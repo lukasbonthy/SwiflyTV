@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+        
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-QDSZE0VTXD"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+    
+      gtag('config', 'G-QDSZE0VTXD');
+    </script>
+<style> .lavalamp {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            background-color: #ff5733; /* Change this to your desired color */
+            transform-origin: left center;
+            animation: lavalamp 2s ease-in-out infinite;
+        }</style>
+    <div class="lavalamp"></div>
+<!-- Google tag (gtag.js) please do not remove -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-PZPC7C2C98"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-PZPC7C2C98');
+</script>
+
+    
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <meta name="robots" content="index,follow">
+    <meta name="googlebot" content="index,follow">
+    
+    <title>SwiflyTV</title>
+    <link rel="icon" href="/assets/favicon.ico" type="image/x-icon">
+
+    <meta name="description" content="Watch movies online for free! Better than any other site available.">
+    <meta name="keywords" content="SwiflyTV, 123movies, 123movie, 123 movies, movies123, free movies, watch movies online, movies123, fmovies, putlocker, solarmovies">
+
+    <meta property="og:title" content="SwiflyTV - Watch Free TV & Movies">
+    <meta property="og:description" content="Watch movies online for free! Better than any other site available.">
+    <meta property="og:keywords" content="SwiflyTV, 123movies, 123movie, 123 movies, movies123,free movies, watch movies online, movies123, fmovies, putlocker, solarmovies">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="/assets/logo.png">
+    <meta property="og:site_name" content="SwiflyTV">
+    <meta property="og:locale" content="en_US">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="SwiflyTV+ - Watch Free TV & Movies">
+    <meta name="twitter:description" content="Watch movies online for free! Better than any other site available.">
+    <meta name="twitter:image:alt" content="Watch Movies - 123movies | 123 movies | Movies123">
+    <link rel="icon" href="/logo.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://assets.lol/libs/fontawesome-6.2.0/css/all.min.css" rel="stylesheet">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Your existing code -->
+    
+    <!-- Add custom CSS for the embed popup -->
+    <style>
+      .embed-popup {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        border-radius: 10px;
+        background-color: #fff;
+        padding: 10px;
+        animation: popup-animation 0.5s ease-in-out;
+        display: none;
+      }
+      
+      /* Add animation keyframes */
+      @keyframes popup-animation {
+        0% { opacity: 0; transform: scale(0.8); }
+        100% { opacity: 1; transform: scale(1); }
+      }
+      /* CSS for the text container */
+.popup-text-container {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  text-align: right;
+}
+
+/* CSS for the black text */
+.popup-text {
+  color: black;
+  font-size: 14px; /* Adjust the font size as needed */
+  position: relative; /* Ensure the text is on top */
+  background-color: white; /* Set the background color of the text */
+  padding: 10px; /* Add padding to create a white textbox around the text */
+  border-radius: 5px; /* Add border-radius for rounded corners */
+  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.3); /* Add a subtle shadow effect */
+}
+
+    </style>
+    
+    <!-- Add JavaScript to show and hide the embed popup -->
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+        var embedPopup = document.querySelector(".embed-popup");
+        var fullscreenButton = document.querySelector(".fullscreen-button");
+        var closeButton = document.querySelector(".close-button");
+        
+        // Show embed popup
+        function showEmbedPopup() {
+          embedPopup.style.display = "block";
+        }
+        
+        function hideEmbedPopup() {
+  var iframe = embedPopup.querySelector("iframe");
+  embedPopup.style.display = "none";
+  
+  // Pause the iframe by setting its src to an empty string
+  iframe.src = "";
+}
+        
+        // Toggle fullscreen mode
+function toggleFullscreen() {
+  var iframe = embedPopup.querySelector("iframe");
+  if (iframe.requestFullscreen) {
+    iframe.requestFullscreen();
+  } else if (iframe.mozRequestFullScreen) {
+    iframe.mozRequestFullScreen();
+  } else if (iframe.webkitRequestFullscreen) {
+    iframe.webkitRequestFullscreen();
+  } else if (iframe.msRequestFullscreen) {
+    iframe.msRequestFullscreen();
+  }
+}
+
+        
+        // Add event listeners
+        fullscreenButton.addEventListener("click", toggleFullscreen);
+        closeButton.addEventListener("click", hideEmbedPopup);
+        
+        // Show the embed popup after a delay (2 seconds in this example)
+        setTimeout(showEmbedPopup, 2000);
+      });
+    </script>
+  </head>
+  <body>
+
+    
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
