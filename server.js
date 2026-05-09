@@ -15619,7 +15619,9 @@ function welcomePreviewRail(title = "", items = [], type = "") {
 
 
 async function welcomePage(req, res) {
-  const [trendingAll, popularMovies, popularTv, familyMovies, topMovies] = await Promise.all([
+  const [trendingAll, popularMovies, popularTv, familyMovies, topMovies,
+    welcomeSpotlightMovie,
+  ] = await Promise.all([
     tmdb("/trending/all/week", {}, CACHE_TTL.short),
     tmdb("/movie/popular", {}, CACHE_TTL.medium),
     tmdb("/tv/popular", {}, CACHE_TTL.medium),
@@ -15628,7 +15630,7 @@ async function welcomePage(req, res) {
     tmdb(`/movie/${DROPSTREAM_SPOTLIGHT_TMDB_ID}`, {}, CACHE_TTL.long),
   ]);
 
-  const sources = [trendingAll, popularMovies, popularTv, familyMovies, topMovies];
+  const sources = [trendingAll, popularMovies, popularTv, familyMovies, topMovies, welcomeSpotlightMovie];
   const hasTmdb = !sources.some((data) => data && data.__error);
   const trending = hasTmdb ? (trendingAll.results || []).filter((item) => ["movie", "tv"].includes(getType(item))) : [];
   const hero = welcomeSpotlightMovie && !welcomeSpotlightMovie.__error
@@ -16380,9 +16382,9 @@ async function watchPage(req, res, type) {
     : "";
 
   const movieFrame = movieEmbedUrl
-    ? `<iframe class="dsMovieEmbedFrame" src="${escapeHtml(movieEmbedUrl)}" title="${escapeHtml(title)} movie embed" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write; web-share" allowfullscreen sandbox="allow-scripts"></iframe>`
+    ? `<iframe class="dsMovieEmbedFrame" src="${escapeHtml(movieEmbedUrl)}" title="${escapeHtml(title)} movie embed" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write; web-share" allowfullscreen sandbox="allow-scripts allow-same-origin"></iframe>`
     : trailer
-      ? `<div class="dsMovieEmbedNotice"><span>Embed provider off</span><strong>Using trailer fallback</strong><small>Set MOVIE_EMBED_PROVIDER_ENABLED=true and MOVIE_EMBED_PROVIDER_URL to use your authorized embed provider.</small></div><iframe src="${escapeHtml(trailerEmbedSrc)}" title="${escapeHtml(title)} trailer fallback" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen sandbox="allow-scripts"></iframe>`
+      ? `<div class="dsMovieEmbedNotice"><span>Embed provider off</span><strong>Using trailer fallback</strong><small>Set MOVIE_EMBED_PROVIDER_ENABLED=true and MOVIE_EMBED_PROVIDER_URL to use your authorized embed provider.</small></div><iframe src="${escapeHtml(trailerEmbedSrc)}" title="${escapeHtml(title)} trailer fallback" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin"></iframe>`
       : `<div class="dsNoTrailer"><h2>No source configured</h2><p>No embed provider is configured and TMDB did not return a trailer.</p></div>`;
 
   const body = `<main class="dsWatchPage ${isMovieMode ? "dsWatchFullscreenMovie dsWatchEmbedMode" : "dsWatchTrailerMode"}">
