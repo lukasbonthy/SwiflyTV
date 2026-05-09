@@ -14197,6 +14197,84 @@ function pageShell({ title = SITE_NAME, description = "Premium movie and TV disc
       -webkit-backdrop-filter: blur(12px);
     }
 
+
+    /* ============================================================
+       v39 EMBED CLICK CLEANUP
+       Removes side info panel and avoids overlays blocking iframe controls.
+       ============================================================ */
+
+    .dsWatchEmbedMode .dsWatchLayout {
+      grid-template-columns: 1fr !important;
+    }
+
+    .dsWatchEmbedMode .dsWatchSidePanel,
+    .dsWatchEmbedMode .dsWatchPlayerTop,
+    .dsWatchEmbedMode .dsWatchEmbedFrame::after {
+      display: none !important;
+    }
+
+    .dsWatchEmbedMode .dsWatchPlayerCard {
+      grid-template-rows: 1fr auto !important;
+    }
+
+    .dsWatchEmbedMode .dsWatchActions {
+      left: 50% !important;
+      right: auto !important;
+      bottom: 14px !important;
+      transform: translateX(-50%);
+      width: auto !important;
+      max-width: min(760px, calc(100vw - 24px)) !important;
+      opacity: .22;
+      transition: opacity .18s ease, transform .18s ease;
+      pointer-events: auto;
+    }
+
+    .dsWatchEmbedMode .dsWatchActions:hover,
+    .dsWatchEmbedMode .dsWatchActions:focus-within {
+      opacity: 1;
+      transform: translateX(-50%) translateY(-2px);
+    }
+
+    .dsWatchEmbedMode .dsWatchHeader {
+      opacity: .20;
+      transition: opacity .18s ease;
+      pointer-events: auto;
+    }
+
+    .dsWatchEmbedMode .dsWatchHeader:hover,
+    .dsWatchEmbedMode .dsWatchHeader:focus-within {
+      opacity: 1;
+    }
+
+    .dsWatchEmbedMode .dsWatchFrame,
+    .dsWatchEmbedMode .dsMovieEmbedFrame {
+      position: relative;
+      z-index: 1;
+    }
+
+    .dsWatchEmbedMode .dsMovieEmbedNotice {
+      display: none !important;
+    }
+
+    @media(max-width: 860px) {
+      .dsWatchEmbedMode .dsWatchActions {
+        left: 12px !important;
+        right: 12px !important;
+        bottom: 12px !important;
+        transform: none !important;
+        width: auto !important;
+        max-width: none !important;
+        opacity: .35;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .dsWatchEmbedMode .dsWatchActions:hover,
+      .dsWatchEmbedMode .dsWatchActions:focus-within {
+        transform: none !important;
+        opacity: 1;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -16082,23 +16160,22 @@ async function watchPage(req, res, type) {
             <button class="dsSecondaryBtn dsFullscreenBtn" type="button" data-fullscreen-watch>⛶ Fullscreen</button>
             ${trailer && !isMovieMode ? `<a class="dsSecondaryBtn" href="${escapeHtml(youtubeUrl)}" target="_blank" rel="noopener">Open on YouTube</a>` : ""}
             ${isMovieMode && movieEmbedUrl ? `<a class="dsSecondaryBtn" href="${escapeHtml(movieEmbedUrl)}" target="_blank" rel="noopener">Open embed</a>` : ""}
-            <button class="dsSecondaryBtn" data-watch-id="${escapeHtml(id)}" data-watch-type="${escapeHtml(type)}" data-watch-title="${escapeHtml(title)}" data-watch-poster="${escapeHtml(details.poster_path || "")}" data-watch-backdrop="${escapeHtml(details.backdrop_path || "")}" data-watch-rating="${escapeHtml(formatRating(details.vote_average))}" data-watch-year="${escapeHtml(getYear(detailsDate))}" type="button">＋ My List</button>
-            <button class="dsSecondaryBtn dsHeartBtn" data-like-id="${escapeHtml(id)}" data-like-type="${escapeHtml(type)}" data-like-title="${escapeHtml(title)}" data-like-poster="${escapeHtml(details.poster_path || "")}" data-like-backdrop="${escapeHtml(details.backdrop_path || "")}" data-like-rating="${escapeHtml(formatRating(details.vote_average))}" data-like-year="${escapeHtml(getYear(detailsDate))}" type="button">♡ Liked</button>
+            ${!isMovieMode ? `<button class="dsSecondaryBtn" data-watch-id="${escapeHtml(id)}" data-watch-type="${escapeHtml(type)}" data-watch-title="${escapeHtml(title)}" data-watch-poster="${escapeHtml(details.poster_path || "")}" data-watch-backdrop="${escapeHtml(details.backdrop_path || "")}" data-watch-rating="${escapeHtml(formatRating(details.vote_average))}" data-watch-year="${escapeHtml(getYear(detailsDate))}" type="button">＋ My List</button>
+            <button class="dsSecondaryBtn dsHeartBtn" data-like-id="${escapeHtml(id)}" data-like-type="${escapeHtml(type)}" data-like-title="${escapeHtml(title)}" data-like-poster="${escapeHtml(details.poster_path || "")}" data-like-backdrop="${escapeHtml(details.backdrop_path || "")}" data-like-rating="${escapeHtml(formatRating(details.vote_average))}" data-like-year="${escapeHtml(getYear(detailsDate))}" type="button">♡ Liked</button>` : ""}
           </div>
         </section>
 
-        <aside class="dsWatchSidePanel">
+        ${!isMovieMode ? `<aside class="dsWatchSidePanel">
           <span class="dsEyebrow">${type === "tv" ? "Series" : "Movie"}</span>
-          <h2>${isMovieMode ? "Embed playback" : "Trailer playback"}</h2>
-          <p>${isMovieMode ? `This page builds an embed URL from the TMDB ID${type === "tv" ? ` and defaults to ${tvEpisodeLabel}` : ""}. Configure the provider URL in env and swap providers later without changing the UI.` : "This button is for previewing the official trailer before watching."}</p>
+          <h2>Trailer playback</h2>
+          <p>This button is for previewing the official trailer before watching.</p>
           <div class="dsWatchMeta">
             <div><small>Year</small><b>${escapeHtml(getYear(detailsDate))}</b></div>
             <div><small>Rating</small><b>${escapeHtml(formatRating(details.vote_average))}</b></div>
             <div><small>Source</small><b>${escapeHtml(sourceLabel)}</b></div>
-            ${type === "tv" && isMovieMode ? `<div><small>Episode</small><b>${tvEpisodeLabel}</b></div>` : ""}
           </div>
           <a class="dsPrimaryBtn" href="/watchrooms">Create Watchroom</a>
-        </aside>
+        </aside>` : ""}
       </div>
     </section>
   </main>`;
