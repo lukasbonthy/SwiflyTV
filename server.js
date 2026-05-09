@@ -14275,6 +14275,50 @@ function pageShell({ title = SITE_NAME, description = "Premium movie and TV disc
       }
     }
 
+
+    /* ============================================================
+       v41 CLICKABLE SANDBOX
+       Keeps popups blocked but allows normal player interactions.
+       ============================================================ */
+
+    .dsWatchEmbedMode .dsWatchEmbedFrame::after,
+    .dsWatchEmbedMode .dsMovieEmbedNotice,
+    .dsWatchEmbedMode .dsWatchPlayerTop,
+    .dsWatchEmbedMode .dsWatchSidePanel,
+    .dsWatchEmbedMode .dsWatchActions {
+      display: none !important;
+      pointer-events: none !important;
+    }
+
+    .dsWatchEmbedMode .dsWatchLayout {
+      grid-template-columns: 1fr !important;
+    }
+
+    .dsWatchEmbedMode .dsWatchFrame,
+    .dsWatchEmbedMode .dsMovieEmbedFrame {
+      pointer-events: auto !important;
+    }
+
+    .dsWatchEmbedMode .dsWatchHeader {
+      opacity: .12;
+      pointer-events: auto;
+      transition: opacity .18s ease;
+    }
+
+    .dsWatchEmbedMode .dsWatchHeader:hover,
+    .dsWatchEmbedMode .dsWatchHeader:focus-within {
+      opacity: 1;
+    }
+
+    .dsWatchEmbedMode .dsMovieEmbedFrame {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #000;
+    }
+
   </style>
 </head>
 <body>
@@ -16121,9 +16165,9 @@ async function watchPage(req, res, type) {
     : "";
 
   const movieFrame = movieEmbedUrl
-    ? `<iframe class="dsMovieEmbedFrame" src="${escapeHtml(movieEmbedUrl)}" title="${escapeHtml(title)} movie embed" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen sandbox="allow-scripts allow-same-origin allow-forms allow-presentation" referrerpolicy="no-referrer"></iframe>`
+    ? `<iframe class="dsMovieEmbedFrame" src="${escapeHtml(movieEmbedUrl)}" title="${escapeHtml(title)} movie embed" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write; web-share" allowfullscreen sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-pointer-lock allow-orientation-lock allow-modals"></iframe>`
     : trailer
-      ? `<div class="dsMovieEmbedNotice"><span>Embed provider off</span><strong>Using trailer fallback</strong><small>Set MOVIE_EMBED_PROVIDER_ENABLED=true and MOVIE_EMBED_PROVIDER_URL to use your authorized embed provider.</small></div><iframe src="${escapeHtml(trailerEmbedSrc)}" title="${escapeHtml(title)} trailer fallback" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin allow-presentation" referrerpolicy="no-referrer"></iframe>`
+      ? `<div class="dsMovieEmbedNotice"><span>Embed provider off</span><strong>Using trailer fallback</strong><small>Set MOVIE_EMBED_PROVIDER_ENABLED=true and MOVIE_EMBED_PROVIDER_URL to use your authorized embed provider.</small></div><iframe src="${escapeHtml(trailerEmbedSrc)}" title="${escapeHtml(title)} trailer fallback" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-pointer-lock allow-orientation-lock allow-modals"></iframe>`
       : `<div class="dsNoTrailer"><h2>No source configured</h2><p>No embed provider is configured and TMDB did not return a trailer.</p></div>`;
 
   const body = `<main class="dsWatchPage ${isMovieMode ? "dsWatchFullscreenMovie dsWatchEmbedMode" : "dsWatchTrailerMode"}">
