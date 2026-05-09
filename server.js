@@ -13842,7 +13842,7 @@ function pageShell({ title = SITE_NAME, description = "Premium movie and TV disc
 
     /* ============================================================
        v32 BETTER VIDEO PLAYER
-       Better native MP4 loading, retry UI, alternate stream fallback.
+       Better native MP4/HLS loading, retry UI, alternate stream fallback.
        ============================================================ */
 
     .dsBetterNativeVideo {
@@ -14000,102 +14000,6 @@ function pageShell({ title = SITE_NAME, description = "Premium movie and TV disc
       inset: 0;
       width: 100%;
       height: 100%;
-    }
-
-
-    /* ============================================================
-       v34 NATIVE VIDEO FALLBACK
-       If MP4 video tag fails, try browser-native iframe/player mode.
-       ============================================================ */
-
-    .dsNativeVideoIframe {
-      position: absolute;
-      inset: 0;
-      z-index: 3;
-      width: 100%;
-      height: 100%;
-      border: 0;
-      background: #000;
-    }
-
-    .dsMovieProviderBanner.nativeFallback span {
-      color: #ffe08a;
-    }
-
-    .dsNativeFallbackDock {
-      position: absolute;
-      left: 50%;
-      bottom: 18px;
-      transform: translateX(-50%);
-      z-index: 20;
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      justify-content: center;
-      width: min(760px, calc(100% - 28px));
-      padding: 10px;
-      border-radius: 999px;
-      background: rgba(2,3,10,.66);
-      border: 1px solid rgba(255,255,255,.10);
-      box-shadow: 0 20px 80px rgba(0,0,0,.44);
-      backdrop-filter: blur(18px) saturate(1.08);
-      -webkit-backdrop-filter: blur(18px) saturate(1.08);
-    }
-
-    .dsNativeFallbackDock .dsSecondaryBtn {
-      min-height: 38px;
-      border-radius: 999px;
-      font-size: 12px;
-      padding-inline: 12px;
-      white-space: nowrap;
-    }
-
-    .absolute.inset-0.w-full.h-screen.bg-black {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      background: #000;
-    }
-
-    @media(max-width: 720px) {
-      .dsNativeFallbackDock {
-        display: grid;
-        border-radius: 22px;
-      }
-
-      .dsNativeFallbackDock .dsSecondaryBtn {
-        width: 100%;
-      }
-    }
-
-
-    /* ============================================================
-       v36 SMART HLS FALLBACK
-       Movie button tries MP4 first, then HLS.js fallback.
-       ============================================================ */
-
-    .dsMovieProviderBanner.licensed span::after {
-      content: " • MP4/HLS";
-      color: rgba(255,255,255,.62);
-    }
-
-
-    /* ============================================================
-       v36 HLS PLAYER POLISH
-       HLS fallback uses hls.js, similar to a dedicated streaming player.
-       ============================================================ */
-
-    .dsMovieProviderBanner.licensed span {
-      color: #aaffdc;
-    }
-
-    .dsMovieProviderBanner.licensed strong::after {
-      content: "";
-    }
-
-    .dsVideoLoading span::after {
-      content: "";
     }
 
   </style>
@@ -15765,19 +15669,19 @@ function chooseLicensedStream(data = {}) {
     stream: stream || {},
     type: String(stream?.type || "").toLowerCase(),
     url: String(stream?.url || ""),
-  })).filter((entry) => entry.url && ["mp4", "hls"].includes(entry.type));
+  })).filter((entry) => entry.url && ["hls", "mp4"].includes(entry.type));
 
   if (!entries.length) return null;
 
   const preferredQuality = String(process.env.MOVIE_PLACEHOLDER_PREFERRED_QUALITY || "ORG").toUpperCase();
-  const allowHlsFallback = process.env.MOVIE_PLACEHOLDER_ALLOW_HLS_FALLBACK !== "false";
+  const preferMp4 = process.env.MOVIE_PLACEHOLDER_PREFER_MP4 !== "false";
 
   const picked =
-    entries.find((entry) => entry.type === "mp4" && entry.quality === preferredQuality) ||
-    entries.find((entry) => entry.type === "mp4" && entry.quality === "ORG") ||
-    entries.find((entry) => entry.type === "mp4") ||
-    (allowHlsFallback ? entries.find((entry) => entry.type === "hls" && entry.quality === "AUTO") : null) ||
-    (allowHlsFallback ? entries.find((entry) => entry.type === "hls") : null) ||
+    entries.find((entry) => entry.quality === preferredQuality && (!preferMp4 || entry.type === "mp4")) ||
+    (preferMp4 ? entries.find((entry) => entry.type === "mp4") : null) ||
+    entries.find((entry) => entry.quality === preferredQuality) ||
+    entries.find((entry) => entry.quality === "ORG") ||
+    entries.find((entry) => entry.quality === "AUTO") ||
     entries[0];
 
   return {
@@ -15789,15 +15693,13 @@ function chooseLicensedStream(data = {}) {
 
 function listProviderStreams(data = {}) {
   const streams = data.streams || {};
-  const allowHlsFallback = process.env.MOVIE_PLACEHOLDER_ALLOW_HLS_FALLBACK !== "false";
-
   return Object.entries(streams)
     .map(([quality, stream]) => ({
       quality: String(quality || "CUSTOM").toUpperCase(),
       type: String(stream?.type || "").toLowerCase(),
       url: String(stream?.url || ""),
     }))
-    .filter((entry) => entry.url && (entry.type === "mp4" || (allowHlsFallback && entry.type === "hls")));
+    .filter((entry) => entry.url && ["hls", "mp4"].includes(entry.type));
 }
 
 async function fetchMoviePlaceholderSource({ type, id }) {
@@ -15863,7 +15765,7 @@ async function fetchMoviePlaceholderSource({ type, id }) {
 
   const stream = chooseLicensedStream(data);
   if (!stream) {
-    return { status: "placeholder", reason: "no_supported_stream" };
+    return { status: "placeholder", reason: "no_stream" };
   }
 
   return {
@@ -16067,41 +15969,8 @@ async function watchPage(req, res, type) {
           setLoading(false);
           const panel = document.getElementById("videoErrorPanel");
           const text = document.getElementById("videoErrorText");
-          if (text) text.textContent = message || "The browser could not play this video source. The provider may be returning an expired token, an HTML/error page, or a source the browser cannot decode.";
+          if (text) text.textContent = message || "The browser could not play this video source.";
           if (panel) panel.hidden = false;
-        }
-
-        function mountNativeIframeFallback(source, reason) {
-          if (!source || !source.url) {
-            setVideoError(reason || "No playable source URL was returned.");
-            return;
-          }
-
-          if (activeHls) {
-            activeHls.destroy();
-            activeHls = null;
-          }
-
-          mount.innerHTML =
-            '<div class="dsMovieProviderBanner nativeFallback">' +
-              '<span>Native fallback</span>' +
-              '<strong>' + escapeClient(streamLabel(source)) + '</strong>' +
-              '<small>' + escapeClient(reason || "Trying the browser native media page because direct video playback failed.") + '</small>' +
-            '</div>' +
-            '<iframe class="dsNativeVideoIframe" src="' + escapeClient(source.url) + '" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen></iframe>' +
-            '<div class="dsNativeFallbackDock">' +
-              '<button class="dsSecondaryBtn" id="retryNativeVideoBtn" type="button">Retry video tag</button>' +
-              '<button class="dsSecondaryBtn" id="tryNativeAltBtn" type="button">Try alternate</button>' +
-              '<a class="dsSecondaryBtn" href="' + escapeClient(source.url) + '" target="_blank" rel="noopener">Open source</a>' +
-            '</div>';
-
-          document.getElementById("retryNativeVideoBtn")?.addEventListener("click", () => {
-            mountVideo(source, currentProviderData);
-          });
-
-          document.getElementById("tryNativeAltBtn")?.addEventListener("click", () => {
-            tryAlternateSource();
-          });
         }
 
         function clearVideoError() {
@@ -16126,14 +15995,9 @@ async function watchPage(req, res, type) {
         function tryAlternateSource() {
           const choices = candidateStreams(currentProviderData);
           const currentUrl = activeSource?.url || "";
-          const currentType = activeSource?.type || "";
-          const next =
-            choices.find((item) => item.url !== currentUrl && currentType === "mp4" && item.type === "hls") ||
-            choices.find((item) => item.url !== currentUrl && currentType === "hls" && item.type === "mp4") ||
-            choices.find((item) => item.url !== currentUrl);
-
+          const next = choices.find((item) => item.url !== currentUrl);
           if (!next) {
-            mountNativeIframeFallback(activeSource, "No alternate MP4/HLS source was returned by the provider.");
+            setVideoError("No alternate MP4/HLS source was returned by the provider.");
             return;
           }
           retryCount = 0;
@@ -16169,33 +16033,27 @@ async function watchPage(req, res, type) {
             setLoading(true, "Connection stalled. Waiting for more data...");
             clearTimeout(stalledTimer);
             stalledTimer = setTimeout(() => {
-              if (video.readyState < 3) mountNativeIframeFallback(activeSource || source, "The stream stalled in the video tag. Trying native browser fallback.");
+              if (video.readyState < 3) setVideoError("The stream stalled. Try Retry or Try alternate.");
             }, 9000);
           });
 
           video.addEventListener("error", () => {
             const code = video.error?.code;
             const message = code === 4
-              ? "The browser could not decode/load this stream. Trying native browser fallback..."
+              ? "This MP4/HLS source could not be decoded or loaded by the browser."
               : code === 3
-                ? "The browser thinks the video is corrupted or unsupported. Trying native browser fallback..."
+                ? "The browser stopped because the video looked corrupted or unsupported."
                 : code === 2
-                  ? "Network error while loading the video. Trying alternate/native fallback..."
-                  : "The video failed to play. Trying fallback...";
+                  ? "Network error while loading the video."
+                  : "The video failed to play.";
+            setVideoError(message);
 
             if (retryCount < 1) {
               retryCount += 1;
               setTimeout(() => {
-                const choices = candidateStreams(currentProviderData);
-                const currentUrl = activeSource?.url || "";
-                const next = choices.find((item) => item.url !== currentUrl);
-                if (next) mountVideo(next, currentProviderData);
-                else mountNativeIframeFallback(activeSource || source, message);
-              }, 550);
-              return;
+                tryAlternateSource();
+              }, 700);
             }
-
-            mountNativeIframeFallback(activeSource || source, message);
           });
         }
 
@@ -16203,13 +16061,10 @@ async function watchPage(req, res, type) {
           setLoading(true, "Loading MP4...");
           video.removeAttribute("crossorigin");
           video.innerHTML = "";
-          video.id = "video-element";
-          video.className = "dsLicensedVideo dsBetterNativeVideo absolute inset-0 w-full h-screen bg-black";
           video.src = source.url;
           video.preload = "metadata";
           video.autoplay = true;
           video.playsInline = true;
-          video.setAttribute("autoplay", "");
           video.setAttribute("playsinline", "");
           video.setAttribute("webkit-playsinline", "");
           video.load();
@@ -16233,7 +16088,7 @@ async function watchPage(req, res, type) {
           loadHlsScript()
             .then(() => {
               if (!window.Hls || !window.Hls.isSupported()) {
-                setVideoError("HLS is disabled. Movie mode only accepts MP4.");
+                setVideoError("HLS is not supported in this browser.");
                 return;
               }
 
@@ -16263,7 +16118,7 @@ async function watchPage(req, res, type) {
                   activeHls.recoverMediaError();
                   return;
                 }
-                setVideoError("MP4 playback failed. Try alternate source.");
+                setVideoError("HLS playback failed. Try alternate source.");
               });
 
               activeHls.loadSource(source.url);
@@ -16295,7 +16150,7 @@ async function watchPage(req, res, type) {
             return;
           }
 
-          setVideoError("Unsupported source type: " + source.type + ". Movie mode accepts MP4 or HLS.");
+          setVideoError("Unsupported source type: " + source.type);
         }
 
         fetch("/api/movie-source/${escapeHtml(type)}/${escapeHtml(id)}")
@@ -16308,11 +16163,6 @@ async function watchPage(req, res, type) {
 
             if (data.reason === "provider_disabled" || data.reason === "provider_missing") {
               showTrailerFallback("No Movie button placeholder provider is configured yet.");
-              return;
-            }
-
-            if (data.reason === "no_supported_stream") {
-              showTrailerFallback("Provider did not return an MP4 or HLS stream the player can use.");
               return;
             }
 
