@@ -14445,9 +14445,14 @@ function pageShell({ title = SITE_NAME, description = "Premium movie and TV disc
 
 
     /* ============================================================
-       v45 SANDBOX SCRIPTS ONLY
-       Movie embed iframe sandbox now only allows scripts.
+       v45 ONE RULE SANDBOX
+       Sandbox now uses exactly one permission: allow-scripts.
+       Popups/top navigation remain blocked because they are not allowed.
        ============================================================ */
+
+    .dsMovieEmbedFrame {
+      pointer-events: auto !important;
+    }
 
   </style>
 </head>
@@ -16400,7 +16405,7 @@ async function watchPage(req, res, type) {
             ${isMovieMode
               ? movieFrame
               : trailer
-                ? `<iframe src="${escapeHtml(trailerEmbedSrc)}" title="${escapeHtml(title)} trailer" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin allow-presentation" referrerpolicy="no-referrer"></iframe>`
+                ? `<iframe src="${escapeHtml(trailerEmbedSrc)}" title="${escapeHtml(title)} trailer" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen sandbox="allow-scripts" referrerpolicy="no-referrer"></iframe>`
                 : `<div class="dsNoTrailer"><h2>No trailer found</h2><p>TMDB did not return a YouTube trailer for this title.</p></div>`}
           </div>
 
