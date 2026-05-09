@@ -24,6 +24,7 @@ const CACHE_TTL = {
   long: 1000 * 60 * 60 * 6,
 };
 
+const DROPSTREAM_SPOTLIGHT_TMDB_ID = process.env.DROPSTREAM_SPOTLIGHT_TMDB_ID || "76479";
 const memoryCache = new Map();
 const watchRooms = new Map();
 
@@ -15497,12 +15498,15 @@ async function welcomePage(req, res) {
     tmdb("/tv/popular", {}, CACHE_TTL.medium),
     tmdb("/discover/movie", { with_genres: "10751", sort_by: "popularity.desc", include_adult: "false" }, CACHE_TTL.medium),
     tmdb("/movie/top_rated", {}, CACHE_TTL.medium),
+    tmdb(`/movie/${DROPSTREAM_SPOTLIGHT_TMDB_ID}`, {}, CACHE_TTL.long),
   ]);
 
   const sources = [trendingAll, popularMovies, popularTv, familyMovies, topMovies];
   const hasTmdb = !sources.some((data) => data && data.__error);
   const trending = hasTmdb ? (trendingAll.results || []).filter((item) => ["movie", "tv"].includes(getType(item))) : [];
-  const hero = pickHero(trending) || {};
+  const hero = welcomeSpotlightMovie && !welcomeSpotlightMovie.__error
+    ? { ...welcomeSpotlightMovie, media_type: "movie" }
+    : pickHero(trending) || {};
   const heroTitle = getTitle(hero) || "Watch together. Discover faster.";
   const heroBg = hero.backdrop_path ? fullBackdrop(hero.backdrop_path) : "";
   const heroDesc = hero.overview || "Preview trending movies and shows, create watchrooms, save favorites, and unlock a cleaner streaming discovery experience once you sign up.";
@@ -15590,6 +15594,7 @@ async function homePage(req, res) {
     familyMovies,
     animationMovies,
     thrillerMovies,
+    spotlightMovie,
   ] = await Promise.all([
     tmdb("/trending/all/week", {}, CACHE_TTL.short),
     tmdb("/trending/movie/week", {}, CACHE_TTL.short),
@@ -15606,17 +15611,20 @@ async function homePage(req, res) {
     tmdb("/discover/movie", { with_genres: "10751", sort_by: "popularity.desc" }, CACHE_TTL.medium),
     tmdb("/discover/movie", { with_genres: "16", sort_by: "popularity.desc" }, CACHE_TTL.medium),
     tmdb("/discover/movie", { with_genres: "53", sort_by: "popularity.desc" }, CACHE_TTL.medium),
+    tmdb(`/movie/${DROPSTREAM_SPOTLIGHT_TMDB_ID}`, {}, CACHE_TTL.long),
   ]);
 
   const firstError = [
     trendingAll, trendingMovies, trendingTv, popularMovies, popularTv, topMovies, topTv,
     nowPlaying, upcomingMovies, actionMovies, comedyMovies, dramaShows, familyMovies,
-    animationMovies, thrillerMovies,
+    animationMovies, thrillerMovies, spotlightMovie,
   ].find((data) => data.__error);
 
   if (firstError) return res.send(setupNeededPage(firstError.message));
 
-  const hero = pickHero((trendingAll.results || []).filter((item) => ["movie", "tv"].includes(getType(item))));
+  const hero = spotlightMovie && !spotlightMovie.__error
+    ? { ...spotlightMovie, media_type: "movie" }
+    : pickHero((trendingAll.results || []).filter((item) => ["movie", "tv"].includes(getType(item))));
 
   const body = `<main>
     ${dsHero({ hero, context: "Featured today", eyebrow: "DropStream spotlight" })}
@@ -15625,6 +15633,7 @@ async function homePage(req, res) {
         <div class="dsRowHead"><h2>Continue Watching</h2><span class="dsRowTag">Saved watching</span></div>
         <div id="continueWatchingRail" class="movieRail dsRail"></div>
       </section>
+      ${dsRail("DropStream Spotlight", [{ ...spotlightMovie, media_type: "movie" }], "movie", { tag: "Featured" })}
       ${dsRail("Trending Now", (trendingAll.results || []).filter((item) => ["movie", "tv"].includes(getType(item))), "", { tag: "Live" })}
       ${dsTopRail("Top 10 Movies", popularMovies.results || [], "movie")}
       ${dsRail("Award-Winning TV Dramas", dramaShows.results || [], "tv")}
