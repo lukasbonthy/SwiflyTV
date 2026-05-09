@@ -13842,7 +13842,7 @@ function pageShell({ title = SITE_NAME, description = "Premium movie and TV disc
 
     /* ============================================================
        v32 BETTER VIDEO PLAYER
-       Better native MP4/HLS loading, retry UI, alternate stream fallback.
+       Better native MP4 loading, retry UI, alternate stream fallback.
        ============================================================ */
 
     .dsBetterNativeVideo {
@@ -13998,6 +13998,169 @@ function pageShell({ title = SITE_NAME, description = "Premium movie and TV disc
     .dsMovieProviderMount iframe {
       position: absolute;
       inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+
+    /* ============================================================
+       v34 NATIVE VIDEO FALLBACK
+       If MP4 video tag fails, try browser-native iframe/player mode.
+       ============================================================ */
+
+    .dsNativeVideoIframe {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #000;
+    }
+
+    .dsMovieProviderBanner.nativeFallback span {
+      color: #ffe08a;
+    }
+
+    .dsNativeFallbackDock {
+      position: absolute;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      z-index: 20;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: min(760px, calc(100% - 28px));
+      padding: 10px;
+      border-radius: 999px;
+      background: rgba(2,3,10,.66);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 20px 80px rgba(0,0,0,.44);
+      backdrop-filter: blur(18px) saturate(1.08);
+      -webkit-backdrop-filter: blur(18px) saturate(1.08);
+    }
+
+    .dsNativeFallbackDock .dsSecondaryBtn {
+      min-height: 38px;
+      border-radius: 999px;
+      font-size: 12px;
+      padding-inline: 12px;
+      white-space: nowrap;
+    }
+
+    .absolute.inset-0.w-full.h-screen.bg-black {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+    }
+
+    @media(max-width: 720px) {
+      .dsNativeFallbackDock {
+        display: grid;
+        border-radius: 22px;
+      }
+
+      .dsNativeFallbackDock .dsSecondaryBtn {
+        width: 100%;
+      }
+    }
+
+
+    /* ============================================================
+       v36 SMART HLS FALLBACK
+       Movie button tries MP4 first, then HLS.js fallback.
+       ============================================================ */
+
+    .dsMovieProviderBanner.licensed span::after {
+      content: " • MP4/HLS";
+      color: rgba(255,255,255,.62);
+    }
+
+
+    /* ============================================================
+       v36 HLS PLAYER POLISH
+       HLS fallback uses hls.js, similar to a dedicated streaming player.
+       ============================================================ */
+
+    .dsMovieProviderBanner.licensed span {
+      color: #aaffdc;
+    }
+
+    .dsMovieProviderBanner.licensed strong::after {
+      content: "";
+    }
+
+    .dsVideoLoading span::after {
+      content: "";
+    }
+
+
+    /* ============================================================
+       v37 EMBED PROVIDER WATCH MODE
+       Movie button uses a simple authorized iframe embed provider.
+       ============================================================ */
+
+    .dsWatchEmbedFrame {
+      position: relative;
+      background: #000;
+    }
+
+    .dsMovieEmbedFrame {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border: 0;
+      background: #000;
+    }
+
+    .dsMovieEmbedNotice {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      z-index: 10;
+      max-width: min(440px, calc(100% - 32px));
+      display: grid;
+      gap: 4px;
+      padding: 12px 14px;
+      border-radius: 18px;
+      color: white;
+      background: rgba(7,10,22,.72);
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 18px 54px rgba(0,0,0,.32);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      pointer-events: none;
+    }
+
+    .dsMovieEmbedNotice span {
+      color: #ffe08a;
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .dsMovieEmbedNotice strong {
+      font-size: 13px;
+      font-weight: 950;
+    }
+
+    .dsMovieEmbedNotice small {
+      color: rgba(248,251,255,.62);
+      font-size: 12px;
+      line-height: 1.35;
+      font-weight: 650;
+    }
+
+    .dsWatchFullscreenMovie.dsWatchEmbedMode .dsWatchFrame {
+      background: #000;
+    }
+
+    .dsWatchFullscreenMovie.dsWatchEmbedMode .dsMovieEmbedFrame {
       width: 100%;
       height: 100%;
     }
@@ -15669,19 +15832,19 @@ function chooseLicensedStream(data = {}) {
     stream: stream || {},
     type: String(stream?.type || "").toLowerCase(),
     url: String(stream?.url || ""),
-  })).filter((entry) => entry.url && ["hls", "mp4"].includes(entry.type));
+  })).filter((entry) => entry.url && ["mp4", "hls"].includes(entry.type));
 
   if (!entries.length) return null;
 
   const preferredQuality = String(process.env.MOVIE_PLACEHOLDER_PREFERRED_QUALITY || "ORG").toUpperCase();
-  const preferMp4 = process.env.MOVIE_PLACEHOLDER_PREFER_MP4 !== "false";
+  const allowHlsFallback = process.env.MOVIE_PLACEHOLDER_ALLOW_HLS_FALLBACK !== "false";
 
   const picked =
-    entries.find((entry) => entry.quality === preferredQuality && (!preferMp4 || entry.type === "mp4")) ||
-    (preferMp4 ? entries.find((entry) => entry.type === "mp4") : null) ||
-    entries.find((entry) => entry.quality === preferredQuality) ||
-    entries.find((entry) => entry.quality === "ORG") ||
-    entries.find((entry) => entry.quality === "AUTO") ||
+    entries.find((entry) => entry.type === "mp4" && entry.quality === preferredQuality) ||
+    entries.find((entry) => entry.type === "mp4" && entry.quality === "ORG") ||
+    entries.find((entry) => entry.type === "mp4") ||
+    (allowHlsFallback ? entries.find((entry) => entry.type === "hls" && entry.quality === "AUTO") : null) ||
+    (allowHlsFallback ? entries.find((entry) => entry.type === "hls") : null) ||
     entries[0];
 
   return {
@@ -15693,13 +15856,15 @@ function chooseLicensedStream(data = {}) {
 
 function listProviderStreams(data = {}) {
   const streams = data.streams || {};
+  const allowHlsFallback = process.env.MOVIE_PLACEHOLDER_ALLOW_HLS_FALLBACK !== "false";
+
   return Object.entries(streams)
     .map(([quality, stream]) => ({
       quality: String(quality || "CUSTOM").toUpperCase(),
       type: String(stream?.type || "").toLowerCase(),
       url: String(stream?.url || ""),
     }))
-    .filter((entry) => entry.url && ["hls", "mp4"].includes(entry.type));
+    .filter((entry) => entry.url && (entry.type === "mp4" || (allowHlsFallback && entry.type === "hls")));
 }
 
 async function fetchMoviePlaceholderSource({ type, id }) {
@@ -15765,7 +15930,7 @@ async function fetchMoviePlaceholderSource({ type, id }) {
 
   const stream = chooseLicensedStream(data);
   if (!stream) {
-    return { status: "placeholder", reason: "no_stream" };
+    return { status: "placeholder", reason: "no_supported_stream" };
   }
 
   return {
@@ -15786,6 +15951,38 @@ async function fetchLicensedMovieSource(args) {
 }
 
 
+
+function buildMovieEmbedProviderUrl({ req, type, id }) {
+  if (process.env.MOVIE_EMBED_PROVIDER_ENABLED !== "true") return "";
+
+  const providerBase = process.env.MOVIE_EMBED_PROVIDER_URL;
+  if (!providerBase) return "";
+
+  const url = new URL(providerBase);
+  url.searchParams.set("tmdb", String(id));
+  url.searchParams.set("type", type === "tv" ? "tv" : "movie");
+
+  const lang = String(req.query.lan || process.env.MOVIE_EMBED_LANGUAGE || "eng").trim();
+  if (lang) url.searchParams.set("lan", lang);
+
+  if (type === "tv") {
+    const season = String(req.query.s || process.env.MOVIE_EMBED_DEFAULT_SEASON || "1").trim();
+    const episode = String(req.query.e || process.env.MOVIE_EMBED_DEFAULT_EPISODE || "1").trim();
+    url.searchParams.set("s", season || "1");
+    url.searchParams.set("e", episode || "1");
+  }
+
+  if (process.env.MOVIE_EMBED_EXTRA_QUERY) {
+    for (const part of process.env.MOVIE_EMBED_EXTRA_QUERY.split("&")) {
+      const [rawKey, rawValue = ""] = part.split("=");
+      const key = decodeURIComponent(rawKey || "").trim();
+      if (key) url.searchParams.set(key, decodeURIComponent(rawValue || ""));
+    }
+  }
+
+  return url.toString();
+}
+
 async function watchPage(req, res, type) {
   const id = req.params.id;
   const mode = req.query.mode === "trailer" ? "trailer" : "movie";
@@ -15803,17 +16000,30 @@ async function watchPage(req, res, type) {
   const trailer = pickBestTrailer(videos.results || []);
   const isMovieMode = mode === "movie";
   const heroBg = fullBackdrop(details.backdrop_path || details.poster_path);
-  const embedSrc = trailer ? youtubeEmbedSrc(trailer.key) : "";
+  const trailerEmbedSrc = trailer ? youtubeEmbedSrc(trailer.key) : "";
   const youtubeUrl = trailer ? `https://www.youtube.com/watch?v=${encodeURIComponent(trailer.key)}` : "";
+  const movieEmbedUrl = isMovieMode ? buildMovieEmbedProviderUrl({ req, type, id }) : "";
+  const sourceLabel = isMovieMode
+    ? (movieEmbedUrl ? "Embed provider" : "Trailer fallback")
+    : "YouTube/TMDB";
+  const tvEpisodeLabel = type === "tv"
+    ? `S${escapeHtml(String(req.query.s || process.env.MOVIE_EMBED_DEFAULT_SEASON || "1"))}:E${escapeHtml(String(req.query.e || process.env.MOVIE_EMBED_DEFAULT_EPISODE || "1"))}`
+    : "";
 
-  const body = `<main class="dsWatchPage ${isMovieMode ? "dsWatchFullscreenMovie" : "dsWatchTrailerMode"}">
+  const movieFrame = movieEmbedUrl
+    ? `<iframe class="dsMovieEmbedFrame" src="${escapeHtml(movieEmbedUrl)}" title="${escapeHtml(title)} movie embed" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen></iframe>`
+    : trailer
+      ? `<div class="dsMovieEmbedNotice"><span>Embed provider off</span><strong>Using trailer fallback</strong><small>Set MOVIE_EMBED_PROVIDER_ENABLED=true and MOVIE_EMBED_PROVIDER_URL to use your authorized embed provider.</small></div><iframe src="${escapeHtml(trailerEmbedSrc)}" title="${escapeHtml(title)} trailer fallback" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen" allowfullscreen></iframe>`
+      : `<div class="dsNoTrailer"><h2>No source configured</h2><p>No embed provider is configured and TMDB did not return a trailer.</p></div>`;
+
+  const body = `<main class="dsWatchPage ${isMovieMode ? "dsWatchFullscreenMovie dsWatchEmbedMode" : "dsWatchTrailerMode"}">
     <section class="dsWatchHero">
       <div class="dsWatchBg" style="background-image:url('${escapeHtml(heroBg)}')"></div>
       <div class="dsWatchHeader">
         <a class="dsGhostPill" href="/${escapeHtml(type)}/${escapeHtml(id)}">← Back</a>
         <div class="dsWatchModeSwitch">
           <a class="${mode === "trailer" ? "active" : ""}" href="/watch/${escapeHtml(type)}/${escapeHtml(id)}?mode=trailer">Trailer</a>
-          <a class="${mode === "movie" ? "active" : ""}" href="/watch/${escapeHtml(type)}/${escapeHtml(id)}?mode=movie">Movie</a>
+          <a class="${mode === "movie" ? "active" : ""}" href="/watch/${escapeHtml(type)}/${escapeHtml(id)}?mode=movie${type === "tv" ? `&s=${escapeHtml(String(req.query.s || process.env.MOVIE_EMBED_DEFAULT_SEASON || "1"))}&e=${escapeHtml(String(req.query.e || process.env.MOVIE_EMBED_DEFAULT_EPISODE || "1"))}` : ""}">Movie</a>
         </div>
       </div>
 
@@ -15823,28 +16033,23 @@ async function watchPage(req, res, type) {
             <div>
               <span class="dsEyebrow">${isMovieMode ? "Movie mode" : "Trailer mode"}</span>
               <h1>${escapeHtml(title)}</h1>
-              <p>${isMovieMode ? "Movie button playback. This can use your configured trailer-stream placeholder provider until you add licensed movie access." : "Official trailer / preview playback."}</p>
+              <p>${isMovieMode ? "Movie mode now uses a simple embed provider iframe. TV embeds default to season 1, episode 1 unless you pass s/e in the URL." : "Official trailer / preview playback."}</p>
             </div>
-            ${isMovieMode ? `<span class="dsPlaceholderBadge">Trailer placeholder</span>` : `<span class="dsPlaceholderBadge trailer">Trailer</span>`}
+            ${isMovieMode ? `<span class="dsPlaceholderBadge">${movieEmbedUrl ? "Embed" : "Trailer fallback"}</span>` : `<span class="dsPlaceholderBadge trailer">Trailer</span>`}
           </div>
 
-          <div class="dsWatchFrame">
+          <div class="dsWatchFrame dsWatchEmbedFrame">
             ${isMovieMode
-              ? `<div id="movieProviderMount" class="dsMovieProviderMount" data-type="${escapeHtml(type)}" data-id="${escapeHtml(id)}">
-                  <div class="dsMovieProviderLoading">
-                    <span class="dsEyebrow">Movie source</span>
-                    <h2>Checking licensed provider...</h2>
-                    <p>If no placeholder provider is configured yet, DropStream will use the trailer as a temporary fallback.</p>
-                  </div>
-                </div>`
+              ? movieFrame
               : trailer
-                ? `<iframe src="${escapeHtml(embedSrc)}" title="${escapeHtml(title)} trailer" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen" allowfullscreen></iframe>`
+                ? `<iframe src="${escapeHtml(trailerEmbedSrc)}" title="${escapeHtml(title)} trailer" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen" allowfullscreen></iframe>`
                 : `<div class="dsNoTrailer"><h2>No trailer found</h2><p>TMDB did not return a YouTube trailer for this title.</p></div>`}
           </div>
 
           <div class="dsWatchActions">
             <button class="dsSecondaryBtn dsFullscreenBtn" type="button" data-fullscreen-watch>⛶ Fullscreen</button>
-            ${trailer ? `<a class="dsSecondaryBtn" href="${escapeHtml(youtubeUrl)}" target="_blank" rel="noopener">Open on YouTube</a>` : ""}
+            ${trailer && !isMovieMode ? `<a class="dsSecondaryBtn" href="${escapeHtml(youtubeUrl)}" target="_blank" rel="noopener">Open on YouTube</a>` : ""}
+            ${isMovieMode && movieEmbedUrl ? `<a class="dsSecondaryBtn" href="${escapeHtml(movieEmbedUrl)}" target="_blank" rel="noopener">Open embed</a>` : ""}
             <button class="dsSecondaryBtn" data-watch-id="${escapeHtml(id)}" data-watch-type="${escapeHtml(type)}" data-watch-title="${escapeHtml(title)}" data-watch-poster="${escapeHtml(details.poster_path || "")}" data-watch-backdrop="${escapeHtml(details.backdrop_path || "")}" data-watch-rating="${escapeHtml(formatRating(details.vote_average))}" data-watch-year="${escapeHtml(getYear(detailsDate))}" type="button">＋ My List</button>
             <button class="dsSecondaryBtn dsHeartBtn" data-like-id="${escapeHtml(id)}" data-like-type="${escapeHtml(type)}" data-like-title="${escapeHtml(title)}" data-like-poster="${escapeHtml(details.poster_path || "")}" data-like-backdrop="${escapeHtml(details.backdrop_path || "")}" data-like-rating="${escapeHtml(formatRating(details.vote_average))}" data-like-year="${escapeHtml(getYear(detailsDate))}" type="button">♡ Liked</button>
           </div>
@@ -15852,325 +16057,18 @@ async function watchPage(req, res, type) {
 
         <aside class="dsWatchSidePanel">
           <span class="dsEyebrow">${type === "tv" ? "Series" : "Movie"}</span>
-          <h2>${isMovieMode ? "Movie button behavior" : "Trailer button behavior"}</h2>
-          <p>${isMovieMode ? "This is where the actual movie player will go later. Until you connect a legal movie access API or hosting source, DropStream plays the trailer here as a temporary replacement." : "This button is for previewing the official trailer before watching."}</p>
+          <h2>${isMovieMode ? "Embed playback" : "Trailer playback"}</h2>
+          <p>${isMovieMode ? `This page builds an embed URL from the TMDB ID${type === "tv" ? ` and defaults to ${tvEpisodeLabel}` : ""}. Configure the provider URL in env and swap providers later without changing the UI.` : "This button is for previewing the official trailer before watching."}</p>
           <div class="dsWatchMeta">
             <div><small>Year</small><b>${escapeHtml(getYear(detailsDate))}</b></div>
             <div><small>Rating</small><b>${escapeHtml(formatRating(details.vote_average))}</b></div>
-            <div><small>Source</small><b>${trailer ? "YouTube/TMDB" : "Unavailable"}</b></div>
+            <div><small>Source</small><b>${escapeHtml(sourceLabel)}</b></div>
+            ${type === "tv" && isMovieMode ? `<div><small>Episode</small><b>${tvEpisodeLabel}</b></div>` : ""}
           </div>
           <a class="dsPrimaryBtn" href="/watchrooms">Create Watchroom</a>
         </aside>
       </div>
     </section>
-
-    ${isMovieMode ? `<script>
-      (function licensedMovieProvider(){
-        const mount = document.getElementById("movieProviderMount");
-        if (!mount) return;
-
-        const trailerHtml = ${JSON.stringify(trailer ? `<iframe src="${escapeHtml(embedSrc)}" title="${escapeHtml(title)} trailer placeholder" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen" allowfullscreen></iframe>` : `<div class="dsNoTrailer"><h2>No movie source yet</h2><p>No licensed movie stream is configured and no trailer was found for this title.</p></div>`)};
-
-        function showTrailerFallback(message) {
-          mount.innerHTML =
-            '<div class="dsMovieProviderBanner">' +
-              '<span>Movie placeholder</span>' +
-              '<strong>' + message + '</strong>' +
-              '<small>This is your temporary trailer-stream placeholder for the Movie button. Swap provider later when you get movie access.</small>' +
-            '</div>' +
-            trailerHtml;
-        }
-
-        function loadHlsScript() {
-          return new Promise((resolve, reject) => {
-            if (window.Hls) return resolve();
-            const script = document.createElement("script");
-            script.src = "https://cdn.jsdelivr.net/npm/hls.js@latest";
-            script.onload = resolve;
-            script.onerror = reject;
-            document.head.appendChild(script);
-          });
-        }
-
-        let currentProviderData = null;
-        let activeVideo = null;
-        let activeSource = null;
-        let activeHls = null;
-        let retryCount = 0;
-
-        function escapeClient(value) {
-          return String(value || "")
-            .replaceAll("&", "&amp;")
-            .replaceAll("<", "&lt;")
-            .replaceAll(">", "&gt;")
-            .replaceAll('"', "&quot;");
-        }
-
-        function streamLabel(source) {
-          return (source.quality || "ORG") + " • " + String(source.type || "").toUpperCase();
-        }
-
-        function buildPlayerShell(source) {
-          mount.innerHTML =
-            '<div class="dsMovieProviderBanner licensed">' +
-              '<span>Movie button source</span>' +
-              '<strong>' + escapeClient(streamLabel(source)) + '</strong>' +
-              '<small>Using the best available player setup for this stream.</small>' +
-            '</div>' +
-            '<div class="dsVideoLoading" id="videoLoading">' +
-              '<div></div><strong>Loading video...</strong><span>Preparing ' + escapeClient(streamLabel(source)) + '</span>' +
-            '</div>' +
-            '<div class="dsVideoErrorPanel" id="videoErrorPanel" hidden>' +
-              '<h2>Video had trouble playing</h2>' +
-              '<p id="videoErrorText">The browser could not play this source.</p>' +
-              '<div>' +
-                '<button class="dsSecondaryBtn" id="retryVideoBtn" type="button">Retry</button>' +
-                '<button class="dsSecondaryBtn" id="tryAltVideoBtn" type="button">Try alternate</button>' +
-                '<a class="dsSecondaryBtn" id="openVideoSourceBtn" href="#" target="_blank" rel="noopener">Open source</a>' +
-              '</div>' +
-            '</div>';
-
-          const video = document.createElement("video");
-          video.className = "dsLicensedVideo dsBetterNativeVideo";
-          video.controls = true;
-          video.autoplay = true;
-          video.playsInline = true;
-          video.preload = "metadata";
-          video.setAttribute("playsinline", "");
-          video.setAttribute("webkit-playsinline", "");
-          video.setAttribute("controlsList", "nodownload");
-
-          mount.appendChild(video);
-          activeVideo = video;
-
-          const open = document.getElementById("openVideoSourceBtn");
-          if (open) open.href = source.url;
-
-          const retry = document.getElementById("retryVideoBtn");
-          if (retry) retry.addEventListener("click", () => mountVideo(activeSource || source, currentProviderData));
-
-          const alt = document.getElementById("tryAltVideoBtn");
-          if (alt) alt.addEventListener("click", () => tryAlternateSource());
-
-          return video;
-        }
-
-        function setLoading(show, text) {
-          const loading = document.getElementById("videoLoading");
-          if (!loading) return;
-          loading.hidden = !show;
-          if (text) {
-            const span = loading.querySelector("span");
-            if (span) span.textContent = text;
-          }
-        }
-
-        function setVideoError(message) {
-          setLoading(false);
-          const panel = document.getElementById("videoErrorPanel");
-          const text = document.getElementById("videoErrorText");
-          if (text) text.textContent = message || "The browser could not play this video source.";
-          if (panel) panel.hidden = false;
-        }
-
-        function clearVideoError() {
-          const panel = document.getElementById("videoErrorPanel");
-          if (panel) panel.hidden = true;
-        }
-
-        function candidateStreams(data) {
-          const list = Array.isArray(data?.streams) ? data.streams : [];
-          const selected = data?.stream ? [data.stream] : [];
-          const merged = [...selected, ...list];
-          const seen = new Set();
-          return merged.filter((item) => {
-            if (!item || !item.url || !item.type) return false;
-            const key = item.type + "::" + item.url;
-            if (seen.has(key)) return false;
-            seen.add(key);
-            return true;
-          });
-        }
-
-        function tryAlternateSource() {
-          const choices = candidateStreams(currentProviderData);
-          const currentUrl = activeSource?.url || "";
-          const next = choices.find((item) => item.url !== currentUrl);
-          if (!next) {
-            setVideoError("No alternate MP4/HLS source was returned by the provider.");
-            return;
-          }
-          retryCount = 0;
-          mountVideo(next, currentProviderData);
-        }
-
-        function attachVideoEvents(video, source) {
-          let stalledTimer = null;
-
-          video.addEventListener("loadstart", () => {
-            clearVideoError();
-            setLoading(true, "Requesting " + streamLabel(source));
-          });
-
-          video.addEventListener("loadedmetadata", () => {
-            setLoading(false);
-          });
-
-          video.addEventListener("canplay", () => {
-            setLoading(false);
-          });
-
-          video.addEventListener("waiting", () => {
-            setLoading(true, "Buffering...");
-          });
-
-          video.addEventListener("playing", () => {
-            setLoading(false);
-            clearTimeout(stalledTimer);
-          });
-
-          video.addEventListener("stalled", () => {
-            setLoading(true, "Connection stalled. Waiting for more data...");
-            clearTimeout(stalledTimer);
-            stalledTimer = setTimeout(() => {
-              if (video.readyState < 3) setVideoError("The stream stalled. Try Retry or Try alternate.");
-            }, 9000);
-          });
-
-          video.addEventListener("error", () => {
-            const code = video.error?.code;
-            const message = code === 4
-              ? "This MP4/HLS source could not be decoded or loaded by the browser."
-              : code === 3
-                ? "The browser stopped because the video looked corrupted or unsupported."
-                : code === 2
-                  ? "Network error while loading the video."
-                  : "The video failed to play.";
-            setVideoError(message);
-
-            if (retryCount < 1) {
-              retryCount += 1;
-              setTimeout(() => {
-                tryAlternateSource();
-              }, 700);
-            }
-          });
-        }
-
-        function loadMp4(video, source) {
-          setLoading(true, "Loading MP4...");
-          video.removeAttribute("crossorigin");
-          video.innerHTML = "";
-          video.src = source.url;
-          video.preload = "metadata";
-          video.autoplay = true;
-          video.playsInline = true;
-          video.setAttribute("playsinline", "");
-          video.setAttribute("webkit-playsinline", "");
-          video.load();
-
-          const playPromise = video.play();
-          if (playPromise && typeof playPromise.catch === "function") {
-            playPromise.catch(() => {
-              setLoading(false);
-            });
-          }
-        }
-
-        function loadHls(video, source) {
-          setLoading(true, "Loading HLS...");
-          if (video.canPlayType("application/vnd.apple.mpegurl")) {
-            video.src = source.url;
-            video.load();
-            return;
-          }
-
-          loadHlsScript()
-            .then(() => {
-              if (!window.Hls || !window.Hls.isSupported()) {
-                setVideoError("HLS is not supported in this browser.");
-                return;
-              }
-
-              if (activeHls) {
-                activeHls.destroy();
-                activeHls = null;
-              }
-
-              activeHls = new window.Hls({
-                enableWorker: true,
-                lowLatencyMode: false,
-                backBufferLength: 90,
-                maxBufferLength: 45,
-                maxMaxBufferLength: 90,
-                manifestLoadingMaxRetry: 3,
-                levelLoadingMaxRetry: 3,
-                fragLoadingMaxRetry: 3,
-              });
-
-              activeHls.on(window.Hls.Events.ERROR, function(event, data) {
-                if (!data?.fatal) return;
-                if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
-                  activeHls.startLoad();
-                  return;
-                }
-                if (data.type === window.Hls.ErrorTypes.MEDIA_ERROR) {
-                  activeHls.recoverMediaError();
-                  return;
-                }
-                setVideoError("HLS playback failed. Try alternate source.");
-              });
-
-              activeHls.loadSource(source.url);
-              activeHls.attachMedia(video);
-            })
-            .catch(() => setVideoError("Could not load the HLS player."));
-        }
-
-        function mountVideo(source, providerData) {
-          currentProviderData = providerData || currentProviderData || { stream: source, streams: [source] };
-          activeSource = source;
-          retryCount = 0;
-
-          if (activeHls) {
-            activeHls.destroy();
-            activeHls = null;
-          }
-
-          const video = buildPlayerShell(source);
-          attachVideoEvents(video, source);
-
-          if (source.type === "mp4") {
-            loadMp4(video, source);
-            return;
-          }
-
-          if (source.type === "hls") {
-            loadHls(video, source);
-            return;
-          }
-
-          setVideoError("Unsupported source type: " + source.type);
-        }
-
-        fetch("/api/movie-source/${escapeHtml(type)}/${escapeHtml(id)}")
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.status === "ok" && data.stream && data.stream.url) {
-              mountVideo(data.stream, data);
-              return;
-            }
-
-            if (data.reason === "provider_disabled" || data.reason === "provider_missing") {
-              showTrailerFallback("No Movie button placeholder provider is configured yet.");
-              return;
-            }
-
-            showTrailerFallback(data.message || "Movie stream is not available yet.");
-          })
-          .catch(() => showTrailerFallback("Movie provider request failed."));
-      })();
-    </script>` : ""}
   </main>`;
 
   res.send(pageShell({ title: `${SITE_NAME} — ${mode === "movie" ? "Watch" : "Trailer"} ${title}`, active: "watch", body }));
