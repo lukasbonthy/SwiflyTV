@@ -14394,6 +14394,61 @@ function pageShell({ title = SITE_NAME, description = "Premium movie and TV disc
       }
     }
 
+
+    /* ============================================================
+       v44 REAL IFRAME FULLSCREEN
+       Fullscreen button now targets the iframe first, then falls back.
+       ============================================================ */
+
+    .dsMovieEmbedFrame:fullscreen,
+    .dsMovieEmbedFrame:-webkit-full-screen,
+    .dsMovieEmbedFrame:-moz-full-screen,
+    .dsMovieEmbedFrame:-ms-fullscreen {
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: none !important;
+      max-height: none !important;
+      border: 0 !important;
+      background: #000 !important;
+    }
+
+    .dsWatchPlayerCard:fullscreen,
+    .dsWatchPlayerCard:-webkit-full-screen,
+    .dsWatchPlayerCard:-moz-full-screen,
+    .dsWatchPlayerCard:-ms-fullscreen {
+      width: 100vw !important;
+      height: 100vh !important;
+      padding: 0 !important;
+      border-radius: 0 !important;
+      background: #000 !important;
+    }
+
+    .dsWatchPlayerCard:fullscreen .dsWatchFrame,
+    .dsWatchPlayerCard:-webkit-full-screen .dsWatchFrame,
+    .dsWatchPlayerCard:-moz-full-screen .dsWatchFrame,
+    .dsWatchPlayerCard:-ms-fullscreen .dsWatchFrame {
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: none !important;
+      max-height: none !important;
+      border-radius: 0 !important;
+      background: #000 !important;
+    }
+
+    .dsIsFullscreen .dsWatchHeader,
+    .dsIsFullscreen .dsWatchActions,
+    .dsIsFullscreen .dsWatchPlayerTop,
+    .dsIsFullscreen .dsWatchSidePanel {
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+
+    /* ============================================================
+       v45 SANDBOX SCRIPTS ONLY
+       Movie embed iframe sandbox now only allows scripts.
+       ============================================================ */
+
   </style>
 </head>
 <body>
@@ -15284,29 +15339,91 @@ function pageShell({ title = SITE_NAME, description = "Premium movie and TV disc
 
   <script>
     (function dropstreamFullscreenWatch(){
-      document.querySelectorAll("[data-fullscreen-watch]").forEach((button) => {
-        button.addEventListener("click", async () => {
-          const target =
-            button.closest(".dsWatchPage")?.querySelector(".dsWatchFrame") ||
-            document.querySelector(".dsWatchFrame") ||
-            document.documentElement;
+      function fullscreenElement() {
+        return document.fullscreenElement ||
+          document.webkitFullscreenElement ||
+          document.mozFullScreenElement ||
+          document.msFullscreenElement ||
+          null;
+      }
+
+      function requestFullscreen(element) {
+        if (!element) return Promise.reject(new Error("No fullscreen target"));
+        const fn =
+          element.requestFullscreen ||
+          element.webkitRequestFullscreen ||
+          element.webkitEnterFullscreen ||
+          element.mozRequestFullScreen ||
+          element.msRequestFullscreen;
+
+        if (!fn) return Promise.reject(new Error("Fullscreen API unavailable"));
+
+        const result = fn.call(element, { navigationUI: "hide" });
+        return result && typeof result.then === "function" ? result : Promise.resolve();
+      }
+
+      function exitFullscreen() {
+        const fn =
+          document.exitFullscreen ||
+          document.webkitExitFullscreen ||
+          document.mozCancelFullScreen ||
+          document.msExitFullscreen;
+
+        if (!fn) return Promise.resolve();
+        const result = fn.call(document);
+        return result && typeof result.then === "function" ? result : Promise.resolve();
+      }
+
+      function getFullscreenTargets(button) {
+        const page = button.closest(".dsWatchPage") || document;
+        const iframe = page.querySelector(".dsMovieEmbedFrame");
+        const frame = page.querySelector(".dsWatchFrame");
+        const playerCard = page.querySelector(".dsWatchPlayerCard");
+        return [iframe, frame, playerCard, document.documentElement].filter(Boolean);
+      }
+
+      async function enterFullscreen(button) {
+        const targets = getFullscreenTargets(button);
+        let lastError = null;
+
+        for (const target of targets) {
           try {
-            if (!document.fullscreenElement) {
-              await target.requestFullscreen();
-              button.textContent = "Exit Fullscreen";
-            } else {
-              await document.exitFullscreen();
-              button.textContent = "⛶ Fullscreen";
-            }
+            await requestFullscreen(target);
+            document.body.classList.add("dsIsFullscreen");
+            button.textContent = "Exit Fullscreen";
+            return;
           } catch (error) {
-            showToast("Fullscreen is blocked by this browser");
+            lastError = error;
           }
+        }
+
+        console.warn("Fullscreen failed:", lastError);
+        showToast("Fullscreen was blocked by this browser");
+      }
+
+      document.querySelectorAll("[data-fullscreen-watch]").forEach((button) => {
+        button.addEventListener("click", async (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+
+          if (fullscreenElement()) {
+            await exitFullscreen();
+            document.body.classList.remove("dsIsFullscreen");
+            button.textContent = "⛶ Fullscreen";
+            return;
+          }
+
+          await enterFullscreen(button);
         });
       });
 
-      document.addEventListener("fullscreenchange", () => {
-        document.querySelectorAll("[data-fullscreen-watch]").forEach((button) => {
-          button.textContent = document.fullscreenElement ? "Exit Fullscreen" : "⛶ Fullscreen";
+      ["fullscreenchange", "webkitfullscreenchange", "mozfullscreenchange", "MSFullscreenChange"].forEach((eventName) => {
+        document.addEventListener(eventName, () => {
+          const active = Boolean(fullscreenElement());
+          document.body.classList.toggle("dsIsFullscreen", active);
+          document.querySelectorAll("[data-fullscreen-watch]").forEach((button) => {
+            button.textContent = active ? "Exit Fullscreen" : "⛶ Fullscreen";
+          });
         });
       });
     })();
@@ -16251,9 +16368,9 @@ async function watchPage(req, res, type) {
     : "";
 
   const movieFrame = movieEmbedUrl
-    ? `<iframe class="dsMovieEmbedFrame" src="${escapeHtml(movieEmbedUrl)}" title="${escapeHtml(title)} movie embed" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write; web-share" allowfullscreen sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-pointer-lock allow-orientation-lock allow-modals"></iframe>`
+    ? `<iframe class="dsMovieEmbedFrame" src="${escapeHtml(movieEmbedUrl)}" title="${escapeHtml(title)} movie embed" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write; web-share" allowfullscreen sandbox="allow-scripts"></iframe>`
     : trailer
-      ? `<div class="dsMovieEmbedNotice"><span>Embed provider off</span><strong>Using trailer fallback</strong><small>Set MOVIE_EMBED_PROVIDER_ENABLED=true and MOVIE_EMBED_PROVIDER_URL to use your authorized embed provider.</small></div><iframe src="${escapeHtml(trailerEmbedSrc)}" title="${escapeHtml(title)} trailer fallback" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-pointer-lock allow-orientation-lock allow-modals"></iframe>`
+      ? `<div class="dsMovieEmbedNotice"><span>Embed provider off</span><strong>Using trailer fallback</strong><small>Set MOVIE_EMBED_PROVIDER_ENABLED=true and MOVIE_EMBED_PROVIDER_URL to use your authorized embed provider.</small></div><iframe src="${escapeHtml(trailerEmbedSrc)}" title="${escapeHtml(title)} trailer fallback" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen sandbox="allow-scripts"></iframe>`
       : `<div class="dsNoTrailer"><h2>No source configured</h2><p>No embed provider is configured and TMDB did not return a trailer.</p></div>`;
 
   const body = `<main class="dsWatchPage ${isMovieMode ? "dsWatchFullscreenMovie dsWatchEmbedMode" : "dsWatchTrailerMode"}">
@@ -16751,7 +16868,7 @@ function watchroomPage(req, res) {
 
           <div id="playerWrap" class="dsPlayerWrap">
             <div id="player" class="dsWatchPlayer"></div>
-            <iframe id="genericEmbed" class="dsGenericEmbed" title="Watchroom embed" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen></iframe>
+            <iframe id="genericEmbed" class="dsGenericEmbed" title="Watchroom embed" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write; web-share" allowfullscreen></iframe>
             <div id="ytFallback" class="dsYoutubeFallback" hidden>
               <h2>YouTube would not embed this video</h2>
               <p>Error 153 usually means YouTube rejected the player configuration or this specific video does not allow embedding. Open it on YouTube, then use the room clock to stay synced.</p>
