@@ -14445,13 +14445,12 @@ function pageShell({ title = SITE_NAME, description = "Premium movie and TV disc
 
 
     /* ============================================================
-       v45 ONE RULE SANDBOX
-       Sandbox now uses exactly one permission: allow-scripts.
-       Popups/top navigation remain blocked because they are not allowed.
+       v45 TV EPISODE BUTTON + SANDBOX CHECK
+       TV watch button says Episode; sandbox blocks popups/top navigation.
        ============================================================ */
 
-    .dsMovieEmbedFrame {
-      pointer-events: auto !important;
+    .dsMoviePlaceholderNote {
+      white-space: nowrap;
     }
 
   </style>
@@ -16361,6 +16360,8 @@ async function watchPage(req, res, type) {
   const detailsDate = type === "tv" ? details.first_air_date : details.release_date;
   const trailer = pickBestTrailer(videos.results || []);
   const isMovieMode = mode === "movie";
+  const watchButtonLabel = type === "tv" ? "Episode" : "Movie";
+  const watchModeLabel = type === "tv" ? "Episode mode" : "Movie mode";
   const heroBg = fullBackdrop(details.backdrop_path || details.poster_path);
   const trailerEmbedSrc = trailer ? youtubeEmbedSrc(trailer.key) : "";
   const youtubeUrl = trailer ? `https://www.youtube.com/watch?v=${encodeURIComponent(trailer.key)}` : "";
@@ -16373,9 +16374,9 @@ async function watchPage(req, res, type) {
     : "";
 
   const movieFrame = movieEmbedUrl
-    ? `<iframe class="dsMovieEmbedFrame" src="${escapeHtml(movieEmbedUrl)}" title="${escapeHtml(title)} movie embed" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write; web-share" allowfullscreen sandbox="allow-scripts"></iframe>`
+    ? `<iframe class="dsMovieEmbedFrame" src="${escapeHtml(movieEmbedUrl)}" title="${escapeHtml(title)} movie embed" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write; web-share" allowfullscreen sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-pointer-lock allow-orientation-lock allow-modals"></iframe>`
     : trailer
-      ? `<div class="dsMovieEmbedNotice"><span>Embed provider off</span><strong>Using trailer fallback</strong><small>Set MOVIE_EMBED_PROVIDER_ENABLED=true and MOVIE_EMBED_PROVIDER_URL to use your authorized embed provider.</small></div><iframe src="${escapeHtml(trailerEmbedSrc)}" title="${escapeHtml(title)} trailer fallback" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen sandbox="allow-scripts"></iframe>`
+      ? `<div class="dsMovieEmbedNotice"><span>Embed provider off</span><strong>Using trailer fallback</strong><small>Set MOVIE_EMBED_PROVIDER_ENABLED=true and MOVIE_EMBED_PROVIDER_URL to use your authorized embed provider.</small></div><iframe src="${escapeHtml(trailerEmbedSrc)}" title="${escapeHtml(title)} trailer fallback" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-pointer-lock allow-orientation-lock allow-modals"></iframe>`
       : `<div class="dsNoTrailer"><h2>No source configured</h2><p>No embed provider is configured and TMDB did not return a trailer.</p></div>`;
 
   const body = `<main class="dsWatchPage ${isMovieMode ? "dsWatchFullscreenMovie dsWatchEmbedMode" : "dsWatchTrailerMode"}">
@@ -16385,7 +16386,7 @@ async function watchPage(req, res, type) {
         <a class="dsGhostPill" href="/${escapeHtml(type)}/${escapeHtml(id)}">← Back</a>
         <div class="dsWatchModeSwitch">
           <a class="${mode === "trailer" ? "active" : ""}" href="/watch/${escapeHtml(type)}/${escapeHtml(id)}?mode=trailer">Trailer</a>
-          <a class="${mode === "movie" ? "active" : ""}" href="/watch/${escapeHtml(type)}/${escapeHtml(id)}?mode=movie${type === "tv" ? `&s=${escapeHtml(String(req.query.s || process.env.MOVIE_EMBED_DEFAULT_SEASON || "1"))}&e=${escapeHtml(String(req.query.e || process.env.MOVIE_EMBED_DEFAULT_EPISODE || "1"))}` : ""}">Movie</a>
+          <a class="${mode === "movie" ? "active" : ""}" href="/watch/${escapeHtml(type)}/${escapeHtml(id)}?mode=movie${type === "tv" ? `&s=${escapeHtml(String(req.query.s || process.env.MOVIE_EMBED_DEFAULT_SEASON || "1"))}&e=${escapeHtml(String(req.query.e || process.env.MOVIE_EMBED_DEFAULT_EPISODE || "1"))}` : ""}">${escapeHtml(watchButtonLabel)}</a>
         </div>
         ${isMovieMode ? `<button class="dsEmbedFullscreenBtn" type="button" data-fullscreen-watch>⛶ Fullscreen</button>` : ""}
       </div>
@@ -16394,7 +16395,7 @@ async function watchPage(req, res, type) {
         <section class="dsWatchPlayerCard">
           <div class="dsWatchPlayerTop">
             <div>
-              <span class="dsEyebrow">${isMovieMode ? "Movie mode" : "Trailer mode"}</span>
+              <span class="dsEyebrow">${isMovieMode ? watchModeLabel : "Trailer mode"}</span>
               <h1>${escapeHtml(title)}</h1>
               <p>${isMovieMode ? "Movie mode now uses a simple embed provider iframe. TV embeds default to season 1, episode 1 unless you pass s/e in the URL." : "Official trailer / preview playback."}</p>
             </div>
@@ -16405,7 +16406,7 @@ async function watchPage(req, res, type) {
             ${isMovieMode
               ? movieFrame
               : trailer
-                ? `<iframe src="${escapeHtml(trailerEmbedSrc)}" title="${escapeHtml(title)} trailer" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen sandbox="allow-scripts" referrerpolicy="no-referrer"></iframe>`
+                ? `<iframe src="${escapeHtml(trailerEmbedSrc)}" title="${escapeHtml(title)} trailer" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-pointer-lock allow-orientation-lock allow-modals" referrerpolicy="no-referrer"></iframe>`
                 : `<div class="dsNoTrailer"><h2>No trailer found</h2><p>TMDB did not return a YouTube trailer for this title.</p></div>`}
           </div>
 
@@ -16453,6 +16454,7 @@ async function detailPage(req, res, type) {
 
   const title = getTitle(details);
   const detailsDate = type === "tv" ? details.first_air_date : details.release_date;
+  const watchButtonLabel = type === "tv" ? "Episode" : "Movie";
   const heroBg = fullBackdrop(details.backdrop_path || details.poster_path);
   const cast = Array.isArray(credits.cast) ? credits.cast.slice(0, 18) : [];
   const crew = Array.isArray(credits.crew) ? credits.crew : [];
@@ -16499,9 +16501,9 @@ async function detailPage(req, res, type) {
           <span class="dsEyebrow">${type === "tv" ? "Series" : "Movie"}</span>
           <h1>${escapeHtml(titleArtText(title))}</h1>
           <div class="dsDetailActions dsDetailActionsV27">
-            <a class="dsPrimaryBtn dsMoviePlayBtn" href="/watch/${escapeHtml(type)}/${escapeHtml(id)}?mode=movie" data-play-id="${escapeHtml(id)}" data-play-type="${escapeHtml(type)}" data-play-title="${escapeHtml(title)}" data-play-poster="${escapeHtml(details.poster_path || "")}" data-play-backdrop="${escapeHtml(details.backdrop_path || "")}" data-play-rating="${escapeHtml(formatRating(details.vote_average))}" data-play-year="${escapeHtml(getYear(detailsDate))}"><span>▶</span> Movie</a>
+            <a class="dsPrimaryBtn dsMoviePlayBtn" href="/watch/${escapeHtml(type)}/${escapeHtml(id)}?mode=movie" data-play-id="${escapeHtml(id)}" data-play-type="${escapeHtml(type)}" data-play-title="${escapeHtml(title)}" data-play-poster="${escapeHtml(details.poster_path || "")}" data-play-backdrop="${escapeHtml(details.backdrop_path || "")}" data-play-rating="${escapeHtml(formatRating(details.vote_average))}" data-play-year="${escapeHtml(getYear(detailsDate))}"><span>▶</span> ${escapeHtml(watchButtonLabel)}</a>
             <a class="dsSecondaryBtn dsTrailerPlayBtn" href="/watch/${escapeHtml(type)}/${escapeHtml(id)}?mode=trailer" data-play-id="${escapeHtml(id)}" data-play-type="${escapeHtml(type)}" data-play-title="${escapeHtml(title)}" data-play-poster="${escapeHtml(details.poster_path || "")}" data-play-backdrop="${escapeHtml(details.backdrop_path || "")}" data-play-rating="${escapeHtml(formatRating(details.vote_average))}" data-play-year="${escapeHtml(getYear(detailsDate))}"><span>🎞</span> Trailer</a>
-            <span class="dsMoviePlaceholderNote">Movie uses trailer for now</span>
+            <span class="dsMoviePlaceholderNote">${type === "tv" ? "Episode embed mode" : "Movie embed mode"}</span>
             <button class="dsIconBtn" data-watch-id="${escapeHtml(id)}" data-watch-type="${escapeHtml(type)}" data-watch-title="${escapeHtml(title)}" data-watch-poster="${escapeHtml(details.poster_path || "")}" data-watch-backdrop="${escapeHtml(details.backdrop_path || "")}" data-watch-rating="${escapeHtml(formatRating(details.vote_average))}" data-watch-year="${escapeHtml(getYear(detailsDate))}" type="button">＋</button>
             <button class="dsIconBtn dsHeartBtn" data-like-id="${escapeHtml(id)}" data-like-type="${escapeHtml(type)}" data-like-title="${escapeHtml(title)}" data-like-poster="${escapeHtml(details.poster_path || "")}" data-like-backdrop="${escapeHtml(details.backdrop_path || "")}" data-like-rating="${escapeHtml(formatRating(details.vote_average))}" data-like-year="${escapeHtml(getYear(detailsDate))}" type="button">♡</button>
           </div>
