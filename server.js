@@ -14319,6 +14319,80 @@ function pageShell({ title = SITE_NAME, description = "Premium movie and TV disc
       background: #000;
     }
 
+
+    /* ============================================================
+       v42 EMBED FULLSCREEN BUTTON
+       Adds a small fullscreen control without covering iframe clicks.
+       ============================================================ */
+
+    .dsEmbedFullscreenBtn {
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 13px;
+      border-radius: 999px;
+      color: rgba(248,251,255,.88);
+      background: rgba(2,3,10,.58);
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 14px 44px rgba(0,0,0,.30);
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      pointer-events: auto;
+      transition: opacity .18s ease, transform .18s ease, background .18s ease;
+    }
+
+    .dsEmbedFullscreenBtn:hover {
+      color: white;
+      background: rgba(255,255,255,.10);
+      transform: translateY(-1px);
+    }
+
+    .dsWatchEmbedMode .dsWatchHeader {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .dsWatchEmbedMode .dsWatchHeader .dsWatchModeSwitch {
+      margin-left: auto;
+    }
+
+    .dsWatchFrame:fullscreen,
+    .dsWatchFrame:-webkit-full-screen {
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: none !important;
+      max-height: none !important;
+      border-radius: 0 !important;
+      background: #000 !important;
+    }
+
+    .dsWatchFrame:fullscreen iframe,
+    .dsWatchFrame:-webkit-full-screen iframe {
+      position: absolute !important;
+      inset: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      border: 0 !important;
+      background: #000 !important;
+    }
+
+    @media(max-width: 720px) {
+      .dsEmbedFullscreenBtn {
+        padding: 0 10px;
+        font-size: 11px;
+      }
+
+      .dsWatchEmbedMode .dsWatchHeader {
+        flex-wrap: wrap;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -15211,7 +15285,10 @@ function pageShell({ title = SITE_NAME, description = "Premium movie and TV disc
     (function dropstreamFullscreenWatch(){
       document.querySelectorAll("[data-fullscreen-watch]").forEach((button) => {
         button.addEventListener("click", async () => {
-          const target = document.querySelector(".dsWatchFrame") || document.documentElement;
+          const target =
+            button.closest(".dsWatchPage")?.querySelector(".dsWatchFrame") ||
+            document.querySelector(".dsWatchFrame") ||
+            document.documentElement;
           try {
             if (!document.fullscreenElement) {
               await target.requestFullscreen();
@@ -16179,6 +16256,7 @@ async function watchPage(req, res, type) {
           <a class="${mode === "trailer" ? "active" : ""}" href="/watch/${escapeHtml(type)}/${escapeHtml(id)}?mode=trailer">Trailer</a>
           <a class="${mode === "movie" ? "active" : ""}" href="/watch/${escapeHtml(type)}/${escapeHtml(id)}?mode=movie${type === "tv" ? `&s=${escapeHtml(String(req.query.s || process.env.MOVIE_EMBED_DEFAULT_SEASON || "1"))}&e=${escapeHtml(String(req.query.e || process.env.MOVIE_EMBED_DEFAULT_EPISODE || "1"))}` : ""}">Movie</a>
         </div>
+        ${isMovieMode ? `<button class="dsEmbedFullscreenBtn" type="button" data-fullscreen-watch>⛶ Fullscreen</button>` : ""}
       </div>
 
       <div class="dsWatchLayout">
