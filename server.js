@@ -16380,9 +16380,9 @@ async function watchPage(req, res, type) {
     : "";
 
   const movieFrame = movieEmbedUrl
-    ? `<iframe class="dsMovieEmbedFrame" src="${escapeHtml(movieEmbedUrl)}" title="${escapeHtml(title)} movie embed" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write; web-share" allowfullscreen sandbox="allow-same-origin"></iframe>`
+    ? `<iframe class="dsMovieEmbedFrame" src="${escapeHtml(movieEmbedUrl)}" title="${escapeHtml(title)} movie embed" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write; web-share" allowfullscreen sandbox="allow-scripts"></iframe>`
     : trailer
-      ? `<div class="dsMovieEmbedNotice"><span>Embed provider off</span><strong>Using trailer fallback</strong><small>Set MOVIE_EMBED_PROVIDER_ENABLED=true and MOVIE_EMBED_PROVIDER_URL to use your authorized embed provider.</small></div><iframe src="${escapeHtml(trailerEmbedSrc)}" title="${escapeHtml(title)} trailer fallback" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen sandbox="allow-same-origin"></iframe>`
+      ? `<div class="dsMovieEmbedNotice"><span>Embed provider off</span><strong>Using trailer fallback</strong><small>Set MOVIE_EMBED_PROVIDER_ENABLED=true and MOVIE_EMBED_PROVIDER_URL to use your authorized embed provider.</small></div><iframe src="${escapeHtml(trailerEmbedSrc)}" title="${escapeHtml(title)} trailer fallback" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen sandbox="allow-scripts"></iframe>`
       : `<div class="dsNoTrailer"><h2>No source configured</h2><p>No embed provider is configured and TMDB did not return a trailer.</p></div>`;
 
   const body = `<main class="dsWatchPage ${isMovieMode ? "dsWatchFullscreenMovie dsWatchEmbedMode" : "dsWatchTrailerMode"}">
