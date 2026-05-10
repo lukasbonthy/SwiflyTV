@@ -204,16 +204,27 @@ async function getRemoteBrowserEngine() {
   if (remoteBrowserLaunchError) throw new Error(remoteBrowserLaunchError);
 
   if (process.env.REMOTE_BROWSER_ENABLED !== "true") {
-    throw new Error("Remote Browser is disabled. Set REMOTE_BROWSER_ENABLED=true.");
+    throw new Error("Remote Browser is disabled. Set REMOTE_BROWSER_ENABLED=true and REMOTE_BROWSER_WS_URL.");
   }
 
   try {
-    const { chromium } = require("playwright");
-    remoteBrowserEngine = await chromium.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
-    });
-    return remoteBrowserEngine;
+    const { chromium } = require("playwright-core");
+
+    if (process.env.REMOTE_BROWSER_WS_URL) {
+      remoteBrowserEngine = await chromium.connectOverCDP(process.env.REMOTE_BROWSER_WS_URL);
+      return remoteBrowserEngine;
+    }
+
+    if (process.env.REMOTE_BROWSER_EXECUTABLE_PATH) {
+      remoteBrowserEngine = await chromium.launch({
+        executablePath: process.env.REMOTE_BROWSER_EXECUTABLE_PATH,
+        headless: true,
+        args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
+      });
+      return remoteBrowserEngine;
+    }
+
+    throw new Error("Remote Browser needs REMOTE_BROWSER_WS_URL, or REMOTE_BROWSER_EXECUTABLE_PATH. This build no longer downloads Chromium on Render.");
   } catch (error) {
     remoteBrowserLaunchError = error.message || String(error);
     throw error;
@@ -226,12 +237,19 @@ async function getRemoteBrowserSession(room) {
   if (existing?.page) return existing;
 
   const browser = await getRemoteBrowserEngine();
-  const context = await browser.newContext({
-    viewport: { width: 1280, height: 720 },
-    deviceScaleFactor: 1,
-    ignoreHTTPSErrors: true,
-    userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36 DropStreamRemoteBrowser/1.0",
-  });
+  let context;
+
+  try {
+    context = await browser.newContext({
+      viewport: { width: 1280, height: 720 },
+      deviceScaleFactor: 1,
+      ignoreHTTPSErrors: true,
+      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36 DropStreamRemoteBrowser/1.0",
+    });
+  } catch {
+    context = browser.contexts?.()[0];
+    if (!context) throw new Error("Remote browser context could not be created.");
+  }
 
   const page = await context.newPage();
   page.setDefaultTimeout(12000);
