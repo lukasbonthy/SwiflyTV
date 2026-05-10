@@ -6,6 +6,8 @@ const helmet = require("helmet");
 const compression = require("compression");
 const rateLimit = require("express-rate-limit");
 const http = require("http");
+const dns = require("dns").promises;
+const net = require("net");
 const { Server } = require("socket.io");
 
 const app = express();
@@ -27,6 +29,9 @@ const CACHE_TTL = {
 const DROPSTREAM_SPOTLIGHT_TMDB_ID = process.env.DROPSTREAM_SPOTLIGHT_TMDB_ID || "76479";
 const memoryCache = new Map();
 const watchRooms = new Map();
+const remoteBrowserSessions = new Map();
+let remoteBrowserEngine = null;
+let remoteBrowserLaunchError = "";
 
 app.disable("x-powered-by");
 
@@ -71,6 +76,7 @@ function publicRoom(room = {}) {
     embedUrl: room.embedUrl || "",
     videoId: room.videoId || "",
     mediaKind: room.mediaKind || (room.videoId ? "youtube" : "embed"),
+    browserUrl: room.browserUrl || "",
     host: room.host || "Host",
     viewers: Number(room.viewers || 0),
     createdAt: Number(room.createdAt || Date.now()),
@@ -89,6 +95,7 @@ function getOrCreateWatchRoom(roomId, data = {}) {
     if (data.embedUrl) existing.embedUrl = String(data.embedUrl).slice(0, 800);
     if (data.videoId) existing.videoId = String(data.videoId).slice(0, 40);
     if (data.mediaKind) existing.mediaKind = String(data.mediaKind).slice(0, 20);
+    if (data.browserUrl) existing.browserUrl = normalizeSharedBrowserUrl(data.browserUrl).slice(0, 1000);
     if (data.host) existing.host = String(data.host).slice(0, 40);
     existing.updatedAt = Date.now();
     return existing;
@@ -102,7 +109,9 @@ function getOrCreateWatchRoom(roomId, data = {}) {
     embedUrl: String(data.embedUrl || data.trailerUrl || "").slice(0, 800),
     videoId: String(data.videoId || "").slice(0, 40),
     mediaKind: String(data.mediaKind || (data.videoId ? "youtube" : "embed")).slice(0, 20),
+    browserUrl: normalizeSharedBrowserUrl(data.browserUrl || ""),
     host: String(data.host || "Host").slice(0, 40),
+    hostSocketId: "",
     viewers: 0,
     createdAt: now,
     state: { playing: false, time: 0, updatedAt: now },
@@ -116,6 +125,183 @@ function getOrCreateWatchRoom(roomId, data = {}) {
 function roomMovieSeconds(room = {}) {
   return Math.max(0, Math.floor((Date.now() - Number(room.createdAt || Date.now())) / 1000));
 }
+
+function normalizeSharedBrowserUrl(value = "") {
+  let url = String(value || "").trim().slice(0, 1000);
+  if (!url) return "";
+
+  if (url.startsWith("/")) return url;
+  if (/^https?:\/\//i.test(url)) return url;
+
+  if (/^[a-z0-9.-]+\.[a-z]{2,}(\/.*)?$/i.test(url)) {
+    return `https://${url}`;
+  }
+
+  return "";
+}
+
+
+function isPrivateIp(address = "") {
+  const ipVersion = net.isIP(address);
+  if (!ipVersion) return false;
+
+  if (ipVersion === 4) {
+    const parts = address.split(".").map((part) => Number(part));
+    const [a, b] = parts;
+    return a === 10 ||
+      a === 127 ||
+      (a === 172 && b >= 16 && b <= 31) ||
+      (a === 192 && b === 168) ||
+      (a === 169 && b === 254) ||
+      a === 0;
+  }
+
+  const lower = address.toLowerCase();
+  return lower === "::1" ||
+    lower.startsWith("fc") ||
+    lower.startsWith("fd") ||
+    lower.startsWith("fe80:");
+}
+
+async function normalizeRemoteBrowserUrl(value = "", req = null) {
+  const raw = String(value || "").trim().slice(0, 1000);
+  if (!raw) return "";
+
+  let absolute = raw;
+  if (raw.startsWith("/")) {
+    const proto = req?.headers?.["x-forwarded-proto"] || "https";
+    const host = req?.headers?.host || `localhost:${PORT}`;
+    absolute = `${proto}://${host}${raw}`;
+  } else if (!/^https?:\/\//i.test(raw) && /^[a-z0-9.-]+\.[a-z]{2,}(\/.*)?$/i.test(raw)) {
+    absolute = `https://${raw}`;
+  }
+
+  let parsed;
+  try {
+    parsed = new URL(absolute);
+  } catch {
+    return "";
+  }
+
+  if (!["http:", "https:"].includes(parsed.protocol)) return "";
+
+  const hostname = parsed.hostname.toLowerCase();
+  if (!hostname || hostname === "localhost" || hostname.endsWith(".localhost") || hostname.endsWith(".local")) return "";
+  if (net.isIP(hostname) && isPrivateIp(hostname)) return "";
+
+  try {
+    const addresses = await dns.lookup(hostname, { all: true, verbatim: true });
+    if (addresses.some((entry) => isPrivateIp(entry.address))) return "";
+  } catch {
+    return "";
+  }
+
+  return parsed.toString();
+}
+
+async function getRemoteBrowserEngine() {
+  if (remoteBrowserEngine) return remoteBrowserEngine;
+  if (remoteBrowserLaunchError) throw new Error(remoteBrowserLaunchError);
+
+  if (process.env.REMOTE_BROWSER_ENABLED !== "true") {
+    throw new Error("Remote Browser is disabled. Set REMOTE_BROWSER_ENABLED=true.");
+  }
+
+  try {
+    const { chromium } = require("playwright");
+    remoteBrowserEngine = await chromium.launch({
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
+    });
+    return remoteBrowserEngine;
+  } catch (error) {
+    remoteBrowserLaunchError = error.message || String(error);
+    throw error;
+  }
+}
+
+async function getRemoteBrowserSession(room) {
+  if (!room || !room.id) throw new Error("Missing watchroom.");
+  const existing = remoteBrowserSessions.get(room.id);
+  if (existing?.page) return existing;
+
+  const browser = await getRemoteBrowserEngine();
+  const context = await browser.newContext({
+    viewport: { width: 1280, height: 720 },
+    deviceScaleFactor: 1,
+    ignoreHTTPSErrors: true,
+    userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36 DropStreamRemoteBrowser/1.0",
+  });
+
+  const page = await context.newPage();
+  page.setDefaultTimeout(12000);
+
+  const session = {
+    roomId: room.id,
+    context,
+    page,
+    url: "",
+    streaming: false,
+    interval: null,
+  };
+
+  remoteBrowserSessions.set(room.id, session);
+  return session;
+}
+
+async function closeRemoteBrowserSession(roomId = "") {
+  const id = normalizeRoomId(roomId);
+  const session = remoteBrowserSessions.get(id);
+  if (!session) return;
+
+  clearInterval(session.interval);
+  remoteBrowserSessions.delete(id);
+
+  try {
+    await session.context?.close();
+  } catch {}
+}
+
+async function emitRemoteBrowserFrame(io, room, reason = "") {
+  const session = remoteBrowserSessions.get(room.id);
+  if (!session?.page) return;
+
+  try {
+    const buffer = await session.page.screenshot({
+      type: "jpeg",
+      quality: Number(process.env.REMOTE_BROWSER_JPEG_QUALITY || 58),
+      fullPage: false,
+    });
+
+    io.to(room.id).emit("watchroom:remote-frame", {
+      roomId: room.id,
+      image: `data:image/jpeg;base64,${buffer.toString("base64")}`,
+      url: session.url || session.page.url(),
+      reason,
+      updatedAt: Date.now(),
+    });
+  } catch (error) {
+    io.to(room.id).emit("watchroom:remote-status", {
+      roomId: room.id,
+      status: "error",
+      message: error.message || "Remote browser screenshot failed.",
+    });
+  }
+}
+
+function ensureRemoteBrowserStream(io, room) {
+  const session = remoteBrowserSessions.get(room.id);
+  if (!session || session.streaming) return;
+
+  session.streaming = true;
+  const fps = Math.max(0.3, Math.min(3, Number(process.env.REMOTE_BROWSER_FPS || 1)));
+  const intervalMs = Math.max(333, Math.floor(1000 / fps));
+
+  session.interval = setInterval(() => {
+    emitRemoteBrowserFrame(io, room).catch(() => {});
+  }, intervalMs);
+}
+
 
 
 function escapeHtml(value = "") {
@@ -14908,6 +15094,725 @@ function pageShell({ title = SITE_NAME, description = "Premium movie and TV disc
       }
     }
 
+
+    /* ============================================================
+       v49 BETTER WELCOME PAGE
+       Cleaner landing page, stronger discovery, mobile polish.
+       ============================================================ */
+
+    .dsWelcomePagePro {
+      background:
+        radial-gradient(1200px circle at 8% -6%, rgba(140,107,255,.28), transparent 42%),
+        radial-gradient(950px circle at 92% -8%, rgba(53,216,255,.16), transparent 42%),
+        radial-gradient(900px circle at 50% 28%, rgba(255,255,255,.045), transparent 45%),
+        linear-gradient(180deg, #050711 0%, #080c18 42%, #050711 100%);
+    }
+
+    .dsWelcomeNavPro {
+      height: 82px;
+      background:
+        linear-gradient(to bottom, rgba(5,7,17,.92), rgba(5,7,17,.58), transparent);
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      backdrop-filter: blur(16px) saturate(1.08);
+      -webkit-backdrop-filter: blur(16px) saturate(1.08);
+    }
+
+    .dsWelcomeNavLinks {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .dsWelcomeHeroPro {
+      min-height: 100svh;
+      grid-template-columns: minmax(0, 1.02fr) minmax(340px, .72fr);
+      align-items: center;
+      padding-top: 118px;
+      padding-bottom: 80px;
+    }
+
+    .dsWelcomeHeroPro::before {
+      background:
+        linear-gradient(to top, #050711 0%, rgba(5,7,17,.88) 18%, rgba(5,7,17,.28) 55%, rgba(5,7,17,.86) 100%),
+        linear-gradient(90deg, rgba(5,7,17,.96), rgba(5,7,17,.32), rgba(5,7,17,.66));
+    }
+
+    .dsWelcomeGlowOne {
+      position: absolute;
+      width: min(520px, 60vw);
+      height: min(520px, 60vw);
+      right: 10vw;
+      top: 18vh;
+      z-index: -1;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(53,216,255,.16), transparent 62%);
+      filter: blur(16px);
+      pointer-events: none;
+    }
+
+    .dsWelcomeHeroPro .dsWelcomeHeroCopy h1 {
+      max-width: 1000px;
+      font-size: clamp(56px, 8.5vw, 126px);
+      letter-spacing: -.09em;
+    }
+
+    .dsWelcomeHeroPro .dsWelcomeHeroCopy p {
+      max-width: 720px;
+      color: rgba(248,251,255,.78);
+    }
+
+    .dsWelcomeStats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 9px;
+      max-width: 780px;
+      margin-top: 28px;
+    }
+
+    .dsWelcomeStats div {
+      min-height: 92px;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      padding: 15px;
+      border-radius: 22px;
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 18px 54px rgba(0,0,0,.22);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .dsWelcomeStats b {
+      color: white;
+      font-size: 15px;
+      font-weight: 950;
+    }
+
+    .dsWelcomeStats span {
+      color: rgba(248,251,255,.58);
+      font-size: 12px;
+      font-weight: 720;
+      line-height: 1.35;
+    }
+
+    .dsWelcomeShowcase {
+      display: grid;
+      gap: 14px;
+      align-self: center;
+    }
+
+    .dsWelcomeSpotlightCard {
+      display: grid;
+      grid-template-columns: 132px minmax(0, 1fr);
+      gap: 16px;
+      align-items: end;
+      padding: 16px;
+      border-radius: 34px;
+      background:
+        radial-gradient(460px circle at 0% 0%, rgba(53,216,255,.14), transparent 52%),
+        rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: 0 32px 100px rgba(0,0,0,.38);
+      backdrop-filter: blur(20px) saturate(1.08);
+      -webkit-backdrop-filter: blur(20px) saturate(1.08);
+    }
+
+    .dsWelcomeSpotlightCard img,
+    .dsWelcomeSpotlightCard .posterFallback {
+      width: 100%;
+      aspect-ratio: 2 / 3;
+      object-fit: cover;
+      border-radius: 24px;
+      background: rgba(255,255,255,.08);
+      box-shadow: 0 20px 60px rgba(0,0,0,.38);
+    }
+
+    .dsWelcomeSpotlightCard span {
+      color: rgba(248,251,255,.56);
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .dsWelcomeSpotlightCard h2 {
+      margin: 8px 0 6px;
+      color: white;
+      font-family: "Space Grotesk", Inter, Arial, sans-serif;
+      font-size: clamp(26px, 3.6vw, 46px);
+      line-height: .94;
+      letter-spacing: -.07em;
+    }
+
+    .dsWelcomeSpotlightCard p {
+      margin: 0 0 12px;
+      color: rgba(248,251,255,.62);
+      font-weight: 760;
+    }
+
+    .dsWelcomeSpotlightCard a {
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 12px;
+      border-radius: 999px;
+      color: #050711;
+      background: linear-gradient(135deg, #fff, #dff8ff);
+      font-size: 12px;
+      font-weight: 950;
+    }
+
+    .dsWelcomeMiniMosaic {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+      padding: 10px;
+      border-radius: 24px;
+      background: rgba(255,255,255,.055);
+      border: 1px solid rgba(255,255,255,.10);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .dsWelcomeMiniMosaic img {
+      width: 100%;
+      aspect-ratio: 2 / 3;
+      object-fit: cover;
+      border-radius: 14px;
+      filter: saturate(1.03);
+    }
+
+    .dsWelcomeHowItWorks {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: -36px var(--v-right, 4vw) 54px var(--v-left, 4vw);
+      position: relative;
+      z-index: 5;
+    }
+
+    .dsWelcomeHowItWorks article {
+      min-height: 160px;
+      padding: 20px;
+      border-radius: 30px;
+      background:
+        radial-gradient(420px circle at 0% 0%, rgba(140,107,255,.12), transparent 50%),
+        rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.11);
+      box-shadow: 0 24px 76px rgba(0,0,0,.24);
+      backdrop-filter: blur(18px) saturate(1.08);
+      -webkit-backdrop-filter: blur(18px) saturate(1.08);
+    }
+
+    .dsWelcomeHowItWorks span {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      color: #050711;
+      background: linear-gradient(135deg, #fff, #dff8ff);
+      font-size: 13px;
+      font-weight: 950;
+    }
+
+    .dsWelcomeHowItWorks strong {
+      display: block;
+      margin-top: 16px;
+      color: white;
+      font-size: 21px;
+      letter-spacing: -.05em;
+      font-weight: 950;
+    }
+
+    .dsWelcomeHowItWorks p {
+      margin: 8px 0 0;
+      color: rgba(248,251,255,.62);
+      line-height: 1.5;
+      font-weight: 650;
+    }
+
+    .dsWelcomeDiscoveryPro {
+      padding-top: 18px;
+    }
+
+    .dsWelcomeDiscoveryPro .dsWelcomeIntro {
+      max-width: 980px;
+      margin-bottom: 32px;
+    }
+
+    .dsWelcomeFeaturesPro {
+      grid-template-columns: repeat(4, 1fr);
+      margin-top: 50px;
+    }
+
+    .dsWelcomeFeaturesPro article {
+      min-height: 238px;
+      transition: transform .18s ease, border-color .18s ease;
+    }
+
+    .dsWelcomeFeaturesPro article:hover {
+      transform: translateY(-5px);
+      border-color: rgba(255,255,255,.18);
+    }
+
+    .dsWelcomeFeaturesPro article span {
+      color: var(--v-blue, #35d8ff);
+      font-size: 11px;
+    }
+
+    .dsWelcomeDevice {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(260px, 380px);
+      align-items: center;
+      gap: clamp(22px, 5vw, 70px);
+      margin: 54px var(--v-right, 4vw) 0 var(--v-left, 4vw);
+      padding: clamp(24px, 4vw, 56px);
+      border-radius: 38px;
+      background:
+        radial-gradient(720px circle at 0% 0%, rgba(53,216,255,.12), transparent 48%),
+        radial-gradient(620px circle at 100% 0%, rgba(140,107,255,.13), transparent 48%),
+        rgba(255,255,255,.065);
+      border: 1px solid rgba(255,255,255,.11);
+      box-shadow: 0 30px 110px rgba(0,0,0,.30);
+      overflow: hidden;
+    }
+
+    .dsWelcomeDevice h2 {
+      margin: 0;
+      color: white;
+      font-family: "Space Grotesk", Inter, Arial, sans-serif;
+      font-size: clamp(40px, 6vw, 82px);
+      line-height: .92;
+      letter-spacing: -.075em;
+    }
+
+    .dsWelcomeDevice p {
+      max-width: 680px;
+      color: rgba(248,251,255,.66);
+      line-height: 1.6;
+      font-weight: 650;
+    }
+
+    .dsPhoneMock {
+      justify-self: center;
+      width: min(280px, 72vw);
+      aspect-ratio: 9 / 18.5;
+      padding: 14px;
+      border-radius: 42px;
+      background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.04));
+      border: 1px solid rgba(255,255,255,.18);
+      box-shadow: 0 34px 100px rgba(0,0,0,.42), inset 0 0 0 7px rgba(0,0,0,.28);
+      display: grid;
+      grid-template-rows: 26px 1fr auto;
+      gap: 12px;
+      transform: rotate(4deg);
+    }
+
+    .dsPhoneTop {
+      width: 92px;
+      height: 10px;
+      border-radius: 999px;
+      justify-self: center;
+      background: rgba(0,0,0,.55);
+    }
+
+    .dsPhoneHero {
+      border-radius: 28px;
+      background:
+        linear-gradient(to top, rgba(0,0,0,.82), transparent 54%),
+        radial-gradient(circle at 30% 20%, rgba(53,216,255,.34), transparent 42%),
+        linear-gradient(135deg, rgba(140,107,255,.52), rgba(255,255,255,.08));
+    }
+
+    .dsPhoneRows {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+    }
+
+    .dsPhoneRows span {
+      aspect-ratio: 2 / 3;
+      border-radius: 13px;
+      background: rgba(255,255,255,.13);
+    }
+
+    .dsWelcomeFinalCtaPro {
+      min-height: 360px;
+      margin-top: 54px;
+      background:
+        radial-gradient(760px circle at 50% 0%, rgba(53,216,255,.13), transparent 54%),
+        rgba(255,255,255,.065);
+    }
+
+    @media(max-width: 1060px) {
+      .dsWelcomeHeroPro,
+      .dsWelcomeDevice {
+        grid-template-columns: 1fr;
+      }
+
+      .dsWelcomeShowcase {
+        max-width: 720px;
+      }
+
+      .dsWelcomeHowItWorks,
+      .dsWelcomeFeaturesPro {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media(max-width: 720px) {
+      .dsWelcomeNavPro {
+        height: 66px;
+        padding: 0 14px;
+      }
+
+      .dsWelcomeNavLinks a[href="#features"],
+      .dsWelcomeNavLinks a[href="#discovery"] {
+        display: none !important;
+      }
+
+      .dsWelcomeNavLinks {
+        gap: 7px;
+      }
+
+      .dsWelcomeNav a:not(.dsWelcomeBrand) {
+        min-height: 36px;
+        padding: 0 10px;
+        font-size: 12px;
+      }
+
+      .dsWelcomeHeroPro {
+        min-height: auto;
+        padding: 104px 16px 54px;
+      }
+
+      .dsWelcomeHeroPro .dsWelcomeHeroCopy h1 {
+        font-size: clamp(46px, 15vw, 76px);
+      }
+
+      .dsWelcomeHeroPro .dsWelcomeHeroCopy p {
+        font-size: 14px;
+      }
+
+      .dsWelcomeActions {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .dsWelcomeActions a {
+        width: 100%;
+      }
+
+      .dsWelcomeStats {
+        grid-template-columns: 1fr;
+      }
+
+      .dsWelcomeSpotlightCard {
+        grid-template-columns: 92px minmax(0, 1fr);
+        border-radius: 26px;
+        padding: 12px;
+      }
+
+      .dsWelcomeSpotlightCard img,
+      .dsWelcomeSpotlightCard .posterFallback {
+        border-radius: 18px;
+      }
+
+      .dsWelcomeSpotlightCard h2 {
+        font-size: 25px;
+      }
+
+      .dsWelcomeMiniMosaic {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .dsWelcomeHowItWorks,
+      .dsWelcomeFeaturesPro {
+        grid-template-columns: 1fr;
+        margin-left: 16px;
+        margin-right: 16px;
+      }
+
+      .dsWelcomeHowItWorks {
+        margin-top: 4px;
+      }
+
+      .dsWelcomeDiscoveryPro,
+      .dsWelcomeDevice,
+      .dsWelcomeFinalCtaPro {
+        margin-left: 16px;
+        margin-right: 16px;
+      }
+
+      .dsWelcomeIntro h2,
+      .dsWelcomeDevice h2,
+      .dsWelcomeFinalCta h2 {
+        font-size: clamp(36px, 12vw, 58px);
+      }
+
+      .dsWelcomeRailTrack {
+        grid-auto-columns: minmax(210px, 78vw);
+      }
+
+      .dsWelcomeDevice {
+        padding: 24px;
+        border-radius: 28px;
+      }
+
+      .dsPhoneMock {
+        width: min(240px, 70vw);
+        transform: rotate(0deg);
+      }
+    }
+
+
+    /* ============================================================
+       v50 WATCHROOM SHARED BROWSER
+       Host-controlled iframe browser inside watchrooms.
+       ============================================================ */
+
+    .dsRoomBrowserPanel {
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+      border-radius: 28px;
+      background:
+        radial-gradient(540px circle at 0% 0%, rgba(53,216,255,.09), transparent 44%),
+        radial-gradient(460px circle at 100% 0%, rgba(140,107,255,.11), transparent 44%),
+        rgba(255,255,255,.045);
+      border: 1px solid rgba(255,255,255,.09);
+      box-shadow: 0 24px 80px rgba(0,0,0,.28);
+    }
+
+    .dsRoomBrowserPanel[hidden] {
+      display: none !important;
+    }
+
+    .dsRoomBrowserTop {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .dsRoomBrowserTop h2 {
+      margin: 4px 0 6px;
+      color: white;
+      font-family: "Space Grotesk", Inter, Arial, sans-serif;
+      font-size: clamp(28px, 4vw, 50px);
+      line-height: .95;
+      letter-spacing: -.06em;
+    }
+
+    .dsRoomBrowserTop p,
+    .dsRoomBrowserNote {
+      margin: 0;
+      color: rgba(248,251,255,.62);
+      line-height: 1.45;
+      font-weight: 650;
+    }
+
+    .dsHostBadge {
+      min-height: 34px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 11px;
+      border-radius: 999px;
+      color: #050711;
+      background: linear-gradient(135deg, #fff, #dff8ff);
+      font-size: 11px;
+      font-weight: 950;
+      white-space: nowrap;
+    }
+
+    .dsRoomBrowserForm {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .dsRoomBrowserForm input {
+      min-height: 50px;
+      padding: 0 14px;
+      border-radius: 16px;
+      color: white;
+      background: rgba(255,255,255,.075);
+      border: 1px solid rgba(255,255,255,.12);
+      outline: 0;
+      font-weight: 650;
+    }
+
+    .dsRoomBrowserForm.isGuestLocked {
+      opacity: .58;
+    }
+
+    .dsRoomBrowserFrameWrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      min-height: 420px;
+      overflow: hidden;
+      border-radius: 24px;
+      background: #02030a;
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.025);
+    }
+
+    .dsRoomBrowserFrameWrap iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #000;
+    }
+
+    .dsRoomBrowserEmpty {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 8px;
+      padding: 28px;
+      text-align: center;
+      background:
+        radial-gradient(540px circle at 50% 0%, rgba(53,216,255,.10), transparent 54%),
+        rgba(5,7,17,.86);
+    }
+
+    .dsRoomBrowserEmpty[hidden] {
+      display: none !important;
+    }
+
+    .dsRoomBrowserEmpty h3 {
+      margin: 0;
+      color: white;
+      font-family: "Space Grotesk", Inter, Arial, sans-serif;
+      font-size: clamp(26px, 4vw, 48px);
+      line-height: .95;
+      letter-spacing: -.06em;
+    }
+
+    .dsRoomBrowserEmpty p {
+      max-width: 520px;
+      margin: 0;
+      color: rgba(248,251,255,.62);
+      font-weight: 650;
+      line-height: 1.5;
+    }
+
+    .dsEmbedTabsClean button.active {
+      color: #050711;
+      background: linear-gradient(135deg, #fff, #dff8ff);
+      border-color: transparent;
+    }
+
+    @media(max-width: 820px) {
+      .dsRoomBrowserTop {
+        display: grid;
+      }
+
+      .dsRoomBrowserForm {
+        grid-template-columns: 1fr;
+      }
+
+      .dsRoomBrowserForm button {
+        width: 100%;
+      }
+
+      .dsRoomBrowserFrameWrap {
+        min-height: 320px;
+        border-radius: 20px;
+      }
+    }
+
+
+    /* ============================================================
+       v51 WATCHROOM REMOTE BROWSER
+       Playwright-powered server browser stream for watchrooms.
+       ============================================================ */
+
+    .dsRemoteBrowserPanel {
+      border-color: rgba(53,216,255,.16);
+    }
+
+    .dsRemoteBrowserScreen {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      min-height: 420px;
+      overflow: hidden;
+      border-radius: 24px;
+      background: #02030a;
+      border: 1px solid rgba(255,255,255,.10);
+      cursor: crosshair;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.025), 0 20px 70px rgba(0,0,0,.30);
+    }
+
+    .dsRemoteBrowserScreen img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #000;
+      opacity: 0;
+      transition: opacity .16s ease;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    .dsRemoteBrowserScreen img.isLoaded {
+      opacity: 1;
+    }
+
+    .dsRemoteTextForm {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto auto;
+      gap: 9px;
+      align-items: center;
+    }
+
+    .dsRemoteTextForm input {
+      min-height: 46px;
+      padding: 0 13px;
+      border-radius: 15px;
+      color: white;
+      background: rgba(255,255,255,.075);
+      border: 1px solid rgba(255,255,255,.12);
+      outline: 0;
+      font-weight: 650;
+    }
+
+    .dsRemoteTextForm.isGuestLocked,
+    .dsRoomBrowserForm.isGuestLocked {
+      opacity: .54;
+    }
+
+    .dsRemoteTextForm.isGuestLocked input,
+    .dsRoomBrowserForm.isGuestLocked input {
+      cursor: not-allowed;
+    }
+
+    @media(max-width: 820px) {
+      .dsRemoteBrowserScreen {
+        min-height: 300px;
+        border-radius: 20px;
+      }
+
+      .dsRemoteTextForm {
+        grid-template-columns: 1fr;
+      }
+
+      .dsRemoteTextForm button {
+        width: 100%;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -16068,9 +16973,7 @@ function welcomePreviewRail(title = "", items = [], type = "") {
 
 
 async function welcomePage(req, res) {
-  const [trendingAll, popularMovies, popularTv, familyMovies, topMovies,
-    welcomeSpotlightMovie,
-  ] = await Promise.all([
+  const [trendingAll, popularMovies, popularTv, familyMovies, topMovies, welcomeSpotlightMovie] = await Promise.all([
     tmdb("/trending/all/week", {}, CACHE_TTL.short),
     tmdb("/movie/popular", {}, CACHE_TTL.medium),
     tmdb("/tv/popular", {}, CACHE_TTL.medium),
@@ -16087,48 +16990,80 @@ async function welcomePage(req, res) {
     : pickHero(trending) || {};
   const heroTitle = getTitle(hero) || "Watch together. Discover faster.";
   const heroBg = hero.backdrop_path ? fullBackdrop(hero.backdrop_path) : "";
+  const heroPoster = hero.poster_path ? img(hero.poster_path, "w500") : "";
   const heroDesc = hero.overview || "Preview trending movies and shows, create watchrooms, save favorites, and unlock a cleaner streaming discovery experience once you sign up.";
   const redirect = encodeURIComponent(String(req.query.redirect || "/profiles"));
+  const heroType = getType(hero) || "movie";
+  const heroHref = hero.id ? `/signup?redirect=${encodeURIComponent(`/${heroType}/${hero.id}`)}` : `/signup?redirect=${redirect}`;
+  const previewMosaic = hasTmdb
+    ? [...(popularMovies.results || []), ...(popularTv.results || [])].filter((item) => item.poster_path).slice(0, 6)
+    : [];
 
-  const body = `<main class="dsWelcomePage">
-    <nav class="dsWelcomeNav">
+  const body = `<main class="dsWelcomePage dsWelcomePagePro">
+    <nav class="dsWelcomeNav dsWelcomeNavPro">
       <a class="dsWelcomeBrand" href="/welcome"><span></span><b>${escapeHtml(BRAND_WORDMARK)}</b></a>
-      <div>
+      <div class="dsWelcomeNavLinks">
+        <a href="#discovery">Preview</a>
+        <a href="#features">Features</a>
         <a href="/login?redirect=${redirect}">Log in</a>
         <a class="dsWelcomeJoin" href="/signup?redirect=${redirect}">Sign up</a>
       </div>
     </nav>
 
-    <section class="dsWelcomeHero">
+    <section class="dsWelcomeHero dsWelcomeHeroPro">
       ${heroBg ? `<div class="dsWelcomeHeroBg" style="background-image:url('${escapeHtml(heroBg)}')"></div>` : ""}
+      <div class="dsWelcomeGlowOne"></div>
       <div class="dsWelcomeHeroCopy">
-        <span class="dsEyebrow">Preview DropStream</span>
-        <h1>Discover what’s worth watching before you join.</h1>
+        <span class="dsEyebrow">DropStream preview</span>
+        <h1>Your next watch starts before you even sign up.</h1>
         <p>${escapeHtml(heroDesc)}</p>
+
         <div class="dsWelcomeActions">
-          <a class="dsPrimaryBtn" href="/signup?redirect=${redirect}">Start free</a>
-          <a class="dsSecondaryBtn" href="/login?redirect=${redirect}">I already have an account</a>
+          <a class="dsPrimaryBtn" href="/signup?redirect=${redirect}">Create free account</a>
+          <a class="dsSecondaryBtn" href="#discovery">Browse previews</a>
+        </div>
+
+        <div class="dsWelcomeStats">
+          <div><b>Profiles</b><span>Separate watching spaces</span></div>
+          <div><b>Watchrooms</b><span>Watch together with friends</span></div>
+          <div><b>Kids Safe</b><span>Cleaner family browsing</span></div>
         </div>
       </div>
-      <aside class="dsWelcomeHeroCard">
-        <span>Featured preview</span>
-        <h2>${escapeHtml(heroTitle)}</h2>
-        <p>${escapeHtml(getYear(getDate(hero)))} • ${escapeHtml(metaMatch(hero))}</p>
+
+      <aside class="dsWelcomeShowcase">
+        <div class="dsWelcomeSpotlightCard">
+          ${heroPoster ? `<img src="${escapeHtml(heroPoster)}" alt="${escapeHtml(heroTitle)} poster" loading="lazy" />` : `<div class="posterFallback"><span>${escapeHtml(heroTitle.slice(0, 1))}</span></div>`}
+          <div>
+            <span>Spotlight</span>
+            <h2>${escapeHtml(heroTitle)}</h2>
+            <p>${escapeHtml(getYear(getDate(hero)))} • ${escapeHtml(metaMatch(hero))}</p>
+            <a href="${heroHref}">Unlock preview →</a>
+          </div>
+        </div>
+        <div class="dsWelcomeMiniMosaic">
+          ${previewMosaic.map((item) => `<img src="${escapeHtml(img(item.poster_path, "w342"))}" alt="${escapeHtml(getTitle(item))}" loading="lazy" />`).join("")}
+        </div>
       </aside>
     </section>
 
-    <section class="dsWelcomeDiscovery">
+    <section class="dsWelcomeHowItWorks">
+      <article><span>1</span><strong>Preview the catalog</strong><p>See the vibe first with trending movies, shows, family picks, and top-rated titles.</p></article>
+      <article><span>2</span><strong>Make your profile</strong><p>Set up profiles for you, friends, or Kids Safe Mode so browsing feels personal.</p></article>
+      <article><span>3</span><strong>Save and watch together</strong><p>Use My List, Liked, Continue Watching, and Watchrooms once you join.</p></article>
+    </section>
+
+    <section id="discovery" class="dsWelcomeDiscovery dsWelcomeDiscoveryPro">
       <div class="dsWelcomeIntro">
         <span class="dsEyebrow">Discovery for non-members</span>
-        <h2>Browse the vibe. Join when you’re ready.</h2>
-        <p>You can preview popular titles here. Signing up unlocks profiles, watchrooms, Continue Watching, My List, Liked, Kids Safe Mode, and synced trailer rooms.</p>
+        <h2>Scroll first. Sign up when it feels worth it.</h2>
+        <p>DropStream lets guests preview the catalog feeling before signing in. Members unlock profiles, watch history, watchrooms, saved titles, liked titles, Kids Safe Mode, and the full app layout.</p>
       </div>
 
       ${hasTmdb ? `
-        ${welcomePreviewRail("Trending previews", trending)}
+        ${welcomePreviewRail("Trending this week", trending)}
         ${welcomePreviewRail("Popular movies", popularMovies.results || [], "movie")}
         ${welcomePreviewRail("Popular shows", popularTv.results || [], "tv")}
-        ${welcomePreviewRail("Family previews", familyMovies.results || [], "movie")}
+        ${welcomePreviewRail("Family night picks", familyMovies.results || [], "movie")}
         ${welcomePreviewRail("Critically acclaimed", topMovies.results || [], "movie")}
       ` : `
         <section class="dsWelcomeFallback">
@@ -16139,16 +17074,35 @@ async function welcomePage(req, res) {
       `}
     </section>
 
-    <section class="dsWelcomeFeatures">
-      <article><span>01</span><h3>Watchrooms</h3><p>Create rooms, share an invite, chat, and sync trailers together.</p></article>
-      <article><span>02</span><h3>Profiles</h3><p>Make custom local profiles with Kids Safe Mode and profile-specific starts.</p></article>
-      <article><span>03</span><h3>Saved watching</h3><p>Use Continue Watching, My List, and Liked to keep everything organized.</p></article>
+    <section id="features" class="dsWelcomeFeatures dsWelcomeFeaturesPro">
+      <article><span>Watchrooms</span><h3>Make it social</h3><p>Create a room, share an invite, sync trailers, and chat while watching.</p></article>
+      <article><span>Profiles</span><h3>Everyone gets a space</h3><p>Custom profile icons, profile start pages, and separate browsing areas.</p></article>
+      <article><span>Continue Watching</span><h3>Pick up fast</h3><p>Saved watching remembers what you started so the site feels more real.</p></article>
+      <article><span>Kids Safe</span><h3>Cleaner browsing</h3><p>A safer profile path that filters adult discovery and keeps the UI simple.</p></article>
     </section>
 
-    <section class="dsWelcomeFinalCta">
-      <h2>Ready to enter DropStream?</h2>
-      <p>Make an account and unlock the full app.</p>
-      <a class="dsPrimaryBtn" href="/signup?redirect=${redirect}">Create account</a>
+    <section class="dsWelcomeDevice">
+      <div>
+        <span class="dsEyebrow">Works better on every screen</span>
+        <h2>Built for phone browsing too.</h2>
+        <p>The mobile layout is designed to feel like an actual streaming app: cleaner cards, easier scrolling, better buttons, and less clutter.</p>
+        <a class="dsPrimaryBtn" href="/signup?redirect=${redirect}">Join DropStream</a>
+      </div>
+      <div class="dsPhoneMock">
+        <div class="dsPhoneTop"></div>
+        <div class="dsPhoneHero"></div>
+        <div class="dsPhoneRows"><span></span><span></span><span></span></div>
+      </div>
+    </section>
+
+    <section class="dsWelcomeFinalCta dsWelcomeFinalCtaPro">
+      <span class="dsEyebrow">Ready?</span>
+      <h2>Enter DropStream.</h2>
+      <p>Create an account and unlock the full app experience.</p>
+      <div class="dsWelcomeActions">
+        <a class="dsPrimaryBtn" href="/signup?redirect=${redirect}">Create account</a>
+        <a class="dsSecondaryBtn" href="/login?redirect=${redirect}">Log in</a>
+      </div>
     </section>
   </main>`;
 
@@ -17322,8 +18276,9 @@ function watchroomPage(req, res) {
   const embedUrl = String(req.query.embed || req.query.trailer || "").slice(0, 800);
   const videoId = String(req.query.video || "").slice(0, 40);
   const mediaKind = String(req.query.kind || (videoId ? "youtube" : "embed")).slice(0, 20);
+  const browserUrl = normalizeSharedBrowserUrl(req.query.browser || req.query.url || "");
 
-  const room = getOrCreateWatchRoom(roomId, { name, trailerUrl, embedUrl, videoId, mediaKind });
+  const room = getOrCreateWatchRoom(roomId, { name, trailerUrl, embedUrl, videoId, mediaKind, browserUrl });
   const safeRoomId = escapeHtml(room.id);
   const safeName = escapeHtml(room.name);
 
@@ -17352,6 +18307,7 @@ function watchroomPage(req, res) {
           </div>
           <div class="dsRoomToolbarActions">
             <button class="dsGhostPill" id="copyRoomLink" type="button">Copy invite</button>
+            <button class="dsGhostPill" id="toggleBrowserBtn" type="button">Browser</button>
             <button class="dsGhostPill" id="toggleSetupBtn" type="button">Change media</button>
           </div>
         </div>
@@ -17368,6 +18324,8 @@ function watchroomPage(req, res) {
         <div class="dsPlayerStage">
           <div class="dsEmbedTabs dsEmbedTabsClean">
             <button id="showPlayerBtn" type="button" class="active">Player</button>
+            <button id="showBrowserBtn" type="button">Browser</button>
+            <button id="showRemoteBrowserBtn" type="button">Remote</button>
             <button id="showClockBtn" type="button">Timeframe</button>
           </div>
 
@@ -17387,6 +18345,62 @@ function watchroomPage(req, res) {
             <div class="dsBigTime" id="manualBigTime">00:00</div>
             <button class="dsGhostPill dsManualCopyBtn" id="copyManualTimeBtn" type="button">Copy timeframe message</button>
           </div>
+
+          <section class="dsRoomBrowserPanel" id="roomBrowserPanel" hidden>
+            <div class="dsRoomBrowserTop">
+              <div>
+                <span class="dsEyebrow">Shared browser</span>
+                <h2>Room Browser</h2>
+                <p id="roomBrowserHelp">The host controls this built-in browser. Guests see the same URL without needing a screenshare.</p>
+              </div>
+              <span class="dsHostBadge" id="roomHostBadge">Host controls</span>
+            </div>
+            <form id="roomBrowserForm" class="dsRoomBrowserForm">
+              <input name="browserUrl" id="roomBrowserInput" placeholder="Paste a URL, or try /watch/movie/76479?mode=movie" value="${escapeHtml(room.browserUrl || "")}" />
+              <button class="dsPrimaryBtn" type="submit">Go</button>
+            </form>
+            <div class="dsRoomBrowserFrameWrap">
+              <iframe id="roomBrowserFrame" title="Shared room browser" sandbox="allow-scripts allow-same-origin" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen></iframe>
+              <div id="roomBrowserEmpty" class="dsRoomBrowserEmpty">
+                <h3>No shared page yet</h3>
+                <p>The host can load an embeddable page, a DropStream watch page, or a trailer/embed link.</p>
+              </div>
+            </div>
+            <p class="dsRoomBrowserNote">Some websites block embeds. DropStream pages and embeddable players work best.</p>
+          </section>
+
+          <section class="dsRoomBrowserPanel dsRemoteBrowserPanel" id="remoteBrowserPanel" hidden>
+            <div class="dsRoomBrowserTop">
+              <div>
+                <span class="dsEyebrow">Remote browser stream</span>
+                <h2>Server Browser</h2>
+                <p id="remoteBrowserHelp">The server opens the page and streams screenshots to the room. Host clicks/type; guests watch.</p>
+              </div>
+              <span class="dsHostBadge" id="remoteBrowserBadge">Host controls</span>
+            </div>
+
+            <form id="remoteBrowserForm" class="dsRoomBrowserForm">
+              <input name="remoteUrl" id="remoteBrowserInput" placeholder="Paste a website URL, like https://example.com" />
+              <button class="dsPrimaryBtn" type="submit">Open Remote</button>
+            </form>
+
+            <div class="dsRemoteBrowserScreen" id="remoteBrowserScreen">
+              <img id="remoteBrowserImage" alt="Remote browser screen" />
+              <div id="remoteBrowserEmpty" class="dsRoomBrowserEmpty">
+                <h3>Remote Browser is waiting</h3>
+                <p>The host can open a URL. Guests will see the server browser here.</p>
+              </div>
+            </div>
+
+            <form id="remoteTextForm" class="dsRemoteTextForm">
+              <input name="remoteText" id="remoteTextInput" placeholder="Host can type text here..." maxlength="180" />
+              <button class="dsSecondaryBtn" type="submit">Type</button>
+              <button class="dsGhostPill" id="remoteEnterBtn" type="button">Enter</button>
+              <button class="dsGhostPill" id="remoteBackBtn" type="button">Back</button>
+            </form>
+
+            <p class="dsRoomBrowserNote">This avoids iframe blocks because the page runs in a server browser. Private/local addresses are blocked for safety.</p>
+          </section>
         </div>
 
         <div class="dsSyncControls dsSyncControlsClean">
@@ -17444,6 +18458,7 @@ function watchroomPage(req, res) {
         var initialVideoId = "${escapeHtml(room.videoId)}";
         var initialEmbedUrl = "${escapeHtml(room.embedUrl || room.trailerUrl)}";
         var initialKind = "${escapeHtml(room.mediaKind || (room.videoId ? "youtube" : "embed"))}";
+        var initialBrowserUrl = "${escapeHtml(room.browserUrl || "")}";
         var roomCreatedAt = Number("${escapeHtml(String(room.createdAt))}") || Date.now();
         var initialName = "${safeName}";
         var player = null;
@@ -17452,6 +18467,8 @@ function watchroomPage(req, res) {
         var currentVideoId = initialVideoId;
         var currentEmbedUrl = initialEmbedUrl;
         var currentKind = initialKind;
+        var currentBrowserUrl = initialBrowserUrl;
+        var isRoomHost = false;
         var socket = io();
 
         function getSessionName() {
@@ -17504,6 +18521,91 @@ function watchroomPage(req, res) {
           var value = String(url || "").trim();
           if (!value || !/^https?:\/\//i.test(value)) return "";
           return value;
+        }
+
+        function cleanBrowserUrl(url) {
+          var value = String(url || "").trim();
+          if (!value) return "";
+          if (value[0] === "/") return value;
+          if (/^https?:\/\//i.test(value)) return value;
+          if (/^[a-z0-9.-]+\.[a-z]{2,}(\/.*)?$/i.test(value)) return "https://" + value;
+          return "";
+        }
+
+        function setBrowserVisible(visible) {
+          var panel = document.getElementById("roomBrowserPanel");
+          var remotePanel = document.getElementById("remoteBrowserPanel");
+          if (panel) panel.hidden = !visible;
+          if (remotePanel && visible) remotePanel.hidden = true;
+          var browserBtn = document.getElementById("showBrowserBtn");
+          var remoteBtn = document.getElementById("showRemoteBrowserBtn");
+          var playerBtn = document.getElementById("showPlayerBtn");
+          var clockBtn = document.getElementById("showClockBtn");
+          if (browserBtn) browserBtn.classList.toggle("active", Boolean(visible));
+          if (remoteBtn) remoteBtn.classList.remove("active");
+          if (playerBtn) playerBtn.classList.toggle("active", !visible);
+          if (clockBtn) clockBtn.classList.remove("active");
+        }
+
+        function setRemoteBrowserVisible(visible) {
+          var panel = document.getElementById("remoteBrowserPanel");
+          var iframePanel = document.getElementById("roomBrowserPanel");
+          if (panel) panel.hidden = !visible;
+          if (iframePanel && visible) iframePanel.hidden = true;
+          var remoteBtn = document.getElementById("showRemoteBrowserBtn");
+          var browserBtn = document.getElementById("showBrowserBtn");
+          var playerBtn = document.getElementById("showPlayerBtn");
+          var clockBtn = document.getElementById("showClockBtn");
+          if (remoteBtn) remoteBtn.classList.toggle("active", Boolean(visible));
+          if (browserBtn) browserBtn.classList.remove("active");
+          if (playerBtn) playerBtn.classList.toggle("active", !visible);
+          if (clockBtn) clockBtn.classList.remove("active");
+        }
+
+        function setRemoteHostMode() {
+          var form = document.getElementById("remoteBrowserForm");
+          var input = document.getElementById("remoteBrowserInput");
+          var textInput = document.getElementById("remoteTextInput");
+          var textForm = document.getElementById("remoteTextForm");
+          var badge = document.getElementById("remoteBrowserBadge");
+          if (input) input.disabled = !isRoomHost;
+          if (textInput) textInput.disabled = !isRoomHost;
+          if (form) form.classList.toggle("isGuestLocked", !isRoomHost);
+          if (textForm) textForm.classList.toggle("isGuestLocked", !isRoomHost);
+          if (badge) badge.textContent = isRoomHost ? "You are host" : "View only";
+        }
+
+        function setBrowserHostMode() {
+          var form = document.getElementById("roomBrowserForm");
+          var input = document.getElementById("roomBrowserInput");
+          var help = document.getElementById("roomBrowserHelp");
+          var badge = document.getElementById("roomHostBadge");
+          if (input) input.disabled = !isRoomHost;
+          if (form) form.classList.toggle("isGuestLocked", !isRoomHost);
+          if (badge) badge.textContent = isRoomHost ? "You are host" : "View only";
+          if (help) help.textContent = isRoomHost
+            ? "You control the shared browser. Everyone in the room sees the URL you load."
+            : "Only the host can control this built-in browser. You can watch and interact if the embedded page allows it.";
+          setRemoteHostMode();
+        }
+
+        function loadRoomBrowser(url, silent) {
+          var clean = cleanBrowserUrl(url);
+          if (!clean) {
+            if (!silent) showToast("Paste a valid website URL or DropStream path");
+            return false;
+          }
+
+          currentBrowserUrl = clean;
+          var frame = document.getElementById("roomBrowserFrame");
+          var empty = document.getElementById("roomBrowserEmpty");
+          var input = document.getElementById("roomBrowserInput");
+          if (input) input.value = clean;
+          if (frame) frame.src = clean;
+          if (empty) empty.hidden = true;
+          setBrowserVisible(true);
+          setStatus("Shared browser loaded: " + clean);
+          return true;
         }
 
         function setStatus(text) {
@@ -17639,6 +18741,11 @@ function watchroomPage(req, res) {
           loadGenericEmbed(initialEmbedUrl);
         }
 
+        if (initialBrowserUrl) {
+          loadRoomBrowser(initialBrowserUrl, true);
+        }
+        setBrowserHostMode();
+
         function emitState(playing) {
           if (!player || !player.getCurrentTime) return;
           socket.emit("watchroom:state", {
@@ -17685,15 +18792,19 @@ function watchroomPage(req, res) {
             videoId: initialVideoId,
             embedUrl: initialEmbedUrl,
             mediaKind: initialKind,
+            browserUrl: initialBrowserUrl,
             user: getSessionName()
           });
         });
 
         socket.on("watchroom:joined", function(data) {
+          isRoomHost = Boolean(data.isHost);
+          setBrowserHostMode();
           if (data.room) {
             if (data.room.createdAt) roomCreatedAt = Number(data.room.createdAt);
             if (data.room.videoId) createPlayer(data.room.videoId);
             else if (data.room.embedUrl) loadGenericEmbed(data.room.embedUrl);
+            if (data.room.browserUrl) loadRoomBrowser(data.room.browserUrl, true);
           }
           if (data.state) setTimeout(function(){ applyState(data.state); }, 900);
           if (data.messages) data.messages.forEach(addMessage);
@@ -17717,6 +18828,35 @@ function watchroomPage(req, res) {
             loadGenericEmbed(data.embedUrl);
             showToast("Embed changed");
           }
+        });
+
+        socket.on("watchroom:browser", function(data) {
+          if (data && data.browserUrl) {
+            loadRoomBrowser(data.browserUrl, true);
+            showToast("Host changed the room browser");
+          }
+        });
+
+        socket.on("watchroom:remote-frame", function(data) {
+          var img = document.getElementById("remoteBrowserImage");
+          var empty = document.getElementById("remoteBrowserEmpty");
+          var input = document.getElementById("remoteBrowserInput");
+          if (img && data.image) {
+            img.src = data.image;
+            img.classList.add("isLoaded");
+          }
+          if (empty) empty.hidden = true;
+          if (input && data.url) input.value = data.url;
+          setRemoteBrowserVisible(true);
+        });
+
+        socket.on("watchroom:remote-status", function(data) {
+          if (data && data.message) showToast(data.message);
+        });
+
+        socket.on("watchroom:host", function(data) {
+          isRoomHost = Boolean(data && data.isHost);
+          setBrowserHostMode();
         });
 
         socket.on("watchroom:message", addMessage);
@@ -17781,6 +18921,106 @@ function watchroomPage(req, res) {
           if (!setup) return;
           setup.classList.toggle("isForceVisible");
           this.textContent = setup.classList.contains("isForceVisible") ? "Hide media" : "Change media";
+        });
+
+        document.getElementById("toggleBrowserBtn")?.addEventListener("click", function() {
+          setBrowserVisible(document.getElementById("roomBrowserPanel")?.hidden);
+        });
+
+        document.getElementById("showBrowserBtn")?.addEventListener("click", function() {
+          setBrowserVisible(true);
+        });
+
+        document.getElementById("showPlayerBtn")?.addEventListener("click", function() {
+          setBrowserVisible(false);
+          showMode(currentKind === "youtube" ? "youtube" : "embed");
+        });
+
+        document.getElementById("roomBrowserForm")?.addEventListener("submit", function(event) {
+          event.preventDefault();
+          if (!isRoomHost) {
+            showToast("Only the host can control the room browser");
+            return;
+          }
+
+          var url = String(new FormData(event.currentTarget).get("browserUrl") || "");
+          var clean = cleanBrowserUrl(url);
+          if (!clean) {
+            showToast("Paste a valid website URL or DropStream path");
+            return;
+          }
+
+          loadRoomBrowser(clean, false);
+          socket.emit("watchroom:browser", {
+            roomId: roomId,
+            browserUrl: clean,
+            user: getSessionName()
+          });
+        });
+
+        document.getElementById("showRemoteBrowserBtn")?.addEventListener("click", function() {
+          setRemoteBrowserVisible(true);
+        });
+
+        document.getElementById("remoteBrowserForm")?.addEventListener("submit", function(event) {
+          event.preventDefault();
+          if (!isRoomHost) {
+            showToast("Only the host can control the remote browser");
+            return;
+          }
+
+          var url = String(new FormData(event.currentTarget).get("remoteUrl") || "");
+          if (!url.trim()) {
+            showToast("Paste a URL to open");
+            return;
+          }
+
+          setRemoteBrowserVisible(true);
+          socket.emit("watchroom:remote-start", {
+            roomId: roomId,
+            url: url,
+            user: getSessionName()
+          });
+        });
+
+        document.getElementById("remoteBrowserScreen")?.addEventListener("click", function(event) {
+          if (!isRoomHost) {
+            showToast("Only the host can click the remote browser");
+            return;
+          }
+
+          var rect = event.currentTarget.getBoundingClientRect();
+          var x = (event.clientX - rect.left) / rect.width;
+          var y = (event.clientY - rect.top) / rect.height;
+          socket.emit("watchroom:remote-click", {
+            roomId: roomId,
+            x: Math.max(0, Math.min(1, x)),
+            y: Math.max(0, Math.min(1, y))
+          });
+        });
+
+        document.getElementById("remoteTextForm")?.addEventListener("submit", function(event) {
+          event.preventDefault();
+          if (!isRoomHost) {
+            showToast("Only the host can type in the remote browser");
+            return;
+          }
+
+          var input = document.getElementById("remoteTextInput");
+          var text = String(input && input.value || "");
+          if (!text) return;
+          socket.emit("watchroom:remote-type", { roomId: roomId, text: text });
+          if (input) input.value = "";
+        });
+
+        document.getElementById("remoteEnterBtn")?.addEventListener("click", function() {
+          if (!isRoomHost) return showToast("Only the host can control the remote browser");
+          socket.emit("watchroom:remote-key", { roomId: roomId, key: "Enter" });
+        });
+
+        document.getElementById("remoteBackBtn")?.addEventListener("click", function() {
+          if (!isRoomHost) return showToast("Only the host can control the remote browser");
+          socket.emit("watchroom:remote-key", { roomId: roomId, key: "Alt+Left" });
         });
 
         function copyTimePhrase() {
@@ -18164,11 +19404,16 @@ io.on("connection", (socket) => {
       videoId: payload.videoId,
       embedUrl: payload.embedUrl,
       mediaKind: payload.mediaKind,
+      browserUrl: payload.browserUrl,
       host: payload.user,
     });
 
     socket.data.roomId = room.id;
     socket.join(room.id);
+
+    if (!room.hostSocketId) room.hostSocketId = socket.id;
+    const isHost = room.hostSocketId === socket.id;
+    socket.data.isWatchroomHost = isHost;
 
     room.viewers = io.sockets.adapter.rooms.get(room.id)?.size || 0;
     room.updatedAt = Date.now();
@@ -18177,6 +19422,7 @@ io.on("connection", (socket) => {
       room: publicRoom(room),
       state: room.state,
       messages: room.messages.slice(-40),
+      isHost,
     });
 
     io.to(room.id).emit("watchroom:viewers", { roomId: room.id, viewers: room.viewers });
@@ -18226,6 +19472,136 @@ io.on("connection", (socket) => {
     });
   });
 
+  socket.on("watchroom:browser", (payload = {}) => {
+    const roomId = normalizeRoomId(payload.roomId || socket.data.roomId);
+    const room = watchRooms.get(roomId);
+    if (!room) return;
+
+    if (room.hostSocketId && room.hostSocketId !== socket.id) {
+      socket.emit("watchroom:message", {
+        name: "System",
+        text: "Only the host can control the shared browser.",
+        createdAt: Date.now(),
+      });
+      return;
+    }
+
+    const browserUrl = normalizeSharedBrowserUrl(payload.browserUrl || "");
+    if (!browserUrl) return;
+
+    room.browserUrl = browserUrl;
+    room.updatedAt = Date.now();
+
+    io.to(room.id).emit("watchroom:browser", {
+      roomId: room.id,
+      browserUrl: room.browserUrl,
+      updatedAt: room.updatedAt,
+    });
+  });
+
+  socket.on("watchroom:remote-start", async (payload = {}) => {
+    const roomId = normalizeRoomId(payload.roomId || socket.data.roomId);
+    const room = watchRooms.get(roomId);
+    if (!room) return;
+
+    if (room.hostSocketId && room.hostSocketId !== socket.id) {
+      socket.emit("watchroom:remote-status", {
+        roomId: room.id,
+        status: "locked",
+        message: "Only the host can control the remote browser.",
+      });
+      return;
+    }
+
+    const url = await normalizeRemoteBrowserUrl(payload.url || "", socket.request);
+    if (!url) {
+      socket.emit("watchroom:remote-status", {
+        roomId: room.id,
+        status: "blocked",
+        message: "Remote browser URL was blocked or invalid.",
+      });
+      return;
+    }
+
+    try {
+      const session = await getRemoteBrowserSession(room);
+      await session.page.goto(url, { waitUntil: "domcontentloaded", timeout: 18000 });
+      session.url = session.page.url();
+      ensureRemoteBrowserStream(io, room);
+      await emitRemoteBrowserFrame(io, room, "navigate");
+      io.to(room.id).emit("watchroom:remote-status", {
+        roomId: room.id,
+        status: "ready",
+        message: "Remote browser opened.",
+      });
+    } catch (error) {
+      socket.emit("watchroom:remote-status", {
+        roomId: room.id,
+        status: "error",
+        message: error.message || "Remote browser failed to start.",
+      });
+    }
+  });
+
+  socket.on("watchroom:remote-click", async (payload = {}) => {
+    const roomId = normalizeRoomId(payload.roomId || socket.data.roomId);
+    const room = watchRooms.get(roomId);
+    if (!room || room.hostSocketId !== socket.id) return;
+
+    const session = remoteBrowserSessions.get(room.id);
+    if (!session?.page) return;
+
+    try {
+      const viewport = session.page.viewportSize() || { width: 1280, height: 720 };
+      const x = Math.max(0, Math.min(1, Number(payload.x || 0))) * viewport.width;
+      const y = Math.max(0, Math.min(1, Number(payload.y || 0))) * viewport.height;
+      await session.page.mouse.click(x, y);
+      session.url = session.page.url();
+      await emitRemoteBrowserFrame(io, room, "click");
+    } catch {
+      socket.emit("watchroom:remote-status", { roomId: room.id, status: "error", message: "Remote click failed." });
+    }
+  });
+
+  socket.on("watchroom:remote-type", async (payload = {}) => {
+    const roomId = normalizeRoomId(payload.roomId || socket.data.roomId);
+    const room = watchRooms.get(roomId);
+    if (!room || room.hostSocketId !== socket.id) return;
+
+    const session = remoteBrowserSessions.get(room.id);
+    if (!session?.page) return;
+
+    try {
+      const text = String(payload.text || "").slice(0, 180);
+      await session.page.keyboard.type(text, { delay: 12 });
+      await emitRemoteBrowserFrame(io, room, "type");
+    } catch {
+      socket.emit("watchroom:remote-status", { roomId: room.id, status: "error", message: "Remote typing failed." });
+    }
+  });
+
+  socket.on("watchroom:remote-key", async (payload = {}) => {
+    const roomId = normalizeRoomId(payload.roomId || socket.data.roomId);
+    const room = watchRooms.get(roomId);
+    if (!room || room.hostSocketId !== socket.id) return;
+
+    const session = remoteBrowserSessions.get(room.id);
+    if (!session?.page) return;
+
+    try {
+      const key = String(payload.key || "").slice(0, 30);
+      if (key === "Alt+Left") {
+        await session.page.goBack({ waitUntil: "domcontentloaded", timeout: 8000 }).catch(() => {});
+      } else if (key) {
+        await session.page.keyboard.press(key);
+      }
+      session.url = session.page.url();
+      await emitRemoteBrowserFrame(io, room, "key");
+    } catch {
+      socket.emit("watchroom:remote-status", { roomId: room.id, status: "error", message: "Remote key failed." });
+    }
+  });
+
   socket.on("watchroom:message", (payload = {}) => {
     const roomId = normalizeRoomId(payload.roomId || socket.data.roomId);
     const room = watchRooms.get(roomId);
@@ -18255,10 +19631,22 @@ io.on("connection", (socket) => {
       const viewers = io.sockets.adapter.rooms.get(roomId)?.size || 0;
       room.viewers = viewers;
       room.updatedAt = Date.now();
+
+      if (room.hostSocketId === socket.id) {
+        room.hostSocketId = "";
+        const remaining = io.sockets.adapter.rooms.get(roomId);
+        const nextSocketId = remaining ? Array.from(remaining)[0] : "";
+        if (nextSocketId) {
+          room.hostSocketId = nextSocketId;
+          io.to(nextSocketId).emit("watchroom:host", { roomId, isHost: true });
+        }
+      }
+
       io.to(roomId).emit("watchroom:viewers", { roomId, viewers });
 
       if (viewers === 0) {
         room.updatedAt = Date.now();
+        closeRemoteBrowserSession(roomId).catch(() => {});
       }
     }, 50);
   });
@@ -18270,6 +19658,7 @@ setInterval(() => {
     const viewers = io.sockets.adapter.rooms.get(id)?.size || 0;
     room.viewers = viewers;
     if (viewers === 0 && now - Number(room.updatedAt || 0) > 1000 * 60 * 60 * 3) {
+      closeRemoteBrowserSession(id).catch(() => {});
       watchRooms.delete(id);
     }
   }
