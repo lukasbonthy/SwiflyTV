@@ -6,6 +6,8 @@ const helmet = require("helmet");
 const compression = require("compression");
 const rateLimit = require("express-rate-limit");
 const http = require("http");
+const fs = require("fs");
+const path = require("path");
 const dns = require("dns").promises;
 const net = require("net");
 const { Server } = require("socket.io");
@@ -199,12 +201,62 @@ async function normalizeRemoteBrowserUrl(value = "", req = null) {
   return parsed.toString();
 }
 
+
+function fileExistsSafe(filePath = "") {
+  try {
+    return Boolean(filePath) && fs.existsSync(filePath);
+  } catch {
+    return false;
+  }
+}
+
+function findChromiumInDir(root = "", depth = 0) {
+  if (!root || depth > 4) return "";
+  try {
+    const entries = fs.readdirSync(root, { withFileTypes: true });
+    for (const entry of entries) {
+      const full = path.join(root, entry.name);
+      if (entry.isFile() && ["chrome", "chromium", "chromium-browser", "google-chrome"].includes(entry.name)) {
+        return full;
+      }
+      if (entry.isDirectory()) {
+        const found = findChromiumInDir(full, depth + 1);
+        if (found) return found;
+      }
+    }
+  } catch {}
+  return "";
+}
+
+function findChromiumExecutable() {
+  const explicit = process.env.REMOTE_BROWSER_EXECUTABLE_PATH || "";
+  if (fileExistsSafe(explicit)) return explicit;
+
+  const candidates = [
+    "/usr/bin/chromium",
+    "/usr/bin/chromium-browser",
+    "/usr/bin/google-chrome",
+    "/usr/bin/google-chrome-stable",
+    "/opt/google/chrome/chrome",
+  ];
+
+  for (const candidate of candidates) {
+    if (fileExistsSafe(candidate)) return candidate;
+  }
+
+  const browserPath = process.env.PLAYWRIGHT_BROWSERS_PATH || "/ms-playwright";
+  const fromPlaywrightPath = findChromiumInDir(browserPath);
+  if (fromPlaywrightPath) return fromPlaywrightPath;
+
+  return "";
+}
+
 async function getRemoteBrowserEngine() {
   if (remoteBrowserEngine) return remoteBrowserEngine;
   if (remoteBrowserLaunchError) throw new Error(remoteBrowserLaunchError);
 
   if (process.env.REMOTE_BROWSER_ENABLED !== "true") {
-    throw new Error("Remote Browser is disabled. Set REMOTE_BROWSER_ENABLED=true and REMOTE_BROWSER_WS_URL.");
+    throw new Error("Remote Browser is disabled. Set REMOTE_BROWSER_ENABLED=true.");
   }
 
   try {
@@ -215,16 +267,25 @@ async function getRemoteBrowserEngine() {
       return remoteBrowserEngine;
     }
 
-    if (process.env.REMOTE_BROWSER_EXECUTABLE_PATH) {
-      remoteBrowserEngine = await chromium.launch({
-        executablePath: process.env.REMOTE_BROWSER_EXECUTABLE_PATH,
-        headless: true,
-        args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
-      });
-      return remoteBrowserEngine;
+    const executablePath = findChromiumExecutable();
+    if (!executablePath) {
+      throw new Error("Chromium was not found. On Render, deploy this project with the included Dockerfile so Chromium is already installed.");
     }
 
-    throw new Error("Remote Browser needs REMOTE_BROWSER_WS_URL, or REMOTE_BROWSER_EXECUTABLE_PATH. This build no longer downloads Chromium on Render.");
+    remoteBrowserEngine = await chromium.launch({
+      executablePath,
+      headless: true,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+        "--disable-web-security",
+        "--autoplay-policy=no-user-gesture-required",
+      ],
+    });
+
+    return remoteBrowserEngine;
   } catch (error) {
     remoteBrowserLaunchError = error.message || String(error);
     throw error;
@@ -19387,6 +19448,15 @@ app.get("/api/watchrooms", (req, res) => {
 
 app.get("/api/status", apiStatus);
 app.get("/health", apiStatus);
+app.get("/api/remote-browser/status", (req, res) => {
+  res.json({
+    enabled: process.env.REMOTE_BROWSER_ENABLED === "true",
+    hasWsUrl: Boolean(process.env.REMOTE_BROWSER_WS_URL),
+    executablePath: findChromiumExecutable() || "",
+    launchError: remoteBrowserLaunchError || "",
+  });
+});
+
 
 app.get("/api/tmdb/:path(*)", async (req, res) => {
   const endpoint = `/${req.params.path}`;
