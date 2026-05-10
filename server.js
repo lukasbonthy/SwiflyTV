@@ -15892,6 +15892,93 @@ function pageShell({ title = SITE_NAME, description = "Premium movie and TV disc
       }
     }
 
+
+    /* ============================================================
+       v54 WATCHROOM BUG FIXES + RENDER/GITHUB READY
+       Fixes tab switching, Browser button visibility, and setup diagnostics.
+       ============================================================ */
+
+    .dsPlayerStage[data-room-view="browser"] #playerWrap,
+    .dsPlayerStage[data-room-view="browser"] #manualTimeBox,
+    .dsPlayerStage[data-room-view="browser"] #remoteBrowserPanel,
+    .dsPlayerStage[data-room-view="remote"] #playerWrap,
+    .dsPlayerStage[data-room-view="remote"] #manualTimeBox,
+    .dsPlayerStage[data-room-view="remote"] #roomBrowserPanel,
+    .dsPlayerStage[data-room-view="clock"] #playerWrap,
+    .dsPlayerStage[data-room-view="clock"] #roomBrowserPanel,
+    .dsPlayerStage[data-room-view="clock"] #remoteBrowserPanel {
+      display: none !important;
+    }
+
+    .dsPlayerStage[data-room-view="browser"] #roomBrowserPanel,
+    .dsPlayerStage[data-room-view="remote"] #remoteBrowserPanel,
+    .dsPlayerStage[data-room-view="clock"] #manualTimeBox,
+    .dsPlayerStage[data-room-view="player"] #playerWrap {
+      display: grid !important;
+    }
+
+    .dsPlayerStage[data-room-view="player"] #manualTimeBox,
+    .dsPlayerStage[data-room-view="player"] #roomBrowserPanel,
+    .dsPlayerStage[data-room-view="player"] #remoteBrowserPanel {
+      display: none !important;
+    }
+
+    .dsSyncControls.isBrowserView {
+      opacity: .42;
+    }
+
+    .dsSyncControls.isBrowserView .dsSyncPrimaryRow::before {
+      content: "Sync buttons only control YouTube player mode";
+      color: rgba(248,251,255,.54);
+      font-size: 12px;
+      font-weight: 800;
+      align-self: center;
+    }
+
+    .dsEmbedTabsClean {
+      position: sticky;
+      top: 80px;
+      z-index: 12;
+      background: rgba(2,3,10,.50);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 999px;
+      padding: 6px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .dsEmbedTabsClean button {
+      min-height: 38px;
+      padding: 0 13px;
+    }
+
+    .dsRoomBrowserPanel,
+    .dsRemoteBrowserPanel,
+    .dsManualTimeBox {
+      margin-top: 12px;
+    }
+
+    .dsRoomBrowserFrameWrap,
+    .dsRemoteBrowserScreen {
+      min-height: clamp(300px, 52vw, 560px);
+    }
+
+    @media(max-width: 760px) {
+      .dsEmbedTabsClean {
+        overflow-x: auto;
+        justify-content: flex-start;
+        border-radius: 18px;
+      }
+
+      .dsEmbedTabsClean button {
+        flex: 0 0 auto;
+      }
+
+      .dsSyncControls.isBrowserView {
+        display: none;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -18476,6 +18563,7 @@ function watchroomPage(req, res) {
               <button class="dsSecondaryBtn" type="submit">Type</button>
               <button class="dsGhostPill" id="remoteEnterBtn" type="button">Enter</button>
               <button class="dsGhostPill" id="remoteBackBtn" type="button">Back</button>
+              <button class="dsGhostPill" id="remoteStatusBtn" type="button">Check setup</button>
             </form>
 
             <p class="dsRoomBrowserNote">This avoids iframe blocks because the page runs in a server browser. Private/local addresses are blocked for safety.</p>
@@ -18611,34 +18699,40 @@ function watchroomPage(req, res) {
           return "";
         }
 
-        function setBrowserVisible(visible) {
-          var panel = document.getElementById("roomBrowserPanel");
+        function setRoomView(view) {
+          var stage = document.querySelector(".dsPlayerStage");
+          var playerWrap = document.getElementById("playerWrap");
+          var manual = document.getElementById("manualTimeBox");
+          var browserPanel = document.getElementById("roomBrowserPanel");
           var remotePanel = document.getElementById("remoteBrowserPanel");
-          if (panel) panel.hidden = !visible;
-          if (remotePanel && visible) remotePanel.hidden = true;
-          var browserBtn = document.getElementById("showBrowserBtn");
-          var remoteBtn = document.getElementById("showRemoteBrowserBtn");
-          var playerBtn = document.getElementById("showPlayerBtn");
-          var clockBtn = document.getElementById("showClockBtn");
-          if (browserBtn) browserBtn.classList.toggle("active", Boolean(visible));
-          if (remoteBtn) remoteBtn.classList.remove("active");
-          if (playerBtn) playerBtn.classList.toggle("active", !visible);
-          if (clockBtn) clockBtn.classList.remove("active");
+          var controls = document.querySelector(".dsSyncControls");
+
+          view = view || "player";
+          if (stage) stage.dataset.roomView = view;
+
+          if (playerWrap) playerWrap.hidden = view !== "player";
+          if (manual) manual.hidden = view !== "clock";
+          if (browserPanel) browserPanel.hidden = view !== "browser";
+          if (remotePanel) remotePanel.hidden = view !== "remote";
+          if (controls) controls.classList.toggle("isBrowserView", view === "browser" || view === "remote" || view === "clock");
+
+          [
+            ["showPlayerBtn", view === "player"],
+            ["showBrowserBtn", view === "browser"],
+            ["showRemoteBrowserBtn", view === "remote"],
+            ["showClockBtn", view === "clock"],
+          ].forEach(function(pair) {
+            var el = document.getElementById(pair[0]);
+            if (el) el.classList.toggle("active", Boolean(pair[1]));
+          });
+        }
+
+        function setBrowserVisible(visible) {
+          setRoomView(visible ? "browser" : "player");
         }
 
         function setRemoteBrowserVisible(visible) {
-          var panel = document.getElementById("remoteBrowserPanel");
-          var iframePanel = document.getElementById("roomBrowserPanel");
-          if (panel) panel.hidden = !visible;
-          if (iframePanel && visible) iframePanel.hidden = true;
-          var remoteBtn = document.getElementById("showRemoteBrowserBtn");
-          var browserBtn = document.getElementById("showBrowserBtn");
-          var playerBtn = document.getElementById("showPlayerBtn");
-          var clockBtn = document.getElementById("showClockBtn");
-          if (remoteBtn) remoteBtn.classList.toggle("active", Boolean(visible));
-          if (browserBtn) browserBtn.classList.remove("active");
-          if (playerBtn) playerBtn.classList.toggle("active", !visible);
-          if (clockBtn) clockBtn.classList.remove("active");
+          setRoomView(visible ? "remote" : "player");
         }
 
         function setRemoteHostMode() {
@@ -18718,19 +18812,18 @@ function watchroomPage(req, res) {
           var generic = document.getElementById("genericEmbed");
           var playerEl = document.getElementById("player");
           var controls = document.querySelector(".dsSyncControls");
-          var manual = document.getElementById("manualTimeBox");
 
           if (kind === "youtube") {
             if (generic) generic.classList.remove("isActive");
             if (playerEl) playerEl.classList.remove("isHidden");
             if (controls) controls.classList.remove("isManualOnly");
-            if (manual) manual.classList.remove("isActive");
           } else {
             if (generic) generic.classList.add("isActive");
             if (playerEl) playerEl.classList.add("isHidden");
             if (controls) controls.classList.add("isManualOnly");
-            if (manual) manual.classList.add("isActive");
           }
+
+          setRoomView("player");
         }
 
         function createPlayer(videoId) {
@@ -19003,7 +19096,7 @@ function watchroomPage(req, res) {
         });
 
         document.getElementById("toggleBrowserBtn")?.addEventListener("click", function() {
-          setBrowserVisible(document.getElementById("roomBrowserPanel")?.hidden);
+          setRoomView("browser");
         });
 
         document.getElementById("showBrowserBtn")?.addEventListener("click", function() {
@@ -19011,7 +19104,7 @@ function watchroomPage(req, res) {
         });
 
         document.getElementById("showPlayerBtn")?.addEventListener("click", function() {
-          setBrowserVisible(false);
+          setRoomView("player");
           showMode(currentKind === "youtube" ? "youtube" : "embed");
         });
 
@@ -19100,6 +19193,19 @@ function watchroomPage(req, res) {
         document.getElementById("remoteBackBtn")?.addEventListener("click", function() {
           if (!isRoomHost) return showToast("Only the host can control the remote browser");
           socket.emit("watchroom:remote-key", { roomId: roomId, key: "Alt+Left" });
+        });
+
+        document.getElementById("remoteStatusBtn")?.addEventListener("click", function() {
+          fetch("/api/remote-browser/status")
+            .then(function(res){ return res.json(); })
+            .then(function(data){
+              var msg = data.ready
+                ? "Remote Browser ready"
+                : (data.runtimeHint || "Remote Browser is not ready");
+              showToast(msg);
+              sendRoomMessage("Remote Browser status: " + msg);
+            })
+            .catch(function(){ showToast("Could not check Remote Browser setup"); });
         });
 
         function copyTimePhrase() {
@@ -19449,11 +19555,23 @@ app.get("/api/watchrooms", (req, res) => {
 app.get("/api/status", apiStatus);
 app.get("/health", apiStatus);
 app.get("/api/remote-browser/status", (req, res) => {
+  const executablePath = findChromiumExecutable() || "";
+  const enabled = process.env.REMOTE_BROWSER_ENABLED === "true";
+  const hasWsUrl = Boolean(process.env.REMOTE_BROWSER_WS_URL);
+
   res.json({
-    enabled: process.env.REMOTE_BROWSER_ENABLED === "true",
-    hasWsUrl: Boolean(process.env.REMOTE_BROWSER_WS_URL),
-    executablePath: findChromiumExecutable() || "",
+    enabled,
+    hasWsUrl,
+    executablePath,
+    ready: enabled && (hasWsUrl || Boolean(executablePath)) && !remoteBrowserLaunchError,
     launchError: remoteBrowserLaunchError || "",
+    runtimeHint: executablePath
+      ? "Chromium found. Remote Browser can launch locally."
+      : hasWsUrl
+        ? "Remote browser WebSocket configured."
+        : "Chromium not found. On Render, deploy as Docker using the included Dockerfile, or set REMOTE_BROWSER_WS_URL.",
+    dockerExpectedPath: "/ms-playwright",
+    renderModeNeeded: "Docker",
   });
 });
 
@@ -19542,6 +19660,15 @@ io.on("connection", (socket) => {
       videoId: payload.videoId,
       mediaKind: payload.mediaKind,
     });
+
+    if (room.hostSocketId && room.hostSocketId !== socket.id) {
+      socket.emit("watchroom:message", {
+        name: "System",
+        text: "Only the host can change media.",
+        createdAt: Date.now(),
+      });
+      return;
+    }
 
     room.videoId = String(payload.videoId || "").slice(0, 40);
     room.trailerUrl = String(payload.trailerUrl || "").slice(0, 500);
