@@ -17029,6 +17029,195 @@ function pageShell({ title = SITE_NAME, description = "Premium movie and TV disc
       }
     }
 
+
+    /* ============================================================
+       v60 AUTH PAGE FIX
+       Fixes /login and /signup Internal Server Error.
+       ============================================================ */
+
+    .dsAuthPageSafe {
+      min-height: 100svh;
+      display: grid;
+      place-items: center;
+      padding: calc(var(--v-nav, 74px) + 30px) var(--v-left, 4vw) 54px;
+      background:
+        radial-gradient(900px circle at 16% 0%, rgba(140,107,255,.22), transparent 44%),
+        radial-gradient(760px circle at 92% 12%, rgba(53,216,255,.14), transparent 42%),
+        linear-gradient(180deg, #050711, #080c18 58%, #050711);
+    }
+
+    .dsAuthShellSafe {
+      width: min(1120px, 100%);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(340px, 440px);
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .dsAuthPitch,
+    .dsAuthCard {
+      border-radius: 34px;
+      background:
+        radial-gradient(560px circle at 0% 0%, rgba(53,216,255,.10), transparent 48%),
+        rgba(255,255,255,.065);
+      border: 1px solid rgba(255,255,255,.11);
+      box-shadow: 0 28px 100px rgba(0,0,0,.32);
+      backdrop-filter: blur(18px) saturate(1.08);
+      -webkit-backdrop-filter: blur(18px) saturate(1.08);
+    }
+
+    .dsAuthPitch {
+      display: grid;
+      align-content: end;
+      gap: 16px;
+      padding: clamp(24px, 4vw, 50px);
+      min-height: 560px;
+    }
+
+    .dsAuthPitch h1 {
+      margin: 0;
+      color: white;
+      font-family: "Space Grotesk", Inter, Arial, sans-serif;
+      font-size: clamp(48px, 7vw, 92px);
+      line-height: .88;
+      letter-spacing: -.085em;
+    }
+
+    .dsAuthPitch p,
+    .dsAuthCard p {
+      color: rgba(248,251,255,.66);
+      line-height: 1.55;
+      font-weight: 650;
+    }
+
+    .dsAuthFeatureList {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 9px;
+      margin-top: 10px;
+    }
+
+    .dsAuthFeatureList div {
+      min-height: 116px;
+      display: grid;
+      align-content: center;
+      gap: 5px;
+      padding: 14px;
+      border-radius: 22px;
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.09);
+    }
+
+    .dsAuthFeatureList b {
+      color: white;
+      font-weight: 950;
+    }
+
+    .dsAuthFeatureList span {
+      color: rgba(248,251,255,.58);
+      font-size: 12px;
+      line-height: 1.38;
+      font-weight: 700;
+    }
+
+    .dsAuthCard {
+      padding: clamp(20px, 3vw, 34px);
+      display: grid;
+      align-content: center;
+    }
+
+    .dsAuthSwitch {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+      padding: 6px;
+      margin-bottom: 18px;
+      border-radius: 999px;
+      background: rgba(2,3,10,.42);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .dsAuthSwitch a {
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      color: rgba(248,251,255,.72);
+      font-size: 13px;
+      font-weight: 950;
+    }
+
+    .dsAuthSwitch a.active {
+      color: #050711;
+      background: linear-gradient(135deg, #fff, #dff8ff);
+    }
+
+    .dsAuthCard h2 {
+      margin: 0 0 8px;
+      color: white;
+      font-family: "Space Grotesk", Inter, Arial, sans-serif;
+      font-size: 42px;
+      line-height: .95;
+      letter-spacing: -.065em;
+    }
+
+    .dsSafeAuthForm {
+      display: grid;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .dsSafeAuthForm label {
+      display: grid;
+      gap: 7px;
+      color: rgba(248,251,255,.76);
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .dsSafeAuthForm input {
+      min-height: 50px;
+      padding: 0 14px;
+      border-radius: 16px;
+      color: white;
+      background: rgba(255,255,255,.075);
+      border: 1px solid rgba(255,255,255,.12);
+      outline: 0;
+      font-size: 15px;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+
+    .dsAuthFinePrint {
+      margin: 16px 0 0 !important;
+      font-size: 13px;
+    }
+
+    .dsAuthFinePrint a {
+      color: white;
+      font-weight: 950;
+      text-decoration: underline;
+      text-decoration-color: rgba(255,255,255,.28);
+    }
+
+    @media(max-width: 900px) {
+      .dsAuthShellSafe {
+        grid-template-columns: 1fr;
+      }
+
+      .dsAuthPitch {
+        min-height: auto;
+      }
+
+      .dsAuthFeatureList {
+        grid-template-columns: 1fr;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -20091,6 +20280,164 @@ app.get("/person/:id", personDetailPage);
 app.get("/watchlist", watchlistPage);
 app.get("/my-list", watchlistPage);
 app.get("/liked", likedPage);
+
+function authPage(res, mode = "login") {
+  const isSignup = String(mode || "login") === "signup";
+  const title = isSignup ? "Create your account" : "Welcome back";
+  const subtitle = isSignup
+    ? "Make a local DropStream account for profiles, lists, and watchrooms on this device."
+    : "Log in to your local DropStream account on this device.";
+
+  const body = `<main class="dsAuthPage dsAuthPageSafe">
+    <section class="dsAuthShell dsAuthShellSafe">
+      <a class="dsAuthBrand" href="/"><span></span>${escapeHtml(SITE_NAME)}</a>
+
+      <aside class="dsAuthPitch">
+        <span class="dsEyebrow">${isSignup ? "Join DropStream" : "DropStream account"}</span>
+        <h1>${escapeHtml(title)}</h1>
+        <p>${escapeHtml(subtitle)}</p>
+
+        <div class="dsAuthFeatureList">
+          <div><b>Profiles</b><span>Choose who is watching.</span></div>
+          <div><b>Watchrooms</b><span>Open Together, Live Share, and chat.</span></div>
+          <div><b>Saved titles</b><span>Keep My List and liked movies locally.</span></div>
+        </div>
+      </aside>
+
+      <section class="dsAuthCard">
+        <div class="dsAuthSwitch">
+          <a class="${!isSignup ? "active" : ""}" href="/login">Login</a>
+          <a class="${isSignup ? "active" : ""}" href="/signup">Signup</a>
+        </div>
+
+        <h2>${isSignup ? "Sign up" : "Log in"}</h2>
+        <p>${isSignup ? "This is a simple local account saved in your browser." : "Enter the same email/name you used on this device."}</p>
+
+        <form id="safeAuthForm" class="dsSafeAuthForm">
+          <label>
+            <span>Name</span>
+            <input name="name" placeholder="Your name" autocomplete="name" ${isSignup ? "required" : ""} />
+          </label>
+          <label>
+            <span>Email</span>
+            <input name="email" type="email" placeholder="you@example.com" autocomplete="email" required />
+          </label>
+          <label>
+            <span>Password</span>
+            <input name="password" type="password" placeholder="Password" autocomplete="${isSignup ? "new-password" : "current-password"}" required />
+          </label>
+
+          <button class="dsPrimaryBtn" type="submit">${isSignup ? "Create account" : "Log in"}</button>
+        </form>
+
+        <p class="dsAuthFinePrint">
+          ${isSignup
+            ? `Already have one? <a href="/login">Log in</a>`
+            : `Need an account? <a href="/signup">Sign up</a>`}
+        </p>
+      </section>
+    </section>
+
+    <script>
+      (function safeAuth(){
+        const form = document.getElementById("safeAuthForm");
+        if (!form) return;
+
+        const mode = "${isSignup ? "signup" : "login"}";
+        const params = new URLSearchParams(location.search);
+        const redirect = params.get("redirect") || "/profiles";
+
+        function toast(msg) {
+          if (window.showToast) showToast(msg);
+          else alert(msg);
+        }
+
+        function readAccounts() {
+          try {
+            return JSON.parse(localStorage.getItem("dropstream.accounts") || "[]");
+          } catch {
+            return [];
+          }
+        }
+
+        function writeAccounts(accounts) {
+          localStorage.setItem("dropstream.accounts", JSON.stringify(accounts));
+        }
+
+        form.addEventListener("submit", function(event) {
+          event.preventDefault();
+
+          const fd = new FormData(form);
+          const name = String(fd.get("name") || "").trim();
+          const email = String(fd.get("email") || "").trim().toLowerCase();
+          const password = String(fd.get("password") || "");
+
+          if (!email || !password) {
+            toast("Email and password required");
+            return;
+          }
+
+          let accounts = readAccounts();
+          let account = accounts.find((item) => String(item.email || "").toLowerCase() === email);
+
+          if (mode === "signup") {
+            if (account) {
+              toast("That account already exists on this device");
+              return;
+            }
+
+            account = {
+              id: Date.now().toString(36),
+              name: name || email.split("@")[0] || "User",
+              email,
+              password,
+              createdAt: Date.now()
+            };
+
+            accounts.push(account);
+            writeAccounts(accounts);
+          } else {
+            if (!account) {
+              account = {
+                id: Date.now().toString(36),
+                name: name || email.split("@")[0] || "User",
+                email,
+                password,
+                createdAt: Date.now()
+              };
+              accounts.push(account);
+              writeAccounts(accounts);
+            } else if (String(account.password || "") !== password) {
+              toast("Wrong password for this local account");
+              return;
+            }
+          }
+
+          localStorage.setItem("dropstream.session", JSON.stringify({
+            id: account.id,
+            name: account.name,
+            email: account.email,
+            loggedInAt: Date.now()
+          }));
+
+          if (!localStorage.getItem("dropstream.profiles")) {
+            localStorage.setItem("dropstream.profiles", JSON.stringify([
+              { id: "main", name: account.name || "Main", mode: "standard" },
+              { id: "kids", name: "Kids", mode: "kids" }
+            ]));
+          }
+
+          toast(mode === "signup" ? "Account created" : "Logged in");
+          location.href = redirect;
+        });
+      })();
+    </script>
+  </main>`;
+
+  res.send(pageShell({ title: `${SITE_NAME} — ${isSignup ? "Signup" : "Login"}`, active: isSignup ? "signup" : "login", body }));
+}
+
+
 app.get("/login", (req, res) => authPage(res, "login"));
 app.get("/signup", (req, res) => authPage(res, "signup"));
 
