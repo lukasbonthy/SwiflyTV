@@ -16851,6 +16851,184 @@ function pageShell({ title = SITE_NAME, description = "Premium movie and TV disc
       }
     }
 
+
+    /* ============================================================
+       v59 MISSING ROUTE FALLBACKS
+       Prevents Render crashes from undefined page handlers.
+       ============================================================ */
+
+    .dsContinuePage,
+    .dsProfilesPage {
+      min-height: 100svh;
+      padding: clamp(18px, 4vw, 54px);
+      background:
+        radial-gradient(900px circle at 10% -10%, rgba(53,216,255,.14), transparent 42%),
+        radial-gradient(760px circle at 95% 0%, rgba(140,107,255,.16), transparent 42%),
+        linear-gradient(180deg, #050711, #080c18 54%, #050711);
+    }
+
+    .dsContinueHero,
+    .dsProfilesHero {
+      max-width: 1320px;
+      margin: 0 auto 22px;
+      padding-top: clamp(34px, 7vw, 90px);
+    }
+
+    .dsContinueHero h1,
+    .dsProfilesHero h1 {
+      margin: 8px 0 10px;
+      color: white;
+      font-family: "Space Grotesk", Inter, Arial, sans-serif;
+      font-size: clamp(46px, 8vw, 112px);
+      line-height: .88;
+      letter-spacing: -.085em;
+    }
+
+    .dsContinueHero p,
+    .dsProfilesHero p {
+      max-width: 720px;
+      margin: 0 0 16px;
+      color: rgba(248,251,255,.66);
+      line-height: 1.55;
+      font-weight: 650;
+    }
+
+    .dsContinueActions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+    }
+
+    .dsContinueList,
+    .dsProfilesGrid {
+      max-width: 1320px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 12px;
+    }
+
+    .dsContinueCard,
+    .dsProfileCard,
+    .dsEmptyContinue {
+      overflow: hidden;
+      border-radius: 24px;
+      color: white;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 24px 80px rgba(0,0,0,.25);
+    }
+
+    .dsContinueCard img,
+    .dsContinueCard .posterFallback {
+      width: 100%;
+      aspect-ratio: 2 / 3;
+      object-fit: cover;
+      display: grid;
+      place-items: center;
+      background: rgba(255,255,255,.08);
+    }
+
+    .dsContinueCard div {
+      display: grid;
+      gap: 4px;
+      padding: 12px;
+    }
+
+    .dsContinueCard strong,
+    .dsProfileCard strong {
+      color: white;
+      font-weight: 950;
+    }
+
+    .dsContinueCard span,
+    .dsProfileCard small {
+      color: rgba(248,251,255,.56);
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .dsEmptyContinue {
+      grid-column: 1 / -1;
+      padding: 24px;
+    }
+
+    .dsEmptyContinue h2 {
+      margin: 0 0 8px;
+      color: white;
+      font-family: "Space Grotesk", Inter, Arial, sans-serif;
+      font-size: 34px;
+      letter-spacing: -.06em;
+    }
+
+    .dsEmptyContinue p {
+      margin: 0;
+      color: rgba(248,251,255,.62);
+    }
+
+    .dsProfileCard {
+      min-height: 210px;
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 9px;
+      border: 1px solid rgba(255,255,255,.10);
+      cursor: pointer;
+    }
+
+    .dsProfileCard span {
+      width: 72px;
+      height: 72px;
+      display: grid;
+      place-items: center;
+      border-radius: 26px;
+      color: #050711;
+      background: linear-gradient(135deg, #fff, #dff8ff);
+      font-size: 30px;
+      font-weight: 950;
+    }
+
+    .dsProfileCreate {
+      max-width: 1320px;
+      margin: 16px auto 0;
+      padding: 18px;
+      border-radius: 26px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .dsProfileCreate h2 {
+      margin: 0 0 12px;
+      color: white;
+      font-family: "Space Grotesk", Inter, Arial, sans-serif;
+      letter-spacing: -.05em;
+    }
+
+    .dsProfileCreate form {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 180px auto;
+      gap: 10px;
+    }
+
+    .dsProfileCreate input,
+    .dsProfileCreate select {
+      min-height: 48px;
+      padding: 0 13px;
+      border-radius: 14px;
+      color: white;
+      background: rgba(255,255,255,.075);
+      border: 1px solid rgba(255,255,255,.12);
+      outline: 0;
+    }
+
+    @media(max-width: 680px) {
+      .dsProfileCreate form,
+      .dsContinueActions {
+        grid-template-columns: 1fr;
+        display: grid;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -19973,8 +20151,159 @@ function accountPage(req, res) {
 }
 
 
+
+function apiStatus(req, res) {
+  res.json({
+    ok: true,
+    name: SITE_NAME,
+    uptime: Math.round(process.uptime()),
+    timestamp: Date.now()
+  });
+}
+
+
+function continueWatchingPage(req, res) {
+  const body = `<main class="dsPlainPage dsContinuePage">
+    <section class="dsContinueHero">
+      <span class="dsEyebrow">Continue Watching</span>
+      <h1>Pick up where you left off.</h1>
+      <p>Your browser saves started titles locally. Open a title, press play, and it can show here on this device.</p>
+      <div class="dsContinueActions">
+        <a class="dsPrimaryBtn" href="/">Browse Home</a>
+        <a class="dsSecondaryBtn" href="/movies">Movies</a>
+        <a class="dsGhostPill" href="/tv">TV Shows</a>
+      </div>
+    </section>
+
+    <section class="dsContinueList" id="continueList">
+      <div class="dsEmptyContinue">
+        <h2>No saved watching yet</h2>
+        <p>When you start watching something, it will show up here.</p>
+      </div>
+    </section>
+
+    <script>
+      (function renderContinueWatching(){
+        const root = document.getElementById("continueList");
+        if (!root) return;
+
+        let items = [];
+        try {
+          items = JSON.parse(localStorage.getItem("dropstream.continueWatching") || "[]");
+        } catch {}
+
+        if (!Array.isArray(items) || !items.length) return;
+
+        root.innerHTML = items.slice(0, 24).map((item) => {
+          const type = item.type || item.media_type || "movie";
+          const id = item.id || item.tmdbId || "";
+          const title = String(item.title || item.name || "Untitled")
+            .replaceAll("&","&amp;")
+            .replaceAll("<","&lt;")
+            .replaceAll(">","&gt;");
+          const poster = item.poster || item.poster_path || "";
+          const href = id ? "/" + type + "/" + id : "#";
+          const imgSrc = poster && poster.startsWith("http") ? poster : (poster ? "https://image.tmdb.org/t/p/w342" + poster : "");
+          return '<a class="dsContinueCard" href="' + href + '">' +
+            (imgSrc ? '<img src="' + imgSrc + '" alt="' + title + '" loading="lazy" />' : '<div class="posterFallback"><span>' + title.slice(0,1) + '</span></div>') +
+            '<div><strong>' + title + '</strong><span>Continue watching</span></div>' +
+          '</a>';
+        }).join("");
+      })();
+    </script>
+  </main>`;
+
+  res.send(pageShell({ title: `${SITE_NAME} — Continue Watching`, active: "continue", body }));
+}
+
+
+function profilesPage(req, res) {
+  const body = `<main class="dsPlainPage dsProfilesPage">
+    <section class="dsProfilesHero">
+      <span class="dsEyebrow">Profiles</span>
+      <h1>Who is watching?</h1>
+      <p>Choose a local profile for browsing, Kids Mode, watchrooms, and saved lists.</p>
+    </section>
+
+    <section class="dsProfilesGrid" id="profilesGrid"></section>
+
+    <section class="dsProfileCreate">
+      <h2>Create profile</h2>
+      <form id="profileCreateForm">
+        <input name="name" placeholder="Profile name" maxlength="32" />
+        <select name="mode">
+          <option value="standard">Standard</option>
+          <option value="kids">Kids Safe</option>
+        </select>
+        <button class="dsPrimaryBtn" type="submit">Add Profile</button>
+      </form>
+    </section>
+
+    <script>
+      (function profileUi(){
+        const grid = document.getElementById("profilesGrid");
+        const form = document.getElementById("profileCreateForm");
+        if (!grid || !form) return;
+
+        function readProfiles() {
+          try {
+            const saved = JSON.parse(localStorage.getItem("dropstream.profiles") || "[]");
+            if (Array.isArray(saved) && saved.length) return saved;
+          } catch {}
+          return [{ id: "main", name: "Main", mode: "standard" }, { id: "kids", name: "Kids", mode: "kids" }];
+        }
+
+        function saveProfiles(profiles) {
+          localStorage.setItem("dropstream.profiles", JSON.stringify(profiles));
+        }
+
+        function esc(value) {
+          return String(value || "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+        }
+
+        function render() {
+          const profiles = readProfiles();
+          grid.innerHTML = profiles.map((profile, index) => {
+            return '<button class="dsProfileCard" data-index="' + index + '" type="button">' +
+              '<span>' + esc(profile.name).slice(0,1).toUpperCase() + '</span>' +
+              '<strong>' + esc(profile.name) + '</strong>' +
+              '<small>' + (profile.mode === "kids" ? "Kids Safe" : "Standard") + '</small>' +
+            '</button>';
+          }).join("");
+
+          grid.querySelectorAll(".dsProfileCard").forEach((button) => {
+            button.addEventListener("click", () => {
+              const profile = profiles[Number(button.dataset.index || 0)];
+              localStorage.setItem("dropstream.activeProfile", JSON.stringify(profile));
+              location.href = profile.mode === "kids" ? "/kids" : "/";
+            });
+          });
+        }
+
+        form.addEventListener("submit", (event) => {
+          event.preventDefault();
+          const fd = new FormData(form);
+          const name = String(fd.get("name") || "").trim() || "Profile";
+          const mode = String(fd.get("mode") || "standard");
+          const profiles = readProfiles();
+          profiles.push({ id: Date.now().toString(36), name, mode });
+          saveProfiles(profiles);
+          form.reset();
+          render();
+        });
+
+        render();
+      })();
+    </script>
+  </main>`;
+
+  res.send(pageShell({ title: `${SITE_NAME} — Profiles`, active: "profiles", body }));
+}
+
+
 app.get("/account", accountPage);
 app.get("/continue-watching", continueWatchingPage);
+app.get("/continue", continueWatchingPage);
 app.get("/watchrooms", watchroomsPage);
 app.get("/watchrooms/:roomId", watchroomPage);
 app.get("/profiles", profilesPage);
