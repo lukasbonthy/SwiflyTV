@@ -16721,6 +16721,136 @@ function pageShell({ title = SITE_NAME, description = "Premium movie and TV disc
       }
     }
 
+
+    /* ============================================================
+       v58 ACCOUNT PAGE FIX
+       Adds a safe /account page so Render does not crash.
+       ============================================================ */
+
+    .dsAccountPage {
+      min-height: 100svh;
+      padding: clamp(18px, 4vw, 54px);
+      background:
+        radial-gradient(900px circle at 10% -10%, rgba(53,216,255,.14), transparent 42%),
+        radial-gradient(760px circle at 95% 0%, rgba(140,107,255,.16), transparent 42%),
+        linear-gradient(180deg, #050711, #080c18 54%, #050711);
+    }
+
+    .dsAccountHero {
+      max-width: 1320px;
+      margin: 0 auto 18px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: end;
+      padding-top: clamp(34px, 7vw, 90px);
+    }
+
+    .dsAccountHero h1 {
+      margin: 8px 0 10px;
+      color: white;
+      font-family: "Space Grotesk", Inter, Arial, sans-serif;
+      font-size: clamp(46px, 8vw, 112px);
+      line-height: .88;
+      letter-spacing: -.085em;
+    }
+
+    .dsAccountHero p {
+      max-width: 720px;
+      margin: 0;
+      color: rgba(248,251,255,.66);
+      line-height: 1.55;
+      font-weight: 650;
+    }
+
+    .dsAccountActions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      justify-content: flex-end;
+    }
+
+    .dsAccountGrid {
+      max-width: 1320px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .dsAccountCard {
+      min-height: 220px;
+      display: grid;
+      align-content: end;
+      gap: 8px;
+      padding: 18px;
+      border-radius: 28px;
+      color: white;
+      background:
+        radial-gradient(440px circle at 0% 0%, rgba(53,216,255,.10), transparent 50%),
+        rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 24px 80px rgba(0,0,0,.26);
+      transition: transform .18s ease, border-color .18s ease, background .18s ease;
+    }
+
+    .dsAccountCard:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255,255,255,.18);
+      background:
+        radial-gradient(440px circle at 0% 0%, rgba(140,107,255,.14), transparent 50%),
+        rgba(255,255,255,.075);
+    }
+
+    .dsAccountCard span {
+      color: rgba(248,251,255,.48);
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: .08em;
+    }
+
+    .dsAccountCard h2 {
+      margin: 0;
+      font-family: "Space Grotesk", Inter, Arial, sans-serif;
+      font-size: 30px;
+      line-height: .96;
+      letter-spacing: -.06em;
+    }
+
+    .dsAccountCard p {
+      margin: 0;
+      color: rgba(248,251,255,.62);
+      line-height: 1.42;
+      font-weight: 650;
+    }
+
+    @media(max-width: 900px) {
+      .dsAccountHero {
+        grid-template-columns: 1fr;
+      }
+
+      .dsAccountActions {
+        justify-content: flex-start;
+      }
+
+      .dsAccountGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media(max-width: 560px) {
+      .dsAccountActions,
+      .dsAccountGrid {
+        grid-template-columns: 1fr;
+        display: grid;
+      }
+
+      .dsAccountActions a,
+      .dsAccountCard {
+        width: 100%;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -19785,6 +19915,64 @@ app.get("/my-list", watchlistPage);
 app.get("/liked", likedPage);
 app.get("/login", (req, res) => authPage(res, "login"));
 app.get("/signup", (req, res) => authPage(res, "signup"));
+
+function accountPage(req, res) {
+  const body = `<main class="dsPlainPage dsAccountPage">
+    <section class="dsAccountHero">
+      <div>
+        <span class="dsEyebrow">Account</span>
+        <h1>Your DropStream account</h1>
+        <p>Manage your profile, continue watching, liked titles, saved list, and watchrooms from one place.</p>
+      </div>
+      <div class="dsAccountActions">
+        <a class="dsPrimaryBtn" href="/profiles">Profiles</a>
+        <a class="dsSecondaryBtn" href="/my-list">My List</a>
+        <a class="dsSecondaryBtn" href="/liked">Liked</a>
+        <a class="dsGhostPill" href="/watchrooms">Watchrooms</a>
+      </div>
+    </section>
+
+    <section class="dsAccountGrid">
+      <a class="dsAccountCard" href="/profiles">
+        <span>01</span>
+        <h2>Profiles</h2>
+        <p>Choose or manage who is watching.</p>
+      </a>
+      <a class="dsAccountCard" href="/continue">
+        <span>02</span>
+        <h2>Continue Watching</h2>
+        <p>Jump back into titles you started.</p>
+      </a>
+      <a class="dsAccountCard" href="/my-list">
+        <span>03</span>
+        <h2>My List</h2>
+        <p>View titles you saved for later.</p>
+      </a>
+      <a class="dsAccountCard" href="/watchrooms">
+        <span>04</span>
+        <h2>Watchrooms</h2>
+        <p>Create or join a room with friends.</p>
+      </a>
+    </section>
+
+    <script>
+      (function accountLocalPreview(){
+        try {
+          var session = JSON.parse(localStorage.getItem("dropstream.session") || "null");
+          var profile = JSON.parse(localStorage.getItem("dropstream.activeProfile") || "null");
+          var title = document.querySelector(".dsAccountHero h1");
+          if (title && (profile?.name || session?.name)) {
+            title.textContent = "Welcome, " + (profile?.name || session?.name);
+          }
+        } catch {}
+      })();
+    </script>
+  </main>`;
+
+  res.send(pageShell({ title: `${SITE_NAME} — Account`, active: "account", body }));
+}
+
+
 app.get("/account", accountPage);
 app.get("/continue-watching", continueWatchingPage);
 app.get("/watchrooms", watchroomsPage);
