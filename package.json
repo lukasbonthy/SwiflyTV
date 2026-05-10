@@ -6,8 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "check": "node --check server.js",
-    "postinstall": "npx playwright install chromium"
+    "check": "node --check server.js"
   },
   "engines": {
     "node": ">=20"
@@ -19,6 +18,6 @@
     "express-rate-limit": "^7.2.0",
     "helmet": "^7.1.0",
     "socket.io": "^4.8.1",
-    "playwright": "^1.49.1"
+    "playwright-core": "^1.49.1"
   }
 }
