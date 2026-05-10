@@ -16275,6 +16275,452 @@ function pageShell({ title = SITE_NAME, description = "Premium movie and TV disc
       }
     }
 
+
+    /* ============================================================
+       v57 RELIABLE WATCHROOM
+       Replaces old broken tabs with a stable Open Together + Live Share room.
+       ============================================================ */
+
+    .dsStableRoom {
+      min-height: 100svh;
+      padding: clamp(18px, 3vw, 34px);
+      background:
+        radial-gradient(900px circle at 10% -10%, rgba(53,216,255,.14), transparent 42%),
+        radial-gradient(780px circle at 90% 0%, rgba(140,107,255,.16), transparent 44%),
+        linear-gradient(180deg, #050711 0%, #080c18 56%, #050711 100%);
+    }
+
+    .dsStableRoomHero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+      gap: 18px;
+      align-items: end;
+      max-width: 1560px;
+      margin: 0 auto 18px;
+      padding-top: 22px;
+    }
+
+    .dsStableRoomHero h1 {
+      margin: 14px 0 10px;
+      color: white;
+      font-family: "Space Grotesk", Inter, Arial, sans-serif;
+      font-size: clamp(46px, 7vw, 104px);
+      line-height: .88;
+      letter-spacing: -.085em;
+    }
+
+    .dsStableRoomHero p {
+      max-width: 780px;
+      margin: 0;
+      color: rgba(248,251,255,.68);
+      line-height: 1.55;
+      font-weight: 650;
+    }
+
+    .dsStableRoomMeta {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding: 10px;
+      border-radius: 26px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 24px 80px rgba(0,0,0,.28);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .dsStableRoomMeta div {
+      min-height: 86px;
+      display: grid;
+      align-content: center;
+      gap: 6px;
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.055);
+    }
+
+    .dsStableRoomMeta small {
+      color: rgba(248,251,255,.52);
+      font-size: 10px;
+      font-weight: 950;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .dsStableRoomMeta strong {
+      color: white;
+      font-weight: 950;
+      overflow-wrap: anywhere;
+    }
+
+    .dsStableRoomGrid {
+      max-width: 1560px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .dsStableMain,
+    .dsStableSide,
+    .dsStablePanel {
+      min-width: 0;
+    }
+
+    .dsStableTabs {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 8px;
+      margin-bottom: 12px;
+      border-radius: 999px;
+      background: rgba(2,3,10,.54);
+      border: 1px solid rgba(255,255,255,.09);
+      box-shadow: 0 18px 60px rgba(0,0,0,.28);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      scrollbar-width: none;
+    }
+
+    .dsStableTabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .dsStableTabs button {
+      min-height: 42px;
+      flex: 1;
+      min-width: 150px;
+      border: 0;
+      border-radius: 999px;
+      color: rgba(248,251,255,.72);
+      background: transparent;
+      font-size: 13px;
+      font-weight: 950;
+      cursor: pointer;
+    }
+
+    .dsStableTabs button.active {
+      color: #050711;
+      background: linear-gradient(135deg, #fff, #dff8ff);
+      box-shadow: 0 12px 34px rgba(53,216,255,.16);
+    }
+
+    .dsStablePanel {
+      display: none;
+      gap: 16px;
+      padding: clamp(16px, 2.4vw, 24px);
+      border-radius: 32px;
+      background:
+        radial-gradient(680px circle at 0% 0%, rgba(53,216,255,.09), transparent 44%),
+        radial-gradient(620px circle at 100% 0%, rgba(140,107,255,.10), transparent 44%),
+        rgba(255,255,255,.055);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 28px 100px rgba(0,0,0,.30);
+      backdrop-filter: blur(18px) saturate(1.08);
+      -webkit-backdrop-filter: blur(18px) saturate(1.08);
+    }
+
+    .dsStablePanel.active,
+    .dsStableSide .dsStablePanel {
+      display: grid;
+    }
+
+    .dsStablePanelHead {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .dsStablePanelHead h2,
+    .dsStableInvite h2,
+    .dsStableChat h2 {
+      margin: 4px 0 6px;
+      color: white;
+      font-family: "Space Grotesk", Inter, Arial, sans-serif;
+      font-size: clamp(30px, 4vw, 56px);
+      line-height: .92;
+      letter-spacing: -.07em;
+    }
+
+    .dsStablePanelHead p,
+    .dsStableInvite p {
+      margin: 0;
+      color: rgba(248,251,255,.64);
+      line-height: 1.52;
+      font-weight: 650;
+    }
+
+    .dsStableUrlForm,
+    #stableChatForm {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .dsStableUrlForm input,
+    #stableChatForm input {
+      min-height: 52px;
+      padding: 0 15px;
+      border-radius: 16px;
+      color: white;
+      background: rgba(255,255,255,.075);
+      border: 1px solid rgba(255,255,255,.12);
+      outline: 0;
+      font-weight: 700;
+    }
+
+    .dsStableUrlForm input:disabled,
+    .dsStableActions button:disabled {
+      opacity: .48;
+      cursor: not-allowed;
+    }
+
+    .dsStableWatchCard {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 18px;
+      border-radius: 26px;
+      background: rgba(255,255,255,.065);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .dsStableWatchCard small,
+    .dsStableSyncBoard small {
+      color: rgba(248,251,255,.55);
+      font-size: 10px;
+      font-weight: 950;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .dsStableWatchCard h3 {
+      margin: 7px 0;
+      color: white;
+      font-family: "Space Grotesk", Inter, Arial, sans-serif;
+      font-size: clamp(26px, 4vw, 44px);
+      line-height: .94;
+      letter-spacing: -.065em;
+    }
+
+    .dsStableWatchCard p {
+      max-width: 780px;
+      margin: 0;
+      color: rgba(248,251,255,.62);
+      line-height: 1.45;
+      font-weight: 650;
+      overflow-wrap: anywhere;
+    }
+
+    .dsStableWatchCard a.disabled {
+      opacity: .44;
+      pointer-events: none;
+    }
+
+    .dsStableSyncBoard {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .dsStableSyncBoard div {
+      min-height: 132px;
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 6px;
+      text-align: center;
+      border-radius: 26px;
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .dsStableSyncBoard strong,
+    .dsStableBigClock {
+      color: white;
+      font-family: "Space Grotesk", Inter, Arial, sans-serif;
+      font-size: clamp(44px, 8vw, 92px);
+      line-height: .88;
+      letter-spacing: -.085em;
+    }
+
+    .dsStableBigClock {
+      min-height: 260px;
+      display: grid;
+      place-items: center;
+      border-radius: 30px;
+      background:
+        radial-gradient(620px circle at 50% 0%, rgba(53,216,255,.13), transparent 54%),
+        rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .dsStableActions {
+      display: flex;
+      gap: 9px;
+      flex-wrap: wrap;
+    }
+
+    .dsStableLiveStage {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      min-height: clamp(300px, 52vw, 620px);
+      overflow: hidden;
+      border-radius: 26px;
+      background: #000;
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 22px 80px rgba(0,0,0,.32);
+    }
+
+    .dsStableLiveStage video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #000;
+    }
+
+    #stableLiveEmpty {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 8px;
+      padding: 26px;
+      text-align: center;
+      background:
+        radial-gradient(620px circle at 50% 0%, rgba(53,216,255,.13), transparent 54%),
+        rgba(5,7,17,.88);
+    }
+
+    #stableLiveEmpty[hidden] {
+      display: none !important;
+    }
+
+    #stableLiveEmpty h3 {
+      margin: 0;
+      color: white;
+      font-family: "Space Grotesk", Inter, Arial, sans-serif;
+      font-size: clamp(28px, 5vw, 58px);
+      line-height: .92;
+      letter-spacing: -.07em;
+    }
+
+    #stableLiveEmpty p {
+      max-width: 620px;
+      margin: 0;
+      color: rgba(248,251,255,.62);
+      line-height: 1.5;
+      font-weight: 650;
+    }
+
+    .dsStableSide {
+      display: grid;
+      gap: 18px;
+      position: sticky;
+      top: 18px;
+    }
+
+    .dsStableInvite {
+      gap: 12px;
+    }
+
+    .dsStableChat {
+      min-height: 560px;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+    }
+
+    .dsStableMessages {
+      min-height: 300px;
+      max-height: 540px;
+      overflow-y: auto;
+      display: grid;
+      align-content: start;
+      gap: 9px;
+      padding: 10px;
+      border-radius: 22px;
+      background: rgba(2,3,10,.34);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .dsStableMessage {
+      display: grid;
+      gap: 3px;
+      padding: 11px 12px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .dsStableMessage b {
+      color: white;
+      font-size: 12px;
+      font-weight: 950;
+    }
+
+    .dsStableMessage span {
+      color: rgba(248,251,255,.72);
+      line-height: 1.4;
+      font-size: 13px;
+      overflow-wrap: anywhere;
+    }
+
+    @media(max-width: 1060px) {
+      .dsStableRoomHero,
+      .dsStableRoomGrid {
+        grid-template-columns: 1fr;
+      }
+
+      .dsStableSide {
+        position: static;
+      }
+    }
+
+    @media(max-width: 680px) {
+      .dsStableRoom {
+        padding: 12px;
+      }
+
+      .dsStableRoomMeta,
+      .dsStableSyncBoard,
+      .dsStableUrlForm,
+      #stableChatForm {
+        grid-template-columns: 1fr;
+      }
+
+      .dsStablePanelHead,
+      .dsStableWatchCard {
+        display: grid;
+      }
+
+      .dsStableActions,
+      .dsStableTabs {
+        display: grid;
+        border-radius: 22px;
+      }
+
+      .dsStableTabs button,
+      .dsStableActions button,
+      .dsStableWatchCard a,
+      .dsStableUrlForm button,
+      #stableChatForm button,
+      .dsStableInvite button {
+        width: 100%;
+      }
+
+      .dsStableLiveStage {
+        min-height: 260px;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -18734,251 +19180,148 @@ function watchroomsPage(req, res) {
 function watchroomPage(req, res) {
   const roomId = normalizeRoomId(req.params.roomId);
   const name = String(req.query.name || "DropStream Watchroom").slice(0, 80);
-  const trailerUrl = String(req.query.trailer || "").slice(0, 500);
-  const embedUrl = String(req.query.embed || req.query.trailer || "").slice(0, 800);
-  const videoId = String(req.query.video || "").slice(0, 40);
-  const mediaKind = String(req.query.kind || (videoId ? "youtube" : "embed")).slice(0, 20);
-  const browserUrl = normalizeSharedBrowserUrl(req.query.browser || req.query.url || "");
+  const sharedUrl = normalizeSharedBrowserUrl(req.query.url || req.query.open || req.query.embed || req.query.trailer || "");
 
-  const room = getOrCreateWatchRoom(roomId, { name, trailerUrl, embedUrl, videoId, mediaKind, browserUrl });
+  const room = getOrCreateWatchRoom(roomId, {
+    name,
+    browserUrl: sharedUrl,
+    host: "Host",
+  });
+
+  if (sharedUrl && !room.openTogetherUrl) {
+    room.openTogetherUrl = sharedUrl;
+  }
+
   const safeRoomId = escapeHtml(room.id);
   const safeName = escapeHtml(room.name);
+  const safeInitialUrl = escapeHtml(room.openTogetherUrl || sharedUrl || "");
+  const safeCountdown = escapeHtml(String(room.openTogetherCountdownEndsAt || 0));
 
-  const body = `<main class="dsPlainPage dsRoomPage dsClockRoom" data-room-id="${safeRoomId}" data-created-at="${escapeHtml(String(room.createdAt))}">
-    ${dsPageHeader(safeName, "Share the invite, load an embed, use the room clock, and chat while everyone sets the same timeframe.", "Watchroom")}
+  const body = `<main class="dsPlainPage dsStableRoom" data-room-id="${safeRoomId}">
+    <section class="dsStableRoomHero">
+      <div>
+        <a class="dsGhostPill" href="/watchrooms">← Watchrooms</a>
+        <span class="dsEyebrow">Reliable Watchroom</span>
+        <h1>${safeName}</h1>
+        <p>No messy embeds required. Use <b>Live Share</b> if the host can share a tab, or <b>Open Together</b> if sharing does not work.</p>
+      </div>
 
-    <section class="dsMovieClockHero dsMovieClockHeroClean">
-      <div class="dsClockMain">
-        <span class="dsEyebrow">Room movie clock</span>
-        <h2 id="roomMovieClock">00:00</h2>
-        <p>Everyone set your player to <b><span id="roomTimePhrase">00:00</span></b></p>
-      </div>
-      <div class="dsClockActions dsClockActionsClean">
-        <button class="dsGhostPill" id="copyTimeframeBtn" type="button">Copy time</button>
-        <button class="dsGhostPill" id="sendTimeframeBtn" type="button">Send in chat</button>
-      </div>
+      <aside class="dsStableRoomMeta">
+        <div><small>Room code</small><strong>${safeRoomId}</strong></div>
+        <div><small>Status</small><strong id="stableHostStatus">Joining...</strong></div>
+        <div><small>Viewers</small><strong id="stableViewerCount">0</strong></div>
+      </aside>
     </section>
 
-    <section class="dsRoomShell dsRoomShellPro dsRoomShellAiry">
-      <div class="dsRoomPlayerPanel dsRoomPlayerPanelClean">
-        <div class="dsRoomToolbar dsRoomToolbarPro dsRoomToolbarClean">
-          <div class="dsRoomTopMeta">
-            <span class="dsRoomLive">LIVE</span>
-            <span class="dsRoomCodeMini">Room ${safeRoomId}</span>
-            <b id="roomViewerCount">0 watching</b>
-          </div>
-          <div class="dsRoomToolbarActions">
-            <button class="dsGhostPill" id="copyRoomLink" type="button">Copy invite</button>
-            <button class="dsGhostPill" id="toggleBrowserBtn" type="button">Browser</button>
-            <button class="dsGhostPill" id="toggleSetupBtn" type="button">Change media</button>
-          </div>
+    <section class="dsStableRoomGrid">
+      <section class="dsStableMain">
+        <div class="dsStableTabs">
+          <button class="active" type="button" data-stable-tab="open">Open Together</button>
+          <button type="button" data-stable-tab="live">Live Share</button>
+          <button type="button" data-stable-tab="clock">Clock</button>
         </div>
 
-        <div class="dsTrailerInput dsTrailerInputClean" id="trailerSetup">
-          <h2>Load media</h2>
-          <p>Paste a YouTube trailer for better syncing, or another embeddable link and use the room clock to stay lined up.</p>
-          <form id="setTrailerForm">
-            <input name="trailerUrl" placeholder="Paste a YouTube trailer or embeddable URL" value="${escapeHtml(room.embedUrl || room.trailerUrl)}" />
-            <button class="dsPrimaryBtn" type="submit">Load</button>
+        <section class="dsStablePanel active" id="stableOpenPanel">
+          <div class="dsStablePanelHead">
+            <div>
+              <span class="dsEyebrow">Most reliable</span>
+              <h2>Open Together</h2>
+              <p>Everyone opens the real movie/site in their own tab, then uses the shared clock and countdown to stay synced.</p>
+            </div>
+            <span class="dsHostBadge" id="stableOpenBadge">Host controls</span>
+          </div>
+
+          <form id="stableOpenForm" class="dsStableUrlForm">
+            <input id="stableOpenInput" name="url" placeholder="Paste movie/website link here" value="${safeInitialUrl}" />
+            <button class="dsPrimaryBtn" type="submit">Share Link</button>
           </form>
-        </div>
 
-        <div class="dsPlayerStage">
-          <div class="dsEmbedTabs dsEmbedTabsClean">
-            <button id="showPlayerBtn" type="button" class="active">Player</button>
-            <button id="showLiveShareBtn" type="button">Live Share</button>
-            <button id="showOpenTogetherBtn" type="button">Open Together</button>
-            <button id="showBrowserBtn" type="button">Browser</button>
-            <button id="showRemoteBrowserBtn" type="button">Remote</button>
-            <button id="showClockBtn" type="button">Timeframe</button>
-          </div>
-
-          <div id="playerWrap" class="dsPlayerWrap">
-            <div id="player" class="dsWatchPlayer"></div>
-            <iframe id="genericEmbed" class="dsGenericEmbed" title="Watchroom embed" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write; web-share" allowfullscreen></iframe>
-            <div id="ytFallback" class="dsYoutubeFallback" hidden>
-              <h2>YouTube would not embed this video</h2>
-              <p>Error 153 usually means YouTube rejected the player configuration or this specific video does not allow embedding. Open it on YouTube, then use the room clock to stay synced.</p>
-              <a id="ytFallbackLink" class="dsPrimaryBtn" href="#" target="_blank" rel="noopener">Watch on YouTube</a>
-            </div>
-          </div>
-
-          <div class="dsManualTimeBox" id="manualTimeBox">
-            <h2>Manual timeframe</h2>
-            <p>If the embed cannot sync itself, everybody should jump to this time:</p>
-            <div class="dsBigTime" id="manualBigTime">00:00</div>
-            <button class="dsGhostPill dsManualCopyBtn" id="copyManualTimeBtn" type="button">Copy timeframe message</button>
-          </div>
-
-          <section class="dsLiveSharePanel" id="liveSharePanel" hidden>
-            <div class="dsLiveShareTop">
-              <div>
-                <span class="dsEyebrow">Best option</span>
-                <h2>Live Tab Share</h2>
-                <p id="liveShareHelp">The host shares a browser tab/window here. Guests watch the live stream inside the room, so embeds cannot block it.</p>
-              </div>
-              <span class="dsHostBadge" id="liveShareBadge">Host controls</span>
-            </div>
-
-            <div class="dsLiveShareStage">
-              <video id="liveShareVideo" playsinline autoplay controls></video>
-              <div id="liveShareEmpty" class="dsRoomBrowserEmpty">
-                <h3>Waiting for host</h3>
-                <p>The host can click Start Live Share and pick the movie/website tab. Guests will see it here.</p>
-              </div>
-            </div>
-
-            <div class="dsLiveShareControls">
-              <button class="dsPrimaryBtn" id="startLiveShareBtn" type="button">Start Live Share</button>
-              <button class="dsSecondaryBtn" id="stopLiveShareBtn" type="button">Stop</button>
-              <button class="dsGhostPill" id="fullscreenLiveShareBtn" type="button">Fullscreen</button>
-            </div>
-
-            <p class="dsRoomBrowserNote">This works on Render without Docker, Puppeteer, or iframe embedding. Pick “share tab audio” when your browser asks.</p>
-          </section>
-
-          <section class="dsOpenTogetherPanel" id="openTogetherPanel" hidden>
-            <div class="dsLiveShareTop">
-              <div>
-                <span class="dsEyebrow">Backup option</span>
-                <h2>Open Together</h2>
-                <p id="openTogetherHelp">If Live Share or embeds fail, everyone opens the same link in their own tab and follows the shared room clock.</p>
-              </div>
-              <span class="dsHostBadge" id="openTogetherBadge">Host controls</span>
-            </div>
-
-            <form id="openTogetherForm" class="dsOpenTogetherForm">
-              <input name="openTogetherUrl" id="openTogetherInput" placeholder="Paste the movie/website link everyone should open" />
-              <button class="dsPrimaryBtn" type="submit">Share Link</button>
-            </form>
-
-            <div class="dsOpenTogetherCard">
-              <div>
-                <span>Shared watch link</span>
-                <h3 id="openTogetherTitle">No link yet</h3>
-                <p id="openTogetherUrlText">The host can share a link. Everyone opens it, then uses the room timeframe to stay synced.</p>
-              </div>
-              <a id="openTogetherLink" class="dsPrimaryBtn disabled" href="#" target="_blank" rel="noopener">Open Watch Link</a>
-            </div>
-
-            <div class="dsOpenTogetherSync">
-              <div>
-                <small>Everyone set your player to</small>
-                <strong id="openTogetherTime">00:00</strong>
-              </div>
-              <div>
-                <small>Host countdown</small>
-                <strong id="openTogetherCountdown">Ready</strong>
-              </div>
-            </div>
-
-            <div class="dsOpenTogetherControls">
-              <button class="dsPrimaryBtn" id="openTogetherCountdownBtn" type="button">Start 10s Countdown</button>
-              <button class="dsSecondaryBtn" id="openTogetherSendTimeBtn" type="button">Send Timeframe</button>
-              <button class="dsGhostPill" id="openTogetherCopyBtn" type="button">Copy Link + Time</button>
-            </div>
-
-            <p class="dsRoomBrowserNote">This does not control the outside site, but it always works because everyone opens the real site directly.</p>
-          </section>
-
-          <section class="dsRoomBrowserPanel" id="roomBrowserPanel" hidden>
-            <div class="dsRoomBrowserTop">
-              <div>
-                <span class="dsEyebrow">Shared browser</span>
-                <h2>Room Browser</h2>
-                <p id="roomBrowserHelp">The host controls this built-in browser. Guests see the same URL without needing a screenshare.</p>
-              </div>
-              <span class="dsHostBadge" id="roomHostBadge">Host controls</span>
-            </div>
-            <form id="roomBrowserForm" class="dsRoomBrowserForm">
-              <input name="browserUrl" id="roomBrowserInput" placeholder="Paste a URL, or try /watch/movie/76479?mode=movie" value="${escapeHtml(room.browserUrl || "")}" />
-              <button class="dsPrimaryBtn" type="submit">Go</button>
-            </form>
-            <div class="dsRoomBrowserFrameWrap">
-              <iframe id="roomBrowserFrame" title="Shared room browser" sandbox="allow-scripts allow-same-origin" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen></iframe>
-              <div id="roomBrowserEmpty" class="dsRoomBrowserEmpty">
-                <h3>No shared page yet</h3>
-                <p>The host can load an embeddable page, a DropStream watch page, or a trailer/embed link.</p>
-              </div>
-            </div>
-            <p class="dsRoomBrowserNote">Some websites block embeds. DropStream pages and embeddable players work best.</p>
-          </section>
-
-          <section class="dsRoomBrowserPanel dsRemoteBrowserPanel" id="remoteBrowserPanel" hidden>
-            <div class="dsRoomBrowserTop">
-              <div>
-                <span class="dsEyebrow">Remote browser stream</span>
-                <h2>Server Browser</h2>
-                <p id="remoteBrowserHelp">The server opens the page and streams screenshots to the room. Host clicks/type; guests watch.</p>
-              </div>
-              <span class="dsHostBadge" id="remoteBrowserBadge">Host controls</span>
-            </div>
-
-            <form id="remoteBrowserForm" class="dsRoomBrowserForm">
-              <input name="remoteUrl" id="remoteBrowserInput" placeholder="Paste a website URL, like https://example.com" />
-              <button class="dsPrimaryBtn" type="submit">Open Remote</button>
-            </form>
-
-            <div class="dsRemoteBrowserScreen" id="remoteBrowserScreen">
-              <img id="remoteBrowserImage" alt="Remote browser screen" />
-              <div id="remoteBrowserEmpty" class="dsRoomBrowserEmpty">
-                <h3>Remote Browser is waiting</h3>
-                <p>The host can open a URL. Guests will see the server browser here.</p>
-              </div>
-            </div>
-
-            <form id="remoteTextForm" class="dsRemoteTextForm">
-              <input name="remoteText" id="remoteTextInput" placeholder="Host can type text here..." maxlength="180" />
-              <button class="dsSecondaryBtn" type="submit">Type</button>
-              <button class="dsGhostPill" id="remoteEnterBtn" type="button">Enter</button>
-              <button class="dsGhostPill" id="remoteBackBtn" type="button">Back</button>
-              <button class="dsGhostPill" id="remoteStatusBtn" type="button">Check setup</button>
-            </form>
-
-            <p class="dsRoomBrowserNote">This avoids iframe blocks because the page runs in a server browser. Private/local addresses are blocked for safety.</p>
-          </section>
-        </div>
-
-        <div class="dsSyncControls dsSyncControlsClean">
-          <div class="dsSyncPrimaryRow">
-            <button class="dsPrimaryBtn" id="syncPlay" type="button">Play</button>
-            <button class="dsSecondaryBtn" id="syncPause" type="button">Pause</button>
-            <button class="dsSecondaryBtn" id="syncNow" type="button">Sync room</button>
-          </div>
-          <div class="dsSyncSecondaryRow">
-            <button class="dsGhostPill" id="syncBack" type="button">-10s</button>
-            <button class="dsGhostPill" id="syncForward" type="button">+10s</button>
-          </div>
-        </div>
-      </div>
-
-      <aside class="dsRoomSidebar dsRoomSidebarClean">
-        <section class="dsWatchroomPanel dsRoomInfoPanel">
-          <span class="dsEyebrow">Room details</span>
-          <h2>${safeName}</h2>
-          <div class="dsRoomInfoGrid">
+          <div class="dsStableWatchCard">
             <div>
-              <small>Code</small>
-              <div class="dsRoomCode">${safeRoomId}</div>
+              <small>Shared link</small>
+              <h3 id="stableLinkTitle">${safeInitialUrl ? "Ready to open" : "No link shared yet"}</h3>
+              <p id="stableLinkText">${safeInitialUrl || "Host can paste the link everyone should open."}</p>
+            </div>
+            <a id="stableOpenLink" class="dsPrimaryBtn ${safeInitialUrl ? "" : "disabled"}" href="${safeInitialUrl || "#"}" target="_blank" rel="noopener">Open Link</a>
+          </div>
+
+          <div class="dsStableSyncBoard">
+            <div>
+              <small>Room timeframe</small>
+              <strong id="stableRoomTime">0:00</strong>
             </div>
             <div>
-              <small>Status</small>
-              <p id="roomStatusText">Waiting for embed...</p>
+              <small>Countdown</small>
+              <strong id="stableCountdown">Ready</strong>
             </div>
           </div>
-          <p class="dsRoomHint">YouTube works best for syncing. For other embeds, use the room movie clock to stay together manually.</p>
+
+          <div class="dsStableActions">
+            <button class="dsPrimaryBtn" id="stableCountdownBtn" type="button">Start 10s Countdown</button>
+            <button class="dsSecondaryBtn" id="stableSendTimeBtn" type="button">Send Time</button>
+            <button class="dsGhostPill" id="stableCopyLinkBtn" type="button">Copy Link + Time</button>
+          </div>
         </section>
 
-        <section class="dsWatchroomPanel dsRoomChat dsRoomChatbar dsRoomChatClean">
-          <div class="dsRoomChatHead">
+        <section class="dsStablePanel" id="stableLivePanel">
+          <div class="dsStablePanelHead">
+            <div>
+              <span class="dsEyebrow">If host can share tab</span>
+              <h2>Live Share</h2>
+              <p>The host shares a browser tab/window. Guests watch inside the room. This avoids iframe blocking completely.</p>
+            </div>
+            <span class="dsHostBadge" id="stableLiveBadge">Host controls</span>
+          </div>
+
+          <div class="dsStableLiveStage">
+            <video id="stableLiveVideo" autoplay playsinline controls></video>
+            <div id="stableLiveEmpty">
+              <h3>Waiting for Live Share</h3>
+              <p>The host can start sharing a tab/window. Choose tab audio if the browser asks.</p>
+            </div>
+          </div>
+
+          <div class="dsStableActions">
+            <button class="dsPrimaryBtn" id="stableStartLiveBtn" type="button">Start Live Share</button>
+            <button class="dsSecondaryBtn" id="stableStopLiveBtn" type="button">Stop</button>
+            <button class="dsGhostPill" id="stableFullscreenLiveBtn" type="button">Fullscreen</button>
+          </div>
+        </section>
+
+        <section class="dsStablePanel" id="stableClockPanel">
+          <div class="dsStablePanelHead">
+            <div>
+              <span class="dsEyebrow">Manual sync</span>
+              <h2>Room Clock</h2>
+              <p>Use this when everyone already has the movie/site open. The room clock starts when the watchroom was created.</p>
+            </div>
+          </div>
+
+          <div class="dsStableBigClock" id="stableBigClock">0:00</div>
+          <div class="dsStableActions">
+            <button class="dsPrimaryBtn" id="stableCopyTimeBtn" type="button">Copy timeframe</button>
+            <button class="dsSecondaryBtn" id="stableChatTimeBtn" type="button">Send in chat</button>
+          </div>
+        </section>
+      </section>
+
+      <aside class="dsStableSide">
+        <section class="dsStablePanel dsStableInvite">
+          <span class="dsEyebrow">Invite</span>
+          <h2>Bring friends in</h2>
+          <p>Share this room link. First person in becomes host; if the host leaves, the next person becomes host.</p>
+          <button class="dsPrimaryBtn" id="stableCopyInviteBtn" type="button">Copy Invite</button>
+        </section>
+
+        <section class="dsStablePanel dsStableChat">
+          <div class="dsStableChatHead">
             <div>
               <span class="dsEyebrow">Chat</span>
-              <h2>Room chat</h2>
+              <h2>Room Chat</h2>
             </div>
-            <span class="dsRoomHintMini">Send quick updates</span>
           </div>
-          <div id="roomMessages" class="dsRoomMessages"></div>
-          <form id="roomChatForm">
+          <div id="stableMessages" class="dsStableMessages"></div>
+          <form id="stableChatForm">
             <input name="message" placeholder="Message the room..." maxlength="220" />
             <button class="dsPrimaryBtn" type="submit">Send</button>
           </form>
@@ -18987,31 +19330,28 @@ function watchroomPage(req, res) {
     </section>
 
     <script src="/socket.io/socket.io.js"></script>
-    <script src="https://www.youtube.com/iframe_api"></script>
     <script>
-      (function watchroomClient(){
+      (function stableWatchroom(){
         var roomId = "${safeRoomId}";
-        var initialVideoId = "${escapeHtml(room.videoId)}";
-        var initialEmbedUrl = "${escapeHtml(room.embedUrl || room.trailerUrl)}";
-        var initialKind = "${escapeHtml(room.mediaKind || (room.videoId ? "youtube" : "embed"))}";
-        var initialBrowserUrl = "${escapeHtml(room.browserUrl || "")}";
-        var roomCreatedAt = Number("${escapeHtml(String(room.createdAt))}") || Date.now();
         var initialName = "${safeName}";
-        var player = null;
-        var playerReady = false;
-        var suppressEmit = false;
-        var currentVideoId = initialVideoId;
-        var currentEmbedUrl = initialEmbedUrl;
-        var currentKind = initialKind;
-        var currentBrowserUrl = initialBrowserUrl;
+        var initialUrl = "${safeInitialUrl}";
+        var roomCreatedAt = Number("${escapeHtml(String(room.createdAt))}") || Date.now();
         var isRoomHost = false;
+        var sharedUrl = initialUrl;
+        var countdownEndsAt = Number("${safeCountdown}") || 0;
         var socket = io();
+
         var liveLocalStream = null;
         var livePeerConnections = {};
         var liveViewerPeer = null;
         var liveIceServers = [{ urls: "stun:stun.l.google.com:19302" }];
-        var openTogetherUrl = "";
-        var openTogetherCountdownEndsAt = 0;
+
+        function esc(value) {
+          return String(value || "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;");
+        }
 
         function getSessionName() {
           try {
@@ -19023,7 +19363,13 @@ function watchroomPage(req, res) {
           }
         }
 
+        function toast(text) {
+          if (window.showToast) showToast(text);
+          else console.log(text);
+        }
+
         function pad(n) { return String(Math.floor(n)).padStart(2, "0"); }
+
         function formatTime(seconds) {
           seconds = Math.max(0, Math.floor(Number(seconds || 0)));
           var h = Math.floor(seconds / 3600);
@@ -19036,241 +19382,109 @@ function watchroomPage(req, res) {
           return Math.max(0, Math.floor((Date.now() - roomCreatedAt) / 1000));
         }
 
-        function updateRoomClock() {
-          var text = formatTime(currentRoomSeconds());
-          ["roomMovieClock", "roomTimePhrase", "manualBigTime"].forEach(function(id) {
-            var el = document.getElementById(id);
-            if (el) el.textContent = text;
-          });
-          var copyManual = document.getElementById("copyManualTimeBtn");
-          if (copyManual) copyManual.textContent = "Copy “Put your timeframe at " + text + "”";
-        }
-
-        setInterval(updateRoomClock, 1000);
-        updateRoomClock();
-
-        function timeframePhrase() {
-          return "Put your timeframe at " + formatTime(currentRoomSeconds());
-        }
-
-        function videoIdFromUrl(url) {
-          var value = String(url || "").trim();
-          var match = value.match(/(?:youtube\\.com\\/(?:watch\\?v=|embed\\/|shorts\\/)|youtu\\.be\\/)([A-Za-z0-9_-]{6,})/);
-          return match ? match[1] : "";
-        }
-
-        function cleanEmbedUrl(url) {
-          var value = String(url || "").trim();
-          if (!value || !/^https?:\/\//i.test(value)) return "";
-          return value;
-        }
-
-        function cleanBrowserUrl(url) {
+        function normalizeUrl(url) {
           var value = String(url || "").trim();
           if (!value) return "";
           if (value[0] === "/") return value;
-          if (/^https?:\/\//i.test(value)) return value;
-          if (/^[a-z0-9.-]+\.[a-z]{2,}(\/.*)?$/i.test(value)) return "https://" + value;
+          if (/^https?:\\/\\//i.test(value)) return value;
+          if (/^[a-z0-9.-]+\\.[a-z]{2,}(\\/.*)?$/i.test(value)) return "https://" + value;
           return "";
         }
 
-        function setRoomView(view) {
-          var stage = document.querySelector(".dsPlayerStage");
-          var playerWrap = document.getElementById("playerWrap");
-          var manual = document.getElementById("manualTimeBox");
-          var browserPanel = document.getElementById("roomBrowserPanel");
-          var remotePanel = document.getElementById("remoteBrowserPanel");
-          var livePanel = document.getElementById("liveSharePanel");
-          var openTogetherPanel = document.getElementById("openTogetherPanel");
-          var controls = document.querySelector(".dsSyncControls");
-
-          view = view || "player";
-          if (stage) stage.dataset.roomView = view;
-
-          if (playerWrap) playerWrap.hidden = view !== "player";
-          if (manual) manual.hidden = view !== "clock";
-          if (browserPanel) browserPanel.hidden = view !== "browser";
-          if (remotePanel) remotePanel.hidden = view !== "remote";
-          if (livePanel) livePanel.hidden = view !== "live";
-          if (openTogetherPanel) openTogetherPanel.hidden = view !== "open";
-          if (controls) controls.classList.toggle("isBrowserView", view === "browser" || view === "remote" || view === "clock" || view === "live" || view === "open");
-
-          [
-            ["showPlayerBtn", view === "player"],
-            ["showLiveShareBtn", view === "live"],
-            ["showOpenTogetherBtn", view === "open"],
-            ["showBrowserBtn", view === "browser"],
-            ["showRemoteBrowserBtn", view === "remote"],
-            ["showClockBtn", view === "clock"],
-          ].forEach(function(pair) {
-            var el = document.getElementById(pair[0]);
-            if (el) el.classList.toggle("active", Boolean(pair[1]));
+        function setTab(name) {
+          document.querySelectorAll("[data-stable-tab]").forEach(function(btn) {
+            btn.classList.toggle("active", btn.dataset.stableTab === name);
           });
-        }
 
-        function setBrowserVisible(visible) {
-          setRoomView(visible ? "browser" : "player");
-        }
-
-        function setRemoteBrowserVisible(visible) {
-          setRoomView(visible ? "remote" : "player");
-        }
-
-        function setRemoteHostMode() {
-          var form = document.getElementById("remoteBrowserForm");
-          var input = document.getElementById("remoteBrowserInput");
-          var textInput = document.getElementById("remoteTextInput");
-          var textForm = document.getElementById("remoteTextForm");
-          var badge = document.getElementById("remoteBrowserBadge");
-          if (input) input.disabled = !isRoomHost;
-          if (textInput) textInput.disabled = !isRoomHost;
-          if (form) form.classList.toggle("isGuestLocked", !isRoomHost);
-          if (textForm) textForm.classList.toggle("isGuestLocked", !isRoomHost);
-          if (badge) badge.textContent = isRoomHost ? "You are host" : "View only";
-        }
-
-        function setLiveShareHostMode() {
-          var start = document.getElementById("startLiveShareBtn");
-          var stop = document.getElementById("stopLiveShareBtn");
-          var badge = document.getElementById("liveShareBadge");
-          var help = document.getElementById("liveShareHelp");
-          if (start) start.disabled = !isRoomHost;
-          if (stop) stop.disabled = !isRoomHost;
-          if (badge) badge.textContent = isRoomHost ? "You are host" : "View only";
-          if (help) help.textContent = isRoomHost
-            ? "You control the source. Click Start Live Share, pick your movie/website tab, and everyone watches inside this room."
-            : "Only the host can start the stream. You will see the host's shared tab/window here.";
-        }
-
-        function setOpenTogetherHostMode() {
-          var form = document.getElementById("openTogetherForm");
-          var input = document.getElementById("openTogetherInput");
-          var countdown = document.getElementById("openTogetherCountdownBtn");
-          var badge = document.getElementById("openTogetherBadge");
-          var help = document.getElementById("openTogetherHelp");
-          if (input) input.disabled = !isRoomHost;
-          if (form) form.classList.toggle("isGuestLocked", !isRoomHost);
-          if (countdown) countdown.disabled = !isRoomHost;
-          if (badge) badge.textContent = isRoomHost ? "You are host" : "View only";
-          if (help) help.textContent = isRoomHost
-            ? "Paste the real movie/website link. Guests open it directly, then everyone follows the shared timeframe."
-            : "Open the host's link in your own tab, then follow the room timeframe/countdown.";
-        }
-
-        function setBrowserHostMode() {
-          var form = document.getElementById("roomBrowserForm");
-          var input = document.getElementById("roomBrowserInput");
-          var help = document.getElementById("roomBrowserHelp");
-          var badge = document.getElementById("roomHostBadge");
-          if (input) input.disabled = !isRoomHost;
-          if (form) form.classList.toggle("isGuestLocked", !isRoomHost);
-          if (badge) badge.textContent = isRoomHost ? "You are host" : "View only";
-          if (help) help.textContent = isRoomHost
-            ? "You control the shared browser. Everyone in the room sees the URL you load."
-            : "Only the host can control this built-in browser. You can watch and interact if the embedded page allows it.";
-          setRemoteHostMode();
-          setLiveShareHostMode();
-          setOpenTogetherHostMode();
-        }
-
-        function loadRoomBrowser(url, silent) {
-          var clean = cleanBrowserUrl(url);
-          if (!clean) {
-            if (!silent) showToast("Paste a valid website URL or DropStream path");
-            return false;
-          }
-
-          currentBrowserUrl = clean;
-          var frame = document.getElementById("roomBrowserFrame");
-          var empty = document.getElementById("roomBrowserEmpty");
-          var input = document.getElementById("roomBrowserInput");
-          if (input) input.value = clean;
-          if (frame) frame.src = clean;
-          if (empty) empty.hidden = true;
-          setBrowserVisible(true);
-          setStatus("Shared browser loaded: " + clean);
-          return true;
-        }
-
-        function showLiveEmpty(show, text) {
-          var empty = document.getElementById("liveShareEmpty");
-          if (!empty) return;
-          empty.hidden = !show;
-          if (text) {
-            var p = empty.querySelector("p");
-            if (p) p.textContent = text;
-          }
-        }
-
-        function attachLiveStream(stream) {
-          var video = document.getElementById("liveShareVideo");
-          if (!video) return;
-          video.srcObject = stream;
-          video.muted = isRoomHost;
-          video.play().catch(function(){});
-          showLiveEmpty(false);
-          setRoomView("live");
-        }
-
-        function createLivePeerConnection(targetSocketId, isHostSide) {
-          var pc = new RTCPeerConnection({ iceServers: liveIceServers });
-
-          pc.onicecandidate = function(event) {
-            if (event.candidate) {
-              socket.emit("watchroom:live-ice", {
-                roomId: roomId,
-                target: targetSocketId,
-                candidate: event.candidate
-              });
+          document.querySelectorAll(".dsStablePanel").forEach(function(panel) {
+            if (panel.id === "stableOpenPanel" || panel.id === "stableLivePanel" || panel.id === "stableClockPanel") {
+              panel.classList.remove("active");
             }
-          };
+          });
 
-          if (isHostSide && liveLocalStream) {
-            liveLocalStream.getTracks().forEach(function(track) {
-              pc.addTrack(track, liveLocalStream);
-            });
-          }
-
-          if (!isHostSide) {
-            pc.ontrack = function(event) {
-              var stream = event.streams && event.streams[0];
-              if (stream) attachLiveStream(stream);
-            };
-          }
-
-          return pc;
+          var target = document.getElementById(name === "live" ? "stableLivePanel" : name === "clock" ? "stableClockPanel" : "stableOpenPanel");
+          if (target) target.classList.add("active");
         }
 
-        async function startLiveShare() {
-          if (!isRoomHost) {
-            showToast("Only the host can start Live Share");
-            return;
+        function setHostMode() {
+          var hostText = isRoomHost ? "You are host" : "View only";
+          ["stableOpenBadge", "stableLiveBadge"].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.textContent = hostText;
+          });
+
+          ["stableOpenInput", "stableCountdownBtn", "stableStartLiveBtn", "stableStopLiveBtn"].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.disabled = !isRoomHost;
+          });
+
+          var status = document.getElementById("stableHostStatus");
+          if (status) status.textContent = isRoomHost ? "You are host" : "Viewer";
+        }
+
+        function updateSharedLink(url) {
+          sharedUrl = normalizeUrl(url);
+          var link = document.getElementById("stableOpenLink");
+          var title = document.getElementById("stableLinkTitle");
+          var text = document.getElementById("stableLinkText");
+          var input = document.getElementById("stableOpenInput");
+
+          if (input && sharedUrl) input.value = sharedUrl;
+
+          if (sharedUrl) {
+            if (link) {
+              link.href = sharedUrl;
+              link.classList.remove("disabled");
+              link.textContent = "Open Link";
+            }
+            if (title) title.textContent = "Ready to open";
+            if (text) text.textContent = sharedUrl;
+          } else {
+            if (link) {
+              link.href = "#";
+              link.classList.add("disabled");
+              link.textContent = "Waiting for link";
+            }
+            if (title) title.textContent = "No link shared yet";
+            if (text) text.textContent = "Host can paste the link everyone should open.";
           }
+        }
 
-          if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
-            showToast("This browser does not support tab sharing");
-            return;
-          }
+        function updateClock() {
+          var time = formatTime(currentRoomSeconds());
+          ["stableRoomTime", "stableBigClock"].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.textContent = time;
+          });
 
-          try {
-            liveLocalStream = await navigator.mediaDevices.getDisplayMedia({
-              video: true,
-              audio: true
-            });
+          var left = Math.ceil((countdownEndsAt - Date.now()) / 1000);
+          var countdown = document.getElementById("stableCountdown");
+          if (countdown) countdown.textContent = left > 0 ? "Play in " + left : "Ready";
+        }
 
-            attachLiveStream(liveLocalStream);
-            showToast("Live Share started");
-            sendRoomMessage("Live Share started. Guests can watch inside the room.");
+        setInterval(updateClock, 500);
+        updateClock();
+        updateSharedLink(initialUrl);
 
-            liveLocalStream.getVideoTracks()[0]?.addEventListener("ended", stopLiveShare);
+        function addMessage(message) {
+          var root = document.getElementById("stableMessages");
+          if (!root) return;
+          var name = esc(message.name || "Guest");
+          var text = esc(message.text || "");
+          if (!text) return;
+          root.insertAdjacentHTML("beforeend", '<div class="dsStableMessage"><b>' + name + '</b><span>' + text + '</span></div>');
+          root.scrollTop = root.scrollHeight;
+        }
 
-            socket.emit("watchroom:live-start", {
-              roomId: roomId,
-              name: getSessionName()
-            });
-          } catch (error) {
-            showToast("Live Share was cancelled or blocked");
-          }
+        function sendMessage(text) {
+          text = String(text || "").trim();
+          if (!text) return;
+          socket.emit("watchroom:message", { roomId: roomId, name: getSessionName(), text: text });
+        }
+
+        function copyText(text, label) {
+          navigator.clipboard?.writeText(text);
+          toast(label || "Copied");
         }
 
         function stopLiveShare() {
@@ -19284,344 +19498,139 @@ function watchroomPage(req, res) {
           });
           livePeerConnections = {};
 
-          var video = document.getElementById("liveShareVideo");
+          var video = document.getElementById("stableLiveVideo");
           if (video) video.srcObject = null;
-          showLiveEmpty(true, "Live Share stopped. The host can start it again.");
-          socket.emit("watchroom:live-stop", { roomId: roomId });
+
+          var empty = document.getElementById("stableLiveEmpty");
+          if (empty) empty.hidden = false;
+
+          if (isRoomHost) socket.emit("watchroom:live-stop", { roomId: roomId });
         }
 
-        async function handleLiveViewerReady(viewerSocketId) {
+        function attachLiveStream(stream) {
+          var video = document.getElementById("stableLiveVideo");
+          var empty = document.getElementById("stableLiveEmpty");
+          if (empty) empty.hidden = true;
+          if (!video) return;
+          video.srcObject = stream;
+          video.muted = isRoomHost;
+          video.play().catch(function(){});
+          setTab("live");
+        }
+
+        function makePeer(targetSocketId, hostSide) {
+          var pc = new RTCPeerConnection({ iceServers: liveIceServers });
+
+          pc.onicecandidate = function(event) {
+            if (event.candidate) {
+              socket.emit("watchroom:live-ice", {
+                roomId: roomId,
+                target: targetSocketId,
+                candidate: event.candidate
+              });
+            }
+          };
+
+          if (hostSide && liveLocalStream) {
+            liveLocalStream.getTracks().forEach(function(track) {
+              pc.addTrack(track, liveLocalStream);
+            });
+          }
+
+          if (!hostSide) {
+            pc.ontrack = function(event) {
+              var stream = event.streams && event.streams[0];
+              if (stream) attachLiveStream(stream);
+            };
+          }
+
+          return pc;
+        }
+
+        async function startLiveShare() {
+          if (!isRoomHost) {
+            toast("Only the host can start Live Share");
+            return;
+          }
+
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+            toast("This browser does not support Live Share");
+            return;
+          }
+
+          try {
+            liveLocalStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+            attachLiveStream(liveLocalStream);
+            liveLocalStream.getVideoTracks()[0]?.addEventListener("ended", stopLiveShare);
+            socket.emit("watchroom:live-start", { roomId: roomId, name: getSessionName() });
+            sendMessage("Live Share started. Pick the shared video in this room.");
+            toast("Live Share started");
+          } catch {
+            toast("Live Share cancelled or blocked");
+          }
+        }
+
+        async function connectViewer(viewerSocketId) {
           if (!isRoomHost || !liveLocalStream || !viewerSocketId) return;
-
-          var pc = createLivePeerConnection(viewerSocketId, true);
+          var pc = makePeer(viewerSocketId, true);
           livePeerConnections[viewerSocketId] = pc;
-
           var offer = await pc.createOffer();
           await pc.setLocalDescription(offer);
-
-          socket.emit("watchroom:live-offer", {
-            roomId: roomId,
-            target: viewerSocketId,
-            description: pc.localDescription
-          });
-        }
-
-        function normalizeOpenTogetherUrl(url) {
-          var value = String(url || "").trim();
-          if (!value) return "";
-          if (value[0] === "/") return value;
-          if (/^https?:\/\//i.test(value)) return value;
-          if (/^[a-z0-9.-]+\.[a-z]{2,}(\/.*)?$/i.test(value)) return "https://" + value;
-          return "";
-        }
-
-        function updateOpenTogether(data) {
-          data = data || {};
-          if (data.url !== undefined) openTogetherUrl = normalizeOpenTogetherUrl(data.url);
-          if (data.countdownEndsAt !== undefined) openTogetherCountdownEndsAt = Number(data.countdownEndsAt || 0);
-
-          var link = document.getElementById("openTogetherLink");
-          var title = document.getElementById("openTogetherTitle");
-          var text = document.getElementById("openTogetherUrlText");
-          var input = document.getElementById("openTogetherInput");
-
-          if (openTogetherUrl) {
-            if (link) {
-              link.href = openTogetherUrl;
-              link.classList.remove("disabled");
-              link.textContent = "Open Watch Link";
-            }
-            if (title) title.textContent = "Ready to open";
-            if (text) text.textContent = openTogetherUrl;
-            if (input) input.value = openTogetherUrl;
-          } else {
-            if (link) {
-              link.href = "#";
-              link.classList.add("disabled");
-              link.textContent = "Waiting for link";
-            }
-            if (title) title.textContent = "No link yet";
-            if (text) text.textContent = "The host can share a link. Everyone opens it, then uses the room timeframe to stay synced.";
-          }
-
-          setRoomView("open");
-        }
-
-        function updateOpenTogetherClock() {
-          var time = document.getElementById("openTogetherTime");
-          if (time) time.textContent = formatTime(currentRoomSeconds());
-
-          var countdown = document.getElementById("openTogetherCountdown");
-          if (countdown) {
-            var left = Math.ceil((openTogetherCountdownEndsAt - Date.now()) / 1000);
-            countdown.textContent = left > 0 ? "Play in " + left : "Ready";
-          }
-        }
-
-        setInterval(updateOpenTogetherClock, 500);
-        updateOpenTogetherClock();
-
-        function setStatus(text) {
-          var el = document.getElementById("roomStatusText");
-          if (el) el.textContent = text;
-        }
-
-        function youtubeWatchUrl(videoId) {
-          return "https://www.youtube.com/watch?v=" + encodeURIComponent(String(videoId || ""));
-        }
-
-        function youtubeEmbedUrl(videoId) {
-          var origin = encodeURIComponent(window.location.origin);
-          return "https://www.youtube.com/embed/" + encodeURIComponent(String(videoId || "")) + "?enablejsapi=1&playsinline=1&rel=0&modestbranding=1&origin=" + origin;
-        }
-
-        function showYoutubeFallback(videoId) {
-          var fallback = document.getElementById("ytFallback");
-          var link = document.getElementById("ytFallbackLink");
-          if (link) link.href = youtubeWatchUrl(videoId || currentVideoId);
-          if (fallback) fallback.hidden = false;
-          setStatus("YouTube embed failed. Open it on YouTube and use the room clock.");
-        }
-
-        function hideYoutubeFallback() {
-          var fallback = document.getElementById("ytFallback");
-          if (fallback) fallback.hidden = true;
-        }
-
-        function showMode(kind) {
-          var generic = document.getElementById("genericEmbed");
-          var playerEl = document.getElementById("player");
-          var controls = document.querySelector(".dsSyncControls");
-
-          if (kind === "youtube") {
-            if (generic) generic.classList.remove("isActive");
-            if (playerEl) playerEl.classList.remove("isHidden");
-            if (controls) controls.classList.remove("isManualOnly");
-          } else {
-            if (generic) generic.classList.add("isActive");
-            if (playerEl) playerEl.classList.add("isHidden");
-            if (controls) controls.classList.add("isManualOnly");
-          }
-
-          setRoomView("player");
-        }
-
-        function createPlayer(videoId) {
-          currentVideoId = videoId || currentVideoId;
-          currentKind = "youtube";
-          hideYoutubeFallback();
-          showMode("youtube");
-          if (!currentVideoId) {
-            setStatus("Paste a trailer or embed link to start.");
-            return;
-          }
-
-          document.getElementById("trailerSetup")?.classList.add("isLoaded");
-
-          if (player && player.loadVideoById) {
-            suppressEmit = true;
-            hideYoutubeFallback();
-            player.loadVideoById(currentVideoId);
-            setTimeout(function(){ suppressEmit = false; }, 600);
-            setStatus("YouTube trailer loaded. Sync controls enabled.");
-            return;
-          }
-
-          if (!window.YT || !YT.Player) {
-            var iframe = document.getElementById("genericEmbed");
-            if (iframe) iframe.src = youtubeEmbedUrl(currentVideoId);
-            return;
-          }
-
-          player = new YT.Player("player", {
-            height: "390",
-            width: "640",
-            videoId: currentVideoId,
-            playerVars: {
-              enablejsapi: 1,
-              playsinline: 1,
-              modestbranding: 1,
-              rel: 0,
-              origin: window.location.origin,
-              widget_referrer: window.location.href
-            },
-            events: {
-              onReady: function() {
-                playerReady = true;
-                hideYoutubeFallback();
-                setStatus("YouTube trailer ready. Sync controls enabled.");
-              },
-              onError: function(event) {
-                showYoutubeFallback(currentVideoId);
-              },
-              onStateChange: function(event) {
-                if (suppressEmit || !playerReady) return;
-                if (event.data === YT.PlayerState.PLAYING) emitState(true);
-                if (event.data === YT.PlayerState.PAUSED) emitState(false);
-              }
-            }
-          });
-        }
-
-        function loadGenericEmbed(url) {
-          var clean = cleanEmbedUrl(url);
-          if (!clean) {
-            setStatus("Paste a valid embed URL.");
-            return;
-          }
-          var youtubeId = videoIdFromUrl(clean);
-          if (youtubeId) {
-            createPlayer(youtubeId);
-            return;
-          }
-          currentKind = "embed";
-          currentEmbedUrl = clean;
-          hideYoutubeFallback();
-          document.getElementById("trailerSetup")?.classList.add("isLoaded");
-          var iframe = document.getElementById("genericEmbed");
-          if (iframe) iframe.src = clean;
-          showMode("embed");
-          setStatus("Embed loaded. Use the room movie clock to line everyone up.");
-        }
-
-        window.onYouTubeIframeAPIReady = function() {
-          if (initialVideoId) createPlayer(initialVideoId);
-          else if (initialEmbedUrl) loadGenericEmbed(initialEmbedUrl);
-        };
-
-        if (initialKind !== "youtube" && initialEmbedUrl) {
-          loadGenericEmbed(initialEmbedUrl);
-        }
-
-        if (initialBrowserUrl) {
-          loadRoomBrowser(initialBrowserUrl, true);
-        }
-        setBrowserHostMode();
-
-        function emitState(playing) {
-          if (!player || !player.getCurrentTime) return;
-          socket.emit("watchroom:state", {
-            roomId: roomId,
-            playing: Boolean(playing),
-            time: player.getCurrentTime(),
-            videoId: currentVideoId
-          });
-        }
-
-        function applyState(state) {
-          if (!state) return;
-          if (state.videoId && state.videoId !== currentVideoId) createPlayer(state.videoId);
-          if (!player || !playerReady) return;
-
-          suppressEmit = true;
-          var target = Number(state.time || 0);
-          var current = player.getCurrentTime ? player.getCurrentTime() : 0;
-          if (Math.abs(current - target) > 1.25) player.seekTo(target, true);
-          if (state.playing) player.playVideo();
-          else player.pauseVideo();
-          setTimeout(function(){ suppressEmit = false; }, 700);
-        }
-
-        function addMessage(message) {
-          var root = document.getElementById("roomMessages");
-          if (!root) return;
-          var name = String(message.name || "Guest").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
-          var text = String(message.text || "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
-          root.insertAdjacentHTML("beforeend", '<div class="dsRoomMessage"><b>' + name + '</b><span>' + text + '</span></div>');
-          root.scrollTop = root.scrollHeight;
-        }
-
-        function sendRoomMessage(text) {
-          text = String(text || "").trim();
-          if (!text) return;
-          socket.emit("watchroom:message", { roomId: roomId, name: getSessionName(), text: text });
+          socket.emit("watchroom:live-offer", { roomId: roomId, target: viewerSocketId, description: pc.localDescription });
         }
 
         socket.on("connect", function() {
           socket.emit("watchroom:join", {
             roomId: roomId,
             name: initialName,
-            videoId: initialVideoId,
-            embedUrl: initialEmbedUrl,
-            mediaKind: initialKind,
-            browserUrl: initialBrowserUrl,
+            browserUrl: sharedUrl,
             user: getSessionName()
           });
         });
 
         socket.on("watchroom:joined", function(data) {
           isRoomHost = Boolean(data.isHost);
-          setBrowserHostMode();
+          setHostMode();
+
           if (data.room) {
             if (data.room.createdAt) roomCreatedAt = Number(data.room.createdAt);
-            if (data.room.videoId) createPlayer(data.room.videoId);
-            else if (data.room.embedUrl) loadGenericEmbed(data.room.embedUrl);
-            if (data.room.browserUrl) loadRoomBrowser(data.room.browserUrl, true);
+            if (data.room.openTogetherUrl) updateSharedLink(data.room.openTogetherUrl);
+            if (data.room.openTogetherCountdownEndsAt) countdownEndsAt = Number(data.room.openTogetherCountdownEndsAt || 0);
           }
-          if (data.state) setTimeout(function(){ applyState(data.state); }, 900);
+
           if (data.messages) data.messages.forEach(addMessage);
-          updateRoomClock();
+          updateClock();
         });
 
         socket.on("watchroom:viewers", function(data) {
           var count = Number(data.viewers || 0);
-          var label = count === 1 ? "1 watching" : count + " watching";
-          var el = document.getElementById("roomViewerCount");
-          if (el) el.textContent = label;
+          var el = document.getElementById("stableViewerCount");
+          if (el) el.textContent = String(count);
         });
 
-        socket.on("watchroom:state", applyState);
-
-        socket.on("watchroom:trailer", function(data) {
-          if (data.videoId) {
-            createPlayer(data.videoId);
-            showToast("YouTube trailer changed");
-          } else if (data.embedUrl) {
-            loadGenericEmbed(data.embedUrl);
-            showToast("Embed changed");
-          }
+        socket.on("watchroom:host", function(data) {
+          isRoomHost = Boolean(data && data.isHost);
+          setHostMode();
         });
 
-        socket.on("watchroom:browser", function(data) {
-          if (data && data.browserUrl) {
-            loadRoomBrowser(data.browserUrl, true);
-            showToast("Host changed the room browser");
-          }
-        });
+        socket.on("watchroom:message", addMessage);
 
-        socket.on("watchroom:remote-frame", function(data) {
-          var img = document.getElementById("remoteBrowserImage");
-          var empty = document.getElementById("remoteBrowserEmpty");
-          var input = document.getElementById("remoteBrowserInput");
-          if (img && data.image) {
-            img.src = data.image;
-            img.classList.add("isLoaded");
-          }
-          if (empty) empty.hidden = true;
-          if (input && data.url) input.value = data.url;
-          setRemoteBrowserVisible(true);
-        });
-
-        socket.on("watchroom:remote-status", function(data) {
-          if (data && data.message) showToast(data.message);
+        socket.on("watchroom:open-together", function(data) {
+          if (data && data.url) updateSharedLink(data.url);
+          if (data && data.countdownEndsAt !== undefined) countdownEndsAt = Number(data.countdownEndsAt || 0);
+          updateClock();
+          setTab("open");
         });
 
         socket.on("watchroom:live-status", function(data) {
-          if (data && data.active) {
-            setRoomView("live");
-            showLiveEmpty(true, "Connecting to the host's Live Share...");
-            if (!isRoomHost) {
-              socket.emit("watchroom:live-viewer-ready", { roomId: roomId });
-            }
-          } else if (data && data.message) {
-            showLiveEmpty(true, data.message);
+          if (data && data.active && !isRoomHost) {
+            setTab("live");
+            socket.emit("watchroom:live-viewer-ready", { roomId: roomId });
           }
         });
 
         socket.on("watchroom:live-viewer-ready", function(data) {
-          handleLiveViewerReady(data && data.viewerSocketId).catch(function() {
-            showToast("Could not connect viewer to Live Share");
-          });
+          connectViewer(data && data.viewerSocketId).catch(function(){ toast("Could not connect viewer"); });
         });
 
         socket.on("watchroom:live-offer", async function(data) {
@@ -19632,18 +19641,13 @@ function watchroomPage(req, res) {
               try { liveViewerPeer.close(); } catch {}
             }
 
-            liveViewerPeer = createLivePeerConnection(data.from, false);
+            liveViewerPeer = makePeer(data.from, false);
             await liveViewerPeer.setRemoteDescription(data.description);
             var answer = await liveViewerPeer.createAnswer();
             await liveViewerPeer.setLocalDescription(answer);
-
-            socket.emit("watchroom:live-answer", {
-              roomId: roomId,
-              target: data.from,
-              description: liveViewerPeer.localDescription
-            });
-          } catch (error) {
-            showToast("Could not connect to Live Share");
+            socket.emit("watchroom:live-answer", { roomId: roomId, target: data.from, description: liveViewerPeer.localDescription });
+          } catch {
+            toast("Could not connect to Live Share");
           }
         });
 
@@ -19651,18 +19655,14 @@ function watchroomPage(req, res) {
           if (!isRoomHost || !data || !data.from || !data.description) return;
           var pc = livePeerConnections[data.from];
           if (!pc) return;
-          try {
-            await pc.setRemoteDescription(data.description);
-          } catch {}
+          try { await pc.setRemoteDescription(data.description); } catch {}
         });
 
         socket.on("watchroom:live-ice", async function(data) {
           if (!data || !data.candidate) return;
           var pc = isRoomHost ? livePeerConnections[data.from] : liveViewerPeer;
           if (!pc) return;
-          try {
-            await pc.addIceCandidate(data.candidate);
-          } catch {}
+          try { await pc.addIceCandidate(data.candidate); } catch {}
         });
 
         socket.on("watchroom:live-stop", function() {
@@ -19670,516 +19670,96 @@ function watchroomPage(req, res) {
             try { liveViewerPeer.close(); } catch {}
             liveViewerPeer = null;
           }
-
-          var video = document.getElementById("liveShareVideo");
+          var video = document.getElementById("stableLiveVideo");
           if (!isRoomHost && video) video.srcObject = null;
-          showLiveEmpty(true, "Live Share stopped. Waiting for host.");
-        });
-
-        socket.on("watchroom:open-together", function(data) {
-          updateOpenTogether(data);
-          if (data && data.url) showToast("Host shared an Open Together link");
-        });
-
-        socket.on("watchroom:host", function(data) {
-          isRoomHost = Boolean(data && data.isHost);
-          setBrowserHostMode();
-          setLiveShareHostMode();
-          setOpenTogetherHostMode();
-        });
-
-        socket.on("watchroom:message", addMessage);
-
-        document.getElementById("setTrailerForm")?.addEventListener("submit", function(event) {
-          event.preventDefault();
-          var url = String(new FormData(event.currentTarget).get("trailerUrl") || "");
-          var videoId = videoIdFromUrl(url);
-          var embedUrl = cleanEmbedUrl(url);
-          if (!videoId && !embedUrl) {
-            showToast("Paste a valid trailer/embed link");
-            return;
+          var empty = document.getElementById("stableLiveEmpty");
+          if (empty) {
+            empty.hidden = false;
+            empty.querySelector("p").textContent = "Live Share stopped. Waiting for host.";
           }
+        });
 
-          if (videoId) createPlayer(videoId);
-          else loadGenericEmbed(embedUrl);
-
-          socket.emit("watchroom:trailer", {
-            roomId: roomId,
-            videoId: videoId,
-            embedUrl: embedUrl,
-            trailerUrl: url,
-            mediaKind: videoId ? "youtube" : "embed",
-            name: initialName
+        document.querySelectorAll("[data-stable-tab]").forEach(function(btn) {
+          btn.addEventListener("click", function() {
+            setTab(btn.dataset.stableTab);
+            if (btn.dataset.stableTab === "live" && !isRoomHost) {
+              socket.emit("watchroom:live-viewer-ready", { roomId: roomId });
+            }
           });
         });
 
-        document.getElementById("syncPlay")?.addEventListener("click", function() {
-          if (player && player.playVideo) player.playVideo();
-          emitState(true);
-        });
-
-        document.getElementById("syncPause")?.addEventListener("click", function() {
-          if (player && player.pauseVideo) player.pauseVideo();
-          emitState(false);
-        });
-
-        document.getElementById("syncBack")?.addEventListener("click", function() {
-          if (!player || !player.seekTo) return;
-          player.seekTo(Math.max(0, player.getCurrentTime() - 10), true);
-          emitState(false);
-        });
-
-        document.getElementById("syncForward")?.addEventListener("click", function() {
-          if (!player || !player.seekTo) return;
-          player.seekTo(player.getCurrentTime() + 10, true);
-          emitState(false);
-        });
-
-        document.getElementById("syncNow")?.addEventListener("click", function() {
-          emitState(player && player.getPlayerState && player.getPlayerState() === YT.PlayerState.PLAYING);
-          showToast("Synced room");
-        });
-
-        document.getElementById("copyRoomLink")?.addEventListener("click", function() {
-          navigator.clipboard?.writeText(location.href);
-          showToast("Invite link copied");
-        });
-
-        document.getElementById("toggleSetupBtn")?.addEventListener("click", function() {
-          var setup = document.getElementById("trailerSetup");
-          if (!setup) return;
-          setup.classList.toggle("isForceVisible");
-          this.textContent = setup.classList.contains("isForceVisible") ? "Hide media" : "Change media";
-        });
-
-        document.getElementById("toggleBrowserBtn")?.addEventListener("click", function() {
-          setRoomView("browser");
-        });
-
-        document.getElementById("showBrowserBtn")?.addEventListener("click", function() {
-          setBrowserVisible(true);
-        });
-
-        document.getElementById("showPlayerBtn")?.addEventListener("click", function() {
-          setRoomView("player");
-          showMode(currentKind === "youtube" ? "youtube" : "embed");
-        });
-
-        document.getElementById("roomBrowserForm")?.addEventListener("submit", function(event) {
+        document.getElementById("stableOpenForm")?.addEventListener("submit", function(event) {
           event.preventDefault();
-          if (!isRoomHost) {
-            showToast("Only the host can control the room browser");
-            return;
-          }
+          if (!isRoomHost) return toast("Only the host can share the link");
 
-          var url = String(new FormData(event.currentTarget).get("browserUrl") || "");
-          var clean = cleanBrowserUrl(url);
-          if (!clean) {
-            showToast("Paste a valid website URL or DropStream path");
-            return;
-          }
+          var url = normalizeUrl(document.getElementById("stableOpenInput")?.value || "");
+          if (!url) return toast("Paste a valid link");
 
-          loadRoomBrowser(clean, false);
-          socket.emit("watchroom:browser", {
-            roomId: roomId,
-            browserUrl: clean,
-            user: getSessionName()
-          });
+          updateSharedLink(url);
+          socket.emit("watchroom:open-together", { roomId: roomId, url: url, countdownEndsAt: countdownEndsAt });
+          sendMessage("Open Together link shared. Open it and follow the room time.");
         });
 
-        document.getElementById("showRemoteBrowserBtn")?.addEventListener("click", function() {
-          setRemoteBrowserVisible(true);
+        document.getElementById("stableCountdownBtn")?.addEventListener("click", function() {
+          if (!isRoomHost) return toast("Only the host can start countdown");
+          countdownEndsAt = Date.now() + 10000;
+          socket.emit("watchroom:open-together", { roomId: roomId, url: sharedUrl, countdownEndsAt: countdownEndsAt });
+          sendMessage("Countdown started. Press play when it says Ready. Set your player to " + formatTime(currentRoomSeconds()) + ".");
+          updateClock();
         });
 
-        document.getElementById("showLiveShareBtn")?.addEventListener("click", function() {
-          setRoomView("live");
-          if (!isRoomHost) {
-            socket.emit("watchroom:live-viewer-ready", { roomId: roomId });
-          }
+        document.getElementById("stableSendTimeBtn")?.addEventListener("click", function() {
+          sendMessage("Set your player to " + formatTime(currentRoomSeconds()) + ".");
         });
 
-        document.getElementById("startLiveShareBtn")?.addEventListener("click", startLiveShare);
-        document.getElementById("stopLiveShareBtn")?.addEventListener("click", stopLiveShare);
+        document.getElementById("stableCopyLinkBtn")?.addEventListener("click", function() {
+          copyText((sharedUrl || "No link yet") + " — set player to " + formatTime(currentRoomSeconds()), "Copied link + time");
+        });
 
-        document.getElementById("fullscreenLiveShareBtn")?.addEventListener("click", function() {
-          var stage = document.querySelector(".dsLiveShareStage");
+        document.getElementById("stableCopyInviteBtn")?.addEventListener("click", function() {
+          copyText(location.href, "Invite copied");
+        });
+
+        document.getElementById("stableCopyTimeBtn")?.addEventListener("click", function() {
+          copyText("Set your player to " + formatTime(currentRoomSeconds()), "Time copied");
+        });
+
+        document.getElementById("stableChatTimeBtn")?.addEventListener("click", function() {
+          sendMessage("Set your player to " + formatTime(currentRoomSeconds()) + ".");
+        });
+
+        document.getElementById("stableStartLiveBtn")?.addEventListener("click", startLiveShare);
+        document.getElementById("stableStopLiveBtn")?.addEventListener("click", stopLiveShare);
+
+        document.getElementById("stableFullscreenLiveBtn")?.addEventListener("click", function() {
+          var stage = document.querySelector(".dsStableLiveStage");
           if (!stage) return;
           if (!document.fullscreenElement) stage.requestFullscreen?.();
           else document.exitFullscreen?.();
         });
 
-        document.getElementById("showOpenTogetherBtn")?.addEventListener("click", function() {
-          setRoomView("open");
-        });
-
-        document.getElementById("openTogetherForm")?.addEventListener("submit", function(event) {
+        document.getElementById("stableChatForm")?.addEventListener("submit", function(event) {
           event.preventDefault();
-          if (!isRoomHost) {
-            showToast("Only the host can share the Open Together link");
-            return;
-          }
-
-          var url = normalizeOpenTogetherUrl(new FormData(event.currentTarget).get("openTogetherUrl") || "");
-          if (!url) {
-            showToast("Paste a valid link");
-            return;
-          }
-
-          updateOpenTogether({ url: url, countdownEndsAt: 0 });
-          socket.emit("watchroom:open-together", {
-            roomId: roomId,
-            url: url,
-            countdownEndsAt: 0
-          });
-          sendRoomMessage("Open Together link shared. Open it and follow the room timeframe.");
-        });
-
-        document.getElementById("openTogetherCountdownBtn")?.addEventListener("click", function() {
-          if (!isRoomHost) {
-            showToast("Only the host can start countdown");
-            return;
-          }
-
-          var endsAt = Date.now() + 10000;
-          updateOpenTogether({ url: openTogetherUrl, countdownEndsAt: endsAt });
-          socket.emit("watchroom:open-together", {
-            roomId: roomId,
-            url: openTogetherUrl,
-            countdownEndsAt: endsAt
-          });
-          sendRoomMessage("Countdown started. Press play when it says Ready. Put your timeframe at " + formatTime(currentRoomSeconds()));
-        });
-
-        document.getElementById("openTogetherSendTimeBtn")?.addEventListener("click", function() {
-          sendRoomMessage("Put your timeframe at " + formatTime(currentRoomSeconds()));
-        });
-
-        document.getElementById("openTogetherCopyBtn")?.addEventListener("click", function() {
-          var message = (openTogetherUrl || "No link yet") + " — put your timeframe at " + formatTime(currentRoomSeconds());
-          navigator.clipboard?.writeText(message);
-          showToast("Copied Open Together info");
-        });
-
-        document.getElementById("remoteBrowserForm")?.addEventListener("submit", function(event) {
-          event.preventDefault();
-          if (!isRoomHost) {
-            showToast("Only the host can control the remote browser");
-            return;
-          }
-
-          var url = String(new FormData(event.currentTarget).get("remoteUrl") || "");
-          if (!url.trim()) {
-            showToast("Paste a URL to open");
-            return;
-          }
-
-          setRemoteBrowserVisible(true);
-          socket.emit("watchroom:remote-start", {
-            roomId: roomId,
-            url: url,
-            user: getSessionName()
-          });
-        });
-
-        document.getElementById("remoteBrowserScreen")?.addEventListener("click", function(event) {
-          if (!isRoomHost) {
-            showToast("Only the host can click the remote browser");
-            return;
-          }
-
-          var rect = event.currentTarget.getBoundingClientRect();
-          var x = (event.clientX - rect.left) / rect.width;
-          var y = (event.clientY - rect.top) / rect.height;
-          socket.emit("watchroom:remote-click", {
-            roomId: roomId,
-            x: Math.max(0, Math.min(1, x)),
-            y: Math.max(0, Math.min(1, y))
-          });
-        });
-
-        document.getElementById("remoteTextForm")?.addEventListener("submit", function(event) {
-          event.preventDefault();
-          if (!isRoomHost) {
-            showToast("Only the host can type in the remote browser");
-            return;
-          }
-
-          var input = document.getElementById("remoteTextInput");
-          var text = String(input && input.value || "");
+          var input = event.currentTarget.querySelector("input[name='message']");
+          var text = String(input && input.value || "").trim();
           if (!text) return;
-          socket.emit("watchroom:remote-type", { roomId: roomId, text: text });
-          if (input) input.value = "";
+          sendMessage(text);
+          input.value = "";
         });
 
-        document.getElementById("remoteEnterBtn")?.addEventListener("click", function() {
-          if (!isRoomHost) return showToast("Only the host can control the remote browser");
-          socket.emit("watchroom:remote-key", { roomId: roomId, key: "Enter" });
-        });
-
-        document.getElementById("remoteBackBtn")?.addEventListener("click", function() {
-          if (!isRoomHost) return showToast("Only the host can control the remote browser");
-          socket.emit("watchroom:remote-key", { roomId: roomId, key: "Alt+Left" });
-        });
-
-        document.getElementById("remoteStatusBtn")?.addEventListener("click", function() {
-          fetch("/api/remote-browser/status")
-            .then(function(res){ return res.json(); })
-            .then(function(data){
-              var msg = data.ready
-                ? "Remote Browser ready"
-                : (data.runtimeHint || "Remote Browser is not ready");
-              showToast(msg);
-              sendRoomMessage("Remote Browser status: " + msg);
-            })
-            .catch(function(){ showToast("Could not check Remote Browser setup"); });
-        });
-
-        function copyTimePhrase() {
-          var phrase = timeframePhrase();
-          navigator.clipboard?.writeText(phrase);
-          showToast("Copied: " + phrase);
-        }
-
-        document.getElementById("copyTimeframeBtn")?.addEventListener("click", copyTimePhrase);
-        document.getElementById("copyManualTimeBtn")?.addEventListener("click", copyTimePhrase);
-        document.getElementById("sendTimeframeBtn")?.addEventListener("click", function() {
-          sendRoomMessage(timeframePhrase());
-        });
-
-        document.getElementById("showPlayerBtn")?.addEventListener("click", function() {
-          document.getElementById("playerWrap")?.classList.remove("isClockOnly");
-          document.getElementById("manualTimeBox")?.classList.remove("forceShow");
-          this.classList.add("active");
-          document.getElementById("showClockBtn")?.classList.remove("active");
-        });
-
-        document.getElementById("showClockBtn")?.addEventListener("click", function() {
-          document.getElementById("playerWrap")?.classList.add("isClockOnly");
-          document.getElementById("manualTimeBox")?.classList.add("forceShow");
-          this.classList.add("active");
-          document.getElementById("showPlayerBtn")?.classList.remove("active");
-        });
-
-        function attachChat(formId) {
-          document.getElementById(formId)?.addEventListener("submit", function(event) {
+        document.getElementById("stableOpenLink")?.addEventListener("click", function(event) {
+          if (!sharedUrl) {
             event.preventDefault();
-            var input = event.currentTarget.elements.message;
-            var text = String(input.value || "").trim();
-            if (!text) return;
-            input.value = "";
-            sendRoomMessage(text);
-          });
-        }
+            toast("No link shared yet");
+          }
+        });
 
-        attachChat("roomChatForm");
-        attachChat("floatingChatForm");
+        setHostMode();
       })();
     </script>
   </main>`;
 
-  res.send(pageShell({ title: `${SITE_NAME} — Watchroom ${safeRoomId}`, active: "watchrooms", body }));
-}
-
-
-function authPage(res, mode = "login") {
-  const isSignup = mode === "signup";
-  const body = `<main class="dsAuthPage" data-auth-mode="${isSignup ? "signup" : "login"}">
-    <section class="dsAuthShell">
-      <a class="dsAuthBrand" href="/welcome"><span></span><b>${escapeHtml(BRAND_WORDMARK)}</b></a>
-      <div class="dsAuthCard">
-        <span class="dsEyebrow">${isSignup ? "Start watching" : "Welcome back"}</span>
-        <h1>${isSignup ? "Create your account" : "Log in"}</h1>
-        <p>${isSignup ? "Make a local DropStream account for this browser. Profiles, My List, Liked, and Continue Watching stay saved here." : "Sign in to your local DropStream account on this browser."}</p>
-
-        <form id="dsAuthForm" class="dsAuthForm">
-          ${isSignup ? `<label>Display name<input name="name" placeholder="Lukas" autocomplete="name" required /></label>` : ""}
-          <label>Email<input name="email" type="email" placeholder="you@example.com" autocomplete="email" required /></label>
-          <label>Password<input name="password" type="password" placeholder="••••••••" autocomplete="${isSignup ? "new-password" : "current-password"}" required minlength="4" /></label>
-          <button class="dsPrimaryBtn" type="submit">${isSignup ? "Create account" : "Log in"}</button>
-        </form>
-
-        <div class="dsAuthSwap">\n          ${isSignup ? `Already have an account? <a href="/login">Log in</a>` : `New here? <a href="/signup">Create an account</a>`}\n        </div>\n        <div class="dsAuthRequiredNote">You must be logged in to use DropStream, profiles, Continue Watching, My List, Liked, and Kids Safe Mode.</div>
-      </div>
-      <div class="dsAuthAside">
-        <h2>What this unlocks</h2>
-        <ul>
-          <li>Better profile picker</li>
-          <li>Continue Watching</li>
-          <li>Liked titles</li>
-          <li>My List</li>
-          <li>Kids Safe profile</li>
-        </ul>
-      </div>
-    </section>
-  </main>`;
-
-  res.send(pageShell({ title: `${SITE_NAME} — ${isSignup ? "Sign up" : "Login"}`, active: "login", body }));
-}
-
-function accountPage(req, res) {
-  const body = `<main class="dsPlainPage dsAccountPage dsAccountPro">
-    ${dsPageHeader("Account Center", "Manage your local DropStream account, profiles, privacy, saved watching, and watchroom settings.", "Account")}
-
-    <section class="dsAccountHero">
-      <div id="accountIdentity" class="dsAccountIdentity dsAccountIdentityPro">Loading...</div>
-      <div class="dsAccountQuickStats">
-        <div><b id="statProfiles">0</b><span>Profiles</span></div>
-        <div><b id="statContinue">0</b><span>Continue</span></div>
-        <div><b id="statLiked">0</b><span>Liked</span></div>
-        <div><b id="statList">0</b><span>My List</span></div>
-      </div>
-    </section>
-
-    <section class="dsAccountGrid dsAccountGridPro">
-      <article class="dsAccountPanel">
-        <h2>Profile & identity</h2>
-        <p>Change the local account display name and choose which profile is active.</p>
-        <form id="accountNameForm" class="dsMiniForm">
-          <label>Display name<input name="displayName" id="accountDisplayName" placeholder="Display name" /></label>
-          <button class="dsPrimaryBtn" type="submit">Save name</button>
-        </form>
-        <div class="dsMyListControls">
-          <a href="/profiles">Manage Profiles</a>
-          <a href="/continue-watching">Continue Watching</a>
-          <button type="button" id="logoutBtn">Log out</button>
-        </div>
-      </article>
-
-      <article class="dsAccountPanel">
-        <h2>Library</h2>
-        <p>Jump to your saved areas or clear only the section you want.</p>
-        <div class="dsAccountButtonGrid">
-          <a href="/my-list">My List</a>
-          <a href="/liked">Liked</a>
-          <a href="/continue-watching">Continue Watching</a>
-          <a href="/watchrooms">Watchrooms</a>
-        </div>
-        <div class="dsDangerGrid">
-          <button type="button" data-clear-key="movieverse.watchlist">Clear My List</button>
-          <button type="button" data-clear-key="movieverse.liked">Clear Liked</button>
-          <button type="button" data-clear-key="movieverse.continue">Clear Continue</button>
-        </div>
-      </article>
-
-      <article class="dsAccountPanel">
-        <h2>Kids & safety</h2>
-        <p>Kids Safe Mode filters adult content and sends the Kids profile directly to a safer page.</p>
-        <div class="dsAccountButtonGrid">
-          <a href="/kids">Open Kids Mode</a>
-          <a href="/profiles">Choose Profile</a>
-        </div>
-      </article>
-
-      <article class="dsAccountPanel">
-        <h2>Reset local data</h2>
-        <p>This demo stores accounts, profiles, My List, Liked, Continue Watching, and settings inside this browser only.</p>
-        <button type="button" id="wipeAccountData" class="dsDangerBtn">Clear all local DropStream data</button>
-      </article>
-    </section>
-  </main>`;
-
-  res.send(pageShell({ title: `${SITE_NAME} — Account`, active: "profiles", body }));
-}
-
-function continueWatchingPage(req, res) {
-  const body = `<main class="dsPlainPage">
-    ${dsPageHeader("Continue Watching", "Titles you press Play on appear here with local progress.", "Saved watching")}
-    <section class="dsMyListControls">
-      <a href="/my-list">My List</a>
-      <a href="/liked">Liked</a>
-      <a href="/movies">Movies</a>
-      <a href="/tv">TV Shows</a>
-      <button type="button" id="clearContinueInline">Clear Continue Watching</button>
-    </section>
-    <section class="dsContent noHero">
-      <div id="continueGrid" class="dsGrid"></div>
-    </section>
-    <script>
-      document.getElementById('clearContinueInline')?.addEventListener('click', () => {
-        if (!confirm('Clear Continue Watching?')) return;
-        localStorage.setItem('movieverse.continue', '[]');
-        location.reload();
-      });
-    </script>
-  </main>`;
-
-  res.send(pageShell({ title: `${SITE_NAME} — Continue Watching`, active: "continue", body }));
-}
-
-function profilesPage(req, res) {
-  const body = `<main class="profileGate dsBetterProfiles dsProfilesPro">
-    <section class="profileGateInner dsProfilesShell">
-      <a class="dsAuthBrand dsProfilesBrand" href="/"><span></span><b>${escapeHtml(BRAND_WORDMARK)}</b></a>
-
-      <div class="dsProfilesHeader">
-        <div>
-          <span class="dsEyebrow">Profiles</span>
-          <h1>Who's watching?</h1>
-          <p class="dsProfileSub">Pick a profile, create a new one, edit icons, or jump into Kids Safe Mode.</p>
-        </div>
-        <div class="dsProfileHeaderActions">
-          <a class="dsSecondaryBtn" href="/account">Account</a>
-          <button class="dsPrimaryBtn" type="button" id="addProfileTopBtn">Add Profile</button>
-        </div>
-      </div>
-
-      <div id="dynamicProfiles" class="profileGrid dsDynamicProfiles dsProfileGridPro">
-        <a class="profileCard" href="/" data-profile-name="Main"><span class="profileAvatar">☺</span><span>Main</span></a>
-        <a class="profileCard" href="/kids" data-profile-name="Kids"><span class="profileAvatar">K</span><span>Kids</span></a>
-      </div>
-
-      <section class="dsProfileManager">
-        <div>
-          <h2>Profile tools</h2>
-          <p>Profiles are saved locally in this browser. Kids profile is locked to Kids Safe Mode.</p>
-        </div>
-        <div class="dsMyListControls dsProfileControls">
-          <a href="/continue-watching">Continue Watching</a>
-          <a href="/liked">Liked</a>
-          <button type="button" id="manageProfilesBtn">Reset Profiles</button>
-        </div>
-      </section>
-    </section>
-
-    <dialog id="profileEditor" class="dsProfileDialog">
-      <form method="dialog" id="profileEditorForm">
-        <div class="dsDialogHead">
-          <h2 id="profileDialogTitle">Add Profile</h2>
-          <button type="button" id="closeProfileDialog">×</button>
-        </div>
-        <input type="hidden" name="profileIndex" id="profileIndex" value="-1" />
-        <label>Profile name<input name="profileName" id="profileNameInput" maxlength="18" placeholder="Profile name" required /></label>
-        <label>Icon<input name="profileIcon" id="profileIconInput" maxlength="2" placeholder="☺" /></label>
-        <label class="dsCheckLine"><input type="checkbox" name="profileKids" id="profileKidsInput" /> Kids Safe profile</label>
-        <label>Start page
-          <select name="profileHref" id="profileHrefInput">
-            <option value="/">Home</option>
-            <option value="/movies">Movies</option>
-            <option value="/tv">TV Shows</option>
-            <option value="/kids">Kids Safe</option>
-            <option value="/watchrooms">Watchrooms</option>
-            <option value="/continue-watching">Continue Watching</option>
-          </select>
-        </label>
-        <div class="dsDialogActions">
-          <button class="dsDangerBtn" type="button" id="deleteProfileBtn">Delete</button>
-          <button class="dsSecondaryBtn" type="button" id="cancelProfileEditor">Cancel</button>
-          <button class="dsPrimaryBtn" type="submit">Save Profile</button>
-        </div>
-      </form>
-    </dialog>
-  </main>`;
-  res.send(pageShell({ title: `${SITE_NAME} — Profiles`, active: "profiles", body }));
-}
-
-async function apiStatus(req, res) {
-  res.json({
-    ok: true,
-    site: SITE_NAME,
-    tmdbConfigured: Boolean(TMDB_API_KEY),
-    cacheSize: memoryCache.size,
-    time: new Date().toISOString(),
-  });
+  res.send(pageShell({ title: `${SITE_NAME} — ${room.name}`, active: "watchrooms", body }));
 }
 
 app.get("/welcome", welcomePage);
