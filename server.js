@@ -79,6 +79,8 @@ function publicRoom(room = {}) {
     videoId: room.videoId || "",
     mediaKind: room.mediaKind || (room.videoId ? "youtube" : "embed"),
     browserUrl: room.browserUrl || "",
+    openTogetherUrl: room.openTogetherUrl || "",
+    openTogetherCountdownEndsAt: Number(room.openTogetherCountdownEndsAt || 0),
     host: room.host || "Host",
     viewers: Number(room.viewers || 0),
     createdAt: Number(room.createdAt || Date.now()),
@@ -112,6 +114,8 @@ function getOrCreateWatchRoom(roomId, data = {}) {
     videoId: String(data.videoId || "").slice(0, 40),
     mediaKind: String(data.mediaKind || (data.videoId ? "youtube" : "embed")).slice(0, 20),
     browserUrl: normalizeSharedBrowserUrl(data.browserUrl || ""),
+    openTogetherUrl: "",
+    openTogetherCountdownEndsAt: 0,
     host: String(data.host || "Host").slice(0, 40),
     hostSocketId: "",
     viewers: 0,
@@ -15979,6 +15983,298 @@ function pageShell({ title = SITE_NAME, description = "Premium movie and TV disc
       }
     }
 
+
+    /* ============================================================
+       v55 WATCHROOM LIVE SHARE
+       Reliable fallback: host shares a tab/window through WebRTC.
+       ============================================================ */
+
+    .dsPlayerStage[data-room-view="live"] #playerWrap,
+    .dsPlayerStage[data-room-view="live"] #manualTimeBox,
+    .dsPlayerStage[data-room-view="live"] #roomBrowserPanel,
+    .dsPlayerStage[data-room-view="live"] #remoteBrowserPanel {
+      display: none !important;
+    }
+
+    .dsPlayerStage[data-room-view="live"] #liveSharePanel {
+      display: grid !important;
+    }
+
+    .dsPlayerStage[data-room-view="player"] #liveSharePanel,
+    .dsPlayerStage[data-room-view="browser"] #liveSharePanel,
+    .dsPlayerStage[data-room-view="remote"] #liveSharePanel,
+    .dsPlayerStage[data-room-view="clock"] #liveSharePanel {
+      display: none !important;
+    }
+
+    .dsLiveSharePanel {
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+      margin-top: 12px;
+      border-radius: 28px;
+      background:
+        radial-gradient(620px circle at 0% 0%, rgba(53,216,255,.12), transparent 46%),
+        radial-gradient(520px circle at 100% 0%, rgba(140,107,255,.12), transparent 46%),
+        rgba(255,255,255,.052);
+      border: 1px solid rgba(255,255,255,.11);
+      box-shadow: 0 24px 80px rgba(0,0,0,.28);
+    }
+
+    .dsLiveSharePanel[hidden] {
+      display: none !important;
+    }
+
+    .dsLiveShareTop {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .dsLiveShareTop h2 {
+      margin: 4px 0 6px;
+      color: white;
+      font-family: "Space Grotesk", Inter, Arial, sans-serif;
+      font-size: clamp(30px, 4vw, 54px);
+      line-height: .92;
+      letter-spacing: -.07em;
+    }
+
+    .dsLiveShareTop p {
+      margin: 0;
+      color: rgba(248,251,255,.64);
+      line-height: 1.48;
+      font-weight: 650;
+    }
+
+    .dsLiveShareStage {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      min-height: clamp(300px, 52vw, 580px);
+      overflow: hidden;
+      border-radius: 24px;
+      background: #000;
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.025), 0 20px 70px rgba(0,0,0,.30);
+    }
+
+    .dsLiveShareStage video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #000;
+    }
+
+    .dsLiveShareControls {
+      display: flex;
+      gap: 9px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .dsLiveShareControls button:disabled {
+      opacity: .42;
+      cursor: not-allowed;
+    }
+
+    .dsLiveShareStage:fullscreen {
+      width: 100vw;
+      height: 100vh;
+      border-radius: 0;
+    }
+
+    @media(max-width: 760px) {
+      .dsLiveShareTop {
+        display: grid;
+      }
+
+      .dsLiveShareControls {
+        display: grid;
+      }
+
+      .dsLiveShareControls button {
+        width: 100%;
+      }
+    }
+
+
+    /* ============================================================
+       v56 OPEN TOGETHER MODE
+       Fallback if the host cannot live share.
+       ============================================================ */
+
+    .dsPlayerStage[data-room-view="open"] #playerWrap,
+    .dsPlayerStage[data-room-view="open"] #manualTimeBox,
+    .dsPlayerStage[data-room-view="open"] #roomBrowserPanel,
+    .dsPlayerStage[data-room-view="open"] #remoteBrowserPanel,
+    .dsPlayerStage[data-room-view="open"] #liveSharePanel {
+      display: none !important;
+    }
+
+    .dsPlayerStage[data-room-view="open"] #openTogetherPanel {
+      display: grid !important;
+    }
+
+    .dsPlayerStage[data-room-view="player"] #openTogetherPanel,
+    .dsPlayerStage[data-room-view="browser"] #openTogetherPanel,
+    .dsPlayerStage[data-room-view="remote"] #openTogetherPanel,
+    .dsPlayerStage[data-room-view="clock"] #openTogetherPanel,
+    .dsPlayerStage[data-room-view="live"] #openTogetherPanel {
+      display: none !important;
+    }
+
+    .dsOpenTogetherPanel {
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+      margin-top: 12px;
+      border-radius: 28px;
+      background:
+        radial-gradient(620px circle at 0% 0%, rgba(255,224,138,.12), transparent 46%),
+        radial-gradient(520px circle at 100% 0%, rgba(53,216,255,.10), transparent 46%),
+        rgba(255,255,255,.052);
+      border: 1px solid rgba(255,255,255,.11);
+      box-shadow: 0 24px 80px rgba(0,0,0,.28);
+    }
+
+    .dsOpenTogetherPanel[hidden] {
+      display: none !important;
+    }
+
+    .dsOpenTogetherForm {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .dsOpenTogetherForm input {
+      min-height: 50px;
+      padding: 0 14px;
+      border-radius: 16px;
+      color: white;
+      background: rgba(255,255,255,.075);
+      border: 1px solid rgba(255,255,255,.12);
+      outline: 0;
+      font-weight: 650;
+    }
+
+    .dsOpenTogetherForm.isGuestLocked {
+      opacity: .55;
+    }
+
+    .dsOpenTogetherCard {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 18px;
+      border-radius: 24px;
+      background: rgba(255,255,255,.065);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .dsOpenTogetherCard span {
+      color: rgba(248,251,255,.54);
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .dsOpenTogetherCard h3 {
+      margin: 6px 0;
+      color: white;
+      font-family: "Space Grotesk", Inter, Arial, sans-serif;
+      font-size: clamp(26px, 4vw, 44px);
+      line-height: .95;
+      letter-spacing: -.06em;
+    }
+
+    .dsOpenTogetherCard p {
+      max-width: 720px;
+      margin: 0;
+      color: rgba(248,251,255,.60);
+      overflow-wrap: anywhere;
+      line-height: 1.45;
+      font-weight: 650;
+    }
+
+    .dsOpenTogetherCard a.disabled {
+      opacity: .46;
+      pointer-events: none;
+    }
+
+    .dsOpenTogetherSync {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .dsOpenTogetherSync div {
+      min-height: 120px;
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 4px;
+      text-align: center;
+      border-radius: 24px;
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .dsOpenTogetherSync small {
+      color: rgba(248,251,255,.55);
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .dsOpenTogetherSync strong {
+      color: white;
+      font-family: "Space Grotesk", Inter, Arial, sans-serif;
+      font-size: clamp(42px, 7vw, 84px);
+      line-height: .9;
+      letter-spacing: -.08em;
+    }
+
+    .dsOpenTogetherControls {
+      display: flex;
+      gap: 9px;
+      flex-wrap: wrap;
+    }
+
+    .dsOpenTogetherControls button:disabled,
+    .dsOpenTogetherForm input:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+
+    @media(max-width: 760px) {
+      .dsOpenTogetherForm,
+      .dsOpenTogetherSync {
+        grid-template-columns: 1fr;
+      }
+
+      .dsOpenTogetherCard {
+        display: grid;
+      }
+
+      .dsOpenTogetherCard a,
+      .dsOpenTogetherControls button {
+        width: 100%;
+      }
+
+      .dsOpenTogetherControls {
+        display: grid;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -18490,6 +18786,8 @@ function watchroomPage(req, res) {
         <div class="dsPlayerStage">
           <div class="dsEmbedTabs dsEmbedTabsClean">
             <button id="showPlayerBtn" type="button" class="active">Player</button>
+            <button id="showLiveShareBtn" type="button">Live Share</button>
+            <button id="showOpenTogetherBtn" type="button">Open Together</button>
             <button id="showBrowserBtn" type="button">Browser</button>
             <button id="showRemoteBrowserBtn" type="button">Remote</button>
             <button id="showClockBtn" type="button">Timeframe</button>
@@ -18511,6 +18809,77 @@ function watchroomPage(req, res) {
             <div class="dsBigTime" id="manualBigTime">00:00</div>
             <button class="dsGhostPill dsManualCopyBtn" id="copyManualTimeBtn" type="button">Copy timeframe message</button>
           </div>
+
+          <section class="dsLiveSharePanel" id="liveSharePanel" hidden>
+            <div class="dsLiveShareTop">
+              <div>
+                <span class="dsEyebrow">Best option</span>
+                <h2>Live Tab Share</h2>
+                <p id="liveShareHelp">The host shares a browser tab/window here. Guests watch the live stream inside the room, so embeds cannot block it.</p>
+              </div>
+              <span class="dsHostBadge" id="liveShareBadge">Host controls</span>
+            </div>
+
+            <div class="dsLiveShareStage">
+              <video id="liveShareVideo" playsinline autoplay controls></video>
+              <div id="liveShareEmpty" class="dsRoomBrowserEmpty">
+                <h3>Waiting for host</h3>
+                <p>The host can click Start Live Share and pick the movie/website tab. Guests will see it here.</p>
+              </div>
+            </div>
+
+            <div class="dsLiveShareControls">
+              <button class="dsPrimaryBtn" id="startLiveShareBtn" type="button">Start Live Share</button>
+              <button class="dsSecondaryBtn" id="stopLiveShareBtn" type="button">Stop</button>
+              <button class="dsGhostPill" id="fullscreenLiveShareBtn" type="button">Fullscreen</button>
+            </div>
+
+            <p class="dsRoomBrowserNote">This works on Render without Docker, Puppeteer, or iframe embedding. Pick “share tab audio” when your browser asks.</p>
+          </section>
+
+          <section class="dsOpenTogetherPanel" id="openTogetherPanel" hidden>
+            <div class="dsLiveShareTop">
+              <div>
+                <span class="dsEyebrow">Backup option</span>
+                <h2>Open Together</h2>
+                <p id="openTogetherHelp">If Live Share or embeds fail, everyone opens the same link in their own tab and follows the shared room clock.</p>
+              </div>
+              <span class="dsHostBadge" id="openTogetherBadge">Host controls</span>
+            </div>
+
+            <form id="openTogetherForm" class="dsOpenTogetherForm">
+              <input name="openTogetherUrl" id="openTogetherInput" placeholder="Paste the movie/website link everyone should open" />
+              <button class="dsPrimaryBtn" type="submit">Share Link</button>
+            </form>
+
+            <div class="dsOpenTogetherCard">
+              <div>
+                <span>Shared watch link</span>
+                <h3 id="openTogetherTitle">No link yet</h3>
+                <p id="openTogetherUrlText">The host can share a link. Everyone opens it, then uses the room timeframe to stay synced.</p>
+              </div>
+              <a id="openTogetherLink" class="dsPrimaryBtn disabled" href="#" target="_blank" rel="noopener">Open Watch Link</a>
+            </div>
+
+            <div class="dsOpenTogetherSync">
+              <div>
+                <small>Everyone set your player to</small>
+                <strong id="openTogetherTime">00:00</strong>
+              </div>
+              <div>
+                <small>Host countdown</small>
+                <strong id="openTogetherCountdown">Ready</strong>
+              </div>
+            </div>
+
+            <div class="dsOpenTogetherControls">
+              <button class="dsPrimaryBtn" id="openTogetherCountdownBtn" type="button">Start 10s Countdown</button>
+              <button class="dsSecondaryBtn" id="openTogetherSendTimeBtn" type="button">Send Timeframe</button>
+              <button class="dsGhostPill" id="openTogetherCopyBtn" type="button">Copy Link + Time</button>
+            </div>
+
+            <p class="dsRoomBrowserNote">This does not control the outside site, but it always works because everyone opens the real site directly.</p>
+          </section>
 
           <section class="dsRoomBrowserPanel" id="roomBrowserPanel" hidden>
             <div class="dsRoomBrowserTop">
@@ -18637,6 +19006,12 @@ function watchroomPage(req, res) {
         var currentBrowserUrl = initialBrowserUrl;
         var isRoomHost = false;
         var socket = io();
+        var liveLocalStream = null;
+        var livePeerConnections = {};
+        var liveViewerPeer = null;
+        var liveIceServers = [{ urls: "stun:stun.l.google.com:19302" }];
+        var openTogetherUrl = "";
+        var openTogetherCountdownEndsAt = 0;
 
         function getSessionName() {
           try {
@@ -18705,6 +19080,8 @@ function watchroomPage(req, res) {
           var manual = document.getElementById("manualTimeBox");
           var browserPanel = document.getElementById("roomBrowserPanel");
           var remotePanel = document.getElementById("remoteBrowserPanel");
+          var livePanel = document.getElementById("liveSharePanel");
+          var openTogetherPanel = document.getElementById("openTogetherPanel");
           var controls = document.querySelector(".dsSyncControls");
 
           view = view || "player";
@@ -18714,10 +19091,14 @@ function watchroomPage(req, res) {
           if (manual) manual.hidden = view !== "clock";
           if (browserPanel) browserPanel.hidden = view !== "browser";
           if (remotePanel) remotePanel.hidden = view !== "remote";
-          if (controls) controls.classList.toggle("isBrowserView", view === "browser" || view === "remote" || view === "clock");
+          if (livePanel) livePanel.hidden = view !== "live";
+          if (openTogetherPanel) openTogetherPanel.hidden = view !== "open";
+          if (controls) controls.classList.toggle("isBrowserView", view === "browser" || view === "remote" || view === "clock" || view === "live" || view === "open");
 
           [
             ["showPlayerBtn", view === "player"],
+            ["showLiveShareBtn", view === "live"],
+            ["showOpenTogetherBtn", view === "open"],
             ["showBrowserBtn", view === "browser"],
             ["showRemoteBrowserBtn", view === "remote"],
             ["showClockBtn", view === "clock"],
@@ -18748,6 +19129,34 @@ function watchroomPage(req, res) {
           if (badge) badge.textContent = isRoomHost ? "You are host" : "View only";
         }
 
+        function setLiveShareHostMode() {
+          var start = document.getElementById("startLiveShareBtn");
+          var stop = document.getElementById("stopLiveShareBtn");
+          var badge = document.getElementById("liveShareBadge");
+          var help = document.getElementById("liveShareHelp");
+          if (start) start.disabled = !isRoomHost;
+          if (stop) stop.disabled = !isRoomHost;
+          if (badge) badge.textContent = isRoomHost ? "You are host" : "View only";
+          if (help) help.textContent = isRoomHost
+            ? "You control the source. Click Start Live Share, pick your movie/website tab, and everyone watches inside this room."
+            : "Only the host can start the stream. You will see the host's shared tab/window here.";
+        }
+
+        function setOpenTogetherHostMode() {
+          var form = document.getElementById("openTogetherForm");
+          var input = document.getElementById("openTogetherInput");
+          var countdown = document.getElementById("openTogetherCountdownBtn");
+          var badge = document.getElementById("openTogetherBadge");
+          var help = document.getElementById("openTogetherHelp");
+          if (input) input.disabled = !isRoomHost;
+          if (form) form.classList.toggle("isGuestLocked", !isRoomHost);
+          if (countdown) countdown.disabled = !isRoomHost;
+          if (badge) badge.textContent = isRoomHost ? "You are host" : "View only";
+          if (help) help.textContent = isRoomHost
+            ? "Paste the real movie/website link. Guests open it directly, then everyone follows the shared timeframe."
+            : "Open the host's link in your own tab, then follow the room timeframe/countdown.";
+        }
+
         function setBrowserHostMode() {
           var form = document.getElementById("roomBrowserForm");
           var input = document.getElementById("roomBrowserInput");
@@ -18760,6 +19169,8 @@ function watchroomPage(req, res) {
             ? "You control the shared browser. Everyone in the room sees the URL you load."
             : "Only the host can control this built-in browser. You can watch and interact if the embedded page allows it.";
           setRemoteHostMode();
+          setLiveShareHostMode();
+          setOpenTogetherHostMode();
         }
 
         function loadRoomBrowser(url, silent) {
@@ -18780,6 +19191,175 @@ function watchroomPage(req, res) {
           setStatus("Shared browser loaded: " + clean);
           return true;
         }
+
+        function showLiveEmpty(show, text) {
+          var empty = document.getElementById("liveShareEmpty");
+          if (!empty) return;
+          empty.hidden = !show;
+          if (text) {
+            var p = empty.querySelector("p");
+            if (p) p.textContent = text;
+          }
+        }
+
+        function attachLiveStream(stream) {
+          var video = document.getElementById("liveShareVideo");
+          if (!video) return;
+          video.srcObject = stream;
+          video.muted = isRoomHost;
+          video.play().catch(function(){});
+          showLiveEmpty(false);
+          setRoomView("live");
+        }
+
+        function createLivePeerConnection(targetSocketId, isHostSide) {
+          var pc = new RTCPeerConnection({ iceServers: liveIceServers });
+
+          pc.onicecandidate = function(event) {
+            if (event.candidate) {
+              socket.emit("watchroom:live-ice", {
+                roomId: roomId,
+                target: targetSocketId,
+                candidate: event.candidate
+              });
+            }
+          };
+
+          if (isHostSide && liveLocalStream) {
+            liveLocalStream.getTracks().forEach(function(track) {
+              pc.addTrack(track, liveLocalStream);
+            });
+          }
+
+          if (!isHostSide) {
+            pc.ontrack = function(event) {
+              var stream = event.streams && event.streams[0];
+              if (stream) attachLiveStream(stream);
+            };
+          }
+
+          return pc;
+        }
+
+        async function startLiveShare() {
+          if (!isRoomHost) {
+            showToast("Only the host can start Live Share");
+            return;
+          }
+
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+            showToast("This browser does not support tab sharing");
+            return;
+          }
+
+          try {
+            liveLocalStream = await navigator.mediaDevices.getDisplayMedia({
+              video: true,
+              audio: true
+            });
+
+            attachLiveStream(liveLocalStream);
+            showToast("Live Share started");
+            sendRoomMessage("Live Share started. Guests can watch inside the room.");
+
+            liveLocalStream.getVideoTracks()[0]?.addEventListener("ended", stopLiveShare);
+
+            socket.emit("watchroom:live-start", {
+              roomId: roomId,
+              name: getSessionName()
+            });
+          } catch (error) {
+            showToast("Live Share was cancelled or blocked");
+          }
+        }
+
+        function stopLiveShare() {
+          if (liveLocalStream) {
+            liveLocalStream.getTracks().forEach(function(track) { track.stop(); });
+            liveLocalStream = null;
+          }
+
+          Object.keys(livePeerConnections).forEach(function(id) {
+            try { livePeerConnections[id].close(); } catch {}
+          });
+          livePeerConnections = {};
+
+          var video = document.getElementById("liveShareVideo");
+          if (video) video.srcObject = null;
+          showLiveEmpty(true, "Live Share stopped. The host can start it again.");
+          socket.emit("watchroom:live-stop", { roomId: roomId });
+        }
+
+        async function handleLiveViewerReady(viewerSocketId) {
+          if (!isRoomHost || !liveLocalStream || !viewerSocketId) return;
+
+          var pc = createLivePeerConnection(viewerSocketId, true);
+          livePeerConnections[viewerSocketId] = pc;
+
+          var offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+
+          socket.emit("watchroom:live-offer", {
+            roomId: roomId,
+            target: viewerSocketId,
+            description: pc.localDescription
+          });
+        }
+
+        function normalizeOpenTogetherUrl(url) {
+          var value = String(url || "").trim();
+          if (!value) return "";
+          if (value[0] === "/") return value;
+          if (/^https?:\/\//i.test(value)) return value;
+          if (/^[a-z0-9.-]+\.[a-z]{2,}(\/.*)?$/i.test(value)) return "https://" + value;
+          return "";
+        }
+
+        function updateOpenTogether(data) {
+          data = data || {};
+          if (data.url !== undefined) openTogetherUrl = normalizeOpenTogetherUrl(data.url);
+          if (data.countdownEndsAt !== undefined) openTogetherCountdownEndsAt = Number(data.countdownEndsAt || 0);
+
+          var link = document.getElementById("openTogetherLink");
+          var title = document.getElementById("openTogetherTitle");
+          var text = document.getElementById("openTogetherUrlText");
+          var input = document.getElementById("openTogetherInput");
+
+          if (openTogetherUrl) {
+            if (link) {
+              link.href = openTogetherUrl;
+              link.classList.remove("disabled");
+              link.textContent = "Open Watch Link";
+            }
+            if (title) title.textContent = "Ready to open";
+            if (text) text.textContent = openTogetherUrl;
+            if (input) input.value = openTogetherUrl;
+          } else {
+            if (link) {
+              link.href = "#";
+              link.classList.add("disabled");
+              link.textContent = "Waiting for link";
+            }
+            if (title) title.textContent = "No link yet";
+            if (text) text.textContent = "The host can share a link. Everyone opens it, then uses the room timeframe to stay synced.";
+          }
+
+          setRoomView("open");
+        }
+
+        function updateOpenTogetherClock() {
+          var time = document.getElementById("openTogetherTime");
+          if (time) time.textContent = formatTime(currentRoomSeconds());
+
+          var countdown = document.getElementById("openTogetherCountdown");
+          if (countdown) {
+            var left = Math.ceil((openTogetherCountdownEndsAt - Date.now()) / 1000);
+            countdown.textContent = left > 0 ? "Play in " + left : "Ready";
+          }
+        }
+
+        setInterval(updateOpenTogetherClock, 500);
+        updateOpenTogetherClock();
 
         function setStatus(text) {
           var el = document.getElementById("roomStatusText");
@@ -19026,9 +19606,86 @@ function watchroomPage(req, res) {
           if (data && data.message) showToast(data.message);
         });
 
+        socket.on("watchroom:live-status", function(data) {
+          if (data && data.active) {
+            setRoomView("live");
+            showLiveEmpty(true, "Connecting to the host's Live Share...");
+            if (!isRoomHost) {
+              socket.emit("watchroom:live-viewer-ready", { roomId: roomId });
+            }
+          } else if (data && data.message) {
+            showLiveEmpty(true, data.message);
+          }
+        });
+
+        socket.on("watchroom:live-viewer-ready", function(data) {
+          handleLiveViewerReady(data && data.viewerSocketId).catch(function() {
+            showToast("Could not connect viewer to Live Share");
+          });
+        });
+
+        socket.on("watchroom:live-offer", async function(data) {
+          if (isRoomHost || !data || !data.description) return;
+
+          try {
+            if (liveViewerPeer) {
+              try { liveViewerPeer.close(); } catch {}
+            }
+
+            liveViewerPeer = createLivePeerConnection(data.from, false);
+            await liveViewerPeer.setRemoteDescription(data.description);
+            var answer = await liveViewerPeer.createAnswer();
+            await liveViewerPeer.setLocalDescription(answer);
+
+            socket.emit("watchroom:live-answer", {
+              roomId: roomId,
+              target: data.from,
+              description: liveViewerPeer.localDescription
+            });
+          } catch (error) {
+            showToast("Could not connect to Live Share");
+          }
+        });
+
+        socket.on("watchroom:live-answer", async function(data) {
+          if (!isRoomHost || !data || !data.from || !data.description) return;
+          var pc = livePeerConnections[data.from];
+          if (!pc) return;
+          try {
+            await pc.setRemoteDescription(data.description);
+          } catch {}
+        });
+
+        socket.on("watchroom:live-ice", async function(data) {
+          if (!data || !data.candidate) return;
+          var pc = isRoomHost ? livePeerConnections[data.from] : liveViewerPeer;
+          if (!pc) return;
+          try {
+            await pc.addIceCandidate(data.candidate);
+          } catch {}
+        });
+
+        socket.on("watchroom:live-stop", function() {
+          if (!isRoomHost && liveViewerPeer) {
+            try { liveViewerPeer.close(); } catch {}
+            liveViewerPeer = null;
+          }
+
+          var video = document.getElementById("liveShareVideo");
+          if (!isRoomHost && video) video.srcObject = null;
+          showLiveEmpty(true, "Live Share stopped. Waiting for host.");
+        });
+
+        socket.on("watchroom:open-together", function(data) {
+          updateOpenTogether(data);
+          if (data && data.url) showToast("Host shared an Open Together link");
+        });
+
         socket.on("watchroom:host", function(data) {
           isRoomHost = Boolean(data && data.isHost);
           setBrowserHostMode();
+          setLiveShareHostMode();
+          setOpenTogetherHostMode();
         });
 
         socket.on("watchroom:message", addMessage);
@@ -19132,6 +19789,75 @@ function watchroomPage(req, res) {
 
         document.getElementById("showRemoteBrowserBtn")?.addEventListener("click", function() {
           setRemoteBrowserVisible(true);
+        });
+
+        document.getElementById("showLiveShareBtn")?.addEventListener("click", function() {
+          setRoomView("live");
+          if (!isRoomHost) {
+            socket.emit("watchroom:live-viewer-ready", { roomId: roomId });
+          }
+        });
+
+        document.getElementById("startLiveShareBtn")?.addEventListener("click", startLiveShare);
+        document.getElementById("stopLiveShareBtn")?.addEventListener("click", stopLiveShare);
+
+        document.getElementById("fullscreenLiveShareBtn")?.addEventListener("click", function() {
+          var stage = document.querySelector(".dsLiveShareStage");
+          if (!stage) return;
+          if (!document.fullscreenElement) stage.requestFullscreen?.();
+          else document.exitFullscreen?.();
+        });
+
+        document.getElementById("showOpenTogetherBtn")?.addEventListener("click", function() {
+          setRoomView("open");
+        });
+
+        document.getElementById("openTogetherForm")?.addEventListener("submit", function(event) {
+          event.preventDefault();
+          if (!isRoomHost) {
+            showToast("Only the host can share the Open Together link");
+            return;
+          }
+
+          var url = normalizeOpenTogetherUrl(new FormData(event.currentTarget).get("openTogetherUrl") || "");
+          if (!url) {
+            showToast("Paste a valid link");
+            return;
+          }
+
+          updateOpenTogether({ url: url, countdownEndsAt: 0 });
+          socket.emit("watchroom:open-together", {
+            roomId: roomId,
+            url: url,
+            countdownEndsAt: 0
+          });
+          sendRoomMessage("Open Together link shared. Open it and follow the room timeframe.");
+        });
+
+        document.getElementById("openTogetherCountdownBtn")?.addEventListener("click", function() {
+          if (!isRoomHost) {
+            showToast("Only the host can start countdown");
+            return;
+          }
+
+          var endsAt = Date.now() + 10000;
+          updateOpenTogether({ url: openTogetherUrl, countdownEndsAt: endsAt });
+          socket.emit("watchroom:open-together", {
+            roomId: roomId,
+            url: openTogetherUrl,
+            countdownEndsAt: endsAt
+          });
+          sendRoomMessage("Countdown started. Press play when it says Ready. Put your timeframe at " + formatTime(currentRoomSeconds()));
+        });
+
+        document.getElementById("openTogetherSendTimeBtn")?.addEventListener("click", function() {
+          sendRoomMessage("Put your timeframe at " + formatTime(currentRoomSeconds()));
+        });
+
+        document.getElementById("openTogetherCopyBtn")?.addEventListener("click", function() {
+          var message = (openTogetherUrl || "No link yet") + " — put your timeframe at " + formatTime(currentRoomSeconds());
+          navigator.clipboard?.writeText(message);
+          showToast("Copied Open Together info");
         });
 
         document.getElementById("remoteBrowserForm")?.addEventListener("submit", function(event) {
@@ -19631,6 +20357,18 @@ io.on("connection", (socket) => {
       isHost,
     });
 
+    if (room.liveShareActive && !isHost) {
+      socket.emit("watchroom:live-status", { roomId: room.id, active: true, host: room.host || "Host" });
+    }
+
+    if (room.openTogetherUrl) {
+      socket.emit("watchroom:open-together", {
+        roomId: room.id,
+        url: room.openTogetherUrl,
+        countdownEndsAt: Number(room.openTogetherCountdownEndsAt || 0),
+      });
+    }
+
     io.to(room.id).emit("watchroom:viewers", { roomId: room.id, viewers: room.viewers });
   });
 
@@ -19712,6 +20450,126 @@ io.on("connection", (socket) => {
       browserUrl: room.browserUrl,
       updatedAt: room.updatedAt,
     });
+  });
+
+  socket.on("watchroom:open-together", (payload = {}) => {
+    const roomId = normalizeRoomId(payload.roomId || socket.data.roomId);
+    const room = watchRooms.get(roomId);
+    if (!room) return;
+
+    if (room.hostSocketId && room.hostSocketId !== socket.id) {
+      socket.emit("watchroom:message", {
+        name: "System",
+        text: "Only the host can share Open Together links.",
+        createdAt: Date.now(),
+      });
+      return;
+    }
+
+    const url = normalizeSharedBrowserUrl(payload.url || "");
+    if (!url) return;
+
+    room.openTogetherUrl = url;
+    room.openTogetherCountdownEndsAt = Math.max(0, Number(payload.countdownEndsAt || 0));
+    room.updatedAt = Date.now();
+
+    io.to(room.id).emit("watchroom:open-together", {
+      roomId: room.id,
+      url: room.openTogetherUrl,
+      countdownEndsAt: room.openTogetherCountdownEndsAt,
+    });
+  });
+
+  socket.on("watchroom:live-start", (payload = {}) => {
+    const roomId = normalizeRoomId(payload.roomId || socket.data.roomId);
+    const room = watchRooms.get(roomId);
+    if (!room) return;
+
+    if (room.hostSocketId && room.hostSocketId !== socket.id) {
+      socket.emit("watchroom:live-status", { active: false, message: "Only the host can start Live Share." });
+      return;
+    }
+
+    room.liveShareActive = true;
+    room.liveHostSocketId = socket.id;
+    room.updatedAt = Date.now();
+
+    socket.to(room.id).emit("watchroom:live-status", {
+      roomId: room.id,
+      active: true,
+      host: String(payload.name || room.host || "Host").slice(0, 40),
+    });
+  });
+
+  socket.on("watchroom:live-viewer-ready", (payload = {}) => {
+    const roomId = normalizeRoomId(payload.roomId || socket.data.roomId);
+    const room = watchRooms.get(roomId);
+    if (!room || !room.liveShareActive || !room.liveHostSocketId) {
+      socket.emit("watchroom:live-status", { active: false, message: "Waiting for host to start Live Share." });
+      return;
+    }
+
+    io.to(room.liveHostSocketId).emit("watchroom:live-viewer-ready", {
+      roomId: room.id,
+      viewerSocketId: socket.id,
+    });
+  });
+
+  socket.on("watchroom:live-offer", (payload = {}) => {
+    const roomId = normalizeRoomId(payload.roomId || socket.data.roomId);
+    const room = watchRooms.get(roomId);
+    if (!room || room.liveHostSocketId !== socket.id) return;
+
+    const target = String(payload.target || "");
+    if (!target) return;
+
+    io.to(target).emit("watchroom:live-offer", {
+      roomId: room.id,
+      from: socket.id,
+      description: payload.description,
+    });
+  });
+
+  socket.on("watchroom:live-answer", (payload = {}) => {
+    const roomId = normalizeRoomId(payload.roomId || socket.data.roomId);
+    const room = watchRooms.get(roomId);
+    if (!room) return;
+
+    const target = String(payload.target || "");
+    if (!target) return;
+
+    io.to(target).emit("watchroom:live-answer", {
+      roomId: room.id,
+      from: socket.id,
+      description: payload.description,
+    });
+  });
+
+  socket.on("watchroom:live-ice", (payload = {}) => {
+    const roomId = normalizeRoomId(payload.roomId || socket.data.roomId);
+    const room = watchRooms.get(roomId);
+    if (!room) return;
+
+    const target = String(payload.target || "");
+    if (!target) return;
+
+    io.to(target).emit("watchroom:live-ice", {
+      roomId: room.id,
+      from: socket.id,
+      candidate: payload.candidate,
+    });
+  });
+
+  socket.on("watchroom:live-stop", (payload = {}) => {
+    const roomId = normalizeRoomId(payload.roomId || socket.data.roomId);
+    const room = watchRooms.get(roomId);
+    if (!room || room.liveHostSocketId !== socket.id) return;
+
+    room.liveShareActive = false;
+    room.liveHostSocketId = "";
+    room.updatedAt = Date.now();
+
+    io.to(room.id).emit("watchroom:live-stop", { roomId: room.id });
   });
 
   socket.on("watchroom:remote-start", async (payload = {}) => {
@@ -19846,6 +20704,12 @@ io.on("connection", (socket) => {
       const viewers = io.sockets.adapter.rooms.get(roomId)?.size || 0;
       room.viewers = viewers;
       room.updatedAt = Date.now();
+
+      if (room.liveHostSocketId === socket.id) {
+        room.liveShareActive = false;
+        room.liveHostSocketId = "";
+        io.to(roomId).emit("watchroom:live-stop", { roomId });
+      }
 
       if (room.hostSocketId === socket.id) {
         room.hostSocketId = "";
