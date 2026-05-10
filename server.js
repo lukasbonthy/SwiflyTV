@@ -76,6 +76,7 @@ function publicRoom(room = {}) {
     createdAt: Number(room.createdAt || Date.now()),
     movieTime: Math.max(0, Math.floor((Date.now() - Number(room.createdAt || Date.now())) / 1000)),
     updatedAt: room.updatedAt || Date.now(),
+    locked: Boolean(room.locked),
   };
 }
 
@@ -300,6 +301,8 @@ function pageShell({ title = SITE_NAME, description = "Premium movie and TV disc
   <meta name="description" content="${escapeHtml(description)}" />
   <meta name="theme-color" content="#050712" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icon.svg" />
   <meta name="mobile-web-app-capable" content="yes" />
   <link rel="preconnect" href="https://image.tmdb.org" />
   <link rel="preconnect" href="https://www.youtube.com" />
@@ -14459,6 +14462,1211 @@ function pageShell({ title = SITE_NAME, description = "Premium movie and TV disc
        Sandbox is exactly: allow-scripts allow-same-origin
        ============================================================ */
 
+
+    /* ============================================================
+       v48 MOBILE + EPISODE UI
+       Updated mobile layout and clickable seasons/episodes.
+       ============================================================ */
+
+    .dsSectionTitleRow {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .dsSectionTitleRow h2 {
+      margin: 0;
+    }
+
+    .dsSectionTitleRow p {
+      margin: 6px 0 0;
+      color: rgba(248,251,255,.58);
+      font-size: 14px;
+      font-weight: 650;
+      line-height: 1.45;
+    }
+
+    .dsSectionTitleRow > a {
+      min-height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 13px;
+      border-radius: 999px;
+      color: #050711;
+      background: linear-gradient(135deg, #fff, #dff8ff);
+      font-size: 12px;
+      font-weight: 950;
+      white-space: nowrap;
+    }
+
+    .dsSeasonBlock {
+      overflow: hidden;
+      border-radius: 24px;
+      background:
+        radial-gradient(380px circle at 0% 0%, rgba(53,216,255,.10), transparent 54%),
+        rgba(255,255,255,.055);
+      border: 1px solid rgba(255,255,255,.10);
+      margin-bottom: 12px;
+      transition: transform .18s ease, border-color .18s ease, background .18s ease;
+    }
+
+    .dsSeasonBlock:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255,255,255,.18);
+      background:
+        radial-gradient(380px circle at 0% 0%, rgba(140,107,255,.13), transparent 54%),
+        rgba(255,255,255,.075);
+    }
+
+    .dsSeasonBlockHead {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 14px;
+      padding: 16px;
+      color: white;
+    }
+
+    .dsSeasonBlockHead > span {
+      width: 54px;
+      height: 54px;
+      display: grid;
+      place-items: center;
+      border-radius: 18px;
+      color: #050711;
+      background: linear-gradient(135deg, #fff, #dff8ff);
+      font-weight: 950;
+      box-shadow: 0 16px 38px rgba(53,216,255,.12);
+    }
+
+    .dsSeasonBlockHead strong {
+      display: block;
+      color: white;
+      font-size: 18px;
+      letter-spacing: -.03em;
+    }
+
+    .dsSeasonBlockHead p {
+      margin: 6px 0 0;
+      color: rgba(248,251,255,.58);
+      line-height: 1.45;
+      font-size: 13px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .dsSeasonBlockHead b {
+      color: rgba(248,251,255,.72);
+      font-size: 12px;
+      font-weight: 950;
+      white-space: nowrap;
+    }
+
+    .dsEpisodeChips {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 0 16px 16px 84px;
+      scrollbar-width: none;
+    }
+
+    .dsEpisodeChips::-webkit-scrollbar,
+    .dsWatchSeasonScroll::-webkit-scrollbar,
+    .dsWatchEpisodeScroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .dsEpisodeChips a,
+    .dsWatchSeasonScroll a,
+    .dsWatchEpisodeScroll a {
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 12px;
+      flex: 0 0 auto;
+      border-radius: 999px;
+      color: rgba(248,251,255,.82);
+      background: rgba(255,255,255,.075);
+      border: 1px solid rgba(255,255,255,.10);
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .dsEpisodeChips a:hover,
+    .dsWatchSeasonScroll a:hover,
+    .dsWatchEpisodeScroll a:hover,
+    .dsWatchSeasonScroll a.active,
+    .dsWatchEpisodeScroll a.active {
+      color: #050711;
+      background: linear-gradient(135deg, #fff, #dff8ff);
+      border-color: transparent;
+    }
+
+    .dsWatchEpisodePicker {
+      position: fixed;
+      left: max(12px, var(--v-left, 4vw));
+      right: max(12px, var(--v-right, 4vw));
+      top: 78px;
+      z-index: 48;
+      display: grid;
+      grid-template-columns: auto minmax(0, .9fr) minmax(0, 1.1fr);
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      border-radius: 22px;
+      background: rgba(2,3,10,.62);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 18px 70px rgba(0,0,0,.34);
+      backdrop-filter: blur(18px) saturate(1.08);
+      -webkit-backdrop-filter: blur(18px) saturate(1.08);
+      opacity: .88;
+      transition: opacity .18s ease, transform .18s ease;
+    }
+
+    .dsWatchEpisodePicker:hover,
+    .dsWatchEpisodePicker:focus-within {
+      opacity: 1;
+      transform: translateY(-1px);
+    }
+
+    .dsWatchEpisodePicker > div:first-child {
+      display: grid;
+      gap: 2px;
+      padding: 0 8px;
+      min-width: 112px;
+    }
+
+    .dsWatchEpisodePicker span {
+      color: rgba(248,251,255,.50);
+      font-size: 10px;
+      font-weight: 950;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .dsWatchEpisodePicker strong {
+      color: white;
+      font-size: 18px;
+      letter-spacing: -.04em;
+    }
+
+    .dsWatchSeasonScroll,
+    .dsWatchEpisodeScroll {
+      display: flex;
+      gap: 7px;
+      overflow-x: auto;
+      padding: 2px;
+      scrollbar-width: none;
+    }
+
+    .dsWatchEmbedMode .dsWatchEpisodePicker {
+      opacity: .26;
+    }
+
+    .dsWatchEmbedMode .dsWatchEpisodePicker:hover,
+    .dsWatchEmbedMode .dsWatchEpisodePicker:focus-within {
+      opacity: 1;
+    }
+
+    @media(max-width: 900px) {
+      .topbar,
+      .netflixTopbar {
+        min-height: 62px !important;
+        padding-inline: 14px !important;
+        background: rgba(5,7,17,.76) !important;
+        border-bottom: 1px solid rgba(255,255,255,.08);
+        backdrop-filter: blur(18px) saturate(1.08);
+        -webkit-backdrop-filter: blur(18px) saturate(1.08);
+      }
+
+      .dsHero,
+      .hero {
+        min-height: 74svh !important;
+      }
+
+      .dsHeroContent,
+      .heroCopy {
+        padding-top: 78px;
+        padding-bottom: 88px;
+      }
+
+      .dsHeroContent h1,
+      .heroCopy h1,
+      .dsDetailHeroContent h1 {
+        font-size: clamp(42px, 14vw, 72px) !important;
+        line-height: .9 !important;
+        letter-spacing: -.075em !important;
+      }
+
+      .dsHeroContent p,
+      .heroCopy p,
+      .dsDetailGrid > p {
+        font-size: 14px !important;
+        line-height: 1.48 !important;
+        -webkit-line-clamp: 4;
+      }
+
+      .dsHeroActions,
+      .dsDetailActions {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr;
+        gap: 9px !important;
+        width: 100%;
+      }
+
+      .dsHeroActions .dsPrimaryBtn,
+      .dsHeroActions .dsSecondaryBtn,
+      .dsDetailActions .dsPrimaryBtn,
+      .dsDetailActions .dsSecondaryBtn {
+        width: 100%;
+        min-height: 48px;
+        padding-inline: 12px;
+      }
+
+      .dsMoviePlaceholderNote {
+        grid-column: 1 / -1;
+        justify-content: center;
+      }
+
+      .dsIconBtn {
+        min-height: 44px !important;
+        width: 100% !important;
+      }
+
+      .dsRow,
+      .dsContent,
+      .dsDetailBody {
+        padding-left: 14px !important;
+        padding-right: 14px !important;
+      }
+
+      .movieRail,
+      .dsRail {
+        gap: 10px !important;
+        scroll-padding-left: 14px;
+      }
+
+      .movieCard,
+      .dsWelcomeCard a {
+        border-radius: 18px !important;
+      }
+
+      .dsDetailShell {
+        border-radius: 0 !important;
+      }
+
+      .dsDetailHero {
+        min-height: 68svh !important;
+      }
+
+      .dsDetailBody {
+        margin-top: -38px;
+        position: relative;
+        z-index: 4;
+        border-radius: 28px 28px 0 0;
+        background: linear-gradient(180deg, rgba(8,11,22,.98), #050711);
+        border-top: 1px solid rgba(255,255,255,.08);
+        padding-top: 20px !important;
+      }
+
+      .dsMetaBand {
+        overflow-x: auto;
+        flex-wrap: nowrap !important;
+        scrollbar-width: none;
+      }
+
+      .dsMetaBand::-webkit-scrollbar {
+        display: none;
+      }
+
+      .dsDetailGrid {
+        grid-template-columns: 1fr !important;
+        gap: 18px !important;
+      }
+
+      .dsDetailTabs {
+        position: sticky;
+        top: 62px;
+        z-index: 20;
+        display: flex;
+        overflow-x: auto;
+        gap: 8px;
+        padding: 10px 0;
+        background: linear-gradient(180deg, rgba(8,11,22,.96), rgba(8,11,22,.80));
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        scrollbar-width: none;
+      }
+
+      .dsDetailTabs::-webkit-scrollbar {
+        display: none;
+      }
+
+      .dsDetailTabs a {
+        flex: 0 0 auto;
+        min-height: 38px;
+        padding: 0 12px;
+        border-radius: 999px;
+        background: rgba(255,255,255,.07);
+        border: 1px solid rgba(255,255,255,.10);
+      }
+
+      .dsSectionTitleRow {
+        display: grid;
+        align-items: start;
+      }
+
+      .dsSectionTitleRow > a {
+        width: 100%;
+      }
+
+      .dsSeasonBlock {
+        border-radius: 20px;
+      }
+
+      .dsSeasonBlockHead {
+        grid-template-columns: auto minmax(0, 1fr);
+        align-items: start;
+      }
+
+      .dsSeasonBlockHead b {
+        grid-column: 1 / -1;
+        margin-left: 68px;
+      }
+
+      .dsEpisodeChips {
+        padding-left: 16px;
+      }
+
+      .dsWatchEpisodePicker {
+        top: 66px;
+        left: 10px;
+        right: 10px;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        opacity: .96 !important;
+        border-radius: 20px;
+      }
+
+      .dsWatchEpisodePicker > div:first-child {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        min-width: 0;
+      }
+
+      .dsWatchFullscreenMovie .dsWatchPlayerCard {
+        padding-top: 170px !important;
+      }
+
+      .dsWatchTrailerMode .dsWatchHero {
+        padding-top: 124px !important;
+      }
+
+      .dsWatchHeader {
+        min-height: 58px !important;
+        padding: 10px !important;
+      }
+    }
+
+    @media(max-width: 520px) {
+      .dsHeroActions,
+      .dsDetailActions {
+        grid-template-columns: 1fr;
+      }
+
+      .dsSeasonBlockHead {
+        gap: 10px;
+        padding: 14px;
+      }
+
+      .dsSeasonBlockHead > span {
+        width: 46px;
+        height: 46px;
+        border-radius: 15px;
+      }
+
+      .dsSeasonBlockHead b {
+        margin-left: 56px;
+      }
+
+      .dsEpisodeChips a {
+        min-height: 34px;
+        padding-inline: 10px;
+      }
+
+      .dsWatchModeSwitch {
+        width: 100%;
+      }
+
+      .dsWatchModeSwitch a {
+        flex: 1;
+      }
+    }
+
+
+    /* ============================================================
+       v49 EVERYTHING UPGRADE
+       Premium mobile nav, app polish, accessibility, episodes, PWA, watchrooms.
+       ============================================================ */
+
+    :root[data-theme="red"] {
+      --v-blue: #ff2f4f;
+      --v-purple: #d6001c;
+      --v-bg: #080307;
+    }
+
+    :root[data-theme="ocean"] {
+      --v-blue: #35d8ff;
+      --v-purple: #1b8cff;
+      --v-bg: #031018;
+    }
+
+    :root[data-theme="purple"] {
+      --v-blue: #b28cff;
+      --v-purple: #7c5cff;
+      --v-bg: #080513;
+    }
+
+    :root[data-theme="snow"] {
+      --v-blue: #9ee8ff;
+      --v-purple: #d5e8ff;
+      --v-bg: #0a1018;
+    }
+
+    :root[data-theme="classic"] {
+      --v-blue: #ffffff;
+      --v-purple: #b6b6b6;
+      --v-bg: #050505;
+    }
+
+    .dsLargeText body,
+    .dsLargeText {
+      font-size: 18px;
+    }
+
+    .dsHighContrast {
+      --muted: rgba(255,255,255,.86);
+      --muted2: rgba(255,255,255,.70);
+    }
+
+    .dsHighContrast .dsSecondaryBtn,
+    .dsHighContrast .movieCard,
+    .dsHighContrast .dsAccountPanel,
+    .dsHighContrast .dsWatchroomPanel {
+      border-color: rgba(255,255,255,.30) !important;
+    }
+
+    .dsReducedMotion *,
+    .dsReducedMotion *::before,
+    .dsReducedMotion *::after {
+      animation-duration: .001ms !important;
+      transition-duration: .001ms !important;
+      scroll-behavior: auto !important;
+    }
+
+    .dsMobileBottomNav {
+      position: fixed;
+      left: 10px;
+      right: 10px;
+      bottom: calc(10px + env(safe-area-inset-bottom));
+      z-index: 2500;
+      display: none;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      padding: 7px;
+      border-radius: 26px;
+      background: rgba(5,7,17,.78);
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 18px 70px rgba(0,0,0,.46);
+      backdrop-filter: blur(22px) saturate(1.16);
+      -webkit-backdrop-filter: blur(22px) saturate(1.16);
+    }
+
+    .dsMobileBottomNav a {
+      min-height: 50px;
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 2px;
+      border-radius: 18px;
+      color: rgba(248,251,255,.62);
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .dsMobileBottomNav span {
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .dsMobileBottomNav a.active {
+      color: white;
+      background: linear-gradient(135deg, rgba(53,216,255,.16), rgba(140,107,255,.18));
+      border: 1px solid rgba(255,255,255,.12);
+    }
+
+    .dsCommandPalette {
+      position: fixed;
+      inset: 0;
+      z-index: 5000;
+      display: grid;
+      place-items: start center;
+      padding: 12vh 18px 18px;
+      background: rgba(0,0,0,.58);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .dsCommandPalette[hidden] {
+      display: none !important;
+    }
+
+    .dsCommandPanel {
+      width: min(760px, 100%);
+      border-radius: 28px;
+      background: rgba(8,11,22,.96);
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: 0 32px 120px rgba(0,0,0,.58);
+      padding: 16px;
+    }
+
+    .dsCommandHead,
+    .dsCommandSearch,
+    .dsCommandLinks {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .dsCommandHead {
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .dsCommandHead strong {
+      color: white;
+      font-size: 20px;
+      letter-spacing: -.04em;
+    }
+
+    .dsCommandHead button {
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.13);
+      background: rgba(255,255,255,.07);
+      color: white;
+      cursor: pointer;
+    }
+
+    .dsCommandSearch input {
+      flex: 1;
+      min-height: 54px;
+      padding: 0 16px;
+      border-radius: 18px;
+      color: white;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.14);
+      outline: 0;
+      font-weight: 700;
+    }
+
+    .dsCommandSearch button,
+    .dsCommandLinks a {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 14px;
+      border-radius: 999px;
+      border: 0;
+      color: #050711;
+      background: linear-gradient(135deg, #fff, #dff8ff);
+      font-weight: 950;
+      white-space: nowrap;
+    }
+
+    .dsCommandLinks {
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .dsCommandLinks a {
+      color: white;
+      background: rgba(255,255,255,.075);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+
+    .dsOnboardingDialog {
+      width: min(560px, calc(100vw - 24px));
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 30px;
+      color: white;
+      background: radial-gradient(500px circle at 0 0, rgba(140,107,255,.18), transparent 52%), rgba(8,11,22,.96);
+      box-shadow: 0 32px 120px rgba(0,0,0,.58);
+    }
+
+    .dsOnboardingDialog::backdrop {
+      background: rgba(0,0,0,.64);
+      backdrop-filter: blur(10px);
+    }
+
+    .dsOnboardingDialog form {
+      display: grid;
+      gap: 14px;
+      padding: 8px;
+    }
+
+    .dsOnboardingDialog p {
+      color: rgba(248,251,255,.66);
+      line-height: 1.5;
+    }
+
+    .dsOnboardingGenres {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+    }
+
+    .dsOnboardingGenres button,
+    .dsThemePresetGrid button,
+    .dsFolderGrid button,
+    .dsRoomHostGrid button,
+    .dsRoomReactions button {
+      min-height: 40px;
+      border-radius: 999px;
+      color: white;
+      background: rgba(255,255,255,.075);
+      border: 1px solid rgba(255,255,255,.12);
+      padding: 0 13px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .dsOnboardingGenres button.active,
+    .dsThemePresetGrid button:hover,
+    .dsFolderGrid button:hover,
+    .dsRoomHostGrid button:hover,
+    .dsRoomReactions button:hover {
+      color: #050711;
+      background: linear-gradient(135deg, #fff, #dff8ff);
+      border-color: transparent;
+    }
+
+    .dsSettingsGrid {
+      margin: 24px var(--v-right, 4vw) 60px var(--v-left, 4vw);
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .dsSettingsPanel,
+    .dsHistoryItem {
+      border-radius: 28px;
+      padding: 22px;
+      background: radial-gradient(420px circle at 0 0, rgba(53,216,255,.08), transparent 54%), rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 18px 70px rgba(0,0,0,.22);
+    }
+
+    .dsSettingsPanel h2 {
+      color: white;
+      margin: 0 0 8px;
+      font-size: 28px;
+      letter-spacing: -.06em;
+      font-family: "Space Grotesk", Inter, sans-serif;
+    }
+
+    .dsSettingsPanel p {
+      color: rgba(248,251,255,.62);
+      line-height: 1.5;
+    }
+
+    .dsThemePresetGrid,
+    .dsFolderGrid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin-top: 12px;
+    }
+
+    .dsHistoryItem {
+      display: grid;
+      gap: 6px;
+      color: white;
+    }
+
+    .dsHistoryItem span {
+      color: var(--v-blue);
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .08em;
+    }
+
+    .dsHistoryItem strong {
+      font-size: 20px;
+      letter-spacing: -.04em;
+    }
+
+    .dsHistoryItem small {
+      color: rgba(248,251,255,.54);
+    }
+
+    .dsProgressBar {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.18);
+      overflow: hidden;
+      z-index: 12;
+    }
+
+    .dsProgressBar span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--v-blue), var(--v-purple));
+    }
+
+    .movieCard,
+    .dsCard {
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, filter .18s ease;
+    }
+
+    .movieCard:hover,
+    .dsCard:hover {
+      transform: translateY(-6px) scale(1.025);
+      box-shadow: 0 24px 80px rgba(0,0,0,.34), 0 0 46px rgba(53,216,255,.10);
+      filter: saturate(1.08);
+    }
+
+    .movieCard::after,
+    .dsCard::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,.14) 42%, transparent 60%);
+      transform: translateX(-130%);
+      transition: transform .55s ease;
+      pointer-events: none;
+    }
+
+    .movieCard:hover::after,
+    .dsCard:hover::after {
+      transform: translateX(130%);
+    }
+
+    .dsSearchBoxPro {
+      border-radius: 28px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      padding: 14px;
+      margin-inline: var(--v-left, 4vw) var(--v-right, 4vw);
+    }
+
+    .dsSearchFilters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .dsSearchFilters a {
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 12px;
+      border-radius: 999px;
+      color: rgba(248,251,255,.82);
+      background: rgba(255,255,255,.075);
+      border: 1px solid rgba(255,255,255,.10);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .dsEpisodeNextPrev {
+      display: flex;
+      gap: 7px;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .dsEpisodeNextPrev a {
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 12px;
+      border-radius: 999px;
+      color: #050711;
+      background: linear-gradient(135deg, #fff, #dff8ff);
+      font-size: 12px;
+      font-weight: 950;
+      white-space: nowrap;
+    }
+
+    .dsTheaterMode .topbar,
+    .dsTheaterMode .netflixTopbar,
+    .dsTheaterMode .mobileNav,
+    .dsTheaterMode .dsMobileBottomNav,
+    .dsTheaterMode .dsWatchPlayerTop,
+    .dsTheaterMode .dsWatchSidePanel {
+      display: none !important;
+    }
+
+    .dsTheaterMode .dsWatchHero,
+    .dsTheaterMode .dsWatchPlayerCard,
+    .dsTheaterMode .dsWatchFrame {
+      min-height: 100svh !important;
+      height: 100svh !important;
+      padding: 0 !important;
+      border-radius: 0 !important;
+    }
+
+    .dsRoomHostControls {
+      display: grid;
+      gap: 12px;
+    }
+
+    .dsRoomHostGrid,
+    .dsRoomReactions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .dsRoomReactions button {
+      width: 42px;
+      height: 42px;
+      padding: 0;
+      font-size: 18px;
+    }
+
+    .dsOfflinePage {
+      min-height: 100svh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: radial-gradient(800px circle at 50% 0, rgba(53,216,255,.12), transparent 50%), #050711;
+    }
+
+    .dsOfflinePage section {
+      max-width: 620px;
+      text-align: center;
+      padding: 34px;
+      border-radius: 32px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .dsOfflinePage h1 {
+      color: white;
+      font-size: clamp(42px, 8vw, 88px);
+      line-height: .9;
+      letter-spacing: -.08em;
+      margin: 12px 0;
+      font-family: "Space Grotesk", Inter, sans-serif;
+    }
+
+    .dsOfflinePage p {
+      color: rgba(248,251,255,.66);
+      line-height: 1.55;
+    }
+
+    @media(max-width: 900px) {
+      body {
+        padding-bottom: calc(78px + env(safe-area-inset-bottom));
+      }
+
+      body:has(.dsWatchFullscreenMovie),
+      body:has(.dsWelcomePage) {
+        padding-bottom: 0;
+      }
+
+      .dsMobileBottomNav {
+        display: grid;
+      }
+
+      .dsSettingsGrid,
+      .dsAccountGridPro,
+      .dsAccountHero {
+        grid-template-columns: 1fr !important;
+      }
+
+      .dsSettingsGrid {
+        margin-left: 14px;
+        margin-right: 14px;
+      }
+
+      .dsCommandPalette {
+        padding-top: 8vh;
+      }
+
+      .dsCommandSearch {
+        display: grid;
+      }
+
+      .dsCommandSearch input,
+      .dsCommandSearch button {
+        width: 100%;
+      }
+
+      .dsEpisodeNextPrev {
+        justify-content: stretch;
+      }
+
+      .dsEpisodeNextPrev a {
+        flex: 1;
+      }
+    }
+
+    @media(max-width: 620px) {
+      .dsMobileBottomNav {
+        left: 8px;
+        right: 8px;
+        bottom: calc(8px + env(safe-area-inset-bottom));
+      }
+
+      .dsMobileBottomNav a {
+        min-height: 48px;
+      }
+
+      .dsMobileBottomNav b {
+        font-size: 9px;
+      }
+
+      .dsSettingsPanel {
+        padding: 18px;
+        border-radius: 22px;
+      }
+    }
+
+
+    /* ============================================================
+       v50 FUNCTIONAL EVERYTHING
+       Makes v49's demo UI actually usable: folders, watchroom sync, icons.
+       ============================================================ */
+
+    .dsPersonalizedTrack {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(160px, 1fr));
+      gap: 12px;
+      overflow-x: auto;
+    }
+
+    .dsPersonalizedTrack a {
+      min-height: 132px;
+      display: grid;
+      align-content: end;
+      gap: 6px;
+      padding: 18px;
+      border-radius: 24px;
+      color: white;
+      background:
+        radial-gradient(300px circle at 0% 0%, rgba(53,216,255,.18), transparent 52%),
+        radial-gradient(300px circle at 100% 0%, rgba(140,107,255,.18), transparent 52%),
+        rgba(255,255,255,.065);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 18px 70px rgba(0,0,0,.24);
+    }
+
+    .dsPersonalizedTrack span,
+    .dsPersonalizedTrack small {
+      color: rgba(248,251,255,.62);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .dsPersonalizedTrack strong {
+      color: white;
+      font-size: 26px;
+      font-family: "Space Grotesk", Inter, sans-serif;
+      letter-spacing: -.06em;
+    }
+
+    .dsFolderManager {
+      margin: 18px var(--v-right, 4vw) 12px var(--v-left, 4vw);
+      padding: 22px;
+      border-radius: 30px;
+      background:
+        radial-gradient(520px circle at 0 0, rgba(53,216,255,.10), transparent 52%),
+        rgba(255,255,255,.055);
+      border: 1px solid rgba(255,255,255,.10);
+      display: grid;
+      gap: 14px;
+    }
+
+    .dsFolderManager h2,
+    .dsFolderActiveHead h3 {
+      margin: 0;
+      color: white;
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-size: clamp(28px, 4vw, 46px);
+      letter-spacing: -.07em;
+    }
+
+    .dsFolderManager p {
+      margin: 6px 0 0;
+      color: rgba(248,251,255,.62);
+      line-height: 1.5;
+    }
+
+    .dsFolderManager form {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+    }
+
+    .dsFolderManager input {
+      min-height: 48px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.075);
+      color: white;
+      padding: 0 14px;
+      outline: none;
+      font-weight: 750;
+    }
+
+    .dsFolderTabs,
+    .dsFolderAddList {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .dsFolderTabs button,
+    .dsFolderAddList button,
+    .dsFolderActiveHead button {
+      min-height: 38px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.07);
+      color: rgba(248,251,255,.82);
+      padding: 0 12px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .dsFolderTabs button.active,
+    .dsFolderAddList button.active {
+      color: #050711;
+      background: linear-gradient(135deg, #fff, #dff8ff);
+      border-color: transparent;
+    }
+
+    .dsFolderTabs span {
+      opacity: .65;
+      margin-left: 4px;
+    }
+
+    .dsFolderActiveHead {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .dsFolderActiveHead button {
+      color: #ffd6dd;
+      border-color: rgba(255,120,140,.22);
+    }
+
+    .dsFolderSavedGrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .dsFolderSavedGrid a {
+      display: grid;
+      gap: 5px;
+      padding: 14px;
+      border-radius: 18px;
+      color: white;
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .dsFolderSavedGrid span {
+      color: rgba(248,251,255,.55);
+      font-size: 12px;
+    }
+
+    .dsRoomHostGrid button.active {
+      color: #050711;
+      background: linear-gradient(135deg, #fff, #dff8ff);
+      border-color: transparent;
+    }
+
+    .dsRoomReactionBurst {
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      overflow: hidden;
+    }
+
+    .dsReactionFloat {
+      position: absolute;
+      bottom: 18vh;
+      font-size: clamp(34px, 6vw, 68px);
+      animation: dsReactionRise 1.8s ease-out forwards;
+      filter: drop-shadow(0 14px 20px rgba(0,0,0,.42));
+    }
+
+    @keyframes dsReactionRise {
+      0% { transform: translateY(0) scale(.7) rotate(-8deg); opacity: 0; }
+      12% { opacity: 1; }
+      100% { transform: translateY(-42vh) scale(1.2) rotate(10deg); opacity: 0; }
+    }
+
+    .dsInstalledApp [data-install-app]::after {
+      content: " ✓";
+    }
+
+    @media(max-width: 900px) {
+      .dsPersonalizedTrack {
+        grid-auto-flow: column;
+        grid-auto-columns: 72vw;
+        grid-template-columns: none;
+        scrollbar-width: none;
+      }
+
+      .dsPersonalizedTrack::-webkit-scrollbar {
+        display: none;
+      }
+
+      .dsFolderManager {
+        margin-left: 14px;
+        margin-right: 14px;
+        padding: 16px;
+        border-radius: 24px;
+      }
+
+      .dsFolderManager form {
+        grid-template-columns: 1fr;
+      }
+
+      .dsFolderActiveHead {
+        display: grid;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -15439,6 +16647,343 @@ function pageShell({ title = SITE_NAME, description = "Premium movie and TV disc
     })();
   </script>
 
+
+  <nav class="dsMobileBottomNav" aria-label="Mobile navigation">
+    <a href="/" data-nav="home"><span>⌂</span><b>Home</b></a>
+    <a href="/search" data-nav="search"><span>⌕</span><b>Search</b></a>
+    <a href="/my-list" data-nav="list"><span>＋</span><b>My List</b></a>
+    <a href="/watchrooms" data-nav="rooms"><span>◉</span><b>Rooms</b></a>
+    <a href="/profiles" data-nav="profile"><span>☺</span><b>Profile</b></a>
+  </nav>
+
+  <div class="dsCommandPalette" id="dsCommandPalette" hidden>
+    <div class="dsCommandPanel">
+      <div class="dsCommandHead">
+        <strong>Quick Search</strong>
+        <button type="button" id="dsCommandClose">×</button>
+      </div>
+      <form action="/search" method="get" class="dsCommandSearch">
+        <input name="q" id="dsCommandInput" placeholder="Search movies, shows, people..." autocomplete="off" />
+        <button type="submit">Search</button>
+      </form>
+      <div class="dsCommandLinks">
+        <a href="/movies">Movies</a>
+        <a href="/tv">TV Shows</a>
+        <a href="/kids">Kids Safe</a>
+        <a href="/continue-watching">Continue</a>
+        <a href="/watchrooms">Watchrooms</a>
+        <a href="/settings">Settings</a>
+      </div>
+    </div>
+  </div>
+
+  <dialog class="dsOnboardingDialog" id="dsOnboardingDialog">
+    <form method="dialog">
+      <div class="dsDialogHead">
+        <h2>Set up DropStream</h2>
+        <button type="button" id="dsOnboardingClose">×</button>
+      </div>
+      <p>Pick what you like so the home page feels more personal.</p>
+      <div class="dsOnboardingGenres">
+        <button type="button" data-genre-pick="Action">Action</button>
+        <button type="button" data-genre-pick="Comedy">Comedy</button>
+        <button type="button" data-genre-pick="Drama">Drama</button>
+        <button type="button" data-genre-pick="Family">Family</button>
+        <button type="button" data-genre-pick="Animation">Animation</button>
+        <button type="button" data-genre-pick="Thriller">Thriller</button>
+      </div>
+      <button class="dsPrimaryBtn" type="button" id="dsOnboardingDone">Finish</button>
+    </form>
+  </dialog>
+
+
+  <script>
+    (function dropstreamV49(){
+      const readJson = (key, fallback) => {
+        try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); }
+        catch { return fallback; }
+      };
+      const writeJson = (key, value) => localStorage.setItem(key, JSON.stringify(value));
+
+      const path = location.pathname;
+      document.querySelectorAll(".dsMobileBottomNav a").forEach((link) => {
+        const href = link.getAttribute("href") || "";
+        const active =
+          (href === "/" && path === "/") ||
+          (href !== "/" && path.startsWith(href)) ||
+          (href === "/my-list" && path === "/watchlist");
+        link.classList.toggle("active", active);
+      });
+
+      // Accessibility / appearance settings
+      const settings = readJson("dropstream.v49.settings", {});
+      function applySettings() {
+        document.documentElement.classList.toggle("dsLargeText", settings.largeText === true);
+        document.documentElement.classList.toggle("dsHighContrast", settings.highContrast === true);
+        document.documentElement.classList.toggle("dsReducedMotion", settings.reducedMotion === true);
+        document.documentElement.dataset.theme = settings.theme || "midnight";
+      }
+      applySettings();
+
+      document.addEventListener("click", (event) => {
+        const control = event.target.closest("[data-ds-setting]");
+        if (!control) return;
+        const key = control.dataset.dsSetting;
+        const value = control.dataset.dsValue;
+        if (key === "theme") settings.theme = value;
+        else settings[key] = !settings[key];
+        writeJson("dropstream.v49.settings", settings);
+        applySettings();
+        window.showToast?.("Setting saved");
+      });
+
+      // Command palette
+      const palette = document.getElementById("dsCommandPalette");
+      const input = document.getElementById("dsCommandInput");
+      function openPalette() {
+        if (!palette) return;
+        palette.hidden = false;
+        setTimeout(() => input?.focus(), 30);
+      }
+      function closePalette() {
+        if (palette) palette.hidden = true;
+      }
+      document.addEventListener("keydown", (event) => {
+        const typing = ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName || "");
+        if ((event.key === "/" && !typing) || ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k")) {
+          event.preventDefault();
+          openPalette();
+        }
+        if (event.key === "Escape") closePalette();
+      });
+      document.getElementById("dsCommandClose")?.addEventListener("click", closePalette);
+      palette?.addEventListener("click", (event) => {
+        if (event.target === palette) closePalette();
+      });
+
+      // Onboarding
+      const onboard = document.getElementById("dsOnboardingDialog");
+      if (onboard && !localStorage.getItem("dropstream.v49.onboarded") && !path.startsWith("/welcome") && !path.startsWith("/login") && !path.startsWith("/signup")) {
+        setTimeout(() => { try { onboard.showModal(); } catch {} }, 900);
+      }
+      document.querySelectorAll("[data-genre-pick]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          btn.classList.toggle("active");
+          const picks = Array.from(document.querySelectorAll("[data-genre-pick].active")).map((el) => el.dataset.genrePick);
+          writeJson("dropstream.v49.favoriteGenres", picks);
+        });
+      });
+      document.getElementById("dsOnboardingDone")?.addEventListener("click", () => {
+        localStorage.setItem("dropstream.v49.onboarded", "true");
+        onboard?.close();
+        window.showToast?.("Personalization saved");
+      });
+      document.getElementById("dsOnboardingClose")?.addEventListener("click", () => {
+        localStorage.setItem("dropstream.v49.onboarded", "true");
+        onboard?.close();
+      });
+
+      // Better card interactions + watch history
+      document.addEventListener("click", (event) => {
+        const play = event.target.closest("[data-play-id], .dsMoviePlayBtn, .dsTrailerPlayBtn");
+        if (!play) return;
+        const id = play.dataset.playId || play.getAttribute("href")?.split("/").pop()?.split("?")[0];
+        const type = play.dataset.playType || (play.getAttribute("href") || "").includes("/tv/") ? "tv" : "movie";
+        const title = play.dataset.playTitle || document.querySelector("h1")?.textContent || "Untitled";
+        if (!id) return;
+        const history = readJson("dropstream.watchHistory", []);
+        const item = { id, type, title, href: play.getAttribute("href") || location.pathname, at: Date.now() };
+        writeJson("dropstream.watchHistory", [item, ...history.filter((old) => !(String(old.id) === String(id) && old.type === type))].slice(0, 60));
+      });
+
+      // fake/progressive progress bars on continue watching cards
+      document.querySelectorAll("#continueWatchingRail .movieCard, #continueGrid .movieCard, .continueCard").forEach((card, index) => {
+        if (card.querySelector(".dsProgressBar")) return;
+        const progress = 18 + ((index * 17) % 70);
+        card.insertAdjacentHTML("beforeend", '<div class="dsProgressBar"><span style="width:' + progress + '%"></span></div>');
+      });
+
+      // Install app prompt
+      let deferredInstall = null;
+      window.addEventListener("beforeinstallprompt", (event) => {
+        event.preventDefault();
+        deferredInstall = event;
+        document.body.classList.add("dsCanInstall");
+      });
+      document.addEventListener("click", async (event) => {
+        const install = event.target.closest("[data-install-app]");
+        if (!install) return;
+        if (!deferredInstall) {
+          window.showToast?.("Use your browser menu → Add to Home Screen");
+          return;
+        }
+        deferredInstall.prompt();
+        await deferredInstall.userChoice.catch(() => null);
+        deferredInstall = null;
+      });
+
+      // Theater mode
+      document.addEventListener("click", (event) => {
+        const theater = event.target.closest("[data-theater-mode]");
+        if (!theater) return;
+        document.body.classList.toggle("dsTheaterMode");
+        theater.textContent = document.body.classList.contains("dsTheaterMode") ? "Exit Theater" : "Theater";
+      });
+
+      // Watchroom reactions
+      document.addEventListener("click", (event) => {
+        const reaction = event.target.closest("[data-room-reaction]");
+        if (!reaction) return;
+        window.showToast?.(reaction.textContent + " reaction sent");
+      });
+
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/service-worker.js").catch(() => {});
+      }
+    })();
+  </script>
+
+
+  <script>
+    (function dropstreamV50(){
+      const readJson = (key, fallback) => {
+        try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); }
+        catch { return fallback; }
+      };
+      const writeJson = (key, value) => localStorage.setItem(key, JSON.stringify(value));
+      const escapeHtml = (value) => String(value || "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+
+      // Personalized rail from onboarding genres
+      const personalRail = document.getElementById("personalizedLocalRail");
+      const personalTrack = document.getElementById("personalizedLocalTrack");
+      const picks = readJson("dropstream.v49.favoriteGenres", []);
+      if (personalRail && personalTrack && picks.length) {
+        const map = {
+          Action: "/genre/movie/28",
+          Comedy: "/genre/movie/35",
+          Drama: "/genre/tv/18",
+          Family: "/genre/movie/10751",
+          Animation: "/genre/movie/16",
+          Thriller: "/genre/movie/53"
+        };
+        personalTrack.innerHTML = picks.map((genre) => '<a href="' + (map[genre] || "/genres") + '"><span>Because you picked</span><strong>' + escapeHtml(genre) + '</strong><small>Open recommendations →</small></a>').join("");
+        personalRail.hidden = false;
+      }
+
+      // Real local My List folders
+      const DEFAULT_FOLDERS = ["Favorites", "Watch Later", "Family", "Action", "Christian", "Comfort Shows"];
+      function readWatchlist() { return readJson("movieverse.watchlist", []); }
+      function readFolders() {
+        const saved = readJson("dropstream.listFolders", null);
+        if (saved && typeof saved === "object" && !Array.isArray(saved)) return saved;
+        const out = {};
+        DEFAULT_FOLDERS.forEach((name) => out[name] = []);
+        return out;
+      }
+      function saveFolders(folders) {
+        writeJson("dropstream.listFolders", folders);
+        renderFolderManager();
+      }
+      function itemKey(item) { return (item.type || "movie") + ":" + item.id; }
+
+      function renderFolderManager() {
+        const tabs = document.getElementById("folderTabs");
+        const contents = document.getElementById("folderContents");
+        if (!tabs || !contents) return;
+
+        const folders = readFolders();
+        const list = readWatchlist();
+        const names = Object.keys(folders);
+        let active = localStorage.getItem("dropstream.activeFolder") || names[0] || "Watch Later";
+        if (!folders[active]) active = names[0] || "Watch Later";
+        localStorage.setItem("dropstream.activeFolder", active);
+
+        tabs.innerHTML = names.map((name) => '<button type="button" class="' + (name === active ? "active" : "") + '" data-folder-tab="' + escapeHtml(name) + '">' + escapeHtml(name) + ' <span>' + (folders[name] || []).length + '</span></button>').join("");
+
+        const savedKeys = new Set(folders[active] || []);
+        const savedItems = list.filter((item) => savedKeys.has(itemKey(item)));
+        const options = list.map((item) => {
+          const key = itemKey(item);
+          return '<button type="button" class="' + (savedKeys.has(key) ? "active" : "") + '" data-folder-add="' + escapeHtml(active) + '" data-folder-key="' + escapeHtml(key) + '">' + (savedKeys.has(key) ? "✓ " : "+ ") + escapeHtml(item.title || "Untitled") + '</button>';
+        }).join("");
+
+        const grid = savedItems.length
+          ? '<div class="dsFolderSavedGrid">' + savedItems.map((item) => '<a href="/' + escapeHtml(item.type || "movie") + '/' + escapeHtml(item.id) + '"><strong>' + escapeHtml(item.title || "Untitled") + '</strong><span>' + escapeHtml(item.year || "Saved") + '</span></a>').join("") + '</div>'
+          : '<div class="watchlistEmptyNetflix"><div><strong>No titles in this folder yet</strong><span>Use the buttons below to add saved titles into ' + escapeHtml(active) + '.</span></div></div>';
+
+        contents.innerHTML = '<div class="dsFolderActiveHead"><h3>' + escapeHtml(active) + '</h3><button type="button" data-folder-delete="' + escapeHtml(active) + '">Delete Folder</button></div>' + grid + '<div class="dsFolderAddList">' + (options || '<p>Add titles to My List first, then organize them here.</p>') + '</div>';
+      }
+
+      document.getElementById("folderCreateForm")?.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const input = event.currentTarget.elements.folderName;
+        const name = String(input?.value || "").trim().slice(0, 32);
+        if (!name) return;
+        const folders = readFolders();
+        if (!folders[name]) folders[name] = [];
+        localStorage.setItem("dropstream.activeFolder", name);
+        input.value = "";
+        saveFolders(folders);
+        window.showToast?.("Folder created");
+      });
+
+      document.addEventListener("click", (event) => {
+        const tab = event.target.closest("[data-folder-tab]");
+        if (tab) {
+          localStorage.setItem("dropstream.activeFolder", tab.dataset.folderTab);
+          renderFolderManager();
+          return;
+        }
+
+        const add = event.target.closest("[data-folder-add]");
+        if (add) {
+          const folders = readFolders();
+          const folder = add.dataset.folderAdd;
+          const key = add.dataset.folderKey;
+          folders[folder] ||= [];
+          if (folders[folder].includes(key)) folders[folder] = folders[folder].filter((item) => item !== key);
+          else folders[folder].push(key);
+          saveFolders(folders);
+          return;
+        }
+
+        const del = event.target.closest("[data-folder-delete]");
+        if (del) {
+          const name = del.dataset.folderDelete;
+          if (!confirm("Delete folder " + name + "? This will not delete titles from My List.")) return;
+          const folders = readFolders();
+          delete folders[name];
+          localStorage.removeItem("dropstream.activeFolder");
+          saveFolders(folders);
+          window.showToast?.("Folder deleted");
+        }
+      });
+
+      renderFolderManager();
+
+      // More real watch history controls
+      const historyGrid = document.getElementById("watchHistoryGrid");
+      if (historyGrid && !document.getElementById("clearHistoryInline")) {
+        const clear = document.createElement("button");
+        clear.id = "clearHistoryInline";
+        clear.className = "dsDangerBtn";
+        clear.type = "button";
+        clear.textContent = "Clear History";
+        historyGrid.parentElement?.insertBefore(clear, historyGrid);
+        clear.addEventListener("click", () => {
+          if (!confirm("Clear watch history?")) return;
+          localStorage.setItem("dropstream.watchHistory", "[]");
+          location.reload();
+        });
+      }
+
+      // Convert install status into useful message
+      if (window.matchMedia("(display-mode: standalone)").matches) {
+        document.documentElement.classList.add("dsInstalledApp");
+      }
+    })();
+  </script>
+
 </body>
 </html>`;
 }
@@ -15758,6 +17303,10 @@ async function homePage(req, res) {
   const body = `<main>
     ${dsHero({ hero, context: "Featured today", eyebrow: "DropStream spotlight" })}
     <section class="dsContent">
+      <section id="personalizedLocalRail" class="dsRow dsPersonalizedLocalRail" hidden>
+        <div class="dsRowHead"><h2>Picked for your taste</h2><span class="dsRowTag">Personalized</span></div>
+        <div id="personalizedLocalTrack" class="dsPersonalizedTrack"></div>
+      </section>
       <section id="continueWatchingSection" class="dsRow dsContinueSection" hidden>
         <div class="dsRowHead"><h2>Continue Watching</h2><span class="dsRowTag">Saved watching</span></div>
         <div id="continueWatchingRail" class="movieRail dsRail"></div>
@@ -16094,11 +17643,18 @@ async function searchPage(req, res) {
       active: "search",
       body: `<main class="dsPlainPage">
         ${dsPageHeader("Search", "Find movies, shows, actors, and creators.", "Discovery")}
-        <section class="dsSearchBox">
+        <section class="dsSearchBox dsSearchBoxPro">
           <form action="/search" method="get">
             <input name="q" placeholder="Search movies, shows, actors..." autocomplete="off" autofocus />
             <button type="submit">Search</button>
           </form>
+          <div class="dsSearchFilters">
+            <a href="/movies">Movies</a>
+            <a href="/tv">TV Shows</a>
+            <a href="/kids">Kids</a>
+            <a href="/genres">Genres</a>
+            <a href="/trending">New & Popular</a>
+          </div>
         </section>
         <section class="dsContent noHero">
           ${dsRail("Popular Searches", (trending.results || []).filter((item) => ["movie", "tv"].includes(getType(item))))}
@@ -16377,8 +17933,33 @@ async function watchPage(req, res, type) {
   const sourceLabel = isMovieMode
     ? (movieEmbedUrl ? "Embed provider" : "Trailer fallback")
     : "YouTube/TMDB";
+  const selectedSeason = String(req.query.s || process.env.MOVIE_EMBED_DEFAULT_SEASON || "1");
+  const selectedEpisode = String(req.query.e || process.env.MOVIE_EMBED_DEFAULT_EPISODE || "1");
   const tvEpisodeLabel = type === "tv"
-    ? `S${escapeHtml(String(req.query.s || process.env.MOVIE_EMBED_DEFAULT_SEASON || "1"))}:E${escapeHtml(String(req.query.e || process.env.MOVIE_EMBED_DEFAULT_EPISODE || "1"))}`
+    ? `S${escapeHtml(selectedSeason)}:E${escapeHtml(selectedEpisode)}`
+    : "";
+
+  const currentSeason = type === "tv"
+    ? (details.seasons || []).find((season) => String(season.season_number) === selectedSeason) || (details.seasons || []).find((season) => season.season_number > 0)
+    : null;
+  const episodeCount = Math.max(1, Math.min(24, Number(currentSeason?.episode_count || 10)));
+  const tvEpisodePicker = type === "tv"
+    ? `<section class="dsWatchEpisodePicker" aria-label="Choose episode">
+        <div>
+          <span>Now watching</span>
+          <strong>${tvEpisodeLabel}</strong>
+        </div>
+        <div class="dsWatchSeasonScroll">
+          ${(details.seasons || []).filter((season) => season.season_number > 0).slice(0, 12).map((season) => `<a class="${String(season.season_number) === selectedSeason ? "active" : ""}" href="/watch/tv/${escapeHtml(id)}?mode=movie&s=${escapeHtml(String(season.season_number))}&e=1">Season ${escapeHtml(String(season.season_number))}</a>`).join("")}
+        </div>
+        <div class="dsWatchEpisodeScroll">
+          ${Array.from({ length: episodeCount }, (_, i) => i + 1).map((episodeNum) => `<a class="${String(episodeNum) === selectedEpisode ? "active" : ""}" href="/watch/tv/${escapeHtml(id)}?mode=movie&s=${escapeHtml(selectedSeason)}&e=${escapeHtml(String(episodeNum))}">E${escapeHtml(String(episodeNum))}</a>`).join("")}
+        </div>
+        <div class="dsEpisodeNextPrev">
+          <a href="/watch/tv/${escapeHtml(id)}?mode=movie&s=${escapeHtml(selectedSeason)}&e=${escapeHtml(String(Math.max(1, Number(selectedEpisode) - 1)))}">Previous</a>
+          <a href="/watch/tv/${escapeHtml(id)}?mode=movie&s=${escapeHtml(selectedSeason)}&e=${escapeHtml(String(Math.min(episodeCount, Number(selectedEpisode) + 1)))}">Next Episode</a>
+        </div>
+      </section>`
     : "";
 
   const movieFrame = movieEmbedUrl
@@ -16398,6 +17979,8 @@ async function watchPage(req, res, type) {
         </div>
         ${isMovieMode ? `<button class="dsEmbedFullscreenBtn" type="button" data-fullscreen-watch>⛶ Fullscreen</button>` : ""}
       </div>
+
+      ${tvEpisodePicker}
 
       <div class="dsWatchLayout">
         <section class="dsWatchPlayerCard">
@@ -16484,11 +18067,29 @@ async function detailPage(req, res, type) {
   const maturity = type === "tv" ? "TV-14" : "PG-13";
 
   const seasonRows = type === "tv"
-    ? (details.seasons || []).filter((season) => season.season_number > 0).slice(0, 8).map((season, index) => `<div class="dsEpisodeRow">
-        <span>${escapeHtml(String(index + 1))}</span>
-        <div><strong>${escapeHtml(season.name || `Season ${season.season_number}`)}</strong><p>${escapeHtml(season.overview || `${season.episode_count || 0} episodes available from TMDB metadata.`)}</p></div>
-        <b>${escapeHtml(String(season.episode_count || 0))} Episodes</b>
-      </div>`).join("")
+    ? (details.seasons || [])
+      .filter((season) => season.season_number > 0)
+      .slice(0, 10)
+      .map((season) => {
+        const seasonNumber = Number(season.season_number || 1);
+        const totalEpisodes = Math.max(1, Number(season.episode_count || 1));
+        const shownEpisodes = Math.min(totalEpisodes, 16);
+        const episodeLinks = Array.from({ length: shownEpisodes }, (_, i) => {
+          const episodeNumber = i + 1;
+          return `<a href="/watch/tv/${escapeHtml(id)}?mode=movie&s=${escapeHtml(String(seasonNumber))}&e=${escapeHtml(String(episodeNumber))}" aria-label="Watch season ${escapeHtml(String(seasonNumber))} episode ${escapeHtml(String(episodeNumber))}">Episode ${escapeHtml(String(episodeNumber))}</a>`;
+        }).join("");
+        return `<article class="dsSeasonBlock">
+          <a class="dsSeasonBlockHead" href="/watch/tv/${escapeHtml(id)}?mode=movie&s=${escapeHtml(String(seasonNumber))}&e=1">
+            <span>S${escapeHtml(String(seasonNumber))}</span>
+            <div>
+              <strong>${escapeHtml(season.name || `Season ${seasonNumber}`)}</strong>
+              <p>${escapeHtml(season.overview || `${totalEpisodes} episodes available. Tap a season or episode to start watching.`)}</p>
+            </div>
+            <b>${escapeHtml(String(totalEpisodes))} Episodes →</b>
+          </a>
+          <div class="dsEpisodeChips">${episodeLinks}${totalEpisodes > shownEpisodes ? `<a href="/watch/tv/${escapeHtml(id)}?mode=movie&s=${escapeHtml(String(seasonNumber))}&e=${escapeHtml(String(shownEpisodes + 1))}">+${escapeHtml(String(totalEpisodes - shownEpisodes))} more</a>` : ""}</div>
+        </article>`;
+      }).join("")
     : "";
 
   const castHtml = cast.map((p) => `<a class="dsCastCard" href="/person/${encodeURIComponent(p.id)}">
@@ -16546,7 +18147,7 @@ async function detailPage(req, res, type) {
           <a href="#details">Details</a>
         </nav>
 
-        ${type === "tv" && seasonRows ? `<section id="episodes" class="dsDetailSection"><h2>Episodes</h2><div class="dsEpisodeList">${seasonRows}</div></section>` : ""}
+        ${type === "tv" && seasonRows ? `<section id="episodes" class="dsDetailSection dsEpisodesClickable"><div class="dsSectionTitleRow"><div><h2>Seasons & Episodes</h2><p>Tap any season or episode to open it in the player.</p></div><a href="/watch/tv/${escapeHtml(id)}?mode=movie&s=1&e=1">Start S1:E1</a></div><div class="dsEpisodeList">${seasonRows}</div></section>` : ""}
 
         ${castHtml ? `<section id="cast" class="dsDetailSection"><h2>Cast</h2><div class="dsCastRail">${castHtml}</div></section>` : ""}
 
@@ -16639,8 +18240,24 @@ function watchlistPage(req, res) {
       <a href="/movies">Movies</a>
       <a href="/tv">TV Shows</a>
       <a href="/trending">New & Popular</a>
+      <a href="/history">Watch History</a><a href="/my-list#folders">Folders</a>
       <button type="button" id="clearWatchlistInline">Clear My List</button>
     </section>
+
+    <section class="dsFolderManager">
+      <div>
+        <span class="dsEyebrow">Folders</span>
+        <h2>Organize My List</h2>
+        <p>Create folders, then add saved titles into them from this page.</p>
+      </div>
+      <form id="folderCreateForm">
+        <input name="folderName" placeholder="New folder name" maxlength="32" />
+        <button class="dsPrimaryBtn" type="submit">Create Folder</button>
+      </form>
+      <div id="folderTabs" class="dsFolderTabs"></div>
+      <div id="folderContents" class="dsFolderContents"></div>
+    </section>
+
     <section class="dsContent noHero">
       <div id="watchlistGrid" class="dsGrid"></div>
     </section>
@@ -16929,6 +18546,24 @@ function watchroomPage(req, res) {
           <p class="dsRoomHint">YouTube works best for syncing. For other embeds, use the room movie clock to stay together manually.</p>
         </section>
 
+        <section class="dsWatchroomPanel dsRoomHostControls">
+          <div class="dsRoomChatHead">
+            <div><span class="dsEyebrow">Host tools</span><h2>Room controls</h2></div>
+          </div>
+          <div class="dsRoomHostGrid">
+            <button type="button" data-room-host="lock">Lock Room</button>
+            <button type="button" data-room-host="clear">Clear Chat</button>
+            <button type="button" data-room-host="rename">Change Title</button>
+          </div>
+          <div class="dsRoomReactions">
+            <button type="button" data-room-reaction>😂</button>
+            <button type="button" data-room-reaction>😱</button>
+            <button type="button" data-room-reaction>🔥</button>
+            <button type="button" data-room-reaction>❤️</button>
+            <button type="button" data-room-reaction>🙏</button>
+          </div>
+        </section>
+
         <section class="dsWatchroomPanel dsRoomChat dsRoomChatbar dsRoomChatClean">
           <div class="dsRoomChatHead">
             <div>
@@ -16946,7 +18581,9 @@ function watchroomPage(req, res) {
       </aside>
     </section>
 
-    <script src="/socket.io/socket.io.js"></script>
+<div id="roomReactionBurst" class="dsRoomReactionBurst"></div>
+
+        <script src="/socket.io/socket.io.js"></script>
     <script src="https://www.youtube.com/iframe_api"></script>
     <script>
       (function watchroomClient(){
@@ -17231,6 +18868,66 @@ function watchroomPage(req, res) {
 
         socket.on("watchroom:message", addMessage);
 
+        function showRoomReaction(emoji, name) {
+          var root = document.getElementById("roomReactionBurst");
+          if (!root) return;
+          var item = document.createElement("div");
+          item.className = "dsReactionFloat";
+          item.textContent = emoji || "🔥";
+          item.title = name || "Reaction";
+          item.style.left = (20 + Math.random() * 60) + "%";
+          root.appendChild(item);
+          setTimeout(function(){ item.remove(); }, 1800);
+        }
+
+        socket.on("watchroom:reaction", function(data) {
+          showRoomReaction(data.emoji, data.name);
+        });
+
+        socket.on("watchroom:host", function(data) {
+          if (!data || !data.action) return;
+          if (data.action === "clear") {
+            var root = document.getElementById("roomMessages");
+            if (root) root.innerHTML = "";
+            showToast("Chat cleared");
+          }
+          if (data.action === "lock") {
+            showToast(data.locked ? "Room locked" : "Room unlocked");
+            document.querySelector('[data-room-host="lock"]')?.classList.toggle("active", Boolean(data.locked));
+            document.querySelector('[data-room-host="lock"]') && (document.querySelector('[data-room-host="lock"]').textContent = data.locked ? "Unlock Room" : "Lock Room");
+          }
+          if (data.action === "rename" && data.name) {
+            document.title = data.name + " — DropStream";
+            var h = document.querySelector(".dsPageHeader h1, .pageHeader h1");
+            if (h) h.textContent = data.name;
+            showToast("Room title changed");
+          }
+        });
+
+        document.querySelectorAll("[data-room-reaction]").forEach(function(button) {
+          button.addEventListener("click", function(event) {
+            event.preventDefault();
+            var emoji = button.textContent.trim() || "🔥";
+            socket.emit("watchroom:reaction", { roomId: roomId, emoji: emoji, name: currentUserName() });
+            showRoomReaction(emoji, currentUserName());
+          });
+        });
+
+        document.querySelectorAll("[data-room-host]").forEach(function(button) {
+          button.addEventListener("click", function(event) {
+            event.preventDefault();
+            var action = button.dataset.roomHost;
+            if (action === "rename") {
+              var next = prompt("Room title", initialName || "DropStream Watchroom");
+              if (!next) return;
+              socket.emit("watchroom:host", { roomId: roomId, action: "rename", name: next.slice(0, 80) });
+              return;
+            }
+            if (action === "clear" && !confirm("Clear chat for everyone?")) return;
+            socket.emit("watchroom:host", { roomId: roomId, action: action });
+          });
+        });
+
         document.getElementById("setTrailerForm")?.addEventListener("submit", function(event) {
           event.preventDefault();
           var url = String(new FormData(event.currentTarget).get("trailerUrl") || "");
@@ -17434,6 +19131,28 @@ function accountPage(req, res) {
         <p>This demo stores accounts, profiles, My List, Liked, Continue Watching, and settings inside this browser only.</p>
         <button type="button" id="wipeAccountData" class="dsDangerBtn">Clear all local DropStream data</button>
       </article>
+
+      <article class="dsAccountPanel">
+        <h2>My List folders</h2>
+        <p>Use simple local folders to organize what you want to watch.</p>
+        <div class="dsFolderGrid">
+          <button type="button">Favorites</button>
+          <button type="button">Watch Later</button>
+          <button type="button">Family</button>
+          <button type="button">Action</button>
+          <button type="button">Christian</button>
+          <button type="button">Comfort Shows</button>
+        </div>
+      </article>
+
+      <article class="dsAccountPanel">
+        <h2>Comfort mode</h2>
+        <p>Bigger text, high contrast, reduced motion, and simpler viewing options.</p>
+        <div class="dsAccountButtonGrid">
+          <a href="/settings">Open Settings</a>
+          <a href="/history">Watch History</a>
+        </div>
+      </article>
     </section>
   </main>`;
 
@@ -17541,6 +19260,140 @@ async function apiStatus(req, res) {
   });
 }
 
+function settingsPage(req, res) {
+  const body = `<main class="dsPlainPage dsSettingsPage">
+    ${dsPageHeader("Settings", "Customize DropStream for comfort, accessibility, and style.", "Personalize")}
+    <section class="dsSettingsGrid">
+      <article class="dsSettingsPanel">
+        <h2>Accessibility</h2>
+        <p>Great for older viewers or anyone who wants a simpler, easier app.</p>
+        <button class="dsSecondaryBtn" data-ds-setting="largeText" type="button">Toggle Bigger Text</button>
+        <button class="dsSecondaryBtn" data-ds-setting="highContrast" type="button">Toggle High Contrast</button>
+        <button class="dsSecondaryBtn" data-ds-setting="reducedMotion" type="button">Toggle Reduced Motion</button>
+      </article>
+      <article class="dsSettingsPanel">
+        <h2>Themes</h2>
+        <p>Cleaner theme presets that feel more premium.</p>
+        <div class="dsThemePresetGrid">
+          <button data-ds-setting="theme" data-ds-value="midnight" type="button">Midnight</button>
+          <button data-ds-setting="theme" data-ds-value="red" type="button">Netflix Red</button>
+          <button data-ds-setting="theme" data-ds-value="ocean" type="button">Ocean</button>
+          <button data-ds-setting="theme" data-ds-value="purple" type="button">Purple Glass</button>
+          <button data-ds-setting="theme" data-ds-value="snow" type="button">Snow</button>
+          <button data-ds-setting="theme" data-ds-value="classic" type="button">Classic</button>
+        </div>
+      </article>
+      <article class="dsSettingsPanel">
+        <h2>Install App</h2>
+        <p>Add DropStream to your phone home screen like an app.</p>
+        <button class="dsPrimaryBtn" data-install-app type="button">Install / Add to Home Screen</button>
+      </article>
+      <article class="dsSettingsPanel">
+        <h2>Profile maturity</h2>
+        <p>Use Kids Safe for family viewing, or keep a normal profile for everything else.</p>
+        <a class="dsSecondaryBtn" href="/kids">Open Kids Safe</a>
+        <a class="dsSecondaryBtn" href="/profiles">Manage Profiles</a>
+      </article>
+    </section>
+  </main>`;
+  res.send(pageShell({ title: `${SITE_NAME} — Settings`, active: "settings", body }));
+}
+
+function historyPage(req, res) {
+  const body = `<main class="dsPlainPage dsHistoryPage">
+    ${dsPageHeader("Watch History", "Titles you recently opened on this browser.", "History")}
+    <section class="dsContent noHero">
+      <div id="watchHistoryGrid" class="dsGrid"></div>
+      <div id="watchHistoryEmpty" class="watchlistEmptyNetflix"><div><strong>No history yet</strong><span>Open a movie, episode, or trailer and it will show up here.</span></div></div>
+    </section>
+    <script>
+      (function(){
+        const grid = document.getElementById("watchHistoryGrid");
+        const empty = document.getElementById("watchHistoryEmpty");
+        let items = [];
+        try { items = JSON.parse(localStorage.getItem("dropstream.watchHistory") || "[]"); } catch {}
+        if (!items.length) { if (empty) empty.hidden = false; return; }
+        if (empty) empty.hidden = true;
+        grid.innerHTML = items.map((item) => '<a class="dsHistoryItem" href="' + (item.href || "/" + item.type + "/" + item.id) + '"><span>' + (item.type === "tv" ? "TV" : "MOVIE") + '</span><strong>' + String(item.title || "Untitled").replaceAll("<","&lt;") + '</strong><small>' + new Date(item.at || Date.now()).toLocaleDateString() + '</small></a>').join("");
+      })();
+    </script>
+  </main>`;
+  res.send(pageShell({ title: `${SITE_NAME} — History`, active: "history", body }));
+}
+
+function offlinePage(req, res) {
+  res.send(pageShell({
+    title: `${SITE_NAME} — Offline`,
+    active: "offline",
+    body: `<main class="dsOfflinePage">
+      <section>
+        <span class="dsEyebrow">Offline</span>
+        <h1>You’re offline right now.</h1>
+        <p>DropStream could not reach the network. Try again when your connection comes back.</p>
+        <a class="dsPrimaryBtn" href="/">Retry Home</a>
+      </section>
+    </main>`
+  }));
+}
+
+
+function appIconSvg(size = 512) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 512 512">
+    <defs>
+      <linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#35d8ff"/><stop offset="1" stop-color="#8c6bff"/></linearGradient>
+      <radialGradient id="r" cx=".25" cy=".15" r=".8"><stop stop-color="#ffffff" stop-opacity=".35"/><stop offset=".55" stop-color="#ffffff" stop-opacity="0"/></radialGradient>
+    </defs>
+    <rect width="512" height="512" rx="112" fill="#050711"/>
+    <rect x="70" y="70" width="372" height="372" rx="92" fill="url(#g)"/>
+    <rect x="70" y="70" width="372" height="372" rx="92" fill="url(#r)"/>
+    <path d="M218 164v184l142-92-142-92z" fill="#050711"/>
+    <path d="M126 394h260" stroke="#fff" stroke-opacity=".55" stroke-width="18" stroke-linecap="round"/>
+  </svg>`;
+}
+
+app.get("/icon.svg", (req, res) => {
+  res.type("image/svg+xml").send(appIconSvg(512));
+});
+
+app.get(["/icon-192.png", "/icon-512.png"], (req, res) => {
+  res.type("image/svg+xml").send(appIconSvg(req.path.includes("192") ? 192 : 512));
+});
+
+app.get("/manifest.webmanifest", (req, res) => {
+  res.type("application/manifest+json").send(JSON.stringify({
+    name: SITE_NAME,
+    short_name: "DropStream",
+    start_url: "/",
+    scope: "/",
+    display: "standalone",
+    background_color: "#050711",
+    theme_color: "#050711",
+    icons: [
+      { src: "/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any maskable" },
+      { src: "/icon-192.png", sizes: "192x192", type: "image/svg+xml", purpose: "any maskable" },
+      { src: "/icon-512.png", sizes: "512x512", type: "image/svg+xml", purpose: "any maskable" }
+    ]
+  }));
+});
+
+app.get("/service-worker.js", (req, res) => {
+  res.type("application/javascript").send(`
+    const CACHE = "dropstream-v49";
+    self.addEventListener("install", event => {
+      event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(["/", "/offline"])).catch(() => null));
+      self.skipWaiting();
+    });
+    self.addEventListener("activate", event => event.waitUntil(self.clients.claim()));
+    self.addEventListener("fetch", event => {
+      if (event.request.method !== "GET") return;
+      event.respondWith(fetch(event.request).catch(() => caches.match(event.request).then(hit => hit || caches.match("/offline"))));
+    });
+  `);
+});
+
+app.get("/offline", offlinePage);
+app.get("/settings", settingsPage);
+app.get("/history", historyPage);
 app.get("/welcome", welcomePage);
 app.get("/", homePage);
 app.get("/movies", (req, res) => listingPage(req, res, "movie", { sort: "popular" }));
