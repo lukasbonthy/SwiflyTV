@@ -10097,7 +10097,7 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
     .dsHeroContent .dsEyebrow,
     .dsPageHeader .dsEyebrow,
     .dsDetailHeroContent .dsEyebrow {
-      animation: dsFadeUp .55s cubic-bezier(.2,.8,.2,1) .04s both;
+      animation: dsFadeUp .510s cubic-bezier(.2,.8,.2,1) .04s both;
     }
 
     .dsHeroContent h1,
@@ -10119,7 +10119,7 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
     }
 
     .dsPrimaryBtn {
-      animation: dsButtonPulse 4.5s ease-in-out infinite;
+      animation: dsButtonPulse 4.10s ease-in-out infinite;
     }
 
     .dsPrimaryBtn,
@@ -10165,9 +10165,9 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
       transform: translateY(24px);
       filter: blur(8px);
       transition:
-        opacity .65s cubic-bezier(.2,.8,.2,1),
-        transform .65s cubic-bezier(.2,.8,.2,1),
-        filter .65s cubic-bezier(.2,.8,.2,1);
+        opacity .610s cubic-bezier(.2,.8,.2,1),
+        transform .610s cubic-bezier(.2,.8,.2,1),
+        filter .610s cubic-bezier(.2,.8,.2,1);
       will-change: opacity, transform, filter;
     }
 
@@ -10765,7 +10765,7 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
       inset: 0;
       background: linear-gradient(90deg, transparent, rgba(255,255,255,.42), transparent);
       transform: translateX(-130%) skewX(-18deg);
-      transition: transform .55s ease;
+      transition: transform .510s ease;
       pointer-events: none;
     }
 
@@ -17734,7 +17734,7 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
       box-shadow: 0 30px 120px rgba(0,0,0,.52);
       backdrop-filter: blur(20px) saturate(1.1);
       -webkit-backdrop-filter: blur(20px) saturate(1.1);
-      animation: dsLoveNotePop 6.5s ease forwards;
+      animation: dsLoveNotePop 6.10s ease forwards;
     }
 
     .dsCouplePopup span {
@@ -17858,7 +17858,7 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
       font-size: 30px;
       letter-spacing: 20px;
       pointer-events: none;
-      animation: dsAmbientFloat 5s ease-in-out infinite;
+      animation: dsAmbientFloat 10s ease-in-out infinite;
     }
 
     .dsPauseForUsBanner {
@@ -18382,7 +18382,7 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
 
     /* ============================================================
        v71 ROOM MOVIE SYNC ENGINE
-       Server timer + host controls + 5-second drift correction for native video.
+       Server timer + host controls + 10-second drift correction for native video.
        ============================================================ */
 
     .dsRoomMovieStatusCard {
@@ -18574,7 +18574,7 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
 
 
     <script>
-      window.ROOM_MOVIE_DRIFT_LIMIT = window.ROOM_MOVIE_DRIFT_LIMIT || 5;
+      window.ROOM_MOVIE_DRIFT_LIMIT = window.ROOM_MOVIE_DRIFT_LIMIT || 10;
     </script>
 
 </head>
@@ -21456,7 +21456,7 @@ function watchroomPage(req, res) {
           <div class="dsRoomSyncControls">
             <div>
               <small>Host sync controls</small>
-              <p>Host controls the room timer. If the player is a direct video, SwiflyTV auto-corrects anyone more than 5 seconds off. If it is a cross-site iframe, the timer still tells everyone exactly where to be.</p>
+              <p>Host controls the room timer. If the player is a direct video, SwiflyTV auto-corrects anyone more than 10 seconds off. If it is a cross-site iframe, the timer still tells everyone exactly where to be.</p>
             </div>
             <div class="dsStableActions">
               <button class="dsPrimaryBtn" id="roomMoviePlayBtn" type="button">Play</button>
@@ -21742,7 +21742,7 @@ function watchroomPage(req, res) {
         var roomMovieState = { status: "idle", movieId: "", proxyVideo: "", playAt: 0, selectedBy: "", message: "" };
         var roomMovieTimer = null;
         var roomMovieCorrectionTimer = null;
-        var ROOM_MOVIE_DRIFT_LIMIT = Number(window.ROOM_MOVIE_DRIFT_LIMIT || 5);
+        var ROOM_MOVIE_DRIFT_LIMIT = Number(window.ROOM_MOVIE_DRIFT_LIMIT || 10);
         var roomMovieRemoteApplying = false;
         var roomMovieIgnoreNativeEventsUntil = 0;
         var roomMovieLastNativeSetSentAt = 0;
@@ -21927,12 +21927,38 @@ function watchroomPage(req, res) {
 
         function markRoomMovieRemoteApply(ms) {
           roomMovieRemoteApplying = true;
-          roomMovieIgnoreNativeEventsUntil = Date.now() + (ms || 1600);
+          roomMovieIgnoreNativeEventsUntil = Date.now() + (ms || 1800);
           setTimeout(function(){
             if (Date.now() >= roomMovieIgnoreNativeEventsUntil) {
               roomMovieRemoteApplying = false;
             }
-          }, ms || 1600);
+          }, ms || 1800);
+        }
+
+        function forceRoomMovieVideoTo(target, shouldPlay) {
+          var video = document.getElementById("roomMovieVideo");
+          if (!video) return false;
+
+          markRoomMovieRemoteApply(2600);
+
+          try {
+            if (!video.paused) video.pause();
+          } catch {}
+
+          try {
+            video.currentTime = Math.max(0, Number(target || 0));
+          } catch {
+            return false;
+          }
+
+          if (shouldPlay) {
+            setTimeout(function() {
+              markRoomMovieRemoteApply(1200);
+              video.play().catch(function(){});
+            }, 280);
+          }
+
+          return true;
         }
 
         function applyNativeVideoSync(force) {
@@ -21944,40 +21970,37 @@ function watchroomPage(req, res) {
           var drift = Math.abs(current - target);
           var now = Date.now();
           var corrected = false;
-
-          // v79: Do not fight the player constantly. Force only happens for the first load/manual sync.
-          // Normal correction only happens if drift is over the limit AND the correction cooldown passed.
-          var canCorrectNow = force || (drift > ROOM_MOVIE_DRIFT_LIMIT && now - roomMovieLastCorrectionAt > 8000);
-
-          if (canCorrectNow) {
-            markRoomMovieRemoteApply(2200);
-            roomMovieLastCorrectionAt = now;
-            try {
-              video.currentTime = target;
-              corrected = true;
-            } catch {}
-          }
-
           var shouldPlay = Boolean(roomMovieState.sync && roomMovieState.sync.playing);
 
-          // Avoid repeated play/pause calls. Those can cause audio skipping on some streams.
-          if (now - roomMovieLastPlayPauseAt > 2500) {
-            if (shouldPlay && video.paused) {
-              markRoomMovieRemoteApply(1100);
-              roomMovieLastPlayPauseAt = now;
-              video.play().catch(function(){});
-            } else if (!shouldPlay && !video.paused) {
-              markRoomMovieRemoteApply(1100);
-              roomMovieLastPlayPauseAt = now;
-              try { video.pause(); } catch {}
+          // v80: correction distance is 10s. When drift is truly outside the tolerance,
+          // do a real pause -> seek -> resume correction instead of tiny repeated nudges.
+          var cooldownReady = now - roomMovieLastCorrectionAt > 5000;
+          var majorDrift = drift >= (ROOM_MOVIE_DRIFT_LIMIT * 2);
+          var canCorrectNow = force || (drift >= ROOM_MOVIE_DRIFT_LIMIT && (cooldownReady || majorDrift));
+
+          if (canCorrectNow) {
+            roomMovieLastCorrectionAt = now;
+            corrected = forceRoomMovieVideoTo(target, shouldPlay);
+          } else {
+            // Do not keep touching currentTime. Only keep play/pause aligned occasionally.
+            if (now - roomMovieLastPlayPauseAt > 3500) {
+              if (shouldPlay && video.paused) {
+                markRoomMovieRemoteApply(1200);
+                roomMovieLastPlayPauseAt = now;
+                video.play().catch(function(){});
+              } else if (!shouldPlay && !video.paused) {
+                markRoomMovieRemoteApply(1200);
+                roomMovieLastPlayPauseAt = now;
+                try { video.pause(); } catch {}
+              }
             }
           }
 
           var status = document.getElementById("roomMovieStatus");
           if (status && !video.hidden) {
             status.textContent = corrected
-              ? "Synced after drifting over " + ROOM_MOVIE_DRIFT_LIMIT + "s. Room timer: " + formatTime(target)
-              : "Smooth sync active. Room timer: " + formatTime(target) + " • tolerance " + ROOM_MOVIE_DRIFT_LIMIT + "s";
+              ? "Corrected drift over " + ROOM_MOVIE_DRIFT_LIMIT + "s. Room timer: " + formatTime(target)
+              : "Smooth sync active. Drift " + Math.round(drift) + "s • correction distance " + ROOM_MOVIE_DRIFT_LIMIT + "s";
           }
         }
 
@@ -23422,6 +23445,9 @@ function watchroomPage(req, res) {
           var clientId = getClientId();
           var isHost = false;
           var movie = { status: "idle", movieId: "", proxyVideo: "", playAt: 0, sync: { playing: false, offset: 0, startedAt: 0 } };
+          var pollingDriftLimit = Number(window.ROOM_MOVIE_DRIFT_LIMIT || 10);
+          var pollingLastCorrectionAt = 0;
+          var pollingLastPlayPauseAt = 0;
           var lastMovieKey = "";
           var loadTimer = null;
 
@@ -23480,20 +23506,50 @@ function watchroomPage(req, res) {
             if (iframeTarget) iframeTarget.textContent = time;
           }
 
+          function forcePollingVideoTo(target, shouldPlay) {
+            var video = byId("roomMovieVideo");
+            if (!video) return false;
+            try {
+              if (!video.paused) video.pause();
+            } catch {}
+            try {
+              video.currentTime = Math.max(0, Number(target || 0));
+            } catch {
+              return false;
+            }
+            if (shouldPlay) {
+              setTimeout(function(){ video.play().catch(function(){}); }, 280);
+            }
+            return true;
+          }
+
           function applyPollingVideoSync(force) {
             var video = byId("roomMovieVideo");
             if (!video || video.hidden || !movie.proxyVideo) return;
             var target = targetTime();
             var drift = Math.abs(Number(video.currentTime || 0) - target);
-            if (force || drift > ROOM_MOVIE_DRIFT_LIMIT) {
-              try { video.currentTime = target; } catch {}
+            var now = Date.now();
+            var shouldPlay = Boolean(movie.sync && movie.sync.playing);
+            var corrected = false;
+
+            var cooldownReady = now - pollingLastCorrectionAt > 5000;
+            var majorDrift = drift >= (pollingDriftLimit * 2);
+            if (force || (drift >= pollingDriftLimit && (cooldownReady || majorDrift))) {
+              pollingLastCorrectionAt = now;
+              corrected = forcePollingVideoTo(target, shouldPlay);
+            } else if (now - pollingLastPlayPauseAt > 3500) {
+              if (shouldPlay && video.paused) {
+                pollingLastPlayPauseAt = now;
+                video.play().catch(function(){});
+              } else if (!shouldPlay && !video.paused) {
+                pollingLastPlayPauseAt = now;
+                try { video.pause(); } catch {}
+              }
             }
-            if (movie.sync && movie.sync.playing && video.paused) {
-              video.play().catch(function(){});
-            } else if ((!movie.sync || !movie.sync.playing) && !video.paused) {
-              try { video.pause(); } catch {}
-            }
-            setMovieStatus("Smooth native video sync active. Room timer: " + formatTime(target));
+
+            setMovieStatus(corrected
+              ? "Corrected drift over " + pollingDriftLimit + "s. Room timer: " + formatTime(target)
+              : "Smooth native video sync active. Drift " + Math.round(drift) + "s • correction distance " + pollingDriftLimit + "s");
           }
 
           function fallbackPollingIframe(reason) {
@@ -23587,8 +23643,19 @@ function watchroomPage(req, res) {
                 if (overlay) overlay.hidden = true;
                 video.hidden = false;
                 video.onerror = function(){ fallbackPollingIframe("native video error"); };
-                video.onloadedmetadata = function(){ applyPollingVideoSync(true); };
-                video.oncanplay = function(){ applyPollingVideoSync(true); };
+                var pollingInitialSyncDone = false;
+                video.onloadedmetadata = function(){
+                  if (!pollingInitialSyncDone) {
+                    pollingInitialSyncDone = true;
+                    applyPollingVideoSync(true);
+                  }
+                };
+                video.oncanplay = function(){
+                  if (!pollingInitialSyncDone) {
+                    pollingInitialSyncDone = true;
+                    applyPollingVideoSync(true);
+                  }
+                };
                 if (video.src !== movie.proxyVideo) {
                   video.src = movie.proxyVideo;
                   try { video.load(); } catch {}
@@ -23597,7 +23664,7 @@ function watchroomPage(req, res) {
                   if (!video.hidden && video.readyState === 0) fallbackPollingIframe("native video never became ready");
                 }, 9000);
                 applyPollingVideoSync(true);
-                setInterval(function(){ updateTimerUi(); applyPollingVideoSync(false); }, 1000);
+                setInterval(function(){ updateTimerUi(); applyPollingVideoSync(false); }, 2000);
               } else if (frame && movie.proxyVideo) {
                 fallbackPollingIframe("native video element missing");
               }
@@ -24615,7 +24682,7 @@ app.post("/api/date-room/:roomId/movie-control", (req, res) => {
     message = `Host moved the room timer ${delta >= 0 ? "+" : ""}${delta}s.`;
   } else if (action === "set") {
     const requested = Math.max(0, Number(req.body?.time || req.body?.clientTime || 0));
-    const setDriftLimit = Math.max(1, Number(process.env.ROOM_MOVIE_SYNC_DRIFT_LIMIT_SECONDS || 5));
+    const setDriftLimit = Math.max(1, Number(process.env.ROOM_MOVIE_SYNC_DRIFT_LIMIT_SECONDS || 10));
 
     // Prevent feedback loops from freezing the timer at the same value.
     if (Math.abs(requested - current) <= setDriftLimit) {
@@ -24954,7 +25021,7 @@ io.on("connection", (socket) => {
       message = `Host moved the room timer ${delta >= 0 ? "+" : ""}${delta}s.`;
     } else if (action === "set") {
       const requested = Math.max(0, Number(payload.time || payload.clientTime || 0));
-      const setDriftLimit = Math.max(1, Number(process.env.ROOM_MOVIE_SYNC_DRIFT_LIMIT_SECONDS || 5));
+      const setDriftLimit = Math.max(1, Number(process.env.ROOM_MOVIE_SYNC_DRIFT_LIMIT_SECONDS || 10));
 
       // Prevent native-video feedback loops: if this set is already close to the server timer,
       // do not reset/broadcast the timer again.
