@@ -21747,6 +21747,9 @@ function watchroomPage(req, res) {
         var roomMovieIgnoreNativeEventsUntil = 0;
         var roomMovieLastNativeSetSentAt = 0;
         var roomMovieLastNativeSetValue = -1;
+        var roomMovieInitialNativeSyncDone = false;
+        var roomMovieLastCorrectionAt = 0;
+        var roomMovieLastPlayPauseAt = 0;
         var roomMovieVideoControlBound = false;
         var firedNoteIds = {};
 
@@ -21939,10 +21942,16 @@ function watchroomPage(req, res) {
           var target = targetRoomMovieSeconds();
           var current = Number(video.currentTime || 0);
           var drift = Math.abs(current - target);
+          var now = Date.now();
           var corrected = false;
 
-          if (force || drift > ROOM_MOVIE_DRIFT_LIMIT) {
-            markRoomMovieRemoteApply(1800);
+          // v79: Do not fight the player constantly. Force only happens for the first load/manual sync.
+          // Normal correction only happens if drift is over the limit AND the correction cooldown passed.
+          var canCorrectNow = force || (drift > ROOM_MOVIE_DRIFT_LIMIT && now - roomMovieLastCorrectionAt > 8000);
+
+          if (canCorrectNow) {
+            markRoomMovieRemoteApply(2200);
+            roomMovieLastCorrectionAt = now;
             try {
               video.currentTime = target;
               corrected = true;
@@ -21950,19 +21959,25 @@ function watchroomPage(req, res) {
           }
 
           var shouldPlay = Boolean(roomMovieState.sync && roomMovieState.sync.playing);
-          if (shouldPlay && video.paused) {
-            markRoomMovieRemoteApply(900);
-            video.play().catch(function(){});
-          } else if (!shouldPlay && !video.paused) {
-            markRoomMovieRemoteApply(900);
-            try { video.pause(); } catch {}
+
+          // Avoid repeated play/pause calls. Those can cause audio skipping on some streams.
+          if (now - roomMovieLastPlayPauseAt > 2500) {
+            if (shouldPlay && video.paused) {
+              markRoomMovieRemoteApply(1100);
+              roomMovieLastPlayPauseAt = now;
+              video.play().catch(function(){});
+            } else if (!shouldPlay && !video.paused) {
+              markRoomMovieRemoteApply(1100);
+              roomMovieLastPlayPauseAt = now;
+              try { video.pause(); } catch {}
+            }
           }
 
           var status = document.getElementById("roomMovieStatus");
           if (status && !video.hidden) {
             status.textContent = corrected
-              ? "Auto-corrected drift over " + ROOM_MOVIE_DRIFT_LIMIT + "s. Room timer: " + formatTime(target)
-              : "Native video sync active. Room timer: " + formatTime(target) + " • tolerance " + ROOM_MOVIE_DRIFT_LIMIT + "s";
+              ? "Synced after drifting over " + ROOM_MOVIE_DRIFT_LIMIT + "s. Room timer: " + formatTime(target)
+              : "Smooth sync active. Room timer: " + formatTime(target) + " • tolerance " + ROOM_MOVIE_DRIFT_LIMIT + "s";
           }
         }
 
@@ -21971,7 +21986,7 @@ function watchroomPage(req, res) {
           roomMovieCorrectionTimer = setInterval(function() {
             updateRoomMovieTimerUi();
             applyNativeVideoSync(false);
-          }, 1000);
+          }, 2000);
         }
 
         function showIframeSyncHint() {
@@ -22020,11 +22035,19 @@ function watchroomPage(req, res) {
             }, extra || {}));
           }
 
+          var lastNativePlayPauseSentAt = 0;
+
           video.addEventListener("play", function(){
+            var now = Date.now();
+            if (now - lastNativePlayPauseSentAt < 1200) return;
+            lastNativePlayPauseSentAt = now;
             sendFromNative("play");
           });
 
           video.addEventListener("pause", function(){
+            var now = Date.now();
+            if (now - lastNativePlayPauseSentAt < 1200) return;
+            lastNativePlayPauseSentAt = now;
             sendFromNative("pause");
           });
 
@@ -22074,14 +22097,23 @@ function watchroomPage(req, res) {
               fallbackToRoomMovieIframe("native video error");
             };
             video.onloadedmetadata = function() {
-              setRoomMovieStatus("Native video loaded. SwiflyTV will keep this within about 5 seconds of the room timer.");
-              applyNativeVideoSync(true);
+              setRoomMovieStatus("Native video loaded. Smooth sync is active with a " + ROOM_MOVIE_DRIFT_LIMIT + "s tolerance.");
+              if (!roomMovieInitialNativeSyncDone) {
+                roomMovieInitialNativeSyncDone = true;
+                applyNativeVideoSync(true);
+              }
             };
             video.oncanplay = function() {
-              applyNativeVideoSync(true);
+              if (!roomMovieInitialNativeSyncDone) {
+                roomMovieInitialNativeSyncDone = true;
+                applyNativeVideoSync(true);
+              }
             };
 
             if (video.src !== roomMovieState.proxyVideo) {
+              roomMovieInitialNativeSyncDone = false;
+              roomMovieLastCorrectionAt = 0;
+              roomMovieLastPlayPauseAt = 0;
               video.src = roomMovieState.proxyVideo;
               try { video.load(); } catch {}
             }
@@ -22093,7 +22125,7 @@ function watchroomPage(req, res) {
               }
             }, 9000);
 
-            applyNativeVideoSync(true);
+            applyNativeVideoSync(false);
           } else {
             fallbackToRoomMovieIframe("native video element missing");
           }
@@ -22923,6 +22955,7 @@ function watchroomPage(req, res) {
         });
 
         document.getElementById("roomMovieSyncMeBtn")?.addEventListener("click", function() {
+          roomMovieLastCorrectionAt = 0;
           applyNativeVideoSync(true);
           showIframeSyncHint();
           toast("Synced to room timer");
@@ -23460,7 +23493,7 @@ function watchroomPage(req, res) {
             } else if ((!movie.sync || !movie.sync.playing) && !video.paused) {
               try { video.pause(); } catch {}
             }
-            setMovieStatus("Native video sync active. Room timer: " + formatTime(target));
+            setMovieStatus("Smooth native video sync active. Room timer: " + formatTime(target));
           }
 
           function fallbackPollingIframe(reason) {
