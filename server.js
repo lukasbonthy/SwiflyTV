@@ -18452,6 +18452,16 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
       -webkit-tap-highlight-color: transparent;
     }
 
+
+    /* ============================================================
+       v73 DATE ROOM POLLING FALLBACK
+       If Socket.IO stays on Joining..., REST polling takes over.
+       ============================================================ */
+
+    .dsStablePanel.active {
+      display: grid !important;
+    }
+
   </style>
 </head>
 <body>
@@ -22292,6 +22302,7 @@ function watchroomPage(req, res) {
         });
 
         socket.on("watchroom:joined", function(data) {
+          window.__swiflyDateRoomJoined = true;
           isRoomHost = Boolean(data.isHost);
           setHostMode();
 
@@ -22937,6 +22948,7 @@ function watchroomPage(req, res) {
               emit("watchroom:join", { roomId: roomId, name: roomName, user: getName() });
             });
             socket.on("watchroom:joined", function(data) {
+              window.__swiflyDateRoomJoined = true;
               isHost = Boolean(data && data.isHost);
               setHostMode();
               if (data && data.room && data.room.syncedMovie) renderMovie(data.room.syncedMovie);
@@ -23028,7 +23040,325 @@ function watchroomPage(req, res) {
           }
         }, 350);
       })();
+
     </script>
+
+    <script>
+      (function swiflyDateRoomPollingFallback(){
+        function byId(id) { return document.getElementById(id); }
+        function all(sel) { return Array.prototype.slice.call(document.querySelectorAll(sel)); }
+        function toast(msg) {
+          if (window.showToast) window.showToast(msg);
+          else console.log(msg);
+        }
+        function pad(n) { return String(Math.floor(n)).padStart(2, "0"); }
+        function formatTime(seconds) {
+          seconds = Math.max(0, Math.floor(Number(seconds || 0)));
+          var h = Math.floor(seconds / 3600);
+          var m = Math.floor((seconds % 3600) / 60);
+          var s = seconds % 60;
+          return h > 0 ? h + ":" + pad(m) + ":" + pad(s) : m + ":" + pad(s);
+        }
+        function getName() {
+          try {
+            var session = JSON.parse(localStorage.getItem("swiflytv.session") || "null");
+            var profile = JSON.parse(localStorage.getItem("swiflytv.activeProfile") || "null");
+            return (profile && profile.name) || (session && (session.name || session.email)) || "Guest";
+          } catch (e) {
+            return "Guest";
+          }
+        }
+        function getClientId() {
+          var key = "swiflytv.dateRoomClientId";
+          var id = localStorage.getItem(key);
+          if (!id) {
+            id = "c_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+            localStorage.setItem(key, id);
+          }
+          return id;
+        }
+        function parseMovieId(value) {
+          var raw = String(value || "").trim();
+          if (!raw) return "";
+          var match = raw.match(/(?:movie\/|tmdb=|id=)(\d+)/i) || raw.match(/^(\d{2,14})$/);
+          return match ? match[1] : "";
+        }
+
+        function bindTabs() {
+          all("[data-stable-tab]").forEach(function(btn) {
+            if (btn.__swiflyPollingTabBound) return;
+            btn.__swiflyPollingTabBound = true;
+            btn.addEventListener("click", function() {
+              var name = btn.getAttribute("data-stable-tab") || "open";
+              all("[data-stable-tab]").forEach(function(other) {
+                other.classList.toggle("active", other === btn);
+              });
+              [
+                ["stableOpenPanel", "open"],
+                ["stableRoomMoviePanel", "movie"],
+                ["stableLivePanel", "live"],
+                ["stableClockPanel", "clock"],
+                ["stableCouplesPanel", "couples"]
+              ].forEach(function(pair) {
+                var panel = byId(pair[0]);
+                if (panel) panel.classList.toggle("active", pair[1] === name);
+              });
+            });
+          });
+        }
+
+        function startPollingFallback() {
+          if (window.__swiflyDateRoomJoined) return;
+          if (window.__swiflyDateRoomPollingStarted) return;
+          window.__swiflyDateRoomPollingStarted = true;
+
+          bindTabs();
+
+          var roomId = "${safeRoomId}";
+          var roomName = "${safeName}";
+          var clientId = getClientId();
+          var isHost = false;
+          var movie = { status: "idle", movieId: "", proxyVideo: "", playAt: 0, sync: { playing: false, offset: 0, startedAt: 0 } };
+          var lastMovieKey = "";
+          var loadTimer = null;
+
+          var status = byId("stableHostStatus");
+          if (status) status.textContent = "Polling fallback...";
+
+          function api(path, options) {
+            options = options || {};
+            options.headers = Object.assign({ "Content-Type": "application/json", "Accept": "application/json" }, options.headers || {});
+            if (options.body && typeof options.body !== "string") options.body = JSON.stringify(options.body);
+            return fetch(path, options).then(function(res) {
+              return res.json().then(function(data) {
+                if (!res.ok || data.ok === false) {
+                  throw new Error(data.error || data.message || ("HTTP " + res.status));
+                }
+                return data;
+              });
+            });
+          }
+
+          function setHostMode(value) {
+            isHost = Boolean(value);
+            var text = isHost ? "You are host" : "View only";
+            ["stableHostStatus", "stableOpenBadge", "stableLiveBadge", "stableRoomMovieBadge"].forEach(function(id) {
+              var el = byId(id);
+              if (el) el.textContent = text + " • polling";
+            });
+            ["stableOpenInput", "stableCountdownBtn", "stableStartLiveBtn", "stableStopLiveBtn", "roomMovieInput", "roomMovieSelectBtn", "roomMovieRestartBtn", "roomMoviePlayBtn", "roomMoviePauseBtn", "roomMovieBack10Btn", "roomMovieForward10Btn"].forEach(function(id) {
+              var el = byId(id);
+              if (el) el.disabled = !isHost;
+            });
+          }
+
+          function openMovieTab() {
+            var btn = document.querySelector('[data-stable-tab="movie"]');
+            if (btn) btn.click();
+          }
+
+          function setMovieStatus(text) {
+            var el = byId("roomMovieStatus");
+            if (el) el.textContent = text || "";
+          }
+
+          function targetTime() {
+            var sync = movie.sync || {};
+            var offset = Math.max(0, Number(sync.offset || 0));
+            if (!sync.playing || !sync.startedAt) return offset;
+            return Math.max(0, offset + ((Date.now() - Number(sync.startedAt || Date.now())) / 1000));
+          }
+
+          function updateTimerUi() {
+            var el = byId("roomMovieTargetTime");
+            if (el) el.textContent = formatTime(targetTime());
+          }
+
+          function renderMovie(next) {
+            if (!next) return;
+            movie = Object.assign({ status: "idle", movieId: "", proxyVideo: "", playAt: 0, sync: { playing: false, offset: 0, startedAt: 0 } }, next);
+            if (!movie.sync) movie.sync = { playing: false, offset: 0, startedAt: 0 };
+
+            var key = [movie.status, movie.movieId, movie.proxyVideo, movie.playAt, movie.message].join("|");
+            var title = byId("roomMovieTitle");
+            if (title) title.textContent = movie.movieId ? ("TMDB #" + movie.movieId) : "No movie selected";
+
+            if (!movie.movieId) {
+              setMovieStatus("Host can select a movie and everyone will wait together.");
+              return;
+            }
+
+            if (movie.status === "loading") {
+              openMovieTab();
+              setMovieStatus("Waiting for proxyVideo... this can take awhile.");
+              var empty = byId("roomMovieEmpty");
+              if (empty) {
+                empty.hidden = false;
+                var h = empty.querySelector("h3");
+                var p = empty.querySelector("p");
+                if (h) h.textContent = "Finding movie source...";
+                if (p) p.textContent = "Waiting for proxyVideo. Everyone will load together when it returns.";
+              }
+              return;
+            }
+
+            if (movie.status === "error") {
+              openMovieTab();
+              setMovieStatus(movie.message || "proxyVideo failed.");
+              return;
+            }
+
+            if (movie.status === "ready" && movie.proxyVideo) {
+              openMovieTab();
+              setMovieStatus("proxyVideo ready. Sync countdown active.");
+              if (lastMovieKey !== key) {
+                scheduleLoad();
+              }
+            }
+
+            lastMovieKey = key;
+          }
+
+          function scheduleLoad() {
+            if (loadTimer) clearInterval(loadTimer);
+            var countdown = byId("roomMovieCountdown");
+            var frame = byId("roomMovieFrame");
+            var empty = byId("roomMovieEmpty");
+            var stage = byId("roomMovieStage");
+
+            loadTimer = setInterval(function() {
+              updateTimerUi();
+              var left = Math.ceil((Number(movie.playAt || 0) - Date.now()) / 1000);
+
+              if (left > 0) {
+                if (countdown) countdown.textContent = "Play in " + left;
+                return;
+              }
+
+              if (countdown) countdown.textContent = "Play now";
+              if (frame && movie.proxyVideo) {
+                if (frame.src !== movie.proxyVideo) frame.src = movie.proxyVideo;
+                frame.hidden = false;
+              }
+              if (empty) empty.hidden = true;
+              if (stage) stage.classList.add("isReady");
+              clearInterval(loadTimer);
+              loadTimer = null;
+            }, 250);
+          }
+
+          function join() {
+            return api("/api/date-room/" + encodeURIComponent(roomId) + "/join", {
+              method: "POST",
+              body: { clientId: clientId, name: getName(), roomName: roomName }
+            }).then(function(data) {
+              setHostMode(data.isHost);
+              if (data.room && data.room.syncedMovie) renderMovie(data.room.syncedMovie);
+              var viewers = byId("stableViewerCount");
+              if (viewers && data.room) viewers.textContent = String(data.room.viewers || 1);
+              toast("Date Room polling fallback connected");
+            }).catch(function(error) {
+              var status = byId("stableHostStatus");
+              if (status) status.textContent = "Offline";
+              toast("Polling fallback failed: " + error.message);
+            });
+          }
+
+          function poll() {
+            api("/api/date-room/" + encodeURIComponent(roomId) + "/state?clientId=" + encodeURIComponent(clientId), {
+              method: "GET"
+            }).then(function(data) {
+              setHostMode(data.isHost);
+              if (data.room && data.room.syncedMovie) renderMovie(data.room.syncedMovie);
+              var viewers = byId("stableViewerCount");
+              if (viewers && data.room) viewers.textContent = String(data.room.viewers || 1);
+            }).catch(function(){});
+          }
+
+          function postMovieControl(action, extra) {
+            if (!isHost) return toast("Only host can control room movie");
+            return api("/api/date-room/" + encodeURIComponent(roomId) + "/movie-control", {
+              method: "POST",
+              body: Object.assign({ clientId: clientId, action: action }, extra || {})
+            }).then(function(data) {
+              if (data.room && data.room.syncedMovie) renderMovie(data.room.syncedMovie);
+            }).catch(function(error) {
+              toast(error.message);
+            });
+          }
+
+          var form = byId("roomMovieForm");
+          if (form && !form.__swiflyPollingBound) {
+            form.__swiflyPollingBound = true;
+            form.addEventListener("submit", function(event) {
+              if (!window.__swiflyDateRoomPollingStarted) return;
+              event.preventDefault();
+              event.stopImmediatePropagation();
+              if (!isHost) return toast("Only host can select movie");
+
+              var movieId = parseMovieId((byId("roomMovieInput") || {}).value || "");
+              if (!movieId) return toast("Paste a TMDB movie ID or /watch/movie link");
+
+              renderMovie({ status: "loading", movieId: movieId, message: "Waiting for proxyVideo..." });
+              api("/api/date-room/" + encodeURIComponent(roomId) + "/movie-select", {
+                method: "POST",
+                body: { clientId: clientId, movieId: movieId, name: getName() }
+              }).then(function(data) {
+                if (data.room && data.room.syncedMovie) renderMovie(data.room.syncedMovie);
+              }).catch(function(error) {
+                setMovieStatus(error.message);
+                toast(error.message);
+              });
+            }, true);
+          }
+
+          function bindClick(id, fn) {
+            var el = byId(id);
+            if (!el || el.__swiflyPollingBound) return;
+            el.__swiflyPollingBound = true;
+            el.addEventListener("click", function(event) {
+              if (!window.__swiflyDateRoomPollingStarted) return;
+              event.preventDefault();
+              event.stopImmediatePropagation();
+              fn();
+            }, true);
+          }
+
+          bindClick("roomMovieRestartBtn", function(){ postMovieControl("restart"); });
+          bindClick("roomMoviePlayBtn", function(){ postMovieControl("play"); });
+          bindClick("roomMoviePauseBtn", function(){ postMovieControl("pause"); });
+          bindClick("roomMovieBack10Btn", function(){ postMovieControl("seek", { delta: -10 }); });
+          bindClick("roomMovieForward10Btn", function(){ postMovieControl("seek", { delta: 10 }); });
+          bindClick("roomMovieOpenBtn", function(){
+            if (!movie.movieId) return toast("No room movie selected");
+            window.open("/watch/movie/" + encodeURIComponent(movie.movieId) + "?mode=movie", "_blank", "noopener");
+          });
+          bindClick("roomMovieCopyBtn", function(){
+            var text = movie.movieId ? location.origin + "/watch/movie/" + movie.movieId + "?mode=movie" : "No movie selected";
+            if (navigator.clipboard) navigator.clipboard.writeText(text);
+            toast("Copied");
+          });
+          bindClick("roomMovieSyncMeBtn", function(){
+            updateTimerUi();
+            toast("Synced to room timer");
+          });
+
+          join().then(function() {
+            poll();
+            setInterval(poll, 1500);
+            setInterval(updateTimerUi, 1000);
+          });
+        }
+
+        bindTabs();
+
+        setTimeout(function() {
+          if (!window.__swiflyDateRoomJoined) {
+            startPollingFallback();
+          }
+        }, 3500);
+      })();
+
   </main>`;
 
   res.send(pageShell({ title: `${SITE_NAME} — ${room.name}`, active: "watchrooms", body }));
@@ -23690,6 +24020,260 @@ app.get("/api/tmdb/:path(*)", async (req, res) => {
   const data = await tmdb(endpoint, req.query, CACHE_TTL.short);
   res.status(data.status || 200).json(data);
 });
+
+
+function dateRoomRestClientId(value) {
+  return String(value || "").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 80);
+}
+
+function dateRoomRestIsHost(room, clientId) {
+  if (!room.restHostClientId && clientId) {
+    room.restHostClientId = clientId;
+  }
+  return Boolean(clientId && room.restHostClientId === clientId);
+}
+
+function emitDateRoomRestState(room) {
+  return {
+    room: publicRoom(room),
+    state: room.state,
+    messages: room.messages.slice(-40),
+  };
+}
+
+async function resolveDateRoomProxyVideoInBackground(roomId, movieId, selectedBy, requestId) {
+  const result = await fetchProxyVideoSource({ type: "movie", id: movieId });
+  const room = watchRooms.get(roomId);
+  if (!room || !room.syncedMovie || room.syncedMovie.requestId !== requestId) return;
+
+  if (result.status === "ok" && result.proxyVideo) {
+    room.syncedMovie = {
+      status: "ready",
+      movieId,
+      proxyVideo: result.proxyVideo,
+      providerUrl: result.providerUrl || "",
+      sourceUrl: result.sourceUrl || "",
+      playAt: Date.now() + 7000,
+      selectedBy,
+      requestId,
+      message: "proxyVideo ready. Sync countdown started.",
+      sync: createMovieSyncState({ playing: true, offset: 0, startedAt: Date.now() + 7000 }),
+      updatedAt: Date.now(),
+    };
+
+    room.messages.push({
+      name: "System",
+      text: `proxyVideo is ready for TMDB #${movieId}. Room starts in 7 seconds.`,
+      createdAt: Date.now(),
+    });
+  } else {
+    room.syncedMovie = {
+      status: "error",
+      movieId,
+      proxyVideo: "",
+      playAt: 0,
+      selectedBy,
+      requestId,
+      message: result.message || "proxyVideo did not return for this movie.",
+      attempts: result.attempts || [],
+      sync: createMovieSyncState(),
+      updatedAt: Date.now(),
+    };
+
+    room.messages.push({
+      name: "System",
+      text: `proxyVideo failed for TMDB #${movieId}: ${room.syncedMovie.message}`,
+      createdAt: Date.now(),
+    });
+  }
+
+  room.messages = room.messages.slice(-80);
+  room.updatedAt = Date.now();
+
+  io.to(room.id).emit("watchroom:movie-sync", {
+    roomId: room.id,
+    movie: room.syncedMovie,
+  });
+}
+
+app.post("/api/date-room/:roomId/join", (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const roomId = normalizeRoomId(req.params.roomId);
+  const clientId = dateRoomRestClientId(req.body?.clientId);
+  const name = String(req.body?.name || "Guest").slice(0, 40);
+  const roomName = String(req.body?.roomName || "SwiflyTV Date Room").slice(0, 80);
+
+  if (!roomId || !clientId) {
+    return res.status(400).json({ ok: false, error: "roomId and clientId required" });
+  }
+
+  const room = getOrCreateWatchRoom(roomId, {
+    name: roomName,
+    host: name,
+  });
+
+  const isHost = dateRoomRestIsHost(room, clientId);
+  room.restViewers = room.restViewers || {};
+  room.restViewers[clientId] = { name, seenAt: Date.now() };
+  room.viewers = Math.max(io.sockets.adapter.rooms.get(room.id)?.size || 0, Object.keys(room.restViewers).length);
+  room.updatedAt = Date.now();
+
+  res.json({
+    ok: true,
+    isHost,
+    clientId,
+    ...emitDateRoomRestState(room),
+  });
+});
+
+app.get("/api/date-room/:roomId/state", (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const roomId = normalizeRoomId(req.params.roomId);
+  const clientId = dateRoomRestClientId(req.query.clientId);
+  const room = watchRooms.get(roomId);
+
+  if (!room) {
+    return res.status(404).json({ ok: false, error: "room_not_found" });
+  }
+
+  if (clientId) {
+    room.restViewers = room.restViewers || {};
+    if (room.restViewers[clientId]) room.restViewers[clientId].seenAt = Date.now();
+  }
+
+  room.viewers = Math.max(io.sockets.adapter.rooms.get(room.id)?.size || 0, Object.keys(room.restViewers || {}).length);
+  res.json({
+    ok: true,
+    isHost: dateRoomRestIsHost(room, clientId),
+    ...emitDateRoomRestState(room),
+  });
+});
+
+app.post("/api/date-room/:roomId/movie-select", (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const roomId = normalizeRoomId(req.params.roomId);
+  const clientId = dateRoomRestClientId(req.body?.clientId);
+  const movieId = String(req.body?.movieId || "").replace(/\D/g, "").slice(0, 14);
+  const name = String(req.body?.name || "Host").slice(0, 40);
+  const room = watchRooms.get(roomId);
+
+  if (!room) return res.status(404).json({ ok: false, error: "room_not_found" });
+  if (!dateRoomRestIsHost(room, clientId)) return res.status(403).json({ ok: false, error: "host_only" });
+  if (!movieId) return res.status(400).json({ ok: false, error: "movieId_required" });
+
+  const requestId = Math.random().toString(36).slice(2, 10);
+  room.syncedMovie = {
+    status: "loading",
+    movieId,
+    proxyVideo: "",
+    playAt: 0,
+    selectedBy: name,
+    requestId,
+    message: "Waiting for proxyVideo...",
+    sync: createMovieSyncState(),
+    updatedAt: Date.now(),
+  };
+
+  room.messages.push({
+    name: "System",
+    text: `${name} selected TMDB #${movieId}. Waiting for proxyVideo...`,
+    createdAt: Date.now(),
+  });
+  room.messages = room.messages.slice(-80);
+  room.updatedAt = Date.now();
+
+  io.to(room.id).emit("watchroom:movie-sync", {
+    roomId: room.id,
+    movie: room.syncedMovie,
+  });
+
+  resolveDateRoomProxyVideoInBackground(room.id, movieId, name, requestId).catch((error) => {
+    const latest = watchRooms.get(room.id);
+    if (!latest || !latest.syncedMovie || latest.syncedMovie.requestId !== requestId) return;
+    latest.syncedMovie.status = "error";
+    latest.syncedMovie.message = error.message || "proxyVideo background request failed.";
+    latest.syncedMovie.updatedAt = Date.now();
+    latest.updatedAt = Date.now();
+  });
+
+  res.json({
+    ok: true,
+    isHost: true,
+    ...emitDateRoomRestState(room),
+  });
+});
+
+app.post("/api/date-room/:roomId/movie-control", (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const roomId = normalizeRoomId(req.params.roomId);
+  const clientId = dateRoomRestClientId(req.body?.clientId);
+  const action = String(req.body?.action || "").slice(0, 30);
+  const room = watchRooms.get(roomId);
+
+  if (!room) return res.status(404).json({ ok: false, error: "room_not_found" });
+  if (!dateRoomRestIsHost(room, clientId)) return res.status(403).json({ ok: false, error: "host_only" });
+  if (!room.syncedMovie || !room.syncedMovie.movieId) return res.status(400).json({ ok: false, error: "no_movie" });
+
+  ensureSyncedMovieSync(room.syncedMovie);
+
+  const now = Date.now();
+  const current = currentSyncedMovieSeconds(room.syncedMovie);
+  let offset = current;
+  let playing = Boolean(room.syncedMovie.sync.playing);
+  let message = "";
+
+  if (action === "play") {
+    playing = true;
+    offset = current;
+    message = "Host pressed play. Room timer is running.";
+  } else if (action === "pause") {
+    playing = false;
+    offset = current;
+    message = "Host paused the room timer.";
+  } else if (action === "seek") {
+    const delta = Math.max(-600, Math.min(600, Number(req.body?.delta || 0)));
+    offset = Math.max(0, current + delta);
+    message = `Host moved the room timer ${delta >= 0 ? "+" : ""}${delta}s.`;
+  } else if (action === "restart") {
+    room.syncedMovie.playAt = Date.now() + 7000;
+    room.syncedMovie.sync = createMovieSyncState({ playing: true, offset: 0, startedAt: room.syncedMovie.playAt });
+    room.syncedMovie.status = "ready";
+    room.syncedMovie.message = "Sync countdown restarted.";
+    room.syncedMovie.updatedAt = Date.now();
+    room.updatedAt = Date.now();
+
+    io.to(room.id).emit("watchroom:movie-sync", { roomId: room.id, movie: room.syncedMovie });
+    return res.json({ ok: true, isHost: true, ...emitDateRoomRestState(room) });
+  } else {
+    return res.status(400).json({ ok: false, error: "unknown_action" });
+  }
+
+  room.syncedMovie.sync = createMovieSyncState({
+    playing,
+    offset,
+    startedAt: playing ? now : 0,
+  });
+  room.syncedMovie.message = message;
+  room.syncedMovie.updatedAt = now;
+  room.updatedAt = now;
+
+  room.messages.push({ name: "System", text: message, createdAt: now });
+  room.messages = room.messages.slice(-80);
+
+  io.to(room.id).emit("watchroom:movie-sync-state", {
+    roomId: room.id,
+    movieId: room.syncedMovie.movieId,
+    sync: room.syncedMovie.sync,
+    message,
+  });
+
+  res.json({
+    ok: true,
+    isHost: true,
+    ...emitDateRoomRestState(room),
+  });
+});
+
 
 app.use((req, res) => {
   res.status(404).send(pageShell({
