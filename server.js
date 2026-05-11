@@ -19920,7 +19920,7 @@ function listProviderStreams(data = {}) {
 
 
 async function fetchProxyVideoSource({ type, id }) {
-  const enabled = process.env.MOVIE_PROXY_VIDEO_PROVIDER_ENABLED === "true";
+  const enabled = process.env.MOVIE_PROXY_VIDEO_PROVIDER_ENABLED !== "false";
   if (!enabled || type !== "movie") {
     return { status: "disabled", reason: "proxy_video_disabled" };
   }
@@ -19946,8 +19946,14 @@ async function fetchProxyVideoSource({ type, id }) {
     headers.Authorization = `Bearer ${process.env.MOVIE_PROXY_VIDEO_PROVIDER_API_KEY}`;
   }
 
+  const timeoutMs = Math.max(8000, Number(process.env.MOVIE_PROXY_VIDEO_TIMEOUT_MS || 60000));
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
   try {
-    const response = await fetch(url, { headers });
+    const response = await fetch(url, { headers, signal: controller.signal });
+    clearTimeout(timeout);
+
     if (!response.ok) {
       return { status: "error", message: `proxyVideo provider returned HTTP ${response.status}` };
     }
@@ -19979,7 +19985,13 @@ async function fetchProxyVideoSource({ type, id }) {
       providerUrl: url.toString(),
     };
   } catch (error) {
-    return { status: "error", message: error.message || "proxyVideo provider request failed." };
+    clearTimeout(timeout);
+    return {
+      status: "error",
+      message: error.name === "AbortError"
+        ? `proxyVideo provider timed out after ${Math.round(timeoutMs / 1000)} seconds.`
+        : error.message || "proxyVideo provider request failed."
+    };
   }
 }
 
@@ -20213,7 +20225,7 @@ async function watchPage(req, res, type) {
             <div>
               <span class="dsEyebrow">${isMovieMode ? watchModeLabel : "Trailer mode"}</span>
               <h1>${escapeHtml(title)}</h1>
-              <p>${isMovieMode ? (proxyVideoUrl ? "Movie button is embedding the proxyVideo URL returned by your movie API." : providerStream ? "Movie button is using the temporary ORG MP4 trailer/preview provider until licensed movie access is connected." : "Movie mode tries proxyVideo first, then falls back to placeholder/embed/trailer if needed.") : "Official trailer / preview playback."}</p>
+              <p>${isMovieMode ? (proxyVideoUrl ? "Movie button is embedding the proxyVideo URL returned by your movie API." : providerStream ? "Movie button is using the temporary ORG MP4 trailer/preview provider until licensed movie access is connected." : "Movie mode is waiting for proxyVideo first. Old placeholder/embed/trailer sources only load if proxyVideo fails.") : "Official trailer / preview playback."}</p>
             </div>
             ${isMovieMode ? `<span class="dsPlaceholderBadge">${proxyVideoUrl ? "proxyVideo" : providerStream ? "ORG MP4" : movieEmbedUrl ? "Embed" : "Trailer fallback"}</span>` : `<span class="dsPlaceholderBadge trailer">Trailer</span>`}
           </div>
@@ -20249,6 +20261,10 @@ async function watchPage(req, res, type) {
       </div>
     </section>
   </main>`;
+
+  if (isMovieMode) {
+    res.set("Cache-Control", "no-store");
+  }
 
   const directVideoScript = isMovieMode && providerStream
     ? `<script>
@@ -21821,6 +21837,7 @@ app.get("/browse-by-languages", genresPage);
 app.get("/genre/movie/:id", (req, res) => genrePage(req, res, "movie"));
 app.get("/genre/tv/:id", (req, res) => genrePage(req, res, "tv"));
 app.get("/api/proxy-video/movie/:id", async (req, res) => {
+  res.set("Cache-Control", "no-store");
   const result = await fetchProxyVideoSource({ type: "movie", id: req.params.id });
   res.json(result);
 });
