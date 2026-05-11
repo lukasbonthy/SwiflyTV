@@ -21744,6 +21744,9 @@ function watchroomPage(req, res) {
         var roomMovieCorrectionTimer = null;
         var ROOM_MOVIE_DRIFT_LIMIT = Number(window.ROOM_MOVIE_DRIFT_LIMIT || 5);
         var roomMovieRemoteApplying = false;
+        var roomMovieIgnoreNativeEventsUntil = 0;
+        var roomMovieLastNativeSetSentAt = 0;
+        var roomMovieLastNativeSetValue = -1;
         var roomMovieVideoControlBound = false;
         var firedNoteIds = {};
 
@@ -21919,6 +21922,16 @@ function watchroomPage(req, res) {
           if (iframeTarget) iframeTarget.textContent = time;
         }
 
+        function markRoomMovieRemoteApply(ms) {
+          roomMovieRemoteApplying = true;
+          roomMovieIgnoreNativeEventsUntil = Date.now() + (ms || 1600);
+          setTimeout(function(){
+            if (Date.now() >= roomMovieIgnoreNativeEventsUntil) {
+              roomMovieRemoteApplying = false;
+            }
+          }, ms || 1600);
+        }
+
         function applyNativeVideoSync(force) {
           var video = document.getElementById("roomMovieVideo");
           if (!video || video.hidden || !roomMovieState.proxyVideo) return;
@@ -21926,26 +21939,30 @@ function watchroomPage(req, res) {
           var target = targetRoomMovieSeconds();
           var current = Number(video.currentTime || 0);
           var drift = Math.abs(current - target);
-
-          roomMovieRemoteApplying = true;
+          var corrected = false;
 
           if (force || drift > ROOM_MOVIE_DRIFT_LIMIT) {
-            try { video.currentTime = target; } catch {}
+            markRoomMovieRemoteApply(1800);
+            try {
+              video.currentTime = target;
+              corrected = true;
+            } catch {}
           }
 
-          if (roomMovieState.sync && roomMovieState.sync.playing) {
+          var shouldPlay = Boolean(roomMovieState.sync && roomMovieState.sync.playing);
+          if (shouldPlay && video.paused) {
+            markRoomMovieRemoteApply(900);
             video.play().catch(function(){});
-          } else {
+          } else if (!shouldPlay && !video.paused) {
+            markRoomMovieRemoteApply(900);
             try { video.pause(); } catch {}
           }
 
-          setTimeout(function(){ roomMovieRemoteApplying = false; }, 350);
-
           var status = document.getElementById("roomMovieStatus");
           if (status && !video.hidden) {
-            status.textContent = drift > ROOM_MOVIE_DRIFT_LIMIT
-              ? "Auto-corrected drift. Room timer: " + formatTime(target)
-              : "Native video sync active. Room timer: " + formatTime(target);
+            status.textContent = corrected
+              ? "Auto-corrected drift over " + ROOM_MOVIE_DRIFT_LIMIT + "s. Room timer: " + formatTime(target)
+              : "Native video sync active. Room timer: " + formatTime(target) + " • tolerance " + ROOM_MOVIE_DRIFT_LIMIT + "s";
           }
         }
 
@@ -21988,8 +22005,12 @@ function watchroomPage(req, res) {
           if (!video || roomMovieVideoControlBound) return;
           roomMovieVideoControlBound = true;
 
+          function shouldIgnoreNativeEvent() {
+            return roomMovieRemoteApplying || Date.now() < roomMovieIgnoreNativeEventsUntil;
+          }
+
           function sendFromNative(action, extra) {
-            if (!isRoomHost || roomMovieRemoteApplying) return;
+            if (!isRoomHost || shouldIgnoreNativeEvent()) return;
             if (!roomMovieState.movieId) return;
             socket.emit("watchroom:movie-control", Object.assign({
               roomId: roomId,
@@ -21999,9 +22020,30 @@ function watchroomPage(req, res) {
             }, extra || {}));
           }
 
-          video.addEventListener("play", function(){ sendFromNative("play"); });
-          video.addEventListener("pause", function(){ sendFromNative("pause"); });
-          video.addEventListener("seeked", function(){ sendFromNative("set", { time: Number(video.currentTime || 0) }); });
+          video.addEventListener("play", function(){
+            sendFromNative("play");
+          });
+
+          video.addEventListener("pause", function(){
+            sendFromNative("pause");
+          });
+
+          video.addEventListener("seeked", function(){
+            if (!isRoomHost || shouldIgnoreNativeEvent()) return;
+
+            var now = Date.now();
+            var current = Number(video.currentTime || 0);
+            var roomTarget = targetRoomMovieSeconds();
+            var drift = Math.abs(current - roomTarget);
+
+            // Do not spam "set timer" for tiny or repeated seek events.
+            if (drift <= ROOM_MOVIE_DRIFT_LIMIT) return;
+            if (now - roomMovieLastNativeSetSentAt < 2500 && Math.abs(current - roomMovieLastNativeSetValue) < ROOM_MOVIE_DRIFT_LIMIT) return;
+
+            roomMovieLastNativeSetSentAt = now;
+            roomMovieLastNativeSetValue = current;
+            sendFromNative("set", { time: current });
+          });
         }
 
         function loadRoomMovieFrame() {
@@ -22032,7 +22074,7 @@ function watchroomPage(req, res) {
               fallbackToRoomMovieIframe("native video error");
             };
             video.onloadedmetadata = function() {
-              setRoomMovieStatus("Native video loaded. SwiflyTV will keep this within about 1.5 seconds of the room timer.");
+              setRoomMovieStatus("Native video loaded. SwiflyTV will keep this within about 5 seconds of the room timer.");
               applyNativeVideoSync(true);
             };
             video.oncanplay = function() {
@@ -23413,9 +23455,9 @@ function watchroomPage(req, res) {
             if (force || drift > ROOM_MOVIE_DRIFT_LIMIT) {
               try { video.currentTime = target; } catch {}
             }
-            if (movie.sync && movie.sync.playing) {
+            if (movie.sync && movie.sync.playing && video.paused) {
               video.play().catch(function(){});
-            } else {
+            } else if ((!movie.sync || !movie.sync.playing) && !video.paused) {
               try { video.pause(); } catch {}
             }
             setMovieStatus("Native video sync active. Room timer: " + formatTime(target));
@@ -24539,7 +24581,19 @@ app.post("/api/date-room/:roomId/movie-control", (req, res) => {
     offset = Math.max(0, current + delta);
     message = `Host moved the room timer ${delta >= 0 ? "+" : ""}${delta}s.`;
   } else if (action === "set") {
-    offset = Math.max(0, Number(req.body?.time || req.body?.clientTime || 0));
+    const requested = Math.max(0, Number(req.body?.time || req.body?.clientTime || 0));
+    const setDriftLimit = Math.max(1, Number(process.env.ROOM_MOVIE_SYNC_DRIFT_LIMIT_SECONDS || 5));
+
+    // Prevent feedback loops from freezing the timer at the same value.
+    if (Math.abs(requested - current) <= setDriftLimit) {
+      return res.json({
+        ok: true,
+        isHost: true,
+        ...emitDateRoomRestState(room),
+      });
+    }
+
+    offset = requested;
     message = `Host set the room timer to ${Math.floor(offset)}s.`;
   } else if (action === "restart") {
     room.syncedMovie.playAt = Date.now() + 7000;
@@ -24866,7 +24920,22 @@ io.on("connection", (socket) => {
       offset = Math.max(0, current + delta);
       message = `Host moved the room timer ${delta >= 0 ? "+" : ""}${delta}s.`;
     } else if (action === "set") {
-      offset = Math.max(0, Number(payload.time || payload.clientTime || 0));
+      const requested = Math.max(0, Number(payload.time || payload.clientTime || 0));
+      const setDriftLimit = Math.max(1, Number(process.env.ROOM_MOVIE_SYNC_DRIFT_LIMIT_SECONDS || 5));
+
+      // Prevent native-video feedback loops: if this set is already close to the server timer,
+      // do not reset/broadcast the timer again.
+      if (Math.abs(requested - current) <= setDriftLimit) {
+        socket.emit("watchroom:movie-sync-state", {
+          roomId: room.id,
+          movieId: room.syncedMovie.movieId,
+          sync: room.syncedMovie.sync,
+          message: `Already within ${setDriftLimit}s tolerance.`,
+        });
+        return;
+      }
+
+      offset = requested;
       message = `Host set the room timer to ${Math.floor(offset)}s.`;
     } else if (action === "sync-me") {
       socket.emit("watchroom:movie-sync-state", {
