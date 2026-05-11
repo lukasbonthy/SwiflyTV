@@ -18462,6 +18462,67 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
       display: grid !important;
     }
 
+
+    /* ============================================================
+       v75 SYNC REGEX + SCRIPT FIX
+       Removes remaining Date Room regex crash and adds iframe sync target overlay.
+       ============================================================ */
+
+    .dsIframeSyncOverlay {
+      position: absolute;
+      right: 14px;
+      top: 14px;
+      z-index: 8;
+      display: grid;
+      gap: 3px;
+      min-width: 136px;
+      max-width: min(280px, calc(100% - 28px));
+      padding: 10px 12px;
+      border-radius: 18px;
+      color: white;
+      background: rgba(2,3,10,.72);
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 18px 60px rgba(0,0,0,.36);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      pointer-events: none;
+    }
+
+    .dsIframeSyncOverlay[hidden] {
+      display: none !important;
+    }
+
+    .dsIframeSyncOverlay span {
+      color: rgba(248,251,255,.55);
+      font-size: 10px;
+      font-weight: 950;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+    }
+
+    .dsIframeSyncOverlay b {
+      font-family: "Space Grotesk", Inter, Arial, sans-serif;
+      font-size: 30px;
+      line-height: .95;
+      letter-spacing: -.06em;
+    }
+
+    .dsIframeSyncOverlay small {
+      color: rgba(248,251,255,.62);
+      font-size: 11px;
+      line-height: 1.35;
+      font-weight: 650;
+    }
+
+    @media(max-width: 640px) {
+      .dsIframeSyncOverlay {
+        left: 10px;
+        right: 10px;
+        top: 10px;
+        max-width: none;
+      }
+    }
+
   </style>
 
     <script>
@@ -18483,6 +18544,21 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
           console.warn("syncWatchButtons fallback failed", error);
         }
       };
+    </script>
+
+
+    <script>
+      window.__swiflyDateRoomErrors = [];
+      window.addEventListener("error", function(event) {
+        try {
+          window.__swiflyDateRoomErrors.push({
+            message: event.message || "",
+            source: event.filename || "",
+            line: event.lineno || 0,
+            col: event.colno || 0
+          });
+        } catch {}
+      });
     </script>
 
 </head>
@@ -21377,6 +21453,7 @@ function watchroomPage(req, res) {
 
           <div class="dsRoomMovieStage" id="roomMovieStage">
             <iframe id="roomMovieFrame" class="dsRoomMovieFrame" title="Synced room movie" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write; web-share" allowfullscreen referrerpolicy="no-referrer" hidden></iframe>
+            <div id="roomMovieIframeSyncOverlay" class="dsIframeSyncOverlay" hidden><span>Room target</span><b id="roomMovieIframeTarget">0:00</b><small>Iframe players cannot be force-seeked by the browser. Use this target if the embed drifts.</small></div>
             <video id="roomMovieVideo" class="dsRoomMovieFrame" controls playsinline preload="metadata" hidden></video>
             <div id="roomMovieEmpty" class="dsRoomMovieEmpty">
               <div class="dsProxyLoader"></div>
@@ -21803,7 +21880,10 @@ function watchroomPage(req, res) {
         }
 
         function isLikelyDirectVideoUrl(url) {
-          return /\.(mp4|webm|mov)(\?|#|$)/i.test(String(url || "")) || /[?&](?:video|file|src)=/i.test(String(url || ""));
+          var value = String(url || "");
+          var ext = new RegExp("[.](mp4|webm|mov)([?#]|$)", "i");
+          var query = new RegExp("[?&](video|file|src)=", "i");
+          return ext.test(value) || query.test(value);
         }
 
         function targetRoomMovieSeconds() {
@@ -21814,8 +21894,11 @@ function watchroomPage(req, res) {
         }
 
         function updateRoomMovieTimerUi() {
+          var time = formatTime(targetRoomMovieSeconds());
           var el = document.getElementById("roomMovieTargetTime");
-          if (el) el.textContent = formatTime(targetRoomMovieSeconds());
+          if (el) el.textContent = time;
+          var iframeTarget = document.getElementById("roomMovieIframeTarget");
+          if (iframeTarget) iframeTarget.textContent = time;
         }
 
         function applyNativeVideoSync(force) {
@@ -21858,12 +21941,14 @@ function watchroomPage(req, res) {
           var stage = document.getElementById("roomMovieStage");
           if (!roomMovieState.proxyVideo) return;
 
+          var overlay = document.getElementById("roomMovieIframeSyncOverlay");
           if (isLikelyDirectVideoUrl(roomMovieState.proxyVideo) && video) {
             if (video.src !== roomMovieState.proxyVideo) {
               video.src = roomMovieState.proxyVideo;
               try { video.load(); } catch {}
             }
             if (frame) frame.hidden = true;
+            if (overlay) overlay.hidden = true;
             video.hidden = false;
             applyNativeVideoSync(true);
             setRoomMovieStatus("Direct video loaded. SwiflyTV will auto-correct if anyone drifts more than 5 seconds.");
@@ -21873,6 +21958,7 @@ function watchroomPage(req, res) {
             }
             if (video) video.hidden = true;
             frame.hidden = false;
+            if (overlay) overlay.hidden = false;
             showIframeSyncHint();
           }
 
@@ -23218,8 +23304,11 @@ function watchroomPage(req, res) {
           }
 
           function updateTimerUi() {
+            var time = formatTime(targetTime());
             var el = byId("roomMovieTargetTime");
-            if (el) el.textContent = formatTime(targetTime());
+            if (el) el.textContent = time;
+            var iframeTarget = byId("roomMovieIframeTarget");
+            if (iframeTarget) iframeTarget.textContent = time;
           }
 
           function renderMovie(next) {
@@ -23287,6 +23376,8 @@ function watchroomPage(req, res) {
               if (frame && movie.proxyVideo) {
                 if (frame.src !== movie.proxyVideo) frame.src = movie.proxyVideo;
                 frame.hidden = false;
+                var overlay = byId("roomMovieIframeSyncOverlay");
+                if (overlay) overlay.hidden = false;
               }
               if (empty) empty.hidden = true;
               if (stage) stage.classList.add("isReady");
@@ -23424,6 +23515,10 @@ app.get("/genres", genresPage);
 app.get("/browse-by-languages", genresPage);
 app.get("/genre/movie/:id", (req, res) => genrePage(req, res, "movie"));
 app.get("/genre/tv/:id", (req, res) => genrePage(req, res, "tv"));
+app.get("/favicon.ico", (req, res) => {
+  res.status(204).end();
+});
+
 app.get("/api/proxy-video-wait/movie/:id", async (req, res) => {
   res.set("Cache-Control", "no-store");
   const result = await fetchProxyVideoSource({ type: "movie", id: req.params.id });
