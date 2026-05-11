@@ -18431,6 +18431,27 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
       }
     }
 
+
+    /* ============================================================
+       v72 DATE ROOM BUTTON FIX
+       Recovery controller if the main Socket.IO room script fails.
+       ============================================================ */
+
+    .dsStablePanel.active {
+      display: grid !important;
+    }
+
+    .dsStableTabs button {
+      touch-action: manipulation;
+    }
+
+    .dsRoomMovieStatusCard,
+    .dsRoomSyncControls,
+    .dsStableActions button,
+    .dsStableTabs button {
+      -webkit-tap-highlight-color: transparent;
+    }
+
   </style>
 </head>
 <body>
@@ -21581,7 +21602,12 @@ function watchroomPage(req, res) {
         var isRoomHost = false;
         var sharedUrl = initialUrl;
         var countdownEndsAt = Number("${safeCountdown}") || 0;
-        var socket = io();
+        var socketAvailable = typeof io === "function";
+        var socket = socketAvailable ? io() : {
+          id: "offline",
+          emit: function(){},
+          on: function(){},
+        };
 
         var liveLocalStream = null;
         var livePeerConnections = {};
@@ -22657,7 +22683,350 @@ function watchroomPage(req, res) {
           }
         });
 
+        if (!socketAvailable) {
+          isRoomHost = true;
+          setHostMode();
+          toast("Date Room socket did not load. Buttons are in offline mode.");
+        }
+
+        window.__swiflyDateRoomMainLoaded = true;
         setHostMode();
+      })();
+    </script>
+
+    <script>
+      (function swiflyDateRoomRecovery(){
+        function byId(id) { return document.getElementById(id); }
+        function all(sel) { return Array.prototype.slice.call(document.querySelectorAll(sel)); }
+        function toast(msg) {
+          if (window.showToast) window.showToast(msg);
+          else console.log(msg);
+        }
+        function esc(value) {
+          return String(value || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+        }
+        function pad(n) { return String(Math.floor(n)).padStart(2, "0"); }
+        function formatTime(seconds) {
+          seconds = Math.max(0, Math.floor(Number(seconds || 0)));
+          var h = Math.floor(seconds / 3600);
+          var m = Math.floor((seconds % 3600) / 60);
+          var s = seconds % 60;
+          return h > 0 ? h + ":" + pad(m) + ":" + pad(s) : m + ":" + pad(s);
+        }
+        function getName() {
+          try {
+            var session = JSON.parse(localStorage.getItem("swiflytv.session") || "null");
+            var profile = JSON.parse(localStorage.getItem("swiflytv.activeProfile") || "null");
+            return (profile && profile.name) || (session && (session.name || session.email)) || "Guest";
+          } catch (e) {
+            return "Guest";
+          }
+        }
+        function parseMovieId(value) {
+          var raw = String(value || "").trim();
+          if (!raw) return "";
+          var match = raw.match(/(?:movie\/|tmdb=|id=)(\d+)/i) || raw.match(/^(\d{2,14})$/);
+          return match ? match[1] : "";
+        }
+        function normalizeUrl(value) {
+          value = String(value || "").trim();
+          if (!value) return "";
+          if (value.charAt(0) === "/") return value;
+          if (/^https?:\/\//i.test(value)) return value;
+          if (/^[a-z0-9.-]+\.[a-z]{2,}(\/.*)?$/i.test(value)) return "https://" + value;
+          return "";
+        }
+
+        function bindTabs() {
+          all("[data-stable-tab]").forEach(function(btn) {
+            if (btn.__swiflyBound) return;
+            btn.__swiflyBound = true;
+            btn.addEventListener("click", function() {
+              var name = btn.getAttribute("data-stable-tab") || "open";
+              all("[data-stable-tab]").forEach(function(other) {
+                other.classList.toggle("active", other === btn);
+              });
+              ["stableOpenPanel", "stableRoomMoviePanel", "stableLivePanel", "stableClockPanel", "stableCouplesPanel"].forEach(function(id) {
+                var panel = byId(id);
+                if (!panel) return;
+                var active =
+                  (name === "open" && id === "stableOpenPanel") ||
+                  (name === "movie" && id === "stableRoomMoviePanel") ||
+                  (name === "live" && id === "stableLivePanel") ||
+                  (name === "clock" && id === "stableClockPanel") ||
+                  (name === "couples" && id === "stableCouplesPanel");
+                panel.classList.toggle("active", active);
+              });
+            });
+          });
+        }
+
+        bindTabs();
+
+        setTimeout(function(){
+          bindTabs();
+
+          if (window.__swiflyDateRoomMainLoaded) {
+            return;
+          }
+
+          var roomId = "${safeRoomId}";
+          var roomName = "${safeName}";
+          var socketWorks = typeof io === "function";
+          var socket = socketWorks ? io() : null;
+          var isHost = !socketWorks;
+          var movie = { status: "idle", movieId: "", proxyVideo: "", playAt: 0, sync: { playing: false, offset: 0, startedAt: 0 } };
+          var timer = null;
+          var driftLimit = 5;
+
+          function setHostMode() {
+            var text = isHost ? "You are host" : "View only";
+            ["stableHostStatus", "stableOpenBadge", "stableLiveBadge", "stableRoomMovieBadge"].forEach(function(id) {
+              var el = byId(id);
+              if (el) el.textContent = text;
+            });
+            ["stableOpenInput", "stableCountdownBtn", "stableStartLiveBtn", "stableStopLiveBtn", "roomMovieInput", "roomMovieSelectBtn", "roomMovieRestartBtn", "roomMoviePlayBtn", "roomMoviePauseBtn", "roomMovieBack10Btn", "roomMovieForward10Btn"].forEach(function(id) {
+              var el = byId(id);
+              if (el) el.disabled = !isHost;
+            });
+          }
+
+          function setMovieTab() {
+            var btn = document.querySelector('[data-stable-tab="movie"]');
+            if (btn) btn.click();
+          }
+
+          function setMovieStatus(text) {
+            var el = byId("roomMovieStatus");
+            if (el) el.textContent = text || "";
+          }
+
+          function setMovieTitle(text) {
+            var el = byId("roomMovieTitle");
+            if (el) el.textContent = text || "No movie selected";
+          }
+
+          function currentTargetTime() {
+            var sync = movie.sync || {};
+            var offset = Math.max(0, Number(sync.offset || 0));
+            if (!sync.playing || !sync.startedAt) return offset;
+            return Math.max(0, offset + ((Date.now() - Number(sync.startedAt || Date.now())) / 1000));
+          }
+
+          function updateTargetUi() {
+            var el = byId("roomMovieTargetTime");
+            if (el) el.textContent = formatTime(currentTargetTime());
+          }
+
+          function loadMovieFrame() {
+            var frame = byId("roomMovieFrame");
+            var empty = byId("roomMovieEmpty");
+            var stage = byId("roomMovieStage");
+            if (!frame || !movie.proxyVideo) return;
+
+            if (frame.src !== movie.proxyVideo) frame.src = movie.proxyVideo;
+            frame.hidden = false;
+            if (empty) empty.hidden = true;
+            if (stage) stage.classList.add("isReady");
+            setMovieStatus("Movie loaded. Room timer: " + formatTime(currentTargetTime()));
+          }
+
+          function scheduleLoad() {
+            if (timer) clearInterval(timer);
+            var countdown = byId("roomMovieCountdown");
+
+            timer = setInterval(function(){
+              updateTargetUi();
+              if (!movie.proxyVideo) {
+                if (countdown) countdown.textContent = "Waiting";
+                return;
+              }
+              var left = Math.ceil((Number(movie.playAt || 0) - Date.now()) / 1000);
+              if (left > 0) {
+                if (countdown) countdown.textContent = "Play in " + left;
+                return;
+              }
+              if (countdown) countdown.textContent = "Play now";
+              clearInterval(timer);
+              timer = null;
+              loadMovieFrame();
+            }, 250);
+          }
+
+          function renderMovie(data) {
+            movie = Object.assign({ status: "idle", movieId: "", proxyVideo: "", playAt: 0, sync: { playing: false, offset: 0, startedAt: 0 } }, data || {});
+            if (!movie.sync) movie.sync = { playing: false, offset: 0, startedAt: 0 };
+
+            if (movie.movieId) {
+              var input = byId("roomMovieInput");
+              if (input) input.value = movie.movieId;
+              setMovieTitle("TMDB #" + movie.movieId);
+            }
+
+            if (movie.status === "loading") {
+              setMovieTab();
+              setMovieStatus("Waiting for proxyVideo...");
+              var empty = byId("roomMovieEmpty");
+              if (empty) {
+                empty.hidden = false;
+                var h = empty.querySelector("h3");
+                var p = empty.querySelector("p");
+                if (h) h.textContent = "Finding movie source...";
+                if (p) p.textContent = "This can take awhile. Everyone will load it once proxyVideo returns.";
+              }
+              return;
+            }
+
+            if (movie.status === "error") {
+              setMovieTab();
+              setMovieStatus(movie.message || "proxyVideo failed.");
+              return;
+            }
+
+            if (movie.status === "ready" && movie.proxyVideo) {
+              setMovieTab();
+              setMovieStatus("proxyVideo ready. Sync countdown started.");
+              scheduleLoad();
+            }
+          }
+
+          function localProxyPoll(movieId) {
+            renderMovie({ status: "loading", movieId: movieId, message: "Waiting for proxyVideo..." });
+            var started = Date.now();
+            var attempts = 0;
+
+            function poll() {
+              attempts += 1;
+              fetch("/api/proxy-video-wait/movie/" + encodeURIComponent(movieId) + "?t=" + Date.now(), { cache: "no-store" })
+                .then(function(r){ return r.json(); })
+                .then(function(data) {
+                  if (data && data.status === "ok" && data.proxyVideo) {
+                    renderMovie({
+                      status: "ready",
+                      movieId: movieId,
+                      proxyVideo: data.proxyVideo,
+                      playAt: Date.now() + 7000,
+                      sync: { playing: true, offset: 0, startedAt: Date.now() + 7000 },
+                    });
+                    return;
+                  }
+                  if (Date.now() - started > 180000) {
+                    renderMovie({ status: "error", movieId: movieId, message: "Still no proxyVideo after 3 minutes." });
+                    return;
+                  }
+                  setMovieStatus("Still waiting for proxyVideo... attempt " + attempts);
+                  setTimeout(poll, Math.min(15000, 2500 + attempts * 1500));
+                })
+                .catch(function(err) {
+                  setMovieStatus("Still waiting: " + (err.message || "request failed"));
+                  setTimeout(poll, Math.min(15000, 2500 + attempts * 1500));
+                });
+            }
+            poll();
+          }
+
+          function emit(event, payload) {
+            if (socket) socket.emit(event, payload || {});
+          }
+
+          if (socket) {
+            socket.on("connect", function() {
+              emit("watchroom:join", { roomId: roomId, name: roomName, user: getName() });
+            });
+            socket.on("watchroom:joined", function(data) {
+              isHost = Boolean(data && data.isHost);
+              setHostMode();
+              if (data && data.room && data.room.syncedMovie) renderMovie(data.room.syncedMovie);
+            });
+            socket.on("watchroom:host", function(data) {
+              isHost = Boolean(data && data.isHost);
+              setHostMode();
+            });
+            socket.on("watchroom:movie-sync", function(data) {
+              if (data && data.movie) renderMovie(data.movie);
+            });
+            socket.on("watchroom:movie-sync-state", function(data) {
+              if (data && data.sync) {
+                movie.sync = data.sync;
+                updateTargetUi();
+                setMovieStatus(data.message || "Room timer updated.");
+              }
+            });
+            socket.on("watchroom:viewers", function(data) {
+              var el = byId("stableViewerCount");
+              if (el) el.textContent = String((data && data.viewers) || 0);
+            });
+          }
+
+          var form = byId("roomMovieForm");
+          if (form && !form.__swiflyRecoveryBound) {
+            form.__swiflyRecoveryBound = true;
+            form.addEventListener("submit", function(event) {
+              event.preventDefault();
+              if (!isHost) return toast("Only the host can select the room movie");
+              var movieId = parseMovieId((byId("roomMovieInput") || {}).value || "");
+              if (!movieId) return toast("Paste a TMDB movie ID or /watch/movie link");
+              if (socket) {
+                renderMovie({ status: "loading", movieId: movieId, selectedBy: getName(), message: "Waiting for proxyVideo..." });
+                emit("watchroom:movie-select", { roomId: roomId, movieId: movieId, name: getName() });
+              } else {
+                localProxyPoll(movieId);
+              }
+            });
+          }
+
+          function bindClick(id, fn) {
+            var el = byId(id);
+            if (!el || el.__swiflyRecoveryBound) return;
+            el.__swiflyRecoveryBound = true;
+            el.addEventListener("click", fn);
+          }
+
+          bindClick("roomMovieRestartBtn", function(){
+            if (!isHost) return toast("Only the host can restart sync");
+            if (socket && movie.proxyVideo) emit("watchroom:movie-sync-start", { roomId: roomId, delayMs: 7000, name: getName() });
+            else if (movie.proxyVideo) { movie.playAt = Date.now() + 7000; scheduleLoad(); }
+          });
+          bindClick("roomMovieOpenBtn", function(){
+            if (!movie.movieId) return toast("No room movie selected");
+            window.open("/watch/movie/" + encodeURIComponent(movie.movieId) + "?mode=movie", "_blank", "noopener");
+          });
+          bindClick("roomMovieCopyBtn", function(){
+            navigator.clipboard && navigator.clipboard.writeText(movie.movieId ? location.origin + "/watch/movie/" + movie.movieId + "?mode=movie" : "No movie selected");
+            toast("Copied");
+          });
+          bindClick("roomMoviePlayBtn", function(){
+            if (!isHost) return toast("Only the host can control the timer");
+            emit("watchroom:movie-control", { roomId: roomId, action: "play", name: getName() });
+          });
+          bindClick("roomMoviePauseBtn", function(){
+            if (!isHost) return toast("Only the host can control the timer");
+            emit("watchroom:movie-control", { roomId: roomId, action: "pause", name: getName() });
+          });
+          bindClick("roomMovieBack10Btn", function(){
+            if (!isHost) return toast("Only the host can control the timer");
+            emit("watchroom:movie-control", { roomId: roomId, action: "seek", delta: -10, name: getName() });
+          });
+          bindClick("roomMovieForward10Btn", function(){
+            if (!isHost) return toast("Only the host can control the timer");
+            emit("watchroom:movie-control", { roomId: roomId, action: "seek", delta: 10, name: getName() });
+          });
+          bindClick("roomMovieSyncMeBtn", function(){
+            updateTargetUi();
+            toast("Synced to room timer");
+          });
+
+          if (!socketWorks) {
+            isHost = true;
+            setHostMode();
+            toast("Socket failed, Date Room recovery loaded in offline mode.");
+          } else {
+            setHostMode();
+          }
+        }, 350);
       })();
     </script>
   </main>`;
