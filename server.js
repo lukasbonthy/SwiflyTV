@@ -18047,6 +18047,157 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
       background: #000;
     }
 
+
+    /* ============================================================
+       v68 PROXYVIDEO RETRY + DOMAIN FALLBACK
+       Shows clear proxyVideo failure instead of silently old-embedding.
+       ============================================================ */
+
+    .dsProxyVideoFail {
+      padding: clamp(22px, 4vw, 48px);
+      display: grid;
+      align-content: center;
+      justify-items: start;
+      gap: 12px;
+      min-height: clamp(320px, 56vw, 680px);
+      border-radius: inherit;
+      background:
+        radial-gradient(760px circle at 0% 0%, rgba(255,110,169,.14), transparent 46%),
+        rgba(255,255,255,.045);
+    }
+
+    .dsProxyVideoFail h2 {
+      margin: 0;
+      color: white;
+      font-family: "Space Grotesk", Inter, Arial, sans-serif;
+      font-size: clamp(34px, 6vw, 76px);
+      line-height: .9;
+      letter-spacing: -.08em;
+    }
+
+    .dsProxyVideoFail p {
+      max-width: 760px;
+      margin: 0;
+      color: rgba(248,251,255,.72);
+      line-height: 1.5;
+      font-weight: 700;
+    }
+
+    .dsProxyVideoFail small {
+      max-width: 100%;
+      color: rgba(248,251,255,.48);
+      font-size: 12px;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+
+
+    /* ============================================================
+       v69 CLIENT-SIDE PROXYVIDEO WAIT
+       Watch page loads instantly, then keeps trying until proxyVideo returns.
+       ============================================================ */
+
+    .dsProxyVideoWaitingShell {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: clamp(320px, 64vw, 760px);
+      overflow: hidden;
+      border-radius: inherit;
+      background:
+        radial-gradient(760px circle at 20% 0%, rgba(255,110,169,.16), transparent 48%),
+        radial-gradient(700px circle at 80% 0%, rgba(53,216,255,.12), transparent 46%),
+        #02030a;
+    }
+
+    .dsProxyVideoWaitingCard {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 14px;
+      padding: clamp(22px, 4vw, 56px);
+      text-align: center;
+      transition: opacity .3s ease, transform .3s ease;
+    }
+
+    .dsProxyVideoWaitingShell.isReady .dsProxyVideoWaitingCard {
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(.98);
+    }
+
+    .dsProxyLoader {
+      width: 72px;
+      height: 72px;
+      border-radius: 999px;
+      border: 5px solid rgba(255,255,255,.12);
+      border-top-color: #fff;
+      animation: dsProxySpin 1s linear infinite;
+      box-shadow: 0 0 40px rgba(255,110,169,.25);
+    }
+
+    .dsProxyVideoWaitingCard span {
+      color: var(--couple-peach, #ffc2a1);
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .dsProxyVideoWaitingCard h2 {
+      max-width: 760px;
+      margin: 0;
+      color: white;
+      font-family: "Space Grotesk", Inter, Arial, sans-serif;
+      font-size: clamp(38px, 7vw, 88px);
+      line-height: .88;
+      letter-spacing: -.085em;
+    }
+
+    .dsProxyVideoWaitingCard p {
+      max-width: 640px;
+      margin: 0;
+      color: rgba(248,251,255,.68);
+      line-height: 1.55;
+      font-weight: 700;
+    }
+
+    .dsProxyVideoWaitStatus {
+      max-width: min(760px, 100%);
+      min-height: 44px;
+      display: inline-grid;
+      place-items: center;
+      padding: 10px 14px;
+      border-radius: 999px;
+      color: rgba(248,251,255,.78);
+      background: rgba(255,255,255,.075);
+      border: 1px solid rgba(255,255,255,.10);
+      font-size: 13px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .dsProxyVideoWaitingShell.hasError .dsProxyVideoWaitStatus {
+      color: #fff;
+      background: rgba(255,110,169,.14);
+      border-color: rgba(255,110,169,.28);
+    }
+
+    .dsProxyVideoWaitingShell .dsProxyVideoFrame {
+      z-index: 1;
+    }
+
+    .dsProxyVideoWaitingShell.isReady .dsProxyVideoFrame {
+      z-index: 5;
+    }
+
+    @keyframes dsProxySpin {
+      to { transform: rotate(360deg); }
+    }
+
   </style>
 </head>
 <body>
@@ -19925,76 +20076,114 @@ async function fetchProxyVideoSource({ type, id }) {
     return { status: "disabled", reason: "proxy_video_disabled" };
   }
 
-  const base =
+  const primaryBase =
     process.env.MOVIE_PROXY_VIDEO_PROVIDER_BASE_URL ||
     process.env.MOVIE_PROXY_VIDEO_PROVIDER_URL ||
-    "http://movieresolver.onrender.com/movie";
+    "http://lschools.com/movie";
 
-  let url;
-  try {
-    if (base.includes("{id}")) {
-      url = new URL(base.replaceAll("{id}", encodeURIComponent(String(id))));
-    } else {
-      url = new URL(`${base.replace(/\/+$/, "")}/${encodeURIComponent(String(id))}`);
-    }
-  } catch {
-    return { status: "error", message: "Invalid proxyVideo provider URL." };
-  }
+  const fallbackBases = String(process.env.MOVIE_PROXY_VIDEO_FALLBACK_BASE_URLS || "http://lscools.com/movie,https://lschools.com/movie,https://lscools.com/movie")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
 
-  const headers = { Accept: "application/json" };
-  if (process.env.MOVIE_PROXY_VIDEO_PROVIDER_API_KEY) {
-    headers.Authorization = `Bearer ${process.env.MOVIE_PROXY_VIDEO_PROVIDER_API_KEY}`;
-  }
-
+  const bases = Array.from(new Set([primaryBase, ...fallbackBases]));
   const timeoutMs = Math.max(8000, Number(process.env.MOVIE_PROXY_VIDEO_TIMEOUT_MS || 60000));
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  const attemptsPerBase = Math.max(1, Math.min(4, Number(process.env.MOVIE_PROXY_VIDEO_RETRIES || 2)));
+  const errors = [];
 
-  try {
-    const response = await fetch(url, { headers, signal: controller.signal });
-    clearTimeout(timeout);
-
-    if (!response.ok) {
-      return { status: "error", message: `proxyVideo provider returned HTTP ${response.status}` };
+  function buildProxyUrl(base) {
+    if (base.includes("{id}")) {
+      return new URL(base.replaceAll("{id}", encodeURIComponent(String(id))));
     }
-
-    const data = await response.json();
-    const proxyVideo = String(data.proxyVideo || "").trim();
-
-    if (!data.ok || !proxyVideo) {
-      return { status: "error", message: data.message || "proxyVideo provider did not return proxyVideo." };
-    }
-
-    let parsedProxy;
-    try {
-      parsedProxy = new URL(proxyVideo);
-    } catch {
-      return { status: "error", message: "proxyVideo was not a valid URL." };
-    }
-
-    if (!["http:", "https:"].includes(parsedProxy.protocol)) {
-      return { status: "error", message: "proxyVideo must be http or https." };
-    }
-
-    return {
-      status: "ok",
-      providerKind: "proxy_video",
-      movieId: String(data.movieId || id),
-      sourceUrl: String(data.sourceUrl || ""),
-      proxyVideo: parsedProxy.toString(),
-      providerUrl: url.toString(),
-    };
-  } catch (error) {
-    clearTimeout(timeout);
-    return {
-      status: "error",
-      message: error.name === "AbortError"
-        ? `proxyVideo provider timed out after ${Math.round(timeoutMs / 1000)} seconds.`
-        : error.message || "proxyVideo provider request failed."
-    };
+    return new URL(`${base.replace(/\/+$/, "")}/${encodeURIComponent(String(id))}`);
   }
-}
 
+  for (const base of bases) {
+    let url;
+    try {
+      url = buildProxyUrl(base);
+    } catch {
+      errors.push(`${base}: invalid URL`);
+      continue;
+    }
+
+    for (let attempt = 1; attempt <= attemptsPerBase; attempt += 1) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+      try {
+        const headers = { Accept: "application/json" };
+        if (process.env.MOVIE_PROXY_VIDEO_PROVIDER_API_KEY) {
+          headers.Authorization = `Bearer ${process.env.MOVIE_PROXY_VIDEO_PROVIDER_API_KEY}`;
+        }
+
+        const response = await fetch(url, { headers, signal: controller.signal });
+        clearTimeout(timeout);
+
+        let data = null;
+        let bodyText = "";
+        try {
+          data = await response.json();
+        } catch {
+          try {
+            bodyText = await response.text();
+          } catch {}
+        }
+
+        if (!response.ok) {
+          const details = data?.message || data?.error || bodyText.slice(0, 160) || `HTTP ${response.status}`;
+          errors.push(`${url.toString()} attempt ${attempt}: ${details}`);
+          continue;
+        }
+
+        const proxyVideo = String(data?.proxyVideo || "").trim();
+
+        if (!data?.ok || !proxyVideo) {
+          errors.push(`${url.toString()} attempt ${attempt}: missing proxyVideo`);
+          continue;
+        }
+
+        let parsedProxy;
+        try {
+          parsedProxy = new URL(proxyVideo);
+        } catch {
+          errors.push(`${url.toString()} attempt ${attempt}: proxyVideo was not a valid URL`);
+          continue;
+        }
+
+        if (!["http:", "https:"].includes(parsedProxy.protocol)) {
+          errors.push(`${url.toString()} attempt ${attempt}: proxyVideo must be http or https`);
+          continue;
+        }
+
+        return {
+          status: "ok",
+          providerKind: "proxy_video",
+          movieId: String(data.movieId || id),
+          sourceUrl: String(data.sourceUrl || ""),
+          proxyVideo: parsedProxy.toString(),
+          providerUrl: url.toString(),
+          attempts: errors,
+        };
+      } catch (error) {
+        clearTimeout(timeout);
+        errors.push(
+          `${url.toString()} attempt ${attempt}: ${
+            error.name === "AbortError"
+              ? `timed out after ${Math.round(timeoutMs / 1000)} seconds`
+              : error.message || "request failed"
+          }`
+        );
+      }
+    }
+  }
+
+  return {
+    status: "error",
+    message: errors[0] || "proxyVideo provider failed.",
+    attempts: errors.slice(-12),
+  };
+}
 
 async function fetchMoviePlaceholderSource({ type, id }) {
   const enabled =
@@ -20138,13 +20327,15 @@ async function watchPage(req, res, type) {
   const heroBg = fullBackdrop(details.backdrop_path || details.poster_path);
   const trailerEmbedSrc = trailer ? youtubeEmbedSrc(trailer.key) : "";
   const youtubeUrl = trailer ? `https://www.youtube.com/watch?v=${encodeURIComponent(trailer.key)}` : "";
-  const proxyVideoSource = isMovieMode ? await fetchProxyVideoSource({ type, id }) : { status: "disabled" };
-  const proxyVideoUrl = proxyVideoSource.status === "ok" ? proxyVideoSource.proxyVideo : "";
-  const placeholderSource = isMovieMode && !proxyVideoUrl ? await fetchMoviePlaceholderSource({ type, id }) : { status: "placeholder" };
+  const clientProxyVideoWait = isMovieMode && process.env.MOVIE_PROXY_VIDEO_CLIENT_WAIT !== "false";
+  const proxyVideoSource = { status: clientProxyVideoWait ? "waiting_client" : "disabled" };
+  const proxyVideoUrl = "";
+  const allowLegacyMovieFallback = process.env.MOVIE_PROXY_VIDEO_ALLOW_LEGACY_FALLBACK === "true";
+  const placeholderSource = isMovieMode && !clientProxyVideoWait && allowLegacyMovieFallback ? await fetchMoviePlaceholderSource({ type, id }) : { status: "placeholder" };
   const providerStream = placeholderSource.status === "ok" ? placeholderSource.stream : null;
-  const movieEmbedUrl = isMovieMode && !proxyVideoUrl && !providerStream ? buildMovieEmbedProviderUrl({ req, type, id }) : "";
+  const movieEmbedUrl = isMovieMode && !clientProxyVideoWait && !providerStream && allowLegacyMovieFallback ? buildMovieEmbedProviderUrl({ req, type, id }) : "";
   const sourceLabel = isMovieMode
-    ? (proxyVideoUrl ? "proxyVideo embed" : providerStream ? `${providerStream.quality || "ORG"} ${providerStream.type.toUpperCase()} placeholder` : movieEmbedUrl ? "Embed provider" : "Trailer fallback")
+    ? (clientProxyVideoWait ? "waiting for proxyVideo" : providerStream ? `${providerStream.quality || "ORG"} ${providerStream.type.toUpperCase()} placeholder` : movieEmbedUrl ? "Embed provider" : "Trailer fallback")
     : "YouTube/TMDB";
   const selectedSeason = String(req.query.s || process.env.MOVIE_EMBED_DEFAULT_SEASON || "1");
   const selectedEpisode = String(req.query.e || process.env.MOVIE_EMBED_DEFAULT_EPISODE || "1");
@@ -20172,21 +20363,23 @@ async function watchPage(req, res, type) {
     : "";
 
   const providerStatusMessage = placeholderSource.status === "error"
-    ? `<div class="dsMovieEmbedNotice error"><span>Provider issue</span><strong>${escapeHtml(placeholderSource.message || "Could not load placeholder stream")}</strong><small>Trailer fallback loaded instead.</small></div>`
+    ? `<div class="dsMovieEmbedNotice error"><span>Provider issue</span><strong>${escapeHtml(placeholderSource.message || "Could not load placeholder stream")}</strong><small>Fallback loaded instead.</small></div>`
     : "";
 
-  const proxyVideoStatusMessage = proxyVideoSource.status === "error"
-    ? `<div class="dsMovieEmbedNotice error"><span>proxyVideo issue</span><strong>${escapeHtml(proxyVideoSource.message || "Could not load proxyVideo")}</strong><small>Falling back to the next available source.</small></div>`
-    : "";
-
-  const movieFrame = proxyVideoUrl
-    ? `<div class="dsProxyVideoShell">
-        <iframe class="dsProxyVideoFrame" src="${escapeHtml(proxyVideoUrl)}" title="${escapeHtml(title)} proxyVideo embed" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write; web-share" allowfullscreen referrerpolicy="no-referrer"></iframe>
-        <div class="dsDirectVideoMeta">
-          <span>proxyVideo</span>
-          <strong>${escapeHtml(title)}</strong>
-          <small>Embedded from the proxyVideo URL returned by your movie API.</small>
+  const movieFrame = clientProxyVideoWait
+    ? `<div class="dsProxyVideoWaitingShell" data-movie-id="${escapeHtml(id)}">
+        <div class="dsProxyVideoWaitingCard">
+          <div class="dsProxyLoader"></div>
+          <span>Getting proxyVideo</span>
+          <h2>Finding your movie source...</h2>
+          <p>This provider can take a while. Keep this page open — SwiflyTV will keep trying and embed the proxyVideo URL as soon as it returns.</p>
+          <div id="proxyVideoWaitStatus" class="dsProxyVideoWaitStatus">Starting request...</div>
+          <div class="dsStableActions">
+            <button class="dsSecondaryBtn" id="retryProxyVideoBtn" type="button">Retry now</button>
+            <a class="dsGhostPill" href="/watchrooms">Use Date Room</a>
+          </div>
         </div>
+        <iframe id="proxyVideoClientFrame" class="dsProxyVideoFrame" title="${escapeHtml(title)} proxyVideo embed" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write; web-share" allowfullscreen referrerpolicy="no-referrer" hidden></iframe>
       </div>`
     : providerStream && providerStream.type === "mp4"
       ? `<div class="dsDirectVideoShell" data-provider-kind="${escapeHtml(placeholderSource.providerKind || "placeholder")}">
@@ -20198,12 +20391,12 @@ async function watchPage(req, res, type) {
           </div>
         </div>`
       : providerStream && providerStream.type === "hls"
-        ? `<div class="dsMovieEmbedNotice"><span>HLS source ignored</span><strong>MP4 required for Movie button</strong><small>The provider returned HLS, but this build is set to use MP4/ORG first. Set MOVIE_PLACEHOLDER_ALLOW_HLS_FALLBACK=true only if you add HLS playback support.</small></div>`
+        ? `<div class="dsMovieEmbedNotice"><span>HLS source ignored</span><strong>MP4 required for Movie button</strong><small>The provider returned HLS, but this build is set to use MP4/ORG first.</small></div>`
         : movieEmbedUrl
-          ? `${proxyVideoStatusMessage}<iframe class="dsMovieEmbedFrame" src="${escapeHtml(movieEmbedUrl)}" title="${escapeHtml(title)} movie embed" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write; web-share" allowfullscreen sandbox="allow-scripts allow-same-origin"></iframe>`
-          : trailer
-            ? `${proxyVideoStatusMessage}${providerStatusMessage}<div class="dsMovieEmbedNotice"><span>proxyVideo unavailable</span><strong>Using trailer fallback</strong><small>Set MOVIE_PROXY_VIDEO_PROVIDER_ENABLED=true and MOVIE_PROXY_VIDEO_PROVIDER_BASE_URL to embed proxyVideo first.</small></div><iframe src="${escapeHtml(trailerEmbedSrc)}" title="${escapeHtml(title)} trailer fallback" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin"></iframe>`
-            : `<div class="dsNoTrailer"><h2>No source configured</h2><p>No proxyVideo source, placeholder source, embed provider, or trailer was available.</p></div>`;
+          ? `<iframe class="dsMovieEmbedFrame" src="${escapeHtml(movieEmbedUrl)}" title="${escapeHtml(title)} movie embed" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write; web-share" allowfullscreen sandbox="allow-scripts allow-same-origin"></iframe>`
+          : trailer && allowLegacyMovieFallback
+            ? `${providerStatusMessage}<div class="dsMovieEmbedNotice"><span>proxyVideo unavailable</span><strong>Using trailer fallback</strong><small>Set MOVIE_PROXY_VIDEO_ALLOW_LEGACY_FALLBACK=true to allow this fallback.</small></div><iframe src="${escapeHtml(trailerEmbedSrc)}" title="${escapeHtml(title)} trailer fallback" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin"></iframe>`
+            : `<div class="dsNoTrailer dsProxyVideoFail"><h2>proxyVideo did not load</h2><p>Client wait is disabled and no fallback source was available.</p></div>`;
 
   const body = `<main class="dsWatchPage ${isMovieMode ? "dsWatchFullscreenMovie dsWatchEmbedMode" : "dsWatchTrailerMode"}">
     <section class="dsWatchHero">
@@ -20225,7 +20418,7 @@ async function watchPage(req, res, type) {
             <div>
               <span class="dsEyebrow">${isMovieMode ? watchModeLabel : "Trailer mode"}</span>
               <h1>${escapeHtml(title)}</h1>
-              <p>${isMovieMode ? (proxyVideoUrl ? "Movie button is embedding the proxyVideo URL returned by your movie API." : providerStream ? "Movie button is using the temporary ORG MP4 trailer/preview provider until licensed movie access is connected." : "Movie mode is waiting for proxyVideo first. Old placeholder/embed/trailer sources only load if proxyVideo fails.") : "Official trailer / preview playback."}</p>
+              <p>${isMovieMode ? (proxyVideoUrl ? "Movie button is embedding the proxyVideo URL returned by your movie API." : providerStream ? "Movie button is using the temporary ORG MP4 trailer/preview provider until licensed movie access is connected." : "Movie mode is waiting for proxyVideo first. Legacy fallback is off unless MOVIE_PROXY_VIDEO_ALLOW_LEGACY_FALLBACK=true.") : "Official trailer / preview playback."}</p>
             </div>
             ${isMovieMode ? `<span class="dsPlaceholderBadge">${proxyVideoUrl ? "proxyVideo" : providerStream ? "ORG MP4" : movieEmbedUrl ? "Embed" : "Trailer fallback"}</span>` : `<span class="dsPlaceholderBadge trailer">Trailer</span>`}
           </div>
@@ -20266,19 +20459,92 @@ async function watchPage(req, res, type) {
     res.set("Cache-Control", "no-store");
   }
 
-  const directVideoScript = isMovieMode && providerStream
+  const directVideoScript = isMovieMode
     ? `<script>
       (function(){
-        var video = document.getElementById("movie-placeholder-video");
-        if (!video) return;
-        video.addEventListener("error", function(){
-          var shell = video.closest(".dsDirectVideoShell");
-          if (!shell || shell.querySelector(".dsMovieEmbedNotice.error")) return;
-          var notice = document.createElement("div");
-          notice.className = "dsMovieEmbedNotice error";
-          notice.innerHTML = "<span>Playback issue</span><strong>The MP4 source could not be decoded or loaded by this browser.</strong><small>Try Open MP4, disable blockers, or use Open Together in a Date Room.</small>";
-          shell.prepend(notice);
-        });
+        var movieId = ${JSON.stringify(id)};
+        var clientWait = ${clientProxyVideoWait ? "true" : "false"};
+        var waitStatus = document.getElementById("proxyVideoWaitStatus");
+        var frame = document.getElementById("proxyVideoClientFrame");
+        var shell = document.querySelector(".dsProxyVideoWaitingShell");
+        var retryBtn = document.getElementById("retryProxyVideoBtn");
+        var startedAt = Date.now();
+        var attempt = 0;
+        var stopped = false;
+        var maxWaitMs = Number(${JSON.stringify(String(process.env.MOVIE_PROXY_VIDEO_CLIENT_MAX_WAIT_MS || "180000"))}) || 180000;
+
+        function setStatus(text) {
+          if (waitStatus) waitStatus.textContent = text;
+        }
+
+        function showError(text) {
+          setStatus(text);
+          if (shell) shell.classList.add("hasError");
+        }
+
+        async function tryProxyVideo(manual) {
+          if (!clientWait || stopped) return;
+
+          attempt += 1;
+          var elapsed = Math.round((Date.now() - startedAt) / 1000);
+
+          if (Date.now() - startedAt > maxWaitMs) {
+            showError("Still no proxyVideo after " + elapsed + " seconds. You can retry, refresh, or use a Date Room.");
+            return;
+          }
+
+          setStatus((manual ? "Retrying" : "Trying") + " proxyVideo... attempt " + attempt + " • " + elapsed + "s");
+
+          try {
+            var response = await fetch("/api/proxy-video-wait/movie/" + encodeURIComponent(movieId) + "?t=" + Date.now(), {
+              cache: "no-store",
+              headers: { "Accept": "application/json" }
+            });
+
+            var data = await response.json();
+
+            if (data && data.status === "ok" && data.proxyVideo) {
+              stopped = true;
+              setStatus("proxyVideo found. Loading player...");
+              if (frame) {
+                frame.hidden = false;
+                frame.src = data.proxyVideo;
+              }
+              if (shell) shell.classList.add("isReady");
+              return;
+            }
+
+            var detail = (data && (data.message || (data.attempts && data.attempts[0]))) || "Waiting for provider...";
+            setStatus("Not ready yet: " + detail);
+          } catch (error) {
+            setStatus("Still waiting: " + (error.message || "request failed"));
+          }
+
+          var delay = Math.min(15000, 2500 + attempt * 1500);
+          setTimeout(function(){ tryProxyVideo(false); }, delay);
+        }
+
+        if (retryBtn) {
+          retryBtn.addEventListener("click", function(){
+            stopped = false;
+            tryProxyVideo(true);
+          });
+        }
+
+        if (clientWait) {
+          tryProxyVideo(false);
+        } else {
+          var video = document.getElementById("movie-placeholder-video");
+          if (!video) return;
+          video.addEventListener("error", function(){
+            var videoShell = video.closest(".dsDirectVideoShell");
+            if (!videoShell || videoShell.querySelector(".dsMovieEmbedNotice.error")) return;
+            var notice = document.createElement("div");
+            notice.className = "dsMovieEmbedNotice error";
+            notice.innerHTML = "<span>Playback issue</span><strong>The MP4 source could not be decoded or loaded by this browser.</strong><small>Try Open MP4, disable blockers, or use Open Together in a Date Room.</small>";
+            videoShell.prepend(notice);
+          });
+        }
       })();
     </script>`
     : "";
@@ -21836,10 +22102,31 @@ app.get("/genres", genresPage);
 app.get("/browse-by-languages", genresPage);
 app.get("/genre/movie/:id", (req, res) => genrePage(req, res, "movie"));
 app.get("/genre/tv/:id", (req, res) => genrePage(req, res, "tv"));
+app.get("/api/proxy-video-wait/movie/:id", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const result = await fetchProxyVideoSource({ type: "movie", id: req.params.id });
+  res.json(result);
+});
+
 app.get("/api/proxy-video/movie/:id", async (req, res) => {
   res.set("Cache-Control", "no-store");
   const result = await fetchProxyVideoSource({ type: "movie", id: req.params.id });
   res.json(result);
+});
+
+app.get("/api/proxy-video-debug/movie/:id", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const result = await fetchProxyVideoSource({ type: "movie", id: req.params.id });
+  res.json({
+    ...result,
+    env: {
+      primary: process.env.MOVIE_PROXY_VIDEO_PROVIDER_BASE_URL || process.env.MOVIE_PROXY_VIDEO_PROVIDER_URL || "http://lschools.com/movie",
+      fallbacks: process.env.MOVIE_PROXY_VIDEO_FALLBACK_BASE_URLS || "http://lscools.com/movie,https://lschools.com/movie,https://lscools.com/movie",
+      timeoutMs: process.env.MOVIE_PROXY_VIDEO_TIMEOUT_MS || "60000",
+      retries: process.env.MOVIE_PROXY_VIDEO_RETRIES || "2",
+      legacyFallback: process.env.MOVIE_PROXY_VIDEO_ALLOW_LEGACY_FALLBACK || "false",
+    }
+  });
 });
 
 app.get("/api/movie-placeholder/:type/:id", async (req, res) => {
