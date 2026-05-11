@@ -81,6 +81,7 @@ function publicRoom(room = {}) {
     browserUrl: room.browserUrl || "",
     openTogetherUrl: room.openTogetherUrl || "",
     openTogetherCountdownEndsAt: Number(room.openTogetherCountdownEndsAt || 0),
+    syncedMovie: room.syncedMovie || { status: "idle", movieId: "", proxyVideo: "", playAt: 0, selectedBy: "", message: "", sync: { playing: false, offset: 0, startedAt: 0, updatedAt: Date.now() } },
     couplePlus: room.couplePlus || { ready: {}, moods: {}, notes: [], jar: [], tastes: {}, timeline: [], badges: [], theme: "midnight", missingYou: false, sleepy: false, pause: null },
     host: room.host || "Host",
     viewers: Number(room.viewers || 0),
@@ -102,6 +103,7 @@ function getOrCreateWatchRoom(roomId, data = {}) {
     if (data.mediaKind) existing.mediaKind = String(data.mediaKind).slice(0, 20);
     if (data.browserUrl) existing.browserUrl = normalizeSharedBrowserUrl(data.browserUrl).slice(0, 1000);
     if (data.host) existing.host = String(data.host).slice(0, 40);
+    if (!existing.syncedMovie) existing.syncedMovie = { status: "idle", movieId: "", proxyVideo: "", playAt: 0, selectedBy: "", message: "", sync: { playing: false, offset: 0, startedAt: 0, updatedAt: Date.now() } };
     if (!existing.couplePlus) existing.couplePlus = { ready: {}, moods: {}, notes: [], jar: [], tastes: {}, timeline: [], badges: [], theme: "midnight", missingYou: false, sleepy: false, pause: null };
     existing.updatedAt = Date.now();
     return existing;
@@ -118,6 +120,7 @@ function getOrCreateWatchRoom(roomId, data = {}) {
     browserUrl: normalizeSharedBrowserUrl(data.browserUrl || ""),
     openTogetherUrl: "",
     openTogetherCountdownEndsAt: 0,
+    syncedMovie: { status: "idle", movieId: "", proxyVideo: "", playAt: 0, selectedBy: "", message: "", sync: { playing: false, offset: 0, startedAt: 0, updatedAt: Date.now() } },
     couplePlus: { ready: {}, moods: {}, notes: [], jar: [], tastes: {}, timeline: [], badges: [], theme: "midnight", missingYou: false, sleepy: false, pause: null },
     host: String(data.host || "Host").slice(0, 40),
     hostSocketId: "",
@@ -133,6 +136,28 @@ function getOrCreateWatchRoom(roomId, data = {}) {
 
 function roomMovieSeconds(room = {}) {
   return Math.max(0, Math.floor((Date.now() - Number(room.createdAt || Date.now())) / 1000));
+}
+
+function createMovieSyncState({ playing = false, offset = 0, startedAt = 0 } = {}) {
+  const now = Date.now();
+  return {
+    playing: Boolean(playing),
+    offset: Math.max(0, Number(offset || 0)),
+    startedAt: Number(startedAt || 0),
+    updatedAt: now,
+  };
+}
+
+function currentSyncedMovieSeconds(movie = {}) {
+  const sync = movie.sync || {};
+  const offset = Math.max(0, Number(sync.offset || 0));
+  if (!sync.playing || !sync.startedAt) return offset;
+  return Math.max(0, offset + (Date.now() - Number(sync.startedAt || Date.now())) / 1000);
+}
+
+function ensureSyncedMovieSync(movie = {}) {
+  if (!movie.sync) movie.sync = createMovieSyncState();
+  return movie;
 }
 
 function normalizeSharedBrowserUrl(value = "") {
@@ -18198,6 +18223,214 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
       to { transform: rotate(360deg); }
     }
 
+
+    /* ============================================================
+       v70 DATE ROOM MOVIE SYNC
+       Host selects a TMDB movie and everyone embeds proxyVideo together.
+       ============================================================ */
+
+    .dsRoomMovieForm {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .dsRoomMovieForm input {
+      min-height: 52px;
+      padding: 0 15px;
+      border-radius: 16px;
+      color: white;
+      background: rgba(255,255,255,.075);
+      border: 1px solid rgba(255,255,255,.12);
+      outline: 0;
+      font-weight: 750;
+    }
+
+    .dsRoomMovieForm input:disabled,
+    .dsRoomMovieForm button:disabled {
+      opacity: .48;
+      cursor: not-allowed;
+    }
+
+    .dsRoomMovieStatusCard {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(180px, 240px);
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .dsRoomMovieStatusCard > div {
+      padding: 18px;
+      border-radius: 24px;
+      background: rgba(255,255,255,.065);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .dsRoomMovieStatusCard small,
+    .dsRoomMovieCountdown small {
+      display: block;
+      margin-bottom: 7px;
+      color: rgba(248,251,255,.55);
+      font-size: 10px;
+      font-weight: 950;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .dsRoomMovieStatusCard h3 {
+      margin: 0 0 7px;
+      color: white;
+      font-family: "Space Grotesk", Inter, Arial, sans-serif;
+      font-size: clamp(28px, 4vw, 48px);
+      line-height: .94;
+      letter-spacing: -.065em;
+    }
+
+    .dsRoomMovieStatusCard p {
+      margin: 0;
+      color: rgba(248,251,255,.64);
+      line-height: 1.45;
+      font-weight: 650;
+      overflow-wrap: anywhere;
+    }
+
+    .dsRoomMovieCountdown {
+      display: grid;
+      place-items: center;
+      align-content: center;
+      text-align: center;
+    }
+
+    .dsRoomMovieCountdown strong {
+      color: white;
+      font-family: "Space Grotesk", Inter, Arial, sans-serif;
+      font-size: clamp(30px, 5vw, 58px);
+      line-height: .9;
+      letter-spacing: -.075em;
+    }
+
+    .dsRoomMovieStage {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      min-height: clamp(300px, 52vw, 620px);
+      overflow: hidden;
+      border-radius: 26px;
+      background: #000;
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 22px 80px rgba(0,0,0,.32);
+    }
+
+    .dsRoomMovieFrame {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #000;
+    }
+
+    .dsRoomMovieFrame[hidden],
+    .dsRoomMovieEmpty[hidden] {
+      display: none !important;
+    }
+
+    .dsRoomMovieEmpty {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 12px;
+      padding: 26px;
+      text-align: center;
+      background:
+        radial-gradient(620px circle at 50% 0%, rgba(255,110,169,.13), transparent 54%),
+        rgba(5,7,17,.88);
+    }
+
+    .dsRoomMovieEmpty h3 {
+      margin: 0;
+      color: white;
+      font-family: "Space Grotesk", Inter, Arial, sans-serif;
+      font-size: clamp(28px, 5vw, 58px);
+      line-height: .92;
+      letter-spacing: -.07em;
+    }
+
+    .dsRoomMovieEmpty p {
+      max-width: 640px;
+      margin: 0;
+      color: rgba(248,251,255,.62);
+      line-height: 1.5;
+      font-weight: 650;
+    }
+
+    @media(max-width: 720px) {
+      .dsRoomMovieForm,
+      .dsRoomMovieStatusCard {
+        grid-template-columns: 1fr;
+      }
+
+      .dsRoomMovieForm button,
+      #stableRoomMoviePanel .dsStableActions button {
+        width: 100%;
+      }
+    }
+
+
+    /* ============================================================
+       v71 ROOM MOVIE SYNC ENGINE
+       Server timer + host controls + 5-second drift correction for native video.
+       ============================================================ */
+
+    .dsRoomMovieStatusCard {
+      grid-template-columns: minmax(0, 1fr) minmax(160px, 220px) minmax(160px, 220px);
+    }
+
+    .dsRoomMovieTarget strong {
+      color: #ffe1ec;
+    }
+
+    .dsRoomSyncControls {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 14px;
+      border-radius: 22px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .dsRoomSyncControls small {
+      color: var(--couple-peach, #ffc2a1);
+      font-size: 10px;
+      font-weight: 950;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+    }
+
+    .dsRoomSyncControls p {
+      margin: 5px 0 0;
+      color: rgba(248,251,255,.62);
+      line-height: 1.45;
+      font-weight: 650;
+    }
+
+    #roomMovieVideo {
+      object-fit: contain;
+      background: #000;
+    }
+
+    @media(max-width: 860px) {
+      .dsRoomMovieStatusCard,
+      .dsRoomSyncControls {
+        grid-template-columns: 1fr;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -20996,6 +21229,7 @@ function watchroomPage(req, res) {
       <section class="dsStableMain">
         <div class="dsStableTabs">
           <button class="active" type="button" data-stable-tab="open">Open Together</button>
+          <button type="button" data-stable-tab="movie">Room Movie</button>
           <button type="button" data-stable-tab="live">Live Share</button>
           <button type="button" data-stable-tab="couples">Couples+</button>
           <button type="button" data-stable-tab="clock">Clock</button>
@@ -21040,6 +21274,68 @@ function watchroomPage(req, res) {
             <button class="dsPrimaryBtn" id="stableCountdownBtn" type="button">Start 10s Countdown</button>
             <button class="dsSecondaryBtn" id="stableSendTimeBtn" type="button">Send Time</button>
             <button class="dsGhostPill" id="stableCopyLinkBtn" type="button">Copy Link + Time</button>
+          </div>
+        </section>
+
+        <section class="dsStablePanel" id="stableRoomMoviePanel">
+          <div class="dsStablePanelHead">
+            <div>
+              <span class="dsEyebrow">Host movie sync</span>
+              <h2>Pick a movie for the room.</h2>
+              <p>The host selects a TMDB movie ID. SwiflyTV waits for the proxyVideo URL, then everyone loads the same player at the same countdown.</p>
+            </div>
+            <span class="dsHostBadge" id="stableRoomMovieBadge">Host controls</span>
+          </div>
+
+          <form id="roomMovieForm" class="dsRoomMovieForm">
+            <input id="roomMovieInput" name="movieId" placeholder="TMDB ID or /watch/movie/1007757" />
+            <button class="dsPrimaryBtn" id="roomMovieSelectBtn" type="submit">Select Movie</button>
+          </form>
+
+          <div class="dsRoomMovieStatusCard">
+            <div>
+              <small>Room movie</small>
+              <h3 id="roomMovieTitle">No movie selected</h3>
+              <p id="roomMovieStatus">Host can select a movie and everyone will wait together.</p>
+            </div>
+            <div class="dsRoomMovieCountdown">
+              <small>Sync start</small>
+              <strong id="roomMovieCountdown">Waiting</strong>
+            </div>
+            <div class="dsRoomMovieCountdown dsRoomMovieTarget">
+              <small>Room timer</small>
+              <strong id="roomMovieTargetTime">0:00</strong>
+            </div>
+          </div>
+
+          <div class="dsRoomSyncControls">
+            <div>
+              <small>Host sync controls</small>
+              <p>Host controls the room timer. If the player is a direct video, SwiflyTV auto-corrects anyone more than 5 seconds off. If it is a cross-site iframe, the timer still tells everyone exactly where to be.</p>
+            </div>
+            <div class="dsStableActions">
+              <button class="dsPrimaryBtn" id="roomMoviePlayBtn" type="button">Play</button>
+              <button class="dsSecondaryBtn" id="roomMoviePauseBtn" type="button">Pause</button>
+              <button class="dsGhostPill" id="roomMovieBack10Btn" type="button">-10s</button>
+              <button class="dsGhostPill" id="roomMovieForward10Btn" type="button">+10s</button>
+              <button class="dsGhostPill" id="roomMovieSyncMeBtn" type="button">Sync Me</button>
+            </div>
+          </div>
+
+          <div class="dsRoomMovieStage" id="roomMovieStage">
+            <iframe id="roomMovieFrame" class="dsRoomMovieFrame" title="Synced room movie" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write; web-share" allowfullscreen referrerpolicy="no-referrer" hidden></iframe>
+            <video id="roomMovieVideo" class="dsRoomMovieFrame" controls playsinline preload="metadata" hidden></video>
+            <div id="roomMovieEmpty" class="dsRoomMovieEmpty">
+              <div class="dsProxyLoader"></div>
+              <h3>Waiting for host</h3>
+              <p>Select a movie to start syncing the proxyVideo player for everyone.</p>
+            </div>
+          </div>
+
+          <div class="dsStableActions">
+            <button class="dsPrimaryBtn" id="roomMovieRestartBtn" type="button">Restart Sync Countdown</button>
+            <button class="dsSecondaryBtn" id="roomMovieOpenBtn" type="button">Open current movie page</button>
+            <button class="dsGhostPill" id="roomMovieCopyBtn" type="button">Copy room movie</button>
           </div>
         </section>
 
@@ -21292,6 +21588,10 @@ function watchroomPage(req, res) {
         var liveViewerPeer = null;
         var liveIceServers = [{ urls: "stun:stun.l.google.com:19302" }];
         var coupleState = { ready: {}, moods: {}, notes: [], jar: [], tastes: {}, timeline: [], badges: [], theme: "midnight", missingYou: false, sleepy: false, pause: null };
+        var roomMovieState = { status: "idle", movieId: "", proxyVideo: "", playAt: 0, selectedBy: "", message: "" };
+        var roomMovieTimer = null;
+        var roomMovieCorrectionTimer = null;
+        var ROOM_MOVIE_DRIFT_LIMIT = 5;
         var firedNoteIds = {};
 
         function esc(value) {
@@ -21345,23 +21645,23 @@ function watchroomPage(req, res) {
           });
 
           document.querySelectorAll(".dsStablePanel").forEach(function(panel) {
-            if (panel.id === "stableOpenPanel" || panel.id === "stableLivePanel" || panel.id === "stableClockPanel" || panel.id === "stableCouplesPanel") {
+            if (panel.id === "stableOpenPanel" || panel.id === "stableRoomMoviePanel" || panel.id === "stableLivePanel" || panel.id === "stableClockPanel" || panel.id === "stableCouplesPanel") {
               panel.classList.remove("active");
             }
           });
 
-          var target = document.getElementById(name === "live" ? "stableLivePanel" : name === "clock" ? "stableClockPanel" : name === "couples" ? "stableCouplesPanel" : "stableOpenPanel");
+          var target = document.getElementById(name === "movie" ? "stableRoomMoviePanel" : name === "live" ? "stableLivePanel" : name === "clock" ? "stableClockPanel" : name === "couples" ? "stableCouplesPanel" : "stableOpenPanel");
           if (target) target.classList.add("active");
         }
 
         function setHostMode() {
           var hostText = isRoomHost ? "You are host" : "View only";
-          ["stableOpenBadge", "stableLiveBadge"].forEach(function(id) {
+          ["stableOpenBadge", "stableLiveBadge", "stableRoomMovieBadge"].forEach(function(id) {
             var el = document.getElementById(id);
             if (el) el.textContent = hostText;
           });
 
-          ["stableOpenInput", "stableCountdownBtn", "stableStartLiveBtn", "stableStopLiveBtn"].forEach(function(id) {
+          ["stableOpenInput", "stableCountdownBtn", "stableStartLiveBtn", "stableStopLiveBtn", "roomMovieInput", "roomMovieSelectBtn", "roomMovieRestartBtn", "roomMoviePlayBtn", "roomMoviePauseBtn", "roomMovieBack10Btn", "roomMovieForward10Btn"].forEach(function(id) {
             var el = document.getElementById(id);
             if (el) el.disabled = !isRoomHost;
           });
@@ -21395,6 +21695,199 @@ function watchroomPage(req, res) {
             }
             if (title) title.textContent = "No link shared yet";
             if (text) text.textContent = "Host can paste the link you both should open.";
+          }
+        }
+
+        function parseRoomMovieId(value) {
+          var raw = String(value || "").trim();
+          if (!raw) return "";
+          var match = raw.match(/(?:movie\/|tmdb=|id=)(\d+)/i) || raw.match(/^(\d{2,12})$/);
+          return match ? match[1] : "";
+        }
+
+        function setRoomMovieStatus(text) {
+          var el = document.getElementById("roomMovieStatus");
+          if (el) el.textContent = text || "";
+        }
+
+        function setRoomMovieTitle(text) {
+          var el = document.getElementById("roomMovieTitle");
+          if (el) el.textContent = text || "No movie selected";
+        }
+
+        function clearRoomMovieFrame() {
+          var frame = document.getElementById("roomMovieFrame");
+          var video = document.getElementById("roomMovieVideo");
+          var empty = document.getElementById("roomMovieEmpty");
+          var stage = document.getElementById("roomMovieStage");
+          if (frame) {
+            frame.hidden = true;
+            frame.removeAttribute("src");
+          }
+          if (video) {
+            video.hidden = true;
+            video.pause();
+            video.removeAttribute("src");
+            try { video.load(); } catch {}
+          }
+          if (empty) empty.hidden = false;
+          if (stage) stage.classList.remove("isReady");
+        }
+
+        function isLikelyDirectVideoUrl(url) {
+          return /\.(mp4|webm|mov)(\?|#|$)/i.test(String(url || "")) || /[?&](?:video|file|src)=/i.test(String(url || ""));
+        }
+
+        function targetRoomMovieSeconds() {
+          var sync = roomMovieState.sync || {};
+          var offset = Math.max(0, Number(sync.offset || 0));
+          if (!sync.playing || !sync.startedAt) return offset;
+          return Math.max(0, offset + ((Date.now() - Number(sync.startedAt || Date.now())) / 1000));
+        }
+
+        function updateRoomMovieTimerUi() {
+          var el = document.getElementById("roomMovieTargetTime");
+          if (el) el.textContent = formatTime(targetRoomMovieSeconds());
+        }
+
+        function applyNativeVideoSync(force) {
+          var video = document.getElementById("roomMovieVideo");
+          if (!video || video.hidden || !roomMovieState.proxyVideo) return;
+
+          var target = targetRoomMovieSeconds();
+          var drift = Math.abs(Number(video.currentTime || 0) - target);
+
+          if (force || drift > ROOM_MOVIE_DRIFT_LIMIT) {
+            try { video.currentTime = target; } catch {}
+          }
+
+          if (roomMovieState.sync && roomMovieState.sync.playing) {
+            video.play().catch(function(){});
+          } else {
+            video.pause();
+          }
+        }
+
+        function startRoomMovieCorrectionLoop() {
+          if (roomMovieCorrectionTimer) clearInterval(roomMovieCorrectionTimer);
+          roomMovieCorrectionTimer = setInterval(function() {
+            updateRoomMovieTimerUi();
+            applyNativeVideoSync(false);
+          }, 1000);
+        }
+
+        function showIframeSyncHint() {
+          var status = document.getElementById("roomMovieStatus");
+          if (!status || !roomMovieState.proxyVideo) return;
+          if (isLikelyDirectVideoUrl(roomMovieState.proxyVideo)) return;
+          status.textContent = "Iframe player loaded. Room timer is " + formatTime(targetRoomMovieSeconds()) + ". Cross-site iframes cannot be force-seeked, so use the timer if it drifts.";
+        }
+
+        function loadRoomMovieFrame() {
+          var frame = document.getElementById("roomMovieFrame");
+          var video = document.getElementById("roomMovieVideo");
+          var empty = document.getElementById("roomMovieEmpty");
+          var stage = document.getElementById("roomMovieStage");
+          if (!roomMovieState.proxyVideo) return;
+
+          if (isLikelyDirectVideoUrl(roomMovieState.proxyVideo) && video) {
+            if (video.src !== roomMovieState.proxyVideo) {
+              video.src = roomMovieState.proxyVideo;
+              try { video.load(); } catch {}
+            }
+            if (frame) frame.hidden = true;
+            video.hidden = false;
+            applyNativeVideoSync(true);
+            setRoomMovieStatus("Direct video loaded. SwiflyTV will auto-correct if anyone drifts more than 5 seconds.");
+          } else if (frame) {
+            if (frame.src !== roomMovieState.proxyVideo) {
+              frame.src = roomMovieState.proxyVideo;
+            }
+            if (video) video.hidden = true;
+            frame.hidden = false;
+            showIframeSyncHint();
+          }
+
+          if (empty) empty.hidden = true;
+          if (stage) stage.classList.add("isReady");
+          startRoomMovieCorrectionLoop();
+        }
+
+        function scheduleRoomMovieFrame() {
+          if (roomMovieTimer) clearInterval(roomMovieTimer);
+          var countdown = document.getElementById("roomMovieCountdown");
+
+          function tick() {
+            updateRoomMovieTimerUi();
+            var playAt = Number(roomMovieState.playAt || 0);
+            if (!roomMovieState.proxyVideo) {
+              if (countdown) countdown.textContent = "Waiting";
+              return;
+            }
+
+            var left = Math.ceil((playAt - Date.now()) / 1000);
+            if (left > 0) {
+              if (countdown) countdown.textContent = "Play in " + left;
+              return;
+            }
+
+            if (countdown) countdown.textContent = "Play now";
+            if (roomMovieTimer) clearInterval(roomMovieTimer);
+            roomMovieTimer = null;
+            loadRoomMovieFrame();
+            startRoomMovieCorrectionLoop();
+          }
+
+          tick();
+          roomMovieTimer = setInterval(tick, 250);
+        }
+
+        function renderRoomMovie(movie) {
+          roomMovieState = Object.assign({ status: "idle", movieId: "", proxyVideo: "", playAt: 0, selectedBy: "", message: "", sync: { playing: false, offset: 0, startedAt: 0, updatedAt: Date.now() } }, movie || {});
+          if (!roomMovieState.sync) roomMovieState.sync = { playing: false, offset: 0, startedAt: 0, updatedAt: Date.now() };
+          var input = document.getElementById("roomMovieInput");
+          if (input && roomMovieState.movieId) input.value = roomMovieState.movieId;
+
+          if (!roomMovieState.movieId) {
+            setRoomMovieTitle("No movie selected");
+            setRoomMovieStatus("Host can select a movie and everyone will wait together.");
+            clearRoomMovieFrame();
+            return;
+          }
+
+          setRoomMovieTitle("TMDB #" + roomMovieState.movieId);
+
+          if (roomMovieState.status === "loading") {
+            clearRoomMovieFrame();
+            setRoomMovieStatus((roomMovieState.selectedBy || "Host") + " selected this movie. Waiting for proxyVideo...");
+            var empty = document.getElementById("roomMovieEmpty");
+            if (empty) {
+              empty.hidden = false;
+              empty.querySelector("h3").textContent = "Finding movie source...";
+              empty.querySelector("p").textContent = "This can take a little while. The room will start a sync countdown when proxyVideo returns.";
+            }
+            setTab("movie");
+            return;
+          }
+
+          if (roomMovieState.status === "error") {
+            clearRoomMovieFrame();
+            setRoomMovieStatus(roomMovieState.message || "proxyVideo failed for this movie.");
+            var empty = document.getElementById("roomMovieEmpty");
+            if (empty) {
+              empty.hidden = false;
+              empty.querySelector("h3").textContent = "proxyVideo failed";
+              empty.querySelector("p").textContent = roomMovieState.message || "Try another movie ID or retry.";
+            }
+            setTab("movie");
+            return;
+          }
+
+          if (roomMovieState.status === "ready" && roomMovieState.proxyVideo) {
+            setRoomMovieStatus("proxyVideo ready. The room is syncing everyone to the same start.");
+            scheduleRoomMovieFrame();
+            setTab("movie");
+            return;
           }
         }
 
@@ -21780,6 +22273,7 @@ function watchroomPage(req, res) {
             if (data.room.createdAt) roomCreatedAt = Number(data.room.createdAt);
             if (data.room.openTogetherUrl) updateSharedLink(data.room.openTogetherUrl);
             if (data.room.openTogetherCountdownEndsAt) countdownEndsAt = Number(data.room.openTogetherCountdownEndsAt || 0);
+            if (data.room.syncedMovie) renderRoomMovie(data.room.syncedMovie);
             if (data.room.couplePlus) {
               coupleState = data.room.couplePlus;
               renderCouplePlus();
@@ -21836,6 +22330,23 @@ function watchroomPage(req, res) {
           }
           if (event.type === "mood") {
             setTab("couples");
+          }
+        });
+
+        socket.on("watchroom:movie-sync-state", function(data) {
+          if (!data || !data.sync) return;
+          roomMovieState.sync = data.sync;
+          updateRoomMovieTimerUi();
+          applyNativeVideoSync(false);
+          if (data.message) setRoomMovieStatus(data.message);
+        });
+
+        socket.on("watchroom:movie-sync", function(data) {
+          if (data && data.movie) {
+            renderRoomMovie(data.movie);
+            if (data.movie.status === "ready") {
+              toast("Room movie ready. Sync countdown started.");
+            }
           }
         });
 
@@ -22073,6 +22584,70 @@ function watchroomPage(req, res) {
           emitCoupleEvent("complete-date", { completedDates: stats.completedDates });
           sendMessage("Date night marked complete. Streak updated ♡");
           renderCouplePlus();
+        });
+
+        document.getElementById("roomMovieForm")?.addEventListener("submit", function(event) {
+          event.preventDefault();
+          if (!isRoomHost) return toast("Only the host can select the room movie");
+
+          var movieId = parseRoomMovieId(document.getElementById("roomMovieInput")?.value || "");
+          if (!movieId) return toast("Paste a TMDB movie ID or /watch/movie link");
+
+          renderRoomMovie({ status: "loading", movieId: movieId, selectedBy: getSessionName(), message: "Waiting for proxyVideo..." });
+          socket.emit("watchroom:movie-select", { roomId: roomId, movieId: movieId, name: getSessionName() });
+          sendMessage("Selected TMDB #" + movieId + ". Waiting for proxyVideo to sync the room.");
+        });
+
+        document.getElementById("roomMovieRestartBtn")?.addEventListener("click", function() {
+          if (!isRoomHost) return toast("Only the host can restart the sync countdown");
+          if (!roomMovieState.proxyVideo) return toast("No room movie is ready yet");
+          socket.emit("watchroom:movie-sync-start", { roomId: roomId, delayMs: 7000, name: getSessionName() });
+        });
+
+        function sendRoomMovieSync(action, extra) {
+          if (!isRoomHost && action !== "sync-me") return toast("Only the host can control the room timer");
+          if (!roomMovieState.movieId) return toast("No room movie selected");
+          socket.emit("watchroom:movie-control", Object.assign({
+            roomId: roomId,
+            action: action,
+            clientTime: targetRoomMovieSeconds(),
+            name: getSessionName()
+          }, extra || {}));
+        }
+
+        document.getElementById("roomMoviePlayBtn")?.addEventListener("click", function() {
+          sendRoomMovieSync("play");
+        });
+
+        document.getElementById("roomMoviePauseBtn")?.addEventListener("click", function() {
+          sendRoomMovieSync("pause");
+        });
+
+        document.getElementById("roomMovieBack10Btn")?.addEventListener("click", function() {
+          sendRoomMovieSync("seek", { delta: -10 });
+        });
+
+        document.getElementById("roomMovieForward10Btn")?.addEventListener("click", function() {
+          sendRoomMovieSync("seek", { delta: 10 });
+        });
+
+        document.getElementById("roomMovieSyncMeBtn")?.addEventListener("click", function() {
+          applyNativeVideoSync(true);
+          showIframeSyncHint();
+          toast("Synced to room timer");
+        });
+
+        document.getElementById("roomMovieOpenBtn")?.addEventListener("click", function() {
+          if (!roomMovieState.movieId) return toast("No room movie selected");
+          window.open("/watch/movie/" + encodeURIComponent(roomMovieState.movieId) + "?mode=movie", "_blank", "noopener");
+        });
+
+        document.getElementById("roomMovieCopyBtn")?.addEventListener("click", function() {
+          var text = roomMovieState.movieId
+            ? location.origin + "/watch/movie/" + roomMovieState.movieId + "?mode=movie"
+            : "No room movie selected";
+          navigator.clipboard?.writeText(text);
+          toast("Room movie copied");
         });
 
         document.getElementById("stableOpenLink")?.addEventListener("click", function(event) {
@@ -22800,6 +23375,13 @@ io.on("connection", (socket) => {
       socket.emit("watchroom:live-status", { roomId: room.id, active: true, host: room.host || "Host" });
     }
 
+    if (room.syncedMovie && room.syncedMovie.movieId) {
+      socket.emit("watchroom:movie-sync", {
+        roomId: room.id,
+        movie: room.syncedMovie,
+      });
+    }
+
     if (room.openTogetherUrl) {
       socket.emit("watchroom:open-together", {
         roomId: room.id,
@@ -22888,6 +23470,206 @@ io.on("connection", (socket) => {
       roomId: room.id,
       browserUrl: room.browserUrl,
       updatedAt: room.updatedAt,
+    });
+  });
+
+  socket.on("watchroom:movie-select", async (payload = {}) => {
+    const roomId = normalizeRoomId(payload.roomId || socket.data.roomId);
+    const room = watchRooms.get(roomId);
+    if (!room) return;
+
+    if (room.hostSocketId && room.hostSocketId !== socket.id) {
+      socket.emit("watchroom:message", {
+        name: "System",
+        text: "Only the host can select the room movie.",
+        createdAt: Date.now(),
+      });
+      return;
+    }
+
+    const movieId = String(payload.movieId || "").replace(/\D/g, "").slice(0, 14);
+    if (!movieId) return;
+
+    const selectedBy = String(payload.name || room.host || "Host").slice(0, 40);
+    const requestId = Math.random().toString(36).slice(2, 10);
+
+    room.syncedMovie = {
+      status: "loading",
+      movieId,
+      proxyVideo: "",
+      playAt: 0,
+      selectedBy,
+      requestId,
+      message: "Waiting for proxyVideo...",
+      updatedAt: Date.now(),
+    };
+    room.updatedAt = Date.now();
+
+    io.to(room.id).emit("watchroom:movie-sync", {
+      roomId: room.id,
+      movie: room.syncedMovie,
+    });
+
+    io.to(room.id).emit("watchroom:message", {
+      name: "System",
+      text: `${selectedBy} selected TMDB #${movieId}. Waiting for proxyVideo...`,
+      createdAt: Date.now(),
+    });
+
+    const result = await fetchProxyVideoSource({ type: "movie", id: movieId });
+
+    const latest = watchRooms.get(roomId);
+    if (!latest || !latest.syncedMovie || latest.syncedMovie.requestId !== requestId) return;
+
+    if (result.status === "ok" && result.proxyVideo) {
+      latest.syncedMovie = {
+        status: "ready",
+        movieId,
+        proxyVideo: result.proxyVideo,
+        providerUrl: result.providerUrl || "",
+        sourceUrl: result.sourceUrl || "",
+        playAt: Date.now() + 7000,
+        selectedBy,
+        requestId,
+        message: "proxyVideo ready. Sync countdown started.",
+        sync: createMovieSyncState({ playing: true, offset: 0, startedAt: Date.now() + 7000 }),
+        updatedAt: Date.now(),
+      };
+    } else {
+      latest.syncedMovie = {
+        status: "error",
+        movieId,
+        proxyVideo: "",
+        playAt: 0,
+        selectedBy,
+        requestId,
+        message: result.message || "proxyVideo did not return for this movie.",
+        sync: createMovieSyncState(),
+        attempts: result.attempts || [],
+        updatedAt: Date.now(),
+      };
+    }
+
+    latest.updatedAt = Date.now();
+
+    io.to(latest.id).emit("watchroom:movie-sync", {
+      roomId: latest.id,
+      movie: latest.syncedMovie,
+    });
+
+    io.to(latest.id).emit("watchroom:message", {
+      name: "System",
+      text: latest.syncedMovie.status === "ready"
+        ? `proxyVideo is ready for TMDB #${movieId}. Room starts in 7 seconds.`
+        : `proxyVideo failed for TMDB #${movieId}: ${latest.syncedMovie.message}`,
+      createdAt: Date.now(),
+    });
+  });
+
+  socket.on("watchroom:movie-control", (payload = {}) => {
+    const roomId = normalizeRoomId(payload.roomId || socket.data.roomId);
+    const room = watchRooms.get(roomId);
+    if (!room || !room.syncedMovie || !room.syncedMovie.movieId) return;
+
+    const action = String(payload.action || "").slice(0, 30);
+
+    if (action !== "sync-me" && room.hostSocketId && room.hostSocketId !== socket.id) {
+      socket.emit("watchroom:message", {
+        name: "System",
+        text: "Only the host can control the room movie timer.",
+        createdAt: Date.now(),
+      });
+      return;
+    }
+
+    ensureSyncedMovieSync(room.syncedMovie);
+
+    const now = Date.now();
+    const current = currentSyncedMovieSeconds(room.syncedMovie);
+    let offset = current;
+    let playing = Boolean(room.syncedMovie.sync.playing);
+    let message = "";
+
+    if (action === "play") {
+      playing = true;
+      offset = current;
+      message = "Host pressed play. Room timer is running.";
+    } else if (action === "pause") {
+      playing = false;
+      offset = current;
+      message = "Host paused the room timer.";
+    } else if (action === "seek") {
+      const delta = Math.max(-600, Math.min(600, Number(payload.delta || 0)));
+      offset = Math.max(0, current + delta);
+      message = `Host moved the room timer ${delta >= 0 ? "+" : ""}${delta}s.`;
+    } else if (action === "set") {
+      offset = Math.max(0, Number(payload.time || payload.clientTime || 0));
+      message = `Host set the room timer to ${Math.floor(offset)}s.`;
+    } else if (action === "sync-me") {
+      socket.emit("watchroom:movie-sync-state", {
+        roomId: room.id,
+        sync: room.syncedMovie.sync,
+        message: "Synced to current room timer.",
+      });
+      return;
+    } else {
+      return;
+    }
+
+    room.syncedMovie.sync = createMovieSyncState({
+      playing,
+      offset,
+      startedAt: playing ? now : 0,
+    });
+    room.syncedMovie.message = message;
+    room.syncedMovie.updatedAt = now;
+    room.updatedAt = now;
+
+    io.to(room.id).emit("watchroom:movie-sync-state", {
+      roomId: room.id,
+      movieId: room.syncedMovie.movieId,
+      sync: room.syncedMovie.sync,
+      message,
+    });
+
+    io.to(room.id).emit("watchroom:message", {
+      name: "System",
+      text: message,
+      createdAt: now,
+    });
+  });
+
+  socket.on("watchroom:movie-sync-start", (payload = {}) => {
+    const roomId = normalizeRoomId(payload.roomId || socket.data.roomId);
+    const room = watchRooms.get(roomId);
+    if (!room || !room.syncedMovie || !room.syncedMovie.proxyVideo) return;
+
+    if (room.hostSocketId && room.hostSocketId !== socket.id) {
+      socket.emit("watchroom:message", {
+        name: "System",
+        text: "Only the host can restart the movie sync countdown.",
+        createdAt: Date.now(),
+      });
+      return;
+    }
+
+    const delayMs = Math.max(1000, Math.min(30000, Number(payload.delayMs || 7000)));
+    room.syncedMovie.playAt = Date.now() + delayMs;
+    room.syncedMovie.status = "ready";
+    room.syncedMovie.sync = createMovieSyncState({ playing: true, offset: 0, startedAt: room.syncedMovie.playAt });
+    room.syncedMovie.message = "Sync countdown restarted.";
+    room.syncedMovie.updatedAt = Date.now();
+    room.updatedAt = Date.now();
+
+    io.to(room.id).emit("watchroom:movie-sync", {
+      roomId: room.id,
+      movie: room.syncedMovie,
+    });
+
+    io.to(room.id).emit("watchroom:message", {
+      name: "System",
+      text: `Movie sync countdown restarted. Play in ${Math.ceil(delayMs / 1000)} seconds.`,
+      createdAt: Date.now(),
     });
   });
 
