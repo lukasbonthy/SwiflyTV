@@ -21742,6 +21742,7 @@ function watchroomPage(req, res) {
         var roomMovieState = { status: "idle", movieId: "", proxyVideo: "", playAt: 0, selectedBy: "", message: "" };
         var roomMovieTimer = null;
         var roomMovieCorrectionTimer = null;
+        var roomMovieGuestWatchdogTimer = null;
         var ROOM_MOVIE_DRIFT_LIMIT = Number(window.ROOM_MOVIE_DRIFT_LIMIT || 10);
         var roomMovieRemoteApplying = false;
         var roomMovieIgnoreNativeEventsUntil = 0;
@@ -21937,25 +21938,38 @@ function watchroomPage(req, res) {
 
         function forceRoomMovieVideoTo(target, shouldPlay) {
           var video = document.getElementById("roomMovieVideo");
-          if (!video) return false;
+          if (!video || video.hidden) return false;
 
-          markRoomMovieRemoteApply(2600);
+          target = Math.max(0, Number(target || 0));
+          markRoomMovieRemoteApply(3000);
 
           try {
             if (!video.paused) video.pause();
           } catch {}
 
           try {
-            video.currentTime = Math.max(0, Number(target || 0));
+            video.currentTime = target;
           } catch {
             return false;
           }
+
+          // v81: Some streams ignore the first seek while loading/buffering.
+          // Verify shortly after, and try one more time if still outside tolerance.
+          setTimeout(function() {
+            if (!video || video.hidden) return;
+            var freshTarget = targetRoomMovieSeconds();
+            var freshDrift = Math.abs(Number(video.currentTime || 0) - freshTarget);
+            if (freshDrift >= ROOM_MOVIE_DRIFT_LIMIT) {
+              markRoomMovieRemoteApply(2600);
+              try { video.currentTime = freshTarget; } catch {}
+            }
+          }, 700);
 
           if (shouldPlay) {
             setTimeout(function() {
               markRoomMovieRemoteApply(1200);
               video.play().catch(function(){});
-            }, 280);
+            }, 420);
           }
 
           return true;
@@ -21972,17 +21986,16 @@ function watchroomPage(req, res) {
           var corrected = false;
           var shouldPlay = Boolean(roomMovieState.sync && roomMovieState.sync.playing);
 
-          // v80: correction distance is 10s. When drift is truly outside the tolerance,
-          // do a real pause -> seek -> resume correction instead of tiny repeated nudges.
-          var cooldownReady = now - roomMovieLastCorrectionAt > 5000;
-          var majorDrift = drift >= (ROOM_MOVIE_DRIFT_LIMIT * 2);
-          var canCorrectNow = force || (drift >= ROOM_MOVIE_DRIFT_LIMIT && (cooldownReady || majorDrift));
+          // v81: Guests get an actual watchdog correction. If they are 10s+ away,
+          // correct even when no host button/socket event has happened.
+          var cooldownReady = now - roomMovieLastCorrectionAt > 2500;
+          var canCorrectNow = force || (drift >= ROOM_MOVIE_DRIFT_LIMIT && cooldownReady);
 
           if (canCorrectNow) {
             roomMovieLastCorrectionAt = now;
             corrected = forceRoomMovieVideoTo(target, shouldPlay);
           } else {
-            // Do not keep touching currentTime. Only keep play/pause aligned occasionally.
+            // Only keep play/pause aligned occasionally, without touching currentTime.
             if (now - roomMovieLastPlayPauseAt > 3500) {
               if (shouldPlay && video.paused) {
                 markRoomMovieRemoteApply(1200);
@@ -21999,17 +22012,33 @@ function watchroomPage(req, res) {
           var status = document.getElementById("roomMovieStatus");
           if (status && !video.hidden) {
             status.textContent = corrected
-              ? "Corrected drift over " + ROOM_MOVIE_DRIFT_LIMIT + "s. Room timer: " + formatTime(target)
+              ? "Guest auto-corrected " + Math.round(drift) + "s drift. Room timer: " + formatTime(target)
               : "Smooth sync active. Drift " + Math.round(drift) + "s • correction distance " + ROOM_MOVIE_DRIFT_LIMIT + "s";
           }
         }
 
         function startRoomMovieCorrectionLoop() {
           if (roomMovieCorrectionTimer) clearInterval(roomMovieCorrectionTimer);
+          if (roomMovieGuestWatchdogTimer) clearInterval(roomMovieGuestWatchdogTimer);
+
           roomMovieCorrectionTimer = setInterval(function() {
             updateRoomMovieTimerUi();
             applyNativeVideoSync(false);
           }, 2000);
+
+          // v81: A separate guest watchdog keeps checking the actual video time.
+          // This fixes guests who drift far away without any new socket event.
+          roomMovieGuestWatchdogTimer = setInterval(function() {
+            var video = document.getElementById("roomMovieVideo");
+            if (!video || video.hidden || !roomMovieState.proxyVideo) return;
+            if (video.readyState < 1) return;
+
+            var target = targetRoomMovieSeconds();
+            var drift = Math.abs(Number(video.currentTime || 0) - target);
+            if (drift >= ROOM_MOVIE_DRIFT_LIMIT) {
+              applyNativeVideoSync(true);
+            }
+          }, 2500);
         }
 
         function showIframeSyncHint() {
@@ -22144,9 +22173,9 @@ function watchroomPage(req, res) {
             setRoomMovieStatus("Trying native video sync first...");
             setTimeout(function() {
               if (!video.hidden && video.readyState === 0) {
-                fallbackToRoomMovieIframe("native video never became ready");
+                fallbackToRoomMovieIframe("native video never became ready after 30s");
               }
-            }, 9000);
+            }, 30000);
 
             applyNativeVideoSync(false);
           } else {
@@ -23448,6 +23477,7 @@ function watchroomPage(req, res) {
           var pollingDriftLimit = Number(window.ROOM_MOVIE_DRIFT_LIMIT || 10);
           var pollingLastCorrectionAt = 0;
           var pollingLastPlayPauseAt = 0;
+          var pollingGuestWatchdogTimer = null;
           var lastMovieKey = "";
           var loadTimer = null;
 
@@ -23508,17 +23538,29 @@ function watchroomPage(req, res) {
 
           function forcePollingVideoTo(target, shouldPlay) {
             var video = byId("roomMovieVideo");
-            if (!video) return false;
+            if (!video || video.hidden) return false;
+
+            target = Math.max(0, Number(target || 0));
             try {
               if (!video.paused) video.pause();
             } catch {}
             try {
-              video.currentTime = Math.max(0, Number(target || 0));
+              video.currentTime = target;
             } catch {
               return false;
             }
+
+            setTimeout(function() {
+              if (!video || video.hidden) return;
+              var freshTarget = targetTime();
+              var freshDrift = Math.abs(Number(video.currentTime || 0) - freshTarget);
+              if (freshDrift >= pollingDriftLimit) {
+                try { video.currentTime = freshTarget; } catch {}
+              }
+            }, 700);
+
             if (shouldPlay) {
-              setTimeout(function(){ video.play().catch(function(){}); }, 280);
+              setTimeout(function(){ video.play().catch(function(){}); }, 420);
             }
             return true;
           }
@@ -23532,9 +23574,8 @@ function watchroomPage(req, res) {
             var shouldPlay = Boolean(movie.sync && movie.sync.playing);
             var corrected = false;
 
-            var cooldownReady = now - pollingLastCorrectionAt > 5000;
-            var majorDrift = drift >= (pollingDriftLimit * 2);
-            if (force || (drift >= pollingDriftLimit && (cooldownReady || majorDrift))) {
+            var cooldownReady = now - pollingLastCorrectionAt > 2500;
+            if (force || (drift >= pollingDriftLimit && cooldownReady)) {
               pollingLastCorrectionAt = now;
               corrected = forcePollingVideoTo(target, shouldPlay);
             } else if (now - pollingLastPlayPauseAt > 3500) {
@@ -23548,7 +23589,7 @@ function watchroomPage(req, res) {
             }
 
             setMovieStatus(corrected
-              ? "Corrected drift over " + pollingDriftLimit + "s. Room timer: " + formatTime(target)
+              ? "Guest auto-corrected " + Math.round(drift) + "s drift. Room timer: " + formatTime(target)
               : "Smooth native video sync active. Drift " + Math.round(drift) + "s • correction distance " + pollingDriftLimit + "s");
           }
 
@@ -23661,10 +23702,18 @@ function watchroomPage(req, res) {
                   try { video.load(); } catch {}
                 }
                 setTimeout(function(){
-                  if (!video.hidden && video.readyState === 0) fallbackPollingIframe("native video never became ready");
-                }, 9000);
+                  if (!video.hidden && video.readyState === 0) fallbackPollingIframe("native video never became ready after 30s");
+                }, 30000);
                 applyPollingVideoSync(true);
-                setInterval(function(){ updateTimerUi(); applyPollingVideoSync(false); }, 2000);
+                if (pollingGuestWatchdogTimer) clearInterval(pollingGuestWatchdogTimer);
+                pollingGuestWatchdogTimer = setInterval(function(){
+                  updateTimerUi();
+                  applyPollingVideoSync(false);
+                  var v = byId("roomMovieVideo");
+                  if (!v || v.hidden || !movie.proxyVideo || v.readyState < 1) return;
+                  var d = Math.abs(Number(v.currentTime || 0) - targetTime());
+                  if (d >= pollingDriftLimit) applyPollingVideoSync(true);
+                }, 2500);
               } else if (frame && movie.proxyVideo) {
                 fallbackPollingIframe("native video element missing");
               }
