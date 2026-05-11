@@ -18572,6 +18572,11 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
       });
     </script>
 
+
+    <script>
+      window.ROOM_MOVIE_DRIFT_LIMIT = window.ROOM_MOVIE_DRIFT_LIMIT || 5;
+    </script>
+
 </head>
 <body>
 
@@ -21737,7 +21742,7 @@ function watchroomPage(req, res) {
         var roomMovieState = { status: "idle", movieId: "", proxyVideo: "", playAt: 0, selectedBy: "", message: "" };
         var roomMovieTimer = null;
         var roomMovieCorrectionTimer = null;
-        var ROOM_MOVIE_DRIFT_LIMIT = 1.5;
+        var ROOM_MOVIE_DRIFT_LIMIT = Number(window.ROOM_MOVIE_DRIFT_LIMIT || 5);
         var roomMovieRemoteApplying = false;
         var roomMovieVideoControlBound = false;
         var firedNoteIds = {};
@@ -23405,7 +23410,7 @@ function watchroomPage(req, res) {
             if (!video || video.hidden || !movie.proxyVideo) return;
             var target = targetTime();
             var drift = Math.abs(Number(video.currentTime || 0) - target);
-            if (force || drift > 1.5) {
+            if (force || drift > ROOM_MOVIE_DRIFT_LIMIT) {
               try { video.currentTime = target; } catch {}
             }
             if (movie.sync && movie.sync.playing) {
