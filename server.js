@@ -18025,11 +18025,26 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
 
     /* ============================================================
        v66 PROXYVIDEO EMBED
-       Movie button embeds proxyVideo returned by JSON endpoint.
+       Movie button embeds the proxyVideo URL returned by movie API.
        ============================================================ */
 
-    .dsDirectVideoShell[data-provider-kind="proxy_video_json"] .dsDirectVideoMeta span {
-      background: linear-gradient(135deg, #fff, #ffe1ec);
+    .dsProxyVideoShell {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: clamp(320px, 64vw, 760px);
+      overflow: hidden;
+      border-radius: inherit;
+      background: #000;
+    }
+
+    .dsProxyVideoFrame {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #000;
     }
 
   </style>
@@ -19861,106 +19876,6 @@ function youtubeEmbedSrc(videoKey = "") {
   return `https://www.youtube.com/embed/${key}?rel=0&modestbranding=1&playsinline=1&enablejsapi=1`;
 }
 
-
-function buildProxyVideoJsonUrl({ req, type, id }) {
-  const template =
-    process.env.MOVIE_PROXY_JSON_TEMPLATE ||
-    process.env.MOVIE_PROXY_VIDEO_JSON_TEMPLATE ||
-    "";
-
-  if (!template) return "";
-
-  const raw = template
-    .replaceAll("{id}", encodeURIComponent(String(id || "")))
-    .replaceAll("{tmdb}", encodeURIComponent(String(id || "")))
-    .replaceAll("{type}", encodeURIComponent(type === "tv" ? "tv" : "movie"));
-
-  if (raw.startsWith("/")) {
-    const proto = req?.headers?.["x-forwarded-proto"] || req?.protocol || "http";
-    const host = req?.headers?.host || `localhost:${PORT}`;
-    return `${proto}://${host}${raw}`;
-  }
-
-  return raw;
-}
-
-function pickProxyVideoUrl(data = {}) {
-  const field = process.env.MOVIE_PROXY_JSON_FIELD || "proxyVideo";
-  const candidates = [
-    data?.[field],
-    data?.proxyVideo,
-    data?.proxy_video,
-    data?.video,
-    data?.videoUrl,
-    data?.url,
-    data?.stream,
-    data?.source,
-  ];
-
-  const picked = candidates.find((value) => typeof value === "string" && /^https?:\/\//i.test(value.trim()));
-  return picked ? picked.trim() : "";
-}
-
-async function fetchProxyVideoSource({ req, type, id }) {
-  const enabled =
-    process.env.MOVIE_PROXY_JSON_PROVIDER_ENABLED === "true" ||
-    process.env.MOVIE_PROXY_VIDEO_PROVIDER_ENABLED === "true";
-
-  if (!enabled) {
-    return { status: "placeholder", reason: "proxy_provider_disabled" };
-  }
-
-  const providerUrl = buildProxyVideoJsonUrl({ req, type, id });
-  if (!providerUrl) {
-    return { status: "placeholder", reason: "proxy_provider_missing_template" };
-  }
-
-  try {
-    const headers = { Accept: "application/json" };
-    const apiKey = process.env.MOVIE_PROXY_JSON_API_KEY || process.env.MOVIE_PROXY_VIDEO_API_KEY;
-    if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
-
-    const response = await fetch(providerUrl, { headers });
-    if (!response.ok) {
-      return { status: "error", message: `Proxy JSON returned HTTP ${response.status}` };
-    }
-
-    const data = await response.json();
-    if (data.ok === false) {
-      return { status: "error", message: data.message || "Proxy JSON returned ok=false." };
-    }
-
-    const proxyVideo = pickProxyVideoUrl(data);
-    if (!proxyVideo) {
-      return { status: "placeholder", reason: "proxy_video_missing" };
-    }
-
-    return {
-      status: "ok",
-      title: data.title || data.name || `TMDB ${id}`,
-      providerKind: "proxy_video_json",
-      sourceUrl: data.sourceUrl || data.source_url || "",
-      originalCapturedUrl: data.originalCapturedUrl || data.original_captured_url || "",
-      stream: {
-        type: "mp4",
-        url: proxyVideo,
-        quality: "PROXY",
-      },
-      streams: [
-        {
-          quality: "PROXY",
-          type: "mp4",
-          url: proxyVideo,
-        },
-      ],
-      providerUrl: providerUrl.replace(/([?&](?:turnstile|token|key|api_key|apikey)=)[^&]+/gi, "$1***"),
-    };
-  } catch (error) {
-    return { status: "error", message: error.message || "Proxy JSON request failed." };
-  }
-}
-
-
 function chooseLicensedStream(data = {}) {
   const streams = data.streams || {};
   const entries = Object.entries(streams).map(([quality, stream]) => ({
@@ -20002,6 +19917,72 @@ function listProviderStreams(data = {}) {
     }))
     .filter((entry) => entry.url && (entry.type === "mp4" || (allowHlsFallback && entry.type === "hls")));
 }
+
+
+async function fetchProxyVideoSource({ type, id }) {
+  const enabled = process.env.MOVIE_PROXY_VIDEO_PROVIDER_ENABLED === "true";
+  if (!enabled || type !== "movie") {
+    return { status: "disabled", reason: "proxy_video_disabled" };
+  }
+
+  const base =
+    process.env.MOVIE_PROXY_VIDEO_PROVIDER_BASE_URL ||
+    process.env.MOVIE_PROXY_VIDEO_PROVIDER_URL ||
+    "http://movieresolver.onrender.com/movie";
+
+  let url;
+  try {
+    if (base.includes("{id}")) {
+      url = new URL(base.replaceAll("{id}", encodeURIComponent(String(id))));
+    } else {
+      url = new URL(`${base.replace(/\/+$/, "")}/${encodeURIComponent(String(id))}`);
+    }
+  } catch {
+    return { status: "error", message: "Invalid proxyVideo provider URL." };
+  }
+
+  const headers = { Accept: "application/json" };
+  if (process.env.MOVIE_PROXY_VIDEO_PROVIDER_API_KEY) {
+    headers.Authorization = `Bearer ${process.env.MOVIE_PROXY_VIDEO_PROVIDER_API_KEY}`;
+  }
+
+  try {
+    const response = await fetch(url, { headers });
+    if (!response.ok) {
+      return { status: "error", message: `proxyVideo provider returned HTTP ${response.status}` };
+    }
+
+    const data = await response.json();
+    const proxyVideo = String(data.proxyVideo || "").trim();
+
+    if (!data.ok || !proxyVideo) {
+      return { status: "error", message: data.message || "proxyVideo provider did not return proxyVideo." };
+    }
+
+    let parsedProxy;
+    try {
+      parsedProxy = new URL(proxyVideo);
+    } catch {
+      return { status: "error", message: "proxyVideo was not a valid URL." };
+    }
+
+    if (!["http:", "https:"].includes(parsedProxy.protocol)) {
+      return { status: "error", message: "proxyVideo must be http or https." };
+    }
+
+    return {
+      status: "ok",
+      providerKind: "proxy_video",
+      movieId: String(data.movieId || id),
+      sourceUrl: String(data.sourceUrl || ""),
+      proxyVideo: parsedProxy.toString(),
+      providerUrl: url.toString(),
+    };
+  } catch (error) {
+    return { status: "error", message: error.message || "proxyVideo provider request failed." };
+  }
+}
+
 
 async function fetchMoviePlaceholderSource({ type, id }) {
   const enabled =
@@ -20145,13 +20126,13 @@ async function watchPage(req, res, type) {
   const heroBg = fullBackdrop(details.backdrop_path || details.poster_path);
   const trailerEmbedSrc = trailer ? youtubeEmbedSrc(trailer.key) : "";
   const youtubeUrl = trailer ? `https://www.youtube.com/watch?v=${encodeURIComponent(trailer.key)}` : "";
-  const proxyVideoSource = isMovieMode ? await fetchProxyVideoSource({ req, type, id }) : { status: "placeholder" };
-  const placeholderSource = isMovieMode && proxyVideoSource.status !== "ok" ? await fetchMoviePlaceholderSource({ type, id }) : { status: "placeholder" };
-  const activeProviderSource = proxyVideoSource.status === "ok" ? proxyVideoSource : placeholderSource;
-  const providerStream = activeProviderSource.status === "ok" ? activeProviderSource.stream : null;
-  const movieEmbedUrl = isMovieMode && !providerStream ? buildMovieEmbedProviderUrl({ req, type, id }) : "";
+  const proxyVideoSource = isMovieMode ? await fetchProxyVideoSource({ type, id }) : { status: "disabled" };
+  const proxyVideoUrl = proxyVideoSource.status === "ok" ? proxyVideoSource.proxyVideo : "";
+  const placeholderSource = isMovieMode && !proxyVideoUrl ? await fetchMoviePlaceholderSource({ type, id }) : { status: "placeholder" };
+  const providerStream = placeholderSource.status === "ok" ? placeholderSource.stream : null;
+  const movieEmbedUrl = isMovieMode && !proxyVideoUrl && !providerStream ? buildMovieEmbedProviderUrl({ req, type, id }) : "";
   const sourceLabel = isMovieMode
-    ? (providerStream ? `${providerStream.quality || "PROXY"} ${providerStream.type.toUpperCase()} video` : movieEmbedUrl ? "Embed provider" : "Trailer fallback")
+    ? (proxyVideoUrl ? "proxyVideo embed" : providerStream ? `${providerStream.quality || "ORG"} ${providerStream.type.toUpperCase()} placeholder` : movieEmbedUrl ? "Embed provider" : "Trailer fallback")
     : "YouTube/TMDB";
   const selectedSeason = String(req.query.s || process.env.MOVIE_EMBED_DEFAULT_SEASON || "1");
   const selectedEpisode = String(req.query.e || process.env.MOVIE_EMBED_DEFAULT_EPISODE || "1");
@@ -20178,26 +20159,39 @@ async function watchPage(req, res, type) {
       </section>`
     : "";
 
-  const providerStatusMessage = (proxyVideoSource.status === "error" || placeholderSource.status === "error")
-    ? `<div class="dsMovieEmbedNotice error"><span>Provider issue</span><strong>${escapeHtml((proxyVideoSource.message || placeholderSource.message) || "Could not load video source")}</strong><small>Trailer fallback loaded instead.</small></div>`
+  const providerStatusMessage = placeholderSource.status === "error"
+    ? `<div class="dsMovieEmbedNotice error"><span>Provider issue</span><strong>${escapeHtml(placeholderSource.message || "Could not load placeholder stream")}</strong><small>Trailer fallback loaded instead.</small></div>`
     : "";
 
-  const movieFrame = providerStream && providerStream.type === "mp4"
-    ? `<div class="dsDirectVideoShell" data-provider-kind="${escapeHtml(placeholderSource.providerKind || "placeholder")}">
-        <video id="movie-placeholder-video" class="dsDirectMovieVideo" controls autoplay playsinline preload="metadata" src="${escapeHtml(providerStream.url)}"></video>
+  const proxyVideoStatusMessage = proxyVideoSource.status === "error"
+    ? `<div class="dsMovieEmbedNotice error"><span>proxyVideo issue</span><strong>${escapeHtml(proxyVideoSource.message || "Could not load proxyVideo")}</strong><small>Falling back to the next available source.</small></div>`
+    : "";
+
+  const movieFrame = proxyVideoUrl
+    ? `<div class="dsProxyVideoShell">
+        <iframe class="dsProxyVideoFrame" src="${escapeHtml(proxyVideoUrl)}" title="${escapeHtml(title)} proxyVideo embed" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write; web-share" allowfullscreen referrerpolicy="no-referrer"></iframe>
         <div class="dsDirectVideoMeta">
-          <span>${escapeHtml((providerStream.quality || "ORG").toUpperCase())} MP4</span>
-          <strong>${escapeHtml(placeholderSource.title || title)}</strong>
-          <small>Temporary trailer/preview provider until your licensed movie provider is connected.</small>
+          <span>proxyVideo</span>
+          <strong>${escapeHtml(title)}</strong>
+          <small>Embedded from the proxyVideo URL returned by your movie API.</small>
         </div>
       </div>`
-    : providerStream && providerStream.type === "hls"
-      ? `<div class="dsMovieEmbedNotice"><span>HLS source ignored</span><strong>MP4 required for Movie button</strong><small>The provider returned HLS, but this build is set to use MP4/ORG first. Set MOVIE_PLACEHOLDER_ALLOW_HLS_FALLBACK=true only if you add HLS playback support.</small></div>`
-      : movieEmbedUrl
-        ? `<iframe class="dsMovieEmbedFrame" src="${escapeHtml(movieEmbedUrl)}" title="${escapeHtml(title)} movie embed" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write; web-share" allowfullscreen sandbox="allow-scripts allow-same-origin"></iframe>`
-        : trailer
-          ? `${providerStatusMessage}<div class="dsMovieEmbedNotice"><span>ProxyVideo provider unavailable</span><strong>Using trailer fallback</strong><small>Set MOVIE_PROXY_JSON_PROVIDER_ENABLED=true and MOVIE_PROXY_JSON_TEMPLATE to your JSON endpoint that returns proxyVideo.</small></div><iframe src="${escapeHtml(trailerEmbedSrc)}" title="${escapeHtml(title)} trailer fallback" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin"></iframe>`
-          : `<div class="dsNoTrailer"><h2>No source configured</h2><p>No placeholder provider is configured and TMDB did not return a trailer.</p></div>`;
+    : providerStream && providerStream.type === "mp4"
+      ? `<div class="dsDirectVideoShell" data-provider-kind="${escapeHtml(placeholderSource.providerKind || "placeholder")}">
+          <video id="movie-placeholder-video" class="dsDirectMovieVideo" controls autoplay playsinline preload="metadata" src="${escapeHtml(providerStream.url)}"></video>
+          <div class="dsDirectVideoMeta">
+            <span>${escapeHtml((providerStream.quality || "ORG").toUpperCase())} MP4</span>
+            <strong>${escapeHtml(placeholderSource.title || title)}</strong>
+            <small>Temporary trailer/preview provider until your licensed movie provider is connected.</small>
+          </div>
+        </div>`
+      : providerStream && providerStream.type === "hls"
+        ? `<div class="dsMovieEmbedNotice"><span>HLS source ignored</span><strong>MP4 required for Movie button</strong><small>The provider returned HLS, but this build is set to use MP4/ORG first. Set MOVIE_PLACEHOLDER_ALLOW_HLS_FALLBACK=true only if you add HLS playback support.</small></div>`
+        : movieEmbedUrl
+          ? `${proxyVideoStatusMessage}<iframe class="dsMovieEmbedFrame" src="${escapeHtml(movieEmbedUrl)}" title="${escapeHtml(title)} movie embed" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write; web-share" allowfullscreen sandbox="allow-scripts allow-same-origin"></iframe>`
+          : trailer
+            ? `${proxyVideoStatusMessage}${providerStatusMessage}<div class="dsMovieEmbedNotice"><span>proxyVideo unavailable</span><strong>Using trailer fallback</strong><small>Set MOVIE_PROXY_VIDEO_PROVIDER_ENABLED=true and MOVIE_PROXY_VIDEO_PROVIDER_BASE_URL to embed proxyVideo first.</small></div><iframe src="${escapeHtml(trailerEmbedSrc)}" title="${escapeHtml(title)} trailer fallback" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin"></iframe>`
+            : `<div class="dsNoTrailer"><h2>No source configured</h2><p>No proxyVideo source, placeholder source, embed provider, or trailer was available.</p></div>`;
 
   const body = `<main class="dsWatchPage ${isMovieMode ? "dsWatchFullscreenMovie dsWatchEmbedMode" : "dsWatchTrailerMode"}">
     <section class="dsWatchHero">
@@ -20219,9 +20213,9 @@ async function watchPage(req, res, type) {
             <div>
               <span class="dsEyebrow">${isMovieMode ? watchModeLabel : "Trailer mode"}</span>
               <h1>${escapeHtml(title)}</h1>
-              <p>${isMovieMode ? (providerStream ? (activeProviderSource.providerKind === "proxy_video_json" ? "Movie button is embedding the proxyVideo URL returned by your JSON provider." : "Movie button is using the temporary ORG MP4 trailer/preview provider.") : "Movie mode tries proxyVideo JSON first, then placeholder provider, then trailer fallback.") : "Official trailer / preview playback."}</p>
+              <p>${isMovieMode ? (proxyVideoUrl ? "Movie button is embedding the proxyVideo URL returned by your movie API." : providerStream ? "Movie button is using the temporary ORG MP4 trailer/preview provider until licensed movie access is connected." : "Movie mode tries proxyVideo first, then falls back to placeholder/embed/trailer if needed.") : "Official trailer / preview playback."}</p>
             </div>
-            ${isMovieMode ? `<span class="dsPlaceholderBadge">${providerStream ? `${escapeHtml((providerStream.quality || "PROXY").toUpperCase())} MP4` : movieEmbedUrl ? "Embed" : "Trailer fallback"}</span>` : `<span class="dsPlaceholderBadge trailer">Trailer</span>`}
+            ${isMovieMode ? `<span class="dsPlaceholderBadge">${proxyVideoUrl ? "proxyVideo" : providerStream ? "ORG MP4" : movieEmbedUrl ? "Embed" : "Trailer fallback"}</span>` : `<span class="dsPlaceholderBadge trailer">Trailer</span>`}
           </div>
 
           <div class="dsWatchFrame dsWatchEmbedFrame">
@@ -20235,7 +20229,7 @@ async function watchPage(req, res, type) {
           <div class="dsWatchActions">
             <button class="dsSecondaryBtn dsFullscreenBtn" type="button" data-fullscreen-watch>⛶ Fullscreen</button>
             ${trailer && !isMovieMode ? `<a class="dsSecondaryBtn" href="${escapeHtml(youtubeUrl)}" target="_blank" rel="noopener">Open on YouTube</a>` : ""}
-            ${isMovieMode && providerStream ? `<a class="dsSecondaryBtn" href="${escapeHtml(providerStream.url)}" target="_blank" rel="noopener">Open Video URL</a>` : isMovieMode && movieEmbedUrl ? `<a class="dsSecondaryBtn" href="${escapeHtml(movieEmbedUrl)}" target="_blank" rel="noopener">Open embed</a>` : ""}
+            ${isMovieMode && proxyVideoUrl ? `<a class="dsSecondaryBtn" href="${escapeHtml(proxyVideoUrl)}" target="_blank" rel="noopener">Open proxyVideo</a>` : isMovieMode && providerStream ? `<a class="dsSecondaryBtn" href="${escapeHtml(providerStream.url)}" target="_blank" rel="noopener">Open MP4</a>` : isMovieMode && movieEmbedUrl ? `<a class="dsSecondaryBtn" href="${escapeHtml(movieEmbedUrl)}" target="_blank" rel="noopener">Open embed</a>` : ""}
             ${!isMovieMode ? `<button class="dsSecondaryBtn" data-watch-id="${escapeHtml(id)}" data-watch-type="${escapeHtml(type)}" data-watch-title="${escapeHtml(title)}" data-watch-poster="${escapeHtml(details.poster_path || "")}" data-watch-backdrop="${escapeHtml(details.backdrop_path || "")}" data-watch-rating="${escapeHtml(formatRating(details.vote_average))}" data-watch-year="${escapeHtml(getYear(detailsDate))}" type="button">＋ My List</button>
             <button class="dsSecondaryBtn dsHeartBtn" data-like-id="${escapeHtml(id)}" data-like-type="${escapeHtml(type)}" data-like-title="${escapeHtml(title)}" data-like-poster="${escapeHtml(details.poster_path || "")}" data-like-backdrop="${escapeHtml(details.backdrop_path || "")}" data-like-rating="${escapeHtml(formatRating(details.vote_average))}" data-like-year="${escapeHtml(getYear(detailsDate))}" type="button">♡ Liked</button>` : ""}
           </div>
@@ -21826,9 +21820,8 @@ app.get("/genres", genresPage);
 app.get("/browse-by-languages", genresPage);
 app.get("/genre/movie/:id", (req, res) => genrePage(req, res, "movie"));
 app.get("/genre/tv/:id", (req, res) => genrePage(req, res, "tv"));
-app.get("/api/proxy-video/:type/:id", async (req, res) => {
-  const type = req.params.type === "tv" ? "tv" : "movie";
-  const result = await fetchProxyVideoSource({ req, type, id: req.params.id });
+app.get("/api/proxy-video/movie/:id", async (req, res) => {
+  const result = await fetchProxyVideoSource({ type: "movie", id: req.params.id });
   res.json(result);
 });
 
