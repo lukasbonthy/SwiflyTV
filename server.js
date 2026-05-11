@@ -18523,6 +18523,17 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
       }
     }
 
+
+    /* ============================================================
+       v76 VIDEO-FIRST ROOM SYNC
+       Tries proxyVideo as a native video even when URL has no extension.
+       This allows true currentTime drift correction when the proxy URL is a stream.
+       ============================================================ */
+    .dsRoomMovieFrame#roomMovieVideo {
+      background: #000;
+      object-fit: contain;
+    }
+
   </style>
 
     <script>
@@ -21726,7 +21737,9 @@ function watchroomPage(req, res) {
         var roomMovieState = { status: "idle", movieId: "", proxyVideo: "", playAt: 0, selectedBy: "", message: "" };
         var roomMovieTimer = null;
         var roomMovieCorrectionTimer = null;
-        var ROOM_MOVIE_DRIFT_LIMIT = 5;
+        var ROOM_MOVIE_DRIFT_LIMIT = 1.5;
+        var roomMovieRemoteApplying = false;
+        var roomMovieVideoControlBound = false;
         var firedNoteIds = {};
 
         function esc(value) {
@@ -21906,7 +21919,10 @@ function watchroomPage(req, res) {
           if (!video || video.hidden || !roomMovieState.proxyVideo) return;
 
           var target = targetRoomMovieSeconds();
-          var drift = Math.abs(Number(video.currentTime || 0) - target);
+          var current = Number(video.currentTime || 0);
+          var drift = Math.abs(current - target);
+
+          roomMovieRemoteApplying = true;
 
           if (force || drift > ROOM_MOVIE_DRIFT_LIMIT) {
             try { video.currentTime = target; } catch {}
@@ -21915,7 +21931,16 @@ function watchroomPage(req, res) {
           if (roomMovieState.sync && roomMovieState.sync.playing) {
             video.play().catch(function(){});
           } else {
-            video.pause();
+            try { video.pause(); } catch {}
+          }
+
+          setTimeout(function(){ roomMovieRemoteApplying = false; }, 350);
+
+          var status = document.getElementById("roomMovieStatus");
+          if (status && !video.hidden) {
+            status.textContent = drift > ROOM_MOVIE_DRIFT_LIMIT
+              ? "Auto-corrected drift. Room timer: " + formatTime(target)
+              : "Native video sync active. Room timer: " + formatTime(target);
           }
         }
 
@@ -21930,8 +21955,48 @@ function watchroomPage(req, res) {
         function showIframeSyncHint() {
           var status = document.getElementById("roomMovieStatus");
           if (!status || !roomMovieState.proxyVideo) return;
-          if (isLikelyDirectVideoUrl(roomMovieState.proxyVideo)) return;
-          status.textContent = "Iframe player loaded. Room timer is " + formatTime(targetRoomMovieSeconds()) + ". Cross-site iframes cannot be force-seeked, so use the timer if it drifts.";
+          status.textContent = "Iframe fallback loaded. Browser would not accept this URL as a native video, so use the room target timer if it drifts.";
+        }
+
+        function fallbackToRoomMovieIframe(reason) {
+          var frame = document.getElementById("roomMovieFrame");
+          var video = document.getElementById("roomMovieVideo");
+          var overlay = document.getElementById("roomMovieIframeSyncOverlay");
+          if (!frame || !roomMovieState.proxyVideo) return;
+
+          if (video) {
+            try { video.pause(); } catch {}
+            video.hidden = true;
+            video.removeAttribute("src");
+            try { video.load(); } catch {}
+          }
+
+          if (frame.src !== roomMovieState.proxyVideo) frame.src = roomMovieState.proxyVideo;
+          frame.hidden = false;
+          if (overlay) overlay.hidden = false;
+          showIframeSyncHint();
+          if (reason) console.warn("SwiflyTV iframe fallback:", reason);
+        }
+
+        function bindRoomMovieVideoHostControls() {
+          var video = document.getElementById("roomMovieVideo");
+          if (!video || roomMovieVideoControlBound) return;
+          roomMovieVideoControlBound = true;
+
+          function sendFromNative(action, extra) {
+            if (!isRoomHost || roomMovieRemoteApplying) return;
+            if (!roomMovieState.movieId) return;
+            socket.emit("watchroom:movie-control", Object.assign({
+              roomId: roomId,
+              action: action,
+              clientTime: Number(video.currentTime || 0),
+              name: getSessionName()
+            }, extra || {}));
+          }
+
+          video.addEventListener("play", function(){ sendFromNative("play"); });
+          video.addEventListener("pause", function(){ sendFromNative("pause"); });
+          video.addEventListener("seeked", function(){ sendFromNative("set", { time: Number(video.currentTime || 0) }); });
         }
 
         function loadRoomMovieFrame() {
@@ -21939,31 +22004,53 @@ function watchroomPage(req, res) {
           var video = document.getElementById("roomMovieVideo");
           var empty = document.getElementById("roomMovieEmpty");
           var stage = document.getElementById("roomMovieStage");
+          var overlay = document.getElementById("roomMovieIframeSyncOverlay");
           if (!roomMovieState.proxyVideo) return;
 
-          var overlay = document.getElementById("roomMovieIframeSyncOverlay");
-          if (isLikelyDirectVideoUrl(roomMovieState.proxyVideo) && video) {
+          if (empty) empty.hidden = true;
+          if (stage) stage.classList.add("isReady");
+
+          // v76: Always try the proxyVideo URL as a native <video> first.
+          // Many proxyVideo URLs are real MP4/video streams with no .mp4 extension,
+          // so extension detection alone caused SwiflyTV to iframe them and lose sync control.
+          if (video) {
+            bindRoomMovieVideoHostControls();
+
+            if (frame) {
+              frame.hidden = true;
+              frame.removeAttribute("src");
+            }
+            if (overlay) overlay.hidden = true;
+
+            video.hidden = false;
+            video.onerror = function() {
+              fallbackToRoomMovieIframe("native video error");
+            };
+            video.onloadedmetadata = function() {
+              setRoomMovieStatus("Native video loaded. SwiflyTV will keep this within about 1.5 seconds of the room timer.");
+              applyNativeVideoSync(true);
+            };
+            video.oncanplay = function() {
+              applyNativeVideoSync(true);
+            };
+
             if (video.src !== roomMovieState.proxyVideo) {
               video.src = roomMovieState.proxyVideo;
               try { video.load(); } catch {}
             }
-            if (frame) frame.hidden = true;
-            if (overlay) overlay.hidden = true;
-            video.hidden = false;
+
+            setRoomMovieStatus("Trying native video sync first...");
+            setTimeout(function() {
+              if (!video.hidden && video.readyState === 0) {
+                fallbackToRoomMovieIframe("native video never became ready");
+              }
+            }, 9000);
+
             applyNativeVideoSync(true);
-            setRoomMovieStatus("Direct video loaded. SwiflyTV will auto-correct if anyone drifts more than 5 seconds.");
-          } else if (frame) {
-            if (frame.src !== roomMovieState.proxyVideo) {
-              frame.src = roomMovieState.proxyVideo;
-            }
-            if (video) video.hidden = true;
-            frame.hidden = false;
-            if (overlay) overlay.hidden = false;
-            showIframeSyncHint();
+          } else {
+            fallbackToRoomMovieIframe("native video element missing");
           }
 
-          if (empty) empty.hidden = true;
-          if (stage) stage.classList.add("isReady");
           startRoomMovieCorrectionLoop();
         }
 
@@ -22762,10 +22849,12 @@ function watchroomPage(req, res) {
         function sendRoomMovieSync(action, extra) {
           if (!isRoomHost && action !== "sync-me") return toast("Only the host can control the room timer");
           if (!roomMovieState.movieId) return toast("No room movie selected");
+          var video = document.getElementById("roomMovieVideo");
+          var hostTime = video && !video.hidden ? Number(video.currentTime || 0) : targetRoomMovieSeconds();
           socket.emit("watchroom:movie-control", Object.assign({
             roomId: roomId,
             action: action,
-            clientTime: targetRoomMovieSeconds(),
+            clientTime: hostTime,
             name: getSessionName()
           }, extra || {}));
         }
@@ -23311,6 +23400,41 @@ function watchroomPage(req, res) {
             if (iframeTarget) iframeTarget.textContent = time;
           }
 
+          function applyPollingVideoSync(force) {
+            var video = byId("roomMovieVideo");
+            if (!video || video.hidden || !movie.proxyVideo) return;
+            var target = targetTime();
+            var drift = Math.abs(Number(video.currentTime || 0) - target);
+            if (force || drift > 1.5) {
+              try { video.currentTime = target; } catch {}
+            }
+            if (movie.sync && movie.sync.playing) {
+              video.play().catch(function(){});
+            } else {
+              try { video.pause(); } catch {}
+            }
+            setMovieStatus("Native video sync active. Room timer: " + formatTime(target));
+          }
+
+          function fallbackPollingIframe(reason) {
+            var frame = byId("roomMovieFrame");
+            var video = byId("roomMovieVideo");
+            var overlay = byId("roomMovieIframeSyncOverlay");
+            if (video) {
+              try { video.pause(); } catch {}
+              video.hidden = true;
+              video.removeAttribute("src");
+              try { video.load(); } catch {}
+            }
+            if (frame && movie.proxyVideo) {
+              if (frame.src !== movie.proxyVideo) frame.src = movie.proxyVideo;
+              frame.hidden = false;
+            }
+            if (overlay) overlay.hidden = false;
+            setMovieStatus("Iframe fallback loaded. Use the room target timer if it drifts.");
+            if (reason) console.warn("SwiflyTV polling iframe fallback:", reason);
+          }
+
           function renderMovie(next) {
             if (!next) return;
             movie = Object.assign({ status: "idle", movieId: "", proxyVideo: "", playAt: 0, sync: { playing: false, offset: 0, startedAt: 0 } }, next);
@@ -23373,11 +23497,29 @@ function watchroomPage(req, res) {
               }
 
               if (countdown) countdown.textContent = "Play now";
-              if (frame && movie.proxyVideo) {
-                if (frame.src !== movie.proxyVideo) frame.src = movie.proxyVideo;
-                frame.hidden = false;
-                var overlay = byId("roomMovieIframeSyncOverlay");
-                if (overlay) overlay.hidden = false;
+              var video = byId("roomMovieVideo");
+              var overlay = byId("roomMovieIframeSyncOverlay");
+              if (movie.proxyVideo && video) {
+                if (frame) {
+                  frame.hidden = true;
+                  frame.removeAttribute("src");
+                }
+                if (overlay) overlay.hidden = true;
+                video.hidden = false;
+                video.onerror = function(){ fallbackPollingIframe("native video error"); };
+                video.onloadedmetadata = function(){ applyPollingVideoSync(true); };
+                video.oncanplay = function(){ applyPollingVideoSync(true); };
+                if (video.src !== movie.proxyVideo) {
+                  video.src = movie.proxyVideo;
+                  try { video.load(); } catch {}
+                }
+                setTimeout(function(){
+                  if (!video.hidden && video.readyState === 0) fallbackPollingIframe("native video never became ready");
+                }, 9000);
+                applyPollingVideoSync(true);
+                setInterval(function(){ updateTimerUi(); applyPollingVideoSync(false); }, 1000);
+              } else if (frame && movie.proxyVideo) {
+                fallbackPollingIframe("native video element missing");
               }
               if (empty) empty.hidden = true;
               if (stage) stage.classList.add("isReady");
@@ -23416,9 +23558,11 @@ function watchroomPage(req, res) {
 
           function postMovieControl(action, extra) {
             if (!isHost) return toast("Only host can control room movie");
+            var video = byId("roomMovieVideo");
+            var hostTime = video && !video.hidden ? Number(video.currentTime || 0) : targetTime();
             return api("/api/date-room/" + encodeURIComponent(roomId) + "/movie-control", {
               method: "POST",
-              body: Object.assign({ clientId: clientId, action: action }, extra || {})
+              body: Object.assign({ clientId: clientId, action: action, clientTime: hostTime }, extra || {})
             }).then(function(data) {
               if (data.room && data.room.syncedMovie) renderMovie(data.room.syncedMovie);
             }).catch(function(error) {
@@ -23479,8 +23623,17 @@ function watchroomPage(req, res) {
           });
           bindClick("roomMovieSyncMeBtn", function(){
             updateTimerUi();
+            applyPollingVideoSync(true);
             toast("Synced to room timer");
           });
+
+          var pollingVideo = byId("roomMovieVideo");
+          if (pollingVideo && !pollingVideo.__swiflyPollingHostVideoBound) {
+            pollingVideo.__swiflyPollingHostVideoBound = true;
+            pollingVideo.addEventListener("play", function(){ if (isHost) postMovieControl("play", { clientTime: Number(pollingVideo.currentTime || 0) }); });
+            pollingVideo.addEventListener("pause", function(){ if (isHost) postMovieControl("pause", { clientTime: Number(pollingVideo.currentTime || 0) }); });
+            pollingVideo.addEventListener("seeked", function(){ if (isHost) postMovieControl("set", { time: Number(pollingVideo.currentTime || 0), clientTime: Number(pollingVideo.currentTime || 0) }); });
+          }
 
           join().then(function() {
             poll();
@@ -24365,18 +24518,24 @@ app.post("/api/date-room/:roomId/movie-control", (req, res) => {
   let playing = Boolean(room.syncedMovie.sync.playing);
   let message = "";
 
+  const clientTime = Number(req.body?.clientTime);
+  const hasClientTime = Number.isFinite(clientTime) && clientTime >= 0;
+
   if (action === "play") {
     playing = true;
-    offset = current;
+    offset = hasClientTime ? clientTime : current;
     message = "Host pressed play. Room timer is running.";
   } else if (action === "pause") {
     playing = false;
-    offset = current;
+    offset = hasClientTime ? clientTime : current;
     message = "Host paused the room timer.";
   } else if (action === "seek") {
     const delta = Math.max(-600, Math.min(600, Number(req.body?.delta || 0)));
     offset = Math.max(0, current + delta);
     message = `Host moved the room timer ${delta >= 0 ? "+" : ""}${delta}s.`;
+  } else if (action === "set") {
+    offset = Math.max(0, Number(req.body?.time || req.body?.clientTime || 0));
+    message = `Host set the room timer to ${Math.floor(offset)}s.`;
   } else if (action === "restart") {
     room.syncedMovie.playAt = Date.now() + 7000;
     room.syncedMovie.sync = createMovieSyncState({ playing: true, offset: 0, startedAt: room.syncedMovie.playAt });
@@ -24686,13 +24845,16 @@ io.on("connection", (socket) => {
     let playing = Boolean(room.syncedMovie.sync.playing);
     let message = "";
 
+    const clientTime = Number(payload.clientTime);
+    const hasClientTime = Number.isFinite(clientTime) && clientTime >= 0;
+
     if (action === "play") {
       playing = true;
-      offset = current;
+      offset = hasClientTime ? clientTime : current;
       message = "Host pressed play. Room timer is running.";
     } else if (action === "pause") {
       playing = false;
-      offset = current;
+      offset = hasClientTime ? clientTime : current;
       message = "Host paused the room timer.";
     } else if (action === "seek") {
       const delta = Math.max(-600, Math.min(600, Number(payload.delta || 0)));
