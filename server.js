@@ -18463,6 +18463,28 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
     }
 
   </style>
+
+    <script>
+      window.syncWatchButtons = window.syncWatchButtons || function syncWatchButtons() {
+        try {
+          document.querySelectorAll("[data-watch-mode]").forEach(function(button) {
+            if (button.__swiflyWatchModeBound) return;
+            button.__swiflyWatchModeBound = true;
+            button.addEventListener("click", function() {
+              var mode = button.getAttribute("data-watch-mode") || "";
+              var id = button.getAttribute("data-id") || button.getAttribute("data-tmdb-id") || "";
+              var type = button.getAttribute("data-type") || "movie";
+              if (id && mode) {
+                location.href = "/watch/" + type + "/" + encodeURIComponent(id) + "?mode=" + encodeURIComponent(mode);
+              }
+            });
+          });
+        } catch (error) {
+          console.warn("syncWatchButtons fallback failed", error);
+        }
+      };
+    </script>
+
 </head>
 <body>
 
@@ -18821,7 +18843,7 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
     applyTheme(localStorage.getItem("movieverse.theme") || "default");
     document.body.classList.toggle("reduceMotion", localStorage.getItem("movieverse.reduceMotion") === "on");
 
-    syncWatchButtons();
+    if (typeof syncWatchButtons === "function") syncWatchButtons();
     renderWatchlistPage();
   </script>
 
@@ -21666,12 +21688,16 @@ function watchroomPage(req, res) {
           return Math.max(0, Math.floor((Date.now() - roomCreatedAt) / 1000));
         }
 
-        function normalizeUrl(url) {
-          var value = String(url || "").trim();
+        function normalizeUrl(value) {
+          value = String(value || "").trim();
           if (!value) return "";
-          if (value[0] === "/") return value;
-          if (/^https?:\\/\\//i.test(value)) return value;
-          if (/^[a-z0-9.-]+\\.[a-z]{2,}(\\/.*)?$/i.test(value)) return "https://" + value;
+          if (value.charAt(0) === "/") return value;
+
+          var absoluteUrl = new RegExp("^https?://", "i");
+          var plainDomain = new RegExp("^[a-z0-9.-]+[.][a-z]{2,}(/.*)?$", "i");
+
+          if (absoluteUrl.test(value)) return value;
+          if (plainDomain.test(value)) return "https://" + value;
           return "";
         }
 
@@ -21737,8 +21763,14 @@ function watchroomPage(req, res) {
         function parseRoomMovieId(value) {
           var raw = String(value || "").trim();
           if (!raw) return "";
-          var match = raw.match(/(?:movie\/|tmdb=|id=)(\d+)/i) || raw.match(/^(\d{2,12})$/);
-          return match ? match[1] : "";
+
+          var urlMatch = raw.match(new RegExp("(?:movie/|tmdb=|id=)([0-9]+)", "i"));
+          if (urlMatch) return urlMatch[1];
+
+          var numericMatch = raw.match(new RegExp("^([0-9]{2,14})$"));
+          if (numericMatch) return numericMatch[1];
+
+          return "";
         }
 
         function setRoomMovieStatus(text) {
@@ -22739,15 +22771,25 @@ function watchroomPage(req, res) {
         function parseMovieId(value) {
           var raw = String(value || "").trim();
           if (!raw) return "";
-          var match = raw.match(/(?:movie\/|tmdb=|id=)(\d+)/i) || raw.match(/^(\d{2,14})$/);
-          return match ? match[1] : "";
+
+          var urlMatch = raw.match(new RegExp("(?:movie/|tmdb=|id=)([0-9]+)", "i"));
+          if (urlMatch) return urlMatch[1];
+
+          var numericMatch = raw.match(new RegExp("^([0-9]{2,14})$"));
+          if (numericMatch) return numericMatch[1];
+
+          return "";
         }
         function normalizeUrl(value) {
           value = String(value || "").trim();
           if (!value) return "";
           if (value.charAt(0) === "/") return value;
-          if (/^https?:\/\//i.test(value)) return value;
-          if (/^[a-z0-9.-]+\.[a-z]{2,}(\/.*)?$/i.test(value)) return "https://" + value;
+
+          var absoluteUrl = new RegExp("^https?://", "i");
+          var plainDomain = new RegExp("^[a-z0-9.-]+[.][a-z]{2,}(/.*)?$", "i");
+
+          if (absoluteUrl.test(value)) return value;
+          if (plainDomain.test(value)) return "https://" + value;
           return "";
         }
 
@@ -23080,8 +23122,14 @@ function watchroomPage(req, res) {
         function parseMovieId(value) {
           var raw = String(value || "").trim();
           if (!raw) return "";
-          var match = raw.match(/(?:movie\/|tmdb=|id=)(\d+)/i) || raw.match(/^(\d{2,14})$/);
-          return match ? match[1] : "";
+
+          var urlMatch = raw.match(new RegExp("(?:movie/|tmdb=|id=)([0-9]+)", "i"));
+          if (urlMatch) return urlMatch[1];
+
+          var numericMatch = raw.match(new RegExp("^([0-9]{2,14})$"));
+          if (numericMatch) return numericMatch[1];
+
+          return "";
         }
 
         function bindTabs() {
