@@ -10,6 +10,7 @@ const fs = require("fs");
 const path = require("path");
 const dns = require("dns").promises;
 const net = require("net");
+const crypto = require("crypto");
 const { Server } = require("socket.io");
 
 const app = express();
@@ -32,6 +33,7 @@ const SWIFLYTV_SPOTLIGHT_TMDB_ID = process.env.SWIFLYTV_SPOTLIGHT_TMDB_ID || pro
 const memoryCache = new Map();
 const watchRooms = new Map();
 const remoteBrowserSessions = new Map();
+const hlsProxySources = new Map();
 let remoteBrowserEngine = null;
 let remoteBrowserLaunchError = "";
 
@@ -52,11 +54,137 @@ app.use(
 app.use(
   rateLimit({
     windowMs: 60 * 1000,
-    limit: 240,
+    limit: Number(process.env.RATE_LIMIT_PER_MINUTE || 600),
     standardHeaders: true,
     legacyHeaders: false,
+    skip: (req) => String(req.path || "").startsWith("/api/hls-proxy/"),
   })
 );
+
+
+function hlsProxyEnabled() {
+  return process.env.HLS_PROXY_ENABLED !== "false";
+}
+
+function hlsProxyId() {
+  return crypto.randomBytes(12).toString("hex");
+}
+
+function hlsProxyBase64UrlEncode(value = "") {
+  return Buffer.from(String(value || ""), "utf8").toString("base64url");
+}
+
+function hlsProxyBase64UrlDecode(value = "") {
+  return Buffer.from(String(value || ""), "base64url").toString("utf8");
+}
+
+function sanitizeHlsProxyHeaders(headers = {}) {
+  const clean = {};
+  const allowed = new Set(["origin", "referer", "user-agent", "accept", "accept-language"]);
+  for (const [key, value] of Object.entries(headers || {})) {
+    const lower = String(key || "").toLowerCase();
+    if (!allowed.has(lower)) continue;
+    if (typeof value !== "string" || !value.trim()) continue;
+    clean[lower] = value.trim();
+  }
+  if (!clean["user-agent"]) {
+    clean["user-agent"] = process.env.HLS_PROXY_USER_AGENT || "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36";
+  }
+  if (!clean.accept) clean.accept = "*/*";
+  return clean;
+}
+
+function registerHlsProxySource(sourceUrl, headers = {}, meta = {}) {
+  if (!hlsProxyEnabled()) {
+    return { enabled: false, url: "", id: "" };
+  }
+
+  let parsed;
+  try {
+    parsed = new URL(String(sourceUrl || ""));
+  } catch {
+    return { enabled: false, url: "", id: "" };
+  }
+
+  if (!["http:", "https:"].includes(parsed.protocol)) {
+    return { enabled: false, url: "", id: "" };
+  }
+
+  const id = hlsProxyId();
+  const ttlMs = Math.max(5 * 60 * 1000, Number(process.env.HLS_PROXY_TTL_MS || 1000 * 60 * 60 * 2));
+  hlsProxySources.set(id, {
+    id,
+    sourceUrl: parsed.toString(),
+    headers: sanitizeHlsProxyHeaders(headers),
+    meta: meta || {},
+    createdAt: Date.now(),
+    expiresAt: Date.now() + ttlMs,
+  });
+
+  return {
+    enabled: true,
+    id,
+    url: `/api/hls-proxy/${id}/master.m3u8`,
+  };
+}
+
+function getHlsProxyEntry(id) {
+  const entry = hlsProxySources.get(String(id || ""));
+  if (!entry) return null;
+  if (Date.now() > Number(entry.expiresAt || 0)) {
+    hlsProxySources.delete(entry.id);
+    return null;
+  }
+  return entry;
+}
+
+function hlsProxyAssetUrl(id, absoluteUrl) {
+  return `/api/hls-proxy/${encodeURIComponent(id)}/asset?u=${encodeURIComponent(hlsProxyBase64UrlEncode(absoluteUrl))}`;
+}
+
+function rewriteHlsPlaylist(text = "", baseUrl = "", id = "") {
+  const lines = String(text || "").split(/\r?\n/);
+
+  return lines.map((line) => {
+    const trimmed = line.trim();
+
+    if (!trimmed) return line;
+
+    if (trimmed.startsWith("#")) {
+      // Rewrite URI="..." inside EXT-X-KEY, EXT-X-MAP, I-FRAME-STREAM-INF, etc.
+      return line.replace(/URI="([^"]+)"/g, (match, uri) => {
+        try {
+          const absolute = new URL(uri, baseUrl).toString();
+          return `URI="${hlsProxyAssetUrl(id, absolute)}"`;
+        } catch {
+          return match;
+        }
+      });
+    }
+
+    try {
+      const absolute = new URL(trimmed, baseUrl).toString();
+      return hlsProxyAssetUrl(id, absolute);
+    } catch {
+      return line;
+    }
+  }).join("\n");
+}
+
+async function fetchHlsProxyUrl(entry, targetUrl) {
+  return fetch(targetUrl, {
+    headers: entry.headers || {},
+    redirect: "follow",
+  });
+}
+
+function isHlsLikeResponse(url = "", contentType = "") {
+  return String(contentType || "").toLowerCase().includes("mpegurl") ||
+    String(contentType || "").toLowerCase().includes("m3u8") ||
+    new RegExp("[.]m3u8([?#]|$)", "i").test(String(url || ""));
+}
+
+
 
 
 function normalizeRoomId(value = "") {
@@ -20831,20 +20959,36 @@ async function fetchProxyVideoSource({ type, id }) {
           continue;
         }
 
+        const isHlsResolverSource = Boolean(resolverM3u8 || streamType === "m3u8" || streamType === "hls");
+        const hlsProxy = isHlsResolverSource
+          ? registerHlsProxySource(parsedProxy.toString(), streamHeaders, {
+              movieId: String(data.movieId || id),
+              sourceUrl: String(data.sourceUrl || ""),
+              providerUrl: url.toString(),
+              streamName,
+              streamQuality,
+            })
+          : { enabled: false, id: "", url: "" };
+
+        const browserPlaybackUrl = hlsProxy.url || parsedProxy.toString();
+
         return {
           status: "ok",
-          providerKind: resolverM3u8 || streamType === "m3u8" || streamType === "hls" ? "movie_resolver_hls" : "proxy_video",
+          providerKind: isHlsResolverSource ? (hlsProxy.url ? "movie_resolver_hls_proxy" : "movie_resolver_hls") : "proxy_video",
           movieId: String(data.movieId || id),
           sourceUrl: String(data.sourceUrl || ""),
-          playbackUrl: parsedProxy.toString(),
-          proxyVideo: parsedProxy.toString(),
+          playbackUrl: browserPlaybackUrl,
+          proxyVideo: browserPlaybackUrl,
+          originalPlaybackUrl: parsedProxy.toString(),
+          hlsProxyUrl: hlsProxy.url || "",
+          hlsProxyId: hlsProxy.id || "",
           m3u8: resolverM3u8 || (streamType === "m3u8" || streamType === "hls" ? streamUrl : ""),
           streamType: streamType === "hls" ? "m3u8" : streamType,
-          streamQuality: String(data?.stream?.quality || "").slice(0, 40),
-          streamName: String(data?.stream?.name || "").slice(0, 90),
+          streamQuality,
+          streamName,
           streamHeaders,
           streamMode,
-          isLiveM3u8: Boolean(resolverM3u8 || streamType === "m3u8" || streamType === "hls"),
+          isLiveM3u8: isHlsResolverSource,
           apiProxyUrl: String(data?.apiProxyUrl || data?.stream?.apiProxyUrl || ""),
           providerUrl: url.toString(),
           attempts: errors,
@@ -22796,7 +22940,7 @@ function watchroomPage(req, res) {
               attachRoomMovieVideoSource(video, (roomMovieState.playbackUrl || roomMovieState.m3u8 || roomMovieState.proxyVideo));
             }
 
-            setRoomMovieStatus(isRoomMovieHlsUrl((roomMovieState.playbackUrl || roomMovieState.m3u8 || roomMovieState.proxyVideo)) ? "Loading m3u8/HLS in the custom player..." : "Trying native video sync first...");
+            setRoomMovieStatus(isRoomMovieHlsUrl((roomMovieState.playbackUrl || roomMovieState.m3u8 || roomMovieState.proxyVideo)) ? (roomMovieState.hlsProxyUrl ? "Loading proxied live m3u8 in the custom player..." : "Loading m3u8/HLS in the custom player...") : "Trying native video sync first...");
             setTimeout(function() {
               if (!video.hidden && video.readyState === 0) {
                 fallbackToRoomMovieIframe("native video never became ready after 30s");
@@ -24700,14 +24844,20 @@ app.get("/genre/movie/:id", (req, res) => genrePage(req, res, "movie"));
 app.get("/genre/tv/:id", (req, res) => genrePage(req, res, "tv"));
 
 app.get("/m3u8-player", (req, res) => {
-  const src = String(req.query.url || req.query.src || "").trim();
+  const rawSrc = String(req.query.url || req.query.src || "").trim();
+  const srcHeaders = {
+    referer: String(req.query.referer || req.query.ref || ""),
+    origin: String(req.query.origin || ""),
+  };
+  const hlsProxy = rawSrc ? registerHlsProxySource(rawSrc, srcHeaders, { standalone: true }) : { url: "" };
+  const src = hlsProxy.url || rawSrc;
   const safeSrc = escapeHtml(src);
   const body = `<main class="dsWatchPage dsM3u8Standalone">
     <section class="dsWatchHero">
       <div>
         <span class="dsEyebrow">HLS / M3U8 Player</span>
         <h1>SwiflyTV M3U8 Player</h1>
-        <p>Paste a licensed live m3u8 URL as <code>?url=</code>. The player treats it as live HLS and jumps toward the live edge.</p>
+        <p>Paste a licensed live m3u8 URL as <code>?url=</code>. SwiflyTV can also proxy/rewrite the playlist through this server for browser playback.</p>
       </div>
     </section>
 
@@ -24752,6 +24902,73 @@ app.get("/m3u8-player", (req, res) => {
 });
 
 
+
+app.get("/api/hls-proxy/:id/master.m3u8", async (req, res) => {
+  const entry = getHlsProxyEntry(req.params.id);
+  if (!entry) {
+    return res.status(404).type("text/plain").send("HLS proxy source expired or missing.");
+  }
+
+  try {
+    const upstream = await fetchHlsProxyUrl(entry, entry.sourceUrl);
+    if (!upstream.ok) {
+      return res.status(upstream.status).type("text/plain").send(`HLS upstream returned HTTP ${upstream.status}`);
+    }
+
+    const playlist = await upstream.text();
+    const rewritten = rewriteHlsPlaylist(playlist, entry.sourceUrl, entry.id);
+
+    res.set("Cache-Control", "no-store");
+    res.set("Access-Control-Allow-Origin", "*");
+    res.type("application/vnd.apple.mpegurl").send(rewritten);
+  } catch (error) {
+    res.status(502).type("text/plain").send(`HLS proxy failed: ${error.message || "unknown error"}`);
+  }
+});
+
+app.get("/api/hls-proxy/:id/asset", async (req, res) => {
+  const entry = getHlsProxyEntry(req.params.id);
+  if (!entry) {
+    return res.status(404).type("text/plain").send("HLS proxy source expired or missing.");
+  }
+
+  let targetUrl = "";
+  try {
+    targetUrl = hlsProxyBase64UrlDecode(String(req.query.u || ""));
+    const parsed = new URL(targetUrl);
+    if (!["http:", "https:"].includes(parsed.protocol)) {
+      return res.status(400).type("text/plain").send("Invalid HLS asset URL.");
+    }
+  } catch {
+    return res.status(400).type("text/plain").send("Invalid HLS asset URL.");
+  }
+
+  try {
+    const upstream = await fetchHlsProxyUrl(entry, targetUrl);
+    if (!upstream.ok) {
+      return res.status(upstream.status).type("text/plain").send(`HLS asset upstream returned HTTP ${upstream.status}`);
+    }
+
+    const contentType = upstream.headers.get("content-type") || "";
+    res.set("Cache-Control", "public, max-age=20");
+    res.set("Access-Control-Allow-Origin", "*");
+
+    if (isHlsLikeResponse(targetUrl, contentType)) {
+      const nested = await upstream.text();
+      const rewritten = rewriteHlsPlaylist(nested, targetUrl, entry.id);
+      return res.type("application/vnd.apple.mpegurl").send(rewritten);
+    }
+
+    const arrayBuffer = await upstream.arrayBuffer();
+    if (contentType) res.type(contentType);
+    else res.type("application/octet-stream");
+    return res.send(Buffer.from(arrayBuffer));
+  } catch (error) {
+    res.status(502).type("text/plain").send(`HLS asset proxy failed: ${error.message || "unknown error"}`);
+  }
+});
+
+
 app.get("/favicon.ico", (req, res) => {
   res.status(204).end();
 });
@@ -24768,11 +24985,35 @@ app.get("/api/proxy-video/movie/:id", async (req, res) => {
   res.json(result);
 });
 
+app.get("/api/hls-source/movie/:id", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const result = await fetchProxyVideoSource({ type: "movie", id: req.params.id });
+  res.json({
+    ok: result.status === "ok",
+    status: result.status,
+    providerKind: result.providerKind || "",
+    movieId: result.movieId || req.params.id,
+    playbackUrl: result.playbackUrl || "",
+    originalPlaybackUrl: result.originalPlaybackUrl || "",
+    hlsProxyUrl: result.hlsProxyUrl || "",
+    hlsProxyId: result.hlsProxyId || "",
+    m3u8: result.m3u8 || "",
+    streamType: result.streamType || "",
+    streamMode: result.streamMode || "",
+    streamQuality: result.streamQuality || "",
+    streamName: result.streamName || "",
+    hlsProxyEnabled: hlsProxyEnabled(),
+    message: result.message || "",
+    attempts: result.attempts || [],
+  });
+});
+
 app.get("/api/proxy-video-debug/movie/:id", async (req, res) => {
   res.set("Cache-Control", "no-store");
   const result = await fetchProxyVideoSource({ type: "movie", id: req.params.id });
   res.json({
     ...result,
+    hlsProxyEnabled: hlsProxyEnabled(),
     env: {
       primary: process.env.MOVIE_PROXY_VIDEO_PROVIDER_BASE_URL || process.env.MOVIE_PROXY_VIDEO_PROVIDER_URL || "http://lschools.com/movie",
       fallbacks: process.env.MOVIE_PROXY_VIDEO_FALLBACK_BASE_URLS || "http://lscools.com/movie,https://lschools.com/movie,https://lscools.com/movie",
@@ -25440,6 +25681,9 @@ async function resolveDateRoomProxyVideoInBackground(roomId, movieId, selectedBy
       streamName: result.streamName || "",
       streamMode: result.streamMode || "",
       isLiveM3u8: Boolean(result.isLiveM3u8),
+      originalPlaybackUrl: result.originalPlaybackUrl || "",
+      hlsProxyUrl: result.hlsProxyUrl || "",
+      hlsProxyId: result.hlsProxyId || "",
       apiProxyUrl: result.apiProxyUrl || "",
       playAt: Date.now() + 7000,
       selectedBy,
@@ -25894,6 +26138,9 @@ io.on("connection", (socket) => {
       streamName: result.streamName || "",
       streamMode: result.streamMode || "",
       isLiveM3u8: Boolean(result.isLiveM3u8),
+      originalPlaybackUrl: result.originalPlaybackUrl || "",
+      hlsProxyUrl: result.hlsProxyUrl || "",
+      hlsProxyId: result.hlsProxyId || "",
       apiProxyUrl: result.apiProxyUrl || "",
         playAt: Date.now() + 7000,
         selectedBy,
