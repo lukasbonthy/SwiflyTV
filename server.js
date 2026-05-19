@@ -19180,1158 +19180,546 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
 
     /* ============================================================
-       v96 PREMIUM REDESIGN
-       Modern, cleaner, more professional streaming-site polish.
+       v96 MODERN UI POLISH
+       Additive visual layer: premium nav, ambient glow, card tilt,
+       rail fades, better buttons, reveal motion, and player polish.
        ============================================================ */
 
     :root {
-      --sw-bg: #05060a;
-      --sw-bg-soft: #0b0d14;
-      --sw-card: rgba(255,255,255,.072);
-      --sw-card-strong: rgba(255,255,255,.105);
-      --sw-border: rgba(255,255,255,.115);
-      --sw-border-strong: rgba(255,255,255,.18);
-      --sw-text: #f8fbff;
-      --sw-muted: rgba(248,251,255,.68);
-      --sw-faint: rgba(248,251,255,.46);
-      --sw-red: #e50914;
-      --sw-red-2: #ff3b4f;
-      --sw-gold: #ffd36a;
-      --sw-blue: #75d6ff;
-      --sw-radius-lg: 30px;
-      --sw-radius-md: 22px;
-      --sw-shadow-lg: 0 32px 110px rgba(0,0,0,.44);
-      --sw-shadow-md: 0 18px 60px rgba(0,0,0,.32);
+      --swifly-red: #e50914;
+      --swifly-red2: #ff3946;
+      --swifly-ink: #05060d;
+      --swifly-glass: rgba(255,255,255,.075);
+      --swifly-glass-strong: rgba(255,255,255,.12);
+      --swifly-line: rgba(255,255,255,.14);
+      --swifly-line-strong: rgba(255,255,255,.24);
+      --swifly-shadow: 0 28px 90px rgba(0,0,0,.38);
+      --swifly-soft-shadow: 0 18px 60px rgba(0,0,0,.28);
     }
 
     html {
-      background: var(--sw-bg);
       scroll-behavior: smooth;
+    }
+
+    ::selection {
+      background: rgba(229,9,20,.72);
+      color: white;
     }
 
     body {
       background:
-        radial-gradient(1200px circle at 12% -8%, rgba(229,9,20,.18), transparent 42%),
-        radial-gradient(900px circle at 88% 0%, rgba(117,214,255,.10), transparent 38%),
-        linear-gradient(180deg, #05060a 0%, #080a10 42%, #05060a 100%) !important;
-      color: var(--sw-text);
-      text-rendering: geometricPrecision;
-    }
-
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      z-index: -2;
-      pointer-events: none;
-      background:
-        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
-      background-size: 54px 54px;
-      mask-image: linear-gradient(180deg, rgba(0,0,0,.75), transparent 72%);
-      opacity: .45;
+        radial-gradient(1200px circle at 18% -12%, rgba(229,9,20,.20), transparent 48%),
+        radial-gradient(900px circle at 84% 2%, rgba(255,255,255,.07), transparent 42%),
+        linear-gradient(180deg, #05060d 0%, #070912 42%, #03040a 100%) !important;
+      overflow-x: hidden;
     }
 
     body::after {
       content: "";
       position: fixed;
       inset: 0;
-      z-index: -1;
+      z-index: -2;
       pointer-events: none;
-      background: radial-gradient(circle at 50% 0%, transparent 0%, rgba(0,0,0,.40) 72%, rgba(0,0,0,.72) 100%);
+      opacity: .42;
+      background-image:
+        linear-gradient(rgba(255,255,255,.026) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px);
+      background-size: 54px 54px;
+      mask-image: radial-gradient(circle at 50% 8%, black, transparent 74%);
     }
 
-    .container,
-    .dsContent,
-    .netflixPageHero,
-    .footerGrid {
-      width: min(1440px, calc(100vw - 42px));
-    }
-
-    .topbar.netflixTopbar {
-      position: sticky;
+    .swiflyScrollProgress {
+      position: fixed;
       top: 0;
-      z-index: 80;
-      min-height: 76px;
-      border-bottom: 1px solid rgba(255,255,255,.08);
+      left: 0;
+      z-index: 9999;
+      width: 0%;
+      height: 3px;
+      background: linear-gradient(90deg, #e50914, #ff6f7a, #ffffff);
+      box-shadow: 0 0 24px rgba(229,9,20,.70);
+      transform-origin: left center;
+      pointer-events: none;
+    }
+
+    .swiflyAmbient {
+      position: fixed;
+      inset: 0;
+      z-index: -3;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .swiflyOrb {
+      position: absolute;
+      display: block;
+      width: 34vw;
+      height: 34vw;
+      min-width: 360px;
+      min-height: 360px;
+      border-radius: 999px;
+      filter: blur(52px);
+      opacity: .18;
+      transform: translate3d(0,0,0);
+      animation: swiflyFloatOrb 16s ease-in-out infinite alternate;
+    }
+
+    .orbOne {
+      left: -10vw;
+      top: 8vh;
+      background: #e50914;
+    }
+
+    .orbTwo {
+      right: -14vw;
+      top: 36vh;
+      background: #7c5cff;
+      animation-duration: 19s;
+      animation-delay: -4s;
+    }
+
+    .orbThree {
+      left: 42vw;
+      bottom: -20vw;
+      background: #ffffff;
+      opacity: .07;
+      animation-duration: 22s;
+      animation-delay: -8s;
+    }
+
+    @keyframes swiflyFloatOrb {
+      0% { transform: translate3d(0,0,0) scale(1); }
+      100% { transform: translate3d(4vw, -3vh, 0) scale(1.14); }
+    }
+
+    .netflixTopbar {
       background:
-        linear-gradient(180deg, rgba(5,6,10,.86), rgba(5,6,10,.56));
-      backdrop-filter: blur(22px) saturate(1.25);
-      -webkit-backdrop-filter: blur(22px) saturate(1.25);
-      box-shadow: 0 16px 60px rgba(0,0,0,.24);
+        linear-gradient(180deg, rgba(5,6,13,.92), rgba(5,6,13,.58) 68%, transparent) !important;
+      transition: background .24s ease, border-color .24s ease, box-shadow .24s ease, backdrop-filter .24s ease;
     }
 
-    .netflixNav {
-      min-height: 76px;
-      align-items: center;
-      gap: 22px;
-    }
-
-    .netflixBrand {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      min-width: max-content;
+    .netflixTopbar.isScrolled {
+      background: rgba(5,6,13,.80) !important;
+      border-bottom: 1px solid rgba(255,255,255,.09);
+      box-shadow: 0 18px 58px rgba(0,0,0,.32);
+      backdrop-filter: blur(18px) saturate(1.18) !important;
+      -webkit-backdrop-filter: blur(18px) saturate(1.18) !important;
     }
 
     .netflixWordmark {
-      font-family: "Space Grotesk", Inter, system-ui, sans-serif;
-      font-size: clamp(22px, 2vw, 32px);
-      font-weight: 950;
-      letter-spacing: -.08em;
-      color: #fff;
-      text-shadow: 0 0 34px rgba(229,9,20,.35);
+      position: relative;
+      text-shadow: 0 0 28px rgba(229,9,20,.24);
+      letter-spacing: -.065em;
     }
 
-    .netflixWordmark::first-letter {
-      color: var(--sw-red-2);
-    }
-
-    .netflixLinks {
-      gap: 4px;
-    }
-
-    .netflixLinks a,
-    .mobileNav a {
+    .netflixWordmark::after {
+      content: "";
+      position: absolute;
+      left: 4%;
+      right: 4%;
+      bottom: -8px;
+      height: 2px;
       border-radius: 999px;
-      color: rgba(248,251,255,.68);
-      font-weight: 820;
-      letter-spacing: -.01em;
-      transition: color .18s ease, background .18s ease, transform .18s ease, border-color .18s ease;
+      background: linear-gradient(90deg, transparent, rgba(229,9,20,.85), transparent);
+      opacity: .8;
     }
 
     .netflixLinks a {
-      padding: 10px 13px;
-      border: 1px solid transparent;
+      position: relative;
+      isolation: isolate;
+      transition: color .18s ease, transform .18s ease;
+    }
+
+    .netflixLinks a::before {
+      content: "";
+      position: absolute;
+      inset: 1px;
+      z-index: -1;
+      border-radius: 999px;
+      background: rgba(255,255,255,.075);
+      opacity: 0;
+      transform: scale(.92);
+      transition: opacity .18s ease, transform .18s ease;
     }
 
     .netflixLinks a:hover,
     .netflixLinks a.active {
-      color: #fff;
-      background: rgba(255,255,255,.085);
-      border-color: rgba(255,255,255,.11);
       transform: translateY(-1px);
+    }
+
+    .netflixLinks a:hover::before,
+    .netflixLinks a.active::before {
+      opacity: 1;
+      transform: scale(1);
     }
 
     .dsNavSearch {
-      min-width: min(360px, 24vw);
-      height: 42px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.075);
-      border: 1px solid rgba(255,255,255,.12);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      background: rgba(255,255,255,.075) !important;
+      border: 1px solid rgba(255,255,255,.12) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.10);
+      transition: width .22s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease;
     }
 
-    .dsNavSearch input {
-      color: #fff;
-      font-weight: 720;
-    }
-
-    .dsNavSearch input::placeholder {
-      color: rgba(248,251,255,.43);
-    }
-
-    .dsNavSearch button,
-    .dsNavChip,
-    .dsNavIcon,
-    .dsProfileMenu summary {
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.08);
-      color: #fff;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
-      transition: transform .18s ease, background .18s ease, border-color .18s ease;
-    }
-
-    .dsNavSearch button:hover,
-    .dsNavChip:hover,
-    .dsNavIcon:hover,
-    .dsProfileMenu summary:hover {
-      transform: translateY(-1px);
-      background: rgba(255,255,255,.13);
-      border-color: rgba(255,255,255,.18);
+    .dsNavSearch:focus-within {
+      background: rgba(255,255,255,.12) !important;
+      border-color: rgba(255,255,255,.28) !important;
+      box-shadow: 0 0 0 4px rgba(229,9,20,.12), inset 0 1px 0 rgba(255,255,255,.12);
     }
 
     .dsProfileDropdown {
-      border-radius: 24px;
-      background: rgba(8,10,18,.90);
-      border: 1px solid rgba(255,255,255,.12);
-      box-shadow: 0 28px 90px rgba(0,0,0,.48);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.13) !important;
+      background:
+        radial-gradient(420px circle at 0% 0%, rgba(229,9,20,.12), transparent 42%),
+        rgba(8,10,18,.88) !important;
+      box-shadow: 0 28px 90px rgba(0,0,0,.44);
+      backdrop-filter: blur(22px) saturate(1.15);
+      -webkit-backdrop-filter: blur(22px) saturate(1.15);
     }
 
     .dsHero {
-      min-height: clamp(620px, 84vh, 920px);
+      min-height: clamp(620px, 82vh, 900px);
       isolation: isolate;
-      border-bottom: 1px solid rgba(255,255,255,.075);
-      overflow: hidden;
     }
 
     .dsHeroBg {
-      transform: scale(1.045);
-      filter: saturate(1.08) contrast(1.06) brightness(.83);
+      transform: scale(1.032);
+      animation: swiflyHeroDrift 18s ease-in-out infinite alternate;
+      filter: saturate(1.08) contrast(1.04);
+    }
+
+    @keyframes swiflyHeroDrift {
+      from { transform: scale(1.03) translate3d(0,0,0); }
+      to { transform: scale(1.085) translate3d(-1.4%, -.8%, 0); }
     }
 
     .dsHero::before {
       content: "";
       position: absolute;
       inset: 0;
-      z-index: 1;
-      background:
-        radial-gradient(840px circle at 18% 28%, rgba(229,9,20,.20), transparent 48%),
-        linear-gradient(90deg, rgba(5,6,10,.94) 0%, rgba(5,6,10,.72) 34%, rgba(5,6,10,.22) 70%, rgba(5,6,10,.72) 100%),
-        linear-gradient(0deg, #05060a 0%, rgba(5,6,10,.78) 15%, transparent 54%);
+      z-index: 2;
       pointer-events: none;
-    }
-
-    .dsHeroGlass {
       background:
-        linear-gradient(180deg, rgba(255,255,255,.06), transparent 36%),
-        radial-gradient(circle at 16% 28%, rgba(255,255,255,.09), transparent 30%);
-      opacity: .92;
+        radial-gradient(520px circle at 18% 38%, rgba(229,9,20,.22), transparent 50%),
+        linear-gradient(90deg, rgba(5,6,13,.92) 0%, rgba(5,6,13,.70) 31%, rgba(5,6,13,.08) 68%, rgba(5,6,13,.78) 100%),
+        linear-gradient(0deg, #05060d 0%, transparent 34%);
     }
 
     .dsHeroContent {
-      z-index: 3;
-      width: min(720px, calc(100vw - 42px));
-      padding-top: clamp(96px, 14vh, 150px);
+      z-index: 4;
+      max-width: min(720px, 92vw);
+      animation: swiflyRiseIn .72s cubic-bezier(.16,1,.3,1) both;
     }
 
-    .dsEyebrow,
-    .eyebrow {
-      width: fit-content;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 7px 11px;
-      border-radius: 999px;
-      color: rgba(255,255,255,.84);
-      background: rgba(255,255,255,.095);
-      border: 1px solid rgba(255,255,255,.12);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
-      font-size: 11px;
-      font-weight: 950;
-      letter-spacing: .13em;
-      text-transform: uppercase;
-    }
-
-    .dsEyebrow::before,
-    .eyebrow::before {
-      content: "";
-      width: 7px;
-      height: 7px;
-      border-radius: 999px;
-      background: var(--sw-red-2);
-      box-shadow: 0 0 18px rgba(229,9,20,.9);
-    }
-
-    .dsHero h1 {
-      max-width: 780px;
-      margin-top: 18px;
-      font-size: clamp(56px, 9vw, 132px);
-      line-height: .82;
-      letter-spacing: -.095em;
+    .dsHeroContent h1 {
       text-wrap: balance;
-      text-shadow: 0 24px 80px rgba(0,0,0,.55);
+      text-shadow: 0 20px 80px rgba(0,0,0,.55);
     }
 
-    .dsHeroMeta {
-      gap: 9px;
-      margin-top: 22px;
+    .dsHeroContent p {
+      max-width: 680px;
+      color: rgba(248,250,252,.77);
+      text-shadow: 0 10px 40px rgba(0,0,0,.52);
     }
 
     .dsHeroMeta span,
-    .dsHeroMeta b {
-      min-height: 30px;
-      display: inline-flex;
-      align-items: center;
-      padding: 0 11px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.09);
-      border: 1px solid rgba(255,255,255,.10);
-      color: rgba(248,251,255,.76);
-      font-weight: 850;
+    .dsHeroMeta b,
+    .dsRowTag,
+    .dsEyebrow {
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.10);
     }
 
-    .dsHeroMeta b {
-      color: #a8ffcc;
-      background: rgba(61,255,152,.10);
-      border-color: rgba(61,255,152,.18);
-    }
-
-    .dsHero p {
-      max-width: 650px;
-      color: rgba(248,251,255,.76);
-      font-size: clamp(16px, 1.35vw, 20px);
-      line-height: 1.65;
-      text-shadow: 0 8px 30px rgba(0,0,0,.5);
+    @keyframes swiflyRiseIn {
+      from { opacity: 0; transform: translateY(18px) scale(.985); filter: blur(10px); }
+      to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
     }
 
     .dsPrimaryBtn,
     .dsSecondaryBtn,
     .dsGhostPill,
-    .watchBtn,
-    .detailButton,
-    .button,
+    .sectionHead a,
+    .sectionHead button,
+    .pagination a,
     button.dsPrimaryBtn {
-      border-radius: 999px !important;
-      min-height: 48px;
-      padding: 0 20px;
-      font-weight: 950;
-      letter-spacing: -.02em;
-      box-shadow: 0 18px 54px rgba(0,0,0,.24);
-      transition: transform .18s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease, filter .18s ease;
+      position: relative;
+      overflow: hidden;
+      transform: translateZ(0);
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
     }
 
-    .dsPrimaryBtn {
-      background: linear-gradient(135deg, #fff, #dfe9ff) !important;
-      color: #06080f !important;
-      border: 1px solid rgba(255,255,255,.60) !important;
+    .dsPrimaryBtn::after,
+    .dsSecondaryBtn::after,
+    .dsGhostPill::after,
+    .sectionHead a::after,
+    .pagination a::after {
+      content: "";
+      position: absolute;
+      inset: -80% -40%;
+      background: linear-gradient(110deg, transparent 36%, rgba(255,255,255,.26) 48%, transparent 60%);
+      transform: translateX(-80%) rotate(8deg);
+      transition: transform .55s ease;
+      pointer-events: none;
     }
 
-    .dsPrimaryBtn:hover {
-      transform: translateY(-2px) scale(1.015);
-      filter: brightness(1.03);
-      box-shadow: 0 22px 70px rgba(255,255,255,.14);
-    }
-
-    .dsSecondaryBtn,
-    .dsGhostPill {
-      color: #fff !important;
-      background: rgba(255,255,255,.095) !important;
-      border: 1px solid rgba(255,255,255,.135) !important;
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-    }
-
+    .dsPrimaryBtn:hover,
     .dsSecondaryBtn:hover,
-    .dsGhostPill:hover {
+    .dsGhostPill:hover,
+    .pagination a:hover {
       transform: translateY(-2px);
-      background: rgba(255,255,255,.16) !important;
-      border-color: rgba(255,255,255,.22) !important;
+      box-shadow: 0 18px 52px rgba(0,0,0,.32), 0 0 42px rgba(229,9,20,.16);
     }
 
-    .dsContent {
-      padding-top: 26px;
-      padding-bottom: 80px;
+    .dsPrimaryBtn:hover::after,
+    .dsSecondaryBtn:hover::after,
+    .dsGhostPill:hover::after,
+    .sectionHead a:hover::after,
+    .pagination a:hover::after {
+      transform: translateX(80%) rotate(8deg);
     }
 
-    .dsPremiumHomeBoard,
-    .dsMovieHomeBoard {
-      max-width: 1440px;
-      margin: -68px auto 56px;
-      grid-template-columns: minmax(0, 1.15fr) auto;
-      gap: 24px;
-      padding: clamp(22px, 3vw, 34px);
-      border-radius: 34px;
+    .dsMovieHomeBoard,
+    .dsContinuePagePanel,
+    .dsAccountHero,
+    .dsAccountCard,
+    .dsProfileCreate,
+    .dsProfilesHero {
+      border: 1px solid rgba(255,255,255,.12) !important;
       background:
-        radial-gradient(660px circle at 8% 0%, rgba(229,9,20,.20), transparent 48%),
-        radial-gradient(620px circle at 94% 6%, rgba(117,214,255,.13), transparent 48%),
-        linear-gradient(135deg, rgba(255,255,255,.10), rgba(255,255,255,.045));
-      border: 1px solid rgba(255,255,255,.14);
-      box-shadow: var(--sw-shadow-lg);
-      backdrop-filter: blur(24px) saturate(1.16);
-      -webkit-backdrop-filter: blur(24px) saturate(1.16);
-    }
-
-    .dsMovieHomeBoard h2 {
-      font-size: clamp(34px, 4.4vw, 64px);
-      line-height: .92;
-      letter-spacing: -.085em;
-      text-wrap: balance;
-    }
-
-    .dsMovieHomeBoard p {
-      max-width: 800px;
-      margin-top: 10px;
-      color: var(--sw-muted);
-      font-size: 16px;
-      line-height: 1.7;
-    }
-
-    .dsHomeStatLine {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 18px;
-    }
-
-    .dsHomeStatLine span {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      min-height: 34px;
-      padding: 0 12px;
-      border-radius: 999px;
-      color: rgba(255,255,255,.72);
-      background: rgba(0,0,0,.20);
-      border: 1px solid rgba(255,255,255,.10);
-      font-size: 12px;
-      font-weight: 850;
-    }
-
-    .dsHomeStatLine b {
-      color: #fff;
-    }
-
-    .dsHomeQuickActions {
-      align-self: stretch;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      min-width: 210px;
-    }
-
-    .dsHomeFeatureCards {
-      grid-column: 1 / -1;
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    .dsHomeFeatureCards article,
-    .dsCoupleHomeCards article {
-      min-height: 72px;
-      border-radius: 22px;
-      background:
-        linear-gradient(135deg, rgba(255,255,255,.10), rgba(255,255,255,.045));
-      border: 1px solid rgba(255,255,255,.105);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.07);
-      transition: transform .18s ease, background .18s ease, border-color .18s ease;
-    }
-
-    .dsHomeFeatureCards article:hover,
-    .dsCoupleHomeCards article:hover {
-      transform: translateY(-3px);
-      background: rgba(255,255,255,.11);
-      border-color: rgba(255,255,255,.18);
+        linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.045)),
+        radial-gradient(620px circle at 0% 0%, rgba(229,9,20,.12), transparent 52%) !important;
+      box-shadow: var(--swifly-shadow);
+      backdrop-filter: blur(20px) saturate(1.12);
+      -webkit-backdrop-filter: blur(20px) saturate(1.12);
     }
 
     .dsRow {
-      margin-top: clamp(32px, 4vw, 58px);
-    }
-
-    .dsRowHead {
-      margin-bottom: 14px;
-    }
-
-    .dsRowHead h2 {
-      font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: clamp(22px, 2.3vw, 34px);
-      font-weight: 950;
-      letter-spacing: -.055em;
-      color: #fff;
-    }
-
-    .dsRowTag {
-      display: inline-flex;
-      align-items: center;
-      min-height: 28px;
-      padding: 0 10px;
-      border-radius: 999px;
-      color: rgba(255,255,255,.74);
-      background: rgba(255,255,255,.08);
-      border: 1px solid rgba(255,255,255,.10);
-      font-size: 11px;
-      font-weight: 900;
-      letter-spacing: .06em;
-      text-transform: uppercase;
-    }
-
-    .movieRail,
-    .dsRail,
-    .nfTopTenRail {
-      gap: 14px;
-      padding: 6px 0 18px;
-      scroll-padding-inline: 18px;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(255,255,255,.24) transparent;
-    }
-
-    .movieRail::-webkit-scrollbar,
-    .dsRail::-webkit-scrollbar {
-      height: 8px;
-    }
-
-    .movieRail::-webkit-scrollbar-thumb,
-    .dsRail::-webkit-scrollbar-thumb {
-      background: rgba(255,255,255,.22);
-      border-radius: 999px;
-    }
-
-    .movieCard,
-    .nfTopCard,
-    .posterCard,
-    .mediaCard {
       position: relative;
-      border-radius: 22px !important;
-      overflow: hidden;
-      background: rgba(255,255,255,.055);
-      border: 1px solid rgba(255,255,255,.08);
-      box-shadow: 0 18px 60px rgba(0,0,0,.24);
-      transform-origin: center;
-      transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease, filter .22s ease;
+      contain: layout paint;
     }
 
-    .movieCard:hover,
-    .nfTopCard:hover,
-    .posterCard:hover,
-    .mediaCard:hover {
-      transform: translateY(-8px) scale(1.035);
-      border-color: rgba(255,255,255,.20);
-      box-shadow: 0 30px 90px rgba(0,0,0,.48);
-      filter: saturate(1.08) brightness(1.05);
-      z-index: 5;
+    .dsRow::before,
+    .dsRow::after {
+      content: "";
+      position: absolute;
+      top: 56px;
+      bottom: 8px;
+      z-index: 3;
+      width: 64px;
+      pointer-events: none;
+      opacity: .84;
     }
 
-    .movieCard img,
-    .nfTopCard img,
-    .posterCard img,
-    .mediaCard img {
-      transition: transform .35s ease, filter .25s ease;
+    .dsRow::before {
+      left: 0;
+      background: linear-gradient(90deg, rgba(5,6,13,.88), transparent);
     }
 
-    .movieCard:hover img,
-    .nfTopCard:hover img,
-    .posterCard:hover img,
-    .mediaCard:hover img {
+    .dsRow::after {
+      right: 0;
+      background: linear-gradient(270deg, rgba(5,6,13,.88), transparent);
+    }
+
+    .movieRail {
+      scroll-padding-inline: 14px;
+      scrollbar-color: rgba(255,255,255,.26) transparent;
+    }
+
+    .movieRail::-webkit-scrollbar {
+      height: 10px;
+    }
+
+    .movieRail::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .movieRail::-webkit-scrollbar-thumb {
+      border: 3px solid transparent;
+      border-radius: 999px;
+      background: rgba(255,255,255,.28);
+      background-clip: content-box;
+    }
+
+    .movieRail::-webkit-scrollbar-thumb:hover {
+      background: rgba(255,255,255,.42);
+      background-clip: content-box;
+    }
+
+    .movieCard.dsCard {
+      perspective: 1000px;
+      transform-style: preserve-3d;
+    }
+
+    .posterWrap,
+    .dsThumb,
+    .topTenPoster {
+      transform:
+        perspective(900px)
+        rotateX(var(--tilt-x, 0deg))
+        rotateY(var(--tilt-y, 0deg))
+        translateY(var(--lift, 0px))
+        scale(var(--card-scale, 1));
+      will-change: transform;
+      transition: transform .22s cubic-bezier(.16,1,.3,1), box-shadow .22s ease, border-color .22s ease, filter .22s ease;
+    }
+
+    .movieCard:hover .posterWrap,
+    .topTenPoster:hover {
+      --lift: -8px;
+      --card-scale: 1.025;
+      filter: saturate(1.08) contrast(1.05);
+      border-color: rgba(255,255,255,.26);
+      box-shadow:
+        0 32px 90px rgba(0,0,0,.48),
+        0 0 0 1px rgba(255,255,255,.05),
+        0 0 54px rgba(229,9,20,.18);
+    }
+
+    .posterWrap::before,
+    .topTenPoster::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      opacity: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(360px circle at var(--mx, 50%) var(--my, 35%), rgba(255,255,255,.22), transparent 38%),
+        linear-gradient(145deg, rgba(255,255,255,.12), transparent 42%);
+      transition: opacity .2s ease;
+      mix-blend-mode: screen;
+    }
+
+    .movieCard:hover .posterWrap::before,
+    .topTenPoster:hover::before {
+      opacity: 1;
+    }
+
+    .posterWrap img,
+    .topTenPoster img {
+      transition: transform .42s cubic-bezier(.16,1,.3,1), opacity .35s ease, filter .35s ease;
+      opacity: .001;
+    }
+
+    .posterWrap img.swiflyLoaded,
+    .topTenPoster img.swiflyLoaded,
+    img.swiflyLoaded {
+      opacity: 1;
+    }
+
+    .movieCard:hover .posterWrap img,
+    .topTenPoster:hover img {
       transform: scale(1.055);
     }
 
-    .movieCard::after,
-    .posterCard::after,
-    .mediaCard::after {
-      content: "";
-      position: absolute;
-      inset: auto 0 0 0;
-      height: 52%;
-      background: linear-gradient(0deg, rgba(0,0,0,.82), transparent);
-      opacity: .72;
-      pointer-events: none;
-      transition: opacity .2s ease;
+    .dsCardOverlay {
+      background:
+        linear-gradient(0deg, rgba(0,0,0,.94), rgba(0,0,0,.30) 56%, transparent) !important;
+      backdrop-filter: blur(0px);
     }
 
-    .movieCard:hover::after,
-    .posterCard:hover::after,
-    .mediaCard:hover::after {
-      opacity: .95;
+    .dsMiniBtn,
+    .dsPlayDot {
+      box-shadow: 0 14px 36px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.16);
+      transition: transform .18s ease, background .18s ease, border-color .18s ease;
+    }
+
+    .dsMiniBtn:hover,
+    .dsPlayDot:hover {
+      transform: translateY(-2px) scale(1.06);
     }
 
     .movieMeta,
-    .cardMeta {
-      position: relative;
-      z-index: 2;
+    .dsCardText,
+    .nfCardMeta {
+      text-shadow: 0 10px 30px rgba(0,0,0,.36);
     }
 
-    .netflixPageHero,
-    .dsPlainPage > section:first-child,
-    .dsAccountHero,
-    .dsProfilesHero,
-    .dsWatchHero {
-      border-radius: 34px;
-      background:
-        radial-gradient(740px circle at 0% 0%, rgba(229,9,20,.16), transparent 48%),
-        radial-gradient(640px circle at 100% 0%, rgba(117,214,255,.11), transparent 48%),
-        rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.12);
-      box-shadow: var(--sw-shadow-md);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-    }
-
-    .netflixPageHero h1,
-    .dsProfilesHero h1,
-    .dsAccountHero h1,
-    .dsWatchHero h1 {
-      font-family: "Space Grotesk", Inter, sans-serif;
-      letter-spacing: -.075em;
-      text-wrap: balance;
-    }
-
-    .dsAccountCard,
-    .dsProfileCard,
-    .dsContinuePagePanel,
-    .detailPanel,
-    .watchPanel,
-    .searchResultCard {
-      border-radius: 28px !important;
-      background:
-        linear-gradient(135deg, rgba(255,255,255,.088), rgba(255,255,255,.040));
-      border: 1px solid rgba(255,255,255,.115);
-      box-shadow: var(--sw-shadow-md);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      transition: transform .2s ease, border-color .2s ease, background .2s ease;
-    }
-
-    .dsAccountCard:hover,
-    .dsProfileCard:hover,
-    .searchResultCard:hover {
-      transform: translateY(-5px);
-      border-color: rgba(255,255,255,.20);
-      background: rgba(255,255,255,.095);
-    }
-
-    .dsWatchShell,
-    .dsDirectVideoShell,
-    .dsMovieButtonPlayerShell,
-    .dsStandaloneHlsShell {
-      border-radius: 32px !important;
-      overflow: hidden;
-      background:
-        radial-gradient(900px circle at 50% 0%, rgba(255,255,255,.09), transparent 52%),
-        #000;
-      border: 1px solid rgba(255,255,255,.13);
-      box-shadow: 0 34px 110px rgba(0,0,0,.50);
-    }
-
-    .vjs-theme-swifly {
-      border-radius: 28px;
-      overflow: hidden;
-    }
-
-    .vjs-theme-swifly .vjs-control-bar {
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      background: linear-gradient(0deg, rgba(0,0,0,.88), rgba(0,0,0,.20));
-    }
-
-    .dsHlsStatus {
-      border-radius: 20px;
-      background: rgba(9,11,18,.78);
-      border: 1px solid rgba(255,255,255,.14);
-      box-shadow: 0 22px 80px rgba(0,0,0,.40);
-    }
-
-    .footer {
-      margin-top: 70px;
-      border-top: 1px solid rgba(255,255,255,.08);
-      background: linear-gradient(180deg, transparent, rgba(0,0,0,.30));
-    }
-
-    .footerGrid {
-      color: rgba(248,251,255,.56);
+    .topTenNumber {
+      text-shadow:
+        0 0 1px rgba(255,255,255,.48),
+        0 18px 60px rgba(0,0,0,.50),
+        0 0 42px rgba(229,9,20,.22);
     }
 
     .mobileNav {
-      border-top: 1px solid rgba(255,255,255,.12);
-      background: rgba(5,6,10,.84);
-      backdrop-filter: blur(22px) saturate(1.2);
-      -webkit-backdrop-filter: blur(22px) saturate(1.2);
-      box-shadow: 0 -18px 70px rgba(0,0,0,.40);
+      background:
+        linear-gradient(180deg, rgba(10,12,20,.66), rgba(5,6,13,.92)) !important;
+      border-top: 1px solid rgba(255,255,255,.12) !important;
+      box-shadow: 0 -18px 70px rgba(0,0,0,.38);
+      backdrop-filter: blur(24px) saturate(1.2);
+      -webkit-backdrop-filter: blur(24px) saturate(1.2);
+    }
+
+    .mobileNav a {
+      border-radius: 16px;
+      transition: background .18s ease, transform .18s ease;
     }
 
     .mobileNav a.active,
     .mobileNav a:hover {
-      color: #fff;
-      background: rgba(255,255,255,.11);
+      background: rgba(255,255,255,.10);
+      transform: translateY(-1px);
     }
 
-    @media(max-width: 980px) {
-      .dsNavSearch {
-        min-width: 0;
-      }
-
-      .dsPremiumHomeBoard,
-      .dsMovieHomeBoard {
-        grid-template-columns: 1fr;
-        margin-top: -34px;
-      }
-
-      .dsHomeQuickActions {
-        flex-direction: row;
-        flex-wrap: wrap;
-        min-width: 0;
-      }
-
-      .dsHomeFeatureCards {
-        grid-template-columns: 1fr;
-      }
-
-      .dsHero {
-        min-height: 690px;
-      }
-
-      .dsHero h1 {
-        font-size: clamp(48px, 14vw, 82px);
-      }
-    }
-
-    @media(max-width: 640px) {
-      .container,
-      .dsContent,
-      .netflixPageHero,
-      .footerGrid {
-        width: min(100% - 24px, 1440px);
-      }
-
-      .topbar.netflixTopbar {
-        min-height: 66px;
-      }
-
-      .netflixNav {
-        min-height: 66px;
-      }
-
-      .dsHero {
-        min-height: 640px;
-      }
-
-      .dsHeroContent {
-        padding-top: 110px;
-      }
-
-      .dsHero p {
-        font-size: 14px;
-        line-height: 1.55;
-      }
-
-      .dsHeroActions {
-        display: grid;
-        grid-template-columns: 1fr;
-        width: 100%;
-      }
-
-      .dsPrimaryBtn,
-      .dsSecondaryBtn,
-      .dsGhostPill {
-        width: 100%;
-        justify-content: center;
-      }
-
-      .movieRail,
-      .dsRail {
-        gap: 10px;
-      }
-
-      .movieCard:hover,
-      .nfTopCard:hover,
-      .posterCard:hover,
-      .mediaCard:hover {
-        transform: translateY(-4px) scale(1.015);
-      }
-    }
-
-    @media(prefers-reduced-motion: reduce) {
-      * {
-        animation-duration: .01ms !important;
-        animation-iteration-count: 1 !important;
-        scroll-behavior: auto !important;
-        transition-duration: .01ms !important;
-      }
-    }
-
-
-    .swReveal {
+    .swiflyReveal {
       opacity: 0;
       transform: translateY(18px);
-      transition: opacity .55s ease, transform .55s ease;
+      filter: blur(8px);
+      transition: opacity .55s ease, transform .55s cubic-bezier(.16,1,.3,1), filter .55s ease;
     }
 
-    .swReveal.isVisible {
+    .swiflyReveal.isVisible {
       opacity: 1;
       transform: translateY(0);
-    }
-
-    .topbar.isScrolled {
-      background: rgba(5,6,10,.92) !important;
-      box-shadow: 0 20px 70px rgba(0,0,0,.44);
-    }
-
-
-    /* ============================================================
-       v97 EFFECTS UPGRADE
-       Adds motion/effects on top of v96 without changing the site structure.
-       ============================================================ */
-
-    :root {
-      --sw-mouse-x: 50vw;
-      --sw-mouse-y: 20vh;
-    }
-
-    .swiflyFxLayer {
-      position: fixed;
-      inset: 0;
-      z-index: -1;
-      pointer-events: none;
-      overflow: hidden;
-      opacity: .95;
-    }
-
-    .swFxBlob {
-      position: absolute;
-      width: 42vmax;
-      height: 42vmax;
-      border-radius: 999px;
-      filter: blur(56px);
-      opacity: .17;
-      transform: translate3d(0,0,0);
-      animation: swBlobFloat 18s ease-in-out infinite alternate;
-      mix-blend-mode: screen;
-    }
-
-    .swFxBlob.one {
-      left: -16vmax;
-      top: 4vh;
-      background: radial-gradient(circle, rgba(229,9,20,.95), rgba(229,9,20,0) 64%);
-      animation-duration: 18s;
-    }
-
-    .swFxBlob.two {
-      right: -18vmax;
-      top: 18vh;
-      background: radial-gradient(circle, rgba(117,214,255,.80), rgba(117,214,255,0) 66%);
-      animation-duration: 22s;
-      animation-delay: -5s;
-    }
-
-    .swFxBlob.three {
-      left: 30vw;
-      bottom: -22vmax;
-      background: radial-gradient(circle, rgba(255,211,106,.58), rgba(255,211,106,0) 68%);
-      animation-duration: 26s;
-      animation-delay: -9s;
-    }
-
-    .swCursorGlow {
-      position: fixed;
-      left: var(--sw-mouse-x);
-      top: var(--sw-mouse-y);
-      width: 440px;
-      height: 440px;
-      margin-left: -220px;
-      margin-top: -220px;
-      border-radius: 999px;
-      pointer-events: none;
-      background:
-        radial-gradient(circle, rgba(255,255,255,.105), rgba(117,214,255,.07) 28%, rgba(229,9,20,.05) 44%, transparent 70%);
-      filter: blur(18px);
-      opacity: .84;
-      transition: opacity .2s ease;
-      mix-blend-mode: screen;
-    }
-
-    .swNoiseOverlay {
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
-      opacity: .038;
-      mix-blend-mode: overlay;
-      background-image:
-        url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
-    }
-
-    @keyframes swBlobFloat {
-      0% { transform: translate3d(0,0,0) scale(1); }
-      50% { transform: translate3d(8vmax,-3vmax,0) scale(1.08); }
-      100% { transform: translate3d(-4vmax,6vmax,0) scale(.94); }
-    }
-
-    .topbar.netflixTopbar::after {
-      content: "";
-      position: absolute;
-      left: 8%;
-      right: 8%;
-      bottom: -1px;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(229,9,20,.72), rgba(117,214,255,.42), transparent);
-      opacity: .72;
-      filter: blur(.2px);
-    }
-
-    .netflixBrand {
-      position: relative;
-    }
-
-    .netflixBrand::after {
-      content: "";
-      position: absolute;
-      inset: -10px -16px;
-      z-index: -1;
-      border-radius: 999px;
-      background: radial-gradient(circle at 30% 50%, rgba(229,9,20,.22), transparent 62%);
-      opacity: 0;
-      transition: opacity .2s ease;
-    }
-
-    .netflixBrand:hover::after {
-      opacity: 1;
-    }
-
-    .netflixWordmark {
-      background: linear-gradient(115deg, #fff 0%, #fff 34%, #ff5b67 48%, #fff 62%, #e8f3ff 100%);
-      background-size: 220% 100%;
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent !important;
-      animation: swWordmarkSheen 8s ease-in-out infinite;
-    }
-
-    @keyframes swWordmarkSheen {
-      0%, 72%, 100% { background-position: 0% 50%; }
-      82% { background-position: 100% 50%; }
-    }
-
-    .dsHero h1 {
-      background: linear-gradient(110deg, #fff 0%, #fff 38%, #ffccd1 52%, #dff6ff 68%, #fff 100%);
-      background-size: 240% 100%;
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent !important;
-      animation: swHeroTitleSheen 9s ease-in-out infinite;
-      filter: drop-shadow(0 26px 70px rgba(0,0,0,.42));
-    }
-
-    @keyframes swHeroTitleSheen {
-      0%, 68%, 100% { background-position: 0% 50%; }
-      78% { background-position: 100% 50%; }
-    }
-
-    .dsHeroActions,
-    .dsCoupleHomeActions,
-    .dsHomeQuickActions {
-      perspective: 900px;
-    }
-
-    .dsPrimaryBtn,
-    .dsSecondaryBtn,
-    .dsGhostPill,
-    .watchBtn,
-    .detailButton {
-      position: relative;
-      overflow: hidden;
-      isolation: isolate;
-    }
-
-    .dsPrimaryBtn::before,
-    .dsSecondaryBtn::before,
-    .dsGhostPill::before,
-    .watchBtn::before,
-    .detailButton::before {
-      content: "";
-      position: absolute;
-      inset: -2px;
-      z-index: -1;
-      background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,.42) 22%, transparent 44%);
-      transform: translateX(-140%) skewX(-18deg);
-      transition: transform .6s ease;
-    }
-
-    .dsPrimaryBtn:hover::before,
-    .dsSecondaryBtn:hover::before,
-    .dsGhostPill:hover::before,
-    .watchBtn:hover::before,
-    .detailButton:hover::before {
-      transform: translateX(140%) skewX(-18deg);
-    }
-
-    .dsPrimaryBtn::after {
-      content: "";
-      position: absolute;
-      inset: auto 12% -22px 12%;
-      height: 34px;
-      z-index: -2;
-      background: radial-gradient(ellipse, rgba(255,255,255,.33), transparent 70%);
-      filter: blur(12px);
-      opacity: .35;
-      transition: opacity .2s ease, transform .2s ease;
-    }
-
-    .dsPrimaryBtn:hover::after {
-      opacity: .72;
-      transform: translateY(-3px);
-    }
-
-    .movieRail,
-    .dsRail,
-    .nfTopTenRail {
-      position: relative;
-      mask-image: linear-gradient(90deg, transparent, #000 26px, #000 calc(100% - 26px), transparent);
-    }
-
-    .dsRow {
-      position: relative;
-    }
-
-    .dsRow::before {
-      content: "";
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: 42px;
-      height: 1px;
-      background: linear-gradient(90deg, rgba(255,255,255,.10), transparent 70%);
-      opacity: .55;
-      pointer-events: none;
-    }
-
-    .movieCard,
-    .nfTopCard,
-    .posterCard,
-    .mediaCard {
-      transform-style: preserve-3d;
-      will-change: transform;
-    }
-
-    .movieCard::before,
-    .posterCard::before,
-    .mediaCard::before,
-    .nfTopCard::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      z-index: 3;
-      pointer-events: none;
-      background:
-        linear-gradient(115deg, transparent 0%, transparent 38%, rgba(255,255,255,.22) 48%, transparent 58%, transparent 100%);
-      transform: translateX(-135%);
-      opacity: 0;
-      transition: opacity .2s ease, transform .7s ease;
-      mix-blend-mode: screen;
-    }
-
-    .movieCard:hover::before,
-    .posterCard:hover::before,
-    .mediaCard:hover::before,
-    .nfTopCard:hover::before {
-      opacity: 1;
-      transform: translateX(135%);
-    }
-
-    .movieCard:hover,
-    .posterCard:hover,
-    .mediaCard:hover,
-    .nfTopCard:hover {
-      transform:
-        perspective(900px)
-        rotateX(var(--sw-tilt-x, 0deg))
-        rotateY(var(--sw-tilt-y, 0deg))
-        translateY(-10px)
-        scale(1.035);
-    }
-
-    .movieMeta strong,
-    .cardMeta strong {
-      text-shadow: 0 8px 30px rgba(0,0,0,.72);
-    }
-
-    .dsAccountCard,
-    .dsProfileCard,
-    .dsContinuePagePanel,
-    .searchResultCard,
-    .detailPanel {
-      position: relative;
-      overflow: hidden;
-    }
-
-    .dsAccountCard::before,
-    .dsProfileCard::before,
-    .searchResultCard::before,
-    .detailPanel::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      background:
-        radial-gradient(460px circle at var(--sw-card-x, 50%) var(--sw-card-y, 0%), rgba(255,255,255,.13), transparent 42%);
-      opacity: 0;
-      transition: opacity .2s ease;
-    }
-
-    .dsAccountCard:hover::before,
-    .dsProfileCard:hover::before,
-    .searchResultCard:hover::before,
-    .detailPanel:hover::before {
-      opacity: 1;
-    }
-
-    .dsMovieHomeBoard,
-    .dsWatchShell,
-    .dsDirectVideoShell,
-    .dsMovieButtonPlayerShell {
-      position: relative;
-      overflow: hidden;
-    }
-
-    .dsMovieHomeBoard::after,
-    .dsWatchShell::after,
-    .dsDirectVideoShell::after,
-    .dsMovieButtonPlayerShell::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      background:
-        linear-gradient(120deg, transparent, rgba(255,255,255,.045), transparent);
-      transform: translateX(-100%);
-      animation: swPanelSweep 9s ease-in-out infinite;
-    }
-
-    @keyframes swPanelSweep {
-      0%, 74%, 100% { transform: translateX(-100%); opacity: 0; }
-      82% { opacity: 1; }
-      92% { transform: translateX(100%); opacity: 0; }
+      filter: blur(0);
     }
 
     .dsHlsStatus,
-    .dsNoTrailer {
-      animation: swSoftPop .38s ease both;
+    .dsCustomPlayerControls,
+    .dsCustomPlayerTop,
+    .dsProfileDropdown,
+    .controlPanel {
+      box-shadow: 0 28px 90px rgba(0,0,0,.44), inset 0 1px 0 rgba(255,255,255,.08) !important;
     }
 
-    @keyframes swSoftPop {
-      from {
-        opacity: 0;
-        transform: translateY(8px) scale(.985);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
-    }
-
-    .vjs-theme-swifly .vjs-big-play-button {
-      animation: swPlayPulse 2.6s ease-in-out infinite;
-    }
-
-    @keyframes swPlayPulse {
-      0%, 100% { box-shadow: 0 22px 80px rgba(0,0,0,.42), 0 0 0 0 rgba(255,255,255,.18); }
-      50% { box-shadow: 0 22px 80px rgba(0,0,0,.42), 0 0 0 16px rgba(255,255,255,0); }
-    }
-
-    @media(max-width: 760px) {
-      .swCursorGlow {
-        display: none;
-      }
-
-      .swFxBlob {
-        opacity: .12;
-      }
-
-      .movieCard:hover,
-      .posterCard:hover,
-      .mediaCard:hover,
-      .nfTopCard:hover {
-        transform: translateY(-5px) scale(1.018);
+    @media (hover: none) {
+      .posterWrap,
+      .dsThumb,
+      .topTenPoster {
+        transform: none !important;
       }
     }
 
-    @media(prefers-reduced-motion: reduce) {
-      .swFxBlob,
-      .netflixWordmark,
-      .dsHero h1,
-      .dsMovieHomeBoard::after,
-      .dsWatchShell::after,
-      .vjs-theme-swifly .vjs-big-play-button {
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: .001ms !important;
+      }
+
+      .swiflyOrb,
+      .dsHeroBg {
         animation: none !important;
       }
+    }
 
-      .swCursorGlow {
-        display: none !important;
+    @media(max-width: 720px) {
+      .dsRow::before,
+      .dsRow::after {
+        width: 34px;
+      }
+
+      .dsHero {
+        min-height: 620px;
+      }
+
+      .dsHeroContent {
+        padding-top: 90px;
+      }
+
+      .netflixTopbar.isScrolled {
+        background: rgba(5,6,13,.92) !important;
       }
     }
 
@@ -20387,6 +19775,12 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
 </head>
 <body>
+  <div id="swiflyScrollProgress" class="swiflyScrollProgress" aria-hidden="true"></div>
+  <div class="swiflyAmbient" aria-hidden="true">
+    <span class="swiflyOrb orbOne"></span>
+    <span class="swiflyOrb orbTwo"></span>
+    <span class="swiflyOrb orbThree"></span>
+  </div>
 
   <script>
     (function swiflytvAuthRequired(){
@@ -21384,117 +20778,135 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
   </script>
 
 
-    <script>
-      (function swiflyPremiumUi(){
-        try {
-          document.documentElement.classList.add("swifly-premium-ui");
+  <script>
+    (function swiflyModernPolish(){
+      const root = document.documentElement;
+      const progress = document.getElementById("swiflyScrollProgress");
+      const topbar = document.querySelector(".netflixTopbar");
 
-          var topbar = document.querySelector(".topbar");
-          function updateTopbar() {
-            if (!topbar) return;
-            topbar.classList.toggle("isScrolled", window.scrollY > 18);
+      function onScroll() {
+        const doc = document.documentElement;
+        const max = Math.max(1, doc.scrollHeight - window.innerHeight);
+        const pct = Math.max(0, Math.min(100, (window.scrollY / max) * 100));
+        if (progress) progress.style.width = pct + "%";
+        if (topbar) topbar.classList.toggle("isScrolled", window.scrollY > 18);
+      }
+
+      window.addEventListener("scroll", onScroll, { passive: true });
+      window.addEventListener("resize", onScroll, { passive: true });
+      onScroll();
+
+      function prepImages(scope) {
+        (scope || document).querySelectorAll("img").forEach((img) => {
+          if (img.complete && img.naturalWidth) {
+            img.classList.add("swiflyLoaded");
+          } else {
+            img.addEventListener("load", () => img.classList.add("swiflyLoaded"), { once: true });
+            img.addEventListener("error", () => img.classList.add("swiflyLoaded"), { once: true });
           }
-          updateTopbar();
-          window.addEventListener("scroll", updateTopbar, { passive: true });
+        });
+      }
 
-          if ("IntersectionObserver" in window) {
-            var observer = new IntersectionObserver(function(entries) {
-              entries.forEach(function(entry) {
-                if (entry.isIntersecting) {
-                  entry.target.classList.add("isVisible");
-                  observer.unobserve(entry.target);
-                }
-              });
-            }, { threshold: 0.12 });
+      prepImages(document);
 
-            document.querySelectorAll(".dsRow, .dsMovieHomeBoard, .netflixPageHero, .dsAccountCard, .dsProfileCard").forEach(function(el) {
-              el.classList.add("swReveal");
-              observer.observe(el);
-            });
-          }
-        } catch (error) {
-          console.warn("premium ui enhancement failed", error);
+      const revealTargets = [
+        ".dsRow",
+        ".movieGrid",
+        ".dsMovieHomeBoard",
+        ".dsAccountHero",
+        ".dsAccountGrid",
+        ".dsProfilesHero",
+        ".dsProfileCreate",
+        ".dsContinuePagePanel",
+        ".netflixPageHero",
+        ".collectionGrid"
+      ].join(",");
+
+      document.querySelectorAll(revealTargets).forEach((el) => {
+        if (!el.classList.contains("swiflyReveal")) el.classList.add("swiflyReveal");
+      });
+
+      if ("IntersectionObserver" in window) {
+        const revealObserver = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("isVisible");
+              revealObserver.unobserve(entry.target);
+            }
+          });
+        }, { rootMargin: "80px 0px -60px", threshold: 0.08 });
+
+        document.querySelectorAll(".swiflyReveal").forEach((el) => revealObserver.observe(el));
+      } else {
+        document.querySelectorAll(".swiflyReveal").forEach((el) => el.classList.add("isVisible"));
+      }
+
+      function attachTilt(card) {
+        if (card.__swiflyTiltBound) return;
+        card.__swiflyTiltBound = true;
+
+        const target = card.querySelector(".posterWrap, .topTenPoster") || card;
+        if (!target) return;
+
+        card.addEventListener("pointermove", (event) => {
+          if (window.matchMedia && window.matchMedia("(hover: none)").matches) return;
+          const rect = target.getBoundingClientRect();
+          if (!rect.width || !rect.height) return;
+          const px = (event.clientX - rect.left) / rect.width;
+          const py = (event.clientY - rect.top) / rect.height;
+          const rx = (0.5 - py) * 7;
+          const ry = (px - 0.5) * 9;
+          target.style.setProperty("--tilt-x", rx.toFixed(2) + "deg");
+          target.style.setProperty("--tilt-y", ry.toFixed(2) + "deg");
+          target.style.setProperty("--mx", (px * 100).toFixed(1) + "%");
+          target.style.setProperty("--my", (py * 100).toFixed(1) + "%");
+        });
+
+        card.addEventListener("pointerleave", () => {
+          target.style.setProperty("--tilt-x", "0deg");
+          target.style.setProperty("--tilt-y", "0deg");
+          target.style.setProperty("--mx", "50%");
+          target.style.setProperty("--my", "35%");
+        });
+      }
+
+      function bindTilt(scope) {
+        (scope || document).querySelectorAll(".movieCard, .topTenCard").forEach(attachTilt);
+      }
+
+      bindTilt(document);
+
+      // Some rails/cards are rendered by localStorage scripts after load.
+      const observer = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+          mutation.addedNodes.forEach((node) => {
+            if (!(node instanceof Element)) return;
+            prepImages(node);
+            bindTilt(node);
+            if (node.matches && node.matches(revealTargets)) {
+              node.classList.add("swiflyReveal");
+              requestAnimationFrame(() => node.classList.add("isVisible"));
+            }
+          });
         }
-      })();
-    </script>
+      });
 
+      observer.observe(document.body, { childList: true, subtree: true });
 
-    <script>
-      (function swiflyEffectsUpgrade(){
-        try {
-          if (document.getElementById("swiflyFxLayer")) return;
-
-          var layer = document.createElement("div");
-          layer.id = "swiflyFxLayer";
-          layer.className = "swiflyFxLayer";
-          layer.innerHTML =
-            '<div class="swFxBlob one"></div>' +
-            '<div class="swFxBlob two"></div>' +
-            '<div class="swFxBlob three"></div>' +
-            '<div class="swCursorGlow" id="swCursorGlow"></div>' +
-            '<div class="swNoiseOverlay"></div>';
-          document.body.prepend(layer);
-
-          var root = document.documentElement;
-          var raf = null;
-          var mouseX = window.innerWidth / 2;
-          var mouseY = window.innerHeight * .22;
-
-          function updateMouseVars() {
-            raf = null;
-            root.style.setProperty("--sw-mouse-x", mouseX + "px");
-            root.style.setProperty("--sw-mouse-y", mouseY + "px");
+      // Shift + mouse wheel makes horizontal rails feel more app-like on desktop.
+      document.querySelectorAll(".movieRail").forEach((rail) => {
+        if (rail.__swiflyWheelBound) return;
+        rail.__swiflyWheelBound = true;
+        rail.addEventListener("wheel", (event) => {
+          if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+          if (!event.shiftKey && window.innerWidth > 980) {
+            event.preventDefault();
+            rail.scrollLeft += event.deltaY;
           }
-
-          window.addEventListener("pointermove", function(event) {
-            mouseX = event.clientX;
-            mouseY = event.clientY;
-            if (!raf) raf = requestAnimationFrame(updateMouseVars);
-          }, { passive: true });
-
-          function attachTilt(card) {
-            if (!card || card.__swiflyTilt) return;
-            card.__swiflyTilt = true;
-
-            card.addEventListener("pointermove", function(event) {
-              var rect = card.getBoundingClientRect();
-              var x = (event.clientX - rect.left) / Math.max(1, rect.width);
-              var y = (event.clientY - rect.top) / Math.max(1, rect.height);
-              var tiltY = (x - .5) * 8;
-              var tiltX = (.5 - y) * 7;
-              card.style.setProperty("--sw-tilt-x", tiltX.toFixed(2) + "deg");
-              card.style.setProperty("--sw-tilt-y", tiltY.toFixed(2) + "deg");
-              card.style.setProperty("--sw-card-x", (x * 100).toFixed(1) + "%");
-              card.style.setProperty("--sw-card-y", (y * 100).toFixed(1) + "%");
-            }, { passive: true });
-
-            card.addEventListener("pointerleave", function() {
-              card.style.setProperty("--sw-tilt-x", "0deg");
-              card.style.setProperty("--sw-tilt-y", "0deg");
-              card.style.setProperty("--sw-card-x", "50%");
-              card.style.setProperty("--sw-card-y", "0%");
-            }, { passive: true });
-          }
-
-          function bindCards() {
-            document.querySelectorAll(".movieCard, .posterCard, .mediaCard, .nfTopCard, .dsAccountCard, .dsProfileCard, .searchResultCard, .detailPanel").forEach(attachTilt);
-          }
-
-          bindCards();
-
-          if ("MutationObserver" in window) {
-            var observer = new MutationObserver(function() {
-              bindCards();
-            });
-            observer.observe(document.body, { childList: true, subtree: true });
-          }
-
-          document.documentElement.classList.add("swifly-effects-upgrade");
-        } catch (error) {
-          console.warn("swifly effects upgrade failed", error);
-        }
-      })();
-    </script>
+        }, { passive: false });
+      });
+    })();
+  </script>
 
 </body>
 </html>`;
@@ -21871,26 +21283,21 @@ async function homePage(req, res) {
     ${dsHero({ hero, context: "Featured", eyebrow: "Watch now" })}
     <section class="dsContent">
 
-      <section class="dsMovieHomeBoard dsPremiumHomeBoard">
-        <div class="dsHomeBoardCopy">
-          <span class="dsEyebrow">SwiflyTV Streaming</span>
-          <h2>A cleaner way to browse movies and shows.</h2>
-          <p>Discover trending titles, keep a personal list, continue watching, and open synced Watch Rooms when you want to watch with friends.</p>
-          <div class="dsHomeStatLine">
-            <span><b>4K</b> inspired UI</span>
-            <span><b>Fast</b> search</span>
-            <span><b>Synced</b> rooms</span>
-          </div>
+      <section class="dsMovieHomeBoard">
+        <div>
+          <span class="dsEyebrow">Streaming made simple</span>
+          <h2>Movies, shows, watchlists, and watch rooms.</h2>
+          <p>Browse trending titles, save your list, continue watching, and jump into a synced room whenever you want.</p>
         </div>
-        <div class="dsCoupleHomeActions dsHomeQuickActions">
+        <div class="dsCoupleHomeActions">
           <a class="dsPrimaryBtn" href="/movies">Browse Movies</a>
           <a class="dsSecondaryBtn" href="/tv">Browse TV</a>
           <a class="dsGhostPill" href="/watchrooms">Watch Rooms</a>
         </div>
-        <div class="dsCoupleHomeCards dsHomeFeatureCards">
-          <article><b>01</b><span>Discover</span></article>
-          <article><b>02</b><span>Watch</span></article>
-          <article><b>03</b><span>Save</span></article>
+        <div class="dsCoupleHomeCards">
+          <article><b>01</b><span>Find something</span></article>
+          <article><b>02</b><span>Press play</span></article>
+          <article><b>03</b><span>Save your list</span></article>
         </div>
       </section>
 
@@ -21969,7 +21376,7 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "" }) {
   const title = getTitle(hero);
   const href = `/${mediaType}/${encodeURIComponent(hero.id || "")}`;
   const bg = fullBackdrop(hero.backdrop_path || hero.poster_path);
-  const desc = hero.overview || "Browse movies, shows, trailers, cast pages, and your saved list in one polished streaming hub.";
+  const desc = hero.overview || "A premium streaming discovery experience for movies, shows, trailers, cast, and your saved list.";
   const maturity = mediaType === "tv" ? "TV-14" : "PG-13";
   return `<section class="dsHero">
     <div class="dsHeroBg" style="background-image:url('${escapeHtml(bg)}')"></div>
