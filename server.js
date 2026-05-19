@@ -18962,6 +18962,69 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
       user-select: all;
     }
 
+
+    /* ============================================================
+       v90 HLS.JS-FIRST PLAYER
+       Visible HLS attach/loading/errors instead of dead browser video.
+       ============================================================ */
+
+    .dsHlsStatus {
+      position: absolute;
+      left: 14px;
+      top: 14px;
+      z-index: 16;
+      display: grid;
+      gap: 4px;
+      max-width: min(440px, calc(100% - 28px));
+      padding: 12px 14px;
+      border-radius: 18px;
+      color: white;
+      background: rgba(7,9,18,.76);
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: 0 18px 60px rgba(0,0,0,.38);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      pointer-events: none;
+    }
+
+    .dsHlsStatus[hidden] {
+      display: none !important;
+    }
+
+    .dsHlsStatus b {
+      font-family: "Space Grotesk", Inter, Arial, sans-serif;
+      font-size: 18px;
+      letter-spacing: -.035em;
+    }
+
+    .dsHlsStatus span {
+      color: rgba(248,251,255,.68);
+      font-size: 12px;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .dsHlsStatus.isError {
+      border-color: rgba(255,104,142,.38);
+      background:
+        radial-gradient(circle at 0% 0%, rgba(255,104,142,.22), transparent 42%),
+        rgba(7,9,18,.82);
+    }
+
+    .dsStandaloneHlsShell {
+      position: relative;
+      min-height: 70vh;
+      display: grid;
+      place-items: center;
+      background: #000;
+    }
+
+    .dsStandaloneHlsShell video {
+      width: min(100%, 1200px);
+      max-height: 78vh;
+      background: #000;
+    }
+
   </style>
 
     <script>
@@ -21939,7 +22002,8 @@ function watchroomPage(req, res) {
           <div class="dsRoomMovieStage" id="roomMovieStage">
             <iframe id="roomMovieFrame" class="dsRoomMovieFrame" title="Synced room movie" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write; web-share" allowfullscreen referrerpolicy="no-referrer" hidden></iframe>
             <div id="roomMovieIframeSyncOverlay" class="dsIframeSyncOverlay" hidden><span>Room target</span><b id="roomMovieIframeTarget">0:00</b><small>Iframe players cannot be force-seeked by the browser. Use this target if the embed drifts.</small></div>
-            <video id="roomMovieVideo" class="dsRoomMovieFrame dsCustomMovieVideo" playsinline preload="metadata" hidden></video>
+            <video id="roomMovieVideo" class="dsRoomMovieFrame dsCustomMovieVideo" playsinline preload="metadata" crossorigin="anonymous" hidden></video>
+            <div id="roomMovieHlsStatus" class="dsHlsStatus" hidden><b>Loading m3u8...</b><span>Starting HLS player</span></div>
             <div id="roomMoviePlayerChrome" class="dsCustomPlayerChrome" hidden>
               <div class="dsCustomPlayerTop">
                 <div>
@@ -22825,6 +22889,47 @@ function watchroomPage(req, res) {
           });
         }
 
+        function setRoomMovieHlsStatus(title, detail, isError) {
+          var box = document.getElementById("roomMovieHlsStatus");
+          if (!box) return;
+          box.hidden = false;
+          box.classList.toggle("isError", Boolean(isError));
+          var b = box.querySelector("b");
+          var s = box.querySelector("span");
+          if (b) b.textContent = title || "HLS";
+          if (s) s.textContent = detail || "";
+        }
+
+        function hideRoomMovieHlsStatus() {
+          var box = document.getElementById("roomMovieHlsStatus");
+          if (box) box.hidden = true;
+        }
+
+        function loadHlsScriptFallback(callback) {
+          if (window.Hls) return callback(true);
+
+          var urls = [
+            "https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js",
+            "https://unpkg.com/hls.js@1.5.17/dist/hls.min.js",
+            "https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.17/hls.min.js"
+          ];
+          var i = 0;
+
+          function next() {
+            if (window.Hls) return callback(true);
+            if (i >= urls.length) return callback(false);
+
+            var script = document.createElement("script");
+            script.src = urls[i++];
+            script.async = true;
+            script.onload = function(){ callback(Boolean(window.Hls)); };
+            script.onerror = next;
+            document.head.appendChild(script);
+          }
+
+          next();
+        }
+
         function isRoomMovieHlsUrl(url) {
           var value = String(url || "");
           var type = String(roomMovieState.streamType || "").toLowerCase();
@@ -22865,21 +22970,38 @@ function watchroomPage(req, res) {
           roomMovieState.hlsReady = false;
           roomMovieState.hlsIsLive = Boolean(roomMovieState.isLiveM3u8) || String(roomMovieState.streamMode || "").includes("live");
 
+          try {
+            video.crossOrigin = "anonymous";
+            video.removeAttribute("src");
+            video.load();
+          } catch {}
+
           if (isRoomMovieHlsUrl(src)) {
             destroyRoomMovieHls();
+            setRoomMovieHlsStatus("Loading m3u8...", "Preparing HLS.js player", false);
 
-            // Like normal online HLS players: attach source, wait for user/play button,
-            // recover errors, and do not force autoplay/live-edge unless the manifest is live.
-            if (video.canPlayType && video.canPlayType("application/vnd.apple.mpegurl")) {
+            // Safari/iOS can play HLS natively. Chrome/Edge/Firefox need hls.js.
+            var nativeHls = video.canPlayType && video.canPlayType("application/vnd.apple.mpegurl");
+            var isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+            if (nativeHls && isiOS) {
               video.src = src;
               video.dataset.hlsSrc = src;
               try { video.load(); } catch {}
               roomMovieState.hlsReady = true;
+              setRoomMovieHlsStatus("m3u8 ready", "Native Safari HLS loaded. Press play.", false);
+              setTimeout(hideRoomMovieHlsStatus, 1800);
               return true;
             }
 
-            if (window.Hls && window.Hls.isSupported && window.Hls.isSupported()) {
+            loadHlsScriptFallback(function(loaded) {
+              if (!loaded || !window.Hls || !window.Hls.isSupported || !window.Hls.isSupported()) {
+                setRoomMovieHlsStatus("HLS.js did not load", "The browser cannot play this m3u8 without HLS.js.", true);
+                return;
+              }
+
               var hls = new window.Hls({
+                debug: false,
                 enableWorker: true,
                 lowLatencyMode: false,
                 backBufferLength: 90,
@@ -22887,6 +23009,12 @@ function watchroomPage(req, res) {
                 maxMaxBufferLength: 120,
                 startPosition: -1,
                 capLevelToPlayerSize: true,
+                manifestLoadingMaxRetry: 4,
+                manifestLoadingRetryDelay: 1000,
+                levelLoadingMaxRetry: 4,
+                levelLoadingRetryDelay: 1000,
+                fragLoadingMaxRetry: 6,
+                fragLoadingRetryDelay: 1000,
                 fragLoadingTimeOut: 30000,
                 manifestLoadingTimeOut: 30000,
                 levelLoadingTimeOut: 30000,
@@ -22895,16 +23023,21 @@ function watchroomPage(req, res) {
               window.__roomMovieHls = hls;
               video.dataset.hlsSrc = src;
 
-              hls.attachMedia(video);
-
               hls.on(window.Hls.Events.MEDIA_ATTACHED, function() {
+                setRoomMovieHlsStatus("Loading m3u8...", "Fetching manifest", false);
                 hls.loadSource(src);
               });
 
-              hls.on(window.Hls.Events.MANIFEST_PARSED, function() {
+              hls.on(window.Hls.Events.MANIFEST_LOADING, function() {
+                setRoomMovieHlsStatus("Loading m3u8...", "Manifest request sent", false);
+              });
+
+              hls.on(window.Hls.Events.MANIFEST_PARSED, function(event, data) {
                 roomMovieState.hlsReady = true;
+                setRoomMovieHlsStatus("m3u8 ready", "Levels: " + ((data && data.levels && data.levels.length) || 1) + ". Press play.", false);
                 setRoomMovieStatus("m3u8 loaded. Press play when ready.");
                 updateCustomPlayerUi();
+                setTimeout(hideRoomMovieHlsStatus, 2500);
               });
 
               hls.on(window.Hls.Events.LEVEL_LOADED, function(event, data) {
@@ -22915,35 +23048,37 @@ function watchroomPage(req, res) {
 
               hls.on(window.Hls.Events.ERROR, function(event, data) {
                 if (!data) return;
+                var details = String(data.details || data.reason || data.type || "Unknown HLS error");
                 console.warn("SwiflyTV HLS error", data);
 
-                if (!data.fatal) return;
+                if (!data.fatal) {
+                  setRoomMovieHlsStatus("HLS warning", details, false);
+                  return;
+                }
 
                 if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
-                  setRoomMovieStatus("HLS network hiccup. Recovering...");
+                  setRoomMovieHlsStatus("HLS network error", "Retrying stream load...", true);
                   try { hls.startLoad(); } catch {}
                   return;
                 }
 
                 if (data.type === window.Hls.ErrorTypes.MEDIA_ERROR) {
-                  setRoomMovieStatus("HLS media hiccup. Recovering...");
+                  setRoomMovieHlsStatus("HLS media error", "Trying media recovery...", true);
                   try { hls.recoverMediaError(); } catch {}
                   return;
                 }
 
-                try { hls.destroy(); } catch {}
-                window.__roomMovieHls = null;
-                fallbackToRoomMovieIframe("HLS playback error");
+                setRoomMovieHlsStatus("HLS failed", details, true);
               });
 
-              return true;
-            }
+              hls.attachMedia(video);
+            });
 
-            fallbackToRoomMovieIframe("HLS is not supported in this browser");
-            return false;
+            return true;
           }
 
           destroyRoomMovieHls();
+          hideRoomMovieHlsStatus();
           video.src = src;
           try { video.load(); } catch {}
           return true;
@@ -24025,6 +24160,43 @@ function watchroomPage(req, res) {
             setMovieStatus("Movie loaded. Room timer: " + formatTime(currentTargetTime()));
           }
 
+          function setPollingHlsStatus(title, detail, isError) {
+            var box = byId("roomMovieHlsStatus");
+            if (!box) return;
+            box.hidden = false;
+            box.classList.toggle("isError", Boolean(isError));
+            var b = box.querySelector("b");
+            var s = box.querySelector("span");
+            if (b) b.textContent = title || "HLS";
+            if (s) s.textContent = detail || "";
+          }
+
+          function hidePollingHlsStatus() {
+            var box = byId("roomMovieHlsStatus");
+            if (box) box.hidden = true;
+          }
+
+          function loadPollingHlsScript(callback) {
+            if (window.Hls) return callback(true);
+            var urls = [
+              "https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js",
+              "https://unpkg.com/hls.js@1.5.17/dist/hls.min.js",
+              "https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.17/hls.min.js"
+            ];
+            var i = 0;
+            function next() {
+              if (window.Hls) return callback(true);
+              if (i >= urls.length) return callback(false);
+              var script = document.createElement("script");
+              script.src = urls[i++];
+              script.async = true;
+              script.onload = function(){ callback(Boolean(window.Hls)); };
+              script.onerror = next;
+              document.head.appendChild(script);
+            }
+            next();
+          }
+
           function isPollingHlsUrl(url) {
             var value = String(url || "");
             var type = String(movie.streamType || "").toLowerCase();
@@ -24065,19 +24237,37 @@ function watchroomPage(req, res) {
             movie.hlsReady = false;
             movie.hlsIsLive = Boolean(movie.isLiveM3u8) || String(movie.streamMode || "").includes("live");
 
+            try {
+              video.crossOrigin = "anonymous";
+              video.removeAttribute("src");
+              video.load();
+            } catch {}
+
             if (isPollingHlsUrl(src)) {
               destroyPollingHls();
+              setPollingHlsStatus("Loading m3u8...", "Preparing HLS.js player", false);
 
-              if (video.canPlayType && video.canPlayType("application/vnd.apple.mpegurl")) {
+              var nativeHls = video.canPlayType && video.canPlayType("application/vnd.apple.mpegurl");
+              var isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+              if (nativeHls && isiOS) {
                 video.src = src;
                 video.dataset.hlsSrc = src;
                 try { video.load(); } catch {}
                 movie.hlsReady = true;
+                setPollingHlsStatus("m3u8 ready", "Native Safari HLS loaded. Press play.", false);
+                setTimeout(hidePollingHlsStatus, 1800);
                 return true;
               }
 
-              if (window.Hls && window.Hls.isSupported && window.Hls.isSupported()) {
+              loadPollingHlsScript(function(loaded) {
+                if (!loaded || !window.Hls || !window.Hls.isSupported || !window.Hls.isSupported()) {
+                  setPollingHlsStatus("HLS.js did not load", "The browser cannot play this m3u8 without HLS.js.", true);
+                  return;
+                }
+
                 var hls = new window.Hls({
+                  debug: false,
                   enableWorker: true,
                   lowLatencyMode: false,
                   backBufferLength: 90,
@@ -24085,23 +24275,31 @@ function watchroomPage(req, res) {
                   maxMaxBufferLength: 120,
                   startPosition: -1,
                   capLevelToPlayerSize: true,
+                  manifestLoadingMaxRetry: 4,
+                  manifestLoadingRetryDelay: 1000,
+                  levelLoadingMaxRetry: 4,
+                  levelLoadingRetryDelay: 1000,
+                  fragLoadingMaxRetry: 6,
+                  fragLoadingRetryDelay: 1000,
                   fragLoadingTimeOut: 30000,
                   manifestLoadingTimeOut: 30000,
                   levelLoadingTimeOut: 30000,
                 });
+
                 window.__roomMoviePollingHls = hls;
                 video.dataset.hlsSrc = src;
 
-                hls.attachMedia(video);
-
                 hls.on(window.Hls.Events.MEDIA_ATTACHED, function() {
+                  setPollingHlsStatus("Loading m3u8...", "Fetching manifest", false);
                   hls.loadSource(src);
                 });
 
-                hls.on(window.Hls.Events.MANIFEST_PARSED, function() {
+                hls.on(window.Hls.Events.MANIFEST_PARSED, function(event, data) {
                   movie.hlsReady = true;
+                  setPollingHlsStatus("m3u8 ready", "Levels: " + ((data && data.levels && data.levels.length) || 1) + ". Press play.", false);
                   setMovieStatus("m3u8 loaded. Press play when ready.");
                   bindPollingCustomPlayer();
+                  setTimeout(hidePollingHlsStatus, 2500);
                 });
 
                 hls.on(window.Hls.Events.LEVEL_LOADED, function(event, data) {
@@ -24111,34 +24309,37 @@ function watchroomPage(req, res) {
 
                 hls.on(window.Hls.Events.ERROR, function(event, data) {
                   if (!data) return;
+                  var details = String(data.details || data.reason || data.type || "Unknown HLS error");
                   console.warn("SwiflyTV polling HLS error", data);
 
-                  if (!data.fatal) return;
+                  if (!data.fatal) {
+                    setPollingHlsStatus("HLS warning", details, false);
+                    return;
+                  }
 
                   if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
-                    setMovieStatus("HLS network hiccup. Recovering...");
+                    setPollingHlsStatus("HLS network error", "Retrying stream load...", true);
                     try { hls.startLoad(); } catch {}
                     return;
                   }
 
                   if (data.type === window.Hls.ErrorTypes.MEDIA_ERROR) {
-                    setMovieStatus("HLS media hiccup. Recovering...");
+                    setPollingHlsStatus("HLS media error", "Trying media recovery...", true);
                     try { hls.recoverMediaError(); } catch {}
                     return;
                   }
 
-                  try { hls.destroy(); } catch {}
-                  window.__roomMoviePollingHls = null;
-                  fallbackPollingIframe("HLS playback error");
+                  setPollingHlsStatus("HLS failed", details, true);
                 });
-                return true;
-              }
 
-              fallbackPollingIframe("HLS is not supported in this browser");
-              return false;
+                hls.attachMedia(video);
+              });
+
+              return true;
             }
 
             destroyPollingHls();
+            hidePollingHlsStatus();
             video.src = src;
             try { video.load(); } catch {}
             return true;
@@ -24953,34 +25154,77 @@ app.get("/m3u8-player", (req, res) => {
   const useProxy = String(req.query.proxy || "").toLowerCase() === "true";
   const hlsProxy = rawSrc && useProxy ? registerHlsProxySource(rawSrc, srcHeaders, { standalone: true }) : { url: "" };
   const src = hlsProxy.url || rawSrc;
-  const safeSrc = escapeHtml(src);
   const body = `<main class="dsWatchPage dsM3u8Standalone">
     <section class="dsWatchHero">
       <div>
         <span class="dsEyebrow">HLS / M3U8 Player</span>
         <h1>SwiflyTV M3U8 Player</h1>
-        <p>Paste a licensed m3u8 URL as <code>?url=</code>. This loads the raw m3u8 directly through the custom HLS player. Add <code>&proxy=true</code> only if you need the optional server proxy.</p>
+        <p>Paste a licensed m3u8 URL as <code>?url=</code>. This uses a real HLS.js player, not plain browser video.</p>
       </div>
     </section>
 
-    <section class="dsWatchShell">
-      ${src ? `<video id="standaloneM3u8Video" class="dsDirectMovieVideo" controls playsinline preload="metadata"></video>` : `<div class="dsNoTrailer"><h2>No m3u8 URL</h2><p>Add <code>?url=https://example.com/master.m3u8</code></p></div>`}
+    <section class="dsWatchShell dsStandaloneHlsShell">
+      ${src ? `<video id="standaloneM3u8Video" class="dsDirectMovieVideo" controls playsinline crossorigin="anonymous" preload="metadata"></video>
+      <div id="standaloneHlsStatus" class="dsHlsStatus"><b>Loading m3u8...</b><span>Preparing HLS.js player</span></div>` : `<div class="dsNoTrailer"><h2>No m3u8 URL</h2><p>Add <code>?url=https://example.com/master.m3u8</code></p></div>`}
     </section>
 
     <script>
       (function(){
         var src = ${JSON.stringify(src)};
         var video = document.getElementById("standaloneM3u8Video");
+        var status = document.getElementById("standaloneHlsStatus");
         if (!src || !video) return;
 
-        if (video.canPlayType && video.canPlayType("application/vnd.apple.mpegurl")) {
+        function setStatus(title, detail, isError) {
+          if (!status) return;
+          status.hidden = false;
+          status.classList.toggle("isError", Boolean(isError));
+          status.querySelector("b").textContent = title || "HLS";
+          status.querySelector("span").textContent = detail || "";
+        }
+
+        function loadHls(callback) {
+          if (window.Hls) return callback(true);
+          var urls = [
+            "https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js",
+            "https://unpkg.com/hls.js@1.5.17/dist/hls.min.js",
+            "https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.17/hls.min.js"
+          ];
+          var i = 0;
+          function next() {
+            if (window.Hls) return callback(true);
+            if (i >= urls.length) return callback(false);
+            var script = document.createElement("script");
+            script.src = urls[i++];
+            script.async = true;
+            script.onload = function(){ callback(Boolean(window.Hls)); };
+            script.onerror = next;
+            document.head.appendChild(script);
+          }
+          next();
+        }
+
+        try { video.crossOrigin = "anonymous"; } catch {}
+
+        var nativeHls = video.canPlayType && video.canPlayType("application/vnd.apple.mpegurl");
+        var isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+        if (nativeHls && isiOS) {
           video.src = src;
           video.load();
+          setStatus("m3u8 ready", "Native Safari HLS loaded. Press play.", false);
+          setTimeout(function(){ status.hidden = true; }, 2000);
           return;
         }
 
-        if (window.Hls && window.Hls.isSupported && window.Hls.isSupported()) {
+        loadHls(function(loaded) {
+          if (!loaded || !window.Hls || !window.Hls.isSupported()) {
+            setStatus("HLS.js did not load", "This browser needs HLS.js to play m3u8.", true);
+            return;
+          }
+
           var hls = new window.Hls({
+            debug: false,
             enableWorker: true,
             lowLatencyMode: false,
             backBufferLength: 90,
@@ -24988,92 +25232,56 @@ app.get("/m3u8-player", (req, res) => {
             maxMaxBufferLength: 120,
             startPosition: -1,
             capLevelToPlayerSize: true,
-            fragLoadingTimeOut: 30000,
+            manifestLoadingMaxRetry: 4,
+            levelLoadingMaxRetry: 4,
+            fragLoadingMaxRetry: 6,
             manifestLoadingTimeOut: 30000,
             levelLoadingTimeOut: 30000,
+            fragLoadingTimeOut: 30000
           });
-          hls.loadSource(src);
-          hls.attachMedia(video);
-          hls.on(window.Hls.Events.ERROR, function(event, data) {
-            if (data && data.fatal) console.warn("HLS fatal error", data);
-          });
-          return;
-        }
 
-        video.outerHTML = '<div class="dsNoTrailer"><h2>HLS unsupported</h2><p>This browser could not play that m3u8 stream.</p></div>';
+          hls.on(window.Hls.Events.MEDIA_ATTACHED, function() {
+            setStatus("Loading m3u8...", "Fetching manifest", false);
+            hls.loadSource(src);
+          });
+
+          hls.on(window.Hls.Events.MANIFEST_PARSED, function(event, data) {
+            setStatus("m3u8 ready", "Levels: " + ((data && data.levels && data.levels.length) || 1) + ". Press play.", false);
+            setTimeout(function(){ status.hidden = true; }, 2500);
+          });
+
+          hls.on(window.Hls.Events.ERROR, function(event, data) {
+            if (!data) return;
+            var details = String(data.details || data.reason || data.type || "Unknown HLS error");
+            console.warn("Standalone HLS error", data);
+
+            if (!data.fatal) {
+              setStatus("HLS warning", details, false);
+              return;
+            }
+
+            if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
+              setStatus("HLS network error", "Retrying stream load...", true);
+              try { hls.startLoad(); } catch {}
+              return;
+            }
+
+            if (data.type === window.Hls.ErrorTypes.MEDIA_ERROR) {
+              setStatus("HLS media error", "Trying media recovery...", true);
+              try { hls.recoverMediaError(); } catch {}
+              return;
+            }
+
+            setStatus("HLS failed", details, true);
+          });
+
+          hls.attachMedia(video);
+        });
       })();
     </script>
   </main>`;
   res.send(pageShell({ title: `${SITE_NAME} — M3U8 Player`, active: "watch", body }));
 });
-
-
-
-app.get("/api/hls-proxy/:id/master.m3u8", async (req, res) => {
-  const entry = getHlsProxyEntry(req.params.id);
-  if (!entry) {
-    return res.status(404).type("text/plain").send("HLS proxy source expired or missing.");
-  }
-
-  try {
-    const upstream = await fetchHlsProxyUrl(entry, entry.sourceUrl);
-    if (!upstream.ok) {
-      return res.status(upstream.status).type("text/plain").send(`HLS upstream returned HTTP ${upstream.status}`);
-    }
-
-    const playlist = await upstream.text();
-    const rewritten = rewriteHlsPlaylist(playlist, entry.sourceUrl, entry.id);
-
-    res.set("Cache-Control", "no-store");
-    res.set("Access-Control-Allow-Origin", "*");
-    res.type("application/vnd.apple.mpegurl").send(rewritten);
-  } catch (error) {
-    res.status(502).type("text/plain").send(`HLS proxy failed: ${error.message || "unknown error"}`);
-  }
-});
-
-app.get("/api/hls-proxy/:id/asset", async (req, res) => {
-  const entry = getHlsProxyEntry(req.params.id);
-  if (!entry) {
-    return res.status(404).type("text/plain").send("HLS proxy source expired or missing.");
-  }
-
-  let targetUrl = "";
-  try {
-    targetUrl = hlsProxyBase64UrlDecode(String(req.query.u || ""));
-    const parsed = new URL(targetUrl);
-    if (!["http:", "https:"].includes(parsed.protocol)) {
-      return res.status(400).type("text/plain").send("Invalid HLS asset URL.");
-    }
-  } catch {
-    return res.status(400).type("text/plain").send("Invalid HLS asset URL.");
-  }
-
-  try {
-    const upstream = await fetchHlsProxyUrl(entry, targetUrl);
-    if (!upstream.ok) {
-      return res.status(upstream.status).type("text/plain").send(`HLS asset upstream returned HTTP ${upstream.status}`);
-    }
-
-    const contentType = upstream.headers.get("content-type") || "";
-    res.set("Cache-Control", "public, max-age=20");
-    res.set("Access-Control-Allow-Origin", "*");
-
-    if (isHlsLikeResponse(targetUrl, contentType)) {
-      const nested = await upstream.text();
-      const rewritten = rewriteHlsPlaylist(nested, targetUrl, entry.id);
-      return res.type("application/vnd.apple.mpegurl").send(rewritten);
-    }
-
-    const arrayBuffer = await upstream.arrayBuffer();
-    if (contentType) res.type(contentType);
-    else res.type("application/octet-stream");
-    return res.send(Buffer.from(arrayBuffer));
-  } catch (error) {
-    res.status(502).type("text/plain").send(`HLS asset proxy failed: ${error.message || "unknown error"}`);
-  }
-});
-
 
 app.get("/favicon.ico", (req, res) => {
   res.status(204).end();
