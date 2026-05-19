@@ -19162,6 +19162,22 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v94 BOOT ROUTE FIX
+       Restores missing /continue-watching and /api/status handlers.
+       ============================================================ */
+
+    .dsContinuePagePanel {
+      width: min(1320px, calc(100vw - 34px));
+      margin: 22px auto 70px;
+      padding: 20px;
+      border-radius: 28px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.11);
+      box-shadow: 0 22px 80px rgba(0,0,0,.28);
+    }
+
   </style>
 
     <script>
@@ -26192,6 +26208,105 @@ function profilesPage(req, res) {
 
 
 app.get("/account", accountPage);
+
+function continueWatchingPage(req, res) {
+  const body = `<main class="dsPlainPage dsContinueWatchingPage">
+    <section class="dsAccountHero">
+      <div>
+        <span class="dsEyebrow">Continue Watching</span>
+        <h1>Pick up where you left off.</h1>
+        <p>Your recently opened movies and shows appear here on this device.</p>
+      </div>
+      <div class="dsAccountActions">
+        <a class="dsPrimaryBtn" href="/movies">Browse Movies</a>
+        <a class="dsSecondaryBtn" href="/tv">Browse TV Shows</a>
+        <a class="dsGhostPill" href="/date-profile">Date Profile</a>
+      </div>
+    </section>
+
+    <section class="dsContinuePagePanel">
+      <div class="dsRowHead">
+        <h2>Recently watched</h2>
+        <span class="dsRowTag">Local device</span>
+      </div>
+      <div id="continueWatchingPageRail" class="movieRail dsRail"></div>
+      <div id="continueWatchingEmpty" class="dsNoTrailer" hidden>
+        <h2>No watch history yet</h2>
+        <p>Open a movie or show and SwiflyTV will keep it here for later.</p>
+      </div>
+    </section>
+
+    <script>
+      (function continueWatchingUi(){
+        const rail = document.getElementById("continueWatchingPageRail");
+        const empty = document.getElementById("continueWatchingEmpty");
+        if (!rail || !empty) return;
+
+        function esc(value) {
+          return String(value || "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;");
+        }
+
+        function readItems() {
+          try {
+            const saved = JSON.parse(localStorage.getItem("swiflytv.continueWatching") || "[]");
+            return Array.isArray(saved) ? saved : [];
+          } catch {
+            return [];
+          }
+        }
+
+        function posterUrl(path) {
+          if (!path) return "";
+          if (String(path).startsWith("http")) return String(path);
+          return "https://image.tmdb.org/t/p/w342" + String(path);
+        }
+
+        function itemHref(item) {
+          const type = item.type || item.media_type || "movie";
+          const id = item.id || item.tmdbId || "";
+          return id ? "/watch/" + encodeURIComponent(type) + "/" + encodeURIComponent(id) + "?mode=movie" : "/movies";
+        }
+
+        const items = readItems()
+          .filter(Boolean)
+          .sort((a, b) => Number(b.updatedAt || b.savedAt || 0) - Number(a.updatedAt || a.savedAt || 0))
+          .slice(0, 24);
+
+        if (!items.length) {
+          empty.hidden = false;
+          rail.hidden = true;
+          return;
+        }
+
+        empty.hidden = true;
+        rail.hidden = false;
+        rail.innerHTML = items.map((item) => {
+          const title = item.title || item.name || "Untitled";
+          const type = item.type || item.media_type || "movie";
+          const year = item.year || "";
+          const poster = posterUrl(item.poster || item.poster_path || "");
+          return '<a class="movieCard" href="' + esc(itemHref(item)) + '">' +
+            '<div class="posterWrap">' +
+              (poster ? '<img src="' + esc(poster) + '" alt="' + esc(title) + '" loading="lazy" />' : '<div class="posterFallback">' + esc(title).slice(0,1) + '</div>') +
+            '</div>' +
+            '<div class="movieMeta">' +
+              '<strong>' + esc(title) + '</strong>' +
+              '<span>' + esc(String(type).toUpperCase()) + (year ? ' • ' + esc(year) : '') + '</span>' +
+            '</div>' +
+          '</a>';
+        }).join("");
+      })();
+    </script>
+  </main>`;
+
+  res.send(pageShell({ title: `${SITE_NAME} — Continue Watching`, active: "continue", body }));
+}
+
+
 app.get("/continue-watching", continueWatchingPage);
 app.get("/continue", continueWatchingPage);
 
@@ -26367,6 +26482,25 @@ app.get("/api/watchrooms", (req, res) => {
     .map(publicRoom);
   res.json({ rooms });
 });
+
+
+function apiStatus(req, res) {
+  res.set("Cache-Control", "no-store");
+  res.json({
+    ok: true,
+    site: SITE_NAME,
+    version: "v94",
+    uptime: Math.round(process.uptime()),
+    now: Date.now(),
+    features: {
+      regularMovieSite: true,
+      dateProfile: true,
+      regularMovieM3u8Player: true,
+      videojsM3u8Player: true,
+      hlsProxyEnabled: typeof hlsProxyEnabled === "function" ? hlsProxyEnabled() : false,
+    },
+  });
+}
 
 app.get("/api/status", apiStatus);
 app.get("/health", apiStatus);
