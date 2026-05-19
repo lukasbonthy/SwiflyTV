@@ -17377,7 +17377,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
     /* ============================================================
        v62 COUPLES EDITION
-       Long-distance couple targeting: watch rooms, couple dashboard,
+       Long-distance couple targeting: date rooms, couple dashboard,
        shared watch planning, and softer premium UI accents.
        ============================================================ */
 
@@ -19180,3276 +19180,750 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
 
     /* ============================================================
-       v98 CLEAN PROFESSIONAL RESET
-       Stable UI polish only. No new color palette, no red glow system,
-       no ambient effects, no hover preview popups, no layout fighting.
+       v96 UI POLISH + SOCIAL HUB
+       Cleaner profile flow, upgraded cards, and built-in social page.
        ============================================================ */
 
-    .netflixTopbar {
-      border-bottom: 1px solid rgba(255,255,255,.08);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+    :root {
+      --sw-card: rgba(12, 15, 25, .72);
+      --sw-card-2: rgba(255,255,255,.07);
+      --sw-line: rgba(255,255,255,.12);
+      --sw-soft: rgba(248,251,255,.68);
     }
 
-    .netflixLinks a,
-    .mobileNav a {
-      transition: background .16s ease, transform .16s ease, color .16s ease;
+    .dsCleanHero {
+      width: min(1180px, calc(100vw - 34px));
+      margin: 48px auto 24px;
+      padding: clamp(24px, 4vw, 44px);
+      border-radius: 34px;
+      background:
+        radial-gradient(760px circle at 0% 0%, rgba(229,9,20,.18), transparent 46%),
+        radial-gradient(620px circle at 100% 0%, rgba(255,255,255,.10), transparent 48%),
+        var(--sw-card);
+      border: 1px solid var(--sw-line);
+      box-shadow: 0 28px 100px rgba(0,0,0,.32);
+      backdrop-filter: blur(18px) saturate(1.08);
+      -webkit-backdrop-filter: blur(18px) saturate(1.08);
     }
 
-    .netflixLinks a:hover,
-    .netflixLinks a.active,
-    .mobileNav a:hover,
-    .mobileNav a.active {
-      background: rgba(255,255,255,.08);
-      transform: translateY(-1px);
+    .dsCleanHero h1 {
+      margin: 6px 0 8px;
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-size: clamp(38px, 6vw, 76px);
+      letter-spacing: -.08em;
+      line-height: .9;
     }
 
-    .dsNavSearch {
-      border: 1px solid rgba(255,255,255,.12);
-      transition: border-color .16s ease, background .16s ease;
+    .dsCleanHero p {
+      max-width: 760px;
+      margin: 0;
+      color: var(--sw-soft);
+      line-height: 1.6;
+      font-weight: 650;
     }
 
-    .dsNavSearch:focus-within {
-      border-color: rgba(255,255,255,.24);
+    .dsHeroMiniActions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .dsProfilesSelectShell,
+    .dsProfileManagerLayout {
+      width: min(1180px, calc(100vw - 34px));
+      margin: 0 auto 80px;
+    }
+
+    .dsProfilesChoiceGrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 18px;
+    }
+
+    .dsProfileSelectCard,
+    .dsManageProfileCard,
+    .dsProfileManagerPanel,
+    .dsProfileManagerList {
+      border: 1px solid var(--sw-line);
+      background:
+        radial-gradient(360px circle at 10% 0%, rgba(255,255,255,.10), transparent 52%),
+        var(--sw-card-2);
+      box-shadow: 0 20px 70px rgba(0,0,0,.24);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .dsProfileSelectCard {
+      min-height: 230px;
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 12px;
+      padding: 22px;
+      border-radius: 32px;
+      color: white;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform .18s ease, border-color .18s ease, background .18s ease;
+    }
+
+    .dsProfileSelectCard:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255,255,255,.25);
       background: rgba(255,255,255,.10);
     }
 
-    .dsHeroContent,
-    .dsMovieHomeBoard,
-    .dsAccountHero,
-    .dsContinuePagePanel,
-    .dsProfileCreate,
-    .dsProfilesHero {
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-    }
-
-    .dsHeroContent h1,
-    .dsPageHeader h1,
-    .dsAccountHero h1,
-    .dsProfilesHero h1 {
-      text-wrap: balance;
-    }
-
-    .movieCard .posterWrap,
-    .topTenPoster,
-    .dsCastCard,
-    .dsAccountCard,
-    .dsProfileCard {
-      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, filter .18s ease;
-    }
-
-    .movieCard:hover .posterWrap,
-    .topTenPoster:hover,
-    .dsCastCard:hover,
-    .dsAccountCard:hover,
-    .dsProfileCard:hover {
-      transform: translateY(-6px);
-      border-color: rgba(255,255,255,.22);
-      box-shadow: 0 20px 54px rgba(0,0,0,.34);
-      filter: brightness(1.04);
-    }
-
-    .posterWrap img,
-    .topTenPoster img,
-    .dsCastCard img {
-      transition: opacity .22s ease, transform .28s ease;
-    }
-
-    .movieCard:hover .posterWrap img,
-    .topTenPoster:hover img {
-      transform: scale(1.025);
-    }
-
-    .dsPrimaryBtn,
-    .dsSecondaryBtn,
-    .dsGhostPill,
-    .dsMiniBtn,
-    .dsIconBtn {
-      transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease;
-    }
-
-    .dsPrimaryBtn:hover,
-    .dsSecondaryBtn:hover,
-    .dsGhostPill:hover,
-    .dsMiniBtn:hover,
-    .dsIconBtn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 16px 38px rgba(0,0,0,.26);
-    }
-
-    .movieRail {
-      scrollbar-width: thin;
-      scrollbar-color: rgba(255,255,255,.26) transparent;
-    }
-
-    .movieRail::-webkit-scrollbar {
-      height: 8px;
-    }
-
-    .movieRail::-webkit-scrollbar-thumb {
-      border-radius: 999px;
-      background: rgba(255,255,255,.22);
-    }
-
-    .movieRail::-webkit-scrollbar-thumb:hover {
-      background: rgba(255,255,255,.34);
-    }
-
-    .dsWatchPlayerCard,
-    .dsMovieButtonPlayerShell,
-    .dsWatchFrame,
-    .dsDirectVideoShell {
-      box-shadow: 0 28px 80px rgba(0,0,0,.34);
-    }
-
-    .dsProxyVideoWaitingCard,
-    .dsHlsStatus,
-    .dsProfileDropdown {
-      border-color: rgba(255,255,255,.14);
-      box-shadow: 0 24px 70px rgba(0,0,0,.32);
-    }
-
-    .dsCleanProgress {
-      height: 5px;
-      width: 100%;
-      overflow: hidden;
-      border-radius: 999px;
-      background: rgba(255,255,255,.12);
-    }
-
-    .dsCleanProgress span {
-      display: block;
-      height: 100%;
-      width: var(--progress, 0%);
-      border-radius: inherit;
-      background: currentColor;
-      opacity: .85;
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      *,
-      *::before,
-      *::after {
-        transition-duration: .001ms !important;
-        animation-duration: .001ms !important;
-        animation-iteration-count: 1 !important;
-      }
-    }
-
-
-    /* ============================================================
-       v99 VISUAL CLEANUP
-       Fixes rough UI areas without changing the color palette.
-       Uses existing vars/rgba/currentColor only.
-       ============================================================ */
-
-    body {
-      text-rendering: optimizeLegibility;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    .netflixTopbar {
-      min-height: 72px;
-      padding-top: 10px;
-      padding-bottom: 10px;
-    }
-
-    .netflixLinks {
-      gap: 4px;
-    }
-
-    .netflixLinks a {
-      padding: 9px 12px;
-      border-radius: 999px;
-      line-height: 1;
-    }
-
-    .netflixActions {
-      gap: 10px;
-    }
-
-    .profileButton {
-      min-height: 40px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.06);
-    }
-
-    .dsNavSearch input {
-      min-height: 38px;
-    }
-
-    .dsContent,
-    .container {
-      width: min(1420px, calc(100vw - 32px));
-    }
-
-    .section,
-    .dsRow {
-      margin-top: clamp(24px, 4vw, 48px);
-      margin-bottom: clamp(24px, 4vw, 48px);
-    }
-
-    .sectionHead,
-    .dsRowHead {
-      align-items: end;
-      gap: 14px;
-      margin-bottom: 14px;
-    }
-
-    .sectionHead h2,
-    .dsRowHead h2 {
-      letter-spacing: -.045em;
-      line-height: .98;
-    }
-
-    .sectionHead span,
-    .dsRowTag,
-    .dsEyebrow {
-      letter-spacing: .085em;
-    }
-
-    .movieRail {
-      gap: clamp(12px, 1.4vw, 18px);
-      padding: 8px 2px 18px;
-    }
-
-    .movieGrid,
-    .dsGrid,
-    .collectionGrid {
-      gap: clamp(14px, 2vw, 24px);
-    }
-
-    .movieCard {
-      border-radius: 22px;
-    }
-
-    .posterWrap,
-    .dsThumb,
-    .topTenPoster {
-      border-radius: 22px;
-      overflow: hidden;
-      background: rgba(255,255,255,.05);
-      border: 1px solid rgba(255,255,255,.08);
-    }
-
-    .posterWrap img,
-    .dsThumb img,
-    .topTenPoster img {
-      display: block;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .dsCardOverlay {
-      padding: 14px;
-    }
-
-    .dsCardControls {
-      gap: 8px;
-    }
-
-    .dsPlayDot,
-    .dsMiniBtn,
-    .dsIconBtn {
-      width: 38px;
-      height: 38px;
-      min-width: 38px;
-      border-radius: 999px;
-    }
-
-    .dsCardTitle {
-      line-height: 1.05;
-      letter-spacing: -.02em;
-    }
-
-    .dsCardMeta {
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    .dsCardMeta span,
-    .dsCardMeta b {
-      white-space: nowrap;
-    }
-
-    .dsHero {
-      min-height: clamp(560px, 76vh, 780px);
-    }
-
-    .dsHeroContent {
-      padding-top: 92px;
-    }
-
-    .dsHeroContent h1 {
-      max-width: 880px;
-      line-height: .92;
-    }
-
-    .dsHeroContent p {
-      max-width: 680px;
-      line-height: 1.55;
-    }
-
-    .dsHeroActions,
-    .heroActions,
-    .dsDetailActions,
-    .dsWatchActions,
-    .dsAccountActions {
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .dsPrimaryBtn,
-    .dsSecondaryBtn,
-    .dsGhostPill,
-    .btn,
-    .sectionHead a,
-    .pagination a {
-      min-height: 42px;
-      border-radius: 999px;
-      font-weight: 850;
-      letter-spacing: -.01em;
-    }
-
-    .dsMovieHomeBoard {
-      gap: 22px;
-      padding: clamp(18px, 2.4vw, 28px);
-    }
-
-    .dsMovieHomeBoard h2 {
-      line-height: .98;
-      max-width: 780px;
-    }
-
-    .dsMovieHomeBoard p {
-      max-width: 760px;
-    }
-
-    .dsCoupleHomeActions,
-    .dsStableActions {
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .dsCoupleHomeCards {
-      gap: 10px;
-    }
-
-    .dsCoupleHomeCards article {
-      min-height: 84px;
-    }
-
-    .dsDetailShell,
-    .dsWatchPlayerCard,
-    .dsAccountHero,
-    .dsAccountCard,
-    .dsProfileCreate,
-    .dsProfilesHero,
-    .dsContinuePagePanel,
-    .dsWatchroomPanel {
-      border-radius: 28px;
-    }
-
-    .dsDetailHero {
-      min-height: clamp(520px, 72vh, 760px);
-    }
-
-    .dsDetailHeroContent {
-      padding-bottom: clamp(34px, 6vw, 72px);
-    }
-
-    .dsDetailHeroContent h1 {
-      line-height: .92;
-      max-width: 1000px;
-    }
-
-    .dsMetaBand {
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .dsMetaBand span,
-    .dsMetaBand b {
-      white-space: nowrap;
-    }
-
-    .dsDetailBody {
-      padding-top: clamp(20px, 4vw, 42px);
-    }
-
-    .dsDetailGrid {
-      gap: clamp(18px, 4vw, 44px);
-    }
-
-    .dsDetailGrid p {
-      line-height: 1.65;
-    }
-
-    .dsDetailGrid aside {
-      gap: 12px;
-    }
-
-    .dsDetailGrid aside div,
-    .dsAboutGrid div {
-      padding: 14px;
-      border-radius: 18px;
-      background: rgba(255,255,255,.055);
-      border: 1px solid rgba(255,255,255,.08);
-    }
-
-    .dsDetailTabs {
-      gap: 8px;
-      overflow-x: auto;
-      padding-bottom: 6px;
-      scrollbar-width: none;
-    }
-
-    .dsDetailTabs::-webkit-scrollbar {
-      display: none;
-    }
-
-    .dsDetailTabs a {
-      white-space: nowrap;
-      border-radius: 999px;
-    }
-
-    .dsCastRail {
-      gap: 12px;
-      padding-bottom: 12px;
-    }
-
-    .dsCastCard {
-      border-radius: 20px;
-      overflow: hidden;
-    }
-
-    .dsTrailerGrid {
-      gap: 16px;
-    }
-
-    .trailerCard,
-    .trailerCard iframe {
-      border-radius: 22px;
-      overflow: hidden;
-    }
-
-    .dsWatchPage {
-      background: transparent;
-    }
-
-    .dsWatchHero {
-      padding-top: 88px;
-    }
-
-    .dsWatchHeader {
-      gap: 12px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .dsWatchModeSwitch {
-      border-radius: 999px;
-      padding: 4px;
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.10);
-    }
-
-    .dsWatchModeSwitch a {
-      border-radius: 999px;
-      min-height: 36px;
-      display: inline-flex;
-      align-items: center;
-    }
-
-    .dsWatchPlayerTop {
-      gap: 14px;
-      align-items: start;
-    }
-
-    .dsWatchPlayerTop h1 {
-      line-height: 1;
-      letter-spacing: -.045em;
-    }
-
-    .dsWatchPlayerTop p {
-      max-width: 760px;
-      line-height: 1.55;
-    }
-
-    .dsWatchFrame {
-      border-radius: 24px;
-      overflow: hidden;
-      background: #000;
-    }
-
-    .dsMovieButtonPlayerShell,
-    .dsDirectVideoShell,
-    .dsMovieEmbedFrame,
-    .dsProxyVideoWaitingShell {
-      border-radius: 24px;
-      overflow: hidden;
-    }
-
-    .dsProxyVideoWaitingCard {
-      max-width: 560px;
-      border-radius: 28px;
-    }
-
-    .dsProxyVideoWaitStatus {
-      word-break: break-word;
-    }
-
-    .dsHlsStatus {
-      border-radius: 18px;
-    }
-
-    .dsWatchEpisodePicker {
-      border-radius: 24px;
-      gap: 12px;
-    }
-
-    .dsWatchSeasonScroll,
-    .dsWatchEpisodeScroll {
-      scrollbar-width: thin;
-      padding-bottom: 4px;
-    }
-
-    .dsWatchSeasonScroll a,
-    .dsWatchEpisodeScroll a,
-    .dsEpisodeChips a {
-      border-radius: 999px;
-      white-space: nowrap;
-    }
-
-    .dsWatchroomHero,
-    .dsWatchroomCreate,
-    .dsActiveRooms {
-      width: min(1320px, calc(100vw - 32px));
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .dsWatchroomHero {
-      border-radius: 30px;
-      padding: clamp(18px, 3vw, 32px);
-    }
-
-    .dsQuickRoomForm,
-    #createWatchroomForm,
-    #joinWatchroomForm,
-    #profileCreateForm,
-    .dsSafeAuthForm {
-      gap: 12px;
-    }
-
-    input,
-    select,
-    textarea {
-      min-height: 44px;
-      border-radius: 16px !important;
-    }
-
-    textarea {
-      min-height: 120px;
-      line-height: 1.45;
-    }
-
-    .dsAccountGrid,
-    .dsProfilesGrid {
-      gap: clamp(14px, 2vw, 22px);
-    }
-
-    .dsAccountCard,
-    .dsProfileCard {
-      min-height: 180px;
-    }
-
-    .dsProfileCard span {
-      width: 74px;
-      height: 74px;
-    }
-
-    .mobileNav {
-      padding-bottom: max(10px, env(safe-area-inset-bottom));
-    }
-
-    @media(max-width: 980px) {
-      .netflixTopbar {
-        min-height: 64px;
-      }
-
-      .dsHeroContent {
-        padding-top: 82px;
-      }
-
-      .dsMovieHomeBoard {
-        grid-template-columns: 1fr;
-      }
-
-      .dsWatchLayout {
-        grid-template-columns: 1fr;
-      }
-
-      .dsWatchPlayerTop {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media(max-width: 720px) {
-      .dsContent,
-      .container,
-      .dsWatchroomHero,
-      .dsWatchroomCreate,
-      .dsActiveRooms {
-        width: min(100vw - 22px, 100%);
-      }
-
-      .dsHero {
-        min-height: 610px;
-      }
-
-      .dsHeroContent h1,
-      .dsDetailHeroContent h1 {
-        font-size: clamp(42px, 13vw, 76px);
-      }
-
-      .dsHeroActions .dsPrimaryBtn,
-      .dsHeroActions .dsSecondaryBtn,
-      .dsWatchActions .dsPrimaryBtn,
-      .dsWatchActions .dsSecondaryBtn,
-      .dsWatchActions .dsGhostPill {
-        width: 100%;
-      }
-
-      .movieRail {
-        gap: 12px;
-        padding-left: 2px;
-        padding-right: 2px;
-      }
-
-      .posterWrap,
-      .dsThumb {
-        border-radius: 18px;
-      }
-
-      .dsCardOverlay {
-        padding: 12px;
-      }
-
-      .dsWatchHero {
-        padding-top: 74px;
-      }
-
-      .dsWatchPlayerCard {
-        border-radius: 22px;
-      }
-
-      .dsWatchFrame,
-      .dsMovieButtonPlayerShell,
-      .dsDirectVideoShell,
-      .dsMovieEmbedFrame,
-      .dsProxyVideoWaitingShell {
-        border-radius: 18px;
-      }
-
-      .dsAccountCard,
-      .dsProfileCard {
-        min-height: 150px;
-      }
-    }
-
-
-    .netflixTopbar.isScrolled {
-      box-shadow: 0 16px 42px rgba(0,0,0,.28);
-    }
-
-    img:not(.swiflyLoaded) {
-      opacity: .001;
-    }
-
-    img.swiflyLoaded {
-      opacity: 1;
-    }
-
-
-    /* ============================================================
-       v100 FEATURES + MOBILE UPGRADE
-       Adds useful feature sections and mobile app polish.
-       No new color palette, no glow/orb experiments.
-       ============================================================ */
-
-    .dsFeatureStrip {
-      width: min(1320px, calc(100vw - 32px));
-      margin: 0 auto clamp(26px, 4vw, 46px);
+    .dsProfileAvatarBig {
+      width: 92px;
+      height: 92px;
       display: grid;
-      grid-template-columns: repeat(6, minmax(0, 1fr));
-      gap: 12px;
+      place-items: center;
+      border-radius: 28px;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.30), transparent 42%),
+        linear-gradient(135deg, rgba(229,9,20,.92), rgba(91,34,255,.82));
+      box-shadow: 0 20px 70px rgba(229,9,20,.25);
+      font-size: 38px;
+      font-weight: 950;
+      color: white;
     }
 
-    .dsFeatureStrip a {
-      min-height: 106px;
-      display: grid;
-      align-content: center;
-      gap: 6px;
-      padding: 16px;
-      border-radius: 24px;
-      text-decoration: none;
-      color: var(--text);
-      background: rgba(255,255,255,.055);
-      border: 1px solid rgba(255,255,255,.10);
-      transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease;
-    }
-
-    .dsFeatureStrip a:hover {
-      transform: translateY(-4px);
-      border-color: rgba(255,255,255,.20);
-      background: rgba(255,255,255,.085);
-      box-shadow: 0 18px 44px rgba(0,0,0,.26);
-    }
-
-    .dsFeatureStrip span {
+    .dsProfileSelectCard strong {
       font-size: 22px;
-      line-height: 1;
-    }
-
-    .dsFeatureStrip b {
-      font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: 18px;
       letter-spacing: -.035em;
     }
 
-    .dsFeatureStrip small {
-      color: var(--muted);
-      font-weight: 750;
-      line-height: 1.25;
+    .dsProfileSelectCard small {
+      color: var(--sw-soft);
+      font-weight: 800;
     }
 
-    .dsLocalContinueRail {
-      width: min(1320px, calc(100vw - 32px));
-      margin: 0 auto clamp(26px, 4vw, 46px);
-    }
-
-    .dsLocalProgressLine {
-      height: 5px;
-      margin-top: 8px;
-      overflow: hidden;
-      border-radius: 999px;
-      background: rgba(255,255,255,.12);
-    }
-
-    .dsLocalProgressLine span {
-      display: block;
-      width: var(--progress, 0%);
-      height: 100%;
-      background: currentColor;
-      opacity: .82;
-    }
-
-    .swiflyMobileSearchSheet {
-      position: fixed;
-      inset: 0;
-      z-index: 9998;
-      display: grid;
-      align-items: start;
-      padding: 82px 14px 14px;
-      background: rgba(0,0,0,.62);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-    }
-
-    .swiflyMobileSearchSheet[hidden] {
-      display: none !important;
-    }
-
-    .swiflyMobileSearchBox {
-      width: min(520px, 100%);
-      margin: 0 auto;
-      display: grid;
-      gap: 10px;
-      padding: 14px;
-      border-radius: 26px;
-      background: rgba(255,255,255,.075);
-      border: 1px solid rgba(255,255,255,.14);
-      box-shadow: 0 22px 70px rgba(0,0,0,.40);
-    }
-
-    .swiflyMobileSearchBox label {
-      display: grid;
-      gap: 8px;
-    }
-
-    .swiflyMobileSearchBox label span {
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 850;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-    }
-
-    .swiflyMobileSearchBox input {
-      width: 100%;
-      min-height: 48px;
-      padding: 0 14px;
-    }
-
-    .swiflyMobileSearchBox button {
-      min-height: 44px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.12);
+    .dsAddProfileCard .dsProfileAvatarBig {
       background: rgba(255,255,255,.10);
-      color: var(--text);
-      font-weight: 850;
-    }
-
-    .dsRoomFeatureBadges {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 14px;
-    }
-
-    .dsRoomFeatureBadges span {
-      padding: 7px 10px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.08);
-      border: 1px solid rgba(255,255,255,.10);
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 850;
-    }
-
-    .mobileNav a[data-open-mobile-search] {
-      cursor: pointer;
-    }
-
-    @media(max-width: 1180px) {
-      .dsFeatureStrip {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-      }
-    }
-
-    @media(max-width: 760px) {
-      body {
-        padding-bottom: 86px;
-      }
-
-      .netflixTopbar {
-        min-height: 62px;
-        padding-left: 12px;
-        padding-right: 12px;
-      }
-
-      .netflixWordmark {
-        font-size: clamp(22px, 8vw, 34px);
-      }
-
-      .netflixActions .dsNavSearch {
-        display: none;
-      }
-
-      .dsFeatureStrip {
-        width: min(100vw - 22px, 100%);
-        display: flex;
-        gap: 10px;
-        overflow-x: auto;
-        padding: 2px 2px 14px;
-        scroll-snap-type: x mandatory;
-        scrollbar-width: none;
-      }
-
-      .dsFeatureStrip::-webkit-scrollbar {
-        display: none;
-      }
-
-      .dsFeatureStrip a {
-        min-width: 144px;
-        min-height: 96px;
-        scroll-snap-align: start;
-        border-radius: 22px;
-      }
-
-      .dsLocalContinueRail {
-        width: min(100vw - 22px, 100%);
-      }
-
-      .dsMovieHomeBoard {
-        margin-bottom: 18px;
-      }
-
-      .dsMovieHomeBoard h2 {
-        font-size: clamp(28px, 10vw, 44px);
-      }
-
-      .dsCoupleHomeCards {
-        display: grid;
-        grid-template-columns: 1fr;
-      }
-
-      .movieRail {
-        overflow-x: auto;
-        scroll-snap-type: x proximity;
-      }
-
-      .movieRail .movieCard {
-        scroll-snap-align: start;
-      }
-
-      .movieGrid,
-      .dsGrid,
-      .collectionGrid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 12px;
-      }
-
-      .dsWatchroomCreate {
-        grid-template-columns: 1fr;
-      }
-
-      .dsWatchroomHero {
-        display: grid;
-        gap: 16px;
-      }
-
-      .dsQuickRoomForm {
-        grid-template-columns: 1fr;
-      }
-
-      .dsWatchHeader,
-      .dsWatchPlayerTop,
-      .dsDetailActions,
-      .dsHeroActions {
-        align-items: stretch;
-      }
-
-      .dsWatchModeSwitch {
-        width: 100%;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-      }
-
-      .mobileNav {
-        left: 10px;
-        right: 10px;
-        bottom: 10px;
-        width: auto;
-        border-radius: 24px;
-        border: 1px solid rgba(255,255,255,.12);
-        padding: 8px 8px max(8px, env(safe-area-inset-bottom));
-      }
-
-      .mobileNav a {
-        min-height: 48px;
-        display: grid;
-        place-items: center;
-        font-size: 11px;
-      }
-
-      .dsAccountGrid,
-      .dsProfilesGrid {
-        grid-template-columns: 1fr;
-      }
-
-      .dsAccountCard,
-      .dsProfileCard {
-        min-height: 132px;
-      }
-
-      .swiflyMobileSearchSheet {
-        padding-top: 72px;
-      }
-    }
-
-    @media(max-width: 420px) {
-      .movieGrid,
-      .dsGrid,
-      .collectionGrid {
-        gap: 10px;
-      }
-
-      .dsCardTitle {
-        font-size: 13px;
-      }
-
-      .dsCardMeta {
-        font-size: 10px;
-      }
-
-      .dsPlayDot,
-      .dsMiniBtn,
-      .dsIconBtn {
-        width: 34px;
-        height: 34px;
-        min-width: 34px;
-      }
-    }
-
-
-    /* ============================================================
-       v101 WELCOME UPGRADE
-       Professional landing page refresh only. No red/orb experiments.
-       ============================================================ */
-
-    body:has(.dsWelcomeV101) {
-      background: var(--bg);
-    }
-
-    .dsWelcomeV101 {
-      background:
-        radial-gradient(900px circle at 12% 0%, rgba(255,255,255,.08), transparent 46%),
-        radial-gradient(900px circle at 86% 12%, rgba(255,255,255,.055), transparent 48%),
-        var(--bg);
-    }
-
-    .dsWelcomeNavV101 {
-      height: 78px;
-      border-bottom: 1px solid rgba(255,255,255,.08);
-      background: rgba(0,0,0,.34);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-    }
-
-    .dsWelcomeNavV101 .dsWelcomeBrand span {
-      background: rgba(255,255,255,.12);
-      border: 1px solid rgba(255,255,255,.16);
+      border: 1px dashed rgba(255,255,255,.22);
       box-shadow: none;
     }
 
-    .dsWelcomeNavV101 .dsWelcomeNavLinks a {
-      min-height: 40px;
-      border-radius: 999px;
-    }
-
-    .dsWelcomeNavV101 .dsWelcomeJoin {
-      background: rgba(255,255,255,.92) !important;
-      color: var(--bg) !important;
-    }
-
-    .dsWelcomeHeroV101 {
-      min-height: 100svh;
-      grid-template-columns: minmax(0, 1.1fr) minmax(300px, 440px);
-      align-items: center;
-      padding-top: 128px;
-      padding-bottom: 86px;
-    }
-
-    .dsWelcomeHeroV101 .dsWelcomeHeroBg {
-      opacity: .34;
-      filter: saturate(.9) contrast(1.03);
-      transform: scale(1.04);
-    }
-
-    .dsWelcomeHeroShade {
-      position: absolute;
-      inset: 0;
-      z-index: 1;
-      background:
-        linear-gradient(90deg, rgba(0,0,0,.84), rgba(0,0,0,.56) 42%, rgba(0,0,0,.80)),
-        linear-gradient(0deg, var(--bg), transparent 40%);
-      pointer-events: none;
-    }
-
-    .dsWelcomeHeroCopyV101,
-    .dsWelcomeShowcaseV101 {
-      position: relative;
-      z-index: 3;
-    }
-
-    .dsWelcomeKicker {
-      width: fit-content;
-      display: inline-flex;
-      margin-bottom: 16px;
-      padding: 8px 11px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.09);
-      border: 1px solid rgba(255,255,255,.12);
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 950;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-    }
-
-    .dsWelcomeHeroCopyV101 h1 {
-      max-width: 880px;
-      margin: 0;
-      font-size: clamp(54px, 8vw, 118px);
-      line-height: .88;
-      letter-spacing: -.085em;
-      text-wrap: balance;
-    }
-
-    .dsWelcomeHeroCopyV101 p {
-      max-width: 700px;
-      margin-top: 20px;
-      color: rgba(255,255,255,.76);
-      font-size: clamp(16px, 1.35vw, 20px);
-      line-height: 1.6;
-    }
-
-    .dsWelcomeActionsV101 {
+    .dsProfilesQuickActions {
       display: flex;
       flex-wrap: wrap;
+      justify-content: center;
       gap: 10px;
-      margin-top: 26px;
-    }
-
-    .dsWelcomeTrustRow {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
       margin-top: 22px;
     }
 
-    .dsWelcomeTrustRow span {
-      padding: 7px 10px;
-      border-radius: 999px;
-      color: var(--muted);
-      background: rgba(255,255,255,.07);
-      border: 1px solid rgba(255,255,255,.10);
-      font-size: 12px;
-      font-weight: 850;
+    .dsProfileManagerLayout {
+      display: grid;
+      grid-template-columns: 360px minmax(0, 1fr);
+      gap: 20px;
+      align-items: start;
     }
 
-    .dsWelcomeShowcaseV101 {
+    .dsProfileManagerPanel,
+    .dsProfileManagerList {
+      border-radius: 30px;
+      padding: 22px;
+    }
+
+    .dsPanelLabel {
+      color: rgba(255,255,255,.52);
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .dsStackedForm {
       display: grid;
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .dsStackedForm label {
+      display: grid;
+      gap: 7px;
+      color: rgba(255,255,255,.62);
+      font-weight: 850;
+      font-size: 13px;
+    }
+
+    .dsStackedForm input,
+    .dsStackedForm select {
+      min-height: 48px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 16px;
+      padding: 0 14px;
+      color: white;
+      background: rgba(0,0,0,.22);
+      outline: none;
+    }
+
+    .dsSectionHeaderSplit {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .dsSectionHeaderSplit h2 {
+      margin: 3px 0 0;
+      font-size: 30px;
+      letter-spacing: -.055em;
+    }
+
+    .dsManageProfileList {
+      display: grid;
+      gap: 12px;
+    }
+
+    .dsManageProfileCard {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      padding: 14px;
+      border-radius: 24px;
+    }
+
+    .dsManageProfileCard .dsProfileAvatarBig {
+      width: 62px;
+      height: 62px;
+      border-radius: 20px;
+      font-size: 24px;
+    }
+
+    .dsManageProfileMain {
+      display: grid;
+      gap: 3px;
+    }
+
+    .dsManageProfileMain strong {
+      font-size: 18px;
+    }
+
+    .dsManageProfileMain small {
+      color: var(--sw-soft);
+    }
+
+    .dsManageProfileActions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 7px;
+    }
+
+    .dsManageProfileActions button,
+    .dsSocialHeaderActions button,
+    .dsSocialDetailsCard button,
+    .dsSocialDetailsCard a {
+      min-height: 38px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 14px;
+      padding: 0 12px;
+      color: white;
+      background: rgba(255,255,255,.08);
+      font-weight: 850;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .dsSocialPage {
+      min-height: calc(100vh - 80px);
+      padding: 22px;
+    }
+
+    .dsSocialShell {
+      width: min(1500px, 100%);
+      min-height: calc(100vh - 124px);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr) 300px;
       gap: 16px;
     }
 
-    .dsWelcomeSpotlightV101 {
-      border-radius: 30px;
+    .dsSocialSidebar,
+    .dsSocialMain,
+    .dsSocialDetails,
+    .dsCallCard {
+      border: 1px solid var(--sw-line);
       background:
-        linear-gradient(180deg, rgba(255,255,255,.105), rgba(255,255,255,.045)),
-        rgba(0,0,0,.26);
-      border: 1px solid rgba(255,255,255,.13);
-      box-shadow: 0 28px 80px rgba(0,0,0,.38);
-    }
-
-    .dsWelcomeSpotlightV101 img {
-      border-radius: 22px;
-    }
-
-    .dsWelcomeSpotlightV101 a {
-      width: fit-content;
-      display: inline-flex;
-      margin-top: 10px;
-      padding: 8px 11px;
-      border-radius: 999px;
-      color: var(--text);
-      background: rgba(255,255,255,.09);
-      border: 1px solid rgba(255,255,255,.11);
-    }
-
-    .dsWelcomeMiniMosaicV101 {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 9px;
-    }
-
-    .dsWelcomeMiniMosaicV101 img {
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,.10);
-      box-shadow: 0 14px 38px rgba(0,0,0,.24);
-    }
-
-    .dsWelcomeQuickStart {
-      width: min(1320px, calc(100vw - 32px));
-      margin: -32px auto 54px;
-      position: relative;
-      z-index: 5;
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 14px;
-    }
-
-    .dsWelcomeQuickStart article {
-      min-height: 168px;
-      padding: 20px;
-      border-radius: 28px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.045)),
-        rgba(0,0,0,.20);
-      border: 1px solid rgba(255,255,255,.11);
-      box-shadow: 0 20px 60px rgba(0,0,0,.24);
-    }
-
-    .dsWelcomeQuickStart span {
-      display: inline-flex;
-      margin-bottom: 18px;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 950;
-      letter-spacing: .08em;
-    }
-
-    .dsWelcomeQuickStart strong {
-      display: block;
-      font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: 24px;
-      letter-spacing: -.05em;
-    }
-
-    .dsWelcomeQuickStart p {
-      margin: 10px 0 0;
-      color: var(--muted);
-      line-height: 1.55;
-    }
-
-    .dsWelcomeIntroV101 {
-      max-width: 880px;
-    }
-
-    .dsWelcomeIntroV101 h2,
-    .dsWelcomeDeviceV101 h2,
-    .dsWelcomeFinalCtaV101 h2 {
-      letter-spacing: -.07em;
-      line-height: .96;
-      text-wrap: balance;
-    }
-
-    .dsWelcomeDiscoveryV101,
-    .dsWelcomeFeaturesV101,
-    .dsWelcomeDeviceV101,
-    .dsWelcomeFinalCtaV101 {
-      width: min(1320px, calc(100vw - 32px));
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .dsWelcomeRail {
-      border-radius: 28px;
-      background: rgba(255,255,255,.035);
-      border: 1px solid rgba(255,255,255,.07);
-      padding: 16px;
-    }
-
-    .dsWelcomeRailTrack {
-      gap: 12px;
-      padding-bottom: 8px;
-    }
-
-    .dsWelcomeCard {
-      border-radius: 22px;
-      overflow: hidden;
-      background: rgba(255,255,255,.055);
-      border: 1px solid rgba(255,255,255,.09);
-      transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
-    }
-
-    .dsWelcomeCard:hover {
-      transform: translateY(-5px);
-      border-color: rgba(255,255,255,.18);
-      box-shadow: 0 18px 46px rgba(0,0,0,.26);
-    }
-
-    .dsWelcomeFeaturesV101 article {
-      border-radius: 28px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.04)),
-        rgba(0,0,0,.18);
-      border: 1px solid rgba(255,255,255,.10);
-    }
-
-    .dsWelcomeDeviceV101,
-    .dsWelcomeFinalCtaV101 {
-      border-radius: 34px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.035)),
-        rgba(0,0,0,.18);
-      border: 1px solid rgba(255,255,255,.10);
-      box-shadow: 0 24px 70px rgba(0,0,0,.26);
-    }
-
-    .dsPhoneMockV101 {
-      border-color: rgba(255,255,255,.14);
-      background: rgba(0,0,0,.26);
-      box-shadow: 0 28px 80px rgba(0,0,0,.38);
-    }
-
-    @media(max-width: 980px) {
-      .dsWelcomeHeroV101 {
-        grid-template-columns: 1fr;
-        padding-top: 118px;
-      }
-
-      .dsWelcomeShowcaseV101 {
-        max-width: 520px;
-      }
-
-      .dsWelcomeQuickStart {
-        grid-template-columns: 1fr;
-        margin-top: 0;
-      }
-
-      .dsWelcomeMiniMosaicV101 {
-        grid-template-columns: repeat(4, 1fr);
-      }
-    }
-
-    @media(max-width: 720px) {
-      .dsWelcomeNavV101 {
-        height: auto;
-        min-height: 66px;
-        padding: 10px 12px;
-      }
-
-      .dsWelcomeNavLinks a[href="#browse"],
-      .dsWelcomeNavLinks a[href="#features"],
-      .dsWelcomeNavLinks a[href="#devices"] {
-        display: none;
-      }
-
-      .dsWelcomeHeroV101 {
-        min-height: auto;
-        padding: 96px 14px 44px;
-      }
-
-      .dsWelcomeHeroCopyV101 h1 {
-        font-size: clamp(44px, 16vw, 72px);
-      }
-
-      .dsWelcomeActionsV101 .dsPrimaryBtn,
-      .dsWelcomeActionsV101 .dsSecondaryBtn,
-      .dsWelcomeActionsV101 .dsGhostPill {
-        width: 100%;
-      }
-
-      .dsWelcomeQuickStart,
-      .dsWelcomeDiscoveryV101,
-      .dsWelcomeFeaturesV101,
-      .dsWelcomeDeviceV101,
-      .dsWelcomeFinalCtaV101 {
-        width: min(100vw - 22px, 100%);
-      }
-
-      .dsWelcomeMiniMosaicV101 {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-      }
-
-      .dsWelcomeDeviceV101 {
-        grid-template-columns: 1fr;
-      }
-
-      .dsPhoneMockV101 {
-        display: none;
-      }
-    }
-
-
-    /* ============================================================
-       v102 WELCOME CLEAN HERO
-       Fixes the welcome page layout from v101 screenshot.
-       No red glow system, no weird blue line, no huge dead-space hero.
-       ============================================================ */
-
-    body:has(.dsWelcomeV102) .topbar,
-    body:has(.dsWelcomeV102) .netflixTopbar,
-    body:has(.dsWelcomeV102) .mobileNav,
-    body:has(.dsWelcomeV102) .footer {
-      display: none !important;
-    }
-
-    .dsWelcomeV102 {
-      min-height: 100svh;
-      color: var(--text);
-      background: var(--bg);
-      overflow-x: hidden;
-    }
-
-    .dsWelcomeNavV102 {
-      position: fixed;
-      inset: 0 0 auto;
-      z-index: 1000;
-      height: 76px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 18px;
-      padding: 0 clamp(18px, 4vw, 58px);
-      background: rgba(0,0,0,.42);
-      border-bottom: 1px solid rgba(255,255,255,.09);
+        radial-gradient(520px circle at 0% 0%, rgba(255,255,255,.08), transparent 54%),
+        rgba(8,10,18,.74);
+      box-shadow: 0 22px 80px rgba(0,0,0,.30);
       backdrop-filter: blur(18px);
       -webkit-backdrop-filter: blur(18px);
     }
 
-    .dsWelcomeBrandV102 {
-      display: inline-flex;
-      align-items: center;
-      gap: 12px;
-      color: var(--text);
-      text-decoration: none;
-      font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: clamp(24px, 2.2vw, 34px);
-      font-weight: 950;
-      letter-spacing: -.07em;
-    }
-
-    .dsWelcomeBrandV102 span {
-      width: 44px;
-      height: 44px;
-      border-radius: 18px;
-      background: rgba(255,255,255,.10);
-      border: 1px solid rgba(255,255,255,.18);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.12);
-    }
-
-    .dsWelcomeNavV102 > div {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .dsWelcomeNavV102 > div a {
-      min-height: 42px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0 15px;
-      border-radius: 999px;
-      color: var(--text);
-      text-decoration: none;
-      background: rgba(255,255,255,.07);
-      border: 1px solid rgba(255,255,255,.11);
-      font-size: 13px;
-      font-weight: 900;
-      transition: transform .16s ease, background .16s ease, border-color .16s ease;
-    }
-
-    .dsWelcomeNavV102 > div a:hover {
-      transform: translateY(-1px);
-      background: rgba(255,255,255,.11);
-      border-color: rgba(255,255,255,.20);
-    }
-
-    .dsWelcomeNavV102 > div a.primary {
-      background: rgba(255,255,255,.92);
-      color: var(--bg);
-      border-color: transparent;
-    }
-
-    .dsWelcomeHeroV102 {
-      position: relative;
-      min-height: 760px;
-      padding: 118px clamp(18px, 4vw, 58px) 64px;
-      overflow: hidden;
-      isolation: isolate;
-    }
-
-    .dsWelcomeBackdropV102 {
-      position: absolute;
-      inset: 0;
-      z-index: -3;
-      background-size: cover;
-      background-position: center 28%;
-      opacity: .24;
-      filter: saturate(.92) contrast(1.02);
-      transform: scale(1.035);
-    }
-
-    .dsWelcomeHeroV102::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      z-index: -2;
-      background:
-        linear-gradient(90deg, var(--bg) 0%, rgba(0,0,0,.78) 44%, var(--bg) 100%),
-        linear-gradient(0deg, var(--bg) 0%, rgba(0,0,0,.24) 46%, rgba(0,0,0,.62) 100%);
-    }
-
-    .dsWelcomeHeroV102::after {
-      content: "";
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 180px;
-      z-index: -1;
-      background: linear-gradient(0deg, var(--bg), transparent);
-      pointer-events: none;
-    }
-
-    .dsWelcomeHeroInnerV102 {
-      width: min(1560px, 100%);
-      min-height: 560px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(320px, 520px);
-      gap: clamp(26px, 5vw, 86px);
-      align-items: center;
-    }
-
-    .dsWelcomeCopyV102 {
-      display: grid;
-      align-content: center;
-      max-width: 840px;
-    }
-
-    .dsWelcomeKickerV102 {
-      width: fit-content;
-      margin-bottom: 18px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      color: var(--muted);
-      background: rgba(255,255,255,.08);
-      border: 1px solid rgba(255,255,255,.12);
-      font-size: 12px;
-      font-weight: 950;
-      letter-spacing: .09em;
-      text-transform: uppercase;
-    }
-
-    .dsWelcomeCopyV102 h1 {
-      margin: 0;
-      max-width: 820px;
-      font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: clamp(56px, 8.5vw, 122px);
-      line-height: .88;
-      letter-spacing: -.085em;
-      text-wrap: balance;
-    }
-
-    .dsWelcomeCopyV102 p {
-      max-width: 690px;
-      margin: 20px 0 0;
-      color: rgba(255,255,255,.76);
-      font-size: clamp(16px, 1.35vw, 21px);
-      line-height: 1.56;
-      font-weight: 650;
-    }
-
-    .dsWelcomeActionsV102 {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 28px;
-    }
-
-    .dsWelcomeStatsV102 {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-      margin-top: 28px;
-      max-width: 720px;
-    }
-
-    .dsWelcomeStatsV102 article {
-      min-height: 96px;
-      padding: 14px;
-      border-radius: 20px;
-      background: rgba(255,255,255,.055);
-      border: 1px solid rgba(255,255,255,.09);
-    }
-
-    .dsWelcomeStatsV102 b {
-      display: block;
-      font-size: 15px;
-      letter-spacing: -.02em;
-    }
-
-    .dsWelcomeStatsV102 span {
-      display: block;
-      margin-top: 6px;
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.35;
-      font-weight: 700;
-    }
-
-    .dsWelcomeShowcaseV102 {
-      display: grid;
-      gap: 14px;
-      align-self: center;
-    }
-
-    .dsWelcomeFeaturedV102 {
-      display: grid;
-      grid-template-columns: 132px minmax(0, 1fr);
-      gap: 14px;
-      align-items: center;
-      padding: 14px;
+    .dsSocialSidebar,
+    .dsSocialDetails {
       border-radius: 28px;
-      background: rgba(255,255,255,.07);
-      border: 1px solid rgba(255,255,255,.12);
-      box-shadow: 0 24px 70px rgba(0,0,0,.34);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-    }
-
-    .dsWelcomeFeaturedV102 img,
-    .dsWelcomeFeaturedV102 .posterFallback {
-      width: 132px;
-      aspect-ratio: 2 / 3;
-      border-radius: 18px;
-      object-fit: cover;
-      overflow: hidden;
-      background: rgba(255,255,255,.08);
-    }
-
-    .dsWelcomeFeaturedV102 span {
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 950;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-    }
-
-    .dsWelcomeFeaturedV102 h2 {
-      margin: 6px 0 4px;
-      font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: clamp(22px, 2.2vw, 36px);
-      line-height: .98;
-      letter-spacing: -.055em;
-    }
-
-    .dsWelcomeFeaturedV102 p {
-      margin: 0;
-      color: var(--muted);
-      font-weight: 750;
-    }
-
-    .dsWelcomeFeaturedV102 a {
-      width: fit-content;
-      display: inline-flex;
-      margin-top: 12px;
-      min-height: 34px;
-      align-items: center;
-      padding: 0 12px;
-      border-radius: 999px;
-      color: var(--text);
-      text-decoration: none;
-      background: rgba(255,255,255,.09);
-      border: 1px solid rgba(255,255,255,.12);
-      font-size: 12px;
-      font-weight: 900;
-    }
-
-    .dsWelcomePosterGridV102 {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-      gap: 10px;
-      padding: 14px;
-      border-radius: 28px;
-      background: rgba(255,255,255,.045);
-      border: 1px solid rgba(255,255,255,.09);
-    }
-
-    .dsWelcomePosterGridV102 img {
-      width: 100%;
-      aspect-ratio: 2 / 3;
-      object-fit: cover;
-      border-radius: 14px;
-      background: rgba(255,255,255,.08);
-      box-shadow: 0 14px 32px rgba(0,0,0,.28);
-    }
-
-    .dsWelcomeQuickV102 {
-      width: min(1440px, calc(100vw - 36px));
-      margin: -28px auto 62px;
-      position: relative;
-      z-index: 5;
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 14px;
-    }
-
-    .dsWelcomeQuickV102 article,
-    .dsWelcomeFeatureGridV102 article,
-    .dsWelcomeFinalV102,
-    .dsWelcomeRail {
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.038)),
-        rgba(0,0,0,.16);
-      border: 1px solid rgba(255,255,255,.10);
-      box-shadow: 0 20px 56px rgba(0,0,0,.24);
-    }
-
-    .dsWelcomeQuickV102 article {
-      min-height: 174px;
-      padding: 22px;
-      border-radius: 28px;
-    }
-
-    .dsWelcomeQuickV102 span,
-    .dsWelcomeSectionHeadV102 span,
-    .dsWelcomeFeatureGridV102 span,
-    .dsWelcomeFinalV102 span {
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 950;
-      letter-spacing: .09em;
-      text-transform: uppercase;
-    }
-
-    .dsWelcomeQuickV102 h2 {
-      margin: 18px 0 10px;
-      font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: clamp(24px, 2.3vw, 34px);
-      line-height: 1;
-      letter-spacing: -.055em;
-    }
-
-    .dsWelcomeQuickV102 p {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.55;
-      font-weight: 650;
-    }
-
-    .dsWelcomeBrowseV102 {
-      width: min(1440px, calc(100vw - 36px));
-      margin: 0 auto 70px;
-    }
-
-    .dsWelcomeSectionHeadV102 {
-      max-width: 860px;
-      margin-bottom: 24px;
-    }
-
-    .dsWelcomeSectionHeadV102 h2 {
-      margin: 10px 0;
-      font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: clamp(36px, 5vw, 72px);
-      line-height: .95;
-      letter-spacing: -.075em;
-      text-wrap: balance;
-    }
-
-    .dsWelcomeSectionHeadV102 p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 17px;
-      line-height: 1.6;
-      max-width: 720px;
-    }
-
-    .dsWelcomeV102 .dsWelcomeRail {
       padding: 16px;
-      margin: 18px 0;
-      border-radius: 28px;
-    }
-
-    .dsWelcomeV102 .dsWelcomeRailHead {
-      margin-bottom: 12px;
-    }
-
-    .dsWelcomeV102 .dsWelcomeRailHead h2 {
-      font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: 26px;
-      letter-spacing: -.045em;
-    }
-
-    .dsWelcomeV102 .dsWelcomeRailTrack {
-      gap: 12px;
-      padding-bottom: 6px;
-    }
-
-    .dsWelcomeV102 .dsWelcomeCard {
-      border-radius: 18px;
-      background: rgba(255,255,255,.055);
-      border: 1px solid rgba(255,255,255,.09);
       overflow: hidden;
-      transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
     }
 
-    .dsWelcomeV102 .dsWelcomeCard:hover {
-      transform: translateY(-4px);
-      border-color: rgba(255,255,255,.18);
-      box-shadow: 0 16px 42px rgba(0,0,0,.28);
-    }
-
-    .dsWelcomeFeatureGridV102 {
-      width: min(1440px, calc(100vw - 36px));
-      margin: 0 auto 70px;
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 14px;
-    }
-
-    .dsWelcomeFeatureGridV102 article {
-      min-height: 210px;
-      padding: 22px;
-      border-radius: 28px;
-    }
-
-    .dsWelcomeFeatureGridV102 h3 {
-      margin: 14px 0 10px;
-      font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: 25px;
-      line-height: 1;
-      letter-spacing: -.055em;
-    }
-
-    .dsWelcomeFeatureGridV102 p {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.55;
-      font-weight: 650;
-    }
-
-    .dsWelcomeFinalV102 {
-      width: min(1440px, calc(100vw - 36px));
-      margin: 0 auto 80px;
+    .dsSocialBrand {
       display: flex;
+      gap: 12px;
       align-items: center;
-      justify-content: space-between;
-      gap: 18px;
-      padding: clamp(22px, 4vw, 42px);
-      border-radius: 34px;
+      margin-bottom: 14px;
     }
 
-    .dsWelcomeFinalV102 h2 {
-      margin: 10px 0;
-      font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: clamp(34px, 4.8vw, 70px);
-      line-height: .96;
-      letter-spacing: -.075em;
-    }
-
-    .dsWelcomeFinalV102 p {
-      margin: 0;
-      color: var(--muted);
-      max-width: 640px;
-      line-height: 1.55;
-    }
-
-    .dsWelcomeFinalV102 > div:last-child {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-
-    @media(max-width: 1100px) {
-      .dsWelcomeHeroInnerV102 {
-        grid-template-columns: 1fr;
-      }
-
-      .dsWelcomeShowcaseV102 {
-        max-width: 720px;
-      }
-
-      .dsWelcomeFeatureGridV102 {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-    }
-
-    @media(max-width: 760px) {
-      .dsWelcomeNavV102 {
-        height: auto;
-        min-height: 66px;
-        padding: 10px 12px;
-      }
-
-      .dsWelcomeNavV102 > div a[href="#browse"],
-      .dsWelcomeNavV102 > div a[href="#features"] {
-        display: none;
-      }
-
-      .dsWelcomeBrandV102 span {
-        width: 36px;
-        height: 36px;
-        border-radius: 14px;
-      }
-
-      .dsWelcomeHeroV102 {
-        min-height: auto;
-        padding: 92px 12px 42px;
-      }
-
-      .dsWelcomeCopyV102 h1 {
-        font-size: clamp(46px, 15vw, 74px);
-      }
-
-      .dsWelcomeActionsV102 .dsPrimaryBtn,
-      .dsWelcomeActionsV102 .dsSecondaryBtn,
-      .dsWelcomeActionsV102 .dsGhostPill {
-        width: 100%;
-      }
-
-      .dsWelcomeStatsV102,
-      .dsWelcomeQuickV102,
-      .dsWelcomeFeatureGridV102 {
-        grid-template-columns: 1fr;
-      }
-
-      .dsWelcomeFeaturedV102 {
-        grid-template-columns: 104px 1fr;
-      }
-
-      .dsWelcomeFeaturedV102 img,
-      .dsWelcomeFeaturedV102 .posterFallback {
-        width: 104px;
-      }
-
-      .dsWelcomePosterGridV102 {
-        grid-template-columns: repeat(5, 96px);
-        overflow-x: auto;
-        scrollbar-width: none;
-      }
-
-      .dsWelcomePosterGridV102::-webkit-scrollbar {
-        display: none;
-      }
-
-      .dsWelcomeQuickV102,
-      .dsWelcomeBrowseV102,
-      .dsWelcomeFeatureGridV102,
-      .dsWelcomeFinalV102 {
-        width: min(100vw - 22px, 100%);
-      }
-
-      .dsWelcomeQuickV102 {
-        margin-top: 0;
-      }
-
-      .dsWelcomeFinalV102 {
-        display: grid;
-      }
-
-      .dsWelcomeFinalV102 > div:last-child {
-        justify-content: stretch;
-      }
-
-      .dsWelcomeFinalV102 .dsPrimaryBtn,
-      .dsWelcomeFinalV102 .dsSecondaryBtn {
-        width: 100%;
-      }
-    }
-
-
-    /* ============================================================
-       v103 MOBILE APP POLISH
-       Phone-first cleanup across the whole site.
-       No new color palette, no red/orb/scroll-progress experiments.
-       ============================================================ */
-
-    @media(max-width: 860px) {
-      html {
-        scroll-padding-top: 76px;
-      }
-
-      body {
-        min-width: 0;
-        overflow-x: hidden;
-        padding-bottom: calc(92px + env(safe-area-inset-bottom));
-      }
-
-      body:has(.dsWelcomeV102) {
-        padding-bottom: 0;
-      }
-
-      .netflixTopbar {
-        min-height: 64px;
-        padding: 8px 12px;
-        gap: 10px;
-        background: rgba(0,0,0,.68);
-        border-bottom: 1px solid rgba(255,255,255,.10);
-        backdrop-filter: blur(18px);
-        -webkit-backdrop-filter: blur(18px);
-      }
-
-      .netflixBrand {
-        min-width: 0;
-      }
-
-      .netflixWordmark {
-        max-width: 46vw;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        font-size: clamp(22px, 7vw, 32px);
-        letter-spacing: -.06em;
-      }
-
-      .netflixLinks {
-        display: none !important;
-      }
-
-      .netflixActions {
-        margin-left: auto;
-        gap: 8px;
-      }
-
-      .netflixActions .dsNavSearch {
-        display: none !important;
-      }
-
-      .profileButton {
-        min-width: 42px;
-        min-height: 42px;
-        padding: 0;
-        border-radius: 999px;
-      }
-
-      .profileButton b,
-      .profileButton span:not(.avatarDot) {
-        display: none !important;
-      }
-
-      .avatarDot {
-        width: 34px;
-        height: 34px;
-      }
-
-      .dsProfileDropdown {
-        position: fixed !important;
-        top: 70px !important;
-        right: 12px !important;
-        left: 12px !important;
-        width: auto !important;
-        max-width: none !important;
-        border-radius: 24px;
-      }
-
-      .mobileNav {
-        position: fixed;
-        left: 10px;
-        right: 10px;
-        bottom: 10px;
-        z-index: 9990;
-        width: auto;
-        height: auto;
-        min-height: 66px;
-        display: grid;
-        grid-template-columns: repeat(6, minmax(0, 1fr));
-        gap: 4px;
-        padding: 8px 8px max(8px, env(safe-area-inset-bottom));
-        border-radius: 26px;
-        border: 1px solid rgba(255,255,255,.12);
-        background: rgba(0,0,0,.72);
-        box-shadow: 0 -18px 60px rgba(0,0,0,.40);
-        backdrop-filter: blur(22px) saturate(1.12);
-        -webkit-backdrop-filter: blur(22px) saturate(1.12);
-      }
-
-      .mobileNav a {
-        min-width: 0;
-        min-height: 50px;
-        display: grid;
-        place-items: center;
-        padding: 6px 4px;
-        border-radius: 18px;
-        font-size: 10.5px;
-        font-weight: 900;
-        line-height: 1.05;
-        text-align: center;
-        color: var(--muted);
-        -webkit-tap-highlight-color: transparent;
-      }
-
-      .mobileNav a.active,
-      .mobileNav a:hover,
-      .mobileNav a:focus-visible {
-        color: var(--text);
-        background: rgba(255,255,255,.10);
-      }
-
-      .mobileNav a:active {
-        transform: scale(.96);
-      }
-
-      .dsContent,
-      .container,
-      .dsLocalContinueRail,
-      .dsFeatureStrip,
-      .dsWatchroomHero,
-      .dsWatchroomCreate,
-      .dsActiveRooms,
-      .dsContinuePagePanel,
-      .dsAccountHero,
-      .dsAccountGrid,
-      .dsProfilesHero,
-      .dsProfilesGrid,
-      .dsProfileCreate {
-        width: min(100vw - 22px, 100%) !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
-      }
-
-      .section,
-      .dsRow {
-        margin-top: 26px;
-        margin-bottom: 30px;
-      }
-
-      .sectionHead,
-      .dsRowHead {
-        display: flex;
-        align-items: flex-end;
-        justify-content: space-between;
-        gap: 10px;
-        margin-bottom: 12px;
-      }
-
-      .sectionHead h2,
-      .dsRowHead h2 {
-        font-size: clamp(22px, 7vw, 32px);
-        line-height: 1;
-        letter-spacing: -.045em;
-      }
-
-      .sectionHead a,
-      .dsRowHead a {
-        white-space: nowrap;
-        font-size: 12px;
-      }
-
-      .dsHero {
-        min-height: 620px;
-        padding: 0 12px;
-      }
-
-      .dsHeroContent {
-        width: 100%;
-        padding-top: 92px;
-        padding-bottom: 36px;
-      }
-
-      .dsHeroContent h1 {
-        font-size: clamp(42px, 13vw, 76px);
-        line-height: .92;
-        letter-spacing: -.075em;
-      }
-
-      .dsHeroContent p {
-        max-width: 100%;
-        font-size: 15px;
-        line-height: 1.55;
-      }
-
-      .dsHeroMeta {
-        display: flex;
-        gap: 7px;
-        overflow-x: auto;
-        padding-bottom: 3px;
-        scrollbar-width: none;
-      }
-
-      .dsHeroMeta::-webkit-scrollbar {
-        display: none;
-      }
-
-      .dsHeroMeta span,
-      .dsHeroMeta b {
-        white-space: nowrap;
-      }
-
-      .dsHeroActions,
-      .heroActions,
-      .dsDetailActions,
-      .dsWatchActions,
-      .dsAccountActions {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 9px;
-        width: 100%;
-      }
-
-      .dsHeroActions a,
-      .heroActions a,
-      .dsDetailActions a,
-      .dsWatchActions a,
-      .dsAccountActions a,
-      .dsHeroActions button,
-      .heroActions button,
-      .dsDetailActions button,
-      .dsWatchActions button,
-      .dsAccountActions button {
-        width: 100%;
-        min-height: 48px;
-      }
-
-      .dsMovieHomeBoard {
-        width: min(100vw - 22px, 100%);
-        margin: -12px auto 18px;
-        padding: 16px;
-        border-radius: 24px;
-        grid-template-columns: 1fr;
-        gap: 16px;
-      }
-
-      .dsMovieHomeBoard h2 {
-        font-size: clamp(28px, 10vw, 46px);
-        line-height: .98;
-      }
-
-      .dsMovieHomeBoard p {
-        font-size: 14px;
-        line-height: 1.55;
-      }
-
-      .dsCoupleHomeActions,
-      .dsStableActions {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 9px;
-      }
-
-      .dsCoupleHomeActions a,
-      .dsStableActions a {
-        width: 100%;
-      }
-
-      .dsCoupleHomeCards {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 9px;
-      }
-
-      .dsCoupleHomeCards article {
-        min-height: auto;
-        padding: 14px;
-        border-radius: 18px;
-      }
-
-      .dsFeatureStrip {
-        display: flex !important;
-        overflow-x: auto;
-        gap: 10px;
-        padding: 2px 2px 14px;
-        scroll-snap-type: x mandatory;
-        scrollbar-width: none;
-      }
-
-      .dsFeatureStrip::-webkit-scrollbar {
-        display: none;
-      }
-
-      .dsFeatureStrip a {
-        min-width: 146px;
-        min-height: 100px;
-        scroll-snap-align: start;
-        border-radius: 22px;
-      }
-
-      .movieRail,
-      .dsRail,
-      .dsCastRail,
-      .dsWelcomeRailTrack {
-        display: flex;
-        overflow-x: auto;
-        gap: 12px;
-        padding: 4px 2px 16px;
-        scroll-snap-type: x proximity;
-        overscroll-behavior-x: contain;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-      }
-
-      .movieRail::-webkit-scrollbar,
-      .dsRail::-webkit-scrollbar,
-      .dsCastRail::-webkit-scrollbar,
-      .dsWelcomeRailTrack::-webkit-scrollbar {
-        display: none;
-      }
-
-      .movieRail .movieCard,
-      .dsRail .movieCard {
-        min-width: 148px;
-        width: 148px;
-        scroll-snap-align: start;
-      }
-
-      .posterWrap,
-      .dsThumb {
-        border-radius: 18px;
-      }
-
-      .dsCardOverlay {
-        padding: 10px;
-      }
-
-      .dsCardControls {
-        gap: 6px;
-      }
-
-      .dsPlayDot,
-      .dsMiniBtn,
-      .dsIconBtn {
-        width: 34px;
-        height: 34px;
-        min-width: 34px;
-      }
-
-      .dsCardTitle {
-        font-size: 13px;
-        line-height: 1.05;
-      }
-
-      .dsCardMeta {
-        font-size: 10px;
-        gap: 5px;
-      }
-
-      .movieGrid,
-      .dsGrid,
-      .collectionGrid,
-      .resultsGrid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-        gap: 12px !important;
-      }
-
-      .movieGrid .movieCard,
-      .dsGrid .movieCard,
-      .collectionGrid .movieCard,
-      .resultsGrid .movieCard {
-        min-width: 0;
-        width: 100%;
-      }
-
-      .dsPageHeader,
-      .netflixPageHero {
-        padding: 90px 12px 22px;
-      }
-
-      .dsPageHeader h1,
-      .netflixPageHero h1 {
-        font-size: clamp(38px, 12vw, 70px);
-        line-height: .92;
-        letter-spacing: -.075em;
-      }
-
-      .filterBar,
-      .chips,
-      .genreChips,
-      .dsDetailTabs {
-        display: flex;
-        overflow-x: auto;
-        gap: 8px;
-        padding-bottom: 8px;
-        scrollbar-width: none;
-      }
-
-      .filterBar::-webkit-scrollbar,
-      .chips::-webkit-scrollbar,
-      .genreChips::-webkit-scrollbar,
-      .dsDetailTabs::-webkit-scrollbar {
-        display: none;
-      }
-
-      .filterBar a,
-      .chips a,
-      .genreChips a,
-      .dsDetailTabs a {
-        white-space: nowrap;
-      }
-
-      .dsDetailHero {
-        min-height: 620px;
-        padding: 0 12px;
-      }
-
-      .dsDetailHeroContent {
-        padding-top: 98px;
-        padding-bottom: 36px;
-      }
-
-      .dsDetailHeroContent h1 {
-        font-size: clamp(42px, 13vw, 76px);
-        line-height: .92;
-        letter-spacing: -.075em;
-      }
-
-      .dsMetaBand {
-        display: flex;
-        overflow-x: auto;
-        gap: 7px;
-        padding-bottom: 4px;
-        scrollbar-width: none;
-      }
-
-      .dsMetaBand::-webkit-scrollbar {
-        display: none;
-      }
-
-      .dsMetaBand span,
-      .dsMetaBand b {
-        white-space: nowrap;
-      }
-
-      .dsDetailBody {
-        width: min(100vw - 22px, 100%);
-        margin-left: auto;
-        margin-right: auto;
-      }
-
-      .dsDetailGrid,
-      .dsAboutGrid {
-        grid-template-columns: 1fr !important;
-        gap: 14px;
-      }
-
-      .dsDetailGrid p {
-        font-size: 15px;
-        line-height: 1.65;
-      }
-
-      .dsTrailerGrid {
-        grid-template-columns: 1fr !important;
-        gap: 14px;
-      }
-
-      .trailerCard,
-      .trailerCard iframe {
-        border-radius: 18px;
-      }
-
-      .dsCastCard {
-        min-width: 128px;
-        width: 128px;
-      }
-
-      .dsWatchHero {
-        padding: 78px 12px 18px;
-      }
-
-      .dsWatchShell,
-      .dsWatchLayout,
-      .dsWatchPlayerCard {
-        width: min(100vw - 22px, 100%);
-        margin-left: auto;
-        margin-right: auto;
-      }
-
-      .dsWatchPlayerCard {
-        border-radius: 22px;
-        overflow: hidden;
-      }
-
-      .dsWatchHeader {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 12px;
-      }
-
-      .dsWatchModeSwitch {
-        width: 100%;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        padding: 4px;
-        border-radius: 999px;
-      }
-
-      .dsWatchModeSwitch a {
-        justify-content: center;
-        min-height: 40px;
-      }
-
-      .dsWatchPlayerTop {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 12px;
-        padding: 14px;
-      }
-
-      .dsWatchPlayerTop h1 {
-        font-size: clamp(28px, 9vw, 44px);
-        line-height: 1;
-      }
-
-      .dsWatchPlayerTop p {
-        font-size: 14px;
-        line-height: 1.55;
-      }
-
-      .dsWatchFrame,
-      .dsMovieButtonPlayerShell,
-      .dsDirectVideoShell,
-      .dsMovieEmbedFrame,
-      .dsProxyVideoWaitingShell,
-      .dsStandaloneHlsShell {
-        min-height: 270px;
-        border-radius: 18px;
-      }
-
-      .dsMovieButtonVideo,
-      .dsMovieButtonPlayerShell .video-js,
-      .dsDirectMovieVideo {
-        height: 56vh !important;
-        min-height: 270px !important;
-      }
-
-      .dsProxyVideoWaitingCard {
-        width: min(100% - 22px, 420px);
-        padding: 18px;
-        border-radius: 24px;
-      }
-
-      .dsProxyVideoWaitingCard h2 {
-        font-size: 24px;
-        line-height: 1;
-      }
-
-      .dsHlsStatus {
-        left: 10px;
-        right: 10px;
-        top: 10px;
-        max-width: none;
-        border-radius: 16px;
-      }
-
-      .dsWatchEpisodePicker {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 12px;
-        padding: 12px;
-        border-radius: 20px;
-      }
-
-      .dsWatchSeasonScroll,
-      .dsWatchEpisodeScroll,
-      .dsEpisodeChips {
-        display: flex;
-        overflow-x: auto;
-        gap: 8px;
-        padding-bottom: 4px;
-        scrollbar-width: none;
-      }
-
-      .dsWatchSeasonScroll::-webkit-scrollbar,
-      .dsWatchEpisodeScroll::-webkit-scrollbar,
-      .dsEpisodeChips::-webkit-scrollbar {
-        display: none;
-      }
-
-      .dsWatchSeasonScroll a,
-      .dsWatchEpisodeScroll a,
-      .dsEpisodeChips a {
-        white-space: nowrap;
-        min-height: 38px;
-        border-radius: 999px;
-      }
-
-      .dsWatchroomHero {
-        margin-top: 80px;
-        padding: 18px;
-        border-radius: 26px;
-        display: grid;
-        gap: 16px;
-      }
-
-      .dsWatchroomHero h1 {
-        font-size: clamp(34px, 11vw, 62px);
-        line-height: .95;
-      }
-
-      .dsWatchroomCreate,
-      .dsActiveRooms,
-      .dsRoomShell,
-      .dsRoomLayout,
-      .dsRoomMain,
-      .dsRoomSidebar {
-        grid-template-columns: 1fr !important;
-        gap: 14px;
-      }
-
-      .dsWatchroomPanel,
-      .dsRoomCard,
-      .dsRoomChatClean,
-      .dsTrailerInputClean,
-      .dsSyncPanel {
-        border-radius: 22px;
-      }
-
-      .dsQuickRoomForm,
-      #createWatchroomForm,
-      #joinWatchroomForm,
-      #profileCreateForm,
-      .dsSafeAuthForm,
-      .dsRoomChatClean form,
-      .dsTrailerInputClean form {
-        display: grid;
-        grid-template-columns: 1fr !important;
-        gap: 10px;
-      }
-
-      input,
-      select,
-      textarea,
-      button {
-        font-size: 16px;
-      }
-
-      input,
-      select,
-      textarea {
-        width: 100%;
-        min-height: 48px;
-        border-radius: 16px !important;
-      }
-
-      textarea {
-        min-height: 120px;
-      }
-
-      form button,
-      .dsPrimaryBtn,
-      .dsSecondaryBtn,
-      .dsGhostPill {
-        min-height: 48px;
-      }
-
-      .dsAccountHero,
-      .dsProfilesHero,
-      .dsProfileCreate,
-      .dsContinuePagePanel {
-        padding: 18px;
-        border-radius: 24px;
-      }
-
-      .dsAccountHero {
-        margin-top: 84px;
-        display: grid;
-        gap: 16px;
-      }
-
-      .dsAccountHero h1,
-      .dsProfilesHero h1 {
-        font-size: clamp(34px, 11vw, 62px);
-        line-height: .95;
-      }
-
-      .dsAccountGrid,
-      .dsProfilesGrid {
-        grid-template-columns: 1fr !important;
-        gap: 12px;
-      }
-
-      .dsAccountCard,
-      .dsProfileCard {
-        min-height: 132px;
-        border-radius: 22px;
-      }
-
-      .dsProfileCard {
-        display: grid;
-        grid-template-columns: auto 1fr;
-        align-items: center;
-        text-align: left;
-        column-gap: 14px;
-      }
-
-      .dsProfileCard span {
-        grid-row: span 2;
-        width: 64px;
-        height: 64px;
-      }
-
-      .dsContinuePagePanel {
-        margin-top: 18px;
-      }
-
-      .swiflyMobileSearchSheet {
-        padding: 78px 12px 14px;
-      }
-
-      .swiflyMobileSearchBox {
-        border-radius: 24px;
-      }
-
-      .swiflyMobileSearchBox input {
-        min-height: 50px;
-      }
-
-      .dsWelcomeNavV102 {
-        min-height: 64px;
-        height: auto;
-        padding: 10px 12px;
-      }
-
-      .dsWelcomeBrandV102 {
-        min-width: 0;
-      }
-
-      .dsWelcomeBrandV102 b {
-        max-width: 42vw;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      .dsWelcomeBrandV102 span {
-        width: 36px;
-        height: 36px;
-        border-radius: 14px;
-      }
-
-      .dsWelcomeNavV102 > div {
-        gap: 6px;
-      }
-
-      .dsWelcomeNavV102 > div a {
-        min-height: 38px;
-        padding: 0 11px;
-        font-size: 12px;
-      }
-
-      .dsWelcomeNavV102 > div a[href="#browse"],
-      .dsWelcomeNavV102 > div a[href="#features"] {
-        display: none;
-      }
-
-      .dsWelcomeHeroV102 {
-        min-height: auto;
-        padding: 88px 12px 38px;
-      }
-
-      .dsWelcomeHeroInnerV102 {
-        min-height: 0;
-        grid-template-columns: 1fr;
-        gap: 22px;
-      }
-
-      .dsWelcomeCopyV102 h1 {
-        font-size: clamp(44px, 15vw, 76px);
-      }
-
-      .dsWelcomeCopyV102 p {
-        font-size: 15px;
-      }
-
-      .dsWelcomeStatsV102,
-      .dsWelcomeQuickV102,
-      .dsWelcomeFeatureGridV102 {
-        grid-template-columns: 1fr;
-      }
-
-      .dsWelcomeFeaturedV102 {
-        grid-template-columns: 96px 1fr;
-        padding: 12px;
-        border-radius: 22px;
-      }
-
-      .dsWelcomeFeaturedV102 img,
-      .dsWelcomeFeaturedV102 .posterFallback {
-        width: 96px;
-        border-radius: 14px;
-      }
-
-      .dsWelcomePosterGridV102 {
-        display: flex;
-        overflow-x: auto;
-        gap: 10px;
-        padding: 12px;
-        scrollbar-width: none;
-      }
-
-      .dsWelcomePosterGridV102::-webkit-scrollbar {
-        display: none;
-      }
-
-      .dsWelcomePosterGridV102 img {
-        min-width: 92px;
-        width: 92px;
-      }
-
-      .dsWelcomeQuickV102,
-      .dsWelcomeBrowseV102,
-      .dsWelcomeFeatureGridV102,
-      .dsWelcomeFinalV102 {
-        width: min(100vw - 22px, 100%);
-      }
-
-      .dsWelcomeFinalV102 {
-        display: grid;
-        gap: 16px;
-      }
-
-      .dsWelcomeFinalV102 > div:last-child {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 9px;
-      }
-
-      .dsWelcomeFinalV102 a {
-        width: 100%;
-      }
-    }
-
-    @media(max-width: 420px) {
-      .mobileNav {
-        left: 8px;
-        right: 8px;
-        bottom: 8px;
-        gap: 2px;
-        padding-left: 6px;
-        padding-right: 6px;
-      }
-
-      .mobileNav a {
-        font-size: 10px;
-        min-height: 46px;
-      }
-
-      .movieRail .movieCard,
-      .dsRail .movieCard {
-        min-width: 138px;
-        width: 138px;
-      }
-
-      .movieGrid,
-      .dsGrid,
-      .collectionGrid,
-      .resultsGrid {
-        gap: 10px !important;
-      }
-
-      .dsCardTitle {
-        font-size: 12px;
-      }
-
-      .dsCardMeta {
-        font-size: 9.5px;
-      }
-
-      .dsWelcomeCopyV102 h1,
-      .dsHeroContent h1,
-      .dsDetailHeroContent h1 {
-        font-size: clamp(40px, 14vw, 62px);
-      }
-    }
-
-
-    @media(max-width: 860px) {
-      body.isTypingMobile .mobileNav {
-        transform: translateY(calc(100% + 18px));
-      }
-    }
-
-
-    /* ============================================================
-       v104 SOCIAL FEATURES
-       Social hub, DMs, call links, and watch-room invites.
-       No root palette changes.
-       ============================================================ */
-
-    .dsSocialHero {
-      width: min(1320px, calc(100vw - 32px));
-      margin: 0 auto 20px;
+    .dsSocialLogo {
+      width: 48px;
+      height: 48px;
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 18px;
-      align-items: center;
-      padding: clamp(18px, 3vw, 30px);
-      border-radius: 30px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.038)),
-        rgba(0,0,0,.16);
-      border: 1px solid rgba(255,255,255,.10);
-      box-shadow: 0 22px 64px rgba(0,0,0,.26);
+      place-items: center;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #e50914, #6d5dfc);
+      box-shadow: 0 16px 50px rgba(229,9,20,.22);
     }
 
-    .dsSocialHero h2 {
-      margin: 8px 0 8px;
-      font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: clamp(32px, 5vw, 70px);
-      line-height: .96;
-      letter-spacing: -.075em;
+    .dsSocialBrand strong {
+      display: block;
+      font-size: 18px;
     }
 
-    .dsSocialHero p {
-      max-width: 760px;
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.6;
-      font-weight: 650;
+    .dsSocialBrand small,
+    .dsSocialRoom small {
+      color: var(--sw-soft);
     }
 
-    .dsSocialHeroActions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-
-    .dsSocialShell {
-      width: min(1320px, calc(100vw - 32px));
-      margin: 0 auto 28px;
-      display: grid;
-      grid-template-columns: 300px minmax(240px, 320px) minmax(0, 1fr) 300px;
-      gap: 14px;
-      align-items: stretch;
-    }
-
-    .dsSocialPanel {
-      min-width: 0;
-      padding: 16px;
-      border-radius: 26px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.070), rgba(255,255,255,.035)),
-        rgba(0,0,0,.16);
-      border: 1px solid rgba(255,255,255,.10);
-      box-shadow: 0 18px 54px rgba(0,0,0,.23);
-    }
-
-    .dsSocialPanel h2,
-    .dsSocialPanel h3 {
-      margin: 0 0 8px;
-      font-family: "Space Grotesk", Inter, sans-serif;
-      letter-spacing: -.045em;
-    }
-
-    .dsSocialPanel p {
-      color: var(--muted);
-      line-height: 1.5;
-      margin: 0 0 14px;
-      font-size: 14px;
-    }
-
-    .dsSocialPanel form,
-    .dsSocialInlineForm {
-      display: grid;
-      gap: 10px;
-    }
-
-    .dsSocialPanel label {
-      display: grid;
-      gap: 6px;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 850;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-    }
-
-    .dsSocialPanel input,
-    .dsSocialPanel textarea {
+    .dsSocialCompose {
       width: 100%;
       min-height: 44px;
-      border-radius: 16px !important;
+      border: 0;
+      border-radius: 16px;
+      color: white;
+      background: linear-gradient(135deg, #e50914, #7c3aed);
+      font-weight: 950;
+      cursor: pointer;
+      margin-bottom: 16px;
     }
 
-    .dsSocialStatus {
-      margin-top: 12px;
-      padding: 10px 12px;
-      border-radius: 999px;
-      color: var(--muted);
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.10);
-      font-weight: 850;
-      font-size: 12px;
-    }
-
-    .dsSocialStatus.isGood {
-      color: var(--text);
-      background: rgba(255,255,255,.10);
-    }
-
-    .dsSocialOnlineBox {
-      margin-top: 16px;
-      padding-top: 14px;
-      border-top: 1px solid rgba(255,255,255,.10);
-    }
-
-    .dsSocialMiniList,
-    .dsSocialFriendList {
+    .dsSocialSection {
       display: grid;
-      gap: 8px;
+      gap: 7px;
+      margin: 16px 0;
     }
 
-    .dsSocialMiniList button,
-    .dsSocialFriendList button {
-      width: 100%;
-      min-height: 56px;
+    .dsSocialSection > span {
+      color: rgba(255,255,255,.48);
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      padding: 0 8px;
+    }
+
+    .dsSocialRoom {
       display: grid;
-      grid-template-columns: auto minmax(0, 1fr);
+      grid-template-columns: 34px minmax(0, 1fr);
       grid-template-rows: auto auto;
-      gap: 2px 10px;
+      column-gap: 10px;
       align-items: center;
+      width: 100%;
+      min-height: 54px;
+      border: 1px solid transparent;
+      border-radius: 16px;
+      padding: 8px 10px;
+      color: white;
+      background: transparent;
       text-align: left;
-      padding: 10px;
-      border-radius: 18px;
-      color: var(--text);
-      background: rgba(255,255,255,.055);
-      border: 1px solid rgba(255,255,255,.09);
       cursor: pointer;
     }
 
-    .dsSocialFriendList button.active,
-    .dsSocialMiniList button:hover,
-    .dsSocialFriendList button:hover {
-      background: rgba(255,255,255,.10);
-      border-color: rgba(255,255,255,.18);
-    }
-
-    .dsSocialMiniList button > span,
-    .dsSocialFriendList button > span {
-      grid-row: span 2;
-      width: 38px;
-      height: 38px;
+    .dsSocialRoom i {
+      grid-row: 1 / span 2;
+      width: 34px;
+      height: 34px;
       display: grid;
       place-items: center;
-      border-radius: 999px;
-      background: rgba(255,255,255,.10);
-      font-weight: 950;
+      border-radius: 12px;
+      background: rgba(255,255,255,.08);
     }
 
-    .dsSocialMiniList b,
-    .dsSocialFriendList b {
+    .dsSocialRoom b {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
-    .dsSocialMiniList small,
-    .dsSocialMiniList span:last-child,
-    .dsSocialFriendList small {
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 750;
+    .dsSocialRoom.isActive,
+    .dsSocialRoom:hover {
+      border-color: rgba(255,255,255,.13);
+      background: rgba(255,255,255,.08);
     }
 
-    .dsSocialPanelHead,
-    .dsSocialChatTop {
+    .dsSocialMain {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto auto;
+      border-radius: 28px;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .dsSocialHeader {
       display: flex;
       justify-content: space-between;
-      gap: 12px;
+      gap: 14px;
       align-items: center;
-      margin-bottom: 12px;
+      padding: 18px 20px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
     }
 
-    .dsSocialPanelHead button,
-    .dsSocialChatActions button,
-    .dsSocialCallCard button,
-    .dsSocialInlineForm button,
-    .dsSocialMessageForm button,
-    #socialCopyInvite {
-      min-height: 38px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.08);
-      color: var(--text);
-      font-weight: 850;
-      cursor: pointer;
+    .dsSocialHeader span {
+      color: rgba(255,255,255,.52);
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .14em;
+      text-transform: uppercase;
     }
 
-    .dsSocialChatActions {
+    .dsSocialHeader h1 {
+      margin: 2px 0 0;
+      font-size: clamp(24px, 3vw, 36px);
+      letter-spacing: -.06em;
+    }
+
+    .dsSocialHeaderActions {
       display: flex;
       flex-wrap: wrap;
-      gap: 7px;
-      justify-content: flex-end;
-    }
-
-    .dsSocialChatActions button {
-      padding: 0 10px;
-      font-size: 12px;
+      gap: 8px;
     }
 
     .dsSocialMessages {
-      height: 470px;
-      overflow: auto;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .dsSocialMessage {
       display: grid;
-      align-content: start;
+      grid-template-columns: 40px minmax(0, 1fr);
       gap: 10px;
-      padding: 12px;
-      border-radius: 22px;
-      background: rgba(0,0,0,.18);
-      border: 1px solid rgba(255,255,255,.08);
-      scrollbar-width: thin;
+      max-width: min(720px, 92%);
+      align-self: flex-start;
     }
 
-    .dsSocialBubble {
-      width: fit-content;
-      max-width: min(78%, 520px);
+    .dsSocialMessage.mine {
+      align-self: flex-end;
+      grid-template-columns: minmax(0, 1fr) 40px;
+    }
+
+    .dsMsgAvatar {
+      width: 40px;
+      height: 40px;
       display: grid;
-      gap: 4px;
-      padding: 10px 12px;
+      place-items: center;
+      border-radius: 14px;
+      background: rgba(255,255,255,.10);
+      font-weight: 950;
+    }
+
+    .dsSocialMessage.mine .dsMsgAvatar {
+      grid-column: 2;
+      grid-row: 1;
+      background: linear-gradient(135deg, #e50914, #7c3aed);
+    }
+
+    .dsSocialMessage > div {
+      padding: 12px 14px;
       border-radius: 18px;
-      background: rgba(255,255,255,.075);
-      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.09);
     }
 
-    .dsSocialBubble.mine {
-      margin-left: auto;
-      background: rgba(255,255,255,.12);
+    .dsSocialMessage.mine > div {
+      grid-column: 1;
+      grid-row: 1;
+      background: rgba(229,9,20,.18);
+      border-color: rgba(229,9,20,.22);
     }
 
-    .dsSocialBubble span {
-      color: var(--muted);
+    .dsSocialMessage header {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .dsSocialMessage header small {
+      color: rgba(255,255,255,.45);
       font-size: 11px;
-      font-weight: 900;
     }
 
-    .dsSocialBubble p {
+    .dsSocialMessage p {
       margin: 0;
-      color: var(--text);
-      line-height: 1.35;
+      color: rgba(255,255,255,.86);
+      line-height: 1.45;
       overflow-wrap: anywhere;
     }
 
-    .dsSocialMessageForm {
+    .dsSocialTyping {
+      padding: 0 20px 10px;
+      color: rgba(255,255,255,.54);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .dsSocialComposer {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-columns: 44px minmax(0, 1fr) 48px;
       gap: 10px;
-      margin-top: 12px;
+      padding: 16px;
+      border-top: 1px solid rgba(255,255,255,.10);
     }
 
-    .dsSocialMessageForm button {
+    .dsSocialComposer input {
+      min-height: 48px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 17px;
       padding: 0 16px;
+      color: white;
+      background: rgba(0,0,0,.26);
+      outline: none;
     }
 
-    .dsSocialEmpty {
-      color: var(--muted);
-      padding: 12px;
+    .dsSocialComposer button {
+      border: 1px solid rgba(255,255,255,.12);
       border-radius: 16px;
-      background: rgba(255,255,255,.045);
-      border: 1px dashed rgba(255,255,255,.10);
-      font-weight: 750;
+      color: white;
+      background: rgba(255,255,255,.09);
+      cursor: pointer;
     }
 
-    .dsSocialCallPanel {
+    .dsSocialComposer button[type="submit"] {
+      background: linear-gradient(135deg, #e50914, #7c3aed);
+      border-color: transparent;
+    }
+
+    .dsSocialDetails {
       display: grid;
+      gap: 14px;
       align-content: start;
-      gap: 12px;
     }
 
-    .dsSocialCallCard {
+    .dsSocialDetailsCard {
       display: grid;
-      gap: 8px;
-      padding: 13px;
-      border-radius: 20px;
+      gap: 10px;
+      padding: 16px;
+      border-radius: 22px;
       background: rgba(255,255,255,.055);
       border: 1px solid rgba(255,255,255,.09);
     }
 
-    .dsSocialCallCard span {
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 950;
-      text-transform: uppercase;
-      letter-spacing: .08em;
+    .dsSocialDetailsCard h2 {
+      margin: 0;
+      letter-spacing: -.045em;
     }
 
-    .dsSocialCallCard strong {
-      font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: 18px;
-      letter-spacing: -.035em;
+    .dsSocialDetailsCard p {
+      margin: 0;
+      color: var(--sw-soft);
+      line-height: 1.5;
     }
 
-    .dsSocialShareBox {
+    .dsSocialMembers {
       display: grid;
       gap: 8px;
     }
 
-    .dsSocialShareBox textarea {
-      min-height: 94px;
-      resize: vertical;
+    .dsSocialMembers span {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      color: rgba(255,255,255,.82);
+      font-weight: 750;
     }
 
-    .dsSocialFeatureGrid {
-      width: min(1320px, calc(100vw - 32px));
-      margin: 0 auto 72px;
+    .dsSocialMembers i {
+      width: 8px;
+      height: 8px;
+      border-radius: 99px;
+      background: #24e0a4;
+      box-shadow: 0 0 18px rgba(36,224,164,.8);
+    }
+
+    .dsCallModal {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 14px;
+      place-items: center;
+      padding: 20px;
+      background: rgba(0,0,0,.72);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
     }
 
-    .dsSocialFeatureGrid article {
+    .dsCallModal[hidden] {
+      display: none !important;
+    }
+
+    .dsCallCard {
+      width: min(760px, 96vw);
+      border-radius: 30px;
       padding: 18px;
-      border-radius: 24px;
-      background: rgba(255,255,255,.055);
-      border: 1px solid rgba(255,255,255,.10);
     }
 
-    .dsSocialFeatureGrid span {
-      color: var(--muted);
+    .dsCallTop {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .dsCallTop span {
+      color: rgba(255,255,255,.55);
       font-size: 11px;
       font-weight: 950;
+      letter-spacing: .14em;
       text-transform: uppercase;
-      letter-spacing: .08em;
     }
 
-    .dsSocialFeatureGrid h2 {
-      margin: 10px 0 8px;
-      font-family: "Space Grotesk", Inter, sans-serif;
-      letter-spacing: -.05em;
+    .dsCallTop h2 {
+      margin: 2px 0 0;
+      letter-spacing: -.055em;
     }
 
-    .dsSocialFeatureGrid p {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.55;
+    .dsCallTop button {
+      width: 42px;
+      height: 42px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 15px;
+      color: white;
+      background: rgba(255,255,255,.08);
     }
 
-    .dsWatchroomSocialCta {
+    .dsCallStage {
+      position: relative;
+      min-height: 360px;
+      display: grid;
+      place-items: center;
+      border-radius: 24px;
+      overflow: hidden;
+      background:
+        radial-gradient(620px circle at 50% 0%, rgba(124,58,237,.20), transparent 54%),
+        #05070d;
+    }
+
+    .dsCallStage video {
+      width: 100%;
+      height: 100%;
+      min-height: 360px;
+      object-fit: cover;
+    }
+
+    .dsCallPlaceholder {
+      position: absolute;
+      inset: auto 20px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(0,0,0,.48);
+      color: white;
+      font-weight: 850;
+    }
+
+    .dsCallControls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
       margin-top: 14px;
     }
 
-    @media(max-width: 1220px) {
+    .dsCallControls button {
+      min-height: 46px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 16px;
+      padding: 0 16px;
+      color: white;
+      background: rgba(255,255,255,.09);
+      font-weight: 850;
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .dsCallControls .danger {
+      background: rgba(229,9,20,.22);
+      border-color: rgba(229,9,20,.30);
+    }
+
+    .dsRow {
+      margin-bottom: 38px;
+    }
+
+    .dsRowHead {
+      margin-bottom: 12px;
+    }
+
+    .movieRail.dsRail {
+      gap: 14px;
+      scroll-padding-inline: 22px;
+    }
+
+    @media(max-width: 1100px) {
       .dsSocialShell {
         grid-template-columns: 280px minmax(0, 1fr);
       }
 
-      .dsSocialProfilePanel,
-      .dsSocialFriendsPanel,
-      .dsSocialMessagePanel,
-      .dsSocialCallPanel {
-        min-height: 0;
+      .dsSocialDetails {
+        display: none;
+      }
+
+      .dsProfileManagerLayout {
+        grid-template-columns: 1fr;
       }
     }
 
-    @media(max-width: 860px) {
-      .dsSocialHero,
-      .dsSocialShell,
-      .dsSocialFeatureGrid {
-        width: min(100vw - 22px, 100%);
-      }
-
-      .dsSocialHero {
-        margin-top: 82px;
-        grid-template-columns: 1fr;
-        border-radius: 24px;
-        padding: 18px;
-      }
-
-      .dsSocialHero h2 {
-        font-size: clamp(34px, 11vw, 62px);
-      }
-
-      .dsSocialHeroActions {
-        display: grid;
-        grid-template-columns: 1fr;
-        justify-content: stretch;
-      }
-
-      .dsSocialHeroActions a,
-      .dsSocialHeroActions button {
-        width: 100%;
+    @media(max-width: 760px) {
+      .dsSocialPage {
+        padding: 10px;
       }
 
       .dsSocialShell {
+        min-height: calc(100vh - 92px);
         grid-template-columns: 1fr;
-        gap: 12px;
       }
 
-      .dsSocialPanel {
-        border-radius: 22px;
-        padding: 14px;
+      .dsSocialSidebar {
+        max-height: 260px;
+        overflow-y: auto;
+      }
+
+      .dsSocialHeader {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .dsSocialHeaderActions button span {
+        display: none;
       }
 
       .dsSocialMessages {
-        height: 54vh;
-        min-height: 340px;
+        min-height: 420px;
       }
 
-      .dsSocialChatTop,
-      .dsSocialPanelHead {
-        display: grid;
-        grid-template-columns: 1fr;
+      .dsManageProfileCard {
+        grid-template-columns: auto minmax(0, 1fr);
       }
 
-      .dsSocialChatActions {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-      }
-
-      .dsSocialMessageForm {
-        grid-template-columns: 1fr;
-      }
-
-      .dsSocialFeatureGrid {
-        grid-template-columns: 1fr;
+      .dsManageProfileActions {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
       }
     }
 
@@ -22502,6 +19976,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
     <link href="https://vjs.zencdn.net/8.16.1/video-js.css" rel="stylesheet" />
     <script src="https://vjs.zencdn.net/8.16.1/video.min.js"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
 </head>
 <body>
@@ -22557,10 +20033,9 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
           ${navLink("/tv", "TV Shows", "tv", active)}
           ${navLink("/trending", "New & Popular", "trending", active)}
           ${navLink("/my-list", "My List", "watchlist", active)}
-          ${navLink("/liked", "Liked", "liked", active)}
           ${navLink("/social", "Social", "social", active)}
           ${navLink("/watchrooms", "Watch Rooms", "watchrooms", active)}
-          ${navLink("/browse-by-languages", "Browse by Languages", "genres", active)}
+          ${navLink("/browse-by-languages", "Browse", "genres", active)}
         </nav>
       </div>
 
@@ -22586,9 +20061,10 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
             <span class="caretTiny" aria-hidden="true">▾</span>
           </summary>
           <div class="dsProfileDropdown">
-            <a href="/profiles"><span>☺</span><b>Profiles</b></a>
+            <a href="/profiles"><span>☺</span><b>Switch Profile</b></a>
+            <a href="/profiles/manage"><span>✎</span><b>Manage Profiles</b></a>
+            <a href="/social"><span>◉</span><b>Social Hub</b></a>
             <a href="/account"><span>⚙</span><b>Account</b></a>
-            <a href="/social"><span>✉</span><b>Social</b></a>
             <a href="/watchrooms"><span>◎</span><b>Watch Rooms</b></a>
             <a href="/continue-watching"><span>▶</span><b>Continue Watching</b></a>
             <a href="/my-list"><span>＋</span><b>My List</b></a>
@@ -22608,24 +20084,13 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
   ${body}
 
-  <div id="swiflyMobileSearchSheet" class="swiflyMobileSearchSheet" hidden>
-    <form action="/search" method="get" class="swiflyMobileSearchBox">
-      <label>
-        <span>Search SwiflyTV</span>
-        <input name="q" placeholder="Movies, shows, people..." autocomplete="off" />
-      </label>
-      <button type="submit">Search</button>
-      <button type="button" data-close-mobile-search>Close</button>
-    </form>
-  </div>
-
   <nav class="mobileNav">
     ${navLink("/", "Home", "home", active)}
     ${navLink("/movies", "Movies", "movies", active)}
+    ${navLink("/tv", "TV", "tv", active)}
     ${navLink("/social", "Social", "social", active)}
-    <a href="/search" data-open-mobile-search class="${active === "search" ? "active" : ""}">Search</a>
+    ${navLink("/search", "Search", "search", active)}
     ${navLink("/my-list", "List", "watchlist", active)}
-    ${navLink("/watchrooms", "Rooms", "watchrooms", active)}
   </nav>
 
   <div class="controlDock">
@@ -23514,237 +20979,6 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     })();
   </script>
 
-
-  <script>
-    (function swiflyCleanContinueProgress(){
-      const KEY = "swiflytv.continueWatching";
-
-      function read() {
-        try {
-          const parsed = JSON.parse(localStorage.getItem(KEY) || "[]");
-          return Array.isArray(parsed) ? parsed : [];
-        } catch {
-          return [];
-        }
-      }
-
-      function write(items) {
-        localStorage.setItem(KEY, JSON.stringify(items.slice(0, 50)));
-      }
-
-      function itemKey(item) {
-        return String(item.type || "movie") + ":" + String(item.id || item.tmdbId || "");
-      }
-
-      window.swiflySaveContinueWatching = function(item) {
-        if (!item || !(item.id || item.tmdbId)) return;
-        const items = read();
-        const key = itemKey(item);
-        const old = items.find((entry) => itemKey(entry) === key) || {};
-        const next = {
-          ...old,
-          ...item,
-          progress: Math.max(Number(old.progress || 0), Number(item.progress || 0)),
-          currentTime: Number(item.currentTime || old.currentTime || 0),
-          duration: Number(item.duration || old.duration || 0),
-          updatedAt: Date.now()
-        };
-        write([next, ...items.filter((entry) => itemKey(entry) !== key)]);
-      };
-
-      window.swiflyBindContinueProgress = function(video, item) {
-        if (!video || !item || video.__swiflyCleanProgressBound) return;
-        video.__swiflyCleanProgressBound = true;
-
-        function update() {
-          const duration = Number(video.duration || 0);
-          const currentTime = Number(video.currentTime || 0);
-          const progress = duration > 0 && Number.isFinite(duration)
-            ? Math.max(0, Math.min(100, (currentTime / duration) * 100))
-            : 0;
-
-          window.swiflySaveContinueWatching({
-            ...item,
-            progress,
-            currentTime,
-            duration
-          });
-        }
-
-        ["timeupdate", "pause", "seeked", "ended", "loadedmetadata"].forEach((eventName) => {
-          video.addEventListener(eventName, update);
-        });
-      };
-    })();
-  </script>
-
-
-  <script>
-    (function swiflyV99Cleanup(){
-      const topbar = document.querySelector(".netflixTopbar");
-      function onScroll(){
-        if (topbar) topbar.classList.toggle("isScrolled", window.scrollY > 12);
-      }
-      window.addEventListener("scroll", onScroll, { passive: true });
-      onScroll();
-
-      document.querySelectorAll("img").forEach((img) => {
-        if (img.complete && img.naturalWidth) img.classList.add("swiflyLoaded");
-        else {
-          img.addEventListener("load", () => img.classList.add("swiflyLoaded"), { once: true });
-          img.addEventListener("error", () => img.classList.add("swiflyLoaded"), { once: true });
-        }
-      });
-    })();
-  </script>
-
-
-  <script>
-    (function swiflyV100Features(){
-      const searchSheet = document.getElementById("swiflyMobileSearchSheet");
-
-      document.querySelectorAll("[data-open-mobile-search]").forEach((link) => {
-        link.addEventListener("click", (event) => {
-          if (window.innerWidth > 760 || !searchSheet) return;
-          event.preventDefault();
-          searchSheet.hidden = false;
-          const input = searchSheet.querySelector("input");
-          setTimeout(() => input && input.focus(), 50);
-        });
-      });
-
-      document.querySelectorAll("[data-close-mobile-search]").forEach((button) => {
-        button.addEventListener("click", () => {
-          if (searchSheet) searchSheet.hidden = true;
-        });
-      });
-
-      searchSheet?.addEventListener("click", (event) => {
-        if (event.target === searchSheet) searchSheet.hidden = true;
-      });
-
-      document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape" && searchSheet) searchSheet.hidden = true;
-      });
-
-      function esc(value) {
-        return String(value || "")
-          .replaceAll("&", "&amp;")
-          .replaceAll("<", "&lt;")
-          .replaceAll(">", "&gt;")
-          .replaceAll('"', "&quot;");
-      }
-
-      function posterUrl(path) {
-        if (!path) return "";
-        if (String(path).startsWith("http")) return String(path);
-        return "https://image.tmdb.org/t/p/w342" + String(path);
-      }
-
-      function hrefFor(item) {
-        const type = item.type || item.media_type || "movie";
-        const id = item.id || item.tmdbId || "";
-        return id ? "/watch/" + encodeURIComponent(type) + "/" + encodeURIComponent(id) + "?mode=movie" : "/movies";
-      }
-
-      function renderHomeContinue() {
-        const shell = document.getElementById("homeContinueRail");
-        const rail = document.getElementById("homeContinueRailItems");
-        if (!shell || !rail) return;
-
-        let items = [];
-        try {
-          const saved = JSON.parse(localStorage.getItem("swiflytv.continueWatching") || "[]");
-          if (Array.isArray(saved)) items = saved;
-        } catch {}
-
-        items = items
-          .filter(Boolean)
-          .sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0))
-          .slice(0, 12);
-
-        if (!items.length) {
-          shell.hidden = true;
-          return;
-        }
-
-        shell.hidden = false;
-        rail.innerHTML = items.map((item) => {
-          const title = item.title || item.name || "Untitled";
-          const type = item.type || item.media_type || "movie";
-          const year = item.year || "";
-          const poster = posterUrl(item.poster || item.poster_path || "");
-          const progress = Math.max(0, Math.min(100, Number(item.progress || 0)));
-
-          return '<a class="movieCard" href="' + esc(hrefFor(item)) + '">' +
-            '<div class="posterWrap">' +
-              (poster ? '<img src="' + esc(poster) + '" alt="' + esc(title) + '" loading="lazy" />' : '<div class="posterFallback"><span>' + esc(title).slice(0, 1) + '</span></div>') +
-            '</div>' +
-            '<div class="movieMeta">' +
-              '<strong>' + esc(title) + '</strong>' +
-              '<span>' + esc(String(type).toUpperCase()) + (year ? ' • ' + esc(year) : '') + '</span>' +
-              '<div class="dsLocalProgressLine" style="--progress:' + progress + '%"><span></span></div>' +
-            '</div>' +
-          '</a>';
-        }).join("");
-      }
-
-      if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", renderHomeContinue);
-      else renderHomeContinue();
-    })();
-  </script>
-
-
-  <script>
-    (function swiflyV101Welcome(){
-      if (!document.querySelector(".dsWelcomeV101")) return;
-      document.querySelectorAll(".dsWelcomeV101 img").forEach((img) => {
-        if (img.complete && img.naturalWidth) img.classList.add("swiflyLoaded");
-        else {
-          img.addEventListener("load", () => img.classList.add("swiflyLoaded"), { once: true });
-          img.addEventListener("error", () => img.classList.add("swiflyLoaded"), { once: true });
-        }
-      });
-    })();
-  </script>
-
-
-  <script>
-    (function swiflyV102WelcomeFix(){
-      if (!document.querySelector(".dsWelcomeV102")) return;
-      document.querySelectorAll(".dsWelcomeV102 img").forEach((img) => {
-        if (img.complete && img.naturalWidth) img.classList.add("swiflyLoaded");
-        else {
-          img.addEventListener("load", () => img.classList.add("swiflyLoaded"), { once: true });
-          img.addEventListener("error", () => img.classList.add("swiflyLoaded"), { once: true });
-        }
-      });
-    })();
-  </script>
-
-
-  <script>
-    (function swiflyV103MobilePolish(){
-      function setVh(){
-        document.documentElement.style.setProperty("--swifly-vh", (window.innerHeight * 0.01) + "px");
-      }
-      setVh();
-      window.addEventListener("resize", setVh, { passive: true });
-      window.addEventListener("orientationchange", setVh, { passive: true });
-
-      document.querySelectorAll(".movieRail, .dsRail, .dsCastRail").forEach((rail) => {
-        if (rail.__swiflyMobileRailBound) return;
-        rail.__swiflyMobileRailBound = true;
-        rail.setAttribute("tabindex", rail.getAttribute("tabindex") || "0");
-      });
-
-      document.querySelectorAll("input, textarea, select").forEach((field) => {
-        field.addEventListener("focus", () => document.body.classList.add("isTypingMobile"), { passive: true });
-        field.addEventListener("blur", () => setTimeout(() => document.body.classList.remove("isTypingMobile"), 120), { passive: true });
-      });
-    })();
-  </script>
-
 </body>
 </html>`;
 }
@@ -23940,111 +21174,125 @@ async function welcomePage(req, res) {
   const hero = welcomeSpotlightMovie && !welcomeSpotlightMovie.__error
     ? { ...welcomeSpotlightMovie, media_type: "movie" }
     : pickHero(trending) || {};
-  const heroTitle = getTitle(hero) || "Movies and shows, cleaner.";
+  const heroTitle = getTitle(hero) || "Your distance date night starts here.";
   const heroBg = hero.backdrop_path ? fullBackdrop(hero.backdrop_path) : "";
   const heroPoster = hero.poster_path ? img(hero.poster_path, "w500") : "";
-  const heroDesc = hero.overview || "Browse movies, shows, trailers, watchlists, continue watching, and synced watch rooms in one clean streaming-style site.";
+  const heroDesc = hero.overview || "SwiflyTV helps movie fans plan movie nights, share watch links, start date rooms, chat, count down together, and feel a little closer from different places.";
   const redirect = encodeURIComponent(String(req.query.redirect || "/profiles"));
   const heroType = getType(hero) || "movie";
-  const heroDetailsHref = hero.id ? `/${heroType}/${hero.id}` : "/movies";
-  const heroSignupHref = `/signup?redirect=${encodeURIComponent(heroDetailsHref)}`;
+  const heroHref = hero.id ? `/signup?redirect=${encodeURIComponent(`/${heroType}/${hero.id}`)}` : `/signup?redirect=${redirect}`;
   const previewMosaic = hasTmdb
-    ? [...(popularMovies.results || []), ...(popularTv.results || []), ...trending].filter((item) => item.poster_path).slice(0, 10)
+    ? [...(popularMovies.results || []), ...(popularTv.results || [])].filter((item) => item.poster_path).slice(0, 6)
     : [];
 
-  const body = `<main class="dsWelcomePage dsWelcomeV102">
-    <nav class="dsWelcomeNavV102">
-      <a class="dsWelcomeBrandV102" href="/welcome"><span></span><b>${escapeHtml(BRAND_WORDMARK)}</b></a>
-      <div>
-        <a href="#browse">Browse</a>
-        <a href="#features">Features</a>
+  const body = `<main class="dsWelcomePage dsWelcomePagePro">
+    <nav class="dsWelcomeNav dsWelcomeNavPro">
+      <a class="dsWelcomeBrand" href="/welcome"><span></span><b>${escapeHtml(BRAND_WORDMARK)}</b></a>
+      <div class="dsWelcomeNavLinks">
+        <a href="#discovery">Date ideas</a>
+        <a href="#features">Couple tools</a>
         <a href="/login?redirect=${redirect}">Log in</a>
-        <a class="primary" href="/signup?redirect=${redirect}">Get started</a>
+        <a class="dsWelcomeJoin" href="/signup?redirect=${redirect}">Sign up</a>
       </div>
     </nav>
 
-    <section class="dsWelcomeHeroV102">
-      ${heroBg ? `<div class="dsWelcomeBackdropV102" style="background-image:url('${escapeHtml(heroBg)}')"></div>` : ""}
-      <div class="dsWelcomeHeroInnerV102">
-        <section class="dsWelcomeCopyV102">
-          <span class="dsWelcomeKickerV102">SwiflyTV streaming hub</span>
-          <h1>Movies and shows, without the messy part.</h1>
-          <p>Browse trending titles, save your list, continue watching, and open watch rooms from a cleaner movie-site layout.</p>
+    <section class="dsWelcomeHero dsWelcomeHeroPro">
+      ${heroBg ? `<div class="dsWelcomeHeroBg" style="background-image:url('${escapeHtml(heroBg)}')"></div>` : ""}
+      <div class="dsWelcomeGlowOne"></div>
+      <div class="dsWelcomeHeroCopy">
+        <span class="dsEyebrow">Long-distance date nights</span>
+        <h1>Feel closer, even when you are far apart.</h1>
+        <p>${escapeHtml(heroDesc)}</p>
 
-          <div class="dsWelcomeActionsV102">
-            <a class="dsPrimaryBtn" href="/signup?redirect=${redirect}">Start watching</a>
-            <a class="dsSecondaryBtn" href="#browse">Browse preview</a>
-            <a class="dsGhostPill" href="/login?redirect=${redirect}">Log in</a>
-          </div>
+        <div class="dsWelcomeActions">
+          <a class="dsPrimaryBtn" href="/signup?redirect=${redirect}">Start a date night</a>
+          <a class="dsSecondaryBtn" href="#discovery">Browse date picks</a>
+        </div>
 
-          <div class="dsWelcomeStatsV102">
-            <article><b>Movies</b><span>Popular, trending, top rated</span></article>
-            <article><b>Shows</b><span>TV browsing and episode pages</span></article>
-            <article><b>Rooms</b><span>Synced watch rooms</span></article>
-          </div>
-        </section>
-
-        <aside class="dsWelcomeShowcaseV102">
-          <div class="dsWelcomeFeaturedV102">
-            ${heroPoster ? `<img src="${escapeHtml(heroPoster)}" alt="${escapeHtml(heroTitle)} poster" loading="lazy" />` : `<div class="posterFallback"><span>${escapeHtml(heroTitle.slice(0, 1))}</span></div>`}
-            <div>
-              <span>Featured</span>
-              <h2>${escapeHtml(heroTitle)}</h2>
-              <p>${escapeHtml(getYear(getDate(hero)))} • ${escapeHtml(metaMatch(hero))}</p>
-              <a href="${escapeHtml(heroSignupHref)}">Open title</a>
-            </div>
-          </div>
-
-          <div class="dsWelcomePosterGridV102">
-            ${previewMosaic.map((item) => `<img src="${escapeHtml(img(item.poster_path, "w342"))}" alt="${escapeHtml(getTitle(item))}" loading="lazy" />`).join("")}
-          </div>
-        </aside>
+        <div class="dsWelcomeStats">
+          <div><b>Profiles</b><span>Me, partner, and together spaces</span></div>
+          <div><b>Watch Rooms</b><span>Open Together, Live Share, chat</span></div>
+          <div><b>Distance Sync</b><span>Countdowns and shared timeframes</span></div>
+        </div>
       </div>
+
+      <aside class="dsWelcomeShowcase">
+        <div class="dsWelcomeSpotlightCard">
+          ${heroPoster ? `<img src="${escapeHtml(heroPoster)}" alt="${escapeHtml(heroTitle)} poster" loading="lazy" />` : `<div class="posterFallback"><span>${escapeHtml(heroTitle.slice(0, 1))}</span></div>`}
+          <div>
+            <span>Date night spotlight</span>
+            <h2>${escapeHtml(heroTitle)}</h2>
+            <p>${escapeHtml(getYear(getDate(hero)))} • ${escapeHtml(metaMatch(hero))}</p>
+            <a href="${heroHref}">Save for date night →</a>
+          </div>
+        </div>
+        <div class="dsWelcomeMiniMosaic">
+          ${previewMosaic.map((item) => `<img src="${escapeHtml(img(item.poster_path, "w342"))}" alt="${escapeHtml(getTitle(item))}" loading="lazy" />`).join("")}
+        </div>
+      </aside>
     </section>
 
-    <section class="dsWelcomeQuickV102">
-      <article><span>01</span><h2>Find something faster</h2><p>Cleaner rows, search, genres, trending titles, and cast pages help you get to a movie quicker.</p></article>
-      <article><span>02</span><h2>Keep your stuff saved</h2><p>Use profiles, My List, Liked, and Continue Watching so your site feels personal.</p></article>
-      <article><span>03</span><h2>Watch with friends</h2><p>Use Watch Rooms when you want a room code, chat, host controls, and synced playback.</p></article>
+    <section class="dsWelcomeHowItWorks">
+      <article><span>1</span><strong>Pick the vibe</strong><p>Choose cozy, funny, emotional, action, comfort rewatch, or something new for tonight.</p></article>
+      <article><span>2</span><strong>Create your couple space</strong><p>Use Me, Partner, and Together profiles so your date nights feel personal.</p></article>
+      <article><span>3</span><strong>Start a date room</strong><p>Share a room link, chat, countdown, and press play together from anywhere.</p></article>
     </section>
 
-    <section id="browse" class="dsWelcomeBrowseV102">
-      <div class="dsWelcomeSectionHeadV102">
-        <span>Preview the library</span>
-        <h2>See what is popular right now.</h2>
-        <p>These previews come from TMDB. Sign up when you want profiles, My List, Continue Watching, and Watch Rooms.</p>
+    <section class="dsCouplePromiseStrip">
+      <article><span>♡</span><b>Open Together</b><p>If embeds fail, both of you open the real site and use the same countdown.</p></article>
+      <article><span>☾</span><b>Late-night friendly</b><p>Big buttons, clear rooms, and fewer steps when you are already on a call.</p></article>
+      <article><span>✦</span><b>My List</b><p>Save movies you both actually want instead of losing them in texts.</p></article>
+    </section>
+
+    <section id="discovery" class="dsWelcomeDiscovery dsWelcomeDiscoveryPro">
+      <div class="dsWelcomeIntro">
+        <span class="dsEyebrow">Date ideas before signing in</span>
+        <h2>Find the movie before the “what do we watch?” argument.</h2>
+        <p>SwiflyTV is built for movie fans who still want a normal movie night together. Browse ideas, then unlock Watch Rooms, My List, shared watch history, hearts, countdowns, and profiles.</p>
       </div>
 
       ${hasTmdb ? `
-        ${welcomePreviewRail("Trending now", trending)}
-        ${welcomePreviewRail("Popular movies", popularMovies.results || [], "movie")}
-        ${welcomePreviewRail("Popular TV shows", popularTv.results || [], "tv")}
-        ${welcomePreviewRail("Family picks", familyMovies.results || [], "movie")}
-        ${welcomePreviewRail("Top rated movies", topMovies.results || [], "movie")}
+        ${welcomePreviewRail("Date-night trending", trending)}
+        ${welcomePreviewRail("Movies to watch together", popularMovies.results || [], "movie")}
+        ${welcomePreviewRail("Shows to binge together", popularTv.results || [], "tv")}
+        ${welcomePreviewRail("Cozy comfort picks", familyMovies.results || [], "movie")}
+        ${welcomePreviewRail("Serious date-night picks", topMovies.results || [], "movie")}
       ` : `
         <section class="dsWelcomeFallback">
-          <h2>Connect TMDB to unlock previews</h2>
-          <p>Add <code>TMDB_API_KEY</code> in your environment variables to show movie and TV previews here.</p>
+          <h2>Connect TMDB to unlock discovery previews</h2>
+          <p>Add your <code>TMDB_API_KEY</code> in your environment variables to show trending movies and shows here.</p>
           <a class="dsPrimaryBtn" href="/signup">Continue to signup</a>
         </section>
       `}
     </section>
 
-    <section id="features" class="dsWelcomeFeatureGridV102">
-      <article><span>Library</span><h3>Streaming-style discovery</h3><p>Movies, TV shows, trending, top rated, genre pages, language browsing, and search.</p></article>
-      <article><span>Player</span><h3>Cleaner watch pages</h3><p>Movie mode, trailer mode, fullscreen support, player status, and watch room support.</p></article>
-      <article><span>Profiles</span><h3>Your own setup</h3><p>Profiles, Kids mode, My List, Liked titles, and local Continue Watching.</p></article>
-      <article><span>Mobile</span><h3>Better phone layout</h3><p>Bottom nav, swipeable rows, mobile search, and bigger tap targets.</p></article>
+    <section id="features" class="dsWelcomeFeatures dsWelcomeFeaturesPro">
+      <article><span>Watch Rooms</span><h3>Watch from two places</h3><p>Share a room, use Open Together, Live Share, countdowns, and chat while apart.</p></article>
+      <article><span>Profiles</span><h3>Me, you, and us</h3><p>Create profiles for each person and a shared Together space for date nights.</p></article>
+      <article><span>Continue Watching</span><h3>Resume the date</h3><p>Keep track of what you started so the next call can begin faster.</p></article>
+      <article><span>Love Notes</span><h3>Keep it sweet</h3><p>Use the couple dashboard for date ideas, little notes, and shared plans.</p></article>
     </section>
 
-    <section class="dsWelcomeFinalV102">
+    <section class="dsWelcomeDevice">
       <div>
-        <span>Ready to browse?</span>
-        <h2>Start with a profile and make it yours.</h2>
-        <p>No cluttered landing pitch. Just a cleaner way to browse movies and shows.</p>
+        <span class="dsEyebrow">Built for phones and late-night calls</span>
+        <h2>Designed for “you pick, no you pick.”</h2>
+        <p>Whether you are on a phone in bed or a laptop on a call, SwiflyTV makes it easier to choose, sync, and watch together.</p>
+        <a class="dsPrimaryBtn" href="/signup?redirect=${redirect}">Plan your first date room</a>
       </div>
-      <div>
-        <a class="dsPrimaryBtn" href="/signup?redirect=${redirect}">Get started</a>
+      <div class="dsPhoneMock">
+        <div class="dsPhoneTop"></div>
+        <div class="dsPhoneHero"></div>
+        <div class="dsPhoneRows"><span></span><span></span><span></span></div>
+      </div>
+    </section>
+
+    <section class="dsWelcomeFinalCta dsWelcomeFinalCtaPro">
+      <span class="dsEyebrow">Ready for date night?</span>
+      <h2>Start your shared screen tradition.</h2>
+      <p>Create your couple space and make distance feel a little smaller.</p>
+      <div class="dsWelcomeActions">
+        <a class="dsPrimaryBtn" href="/signup?redirect=${redirect}">Create account</a>
         <a class="dsSecondaryBtn" href="/login?redirect=${redirect}">Log in</a>
       </div>
     </section>
@@ -24116,28 +21364,12 @@ async function homePage(req, res) {
           <a class="dsPrimaryBtn" href="/movies">Browse Movies</a>
           <a class="dsSecondaryBtn" href="/tv">Browse TV</a>
           <a class="dsGhostPill" href="/watchrooms">Watch Rooms</a>
-        <a class="dsGhostPill" href="/social">Social</a>
         </div>
         <div class="dsCoupleHomeCards">
           <article><b>01</b><span>Find something</span></article>
           <article><b>02</b><span>Press play</span></article>
           <article><b>03</b><span>Save your list</span></article>
         </div>
-      </section>
-
-      <section class="dsFeatureStrip" aria-label="Quick actions">
-        <a href="/movies"><span>🎬</span><b>Movies</b><small>Browse films</small></a>
-        <a href="/tv"><span>📺</span><b>TV Shows</b><small>Find series</small></a>
-        <a href="/trending"><span>↗</span><b>Trending</b><small>Popular now</small></a>
-        <a href="/watchrooms"><span>◎</span><b>Watch Rooms</b><small>Sync with friends</small></a>
-        <a href="/social"><span>✉</span><b>Social</b><small>Message and call</small></a>
-        <a href="/my-list"><span>＋</span><b>My List</b><small>Saved titles</small></a>
-        <a href="/search"><span>⌕</span><b>Search</b><small>Find anything</small></a>
-      </section>
-
-      <section class="dsLocalContinueRail" id="homeContinueRail" hidden>
-        <div class="dsRowHead"><h2>Continue Watching</h2><a href="/continue-watching">View all</a></div>
-        <div class="movieRail dsRail" id="homeContinueRailItems"></div>
       </section>
 
       <section id="continueWatchingSection" class="dsRow dsContinueSection" hidden>
@@ -25049,38 +22281,6 @@ async function watchPage(req, res, type) {
     res.set("Cache-Control", "no-store");
   }
 
-  const cleanProgressScript = `<script>
-    (function swiflyCleanWatchProgressBoot(){
-      var item = {
-        id: ${JSON.stringify(id)},
-        tmdbId: ${JSON.stringify(id)},
-        type: ${JSON.stringify(type)},
-        title: ${JSON.stringify(title)},
-        name: ${JSON.stringify(title)},
-        poster: ${JSON.stringify(details.poster_path || "")},
-        poster_path: ${JSON.stringify(details.poster_path || "")},
-        backdrop: ${JSON.stringify(details.backdrop_path || "")},
-        backdrop_path: ${JSON.stringify(details.backdrop_path || "")},
-        rating: ${JSON.stringify(formatRating(details.vote_average))},
-        year: ${JSON.stringify(getYear(detailsDate))},
-        href: "/watch/${escapeHtml(type)}/${escapeHtml(id)}?mode=${mode === "movie" ? "movie" : "trailer"}"
-      };
-
-      function bind() {
-        if (window.swiflySaveContinueWatching) window.swiflySaveContinueWatching(item);
-        var video = document.querySelector("#proxyVideoClientVideo, #movie-placeholder-video, .dsWatchFrame video, .dsDirectMovieVideo");
-        if (video && window.swiflyBindContinueProgress) {
-          window.swiflyBindContinueProgress(video, item);
-        }
-      }
-
-      if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind);
-      else bind();
-      setTimeout(bind, 1200);
-      setTimeout(bind, 3500);
-    })();
-  </script>`;
-
   const directVideoScript = isMovieMode
     ? `<script>
       (function(){
@@ -25363,7 +22563,7 @@ async function watchPage(req, res, type) {
     </script>`
     : "";
 
-  res.send(pageShell({ title: `${SITE_NAME} — ${mode === "movie" ? "Watch" : "Trailer"} ${title}`, active: "watch", body: body + directVideoScript + cleanProgressScript }));
+  res.send(pageShell({ title: `${SITE_NAME} — ${mode === "movie" ? "Watch" : "Trailer"} ${title}`, active: "watch", body: body + directVideoScript }));
 }
 
 async function detailPage(req, res, type) {
@@ -25623,523 +22823,39 @@ function likedPage(req, res) {
 
 
 
-
-function socialPage(req, res) {
-  const body = `<main class="dsPlainPage dsSocialPage">
-    ${dsPageHeader("Social", "Message friends, send watch invites, start FaceTime-style calls, or launch a synced watch room together.", "Social")}
-
-    <section class="dsSocialHero">
-      <div>
-        <span class="dsEyebrow">Social hub</span>
-        <h2>Talk before, during, and after the movie.</h2>
-        <p>Add friends by handle, send messages, open FaceTime/Meet links, or invite someone into a SwiflyTV Watch Room.</p>
-      </div>
-      <div class="dsSocialHeroActions">
-        <button class="dsPrimaryBtn" type="button" data-social-start-call>Start call</button>
-        <a class="dsSecondaryBtn" href="/watchrooms">Create Watch Room</a>
-      </div>
-    </section>
-
-    <section class="dsSocialShell">
-      <aside class="dsSocialPanel dsSocialProfilePanel">
-        <h2>Your social profile</h2>
-        <p>Set a display name and handle for this browser. This is lightweight and saves locally.</p>
-        <form id="socialProfileForm">
-          <label>Display name<input name="displayName" placeholder="Your name" maxlength="40" /></label>
-          <label>Handle<input name="handle" placeholder="lukas" maxlength="28" /></label>
-          <button class="dsPrimaryBtn" type="submit">Save profile</button>
-        </form>
-        <div class="dsSocialStatus" id="socialConnectionStatus">Offline</div>
-
-        <div class="dsSocialOnlineBox">
-          <h3>Online now</h3>
-          <div id="socialOnlineList" class="dsSocialMiniList"></div>
-        </div>
-      </aside>
-
-      <aside class="dsSocialPanel dsSocialFriendsPanel">
-        <div class="dsSocialPanelHead">
-          <h2>Friends</h2>
-          <button type="button" id="socialClearFriends">Clear</button>
-        </div>
-        <form id="socialFriendForm" class="dsSocialInlineForm">
-          <input name="friend" placeholder="friend-handle" maxlength="28" />
-          <button type="submit">Add</button>
-        </form>
-        <div id="socialFriendList" class="dsSocialFriendList"></div>
-      </aside>
-
-      <section class="dsSocialPanel dsSocialMessagePanel">
-        <div class="dsSocialChatTop">
-          <div>
-            <span class="dsEyebrow">Messages</span>
-            <h2 id="socialChatTitle">Pick a friend</h2>
-          </div>
-          <div class="dsSocialChatActions">
-            <button type="button" id="socialFaceTimeBtn">FaceTime</button>
-            <button type="button" id="socialMeetBtn">Meet</button>
-            <button type="button" id="socialInviteRoomBtn">Invite</button>
-          </div>
-        </div>
-
-        <div id="socialMessages" class="dsSocialMessages">
-          <div class="dsSocialEmpty">Choose or add a friend to start messaging.</div>
-        </div>
-
-        <form id="socialMessageForm" class="dsSocialMessageForm">
-          <input name="message" placeholder="Message..." maxlength="360" autocomplete="off" />
-          <button type="submit">Send</button>
-        </form>
-      </section>
-
-      <aside class="dsSocialPanel dsSocialCallPanel">
-        <h2>Call tools</h2>
-        <p>Use external call links or SwiflyTV Watch Rooms. FaceTime links open on Apple devices that support them.</p>
-
-        <div class="dsSocialCallCard">
-          <span>FaceTime-style</span>
-          <strong>Open FaceTime</strong>
-          <button type="button" id="socialOpenFaceTime">Open FaceTime link</button>
-        </div>
-
-        <div class="dsSocialCallCard">
-          <span>Browser meeting</span>
-          <strong>Google Meet</strong>
-          <button type="button" id="socialOpenMeet">Open Meet</button>
-        </div>
-
-        <div class="dsSocialCallCard">
-          <span>SwiflyTV</span>
-          <strong>Watch Room call invite</strong>
-          <button type="button" id="socialOpenRoom">Create room invite</button>
-        </div>
-
-        <div class="dsSocialShareBox">
-          <textarea id="socialInviteText" readonly placeholder="Invite text will appear here..."></textarea>
-          <button type="button" id="socialCopyInvite">Copy invite</button>
-        </div>
-      </aside>
-    </section>
-
-    <section class="dsSocialFeatureGrid">
-      <article><span>Messages</span><h2>DM friends</h2><p>Messages save locally and send live when the other browser is online.</p></article>
-      <article><span>Calls</span><h2>FaceTime / Meet</h2><p>Open external call links right from SwiflyTV.</p></article>
-      <article><span>Invites</span><h2>Share rooms</h2><p>Create watch-room invites and send them to friends.</p></article>
-    </section>
-
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
-      (function swiflySocialPage(){
-        var socket = null;
-        var profile = readJson("swiflytv.socialProfile", null) || {};
-        var friends = readJson("swiflytv.socialFriends", []);
-        var selectedFriend = friends[0] || "";
-        var messages = readJson("swiflytv.socialMessages", {});
-        var online = [];
-
-        var profileForm = document.getElementById("socialProfileForm");
-        var friendForm = document.getElementById("socialFriendForm");
-        var messageForm = document.getElementById("socialMessageForm");
-        var friendList = document.getElementById("socialFriendList");
-        var messageList = document.getElementById("socialMessages");
-        var chatTitle = document.getElementById("socialChatTitle");
-        var statusEl = document.getElementById("socialConnectionStatus");
-        var onlineList = document.getElementById("socialOnlineList");
-        var inviteText = document.getElementById("socialInviteText");
-
-        function readJson(key, fallback) {
-          try {
-            var saved = JSON.parse(localStorage.getItem(key) || "null");
-            return saved === null ? fallback : saved;
-          } catch {
-            return fallback;
-          }
-        }
-
-        function saveJson(key, value) {
-          localStorage.setItem(key, JSON.stringify(value));
-        }
-
-        function cleanHandle(value) {
-          return String(value || "")
-            .trim()
-            .toLowerCase()
-            .replace(/^@+/, "")
-            .replace(/[^a-z0-9._-]/g, "")
-            .slice(0, 28);
-        }
-
-        function esc(value) {
-          return String(value || "")
-            .replaceAll("&", "&amp;")
-            .replaceAll("<", "&lt;")
-            .replaceAll(">", "&gt;")
-            .replaceAll('"', "&quot;");
-        }
-
-        function threadKey(a, b) {
-          return [cleanHandle(a), cleanHandle(b)].sort().join("__");
-        }
-
-        function getThread(friend) {
-          var key = threadKey(profile.handle, friend);
-          return Array.isArray(messages[key]) ? messages[key] : [];
-        }
-
-        function saveThread(friend, list) {
-          var key = threadKey(profile.handle, friend);
-          messages[key] = list.slice(-120);
-          saveJson("swiflytv.socialMessages", messages);
-        }
-
-        function setStatus(text, good) {
-          if (!statusEl) return;
-          statusEl.textContent = text;
-          statusEl.classList.toggle("isGood", Boolean(good));
-        }
-
-        function roomCode() {
-          return Math.random().toString(36).slice(2, 7) + "-" + Math.random().toString(36).slice(2, 7);
-        }
-
-        function roomUrl() {
-          var code = roomCode();
-          return location.origin + "/watchrooms/" + encodeURIComponent(code) + "?name=" + encodeURIComponent("Social watch");
-        }
-
-        function selectedOrPrompt() {
-          var friend = cleanHandle(selectedFriend || "");
-          if (!friend) {
-            friend = cleanHandle(prompt("Friend handle?") || "");
-            if (friend && !friends.includes(friend)) {
-              friends.push(friend);
-              saveJson("swiflytv.socialFriends", friends);
-              selectedFriend = friend;
-              renderFriends();
-            }
-          }
-          return friend;
-        }
-
-        function makeInvite(kind) {
-          var friend = selectedOrPrompt();
-          var url = roomUrl();
-          var text = "Join me on SwiflyTV" + (friend ? ", @" + friend : "") + ": " + url;
-          if (kind === "call") text = "Call/watch with me on SwiflyTV: " + url;
-          if (inviteText) inviteText.value = text;
-          if (socket && friend) {
-            socket.emit("social:call-invite", {
-              to: friend,
-              from: profile.handle,
-              fromName: profile.displayName || profile.handle,
-              roomUrl: url,
-              kind: kind || "watch-room"
-            });
-          }
-          return { friend: friend, url: url, text: text };
-        }
-
-        function renderProfile() {
-          if (!profileForm) return;
-          profileForm.displayName.value = profile.displayName || "";
-          profileForm.handle.value = profile.handle || "";
-        }
-
-        function renderFriends() {
-          friends = Array.from(new Set((friends || []).map(cleanHandle).filter(Boolean)));
-          saveJson("swiflytv.socialFriends", friends);
-
-          if (!friendList) return;
-          if (!friends.length) {
-            friendList.innerHTML = '<div class="dsSocialEmpty">No friends yet. Add a handle above.</div>';
-            return;
-          }
-
-          friendList.innerHTML = friends.map(function(friend) {
-            var isSelected = friend === selectedFriend;
-            var isOnline = online.some(function(user){ return user.handle === friend; });
-            return '<button type="button" class="' + (isSelected ? "active" : "") + '" data-friend="' + esc(friend) + '">' +
-              '<span>@' + esc(friend).slice(0,1).toUpperCase() + '</span>' +
-              '<b>@' + esc(friend) + '</b>' +
-              '<small>' + (isOnline ? "Online" : "Saved") + '</small>' +
-            '</button>';
-          }).join("");
-
-          friendList.querySelectorAll("[data-friend]").forEach(function(button) {
-            button.addEventListener("click", function() {
-              selectedFriend = cleanHandle(button.getAttribute("data-friend") || "");
-              renderFriends();
-              renderMessages();
-            });
-          });
-        }
-
-        function renderMessages() {
-          var friend = cleanHandle(selectedFriend || "");
-          if (chatTitle) chatTitle.textContent = friend ? "@" + friend : "Pick a friend";
-          if (!messageList) return;
-
-          if (!friend) {
-            messageList.innerHTML = '<div class="dsSocialEmpty">Choose or add a friend to start messaging.</div>';
-            return;
-          }
-
-          var thread = getThread(friend);
-          if (!thread.length) {
-            messageList.innerHTML = '<div class="dsSocialEmpty">No messages yet. Say hi.</div>';
-            return;
-          }
-
-          messageList.innerHTML = thread.map(function(message) {
-            var mine = cleanHandle(message.from) === cleanHandle(profile.handle);
-            return '<div class="dsSocialBubble ' + (mine ? "mine" : "theirs") + '">' +
-              '<span>' + esc(mine ? "You" : "@" + (message.from || friend)) + '</span>' +
-              '<p>' + esc(message.text) + '</p>' +
-            '</div>';
-          }).join("");
-          messageList.scrollTop = messageList.scrollHeight;
-        }
-
-        function renderOnline() {
-          if (!onlineList) return;
-          var visible = online.filter(function(user) { return user.handle !== profile.handle; }).slice(0, 8);
-          if (!visible.length) {
-            onlineList.innerHTML = '<div class="dsSocialEmpty">No one online yet.</div>';
-            return;
-          }
-
-          onlineList.innerHTML = visible.map(function(user) {
-            return '<button type="button" data-online="' + esc(user.handle) + '"><b>@' + esc(user.handle) + '</b><span>' + esc(user.name || "Online") + '</span></button>';
-          }).join("");
-
-          onlineList.querySelectorAll("[data-online]").forEach(function(button) {
-            button.addEventListener("click", function() {
-              var friend = cleanHandle(button.getAttribute("data-online") || "");
-              if (friend && !friends.includes(friend)) {
-                friends.push(friend);
-                saveJson("swiflytv.socialFriends", friends);
-              }
-              selectedFriend = friend;
-              renderFriends();
-              renderMessages();
-            });
-          });
-        }
-
-        function addMessage(friend, message) {
-          var thread = getThread(friend);
-          thread.push(message);
-          saveThread(friend, thread);
-          renderMessages();
-        }
-
-        function connectSocket() {
-          if (!profile.handle || !window.io) {
-            setStatus(profile.handle ? "Socket unavailable" : "Set profile to go online", false);
-            return;
-          }
-
-          socket = window.io();
-
-          socket.on("connect", function() {
-            setStatus("Online as @" + profile.handle, true);
-            socket.emit("social:join", {
-              name: profile.displayName || profile.handle,
-              handle: profile.handle
-            });
-          });
-
-          socket.on("disconnect", function() {
-            setStatus("Offline", false);
-          });
-
-          socket.on("social:presence", function(data) {
-            online = Array.isArray(data && data.users) ? data.users : [];
-            renderOnline();
-            renderFriends();
-          });
-
-          socket.on("social:dm", function(message) {
-            if (!message) return;
-            var other = cleanHandle(message.from) === cleanHandle(profile.handle) ? cleanHandle(message.to) : cleanHandle(message.from);
-            if (!other) return;
-            addMessage(other, message);
-            if (!friends.includes(other) && other !== profile.handle) {
-              friends.push(other);
-              saveJson("swiflytv.socialFriends", friends);
-              renderFriends();
-            }
-          });
-
-          socket.on("social:call-invite", function(invite) {
-            if (!invite || !invite.roomUrl) return;
-            var from = invite.fromName || invite.from || "Friend";
-            var ok = confirm(from + " invited you to a SwiflyTV Watch Room. Open it?");
-            if (ok) location.href = invite.roomUrl;
-          });
-        }
-
-        profileForm?.addEventListener("submit", function(event) {
-          event.preventDefault();
-          profile = {
-            displayName: String(profileForm.displayName.value || "").trim().slice(0, 40) || "Guest",
-            handle: cleanHandle(profileForm.handle.value || "")
-          };
-          if (!profile.handle) {
-            alert("Pick a handle first.");
-            return;
-          }
-          saveJson("swiflytv.socialProfile", profile);
-          if (socket) socket.disconnect();
-          connectSocket();
-          renderProfile();
-          renderFriends();
-          renderMessages();
-        });
-
-        friendForm?.addEventListener("submit", function(event) {
-          event.preventDefault();
-          var friend = cleanHandle(friendForm.friend.value || "");
-          if (!friend) return;
-          if (friend === profile.handle) {
-            alert("That is your handle.");
-            return;
-          }
-          if (!friends.includes(friend)) friends.push(friend);
-          selectedFriend = friend;
-          saveJson("swiflytv.socialFriends", friends);
-          friendForm.reset();
-          renderFriends();
-          renderMessages();
-        });
-
-        messageForm?.addEventListener("submit", function(event) {
-          event.preventDefault();
-          var friend = cleanHandle(selectedFriend || "");
-          var input = messageForm.message;
-          var text = String(input.value || "").trim();
-          if (!friend) {
-            alert("Pick a friend first.");
-            return;
-          }
-          if (!profile.handle) {
-            alert("Save your social profile first.");
-            return;
-          }
-          if (!text) return;
-          input.value = "";
-
-          var message = {
-            from: profile.handle,
-            to: friend,
-            text: text.slice(0, 360),
-            at: Date.now()
-          };
-
-          addMessage(friend, message);
-          if (socket && socket.connected) socket.emit("social:dm", message);
-        });
-
-        document.getElementById("socialClearFriends")?.addEventListener("click", function() {
-          if (!confirm("Clear saved friends?")) return;
-          friends = [];
-          selectedFriend = "";
-          saveJson("swiflytv.socialFriends", friends);
-          renderFriends();
-          renderMessages();
-        });
-
-        function openFaceTime() {
-          var friend = selectedOrPrompt();
-          if (!friend) return;
-          location.href = "facetime://" + encodeURIComponent(friend);
-        }
-
-        function openMeet() {
-          window.open("https://meet.google.com/new", "_blank", "noopener,noreferrer");
-        }
-
-        function openRoom() {
-          var invite = makeInvite("watch-room");
-          location.href = invite.url;
-        }
-
-        document.getElementById("socialFaceTimeBtn")?.addEventListener("click", openFaceTime);
-        document.getElementById("socialOpenFaceTime")?.addEventListener("click", openFaceTime);
-        document.getElementById("socialMeetBtn")?.addEventListener("click", openMeet);
-        document.getElementById("socialOpenMeet")?.addEventListener("click", openMeet);
-        document.getElementById("socialInviteRoomBtn")?.addEventListener("click", function(){ makeInvite("call"); });
-        document.getElementById("socialOpenRoom")?.addEventListener("click", openRoom);
-        document.querySelector("[data-social-start-call]")?.addEventListener("click", function(){ makeInvite("call"); });
-
-        document.getElementById("socialCopyInvite")?.addEventListener("click", async function() {
-          if (!inviteText || !inviteText.value) makeInvite("watch-room");
-          try {
-            await navigator.clipboard.writeText(inviteText.value);
-            alert("Invite copied.");
-          } catch {
-            inviteText.select();
-            document.execCommand("copy");
-            alert("Invite copied.");
-          }
-        });
-
-        renderProfile();
-        renderFriends();
-        renderMessages();
-        renderOnline();
-        connectSocket();
-      })();
-    </script>
-  </main>`;
-
-  res.send(pageShell({ title: `${SITE_NAME} — Social`, active: "social", body }));
-}
-
 function watchroomsPage(req, res) {
   const roomId = createRoomId();
   const body = `<main class="dsPlainPage dsWatchroomsPage dsWatchroomsPro">
-    ${dsPageHeader("Watch Rooms", "A private room for movie fans to open a link together, countdown, chat, and start the same movie from different places.", "Watch room")}
+    ${dsPageHeader("Watch Rooms", "A private room for movie fans to open a link together, countdown, chat, and start the same movie from different places.", "Long-distance date")}
 
     <section class="dsWatchroomHero">
       <div>
-        <span class="dsEyebrow">Watch rooms</span>
-        <h2>Create a room, share the code, then pick what to watch.</h2>
-        <p>Create a simple synced watch room with a shareable code, chat, countdown, and host controls.</p>
-        <div class="dsRoomFeatureBadges">
-          <span>Room code</span>
-          <span>Chat</span>
-          <span>Synced play</span>
-          <span>Host controls</span>
-          <span>Messages</span>
-          <span>Calls</span>
-        </div>
-        <div class="dsWatchroomSocialCta">
-          <a class="dsSecondaryBtn" href="/social">Open Social Hub</a>
-        </div>
+        <span class="dsEyebrow">Date rooms</span>
+        <h2>Start the room, send the link, then pick what to watch.</h2>
+        <p>Use this when you are on a call and need a simple place to share the watch link and countdown together.</p>
       </div>
       <form id="quickCreateWatchroomForm" class="dsQuickRoomForm">
-        <input name="roomName" placeholder="Movie night" maxlength="80" />
+        <input name="roomName" placeholder="Tonight with us" maxlength="80" />
         <button class="dsPrimaryBtn" type="submit">Create Watch Room</button>
       </form>
     </section>
 
     <section class="dsWatchroomCreate dsWatchroomCreatePro">
       <article class="dsWatchroomPanel dsCreateRoomPanel">
-        <h2>Create a watch room</h2>
-        <p>Name the room and optionally paste the movie/site link you both should open.</p>
+        <h2>Create a date room</h2>
+        <p>Name the date and optionally paste the movie/site link you both should open.</p>
         <form id="createWatchroomForm">
-          <label>Room name<input name="roomName" placeholder="Friday night watch" maxlength="80" /></label>
+          <label>Date room name<input name="roomName" placeholder="Friday night with you" maxlength="80" /></label>
           <label>Optional watch link<input name="trailerUrl" placeholder="Movie, trailer, or website link" /></label>
           <button class="dsPrimaryBtn" type="submit">Create Watch Room</button>
         </form>
       </article>
 
       <article class="dsWatchroomPanel">
-        <h2>Join a watch room</h2>
-        <p>Got a room code? Enter it here.</p>
+        <h2>Join a date room</h2>
+        <p>Got a code from your date? Enter it here.</p>
         <form id="joinWatchroomForm">
-          <label>Room code<input name="roomCode" placeholder="${escapeHtml(roomId)}" /></label>
+          <label>Date room code<input name="roomCode" placeholder="${escapeHtml(roomId)}" /></label>
           <button class="dsSecondaryBtn" type="submit">Join Room</button>
         </form>
       </article>
@@ -26445,7 +23161,7 @@ function watchroomPage(req, res) {
             <div>
               <span class="dsEyebrow">If host can share tab</span>
               <h2>Live Share</h2>
-              <p>One person shares a tab/window and the other watches inside the watch room. Great when only one of you has access.</p>
+              <p>One person shares a tab/window and the other watches inside the date room. Great when only one of you has access.</p>
             </div>
             <span class="dsHostBadge" id="stableLiveBadge">Host controls</span>
           </div>
@@ -30094,6 +26810,7 @@ function accountPage(req, res) {
       </div>
       <div class="dsAccountActions">
         <a class="dsPrimaryBtn" href="/profiles">Profiles</a>
+        <a class="dsSecondaryBtn" href="/profiles/manage">Manage Profiles</a>
         <a class="dsSecondaryBtn" href="/my-list">My List</a>
         <a class="dsSecondaryBtn" href="/liked">Liked</a>
         <a class="dsGhostPill" href="/watchrooms">Watch Rooms</a>
@@ -30104,27 +26821,27 @@ function accountPage(req, res) {
       <a class="dsAccountCard" href="/profiles">
         <span>01</span>
         <h2>Profiles</h2>
-        <p>Choose Regular or Kids mode.</p>
+        <p>Switch into a profile quickly.</p>
+      </a>
+      <a class="dsAccountCard" href="/profiles/manage">
+        <span>02</span>
+        <h2>Manage Profiles</h2>
+        <p>Create, rename, or remove profiles.</p>
       </a>
       <a class="dsAccountCard" href="/continue">
-        <span>02</span>
+        <span>03</span>
         <h2>Continue Watching</h2>
         <p>Jump back into what you were watching.</p>
       </a>
       <a class="dsAccountCard" href="/my-list">
-        <span>03</span>
+        <span>04</span>
         <h2>My List</h2>
         <p>View titles saved for later.</p>
       </a>
       <a class="dsAccountCard" href="/watchrooms">
-        <span>04</span>
+        <span>05</span>
         <h2>Watch Rooms</h2>
         <p>Create or join a synced room.</p>
-      </a>
-      <a class="dsAccountCard" href="/social">
-        <span>05</span>
-        <h2>Social</h2>
-        <p>Message friends, send invites, and start calls.</p>
       </a>
     </section>
 
@@ -30147,32 +26864,26 @@ function accountPage(req, res) {
 
 
 function profilesPage(req, res) {
-  const body = `<main class="dsPlainPage dsProfilesPage">
-    <section class="dsProfilesHero">
+  const body = `<main class="dsPlainPage dsProfilesPage dsProfilesSelectPage">
+    <section class="dsProfilesHero dsCleanHero">
       <span class="dsEyebrow">Profiles</span>
       <h1>Who is watching?</h1>
-      <p>Use a regular profile for movies and shows, or Kids for safer browsing.</p>
+      <p>Pick a profile and jump straight into SwiflyTV. Profile editing lives on its own manage page now, so this screen stays clean.</p>
     </section>
 
-    <section class="dsProfilesGrid" id="profilesGrid"></section>
+    <section class="dsProfilesSelectShell">
+      <div class="dsProfilesGrid dsProfilesChoiceGrid" id="profilesGrid"></div>
 
-    <section class="dsProfileCreate">
-      <h2>Create profile</h2>
-      <form id="profileCreateForm">
-        <input name="name" placeholder="Name this profile" maxlength="32" />
-        <select name="mode">
-          <option value="standard">Regular Movie Profile</option>
-          <option value="kids">Kids Safe</option>
-        </select>
-        <button class="dsPrimaryBtn" type="submit">Add Profile</button>
-      </form>
+      <div class="dsProfilesQuickActions">
+        <a class="dsSecondaryBtn" href="/profiles/manage"><i class="fa-solid fa-pen-to-square"></i> Manage Profiles</a>
+        <a class="dsGhostPill" href="/account"><i class="fa-solid fa-gear"></i> Account</a>
+      </div>
     </section>
 
     <script>
-      (function profileUi(){
+      (function profileSelectUi(){
         const grid = document.getElementById("profilesGrid");
-        const form = document.getElementById("profileCreateForm");
-        if (!grid || !form) return;
+        if (!grid) return;
 
         function readProfiles() {
           try {
@@ -30182,7 +26893,7 @@ function profilesPage(req, res) {
                 .filter(Boolean)
                 .map((profile) => {
                   if (profile.mode === "date") {
-                    return { ...profile, mode: "standard", name: profile.name === "Watch Rooms" ? "Main" : profile.name };
+                    return { ...profile, mode: "standard", name: profile.name === "Date Profile" ? "Main" : profile.name };
                   }
                   return profile;
                 });
@@ -30213,22 +26924,168 @@ function profilesPage(req, res) {
           return "/";
         }
 
+        const profiles = readProfiles();
+        saveProfiles(profiles);
+
+        grid.innerHTML = profiles.map((profile, index) => {
+          const initial = esc(profile.name).slice(0,1).toUpperCase() || "S";
+          return '<button class="dsProfileSelectCard" data-index="' + index + '" type="button">' +
+            '<span class="dsProfileAvatarBig">' + initial + '</span>' +
+            '<strong>' + esc(profile.name) + '</strong>' +
+            '<small>' + modeLabel(profile.mode) + '</small>' +
+          '</button>';
+        }).join("") +
+        '<a class="dsProfileSelectCard dsAddProfileCard" href="/profiles/manage">' +
+          '<span class="dsProfileAvatarBig">+</span>' +
+          '<strong>Add Profile</strong>' +
+          '<small>Manage profiles</small>' +
+        '</a>';
+
+        grid.querySelectorAll("button.dsProfileSelectCard").forEach((button) => {
+          button.addEventListener("click", () => {
+            const profile = profiles[Number(button.dataset.index || 0)];
+            localStorage.setItem("swiflytv.activeProfile", JSON.stringify(profile));
+            location.href = destination(profile);
+          });
+        });
+      })();
+    </script>
+  </main>`;
+
+  res.send(pageShell({ title: `${SITE_NAME} — Profiles`, active: "profiles", body }));
+}
+
+
+
+function profilesManagePage(req, res) {
+  const body = `<main class="dsPlainPage dsProfilesManagePage">
+    <section class="dsCleanHero dsProfilesManageHero">
+      <span class="dsEyebrow">Profile Center</span>
+      <h1>Manage profiles without the clutter.</h1>
+      <p>Create, rename, remove, and organize profiles from one dedicated control page.</p>
+      <div class="dsHeroMiniActions">
+        <a class="dsPrimaryBtn" href="/profiles"><i class="fa-solid fa-user-group"></i> Switch Profile</a>
+        <a class="dsSecondaryBtn" href="/account"><i class="fa-solid fa-gear"></i> Account</a>
+      </div>
+    </section>
+
+    <section class="dsProfileManagerLayout">
+      <aside class="dsProfileManagerPanel">
+        <span class="dsPanelLabel">Create profile</span>
+        <h2>New profile</h2>
+        <form id="profileCreateForm" class="dsStackedForm">
+          <label>
+            <span>Name</span>
+            <input name="name" placeholder="Name this profile" maxlength="32" />
+          </label>
+          <label>
+            <span>Mode</span>
+            <select name="mode">
+              <option value="standard">Regular Movie Profile</option>
+              <option value="kids">Kids Safe</option>
+            </select>
+          </label>
+          <button class="dsPrimaryBtn" type="submit"><i class="fa-solid fa-plus"></i> Add Profile</button>
+        </form>
+      </aside>
+
+      <section class="dsProfileManagerList">
+        <div class="dsSectionHeaderSplit">
+          <div>
+            <span class="dsEyebrow">Your profiles</span>
+            <h2>Profile list</h2>
+          </div>
+          <button id="resetProfilesBtn" class="dsGhostPill" type="button">Reset</button>
+        </div>
+        <div id="profilesManageList" class="dsManageProfileList"></div>
+      </section>
+    </section>
+
+    <script>
+      (function profileManageUi(){
+        const form = document.getElementById("profileCreateForm");
+        const list = document.getElementById("profilesManageList");
+        const resetBtn = document.getElementById("resetProfilesBtn");
+        if (!form || !list) return;
+
+        const fallback = [
+          { id: "main", name: "Main", mode: "standard" },
+          { id: "kids", name: "Kids", mode: "kids" }
+        ];
+
+        function readProfiles() {
+          try {
+            const saved = JSON.parse(localStorage.getItem("swiflytv.profiles") || "[]");
+            if (Array.isArray(saved) && saved.length) {
+              return saved.filter(Boolean).map((profile) => {
+                if (profile.mode === "date") return { ...profile, mode: "standard", name: profile.name === "Date Profile" ? "Main" : profile.name };
+                return profile;
+              });
+            }
+          } catch {}
+          return fallback.slice();
+        }
+
+        function saveProfiles(profiles) {
+          localStorage.setItem("swiflytv.profiles", JSON.stringify(profiles));
+        }
+
+        function esc(value) {
+          return String(value || "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+        }
+
+        function modeLabel(mode) {
+          return mode === "kids" ? "Kids Safe" : "Regular";
+        }
+
         function render() {
           const profiles = readProfiles();
           saveProfiles(profiles);
-          grid.innerHTML = profiles.map((profile, index) => {
-            return '<button class="dsProfileCard" data-index="' + index + '" type="button">' +
-              '<span>' + esc(profile.name).slice(0,1).toUpperCase() + '</span>' +
-              '<strong>' + esc(profile.name) + '</strong>' +
-              '<small>' + modeLabel(profile.mode) + '</small>' +
-            '</button>';
+
+          list.innerHTML = profiles.map((profile, index) => {
+            const initial = esc(profile.name).slice(0,1).toUpperCase() || "S";
+            return '<article class="dsManageProfileCard" data-index="' + index + '">' +
+              '<span class="dsProfileAvatarBig">' + initial + '</span>' +
+              '<div class="dsManageProfileMain">' +
+                '<strong>' + esc(profile.name) + '</strong>' +
+                '<small>' + modeLabel(profile.mode) + '</small>' +
+              '</div>' +
+              '<div class="dsManageProfileActions">' +
+                '<button type="button" data-action="rename">Rename</button>' +
+                '<button type="button" data-action="mode">' + (profile.mode === "kids" ? "Make Regular" : "Make Kids") + '</button>' +
+                '<button type="button" data-action="delete">Delete</button>' +
+              '</div>' +
+            '</article>';
           }).join("");
 
-          grid.querySelectorAll(".dsProfileCard").forEach((button) => {
-            button.addEventListener("click", () => {
-              const profile = profiles[Number(button.dataset.index || 0)];
-              localStorage.setItem("swiflytv.activeProfile", JSON.stringify(profile));
-              location.href = destination(profile);
+          list.querySelectorAll(".dsManageProfileCard").forEach((card) => {
+            card.addEventListener("click", (event) => {
+              const btn = event.target.closest("button");
+              if (!btn) return;
+              const index = Number(card.dataset.index || 0);
+              const profiles = readProfiles();
+              const profile = profiles[index];
+              if (!profile) return;
+
+              if (btn.dataset.action === "rename") {
+                const next = prompt("Profile name", profile.name);
+                if (next && next.trim()) profile.name = next.trim().slice(0, 32);
+              }
+
+              if (btn.dataset.action === "mode") {
+                profile.mode = profile.mode === "kids" ? "standard" : "kids";
+              }
+
+              if (btn.dataset.action === "delete") {
+                if (profiles.length <= 1) {
+                  alert("Keep at least one profile.");
+                  return;
+                }
+                if (confirm("Delete " + profile.name + "?")) profiles.splice(index, 1);
+              }
+
+              saveProfiles(profiles);
+              render();
             });
           });
         }
@@ -30245,16 +27102,361 @@ function profilesPage(req, res) {
           render();
         });
 
+        resetBtn?.addEventListener("click", () => {
+          if (!confirm("Reset profiles to Main and Kids?")) return;
+          saveProfiles(fallback.slice());
+          render();
+        });
+
         render();
       })();
     </script>
   </main>`;
 
-  res.send(pageShell({ title: `${SITE_NAME} — Profiles`, active: "profiles", body }));
+  res.send(pageShell({ title: `${SITE_NAME} — Manage Profiles`, active: "profiles", body }));
 }
 
 
 app.get("/account", accountPage);
+
+
+const socialRooms = new Map();
+
+function getSocialRoom(roomId = "general") {
+  const id = String(roomId || "general").slice(0, 80);
+  if (!socialRooms.has(id)) {
+    socialRooms.set(id, {
+      id,
+      messages: [],
+      members: new Map(),
+      createdAt: Date.now(),
+    });
+  }
+  return socialRooms.get(id);
+}
+
+function socialPage(req, res) {
+  const body = `<main class="dsSocialPage">
+    <section class="dsSocialShell">
+      <aside class="dsSocialSidebar">
+        <div class="dsSocialBrand">
+          <span class="dsSocialLogo"><i class="fa-solid fa-comments"></i></span>
+          <div>
+            <strong>Swifly Social</strong>
+            <small>Chat, groups, channels, calls</small>
+          </div>
+        </div>
+
+        <button class="dsSocialCompose" id="newGroupBtn" type="button"><i class="fa-solid fa-plus"></i> New Group</button>
+
+        <div class="dsSocialSection">
+          <span>Direct messages</span>
+          <button class="dsSocialRoom isActive" data-room="dm-main" data-title="Main Chat"><i class="fa-solid fa-user"></i><b>Main Chat</b><small>Online</small></button>
+          <button class="dsSocialRoom" data-room="dm-moviebuds" data-title="Movie Buds"><i class="fa-solid fa-user-group"></i><b>Movie Buds</b><small>2 members</small></button>
+        </div>
+
+        <div class="dsSocialSection">
+          <span>Groups</span>
+          <button class="dsSocialRoom" data-room="group-watchparty" data-title="Watch Party"><i class="fa-solid fa-users"></i><b>Watch Party</b><small>Group</small></button>
+          <button class="dsSocialRoom" data-room="group-school" data-title="School Friends"><i class="fa-solid fa-graduation-cap"></i><b>School Friends</b><small>Group</small></button>
+        </div>
+
+        <div class="dsSocialSection">
+          <span>Channels</span>
+          <button class="dsSocialRoom" data-room="channel-general" data-title="# general"><i class="fa-solid fa-hashtag"></i><b>general</b><small>Public</small></button>
+          <button class="dsSocialRoom" data-room="channel-recommendations" data-title="# recommendations"><i class="fa-solid fa-hashtag"></i><b>recommendations</b><small>Public</small></button>
+          <button class="dsSocialRoom" data-room="channel-watchrooms" data-title="# watch-rooms"><i class="fa-solid fa-hashtag"></i><b>watch-rooms</b><small>Public</small></button>
+        </div>
+      </aside>
+
+      <section class="dsSocialMain">
+        <header class="dsSocialHeader">
+          <div>
+            <span id="socialRoomKind">Channel</span>
+            <h1 id="socialRoomTitle">Main Chat</h1>
+          </div>
+          <div class="dsSocialHeaderActions">
+            <button id="socialVoiceBtn" type="button"><i class="fa-solid fa-phone"></i><span>Voice</span></button>
+            <button id="socialVideoBtn" type="button"><i class="fa-solid fa-video"></i><span>Video</span></button>
+            <button id="socialInviteBtn" type="button"><i class="fa-solid fa-user-plus"></i><span>Invite</span></button>
+          </div>
+        </header>
+
+        <div id="socialMessages" class="dsSocialMessages"></div>
+
+        <div id="socialTyping" class="dsSocialTyping" hidden>Someone is typing...</div>
+
+        <form id="socialComposer" class="dsSocialComposer">
+          <button type="button" id="socialAttachBtn"><i class="fa-solid fa-paperclip"></i></button>
+          <input id="socialInput" autocomplete="off" placeholder="Message Main Chat..." />
+          <button type="submit"><i class="fa-solid fa-paper-plane"></i></button>
+        </form>
+      </section>
+
+      <aside class="dsSocialDetails">
+        <div class="dsSocialDetailsCard">
+          <span class="dsPanelLabel">Room info</span>
+          <h2 id="socialDetailsTitle">Main Chat</h2>
+          <p id="socialDetailsText">Chat with people, create groups, and open voice/video call rooms.</p>
+        </div>
+
+        <div class="dsSocialDetailsCard">
+          <span class="dsPanelLabel">Quick actions</span>
+          <button id="socialCreateChannelBtn" type="button"><i class="fa-solid fa-hashtag"></i> Create Channel</button>
+          <button id="socialCreateGroupBtn" type="button"><i class="fa-solid fa-users"></i> Create Group</button>
+          <a href="/watchrooms"><i class="fa-solid fa-tv"></i> Open Watch Room</a>
+        </div>
+
+        <div class="dsSocialDetailsCard">
+          <span class="dsPanelLabel">Online</span>
+          <div id="socialMembers" class="dsSocialMembers"></div>
+        </div>
+      </aside>
+    </section>
+
+    <section id="socialCallModal" class="dsCallModal" hidden>
+      <div class="dsCallCard">
+        <div class="dsCallTop">
+          <div>
+            <span id="callTypeLabel">Voice call</span>
+            <h2 id="callRoomTitle">Main Chat</h2>
+          </div>
+          <button id="closeCallBtn" type="button"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div class="dsCallStage">
+          <video id="localCallVideo" autoplay muted playsinline></video>
+          <div class="dsCallPlaceholder">
+            <i class="fa-solid fa-users"></i>
+            <span id="callStatusText">Ready to connect</span>
+          </div>
+        </div>
+
+        <div class="dsCallControls">
+          <button id="muteCallBtn" type="button"><i class="fa-solid fa-microphone"></i><span>Mute</span></button>
+          <button id="cameraCallBtn" type="button"><i class="fa-solid fa-video"></i><span>Camera</span></button>
+          <button id="leaveCallBtn" type="button" class="danger"><i class="fa-solid fa-phone-slash"></i><span>Leave</span></button>
+        </div>
+      </div>
+    </section>
+
+    <script>
+      (function socialHub(){
+        const socket = window.io ? io() : null;
+        const messagesEl = document.getElementById("socialMessages");
+        const composer = document.getElementById("socialComposer");
+        const input = document.getElementById("socialInput");
+        const title = document.getElementById("socialRoomTitle");
+        const kind = document.getElementById("socialRoomKind");
+        const detailsTitle = document.getElementById("socialDetailsTitle");
+        const detailsText = document.getElementById("socialDetailsText");
+        const members = document.getElementById("socialMembers");
+        const callModal = document.getElementById("socialCallModal");
+        const callRoomTitle = document.getElementById("callRoomTitle");
+        const callTypeLabel = document.getElementById("callTypeLabel");
+        const callStatusText = document.getElementById("callStatusText");
+        const localVideo = document.getElementById("localCallVideo");
+
+        let currentRoom = "dm-main";
+        let currentTitle = "Main Chat";
+        let localStream = null;
+        let username = "Guest";
+
+        try {
+          const profile = JSON.parse(localStorage.getItem("swiflytv.activeProfile") || "null");
+          const session = JSON.parse(localStorage.getItem("swiflytv.session") || "null");
+          username = profile?.name || session?.name || "Guest";
+        } catch {}
+
+        function esc(value) {
+          return String(value || "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+        }
+
+        function timeLabel(ts) {
+          try { return new Date(ts || Date.now()).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); }
+          catch { return ""; }
+        }
+
+        function localKey(room) {
+          return "swiflytv.social." + room;
+        }
+
+        function readLocal(room) {
+          try {
+            const saved = JSON.parse(localStorage.getItem(localKey(room)) || "[]");
+            return Array.isArray(saved) ? saved : [];
+          } catch { return []; }
+        }
+
+        function saveLocal(room, msgs) {
+          localStorage.setItem(localKey(room), JSON.stringify(msgs.slice(-120)));
+        }
+
+        function addMessage(message, persist) {
+          if (!messagesEl || !message) return;
+          const mine = message.author === username;
+          const node = document.createElement("article");
+          node.className = "dsSocialMessage" + (mine ? " mine" : "");
+          node.innerHTML = '<span class="dsMsgAvatar">' + esc(message.author || "?").slice(0,1).toUpperCase() + '</span>' +
+            '<div><header><b>' + esc(message.author || "Guest") + '</b><small>' + timeLabel(message.createdAt) + '</small></header>' +
+            '<p>' + esc(message.text || "") + '</p></div>';
+          messagesEl.appendChild(node);
+          messagesEl.scrollTop = messagesEl.scrollHeight;
+
+          if (persist) {
+            const msgs = readLocal(currentRoom);
+            msgs.push(message);
+            saveLocal(currentRoom, msgs);
+          }
+        }
+
+        function renderRoom(seed) {
+          if (!messagesEl) return;
+          messagesEl.innerHTML = "";
+          const saved = readLocal(currentRoom);
+          const messages = saved.length ? saved : seed || [
+            { author: "Swifly", text: "Welcome to " + currentTitle + ".", createdAt: Date.now() },
+            { author: "Swifly", text: "You can chat, make groups, create channels, or start a voice/video call.", createdAt: Date.now() + 10 }
+          ];
+          messages.forEach((msg) => addMessage(msg, false));
+        }
+
+        function joinRoom(room, roomTitle) {
+          currentRoom = room;
+          currentTitle = roomTitle || room;
+          if (title) title.textContent = currentTitle;
+          if (detailsTitle) detailsTitle.textContent = currentTitle;
+          if (input) input.placeholder = "Message " + currentTitle + "...";
+          if (kind) kind.textContent = room.startsWith("channel") ? "Channel" : room.startsWith("group") ? "Group" : "Direct message";
+          if (detailsText) detailsText.textContent = room.startsWith("channel") ? "Public channel for movie talk." : room.startsWith("group") ? "Private group chat." : "Direct message thread.";
+          document.querySelectorAll(".dsSocialRoom").forEach((btn) => btn.classList.toggle("isActive", btn.dataset.room === room));
+          renderRoom();
+          if (socket) socket.emit("social:join", { roomId: currentRoom, name: username });
+        }
+
+        document.querySelectorAll(".dsSocialRoom").forEach((button) => {
+          button.addEventListener("click", () => joinRoom(button.dataset.room, button.dataset.title));
+        });
+
+        composer?.addEventListener("submit", (event) => {
+          event.preventDefault();
+          const text = String(input?.value || "").trim();
+          if (!text) return;
+          const message = { roomId: currentRoom, author: username, text, createdAt: Date.now() };
+          input.value = "";
+          addMessage(message, true);
+          if (socket) socket.emit("social:message", message);
+        });
+
+        input?.addEventListener("input", () => {
+          if (socket) socket.emit("social:typing", { roomId: currentRoom, name: username });
+        });
+
+        socket?.on("social:message", (message) => {
+          if (!message || message.roomId !== currentRoom || message.author === username) return;
+          addMessage(message, true);
+        });
+
+        socket?.on("social:members", (payload) => {
+          if (!members || !payload || payload.roomId !== currentRoom) return;
+          const list = Array.isArray(payload.members) ? payload.members : [];
+          members.innerHTML = list.map((name) => '<span><i></i>' + esc(name) + '</span>').join("") || '<span><i></i>' + esc(username) + '</span>';
+        });
+
+        let typingTimer = null;
+        socket?.on("social:typing", (payload) => {
+          if (!payload || payload.roomId !== currentRoom || payload.name === username) return;
+          const typing = document.getElementById("socialTyping");
+          if (!typing) return;
+          typing.textContent = payload.name + " is typing...";
+          typing.hidden = false;
+          clearTimeout(typingTimer);
+          typingTimer = setTimeout(() => typing.hidden = true, 1300);
+        });
+
+        function createVirtualRoom(kind) {
+          const name = prompt(kind === "channel" ? "Channel name" : "Group name");
+          if (!name || !name.trim()) return;
+          const id = (kind === "channel" ? "channel-" : "group-") + name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 32);
+          const section = [...document.querySelectorAll(".dsSocialSection")].find((sec) => sec.querySelector("span")?.textContent.toLowerCase().includes(kind === "channel" ? "channel" : "group"));
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "dsSocialRoom";
+          btn.dataset.room = id;
+          btn.dataset.title = kind === "channel" ? "# " + name.trim() : name.trim();
+          btn.innerHTML = '<i class="fa-solid ' + (kind === "channel" ? "fa-hashtag" : "fa-users") + '"></i><b>' + esc(name.trim()) + '</b><small>' + (kind === "channel" ? "Public" : "Group") + '</small>';
+          btn.addEventListener("click", () => joinRoom(btn.dataset.room, btn.dataset.title));
+          section?.appendChild(btn);
+          joinRoom(id, btn.dataset.title);
+        }
+
+        document.getElementById("newGroupBtn")?.addEventListener("click", () => createVirtualRoom("group"));
+        document.getElementById("socialCreateGroupBtn")?.addEventListener("click", () => createVirtualRoom("group"));
+        document.getElementById("socialCreateChannelBtn")?.addEventListener("click", () => createVirtualRoom("channel"));
+        document.getElementById("socialInviteBtn")?.addEventListener("click", () => {
+          navigator.clipboard?.writeText(location.origin + "/social?room=" + encodeURIComponent(currentRoom));
+          alert("Invite link copied for " + currentTitle);
+        });
+
+        async function openCall(videoMode) {
+          if (!callModal) return;
+          callModal.hidden = false;
+          if (callRoomTitle) callRoomTitle.textContent = currentTitle;
+          if (callTypeLabel) callTypeLabel.textContent = videoMode ? "Video call" : "Voice call";
+          if (callStatusText) callStatusText.textContent = "Requesting " + (videoMode ? "camera and microphone" : "microphone") + "...";
+
+          try {
+            localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: Boolean(videoMode) });
+            if (localVideo) {
+              localVideo.srcObject = localStream;
+              localVideo.hidden = !videoMode;
+            }
+            if (callStatusText) callStatusText.textContent = videoMode ? "Camera preview active. Signaling room joined." : "Mic active. Signaling room joined.";
+            if (socket) socket.emit("social:call-join", { roomId: currentRoom, name: username, video: Boolean(videoMode) });
+          } catch (error) {
+            if (callStatusText) callStatusText.textContent = "Call permission blocked or unavailable.";
+          }
+        }
+
+        function closeCall() {
+          if (localStream) {
+            localStream.getTracks().forEach((track) => track.stop());
+            localStream = null;
+          }
+          if (localVideo) localVideo.srcObject = null;
+          if (callModal) callModal.hidden = true;
+          if (socket) socket.emit("social:call-leave", { roomId: currentRoom, name: username });
+        }
+
+        document.getElementById("socialVoiceBtn")?.addEventListener("click", () => openCall(false));
+        document.getElementById("socialVideoBtn")?.addEventListener("click", () => openCall(true));
+        document.getElementById("closeCallBtn")?.addEventListener("click", closeCall);
+        document.getElementById("leaveCallBtn")?.addEventListener("click", closeCall);
+        document.getElementById("muteCallBtn")?.addEventListener("click", () => {
+          if (!localStream) return;
+          localStream.getAudioTracks().forEach((track) => track.enabled = !track.enabled);
+        });
+        document.getElementById("cameraCallBtn")?.addEventListener("click", () => {
+          if (!localStream) return;
+          localStream.getVideoTracks().forEach((track) => track.enabled = !track.enabled);
+        });
+
+        socket?.on("social:call-event", (payload) => {
+          if (!payload || payload.roomId !== currentRoom || payload.name === username) return;
+          addMessage({ author: "Call", text: payload.name + " " + (payload.type || "updated the call"), createdAt: Date.now() }, false);
+        });
+
+        const urlRoom = new URLSearchParams(location.search).get("room");
+        const target = urlRoom ? document.querySelector('[data-room="' + CSS.escape(urlRoom) + '"]') : null;
+        if (target) joinRoom(target.dataset.room, target.dataset.title);
+        else joinRoom(currentRoom, currentTitle);
+      })();
+    </script>
+  </main>`;
+
+  res.send(pageShell({ title: `${SITE_NAME} — Social`, active: "social", body }));
+}
+
 
 function continueWatchingPage(req, res) {
   const body = `<main class="dsPlainPage dsContinueWatchingPage">
@@ -30342,7 +27544,7 @@ function continueWatchingPage(req, res) {
             '</div>' +
             '<div class="movieMeta">' +
               '<strong>' + esc(title) + '</strong>' +
-              '<span>' + esc(String(type).toUpperCase()) + (year ? ' • ' + esc(year) : '') + (Number(item.progress || 0) ? ' • ' + Math.round(Number(item.progress || 0)) + '% watched' : '') + '</span>' +
+              '<span>' + esc(String(type).toUpperCase()) + (year ? ' • ' + esc(year) : '') + '</span>' +
             '</div>' +
           '</a>';
         }).join("");
@@ -30364,10 +27566,11 @@ function removedDateProfilePage(req, res) {
 
 app.get("/date-profile", removedDateProfilePage);
 app.get("/couples", removedDateProfilePage);
-app.get("/social", socialPage);
 app.get("/watchrooms", watchroomsPage);
 app.get("/watchrooms/:roomId", watchroomPage);
 app.get("/profiles", profilesPage);
+app.get("/profiles/manage", profilesManagePage);
+app.get("/social", socialPage);
 
 app.get("/kids", async (req, res) => {
   const [family, animation, disneyStyle, kidsTv, familyTv, preschoolTv] = await Promise.all([
@@ -30448,6 +27651,8 @@ function apiStatus(req, res) {
     features: {
       regularMovieSite: true,
       dateIdeasRemoved: true,
+      socialHub: true,
+      profileManager: true,
       dateProfile: false,
       regularMovieM3u8Player: true,
       videojsM3u8Player: true,
@@ -30457,6 +27662,21 @@ function apiStatus(req, res) {
 }
 
 app.get("/api/status", apiStatus);
+
+app.get("/api/social/rooms", (req, res) => {
+  res.set("Cache-Control", "no-store");
+  res.json({
+    ok: true,
+    rooms: Array.from(socialRooms.values()).map((room) => ({
+      id: room.id,
+      members: Array.from(room.members.values()),
+      messages: room.messages.slice(-30),
+      createdAt: room.createdAt,
+    })),
+  });
+});
+
+
 app.get("/health", apiStatus);
 app.get("/api/remote-browser/status", (req, res) => {
   const executablePath = findChromiumExecutable() || "";
@@ -30785,119 +28005,55 @@ const io = new Server(httpServer, {
   },
 });
 
-const socialUsers = new Map();
-const socialDmHistory = new Map();
-
-function normalizeSocialHandle(value = "") {
-  return String(value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/^@+/, "")
-    .replace(/[^a-z0-9._-]/g, "")
-    .slice(0, 28);
-}
-
-function socialThreadKey(a = "", b = "") {
-  return [normalizeSocialHandle(a), normalizeSocialHandle(b)].sort().join("__");
-}
-
-function publicSocialUsers() {
-  return Array.from(socialUsers.values()).map((user) => ({
-    handle: user.handle,
-    name: user.name,
-    count: user.sockets.size,
-    updatedAt: user.updatedAt,
-  })).sort((a, b) => String(a.handle).localeCompare(String(b.handle)));
-}
-
-function broadcastSocialPresence() {
-  io.emit("social:presence", { users: publicSocialUsers(), at: Date.now() });
-}
-
 io.on("connection", (socket) => {
-  socket.data.roomId = "";
 
   socket.on("social:join", (payload = {}) => {
-    const handle = normalizeSocialHandle(payload.handle);
-    if (!handle) return;
-
-    const name = String(payload.name || handle).slice(0, 40);
-    socket.data.socialHandle = handle;
-    socket.data.socialName = name;
-    socket.join(`social:user:${handle}`);
-
-    const existing = socialUsers.get(handle) || {
-      handle,
-      name,
-      sockets: new Set(),
-      updatedAt: Date.now(),
-    };
-
-    existing.name = name;
-    existing.sockets.add(socket.id);
-    existing.updatedAt = Date.now();
-    socialUsers.set(handle, existing);
-
-    socket.emit("social:presence", { users: publicSocialUsers(), at: Date.now() });
-    broadcastSocialPresence();
+    const roomId = String(payload.roomId || "general").slice(0, 80);
+    const name = String(payload.name || "Guest").slice(0, 40);
+    const room = getSocialRoom(roomId);
+    socket.join(`social:${roomId}`);
+    room.members.set(socket.id, name);
+    socket.emit("social:members", { roomId, members: Array.from(room.members.values()) });
+    socket.to(`social:${roomId}`).emit("social:members", { roomId, members: Array.from(room.members.values()) });
   });
 
-  socket.on("social:dm", (payload = {}) => {
-    const from = normalizeSocialHandle(payload.from || socket.data.socialHandle);
-    const to = normalizeSocialHandle(payload.to);
-    const text = String(payload.text || "").trim().slice(0, 360);
-    if (!from || !to || !text) return;
-
-    const message = {
-      from,
-      to,
-      text,
-      at: Number(payload.at || Date.now()),
+  socket.on("social:message", (message = {}) => {
+    const roomId = String(message.roomId || "general").slice(0, 80);
+    const room = getSocialRoom(roomId);
+    const safeMessage = {
+      roomId,
+      author: String(message.author || "Guest").slice(0, 40),
+      text: String(message.text || "").slice(0, 1200),
+      createdAt: Number(message.createdAt || Date.now()),
     };
-
-    const key = socialThreadKey(from, to);
-    const thread = socialDmHistory.get(key) || [];
-    thread.push(message);
-    socialDmHistory.set(key, thread.slice(-120));
-
-    io.to(`social:user:${from}`).emit("social:dm", message);
-    io.to(`social:user:${to}`).emit("social:dm", message);
-  });
-
-  socket.on("social:call-invite", (payload = {}) => {
-    const from = normalizeSocialHandle(payload.from || socket.data.socialHandle);
-    const to = normalizeSocialHandle(payload.to);
-    if (!from || !to) return;
-
-    const invite = {
-      from,
-      fromName: String(payload.fromName || socket.data.socialName || from).slice(0, 40),
-      to,
-      roomUrl: String(payload.roomUrl || "").slice(0, 500),
-      kind: String(payload.kind || "watch-room").slice(0, 40),
-      at: Date.now(),
-    };
-
-    io.to(`social:user:${to}`).emit("social:call-invite", invite);
+    if (!safeMessage.text.trim()) return;
+    room.messages.push(safeMessage);
+    room.messages = room.messages.slice(-200);
+    io.to(`social:${roomId}`).emit("social:message", safeMessage);
   });
 
   socket.on("social:typing", (payload = {}) => {
-    const from = normalizeSocialHandle(payload.from || socket.data.socialHandle);
-    const to = normalizeSocialHandle(payload.to);
-    if (!from || !to) return;
-    io.to(`social:user:${to}`).emit("social:typing", { from, to, at: Date.now() });
+    const roomId = String(payload.roomId || "general").slice(0, 80);
+    const name = String(payload.name || "Guest").slice(0, 40);
+    socket.to(`social:${roomId}`).emit("social:typing", { roomId, name });
   });
 
-  socket.on("disconnect", () => {
-    const handle = normalizeSocialHandle(socket.data.socialHandle);
-    if (!handle) return;
-    const user = socialUsers.get(handle);
-    if (!user) return;
-    user.sockets.delete(socket.id);
-    user.updatedAt = Date.now();
-    if (user.sockets.size <= 0) socialUsers.delete(handle);
-    broadcastSocialPresence();
+  socket.on("social:call-join", (payload = {}) => {
+    const roomId = String(payload.roomId || "general").slice(0, 80);
+    const name = String(payload.name || "Guest").slice(0, 40);
+    socket.join(`social-call:${roomId}`);
+    io.to(`social:${roomId}`).emit("social:call-event", { roomId, name, type: "joined the call" });
   });
+
+  socket.on("social:call-leave", (payload = {}) => {
+    const roomId = String(payload.roomId || "general").slice(0, 80);
+    const name = String(payload.name || "Guest").slice(0, 40);
+    socket.leave(`social-call:${roomId}`);
+    io.to(`social:${roomId}`).emit("social:call-event", { roomId, name, type: "left the call" });
+  });
+
+
+  socket.data.roomId = "";
 
   socket.on("watchroom:join", (payload = {}) => {
     const roomId = normalizeRoomId(payload.roomId);
@@ -31606,6 +28762,18 @@ io.on("connection", (socket) => {
     io.to(room.id).emit("watchroom:message", message);
   });
 
+
+  socket.on("disconnect", () => {
+    socialRooms.forEach((room) => {
+      if (room.members.delete(socket.id)) {
+        io.to(`social:${room.id}`).emit("social:members", {
+          roomId: room.id,
+          members: Array.from(room.members.values()),
+        });
+      }
+    });
+  });
+
   socket.on("disconnect", () => {
     const roomId = socket.data.roomId;
     if (!roomId) return;
@@ -31660,16 +28828,6 @@ setInterval(() => {
     }
   }
 }, 1000 * 60 * 10);
-
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, thread] of socialDmHistory.entries()) {
-    const newest = thread.length ? Number(thread[thread.length - 1].at || 0) : 0;
-    if (!newest || now - newest > 1000 * 60 * 60 * 24) {
-      socialDmHistory.delete(key);
-    }
-  }
-}, 1000 * 60 * 30);
 
 httpServer.listen(PORT, () => {
   console.log(`${SITE_NAME} running on port ${PORT}`);
