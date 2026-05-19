@@ -17377,7 +17377,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
     /* ============================================================
        v62 COUPLES EDITION
-       Long-distance couple targeting: date rooms, couple dashboard,
+       Long-distance couple targeting: watch rooms, couple dashboard,
        shared watch planning, and softer premium UI accents.
        ============================================================ */
 
@@ -19927,6 +19927,273 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v97 SOCIAL WATCH ROOMS
+       Watch Rooms are now invented into Social instead of living apart.
+       ============================================================ */
+
+    .dsSocialWatchSection .dsSocialRoom {
+      background:
+        radial-gradient(240px circle at 0% 0%, rgba(229,9,20,.18), transparent 52%),
+        rgba(255,255,255,.045);
+      border-color: rgba(255,255,255,.08);
+    }
+
+    .dsSocialWatchStudio {
+      margin: 14px 16px 0;
+      padding: 16px;
+      border-radius: 24px;
+      background:
+        radial-gradient(700px circle at 0% 0%, rgba(229,9,20,.18), transparent 52%),
+        radial-gradient(700px circle at 100% 0%, rgba(124,58,237,.16), transparent 54%),
+        rgba(255,255,255,.055);
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 20px 70px rgba(0,0,0,.26);
+    }
+
+    .dsSocialWatchStudio[hidden] {
+      display: none !important;
+    }
+
+    .dsWatchStudioHero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 18px;
+      margin-bottom: 16px;
+    }
+
+    .dsWatchStudioHero h2 {
+      margin: 4px 0 6px;
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-size: clamp(26px, 3vw, 42px);
+      letter-spacing: -.07em;
+      line-height: .95;
+    }
+
+    .dsWatchStudioHero p {
+      margin: 0;
+      max-width: 680px;
+      color: rgba(248,251,255,.68);
+      line-height: 1.55;
+      font-weight: 650;
+    }
+
+    .dsWatchStudioActions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .dsWatchStudioActions button {
+      min-height: 42px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 999px;
+      padding: 0 14px;
+      color: white;
+      background: rgba(255,255,255,.08);
+      font-weight: 850;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dsWatchStudioGrid {
+      display: grid;
+      grid-template-columns: minmax(220px, .9fr) minmax(220px, .72fr) minmax(280px, 1.2fr);
+      gap: 12px;
+    }
+
+    .dsWatchStudioCard {
+      display: grid;
+      align-content: start;
+      gap: 12px;
+      padding: 16px;
+      border-radius: 22px;
+      background: rgba(0,0,0,.20);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .dsWatchStudioCard h3 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: -.045em;
+    }
+
+    .dsWatchStudioCard label {
+      display: grid;
+      gap: 7px;
+      color: rgba(255,255,255,.62);
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .dsWatchStudioCard input {
+      min-height: 44px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 15px;
+      padding: 0 13px;
+      color: white;
+      background: rgba(0,0,0,.30);
+      outline: none;
+    }
+
+    .dsWatchStudioCard p {
+      margin: 0;
+      color: rgba(248,251,255,.58);
+      line-height: 1.45;
+      font-size: 13px;
+    }
+
+    .dsWatchStudioButtons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+    }
+
+    .dsWatchStudioButtons .dsPrimaryBtn,
+    .dsWatchStudioButtons .dsSecondaryBtn {
+      min-height: 42px;
+      padding-inline: 13px;
+      width: auto;
+    }
+
+    .dsWatchStudioActiveCard {
+      min-height: 270px;
+    }
+
+    .dsSocialWatchRoomsList {
+      display: grid;
+      gap: 10px;
+      max-height: 360px;
+      overflow-y: auto;
+      padding-right: 3px;
+    }
+
+    .dsSocialWatchRoomCard {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.065);
+      border: 1px solid rgba(255,255,255,.09);
+    }
+
+    .dsSocialWatchRoomCard > div:first-child {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      grid-template-rows: auto auto;
+      column-gap: 10px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .dsSocialWatchRoomCard span {
+      grid-row: 1 / span 2;
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(229,9,20,.95), rgba(124,58,237,.85));
+    }
+
+    .dsSocialWatchRoomCard strong {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .dsSocialWatchRoomCard small {
+      color: rgba(248,251,255,.58);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .dsSocialWatchRoomActions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 7px;
+    }
+
+    .dsSocialWatchRoomActions a,
+    .dsSocialWatchRoomActions button {
+      min-height: 34px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 12px;
+      padding: 0 10px;
+      color: white;
+      background: rgba(255,255,255,.08);
+      text-decoration: none;
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .dsSocialWatchRoomActions a {
+      background: linear-gradient(135deg, #e50914, #7c3aed);
+      border-color: transparent;
+    }
+
+    .dsSocialEmptyMini {
+      display: grid;
+      place-items: center;
+      min-height: 150px;
+      border: 1px dashed rgba(255,255,255,.14);
+      border-radius: 18px;
+      color: rgba(248,251,255,.58);
+      text-align: center;
+      padding: 18px;
+      font-weight: 750;
+    }
+
+    .socialWatchStudioOpen .dsSocialMessages {
+      min-height: 240px;
+    }
+
+    @media(max-width: 1250px) {
+      .dsWatchStudioGrid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .dsWatchStudioActiveCard {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media(max-width: 760px) {
+      .dsSocialWatchStudio {
+        margin: 10px;
+        padding: 12px;
+      }
+
+      .dsWatchStudioHero {
+        display: grid;
+      }
+
+      .dsWatchStudioActions {
+        justify-content: flex-start;
+      }
+
+      .dsWatchStudioGrid {
+        grid-template-columns: 1fr;
+      }
+
+      .dsSocialWatchRoomCard {
+        grid-template-columns: 1fr;
+      }
+
+      .dsSocialWatchRoomActions {
+        justify-content: flex-start;
+      }
+    }
+
   </style>
 
     <script>
@@ -19978,6 +20245,9 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script src="https://vjs.zencdn.net/8.16.1/video.min.js"></script>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
 
 </head>
 <body>
@@ -20033,8 +20303,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
           ${navLink("/tv", "TV Shows", "tv", active)}
           ${navLink("/trending", "New & Popular", "trending", active)}
           ${navLink("/my-list", "My List", "watchlist", active)}
-          ${navLink("/social", "Social", "social", active)}
-          ${navLink("/watchrooms", "Watch Rooms", "watchrooms", active)}
+          ${navLink("/social", "Social + Rooms", "social", active)}
           ${navLink("/browse-by-languages", "Browse", "genres", active)}
         </nav>
       </div>
@@ -20065,7 +20334,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
             <a href="/profiles/manage"><span>✎</span><b>Manage Profiles</b></a>
             <a href="/social"><span>◉</span><b>Social Hub</b></a>
             <a href="/account"><span>⚙</span><b>Account</b></a>
-            <a href="/watchrooms"><span>◎</span><b>Watch Rooms</b></a>
+            <a href="/social?tab=watchrooms"><span>◎</span><b>Social Watch Rooms</b></a>
             <a href="/continue-watching"><span>▶</span><b>Continue Watching</b></a>
             <a href="/my-list"><span>＋</span><b>My List</b></a>
             <a href="/liked"><span>♥</span><b>Liked</b></a>
@@ -21177,7 +21446,7 @@ async function welcomePage(req, res) {
   const heroTitle = getTitle(hero) || "Your distance date night starts here.";
   const heroBg = hero.backdrop_path ? fullBackdrop(hero.backdrop_path) : "";
   const heroPoster = hero.poster_path ? img(hero.poster_path, "w500") : "";
-  const heroDesc = hero.overview || "SwiflyTV helps movie fans plan movie nights, share watch links, start date rooms, chat, count down together, and feel a little closer from different places.";
+  const heroDesc = hero.overview || "SwiflyTV helps movie fans plan movie nights, share watch links, start watch rooms, chat, count down together, and feel a little closer from different places.";
   const redirect = encodeURIComponent(String(req.query.redirect || "/profiles"));
   const heroType = getType(hero) || "movie";
   const heroHref = hero.id ? `/signup?redirect=${encodeURIComponent(`/${heroType}/${hero.id}`)}` : `/signup?redirect=${redirect}`;
@@ -21200,7 +21469,7 @@ async function welcomePage(req, res) {
       ${heroBg ? `<div class="dsWelcomeHeroBg" style="background-image:url('${escapeHtml(heroBg)}')"></div>` : ""}
       <div class="dsWelcomeGlowOne"></div>
       <div class="dsWelcomeHeroCopy">
-        <span class="dsEyebrow">Long-distance date nights</span>
+        <span class="dsEyebrow">Watch together nights</span>
         <h1>Feel closer, even when you are far apart.</h1>
         <p>${escapeHtml(heroDesc)}</p>
 
@@ -21234,8 +21503,8 @@ async function welcomePage(req, res) {
 
     <section class="dsWelcomeHowItWorks">
       <article><span>1</span><strong>Pick the vibe</strong><p>Choose cozy, funny, emotional, action, comfort rewatch, or something new for tonight.</p></article>
-      <article><span>2</span><strong>Create your couple space</strong><p>Use Me, Partner, and Together profiles so your date nights feel personal.</p></article>
-      <article><span>3</span><strong>Start a date room</strong><p>Share a room link, chat, countdown, and press play together from anywhere.</p></article>
+      <article><span>2</span><strong>Create your couple space</strong><p>Use Me, Partner, and Together profiles so your friends nights feel personal.</p></article>
+      <article><span>3</span><strong>Start a watch room</strong><p>Share a room link, chat, countdown, and press play together from anywhere.</p></article>
     </section>
 
     <section class="dsCouplePromiseStrip">
@@ -21278,7 +21547,7 @@ async function welcomePage(req, res) {
         <span class="dsEyebrow">Built for phones and late-night calls</span>
         <h2>Designed for “you pick, no you pick.”</h2>
         <p>Whether you are on a phone in bed or a laptop on a call, SwiflyTV makes it easier to choose, sync, and watch together.</p>
-        <a class="dsPrimaryBtn" href="/signup?redirect=${redirect}">Plan your first date room</a>
+        <a class="dsPrimaryBtn" href="/signup?redirect=${redirect}">Plan your first watch room</a>
       </div>
       <div class="dsPhoneMock">
         <div class="dsPhoneTop"></div>
@@ -22826,34 +23095,34 @@ function likedPage(req, res) {
 function watchroomsPage(req, res) {
   const roomId = createRoomId();
   const body = `<main class="dsPlainPage dsWatchroomsPage dsWatchroomsPro">
-    ${dsPageHeader("Watch Rooms", "A private room for movie fans to open a link together, countdown, chat, and start the same movie from different places.", "Long-distance date")}
+    ${dsPageHeader("Watch Rooms", "A private room for movie fans to open a link together, countdown, chat, and start the same movie from different places.", "Watch together")}
 
     <section class="dsWatchroomHero">
       <div>
-        <span class="dsEyebrow">Date rooms</span>
+        <span class="dsEyebrow">Watch rooms</span>
         <h2>Start the room, send the link, then pick what to watch.</h2>
         <p>Use this when you are on a call and need a simple place to share the watch link and countdown together.</p>
       </div>
       <form id="quickCreateWatchroomForm" class="dsQuickRoomForm">
-        <input name="roomName" placeholder="Tonight with us" maxlength="80" />
+        <input name="roomName" placeholder="Movie night" maxlength="80" />
         <button class="dsPrimaryBtn" type="submit">Create Watch Room</button>
       </form>
     </section>
 
     <section class="dsWatchroomCreate dsWatchroomCreatePro">
       <article class="dsWatchroomPanel dsCreateRoomPanel">
-        <h2>Create a date room</h2>
-        <p>Name the date and optionally paste the movie/site link you both should open.</p>
+        <h2>Create a watch room</h2>
+        <p>Name the room and optionally paste the movie/site link you both should open.</p>
         <form id="createWatchroomForm">
-          <label>Date room name<input name="roomName" placeholder="Friday night with you" maxlength="80" /></label>
+          <label>Date room name<input name="roomName" placeholder="Friday movie night" maxlength="80" /></label>
           <label>Optional watch link<input name="trailerUrl" placeholder="Movie, trailer, or website link" /></label>
           <button class="dsPrimaryBtn" type="submit">Create Watch Room</button>
         </form>
       </article>
 
       <article class="dsWatchroomPanel">
-        <h2>Join a date room</h2>
-        <p>Got a code from your date? Enter it here.</p>
+        <h2>Join a watch room</h2>
+        <p>Got a code from your friends? Enter it here.</p>
         <form id="joinWatchroomForm">
           <label>Date room code<input name="roomCode" placeholder="${escapeHtml(roomId)}" /></label>
           <button class="dsSecondaryBtn" type="submit">Join Room</button>
@@ -23161,7 +23430,7 @@ function watchroomPage(req, res) {
             <div>
               <span class="dsEyebrow">If host can share tab</span>
               <h2>Live Share</h2>
-              <p>One person shares a tab/window and the other watches inside the date room. Great when only one of you has access.</p>
+              <p>One person shares a tab/window and the other watches inside the watch room. Great when only one of you has access.</p>
             </div>
             <span class="dsHostBadge" id="stableLiveBadge">Host controls</span>
           </div>
@@ -24640,7 +24909,7 @@ function watchroomPage(req, res) {
             if (!note || firedNoteIds[note.id]) return;
             if (current >= Number(note.time || 0)) {
               firedNoteIds[note.id] = true;
-              showCouplePopup(note.text, "From " + (note.from || "your date"));
+              showCouplePopup(note.text, "From " + (note.from || "your friends"));
             }
           });
         }
@@ -27143,7 +27412,7 @@ function socialPage(req, res) {
           <span class="dsSocialLogo"><i class="fa-solid fa-comments"></i></span>
           <div>
             <strong>Swifly Social</strong>
-            <small>Chat, groups, channels, calls</small>
+            <small>Chat, groups, channels, calls, watch rooms</small>
           </div>
         </div>
 
@@ -27167,6 +27436,12 @@ function socialPage(req, res) {
           <button class="dsSocialRoom" data-room="channel-recommendations" data-title="# recommendations"><i class="fa-solid fa-hashtag"></i><b>recommendations</b><small>Public</small></button>
           <button class="dsSocialRoom" data-room="channel-watchrooms" data-title="# watch-rooms"><i class="fa-solid fa-hashtag"></i><b>watch-rooms</b><small>Public</small></button>
         </div>
+
+        <div class="dsSocialSection dsSocialWatchSection">
+          <span>Watch Rooms</span>
+          <button class="dsSocialRoom dsSocialWatchRoomBtn" data-room="watchroom-lobby" data-title="Watch Room Lobby"><i class="fa-solid fa-tv"></i><b>Room Lobby</b><small>Create / join</small></button>
+          <button class="dsSocialRoom dsSocialWatchRoomBtn" data-room="watchroom-active" data-title="Active Watch Rooms"><i class="fa-solid fa-signal"></i><b>Active Rooms</b><small>Live rooms</small></button>
+        </div>
       </aside>
 
       <section class="dsSocialMain">
@@ -27181,6 +27456,63 @@ function socialPage(req, res) {
             <button id="socialInviteBtn" type="button"><i class="fa-solid fa-user-plus"></i><span>Invite</span></button>
           </div>
         </header>
+
+        <section id="socialWatchStudio" class="dsSocialWatchStudio animate__animated animate__fadeIn" hidden>
+          <div class="dsWatchStudioHero">
+            <div>
+              <span class="dsEyebrow">Watch Rooms inside Social</span>
+              <h2>Start a room right from chat.</h2>
+              <p>Create a synced room, share the invite into any chat, then keep talking before and during the movie.</p>
+            </div>
+            <div class="dsWatchStudioActions">
+              <button id="socialRefreshRoomsBtn" type="button"><i class="fa-solid fa-rotate"></i> Refresh Rooms</button>
+              <a href="/social" class="dsGhostPill">Back to Chat</a>
+            </div>
+          </div>
+
+          <div class="dsWatchStudioGrid">
+            <form id="socialWatchCreateForm" class="dsWatchStudioCard">
+              <span class="dsPanelLabel">Create</span>
+              <h3>New Watch Room</h3>
+              <label>
+                <span>Room name</span>
+                <input name="roomName" placeholder="Friday movie night" maxlength="80" />
+              </label>
+              <label>
+                <span>Optional movie/site link</span>
+                <input name="watchLink" placeholder="Paste a movie, trailer, YouTube, or website link" />
+              </label>
+              <div class="dsWatchStudioButtons">
+                <button class="dsPrimaryBtn" type="submit"><i class="fa-solid fa-plus"></i> Create Room</button>
+                <button id="socialCreateBlankRoomBtn" class="dsSecondaryBtn" type="button">Blank Room</button>
+              </div>
+            </form>
+
+            <form id="socialWatchJoinForm" class="dsWatchStudioCard">
+              <span class="dsPanelLabel">Join</span>
+              <h3>Join by code</h3>
+              <label>
+                <span>Room code</span>
+                <input name="roomCode" placeholder="abc12-def34" />
+              </label>
+              <button class="dsPrimaryBtn" type="submit"><i class="fa-solid fa-arrow-right-to-bracket"></i> Join Room</button>
+              <p>Codes are the part after <b>/watchrooms/</b> in a room link.</p>
+            </form>
+
+            <section class="dsWatchStudioCard dsWatchStudioActiveCard">
+              <div class="dsSectionHeaderSplit">
+                <div>
+                  <span class="dsPanelLabel">Live</span>
+                  <h3>Active Rooms</h3>
+                </div>
+                <small id="socialRoomsCount">0 rooms</small>
+              </div>
+              <div id="socialWatchRoomsList" class="dsSocialWatchRoomsList">
+                <div class="dsSocialEmptyMini">No active rooms yet. Create one above.</div>
+              </div>
+            </section>
+          </div>
+        </section>
 
         <div id="socialMessages" class="dsSocialMessages"></div>
 
@@ -27204,7 +27536,7 @@ function socialPage(req, res) {
           <span class="dsPanelLabel">Quick actions</span>
           <button id="socialCreateChannelBtn" type="button"><i class="fa-solid fa-hashtag"></i> Create Channel</button>
           <button id="socialCreateGroupBtn" type="button"><i class="fa-solid fa-users"></i> Create Group</button>
-          <a href="/watchrooms"><i class="fa-solid fa-tv"></i> Open Watch Room</a>
+          <a href="/social?tab=watchrooms"><i class="fa-solid fa-tv"></i> Open Watch Rooms</a>
         </div>
 
         <div class="dsSocialDetailsCard">
@@ -27261,6 +27593,9 @@ function socialPage(req, res) {
         let currentTitle = "Main Chat";
         let localStream = null;
         let username = "Guest";
+        const watchStudio = document.getElementById("socialWatchStudio");
+        const socialWatchRoomsList = document.getElementById("socialWatchRoomsList");
+        const socialRoomsCount = document.getElementById("socialRoomsCount");
 
         try {
           const profile = JSON.parse(localStorage.getItem("swiflytv.activeProfile") || "null");
@@ -27321,6 +27656,153 @@ function socialPage(req, res) {
           messages.forEach((msg) => addMessage(msg, false));
         }
 
+        function videoIdFromUrl(url) {
+          var value = String(url || "").trim();
+          var match = value.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
+          return match ? match[1] : "";
+        }
+
+        function cleanEmbedUrl(url) {
+          var value = String(url || "").trim();
+          if (!value) return "";
+          if (!/^https?:\/\//i.test(value)) return "";
+          return value;
+        }
+
+        function createRoomId() {
+          return Math.random().toString(36).slice(2, 7) + "-" + Math.random().toString(36).slice(2, 7);
+        }
+
+        function safeRoomCode(value) {
+          return String(value || "").toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 32);
+        }
+
+        function localWatchRooms() {
+          try {
+            var saved = JSON.parse(localStorage.getItem("swiflytv.socialWatchRooms") || "[]");
+            return Array.isArray(saved) ? saved : [];
+          } catch {
+            return [];
+          }
+        }
+
+        function saveLocalWatchRooms(rooms) {
+          localStorage.setItem("swiflytv.socialWatchRooms", JSON.stringify(rooms.slice(0, 30)));
+        }
+
+        function buildWatchRoomUrl(room) {
+          var params = new URLSearchParams();
+          params.set("name", room.name || "SwiflyTV Watch Room");
+          if (room.videoId) params.set("videoId", room.videoId);
+          if (room.embedUrl) params.set("embedUrl", room.embedUrl);
+          if (room.mediaKind) params.set("kind", room.mediaKind);
+          else params.set("kind", room.videoId ? "youtube" : room.embedUrl ? "embed" : "blank");
+          return "/watchrooms/" + encodeURIComponent(room.id) + "?" + params.toString();
+        }
+
+        function createSocialWatchRoom(name, url, announce) {
+          var roomId = createRoomId();
+          var videoId = videoIdFromUrl(url);
+          var embedUrl = cleanEmbedUrl(url);
+          var room = {
+            id: roomId,
+            name: String(name || "SwiflyTV Watch Room").trim() || "SwiflyTV Watch Room",
+            videoId: videoId,
+            embedUrl: embedUrl,
+            mediaKind: videoId ? "youtube" : embedUrl ? "embed" : "blank",
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+            host: username,
+          };
+
+          var rooms = localWatchRooms().filter((item) => item && item.id !== room.id);
+          rooms.unshift(room);
+          saveLocalWatchRooms(rooms);
+          renderSocialWatchRooms();
+
+          var roomUrl = buildWatchRoomUrl(room);
+          if (announce) {
+            var message = {
+              roomId: currentRoom,
+              author: username,
+              text: "Created Watch Room: " + room.name + " — " + location.origin + roomUrl,
+              createdAt: Date.now()
+            };
+            addMessage(message, true);
+            if (socket) socket.emit("social:message", message);
+          }
+
+          return roomUrl;
+        }
+
+        function roomCardHtml(room) {
+          var title = esc(room.name || "Watch Room");
+          var href = buildWatchRoomUrl(room);
+          var meta = room.viewers ? room.viewers + " watching" : room.host ? "Host: " + esc(room.host) : "Ready";
+          return '<article class="dsSocialWatchRoomCard">' +
+            '<div><span><i class="fa-solid fa-tv"></i></span><strong>' + title + '</strong><small>' + meta + '</small></div>' +
+            '<div class="dsSocialWatchRoomActions">' +
+              '<a href="' + esc(href) + '">Open</a>' +
+              '<button type="button" data-copy="' + esc(location.origin + href) + '">Copy</button>' +
+              '<button type="button" data-share="' + esc(href) + '" data-title="' + title + '">Share</button>' +
+            '</div>' +
+          '</article>';
+        }
+
+        async function renderSocialWatchRooms() {
+          if (!socialWatchRoomsList) return;
+
+          var local = localWatchRooms();
+          var live = [];
+          try {
+            var response = await fetch("/api/watchrooms", { cache: "no-store" });
+            var data = await response.json();
+            live = Array.isArray(data.rooms) ? data.rooms : [];
+          } catch {}
+
+          var merged = [];
+          var seen = new Set();
+          [...local, ...live].forEach(function(room) {
+            if (!room || !room.id || seen.has(room.id)) return;
+            seen.add(room.id);
+            merged.push(room);
+          });
+
+          if (socialRoomsCount) socialRoomsCount.textContent = merged.length + (merged.length === 1 ? " room" : " rooms");
+
+          if (!merged.length) {
+            socialWatchRoomsList.innerHTML = '<div class="dsSocialEmptyMini">No active rooms yet. Create one above.</div>';
+            return;
+          }
+
+          socialWatchRoomsList.innerHTML = merged.slice(0, 12).map(roomCardHtml).join("");
+
+          socialWatchRoomsList.querySelectorAll("[data-copy]").forEach(function(button) {
+            button.addEventListener("click", function() {
+              navigator.clipboard?.writeText(button.dataset.copy || "");
+              button.textContent = "Copied";
+              setTimeout(function(){ button.textContent = "Copy"; }, 1200);
+            });
+          });
+
+          socialWatchRoomsList.querySelectorAll("[data-share]").forEach(function(button) {
+            button.addEventListener("click", function() {
+              var href = button.dataset.share || "";
+              var title = button.dataset.title || "Watch Room";
+              var text = "Join my Watch Room: " + location.origin + href;
+              var message = { roomId: currentRoom, author: username, text: text, createdAt: Date.now() };
+              addMessage(message, true);
+              if (socket) socket.emit("social:message", message);
+            });
+          });
+        }
+
+        function setWatchStudioVisible(visible) {
+          if (watchStudio) watchStudio.hidden = !visible;
+          document.body.classList.toggle("socialWatchStudioOpen", Boolean(visible));
+          if (visible) renderSocialWatchRooms();
+        }
+
         function joinRoom(room, roomTitle) {
           currentRoom = room;
           currentTitle = roomTitle || room;
@@ -27328,9 +27810,14 @@ function socialPage(req, res) {
           if (detailsTitle) detailsTitle.textContent = currentTitle;
           if (input) input.placeholder = "Message " + currentTitle + "...";
           if (kind) kind.textContent = room.startsWith("channel") ? "Channel" : room.startsWith("group") ? "Group" : "Direct message";
-          if (detailsText) detailsText.textContent = room.startsWith("channel") ? "Public channel for movie talk." : room.startsWith("group") ? "Private group chat." : "Direct message thread.";
+          var isWatchRoomArea = room === "watchroom-lobby" || room === "watchroom-active" || room === "channel-watchrooms";
+          if (detailsText) detailsText.textContent = isWatchRoomArea ? "Create, share, and join synced Watch Rooms from Social." : room.startsWith("channel") ? "Public channel for movie talk." : room.startsWith("group") ? "Private group chat." : "Direct message thread.";
           document.querySelectorAll(".dsSocialRoom").forEach((btn) => btn.classList.toggle("isActive", btn.dataset.room === room));
-          renderRoom();
+          setWatchStudioVisible(isWatchRoomArea);
+          renderRoom(isWatchRoomArea ? [
+            { author: "Swifly", text: "This is the Social Watch Room hub. Create a room above, copy the invite, or share it directly in chat.", createdAt: Date.now() },
+            { author: "Swifly", text: "Tip: rooms still open at /watchrooms/:code, but discovery and sharing now live here.", createdAt: Date.now() + 10 }
+          ] : undefined);
           if (socket) socket.emit("social:join", { roomId: currentRoom, name: username });
         }
 
@@ -27373,6 +27860,30 @@ function socialPage(req, res) {
           clearTimeout(typingTimer);
           typingTimer = setTimeout(() => typing.hidden = true, 1300);
         });
+
+        document.getElementById("socialWatchCreateForm")?.addEventListener("submit", function(event) {
+          event.preventDefault();
+          var fd = new FormData(event.currentTarget);
+          var name = String(fd.get("roomName") || "").trim() || "SwiflyTV Watch Room";
+          var link = String(fd.get("watchLink") || "").trim();
+          var href = createSocialWatchRoom(name, link, true);
+          event.currentTarget.reset();
+          renderSocialWatchRooms();
+        });
+
+        document.getElementById("socialCreateBlankRoomBtn")?.addEventListener("click", function() {
+          createSocialWatchRoom("Blank Watch Room", "", true);
+        });
+
+        document.getElementById("socialWatchJoinForm")?.addEventListener("submit", function(event) {
+          event.preventDefault();
+          var fd = new FormData(event.currentTarget);
+          var code = safeRoomCode(fd.get("roomCode"));
+          if (!code) return;
+          location.href = "/watchrooms/" + encodeURIComponent(code) + "?name=SwiflyTV%20Watch%20Room&kind=blank";
+        });
+
+        document.getElementById("socialRefreshRoomsBtn")?.addEventListener("click", renderSocialWatchRooms);
 
         function createVirtualRoom(kind) {
           const name = prompt(kind === "channel" ? "Channel name" : "Group name");
@@ -27446,8 +27957,12 @@ function socialPage(req, res) {
           addMessage({ author: "Call", text: payload.name + " " + (payload.type || "updated the call"), createdAt: Date.now() }, false);
         });
 
-        const urlRoom = new URLSearchParams(location.search).get("room");
-        const target = urlRoom ? document.querySelector('[data-room="' + CSS.escape(urlRoom) + '"]') : null;
+        const params = new URLSearchParams(location.search);
+        const tab = params.get("tab");
+        const urlRoom = params.get("room");
+        const target = tab === "watchrooms"
+          ? document.querySelector('[data-room="watchroom-lobby"]')
+          : urlRoom ? document.querySelector('[data-room="' + CSS.escape(urlRoom) + '"]') : null;
         if (target) joinRoom(target.dataset.room, target.dataset.title);
         else joinRoom(currentRoom, currentTitle);
       })();
@@ -27566,7 +28081,7 @@ function removedDateProfilePage(req, res) {
 
 app.get("/date-profile", removedDateProfilePage);
 app.get("/couples", removedDateProfilePage);
-app.get("/watchrooms", watchroomsPage);
+app.get("/watchrooms", (req, res) => res.redirect("/social?tab=watchrooms"));
 app.get("/watchrooms/:roomId", watchroomPage);
 app.get("/profiles", profilesPage);
 app.get("/profiles/manage", profilesManagePage);
@@ -27652,6 +28167,7 @@ function apiStatus(req, res) {
       regularMovieSite: true,
       dateIdeasRemoved: true,
       socialHub: true,
+      socialWatchRooms: true,
       profileManager: true,
       dateProfile: false,
       regularMovieM3u8Player: true,
@@ -27662,6 +28178,16 @@ function apiStatus(req, res) {
 }
 
 app.get("/api/status", apiStatus);
+
+
+app.get("/api/social/watchrooms", (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const rooms = [...watchRooms.values()]
+    .sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0))
+    .slice(0, 24)
+    .map(publicRoom);
+  res.json({ ok: true, rooms });
+});
 
 app.get("/api/social/rooms", (req, res) => {
   res.set("Cache-Control", "no-store");
