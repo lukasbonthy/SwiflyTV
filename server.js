@@ -240,7 +240,7 @@ function getOrCreateWatchRoom(roomId, data = {}) {
   const now = Date.now();
   const room = {
     id,
-    name: String(data.name || "SwiflyTV Date Room").slice(0, 80),
+    name: String(data.name || "SwiflyTV Watch Room").slice(0, 80),
     trailerUrl: String(data.trailerUrl || "").slice(0, 500),
     embedUrl: String(data.embedUrl || data.trailerUrl || "").slice(0, 800),
     videoId: String(data.videoId || "").slice(0, 40),
@@ -715,7 +715,7 @@ function navLink(href, label, key, active) {
   return `<a class="${active === key ? "active" : ""}" href="${href}">${label}</a>`;
 }
 
-function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms, and synced watch plans for long-distance couples.", body = "", active = "", extraHead = "" }) {
+function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, trailers, cast pages, watchlists, and synced watch rooms.", body = "", active = "", extraHead = "" }) {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -17923,7 +17923,7 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
     /* ============================================================
        v64 COUPLES PREMIUM PACK
        Adds Taste Match, Date Generator, Missing You Mode,
-       Streaks, Timeline, Pause for Us, Date Room Themes,
+       Streaks, Timeline, Pause for Us, Watch Room Themes,
        Couple Badges, and Sleepy Mode.
        ============================================================ */
 
@@ -18593,7 +18593,7 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
 
     /* ============================================================
        v75 SYNC REGEX + SCRIPT FIX
-       Removes remaining Date Room regex crash and adds iframe sync target overlay.
+       Removes remaining Watch Room regex crash and adds iframe sync target overlay.
        ============================================================ */
 
     .dsIframeSyncOverlay {
@@ -19025,6 +19025,143 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
       background: #000;
     }
 
+
+    /* ============================================================
+       v91 VIDEO.JS M3U8 PLAYER
+       Uses Video.js/VHS first like common online HLS players.
+       ============================================================ */
+
+    .vjs-theme-swifly {
+      width: 100% !important;
+      height: 100% !important;
+      background: #000;
+      font-family: Inter, system-ui, sans-serif;
+    }
+
+    .vjs-theme-swifly .vjs-control-bar {
+      background: linear-gradient(0deg, rgba(0,0,0,.86), rgba(0,0,0,.28));
+      height: 4.2em;
+    }
+
+    .vjs-theme-swifly .vjs-big-play-button {
+      border: 1px solid rgba(255,255,255,.24);
+      border-radius: 999px;
+      width: 82px;
+      height: 82px;
+      line-height: 82px;
+      background: rgba(7,9,18,.64);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      box-shadow: 0 22px 80px rgba(0,0,0,.42);
+    }
+
+    .vjs-theme-swifly:hover .vjs-big-play-button {
+      background: rgba(255,255,255,.16);
+    }
+
+
+    /* ============================================================
+       v92 REGULAR MOVIE M3U8 FIX
+       Normal Movie button uses the same M3U8/Video.js player path as Watch Rooms.
+       ============================================================ */
+
+    .dsMovieButtonPlayerShell {
+      position: relative;
+      width: 100%;
+      min-height: min(72vh, 720px);
+      background: #000;
+      border-radius: inherit;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+    }
+
+    .dsMovieButtonPlayerShell[hidden] {
+      display: none !important;
+    }
+
+    .dsMovieButtonVideo,
+    .dsMovieButtonPlayerShell .video-js {
+      width: 100% !important;
+      height: min(72vh, 720px) !important;
+      min-height: 420px;
+      background: #000;
+    }
+
+    .dsProxyVideoWaitingShell.isReady .dsProxyVideoWaitingCard {
+      display: none !important;
+    }
+
+    @media(max-width: 720px) {
+      .dsMovieButtonVideo,
+      .dsMovieButtonPlayerShell .video-js {
+        height: 62vh !important;
+        min-height: 300px;
+      }
+    }
+
+
+    /* ============================================================
+       v93 REGULAR SITE + DATE PROFILE
+       Main SwiflyTV is a regular movie site; couple/date tools live in Date Profile.
+       ============================================================ */
+
+    .dsMovieHomeBoard {
+      max-width: 1320px;
+      margin: -24px auto 48px;
+      position: relative;
+      z-index: 5;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: center;
+      padding: 22px;
+      border-radius: 30px;
+      background:
+        radial-gradient(720px circle at 0% 0%, rgba(229,9,20,.16), transparent 46%),
+        radial-gradient(580px circle at 100% 0%, rgba(255,255,255,.10), transparent 48%),
+        rgba(255,255,255,.065);
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 26px 90px rgba(0,0,0,.28);
+      backdrop-filter: blur(18px) saturate(1.08);
+      -webkit-backdrop-filter: blur(18px) saturate(1.08);
+    }
+
+    .dsMovieHomeBoard h2 {
+      margin: 0 0 6px;
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-size: clamp(28px, 4vw, 48px);
+      letter-spacing: -.07em;
+    }
+
+    .dsMovieHomeBoard p {
+      margin: 0;
+      color: rgba(248,251,255,.68);
+      max-width: 720px;
+      line-height: 1.55;
+      font-weight: 650;
+    }
+
+    .dsProfileCard.dateProfile {
+      background:
+        radial-gradient(420px circle at 0% 0%, rgba(255,110,169,.20), transparent 48%),
+        rgba(255,255,255,.07);
+    }
+
+    .dsDateProfilePage .dsCouplesHero {
+      background:
+        radial-gradient(740px circle at 0% 0%, rgba(255,110,169,.18), transparent 48%),
+        radial-gradient(720px circle at 100% 0%, rgba(189,167,255,.14), transparent 48%),
+        rgba(255,255,255,.065);
+    }
+
+    @media(max-width: 760px) {
+      .dsMovieHomeBoard {
+        grid-template-columns: 1fr;
+        margin-top: -12px;
+      }
+    }
+
   </style>
 
     <script>
@@ -19070,6 +19207,10 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
 
 
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+
+    <link href="https://vjs.zencdn.net/8.16.1/video-js.css" rel="stylesheet" />
+    <script src="https://vjs.zencdn.net/8.16.1/video.min.js"></script>
 
 </head>
 <body>
@@ -19120,14 +19261,13 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
         </a>
 
         <nav class="navLinks netflixLinks">
-          ${navLink("/", "Tonight", "home", active)}
-          ${navLink("/tv", "Shows", "tv", active)}
+          ${navLink("/", "Home", "home", active)}
           ${navLink("/movies", "Movies", "movies", active)}
-          ${navLink("/trending", "Date Picks", "trending", active)}
-          ${navLink("/my-list", "Our List", "watchlist", active)}
-          ${navLink("/liked", "Hearts", "liked", active)}
-          ${navLink("/couples", "Couples", "couples", active)}
-          ${navLink("/watchrooms", "Date Rooms", "watchrooms", active)}
+          ${navLink("/tv", "TV Shows", "tv", active)}
+          ${navLink("/trending", "New & Popular", "trending", active)}
+          ${navLink("/my-list", "My List", "watchlist", active)}
+          ${navLink("/liked", "Liked", "liked", active)}
+          ${navLink("/date-profile", "Date Profile", "date", active)}
           ${navLink("/browse-by-languages", "Browse by Languages", "genres", active)}
         </nav>
       </div>
@@ -19156,10 +19296,11 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
           <div class="dsProfileDropdown">
             <a href="/profiles"><span>☺</span><b>Profiles</b></a>
             <a href="/account"><span>⚙</span><b>Account</b></a>
-            <a href="/watchrooms"><span>◎</span><b>Watchrooms</b></a>
+            <a href="/date-profile"><span>♡</span><b>Date Profile</b></a>
+            <a href="/watchrooms"><span>◎</span><b>Watch Parties</b></a>
             <a href="/continue-watching"><span>▶</span><b>Continue Watching</b></a>
             <a href="/my-list"><span>＋</span><b>My List</b></a>
-            <a href="/liked"><span>♡</span><b>Liked</b></a>
+            <a href="/liked"><span>♥</span><b>Liked</b></a>
             <a href="/kids"><span>★</span><b>Kids</b></a>
             <a href="/search"><span>⌕</span><b>Search</b></a>
           </div>
@@ -19176,12 +19317,12 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
   ${body}
 
   <nav class="mobileNav">
-    ${navLink("/", "Tonight", "home", active)}
-    ${navLink("/watchrooms", "Date", "watchrooms", active)}
+    ${navLink("/", "Home", "home", active)}
     ${navLink("/movies", "Movies", "movies", active)}
     ${navLink("/tv", "TV", "tv", active)}
     ${navLink("/search", "Search", "search", active)}
-    ${navLink("/my-list", "Ours", "watchlist", active)}
+    ${navLink("/my-list", "List", "watchlist", active)}
+    ${navLink("/date-profile", "Date", "date", active)}
   </nav>
 
   <div class="controlDock">
@@ -19363,7 +19504,7 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
 
       const list = readLibrary(storageKey);
       if (!list.length) {
-        const title = kind === "liked" ? "No liked titles yet" : "Your list is empty";
+        const title = kind === "liked" ? "No liked titles yet" : "Ymy list is empty";
         const sub = kind === "liked" ? "Tap the heart on any title to save favorites here." : "Tap + on any title to add it to My List.";
         root.innerHTML = '<div class="watchlistEmptyNetflix"><div><strong>' + title + '</strong><span>' + sub + '</span></div></div>';
         return;
@@ -20268,7 +20409,7 @@ async function welcomePage(req, res) {
   const heroTitle = getTitle(hero) || "Your distance date night starts here.";
   const heroBg = hero.backdrop_path ? fullBackdrop(hero.backdrop_path) : "";
   const heroPoster = hero.poster_path ? img(hero.poster_path, "w500") : "";
-  const heroDesc = hero.overview || "SwiflyTV helps long-distance couples plan movie nights, share watch links, start date rooms, chat, count down together, and feel a little closer from different places.";
+  const heroDesc = hero.overview || "SwiflyTV helps movie fans plan movie nights, share watch links, start date rooms, chat, count down together, and feel a little closer from different places.";
   const redirect = encodeURIComponent(String(req.query.redirect || "/profiles"));
   const heroType = getType(hero) || "movie";
   const heroHref = hero.id ? `/signup?redirect=${encodeURIComponent(`/${heroType}/${hero.id}`)}` : `/signup?redirect=${redirect}`;
@@ -20301,8 +20442,8 @@ async function welcomePage(req, res) {
         </div>
 
         <div class="dsWelcomeStats">
-          <div><b>Couple Profiles</b><span>Me, partner, and together spaces</span></div>
-          <div><b>Date Rooms</b><span>Open Together, Live Share, chat</span></div>
+          <div><b>Profiles</b><span>Me, partner, and together spaces</span></div>
+          <div><b>Watch Rooms</b><span>Open Together, Live Share, chat</span></div>
           <div><b>Distance Sync</b><span>Countdowns and shared timeframes</span></div>
         </div>
       </div>
@@ -20332,14 +20473,14 @@ async function welcomePage(req, res) {
     <section class="dsCouplePromiseStrip">
       <article><span>♡</span><b>Open Together</b><p>If embeds fail, both of you open the real site and use the same countdown.</p></article>
       <article><span>☾</span><b>Late-night friendly</b><p>Big buttons, clear rooms, and fewer steps when you are already on a call.</p></article>
-      <article><span>✦</span><b>Our List</b><p>Save movies you both actually want instead of losing them in texts.</p></article>
+      <article><span>✦</span><b>My List</b><p>Save movies you both actually want instead of losing them in texts.</p></article>
     </section>
 
     <section id="discovery" class="dsWelcomeDiscovery dsWelcomeDiscoveryPro">
       <div class="dsWelcomeIntro">
         <span class="dsEyebrow">Date ideas before signing in</span>
         <h2>Find the movie before the “what do we watch?” argument.</h2>
-        <p>SwiflyTV is built for long-distance couples who still want a normal movie night together. Browse ideas, then unlock Date Rooms, Our List, shared watch history, hearts, countdowns, and couple profiles.</p>
+        <p>SwiflyTV is built for movie fans who still want a normal movie night together. Browse ideas, then unlock Watch Rooms, My List, shared watch history, hearts, countdowns, and profiles.</p>
       </div>
 
       ${hasTmdb ? `
@@ -20358,9 +20499,9 @@ async function welcomePage(req, res) {
     </section>
 
     <section id="features" class="dsWelcomeFeatures dsWelcomeFeaturesPro">
-      <article><span>Date Rooms</span><h3>Watch from two places</h3><p>Share a room, use Open Together, Live Share, countdowns, and chat while apart.</p></article>
-      <article><span>Couple Profiles</span><h3>Me, you, and us</h3><p>Create profiles for each person and a shared Together space for date nights.</p></article>
-      <article><span>Continue Together</span><h3>Resume the date</h3><p>Keep track of what you started so the next call can begin faster.</p></article>
+      <article><span>Watch Rooms</span><h3>Watch from two places</h3><p>Share a room, use Open Together, Live Share, countdowns, and chat while apart.</p></article>
+      <article><span>Profiles</span><h3>Me, you, and us</h3><p>Create profiles for each person and a shared Together space for date nights.</p></article>
+      <article><span>Continue Watching</span><h3>Resume the date</h3><p>Keep track of what you started so the next call can begin faster.</p></article>
       <article><span>Love Notes</span><h3>Keep it sweet</h3><p>Use the couple dashboard for date ideas, little notes, and shared plans.</p></article>
     </section>
 
@@ -20383,7 +20524,7 @@ async function welcomePage(req, res) {
       <h2>Start your shared screen tradition.</h2>
       <p>Create your couple space and make distance feel a little smaller.</p>
       <div class="dsWelcomeActions">
-        <a class="dsPrimaryBtn" href="/signup?redirect=${redirect}">Create couple account</a>
+        <a class="dsPrimaryBtn" href="/signup?redirect=${redirect}">Create account</a>
         <a class="dsSecondaryBtn" href="/login?redirect=${redirect}">Log in</a>
       </div>
     </section>
@@ -20442,24 +20583,24 @@ async function homePage(req, res) {
     : pickHero((trendingAll.results || []).filter((item) => ["movie", "tv"].includes(getType(item))));
 
   const body = `<main>
-    ${dsHero({ hero, context: "Date night spotlight", eyebrow: "For tonight together" })}
+    ${dsHero({ hero, context: "Featured", eyebrow: "Watch now" })}
     <section class="dsContent">
 
-      <section class="dsCoupleHomeBoard">
+      <section class="dsMovieHomeBoard">
         <div>
-          <span class="dsEyebrow">Tonight together</span>
-          <h2>Plan a long-distance movie date in one place.</h2>
-          <p>Pick something, save it to Our List, open a Date Room, start a countdown, and chat while you both get ready.</p>
+          <span class="dsEyebrow">Streaming made simple</span>
+          <h2>Movies, shows, watchlists, and watch parties.</h2>
+          <p>Browse trending titles, save ymy list, continue watching, and jump into a synced room whenever you want.</p>
         </div>
         <div class="dsCoupleHomeActions">
-          <a class="dsPrimaryBtn" href="/watchrooms">Start Date Room</a>
-          <a class="dsSecondaryBtn" href="/couples">Couple Dashboard</a>
-          <a class="dsGhostPill" href="/my-list">Open Our List</a>
+          <a class="dsPrimaryBtn" href="/movies">Browse Movies</a>
+          <a class="dsSecondaryBtn" href="/tv">Browse TV</a>
+          <a class="dsGhostPill" href="/date-profile">Date Profile</a>
         </div>
         <div class="dsCoupleHomeCards">
-          <article><b>01</b><span>Choose the vibe</span></article>
-          <article><b>02</b><span>Send the room</span></article>
-          <article><b>03</b><span>Press play together</span></article>
+          <article><b>01</b><span>Find something</span></article>
+          <article><b>02</b><span>Press play</span></article>
+          <article><b>03</b><span>Save ymy list</span></article>
         </div>
       </section>
 
@@ -20467,18 +20608,18 @@ async function homePage(req, res) {
         <div class="dsRowHead"><h2>Continue Watching</h2><span class="dsRowTag">Saved watching</span></div>
         <div id="continueWatchingRail" class="movieRail dsRail"></div>
       </section>
-      ${dsRail("Date Night Spotlight", [{ ...spotlightMovie, media_type: "movie" }], "movie", { tag: "Featured" })}
-      ${dsRail("Couples are watching", (trendingAll.results || []).filter((item) => ["movie", "tv"].includes(getType(item))), "", { tag: "Live" })}
-      ${dsTopRail("Top movies for tonight", popularMovies.results || [], "movie")}
-      ${dsRail("Shows for a long call", dramaShows.results || [], "tv")}
-      ${dsRail("New date-night releases", nowPlaying.results || [], "movie")}
-      ${dsRail("Action for high-energy dates", actionMovies.results || [], "movie")}
-      ${dsRail("Binge together", popularTv.results || [], "tv")}
+      ${dsRail("Featured Movie Spotlight", [{ ...spotlightMovie, media_type: "movie" }], "movie", { tag: "Featured" })}
+      ${dsRail("Trending Now", (trendingAll.results || []).filter((item) => ["movie", "tv"].includes(getType(item))), "", { tag: "Live" })}
+      ${dsTopRail("Top Movies", popularMovies.results || [], "movie")}
+      ${dsRail("Popular Drama Shows", dramaShows.results || [], "tv")}
+      ${dsRail("New Releases", nowPlaying.results || [], "movie")}
+      ${dsRail("Action Movies", actionMovies.results || [], "movie")}
+      ${dsRail("Binge-worthy TV", popularTv.results || [], "tv")}
       ${dsTopRail("Top 10 TV Shows", topTv.results || [], "tv")}
       ${dsRail("Comedy Movies", comedyMovies.results || [], "movie")}
       ${dsRail("Family Movie Night", familyMovies.results || [], "movie")}
       ${dsRail("Animated Worlds", animationMovies.results || [], "movie")}
-      ${dsRail("Thrillers to react to together", thrillerMovies.results || [], "movie")}
+      ${dsRail("Thrillers", thrillerMovies.results || [], "movie")}
       ${dsRail("Coming Soon", upcomingMovies.results || [], "movie")}
       ${dsRail("Critically Acclaimed Movies", topMovies.results || [], "movie")}
     </section>
@@ -20722,7 +20863,7 @@ async function listingPage(req, res, type = "movie", options = {}) {
   const label = type === "tv" ? "TV Shows" : "Movies";
   const active = type === "tv" ? "tv" : "movies";
   const hero = pickHero(data.results || rowFive.results || []);
-  const categoryOne = type === "tv" ? "Shows for a long call" : "Action Movies";
+  const categoryOne = type === "tv" ? "Popular Drama Shows" : "Action Movies";
   const categoryTwo = type === "tv" ? "Comedy TV Shows" : "Comedies";
   const categoryThree = type === "tv" ? "Crime & Suspense Shows" : "Suspense Movies";
   const categoryFour = type === "tv" ? "Critically Acclaimed TV" : "Critically Acclaimed Movies";
@@ -20740,7 +20881,7 @@ async function listingPage(req, res, type = "movie", options = {}) {
     ${dsHero({ hero, type, context: label, eyebrow: `${label} spotlight` })}
     <section class="dsContent">
       ${dsRail(categoryOne, rowOne.results || [], type)}
-      ${dsTopRail(type === "tv" ? "Top 10 TV Shows Today" : "Top movies for tonight Today", data.results || [], type)}
+      ${dsTopRail(type === "tv" ? "Top 10 TV Shows Today" : "Top Movies Today", data.results || [], type)}
       ${dsRail(categoryTwo, rowTwo.results || [], type)}
       ${dsRail(categoryThree, rowThree.results || [], type)}
       ${dsRail(categoryFour, rowFour.results || [], type)}
@@ -20773,8 +20914,8 @@ async function trendingPage(req, res) {
         <a class="${type === "movie" ? "active" : ""}" href="/trending?type=movie">Movies</a>
         <a class="${type === "tv" ? "active" : ""}" href="/trending?type=tv">TV Shows</a>
       </div>
-      ${dsRail("Couples are watching", (data.results || []).filter((item) => ["movie", "tv"].includes(getType(item))), type === "all" ? "" : type, { tag: "Live" })}
-      ${dsTopRail("Top movies for tonight Today", popularMovies.results || [], "movie")}
+      ${dsRail("Trending Now", (data.results || []).filter((item) => ["movie", "tv"].includes(getType(item))), type === "all" ? "" : type, { tag: "Live" })}
+      ${dsTopRail("Top Movies Today", popularMovies.results || [], "movie")}
       ${dsRail("Popular TV Shows", popularTv.results || [], "tv")}
       ${dsRail("Coming Soon", upcomingMovies.results || [], "movie")}
       ${dsRail("Now Playing", nowPlaying.results || [], "movie")}
@@ -21280,16 +21421,19 @@ async function watchPage(req, res, type) {
     ? `<div class="dsProxyVideoWaitingShell" data-movie-id="${escapeHtml(id)}">
         <div class="dsProxyVideoWaitingCard">
           <div class="dsProxyLoader"></div>
-          <span>Getting proxyVideo</span>
-          <h2>Finding your movie source...</h2>
-          <p>This provider can take a while. Keep this page open — SwiflyTV will keep trying and embed the proxyVideo URL as soon as it returns.</p>
+          <span>Getting m3u8</span>
+          <h2>Finding your m3u8 source...</h2>
+          <p>This provider can take a while. Keep this page open — SwiflyTV will keep trying and load the m3u8 stream as soon as it returns.</p>
           <div id="proxyVideoWaitStatus" class="dsProxyVideoWaitStatus">Starting request...</div>
           <div class="dsStableActions">
             <button class="dsSecondaryBtn" id="retryProxyVideoBtn" type="button">Retry now</button>
-            <a class="dsGhostPill" href="/watchrooms">Use Date Room</a>
+            <a class="dsGhostPill" href="/watchrooms">Use Watch Room</a>
           </div>
         </div>
-        <iframe id="proxyVideoClientFrame" class="dsProxyVideoFrame" title="${escapeHtml(title)} proxyVideo embed" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write; web-share" allowfullscreen referrerpolicy="no-referrer" hidden></iframe>
+        <div id="movieButtonPlayerShell" class="dsMovieButtonPlayerShell" hidden>
+          <video id="proxyVideoClientVideo" class="dsMovieButtonVideo video-js vjs-big-play-centered vjs-theme-swifly" controls playsinline crossorigin="anonymous" preload="auto"></video>
+          <div id="movieButtonHlsStatus" class="dsHlsStatus"><b>Loading m3u8...</b><span>Preparing player</span></div>
+        </div>
       </div>`
     : providerStream && providerStream.type === "mp4"
       ? `<div class="dsDirectVideoShell" data-provider-kind="${escapeHtml(placeholderSource.providerKind || "placeholder")}">
@@ -21306,7 +21450,7 @@ async function watchPage(req, res, type) {
           ? `<iframe class="dsMovieEmbedFrame" src="${escapeHtml(movieEmbedUrl)}" title="${escapeHtml(title)} movie embed" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write; web-share" allowfullscreen sandbox="allow-scripts allow-same-origin"></iframe>`
           : trailer && allowLegacyMovieFallback
             ? `${providerStatusMessage}<div class="dsMovieEmbedNotice"><span>proxyVideo unavailable</span><strong>Using trailer fallback</strong><small>Set MOVIE_PROXY_VIDEO_ALLOW_LEGACY_FALLBACK=true to allow this fallback.</small></div><iframe src="${escapeHtml(trailerEmbedSrc)}" title="${escapeHtml(title)} trailer fallback" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin"></iframe>`
-            : `<div class="dsNoTrailer dsProxyVideoFail"><h2>proxyVideo did not load</h2><p>Client wait is disabled and no fallback source was available.</p></div>`;
+            : `<div class="dsNoTrailer dsProxyVideoFail"><h2>m3u8 source did not load</h2><p>Client wait is disabled and no fallback source was available.</p></div>`;
 
   const body = `<main class="dsWatchPage ${isMovieMode ? "dsWatchFullscreenMovie dsWatchEmbedMode" : "dsWatchTrailerMode"}">
     <section class="dsWatchHero">
@@ -21328,7 +21472,7 @@ async function watchPage(req, res, type) {
             <div>
               <span class="dsEyebrow">${isMovieMode ? watchModeLabel : "Trailer mode"}</span>
               <h1>${escapeHtml(title)}</h1>
-              <p>${isMovieMode ? (proxyVideoUrl ? "Movie button is embedding the proxyVideo URL returned by your movie API." : providerStream ? "Movie button is using the temporary ORG MP4 trailer/preview provider until licensed movie access is connected." : "Movie mode is waiting for m3u8/stream first. Legacy fallback is off unless MOVIE_PROXY_VIDEO_ALLOW_LEGACY_FALLBACK=true.") : "Official trailer / preview playback."}</p>
+              <p>${isMovieMode ? (proxyVideoUrl ? "Movie button is playing the m3u8 URL returned by your movie API." : providerStream ? "Movie button is using the temporary ORG MP4 trailer/preview provider until licensed movie access is connected." : "Movie mode is waiting for the same m3u8 player source used in Watch Rooms. Legacy fallback is off unless MOVIE_PROXY_VIDEO_ALLOW_LEGACY_FALLBACK=true.") : "Official trailer / preview playback."}</p>
             </div>
             ${isMovieMode ? `<span class="dsPlaceholderBadge">${proxyVideoUrl ? "proxyVideo" : providerStream ? "ORG MP4" : movieEmbedUrl ? "Embed" : "Trailer fallback"}</span>` : `<span class="dsPlaceholderBadge trailer">Trailer</span>`}
           </div>
@@ -21375,7 +21519,11 @@ async function watchPage(req, res, type) {
         var movieId = ${JSON.stringify(id)};
         var clientWait = ${clientProxyVideoWait ? "true" : "false"};
         var waitStatus = document.getElementById("proxyVideoWaitStatus");
-        var frame = document.getElementById("proxyVideoClientFrame");
+        var video = document.getElementById("proxyVideoClientVideo");
+        var playerShell = document.getElementById("movieButtonPlayerShell");
+        var hlsStatus = document.getElementById("movieButtonHlsStatus");
+        var movieButtonPlayer = null;
+        var movieButtonHls = null;
         var shell = document.querySelector(".dsProxyVideoWaitingShell");
         var retryBtn = document.getElementById("retryProxyVideoBtn");
         var startedAt = Date.now();
@@ -21392,6 +21540,197 @@ async function watchPage(req, res, type) {
           if (shell) shell.classList.add("hasError");
         }
 
+        function setPlayerStatus(title, detail, isError) {
+          if (!hlsStatus) return;
+          hlsStatus.hidden = false;
+          hlsStatus.classList.toggle("isError", Boolean(isError));
+          var b = hlsStatus.querySelector("b");
+          var s = hlsStatus.querySelector("span");
+          if (b) b.textContent = title || "Player";
+          if (s) s.textContent = detail || "";
+        }
+
+        function hidePlayerStatusSoon() {
+          setTimeout(function(){
+            if (hlsStatus) hlsStatus.hidden = true;
+          }, 2500);
+        }
+
+        function loadHlsScript(callback) {
+          if (window.Hls) return callback(true);
+          var urls = [
+            "https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js",
+            "https://unpkg.com/hls.js@1.5.17/dist/hls.min.js",
+            "https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.17/hls.min.js"
+          ];
+          var i = 0;
+          function next() {
+            if (window.Hls) return callback(true);
+            if (i >= urls.length) return callback(false);
+            var script = document.createElement("script");
+            script.src = urls[i++];
+            script.async = true;
+            script.onload = function(){ callback(Boolean(window.Hls)); };
+            script.onerror = next;
+            document.head.appendChild(script);
+          }
+          next();
+        }
+
+        function isHlsUrl(url, data) {
+          var value = String(url || "");
+          var type = String((data && data.streamType) || "").toLowerCase();
+          return new RegExp("[.]m3u8([?#]|$)", "i").test(value) || type === "m3u8" || type === "hls" || Boolean(data && data.m3u8);
+        }
+
+        function attachRegularMovieSource(src, data) {
+          if (!video || !src) {
+            showError("No movie source URL returned.");
+            return;
+          }
+
+          if (playerShell) playerShell.hidden = false;
+          if (shell) shell.classList.add("isReady");
+          setStatus("Source found. Loading player...");
+
+          try {
+            video.crossOrigin = "anonymous";
+            video.removeAttribute("src");
+            video.load();
+          } catch {}
+
+          var hls = isHlsUrl(src, data);
+
+          if (!hls) {
+            setPlayerStatus("Loading video...", "Using direct video source.", false);
+            video.src = src;
+            try { video.load(); } catch {}
+            hidePlayerStatusSoon();
+            return;
+          }
+
+          setPlayerStatus("Loading m3u8...", "Starting Video.js player", false);
+
+          if (window.videojs) {
+            try {
+              if (movieButtonPlayer) {
+                try { movieButtonPlayer.dispose(); } catch {}
+                movieButtonPlayer = null;
+              }
+
+              video.classList.add("video-js", "vjs-big-play-centered", "vjs-theme-swifly");
+
+              movieButtonPlayer = window.videojs(video, {
+                controls: true,
+                autoplay: false,
+                preload: "auto",
+                fluid: true,
+                responsive: true,
+                liveui: true,
+                html5: {
+                  vhs: {
+                    overrideNative: true,
+                    withCredentials: false,
+                    enableLowInitialPlaylist: true,
+                    smoothQualityChange: true
+                  },
+                  nativeAudioTracks: false,
+                  nativeVideoTracks: false
+                },
+                sources: [{
+                  src: src,
+                  type: "application/x-mpegURL"
+                }]
+              });
+
+              movieButtonPlayer.ready(function(){
+                setPlayerStatus("m3u8 ready", "Video.js loaded. Press play.", false);
+                setStatus("m3u8 loaded. Press play.");
+                hidePlayerStatusSoon();
+              });
+
+              movieButtonPlayer.on("error", function(){
+                var err = movieButtonPlayer.error && movieButtonPlayer.error();
+                var message = err && (err.message || err.code) ? String(err.message || ("Code " + err.code)) : "Unknown Video.js error";
+                setPlayerStatus("Video.js error", message, true);
+                setStatus("Video.js error: " + message);
+              });
+
+              return;
+            } catch (error) {
+              setPlayerStatus("Video.js failed", error.message || "Trying HLS.js fallback", true);
+            }
+          }
+
+          loadHlsScript(function(loaded) {
+            if (!loaded || !window.Hls || !window.Hls.isSupported()) {
+              setPlayerStatus("HLS.js did not load", "This browser needs Video.js or HLS.js to play this m3u8.", true);
+              setStatus("HLS.js failed to load.");
+              return;
+            }
+
+            if (movieButtonHls) {
+              try { movieButtonHls.destroy(); } catch {}
+              movieButtonHls = null;
+            }
+
+            movieButtonHls = new window.Hls({
+              debug: false,
+              enableWorker: true,
+              lowLatencyMode: false,
+              backBufferLength: 90,
+              maxBufferLength: 60,
+              maxMaxBufferLength: 120,
+              startPosition: -1,
+              capLevelToPlayerSize: true,
+              manifestLoadingMaxRetry: 4,
+              levelLoadingMaxRetry: 4,
+              fragLoadingMaxRetry: 6,
+              manifestLoadingTimeOut: 30000,
+              levelLoadingTimeOut: 30000,
+              fragLoadingTimeOut: 30000
+            });
+
+            movieButtonHls.on(window.Hls.Events.MEDIA_ATTACHED, function() {
+              setPlayerStatus("Loading m3u8...", "Fetching manifest", false);
+              movieButtonHls.loadSource(src);
+            });
+
+            movieButtonHls.on(window.Hls.Events.MANIFEST_PARSED, function(event, parsed) {
+              setPlayerStatus("m3u8 ready", "HLS.js loaded. Press play.", false);
+              setStatus("m3u8 loaded. Press play.");
+              hidePlayerStatusSoon();
+            });
+
+            movieButtonHls.on(window.Hls.Events.ERROR, function(event, err) {
+              if (!err) return;
+              var detail = String(err.details || err.reason || err.type || "Unknown HLS error");
+
+              if (!err.fatal) {
+                setPlayerStatus("HLS warning", detail, false);
+                return;
+              }
+
+              if (err.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
+                setPlayerStatus("HLS network error", "Retrying stream load...", true);
+                try { movieButtonHls.startLoad(); } catch {}
+                return;
+              }
+
+              if (err.type === window.Hls.ErrorTypes.MEDIA_ERROR) {
+                setPlayerStatus("HLS media error", "Trying media recovery...", true);
+                try { movieButtonHls.recoverMediaError(); } catch {}
+                return;
+              }
+
+              setPlayerStatus("HLS failed", detail, true);
+              setStatus("HLS failed: " + detail);
+            });
+
+            movieButtonHls.attachMedia(video);
+          });
+        }
+
         async function tryProxyVideo(manual) {
           if (!clientWait || stopped) return;
 
@@ -21399,11 +21738,11 @@ async function watchPage(req, res, type) {
           var elapsed = Math.round((Date.now() - startedAt) / 1000);
 
           if (Date.now() - startedAt > maxWaitMs) {
-            showError("Still no proxyVideo after " + elapsed + " seconds. You can retry, refresh, or use a Date Room.");
+            showError("Still no m3u8 source after " + elapsed + " seconds. You can retry, refresh, or use a Watch Room.");
             return;
           }
 
-          setStatus((manual ? "Retrying" : "Trying") + " proxyVideo... attempt " + attempt + " • " + elapsed + "s");
+          setStatus((manual ? "Retrying" : "Trying") + " m3u8 source... attempt " + attempt + " • " + elapsed + "s");
 
           try {
             var response = await fetch("/api/proxy-video-wait/movie/" + encodeURIComponent(movieId) + "?t=" + Date.now(), {
@@ -21413,14 +21752,11 @@ async function watchPage(req, res, type) {
 
             var data = await response.json();
 
-            if (data && data.status === "ok" && data.proxyVideo) {
+            if (data && data.status === "ok" && (data.playbackUrl || data.m3u8 || data.proxyVideo)) {
               stopped = true;
-              setStatus("proxyVideo found. Loading player...");
-              if (frame) {
-                frame.hidden = false;
-                frame.src = data.proxyVideo;
-              }
-              if (shell) shell.classList.add("isReady");
+              var src = data.playbackUrl || data.m3u8 || data.proxyVideo;
+              setStatus((data.m3u8 || data.streamType === "m3u8" ? "m3u8" : "Source") + " found. Loading player...");
+              attachRegularMovieSource(src, data);
               return;
             }
 
@@ -21451,7 +21787,7 @@ async function watchPage(req, res, type) {
             if (!videoShell || videoShell.querySelector(".dsMovieEmbedNotice.error")) return;
             var notice = document.createElement("div");
             notice.className = "dsMovieEmbedNotice error";
-            notice.innerHTML = "<span>Playback issue</span><strong>The MP4 source could not be decoded or loaded by this browser.</strong><small>Try Open MP4, disable blockers, or use Open Together in a Date Room.</small>";
+            notice.innerHTML = "<span>Playback issue</span><strong>The MP4 source could not be decoded or loaded by this browser.</strong><small>Try Open MP4, disable blockers, or use Open Together in a Watch Room.</small>";
             videoShell.prepend(notice);
           });
         }
@@ -21722,7 +22058,7 @@ function likedPage(req, res) {
 function watchroomsPage(req, res) {
   const roomId = createRoomId();
   const body = `<main class="dsPlainPage dsWatchroomsPage dsWatchroomsPro">
-    ${dsPageHeader("Date Rooms", "A private room for long-distance couples to open a link together, countdown, chat, and start the same movie from different places.", "Long-distance date")}
+    ${dsPageHeader("Watch Rooms", "A private room for movie fans to open a link together, countdown, chat, and start the same movie from different places.", "Long-distance date")}
 
     <section class="dsWatchroomHero">
       <div>
@@ -21732,7 +22068,7 @@ function watchroomsPage(req, res) {
       </div>
       <form id="quickCreateWatchroomForm" class="dsQuickRoomForm">
         <input name="roomName" placeholder="Tonight with us" maxlength="80" />
-        <button class="dsPrimaryBtn" type="submit">Create Date Room</button>
+        <button class="dsPrimaryBtn" type="submit">Create Watch Room</button>
       </form>
     </section>
 
@@ -21743,13 +22079,13 @@ function watchroomsPage(req, res) {
         <form id="createWatchroomForm">
           <label>Date room name<input name="roomName" placeholder="Friday night with you" maxlength="80" /></label>
           <label>Optional watch link<input name="trailerUrl" placeholder="Movie, trailer, or website link" /></label>
-          <button class="dsPrimaryBtn" type="submit">Create Date Room</button>
+          <button class="dsPrimaryBtn" type="submit">Create Watch Room</button>
         </form>
       </article>
 
       <article class="dsWatchroomPanel">
         <h2>Join a date room</h2>
-        <p>Got a code from your person? Enter it here.</p>
+        <p>Got a code from your date? Enter it here.</p>
         <form id="joinWatchroomForm">
           <label>Date room code<input name="roomCode" placeholder="${escapeHtml(roomId)}" /></label>
           <button class="dsSecondaryBtn" type="submit">Join Room</button>
@@ -21791,7 +22127,7 @@ function watchroomsPage(req, res) {
           var embedUrl = cleanEmbedUrl(trailerUrl);
           var roomId = "${escapeHtml(roomId)}";
           var params = new URLSearchParams();
-          params.set("name", String(roomName || "SwiflyTV Date Room").trim() || "SwiflyTV Date Room");
+          params.set("name", String(roomName || "SwiflyTV Watch Room").trim() || "SwiflyTV Watch Room");
           if (trailerUrl && embedUrl) {
             params.set("trailer", trailerUrl);
             params.set("embed", embedUrl);
@@ -21862,7 +22198,7 @@ function watchroomsPage(req, res) {
 
 function watchroomPage(req, res) {
   const roomId = normalizeRoomId(req.params.roomId);
-  const name = String(req.query.name || "SwiflyTV Date Room").slice(0, 80);
+  const name = String(req.query.name || "SwiflyTV Watch Room").slice(0, 80);
   const sharedUrl = normalizeSharedBrowserUrl(req.query.url || req.query.open || req.query.embed || req.query.trailer || "");
 
   const room = getOrCreateWatchRoom(roomId, {
@@ -21884,9 +22220,9 @@ function watchroomPage(req, res) {
     <section class="dsStableRoomHero">
       <div>
         <a class="dsGhostPill" href="/watchrooms">← Watchrooms</a>
-        <span class="dsEyebrow">Reliable Date Room</span>
+        <span class="dsEyebrow">Reliable Watch Room</span>
         <h1>${safeName}</h1>
-        <p>Built for long-distance couples. Use <b>Open Together</b> when you both can open the movie site, or <b>Live Share</b> when one of you can share a tab.</p>
+        <p>Built for movie fans. Use <b>Open Together</b> when you both can open the movie site, or <b>Live Share</b> when one of you can share a tab.</p>
       </div>
 
       <aside class="dsStableRoomMeta">
@@ -22002,7 +22338,7 @@ function watchroomPage(req, res) {
           <div class="dsRoomMovieStage" id="roomMovieStage">
             <iframe id="roomMovieFrame" class="dsRoomMovieFrame" title="Synced room movie" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write; web-share" allowfullscreen referrerpolicy="no-referrer" hidden></iframe>
             <div id="roomMovieIframeSyncOverlay" class="dsIframeSyncOverlay" hidden><span>Room target</span><b id="roomMovieIframeTarget">0:00</b><small>Iframe players cannot be force-seeked by the browser. Use this target if the embed drifts.</small></div>
-            <video id="roomMovieVideo" class="dsRoomMovieFrame dsCustomMovieVideo" playsinline preload="metadata" crossorigin="anonymous" hidden></video>
+            <video id="roomMovieVideo" class="dsRoomMovieFrame dsCustomMovieVideo video-js vjs-big-play-centered vjs-theme-swifly" playsinline preload="metadata" crossorigin="anonymous" hidden></video>
             <div id="roomMovieHlsStatus" class="dsHlsStatus" hidden><b>Loading m3u8...</b><span>Starting HLS player</span></div>
             <div id="roomMoviePlayerChrome" class="dsCustomPlayerChrome" hidden>
               <div class="dsCustomPlayerTop">
@@ -22199,7 +22535,7 @@ function watchroomPage(req, res) {
             <article class="dsCouplesPlusTool">
               <span>Missing You Mode</span>
               <h3>Make the room softer</h3>
-              <p>Turns on a warm long-distance vibe with floating hearts and sweeter room styling.</p>
+              <p>Turns on a warm remote vibe with floating hearts and sweeter room styling.</p>
               <div class="dsStableActions">
                 <button class="dsPrimaryBtn" id="missingYouBtn" type="button">Toggle Missing You</button>
                 <button class="dsSecondaryBtn" id="sleepyModeBtn" type="button">Toggle Sleepy Mode</button>
@@ -22219,7 +22555,7 @@ function watchroomPage(req, res) {
             </article>
 
             <article class="dsCouplesPlusTool">
-              <span>Date Room Themes</span>
+              <span>Watch Room Themes</span>
               <h3>Change the room vibe</h3>
               <p>Premium rooms should feel like a date, not a video player.</p>
               <div class="dsThemeButtons">
@@ -22252,7 +22588,7 @@ function watchroomPage(req, res) {
               <span>Why paid?</span>
               <h3>Not just streaming.</h3>
               <p>Couples pay for the feeling: less “what do we do?”, more shared rituals, synced moments, and a room that feels made for the relationship.</p>
-              <a class="dsSecondaryBtn" href="/couples">Open Couple Dashboard</a>
+              <a class="dsSecondaryBtn" href="/couples">Open Date Profile</a>
             </article>
           </div>
 
@@ -22957,11 +23293,82 @@ function watchroomPage(req, res) {
 
         function destroyRoomMovieHls() {
           var video = document.getElementById("roomMovieVideo");
+          if (window.__roomMovieVideoJs) {
+            try { window.__roomMovieVideoJs.dispose(); } catch {}
+            window.__roomMovieVideoJs = null;
+          }
           if (window.__roomMovieHls) {
             try { window.__roomMovieHls.destroy(); } catch {}
             window.__roomMovieHls = null;
           }
           if (video) video.dataset.hlsSrc = "";
+        }
+
+        function attachRoomMovieVideoJs(video, src) {
+          if (!video || !src || !window.videojs) return false;
+
+          setRoomMovieHlsStatus("Loading m3u8...", "Starting Video.js HLS player", false);
+
+          try {
+            if (window.__roomMovieVideoJs) {
+              window.__roomMovieVideoJs.dispose();
+              window.__roomMovieVideoJs = null;
+            }
+          } catch {}
+
+          try {
+            video.classList.add("video-js", "vjs-big-play-centered", "vjs-theme-swifly");
+            var player = window.videojs(video, {
+              controls: false,
+              autoplay: false,
+              preload: "auto",
+              fluid: false,
+              responsive: true,
+              liveui: true,
+              html5: {
+                vhs: {
+                  overrideNative: !(/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)),
+                  withCredentials: false,
+                  enableLowInitialPlaylist: true,
+                  smoothQualityChange: true,
+                },
+                nativeAudioTracks: false,
+                nativeVideoTracks: false,
+              },
+              sources: [{
+                src: src,
+                type: "application/x-mpegURL"
+              }],
+            });
+
+            window.__roomMovieVideoJs = player;
+
+            player.ready(function() {
+              roomMovieState.hlsReady = true;
+              setRoomMovieHlsStatus("m3u8 ready", "Video.js player loaded. Press play.", false);
+              setRoomMovieStatus("m3u8 loaded in Video.js. Press play when ready.");
+              updateCustomPlayerUi();
+              setTimeout(hideRoomMovieHlsStatus, 2500);
+            });
+
+            player.on("loadedmetadata", function() {
+              roomMovieState.hlsReady = true;
+              updateCustomPlayerUi();
+            });
+
+            player.on("error", function() {
+              var err = player.error && player.error();
+              var message = err && (err.message || err.code) ? String(err.message || ("Code " + err.code)) : "Unknown Video.js error";
+              setRoomMovieHlsStatus("Video.js error", message, true);
+              console.warn("SwiflyTV Video.js error", err);
+            });
+
+            return true;
+          } catch (error) {
+            console.warn("Video.js attach failed", error);
+            setRoomMovieHlsStatus("Video.js failed", error.message || "Trying HLS.js fallback", true);
+            return false;
+          }
         }
 
         function attachRoomMovieVideoSource(video, src) {
@@ -22978,7 +23385,13 @@ function watchroomPage(req, res) {
 
           if (isRoomMovieHlsUrl(src)) {
             destroyRoomMovieHls();
-            setRoomMovieHlsStatus("Loading m3u8...", "Preparing HLS.js player", false);
+            setRoomMovieHlsStatus("Loading m3u8...", "Preparing Video.js player", false);
+
+            if (attachRoomMovieVideoJs(video, src)) {
+              return true;
+            }
+
+            setRoomMovieHlsStatus("Loading m3u8...", "Video.js unavailable. Trying HLS.js fallback.", false);
 
             // Safari/iOS can play HLS natively. Chrome/Edge/Firefox need hls.js.
             var nativeHls = video.canPlayType && video.canPlayType("application/vnd.apple.mpegurl");
@@ -23357,7 +23770,7 @@ function watchroomPage(req, res) {
           var stats = getLocalStats();
           var earned = new Set(stats.badges || []);
           var completed = Number(stats.completedDates || 0);
-          if (completed >= 1) earned.add("First Date Room");
+          if (completed >= 1) earned.add("First Watch Room");
           if (completed >= 3) earned.add("3 Dates Strong");
           if (completed >= 5) earned.add("Movie Ritual");
           if ((coupleState.notes || []).length >= 1) earned.add("Love Note Sent");
@@ -23459,7 +23872,7 @@ function watchroomPage(req, res) {
             if (!note || firedNoteIds[note.id]) return;
             if (current >= Number(note.time || 0)) {
               firedNoteIds[note.id] = true;
-              showCouplePopup(note.text, "From " + (note.from || "your person"));
+              showCouplePopup(note.text, "From " + (note.from || "your date"));
             }
           });
         }
@@ -24002,7 +24415,7 @@ function watchroomPage(req, res) {
         if (!socketAvailable) {
           isRoomHost = true;
           setHostMode();
-          toast("Date Room socket did not load. Buttons are in offline mode.");
+          toast("Watch Room socket did not load. Buttons are in offline mode.");
         }
 
         window.__swiflyDateRoomMainLoaded = true;
@@ -24224,11 +24637,81 @@ function watchroomPage(req, res) {
 
           function destroyPollingHls() {
             var video = byId("roomMovieVideo");
+            if (window.__roomMoviePollingVideoJs) {
+              try { window.__roomMoviePollingVideoJs.dispose(); } catch {}
+              window.__roomMoviePollingVideoJs = null;
+            }
             if (window.__roomMoviePollingHls) {
               try { window.__roomMoviePollingHls.destroy(); } catch {}
               window.__roomMoviePollingHls = null;
             }
             if (video) video.dataset.hlsSrc = "";
+          }
+
+          function attachPollingVideoJs(video, src) {
+            if (!video || !src || !window.videojs) return false;
+
+            setPollingHlsStatus("Loading m3u8...", "Starting Video.js HLS player", false);
+
+            try {
+              if (window.__roomMoviePollingVideoJs) {
+                window.__roomMoviePollingVideoJs.dispose();
+                window.__roomMoviePollingVideoJs = null;
+              }
+            } catch {}
+
+            try {
+              video.classList.add("video-js", "vjs-big-play-centered", "vjs-theme-swifly");
+              var player = window.videojs(video, {
+                controls: false,
+                autoplay: false,
+                preload: "auto",
+                fluid: false,
+                responsive: true,
+                liveui: true,
+                html5: {
+                  vhs: {
+                    overrideNative: !(/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)),
+                    withCredentials: false,
+                    enableLowInitialPlaylist: true,
+                    smoothQualityChange: true,
+                  },
+                  nativeAudioTracks: false,
+                  nativeVideoTracks: false,
+                },
+                sources: [{
+                  src: src,
+                  type: "application/x-mpegURL"
+                }],
+              });
+
+              window.__roomMoviePollingVideoJs = player;
+
+              player.ready(function() {
+                movie.hlsReady = true;
+                setPollingHlsStatus("m3u8 ready", "Video.js player loaded. Press play.", false);
+                setMovieStatus("m3u8 loaded in Video.js. Press play when ready.");
+                bindPollingCustomPlayer();
+                setTimeout(hidePollingHlsStatus, 2500);
+              });
+
+              player.on("loadedmetadata", function() {
+                movie.hlsReady = true;
+              });
+
+              player.on("error", function() {
+                var err = player.error && player.error();
+                var message = err && (err.message || err.code) ? String(err.message || ("Code " + err.code)) : "Unknown Video.js error";
+                setPollingHlsStatus("Video.js error", message, true);
+                console.warn("SwiflyTV polling Video.js error", err);
+              });
+
+              return true;
+            } catch (error) {
+              console.warn("Polling Video.js attach failed", error);
+              setPollingHlsStatus("Video.js failed", error.message || "Trying HLS.js fallback", true);
+              return false;
+            }
           }
 
           function attachPollingVideoSource(video, src) {
@@ -24245,7 +24728,13 @@ function watchroomPage(req, res) {
 
             if (isPollingHlsUrl(src)) {
               destroyPollingHls();
-              setPollingHlsStatus("Loading m3u8...", "Preparing HLS.js player", false);
+              setPollingHlsStatus("Loading m3u8...", "Preparing Video.js player", false);
+
+              if (attachPollingVideoJs(video, src)) {
+                return true;
+              }
+
+              setPollingHlsStatus("Loading m3u8...", "Video.js unavailable. Trying HLS.js fallback.", false);
 
               var nativeHls = video.canPlayType && video.canPlayType("application/vnd.apple.mpegurl");
               var isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -24534,7 +25023,7 @@ function watchroomPage(req, res) {
           if (!socketWorks) {
             isHost = true;
             setHostMode();
-            toast("Socket failed, Date Room recovery loaded in offline mode.");
+            toast("Socket failed, Watch Room recovery loaded in offline mode.");
           } else {
             setHostMode();
           }
@@ -25013,7 +25502,7 @@ function watchroomPage(req, res) {
               if (data.room && data.room.syncedMovie) renderMovie(data.room.syncedMovie);
               var viewers = byId("stableViewerCount");
               if (viewers && data.room) viewers.textContent = String(data.room.viewers || 1);
-              toast("Date Room polling fallback connected");
+              toast("Watch Room polling fallback connected");
             }).catch(function(error) {
               var status = byId("stableHostStatus");
               if (status) status.textContent = "Offline";
@@ -25157,15 +25646,15 @@ app.get("/m3u8-player", (req, res) => {
   const body = `<main class="dsWatchPage dsM3u8Standalone">
     <section class="dsWatchHero">
       <div>
-        <span class="dsEyebrow">HLS / M3U8 Player</span>
+        <span class="dsEyebrow">Video.js / M3U8 Player</span>
         <h1>SwiflyTV M3U8 Player</h1>
-        <p>Paste a licensed m3u8 URL as <code>?url=</code>. This uses a real HLS.js player, not plain browser video.</p>
+        <p>Paste a licensed m3u8 URL as <code>?url=</code>. This uses Video.js/VHS first, with HLS.js fallback.</p>
       </div>
     </section>
 
     <section class="dsWatchShell dsStandaloneHlsShell">
-      ${src ? `<video id="standaloneM3u8Video" class="dsDirectMovieVideo" controls playsinline crossorigin="anonymous" preload="metadata"></video>
-      <div id="standaloneHlsStatus" class="dsHlsStatus"><b>Loading m3u8...</b><span>Preparing HLS.js player</span></div>` : `<div class="dsNoTrailer"><h2>No m3u8 URL</h2><p>Add <code>?url=https://example.com/master.m3u8</code></p></div>`}
+      ${src ? `<video id="standaloneM3u8Video" class="dsDirectMovieVideo video-js vjs-big-play-centered vjs-theme-swifly" controls playsinline crossorigin="anonymous" preload="auto"></video>
+      <div id="standaloneHlsStatus" class="dsHlsStatus"><b>Loading m3u8...</b><span>Preparing Video.js player</span></div>` : `<div class="dsNoTrailer"><h2>No m3u8 URL</h2><p>Add <code>?url=https://example.com/master.m3u8</code></p></div>`}
     </section>
 
     <script>
@@ -25179,8 +25668,12 @@ app.get("/m3u8-player", (req, res) => {
           if (!status) return;
           status.hidden = false;
           status.classList.toggle("isError", Boolean(isError));
-          status.querySelector("b").textContent = title || "HLS";
+          status.querySelector("b").textContent = title || "Player";
           status.querySelector("span").textContent = detail || "";
+        }
+
+        function hideStatusSoon() {
+          setTimeout(function(){ if (status) status.hidden = true; }, 2500);
         }
 
         function loadHls(callback) {
@@ -25206,20 +25699,48 @@ app.get("/m3u8-player", (req, res) => {
 
         try { video.crossOrigin = "anonymous"; } catch {}
 
-        var nativeHls = video.canPlayType && video.canPlayType("application/vnd.apple.mpegurl");
-        var isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+        if (window.videojs) {
+          try {
+            var player = window.videojs(video, {
+              controls: true,
+              autoplay: false,
+              preload: "auto",
+              liveui: true,
+              responsive: true,
+              fluid: true,
+              html5: {
+                vhs: {
+                  overrideNative: true,
+                  withCredentials: false,
+                  enableLowInitialPlaylist: true,
+                  smoothQualityChange: true
+                },
+                nativeAudioTracks: false,
+                nativeVideoTracks: false
+              },
+              sources: [{ src: src, type: "application/x-mpegURL" }]
+            });
 
-        if (nativeHls && isiOS) {
-          video.src = src;
-          video.load();
-          setStatus("m3u8 ready", "Native Safari HLS loaded. Press play.", false);
-          setTimeout(function(){ status.hidden = true; }, 2000);
-          return;
+            player.ready(function(){
+              setStatus("m3u8 ready", "Video.js loaded. Press play.", false);
+              hideStatusSoon();
+            });
+
+            player.on("error", function(){
+              var err = player.error && player.error();
+              var message = err && (err.message || err.code) ? String(err.message || ("Code " + err.code)) : "Unknown Video.js error";
+              setStatus("Video.js error", message, true);
+            });
+
+            return;
+          } catch (error) {
+            setStatus("Video.js failed", error.message || "Trying HLS.js fallback", true);
+          }
         }
 
         loadHls(function(loaded) {
           if (!loaded || !window.Hls || !window.Hls.isSupported()) {
-            setStatus("HLS.js did not load", "This browser needs HLS.js to play m3u8.", true);
+            setStatus("HLS.js did not load", "This browser needs Video.js or HLS.js to play m3u8.", true);
             return;
           }
 
@@ -25246,32 +25767,27 @@ app.get("/m3u8-player", (req, res) => {
           });
 
           hls.on(window.Hls.Events.MANIFEST_PARSED, function(event, data) {
-            setStatus("m3u8 ready", "Levels: " + ((data && data.levels && data.levels.length) || 1) + ". Press play.", false);
-            setTimeout(function(){ status.hidden = true; }, 2500);
+            setStatus("m3u8 ready", "HLS.js loaded. Press play.", false);
+            hideStatusSoon();
           });
 
           hls.on(window.Hls.Events.ERROR, function(event, data) {
             if (!data) return;
             var details = String(data.details || data.reason || data.type || "Unknown HLS error");
-            console.warn("Standalone HLS error", data);
-
             if (!data.fatal) {
               setStatus("HLS warning", details, false);
               return;
             }
-
             if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
               setStatus("HLS network error", "Retrying stream load...", true);
               try { hls.startLoad(); } catch {}
               return;
             }
-
             if (data.type === window.Hls.ErrorTypes.MEDIA_ERROR) {
               setStatus("HLS media error", "Trying media recovery...", true);
               try { hls.recoverMediaError(); } catch {}
               return;
             }
-
             setStatus("HLS failed", details, true);
           });
 
@@ -25360,22 +25876,22 @@ function authPage(res, mode = "login") {
   const isSignup = String(mode || "login") === "signup";
   const title = isSignup ? "Create your account" : "Welcome back";
   const subtitle = isSignup
-    ? "Make a local SwiflyTV account for couple profiles, date rooms, Our List, and shared watch plans on this device."
-    : "Log in to your SwiflyTV couple space on this device.";
+    ? "Make a local SwiflyTV account for profiles, watchlists, continue watching, and optional Date Profile features on this device."
+    : "Log in to your SwiflyTV profile on this device.";
 
   const body = `<main class="dsAuthPage dsAuthPageSafe">
     <section class="dsAuthShell dsAuthShellSafe">
       <a class="dsAuthBrand" href="/"><span></span>${escapeHtml(SITE_NAME)}</a>
 
       <aside class="dsAuthPitch">
-        <span class="dsEyebrow">${isSignup ? "Start your couple space" : "Welcome back"}</span>
+        <span class="dsEyebrow">${isSignup ? "Start your profile" : "Welcome back"}</span>
         <h1>${escapeHtml(title)}</h1>
         <p>${escapeHtml(subtitle)}</p>
 
         <div class="dsAuthFeatureList">
-          <div><b>Couple Profiles</b><span>Me, Partner, and Together.</span></div>
-          <div><b>Date Rooms</b><span>Open Together, countdown, and chat.</span></div>
-          <div><b>Our List</b><span>Save what you both want next.</span></div>
+          <div><b>Profiles</b><span>Standard, Kids, and Date Profile.</span></div>
+          <div><b>Watch Parties</b><span>Start synced rooms when you want.</span></div>
+          <div><b>My List</b><span>Save what you want next.</span></div>
         </div>
       </aside>
 
@@ -25497,9 +26013,9 @@ function authPage(res, mode = "login") {
 
           if (!localStorage.getItem("swiflytv.profiles")) {
             localStorage.setItem("swiflytv.profiles", JSON.stringify([
-              { id: "me", name: account.name || "Me", mode: "standard" },
-              { id: "partner", name: "Partner", mode: "standard" },
-              { id: "together", name: "Together", mode: "standard" }
+              { id: "main", name: account.name || "Main", mode: "standard" },
+              { id: "date", name: "Date Profile", mode: "date" },
+              { id: "kids", name: "Kids", mode: "kids" }
             ]));
           }
 
@@ -25522,37 +26038,37 @@ function accountPage(req, res) {
     <section class="dsAccountHero">
       <div>
         <span class="dsEyebrow">Account</span>
-        <h1>Your couple space</h1>
-        <p>Manage couple profiles, Our List, hearts, date rooms, and what you are watching together.</p>
+        <h1>Your streaming profile</h1>
+        <p>Manage profiles, watchlists, liked titles, continue watching, and optional Date Profile features.</p>
       </div>
       <div class="dsAccountActions">
         <a class="dsPrimaryBtn" href="/profiles">Profiles</a>
         <a class="dsSecondaryBtn" href="/my-list">My List</a>
         <a class="dsSecondaryBtn" href="/liked">Liked</a>
-        <a class="dsGhostPill" href="/watchrooms">Date Rooms</a>
+        <a class="dsGhostPill" href="/date-profile">Date Profile</a>
       </div>
     </section>
 
     <section class="dsAccountGrid">
       <a class="dsAccountCard" href="/profiles">
         <span>01</span>
-        <h2>Couple Profiles</h2>
-        <p>Choose Me, Partner, or Together.</p>
+        <h2>Profiles</h2>
+        <p>Choose Regular, Kids, or Date Profile.</p>
       </a>
       <a class="dsAccountCard" href="/continue">
         <span>02</span>
-        <h2>Continue Together</h2>
-        <p>Jump back into your last date-night watch.</p>
+        <h2>Continue Watching</h2>
+        <p>Jump back into what you were watching.</p>
       </a>
       <a class="dsAccountCard" href="/my-list">
         <span>03</span>
-        <h2>Our List</h2>
-        <p>View titles saved for your next date.</p>
+        <h2>My List</h2>
+        <p>View titles saved for later.</p>
       </a>
-      <a class="dsAccountCard" href="/watchrooms">
+      <a class="dsAccountCard" href="/date-profile">
         <span>04</span>
-        <h2>Date Rooms</h2>
-        <p>Create or join a room with your person.</p>
+        <h2>Date Profile</h2>
+        <p>Open date rooms, shared notes, and couple watch plans.</p>
       </a>
     </section>
 
@@ -25574,88 +26090,23 @@ function accountPage(req, res) {
 }
 
 
-
-function apiStatus(req, res) {
-  res.json({
-    ok: true,
-    name: SITE_NAME,
-    uptime: Math.round(process.uptime()),
-    timestamp: Date.now()
-  });
-}
-
-
-function continueWatchingPage(req, res) {
-  const body = `<main class="dsPlainPage dsContinuePage">
-    <section class="dsContinueHero">
-      <span class="dsEyebrow">Continue Watching</span>
-      <h1>Pick up where you left off.</h1>
-      <p>Your browser saves started titles locally. Open a title, press play, and it can show here on this device.</p>
-      <div class="dsContinueActions">
-        <a class="dsPrimaryBtn" href="/">Browse Home</a>
-        <a class="dsSecondaryBtn" href="/movies">Movies</a>
-        <a class="dsGhostPill" href="/tv">TV Shows</a>
-      </div>
-    </section>
-
-    <section class="dsContinueList" id="continueList">
-      <div class="dsEmptyContinue">
-        <h2>No saved watching yet</h2>
-        <p>When you start watching something, it will show up here.</p>
-      </div>
-    </section>
-
-    <script>
-      (function renderContinueWatching(){
-        const root = document.getElementById("continueList");
-        if (!root) return;
-
-        let items = [];
-        try {
-          items = JSON.parse(localStorage.getItem("swiflytv.continueWatching") || "[]");
-        } catch {}
-
-        if (!Array.isArray(items) || !items.length) return;
-
-        root.innerHTML = items.slice(0, 24).map((item) => {
-          const type = item.type || item.media_type || "movie";
-          const id = item.id || item.tmdbId || "";
-          const title = String(item.title || item.name || "Untitled")
-            .replaceAll("&","&amp;")
-            .replaceAll("<","&lt;")
-            .replaceAll(">","&gt;");
-          const poster = item.poster || item.poster_path || "";
-          const href = id ? "/" + type + "/" + id : "#";
-          const imgSrc = poster && poster.startsWith("http") ? poster : (poster ? "https://image.tmdb.org/t/p/w342" + poster : "");
-          return '<a class="dsContinueCard" href="' + href + '">' +
-            (imgSrc ? '<img src="' + imgSrc + '" alt="' + title + '" loading="lazy" />' : '<div class="posterFallback"><span>' + title.slice(0,1) + '</span></div>') +
-            '<div><strong>' + title + '</strong><span>Continue watching</span></div>' +
-          '</a>';
-        }).join("");
-      })();
-    </script>
-  </main>`;
-
-  res.send(pageShell({ title: `${SITE_NAME} — Continue Watching`, active: "continue", body }));
-}
-
-
 function profilesPage(req, res) {
   const body = `<main class="dsPlainPage dsProfilesPage">
     <section class="dsProfilesHero">
-      <span class="dsEyebrow">Couple Profiles</span>
-      <h1>Who is watching tonight?</h1>
-      <p>Choose Me, Partner, or Together for browsing, date rooms, and saved lists.</p>
+      <span class="dsEyebrow">Profiles</span>
+      <h1>Who is watching?</h1>
+      <p>Use a regular profile for movies and shows, Kids for safe browsing, or Date Profile for couple/date-room tools.</p>
     </section>
 
     <section class="dsProfilesGrid" id="profilesGrid"></section>
 
     <section class="dsProfileCreate">
-      <h2>Create couple profile</h2>
+      <h2>Create profile</h2>
       <form id="profileCreateForm">
-        <input name="name" placeholder="Me, Partner, or Together" maxlength="32" />
+        <input name="name" placeholder="Name this profile" maxlength="32" />
         <select name="mode">
-          <option value="standard">Standard</option>
+          <option value="standard">Regular Movie Profile</option>
+          <option value="date">Date Profile</option>
           <option value="kids">Kids Safe</option>
         </select>
         <button class="dsPrimaryBtn" type="submit">Add Profile</button>
@@ -25673,7 +26124,11 @@ function profilesPage(req, res) {
             const saved = JSON.parse(localStorage.getItem("swiflytv.profiles") || "[]");
             if (Array.isArray(saved) && saved.length) return saved;
           } catch {}
-          return [{ id: "me", name: "Me", mode: "standard" }, { id: "partner", name: "Partner", mode: "standard" }, { id: "together", name: "Together", mode: "standard" }];
+          return [
+            { id: "main", name: "Main", mode: "standard" },
+            { id: "date", name: "Date Profile", mode: "date" },
+            { id: "kids", name: "Kids", mode: "kids" }
+          ];
         }
 
         function saveProfiles(profiles) {
@@ -25684,13 +26139,25 @@ function profilesPage(req, res) {
           return String(value || "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
         }
 
+        function modeLabel(mode) {
+          if (mode === "kids") return "Kids Safe";
+          if (mode === "date") return "Date Profile";
+          return "Regular";
+        }
+
+        function destination(profile) {
+          if (profile.mode === "kids") return "/kids";
+          if (profile.mode === "date") return "/date-profile";
+          return "/";
+        }
+
         function render() {
           const profiles = readProfiles();
           grid.innerHTML = profiles.map((profile, index) => {
-            return '<button class="dsProfileCard" data-index="' + index + '" type="button">' +
+            return '<button class="dsProfileCard ' + (profile.mode === "date" ? "dateProfile" : "") + '" data-index="' + index + '" type="button">' +
               '<span>' + esc(profile.name).slice(0,1).toUpperCase() + '</span>' +
               '<strong>' + esc(profile.name) + '</strong>' +
-              '<small>' + (profile.mode === "kids" ? "Kids Safe" : "Standard") + '</small>' +
+              '<small>' + modeLabel(profile.mode) + '</small>' +
             '</button>';
           }).join("");
 
@@ -25698,7 +26165,7 @@ function profilesPage(req, res) {
             button.addEventListener("click", () => {
               const profile = profiles[Number(button.dataset.index || 0)];
               localStorage.setItem("swiflytv.activeProfile", JSON.stringify(profile));
-              location.href = profile.mode === "kids" ? "/kids" : "/";
+              location.href = destination(profile);
             });
           });
         }
@@ -25728,26 +26195,26 @@ app.get("/account", accountPage);
 app.get("/continue-watching", continueWatchingPage);
 app.get("/continue", continueWatchingPage);
 
-function couplesPage(req, res) {
-  const body = `<main class="dsPlainPage dsCouplesPage">
+function dateProfilePage(req, res) {
+  const body = `<main class="dsPlainPage dsCouplesPage dsDateProfilePage">
     <section class="dsCouplesHero">
       <div>
-        <span class="dsEyebrow">Couple Dashboard</span>
-        <h1>Tonight, together.</h1>
-        <p>A small home base for long-distance couples: start a date room, save watch ideas, write a note, and keep the next movie night easy.</p>
+        <span class="dsEyebrow">Date Profile</span>
+        <h1>Your date-night version of SwiflyTV.</h1>
+        <p>Keep the main site clean and regular, then use this profile when you want couple tools, date rooms, shared notes, and watch plans.</p>
       </div>
       <div class="dsCouplesHeroActions">
         <a class="dsPrimaryBtn" href="/watchrooms">Start Date Room</a>
-        <a class="dsSecondaryBtn" href="/my-list">Open Our List</a>
-        <a class="dsGhostPill" href="/profiles">Couple Profiles</a>
+        <a class="dsSecondaryBtn" href="/my-list">Open My List</a>
+        <a class="dsGhostPill" href="/">Back to Movies</a>
       </div>
     </section>
 
     <section class="dsCouplesGrid">
       <article class="dsCoupleCard dsCoupleNoteCard">
-        <span>Love note</span>
+        <span>Date note</span>
         <h2>Leave something for them.</h2>
-        <textarea id="coupleNoteInput" placeholder="Write a small note for your person..."></textarea>
+        <textarea id="coupleNoteInput" placeholder="Write a small note..."></textarea>
         <button class="dsPrimaryBtn" id="saveCoupleNoteBtn" type="button">Save Note</button>
         <p id="coupleNotePreview"></p>
       </article>
@@ -25764,75 +26231,45 @@ function couplesPage(req, res) {
       </article>
 
       <article class="dsCoupleCard">
-        <span>Distance sync</span>
-        <h2>Use the same moment.</h2>
-        <p>When a video cannot embed, both of you open the real site and use a Date Room countdown.</p>
-        <a class="dsSecondaryBtn" href="/watchrooms">Open Date Rooms</a>
+        <span>Watch together</span>
+        <h2>Open a synced Date Room.</h2>
+        <p>Use Watch Rooms when you want countdowns, synced playback, chat, and a shared room link.</p>
+        <a class="dsPrimaryBtn" href="/watchrooms">Create Date Room</a>
       </article>
 
       <article class="dsCoupleCard">
-        <span>Our vibe</span>
-        <h2>Pick a mood.</h2>
-        <div class="dsCoupleMoodGrid">
-          <a href="/search?q=romance">Romantic</a>
-          <a href="/search?q=comedy">Funny</a>
-          <a href="/search?q=comfort">Comfort</a>
-          <a href="/search?q=thriller">React together</a>
-          <a href="/search?q=anime">Anime night</a>
-          <a href="/search?q=christmas">Cozy seasonal</a>
-        </div>
-      </article>
-          <article class="dsCoupleCard dsCouplesPlusSell">
-        <span>Couples+</span>
-        <h2>Premium features that feel personal.</h2>
-        <p>Inside every Date Room: Taste Match, Date Night Generator, Missing You Mode, Couple Streaks, Private Timeline, Pause for Us, Date Room Themes, Couple Badges, and Sleepy Mode.</p>
-        <a class="dsPrimaryBtn" href="/watchrooms">Try Couples+ in a Date Room</a>
-      </article>
-
-      <article class="dsCoupleCard">
-        <span>Paid-worthy idea</span>
-        <h2>Relationship memory layer.</h2>
-        <p>Normal movie sites show movies. SwiflyTV keeps the little relationship moments around the movie: streaks, notes, reactions, and date memories.</p>
-      </article>
-
-      <article class="dsCoupleCard dsCoupleRitualCard">
-        <span>Relationship ritual</span>
-        <h2>Make movie night a habit.</h2>
-        <ul>
-          <li>Pick the vibe before the call</li>
-          <li>Add one idea to the Date Jar</li>
-          <li>Start a 10-second countdown</li>
-          <li>Send one timed love note during the movie</li>
-        </ul>
+        <span>Profile mode</span>
+        <h2>Keep date stuff separate.</h2>
+        <p>Choose Date Profile from Profiles when you want the romantic/couple version. Regular profiles stay movie-site focused.</p>
+        <a class="dsSecondaryBtn" href="/profiles">Switch Profile</a>
       </article>
     </section>
 
     <script>
       (function coupleDashboard(){
         const noteInput = document.getElementById("coupleNoteInput");
-        const notePreview = document.getElementById("coupleNotePreview");
         const saveNote = document.getElementById("saveCoupleNoteBtn");
+        const notePreview = document.getElementById("coupleNotePreview");
         const planForm = document.getElementById("couplePlanForm");
         const planPreview = document.getElementById("couplePlanPreview");
 
         function renderNote() {
-          const note = localStorage.getItem("swiflytv.coupleNote") || "";
-          if (noteInput) noteInput.value = note;
-          if (notePreview) notePreview.textContent = note ? "Saved note: " + note : "No note saved yet.";
+          const note = localStorage.getItem("swiflytv.dateProfileNote") || "";
+          if (notePreview) notePreview.textContent = note ? "Saved note: " + note : "";
+          if (noteInput && note && !noteInput.value) noteInput.value = note;
         }
 
         function renderPlan() {
           let plan = null;
-          try { plan = JSON.parse(localStorage.getItem("swiflytv.couplePlan") || "null"); } catch {}
-          if (planPreview) {
-            planPreview.textContent = plan ? (plan.title + " — " + plan.time) : "No plan saved yet.";
-          }
+          try { plan = JSON.parse(localStorage.getItem("swiflytv.dateProfilePlan") || "null"); } catch {}
+          if (planPreview) planPreview.textContent = plan ? plan.title + " • " + plan.time : "No plan saved yet.";
         }
 
         saveNote?.addEventListener("click", () => {
-          localStorage.setItem("swiflytv.coupleNote", String(noteInput?.value || "").trim());
+          const value = String(noteInput?.value || "").trim();
+          localStorage.setItem("swiflytv.dateProfileNote", value);
           renderNote();
-          if (window.showToast) showToast("Love note saved");
+          if (window.showToast) showToast("Date note saved");
         });
 
         planForm?.addEventListener("submit", (event) => {
@@ -25840,7 +26277,7 @@ function couplesPage(req, res) {
           const fd = new FormData(planForm);
           const title = String(fd.get("title") || "").trim() || "Movie night";
           const time = String(fd.get("time") || "").trim() || "Soon";
-          localStorage.setItem("swiflytv.couplePlan", JSON.stringify({ title, time, savedAt: Date.now() }));
+          localStorage.setItem("swiflytv.dateProfilePlan", JSON.stringify({ title, time, savedAt: Date.now() }));
           planForm.reset();
           renderPlan();
           if (window.showToast) showToast("Date plan saved");
@@ -25852,11 +26289,14 @@ function couplesPage(req, res) {
     </script>
   </main>`;
 
-  res.send(pageShell({ title: `${SITE_NAME} — Couples`, active: "couples", body }));
+  res.send(pageShell({ title: `${SITE_NAME} — Date Profile`, active: "date", body }));
 }
 
+const couplesPage = dateProfilePage;
 
-app.get("/couples", couplesPage);
+
+app.get("/date-profile", dateProfilePage);
+app.get("/couples", dateProfilePage);
 app.get("/watchrooms", watchroomsPage);
 app.get("/watchrooms/:roomId", watchroomPage);
 app.get("/profiles", profilesPage);
@@ -26049,7 +26489,7 @@ app.post("/api/date-room/:roomId/join", (req, res) => {
   const roomId = normalizeRoomId(req.params.roomId);
   const clientId = dateRoomRestClientId(req.body?.clientId);
   const name = String(req.body?.name || "Guest").slice(0, 40);
-  const roomName = String(req.body?.roomName || "SwiflyTV Date Room").slice(0, 80);
+  const roomName = String(req.body?.roomName || "SwiflyTV Watch Room").slice(0, 80);
 
   if (!roomId || !clientId) {
     return res.status(400).json({ ok: false, error: "roomId and clientId required" });
