@@ -19178,6 +19178,862 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       box-shadow: 0 22px 80px rgba(0,0,0,.28);
     }
 
+
+    /* ============================================================
+       v96 PREMIUM VISUAL OVERHAUL
+       Regular movie-site polish: cinematic hero, cleaner nav,
+       stronger cards, better mobile, and premium watch pages.
+       ============================================================ */
+
+    :root {
+      --v96-bg: #05060a;
+      --v96-panel: rgba(255,255,255,.065);
+      --v96-panel-strong: rgba(255,255,255,.105);
+      --v96-line: rgba(255,255,255,.13);
+      --v96-text: #f8fbff;
+      --v96-muted: rgba(248,251,255,.68);
+      --v96-dim: rgba(248,251,255,.48);
+      --v96-red: #e50914;
+      --v96-red2: #ff3546;
+      --v96-blue: #79d7ff;
+      --v96-purple: #b79cff;
+      --v96-shadow: 0 24px 100px rgba(0,0,0,.46);
+      --v96-soft-shadow: 0 18px 60px rgba(0,0,0,.30);
+      --v96-radius: 28px;
+    }
+
+    html {
+      background: var(--v96-bg);
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background:
+        radial-gradient(1000px circle at 12% -10%, rgba(229,9,20,.16), transparent 42%),
+        radial-gradient(900px circle at 88% 8%, rgba(121,215,255,.10), transparent 38%),
+        radial-gradient(850px circle at 50% 110%, rgba(183,156,255,.11), transparent 45%),
+        linear-gradient(180deg, #07080d 0%, #05060a 48%, #030408 100%) !important;
+      color: var(--v96-text);
+      text-rendering: geometricPrecision;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      pointer-events: none;
+      opacity: .23;
+      background-image:
+        linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+      background-size: 72px 72px;
+      mask-image: radial-gradient(circle at 50% 20%, #000, transparent 72%);
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,.025), transparent 18%, transparent 82%, rgba(255,255,255,.025)),
+        radial-gradient(circle at 50% 0%, transparent, rgba(0,0,0,.28) 76%);
+    }
+
+    ::selection {
+      background: rgba(229,9,20,.72);
+      color: white;
+    }
+
+    .container,
+    .dsContent,
+    .dsPlainPage,
+    .netflixPageHero {
+      width: min(1440px, calc(100vw - 38px));
+    }
+
+    /* Navigation */
+
+    .topbar.netflixTopbar {
+      position: sticky;
+      top: 0;
+      z-index: 80;
+      background:
+        linear-gradient(180deg, rgba(5,6,10,.92), rgba(5,6,10,.62)) !important;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      box-shadow: 0 12px 48px rgba(0,0,0,.28);
+      backdrop-filter: blur(22px) saturate(1.15);
+      -webkit-backdrop-filter: blur(22px) saturate(1.15);
+    }
+
+    .netflixNav {
+      min-height: 74px;
+      gap: 22px;
+    }
+
+    .netflixWordmark {
+      letter-spacing: -.08em !important;
+      font-weight: 1000 !important;
+      text-shadow: 0 0 28px rgba(229,9,20,.25);
+      background: linear-gradient(135deg, #fff 0%, #ffe4e7 30%, #e50914 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent !important;
+    }
+
+    .netflixLinks {
+      gap: 4px !important;
+      padding: 5px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.045);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .netflixLinks a {
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px !important;
+      padding: 0 13px !important;
+      color: rgba(248,251,255,.72) !important;
+      font-weight: 850 !important;
+      letter-spacing: -.02em;
+      transition: color .18s ease, background .18s ease, transform .18s ease;
+    }
+
+    .netflixLinks a:hover,
+    .netflixLinks a.active {
+      color: white !important;
+      background: rgba(255,255,255,.11) !important;
+      transform: translateY(-1px);
+    }
+
+    .dsNavSearch {
+      height: 42px;
+      border-radius: 999px !important;
+      background: rgba(255,255,255,.07) !important;
+      border: 1px solid rgba(255,255,255,.12) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+    }
+
+    .dsNavSearch input {
+      color: white !important;
+      font-weight: 700;
+    }
+
+    .dsNavSearch input::placeholder {
+      color: rgba(248,251,255,.42);
+    }
+
+    .dsNavChip,
+    .dsNavIcon,
+    .dsProfileMenu summary {
+      border-radius: 999px !important;
+      background: rgba(255,255,255,.07) !important;
+      border: 1px solid rgba(255,255,255,.11) !important;
+      transition: transform .18s ease, background .18s ease;
+    }
+
+    .dsNavChip:hover,
+    .dsNavIcon:hover,
+    .dsProfileMenu summary:hover {
+      transform: translateY(-1px);
+      background: rgba(255,255,255,.13) !important;
+    }
+
+    .dsProfileDropdown {
+      border-radius: 22px !important;
+      border: 1px solid rgba(255,255,255,.12) !important;
+      background:
+        radial-gradient(420px circle at 100% 0%, rgba(229,9,20,.13), transparent 48%),
+        rgba(8,10,18,.92) !important;
+      box-shadow: 0 26px 80px rgba(0,0,0,.44) !important;
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      overflow: hidden;
+    }
+
+    .dsProfileDropdown a {
+      border-radius: 14px;
+      transition: background .18s ease, transform .18s ease;
+    }
+
+    .dsProfileDropdown a:hover {
+      background: rgba(255,255,255,.09);
+      transform: translateX(2px);
+    }
+
+    /* Hero */
+
+    .dsHero {
+      min-height: min(86vh, 820px) !important;
+      border-radius: 0 0 42px 42px;
+      overflow: hidden;
+      isolation: isolate;
+      box-shadow: inset 0 -1px 0 rgba(255,255,255,.08);
+    }
+
+    .dsHero::before {
+      content: "";
+      position: absolute;
+      inset: auto 0 0;
+      height: 32%;
+      z-index: 3;
+      pointer-events: none;
+      background: linear-gradient(0deg, #05060a 0%, rgba(5,6,10,.86) 30%, transparent 100%);
+    }
+
+    .dsHeroBg {
+      filter: saturate(1.12) contrast(1.08) brightness(.76);
+      transform: scale(1.03);
+    }
+
+    .dsHeroGlass {
+      background:
+        radial-gradient(800px circle at 22% 42%, rgba(229,9,20,.18), transparent 50%),
+        linear-gradient(90deg, rgba(0,0,0,.88) 0%, rgba(0,0,0,.62) 34%, rgba(0,0,0,.10) 72%, rgba(0,0,0,.56) 100%) !important;
+    }
+
+    .dsHeroContent {
+      z-index: 5;
+      width: min(740px, calc(100vw - 40px)) !important;
+      padding-top: clamp(92px, 12vh, 150px) !important;
+      padding-bottom: clamp(70px, 9vh, 120px) !important;
+    }
+
+    .dsEyebrow,
+    .eyebrow {
+      width: fit-content;
+      display: inline-flex !important;
+      align-items: center;
+      gap: 8px;
+      min-height: 26px;
+      padding: 0 10px;
+      border-radius: 999px;
+      color: #fff !important;
+      background:
+        linear-gradient(135deg, rgba(229,9,20,.72), rgba(255,255,255,.12));
+      border: 1px solid rgba(255,255,255,.16);
+      box-shadow: 0 10px 30px rgba(229,9,20,.16);
+      font-size: 11px !important;
+      font-weight: 950 !important;
+      letter-spacing: .12em !important;
+      text-transform: uppercase;
+    }
+
+    .dsHeroContent h1 {
+      max-width: 720px;
+      margin-top: 16px !important;
+      margin-bottom: 12px !important;
+      font-size: clamp(48px, 9vw, 104px) !important;
+      line-height: .86 !important;
+      letter-spacing: -.095em !important;
+      text-wrap: balance;
+      text-shadow: 0 22px 80px rgba(0,0,0,.65);
+    }
+
+    .dsHeroMeta {
+      gap: 8px !important;
+      flex-wrap: wrap;
+    }
+
+    .dsHeroMeta span,
+    .dsHeroMeta b {
+      min-height: 26px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 9px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.11);
+      color: rgba(248,251,255,.84);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .dsHeroMeta b {
+      color: #92ffbd;
+      background: rgba(30,255,128,.10);
+      border-color: rgba(30,255,128,.18);
+    }
+
+    .dsHeroContent p {
+      max-width: 650px;
+      color: rgba(248,251,255,.74) !important;
+      font-size: clamp(15px, 1.35vw, 18px) !important;
+      line-height: 1.62 !important;
+      text-shadow: 0 12px 40px rgba(0,0,0,.55);
+    }
+
+    .dsHeroActions {
+      margin-top: 24px !important;
+      gap: 12px !important;
+      flex-wrap: wrap;
+    }
+
+    .dsPrimaryBtn,
+    .dsSecondaryBtn,
+    .dsGhostPill,
+    .pagination a,
+    .dsAccountActions a,
+    .dsCouplesHeroActions a {
+      min-height: 46px;
+      border-radius: 999px !important;
+      font-weight: 950 !important;
+      letter-spacing: -.02em;
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
+    }
+
+    .dsPrimaryBtn {
+      background:
+        radial-gradient(circle at 30% 0%, rgba(255,255,255,.28), transparent 36%),
+        linear-gradient(135deg, var(--v96-red), var(--v96-red2)) !important;
+      color: white !important;
+      border: 1px solid rgba(255,255,255,.14) !important;
+      box-shadow: 0 18px 54px rgba(229,9,20,.28);
+    }
+
+    .dsSecondaryBtn,
+    .dsGhostPill {
+      color: white !important;
+      background: rgba(255,255,255,.11) !important;
+      border: 1px solid rgba(255,255,255,.13) !important;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .dsPrimaryBtn:hover,
+    .dsSecondaryBtn:hover,
+    .dsGhostPill:hover,
+    .pagination a:hover {
+      transform: translateY(-2px) scale(1.015);
+      box-shadow: 0 22px 70px rgba(0,0,0,.30);
+    }
+
+    /* Home board */
+
+    .dsMovieHomeBoard {
+      width: min(1370px, calc(100vw - 38px));
+      margin: -62px auto 46px !important;
+      padding: clamp(18px, 3vw, 30px) !important;
+      border-radius: 34px !important;
+      background:
+        radial-gradient(820px circle at 0% 0%, rgba(229,9,20,.18), transparent 44%),
+        radial-gradient(720px circle at 100% 0%, rgba(121,215,255,.13), transparent 44%),
+        linear-gradient(135deg, rgba(255,255,255,.12), rgba(255,255,255,.055)) !important;
+      border: 1px solid rgba(255,255,255,.14) !important;
+      box-shadow: var(--v96-shadow) !important;
+      backdrop-filter: blur(22px) saturate(1.18) !important;
+      -webkit-backdrop-filter: blur(22px) saturate(1.18) !important;
+      overflow: hidden;
+    }
+
+    .dsMovieHomeBoard::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(120deg, transparent 0%, rgba(255,255,255,.10) 35%, transparent 68%);
+      opacity: .18;
+    }
+
+    .dsMovieHomeBoard h2 {
+      max-width: 780px;
+      font-size: clamp(30px, 4.4vw, 58px) !important;
+      line-height: .96;
+      letter-spacing: -.085em !important;
+      text-wrap: balance;
+    }
+
+    .dsMovieHomeBoard p {
+      color: var(--v96-muted) !important;
+    }
+
+    .dsCoupleHomeCards article {
+      border-radius: 22px !important;
+      background: rgba(255,255,255,.075) !important;
+      border: 1px solid rgba(255,255,255,.12) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+      transition: transform .18s ease, background .18s ease;
+    }
+
+    .dsCoupleHomeCards article:hover {
+      transform: translateY(-3px);
+      background: rgba(255,255,255,.11) !important;
+    }
+
+    .dsCoupleHomeCards b {
+      color: rgba(255,255,255,.42) !important;
+      font-size: 12px;
+      letter-spacing: .14em;
+    }
+
+    /* Rows / Rails */
+
+    .dsContent {
+      padding-bottom: 88px !important;
+    }
+
+    .dsRow {
+      margin-top: 38px !important;
+      position: relative;
+    }
+
+    .dsRowHead {
+      margin-bottom: 15px !important;
+      align-items: end !important;
+    }
+
+    .dsRowHead h2 {
+      margin: 0;
+      font-family: "Space Grotesk", Inter, system-ui, sans-serif;
+      font-size: clamp(22px, 2.6vw, 34px) !important;
+      line-height: 1;
+      letter-spacing: -.055em !important;
+      color: white;
+    }
+
+    .dsRowTag {
+      min-height: 26px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 10px;
+      border-radius: 999px;
+      color: rgba(248,251,255,.78) !important;
+      background: rgba(255,255,255,.08) !important;
+      border: 1px solid rgba(255,255,255,.10);
+      font-size: 11px !important;
+      font-weight: 950 !important;
+      letter-spacing: .10em !important;
+      text-transform: uppercase;
+    }
+
+    .movieRail,
+    .dsRail,
+    .nfTopTenRail {
+      gap: 14px !important;
+      padding: 5px 0 22px !important;
+      scroll-padding-left: 24px;
+    }
+
+    .movieRail::-webkit-scrollbar,
+    .dsRail::-webkit-scrollbar,
+    .nfTopTenRail::-webkit-scrollbar {
+      height: 10px;
+    }
+
+    .movieRail::-webkit-scrollbar-track,
+    .dsRail::-webkit-scrollbar-track,
+    .nfTopTenRail::-webkit-scrollbar-track {
+      background: rgba(255,255,255,.04);
+      border-radius: 999px;
+    }
+
+    .movieRail::-webkit-scrollbar-thumb,
+    .dsRail::-webkit-scrollbar-thumb,
+    .nfTopTenRail::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,.18);
+      border-radius: 999px;
+      border: 2px solid rgba(0,0,0,.25);
+    }
+
+    .movieCard,
+    .nfPosterCard,
+    .nfTopTenCard,
+    .personCard {
+      position: relative;
+      border-radius: 22px !important;
+      overflow: hidden;
+      background: rgba(255,255,255,.055) !important;
+      border: 1px solid rgba(255,255,255,.10) !important;
+      box-shadow: 0 12px 44px rgba(0,0,0,.22);
+      transform-origin: center bottom;
+      transition:
+        transform .20s ease,
+        box-shadow .20s ease,
+        border-color .20s ease,
+        background .20s ease,
+        filter .20s ease;
+    }
+
+    .movieCard:hover,
+    .nfPosterCard:hover,
+    .nfTopTenCard:hover,
+    .personCard:hover {
+      z-index: 8;
+      transform: translateY(-8px) scale(1.035);
+      border-color: rgba(255,255,255,.22) !important;
+      box-shadow: 0 24px 80px rgba(0,0,0,.42);
+      filter: saturate(1.06);
+    }
+
+    .posterWrap,
+    .nfPosterImageWrap {
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255,255,255,.10), transparent 52%),
+        #0d0f17 !important;
+      overflow: hidden;
+    }
+
+    .movieCard img,
+    .nfPosterCard img,
+    .personCard img,
+    .posterWrap img {
+      transform: scale(1.005);
+      transition: transform .24s ease, filter .24s ease;
+    }
+
+    .movieCard:hover img,
+    .nfPosterCard:hover img,
+    .personCard:hover img,
+    .posterWrap:hover img {
+      transform: scale(1.075);
+      filter: brightness(1.06) contrast(1.04);
+    }
+
+    .movieCard::after,
+    .nfPosterCard::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(180deg, transparent 42%, rgba(0,0,0,.72) 100%),
+        radial-gradient(circle at 50% 0%, rgba(255,255,255,.16), transparent 32%);
+      opacity: 0;
+      transition: opacity .22s ease;
+    }
+
+    .movieCard:hover::after,
+    .nfPosterCard:hover::after {
+      opacity: 1;
+    }
+
+    .movieMeta,
+    .nfPosterMeta {
+      position: relative;
+      z-index: 2;
+      color: white !important;
+    }
+
+    .movieMeta strong,
+    .nfPosterMeta strong {
+      color: white !important;
+      font-weight: 950 !important;
+      letter-spacing: -.035em;
+    }
+
+    .movieMeta span,
+    .nfPosterMeta span {
+      color: rgba(248,251,255,.60) !important;
+      font-weight: 760;
+    }
+
+    .posterFallback {
+      background:
+        radial-gradient(circle at 40% 20%, rgba(255,255,255,.18), transparent 38%),
+        linear-gradient(135deg, rgba(229,9,20,.30), rgba(121,215,255,.16)),
+        #11131d !important;
+      color: white;
+      font-size: 42px;
+      font-weight: 1000;
+    }
+
+    /* Detail / watch pages */
+
+    .detailsHero,
+    .watchHero,
+    .dsWatchHero,
+    .netflixPageHero,
+    .dsProfilesHero,
+    .dsAccountHero,
+    .dsCouplesHero {
+      border-radius: 34px !important;
+      border: 1px solid rgba(255,255,255,.13) !important;
+      background:
+        radial-gradient(820px circle at 0% 0%, rgba(229,9,20,.16), transparent 44%),
+        radial-gradient(700px circle at 100% 0%, rgba(121,215,255,.11), transparent 46%),
+        rgba(255,255,255,.065) !important;
+      box-shadow: var(--v96-shadow) !important;
+      backdrop-filter: blur(22px) saturate(1.12);
+      -webkit-backdrop-filter: blur(22px) saturate(1.12);
+    }
+
+    .detailsHero h1,
+    .watchHero h1,
+    .dsWatchHero h1,
+    .netflixPageHero h1,
+    .dsProfilesHero h1,
+    .dsAccountHero h1 {
+      letter-spacing: -.08em !important;
+      line-height: .95 !important;
+      text-wrap: balance;
+    }
+
+    .detailsHero p,
+    .watchHero p,
+    .dsWatchHero p,
+    .netflixPageHero p,
+    .dsProfilesHero p,
+    .dsAccountHero p {
+      color: rgba(248,251,255,.68) !important;
+      line-height: 1.62 !important;
+    }
+
+    .dsWatchShell,
+    .watchPlayerShell,
+    .dsDirectVideoShell,
+    .dsMovieButtonPlayerShell,
+    .dsStandaloneHlsShell {
+      border-radius: 34px !important;
+      background:
+        radial-gradient(900px circle at 50% -20%, rgba(255,255,255,.10), transparent 48%),
+        #000 !important;
+      border: 1px solid rgba(255,255,255,.13) !important;
+      box-shadow: 0 34px 120px rgba(0,0,0,.56) !important;
+      overflow: hidden;
+    }
+
+    .dsHlsStatus {
+      border-radius: 20px !important;
+      background:
+        radial-gradient(360px circle at 0% 0%, rgba(229,9,20,.18), transparent 45%),
+        rgba(8,10,18,.82) !important;
+      border: 1px solid rgba(255,255,255,.14) !important;
+      box-shadow: 0 18px 60px rgba(0,0,0,.38) !important;
+    }
+
+    .vjs-theme-swifly .vjs-control-bar {
+      background:
+        linear-gradient(0deg, rgba(0,0,0,.92), rgba(0,0,0,.28)) !important;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .vjs-theme-swifly .vjs-big-play-button {
+      border: 1px solid rgba(255,255,255,.25) !important;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.20), transparent 40%),
+        rgba(10,12,24,.70) !important;
+      box-shadow: 0 24px 90px rgba(0,0,0,.55) !important;
+    }
+
+    /* Forms / profile / account */
+
+    input,
+    textarea,
+    select {
+      color: white !important;
+      background: rgba(255,255,255,.075) !important;
+      border: 1px solid rgba(255,255,255,.12) !important;
+      border-radius: 16px !important;
+      outline: none !important;
+      transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: rgba(121,215,255,.38) !important;
+      box-shadow: 0 0 0 4px rgba(121,215,255,.11) !important;
+      background: rgba(255,255,255,.105) !important;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: rgba(248,251,255,.42) !important;
+    }
+
+    .dsProfileCard,
+    .dsAccountCard,
+    .dsCoupleCard,
+    .dsContinuePagePanel,
+    .dsProfileCreate {
+      border-radius: 28px !important;
+      border: 1px solid rgba(255,255,255,.12) !important;
+      background:
+        radial-gradient(520px circle at 0% 0%, rgba(255,255,255,.10), transparent 45%),
+        rgba(255,255,255,.06) !important;
+      box-shadow: var(--v96-soft-shadow) !important;
+      transition: transform .18s ease, border-color .18s ease, background .18s ease;
+    }
+
+    .dsProfileCard:hover,
+    .dsAccountCard:hover,
+    .dsCoupleCard:hover {
+      transform: translateY(-5px);
+      border-color: rgba(255,255,255,.20) !important;
+      background: rgba(255,255,255,.09) !important;
+    }
+
+    /* Welcome/login */
+
+    .authShell,
+    .welcomeShell,
+    .loginShell,
+    .signupShell {
+      background:
+        radial-gradient(900px circle at 0% 0%, rgba(229,9,20,.20), transparent 44%),
+        radial-gradient(900px circle at 100% 0%, rgba(121,215,255,.12), transparent 44%),
+        #05060a !important;
+    }
+
+    .authCard,
+    .welcomeCard {
+      border-radius: 34px !important;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.13), rgba(255,255,255,.06)) !important;
+      border: 1px solid rgba(255,255,255,.14) !important;
+      box-shadow: var(--v96-shadow) !important;
+      backdrop-filter: blur(24px) saturate(1.12);
+      -webkit-backdrop-filter: blur(24px) saturate(1.12);
+    }
+
+    /* Mobile */
+
+    .mobileNav {
+      width: min(560px, calc(100vw - 22px)) !important;
+      left: 50% !important;
+      transform: translateX(-50%);
+      bottom: 12px !important;
+      border-radius: 999px !important;
+      padding: 7px !important;
+      background: rgba(8,10,18,.86) !important;
+      border: 1px solid rgba(255,255,255,.12) !important;
+      box-shadow: 0 24px 80px rgba(0,0,0,.44) !important;
+      backdrop-filter: blur(22px) saturate(1.14);
+      -webkit-backdrop-filter: blur(22px) saturate(1.14);
+    }
+
+    .mobileNav a {
+      border-radius: 999px !important;
+      min-height: 42px;
+      font-weight: 950;
+    }
+
+    .mobileNav a.active,
+    .mobileNav a:hover {
+      background: rgba(255,255,255,.12) !important;
+      color: white !important;
+    }
+
+    @media(max-width: 900px) {
+      .netflixLinks {
+        display: none !important;
+      }
+
+      .netflixNav {
+        min-height: 66px;
+      }
+
+      .dsHero {
+        min-height: 74vh !important;
+        border-radius: 0 0 28px 28px;
+      }
+
+      .dsHeroContent {
+        padding-top: 96px !important;
+      }
+
+      .dsHeroContent h1 {
+        font-size: clamp(42px, 14vw, 72px) !important;
+      }
+
+      .dsHeroContent p {
+        max-width: 94vw;
+      }
+
+      .dsMovieHomeBoard {
+        margin-top: -34px !important;
+        grid-template-columns: 1fr !important;
+      }
+
+      .dsCoupleHomeActions,
+      .dsHeroActions,
+      .dsAccountActions {
+        display: flex;
+        flex-wrap: wrap;
+      }
+
+      .dsPrimaryBtn,
+      .dsSecondaryBtn,
+      .dsGhostPill {
+        flex: 1 1 auto;
+        justify-content: center;
+      }
+
+      .movieCard:hover,
+      .nfPosterCard:hover,
+      .personCard:hover {
+        transform: translateY(-4px) scale(1.018);
+      }
+
+      .dsRowHead {
+        align-items: start !important;
+        gap: 8px;
+      }
+    }
+
+    @media(max-width: 560px) {
+      .container,
+      .dsContent,
+      .dsPlainPage,
+      .netflixPageHero {
+        width: min(100vw - 24px, 1440px);
+      }
+
+      .dsNavSearch {
+        display: none !important;
+      }
+
+      .dsHeroContent h1 {
+        letter-spacing: -.075em !important;
+      }
+
+      .dsHeroMeta span,
+      .dsHeroMeta b {
+        font-size: 11px;
+      }
+
+      .dsMovieHomeBoard {
+        border-radius: 24px !important;
+        padding: 18px !important;
+      }
+
+      .dsMovieHomeBoard h2 {
+        font-size: 32px !important;
+      }
+
+      .movieRail,
+      .dsRail {
+        gap: 10px !important;
+      }
+
+      .mobileNav {
+        width: calc(100vw - 14px) !important;
+        bottom: 7px !important;
+      }
+
+      .mobileNav a {
+        font-size: 11px !important;
+        min-height: 39px;
+      }
+    }
+
+    @media(prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+      }
+    }
+
   </style>
 
     <script>
@@ -20226,6 +21082,31 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     })();
   </script>
 
+
+  <script>
+    (function swiflyV96Polish(){
+      try {
+        var topbar = document.querySelector(".topbar");
+        function updateTopbar() {
+          if (!topbar) return;
+          topbar.classList.toggle("isScrolled", window.scrollY > 18);
+        }
+        updateTopbar();
+        window.addEventListener("scroll", updateTopbar, { passive: true });
+
+        document.querySelectorAll(".movieCard, .nfPosterCard, .personCard, .dsAccountCard, .dsProfileCard").forEach(function(card) {
+          if (card.__swiflyV96Bound) return;
+          card.__swiflyV96Bound = true;
+          card.addEventListener("pointerdown", function(){ card.style.transform = "translateY(-3px) scale(.99)"; });
+          card.addEventListener("pointerup", function(){ card.style.transform = ""; });
+          card.addEventListener("pointerleave", function(){ card.style.transform = ""; });
+        });
+      } catch (error) {
+        console.warn("v96 polish skipped", error);
+      }
+    })();
+  </script>
+
 </body>
 </html>`;
 }
@@ -20604,8 +21485,8 @@ async function homePage(req, res) {
       <section class="dsMovieHomeBoard">
         <div>
           <span class="dsEyebrow">Streaming made simple</span>
-          <h2>Movies, shows, watchlists, and watch rooms.</h2>
-          <p>Browse trending titles, save your list, continue watching, and jump into a synced room whenever you want.</p>
+          <h2>Movies, shows, watchlists, and synced watch rooms.</h2>
+          <p>Browse trending movies and shows, save your favorites, continue watching, and open synced watch rooms anytime.</p>
         </div>
         <div class="dsCoupleHomeActions">
           <a class="dsPrimaryBtn" href="/movies">Browse Movies</a>
@@ -20613,9 +21494,9 @@ async function homePage(req, res) {
           <a class="dsGhostPill" href="/watchrooms">Watch Rooms</a>
         </div>
         <div class="dsCoupleHomeCards">
-          <article><b>01</b><span>Find something</span></article>
-          <article><b>02</b><span>Press play</span></article>
-          <article><b>03</b><span>Save your list</span></article>
+          <article><b>01</b><span>Browse titles</span></article>
+          <article><b>02</b><span>Watch instantly</span></article>
+          <article><b>03</b><span>Build your list</span></article>
         </div>
       </section>
 
