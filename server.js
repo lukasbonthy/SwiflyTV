@@ -21211,6 +21211,869 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v100 DISCORD-STYLE SOCIAL ROOMS
+       Discord-inspired layout + creator permissions + integrated watch rooms.
+       ============================================================ */
+
+    .sv100 {
+      --bg0: #0b0d13;
+      --bg1: #11131b;
+      --bg2: #171a24;
+      --bg3: #202431;
+      --line: rgba(255,255,255,.08);
+      --muted: #949ba4;
+      --text: #f3f4f5;
+      --brand: #5865f2;
+      --brand2: #e50914;
+      min-height: calc(100vh - 78px);
+      display: grid;
+      grid-template-columns: 78px 278px minmax(0, 1fr) 260px;
+      color: var(--text);
+      background:
+        radial-gradient(900px circle at 20% 0%, rgba(88,101,242,.14), transparent 42%),
+        radial-gradient(720px circle at 92% 0%, rgba(229,9,20,.12), transparent 40%),
+        var(--bg0);
+      overflow: hidden;
+    }
+
+    .sv100 button,
+    .sv100 a,
+    .sv100 input {
+      font-family: Inter, system-ui, sans-serif;
+    }
+
+    .sv100Guilds {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 10px;
+      background: #070911;
+      border-right: 1px solid rgba(255,255,255,.04);
+    }
+
+    .sv100Guild {
+      width: 52px;
+      height: 52px;
+      display: grid;
+      place-items: center;
+      border-radius: 18px;
+      color: white;
+      text-decoration: none;
+      background: var(--bg2);
+      transition: border-radius .18s ease, background .18s ease, transform .18s ease;
+      font-size: 23px;
+      position: relative;
+    }
+
+    .sv100Guild:hover,
+    .sv100Guild.active {
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--brand), var(--brand2));
+      transform: translateY(-1px);
+    }
+
+    .sv100Guild.active::before {
+      content: "";
+      position: absolute;
+      left: -10px;
+      width: 4px;
+      height: 32px;
+      border-radius: 999px;
+      background: white;
+    }
+
+    .sv100Channels {
+      background: #11131a;
+      border-right: 1px solid rgba(255,255,255,.055);
+      min-height: 100%;
+      overflow-y: auto;
+    }
+
+    .sv100ServerHead {
+      height: 62px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 0 14px;
+      border-bottom: 1px solid rgba(0,0,0,.45);
+      box-shadow: 0 1px 0 rgba(255,255,255,.035);
+    }
+
+    .sv100ServerHead strong {
+      display: block;
+      font-size: 16px;
+      letter-spacing: -.02em;
+    }
+
+    .sv100ServerHead small,
+    .sv100ProfilePill small,
+    .sv100ChannelGroup header span,
+    .sv100Channel b + small {
+      color: var(--muted);
+    }
+
+    .sv100ServerHead button {
+      width: 36px;
+      height: 36px;
+      border: 0;
+      border-radius: 10px;
+      color: var(--muted);
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .sv100ProfilePill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 14px;
+      padding: 10px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.045);
+      border: 1px solid rgba(255,255,255,.055);
+    }
+
+    .sv100ProfilePill > span {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--brand), var(--brand2));
+      font-weight: 950;
+    }
+
+    .sv100ModeTabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin: 0 14px 14px;
+      padding: 5px;
+      border-radius: 14px;
+      background: #0c0e15;
+    }
+
+    .sv100ModeTabs button {
+      min-height: 36px;
+      border: 0;
+      border-radius: 10px;
+      color: var(--muted);
+      background: transparent;
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .sv100ModeTabs button.active {
+      color: white;
+      background: var(--brand);
+    }
+
+    .sv100ChannelGroup {
+      margin: 18px 8px;
+    }
+
+    .sv100ChannelGroup header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 8px 6px;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: .06em;
+      font-weight: 850;
+    }
+
+    .sv100ChannelGroup header button {
+      width: 26px;
+      height: 26px;
+      border: 0;
+      border-radius: 8px;
+      color: var(--muted);
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .sv100ChannelGroup header button:hover {
+      color: white;
+      background: rgba(255,255,255,.08);
+    }
+
+    .sv100ChannelGroup header button:disabled {
+      opacity: .35;
+      cursor: not-allowed;
+    }
+
+    .sv100Channel {
+      width: 100%;
+      min-height: 38px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 9px;
+      border: 0;
+      border-radius: 9px;
+      color: var(--muted);
+      background: transparent;
+      text-decoration: none;
+      cursor: pointer;
+      font-weight: 760;
+      margin: 1px 0;
+    }
+
+    .sv100Channel i {
+      font-size: 18px;
+      opacity: .9;
+    }
+
+    .sv100Channel b {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .sv100Channel:hover {
+      color: #dbdee1;
+      background: rgba(255,255,255,.055);
+    }
+
+    .sv100Channel.active {
+      color: white;
+      background: rgba(255,255,255,.10);
+    }
+
+    .sv100Main {
+      display: grid;
+      grid-template-rows: 62px minmax(0, 1fr);
+      min-width: 0;
+      background: #151821;
+    }
+
+    .sv100Topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: center;
+      padding: 0 18px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      background: rgba(255,255,255,.018);
+      box-shadow: 0 1px 0 rgba(0,0,0,.35);
+    }
+
+    .sv100Topbar span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .sv100Topbar h1 {
+      margin: 1px 0 0;
+      font-size: 23px;
+      letter-spacing: -.035em;
+    }
+
+    .sv100Topbar nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .sv100Topbar button {
+      min-height: 36px;
+      border: 0;
+      border-radius: 10px;
+      padding: 0 11px;
+      color: var(--muted);
+      background: transparent;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .sv100Topbar button:hover {
+      color: white;
+      background: rgba(255,255,255,.08);
+    }
+
+    .sv100Panel {
+      display: none;
+      min-height: 0;
+    }
+
+    .sv100Panel.active {
+      display: grid;
+    }
+
+    #sv100ChatPanel.active {
+      grid-template-rows: auto minmax(0, 1fr) auto;
+    }
+
+    .sv100Notice {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 14px 18px 0;
+      padding: 10px 12px;
+      border-radius: 14px;
+      color: #d7d9ff;
+      background: rgba(88,101,242,.13);
+      border: 1px solid rgba(88,101,242,.20);
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .sv100Messages {
+      overflow-y: auto;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .sv100Msg {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      gap: 12px;
+      padding: 8px 8px;
+      border-radius: 12px;
+    }
+
+    .sv100Msg:hover {
+      background: rgba(255,255,255,.035);
+    }
+
+    .sv100Msg > span {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--brand), var(--brand2));
+      font-weight: 950;
+    }
+
+    .sv100Msg header {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin: 1px 0 3px;
+    }
+
+    .sv100Msg small {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .sv100Msg p {
+      margin: 0;
+      color: #dbdee1;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+
+    .sv100Msg.mine > div {
+      border-left: 2px solid rgba(88,101,242,.7);
+      padding-left: 10px;
+    }
+
+    .sv100Composer {
+      display: grid;
+      grid-template-columns: 44px minmax(0, 1fr) 46px;
+      gap: 8px;
+      margin: 0 18px 18px;
+      padding: 10px;
+      border-radius: 18px;
+      background: #242936;
+    }
+
+    .sv100Composer input {
+      min-height: 44px;
+      border: 0;
+      outline: none;
+      color: white;
+      background: transparent;
+      font-size: 15px;
+    }
+
+    .sv100Composer button {
+      border: 0;
+      border-radius: 13px;
+      color: var(--muted);
+      background: transparent;
+      cursor: pointer;
+      font-size: 20px;
+    }
+
+    .sv100Composer button:hover {
+      color: white;
+      background: rgba(255,255,255,.08);
+    }
+
+    .sv100RoomsPanel.active {
+      display: block;
+      overflow-y: auto;
+      padding: 22px;
+    }
+
+    .sv100RoomsIntro {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 22px;
+      border-radius: 24px;
+      background:
+        radial-gradient(720px circle at 0% 0%, rgba(88,101,242,.25), transparent 48%),
+        radial-gradient(620px circle at 100% 0%, rgba(229,9,20,.18), transparent 48%),
+        #1b1f2b;
+      border: 1px solid rgba(255,255,255,.08);
+      margin-bottom: 18px;
+    }
+
+    .sv100RoomsIntro h2 {
+      margin: 4px 0 8px;
+      font-size: clamp(34px, 5vw, 64px);
+      letter-spacing: -.08em;
+      line-height: .9;
+      font-family: "Space Grotesk", Inter, sans-serif;
+    }
+
+    .sv100RoomsIntro p {
+      margin: 0;
+      color: #b5bac1;
+      max-width: 700px;
+      line-height: 1.55;
+    }
+
+    .sv100Btn {
+      min-height: 44px;
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 12px;
+      padding: 0 14px;
+      color: white;
+      background: rgba(255,255,255,.08);
+      text-decoration: none;
+      font-weight: 900;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .sv100Btn.primary {
+      border-color: transparent;
+      background: var(--brand);
+    }
+
+    .sv100Btn:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+
+    .sv100RoomsGrid {
+      display: grid;
+      grid-template-columns: minmax(260px, .85fr) minmax(240px, .65fr) minmax(340px, 1.2fr);
+      gap: 14px;
+    }
+
+    .sv100Card {
+      display: grid;
+      align-content: start;
+      gap: 12px;
+      padding: 18px;
+      border-radius: 20px;
+      background: #1b1f2b;
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .sv100Card > span,
+    .sv100CardHead span,
+    .sv100Perms span {
+      color: var(--muted);
+      text-transform: uppercase;
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .08em;
+    }
+
+    .sv100Card h3 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: -.045em;
+    }
+
+    .sv100Card p,
+    .sv100Empty {
+      color: #b5bac1;
+      line-height: 1.48;
+      margin: 0;
+    }
+
+    .sv100Card label {
+      display: grid;
+      gap: 7px;
+      color: #b5bac1;
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .sv100Card input {
+      min-height: 44px;
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 12px;
+      padding: 0 12px;
+      color: white;
+      outline: none;
+      background: #11131a;
+    }
+
+    .sv100Card input:focus {
+      border-color: rgba(88,101,242,.70);
+      box-shadow: 0 0 0 3px rgba(88,101,242,.18);
+    }
+
+    .sv100CardHead {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .sv100CardHead button {
+      width: 38px;
+      height: 38px;
+      border: 0;
+      border-radius: 10px;
+      color: white;
+      background: rgba(255,255,255,.08);
+      cursor: pointer;
+    }
+
+    .sv100RoomsList {
+      display: grid;
+      gap: 10px;
+      max-height: 430px;
+      overflow-y: auto;
+    }
+
+    .sv100RoomItem {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.045);
+      border: 1px solid rgba(255,255,255,.06);
+    }
+
+    .sv100RoomItem > div {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: 36px minmax(0, 1fr);
+      grid-template-rows: auto auto;
+      column-gap: 10px;
+      align-items: center;
+    }
+
+    .sv100RoomItem > div i {
+      grid-row: 1 / span 2;
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      background: var(--brand);
+    }
+
+    .sv100RoomItem b,
+    .sv100RoomItem small {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .sv100RoomItem small {
+      color: var(--muted);
+    }
+
+    .sv100RoomItem nav {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .sv100RoomItem a,
+    .sv100RoomItem button {
+      min-height: 34px;
+      border: 0;
+      border-radius: 10px;
+      padding: 0 10px;
+      color: white;
+      background: rgba(255,255,255,.08);
+      text-decoration: none;
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .sv100RoomItem a {
+      background: var(--brand);
+    }
+
+    .sv100Members {
+      background: #11131a;
+      border-left: 1px solid rgba(255,255,255,.055);
+      padding: 18px 14px;
+      overflow-y: auto;
+    }
+
+    .sv100MembersHead {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .sv100MembersHead span,
+    .sv100MembersHead small {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    #sv100MembersList p,
+    .sv100Perms p {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #dbdee1;
+      margin: 8px 0;
+      font-weight: 760;
+    }
+
+    #sv100MembersList i {
+      width: 9px;
+      height: 9px;
+      border-radius: 99px;
+      background: #23a55a;
+      box-shadow: 0 0 16px rgba(35,165,90,.65);
+    }
+
+    .sv100Perms {
+      margin-top: 22px;
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.045);
+      border: 1px solid rgba(255,255,255,.06);
+    }
+
+    .sv100Perms p {
+      align-items: flex-start;
+      color: #b5bac1;
+      line-height: 1.45;
+      font-size: 13px;
+    }
+
+    .creatorOnly[hidden],
+    .lockedOnly[hidden] {
+      display: none !important;
+    }
+
+    .sv100Channel:disabled,
+    [data-requires]:disabled {
+      opacity: .35;
+      cursor: not-allowed;
+    }
+
+    .sv100CallModal {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: rgba(0,0,0,.72);
+      backdrop-filter: blur(14px);
+    }
+
+    .sv100CallModal[hidden] {
+      display: none !important;
+    }
+
+    .sv100CallCard {
+      width: min(760px, 96vw);
+      border-radius: 26px;
+      padding: 18px;
+      color: white;
+      background: #151821;
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 30px 110px rgba(0,0,0,.42);
+    }
+
+    .sv100CallCard header,
+    .sv100CallCard footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .sv100CallCard button {
+      min-height: 40px;
+      border: 0;
+      border-radius: 12px;
+      padding: 0 12px;
+      color: white;
+      background: rgba(255,255,255,.08);
+      cursor: pointer;
+      font-weight: 850;
+    }
+
+    .sv100CallCard .danger {
+      background: rgba(229,9,20,.34);
+    }
+
+    .sv100CallStage {
+      position: relative;
+      min-height: 360px;
+      display: grid;
+      place-items: center;
+      border-radius: 20px;
+      overflow: hidden;
+      margin: 14px 0;
+      background: #0b0d13;
+    }
+
+    .sv100CallStage video {
+      width: 100%;
+      min-height: 360px;
+      object-fit: cover;
+    }
+
+    .sv100CallStage > div {
+      position: absolute;
+      inset: auto 18px 18px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      padding: 11px 13px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.55);
+    }
+
+    .sv100Toast,
+    .sv100Error {
+      position: fixed;
+      z-index: 2500;
+      right: 18px;
+      bottom: 18px;
+      max-width: min(440px, calc(100vw - 36px));
+      padding: 12px 14px;
+      border-radius: 14px;
+      color: white;
+      background: #23a55a;
+      font-weight: 850;
+      box-shadow: 0 18px 60px rgba(0,0,0,.35);
+    }
+
+    .sv100Toast.error,
+    .sv100Error {
+      background: #da373c;
+    }
+
+    .sv100Error {
+      left: 18px;
+      right: auto;
+    }
+
+    @media(max-width: 1180px) {
+      .sv100 {
+        grid-template-columns: 72px 260px minmax(0, 1fr);
+      }
+
+      .sv100Members {
+        display: none;
+      }
+
+      .sv100RoomsGrid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .sv100ActiveRooms {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media(max-width: 760px) {
+      .sv100 {
+        grid-template-columns: 1fr;
+        overflow: auto;
+      }
+
+      .sv100Guilds {
+        min-height: 68px;
+        flex-direction: row;
+        overflow-x: auto;
+        border-right: 0;
+        border-bottom: 1px solid rgba(255,255,255,.055);
+      }
+
+      .sv100Guild.active::before {
+        display: none;
+      }
+
+      .sv100Channels {
+        max-height: 360px;
+        border-right: 0;
+        border-bottom: 1px solid rgba(255,255,255,.055);
+      }
+
+      .sv100Main {
+        min-height: 680px;
+      }
+
+      .sv100Topbar {
+        align-items: flex-start;
+        flex-direction: column;
+        height: auto;
+        padding: 14px;
+      }
+
+      .sv100Topbar nav button span {
+        display: none;
+      }
+
+      .sv100RoomsIntro {
+        display: grid;
+      }
+
+      .sv100RoomsGrid {
+        grid-template-columns: 1fr;
+      }
+
+      .sv100RoomItem {
+        grid-template-columns: 1fr;
+      }
+
+      .sv100RoomItem nav {
+        justify-content: flex-start;
+      }
+    }
+
   </style>
 
     <script>
@@ -21278,6 +22141,11 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" />
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/modern-normalize@2.0.0/modern-normalize.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/atropos@2.0.2/atropos.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.js.iife.js"></script>
 </head>
 <body>
 
@@ -28481,236 +29349,322 @@ function getSocialRoom(roomId = "general") {
   return socialRooms.get(id);
 }
 
+
+function socialCreatorNames() {
+  return String(process.env.SOCIAL_CREATOR_NAMES || "Main,Admin,Owner,Lukas")
+    .split(",")
+    .map((name) => name.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function socialOpenRoomCreation() {
+  return process.env.SOCIAL_OPEN_ROOM_CREATION === "true";
+}
+
+function socialPermissionsForName(name = "") {
+  const normalized = String(name || "").trim().toLowerCase();
+  const allowed = socialCreatorNames();
+  const isCreator = Boolean(normalized && allowed.includes(normalized));
+  return {
+    isCreator,
+    canCreateGroups: isCreator,
+    canCreateChannels: isCreator,
+    canCreateWatchRooms: isCreator || socialOpenRoomCreation(),
+    canManageSocial: isCreator,
+    allowedCreators: allowed,
+    openRoomCreation: socialOpenRoomCreation(),
+  };
+}
+
+
 function socialPage(req, res) {
   const tab = String(req.query.tab || "").toLowerCase();
   const initialTab = tab === "watchrooms" || tab === "rooms" ? "rooms" : "chat";
+  const denied = String(req.query.denied || "");
+  const allowedCreators = socialCreatorNames();
 
-  const body = `<main class="sw99Shell" data-initial-tab="${escapeHtml(initialTab)}">
-    <section class="sw99Top">
-      <div>
-        <span class="dsEyebrow">Swifly Social</span>
-        <h1>Chat, call, and watch together.</h1>
-        <p>Messages, groups, channels, voice/video call preview, and Watch Rooms are in one cleaner hub.</p>
+  const body = `<main class="sv100" data-initial-tab="${escapeHtml(initialTab)}" data-denied="${escapeHtml(denied)}" data-allowed-creators="${escapeHtml(allowedCreators.join(","))}" data-open-room-creation="${socialOpenRoomCreation() ? "true" : "false"}">
+    <aside class="sv100Guilds" aria-label="Servers">
+      <a class="sv100Guild active" href="/social" title="Swifly Social"><i class="ri-discord-fill"></i></a>
+      <a class="sv100Guild" href="/movies" title="Movies"><i class="ri-movie-2-fill"></i></a>
+      <a class="sv100Guild" href="/tv" title="TV Shows"><i class="ri-tv-2-fill"></i></a>
+      <a class="sv100Guild" href="/social?tab=watchrooms" title="Watch Rooms"><i class="ri-vidicon-fill"></i></a>
+      <a class="sv100Guild" href="/profiles" title="Profiles"><i class="ri-user-smile-fill"></i></a>
+    </aside>
+
+    <aside class="sv100Channels">
+      <div class="sv100ServerHead">
+        <div>
+          <strong>Swifly Social</strong>
+          <small id="sv100RoleText">Checking permissions...</small>
+        </div>
+        <button type="button" id="sv100ServerMenu" title="Server menu"><i class="ri-arrow-down-s-line"></i></button>
       </div>
-      <div class="sw99TopActions">
-        <a class="sw99Btn primary" href="/watchrooms/new"><i class="bi bi-tv"></i> New Watch Room</a>
-        <a class="sw99Btn" href="/profiles"><i class="bi bi-person-circle"></i> Profiles</a>
+
+      <div class="sv100ProfilePill">
+        <span id="sv100Avatar">S</span>
+        <div>
+          <b id="sv100Name">Guest</b>
+          <small id="sv100Status">Local mode</small>
+        </div>
       </div>
-    </section>
 
-    <section class="sw99App">
-      <aside class="sw99Sidebar">
-        <div class="sw99Brand">
-          <span><i class="ri-movie-2-fill"></i></span>
-          <div>
-            <strong>SwiflyTV</strong>
-            <small id="sw99Status">Local ready</small>
-          </div>
-        </div>
+      <nav class="sv100ModeTabs">
+        <button type="button" class="${initialTab === "chat" ? "active" : ""}" data-tab="chat"><i class="ri-chat-3-fill"></i> Chat</button>
+        <button type="button" class="${initialTab === "rooms" ? "active" : ""}" data-tab="rooms"><i class="ri-tv-fill"></i> Watch</button>
+      </nav>
 
-        <div class="sw99Tabs">
-          <button type="button" data-tab="chat" class="sw99TabBtn ${initialTab === "chat" ? "active" : ""}"><i class="bi bi-chat-dots"></i> Chat</button>
-          <button type="button" data-tab="rooms" class="sw99TabBtn ${initialTab === "rooms" ? "active" : ""}"><i class="bi bi-display"></i> Rooms</button>
-        </div>
-
-        <div class="sw99Section" data-panel-nav="chat">
-          <span>Direct Messages</span>
-          <button type="button" class="sw99Room active" data-room="dm-main" data-title="Main Chat"><i class="bi bi-person"></i><b>Main Chat</b><small>DM</small></button>
-          <button type="button" class="sw99Room" data-room="dm-friends" data-title="Friends"><i class="bi bi-people"></i><b>Friends</b><small>DM</small></button>
-        </div>
-
-        <div class="sw99Section" data-panel-nav="chat">
-          <span>Groups</span>
-          <button type="button" class="sw99Room" data-room="group-watchparty" data-title="Watch Party"><i class="bi bi-collection-play"></i><b>Watch Party</b><small>Group</small></button>
-          <button type="button" class="sw99Room" data-room="group-school" data-title="School Friends"><i class="bi bi-backpack"></i><b>School Friends</b><small>Group</small></button>
-          <button type="button" class="sw99MiniAction" data-action="new-group"><i class="bi bi-plus-lg"></i> New group</button>
-        </div>
-
-        <div class="sw99Section" data-panel-nav="chat">
-          <span>Channels</span>
-          <button type="button" class="sw99Room" data-room="channel-general" data-title="# general"><i class="bi bi-hash"></i><b>general</b><small>Public</small></button>
-          <button type="button" class="sw99Room" data-room="channel-recommendations" data-title="# recommendations"><i class="bi bi-hash"></i><b>recommendations</b><small>Public</small></button>
-          <button type="button" class="sw99MiniAction" data-action="new-channel"><i class="bi bi-plus-lg"></i> New channel</button>
-        </div>
-
-        <div class="sw99Section" data-panel-nav="rooms">
-          <span>Watch Rooms</span>
-          <a class="sw99Room sw99AnchorRoom" href="/social?tab=watchrooms"><i class="bi bi-house-play"></i><b>Room lobby</b><small>Create / join</small></a>
-          <a class="sw99Room sw99AnchorRoom" href="/watchrooms/new"><i class="bi bi-plus-square"></i><b>Quick room</b><small>Works without JS</small></a>
-        </div>
-      </aside>
-
-      <section class="sw99Main">
-        <header class="sw99Header">
-          <div>
-            <span id="sw99Kind">Direct message</span>
-            <h2 id="sw99Title">Main Chat</h2>
-          </div>
-          <div class="sw99HeaderActions">
-            <button type="button" data-action="voice"><i class="bi bi-telephone"></i><span>Voice</span></button>
-            <button type="button" data-action="video"><i class="bi bi-camera-video"></i><span>Video</span></button>
-            <button type="button" data-action="invite"><i class="bi bi-link-45deg"></i><span>Invite</span></button>
-          </div>
-        </header>
-
-        <section id="sw99ChatPanel" class="sw99Panel ${initialTab === "chat" ? "active" : ""}">
-          <div id="sw99Messages" class="sw99Messages"></div>
-          <form id="sw99Composer" class="sw99Composer">
-            <button type="button" data-action="attach"><i class="bi bi-paperclip"></i></button>
-            <input id="sw99Input" placeholder="Message Main Chat..." autocomplete="off" maxlength="1200" />
-            <button type="submit"><i class="bi bi-send-fill"></i></button>
-          </form>
-        </section>
-
-        <section id="sw99RoomsPanel" class="sw99Panel sw99RoomsPanel ${initialTab === "rooms" ? "active" : ""}">
-          <div class="sw99RoomsHero">
-            <div>
-              <span class="dsEyebrow">Watch Rooms</span>
-              <h2>Start a synced room that actually opens.</h2>
-              <p>These controls are real links/forms too, so the important room buttons still work even if JavaScript has an issue.</p>
-            </div>
-            <a class="sw99Btn primary" href="/watchrooms/new"><i class="bi bi-plus-lg"></i> Instant Room</a>
-          </div>
-
-          <div class="sw99RoomGrid">
-            <form class="sw99Card" method="get" action="/watchrooms/new">
-              <span>Create</span>
-              <h3>New Watch Room</h3>
-              <label>Room name<input name="name" placeholder="Friday movie night" /></label>
-              <label>Movie/site link<input name="watchLink" placeholder="YouTube, trailer, website, etc." /></label>
-              <button class="sw99Btn primary" type="submit"><i class="bi bi-plus-circle"></i> Create Room</button>
-            </form>
-
-            <form class="sw99Card" method="get" action="/watchrooms/join">
-              <span>Join</span>
-              <h3>Join by code</h3>
-              <label>Room code<input name="code" placeholder="abc12-def34" /></label>
-              <button class="sw99Btn primary" type="submit"><i class="bi bi-box-arrow-in-right"></i> Join Room</button>
-              <p>Paste only the part after <b>/watchrooms/</b>.</p>
-            </form>
-
-            <div class="sw99Card sw99ActiveRoomsCard">
-              <div class="sw99CardHead">
-                <div>
-                  <span>Live</span>
-                  <h3>Active / saved rooms</h3>
-                </div>
-                <button type="button" class="sw99IconBtn" data-action="refresh-rooms"><i class="bi bi-arrow-clockwise"></i></button>
-              </div>
-              <div id="sw99RoomsList" class="sw99RoomsList">
-                <p class="sw99Empty">No rooms yet. Create one.</p>
-              </div>
-            </div>
-          </div>
-        </section>
+      <section class="sv100ChannelGroup" data-nav-panel="chat">
+        <header><span>Text Channels</span><button type="button" data-action="new-channel" data-requires="channels" title="Create channel"><i class="ri-add-line"></i></button></header>
+        <button type="button" class="sv100Channel active" data-room="channel-general" data-title="# general"><i class="ri-hashtag"></i><b>general</b></button>
+        <button type="button" class="sv100Channel" data-room="channel-recommendations" data-title="# recommendations"><i class="ri-hashtag"></i><b>recommendations</b></button>
+        <button type="button" class="sv100Channel" data-room="channel-watch" data-title="# watch-room-chat"><i class="ri-hashtag"></i><b>watch-room-chat</b></button>
       </section>
 
-      <aside class="sw99Info">
-        <div class="sw99InfoCard">
-          <span>Room info</span>
-          <h3 id="sw99InfoTitle">Main Chat</h3>
-          <p id="sw99InfoText">Pick a chat, group, channel, or open the Watch Rooms tab.</p>
+      <section class="sv100ChannelGroup" data-nav-panel="chat">
+        <header><span>Groups / DMs</span><button type="button" data-action="new-group" data-requires="groups" title="Create group"><i class="ri-add-line"></i></button></header>
+        <button type="button" class="sv100Channel" data-room="dm-main" data-title="Main Chat"><i class="ri-user-3-fill"></i><b>Main Chat</b></button>
+        <button type="button" class="sv100Channel" data-room="group-watchparty" data-title="Watch Party"><i class="ri-group-fill"></i><b>Watch Party</b></button>
+      </section>
+
+      <section class="sv100ChannelGroup" data-nav-panel="rooms">
+        <header><span>Watch Rooms</span><button type="button" data-action="rooms-tab" title="Open watch hub"><i class="ri-arrow-right-line"></i></button></header>
+        <button type="button" class="sv100Channel" data-tab="rooms"><i class="ri-tv-2-fill"></i><b>room-hub</b></button>
+        <a class="sv100Channel" href="/watchrooms/join"><i class="ri-login-box-fill"></i><b>join-by-code</b></a>
+      </section>
+    </aside>
+
+    <section class="sv100Main">
+      <header class="sv100Topbar">
+        <div>
+          <span id="sv100Kind"><i class="ri-hashtag"></i> Text Channel</span>
+          <h1 id="sv100Title"># general</h1>
+        </div>
+        <nav>
+          <button type="button" data-action="voice"><i class="ri-phone-fill"></i><span>Voice</span></button>
+          <button type="button" data-action="video"><i class="ri-vidicon-fill"></i><span>Video</span></button>
+          <button type="button" data-action="invite"><i class="ri-link"></i><span>Invite</span></button>
+        </nav>
+      </header>
+
+      <section id="sv100ChatPanel" class="sv100Panel ${initialTab === "chat" ? "active" : ""}">
+        <div class="sv100Notice">
+          <i class="ri-shield-check-fill"></i>
+          <span>Only trusted creators can create new groups/channels/rooms. Everyone can chat and join rooms.</span>
+        </div>
+        <div id="sv100Messages" class="sv100Messages"></div>
+        <form id="sv100Composer" class="sv100Composer">
+          <button type="button" data-action="attach"><i class="ri-add-circle-fill"></i></button>
+          <input id="sv100Input" placeholder="Message # general" autocomplete="off" maxlength="1200" />
+          <button type="submit"><i class="ri-send-plane-fill"></i></button>
+        </form>
+      </section>
+
+      <section id="sv100RoomsPanel" class="sv100Panel sv100RoomsPanel ${initialTab === "rooms" ? "active" : ""}">
+        <div class="sv100RoomsIntro">
+          <div>
+            <span class="dsEyebrow">Integrated Watch Rooms</span>
+            <h2>Rooms are channels now.</h2>
+            <p>Watch Rooms live inside Social like a Discord server channel. Trusted creators can host; everyone else can join and chat.</p>
+          </div>
+          <a class="sv100Btn primary creatorOnly" id="sv100InstantRoomLink" href="/watchrooms/new"><i class="ri-add-circle-fill"></i> Instant Room</a>
         </div>
 
-        <div class="sw99InfoCard">
-          <span>Actions</span>
-          <button type="button" data-action="new-group"><i class="bi bi-people-fill"></i> New Group</button>
-          <button type="button" data-action="new-channel"><i class="bi bi-hash"></i> New Channel</button>
-          <a href="/social?tab=watchrooms"><i class="bi bi-tv"></i> Watch Rooms</a>
-        </div>
+        <div class="sv100RoomsGrid">
+          <form class="sv100Card creatorOnly" method="get" action="/watchrooms/new" id="sv100CreateRoomForm">
+            <span>Host tools</span>
+            <h3>Create Watch Room</h3>
+            <input type="hidden" name="creator" id="sv100CreatorInput" value="" />
+            <label>Room name<input name="name" placeholder="Friday movie night" /></label>
+            <label>Movie/site link<input name="watchLink" placeholder="YouTube, trailer, website, etc." /></label>
+            <button class="sv100Btn primary" type="submit"><i class="ri-tv-fill"></i> Create Room</button>
+          </form>
 
-        <div class="sw99InfoCard">
-          <span>Online</span>
-          <div id="sw99Members" class="sw99Members"><p><i></i> You</p></div>
+          <div class="sv100Card lockedOnly" hidden>
+            <span>Locked</span>
+            <h3>Hosting is restricted</h3>
+            <p>You can still join Watch Rooms, chat, voice call, video call, and share links. Ask an admin to add your profile name to the creator list.</p>
+          </div>
+
+          <form class="sv100Card" method="get" action="/watchrooms/join">
+            <span>Everyone</span>
+            <h3>Join by code</h3>
+            <label>Room code<input name="code" placeholder="abc12-def34" /></label>
+            <button class="sv100Btn" type="submit"><i class="ri-login-box-fill"></i> Join Room</button>
+          </form>
+
+          <section class="sv100Card sv100ActiveRooms">
+            <div class="sv100CardHead">
+              <div>
+                <span>Live rooms</span>
+                <h3>Rooms list</h3>
+              </div>
+              <button type="button" data-action="refresh-rooms"><i class="ri-refresh-line"></i></button>
+            </div>
+            <div id="sv100RoomsList" class="sv100RoomsList">
+              <p class="sv100Empty">No rooms yet.</p>
+            </div>
+          </section>
         </div>
-      </aside>
+      </section>
     </section>
 
-    <section id="sw99CallModal" class="sw99CallModal" hidden>
-      <div class="sw99CallCard">
+    <aside class="sv100Members">
+      <div class="sv100MembersHead">
+        <span>Online</span>
+        <small id="sv100MemberCount">1 member</small>
+      </div>
+      <div id="sv100MembersList">
+        <p><i></i> You</p>
+      </div>
+
+      <div class="sv100Perms">
+        <span>Permissions</span>
+        <p id="sv100PermText">Loading creator rules...</p>
+      </div>
+    </aside>
+
+    <section id="sv100CallModal" class="sv100CallModal" hidden>
+      <div class="sv100CallCard">
         <header>
           <div>
-            <span id="sw99CallType">Voice call</span>
-            <h2 id="sw99CallTitle">Main Chat</h2>
+            <span id="sv100CallType">Voice call</span>
+            <h2 id="sv100CallTitle"># general</h2>
           </div>
-          <button type="button" data-action="close-call"><i class="bi bi-x-lg"></i></button>
+          <button type="button" data-action="close-call"><i class="ri-close-line"></i></button>
         </header>
-        <div class="sw99CallStage">
-          <video id="sw99LocalVideo" autoplay muted playsinline></video>
-          <div><i class="bi bi-people-fill"></i><b id="sw99CallStatus">Ready</b></div>
+        <div class="sv100CallStage">
+          <video id="sv100LocalVideo" autoplay muted playsinline></video>
+          <div><i class="ri-group-fill"></i><b id="sv100CallStatus">Ready</b></div>
         </div>
         <footer>
-          <button type="button" data-action="mute"><i class="bi bi-mic"></i> Mute</button>
-          <button type="button" data-action="camera"><i class="bi bi-camera-video"></i> Camera</button>
-          <button type="button" data-action="close-call" class="danger"><i class="bi bi-telephone-x"></i> Leave</button>
+          <button type="button" data-action="mute"><i class="ri-mic-fill"></i> Mute</button>
+          <button type="button" data-action="camera"><i class="ri-vidicon-fill"></i> Camera</button>
+          <button type="button" data-action="close-call" class="danger"><i class="ri-phone-fill"></i> Leave</button>
         </footer>
       </div>
     </section>
 
-    <div id="sw99Error" class="sw99Error" hidden></div>
+    <div id="sv100Toast" class="sv100Toast" hidden></div>
+    <div id="sv100Error" class="sv100Error" hidden></div>
 
     <script>
       (function(){
         const $ = (sel, root = document) => root.querySelector(sel);
         const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
-        const app = $(".sw99Shell");
+        const app = $(".sv100");
         const socket = window.io ? io() : null;
 
-        let currentRoom = "dm-main";
-        let currentTitle = "Main Chat";
-        let localStream = null;
+        let currentRoom = "channel-general";
+        let currentTitle = "# general";
         let username = "Guest";
-
-        try {
-          const profile = JSON.parse(localStorage.getItem("swiflytv.activeProfile") || "null");
-          const session = JSON.parse(localStorage.getItem("swiflytv.session") || "null");
-          username = profile?.name || session?.name || "Guest";
-        } catch {}
-
-        function toast(msg, type) {
-          if (window.swiflyToast) window.swiflyToast(msg, type || "success");
-          else console.log("[SwiflyTV]", msg);
-        }
+        let localStream = null;
+        let permissions = {
+          canCreateGroups: false,
+          canCreateChannels: false,
+          canCreateWatchRooms: false,
+          canManageSocial: false,
+          allowedCreators: [],
+          openRoomCreation: false
+        };
 
         function esc(value) {
           return String(value || "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
         }
 
-        function setError(error) {
-          const box = $("#sw99Error");
-          if (!box) return;
-          box.hidden = false;
-          box.textContent = "Social error: " + (error && error.message ? error.message : String(error));
+        function toast(message, type) {
+          if (window.swiflyToast) window.swiflyToast(message, type || "success");
+          const el = $("#sv100Toast");
+          if (!el) return;
+          el.hidden = false;
+          el.textContent = message;
+          el.classList.toggle("error", type === "error");
+          clearTimeout(el._timer);
+          el._timer = setTimeout(() => el.hidden = true, 1800);
+        }
+
+        function showError(error) {
+          const el = $("#sv100Error");
+          if (!el) return;
+          el.hidden = false;
+          el.textContent = "Social error: " + (error?.message || String(error));
           console.error(error);
         }
 
-        function roomKey(room) {
-          return "swiflytv.social.v99." + room;
+        function readProfile() {
+          try {
+            const profile = JSON.parse(localStorage.getItem("swiflytv.activeProfile") || "null");
+            const session = JSON.parse(localStorage.getItem("swiflytv.session") || "null");
+            username = profile?.name || session?.name || "Guest";
+          } catch {
+            username = "Guest";
+          }
+
+          $("#sv100Name").textContent = username;
+          $("#sv100Avatar").textContent = username.slice(0,1).toUpperCase() || "S";
+          $("#sv100CreatorInput").value = username;
+          const instant = $("#sv100InstantRoomLink");
+          if (instant) instant.href = "/watchrooms/new?creator=" + encodeURIComponent(username);
+          const form = $("#sv100CreateRoomForm");
+          if (form && !form.querySelector('[name="creator"]')) {
+            form.insertAdjacentHTML("afterbegin", '<input type="hidden" name="creator" value="' + esc(username) + '">');
+          }
         }
 
+        async function loadPermissions() {
+          readProfile();
+
+          try {
+            const res = await fetch("/api/social/permissions?name=" + encodeURIComponent(username), { cache: "no-store" });
+            const data = await res.json();
+            if (data && data.permissions) permissions = data.permissions;
+          } catch {
+            const allowed = String(app?.dataset.allowedCreators || "").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
+            const open = app?.dataset.openRoomCreation === "true";
+            const isCreator = allowed.includes(username.trim().toLowerCase());
+            permissions = {
+              canCreateGroups: isCreator,
+              canCreateChannels: isCreator,
+              canCreateWatchRooms: isCreator || open,
+              canManageSocial: isCreator,
+              allowedCreators: allowed,
+              openRoomCreation: open
+            };
+          }
+
+          document.body.classList.toggle("sv100Creator", Boolean(permissions.canManageSocial || permissions.canCreateWatchRooms));
+          $$(".creatorOnly").forEach((el) => el.hidden = !permissions.canCreateWatchRooms);
+          $$(".lockedOnly").forEach((el) => el.hidden = Boolean(permissions.canCreateWatchRooms));
+          $$("[data-requires='groups']").forEach((el) => el.disabled = !permissions.canCreateGroups);
+          $$("[data-requires='channels']").forEach((el) => el.disabled = !permissions.canCreateChannels);
+
+          $("#sv100RoleText").textContent = permissions.canManageSocial ? "Creator permissions" : "Member permissions";
+          $("#sv100PermText").textContent = permissions.canManageSocial
+            ? "You can create groups, channels, and Watch Rooms."
+            : "You can chat and join rooms. Creating groups/channels/rooms is locked.";
+        }
+
+        function roomKey(room) { return "swiflytv.social.v100." + room; }
         function readMessages(room) {
           try {
             const saved = JSON.parse(localStorage.getItem(roomKey(room)) || "[]");
             return Array.isArray(saved) ? saved : [];
           } catch { return []; }
         }
-
         function saveMessages(room, messages) {
-          localStorage.setItem(roomKey(room), JSON.stringify(messages.slice(-120)));
+          localStorage.setItem(roomKey(room), JSON.stringify(messages.slice(-160)));
         }
 
-        function addMessage(message, persist = false) {
-          const list = $("#sw99Messages");
-          if (!list || !message) return;
-
+        function addMessage(message, persist) {
+          const list = $("#sv100Messages");
+          if (!list) return;
           const mine = message.author === username;
-          const item = document.createElement("article");
-          item.className = "sw99Msg" + (mine ? " mine" : "");
-          item.innerHTML =
-            '<span>' + esc(message.author || "?").slice(0,1).toUpperCase() + '</span>' +
+          const node = document.createElement("article");
+          node.className = "sv100Msg" + (mine ? " mine" : "");
+          node.innerHTML = '<span>' + esc(message.author || "?").slice(0,1).toUpperCase() + '</span>' +
             '<div><header><b>' + esc(message.author || "Guest") + '</b><small>' + new Date(message.createdAt || Date.now()).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) + '</small></header>' +
             '<p>' + esc(message.text || "") + '</p></div>';
-          list.appendChild(item);
+          list.appendChild(node);
           list.scrollTop = list.scrollHeight;
 
           if (persist) {
@@ -28721,72 +29675,74 @@ function socialPage(req, res) {
         }
 
         function renderMessages(seed) {
-          const list = $("#sw99Messages");
+          const list = $("#sv100Messages");
           if (!list) return;
           list.innerHTML = "";
           const saved = readMessages(currentRoom);
           const messages = saved.length ? saved : seed || [
             { author: "Swifly", text: "Welcome to " + currentTitle + ".", createdAt: Date.now() },
-            { author: "Swifly", text: "Buttons here use a simpler system now, so they should actually respond.", createdAt: Date.now() + 5 }
+            { author: "Swifly", text: "Groups/channels/rooms can only be created by trusted creators.", createdAt: Date.now() + 10 }
           ];
-          messages.forEach((message) => addMessage(message, false));
+          messages.forEach((msg) => addMessage(msg, false));
         }
 
         function switchTab(tab) {
-          const useRooms = tab === "rooms";
-          $("#sw99ChatPanel")?.classList.toggle("active", !useRooms);
-          $("#sw99RoomsPanel")?.classList.toggle("active", useRooms);
+          const rooms = tab === "rooms";
+          $("#sv100ChatPanel").classList.toggle("active", !rooms);
+          $("#sv100RoomsPanel").classList.toggle("active", rooms);
           $$("[data-tab]").forEach((btn) => btn.classList.toggle("active", btn.dataset.tab === tab));
-          if (useRooms) {
-            $("#sw99Kind").textContent = "Watch Rooms";
-            $("#sw99Title").textContent = "Room Lobby";
-            $("#sw99InfoTitle").textContent = "Watch Rooms";
-            $("#sw99InfoText").textContent = "Create, join, copy, or share a synced room.";
+          if (rooms) {
+            $("#sv100Kind").innerHTML = '<i class="ri-tv-fill"></i> Watch Rooms';
+            $("#sv100Title").textContent = "room-hub";
             renderRooms();
           } else {
-            $("#sw99Kind").textContent = currentRoom.startsWith("channel") ? "Channel" : currentRoom.startsWith("group") ? "Group" : "Direct message";
-            $("#sw99Title").textContent = currentTitle;
-            $("#sw99InfoTitle").textContent = currentTitle;
-            $("#sw99InfoText").textContent = "Chat, call, invite, or start a room.";
+            $("#sv100Kind").innerHTML = currentRoom.startsWith("channel") ? '<i class="ri-hashtag"></i> Text Channel' : currentRoom.startsWith("group") ? '<i class="ri-group-fill"></i> Group' : '<i class="ri-user-3-fill"></i> Direct Message';
+            $("#sv100Title").textContent = currentTitle;
           }
         }
 
         function joinRoom(room, title) {
-          currentRoom = room || "dm-main";
+          currentRoom = room || "channel-general";
           currentTitle = title || currentRoom;
-          $$("[data-room]").forEach((btn) => btn.classList.toggle("active", btn.dataset.room === currentRoom));
-          $("#sw99Input").placeholder = "Message " + currentTitle + "...";
+          $$(".sv100Channel").forEach((btn) => btn.classList.toggle("active", btn.dataset.room === currentRoom));
+          const input = $("#sv100Input");
+          if (input) input.placeholder = "Message " + currentTitle;
           switchTab("chat");
           renderMessages();
           socket?.emit("social:join", { roomId: currentRoom, name: username });
         }
 
-        function createVirtual(kind) {
-          const name = prompt(kind === "channel" ? "Channel name" : "Group name");
+        function requirePermission(type) {
+          const allowed = type === "groups" ? permissions.canCreateGroups :
+            type === "channels" ? permissions.canCreateChannels :
+            type === "rooms" ? permissions.canCreateWatchRooms :
+            false;
+
+          if (!allowed) {
+            toast("You don't have permission to create that.", "error");
+            return false;
+          }
+          return true;
+        }
+
+        function createVirtual(type) {
+          if (!requirePermission(type === "channel" ? "channels" : "groups")) return;
+
+          const name = prompt(type === "channel" ? "Channel name" : "Group name");
           if (!name || !name.trim()) return;
-          const id = (kind === "channel" ? "channel-" : "group-") + name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-          const sectionText = kind === "channel" ? "Channels" : "Groups";
-          const section = $$(".sw99Section").find((sec) => (sec.querySelector("span")?.textContent || "").includes(sectionText));
+
+          const id = (type === "channel" ? "channel-" : "group-") + name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
+          const selectorText = type === "channel" ? "Text Channels" : "Groups / DMs";
+          const section = $$(".sv100ChannelGroup").find((sec) => (sec.querySelector("header span")?.textContent || "") === selectorText);
           const btn = document.createElement("button");
           btn.type = "button";
-          btn.className = "sw99Room";
+          btn.className = "sv100Channel";
           btn.dataset.room = id;
-          btn.dataset.title = kind === "channel" ? "# " + name.trim() : name.trim();
-          btn.innerHTML = '<i class="bi ' + (kind === "channel" ? "bi-hash" : "bi-people") + '"></i><b>' + esc(name.trim()) + '</b><small>' + (kind === "channel" ? "Public" : "Group") + '</small>';
+          btn.dataset.title = type === "channel" ? "# " + name.trim() : name.trim();
+          btn.innerHTML = '<i class="' + (type === "channel" ? "ri-hashtag" : "ri-group-fill") + '"></i><b>' + esc(type === "channel" ? name.trim().toLowerCase().replace(/\\s+/g, "-") : name.trim()) + '</b>';
           section?.appendChild(btn);
           joinRoom(id, btn.dataset.title);
-          toast((kind === "channel" ? "Channel" : "Group") + " created");
-        }
-
-        function localRooms() {
-          try {
-            const saved = JSON.parse(localStorage.getItem("swiflytv.socialWatchRooms") || "[]");
-            return Array.isArray(saved) ? saved : [];
-          } catch { return []; }
-        }
-
-        function saveLocalRooms(rooms) {
-          localStorage.setItem("swiflytv.socialWatchRooms", JSON.stringify(rooms.slice(0, 30)));
+          toast((type === "channel" ? "Channel" : "Group") + " created");
         }
 
         function buildRoomUrl(room) {
@@ -28799,10 +29755,15 @@ function socialPage(req, res) {
         }
 
         async function renderRooms() {
-          const target = $("#sw99RoomsList");
+          const target = $("#sv100RoomsList");
           if (!target) return;
 
-          let rooms = localRooms();
+          let rooms = [];
+          try {
+            const local = JSON.parse(localStorage.getItem("swiflytv.socialWatchRooms") || "[]");
+            if (Array.isArray(local)) rooms = local;
+          } catch {}
+
           try {
             const res = await fetch("/api/watchrooms", { cache: "no-store" });
             const data = await res.json();
@@ -28815,50 +29776,33 @@ function socialPage(req, res) {
           } catch {}
 
           if (!rooms.length) {
-            target.innerHTML = '<p class="sw99Empty">No rooms yet. Create one.</p>';
+            target.innerHTML = '<p class="sv100Empty">No rooms yet. A creator can make the first one.</p>';
             return;
           }
 
-          target.innerHTML = rooms.slice(0, 20).map((room) => {
+          target.innerHTML = rooms.slice(0, 24).map((room) => {
             const href = buildRoomUrl(room);
-            return '<article class="sw99RoomResult">' +
-              '<div><b>' + esc(room.name || "Watch Room") + '</b><small>' + esc(room.host || "Ready") + '</small></div>' +
+            return '<article class="sv100RoomItem">' +
+              '<div><i class="ri-tv-2-fill"></i><b>' + esc(room.name || "Watch Room") + '</b><small>' + esc(room.host || "Ready") + '</small></div>' +
               '<nav><a href="' + esc(href) + '">Open</a><button type="button" data-copy="' + esc(location.origin + href) + '">Copy</button><button type="button" data-share="' + esc(href) + '">Share</button></nav>' +
             '</article>';
           }).join("");
         }
 
-        function createLocalRoom() {
-          const room = {
-            id: Math.random().toString(36).slice(2, 7) + "-" + Math.random().toString(36).slice(2, 7),
-            name: "Social Watch Room",
-            kind: "blank",
-            host: username,
-            createdAt: Date.now()
-          };
-          const rooms = localRooms();
-          rooms.unshift(room);
-          saveLocalRooms(rooms);
-          renderRooms();
-          toast("Room saved");
-          return buildRoomUrl(room);
-        }
-
         async function openCall(video) {
-          const modal = $("#sw99CallModal");
+          const modal = $("#sv100CallModal");
           modal.hidden = false;
-          $("#sw99CallTitle").textContent = currentTitle;
-          $("#sw99CallType").textContent = video ? "Video call" : "Voice call";
-          $("#sw99CallStatus").textContent = "Requesting permission...";
+          $("#sv100CallTitle").textContent = currentTitle;
+          $("#sv100CallType").textContent = video ? "Video call" : "Voice call";
+          $("#sv100CallStatus").textContent = "Requesting permission...";
           try {
             localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: Boolean(video) });
-            const localVideo = $("#sw99LocalVideo");
-            localVideo.srcObject = localStream;
-            localVideo.hidden = !video;
-            $("#sw99CallStatus").textContent = video ? "Camera preview active" : "Microphone active";
+            $("#sv100LocalVideo").srcObject = localStream;
+            $("#sv100LocalVideo").hidden = !video;
+            $("#sv100CallStatus").textContent = video ? "Camera preview active" : "Microphone active";
             socket?.emit("social:call-join", { roomId: currentRoom, name: username, video: Boolean(video) });
           } catch {
-            $("#sw99CallStatus").textContent = "Permission blocked or unavailable";
+            $("#sv100CallStatus").textContent = "Permission blocked or unavailable";
             toast("Permission blocked", "error");
           }
         }
@@ -28866,46 +29810,58 @@ function socialPage(req, res) {
         function closeCall() {
           if (localStream) localStream.getTracks().forEach((track) => track.stop());
           localStream = null;
-          $("#sw99LocalVideo").srcObject = null;
-          $("#sw99CallModal").hidden = true;
+          $("#sv100LocalVideo").srcObject = null;
+          $("#sv100CallModal").hidden = true;
           socket?.emit("social:call-leave", { roomId: currentRoom, name: username });
         }
 
         document.addEventListener("click", async (event) => {
           try {
             const tab = event.target.closest("[data-tab]");
-            if (tab) {
+            if (tab && tab.tagName !== "A") {
               event.preventDefault();
               switchTab(tab.dataset.tab);
               return;
             }
 
-            const room = event.target.closest("[data-room]");
-            if (room && room.tagName !== "A") {
+            const channel = event.target.closest(".sv100Channel[data-room]");
+            if (channel && channel.tagName !== "A") {
               event.preventDefault();
-              joinRoom(room.dataset.room, room.dataset.title);
+              joinRoom(channel.dataset.room, channel.dataset.title);
               return;
             }
 
             const action = event.target.closest("[data-action]");
             if (action) {
               const name = action.dataset.action;
+
               if (name === "new-group") return createVirtual("group");
               if (name === "new-channel") return createVirtual("channel");
+              if (name === "rooms-tab") return switchTab("rooms");
+              if (name === "refresh-rooms") return renderRooms();
+
               if (name === "voice") return openCall(false);
               if (name === "video") return openCall(true);
               if (name === "close-call") return closeCall();
+
               if (name === "invite") {
-                await (window.swiflyCopy ? window.swiflyCopy(location.origin + "/social?room=" + encodeURIComponent(currentRoom)) : navigator.clipboard.writeText(location.origin + "/social?room=" + encodeURIComponent(currentRoom)));
+                const link = location.origin + "/social?room=" + encodeURIComponent(currentRoom);
+                if (window.swiflyCopy) await window.swiflyCopy(link);
+                else await navigator.clipboard.writeText(link);
                 return;
               }
-              if (name === "refresh-rooms") return renderRooms();
-              if (name === "attach") return toast("Attachments coming soon", "info");
+
+              if (name === "attach") {
+                toast("Attachments are not built yet.", "info");
+                return;
+              }
+
               if (name === "mute") {
                 if (!localStream) return toast("No active call", "info");
                 localStream.getAudioTracks().forEach((track) => track.enabled = !track.enabled);
                 return toast("Mic toggled");
               }
+
               if (name === "camera") {
                 if (!localStream) return toast("No active camera", "info");
                 localStream.getVideoTracks().forEach((track) => track.enabled = !track.enabled);
@@ -28916,30 +29872,30 @@ function socialPage(req, res) {
             const copy = event.target.closest("[data-copy]");
             if (copy) {
               event.preventDefault();
-              await (window.swiflyCopy ? window.swiflyCopy(copy.dataset.copy) : navigator.clipboard.writeText(copy.dataset.copy));
+              if (window.swiflyCopy) await window.swiflyCopy(copy.dataset.copy || "");
+              else await navigator.clipboard.writeText(copy.dataset.copy || "");
               return;
             }
 
             const share = event.target.closest("[data-share]");
             if (share) {
               event.preventDefault();
-              const text = "Join my Watch Room: " + location.origin + share.dataset.share;
+              const text = "Join this Watch Room: " + location.origin + share.dataset.share;
               const message = { roomId: currentRoom, author: username, text, createdAt: Date.now() };
               addMessage(message, true);
               socket?.emit("social:message", message);
               switchTab("chat");
-              toast("Shared to chat");
-              return;
+              return toast("Shared to chat");
             }
           } catch (error) {
-            setError(error);
+            showError(error);
           }
         });
 
-        $("#sw99Composer")?.addEventListener("submit", (event) => {
+        $("#sv100Composer")?.addEventListener("submit", (event) => {
           event.preventDefault();
-          const input = $("#sw99Input");
-          const text = String(input.value || "").trim();
+          const input = $("#sv100Input");
+          const text = String(input?.value || "").trim();
           if (!text) return;
           input.value = "";
           const message = { roomId: currentRoom, author: username, text, createdAt: Date.now() };
@@ -28947,13 +29903,20 @@ function socialPage(req, res) {
           socket?.emit("social:message", message);
         });
 
+        $("#sv100CreateRoomForm")?.addEventListener("submit", (event) => {
+          if (!permissions.canCreateWatchRooms) {
+            event.preventDefault();
+            toast("Only trusted creators can create Watch Rooms.", "error");
+          }
+        });
+
         socket?.on("connect", () => {
-          $("#sw99Status").textContent = "Live connected";
+          $("#sv100Status").textContent = "Live connected";
           socket.emit("social:join", { roomId: currentRoom, name: username });
         });
 
         socket?.on("disconnect", () => {
-          $("#sw99Status").textContent = "Local mode";
+          $("#sv100Status").textContent = "Local mode";
         });
 
         socket?.on("social:message", (message) => {
@@ -28962,19 +29925,23 @@ function socialPage(req, res) {
         });
 
         socket?.on("social:members", (payload) => {
-          const el = $("#sw99Members");
-          if (!el || !payload || payload.roomId !== currentRoom) return;
-          const names = Array.isArray(payload.members) ? payload.members : [];
-          el.innerHTML = names.length ? names.map((name) => '<p><i></i> ' + esc(name) + '</p>').join("") : '<p><i></i> You</p>';
+          const list = $("#sv100MembersList");
+          if (!list || !payload || payload.roomId !== currentRoom) return;
+          const members = Array.isArray(payload.members) ? payload.members : [];
+          $("#sv100MemberCount").textContent = members.length + (members.length === 1 ? " member" : " members");
+          list.innerHTML = members.length ? members.map((name) => '<p><i></i> ' + esc(name) + '</p>').join("") : '<p><i></i> You</p>';
         });
 
-        const params = new URLSearchParams(location.search);
-        if (app?.dataset.initialTab === "rooms" || params.get("tab") === "watchrooms") switchTab("rooms");
-        else joinRoom(params.get("room") || currentRoom, currentTitle);
+        readProfile();
+        loadPermissions().then(() => {
+          if (app.dataset.denied) toast("You do not have permission to create that.", "error");
+          const params = new URLSearchParams(location.search);
+          if (app.dataset.initialTab === "rooms" || params.get("tab") === "watchrooms") switchTab("rooms");
+          else joinRoom(params.get("room") || currentRoom, currentTitle);
+          renderRooms();
+        });
 
-        renderRooms();
-
-        window.SwiflySocial = { joinRoom, switchTab, renderRooms, createLocalRoom };
+        window.SwiflySocial = { switchTab, joinRoom, renderRooms, permissions: () => permissions };
       })();
     </script>
   </main>`;
@@ -29093,6 +30060,15 @@ app.get("/date-profile", removedDateProfilePage);
 app.get("/couples", removedDateProfilePage);
 
 app.get("/watchrooms/new", (req, res) => {
+  const creator = String(req.query.creator || req.query.name || "").slice(0, 80);
+  const perms = socialPermissionsForName(creator);
+  if (!perms.canCreateWatchRooms && process.env.SOCIAL_ENFORCE_CREATE_PERMISSIONS !== "false") {
+    const denied = new URLSearchParams();
+    denied.set("tab", "watchrooms");
+    denied.set("denied", "create-room");
+    return res.redirect(`/social?${denied.toString()}`);
+  }
+
   const roomId = generateRoomId();
   const name = String(req.query.name || "SwiflyTV Watch Room").slice(0, 80);
   const rawLink = String(req.query.watchLink || req.query.url || "").trim();
@@ -29217,6 +30193,8 @@ function apiStatus(req, res) {
       socialWatchRooms: true,
       socialButtonsFixed: true,
       socialRebuiltV99: true,
+      discordSocialV100: true,
+      socialPermissions: true,
       noJsWatchRoomFallbacks: true,
       socialLayoutV2: true,
       profileManager: true,
@@ -29238,6 +30216,17 @@ app.get("/api/social/watchrooms", (req, res) => {
     .slice(0, 24)
     .map(publicRoom);
   res.json({ ok: true, rooms });
+});
+
+
+app.get("/api/social/permissions", (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const name = String(req.query.name || "").slice(0, 80);
+  res.json({
+    ok: true,
+    name,
+    permissions: socialPermissionsForName(name),
+  });
 });
 
 app.get("/api/social/rooms", (req, res) => {
