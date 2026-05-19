@@ -63,7 +63,7 @@ app.use(
 
 
 function hlsProxyEnabled() {
-  return process.env.HLS_PROXY_ENABLED === "true";
+  return process.env.HLS_PROXY_ENABLED !== "false";
 }
 
 function hlsProxyId() {
@@ -23022,6 +23022,130 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v106 WATCHROOM M3U8 + NAV FIX
+       Native Social Watchroom uses a stronger m3u8 player and no longer
+       starts under the sticky top navigation.
+       ============================================================ */
+
+    body:has(.sv106),
+    body:has(.sv105) {
+      scroll-padding-top: 92px;
+    }
+
+    .sv106,
+    .sv105 {
+      min-height: calc(100dvh - 78px);
+      box-sizing: border-box;
+    }
+
+    .sv106 {
+      padding-top: 10px;
+    }
+
+    .sv106 .sv100Guilds,
+    .sv106 .sv100Channels,
+    .sv106 .sv100Main,
+    .sv106 .sv100Members {
+      max-height: calc(100dvh - 98px);
+    }
+
+    .sv106NativePlayerShell {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: min(68vh, 720px);
+      background: #000;
+      display: grid;
+      place-items: center;
+    }
+
+    .sv106NativePlayerShell .video-js,
+    .sv106VideoJs,
+    .sv106NativePlayerShell .sv103Video {
+      width: 100% !important;
+      height: 100% !important;
+      min-height: min(68vh, 720px);
+      background: #000;
+    }
+
+    .sv106NativePlayerShell .vjs-fluid {
+      padding-top: 0 !important;
+    }
+
+    .sv106NativePlayerShell .vjs-tech {
+      object-fit: contain;
+    }
+
+    .sv106HlsStatus {
+      position: absolute;
+      left: 18px;
+      bottom: 18px;
+      z-index: 20;
+      max-width: min(520px, calc(100% - 36px));
+      display: grid;
+      gap: 3px;
+      padding: 11px 13px;
+      border-radius: 16px;
+      color: white;
+      background: rgba(5, 8, 22, .76);
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: 0 18px 58px rgba(0,0,0,.32);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      pointer-events: none;
+    }
+
+    .sv106HlsStatus[hidden] {
+      display: none !important;
+    }
+
+    .sv106HlsStatus b {
+      font-size: 13px;
+      font-weight: 950;
+      letter-spacing: -.015em;
+    }
+
+    .sv106HlsStatus span {
+      color: rgba(230, 234, 255, .72);
+      font-size: 12px;
+      line-height: 1.35;
+      font-weight: 700;
+    }
+
+    .sv106HlsStatus.danger {
+      border-color: rgba(255, 95, 129, .35);
+      background:
+        radial-gradient(380px circle at 0% 0%, rgba(255, 95, 129, .22), transparent 54%),
+        rgba(5, 8, 22, .82);
+    }
+
+    .sv106 .sv103Player {
+      align-items: stretch;
+      justify-items: stretch;
+    }
+
+    @media(max-width: 760px) {
+      .sv106 {
+        padding-top: 8px;
+      }
+
+      .sv106 .sv100Guilds,
+      .sv106 .sv100Channels,
+      .sv106 .sv100Main,
+      .sv106 .sv100Members {
+        max-height: none;
+      }
+
+      .sv106NativePlayerShell,
+      .sv106NativePlayerShell .video-js,
+      .sv106VideoJs,
+      .sv106NativePlayerShell .sv103Video {
+        min-height: 360px;
+      }
+    }
+
   </style>
 
     <script>
@@ -30353,7 +30477,7 @@ function socialPage(req, res) {
   const initialVideoId = String(req.query.videoId || "").slice(0, 64);
   const initialEmbedUrl = String(req.query.embedUrl || "").slice(0, 1000);
 
-  const body = `<main class="sv100 sv103 sv104 sv105" data-initial-tab="${escapeHtml(initialTab)}" data-room-id="${escapeHtml(requestedRoomId)}" data-room-name="${escapeHtml(initialRoomName)}" data-room-kind="${escapeHtml(initialKind)}" data-room-video-id="${escapeHtml(initialVideoId)}" data-room-embed-url="${escapeHtml(initialEmbedUrl)}" data-denied="${escapeHtml(denied)}" data-allowed-creators="${escapeHtml(allowedCreators.join(","))}" data-open-room-creation="${socialOpenRoomCreation() ? "true" : "false"}">
+  const body = `<main class="sv100 sv103 sv104 sv105 sv106" data-initial-tab="${escapeHtml(initialTab)}" data-room-id="${escapeHtml(requestedRoomId)}" data-room-name="${escapeHtml(initialRoomName)}" data-room-kind="${escapeHtml(initialKind)}" data-room-video-id="${escapeHtml(initialVideoId)}" data-room-embed-url="${escapeHtml(initialEmbedUrl)}" data-denied="${escapeHtml(denied)}" data-allowed-creators="${escapeHtml(allowedCreators.join(","))}" data-open-room-creation="${socialOpenRoomCreation() ? "true" : "false"}">
     <aside class="sv100Guilds" aria-label="Servers">
       <a class="sv100Guild active" href="/social" title="Swifly Hub"><i class="ri-play-circle-fill"></i></a>
       <a class="sv100Guild" href="/movies" title="Movies"><i class="ri-movie-2-fill"></i></a>
@@ -30620,6 +30744,7 @@ function socialPage(req, res) {
         };
 
         let hlsInstance = null;
+        let nativeVideoJsPlayer = null;
         let nativeVideoControlBound = false;
         let applyingRemote = false;
 
@@ -30885,7 +31010,28 @@ function socialPage(req, res) {
           $("#sv103HostStatus").textContent = activeWatchRoom.isHost ? "You are host" : "Viewer";
         }
 
+        function setNativePlayerStatus(title, detail, danger) {
+          const status = $("#sv106HlsStatus");
+          if (!status) return;
+          status.hidden = false;
+          status.classList.toggle("danger", Boolean(danger));
+          status.innerHTML = '<b>' + esc(title || "Loading") + '</b><span>' + esc(detail || "") + '</span>';
+        }
+
+        function hideNativePlayerStatus(delay) {
+          const status = $("#sv106HlsStatus");
+          if (!status) return;
+          clearTimeout(status._timer);
+          status._timer = setTimeout(() => {
+            status.hidden = true;
+          }, delay || 2600);
+        }
+
         function destroyHls() {
+          if (nativeVideoJsPlayer) {
+            try { nativeVideoJsPlayer.dispose(); } catch {}
+            nativeVideoJsPlayer = null;
+          }
           if (hlsInstance) {
             try { hlsInstance.destroy(); } catch {}
             hlsInstance = null;
@@ -30894,28 +31040,164 @@ function socialPage(req, res) {
 
         function loadHls(cb) {
           if (window.Hls) return cb(true);
-          const script = document.createElement("script");
-          script.src = "https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js";
-          script.onload = () => cb(Boolean(window.Hls));
-          script.onerror = () => cb(false);
-          document.head.appendChild(script);
+          const urls = [
+            "https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js",
+            "https://unpkg.com/hls.js@1.5.17/dist/hls.min.js",
+            "https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.17/hls.min.js"
+          ];
+          let i = 0;
+          function next() {
+            if (window.Hls) return cb(true);
+            if (i >= urls.length) return cb(false);
+            const script = document.createElement("script");
+            script.src = urls[i++];
+            script.async = true;
+            script.onload = () => cb(Boolean(window.Hls));
+            script.onerror = next;
+            document.head.appendChild(script);
+          }
+          next();
         }
 
-        function attachVideoSource(video, src) {
-          destroyHls();
-          if (/\\.m3u8([?#]|$)/i.test(src) && !(video.canPlayType && video.canPlayType("application/vnd.apple.mpegurl"))) {
-            loadHls((ok) => {
-              if (!ok || !window.Hls || !window.Hls.isSupported()) {
-                video.src = src;
-                return;
-              }
-              hlsInstance = new window.Hls({ lowLatencyMode: false, maxBufferLength: 60, backBufferLength: 90 });
-              hlsInstance.loadSource(src);
-              hlsInstance.attachMedia(video);
+        function isNativeHlsSource(src, media) {
+          const value = String(src || "");
+          const type = String(media?.streamType || media?.type || media?.movie?.streamType || "").toLowerCase();
+          return new RegExp("[.]m3u8([?#]|$)", "i").test(value) || type === "m3u8" || type === "hls" || Boolean(media?.m3u8 || media?.movie?.m3u8 || media?.hlsProxyUrl || media?.movie?.hlsProxyUrl);
+        }
+
+        function attachHlsJsSource(video, src) {
+          loadHls((ok) => {
+            if (!ok || !window.Hls || !window.Hls.isSupported()) {
+              setNativePlayerStatus("Using native video", "HLS.js was unavailable. Browser will try the source directly.", false);
+              video.src = src;
+              try { video.load(); } catch {}
+              hideNativePlayerStatus(3600);
+              return;
+            }
+
+            setNativePlayerStatus("Loading m3u8", "HLS.js attached. Waiting for playlist...", false);
+            hlsInstance = new window.Hls({
+              lowLatencyMode: false,
+              enableWorker: true,
+              maxBufferLength: 60,
+              backBufferLength: 90,
+              maxMaxBufferLength: 120,
+              fragLoadingTimeOut: 30000,
+              manifestLoadingTimeOut: 30000,
+              levelLoadingTimeOut: 30000
             });
-          } else {
+
+            hlsInstance.on(window.Hls.Events.MANIFEST_PARSED, () => {
+              setNativePlayerStatus("m3u8 ready", "Press play when you are ready.", false);
+              hideNativePlayerStatus(2400);
+            });
+
+            hlsInstance.on(window.Hls.Events.ERROR, (event, data) => {
+              const details = data && (data.details || data.type) ? String(data.details || data.type) : "unknown error";
+              if (data && data.fatal) {
+                setNativePlayerStatus("m3u8 error", details + ". Trying to recover...", true);
+                try {
+                  if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR) hlsInstance.startLoad();
+                  else if (data.type === window.Hls.ErrorTypes.MEDIA_ERROR) hlsInstance.recoverMediaError();
+                  else {
+                    hlsInstance.destroy();
+                    hlsInstance = null;
+                    video.src = src;
+                    try { video.load(); } catch {}
+                  }
+                } catch {
+                  video.src = src;
+                  try { video.load(); } catch {}
+                }
+              }
+            });
+
+            hlsInstance.loadSource(src);
+            hlsInstance.attachMedia(video);
+          });
+        }
+
+        function attachVideoSource(video, src, media) {
+          destroyHls();
+
+          try {
+            video.removeAttribute("src");
+            video.load();
+          } catch {}
+
+          const hls = isNativeHlsSource(src, media);
+
+          if (!hls) {
+            setNativePlayerStatus("Loading video", "Using direct video source.", false);
             video.src = src;
+            try { video.load(); } catch {}
+            hideNativePlayerStatus(2200);
+            return;
           }
+
+          setNativePlayerStatus("Loading m3u8", "Starting stream player...", false);
+
+          if (window.videojs) {
+            try {
+              video.classList.add("video-js", "vjs-big-play-centered", "vjs-theme-swifly", "sv106VideoJs");
+              nativeVideoJsPlayer = window.videojs(video, {
+                controls: true,
+                autoplay: false,
+                preload: "auto",
+                fluid: false,
+                responsive: true,
+                liveui: true,
+                html5: {
+                  vhs: {
+                    overrideNative: true,
+                    withCredentials: false,
+                    enableLowInitialPlaylist: true,
+                    smoothQualityChange: true
+                  },
+                  nativeAudioTracks: false,
+                  nativeVideoTracks: false
+                },
+                sources: [{ src, type: "application/x-mpegURL" }]
+              });
+
+              nativeVideoJsPlayer.ready(() => {
+                setNativePlayerStatus("m3u8 ready", "Video.js loaded. Press play.", false);
+                hideNativePlayerStatus(2400);
+                bindNativeVideoControls();
+              });
+
+              nativeVideoJsPlayer.on("error", () => {
+                const err = nativeVideoJsPlayer.error && nativeVideoJsPlayer.error();
+                const message = err && (err.message || err.code) ? String(err.message || ("Code " + err.code)) : "Unknown player error";
+                setNativePlayerStatus("Video.js issue", message + ". Falling back to HLS.js.", true);
+                try { nativeVideoJsPlayer.dispose(); } catch {}
+                nativeVideoJsPlayer = null;
+                const fresh = document.createElement("video");
+                fresh.id = "sv103Video";
+                fresh.className = "sv103Video";
+                fresh.controls = true;
+                fresh.playsInline = true;
+                fresh.preload = "metadata";
+                const shell = $("#sv106NativePlayerShell");
+                if (shell) shell.insertBefore(fresh, shell.firstChild);
+                attachHlsJsSource(fresh, src);
+                bindNativeVideoControls();
+              });
+              return;
+            } catch (error) {
+              setNativePlayerStatus("Video.js failed", "Falling back to HLS.js.", true);
+            }
+          }
+
+          if (video.canPlayType && video.canPlayType("application/vnd.apple.mpegurl")) {
+            video.src = src;
+            try { video.load(); } catch {}
+            setNativePlayerStatus("m3u8 ready", "Using browser native HLS.", false);
+            hideNativePlayerStatus(2400);
+            return;
+          }
+
+          attachHlsJsSource(video, src);
         }
 
         function renderNativeMedia(media = {}) {
@@ -30926,15 +31208,15 @@ function socialPage(req, res) {
           nativeVideoControlBound = false;
 
           const movie = media.movie || null;
-          const src = movie?.playbackUrl || movie?.proxyVideo || movie?.m3u8 || media.playbackUrl || media.proxyVideo || "";
+          const src = movie?.playbackUrl || movie?.proxyVideo || movie?.hlsProxyUrl || movie?.m3u8 || media.playbackUrl || media.proxyVideo || media.hlsProxyUrl || media.m3u8 || "";
           const videoId = media.videoId || "";
           const embedUrl = media.embedUrl || "";
           const kind = media.mediaKind || media.kind || "";
 
           if (src) {
-            root.innerHTML = '<video id="sv103Video" class="sv103Video" controls playsinline preload="metadata"></video>';
+            root.innerHTML = '<div id="sv106NativePlayerShell" class="sv106NativePlayerShell"><video id="sv103Video" class="sv103Video" controls playsinline preload="metadata"></video><div id="sv106HlsStatus" class="sv106HlsStatus"><b>Loading player</b><span>Preparing stream...</span></div></div>';
             const video = $("#sv103Video");
-            attachVideoSource(video, src);
+            attachVideoSource(video, src, Object.assign({}, media, movie || {}));
             bindNativeVideoControls();
             return;
           }
@@ -30966,18 +31248,63 @@ function socialPage(req, res) {
           const target = targetSeconds(sync);
           $("#sv103Timer").textContent = formatTime(target);
 
-          const drift = Math.abs(Number(video.currentTime || 0) - target);
+          const drift = Math.abs(nativeVideoCurrentTime(video) - target);
           if (force || drift > 10) {
             applyingRemote = true;
-            try { video.currentTime = target; } catch {}
+            nativeVideoSetTime(video, target);
             setTimeout(() => applyingRemote = false, 600);
           }
 
-          if (sync.playing && video.paused) {
-            video.play().catch(() => {});
-          } else if (!sync.playing && !video.paused) {
-            video.pause();
+          if (sync.playing && nativeVideoIsPaused(video)) {
+            nativeVideoPlay(video);
+          } else if (!sync.playing && !nativeVideoIsPaused(video)) {
+            nativeVideoPause(video);
           }
+        }
+
+        function nativeVideoCurrentTime(video) {
+          try {
+            if (nativeVideoJsPlayer && typeof nativeVideoJsPlayer.currentTime === "function") return Number(nativeVideoJsPlayer.currentTime() || 0);
+          } catch {}
+          return Number(video?.currentTime || 0);
+        }
+
+        function nativeVideoSetTime(video, value) {
+          try {
+            if (nativeVideoJsPlayer && typeof nativeVideoJsPlayer.currentTime === "function") {
+              nativeVideoJsPlayer.currentTime(Number(value || 0));
+              return;
+            }
+          } catch {}
+          try { video.currentTime = Number(value || 0); } catch {}
+        }
+
+        function nativeVideoIsPaused(video) {
+          try {
+            if (nativeVideoJsPlayer && typeof nativeVideoJsPlayer.paused === "function") return Boolean(nativeVideoJsPlayer.paused());
+          } catch {}
+          return Boolean(video?.paused);
+        }
+
+        function nativeVideoPlay(video) {
+          try {
+            if (nativeVideoJsPlayer && typeof nativeVideoJsPlayer.play === "function") {
+              const p = nativeVideoJsPlayer.play();
+              if (p && p.catch) p.catch(() => {});
+              return;
+            }
+          } catch {}
+          try { video?.play()?.catch?.(() => {}); } catch {}
+        }
+
+        function nativeVideoPause(video) {
+          try {
+            if (nativeVideoJsPlayer && typeof nativeVideoJsPlayer.pause === "function") {
+              nativeVideoJsPlayer.pause();
+              return;
+            }
+          } catch {}
+          try { video?.pause(); } catch {}
         }
 
         function bindNativeVideoControls() {
@@ -30990,14 +31317,20 @@ function socialPage(req, res) {
             socket?.emit("watchroom:movie-control", Object.assign({
               roomId: activeWatchRoom.id,
               action,
-              clientTime: Number(video.currentTime || 0),
+              clientTime: nativeVideoCurrentTime(video),
               name: username
             }, extra || {}));
           }
 
           video.addEventListener("play", () => send("play"));
           video.addEventListener("pause", () => send("pause"));
-          video.addEventListener("seeked", () => send("set", { time: Number(video.currentTime || 0) }));
+          video.addEventListener("seeked", () => send("set", { time: nativeVideoCurrentTime(video) }));
+
+          if (nativeVideoJsPlayer && typeof nativeVideoJsPlayer.on === "function") {
+            nativeVideoJsPlayer.on("play", () => send("play"));
+            nativeVideoJsPlayer.on("pause", () => send("pause"));
+            nativeVideoJsPlayer.on("seeked", () => send("set", { time: nativeVideoCurrentTime(video) }));
+          }
         }
 
         function formatTime(seconds) {
@@ -31147,8 +31480,8 @@ function socialPage(req, res) {
                 return;
               }
 
-              if (name === "native-play") return socket?.emit("watchroom:movie-control", { roomId: activeWatchRoom.id, action: "play", clientTime: Number($("#sv103Video")?.currentTime || 0), name: username });
-              if (name === "native-pause") return socket?.emit("watchroom:movie-control", { roomId: activeWatchRoom.id, action: "pause", clientTime: Number($("#sv103Video")?.currentTime || 0), name: username });
+              if (name === "native-play") return socket?.emit("watchroom:movie-control", { roomId: activeWatchRoom.id, action: "play", clientTime: nativeVideoCurrentTime($("#sv103Video")), name: username });
+              if (name === "native-pause") return socket?.emit("watchroom:movie-control", { roomId: activeWatchRoom.id, action: "pause", clientTime: nativeVideoCurrentTime($("#sv103Video")), name: username });
               if (name === "native-back") return socket?.emit("watchroom:movie-control", { roomId: activeWatchRoom.id, action: "seek", delta: -10, name: username });
               if (name === "native-forward") return socket?.emit("watchroom:movie-control", { roomId: activeWatchRoom.id, action: "seek", delta: 10, name: username });
               if (name === "native-sync-me") return socket?.emit("watchroom:movie-control", { roomId: activeWatchRoom.id, action: "sync-me", name: username });
@@ -31653,6 +31986,8 @@ function apiStatus(req, res) {
       openWatchRoomCreationV104: true,
       swiflyHubRefreshV104: true,
       galaxySocialThemeV105: true,
+      watchroomM3u8FixV106: true,
+      socialNavOffsetFixV106: true,
       socialPermissions: true,
       noJsWatchRoomFallbacks: true,
       socialLayoutV2: true,
