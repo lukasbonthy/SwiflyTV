@@ -23192,42 +23192,16 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
 
     /* ============================================================
-       v108 TV / CONTROLLER CURSOR MODE
-       Gamepad + TV remote navigation for couch/TV browsers.
+       v109 FIRE TV FOCUS NAVIGATION
+       No cursor. D-pad/gamepad/remote style focus movement.
        ============================================================ */
 
-    body.swifly-tv-controller-mode {
-      cursor: none;
+    body.swifly-tv-focus-mode {
+      cursor: default;
     }
 
     #swiflyTvCursor {
-      position: fixed;
-      left: 50vw;
-      top: 50vh;
-      width: 22px;
-      height: 22px;
-      z-index: 2147483646;
-      border-radius: 999px;
-      border: 2px solid rgba(255,255,255,.95);
-      background:
-        radial-gradient(circle at 35% 30%, rgba(255,255,255,.95), rgba(255,255,255,.18) 42%, rgba(229,9,20,.78) 100%);
-      box-shadow:
-        0 0 0 8px rgba(229,9,20,.16),
-        0 0 34px rgba(229,9,20,.75),
-        0 0 70px rgba(255,255,255,.22);
-      pointer-events: none;
-      transform: translate3d(-50%, -50%, 0) scale(1);
-      transition: transform .08s ease, opacity .18s ease;
-      opacity: 0;
-      will-change: transform, left, top;
-    }
-
-    body.swifly-tv-controller-mode #swiflyTvCursor {
-      opacity: 1;
-    }
-
-    #swiflyTvCursor.isClicking {
-      transform: translate3d(-50%, -50%, 0) scale(.72);
+      display: none !important;
     }
 
     #swiflyTvHint {
@@ -23254,9 +23228,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       transition: opacity .2s ease, transform .2s ease;
     }
 
-    body.swifly-tv-controller-mode #swiflyTvHint {
+    body.swifly-tv-focus-mode #swiflyTvHint {
       opacity: 1;
-      transform: translateX(-50%) translateY(0);
     }
 
     #swiflyTvHint b {
@@ -23264,24 +23237,46 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       font-weight: 950;
     }
 
-    .swifly-tv-controller-target {
-      outline: 3px solid rgba(255,255,255,.92) !important;
-      outline-offset: 4px !important;
+    .swifly-tv-focus-target {
+      position: relative;
+      outline: 4px solid rgba(255,255,255,.96) !important;
+      outline-offset: 5px !important;
+      border-radius: 18px !important;
       box-shadow:
-        0 0 0 7px rgba(229,9,20,.24),
-        0 0 42px rgba(229,9,20,.34) !important;
-      border-radius: 16px;
+        0 0 0 9px rgba(229,9,20,.30),
+        0 0 52px rgba(229,9,20,.52),
+        0 0 90px rgba(255,255,255,.18) !important;
+      filter: brightness(1.13) saturate(1.08);
+      transform: translateY(-2px) scale(1.015);
+      transition:
+        outline-color .14s ease,
+        box-shadow .14s ease,
+        transform .14s ease,
+        filter .14s ease !important;
+      z-index: 6;
     }
 
-    .swifly-tv-controller-pressed {
-      transform: scale(.98) !important;
-      filter: brightness(1.16) !important;
+    .swifly-tv-focus-pressed {
+      transform: translateY(0) scale(.985) !important;
+      filter: brightness(1.28) saturate(1.12) !important;
     }
 
-    @media(pointer:fine) {
-      body:not(.swifly-tv-controller-mode) #swiflyTvCursor,
-      body:not(.swifly-tv-controller-mode) #swiflyTvHint {
-        display: none;
+    body.swifly-tv-focus-mode a,
+    body.swifly-tv-focus-mode button,
+    body.swifly-tv-focus-mode [role="button"],
+    body.swifly-tv-focus-mode [tabindex] {
+      scroll-margin: 120px;
+    }
+
+    @media(max-width: 700px) {
+      .swifly-tv-focus-target {
+        outline-width: 3px !important;
+        outline-offset: 4px !important;
+      }
+
+      #swiflyTvHint {
+        font-size: 11px;
+        border-radius: 18px;
       }
     }
 
@@ -24410,23 +24405,25 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
   </script>
 
   <script>
-    (function swiflyTvControllerCursor(){
-      if (window.__swiflyTvControllerCursorLoaded) return;
-      window.__swiflyTvControllerCursorLoaded = true;
+    (function swiflyTvFocusNavigation(){
+      if (window.__swiflyTvFocusNavigationLoaded) return;
+      window.__swiflyTvFocusNavigationLoaded = true;
 
-      var enabled = localStorage.getItem("swiflytv.tvControllerMode") === "true";
-      var cursor = null;
+      var enabled = localStorage.getItem("swiflytv.tvFocusMode") === "true" ||
+        localStorage.getItem("swiflytv.tvControllerMode") === "true";
+
+      var focused = null;
       var hint = null;
-      var x = Math.round(window.innerWidth / 2);
-      var y = Math.round(window.innerHeight / 2);
-      var lastButtons = {};
-      var targetEl = null;
       var raf = null;
       var lastFrame = performance.now();
-      var lastKeyboardMove = 0;
-      var idleHintTimer = null;
+      var lastButtons = {};
+      var lastMoveAt = 0;
+      var lastAxisDirection = "";
+      var axisRepeatStartedAt = 0;
+      var lastScrollAt = 0;
+      var hintTimer = null;
 
-      var CLICKABLE_SELECTOR = [
+      var FOCUSABLE_SELECTOR = [
         "a[href]",
         "button:not([disabled])",
         "input:not([disabled])",
@@ -24436,58 +24433,15 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
         "[role='link']",
         "[tabindex]:not([tabindex='-1'])",
         "video",
-        ".dsCustomPlayerChrome *",
-        ".dsRoomMovieStage",
         ".movieCard",
         ".posterCard",
-        ".nfCard"
+        ".nfCard",
+        ".topTenPoster",
+        ".dsCustomControlRow button",
+        "#roomMoviePlayerSyncBtn",
+        "#roomMovieProgress",
+        "#roomMovieVolume"
       ].join(",");
-
-      function clamp(value, min, max) {
-        return Math.max(min, Math.min(max, value));
-      }
-
-      function ensureUi() {
-        if (!cursor) {
-          cursor = document.createElement("div");
-          cursor.id = "swiflyTvCursor";
-          cursor.setAttribute("aria-hidden", "true");
-          document.body.appendChild(cursor);
-        }
-
-        if (!hint) {
-          hint = document.createElement("div");
-          hint.id = "swiflyTvHint";
-          hint.innerHTML = "<b>TV Mode:</b> left stick moves • A/Enter clicks • right stick/D-pad scrolls • B/Esc goes back • Start toggles fullscreen";
-          document.body.appendChild(hint);
-        }
-
-        renderCursor();
-      }
-
-      function setEnabled(value, reason) {
-        enabled = Boolean(value);
-        localStorage.setItem("swiflytv.tvControllerMode", enabled ? "true" : "false");
-        ensureUi();
-        document.body.classList.toggle("swifly-tv-controller-mode", enabled);
-        if (enabled) {
-          showHint(reason || "Controller connected");
-          startLoop();
-        } else {
-          clearTarget();
-        }
-      }
-
-      function showHint(reason) {
-        ensureUi();
-        if (reason && hint) {
-          hint.innerHTML = "<b>TV Mode:</b> " + escapeHtml(reason) + " • left stick moves • A/Enter clicks • B/Esc back";
-        }
-        clearTimeout(idleHintTimer);
-        idleHintTimer = setTimeout(function(){
-          if (hint) hint.innerHTML = "<b>TV Mode:</b> left stick moves • A/Enter clicks • right stick/D-pad scrolls • B/Esc back";
-        }, 2600);
-      }
 
       function escapeHtml(value) {
         return String(value || "")
@@ -24497,88 +24451,217 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
           .replace(/"/g, "&quot;");
       }
 
-      function renderCursor() {
-        if (!cursor) return;
-        cursor.style.left = x + "px";
-        cursor.style.top = y + "px";
-      }
-
-      function clearTarget() {
-        if (targetEl) {
-          targetEl.classList.remove("swifly-tv-controller-target", "swifly-tv-controller-pressed");
-          targetEl = null;
+      function ensureHint() {
+        if (!hint) {
+          hint = document.createElement("div");
+          hint.id = "swiflyTvHint";
+          hint.innerHTML = "<b>TV Mode:</b> D-pad moves • Select clicks • Back goes back • Menu fullscreen";
+          document.body.appendChild(hint);
         }
       }
 
-      function findClickableAt(px, py) {
-        var el = document.elementFromPoint(px, py);
-        if (!el || el === cursor || el === hint) return null;
-        var clicky = el.closest && el.closest(CLICKABLE_SELECTOR);
-        return clicky || el;
+      function showHint(reason) {
+        ensureHint();
+        if (reason) {
+          hint.innerHTML = "<b>TV Mode:</b> " + escapeHtml(reason) + " • D-pad moves • Select clicks • Back goes back";
+        }
+        clearTimeout(hintTimer);
+        hintTimer = setTimeout(function(){
+          if (hint) hint.innerHTML = "<b>TV Mode:</b> D-pad moves • Select clicks • Back goes back • Menu fullscreen";
+        }, 2600);
       }
 
-      function updateTarget() {
-        if (!enabled) return;
-        var next = findClickableAt(x, y);
-        if (next === targetEl) return;
-        clearTarget();
-        targetEl = next;
-        if (targetEl && targetEl.classList) targetEl.classList.add("swifly-tv-controller-target");
+      function isVisible(el) {
+        if (!el || !el.isConnected) return false;
+        var r = el.getBoundingClientRect();
+        var style = getComputedStyle(el);
+        return r.width > 6 &&
+          r.height > 6 &&
+          r.bottom > 0 &&
+          r.right > 0 &&
+          r.top < window.innerHeight &&
+          r.left < window.innerWidth &&
+          style.visibility !== "hidden" &&
+          style.display !== "none" &&
+          Number(style.opacity || 1) > 0.05;
       }
 
-      function fireMouse(type, el) {
-        var event;
-        try {
-          event = new MouseEvent(type, {
-            bubbles: true,
-            cancelable: true,
-            view: window,
-            clientX: x,
-            clientY: y,
-            button: 0
+      function getFocusable() {
+        return Array.from(document.querySelectorAll(FOCUSABLE_SELECTOR))
+          .filter(function(el) {
+            if (!isVisible(el)) return false;
+            if (el.closest("[hidden], [aria-hidden='true']")) return false;
+            if (el.disabled) return false;
+            return true;
           });
-        } catch {
-          event = document.createEvent("MouseEvents");
-          event.initMouseEvent(type, true, true, window, 1, x, y, x, y, false, false, false, false, 0, null);
-        }
-        el.dispatchEvent(event);
       }
 
-      function clickTarget() {
-        if (!enabled) setEnabled(true, "Controller mode enabled");
-        updateTarget();
+      function centerOf(el) {
+        var r = el.getBoundingClientRect();
+        return {
+          x: r.left + r.width / 2,
+          y: r.top + r.height / 2,
+          rect: r
+        };
+      }
 
-        var el = targetEl || findClickableAt(x, y);
-        if (!el) return;
+      function clearFocus() {
+        if (focused && focused.classList) {
+          focused.classList.remove("swifly-tv-focus-target", "swifly-tv-focus-pressed");
+        }
+        focused = null;
+      }
 
-        try { el.focus?.({ preventScroll: true }); } catch {}
+      function setFocus(el, options) {
+        if (!el || !isVisible(el)) return false;
+        if (focused === el) return true;
 
-        if (cursor) {
-          cursor.classList.add("isClicking");
-          setTimeout(function(){ cursor && cursor.classList.remove("isClicking"); }, 130);
+        clearFocus();
+        focused = el;
+        focused.classList.add("swifly-tv-focus-target");
+
+        try { focused.focus?.({ preventScroll: true }); } catch {}
+
+        if (!options || options.scroll !== false) {
+          try {
+            focused.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+          } catch {
+            focused.scrollIntoView?.();
+          }
         }
 
-        if (el.classList) {
-          el.classList.add("swifly-tv-controller-pressed");
-          setTimeout(function(){ el.classList && el.classList.remove("swifly-tv-controller-pressed"); }, 150);
+        return true;
+      }
+
+      function firstFocus() {
+        var active = document.activeElement;
+        if (active && active !== document.body && isVisible(active) && active.matches?.(FOCUSABLE_SELECTOR)) {
+          return setFocus(active);
         }
 
-        fireMouse("pointerdown", el);
-        fireMouse("mousedown", el);
-        fireMouse("pointerup", el);
-        fireMouse("mouseup", el);
-        fireMouse("click", el);
+        var all = getFocusable();
+        if (!all.length) return false;
 
-        if (el.tagName === "VIDEO") {
-          if (el.paused) el.play?.().catch(function(){});
-          else el.pause?.();
+        var preferred = all.find(function(el) {
+          return el.matches(".active, [aria-current='page'], .is-active, .selected");
+        }) || all[0];
+
+        return setFocus(preferred);
+      }
+
+      function setEnabled(value, reason) {
+        enabled = Boolean(value);
+        localStorage.setItem("swiflytv.tvFocusMode", enabled ? "true" : "false");
+        localStorage.removeItem("swiflytv.tvControllerMode");
+
+        document.body.classList.toggle("swifly-tv-focus-mode", enabled);
+        document.body.classList.remove("swifly-tv-controller-mode");
+
+        ensureHint();
+
+        var oldCursor = document.getElementById("swiflyTvCursor");
+        if (oldCursor) oldCursor.remove();
+
+        if (enabled) {
+          showHint(reason || "TV focus mode enabled");
+          firstFocus();
+          startLoop();
+        } else {
+          clearFocus();
         }
+      }
+
+      function directionFromAxes(x, y) {
+        var dead = 0.34;
+        if (Math.abs(x) < dead && Math.abs(y) < dead) return "";
+        if (Math.abs(x) > Math.abs(y)) return x > 0 ? "right" : "left";
+        return y > 0 ? "down" : "up";
+      }
+
+      function moveFocus(direction, force) {
+        if (!enabled) setEnabled(true, "TV focus mode enabled");
+        if (!focused || !isVisible(focused)) firstFocus();
+        if (!focused) return;
+
+        var now = Date.now();
+        if (!force && now - lastMoveAt < 135) return;
+        lastMoveAt = now;
+
+        var current = centerOf(focused);
+        var candidates = getFocusable().filter(function(el) { return el !== focused; });
+        var best = null;
+        var bestScore = Infinity;
+
+        candidates.forEach(function(el) {
+          var c = centerOf(el);
+          var dx = c.x - current.x;
+          var dy = c.y - current.y;
+          var absX = Math.abs(dx);
+          var absY = Math.abs(dy);
+
+          if (direction === "left" && dx >= -8) return;
+          if (direction === "right" && dx <= 8) return;
+          if (direction === "up" && dy >= -8) return;
+          if (direction === "down" && dy <= 8) return;
+
+          var primary = direction === "left" || direction === "right" ? absX : absY;
+          var secondary = direction === "left" || direction === "right" ? absY : absX;
+
+          // Fire TV-like behavior: prefer items lined up in the requested direction.
+          var alignmentPenalty = secondary * 2.2;
+          var distancePenalty = primary * 1.05;
+          var diagonalPenalty = secondary > primary * 1.6 ? 1200 : 0;
+          var score = distancePenalty + alignmentPenalty + diagonalPenalty;
+
+          if (score < bestScore) {
+            bestScore = score;
+            best = el;
+          }
+        });
+
+        if (best) {
+          setFocus(best);
+          return;
+        }
+
+        if (direction === "up") scrollByAmount(0, -360);
+        if (direction === "down") scrollByAmount(0, 360);
+        if (direction === "left") scrollByAmount(-360, 0);
+        if (direction === "right") scrollByAmount(360, 0);
+
+        setTimeout(function(){ firstVisibleAfterScroll(direction); }, 160);
+      }
+
+      function firstVisibleAfterScroll(direction) {
+        var all = getFocusable();
+        if (!all.length) return;
+
+        var current = focused && isVisible(focused) ? centerOf(focused) : { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+        var best = null;
+        var bestScore = Infinity;
+
+        all.forEach(function(el) {
+          var c = centerOf(el);
+          var score = Math.abs(c.x - current.x) + Math.abs(c.y - current.y);
+          if (direction === "down") score += c.y < current.y ? 1000 : 0;
+          if (direction === "up") score += c.y > current.y ? 1000 : 0;
+          if (score < bestScore) {
+            bestScore = score;
+            best = el;
+          }
+        });
+
+        if (best) setFocus(best, { scroll: false });
       }
 
       function scrollByAmount(dx, dy) {
-        if (!dx && !dy) return;
-        var under = findClickableAt(x, y);
-        var scrollParent = under;
+        var now = Date.now();
+        if (now - lastScrollAt < 20) return;
+        lastScrollAt = now;
+
+        var base = focused || document.activeElement;
+        var scrollParent = base;
+
         while (scrollParent && scrollParent !== document.body) {
           var style = getComputedStyle(scrollParent);
           var canScrollY = /(auto|scroll)/.test(style.overflowY) && scrollParent.scrollHeight > scrollParent.clientHeight + 4;
@@ -24589,7 +24672,36 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
           }
           scrollParent = scrollParent.parentElement;
         }
+
         window.scrollBy({ left: dx, top: dy, behavior: "auto" });
+      }
+
+      function clickFocused() {
+        if (!enabled) setEnabled(true, "TV focus mode enabled");
+        if (!focused || !isVisible(focused)) firstFocus();
+        if (!focused) return;
+
+        focused.classList.add("swifly-tv-focus-pressed");
+        setTimeout(function(){ focused && focused.classList.remove("swifly-tv-focus-pressed"); }, 140);
+
+        try { focused.focus?.({ preventScroll: true }); } catch {}
+
+        if (focused.tagName === "VIDEO") {
+          if (focused.paused) focused.play?.().catch(function(){});
+          else focused.pause?.();
+          return;
+        }
+
+        if (focused.matches("input, textarea, select")) {
+          focused.click();
+          return;
+        }
+
+        focused.dispatchEvent(new MouseEvent("click", {
+          bubbles: true,
+          cancelable: true,
+          view: window
+        }));
       }
 
       function goBack() {
@@ -24597,9 +24709,27 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
         else location.href = "/";
       }
 
+      function focusSearch() {
+        var search = document.querySelector("input[type='search'], input[name='q'], input[placeholder*='Search' i], .searchInput");
+        if (search && isVisible(search)) {
+          setFocus(search);
+          try { search.focus(); } catch {}
+        } else {
+          showHint("No search box on this page");
+        }
+      }
+
+      function tryMenu() {
+        var menu = document.querySelector(".mobileMenuButton, [aria-label*='menu' i], [data-menu], .menu button, nav a");
+        if (menu && isVisible(menu)) {
+          setFocus(menu);
+          clickFocused();
+        }
+      }
+
       function toggleFullscreen() {
-        var stage = document.querySelector(".dsRoomMovieStage, .dsWatchShell, .watchPlayer, main") || document.documentElement;
-        if (!document.fullscreenElement) stage.requestFullscreen?.();
+        var target = document.querySelector(".dsRoomMovieStage, .dsWatchShell, .watchPlayer, main") || document.documentElement;
+        if (!document.fullscreenElement) target.requestFullscreen?.();
         else document.exitFullscreen?.();
       }
 
@@ -24613,161 +24743,66 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
         lastButtons[key] = pressed;
       }
 
-      function processGamepad(gamepad, dt) {
+      function processGamepad(gamepad) {
         if (!gamepad) return;
 
-        var ax0 = Number(gamepad.axes?.[0] || 0);
-        var ax1 = Number(gamepad.axes?.[1] || 0);
-        var ax2 = Number(gamepad.axes?.[2] || 0);
-        var ax3 = Number(gamepad.axes?.[3] || 0);
-        var dead = 0.12;
+        var dir = "";
 
-        function clean(v) { return Math.abs(v) > dead ? v : 0; }
+        if (buttonPressed(gamepad, 12)) dir = "up";
+        else if (buttonPressed(gamepad, 13)) dir = "down";
+        else if (buttonPressed(gamepad, 14)) dir = "left";
+        else if (buttonPressed(gamepad, 15)) dir = "right";
+        else dir = directionFromAxes(Number(gamepad.axes?.[0] || 0), Number(gamepad.axes?.[1] || 0));
 
-        ax0 = clean(ax0);
-        ax1 = clean(ax1);
-        ax2 = clean(ax2);
-        ax3 = clean(ax3);
-
-        var speed = buttonPressed(gamepad, 5) ? 1450 : 880;
-        var moved = false;
-
-        if (ax0 || ax1) {
-          x = clamp(x + ax0 * speed * dt, 8, window.innerWidth - 8);
-          y = clamp(y + ax1 * speed * dt, 8, window.innerHeight - 8);
-          moved = true;
+        var now = Date.now();
+        if (dir) {
+          if (dir !== lastAxisDirection) {
+            lastAxisDirection = dir;
+            axisRepeatStartedAt = now;
+            moveFocus(dir, true);
+          } else if (now - axisRepeatStartedAt > 340) {
+            moveFocus(dir, false);
+          }
+        } else {
+          lastAxisDirection = "";
+          axisRepeatStartedAt = 0;
         }
 
-        var scrollY = ax3 * 980 * dt;
-        var scrollX = ax2 * 980 * dt;
-
-        if (buttonPressed(gamepad, 12)) scrollY -= 620 * dt;
-        if (buttonPressed(gamepad, 13)) scrollY += 620 * dt;
-        if (buttonPressed(gamepad, 14)) scrollX -= 620 * dt;
-        if (buttonPressed(gamepad, 15)) scrollX += 620 * dt;
-        if (buttonPressed(gamepad, 4)) scrollY -= 1180 * dt;
-        if (buttonPressed(gamepad, 5)) scrollY += 1180 * dt;
-
+        var scrollX = 0;
+        var scrollY = 0;
+        var rx = Math.abs(Number(gamepad.axes?.[2] || 0)) > 0.25 ? Number(gamepad.axes?.[2] || 0) : 0;
+        var ry = Math.abs(Number(gamepad.axes?.[3] || 0)) > 0.25 ? Number(gamepad.axes?.[3] || 0) : 0;
+        scrollX += rx * 42;
+        scrollY += ry * 42;
+        if (buttonPressed(gamepad, 4)) scrollY -= 46;
+        if (buttonPressed(gamepad, 5)) scrollY += 46;
         if (scrollX || scrollY) scrollByAmount(scrollX, scrollY);
 
-        onButtonEdge(gamepad, 0, "a", clickTarget);          // A / Cross
-        onButtonEdge(gamepad, 1, "b", goBack);               // B / Circle
-        onButtonEdge(gamepad, 2, "x", function(){            // X / Square
-          var search = document.querySelector("input[type='search'], input[name='q'], input[placeholder*='Search' i]");
-          if (search) {
-            search.focus();
-            x = search.getBoundingClientRect().left + 22;
-            y = search.getBoundingClientRect().top + search.getBoundingClientRect().height / 2;
-          }
-        });
-        onButtonEdge(gamepad, 3, "y", function(){            // Y / Triangle
-          var menu = document.querySelector(".menu button, .mobileMenuButton, [aria-label*='menu' i], [data-menu]");
-          if (menu) {
-            var r = menu.getBoundingClientRect();
-            x = r.left + r.width / 2;
-            y = r.top + r.height / 2;
-            clickTarget();
-          }
-        });
-        onButtonEdge(gamepad, 9, "start", toggleFullscreen); // Start/Menu
-        onButtonEdge(gamepad, 8, "select", function(){       // Back/View
-          showHint("Controller help");
-        });
+        onButtonEdge(gamepad, 0, "a", clickFocused);       // A / Cross
+        onButtonEdge(gamepad, 1, "b", goBack);             // B / Circle
+        onButtonEdge(gamepad, 2, "x", focusSearch);        // X / Square
+        onButtonEdge(gamepad, 3, "y", tryMenu);            // Y / Triangle
+        onButtonEdge(gamepad, 8, "select", function(){ showHint("D-pad moves • A selects • B goes back • Start fullscreen"); });
+        onButtonEdge(gamepad, 9, "start", toggleFullscreen);
         onButtonEdge(gamepad, 16, "home", function(){ location.href = "/"; });
-
-        if (moved) {
-          renderCursor();
-          updateTarget();
-        }
       }
 
       function loop(now) {
         raf = requestAnimationFrame(loop);
         if (!enabled) return;
 
-        var dt = Math.min(0.04, Math.max(0.001, (now - lastFrame) / 1000));
-        lastFrame = now;
+        if (!focused || !isVisible(focused)) firstFocus();
 
         var pads = navigator.getGamepads ? Array.from(navigator.getGamepads()).filter(Boolean) : [];
-        if (!pads.length) {
-          updateTarget();
-          return;
-        }
+        if (pads.length) processGamepad(pads[0]);
 
-        processGamepad(pads[0], dt);
+        lastFrame = now;
       }
 
       function startLoop() {
-        ensureUi();
         if (!raf) {
           lastFrame = performance.now();
           raf = requestAnimationFrame(loop);
-        }
-      }
-
-      function moveToFocused() {
-        var el = document.activeElement;
-        if (!el || el === document.body) return;
-        var r = el.getBoundingClientRect();
-        if (r.width && r.height) {
-          x = clamp(r.left + r.width / 2, 8, window.innerWidth - 8);
-          y = clamp(r.top + r.height / 2, 8, window.innerHeight - 8);
-          renderCursor();
-          updateTarget();
-        }
-      }
-
-      function focusNearest(direction) {
-        var now = Date.now();
-        if (now - lastKeyboardMove < 80) return;
-        lastKeyboardMove = now;
-
-        var candidates = Array.from(document.querySelectorAll(CLICKABLE_SELECTOR))
-          .filter(function(el) {
-            var r = el.getBoundingClientRect();
-            return r.width > 4 && r.height > 4 && r.bottom > 0 && r.right > 0 && r.top < window.innerHeight && r.left < window.innerWidth;
-          });
-
-        if (!candidates.length) return;
-
-        var best = null;
-        var bestScore = Infinity;
-
-        candidates.forEach(function(el) {
-          var r = el.getBoundingClientRect();
-          var cx = r.left + r.width / 2;
-          var cy = r.top + r.height / 2;
-          var dx = cx - x;
-          var dy = cy - y;
-
-          if (direction === "left" && dx >= -8) return;
-          if (direction === "right" && dx <= 8) return;
-          if (direction === "up" && dy >= -8) return;
-          if (direction === "down" && dy <= 8) return;
-
-          var primary = direction === "left" || direction === "right" ? Math.abs(dx) : Math.abs(dy);
-          var secondary = direction === "left" || direction === "right" ? Math.abs(dy) : Math.abs(dx);
-          var score = primary * 1.6 + secondary;
-
-          if (score < bestScore) {
-            bestScore = score;
-            best = el;
-          }
-        });
-
-        if (best) {
-          var br = best.getBoundingClientRect();
-          x = clamp(br.left + br.width / 2, 8, window.innerWidth - 8);
-          y = clamp(br.top + br.height / 2, 8, window.innerHeight - 8);
-          try { best.focus?.({ preventScroll: true }); } catch {}
-          best.scrollIntoView?.({ block: "nearest", inline: "nearest" });
-          renderCursor();
-          updateTarget();
-        } else {
-          if (direction === "up") scrollByAmount(0, -280);
-          if (direction === "down") scrollByAmount(0, 280);
-          if (direction === "left") scrollByAmount(-280, 0);
-          if (direction === "right") scrollByAmount(280, 0);
         }
       }
 
@@ -24789,42 +24824,37 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
         }
 
         if (!enabled && ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Enter", "Escape", "Backspace"].includes(key)) {
-          setEnabled(true, "TV remote mode enabled");
+          setEnabled(true, "TV focus mode enabled");
         }
 
         if (!enabled) return;
 
-        if (key === "ArrowUp") { focusNearest("up"); event.preventDefault(); }
-        else if (key === "ArrowDown") { focusNearest("down"); event.preventDefault(); }
-        else if (key === "ArrowLeft") { focusNearest("left"); event.preventDefault(); }
-        else if (key === "ArrowRight") { focusNearest("right"); event.preventDefault(); }
-        else if (key === "Enter" || key === " ") { clickTarget(); event.preventDefault(); }
+        if (key === "ArrowUp") { moveFocus("up", true); event.preventDefault(); }
+        else if (key === "ArrowDown") { moveFocus("down", true); event.preventDefault(); }
+        else if (key === "ArrowLeft") { moveFocus("left", true); event.preventDefault(); }
+        else if (key === "ArrowRight") { moveFocus("right", true); event.preventDefault(); }
+        else if (key === "Enter" || key === " ") { clickFocused(); event.preventDefault(); }
         else if (key === "Escape" || key === "Backspace") { goBack(); event.preventDefault(); }
         else if (key.toLowerCase() === "f") { toggleFullscreen(); event.preventDefault(); }
+        else if (key === "/") { focusSearch(); event.preventDefault(); }
       }, true);
 
-      window.addEventListener("resize", function() {
-        x = clamp(x, 8, window.innerWidth - 8);
-        y = clamp(y, 8, window.innerHeight - 8);
-        renderCursor();
+      document.addEventListener("focusin", function(event) {
+        if (!enabled) return;
+        if (event.target && event.target.matches && event.target.matches(FOCUSABLE_SELECTOR)) {
+          setFocus(event.target, { scroll: false });
+        }
       });
 
-      document.addEventListener("mousemove", function(event) {
-        if (!enabled) return;
-        // Let a real mouse reposition the TV cursor if someone uses an air mouse.
-        x = event.clientX;
-        y = event.clientY;
-        renderCursor();
-        updateTarget();
-      }, { passive: true });
-
       document.addEventListener("DOMContentLoaded", function() {
-        ensureUi();
+        var oldCursor = document.getElementById("swiflyTvCursor");
+        if (oldCursor) oldCursor.remove();
+
+        ensureHint();
         if (enabled) setEnabled(true, "TV mode restored");
         startLoop();
       });
 
-      // Some TV browsers do not fire gamepadconnected until getGamepads is touched.
       setInterval(function() {
         if (!navigator.getGamepads) return;
         var pads = Array.from(navigator.getGamepads()).filter(Boolean);
@@ -24832,6 +24862,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }, 1500);
     })();
   </script>
+
 
 </body>
 </html>`;
