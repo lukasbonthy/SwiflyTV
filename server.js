@@ -22017,6 +22017,442 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v104 SOCIAL FEATURES
+       Social hub, DMs, call links, and watch-room invites.
+       No root palette changes.
+       ============================================================ */
+
+    .dsSocialHero {
+      width: min(1320px, calc(100vw - 32px));
+      margin: 0 auto 20px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: center;
+      padding: clamp(18px, 3vw, 30px);
+      border-radius: 30px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.038)),
+        rgba(0,0,0,.16);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 22px 64px rgba(0,0,0,.26);
+    }
+
+    .dsSocialHero h2 {
+      margin: 8px 0 8px;
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-size: clamp(32px, 5vw, 70px);
+      line-height: .96;
+      letter-spacing: -.075em;
+    }
+
+    .dsSocialHero p {
+      max-width: 760px;
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+      font-weight: 650;
+    }
+
+    .dsSocialHeroActions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .dsSocialShell {
+      width: min(1320px, calc(100vw - 32px));
+      margin: 0 auto 28px;
+      display: grid;
+      grid-template-columns: 300px minmax(240px, 320px) minmax(0, 1fr) 300px;
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .dsSocialPanel {
+      min-width: 0;
+      padding: 16px;
+      border-radius: 26px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.070), rgba(255,255,255,.035)),
+        rgba(0,0,0,.16);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 18px 54px rgba(0,0,0,.23);
+    }
+
+    .dsSocialPanel h2,
+    .dsSocialPanel h3 {
+      margin: 0 0 8px;
+      font-family: "Space Grotesk", Inter, sans-serif;
+      letter-spacing: -.045em;
+    }
+
+    .dsSocialPanel p {
+      color: var(--muted);
+      line-height: 1.5;
+      margin: 0 0 14px;
+      font-size: 14px;
+    }
+
+    .dsSocialPanel form,
+    .dsSocialInlineForm {
+      display: grid;
+      gap: 10px;
+    }
+
+    .dsSocialPanel label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .dsSocialPanel input,
+    .dsSocialPanel textarea {
+      width: 100%;
+      min-height: 44px;
+      border-radius: 16px !important;
+    }
+
+    .dsSocialStatus {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      color: var(--muted);
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      font-weight: 850;
+      font-size: 12px;
+    }
+
+    .dsSocialStatus.isGood {
+      color: var(--text);
+      background: rgba(255,255,255,.10);
+    }
+
+    .dsSocialOnlineBox {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,.10);
+    }
+
+    .dsSocialMiniList,
+    .dsSocialFriendList {
+      display: grid;
+      gap: 8px;
+    }
+
+    .dsSocialMiniList button,
+    .dsSocialFriendList button {
+      width: 100%;
+      min-height: 56px;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      grid-template-rows: auto auto;
+      gap: 2px 10px;
+      align-items: center;
+      text-align: left;
+      padding: 10px;
+      border-radius: 18px;
+      color: var(--text);
+      background: rgba(255,255,255,.055);
+      border: 1px solid rgba(255,255,255,.09);
+      cursor: pointer;
+    }
+
+    .dsSocialFriendList button.active,
+    .dsSocialMiniList button:hover,
+    .dsSocialFriendList button:hover {
+      background: rgba(255,255,255,.10);
+      border-color: rgba(255,255,255,.18);
+    }
+
+    .dsSocialMiniList button > span,
+    .dsSocialFriendList button > span {
+      grid-row: span 2;
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      background: rgba(255,255,255,.10);
+      font-weight: 950;
+    }
+
+    .dsSocialMiniList b,
+    .dsSocialFriendList b {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .dsSocialMiniList small,
+    .dsSocialMiniList span:last-child,
+    .dsSocialFriendList small {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .dsSocialPanelHead,
+    .dsSocialChatTop {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .dsSocialPanelHead button,
+    .dsSocialChatActions button,
+    .dsSocialCallCard button,
+    .dsSocialInlineForm button,
+    .dsSocialMessageForm button,
+    #socialCopyInvite {
+      min-height: 38px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.08);
+      color: var(--text);
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .dsSocialChatActions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      justify-content: flex-end;
+    }
+
+    .dsSocialChatActions button {
+      padding: 0 10px;
+      font-size: 12px;
+    }
+
+    .dsSocialMessages {
+      height: 470px;
+      overflow: auto;
+      display: grid;
+      align-content: start;
+      gap: 10px;
+      padding: 12px;
+      border-radius: 22px;
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.08);
+      scrollbar-width: thin;
+    }
+
+    .dsSocialBubble {
+      width: fit-content;
+      max-width: min(78%, 520px);
+      display: grid;
+      gap: 4px;
+      padding: 10px 12px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.075);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .dsSocialBubble.mine {
+      margin-left: auto;
+      background: rgba(255,255,255,.12);
+    }
+
+    .dsSocialBubble span {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .dsSocialBubble p {
+      margin: 0;
+      color: var(--text);
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .dsSocialMessageForm {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .dsSocialMessageForm button {
+      padding: 0 16px;
+    }
+
+    .dsSocialEmpty {
+      color: var(--muted);
+      padding: 12px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.045);
+      border: 1px dashed rgba(255,255,255,.10);
+      font-weight: 750;
+    }
+
+    .dsSocialCallPanel {
+      display: grid;
+      align-content: start;
+      gap: 12px;
+    }
+
+    .dsSocialCallCard {
+      display: grid;
+      gap: 8px;
+      padding: 13px;
+      border-radius: 20px;
+      background: rgba(255,255,255,.055);
+      border: 1px solid rgba(255,255,255,.09);
+    }
+
+    .dsSocialCallCard span {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .dsSocialCallCard strong {
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-size: 18px;
+      letter-spacing: -.035em;
+    }
+
+    .dsSocialShareBox {
+      display: grid;
+      gap: 8px;
+    }
+
+    .dsSocialShareBox textarea {
+      min-height: 94px;
+      resize: vertical;
+    }
+
+    .dsSocialFeatureGrid {
+      width: min(1320px, calc(100vw - 32px));
+      margin: 0 auto 72px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .dsSocialFeatureGrid article {
+      padding: 18px;
+      border-radius: 24px;
+      background: rgba(255,255,255,.055);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .dsSocialFeatureGrid span {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .dsSocialFeatureGrid h2 {
+      margin: 10px 0 8px;
+      font-family: "Space Grotesk", Inter, sans-serif;
+      letter-spacing: -.05em;
+    }
+
+    .dsSocialFeatureGrid p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .dsWatchroomSocialCta {
+      margin-top: 14px;
+    }
+
+    @media(max-width: 1220px) {
+      .dsSocialShell {
+        grid-template-columns: 280px minmax(0, 1fr);
+      }
+
+      .dsSocialProfilePanel,
+      .dsSocialFriendsPanel,
+      .dsSocialMessagePanel,
+      .dsSocialCallPanel {
+        min-height: 0;
+      }
+    }
+
+    @media(max-width: 860px) {
+      .dsSocialHero,
+      .dsSocialShell,
+      .dsSocialFeatureGrid {
+        width: min(100vw - 22px, 100%);
+      }
+
+      .dsSocialHero {
+        margin-top: 82px;
+        grid-template-columns: 1fr;
+        border-radius: 24px;
+        padding: 18px;
+      }
+
+      .dsSocialHero h2 {
+        font-size: clamp(34px, 11vw, 62px);
+      }
+
+      .dsSocialHeroActions {
+        display: grid;
+        grid-template-columns: 1fr;
+        justify-content: stretch;
+      }
+
+      .dsSocialHeroActions a,
+      .dsSocialHeroActions button {
+        width: 100%;
+      }
+
+      .dsSocialShell {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      .dsSocialPanel {
+        border-radius: 22px;
+        padding: 14px;
+      }
+
+      .dsSocialMessages {
+        height: 54vh;
+        min-height: 340px;
+      }
+
+      .dsSocialChatTop,
+      .dsSocialPanelHead {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .dsSocialChatActions {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .dsSocialMessageForm {
+        grid-template-columns: 1fr;
+      }
+
+      .dsSocialFeatureGrid {
+        grid-template-columns: 1fr;
+      }
+    }
+
   </style>
 
     <script>
@@ -22122,6 +22558,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
           ${navLink("/trending", "New & Popular", "trending", active)}
           ${navLink("/my-list", "My List", "watchlist", active)}
           ${navLink("/liked", "Liked", "liked", active)}
+          ${navLink("/social", "Social", "social", active)}
           ${navLink("/watchrooms", "Watch Rooms", "watchrooms", active)}
           ${navLink("/browse-by-languages", "Browse by Languages", "genres", active)}
         </nav>
@@ -22151,6 +22588,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
           <div class="dsProfileDropdown">
             <a href="/profiles"><span>☺</span><b>Profiles</b></a>
             <a href="/account"><span>⚙</span><b>Account</b></a>
+            <a href="/social"><span>✉</span><b>Social</b></a>
             <a href="/watchrooms"><span>◎</span><b>Watch Rooms</b></a>
             <a href="/continue-watching"><span>▶</span><b>Continue Watching</b></a>
             <a href="/my-list"><span>＋</span><b>My List</b></a>
@@ -22184,7 +22622,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
   <nav class="mobileNav">
     ${navLink("/", "Home", "home", active)}
     ${navLink("/movies", "Movies", "movies", active)}
-    ${navLink("/tv", "TV", "tv", active)}
+    ${navLink("/social", "Social", "social", active)}
     <a href="/search" data-open-mobile-search class="${active === "search" ? "active" : ""}">Search</a>
     ${navLink("/my-list", "List", "watchlist", active)}
     ${navLink("/watchrooms", "Rooms", "watchrooms", active)}
@@ -23678,6 +24116,7 @@ async function homePage(req, res) {
           <a class="dsPrimaryBtn" href="/movies">Browse Movies</a>
           <a class="dsSecondaryBtn" href="/tv">Browse TV</a>
           <a class="dsGhostPill" href="/watchrooms">Watch Rooms</a>
+        <a class="dsGhostPill" href="/social">Social</a>
         </div>
         <div class="dsCoupleHomeCards">
           <article><b>01</b><span>Find something</span></article>
@@ -23691,6 +24130,7 @@ async function homePage(req, res) {
         <a href="/tv"><span>📺</span><b>TV Shows</b><small>Find series</small></a>
         <a href="/trending"><span>↗</span><b>Trending</b><small>Popular now</small></a>
         <a href="/watchrooms"><span>◎</span><b>Watch Rooms</b><small>Sync with friends</small></a>
+        <a href="/social"><span>✉</span><b>Social</b><small>Message and call</small></a>
         <a href="/my-list"><span>＋</span><b>My List</b><small>Saved titles</small></a>
         <a href="/search"><span>⌕</span><b>Search</b><small>Find anything</small></a>
       </section>
@@ -25183,6 +25623,479 @@ function likedPage(req, res) {
 
 
 
+
+function socialPage(req, res) {
+  const body = `<main class="dsPlainPage dsSocialPage">
+    ${dsPageHeader("Social", "Message friends, send watch invites, start FaceTime-style calls, or launch a synced watch room together.", "Social")}
+
+    <section class="dsSocialHero">
+      <div>
+        <span class="dsEyebrow">Social hub</span>
+        <h2>Talk before, during, and after the movie.</h2>
+        <p>Add friends by handle, send messages, open FaceTime/Meet links, or invite someone into a SwiflyTV Watch Room.</p>
+      </div>
+      <div class="dsSocialHeroActions">
+        <button class="dsPrimaryBtn" type="button" data-social-start-call>Start call</button>
+        <a class="dsSecondaryBtn" href="/watchrooms">Create Watch Room</a>
+      </div>
+    </section>
+
+    <section class="dsSocialShell">
+      <aside class="dsSocialPanel dsSocialProfilePanel">
+        <h2>Your social profile</h2>
+        <p>Set a display name and handle for this browser. This is lightweight and saves locally.</p>
+        <form id="socialProfileForm">
+          <label>Display name<input name="displayName" placeholder="Your name" maxlength="40" /></label>
+          <label>Handle<input name="handle" placeholder="lukas" maxlength="28" /></label>
+          <button class="dsPrimaryBtn" type="submit">Save profile</button>
+        </form>
+        <div class="dsSocialStatus" id="socialConnectionStatus">Offline</div>
+
+        <div class="dsSocialOnlineBox">
+          <h3>Online now</h3>
+          <div id="socialOnlineList" class="dsSocialMiniList"></div>
+        </div>
+      </aside>
+
+      <aside class="dsSocialPanel dsSocialFriendsPanel">
+        <div class="dsSocialPanelHead">
+          <h2>Friends</h2>
+          <button type="button" id="socialClearFriends">Clear</button>
+        </div>
+        <form id="socialFriendForm" class="dsSocialInlineForm">
+          <input name="friend" placeholder="friend-handle" maxlength="28" />
+          <button type="submit">Add</button>
+        </form>
+        <div id="socialFriendList" class="dsSocialFriendList"></div>
+      </aside>
+
+      <section class="dsSocialPanel dsSocialMessagePanel">
+        <div class="dsSocialChatTop">
+          <div>
+            <span class="dsEyebrow">Messages</span>
+            <h2 id="socialChatTitle">Pick a friend</h2>
+          </div>
+          <div class="dsSocialChatActions">
+            <button type="button" id="socialFaceTimeBtn">FaceTime</button>
+            <button type="button" id="socialMeetBtn">Meet</button>
+            <button type="button" id="socialInviteRoomBtn">Invite</button>
+          </div>
+        </div>
+
+        <div id="socialMessages" class="dsSocialMessages">
+          <div class="dsSocialEmpty">Choose or add a friend to start messaging.</div>
+        </div>
+
+        <form id="socialMessageForm" class="dsSocialMessageForm">
+          <input name="message" placeholder="Message..." maxlength="360" autocomplete="off" />
+          <button type="submit">Send</button>
+        </form>
+      </section>
+
+      <aside class="dsSocialPanel dsSocialCallPanel">
+        <h2>Call tools</h2>
+        <p>Use external call links or SwiflyTV Watch Rooms. FaceTime links open on Apple devices that support them.</p>
+
+        <div class="dsSocialCallCard">
+          <span>FaceTime-style</span>
+          <strong>Open FaceTime</strong>
+          <button type="button" id="socialOpenFaceTime">Open FaceTime link</button>
+        </div>
+
+        <div class="dsSocialCallCard">
+          <span>Browser meeting</span>
+          <strong>Google Meet</strong>
+          <button type="button" id="socialOpenMeet">Open Meet</button>
+        </div>
+
+        <div class="dsSocialCallCard">
+          <span>SwiflyTV</span>
+          <strong>Watch Room call invite</strong>
+          <button type="button" id="socialOpenRoom">Create room invite</button>
+        </div>
+
+        <div class="dsSocialShareBox">
+          <textarea id="socialInviteText" readonly placeholder="Invite text will appear here..."></textarea>
+          <button type="button" id="socialCopyInvite">Copy invite</button>
+        </div>
+      </aside>
+    </section>
+
+    <section class="dsSocialFeatureGrid">
+      <article><span>Messages</span><h2>DM friends</h2><p>Messages save locally and send live when the other browser is online.</p></article>
+      <article><span>Calls</span><h2>FaceTime / Meet</h2><p>Open external call links right from SwiflyTV.</p></article>
+      <article><span>Invites</span><h2>Share rooms</h2><p>Create watch-room invites and send them to friends.</p></article>
+    </section>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      (function swiflySocialPage(){
+        var socket = null;
+        var profile = readJson("swiflytv.socialProfile", null) || {};
+        var friends = readJson("swiflytv.socialFriends", []);
+        var selectedFriend = friends[0] || "";
+        var messages = readJson("swiflytv.socialMessages", {});
+        var online = [];
+
+        var profileForm = document.getElementById("socialProfileForm");
+        var friendForm = document.getElementById("socialFriendForm");
+        var messageForm = document.getElementById("socialMessageForm");
+        var friendList = document.getElementById("socialFriendList");
+        var messageList = document.getElementById("socialMessages");
+        var chatTitle = document.getElementById("socialChatTitle");
+        var statusEl = document.getElementById("socialConnectionStatus");
+        var onlineList = document.getElementById("socialOnlineList");
+        var inviteText = document.getElementById("socialInviteText");
+
+        function readJson(key, fallback) {
+          try {
+            var saved = JSON.parse(localStorage.getItem(key) || "null");
+            return saved === null ? fallback : saved;
+          } catch {
+            return fallback;
+          }
+        }
+
+        function saveJson(key, value) {
+          localStorage.setItem(key, JSON.stringify(value));
+        }
+
+        function cleanHandle(value) {
+          return String(value || "")
+            .trim()
+            .toLowerCase()
+            .replace(/^@+/, "")
+            .replace(/[^a-z0-9._-]/g, "")
+            .slice(0, 28);
+        }
+
+        function esc(value) {
+          return String(value || "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;");
+        }
+
+        function threadKey(a, b) {
+          return [cleanHandle(a), cleanHandle(b)].sort().join("__");
+        }
+
+        function getThread(friend) {
+          var key = threadKey(profile.handle, friend);
+          return Array.isArray(messages[key]) ? messages[key] : [];
+        }
+
+        function saveThread(friend, list) {
+          var key = threadKey(profile.handle, friend);
+          messages[key] = list.slice(-120);
+          saveJson("swiflytv.socialMessages", messages);
+        }
+
+        function setStatus(text, good) {
+          if (!statusEl) return;
+          statusEl.textContent = text;
+          statusEl.classList.toggle("isGood", Boolean(good));
+        }
+
+        function roomCode() {
+          return Math.random().toString(36).slice(2, 7) + "-" + Math.random().toString(36).slice(2, 7);
+        }
+
+        function roomUrl() {
+          var code = roomCode();
+          return location.origin + "/watchrooms/" + encodeURIComponent(code) + "?name=" + encodeURIComponent("Social watch");
+        }
+
+        function selectedOrPrompt() {
+          var friend = cleanHandle(selectedFriend || "");
+          if (!friend) {
+            friend = cleanHandle(prompt("Friend handle?") || "");
+            if (friend && !friends.includes(friend)) {
+              friends.push(friend);
+              saveJson("swiflytv.socialFriends", friends);
+              selectedFriend = friend;
+              renderFriends();
+            }
+          }
+          return friend;
+        }
+
+        function makeInvite(kind) {
+          var friend = selectedOrPrompt();
+          var url = roomUrl();
+          var text = "Join me on SwiflyTV" + (friend ? ", @" + friend : "") + ": " + url;
+          if (kind === "call") text = "Call/watch with me on SwiflyTV: " + url;
+          if (inviteText) inviteText.value = text;
+          if (socket && friend) {
+            socket.emit("social:call-invite", {
+              to: friend,
+              from: profile.handle,
+              fromName: profile.displayName || profile.handle,
+              roomUrl: url,
+              kind: kind || "watch-room"
+            });
+          }
+          return { friend: friend, url: url, text: text };
+        }
+
+        function renderProfile() {
+          if (!profileForm) return;
+          profileForm.displayName.value = profile.displayName || "";
+          profileForm.handle.value = profile.handle || "";
+        }
+
+        function renderFriends() {
+          friends = Array.from(new Set((friends || []).map(cleanHandle).filter(Boolean)));
+          saveJson("swiflytv.socialFriends", friends);
+
+          if (!friendList) return;
+          if (!friends.length) {
+            friendList.innerHTML = '<div class="dsSocialEmpty">No friends yet. Add a handle above.</div>';
+            return;
+          }
+
+          friendList.innerHTML = friends.map(function(friend) {
+            var isSelected = friend === selectedFriend;
+            var isOnline = online.some(function(user){ return user.handle === friend; });
+            return '<button type="button" class="' + (isSelected ? "active" : "") + '" data-friend="' + esc(friend) + '">' +
+              '<span>@' + esc(friend).slice(0,1).toUpperCase() + '</span>' +
+              '<b>@' + esc(friend) + '</b>' +
+              '<small>' + (isOnline ? "Online" : "Saved") + '</small>' +
+            '</button>';
+          }).join("");
+
+          friendList.querySelectorAll("[data-friend]").forEach(function(button) {
+            button.addEventListener("click", function() {
+              selectedFriend = cleanHandle(button.getAttribute("data-friend") || "");
+              renderFriends();
+              renderMessages();
+            });
+          });
+        }
+
+        function renderMessages() {
+          var friend = cleanHandle(selectedFriend || "");
+          if (chatTitle) chatTitle.textContent = friend ? "@" + friend : "Pick a friend";
+          if (!messageList) return;
+
+          if (!friend) {
+            messageList.innerHTML = '<div class="dsSocialEmpty">Choose or add a friend to start messaging.</div>';
+            return;
+          }
+
+          var thread = getThread(friend);
+          if (!thread.length) {
+            messageList.innerHTML = '<div class="dsSocialEmpty">No messages yet. Say hi.</div>';
+            return;
+          }
+
+          messageList.innerHTML = thread.map(function(message) {
+            var mine = cleanHandle(message.from) === cleanHandle(profile.handle);
+            return '<div class="dsSocialBubble ' + (mine ? "mine" : "theirs") + '">' +
+              '<span>' + esc(mine ? "You" : "@" + (message.from || friend)) + '</span>' +
+              '<p>' + esc(message.text) + '</p>' +
+            '</div>';
+          }).join("");
+          messageList.scrollTop = messageList.scrollHeight;
+        }
+
+        function renderOnline() {
+          if (!onlineList) return;
+          var visible = online.filter(function(user) { return user.handle !== profile.handle; }).slice(0, 8);
+          if (!visible.length) {
+            onlineList.innerHTML = '<div class="dsSocialEmpty">No one online yet.</div>';
+            return;
+          }
+
+          onlineList.innerHTML = visible.map(function(user) {
+            return '<button type="button" data-online="' + esc(user.handle) + '"><b>@' + esc(user.handle) + '</b><span>' + esc(user.name || "Online") + '</span></button>';
+          }).join("");
+
+          onlineList.querySelectorAll("[data-online]").forEach(function(button) {
+            button.addEventListener("click", function() {
+              var friend = cleanHandle(button.getAttribute("data-online") || "");
+              if (friend && !friends.includes(friend)) {
+                friends.push(friend);
+                saveJson("swiflytv.socialFriends", friends);
+              }
+              selectedFriend = friend;
+              renderFriends();
+              renderMessages();
+            });
+          });
+        }
+
+        function addMessage(friend, message) {
+          var thread = getThread(friend);
+          thread.push(message);
+          saveThread(friend, thread);
+          renderMessages();
+        }
+
+        function connectSocket() {
+          if (!profile.handle || !window.io) {
+            setStatus(profile.handle ? "Socket unavailable" : "Set profile to go online", false);
+            return;
+          }
+
+          socket = window.io();
+
+          socket.on("connect", function() {
+            setStatus("Online as @" + profile.handle, true);
+            socket.emit("social:join", {
+              name: profile.displayName || profile.handle,
+              handle: profile.handle
+            });
+          });
+
+          socket.on("disconnect", function() {
+            setStatus("Offline", false);
+          });
+
+          socket.on("social:presence", function(data) {
+            online = Array.isArray(data && data.users) ? data.users : [];
+            renderOnline();
+            renderFriends();
+          });
+
+          socket.on("social:dm", function(message) {
+            if (!message) return;
+            var other = cleanHandle(message.from) === cleanHandle(profile.handle) ? cleanHandle(message.to) : cleanHandle(message.from);
+            if (!other) return;
+            addMessage(other, message);
+            if (!friends.includes(other) && other !== profile.handle) {
+              friends.push(other);
+              saveJson("swiflytv.socialFriends", friends);
+              renderFriends();
+            }
+          });
+
+          socket.on("social:call-invite", function(invite) {
+            if (!invite || !invite.roomUrl) return;
+            var from = invite.fromName || invite.from || "Friend";
+            var ok = confirm(from + " invited you to a SwiflyTV Watch Room. Open it?");
+            if (ok) location.href = invite.roomUrl;
+          });
+        }
+
+        profileForm?.addEventListener("submit", function(event) {
+          event.preventDefault();
+          profile = {
+            displayName: String(profileForm.displayName.value || "").trim().slice(0, 40) || "Guest",
+            handle: cleanHandle(profileForm.handle.value || "")
+          };
+          if (!profile.handle) {
+            alert("Pick a handle first.");
+            return;
+          }
+          saveJson("swiflytv.socialProfile", profile);
+          if (socket) socket.disconnect();
+          connectSocket();
+          renderProfile();
+          renderFriends();
+          renderMessages();
+        });
+
+        friendForm?.addEventListener("submit", function(event) {
+          event.preventDefault();
+          var friend = cleanHandle(friendForm.friend.value || "");
+          if (!friend) return;
+          if (friend === profile.handle) {
+            alert("That is your handle.");
+            return;
+          }
+          if (!friends.includes(friend)) friends.push(friend);
+          selectedFriend = friend;
+          saveJson("swiflytv.socialFriends", friends);
+          friendForm.reset();
+          renderFriends();
+          renderMessages();
+        });
+
+        messageForm?.addEventListener("submit", function(event) {
+          event.preventDefault();
+          var friend = cleanHandle(selectedFriend || "");
+          var input = messageForm.message;
+          var text = String(input.value || "").trim();
+          if (!friend) {
+            alert("Pick a friend first.");
+            return;
+          }
+          if (!profile.handle) {
+            alert("Save your social profile first.");
+            return;
+          }
+          if (!text) return;
+          input.value = "";
+
+          var message = {
+            from: profile.handle,
+            to: friend,
+            text: text.slice(0, 360),
+            at: Date.now()
+          };
+
+          addMessage(friend, message);
+          if (socket && socket.connected) socket.emit("social:dm", message);
+        });
+
+        document.getElementById("socialClearFriends")?.addEventListener("click", function() {
+          if (!confirm("Clear saved friends?")) return;
+          friends = [];
+          selectedFriend = "";
+          saveJson("swiflytv.socialFriends", friends);
+          renderFriends();
+          renderMessages();
+        });
+
+        function openFaceTime() {
+          var friend = selectedOrPrompt();
+          if (!friend) return;
+          location.href = "facetime://" + encodeURIComponent(friend);
+        }
+
+        function openMeet() {
+          window.open("https://meet.google.com/new", "_blank", "noopener,noreferrer");
+        }
+
+        function openRoom() {
+          var invite = makeInvite("watch-room");
+          location.href = invite.url;
+        }
+
+        document.getElementById("socialFaceTimeBtn")?.addEventListener("click", openFaceTime);
+        document.getElementById("socialOpenFaceTime")?.addEventListener("click", openFaceTime);
+        document.getElementById("socialMeetBtn")?.addEventListener("click", openMeet);
+        document.getElementById("socialOpenMeet")?.addEventListener("click", openMeet);
+        document.getElementById("socialInviteRoomBtn")?.addEventListener("click", function(){ makeInvite("call"); });
+        document.getElementById("socialOpenRoom")?.addEventListener("click", openRoom);
+        document.querySelector("[data-social-start-call]")?.addEventListener("click", function(){ makeInvite("call"); });
+
+        document.getElementById("socialCopyInvite")?.addEventListener("click", async function() {
+          if (!inviteText || !inviteText.value) makeInvite("watch-room");
+          try {
+            await navigator.clipboard.writeText(inviteText.value);
+            alert("Invite copied.");
+          } catch {
+            inviteText.select();
+            document.execCommand("copy");
+            alert("Invite copied.");
+          }
+        });
+
+        renderProfile();
+        renderFriends();
+        renderMessages();
+        renderOnline();
+        connectSocket();
+      })();
+    </script>
+  </main>`;
+
+  res.send(pageShell({ title: `${SITE_NAME} — Social`, active: "social", body }));
+}
+
 function watchroomsPage(req, res) {
   const roomId = createRoomId();
   const body = `<main class="dsPlainPage dsWatchroomsPage dsWatchroomsPro">
@@ -25198,6 +26111,11 @@ function watchroomsPage(req, res) {
           <span>Chat</span>
           <span>Synced play</span>
           <span>Host controls</span>
+          <span>Messages</span>
+          <span>Calls</span>
+        </div>
+        <div class="dsWatchroomSocialCta">
+          <a class="dsSecondaryBtn" href="/social">Open Social Hub</a>
         </div>
       </div>
       <form id="quickCreateWatchroomForm" class="dsQuickRoomForm">
@@ -29203,6 +30121,11 @@ function accountPage(req, res) {
         <h2>Watch Rooms</h2>
         <p>Create or join a synced room.</p>
       </a>
+      <a class="dsAccountCard" href="/social">
+        <span>05</span>
+        <h2>Social</h2>
+        <p>Message friends, send invites, and start calls.</p>
+      </a>
     </section>
 
     <script>
@@ -29441,6 +30364,7 @@ function removedDateProfilePage(req, res) {
 
 app.get("/date-profile", removedDateProfilePage);
 app.get("/couples", removedDateProfilePage);
+app.get("/social", socialPage);
 app.get("/watchrooms", watchroomsPage);
 app.get("/watchrooms/:roomId", watchroomPage);
 app.get("/profiles", profilesPage);
@@ -29861,8 +30785,119 @@ const io = new Server(httpServer, {
   },
 });
 
+const socialUsers = new Map();
+const socialDmHistory = new Map();
+
+function normalizeSocialHandle(value = "") {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/^@+/, "")
+    .replace(/[^a-z0-9._-]/g, "")
+    .slice(0, 28);
+}
+
+function socialThreadKey(a = "", b = "") {
+  return [normalizeSocialHandle(a), normalizeSocialHandle(b)].sort().join("__");
+}
+
+function publicSocialUsers() {
+  return Array.from(socialUsers.values()).map((user) => ({
+    handle: user.handle,
+    name: user.name,
+    count: user.sockets.size,
+    updatedAt: user.updatedAt,
+  })).sort((a, b) => String(a.handle).localeCompare(String(b.handle)));
+}
+
+function broadcastSocialPresence() {
+  io.emit("social:presence", { users: publicSocialUsers(), at: Date.now() });
+}
+
 io.on("connection", (socket) => {
   socket.data.roomId = "";
+
+  socket.on("social:join", (payload = {}) => {
+    const handle = normalizeSocialHandle(payload.handle);
+    if (!handle) return;
+
+    const name = String(payload.name || handle).slice(0, 40);
+    socket.data.socialHandle = handle;
+    socket.data.socialName = name;
+    socket.join(`social:user:${handle}`);
+
+    const existing = socialUsers.get(handle) || {
+      handle,
+      name,
+      sockets: new Set(),
+      updatedAt: Date.now(),
+    };
+
+    existing.name = name;
+    existing.sockets.add(socket.id);
+    existing.updatedAt = Date.now();
+    socialUsers.set(handle, existing);
+
+    socket.emit("social:presence", { users: publicSocialUsers(), at: Date.now() });
+    broadcastSocialPresence();
+  });
+
+  socket.on("social:dm", (payload = {}) => {
+    const from = normalizeSocialHandle(payload.from || socket.data.socialHandle);
+    const to = normalizeSocialHandle(payload.to);
+    const text = String(payload.text || "").trim().slice(0, 360);
+    if (!from || !to || !text) return;
+
+    const message = {
+      from,
+      to,
+      text,
+      at: Number(payload.at || Date.now()),
+    };
+
+    const key = socialThreadKey(from, to);
+    const thread = socialDmHistory.get(key) || [];
+    thread.push(message);
+    socialDmHistory.set(key, thread.slice(-120));
+
+    io.to(`social:user:${from}`).emit("social:dm", message);
+    io.to(`social:user:${to}`).emit("social:dm", message);
+  });
+
+  socket.on("social:call-invite", (payload = {}) => {
+    const from = normalizeSocialHandle(payload.from || socket.data.socialHandle);
+    const to = normalizeSocialHandle(payload.to);
+    if (!from || !to) return;
+
+    const invite = {
+      from,
+      fromName: String(payload.fromName || socket.data.socialName || from).slice(0, 40),
+      to,
+      roomUrl: String(payload.roomUrl || "").slice(0, 500),
+      kind: String(payload.kind || "watch-room").slice(0, 40),
+      at: Date.now(),
+    };
+
+    io.to(`social:user:${to}`).emit("social:call-invite", invite);
+  });
+
+  socket.on("social:typing", (payload = {}) => {
+    const from = normalizeSocialHandle(payload.from || socket.data.socialHandle);
+    const to = normalizeSocialHandle(payload.to);
+    if (!from || !to) return;
+    io.to(`social:user:${to}`).emit("social:typing", { from, to, at: Date.now() });
+  });
+
+  socket.on("disconnect", () => {
+    const handle = normalizeSocialHandle(socket.data.socialHandle);
+    if (!handle) return;
+    const user = socialUsers.get(handle);
+    if (!user) return;
+    user.sockets.delete(socket.id);
+    user.updatedAt = Date.now();
+    if (user.sockets.size <= 0) socialUsers.delete(handle);
+    broadcastSocialPresence();
+  });
 
   socket.on("watchroom:join", (payload = {}) => {
     const roomId = normalizeRoomId(payload.roomId);
@@ -30625,6 +31660,16 @@ setInterval(() => {
     }
   }
 }, 1000 * 60 * 10);
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, thread] of socialDmHistory.entries()) {
+    const newest = thread.length ? Number(thread[thread.length - 1].at || 0) : 0;
+    if (!newest || now - newest > 1000 * 60 * 60 * 24) {
+      socialDmHistory.delete(key);
+    }
+  }
+}, 1000 * 60 * 30);
 
 httpServer.listen(PORT, () => {
   console.log(`${SITE_NAME} running on port ${PORT}`);
