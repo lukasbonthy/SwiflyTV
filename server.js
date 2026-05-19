@@ -22600,6 +22600,428 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v105 GALAXY SOCIAL THEME
+       Social colors now match the main SwiflyTV hero: dark navy,
+       purple galaxy glow, cyan-blue accents, lavender cloud glass.
+       ============================================================ */
+
+    .sv105 {
+      --sw-void: #020614;
+      --sw-ink: #050817;
+      --sw-midnight: #081126;
+      --sw-panel: rgba(13, 18, 38, .78);
+      --sw-panel2: rgba(22, 25, 50, .66);
+      --sw-line: rgba(207, 210, 255, .105);
+      --sw-line2: rgba(164, 124, 255, .16);
+      --sw-white: #f7f7ff;
+      --sw-muted: #b8b4cf;
+      --sw-soft: #d9d5ee;
+      --sw-cyan: #55d7ff;
+      --sw-blue: #6f8dff;
+      --sw-violet: #8b5cf6;
+      --sw-purple: #b26cff;
+      --sw-cloud: #a78bbd;
+      --sw-mint: #66ffc9;
+
+      background:
+        radial-gradient(1200px circle at 58% -12%, rgba(141, 82, 255, .28), transparent 40%),
+        radial-gradient(900px circle at 92% 4%, rgba(85, 215, 255, .13), transparent 34%),
+        radial-gradient(820px circle at 12% 18%, rgba(136, 92, 246, .17), transparent 43%),
+        linear-gradient(180deg, rgba(5, 7, 20, .98), rgba(5, 9, 24, .98) 48%, rgba(2, 6, 18, 1));
+      color: var(--sw-white);
+    }
+
+    .sv105::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .42;
+      background-image:
+        radial-gradient(circle at 17% 18%, rgba(255,255,255,.52) 0 1px, transparent 1.4px),
+        radial-gradient(circle at 74% 22%, rgba(255,255,255,.42) 0 1px, transparent 1.3px),
+        radial-gradient(circle at 88% 44%, rgba(140,206,255,.45) 0 1px, transparent 1.4px),
+        radial-gradient(circle at 41% 72%, rgba(255,255,255,.28) 0 1px, transparent 1.3px);
+      background-size: 210px 180px, 270px 240px, 190px 230px, 300px 260px;
+      mix-blend-mode: screen;
+      z-index: 0;
+    }
+
+    .sv105 > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .sv105 .sv100Guilds {
+      background:
+        radial-gradient(240px circle at 50% 2%, rgba(96, 165, 250, .18), transparent 46%),
+        rgba(2, 5, 15, .86);
+      border-right: 1px solid rgba(180, 190, 255, .08);
+      box-shadow: inset -1px 0 0 rgba(255,255,255,.025);
+    }
+
+    .sv105 .sv100Guild {
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.22), transparent 42%),
+        linear-gradient(145deg, rgba(40, 50, 88, .92), rgba(12, 18, 40, .92));
+      border: 1px solid rgba(185, 203, 255, .14);
+      color: rgba(247,247,255,.86);
+    }
+
+    .sv105 .sv100Guild:hover,
+    .sv105 .sv100Guild.active {
+      background:
+        radial-gradient(circle at 32% 22%, rgba(255,255,255,.33), transparent 42%),
+        linear-gradient(145deg, var(--sw-blue), var(--sw-violet) 54%, var(--sw-cyan));
+      box-shadow:
+        0 18px 56px rgba(85, 215, 255, .18),
+        0 10px 44px rgba(139, 92, 246, .20);
+    }
+
+    .sv105 .sv100Guild.active::before {
+      background: linear-gradient(180deg, var(--sw-cyan), var(--sw-purple));
+      box-shadow: 0 0 22px rgba(85,215,255,.70);
+    }
+
+    .sv105 .sv100Channels,
+    .sv105 .sv100Members {
+      background:
+        radial-gradient(480px circle at 20% 0%, rgba(139, 92, 246, .13), transparent 50%),
+        radial-gradient(380px circle at 100% 10%, rgba(85, 215, 255, .08), transparent 44%),
+        rgba(7, 11, 26, .78);
+      border-color: var(--sw-line);
+      box-shadow:
+        inset 1px 0 0 rgba(255,255,255,.025),
+        0 18px 70px rgba(0,0,0,.18);
+    }
+
+    .sv105 .sv100ServerHead {
+      background:
+        linear-gradient(90deg, rgba(255,255,255,.04), transparent),
+        rgba(3, 7, 19, .24);
+      border-bottom-color: rgba(202, 210, 255, .08);
+    }
+
+    .sv105 .sv100ServerHead strong,
+    .sv105 .sv100Topbar h1,
+    .sv105 .sv100RoomsIntro h2,
+    .sv105 .sv103RoomHeader h2 {
+      color: var(--sw-white);
+      text-shadow: 0 0 34px rgba(168, 85, 247, .18);
+    }
+
+    .sv105 .sv100ServerHead small,
+    .sv105 .sv100ProfilePill small,
+    .sv105 .sv100ChannelGroup header span,
+    .sv105 .sv100Topbar span,
+    .sv105 .sv100MembersHead span,
+    .sv105 .sv100MembersHead small,
+    .sv105 .sv103RoomMeta span,
+    .sv105 .sv103ToolCard > span {
+      color: rgba(216, 214, 239, .62);
+    }
+
+    .sv105 .sv100ProfilePill {
+      background:
+        radial-gradient(280px circle at 0% 0%, rgba(85, 215, 255, .15), transparent 54%),
+        radial-gradient(260px circle at 100% 0%, rgba(178, 108, 255, .18), transparent 54%),
+        rgba(255,255,255,.055);
+      border: 1px solid var(--sw-line);
+      box-shadow:
+        0 18px 56px rgba(0,0,0,.20),
+        inset 0 1px 0 rgba(255,255,255,.05);
+    }
+
+    .sv105 .sv100ProfilePill > span {
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.38), transparent 42%),
+        linear-gradient(135deg, var(--sw-cyan), var(--sw-blue) 45%, var(--sw-violet));
+      box-shadow: 0 16px 48px rgba(85,215,255,.20);
+    }
+
+    .sv105 .sv100ModeTabs {
+      background: rgba(255,255,255,.055);
+      border: 1px solid var(--sw-line);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+    }
+
+    .sv105 .sv100ModeTabs button {
+      color: rgba(232,232,255,.68);
+    }
+
+    .sv105 .sv100ModeTabs button.active {
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.20), transparent 42%),
+        linear-gradient(135deg, var(--sw-cyan), var(--sw-blue) 42%, var(--sw-violet));
+      color: white;
+      box-shadow:
+        0 12px 34px rgba(85,215,255,.14),
+        0 12px 34px rgba(139,92,246,.15);
+    }
+
+    .sv105 .sv100ChannelGroup {
+      background:
+        radial-gradient(340px circle at 0% 0%, rgba(168, 85, 247, .08), transparent 54%),
+        rgba(255,255,255,.028);
+      border: 1px solid rgba(213, 219, 255, .06);
+    }
+
+    .sv105 .sv100Channel {
+      color: rgba(232, 232, 255, .70);
+    }
+
+    .sv105 .sv100Channel i {
+      color: rgba(152, 190, 255, .80);
+    }
+
+    .sv105 .sv100Channel:hover,
+    .sv105 .sv100Channel.active {
+      color: white;
+      background:
+        radial-gradient(260px circle at 0% 0%, rgba(85,215,255,.13), transparent 52%),
+        radial-gradient(240px circle at 100% 0%, rgba(178,108,255,.14), transparent 52%),
+        rgba(255,255,255,.075);
+      box-shadow:
+        inset 3px 0 0 var(--sw-cyan),
+        0 8px 28px rgba(0,0,0,.12);
+    }
+
+    .sv105 .sv100Main {
+      background:
+        radial-gradient(760px circle at 45% -10%, rgba(178,108,255,.12), transparent 44%),
+        linear-gradient(180deg, rgba(12,17,34,.72), rgba(6,10,24,.82));
+      border-inline: 1px solid rgba(255,255,255,.045);
+    }
+
+    .sv105 .sv100Topbar {
+      background:
+        linear-gradient(90deg, rgba(85,215,255,.07), rgba(178,108,255,.08), transparent),
+        rgba(5,8,22,.62);
+      border-bottom: 1px solid var(--sw-line);
+      backdrop-filter: blur(18px);
+    }
+
+    .sv105 .sv100Topbar button {
+      color: rgba(234,234,255,.76);
+      background: rgba(255,255,255,.055);
+      border: 1px solid rgba(213, 219, 255, .08);
+    }
+
+    .sv105 .sv100Topbar button:hover {
+      color: white;
+      background: rgba(255,255,255,.105);
+      border-color: rgba(85,215,255,.20);
+      box-shadow: 0 10px 30px rgba(85,215,255,.08);
+    }
+
+    .sv105 .sv100Notice {
+      background:
+        radial-gradient(420px circle at 0% 0%, rgba(102,255,201,.14), transparent 54%),
+        rgba(255,255,255,.05);
+      border-color: rgba(102,255,201,.18);
+      color: rgba(244,255,252,.84);
+    }
+
+    .sv105 .sv100Messages {
+      background:
+        radial-gradient(760px circle at 50% 0%, rgba(178,108,255,.055), transparent 48%),
+        transparent;
+    }
+
+    .sv105 .sv100Msg:hover {
+      background: rgba(255,255,255,.035);
+    }
+
+    .sv105 .sv100Msg > span {
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.28), transparent 42%),
+        linear-gradient(135deg, var(--sw-cyan), var(--sw-violet));
+      box-shadow: 0 10px 34px rgba(85,215,255,.10);
+    }
+
+    .sv105 .sv100Msg p {
+      color: rgba(246,246,255,.86);
+    }
+
+    .sv105 .sv100Composer {
+      background:
+        radial-gradient(540px circle at 0% 0%, rgba(85,215,255,.08), transparent 54%),
+        rgba(255,255,255,.065);
+      border: 1px solid var(--sw-line);
+      box-shadow:
+        0 18px 60px rgba(0,0,0,.20),
+        inset 0 1px 0 rgba(255,255,255,.05);
+    }
+
+    .sv105 .sv100Composer input {
+      color: var(--sw-white);
+    }
+
+    .sv105 .sv100Composer input::placeholder,
+    .sv105 input::placeholder {
+      color: rgba(221, 219, 241, .46);
+    }
+
+    .sv105 .sv100Composer button {
+      color: rgba(230,230,255,.72);
+    }
+
+    .sv105 .sv100Composer button:hover {
+      color: white;
+      background: rgba(85,215,255,.10);
+    }
+
+    .sv105 .sv100RoomsIntro,
+    .sv105 .sv103RoomHeader {
+      background:
+        radial-gradient(900px circle at 12% 0%, rgba(85,215,255,.16), transparent 46%),
+        radial-gradient(760px circle at 72% 0%, rgba(178,108,255,.22), transparent 48%),
+        radial-gradient(620px circle at 45% 110%, rgba(167,139,189,.16), transparent 50%),
+        rgba(255,255,255,.055);
+      border: 1px solid rgba(218, 221, 255, .13);
+      box-shadow:
+        0 26px 100px rgba(0,0,0,.28),
+        inset 0 1px 0 rgba(255,255,255,.055);
+    }
+
+    .sv105 .sv100RoomsIntro p,
+    .sv105 .sv103RoomHeader p,
+    .sv105 .sv100Card p,
+    .sv105 .sv100Empty,
+    .sv105 .sv103EmptyPlayer,
+    .sv105 .sv100Members p,
+    .sv105 .sv100Perms p {
+      color: rgba(221, 219, 241, .72);
+    }
+
+    .sv105 .sv100Btn.primary,
+    .sv105 .sv103ControlDock button:first-child,
+    .sv105 .sv103ToolCard button,
+    .sv105 .sv100RoomItem a {
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.21), transparent 42%),
+        linear-gradient(135deg, var(--sw-cyan), var(--sw-blue) 40%, var(--sw-violet));
+      box-shadow:
+        0 16px 48px rgba(85,215,255,.13),
+        0 14px 46px rgba(139,92,246,.15);
+      border: 0;
+    }
+
+    .sv105 .sv100Btn,
+    .sv105 .sv103RoomHeader button,
+    .sv105 .sv103ControlDock button,
+    .sv105 .sv103ToolCard button,
+    .sv105 .sv100RoomItem button {
+      color: white;
+      border: 1px solid rgba(215, 220, 255, .10);
+      background: rgba(255,255,255,.07);
+    }
+
+    .sv105 .sv100Btn:hover,
+    .sv105 .sv103RoomHeader button:hover,
+    .sv105 .sv103ControlDock button:hover,
+    .sv105 .sv103ToolCard button:hover,
+    .sv105 .sv100RoomItem button:hover {
+      background: rgba(255,255,255,.12);
+      border-color: rgba(85,215,255,.20);
+      filter: none;
+    }
+
+    .sv105 .sv100Card,
+    .sv105 .sv103ToolCard,
+    .sv105 .sv103RoomMeta > div,
+    .sv105 .sv103ControlDock,
+    .sv105 .sv100Perms {
+      background:
+        radial-gradient(360px circle at 0% 0%, rgba(85,215,255,.065), transparent 54%),
+        radial-gradient(340px circle at 100% 0%, rgba(178,108,255,.08), transparent 54%),
+        rgba(255,255,255,.052);
+      border: 1px solid var(--sw-line);
+      box-shadow:
+        0 18px 58px rgba(0,0,0,.18),
+        inset 0 1px 0 rgba(255,255,255,.045);
+    }
+
+    .sv105 .sv103Player {
+      background:
+        radial-gradient(900px circle at 50% 0%, rgba(85,215,255,.12), transparent 46%),
+        radial-gradient(760px circle at 80% 10%, rgba(178,108,255,.12), transparent 48%),
+        #030713;
+      border: 1px solid rgba(218, 221, 255, .12);
+      box-shadow:
+        0 30px 110px rgba(0,0,0,.36),
+        inset 0 1px 0 rgba(255,255,255,.05);
+    }
+
+    .sv105 .sv103EmptyPlayer i {
+      color: var(--sw-cyan);
+      filter: drop-shadow(0 0 22px rgba(85,215,255,.28));
+    }
+
+    .sv105 .sv103EmptyPlayer b,
+    .sv105 .sv103RoomMeta b,
+    .sv105 .sv103ToolCard h3,
+    .sv105 .sv100Card h3 {
+      color: var(--sw-white);
+    }
+
+    .sv105 .sv103ToolCard input,
+    .sv105 .sv100Card input {
+      background: rgba(3, 7, 19, .50);
+      border-color: rgba(218, 221, 255, .10);
+      color: white;
+    }
+
+    .sv105 .sv103ToolCard input:focus,
+    .sv105 .sv100Card input:focus {
+      border-color: rgba(85,215,255,.46);
+      box-shadow: 0 0 0 4px rgba(85,215,255,.11);
+    }
+
+    .sv105 .sv100RoomItem {
+      background:
+        radial-gradient(340px circle at 0% 0%, rgba(85,215,255,.08), transparent 52%),
+        radial-gradient(320px circle at 100% 0%, rgba(178,108,255,.09), transparent 52%),
+        rgba(255,255,255,.055);
+      border-color: rgba(218, 221, 255, .09);
+    }
+
+    .sv105 .sv100RoomItem > div i {
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.25), transparent 42%),
+        linear-gradient(135deg, var(--sw-cyan), var(--sw-violet));
+    }
+
+    .sv105 .sv100RoomItem small {
+      color: rgba(221,219,241,.58);
+    }
+
+    .sv105 #sv100MembersList i {
+      background: var(--sw-mint);
+      box-shadow: 0 0 18px rgba(102,255,201,.80);
+    }
+
+    .sv105 .sv100Toast {
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.20), transparent 42%),
+        linear-gradient(135deg, var(--sw-cyan), var(--sw-violet));
+    }
+
+    .sv105 .sv100Toast.error,
+    .sv105 .sv100Error {
+      background: linear-gradient(135deg, #ff557a, #8b5cf6);
+    }
+
+    @media(max-width: 760px) {
+      .sv105 .sv100Channels,
+      .sv105 .sv100Members,
+      .sv105 .sv100Main {
+        background: rgba(7, 11, 26, .88);
+      }
+    }
+
   </style>
 
     <script>
@@ -22675,6 +23097,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-dark@5/dark.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.10.0/styles/overlayscrollbars.min.css" />
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simplebar@6.2.7/dist/simplebar.min.css" />
 </head>
 <body>
 
@@ -29929,7 +30353,7 @@ function socialPage(req, res) {
   const initialVideoId = String(req.query.videoId || "").slice(0, 64);
   const initialEmbedUrl = String(req.query.embedUrl || "").slice(0, 1000);
 
-  const body = `<main class="sv100 sv103 sv104" data-initial-tab="${escapeHtml(initialTab)}" data-room-id="${escapeHtml(requestedRoomId)}" data-room-name="${escapeHtml(initialRoomName)}" data-room-kind="${escapeHtml(initialKind)}" data-room-video-id="${escapeHtml(initialVideoId)}" data-room-embed-url="${escapeHtml(initialEmbedUrl)}" data-denied="${escapeHtml(denied)}" data-allowed-creators="${escapeHtml(allowedCreators.join(","))}" data-open-room-creation="${socialOpenRoomCreation() ? "true" : "false"}">
+  const body = `<main class="sv100 sv103 sv104 sv105" data-initial-tab="${escapeHtml(initialTab)}" data-room-id="${escapeHtml(requestedRoomId)}" data-room-name="${escapeHtml(initialRoomName)}" data-room-kind="${escapeHtml(initialKind)}" data-room-video-id="${escapeHtml(initialVideoId)}" data-room-embed-url="${escapeHtml(initialEmbedUrl)}" data-denied="${escapeHtml(denied)}" data-allowed-creators="${escapeHtml(allowedCreators.join(","))}" data-open-room-creation="${socialOpenRoomCreation() ? "true" : "false"}">
     <aside class="sv100Guilds" aria-label="Servers">
       <a class="sv100Guild active" href="/social" title="Swifly Hub"><i class="ri-play-circle-fill"></i></a>
       <a class="sv100Guild" href="/movies" title="Movies"><i class="ri-movie-2-fill"></i></a>
@@ -31228,6 +31652,7 @@ function apiStatus(req, res) {
       nativeSocialWatchroomsV103: true,
       openWatchRoomCreationV104: true,
       swiflyHubRefreshV104: true,
+      galaxySocialThemeV105: true,
       socialPermissions: true,
       noJsWatchRoomFallbacks: true,
       socialLayoutV2: true,
