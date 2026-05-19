@@ -22074,6 +22074,101 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v102 INTEGRATED SOCIAL WATCHROOM
+       Watch Rooms open inside Social instead of a separate page.
+       ============================================================ */
+
+    .sv102IntegratedRoom {
+      margin-bottom: 18px;
+      border-radius: 24px;
+      overflow: hidden;
+      background: #0f111a;
+      border: 1px solid rgba(255,255,255,.09);
+      box-shadow: 0 18px 70px rgba(0,0,0,.26);
+    }
+
+    .sv102IntegratedRoom[hidden] {
+      display: none !important;
+    }
+
+    .sv102IntegratedRoom > header {
+      min-height: 62px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      background:
+        radial-gradient(480px circle at 0% 0%, rgba(88,101,242,.18), transparent 50%),
+        #151821;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+
+    .sv102IntegratedRoom h3 {
+      margin: 4px 0 0;
+      font-size: 24px;
+      letter-spacing: -.045em;
+    }
+
+    .sv102IntegratedRoom nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .sv102IntegratedRoom nav button,
+    .sv102IntegratedRoom nav a {
+      min-height: 36px;
+      border: 0;
+      border-radius: 11px;
+      padding: 0 11px;
+      color: white;
+      background: rgba(255,255,255,.08);
+      font-weight: 850;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .sv102IntegratedRoom nav button:hover,
+    .sv102IntegratedRoom nav a:hover {
+      background: rgba(255,255,255,.13);
+    }
+
+    #sv102RoomFrame {
+      display: block;
+      width: 100%;
+      height: min(78vh, 860px);
+      min-height: 620px;
+      border: 0;
+      background: #05070d;
+    }
+
+    .dsSocialEmbeddedRoom .dsStableRoomHero {
+      width: 100% !important;
+    }
+
+    @media(max-width: 760px) {
+      #sv102RoomFrame {
+        min-height: 720px;
+        height: 82vh;
+      }
+
+      .sv102IntegratedRoom > header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .sv102IntegratedRoom nav {
+        justify-content: flex-start;
+      }
+    }
+
   </style>
 
     <script>
@@ -25198,10 +25293,11 @@ function watchroomPage(req, res) {
   const safeInitialUrl = escapeHtml(room.openTogetherUrl || sharedUrl || "");
   const safeCountdown = escapeHtml(String(room.openTogetherCountdownEndsAt || 0));
 
-  const body = `<main class="dsPlainPage dsStableRoom" data-room-id="${safeRoomId}">
+  const isSocialEmbed = String(req.query.socialEmbed || "") === "1";
+  const body = `<main class="dsPlainPage dsStableRoom ${isSocialEmbed ? "dsSocialEmbeddedRoom" : ""}" data-room-id="${safeRoomId}">
     <section class="dsStableRoomHero">
       <div>
-        <a class="dsGhostPill" href="/watchrooms">← Watchrooms</a>
+        ${isSocialEmbed ? "" : '<a class="dsGhostPill" href="/social?tab=watchrooms">← Social Rooms</a>'}
         <span class="dsEyebrow">Reliable Watch Room</span>
         <h1>${safeName}</h1>
         <p>Built for movie fans. Use <b>Open Together</b> when you both can open the movie site, or <b>Live Share</b> when one of you can share a tab.</p>
@@ -28600,7 +28696,18 @@ function watchroomPage(req, res) {
 
   </main>`;
 
-  res.send(pageShell({ title: `${SITE_NAME} — ${room.name}`, active: "watchrooms", body }));
+  res.send(pageShell({
+    title: `${SITE_NAME} — ${room.name}`,
+    active: "social",
+    extraHead: isSocialEmbed ? `<style>
+      body { background: #0f111a !important; }
+      .topbar, .mobileTabBar, .nav, .profileDropdown { display: none !important; }
+      .dsStableRoom { padding: 0 !important; min-height: 100vh; }
+      .dsStableRoomHero { margin-top: 0 !important; border-radius: 0 0 22px 22px !important; }
+      .dsStableRoomGrid { margin-bottom: 0 !important; }
+    </style>` : "",
+    body
+  }));
 }
 
 app.get("/welcome", welcomePage);
@@ -29379,11 +29486,24 @@ function socialPermissionsForName(name = "") {
 
 function socialPage(req, res) {
   const tab = String(req.query.tab || "").toLowerCase();
-  const initialTab = tab === "watchrooms" || tab === "rooms" ? "rooms" : "chat";
+  const requestedRoomId = normalizeRoomId(req.query.roomId || req.query.room || "");
+  const initialTab = requestedRoomId || tab === "watchrooms" || tab === "rooms" ? "rooms" : "chat";
   const denied = String(req.query.denied || "");
   const allowedCreators = socialCreatorNames();
 
-  const body = `<main class="sv100" data-initial-tab="${escapeHtml(initialTab)}" data-denied="${escapeHtml(denied)}" data-allowed-creators="${escapeHtml(allowedCreators.join(","))}" data-open-room-creation="${socialOpenRoomCreation() ? "true" : "false"}">
+  const passthroughParams = new URLSearchParams();
+  for (const [key, value] of Object.entries(req.query || {})) {
+    if (["tab", "room", "roomId", "denied"].includes(key)) continue;
+    if (value == null) continue;
+    passthroughParams.set(key, String(value));
+  }
+
+  const integratedRoomSrc = requestedRoomId
+    ? `/watchrooms/embed/${encodeURIComponent(requestedRoomId)}${passthroughParams.toString() ? `?${passthroughParams.toString()}&socialEmbed=1` : "?socialEmbed=1"}`
+    : "";
+  const integratedRoomName = String(req.query.name || "Social Watch Room").slice(0, 80);
+
+  const body = `<main class="sv100" data-initial-tab="${escapeHtml(initialTab)}" data-room-id="${escapeHtml(requestedRoomId)}" data-room-src="${escapeHtml(integratedRoomSrc)}" data-room-name="${escapeHtml(integratedRoomName)}" data-denied="${escapeHtml(denied)}" data-allowed-creators="${escapeHtml(allowedCreators.join(","))}" data-open-room-creation="${socialOpenRoomCreation() ? "true" : "false"}">
     <aside class="sv100Guilds" aria-label="Servers">
       <a class="sv100Guild active" href="/social" title="Swifly Social"><i class="ri-discord-fill"></i></a>
       <a class="sv100Guild" href="/movies" title="Movies"><i class="ri-movie-2-fill"></i></a>
@@ -29470,11 +29590,27 @@ function socialPage(req, res) {
           <a class="sv100Btn primary creatorOnly" id="sv100InstantRoomLink" href="/watchrooms/new"><i class="ri-add-circle-fill"></i> Instant Room</a>
         </div>
 
+        <section id="sv102IntegratedRoom" class="sv102IntegratedRoom" hidden>
+          <header>
+            <div>
+              <span class="dsEyebrow">Live inside Social</span>
+              <h3 id="sv102RoomTitle">Watch Room</h3>
+            </div>
+            <nav>
+              <button type="button" data-action="copy-room-link"><i class="ri-link"></i> Copy Link</button>
+              <button type="button" data-action="share-room-chat"><i class="ri-chat-forward-fill"></i> Share in Chat</button>
+              <a id="sv102PopoutRoom" href="#" target="_blank" rel="noopener"><i class="ri-external-link-line"></i> Popout</a>
+            </nav>
+          </header>
+          <iframe id="sv102RoomFrame" title="Integrated SwiflyTV Watch Room" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write; web-share; microphone; camera" allowfullscreen referrerpolicy="no-referrer"></iframe>
+        </section>
+
         <div class="sv100RoomsGrid">
           <form class="sv100Card creatorOnly" method="get" action="/watchrooms/new" id="sv100CreateRoomForm">
             <span>Host tools</span>
             <h3>Create Watch Room</h3>
             <input type="hidden" name="creator" id="sv100CreatorInput" value="" />
+            <input type="hidden" name="social" value="1" />
             <label>Room name<input name="name" placeholder="Friday movie night" /></label>
             <label>Movie/site link<input name="watchLink" placeholder="YouTube, trailer, website, etc." /></label>
             <button class="sv100Btn primary" type="submit"><i class="ri-tv-fill"></i> Create Room</button>
@@ -29566,6 +29702,12 @@ function socialPage(req, res) {
           canManageSocial: false,
           allowedCreators: [],
           openRoomCreation: false
+        };
+
+        let activeIntegratedRoom = {
+          id: app?.dataset.roomId || "",
+          src: app?.dataset.roomSrc || "",
+          name: app?.dataset.roomName || "Watch Room"
         };
 
         function esc(value) {
@@ -29745,13 +29887,53 @@ function socialPage(req, res) {
           toast((type === "channel" ? "Channel" : "Group") + " created");
         }
 
+        function loadIntegratedRoom(room) {
+          const frame = $("#sv102RoomFrame");
+          const box = $("#sv102IntegratedRoom");
+          const title = $("#sv102RoomTitle");
+          const popout = $("#sv102PopoutRoom");
+          if (!frame || !box || !room || !room.id) return;
+
+          const roomUrl = buildRoomUrl(room);
+          const embedUrl = buildLegacyEmbedUrl(room);
+
+          activeIntegratedRoom = {
+            id: room.id,
+            src: embedUrl,
+            name: room.name || "Watch Room",
+            socialUrl: roomUrl
+          };
+
+          if (title) title.textContent = activeIntegratedRoom.name;
+          if (popout) popout.href = roomUrl;
+          if (frame.src !== location.origin + embedUrl && frame.getAttribute("src") !== embedUrl) {
+            frame.src = embedUrl;
+          }
+
+          box.hidden = false;
+          switchTab("rooms");
+          toast("Watch Room opened inside Social");
+        }
+
         function buildRoomUrl(room) {
+          const params = new URLSearchParams();
+          params.set("tab", "watchrooms");
+          params.set("roomId", room.id);
+          params.set("name", room.name || "SwiflyTV Watch Room");
+          params.set("kind", room.kind || "blank");
+          if (room.videoId) params.set("videoId", room.videoId);
+          if (room.embedUrl) params.set("embedUrl", room.embedUrl);
+          return "/social?" + params.toString();
+        }
+
+        function buildLegacyEmbedUrl(room) {
           const params = new URLSearchParams();
           params.set("name", room.name || "SwiflyTV Watch Room");
           params.set("kind", room.kind || "blank");
           if (room.videoId) params.set("videoId", room.videoId);
           if (room.embedUrl) params.set("embedUrl", room.embedUrl);
-          return "/watchrooms/" + encodeURIComponent(room.id) + "?" + params.toString();
+          params.set("socialEmbed", "1");
+          return "/watchrooms/embed/" + encodeURIComponent(room.id) + "?" + params.toString();
         }
 
         async function renderRooms() {
@@ -29782,11 +29964,29 @@ function socialPage(req, res) {
 
           target.innerHTML = rooms.slice(0, 24).map((room) => {
             const href = buildRoomUrl(room);
+            const encoded = encodeURIComponent(JSON.stringify({
+              id: room.id,
+              name: room.name || "Watch Room",
+              kind: room.kind || room.mediaKind || "blank",
+              videoId: room.videoId || "",
+              embedUrl: room.embedUrl || ""
+            }));
             return '<article class="sv100RoomItem">' +
               '<div><i class="ri-tv-2-fill"></i><b>' + esc(room.name || "Watch Room") + '</b><small>' + esc(room.host || "Ready") + '</small></div>' +
-              '<nav><a href="' + esc(href) + '">Open</a><button type="button" data-copy="' + esc(location.origin + href) + '">Copy</button><button type="button" data-share="' + esc(href) + '">Share</button></nav>' +
+              '<nav><button type="button" data-open-room="' + encoded + '">Open inside Social</button><button type="button" data-copy="' + esc(location.origin + href) + '">Copy</button><button type="button" data-share="' + esc(href) + '">Share</button></nav>' +
             '</article>';
           }).join("");
+
+          if (activeIntegratedRoom.id && !$("#sv102RoomFrame")?.getAttribute("src")) {
+            const match = rooms.find((room) => room.id === activeIntegratedRoom.id) || {
+              id: activeIntegratedRoom.id,
+              name: activeIntegratedRoom.name || "Watch Room",
+              kind: new URLSearchParams(location.search).get("kind") || "blank",
+              videoId: new URLSearchParams(location.search).get("videoId") || "",
+              embedUrl: new URLSearchParams(location.search).get("embedUrl") || ""
+            };
+            loadIntegratedRoom(match);
+          }
         }
 
         async function openCall(video) {
@@ -29869,6 +30069,38 @@ function socialPage(req, res) {
               }
             }
 
+            const openIntegrated = event.target.closest("[data-open-room]");
+            if (openIntegrated) {
+              event.preventDefault();
+              try {
+                const room = JSON.parse(decodeURIComponent(openIntegrated.dataset.openRoom || ""));
+                loadIntegratedRoom(room);
+              } catch (error) {
+                showError(error);
+              }
+              return;
+            }
+
+            if (event.target.closest("[data-action='copy-room-link']")) {
+              event.preventDefault();
+              const link = activeIntegratedRoom.socialUrl || (activeIntegratedRoom.id ? location.origin + "/social?tab=watchrooms&roomId=" + encodeURIComponent(activeIntegratedRoom.id) : location.href);
+              if (window.swiflyCopy) await window.swiflyCopy(link);
+              else await navigator.clipboard.writeText(link);
+              return;
+            }
+
+            if (event.target.closest("[data-action='share-room-chat']")) {
+              event.preventDefault();
+              const link = activeIntegratedRoom.socialUrl || (activeIntegratedRoom.id ? "/social?tab=watchrooms&roomId=" + encodeURIComponent(activeIntegratedRoom.id) : "");
+              if (!link) return toast("Open a room first", "error");
+              const text = "Join this Watch Room inside Social: " + location.origin + link;
+              const message = { roomId: currentRoom, author: username, text, createdAt: Date.now() };
+              addMessage(message, true);
+              socket?.emit("social:message", message);
+              switchTab("chat");
+              return toast("Shared to chat");
+            }
+
             const copy = event.target.closest("[data-copy]");
             if (copy) {
               event.preventDefault();
@@ -29936,9 +30168,24 @@ function socialPage(req, res) {
         loadPermissions().then(() => {
           if (app.dataset.denied) toast("You do not have permission to create that.", "error");
           const params = new URLSearchParams(location.search);
-          if (app.dataset.initialTab === "rooms" || params.get("tab") === "watchrooms") switchTab("rooms");
-          else joinRoom(params.get("room") || currentRoom, currentTitle);
-          renderRooms();
+          if (app.dataset.initialTab === "rooms" || params.get("tab") === "watchrooms") {
+            switchTab("rooms");
+            renderRooms().then(() => {
+              if (activeIntegratedRoom.id && activeIntegratedRoom.src) {
+                const room = {
+                  id: activeIntegratedRoom.id,
+                  name: activeIntegratedRoom.name || params.get("name") || "Watch Room",
+                  kind: params.get("kind") || "blank",
+                  videoId: params.get("videoId") || "",
+                  embedUrl: params.get("embedUrl") || ""
+                };
+                loadIntegratedRoom(room);
+              }
+            });
+          } else {
+            joinRoom(params.get("room") || currentRoom, currentTitle);
+            renderRooms();
+          }
         });
 
         window.SwiflySocial = { switchTab, joinRoom, renderRooms, permissions: () => permissions };
@@ -30086,7 +30333,14 @@ app.get("/watchrooms/new", (req, res) => {
     params.set("kind", "blank");
   }
 
-  res.redirect(`/watchrooms/${encodeURIComponent(roomId)}?${params.toString()}`);
+  if (String(req.query.social || "") === "1") {
+    const socialParams = new URLSearchParams(params);
+    socialParams.set("tab", "watchrooms");
+    socialParams.set("roomId", roomId);
+    return res.redirect(`/social?${socialParams.toString()}`);
+  }
+
+  res.redirect(`/social?tab=watchrooms&roomId=${encodeURIComponent(roomId)}&${params.toString()}`);
 });
 
 app.get("/watchrooms/join", (req, res) => {
@@ -30100,12 +30354,22 @@ app.get("/watchrooms/join", (req, res) => {
   const params = new URLSearchParams();
   params.set("name", String(req.query.name || "SwiflyTV Watch Room").slice(0, 80));
   params.set("kind", "blank");
-  res.redirect(`/watchrooms/${encodeURIComponent(code)}?${params.toString()}`);
+  const socialParams = new URLSearchParams(params);
+  socialParams.set("tab", "watchrooms");
+  socialParams.set("roomId", code);
+  res.redirect(`/social?${socialParams.toString()}`);
 });
 
 
 app.get("/watchrooms", (req, res) => res.redirect("/social?tab=watchrooms"));
-app.get("/watchrooms/:roomId", watchroomPage);
+app.get("/watchrooms/embed/:roomId", watchroomPage);
+app.get("/watchrooms/:roomId", (req, res) => {
+  const roomId = normalizeRoomId(req.params.roomId);
+  const params = new URLSearchParams(req.query || {});
+  params.set("tab", "watchrooms");
+  params.set("roomId", roomId);
+  res.redirect(`/social?${params.toString()}`);
+});
 app.get("/profiles", profilesPage);
 app.get("/profiles/manage", profilesManagePage);
 app.get("/social", socialPage);
@@ -30194,6 +30458,7 @@ function apiStatus(req, res) {
       socialButtonsFixed: true,
       socialRebuiltV99: true,
       discordSocialV100: true,
+      integratedSocialWatchroomV102: true,
       socialPermissions: true,
       noJsWatchRoomFallbacks: true,
       socialLayoutV2: true,
