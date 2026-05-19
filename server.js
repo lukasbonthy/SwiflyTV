@@ -19106,7 +19106,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
     /* ============================================================
        v92 REGULAR MOVIE M3U8 FIX
-       Normal Movie button uses the same M3U8/Video.js player path as Watch Rooms.
+       Normal Movie button uses the same M3U8/Video.js player path as Watch Parties.
        ============================================================ */
 
     .dsMovieButtonPlayerShell {
@@ -19974,7 +19974,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
     /* ============================================================
        v97 SOCIAL WATCH ROOMS
-       Watch Rooms are now invented into Social instead of living apart.
+       Watch Parties are now invented into Social instead of living apart.
        ============================================================ */
 
     .dsSocialWatchSection .dsSocialRoom {
@@ -22380,7 +22380,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
     /* ============================================================
        v104 SWIFLY HUB REFRESH
-       Watch Rooms are open to everyone + less Discord-clone, more SwiflyTV.
+       Watch Parties are open to everyone + less Discord-clone, more SwiflyTV.
        ============================================================ */
 
     .sv104 {
@@ -23280,6 +23280,447 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v110 SOCIAL LAYOUT + VIBE FIX
+       Fixes Social hiding under the fixed top nav and gives it a
+       SwiflyTV watch-lounge look instead of a straight Discord clone.
+       ============================================================ */
+
+    body:has(.sv110) {
+      overflow: hidden;
+      background:
+        radial-gradient(1000px circle at 8% 0%, rgba(229,9,20,.18), transparent 42%),
+        radial-gradient(880px circle at 86% -10%, rgba(124,92,255,.22), transparent 44%),
+        linear-gradient(180deg, #03050d 0%, #070a16 50%, #02040a 100%);
+    }
+
+    .sv110 {
+      --social-nav-offset: 74px;
+      --social-gap: 14px;
+      width: 100%;
+      height: 100dvh;
+      min-height: 760px;
+      box-sizing: border-box;
+      padding: calc(var(--social-nav-offset) + 12px) 18px 18px;
+      grid-template-columns: 74px 292px minmax(0, 1fr) 282px;
+      gap: var(--social-gap);
+      overflow: hidden;
+      background:
+        radial-gradient(900px circle at 16% 10%, rgba(229,9,20,.16), transparent 42%),
+        radial-gradient(880px circle at 74% 0%, rgba(124,92,255,.22), transparent 44%),
+        radial-gradient(680px circle at 48% 100%, rgba(53,216,255,.10), transparent 52%),
+        linear-gradient(180deg, rgba(6,8,18,.92), rgba(3,5,12,.98));
+    }
+
+    .sv110::before {
+      opacity: .30;
+      z-index: 0;
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,.85), transparent 92%);
+    }
+
+    .sv110 > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .sv110 .sv100Guilds,
+    .sv110 .sv100Channels,
+    .sv110 .sv100Main,
+    .sv110 .sv100Members {
+      height: calc(100dvh - var(--social-nav-offset) - 30px);
+      max-height: calc(100dvh - var(--social-nav-offset) - 30px);
+      border-radius: 28px;
+      border: 1px solid rgba(255,255,255,.105);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.035)),
+        rgba(5,8,19,.76);
+      box-shadow:
+        0 24px 90px rgba(0,0,0,.36),
+        inset 0 1px 0 rgba(255,255,255,.055);
+      backdrop-filter: blur(20px) saturate(1.08);
+      -webkit-backdrop-filter: blur(20px) saturate(1.08);
+      overflow: hidden;
+    }
+
+    .sv110 .sv100Guilds {
+      padding: 14px 10px;
+      background:
+        radial-gradient(220px circle at 50% 0%, rgba(229,9,20,.20), transparent 54%),
+        rgba(4,6,16,.82);
+    }
+
+    .sv110 .sv100Guild {
+      width: 54px;
+      height: 54px;
+      border-radius: 19px;
+      background:
+        radial-gradient(circle at 30% 18%, rgba(255,255,255,.24), transparent 42%),
+        linear-gradient(145deg, rgba(255,255,255,.10), rgba(255,255,255,.035));
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 14px 46px rgba(0,0,0,.26);
+    }
+
+    .sv110 .sv100Guild:hover,
+    .sv110 .sv100Guild.active {
+      border-radius: 20px;
+      background:
+        radial-gradient(circle at 30% 18%, rgba(255,255,255,.34), transparent 42%),
+        linear-gradient(135deg, #e50914, #7c5cff 58%, #55d7ff);
+      box-shadow:
+        0 18px 58px rgba(229,9,20,.18),
+        0 18px 58px rgba(124,92,255,.20);
+    }
+
+    .sv110 .sv100Guild.active::before {
+      left: -12px;
+      background: linear-gradient(180deg, #ff4b5c, #8b5cf6);
+      box-shadow: 0 0 26px rgba(229,9,20,.72);
+    }
+
+    .sv110 .sv100Channels,
+    .sv110 .sv100Members {
+      padding: 12px;
+      overflow-y: auto;
+    }
+
+    .sv110 .sv100ServerHead {
+      height: auto;
+      min-height: 76px;
+      padding: 14px;
+      margin: -12px -12px 12px;
+      background:
+        radial-gradient(360px circle at 0% 0%, rgba(229,9,20,.15), transparent 55%),
+        rgba(255,255,255,.045);
+      border-bottom: 1px solid rgba(255,255,255,.09);
+      box-shadow: none;
+    }
+
+    .sv110 .sv100ServerHead strong {
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-size: 23px;
+      letter-spacing: -.065em;
+      line-height: .95;
+    }
+
+    .sv110 .sv100ServerHead small {
+      color: rgba(255,255,255,.54);
+      font-weight: 700;
+    }
+
+    .sv110 .sv100ProfilePill,
+    .sv110 .sv100ModeTabs,
+    .sv110 .sv100ChannelGroup,
+    .sv110 .sv100Perms {
+      border-radius: 24px;
+      border: 1px solid rgba(255,255,255,.10);
+      background:
+        radial-gradient(260px circle at 0% 0%, rgba(255,255,255,.08), transparent 54%),
+        rgba(255,255,255,.045);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.045);
+    }
+
+    .sv110 .sv100ProfilePill {
+      margin: 0 0 12px;
+      padding: 12px;
+    }
+
+    .sv110 .sv100ProfilePill > span {
+      border-radius: 16px;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.40), transparent 42%),
+        linear-gradient(135deg, #55d7ff, #8b5cf6);
+      box-shadow: 0 12px 40px rgba(85,215,255,.18);
+    }
+
+    .sv110 .sv100ModeTabs {
+      margin: 0 0 14px;
+      padding: 5px;
+    }
+
+    .sv110 .sv100ModeTabs button {
+      border-radius: 999px;
+      min-height: 36px;
+    }
+
+    .sv110 .sv100ModeTabs button.active {
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.28), transparent 42%),
+        linear-gradient(135deg, #55d7ff, #7c5cff);
+    }
+
+    .sv110 .sv100ChannelGroup {
+      margin: 0 0 14px;
+      padding: 12px;
+    }
+
+    .sv110 .sv100ChannelGroup header {
+      margin-bottom: 7px;
+    }
+
+    .sv110 .sv100Channel {
+      min-height: 43px;
+      padding: 0 11px;
+      border-radius: 16px;
+      color: rgba(235,238,255,.70);
+      font-weight: 850;
+      letter-spacing: -.02em;
+    }
+
+    .sv110 .sv100Channel i {
+      color: rgba(148,190,255,.88);
+    }
+
+    .sv110 .sv100Channel:hover,
+    .sv110 .sv100Channel.active {
+      color: white;
+      background:
+        radial-gradient(260px circle at 0% 0%, rgba(85,215,255,.14), transparent 54%),
+        radial-gradient(240px circle at 100% 0%, rgba(229,9,20,.12), transparent 54%),
+        rgba(255,255,255,.085);
+      box-shadow:
+        inset 3px 0 0 #55d7ff,
+        0 14px 38px rgba(0,0,0,.18);
+    }
+
+    .sv110 .sv100Main {
+      grid-template-rows: 78px minmax(0, 1fr);
+      background:
+        radial-gradient(860px circle at 50% -6%, rgba(124,92,255,.16), transparent 45%),
+        rgba(5,8,19,.66);
+      overflow: hidden;
+    }
+
+    .sv110 .sv100Topbar {
+      padding: 0 22px;
+      min-height: 78px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      background:
+        linear-gradient(90deg, rgba(229,9,20,.10), rgba(124,92,255,.10), transparent),
+        rgba(255,255,255,.04);
+      backdrop-filter: blur(18px) saturate(1.10);
+      -webkit-backdrop-filter: blur(18px) saturate(1.10);
+      box-shadow: none;
+    }
+
+    .sv110 .sv100Topbar span {
+      color: rgba(216,222,255,.62);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      font-size: 11px;
+    }
+
+    .sv110 .sv100Topbar h1 {
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-size: clamp(28px, 3.1vw, 45px);
+      letter-spacing: -.075em;
+      line-height: .92;
+      text-shadow: 0 0 32px rgba(124,92,255,.20);
+    }
+
+    .sv110 .sv100Topbar nav {
+      gap: 10px;
+    }
+
+    .sv110 .sv100Topbar button {
+      min-height: 40px;
+      border-radius: 999px;
+      padding: 0 14px;
+      color: rgba(255,255,255,.74);
+      background: rgba(255,255,255,.075);
+      border: 1px solid rgba(255,255,255,.11);
+    }
+
+    .sv110 .sv100Topbar button:hover {
+      color: white;
+      border-color: rgba(85,215,255,.26);
+      background: rgba(255,255,255,.13);
+    }
+
+    .sv110 #sv100ChatPanel.active {
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      min-height: 0;
+    }
+
+    .sv110 .sv100Notice {
+      margin: 16px 18px 0;
+      border-radius: 999px;
+      color: rgba(230,255,248,.90);
+      background:
+        radial-gradient(360px circle at 0% 0%, rgba(102,255,201,.14), transparent 54%),
+        rgba(255,255,255,.055);
+      border-color: rgba(102,255,201,.20);
+    }
+
+    .sv110 .sv100Messages {
+      padding: 22px 22px 16px;
+      background:
+        linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
+      background-size: 120px 120px;
+    }
+
+    .sv110 .sv100Msg {
+      max-width: 780px;
+      padding: 12px;
+      border: 1px solid transparent;
+    }
+
+    .sv110 .sv100Msg:hover {
+      border-color: rgba(255,255,255,.075);
+      background:
+        radial-gradient(340px circle at 0% 0%, rgba(124,92,255,.10), transparent 54%),
+        rgba(255,255,255,.045);
+      box-shadow: 0 18px 44px rgba(0,0,0,.18);
+    }
+
+    .sv110 .sv100Msg > span {
+      border-radius: 16px;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.35), transparent 42%),
+        linear-gradient(135deg, #55d7ff, #7c5cff);
+      box-shadow: 0 12px 34px rgba(85,215,255,.14);
+    }
+
+    .sv110 .sv100Composer {
+      margin: 0 18px 18px;
+      min-height: 64px;
+      border-radius: 25px;
+      background:
+        radial-gradient(520px circle at 0% 0%, rgba(85,215,255,.10), transparent 54%),
+        rgba(255,255,255,.075);
+      border: 1px solid rgba(255,255,255,.13);
+      box-shadow:
+        0 24px 70px rgba(0,0,0,.28),
+        inset 0 1px 0 rgba(255,255,255,.055);
+    }
+
+    .sv110 .sv100Composer input {
+      color: white;
+      font-weight: 720;
+    }
+
+    .sv110 .sv100Composer input::placeholder {
+      color: rgba(255,255,255,.42);
+    }
+
+    .sv110 .sv100Composer button {
+      width: 42px;
+      height: 42px;
+      border-radius: 16px;
+    }
+
+    .sv110 .sv100Members {
+      background:
+        radial-gradient(520px circle at 0% 0%, rgba(85,215,255,.10), transparent 52%),
+        rgba(4,7,17,.80);
+    }
+
+    .sv110 .sv100MembersHead {
+      padding: 14px 10px 12px;
+      margin: -4px 0 8px;
+    }
+
+    .sv110 .sv100MembersHead b {
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-size: 20px;
+      letter-spacing: -.055em;
+    }
+
+    .sv110 .sv100Member {
+      border-radius: 18px;
+      padding: 10px;
+      background: rgba(255,255,255,.035);
+      border: 1px solid rgba(255,255,255,.055);
+    }
+
+    .sv110 .sv100Perms {
+      margin-top: 14px;
+      padding: 16px;
+    }
+
+    .sv110 .sv100RoomsPanel {
+      overflow-y: auto;
+      padding: 18px;
+    }
+
+    .sv110 .sv103RoomShell {
+      gap: 16px;
+    }
+
+    .sv110 .sv103RoomHeader,
+    .sv110 .sv100RoomsIntro {
+      border-radius: 28px;
+      background:
+        radial-gradient(920px circle at 0% 0%, rgba(229,9,20,.14), transparent 46%),
+        radial-gradient(720px circle at 72% 0%, rgba(85,215,255,.13), transparent 48%),
+        rgba(255,255,255,.065);
+      border: 1px solid rgba(255,255,255,.13);
+    }
+
+    .sv110 .sv103Player {
+      border-radius: 28px;
+      border-color: rgba(255,255,255,.13);
+      box-shadow: 0 32px 120px rgba(0,0,0,.42);
+    }
+
+    @media(max-width: 1180px) {
+      .sv110 {
+        grid-template-columns: 76px 290px minmax(0, 1fr);
+      }
+
+      .sv110 .sv100Members {
+        display: none;
+      }
+    }
+
+    @media(max-width: 860px) {
+      body:has(.sv110) {
+        overflow: auto;
+      }
+
+      .sv110 {
+        height: auto;
+        min-height: 100dvh;
+        grid-template-columns: 1fr;
+        padding: calc(var(--social-nav-offset) + 8px) 12px calc(96px + var(--safe-bottom));
+        overflow: visible;
+      }
+
+      .sv110 .sv100Guilds,
+      .sv110 .sv100Channels,
+      .sv110 .sv100Main,
+      .sv110 .sv100Members {
+        height: auto;
+        max-height: none;
+      }
+
+      .sv110 .sv100Guilds {
+        min-height: 72px;
+        flex-direction: row;
+        overflow-x: auto;
+      }
+
+      .sv110 .sv100Channels {
+        max-height: 42svh;
+      }
+
+      .sv110 .sv100Main {
+        min-height: 72svh;
+      }
+
+      .sv110 .sv100Topbar {
+        min-height: auto;
+        padding: 16px;
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .sv110 .sv100Topbar nav button span {
+        display: none;
+      }
+    }
+
   </style>
 
     <script>
@@ -23442,7 +23883,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
             <a href="/profiles/manage"><span>✎</span><b>Manage Profiles</b></a>
             <a href="/social"><span>◉</span><b>Social Hub</b></a>
             <a href="/account"><span>⚙</span><b>Account</b></a>
-            <a href="/social?tab=watchrooms"><span>◎</span><b>Social Watch Rooms</b></a>
+            <a href="/social?tab=watchrooms"><span>◎</span><b>Social Watch Parties</b></a>
             <a href="/continue-watching"><span>▶</span><b>Continue Watching</b></a>
             <a href="/my-list"><span>＋</span><b>My List</b></a>
             <a href="/liked"><span>♥</span><b>Liked</b></a>
@@ -25096,7 +25537,7 @@ async function welcomePage(req, res) {
 
         <div class="dsWelcomeStats">
           <div><b>Profiles</b><span>Me, partner, and together spaces</span></div>
-          <div><b>Watch Rooms</b><span>Open Together, Live Share, chat</span></div>
+          <div><b>Watch Parties</b><span>Open Together, Live Share, chat</span></div>
           <div><b>Distance Sync</b><span>Countdowns and shared timeframes</span></div>
         </div>
       </div>
@@ -25133,7 +25574,7 @@ async function welcomePage(req, res) {
       <div class="dsWelcomeIntro">
         <span class="dsEyebrow">Date ideas before signing in</span>
         <h2>Find the movie before the “what do we watch?” argument.</h2>
-        <p>SwiflyTV is built for movie fans who still want a normal movie night together. Browse ideas, then unlock Watch Rooms, My List, shared watch history, hearts, countdowns, and profiles.</p>
+        <p>SwiflyTV is built for movie fans who still want a normal movie night together. Browse ideas, then unlock Watch Parties, My List, shared watch history, hearts, countdowns, and profiles.</p>
       </div>
 
       ${hasTmdb ? `
@@ -25152,7 +25593,7 @@ async function welcomePage(req, res) {
     </section>
 
     <section id="features" class="dsWelcomeFeatures dsWelcomeFeaturesPro">
-      <article><span>Watch Rooms</span><h3>Watch from two places</h3><p>Share a room, use Open Together, Live Share, countdowns, and chat while apart.</p></article>
+      <article><span>Watch Parties</span><h3>Watch from two places</h3><p>Share a room, use Open Together, Live Share, countdowns, and chat while apart.</p></article>
       <article><span>Profiles</span><h3>Me, you, and us</h3><p>Create profiles for each person and a shared Together space for date nights.</p></article>
       <article><span>Continue Watching</span><h3>Resume the date</h3><p>Keep track of what you started so the next call can begin faster.</p></article>
       <article><span>Love Notes</span><h3>Keep it sweet</h3><p>Use the couple dashboard for date ideas, little notes, and shared plans.</p></article>
@@ -25248,7 +25689,7 @@ async function homePage(req, res) {
         <div class="dsCoupleHomeActions">
           <a class="dsPrimaryBtn" href="/movies">Browse Movies</a>
           <a class="dsSecondaryBtn" href="/tv">Browse TV</a>
-          <a class="dsGhostPill" href="/watchrooms">Watch Rooms</a>
+          <a class="dsGhostPill" href="/watchrooms">Watch Parties</a>
         </div>
         <div class="dsCoupleHomeCards">
           <article><b>01</b><span>Find something</span></article>
@@ -26126,7 +26567,7 @@ async function watchPage(req, res, type) {
             <div>
               <span class="dsEyebrow">${isMovieMode ? watchModeLabel : "Trailer mode"}</span>
               <h1>${escapeHtml(title)}</h1>
-              <p>${isMovieMode ? (proxyVideoUrl ? "Movie button is playing the m3u8 URL returned by your movie API." : providerStream ? "Movie button is using the temporary ORG MP4 trailer/preview provider until licensed movie access is connected." : "Movie mode is waiting for the same m3u8 player source used in Watch Rooms. Legacy fallback is off unless MOVIE_PROXY_VIDEO_ALLOW_LEGACY_FALLBACK=true.") : "Official trailer / preview playback."}</p>
+              <p>${isMovieMode ? (proxyVideoUrl ? "Movie button is playing the m3u8 URL returned by your movie API." : providerStream ? "Movie button is using the temporary ORG MP4 trailer/preview provider until licensed movie access is connected." : "Movie mode is waiting for the same m3u8 player source used in Watch Parties. Legacy fallback is off unless MOVIE_PROXY_VIDEO_ALLOW_LEGACY_FALLBACK=true.") : "Official trailer / preview playback."}</p>
             </div>
             ${isMovieMode ? `<span class="dsPlaceholderBadge">${proxyVideoUrl ? "proxyVideo" : providerStream ? "ORG MP4" : movieEmbedUrl ? "Embed" : "Trailer fallback"}</span>` : `<span class="dsPlaceholderBadge trailer">Trailer</span>`}
           </div>
@@ -26712,7 +27153,7 @@ function likedPage(req, res) {
 function watchroomsPage(req, res) {
   const roomId = createRoomId();
   const body = `<main class="dsPlainPage dsWatchroomsPage dsWatchroomsPro">
-    ${dsPageHeader("Watch Rooms", "A private room for movie fans to open a link together, countdown, chat, and start the same movie from different places.", "Watch together")}
+    ${dsPageHeader("Watch Parties", "A private room for movie fans to open a link together, countdown, chat, and start the same movie from different places.", "Watch together")}
 
     <section class="dsWatchroomHero">
       <div>
@@ -27243,7 +27684,7 @@ function watchroomPage(req, res) {
               <span>Why paid?</span>
               <h3>Not just streaming.</h3>
               <p>Couples pay for the feeling: less “what do we do?”, more shared rituals, synced moments, and a room that feels made for the relationship.</p>
-              <a class="dsSecondaryBtn" href="/couples">Open Watch Rooms</a>
+              <a class="dsSecondaryBtn" href="/couples">Open Watch Parties</a>
             </article>
           </div>
 
@@ -30719,7 +31160,7 @@ function authPage(res, mode = "login") {
 
         <div class="dsAuthFeatureList">
           <div><b>Profiles</b><span>Regular and Kids profiles.</span></div>
-          <div><b>Watch Rooms</b><span>Start synced rooms when you want.</span></div>
+          <div><b>Watch Parties</b><span>Start synced rooms when you want.</span></div>
           <div><b>My List</b><span>Save what you want next.</span></div>
         </div>
       </aside>
@@ -30874,7 +31315,7 @@ function accountPage(req, res) {
         <a class="dsSecondaryBtn" href="/profiles/manage">Manage Profiles</a>
         <a class="dsSecondaryBtn" href="/my-list">My List</a>
         <a class="dsSecondaryBtn" href="/liked">Liked</a>
-        <a class="dsGhostPill" href="/watchrooms">Watch Rooms</a>
+        <a class="dsGhostPill" href="/watchrooms">Watch Parties</a>
       </div>
     </section>
 
@@ -30901,7 +31342,7 @@ function accountPage(req, res) {
       </a>
       <a class="dsAccountCard" href="/watchrooms">
         <span>05</span>
-        <h2>Watch Rooms</h2>
+        <h2>Watch Parties</h2>
         <p>Create or join a synced room.</p>
       </a>
     </section>
@@ -31235,12 +31676,12 @@ function socialPage(req, res) {
   const initialVideoId = String(req.query.videoId || "").slice(0, 64);
   const initialEmbedUrl = String(req.query.embedUrl || "").slice(0, 1000);
 
-  const body = `<main class="sv100 sv103 sv104 sv105 sv106" data-initial-tab="${escapeHtml(initialTab)}" data-room-id="${escapeHtml(requestedRoomId)}" data-room-name="${escapeHtml(initialRoomName)}" data-room-kind="${escapeHtml(initialKind)}" data-room-video-id="${escapeHtml(initialVideoId)}" data-room-embed-url="${escapeHtml(initialEmbedUrl)}" data-denied="${escapeHtml(denied)}" data-allowed-creators="${escapeHtml(allowedCreators.join(","))}" data-open-room-creation="${socialOpenRoomCreation() ? "true" : "false"}">
+  const body = `<main class="sv100 sv103 sv104 sv105 sv106 sv110" data-initial-tab="${escapeHtml(initialTab)}" data-room-id="${escapeHtml(requestedRoomId)}" data-room-name="${escapeHtml(initialRoomName)}" data-room-kind="${escapeHtml(initialKind)}" data-room-video-id="${escapeHtml(initialVideoId)}" data-room-embed-url="${escapeHtml(initialEmbedUrl)}" data-denied="${escapeHtml(denied)}" data-allowed-creators="${escapeHtml(allowedCreators.join(","))}" data-open-room-creation="${socialOpenRoomCreation() ? "true" : "false"}">
     <aside class="sv100Guilds" aria-label="Servers">
       <a class="sv100Guild active" href="/social" title="Swifly Hub"><i class="ri-play-circle-fill"></i></a>
       <a class="sv100Guild" href="/movies" title="Movies"><i class="ri-movie-2-fill"></i></a>
       <a class="sv100Guild" href="/tv" title="TV Shows"><i class="ri-tv-2-fill"></i></a>
-      <a class="sv100Guild" href="/social?tab=watchrooms" title="Watch Rooms"><i class="ri-vidicon-fill"></i></a>
+      <a class="sv100Guild" href="/social?tab=watchrooms" title="Watch Parties"><i class="ri-vidicon-fill"></i></a>
       <a class="sv100Guild" href="/profiles" title="Profiles"><i class="ri-user-smile-fill"></i></a>
     </aside>
 
@@ -31267,31 +31708,31 @@ function socialPage(req, res) {
       </nav>
 
       <section class="sv100ChannelGroup" data-nav-panel="chat">
-        <header><span>Text Channels</span><button type="button" data-action="new-channel" data-requires="channels" title="Create channel"><i class="ri-add-line"></i></button></header>
-        <button type="button" class="sv100Channel active" data-room="channel-general" data-title="# general"><i class="ri-hashtag"></i><b>general</b></button>
+        <header><span>Social Lounges</span><button type="button" data-action="new-channel" data-requires="channels" title="Create channel"><i class="ri-add-line"></i></button></header>
+        <button type="button" class="sv100Channel active" data-room="channel-general" data-title="Lounge"><i class="ri-hashtag"></i><b>general</b></button>
         <button type="button" class="sv100Channel" data-room="channel-recommendations" data-title="# recommendations"><i class="ri-hashtag"></i><b>recommendations</b></button>
         <button type="button" class="sv100Channel" data-room="channel-watch" data-title="# watch-room-chat"><i class="ri-hashtag"></i><b>watch-room-chat</b></button>
       </section>
 
       <section class="sv100ChannelGroup" data-nav-panel="chat">
-        <header><span>Groups / DMs</span><button type="button" data-action="new-group" data-requires="groups" title="Create group"><i class="ri-add-line"></i></button></header>
+        <header><span>Private Rooms</span><button type="button" data-action="new-group" data-requires="groups" title="Create group"><i class="ri-add-line"></i></button></header>
         <button type="button" class="sv100Channel" data-room="dm-main" data-title="Main Chat"><i class="ri-user-3-fill"></i><b>Main Chat</b></button>
         <button type="button" class="sv100Channel" data-room="group-watchparty" data-title="Watch Party"><i class="ri-group-fill"></i><b>Watch Party</b></button>
       </section>
 
       <section class="sv100ChannelGroup" data-nav-panel="rooms">
-        <header><span>Watch Rooms</span><button type="button" data-action="rooms-tab" title="Open watch hub"><i class="ri-arrow-right-line"></i></button></header>
-        <button type="button" class="sv100Channel" data-tab="rooms"><i class="ri-tv-2-fill"></i><b>room-hub</b></button>
-        <button type="button" class="sv100Channel" data-action="native-create-room" data-requires="rooms"><i class="ri-add-box-fill"></i><b>create-room</b></button>
-        <button type="button" class="sv100Channel" data-action="native-join-room"><i class="ri-login-box-fill"></i><b>join-by-code</b></button>
+        <header><span>Watch Parties</span><button type="button" data-action="rooms-tab" title="Open watch hub"><i class="ri-arrow-right-line"></i></button></header>
+        <button type="button" class="sv100Channel" data-tab="rooms"><i class="ri-tv-2-fill"></i><b>party-hub</b></button>
+        <button type="button" class="sv100Channel" data-action="native-create-party" data-requires="rooms"><i class="ri-add-box-fill"></i><b>create-party</b></button>
+        <button type="button" class="sv100Channel" data-action="native-join-room"><i class="ri-login-box-fill"></i><b>join-code</b></button>
       </section>
     </aside>
 
     <section class="sv100Main">
       <header class="sv100Topbar">
         <div>
-          <span id="sv100Kind"><i class="ri-hashtag"></i> Text Channel</span>
-          <h1 id="sv100Title"># general</h1>
+          <span id="sv100Kind"><i class="ri-hashtag"></i> Social Lounge</span>
+          <h1 id="sv100Title">Lounge</h1>
         </div>
         <nav>
           <button type="button" data-action="voice"><i class="ri-phone-fill"></i><span>Voice</span></button>
@@ -31303,12 +31744,12 @@ function socialPage(req, res) {
       <section id="sv100ChatPanel" class="sv100Panel ${initialTab === "chat" ? "active" : ""}">
         <div class="sv100Notice">
           <i class="ri-shield-check-fill"></i>
-          <span>Everyone can create Watch Rooms. Groups and channels still need creator permission.</span>
+          <span>Everyone can create Watch Parties. Groups and channels still need creator permission.</span>
         </div>
         <div id="sv100Messages" class="sv100Messages"></div>
         <form id="sv100Composer" class="sv100Composer">
           <button type="button" data-action="attach"><i class="ri-add-circle-fill"></i></button>
-          <input id="sv100Input" placeholder="Message # general" autocomplete="off" maxlength="1200" />
+          <input id="sv100Input" placeholder="Message Lounge" autocomplete="off" maxlength="1200" />
           <button type="submit"><i class="ri-send-plane-fill"></i></button>
         </form>
       </section>
@@ -31318,7 +31759,7 @@ function socialPage(req, res) {
           <header class="sv103RoomHeader">
             <div>
               <span class="dsEyebrow">Native Social Watchroom</span>
-              <h2 id="sv103RoomTitle">room-hub</h2>
+              <h2 id="sv103RoomTitle">party-hub</h2>
               <p id="sv103RoomSub">Create or join a room. The native room UI lives inside Swifly Hub.</p>
             </div>
             <nav>
@@ -31381,11 +31822,11 @@ function socialPage(req, res) {
           <section id="sv103RoomLobby" class="sv103RoomLobby">
             <div class="sv100RoomsIntro">
               <div>
-                <span class="dsEyebrow">Integrated Watch Rooms</span>
+                <span class="dsEyebrow">Integrated Watch Parties</span>
                 <h2>Watchrooms are native now.</h2>
                 <p>The player, controls, room code, viewers, and host tools are built directly into Swifly Hub.</p>
               </div>
-              <button class="sv100Btn primary creatorOnly" type="button" data-action="native-create-room"><i class="ri-add-circle-fill"></i> Create Room</button>
+              <button class="sv100Btn primary creatorOnly" type="button" data-action="native-create-party"><i class="ri-add-circle-fill"></i> Create Room</button>
             </div>
 
             <div class="sv100RoomsGrid">
@@ -31402,7 +31843,7 @@ function socialPage(req, res) {
               <div class="sv100Card lockedOnly" hidden>
                 <span>Locked</span>
                 <h3>Group/channel creation is restricted</h3>
-                <p>You can create and join Watch Rooms. Only groups/channels are restricted.</p>
+                <p>You can create and join Watch Parties. Only groups/channels are restricted.</p>
               </div>
 
               <form class="sv100Card" method="get" action="/watchrooms/join">
@@ -31450,7 +31891,7 @@ function socialPage(req, res) {
         <header>
           <div>
             <span id="sv100CallType">Voice call</span>
-            <h2 id="sv100CallTitle"># general</h2>
+            <h2 id="sv100CallTitle">Lounge</h2>
           </div>
           <button type="button" data-action="close-call"><i class="ri-close-line"></i></button>
         </header>
@@ -31477,7 +31918,7 @@ function socialPage(req, res) {
         const socket = window.io ? io() : null;
 
         let currentRoom = "channel-general";
-        let currentTitle = "# general";
+        let currentTitle = "Lounge";
         let username = "Guest";
         let localStream = null;
         let permissions = {
@@ -31573,8 +32014,8 @@ function socialPage(req, res) {
 
           $("#sv100RoleText").textContent = permissions.canManageSocial ? "Creator permissions" : "Member access";
           $("#sv100PermText").textContent = permissions.canManageSocial
-            ? "You can create groups/channels, and everyone can create Watch Rooms."
-            : "You can chat, join rooms, and create Watch Rooms. Groups/channels are locked.";
+            ? "You can create groups/channels, and everyone can create Watch Parties."
+            : "You can chat, join rooms, and create Watch Parties. Groups/channels are locked.";
         }
 
         function roomKey(room) { return "swiflytv.social.v103." + room; }
@@ -31615,7 +32056,7 @@ function socialPage(req, res) {
           const saved = readMessages(currentRoom);
           const messages = saved.length ? saved : seed || [
             { author: "Swifly", text: "Welcome to " + currentTitle + ".", createdAt: Date.now() },
-            { author: "Swifly", text: "Watchrooms are native in Social now. No embedded room page.", createdAt: Date.now() + 10 }
+            { author: "Swifly", text: "Start a watch room, invite someone, and keep the movie night in one place.", createdAt: Date.now() + 10 }
           ];
           messages.forEach((msg) => addMessage(msg, false));
         }
@@ -31626,11 +32067,11 @@ function socialPage(req, res) {
           $("#sv100RoomsPanel").classList.toggle("active", rooms);
           $$("[data-tab]").forEach((btn) => btn.classList.toggle("active", btn.dataset.tab === tab));
           if (rooms) {
-            $("#sv100Kind").innerHTML = '<i class="ri-tv-fill"></i> Watch Rooms';
-            $("#sv100Title").textContent = activeWatchRoom.joined ? activeWatchRoom.name : "room-hub";
+            $("#sv100Kind").innerHTML = '<i class="ri-tv-fill"></i> Watch Parties';
+            $("#sv100Title").textContent = activeWatchRoom.joined ? activeWatchRoom.name : "party-hub";
             renderRooms();
           } else {
-            $("#sv100Kind").innerHTML = currentRoom.startsWith("channel") ? '<i class="ri-hashtag"></i> Text Channel' : currentRoom.startsWith("group") ? '<i class="ri-group-fill"></i> Group' : '<i class="ri-user-3-fill"></i> Direct Message';
+            $("#sv100Kind").innerHTML = currentRoom.startsWith("channel") ? '<i class="ri-hashtag"></i> Social Lounge' : currentRoom.startsWith("group") ? '<i class="ri-group-fill"></i> Group' : '<i class="ri-user-3-fill"></i> Direct Message';
             $("#sv100Title").textContent = currentTitle;
           }
         }
@@ -31666,7 +32107,7 @@ function socialPage(req, res) {
           if (!name || !name.trim()) return;
 
           const id = (type === "channel" ? "channel-" : "group-") + name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
-          const selectorText = type === "channel" ? "Text Channels" : "Groups / DMs";
+          const selectorText = type === "channel" ? "Social Lounges" : "Private Rooms";
           const section = $$(".sv100ChannelGroup").find((sec) => (sec.querySelector("header span")?.textContent || "") === selectorText);
           const btn = document.createElement("button");
           btn.type = "button";
@@ -31754,7 +32195,7 @@ function socialPage(req, res) {
           $("#sv103NativeRoom").hidden = true;
           $("#sv103RoomLobby").hidden = false;
           $("#sv103Player").innerHTML = '<div class="sv103EmptyPlayer"><i class="ri-tv-2-fill"></i><b>No media selected</b><span>Host can paste a YouTube/link or select a TMDB movie.</span></div>';
-          $("#sv100Title").textContent = "room-hub";
+          $("#sv100Title").textContent = "party-hub";
           $("#sv103RoomSub").textContent = "Create or join a room. The native room UI lives inside Swifly Hub.";
           renderRooms();
         }
@@ -32231,7 +32672,7 @@ function socialPage(req, res) {
               if (name === "new-channel") return createVirtual("channel");
               if (name === "rooms-tab") return switchTab("rooms");
               if (name === "refresh-rooms") return renderRooms();
-              if (name === "native-create-room") return createNativeRoom();
+              if (name === "native-create-party") return createNativeRoom();
               if (name === "native-join-room") {
                 const code = roomCode(prompt("Room code") || "");
                 if (code) openNativeWatchRoom({ id: code, name: "SwiflyTV Watch Room", kind: "blank" });
@@ -32489,7 +32930,7 @@ function continueWatchingPage(req, res) {
       <div class="dsAccountActions">
         <a class="dsPrimaryBtn" href="/movies">Browse Movies</a>
         <a class="dsSecondaryBtn" href="/tv">Browse TV Shows</a>
-        <a class="dsGhostPill" href="/watchrooms">Watch Rooms</a>
+        <a class="dsGhostPill" href="/watchrooms">Watch Parties</a>
       </div>
     </section>
 
@@ -32593,7 +33034,7 @@ app.get("/watchrooms/new", (req, res) => {
   if (!perms.canCreateWatchRooms && process.env.SOCIAL_LOCK_WATCHROOM_CREATION === "true") {
     const denied = new URLSearchParams();
     denied.set("tab", "watchrooms");
-    denied.set("denied", "create-room");
+    denied.set("denied", "create-party");
     return res.redirect(`/social?${denied.toString()}`);
   }
 
@@ -32766,7 +33207,7 @@ app.post("/api/social/watchrooms/create", (req, res) => {
   const creator = String(req.body?.creator || "").slice(0, 80);
   const perms = socialPermissionsForName(creator);
   if (!perms.canCreateWatchRooms && process.env.SOCIAL_LOCK_WATCHROOM_CREATION === "true") {
-    return res.status(403).json({ ok: false, message: "You do not have permission to create Watch Rooms." });
+    return res.status(403).json({ ok: false, message: "You do not have permission to create Watch Parties." });
   }
 
   const id = createRoomId();
