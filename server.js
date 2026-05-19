@@ -17377,7 +17377,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
     /* ============================================================
        v62 COUPLES EDITION
-       Long-distance couple targeting: date rooms, couple dashboard,
+       Long-distance couple targeting: watch rooms, couple dashboard,
        shared watch planning, and softer premium UI accents.
        ============================================================ */
 
@@ -19337,6 +19337,1204 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v99 VISUAL CLEANUP
+       Fixes rough UI areas without changing the color palette.
+       Uses existing vars/rgba/currentColor only.
+       ============================================================ */
+
+    body {
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .netflixTopbar {
+      min-height: 72px;
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+
+    .netflixLinks {
+      gap: 4px;
+    }
+
+    .netflixLinks a {
+      padding: 9px 12px;
+      border-radius: 999px;
+      line-height: 1;
+    }
+
+    .netflixActions {
+      gap: 10px;
+    }
+
+    .profileButton {
+      min-height: 40px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+    }
+
+    .dsNavSearch input {
+      min-height: 38px;
+    }
+
+    .dsContent,
+    .container {
+      width: min(1420px, calc(100vw - 32px));
+    }
+
+    .section,
+    .dsRow {
+      margin-top: clamp(24px, 4vw, 48px);
+      margin-bottom: clamp(24px, 4vw, 48px);
+    }
+
+    .sectionHead,
+    .dsRowHead {
+      align-items: end;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .sectionHead h2,
+    .dsRowHead h2 {
+      letter-spacing: -.045em;
+      line-height: .98;
+    }
+
+    .sectionHead span,
+    .dsRowTag,
+    .dsEyebrow {
+      letter-spacing: .085em;
+    }
+
+    .movieRail {
+      gap: clamp(12px, 1.4vw, 18px);
+      padding: 8px 2px 18px;
+    }
+
+    .movieGrid,
+    .dsGrid,
+    .collectionGrid {
+      gap: clamp(14px, 2vw, 24px);
+    }
+
+    .movieCard {
+      border-radius: 22px;
+    }
+
+    .posterWrap,
+    .dsThumb,
+    .topTenPoster {
+      border-radius: 22px;
+      overflow: hidden;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .posterWrap img,
+    .dsThumb img,
+    .topTenPoster img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .dsCardOverlay {
+      padding: 14px;
+    }
+
+    .dsCardControls {
+      gap: 8px;
+    }
+
+    .dsPlayDot,
+    .dsMiniBtn,
+    .dsIconBtn {
+      width: 38px;
+      height: 38px;
+      min-width: 38px;
+      border-radius: 999px;
+    }
+
+    .dsCardTitle {
+      line-height: 1.05;
+      letter-spacing: -.02em;
+    }
+
+    .dsCardMeta {
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .dsCardMeta span,
+    .dsCardMeta b {
+      white-space: nowrap;
+    }
+
+    .dsHero {
+      min-height: clamp(560px, 76vh, 780px);
+    }
+
+    .dsHeroContent {
+      padding-top: 92px;
+    }
+
+    .dsHeroContent h1 {
+      max-width: 880px;
+      line-height: .92;
+    }
+
+    .dsHeroContent p {
+      max-width: 680px;
+      line-height: 1.55;
+    }
+
+    .dsHeroActions,
+    .heroActions,
+    .dsDetailActions,
+    .dsWatchActions,
+    .dsAccountActions {
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .dsPrimaryBtn,
+    .dsSecondaryBtn,
+    .dsGhostPill,
+    .btn,
+    .sectionHead a,
+    .pagination a {
+      min-height: 42px;
+      border-radius: 999px;
+      font-weight: 850;
+      letter-spacing: -.01em;
+    }
+
+    .dsMovieHomeBoard {
+      gap: 22px;
+      padding: clamp(18px, 2.4vw, 28px);
+    }
+
+    .dsMovieHomeBoard h2 {
+      line-height: .98;
+      max-width: 780px;
+    }
+
+    .dsMovieHomeBoard p {
+      max-width: 760px;
+    }
+
+    .dsCoupleHomeActions,
+    .dsStableActions {
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .dsCoupleHomeCards {
+      gap: 10px;
+    }
+
+    .dsCoupleHomeCards article {
+      min-height: 84px;
+    }
+
+    .dsDetailShell,
+    .dsWatchPlayerCard,
+    .dsAccountHero,
+    .dsAccountCard,
+    .dsProfileCreate,
+    .dsProfilesHero,
+    .dsContinuePagePanel,
+    .dsWatchroomPanel {
+      border-radius: 28px;
+    }
+
+    .dsDetailHero {
+      min-height: clamp(520px, 72vh, 760px);
+    }
+
+    .dsDetailHeroContent {
+      padding-bottom: clamp(34px, 6vw, 72px);
+    }
+
+    .dsDetailHeroContent h1 {
+      line-height: .92;
+      max-width: 1000px;
+    }
+
+    .dsMetaBand {
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .dsMetaBand span,
+    .dsMetaBand b {
+      white-space: nowrap;
+    }
+
+    .dsDetailBody {
+      padding-top: clamp(20px, 4vw, 42px);
+    }
+
+    .dsDetailGrid {
+      gap: clamp(18px, 4vw, 44px);
+    }
+
+    .dsDetailGrid p {
+      line-height: 1.65;
+    }
+
+    .dsDetailGrid aside {
+      gap: 12px;
+    }
+
+    .dsDetailGrid aside div,
+    .dsAboutGrid div {
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.055);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .dsDetailTabs {
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      scrollbar-width: none;
+    }
+
+    .dsDetailTabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .dsDetailTabs a {
+      white-space: nowrap;
+      border-radius: 999px;
+    }
+
+    .dsCastRail {
+      gap: 12px;
+      padding-bottom: 12px;
+    }
+
+    .dsCastCard {
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    .dsTrailerGrid {
+      gap: 16px;
+    }
+
+    .trailerCard,
+    .trailerCard iframe {
+      border-radius: 22px;
+      overflow: hidden;
+    }
+
+    .dsWatchPage {
+      background: transparent;
+    }
+
+    .dsWatchHero {
+      padding-top: 88px;
+    }
+
+    .dsWatchHeader {
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .dsWatchModeSwitch {
+      border-radius: 999px;
+      padding: 4px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .dsWatchModeSwitch a {
+      border-radius: 999px;
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .dsWatchPlayerTop {
+      gap: 14px;
+      align-items: start;
+    }
+
+    .dsWatchPlayerTop h1 {
+      line-height: 1;
+      letter-spacing: -.045em;
+    }
+
+    .dsWatchPlayerTop p {
+      max-width: 760px;
+      line-height: 1.55;
+    }
+
+    .dsWatchFrame {
+      border-radius: 24px;
+      overflow: hidden;
+      background: #000;
+    }
+
+    .dsMovieButtonPlayerShell,
+    .dsDirectVideoShell,
+    .dsMovieEmbedFrame,
+    .dsProxyVideoWaitingShell {
+      border-radius: 24px;
+      overflow: hidden;
+    }
+
+    .dsProxyVideoWaitingCard {
+      max-width: 560px;
+      border-radius: 28px;
+    }
+
+    .dsProxyVideoWaitStatus {
+      word-break: break-word;
+    }
+
+    .dsHlsStatus {
+      border-radius: 18px;
+    }
+
+    .dsWatchEpisodePicker {
+      border-radius: 24px;
+      gap: 12px;
+    }
+
+    .dsWatchSeasonScroll,
+    .dsWatchEpisodeScroll {
+      scrollbar-width: thin;
+      padding-bottom: 4px;
+    }
+
+    .dsWatchSeasonScroll a,
+    .dsWatchEpisodeScroll a,
+    .dsEpisodeChips a {
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .dsWatchroomHero,
+    .dsWatchroomCreate,
+    .dsActiveRooms {
+      width: min(1320px, calc(100vw - 32px));
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .dsWatchroomHero {
+      border-radius: 30px;
+      padding: clamp(18px, 3vw, 32px);
+    }
+
+    .dsQuickRoomForm,
+    #createWatchroomForm,
+    #joinWatchroomForm,
+    #profileCreateForm,
+    .dsSafeAuthForm {
+      gap: 12px;
+    }
+
+    input,
+    select,
+    textarea {
+      min-height: 44px;
+      border-radius: 16px !important;
+    }
+
+    textarea {
+      min-height: 120px;
+      line-height: 1.45;
+    }
+
+    .dsAccountGrid,
+    .dsProfilesGrid {
+      gap: clamp(14px, 2vw, 22px);
+    }
+
+    .dsAccountCard,
+    .dsProfileCard {
+      min-height: 180px;
+    }
+
+    .dsProfileCard span {
+      width: 74px;
+      height: 74px;
+    }
+
+    .mobileNav {
+      padding-bottom: max(10px, env(safe-area-inset-bottom));
+    }
+
+    @media(max-width: 980px) {
+      .netflixTopbar {
+        min-height: 64px;
+      }
+
+      .dsHeroContent {
+        padding-top: 82px;
+      }
+
+      .dsMovieHomeBoard {
+        grid-template-columns: 1fr;
+      }
+
+      .dsWatchLayout {
+        grid-template-columns: 1fr;
+      }
+
+      .dsWatchPlayerTop {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media(max-width: 720px) {
+      .dsContent,
+      .container,
+      .dsWatchroomHero,
+      .dsWatchroomCreate,
+      .dsActiveRooms {
+        width: min(100vw - 22px, 100%);
+      }
+
+      .dsHero {
+        min-height: 610px;
+      }
+
+      .dsHeroContent h1,
+      .dsDetailHeroContent h1 {
+        font-size: clamp(42px, 13vw, 76px);
+      }
+
+      .dsHeroActions .dsPrimaryBtn,
+      .dsHeroActions .dsSecondaryBtn,
+      .dsWatchActions .dsPrimaryBtn,
+      .dsWatchActions .dsSecondaryBtn,
+      .dsWatchActions .dsGhostPill {
+        width: 100%;
+      }
+
+      .movieRail {
+        gap: 12px;
+        padding-left: 2px;
+        padding-right: 2px;
+      }
+
+      .posterWrap,
+      .dsThumb {
+        border-radius: 18px;
+      }
+
+      .dsCardOverlay {
+        padding: 12px;
+      }
+
+      .dsWatchHero {
+        padding-top: 74px;
+      }
+
+      .dsWatchPlayerCard {
+        border-radius: 22px;
+      }
+
+      .dsWatchFrame,
+      .dsMovieButtonPlayerShell,
+      .dsDirectVideoShell,
+      .dsMovieEmbedFrame,
+      .dsProxyVideoWaitingShell {
+        border-radius: 18px;
+      }
+
+      .dsAccountCard,
+      .dsProfileCard {
+        min-height: 150px;
+      }
+    }
+
+
+    .netflixTopbar.isScrolled {
+      box-shadow: 0 16px 42px rgba(0,0,0,.28);
+    }
+
+    img:not(.swiflyLoaded) {
+      opacity: .001;
+    }
+
+    img.swiflyLoaded {
+      opacity: 1;
+    }
+
+
+    /* ============================================================
+       v100 FEATURES + MOBILE UPGRADE
+       Adds useful feature sections and mobile app polish.
+       No new color palette, no glow/orb experiments.
+       ============================================================ */
+
+    .dsFeatureStrip {
+      width: min(1320px, calc(100vw - 32px));
+      margin: 0 auto clamp(26px, 4vw, 46px);
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .dsFeatureStrip a {
+      min-height: 106px;
+      display: grid;
+      align-content: center;
+      gap: 6px;
+      padding: 16px;
+      border-radius: 24px;
+      text-decoration: none;
+      color: var(--text);
+      background: rgba(255,255,255,.055);
+      border: 1px solid rgba(255,255,255,.10);
+      transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease;
+    }
+
+    .dsFeatureStrip a:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255,255,255,.20);
+      background: rgba(255,255,255,.085);
+      box-shadow: 0 18px 44px rgba(0,0,0,.26);
+    }
+
+    .dsFeatureStrip span {
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .dsFeatureStrip b {
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-size: 18px;
+      letter-spacing: -.035em;
+    }
+
+    .dsFeatureStrip small {
+      color: var(--muted);
+      font-weight: 750;
+      line-height: 1.25;
+    }
+
+    .dsLocalContinueRail {
+      width: min(1320px, calc(100vw - 32px));
+      margin: 0 auto clamp(26px, 4vw, 46px);
+    }
+
+    .dsLocalProgressLine {
+      height: 5px;
+      margin-top: 8px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255,255,255,.12);
+    }
+
+    .dsLocalProgressLine span {
+      display: block;
+      width: var(--progress, 0%);
+      height: 100%;
+      background: currentColor;
+      opacity: .82;
+    }
+
+    .swiflyMobileSearchSheet {
+      position: fixed;
+      inset: 0;
+      z-index: 9998;
+      display: grid;
+      align-items: start;
+      padding: 82px 14px 14px;
+      background: rgba(0,0,0,.62);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .swiflyMobileSearchSheet[hidden] {
+      display: none !important;
+    }
+
+    .swiflyMobileSearchBox {
+      width: min(520px, 100%);
+      margin: 0 auto;
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border-radius: 26px;
+      background: rgba(255,255,255,.075);
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: 0 22px 70px rgba(0,0,0,.40);
+    }
+
+    .swiflyMobileSearchBox label {
+      display: grid;
+      gap: 8px;
+    }
+
+    .swiflyMobileSearchBox label span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .swiflyMobileSearchBox input {
+      width: 100%;
+      min-height: 48px;
+      padding: 0 14px;
+    }
+
+    .swiflyMobileSearchBox button {
+      min-height: 44px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.10);
+      color: var(--text);
+      font-weight: 850;
+    }
+
+    .dsRoomFeatureBadges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .dsRoomFeatureBadges span {
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.10);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .mobileNav a[data-open-mobile-search] {
+      cursor: pointer;
+    }
+
+    @media(max-width: 1180px) {
+      .dsFeatureStrip {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media(max-width: 760px) {
+      body {
+        padding-bottom: 86px;
+      }
+
+      .netflixTopbar {
+        min-height: 62px;
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+
+      .netflixWordmark {
+        font-size: clamp(22px, 8vw, 34px);
+      }
+
+      .netflixActions .dsNavSearch {
+        display: none;
+      }
+
+      .dsFeatureStrip {
+        width: min(100vw - 22px, 100%);
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        padding: 2px 2px 14px;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none;
+      }
+
+      .dsFeatureStrip::-webkit-scrollbar {
+        display: none;
+      }
+
+      .dsFeatureStrip a {
+        min-width: 144px;
+        min-height: 96px;
+        scroll-snap-align: start;
+        border-radius: 22px;
+      }
+
+      .dsLocalContinueRail {
+        width: min(100vw - 22px, 100%);
+      }
+
+      .dsMovieHomeBoard {
+        margin-bottom: 18px;
+      }
+
+      .dsMovieHomeBoard h2 {
+        font-size: clamp(28px, 10vw, 44px);
+      }
+
+      .dsCoupleHomeCards {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .movieRail {
+        overflow-x: auto;
+        scroll-snap-type: x proximity;
+      }
+
+      .movieRail .movieCard {
+        scroll-snap-align: start;
+      }
+
+      .movieGrid,
+      .dsGrid,
+      .collectionGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .dsWatchroomCreate {
+        grid-template-columns: 1fr;
+      }
+
+      .dsWatchroomHero {
+        display: grid;
+        gap: 16px;
+      }
+
+      .dsQuickRoomForm {
+        grid-template-columns: 1fr;
+      }
+
+      .dsWatchHeader,
+      .dsWatchPlayerTop,
+      .dsDetailActions,
+      .dsHeroActions {
+        align-items: stretch;
+      }
+
+      .dsWatchModeSwitch {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .mobileNav {
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+        width: auto;
+        border-radius: 24px;
+        border: 1px solid rgba(255,255,255,.12);
+        padding: 8px 8px max(8px, env(safe-area-inset-bottom));
+      }
+
+      .mobileNav a {
+        min-height: 48px;
+        display: grid;
+        place-items: center;
+        font-size: 11px;
+      }
+
+      .dsAccountGrid,
+      .dsProfilesGrid {
+        grid-template-columns: 1fr;
+      }
+
+      .dsAccountCard,
+      .dsProfileCard {
+        min-height: 132px;
+      }
+
+      .swiflyMobileSearchSheet {
+        padding-top: 72px;
+      }
+    }
+
+    @media(max-width: 420px) {
+      .movieGrid,
+      .dsGrid,
+      .collectionGrid {
+        gap: 10px;
+      }
+
+      .dsCardTitle {
+        font-size: 13px;
+      }
+
+      .dsCardMeta {
+        font-size: 10px;
+      }
+
+      .dsPlayDot,
+      .dsMiniBtn,
+      .dsIconBtn {
+        width: 34px;
+        height: 34px;
+        min-width: 34px;
+      }
+    }
+
+
+    /* ============================================================
+       v101 WELCOME UPGRADE
+       Professional landing page refresh only. No red/orb experiments.
+       ============================================================ */
+
+    body:has(.dsWelcomeV101) {
+      background: var(--bg);
+    }
+
+    .dsWelcomeV101 {
+      background:
+        radial-gradient(900px circle at 12% 0%, rgba(255,255,255,.08), transparent 46%),
+        radial-gradient(900px circle at 86% 12%, rgba(255,255,255,.055), transparent 48%),
+        var(--bg);
+    }
+
+    .dsWelcomeNavV101 {
+      height: 78px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.34);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .dsWelcomeNavV101 .dsWelcomeBrand span {
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.16);
+      box-shadow: none;
+    }
+
+    .dsWelcomeNavV101 .dsWelcomeNavLinks a {
+      min-height: 40px;
+      border-radius: 999px;
+    }
+
+    .dsWelcomeNavV101 .dsWelcomeJoin {
+      background: rgba(255,255,255,.92) !important;
+      color: var(--bg) !important;
+    }
+
+    .dsWelcomeHeroV101 {
+      min-height: 100svh;
+      grid-template-columns: minmax(0, 1.1fr) minmax(300px, 440px);
+      align-items: center;
+      padding-top: 128px;
+      padding-bottom: 86px;
+    }
+
+    .dsWelcomeHeroV101 .dsWelcomeHeroBg {
+      opacity: .34;
+      filter: saturate(.9) contrast(1.03);
+      transform: scale(1.04);
+    }
+
+    .dsWelcomeHeroShade {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background:
+        linear-gradient(90deg, rgba(0,0,0,.84), rgba(0,0,0,.56) 42%, rgba(0,0,0,.80)),
+        linear-gradient(0deg, var(--bg), transparent 40%);
+      pointer-events: none;
+    }
+
+    .dsWelcomeHeroCopyV101,
+    .dsWelcomeShowcaseV101 {
+      position: relative;
+      z-index: 3;
+    }
+
+    .dsWelcomeKicker {
+      width: fit-content;
+      display: inline-flex;
+      margin-bottom: 16px;
+      padding: 8px 11px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.09);
+      border: 1px solid rgba(255,255,255,.12);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .dsWelcomeHeroCopyV101 h1 {
+      max-width: 880px;
+      margin: 0;
+      font-size: clamp(54px, 8vw, 118px);
+      line-height: .88;
+      letter-spacing: -.085em;
+      text-wrap: balance;
+    }
+
+    .dsWelcomeHeroCopyV101 p {
+      max-width: 700px;
+      margin-top: 20px;
+      color: rgba(255,255,255,.76);
+      font-size: clamp(16px, 1.35vw, 20px);
+      line-height: 1.6;
+    }
+
+    .dsWelcomeActionsV101 {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 26px;
+    }
+
+    .dsWelcomeTrustRow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 22px;
+    }
+
+    .dsWelcomeTrustRow span {
+      padding: 7px 10px;
+      border-radius: 999px;
+      color: var(--muted);
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.10);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .dsWelcomeShowcaseV101 {
+      display: grid;
+      gap: 16px;
+    }
+
+    .dsWelcomeSpotlightV101 {
+      border-radius: 30px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.105), rgba(255,255,255,.045)),
+        rgba(0,0,0,.26);
+      border: 1px solid rgba(255,255,255,.13);
+      box-shadow: 0 28px 80px rgba(0,0,0,.38);
+    }
+
+    .dsWelcomeSpotlightV101 img {
+      border-radius: 22px;
+    }
+
+    .dsWelcomeSpotlightV101 a {
+      width: fit-content;
+      display: inline-flex;
+      margin-top: 10px;
+      padding: 8px 11px;
+      border-radius: 999px;
+      color: var(--text);
+      background: rgba(255,255,255,.09);
+      border: 1px solid rgba(255,255,255,.11);
+    }
+
+    .dsWelcomeMiniMosaicV101 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 9px;
+    }
+
+    .dsWelcomeMiniMosaicV101 img {
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 14px 38px rgba(0,0,0,.24);
+    }
+
+    .dsWelcomeQuickStart {
+      width: min(1320px, calc(100vw - 32px));
+      margin: -32px auto 54px;
+      position: relative;
+      z-index: 5;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .dsWelcomeQuickStart article {
+      min-height: 168px;
+      padding: 20px;
+      border-radius: 28px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.045)),
+        rgba(0,0,0,.20);
+      border: 1px solid rgba(255,255,255,.11);
+      box-shadow: 0 20px 60px rgba(0,0,0,.24);
+    }
+
+    .dsWelcomeQuickStart span {
+      display: inline-flex;
+      margin-bottom: 18px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: .08em;
+    }
+
+    .dsWelcomeQuickStart strong {
+      display: block;
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-size: 24px;
+      letter-spacing: -.05em;
+    }
+
+    .dsWelcomeQuickStart p {
+      margin: 10px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .dsWelcomeIntroV101 {
+      max-width: 880px;
+    }
+
+    .dsWelcomeIntroV101 h2,
+    .dsWelcomeDeviceV101 h2,
+    .dsWelcomeFinalCtaV101 h2 {
+      letter-spacing: -.07em;
+      line-height: .96;
+      text-wrap: balance;
+    }
+
+    .dsWelcomeDiscoveryV101,
+    .dsWelcomeFeaturesV101,
+    .dsWelcomeDeviceV101,
+    .dsWelcomeFinalCtaV101 {
+      width: min(1320px, calc(100vw - 32px));
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .dsWelcomeRail {
+      border-radius: 28px;
+      background: rgba(255,255,255,.035);
+      border: 1px solid rgba(255,255,255,.07);
+      padding: 16px;
+    }
+
+    .dsWelcomeRailTrack {
+      gap: 12px;
+      padding-bottom: 8px;
+    }
+
+    .dsWelcomeCard {
+      border-radius: 22px;
+      overflow: hidden;
+      background: rgba(255,255,255,.055);
+      border: 1px solid rgba(255,255,255,.09);
+      transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+    }
+
+    .dsWelcomeCard:hover {
+      transform: translateY(-5px);
+      border-color: rgba(255,255,255,.18);
+      box-shadow: 0 18px 46px rgba(0,0,0,.26);
+    }
+
+    .dsWelcomeFeaturesV101 article {
+      border-radius: 28px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.04)),
+        rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .dsWelcomeDeviceV101,
+    .dsWelcomeFinalCtaV101 {
+      border-radius: 34px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.035)),
+        rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 24px 70px rgba(0,0,0,.26);
+    }
+
+    .dsPhoneMockV101 {
+      border-color: rgba(255,255,255,.14);
+      background: rgba(0,0,0,.26);
+      box-shadow: 0 28px 80px rgba(0,0,0,.38);
+    }
+
+    @media(max-width: 980px) {
+      .dsWelcomeHeroV101 {
+        grid-template-columns: 1fr;
+        padding-top: 118px;
+      }
+
+      .dsWelcomeShowcaseV101 {
+        max-width: 520px;
+      }
+
+      .dsWelcomeQuickStart {
+        grid-template-columns: 1fr;
+        margin-top: 0;
+      }
+
+      .dsWelcomeMiniMosaicV101 {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    @media(max-width: 720px) {
+      .dsWelcomeNavV101 {
+        height: auto;
+        min-height: 66px;
+        padding: 10px 12px;
+      }
+
+      .dsWelcomeNavLinks a[href="#browse"],
+      .dsWelcomeNavLinks a[href="#features"],
+      .dsWelcomeNavLinks a[href="#devices"] {
+        display: none;
+      }
+
+      .dsWelcomeHeroV101 {
+        min-height: auto;
+        padding: 96px 14px 44px;
+      }
+
+      .dsWelcomeHeroCopyV101 h1 {
+        font-size: clamp(44px, 16vw, 72px);
+      }
+
+      .dsWelcomeActionsV101 .dsPrimaryBtn,
+      .dsWelcomeActionsV101 .dsSecondaryBtn,
+      .dsWelcomeActionsV101 .dsGhostPill {
+        width: 100%;
+      }
+
+      .dsWelcomeQuickStart,
+      .dsWelcomeDiscoveryV101,
+      .dsWelcomeFeaturesV101,
+      .dsWelcomeDeviceV101,
+      .dsWelcomeFinalCtaV101 {
+        width: min(100vw - 22px, 100%);
+      }
+
+      .dsWelcomeMiniMosaicV101 {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .dsWelcomeDeviceV101 {
+        grid-template-columns: 1fr;
+      }
+
+      .dsPhoneMockV101 {
+        display: none;
+      }
+    }
+
   </style>
 
     <script>
@@ -19490,11 +20688,22 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
   ${body}
 
+  <div id="swiflyMobileSearchSheet" class="swiflyMobileSearchSheet" hidden>
+    <form action="/search" method="get" class="swiflyMobileSearchBox">
+      <label>
+        <span>Search SwiflyTV</span>
+        <input name="q" placeholder="Movies, shows, people..." autocomplete="off" />
+      </label>
+      <button type="submit">Search</button>
+      <button type="button" data-close-mobile-search>Close</button>
+    </form>
+  </div>
+
   <nav class="mobileNav">
     ${navLink("/", "Home", "home", active)}
     ${navLink("/movies", "Movies", "movies", active)}
     ${navLink("/tv", "TV", "tv", active)}
-    ${navLink("/search", "Search", "search", active)}
+    <a href="/search" data-open-mobile-search class="${active === "search" ? "active" : ""}">Search</a>
     ${navLink("/my-list", "List", "watchlist", active)}
     ${navLink("/watchrooms", "Rooms", "watchrooms", active)}
   </nav>
@@ -20449,6 +21658,136 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     })();
   </script>
 
+
+  <script>
+    (function swiflyV99Cleanup(){
+      const topbar = document.querySelector(".netflixTopbar");
+      function onScroll(){
+        if (topbar) topbar.classList.toggle("isScrolled", window.scrollY > 12);
+      }
+      window.addEventListener("scroll", onScroll, { passive: true });
+      onScroll();
+
+      document.querySelectorAll("img").forEach((img) => {
+        if (img.complete && img.naturalWidth) img.classList.add("swiflyLoaded");
+        else {
+          img.addEventListener("load", () => img.classList.add("swiflyLoaded"), { once: true });
+          img.addEventListener("error", () => img.classList.add("swiflyLoaded"), { once: true });
+        }
+      });
+    })();
+  </script>
+
+
+  <script>
+    (function swiflyV100Features(){
+      const searchSheet = document.getElementById("swiflyMobileSearchSheet");
+
+      document.querySelectorAll("[data-open-mobile-search]").forEach((link) => {
+        link.addEventListener("click", (event) => {
+          if (window.innerWidth > 760 || !searchSheet) return;
+          event.preventDefault();
+          searchSheet.hidden = false;
+          const input = searchSheet.querySelector("input");
+          setTimeout(() => input && input.focus(), 50);
+        });
+      });
+
+      document.querySelectorAll("[data-close-mobile-search]").forEach((button) => {
+        button.addEventListener("click", () => {
+          if (searchSheet) searchSheet.hidden = true;
+        });
+      });
+
+      searchSheet?.addEventListener("click", (event) => {
+        if (event.target === searchSheet) searchSheet.hidden = true;
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && searchSheet) searchSheet.hidden = true;
+      });
+
+      function esc(value) {
+        return String(value || "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;");
+      }
+
+      function posterUrl(path) {
+        if (!path) return "";
+        if (String(path).startsWith("http")) return String(path);
+        return "https://image.tmdb.org/t/p/w342" + String(path);
+      }
+
+      function hrefFor(item) {
+        const type = item.type || item.media_type || "movie";
+        const id = item.id || item.tmdbId || "";
+        return id ? "/watch/" + encodeURIComponent(type) + "/" + encodeURIComponent(id) + "?mode=movie" : "/movies";
+      }
+
+      function renderHomeContinue() {
+        const shell = document.getElementById("homeContinueRail");
+        const rail = document.getElementById("homeContinueRailItems");
+        if (!shell || !rail) return;
+
+        let items = [];
+        try {
+          const saved = JSON.parse(localStorage.getItem("swiflytv.continueWatching") || "[]");
+          if (Array.isArray(saved)) items = saved;
+        } catch {}
+
+        items = items
+          .filter(Boolean)
+          .sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0))
+          .slice(0, 12);
+
+        if (!items.length) {
+          shell.hidden = true;
+          return;
+        }
+
+        shell.hidden = false;
+        rail.innerHTML = items.map((item) => {
+          const title = item.title || item.name || "Untitled";
+          const type = item.type || item.media_type || "movie";
+          const year = item.year || "";
+          const poster = posterUrl(item.poster || item.poster_path || "");
+          const progress = Math.max(0, Math.min(100, Number(item.progress || 0)));
+
+          return '<a class="movieCard" href="' + esc(hrefFor(item)) + '">' +
+            '<div class="posterWrap">' +
+              (poster ? '<img src="' + esc(poster) + '" alt="' + esc(title) + '" loading="lazy" />' : '<div class="posterFallback"><span>' + esc(title).slice(0, 1) + '</span></div>') +
+            '</div>' +
+            '<div class="movieMeta">' +
+              '<strong>' + esc(title) + '</strong>' +
+              '<span>' + esc(String(type).toUpperCase()) + (year ? ' • ' + esc(year) : '') + '</span>' +
+              '<div class="dsLocalProgressLine" style="--progress:' + progress + '%"><span></span></div>' +
+            '</div>' +
+          '</a>';
+        }).join("");
+      }
+
+      if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", renderHomeContinue);
+      else renderHomeContinue();
+    })();
+  </script>
+
+
+  <script>
+    (function swiflyV101Welcome(){
+      if (!document.querySelector(".dsWelcomeV101")) return;
+      document.querySelectorAll(".dsWelcomeV101 img").forEach((img) => {
+        if (img.complete && img.naturalWidth) img.classList.add("swiflyLoaded");
+        else {
+          img.addEventListener("load", () => img.classList.add("swiflyLoaded"), { once: true });
+          img.addEventListener("error", () => img.classList.add("swiflyLoaded"), { once: true });
+        }
+      });
+    })();
+  </script>
+
 </body>
 </html>`;
 }
@@ -20644,89 +21983,88 @@ async function welcomePage(req, res) {
   const hero = welcomeSpotlightMovie && !welcomeSpotlightMovie.__error
     ? { ...welcomeSpotlightMovie, media_type: "movie" }
     : pickHero(trending) || {};
-  const heroTitle = getTitle(hero) || "Your distance date night starts here.";
+  const heroTitle = getTitle(hero) || "Watch movies and shows in one place.";
   const heroBg = hero.backdrop_path ? fullBackdrop(hero.backdrop_path) : "";
   const heroPoster = hero.poster_path ? img(hero.poster_path, "w500") : "";
-  const heroDesc = hero.overview || "SwiflyTV helps movie fans plan movie nights, share watch links, start date rooms, chat, count down together, and feel a little closer from different places.";
+  const heroDesc = hero.overview || "SwiflyTV is a clean streaming-style movie site for browsing movies, TV shows, trailers, watchlists, continue watching, and synced watch rooms.";
   const redirect = encodeURIComponent(String(req.query.redirect || "/profiles"));
   const heroType = getType(hero) || "movie";
-  const heroHref = hero.id ? `/signup?redirect=${encodeURIComponent(`/${heroType}/${hero.id}`)}` : `/signup?redirect=${redirect}`;
+  const heroDetailsHref = hero.id ? `/${heroType}/${hero.id}` : "/movies";
+  const heroSignupHref = `/signup?redirect=${encodeURIComponent(heroDetailsHref)}`;
   const previewMosaic = hasTmdb
-    ? [...(popularMovies.results || []), ...(popularTv.results || [])].filter((item) => item.poster_path).slice(0, 6)
+    ? [...(popularMovies.results || []), ...(popularTv.results || [])].filter((item) => item.poster_path).slice(0, 8)
     : [];
 
-  const body = `<main class="dsWelcomePage dsWelcomePagePro">
-    <nav class="dsWelcomeNav dsWelcomeNavPro">
+  const body = `<main class="dsWelcomePage dsWelcomePagePro dsWelcomeV101">
+    <nav class="dsWelcomeNav dsWelcomeNavPro dsWelcomeNavV101">
       <a class="dsWelcomeBrand" href="/welcome"><span></span><b>${escapeHtml(BRAND_WORDMARK)}</b></a>
       <div class="dsWelcomeNavLinks">
-        <a href="#discovery">Date ideas</a>
-        <a href="#features">Couple tools</a>
+        <a href="#browse">Browse</a>
+        <a href="#features">Features</a>
+        <a href="#devices">Mobile</a>
         <a href="/login?redirect=${redirect}">Log in</a>
-        <a class="dsWelcomeJoin" href="/signup?redirect=${redirect}">Sign up</a>
+        <a class="dsWelcomeJoin" href="/signup?redirect=${redirect}">Get started</a>
       </div>
     </nav>
 
-    <section class="dsWelcomeHero dsWelcomeHeroPro">
+    <section class="dsWelcomeHero dsWelcomeHeroPro dsWelcomeHeroV101">
       ${heroBg ? `<div class="dsWelcomeHeroBg" style="background-image:url('${escapeHtml(heroBg)}')"></div>` : ""}
-      <div class="dsWelcomeGlowOne"></div>
-      <div class="dsWelcomeHeroCopy">
-        <span class="dsEyebrow">Long-distance date nights</span>
-        <h1>Feel closer, even when you are far apart.</h1>
+      <div class="dsWelcomeHeroShade"></div>
+
+      <div class="dsWelcomeHeroCopy dsWelcomeHeroCopyV101">
+        <span class="dsWelcomeKicker">Movies • TV Shows • Watch Rooms</span>
+        <h1>A cleaner way to find what to watch.</h1>
         <p>${escapeHtml(heroDesc)}</p>
 
-        <div class="dsWelcomeActions">
-          <a class="dsPrimaryBtn" href="/signup?redirect=${redirect}">Start a date night</a>
-          <a class="dsSecondaryBtn" href="#discovery">Browse date picks</a>
+        <div class="dsWelcomeActions dsWelcomeActionsV101">
+          <a class="dsPrimaryBtn" href="/signup?redirect=${redirect}">Start watching</a>
+          <a class="dsSecondaryBtn" href="#browse">Preview the library</a>
+          <a class="dsGhostPill" href="/login?redirect=${redirect}">I already have an account</a>
         </div>
 
-        <div class="dsWelcomeStats">
-          <div><b>Profiles</b><span>Me, partner, and together spaces</span></div>
-          <div><b>Watch Rooms</b><span>Open Together, Live Share, chat</span></div>
-          <div><b>Distance Sync</b><span>Countdowns and shared timeframes</span></div>
+        <div class="dsWelcomeTrustRow">
+          <span>No clutter</span>
+          <span>Fast browsing</span>
+          <span>Mobile ready</span>
+          <span>Synced rooms</span>
         </div>
       </div>
 
-      <aside class="dsWelcomeShowcase">
-        <div class="dsWelcomeSpotlightCard">
+      <aside class="dsWelcomeShowcase dsWelcomeShowcaseV101">
+        <div class="dsWelcomeSpotlightCard dsWelcomeSpotlightV101">
           ${heroPoster ? `<img src="${escapeHtml(heroPoster)}" alt="${escapeHtml(heroTitle)} poster" loading="lazy" />` : `<div class="posterFallback"><span>${escapeHtml(heroTitle.slice(0, 1))}</span></div>`}
           <div>
-            <span>Date night spotlight</span>
+            <span>Featured title</span>
             <h2>${escapeHtml(heroTitle)}</h2>
             <p>${escapeHtml(getYear(getDate(hero)))} • ${escapeHtml(metaMatch(hero))}</p>
-            <a href="${heroHref}">Save for date night →</a>
+            <a href="${escapeHtml(heroSignupHref)}">Open title →</a>
           </div>
         </div>
-        <div class="dsWelcomeMiniMosaic">
+        <div class="dsWelcomeMiniMosaic dsWelcomeMiniMosaicV101">
           ${previewMosaic.map((item) => `<img src="${escapeHtml(img(item.poster_path, "w342"))}" alt="${escapeHtml(getTitle(item))}" loading="lazy" />`).join("")}
         </div>
       </aside>
     </section>
 
-    <section class="dsWelcomeHowItWorks">
-      <article><span>1</span><strong>Pick the vibe</strong><p>Choose cozy, funny, emotional, action, comfort rewatch, or something new for tonight.</p></article>
-      <article><span>2</span><strong>Create your couple space</strong><p>Use Me, Partner, and Together profiles so your date nights feel personal.</p></article>
-      <article><span>3</span><strong>Start a date room</strong><p>Share a room link, chat, countdown, and press play together from anywhere.</p></article>
+    <section class="dsWelcomeQuickStart">
+      <article><span>01</span><strong>Browse faster</strong><p>Jump into movies, TV shows, trending titles, genres, cast pages, and trailers with less noise.</p></article>
+      <article><span>02</span><strong>Save your list</strong><p>Keep your watchlist, liked titles, and continue watching history ready on your device.</p></article>
+      <article><span>03</span><strong>Watch together</strong><p>Create a watch room when you want synced playback, chat, and host controls.</p></article>
     </section>
 
-    <section class="dsCouplePromiseStrip">
-      <article><span>♡</span><b>Open Together</b><p>If embeds fail, both of you open the real site and use the same countdown.</p></article>
-      <article><span>☾</span><b>Late-night friendly</b><p>Big buttons, clear rooms, and fewer steps when you are already on a call.</p></article>
-      <article><span>✦</span><b>My List</b><p>Save movies you both actually want instead of losing them in texts.</p></article>
-    </section>
-
-    <section id="discovery" class="dsWelcomeDiscovery dsWelcomeDiscoveryPro">
-      <div class="dsWelcomeIntro">
-        <span class="dsEyebrow">Date ideas before signing in</span>
-        <h2>Find the movie before the “what do we watch?” argument.</h2>
-        <p>SwiflyTV is built for movie fans who still want a normal movie night together. Browse ideas, then unlock Watch Rooms, My List, shared watch history, hearts, countdowns, and profiles.</p>
+    <section id="browse" class="dsWelcomeDiscovery dsWelcomeDiscoveryPro dsWelcomeDiscoveryV101">
+      <div class="dsWelcomeIntro dsWelcomeIntroV101">
+        <span class="dsEyebrow">Preview the library</span>
+        <h2>Start with what is popular right now.</h2>
+        <p>Browse a clean preview of trending titles before signing in. Create an account when you want profiles, My List, continue watching, and watch rooms.</p>
       </div>
 
       ${hasTmdb ? `
-        ${welcomePreviewRail("Date-night trending", trending)}
-        ${welcomePreviewRail("Movies to watch together", popularMovies.results || [], "movie")}
-        ${welcomePreviewRail("Shows to binge together", popularTv.results || [], "tv")}
-        ${welcomePreviewRail("Cozy comfort picks", familyMovies.results || [], "movie")}
-        ${welcomePreviewRail("Serious date-night picks", topMovies.results || [], "movie")}
+        ${welcomePreviewRail("Trending now", trending)}
+        ${welcomePreviewRail("Popular movies", popularMovies.results || [], "movie")}
+        ${welcomePreviewRail("Popular TV shows", popularTv.results || [], "tv")}
+        ${welcomePreviewRail("Family picks", familyMovies.results || [], "movie")}
+        ${welcomePreviewRail("Top rated movies", topMovies.results || [], "movie")}
       ` : `
         <section class="dsWelcomeFallback">
           <h2>Connect TMDB to unlock discovery previews</h2>
@@ -20736,33 +22074,33 @@ async function welcomePage(req, res) {
       `}
     </section>
 
-    <section id="features" class="dsWelcomeFeatures dsWelcomeFeaturesPro">
-      <article><span>Watch Rooms</span><h3>Watch from two places</h3><p>Share a room, use Open Together, Live Share, countdowns, and chat while apart.</p></article>
-      <article><span>Profiles</span><h3>Me, you, and us</h3><p>Create profiles for each person and a shared Together space for date nights.</p></article>
-      <article><span>Continue Watching</span><h3>Resume the date</h3><p>Keep track of what you started so the next call can begin faster.</p></article>
-      <article><span>Love Notes</span><h3>Keep it sweet</h3><p>Use the couple dashboard for date ideas, little notes, and shared plans.</p></article>
+    <section id="features" class="dsWelcomeFeatures dsWelcomeFeaturesPro dsWelcomeFeaturesV101">
+      <article><span>Library</span><h3>Movies and shows together</h3><p>Browse popular, trending, top-rated, family, genre, and search pages in a streaming-style layout.</p></article>
+      <article><span>Player</span><h3>Movie-first watch pages</h3><p>Use a cleaner watch page with trailer mode, movie mode, fullscreen support, and player status.</p></article>
+      <article><span>Lists</span><h3>Save what matters</h3><p>Build My List, like titles, and pick up titles from Continue Watching when you come back.</p></article>
+      <article><span>Rooms</span><h3>Watch rooms when needed</h3><p>Create a room, share the code, chat, and use host controls for synced watching.</p></article>
     </section>
 
-    <section class="dsWelcomeDevice">
+    <section id="devices" class="dsWelcomeDevice dsWelcomeDeviceV101">
       <div>
-        <span class="dsEyebrow">Built for phones and late-night calls</span>
-        <h2>Designed for “you pick, no you pick.”</h2>
-        <p>Whether you are on a phone in bed or a laptop on a call, SwiflyTV makes it easier to choose, sync, and watch together.</p>
-        <a class="dsPrimaryBtn" href="/signup?redirect=${redirect}">Plan your first date room</a>
+        <span class="dsEyebrow">Better on every screen</span>
+        <h2>Built to feel like an app on your phone.</h2>
+        <p>Mobile search, quick actions, swipeable rails, bigger tap targets, and a bottom nav make it easier to browse without fighting the page.</p>
+        <a class="dsPrimaryBtn" href="/signup?redirect=${redirect}">Create free profile</a>
       </div>
-      <div class="dsPhoneMock">
+      <div class="dsPhoneMock dsPhoneMockV101">
         <div class="dsPhoneTop"></div>
         <div class="dsPhoneHero"></div>
         <div class="dsPhoneRows"><span></span><span></span><span></span></div>
       </div>
     </section>
 
-    <section class="dsWelcomeFinalCta dsWelcomeFinalCtaPro">
-      <span class="dsEyebrow">Ready for date night?</span>
-      <h2>Start your shared screen tradition.</h2>
-      <p>Create your couple space and make distance feel a little smaller.</p>
+    <section class="dsWelcomeFinalCta dsWelcomeFinalCtaPro dsWelcomeFinalCtaV101">
+      <span class="dsEyebrow">Ready?</span>
+      <h2>Open SwiflyTV and start browsing.</h2>
+      <p>Make a profile, save your list, and turn the site into your own clean movie hub.</p>
       <div class="dsWelcomeActions">
-        <a class="dsPrimaryBtn" href="/signup?redirect=${redirect}">Create account</a>
+        <a class="dsPrimaryBtn" href="/signup?redirect=${redirect}">Get started</a>
         <a class="dsSecondaryBtn" href="/login?redirect=${redirect}">Log in</a>
       </div>
     </section>
@@ -20840,6 +22178,20 @@ async function homePage(req, res) {
           <article><b>02</b><span>Press play</span></article>
           <article><b>03</b><span>Save your list</span></article>
         </div>
+      </section>
+
+      <section class="dsFeatureStrip" aria-label="Quick actions">
+        <a href="/movies"><span>🎬</span><b>Movies</b><small>Browse films</small></a>
+        <a href="/tv"><span>📺</span><b>TV Shows</b><small>Find series</small></a>
+        <a href="/trending"><span>↗</span><b>Trending</b><small>Popular now</small></a>
+        <a href="/watchrooms"><span>◎</span><b>Watch Rooms</b><small>Sync with friends</small></a>
+        <a href="/my-list"><span>＋</span><b>My List</b><small>Saved titles</small></a>
+        <a href="/search"><span>⌕</span><b>Search</b><small>Find anything</small></a>
+      </section>
+
+      <section class="dsLocalContinueRail" id="homeContinueRail" hidden>
+        <div class="dsRowHead"><h2>Continue Watching</h2><a href="/continue-watching">View all</a></div>
+        <div class="movieRail dsRail" id="homeContinueRailItems"></div>
       </section>
 
       <section id="continueWatchingSection" class="dsRow dsContinueSection" hidden>
@@ -22328,36 +23680,42 @@ function likedPage(req, res) {
 function watchroomsPage(req, res) {
   const roomId = createRoomId();
   const body = `<main class="dsPlainPage dsWatchroomsPage dsWatchroomsPro">
-    ${dsPageHeader("Watch Rooms", "A private room for movie fans to open a link together, countdown, chat, and start the same movie from different places.", "Long-distance date")}
+    ${dsPageHeader("Watch Rooms", "A private room for movie fans to open a link together, countdown, chat, and start the same movie from different places.", "Watch room")}
 
     <section class="dsWatchroomHero">
       <div>
-        <span class="dsEyebrow">Date rooms</span>
-        <h2>Start the room, send the link, then pick what to watch.</h2>
-        <p>Use this when you are on a call and need a simple place to share the watch link and countdown together.</p>
+        <span class="dsEyebrow">Watch rooms</span>
+        <h2>Create a room, share the code, then pick what to watch.</h2>
+        <p>Create a simple synced watch room with a shareable code, chat, countdown, and host controls.</p>
+        <div class="dsRoomFeatureBadges">
+          <span>Room code</span>
+          <span>Chat</span>
+          <span>Synced play</span>
+          <span>Host controls</span>
+        </div>
       </div>
       <form id="quickCreateWatchroomForm" class="dsQuickRoomForm">
-        <input name="roomName" placeholder="Tonight with us" maxlength="80" />
+        <input name="roomName" placeholder="Movie night" maxlength="80" />
         <button class="dsPrimaryBtn" type="submit">Create Watch Room</button>
       </form>
     </section>
 
     <section class="dsWatchroomCreate dsWatchroomCreatePro">
       <article class="dsWatchroomPanel dsCreateRoomPanel">
-        <h2>Create a date room</h2>
-        <p>Name the date and optionally paste the movie/site link you both should open.</p>
+        <h2>Create a watch room</h2>
+        <p>Name the room and optionally paste the movie/site link you both should open.</p>
         <form id="createWatchroomForm">
-          <label>Date room name<input name="roomName" placeholder="Friday night with you" maxlength="80" /></label>
+          <label>Room name<input name="roomName" placeholder="Friday night watch" maxlength="80" /></label>
           <label>Optional watch link<input name="trailerUrl" placeholder="Movie, trailer, or website link" /></label>
           <button class="dsPrimaryBtn" type="submit">Create Watch Room</button>
         </form>
       </article>
 
       <article class="dsWatchroomPanel">
-        <h2>Join a date room</h2>
-        <p>Got a code from your date? Enter it here.</p>
+        <h2>Join a watch room</h2>
+        <p>Got a room code? Enter it here.</p>
         <form id="joinWatchroomForm">
-          <label>Date room code<input name="roomCode" placeholder="${escapeHtml(roomId)}" /></label>
+          <label>Room code<input name="roomCode" placeholder="${escapeHtml(roomId)}" /></label>
           <button class="dsSecondaryBtn" type="submit">Join Room</button>
         </form>
       </article>
@@ -22663,7 +24021,7 @@ function watchroomPage(req, res) {
             <div>
               <span class="dsEyebrow">If host can share tab</span>
               <h2>Live Share</h2>
-              <p>One person shares a tab/window and the other watches inside the date room. Great when only one of you has access.</p>
+              <p>One person shares a tab/window and the other watches inside the watch room. Great when only one of you has access.</p>
             </div>
             <span class="dsHostBadge" id="stableLiveBadge">Host controls</span>
           </div>
