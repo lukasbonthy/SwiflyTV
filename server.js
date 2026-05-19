@@ -152,7 +152,7 @@ function recordHlsProxyRequest(entry, item = {}) {
     bytes: Number(item.bytes || 0),
     error: item.error || "",
   });
-  entry.requests = entry.requests.slice(-60);
+  entry.requests = entry.requests.slice(-80);
   if (item.error) entry.lastError = item.error;
 }
 
@@ -284,7 +284,7 @@ function getOrCreateWatchRoom(roomId, data = {}) {
   const now = Date.now();
   const room = {
     id,
-    name: String(data.name || "SwiflyTV Date Room").slice(0, 80),
+    name: String(data.name || "SwiflyTV Watch Room").slice(0, 80),
     trailerUrl: String(data.trailerUrl || "").slice(0, 500),
     embedUrl: String(data.embedUrl || data.trailerUrl || "").slice(0, 800),
     videoId: String(data.videoId || "").slice(0, 40),
@@ -759,7 +759,7 @@ function navLink(href, label, key, active) {
   return `<a class="${active === key ? "active" : ""}" href="${href}">${label}</a>`;
 }
 
-function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms, and synced watch plans for long-distance couples.", body = "", active = "", extraHead = "" }) {
+function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, trailers, cast pages, watchlists, and synced watch rooms.", body = "", active = "", extraHead = "" }) {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -17421,8 +17421,8 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
 
     /* ============================================================
        v62 COUPLES EDITION
-       Long-distance couple targeting: date rooms, couple dashboard,
-       shared watch planning, and softer romantic UI accents.
+       Long-distance couple targeting: watch rooms, couple dashboard,
+       shared watch planning, and softer premium UI accents.
        ============================================================ */
 
     :root {
@@ -17967,7 +17967,7 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
     /* ============================================================
        v64 COUPLES PREMIUM PACK
        Adds Taste Match, Date Generator, Missing You Mode,
-       Streaks, Timeline, Pause for Us, Date Room Themes,
+       Streaks, Timeline, Pause for Us, Watch Room Themes,
        Couple Badges, and Sleepy Mode.
        ============================================================ */
 
@@ -18637,7 +18637,7 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
 
     /* ============================================================
        v75 SYNC REGEX + SCRIPT FIX
-       Removes remaining Date Room regex crash and adds iframe sync target overlay.
+       Removes remaining Watch Room regex crash and adds iframe sync target overlay.
        ============================================================ */
 
     .dsIframeSyncOverlay {
@@ -18990,9 +18990,4204 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
     }
 
     #roomMoviePlayerType::before {
-      content: "● ";
-      color: #ff3b7a;
-      text-shadow: 0 0 14px rgba(255,59,122,.75);
+      content: "HLS ";
+      color: #07101a;
+      text-shadow: none;
+      font-weight: 950;
+    }
+
+
+    /* ============================================================
+       v88 DIRECT M3U8 PLAYER
+       Raw m3u8 is loaded through hls.js/custom player by default.
+       ============================================================ */
+
+    .dsM3u8Standalone .dsWatchHero p code {
+      user-select: all;
+    }
+
+
+    /* ============================================================
+       v90 HLS.JS-FIRST PLAYER
+       Visible HLS attach/loading/errors instead of dead browser video.
+       ============================================================ */
+
+    .dsHlsStatus {
+      position: absolute;
+      left: 14px;
+      top: 14px;
+      z-index: 16;
+      display: grid;
+      gap: 4px;
+      max-width: min(440px, calc(100% - 28px));
+      padding: 12px 14px;
+      border-radius: 18px;
+      color: white;
+      background: rgba(7,9,18,.76);
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: 0 18px 60px rgba(0,0,0,.38);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      pointer-events: none;
+    }
+
+    .dsHlsStatus[hidden] {
+      display: none !important;
+    }
+
+    .dsHlsStatus b {
+      font-family: "Space Grotesk", Inter, Arial, sans-serif;
+      font-size: 18px;
+      letter-spacing: -.035em;
+    }
+
+    .dsHlsStatus span {
+      color: rgba(248,251,255,.68);
+      font-size: 12px;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .dsHlsStatus.isError {
+      border-color: rgba(255,104,142,.38);
+      background:
+        radial-gradient(circle at 0% 0%, rgba(255,104,142,.22), transparent 42%),
+        rgba(7,9,18,.82);
+    }
+
+    .dsStandaloneHlsShell {
+      position: relative;
+      min-height: 70vh;
+      display: grid;
+      place-items: center;
+      background: #000;
+    }
+
+    .dsStandaloneHlsShell video {
+      width: min(100%, 1200px);
+      max-height: 78vh;
+      background: #000;
+    }
+
+
+    /* ============================================================
+       v91 VIDEO.JS M3U8 PLAYER
+       Uses Video.js/VHS first like common online HLS players.
+       ============================================================ */
+
+    .vjs-theme-swifly {
+      width: 100% !important;
+      height: 100% !important;
+      background: #000;
+      font-family: Inter, system-ui, sans-serif;
+    }
+
+    .vjs-theme-swifly .vjs-control-bar {
+      background: linear-gradient(0deg, rgba(0,0,0,.86), rgba(0,0,0,.28));
+      height: 4.2em;
+    }
+
+    .vjs-theme-swifly .vjs-big-play-button {
+      border: 1px solid rgba(255,255,255,.24);
+      border-radius: 999px;
+      width: 82px;
+      height: 82px;
+      line-height: 82px;
+      background: rgba(7,9,18,.64);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      box-shadow: 0 22px 80px rgba(0,0,0,.42);
+    }
+
+    .vjs-theme-swifly:hover .vjs-big-play-button {
+      background: rgba(255,255,255,.16);
+    }
+
+
+    /* ============================================================
+       v92 REGULAR MOVIE M3U8 FIX
+       Normal Movie button uses the same M3U8/Video.js player path as Watch Rooms.
+       ============================================================ */
+
+    .dsMovieButtonPlayerShell {
+      position: relative;
+      width: 100%;
+      min-height: min(72vh, 720px);
+      background: #000;
+      border-radius: inherit;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+    }
+
+    .dsMovieButtonPlayerShell[hidden] {
+      display: none !important;
+    }
+
+    .dsMovieButtonVideo,
+    .dsMovieButtonPlayerShell .video-js {
+      width: 100% !important;
+      height: min(72vh, 720px) !important;
+      min-height: 420px;
+      background: #000;
+    }
+
+    .dsProxyVideoWaitingShell.isReady .dsProxyVideoWaitingCard {
+      display: none !important;
+    }
+
+    @media(max-width: 720px) {
+      .dsMovieButtonVideo,
+      .dsMovieButtonPlayerShell .video-js {
+        height: 62vh !important;
+        min-height: 300px;
+      }
+    }
+
+
+    /* ============================================================
+       v95 REGULAR MOVIE SITE ONLY
+       Main SwiflyTV is a regular movie site.
+       ============================================================ */
+
+    .dsMovieHomeBoard {
+      max-width: 1320px;
+      margin: -24px auto 48px;
+      position: relative;
+      z-index: 5;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: center;
+      padding: 22px;
+      border-radius: 30px;
+      background:
+        radial-gradient(720px circle at 0% 0%, rgba(229,9,20,.16), transparent 46%),
+        radial-gradient(580px circle at 100% 0%, rgba(255,255,255,.10), transparent 48%),
+        rgba(255,255,255,.065);
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 26px 90px rgba(0,0,0,.28);
+      backdrop-filter: blur(18px) saturate(1.08);
+      -webkit-backdrop-filter: blur(18px) saturate(1.08);
+    }
+
+    .dsMovieHomeBoard h2 {
+      margin: 0 0 6px;
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-size: clamp(28px, 4vw, 48px);
+      letter-spacing: -.07em;
+    }
+
+    .dsMovieHomeBoard p {
+      margin: 0;
+      color: rgba(248,251,255,.68);
+      max-width: 720px;
+      line-height: 1.55;
+      font-weight: 650;
+    }
+
+    .dsProfileCard.dateProfile {
+      background:
+        radial-gradient(420px circle at 0% 0%, rgba(255,110,169,.20), transparent 48%),
+        rgba(255,255,255,.07);
+    }
+
+    .dsDateProfilePage .dsCouplesHero {
+      background:
+        radial-gradient(740px circle at 0% 0%, rgba(255,110,169,.18), transparent 48%),
+        radial-gradient(720px circle at 100% 0%, rgba(189,167,255,.14), transparent 48%),
+        rgba(255,255,255,.065);
+    }
+
+    @media(max-width: 760px) {
+      .dsMovieHomeBoard {
+        grid-template-columns: 1fr;
+        margin-top: -12px;
+      }
+    }
+
+
+    /* ============================================================
+       v94 BOOT ROUTE FIX
+       Restores missing /continue-watching and /api/status handlers.
+       ============================================================ */
+
+    .dsContinuePagePanel {
+      width: min(1320px, calc(100vw - 34px));
+      margin: 22px auto 70px;
+      padding: 20px;
+      border-radius: 28px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.11);
+      box-shadow: 0 22px 80px rgba(0,0,0,.28);
+    }
+
+
+    /* ============================================================
+       v96 UI POLISH + SOCIAL HUB
+       Cleaner profile flow, upgraded cards, and built-in social page.
+       ============================================================ */
+
+    :root {
+      --sw-card: rgba(12, 15, 25, .72);
+      --sw-card-2: rgba(255,255,255,.07);
+      --sw-line: rgba(255,255,255,.12);
+      --sw-soft: rgba(248,251,255,.68);
+    }
+
+    .dsCleanHero {
+      width: min(1180px, calc(100vw - 34px));
+      margin: 48px auto 24px;
+      padding: clamp(24px, 4vw, 44px);
+      border-radius: 34px;
+      background:
+        radial-gradient(760px circle at 0% 0%, rgba(229,9,20,.18), transparent 46%),
+        radial-gradient(620px circle at 100% 0%, rgba(255,255,255,.10), transparent 48%),
+        var(--sw-card);
+      border: 1px solid var(--sw-line);
+      box-shadow: 0 28px 100px rgba(0,0,0,.32);
+      backdrop-filter: blur(18px) saturate(1.08);
+      -webkit-backdrop-filter: blur(18px) saturate(1.08);
+    }
+
+    .dsCleanHero h1 {
+      margin: 6px 0 8px;
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-size: clamp(38px, 6vw, 76px);
+      letter-spacing: -.08em;
+      line-height: .9;
+    }
+
+    .dsCleanHero p {
+      max-width: 760px;
+      margin: 0;
+      color: var(--sw-soft);
+      line-height: 1.6;
+      font-weight: 650;
+    }
+
+    .dsHeroMiniActions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .dsProfilesSelectShell,
+    .dsProfileManagerLayout {
+      width: min(1180px, calc(100vw - 34px));
+      margin: 0 auto 80px;
+    }
+
+    .dsProfilesChoiceGrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 18px;
+    }
+
+    .dsProfileSelectCard,
+    .dsManageProfileCard,
+    .dsProfileManagerPanel,
+    .dsProfileManagerList {
+      border: 1px solid var(--sw-line);
+      background:
+        radial-gradient(360px circle at 10% 0%, rgba(255,255,255,.10), transparent 52%),
+        var(--sw-card-2);
+      box-shadow: 0 20px 70px rgba(0,0,0,.24);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .dsProfileSelectCard {
+      min-height: 230px;
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 12px;
+      padding: 22px;
+      border-radius: 32px;
+      color: white;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform .18s ease, border-color .18s ease, background .18s ease;
+    }
+
+    .dsProfileSelectCard:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255,255,255,.25);
+      background: rgba(255,255,255,.10);
+    }
+
+    .dsProfileAvatarBig {
+      width: 92px;
+      height: 92px;
+      display: grid;
+      place-items: center;
+      border-radius: 28px;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.30), transparent 42%),
+        linear-gradient(135deg, rgba(229,9,20,.92), rgba(91,34,255,.82));
+      box-shadow: 0 20px 70px rgba(229,9,20,.25);
+      font-size: 38px;
+      font-weight: 950;
+      color: white;
+    }
+
+    .dsProfileSelectCard strong {
+      font-size: 22px;
+      letter-spacing: -.035em;
+    }
+
+    .dsProfileSelectCard small {
+      color: var(--sw-soft);
+      font-weight: 800;
+    }
+
+    .dsAddProfileCard .dsProfileAvatarBig {
+      background: rgba(255,255,255,.10);
+      border: 1px dashed rgba(255,255,255,.22);
+      box-shadow: none;
+    }
+
+    .dsProfilesQuickActions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .dsProfileManagerLayout {
+      display: grid;
+      grid-template-columns: 360px minmax(0, 1fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    .dsProfileManagerPanel,
+    .dsProfileManagerList {
+      border-radius: 30px;
+      padding: 22px;
+    }
+
+    .dsPanelLabel {
+      color: rgba(255,255,255,.52);
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .dsStackedForm {
+      display: grid;
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .dsStackedForm label {
+      display: grid;
+      gap: 7px;
+      color: rgba(255,255,255,.62);
+      font-weight: 850;
+      font-size: 13px;
+    }
+
+    .dsStackedForm input,
+    .dsStackedForm select {
+      min-height: 48px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 16px;
+      padding: 0 14px;
+      color: white;
+      background: rgba(0,0,0,.22);
+      outline: none;
+    }
+
+    .dsSectionHeaderSplit {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .dsSectionHeaderSplit h2 {
+      margin: 3px 0 0;
+      font-size: 30px;
+      letter-spacing: -.055em;
+    }
+
+    .dsManageProfileList {
+      display: grid;
+      gap: 12px;
+    }
+
+    .dsManageProfileCard {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      padding: 14px;
+      border-radius: 24px;
+    }
+
+    .dsManageProfileCard .dsProfileAvatarBig {
+      width: 62px;
+      height: 62px;
+      border-radius: 20px;
+      font-size: 24px;
+    }
+
+    .dsManageProfileMain {
+      display: grid;
+      gap: 3px;
+    }
+
+    .dsManageProfileMain strong {
+      font-size: 18px;
+    }
+
+    .dsManageProfileMain small {
+      color: var(--sw-soft);
+    }
+
+    .dsManageProfileActions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 7px;
+    }
+
+    .dsManageProfileActions button,
+    .dsSocialHeaderActions button,
+    .dsSocialDetailsCard button,
+    .dsSocialDetailsCard a {
+      min-height: 38px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 14px;
+      padding: 0 12px;
+      color: white;
+      background: rgba(255,255,255,.08);
+      font-weight: 850;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .dsSocialPage {
+      min-height: calc(100vh - 80px);
+      padding: 22px;
+    }
+
+    .dsSocialShell {
+      width: min(1500px, 100%);
+      min-height: calc(100vh - 124px);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr) 300px;
+      gap: 16px;
+    }
+
+    .dsSocialSidebar,
+    .dsSocialMain,
+    .dsSocialDetails,
+    .dsCallCard {
+      border: 1px solid var(--sw-line);
+      background:
+        radial-gradient(520px circle at 0% 0%, rgba(255,255,255,.08), transparent 54%),
+        rgba(8,10,18,.74);
+      box-shadow: 0 22px 80px rgba(0,0,0,.30);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .dsSocialSidebar,
+    .dsSocialDetails {
+      border-radius: 28px;
+      padding: 16px;
+      overflow: hidden;
+    }
+
+    .dsSocialBrand {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .dsSocialLogo {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #e50914, #6d5dfc);
+      box-shadow: 0 16px 50px rgba(229,9,20,.22);
+    }
+
+    .dsSocialBrand strong {
+      display: block;
+      font-size: 18px;
+    }
+
+    .dsSocialBrand small,
+    .dsSocialRoom small {
+      color: var(--sw-soft);
+    }
+
+    .dsSocialCompose {
+      width: 100%;
+      min-height: 44px;
+      border: 0;
+      border-radius: 16px;
+      color: white;
+      background: linear-gradient(135deg, #e50914, #7c3aed);
+      font-weight: 950;
+      cursor: pointer;
+      margin-bottom: 16px;
+    }
+
+    .dsSocialSection {
+      display: grid;
+      gap: 7px;
+      margin: 16px 0;
+    }
+
+    .dsSocialSection > span {
+      color: rgba(255,255,255,.48);
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      padding: 0 8px;
+    }
+
+    .dsSocialRoom {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr);
+      grid-template-rows: auto auto;
+      column-gap: 10px;
+      align-items: center;
+      width: 100%;
+      min-height: 54px;
+      border: 1px solid transparent;
+      border-radius: 16px;
+      padding: 8px 10px;
+      color: white;
+      background: transparent;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .dsSocialRoom i {
+      grid-row: 1 / span 2;
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      background: rgba(255,255,255,.08);
+    }
+
+    .dsSocialRoom b {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .dsSocialRoom.isActive,
+    .dsSocialRoom:hover {
+      border-color: rgba(255,255,255,.13);
+      background: rgba(255,255,255,.08);
+    }
+
+    .dsSocialMain {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto auto;
+      border-radius: 28px;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .dsSocialHeader {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: center;
+      padding: 18px 20px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+    }
+
+    .dsSocialHeader span {
+      color: rgba(255,255,255,.52);
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .dsSocialHeader h1 {
+      margin: 2px 0 0;
+      font-size: clamp(24px, 3vw, 36px);
+      letter-spacing: -.06em;
+    }
+
+    .dsSocialHeaderActions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .dsSocialMessages {
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .dsSocialMessage {
+      display: grid;
+      grid-template-columns: 40px minmax(0, 1fr);
+      gap: 10px;
+      max-width: min(720px, 92%);
+      align-self: flex-start;
+    }
+
+    .dsSocialMessage.mine {
+      align-self: flex-end;
+      grid-template-columns: minmax(0, 1fr) 40px;
+    }
+
+    .dsMsgAvatar {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background: rgba(255,255,255,.10);
+      font-weight: 950;
+    }
+
+    .dsSocialMessage.mine .dsMsgAvatar {
+      grid-column: 2;
+      grid-row: 1;
+      background: linear-gradient(135deg, #e50914, #7c3aed);
+    }
+
+    .dsSocialMessage > div {
+      padding: 12px 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.09);
+    }
+
+    .dsSocialMessage.mine > div {
+      grid-column: 1;
+      grid-row: 1;
+      background: rgba(229,9,20,.18);
+      border-color: rgba(229,9,20,.22);
+    }
+
+    .dsSocialMessage header {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .dsSocialMessage header small {
+      color: rgba(255,255,255,.45);
+      font-size: 11px;
+    }
+
+    .dsSocialMessage p {
+      margin: 0;
+      color: rgba(255,255,255,.86);
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+
+    .dsSocialTyping {
+      padding: 0 20px 10px;
+      color: rgba(255,255,255,.54);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .dsSocialComposer {
+      display: grid;
+      grid-template-columns: 44px minmax(0, 1fr) 48px;
+      gap: 10px;
+      padding: 16px;
+      border-top: 1px solid rgba(255,255,255,.10);
+    }
+
+    .dsSocialComposer input {
+      min-height: 48px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 17px;
+      padding: 0 16px;
+      color: white;
+      background: rgba(0,0,0,.26);
+      outline: none;
+    }
+
+    .dsSocialComposer button {
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 16px;
+      color: white;
+      background: rgba(255,255,255,.09);
+      cursor: pointer;
+    }
+
+    .dsSocialComposer button[type="submit"] {
+      background: linear-gradient(135deg, #e50914, #7c3aed);
+      border-color: transparent;
+    }
+
+    .dsSocialDetails {
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+
+    .dsSocialDetailsCard {
+      display: grid;
+      gap: 10px;
+      padding: 16px;
+      border-radius: 22px;
+      background: rgba(255,255,255,.055);
+      border: 1px solid rgba(255,255,255,.09);
+    }
+
+    .dsSocialDetailsCard h2 {
+      margin: 0;
+      letter-spacing: -.045em;
+    }
+
+    .dsSocialDetailsCard p {
+      margin: 0;
+      color: var(--sw-soft);
+      line-height: 1.5;
+    }
+
+    .dsSocialMembers {
+      display: grid;
+      gap: 8px;
+    }
+
+    .dsSocialMembers span {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      color: rgba(255,255,255,.82);
+      font-weight: 750;
+    }
+
+    .dsSocialMembers i {
+      width: 8px;
+      height: 8px;
+      border-radius: 99px;
+      background: #24e0a4;
+      box-shadow: 0 0 18px rgba(36,224,164,.8);
+    }
+
+    .dsCallModal {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: rgba(0,0,0,.72);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .dsCallModal[hidden] {
+      display: none !important;
+    }
+
+    .dsCallCard {
+      width: min(760px, 96vw);
+      border-radius: 30px;
+      padding: 18px;
+    }
+
+    .dsCallTop {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .dsCallTop span {
+      color: rgba(255,255,255,.55);
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .dsCallTop h2 {
+      margin: 2px 0 0;
+      letter-spacing: -.055em;
+    }
+
+    .dsCallTop button {
+      width: 42px;
+      height: 42px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 15px;
+      color: white;
+      background: rgba(255,255,255,.08);
+    }
+
+    .dsCallStage {
+      position: relative;
+      min-height: 360px;
+      display: grid;
+      place-items: center;
+      border-radius: 24px;
+      overflow: hidden;
+      background:
+        radial-gradient(620px circle at 50% 0%, rgba(124,58,237,.20), transparent 54%),
+        #05070d;
+    }
+
+    .dsCallStage video {
+      width: 100%;
+      height: 100%;
+      min-height: 360px;
+      object-fit: cover;
+    }
+
+    .dsCallPlaceholder {
+      position: absolute;
+      inset: auto 20px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(0,0,0,.48);
+      color: white;
+      font-weight: 850;
+    }
+
+    .dsCallControls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .dsCallControls button {
+      min-height: 46px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 16px;
+      padding: 0 16px;
+      color: white;
+      background: rgba(255,255,255,.09);
+      font-weight: 850;
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .dsCallControls .danger {
+      background: rgba(229,9,20,.22);
+      border-color: rgba(229,9,20,.30);
+    }
+
+    .dsRow {
+      margin-bottom: 38px;
+    }
+
+    .dsRowHead {
+      margin-bottom: 12px;
+    }
+
+    .movieRail.dsRail {
+      gap: 14px;
+      scroll-padding-inline: 22px;
+    }
+
+    @media(max-width: 1100px) {
+      .dsSocialShell {
+        grid-template-columns: 280px minmax(0, 1fr);
+      }
+
+      .dsSocialDetails {
+        display: none;
+      }
+
+      .dsProfileManagerLayout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media(max-width: 760px) {
+      .dsSocialPage {
+        padding: 10px;
+      }
+
+      .dsSocialShell {
+        min-height: calc(100vh - 92px);
+        grid-template-columns: 1fr;
+      }
+
+      .dsSocialSidebar {
+        max-height: 260px;
+        overflow-y: auto;
+      }
+
+      .dsSocialHeader {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .dsSocialHeaderActions button span {
+        display: none;
+      }
+
+      .dsSocialMessages {
+        min-height: 420px;
+      }
+
+      .dsManageProfileCard {
+        grid-template-columns: auto minmax(0, 1fr);
+      }
+
+      .dsManageProfileActions {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+      }
+    }
+
+
+    /* ============================================================
+       v97 SOCIAL WATCH ROOMS
+       Watch Rooms are now invented into Social instead of living apart.
+       ============================================================ */
+
+    .dsSocialWatchSection .dsSocialRoom {
+      background:
+        radial-gradient(240px circle at 0% 0%, rgba(229,9,20,.18), transparent 52%),
+        rgba(255,255,255,.045);
+      border-color: rgba(255,255,255,.08);
+    }
+
+    .dsSocialWatchStudio {
+      margin: 14px 16px 0;
+      padding: 16px;
+      border-radius: 24px;
+      background:
+        radial-gradient(700px circle at 0% 0%, rgba(229,9,20,.18), transparent 52%),
+        radial-gradient(700px circle at 100% 0%, rgba(124,58,237,.16), transparent 54%),
+        rgba(255,255,255,.055);
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 20px 70px rgba(0,0,0,.26);
+    }
+
+    .dsSocialWatchStudio[hidden] {
+      display: none !important;
+    }
+
+    .dsWatchStudioHero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 18px;
+      margin-bottom: 16px;
+    }
+
+    .dsWatchStudioHero h2 {
+      margin: 4px 0 6px;
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-size: clamp(26px, 3vw, 42px);
+      letter-spacing: -.07em;
+      line-height: .95;
+    }
+
+    .dsWatchStudioHero p {
+      margin: 0;
+      max-width: 680px;
+      color: rgba(248,251,255,.68);
+      line-height: 1.55;
+      font-weight: 650;
+    }
+
+    .dsWatchStudioActions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .dsWatchStudioActions button {
+      min-height: 42px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 999px;
+      padding: 0 14px;
+      color: white;
+      background: rgba(255,255,255,.08);
+      font-weight: 850;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dsWatchStudioGrid {
+      display: grid;
+      grid-template-columns: minmax(220px, .9fr) minmax(220px, .72fr) minmax(280px, 1.2fr);
+      gap: 12px;
+    }
+
+    .dsWatchStudioCard {
+      display: grid;
+      align-content: start;
+      gap: 12px;
+      padding: 16px;
+      border-radius: 22px;
+      background: rgba(0,0,0,.20);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .dsWatchStudioCard h3 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: -.045em;
+    }
+
+    .dsWatchStudioCard label {
+      display: grid;
+      gap: 7px;
+      color: rgba(255,255,255,.62);
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .dsWatchStudioCard input {
+      min-height: 44px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 15px;
+      padding: 0 13px;
+      color: white;
+      background: rgba(0,0,0,.30);
+      outline: none;
+    }
+
+    .dsWatchStudioCard p {
+      margin: 0;
+      color: rgba(248,251,255,.58);
+      line-height: 1.45;
+      font-size: 13px;
+    }
+
+    .dsWatchStudioButtons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+    }
+
+    .dsWatchStudioButtons .dsPrimaryBtn,
+    .dsWatchStudioButtons .dsSecondaryBtn {
+      min-height: 42px;
+      padding-inline: 13px;
+      width: auto;
+    }
+
+    .dsWatchStudioActiveCard {
+      min-height: 270px;
+    }
+
+    .dsSocialWatchRoomsList {
+      display: grid;
+      gap: 10px;
+      max-height: 360px;
+      overflow-y: auto;
+      padding-right: 3px;
+    }
+
+    .dsSocialWatchRoomCard {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.065);
+      border: 1px solid rgba(255,255,255,.09);
+    }
+
+    .dsSocialWatchRoomCard > div:first-child {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      grid-template-rows: auto auto;
+      column-gap: 10px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .dsSocialWatchRoomCard span {
+      grid-row: 1 / span 2;
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(229,9,20,.95), rgba(124,58,237,.85));
+    }
+
+    .dsSocialWatchRoomCard strong {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .dsSocialWatchRoomCard small {
+      color: rgba(248,251,255,.58);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .dsSocialWatchRoomActions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 7px;
+    }
+
+    .dsSocialWatchRoomActions a,
+    .dsSocialWatchRoomActions button {
+      min-height: 34px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 12px;
+      padding: 0 10px;
+      color: white;
+      background: rgba(255,255,255,.08);
+      text-decoration: none;
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .dsSocialWatchRoomActions a {
+      background: linear-gradient(135deg, #e50914, #7c3aed);
+      border-color: transparent;
+    }
+
+    .dsSocialEmptyMini {
+      display: grid;
+      place-items: center;
+      min-height: 150px;
+      border: 1px dashed rgba(255,255,255,.14);
+      border-radius: 18px;
+      color: rgba(248,251,255,.58);
+      text-align: center;
+      padding: 18px;
+      font-weight: 750;
+    }
+
+    .socialWatchStudioOpen .dsSocialMessages {
+      min-height: 240px;
+    }
+
+    @media(max-width: 1250px) {
+      .dsWatchStudioGrid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .dsWatchStudioActiveCard {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media(max-width: 760px) {
+      .dsSocialWatchStudio {
+        margin: 10px;
+        padding: 12px;
+      }
+
+      .dsWatchStudioHero {
+        display: grid;
+      }
+
+      .dsWatchStudioActions {
+        justify-content: flex-start;
+      }
+
+      .dsWatchStudioGrid {
+        grid-template-columns: 1fr;
+      }
+
+      .dsSocialWatchRoomCard {
+        grid-template-columns: 1fr;
+      }
+
+      .dsSocialWatchRoomActions {
+        justify-content: flex-start;
+      }
+    }
+
+
+    /* ============================================================
+       v98 BUTTON + LAYOUT FIX
+       Stronger Social layout, delegated buttons, and external CSS polish.
+       ============================================================ */
+
+    .is-pressing {
+      transform: scale(.985) !important;
+      transition: transform .12s ease !important;
+    }
+
+    .dsSocialModeTabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 6px;
+      margin: 0 0 12px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.09);
+    }
+
+    .dsSocialModeTabs button {
+      min-height: 40px;
+      border: 0;
+      border-radius: 14px;
+      color: rgba(255,255,255,.70);
+      background: transparent;
+      font-weight: 900;
+      cursor: pointer;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dsSocialModeTabs button.isActive {
+      color: white;
+      background:
+        radial-gradient(240px circle at 20% 0%, rgba(255,255,255,.22), transparent 50%),
+        linear-gradient(135deg, rgba(229,9,20,.92), rgba(124,58,237,.78));
+      box-shadow: 0 12px 36px rgba(229,9,20,.18);
+    }
+
+    .dsSocialStatusBar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 18px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      color: rgba(248,251,255,.66);
+      font-size: 12px;
+      font-weight: 800;
+      background: rgba(0,0,0,.12);
+    }
+
+    .dsSocialStatusBar span {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    #socialConnectionBadge i {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 18px rgba(34,197,94,.75);
+    }
+
+    #socialConnectionBadge.isOffline i {
+      background: #f59e0b;
+      box-shadow: 0 0 18px rgba(245,158,11,.65);
+    }
+
+    #socialActionHint {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      opacity: .76;
+    }
+
+    .dsSocialShell {
+      grid-template-columns: 310px minmax(0, 1fr) 320px;
+      gap: 18px;
+    }
+
+    .dsSocialSidebar,
+    .dsSocialMain,
+    .dsSocialDetails {
+      outline: 1px solid rgba(255,255,255,.04);
+    }
+
+    .dsSocialSidebar {
+      max-height: calc(100vh - 122px);
+      overflow-y: auto;
+    }
+
+    .dsSocialMain {
+      min-height: calc(100vh - 122px);
+    }
+
+    .dsSocialHeader {
+      background:
+        linear-gradient(90deg, rgba(229,9,20,.08), rgba(124,58,237,.08)),
+        rgba(0,0,0,.08);
+    }
+
+    .dsSocialHeaderActions button,
+    .dsSocialDetailsCard button,
+    .dsSocialDetailsCard a,
+    .dsSocialWatchRoomActions button,
+    .dsSocialWatchRoomActions a,
+    .dsWatchStudioActions button {
+      transition: transform .16s ease, border-color .16s ease, background .16s ease, opacity .16s ease;
+    }
+
+    .dsSocialHeaderActions button:hover,
+    .dsSocialDetailsCard button:hover,
+    .dsSocialDetailsCard a:hover,
+    .dsSocialWatchRoomActions button:hover,
+    .dsSocialWatchRoomActions a:hover,
+    .dsWatchStudioActions button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255,255,255,.22);
+      background: rgba(255,255,255,.12);
+    }
+
+    .dsSocialWatchStudio {
+      margin: 14px 18px;
+      max-height: min(58vh, 560px);
+      overflow-y: auto;
+    }
+
+    .dsWatchStudioGrid {
+      grid-template-columns: minmax(240px, .8fr) minmax(220px, .62fr) minmax(320px, 1.1fr);
+    }
+
+    .dsWatchStudioCard {
+      min-height: 100%;
+    }
+
+    .dsWatchStudioCard label span {
+      color: rgba(248,251,255,.78);
+    }
+
+    .dsWatchStudioCard input:focus,
+    .dsSocialComposer input:focus {
+      border-color: rgba(229,9,20,.38);
+      box-shadow: 0 0 0 4px rgba(229,9,20,.12);
+    }
+
+    .dsSocialMessages {
+      background:
+        radial-gradient(860px circle at 50% 0%, rgba(255,255,255,.035), transparent 54%),
+        rgba(0,0,0,.06);
+    }
+
+    .dsSocialMessage > div {
+      box-shadow: 0 10px 34px rgba(0,0,0,.14);
+    }
+
+    .dsSocialComposer {
+      background: rgba(0,0,0,.16);
+    }
+
+    .dsSocialCompose {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    .dsSocialSection {
+      padding: 4px;
+      border-radius: 18px;
+    }
+
+    .dsSocialRoom {
+      transition: transform .14s ease, background .14s ease, border-color .14s ease;
+    }
+
+    .dsSocialRoom:hover {
+      transform: translateX(2px);
+    }
+
+    .dsSocialRoom.isActive {
+      background:
+        radial-gradient(260px circle at 0% 0%, rgba(229,9,20,.22), transparent 52%),
+        rgba(255,255,255,.095);
+      border-color: rgba(229,9,20,.24);
+    }
+
+    .dsSocialWatchRoomCard {
+      transition: transform .16s ease, background .16s ease, border-color .16s ease;
+    }
+
+    .dsSocialWatchRoomCard:hover {
+      transform: translateY(-2px);
+      background: rgba(255,255,255,.085);
+      border-color: rgba(255,255,255,.16);
+    }
+
+    .dsSocialDetailsCard {
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    }
+
+    .notyf__toast {
+      border-radius: 16px !important;
+      font-weight: 800 !important;
+      box-shadow: 0 16px 50px rgba(0,0,0,.28) !important;
+    }
+
+    @media(max-width: 1250px) {
+      .dsSocialShell {
+        grid-template-columns: 285px minmax(0, 1fr);
+      }
+
+      .dsSocialMain {
+        min-height: calc(100vh - 122px);
+      }
+    }
+
+    @media(max-width: 820px) {
+      .dsSocialShell {
+        display: flex;
+        flex-direction: column;
+        min-height: auto;
+      }
+
+      .dsSocialSidebar {
+        max-height: none;
+        overflow: visible;
+      }
+
+      .dsSocialSection {
+        display: flex;
+        overflow-x: auto;
+        gap: 8px;
+        padding-bottom: 10px;
+      }
+
+      .dsSocialSection > span {
+        min-width: 100%;
+      }
+
+      .dsSocialRoom {
+        min-width: 180px;
+      }
+
+      .dsSocialWatchStudio {
+        max-height: none;
+        margin: 10px;
+      }
+
+      .dsSocialStatusBar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      #socialActionHint {
+        white-space: normal;
+      }
+    }
+
+
+    /* ============================================================
+       v99 SOCIAL REBUILD
+       Simpler, stronger layout. Core room actions work as real links/forms.
+       ============================================================ */
+
+    .sw99Shell {
+      min-height: calc(100vh - 82px);
+      padding: 22px;
+      color: white;
+    }
+
+    .sw99Top {
+      width: min(1500px, 100%);
+      margin: 0 auto 18px;
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: stretch;
+      padding: clamp(20px, 3vw, 34px);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 34px;
+      background:
+        radial-gradient(720px circle at 0% 0%, rgba(229,9,20,.22), transparent 48%),
+        radial-gradient(680px circle at 100% 10%, rgba(124,58,237,.18), transparent 48%),
+        rgba(9,11,20,.78);
+      box-shadow: 0 28px 100px rgba(0,0,0,.30);
+      backdrop-filter: blur(18px);
+    }
+
+    .sw99Top h1 {
+      margin: 6px 0 8px;
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-size: clamp(38px, 6vw, 78px);
+      letter-spacing: -.08em;
+      line-height: .9;
+    }
+
+    .sw99Top p {
+      max-width: 760px;
+      margin: 0;
+      color: rgba(248,251,255,.68);
+      font-weight: 650;
+      line-height: 1.55;
+    }
+
+    .sw99TopActions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: flex-end;
+      justify-content: flex-end;
+    }
+
+    .sw99Btn,
+    .sw99IconBtn {
+      min-height: 44px;
+      border: 1px solid rgba(255,255,255,.13);
+      border-radius: 999px;
+      padding: 0 16px;
+      color: white;
+      background: rgba(255,255,255,.08);
+      font-weight: 900;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+    }
+
+    .sw99Btn:hover,
+    .sw99IconBtn:hover {
+      transform: translateY(-1px);
+      background: rgba(255,255,255,.13);
+      border-color: rgba(255,255,255,.22);
+    }
+
+    .sw99Btn.primary {
+      border-color: transparent;
+      background: linear-gradient(135deg, #e50914, #7c3aed);
+      box-shadow: 0 16px 50px rgba(229,9,20,.22);
+    }
+
+    .sw99App {
+      width: min(1500px, 100%);
+      min-height: 760px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 310px minmax(0, 1fr) 310px;
+      gap: 18px;
+    }
+
+    .sw99Sidebar,
+    .sw99Main,
+    .sw99Info,
+    .sw99CallCard {
+      border: 1px solid rgba(255,255,255,.12);
+      background:
+        radial-gradient(520px circle at 0% 0%, rgba(255,255,255,.08), transparent 54%),
+        rgba(8,10,18,.76);
+      box-shadow: 0 22px 80px rgba(0,0,0,.30);
+      backdrop-filter: blur(18px);
+    }
+
+    .sw99Sidebar,
+    .sw99Info {
+      border-radius: 30px;
+      padding: 16px;
+      align-self: start;
+      max-height: calc(100vh - 120px);
+      overflow-y: auto;
+    }
+
+    .sw99Main {
+      border-radius: 30px;
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      min-width: 0;
+    }
+
+    .sw99Brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .sw99Brand > span {
+      width: 52px;
+      height: 52px;
+      display: grid;
+      place-items: center;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #e50914, #7c3aed);
+      box-shadow: 0 16px 50px rgba(229,9,20,.24);
+      font-size: 23px;
+    }
+
+    .sw99Brand strong {
+      display: block;
+      font-size: 20px;
+      letter-spacing: -.035em;
+    }
+
+    .sw99Brand small,
+    .sw99Room small,
+    .sw99InfoCard p {
+      color: rgba(248,251,255,.62);
+    }
+
+    .sw99Tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 6px;
+      margin-bottom: 16px;
+      border-radius: 19px;
+      background: rgba(255,255,255,.065);
+      border: 1px solid rgba(255,255,255,.09);
+    }
+
+    .sw99Tabs button {
+      min-height: 42px;
+      border: 0;
+      border-radius: 15px;
+      color: rgba(255,255,255,.72);
+      background: transparent;
+      font-weight: 950;
+      cursor: pointer;
+    }
+
+    .sw99Tabs button.active {
+      color: white;
+      background: linear-gradient(135deg, rgba(229,9,20,.94), rgba(124,58,237,.82));
+    }
+
+    .sw99Section {
+      display: grid;
+      gap: 7px;
+      margin: 16px 0;
+    }
+
+    .sw99Section > span {
+      color: rgba(255,255,255,.48);
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      padding: 0 8px;
+    }
+
+    .sw99Room,
+    .sw99MiniAction {
+      width: 100%;
+      min-height: 56px;
+      border: 1px solid transparent;
+      border-radius: 17px;
+      padding: 9px 10px;
+      color: white;
+      background: transparent;
+      text-align: left;
+      cursor: pointer;
+      text-decoration: none;
+      display: grid;
+      grid-template-columns: 38px minmax(0, 1fr);
+      grid-template-rows: auto auto;
+      column-gap: 10px;
+      align-items: center;
+    }
+
+    .sw99Room i {
+      grid-row: 1 / span 2;
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 13px;
+      background: rgba(255,255,255,.09);
+    }
+
+    .sw99Room b {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .sw99Room:hover,
+    .sw99Room.active {
+      background: rgba(255,255,255,.085);
+      border-color: rgba(255,255,255,.13);
+    }
+
+    .sw99MiniAction {
+      min-height: 42px;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      color: rgba(255,255,255,.82);
+      background: rgba(255,255,255,.065);
+      font-weight: 850;
+      text-align: center;
+    }
+
+    .sw99Header {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: center;
+      padding: 18px 20px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      background:
+        linear-gradient(90deg, rgba(229,9,20,.08), rgba(124,58,237,.08)),
+        rgba(0,0,0,.10);
+    }
+
+    .sw99Header span,
+    .sw99InfoCard span,
+    .sw99Card > span,
+    .sw99CardHead span {
+      color: rgba(255,255,255,.50);
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .sw99Header h2 {
+      margin: 2px 0 0;
+      font-size: clamp(26px, 3vw, 42px);
+      letter-spacing: -.065em;
+    }
+
+    .sw99HeaderActions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .sw99HeaderActions button {
+      min-height: 40px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 15px;
+      padding: 0 12px;
+      color: white;
+      background: rgba(255,255,255,.08);
+      font-weight: 850;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sw99Panel {
+      display: none;
+      min-height: 620px;
+    }
+
+    .sw99Panel.active {
+      display: grid;
+    }
+
+    .sw99Messages {
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      background:
+        radial-gradient(900px circle at 50% 0%, rgba(255,255,255,.035), transparent 54%),
+        rgba(0,0,0,.05);
+    }
+
+    .sw99Msg {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      gap: 10px;
+      max-width: min(720px, 92%);
+      align-self: flex-start;
+    }
+
+    .sw99Msg.mine {
+      align-self: flex-end;
+      grid-template-columns: minmax(0, 1fr) 42px;
+    }
+
+    .sw99Msg > span {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background: rgba(255,255,255,.10);
+      font-weight: 950;
+    }
+
+    .sw99Msg.mine > span {
+      grid-column: 2;
+      grid-row: 1;
+      background: linear-gradient(135deg, #e50914, #7c3aed);
+    }
+
+    .sw99Msg > div {
+      padding: 12px 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.09);
+      box-shadow: 0 10px 34px rgba(0,0,0,.14);
+    }
+
+    .sw99Msg.mine > div {
+      grid-column: 1;
+      grid-row: 1;
+      background: rgba(229,9,20,.18);
+      border-color: rgba(229,9,20,.22);
+    }
+
+    .sw99Msg header {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .sw99Msg small {
+      color: rgba(255,255,255,.46);
+      font-size: 11px;
+    }
+
+    .sw99Msg p {
+      margin: 0;
+      color: rgba(255,255,255,.88);
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+
+    .sw99Composer {
+      display: grid;
+      grid-template-columns: 46px minmax(0, 1fr) 50px;
+      gap: 10px;
+      padding: 16px;
+      border-top: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.16);
+    }
+
+    .sw99Composer input,
+    .sw99Card input {
+      min-height: 48px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 17px;
+      padding: 0 15px;
+      color: white;
+      background: rgba(0,0,0,.28);
+      outline: none;
+    }
+
+    .sw99Composer button {
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 16px;
+      color: white;
+      background: rgba(255,255,255,.09);
+      cursor: pointer;
+    }
+
+    .sw99Composer button[type="submit"] {
+      background: linear-gradient(135deg, #e50914, #7c3aed);
+      border-color: transparent;
+    }
+
+    .sw99RoomsPanel {
+      padding: 18px;
+      overflow-y: auto;
+      align-content: start;
+      gap: 16px;
+    }
+
+    .sw99RoomsHero {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 18px;
+      border-radius: 24px;
+      background:
+        radial-gradient(540px circle at 0% 0%, rgba(229,9,20,.18), transparent 52%),
+        rgba(255,255,255,.055);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .sw99RoomsHero h2 {
+      margin: 4px 0 6px;
+      font-size: clamp(26px, 3vw, 46px);
+      letter-spacing: -.07em;
+      line-height: .95;
+    }
+
+    .sw99RoomsHero p {
+      margin: 0;
+      max-width: 720px;
+      color: rgba(248,251,255,.66);
+    }
+
+    .sw99RoomGrid {
+      display: grid;
+      grid-template-columns: minmax(240px, .8fr) minmax(220px, .62fr) minmax(320px, 1.1fr);
+      gap: 14px;
+    }
+
+    .sw99Card,
+    .sw99InfoCard {
+      display: grid;
+      gap: 12px;
+      padding: 18px;
+      border-radius: 24px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+    }
+
+    .sw99Card h3,
+    .sw99InfoCard h3 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: -.045em;
+    }
+
+    .sw99Card label {
+      display: grid;
+      gap: 7px;
+      color: rgba(248,251,255,.70);
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .sw99Card p,
+    .sw99Empty {
+      margin: 0;
+      color: rgba(248,251,255,.58);
+      line-height: 1.45;
+      font-size: 13px;
+    }
+
+    .sw99CardHead {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .sw99RoomsList {
+      display: grid;
+      gap: 10px;
+      max-height: 440px;
+      overflow-y: auto;
+    }
+
+    .sw99RoomResult {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 18px;
+      background: rgba(255,255,255,.055);
+    }
+
+    .sw99RoomResult b,
+    .sw99RoomResult small {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .sw99RoomResult small {
+      color: rgba(248,251,255,.56);
+    }
+
+    .sw99RoomResult nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 7px;
+    }
+
+    .sw99RoomResult a,
+    .sw99RoomResult button,
+    .sw99InfoCard button,
+    .sw99InfoCard a {
+      min-height: 34px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 12px;
+      padding: 0 10px;
+      color: white;
+      background: rgba(255,255,255,.08);
+      text-decoration: none;
+      font-weight: 850;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sw99RoomResult a {
+      background: linear-gradient(135deg, #e50914, #7c3aed);
+      border-color: transparent;
+    }
+
+    .sw99Info {
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+
+    .sw99Members p {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 8px;
+      color: rgba(248,251,255,.80);
+      font-weight: 750;
+    }
+
+    .sw99Members i {
+      width: 8px;
+      height: 8px;
+      border-radius: 99px;
+      background: #22c55e;
+      box-shadow: 0 0 18px rgba(34,197,94,.75);
+    }
+
+    .sw99CallModal {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: rgba(0,0,0,.72);
+      backdrop-filter: blur(14px);
+    }
+
+    .sw99CallModal[hidden] {
+      display: none !important;
+    }
+
+    .sw99CallCard {
+      width: min(760px, 96vw);
+      border-radius: 30px;
+      padding: 18px;
+    }
+
+    .sw99CallCard header,
+    .sw99CallCard footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .sw99CallCard header button,
+    .sw99CallCard footer button {
+      min-height: 42px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 15px;
+      color: white;
+      background: rgba(255,255,255,.09);
+      padding: 0 14px;
+      cursor: pointer;
+      font-weight: 850;
+    }
+
+    .sw99CallCard .danger {
+      background: rgba(229,9,20,.22);
+      border-color: rgba(229,9,20,.30);
+    }
+
+    .sw99CallStage {
+      position: relative;
+      display: grid;
+      place-items: center;
+      min-height: 360px;
+      margin: 14px 0;
+      border-radius: 24px;
+      overflow: hidden;
+      background:
+        radial-gradient(620px circle at 50% 0%, rgba(124,58,237,.20), transparent 54%),
+        #05070d;
+    }
+
+    .sw99CallStage video {
+      width: 100%;
+      min-height: 360px;
+      object-fit: cover;
+    }
+
+    .sw99CallStage > div {
+      position: absolute;
+      inset: auto 20px 20px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(0,0,0,.50);
+      font-weight: 850;
+    }
+
+    .sw99Error {
+      position: fixed;
+      left: 18px;
+      bottom: 18px;
+      z-index: 3000;
+      max-width: min(520px, calc(100vw - 36px));
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(220,38,38,.92);
+      color: white;
+      font-weight: 850;
+      box-shadow: 0 18px 60px rgba(0,0,0,.32);
+    }
+
+    @media(max-width: 1200px) {
+      .sw99App {
+        grid-template-columns: 300px minmax(0, 1fr);
+      }
+
+      .sw99Info {
+        display: none;
+      }
+
+      .sw99RoomGrid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .sw99ActiveRoomsCard {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media(max-width: 820px) {
+      .sw99Shell {
+        padding: 10px;
+      }
+
+      .sw99Top {
+        display: grid;
+      }
+
+      .sw99TopActions {
+        justify-content: flex-start;
+      }
+
+      .sw99App {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .sw99Sidebar {
+        max-height: none;
+      }
+
+      .sw99Section {
+        display: flex;
+        overflow-x: auto;
+        gap: 8px;
+        padding-bottom: 8px;
+      }
+
+      .sw99Section > span {
+        min-width: 100%;
+      }
+
+      .sw99Room {
+        min-width: 190px;
+      }
+
+      .sw99Header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .sw99HeaderActions button span {
+        display: none;
+      }
+
+      .sw99Panel {
+        min-height: 520px;
+      }
+
+      .sw99RoomGrid {
+        grid-template-columns: 1fr;
+      }
+
+      .sw99RoomsHero {
+        display: grid;
+      }
+
+      .sw99RoomResult {
+        grid-template-columns: 1fr;
+      }
+
+      .sw99RoomResult nav {
+        justify-content: flex-start;
+      }
+    }
+
+
+    /* ============================================================
+       v100 DISCORD-STYLE SOCIAL ROOMS
+       Swifly-inspired layout + creator permissions + integrated watch rooms.
+       ============================================================ */
+
+    .sv100 {
+      --bg0: #0b0d13;
+      --bg1: #11131b;
+      --bg2: #171a24;
+      --bg3: #202431;
+      --line: rgba(255,255,255,.08);
+      --muted: #949ba4;
+      --text: #f3f4f5;
+      --brand: #5865f2;
+      --brand2: #e50914;
+      min-height: calc(100vh - 78px);
+      display: grid;
+      grid-template-columns: 78px 278px minmax(0, 1fr) 260px;
+      color: var(--text);
+      background:
+        radial-gradient(900px circle at 20% 0%, rgba(88,101,242,.14), transparent 42%),
+        radial-gradient(720px circle at 92% 0%, rgba(229,9,20,.12), transparent 40%),
+        var(--bg0);
+      overflow: hidden;
+    }
+
+    .sv100 button,
+    .sv100 a,
+    .sv100 input {
+      font-family: Inter, system-ui, sans-serif;
+    }
+
+    .sv100Guilds {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 10px;
+      background: #070911;
+      border-right: 1px solid rgba(255,255,255,.04);
+    }
+
+    .sv100Guild {
+      width: 52px;
+      height: 52px;
+      display: grid;
+      place-items: center;
+      border-radius: 18px;
+      color: white;
+      text-decoration: none;
+      background: var(--bg2);
+      transition: border-radius .18s ease, background .18s ease, transform .18s ease;
+      font-size: 23px;
+      position: relative;
+    }
+
+    .sv100Guild:hover,
+    .sv100Guild.active {
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--brand), var(--brand2));
+      transform: translateY(-1px);
+    }
+
+    .sv100Guild.active::before {
+      content: "";
+      position: absolute;
+      left: -10px;
+      width: 4px;
+      height: 32px;
+      border-radius: 999px;
+      background: white;
+    }
+
+    .sv100Channels {
+      background: #11131a;
+      border-right: 1px solid rgba(255,255,255,.055);
+      min-height: 100%;
+      overflow-y: auto;
+    }
+
+    .sv100ServerHead {
+      height: 62px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 0 14px;
+      border-bottom: 1px solid rgba(0,0,0,.45);
+      box-shadow: 0 1px 0 rgba(255,255,255,.035);
+    }
+
+    .sv100ServerHead strong {
+      display: block;
+      font-size: 16px;
+      letter-spacing: -.02em;
+    }
+
+    .sv100ServerHead small,
+    .sv100ProfilePill small,
+    .sv100ChannelGroup header span,
+    .sv100Channel b + small {
+      color: var(--muted);
+    }
+
+    .sv100ServerHead button {
+      width: 36px;
+      height: 36px;
+      border: 0;
+      border-radius: 10px;
+      color: var(--muted);
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .sv100ProfilePill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 14px;
+      padding: 10px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.045);
+      border: 1px solid rgba(255,255,255,.055);
+    }
+
+    .sv100ProfilePill > span {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--brand), var(--brand2));
+      font-weight: 950;
+    }
+
+    .sv100ModeTabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin: 0 14px 14px;
+      padding: 5px;
+      border-radius: 14px;
+      background: #0c0e15;
+    }
+
+    .sv100ModeTabs button {
+      min-height: 36px;
+      border: 0;
+      border-radius: 10px;
+      color: var(--muted);
+      background: transparent;
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .sv100ModeTabs button.active {
+      color: white;
+      background: var(--brand);
+    }
+
+    .sv100ChannelGroup {
+      margin: 18px 8px;
+    }
+
+    .sv100ChannelGroup header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 8px 6px;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: .06em;
+      font-weight: 850;
+    }
+
+    .sv100ChannelGroup header button {
+      width: 26px;
+      height: 26px;
+      border: 0;
+      border-radius: 8px;
+      color: var(--muted);
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .sv100ChannelGroup header button:hover {
+      color: white;
+      background: rgba(255,255,255,.08);
+    }
+
+    .sv100ChannelGroup header button:disabled {
+      opacity: .35;
+      cursor: not-allowed;
+    }
+
+    .sv100Channel {
+      width: 100%;
+      min-height: 38px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 9px;
+      border: 0;
+      border-radius: 9px;
+      color: var(--muted);
+      background: transparent;
+      text-decoration: none;
+      cursor: pointer;
+      font-weight: 760;
+      margin: 1px 0;
+    }
+
+    .sv100Channel i {
+      font-size: 18px;
+      opacity: .9;
+    }
+
+    .sv100Channel b {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .sv100Channel:hover {
+      color: #dbdee1;
+      background: rgba(255,255,255,.055);
+    }
+
+    .sv100Channel.active {
+      color: white;
+      background: rgba(255,255,255,.10);
+    }
+
+    .sv100Main {
+      display: grid;
+      grid-template-rows: 62px minmax(0, 1fr);
+      min-width: 0;
+      background: #151821;
+    }
+
+    .sv100Topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: center;
+      padding: 0 18px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      background: rgba(255,255,255,.018);
+      box-shadow: 0 1px 0 rgba(0,0,0,.35);
+    }
+
+    .sv100Topbar span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .sv100Topbar h1 {
+      margin: 1px 0 0;
+      font-size: 23px;
+      letter-spacing: -.035em;
+    }
+
+    .sv100Topbar nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .sv100Topbar button {
+      min-height: 36px;
+      border: 0;
+      border-radius: 10px;
+      padding: 0 11px;
+      color: var(--muted);
+      background: transparent;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .sv100Topbar button:hover {
+      color: white;
+      background: rgba(255,255,255,.08);
+    }
+
+    .sv100Panel {
+      display: none;
+      min-height: 0;
+    }
+
+    .sv100Panel.active {
+      display: grid;
+    }
+
+    #sv100ChatPanel.active {
+      grid-template-rows: auto minmax(0, 1fr) auto;
+    }
+
+    .sv100Notice {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 14px 18px 0;
+      padding: 10px 12px;
+      border-radius: 14px;
+      color: #d7d9ff;
+      background: rgba(88,101,242,.13);
+      border: 1px solid rgba(88,101,242,.20);
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .sv100Messages {
+      overflow-y: auto;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .sv100Msg {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      gap: 12px;
+      padding: 8px 8px;
+      border-radius: 12px;
+    }
+
+    .sv100Msg:hover {
+      background: rgba(255,255,255,.035);
+    }
+
+    .sv100Msg > span {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--brand), var(--brand2));
+      font-weight: 950;
+    }
+
+    .sv100Msg header {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin: 1px 0 3px;
+    }
+
+    .sv100Msg small {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .sv100Msg p {
+      margin: 0;
+      color: #dbdee1;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+
+    .sv100Msg.mine > div {
+      border-left: 2px solid rgba(88,101,242,.7);
+      padding-left: 10px;
+    }
+
+    .sv100Composer {
+      display: grid;
+      grid-template-columns: 44px minmax(0, 1fr) 46px;
+      gap: 8px;
+      margin: 0 18px 18px;
+      padding: 10px;
+      border-radius: 18px;
+      background: #242936;
+    }
+
+    .sv100Composer input {
+      min-height: 44px;
+      border: 0;
+      outline: none;
+      color: white;
+      background: transparent;
+      font-size: 15px;
+    }
+
+    .sv100Composer button {
+      border: 0;
+      border-radius: 13px;
+      color: var(--muted);
+      background: transparent;
+      cursor: pointer;
+      font-size: 20px;
+    }
+
+    .sv100Composer button:hover {
+      color: white;
+      background: rgba(255,255,255,.08);
+    }
+
+    .sv100RoomsPanel.active {
+      display: block;
+      overflow-y: auto;
+      padding: 22px;
+    }
+
+    .sv100RoomsIntro {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 22px;
+      border-radius: 24px;
+      background:
+        radial-gradient(720px circle at 0% 0%, rgba(88,101,242,.25), transparent 48%),
+        radial-gradient(620px circle at 100% 0%, rgba(229,9,20,.18), transparent 48%),
+        #1b1f2b;
+      border: 1px solid rgba(255,255,255,.08);
+      margin-bottom: 18px;
+    }
+
+    .sv100RoomsIntro h2 {
+      margin: 4px 0 8px;
+      font-size: clamp(34px, 5vw, 64px);
+      letter-spacing: -.08em;
+      line-height: .9;
+      font-family: "Space Grotesk", Inter, sans-serif;
+    }
+
+    .sv100RoomsIntro p {
+      margin: 0;
+      color: #b5bac1;
+      max-width: 700px;
+      line-height: 1.55;
+    }
+
+    .sv100Btn {
+      min-height: 44px;
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 12px;
+      padding: 0 14px;
+      color: white;
+      background: rgba(255,255,255,.08);
+      text-decoration: none;
+      font-weight: 900;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .sv100Btn.primary {
+      border-color: transparent;
+      background: var(--brand);
+    }
+
+    .sv100Btn:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+
+    .sv100RoomsGrid {
+      display: grid;
+      grid-template-columns: minmax(260px, .85fr) minmax(240px, .65fr) minmax(340px, 1.2fr);
+      gap: 14px;
+    }
+
+    .sv100Card {
+      display: grid;
+      align-content: start;
+      gap: 12px;
+      padding: 18px;
+      border-radius: 20px;
+      background: #1b1f2b;
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .sv100Card > span,
+    .sv100CardHead span,
+    .sv100Perms span {
+      color: var(--muted);
+      text-transform: uppercase;
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .08em;
+    }
+
+    .sv100Card h3 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: -.045em;
+    }
+
+    .sv100Card p,
+    .sv100Empty {
+      color: #b5bac1;
+      line-height: 1.48;
+      margin: 0;
+    }
+
+    .sv100Card label {
+      display: grid;
+      gap: 7px;
+      color: #b5bac1;
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .sv100Card input {
+      min-height: 44px;
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 12px;
+      padding: 0 12px;
+      color: white;
+      outline: none;
+      background: #11131a;
+    }
+
+    .sv100Card input:focus {
+      border-color: rgba(88,101,242,.70);
+      box-shadow: 0 0 0 3px rgba(88,101,242,.18);
+    }
+
+    .sv100CardHead {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .sv100CardHead button {
+      width: 38px;
+      height: 38px;
+      border: 0;
+      border-radius: 10px;
+      color: white;
+      background: rgba(255,255,255,.08);
+      cursor: pointer;
+    }
+
+    .sv100RoomsList {
+      display: grid;
+      gap: 10px;
+      max-height: 430px;
+      overflow-y: auto;
+    }
+
+    .sv100RoomItem {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.045);
+      border: 1px solid rgba(255,255,255,.06);
+    }
+
+    .sv100RoomItem > div {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: 36px minmax(0, 1fr);
+      grid-template-rows: auto auto;
+      column-gap: 10px;
+      align-items: center;
+    }
+
+    .sv100RoomItem > div i {
+      grid-row: 1 / span 2;
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      background: var(--brand);
+    }
+
+    .sv100RoomItem b,
+    .sv100RoomItem small {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .sv100RoomItem small {
+      color: var(--muted);
+    }
+
+    .sv100RoomItem nav {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .sv100RoomItem a,
+    .sv100RoomItem button {
+      min-height: 34px;
+      border: 0;
+      border-radius: 10px;
+      padding: 0 10px;
+      color: white;
+      background: rgba(255,255,255,.08);
+      text-decoration: none;
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .sv100RoomItem a {
+      background: var(--brand);
+    }
+
+    .sv100Members {
+      background: #11131a;
+      border-left: 1px solid rgba(255,255,255,.055);
+      padding: 18px 14px;
+      overflow-y: auto;
+    }
+
+    .sv100MembersHead {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .sv100MembersHead span,
+    .sv100MembersHead small {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    #sv100MembersList p,
+    .sv100Perms p {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #dbdee1;
+      margin: 8px 0;
+      font-weight: 760;
+    }
+
+    #sv100MembersList i {
+      width: 9px;
+      height: 9px;
+      border-radius: 99px;
+      background: #23a55a;
+      box-shadow: 0 0 16px rgba(35,165,90,.65);
+    }
+
+    .sv100Perms {
+      margin-top: 22px;
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.045);
+      border: 1px solid rgba(255,255,255,.06);
+    }
+
+    .sv100Perms p {
+      align-items: flex-start;
+      color: #b5bac1;
+      line-height: 1.45;
+      font-size: 13px;
+    }
+
+    .creatorOnly[hidden],
+    .lockedOnly[hidden] {
+      display: none !important;
+    }
+
+    .sv100Channel:disabled,
+    [data-requires]:disabled {
+      opacity: .35;
+      cursor: not-allowed;
+    }
+
+    .sv100CallModal {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: rgba(0,0,0,.72);
+      backdrop-filter: blur(14px);
+    }
+
+    .sv100CallModal[hidden] {
+      display: none !important;
+    }
+
+    .sv100CallCard {
+      width: min(760px, 96vw);
+      border-radius: 26px;
+      padding: 18px;
+      color: white;
+      background: #151821;
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 30px 110px rgba(0,0,0,.42);
+    }
+
+    .sv100CallCard header,
+    .sv100CallCard footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .sv100CallCard button {
+      min-height: 40px;
+      border: 0;
+      border-radius: 12px;
+      padding: 0 12px;
+      color: white;
+      background: rgba(255,255,255,.08);
+      cursor: pointer;
+      font-weight: 850;
+    }
+
+    .sv100CallCard .danger {
+      background: rgba(229,9,20,.34);
+    }
+
+    .sv100CallStage {
+      position: relative;
+      min-height: 360px;
+      display: grid;
+      place-items: center;
+      border-radius: 20px;
+      overflow: hidden;
+      margin: 14px 0;
+      background: #0b0d13;
+    }
+
+    .sv100CallStage video {
+      width: 100%;
+      min-height: 360px;
+      object-fit: cover;
+    }
+
+    .sv100CallStage > div {
+      position: absolute;
+      inset: auto 18px 18px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      padding: 11px 13px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.55);
+    }
+
+    .sv100Toast,
+    .sv100Error {
+      position: fixed;
+      z-index: 2500;
+      right: 18px;
+      bottom: 18px;
+      max-width: min(440px, calc(100vw - 36px));
+      padding: 12px 14px;
+      border-radius: 14px;
+      color: white;
+      background: #23a55a;
+      font-weight: 850;
+      box-shadow: 0 18px 60px rgba(0,0,0,.35);
+    }
+
+    .sv100Toast.error,
+    .sv100Error {
+      background: #da373c;
+    }
+
+    .sv100Error {
+      left: 18px;
+      right: auto;
+    }
+
+    @media(max-width: 1180px) {
+      .sv100 {
+        grid-template-columns: 72px 260px minmax(0, 1fr);
+      }
+
+      .sv100Members {
+        display: none;
+      }
+
+      .sv100RoomsGrid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .sv100ActiveRooms {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media(max-width: 760px) {
+      .sv100 {
+        grid-template-columns: 1fr;
+        overflow: auto;
+      }
+
+      .sv100Guilds {
+        min-height: 68px;
+        flex-direction: row;
+        overflow-x: auto;
+        border-right: 0;
+        border-bottom: 1px solid rgba(255,255,255,.055);
+      }
+
+      .sv100Guild.active::before {
+        display: none;
+      }
+
+      .sv100Channels {
+        max-height: 360px;
+        border-right: 0;
+        border-bottom: 1px solid rgba(255,255,255,.055);
+      }
+
+      .sv100Main {
+        min-height: 680px;
+      }
+
+      .sv100Topbar {
+        align-items: flex-start;
+        flex-direction: column;
+        height: auto;
+        padding: 14px;
+      }
+
+      .sv100Topbar nav button span {
+        display: none;
+      }
+
+      .sv100RoomsIntro {
+        display: grid;
+      }
+
+      .sv100RoomsGrid {
+        grid-template-columns: 1fr;
+      }
+
+      .sv100RoomItem {
+        grid-template-columns: 1fr;
+      }
+
+      .sv100RoomItem nav {
+        justify-content: flex-start;
+      }
+    }
+
+
+
+
+    /* ============================================================
+       v103 NATIVE SOCIAL WATCHROOMS
+       Watchrooms are not iframe pages anymore; Social owns the room UI.
+       ============================================================ */
+
+    .sv103RoomShell {
+      display: grid;
+      gap: 18px;
+    }
+
+    .sv103RoomHeader {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      padding: 18px;
+      border-radius: 22px;
+      background:
+        radial-gradient(700px circle at 0% 0%, rgba(88,101,242,.20), transparent 48%),
+        radial-gradient(620px circle at 100% 0%, rgba(229,9,20,.14), transparent 48%),
+        #1b1f2b;
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .sv103RoomHeader h2 {
+      margin: 4px 0 5px;
+      font-size: clamp(30px, 4vw, 54px);
+      line-height: .95;
+      letter-spacing: -.075em;
+      font-family: "Space Grotesk", Inter, sans-serif;
+    }
+
+    .sv103RoomHeader p {
+      margin: 0;
+      color: #b5bac1;
+      line-height: 1.45;
+    }
+
+    .sv103RoomHeader nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .sv103RoomHeader button,
+    .sv103ControlDock button,
+    .sv103ToolCard button {
+      min-height: 38px;
+      border: 0;
+      border-radius: 12px;
+      padding: 0 12px;
+      color: white;
+      background: rgba(255,255,255,.09);
+      font-weight: 850;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+    }
+
+    .sv103RoomHeader button:hover,
+    .sv103ControlDock button:hover,
+    .sv103ToolCard button:hover {
+      background: rgba(255,255,255,.14);
+    }
+
+    .sv103NativeRoom[hidden],
+    .sv103RoomLobby[hidden] {
+      display: none !important;
+    }
+
+    .sv103NativeRoom {
+      display: grid;
+      gap: 14px;
+    }
+
+    .sv103Stage {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 210px;
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .sv103Player {
+      min-height: min(68vh, 720px);
+      border-radius: 22px;
+      overflow: hidden;
+      background: #05070d;
+      border: 1px solid rgba(255,255,255,.08);
+      display: grid;
+      place-items: center;
+      box-shadow: 0 18px 70px rgba(0,0,0,.25);
+    }
+
+    .sv103Video,
+    .sv103MediaFrame {
+      width: 100%;
+      height: 100%;
+      min-height: min(68vh, 720px);
+      border: 0;
+      background: #000;
+      display: block;
+    }
+
+    .sv103EmptyPlayer {
+      display: grid;
+      place-items: center;
+      gap: 9px;
+      text-align: center;
+      padding: 28px;
+      color: #b5bac1;
+    }
+
+    .sv103EmptyPlayer i {
+      font-size: 54px;
+      color: #5865f2;
+    }
+
+    .sv103EmptyPlayer b {
+      color: white;
+      font-size: 24px;
+      letter-spacing: -.04em;
+    }
+
+    .sv103EmptyPlayer.error i {
+      color: #da373c;
+    }
+
+    .sv103RoomMeta {
+      display: grid;
+      gap: 10px;
+      align-content: start;
+    }
+
+    .sv103RoomMeta > div {
+      display: grid;
+      gap: 5px;
+      padding: 14px;
+      min-height: 86px;
+      border-radius: 18px;
+      background: #1b1f2b;
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .sv103RoomMeta span,
+    .sv103ToolCard > span {
+      color: #949ba4;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      font-weight: 950;
+    }
+
+    .sv103RoomMeta b {
+      color: white;
+      overflow-wrap: anywhere;
+    }
+
+    .sv103ControlDock {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 12px;
+      border-radius: 18px;
+      background: #1b1f2b;
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .sv103ControlDock button:first-child {
+      background: #23a55a;
+    }
+
+    .sv103ControlDock .isLocked {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+
+    .sv103ToolsGrid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .sv103ToolCard {
+      display: grid;
+      align-content: start;
+      gap: 10px;
+      padding: 16px;
+      border-radius: 18px;
+      background: #1b1f2b;
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .sv103ToolCard h3 {
+      margin: 0;
+      letter-spacing: -.04em;
+      font-size: 21px;
+    }
+
+    .sv103ToolCard input {
+      min-height: 42px;
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 12px;
+      padding: 0 12px;
+      color: white;
+      background: #11131a;
+      outline: none;
+    }
+
+    .sv103ToolCard input:focus {
+      border-color: rgba(88,101,242,.72);
+      box-shadow: 0 0 0 3px rgba(88,101,242,.18);
+    }
+
+    .sv103IsHost .hostOnly.isLocked {
+      opacity: 1;
+      cursor: pointer;
+    }
+
+    @media(max-width: 1180px) {
+      .sv103Stage {
+        grid-template-columns: 1fr;
+      }
+
+      .sv103RoomMeta {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .sv103ToolsGrid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media(max-width: 760px) {
+      .sv103RoomHeader {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .sv103RoomHeader nav {
+        justify-content: flex-start;
+      }
+
+      .sv103RoomMeta {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .sv103Video,
+      .sv103MediaFrame,
+      .sv103Player {
+        min-height: 360px;
+      }
+    }
+
+
+    /* ============================================================
+       v104 SWIFLY HUB REFRESH
+       Watch Rooms are open to everyone + less Discord-clone, more SwiflyTV.
+       ============================================================ */
+
+    .sv104 {
+      background:
+        radial-gradient(1100px circle at 12% -8%, rgba(229,9,20,.18), transparent 42%),
+        radial-gradient(820px circle at 96% 8%, rgba(88,101,242,.14), transparent 40%),
+        linear-gradient(135deg, #07080d 0%, #10121b 46%, #08090f 100%);
+      grid-template-columns: 88px 300px minmax(0, 1fr) 278px;
+    }
+
+    .sv104 .sv100Guilds {
+      background:
+        linear-gradient(180deg, rgba(229,9,20,.13), transparent 24%),
+        rgba(5,6,10,.82);
+      backdrop-filter: blur(18px);
+      border-right: 1px solid rgba(255,255,255,.075);
+    }
+
+    .sv104 .sv100Guild {
+      width: 56px;
+      height: 56px;
+      border-radius: 20px;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.16), transparent 40%),
+        rgba(255,255,255,.075);
+      border: 1px solid rgba(255,255,255,.09);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    }
+
+    .sv104 .sv100Guild:hover,
+    .sv104 .sv100Guild.active {
+      border-radius: 20px;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.25), transparent 40%),
+        linear-gradient(145deg, #e50914, #7c3aed 62%, #2563eb);
+      box-shadow: 0 18px 55px rgba(229,9,20,.20);
+    }
+
+    .sv104 .sv100Guild.active::before {
+      left: -11px;
+      height: 38px;
+      background: linear-gradient(180deg, #e50914, #7c3aed);
+      box-shadow: 0 0 22px rgba(229,9,20,.58);
+    }
+
+    .sv104 .sv100Channels,
+    .sv104 .sv100Members {
+      background:
+        radial-gradient(420px circle at 0% 0%, rgba(229,9,20,.09), transparent 52%),
+        rgba(14,16,25,.78);
+      backdrop-filter: blur(18px) saturate(1.08);
+      border-color: rgba(255,255,255,.085);
+    }
+
+    .sv104 .sv100ServerHead {
+      min-height: 76px;
+      padding: 0 18px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      box-shadow: none;
+    }
+
+    .sv104 .sv100ServerHead strong {
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-size: 22px;
+      letter-spacing: -.055em;
+    }
+
+    .sv104 .sv100ProfilePill {
+      margin: 16px;
+      padding: 13px;
+      border-radius: 22px;
+      background:
+        radial-gradient(260px circle at 0% 0%, rgba(229,9,20,.20), transparent 55%),
+        rgba(255,255,255,.065);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 18px 52px rgba(0,0,0,.18);
+    }
+
+    .sv104 .sv100ProfilePill > span {
+      border-radius: 17px;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.28), transparent 42%),
+        linear-gradient(135deg, #e50914, #7c3aed);
+      box-shadow: 0 12px 34px rgba(229,9,20,.22);
+    }
+
+    .sv104 .sv100ModeTabs {
+      margin: 0 16px 18px;
+      padding: 6px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.065);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .sv104 .sv100ModeTabs button {
+      border-radius: 999px;
+    }
+
+    .sv104 .sv100ModeTabs button.active {
+      background: linear-gradient(135deg, #e50914, #7c3aed);
+      box-shadow: 0 10px 35px rgba(229,9,20,.20);
+    }
+
+    .sv104 .sv100ChannelGroup {
+      margin: 20px 12px;
+      padding: 10px;
+      border-radius: 22px;
+      background: rgba(255,255,255,.025);
+      border: 1px solid rgba(255,255,255,.045);
+    }
+
+    .sv104 .sv100Channel {
+      min-height: 44px;
+      border-radius: 15px;
+      margin: 3px 0;
+      color: rgba(243,244,245,.74);
+    }
+
+    .sv104 .sv100Channel:hover,
+    .sv104 .sv100Channel.active {
+      color: white;
+      background:
+        radial-gradient(220px circle at 0% 0%, rgba(229,9,20,.14), transparent 50%),
+        rgba(255,255,255,.085);
+      box-shadow: inset 3px 0 0 rgba(229,9,20,.82);
+    }
+
+    .sv104 .sv100Main {
+      background:
+        radial-gradient(960px circle at 30% -10%, rgba(255,255,255,.045), transparent 48%),
+        rgba(16,18,27,.78);
+    }
+
+    .sv104 .sv100Topbar {
+      min-height: 76px;
+      padding: 0 22px;
+      background:
+        linear-gradient(90deg, rgba(229,9,20,.10), rgba(124,58,237,.06), rgba(255,255,255,.018)),
+        rgba(255,255,255,.025);
+      border-bottom: 1px solid rgba(255,255,255,.075);
+    }
+
+    .sv104 .sv100Topbar h1 {
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-size: 30px;
+      letter-spacing: -.065em;
+    }
+
+    .sv104 .sv100Topbar button {
+      border-radius: 999px;
+      background: rgba(255,255,255,.065);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .sv104 .sv100Topbar button:hover {
+      background: rgba(255,255,255,.12);
+      border-color: rgba(255,255,255,.16);
+    }
+
+    .sv104 .sv100Notice {
+      border-radius: 18px;
+      color: rgba(255,255,255,.82);
+      background:
+        radial-gradient(380px circle at 0% 0%, rgba(35,165,90,.18), transparent 55%),
+        rgba(255,255,255,.055);
+      border: 1px solid rgba(35,165,90,.18);
+    }
+
+    .sv104 .sv100Composer {
+      border-radius: 24px;
+      background: rgba(255,255,255,.075);
+      border: 1px solid rgba(255,255,255,.085);
+      box-shadow: 0 18px 60px rgba(0,0,0,.18);
+    }
+
+    .sv104 .sv100RoomsIntro,
+    .sv104 .sv103RoomHeader {
+      border-radius: 30px;
+      background:
+        radial-gradient(780px circle at 0% 0%, rgba(229,9,20,.22), transparent 46%),
+        radial-gradient(720px circle at 100% 0%, rgba(124,58,237,.18), transparent 50%),
+        rgba(255,255,255,.055);
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 24px 90px rgba(0,0,0,.25);
+    }
+
+    .sv104 .sv100RoomsIntro h2,
+    .sv104 .sv103RoomHeader h2 {
+      font-size: clamp(38px, 5.5vw, 72px);
+      letter-spacing: -.085em;
+    }
+
+    .sv104 .sv100Card,
+    .sv104 .sv103ToolCard,
+    .sv104 .sv103RoomMeta > div,
+    .sv104 .sv103ControlDock {
+      border-radius: 24px;
+      background:
+        radial-gradient(320px circle at 0% 0%, rgba(255,255,255,.08), transparent 55%),
+        rgba(255,255,255,.055);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 16px 55px rgba(0,0,0,.18);
+    }
+
+    .sv104 .sv103Player {
+      border-radius: 30px;
+      border: 1px solid rgba(255,255,255,.11);
+      background:
+        radial-gradient(800px circle at 50% 0%, rgba(88,101,242,.13), transparent 48%),
+        #05070d;
+      box-shadow: 0 26px 100px rgba(0,0,0,.32);
+    }
+
+    .sv104 .sv103ControlDock {
+      justify-content: center;
+    }
+
+    .sv104 .sv103ControlDock button:first-child,
+    .sv104 .sv100Btn.primary,
+    .sv104 .sv103ToolCard button {
+      background: linear-gradient(135deg, #e50914, #7c3aed);
+      box-shadow: 0 14px 44px rgba(229,9,20,.18);
+    }
+
+    .sv104 .sv100RoomItem {
+      border-radius: 20px;
+      background:
+        radial-gradient(260px circle at 0% 0%, rgba(229,9,20,.12), transparent 52%),
+        rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.09);
+    }
+
+    .sv104 .sv100RoomItem a,
+    .sv104 .sv100RoomItem button {
+      border-radius: 999px;
+    }
+
+    .sv104 .lockedOnly {
+      display: none !important;
+    }
+
+    @media(max-width: 1180px) {
+      .sv104 {
+        grid-template-columns: 82px 286px minmax(0, 1fr);
+      }
+    }
+
+    @media(max-width: 760px) {
+      .sv104 {
+        grid-template-columns: 1fr;
+      }
+
+      .sv104 .sv100Guilds {
+        flex-direction: row;
+        overflow-x: auto;
+      }
+
+      .sv104 .sv100ServerHead,
+      .sv104 .sv100Topbar {
+        min-height: auto;
+      }
+    }
+
+
+    /* ============================================================
+       v105 GALAXY SOCIAL THEME
+       Social colors now match the main SwiflyTV hero: dark navy,
+       purple galaxy glow, cyan-blue accents, lavender cloud glass.
+       ============================================================ */
+
+    .sv105 {
+      --sw-void: #020614;
+      --sw-ink: #050817;
+      --sw-midnight: #081126;
+      --sw-panel: rgba(13, 18, 38, .78);
+      --sw-panel2: rgba(22, 25, 50, .66);
+      --sw-line: rgba(207, 210, 255, .105);
+      --sw-line2: rgba(164, 124, 255, .16);
+      --sw-white: #f7f7ff;
+      --sw-muted: #b8b4cf;
+      --sw-soft: #d9d5ee;
+      --sw-cyan: #55d7ff;
+      --sw-blue: #6f8dff;
+      --sw-violet: #8b5cf6;
+      --sw-purple: #b26cff;
+      --sw-cloud: #a78bbd;
+      --sw-mint: #66ffc9;
+
+      background:
+        radial-gradient(1200px circle at 58% -12%, rgba(141, 82, 255, .28), transparent 40%),
+        radial-gradient(900px circle at 92% 4%, rgba(85, 215, 255, .13), transparent 34%),
+        radial-gradient(820px circle at 12% 18%, rgba(136, 92, 246, .17), transparent 43%),
+        linear-gradient(180deg, rgba(5, 7, 20, .98), rgba(5, 9, 24, .98) 48%, rgba(2, 6, 18, 1));
+      color: var(--sw-white);
+    }
+
+    .sv105::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .42;
+      background-image:
+        radial-gradient(circle at 17% 18%, rgba(255,255,255,.52) 0 1px, transparent 1.4px),
+        radial-gradient(circle at 74% 22%, rgba(255,255,255,.42) 0 1px, transparent 1.3px),
+        radial-gradient(circle at 88% 44%, rgba(140,206,255,.45) 0 1px, transparent 1.4px),
+        radial-gradient(circle at 41% 72%, rgba(255,255,255,.28) 0 1px, transparent 1.3px);
+      background-size: 210px 180px, 270px 240px, 190px 230px, 300px 260px;
+      mix-blend-mode: screen;
+      z-index: 0;
+    }
+
+    .sv105 > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .sv105 .sv100Guilds {
+      background:
+        radial-gradient(240px circle at 50% 2%, rgba(96, 165, 250, .18), transparent 46%),
+        rgba(2, 5, 15, .86);
+      border-right: 1px solid rgba(180, 190, 255, .08);
+      box-shadow: inset -1px 0 0 rgba(255,255,255,.025);
+    }
+
+    .sv105 .sv100Guild {
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.22), transparent 42%),
+        linear-gradient(145deg, rgba(40, 50, 88, .92), rgba(12, 18, 40, .92));
+      border: 1px solid rgba(185, 203, 255, .14);
+      color: rgba(247,247,255,.86);
+    }
+
+    .sv105 .sv100Guild:hover,
+    .sv105 .sv100Guild.active {
+      background:
+        radial-gradient(circle at 32% 22%, rgba(255,255,255,.33), transparent 42%),
+        linear-gradient(145deg, var(--sw-blue), var(--sw-violet) 54%, var(--sw-cyan));
+      box-shadow:
+        0 18px 56px rgba(85, 215, 255, .18),
+        0 10px 44px rgba(139, 92, 246, .20);
+    }
+
+    .sv105 .sv100Guild.active::before {
+      background: linear-gradient(180deg, var(--sw-cyan), var(--sw-purple));
+      box-shadow: 0 0 22px rgba(85,215,255,.70);
+    }
+
+    .sv105 .sv100Channels,
+    .sv105 .sv100Members {
+      background:
+        radial-gradient(480px circle at 20% 0%, rgba(139, 92, 246, .13), transparent 50%),
+        radial-gradient(380px circle at 100% 10%, rgba(85, 215, 255, .08), transparent 44%),
+        rgba(7, 11, 26, .78);
+      border-color: var(--sw-line);
+      box-shadow:
+        inset 1px 0 0 rgba(255,255,255,.025),
+        0 18px 70px rgba(0,0,0,.18);
+    }
+
+    .sv105 .sv100ServerHead {
+      background:
+        linear-gradient(90deg, rgba(255,255,255,.04), transparent),
+        rgba(3, 7, 19, .24);
+      border-bottom-color: rgba(202, 210, 255, .08);
+    }
+
+    .sv105 .sv100ServerHead strong,
+    .sv105 .sv100Topbar h1,
+    .sv105 .sv100RoomsIntro h2,
+    .sv105 .sv103RoomHeader h2 {
+      color: var(--sw-white);
+      text-shadow: 0 0 34px rgba(168, 85, 247, .18);
+    }
+
+    .sv105 .sv100ServerHead small,
+    .sv105 .sv100ProfilePill small,
+    .sv105 .sv100ChannelGroup header span,
+    .sv105 .sv100Topbar span,
+    .sv105 .sv100MembersHead span,
+    .sv105 .sv100MembersHead small,
+    .sv105 .sv103RoomMeta span,
+    .sv105 .sv103ToolCard > span {
+      color: rgba(216, 214, 239, .62);
+    }
+
+    .sv105 .sv100ProfilePill {
+      background:
+        radial-gradient(280px circle at 0% 0%, rgba(85, 215, 255, .15), transparent 54%),
+        radial-gradient(260px circle at 100% 0%, rgba(178, 108, 255, .18), transparent 54%),
+        rgba(255,255,255,.055);
+      border: 1px solid var(--sw-line);
+      box-shadow:
+        0 18px 56px rgba(0,0,0,.20),
+        inset 0 1px 0 rgba(255,255,255,.05);
+    }
+
+    .sv105 .sv100ProfilePill > span {
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.38), transparent 42%),
+        linear-gradient(135deg, var(--sw-cyan), var(--sw-blue) 45%, var(--sw-violet));
+      box-shadow: 0 16px 48px rgba(85,215,255,.20);
+    }
+
+    .sv105 .sv100ModeTabs {
+      background: rgba(255,255,255,.055);
+      border: 1px solid var(--sw-line);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+    }
+
+    .sv105 .sv100ModeTabs button {
+      color: rgba(232,232,255,.68);
+    }
+
+    .sv105 .sv100ModeTabs button.active {
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.20), transparent 42%),
+        linear-gradient(135deg, var(--sw-cyan), var(--sw-blue) 42%, var(--sw-violet));
+      color: white;
+      box-shadow:
+        0 12px 34px rgba(85,215,255,.14),
+        0 12px 34px rgba(139,92,246,.15);
+    }
+
+    .sv105 .sv100ChannelGroup {
+      background:
+        radial-gradient(340px circle at 0% 0%, rgba(168, 85, 247, .08), transparent 54%),
+        rgba(255,255,255,.028);
+      border: 1px solid rgba(213, 219, 255, .06);
+    }
+
+    .sv105 .sv100Channel {
+      color: rgba(232, 232, 255, .70);
+    }
+
+    .sv105 .sv100Channel i {
+      color: rgba(152, 190, 255, .80);
+    }
+
+    .sv105 .sv100Channel:hover,
+    .sv105 .sv100Channel.active {
+      color: white;
+      background:
+        radial-gradient(260px circle at 0% 0%, rgba(85,215,255,.13), transparent 52%),
+        radial-gradient(240px circle at 100% 0%, rgba(178,108,255,.14), transparent 52%),
+        rgba(255,255,255,.075);
+      box-shadow:
+        inset 3px 0 0 var(--sw-cyan),
+        0 8px 28px rgba(0,0,0,.12);
+    }
+
+    .sv105 .sv100Main {
+      background:
+        radial-gradient(760px circle at 45% -10%, rgba(178,108,255,.12), transparent 44%),
+        linear-gradient(180deg, rgba(12,17,34,.72), rgba(6,10,24,.82));
+      border-inline: 1px solid rgba(255,255,255,.045);
+    }
+
+    .sv105 .sv100Topbar {
+      background:
+        linear-gradient(90deg, rgba(85,215,255,.07), rgba(178,108,255,.08), transparent),
+        rgba(5,8,22,.62);
+      border-bottom: 1px solid var(--sw-line);
+      backdrop-filter: blur(18px);
+    }
+
+    .sv105 .sv100Topbar button {
+      color: rgba(234,234,255,.76);
+      background: rgba(255,255,255,.055);
+      border: 1px solid rgba(213, 219, 255, .08);
+    }
+
+    .sv105 .sv100Topbar button:hover {
+      color: white;
+      background: rgba(255,255,255,.105);
+      border-color: rgba(85,215,255,.20);
+      box-shadow: 0 10px 30px rgba(85,215,255,.08);
+    }
+
+    .sv105 .sv100Notice {
+      background:
+        radial-gradient(420px circle at 0% 0%, rgba(102,255,201,.14), transparent 54%),
+        rgba(255,255,255,.05);
+      border-color: rgba(102,255,201,.18);
+      color: rgba(244,255,252,.84);
+    }
+
+    .sv105 .sv100Messages {
+      background:
+        radial-gradient(760px circle at 50% 0%, rgba(178,108,255,.055), transparent 48%),
+        transparent;
+    }
+
+    .sv105 .sv100Msg:hover {
+      background: rgba(255,255,255,.035);
+    }
+
+    .sv105 .sv100Msg > span {
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.28), transparent 42%),
+        linear-gradient(135deg, var(--sw-cyan), var(--sw-violet));
+      box-shadow: 0 10px 34px rgba(85,215,255,.10);
+    }
+
+    .sv105 .sv100Msg p {
+      color: rgba(246,246,255,.86);
+    }
+
+    .sv105 .sv100Composer {
+      background:
+        radial-gradient(540px circle at 0% 0%, rgba(85,215,255,.08), transparent 54%),
+        rgba(255,255,255,.065);
+      border: 1px solid var(--sw-line);
+      box-shadow:
+        0 18px 60px rgba(0,0,0,.20),
+        inset 0 1px 0 rgba(255,255,255,.05);
+    }
+
+    .sv105 .sv100Composer input {
+      color: var(--sw-white);
+    }
+
+    .sv105 .sv100Composer input::placeholder,
+    .sv105 input::placeholder {
+      color: rgba(221, 219, 241, .46);
+    }
+
+    .sv105 .sv100Composer button {
+      color: rgba(230,230,255,.72);
+    }
+
+    .sv105 .sv100Composer button:hover {
+      color: white;
+      background: rgba(85,215,255,.10);
+    }
+
+    .sv105 .sv100RoomsIntro,
+    .sv105 .sv103RoomHeader {
+      background:
+        radial-gradient(900px circle at 12% 0%, rgba(85,215,255,.16), transparent 46%),
+        radial-gradient(760px circle at 72% 0%, rgba(178,108,255,.22), transparent 48%),
+        radial-gradient(620px circle at 45% 110%, rgba(167,139,189,.16), transparent 50%),
+        rgba(255,255,255,.055);
+      border: 1px solid rgba(218, 221, 255, .13);
+      box-shadow:
+        0 26px 100px rgba(0,0,0,.28),
+        inset 0 1px 0 rgba(255,255,255,.055);
+    }
+
+    .sv105 .sv100RoomsIntro p,
+    .sv105 .sv103RoomHeader p,
+    .sv105 .sv100Card p,
+    .sv105 .sv100Empty,
+    .sv105 .sv103EmptyPlayer,
+    .sv105 .sv100Members p,
+    .sv105 .sv100Perms p {
+      color: rgba(221, 219, 241, .72);
+    }
+
+    .sv105 .sv100Btn.primary,
+    .sv105 .sv103ControlDock button:first-child,
+    .sv105 .sv103ToolCard button,
+    .sv105 .sv100RoomItem a {
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.21), transparent 42%),
+        linear-gradient(135deg, var(--sw-cyan), var(--sw-blue) 40%, var(--sw-violet));
+      box-shadow:
+        0 16px 48px rgba(85,215,255,.13),
+        0 14px 46px rgba(139,92,246,.15);
+      border: 0;
+    }
+
+    .sv105 .sv100Btn,
+    .sv105 .sv103RoomHeader button,
+    .sv105 .sv103ControlDock button,
+    .sv105 .sv103ToolCard button,
+    .sv105 .sv100RoomItem button {
+      color: white;
+      border: 1px solid rgba(215, 220, 255, .10);
+      background: rgba(255,255,255,.07);
+    }
+
+    .sv105 .sv100Btn:hover,
+    .sv105 .sv103RoomHeader button:hover,
+    .sv105 .sv103ControlDock button:hover,
+    .sv105 .sv103ToolCard button:hover,
+    .sv105 .sv100RoomItem button:hover {
+      background: rgba(255,255,255,.12);
+      border-color: rgba(85,215,255,.20);
+      filter: none;
+    }
+
+    .sv105 .sv100Card,
+    .sv105 .sv103ToolCard,
+    .sv105 .sv103RoomMeta > div,
+    .sv105 .sv103ControlDock,
+    .sv105 .sv100Perms {
+      background:
+        radial-gradient(360px circle at 0% 0%, rgba(85,215,255,.065), transparent 54%),
+        radial-gradient(340px circle at 100% 0%, rgba(178,108,255,.08), transparent 54%),
+        rgba(255,255,255,.052);
+      border: 1px solid var(--sw-line);
+      box-shadow:
+        0 18px 58px rgba(0,0,0,.18),
+        inset 0 1px 0 rgba(255,255,255,.045);
+    }
+
+    .sv105 .sv103Player {
+      background:
+        radial-gradient(900px circle at 50% 0%, rgba(85,215,255,.12), transparent 46%),
+        radial-gradient(760px circle at 80% 10%, rgba(178,108,255,.12), transparent 48%),
+        #030713;
+      border: 1px solid rgba(218, 221, 255, .12);
+      box-shadow:
+        0 30px 110px rgba(0,0,0,.36),
+        inset 0 1px 0 rgba(255,255,255,.05);
+    }
+
+    .sv105 .sv103EmptyPlayer i {
+      color: var(--sw-cyan);
+      filter: drop-shadow(0 0 22px rgba(85,215,255,.28));
+    }
+
+    .sv105 .sv103EmptyPlayer b,
+    .sv105 .sv103RoomMeta b,
+    .sv105 .sv103ToolCard h3,
+    .sv105 .sv100Card h3 {
+      color: var(--sw-white);
+    }
+
+    .sv105 .sv103ToolCard input,
+    .sv105 .sv100Card input {
+      background: rgba(3, 7, 19, .50);
+      border-color: rgba(218, 221, 255, .10);
+      color: white;
+    }
+
+    .sv105 .sv103ToolCard input:focus,
+    .sv105 .sv100Card input:focus {
+      border-color: rgba(85,215,255,.46);
+      box-shadow: 0 0 0 4px rgba(85,215,255,.11);
+    }
+
+    .sv105 .sv100RoomItem {
+      background:
+        radial-gradient(340px circle at 0% 0%, rgba(85,215,255,.08), transparent 52%),
+        radial-gradient(320px circle at 100% 0%, rgba(178,108,255,.09), transparent 52%),
+        rgba(255,255,255,.055);
+      border-color: rgba(218, 221, 255, .09);
+    }
+
+    .sv105 .sv100RoomItem > div i {
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.25), transparent 42%),
+        linear-gradient(135deg, var(--sw-cyan), var(--sw-violet));
+    }
+
+    .sv105 .sv100RoomItem small {
+      color: rgba(221,219,241,.58);
+    }
+
+    .sv105 #sv100MembersList i {
+      background: var(--sw-mint);
+      box-shadow: 0 0 18px rgba(102,255,201,.80);
+    }
+
+    .sv105 .sv100Toast {
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.20), transparent 42%),
+        linear-gradient(135deg, var(--sw-cyan), var(--sw-violet));
+    }
+
+    .sv105 .sv100Toast.error,
+    .sv105 .sv100Error {
+      background: linear-gradient(135deg, #ff557a, #8b5cf6);
+    }
+
+    @media(max-width: 760px) {
+      .sv105 .sv100Channels,
+      .sv105 .sv100Members,
+      .sv105 .sv100Main {
+        background: rgba(7, 11, 26, .88);
+      }
+    }
+
+
+    /* ============================================================
+       v106 WATCHROOM M3U8 + NAV FIX
+       Native Social Watchroom uses a stronger m3u8 player and no longer
+       starts under the sticky top navigation.
+       ============================================================ */
+
+    body:has(.sv106),
+    body:has(.sv105) {
+      scroll-padding-top: 92px;
+    }
+
+    .sv106,
+    .sv105 {
+      min-height: calc(100dvh - 78px);
+      box-sizing: border-box;
+    }
+
+    .sv106 {
+      padding-top: 10px;
+    }
+
+    .sv106 .sv100Guilds,
+    .sv106 .sv100Channels,
+    .sv106 .sv100Main,
+    .sv106 .sv100Members {
+      max-height: calc(100dvh - 98px);
+    }
+
+    .sv106NativePlayerShell {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: min(68vh, 720px);
+      background: #000;
+      display: grid;
+      place-items: center;
+    }
+
+    .sv106NativePlayerShell .video-js,
+    .sv106VideoJs,
+    .sv106NativePlayerShell .sv103Video {
+      width: 100% !important;
+      height: 100% !important;
+      min-height: min(68vh, 720px);
+      background: #000;
+    }
+
+    .sv106NativePlayerShell .vjs-fluid {
+      padding-top: 0 !important;
+    }
+
+    .sv106NativePlayerShell .vjs-tech {
+      object-fit: contain;
+    }
+
+    .sv106HlsStatus {
+      position: absolute;
+      left: 18px;
+      bottom: 18px;
+      z-index: 20;
+      max-width: min(520px, calc(100% - 36px));
+      display: grid;
+      gap: 3px;
+      padding: 11px 13px;
+      border-radius: 16px;
+      color: white;
+      background: rgba(5, 8, 22, .76);
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: 0 18px 58px rgba(0,0,0,.32);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      pointer-events: none;
+    }
+
+    .sv106HlsStatus[hidden] {
+      display: none !important;
+    }
+
+    .sv106HlsStatus b {
+      font-size: 13px;
+      font-weight: 950;
+      letter-spacing: -.015em;
+    }
+
+    .sv106HlsStatus span {
+      color: rgba(230, 234, 255, .72);
+      font-size: 12px;
+      line-height: 1.35;
+      font-weight: 700;
+    }
+
+    .sv106HlsStatus.danger {
+      border-color: rgba(255, 95, 129, .35);
+      background:
+        radial-gradient(380px circle at 0% 0%, rgba(255, 95, 129, .22), transparent 54%),
+        rgba(5, 8, 22, .82);
+    }
+
+    .sv106 .sv103Player {
+      align-items: stretch;
+      justify-items: stretch;
+    }
+
+    @media(max-width: 760px) {
+      .sv106 {
+        padding-top: 8px;
+      }
+
+      .sv106 .sv100Guilds,
+      .sv106 .sv100Channels,
+      .sv106 .sv100Main,
+      .sv106 .sv100Members {
+        max-height: none;
+      }
+
+      .sv106NativePlayerShell,
+      .sv106NativePlayerShell .video-js,
+      .sv106VideoJs,
+      .sv106NativePlayerShell .sv103Video {
+        min-height: 360px;
+      }
     }
 
   </style>
@@ -19041,6 +23236,37 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
 
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
+
+    <link href="https://vjs.zencdn.net/8.16.1/video-js.css" rel="stylesheet" />
+    <script src="https://vjs.zencdn.net/8.16.1/video.min.js"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
+
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tippy.js@6.3.7/animations/scale.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tippy.js@6.3.7/themes/translucent.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+
+    <script src="/socket.io/socket.io.js"></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" />
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/modern-normalize@2.0.0/modern-normalize.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/atropos@2.0.2/atropos.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.js.iife.js"></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-dark@5/dark.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.10.0/styles/overlayscrollbars.min.css" />
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simplebar@6.2.7/dist/simplebar.min.css" />
 </head>
 <body>
 
@@ -19090,15 +23316,13 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
         </a>
 
         <nav class="navLinks netflixLinks">
-          ${navLink("/", "Tonight", "home", active)}
-          ${navLink("/tv", "Shows", "tv", active)}
+          ${navLink("/", "Home", "home", active)}
           ${navLink("/movies", "Movies", "movies", active)}
-          ${navLink("/trending", "Date Picks", "trending", active)}
-          ${navLink("/my-list", "Our List", "watchlist", active)}
-          ${navLink("/liked", "Hearts", "liked", active)}
-          ${navLink("/couples", "Couples", "couples", active)}
-          ${navLink("/watchrooms", "Date Rooms", "watchrooms", active)}
-          ${navLink("/browse-by-languages", "Browse by Languages", "genres", active)}
+          ${navLink("/tv", "TV Shows", "tv", active)}
+          ${navLink("/trending", "New & Popular", "trending", active)}
+          ${navLink("/my-list", "My List", "watchlist", active)}
+          ${navLink("/social", "Social", "social", active)}
+          ${navLink("/browse-by-languages", "Languages", "genres", active)}
         </nav>
       </div>
 
@@ -19124,12 +23348,14 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
             <span class="caretTiny" aria-hidden="true">▾</span>
           </summary>
           <div class="dsProfileDropdown">
-            <a href="/profiles"><span>☺</span><b>Profiles</b></a>
+            <a href="/profiles"><span>☺</span><b>Switch Profile</b></a>
+            <a href="/profiles/manage"><span>✎</span><b>Manage Profiles</b></a>
+            <a href="/social"><span>◉</span><b>Social Hub</b></a>
             <a href="/account"><span>⚙</span><b>Account</b></a>
-            <a href="/watchrooms"><span>◎</span><b>Watchrooms</b></a>
+            <a href="/social?tab=watchrooms"><span>◎</span><b>Social Watch Rooms</b></a>
             <a href="/continue-watching"><span>▶</span><b>Continue Watching</b></a>
             <a href="/my-list"><span>＋</span><b>My List</b></a>
-            <a href="/liked"><span>♡</span><b>Liked</b></a>
+            <a href="/liked"><span>♥</span><b>Liked</b></a>
             <a href="/kids"><span>★</span><b>Kids</b></a>
             <a href="/search"><span>⌕</span><b>Search</b></a>
           </div>
@@ -19146,12 +23372,12 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
   ${body}
 
   <nav class="mobileNav">
-    ${navLink("/", "Tonight", "home", active)}
-    ${navLink("/watchrooms", "Date", "watchrooms", active)}
+    ${navLink("/", "Home", "home", active)}
     ${navLink("/movies", "Movies", "movies", active)}
     ${navLink("/tv", "TV", "tv", active)}
+    ${navLink("/social", "Social", "social", active)}
     ${navLink("/search", "Search", "search", active)}
-    ${navLink("/my-list", "Ours", "watchlist", active)}
+    ${navLink("/my-list", "List", "watchlist", active)}
   </nav>
 
   <div class="controlDock">
@@ -19333,7 +23559,7 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
 
       const list = readLibrary(storageKey);
       if (!list.length) {
-        const title = kind === "liked" ? "No liked titles yet" : "Your list is empty";
+        const title = kind === "liked" ? "No liked titles yet" : "Ymy list is empty";
         const sub = kind === "liked" ? "Tap the heart on any title to save favorites here." : "Tap + on any title to add it to My List.";
         root.innerHTML = '<div class="watchlistEmptyNetflix"><div><strong>' + title + '</strong><span>' + sub + '</span></div></div>';
         return;
@@ -20040,6 +24266,54 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
     })();
   </script>
 
+
+  <script>
+    window.swiflyToast = window.swiflyToast || function(message, type) {
+      try {
+        if (window.Notyf) {
+          window.__swiflyNotyf = window.__swiflyNotyf || new Notyf({
+            duration: 1800,
+            position: { x: "right", y: "bottom" },
+            types: [
+              { type: "info", background: "#2563eb", icon: false },
+              { type: "success", background: "#16a34a", icon: false },
+              { type: "error", background: "#dc2626", icon: false }
+            ]
+          });
+          window.__swiflyNotyf.open({ type: type || "success", message: String(message || "Done") });
+          return;
+        }
+      } catch {}
+      console.log("[SwiflyTV]", message);
+    };
+
+    window.swiflyCopy = window.swiflyCopy || async function(text) {
+      try {
+        await navigator.clipboard.writeText(String(text || ""));
+        swiflyToast("Copied");
+        return true;
+      } catch {
+        var area = document.createElement("textarea");
+        area.value = String(text || "");
+        area.setAttribute("readonly", "");
+        area.style.position = "fixed";
+        area.style.opacity = "0";
+        document.body.appendChild(area);
+        area.select();
+        try { document.execCommand("copy"); swiflyToast("Copied"); return true; }
+        catch { swiflyToast("Copy failed", "error"); return false; }
+        finally { area.remove(); }
+      }
+    };
+
+    document.addEventListener("click", function(event) {
+      var button = event.target.closest("button, a");
+      if (!button || button.classList.contains("no-press")) return;
+      button.classList.add("is-pressing");
+      setTimeout(function(){ button.classList.remove("is-pressing"); }, 160);
+    }, true);
+  </script>
+
 </body>
 </html>`;
 }
@@ -20238,7 +24512,7 @@ async function welcomePage(req, res) {
   const heroTitle = getTitle(hero) || "Your distance date night starts here.";
   const heroBg = hero.backdrop_path ? fullBackdrop(hero.backdrop_path) : "";
   const heroPoster = hero.poster_path ? img(hero.poster_path, "w500") : "";
-  const heroDesc = hero.overview || "SwiflyTV helps long-distance couples plan movie nights, share watch links, start date rooms, chat, count down together, and feel a little closer from different places.";
+  const heroDesc = hero.overview || "SwiflyTV helps movie fans plan movie nights, share watch links, start watch rooms, chat, count down together, and feel a little closer from different places.";
   const redirect = encodeURIComponent(String(req.query.redirect || "/profiles"));
   const heroType = getType(hero) || "movie";
   const heroHref = hero.id ? `/signup?redirect=${encodeURIComponent(`/${heroType}/${hero.id}`)}` : `/signup?redirect=${redirect}`;
@@ -20261,7 +24535,7 @@ async function welcomePage(req, res) {
       ${heroBg ? `<div class="dsWelcomeHeroBg" style="background-image:url('${escapeHtml(heroBg)}')"></div>` : ""}
       <div class="dsWelcomeGlowOne"></div>
       <div class="dsWelcomeHeroCopy">
-        <span class="dsEyebrow">Long-distance date nights</span>
+        <span class="dsEyebrow">Watch together nights</span>
         <h1>Feel closer, even when you are far apart.</h1>
         <p>${escapeHtml(heroDesc)}</p>
 
@@ -20271,8 +24545,8 @@ async function welcomePage(req, res) {
         </div>
 
         <div class="dsWelcomeStats">
-          <div><b>Couple Profiles</b><span>Me, partner, and together spaces</span></div>
-          <div><b>Date Rooms</b><span>Open Together, Live Share, chat</span></div>
+          <div><b>Profiles</b><span>Me, partner, and together spaces</span></div>
+          <div><b>Watch Rooms</b><span>Open Together, Live Share, chat</span></div>
           <div><b>Distance Sync</b><span>Countdowns and shared timeframes</span></div>
         </div>
       </div>
@@ -20295,21 +24569,21 @@ async function welcomePage(req, res) {
 
     <section class="dsWelcomeHowItWorks">
       <article><span>1</span><strong>Pick the vibe</strong><p>Choose cozy, funny, emotional, action, comfort rewatch, or something new for tonight.</p></article>
-      <article><span>2</span><strong>Create your couple space</strong><p>Use Me, Partner, and Together profiles so your date nights feel personal.</p></article>
-      <article><span>3</span><strong>Start a date room</strong><p>Share a room link, chat, countdown, and press play together from anywhere.</p></article>
+      <article><span>2</span><strong>Create your couple space</strong><p>Use Me, Partner, and Together profiles so your friends nights feel personal.</p></article>
+      <article><span>3</span><strong>Start a watch room</strong><p>Share a room link, chat, countdown, and press play together from anywhere.</p></article>
     </section>
 
     <section class="dsCouplePromiseStrip">
       <article><span>♡</span><b>Open Together</b><p>If embeds fail, both of you open the real site and use the same countdown.</p></article>
       <article><span>☾</span><b>Late-night friendly</b><p>Big buttons, clear rooms, and fewer steps when you are already on a call.</p></article>
-      <article><span>✦</span><b>Our List</b><p>Save movies you both actually want instead of losing them in texts.</p></article>
+      <article><span>✦</span><b>My List</b><p>Save movies you both actually want instead of losing them in texts.</p></article>
     </section>
 
     <section id="discovery" class="dsWelcomeDiscovery dsWelcomeDiscoveryPro">
       <div class="dsWelcomeIntro">
         <span class="dsEyebrow">Date ideas before signing in</span>
         <h2>Find the movie before the “what do we watch?” argument.</h2>
-        <p>SwiflyTV is built for long-distance couples who still want a normal movie night together. Browse ideas, then unlock Date Rooms, Our List, shared watch history, hearts, countdowns, and couple profiles.</p>
+        <p>SwiflyTV is built for movie fans who still want a normal movie night together. Browse ideas, then unlock Watch Rooms, My List, shared watch history, hearts, countdowns, and profiles.</p>
       </div>
 
       ${hasTmdb ? `
@@ -20328,9 +24602,9 @@ async function welcomePage(req, res) {
     </section>
 
     <section id="features" class="dsWelcomeFeatures dsWelcomeFeaturesPro">
-      <article><span>Date Rooms</span><h3>Watch from two places</h3><p>Share a room, use Open Together, Live Share, countdowns, and chat while apart.</p></article>
-      <article><span>Couple Profiles</span><h3>Me, you, and us</h3><p>Create profiles for each person and a shared Together space for date nights.</p></article>
-      <article><span>Continue Together</span><h3>Resume the date</h3><p>Keep track of what you started so the next call can begin faster.</p></article>
+      <article><span>Watch Rooms</span><h3>Watch from two places</h3><p>Share a room, use Open Together, Live Share, countdowns, and chat while apart.</p></article>
+      <article><span>Profiles</span><h3>Me, you, and us</h3><p>Create profiles for each person and a shared Together space for date nights.</p></article>
+      <article><span>Continue Watching</span><h3>Resume the date</h3><p>Keep track of what you started so the next call can begin faster.</p></article>
       <article><span>Love Notes</span><h3>Keep it sweet</h3><p>Use the couple dashboard for date ideas, little notes, and shared plans.</p></article>
     </section>
 
@@ -20339,7 +24613,7 @@ async function welcomePage(req, res) {
         <span class="dsEyebrow">Built for phones and late-night calls</span>
         <h2>Designed for “you pick, no you pick.”</h2>
         <p>Whether you are on a phone in bed or a laptop on a call, SwiflyTV makes it easier to choose, sync, and watch together.</p>
-        <a class="dsPrimaryBtn" href="/signup?redirect=${redirect}">Plan your first date room</a>
+        <a class="dsPrimaryBtn" href="/signup?redirect=${redirect}">Plan your first watch room</a>
       </div>
       <div class="dsPhoneMock">
         <div class="dsPhoneTop"></div>
@@ -20353,7 +24627,7 @@ async function welcomePage(req, res) {
       <h2>Start your shared screen tradition.</h2>
       <p>Create your couple space and make distance feel a little smaller.</p>
       <div class="dsWelcomeActions">
-        <a class="dsPrimaryBtn" href="/signup?redirect=${redirect}">Create couple account</a>
+        <a class="dsPrimaryBtn" href="/signup?redirect=${redirect}">Create account</a>
         <a class="dsSecondaryBtn" href="/login?redirect=${redirect}">Log in</a>
       </div>
     </section>
@@ -20412,24 +24686,24 @@ async function homePage(req, res) {
     : pickHero((trendingAll.results || []).filter((item) => ["movie", "tv"].includes(getType(item))));
 
   const body = `<main>
-    ${dsHero({ hero, context: "Date night spotlight", eyebrow: "For tonight together" })}
+    ${dsHero({ hero, context: "Featured", eyebrow: "Watch now" })}
     <section class="dsContent">
 
-      <section class="dsCoupleHomeBoard">
+      <section class="dsMovieHomeBoard">
         <div>
-          <span class="dsEyebrow">Tonight together</span>
-          <h2>Plan a long-distance movie date in one place.</h2>
-          <p>Pick something, save it to Our List, open a Date Room, start a countdown, and chat while you both get ready.</p>
+          <span class="dsEyebrow">Streaming made simple</span>
+          <h2>Movies, shows, watchlists, and watch rooms.</h2>
+          <p>Browse trending titles, save your list, continue watching, and jump into a synced room whenever you want.</p>
         </div>
         <div class="dsCoupleHomeActions">
-          <a class="dsPrimaryBtn" href="/watchrooms">Start Date Room</a>
-          <a class="dsSecondaryBtn" href="/couples">Couple Dashboard</a>
-          <a class="dsGhostPill" href="/my-list">Open Our List</a>
+          <a class="dsPrimaryBtn" href="/movies">Browse Movies</a>
+          <a class="dsSecondaryBtn" href="/tv">Browse TV</a>
+          <a class="dsGhostPill" href="/watchrooms">Watch Rooms</a>
         </div>
         <div class="dsCoupleHomeCards">
-          <article><b>01</b><span>Choose the vibe</span></article>
-          <article><b>02</b><span>Send the room</span></article>
-          <article><b>03</b><span>Press play together</span></article>
+          <article><b>01</b><span>Find something</span></article>
+          <article><b>02</b><span>Press play</span></article>
+          <article><b>03</b><span>Save your list</span></article>
         </div>
       </section>
 
@@ -20437,18 +24711,18 @@ async function homePage(req, res) {
         <div class="dsRowHead"><h2>Continue Watching</h2><span class="dsRowTag">Saved watching</span></div>
         <div id="continueWatchingRail" class="movieRail dsRail"></div>
       </section>
-      ${dsRail("Date Night Spotlight", [{ ...spotlightMovie, media_type: "movie" }], "movie", { tag: "Featured" })}
-      ${dsRail("Couples are watching", (trendingAll.results || []).filter((item) => ["movie", "tv"].includes(getType(item))), "", { tag: "Live" })}
-      ${dsTopRail("Top movies for tonight", popularMovies.results || [], "movie")}
-      ${dsRail("Shows for a long call", dramaShows.results || [], "tv")}
-      ${dsRail("New date-night releases", nowPlaying.results || [], "movie")}
-      ${dsRail("Action for high-energy dates", actionMovies.results || [], "movie")}
-      ${dsRail("Binge together", popularTv.results || [], "tv")}
+      ${dsRail("Featured Movie Spotlight", [{ ...spotlightMovie, media_type: "movie" }], "movie", { tag: "Featured" })}
+      ${dsRail("Trending Now", (trendingAll.results || []).filter((item) => ["movie", "tv"].includes(getType(item))), "", { tag: "Live" })}
+      ${dsTopRail("Top Movies", popularMovies.results || [], "movie")}
+      ${dsRail("Popular Drama Shows", dramaShows.results || [], "tv")}
+      ${dsRail("New Releases", nowPlaying.results || [], "movie")}
+      ${dsRail("Action Movies", actionMovies.results || [], "movie")}
+      ${dsRail("Binge-worthy TV", popularTv.results || [], "tv")}
       ${dsTopRail("Top 10 TV Shows", topTv.results || [], "tv")}
       ${dsRail("Comedy Movies", comedyMovies.results || [], "movie")}
       ${dsRail("Family Movie Night", familyMovies.results || [], "movie")}
       ${dsRail("Animated Worlds", animationMovies.results || [], "movie")}
-      ${dsRail("Thrillers to react to together", thrillerMovies.results || [], "movie")}
+      ${dsRail("Thrillers", thrillerMovies.results || [], "movie")}
       ${dsRail("Coming Soon", upcomingMovies.results || [], "movie")}
       ${dsRail("Critically Acclaimed Movies", topMovies.results || [], "movie")}
     </section>
@@ -20692,7 +24966,7 @@ async function listingPage(req, res, type = "movie", options = {}) {
   const label = type === "tv" ? "TV Shows" : "Movies";
   const active = type === "tv" ? "tv" : "movies";
   const hero = pickHero(data.results || rowFive.results || []);
-  const categoryOne = type === "tv" ? "Shows for a long call" : "Action Movies";
+  const categoryOne = type === "tv" ? "Popular Drama Shows" : "Action Movies";
   const categoryTwo = type === "tv" ? "Comedy TV Shows" : "Comedies";
   const categoryThree = type === "tv" ? "Crime & Suspense Shows" : "Suspense Movies";
   const categoryFour = type === "tv" ? "Critically Acclaimed TV" : "Critically Acclaimed Movies";
@@ -20710,7 +24984,7 @@ async function listingPage(req, res, type = "movie", options = {}) {
     ${dsHero({ hero, type, context: label, eyebrow: `${label} spotlight` })}
     <section class="dsContent">
       ${dsRail(categoryOne, rowOne.results || [], type)}
-      ${dsTopRail(type === "tv" ? "Top 10 TV Shows Today" : "Top movies for tonight Today", data.results || [], type)}
+      ${dsTopRail(type === "tv" ? "Top 10 TV Shows Today" : "Top Movies Today", data.results || [], type)}
       ${dsRail(categoryTwo, rowTwo.results || [], type)}
       ${dsRail(categoryThree, rowThree.results || [], type)}
       ${dsRail(categoryFour, rowFour.results || [], type)}
@@ -20743,8 +25017,8 @@ async function trendingPage(req, res) {
         <a class="${type === "movie" ? "active" : ""}" href="/trending?type=movie">Movies</a>
         <a class="${type === "tv" ? "active" : ""}" href="/trending?type=tv">TV Shows</a>
       </div>
-      ${dsRail("Couples are watching", (data.results || []).filter((item) => ["movie", "tv"].includes(getType(item))), type === "all" ? "" : type, { tag: "Live" })}
-      ${dsTopRail("Top movies for tonight Today", popularMovies.results || [], "movie")}
+      ${dsRail("Trending Now", (data.results || []).filter((item) => ["movie", "tv"].includes(getType(item))), type === "all" ? "" : type, { tag: "Live" })}
+      ${dsTopRail("Top Movies Today", popularMovies.results || [], "movie")}
       ${dsRail("Popular TV Shows", popularTv.results || [], "tv")}
       ${dsRail("Coming Soon", upcomingMovies.results || [], "movie")}
       ${dsRail("Now Playing", nowPlaying.results || [], "movie")}
@@ -20985,7 +25259,11 @@ async function fetchProxyVideoSource({ type, id }) {
         const streamHeaders = data?.headers || data?.stream?.headers || {};
         const streamQuality = String(data?.stream?.quality || "").slice(0, 40);
         const streamName = String(data?.stream?.name || "").slice(0, 90);
-        const streamMode = String(data?.streamMode || data?.mode || (resolverM3u8 || streamType === "m3u8" || streamType === "hls" ? "live-hls" : "video")).toLowerCase();
+        const streamMode = String(
+          data?.streamMode ||
+          data?.mode ||
+          (process.env.M3U8_FORCE_LIVE === "true" && (resolverM3u8 || streamType === "m3u8" || streamType === "hls") ? "live-hls" : (resolverM3u8 || streamType === "m3u8" || streamType === "hls" ? "hls" : "video"))
+        ).toLowerCase();
 
         if (!data?.ok || !chosenVideo) {
           errors.push(`${url.toString()} attempt ${attempt}: missing m3u8/stream.url/proxyVideo`);
@@ -21006,21 +25284,23 @@ async function fetchProxyVideoSource({ type, id }) {
         }
 
         const isHlsResolverSource = Boolean(resolverM3u8 || streamType === "m3u8" || streamType === "hls");
-        const hlsProxy = isHlsResolverSource
+        const hlsProxy = isHlsResolverSource && hlsProxyEnabled()
           ? registerHlsProxySource(parsedProxy.toString(), streamHeaders, {
               movieId: String(data.movieId || id),
               sourceUrl: String(data.sourceUrl || ""),
               providerUrl: url.toString(),
-              streamName: streamName || "",
-              streamQuality: streamQuality || "",
+              streamName,
+              streamQuality,
             })
           : { enabled: false, id: "", url: "" };
 
+        // v88: direct m3u8 player mode. Use the raw resolver m3u8 URL by default.
+        // HLS proxy remains available only if HLS_PROXY_ENABLED=true.
         const browserPlaybackUrl = hlsProxy.url || parsedProxy.toString();
 
         return {
           status: "ok",
-          providerKind: isHlsResolverSource ? (hlsProxy.url ? "movie_resolver_hls_proxy" : "movie_resolver_hls") : "proxy_video",
+          providerKind: isHlsResolverSource ? (hlsProxy.url ? "movie_resolver_hls_proxy" : "movie_resolver_direct_m3u8") : "proxy_video",
           movieId: String(data.movieId || id),
           sourceUrl: String(data.sourceUrl || ""),
           playbackUrl: browserPlaybackUrl,
@@ -21035,7 +25315,7 @@ async function fetchProxyVideoSource({ type, id }) {
           streamName,
           streamHeaders,
           streamMode,
-          isLiveM3u8: isHlsResolverSource,
+          isLiveM3u8: streamMode.includes("live") || process.env.M3U8_FORCE_LIVE === "true",
           apiProxyUrl: String(data?.apiProxyUrl || data?.stream?.apiProxyUrl || ""),
           providerUrl: url.toString(),
           attempts: errors,
@@ -21245,16 +25525,19 @@ async function watchPage(req, res, type) {
     ? `<div class="dsProxyVideoWaitingShell" data-movie-id="${escapeHtml(id)}">
         <div class="dsProxyVideoWaitingCard">
           <div class="dsProxyLoader"></div>
-          <span>Getting proxyVideo</span>
-          <h2>Finding your movie source...</h2>
-          <p>This provider can take a while. Keep this page open — SwiflyTV will keep trying and embed the proxyVideo URL as soon as it returns.</p>
+          <span>Getting m3u8</span>
+          <h2>Finding your m3u8 source...</h2>
+          <p>This provider can take a while. Keep this page open — SwiflyTV will keep trying and load the m3u8 stream as soon as it returns.</p>
           <div id="proxyVideoWaitStatus" class="dsProxyVideoWaitStatus">Starting request...</div>
           <div class="dsStableActions">
             <button class="dsSecondaryBtn" id="retryProxyVideoBtn" type="button">Retry now</button>
-            <a class="dsGhostPill" href="/watchrooms">Use Date Room</a>
+            <a class="dsGhostPill" href="/watchrooms">Use Watch Room</a>
           </div>
         </div>
-        <iframe id="proxyVideoClientFrame" class="dsProxyVideoFrame" title="${escapeHtml(title)} proxyVideo embed" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write; web-share" allowfullscreen referrerpolicy="no-referrer" hidden></iframe>
+        <div id="movieButtonPlayerShell" class="dsMovieButtonPlayerShell" hidden>
+          <video id="proxyVideoClientVideo" class="dsMovieButtonVideo video-js vjs-big-play-centered vjs-theme-swifly" controls playsinline crossorigin="anonymous" preload="auto"></video>
+          <div id="movieButtonHlsStatus" class="dsHlsStatus"><b>Loading m3u8...</b><span>Preparing player</span></div>
+        </div>
       </div>`
     : providerStream && providerStream.type === "mp4"
       ? `<div class="dsDirectVideoShell" data-provider-kind="${escapeHtml(placeholderSource.providerKind || "placeholder")}">
@@ -21271,7 +25554,7 @@ async function watchPage(req, res, type) {
           ? `<iframe class="dsMovieEmbedFrame" src="${escapeHtml(movieEmbedUrl)}" title="${escapeHtml(title)} movie embed" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write; web-share" allowfullscreen sandbox="allow-scripts allow-same-origin"></iframe>`
           : trailer && allowLegacyMovieFallback
             ? `${providerStatusMessage}<div class="dsMovieEmbedNotice"><span>proxyVideo unavailable</span><strong>Using trailer fallback</strong><small>Set MOVIE_PROXY_VIDEO_ALLOW_LEGACY_FALLBACK=true to allow this fallback.</small></div><iframe src="${escapeHtml(trailerEmbedSrc)}" title="${escapeHtml(title)} trailer fallback" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin"></iframe>`
-            : `<div class="dsNoTrailer dsProxyVideoFail"><h2>proxyVideo did not load</h2><p>Client wait is disabled and no fallback source was available.</p></div>`;
+            : `<div class="dsNoTrailer dsProxyVideoFail"><h2>m3u8 source did not load</h2><p>Client wait is disabled and no fallback source was available.</p></div>`;
 
   const body = `<main class="dsWatchPage ${isMovieMode ? "dsWatchFullscreenMovie dsWatchEmbedMode" : "dsWatchTrailerMode"}">
     <section class="dsWatchHero">
@@ -21293,7 +25576,7 @@ async function watchPage(req, res, type) {
             <div>
               <span class="dsEyebrow">${isMovieMode ? watchModeLabel : "Trailer mode"}</span>
               <h1>${escapeHtml(title)}</h1>
-              <p>${isMovieMode ? (proxyVideoUrl ? "Movie button is embedding the proxyVideo URL returned by your movie API." : providerStream ? "Movie button is using the temporary ORG MP4 trailer/preview provider until licensed movie access is connected." : "Movie mode is waiting for m3u8/stream first. Legacy fallback is off unless MOVIE_PROXY_VIDEO_ALLOW_LEGACY_FALLBACK=true.") : "Official trailer / preview playback."}</p>
+              <p>${isMovieMode ? (proxyVideoUrl ? "Movie button is playing the m3u8 URL returned by your movie API." : providerStream ? "Movie button is using the temporary ORG MP4 trailer/preview provider until licensed movie access is connected." : "Movie mode is waiting for the same m3u8 player source used in Watch Rooms. Legacy fallback is off unless MOVIE_PROXY_VIDEO_ALLOW_LEGACY_FALLBACK=true.") : "Official trailer / preview playback."}</p>
             </div>
             ${isMovieMode ? `<span class="dsPlaceholderBadge">${proxyVideoUrl ? "proxyVideo" : providerStream ? "ORG MP4" : movieEmbedUrl ? "Embed" : "Trailer fallback"}</span>` : `<span class="dsPlaceholderBadge trailer">Trailer</span>`}
           </div>
@@ -21340,7 +25623,11 @@ async function watchPage(req, res, type) {
         var movieId = ${JSON.stringify(id)};
         var clientWait = ${clientProxyVideoWait ? "true" : "false"};
         var waitStatus = document.getElementById("proxyVideoWaitStatus");
-        var frame = document.getElementById("proxyVideoClientFrame");
+        var video = document.getElementById("proxyVideoClientVideo");
+        var playerShell = document.getElementById("movieButtonPlayerShell");
+        var hlsStatus = document.getElementById("movieButtonHlsStatus");
+        var movieButtonPlayer = null;
+        var movieButtonHls = null;
         var shell = document.querySelector(".dsProxyVideoWaitingShell");
         var retryBtn = document.getElementById("retryProxyVideoBtn");
         var startedAt = Date.now();
@@ -21357,6 +25644,197 @@ async function watchPage(req, res, type) {
           if (shell) shell.classList.add("hasError");
         }
 
+        function setPlayerStatus(title, detail, isError) {
+          if (!hlsStatus) return;
+          hlsStatus.hidden = false;
+          hlsStatus.classList.toggle("isError", Boolean(isError));
+          var b = hlsStatus.querySelector("b");
+          var s = hlsStatus.querySelector("span");
+          if (b) b.textContent = title || "Player";
+          if (s) s.textContent = detail || "";
+        }
+
+        function hidePlayerStatusSoon() {
+          setTimeout(function(){
+            if (hlsStatus) hlsStatus.hidden = true;
+          }, 2500);
+        }
+
+        function loadHlsScript(callback) {
+          if (window.Hls) return callback(true);
+          var urls = [
+            "https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js",
+            "https://unpkg.com/hls.js@1.5.17/dist/hls.min.js",
+            "https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.17/hls.min.js"
+          ];
+          var i = 0;
+          function next() {
+            if (window.Hls) return callback(true);
+            if (i >= urls.length) return callback(false);
+            var script = document.createElement("script");
+            script.src = urls[i++];
+            script.async = true;
+            script.onload = function(){ callback(Boolean(window.Hls)); };
+            script.onerror = next;
+            document.head.appendChild(script);
+          }
+          next();
+        }
+
+        function isHlsUrl(url, data) {
+          var value = String(url || "");
+          var type = String((data && data.streamType) || "").toLowerCase();
+          return new RegExp("[.]m3u8([?#]|$)", "i").test(value) || type === "m3u8" || type === "hls" || Boolean(data && data.m3u8);
+        }
+
+        function attachRegularMovieSource(src, data) {
+          if (!video || !src) {
+            showError("No movie source URL returned.");
+            return;
+          }
+
+          if (playerShell) playerShell.hidden = false;
+          if (shell) shell.classList.add("isReady");
+          setStatus("Source found. Loading player...");
+
+          try {
+            video.crossOrigin = "anonymous";
+            video.removeAttribute("src");
+            video.load();
+          } catch {}
+
+          var hls = isHlsUrl(src, data);
+
+          if (!hls) {
+            setPlayerStatus("Loading video...", "Using direct video source.", false);
+            video.src = src;
+            try { video.load(); } catch {}
+            hidePlayerStatusSoon();
+            return;
+          }
+
+          setPlayerStatus("Loading m3u8...", "Starting Video.js player", false);
+
+          if (window.videojs) {
+            try {
+              if (movieButtonPlayer) {
+                try { movieButtonPlayer.dispose(); } catch {}
+                movieButtonPlayer = null;
+              }
+
+              video.classList.add("video-js", "vjs-big-play-centered", "vjs-theme-swifly");
+
+              movieButtonPlayer = window.videojs(video, {
+                controls: true,
+                autoplay: false,
+                preload: "auto",
+                fluid: true,
+                responsive: true,
+                liveui: true,
+                html5: {
+                  vhs: {
+                    overrideNative: true,
+                    withCredentials: false,
+                    enableLowInitialPlaylist: true,
+                    smoothQualityChange: true
+                  },
+                  nativeAudioTracks: false,
+                  nativeVideoTracks: false
+                },
+                sources: [{
+                  src: src,
+                  type: "application/x-mpegURL"
+                }]
+              });
+
+              movieButtonPlayer.ready(function(){
+                setPlayerStatus("m3u8 ready", "Video.js loaded. Press play.", false);
+                setStatus("m3u8 loaded. Press play.");
+                hidePlayerStatusSoon();
+              });
+
+              movieButtonPlayer.on("error", function(){
+                var err = movieButtonPlayer.error && movieButtonPlayer.error();
+                var message = err && (err.message || err.code) ? String(err.message || ("Code " + err.code)) : "Unknown Video.js error";
+                setPlayerStatus("Video.js error", message, true);
+                setStatus("Video.js error: " + message);
+              });
+
+              return;
+            } catch (error) {
+              setPlayerStatus("Video.js failed", error.message || "Trying HLS.js fallback", true);
+            }
+          }
+
+          loadHlsScript(function(loaded) {
+            if (!loaded || !window.Hls || !window.Hls.isSupported()) {
+              setPlayerStatus("HLS.js did not load", "This browser needs Video.js or HLS.js to play this m3u8.", true);
+              setStatus("HLS.js failed to load.");
+              return;
+            }
+
+            if (movieButtonHls) {
+              try { movieButtonHls.destroy(); } catch {}
+              movieButtonHls = null;
+            }
+
+            movieButtonHls = new window.Hls({
+              debug: false,
+              enableWorker: true,
+              lowLatencyMode: false,
+              backBufferLength: 90,
+              maxBufferLength: 60,
+              maxMaxBufferLength: 120,
+              startPosition: -1,
+              capLevelToPlayerSize: true,
+              manifestLoadingMaxRetry: 4,
+              levelLoadingMaxRetry: 4,
+              fragLoadingMaxRetry: 6,
+              manifestLoadingTimeOut: 30000,
+              levelLoadingTimeOut: 30000,
+              fragLoadingTimeOut: 30000
+            });
+
+            movieButtonHls.on(window.Hls.Events.MEDIA_ATTACHED, function() {
+              setPlayerStatus("Loading m3u8...", "Fetching manifest", false);
+              movieButtonHls.loadSource(src);
+            });
+
+            movieButtonHls.on(window.Hls.Events.MANIFEST_PARSED, function(event, parsed) {
+              setPlayerStatus("m3u8 ready", "HLS.js loaded. Press play.", false);
+              setStatus("m3u8 loaded. Press play.");
+              hidePlayerStatusSoon();
+            });
+
+            movieButtonHls.on(window.Hls.Events.ERROR, function(event, err) {
+              if (!err) return;
+              var detail = String(err.details || err.reason || err.type || "Unknown HLS error");
+
+              if (!err.fatal) {
+                setPlayerStatus("HLS warning", detail, false);
+                return;
+              }
+
+              if (err.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
+                setPlayerStatus("HLS network error", "Retrying stream load...", true);
+                try { movieButtonHls.startLoad(); } catch {}
+                return;
+              }
+
+              if (err.type === window.Hls.ErrorTypes.MEDIA_ERROR) {
+                setPlayerStatus("HLS media error", "Trying media recovery...", true);
+                try { movieButtonHls.recoverMediaError(); } catch {}
+                return;
+              }
+
+              setPlayerStatus("HLS failed", detail, true);
+              setStatus("HLS failed: " + detail);
+            });
+
+            movieButtonHls.attachMedia(video);
+          });
+        }
+
         async function tryProxyVideo(manual) {
           if (!clientWait || stopped) return;
 
@@ -21364,11 +25842,11 @@ async function watchPage(req, res, type) {
           var elapsed = Math.round((Date.now() - startedAt) / 1000);
 
           if (Date.now() - startedAt > maxWaitMs) {
-            showError("Still no proxyVideo after " + elapsed + " seconds. You can retry, refresh, or use a Date Room.");
+            showError("Still no m3u8 source after " + elapsed + " seconds. You can retry, refresh, or use a Watch Room.");
             return;
           }
 
-          setStatus((manual ? "Retrying" : "Trying") + " proxyVideo... attempt " + attempt + " • " + elapsed + "s");
+          setStatus((manual ? "Retrying" : "Trying") + " m3u8 source... attempt " + attempt + " • " + elapsed + "s");
 
           try {
             var response = await fetch("/api/proxy-video-wait/movie/" + encodeURIComponent(movieId) + "?t=" + Date.now(), {
@@ -21378,14 +25856,11 @@ async function watchPage(req, res, type) {
 
             var data = await response.json();
 
-            if (data && data.status === "ok" && data.proxyVideo) {
+            if (data && data.status === "ok" && (data.playbackUrl || data.m3u8 || data.proxyVideo)) {
               stopped = true;
-              setStatus("proxyVideo found. Loading player...");
-              if (frame) {
-                frame.hidden = false;
-                frame.src = data.proxyVideo;
-              }
-              if (shell) shell.classList.add("isReady");
+              var src = data.playbackUrl || data.m3u8 || data.proxyVideo;
+              setStatus((data.m3u8 || data.streamType === "m3u8" ? "m3u8" : "Source") + " found. Loading player...");
+              attachRegularMovieSource(src, data);
               return;
             }
 
@@ -21416,7 +25891,7 @@ async function watchPage(req, res, type) {
             if (!videoShell || videoShell.querySelector(".dsMovieEmbedNotice.error")) return;
             var notice = document.createElement("div");
             notice.className = "dsMovieEmbedNotice error";
-            notice.innerHTML = "<span>Playback issue</span><strong>The MP4 source could not be decoded or loaded by this browser.</strong><small>Try Open MP4, disable blockers, or use Open Together in a Date Room.</small>";
+            notice.innerHTML = "<span>Playback issue</span><strong>The MP4 source could not be decoded or loaded by this browser.</strong><small>Try Open MP4, disable blockers, or use Open Together in a Watch Room.</small>";
             videoShell.prepend(notice);
           });
         }
@@ -21687,34 +26162,34 @@ function likedPage(req, res) {
 function watchroomsPage(req, res) {
   const roomId = createRoomId();
   const body = `<main class="dsPlainPage dsWatchroomsPage dsWatchroomsPro">
-    ${dsPageHeader("Date Rooms", "A private room for long-distance couples to open a link together, countdown, chat, and start the same movie from different places.", "Long-distance date")}
+    ${dsPageHeader("Watch Rooms", "A private room for movie fans to open a link together, countdown, chat, and start the same movie from different places.", "Watch together")}
 
     <section class="dsWatchroomHero">
       <div>
-        <span class="dsEyebrow">Date rooms</span>
+        <span class="dsEyebrow">Watch rooms</span>
         <h2>Start the room, send the link, then pick what to watch.</h2>
         <p>Use this when you are on a call and need a simple place to share the watch link and countdown together.</p>
       </div>
       <form id="quickCreateWatchroomForm" class="dsQuickRoomForm">
-        <input name="roomName" placeholder="Tonight with us" maxlength="80" />
-        <button class="dsPrimaryBtn" type="submit">Create Date Room</button>
+        <input name="roomName" placeholder="Movie night" maxlength="80" />
+        <button class="dsPrimaryBtn" type="submit">Create Watch Room</button>
       </form>
     </section>
 
     <section class="dsWatchroomCreate dsWatchroomCreatePro">
       <article class="dsWatchroomPanel dsCreateRoomPanel">
-        <h2>Create a date room</h2>
-        <p>Name the date and optionally paste the movie/site link you both should open.</p>
+        <h2>Create a watch room</h2>
+        <p>Name the room and optionally paste the movie/site link you both should open.</p>
         <form id="createWatchroomForm">
-          <label>Date room name<input name="roomName" placeholder="Friday night with you" maxlength="80" /></label>
+          <label>Date room name<input name="roomName" placeholder="Friday movie night" maxlength="80" /></label>
           <label>Optional watch link<input name="trailerUrl" placeholder="Movie, trailer, or website link" /></label>
-          <button class="dsPrimaryBtn" type="submit">Create Date Room</button>
+          <button class="dsPrimaryBtn" type="submit">Create Watch Room</button>
         </form>
       </article>
 
       <article class="dsWatchroomPanel">
-        <h2>Join a date room</h2>
-        <p>Got a code from your person? Enter it here.</p>
+        <h2>Join a watch room</h2>
+        <p>Got a code from your friends? Enter it here.</p>
         <form id="joinWatchroomForm">
           <label>Date room code<input name="roomCode" placeholder="${escapeHtml(roomId)}" /></label>
           <button class="dsSecondaryBtn" type="submit">Join Room</button>
@@ -21756,7 +26231,7 @@ function watchroomsPage(req, res) {
           var embedUrl = cleanEmbedUrl(trailerUrl);
           var roomId = "${escapeHtml(roomId)}";
           var params = new URLSearchParams();
-          params.set("name", String(roomName || "SwiflyTV Date Room").trim() || "SwiflyTV Date Room");
+          params.set("name", String(roomName || "SwiflyTV Watch Room").trim() || "SwiflyTV Watch Room");
           if (trailerUrl && embedUrl) {
             params.set("trailer", trailerUrl);
             params.set("embed", embedUrl);
@@ -21827,7 +26302,7 @@ function watchroomsPage(req, res) {
 
 function watchroomPage(req, res) {
   const roomId = normalizeRoomId(req.params.roomId);
-  const name = String(req.query.name || "SwiflyTV Date Room").slice(0, 80);
+  const name = String(req.query.name || "SwiflyTV Watch Room").slice(0, 80);
   const sharedUrl = normalizeSharedBrowserUrl(req.query.url || req.query.open || req.query.embed || req.query.trailer || "");
 
   const room = getOrCreateWatchRoom(roomId, {
@@ -21845,13 +26320,14 @@ function watchroomPage(req, res) {
   const safeInitialUrl = escapeHtml(room.openTogetherUrl || sharedUrl || "");
   const safeCountdown = escapeHtml(String(room.openTogetherCountdownEndsAt || 0));
 
-  const body = `<main class="dsPlainPage dsStableRoom" data-room-id="${safeRoomId}">
+  const isSocialEmbed = String(req.query.socialEmbed || "") === "1";
+  const body = `<main class="dsPlainPage dsStableRoom ${isSocialEmbed ? "dsSocialEmbeddedRoom" : ""}" data-room-id="${safeRoomId}">
     <section class="dsStableRoomHero">
       <div>
-        <a class="dsGhostPill" href="/watchrooms">← Watchrooms</a>
-        <span class="dsEyebrow">Reliable Date Room</span>
+        ${isSocialEmbed ? "" : '<a class="dsGhostPill" href="/social?tab=watchrooms">← Social Rooms</a>'}
+        <span class="dsEyebrow">Reliable Watch Room</span>
         <h1>${safeName}</h1>
-        <p>Built for long-distance couples. Use <b>Open Together</b> when you both can open the movie site, or <b>Live Share</b> when one of you can share a tab.</p>
+        <p>Built for movie fans. Use <b>Open Together</b> when you both can open the movie site, or <b>Live Share</b> when one of you can share a tab.</p>
       </div>
 
       <aside class="dsStableRoomMeta">
@@ -21967,7 +26443,8 @@ function watchroomPage(req, res) {
           <div class="dsRoomMovieStage" id="roomMovieStage">
             <iframe id="roomMovieFrame" class="dsRoomMovieFrame" title="Synced room movie" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write; web-share" allowfullscreen referrerpolicy="no-referrer" hidden></iframe>
             <div id="roomMovieIframeSyncOverlay" class="dsIframeSyncOverlay" hidden><span>Room target</span><b id="roomMovieIframeTarget">0:00</b><small>Iframe players cannot be force-seeked by the browser. Use this target if the embed drifts.</small></div>
-            <video id="roomMovieVideo" class="dsRoomMovieFrame dsCustomMovieVideo" playsinline preload="metadata" hidden></video>
+            <video id="roomMovieVideo" class="dsRoomMovieFrame dsCustomMovieVideo video-js vjs-big-play-centered vjs-theme-swifly" playsinline preload="metadata" crossorigin="anonymous" hidden></video>
+            <div id="roomMovieHlsStatus" class="dsHlsStatus" hidden><b>Loading m3u8...</b><span>Starting HLS player</span></div>
             <div id="roomMoviePlayerChrome" class="dsCustomPlayerChrome" hidden>
               <div class="dsCustomPlayerTop">
                 <div>
@@ -22021,7 +26498,7 @@ function watchroomPage(req, res) {
             <div>
               <span class="dsEyebrow">If host can share tab</span>
               <h2>Live Share</h2>
-              <p>One person shares a tab/window and the other watches inside the date room. Great when only one of you has access.</p>
+              <p>One person shares a tab/window and the other watches inside the watch room. Great when only one of you has access.</p>
             </div>
             <span class="dsHostBadge" id="stableLiveBadge">Host controls</span>
           </div>
@@ -22163,7 +26640,7 @@ function watchroomPage(req, res) {
             <article class="dsCouplesPlusTool">
               <span>Missing You Mode</span>
               <h3>Make the room softer</h3>
-              <p>Turns on a warm long-distance vibe with floating hearts and sweeter room styling.</p>
+              <p>Turns on a warm remote vibe with floating hearts and sweeter room styling.</p>
               <div class="dsStableActions">
                 <button class="dsPrimaryBtn" id="missingYouBtn" type="button">Toggle Missing You</button>
                 <button class="dsSecondaryBtn" id="sleepyModeBtn" type="button">Toggle Sleepy Mode</button>
@@ -22183,7 +26660,7 @@ function watchroomPage(req, res) {
             </article>
 
             <article class="dsCouplesPlusTool">
-              <span>Date Room Themes</span>
+              <span>Watch Room Themes</span>
               <h3>Change the room vibe</h3>
               <p>Premium rooms should feel like a date, not a video player.</p>
               <div class="dsThemeButtons">
@@ -22216,7 +26693,7 @@ function watchroomPage(req, res) {
               <span>Why paid?</span>
               <h3>Not just streaming.</h3>
               <p>Couples pay for the feeling: less “what do we do?”, more shared rituals, synced moments, and a room that feels made for the relationship.</p>
-              <a class="dsSecondaryBtn" href="/couples">Open Couple Dashboard</a>
+              <a class="dsSecondaryBtn" href="/couples">Open Watch Rooms</a>
             </article>
           </div>
 
@@ -22521,6 +26998,10 @@ function watchroomPage(req, res) {
           if (!video || video.hidden || !(roomMovieState.playbackUrl || roomMovieState.m3u8 || roomMovieState.proxyVideo)) return;
 
           var liveMode = typeof isRoomMovieLiveM3u8 === "function" && isRoomMovieLiveM3u8();
+          if (isRoomMovieHlsUrl(roomMovieState.playbackUrl || roomMovieState.m3u8 || roomMovieState.proxyVideo) && !roomMovieState.hlsReady) {
+            return;
+          }
+
           var target = targetRoomMovieSeconds();
           var current = Number(video.currentTime || 0);
           var drift = Math.abs(current - target);
@@ -22680,7 +27161,7 @@ function watchroomPage(req, res) {
           if (playerType) {
             var isHls = typeof isRoomMovieHlsUrl === "function" && isRoomMovieHlsUrl(roomMovieState.playbackUrl || roomMovieState.m3u8 || roomMovieState.proxyVideo);
             var quality = roomMovieState.streamQuality ? " • " + roomMovieState.streamQuality : "";
-            playerType.textContent = isHls ? "LIVE HLS / M3U8 Player" + quality : "Native Video Player" + quality;
+            playerType.textContent = isHls ? ((roomMovieState && roomMovieState.hlsProxyUrl) ? "PROXIED M3U8 Player" : "DIRECT M3U8 Player") + quality : "Native Video Player" + quality;
           }
 
           if (driftBadge && typeof targetRoomMovieSeconds === "function") {
@@ -22849,6 +27330,47 @@ function watchroomPage(req, res) {
           });
         }
 
+        function setRoomMovieHlsStatus(title, detail, isError) {
+          var box = document.getElementById("roomMovieHlsStatus");
+          if (!box) return;
+          box.hidden = false;
+          box.classList.toggle("isError", Boolean(isError));
+          var b = box.querySelector("b");
+          var s = box.querySelector("span");
+          if (b) b.textContent = title || "HLS";
+          if (s) s.textContent = detail || "";
+        }
+
+        function hideRoomMovieHlsStatus() {
+          var box = document.getElementById("roomMovieHlsStatus");
+          if (box) box.hidden = true;
+        }
+
+        function loadHlsScriptFallback(callback) {
+          if (window.Hls) return callback(true);
+
+          var urls = [
+            "https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js",
+            "https://unpkg.com/hls.js@1.5.17/dist/hls.min.js",
+            "https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.17/hls.min.js"
+          ];
+          var i = 0;
+
+          function next() {
+            if (window.Hls) return callback(true);
+            if (i >= urls.length) return callback(false);
+
+            var script = document.createElement("script");
+            script.src = urls[i++];
+            script.async = true;
+            script.onload = function(){ callback(Boolean(window.Hls)); };
+            script.onerror = next;
+            document.head.appendChild(script);
+          }
+
+          next();
+        }
+
         function isRoomMovieHlsUrl(url) {
           var value = String(url || "");
           var type = String(roomMovieState.streamType || "").toLowerCase();
@@ -22856,8 +27378,7 @@ function watchroomPage(req, res) {
         }
 
         function isRoomMovieLiveM3u8() {
-          var url = roomMovieState.playbackUrl || roomMovieState.m3u8 || roomMovieState.proxyVideo;
-          return Boolean(roomMovieState.isLiveM3u8) || isRoomMovieHlsUrl(url) || String(roomMovieState.streamMode || "").includes("live");
+          return Boolean(roomMovieState.isLiveM3u8) || Boolean(roomMovieState.hlsIsLive) || String(roomMovieState.streamMode || "").includes("live");
         }
 
         function seekRoomMovieLiveEdge() {
@@ -22877,6 +27398,10 @@ function watchroomPage(req, res) {
 
         function destroyRoomMovieHls() {
           var video = document.getElementById("roomMovieVideo");
+          if (window.__roomMovieVideoJs) {
+            try { window.__roomMovieVideoJs.dispose(); } catch {}
+            window.__roomMovieVideoJs = null;
+          }
           if (window.__roomMovieHls) {
             try { window.__roomMovieHls.destroy(); } catch {}
             window.__roomMovieHls = null;
@@ -22884,53 +27409,194 @@ function watchroomPage(req, res) {
           if (video) video.dataset.hlsSrc = "";
         }
 
+        function attachRoomMovieVideoJs(video, src) {
+          if (!video || !src || !window.videojs) return false;
+
+          setRoomMovieHlsStatus("Loading m3u8...", "Starting Video.js HLS player", false);
+
+          try {
+            if (window.__roomMovieVideoJs) {
+              window.__roomMovieVideoJs.dispose();
+              window.__roomMovieVideoJs = null;
+            }
+          } catch {}
+
+          try {
+            video.classList.add("video-js", "vjs-big-play-centered", "vjs-theme-swifly");
+            var player = window.videojs(video, {
+              controls: false,
+              autoplay: false,
+              preload: "auto",
+              fluid: false,
+              responsive: true,
+              liveui: true,
+              html5: {
+                vhs: {
+                  overrideNative: !(/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)),
+                  withCredentials: false,
+                  enableLowInitialPlaylist: true,
+                  smoothQualityChange: true,
+                },
+                nativeAudioTracks: false,
+                nativeVideoTracks: false,
+              },
+              sources: [{
+                src: src,
+                type: "application/x-mpegURL"
+              }],
+            });
+
+            window.__roomMovieVideoJs = player;
+
+            player.ready(function() {
+              roomMovieState.hlsReady = true;
+              setRoomMovieHlsStatus("m3u8 ready", "Video.js player loaded. Press play.", false);
+              setRoomMovieStatus("m3u8 loaded in Video.js. Press play when ready.");
+              updateCustomPlayerUi();
+              setTimeout(hideRoomMovieHlsStatus, 2500);
+            });
+
+            player.on("loadedmetadata", function() {
+              roomMovieState.hlsReady = true;
+              updateCustomPlayerUi();
+            });
+
+            player.on("error", function() {
+              var err = player.error && player.error();
+              var message = err && (err.message || err.code) ? String(err.message || ("Code " + err.code)) : "Unknown Video.js error";
+              setRoomMovieHlsStatus("Video.js error", message, true);
+              console.warn("SwiflyTV Video.js error", err);
+            });
+
+            return true;
+          } catch (error) {
+            console.warn("Video.js attach failed", error);
+            setRoomMovieHlsStatus("Video.js failed", error.message || "Trying HLS.js fallback", true);
+            return false;
+          }
+        }
+
         function attachRoomMovieVideoSource(video, src) {
           if (!video || !src) return false;
 
+          roomMovieState.hlsReady = false;
+          roomMovieState.hlsIsLive = Boolean(roomMovieState.isLiveM3u8) || String(roomMovieState.streamMode || "").includes("live");
+
+          try {
+            video.crossOrigin = "anonymous";
+            video.removeAttribute("src");
+            video.load();
+          } catch {}
+
           if (isRoomMovieHlsUrl(src)) {
             destroyRoomMovieHls();
+            setRoomMovieHlsStatus("Loading m3u8...", "Preparing Video.js player", false);
 
-            if (video.canPlayType && video.canPlayType("application/vnd.apple.mpegurl")) {
-              video.src = src;
-              video.dataset.hlsSrc = src;
-              try { video.load(); } catch {}
+            if (attachRoomMovieVideoJs(video, src)) {
               return true;
             }
 
-            if (window.Hls && window.Hls.isSupported && window.Hls.isSupported()) {
+            setRoomMovieHlsStatus("Loading m3u8...", "Video.js unavailable. Trying HLS.js fallback.", false);
+
+            // Safari/iOS can play HLS natively. Chrome/Edge/Firefox need hls.js.
+            var nativeHls = video.canPlayType && video.canPlayType("application/vnd.apple.mpegurl");
+            var isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+            if (nativeHls && isiOS) {
+              video.src = src;
+              video.dataset.hlsSrc = src;
+              try { video.load(); } catch {}
+              roomMovieState.hlsReady = true;
+              setRoomMovieHlsStatus("m3u8 ready", "Native Safari HLS loaded. Press play.", false);
+              setTimeout(hideRoomMovieHlsStatus, 1800);
+              return true;
+            }
+
+            loadHlsScriptFallback(function(loaded) {
+              if (!loaded || !window.Hls || !window.Hls.isSupported || !window.Hls.isSupported()) {
+                setRoomMovieHlsStatus("HLS.js did not load", "The browser cannot play this m3u8 without HLS.js.", true);
+                return;
+              }
+
               var hls = new window.Hls({
+                debug: false,
                 enableWorker: true,
-                lowLatencyMode: true,
-                liveSyncDurationCount: 3,
-                liveMaxLatencyDurationCount: 10,
-                maxLiveSyncPlaybackRate: 1.5,
-                backBufferLength: 30,
+                lowLatencyMode: false,
+                backBufferLength: 90,
+                maxBufferLength: 60,
+                maxMaxBufferLength: 120,
+                startPosition: -1,
+                capLevelToPlayerSize: true,
+                manifestLoadingMaxRetry: 4,
+                manifestLoadingRetryDelay: 1000,
+                levelLoadingMaxRetry: 4,
+                levelLoadingRetryDelay: 1000,
+                fragLoadingMaxRetry: 6,
+                fragLoadingRetryDelay: 1000,
+                fragLoadingTimeOut: 30000,
+                manifestLoadingTimeOut: 30000,
+                levelLoadingTimeOut: 30000,
               });
 
               window.__roomMovieHls = hls;
               video.dataset.hlsSrc = src;
 
-              hls.loadSource(src);
-              hls.attachMedia(video);
-          hls.on(window.Hls.Events.MANIFEST_PARSED, function(){ video.play().catch(function(){}); });
-
-              hls.on(window.Hls.Events.ERROR, function(event, data) {
-                if (data && data.fatal) {
-                  console.warn("SwiflyTV HLS fatal error", data);
-                  try { hls.destroy(); } catch {}
-                  window.__roomMovieHls = null;
-                  fallbackToRoomMovieIframe("HLS playback error");
-                }
+              hls.on(window.Hls.Events.MEDIA_ATTACHED, function() {
+                setRoomMovieHlsStatus("Loading m3u8...", "Fetching manifest", false);
+                hls.loadSource(src);
               });
 
-              return true;
-            }
+              hls.on(window.Hls.Events.MANIFEST_LOADING, function() {
+                setRoomMovieHlsStatus("Loading m3u8...", "Manifest request sent", false);
+              });
 
-            fallbackToRoomMovieIframe("HLS is not supported in this browser");
-            return false;
+              hls.on(window.Hls.Events.MANIFEST_PARSED, function(event, data) {
+                roomMovieState.hlsReady = true;
+                setRoomMovieHlsStatus("m3u8 ready", "Levels: " + ((data && data.levels && data.levels.length) || 1) + ". Press play.", false);
+                setRoomMovieStatus("m3u8 loaded. Press play when ready.");
+                updateCustomPlayerUi();
+                setTimeout(hideRoomMovieHlsStatus, 2500);
+              });
+
+              hls.on(window.Hls.Events.LEVEL_LOADED, function(event, data) {
+                var live = Boolean(data && data.details && data.details.live);
+                roomMovieState.hlsIsLive = live || Boolean(roomMovieState.isLiveM3u8) || String(roomMovieState.streamMode || "").includes("live");
+                updateCustomPlayerUi();
+              });
+
+              hls.on(window.Hls.Events.ERROR, function(event, data) {
+                if (!data) return;
+                var details = String(data.details || data.reason || data.type || "Unknown HLS error");
+                console.warn("SwiflyTV HLS error", data);
+
+                if (!data.fatal) {
+                  setRoomMovieHlsStatus("HLS warning", details, false);
+                  return;
+                }
+
+                if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
+                  setRoomMovieHlsStatus("HLS network error", "Retrying stream load...", true);
+                  try { hls.startLoad(); } catch {}
+                  return;
+                }
+
+                if (data.type === window.Hls.ErrorTypes.MEDIA_ERROR) {
+                  setRoomMovieHlsStatus("HLS media error", "Trying media recovery...", true);
+                  try { hls.recoverMediaError(); } catch {}
+                  return;
+                }
+
+                setRoomMovieHlsStatus("HLS failed", details, true);
+              });
+
+              hls.attachMedia(video);
+            });
+
+            return true;
           }
 
           destroyRoomMovieHls();
+          hideRoomMovieHlsStatus();
           video.src = src;
           try { video.load(); } catch {}
           return true;
@@ -22987,7 +27653,7 @@ function watchroomPage(req, res) {
               attachRoomMovieVideoSource(video, (roomMovieState.playbackUrl || roomMovieState.m3u8 || roomMovieState.proxyVideo));
             }
 
-            setRoomMovieStatus(isRoomMovieHlsUrl((roomMovieState.playbackUrl || roomMovieState.m3u8 || roomMovieState.proxyVideo)) ? (roomMovieState.hlsProxyUrl ? "Loading proxied live m3u8 in the custom player..." : "Loading m3u8/HLS in the custom player...") : "Trying native video sync first...");
+            setRoomMovieStatus(isRoomMovieHlsUrl((roomMovieState.playbackUrl || roomMovieState.m3u8 || roomMovieState.proxyVideo)) ? (roomMovieState.hlsProxyUrl ? "Loading proxied live m3u8 in the custom player..." : "Loading direct live m3u8 in the custom player...") : "Trying native video sync first...");
             setTimeout(function() {
               if (!video.hidden && video.readyState === 0) {
                 fallbackToRoomMovieIframe("native video never became ready after 30s");
@@ -23032,7 +27698,7 @@ function watchroomPage(req, res) {
         }
 
         function renderRoomMovie(movie) {
-          roomMovieState = Object.assign({ status: "idle", movieId: "", playbackUrl: "", proxyVideo: "", m3u8: "", streamType: "", streamQuality: "", streamName: "", streamMode: "", isLiveM3u8: false, playAt: 0, selectedBy: "", message: "", sync: { playing: false, offset: 0, startedAt: 0, updatedAt: Date.now() } }, movie || {});
+          roomMovieState = Object.assign({ status: "idle", movieId: "", playbackUrl: "", proxyVideo: "", m3u8: "", streamType: "", streamQuality: "", streamName: "", streamMode: "", isLiveM3u8: false, hlsIsLive: false, hlsReady: false, playAt: 0, selectedBy: "", message: "", sync: { playing: false, offset: 0, startedAt: 0, updatedAt: Date.now() } }, movie || {});
           roomMovieState.playbackUrl = roomMovieState.playbackUrl || roomMovieState.m3u8 || (roomMovieState.playbackUrl || roomMovieState.m3u8 || roomMovieState.proxyVideo);
           if (!roomMovieState.sync) roomMovieState.sync = { playing: false, offset: 0, startedAt: 0, updatedAt: Date.now() };
           var input = document.getElementById("roomMovieInput");
@@ -23209,7 +27875,7 @@ function watchroomPage(req, res) {
           var stats = getLocalStats();
           var earned = new Set(stats.badges || []);
           var completed = Number(stats.completedDates || 0);
-          if (completed >= 1) earned.add("First Date Room");
+          if (completed >= 1) earned.add("First Watch Room");
           if (completed >= 3) earned.add("3 Dates Strong");
           if (completed >= 5) earned.add("Movie Ritual");
           if ((coupleState.notes || []).length >= 1) earned.add("Love Note Sent");
@@ -23311,7 +27977,7 @@ function watchroomPage(req, res) {
             if (!note || firedNoteIds[note.id]) return;
             if (current >= Number(note.time || 0)) {
               firedNoteIds[note.id] = true;
-              showCouplePopup(note.text, "From " + (note.from || "your person"));
+              showCouplePopup(note.text, "From " + (note.from || "your friends"));
             }
           });
         }
@@ -23854,7 +28520,7 @@ function watchroomPage(req, res) {
         if (!socketAvailable) {
           isRoomHost = true;
           setHostMode();
-          toast("Date Room socket did not load. Buttons are in offline mode.");
+          toast("Watch Room socket did not load. Buttons are in offline mode.");
         }
 
         window.__swiflyDateRoomMainLoaded = true;
@@ -23956,7 +28622,7 @@ function watchroomPage(req, res) {
           var socketWorks = typeof io === "function";
           var socket = socketWorks ? io() : null;
           var isHost = !socketWorks;
-          var movie = { status: "idle", movieId: "", playbackUrl: "", proxyVideo: "", m3u8: "", streamType: "", streamQuality: "", streamName: "", streamMode: "", isLiveM3u8: false, playAt: 0, sync: { playing: false, offset: 0, startedAt: 0 } };
+          var movie = { status: "idle", movieId: "", playbackUrl: "", proxyVideo: "", m3u8: "", streamType: "", streamQuality: "", streamName: "", streamMode: "", isLiveM3u8: false, hlsIsLive: false, hlsReady: false, playAt: 0, sync: { playing: false, offset: 0, startedAt: 0 } };
           var timer = null;
           var driftLimit = 5;
 
@@ -24012,6 +28678,43 @@ function watchroomPage(req, res) {
             setMovieStatus("Movie loaded. Room timer: " + formatTime(currentTargetTime()));
           }
 
+          function setPollingHlsStatus(title, detail, isError) {
+            var box = byId("roomMovieHlsStatus");
+            if (!box) return;
+            box.hidden = false;
+            box.classList.toggle("isError", Boolean(isError));
+            var b = box.querySelector("b");
+            var s = box.querySelector("span");
+            if (b) b.textContent = title || "HLS";
+            if (s) s.textContent = detail || "";
+          }
+
+          function hidePollingHlsStatus() {
+            var box = byId("roomMovieHlsStatus");
+            if (box) box.hidden = true;
+          }
+
+          function loadPollingHlsScript(callback) {
+            if (window.Hls) return callback(true);
+            var urls = [
+              "https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js",
+              "https://unpkg.com/hls.js@1.5.17/dist/hls.min.js",
+              "https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.17/hls.min.js"
+            ];
+            var i = 0;
+            function next() {
+              if (window.Hls) return callback(true);
+              if (i >= urls.length) return callback(false);
+              var script = document.createElement("script");
+              script.src = urls[i++];
+              script.async = true;
+              script.onload = function(){ callback(Boolean(window.Hls)); };
+              script.onerror = next;
+              document.head.appendChild(script);
+            }
+            next();
+          }
+
           function isPollingHlsUrl(url) {
             var value = String(url || "");
             var type = String(movie.streamType || "").toLowerCase();
@@ -24019,8 +28722,7 @@ function watchroomPage(req, res) {
           }
 
           function isPollingLiveM3u8() {
-            var url = movie.playbackUrl || movie.m3u8 || movie.proxyVideo;
-            return Boolean(movie.isLiveM3u8) || isPollingHlsUrl(url) || String(movie.streamMode || "").includes("live");
+            return Boolean(movie.isLiveM3u8) || Boolean(movie.hlsIsLive) || String(movie.streamMode || "").includes("live");
           }
 
           function seekPollingLiveEdge() {
@@ -24040,6 +28742,10 @@ function watchroomPage(req, res) {
 
           function destroyPollingHls() {
             var video = byId("roomMovieVideo");
+            if (window.__roomMoviePollingVideoJs) {
+              try { window.__roomMoviePollingVideoJs.dispose(); } catch {}
+              window.__roomMoviePollingVideoJs = null;
+            }
             if (window.__roomMoviePollingHls) {
               try { window.__roomMoviePollingHls.destroy(); } catch {}
               window.__roomMoviePollingHls = null;
@@ -24047,49 +28753,187 @@ function watchroomPage(req, res) {
             if (video) video.dataset.hlsSrc = "";
           }
 
+          function attachPollingVideoJs(video, src) {
+            if (!video || !src || !window.videojs) return false;
+
+            setPollingHlsStatus("Loading m3u8...", "Starting Video.js HLS player", false);
+
+            try {
+              if (window.__roomMoviePollingVideoJs) {
+                window.__roomMoviePollingVideoJs.dispose();
+                window.__roomMoviePollingVideoJs = null;
+              }
+            } catch {}
+
+            try {
+              video.classList.add("video-js", "vjs-big-play-centered", "vjs-theme-swifly");
+              var player = window.videojs(video, {
+                controls: false,
+                autoplay: false,
+                preload: "auto",
+                fluid: false,
+                responsive: true,
+                liveui: true,
+                html5: {
+                  vhs: {
+                    overrideNative: !(/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)),
+                    withCredentials: false,
+                    enableLowInitialPlaylist: true,
+                    smoothQualityChange: true,
+                  },
+                  nativeAudioTracks: false,
+                  nativeVideoTracks: false,
+                },
+                sources: [{
+                  src: src,
+                  type: "application/x-mpegURL"
+                }],
+              });
+
+              window.__roomMoviePollingVideoJs = player;
+
+              player.ready(function() {
+                movie.hlsReady = true;
+                setPollingHlsStatus("m3u8 ready", "Video.js player loaded. Press play.", false);
+                setMovieStatus("m3u8 loaded in Video.js. Press play when ready.");
+                bindPollingCustomPlayer();
+                setTimeout(hidePollingHlsStatus, 2500);
+              });
+
+              player.on("loadedmetadata", function() {
+                movie.hlsReady = true;
+              });
+
+              player.on("error", function() {
+                var err = player.error && player.error();
+                var message = err && (err.message || err.code) ? String(err.message || ("Code " + err.code)) : "Unknown Video.js error";
+                setPollingHlsStatus("Video.js error", message, true);
+                console.warn("SwiflyTV polling Video.js error", err);
+              });
+
+              return true;
+            } catch (error) {
+              console.warn("Polling Video.js attach failed", error);
+              setPollingHlsStatus("Video.js failed", error.message || "Trying HLS.js fallback", true);
+              return false;
+            }
+          }
+
           function attachPollingVideoSource(video, src) {
             if (!video || !src) return false;
 
+            movie.hlsReady = false;
+            movie.hlsIsLive = Boolean(movie.isLiveM3u8) || String(movie.streamMode || "").includes("live");
+
+            try {
+              video.crossOrigin = "anonymous";
+              video.removeAttribute("src");
+              video.load();
+            } catch {}
+
             if (isPollingHlsUrl(src)) {
               destroyPollingHls();
+              setPollingHlsStatus("Loading m3u8...", "Preparing Video.js player", false);
 
-              if (video.canPlayType && video.canPlayType("application/vnd.apple.mpegurl")) {
+              if (attachPollingVideoJs(video, src)) {
+                return true;
+              }
+
+              setPollingHlsStatus("Loading m3u8...", "Video.js unavailable. Trying HLS.js fallback.", false);
+
+              var nativeHls = video.canPlayType && video.canPlayType("application/vnd.apple.mpegurl");
+              var isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+              if (nativeHls && isiOS) {
                 video.src = src;
                 video.dataset.hlsSrc = src;
                 try { video.load(); } catch {}
+                movie.hlsReady = true;
+                setPollingHlsStatus("m3u8 ready", "Native Safari HLS loaded. Press play.", false);
+                setTimeout(hidePollingHlsStatus, 1800);
                 return true;
               }
 
-              if (window.Hls && window.Hls.isSupported && window.Hls.isSupported()) {
+              loadPollingHlsScript(function(loaded) {
+                if (!loaded || !window.Hls || !window.Hls.isSupported || !window.Hls.isSupported()) {
+                  setPollingHlsStatus("HLS.js did not load", "The browser cannot play this m3u8 without HLS.js.", true);
+                  return;
+                }
+
                 var hls = new window.Hls({
+                  debug: false,
                   enableWorker: true,
-                  lowLatencyMode: true,
-                  liveSyncDurationCount: 3,
-                  liveMaxLatencyDurationCount: 10,
-                  maxLiveSyncPlaybackRate: 1.5,
-                  backBufferLength: 30,
+                  lowLatencyMode: false,
+                  backBufferLength: 90,
+                  maxBufferLength: 60,
+                  maxMaxBufferLength: 120,
+                  startPosition: -1,
+                  capLevelToPlayerSize: true,
+                  manifestLoadingMaxRetry: 4,
+                  manifestLoadingRetryDelay: 1000,
+                  levelLoadingMaxRetry: 4,
+                  levelLoadingRetryDelay: 1000,
+                  fragLoadingMaxRetry: 6,
+                  fragLoadingRetryDelay: 1000,
+                  fragLoadingTimeOut: 30000,
+                  manifestLoadingTimeOut: 30000,
+                  levelLoadingTimeOut: 30000,
                 });
+
                 window.__roomMoviePollingHls = hls;
                 video.dataset.hlsSrc = src;
-                hls.loadSource(src);
-                hls.attachMedia(video);
-                hls.on(window.Hls.Events.ERROR, function(event, data) {
-                  if (data && data.fatal) {
-                    console.warn("SwiflyTV polling HLS fatal error", data);
-                    setMovieStatus("HLS proxy playback error: " + (data.details || data.type || "unknown") + (movie.hlsProxyStatusUrl ? " • debug: " + movie.hlsProxyStatusUrl : ""));
-                    try { hls.destroy(); } catch {}
-                    window.__roomMoviePollingHls = null;
-                    fallbackPollingIframe("HLS playback error");
-                  }
-                });
-                return true;
-              }
 
-              fallbackPollingIframe("HLS is not supported in this browser");
-              return false;
+                hls.on(window.Hls.Events.MEDIA_ATTACHED, function() {
+                  setPollingHlsStatus("Loading m3u8...", "Fetching manifest", false);
+                  hls.loadSource(src);
+                });
+
+                hls.on(window.Hls.Events.MANIFEST_PARSED, function(event, data) {
+                  movie.hlsReady = true;
+                  setPollingHlsStatus("m3u8 ready", "Levels: " + ((data && data.levels && data.levels.length) || 1) + ". Press play.", false);
+                  setMovieStatus("m3u8 loaded. Press play when ready.");
+                  bindPollingCustomPlayer();
+                  setTimeout(hidePollingHlsStatus, 2500);
+                });
+
+                hls.on(window.Hls.Events.LEVEL_LOADED, function(event, data) {
+                  var live = Boolean(data && data.details && data.details.live);
+                  movie.hlsIsLive = live || Boolean(movie.isLiveM3u8) || String(movie.streamMode || "").includes("live");
+                });
+
+                hls.on(window.Hls.Events.ERROR, function(event, data) {
+                  if (!data) return;
+                  var details = String(data.details || data.reason || data.type || "Unknown HLS error");
+                  console.warn("SwiflyTV polling HLS error", data);
+
+                  if (!data.fatal) {
+                    setPollingHlsStatus("HLS warning", details, false);
+                    return;
+                  }
+
+                  if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
+                    setPollingHlsStatus("HLS network error", "Retrying stream load...", true);
+                    try { hls.startLoad(); } catch {}
+                    return;
+                  }
+
+                  if (data.type === window.Hls.ErrorTypes.MEDIA_ERROR) {
+                    setPollingHlsStatus("HLS media error", "Trying media recovery...", true);
+                    try { hls.recoverMediaError(); } catch {}
+                    return;
+                  }
+
+                  setPollingHlsStatus("HLS failed", details, true);
+                });
+
+                hls.attachMedia(video);
+              });
+
+              return true;
             }
 
             destroyPollingHls();
+            hidePollingHlsStatus();
             video.src = src;
             try { video.load(); } catch {}
             return true;
@@ -24284,7 +29128,7 @@ function watchroomPage(req, res) {
           if (!socketWorks) {
             isHost = true;
             setHostMode();
-            toast("Socket failed, Date Room recovery loaded in offline mode.");
+            toast("Socket failed, Watch Room recovery loaded in offline mode.");
           } else {
             setHostMode();
           }
@@ -24494,7 +29338,7 @@ function watchroomPage(req, res) {
               if (playerType) {
                 var isHls = typeof isPollingHlsUrl === "function" && isPollingHlsUrl(movie.playbackUrl || movie.m3u8 || (movie.playbackUrl || movie.m3u8 || movie.proxyVideo));
                 var quality = movie.streamQuality ? " • " + movie.streamQuality : "";
-                playerType.textContent = isHls ? "LIVE HLS / M3U8 Player" + quality : "Native Video Player" + quality;
+                playerType.textContent = isHls ? ((movie && movie.hlsProxyUrl) ? "PROXIED M3U8 Player" : "DIRECT M3U8 Player") + quality : "Native Video Player" + quality;
               }
 
               if (driftBadge) {
@@ -24584,6 +29428,10 @@ function watchroomPage(req, res) {
             var video = byId("roomMovieVideo");
             if (!video || video.hidden || !(movie.playbackUrl || movie.m3u8 || movie.proxyVideo)) return;
             var liveMode = typeof isPollingLiveM3u8 === "function" && isPollingLiveM3u8();
+            if (isPollingHlsUrl(movie.playbackUrl || movie.m3u8 || movie.proxyVideo) && !movie.hlsReady) {
+              return;
+            }
+
             var target = targetTime();
             var drift = Math.abs(Number(video.currentTime || 0) - target);
             if (liveMode) {
@@ -24640,7 +29488,7 @@ function watchroomPage(req, res) {
 
           function renderMovie(next) {
             if (!next) return;
-            movie = Object.assign({ status: "idle", movieId: "", playbackUrl: "", proxyVideo: "", m3u8: "", streamType: "", streamQuality: "", streamName: "", streamMode: "", isLiveM3u8: false, playAt: 0, sync: { playing: false, offset: 0, startedAt: 0 } }, next);
+            movie = Object.assign({ status: "idle", movieId: "", playbackUrl: "", proxyVideo: "", m3u8: "", streamType: "", streamQuality: "", streamName: "", streamMode: "", isLiveM3u8: false, hlsIsLive: false, hlsReady: false, playAt: 0, sync: { playing: false, offset: 0, startedAt: 0 } }, next);
             movie.playbackUrl = movie.playbackUrl || movie.m3u8 || (movie.playbackUrl || movie.m3u8 || movie.proxyVideo);
             if (!movie.sync) movie.sync = { playing: false, offset: 0, startedAt: 0 };
 
@@ -24759,7 +29607,7 @@ function watchroomPage(req, res) {
               if (data.room && data.room.syncedMovie) renderMovie(data.room.syncedMovie);
               var viewers = byId("stableViewerCount");
               if (viewers && data.room) viewers.textContent = String(data.room.viewers || 1);
-              toast("Date Room polling fallback connected");
+              toast("Watch Room polling fallback connected");
             }).catch(function(error) {
               var status = byId("stableHostStatus");
               if (status) status.textContent = "Offline";
@@ -24875,7 +29723,18 @@ function watchroomPage(req, res) {
 
   </main>`;
 
-  res.send(pageShell({ title: `${SITE_NAME} — ${room.name}`, active: "watchrooms", body }));
+  res.send(pageShell({
+    title: `${SITE_NAME} — ${room.name}`,
+    active: "social",
+    extraHead: isSocialEmbed ? `<style>
+      body { background: #0f111a !important; }
+      .topbar, .mobileTabBar, .nav, .profileDropdown { display: none !important; }
+      .dsStableRoom { padding: 0 !important; min-height: 100vh; }
+      .dsStableRoomHero { margin-top: 0 !important; border-radius: 0 0 22px 22px !important; }
+      .dsStableRoomGrid { margin-bottom: 0 !important; }
+    </style>` : "",
+    body
+  }));
 }
 
 app.get("/welcome", welcomePage);
@@ -24897,58 +29756,164 @@ app.get("/m3u8-player", (req, res) => {
     referer: String(req.query.referer || req.query.ref || ""),
     origin: String(req.query.origin || ""),
   };
-  const hlsProxy = rawSrc ? registerHlsProxySource(rawSrc, srcHeaders, { standalone: true }) : { url: "" };
+  const useProxy = String(req.query.proxy || "").toLowerCase() === "true";
+  const hlsProxy = rawSrc && useProxy ? registerHlsProxySource(rawSrc, srcHeaders, { standalone: true }) : { url: "" };
   const src = hlsProxy.url || rawSrc;
-  const safeSrc = escapeHtml(src);
   const body = `<main class="dsWatchPage dsM3u8Standalone">
     <section class="dsWatchHero">
       <div>
-        <span class="dsEyebrow">HLS / M3U8 Player</span>
+        <span class="dsEyebrow">Video.js / M3U8 Player</span>
         <h1>SwiflyTV M3U8 Player</h1>
-        <p>Paste a licensed live m3u8 URL as <code>?url=</code>. SwiflyTV can also proxy/rewrite the playlist through this server for browser playback.</p>
+        <p>Paste a licensed m3u8 URL as <code>?url=</code>. This uses Video.js/VHS first, with HLS.js fallback.</p>
       </div>
     </section>
 
-    <section class="dsWatchShell">
-      ${src ? `<video id="standaloneM3u8Video" class="dsDirectMovieVideo" controls playsinline preload="metadata"></video>` : `<div class="dsNoTrailer"><h2>No m3u8 URL</h2><p>Add <code>?url=https://example.com/master.m3u8</code></p></div>`}
+    <section class="dsWatchShell dsStandaloneHlsShell">
+      ${src ? `<video id="standaloneM3u8Video" class="dsDirectMovieVideo video-js vjs-big-play-centered vjs-theme-swifly" controls playsinline crossorigin="anonymous" preload="auto"></video>
+      <div id="standaloneHlsStatus" class="dsHlsStatus"><b>Loading m3u8...</b><span>Preparing Video.js player</span></div>` : `<div class="dsNoTrailer"><h2>No m3u8 URL</h2><p>Add <code>?url=https://example.com/master.m3u8</code></p></div>`}
     </section>
 
     <script>
       (function(){
         var src = ${JSON.stringify(src)};
         var video = document.getElementById("standaloneM3u8Video");
+        var status = document.getElementById("standaloneHlsStatus");
         if (!src || !video) return;
 
-        if (video.canPlayType && video.canPlayType("application/vnd.apple.mpegurl")) {
-          video.src = src;
-          video.load();
-          return;
+        function setStatus(title, detail, isError) {
+          if (!status) return;
+          status.hidden = false;
+          status.classList.toggle("isError", Boolean(isError));
+          status.querySelector("b").textContent = title || "Player";
+          status.querySelector("span").textContent = detail || "";
         }
 
-        if (window.Hls && window.Hls.isSupported && window.Hls.isSupported()) {
+        function hideStatusSoon() {
+          setTimeout(function(){ if (status) status.hidden = true; }, 2500);
+        }
+
+        function loadHls(callback) {
+          if (window.Hls) return callback(true);
+          var urls = [
+            "https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js",
+            "https://unpkg.com/hls.js@1.5.17/dist/hls.min.js",
+            "https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.17/hls.min.js"
+          ];
+          var i = 0;
+          function next() {
+            if (window.Hls) return callback(true);
+            if (i >= urls.length) return callback(false);
+            var script = document.createElement("script");
+            script.src = urls[i++];
+            script.async = true;
+            script.onload = function(){ callback(Boolean(window.Hls)); };
+            script.onerror = next;
+            document.head.appendChild(script);
+          }
+          next();
+        }
+
+        try { video.crossOrigin = "anonymous"; } catch {}
+
+        if (window.videojs) {
+          try {
+            var player = window.videojs(video, {
+              controls: true,
+              autoplay: false,
+              preload: "auto",
+              liveui: true,
+              responsive: true,
+              fluid: true,
+              html5: {
+                vhs: {
+                  overrideNative: true,
+                  withCredentials: false,
+                  enableLowInitialPlaylist: true,
+                  smoothQualityChange: true
+                },
+                nativeAudioTracks: false,
+                nativeVideoTracks: false
+              },
+              sources: [{ src: src, type: "application/x-mpegURL" }]
+            });
+
+            player.ready(function(){
+              setStatus("m3u8 ready", "Video.js loaded. Press play.", false);
+              hideStatusSoon();
+            });
+
+            player.on("error", function(){
+              var err = player.error && player.error();
+              var message = err && (err.message || err.code) ? String(err.message || ("Code " + err.code)) : "Unknown Video.js error";
+              setStatus("Video.js error", message, true);
+            });
+
+            return;
+          } catch (error) {
+            setStatus("Video.js failed", error.message || "Trying HLS.js fallback", true);
+          }
+        }
+
+        loadHls(function(loaded) {
+          if (!loaded || !window.Hls || !window.Hls.isSupported()) {
+            setStatus("HLS.js did not load", "This browser needs Video.js or HLS.js to play m3u8.", true);
+            return;
+          }
+
           var hls = new window.Hls({
+            debug: false,
             enableWorker: true,
-            lowLatencyMode: true,
-            liveSyncDurationCount: 3,
-            liveMaxLatencyDurationCount: 10,
-            maxLiveSyncPlaybackRate: 1.5,
-            backBufferLength: 30,
+            lowLatencyMode: false,
+            backBufferLength: 90,
+            maxBufferLength: 60,
+            maxMaxBufferLength: 120,
+            startPosition: -1,
+            capLevelToPlayerSize: true,
+            manifestLoadingMaxRetry: 4,
+            levelLoadingMaxRetry: 4,
+            fragLoadingMaxRetry: 6,
+            manifestLoadingTimeOut: 30000,
+            levelLoadingTimeOut: 30000,
+            fragLoadingTimeOut: 30000
           });
-          hls.loadSource(src);
-          hls.attachMedia(video);
-          hls.on(window.Hls.Events.ERROR, function(event, data) {
-            if (data && data.fatal) console.warn("HLS fatal error", data);
-          });
-          return;
-        }
 
-        video.outerHTML = '<div class="dsNoTrailer"><h2>HLS unsupported</h2><p>This browser could not play that m3u8 stream.</p></div>';
+          hls.on(window.Hls.Events.MEDIA_ATTACHED, function() {
+            setStatus("Loading m3u8...", "Fetching manifest", false);
+            hls.loadSource(src);
+          });
+
+          hls.on(window.Hls.Events.MANIFEST_PARSED, function(event, data) {
+            setStatus("m3u8 ready", "HLS.js loaded. Press play.", false);
+            hideStatusSoon();
+          });
+
+          hls.on(window.Hls.Events.ERROR, function(event, data) {
+            if (!data) return;
+            var details = String(data.details || data.reason || data.type || "Unknown HLS error");
+            if (!data.fatal) {
+              setStatus("HLS warning", details, false);
+              return;
+            }
+            if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
+              setStatus("HLS network error", "Retrying stream load...", true);
+              try { hls.startLoad(); } catch {}
+              return;
+            }
+            if (data.type === window.Hls.ErrorTypes.MEDIA_ERROR) {
+              setStatus("HLS media error", "Trying media recovery...", true);
+              try { hls.recoverMediaError(); } catch {}
+              return;
+            }
+            setStatus("HLS failed", details, true);
+          });
+
+          hls.attachMedia(video);
+        });
       })();
     </script>
   </main>`;
   res.send(pageShell({ title: `${SITE_NAME} — M3U8 Player`, active: "watch", body }));
 });
-
 
 
 async function handleHlsProxyMaster(req, res) {
@@ -25001,10 +29966,6 @@ async function handleHlsProxyMaster(req, res) {
     return res.status(502).type("text/plain").send(`HLS proxy failed: ${error.message || "unknown error"}`);
   }
 }
-
-app.options("/api/hls-proxy/:id/master.m3u8", handleHlsProxyMaster);
-app.head("/api/hls-proxy/:id/master.m3u8", handleHlsProxyMaster);
-app.get("/api/hls-proxy/:id/master.m3u8", handleHlsProxyMaster);
 
 async function handleHlsProxyAsset(req, res) {
   setHlsProxyCors(res);
@@ -25087,26 +30048,13 @@ async function handleHlsProxyAsset(req, res) {
   }
 }
 
+app.options("/api/hls-proxy/:id/master.m3u8", handleHlsProxyMaster);
+app.head("/api/hls-proxy/:id/master.m3u8", handleHlsProxyMaster);
+app.get("/api/hls-proxy/:id/master.m3u8", handleHlsProxyMaster);
+
 app.options("/api/hls-proxy/:id/asset", handleHlsProxyAsset);
 app.head("/api/hls-proxy/:id/asset", handleHlsProxyAsset);
 app.get("/api/hls-proxy/:id/asset", handleHlsProxyAsset);
-
-
-app.get("/favicon.ico", (req, res) => {
-  res.status(204).end();
-});
-
-app.get("/api/proxy-video-wait/movie/:id", async (req, res) => {
-  res.set("Cache-Control", "no-store");
-  const result = await fetchProxyVideoSource({ type: "movie", id: req.params.id });
-  res.json(result);
-});
-
-app.get("/api/proxy-video/movie/:id", async (req, res) => {
-  res.set("Cache-Control", "no-store");
-  const result = await fetchProxyVideoSource({ type: "movie", id: req.params.id });
-  res.json(result);
-});
 
 app.get("/api/hls-proxy/:id/status", (req, res) => {
   res.set("Cache-Control", "no-store");
@@ -25128,6 +30076,23 @@ app.get("/api/hls-proxy/:id/status", (req, res) => {
   });
 });
 
+
+app.get("/favicon.ico", (req, res) => {
+  res.status(204).end();
+});
+
+app.get("/api/proxy-video-wait/movie/:id", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const result = await fetchProxyVideoSource({ type: "movie", id: req.params.id });
+  res.json(result);
+});
+
+app.get("/api/proxy-video/movie/:id", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const result = await fetchProxyVideoSource({ type: "movie", id: req.params.id });
+  res.json(result);
+});
+
 app.get("/api/hls-source/movie/:id", async (req, res) => {
   res.set("Cache-Control", "no-store");
   const result = await fetchProxyVideoSource({ type: "movie", id: req.params.id });
@@ -25146,6 +30111,8 @@ app.get("/api/hls-source/movie/:id", async (req, res) => {
     streamMode: result.streamMode || "",
     streamQuality: result.streamQuality || "",
     streamName: result.streamName || "",
+    streamNameFix: true,
+    m3u8ProxyDefault: true,
     hlsProxyEnabled: hlsProxyEnabled(),
     message: result.message || "",
     attempts: result.attempts || [],
@@ -25188,22 +30155,22 @@ function authPage(res, mode = "login") {
   const isSignup = String(mode || "login") === "signup";
   const title = isSignup ? "Create your account" : "Welcome back";
   const subtitle = isSignup
-    ? "Make a local SwiflyTV account for couple profiles, date rooms, Our List, and shared watch plans on this device."
-    : "Log in to your SwiflyTV couple space on this device.";
+    ? "Make a local SwiflyTV account for profiles, watchlists, continue watching, and watch room features on this device."
+    : "Log in to your SwiflyTV profile on this device.";
 
   const body = `<main class="dsAuthPage dsAuthPageSafe">
     <section class="dsAuthShell dsAuthShellSafe">
       <a class="dsAuthBrand" href="/"><span></span>${escapeHtml(SITE_NAME)}</a>
 
       <aside class="dsAuthPitch">
-        <span class="dsEyebrow">${isSignup ? "Start your couple space" : "Welcome back"}</span>
+        <span class="dsEyebrow">${isSignup ? "Start your profile" : "Welcome back"}</span>
         <h1>${escapeHtml(title)}</h1>
         <p>${escapeHtml(subtitle)}</p>
 
         <div class="dsAuthFeatureList">
-          <div><b>Couple Profiles</b><span>Me, Partner, and Together.</span></div>
-          <div><b>Date Rooms</b><span>Open Together, countdown, and chat.</span></div>
-          <div><b>Our List</b><span>Save what you both want next.</span></div>
+          <div><b>Profiles</b><span>Regular and Kids profiles.</span></div>
+          <div><b>Watch Rooms</b><span>Start synced rooms when you want.</span></div>
+          <div><b>My List</b><span>Save what you want next.</span></div>
         </div>
       </aside>
 
@@ -25325,9 +30292,8 @@ function authPage(res, mode = "login") {
 
           if (!localStorage.getItem("swiflytv.profiles")) {
             localStorage.setItem("swiflytv.profiles", JSON.stringify([
-              { id: "me", name: account.name || "Me", mode: "standard" },
-              { id: "partner", name: "Partner", mode: "standard" },
-              { id: "together", name: "Together", mode: "standard" }
+              { id: "main", name: account.name || "Main", mode: "standard" },
+              { id: "kids", name: "Kids", mode: "kids" }
             ]));
           }
 
@@ -25350,37 +30316,43 @@ function accountPage(req, res) {
     <section class="dsAccountHero">
       <div>
         <span class="dsEyebrow">Account</span>
-        <h1>Your couple space</h1>
-        <p>Manage couple profiles, Our List, hearts, date rooms, and what you are watching together.</p>
+        <h1>Your streaming profile</h1>
+        <p>Manage profiles, watchlists, liked titles, continue watching, and watch rooms.</p>
       </div>
       <div class="dsAccountActions">
         <a class="dsPrimaryBtn" href="/profiles">Profiles</a>
+        <a class="dsSecondaryBtn" href="/profiles/manage">Manage Profiles</a>
         <a class="dsSecondaryBtn" href="/my-list">My List</a>
         <a class="dsSecondaryBtn" href="/liked">Liked</a>
-        <a class="dsGhostPill" href="/watchrooms">Date Rooms</a>
+        <a class="dsGhostPill" href="/watchrooms">Watch Rooms</a>
       </div>
     </section>
 
     <section class="dsAccountGrid">
       <a class="dsAccountCard" href="/profiles">
         <span>01</span>
-        <h2>Couple Profiles</h2>
-        <p>Choose Me, Partner, or Together.</p>
+        <h2>Profiles</h2>
+        <p>Switch into a profile quickly.</p>
+      </a>
+      <a class="dsAccountCard" href="/profiles/manage">
+        <span>02</span>
+        <h2>Manage Profiles</h2>
+        <p>Create, rename, or remove profiles.</p>
       </a>
       <a class="dsAccountCard" href="/continue">
-        <span>02</span>
-        <h2>Continue Together</h2>
-        <p>Jump back into your last date-night watch.</p>
+        <span>03</span>
+        <h2>Continue Watching</h2>
+        <p>Jump back into what you were watching.</p>
       </a>
       <a class="dsAccountCard" href="/my-list">
-        <span>03</span>
-        <h2>Our List</h2>
-        <p>View titles saved for your next date.</p>
+        <span>04</span>
+        <h2>My List</h2>
+        <p>View titles saved for later.</p>
       </a>
       <a class="dsAccountCard" href="/watchrooms">
-        <span>04</span>
-        <h2>Date Rooms</h2>
-        <p>Create or join a room with your person.</p>
+        <span>05</span>
+        <h2>Watch Rooms</h2>
+        <p>Create or join a synced room.</p>
       </a>
     </section>
 
@@ -25402,106 +30374,47 @@ function accountPage(req, res) {
 }
 
 
-
-function apiStatus(req, res) {
-  res.json({
-    ok: true,
-    name: SITE_NAME,
-    uptime: Math.round(process.uptime()),
-    timestamp: Date.now()
-  });
-}
-
-
-function continueWatchingPage(req, res) {
-  const body = `<main class="dsPlainPage dsContinuePage">
-    <section class="dsContinueHero">
-      <span class="dsEyebrow">Continue Watching</span>
-      <h1>Pick up where you left off.</h1>
-      <p>Your browser saves started titles locally. Open a title, press play, and it can show here on this device.</p>
-      <div class="dsContinueActions">
-        <a class="dsPrimaryBtn" href="/">Browse Home</a>
-        <a class="dsSecondaryBtn" href="/movies">Movies</a>
-        <a class="dsGhostPill" href="/tv">TV Shows</a>
-      </div>
-    </section>
-
-    <section class="dsContinueList" id="continueList">
-      <div class="dsEmptyContinue">
-        <h2>No saved watching yet</h2>
-        <p>When you start watching something, it will show up here.</p>
-      </div>
-    </section>
-
-    <script>
-      (function renderContinueWatching(){
-        const root = document.getElementById("continueList");
-        if (!root) return;
-
-        let items = [];
-        try {
-          items = JSON.parse(localStorage.getItem("swiflytv.continueWatching") || "[]");
-        } catch {}
-
-        if (!Array.isArray(items) || !items.length) return;
-
-        root.innerHTML = items.slice(0, 24).map((item) => {
-          const type = item.type || item.media_type || "movie";
-          const id = item.id || item.tmdbId || "";
-          const title = String(item.title || item.name || "Untitled")
-            .replaceAll("&","&amp;")
-            .replaceAll("<","&lt;")
-            .replaceAll(">","&gt;");
-          const poster = item.poster || item.poster_path || "";
-          const href = id ? "/" + type + "/" + id : "#";
-          const imgSrc = poster && poster.startsWith("http") ? poster : (poster ? "https://image.tmdb.org/t/p/w342" + poster : "");
-          return '<a class="dsContinueCard" href="' + href + '">' +
-            (imgSrc ? '<img src="' + imgSrc + '" alt="' + title + '" loading="lazy" />' : '<div class="posterFallback"><span>' + title.slice(0,1) + '</span></div>') +
-            '<div><strong>' + title + '</strong><span>Continue watching</span></div>' +
-          '</a>';
-        }).join("");
-      })();
-    </script>
-  </main>`;
-
-  res.send(pageShell({ title: `${SITE_NAME} — Continue Watching`, active: "continue", body }));
-}
-
-
 function profilesPage(req, res) {
-  const body = `<main class="dsPlainPage dsProfilesPage">
-    <section class="dsProfilesHero">
-      <span class="dsEyebrow">Couple Profiles</span>
-      <h1>Who is watching tonight?</h1>
-      <p>Choose Me, Partner, or Together for browsing, date rooms, and saved lists.</p>
+  const body = `<main class="dsPlainPage dsProfilesPage dsProfilesSelectPage">
+    <section class="dsProfilesHero dsCleanHero">
+      <span class="dsEyebrow">Profiles</span>
+      <h1>Who is watching?</h1>
+      <p>Pick a profile and jump straight into SwiflyTV. Profile editing lives on its own manage page now, so this screen stays clean.</p>
     </section>
 
-    <section class="dsProfilesGrid" id="profilesGrid"></section>
+    <section class="dsProfilesSelectShell">
+      <div class="dsProfilesGrid dsProfilesChoiceGrid" id="profilesGrid"></div>
 
-    <section class="dsProfileCreate">
-      <h2>Create couple profile</h2>
-      <form id="profileCreateForm">
-        <input name="name" placeholder="Me, Partner, or Together" maxlength="32" />
-        <select name="mode">
-          <option value="standard">Standard</option>
-          <option value="kids">Kids Safe</option>
-        </select>
-        <button class="dsPrimaryBtn" type="submit">Add Profile</button>
-      </form>
+      <div class="dsProfilesQuickActions">
+        <a class="dsSecondaryBtn" href="/profiles/manage"><i class="fa-solid fa-pen-to-square"></i> Manage Profiles</a>
+        <a class="dsGhostPill" href="/account"><i class="fa-solid fa-gear"></i> Account</a>
+      </div>
     </section>
 
     <script>
-      (function profileUi(){
+      (function profileSelectUi(){
         const grid = document.getElementById("profilesGrid");
-        const form = document.getElementById("profileCreateForm");
-        if (!grid || !form) return;
+        if (!grid) return;
 
         function readProfiles() {
           try {
             const saved = JSON.parse(localStorage.getItem("swiflytv.profiles") || "[]");
-            if (Array.isArray(saved) && saved.length) return saved;
+            if (Array.isArray(saved) && saved.length) {
+              const cleaned = saved
+                .filter(Boolean)
+                .map((profile) => {
+                  if (profile.mode === "date") {
+                    return { ...profile, mode: "standard", name: profile.name === "Date Profile" ? "Main" : profile.name };
+                  }
+                  return profile;
+                });
+              return cleaned.length ? cleaned : [{ id: "main", name: "Main", mode: "standard" }, { id: "kids", name: "Kids", mode: "kids" }];
+            }
           } catch {}
-          return [{ id: "me", name: "Me", mode: "standard" }, { id: "partner", name: "Partner", mode: "standard" }, { id: "together", name: "Together", mode: "standard" }];
+          return [
+            { id: "main", name: "Main", mode: "standard" },
+            { id: "kids", name: "Kids", mode: "kids" }
+          ];
         }
 
         function saveProfiles(profiles) {
@@ -25512,21 +30425,178 @@ function profilesPage(req, res) {
           return String(value || "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
         }
 
+        function modeLabel(mode) {
+          if (mode === "kids") return "Kids Safe";
+          return "Regular";
+        }
+
+        function destination(profile) {
+          if (profile.mode === "kids") return "/kids";
+          return "/";
+        }
+
+        const profiles = readProfiles();
+        saveProfiles(profiles);
+
+        grid.innerHTML = profiles.map((profile, index) => {
+          const initial = esc(profile.name).slice(0,1).toUpperCase() || "S";
+          return '<button class="dsProfileSelectCard" data-index="' + index + '" type="button">' +
+            '<span class="dsProfileAvatarBig">' + initial + '</span>' +
+            '<strong>' + esc(profile.name) + '</strong>' +
+            '<small>' + modeLabel(profile.mode) + '</small>' +
+          '</button>';
+        }).join("") +
+        '<a class="dsProfileSelectCard dsAddProfileCard" href="/profiles/manage">' +
+          '<span class="dsProfileAvatarBig">+</span>' +
+          '<strong>Add Profile</strong>' +
+          '<small>Manage profiles</small>' +
+        '</a>';
+
+        grid.querySelectorAll("button.dsProfileSelectCard").forEach((button) => {
+          button.addEventListener("click", () => {
+            const profile = profiles[Number(button.dataset.index || 0)];
+            localStorage.setItem("swiflytv.activeProfile", JSON.stringify(profile));
+            location.href = destination(profile);
+          });
+        });
+      })();
+    </script>
+  </main>`;
+
+  res.send(pageShell({ title: `${SITE_NAME} — Profiles`, active: "profiles", body }));
+}
+
+
+
+function profilesManagePage(req, res) {
+  const body = `<main class="dsPlainPage dsProfilesManagePage">
+    <section class="dsCleanHero dsProfilesManageHero">
+      <span class="dsEyebrow">Profile Center</span>
+      <h1>Manage profiles without the clutter.</h1>
+      <p>Create, rename, remove, and organize profiles from one dedicated control page.</p>
+      <div class="dsHeroMiniActions">
+        <a class="dsPrimaryBtn" href="/profiles"><i class="fa-solid fa-user-group"></i> Switch Profile</a>
+        <a class="dsSecondaryBtn" href="/account"><i class="fa-solid fa-gear"></i> Account</a>
+      </div>
+    </section>
+
+    <section class="dsProfileManagerLayout">
+      <aside class="dsProfileManagerPanel">
+        <span class="dsPanelLabel">Create profile</span>
+        <h2>New profile</h2>
+        <form id="profileCreateForm" class="dsStackedForm">
+          <label>
+            <span>Name</span>
+            <input name="name" placeholder="Name this profile" maxlength="32" />
+          </label>
+          <label>
+            <span>Mode</span>
+            <select name="mode">
+              <option value="standard">Regular Movie Profile</option>
+              <option value="kids">Kids Safe</option>
+            </select>
+          </label>
+          <button class="dsPrimaryBtn" type="submit"><i class="fa-solid fa-plus"></i> Add Profile</button>
+        </form>
+      </aside>
+
+      <section class="dsProfileManagerList">
+        <div class="dsSectionHeaderSplit">
+          <div>
+            <span class="dsEyebrow">Your profiles</span>
+            <h2>Profile list</h2>
+          </div>
+          <button id="resetProfilesBtn" class="dsGhostPill" type="button">Reset</button>
+        </div>
+        <div id="profilesManageList" class="dsManageProfileList"></div>
+      </section>
+    </section>
+
+    <script>
+      (function profileManageUi(){
+        const form = document.getElementById("profileCreateForm");
+        const list = document.getElementById("profilesManageList");
+        const resetBtn = document.getElementById("resetProfilesBtn");
+        if (!form || !list) return;
+
+        const fallback = [
+          { id: "main", name: "Main", mode: "standard" },
+          { id: "kids", name: "Kids", mode: "kids" }
+        ];
+
+        function readProfiles() {
+          try {
+            const saved = JSON.parse(localStorage.getItem("swiflytv.profiles") || "[]");
+            if (Array.isArray(saved) && saved.length) {
+              return saved.filter(Boolean).map((profile) => {
+                if (profile.mode === "date") return { ...profile, mode: "standard", name: profile.name === "Date Profile" ? "Main" : profile.name };
+                return profile;
+              });
+            }
+          } catch {}
+          return fallback.slice();
+        }
+
+        function saveProfiles(profiles) {
+          localStorage.setItem("swiflytv.profiles", JSON.stringify(profiles));
+        }
+
+        function esc(value) {
+          return String(value || "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+        }
+
+        function modeLabel(mode) {
+          return mode === "kids" ? "Kids Safe" : "Regular";
+        }
+
         function render() {
           const profiles = readProfiles();
-          grid.innerHTML = profiles.map((profile, index) => {
-            return '<button class="dsProfileCard" data-index="' + index + '" type="button">' +
-              '<span>' + esc(profile.name).slice(0,1).toUpperCase() + '</span>' +
-              '<strong>' + esc(profile.name) + '</strong>' +
-              '<small>' + (profile.mode === "kids" ? "Kids Safe" : "Standard") + '</small>' +
-            '</button>';
+          saveProfiles(profiles);
+
+          list.innerHTML = profiles.map((profile, index) => {
+            const initial = esc(profile.name).slice(0,1).toUpperCase() || "S";
+            return '<article class="dsManageProfileCard" data-index="' + index + '">' +
+              '<span class="dsProfileAvatarBig">' + initial + '</span>' +
+              '<div class="dsManageProfileMain">' +
+                '<strong>' + esc(profile.name) + '</strong>' +
+                '<small>' + modeLabel(profile.mode) + '</small>' +
+              '</div>' +
+              '<div class="dsManageProfileActions">' +
+                '<button type="button" data-action="rename">Rename</button>' +
+                '<button type="button" data-action="mode">' + (profile.mode === "kids" ? "Make Regular" : "Make Kids") + '</button>' +
+                '<button type="button" data-action="delete">Delete</button>' +
+              '</div>' +
+            '</article>';
           }).join("");
 
-          grid.querySelectorAll(".dsProfileCard").forEach((button) => {
-            button.addEventListener("click", () => {
-              const profile = profiles[Number(button.dataset.index || 0)];
-              localStorage.setItem("swiflytv.activeProfile", JSON.stringify(profile));
-              location.href = profile.mode === "kids" ? "/kids" : "/";
+          list.querySelectorAll(".dsManageProfileCard").forEach((card) => {
+            card.addEventListener("click", (event) => {
+              const btn = event.target.closest("button");
+              if (!btn) return;
+              const index = Number(card.dataset.index || 0);
+              const profiles = readProfiles();
+              const profile = profiles[index];
+              if (!profile) return;
+
+              if (btn.dataset.action === "rename") {
+                const next = prompt("Profile name", profile.name);
+                if (next && next.trim()) profile.name = next.trim().slice(0, 32);
+              }
+
+              if (btn.dataset.action === "mode") {
+                profile.mode = profile.mode === "kids" ? "standard" : "kids";
+              }
+
+              if (btn.dataset.action === "delete") {
+                if (profiles.length <= 1) {
+                  alert("Keep at least one profile.");
+                  return;
+                }
+                if (confirm("Delete " + profile.name + "?")) profiles.splice(index, 1);
+              }
+
+              saveProfiles(profiles);
+              render();
             });
           });
         }
@@ -25543,151 +30613,1497 @@ function profilesPage(req, res) {
           render();
         });
 
+        resetBtn?.addEventListener("click", () => {
+          if (!confirm("Reset profiles to Main and Kids?")) return;
+          saveProfiles(fallback.slice());
+          render();
+        });
+
         render();
       })();
     </script>
   </main>`;
 
-  res.send(pageShell({ title: `${SITE_NAME} — Profiles`, active: "profiles", body }));
+  res.send(pageShell({ title: `${SITE_NAME} — Manage Profiles`, active: "profiles", body }));
 }
 
 
 app.get("/account", accountPage);
-app.get("/continue-watching", continueWatchingPage);
-app.get("/continue", continueWatchingPage);
 
-function couplesPage(req, res) {
-  const body = `<main class="dsPlainPage dsCouplesPage">
-    <section class="dsCouplesHero">
-      <div>
-        <span class="dsEyebrow">Couple Dashboard</span>
-        <h1>Tonight, together.</h1>
-        <p>A small home base for long-distance couples: start a date room, save watch ideas, write a note, and keep the next movie night easy.</p>
-      </div>
-      <div class="dsCouplesHeroActions">
-        <a class="dsPrimaryBtn" href="/watchrooms">Start Date Room</a>
-        <a class="dsSecondaryBtn" href="/my-list">Open Our List</a>
-        <a class="dsGhostPill" href="/profiles">Couple Profiles</a>
-      </div>
-    </section>
 
-    <section class="dsCouplesGrid">
-      <article class="dsCoupleCard dsCoupleNoteCard">
-        <span>Love note</span>
-        <h2>Leave something for them.</h2>
-        <textarea id="coupleNoteInput" placeholder="Write a small note for your person..."></textarea>
-        <button class="dsPrimaryBtn" id="saveCoupleNoteBtn" type="button">Save Note</button>
-        <p id="coupleNotePreview"></p>
-      </article>
+const socialRooms = new Map();
 
-      <article class="dsCoupleCard">
-        <span>Next date</span>
-        <h2>Plan the watch.</h2>
-        <form id="couplePlanForm">
-          <input name="title" placeholder="Movie/show idea" />
-          <input name="time" placeholder="Date/time, like Friday 9PM" />
-          <button class="dsPrimaryBtn" type="submit">Save Plan</button>
-        </form>
-        <div id="couplePlanPreview" class="dsCoupleSavedLine">No plan saved yet.</div>
-      </article>
+function getSocialRoom(roomId = "general") {
+  const id = String(roomId || "general").slice(0, 80);
+  if (!socialRooms.has(id)) {
+    socialRooms.set(id, {
+      id,
+      messages: [],
+      members: new Map(),
+      createdAt: Date.now(),
+    });
+  }
+  return socialRooms.get(id);
+}
 
-      <article class="dsCoupleCard">
-        <span>Distance sync</span>
-        <h2>Use the same moment.</h2>
-        <p>When a video cannot embed, both of you open the real site and use a Date Room countdown.</p>
-        <a class="dsSecondaryBtn" href="/watchrooms">Open Date Rooms</a>
-      </article>
 
-      <article class="dsCoupleCard">
-        <span>Our vibe</span>
-        <h2>Pick a mood.</h2>
-        <div class="dsCoupleMoodGrid">
-          <a href="/search?q=romance">Romantic</a>
-          <a href="/search?q=comedy">Funny</a>
-          <a href="/search?q=comfort">Comfort</a>
-          <a href="/search?q=thriller">React together</a>
-          <a href="/search?q=anime">Anime night</a>
-          <a href="/search?q=christmas">Cozy seasonal</a>
+function socialCreatorNames() {
+  return String(process.env.SOCIAL_CREATOR_NAMES || "Main,Admin,Owner,Lukas")
+    .split(",")
+    .map((name) => name.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function socialOpenRoomCreation() {
+  return process.env.SOCIAL_OPEN_ROOM_CREATION !== "false";
+}
+
+function socialPermissionsForName(name = "") {
+  const normalized = String(name || "").trim().toLowerCase();
+  const allowed = socialCreatorNames();
+  const isCreator = Boolean(normalized && allowed.includes(normalized));
+  return {
+    isCreator,
+    canCreateGroups: isCreator,
+    canCreateChannels: isCreator,
+    canCreateWatchRooms: socialOpenRoomCreation() || isCreator,
+    canManageSocial: isCreator,
+    allowedCreators: allowed,
+    openRoomCreation: socialOpenRoomCreation(),
+  };
+}
+
+
+function socialPage(req, res) {
+  const tab = String(req.query.tab || "").toLowerCase();
+  const requestedRoomId = normalizeRoomId(req.query.roomId || req.query.room || "");
+  const initialTab = requestedRoomId || tab === "watchrooms" || tab === "rooms" ? "rooms" : "chat";
+  const denied = String(req.query.denied || "");
+  const allowedCreators = socialCreatorNames();
+  const initialRoomName = String(req.query.name || "Social Watch Room").slice(0, 80);
+  const initialKind = String(req.query.kind || "").slice(0, 24);
+  const initialVideoId = String(req.query.videoId || "").slice(0, 64);
+  const initialEmbedUrl = String(req.query.embedUrl || "").slice(0, 1000);
+
+  const body = `<main class="sv100 sv103 sv104 sv105 sv106" data-initial-tab="${escapeHtml(initialTab)}" data-room-id="${escapeHtml(requestedRoomId)}" data-room-name="${escapeHtml(initialRoomName)}" data-room-kind="${escapeHtml(initialKind)}" data-room-video-id="${escapeHtml(initialVideoId)}" data-room-embed-url="${escapeHtml(initialEmbedUrl)}" data-denied="${escapeHtml(denied)}" data-allowed-creators="${escapeHtml(allowedCreators.join(","))}" data-open-room-creation="${socialOpenRoomCreation() ? "true" : "false"}">
+    <aside class="sv100Guilds" aria-label="Servers">
+      <a class="sv100Guild active" href="/social" title="Swifly Hub"><i class="ri-play-circle-fill"></i></a>
+      <a class="sv100Guild" href="/movies" title="Movies"><i class="ri-movie-2-fill"></i></a>
+      <a class="sv100Guild" href="/tv" title="TV Shows"><i class="ri-tv-2-fill"></i></a>
+      <a class="sv100Guild" href="/social?tab=watchrooms" title="Watch Rooms"><i class="ri-vidicon-fill"></i></a>
+      <a class="sv100Guild" href="/profiles" title="Profiles"><i class="ri-user-smile-fill"></i></a>
+    </aside>
+
+    <aside class="sv100Channels">
+      <div class="sv100ServerHead">
+        <div>
+          <strong>Swifly Hub</strong>
+          <small id="sv100RoleText">Checking permissions...</small>
         </div>
-      </article>
-          <article class="dsCoupleCard dsCouplesPlusSell">
-        <span>Couples+</span>
-        <h2>Premium features that feel personal.</h2>
-        <p>Inside every Date Room: Taste Match, Date Night Generator, Missing You Mode, Couple Streaks, Private Timeline, Pause for Us, Date Room Themes, Couple Badges, and Sleepy Mode.</p>
-        <a class="dsPrimaryBtn" href="/watchrooms">Try Couples+ in a Date Room</a>
-      </article>
+        <button type="button" id="sv100ServerMenu" title="Server menu"><i class="ri-arrow-down-s-line"></i></button>
+      </div>
 
-      <article class="dsCoupleCard">
-        <span>Paid-worthy idea</span>
-        <h2>Relationship memory layer.</h2>
-        <p>Normal movie sites show movies. SwiflyTV keeps the little relationship moments around the movie: streaks, notes, reactions, and date memories.</p>
-      </article>
+      <div class="sv100ProfilePill">
+        <span id="sv100Avatar">S</span>
+        <div>
+          <b id="sv100Name">Guest</b>
+          <small id="sv100Status">Local mode</small>
+        </div>
+      </div>
 
-      <article class="dsCoupleCard dsCoupleRitualCard">
-        <span>Relationship ritual</span>
-        <h2>Make movie night a habit.</h2>
-        <ul>
-          <li>Pick the vibe before the call</li>
-          <li>Add one idea to the Date Jar</li>
-          <li>Start a 10-second countdown</li>
-          <li>Send one timed love note during the movie</li>
-        </ul>
-      </article>
+      <nav class="sv100ModeTabs">
+        <button type="button" class="${initialTab === "chat" ? "active" : ""}" data-tab="chat"><i class="ri-chat-3-fill"></i> Chat</button>
+        <button type="button" class="${initialTab === "rooms" ? "active" : ""}" data-tab="rooms"><i class="ri-tv-fill"></i> Watch</button>
+      </nav>
+
+      <section class="sv100ChannelGroup" data-nav-panel="chat">
+        <header><span>Text Channels</span><button type="button" data-action="new-channel" data-requires="channels" title="Create channel"><i class="ri-add-line"></i></button></header>
+        <button type="button" class="sv100Channel active" data-room="channel-general" data-title="# general"><i class="ri-hashtag"></i><b>general</b></button>
+        <button type="button" class="sv100Channel" data-room="channel-recommendations" data-title="# recommendations"><i class="ri-hashtag"></i><b>recommendations</b></button>
+        <button type="button" class="sv100Channel" data-room="channel-watch" data-title="# watch-room-chat"><i class="ri-hashtag"></i><b>watch-room-chat</b></button>
+      </section>
+
+      <section class="sv100ChannelGroup" data-nav-panel="chat">
+        <header><span>Groups / DMs</span><button type="button" data-action="new-group" data-requires="groups" title="Create group"><i class="ri-add-line"></i></button></header>
+        <button type="button" class="sv100Channel" data-room="dm-main" data-title="Main Chat"><i class="ri-user-3-fill"></i><b>Main Chat</b></button>
+        <button type="button" class="sv100Channel" data-room="group-watchparty" data-title="Watch Party"><i class="ri-group-fill"></i><b>Watch Party</b></button>
+      </section>
+
+      <section class="sv100ChannelGroup" data-nav-panel="rooms">
+        <header><span>Watch Rooms</span><button type="button" data-action="rooms-tab" title="Open watch hub"><i class="ri-arrow-right-line"></i></button></header>
+        <button type="button" class="sv100Channel" data-tab="rooms"><i class="ri-tv-2-fill"></i><b>room-hub</b></button>
+        <button type="button" class="sv100Channel" data-action="native-create-room" data-requires="rooms"><i class="ri-add-box-fill"></i><b>create-room</b></button>
+        <button type="button" class="sv100Channel" data-action="native-join-room"><i class="ri-login-box-fill"></i><b>join-by-code</b></button>
+      </section>
+    </aside>
+
+    <section class="sv100Main">
+      <header class="sv100Topbar">
+        <div>
+          <span id="sv100Kind"><i class="ri-hashtag"></i> Text Channel</span>
+          <h1 id="sv100Title"># general</h1>
+        </div>
+        <nav>
+          <button type="button" data-action="voice"><i class="ri-phone-fill"></i><span>Voice</span></button>
+          <button type="button" data-action="video"><i class="ri-vidicon-fill"></i><span>Video</span></button>
+          <button type="button" data-action="invite"><i class="ri-link"></i><span>Invite</span></button>
+        </nav>
+      </header>
+
+      <section id="sv100ChatPanel" class="sv100Panel ${initialTab === "chat" ? "active" : ""}">
+        <div class="sv100Notice">
+          <i class="ri-shield-check-fill"></i>
+          <span>Everyone can create Watch Rooms. Groups and channels still need creator permission.</span>
+        </div>
+        <div id="sv100Messages" class="sv100Messages"></div>
+        <form id="sv100Composer" class="sv100Composer">
+          <button type="button" data-action="attach"><i class="ri-add-circle-fill"></i></button>
+          <input id="sv100Input" placeholder="Message # general" autocomplete="off" maxlength="1200" />
+          <button type="submit"><i class="ri-send-plane-fill"></i></button>
+        </form>
+      </section>
+
+      <section id="sv100RoomsPanel" class="sv100Panel sv100RoomsPanel ${initialTab === "rooms" ? "active" : ""}">
+        <div class="sv103RoomShell">
+          <header class="sv103RoomHeader">
+            <div>
+              <span class="dsEyebrow">Native Social Watchroom</span>
+              <h2 id="sv103RoomTitle">room-hub</h2>
+              <p id="sv103RoomSub">Create or join a room. The native room UI lives inside Swifly Hub.</p>
+            </div>
+            <nav>
+              <button type="button" data-action="copy-room-link"><i class="ri-link"></i> Copy</button>
+              <button type="button" data-action="share-room-chat"><i class="ri-chat-forward-fill"></i> Share</button>
+              <button type="button" data-action="leave-native-room"><i class="ri-logout-box-line"></i> Leave</button>
+            </nav>
+          </header>
+
+          <section id="sv103NativeRoom" class="sv103NativeRoom" hidden>
+            <div class="sv103Stage">
+              <div id="sv103Player" class="sv103Player">
+                <div class="sv103EmptyPlayer">
+                  <i class="ri-tv-2-fill"></i>
+                  <b>No media selected</b>
+                  <span>Host can paste a YouTube/link or select a TMDB movie.</span>
+                </div>
+              </div>
+
+              <aside class="sv103RoomMeta">
+                <div><span>Room code</span><b id="sv103RoomCode">—</b></div>
+                <div><span>Status</span><b id="sv103HostStatus">Joining...</b></div>
+                <div><span>Viewers</span><b id="sv103ViewerCount">0</b></div>
+                <div><span>Timer</span><b id="sv103Timer">0:00</b></div>
+              </aside>
+            </div>
+
+            <div class="sv103ControlDock">
+              <button type="button" data-action="native-play" class="hostOnly"><i class="ri-play-fill"></i> Play</button>
+              <button type="button" data-action="native-pause" class="hostOnly"><i class="ri-pause-fill"></i> Pause</button>
+              <button type="button" data-action="native-back" class="hostOnly"><i class="ri-replay-10-line"></i> -10</button>
+              <button type="button" data-action="native-forward" class="hostOnly"><i class="ri-forward-10-line"></i> +10</button>
+              <button type="button" data-action="native-sync-me"><i class="ri-refresh-line"></i> Sync Me</button>
+            </div>
+
+            <section class="sv103ToolsGrid">
+              <form id="sv103SetMediaForm" class="sv103ToolCard hostOnly">
+                <span>Host media</span>
+                <h3>Set YouTube / embed link</h3>
+                <input name="mediaUrl" placeholder="Paste YouTube, trailer, or website URL" />
+                <button type="submit"><i class="ri-links-fill"></i> Set Media</button>
+              </form>
+
+              <form id="sv103MovieForm" class="sv103ToolCard hostOnly">
+                <span>Movie resolver</span>
+                <h3>Select TMDB movie</h3>
+                <input name="movieId" placeholder="TMDB movie id" inputmode="numeric" />
+                <button type="submit"><i class="ri-movie-2-fill"></i> Load Movie</button>
+              </form>
+
+              <form id="sv103JoinForm" class="sv103ToolCard">
+                <span>Join</span>
+                <h3>Join another room</h3>
+                <input name="roomCode" placeholder="abc12-def34" />
+                <button type="submit"><i class="ri-login-box-fill"></i> Join</button>
+              </form>
+            </section>
+          </section>
+
+          <section id="sv103RoomLobby" class="sv103RoomLobby">
+            <div class="sv100RoomsIntro">
+              <div>
+                <span class="dsEyebrow">Integrated Watch Rooms</span>
+                <h2>Watchrooms are native now.</h2>
+                <p>The player, controls, room code, viewers, and host tools are built directly into Swifly Hub.</p>
+              </div>
+              <button class="sv100Btn primary creatorOnly" type="button" data-action="native-create-room"><i class="ri-add-circle-fill"></i> Create Room</button>
+            </div>
+
+            <div class="sv100RoomsGrid">
+              <form class="sv100Card creatorOnly" method="get" action="/watchrooms/new" id="sv100CreateRoomForm">
+                <input type="hidden" name="creator" id="sv100CreatorInput" value="" />
+                <input type="hidden" name="social" value="1" />
+                <span>Watch tools</span>
+                <h3>Create Watch Room</h3>
+                <label>Room name<input name="name" placeholder="Friday movie night" /></label>
+                <label>Movie/site link<input name="watchLink" placeholder="YouTube, trailer, website, etc." /></label>
+                <button class="sv100Btn primary" type="submit"><i class="ri-tv-fill"></i> Create Room</button>
+              </form>
+
+              <div class="sv100Card lockedOnly" hidden>
+                <span>Locked</span>
+                <h3>Group/channel creation is restricted</h3>
+                <p>You can create and join Watch Rooms. Only groups/channels are restricted.</p>
+              </div>
+
+              <form class="sv100Card" method="get" action="/watchrooms/join">
+                <span>Everyone</span>
+                <h3>Join by code</h3>
+                <label>Room code<input name="code" placeholder="abc12-def34" /></label>
+                <button class="sv100Btn" type="submit"><i class="ri-login-box-fill"></i> Join Room</button>
+              </form>
+
+              <section class="sv100Card sv100ActiveRooms">
+                <div class="sv100CardHead">
+                  <div>
+                    <span>Live rooms</span>
+                    <h3>Rooms list</h3>
+                  </div>
+                  <button type="button" data-action="refresh-rooms"><i class="ri-refresh-line"></i></button>
+                </div>
+                <div id="sv100RoomsList" class="sv100RoomsList">
+                  <p class="sv100Empty">No rooms yet.</p>
+                </div>
+              </section>
+            </div>
+          </section>
+        </div>
+      </section>
     </section>
+
+    <aside class="sv100Members">
+      <div class="sv100MembersHead">
+        <span>Online</span>
+        <small id="sv100MemberCount">1 member</small>
+      </div>
+      <div id="sv100MembersList">
+        <p><i></i> You</p>
+      </div>
+
+      <div class="sv100Perms">
+        <span>Permissions</span>
+        <p id="sv100PermText">Loading creator rules...</p>
+      </div>
+    </aside>
+
+    <section id="sv100CallModal" class="sv100CallModal" hidden>
+      <div class="sv100CallCard">
+        <header>
+          <div>
+            <span id="sv100CallType">Voice call</span>
+            <h2 id="sv100CallTitle"># general</h2>
+          </div>
+          <button type="button" data-action="close-call"><i class="ri-close-line"></i></button>
+        </header>
+        <div class="sv100CallStage">
+          <video id="sv100LocalVideo" autoplay muted playsinline></video>
+          <div><i class="ri-group-fill"></i><b id="sv100CallStatus">Ready</b></div>
+        </div>
+        <footer>
+          <button type="button" data-action="mute"><i class="ri-mic-fill"></i> Mute</button>
+          <button type="button" data-action="camera"><i class="ri-vidicon-fill"></i> Camera</button>
+          <button type="button" data-action="close-call" class="danger"><i class="ri-phone-fill"></i> Leave</button>
+        </footer>
+      </div>
+    </section>
+
+    <div id="sv100Toast" class="sv100Toast" hidden></div>
+    <div id="sv100Error" class="sv100Error" hidden></div>
 
     <script>
-      (function coupleDashboard(){
-        const noteInput = document.getElementById("coupleNoteInput");
-        const notePreview = document.getElementById("coupleNotePreview");
-        const saveNote = document.getElementById("saveCoupleNoteBtn");
-        const planForm = document.getElementById("couplePlanForm");
-        const planPreview = document.getElementById("couplePlanPreview");
+      (function(){
+        const $ = (sel, root = document) => root.querySelector(sel);
+        const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+        const app = $(".sv100");
+        const socket = window.io ? io() : null;
 
-        function renderNote() {
-          const note = localStorage.getItem("swiflytv.coupleNote") || "";
-          if (noteInput) noteInput.value = note;
-          if (notePreview) notePreview.textContent = note ? "Saved note: " + note : "No note saved yet.";
+        let currentRoom = "channel-general";
+        let currentTitle = "# general";
+        let username = "Guest";
+        let localStream = null;
+        let permissions = {
+          canCreateGroups: false,
+          canCreateChannels: false,
+          canCreateWatchRooms: false,
+          canManageSocial: false,
+          allowedCreators: [],
+          openRoomCreation: false
+        };
+
+        let activeWatchRoom = {
+          id: app?.dataset.roomId || "",
+          name: app?.dataset.roomName || "Social Watch Room",
+          kind: app?.dataset.roomKind || "",
+          videoId: app?.dataset.roomVideoId || "",
+          embedUrl: app?.dataset.roomEmbedUrl || "",
+          isHost: false,
+          joined: false,
+          syncedMovie: null,
+          sync: null
+        };
+
+        let hlsInstance = null;
+        let nativeVideoJsPlayer = null;
+        let nativeVideoControlBound = false;
+        let applyingRemote = false;
+
+        function esc(value) {
+          return String(value || "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
         }
 
-        function renderPlan() {
-          let plan = null;
-          try { plan = JSON.parse(localStorage.getItem("swiflytv.couplePlan") || "null"); } catch {}
-          if (planPreview) {
-            planPreview.textContent = plan ? (plan.title + " — " + plan.time) : "No plan saved yet.";
+        function toast(message, type) {
+          if (window.swiflyToast) window.swiflyToast(message, type || "success");
+          const el = $("#sv100Toast");
+          if (!el) return;
+          el.hidden = false;
+          el.textContent = message;
+          el.classList.toggle("error", type === "error");
+          clearTimeout(el._timer);
+          el._timer = setTimeout(() => el.hidden = true, 1800);
+        }
+
+        function showError(error) {
+          const el = $("#sv100Error");
+          if (!el) return;
+          el.hidden = false;
+          el.textContent = "Social error: " + (error?.message || String(error));
+          console.error(error);
+        }
+
+        function readProfile() {
+          try {
+            const profile = JSON.parse(localStorage.getItem("swiflytv.activeProfile") || "null");
+            const session = JSON.parse(localStorage.getItem("swiflytv.session") || "null");
+            username = profile?.name || session?.name || "Guest";
+          } catch {
+            username = "Guest";
+          }
+
+          $("#sv100Name").textContent = username;
+          $("#sv100Avatar").textContent = username.slice(0,1).toUpperCase() || "S";
+          $("#sv100CreatorInput").value = username;
+        }
+
+        async function loadPermissions() {
+          readProfile();
+
+          try {
+            const res = await fetch("/api/social/permissions?name=" + encodeURIComponent(username), { cache: "no-store" });
+            const data = await res.json();
+            if (data && data.permissions) permissions = data.permissions;
+          } catch {
+            const allowed = String(app?.dataset.allowedCreators || "").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
+            const open = app?.dataset.openRoomCreation === "true";
+            const isCreator = allowed.includes(username.trim().toLowerCase());
+            permissions = {
+              canCreateGroups: isCreator,
+              canCreateChannels: isCreator,
+              canCreateWatchRooms: isCreator || open,
+              canManageSocial: isCreator,
+              allowedCreators: allowed,
+              openRoomCreation: open
+            };
+          }
+
+          document.body.classList.toggle("sv100Creator", Boolean(permissions.canManageSocial || permissions.canCreateWatchRooms));
+          $$(".creatorOnly").forEach((el) => el.hidden = !permissions.canCreateWatchRooms);
+          $$(".lockedOnly").forEach((el) => el.hidden = Boolean(permissions.canCreateWatchRooms));
+          $$("[data-requires='groups']").forEach((el) => el.disabled = !permissions.canCreateGroups);
+          $$("[data-requires='channels']").forEach((el) => el.disabled = !permissions.canCreateChannels);
+          $$("[data-requires='rooms']").forEach((el) => el.disabled = !permissions.canCreateWatchRooms);
+
+          $("#sv100RoleText").textContent = permissions.canManageSocial ? "Creator permissions" : "Member access";
+          $("#sv100PermText").textContent = permissions.canManageSocial
+            ? "You can create groups/channels, and everyone can create Watch Rooms."
+            : "You can chat, join rooms, and create Watch Rooms. Groups/channels are locked.";
+        }
+
+        function roomKey(room) { return "swiflytv.social.v103." + room; }
+        function readMessages(room) {
+          try {
+            const saved = JSON.parse(localStorage.getItem(roomKey(room)) || "[]");
+            return Array.isArray(saved) ? saved : [];
+          } catch { return []; }
+        }
+        function saveMessages(room, messages) {
+          localStorage.setItem(roomKey(room), JSON.stringify(messages.slice(-160)));
+        }
+
+        function addMessage(message, persist) {
+          const list = $("#sv100Messages");
+          if (!list) return;
+          const author = message.author || message.name || "Guest";
+          const mine = author === username;
+          const node = document.createElement("article");
+          node.className = "sv100Msg" + (mine ? " mine" : "");
+          node.innerHTML = '<span>' + esc(author || "?").slice(0,1).toUpperCase() + '</span>' +
+            '<div><header><b>' + esc(author || "Guest") + '</b><small>' + new Date(message.createdAt || message.at || Date.now()).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) + '</small></header>' +
+            '<p>' + esc(message.text || "") + '</p></div>';
+          list.appendChild(node);
+          list.scrollTop = list.scrollHeight;
+
+          if (persist) {
+            const messages = readMessages(currentRoom);
+            messages.push({ author, text: message.text || "", createdAt: message.createdAt || message.at || Date.now() });
+            saveMessages(currentRoom, messages);
           }
         }
 
-        saveNote?.addEventListener("click", () => {
-          localStorage.setItem("swiflytv.coupleNote", String(noteInput?.value || "").trim());
-          renderNote();
-          if (window.showToast) showToast("Love note saved");
+        function renderMessages(seed) {
+          const list = $("#sv100Messages");
+          if (!list) return;
+          list.innerHTML = "";
+          const saved = readMessages(currentRoom);
+          const messages = saved.length ? saved : seed || [
+            { author: "Swifly", text: "Welcome to " + currentTitle + ".", createdAt: Date.now() },
+            { author: "Swifly", text: "Watchrooms are native in Social now. No embedded room page.", createdAt: Date.now() + 10 }
+          ];
+          messages.forEach((msg) => addMessage(msg, false));
+        }
+
+        function switchTab(tab) {
+          const rooms = tab === "rooms";
+          $("#sv100ChatPanel").classList.toggle("active", !rooms);
+          $("#sv100RoomsPanel").classList.toggle("active", rooms);
+          $$("[data-tab]").forEach((btn) => btn.classList.toggle("active", btn.dataset.tab === tab));
+          if (rooms) {
+            $("#sv100Kind").innerHTML = '<i class="ri-tv-fill"></i> Watch Rooms';
+            $("#sv100Title").textContent = activeWatchRoom.joined ? activeWatchRoom.name : "room-hub";
+            renderRooms();
+          } else {
+            $("#sv100Kind").innerHTML = currentRoom.startsWith("channel") ? '<i class="ri-hashtag"></i> Text Channel' : currentRoom.startsWith("group") ? '<i class="ri-group-fill"></i> Group' : '<i class="ri-user-3-fill"></i> Direct Message';
+            $("#sv100Title").textContent = currentTitle;
+          }
+        }
+
+        function joinRoom(room, title) {
+          currentRoom = room || "channel-general";
+          currentTitle = title || currentRoom;
+          $$(".sv100Channel").forEach((btn) => btn.classList.toggle("active", btn.dataset.room === currentRoom));
+          const input = $("#sv100Input");
+          if (input) input.placeholder = "Message " + currentTitle;
+          switchTab("chat");
+          renderMessages();
+          socket?.emit("social:join", { roomId: currentRoom, name: username });
+        }
+
+        function requirePermission(type) {
+          const allowed = type === "groups" ? permissions.canCreateGroups :
+            type === "channels" ? permissions.canCreateChannels :
+            type === "rooms" ? permissions.canCreateWatchRooms :
+            false;
+
+          if (!allowed) {
+            toast("You don't have permission to create that.", "error");
+            return false;
+          }
+          return true;
+        }
+
+        function createVirtual(type) {
+          if (!requirePermission(type === "channel" ? "channels" : "groups")) return;
+
+          const name = prompt(type === "channel" ? "Channel name" : "Group name");
+          if (!name || !name.trim()) return;
+
+          const id = (type === "channel" ? "channel-" : "group-") + name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
+          const selectorText = type === "channel" ? "Text Channels" : "Groups / DMs";
+          const section = $$(".sv100ChannelGroup").find((sec) => (sec.querySelector("header span")?.textContent || "") === selectorText);
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "sv100Channel";
+          btn.dataset.room = id;
+          btn.dataset.title = type === "channel" ? "# " + name.trim() : name.trim();
+          btn.innerHTML = '<i class="' + (type === "channel" ? "ri-hashtag" : "ri-group-fill") + '"></i><b>' + esc(type === "channel" ? name.trim().toLowerCase().replace(/\\s+/g, "-") : name.trim()) + '</b>';
+          section?.appendChild(btn);
+          joinRoom(id, btn.dataset.title);
+          toast((type === "channel" ? "Channel" : "Group") + " created");
+        }
+
+        function roomCode(value) {
+          return String(value || "").toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 40);
+        }
+
+        function createRoomId() {
+          return Math.random().toString(36).slice(2, 7) + "-" + Math.random().toString(36).slice(2, 7);
+        }
+
+        function parseYouTube(url) {
+          const pattern = new RegExp("(?:youtube\\\\.com/(?:watch\\\\?v=|embed/|shorts/)|youtu\\\\.be/)([A-Za-z0-9_-]{6,})");
+          const match = String(url || "").match(pattern);
+          return match ? match[1] : "";
+        }
+
+        function socialRoomUrl(room) {
+          const params = new URLSearchParams();
+          params.set("tab", "watchrooms");
+          params.set("roomId", room.id);
+          params.set("name", room.name || "SwiflyTV Watch Room");
+          params.set("kind", room.kind || room.mediaKind || "blank");
+          if (room.videoId) params.set("videoId", room.videoId);
+          if (room.embedUrl) params.set("embedUrl", room.embedUrl);
+          return "/social?" + params.toString();
+        }
+
+        async function createNativeRoom() {
+          if (!permissions.canCreateWatchRooms) return toast("Watch Room creation is locked by this server.", "error");
+          const name = prompt("Room name", "SwiflyTV Watch Room");
+          if (name === null) return;
+          const room = { id: createRoomId(), name: name.trim() || "SwiflyTV Watch Room", kind: "blank" };
+          openNativeWatchRoom(room);
+        }
+
+        function openNativeWatchRoom(room) {
+          if (!room || !room.id) return;
+          activeWatchRoom.id = room.id;
+          activeWatchRoom.name = room.name || "SwiflyTV Watch Room";
+          activeWatchRoom.kind = room.kind || room.mediaKind || "";
+          activeWatchRoom.videoId = room.videoId || "";
+          activeWatchRoom.embedUrl = room.embedUrl || "";
+          activeWatchRoom.joined = true;
+
+          $("#sv103NativeRoom").hidden = false;
+          $("#sv103RoomLobby").hidden = true;
+          $("#sv103RoomTitle").textContent = activeWatchRoom.name;
+          $("#sv103RoomSub").textContent = "Room code: " + activeWatchRoom.id + " • fully native inside Social";
+          $("#sv103RoomCode").textContent = activeWatchRoom.id;
+          $("#sv100Title").textContent = activeWatchRoom.name;
+          currentRoom = "watchroom-" + activeWatchRoom.id;
+          currentTitle = activeWatchRoom.name;
+
+          renderNativeMedia({
+            videoId: activeWatchRoom.videoId,
+            embedUrl: activeWatchRoom.embedUrl,
+            mediaKind: activeWatchRoom.kind
+          });
+
+          socket?.emit("watchroom:join", {
+            roomId: activeWatchRoom.id,
+            name: activeWatchRoom.name,
+            videoId: activeWatchRoom.videoId,
+            embedUrl: activeWatchRoom.embedUrl,
+            mediaKind: activeWatchRoom.kind,
+            user: username
+          });
+
+          switchTab("rooms");
+          toast("Opened native Watch Room");
+        }
+
+        function leaveNativeWatchRoom() {
+          activeWatchRoom = { id: "", name: "Social Watch Room", kind: "", videoId: "", embedUrl: "", isHost: false, joined: false, syncedMovie: null, sync: null };
+          $("#sv103NativeRoom").hidden = true;
+          $("#sv103RoomLobby").hidden = false;
+          $("#sv103Player").innerHTML = '<div class="sv103EmptyPlayer"><i class="ri-tv-2-fill"></i><b>No media selected</b><span>Host can paste a YouTube/link or select a TMDB movie.</span></div>';
+          $("#sv100Title").textContent = "room-hub";
+          $("#sv103RoomSub").textContent = "Create or join a room. The native room UI lives inside Swifly Hub.";
+          renderRooms();
+        }
+
+        function updateHostUi() {
+          document.body.classList.toggle("sv103IsHost", Boolean(activeWatchRoom.isHost));
+          $$(".hostOnly").forEach((el) => {
+            el.disabled = !activeWatchRoom.isHost;
+            el.classList.toggle("isLocked", !activeWatchRoom.isHost);
+          });
+          $("#sv103HostStatus").textContent = activeWatchRoom.isHost ? "You are host" : "Viewer";
+        }
+
+        function setNativePlayerStatus(title, detail, danger) {
+          const status = $("#sv106HlsStatus");
+          if (!status) return;
+          status.hidden = false;
+          status.classList.toggle("danger", Boolean(danger));
+          status.innerHTML = '<b>' + esc(title || "Loading") + '</b><span>' + esc(detail || "") + '</span>';
+        }
+
+        function hideNativePlayerStatus(delay) {
+          const status = $("#sv106HlsStatus");
+          if (!status) return;
+          clearTimeout(status._timer);
+          status._timer = setTimeout(() => {
+            status.hidden = true;
+          }, delay || 2600);
+        }
+
+        function destroyHls() {
+          if (nativeVideoJsPlayer) {
+            try { nativeVideoJsPlayer.dispose(); } catch {}
+            nativeVideoJsPlayer = null;
+          }
+          if (hlsInstance) {
+            try { hlsInstance.destroy(); } catch {}
+            hlsInstance = null;
+          }
+        }
+
+        function loadHls(cb) {
+          if (window.Hls) return cb(true);
+          const urls = [
+            "https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js",
+            "https://unpkg.com/hls.js@1.5.17/dist/hls.min.js",
+            "https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.17/hls.min.js"
+          ];
+          let i = 0;
+          function next() {
+            if (window.Hls) return cb(true);
+            if (i >= urls.length) return cb(false);
+            const script = document.createElement("script");
+            script.src = urls[i++];
+            script.async = true;
+            script.onload = () => cb(Boolean(window.Hls));
+            script.onerror = next;
+            document.head.appendChild(script);
+          }
+          next();
+        }
+
+        function isNativeHlsSource(src, media) {
+          const value = String(src || "");
+          const type = String(media?.streamType || media?.type || media?.movie?.streamType || "").toLowerCase();
+          return new RegExp("[.]m3u8([?#]|$)", "i").test(value) || type === "m3u8" || type === "hls" || Boolean(media?.m3u8 || media?.movie?.m3u8 || media?.hlsProxyUrl || media?.movie?.hlsProxyUrl);
+        }
+
+        function attachHlsJsSource(video, src) {
+          loadHls((ok) => {
+            if (!ok || !window.Hls || !window.Hls.isSupported()) {
+              setNativePlayerStatus("Using native video", "HLS.js was unavailable. Browser will try the source directly.", false);
+              video.src = src;
+              try { video.load(); } catch {}
+              hideNativePlayerStatus(3600);
+              return;
+            }
+
+            setNativePlayerStatus("Loading m3u8", "HLS.js attached. Waiting for playlist...", false);
+            hlsInstance = new window.Hls({
+              lowLatencyMode: false,
+              enableWorker: true,
+              maxBufferLength: 60,
+              backBufferLength: 90,
+              maxMaxBufferLength: 120,
+              fragLoadingTimeOut: 30000,
+              manifestLoadingTimeOut: 30000,
+              levelLoadingTimeOut: 30000
+            });
+
+            hlsInstance.on(window.Hls.Events.MANIFEST_PARSED, () => {
+              setNativePlayerStatus("m3u8 ready", "Press play when you are ready.", false);
+              hideNativePlayerStatus(2400);
+            });
+
+            hlsInstance.on(window.Hls.Events.ERROR, (event, data) => {
+              const details = data && (data.details || data.type) ? String(data.details || data.type) : "unknown error";
+              if (data && data.fatal) {
+                setNativePlayerStatus("m3u8 error", details + ". Trying to recover...", true);
+                try {
+                  if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR) hlsInstance.startLoad();
+                  else if (data.type === window.Hls.ErrorTypes.MEDIA_ERROR) hlsInstance.recoverMediaError();
+                  else {
+                    hlsInstance.destroy();
+                    hlsInstance = null;
+                    video.src = src;
+                    try { video.load(); } catch {}
+                  }
+                } catch {
+                  video.src = src;
+                  try { video.load(); } catch {}
+                }
+              }
+            });
+
+            hlsInstance.loadSource(src);
+            hlsInstance.attachMedia(video);
+          });
+        }
+
+        function attachVideoSource(video, src, media) {
+          destroyHls();
+
+          try {
+            video.removeAttribute("src");
+            video.load();
+          } catch {}
+
+          const hls = isNativeHlsSource(src, media);
+
+          if (!hls) {
+            setNativePlayerStatus("Loading video", "Using direct video source.", false);
+            video.src = src;
+            try { video.load(); } catch {}
+            hideNativePlayerStatus(2200);
+            return;
+          }
+
+          setNativePlayerStatus("Loading m3u8", "Starting stream player...", false);
+
+          if (window.videojs) {
+            try {
+              video.classList.add("video-js", "vjs-big-play-centered", "vjs-theme-swifly", "sv106VideoJs");
+              nativeVideoJsPlayer = window.videojs(video, {
+                controls: true,
+                autoplay: false,
+                preload: "auto",
+                fluid: false,
+                responsive: true,
+                liveui: true,
+                html5: {
+                  vhs: {
+                    overrideNative: true,
+                    withCredentials: false,
+                    enableLowInitialPlaylist: true,
+                    smoothQualityChange: true
+                  },
+                  nativeAudioTracks: false,
+                  nativeVideoTracks: false
+                },
+                sources: [{ src, type: "application/x-mpegURL" }]
+              });
+
+              nativeVideoJsPlayer.ready(() => {
+                setNativePlayerStatus("m3u8 ready", "Video.js loaded. Press play.", false);
+                hideNativePlayerStatus(2400);
+                bindNativeVideoControls();
+              });
+
+              nativeVideoJsPlayer.on("error", () => {
+                const err = nativeVideoJsPlayer.error && nativeVideoJsPlayer.error();
+                const message = err && (err.message || err.code) ? String(err.message || ("Code " + err.code)) : "Unknown player error";
+                setNativePlayerStatus("Video.js issue", message + ". Falling back to HLS.js.", true);
+                try { nativeVideoJsPlayer.dispose(); } catch {}
+                nativeVideoJsPlayer = null;
+                const fresh = document.createElement("video");
+                fresh.id = "sv103Video";
+                fresh.className = "sv103Video";
+                fresh.controls = true;
+                fresh.playsInline = true;
+                fresh.preload = "metadata";
+                const shell = $("#sv106NativePlayerShell");
+                if (shell) shell.insertBefore(fresh, shell.firstChild);
+                attachHlsJsSource(fresh, src);
+                bindNativeVideoControls();
+              });
+              return;
+            } catch (error) {
+              setNativePlayerStatus("Video.js failed", "Falling back to HLS.js.", true);
+            }
+          }
+
+          if (video.canPlayType && video.canPlayType("application/vnd.apple.mpegurl")) {
+            video.src = src;
+            try { video.load(); } catch {}
+            setNativePlayerStatus("m3u8 ready", "Using browser native HLS.", false);
+            hideNativePlayerStatus(2400);
+            return;
+          }
+
+          attachHlsJsSource(video, src);
+        }
+
+        function renderNativeMedia(media = {}) {
+          const root = $("#sv103Player");
+          if (!root) return;
+
+          destroyHls();
+          nativeVideoControlBound = false;
+
+          const movie = media.movie || null;
+          const src = movie?.playbackUrl || movie?.proxyVideo || movie?.hlsProxyUrl || movie?.m3u8 || media.playbackUrl || media.proxyVideo || media.hlsProxyUrl || media.m3u8 || "";
+          const videoId = media.videoId || "";
+          const embedUrl = media.embedUrl || "";
+          const kind = media.mediaKind || media.kind || "";
+
+          if (src) {
+            root.innerHTML = '<div id="sv106NativePlayerShell" class="sv106NativePlayerShell"><video id="sv103Video" class="sv103Video" controls playsinline preload="metadata"></video><div id="sv106HlsStatus" class="sv106HlsStatus"><b>Loading player</b><span>Preparing stream...</span></div></div>';
+            const video = $("#sv103Video");
+            attachVideoSource(video, src, Object.assign({}, media, movie || {}));
+            bindNativeVideoControls();
+            return;
+          }
+
+          if (videoId) {
+            root.innerHTML = '<iframe class="sv103MediaFrame" src="https://www.youtube.com/embed/' + encodeURIComponent(videoId) + '?rel=0&playsinline=1" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen></iframe>';
+            return;
+          }
+
+          if (embedUrl && new RegExp("^https?://", "i").test(embedUrl)) {
+            root.innerHTML = '<iframe class="sv103MediaFrame" src="' + esc(embedUrl) + '" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen referrerpolicy="no-referrer"></iframe>';
+            return;
+          }
+
+          root.innerHTML = '<div class="sv103EmptyPlayer"><i class="ri-tv-2-fill"></i><b>No media selected</b><span>Host can paste a YouTube/link or select a TMDB movie.</span></div>';
+        }
+
+        function targetSeconds(sync) {
+          if (!sync) return 0;
+          const offset = Number(sync.offset || 0);
+          if (!sync.playing) return offset;
+          return Math.max(0, offset + ((Date.now() - Number(sync.startedAt || Date.now())) / 1000));
+        }
+
+        function applyNativeSync(force) {
+          const video = $("#sv103Video");
+          const sync = activeWatchRoom.sync;
+          if (!video || !sync) return;
+          const target = targetSeconds(sync);
+          $("#sv103Timer").textContent = formatTime(target);
+
+          const drift = Math.abs(nativeVideoCurrentTime(video) - target);
+          if (force || drift > 10) {
+            applyingRemote = true;
+            nativeVideoSetTime(video, target);
+            setTimeout(() => applyingRemote = false, 600);
+          }
+
+          if (sync.playing && nativeVideoIsPaused(video)) {
+            nativeVideoPlay(video);
+          } else if (!sync.playing && !nativeVideoIsPaused(video)) {
+            nativeVideoPause(video);
+          }
+        }
+
+        function nativeVideoCurrentTime(video) {
+          try {
+            if (nativeVideoJsPlayer && typeof nativeVideoJsPlayer.currentTime === "function") return Number(nativeVideoJsPlayer.currentTime() || 0);
+          } catch {}
+          return Number(video?.currentTime || 0);
+        }
+
+        function nativeVideoSetTime(video, value) {
+          try {
+            if (nativeVideoJsPlayer && typeof nativeVideoJsPlayer.currentTime === "function") {
+              nativeVideoJsPlayer.currentTime(Number(value || 0));
+              return;
+            }
+          } catch {}
+          try { video.currentTime = Number(value || 0); } catch {}
+        }
+
+        function nativeVideoIsPaused(video) {
+          try {
+            if (nativeVideoJsPlayer && typeof nativeVideoJsPlayer.paused === "function") return Boolean(nativeVideoJsPlayer.paused());
+          } catch {}
+          return Boolean(video?.paused);
+        }
+
+        function nativeVideoPlay(video) {
+          try {
+            if (nativeVideoJsPlayer && typeof nativeVideoJsPlayer.play === "function") {
+              const p = nativeVideoJsPlayer.play();
+              if (p && p.catch) p.catch(() => {});
+              return;
+            }
+          } catch {}
+          try { video?.play()?.catch?.(() => {}); } catch {}
+        }
+
+        function nativeVideoPause(video) {
+          try {
+            if (nativeVideoJsPlayer && typeof nativeVideoJsPlayer.pause === "function") {
+              nativeVideoJsPlayer.pause();
+              return;
+            }
+          } catch {}
+          try { video?.pause(); } catch {}
+        }
+
+        function bindNativeVideoControls() {
+          const video = $("#sv103Video");
+          if (!video || nativeVideoControlBound) return;
+          nativeVideoControlBound = true;
+
+          function send(action, extra) {
+            if (!activeWatchRoom.isHost || applyingRemote || !activeWatchRoom.id) return;
+            socket?.emit("watchroom:movie-control", Object.assign({
+              roomId: activeWatchRoom.id,
+              action,
+              clientTime: nativeVideoCurrentTime(video),
+              name: username
+            }, extra || {}));
+          }
+
+          video.addEventListener("play", () => send("play"));
+          video.addEventListener("pause", () => send("pause"));
+          video.addEventListener("seeked", () => send("set", { time: nativeVideoCurrentTime(video) }));
+
+          if (nativeVideoJsPlayer && typeof nativeVideoJsPlayer.on === "function") {
+            nativeVideoJsPlayer.on("play", () => send("play"));
+            nativeVideoJsPlayer.on("pause", () => send("pause"));
+            nativeVideoJsPlayer.on("seeked", () => send("set", { time: nativeVideoCurrentTime(video) }));
+          }
+        }
+
+        function formatTime(seconds) {
+          const s = Math.max(0, Math.floor(Number(seconds || 0)));
+          return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+        }
+
+        function setMediaFromUrl(url) {
+          if (!activeWatchRoom.id) return toast("Open a room first", "error");
+          if (!activeWatchRoom.isHost) return toast("Only the host can change media.", "error");
+          const videoId = parseYouTube(url);
+          const embedUrl = videoId ? "" : String(url || "").trim();
+          socket?.emit("watchroom:trailer", {
+            roomId: activeWatchRoom.id,
+            name: activeWatchRoom.name,
+            videoId,
+            embedUrl,
+            trailerUrl: embedUrl,
+            mediaKind: videoId ? "youtube" : embedUrl ? "embed" : "blank"
+          });
+        }
+
+        function selectTmdbMovie(movieId) {
+          if (!activeWatchRoom.id) return toast("Open a room first", "error");
+          if (!activeWatchRoom.isHost) return toast("Only the host can select movies.", "error");
+          const clean = String(movieId || "").replace(/\\D/g, "");
+          if (!clean) return toast("Enter a TMDB movie id", "error");
+          socket?.emit("watchroom:movie-select", { roomId: activeWatchRoom.id, movieId: clean, name: username });
+          toast("Loading movie stream...");
+        }
+
+        function buildRoomUrl(room) {
+          const params = new URLSearchParams();
+          params.set("tab", "watchrooms");
+          params.set("roomId", room.id);
+          params.set("name", room.name || "SwiflyTV Watch Room");
+          params.set("kind", room.kind || room.mediaKind || "blank");
+          if (room.videoId) params.set("videoId", room.videoId);
+          if (room.embedUrl) params.set("embedUrl", room.embedUrl);
+          return "/social?" + params.toString();
+        }
+
+        async function renderRooms() {
+          const target = $("#sv100RoomsList");
+          if (!target) return;
+
+          let rooms = [];
+          try {
+            const local = JSON.parse(localStorage.getItem("swiflytv.socialWatchRooms") || "[]");
+            if (Array.isArray(local)) rooms = local;
+          } catch {}
+
+          try {
+            const res = await fetch("/api/watchrooms", { cache: "no-store" });
+            const data = await res.json();
+            if (Array.isArray(data.rooms)) {
+              const seen = new Set(rooms.map((r) => r.id));
+              data.rooms.forEach((room) => {
+                if (room && room.id && !seen.has(room.id)) rooms.push(room);
+              });
+            }
+          } catch {}
+
+          if (!rooms.length) {
+            target.innerHTML = '<p class="sv100Empty">No rooms yet. Anyone can make the first one.</p>';
+            return;
+          }
+
+          target.innerHTML = rooms.slice(0, 24).map((room) => {
+            const href = buildRoomUrl(room);
+            const encoded = encodeURIComponent(JSON.stringify({
+              id: room.id,
+              name: room.name || "Watch Room",
+              kind: room.kind || room.mediaKind || "blank",
+              videoId: room.videoId || "",
+              embedUrl: room.embedUrl || ""
+            }));
+            return '<article class="sv100RoomItem">' +
+              '<div><i class="ri-tv-2-fill"></i><b>' + esc(room.name || "Watch Room") + '</b><small>' + esc(room.host || "Ready") + '</small></div>' +
+              '<nav><button type="button" data-open-native-room="' + encoded + '">Open</button><button type="button" data-copy="' + esc(location.origin + href) + '">Copy</button><button type="button" data-share="' + esc(href) + '">Share</button></nav>' +
+            '</article>';
+          }).join("");
+        }
+
+        async function openCall(video) {
+          const modal = $("#sv100CallModal");
+          modal.hidden = false;
+          $("#sv100CallTitle").textContent = currentTitle;
+          $("#sv100CallType").textContent = video ? "Video call" : "Voice call";
+          $("#sv100CallStatus").textContent = "Requesting permission...";
+          try {
+            localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: Boolean(video) });
+            $("#sv100LocalVideo").srcObject = localStream;
+            $("#sv100LocalVideo").hidden = !video;
+            $("#sv100CallStatus").textContent = video ? "Camera preview active" : "Microphone active";
+            socket?.emit("social:call-join", { roomId: currentRoom, name: username, video: Boolean(video) });
+          } catch {
+            $("#sv100CallStatus").textContent = "Permission blocked or unavailable";
+            toast("Permission blocked", "error");
+          }
+        }
+
+        function closeCall() {
+          if (localStream) localStream.getTracks().forEach((track) => track.stop());
+          localStream = null;
+          $("#sv100LocalVideo").srcObject = null;
+          $("#sv100CallModal").hidden = true;
+          socket?.emit("social:call-leave", { roomId: currentRoom, name: username });
+        }
+
+        document.addEventListener("click", async (event) => {
+          try {
+            const tab = event.target.closest("[data-tab]");
+            if (tab && tab.tagName !== "A") {
+              event.preventDefault();
+              switchTab(tab.dataset.tab);
+              return;
+            }
+
+            const channel = event.target.closest(".sv100Channel[data-room]");
+            if (channel && channel.tagName !== "A") {
+              event.preventDefault();
+              joinRoom(channel.dataset.room, channel.dataset.title);
+              return;
+            }
+
+            const nativeOpen = event.target.closest("[data-open-native-room]");
+            if (nativeOpen) {
+              event.preventDefault();
+              const room = JSON.parse(decodeURIComponent(nativeOpen.dataset.openNativeRoom || ""));
+              openNativeWatchRoom(room);
+              return;
+            }
+
+            const action = event.target.closest("[data-action]");
+            if (action) {
+              const name = action.dataset.action;
+
+              if (name === "new-group") return createVirtual("group");
+              if (name === "new-channel") return createVirtual("channel");
+              if (name === "rooms-tab") return switchTab("rooms");
+              if (name === "refresh-rooms") return renderRooms();
+              if (name === "native-create-room") return createNativeRoom();
+              if (name === "native-join-room") {
+                const code = roomCode(prompt("Room code") || "");
+                if (code) openNativeWatchRoom({ id: code, name: "SwiflyTV Watch Room", kind: "blank" });
+                return;
+              }
+
+              if (name === "native-play") return socket?.emit("watchroom:movie-control", { roomId: activeWatchRoom.id, action: "play", clientTime: nativeVideoCurrentTime($("#sv103Video")), name: username });
+              if (name === "native-pause") return socket?.emit("watchroom:movie-control", { roomId: activeWatchRoom.id, action: "pause", clientTime: nativeVideoCurrentTime($("#sv103Video")), name: username });
+              if (name === "native-back") return socket?.emit("watchroom:movie-control", { roomId: activeWatchRoom.id, action: "seek", delta: -10, name: username });
+              if (name === "native-forward") return socket?.emit("watchroom:movie-control", { roomId: activeWatchRoom.id, action: "seek", delta: 10, name: username });
+              if (name === "native-sync-me") return socket?.emit("watchroom:movie-control", { roomId: activeWatchRoom.id, action: "sync-me", name: username });
+
+              if (name === "copy-room-link") {
+                const link = location.origin + buildRoomUrl(activeWatchRoom);
+                if (window.swiflyCopy) await window.swiflyCopy(link);
+                else await navigator.clipboard.writeText(link);
+                return;
+              }
+
+              if (name === "share-room-chat") {
+                if (!activeWatchRoom.id) return toast("Open a room first", "error");
+                const text = "Join this native Social Watch Room: " + location.origin + buildRoomUrl(activeWatchRoom);
+                const message = { roomId: currentRoom, author: username, text, createdAt: Date.now() };
+                addMessage(message, true);
+                socket?.emit("social:message", message);
+                switchTab("chat");
+                return;
+              }
+
+              if (name === "leave-native-room") return leaveNativeWatchRoom();
+
+              if (name === "voice") return openCall(false);
+              if (name === "video") return openCall(true);
+              if (name === "close-call") return closeCall();
+
+              if (name === "invite") {
+                const link = activeWatchRoom.id ? location.origin + buildRoomUrl(activeWatchRoom) : location.origin + "/social?room=" + encodeURIComponent(currentRoom);
+                if (window.swiflyCopy) await window.swiflyCopy(link);
+                else await navigator.clipboard.writeText(link);
+                return;
+              }
+
+              if (name === "attach") {
+                toast("Attachments are not built yet.", "info");
+                return;
+              }
+
+              if (name === "mute") {
+                if (!localStream) return toast("No active call", "info");
+                localStream.getAudioTracks().forEach((track) => track.enabled = !track.enabled);
+                return toast("Mic toggled");
+              }
+
+              if (name === "camera") {
+                if (!localStream) return toast("No active camera", "info");
+                localStream.getVideoTracks().forEach((track) => track.enabled = !track.enabled);
+                return toast("Camera toggled");
+              }
+            }
+
+            const copy = event.target.closest("[data-copy]");
+            if (copy) {
+              event.preventDefault();
+              if (window.swiflyCopy) await window.swiflyCopy(copy.dataset.copy || "");
+              else await navigator.clipboard.writeText(copy.dataset.copy || "");
+              return;
+            }
+
+            const share = event.target.closest("[data-share]");
+            if (share) {
+              event.preventDefault();
+              const text = "Join this Watch Room: " + location.origin + share.dataset.share;
+              const message = { roomId: currentRoom, author: username, text, createdAt: Date.now() };
+              addMessage(message, true);
+              socket?.emit("social:message", message);
+              switchTab("chat");
+              return toast("Shared to chat");
+            }
+          } catch (error) {
+            showError(error);
+          }
         });
 
-        planForm?.addEventListener("submit", (event) => {
+        $("#sv100Composer")?.addEventListener("submit", (event) => {
           event.preventDefault();
-          const fd = new FormData(planForm);
-          const title = String(fd.get("title") || "").trim() || "Movie night";
-          const time = String(fd.get("time") || "").trim() || "Soon";
-          localStorage.setItem("swiflytv.couplePlan", JSON.stringify({ title, time, savedAt: Date.now() }));
-          planForm.reset();
-          renderPlan();
-          if (window.showToast) showToast("Date plan saved");
+          const input = $("#sv100Input");
+          const text = String(input?.value || "").trim();
+          if (!text) return;
+          input.value = "";
+          const message = { roomId: currentRoom, author: username, text, createdAt: Date.now() };
+          addMessage(message, true);
+          if (activeWatchRoom.joined && currentRoom === "watchroom-" + activeWatchRoom.id) {
+            socket?.emit("watchroom:message", { roomId: activeWatchRoom.id, name: username, text });
+          } else {
+            socket?.emit("social:message", message);
+          }
         });
 
-        renderNote();
-        renderPlan();
+        $("#sv103SetMediaForm")?.addEventListener("submit", (event) => {
+          event.preventDefault();
+          const fd = new FormData(event.currentTarget);
+          setMediaFromUrl(fd.get("mediaUrl"));
+        });
+
+        $("#sv103MovieForm")?.addEventListener("submit", (event) => {
+          event.preventDefault();
+          const fd = new FormData(event.currentTarget);
+          selectTmdbMovie(fd.get("movieId"));
+        });
+
+        $("#sv103JoinForm")?.addEventListener("submit", (event) => {
+          event.preventDefault();
+          const fd = new FormData(event.currentTarget);
+          const code = roomCode(fd.get("roomCode"));
+          if (!code) return toast("Enter a room code", "error");
+          openNativeWatchRoom({ id: code, name: "SwiflyTV Watch Room", kind: "blank" });
+        });
+
+        $("#sv100CreateRoomForm")?.addEventListener("submit", (event) => {
+          if (!permissions.canCreateWatchRooms) {
+            event.preventDefault();
+            toast("Watch Room creation is locked by this server.", "error");
+          }
+        });
+
+        socket?.on("connect", () => {
+          $("#sv100Status").textContent = "Live connected";
+          socket.emit("social:join", { roomId: currentRoom, name: username });
+          if (activeWatchRoom.id && activeWatchRoom.joined) {
+            openNativeWatchRoom(activeWatchRoom);
+          }
+        });
+
+        socket?.on("disconnect", () => {
+          $("#sv100Status").textContent = "Local mode";
+        });
+
+        socket?.on("social:message", (message) => {
+          if (!message || message.roomId !== currentRoom || message.author === username) return;
+          addMessage(message, true);
+        });
+
+        socket?.on("social:members", (payload) => {
+          const list = $("#sv100MembersList");
+          if (!list || !payload || payload.roomId !== currentRoom) return;
+          const members = Array.isArray(payload.members) ? payload.members : [];
+          $("#sv100MemberCount").textContent = members.length + (members.length === 1 ? " member" : " members");
+          list.innerHTML = members.length ? members.map((name) => '<p><i></i> ' + esc(name) + '</p>').join("") : '<p><i></i> You</p>';
+        });
+
+        socket?.on("watchroom:joined", (data) => {
+          activeWatchRoom.isHost = Boolean(data.isHost);
+          activeWatchRoom.joined = true;
+          if (data.room) {
+            activeWatchRoom.name = data.room.name || activeWatchRoom.name;
+            activeWatchRoom.videoId = data.room.videoId || activeWatchRoom.videoId;
+            activeWatchRoom.embedUrl = data.room.embedUrl || activeWatchRoom.embedUrl;
+            activeWatchRoom.kind = data.room.mediaKind || activeWatchRoom.kind;
+            if (data.room.syncedMovie && data.room.syncedMovie.status === "ready") {
+              activeWatchRoom.syncedMovie = data.room.syncedMovie;
+              activeWatchRoom.sync = data.room.syncedMovie.sync;
+              renderNativeMedia({ movie: data.room.syncedMovie });
+            } else {
+              renderNativeMedia(data.room);
+            }
+          }
+          updateHostUi();
+          if (data.messages) data.messages.forEach((msg) => addMessage({ author: msg.name, text: msg.text, createdAt: msg.at || Date.now() }, false));
+        });
+
+        socket?.on("watchroom:host", (data) => {
+          activeWatchRoom.isHost = Boolean(data && data.isHost);
+          updateHostUi();
+        });
+
+        socket?.on("watchroom:viewers", (data) => {
+          if (!data || data.roomId !== activeWatchRoom.id) return;
+          $("#sv103ViewerCount").textContent = String(Number(data.viewers || 0));
+        });
+
+        socket?.on("watchroom:message", (msg) => {
+          if (!msg) return;
+          addMessage({ author: msg.name || "Guest", text: msg.text || "", createdAt: msg.at || Date.now() }, true);
+        });
+
+        socket?.on("watchroom:trailer", (data) => {
+          if (!data || data.roomId !== activeWatchRoom.id) return;
+          activeWatchRoom.videoId = data.videoId || "";
+          activeWatchRoom.embedUrl = data.embedUrl || data.trailerUrl || "";
+          activeWatchRoom.kind = data.mediaKind || (activeWatchRoom.videoId ? "youtube" : "embed");
+          renderNativeMedia(activeWatchRoom);
+          toast("Room media updated");
+        });
+
+        socket?.on("watchroom:movie-sync", (data) => {
+          if (!data || data.roomId !== activeWatchRoom.id || !data.movie) return;
+          activeWatchRoom.syncedMovie = data.movie;
+          activeWatchRoom.sync = data.movie.sync || null;
+          if (data.movie.status === "loading") {
+            $("#sv103Player").innerHTML = '<div class="sv103EmptyPlayer"><i class="ri-loader-4-line"></i><b>Loading movie stream...</b><span>' + esc(data.movie.message || "Waiting") + '</span></div>';
+            return;
+          }
+          if (data.movie.status === "error") {
+            $("#sv103Player").innerHTML = '<div class="sv103EmptyPlayer error"><i class="ri-error-warning-fill"></i><b>Movie failed</b><span>' + esc(data.movie.message || "No stream") + '</span></div>';
+            return;
+          }
+          renderNativeMedia({ movie: data.movie });
+          toast("Movie ready in native Social room");
+        });
+
+        socket?.on("watchroom:movie-sync-state", (data) => {
+          if (!data || data.roomId !== activeWatchRoom.id) return;
+          activeWatchRoom.sync = data.sync;
+          applyNativeSync(false);
+        });
+
+        setInterval(() => {
+          if (activeWatchRoom.sync) {
+            $("#sv103Timer").textContent = formatTime(targetSeconds(activeWatchRoom.sync));
+            applyNativeSync(false);
+          }
+        }, 1000);
+
+        readProfile();
+        loadPermissions().then(() => {
+          if (app.dataset.denied) toast("You do not have permission to create that.", "error");
+          const params = new URLSearchParams(location.search);
+          if (app.dataset.initialTab === "rooms" || params.get("tab") === "watchrooms") {
+            switchTab("rooms");
+            if (activeWatchRoom.id) openNativeWatchRoom(activeWatchRoom);
+            else renderRooms();
+          } else {
+            joinRoom(params.get("room") || currentRoom, currentTitle);
+            renderRooms();
+          }
+        });
+
+        window.SwiflySocial = { switchTab, joinRoom, renderRooms, openNativeWatchRoom, permissions: () => permissions };
       })();
     </script>
   </main>`;
 
-  res.send(pageShell({ title: `${SITE_NAME} — Couples`, active: "couples", body }));
+  res.send(pageShell({ title: `${SITE_NAME} — Social`, active: "social", body }));
 }
 
 
-app.get("/couples", couplesPage);
-app.get("/watchrooms", watchroomsPage);
-app.get("/watchrooms/:roomId", watchroomPage);
+function continueWatchingPage(req, res) {
+  const body = `<main class="dsPlainPage dsContinueWatchingPage">
+    <section class="dsAccountHero">
+      <div>
+        <span class="dsEyebrow">Continue Watching</span>
+        <h1>Pick up where you left off.</h1>
+        <p>Your recently opened movies and shows appear here on this device.</p>
+      </div>
+      <div class="dsAccountActions">
+        <a class="dsPrimaryBtn" href="/movies">Browse Movies</a>
+        <a class="dsSecondaryBtn" href="/tv">Browse TV Shows</a>
+        <a class="dsGhostPill" href="/watchrooms">Watch Rooms</a>
+      </div>
+    </section>
+
+    <section class="dsContinuePagePanel">
+      <div class="dsRowHead">
+        <h2>Recently watched</h2>
+        <span class="dsRowTag">Local device</span>
+      </div>
+      <div id="continueWatchingPageRail" class="movieRail dsRail"></div>
+      <div id="continueWatchingEmpty" class="dsNoTrailer" hidden>
+        <h2>No watch history yet</h2>
+        <p>Open a movie or show and SwiflyTV will keep it here for later.</p>
+      </div>
+    </section>
+
+    <script>
+      (function continueWatchingUi(){
+        const rail = document.getElementById("continueWatchingPageRail");
+        const empty = document.getElementById("continueWatchingEmpty");
+        if (!rail || !empty) return;
+
+        function esc(value) {
+          return String(value || "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;");
+        }
+
+        function readItems() {
+          try {
+            const saved = JSON.parse(localStorage.getItem("swiflytv.continueWatching") || "[]");
+            return Array.isArray(saved) ? saved : [];
+          } catch {
+            return [];
+          }
+        }
+
+        function posterUrl(path) {
+          if (!path) return "";
+          if (String(path).startsWith("http")) return String(path);
+          return "https://image.tmdb.org/t/p/w342" + String(path);
+        }
+
+        function itemHref(item) {
+          const type = item.type || item.media_type || "movie";
+          const id = item.id || item.tmdbId || "";
+          return id ? "/watch/" + encodeURIComponent(type) + "/" + encodeURIComponent(id) + "?mode=movie" : "/movies";
+        }
+
+        const items = readItems()
+          .filter(Boolean)
+          .sort((a, b) => Number(b.updatedAt || b.savedAt || 0) - Number(a.updatedAt || a.savedAt || 0))
+          .slice(0, 24);
+
+        if (!items.length) {
+          empty.hidden = false;
+          rail.hidden = true;
+          return;
+        }
+
+        empty.hidden = true;
+        rail.hidden = false;
+        rail.innerHTML = items.map((item) => {
+          const title = item.title || item.name || "Untitled";
+          const type = item.type || item.media_type || "movie";
+          const year = item.year || "";
+          const poster = posterUrl(item.poster || item.poster_path || "");
+          return '<a class="movieCard" href="' + esc(itemHref(item)) + '">' +
+            '<div class="posterWrap">' +
+              (poster ? '<img src="' + esc(poster) + '" alt="' + esc(title) + '" loading="lazy" />' : '<div class="posterFallback">' + esc(title).slice(0,1) + '</div>') +
+            '</div>' +
+            '<div class="movieMeta">' +
+              '<strong>' + esc(title) + '</strong>' +
+              '<span>' + esc(String(type).toUpperCase()) + (year ? ' • ' + esc(year) : '') + '</span>' +
+            '</div>' +
+          '</a>';
+        }).join("");
+      })();
+    </script>
+  </main>`;
+
+  res.send(pageShell({ title: `${SITE_NAME} — Continue Watching`, active: "continue", body }));
+}
+
+
+app.get("/continue-watching", continueWatchingPage);
+app.get("/continue", continueWatchingPage);
+
+function removedDateProfilePage(req, res) {
+  res.redirect("/");
+}
+
+
+app.get("/date-profile", removedDateProfilePage);
+app.get("/couples", removedDateProfilePage);
+
+app.get("/watchrooms/new", (req, res) => {
+  const creator = String(req.query.creator || req.query.name || "").slice(0, 80);
+  const perms = socialPermissionsForName(creator);
+  if (!perms.canCreateWatchRooms && process.env.SOCIAL_LOCK_WATCHROOM_CREATION === "true") {
+    const denied = new URLSearchParams();
+    denied.set("tab", "watchrooms");
+    denied.set("denied", "create-room");
+    return res.redirect(`/social?${denied.toString()}`);
+  }
+
+  const roomId = generateRoomId();
+  const name = String(req.query.name || "SwiflyTV Watch Room").slice(0, 80);
+  const rawLink = String(req.query.watchLink || req.query.url || "").trim();
+  const params = new URLSearchParams();
+  params.set("name", name);
+
+  const youtubeMatch = rawLink.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
+  if (youtubeMatch) {
+    params.set("kind", "youtube");
+    params.set("videoId", youtubeMatch[1]);
+  } else if (/^https?:\/\//i.test(rawLink)) {
+    params.set("kind", "embed");
+    params.set("embedUrl", rawLink);
+  } else {
+    params.set("kind", "blank");
+  }
+
+  if (String(req.query.social || "") === "1") {
+    const socialParams = new URLSearchParams(params);
+    socialParams.set("tab", "watchrooms");
+    socialParams.set("roomId", roomId);
+    return res.redirect(`/social?${socialParams.toString()}`);
+  }
+
+  res.redirect(`/social?tab=watchrooms&roomId=${encodeURIComponent(roomId)}&${params.toString()}`);
+});
+
+app.get("/watchrooms/join", (req, res) => {
+  const code = String(req.query.code || req.query.room || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, "")
+    .slice(0, 40);
+
+  if (!code) return res.redirect("/social?tab=watchrooms");
+
+  const params = new URLSearchParams();
+  params.set("name", String(req.query.name || "SwiflyTV Watch Room").slice(0, 80));
+  params.set("kind", "blank");
+  const socialParams = new URLSearchParams(params);
+  socialParams.set("tab", "watchrooms");
+  socialParams.set("roomId", code);
+  res.redirect(`/social?${socialParams.toString()}`);
+});
+
+
+app.get("/watchrooms", (req, res) => res.redirect("/social?tab=watchrooms"));
+app.get("/watchrooms/embed/:roomId", watchroomPage);
+app.get("/watchrooms/:roomId", (req, res) => {
+  const roomId = normalizeRoomId(req.params.roomId);
+  const params = new URLSearchParams(req.query || {});
+  params.set("tab", "watchrooms");
+  params.set("roomId", roomId);
+  res.redirect(`/social?${params.toString()}`);
+});
 app.get("/profiles", profilesPage);
+app.get("/profiles/manage", profilesManagePage);
+app.get("/social", socialPage);
 
 app.get("/kids", async (req, res) => {
   const [family, animation, disneyStyle, kidsTv, familyTv, preschoolTv] = await Promise.all([
@@ -25756,7 +32172,103 @@ app.get("/api/watchrooms", (req, res) => {
   res.json({ rooms });
 });
 
+
+function apiStatus(req, res) {
+  res.set("Cache-Control", "no-store");
+  res.json({
+    ok: true,
+    site: SITE_NAME,
+    version: "v94",
+    uptime: Math.round(process.uptime()),
+    now: Date.now(),
+    features: {
+      regularMovieSite: true,
+      dateIdeasRemoved: true,
+      socialHub: true,
+      socialWatchRooms: true,
+      socialButtonsFixed: true,
+      socialRebuiltV99: true,
+      discordSocialV100: true,
+      integratedSocialWatchroomV102: true,
+      nativeSocialWatchroomsV103: true,
+      openWatchRoomCreationV104: true,
+      swiflyHubRefreshV104: true,
+      galaxySocialThemeV105: true,
+      watchroomM3u8FixV106: true,
+      socialNavOffsetFixV106: true,
+      socialPermissions: true,
+      noJsWatchRoomFallbacks: true,
+      socialLayoutV2: true,
+      profileManager: true,
+      dateProfile: false,
+      regularMovieM3u8Player: true,
+      videojsM3u8Player: true,
+      hlsProxyEnabled: typeof hlsProxyEnabled === "function" ? hlsProxyEnabled() : false,
+    },
+  });
+}
+
 app.get("/api/status", apiStatus);
+
+
+
+app.post("/api/social/watchrooms/create", (req, res) => {
+  const creator = String(req.body?.creator || "").slice(0, 80);
+  const perms = socialPermissionsForName(creator);
+  if (!perms.canCreateWatchRooms && process.env.SOCIAL_LOCK_WATCHROOM_CREATION === "true") {
+    return res.status(403).json({ ok: false, message: "You do not have permission to create Watch Rooms." });
+  }
+
+  const id = createRoomId();
+  const name = String(req.body?.name || "SwiflyTV Watch Room").slice(0, 80);
+  const mediaUrl = String(req.body?.mediaUrl || "").trim();
+  const youtubeMatch = mediaUrl.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
+
+  const room = getOrCreateWatchRoom(id, {
+    name,
+    host: creator || "Host",
+    mediaKind: youtubeMatch ? "youtube" : mediaUrl ? "embed" : "blank",
+    videoId: youtubeMatch ? youtubeMatch[1] : "",
+    embedUrl: youtubeMatch ? "" : mediaUrl,
+  });
+
+  res.json({ ok: true, room: publicRoom(room), socialUrl: `/social?tab=watchrooms&roomId=${encodeURIComponent(room.id)}&name=${encodeURIComponent(room.name)}` });
+});
+
+app.get("/api/social/watchrooms", (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const rooms = [...watchRooms.values()]
+    .sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0))
+    .slice(0, 24)
+    .map(publicRoom);
+  res.json({ ok: true, rooms });
+});
+
+
+app.get("/api/social/permissions", (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const name = String(req.query.name || "").slice(0, 80);
+  res.json({
+    ok: true,
+    name,
+    permissions: socialPermissionsForName(name),
+  });
+});
+
+app.get("/api/social/rooms", (req, res) => {
+  res.set("Cache-Control", "no-store");
+  res.json({
+    ok: true,
+    rooms: Array.from(socialRooms.values()).map((room) => ({
+      id: room.id,
+      members: Array.from(room.members.values()),
+      messages: room.messages.slice(-30),
+      createdAt: room.createdAt,
+    })),
+  });
+});
+
+
 app.get("/health", apiStatus);
 app.get("/api/remote-browser/status", (req, res) => {
   const executablePath = findChromiumExecutable() || "";
@@ -25878,7 +32390,7 @@ app.post("/api/date-room/:roomId/join", (req, res) => {
   const roomId = normalizeRoomId(req.params.roomId);
   const clientId = dateRoomRestClientId(req.body?.clientId);
   const name = String(req.body?.name || "Guest").slice(0, 40);
-  const roomName = String(req.body?.roomName || "SwiflyTV Date Room").slice(0, 80);
+  const roomName = String(req.body?.roomName || "SwiflyTV Watch Room").slice(0, 80);
 
   if (!roomId || !clientId) {
     return res.status(400).json({ ok: false, error: "roomId and clientId required" });
@@ -26087,6 +32599,53 @@ const io = new Server(httpServer, {
 });
 
 io.on("connection", (socket) => {
+
+  socket.on("social:join", (payload = {}) => {
+    const roomId = String(payload.roomId || "general").slice(0, 80);
+    const name = String(payload.name || "Guest").slice(0, 40);
+    const room = getSocialRoom(roomId);
+    socket.join(`social:${roomId}`);
+    room.members.set(socket.id, name);
+    socket.emit("social:members", { roomId, members: Array.from(room.members.values()) });
+    socket.to(`social:${roomId}`).emit("social:members", { roomId, members: Array.from(room.members.values()) });
+  });
+
+  socket.on("social:message", (message = {}) => {
+    const roomId = String(message.roomId || "general").slice(0, 80);
+    const room = getSocialRoom(roomId);
+    const safeMessage = {
+      roomId,
+      author: String(message.author || "Guest").slice(0, 40),
+      text: String(message.text || "").slice(0, 1200),
+      createdAt: Number(message.createdAt || Date.now()),
+    };
+    if (!safeMessage.text.trim()) return;
+    room.messages.push(safeMessage);
+    room.messages = room.messages.slice(-200);
+    io.to(`social:${roomId}`).emit("social:message", safeMessage);
+  });
+
+  socket.on("social:typing", (payload = {}) => {
+    const roomId = String(payload.roomId || "general").slice(0, 80);
+    const name = String(payload.name || "Guest").slice(0, 40);
+    socket.to(`social:${roomId}`).emit("social:typing", { roomId, name });
+  });
+
+  socket.on("social:call-join", (payload = {}) => {
+    const roomId = String(payload.roomId || "general").slice(0, 80);
+    const name = String(payload.name || "Guest").slice(0, 40);
+    socket.join(`social-call:${roomId}`);
+    io.to(`social:${roomId}`).emit("social:call-event", { roomId, name, type: "joined the call" });
+  });
+
+  socket.on("social:call-leave", (payload = {}) => {
+    const roomId = String(payload.roomId || "general").slice(0, 80);
+    const name = String(payload.name || "Guest").slice(0, 40);
+    socket.leave(`social-call:${roomId}`);
+    io.to(`social:${roomId}`).emit("social:call-event", { roomId, name, type: "left the call" });
+  });
+
+
   socket.data.roomId = "";
 
   socket.on("watchroom:join", (payload = {}) => {
@@ -26794,6 +33353,18 @@ io.on("connection", (socket) => {
     room.updatedAt = Date.now();
 
     io.to(room.id).emit("watchroom:message", message);
+  });
+
+
+  socket.on("disconnect", () => {
+    socialRooms.forEach((room) => {
+      if (room.members.delete(socket.id)) {
+        io.to(`social:${room.id}`).emit("social:members", {
+          roomId: room.id,
+          members: Array.from(room.members.values()),
+        });
+      }
+    });
   });
 
   socket.on("disconnect", () => {
