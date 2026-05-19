@@ -63,7 +63,7 @@ app.use(
 
 
 function hlsProxyEnabled() {
-  return process.env.HLS_PROXY_ENABLED !== "false";
+  return process.env.HLS_PROXY_ENABLED === "true";
 }
 
 function hlsProxyId() {
@@ -18951,6 +18951,16 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
       text-shadow: 0 0 14px rgba(255,59,122,.75);
     }
 
+
+    /* ============================================================
+       v88 DIRECT M3U8 PLAYER
+       Raw m3u8 is loaded through hls.js/custom player by default.
+       ============================================================ */
+
+    .dsM3u8Standalone .dsWatchHero p code {
+      user-select: all;
+    }
+
   </style>
 
     <script>
@@ -20962,7 +20972,7 @@ async function fetchProxyVideoSource({ type, id }) {
         }
 
         const isHlsResolverSource = Boolean(resolverM3u8 || streamType === "m3u8" || streamType === "hls");
-        const hlsProxy = isHlsResolverSource
+        const hlsProxy = isHlsResolverSource && hlsProxyEnabled()
           ? registerHlsProxySource(parsedProxy.toString(), streamHeaders, {
               movieId: String(data.movieId || id),
               sourceUrl: String(data.sourceUrl || ""),
@@ -20972,11 +20982,13 @@ async function fetchProxyVideoSource({ type, id }) {
             })
           : { enabled: false, id: "", url: "" };
 
+        // v88: direct m3u8 player mode. Use the raw resolver m3u8 URL by default.
+        // HLS proxy remains available only if HLS_PROXY_ENABLED=true.
         const browserPlaybackUrl = hlsProxy.url || parsedProxy.toString();
 
         return {
           status: "ok",
-          providerKind: isHlsResolverSource ? (hlsProxy.url ? "movie_resolver_hls_proxy" : "movie_resolver_hls") : "proxy_video",
+          providerKind: isHlsResolverSource ? (hlsProxy.url ? "movie_resolver_hls_proxy" : "movie_resolver_direct_m3u8") : "proxy_video",
           movieId: String(data.movieId || id),
           sourceUrl: String(data.sourceUrl || ""),
           playbackUrl: browserPlaybackUrl,
@@ -22635,7 +22647,7 @@ function watchroomPage(req, res) {
           if (playerType) {
             var isHls = typeof isRoomMovieHlsUrl === "function" && isRoomMovieHlsUrl(roomMovieState.playbackUrl || roomMovieState.m3u8 || roomMovieState.proxyVideo);
             var quality = roomMovieState.streamQuality ? " • " + roomMovieState.streamQuality : "";
-            playerType.textContent = isHls ? "LIVE HLS / M3U8 Player" + quality : "Native Video Player" + quality;
+            playerType.textContent = isHls ? ((roomMovieState && roomMovieState.hlsProxyUrl) ? "PROXIED LIVE M3U8 Player" : "DIRECT LIVE M3U8 Player") + quality : "Native Video Player" + quality;
           }
 
           if (driftBadge && typeof targetRoomMovieSeconds === "function") {
@@ -22942,7 +22954,7 @@ function watchroomPage(req, res) {
               attachRoomMovieVideoSource(video, (roomMovieState.playbackUrl || roomMovieState.m3u8 || roomMovieState.proxyVideo));
             }
 
-            setRoomMovieStatus(isRoomMovieHlsUrl((roomMovieState.playbackUrl || roomMovieState.m3u8 || roomMovieState.proxyVideo)) ? (roomMovieState.hlsProxyUrl ? "Loading proxied live m3u8 in the custom player..." : "Loading m3u8/HLS in the custom player...") : "Trying native video sync first...");
+            setRoomMovieStatus(isRoomMovieHlsUrl((roomMovieState.playbackUrl || roomMovieState.m3u8 || roomMovieState.proxyVideo)) ? (roomMovieState.hlsProxyUrl ? "Loading proxied live m3u8 in the custom player..." : "Loading direct live m3u8 in the custom player...") : "Trying native video sync first...");
             setTimeout(function() {
               if (!video.hidden && video.readyState === 0) {
                 fallbackToRoomMovieIframe("native video never became ready after 30s");
@@ -24448,7 +24460,7 @@ function watchroomPage(req, res) {
               if (playerType) {
                 var isHls = typeof isPollingHlsUrl === "function" && isPollingHlsUrl(movie.playbackUrl || movie.m3u8 || (movie.playbackUrl || movie.m3u8 || movie.proxyVideo));
                 var quality = movie.streamQuality ? " • " + movie.streamQuality : "";
-                playerType.textContent = isHls ? "LIVE HLS / M3U8 Player" + quality : "Native Video Player" + quality;
+                playerType.textContent = isHls ? ((movie && movie.hlsProxyUrl) ? "PROXIED LIVE M3U8 Player" : "DIRECT LIVE M3U8 Player") + quality : "Native Video Player" + quality;
               }
 
               if (driftBadge) {
@@ -24851,7 +24863,8 @@ app.get("/m3u8-player", (req, res) => {
     referer: String(req.query.referer || req.query.ref || ""),
     origin: String(req.query.origin || ""),
   };
-  const hlsProxy = rawSrc ? registerHlsProxySource(rawSrc, srcHeaders, { standalone: true }) : { url: "" };
+  const useProxy = String(req.query.proxy || "").toLowerCase() === "true";
+  const hlsProxy = rawSrc && useProxy ? registerHlsProxySource(rawSrc, srcHeaders, { standalone: true }) : { url: "" };
   const src = hlsProxy.url || rawSrc;
   const safeSrc = escapeHtml(src);
   const body = `<main class="dsWatchPage dsM3u8Standalone">
@@ -24859,7 +24872,7 @@ app.get("/m3u8-player", (req, res) => {
       <div>
         <span class="dsEyebrow">HLS / M3U8 Player</span>
         <h1>SwiflyTV M3U8 Player</h1>
-        <p>Paste a licensed live m3u8 URL as <code>?url=</code>. SwiflyTV can also proxy/rewrite the playlist through this server for browser playback.</p>
+        <p>Paste a licensed live m3u8 URL as <code>?url=</code>. This loads the raw m3u8 directly through the custom HLS player. Add <code>&proxy=true</code> only if you need the optional server proxy.</p>
       </div>
     </section>
 
@@ -25005,6 +25018,7 @@ app.get("/api/hls-source/movie/:id", async (req, res) => {
     streamQuality: result.streamQuality || "",
     streamName: result.streamName || "",
     streamNameFix: true,
+    directM3u8Default: true,
     hlsProxyEnabled: hlsProxyEnabled(),
     message: result.message || "",
     attempts: result.attempts || [],
