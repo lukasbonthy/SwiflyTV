@@ -20194,6 +20194,272 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v98 BUTTON + LAYOUT FIX
+       Stronger Social layout, delegated buttons, and external CSS polish.
+       ============================================================ */
+
+    .is-pressing {
+      transform: scale(.985) !important;
+      transition: transform .12s ease !important;
+    }
+
+    .dsSocialModeTabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 6px;
+      margin: 0 0 12px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.09);
+    }
+
+    .dsSocialModeTabs button {
+      min-height: 40px;
+      border: 0;
+      border-radius: 14px;
+      color: rgba(255,255,255,.70);
+      background: transparent;
+      font-weight: 900;
+      cursor: pointer;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dsSocialModeTabs button.isActive {
+      color: white;
+      background:
+        radial-gradient(240px circle at 20% 0%, rgba(255,255,255,.22), transparent 50%),
+        linear-gradient(135deg, rgba(229,9,20,.92), rgba(124,58,237,.78));
+      box-shadow: 0 12px 36px rgba(229,9,20,.18);
+    }
+
+    .dsSocialStatusBar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 18px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      color: rgba(248,251,255,.66);
+      font-size: 12px;
+      font-weight: 800;
+      background: rgba(0,0,0,.12);
+    }
+
+    .dsSocialStatusBar span {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    #socialConnectionBadge i {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 18px rgba(34,197,94,.75);
+    }
+
+    #socialConnectionBadge.isOffline i {
+      background: #f59e0b;
+      box-shadow: 0 0 18px rgba(245,158,11,.65);
+    }
+
+    #socialActionHint {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      opacity: .76;
+    }
+
+    .dsSocialShell {
+      grid-template-columns: 310px minmax(0, 1fr) 320px;
+      gap: 18px;
+    }
+
+    .dsSocialSidebar,
+    .dsSocialMain,
+    .dsSocialDetails {
+      outline: 1px solid rgba(255,255,255,.04);
+    }
+
+    .dsSocialSidebar {
+      max-height: calc(100vh - 122px);
+      overflow-y: auto;
+    }
+
+    .dsSocialMain {
+      min-height: calc(100vh - 122px);
+    }
+
+    .dsSocialHeader {
+      background:
+        linear-gradient(90deg, rgba(229,9,20,.08), rgba(124,58,237,.08)),
+        rgba(0,0,0,.08);
+    }
+
+    .dsSocialHeaderActions button,
+    .dsSocialDetailsCard button,
+    .dsSocialDetailsCard a,
+    .dsSocialWatchRoomActions button,
+    .dsSocialWatchRoomActions a,
+    .dsWatchStudioActions button {
+      transition: transform .16s ease, border-color .16s ease, background .16s ease, opacity .16s ease;
+    }
+
+    .dsSocialHeaderActions button:hover,
+    .dsSocialDetailsCard button:hover,
+    .dsSocialDetailsCard a:hover,
+    .dsSocialWatchRoomActions button:hover,
+    .dsSocialWatchRoomActions a:hover,
+    .dsWatchStudioActions button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255,255,255,.22);
+      background: rgba(255,255,255,.12);
+    }
+
+    .dsSocialWatchStudio {
+      margin: 14px 18px;
+      max-height: min(58vh, 560px);
+      overflow-y: auto;
+    }
+
+    .dsWatchStudioGrid {
+      grid-template-columns: minmax(240px, .8fr) minmax(220px, .62fr) minmax(320px, 1.1fr);
+    }
+
+    .dsWatchStudioCard {
+      min-height: 100%;
+    }
+
+    .dsWatchStudioCard label span {
+      color: rgba(248,251,255,.78);
+    }
+
+    .dsWatchStudioCard input:focus,
+    .dsSocialComposer input:focus {
+      border-color: rgba(229,9,20,.38);
+      box-shadow: 0 0 0 4px rgba(229,9,20,.12);
+    }
+
+    .dsSocialMessages {
+      background:
+        radial-gradient(860px circle at 50% 0%, rgba(255,255,255,.035), transparent 54%),
+        rgba(0,0,0,.06);
+    }
+
+    .dsSocialMessage > div {
+      box-shadow: 0 10px 34px rgba(0,0,0,.14);
+    }
+
+    .dsSocialComposer {
+      background: rgba(0,0,0,.16);
+    }
+
+    .dsSocialCompose {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    .dsSocialSection {
+      padding: 4px;
+      border-radius: 18px;
+    }
+
+    .dsSocialRoom {
+      transition: transform .14s ease, background .14s ease, border-color .14s ease;
+    }
+
+    .dsSocialRoom:hover {
+      transform: translateX(2px);
+    }
+
+    .dsSocialRoom.isActive {
+      background:
+        radial-gradient(260px circle at 0% 0%, rgba(229,9,20,.22), transparent 52%),
+        rgba(255,255,255,.095);
+      border-color: rgba(229,9,20,.24);
+    }
+
+    .dsSocialWatchRoomCard {
+      transition: transform .16s ease, background .16s ease, border-color .16s ease;
+    }
+
+    .dsSocialWatchRoomCard:hover {
+      transform: translateY(-2px);
+      background: rgba(255,255,255,.085);
+      border-color: rgba(255,255,255,.16);
+    }
+
+    .dsSocialDetailsCard {
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    }
+
+    .notyf__toast {
+      border-radius: 16px !important;
+      font-weight: 800 !important;
+      box-shadow: 0 16px 50px rgba(0,0,0,.28) !important;
+    }
+
+    @media(max-width: 1250px) {
+      .dsSocialShell {
+        grid-template-columns: 285px minmax(0, 1fr);
+      }
+
+      .dsSocialMain {
+        min-height: calc(100vh - 122px);
+      }
+    }
+
+    @media(max-width: 820px) {
+      .dsSocialShell {
+        display: flex;
+        flex-direction: column;
+        min-height: auto;
+      }
+
+      .dsSocialSidebar {
+        max-height: none;
+        overflow: visible;
+      }
+
+      .dsSocialSection {
+        display: flex;
+        overflow-x: auto;
+        gap: 8px;
+        padding-bottom: 10px;
+      }
+
+      .dsSocialSection > span {
+        min-width: 100%;
+      }
+
+      .dsSocialRoom {
+        min-width: 180px;
+      }
+
+      .dsSocialWatchStudio {
+        max-height: none;
+        margin: 10px;
+      }
+
+      .dsSocialStatusBar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      #socialActionHint {
+        white-space: normal;
+      }
+    }
+
   </style>
 
     <script>
@@ -20249,6 +20515,13 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
 
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tippy.js@6.3.7/animations/scale.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tippy.js@6.3.7/themes/translucent.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+
 </head>
 <body>
 
@@ -20303,8 +20576,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
           ${navLink("/tv", "TV Shows", "tv", active)}
           ${navLink("/trending", "New & Popular", "trending", active)}
           ${navLink("/my-list", "My List", "watchlist", active)}
-          ${navLink("/social", "Social + Rooms", "social", active)}
-          ${navLink("/browse-by-languages", "Browse", "genres", active)}
+          ${navLink("/social", "Social", "social", active)}
+          ${navLink("/browse-by-languages", "Languages", "genres", active)}
         </nav>
       </div>
 
@@ -21246,6 +21519,54 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
         });
       });
     })();
+  </script>
+
+
+  <script>
+    window.swiflyToast = window.swiflyToast || function(message, type) {
+      try {
+        if (window.Notyf) {
+          window.__swiflyNotyf = window.__swiflyNotyf || new Notyf({
+            duration: 1800,
+            position: { x: "right", y: "bottom" },
+            types: [
+              { type: "info", background: "#2563eb", icon: false },
+              { type: "success", background: "#16a34a", icon: false },
+              { type: "error", background: "#dc2626", icon: false }
+            ]
+          });
+          window.__swiflyNotyf.open({ type: type || "success", message: String(message || "Done") });
+          return;
+        }
+      } catch {}
+      console.log("[SwiflyTV]", message);
+    };
+
+    window.swiflyCopy = window.swiflyCopy || async function(text) {
+      try {
+        await navigator.clipboard.writeText(String(text || ""));
+        swiflyToast("Copied");
+        return true;
+      } catch {
+        var area = document.createElement("textarea");
+        area.value = String(text || "");
+        area.setAttribute("readonly", "");
+        area.style.position = "fixed";
+        area.style.opacity = "0";
+        document.body.appendChild(area);
+        area.select();
+        try { document.execCommand("copy"); swiflyToast("Copied"); return true; }
+        catch { swiflyToast("Copy failed", "error"); return false; }
+        finally { area.remove(); }
+      }
+    };
+
+    document.addEventListener("click", function(event) {
+      var button = event.target.closest("button, a");
+      if (!button || button.classList.contains("no-press")) return;
+      button.classList.add("is-pressing");
+      setTimeout(function(){ button.classList.remove("is-pressing"); }, 160);
+    }, true);
   </script>
 
 </body>
@@ -27412,8 +27733,13 @@ function socialPage(req, res) {
           <span class="dsSocialLogo"><i class="fa-solid fa-comments"></i></span>
           <div>
             <strong>Swifly Social</strong>
-            <small>Chat, groups, channels, calls, watch rooms</small>
+            <small>Chats, calls, channels, rooms</small>
           </div>
+        </div>
+
+        <div class="dsSocialModeTabs" role="tablist">
+          <button class="isActive" id="socialChatModeBtn" type="button"><i class="fa-solid fa-message"></i> Chat</button>
+          <button id="socialRoomsModeBtn" type="button"><i class="fa-solid fa-tv"></i> Rooms</button>
         </div>
 
         <button class="dsSocialCompose" id="newGroupBtn" type="button"><i class="fa-solid fa-plus"></i> New Group</button>
@@ -27457,12 +27783,17 @@ function socialPage(req, res) {
           </div>
         </header>
 
+        <div class="dsSocialStatusBar">
+          <span id="socialConnectionBadge"><i></i> Local + live ready</span>
+          <span id="socialActionHint">Pick a DM, group, channel, or Watch Room.</span>
+        </div>
+
         <section id="socialWatchStudio" class="dsSocialWatchStudio animate__animated animate__fadeIn" hidden>
           <div class="dsWatchStudioHero">
             <div>
               <span class="dsEyebrow">Watch Rooms inside Social</span>
-              <h2>Start a room right from chat.</h2>
-              <p>Create a synced room, share the invite into any chat, then keep talking before and during the movie.</p>
+              <h2>Create and share rooms without leaving Social.</h2>
+              <p>Start a synced room, copy the invite, or drop it into the current chat. Chat stays right below it.</p>
             </div>
             <div class="dsWatchStudioActions">
               <button id="socialRefreshRoomsBtn" type="button"><i class="fa-solid fa-rotate"></i> Refresh Rooms</button>
@@ -27575,6 +27906,7 @@ function socialPage(req, res) {
     <script>
       (function socialHub(){
         const socket = window.io ? io() : null;
+
         const messagesEl = document.getElementById("socialMessages");
         const composer = document.getElementById("socialComposer");
         const input = document.getElementById("socialInput");
@@ -27588,14 +27920,18 @@ function socialPage(req, res) {
         const callTypeLabel = document.getElementById("callTypeLabel");
         const callStatusText = document.getElementById("callStatusText");
         const localVideo = document.getElementById("localCallVideo");
+        const watchStudio = document.getElementById("socialWatchStudio");
+        const socialWatchRoomsList = document.getElementById("socialWatchRoomsList");
+        const socialRoomsCount = document.getElementById("socialRoomsCount");
+        const connectionBadge = document.getElementById("socialConnectionBadge");
+        const actionHint = document.getElementById("socialActionHint");
+        const chatModeBtn = document.getElementById("socialChatModeBtn");
+        const roomsModeBtn = document.getElementById("socialRoomsModeBtn");
 
         let currentRoom = "dm-main";
         let currentTitle = "Main Chat";
         let localStream = null;
         let username = "Guest";
-        const watchStudio = document.getElementById("socialWatchStudio");
-        const socialWatchRoomsList = document.getElementById("socialWatchRoomsList");
-        const socialRoomsCount = document.getElementById("socialRoomsCount");
 
         try {
           const profile = JSON.parse(localStorage.getItem("swiflytv.activeProfile") || "null");
@@ -27603,8 +27939,16 @@ function socialPage(req, res) {
           username = profile?.name || session?.name || "Guest";
         } catch {}
 
+        function toast(message, type) {
+          if (window.swiflyToast) window.swiflyToast(message, type);
+        }
+
         function esc(value) {
-          return String(value || "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+          return String(value || "")
+            .replaceAll("&","&amp;")
+            .replaceAll("<","&lt;")
+            .replaceAll(">","&gt;")
+            .replaceAll('"',"&quot;");
         }
 
         function timeLabel(ts) {
@@ -27620,12 +27964,35 @@ function socialPage(req, res) {
           try {
             const saved = JSON.parse(localStorage.getItem(localKey(room)) || "[]");
             return Array.isArray(saved) ? saved : [];
-          } catch { return []; }
+          } catch {
+            return [];
+          }
         }
 
         function saveLocal(room, msgs) {
           localStorage.setItem(localKey(room), JSON.stringify(msgs.slice(-120)));
         }
+
+        function setHint(text) {
+          if (actionHint) actionHint.textContent = text || "";
+        }
+
+        function setConnected(connected) {
+          if (!connectionBadge) return;
+          connectionBadge.innerHTML = "<i></i> " + (connected ? "Live connected" : "Local mode");
+          connectionBadge.classList.toggle("isOffline", !connected);
+        }
+
+        setConnected(Boolean(socket && socket.connected));
+
+        socket?.on("connect", () => {
+          setConnected(true);
+          socket.emit("social:join", { roomId: currentRoom, name: username });
+        });
+
+        socket?.on("disconnect", () => {
+          setConnected(false);
+        });
 
         function addMessage(message, persist) {
           if (!messagesEl || !message) return;
@@ -27651,9 +28018,45 @@ function socialPage(req, res) {
           const saved = readLocal(currentRoom);
           const messages = saved.length ? saved : seed || [
             { author: "Swifly", text: "Welcome to " + currentTitle + ".", createdAt: Date.now() },
-            { author: "Swifly", text: "You can chat, make groups, create channels, or start a voice/video call.", createdAt: Date.now() + 10 }
+            { author: "Swifly", text: "Chat, call, create groups, make channels, or start a Watch Room.", createdAt: Date.now() + 10 }
           ];
           messages.forEach((msg) => addMessage(msg, false));
+        }
+
+        function isWatchArea(room) {
+          return room === "watchroom-lobby" || room === "watchroom-active" || room === "channel-watchrooms";
+        }
+
+        function setWatchStudioVisible(visible) {
+          if (watchStudio) watchStudio.hidden = !visible;
+          document.body.classList.toggle("socialWatchStudioOpen", Boolean(visible));
+          chatModeBtn?.classList.toggle("isActive", !visible);
+          roomsModeBtn?.classList.toggle("isActive", Boolean(visible));
+          if (visible) renderSocialWatchRooms();
+        }
+
+        function joinRoom(room, roomTitle) {
+          currentRoom = room || "dm-main";
+          currentTitle = roomTitle || currentRoom;
+
+          const watchMode = isWatchArea(currentRoom);
+
+          if (title) title.textContent = currentTitle;
+          if (detailsTitle) detailsTitle.textContent = currentTitle;
+          if (input) input.placeholder = "Message " + currentTitle + "...";
+          if (kind) kind.textContent = watchMode ? "Watch Rooms" : currentRoom.startsWith("channel") ? "Channel" : currentRoom.startsWith("group") ? "Group" : "Direct message";
+          if (detailsText) detailsText.textContent = watchMode ? "Create, share, and join synced Watch Rooms from Social." : currentRoom.startsWith("channel") ? "Public channel for movie talk." : currentRoom.startsWith("group") ? "Private group chat." : "Direct message thread.";
+
+          document.querySelectorAll(".dsSocialRoom").forEach((btn) => btn.classList.toggle("isActive", btn.dataset.room === currentRoom));
+
+          setWatchStudioVisible(watchMode);
+          renderRoom(watchMode ? [
+            { author: "Swifly", text: "This is the Social Watch Room hub. Create a room above, copy the invite, or share it into chat.", createdAt: Date.now() },
+            { author: "Swifly", text: "Actual room links still open at /watchrooms/:code.", createdAt: Date.now() + 10 }
+          ] : undefined);
+
+          if (socket) socket.emit("social:join", { roomId: currentRoom, name: username });
+          setHint(watchMode ? "Create or join a Watch Room above." : "Chat is ready.");
         }
 
         function videoIdFromUrl(url) {
@@ -27732,6 +28135,7 @@ function socialPage(req, res) {
             if (socket) socket.emit("social:message", message);
           }
 
+          toast("Watch Room created");
           return roomUrl;
         }
 
@@ -27776,53 +28180,181 @@ function socialPage(req, res) {
           }
 
           socialWatchRoomsList.innerHTML = merged.slice(0, 12).map(roomCardHtml).join("");
-
-          socialWatchRoomsList.querySelectorAll("[data-copy]").forEach(function(button) {
-            button.addEventListener("click", function() {
-              navigator.clipboard?.writeText(button.dataset.copy || "");
-              button.textContent = "Copied";
-              setTimeout(function(){ button.textContent = "Copy"; }, 1200);
-            });
-          });
-
-          socialWatchRoomsList.querySelectorAll("[data-share]").forEach(function(button) {
-            button.addEventListener("click", function() {
-              var href = button.dataset.share || "";
-              var title = button.dataset.title || "Watch Room";
-              var text = "Join my Watch Room: " + location.origin + href;
-              var message = { roomId: currentRoom, author: username, text: text, createdAt: Date.now() };
-              addMessage(message, true);
-              if (socket) socket.emit("social:message", message);
-            });
-          });
         }
 
-        function setWatchStudioVisible(visible) {
-          if (watchStudio) watchStudio.hidden = !visible;
-          document.body.classList.toggle("socialWatchStudioOpen", Boolean(visible));
-          if (visible) renderSocialWatchRooms();
+        async function openCall(videoMode) {
+          if (!callModal) return;
+          callModal.hidden = false;
+          if (callRoomTitle) callRoomTitle.textContent = currentTitle;
+          if (callTypeLabel) callTypeLabel.textContent = videoMode ? "Video call" : "Voice call";
+          if (callStatusText) callStatusText.textContent = "Requesting " + (videoMode ? "camera and microphone" : "microphone") + "...";
+
+          try {
+            localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: Boolean(videoMode) });
+            if (localVideo) {
+              localVideo.srcObject = localStream;
+              localVideo.hidden = !videoMode;
+            }
+            if (callStatusText) callStatusText.textContent = videoMode ? "Camera preview active. Signaling room joined." : "Mic active. Signaling room joined.";
+            if (socket) socket.emit("social:call-join", { roomId: currentRoom, name: username, video: Boolean(videoMode) });
+            toast(videoMode ? "Video preview started" : "Voice call started");
+          } catch (error) {
+            if (callStatusText) callStatusText.textContent = "Call permission blocked or unavailable.";
+            toast("Call permission blocked", "error");
+          }
         }
 
-        function joinRoom(room, roomTitle) {
-          currentRoom = room;
-          currentTitle = roomTitle || room;
-          if (title) title.textContent = currentTitle;
-          if (detailsTitle) detailsTitle.textContent = currentTitle;
-          if (input) input.placeholder = "Message " + currentTitle + "...";
-          if (kind) kind.textContent = room.startsWith("channel") ? "Channel" : room.startsWith("group") ? "Group" : "Direct message";
-          var isWatchRoomArea = room === "watchroom-lobby" || room === "watchroom-active" || room === "channel-watchrooms";
-          if (detailsText) detailsText.textContent = isWatchRoomArea ? "Create, share, and join synced Watch Rooms from Social." : room.startsWith("channel") ? "Public channel for movie talk." : room.startsWith("group") ? "Private group chat." : "Direct message thread.";
-          document.querySelectorAll(".dsSocialRoom").forEach((btn) => btn.classList.toggle("isActive", btn.dataset.room === room));
-          setWatchStudioVisible(isWatchRoomArea);
-          renderRoom(isWatchRoomArea ? [
-            { author: "Swifly", text: "This is the Social Watch Room hub. Create a room above, copy the invite, or share it directly in chat.", createdAt: Date.now() },
-            { author: "Swifly", text: "Tip: rooms still open at /watchrooms/:code, but discovery and sharing now live here.", createdAt: Date.now() + 10 }
-          ] : undefined);
-          if (socket) socket.emit("social:join", { roomId: currentRoom, name: username });
+        function closeCall() {
+          if (localStream) {
+            localStream.getTracks().forEach((track) => track.stop());
+            localStream = null;
+          }
+          if (localVideo) localVideo.srcObject = null;
+          if (callModal) callModal.hidden = true;
+          if (socket) socket.emit("social:call-leave", { roomId: currentRoom, name: username });
         }
 
-        document.querySelectorAll(".dsSocialRoom").forEach((button) => {
-          button.addEventListener("click", () => joinRoom(button.dataset.room, button.dataset.title));
+        function createVirtualRoom(kindType) {
+          const name = prompt(kindType === "channel" ? "Channel name" : "Group name");
+          if (!name || !name.trim()) return;
+          const id = (kindType === "channel" ? "channel-" : "group-") + name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 32);
+          const section = [...document.querySelectorAll(".dsSocialSection")].find((sec) => sec.querySelector("span")?.textContent.toLowerCase().includes(kindType === "channel" ? "channel" : "group"));
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "dsSocialRoom";
+          btn.dataset.room = id;
+          btn.dataset.title = kindType === "channel" ? "# " + name.trim() : name.trim();
+          btn.innerHTML = '<i class="fa-solid ' + (kindType === "channel" ? "fa-hashtag" : "fa-users") + '"></i><b>' + esc(name.trim()) + '</b><small>' + (kindType === "channel" ? "Public" : "Group") + '</small>';
+          section?.appendChild(btn);
+          joinRoom(id, btn.dataset.title);
+          toast((kindType === "channel" ? "Channel" : "Group") + " created");
+        }
+
+        // Delegated click handling. This is more reliable after dynamic room/channel creation.
+        document.addEventListener("click", async function(event) {
+          const roomButton = event.target.closest(".dsSocialRoom");
+          if (roomButton) {
+            event.preventDefault();
+            joinRoom(roomButton.dataset.room, roomButton.dataset.title);
+            return;
+          }
+
+          const copyBtn = event.target.closest("[data-copy]");
+          if (copyBtn) {
+            event.preventDefault();
+            await (window.swiflyCopy ? window.swiflyCopy(copyBtn.dataset.copy || "") : navigator.clipboard?.writeText(copyBtn.dataset.copy || ""));
+            copyBtn.textContent = "Copied";
+            setTimeout(() => copyBtn.textContent = "Copy", 1200);
+            return;
+          }
+
+          const shareBtn = event.target.closest("[data-share]");
+          if (shareBtn) {
+            event.preventDefault();
+            const href = shareBtn.dataset.share || "";
+            const text = "Join my Watch Room: " + location.origin + href;
+            const message = { roomId: currentRoom, author: username, text, createdAt: Date.now() };
+            addMessage(message, true);
+            if (socket) socket.emit("social:message", message);
+            toast("Shared to chat");
+            return;
+          }
+
+          if (event.target.closest("#newGroupBtn") || event.target.closest("#socialCreateGroupBtn")) {
+            event.preventDefault();
+            createVirtualRoom("group");
+            return;
+          }
+
+          if (event.target.closest("#socialCreateChannelBtn")) {
+            event.preventDefault();
+            createVirtualRoom("channel");
+            return;
+          }
+
+          if (event.target.closest("#socialRoomsModeBtn")) {
+            event.preventDefault();
+            joinRoom("watchroom-lobby", "Watch Room Lobby");
+            return;
+          }
+
+          if (event.target.closest("#socialChatModeBtn")) {
+            event.preventDefault();
+            joinRoom("dm-main", "Main Chat");
+            return;
+          }
+
+          if (event.target.closest("#socialRefreshRoomsBtn")) {
+            event.preventDefault();
+            renderSocialWatchRooms();
+            toast("Rooms refreshed");
+            return;
+          }
+
+          if (event.target.closest("#socialCreateBlankRoomBtn")) {
+            event.preventDefault();
+            createSocialWatchRoom("Blank Watch Room", "", true);
+            return;
+          }
+
+          if (event.target.closest("#socialInviteBtn")) {
+            event.preventDefault();
+            const invite = location.origin + "/social?room=" + encodeURIComponent(currentRoom);
+            if (window.swiflyCopy) await window.swiflyCopy(invite);
+            else await navigator.clipboard?.writeText(invite);
+            return;
+          }
+
+          if (event.target.closest("#socialVoiceBtn")) {
+            event.preventDefault();
+            openCall(false);
+            return;
+          }
+
+          if (event.target.closest("#socialVideoBtn")) {
+            event.preventDefault();
+            openCall(true);
+            return;
+          }
+
+          if (event.target.closest("#closeCallBtn") || event.target.closest("#leaveCallBtn")) {
+            event.preventDefault();
+            closeCall();
+            return;
+          }
+
+          if (event.target.closest("#muteCallBtn")) {
+            event.preventDefault();
+            if (!localStream) return toast("No active call", "info");
+            localStream.getAudioTracks().forEach((track) => track.enabled = !track.enabled);
+            toast("Mic toggled");
+            return;
+          }
+
+          if (event.target.closest("#cameraCallBtn")) {
+            event.preventDefault();
+            if (!localStream) return toast("No active camera", "info");
+            localStream.getVideoTracks().forEach((track) => track.enabled = !track.enabled);
+            toast("Camera toggled");
+            return;
+          }
+        });
+
+        document.getElementById("socialWatchCreateForm")?.addEventListener("submit", function(event) {
+          event.preventDefault();
+          var fd = new FormData(event.currentTarget);
+          var name = String(fd.get("roomName") || "").trim() || "SwiflyTV Watch Room";
+          var link = String(fd.get("watchLink") || "").trim();
+          createSocialWatchRoom(name, link, true);
+          event.currentTarget.reset();
+        });
+
+        document.getElementById("socialWatchJoinForm")?.addEventListener("submit", function(event) {
+          event.preventDefault();
+          var fd = new FormData(event.currentTarget);
+          var code = safeRoomCode(fd.get("roomCode"));
+          if (!code) return toast("Enter a room code", "error");
+          location.href = "/watchrooms/" + encodeURIComponent(code) + "?name=SwiflyTV%20Watch%20Room&kind=blank";
         });
 
         composer?.addEventListener("submit", (event) => {
@@ -27861,97 +28393,6 @@ function socialPage(req, res) {
           typingTimer = setTimeout(() => typing.hidden = true, 1300);
         });
 
-        document.getElementById("socialWatchCreateForm")?.addEventListener("submit", function(event) {
-          event.preventDefault();
-          var fd = new FormData(event.currentTarget);
-          var name = String(fd.get("roomName") || "").trim() || "SwiflyTV Watch Room";
-          var link = String(fd.get("watchLink") || "").trim();
-          var href = createSocialWatchRoom(name, link, true);
-          event.currentTarget.reset();
-          renderSocialWatchRooms();
-        });
-
-        document.getElementById("socialCreateBlankRoomBtn")?.addEventListener("click", function() {
-          createSocialWatchRoom("Blank Watch Room", "", true);
-        });
-
-        document.getElementById("socialWatchJoinForm")?.addEventListener("submit", function(event) {
-          event.preventDefault();
-          var fd = new FormData(event.currentTarget);
-          var code = safeRoomCode(fd.get("roomCode"));
-          if (!code) return;
-          location.href = "/watchrooms/" + encodeURIComponent(code) + "?name=SwiflyTV%20Watch%20Room&kind=blank";
-        });
-
-        document.getElementById("socialRefreshRoomsBtn")?.addEventListener("click", renderSocialWatchRooms);
-
-        function createVirtualRoom(kind) {
-          const name = prompt(kind === "channel" ? "Channel name" : "Group name");
-          if (!name || !name.trim()) return;
-          const id = (kind === "channel" ? "channel-" : "group-") + name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 32);
-          const section = [...document.querySelectorAll(".dsSocialSection")].find((sec) => sec.querySelector("span")?.textContent.toLowerCase().includes(kind === "channel" ? "channel" : "group"));
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = "dsSocialRoom";
-          btn.dataset.room = id;
-          btn.dataset.title = kind === "channel" ? "# " + name.trim() : name.trim();
-          btn.innerHTML = '<i class="fa-solid ' + (kind === "channel" ? "fa-hashtag" : "fa-users") + '"></i><b>' + esc(name.trim()) + '</b><small>' + (kind === "channel" ? "Public" : "Group") + '</small>';
-          btn.addEventListener("click", () => joinRoom(btn.dataset.room, btn.dataset.title));
-          section?.appendChild(btn);
-          joinRoom(id, btn.dataset.title);
-        }
-
-        document.getElementById("newGroupBtn")?.addEventListener("click", () => createVirtualRoom("group"));
-        document.getElementById("socialCreateGroupBtn")?.addEventListener("click", () => createVirtualRoom("group"));
-        document.getElementById("socialCreateChannelBtn")?.addEventListener("click", () => createVirtualRoom("channel"));
-        document.getElementById("socialInviteBtn")?.addEventListener("click", () => {
-          navigator.clipboard?.writeText(location.origin + "/social?room=" + encodeURIComponent(currentRoom));
-          alert("Invite link copied for " + currentTitle);
-        });
-
-        async function openCall(videoMode) {
-          if (!callModal) return;
-          callModal.hidden = false;
-          if (callRoomTitle) callRoomTitle.textContent = currentTitle;
-          if (callTypeLabel) callTypeLabel.textContent = videoMode ? "Video call" : "Voice call";
-          if (callStatusText) callStatusText.textContent = "Requesting " + (videoMode ? "camera and microphone" : "microphone") + "...";
-
-          try {
-            localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: Boolean(videoMode) });
-            if (localVideo) {
-              localVideo.srcObject = localStream;
-              localVideo.hidden = !videoMode;
-            }
-            if (callStatusText) callStatusText.textContent = videoMode ? "Camera preview active. Signaling room joined." : "Mic active. Signaling room joined.";
-            if (socket) socket.emit("social:call-join", { roomId: currentRoom, name: username, video: Boolean(videoMode) });
-          } catch (error) {
-            if (callStatusText) callStatusText.textContent = "Call permission blocked or unavailable.";
-          }
-        }
-
-        function closeCall() {
-          if (localStream) {
-            localStream.getTracks().forEach((track) => track.stop());
-            localStream = null;
-          }
-          if (localVideo) localVideo.srcObject = null;
-          if (callModal) callModal.hidden = true;
-          if (socket) socket.emit("social:call-leave", { roomId: currentRoom, name: username });
-        }
-
-        document.getElementById("socialVoiceBtn")?.addEventListener("click", () => openCall(false));
-        document.getElementById("socialVideoBtn")?.addEventListener("click", () => openCall(true));
-        document.getElementById("closeCallBtn")?.addEventListener("click", closeCall);
-        document.getElementById("leaveCallBtn")?.addEventListener("click", closeCall);
-        document.getElementById("muteCallBtn")?.addEventListener("click", () => {
-          if (!localStream) return;
-          localStream.getAudioTracks().forEach((track) => track.enabled = !track.enabled);
-        });
-        document.getElementById("cameraCallBtn")?.addEventListener("click", () => {
-          if (!localStream) return;
-          localStream.getVideoTracks().forEach((track) => track.enabled = !track.enabled);
-        });
-
         socket?.on("social:call-event", (payload) => {
           if (!payload || payload.roomId !== currentRoom || payload.name === username) return;
           addMessage({ author: "Call", text: payload.name + " " + (payload.type || "updated the call"), createdAt: Date.now() }, false);
@@ -27962,9 +28403,12 @@ function socialPage(req, res) {
         const urlRoom = params.get("room");
         const target = tab === "watchrooms"
           ? document.querySelector('[data-room="watchroom-lobby"]')
-          : urlRoom ? document.querySelector('[data-room="' + CSS.escape(urlRoom) + '"]') : null;
+          : urlRoom ? document.querySelector('[data-room="' + (window.CSS && CSS.escape ? CSS.escape(urlRoom) : urlRoom.replace(/"/g, "")) + '"]') : null;
         if (target) joinRoom(target.dataset.room, target.dataset.title);
         else joinRoom(currentRoom, currentTitle);
+
+        // expose for quick manual testing in console
+        window.swiflySocial = { joinRoom, renderSocialWatchRooms, createSocialWatchRoom };
       })();
     </script>
   </main>`;
@@ -28168,6 +28612,8 @@ function apiStatus(req, res) {
       dateIdeasRemoved: true,
       socialHub: true,
       socialWatchRooms: true,
+      socialButtonsFixed: true,
+      socialLayoutV2: true,
       profileManager: true,
       dateProfile: false,
       regularMovieM3u8Player: true,
