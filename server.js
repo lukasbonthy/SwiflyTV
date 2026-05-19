@@ -19723,6 +19723,440 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v97 CINEMATIC FEATURES
+       Additive only. No color palette / root color-code changes.
+       ============================================================ */
+
+    .dsPreviewCard {
+      position: relative;
+      z-index: 0;
+    }
+
+    .dsPreviewCard:hover,
+    .dsPreviewCard:focus-within {
+      z-index: 30;
+    }
+
+    .dsHoverPreview {
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% - 18px);
+      z-index: 40;
+      width: min(360px, 86vw);
+      border-radius: 24px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.045)),
+        rgba(0,0,0,.70);
+      box-shadow: var(--swifly-shadow);
+      backdrop-filter: blur(22px) saturate(1.14);
+      -webkit-backdrop-filter: blur(22px) saturate(1.14);
+      opacity: 0;
+      transform: translate(-50%, 12px) scale(.96);
+      pointer-events: none;
+      transition: opacity .18s ease, transform .18s cubic-bezier(.16,1,.3,1);
+    }
+
+    .dsPreviewCard:hover .dsHoverPreview,
+    .dsPreviewCard:focus-within .dsHoverPreview {
+      opacity: 1;
+      transform: translate(-50%, 0) scale(1);
+      pointer-events: auto;
+    }
+
+    .dsHoverPreviewMedia {
+      position: relative;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+      background: rgba(255,255,255,.07);
+    }
+
+    .dsHoverPreviewMedia img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: .001;
+      transition: opacity .25s ease, transform .45s ease;
+    }
+
+    .dsPreviewCard:hover .dsHoverPreviewMedia img {
+      transform: scale(1.045);
+    }
+
+    .dsPreviewType {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.46);
+      font-size: 11px;
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .dsHoverPreviewBody {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+    }
+
+    .dsHoverPreviewBody strong {
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-size: 20px;
+      line-height: 1.04;
+      letter-spacing: -.045em;
+    }
+
+    .dsHoverPreviewBody p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .dsHoverPreviewMeta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .dsHoverPreviewMeta b,
+    .dsHoverPreviewMeta span {
+      padding: 4px 7px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .dsHoverPreviewActions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .dsHoverPreviewActions a {
+      min-height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 11px;
+      border-radius: 999px;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 950;
+      background: rgba(255,255,255,.09);
+      border: 1px solid rgba(255,255,255,.12);
+      transition: transform .16s ease, background .16s ease;
+    }
+
+    .dsHoverPreviewActions a:hover {
+      transform: translateY(-1px);
+      background: rgba(255,255,255,.15);
+    }
+
+    .dsCardProgress {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      z-index: 5;
+      height: 4px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255,255,255,.14);
+      opacity: 0;
+      transition: opacity .18s ease;
+    }
+
+    .dsCardProgress.always,
+    .dsCardProgress.hasProgress {
+      opacity: 1;
+    }
+
+    .dsCardProgress span {
+      display: block;
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+      background: currentColor;
+      color: var(--purple);
+      box-shadow: 0 0 22px currentColor;
+      transition: width .24s ease;
+    }
+
+    .dsWatchTheaterBar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      border-radius: 24px 24px 0 0;
+      border: 1px solid rgba(255,255,255,.10);
+      border-bottom: 0;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.045)),
+        rgba(0,0,0,.28);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .dsWatchTheaterBar span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .dsWatchTheaterBar strong {
+      display: block;
+      margin-top: 3px;
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-size: clamp(18px, 2.4vw, 28px);
+      letter-spacing: -.05em;
+    }
+
+    .dsWatchTheaterPills {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 7px;
+    }
+
+    .dsWatchTheaterPills span {
+      padding: 6px 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.10);
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .dsWatchProgressPanel {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .dsWatchProgressPanel div:first-child {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .dsWatchProgressTrack {
+      height: 6px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255,255,255,.12);
+    }
+
+    .dsWatchProgressTrack span {
+      display: block;
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: currentColor;
+      color: var(--purple);
+      transition: width .24s ease;
+    }
+
+    .dsWatchUpNext {
+      width: min(1420px, calc(100vw - 34px));
+      margin: 22px auto 72px;
+    }
+
+    .dsDetailHero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
+      gap: clamp(18px, 4vw, 44px);
+      align-items: end;
+    }
+
+    .dsDetailPosterPanel {
+      position: relative;
+      z-index: 4;
+      align-self: end;
+      margin: 0 clamp(18px, 4vw, 58px) clamp(24px, 5vw, 72px) 0;
+      border-radius: 28px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      box-shadow: var(--swifly-shadow);
+    }
+
+    .dsDetailPosterPanel img {
+      width: 100%;
+      display: block;
+      aspect-ratio: 2 / 3;
+      object-fit: cover;
+      opacity: .001;
+      transition: opacity .24s ease, transform .45s ease;
+    }
+
+    .dsDetailPosterPanel:hover img {
+      transform: scale(1.035);
+    }
+
+    .dsDetailPosterPanel > div {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      display: grid;
+      gap: 4px;
+      padding: 10px;
+      border-radius: 18px;
+      background: rgba(0,0,0,.55);
+      border: 1px solid rgba(255,255,255,.10);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .dsDetailPosterPanel span {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .dsDetailPosterPanel strong {
+      font-size: 14px;
+      font-weight: 950;
+    }
+
+    .dsDetailQuickChips,
+    .dsDetailGenreChips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .dsDetailQuickChips span,
+    .dsDetailGenreChips span {
+      padding: 7px 10px;
+      border-radius: 999px;
+      color: var(--text);
+      background: rgba(255,255,255,.09);
+      border: 1px solid rgba(255,255,255,.12);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .dsCinematicOverview {
+      align-items: start;
+    }
+
+    .dsCinematicOverview h2 {
+      margin: 0 0 10px;
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-size: clamp(28px, 3.5vw, 46px);
+      letter-spacing: -.06em;
+    }
+
+    .dsDetailStats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .dsDetailStats article {
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .dsDetailStats span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .dsDetailStats strong {
+      display: block;
+      margin-top: 6px;
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-size: 24px;
+      letter-spacing: -.05em;
+    }
+
+    .swiflyImgPending {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .swiflyImgPending::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      background:
+        linear-gradient(110deg, transparent 32%, rgba(255,255,255,.14) 48%, transparent 64%),
+        rgba(255,255,255,.045);
+      background-size: 220% 100%;
+      animation: swiflySkeletonSweep 1.15s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes swiflySkeletonSweep {
+      from { background-position: 140% 0; }
+      to { background-position: -80% 0; }
+    }
+
+    @media(max-width: 900px) {
+      .dsDetailHero {
+        grid-template-columns: 1fr;
+      }
+
+      .dsDetailPosterPanel {
+        display: none;
+      }
+
+      .dsWatchTheaterBar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .dsWatchTheaterPills {
+        justify-content: flex-start;
+      }
+    }
+
+    @media(max-width: 760px) {
+      .dsHoverPreview {
+        display: none;
+      }
+
+      .dsDetailStats {
+        grid-template-columns: 1fr;
+      }
+    }
+
   </style>
 
     <script>
@@ -20778,6 +21212,101 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
   </script>
 
 
+
+  <script>
+    (function swiflyContinueWatchingEngine(){
+      const STORAGE_KEY = "swiflytv.continueWatching";
+
+      function readList() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+          return Array.isArray(saved) ? saved : [];
+        } catch {
+          return [];
+        }
+      }
+
+      function writeList(list) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(list.slice(0, 60)));
+      }
+
+      function keyFor(item) {
+        return String(item.type || item.media_type || "movie") + ":" + String(item.id || item.tmdbId || "");
+      }
+
+      window.swiflySaveContinueWatching = function swiflySaveContinueWatching(item) {
+        if (!item || !(item.id || item.tmdbId)) return;
+        const list = readList();
+        const key = keyFor(item);
+        const previous = list.find((entry) => keyFor(entry) === key) || {};
+        const next = {
+          ...previous,
+          ...item,
+          progress: Math.max(Number(previous.progress || 0), Number(item.progress || 0)),
+          currentTime: Number(item.currentTime || previous.currentTime || 0),
+          duration: Number(item.duration || previous.duration || 0),
+          updatedAt: Date.now(),
+        };
+        const filtered = list.filter((entry) => keyFor(entry) !== key);
+        writeList([next, ...filtered]);
+        window.swiflyPaintContinueProgress?.();
+      };
+
+      window.swiflyBindContinueProgress = function swiflyBindContinueProgress(video, item) {
+        if (!video || !item || video.__swiflyProgressBound) return;
+        video.__swiflyProgressBound = true;
+
+        const panel = document.querySelector("[data-watch-progress-panel]");
+        const label = document.querySelector("[data-watch-progress-label]");
+        const bar = document.querySelector("[data-watch-progress-bar]");
+
+        function update() {
+          const duration = Number(video.duration || 0);
+          const currentTime = Number(video.currentTime || 0);
+          const progress = duration > 0 && Number.isFinite(duration) ? Math.max(0, Math.min(100, (currentTime / duration) * 100)) : 0;
+
+          if (panel && progress > 0) panel.hidden = false;
+          if (label) label.textContent = Math.round(progress) + "%";
+          if (bar) bar.style.width = progress + "%";
+
+          window.swiflySaveContinueWatching({
+            ...item,
+            progress,
+            currentTime,
+            duration,
+          });
+        }
+
+        ["timeupdate", "pause", "ended", "seeked", "loadedmetadata"].forEach((eventName) => {
+          video.addEventListener(eventName, update);
+        });
+
+        update();
+      };
+
+      window.swiflyPaintContinueProgress = function swiflyPaintContinueProgress() {
+        const list = readList();
+        const byKey = new Map(list.map((item) => [keyFor(item), item]));
+
+        document.querySelectorAll("[data-progress-id]").forEach((card) => {
+          const item = byKey.get(card.getAttribute("data-progress-id") || "");
+          const progress = item ? Math.max(0, Math.min(100, Number(item.progress || 0))) : 0;
+          let bar = card.querySelector("[data-card-progress]");
+          if (!bar) return;
+          bar.classList.toggle("hasProgress", progress > 1);
+          const fill = bar.querySelector("span");
+          if (fill) fill.style.width = progress + "%";
+        });
+      };
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", window.swiflyPaintContinueProgress);
+      } else {
+        window.swiflyPaintContinueProgress();
+      }
+    })();
+  </script>
+
   <script>
     (function swiflyModernPolish(){
       const root = document.documentElement;
@@ -20798,11 +21327,19 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
       function prepImages(scope) {
         (scope || document).querySelectorAll("img").forEach((img) => {
-          if (img.complete && img.naturalWidth) {
+          const wrap = img.closest(".posterWrap, .topTenPoster, .dsHoverPreviewMedia, .dsDetailPosterPanel, .personPhoto");
+          if (wrap) wrap.classList.add("swiflyImgPending");
+
+          function markLoaded() {
             img.classList.add("swiflyLoaded");
+            if (wrap) wrap.classList.remove("swiflyImgPending");
+          }
+
+          if (img.complete && img.naturalWidth) {
+            markLoaded();
           } else {
-            img.addEventListener("load", () => img.classList.add("swiflyLoaded"), { once: true });
-            img.addEventListener("error", () => img.classList.add("swiflyLoaded"), { once: true });
+            img.addEventListener("load", markLoaded, { once: true });
+            img.addEventListener("error", markLoaded, { once: true });
           }
         });
       }
@@ -20959,15 +21496,22 @@ function movieCard(item = {}, forcedType = "") {
   const title = getTitle(item);
   const id = item.id || "";
   const href = `/${type}/${encodeURIComponent(id)}`;
+  const watchHref = `/watch/${type}/${encodeURIComponent(id)}?mode=movie`;
+  const trailerHref = `/watch/${type}/${encodeURIComponent(id)}?mode=trailer`;
   const thumbUrl = item.backdrop_path ? img(item.backdrop_path, "w780") : img(item.poster_path, "w500");
+  const posterUrl = item.poster_path ? img(item.poster_path, "w500") : thumbUrl;
   const itemYear = getYear(getDate(item));
   const score = formatRating(item.vote_average);
   const maturity = type === "tv" ? "TV-14" : "PG-13";
   const match = metaMatch(item);
+  const overview = String(item.overview || "").trim();
+  const shortOverview = overview.length > 150 ? `${overview.slice(0, 147).trim()}...` : overview;
+  const typeLabel = type === "tv" ? "Series" : "Movie";
 
-  return `<article class="movieCard dsCard" data-title="${escapeHtml(title.toLowerCase())}">
+  return `<article class="movieCard dsCard dsPreviewCard" data-title="${escapeHtml(title.toLowerCase())}" data-progress-id="${escapeHtml(type)}:${escapeHtml(id)}">
     <a href="${href}" class="posterWrap dsThumb" aria-label="${escapeHtml(title)}">
       ${thumbUrl ? `<img src="${escapeHtml(thumbUrl)}" alt="${escapeHtml(title)} thumbnail" loading="lazy" />` : `<div class="posterFallback"><span>${escapeHtml(title.slice(0, 1))}</span></div>`}
+      <div class="dsCardProgress" data-card-progress><span></span></div>
       <div class="dsCardOverlay">
         <div class="dsCardControls">
           <span class="dsPlayDot">▶</span>
@@ -20997,6 +21541,23 @@ function movieCard(item = {}, forcedType = "") {
         <div class="dsCardMeta"><b>${escapeHtml(match)}</b><span>${escapeHtml(itemYear)}</span><span>${escapeHtml(maturity)}</span></div>
       </div>
     </a>
+
+    <div class="dsHoverPreview" role="presentation">
+      <div class="dsHoverPreviewMedia">
+        ${posterUrl ? `<img src="${escapeHtml(posterUrl)}" alt="" loading="lazy" />` : `<div class="posterFallback"><span>${escapeHtml(title.slice(0, 1))}</span></div>`}
+        <span class="dsPreviewType">${escapeHtml(typeLabel)}</span>
+      </div>
+      <div class="dsHoverPreviewBody">
+        <strong>${escapeHtml(title)}</strong>
+        <div class="dsHoverPreviewMeta"><b>${escapeHtml(match)}</b><span>${escapeHtml(itemYear)}</span><span>${escapeHtml(maturity)}</span><span>HD</span></div>
+        ${shortOverview ? `<p>${escapeHtml(shortOverview)}</p>` : ""}
+        <div class="dsHoverPreviewActions">
+          <a href="${escapeHtml(watchHref)}">▶ Play</a>
+          <a href="${escapeHtml(trailerHref)}">🎞 Trailer</a>
+          <a href="${escapeHtml(href)}">Info</a>
+        </div>
+      </div>
+    </div>
   </article>`;
 }
 
@@ -21224,6 +21785,7 @@ async function welcomePage(req, res) {
         <a class="dsPrimaryBtn" href="/signup?redirect=${redirect}">Create account</a>
         <a class="dsSecondaryBtn" href="/login?redirect=${redirect}">Log in</a>
       </div>
+      ${upNextRail}
     </section>
   </main>`;
 
@@ -22059,9 +22621,11 @@ async function watchPage(req, res, type) {
   const mode = req.query.mode === "trailer" ? "trailer" : "movie";
   const endpoint = type === "tv" ? `/tv/${id}` : `/movie/${id}`;
 
-  const [details, videos] = await Promise.all([
+  const [details, videos, recommendations, similar] = await Promise.all([
     tmdb(endpoint, {}, CACHE_TTL.long),
     tmdb(`${endpoint}/videos`, {}, CACHE_TTL.long),
+    tmdb(`${endpoint}/recommendations`, {}, CACHE_TTL.medium),
+    tmdb(`${endpoint}/similar`, {}, CACHE_TTL.medium),
   ]);
 
   if (details.__error) return res.send(setupNeededPage(details.message));
@@ -22095,6 +22659,14 @@ async function watchPage(req, res, type) {
     ? (details.seasons || []).find((season) => String(season.season_number) === selectedSeason) || (details.seasons || []).find((season) => season.season_number > 0)
     : null;
   const episodeCount = Math.max(1, Math.min(24, Number(currentSeason?.episode_count || 10)));
+  const upNextItems = [
+    ...((recommendations && Array.isArray(recommendations.results)) ? recommendations.results : []),
+    ...((similar && Array.isArray(similar.results)) ? similar.results : []),
+  ].filter((item, index, arr) => item && item.id && arr.findIndex((i) => i.id === item.id) === index).slice(0, 18);
+  const upNextRail = upNextItems.length
+    ? `<section class="dsWatchUpNext"><div class="dsRowHead"><h2>Up Next</h2><span class="dsRowTag">Recommended</span></div><div class="movieRail dsRail">${upNextItems.map((item) => movieCard(item, type)).join("")}</div></section>`
+    : "";
+
   const tvEpisodePicker = type === "tv"
     ? `<section class="dsWatchEpisodePicker" aria-label="Choose episode">
         <div>
@@ -22174,12 +22746,29 @@ async function watchPage(req, res, type) {
             ${isMovieMode ? `<span class="dsPlaceholderBadge">${proxyVideoUrl ? "proxyVideo" : providerStream ? "ORG MP4" : movieEmbedUrl ? "Embed" : "Trailer fallback"}</span>` : `<span class="dsPlaceholderBadge trailer">Trailer</span>`}
           </div>
 
-          <div class="dsWatchFrame dsWatchEmbedFrame">
+          <div class="dsWatchTheaterBar">
+            <div>
+              <span>${escapeHtml(type === "tv" ? tvEpisodeLabel || "Episode" : "Now playing")}</span>
+              <strong>${escapeHtml(title)}</strong>
+            </div>
+            <div class="dsWatchTheaterPills">
+              <span>${escapeHtml(getYear(detailsDate))}</span>
+              <span>${escapeHtml(formatRating(details.vote_average))}</span>
+              <span>${escapeHtml(sourceLabel)}</span>
+            </div>
+          </div>
+
+          <div class="dsWatchFrame dsWatchEmbedFrame" data-watch-progress-root>
             ${isMovieMode
               ? movieFrame
               : trailer
                 ? `<iframe src="${escapeHtml(trailerEmbedSrc)}" title="${escapeHtml(title)} trailer" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin" referrerpolicy="no-referrer"></iframe>`
                 : `<div class="dsNoTrailer"><h2>No trailer found</h2><p>TMDB did not return a YouTube trailer for this title.</p></div>`}
+          </div>
+
+          <div class="dsWatchProgressPanel" data-watch-progress-panel hidden>
+            <div><span>Watching progress</span><strong data-watch-progress-label>0%</strong></div>
+            <div class="dsWatchProgressTrack"><span data-watch-progress-bar></span></div>
           </div>
 
           <div class="dsWatchActions">
@@ -22209,6 +22798,41 @@ async function watchPage(req, res, type) {
   if (isMovieMode) {
     res.set("Cache-Control", "no-store");
   }
+
+  const continueWatchingScript = `<script>
+    (function swiflyWatchProgressBoot(){
+      var item = {
+        id: ${JSON.stringify(id)},
+        tmdbId: ${JSON.stringify(id)},
+        type: ${JSON.stringify(type)},
+        title: ${JSON.stringify(title)},
+        name: ${JSON.stringify(title)},
+        poster: ${JSON.stringify(details.poster_path || "")},
+        poster_path: ${JSON.stringify(details.poster_path || "")},
+        backdrop: ${JSON.stringify(details.backdrop_path || "")},
+        backdrop_path: ${JSON.stringify(details.backdrop_path || "")},
+        rating: ${JSON.stringify(formatRating(details.vote_average))},
+        year: ${JSON.stringify(getYear(detailsDate))},
+        href: "/watch/${escapeHtml(type)}/${escapeHtml(id)}?mode=${mode === "movie" ? "movie" : "trailer"}"
+      };
+
+      function start() {
+        if (window.swiflySaveContinueWatching) window.swiflySaveContinueWatching(item);
+        var bind = function() {
+          var video = document.querySelector("#proxyVideoClientVideo, #movie-placeholder-video, .dsWatchFrame video, .dsDirectMovieVideo");
+          if (video && window.swiflyBindContinueProgress) {
+            window.swiflyBindContinueProgress(video, item);
+          }
+        };
+        bind();
+        setTimeout(bind, 1000);
+        setTimeout(bind, 3000);
+      }
+
+      if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+      else start();
+    })();
+  </script>`;
 
   const directVideoScript = isMovieMode
     ? `<script>
@@ -22492,7 +23116,7 @@ async function watchPage(req, res, type) {
     </script>`
     : "";
 
-  res.send(pageShell({ title: `${SITE_NAME} — ${mode === "movie" ? "Watch" : "Trailer"} ${title}`, active: "watch", body: body + directVideoScript }));
+  res.send(pageShell({ title: `${SITE_NAME} — ${mode === "movie" ? "Watch" : "Trailer"} ${title}`, active: "watch", body: body + directVideoScript + continueWatchingScript }));
 }
 
 async function detailPage(req, res, type) {
@@ -22532,6 +23156,11 @@ async function detailPage(req, res, type) {
     ? formatRuntime(details.runtime)
     : `${details.number_of_seasons || 0} Season${details.number_of_seasons === 1 ? "" : "s"}`;
   const maturity = type === "tv" ? "TV-14" : "PG-13";
+  const detailPoster = img(details.poster_path, "w500");
+  const genreChips = (details.genres || []).slice(0, 5).map((genre) => `<span>${escapeHtml(genre.name)}</span>`).join("");
+  const trailerCount = trailers.length;
+  const popularityScore = Math.round(Number(details.popularity || 0));
+  const voteCount = Number(details.vote_count || 0).toLocaleString();
 
   const seasonRows = type === "tv"
     ? (details.seasons || [])
@@ -22576,6 +23205,13 @@ async function detailPage(req, res, type) {
         <div class="dsDetailHeroContent">
           <span class="dsEyebrow">${type === "tv" ? "Series" : "Movie"}</span>
           <h1>${escapeHtml(titleArtText(title))}</h1>
+          <div class="dsDetailQuickChips">
+            <span>${escapeHtml(getYear(detailsDate))}</span>
+            <span>${escapeHtml(runtime)}</span>
+            <span>${escapeHtml(formatRating(details.vote_average))}</span>
+            <span>${escapeHtml(maturity)}</span>
+          </div>
+          <div class="dsDetailGenreChips">${genreChips}</div>
           <div class="dsDetailActions dsDetailActionsV27">
             <a class="dsPrimaryBtn dsMoviePlayBtn" href="/watch/${escapeHtml(type)}/${escapeHtml(id)}?mode=movie" data-play-id="${escapeHtml(id)}" data-play-type="${escapeHtml(type)}" data-play-title="${escapeHtml(title)}" data-play-poster="${escapeHtml(details.poster_path || "")}" data-play-backdrop="${escapeHtml(details.backdrop_path || "")}" data-play-rating="${escapeHtml(formatRating(details.vote_average))}" data-play-year="${escapeHtml(getYear(detailsDate))}"><span>▶</span> ${escapeHtml(watchButtonLabel)}</a>
             <a class="dsSecondaryBtn dsTrailerPlayBtn" href="/watch/${escapeHtml(type)}/${escapeHtml(id)}?mode=trailer" data-play-id="${escapeHtml(id)}" data-play-type="${escapeHtml(type)}" data-play-title="${escapeHtml(title)}" data-play-poster="${escapeHtml(details.poster_path || "")}" data-play-backdrop="${escapeHtml(details.backdrop_path || "")}" data-play-rating="${escapeHtml(formatRating(details.vote_average))}" data-play-year="${escapeHtml(getYear(detailsDate))}"><span>🎞</span> Trailer</a>
@@ -22584,6 +23220,13 @@ async function detailPage(req, res, type) {
             <button class="dsIconBtn dsHeartBtn" data-like-id="${escapeHtml(id)}" data-like-type="${escapeHtml(type)}" data-like-title="${escapeHtml(title)}" data-like-poster="${escapeHtml(details.poster_path || "")}" data-like-backdrop="${escapeHtml(details.backdrop_path || "")}" data-like-rating="${escapeHtml(formatRating(details.vote_average))}" data-like-year="${escapeHtml(getYear(detailsDate))}" type="button">♡</button>
           </div>
         </div>
+        <aside class="dsDetailPosterPanel">
+          ${detailPoster ? `<img src="${escapeHtml(detailPoster)}" alt="${escapeHtml(title)} poster" loading="lazy" />` : `<div class="posterFallback"><span>${escapeHtml(title.slice(0, 1))}</span></div>`}
+          <div>
+            <span>${escapeHtml(metaMatch(details))}</span>
+            <strong>${escapeHtml(type === "tv" ? "Series details" : "Movie details")}</strong>
+          </div>
+        </aside>
       </section>
 
       <section class="dsDetailBody">
@@ -22595,8 +23238,16 @@ async function detailPage(req, res, type) {
           <span>HD</span>
         </div>
 
-        <section id="overview" class="dsDetailGrid">
-          <p>${escapeHtml(details.overview || "No overview available.")}</p>
+        <section id="overview" class="dsDetailGrid dsCinematicOverview">
+          <div>
+            <h2>Overview</h2>
+            <p>${escapeHtml(details.overview || "No overview available.")}</p>
+            <div class="dsDetailStats">
+              <article><span>Trailers</span><strong>${escapeHtml(String(trailerCount))}</strong></article>
+              <article><span>Votes</span><strong>${escapeHtml(voteCount)}</strong></article>
+              <article><span>Popularity</span><strong>${escapeHtml(String(popularityScore))}</strong></article>
+            </div>
+          </div>
           <aside>
             <div><span>Cast</span><strong>${escapeHtml(cast.slice(0, 4).map((p) => p.name).join(", ") || "—")}</strong></div>
             <div><span>Genres</span><strong>${escapeHtml((details.genres || []).slice(0, 4).map((g) => g.name).join(", ") || "—")}</strong></div>
@@ -26976,13 +27627,15 @@ function continueWatchingPage(req, res) {
           const type = item.type || item.media_type || "movie";
           const year = item.year || "";
           const poster = posterUrl(item.poster || item.poster_path || "");
+          const progress = Math.max(0, Math.min(100, Number(item.progress || 0)));
           return '<a class="movieCard" href="' + esc(itemHref(item)) + '">' +
             '<div class="posterWrap">' +
               (poster ? '<img src="' + esc(poster) + '" alt="' + esc(title) + '" loading="lazy" />' : '<div class="posterFallback">' + esc(title).slice(0,1) + '</div>') +
+              '<div class="dsCardProgress always"><span style="width:' + progress + '%"></span></div>' +
             '</div>' +
             '<div class="movieMeta">' +
               '<strong>' + esc(title) + '</strong>' +
-              '<span>' + esc(String(type).toUpperCase()) + (year ? ' • ' + esc(year) : '') + '</span>' +
+              '<span>' + esc(String(type).toUpperCase()) + (year ? ' • ' + esc(year) : '') + (progress ? ' • ' + Math.round(progress) + '% watched' : '') + '</span>' +
             '</div>' +
           '</a>';
         }).join("");
