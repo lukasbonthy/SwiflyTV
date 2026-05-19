@@ -21214,7 +21214,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
     /* ============================================================
        v100 DISCORD-STYLE SOCIAL ROOMS
-       Discord-inspired layout + creator permissions + integrated watch rooms.
+       Swifly-inspired layout + creator permissions + integrated watch rooms.
        ============================================================ */
 
     .sv100 {
@@ -22330,6 +22330,273 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       .sv103MediaFrame,
       .sv103Player {
         min-height: 360px;
+      }
+    }
+
+
+    /* ============================================================
+       v104 SWIFLY HUB REFRESH
+       Watch Rooms are open to everyone + less Discord-clone, more SwiflyTV.
+       ============================================================ */
+
+    .sv104 {
+      background:
+        radial-gradient(1100px circle at 12% -8%, rgba(229,9,20,.18), transparent 42%),
+        radial-gradient(820px circle at 96% 8%, rgba(88,101,242,.14), transparent 40%),
+        linear-gradient(135deg, #07080d 0%, #10121b 46%, #08090f 100%);
+      grid-template-columns: 88px 300px minmax(0, 1fr) 278px;
+    }
+
+    .sv104 .sv100Guilds {
+      background:
+        linear-gradient(180deg, rgba(229,9,20,.13), transparent 24%),
+        rgba(5,6,10,.82);
+      backdrop-filter: blur(18px);
+      border-right: 1px solid rgba(255,255,255,.075);
+    }
+
+    .sv104 .sv100Guild {
+      width: 56px;
+      height: 56px;
+      border-radius: 20px;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.16), transparent 40%),
+        rgba(255,255,255,.075);
+      border: 1px solid rgba(255,255,255,.09);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    }
+
+    .sv104 .sv100Guild:hover,
+    .sv104 .sv100Guild.active {
+      border-radius: 20px;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.25), transparent 40%),
+        linear-gradient(145deg, #e50914, #7c3aed 62%, #2563eb);
+      box-shadow: 0 18px 55px rgba(229,9,20,.20);
+    }
+
+    .sv104 .sv100Guild.active::before {
+      left: -11px;
+      height: 38px;
+      background: linear-gradient(180deg, #e50914, #7c3aed);
+      box-shadow: 0 0 22px rgba(229,9,20,.58);
+    }
+
+    .sv104 .sv100Channels,
+    .sv104 .sv100Members {
+      background:
+        radial-gradient(420px circle at 0% 0%, rgba(229,9,20,.09), transparent 52%),
+        rgba(14,16,25,.78);
+      backdrop-filter: blur(18px) saturate(1.08);
+      border-color: rgba(255,255,255,.085);
+    }
+
+    .sv104 .sv100ServerHead {
+      min-height: 76px;
+      padding: 0 18px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      box-shadow: none;
+    }
+
+    .sv104 .sv100ServerHead strong {
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-size: 22px;
+      letter-spacing: -.055em;
+    }
+
+    .sv104 .sv100ProfilePill {
+      margin: 16px;
+      padding: 13px;
+      border-radius: 22px;
+      background:
+        radial-gradient(260px circle at 0% 0%, rgba(229,9,20,.20), transparent 55%),
+        rgba(255,255,255,.065);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 18px 52px rgba(0,0,0,.18);
+    }
+
+    .sv104 .sv100ProfilePill > span {
+      border-radius: 17px;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.28), transparent 42%),
+        linear-gradient(135deg, #e50914, #7c3aed);
+      box-shadow: 0 12px 34px rgba(229,9,20,.22);
+    }
+
+    .sv104 .sv100ModeTabs {
+      margin: 0 16px 18px;
+      padding: 6px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.065);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .sv104 .sv100ModeTabs button {
+      border-radius: 999px;
+    }
+
+    .sv104 .sv100ModeTabs button.active {
+      background: linear-gradient(135deg, #e50914, #7c3aed);
+      box-shadow: 0 10px 35px rgba(229,9,20,.20);
+    }
+
+    .sv104 .sv100ChannelGroup {
+      margin: 20px 12px;
+      padding: 10px;
+      border-radius: 22px;
+      background: rgba(255,255,255,.025);
+      border: 1px solid rgba(255,255,255,.045);
+    }
+
+    .sv104 .sv100Channel {
+      min-height: 44px;
+      border-radius: 15px;
+      margin: 3px 0;
+      color: rgba(243,244,245,.74);
+    }
+
+    .sv104 .sv100Channel:hover,
+    .sv104 .sv100Channel.active {
+      color: white;
+      background:
+        radial-gradient(220px circle at 0% 0%, rgba(229,9,20,.14), transparent 50%),
+        rgba(255,255,255,.085);
+      box-shadow: inset 3px 0 0 rgba(229,9,20,.82);
+    }
+
+    .sv104 .sv100Main {
+      background:
+        radial-gradient(960px circle at 30% -10%, rgba(255,255,255,.045), transparent 48%),
+        rgba(16,18,27,.78);
+    }
+
+    .sv104 .sv100Topbar {
+      min-height: 76px;
+      padding: 0 22px;
+      background:
+        linear-gradient(90deg, rgba(229,9,20,.10), rgba(124,58,237,.06), rgba(255,255,255,.018)),
+        rgba(255,255,255,.025);
+      border-bottom: 1px solid rgba(255,255,255,.075);
+    }
+
+    .sv104 .sv100Topbar h1 {
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-size: 30px;
+      letter-spacing: -.065em;
+    }
+
+    .sv104 .sv100Topbar button {
+      border-radius: 999px;
+      background: rgba(255,255,255,.065);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .sv104 .sv100Topbar button:hover {
+      background: rgba(255,255,255,.12);
+      border-color: rgba(255,255,255,.16);
+    }
+
+    .sv104 .sv100Notice {
+      border-radius: 18px;
+      color: rgba(255,255,255,.82);
+      background:
+        radial-gradient(380px circle at 0% 0%, rgba(35,165,90,.18), transparent 55%),
+        rgba(255,255,255,.055);
+      border: 1px solid rgba(35,165,90,.18);
+    }
+
+    .sv104 .sv100Composer {
+      border-radius: 24px;
+      background: rgba(255,255,255,.075);
+      border: 1px solid rgba(255,255,255,.085);
+      box-shadow: 0 18px 60px rgba(0,0,0,.18);
+    }
+
+    .sv104 .sv100RoomsIntro,
+    .sv104 .sv103RoomHeader {
+      border-radius: 30px;
+      background:
+        radial-gradient(780px circle at 0% 0%, rgba(229,9,20,.22), transparent 46%),
+        radial-gradient(720px circle at 100% 0%, rgba(124,58,237,.18), transparent 50%),
+        rgba(255,255,255,.055);
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 24px 90px rgba(0,0,0,.25);
+    }
+
+    .sv104 .sv100RoomsIntro h2,
+    .sv104 .sv103RoomHeader h2 {
+      font-size: clamp(38px, 5.5vw, 72px);
+      letter-spacing: -.085em;
+    }
+
+    .sv104 .sv100Card,
+    .sv104 .sv103ToolCard,
+    .sv104 .sv103RoomMeta > div,
+    .sv104 .sv103ControlDock {
+      border-radius: 24px;
+      background:
+        radial-gradient(320px circle at 0% 0%, rgba(255,255,255,.08), transparent 55%),
+        rgba(255,255,255,.055);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 16px 55px rgba(0,0,0,.18);
+    }
+
+    .sv104 .sv103Player {
+      border-radius: 30px;
+      border: 1px solid rgba(255,255,255,.11);
+      background:
+        radial-gradient(800px circle at 50% 0%, rgba(88,101,242,.13), transparent 48%),
+        #05070d;
+      box-shadow: 0 26px 100px rgba(0,0,0,.32);
+    }
+
+    .sv104 .sv103ControlDock {
+      justify-content: center;
+    }
+
+    .sv104 .sv103ControlDock button:first-child,
+    .sv104 .sv100Btn.primary,
+    .sv104 .sv103ToolCard button {
+      background: linear-gradient(135deg, #e50914, #7c3aed);
+      box-shadow: 0 14px 44px rgba(229,9,20,.18);
+    }
+
+    .sv104 .sv100RoomItem {
+      border-radius: 20px;
+      background:
+        radial-gradient(260px circle at 0% 0%, rgba(229,9,20,.12), transparent 52%),
+        rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.09);
+    }
+
+    .sv104 .sv100RoomItem a,
+    .sv104 .sv100RoomItem button {
+      border-radius: 999px;
+    }
+
+    .sv104 .lockedOnly {
+      display: none !important;
+    }
+
+    @media(max-width: 1180px) {
+      .sv104 {
+        grid-template-columns: 82px 286px minmax(0, 1fr);
+      }
+    }
+
+    @media(max-width: 760px) {
+      .sv104 {
+        grid-template-columns: 1fr;
+      }
+
+      .sv104 .sv100Guilds {
+        flex-direction: row;
+        overflow-x: auto;
+      }
+
+      .sv104 .sv100ServerHead,
+      .sv104 .sv100Topbar {
+        min-height: auto;
       }
     }
 
@@ -29632,7 +29899,7 @@ function socialCreatorNames() {
 }
 
 function socialOpenRoomCreation() {
-  return process.env.SOCIAL_OPEN_ROOM_CREATION === "true";
+  return process.env.SOCIAL_OPEN_ROOM_CREATION !== "false";
 }
 
 function socialPermissionsForName(name = "") {
@@ -29643,7 +29910,7 @@ function socialPermissionsForName(name = "") {
     isCreator,
     canCreateGroups: isCreator,
     canCreateChannels: isCreator,
-    canCreateWatchRooms: isCreator || socialOpenRoomCreation(),
+    canCreateWatchRooms: socialOpenRoomCreation() || isCreator,
     canManageSocial: isCreator,
     allowedCreators: allowed,
     openRoomCreation: socialOpenRoomCreation(),
@@ -29662,9 +29929,9 @@ function socialPage(req, res) {
   const initialVideoId = String(req.query.videoId || "").slice(0, 64);
   const initialEmbedUrl = String(req.query.embedUrl || "").slice(0, 1000);
 
-  const body = `<main class="sv100 sv103" data-initial-tab="${escapeHtml(initialTab)}" data-room-id="${escapeHtml(requestedRoomId)}" data-room-name="${escapeHtml(initialRoomName)}" data-room-kind="${escapeHtml(initialKind)}" data-room-video-id="${escapeHtml(initialVideoId)}" data-room-embed-url="${escapeHtml(initialEmbedUrl)}" data-denied="${escapeHtml(denied)}" data-allowed-creators="${escapeHtml(allowedCreators.join(","))}" data-open-room-creation="${socialOpenRoomCreation() ? "true" : "false"}">
+  const body = `<main class="sv100 sv103 sv104" data-initial-tab="${escapeHtml(initialTab)}" data-room-id="${escapeHtml(requestedRoomId)}" data-room-name="${escapeHtml(initialRoomName)}" data-room-kind="${escapeHtml(initialKind)}" data-room-video-id="${escapeHtml(initialVideoId)}" data-room-embed-url="${escapeHtml(initialEmbedUrl)}" data-denied="${escapeHtml(denied)}" data-allowed-creators="${escapeHtml(allowedCreators.join(","))}" data-open-room-creation="${socialOpenRoomCreation() ? "true" : "false"}">
     <aside class="sv100Guilds" aria-label="Servers">
-      <a class="sv100Guild active" href="/social" title="Swifly Social"><i class="ri-discord-fill"></i></a>
+      <a class="sv100Guild active" href="/social" title="Swifly Hub"><i class="ri-play-circle-fill"></i></a>
       <a class="sv100Guild" href="/movies" title="Movies"><i class="ri-movie-2-fill"></i></a>
       <a class="sv100Guild" href="/tv" title="TV Shows"><i class="ri-tv-2-fill"></i></a>
       <a class="sv100Guild" href="/social?tab=watchrooms" title="Watch Rooms"><i class="ri-vidicon-fill"></i></a>
@@ -29674,7 +29941,7 @@ function socialPage(req, res) {
     <aside class="sv100Channels">
       <div class="sv100ServerHead">
         <div>
-          <strong>Swifly Social</strong>
+          <strong>Swifly Hub</strong>
           <small id="sv100RoleText">Checking permissions...</small>
         </div>
         <button type="button" id="sv100ServerMenu" title="Server menu"><i class="ri-arrow-down-s-line"></i></button>
@@ -29730,7 +29997,7 @@ function socialPage(req, res) {
       <section id="sv100ChatPanel" class="sv100Panel ${initialTab === "chat" ? "active" : ""}">
         <div class="sv100Notice">
           <i class="ri-shield-check-fill"></i>
-          <span>Only trusted creators can create new groups/channels/rooms. Everyone can chat and join rooms.</span>
+          <span>Everyone can create Watch Rooms. Groups and channels still need creator permission.</span>
         </div>
         <div id="sv100Messages" class="sv100Messages"></div>
         <form id="sv100Composer" class="sv100Composer">
@@ -29746,7 +30013,7 @@ function socialPage(req, res) {
             <div>
               <span class="dsEyebrow">Native Social Watchroom</span>
               <h2 id="sv103RoomTitle">room-hub</h2>
-              <p id="sv103RoomSub">Create or join a room. The room UI lives here, not in an embedded page.</p>
+              <p id="sv103RoomSub">Create or join a room. The native room UI lives inside Swifly Hub.</p>
             </div>
             <nav>
               <button type="button" data-action="copy-room-link"><i class="ri-link"></i> Copy</button>
@@ -29810,7 +30077,7 @@ function socialPage(req, res) {
               <div>
                 <span class="dsEyebrow">Integrated Watch Rooms</span>
                 <h2>Watchrooms are native now.</h2>
-                <p>No iframe page-in-a-page. The player, controls, code, viewers, host state, and room tools are built directly into Social.</p>
+                <p>The player, controls, room code, viewers, and host tools are built directly into Swifly Hub.</p>
               </div>
               <button class="sv100Btn primary creatorOnly" type="button" data-action="native-create-room"><i class="ri-add-circle-fill"></i> Create Room</button>
             </div>
@@ -29819,7 +30086,7 @@ function socialPage(req, res) {
               <form class="sv100Card creatorOnly" method="get" action="/watchrooms/new" id="sv100CreateRoomForm">
                 <input type="hidden" name="creator" id="sv100CreatorInput" value="" />
                 <input type="hidden" name="social" value="1" />
-                <span>Host tools</span>
+                <span>Watch tools</span>
                 <h3>Create Watch Room</h3>
                 <label>Room name<input name="name" placeholder="Friday movie night" /></label>
                 <label>Movie/site link<input name="watchLink" placeholder="YouTube, trailer, website, etc." /></label>
@@ -29828,8 +30095,8 @@ function socialPage(req, res) {
 
               <div class="sv100Card lockedOnly" hidden>
                 <span>Locked</span>
-                <h3>Hosting is restricted</h3>
-                <p>You can still join Watch Rooms, chat, voice call, video call, and share links. Ask an admin to add your profile name to the creator list.</p>
+                <h3>Group/channel creation is restricted</h3>
+                <p>You can create and join Watch Rooms. Only groups/channels are restricted.</p>
               </div>
 
               <form class="sv100Card" method="get" action="/watchrooms/join">
@@ -29997,10 +30264,10 @@ function socialPage(req, res) {
           $$("[data-requires='channels']").forEach((el) => el.disabled = !permissions.canCreateChannels);
           $$("[data-requires='rooms']").forEach((el) => el.disabled = !permissions.canCreateWatchRooms);
 
-          $("#sv100RoleText").textContent = permissions.canManageSocial ? "Creator permissions" : "Member permissions";
+          $("#sv100RoleText").textContent = permissions.canManageSocial ? "Creator permissions" : "Member access";
           $("#sv100PermText").textContent = permissions.canManageSocial
-            ? "You can create groups, channels, and Watch Rooms."
-            : "You can chat and join rooms. Creating groups/channels/rooms is locked.";
+            ? "You can create groups/channels, and everyone can create Watch Rooms."
+            : "You can chat, join rooms, and create Watch Rooms. Groups/channels are locked.";
         }
 
         function roomKey(room) { return "swiflytv.social.v103." + room; }
@@ -30131,7 +30398,7 @@ function socialPage(req, res) {
         }
 
         async function createNativeRoom() {
-          if (!requirePermission("rooms")) return;
+          if (!permissions.canCreateWatchRooms) return toast("Watch Room creation is locked by this server.", "error");
           const name = prompt("Room name", "SwiflyTV Watch Room");
           if (name === null) return;
           const room = { id: createRoomId(), name: name.trim() || "SwiflyTV Watch Room", kind: "blank" };
@@ -30181,7 +30448,7 @@ function socialPage(req, res) {
           $("#sv103RoomLobby").hidden = false;
           $("#sv103Player").innerHTML = '<div class="sv103EmptyPlayer"><i class="ri-tv-2-fill"></i><b>No media selected</b><span>Host can paste a YouTube/link or select a TMDB movie.</span></div>';
           $("#sv100Title").textContent = "room-hub";
-          $("#sv103RoomSub").textContent = "Create or join a room. The room UI lives here, not in an embedded page.";
+          $("#sv103RoomSub").textContent = "Create or join a room. The native room UI lives inside Swifly Hub.";
           renderRooms();
         }
 
@@ -30371,7 +30638,7 @@ function socialPage(req, res) {
           } catch {}
 
           if (!rooms.length) {
-            target.innerHTML = '<p class="sv100Empty">No rooms yet. A creator can make the first one.</p>';
+            target.innerHTML = '<p class="sv100Empty">No rooms yet. Anyone can make the first one.</p>';
             return;
           }
 
@@ -30571,7 +30838,7 @@ function socialPage(req, res) {
         $("#sv100CreateRoomForm")?.addEventListener("submit", (event) => {
           if (!permissions.canCreateWatchRooms) {
             event.preventDefault();
-            toast("Only trusted creators can create Watch Rooms.", "error");
+            toast("Watch Room creation is locked by this server.", "error");
           }
         });
 
@@ -30808,7 +31075,7 @@ app.get("/couples", removedDateProfilePage);
 app.get("/watchrooms/new", (req, res) => {
   const creator = String(req.query.creator || req.query.name || "").slice(0, 80);
   const perms = socialPermissionsForName(creator);
-  if (!perms.canCreateWatchRooms && process.env.SOCIAL_ENFORCE_CREATE_PERMISSIONS !== "false") {
+  if (!perms.canCreateWatchRooms && process.env.SOCIAL_LOCK_WATCHROOM_CREATION === "true") {
     const denied = new URLSearchParams();
     denied.set("tab", "watchrooms");
     denied.set("denied", "create-room");
@@ -30959,6 +31226,8 @@ function apiStatus(req, res) {
       discordSocialV100: true,
       integratedSocialWatchroomV102: true,
       nativeSocialWatchroomsV103: true,
+      openWatchRoomCreationV104: true,
+      swiflyHubRefreshV104: true,
       socialPermissions: true,
       noJsWatchRoomFallbacks: true,
       socialLayoutV2: true,
@@ -30978,7 +31247,7 @@ app.get("/api/status", apiStatus);
 app.post("/api/social/watchrooms/create", (req, res) => {
   const creator = String(req.body?.creator || "").slice(0, 80);
   const perms = socialPermissionsForName(creator);
-  if (!perms.canCreateWatchRooms && process.env.SOCIAL_ENFORCE_CREATE_PERMISSIONS !== "false") {
+  if (!perms.canCreateWatchRooms && process.env.SOCIAL_LOCK_WATCHROOM_CREATION === "true") {
     return res.status(403).json({ ok: false, message: "You do not have permission to create Watch Rooms." });
   }
 
