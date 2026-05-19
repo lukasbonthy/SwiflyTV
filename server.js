@@ -20460,6 +20460,757 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v99 SOCIAL REBUILD
+       Simpler, stronger layout. Core room actions work as real links/forms.
+       ============================================================ */
+
+    .sw99Shell {
+      min-height: calc(100vh - 82px);
+      padding: 22px;
+      color: white;
+    }
+
+    .sw99Top {
+      width: min(1500px, 100%);
+      margin: 0 auto 18px;
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: stretch;
+      padding: clamp(20px, 3vw, 34px);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 34px;
+      background:
+        radial-gradient(720px circle at 0% 0%, rgba(229,9,20,.22), transparent 48%),
+        radial-gradient(680px circle at 100% 10%, rgba(124,58,237,.18), transparent 48%),
+        rgba(9,11,20,.78);
+      box-shadow: 0 28px 100px rgba(0,0,0,.30);
+      backdrop-filter: blur(18px);
+    }
+
+    .sw99Top h1 {
+      margin: 6px 0 8px;
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-size: clamp(38px, 6vw, 78px);
+      letter-spacing: -.08em;
+      line-height: .9;
+    }
+
+    .sw99Top p {
+      max-width: 760px;
+      margin: 0;
+      color: rgba(248,251,255,.68);
+      font-weight: 650;
+      line-height: 1.55;
+    }
+
+    .sw99TopActions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: flex-end;
+      justify-content: flex-end;
+    }
+
+    .sw99Btn,
+    .sw99IconBtn {
+      min-height: 44px;
+      border: 1px solid rgba(255,255,255,.13);
+      border-radius: 999px;
+      padding: 0 16px;
+      color: white;
+      background: rgba(255,255,255,.08);
+      font-weight: 900;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+    }
+
+    .sw99Btn:hover,
+    .sw99IconBtn:hover {
+      transform: translateY(-1px);
+      background: rgba(255,255,255,.13);
+      border-color: rgba(255,255,255,.22);
+    }
+
+    .sw99Btn.primary {
+      border-color: transparent;
+      background: linear-gradient(135deg, #e50914, #7c3aed);
+      box-shadow: 0 16px 50px rgba(229,9,20,.22);
+    }
+
+    .sw99App {
+      width: min(1500px, 100%);
+      min-height: 760px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 310px minmax(0, 1fr) 310px;
+      gap: 18px;
+    }
+
+    .sw99Sidebar,
+    .sw99Main,
+    .sw99Info,
+    .sw99CallCard {
+      border: 1px solid rgba(255,255,255,.12);
+      background:
+        radial-gradient(520px circle at 0% 0%, rgba(255,255,255,.08), transparent 54%),
+        rgba(8,10,18,.76);
+      box-shadow: 0 22px 80px rgba(0,0,0,.30);
+      backdrop-filter: blur(18px);
+    }
+
+    .sw99Sidebar,
+    .sw99Info {
+      border-radius: 30px;
+      padding: 16px;
+      align-self: start;
+      max-height: calc(100vh - 120px);
+      overflow-y: auto;
+    }
+
+    .sw99Main {
+      border-radius: 30px;
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      min-width: 0;
+    }
+
+    .sw99Brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .sw99Brand > span {
+      width: 52px;
+      height: 52px;
+      display: grid;
+      place-items: center;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #e50914, #7c3aed);
+      box-shadow: 0 16px 50px rgba(229,9,20,.24);
+      font-size: 23px;
+    }
+
+    .sw99Brand strong {
+      display: block;
+      font-size: 20px;
+      letter-spacing: -.035em;
+    }
+
+    .sw99Brand small,
+    .sw99Room small,
+    .sw99InfoCard p {
+      color: rgba(248,251,255,.62);
+    }
+
+    .sw99Tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 6px;
+      margin-bottom: 16px;
+      border-radius: 19px;
+      background: rgba(255,255,255,.065);
+      border: 1px solid rgba(255,255,255,.09);
+    }
+
+    .sw99Tabs button {
+      min-height: 42px;
+      border: 0;
+      border-radius: 15px;
+      color: rgba(255,255,255,.72);
+      background: transparent;
+      font-weight: 950;
+      cursor: pointer;
+    }
+
+    .sw99Tabs button.active {
+      color: white;
+      background: linear-gradient(135deg, rgba(229,9,20,.94), rgba(124,58,237,.82));
+    }
+
+    .sw99Section {
+      display: grid;
+      gap: 7px;
+      margin: 16px 0;
+    }
+
+    .sw99Section > span {
+      color: rgba(255,255,255,.48);
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      padding: 0 8px;
+    }
+
+    .sw99Room,
+    .sw99MiniAction {
+      width: 100%;
+      min-height: 56px;
+      border: 1px solid transparent;
+      border-radius: 17px;
+      padding: 9px 10px;
+      color: white;
+      background: transparent;
+      text-align: left;
+      cursor: pointer;
+      text-decoration: none;
+      display: grid;
+      grid-template-columns: 38px minmax(0, 1fr);
+      grid-template-rows: auto auto;
+      column-gap: 10px;
+      align-items: center;
+    }
+
+    .sw99Room i {
+      grid-row: 1 / span 2;
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 13px;
+      background: rgba(255,255,255,.09);
+    }
+
+    .sw99Room b {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .sw99Room:hover,
+    .sw99Room.active {
+      background: rgba(255,255,255,.085);
+      border-color: rgba(255,255,255,.13);
+    }
+
+    .sw99MiniAction {
+      min-height: 42px;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      color: rgba(255,255,255,.82);
+      background: rgba(255,255,255,.065);
+      font-weight: 850;
+      text-align: center;
+    }
+
+    .sw99Header {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: center;
+      padding: 18px 20px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      background:
+        linear-gradient(90deg, rgba(229,9,20,.08), rgba(124,58,237,.08)),
+        rgba(0,0,0,.10);
+    }
+
+    .sw99Header span,
+    .sw99InfoCard span,
+    .sw99Card > span,
+    .sw99CardHead span {
+      color: rgba(255,255,255,.50);
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .sw99Header h2 {
+      margin: 2px 0 0;
+      font-size: clamp(26px, 3vw, 42px);
+      letter-spacing: -.065em;
+    }
+
+    .sw99HeaderActions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .sw99HeaderActions button {
+      min-height: 40px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 15px;
+      padding: 0 12px;
+      color: white;
+      background: rgba(255,255,255,.08);
+      font-weight: 850;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sw99Panel {
+      display: none;
+      min-height: 620px;
+    }
+
+    .sw99Panel.active {
+      display: grid;
+    }
+
+    .sw99Messages {
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      background:
+        radial-gradient(900px circle at 50% 0%, rgba(255,255,255,.035), transparent 54%),
+        rgba(0,0,0,.05);
+    }
+
+    .sw99Msg {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      gap: 10px;
+      max-width: min(720px, 92%);
+      align-self: flex-start;
+    }
+
+    .sw99Msg.mine {
+      align-self: flex-end;
+      grid-template-columns: minmax(0, 1fr) 42px;
+    }
+
+    .sw99Msg > span {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background: rgba(255,255,255,.10);
+      font-weight: 950;
+    }
+
+    .sw99Msg.mine > span {
+      grid-column: 2;
+      grid-row: 1;
+      background: linear-gradient(135deg, #e50914, #7c3aed);
+    }
+
+    .sw99Msg > div {
+      padding: 12px 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.09);
+      box-shadow: 0 10px 34px rgba(0,0,0,.14);
+    }
+
+    .sw99Msg.mine > div {
+      grid-column: 1;
+      grid-row: 1;
+      background: rgba(229,9,20,.18);
+      border-color: rgba(229,9,20,.22);
+    }
+
+    .sw99Msg header {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .sw99Msg small {
+      color: rgba(255,255,255,.46);
+      font-size: 11px;
+    }
+
+    .sw99Msg p {
+      margin: 0;
+      color: rgba(255,255,255,.88);
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+
+    .sw99Composer {
+      display: grid;
+      grid-template-columns: 46px minmax(0, 1fr) 50px;
+      gap: 10px;
+      padding: 16px;
+      border-top: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.16);
+    }
+
+    .sw99Composer input,
+    .sw99Card input {
+      min-height: 48px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 17px;
+      padding: 0 15px;
+      color: white;
+      background: rgba(0,0,0,.28);
+      outline: none;
+    }
+
+    .sw99Composer button {
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 16px;
+      color: white;
+      background: rgba(255,255,255,.09);
+      cursor: pointer;
+    }
+
+    .sw99Composer button[type="submit"] {
+      background: linear-gradient(135deg, #e50914, #7c3aed);
+      border-color: transparent;
+    }
+
+    .sw99RoomsPanel {
+      padding: 18px;
+      overflow-y: auto;
+      align-content: start;
+      gap: 16px;
+    }
+
+    .sw99RoomsHero {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 18px;
+      border-radius: 24px;
+      background:
+        radial-gradient(540px circle at 0% 0%, rgba(229,9,20,.18), transparent 52%),
+        rgba(255,255,255,.055);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .sw99RoomsHero h2 {
+      margin: 4px 0 6px;
+      font-size: clamp(26px, 3vw, 46px);
+      letter-spacing: -.07em;
+      line-height: .95;
+    }
+
+    .sw99RoomsHero p {
+      margin: 0;
+      max-width: 720px;
+      color: rgba(248,251,255,.66);
+    }
+
+    .sw99RoomGrid {
+      display: grid;
+      grid-template-columns: minmax(240px, .8fr) minmax(220px, .62fr) minmax(320px, 1.1fr);
+      gap: 14px;
+    }
+
+    .sw99Card,
+    .sw99InfoCard {
+      display: grid;
+      gap: 12px;
+      padding: 18px;
+      border-radius: 24px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+    }
+
+    .sw99Card h3,
+    .sw99InfoCard h3 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: -.045em;
+    }
+
+    .sw99Card label {
+      display: grid;
+      gap: 7px;
+      color: rgba(248,251,255,.70);
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .sw99Card p,
+    .sw99Empty {
+      margin: 0;
+      color: rgba(248,251,255,.58);
+      line-height: 1.45;
+      font-size: 13px;
+    }
+
+    .sw99CardHead {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .sw99RoomsList {
+      display: grid;
+      gap: 10px;
+      max-height: 440px;
+      overflow-y: auto;
+    }
+
+    .sw99RoomResult {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 18px;
+      background: rgba(255,255,255,.055);
+    }
+
+    .sw99RoomResult b,
+    .sw99RoomResult small {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .sw99RoomResult small {
+      color: rgba(248,251,255,.56);
+    }
+
+    .sw99RoomResult nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 7px;
+    }
+
+    .sw99RoomResult a,
+    .sw99RoomResult button,
+    .sw99InfoCard button,
+    .sw99InfoCard a {
+      min-height: 34px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 12px;
+      padding: 0 10px;
+      color: white;
+      background: rgba(255,255,255,.08);
+      text-decoration: none;
+      font-weight: 850;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sw99RoomResult a {
+      background: linear-gradient(135deg, #e50914, #7c3aed);
+      border-color: transparent;
+    }
+
+    .sw99Info {
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+
+    .sw99Members p {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 8px;
+      color: rgba(248,251,255,.80);
+      font-weight: 750;
+    }
+
+    .sw99Members i {
+      width: 8px;
+      height: 8px;
+      border-radius: 99px;
+      background: #22c55e;
+      box-shadow: 0 0 18px rgba(34,197,94,.75);
+    }
+
+    .sw99CallModal {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: rgba(0,0,0,.72);
+      backdrop-filter: blur(14px);
+    }
+
+    .sw99CallModal[hidden] {
+      display: none !important;
+    }
+
+    .sw99CallCard {
+      width: min(760px, 96vw);
+      border-radius: 30px;
+      padding: 18px;
+    }
+
+    .sw99CallCard header,
+    .sw99CallCard footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .sw99CallCard header button,
+    .sw99CallCard footer button {
+      min-height: 42px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 15px;
+      color: white;
+      background: rgba(255,255,255,.09);
+      padding: 0 14px;
+      cursor: pointer;
+      font-weight: 850;
+    }
+
+    .sw99CallCard .danger {
+      background: rgba(229,9,20,.22);
+      border-color: rgba(229,9,20,.30);
+    }
+
+    .sw99CallStage {
+      position: relative;
+      display: grid;
+      place-items: center;
+      min-height: 360px;
+      margin: 14px 0;
+      border-radius: 24px;
+      overflow: hidden;
+      background:
+        radial-gradient(620px circle at 50% 0%, rgba(124,58,237,.20), transparent 54%),
+        #05070d;
+    }
+
+    .sw99CallStage video {
+      width: 100%;
+      min-height: 360px;
+      object-fit: cover;
+    }
+
+    .sw99CallStage > div {
+      position: absolute;
+      inset: auto 20px 20px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(0,0,0,.50);
+      font-weight: 850;
+    }
+
+    .sw99Error {
+      position: fixed;
+      left: 18px;
+      bottom: 18px;
+      z-index: 3000;
+      max-width: min(520px, calc(100vw - 36px));
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(220,38,38,.92);
+      color: white;
+      font-weight: 850;
+      box-shadow: 0 18px 60px rgba(0,0,0,.32);
+    }
+
+    @media(max-width: 1200px) {
+      .sw99App {
+        grid-template-columns: 300px minmax(0, 1fr);
+      }
+
+      .sw99Info {
+        display: none;
+      }
+
+      .sw99RoomGrid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .sw99ActiveRoomsCard {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media(max-width: 820px) {
+      .sw99Shell {
+        padding: 10px;
+      }
+
+      .sw99Top {
+        display: grid;
+      }
+
+      .sw99TopActions {
+        justify-content: flex-start;
+      }
+
+      .sw99App {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .sw99Sidebar {
+        max-height: none;
+      }
+
+      .sw99Section {
+        display: flex;
+        overflow-x: auto;
+        gap: 8px;
+        padding-bottom: 8px;
+      }
+
+      .sw99Section > span {
+        min-width: 100%;
+      }
+
+      .sw99Room {
+        min-width: 190px;
+      }
+
+      .sw99Header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .sw99HeaderActions button span {
+        display: none;
+      }
+
+      .sw99Panel {
+        min-height: 520px;
+      }
+
+      .sw99RoomGrid {
+        grid-template-columns: 1fr;
+      }
+
+      .sw99RoomsHero {
+        display: grid;
+      }
+
+      .sw99RoomResult {
+        grid-template-columns: 1fr;
+      }
+
+      .sw99RoomResult nav {
+        justify-content: flex-start;
+      }
+    }
+
   </style>
 
     <script>
@@ -20522,6 +21273,11 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
 
+    <script src="/socket.io/socket.io.js"></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" />
 </head>
 <body>
 
@@ -27726,207 +28482,179 @@ function getSocialRoom(roomId = "general") {
 }
 
 function socialPage(req, res) {
-  const body = `<main class="dsSocialPage">
-    <section class="dsSocialShell">
-      <aside class="dsSocialSidebar">
-        <div class="dsSocialBrand">
-          <span class="dsSocialLogo"><i class="fa-solid fa-comments"></i></span>
-          <div>
-            <strong>Swifly Social</strong>
-            <small>Chats, calls, channels, rooms</small>
-          </div>
-        </div>
+  const tab = String(req.query.tab || "").toLowerCase();
+  const initialTab = tab === "watchrooms" || tab === "rooms" ? "rooms" : "chat";
 
-        <div class="dsSocialModeTabs" role="tablist">
-          <button class="isActive" id="socialChatModeBtn" type="button"><i class="fa-solid fa-message"></i> Chat</button>
-          <button id="socialRoomsModeBtn" type="button"><i class="fa-solid fa-tv"></i> Rooms</button>
-        </div>
-
-        <button class="dsSocialCompose" id="newGroupBtn" type="button"><i class="fa-solid fa-plus"></i> New Group</button>
-
-        <div class="dsSocialSection">
-          <span>Direct messages</span>
-          <button class="dsSocialRoom isActive" data-room="dm-main" data-title="Main Chat"><i class="fa-solid fa-user"></i><b>Main Chat</b><small>Online</small></button>
-          <button class="dsSocialRoom" data-room="dm-moviebuds" data-title="Movie Buds"><i class="fa-solid fa-user-group"></i><b>Movie Buds</b><small>2 members</small></button>
-        </div>
-
-        <div class="dsSocialSection">
-          <span>Groups</span>
-          <button class="dsSocialRoom" data-room="group-watchparty" data-title="Watch Party"><i class="fa-solid fa-users"></i><b>Watch Party</b><small>Group</small></button>
-          <button class="dsSocialRoom" data-room="group-school" data-title="School Friends"><i class="fa-solid fa-graduation-cap"></i><b>School Friends</b><small>Group</small></button>
-        </div>
-
-        <div class="dsSocialSection">
-          <span>Channels</span>
-          <button class="dsSocialRoom" data-room="channel-general" data-title="# general"><i class="fa-solid fa-hashtag"></i><b>general</b><small>Public</small></button>
-          <button class="dsSocialRoom" data-room="channel-recommendations" data-title="# recommendations"><i class="fa-solid fa-hashtag"></i><b>recommendations</b><small>Public</small></button>
-          <button class="dsSocialRoom" data-room="channel-watchrooms" data-title="# watch-rooms"><i class="fa-solid fa-hashtag"></i><b>watch-rooms</b><small>Public</small></button>
-        </div>
-
-        <div class="dsSocialSection dsSocialWatchSection">
-          <span>Watch Rooms</span>
-          <button class="dsSocialRoom dsSocialWatchRoomBtn" data-room="watchroom-lobby" data-title="Watch Room Lobby"><i class="fa-solid fa-tv"></i><b>Room Lobby</b><small>Create / join</small></button>
-          <button class="dsSocialRoom dsSocialWatchRoomBtn" data-room="watchroom-active" data-title="Active Watch Rooms"><i class="fa-solid fa-signal"></i><b>Active Rooms</b><small>Live rooms</small></button>
-        </div>
-      </aside>
-
-      <section class="dsSocialMain">
-        <header class="dsSocialHeader">
-          <div>
-            <span id="socialRoomKind">Channel</span>
-            <h1 id="socialRoomTitle">Main Chat</h1>
-          </div>
-          <div class="dsSocialHeaderActions">
-            <button id="socialVoiceBtn" type="button"><i class="fa-solid fa-phone"></i><span>Voice</span></button>
-            <button id="socialVideoBtn" type="button"><i class="fa-solid fa-video"></i><span>Video</span></button>
-            <button id="socialInviteBtn" type="button"><i class="fa-solid fa-user-plus"></i><span>Invite</span></button>
-          </div>
-        </header>
-
-        <div class="dsSocialStatusBar">
-          <span id="socialConnectionBadge"><i></i> Local + live ready</span>
-          <span id="socialActionHint">Pick a DM, group, channel, or Watch Room.</span>
-        </div>
-
-        <section id="socialWatchStudio" class="dsSocialWatchStudio animate__animated animate__fadeIn" hidden>
-          <div class="dsWatchStudioHero">
-            <div>
-              <span class="dsEyebrow">Watch Rooms inside Social</span>
-              <h2>Create and share rooms without leaving Social.</h2>
-              <p>Start a synced room, copy the invite, or drop it into the current chat. Chat stays right below it.</p>
-            </div>
-            <div class="dsWatchStudioActions">
-              <button id="socialRefreshRoomsBtn" type="button"><i class="fa-solid fa-rotate"></i> Refresh Rooms</button>
-              <a href="/social" class="dsGhostPill">Back to Chat</a>
-            </div>
-          </div>
-
-          <div class="dsWatchStudioGrid">
-            <form id="socialWatchCreateForm" class="dsWatchStudioCard">
-              <span class="dsPanelLabel">Create</span>
-              <h3>New Watch Room</h3>
-              <label>
-                <span>Room name</span>
-                <input name="roomName" placeholder="Friday movie night" maxlength="80" />
-              </label>
-              <label>
-                <span>Optional movie/site link</span>
-                <input name="watchLink" placeholder="Paste a movie, trailer, YouTube, or website link" />
-              </label>
-              <div class="dsWatchStudioButtons">
-                <button class="dsPrimaryBtn" type="submit"><i class="fa-solid fa-plus"></i> Create Room</button>
-                <button id="socialCreateBlankRoomBtn" class="dsSecondaryBtn" type="button">Blank Room</button>
-              </div>
-            </form>
-
-            <form id="socialWatchJoinForm" class="dsWatchStudioCard">
-              <span class="dsPanelLabel">Join</span>
-              <h3>Join by code</h3>
-              <label>
-                <span>Room code</span>
-                <input name="roomCode" placeholder="abc12-def34" />
-              </label>
-              <button class="dsPrimaryBtn" type="submit"><i class="fa-solid fa-arrow-right-to-bracket"></i> Join Room</button>
-              <p>Codes are the part after <b>/watchrooms/</b> in a room link.</p>
-            </form>
-
-            <section class="dsWatchStudioCard dsWatchStudioActiveCard">
-              <div class="dsSectionHeaderSplit">
-                <div>
-                  <span class="dsPanelLabel">Live</span>
-                  <h3>Active Rooms</h3>
-                </div>
-                <small id="socialRoomsCount">0 rooms</small>
-              </div>
-              <div id="socialWatchRoomsList" class="dsSocialWatchRoomsList">
-                <div class="dsSocialEmptyMini">No active rooms yet. Create one above.</div>
-              </div>
-            </section>
-          </div>
-        </section>
-
-        <div id="socialMessages" class="dsSocialMessages"></div>
-
-        <div id="socialTyping" class="dsSocialTyping" hidden>Someone is typing...</div>
-
-        <form id="socialComposer" class="dsSocialComposer">
-          <button type="button" id="socialAttachBtn"><i class="fa-solid fa-paperclip"></i></button>
-          <input id="socialInput" autocomplete="off" placeholder="Message Main Chat..." />
-          <button type="submit"><i class="fa-solid fa-paper-plane"></i></button>
-        </form>
-      </section>
-
-      <aside class="dsSocialDetails">
-        <div class="dsSocialDetailsCard">
-          <span class="dsPanelLabel">Room info</span>
-          <h2 id="socialDetailsTitle">Main Chat</h2>
-          <p id="socialDetailsText">Chat with people, create groups, and open voice/video call rooms.</p>
-        </div>
-
-        <div class="dsSocialDetailsCard">
-          <span class="dsPanelLabel">Quick actions</span>
-          <button id="socialCreateChannelBtn" type="button"><i class="fa-solid fa-hashtag"></i> Create Channel</button>
-          <button id="socialCreateGroupBtn" type="button"><i class="fa-solid fa-users"></i> Create Group</button>
-          <a href="/social?tab=watchrooms"><i class="fa-solid fa-tv"></i> Open Watch Rooms</a>
-        </div>
-
-        <div class="dsSocialDetailsCard">
-          <span class="dsPanelLabel">Online</span>
-          <div id="socialMembers" class="dsSocialMembers"></div>
-        </div>
-      </aside>
-    </section>
-
-    <section id="socialCallModal" class="dsCallModal" hidden>
-      <div class="dsCallCard">
-        <div class="dsCallTop">
-          <div>
-            <span id="callTypeLabel">Voice call</span>
-            <h2 id="callRoomTitle">Main Chat</h2>
-          </div>
-          <button id="closeCallBtn" type="button"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-
-        <div class="dsCallStage">
-          <video id="localCallVideo" autoplay muted playsinline></video>
-          <div class="dsCallPlaceholder">
-            <i class="fa-solid fa-users"></i>
-            <span id="callStatusText">Ready to connect</span>
-          </div>
-        </div>
-
-        <div class="dsCallControls">
-          <button id="muteCallBtn" type="button"><i class="fa-solid fa-microphone"></i><span>Mute</span></button>
-          <button id="cameraCallBtn" type="button"><i class="fa-solid fa-video"></i><span>Camera</span></button>
-          <button id="leaveCallBtn" type="button" class="danger"><i class="fa-solid fa-phone-slash"></i><span>Leave</span></button>
-        </div>
+  const body = `<main class="sw99Shell" data-initial-tab="${escapeHtml(initialTab)}">
+    <section class="sw99Top">
+      <div>
+        <span class="dsEyebrow">Swifly Social</span>
+        <h1>Chat, call, and watch together.</h1>
+        <p>Messages, groups, channels, voice/video call preview, and Watch Rooms are in one cleaner hub.</p>
+      </div>
+      <div class="sw99TopActions">
+        <a class="sw99Btn primary" href="/watchrooms/new"><i class="bi bi-tv"></i> New Watch Room</a>
+        <a class="sw99Btn" href="/profiles"><i class="bi bi-person-circle"></i> Profiles</a>
       </div>
     </section>
 
-    <script>
-      (function socialHub(){
-        const socket = window.io ? io() : null;
+    <section class="sw99App">
+      <aside class="sw99Sidebar">
+        <div class="sw99Brand">
+          <span><i class="ri-movie-2-fill"></i></span>
+          <div>
+            <strong>SwiflyTV</strong>
+            <small id="sw99Status">Local ready</small>
+          </div>
+        </div>
 
-        const messagesEl = document.getElementById("socialMessages");
-        const composer = document.getElementById("socialComposer");
-        const input = document.getElementById("socialInput");
-        const title = document.getElementById("socialRoomTitle");
-        const kind = document.getElementById("socialRoomKind");
-        const detailsTitle = document.getElementById("socialDetailsTitle");
-        const detailsText = document.getElementById("socialDetailsText");
-        const members = document.getElementById("socialMembers");
-        const callModal = document.getElementById("socialCallModal");
-        const callRoomTitle = document.getElementById("callRoomTitle");
-        const callTypeLabel = document.getElementById("callTypeLabel");
-        const callStatusText = document.getElementById("callStatusText");
-        const localVideo = document.getElementById("localCallVideo");
-        const watchStudio = document.getElementById("socialWatchStudio");
-        const socialWatchRoomsList = document.getElementById("socialWatchRoomsList");
-        const socialRoomsCount = document.getElementById("socialRoomsCount");
-        const connectionBadge = document.getElementById("socialConnectionBadge");
-        const actionHint = document.getElementById("socialActionHint");
-        const chatModeBtn = document.getElementById("socialChatModeBtn");
-        const roomsModeBtn = document.getElementById("socialRoomsModeBtn");
+        <div class="sw99Tabs">
+          <button type="button" data-tab="chat" class="sw99TabBtn ${initialTab === "chat" ? "active" : ""}"><i class="bi bi-chat-dots"></i> Chat</button>
+          <button type="button" data-tab="rooms" class="sw99TabBtn ${initialTab === "rooms" ? "active" : ""}"><i class="bi bi-display"></i> Rooms</button>
+        </div>
+
+        <div class="sw99Section" data-panel-nav="chat">
+          <span>Direct Messages</span>
+          <button type="button" class="sw99Room active" data-room="dm-main" data-title="Main Chat"><i class="bi bi-person"></i><b>Main Chat</b><small>DM</small></button>
+          <button type="button" class="sw99Room" data-room="dm-friends" data-title="Friends"><i class="bi bi-people"></i><b>Friends</b><small>DM</small></button>
+        </div>
+
+        <div class="sw99Section" data-panel-nav="chat">
+          <span>Groups</span>
+          <button type="button" class="sw99Room" data-room="group-watchparty" data-title="Watch Party"><i class="bi bi-collection-play"></i><b>Watch Party</b><small>Group</small></button>
+          <button type="button" class="sw99Room" data-room="group-school" data-title="School Friends"><i class="bi bi-backpack"></i><b>School Friends</b><small>Group</small></button>
+          <button type="button" class="sw99MiniAction" data-action="new-group"><i class="bi bi-plus-lg"></i> New group</button>
+        </div>
+
+        <div class="sw99Section" data-panel-nav="chat">
+          <span>Channels</span>
+          <button type="button" class="sw99Room" data-room="channel-general" data-title="# general"><i class="bi bi-hash"></i><b>general</b><small>Public</small></button>
+          <button type="button" class="sw99Room" data-room="channel-recommendations" data-title="# recommendations"><i class="bi bi-hash"></i><b>recommendations</b><small>Public</small></button>
+          <button type="button" class="sw99MiniAction" data-action="new-channel"><i class="bi bi-plus-lg"></i> New channel</button>
+        </div>
+
+        <div class="sw99Section" data-panel-nav="rooms">
+          <span>Watch Rooms</span>
+          <a class="sw99Room sw99AnchorRoom" href="/social?tab=watchrooms"><i class="bi bi-house-play"></i><b>Room lobby</b><small>Create / join</small></a>
+          <a class="sw99Room sw99AnchorRoom" href="/watchrooms/new"><i class="bi bi-plus-square"></i><b>Quick room</b><small>Works without JS</small></a>
+        </div>
+      </aside>
+
+      <section class="sw99Main">
+        <header class="sw99Header">
+          <div>
+            <span id="sw99Kind">Direct message</span>
+            <h2 id="sw99Title">Main Chat</h2>
+          </div>
+          <div class="sw99HeaderActions">
+            <button type="button" data-action="voice"><i class="bi bi-telephone"></i><span>Voice</span></button>
+            <button type="button" data-action="video"><i class="bi bi-camera-video"></i><span>Video</span></button>
+            <button type="button" data-action="invite"><i class="bi bi-link-45deg"></i><span>Invite</span></button>
+          </div>
+        </header>
+
+        <section id="sw99ChatPanel" class="sw99Panel ${initialTab === "chat" ? "active" : ""}">
+          <div id="sw99Messages" class="sw99Messages"></div>
+          <form id="sw99Composer" class="sw99Composer">
+            <button type="button" data-action="attach"><i class="bi bi-paperclip"></i></button>
+            <input id="sw99Input" placeholder="Message Main Chat..." autocomplete="off" maxlength="1200" />
+            <button type="submit"><i class="bi bi-send-fill"></i></button>
+          </form>
+        </section>
+
+        <section id="sw99RoomsPanel" class="sw99Panel sw99RoomsPanel ${initialTab === "rooms" ? "active" : ""}">
+          <div class="sw99RoomsHero">
+            <div>
+              <span class="dsEyebrow">Watch Rooms</span>
+              <h2>Start a synced room that actually opens.</h2>
+              <p>These controls are real links/forms too, so the important room buttons still work even if JavaScript has an issue.</p>
+            </div>
+            <a class="sw99Btn primary" href="/watchrooms/new"><i class="bi bi-plus-lg"></i> Instant Room</a>
+          </div>
+
+          <div class="sw99RoomGrid">
+            <form class="sw99Card" method="get" action="/watchrooms/new">
+              <span>Create</span>
+              <h3>New Watch Room</h3>
+              <label>Room name<input name="name" placeholder="Friday movie night" /></label>
+              <label>Movie/site link<input name="watchLink" placeholder="YouTube, trailer, website, etc." /></label>
+              <button class="sw99Btn primary" type="submit"><i class="bi bi-plus-circle"></i> Create Room</button>
+            </form>
+
+            <form class="sw99Card" method="get" action="/watchrooms/join">
+              <span>Join</span>
+              <h3>Join by code</h3>
+              <label>Room code<input name="code" placeholder="abc12-def34" /></label>
+              <button class="sw99Btn primary" type="submit"><i class="bi bi-box-arrow-in-right"></i> Join Room</button>
+              <p>Paste only the part after <b>/watchrooms/</b>.</p>
+            </form>
+
+            <div class="sw99Card sw99ActiveRoomsCard">
+              <div class="sw99CardHead">
+                <div>
+                  <span>Live</span>
+                  <h3>Active / saved rooms</h3>
+                </div>
+                <button type="button" class="sw99IconBtn" data-action="refresh-rooms"><i class="bi bi-arrow-clockwise"></i></button>
+              </div>
+              <div id="sw99RoomsList" class="sw99RoomsList">
+                <p class="sw99Empty">No rooms yet. Create one.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <aside class="sw99Info">
+        <div class="sw99InfoCard">
+          <span>Room info</span>
+          <h3 id="sw99InfoTitle">Main Chat</h3>
+          <p id="sw99InfoText">Pick a chat, group, channel, or open the Watch Rooms tab.</p>
+        </div>
+
+        <div class="sw99InfoCard">
+          <span>Actions</span>
+          <button type="button" data-action="new-group"><i class="bi bi-people-fill"></i> New Group</button>
+          <button type="button" data-action="new-channel"><i class="bi bi-hash"></i> New Channel</button>
+          <a href="/social?tab=watchrooms"><i class="bi bi-tv"></i> Watch Rooms</a>
+        </div>
+
+        <div class="sw99InfoCard">
+          <span>Online</span>
+          <div id="sw99Members" class="sw99Members"><p><i></i> You</p></div>
+        </div>
+      </aside>
+    </section>
+
+    <section id="sw99CallModal" class="sw99CallModal" hidden>
+      <div class="sw99CallCard">
+        <header>
+          <div>
+            <span id="sw99CallType">Voice call</span>
+            <h2 id="sw99CallTitle">Main Chat</h2>
+          </div>
+          <button type="button" data-action="close-call"><i class="bi bi-x-lg"></i></button>
+        </header>
+        <div class="sw99CallStage">
+          <video id="sw99LocalVideo" autoplay muted playsinline></video>
+          <div><i class="bi bi-people-fill"></i><b id="sw99CallStatus">Ready</b></div>
+        </div>
+        <footer>
+          <button type="button" data-action="mute"><i class="bi bi-mic"></i> Mute</button>
+          <button type="button" data-action="camera"><i class="bi bi-camera-video"></i> Camera</button>
+          <button type="button" data-action="close-call" class="danger"><i class="bi bi-telephone-x"></i> Leave</button>
+        </footer>
+      </div>
+    </section>
+
+    <div id="sw99Error" class="sw99Error" hidden></div>
+
+    <script>
+      (function(){
+        const $ = (sel, root = document) => root.querySelector(sel);
+        const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+        const app = $(".sw99Shell");
+        const socket = window.io ? io() : null;
 
         let currentRoom = "dm-main";
         let currentTitle = "Main Chat";
@@ -27939,436 +28667,293 @@ function socialPage(req, res) {
           username = profile?.name || session?.name || "Guest";
         } catch {}
 
-        function toast(message, type) {
-          if (window.swiflyToast) window.swiflyToast(message, type);
+        function toast(msg, type) {
+          if (window.swiflyToast) window.swiflyToast(msg, type || "success");
+          else console.log("[SwiflyTV]", msg);
         }
 
         function esc(value) {
-          return String(value || "")
-            .replaceAll("&","&amp;")
-            .replaceAll("<","&lt;")
-            .replaceAll(">","&gt;")
-            .replaceAll('"',"&quot;");
+          return String(value || "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
         }
 
-        function timeLabel(ts) {
-          try { return new Date(ts || Date.now()).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); }
-          catch { return ""; }
+        function setError(error) {
+          const box = $("#sw99Error");
+          if (!box) return;
+          box.hidden = false;
+          box.textContent = "Social error: " + (error && error.message ? error.message : String(error));
+          console.error(error);
         }
 
-        function localKey(room) {
-          return "swiflytv.social." + room;
+        function roomKey(room) {
+          return "swiflytv.social.v99." + room;
         }
 
-        function readLocal(room) {
+        function readMessages(room) {
           try {
-            const saved = JSON.parse(localStorage.getItem(localKey(room)) || "[]");
+            const saved = JSON.parse(localStorage.getItem(roomKey(room)) || "[]");
             return Array.isArray(saved) ? saved : [];
-          } catch {
-            return [];
-          }
+          } catch { return []; }
         }
 
-        function saveLocal(room, msgs) {
-          localStorage.setItem(localKey(room), JSON.stringify(msgs.slice(-120)));
+        function saveMessages(room, messages) {
+          localStorage.setItem(roomKey(room), JSON.stringify(messages.slice(-120)));
         }
 
-        function setHint(text) {
-          if (actionHint) actionHint.textContent = text || "";
-        }
+        function addMessage(message, persist = false) {
+          const list = $("#sw99Messages");
+          if (!list || !message) return;
 
-        function setConnected(connected) {
-          if (!connectionBadge) return;
-          connectionBadge.innerHTML = "<i></i> " + (connected ? "Live connected" : "Local mode");
-          connectionBadge.classList.toggle("isOffline", !connected);
-        }
-
-        setConnected(Boolean(socket && socket.connected));
-
-        socket?.on("connect", () => {
-          setConnected(true);
-          socket.emit("social:join", { roomId: currentRoom, name: username });
-        });
-
-        socket?.on("disconnect", () => {
-          setConnected(false);
-        });
-
-        function addMessage(message, persist) {
-          if (!messagesEl || !message) return;
           const mine = message.author === username;
-          const node = document.createElement("article");
-          node.className = "dsSocialMessage" + (mine ? " mine" : "");
-          node.innerHTML = '<span class="dsMsgAvatar">' + esc(message.author || "?").slice(0,1).toUpperCase() + '</span>' +
-            '<div><header><b>' + esc(message.author || "Guest") + '</b><small>' + timeLabel(message.createdAt) + '</small></header>' +
+          const item = document.createElement("article");
+          item.className = "sw99Msg" + (mine ? " mine" : "");
+          item.innerHTML =
+            '<span>' + esc(message.author || "?").slice(0,1).toUpperCase() + '</span>' +
+            '<div><header><b>' + esc(message.author || "Guest") + '</b><small>' + new Date(message.createdAt || Date.now()).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) + '</small></header>' +
             '<p>' + esc(message.text || "") + '</p></div>';
-          messagesEl.appendChild(node);
-          messagesEl.scrollTop = messagesEl.scrollHeight;
+          list.appendChild(item);
+          list.scrollTop = list.scrollHeight;
 
           if (persist) {
-            const msgs = readLocal(currentRoom);
-            msgs.push(message);
-            saveLocal(currentRoom, msgs);
+            const messages = readMessages(currentRoom);
+            messages.push(message);
+            saveMessages(currentRoom, messages);
           }
         }
 
-        function renderRoom(seed) {
-          if (!messagesEl) return;
-          messagesEl.innerHTML = "";
-          const saved = readLocal(currentRoom);
+        function renderMessages(seed) {
+          const list = $("#sw99Messages");
+          if (!list) return;
+          list.innerHTML = "";
+          const saved = readMessages(currentRoom);
           const messages = saved.length ? saved : seed || [
             { author: "Swifly", text: "Welcome to " + currentTitle + ".", createdAt: Date.now() },
-            { author: "Swifly", text: "Chat, call, create groups, make channels, or start a Watch Room.", createdAt: Date.now() + 10 }
+            { author: "Swifly", text: "Buttons here use a simpler system now, so they should actually respond.", createdAt: Date.now() + 5 }
           ];
-          messages.forEach((msg) => addMessage(msg, false));
+          messages.forEach((message) => addMessage(message, false));
         }
 
-        function isWatchArea(room) {
-          return room === "watchroom-lobby" || room === "watchroom-active" || room === "channel-watchrooms";
-        }
-
-        function setWatchStudioVisible(visible) {
-          if (watchStudio) watchStudio.hidden = !visible;
-          document.body.classList.toggle("socialWatchStudioOpen", Boolean(visible));
-          chatModeBtn?.classList.toggle("isActive", !visible);
-          roomsModeBtn?.classList.toggle("isActive", Boolean(visible));
-          if (visible) renderSocialWatchRooms();
-        }
-
-        function joinRoom(room, roomTitle) {
-          currentRoom = room || "dm-main";
-          currentTitle = roomTitle || currentRoom;
-
-          const watchMode = isWatchArea(currentRoom);
-
-          if (title) title.textContent = currentTitle;
-          if (detailsTitle) detailsTitle.textContent = currentTitle;
-          if (input) input.placeholder = "Message " + currentTitle + "...";
-          if (kind) kind.textContent = watchMode ? "Watch Rooms" : currentRoom.startsWith("channel") ? "Channel" : currentRoom.startsWith("group") ? "Group" : "Direct message";
-          if (detailsText) detailsText.textContent = watchMode ? "Create, share, and join synced Watch Rooms from Social." : currentRoom.startsWith("channel") ? "Public channel for movie talk." : currentRoom.startsWith("group") ? "Private group chat." : "Direct message thread.";
-
-          document.querySelectorAll(".dsSocialRoom").forEach((btn) => btn.classList.toggle("isActive", btn.dataset.room === currentRoom));
-
-          setWatchStudioVisible(watchMode);
-          renderRoom(watchMode ? [
-            { author: "Swifly", text: "This is the Social Watch Room hub. Create a room above, copy the invite, or share it into chat.", createdAt: Date.now() },
-            { author: "Swifly", text: "Actual room links still open at /watchrooms/:code.", createdAt: Date.now() + 10 }
-          ] : undefined);
-
-          if (socket) socket.emit("social:join", { roomId: currentRoom, name: username });
-          setHint(watchMode ? "Create or join a Watch Room above." : "Chat is ready.");
-        }
-
-        function videoIdFromUrl(url) {
-          var value = String(url || "").trim();
-          var match = value.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
-          return match ? match[1] : "";
-        }
-
-        function cleanEmbedUrl(url) {
-          var value = String(url || "").trim();
-          if (!value) return "";
-          if (!/^https?:\/\//i.test(value)) return "";
-          return value;
-        }
-
-        function createRoomId() {
-          return Math.random().toString(36).slice(2, 7) + "-" + Math.random().toString(36).slice(2, 7);
-        }
-
-        function safeRoomCode(value) {
-          return String(value || "").toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 32);
-        }
-
-        function localWatchRooms() {
-          try {
-            var saved = JSON.parse(localStorage.getItem("swiflytv.socialWatchRooms") || "[]");
-            return Array.isArray(saved) ? saved : [];
-          } catch {
-            return [];
+        function switchTab(tab) {
+          const useRooms = tab === "rooms";
+          $("#sw99ChatPanel")?.classList.toggle("active", !useRooms);
+          $("#sw99RoomsPanel")?.classList.toggle("active", useRooms);
+          $$("[data-tab]").forEach((btn) => btn.classList.toggle("active", btn.dataset.tab === tab));
+          if (useRooms) {
+            $("#sw99Kind").textContent = "Watch Rooms";
+            $("#sw99Title").textContent = "Room Lobby";
+            $("#sw99InfoTitle").textContent = "Watch Rooms";
+            $("#sw99InfoText").textContent = "Create, join, copy, or share a synced room.";
+            renderRooms();
+          } else {
+            $("#sw99Kind").textContent = currentRoom.startsWith("channel") ? "Channel" : currentRoom.startsWith("group") ? "Group" : "Direct message";
+            $("#sw99Title").textContent = currentTitle;
+            $("#sw99InfoTitle").textContent = currentTitle;
+            $("#sw99InfoText").textContent = "Chat, call, invite, or start a room.";
           }
         }
 
-        function saveLocalWatchRooms(rooms) {
+        function joinRoom(room, title) {
+          currentRoom = room || "dm-main";
+          currentTitle = title || currentRoom;
+          $$("[data-room]").forEach((btn) => btn.classList.toggle("active", btn.dataset.room === currentRoom));
+          $("#sw99Input").placeholder = "Message " + currentTitle + "...";
+          switchTab("chat");
+          renderMessages();
+          socket?.emit("social:join", { roomId: currentRoom, name: username });
+        }
+
+        function createVirtual(kind) {
+          const name = prompt(kind === "channel" ? "Channel name" : "Group name");
+          if (!name || !name.trim()) return;
+          const id = (kind === "channel" ? "channel-" : "group-") + name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+          const sectionText = kind === "channel" ? "Channels" : "Groups";
+          const section = $$(".sw99Section").find((sec) => (sec.querySelector("span")?.textContent || "").includes(sectionText));
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "sw99Room";
+          btn.dataset.room = id;
+          btn.dataset.title = kind === "channel" ? "# " + name.trim() : name.trim();
+          btn.innerHTML = '<i class="bi ' + (kind === "channel" ? "bi-hash" : "bi-people") + '"></i><b>' + esc(name.trim()) + '</b><small>' + (kind === "channel" ? "Public" : "Group") + '</small>';
+          section?.appendChild(btn);
+          joinRoom(id, btn.dataset.title);
+          toast((kind === "channel" ? "Channel" : "Group") + " created");
+        }
+
+        function localRooms() {
+          try {
+            const saved = JSON.parse(localStorage.getItem("swiflytv.socialWatchRooms") || "[]");
+            return Array.isArray(saved) ? saved : [];
+          } catch { return []; }
+        }
+
+        function saveLocalRooms(rooms) {
           localStorage.setItem("swiflytv.socialWatchRooms", JSON.stringify(rooms.slice(0, 30)));
         }
 
-        function buildWatchRoomUrl(room) {
-          var params = new URLSearchParams();
+        function buildRoomUrl(room) {
+          const params = new URLSearchParams();
           params.set("name", room.name || "SwiflyTV Watch Room");
+          params.set("kind", room.kind || "blank");
           if (room.videoId) params.set("videoId", room.videoId);
           if (room.embedUrl) params.set("embedUrl", room.embedUrl);
-          if (room.mediaKind) params.set("kind", room.mediaKind);
-          else params.set("kind", room.videoId ? "youtube" : room.embedUrl ? "embed" : "blank");
           return "/watchrooms/" + encodeURIComponent(room.id) + "?" + params.toString();
         }
 
-        function createSocialWatchRoom(name, url, announce) {
-          var roomId = createRoomId();
-          var videoId = videoIdFromUrl(url);
-          var embedUrl = cleanEmbedUrl(url);
-          var room = {
-            id: roomId,
-            name: String(name || "SwiflyTV Watch Room").trim() || "SwiflyTV Watch Room",
-            videoId: videoId,
-            embedUrl: embedUrl,
-            mediaKind: videoId ? "youtube" : embedUrl ? "embed" : "blank",
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-            host: username,
-          };
+        async function renderRooms() {
+          const target = $("#sw99RoomsList");
+          if (!target) return;
 
-          var rooms = localWatchRooms().filter((item) => item && item.id !== room.id);
-          rooms.unshift(room);
-          saveLocalWatchRooms(rooms);
-          renderSocialWatchRooms();
-
-          var roomUrl = buildWatchRoomUrl(room);
-          if (announce) {
-            var message = {
-              roomId: currentRoom,
-              author: username,
-              text: "Created Watch Room: " + room.name + " — " + location.origin + roomUrl,
-              createdAt: Date.now()
-            };
-            addMessage(message, true);
-            if (socket) socket.emit("social:message", message);
-          }
-
-          toast("Watch Room created");
-          return roomUrl;
-        }
-
-        function roomCardHtml(room) {
-          var title = esc(room.name || "Watch Room");
-          var href = buildWatchRoomUrl(room);
-          var meta = room.viewers ? room.viewers + " watching" : room.host ? "Host: " + esc(room.host) : "Ready";
-          return '<article class="dsSocialWatchRoomCard">' +
-            '<div><span><i class="fa-solid fa-tv"></i></span><strong>' + title + '</strong><small>' + meta + '</small></div>' +
-            '<div class="dsSocialWatchRoomActions">' +
-              '<a href="' + esc(href) + '">Open</a>' +
-              '<button type="button" data-copy="' + esc(location.origin + href) + '">Copy</button>' +
-              '<button type="button" data-share="' + esc(href) + '" data-title="' + title + '">Share</button>' +
-            '</div>' +
-          '</article>';
-        }
-
-        async function renderSocialWatchRooms() {
-          if (!socialWatchRoomsList) return;
-
-          var local = localWatchRooms();
-          var live = [];
+          let rooms = localRooms();
           try {
-            var response = await fetch("/api/watchrooms", { cache: "no-store" });
-            var data = await response.json();
-            live = Array.isArray(data.rooms) ? data.rooms : [];
+            const res = await fetch("/api/watchrooms", { cache: "no-store" });
+            const data = await res.json();
+            if (Array.isArray(data.rooms)) {
+              const seen = new Set(rooms.map((r) => r.id));
+              data.rooms.forEach((room) => {
+                if (room && room.id && !seen.has(room.id)) rooms.push(room);
+              });
+            }
           } catch {}
 
-          var merged = [];
-          var seen = new Set();
-          [...local, ...live].forEach(function(room) {
-            if (!room || !room.id || seen.has(room.id)) return;
-            seen.add(room.id);
-            merged.push(room);
-          });
-
-          if (socialRoomsCount) socialRoomsCount.textContent = merged.length + (merged.length === 1 ? " room" : " rooms");
-
-          if (!merged.length) {
-            socialWatchRoomsList.innerHTML = '<div class="dsSocialEmptyMini">No active rooms yet. Create one above.</div>';
+          if (!rooms.length) {
+            target.innerHTML = '<p class="sw99Empty">No rooms yet. Create one.</p>';
             return;
           }
 
-          socialWatchRoomsList.innerHTML = merged.slice(0, 12).map(roomCardHtml).join("");
+          target.innerHTML = rooms.slice(0, 20).map((room) => {
+            const href = buildRoomUrl(room);
+            return '<article class="sw99RoomResult">' +
+              '<div><b>' + esc(room.name || "Watch Room") + '</b><small>' + esc(room.host || "Ready") + '</small></div>' +
+              '<nav><a href="' + esc(href) + '">Open</a><button type="button" data-copy="' + esc(location.origin + href) + '">Copy</button><button type="button" data-share="' + esc(href) + '">Share</button></nav>' +
+            '</article>';
+          }).join("");
         }
 
-        async function openCall(videoMode) {
-          if (!callModal) return;
-          callModal.hidden = false;
-          if (callRoomTitle) callRoomTitle.textContent = currentTitle;
-          if (callTypeLabel) callTypeLabel.textContent = videoMode ? "Video call" : "Voice call";
-          if (callStatusText) callStatusText.textContent = "Requesting " + (videoMode ? "camera and microphone" : "microphone") + "...";
+        function createLocalRoom() {
+          const room = {
+            id: Math.random().toString(36).slice(2, 7) + "-" + Math.random().toString(36).slice(2, 7),
+            name: "Social Watch Room",
+            kind: "blank",
+            host: username,
+            createdAt: Date.now()
+          };
+          const rooms = localRooms();
+          rooms.unshift(room);
+          saveLocalRooms(rooms);
+          renderRooms();
+          toast("Room saved");
+          return buildRoomUrl(room);
+        }
 
+        async function openCall(video) {
+          const modal = $("#sw99CallModal");
+          modal.hidden = false;
+          $("#sw99CallTitle").textContent = currentTitle;
+          $("#sw99CallType").textContent = video ? "Video call" : "Voice call";
+          $("#sw99CallStatus").textContent = "Requesting permission...";
           try {
-            localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: Boolean(videoMode) });
-            if (localVideo) {
-              localVideo.srcObject = localStream;
-              localVideo.hidden = !videoMode;
-            }
-            if (callStatusText) callStatusText.textContent = videoMode ? "Camera preview active. Signaling room joined." : "Mic active. Signaling room joined.";
-            if (socket) socket.emit("social:call-join", { roomId: currentRoom, name: username, video: Boolean(videoMode) });
-            toast(videoMode ? "Video preview started" : "Voice call started");
-          } catch (error) {
-            if (callStatusText) callStatusText.textContent = "Call permission blocked or unavailable.";
-            toast("Call permission blocked", "error");
+            localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: Boolean(video) });
+            const localVideo = $("#sw99LocalVideo");
+            localVideo.srcObject = localStream;
+            localVideo.hidden = !video;
+            $("#sw99CallStatus").textContent = video ? "Camera preview active" : "Microphone active";
+            socket?.emit("social:call-join", { roomId: currentRoom, name: username, video: Boolean(video) });
+          } catch {
+            $("#sw99CallStatus").textContent = "Permission blocked or unavailable";
+            toast("Permission blocked", "error");
           }
         }
 
         function closeCall() {
-          if (localStream) {
-            localStream.getTracks().forEach((track) => track.stop());
-            localStream = null;
-          }
-          if (localVideo) localVideo.srcObject = null;
-          if (callModal) callModal.hidden = true;
-          if (socket) socket.emit("social:call-leave", { roomId: currentRoom, name: username });
+          if (localStream) localStream.getTracks().forEach((track) => track.stop());
+          localStream = null;
+          $("#sw99LocalVideo").srcObject = null;
+          $("#sw99CallModal").hidden = true;
+          socket?.emit("social:call-leave", { roomId: currentRoom, name: username });
         }
 
-        function createVirtualRoom(kindType) {
-          const name = prompt(kindType === "channel" ? "Channel name" : "Group name");
-          if (!name || !name.trim()) return;
-          const id = (kindType === "channel" ? "channel-" : "group-") + name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 32);
-          const section = [...document.querySelectorAll(".dsSocialSection")].find((sec) => sec.querySelector("span")?.textContent.toLowerCase().includes(kindType === "channel" ? "channel" : "group"));
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = "dsSocialRoom";
-          btn.dataset.room = id;
-          btn.dataset.title = kindType === "channel" ? "# " + name.trim() : name.trim();
-          btn.innerHTML = '<i class="fa-solid ' + (kindType === "channel" ? "fa-hashtag" : "fa-users") + '"></i><b>' + esc(name.trim()) + '</b><small>' + (kindType === "channel" ? "Public" : "Group") + '</small>';
-          section?.appendChild(btn);
-          joinRoom(id, btn.dataset.title);
-          toast((kindType === "channel" ? "Channel" : "Group") + " created");
-        }
+        document.addEventListener("click", async (event) => {
+          try {
+            const tab = event.target.closest("[data-tab]");
+            if (tab) {
+              event.preventDefault();
+              switchTab(tab.dataset.tab);
+              return;
+            }
 
-        // Delegated click handling. This is more reliable after dynamic room/channel creation.
-        document.addEventListener("click", async function(event) {
-          const roomButton = event.target.closest(".dsSocialRoom");
-          if (roomButton) {
-            event.preventDefault();
-            joinRoom(roomButton.dataset.room, roomButton.dataset.title);
-            return;
-          }
+            const room = event.target.closest("[data-room]");
+            if (room && room.tagName !== "A") {
+              event.preventDefault();
+              joinRoom(room.dataset.room, room.dataset.title);
+              return;
+            }
 
-          const copyBtn = event.target.closest("[data-copy]");
-          if (copyBtn) {
-            event.preventDefault();
-            await (window.swiflyCopy ? window.swiflyCopy(copyBtn.dataset.copy || "") : navigator.clipboard?.writeText(copyBtn.dataset.copy || ""));
-            copyBtn.textContent = "Copied";
-            setTimeout(() => copyBtn.textContent = "Copy", 1200);
-            return;
-          }
+            const action = event.target.closest("[data-action]");
+            if (action) {
+              const name = action.dataset.action;
+              if (name === "new-group") return createVirtual("group");
+              if (name === "new-channel") return createVirtual("channel");
+              if (name === "voice") return openCall(false);
+              if (name === "video") return openCall(true);
+              if (name === "close-call") return closeCall();
+              if (name === "invite") {
+                await (window.swiflyCopy ? window.swiflyCopy(location.origin + "/social?room=" + encodeURIComponent(currentRoom)) : navigator.clipboard.writeText(location.origin + "/social?room=" + encodeURIComponent(currentRoom)));
+                return;
+              }
+              if (name === "refresh-rooms") return renderRooms();
+              if (name === "attach") return toast("Attachments coming soon", "info");
+              if (name === "mute") {
+                if (!localStream) return toast("No active call", "info");
+                localStream.getAudioTracks().forEach((track) => track.enabled = !track.enabled);
+                return toast("Mic toggled");
+              }
+              if (name === "camera") {
+                if (!localStream) return toast("No active camera", "info");
+                localStream.getVideoTracks().forEach((track) => track.enabled = !track.enabled);
+                return toast("Camera toggled");
+              }
+            }
 
-          const shareBtn = event.target.closest("[data-share]");
-          if (shareBtn) {
-            event.preventDefault();
-            const href = shareBtn.dataset.share || "";
-            const text = "Join my Watch Room: " + location.origin + href;
-            const message = { roomId: currentRoom, author: username, text, createdAt: Date.now() };
-            addMessage(message, true);
-            if (socket) socket.emit("social:message", message);
-            toast("Shared to chat");
-            return;
-          }
+            const copy = event.target.closest("[data-copy]");
+            if (copy) {
+              event.preventDefault();
+              await (window.swiflyCopy ? window.swiflyCopy(copy.dataset.copy) : navigator.clipboard.writeText(copy.dataset.copy));
+              return;
+            }
 
-          if (event.target.closest("#newGroupBtn") || event.target.closest("#socialCreateGroupBtn")) {
-            event.preventDefault();
-            createVirtualRoom("group");
-            return;
-          }
-
-          if (event.target.closest("#socialCreateChannelBtn")) {
-            event.preventDefault();
-            createVirtualRoom("channel");
-            return;
-          }
-
-          if (event.target.closest("#socialRoomsModeBtn")) {
-            event.preventDefault();
-            joinRoom("watchroom-lobby", "Watch Room Lobby");
-            return;
-          }
-
-          if (event.target.closest("#socialChatModeBtn")) {
-            event.preventDefault();
-            joinRoom("dm-main", "Main Chat");
-            return;
-          }
-
-          if (event.target.closest("#socialRefreshRoomsBtn")) {
-            event.preventDefault();
-            renderSocialWatchRooms();
-            toast("Rooms refreshed");
-            return;
-          }
-
-          if (event.target.closest("#socialCreateBlankRoomBtn")) {
-            event.preventDefault();
-            createSocialWatchRoom("Blank Watch Room", "", true);
-            return;
-          }
-
-          if (event.target.closest("#socialInviteBtn")) {
-            event.preventDefault();
-            const invite = location.origin + "/social?room=" + encodeURIComponent(currentRoom);
-            if (window.swiflyCopy) await window.swiflyCopy(invite);
-            else await navigator.clipboard?.writeText(invite);
-            return;
-          }
-
-          if (event.target.closest("#socialVoiceBtn")) {
-            event.preventDefault();
-            openCall(false);
-            return;
-          }
-
-          if (event.target.closest("#socialVideoBtn")) {
-            event.preventDefault();
-            openCall(true);
-            return;
-          }
-
-          if (event.target.closest("#closeCallBtn") || event.target.closest("#leaveCallBtn")) {
-            event.preventDefault();
-            closeCall();
-            return;
-          }
-
-          if (event.target.closest("#muteCallBtn")) {
-            event.preventDefault();
-            if (!localStream) return toast("No active call", "info");
-            localStream.getAudioTracks().forEach((track) => track.enabled = !track.enabled);
-            toast("Mic toggled");
-            return;
-          }
-
-          if (event.target.closest("#cameraCallBtn")) {
-            event.preventDefault();
-            if (!localStream) return toast("No active camera", "info");
-            localStream.getVideoTracks().forEach((track) => track.enabled = !track.enabled);
-            toast("Camera toggled");
-            return;
+            const share = event.target.closest("[data-share]");
+            if (share) {
+              event.preventDefault();
+              const text = "Join my Watch Room: " + location.origin + share.dataset.share;
+              const message = { roomId: currentRoom, author: username, text, createdAt: Date.now() };
+              addMessage(message, true);
+              socket?.emit("social:message", message);
+              switchTab("chat");
+              toast("Shared to chat");
+              return;
+            }
+          } catch (error) {
+            setError(error);
           }
         });
 
-        document.getElementById("socialWatchCreateForm")?.addEventListener("submit", function(event) {
+        $("#sw99Composer")?.addEventListener("submit", (event) => {
           event.preventDefault();
-          var fd = new FormData(event.currentTarget);
-          var name = String(fd.get("roomName") || "").trim() || "SwiflyTV Watch Room";
-          var link = String(fd.get("watchLink") || "").trim();
-          createSocialWatchRoom(name, link, true);
-          event.currentTarget.reset();
-        });
-
-        document.getElementById("socialWatchJoinForm")?.addEventListener("submit", function(event) {
-          event.preventDefault();
-          var fd = new FormData(event.currentTarget);
-          var code = safeRoomCode(fd.get("roomCode"));
-          if (!code) return toast("Enter a room code", "error");
-          location.href = "/watchrooms/" + encodeURIComponent(code) + "?name=SwiflyTV%20Watch%20Room&kind=blank";
-        });
-
-        composer?.addEventListener("submit", (event) => {
-          event.preventDefault();
-          const text = String(input?.value || "").trim();
+          const input = $("#sw99Input");
+          const text = String(input.value || "").trim();
           if (!text) return;
-          const message = { roomId: currentRoom, author: username, text, createdAt: Date.now() };
           input.value = "";
+          const message = { roomId: currentRoom, author: username, text, createdAt: Date.now() };
           addMessage(message, true);
-          if (socket) socket.emit("social:message", message);
+          socket?.emit("social:message", message);
         });
 
-        input?.addEventListener("input", () => {
-          if (socket) socket.emit("social:typing", { roomId: currentRoom, name: username });
+        socket?.on("connect", () => {
+          $("#sw99Status").textContent = "Live connected";
+          socket.emit("social:join", { roomId: currentRoom, name: username });
+        });
+
+        socket?.on("disconnect", () => {
+          $("#sw99Status").textContent = "Local mode";
         });
 
         socket?.on("social:message", (message) => {
@@ -28377,38 +28962,19 @@ function socialPage(req, res) {
         });
 
         socket?.on("social:members", (payload) => {
-          if (!members || !payload || payload.roomId !== currentRoom) return;
-          const list = Array.isArray(payload.members) ? payload.members : [];
-          members.innerHTML = list.map((name) => '<span><i></i>' + esc(name) + '</span>').join("") || '<span><i></i>' + esc(username) + '</span>';
-        });
-
-        let typingTimer = null;
-        socket?.on("social:typing", (payload) => {
-          if (!payload || payload.roomId !== currentRoom || payload.name === username) return;
-          const typing = document.getElementById("socialTyping");
-          if (!typing) return;
-          typing.textContent = payload.name + " is typing...";
-          typing.hidden = false;
-          clearTimeout(typingTimer);
-          typingTimer = setTimeout(() => typing.hidden = true, 1300);
-        });
-
-        socket?.on("social:call-event", (payload) => {
-          if (!payload || payload.roomId !== currentRoom || payload.name === username) return;
-          addMessage({ author: "Call", text: payload.name + " " + (payload.type || "updated the call"), createdAt: Date.now() }, false);
+          const el = $("#sw99Members");
+          if (!el || !payload || payload.roomId !== currentRoom) return;
+          const names = Array.isArray(payload.members) ? payload.members : [];
+          el.innerHTML = names.length ? names.map((name) => '<p><i></i> ' + esc(name) + '</p>').join("") : '<p><i></i> You</p>';
         });
 
         const params = new URLSearchParams(location.search);
-        const tab = params.get("tab");
-        const urlRoom = params.get("room");
-        const target = tab === "watchrooms"
-          ? document.querySelector('[data-room="watchroom-lobby"]')
-          : urlRoom ? document.querySelector('[data-room="' + (window.CSS && CSS.escape ? CSS.escape(urlRoom) : urlRoom.replace(/"/g, "")) + '"]') : null;
-        if (target) joinRoom(target.dataset.room, target.dataset.title);
-        else joinRoom(currentRoom, currentTitle);
+        if (app?.dataset.initialTab === "rooms" || params.get("tab") === "watchrooms") switchTab("rooms");
+        else joinRoom(params.get("room") || currentRoom, currentTitle);
 
-        // expose for quick manual testing in console
-        window.swiflySocial = { joinRoom, renderSocialWatchRooms, createSocialWatchRoom };
+        renderRooms();
+
+        window.SwiflySocial = { joinRoom, switchTab, renderRooms, createLocalRoom };
       })();
     </script>
   </main>`;
@@ -28525,6 +29091,43 @@ function removedDateProfilePage(req, res) {
 
 app.get("/date-profile", removedDateProfilePage);
 app.get("/couples", removedDateProfilePage);
+
+app.get("/watchrooms/new", (req, res) => {
+  const roomId = generateRoomId();
+  const name = String(req.query.name || "SwiflyTV Watch Room").slice(0, 80);
+  const rawLink = String(req.query.watchLink || req.query.url || "").trim();
+  const params = new URLSearchParams();
+  params.set("name", name);
+
+  const youtubeMatch = rawLink.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
+  if (youtubeMatch) {
+    params.set("kind", "youtube");
+    params.set("videoId", youtubeMatch[1]);
+  } else if (/^https?:\/\//i.test(rawLink)) {
+    params.set("kind", "embed");
+    params.set("embedUrl", rawLink);
+  } else {
+    params.set("kind", "blank");
+  }
+
+  res.redirect(`/watchrooms/${encodeURIComponent(roomId)}?${params.toString()}`);
+});
+
+app.get("/watchrooms/join", (req, res) => {
+  const code = String(req.query.code || req.query.room || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, "")
+    .slice(0, 40);
+
+  if (!code) return res.redirect("/social?tab=watchrooms");
+
+  const params = new URLSearchParams();
+  params.set("name", String(req.query.name || "SwiflyTV Watch Room").slice(0, 80));
+  params.set("kind", "blank");
+  res.redirect(`/watchrooms/${encodeURIComponent(code)}?${params.toString()}`);
+});
+
+
 app.get("/watchrooms", (req, res) => res.redirect("/social?tab=watchrooms"));
 app.get("/watchrooms/:roomId", watchroomPage);
 app.get("/profiles", profilesPage);
@@ -28613,6 +29216,8 @@ function apiStatus(req, res) {
       socialHub: true,
       socialWatchRooms: true,
       socialButtonsFixed: true,
+      socialRebuiltV99: true,
+      noJsWatchRoomFallbacks: true,
       socialLayoutV2: true,
       profileManager: true,
       dateProfile: false,
