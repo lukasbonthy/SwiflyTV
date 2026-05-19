@@ -18946,9 +18946,10 @@ function pageShell({ title = SITE_NAME, description = "Movie nights, date rooms,
     }
 
     #roomMoviePlayerType::before {
-      content: "● ";
-      color: #ff3b7a;
-      text-shadow: 0 0 14px rgba(255,59,122,.75);
+      content: "HLS ";
+      color: #07101a;
+      text-shadow: none;
+      font-weight: 950;
     }
 
 
@@ -20951,7 +20952,11 @@ async function fetchProxyVideoSource({ type, id }) {
         const streamHeaders = data?.headers || data?.stream?.headers || {};
         const streamQuality = String(data?.stream?.quality || "").slice(0, 40);
         const streamName = String(data?.stream?.name || "").slice(0, 90);
-        const streamMode = String(data?.streamMode || data?.mode || (resolverM3u8 || streamType === "m3u8" || streamType === "hls" ? "live-hls" : "video")).toLowerCase();
+        const streamMode = String(
+          data?.streamMode ||
+          data?.mode ||
+          (process.env.M3U8_FORCE_LIVE === "true" && (resolverM3u8 || streamType === "m3u8" || streamType === "hls") ? "live-hls" : (resolverM3u8 || streamType === "m3u8" || streamType === "hls" ? "hls" : "video"))
+        ).toLowerCase();
 
         if (!data?.ok || !chosenVideo) {
           errors.push(`${url.toString()} attempt ${attempt}: missing m3u8/stream.url/proxyVideo`);
@@ -21002,7 +21007,7 @@ async function fetchProxyVideoSource({ type, id }) {
           streamName,
           streamHeaders,
           streamMode,
-          isLiveM3u8: isHlsResolverSource,
+          isLiveM3u8: streamMode.includes("live") || process.env.M3U8_FORCE_LIVE === "true",
           apiProxyUrl: String(data?.apiProxyUrl || data?.stream?.apiProxyUrl || ""),
           providerUrl: url.toString(),
           attempts: errors,
@@ -22488,6 +22493,10 @@ function watchroomPage(req, res) {
           if (!video || video.hidden || !(roomMovieState.playbackUrl || roomMovieState.m3u8 || roomMovieState.proxyVideo)) return;
 
           var liveMode = typeof isRoomMovieLiveM3u8 === "function" && isRoomMovieLiveM3u8();
+          if (isRoomMovieHlsUrl(roomMovieState.playbackUrl || roomMovieState.m3u8 || roomMovieState.proxyVideo) && !roomMovieState.hlsReady) {
+            return;
+          }
+
           var target = targetRoomMovieSeconds();
           var current = Number(video.currentTime || 0);
           var drift = Math.abs(current - target);
@@ -22647,7 +22656,7 @@ function watchroomPage(req, res) {
           if (playerType) {
             var isHls = typeof isRoomMovieHlsUrl === "function" && isRoomMovieHlsUrl(roomMovieState.playbackUrl || roomMovieState.m3u8 || roomMovieState.proxyVideo);
             var quality = roomMovieState.streamQuality ? " • " + roomMovieState.streamQuality : "";
-            playerType.textContent = isHls ? ((roomMovieState && roomMovieState.hlsProxyUrl) ? "PROXIED LIVE M3U8 Player" : "DIRECT LIVE M3U8 Player") + quality : "Native Video Player" + quality;
+            playerType.textContent = isHls ? ((roomMovieState && roomMovieState.hlsProxyUrl) ? "PROXIED M3U8 Player" : "DIRECT M3U8 Player") + quality : "Native Video Player" + quality;
           }
 
           if (driftBadge && typeof targetRoomMovieSeconds === "function") {
@@ -22823,8 +22832,7 @@ function watchroomPage(req, res) {
         }
 
         function isRoomMovieLiveM3u8() {
-          var url = roomMovieState.playbackUrl || roomMovieState.m3u8 || roomMovieState.proxyVideo;
-          return Boolean(roomMovieState.isLiveM3u8) || isRoomMovieHlsUrl(url) || String(roomMovieState.streamMode || "").includes("live");
+          return Boolean(roomMovieState.isLiveM3u8) || Boolean(roomMovieState.hlsIsLive) || String(roomMovieState.streamMode || "").includes("live");
         }
 
         function seekRoomMovieLiveEdge() {
@@ -22854,40 +22862,78 @@ function watchroomPage(req, res) {
         function attachRoomMovieVideoSource(video, src) {
           if (!video || !src) return false;
 
+          roomMovieState.hlsReady = false;
+          roomMovieState.hlsIsLive = Boolean(roomMovieState.isLiveM3u8) || String(roomMovieState.streamMode || "").includes("live");
+
           if (isRoomMovieHlsUrl(src)) {
             destroyRoomMovieHls();
 
+            // Like normal online HLS players: attach source, wait for user/play button,
+            // recover errors, and do not force autoplay/live-edge unless the manifest is live.
             if (video.canPlayType && video.canPlayType("application/vnd.apple.mpegurl")) {
               video.src = src;
               video.dataset.hlsSrc = src;
               try { video.load(); } catch {}
+              roomMovieState.hlsReady = true;
               return true;
             }
 
             if (window.Hls && window.Hls.isSupported && window.Hls.isSupported()) {
               var hls = new window.Hls({
                 enableWorker: true,
-                lowLatencyMode: true,
-                liveSyncDurationCount: 3,
-                liveMaxLatencyDurationCount: 10,
-                maxLiveSyncPlaybackRate: 1.5,
-                backBufferLength: 30,
+                lowLatencyMode: false,
+                backBufferLength: 90,
+                maxBufferLength: 60,
+                maxMaxBufferLength: 120,
+                startPosition: -1,
+                capLevelToPlayerSize: true,
+                fragLoadingTimeOut: 30000,
+                manifestLoadingTimeOut: 30000,
+                levelLoadingTimeOut: 30000,
               });
 
               window.__roomMovieHls = hls;
               video.dataset.hlsSrc = src;
 
-              hls.loadSource(src);
               hls.attachMedia(video);
-          hls.on(window.Hls.Events.MANIFEST_PARSED, function(){ video.play().catch(function(){}); });
+
+              hls.on(window.Hls.Events.MEDIA_ATTACHED, function() {
+                hls.loadSource(src);
+              });
+
+              hls.on(window.Hls.Events.MANIFEST_PARSED, function() {
+                roomMovieState.hlsReady = true;
+                setRoomMovieStatus("m3u8 loaded. Press play when ready.");
+                updateCustomPlayerUi();
+              });
+
+              hls.on(window.Hls.Events.LEVEL_LOADED, function(event, data) {
+                var live = Boolean(data && data.details && data.details.live);
+                roomMovieState.hlsIsLive = live || Boolean(roomMovieState.isLiveM3u8) || String(roomMovieState.streamMode || "").includes("live");
+                updateCustomPlayerUi();
+              });
 
               hls.on(window.Hls.Events.ERROR, function(event, data) {
-                if (data && data.fatal) {
-                  console.warn("SwiflyTV HLS fatal error", data);
-                  try { hls.destroy(); } catch {}
-                  window.__roomMovieHls = null;
-                  fallbackToRoomMovieIframe("HLS playback error");
+                if (!data) return;
+                console.warn("SwiflyTV HLS error", data);
+
+                if (!data.fatal) return;
+
+                if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
+                  setRoomMovieStatus("HLS network hiccup. Recovering...");
+                  try { hls.startLoad(); } catch {}
+                  return;
                 }
+
+                if (data.type === window.Hls.ErrorTypes.MEDIA_ERROR) {
+                  setRoomMovieStatus("HLS media hiccup. Recovering...");
+                  try { hls.recoverMediaError(); } catch {}
+                  return;
+                }
+
+                try { hls.destroy(); } catch {}
+                window.__roomMovieHls = null;
+                fallbackToRoomMovieIframe("HLS playback error");
               });
 
               return true;
@@ -22999,7 +23045,7 @@ function watchroomPage(req, res) {
         }
 
         function renderRoomMovie(movie) {
-          roomMovieState = Object.assign({ status: "idle", movieId: "", playbackUrl: "", proxyVideo: "", m3u8: "", streamType: "", streamQuality: "", streamName: "", streamMode: "", isLiveM3u8: false, playAt: 0, selectedBy: "", message: "", sync: { playing: false, offset: 0, startedAt: 0, updatedAt: Date.now() } }, movie || {});
+          roomMovieState = Object.assign({ status: "idle", movieId: "", playbackUrl: "", proxyVideo: "", m3u8: "", streamType: "", streamQuality: "", streamName: "", streamMode: "", isLiveM3u8: false, hlsIsLive: false, hlsReady: false, playAt: 0, selectedBy: "", message: "", sync: { playing: false, offset: 0, startedAt: 0, updatedAt: Date.now() } }, movie || {});
           roomMovieState.playbackUrl = roomMovieState.playbackUrl || roomMovieState.m3u8 || (roomMovieState.playbackUrl || roomMovieState.m3u8 || roomMovieState.proxyVideo);
           if (!roomMovieState.sync) roomMovieState.sync = { playing: false, offset: 0, startedAt: 0, updatedAt: Date.now() };
           var input = document.getElementById("roomMovieInput");
@@ -23923,7 +23969,7 @@ function watchroomPage(req, res) {
           var socketWorks = typeof io === "function";
           var socket = socketWorks ? io() : null;
           var isHost = !socketWorks;
-          var movie = { status: "idle", movieId: "", playbackUrl: "", proxyVideo: "", m3u8: "", streamType: "", streamQuality: "", streamName: "", streamMode: "", isLiveM3u8: false, playAt: 0, sync: { playing: false, offset: 0, startedAt: 0 } };
+          var movie = { status: "idle", movieId: "", playbackUrl: "", proxyVideo: "", m3u8: "", streamType: "", streamQuality: "", streamName: "", streamMode: "", isLiveM3u8: false, hlsIsLive: false, hlsReady: false, playAt: 0, sync: { playing: false, offset: 0, startedAt: 0 } };
           var timer = null;
           var driftLimit = 5;
 
@@ -23986,8 +24032,7 @@ function watchroomPage(req, res) {
           }
 
           function isPollingLiveM3u8() {
-            var url = movie.playbackUrl || movie.m3u8 || movie.proxyVideo;
-            return Boolean(movie.isLiveM3u8) || isPollingHlsUrl(url) || String(movie.streamMode || "").includes("live");
+            return Boolean(movie.isLiveM3u8) || Boolean(movie.hlsIsLive) || String(movie.streamMode || "").includes("live");
           }
 
           function seekPollingLiveEdge() {
@@ -24017,6 +24062,9 @@ function watchroomPage(req, res) {
           function attachPollingVideoSource(video, src) {
             if (!video || !src) return false;
 
+            movie.hlsReady = false;
+            movie.hlsIsLive = Boolean(movie.isLiveM3u8) || String(movie.streamMode || "").includes("live");
+
             if (isPollingHlsUrl(src)) {
               destroyPollingHls();
 
@@ -24024,29 +24072,64 @@ function watchroomPage(req, res) {
                 video.src = src;
                 video.dataset.hlsSrc = src;
                 try { video.load(); } catch {}
+                movie.hlsReady = true;
                 return true;
               }
 
               if (window.Hls && window.Hls.isSupported && window.Hls.isSupported()) {
                 var hls = new window.Hls({
                   enableWorker: true,
-                  lowLatencyMode: true,
-                  liveSyncDurationCount: 3,
-                  liveMaxLatencyDurationCount: 10,
-                  maxLiveSyncPlaybackRate: 1.5,
-                  backBufferLength: 30,
+                  lowLatencyMode: false,
+                  backBufferLength: 90,
+                  maxBufferLength: 60,
+                  maxMaxBufferLength: 120,
+                  startPosition: -1,
+                  capLevelToPlayerSize: true,
+                  fragLoadingTimeOut: 30000,
+                  manifestLoadingTimeOut: 30000,
+                  levelLoadingTimeOut: 30000,
                 });
                 window.__roomMoviePollingHls = hls;
                 video.dataset.hlsSrc = src;
-                hls.loadSource(src);
+
                 hls.attachMedia(video);
+
+                hls.on(window.Hls.Events.MEDIA_ATTACHED, function() {
+                  hls.loadSource(src);
+                });
+
+                hls.on(window.Hls.Events.MANIFEST_PARSED, function() {
+                  movie.hlsReady = true;
+                  setMovieStatus("m3u8 loaded. Press play when ready.");
+                  bindPollingCustomPlayer();
+                });
+
+                hls.on(window.Hls.Events.LEVEL_LOADED, function(event, data) {
+                  var live = Boolean(data && data.details && data.details.live);
+                  movie.hlsIsLive = live || Boolean(movie.isLiveM3u8) || String(movie.streamMode || "").includes("live");
+                });
+
                 hls.on(window.Hls.Events.ERROR, function(event, data) {
-                  if (data && data.fatal) {
-                    console.warn("SwiflyTV polling HLS fatal error", data);
-                    try { hls.destroy(); } catch {}
-                    window.__roomMoviePollingHls = null;
-                    fallbackPollingIframe("HLS playback error");
+                  if (!data) return;
+                  console.warn("SwiflyTV polling HLS error", data);
+
+                  if (!data.fatal) return;
+
+                  if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
+                    setMovieStatus("HLS network hiccup. Recovering...");
+                    try { hls.startLoad(); } catch {}
+                    return;
                   }
+
+                  if (data.type === window.Hls.ErrorTypes.MEDIA_ERROR) {
+                    setMovieStatus("HLS media hiccup. Recovering...");
+                    try { hls.recoverMediaError(); } catch {}
+                    return;
+                  }
+
+                  try { hls.destroy(); } catch {}
+                  window.__roomMoviePollingHls = null;
+                  fallbackPollingIframe("HLS playback error");
                 });
                 return true;
               }
@@ -24460,7 +24543,7 @@ function watchroomPage(req, res) {
               if (playerType) {
                 var isHls = typeof isPollingHlsUrl === "function" && isPollingHlsUrl(movie.playbackUrl || movie.m3u8 || (movie.playbackUrl || movie.m3u8 || movie.proxyVideo));
                 var quality = movie.streamQuality ? " • " + movie.streamQuality : "";
-                playerType.textContent = isHls ? ((movie && movie.hlsProxyUrl) ? "PROXIED LIVE M3U8 Player" : "DIRECT LIVE M3U8 Player") + quality : "Native Video Player" + quality;
+                playerType.textContent = isHls ? ((movie && movie.hlsProxyUrl) ? "PROXIED M3U8 Player" : "DIRECT M3U8 Player") + quality : "Native Video Player" + quality;
               }
 
               if (driftBadge) {
@@ -24550,6 +24633,10 @@ function watchroomPage(req, res) {
             var video = byId("roomMovieVideo");
             if (!video || video.hidden || !(movie.playbackUrl || movie.m3u8 || movie.proxyVideo)) return;
             var liveMode = typeof isPollingLiveM3u8 === "function" && isPollingLiveM3u8();
+            if (isPollingHlsUrl(movie.playbackUrl || movie.m3u8 || movie.proxyVideo) && !movie.hlsReady) {
+              return;
+            }
+
             var target = targetTime();
             var drift = Math.abs(Number(video.currentTime || 0) - target);
             if (liveMode) {
@@ -24606,7 +24693,7 @@ function watchroomPage(req, res) {
 
           function renderMovie(next) {
             if (!next) return;
-            movie = Object.assign({ status: "idle", movieId: "", playbackUrl: "", proxyVideo: "", m3u8: "", streamType: "", streamQuality: "", streamName: "", streamMode: "", isLiveM3u8: false, playAt: 0, sync: { playing: false, offset: 0, startedAt: 0 } }, next);
+            movie = Object.assign({ status: "idle", movieId: "", playbackUrl: "", proxyVideo: "", m3u8: "", streamType: "", streamQuality: "", streamName: "", streamMode: "", isLiveM3u8: false, hlsIsLive: false, hlsReady: false, playAt: 0, sync: { playing: false, offset: 0, startedAt: 0 } }, next);
             movie.playbackUrl = movie.playbackUrl || movie.m3u8 || (movie.playbackUrl || movie.m3u8 || movie.proxyVideo);
             if (!movie.sync) movie.sync = { playing: false, offset: 0, startedAt: 0 };
 
@@ -24872,7 +24959,7 @@ app.get("/m3u8-player", (req, res) => {
       <div>
         <span class="dsEyebrow">HLS / M3U8 Player</span>
         <h1>SwiflyTV M3U8 Player</h1>
-        <p>Paste a licensed live m3u8 URL as <code>?url=</code>. This loads the raw m3u8 directly through the custom HLS player. Add <code>&proxy=true</code> only if you need the optional server proxy.</p>
+        <p>Paste a licensed m3u8 URL as <code>?url=</code>. This loads the raw m3u8 directly through the custom HLS player. Add <code>&proxy=true</code> only if you need the optional server proxy.</p>
       </div>
     </section>
 
@@ -24895,11 +24982,15 @@ app.get("/m3u8-player", (req, res) => {
         if (window.Hls && window.Hls.isSupported && window.Hls.isSupported()) {
           var hls = new window.Hls({
             enableWorker: true,
-            lowLatencyMode: true,
-            liveSyncDurationCount: 3,
-            liveMaxLatencyDurationCount: 10,
-            maxLiveSyncPlaybackRate: 1.5,
-            backBufferLength: 30,
+            lowLatencyMode: false,
+            backBufferLength: 90,
+            maxBufferLength: 60,
+            maxMaxBufferLength: 120,
+            startPosition: -1,
+            capLevelToPlayerSize: true,
+            fragLoadingTimeOut: 30000,
+            manifestLoadingTimeOut: 30000,
+            levelLoadingTimeOut: 30000,
           });
           hls.loadSource(src);
           hls.attachMedia(video);
