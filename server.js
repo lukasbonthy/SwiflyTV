@@ -23190,6 +23190,101 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v108 TV / CONTROLLER CURSOR MODE
+       Gamepad + TV remote navigation for couch/TV browsers.
+       ============================================================ */
+
+    body.swifly-tv-controller-mode {
+      cursor: none;
+    }
+
+    #swiflyTvCursor {
+      position: fixed;
+      left: 50vw;
+      top: 50vh;
+      width: 22px;
+      height: 22px;
+      z-index: 2147483646;
+      border-radius: 999px;
+      border: 2px solid rgba(255,255,255,.95);
+      background:
+        radial-gradient(circle at 35% 30%, rgba(255,255,255,.95), rgba(255,255,255,.18) 42%, rgba(229,9,20,.78) 100%);
+      box-shadow:
+        0 0 0 8px rgba(229,9,20,.16),
+        0 0 34px rgba(229,9,20,.75),
+        0 0 70px rgba(255,255,255,.22);
+      pointer-events: none;
+      transform: translate3d(-50%, -50%, 0) scale(1);
+      transition: transform .08s ease, opacity .18s ease;
+      opacity: 0;
+      will-change: transform, left, top;
+    }
+
+    body.swifly-tv-controller-mode #swiflyTvCursor {
+      opacity: 1;
+    }
+
+    #swiflyTvCursor.isClicking {
+      transform: translate3d(-50%, -50%, 0) scale(.72);
+    }
+
+    #swiflyTvHint {
+      position: fixed;
+      left: 50%;
+      bottom: calc(18px + var(--safe-bottom, 0px));
+      z-index: 2147483645;
+      transform: translateX(-50%);
+      max-width: min(760px, calc(100vw - 28px));
+      padding: 10px 14px;
+      border-radius: 999px;
+      color: rgba(255,255,255,.92);
+      background: rgba(5,7,18,.78);
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: 0 22px 80px rgba(0,0,0,.44);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      font-size: 12px;
+      font-weight: 850;
+      letter-spacing: -.01em;
+      text-align: center;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .2s ease, transform .2s ease;
+    }
+
+    body.swifly-tv-controller-mode #swiflyTvHint {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    #swiflyTvHint b {
+      color: #fff;
+      font-weight: 950;
+    }
+
+    .swifly-tv-controller-target {
+      outline: 3px solid rgba(255,255,255,.92) !important;
+      outline-offset: 4px !important;
+      box-shadow:
+        0 0 0 7px rgba(229,9,20,.24),
+        0 0 42px rgba(229,9,20,.34) !important;
+      border-radius: 16px;
+    }
+
+    .swifly-tv-controller-pressed {
+      transform: scale(.98) !important;
+      filter: brightness(1.16) !important;
+    }
+
+    @media(pointer:fine) {
+      body:not(.swifly-tv-controller-mode) #swiflyTvCursor,
+      body:not(.swifly-tv-controller-mode) #swiflyTvHint {
+        display: none;
+      }
+    }
+
   </style>
 
     <script>
@@ -24312,6 +24407,430 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       button.classList.add("is-pressing");
       setTimeout(function(){ button.classList.remove("is-pressing"); }, 160);
     }, true);
+  </script>
+
+  <script>
+    (function swiflyTvControllerCursor(){
+      if (window.__swiflyTvControllerCursorLoaded) return;
+      window.__swiflyTvControllerCursorLoaded = true;
+
+      var enabled = localStorage.getItem("swiflytv.tvControllerMode") === "true";
+      var cursor = null;
+      var hint = null;
+      var x = Math.round(window.innerWidth / 2);
+      var y = Math.round(window.innerHeight / 2);
+      var lastButtons = {};
+      var targetEl = null;
+      var raf = null;
+      var lastFrame = performance.now();
+      var lastKeyboardMove = 0;
+      var idleHintTimer = null;
+
+      var CLICKABLE_SELECTOR = [
+        "a[href]",
+        "button:not([disabled])",
+        "input:not([disabled])",
+        "textarea:not([disabled])",
+        "select:not([disabled])",
+        "[role='button']",
+        "[role='link']",
+        "[tabindex]:not([tabindex='-1'])",
+        "video",
+        ".dsCustomPlayerChrome *",
+        ".dsRoomMovieStage",
+        ".movieCard",
+        ".posterCard",
+        ".nfCard"
+      ].join(",");
+
+      function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+      }
+
+      function ensureUi() {
+        if (!cursor) {
+          cursor = document.createElement("div");
+          cursor.id = "swiflyTvCursor";
+          cursor.setAttribute("aria-hidden", "true");
+          document.body.appendChild(cursor);
+        }
+
+        if (!hint) {
+          hint = document.createElement("div");
+          hint.id = "swiflyTvHint";
+          hint.innerHTML = "<b>TV Mode:</b> left stick moves • A/Enter clicks • right stick/D-pad scrolls • B/Esc goes back • Start toggles fullscreen";
+          document.body.appendChild(hint);
+        }
+
+        renderCursor();
+      }
+
+      function setEnabled(value, reason) {
+        enabled = Boolean(value);
+        localStorage.setItem("swiflytv.tvControllerMode", enabled ? "true" : "false");
+        ensureUi();
+        document.body.classList.toggle("swifly-tv-controller-mode", enabled);
+        if (enabled) {
+          showHint(reason || "Controller connected");
+          startLoop();
+        } else {
+          clearTarget();
+        }
+      }
+
+      function showHint(reason) {
+        ensureUi();
+        if (reason && hint) {
+          hint.innerHTML = "<b>TV Mode:</b> " + escapeHtml(reason) + " • left stick moves • A/Enter clicks • B/Esc back";
+        }
+        clearTimeout(idleHintTimer);
+        idleHintTimer = setTimeout(function(){
+          if (hint) hint.innerHTML = "<b>TV Mode:</b> left stick moves • A/Enter clicks • right stick/D-pad scrolls • B/Esc back";
+        }, 2600);
+      }
+
+      function escapeHtml(value) {
+        return String(value || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function renderCursor() {
+        if (!cursor) return;
+        cursor.style.left = x + "px";
+        cursor.style.top = y + "px";
+      }
+
+      function clearTarget() {
+        if (targetEl) {
+          targetEl.classList.remove("swifly-tv-controller-target", "swifly-tv-controller-pressed");
+          targetEl = null;
+        }
+      }
+
+      function findClickableAt(px, py) {
+        var el = document.elementFromPoint(px, py);
+        if (!el || el === cursor || el === hint) return null;
+        var clicky = el.closest && el.closest(CLICKABLE_SELECTOR);
+        return clicky || el;
+      }
+
+      function updateTarget() {
+        if (!enabled) return;
+        var next = findClickableAt(x, y);
+        if (next === targetEl) return;
+        clearTarget();
+        targetEl = next;
+        if (targetEl && targetEl.classList) targetEl.classList.add("swifly-tv-controller-target");
+      }
+
+      function fireMouse(type, el) {
+        var event;
+        try {
+          event = new MouseEvent(type, {
+            bubbles: true,
+            cancelable: true,
+            view: window,
+            clientX: x,
+            clientY: y,
+            button: 0
+          });
+        } catch {
+          event = document.createEvent("MouseEvents");
+          event.initMouseEvent(type, true, true, window, 1, x, y, x, y, false, false, false, false, 0, null);
+        }
+        el.dispatchEvent(event);
+      }
+
+      function clickTarget() {
+        if (!enabled) setEnabled(true, "Controller mode enabled");
+        updateTarget();
+
+        var el = targetEl || findClickableAt(x, y);
+        if (!el) return;
+
+        try { el.focus?.({ preventScroll: true }); } catch {}
+
+        if (cursor) {
+          cursor.classList.add("isClicking");
+          setTimeout(function(){ cursor && cursor.classList.remove("isClicking"); }, 130);
+        }
+
+        if (el.classList) {
+          el.classList.add("swifly-tv-controller-pressed");
+          setTimeout(function(){ el.classList && el.classList.remove("swifly-tv-controller-pressed"); }, 150);
+        }
+
+        fireMouse("pointerdown", el);
+        fireMouse("mousedown", el);
+        fireMouse("pointerup", el);
+        fireMouse("mouseup", el);
+        fireMouse("click", el);
+
+        if (el.tagName === "VIDEO") {
+          if (el.paused) el.play?.().catch(function(){});
+          else el.pause?.();
+        }
+      }
+
+      function scrollByAmount(dx, dy) {
+        if (!dx && !dy) return;
+        var under = findClickableAt(x, y);
+        var scrollParent = under;
+        while (scrollParent && scrollParent !== document.body) {
+          var style = getComputedStyle(scrollParent);
+          var canScrollY = /(auto|scroll)/.test(style.overflowY) && scrollParent.scrollHeight > scrollParent.clientHeight + 4;
+          var canScrollX = /(auto|scroll)/.test(style.overflowX) && scrollParent.scrollWidth > scrollParent.clientWidth + 4;
+          if (canScrollY || canScrollX) {
+            scrollParent.scrollBy({ left: dx, top: dy, behavior: "auto" });
+            return;
+          }
+          scrollParent = scrollParent.parentElement;
+        }
+        window.scrollBy({ left: dx, top: dy, behavior: "auto" });
+      }
+
+      function goBack() {
+        if (history.length > 1) history.back();
+        else location.href = "/";
+      }
+
+      function toggleFullscreen() {
+        var stage = document.querySelector(".dsRoomMovieStage, .dsWatchShell, .watchPlayer, main") || document.documentElement;
+        if (!document.fullscreenElement) stage.requestFullscreen?.();
+        else document.exitFullscreen?.();
+      }
+
+      function buttonPressed(gamepad, index) {
+        return Boolean(gamepad && gamepad.buttons && gamepad.buttons[index] && gamepad.buttons[index].pressed);
+      }
+
+      function onButtonEdge(gamepad, index, key, callback) {
+        var pressed = buttonPressed(gamepad, index);
+        if (pressed && !lastButtons[key]) callback();
+        lastButtons[key] = pressed;
+      }
+
+      function processGamepad(gamepad, dt) {
+        if (!gamepad) return;
+
+        var ax0 = Number(gamepad.axes?.[0] || 0);
+        var ax1 = Number(gamepad.axes?.[1] || 0);
+        var ax2 = Number(gamepad.axes?.[2] || 0);
+        var ax3 = Number(gamepad.axes?.[3] || 0);
+        var dead = 0.12;
+
+        function clean(v) { return Math.abs(v) > dead ? v : 0; }
+
+        ax0 = clean(ax0);
+        ax1 = clean(ax1);
+        ax2 = clean(ax2);
+        ax3 = clean(ax3);
+
+        var speed = buttonPressed(gamepad, 5) ? 1450 : 880;
+        var moved = false;
+
+        if (ax0 || ax1) {
+          x = clamp(x + ax0 * speed * dt, 8, window.innerWidth - 8);
+          y = clamp(y + ax1 * speed * dt, 8, window.innerHeight - 8);
+          moved = true;
+        }
+
+        var scrollY = ax3 * 980 * dt;
+        var scrollX = ax2 * 980 * dt;
+
+        if (buttonPressed(gamepad, 12)) scrollY -= 620 * dt;
+        if (buttonPressed(gamepad, 13)) scrollY += 620 * dt;
+        if (buttonPressed(gamepad, 14)) scrollX -= 620 * dt;
+        if (buttonPressed(gamepad, 15)) scrollX += 620 * dt;
+        if (buttonPressed(gamepad, 4)) scrollY -= 1180 * dt;
+        if (buttonPressed(gamepad, 5)) scrollY += 1180 * dt;
+
+        if (scrollX || scrollY) scrollByAmount(scrollX, scrollY);
+
+        onButtonEdge(gamepad, 0, "a", clickTarget);          // A / Cross
+        onButtonEdge(gamepad, 1, "b", goBack);               // B / Circle
+        onButtonEdge(gamepad, 2, "x", function(){            // X / Square
+          var search = document.querySelector("input[type='search'], input[name='q'], input[placeholder*='Search' i]");
+          if (search) {
+            search.focus();
+            x = search.getBoundingClientRect().left + 22;
+            y = search.getBoundingClientRect().top + search.getBoundingClientRect().height / 2;
+          }
+        });
+        onButtonEdge(gamepad, 3, "y", function(){            // Y / Triangle
+          var menu = document.querySelector(".menu button, .mobileMenuButton, [aria-label*='menu' i], [data-menu]");
+          if (menu) {
+            var r = menu.getBoundingClientRect();
+            x = r.left + r.width / 2;
+            y = r.top + r.height / 2;
+            clickTarget();
+          }
+        });
+        onButtonEdge(gamepad, 9, "start", toggleFullscreen); // Start/Menu
+        onButtonEdge(gamepad, 8, "select", function(){       // Back/View
+          showHint("Controller help");
+        });
+        onButtonEdge(gamepad, 16, "home", function(){ location.href = "/"; });
+
+        if (moved) {
+          renderCursor();
+          updateTarget();
+        }
+      }
+
+      function loop(now) {
+        raf = requestAnimationFrame(loop);
+        if (!enabled) return;
+
+        var dt = Math.min(0.04, Math.max(0.001, (now - lastFrame) / 1000));
+        lastFrame = now;
+
+        var pads = navigator.getGamepads ? Array.from(navigator.getGamepads()).filter(Boolean) : [];
+        if (!pads.length) {
+          updateTarget();
+          return;
+        }
+
+        processGamepad(pads[0], dt);
+      }
+
+      function startLoop() {
+        ensureUi();
+        if (!raf) {
+          lastFrame = performance.now();
+          raf = requestAnimationFrame(loop);
+        }
+      }
+
+      function moveToFocused() {
+        var el = document.activeElement;
+        if (!el || el === document.body) return;
+        var r = el.getBoundingClientRect();
+        if (r.width && r.height) {
+          x = clamp(r.left + r.width / 2, 8, window.innerWidth - 8);
+          y = clamp(r.top + r.height / 2, 8, window.innerHeight - 8);
+          renderCursor();
+          updateTarget();
+        }
+      }
+
+      function focusNearest(direction) {
+        var now = Date.now();
+        if (now - lastKeyboardMove < 80) return;
+        lastKeyboardMove = now;
+
+        var candidates = Array.from(document.querySelectorAll(CLICKABLE_SELECTOR))
+          .filter(function(el) {
+            var r = el.getBoundingClientRect();
+            return r.width > 4 && r.height > 4 && r.bottom > 0 && r.right > 0 && r.top < window.innerHeight && r.left < window.innerWidth;
+          });
+
+        if (!candidates.length) return;
+
+        var best = null;
+        var bestScore = Infinity;
+
+        candidates.forEach(function(el) {
+          var r = el.getBoundingClientRect();
+          var cx = r.left + r.width / 2;
+          var cy = r.top + r.height / 2;
+          var dx = cx - x;
+          var dy = cy - y;
+
+          if (direction === "left" && dx >= -8) return;
+          if (direction === "right" && dx <= 8) return;
+          if (direction === "up" && dy >= -8) return;
+          if (direction === "down" && dy <= 8) return;
+
+          var primary = direction === "left" || direction === "right" ? Math.abs(dx) : Math.abs(dy);
+          var secondary = direction === "left" || direction === "right" ? Math.abs(dy) : Math.abs(dx);
+          var score = primary * 1.6 + secondary;
+
+          if (score < bestScore) {
+            bestScore = score;
+            best = el;
+          }
+        });
+
+        if (best) {
+          var br = best.getBoundingClientRect();
+          x = clamp(br.left + br.width / 2, 8, window.innerWidth - 8);
+          y = clamp(br.top + br.height / 2, 8, window.innerHeight - 8);
+          try { best.focus?.({ preventScroll: true }); } catch {}
+          best.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+          renderCursor();
+          updateTarget();
+        } else {
+          if (direction === "up") scrollByAmount(0, -280);
+          if (direction === "down") scrollByAmount(0, 280);
+          if (direction === "left") scrollByAmount(-280, 0);
+          if (direction === "right") scrollByAmount(280, 0);
+        }
+      }
+
+      window.addEventListener("gamepadconnected", function(event) {
+        setEnabled(true, (event.gamepad && event.gamepad.id ? event.gamepad.id : "Controller") + " connected");
+      });
+
+      window.addEventListener("gamepaddisconnected", function() {
+        showHint("Controller disconnected");
+      });
+
+      document.addEventListener("keydown", function(event) {
+        var key = event.key;
+
+        if (key === "F8") {
+          setEnabled(!enabled, enabled ? "TV mode disabled" : "TV mode enabled");
+          event.preventDefault();
+          return;
+        }
+
+        if (!enabled && ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Enter", "Escape", "Backspace"].includes(key)) {
+          setEnabled(true, "TV remote mode enabled");
+        }
+
+        if (!enabled) return;
+
+        if (key === "ArrowUp") { focusNearest("up"); event.preventDefault(); }
+        else if (key === "ArrowDown") { focusNearest("down"); event.preventDefault(); }
+        else if (key === "ArrowLeft") { focusNearest("left"); event.preventDefault(); }
+        else if (key === "ArrowRight") { focusNearest("right"); event.preventDefault(); }
+        else if (key === "Enter" || key === " ") { clickTarget(); event.preventDefault(); }
+        else if (key === "Escape" || key === "Backspace") { goBack(); event.preventDefault(); }
+        else if (key.toLowerCase() === "f") { toggleFullscreen(); event.preventDefault(); }
+      }, true);
+
+      window.addEventListener("resize", function() {
+        x = clamp(x, 8, window.innerWidth - 8);
+        y = clamp(y, 8, window.innerHeight - 8);
+        renderCursor();
+      });
+
+      document.addEventListener("mousemove", function(event) {
+        if (!enabled) return;
+        // Let a real mouse reposition the TV cursor if someone uses an air mouse.
+        x = event.clientX;
+        y = event.clientY;
+        renderCursor();
+        updateTarget();
+      }, { passive: true });
+
+      document.addEventListener("DOMContentLoaded", function() {
+        ensureUi();
+        if (enabled) setEnabled(true, "TV mode restored");
+        startLoop();
+      });
+
+      // Some TV browsers do not fire gamepadconnected until getGamepads is touched.
+      setInterval(function() {
+        if (!navigator.getGamepads) return;
+        var pads = Array.from(navigator.getGamepads()).filter(Boolean);
+        if (pads.length && !enabled) setEnabled(true, "Controller detected");
+      }, 1500);
+    })();
   </script>
 
 </body>
