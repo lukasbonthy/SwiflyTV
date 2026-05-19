@@ -1,7 +1,7 @@
 {
-  "name": "movieverse-tmdb-full",
+  "name": "swiflytv",
   "version": "2.0.0",
-  "description": "A full premium movie and TV discovery website powered by TMDB API.",
+  "description": "SwiflyTV v108 with TV/controller virtual cursor navigation.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
