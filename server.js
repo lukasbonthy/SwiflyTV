@@ -17378,7 +17378,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     /* ============================================================
        v62 COUPLES EDITION
        Long-distance couple targeting: date rooms, couple dashboard,
-       shared watch planning, and softer romantic UI accents.
+       shared watch planning, and softer premium UI accents.
        ============================================================ */
 
     :root {
@@ -19102,8 +19102,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
 
     /* ============================================================
-       v93 REGULAR SITE + DATE PROFILE
-       Main SwiflyTV is a regular movie site; couple/date tools live in Date Profile.
+       v95 REGULAR MOVIE SITE ONLY
+       Main SwiflyTV is a regular movie site.
        ============================================================ */
 
     .dsMovieHomeBoard {
@@ -19283,7 +19283,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
           ${navLink("/trending", "New & Popular", "trending", active)}
           ${navLink("/my-list", "My List", "watchlist", active)}
           ${navLink("/liked", "Liked", "liked", active)}
-          ${navLink("/date-profile", "Date Profile", "date", active)}
+          ${navLink("/watchrooms", "Watch Rooms", "watchrooms", active)}
           ${navLink("/browse-by-languages", "Browse by Languages", "genres", active)}
         </nav>
       </div>
@@ -19312,8 +19312,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
           <div class="dsProfileDropdown">
             <a href="/profiles"><span>☺</span><b>Profiles</b></a>
             <a href="/account"><span>⚙</span><b>Account</b></a>
-            <a href="/date-profile"><span>♡</span><b>Date Profile</b></a>
-            <a href="/watchrooms"><span>◎</span><b>Watch Parties</b></a>
+            <a href="/watchrooms"><span>◎</span><b>Watch Rooms</b></a>
             <a href="/continue-watching"><span>▶</span><b>Continue Watching</b></a>
             <a href="/my-list"><span>＋</span><b>My List</b></a>
             <a href="/liked"><span>♥</span><b>Liked</b></a>
@@ -19338,7 +19337,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${navLink("/tv", "TV", "tv", active)}
     ${navLink("/search", "Search", "search", active)}
     ${navLink("/my-list", "List", "watchlist", active)}
-    ${navLink("/date-profile", "Date", "date", active)}
+    ${navLink("/watchrooms", "Rooms", "watchrooms", active)}
   </nav>
 
   <div class="controlDock">
@@ -20605,18 +20604,18 @@ async function homePage(req, res) {
       <section class="dsMovieHomeBoard">
         <div>
           <span class="dsEyebrow">Streaming made simple</span>
-          <h2>Movies, shows, watchlists, and watch parties.</h2>
-          <p>Browse trending titles, save ymy list, continue watching, and jump into a synced room whenever you want.</p>
+          <h2>Movies, shows, watchlists, and watch rooms.</h2>
+          <p>Browse trending titles, save your list, continue watching, and jump into a synced room whenever you want.</p>
         </div>
         <div class="dsCoupleHomeActions">
           <a class="dsPrimaryBtn" href="/movies">Browse Movies</a>
           <a class="dsSecondaryBtn" href="/tv">Browse TV</a>
-          <a class="dsGhostPill" href="/date-profile">Date Profile</a>
+          <a class="dsGhostPill" href="/watchrooms">Watch Rooms</a>
         </div>
         <div class="dsCoupleHomeCards">
           <article><b>01</b><span>Find something</span></article>
           <article><b>02</b><span>Press play</span></article>
-          <article><b>03</b><span>Save ymy list</span></article>
+          <article><b>03</b><span>Save your list</span></article>
         </div>
       </section>
 
@@ -22604,7 +22603,7 @@ function watchroomPage(req, res) {
               <span>Why paid?</span>
               <h3>Not just streaming.</h3>
               <p>Couples pay for the feeling: less “what do we do?”, more shared rituals, synced moments, and a room that feels made for the relationship.</p>
-              <a class="dsSecondaryBtn" href="/couples">Open Date Profile</a>
+              <a class="dsSecondaryBtn" href="/couples">Open Watch Rooms</a>
             </article>
           </div>
 
@@ -25892,7 +25891,7 @@ function authPage(res, mode = "login") {
   const isSignup = String(mode || "login") === "signup";
   const title = isSignup ? "Create your account" : "Welcome back";
   const subtitle = isSignup
-    ? "Make a local SwiflyTV account for profiles, watchlists, continue watching, and optional Date Profile features on this device."
+    ? "Make a local SwiflyTV account for profiles, watchlists, continue watching, and watch room features on this device."
     : "Log in to your SwiflyTV profile on this device.";
 
   const body = `<main class="dsAuthPage dsAuthPageSafe">
@@ -25905,8 +25904,8 @@ function authPage(res, mode = "login") {
         <p>${escapeHtml(subtitle)}</p>
 
         <div class="dsAuthFeatureList">
-          <div><b>Profiles</b><span>Standard, Kids, and Date Profile.</span></div>
-          <div><b>Watch Parties</b><span>Start synced rooms when you want.</span></div>
+          <div><b>Profiles</b><span>Regular and Kids profiles.</span></div>
+          <div><b>Watch Rooms</b><span>Start synced rooms when you want.</span></div>
           <div><b>My List</b><span>Save what you want next.</span></div>
         </div>
       </aside>
@@ -26030,7 +26029,6 @@ function authPage(res, mode = "login") {
           if (!localStorage.getItem("swiflytv.profiles")) {
             localStorage.setItem("swiflytv.profiles", JSON.stringify([
               { id: "main", name: account.name || "Main", mode: "standard" },
-              { id: "date", name: "Date Profile", mode: "date" },
               { id: "kids", name: "Kids", mode: "kids" }
             ]));
           }
@@ -26055,13 +26053,13 @@ function accountPage(req, res) {
       <div>
         <span class="dsEyebrow">Account</span>
         <h1>Your streaming profile</h1>
-        <p>Manage profiles, watchlists, liked titles, continue watching, and optional Date Profile features.</p>
+        <p>Manage profiles, watchlists, liked titles, continue watching, and watch rooms.</p>
       </div>
       <div class="dsAccountActions">
         <a class="dsPrimaryBtn" href="/profiles">Profiles</a>
         <a class="dsSecondaryBtn" href="/my-list">My List</a>
         <a class="dsSecondaryBtn" href="/liked">Liked</a>
-        <a class="dsGhostPill" href="/date-profile">Date Profile</a>
+        <a class="dsGhostPill" href="/watchrooms">Watch Rooms</a>
       </div>
     </section>
 
@@ -26069,7 +26067,7 @@ function accountPage(req, res) {
       <a class="dsAccountCard" href="/profiles">
         <span>01</span>
         <h2>Profiles</h2>
-        <p>Choose Regular, Kids, or Date Profile.</p>
+        <p>Choose Regular or Kids mode.</p>
       </a>
       <a class="dsAccountCard" href="/continue">
         <span>02</span>
@@ -26081,10 +26079,10 @@ function accountPage(req, res) {
         <h2>My List</h2>
         <p>View titles saved for later.</p>
       </a>
-      <a class="dsAccountCard" href="/date-profile">
+      <a class="dsAccountCard" href="/watchrooms">
         <span>04</span>
-        <h2>Date Profile</h2>
-        <p>Open date rooms, shared notes, and couple watch plans.</p>
+        <h2>Watch Rooms</h2>
+        <p>Create or join a synced room.</p>
       </a>
     </section>
 
@@ -26111,7 +26109,7 @@ function profilesPage(req, res) {
     <section class="dsProfilesHero">
       <span class="dsEyebrow">Profiles</span>
       <h1>Who is watching?</h1>
-      <p>Use a regular profile for movies and shows, Kids for safe browsing, or Date Profile for couple/date-room tools.</p>
+      <p>Use a regular profile for movies and shows, or Kids for safer browsing.</p>
     </section>
 
     <section class="dsProfilesGrid" id="profilesGrid"></section>
@@ -26122,7 +26120,6 @@ function profilesPage(req, res) {
         <input name="name" placeholder="Name this profile" maxlength="32" />
         <select name="mode">
           <option value="standard">Regular Movie Profile</option>
-          <option value="date">Date Profile</option>
           <option value="kids">Kids Safe</option>
         </select>
         <button class="dsPrimaryBtn" type="submit">Add Profile</button>
@@ -26138,11 +26135,20 @@ function profilesPage(req, res) {
         function readProfiles() {
           try {
             const saved = JSON.parse(localStorage.getItem("swiflytv.profiles") || "[]");
-            if (Array.isArray(saved) && saved.length) return saved;
+            if (Array.isArray(saved) && saved.length) {
+              const cleaned = saved
+                .filter(Boolean)
+                .map((profile) => {
+                  if (profile.mode === "date") {
+                    return { ...profile, mode: "standard", name: profile.name === "Watch Rooms" ? "Main" : profile.name };
+                  }
+                  return profile;
+                });
+              return cleaned.length ? cleaned : [{ id: "main", name: "Main", mode: "standard" }, { id: "kids", name: "Kids", mode: "kids" }];
+            }
           } catch {}
           return [
             { id: "main", name: "Main", mode: "standard" },
-            { id: "date", name: "Date Profile", mode: "date" },
             { id: "kids", name: "Kids", mode: "kids" }
           ];
         }
@@ -26157,20 +26163,19 @@ function profilesPage(req, res) {
 
         function modeLabel(mode) {
           if (mode === "kids") return "Kids Safe";
-          if (mode === "date") return "Date Profile";
           return "Regular";
         }
 
         function destination(profile) {
           if (profile.mode === "kids") return "/kids";
-          if (profile.mode === "date") return "/date-profile";
           return "/";
         }
 
         function render() {
           const profiles = readProfiles();
+          saveProfiles(profiles);
           grid.innerHTML = profiles.map((profile, index) => {
-            return '<button class="dsProfileCard ' + (profile.mode === "date" ? "dateProfile" : "") + '" data-index="' + index + '" type="button">' +
+            return '<button class="dsProfileCard" data-index="' + index + '" type="button">' +
               '<span>' + esc(profile.name).slice(0,1).toUpperCase() + '</span>' +
               '<strong>' + esc(profile.name) + '</strong>' +
               '<small>' + modeLabel(profile.mode) + '</small>' +
@@ -26220,7 +26225,7 @@ function continueWatchingPage(req, res) {
       <div class="dsAccountActions">
         <a class="dsPrimaryBtn" href="/movies">Browse Movies</a>
         <a class="dsSecondaryBtn" href="/tv">Browse TV Shows</a>
-        <a class="dsGhostPill" href="/date-profile">Date Profile</a>
+        <a class="dsGhostPill" href="/watchrooms">Watch Rooms</a>
       </div>
     </section>
 
@@ -26310,108 +26315,13 @@ function continueWatchingPage(req, res) {
 app.get("/continue-watching", continueWatchingPage);
 app.get("/continue", continueWatchingPage);
 
-function dateProfilePage(req, res) {
-  const body = `<main class="dsPlainPage dsCouplesPage dsDateProfilePage">
-    <section class="dsCouplesHero">
-      <div>
-        <span class="dsEyebrow">Date Profile</span>
-        <h1>Your date-night version of SwiflyTV.</h1>
-        <p>Keep the main site clean and regular, then use this profile when you want couple tools, date rooms, shared notes, and watch plans.</p>
-      </div>
-      <div class="dsCouplesHeroActions">
-        <a class="dsPrimaryBtn" href="/watchrooms">Start Date Room</a>
-        <a class="dsSecondaryBtn" href="/my-list">Open My List</a>
-        <a class="dsGhostPill" href="/">Back to Movies</a>
-      </div>
-    </section>
-
-    <section class="dsCouplesGrid">
-      <article class="dsCoupleCard dsCoupleNoteCard">
-        <span>Date note</span>
-        <h2>Leave something for them.</h2>
-        <textarea id="coupleNoteInput" placeholder="Write a small note..."></textarea>
-        <button class="dsPrimaryBtn" id="saveCoupleNoteBtn" type="button">Save Note</button>
-        <p id="coupleNotePreview"></p>
-      </article>
-
-      <article class="dsCoupleCard">
-        <span>Next date</span>
-        <h2>Plan the watch.</h2>
-        <form id="couplePlanForm">
-          <input name="title" placeholder="Movie/show idea" />
-          <input name="time" placeholder="Date/time, like Friday 9PM" />
-          <button class="dsPrimaryBtn" type="submit">Save Plan</button>
-        </form>
-        <div id="couplePlanPreview" class="dsCoupleSavedLine">No plan saved yet.</div>
-      </article>
-
-      <article class="dsCoupleCard">
-        <span>Watch together</span>
-        <h2>Open a synced Date Room.</h2>
-        <p>Use Watch Rooms when you want countdowns, synced playback, chat, and a shared room link.</p>
-        <a class="dsPrimaryBtn" href="/watchrooms">Create Date Room</a>
-      </article>
-
-      <article class="dsCoupleCard">
-        <span>Profile mode</span>
-        <h2>Keep date stuff separate.</h2>
-        <p>Choose Date Profile from Profiles when you want the romantic/couple version. Regular profiles stay movie-site focused.</p>
-        <a class="dsSecondaryBtn" href="/profiles">Switch Profile</a>
-      </article>
-    </section>
-
-    <script>
-      (function coupleDashboard(){
-        const noteInput = document.getElementById("coupleNoteInput");
-        const saveNote = document.getElementById("saveCoupleNoteBtn");
-        const notePreview = document.getElementById("coupleNotePreview");
-        const planForm = document.getElementById("couplePlanForm");
-        const planPreview = document.getElementById("couplePlanPreview");
-
-        function renderNote() {
-          const note = localStorage.getItem("swiflytv.dateProfileNote") || "";
-          if (notePreview) notePreview.textContent = note ? "Saved note: " + note : "";
-          if (noteInput && note && !noteInput.value) noteInput.value = note;
-        }
-
-        function renderPlan() {
-          let plan = null;
-          try { plan = JSON.parse(localStorage.getItem("swiflytv.dateProfilePlan") || "null"); } catch {}
-          if (planPreview) planPreview.textContent = plan ? plan.title + " • " + plan.time : "No plan saved yet.";
-        }
-
-        saveNote?.addEventListener("click", () => {
-          const value = String(noteInput?.value || "").trim();
-          localStorage.setItem("swiflytv.dateProfileNote", value);
-          renderNote();
-          if (window.showToast) showToast("Date note saved");
-        });
-
-        planForm?.addEventListener("submit", (event) => {
-          event.preventDefault();
-          const fd = new FormData(planForm);
-          const title = String(fd.get("title") || "").trim() || "Movie night";
-          const time = String(fd.get("time") || "").trim() || "Soon";
-          localStorage.setItem("swiflytv.dateProfilePlan", JSON.stringify({ title, time, savedAt: Date.now() }));
-          planForm.reset();
-          renderPlan();
-          if (window.showToast) showToast("Date plan saved");
-        });
-
-        renderNote();
-        renderPlan();
-      })();
-    </script>
-  </main>`;
-
-  res.send(pageShell({ title: `${SITE_NAME} — Date Profile`, active: "date", body }));
+function removedDateProfilePage(req, res) {
+  res.redirect("/");
 }
 
-const couplesPage = dateProfilePage;
 
-
-app.get("/date-profile", dateProfilePage);
-app.get("/couples", dateProfilePage);
+app.get("/date-profile", removedDateProfilePage);
+app.get("/couples", removedDateProfilePage);
 app.get("/watchrooms", watchroomsPage);
 app.get("/watchrooms/:roomId", watchroomPage);
 app.get("/profiles", profilesPage);
@@ -26494,7 +26404,8 @@ function apiStatus(req, res) {
     now: Date.now(),
     features: {
       regularMovieSite: true,
-      dateProfile: true,
+      dateIdeasRemoved: true,
+      dateProfile: false,
       regularMovieM3u8Player: true,
       videojsM3u8Player: true,
       hlsProxyEnabled: typeof hlsProxyEnabled === "function" ? hlsProxyEnabled() : false,
