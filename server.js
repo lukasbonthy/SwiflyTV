@@ -19942,6 +19942,399 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       box-shadow: 0 20px 70px rgba(0,0,0,.44);
     }
 
+
+    /* ============================================================
+       v97 EFFECTS UPGRADE
+       Adds motion/effects on top of v96 without changing the site structure.
+       ============================================================ */
+
+    :root {
+      --sw-mouse-x: 50vw;
+      --sw-mouse-y: 20vh;
+    }
+
+    .swiflyFxLayer {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      overflow: hidden;
+      opacity: .95;
+    }
+
+    .swFxBlob {
+      position: absolute;
+      width: 42vmax;
+      height: 42vmax;
+      border-radius: 999px;
+      filter: blur(56px);
+      opacity: .17;
+      transform: translate3d(0,0,0);
+      animation: swBlobFloat 18s ease-in-out infinite alternate;
+      mix-blend-mode: screen;
+    }
+
+    .swFxBlob.one {
+      left: -16vmax;
+      top: 4vh;
+      background: radial-gradient(circle, rgba(229,9,20,.95), rgba(229,9,20,0) 64%);
+      animation-duration: 18s;
+    }
+
+    .swFxBlob.two {
+      right: -18vmax;
+      top: 18vh;
+      background: radial-gradient(circle, rgba(117,214,255,.80), rgba(117,214,255,0) 66%);
+      animation-duration: 22s;
+      animation-delay: -5s;
+    }
+
+    .swFxBlob.three {
+      left: 30vw;
+      bottom: -22vmax;
+      background: radial-gradient(circle, rgba(255,211,106,.58), rgba(255,211,106,0) 68%);
+      animation-duration: 26s;
+      animation-delay: -9s;
+    }
+
+    .swCursorGlow {
+      position: fixed;
+      left: var(--sw-mouse-x);
+      top: var(--sw-mouse-y);
+      width: 440px;
+      height: 440px;
+      margin-left: -220px;
+      margin-top: -220px;
+      border-radius: 999px;
+      pointer-events: none;
+      background:
+        radial-gradient(circle, rgba(255,255,255,.105), rgba(117,214,255,.07) 28%, rgba(229,9,20,.05) 44%, transparent 70%);
+      filter: blur(18px);
+      opacity: .84;
+      transition: opacity .2s ease;
+      mix-blend-mode: screen;
+    }
+
+    .swNoiseOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      opacity: .038;
+      mix-blend-mode: overlay;
+      background-image:
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+    }
+
+    @keyframes swBlobFloat {
+      0% { transform: translate3d(0,0,0) scale(1); }
+      50% { transform: translate3d(8vmax,-3vmax,0) scale(1.08); }
+      100% { transform: translate3d(-4vmax,6vmax,0) scale(.94); }
+    }
+
+    .topbar.netflixTopbar::after {
+      content: "";
+      position: absolute;
+      left: 8%;
+      right: 8%;
+      bottom: -1px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(229,9,20,.72), rgba(117,214,255,.42), transparent);
+      opacity: .72;
+      filter: blur(.2px);
+    }
+
+    .netflixBrand {
+      position: relative;
+    }
+
+    .netflixBrand::after {
+      content: "";
+      position: absolute;
+      inset: -10px -16px;
+      z-index: -1;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 50%, rgba(229,9,20,.22), transparent 62%);
+      opacity: 0;
+      transition: opacity .2s ease;
+    }
+
+    .netflixBrand:hover::after {
+      opacity: 1;
+    }
+
+    .netflixWordmark {
+      background: linear-gradient(115deg, #fff 0%, #fff 34%, #ff5b67 48%, #fff 62%, #e8f3ff 100%);
+      background-size: 220% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent !important;
+      animation: swWordmarkSheen 8s ease-in-out infinite;
+    }
+
+    @keyframes swWordmarkSheen {
+      0%, 72%, 100% { background-position: 0% 50%; }
+      82% { background-position: 100% 50%; }
+    }
+
+    .dsHero h1 {
+      background: linear-gradient(110deg, #fff 0%, #fff 38%, #ffccd1 52%, #dff6ff 68%, #fff 100%);
+      background-size: 240% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent !important;
+      animation: swHeroTitleSheen 9s ease-in-out infinite;
+      filter: drop-shadow(0 26px 70px rgba(0,0,0,.42));
+    }
+
+    @keyframes swHeroTitleSheen {
+      0%, 68%, 100% { background-position: 0% 50%; }
+      78% { background-position: 100% 50%; }
+    }
+
+    .dsHeroActions,
+    .dsCoupleHomeActions,
+    .dsHomeQuickActions {
+      perspective: 900px;
+    }
+
+    .dsPrimaryBtn,
+    .dsSecondaryBtn,
+    .dsGhostPill,
+    .watchBtn,
+    .detailButton {
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .dsPrimaryBtn::before,
+    .dsSecondaryBtn::before,
+    .dsGhostPill::before,
+    .watchBtn::before,
+    .detailButton::before {
+      content: "";
+      position: absolute;
+      inset: -2px;
+      z-index: -1;
+      background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,.42) 22%, transparent 44%);
+      transform: translateX(-140%) skewX(-18deg);
+      transition: transform .6s ease;
+    }
+
+    .dsPrimaryBtn:hover::before,
+    .dsSecondaryBtn:hover::before,
+    .dsGhostPill:hover::before,
+    .watchBtn:hover::before,
+    .detailButton:hover::before {
+      transform: translateX(140%) skewX(-18deg);
+    }
+
+    .dsPrimaryBtn::after {
+      content: "";
+      position: absolute;
+      inset: auto 12% -22px 12%;
+      height: 34px;
+      z-index: -2;
+      background: radial-gradient(ellipse, rgba(255,255,255,.33), transparent 70%);
+      filter: blur(12px);
+      opacity: .35;
+      transition: opacity .2s ease, transform .2s ease;
+    }
+
+    .dsPrimaryBtn:hover::after {
+      opacity: .72;
+      transform: translateY(-3px);
+    }
+
+    .movieRail,
+    .dsRail,
+    .nfTopTenRail {
+      position: relative;
+      mask-image: linear-gradient(90deg, transparent, #000 26px, #000 calc(100% - 26px), transparent);
+    }
+
+    .dsRow {
+      position: relative;
+    }
+
+    .dsRow::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 42px;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(255,255,255,.10), transparent 70%);
+      opacity: .55;
+      pointer-events: none;
+    }
+
+    .movieCard,
+    .nfTopCard,
+    .posterCard,
+    .mediaCard {
+      transform-style: preserve-3d;
+      will-change: transform;
+    }
+
+    .movieCard::before,
+    .posterCard::before,
+    .mediaCard::before,
+    .nfTopCard::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      background:
+        linear-gradient(115deg, transparent 0%, transparent 38%, rgba(255,255,255,.22) 48%, transparent 58%, transparent 100%);
+      transform: translateX(-135%);
+      opacity: 0;
+      transition: opacity .2s ease, transform .7s ease;
+      mix-blend-mode: screen;
+    }
+
+    .movieCard:hover::before,
+    .posterCard:hover::before,
+    .mediaCard:hover::before,
+    .nfTopCard:hover::before {
+      opacity: 1;
+      transform: translateX(135%);
+    }
+
+    .movieCard:hover,
+    .posterCard:hover,
+    .mediaCard:hover,
+    .nfTopCard:hover {
+      transform:
+        perspective(900px)
+        rotateX(var(--sw-tilt-x, 0deg))
+        rotateY(var(--sw-tilt-y, 0deg))
+        translateY(-10px)
+        scale(1.035);
+    }
+
+    .movieMeta strong,
+    .cardMeta strong {
+      text-shadow: 0 8px 30px rgba(0,0,0,.72);
+    }
+
+    .dsAccountCard,
+    .dsProfileCard,
+    .dsContinuePagePanel,
+    .searchResultCard,
+    .detailPanel {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .dsAccountCard::before,
+    .dsProfileCard::before,
+    .searchResultCard::before,
+    .detailPanel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(460px circle at var(--sw-card-x, 50%) var(--sw-card-y, 0%), rgba(255,255,255,.13), transparent 42%);
+      opacity: 0;
+      transition: opacity .2s ease;
+    }
+
+    .dsAccountCard:hover::before,
+    .dsProfileCard:hover::before,
+    .searchResultCard:hover::before,
+    .detailPanel:hover::before {
+      opacity: 1;
+    }
+
+    .dsMovieHomeBoard,
+    .dsWatchShell,
+    .dsDirectVideoShell,
+    .dsMovieButtonPlayerShell {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .dsMovieHomeBoard::after,
+    .dsWatchShell::after,
+    .dsDirectVideoShell::after,
+    .dsMovieButtonPlayerShell::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(120deg, transparent, rgba(255,255,255,.045), transparent);
+      transform: translateX(-100%);
+      animation: swPanelSweep 9s ease-in-out infinite;
+    }
+
+    @keyframes swPanelSweep {
+      0%, 74%, 100% { transform: translateX(-100%); opacity: 0; }
+      82% { opacity: 1; }
+      92% { transform: translateX(100%); opacity: 0; }
+    }
+
+    .dsHlsStatus,
+    .dsNoTrailer {
+      animation: swSoftPop .38s ease both;
+    }
+
+    @keyframes swSoftPop {
+      from {
+        opacity: 0;
+        transform: translateY(8px) scale(.985);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .vjs-theme-swifly .vjs-big-play-button {
+      animation: swPlayPulse 2.6s ease-in-out infinite;
+    }
+
+    @keyframes swPlayPulse {
+      0%, 100% { box-shadow: 0 22px 80px rgba(0,0,0,.42), 0 0 0 0 rgba(255,255,255,.18); }
+      50% { box-shadow: 0 22px 80px rgba(0,0,0,.42), 0 0 0 16px rgba(255,255,255,0); }
+    }
+
+    @media(max-width: 760px) {
+      .swCursorGlow {
+        display: none;
+      }
+
+      .swFxBlob {
+        opacity: .12;
+      }
+
+      .movieCard:hover,
+      .posterCard:hover,
+      .mediaCard:hover,
+      .nfTopCard:hover {
+        transform: translateY(-5px) scale(1.018);
+      }
+    }
+
+    @media(prefers-reduced-motion: reduce) {
+      .swFxBlob,
+      .netflixWordmark,
+      .dsHero h1,
+      .dsMovieHomeBoard::after,
+      .dsWatchShell::after,
+      .vjs-theme-swifly .vjs-big-play-button {
+        animation: none !important;
+      }
+
+      .swCursorGlow {
+        display: none !important;
+      }
+    }
+
   </style>
 
     <script>
@@ -21021,6 +21414,84 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
           }
         } catch (error) {
           console.warn("premium ui enhancement failed", error);
+        }
+      })();
+    </script>
+
+
+    <script>
+      (function swiflyEffectsUpgrade(){
+        try {
+          if (document.getElementById("swiflyFxLayer")) return;
+
+          var layer = document.createElement("div");
+          layer.id = "swiflyFxLayer";
+          layer.className = "swiflyFxLayer";
+          layer.innerHTML =
+            '<div class="swFxBlob one"></div>' +
+            '<div class="swFxBlob two"></div>' +
+            '<div class="swFxBlob three"></div>' +
+            '<div class="swCursorGlow" id="swCursorGlow"></div>' +
+            '<div class="swNoiseOverlay"></div>';
+          document.body.prepend(layer);
+
+          var root = document.documentElement;
+          var raf = null;
+          var mouseX = window.innerWidth / 2;
+          var mouseY = window.innerHeight * .22;
+
+          function updateMouseVars() {
+            raf = null;
+            root.style.setProperty("--sw-mouse-x", mouseX + "px");
+            root.style.setProperty("--sw-mouse-y", mouseY + "px");
+          }
+
+          window.addEventListener("pointermove", function(event) {
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+            if (!raf) raf = requestAnimationFrame(updateMouseVars);
+          }, { passive: true });
+
+          function attachTilt(card) {
+            if (!card || card.__swiflyTilt) return;
+            card.__swiflyTilt = true;
+
+            card.addEventListener("pointermove", function(event) {
+              var rect = card.getBoundingClientRect();
+              var x = (event.clientX - rect.left) / Math.max(1, rect.width);
+              var y = (event.clientY - rect.top) / Math.max(1, rect.height);
+              var tiltY = (x - .5) * 8;
+              var tiltX = (.5 - y) * 7;
+              card.style.setProperty("--sw-tilt-x", tiltX.toFixed(2) + "deg");
+              card.style.setProperty("--sw-tilt-y", tiltY.toFixed(2) + "deg");
+              card.style.setProperty("--sw-card-x", (x * 100).toFixed(1) + "%");
+              card.style.setProperty("--sw-card-y", (y * 100).toFixed(1) + "%");
+            }, { passive: true });
+
+            card.addEventListener("pointerleave", function() {
+              card.style.setProperty("--sw-tilt-x", "0deg");
+              card.style.setProperty("--sw-tilt-y", "0deg");
+              card.style.setProperty("--sw-card-x", "50%");
+              card.style.setProperty("--sw-card-y", "0%");
+            }, { passive: true });
+          }
+
+          function bindCards() {
+            document.querySelectorAll(".movieCard, .posterCard, .mediaCard, .nfTopCard, .dsAccountCard, .dsProfileCard, .searchResultCard, .detailPanel").forEach(attachTilt);
+          }
+
+          bindCards();
+
+          if ("MutationObserver" in window) {
+            var observer = new MutationObserver(function() {
+              bindCards();
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
+          }
+
+          document.documentElement.classList.add("swifly-effects-upgrade");
+        } catch (error) {
+          console.warn("swifly effects upgrade failed", error);
         }
       })();
     </script>
