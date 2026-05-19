@@ -20939,6 +20939,8 @@ async function fetchProxyVideoSource({ type, id }) {
         const streamType = String(data?.stream?.type || (resolverM3u8 || streamUrl.endsWith(".m3u8") ? "m3u8" : "")).toLowerCase();
         const chosenVideo = String(resolverM3u8 || streamUrl || data?.proxyVideo || "").trim();
         const streamHeaders = data?.headers || data?.stream?.headers || {};
+        const streamQuality = String(data?.stream?.quality || "").slice(0, 40);
+        const streamName = String(data?.stream?.name || "").slice(0, 90);
         const streamMode = String(data?.streamMode || data?.mode || (resolverM3u8 || streamType === "m3u8" || streamType === "hls" ? "live-hls" : "video")).toLowerCase();
 
         if (!data?.ok || !chosenVideo) {
@@ -25002,6 +25004,7 @@ app.get("/api/hls-source/movie/:id", async (req, res) => {
     streamMode: result.streamMode || "",
     streamQuality: result.streamQuality || "",
     streamName: result.streamName || "",
+    streamNameFix: true,
     hlsProxyEnabled: hlsProxyEnabled(),
     message: result.message || "",
     attempts: result.attempts || [],
