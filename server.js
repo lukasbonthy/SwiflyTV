@@ -19180,1375 +19180,766 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
 
     /* ============================================================
-       v97 CLEAN STREAMING REDESIGN
-       Less glass, less AI-looking, more real streaming platform.
+       v96 PREMIUM REDESIGN
+       Modern, cleaner, more professional streaming-site polish.
        ============================================================ */
 
     :root {
-      --clean-bg: #050505;
-      --clean-bg2: #0b0b0d;
-      --clean-panel: #111114;
-      --clean-panel2: #17171b;
-      --clean-line: rgba(255,255,255,.09);
-      --clean-text: #f5f5f7;
-      --clean-muted: rgba(245,245,247,.62);
-      --clean-faint: rgba(245,245,247,.38);
-      --clean-red: #e50914;
-      --clean-red2: #b80710;
-      --clean-radius: 14px;
-      --clean-radius-lg: 22px;
-      --clean-shadow: 0 18px 60px rgba(0,0,0,.42);
-    }
-
-    html,
-    body {
-      background: var(--clean-bg) !important;
-      color: var(--clean-text) !important;
-    }
-
-    body {
-      background:
-        linear-gradient(180deg, #08080a 0%, #050505 28%, #050505 100%) !important;
-      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
-    }
-
-    body::before,
-    body::after {
-      display: none !important;
-    }
-
-    /* Top nav: flat and real, not bubbly */
-
-    .topbar.netflixTopbar {
-      position: sticky;
-      top: 0;
-      z-index: 80;
-      background: rgba(5,5,5,.92) !important;
-      border-bottom: 1px solid rgba(255,255,255,.075) !important;
-      box-shadow: none !important;
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-    }
-
-    .netflixNav {
-      min-height: 66px !important;
-      gap: 22px !important;
-    }
-
-    .netflixWordmark {
-      color: var(--clean-red) !important;
-      font-weight: 1000 !important;
-      letter-spacing: -.08em !important;
-      text-shadow: none !important;
-      background: none !important;
-      -webkit-text-fill-color: var(--clean-red);
-    }
-
-    .netflixLinks {
-      gap: 20px !important;
-      background: transparent !important;
-      border: 0 !important;
-      padding: 0 !important;
-    }
-
-    .netflixLinks a {
-      padding: 0 !important;
-      min-height: auto !important;
-      color: rgba(245,245,247,.68) !important;
-      font-size: 14px !important;
-      font-weight: 650 !important;
-      background: transparent !important;
-      border: 0 !important;
-      border-radius: 0 !important;
-      transition: color .16s ease;
-    }
-
-    .netflixLinks a:hover,
-    .netflixLinks a.active {
-      color: #fff !important;
-      background: transparent !important;
-      transform: none !important;
-    }
-
-    .dsNavSearch {
-      height: 38px !important;
-      border-radius: 9px !important;
-      background: #111114 !important;
-      border: 1px solid rgba(255,255,255,.10) !important;
-      box-shadow: none !important;
-    }
-
-    .dsNavSearch input {
-      color: white !important;
-      font-size: 14px !important;
-    }
-
-    .dsNavChip,
-    .dsNavIcon,
-    .dsProfileMenu summary {
-      border-radius: 9px !important;
-      background: #111114 !important;
-      border: 1px solid rgba(255,255,255,.09) !important;
-      box-shadow: none !important;
-    }
-
-    .dsNavChip:hover,
-    .dsNavIcon:hover,
-    .dsProfileMenu summary:hover {
-      transform: none !important;
-      background: #19191d !important;
-    }
-
-    .dsProfileDropdown {
-      border-radius: 14px !important;
-      background: #111114 !important;
-      border: 1px solid rgba(255,255,255,.10) !important;
-      box-shadow: 0 20px 50px rgba(0,0,0,.48) !important;
-      backdrop-filter: none !important;
-      -webkit-backdrop-filter: none !important;
-    }
-
-    /* Hero: cinematic but not try-hard */
-
-    .dsHero {
-      min-height: min(78vh, 760px) !important;
-      border-radius: 0 !important;
-      overflow: hidden;
-      background: #08080a !important;
-      box-shadow: none !important;
-    }
-
-    .dsHero::before {
-      content: "";
-      position: absolute;
-      inset: auto 0 0;
-      height: 42%;
-      z-index: 3;
-      background: linear-gradient(0deg, #050505 0%, rgba(5,5,5,.84) 36%, transparent 100%);
-      pointer-events: none;
-    }
-
-    .dsHeroBg {
-      filter: brightness(.58) saturate(1.02) contrast(1.04) !important;
-      transform: scale(1.01) !important;
-    }
-
-    .dsHeroGlass {
-      background:
-        linear-gradient(90deg, rgba(0,0,0,.88) 0%, rgba(0,0,0,.56) 38%, rgba(0,0,0,.12) 72%, rgba(0,0,0,.55) 100%) !important;
-    }
-
-    .dsHeroContent {
-      position: relative;
-      z-index: 5;
-      width: min(720px, calc(100vw - 42px)) !important;
-      padding-top: clamp(96px, 14vh, 150px) !important;
-      padding-bottom: clamp(72px, 11vh, 130px) !important;
-    }
-
-    .dsEyebrow,
-    .eyebrow {
-      display: inline-flex !important;
-      align-items: center;
-      min-height: 22px;
-      padding: 0 !important;
-      border-radius: 0 !important;
-      color: rgba(245,245,247,.72) !important;
-      background: transparent !important;
-      border: 0 !important;
-      box-shadow: none !important;
-      font-size: 12px !important;
-      font-weight: 800 !important;
-      letter-spacing: .16em !important;
-      text-transform: uppercase;
-    }
-
-    .dsHeroContent h1 {
-      margin: 14px 0 12px !important;
-      max-width: 760px;
-      font-size: clamp(48px, 8vw, 96px) !important;
-      line-height: .91 !important;
-      letter-spacing: -.075em !important;
-      text-shadow: 0 18px 50px rgba(0,0,0,.60);
-      text-wrap: balance;
-    }
-
-    .dsHeroContent p {
-      max-width: 630px;
-      color: rgba(245,245,247,.70) !important;
-      font-size: clamp(15px, 1.25vw, 18px) !important;
-      line-height: 1.55 !important;
-    }
-
-    .dsHeroMeta {
-      gap: 8px !important;
-      flex-wrap: wrap;
-    }
-
-    .dsHeroMeta span,
-    .dsHeroMeta b {
-      min-height: 24px;
-      padding: 0 8px;
-      border-radius: 5px;
-      background: rgba(255,255,255,.10);
-      border: 1px solid rgba(255,255,255,.075);
-      color: rgba(245,245,247,.80);
-      font-size: 12px;
-      font-weight: 800;
-    }
-
-    .dsHeroActions {
-      margin-top: 24px !important;
-      gap: 10px !important;
-      flex-wrap: wrap;
-    }
-
-    .dsPrimaryBtn,
-    .dsSecondaryBtn,
-    .dsGhostPill,
-    .pagination a,
-    .dsAccountActions a {
-      min-height: 44px !important;
-      padding: 0 18px !important;
-      border-radius: 8px !important;
-      font-weight: 800 !important;
-      letter-spacing: -.01em !important;
-      box-shadow: none !important;
-      transition: background .16s ease, color .16s ease, transform .16s ease, border-color .16s ease;
-    }
-
-    .dsPrimaryBtn {
-      background: #fff !important;
-      color: #050505 !important;
-      border: 1px solid #fff !important;
-    }
-
-    .dsPrimaryBtn:hover {
-      background: rgba(255,255,255,.82) !important;
-      transform: translateY(-1px);
-    }
-
-    .dsSecondaryBtn,
-    .dsGhostPill {
-      background: rgba(255,255,255,.14) !important;
-      color: white !important;
-      border: 1px solid rgba(255,255,255,.11) !important;
-      backdrop-filter: none !important;
-      -webkit-backdrop-filter: none !important;
-    }
-
-    .dsSecondaryBtn:hover,
-    .dsGhostPill:hover {
-      background: rgba(255,255,255,.20) !important;
-      transform: translateY(-1px);
-    }
-
-    /* Home intro: simpler */
-
-    .dsMovieHomeBoard {
-      width: min(1320px, calc(100vw - 38px));
-      margin: -46px auto 42px !important;
-      position: relative;
-      z-index: 8;
-      padding: clamp(18px, 2.6vw, 26px) !important;
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 18px;
-      align-items: center;
-      border-radius: 18px !important;
-      background: #101013 !important;
-      border: 1px solid rgba(255,255,255,.08) !important;
-      box-shadow: 0 18px 60px rgba(0,0,0,.35) !important;
-      backdrop-filter: none !important;
-      -webkit-backdrop-filter: none !important;
-    }
-
-    .dsMovieHomeBoard::before {
-      display: none !important;
-    }
-
-    .dsMovieHomeBoard h2 {
-      margin: 0 0 7px !important;
-      max-width: 760px;
-      font-size: clamp(26px, 3.7vw, 46px) !important;
-      line-height: .98 !important;
-      letter-spacing: -.055em !important;
-      text-wrap: balance;
-    }
-
-    .dsMovieHomeBoard p {
-      margin: 0 !important;
-      color: var(--clean-muted) !important;
-      max-width: 700px;
-      line-height: 1.5 !important;
-      font-weight: 500 !important;
-    }
-
-    .dsCoupleHomeCards {
-      display: none !important;
-    }
-
-    /* Rows/cards */
-
-    .dsContent {
-      width: min(1320px, calc(100vw - 38px)) !important;
-      padding-bottom: 80px !important;
-    }
-
-    .dsRow {
-      margin-top: 34px !important;
-    }
-
-    .dsRowHead {
-      margin-bottom: 12px !important;
-      align-items: baseline !important;
-    }
-
-    .dsRowHead h2 {
-      margin: 0;
-      color: white;
-      font-size: clamp(21px, 2.1vw, 30px) !important;
-      line-height: 1.05;
-      letter-spacing: -.035em !important;
-      font-weight: 850 !important;
-    }
-
-    .dsRowTag {
-      color: var(--clean-faint) !important;
-      background: transparent !important;
-      border: 0 !important;
-      font-size: 12px !important;
-      font-weight: 700 !important;
-      letter-spacing: .08em !important;
-      text-transform: uppercase;
-    }
-
-    .movieRail,
-    .dsRail,
-    .nfTopTenRail {
-      gap: 12px !important;
-      padding: 4px 0 18px !important;
-      scroll-padding-left: 18px;
-    }
-
-    .movieRail::-webkit-scrollbar,
-    .dsRail::-webkit-scrollbar,
-    .nfTopTenRail::-webkit-scrollbar {
-      height: 8px;
-    }
-
-    .movieRail::-webkit-scrollbar-thumb,
-    .dsRail::-webkit-scrollbar-thumb,
-    .nfTopTenRail::-webkit-scrollbar-thumb {
-      background: rgba(255,255,255,.18);
-      border-radius: 999px;
-    }
-
-    .movieRail::-webkit-scrollbar-track,
-    .dsRail::-webkit-scrollbar-track,
-    .nfTopTenRail::-webkit-scrollbar-track {
-      background: rgba(255,255,255,.04);
-      border-radius: 999px;
-    }
-
-    .movieCard,
-    .nfPosterCard,
-    .nfTopTenCard,
-    .personCard {
-      border-radius: 10px !important;
-      background: #111114 !important;
-      border: 1px solid transparent !important;
-      box-shadow: none !important;
-      overflow: hidden;
-      transition: transform .16s ease, border-color .16s ease, filter .16s ease;
-    }
-
-    .movieCard:hover,
-    .nfPosterCard:hover,
-    .nfTopTenCard:hover,
-    .personCard:hover {
-      z-index: 8;
-      transform: scale(1.045) translateY(-4px);
-      border-color: rgba(255,255,255,.18) !important;
-      box-shadow: 0 16px 42px rgba(0,0,0,.45) !important;
-      filter: brightness(1.04);
-    }
-
-    .posterWrap,
-    .nfPosterImageWrap {
-      background: #111114 !important;
-      overflow: hidden;
-    }
-
-    .movieCard img,
-    .nfPosterCard img,
-    .personCard img,
-    .posterWrap img {
-      transition: transform .20s ease, filter .20s ease;
-    }
-
-    .movieCard:hover img,
-    .nfPosterCard:hover img,
-    .personCard:hover img {
-      transform: scale(1.045);
-    }
-
-    .movieCard::after,
-    .nfPosterCard::after {
-      display: none !important;
-    }
-
-    .movieMeta,
-    .nfPosterMeta {
-      padding: 10px 10px 11px !important;
-      background: #111114;
-    }
-
-    .movieMeta strong,
-    .nfPosterMeta strong {
-      color: white !important;
-      font-weight: 800 !important;
-      letter-spacing: -.025em !important;
-    }
-
-    .movieMeta span,
-    .nfPosterMeta span {
-      color: rgba(245,245,247,.52) !important;
-      font-weight: 600 !important;
-      font-size: 12px;
-    }
-
-    .posterFallback {
-      background: #17171b !important;
-      color: rgba(255,255,255,.72) !important;
-      font-weight: 900 !important;
-    }
-
-    /* Pages and panels */
-
-    .detailsHero,
-    .watchHero,
-    .dsWatchHero,
-    .netflixPageHero,
-    .dsProfilesHero,
-    .dsAccountHero,
-    .dsCouplesHero,
-    .dsContinuePagePanel,
-    .dsProfileCreate,
-    .dsAccountCard,
-    .dsProfileCard,
-    .dsCoupleCard {
-      border-radius: 16px !important;
-      background: #101013 !important;
-      border: 1px solid rgba(255,255,255,.08) !important;
-      box-shadow: none !important;
-      backdrop-filter: none !important;
-      -webkit-backdrop-filter: none !important;
-    }
-
-    .detailsHero h1,
-    .watchHero h1,
-    .dsWatchHero h1,
-    .netflixPageHero h1,
-    .dsProfilesHero h1,
-    .dsAccountHero h1 {
-      letter-spacing: -.055em !important;
-      line-height: .98 !important;
-    }
-
-    .detailsHero p,
-    .watchHero p,
-    .dsWatchHero p,
-    .netflixPageHero p,
-    .dsProfilesHero p,
-    .dsAccountHero p {
-      color: var(--clean-muted) !important;
-      line-height: 1.55 !important;
-    }
-
-    .dsWatchShell,
-    .watchPlayerShell,
-    .dsDirectVideoShell,
-    .dsMovieButtonPlayerShell,
-    .dsStandaloneHlsShell {
-      border-radius: 14px !important;
-      background: #000 !important;
-      border: 1px solid rgba(255,255,255,.09) !important;
-      box-shadow: 0 18px 60px rgba(0,0,0,.45) !important;
-      overflow: hidden;
-    }
-
-    .dsHlsStatus {
-      border-radius: 10px !important;
-      background: rgba(16,16,19,.92) !important;
-      border: 1px solid rgba(255,255,255,.11) !important;
-      box-shadow: 0 12px 36px rgba(0,0,0,.42) !important;
-    }
-
-    .vjs-theme-swifly .vjs-control-bar {
-      background: linear-gradient(0deg, rgba(0,0,0,.92), rgba(0,0,0,.18)) !important;
-      backdrop-filter: none !important;
-      -webkit-backdrop-filter: none !important;
-    }
-
-    .vjs-theme-swifly .vjs-big-play-button {
-      border-radius: 10px !important;
-      background: rgba(255,255,255,.16) !important;
-      border: 1px solid rgba(255,255,255,.22) !important;
-      box-shadow: none !important;
-    }
-
-    /* Forms */
-
-    input,
-    textarea,
-    select {
-      border-radius: 9px !important;
-      color: white !important;
-      background: #0d0d10 !important;
-      border: 1px solid rgba(255,255,255,.10) !important;
-      outline: none !important;
-      box-shadow: none !important;
-    }
-
-    input:focus,
-    textarea:focus,
-    select:focus {
-      border-color: rgba(255,255,255,.28) !important;
-      background: #121217 !important;
-      box-shadow: none !important;
-    }
-
-    input::placeholder,
-    textarea::placeholder {
-      color: rgba(245,245,247,.36) !important;
-    }
-
-    .dsProfileCard:hover,
-    .dsAccountCard:hover,
-    .dsCoupleCard:hover {
-      transform: translateY(-3px);
-      background: #151519 !important;
-      border-color: rgba(255,255,255,.14) !important;
-    }
-
-    /* Bottom mobile nav */
-
-    .mobileNav {
-      width: min(560px, calc(100vw - 18px)) !important;
-      left: 50% !important;
-      transform: translateX(-50%);
-      bottom: 9px !important;
-      border-radius: 14px !important;
-      padding: 6px !important;
-      background: rgba(12,12,14,.94) !important;
-      border: 1px solid rgba(255,255,255,.09) !important;
-      box-shadow: 0 14px 40px rgba(0,0,0,.48) !important;
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-    }
-
-    .mobileNav a {
-      min-height: 40px;
-      border-radius: 9px !important;
-      color: rgba(245,245,247,.56) !important;
-      font-weight: 750 !important;
-    }
-
-    .mobileNav a.active,
-    .mobileNav a:hover {
-      background: rgba(255,255,255,.10) !important;
-      color: white !important;
-    }
-
-    /* Responsive */
-
-    @media(max-width: 900px) {
-      .netflixLinks {
-        display: none !important;
-      }
-
-      .dsHero {
-        min-height: 70vh !important;
-      }
-
-      .dsHeroContent h1 {
-        font-size: clamp(42px, 13vw, 70px) !important;
-      }
-
-      .dsMovieHomeBoard {
-        grid-template-columns: 1fr !important;
-        margin-top: -32px !important;
-      }
-
-      .dsCoupleHomeActions,
-      .dsHeroActions,
-      .dsAccountActions {
-        display: flex;
-        flex-wrap: wrap;
-      }
-
-      .dsPrimaryBtn,
-      .dsSecondaryBtn,
-      .dsGhostPill {
-        flex: 1 1 auto;
-        justify-content: center;
-      }
-    }
-
-    @media(max-width: 560px) {
-      .container,
-      .dsContent,
-      .dsPlainPage,
-      .netflixPageHero {
-        width: min(100vw - 24px, 1320px) !important;
-      }
-
-      .dsNavSearch {
-        display: none !important;
-      }
-
-      .dsMovieHomeBoard {
-        border-radius: 14px !important;
-        padding: 16px !important;
-      }
-
-      .dsMovieHomeBoard h2 {
-        font-size: 30px !important;
-      }
-
-      .movieRail,
-      .dsRail {
-        gap: 9px !important;
-      }
-
-      .mobileNav {
-        width: calc(100vw - 12px) !important;
-        bottom: 6px !important;
-      }
-
-      .mobileNav a {
-        font-size: 11px !important;
-      }
-    }
-
-
-    /* ============================================================
-       v98 MODERN STREAMING UI
-       Clean, premium, current streaming-site design.
-       Less toy-ish, more cinematic, sharper, better mobile.
-       ============================================================ */
-
-    :root {
-      --m98-bg: #030405;
-      --m98-surface: #0b0c0f;
-      --m98-surface-2: #111217;
-      --m98-surface-3: #171920;
-      --m98-line: rgba(255,255,255,.10);
-      --m98-line-2: rgba(255,255,255,.16);
-      --m98-text: #f7f7f8;
-      --m98-muted: rgba(247,247,248,.64);
-      --m98-faint: rgba(247,247,248,.42);
-      --m98-red: #e50914;
-      --m98-red-soft: rgba(229,9,20,.22);
-      --m98-green: #46d369;
-      --m98-blue: #74c7ff;
-      --m98-radius-sm: 10px;
-      --m98-radius: 16px;
-      --m98-radius-lg: 24px;
-      --m98-shadow: 0 20px 70px rgba(0,0,0,.46);
-      --m98-shadow-soft: 0 14px 42px rgba(0,0,0,.30);
+      --sw-bg: #05060a;
+      --sw-bg-soft: #0b0d14;
+      --sw-card: rgba(255,255,255,.072);
+      --sw-card-strong: rgba(255,255,255,.105);
+      --sw-border: rgba(255,255,255,.115);
+      --sw-border-strong: rgba(255,255,255,.18);
+      --sw-text: #f8fbff;
+      --sw-muted: rgba(248,251,255,.68);
+      --sw-faint: rgba(248,251,255,.46);
+      --sw-red: #e50914;
+      --sw-red-2: #ff3b4f;
+      --sw-gold: #ffd36a;
+      --sw-blue: #75d6ff;
+      --sw-radius-lg: 30px;
+      --sw-radius-md: 22px;
+      --sw-shadow-lg: 0 32px 110px rgba(0,0,0,.44);
+      --sw-shadow-md: 0 18px 60px rgba(0,0,0,.32);
     }
 
     html {
-      background: var(--m98-bg) !important;
+      background: var(--sw-bg);
+      scroll-behavior: smooth;
     }
 
     body {
       background:
-        radial-gradient(1200px 620px at 70% -18%, rgba(229,9,20,.13), transparent 55%),
-        radial-gradient(900px 520px at -10% 18%, rgba(116,199,255,.055), transparent 52%),
-        linear-gradient(180deg, #090a0d 0%, #050607 32%, #030405 100%) !important;
-      color: var(--m98-text) !important;
-      overflow-x: hidden;
+        radial-gradient(1200px circle at 12% -8%, rgba(229,9,20,.18), transparent 42%),
+        radial-gradient(900px circle at 88% 0%, rgba(117,214,255,.10), transparent 38%),
+        linear-gradient(180deg, #05060a 0%, #080a10 42%, #05060a 100%) !important;
+      color: var(--sw-text);
+      text-rendering: geometricPrecision;
     }
 
     body::before {
       content: "";
       position: fixed;
       inset: 0;
+      z-index: -2;
       pointer-events: none;
+      background:
+        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
+      background-size: 54px 54px;
+      mask-image: linear-gradient(180deg, rgba(0,0,0,.75), transparent 72%);
+      opacity: .45;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
       z-index: -1;
-      opacity: .10;
-      background-image:
-        linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px);
-      background-size: 56px 56px;
-      mask-image: linear-gradient(180deg, #000 0%, transparent 70%);
+      pointer-events: none;
+      background: radial-gradient(circle at 50% 0%, transparent 0%, rgba(0,0,0,.40) 72%, rgba(0,0,0,.72) 100%);
     }
 
     .container,
     .dsContent,
-    .dsPlainPage,
-    .netflixPageHero {
-      width: min(1480px, calc(100vw - 44px)) !important;
+    .netflixPageHero,
+    .footerGrid {
+      width: min(1440px, calc(100vw - 42px));
     }
 
-    /* Header */
-
     .topbar.netflixTopbar {
+      position: sticky;
+      top: 0;
+      z-index: 80;
+      min-height: 76px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
       background:
-        linear-gradient(180deg, rgba(3,4,5,.92), rgba(3,4,5,.74)) !important;
-      border-bottom: 1px solid rgba(255,255,255,.075) !important;
-      backdrop-filter: blur(18px) saturate(1.12) !important;
-      -webkit-backdrop-filter: blur(18px) saturate(1.12) !important;
+        linear-gradient(180deg, rgba(5,6,10,.86), rgba(5,6,10,.56));
+      backdrop-filter: blur(22px) saturate(1.25);
+      -webkit-backdrop-filter: blur(22px) saturate(1.25);
+      box-shadow: 0 16px 60px rgba(0,0,0,.24);
     }
 
     .netflixNav {
-      min-height: 72px !important;
-      gap: 24px !important;
+      min-height: 76px;
+      align-items: center;
+      gap: 22px;
+    }
+
+    .netflixBrand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-width: max-content;
     }
 
     .netflixWordmark {
-      position: relative;
-      color: #fff !important;
-      -webkit-text-fill-color: #fff !important;
-      font-size: clamp(24px, 2vw, 32px) !important;
-      letter-spacing: -.075em !important;
+      font-family: "Space Grotesk", Inter, system-ui, sans-serif;
+      font-size: clamp(22px, 2vw, 32px);
+      font-weight: 950;
+      letter-spacing: -.08em;
+      color: #fff;
+      text-shadow: 0 0 34px rgba(229,9,20,.35);
     }
 
-    .netflixWordmark::after {
-      content: "";
-      position: absolute;
-      left: 0;
-      right: 8%;
-      bottom: -5px;
-      height: 3px;
-      border-radius: 99px;
-      background: linear-gradient(90deg, var(--m98-red), transparent);
-      opacity: .95;
+    .netflixWordmark::first-letter {
+      color: var(--sw-red-2);
     }
 
     .netflixLinks {
-      gap: 2px !important;
-      height: 42px;
-      align-items: center;
-      padding: 4px !important;
-      border-radius: 12px !important;
-      background: rgba(255,255,255,.045) !important;
-      border: 1px solid rgba(255,255,255,.075) !important;
+      gap: 4px;
+    }
+
+    .netflixLinks a,
+    .mobileNav a {
+      border-radius: 999px;
+      color: rgba(248,251,255,.68);
+      font-weight: 820;
+      letter-spacing: -.01em;
+      transition: color .18s ease, background .18s ease, transform .18s ease, border-color .18s ease;
     }
 
     .netflixLinks a {
-      height: 34px !important;
-      display: inline-flex !important;
-      align-items: center;
-      padding: 0 12px !important;
-      border-radius: 9px !important;
-      color: rgba(247,247,248,.58) !important;
-      font-size: 13px !important;
-      font-weight: 760 !important;
-      letter-spacing: -.01em !important;
-      transition: color .16s ease, background .16s ease;
+      padding: 10px 13px;
+      border: 1px solid transparent;
     }
 
     .netflixLinks a:hover,
     .netflixLinks a.active {
-      color: #fff !important;
-      background: rgba(255,255,255,.10) !important;
+      color: #fff;
+      background: rgba(255,255,255,.085);
+      border-color: rgba(255,255,255,.11);
+      transform: translateY(-1px);
     }
 
     .dsNavSearch {
-      width: min(300px, 22vw) !important;
-      height: 40px !important;
-      border-radius: 12px !important;
-      background: rgba(255,255,255,.055) !important;
-      border: 1px solid rgba(255,255,255,.09) !important;
+      min-width: min(360px, 24vw);
+      height: 42px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.075);
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
     }
 
-    .dsNavSearch:focus-within {
-      border-color: rgba(255,255,255,.22) !important;
-      background: rgba(255,255,255,.08) !important;
+    .dsNavSearch input {
+      color: #fff;
+      font-weight: 720;
     }
 
+    .dsNavSearch input::placeholder {
+      color: rgba(248,251,255,.43);
+    }
+
+    .dsNavSearch button,
     .dsNavChip,
     .dsNavIcon,
     .dsProfileMenu summary {
-      height: 40px !important;
-      border-radius: 12px !important;
-      background: rgba(255,255,255,.055) !important;
-      border: 1px solid rgba(255,255,255,.09) !important;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.08);
+      color: #fff;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+      transition: transform .18s ease, background .18s ease, border-color .18s ease;
+    }
+
+    .dsNavSearch button:hover,
+    .dsNavChip:hover,
+    .dsNavIcon:hover,
+    .dsProfileMenu summary:hover {
+      transform: translateY(-1px);
+      background: rgba(255,255,255,.13);
+      border-color: rgba(255,255,255,.18);
     }
 
     .dsProfileDropdown {
-      border-radius: 18px !important;
-      background: rgba(12,13,17,.96) !important;
-      border: 1px solid rgba(255,255,255,.11) !important;
-      box-shadow: 0 24px 80px rgba(0,0,0,.54) !important;
+      border-radius: 24px;
+      background: rgba(8,10,18,.90);
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 28px 90px rgba(0,0,0,.48);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       overflow: hidden;
     }
 
-    /* Hero: modern editorial style */
-
     .dsHero {
-      min-height: min(82vh, 820px) !important;
-      background: #000 !important;
+      min-height: clamp(620px, 84vh, 920px);
       isolation: isolate;
+      border-bottom: 1px solid rgba(255,255,255,.075);
+      overflow: hidden;
     }
 
     .dsHeroBg {
-      filter: brightness(.66) saturate(1.08) contrast(1.05) !important;
-      transform: scale(1.025) !important;
+      transform: scale(1.045);
+      filter: saturate(1.08) contrast(1.06) brightness(.83);
+    }
+
+    .dsHero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background:
+        radial-gradient(840px circle at 18% 28%, rgba(229,9,20,.20), transparent 48%),
+        linear-gradient(90deg, rgba(5,6,10,.94) 0%, rgba(5,6,10,.72) 34%, rgba(5,6,10,.22) 70%, rgba(5,6,10,.72) 100%),
+        linear-gradient(0deg, #05060a 0%, rgba(5,6,10,.78) 15%, transparent 54%);
+      pointer-events: none;
     }
 
     .dsHeroGlass {
       background:
-        linear-gradient(90deg, rgba(3,4,5,.95) 0%, rgba(3,4,5,.78) 26%, rgba(3,4,5,.30) 58%, rgba(3,4,5,.76) 100%),
-        linear-gradient(0deg, #030405 0%, rgba(3,4,5,.74) 16%, transparent 56%) !important;
-    }
-
-    .dsHero::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      z-index: 2;
-      pointer-events: none;
-      background:
-        radial-gradient(620px 360px at 25% 50%, rgba(229,9,20,.14), transparent 62%),
-        linear-gradient(180deg, transparent 68%, #030405 100%);
+        linear-gradient(180deg, rgba(255,255,255,.06), transparent 36%),
+        radial-gradient(circle at 16% 28%, rgba(255,255,255,.09), transparent 30%);
+      opacity: .92;
     }
 
     .dsHeroContent {
-      z-index: 6;
-      width: min(780px, calc(100vw - 48px)) !important;
-      padding-top: clamp(110px, 15vh, 165px) !important;
-      padding-bottom: clamp(84px, 12vh, 150px) !important;
+      z-index: 3;
+      width: min(720px, calc(100vw - 42px));
+      padding-top: clamp(96px, 14vh, 150px);
     }
 
     .dsEyebrow,
     .eyebrow {
-      color: rgba(247,247,248,.62) !important;
-      font-size: 11px !important;
-      font-weight: 900 !important;
-      letter-spacing: .18em !important;
+      width: fit-content;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      color: rgba(255,255,255,.84);
+      background: rgba(255,255,255,.095);
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .13em;
+      text-transform: uppercase;
     }
 
-    .dsHeroContent h1 {
-      margin-top: 16px !important;
-      max-width: 760px;
-      font-size: clamp(52px, 8.5vw, 110px) !important;
-      line-height: .86 !important;
-      letter-spacing: -.09em !important;
+    .dsEyebrow::before,
+    .eyebrow::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--sw-red-2);
+      box-shadow: 0 0 18px rgba(229,9,20,.9);
+    }
+
+    .dsHero h1 {
+      max-width: 780px;
+      margin-top: 18px;
+      font-size: clamp(56px, 9vw, 132px);
+      line-height: .82;
+      letter-spacing: -.095em;
       text-wrap: balance;
+      text-shadow: 0 24px 80px rgba(0,0,0,.55);
     }
 
-    .dsHeroContent p {
-      color: rgba(247,247,248,.70) !important;
-      max-width: 650px;
-      font-size: clamp(15px, 1.22vw, 18px) !important;
-      line-height: 1.6 !important;
+    .dsHeroMeta {
+      gap: 9px;
+      margin-top: 22px;
     }
 
     .dsHeroMeta span,
     .dsHeroMeta b {
-      border-radius: 999px !important;
-      min-height: 26px;
-      padding: 0 10px !important;
-      background: rgba(255,255,255,.085) !important;
-      border: 1px solid rgba(255,255,255,.10) !important;
-      font-size: 12px !important;
-      font-weight: 820 !important;
+      min-height: 30px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 11px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.09);
+      border: 1px solid rgba(255,255,255,.10);
+      color: rgba(248,251,255,.76);
+      font-weight: 850;
     }
 
     .dsHeroMeta b {
-      color: var(--m98-green) !important;
-      background: rgba(70,211,105,.11) !important;
-      border-color: rgba(70,211,105,.18) !important;
+      color: #a8ffcc;
+      background: rgba(61,255,152,.10);
+      border-color: rgba(61,255,152,.18);
+    }
+
+    .dsHero p {
+      max-width: 650px;
+      color: rgba(248,251,255,.76);
+      font-size: clamp(16px, 1.35vw, 20px);
+      line-height: 1.65;
+      text-shadow: 0 8px 30px rgba(0,0,0,.5);
     }
 
     .dsPrimaryBtn,
     .dsSecondaryBtn,
     .dsGhostPill,
-    .pagination a,
-    .dsAccountActions a {
-      min-height: 46px !important;
-      padding: 0 19px !important;
-      border-radius: 12px !important;
-      font-weight: 850 !important;
+    .watchBtn,
+    .detailButton,
+    .button,
+    button.dsPrimaryBtn {
+      border-radius: 999px !important;
+      min-height: 48px;
+      padding: 0 20px;
+      font-weight: 950;
+      letter-spacing: -.02em;
+      box-shadow: 0 18px 54px rgba(0,0,0,.24);
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease, filter .18s ease;
     }
 
     .dsPrimaryBtn {
-      color: white !important;
-      background:
-        linear-gradient(180deg, #f22936 0%, #d90813 100%) !important;
-      border: 1px solid rgba(255,255,255,.12) !important;
-      box-shadow: 0 14px 42px rgba(229,9,20,.28) !important;
+      background: linear-gradient(135deg, #fff, #dfe9ff) !important;
+      color: #06080f !important;
+      border: 1px solid rgba(255,255,255,.60) !important;
     }
 
     .dsPrimaryBtn:hover {
-      background:
-        linear-gradient(180deg, #ff3b47 0%, #e50914 100%) !important;
-      transform: translateY(-1px);
+      transform: translateY(-2px) scale(1.015);
+      filter: brightness(1.03);
+      box-shadow: 0 22px 70px rgba(255,255,255,.14);
     }
 
     .dsSecondaryBtn,
     .dsGhostPill {
-      color: white !important;
-      background: rgba(255,255,255,.12) !important;
-      border: 1px solid rgba(255,255,255,.12) !important;
+      color: #fff !important;
+      background: rgba(255,255,255,.095) !important;
+      border: 1px solid rgba(255,255,255,.135) !important;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
     }
 
     .dsSecondaryBtn:hover,
     .dsGhostPill:hover {
-      background: rgba(255,255,255,.18) !important;
-      transform: translateY(-1px);
+      transform: translateY(-2px);
+      background: rgba(255,255,255,.16) !important;
+      border-color: rgba(255,255,255,.22) !important;
     }
 
-    /* Home feature block */
+    .dsContent {
+      padding-top: 26px;
+      padding-bottom: 80px;
+    }
 
+    .dsPremiumHomeBoard,
     .dsMovieHomeBoard {
-      width: min(1400px, calc(100vw - 44px));
-      margin: -56px auto 48px !important;
-      padding: clamp(18px, 2.6vw, 28px) !important;
-      border-radius: 22px !important;
+      max-width: 1440px;
+      margin: -68px auto 56px;
+      grid-template-columns: minmax(0, 1.15fr) auto;
+      gap: 24px;
+      padding: clamp(22px, 3vw, 34px);
+      border-radius: 34px;
       background:
-        linear-gradient(135deg, rgba(255,255,255,.095), rgba(255,255,255,.045)),
-        #0b0c0f !important;
-      border: 1px solid rgba(255,255,255,.10) !important;
-      box-shadow: var(--m98-shadow) !important;
-      overflow: hidden;
-    }
-
-    .dsMovieHomeBoard::before {
-      content: "";
-      display: block !important;
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      background:
-        radial-gradient(520px 240px at 0% 0%, rgba(229,9,20,.16), transparent 60%),
-        radial-gradient(520px 240px at 100% 0%, rgba(116,199,255,.10), transparent 60%);
-    }
-
-    .dsMovieHomeBoard > * {
-      position: relative;
-      z-index: 1;
+        radial-gradient(660px circle at 8% 0%, rgba(229,9,20,.20), transparent 48%),
+        radial-gradient(620px circle at 94% 6%, rgba(117,214,255,.13), transparent 48%),
+        linear-gradient(135deg, rgba(255,255,255,.10), rgba(255,255,255,.045));
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: var(--sw-shadow-lg);
+      backdrop-filter: blur(24px) saturate(1.16);
+      -webkit-backdrop-filter: blur(24px) saturate(1.16);
     }
 
     .dsMovieHomeBoard h2 {
-      max-width: 820px;
-      font-size: clamp(30px, 4vw, 56px) !important;
-      line-height: .94 !important;
-      letter-spacing: -.075em !important;
+      font-size: clamp(34px, 4.4vw, 64px);
+      line-height: .92;
+      letter-spacing: -.085em;
       text-wrap: balance;
     }
 
     .dsMovieHomeBoard p {
-      color: rgba(247,247,248,.64) !important;
-      font-size: 15px !important;
+      max-width: 800px;
+      margin-top: 10px;
+      color: var(--sw-muted);
+      font-size: 16px;
+      line-height: 1.7;
     }
 
-    .dsCoupleHomeCards {
-      display: grid !important;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+    .dsHomeStatLine {
+      display: flex;
+      flex-wrap: wrap;
       gap: 10px;
+      margin-top: 18px;
+    }
+
+    .dsHomeStatLine span {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 34px;
+      padding: 0 12px;
+      border-radius: 999px;
+      color: rgba(255,255,255,.72);
+      background: rgba(0,0,0,.20);
+      border: 1px solid rgba(255,255,255,.10);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .dsHomeStatLine b {
+      color: #fff;
+    }
+
+    .dsHomeQuickActions {
+      align-self: stretch;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 210px;
+    }
+
+    .dsHomeFeatureCards {
       grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
     }
 
+    .dsHomeFeatureCards article,
     .dsCoupleHomeCards article {
-      border-radius: 14px !important;
-      background: rgba(255,255,255,.055) !important;
-      border: 1px solid rgba(255,255,255,.075) !important;
-      padding: 14px !important;
-      min-height: 76px;
+      min-height: 72px;
+      border-radius: 22px;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.10), rgba(255,255,255,.045));
+      border: 1px solid rgba(255,255,255,.105);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.07);
+      transition: transform .18s ease, background .18s ease, border-color .18s ease;
     }
 
-    .dsCoupleHomeCards b {
-      color: rgba(255,255,255,.34) !important;
-      font-size: 11px;
-      letter-spacing: .14em;
-    }
-
-    .dsCoupleHomeCards span {
-      color: rgba(255,255,255,.84);
-      font-weight: 800;
-    }
-
-    /* Rows and cards: modern high density */
-
-    .dsContent {
-      width: min(1400px, calc(100vw - 44px)) !important;
+    .dsHomeFeatureCards article:hover,
+    .dsCoupleHomeCards article:hover {
+      transform: translateY(-3px);
+      background: rgba(255,255,255,.11);
+      border-color: rgba(255,255,255,.18);
     }
 
     .dsRow {
-      margin-top: 42px !important;
+      margin-top: clamp(32px, 4vw, 58px);
     }
 
     .dsRowHead {
-      margin-bottom: 14px !important;
-      align-items: center !important;
+      margin-bottom: 14px;
     }
 
     .dsRowHead h2 {
-      font-size: clamp(22px, 2.2vw, 32px) !important;
-      letter-spacing: -.045em !important;
-      font-weight: 900 !important;
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-size: clamp(22px, 2.3vw, 34px);
+      font-weight: 950;
+      letter-spacing: -.055em;
+      color: #fff;
     }
 
     .dsRowTag {
-      min-height: 24px;
-      padding: 0 9px;
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 0 10px;
       border-radius: 999px;
-      color: rgba(247,247,248,.48) !important;
-      background: rgba(255,255,255,.055) !important;
-      border: 1px solid rgba(255,255,255,.07) !important;
-      font-size: 11px !important;
-      font-weight: 850 !important;
+      color: rgba(255,255,255,.74);
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.10);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .06em;
+      text-transform: uppercase;
     }
 
     .movieRail,
     .dsRail,
     .nfTopTenRail {
-      gap: 13px !important;
-      padding: 6px 0 24px !important;
+      gap: 14px;
+      padding: 6px 0 18px;
+      scroll-padding-inline: 18px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,.24) transparent;
+    }
+
+    .movieRail::-webkit-scrollbar,
+    .dsRail::-webkit-scrollbar {
+      height: 8px;
+    }
+
+    .movieRail::-webkit-scrollbar-thumb,
+    .dsRail::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,.22);
+      border-radius: 999px;
     }
 
     .movieCard,
-    .nfPosterCard,
-    .nfTopTenCard,
-    .personCard {
-      border-radius: 14px !important;
-      background: var(--m98-surface-2) !important;
-      border: 1px solid rgba(255,255,255,.075) !important;
-      box-shadow: 0 10px 32px rgba(0,0,0,.18) !important;
+    .nfTopCard,
+    .posterCard,
+    .mediaCard {
+      position: relative;
+      border-radius: 22px !important;
       overflow: hidden;
-      transition:
-        transform .18s ease,
-        border-color .18s ease,
-        box-shadow .18s ease,
-        background .18s ease;
+      background: rgba(255,255,255,.055);
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: 0 18px 60px rgba(0,0,0,.24);
+      transform-origin: center;
+      transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease, filter .22s ease;
     }
 
     .movieCard:hover,
-    .nfPosterCard:hover,
-    .nfTopTenCard:hover,
-    .personCard:hover {
-      transform: translateY(-7px) scale(1.035);
-      border-color: rgba(255,255,255,.20) !important;
-      background: var(--m98-surface-3) !important;
-      box-shadow: 0 24px 60px rgba(0,0,0,.42) !important;
-    }
-
-    .posterWrap,
-    .nfPosterImageWrap {
-      background: #0e0f13 !important;
+    .nfTopCard:hover,
+    .posterCard:hover,
+    .mediaCard:hover {
+      transform: translateY(-8px) scale(1.035);
+      border-color: rgba(255,255,255,.20);
+      box-shadow: 0 30px 90px rgba(0,0,0,.48);
+      filter: saturate(1.08) brightness(1.05);
+      z-index: 5;
     }
 
     .movieCard img,
-    .nfPosterCard img,
-    .personCard img,
-    .posterWrap img {
-      transition: transform .22s ease, filter .22s ease;
+    .nfTopCard img,
+    .posterCard img,
+    .mediaCard img {
+      transition: transform .35s ease, filter .25s ease;
     }
 
     .movieCard:hover img,
-    .nfPosterCard:hover img,
-    .personCard:hover img {
+    .nfTopCard:hover img,
+    .posterCard:hover img,
+    .mediaCard:hover img {
       transform: scale(1.055);
-      filter: brightness(1.06);
+    }
+
+    .movieCard::after,
+    .posterCard::after,
+    .mediaCard::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0 0;
+      height: 52%;
+      background: linear-gradient(0deg, rgba(0,0,0,.82), transparent);
+      opacity: .72;
+      pointer-events: none;
+      transition: opacity .2s ease;
+    }
+
+    .movieCard:hover::after,
+    .posterCard:hover::after,
+    .mediaCard:hover::after {
+      opacity: .95;
     }
 
     .movieMeta,
-    .nfPosterMeta {
-      padding: 11px 11px 12px !important;
-      background: linear-gradient(180deg, rgba(17,18,23,.98), #101116);
+    .cardMeta {
+      position: relative;
+      z-index: 2;
     }
 
-    .movieMeta strong,
-    .nfPosterMeta strong {
-      color: white !important;
-      font-weight: 850 !important;
-      letter-spacing: -.028em !important;
-    }
-
-    .movieMeta span,
-    .nfPosterMeta span {
-      color: rgba(247,247,248,.52) !important;
-      font-size: 12px !important;
-      font-weight: 650 !important;
-    }
-
-    .posterFallback {
-      background:
-        radial-gradient(circle at 30% 20%, rgba(229,9,20,.16), transparent 36%),
-        #12141a !important;
-      color: rgba(255,255,255,.70) !important;
-    }
-
-    /* Detail/player pages */
-
-    .detailsHero,
-    .watchHero,
-    .dsWatchHero,
     .netflixPageHero,
-    .dsProfilesHero,
+    .dsPlainPage > section:first-child,
     .dsAccountHero,
-    .dsContinuePagePanel,
-    .dsProfileCreate,
-    .dsAccountCard,
-    .dsProfileCard,
-    .dsCoupleCard {
-      border-radius: 22px !important;
+    .dsProfilesHero,
+    .dsWatchHero {
+      border-radius: 34px;
       background:
-        linear-gradient(135deg, rgba(255,255,255,.075), rgba(255,255,255,.035)),
-        var(--m98-surface) !important;
-      border: 1px solid rgba(255,255,255,.09) !important;
-      box-shadow: 0 18px 60px rgba(0,0,0,.32) !important;
+        radial-gradient(740px circle at 0% 0%, rgba(229,9,20,.16), transparent 48%),
+        radial-gradient(640px circle at 100% 0%, rgba(117,214,255,.11), transparent 48%),
+        rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: var(--sw-shadow-md);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
     }
 
-    .detailsHero h1,
-    .watchHero h1,
-    .dsWatchHero h1,
     .netflixPageHero h1,
     .dsProfilesHero h1,
-    .dsAccountHero h1 {
-      font-size: clamp(38px, 5vw, 74px) !important;
-      letter-spacing: -.075em !important;
-      line-height: .92 !important;
+    .dsAccountHero h1,
+    .dsWatchHero h1 {
+      font-family: "Space Grotesk", Inter, sans-serif;
+      letter-spacing: -.075em;
       text-wrap: balance;
     }
 
-    .detailsHero p,
-    .watchHero p,
-    .dsWatchHero p,
-    .netflixPageHero p,
-    .dsProfilesHero p,
-    .dsAccountHero p {
-      color: var(--m98-muted) !important;
-      line-height: 1.6 !important;
+    .dsAccountCard,
+    .dsProfileCard,
+    .dsContinuePagePanel,
+    .detailPanel,
+    .watchPanel,
+    .searchResultCard {
+      border-radius: 28px !important;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.088), rgba(255,255,255,.040));
+      border: 1px solid rgba(255,255,255,.115);
+      box-shadow: var(--sw-shadow-md);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      transition: transform .2s ease, border-color .2s ease, background .2s ease;
+    }
+
+    .dsAccountCard:hover,
+    .dsProfileCard:hover,
+    .searchResultCard:hover {
+      transform: translateY(-5px);
+      border-color: rgba(255,255,255,.20);
+      background: rgba(255,255,255,.095);
     }
 
     .dsWatchShell,
-    .watchPlayerShell,
     .dsDirectVideoShell,
     .dsMovieButtonPlayerShell,
     .dsStandaloneHlsShell {
-      border-radius: 20px !important;
-      background: #000 !important;
-      border: 1px solid rgba(255,255,255,.10) !important;
-      box-shadow: 0 24px 80px rgba(0,0,0,.52) !important;
-    }
-
-    .dsMovieButtonVideo,
-    .dsMovieButtonPlayerShell .video-js {
-      min-height: clamp(320px, 62vh, 760px) !important;
-    }
-
-    .dsHlsStatus {
-      border-radius: 14px !important;
+      border-radius: 32px !important;
+      overflow: hidden;
       background:
-        linear-gradient(135deg, rgba(20,21,26,.96), rgba(10,11,14,.94)) !important;
-      border: 1px solid rgba(255,255,255,.12) !important;
-      box-shadow: 0 18px 50px rgba(0,0,0,.42) !important;
+        radial-gradient(900px circle at 50% 0%, rgba(255,255,255,.09), transparent 52%),
+        #000;
+      border: 1px solid rgba(255,255,255,.13);
+      box-shadow: 0 34px 110px rgba(0,0,0,.50);
+    }
+
+    .vjs-theme-swifly {
+      border-radius: 28px;
+      overflow: hidden;
     }
 
     .vjs-theme-swifly .vjs-control-bar {
-      height: 4.4em !important;
-      background:
-        linear-gradient(0deg, rgba(0,0,0,.94), rgba(0,0,0,.14)) !important;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      background: linear-gradient(0deg, rgba(0,0,0,.88), rgba(0,0,0,.20));
     }
 
-    .vjs-theme-swifly .vjs-big-play-button {
-      border-radius: 999px !important;
-      width: 78px !important;
-      height: 78px !important;
-      line-height: 78px !important;
-      background: rgba(255,255,255,.16) !important;
-      border: 1px solid rgba(255,255,255,.26) !important;
-      box-shadow: 0 18px 56px rgba(0,0,0,.44) !important;
+    .dsHlsStatus {
+      border-radius: 20px;
+      background: rgba(9,11,18,.78);
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: 0 22px 80px rgba(0,0,0,.40);
     }
 
-    /* Pages/forms */
-
-    .dsProfileCard,
-    .dsAccountCard,
-    .dsCoupleCard {
-      transition: transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease;
+    .footer {
+      margin-top: 70px;
+      border-top: 1px solid rgba(255,255,255,.08);
+      background: linear-gradient(180deg, transparent, rgba(0,0,0,.30));
     }
 
-    .dsProfileCard:hover,
-    .dsAccountCard:hover,
-    .dsCoupleCard:hover {
-      transform: translateY(-5px);
-      border-color: rgba(255,255,255,.18) !important;
-      background:
-        linear-gradient(135deg, rgba(255,255,255,.10), rgba(255,255,255,.045)),
-        var(--m98-surface-2) !important;
-      box-shadow: 0 22px 62px rgba(0,0,0,.38) !important;
+    .footerGrid {
+      color: rgba(248,251,255,.56);
     }
-
-    input,
-    textarea,
-    select {
-      border-radius: 12px !important;
-      background: rgba(255,255,255,.055) !important;
-      border: 1px solid rgba(255,255,255,.10) !important;
-      color: white !important;
-    }
-
-    input:focus,
-    textarea:focus,
-    select:focus {
-      background: rgba(255,255,255,.08) !important;
-      border-color: rgba(255,255,255,.24) !important;
-      box-shadow: 0 0 0 4px rgba(255,255,255,.045) !important;
-    }
-
-    /* Auth/welcome screens */
-
-    .authShell,
-    .welcomeShell,
-    .loginShell,
-    .signupShell {
-      background:
-        radial-gradient(900px 500px at 20% 0%, rgba(229,9,20,.17), transparent 56%),
-        radial-gradient(900px 500px at 90% 0%, rgba(116,199,255,.08), transparent 58%),
-        #030405 !important;
-    }
-
-    .authCard,
-    .welcomeCard {
-      border-radius: 24px !important;
-      background:
-        linear-gradient(135deg, rgba(255,255,255,.10), rgba(255,255,255,.045)),
-        #0b0c0f !important;
-      border: 1px solid rgba(255,255,255,.11) !important;
-      box-shadow: 0 24px 80px rgba(0,0,0,.48) !important;
-    }
-
-    /* Mobile */
 
     .mobileNav {
-      width: min(560px, calc(100vw - 18px)) !important;
-      left: 50% !important;
-      transform: translateX(-50%) !important;
-      bottom: 10px !important;
-      padding: 6px !important;
-      border-radius: 18px !important;
-      background: rgba(10,11,14,.92) !important;
-      border: 1px solid rgba(255,255,255,.10) !important;
-      box-shadow: 0 18px 60px rgba(0,0,0,.52) !important;
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-    }
-
-    .mobileNav a {
-      min-height: 42px !important;
-      border-radius: 13px !important;
-      color: rgba(247,247,248,.56) !important;
-      font-weight: 820 !important;
+      border-top: 1px solid rgba(255,255,255,.12);
+      background: rgba(5,6,10,.84);
+      backdrop-filter: blur(22px) saturate(1.2);
+      -webkit-backdrop-filter: blur(22px) saturate(1.2);
+      box-shadow: 0 -18px 70px rgba(0,0,0,.40);
     }
 
     .mobileNav a.active,
     .mobileNav a:hover {
-      color: white !important;
-      background: rgba(255,255,255,.12) !important;
+      color: #fff;
+      background: rgba(255,255,255,.11);
     }
 
     @media(max-width: 980px) {
-      .netflixLinks {
-        display: none !important;
+      .dsNavSearch {
+        min-width: 0;
       }
 
-      .netflixNav {
-        min-height: 66px !important;
+      .dsPremiumHomeBoard,
+      .dsMovieHomeBoard {
+        grid-template-columns: 1fr;
+        margin-top: -34px;
+      }
+
+      .dsHomeQuickActions {
+        flex-direction: row;
+        flex-wrap: wrap;
+        min-width: 0;
+      }
+
+      .dsHomeFeatureCards {
+        grid-template-columns: 1fr;
       }
 
       .dsHero {
-        min-height: 74vh !important;
+        min-height: 690px;
       }
 
-      .dsHeroContent h1 {
-        font-size: clamp(44px, 14vw, 78px) !important;
+      .dsHero h1 {
+        font-size: clamp(48px, 14vw, 82px);
+      }
+    }
+
+    @media(max-width: 640px) {
+      .container,
+      .dsContent,
+      .netflixPageHero,
+      .footerGrid {
+        width: min(100% - 24px, 1440px);
       }
 
-      .dsMovieHomeBoard {
-        grid-template-columns: 1fr !important;
-        margin-top: -38px !important;
+      .topbar.netflixTopbar {
+        min-height: 66px;
       }
 
-      .dsCoupleHomeCards {
-        grid-template-columns: 1fr !important;
+      .netflixNav {
+        min-height: 66px;
       }
 
-      .dsCoupleHomeActions,
-      .dsHeroActions,
-      .dsAccountActions {
-        display: flex;
-        flex-wrap: wrap;
+      .dsHero {
+        min-height: 640px;
+      }
+
+      .dsHeroContent {
+        padding-top: 110px;
+      }
+
+      .dsHero p {
+        font-size: 14px;
+        line-height: 1.55;
+      }
+
+      .dsHeroActions {
+        display: grid;
+        grid-template-columns: 1fr;
+        width: 100%;
       }
 
       .dsPrimaryBtn,
       .dsSecondaryBtn,
       .dsGhostPill {
-        flex: 1 1 auto;
+        width: 100%;
         justify-content: center;
-      }
-    }
-
-    @media(max-width: 560px) {
-      .container,
-      .dsContent,
-      .dsPlainPage,
-      .netflixPageHero {
-        width: min(100vw - 24px, 1480px) !important;
-      }
-
-      .dsNavSearch {
-        display: none !important;
-      }
-
-      .dsHero {
-        min-height: 70vh !important;
-      }
-
-      .dsHeroContent {
-        width: calc(100vw - 28px) !important;
-      }
-
-      .dsHeroContent h1 {
-        font-size: clamp(42px, 15vw, 66px) !important;
-      }
-
-      .dsMovieHomeBoard {
-        border-radius: 18px !important;
-        padding: 17px !important;
-      }
-
-      .dsMovieHomeBoard h2 {
-        font-size: 31px !important;
       }
 
       .movieRail,
-      .dsRail,
-      .nfTopTenRail {
-        gap: 10px !important;
+      .dsRail {
+        gap: 10px;
       }
 
       .movieCard:hover,
-      .nfPosterCard:hover,
-      .personCard:hover {
-        transform: translateY(-3px) scale(1.018);
+      .nfTopCard:hover,
+      .posterCard:hover,
+      .mediaCard:hover {
+        transform: translateY(-4px) scale(1.015);
       }
+    }
 
-      .mobileNav {
-        width: calc(100vw - 12px) !important;
-        bottom: 6px !important;
+    @media(prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
       }
+    }
 
-      .mobileNav a {
-        font-size: 11px !important;
-      }
+
+    .swReveal {
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity .55s ease, transform .55s ease;
+    }
+
+    .swReveal.isVisible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .topbar.isScrolled {
+      background: rgba(5,6,10,.92) !important;
+      box-shadow: 0 20px 70px rgba(0,0,0,.44);
     }
 
   </style>
@@ -21600,22 +20991,39 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
   </script>
 
 
-  <script>
-    (function swiflyV98ModernUi(){
-      try {
-        var topbar = document.querySelector(".topbar");
-        var last = -1;
-        function tick() {
-          var y = window.scrollY || 0;
-          if ((y > 12) === (last > 12)) return;
-          last = y;
-          if (topbar) topbar.classList.toggle("isScrolled", y > 12);
+    <script>
+      (function swiflyPremiumUi(){
+        try {
+          document.documentElement.classList.add("swifly-premium-ui");
+
+          var topbar = document.querySelector(".topbar");
+          function updateTopbar() {
+            if (!topbar) return;
+            topbar.classList.toggle("isScrolled", window.scrollY > 18);
+          }
+          updateTopbar();
+          window.addEventListener("scroll", updateTopbar, { passive: true });
+
+          if ("IntersectionObserver" in window) {
+            var observer = new IntersectionObserver(function(entries) {
+              entries.forEach(function(entry) {
+                if (entry.isIntersecting) {
+                  entry.target.classList.add("isVisible");
+                  observer.unobserve(entry.target);
+                }
+              });
+            }, { threshold: 0.12 });
+
+            document.querySelectorAll(".dsRow, .dsMovieHomeBoard, .netflixPageHero, .dsAccountCard, .dsProfileCard").forEach(function(el) {
+              el.classList.add("swReveal");
+              observer.observe(el);
+            });
+          }
+        } catch (error) {
+          console.warn("premium ui enhancement failed", error);
         }
-        tick();
-        window.addEventListener("scroll", tick, { passive: true });
-      } catch (error) {}
-    })();
-  </script>
+      })();
+    </script>
 
 </body>
 </html>`;
@@ -21992,21 +21400,26 @@ async function homePage(req, res) {
     ${dsHero({ hero, context: "Featured", eyebrow: "Watch now" })}
     <section class="dsContent">
 
-      <section class="dsMovieHomeBoard">
-        <div>
-          <span class="dsEyebrow">Streaming made simple</span>
-          <h2>Movies, shows, watchlists, and watch rooms.</h2>
-          <p>Browse trending titles, save your list, continue watching, and jump into a synced room whenever you want.</p>
+      <section class="dsMovieHomeBoard dsPremiumHomeBoard">
+        <div class="dsHomeBoardCopy">
+          <span class="dsEyebrow">SwiflyTV Streaming</span>
+          <h2>A cleaner way to browse movies and shows.</h2>
+          <p>Discover trending titles, keep a personal list, continue watching, and open synced Watch Rooms when you want to watch with friends.</p>
+          <div class="dsHomeStatLine">
+            <span><b>4K</b> inspired UI</span>
+            <span><b>Fast</b> search</span>
+            <span><b>Synced</b> rooms</span>
+          </div>
         </div>
-        <div class="dsCoupleHomeActions">
+        <div class="dsCoupleHomeActions dsHomeQuickActions">
           <a class="dsPrimaryBtn" href="/movies">Browse Movies</a>
           <a class="dsSecondaryBtn" href="/tv">Browse TV</a>
           <a class="dsGhostPill" href="/watchrooms">Watch Rooms</a>
         </div>
-        <div class="dsCoupleHomeCards">
-          <article><b>01</b><span>Find something</span></article>
-          <article><b>02</b><span>Press play</span></article>
-          <article><b>03</b><span>Save your list</span></article>
+        <div class="dsCoupleHomeCards dsHomeFeatureCards">
+          <article><b>01</b><span>Discover</span></article>
+          <article><b>02</b><span>Watch</span></article>
+          <article><b>03</b><span>Save</span></article>
         </div>
       </section>
 
@@ -22085,7 +21498,7 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "" }) {
   const title = getTitle(hero);
   const href = `/${mediaType}/${encodeURIComponent(hero.id || "")}`;
   const bg = fullBackdrop(hero.backdrop_path || hero.poster_path);
-  const desc = hero.overview || "A premium streaming discovery experience for movies, shows, trailers, cast, and your saved list.";
+  const desc = hero.overview || "Browse movies, shows, trailers, cast pages, and your saved list in one polished streaming hub.";
   const maturity = mediaType === "tv" ? "TV-14" : "PG-13";
   return `<section class="dsHero">
     <div class="dsHeroBg" style="background-image:url('${escapeHtml(bg)}')"></div>
