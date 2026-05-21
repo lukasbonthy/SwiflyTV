@@ -30939,6 +30939,125 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v132 VIDEO.JS SOFT RECT PLAY BUTTON
+       The circular play button felt cheap/old. This makes it a modern
+       rounded-rectangle / pill button, keeps it small, and avoids
+       huge overlay UI.
+       ============================================================ */
+
+    .dsVideoJsCinemaShell.v132SoftRectPlay .vjs-big-play-button {
+      display: block !important;
+      width: clamp(72px, 6.3vw, 92px) !important;
+      height: clamp(46px, 4.2vw, 56px) !important;
+      line-height: clamp(46px, 4.2vw, 56px) !important;
+      left: 50% !important;
+      top: 50% !important;
+      margin-left: calc(clamp(72px, 6.3vw, 92px) / -2) !important;
+      margin-top: calc(clamp(46px, 4.2vw, 56px) / -2) !important;
+      border-radius: 18px !important;
+      border: 1px solid rgba(255,255,255,.16) !important;
+      color: rgba(255,255,255,.96) !important;
+      background:
+        radial-gradient(circle at 26% 20%, rgba(255,255,255,.18), transparent 42%),
+        linear-gradient(135deg, rgba(85,215,255,.18), rgba(139,92,246,.14)),
+        rgba(7,10,22,.52) !important;
+      box-shadow:
+        0 18px 58px rgba(0,0,0,.44),
+        0 0 24px rgba(85,215,255,.09),
+        inset 0 1px 0 rgba(255,255,255,.08) !important;
+      backdrop-filter: blur(14px) saturate(1.08) !important;
+      -webkit-backdrop-filter: blur(14px) saturate(1.08) !important;
+      opacity: .98 !important;
+      transform: translateZ(0);
+      transition:
+        transform .16s cubic-bezier(.2,.8,.2,1),
+        background .16s ease,
+        border-color .16s ease,
+        box-shadow .16s ease,
+        opacity .16s ease !important;
+    }
+
+    .dsVideoJsCinemaShell.v132SoftRectPlay .vjs-big-play-button:hover,
+    .dsVideoJsCinemaShell.v132SoftRectPlay .vjs-big-play-button:focus {
+      transform: translateY(-1px) scale(1.035) !important;
+      border-color: rgba(223,248,255,.28) !important;
+      background:
+        radial-gradient(circle at 26% 20%, rgba(255,255,255,.23), transparent 42%),
+        linear-gradient(135deg, rgba(85,215,255,.24), rgba(139,92,246,.18)),
+        rgba(14,20,38,.64) !important;
+      box-shadow:
+        0 22px 70px rgba(0,0,0,.50),
+        0 0 34px rgba(85,215,255,.14),
+        inset 0 1px 0 rgba(255,255,255,.10) !important;
+    }
+
+    .dsVideoJsCinemaShell.v132SoftRectPlay .vjs-big-play-button .vjs-icon-placeholder::before {
+      width: 100% !important;
+      height: 100% !important;
+      left: 0 !important;
+      top: 0 !important;
+      line-height: clamp(46px, 4.2vw, 56px) !important;
+      font-size: clamp(20px, 2vw, 26px) !important;
+      text-align: center !important;
+      transform: translateX(2px);
+      text-shadow: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v132SoftRectPlay .vjs-has-started .vjs-big-play-button,
+    .dsVideoJsCinemaShell.v132SoftRectPlay .vjs-playing .vjs-big-play-button {
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v132SoftRectPlay .vjs-paused.vjs-has-started .vjs-big-play-button {
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    /* Keep the timeline fix from v131 stronger than generic Video.js control widths. */
+    .dsVideoJsCinemaShell.v132SoftRectPlay .vjs-control-bar .vjs-progress-control.vjs-control {
+      width: calc(100% - 20px) !important;
+      max-width: none !important;
+      min-width: 0 !important;
+      flex: 0 0 auto !important;
+    }
+
+    /* Slightly cleaner compact dock so the play button change fits the same vibe. */
+    .dsVideoJsCinemaShell.v132SoftRectPlay .vjs-control-bar {
+      border-radius: 16px !important;
+      background: rgba(5,8,18,.56) !important;
+      border-color: rgba(255,255,255,.07) !important;
+    }
+
+    .dsVideoJsCinemaShell.v132SoftRectPlay .vjs-control-bar > .vjs-control:not(.vjs-progress-control) {
+      width: 29px !important;
+      height: 29px !important;
+      min-width: 29px !important;
+    }
+
+    .dsVideoJsCinemaShell.v132SoftRectPlay .vjs-button > .vjs-icon-placeholder::before {
+      line-height: 29px !important;
+      font-size: 13.5px !important;
+    }
+
+    @media(max-width: 520px) {
+      .dsVideoJsCinemaShell.v132SoftRectPlay .vjs-big-play-button {
+        width: 68px !important;
+        height: 44px !important;
+        line-height: 44px !important;
+        margin-left: -34px !important;
+        margin-top: -22px !important;
+        border-radius: 16px !important;
+      }
+
+      .dsVideoJsCinemaShell.v132SoftRectPlay .vjs-big-play-button .vjs-icon-placeholder::before {
+        line-height: 44px !important;
+        font-size: 21px !important;
+      }
+    }
+
   </style>
 
     <script>
@@ -34687,8 +34806,8 @@ async function watchPage(req, res, type) {
           destroyRegularMoviePlayers();
 
           if (playerShell) {
-            playerShell.classList.remove("usesPlyr", "usesMediaChrome", "usesNativeVideo", "isScrubbing", "v128VideoReady", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed");
-            playerShell.classList.add("usesVideoJs", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed");
+            playerShell.classList.remove("usesPlyr", "usesMediaChrome", "usesNativeVideo", "isScrubbing", "v128VideoReady", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed", "v132SoftRectPlay");
+            playerShell.classList.add("usesVideoJs", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed", "v132SoftRectPlay");
           }
 
           try {
