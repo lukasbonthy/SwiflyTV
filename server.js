@@ -38003,131 +38003,197 @@ async function watchPage(req, res, type) {
         }
 
         function startVideoJsCinemaSource(src, data) {
-          setPlayerStatus("Loading", "Preparing video", false);
+          setPlayerStatus("Loading", "Starting fresh Video.js player", false);
           setVideoUiState("loading");
           destroyRegularMoviePlayers();
 
           if (playerShell) {
-            playerShell.classList.remove("usesPlyr", "usesMediaChrome", "usesNativeVideo", "isScrubbing", "v128VideoReady", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed", "v132SoftRectPlay", "v133HoverPreview", "v134SpeedPreviewFix", "v135VolumeImagePreview", "v136PillDockSkin", "v137NativeDock", "v138PreviewWarmup", "v139CleanIconDock", "v141FitFullscreenPreviewFix");
-            playerShell.classList.add("usesVideoJs", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed", "v132SoftRectPlay", "v133HoverPreview", "v134SpeedPreviewFix", "v135VolumeImagePreview", "v136PillDockSkin", "v137NativeDock", "v138PreviewWarmup", "v139CleanIconDock", "v141FitFullscreenPreviewFix");
+            playerShell.classList.remove(
+              "usesPlyr",
+              "usesMediaChrome",
+              "usesNativeVideo",
+              "isScrubbing",
+              "isUsingDock",
+              "isPreviewingTime",
+              "previewLoadingFrame",
+              "hasFramePreview",
+              "v128VideoReady",
+              "v129MinimalPlayer",
+              "v130SimpleModern",
+              "v131TimelineFixed",
+              "v132SoftRectPlay",
+              "v133HoverPreview",
+              "v134SpeedPreviewFix",
+              "v135VolumeImagePreview",
+              "v136PillDockSkin",
+              "v137NativeDock",
+              "v138PreviewWarmup",
+              "v139CleanIconDock",
+              "v141FitFullscreenPreviewFix"
+            );
+            playerShell.classList.add("usesVideoJs", "v147VideoJsFresh");
           }
 
           try {
-            video.className = "dsMovieButtonVideo dsCinemaHlsVideo video-js vjs-big-play-centered vjs-theme-swifly";
+            video.className = "dsMovieButtonVideo dsCinemaHlsVideo video-js vjs-big-play-centered swifly-v147-player";
             video.controls = true;
+            video.playsInline = true;
+            video.preload = "auto";
             video.crossOrigin = "anonymous";
             video.removeAttribute("slot");
             video.removeAttribute("src");
+            video.removeAttribute("poster");
             video.load();
           } catch {}
 
           loadVideoJsAssets(function(loaded) {
             if (!loaded || !window.videojs) {
               if (playerShell) {
-                playerShell.classList.remove("usesVideoJs");
+                playerShell.classList.remove("usesVideoJs", "v147VideoJsFresh");
+                playerShell.classList.add("usesNativeVideo");
+              }
+              video.src = src;
+              video.controls = true;
+              video.preload = "auto";
+              try { video.load(); } catch {}
+              setVideoUiState("ready");
+              setPlayerStatus("Video.js failed to load", "Using native controls fallback.", true);
+              return;
+            }
+
+            try {
+              movieButtonPlayer = window.videojs(video, {
+                controls: true,
+                autoplay: false,
+                preload: "auto",
+                fluid: false,
+                fill: true,
+                responsive: true,
+                restoreEl: true,
+                inactivityTimeout: 2100,
+                playbackRates: [0.5, 0.75, 1, 1.25, 1.5, 2],
+                userActions: {
+                  hotkeys: true
+                },
+                controlBar: {
+                  skipButtons: {
+                    backward: 10,
+                    forward: 10
+                  },
+                  volumePanel: {
+                    inline: false
+                  },
+                  pictureInPictureToggle: true,
+                  remainingTimeDisplay: false,
+                  currentTimeDisplay: true,
+                  durationDisplay: true,
+                  timeDivider: true,
+                  playbackRateMenuButton: true,
+                  fullscreenToggle: true
+                },
+                html5: {
+                  vhs: {
+                    overrideNative: true,
+                    withCredentials: false,
+                    enableLowInitialPlaylist: true,
+                    smoothQualityChange: true,
+                    useDevicePixelRatio: true,
+                    handlePartialData: true,
+                    maxPlaylistRetries: 3
+                  },
+                  nativeAudioTracks: false,
+                  nativeVideoTracks: false
+                },
+                sources: [{
+                  src: src,
+                  type: "application/x-mpegURL"
+                }]
+              });
+            } catch (error) {
+              if (playerShell) {
+                playerShell.classList.remove("usesVideoJs", "v147VideoJsFresh");
                 playerShell.classList.add("usesNativeVideo");
               }
               video.src = src;
               video.controls = true;
               try { video.load(); } catch {}
+              setPlayerStatus("Video.js setup failed", (error && error.message) || "Native fallback loaded", true);
               setVideoUiState("ready");
-              setPlayerStatus("Video.js failed to load", "Using native controls fallback.", true);
-              setTimeout(syncCustomSeekBar, 500);
               return;
             }
 
-            movieButtonPlayer = window.videojs(video, {
-              controls: true,
-              autoplay: false,
-              preload: "auto",
-              fluid: false,
-              fill: true,
-              responsive: true,
-              inactivityTimeout: 1700,
-              liveui: false,
-              playbackRates: [0.5, 0.75, 1, 1.25, 1.5, 2],
-              controlBar: {
-                children: [
-                  "playToggle",
-                  "currentTimeDisplay",
-                  "progressControl",
-                  "durationDisplay",
-                  "pictureInPictureToggle",
-                  "fullscreenToggle"
-                ],
-                volumePanel: { inline: false },
-                remainingTimeDisplay: false,
-                pictureInPictureToggle: true
-              },
-              html5: {
-                vhs: {
-                  overrideNative: true,
-                  withCredentials: false,
-                  enableLowInitialPlaylist: true,
-                  smoothQualityChange: true,
-                  useDevicePixelRatio: true,
-                  handlePartialData: true
-                },
-                nativeAudioTracks: false,
-                nativeVideoTracks: false
-              },
-              sources: [{
-                src: src,
-                type: "application/x-mpegURL"
-              }]
-            });
-
             movieButtonPlayer.ready(function() {
-              setVideoJsQualityMenu(movieButtonPlayer);
-              setVideoJsSpeedMenu(movieButtonPlayer);
-              setVideoJsVolumeMenu(movieButtonPlayer);
-              prepareTimelinePreviewVideo(src);
-              schedulePreviewWarmup(movieButtonPlayer);
-              installVideoJsTimelinePreview(movieButtonPlayer);
-              installSwiflyNativeDock(movieButtonPlayer, src);
-              wireVideoJsOverlayControls(movieButtonPlayer);
-              // Video.js already has the main timeline. Keep the custom HLS helper hidden for this skin.
               if (seekDock) seekDock.hidden = true;
 
               try {
                 movieButtonPlayer.fill(true);
                 movieButtonPlayer.responsive(true);
-                var playerEl = movieButtonPlayer.el && movieButtonPlayer.el();
-                if (playerEl && !playerEl.dataset.swiflyMenuFix) {
-                  playerEl.dataset.swiflyMenuFix = "true";
-                  playerEl.addEventListener("mouseover", function(event) {
-                    if (event.target && event.target.closest && event.target.closest(".vjs-menu, .vjs-menu-button, .vjs-progress-control, .dsVideoJsSpeed, .dsVideoJsQuality, .dsVideoJsVolume, .dsVideoJsTimelinePreview, .swiflyVideoDock")) {
-                      movieButtonPlayer.userActive(true);
-                    }
-                  });
-                  playerEl.addEventListener("mousemove", function(event) {
-                    if (event.target && event.target.closest && event.target.closest(".vjs-menu, .vjs-menu-button, .vjs-progress-control, .dsVideoJsSpeed, .dsVideoJsQuality, .dsVideoJsVolume, .dsVideoJsTimelinePreview, .swiflyVideoDock")) {
-                      movieButtonPlayer.userActive(true);
-                    }
-                  });
-                }
+                movieButtonPlayer.src({ src: src, type: "application/x-mpegURL" });
               } catch {}
-              if (playerShell) playerShell.classList.add("v128VideoReady");
-              setPlayerStatus("Ready", "Press play", false);
+
+              if (playerShell) {
+                playerShell.classList.add("v147Ready");
+                try { playerShell.focus({ preventScroll: true }); } catch {}
+              }
+
               setVideoUiState("ready");
-              setStatus("m3u8 loaded. Timeline enabled.");
-              if (playerShell) { try { playerShell.focus({ preventScroll: true }); } catch {} }
-              setTimeout(syncCustomSeekBar, 500);
+              setPlayerStatus("Ready", "Fresh Video.js player loaded", false);
+              setStatus("m3u8 loaded in fresh Video.js player.");
               hidePlayerStatusSoon();
 
               try {
-                movieButtonPlayer.on("timeupdate", function(){});
-                movieButtonPlayer.on("durationchange", function(){});
-                movieButtonPlayer.on("loadedmetadata", function(){});
-                movieButtonPlayer.on("progress", function(){});
-                movieButtonPlayer.on("play", function(){ setVideoUiState("playing"); hidePlayerStatusSoon(); });
-                movieButtonPlayer.on("playing", function(){ setVideoUiState("playing"); hidePlayerStatusSoon(); });
-                movieButtonPlayer.on("pause", function(){ setVideoUiState("paused"); });
+                movieButtonPlayer.on("play", function() {
+                  setVideoUiState("playing");
+                  if (playerShell) playerShell.classList.add("v147Playing");
+                  hidePlayerStatusSoon();
+                });
+
+                movieButtonPlayer.on("playing", function() {
+                  setVideoUiState("playing");
+                  if (playerShell) playerShell.classList.add("v147Playing");
+                  hidePlayerStatusSoon();
+                });
+
+                movieButtonPlayer.on("pause", function() {
+                  setVideoUiState("paused");
+                  if (playerShell) playerShell.classList.remove("v147Playing");
+                });
+
+                movieButtonPlayer.on("fullscreenchange", function() {
+                  if (playerShell) playerShell.classList.toggle("v147Fullscreen", movieButtonPlayer.isFullscreen && movieButtonPlayer.isFullscreen());
+                });
+
                 movieButtonPlayer.on("error", function() {
                   var error = movieButtonPlayer.error && movieButtonPlayer.error();
                   setPlayerStatus("Video.js error", (error && (error.message || error.code)) || "Playback error", true);
                 });
               } catch {}
+
+              // Keyboard shortcuts without adding custom visual controls.
+              if (playerShell && !playerShell.dataset.v147Keys) {
+                playerShell.dataset.v147Keys = "true";
+                playerShell.addEventListener("keydown", function(event) {
+                  if (!movieButtonPlayer || !playerShell.classList.contains("v147VideoJsFresh")) return;
+                  var tag = event.target && event.target.tagName ? event.target.tagName.toLowerCase() : "";
+                  if (tag === "input" || tag === "textarea" || tag === "select") return;
+
+                  if (event.key === "j" || event.key === "J" || event.key === "ArrowLeft") {
+                    event.preventDefault();
+                    try { movieButtonPlayer.currentTime(Math.max(0, movieButtonPlayer.currentTime() - 10)); } catch {}
+                  } else if (event.key === "l" || event.key === "L" || event.key === "ArrowRight") {
+                    event.preventDefault();
+                    try { movieButtonPlayer.currentTime(movieButtonPlayer.currentTime() + 10); } catch {}
+                  } else if (event.key === "k" || event.key === "K" || event.key === " ") {
+                    event.preventDefault();
+                    try { movieButtonPlayer.paused() ? movieButtonPlayer.play() : movieButtonPlayer.pause(); } catch {}
+                  } else if (event.key === "f" || event.key === "F") {
+                    event.preventDefault();
+                    try {
+                      movieButtonPlayer.isFullscreen() ? movieButtonPlayer.exitFullscreen() : movieButtonPlayer.requestFullscreen();
+                    } catch {}
+                  }
+                });
+              }
             });
           });
         }
@@ -42519,6 +42585,494 @@ function watchroomPage(req, res) {
 
       .dsHeroHasTrailer .dsHeroTrailerLayer {
         opacity: 0 !important;
+      }
+    }
+
+
+    /* ============================================================
+       v147 FRESH VIDEO.JS MODERN PLAYER
+       Start-over player skin:
+       - uses Video.js controls directly
+       - no Swifly custom dock
+       - no old floating overlays
+       - m3u8 fills the player
+       - modern pill control bar
+       ============================================================ */
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh {
+      --v147-radius: 24px;
+      --v147-bar-x: clamp(12px, 1.6vw, 22px);
+      --v147-bar-bottom: clamp(12px, 1.6vw, 22px);
+      position: relative !important;
+      min-height: clamp(360px, 72vh, 820px) !important;
+      height: clamp(360px, 72vh, 820px) !important;
+      border-radius: var(--v147-radius) !important;
+      background: #000 !important;
+      overflow: hidden !important;
+      isolation: isolate !important;
+      outline: 1px solid rgba(255,255,255,.07) !important;
+      box-shadow: 0 34px 105px rgba(0,0,0,.56), 0 0 45px rgba(90,160,255,.045) !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 6;
+      pointer-events: none;
+      background:
+        linear-gradient(to top, rgba(0,0,0,.34), transparent 24%, transparent 76%, rgba(0,0,0,.14)),
+        radial-gradient(circle at 50% 100%, rgba(160,190,255,.10), transparent 34%);
+      opacity: .55;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .dsCinemaPlayerAura,
+    .dsVideoJsCinemaShell.v147VideoJsFresh .dsVideoJsTop,
+    .dsVideoJsCinemaShell.v147VideoJsFresh .dsVideoJsCenter,
+    .dsVideoJsCinemaShell.v147VideoJsFresh .dsVideoJsHint,
+    .dsVideoJsCinemaShell.v147VideoJsFresh .dsVideoJsQuality,
+    .dsVideoJsCinemaShell.v147VideoJsFresh .dsVideoJsSpeed,
+    .dsVideoJsCinemaShell.v147VideoJsFresh .dsVideoJsVolume,
+    .dsVideoJsCinemaShell.v147VideoJsFresh .dsVideoJsTimelinePreview,
+    .dsVideoJsCinemaShell.v147VideoJsFresh .swiflyVideoDock,
+    .dsVideoJsCinemaShell.v147VideoJsFresh .dsCinemaSeekDock,
+    .dsVideoJsCinemaShell.v147VideoJsFresh .dsSwiflyMediaController,
+    .dsVideoJsCinemaShell.v147VideoJsFresh .dsMediaChromeControls,
+    .dsVideoJsCinemaShell.v147VideoJsFresh .dsMediaChromeCenter,
+    .dsVideoJsCinemaShell.v147VideoJsFresh .dsMediaChromeQuality,
+    .dsVideoJsCinemaShell.v147VideoJsFresh .plyr {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .video-js,
+    .dsVideoJsCinemaShell.v147VideoJsFresh .dsCinemaHlsVideo,
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-tech {
+      display: block !important;
+      position: absolute !important;
+      inset: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      min-height: 100% !important;
+      max-height: none !important;
+      border-radius: inherit !important;
+      background: #000 !important;
+      overflow: hidden !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-tech {
+      object-fit: cover !important;
+      object-position: center center !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .video-js {
+      font-family: var(--font-ui, "Host Grotesk", Inter, system-ui, sans-serif) !important;
+      color: #fff !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-poster img {
+      object-fit: cover !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-big-play-button {
+      width: 76px !important;
+      height: 50px !important;
+      line-height: 50px !important;
+      left: 50% !important;
+      top: 50% !important;
+      margin-left: -38px !important;
+      margin-top: -25px !important;
+      display: grid !important;
+      place-items: center !important;
+      padding: 0 !important;
+      border: 1px solid rgba(255,255,255,.16) !important;
+      border-radius: 18px !important;
+      color: rgba(255,255,255,.98) !important;
+      background:
+        radial-gradient(circle at 30% 18%, rgba(255,255,255,.18), transparent 44%),
+        rgba(14,18,31,.62) !important;
+      box-shadow: 0 22px 70px rgba(0,0,0,.46), inset 0 1px 0 rgba(255,255,255,.075) !important;
+      backdrop-filter: blur(16px) saturate(1.08) !important;
+      -webkit-backdrop-filter: blur(16px) saturate(1.08) !important;
+      opacity: .96 !important;
+      transition: transform .16s ease, background .16s ease, opacity .16s ease, border-color .16s ease !important;
+      z-index: 14 !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-big-play-button:hover,
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-big-play-button:focus {
+      transform: translateY(-1px) scale(1.035) !important;
+      border-color: rgba(255,255,255,.26) !important;
+      background:
+        radial-gradient(circle at 30% 18%, rgba(255,255,255,.23), transparent 44%),
+        rgba(24,29,48,.72) !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-big-play-button .vjs-icon-placeholder {
+      position: static !important;
+      display: grid !important;
+      place-items: center !important;
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-big-play-button .vjs-icon-placeholder::before {
+      position: static !important;
+      width: auto !important;
+      height: auto !important;
+      margin: 0 !important;
+      line-height: 1 !important;
+      font-size: 26px !important;
+      transform: translateX(2px) !important;
+      text-shadow: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-has-started .vjs-big-play-button,
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-playing .vjs-big-play-button {
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-control-bar {
+      position: absolute !important;
+      left: var(--v147-bar-x) !important;
+      right: var(--v147-bar-x) !important;
+      bottom: var(--v147-bar-bottom) !important;
+      width: auto !important;
+      height: 50px !important;
+      min-height: 50px !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+      padding: 0 14px !important;
+      border-radius: 999px !important;
+      color: rgba(255,255,255,.92) !important;
+      background: rgba(28,31,36,.78) !important;
+      border: 1px solid rgba(255,255,255,.08) !important;
+      box-shadow: 0 16px 44px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.06) !important;
+      backdrop-filter: blur(16px) saturate(1.08) !important;
+      -webkit-backdrop-filter: blur(16px) saturate(1.08) !important;
+      opacity: 0 !important;
+      transform: translateY(10px) !important;
+      transition: opacity .18s ease, transform .18s ease !important;
+      z-index: 30 !important;
+      overflow: visible !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh:hover .vjs-control-bar,
+    .dsVideoJsCinemaShell.v147VideoJsFresh:focus-within .vjs-control-bar,
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-user-active .vjs-control-bar,
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-paused .vjs-control-bar {
+      opacity: 1 !important;
+      transform: translateY(0) !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-control {
+      flex: 0 0 auto !important;
+      width: 30px !important;
+      height: 30px !important;
+      min-width: 30px !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border-radius: 999px !important;
+      color: rgba(255,255,255,.88) !important;
+      background: transparent !important;
+      transition: color .14s ease, background .14s ease, transform .14s ease !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-control:hover,
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-control:focus {
+      color: #fff !important;
+      background: rgba(255,255,255,.09) !important;
+      transform: translateY(-1px) !important;
+      outline: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-button > .vjs-icon-placeholder::before {
+      line-height: 30px !important;
+      font-size: 15px !important;
+      text-shadow: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-progress-control {
+      flex: 1 1 auto !important;
+      width: auto !important;
+      min-width: 160px !important;
+      max-width: none !important;
+      height: 30px !important;
+      padding: 0 !important;
+      margin: 0 4px !important;
+      cursor: pointer !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-progress-holder {
+      height: 5px !important;
+      margin: 12px 0 0 !important;
+      border-radius: 999px !important;
+      background: rgba(255,255,255,.26) !important;
+      overflow: visible !important;
+      box-shadow: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-load-progress,
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-play-progress {
+      height: 5px !important;
+      border-radius: 999px !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-load-progress {
+      background: rgba(255,255,255,.16) !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-play-progress {
+      background: #f3f7fb !important;
+      box-shadow: 0 0 14px rgba(243,247,251,.18) !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-play-progress::before {
+      top: -4px !important;
+      right: -0.38em !important;
+      font-size: 11px !important;
+      color: #f3f7fb !important;
+      text-shadow: 0 0 10px rgba(255,255,255,.25) !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-mouse-display {
+      background: rgba(255,255,255,.9) !important;
+      width: 2px !important;
+      height: 13px !important;
+      top: -4px !important;
+      border-radius: 999px !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-time-tooltip {
+      bottom: 22px !important;
+      padding: 5px 8px !important;
+      border-radius: 999px !important;
+      color: #080b12 !important;
+      background: #f3f7fb !important;
+      box-shadow: 0 14px 30px rgba(0,0,0,.34) !important;
+      font-family: var(--font-ui, "Host Grotesk", Inter, system-ui, sans-serif) !important;
+      font-size: 11px !important;
+      font-weight: 900 !important;
+      line-height: 1 !important;
+      text-shadow: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-time-control {
+      display: block !important;
+      flex: 0 0 auto !important;
+      width: auto !important;
+      min-width: auto !important;
+      height: 30px !important;
+      padding: 0 3px !important;
+      line-height: 30px !important;
+      color: rgba(255,255,255,.86) !important;
+      font-size: 12px !important;
+      font-weight: 850 !important;
+      white-space: nowrap !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-time-divider {
+      min-width: 6px !important;
+      padding: 0 !important;
+      color: rgba(255,255,255,.42) !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-volume-panel {
+      width: 30px !important;
+      min-width: 30px !important;
+      overflow: visible !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-volume-panel.vjs-hover,
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-volume-panel:hover,
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-volume-panel:focus-within,
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-volume-panel.vjs-slider-active {
+      width: 106px !important;
+      min-width: 106px !important;
+      background: rgba(255,255,255,.06) !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-volume-control {
+      width: 72px !important;
+      height: 30px !important;
+      opacity: 1 !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-volume-bar {
+      margin: 12px 10px 0 6px !important;
+      height: 5px !important;
+      border-radius: 999px !important;
+      background: rgba(255,255,255,.22) !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-volume-level {
+      height: 5px !important;
+      border-radius: 999px !important;
+      background: #f3f7fb !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-volume-level::before {
+      top: -4px !important;
+      font-size: 11px !important;
+      color: #f3f7fb !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-playback-rate {
+      width: 42px !important;
+      min-width: 42px !important;
+      overflow: visible !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-playback-rate .vjs-playback-rate-value {
+      line-height: 30px !important;
+      color: rgba(255,255,255,.88) !important;
+      font-size: 12px !important;
+      font-weight: 900 !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-menu {
+      bottom: 36px !important;
+      z-index: 80 !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-menu-content {
+      min-width: 96px !important;
+      padding: 6px !important;
+      border-radius: 14px !important;
+      color: rgba(255,255,255,.78) !important;
+      background: rgba(18,21,27,.96) !important;
+      border: 1px solid rgba(255,255,255,.09) !important;
+      box-shadow: 0 18px 46px rgba(0,0,0,.42) !important;
+      backdrop-filter: blur(16px) saturate(1.08) !important;
+      -webkit-backdrop-filter: blur(16px) saturate(1.08) !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-menu li {
+      min-height: 28px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      border-radius: 9px !important;
+      color: rgba(255,255,255,.74) !important;
+      font-size: 11px !important;
+      font-weight: 850 !important;
+      text-transform: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-menu li:hover,
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-menu li.vjs-selected {
+      color: #070b12 !important;
+      background: #f3f7fb !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-picture-in-picture-control,
+    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-fullscreen-control {
+      margin-left: 0 !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh .dsHlsStatus {
+      left: 16px !important;
+      top: 16px !important;
+      bottom: auto !important;
+      max-width: min(230px, calc(100% - 32px)) !important;
+      padding: 8px 10px !important;
+      border-radius: 13px !important;
+      color: rgba(255,255,255,.86) !important;
+      background: rgba(15,18,28,.54) !important;
+      border: 1px solid rgba(255,255,255,.08) !important;
+      box-shadow: 0 12px 32px rgba(0,0,0,.28) !important;
+      backdrop-filter: blur(14px) saturate(1.08) !important;
+      -webkit-backdrop-filter: blur(14px) saturate(1.08) !important;
+      z-index: 35 !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh.v147Ready .dsHlsStatus:not(.isError),
+    .dsVideoJsCinemaShell.v147VideoJsFresh.v147Playing .dsHlsStatus:not(.isError) {
+      opacity: 0 !important;
+      transform: translateY(-6px) !important;
+      pointer-events: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh.v147Fullscreen,
+    .dsVideoJsCinemaShell.v147VideoJsFresh:fullscreen,
+    .dsVideoJsCinemaShell.v147VideoJsFresh:-webkit-full-screen {
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: 100vw !important;
+      max-height: 100vh !important;
+      border-radius: 0 !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh.v147Fullscreen .video-js,
+    .dsVideoJsCinemaShell.v147VideoJsFresh:fullscreen .video-js,
+    .dsVideoJsCinemaShell.v147VideoJsFresh:-webkit-full-screen .video-js {
+      width: 100vw !important;
+      height: 100vh !important;
+      border-radius: 0 !important;
+    }
+
+    .dsVideoJsCinemaShell.v147VideoJsFresh.v147Fullscreen .vjs-control-bar,
+    .dsVideoJsCinemaShell.v147VideoJsFresh:fullscreen .vjs-control-bar,
+    .dsVideoJsCinemaShell.v147VideoJsFresh:-webkit-full-screen .vjs-control-bar {
+      left: max(16px, env(safe-area-inset-left)) !important;
+      right: max(16px, env(safe-area-inset-right)) !important;
+      bottom: max(16px, env(safe-area-inset-bottom)) !important;
+    }
+
+    @media(max-width: 900px) {
+      .dsVideoJsCinemaShell.v147VideoJsFresh {
+        --v147-radius: 18px;
+        --v147-bar-x: 8px;
+        --v147-bar-bottom: 8px;
+        min-height: clamp(292px, 58vh, 620px) !important;
+        height: clamp(292px, 58vh, 620px) !important;
+      }
+
+      .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-control-bar {
+        height: 46px !important;
+        min-height: 46px !important;
+        gap: 6px !important;
+        padding: 0 10px !important;
+      }
+
+      .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-time-control,
+      .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-picture-in-picture-control {
+        display: none !important;
+      }
+
+      .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-progress-control {
+        min-width: 88px !important;
+      }
+
+      .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-volume-panel.vjs-hover,
+      .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-volume-panel:hover,
+      .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-volume-panel:focus-within,
+      .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-volume-panel.vjs-slider-active {
+        width: 30px !important;
+        min-width: 30px !important;
+      }
+
+      .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-volume-control {
+        display: none !important;
+      }
+    }
+
+    @media(max-width: 560px) {
+      .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-playback-rate,
+      .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-skip-backward-10,
+      .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-skip-forward-10 {
+        display: none !important;
+      }
+
+      .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-big-play-button {
+        width: 66px !important;
+        height: 44px !important;
+        margin-left: -33px !important;
+        margin-top: -22px !important;
       }
     }
 
