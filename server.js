@@ -30510,6 +30510,435 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v131 VIDEO.JS TIMELINE FIX + MODERN COMPACT SKIN
+       Fixes the screenshot bug:
+       - progress/timeframe was short because generic .vjs-control width
+         rules were overriding the progress component.
+       - this final layer forces progressControl to span the player.
+       - control bar becomes a compact modern floating dock.
+       ============================================================ */
+
+    .dsVideoJsCinemaShell.v131TimelineFixed {
+      --player-radius: 24px;
+      --dock-x: clamp(10px, 1.4vw, 18px);
+      --dock-bottom: clamp(10px, 1.4vw, 18px);
+      --dock-height: 58px;
+      background: #000 !important;
+      border-radius: var(--player-radius) !important;
+      outline: 1px solid rgba(255,255,255,.07) !important;
+      box-shadow:
+        0 30px 110px rgba(0,0,0,.56),
+        0 0 42px rgba(85,215,255,.045) !important;
+      overflow: hidden !important;
+      min-height: clamp(330px, 68vh, 760px) !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed::after {
+      opacity: .10 !important;
+      background: linear-gradient(to bottom, rgba(0,0,0,.20), transparent 18%, transparent 80%, rgba(0,0,0,.25)) !important;
+      pointer-events: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .dsCinemaPlayerAura,
+    .dsVideoJsCinemaShell.v131TimelineFixed .dsVideoJsCenter,
+    .dsVideoJsCinemaShell.v131TimelineFixed .dsVideoJsHint,
+    .dsVideoJsCinemaShell.v131TimelineFixed .dsCinemaSeekDock,
+    .dsVideoJsCinemaShell.v131TimelineFixed .dsVideoJsTop {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .video-js,
+    .dsVideoJsCinemaShell.v131TimelineFixed .dsCinemaHlsVideo {
+      display: block !important;
+      position: relative !important;
+      z-index: 4 !important;
+      width: 100% !important;
+      height: clamp(330px, 68vh, 760px) !important;
+      min-height: 330px !important;
+      max-height: 78vh !important;
+      border-radius: var(--player-radius) !important;
+      background: #000 !important;
+      overflow: hidden !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .vjs-tech {
+      object-fit: contain !important;
+      background: #000 !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .dsHlsStatus {
+      left: 14px !important;
+      top: 14px !important;
+      bottom: auto !important;
+      max-width: min(210px, calc(100% - 28px)) !important;
+      padding: 7px 9px !important;
+      border-radius: 12px !important;
+      background: rgba(5,8,18,.48) !important;
+      border: 1px solid rgba(255,255,255,.075) !important;
+      box-shadow: 0 10px 26px rgba(0,0,0,.24) !important;
+      backdrop-filter: blur(12px) saturate(1.05) !important;
+      -webkit-backdrop-filter: blur(12px) saturate(1.05) !important;
+      z-index: 58 !important;
+      transition: opacity .18s ease, transform .18s ease !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .dsHlsStatus b {
+      font-size: 12px !important;
+      line-height: 1.05 !important;
+      letter-spacing: -.025em !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .dsHlsStatus span {
+      margin-top: 2px !important;
+      font-size: 9px !important;
+      color: rgba(238,242,255,.52) !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed.v128VideoReady .dsHlsStatus:not(.isError),
+    .dsVideoJsCinemaShell.v131TimelineFixed.isPlaying .dsHlsStatus:not(.isError),
+    .dsVideoJsCinemaShell.v131TimelineFixed.isReady .dsHlsStatus:not(.isError) {
+      opacity: 0 !important;
+      transform: translateY(-6px) !important;
+      pointer-events: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .vjs-big-play-button {
+      display: block !important;
+      width: clamp(54px, 5.4vw, 72px) !important;
+      height: clamp(54px, 5.4vw, 72px) !important;
+      line-height: clamp(54px, 5.4vw, 72px) !important;
+      left: 50% !important;
+      top: 50% !important;
+      margin-left: calc(clamp(54px, 5.4vw, 72px) / -2) !important;
+      margin-top: calc(clamp(54px, 5.4vw, 72px) / -2) !important;
+      border-radius: 999px !important;
+      border: 1px solid rgba(255,255,255,.14) !important;
+      color: white !important;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.14), transparent 42%),
+        rgba(8,12,24,.48) !important;
+      box-shadow:
+        0 18px 54px rgba(0,0,0,.44),
+        0 0 22px rgba(85,215,255,.07) !important;
+      backdrop-filter: blur(12px) saturate(1.06) !important;
+      -webkit-backdrop-filter: blur(12px) saturate(1.06) !important;
+      opacity: .96 !important;
+      transition: transform .16s ease, opacity .16s ease, background .16s ease !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .vjs-big-play-button:hover,
+    .dsVideoJsCinemaShell.v131TimelineFixed .vjs-big-play-button:focus {
+      transform: scale(1.035) !important;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.20), transparent 42%),
+        rgba(18,25,46,.58) !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .vjs-big-play-button .vjs-icon-placeholder::before {
+      font-size: clamp(22px, 2.3vw, 30px) !important;
+      line-height: clamp(54px, 5.4vw, 72px) !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .vjs-has-started .vjs-big-play-button,
+    .dsVideoJsCinemaShell.v131TimelineFixed .vjs-playing .vjs-big-play-button {
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .vjs-control-bar {
+      position: absolute !important;
+      left: var(--dock-x) !important;
+      right: var(--dock-x) !important;
+      bottom: var(--dock-bottom) !important;
+      width: auto !important;
+      height: var(--dock-height) !important;
+      min-height: var(--dock-height) !important;
+      display: flex !important;
+      align-items: flex-end !important;
+      gap: 2px !important;
+      padding: 22px 10px 8px !important;
+      border-radius: 17px !important;
+      background: rgba(5,8,18,.60) !important;
+      border: 1px solid rgba(255,255,255,.075) !important;
+      box-shadow: 0 16px 42px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.045) !important;
+      backdrop-filter: blur(14px) saturate(1.08) !important;
+      -webkit-backdrop-filter: blur(14px) saturate(1.08) !important;
+      opacity: 0 !important;
+      transform: translateY(8px) !important;
+      transition: opacity .16s ease, transform .16s ease !important;
+      pointer-events: auto !important;
+      z-index: 52 !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed:hover .vjs-control-bar,
+    .dsVideoJsCinemaShell.v131TimelineFixed:focus-within .vjs-control-bar,
+    .dsVideoJsCinemaShell.v131TimelineFixed .vjs-user-active .vjs-control-bar,
+    .dsVideoJsCinemaShell.v131TimelineFixed .vjs-paused .vjs-control-bar {
+      opacity: 1 !important;
+      transform: translateY(0) !important;
+    }
+
+    /* Critical fix: progressControl is also a .vjs-control, so it was being forced to 30px wide.
+       This final, more specific rule wins and makes the timeframe full-width. */
+    .dsVideoJsCinemaShell.v131TimelineFixed .vjs-control-bar .vjs-progress-control.vjs-control {
+      position: absolute !important;
+      left: 10px !important;
+      right: 10px !important;
+      top: 7px !important;
+      bottom: auto !important;
+      width: calc(100% - 20px) !important;
+      max-width: none !important;
+      min-width: 0 !important;
+      height: 16px !important;
+      flex: 0 0 auto !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      cursor: pointer !important;
+      z-index: 56 !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .vjs-control-bar .vjs-progress-control .vjs-progress-holder {
+      position: relative !important;
+      width: 100% !important;
+      height: 5px !important;
+      margin: 6px 0 0 !important;
+      border-radius: 999px !important;
+      background: rgba(255,255,255,.18) !important;
+      overflow: visible !important;
+      box-shadow: none !important;
+      cursor: pointer !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .vjs-load-progress,
+    .dsVideoJsCinemaShell.v131TimelineFixed .vjs-play-progress {
+      height: 5px !important;
+      border-radius: 999px !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .vjs-play-progress {
+      background: linear-gradient(90deg, #55d7ff, #8b5cf6) !important;
+      box-shadow: 0 0 10px rgba(85,215,255,.22) !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .vjs-play-progress::before {
+      top: -5px !important;
+      right: -0.45em !important;
+      font-size: 12px !important;
+      color: #dff8ff !important;
+      text-shadow: 0 0 10px rgba(85,215,255,.28) !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .vjs-control-bar > .vjs-control:not(.vjs-progress-control) {
+      width: 30px !important;
+      height: 30px !important;
+      min-width: 30px !important;
+      border-radius: 999px !important;
+      color: rgba(255,255,255,.74) !important;
+      background: transparent !important;
+      transition: color .14s ease, background .14s ease, transform .14s ease !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .vjs-control-bar > .vjs-control:not(.vjs-progress-control):hover,
+    .dsVideoJsCinemaShell.v131TimelineFixed .vjs-control-bar > .vjs-control:not(.vjs-progress-control):focus {
+      color: white !important;
+      background: rgba(255,255,255,.085) !important;
+      transform: translateY(-1px) !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .vjs-button > .vjs-icon-placeholder::before {
+      line-height: 30px !important;
+      font-size: 14px !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .vjs-time-control {
+      display: block !important;
+      width: auto !important;
+      min-width: auto !important;
+      height: 30px !important;
+      padding: 0 3px !important;
+      line-height: 30px !important;
+      font-size: 10px !important;
+      font-weight: 800 !important;
+      color: rgba(255,255,255,.56) !important;
+      white-space: nowrap !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .vjs-time-divider {
+      min-width: 5px !important;
+      padding: 0 !important;
+      color: rgba(255,255,255,.30) !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .vjs-volume-panel {
+      width: 30px !important;
+      min-width: 30px !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .vjs-volume-panel.vjs-volume-panel-horizontal:hover,
+    .dsVideoJsCinemaShell.v131TimelineFixed .vjs-volume-panel.vjs-volume-panel-horizontal.vjs-slider-active {
+      width: 90px !important;
+      background: rgba(255,255,255,.05) !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .vjs-volume-bar {
+      margin-top: 1.25em !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .vjs-playback-rate {
+      width: 42px !important;
+      min-width: 42px !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .vjs-playback-rate .vjs-playback-rate-value {
+      line-height: 30px !important;
+      font-size: 10px !important;
+      font-weight: 900 !important;
+      color: rgba(255,255,255,.66) !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .vjs-menu-content {
+      border-radius: 12px !important;
+      border: 1px solid rgba(255,255,255,.09) !important;
+      background: rgba(5,8,18,.94) !important;
+      box-shadow: 0 16px 46px rgba(0,0,0,.38) !important;
+      backdrop-filter: blur(16px) saturate(1.08) !important;
+      -webkit-backdrop-filter: blur(16px) saturate(1.08) !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .vjs-menu li {
+      border-radius: 9px !important;
+      color: rgba(255,255,255,.68) !important;
+      font-size: 11px !important;
+      font-weight: 800 !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .vjs-menu li.vjs-selected,
+    .dsVideoJsCinemaShell.v131TimelineFixed .vjs-menu li:hover {
+      color: #06101d !important;
+      background: linear-gradient(135deg, #ffffff, #dff8ff) !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .dsVideoJsQuality {
+      right: calc(var(--dock-x) + 8px) !important;
+      bottom: calc(var(--dock-bottom) + var(--dock-height) + 8px) !important;
+      z-index: 58 !important;
+      opacity: 0 !important;
+      transform: translateY(5px) !important;
+      transition: opacity .16s ease, transform .16s ease !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed:hover .dsVideoJsQuality,
+    .dsVideoJsCinemaShell.v131TimelineFixed:focus-within .dsVideoJsQuality,
+    .dsVideoJsCinemaShell.v131TimelineFixed.isPaused .dsVideoJsQuality {
+      opacity: .86 !important;
+      transform: translateY(0) !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .dsVideoJsQualityToggle {
+      min-height: 26px !important;
+      min-width: 54px !important;
+      padding: 0 8px !important;
+      gap: 4px !important;
+      border-radius: 999px !important;
+      background: rgba(5,8,18,.52) !important;
+      border: 1px solid rgba(255,255,255,.08) !important;
+      box-shadow: 0 8px 22px rgba(0,0,0,.22) !important;
+      backdrop-filter: blur(12px) saturate(1.06) !important;
+      -webkit-backdrop-filter: blur(12px) saturate(1.06) !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .dsVideoJsQualityToggle span {
+      display: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .dsVideoJsQualityToggle b {
+      font-size: 10px !important;
+      color: rgba(255,255,255,.78) !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .dsVideoJsQualityMenu {
+      bottom: 32px !important;
+      min-width: 96px !important;
+      padding: 5px !important;
+      border-radius: 12px !important;
+      background: rgba(5,8,18,.94) !important;
+      box-shadow: 0 14px 40px rgba(0,0,0,.36) !important;
+    }
+
+    .dsVideoJsCinemaShell.v131TimelineFixed .dsVideoJsQualityMenu button {
+      min-height: 28px !important;
+      padding: 0 9px !important;
+      border-radius: 9px !important;
+      font-size: 11px !important;
+    }
+
+    @media(max-width: 900px) {
+      .dsVideoJsCinemaShell.v131TimelineFixed {
+        --player-radius: 18px;
+        --dock-x: 8px;
+        --dock-bottom: 8px;
+        --dock-height: 54px;
+        min-height: clamp(280px, 56vh, 580px) !important;
+      }
+
+      .dsVideoJsCinemaShell.v131TimelineFixed .video-js,
+      .dsVideoJsCinemaShell.v131TimelineFixed .dsCinemaHlsVideo {
+        height: clamp(280px, 56vh, 580px) !important;
+        min-height: 280px !important;
+      }
+
+      .dsVideoJsCinemaShell.v131TimelineFixed .vjs-control-bar {
+        padding: 20px 8px 8px !important;
+      }
+
+      .dsVideoJsCinemaShell.v131TimelineFixed .vjs-control-bar .vjs-progress-control.vjs-control {
+        left: 8px !important;
+        right: 8px !important;
+        width: calc(100% - 16px) !important;
+      }
+
+      .dsVideoJsCinemaShell.v131TimelineFixed .vjs-time-control,
+      .dsVideoJsCinemaShell.v131TimelineFixed .vjs-volume-panel,
+      .dsVideoJsCinemaShell.v131TimelineFixed .vjs-picture-in-picture-control {
+        display: none !important;
+      }
+
+      .dsVideoJsCinemaShell.v131TimelineFixed .dsVideoJsQuality {
+        display: none !important;
+      }
+    }
+
+    @media(max-width: 520px) {
+      .dsVideoJsCinemaShell.v131TimelineFixed,
+      .dsVideoJsCinemaShell.v131TimelineFixed .video-js,
+      .dsVideoJsCinemaShell.v131TimelineFixed .dsCinemaHlsVideo {
+        height: 50vh !important;
+        min-height: 254px !important;
+      }
+
+      .dsVideoJsCinemaShell.v131TimelineFixed .vjs-playback-rate {
+        display: none !important;
+      }
+
+      .dsVideoJsCinemaShell.v131TimelineFixed .vjs-big-play-button {
+        width: 56px !important;
+        height: 56px !important;
+        line-height: 56px !important;
+        margin-left: -28px !important;
+        margin-top: -28px !important;
+      }
+
+      .dsVideoJsCinemaShell.v131TimelineFixed .vjs-big-play-button .vjs-icon-placeholder::before {
+        line-height: 56px !important;
+        font-size: 23px !important;
+      }
+    }
+
   </style>
 
     <script>
@@ -34258,8 +34687,8 @@ async function watchPage(req, res, type) {
           destroyRegularMoviePlayers();
 
           if (playerShell) {
-            playerShell.classList.remove("usesPlyr", "usesMediaChrome", "usesNativeVideo", "isScrubbing", "v128VideoReady", "v129MinimalPlayer", "v130SimpleModern");
-            playerShell.classList.add("usesVideoJs", "v129MinimalPlayer", "v130SimpleModern");
+            playerShell.classList.remove("usesPlyr", "usesMediaChrome", "usesNativeVideo", "isScrubbing", "v128VideoReady", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed");
+            playerShell.classList.add("usesVideoJs", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed");
           }
 
           try {
@@ -34336,6 +34765,10 @@ async function watchPage(req, res, type) {
               // Video.js already has the main timeline. Keep the custom HLS helper hidden for this skin.
               if (seekDock) seekDock.hidden = true;
 
+              try {
+                movieButtonPlayer.fill(true);
+                movieButtonPlayer.responsive(true);
+              } catch {}
               if (playerShell) playerShell.classList.add("v128VideoReady");
               setPlayerStatus("Ready", "Press play", false);
               setVideoUiState("ready");
