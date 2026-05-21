@@ -24592,6 +24592,447 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v114 POLISHED STUDIO DRAWER
+       Cleaner Studio feature: premium compact button + right-side
+       drawer with better layout and no random giant white pill.
+       ============================================================ */
+
+    .navStudioButton {
+      min-height: 36px !important;
+      padding: 0 12px !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 7px !important;
+      border-radius: 999px !important;
+      border: 1px solid rgba(255,255,255,.12) !important;
+      outline: none !important;
+      color: rgba(255,255,255,.88) !important;
+      background:
+        radial-gradient(120px circle at 20% 0%, rgba(85,215,255,.18), transparent 60%),
+        rgba(255,255,255,.065) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.055) !important;
+      font-size: 12px !important;
+      font-weight: 900 !important;
+      letter-spacing: -.01em !important;
+    }
+
+    .navStudioButton span {
+      width: 20px;
+      height: 20px;
+      display: inline-grid;
+      place-items: center;
+      border-radius: 999px;
+      color: #06101d;
+      background: linear-gradient(135deg, #dff8ff, #c7bbff);
+      font-size: 12px;
+    }
+
+    .navStudioButton:hover {
+      color: white !important;
+      transform: translateY(-1px);
+      background:
+        radial-gradient(160px circle at 20% 0%, rgba(85,215,255,.22), transparent 60%),
+        rgba(255,255,255,.10) !important;
+    }
+
+    .controlDock {
+      left: auto !important;
+      right: 22px !important;
+      top: auto !important;
+      bottom: calc(24px + var(--safe-bottom)) !important;
+      z-index: 2147483600 !important;
+      display: flex !important;
+      pointer-events: none !important;
+    }
+
+    .controlDock .controlButton.studioButton {
+      pointer-events: auto !important;
+      width: auto !important;
+      min-width: 142px !important;
+      height: 52px !important;
+      padding: 0 14px 0 10px !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 9px !important;
+      border-radius: 999px !important;
+      border: 1px solid rgba(255,255,255,.14) !important;
+      outline: none !important;
+      color: white !important;
+      background:
+        radial-gradient(140px circle at 20% 0%, rgba(85,215,255,.22), transparent 62%),
+        linear-gradient(180deg, rgba(255,255,255,.13), rgba(255,255,255,.07)),
+        rgba(4,7,18,.84) !important;
+      box-shadow:
+        0 18px 62px rgba(0,0,0,.42),
+        0 0 38px rgba(85,215,255,.14),
+        inset 0 1px 0 rgba(255,255,255,.075) !important;
+      backdrop-filter: blur(22px) saturate(1.18) !important;
+      -webkit-backdrop-filter: blur(22px) saturate(1.18) !important;
+      animation: none !important;
+    }
+
+    .controlDock .controlButton.studioButton span {
+      width: 32px !important;
+      height: 32px !important;
+      display: inline-grid !important;
+      place-items: center !important;
+      border-radius: 999px !important;
+      color: #06101d !important;
+      background:
+        radial-gradient(circle at 28% 20%, rgba(255,255,255,.95), transparent 40%),
+        linear-gradient(135deg, #dff8ff, #8b5cf6) !important;
+      box-shadow: 0 10px 30px rgba(85,215,255,.25) !important;
+    }
+
+    .controlDock .controlButton.studioButton b {
+      display: block !important;
+      font-size: 14px !important;
+      line-height: .95 !important;
+      font-weight: 950 !important;
+      color: white !important;
+    }
+
+    .controlDock .controlButton.studioButton small {
+      display: block !important;
+      margin-top: 2px !important;
+      color: rgba(255,255,255,.48) !important;
+      font-size: 10px !important;
+      line-height: .95 !important;
+      font-weight: 850 !important;
+    }
+
+    .controlDock .controlButton.studioButton::after {
+      display: none !important;
+      content: none !important;
+    }
+
+    .controlDock .controlButton.studioButton:hover {
+      transform: translateY(-3px) scale(1.02) !important;
+      background:
+        radial-gradient(180px circle at 20% 0%, rgba(85,215,255,.28), transparent 62%),
+        linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.08)),
+        rgba(4,7,18,.92) !important;
+      box-shadow:
+        0 26px 82px rgba(0,0,0,.48),
+        0 0 56px rgba(85,215,255,.24),
+        inset 0 1px 0 rgba(255,255,255,.09) !important;
+    }
+
+    .controlPanel.v111StyleStudio.v114StudioDrawer {
+      position: fixed !important;
+      left: auto !important;
+      right: 22px !important;
+      top: auto !important;
+      bottom: calc(88px + var(--safe-bottom)) !important;
+      z-index: 2147483599 !important;
+      width: min(430px, calc(100vw - 44px)) !important;
+      max-height: min(720px, calc(100dvh - 118px)) !important;
+      display: block !important;
+      overflow-y: auto !important;
+      padding: 16px !important;
+      border-radius: 30px !important;
+      border: 1px solid rgba(255,255,255,.13) !important;
+      outline: none !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+      transform: translateY(18px) scale(.975) !important;
+      background:
+        radial-gradient(520px circle at 0% 0%, rgba(85,215,255,.17), transparent 54%),
+        radial-gradient(520px circle at 100% 0%, rgba(139,92,246,.20), transparent 54%),
+        linear-gradient(180deg, rgba(255,255,255,.095), rgba(255,255,255,.045)),
+        rgba(4,7,18,.92) !important;
+      box-shadow:
+        0 34px 120px rgba(0,0,0,.62),
+        0 0 70px rgba(85,215,255,.12),
+        inset 0 1px 0 rgba(255,255,255,.08) !important;
+      backdrop-filter: blur(26px) saturate(1.20) !important;
+      -webkit-backdrop-filter: blur(26px) saturate(1.20) !important;
+      transition: opacity .18s ease, transform .18s ease, visibility .18s ease !important;
+    }
+
+    .controlPanel.v111StyleStudio.v114StudioDrawer.open {
+      opacity: 1 !important;
+      visibility: visible !important;
+      pointer-events: auto !important;
+      transform: translateY(0) scale(1) !important;
+    }
+
+    .controlPanel.v111StyleStudio.v114StudioDrawer::before {
+      display: none !important;
+      content: none !important;
+    }
+
+    .studioHero {
+      display: grid;
+      grid-template-columns: 46px minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: start;
+      padding: 13px;
+      border-radius: 24px;
+      background:
+        radial-gradient(260px circle at 0% 0%, rgba(255,255,255,.12), transparent 52%),
+        rgba(255,255,255,.055);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    }
+
+    .studioHeroOrb {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border-radius: 17px;
+      color: #06101d;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.94), transparent 38%),
+        linear-gradient(135deg, #dff8ff, #8b5cf6);
+      box-shadow: 0 18px 46px rgba(85,215,255,.22);
+      font-size: 19px;
+      font-weight: 950;
+    }
+
+    .studioHero span {
+      color: rgba(223,248,255,.72);
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .studioHero h3 {
+      margin: 2px 0 5px !important;
+      font-family: var(--font-display, "Space Grotesk", Inter, sans-serif) !important;
+      font-size: 28px !important;
+      line-height: .94 !important;
+      letter-spacing: -.07em !important;
+      color: white !important;
+    }
+
+    .studioHero p {
+      margin: 0 !important;
+      max-width: 255px;
+      color: rgba(255,255,255,.54) !important;
+      font-size: 12px !important;
+      line-height: 1.35 !important;
+    }
+
+    .styleReset {
+      min-height: 34px !important;
+      padding: 0 11px !important;
+      border-radius: 999px !important;
+      border: 1px solid rgba(255,255,255,.12) !important;
+      color: rgba(255,255,255,.82) !important;
+      background: rgba(255,255,255,.075) !important;
+      font-size: 12px !important;
+    }
+
+    .studioPreview {
+      display: grid;
+      grid-template-columns: 72px 1fr;
+      gap: 12px;
+      align-items: center;
+      margin: 12px 0 13px;
+      padding: 10px;
+      border-radius: 22px;
+      background:
+        linear-gradient(90deg, rgba(85,215,255,.10), rgba(139,92,246,.08)),
+        rgba(255,255,255,.045);
+      border: 1px solid rgba(255,255,255,.09);
+    }
+
+    .previewPoster {
+      width: 72px;
+      height: 45px;
+      border-radius: 14px;
+      background:
+        radial-gradient(26px circle at 24% 30%, #dff8ff, transparent 70%),
+        radial-gradient(36px circle at 78% 22%, #8b5cf6, transparent 70%),
+        linear-gradient(135deg, #08101d, #17223a);
+      box-shadow: 0 14px 38px rgba(0,0,0,.26);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .previewPoster::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(115deg, transparent 0 35%, rgba(255,255,255,.22) 46%, transparent 57%);
+      transform: translateX(-120%);
+      animation: studioPreviewShine 3.2s ease-in-out infinite;
+    }
+
+    .previewText {
+      display: grid;
+      gap: 4px;
+    }
+
+    .previewText b {
+      color: white;
+      font-size: 13px;
+      font-weight: 950;
+      letter-spacing: -.02em;
+    }
+
+    .previewText span {
+      color: rgba(255,255,255,.50);
+      font-size: 12px;
+      line-height: 1.32;
+      font-weight: 720;
+    }
+
+    .styleGroup {
+      margin-top: 12px !important;
+      padding: 11px !important;
+      border-radius: 22px !important;
+      border: 1px solid rgba(255,255,255,.085) !important;
+      background: rgba(255,255,255,.035) !important;
+    }
+
+    .styleGroupTitle {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 9px;
+    }
+
+    .styleGroupTitle b {
+      color: rgba(255,255,255,.88);
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .styleGroupTitle span {
+      color: rgba(255,255,255,.38);
+      font-size: 11px;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .compactStudioGrid {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      gap: 8px !important;
+      grid-template-columns: none !important;
+    }
+
+    .compactStudioGrid button {
+      min-height: 36px !important;
+      flex: 1 1 auto;
+      min-width: 94px;
+      padding: 0 11px !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 7px !important;
+      border-radius: 999px !important;
+      border: 1px solid rgba(255,255,255,.10) !important;
+      color: rgba(255,255,255,.72) !important;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.04)) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.045) !important;
+      font-size: 12px !important;
+      font-weight: 900 !important;
+      letter-spacing: -.01em !important;
+    }
+
+    .compactStudioGrid button i {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #55d7ff, #8b5cf6);
+      box-shadow: 0 0 18px rgba(85,215,255,.36);
+    }
+
+    .compactStudioGrid button[data-theme="red"] i {
+      background: linear-gradient(135deg, #ff5d6c, #ffb199);
+    }
+
+    .compactStudioGrid button[data-theme="blue"] i {
+      background: linear-gradient(135deg, #55d7ff, #3b82f6);
+    }
+
+    .compactStudioGrid button[data-theme="green"] i {
+      background: linear-gradient(135deg, #67f8c4, #22c55e);
+    }
+
+    .compactStudioGrid button[data-theme="mono"] i {
+      background: linear-gradient(135deg, #ffffff, #818cf8);
+    }
+
+    .compactStudioGrid button:hover,
+    .compactStudioGrid button.active {
+      color: white !important;
+      border-color: rgba(223,248,255,.26) !important;
+      background:
+        radial-gradient(140px circle at 30% 0%, rgba(85,215,255,.18), transparent 62%),
+        rgba(255,255,255,.09) !important;
+      box-shadow:
+        0 12px 34px rgba(0,0,0,.22),
+        inset 0 1px 0 rgba(255,255,255,.075) !important;
+      transform: translateY(-1px) !important;
+    }
+
+    @keyframes studioPreviewShine {
+      0%, 58% { transform: translateX(-120%); opacity: 0; }
+      72% { opacity: 1; }
+      100% { transform: translateX(120%); opacity: 0; }
+    }
+
+    @media(max-width: 760px) {
+      .navStudioButton {
+        display: none !important;
+      }
+
+      .controlDock {
+        right: 14px !important;
+        bottom: calc(92px + var(--safe-bottom)) !important;
+      }
+
+      .controlDock .controlButton.studioButton {
+        min-width: 124px !important;
+        height: 48px !important;
+      }
+
+      .controlDock .controlButton.studioButton small {
+        display: none !important;
+      }
+
+      .controlPanel.v111StyleStudio.v114StudioDrawer {
+        right: 12px !important;
+        left: 12px !important;
+        bottom: calc(148px + var(--safe-bottom)) !important;
+        width: auto !important;
+        max-height: min(650px, calc(100dvh - 176px)) !important;
+      }
+
+      .studioHero {
+        grid-template-columns: 42px minmax(0, 1fr);
+      }
+
+      .styleReset {
+        grid-column: 1 / -1;
+        width: 100%;
+      }
+
+      .studioPreview {
+        grid-template-columns: 1fr;
+      }
+
+      .previewPoster {
+        width: 100%;
+        height: 76px;
+      }
+    }
+
   </style>
 
     <script>
@@ -24783,33 +25224,48 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
   </nav>
 
   <div class="controlDock">
-    <button id="controlToggle" class="controlButton studioButton" type="button"><span>✦</span><b>Studio</b></button>
+    <button id="controlToggle" class="controlButton studioButton" type="button"><span>✦</span><b>Studio</b><small>Customize</small></button>
   </div>
 
-  <section id="controlPanel" class="controlPanel v111StyleStudio" aria-label="Style Studio">
-    <div class="styleStudioHead">
+    <section id="controlPanel" class="controlPanel v111StyleStudio v114StudioDrawer" aria-label="Swifly Studio">
+    <div class="studioHero">
+      <div class="studioHeroOrb">✦</div>
       <div>
         <span>Swifly Studio</span>
-        <h3>Effects</h3>
+        <h3>Customize the vibe</h3>
+        <p>Change how SwiflyTV looks without touching code.</p>
       </div>
       <button id="styleReset" class="styleReset" type="button">Reset</button>
     </div>
-    <p>Change fonts, themes, spacing, and effects. Your choices save in this browser.</p>
 
-    <div class="styleGroup">
-      <b>Theme</b>
-      <div class="themeGrid styleGrid">
-        <button data-theme="default">Swifly</button>
-        <button data-theme="red">Heat</button>
-        <button data-theme="blue">Ice</button>
-        <button data-theme="green">Mint</button>
-        <button data-theme="mono">Mono</button>
+    <div class="studioPreview">
+      <div class="previewPoster"></div>
+      <div class="previewText">
+        <b>Live preview</b>
+        <span>Theme, fonts, spacing, and effects save on this browser.</span>
       </div>
     </div>
 
     <div class="styleGroup">
-      <b>Font</b>
-      <div class="styleGrid">
+      <div class="styleGroupTitle">
+        <b>Look</b>
+        <span>site colors</span>
+      </div>
+      <div class="themeGrid styleGrid compactStudioGrid">
+        <button data-theme="default"><i></i>Swifly</button>
+        <button data-theme="red"><i></i>Heat</button>
+        <button data-theme="blue"><i></i>Ice</button>
+        <button data-theme="green"><i></i>Mint</button>
+        <button data-theme="mono"><i></i>Mono</button>
+      </div>
+    </div>
+
+    <div class="styleGroup">
+      <div class="styleGroupTitle">
+        <b>Font</b>
+        <span>personality</span>
+      </div>
+      <div class="styleGrid compactStudioGrid">
         <button data-font="default">Premium</button>
         <button data-font="cinema">Cinema</button>
         <button data-font="soft">Soft</button>
@@ -24818,8 +25274,11 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     </div>
 
     <div class="styleGroup">
-      <b>Effects</b>
-      <div class="styleGrid">
+      <div class="styleGroupTitle">
+        <b>Effects</b>
+        <span>motion + glow</span>
+      </div>
+      <div class="styleGrid compactStudioGrid">
         <button data-effect="cinematic">Cinematic</button>
         <button data-effect="dropcart">Dropcart</button>
         <button data-effect="neon">Neon</button>
@@ -24830,11 +25289,14 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     </div>
 
     <div class="styleGroup">
-      <b>Experience</b>
-      <div class="styleGrid">
+      <div class="styleGroupTitle">
+        <b>Experience</b>
+        <span>spacing</span>
+      </div>
+      <div class="styleGrid compactStudioGrid">
         <button data-density="comfy">Comfy</button>
         <button data-density="compact">Compact</button>
-        <button id="motionToggle" type="button">Motion</button>
+        <button id="motionToggle" type="button">Reduce motion</button>
       </div>
     </div>
   </section>
@@ -25045,6 +25507,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
     function setStudioOpen(open) {
       panel?.classList.toggle("open", Boolean(open));
+      document.body.classList.toggle("studio-open", Boolean(open));
       const expanded = panel?.classList.contains("open") ? "true" : "false";
       controlToggle?.setAttribute("aria-expanded", expanded);
       controlToggleTop?.setAttribute("aria-expanded", expanded);
@@ -25070,6 +25533,10 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
         event.preventDefault();
         toggleStudio();
         showToast(panel?.classList.contains("open") ? "Studio opened" : "Studio closed");
+      }
+      if (event.key === "Escape" && panel?.classList.contains("open")) {
+        setStudioOpen(false);
+        showToast("Studio closed");
       }
     });
 
