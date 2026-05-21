@@ -26845,6 +26845,551 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v121 WATCH DIRECT + DETAIL TABS + CINEMA HLS PLAYER
+       - Card clicks open the player directly.
+       - Detail page sections become animated tab panels.
+       - Row arrow controls sit above LIVE tags.
+       - M3U8 player gets a better cinema-style shell.
+       ============================================================ */
+
+    .dsRowHead {
+      position: relative !important;
+    }
+
+    .dsRowControls {
+      top: 2px !important;
+      right: 0 !important;
+      z-index: 120 !important;
+      padding-left: 18px;
+      background: linear-gradient(90deg, transparent, rgba(3,5,12,.84) 34%, rgba(3,5,12,.96));
+      border-radius: 999px;
+    }
+
+    .dsRowBtn {
+      position: relative;
+      z-index: 121 !important;
+      width: 38px !important;
+      height: 38px !important;
+      color: rgba(255,255,255,.95) !important;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.16), transparent 42%),
+        rgba(12,16,31,.82) !important;
+      border: 1px solid rgba(223,248,255,.18) !important;
+      box-shadow: 0 14px 36px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.07) !important;
+    }
+
+    .dsRowBtn:hover {
+      background:
+        radial-gradient(circle at 30% 20%, rgba(85,215,255,.18), transparent 42%),
+        rgba(19,26,48,.92) !important;
+      border-color: rgba(223,248,255,.30) !important;
+      transform: translateY(-1px);
+    }
+
+    .dsRowTag {
+      position: relative;
+      z-index: 2 !important;
+      pointer-events: none;
+      margin-right: 92px !important;
+      transition: opacity .16s ease, transform .16s ease;
+    }
+
+    .dsRow:hover .dsRowTag,
+    .nfRowSection:hover .dsRowTag {
+      opacity: .28;
+      transform: translateX(-8px);
+    }
+
+    .dsInfoBtn {
+      color: #06101d !important;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.96), transparent 38%),
+        linear-gradient(135deg, #ffffff, #dff8ff 58%, #cabdff) !important;
+    }
+
+    .dsDetailBodyTabs {
+      display: grid;
+      gap: 18px;
+      padding-bottom: clamp(42px, 6vw, 84px) !important;
+    }
+
+    .dsDetailTabsV121 {
+      position: sticky;
+      top: 76px;
+      z-index: 50;
+      display: flex !important;
+      gap: 7px !important;
+      overflow-x: auto;
+      padding: 8px !important;
+      margin: 8px 0 0 !important;
+      border: 1px solid rgba(255,255,255,.105) !important;
+      border-radius: 999px !important;
+      background:
+        radial-gradient(260px circle at 0% 0%, rgba(85,215,255,.10), transparent 52%),
+        rgba(7,10,22,.76) !important;
+      backdrop-filter: blur(22px) saturate(1.12);
+      -webkit-backdrop-filter: blur(22px) saturate(1.12);
+      box-shadow: 0 18px 60px rgba(0,0,0,.30);
+      scrollbar-width: none;
+    }
+
+    .dsDetailTabsV121::-webkit-scrollbar {
+      display: none;
+    }
+
+    .dsDetailTabsV121 button {
+      flex: 0 0 auto;
+      min-height: 38px;
+      padding: 0 14px;
+      border: 0;
+      border-radius: 999px;
+      color: rgba(238,242,255,.62);
+      background: transparent;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: -.01em;
+      cursor: pointer;
+      transition: color .16s ease, background .16s ease, transform .16s ease;
+    }
+
+    .dsDetailTabsV121 button:hover {
+      color: white;
+      background: rgba(255,255,255,.07);
+    }
+
+    .dsDetailTabsV121 button.active {
+      color: #06101d;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.96), transparent 38%),
+        linear-gradient(135deg, #dff8ff, #cabdff);
+      box-shadow: 0 12px 34px rgba(0,0,0,.28), 0 0 24px rgba(85,215,255,.18);
+    }
+
+    .dsDetailTabPanels {
+      position: relative;
+      min-height: clamp(360px, 42vw, 580px);
+      overflow: hidden;
+      border-radius: 30px;
+      border: 1px solid rgba(255,255,255,.105);
+      background:
+        radial-gradient(780px circle at 0% 0%, rgba(85,215,255,.08), transparent 44%),
+        radial-gradient(680px circle at 100% 0%, rgba(139,92,246,.09), transparent 42%),
+        rgba(255,255,255,.035);
+      box-shadow: 0 24px 90px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.055);
+    }
+
+    .dsDetailTabPanel {
+      display: none;
+      padding: clamp(18px, 2.4vw, 32px);
+    }
+
+    .dsDetailTabPanel.active {
+      display: block;
+      animation: dsTabSlideIn .34s cubic-bezier(.2,.8,.2,1) both;
+    }
+
+    .dsDetailTabPanel.active.slideBack {
+      animation-name: dsTabSlideBack;
+    }
+
+    .dsDetailPanelHead {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .dsDetailPanelHead span {
+      color: rgba(223,248,255,.62);
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .dsDetailPanelHead h2 {
+      margin: 3px 0 0;
+      color: white;
+      font-family: var(--font-display, "Space Grotesk", Inter, sans-serif);
+      font-size: clamp(30px, 4vw, 52px);
+      line-height: .92;
+      letter-spacing: -.08em;
+    }
+
+    .dsDetailGridV121 {
+      grid-template-columns: minmax(0, 1.08fr) minmax(280px, .92fr) !important;
+      gap: clamp(22px, 3vw, 42px) !important;
+      align-items: start;
+    }
+
+    .dsDetailGridV121 > p {
+      margin: 0;
+      max-width: 820px;
+      color: rgba(248,251,255,.80);
+      font-size: clamp(16px, 1.35vw, 20px);
+      line-height: 1.65;
+      font-weight: 640;
+    }
+
+    .dsDetailGridV121 aside,
+    .dsAboutGridV121 {
+      border-radius: 24px;
+      border: 1px solid rgba(255,255,255,.095);
+      background: rgba(255,255,255,.045);
+      padding: 14px;
+    }
+
+    .dsCastRailV121 {
+      display: grid !important;
+      grid-auto-flow: column;
+      grid-auto-columns: clamp(132px, 11vw, 172px);
+      gap: 14px;
+      overflow-x: auto;
+      padding: 4px 0 18px;
+      scrollbar-width: none;
+    }
+
+    .dsCastRailV121::-webkit-scrollbar {
+      display: none;
+    }
+
+    .dsCastRailV121 .dsCastCard {
+      border-radius: 24px;
+      padding: 10px;
+      background: rgba(255,255,255,.045);
+      border: 1px solid rgba(255,255,255,.085);
+      transition: transform .18s ease, background .18s ease, border-color .18s ease;
+    }
+
+    .dsCastRailV121 .dsCastCard:hover {
+      transform: translateY(-4px);
+      background: rgba(255,255,255,.075);
+      border-color: rgba(223,248,255,.18);
+    }
+
+    .dsCastRailV121 .dsCastCard div {
+      border-radius: 18px !important;
+      overflow: hidden;
+    }
+
+    .dsTrailerGridV121 {
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important;
+      gap: 16px !important;
+    }
+
+    .dsTrailerGridV121 .trailerCard {
+      border-radius: 24px !important;
+      overflow: hidden;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 20px 64px rgba(0,0,0,.28);
+    }
+
+    .dsMoreGridV121 {
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)) !important;
+      gap: 16px !important;
+    }
+
+    .dsAboutGridV121 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 12px;
+    }
+
+    .dsAboutGridV121 > div,
+    .dsDetailGridV121 aside > div {
+      padding: 13px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.045);
+      border: 1px solid rgba(255,255,255,.065);
+    }
+
+    .dsAboutGridV121 span,
+    .dsDetailGridV121 aside span {
+      display: block;
+      margin-bottom: 5px;
+      color: rgba(238,242,255,.42);
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .dsAboutGridV121 strong,
+    .dsDetailGridV121 aside strong {
+      color: rgba(255,255,255,.86);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    @keyframes dsTabSlideIn {
+      from { opacity: 0; transform: translateX(34px); filter: blur(8px); }
+      to { opacity: 1; transform: translateX(0); filter: blur(0); }
+    }
+
+    @keyframes dsTabSlideBack {
+      from { opacity: 0; transform: translateX(-34px); filter: blur(8px); }
+      to { opacity: 1; transform: translateX(0); filter: blur(0); }
+    }
+
+    .dsCinemaHlsShell {
+      position: relative;
+      min-height: min(76vh, 760px) !important;
+      background:
+        radial-gradient(900px circle at 20% 0%, rgba(85,215,255,.10), transparent 44%),
+        radial-gradient(800px circle at 82% 0%, rgba(139,92,246,.12), transparent 45%),
+        #000 !important;
+      border-radius: 28px !important;
+      overflow: hidden !important;
+      box-shadow:
+        0 34px 120px rgba(0,0,0,.60),
+        0 0 90px rgba(85,215,255,.08),
+        inset 0 1px 0 rgba(255,255,255,.055);
+      outline: 1px solid rgba(255,255,255,.095);
+    }
+
+    .dsCinemaPlayerAura {
+      position: absolute;
+      inset: -20%;
+      pointer-events: none;
+      background:
+        radial-gradient(closest-side at 20% 15%, rgba(85,215,255,.18), transparent 72%),
+        radial-gradient(closest-side at 82% 12%, rgba(139,92,246,.18), transparent 72%);
+      filter: blur(30px);
+      opacity: .56;
+      z-index: 0;
+    }
+
+    .dsCinemaHlsVideo,
+    .dsCinemaHlsShell .video-js {
+      position: relative !important;
+      z-index: 2 !important;
+      width: 100% !important;
+      height: min(76vh, 760px) !important;
+      min-height: 430px !important;
+      background: #000 !important;
+      border-radius: inherit !important;
+      overflow: hidden;
+    }
+
+    .dsCinemaHlsTop {
+      position: absolute;
+      left: 18px;
+      top: 18px;
+      z-index: 8;
+      display: grid;
+      gap: 4px;
+      max-width: min(520px, calc(100% - 36px));
+      padding: 12px 14px;
+      border-radius: 18px;
+      color: white;
+      background: rgba(4,7,18,.58);
+      border: 1px solid rgba(255,255,255,.105);
+      box-shadow: 0 16px 54px rgba(0,0,0,.34);
+      backdrop-filter: blur(18px) saturate(1.16);
+      -webkit-backdrop-filter: blur(18px) saturate(1.16);
+      pointer-events: none;
+      transition: opacity .18s ease, transform .18s ease;
+    }
+
+    .dsCinemaHlsTop span {
+      color: #a7f3d0;
+      font-size: 10px;
+      font-weight: 950;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .dsCinemaHlsTop b {
+      font-family: var(--font-display, "Space Grotesk", Inter, sans-serif);
+      font-size: clamp(18px, 2.6vw, 30px);
+      line-height: .94;
+      letter-spacing: -.06em;
+    }
+
+    .dsCinemaHlsTop small {
+      color: rgba(238,242,255,.62);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .dsCinemaHlsHint {
+      position: absolute;
+      right: 18px;
+      bottom: 84px;
+      z-index: 8;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 10px;
+      border-radius: 999px;
+      color: rgba(255,255,255,.74);
+      background: rgba(4,7,18,.54);
+      border: 1px solid rgba(255,255,255,.095);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      pointer-events: none;
+      opacity: .0;
+      transform: translateY(6px);
+      transition: opacity .18s ease, transform .18s ease;
+    }
+
+    .dsCinemaHlsShell:hover .dsCinemaHlsHint,
+    .dsCinemaHlsShell:focus-within .dsCinemaHlsHint {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .dsCinemaHlsHint span {
+      min-width: 24px;
+      height: 22px;
+      display: inline-grid;
+      place-items: center;
+      border-radius: 8px;
+      color: #06101d;
+      background: linear-gradient(135deg, #ffffff, #dff8ff);
+      font-size: 10px;
+      font-weight: 950;
+    }
+
+    .dsCinemaHlsHint b {
+      font-size: 11px;
+      font-weight: 850;
+    }
+
+    .dsCinemaHlsShell .dsHlsStatus {
+      top: auto !important;
+      left: 18px !important;
+      bottom: 84px !important;
+      z-index: 9 !important;
+      border-radius: 18px !important;
+      background: rgba(4,7,18,.66) !important;
+    }
+
+    .vjs-theme-swifly {
+      font-family: var(--font-ui, "Host Grotesk", Inter, system-ui, sans-serif) !important;
+    }
+
+    .vjs-theme-swifly .vjs-control-bar {
+      height: 5.2em !important;
+      padding: 0 18px 12px !important;
+      background:
+        linear-gradient(0deg, rgba(0,0,0,.92), rgba(0,0,0,.58) 52%, transparent) !important;
+      backdrop-filter: blur(4px);
+    }
+
+    .vjs-theme-swifly .vjs-progress-control {
+      position: absolute !important;
+      left: 18px !important;
+      right: 18px !important;
+      bottom: 62px !important;
+      width: auto !important;
+      height: 8px !important;
+    }
+
+    .vjs-theme-swifly .vjs-progress-holder,
+    .vjs-theme-swifly .vjs-load-progress,
+    .vjs-theme-swifly .vjs-play-progress {
+      height: 6px !important;
+      border-radius: 999px !important;
+    }
+
+    .vjs-theme-swifly .vjs-play-progress {
+      background: linear-gradient(90deg, #55d7ff, #8b5cf6, #dff8ff) !important;
+      box-shadow: 0 0 22px rgba(85,215,255,.28);
+    }
+
+    .vjs-theme-swifly .vjs-slider {
+      background: rgba(255,255,255,.18) !important;
+    }
+
+    .vjs-theme-swifly .vjs-button > .vjs-icon-placeholder::before,
+    .vjs-theme-swifly .vjs-time-control {
+      color: rgba(255,255,255,.88) !important;
+      text-shadow: 0 2px 12px rgba(0,0,0,.45);
+    }
+
+    .vjs-theme-swifly .vjs-big-play-button {
+      width: clamp(74px, 9vw, 104px) !important;
+      height: clamp(74px, 9vw, 104px) !important;
+      line-height: clamp(74px, 9vw, 104px) !important;
+      border: 1px solid rgba(255,255,255,.28) !important;
+      border-radius: 999px !important;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.28), transparent 42%),
+        rgba(4,7,18,.62) !important;
+      box-shadow:
+        0 28px 96px rgba(0,0,0,.58),
+        0 0 46px rgba(85,215,255,.18) !important;
+      backdrop-filter: blur(22px) saturate(1.18);
+      -webkit-backdrop-filter: blur(22px) saturate(1.18);
+    }
+
+    .vjs-theme-swifly:hover .vjs-big-play-button,
+    .vjs-theme-swifly .vjs-big-play-button:focus {
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.36), transparent 42%),
+        linear-gradient(135deg, rgba(85,215,255,.72), rgba(139,92,246,.70)) !important;
+      transform: scale(1.05);
+    }
+
+    .vjs-theme-swifly .vjs-volume-panel,
+    .vjs-theme-swifly .vjs-playback-rate,
+    .vjs-theme-swifly .vjs-picture-in-picture-control,
+    .vjs-theme-swifly .vjs-fullscreen-control {
+      border-radius: 999px !important;
+    }
+
+    @media(max-width: 760px) {
+      .dsRowTag {
+        margin-right: 0 !important;
+      }
+
+      .dsDetailTabsV121 {
+        top: 68px;
+        border-radius: 18px !important;
+      }
+
+      .dsDetailTabPanels {
+        border-radius: 22px;
+        min-height: 420px;
+      }
+
+      .dsDetailGridV121 {
+        grid-template-columns: 1fr !important;
+      }
+
+      .dsTrailerGridV121,
+      .dsMoreGridV121 {
+        grid-template-columns: 1fr !important;
+      }
+
+      .dsCinemaHlsVideo,
+      .dsCinemaHlsShell .video-js {
+        height: 62vh !important;
+        min-height: 330px !important;
+      }
+
+      .dsCinemaHlsTop {
+        left: 10px;
+        top: 10px;
+        right: 10px;
+      }
+
+      .dsCinemaHlsHint {
+        display: none;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .dsDetailTabPanel.active {
+        animation: none !important;
+      }
+    }
+
   </style>
 
     <script>
@@ -27310,6 +27855,15 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
           "Added to Liked",
           "Removed from Liked"
         );
+        return;
+      }
+
+      const infoButton = event.target.closest("[data-info-url]");
+      if (infoButton) {
+        event.preventDefault();
+        event.stopPropagation();
+        const url = infoButton.getAttribute("data-info-url") || "/";
+        window.location.href = url;
       }
     });
 
@@ -27335,7 +27889,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
       root.innerHTML = list.map((item) => {
         const poster = item.backdrop ? "https://image.tmdb.org/t/p/w780" + item.backdrop : (item.poster ? "https://image.tmdb.org/t/p/w500" + item.poster : "");
-        const href = "/" + item.type + "/" + item.id;
+        const href = "/watch/" + item.type + "/" + item.id + "?mode=movie" + (item.type === "tv" ? "&s=1&e=1" : "");
         const title = escapeSaved(item.title || "Untitled");
         const removeAttr = kind === "liked" ? "like" : "watch";
         const removeSymbol = kind === "liked" ? "♥" : "✓";
@@ -28851,7 +29405,8 @@ function movieCard(item = {}, forcedType = "") {
   const type = forcedType || getType(item);
   const title = getTitle(item);
   const id = item.id || "";
-  const href = `/${type}/${encodeURIComponent(id)}`;
+  const detailsHref = `/${type}/${encodeURIComponent(id)}`;
+  const watchHref = `/watch/${type}/${encodeURIComponent(id)}?mode=movie${type === "tv" ? "&s=1&e=1" : ""}`;
   const thumbUrl = item.backdrop_path ? img(item.backdrop_path, "w780") : img(item.poster_path, "w500");
   const itemYear = getYear(getDate(item));
   const score = formatRating(item.vote_average);
@@ -28859,7 +29414,17 @@ function movieCard(item = {}, forcedType = "") {
   const match = metaMatch(item);
 
   return `<article class="movieCard dsCard" data-title="${escapeHtml(title.toLowerCase())}">
-    <a href="${href}" class="posterWrap dsThumb" aria-label="${escapeHtml(title)}">
+    <a
+      href="${watchHref}"
+      class="posterWrap dsThumb"
+      aria-label="Watch ${escapeHtml(title)}"
+      data-play-id="${escapeHtml(id)}"
+      data-play-type="${escapeHtml(type)}"
+      data-play-title="${escapeHtml(title)}"
+      data-play-poster="${escapeHtml(item.poster_path || "")}"
+      data-play-backdrop="${escapeHtml(item.backdrop_path || "")}"
+      data-play-rating="${escapeHtml(score)}"
+      data-play-year="${escapeHtml(itemYear)}">
       ${thumbUrl ? `<img src="${escapeHtml(thumbUrl)}" alt="${escapeHtml(title)} thumbnail" loading="lazy" />` : `<div class="posterFallback"><span>${escapeHtml(title.slice(0, 1))}</span></div>`}
       <div class="dsCardOverlay">
         <div class="dsCardControls">
@@ -28886,6 +29451,11 @@ function movieCard(item = {}, forcedType = "") {
             data-like-backdrop="${escapeHtml(item.backdrop_path || "")}"
             data-like-rating="${escapeHtml(score)}"
             data-like-year="${escapeHtml(itemYear)}">♡</button>
+          <button
+            class="dsMiniBtn dsInfoBtn"
+            type="button"
+            aria-label="More info for ${escapeHtml(title)}"
+            data-info-url="${escapeHtml(detailsHref)}">ⓘ</button>
         </div>
         <div class="dsCardTitle">${escapeHtml(title)}</div>
         <div class="dsCardMeta"><b>${escapeHtml(match)}</b><span>${escapeHtml(itemYear)}</span><span>${escapeHtml(maturity)}</span></div>
@@ -30065,8 +30635,19 @@ async function watchPage(req, res, type) {
             <a class="dsGhostPill" href="/watchrooms">Use Watch Room</a>
           </div>
         </div>
-        <div id="movieButtonPlayerShell" class="dsMovieButtonPlayerShell" hidden>
-          <video id="proxyVideoClientVideo" class="dsMovieButtonVideo video-js vjs-big-play-centered vjs-theme-swifly" controls playsinline crossorigin="anonymous" preload="auto"></video>
+        <div id="movieButtonPlayerShell" class="dsMovieButtonPlayerShell dsCinemaHlsShell" hidden>
+          <div class="dsCinemaPlayerAura"></div>
+          <video id="proxyVideoClientVideo" class="dsMovieButtonVideo dsCinemaHlsVideo video-js vjs-big-play-centered vjs-theme-swifly" controls playsinline crossorigin="anonymous" preload="auto"></video>
+          <div class="dsCinemaHlsTop">
+            <span>SWIFLY HLS</span>
+            <b id="movieButtonHlsTitle">Preparing stream</b>
+            <small id="movieButtonHlsMeta">m3u8 player</small>
+          </div>
+          <div class="dsCinemaHlsHint">
+            <span>Space</span><b>play / pause</b>
+            <span>F</span><b>fullscreen</b>
+            <span>M</span><b>mute</b>
+          </div>
           <div id="movieButtonHlsStatus" class="dsHlsStatus"><b>Loading m3u8...</b><span>Preparing player</span></div>
         </div>
       </div>`
@@ -30157,6 +30738,8 @@ async function watchPage(req, res, type) {
         var video = document.getElementById("proxyVideoClientVideo");
         var playerShell = document.getElementById("movieButtonPlayerShell");
         var hlsStatus = document.getElementById("movieButtonHlsStatus");
+        var hlsTitle = document.getElementById("movieButtonHlsTitle");
+        var hlsMeta = document.getElementById("movieButtonHlsMeta");
         var movieButtonPlayer = null;
         var movieButtonHls = null;
         var shell = document.querySelector(".dsProxyVideoWaitingShell");
@@ -30183,6 +30766,36 @@ async function watchPage(req, res, type) {
           var s = hlsStatus.querySelector("span");
           if (b) b.textContent = title || "Player";
           if (s) s.textContent = detail || "";
+          if (hlsTitle) hlsTitle.textContent = title || "Player";
+          if (hlsMeta) hlsMeta.textContent = detail || "m3u8 player";
+        }
+
+        function installCinemaPlayerShortcuts() {
+          if (!playerShell || playerShell.dataset.shortcutsReady === "true") return;
+          playerShell.dataset.shortcutsReady = "true";
+          playerShell.addEventListener("keydown", function(event) {
+            if (!video) return;
+            var key = String(event.key || "").toLowerCase();
+            if (key === " " || key === "k") {
+              event.preventDefault();
+              if (video.paused) video.play().catch(function(){});
+              else video.pause();
+            } else if (key === "m") {
+              event.preventDefault();
+              video.muted = !video.muted;
+            } else if (key === "f") {
+              event.preventDefault();
+              if (!document.fullscreenElement) playerShell.requestFullscreen && playerShell.requestFullscreen();
+              else document.exitFullscreen && document.exitFullscreen();
+            } else if (key === "arrowright") {
+              event.preventDefault();
+              try { video.currentTime = Math.min((video.duration || video.currentTime + 10), video.currentTime + 10); } catch {}
+            } else if (key === "arrowleft") {
+              event.preventDefault();
+              try { video.currentTime = Math.max(0, video.currentTime - 10); } catch {}
+            }
+          });
+          playerShell.setAttribute("tabindex", "0");
         }
 
         function hidePlayerStatusSoon() {
@@ -30224,7 +30837,7 @@ async function watchPage(req, res, type) {
             return;
           }
 
-          if (playerShell) playerShell.hidden = false;
+          if (playerShell) { playerShell.hidden = false; installCinemaPlayerShortcuts(); }
           if (shell) shell.classList.add("isReady");
           setStatus("Source found. Loading player...");
 
@@ -30262,12 +30875,19 @@ async function watchPage(req, res, type) {
                 fluid: true,
                 responsive: true,
                 liveui: true,
+                playbackRates: [0.5, 0.75, 1, 1.25, 1.5, 2],
+                controlBar: {
+                  pictureInPictureToggle: true,
+                  volumePanel: { inline: false },
+                  remainingTimeDisplay: false
+                },
                 html5: {
                   vhs: {
                     overrideNative: true,
                     withCredentials: false,
                     enableLowInitialPlaylist: true,
-                    smoothQualityChange: true
+                    smoothQualityChange: true,
+                    useDevicePixelRatio: true
                   },
                   nativeAudioTracks: false,
                   nativeVideoTracks: false
@@ -30281,6 +30901,7 @@ async function watchPage(req, res, type) {
               movieButtonPlayer.ready(function(){
                 setPlayerStatus("m3u8 ready", "Video.js loaded. Press play.", false);
                 setStatus("m3u8 loaded. Press play.");
+                if (playerShell) { try { playerShell.focus({ preventScroll: true }); } catch {} }
                 hidePlayerStatusSoon();
               });
 
@@ -30312,10 +30933,12 @@ async function watchPage(req, res, type) {
             movieButtonHls = new window.Hls({
               debug: false,
               enableWorker: true,
-              lowLatencyMode: false,
+              lowLatencyMode: true,
               backBufferLength: 90,
-              maxBufferLength: 60,
+              maxBufferLength: 45,
               maxMaxBufferLength: 120,
+              liveSyncDurationCount: 3,
+              liveMaxLatencyDurationCount: 8,
               startPosition: -1,
               capLevelToPlayerSize: true,
               manifestLoadingMaxRetry: 4,
@@ -30332,8 +30955,10 @@ async function watchPage(req, res, type) {
             });
 
             movieButtonHls.on(window.Hls.Events.MANIFEST_PARSED, function(event, parsed) {
-              setPlayerStatus("m3u8 ready", "HLS.js loaded. Press play.", false);
+              var levels = parsed && parsed.levels ? parsed.levels.length : 0;
+              setPlayerStatus("m3u8 ready", "HLS.js loaded" + (levels ? " • " + levels + " qualities" : "") + ". Press play.", false);
               setStatus("m3u8 loaded. Press play.");
+              if (playerShell) { try { playerShell.focus({ preventScroll: true }); } catch {} }
               hidePlayerStatusSoon();
             });
 
@@ -30524,7 +31149,7 @@ async function detailPage(req, res, type) {
         </div>
       </section>
 
-      <section class="dsDetailBody">
+      <section class="dsDetailBody dsDetailBodyTabs">
         <div class="dsMetaBand">
           <b>${escapeHtml(metaMatch(details))}</b>
           <span>${escapeHtml(getYear(detailsDate))}</span>
@@ -30533,43 +31158,106 @@ async function detailPage(req, res, type) {
           <span>HD</span>
         </div>
 
-        <section id="overview" class="dsDetailGrid">
-          <p>${escapeHtml(details.overview || "No overview available.")}</p>
-          <aside>
-            <div><span>Cast</span><strong>${escapeHtml(cast.slice(0, 4).map((p) => p.name).join(", ") || "—")}</strong></div>
-            <div><span>Genres</span><strong>${escapeHtml((details.genres || []).slice(0, 4).map((g) => g.name).join(", ") || "—")}</strong></div>
-            <div><span>Director</span><strong>${escapeHtml(director?.name || "—")}</strong></div>
-            <div><span>Writers</span><strong>${escapeHtml(writers.map((w) => w.name).join(", ") || "—")}</strong></div>
-            <div><span>Available data</span><strong>${escapeHtml(providerList.map((p) => p.provider_name).join(", ") || "TMDB")}</strong></div>
-          </aside>
-        </section>
-
-        <nav class="dsDetailTabs">
-          <a href="#overview">Overview</a>
-          ${type === "tv" ? `<a href="#episodes">Episodes</a>` : ""}
-          <a href="#trailers">Trailers</a>
-          <a href="#more-like-this">More Like This</a>
-          <a href="#details">Details</a>
+        <nav class="dsDetailTabs dsDetailTabsV121" aria-label="Title sections">
+          <button type="button" class="active" data-detail-tab="overview">Overview</button>
+          ${castHtml ? `<button type="button" data-detail-tab="cast">Cast</button>` : ""}
+          ${type === "tv" && seasonRows ? `<button type="button" data-detail-tab="episodes">Episodes</button>` : ""}
+          <button type="button" data-detail-tab="trailers">Trailers</button>
+          <button type="button" data-detail-tab="more-like-this">More Like This</button>
+          <button type="button" data-detail-tab="details">Details</button>
         </nav>
 
-        ${type === "tv" && seasonRows ? `<section id="episodes" class="dsDetailSection dsEpisodesClickable"><div class="dsSectionTitleRow"><div><h2>Seasons & Episodes</h2><p>Tap any season or episode to open it in the player.</p></div><a href="/watch/tv/${escapeHtml(id)}?mode=movie&s=1&e=1">Start S1:E1</a></div><div class="dsEpisodeList">${seasonRows}</div></section>` : ""}
+        <section class="dsDetailTabPanels" data-active-tab="overview">
+          <section id="overview" class="dsDetailTabPanel active" data-tab-panel="overview">
+            <div class="dsDetailPanelHead">
+              <span>Story</span>
+              <h2>Overview</h2>
+            </div>
+            <div class="dsDetailGrid dsDetailGridV121">
+              <p>${escapeHtml(details.overview || "No overview available.")}</p>
+              <aside>
+                <div><span>Cast</span><strong>${escapeHtml(cast.slice(0, 4).map((p) => p.name).join(", ") || "—")}</strong></div>
+                <div><span>Genres</span><strong>${escapeHtml((details.genres || []).slice(0, 4).map((g) => g.name).join(", ") || "—")}</strong></div>
+                <div><span>Director</span><strong>${escapeHtml(director?.name || "—")}</strong></div>
+                <div><span>Writers</span><strong>${escapeHtml(writers.map((w) => w.name).join(", ") || "—")}</strong></div>
+                <div><span>Available data</span><strong>${escapeHtml(providerList.map((p) => p.provider_name).join(", ") || "TMDB")}</strong></div>
+              </aside>
+            </div>
+          </section>
 
-        ${castHtml ? `<section id="cast" class="dsDetailSection"><h2>Cast</h2><div class="dsCastRail">${castHtml}</div></section>` : ""}
+          ${castHtml ? `<section id="cast" class="dsDetailTabPanel" data-tab-panel="cast">
+            <div class="dsDetailPanelHead"><span>People</span><h2>Cast</h2></div>
+            <div class="dsCastRail dsCastRailV121">${castHtml}</div>
+          </section>` : ""}
 
-        ${trailerHtml ? `<section id="trailers" class="dsDetailSection"><h2>Trailers</h2><div class="dsTrailerGrid">${trailerHtml}</div></section>` : ""}
+          ${type === "tv" && seasonRows ? `<section id="episodes" class="dsDetailTabPanel dsEpisodesClickable" data-tab-panel="episodes">
+            <div class="dsSectionTitleRow dsDetailPanelHead"><div><span>Episodes</span><h2>Seasons & Episodes</h2><p>Tap any season or episode to open it directly in the player.</p></div><a href="/watch/tv/${escapeHtml(id)}?mode=movie&s=1&e=1">Start S1:E1</a></div>
+            <div class="dsEpisodeList">${seasonRows}</div>
+          </section>` : ""}
 
-        <section id="more-like-this" class="dsDetailSection"><h2>More Like This</h2><div class="dsGrid">${moreHtml || `<div class="emptyState">No similar titles found.</div>`}</div></section>
+          <section id="trailers" class="dsDetailTabPanel" data-tab-panel="trailers">
+            <div class="dsDetailPanelHead"><span>Video</span><h2>Trailers</h2></div>
+            <div class="dsTrailerGrid dsTrailerGridV121">${trailerHtml || `<div class="emptyState">No trailers found.</div>`}</div>
+          </section>
 
-        <section id="details" class="dsDetailSection"><h2>About ${escapeHtml(title)}</h2>
-          <div class="dsAboutGrid">
-            <div><span>Full title</span><strong>${escapeHtml(title)}</strong></div>
-            <div><span>Release year</span><strong>${escapeHtml(getYear(detailsDate))}</strong></div>
-            <div><span>Status</span><strong>${escapeHtml(details.status || "—")}</strong></div>
-            <div><span>Original language</span><strong>${escapeHtml(String(details.original_language || "—").toUpperCase())}</strong></div>
-            ${externalIds.imdb_id ? `<div><span>IMDb</span><strong>${escapeHtml(externalIds.imdb_id)}</strong></div>` : ""}
-          </div>
+          <section id="more-like-this" class="dsDetailTabPanel" data-tab-panel="more-like-this">
+            <div class="dsDetailPanelHead"><span>Discover</span><h2>More Like This</h2></div>
+            <div class="dsGrid dsMoreGridV121">${moreHtml || `<div class="emptyState">No similar titles found.</div>`}</div>
+          </section>
+
+          <section id="details" class="dsDetailTabPanel" data-tab-panel="details">
+            <div class="dsDetailPanelHead"><span>Info</span><h2>About ${escapeHtml(title)}</h2></div>
+            <div class="dsAboutGrid dsAboutGridV121">
+              <div><span>Full title</span><strong>${escapeHtml(title)}</strong></div>
+              <div><span>Release year</span><strong>${escapeHtml(getYear(detailsDate))}</strong></div>
+              <div><span>Status</span><strong>${escapeHtml(details.status || "—")}</strong></div>
+              <div><span>Original language</span><strong>${escapeHtml(String(details.original_language || "—").toUpperCase())}</strong></div>
+              <div><span>Runtime</span><strong>${escapeHtml(runtime)}</strong></div>
+              <div><span>Rating</span><strong>${escapeHtml(formatRating(details.vote_average))}</strong></div>
+              ${externalIds.imdb_id ? `<div><span>IMDb</span><strong>${escapeHtml(externalIds.imdb_id)}</strong></div>` : ""}
+            </div>
+          </section>
         </section>
       </section>
+
+      <script>
+        (function swiflyDetailTabs(){
+          var root = document.currentScript.closest(".dsDetailShell") || document;
+          var buttons = Array.from(root.querySelectorAll("[data-detail-tab]"));
+          var panels = Array.from(root.querySelectorAll("[data-tab-panel]"));
+          var wrap = root.querySelector(".dsDetailTabPanels");
+          if (!buttons.length || !panels.length) return;
+
+          function showTab(tab, push) {
+            var next = panels.find(function(panel){ return panel.getAttribute("data-tab-panel") === tab; }) || panels[0];
+            if (!next) return;
+            var previous = panels.find(function(panel){ return panel.classList.contains("active"); });
+            var backwards = previous && panels.indexOf(next) < panels.indexOf(previous);
+            panels.forEach(function(panel){
+              var active = panel === next;
+              panel.classList.toggle("active", active);
+              panel.classList.toggle("slideBack", active && backwards);
+              panel.hidden = !active;
+            });
+            buttons.forEach(function(button){
+              var active = button.getAttribute("data-detail-tab") === next.getAttribute("data-tab-panel");
+              button.classList.toggle("active", active);
+              button.setAttribute("aria-selected", active ? "true" : "false");
+            });
+            if (wrap) wrap.setAttribute("data-active-tab", next.getAttribute("data-tab-panel"));
+            if (push) history.replaceState(null, "", "#" + next.id);
+          }
+
+          buttons.forEach(function(button){
+            button.addEventListener("click", function(){
+              showTab(button.getAttribute("data-detail-tab"), true);
+            });
+          });
+
+          var initial = String(location.hash || "").replace("#", "");
+          showTab(initial || "overview", false);
+        })();
+      </script>
     </article>
   </main>`;
 
