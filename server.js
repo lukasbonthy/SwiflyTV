@@ -32139,6 +32139,404 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v137 VIDEO.JS NATIVE CUSTOM DOCK
+       Real fix: stop fighting Video.js control-bar flex/CSS.
+       Video.js/VHS still plays the m3u8, but SwiflyTV owns one
+       clean custom dock using player/currentTime/volume APIs.
+       ============================================================ */
+
+    .dsVideoJsCinemaShell.v137NativeDock {
+      --player-radius: 16px;
+      --dock-x: 14px;
+      --dock-bottom: 14px;
+      --dock-height: 46px;
+      background: #000 !important;
+      border-radius: var(--player-radius) !important;
+      outline: 1px solid rgba(255,255,255,.055) !important;
+      box-shadow: 0 30px 96px rgba(0,0,0,.54) !important;
+      overflow: hidden !important;
+    }
+
+    .dsVideoJsCinemaShell.v137NativeDock .vjs-control-bar,
+    .dsVideoJsCinemaShell.v137NativeDock .dsVideoJsSpeed,
+    .dsVideoJsCinemaShell.v137NativeDock .dsVideoJsVolume,
+    .dsVideoJsCinemaShell.v137NativeDock .dsVideoJsQuality,
+    .dsVideoJsCinemaShell.v137NativeDock .dsVideoJsTop,
+    .dsVideoJsCinemaShell.v137NativeDock .dsVideoJsHint,
+    .dsVideoJsCinemaShell.v137NativeDock .dsCinemaSeekDock,
+    .dsVideoJsCinemaShell.v137NativeDock .dsCinemaPlayerAura {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v137NativeDock::after {
+      display: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v137NativeDock .video-js,
+    .dsVideoJsCinemaShell.v137NativeDock .dsCinemaHlsVideo {
+      border-radius: var(--player-radius) !important;
+      background: #000 !important;
+      overflow: hidden !important;
+    }
+
+    .dsVideoJsCinemaShell.v137NativeDock .vjs-tech {
+      object-fit: contain !important;
+      background: #000 !important;
+    }
+
+    .dsVideoJsCinemaShell.v137NativeDock .vjs-big-play-button {
+      width: 70px !important;
+      height: 44px !important;
+      line-height: 44px !important;
+      left: 50% !important;
+      top: 50% !important;
+      margin-left: -35px !important;
+      margin-top: -22px !important;
+      display: grid !important;
+      place-items: center !important;
+      padding: 0 !important;
+      border-radius: 15px !important;
+      border: 1px solid rgba(255,255,255,.13) !important;
+      color: rgba(255,255,255,.96) !important;
+      background: rgba(13,18,32,.68) !important;
+      box-shadow: 0 18px 54px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.075) !important;
+      backdrop-filter: blur(14px) saturate(1.08) !important;
+      -webkit-backdrop-filter: blur(14px) saturate(1.08) !important;
+      opacity: .95 !important;
+      transition: transform .16s ease, background .16s ease, opacity .16s ease !important;
+    }
+
+    .dsVideoJsCinemaShell.v137NativeDock .vjs-big-play-button .vjs-icon-placeholder {
+      position: static !important;
+      display: grid !important;
+      place-items: center !important;
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .dsVideoJsCinemaShell.v137NativeDock .vjs-big-play-button .vjs-icon-placeholder::before {
+      position: static !important;
+      line-height: 1 !important;
+      margin: 0 !important;
+      font-size: 22px !important;
+      transform: translateX(1.5px) !important;
+    }
+
+    .dsVideoJsCinemaShell.v137NativeDock .vjs-has-started .vjs-big-play-button,
+    .dsVideoJsCinemaShell.v137NativeDock .vjs-playing .vjs-big-play-button {
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    .swiflyVideoDock {
+      position: absolute;
+      left: var(--dock-x, 14px);
+      right: var(--dock-x, 14px);
+      bottom: var(--dock-bottom, 14px);
+      height: var(--dock-height, 46px);
+      z-index: 120;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 0 14px;
+      border-radius: 999px;
+      background: rgba(34,38,42,.82);
+      border: 1px solid rgba(255,255,255,.075);
+      box-shadow: 0 14px 38px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.06);
+      backdrop-filter: blur(12px) saturate(1.06);
+      -webkit-backdrop-filter: blur(12px) saturate(1.06);
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity .16s ease, transform .16s ease;
+      pointer-events: auto;
+      font-family: var(--font-ui, "Host Grotesk", Inter, system-ui, sans-serif);
+    }
+
+    .dsVideoJsCinemaShell.v137NativeDock:hover .swiflyVideoDock,
+    .dsVideoJsCinemaShell.v137NativeDock:focus-within .swiflyVideoDock,
+    .dsVideoJsCinemaShell.v137NativeDock.isPaused .swiflyVideoDock,
+    .dsVideoJsCinemaShell.v137NativeDock.isUsingDock .swiflyVideoDock,
+    .dsVideoJsCinemaShell.v137NativeDock.isPreviewingTime .swiflyVideoDock {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .swiflyDockIcon,
+    .swiflyDockPill {
+      flex: 0 0 auto;
+      height: 28px;
+      min-width: 28px;
+      border: 0;
+      border-radius: 999px;
+      color: rgba(255,255,255,.88);
+      background: transparent;
+      display: inline-grid;
+      place-items: center;
+      padding: 0 7px;
+      cursor: pointer;
+      font: 850 12px/1 var(--font-ui, "Host Grotesk", Inter, system-ui, sans-serif);
+      transition: background .14s ease, color .14s ease, transform .14s ease;
+    }
+
+    .swiflyDockIcon:hover,
+    .swiflyDockPill:hover,
+    .swiflyDockIcon:focus-visible,
+    .swiflyDockPill:focus-visible {
+      color: white;
+      background: rgba(255,255,255,.09);
+      transform: translateY(-1px);
+      outline: none;
+    }
+
+    .swiflyDockPlay {
+      font-size: 13px;
+      width: 28px;
+    }
+
+    .swiflyDockSkip {
+      position: relative;
+      width: 32px;
+      font-size: 15px;
+    }
+
+    .swiflyDockSkip small {
+      position: absolute;
+      right: 4px;
+      bottom: 4px;
+      font-size: 8px;
+      font-weight: 950;
+      letter-spacing: -.05em;
+    }
+
+    .swiflyDockTime {
+      flex: 0 0 auto;
+      color: rgba(255,255,255,.88);
+      font-size: 12px;
+      font-weight: 850;
+      letter-spacing: -.01em;
+      white-space: nowrap;
+      min-width: 38px;
+      text-align: center;
+    }
+
+    .swiflyDockProgressWrap {
+      flex: 1 1 auto;
+      min-width: 120px;
+      display: flex;
+      align-items: center;
+      height: 28px;
+    }
+
+    .swiflyDockProgress {
+      width: 100%;
+      height: 18px;
+      appearance: none;
+      -webkit-appearance: none;
+      margin: 0;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .swiflyDockProgress::-webkit-slider-runnable-track {
+      height: 5px;
+      border-radius: 999px;
+      background:
+        linear-gradient(90deg, #e9eef5, #e9eef5) 0 / calc(var(--progress-pct, 0) * 1%) 100% no-repeat,
+        rgba(255,255,255,.28);
+    }
+
+    .swiflyDockProgress::-moz-range-track {
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.28);
+    }
+
+    .swiflyDockProgress::-moz-range-progress {
+      height: 5px;
+      border-radius: 999px;
+      background: #e9eef5;
+    }
+
+    .swiflyDockProgress::-webkit-slider-thumb {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 13px;
+      height: 13px;
+      margin-top: -4px;
+      border-radius: 999px;
+      border: 0;
+      background: #dff8ff;
+      box-shadow: 0 0 0 2px rgba(223,248,255,.18), 0 4px 12px rgba(0,0,0,.30);
+    }
+
+    .swiflyDockProgress::-moz-range-thumb {
+      width: 13px;
+      height: 13px;
+      border-radius: 999px;
+      border: 0;
+      background: #dff8ff;
+      box-shadow: 0 0 0 2px rgba(223,248,255,.18), 0 4px 12px rgba(0,0,0,.30);
+    }
+
+    .swiflyDockMenu,
+    .swiflyDockVolumeMenu {
+      position: absolute;
+      right: 98px;
+      bottom: calc(100% + 10px);
+      min-width: 92px;
+      display: grid;
+      gap: 4px;
+      padding: 5px;
+      border-radius: 13px;
+      border: 1px solid rgba(255,255,255,.09);
+      background: rgba(24,28,34,.96);
+      box-shadow: 0 14px 40px rgba(0,0,0,.38);
+      backdrop-filter: blur(14px) saturate(1.08);
+      -webkit-backdrop-filter: blur(14px) saturate(1.08);
+      z-index: 150;
+    }
+
+    .swiflyDockMenu[hidden],
+    .swiflyDockVolumeMenu[hidden] {
+      display: none !important;
+    }
+
+    .swiflyDockMenu button {
+      min-height: 28px;
+      border: 0;
+      border-radius: 9px;
+      background: transparent;
+      color: rgba(255,255,255,.74);
+      cursor: pointer;
+      font: 900 11px/1 var(--font-ui, "Host Grotesk", Inter, system-ui, sans-serif);
+    }
+
+    .swiflyDockMenu button:hover,
+    .swiflyDockMenu button.active {
+      color: #06101d;
+      background: linear-gradient(135deg, #ffffff, #dff8ff);
+    }
+
+    .swiflyDockVolumeMenu {
+      right: 48px;
+      width: 132px;
+      padding: 10px;
+    }
+
+    .swiflyDockVolumeMenu input {
+      width: 100%;
+      height: 18px;
+      appearance: none;
+      -webkit-appearance: none;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .swiflyDockVolumeMenu input::-webkit-slider-runnable-track {
+      height: 6px;
+      border-radius: 999px;
+      background:
+        linear-gradient(90deg, #e9eef5, #e9eef5) 0 / calc(var(--volume-pct, 100) * 1%) 100% no-repeat,
+        rgba(255,255,255,.18);
+    }
+
+    .swiflyDockVolumeMenu input::-webkit-slider-thumb {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 15px;
+      height: 15px;
+      margin-top: -4.5px;
+      border-radius: 999px;
+      border: 0;
+      background: #dff8ff;
+      box-shadow: 0 4px 12px rgba(0,0,0,.30);
+    }
+
+    .swiflyDockVolumeMenu input::-moz-range-track {
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.18);
+    }
+
+    .swiflyDockVolumeMenu input::-moz-range-progress {
+      height: 6px;
+      border-radius: 999px;
+      background: #e9eef5;
+    }
+
+    .swiflyDockVolumeMenu input::-moz-range-thumb {
+      width: 15px;
+      height: 15px;
+      border-radius: 999px;
+      border: 0;
+      background: #dff8ff;
+      box-shadow: 0 4px 12px rgba(0,0,0,.30);
+    }
+
+    .dsVideoJsCinemaShell.v137NativeDock .dsVideoJsTimelinePreview {
+      bottom: calc(var(--dock-bottom, 14px) + var(--dock-height, 46px) + 20px) !important;
+      z-index: 160 !important;
+    }
+
+    .dsVideoJsCinemaShell.v137NativeDock .dsHlsStatus {
+      left: 12px !important;
+      top: 12px !important;
+      max-width: min(200px, calc(100% - 24px)) !important;
+      padding: 7px 9px !important;
+      border-radius: 12px !important;
+      background: rgba(22,26,32,.62) !important;
+      border: 1px solid rgba(255,255,255,.08) !important;
+      box-shadow: 0 10px 28px rgba(0,0,0,.24) !important;
+      z-index: 75 !important;
+    }
+
+    .dsVideoJsCinemaShell.v137NativeDock.v128VideoReady .dsHlsStatus:not(.isError),
+    .dsVideoJsCinemaShell.v137NativeDock.isPlaying .dsHlsStatus:not(.isError),
+    .dsVideoJsCinemaShell.v137NativeDock.isReady .dsHlsStatus:not(.isError) {
+      opacity: 0 !important;
+      transform: translateY(-6px) !important;
+      pointer-events: none !important;
+    }
+
+    @media(max-width: 900px) {
+      .dsVideoJsCinemaShell.v137NativeDock {
+        --player-radius: 12px;
+        --dock-x: 8px;
+        --dock-bottom: 8px;
+        --dock-height: 44px;
+      }
+
+      .swiflyVideoDock {
+        gap: 7px;
+        padding: 0 10px;
+      }
+
+      .swiflyDockSkip,
+      .swiflyDockTime,
+      #swiflyDockPip {
+        display: none !important;
+      }
+
+      .swiflyDockProgressWrap {
+        min-width: 80px;
+      }
+
+      .dsVideoJsCinemaShell.v137NativeDock .dsVideoJsTimelinePreview {
+        display: none !important;
+      }
+    }
+
+    @media(max-width: 520px) {
+      .swiflyDockPill {
+        display: none !important;
+      }
+    }
+
   </style>
 
     <script>
@@ -35426,6 +35824,25 @@ async function watchPage(req, res, type) {
             <i></i>
           </div>
 
+          <div id="swiflyVideoDock" class="swiflyVideoDock" aria-label="Video controls">
+            <button id="swiflyDockPlay" type="button" class="swiflyDockIcon swiflyDockPlay" aria-label="Play or pause">▶</button>
+            <button id="swiflyDockBack" type="button" class="swiflyDockIcon swiflyDockSkip" aria-label="Back 10 seconds">↺<small>10</small></button>
+            <button id="swiflyDockForward" type="button" class="swiflyDockIcon swiflyDockSkip" aria-label="Forward 10 seconds">↻<small>10</small></button>
+            <span id="swiflyDockCurrent" class="swiflyDockTime">0:00</span>
+            <div class="swiflyDockProgressWrap">
+              <input id="swiflyDockProgress" class="swiflyDockProgress" type="range" min="0" max="1000" value="0" step="1" aria-label="Timeline" />
+            </div>
+            <span id="swiflyDockDuration" class="swiflyDockTime">0:00</span>
+            <button id="swiflyDockSpeed" type="button" class="swiflyDockPill" aria-label="Playback speed">1x</button>
+            <div id="swiflyDockSpeedMenu" class="swiflyDockMenu" hidden></div>
+            <button id="swiflyDockMute" type="button" class="swiflyDockIcon" aria-label="Mute">🔊</button>
+            <div id="swiflyDockVolumeMenu" class="swiflyDockVolumeMenu" hidden>
+              <input id="swiflyDockVolume" type="range" min="0" max="100" value="100" step="1" aria-label="Volume" />
+            </div>
+            <button id="swiflyDockPip" type="button" class="swiflyDockIcon" aria-label="Picture in picture">▣</button>
+            <button id="swiflyDockFull" type="button" class="swiflyDockIcon" aria-label="Fullscreen">⛶</button>
+          </div>
+
           <div class="dsCinemaHlsHint dsVideoJsHint">
             <span>J</span><b>-10</b>
             <span>K</span><b>play</b>
@@ -35559,6 +35976,21 @@ async function watchPage(req, res, type) {
         var previewHls = null;
         var previewSourceUrl = "";
         var previewSeekTimer = null;
+        var dock = document.getElementById("swiflyVideoDock");
+        var dockPlay = document.getElementById("swiflyDockPlay");
+        var dockBack = document.getElementById("swiflyDockBack");
+        var dockForward = document.getElementById("swiflyDockForward");
+        var dockCurrent = document.getElementById("swiflyDockCurrent");
+        var dockDuration = document.getElementById("swiflyDockDuration");
+        var dockProgress = document.getElementById("swiflyDockProgress");
+        var dockSpeed = document.getElementById("swiflyDockSpeed");
+        var dockSpeedMenu = document.getElementById("swiflyDockSpeedMenu");
+        var dockMute = document.getElementById("swiflyDockMute");
+        var dockVolumeMenu = document.getElementById("swiflyDockVolumeMenu");
+        var dockVolume = document.getElementById("swiflyDockVolume");
+        var dockPip = document.getElementById("swiflyDockPip");
+        var dockFull = document.getElementById("swiflyDockFull");
+        var dockScrubbing = false;
         var bigPlayButton = document.getElementById("movieButtonBigPlay");
         var back10Button = document.getElementById("movieButtonBack10");
         var forward10Button = document.getElementById("movieButtonForward10");
@@ -35810,6 +36242,254 @@ async function watchPage(req, res, type) {
             document.head.appendChild(script);
           }
           next();
+        }
+
+        function installSwiflyNativeDock(player, src) {
+          if (!player || !video || !dock || !dockProgress) return;
+          if (dock.dataset.swiflyReady === "true") return;
+          dock.dataset.swiflyReady = "true";
+
+          function getPlayerDuration() {
+            var win = getSeekWindow();
+            var duration = win.duration || 0;
+            try {
+              var d = player.duration && player.duration();
+              if (!duration && Number.isFinite(d) && d > 0) duration = d;
+            } catch {}
+            if (!duration && Number.isFinite(video.duration) && video.duration > 0) duration = video.duration;
+            return { win: win, duration: duration };
+          }
+
+          function setDockActive() {
+            if (player && player.userActive) player.userActive(true);
+            if (playerShell) playerShell.classList.add("isUsingDock");
+          }
+
+          function updateDock() {
+            var info = getPlayerDuration();
+            var win = info.win;
+            var duration = info.duration;
+            var current = Math.max(0, (Number(video.currentTime || 0) - (win.start || 0)));
+
+            if (dockCurrent) dockCurrent.textContent = formatClock(current);
+            if (dockDuration) dockDuration.textContent = duration ? formatClock(duration) : "--:--";
+
+            if (!dockScrubbing && dockProgress) {
+              var pct = duration > 0 ? Math.max(0, Math.min(1000, Math.round((current / duration) * 1000))) : 0;
+              dockProgress.value = String(pct);
+              dockProgress.style.setProperty("--progress-pct", String(pct / 10));
+            }
+
+            if (dockPlay) dockPlay.textContent = video.paused ? "▶" : "Ⅱ";
+            if (dockMute) dockMute.textContent = video.muted || Number(video.volume || 0) === 0 ? "🔇" : "🔊";
+            if (dockVolume) {
+              var vol = Math.round((video.muted ? 0 : Number(video.volume || 0)) * 100);
+              dockVolume.value = String(vol);
+              dockVolume.style.setProperty("--volume-pct", String(vol));
+            }
+          }
+
+          function seekBy(delta) {
+            var info = getPlayerDuration();
+            var win = info.win;
+            var end = win.end || ((win.start || 0) + (info.duration || 0)) || (Number(video.currentTime || 0) + delta);
+            var target = Math.max(win.start || 0, Math.min(end - 0.15, Number(video.currentTime || 0) + delta));
+            try {
+              if (player.currentTime) player.currentTime(target);
+              else video.currentTime = target;
+            } catch {}
+            updateDock();
+          }
+
+          function seekToRatio(value) {
+            var info = getPlayerDuration();
+            var win = info.win;
+            var duration = info.duration;
+            if (!duration) return;
+            var ratio = Math.max(0, Math.min(1000, Number(value || 0))) / 1000;
+            var target = (win.start || 0) + duration * ratio;
+            try {
+              if (player.currentTime) player.currentTime(target);
+              else video.currentTime = target;
+            } catch {}
+            updateDock();
+          }
+
+          if (dockPlay) dockPlay.onclick = function(event) {
+            event.preventDefault();
+            setDockActive();
+            if (video.paused) video.play().catch(function(){});
+            else video.pause();
+          };
+          if (dockBack) dockBack.onclick = function(event) { event.preventDefault(); setDockActive(); seekBy(-10); };
+          if (dockForward) dockForward.onclick = function(event) { event.preventDefault(); setDockActive(); seekBy(10); };
+
+          dockProgress.addEventListener("pointerdown", function() {
+            dockScrubbing = true;
+            setDockActive();
+            if (playerShell) playerShell.classList.add("isScrubbing");
+          });
+          dockProgress.addEventListener("input", function() {
+            setDockActive();
+            seekToRatio(dockProgress.value);
+            dockProgress.style.setProperty("--progress-pct", String(Number(dockProgress.value || 0) / 10));
+          });
+          ["change", "pointerup", "pointercancel"].forEach(function(name) {
+            dockProgress.addEventListener(name, function() {
+              seekToRatio(dockProgress.value);
+              dockScrubbing = false;
+              if (playerShell) playerShell.classList.remove("isScrubbing");
+            });
+          });
+
+          function updatePreviewFromDock(event) {
+            if (!timelinePreview || !timelinePreviewTime) return;
+            var rect = dockProgress.getBoundingClientRect();
+            if (!rect || !rect.width) return;
+            var x = Math.max(0, Math.min(rect.width, event.clientX - rect.left));
+            var ratio = x / rect.width;
+            var info = getPlayerDuration();
+            if (!info.duration) return;
+            var seconds = (info.win.start || 0) + info.duration * ratio;
+            timelinePreviewTime.textContent = formatClock(info.duration * ratio);
+            var shellRect = playerShell.getBoundingClientRect();
+            var left = Math.max(86, Math.min(shellRect.width - 86, event.clientX - shellRect.left));
+            timelinePreview.style.left = left + "px";
+            timelinePreview.style.setProperty("--preview-left", left + "px");
+            timelinePreview.hidden = false;
+            playerShell.classList.add("isPreviewingTime", "isUsingDock");
+
+            if (timelinePreviewVideo) {
+              if (previewSeekTimer) clearTimeout(previewSeekTimer);
+              previewSeekTimer = setTimeout(function() {
+                try {
+                  if (timelinePreviewVideo.readyState >= 1 && Math.abs((timelinePreviewVideo.currentTime || 0) - seconds) > 1.2) {
+                    timelinePreviewVideo.currentTime = seconds;
+                    if (timelinePreviewState) timelinePreviewState.textContent = "Loading frame";
+                  }
+                } catch {
+                  if (timelinePreviewState) timelinePreviewState.textContent = "Time preview";
+                }
+              }, 90);
+            }
+          }
+
+          dockProgress.addEventListener("mousemove", updatePreviewFromDock);
+          dockProgress.addEventListener("pointermove", updatePreviewFromDock);
+          dockProgress.addEventListener("mouseenter", updatePreviewFromDock);
+          dockProgress.addEventListener("mouseleave", function() {
+            if (timelinePreview) timelinePreview.hidden = true;
+            if (playerShell) playerShell.classList.remove("isPreviewingTime");
+          });
+
+          var speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
+          if (dockSpeedMenu && dockSpeed) {
+            dockSpeedMenu.innerHTML = "";
+            speeds.forEach(function(rate) {
+              var b = document.createElement("button");
+              b.type = "button";
+              b.textContent = rate === 1 ? "1x" : rate + "x";
+              b.dataset.speed = String(rate);
+              if (rate === 1) b.classList.add("active");
+              b.onclick = function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                try {
+                  if (player.playbackRate) player.playbackRate(rate);
+                  video.playbackRate = rate;
+                } catch {}
+                dockSpeed.textContent = rate === 1 ? "1x" : rate + "x";
+                Array.from(dockSpeedMenu.querySelectorAll("button")).forEach(function(x) { x.classList.remove("active"); });
+                b.classList.add("active");
+                dockSpeedMenu.hidden = true;
+                setDockActive();
+              };
+              dockSpeedMenu.appendChild(b);
+            });
+            dockSpeed.onclick = function(event) {
+              event.preventDefault();
+              event.stopPropagation();
+              dockSpeedMenu.hidden = !dockSpeedMenu.hidden;
+              if (dockVolumeMenu) dockVolumeMenu.hidden = true;
+              setDockActive();
+            };
+          }
+
+          if (dockMute) dockMute.onclick = function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            video.muted = !video.muted;
+            try { if (player.muted) player.muted(video.muted); } catch {}
+            updateDock();
+            if (dockVolumeMenu) dockVolumeMenu.hidden = true;
+            setDockActive();
+          };
+
+          if (dockMute && dockVolumeMenu) {
+            dockMute.onmouseenter = function() {
+              dockVolumeMenu.hidden = false;
+              setDockActive();
+            };
+          }
+          if (dockVolumeMenu) {
+            dockVolumeMenu.onmouseenter = setDockActive;
+            dockVolumeMenu.onmousemove = setDockActive;
+            dockVolumeMenu.onmouseleave = function() {
+              dockVolumeMenu.hidden = true;
+            };
+          }
+          if (dockVolume) {
+            dockVolume.addEventListener("input", function() {
+              var value = Math.max(0, Math.min(100, Number(dockVolume.value || 0)));
+              video.volume = value / 100;
+              video.muted = value === 0;
+              try {
+                if (player.volume) player.volume(value / 100);
+                if (player.muted) player.muted(value === 0);
+              } catch {}
+              dockVolume.style.setProperty("--volume-pct", String(value));
+              updateDock();
+              setDockActive();
+            });
+          }
+
+          if (dockPip) dockPip.onclick = async function(event) {
+            event.preventDefault();
+            setDockActive();
+            try {
+              if (document.pictureInPictureElement) await document.exitPictureInPicture();
+              else if (video.requestPictureInPicture) await video.requestPictureInPicture();
+            } catch {}
+          };
+
+          if (dockFull) dockFull.onclick = function(event) {
+            event.preventDefault();
+            setDockActive();
+            try {
+              if (!document.fullscreenElement) {
+                if (playerShell.requestFullscreen) playerShell.requestFullscreen();
+              } else if (document.exitFullscreen) {
+                document.exitFullscreen();
+              }
+            } catch {}
+          };
+
+          document.addEventListener("click", function(event) {
+            if (!dock) return;
+            if (dock.contains(event.target)) return;
+            if (dockSpeedMenu) dockSpeedMenu.hidden = true;
+            if (dockVolumeMenu) dockVolumeMenu.hidden = true;
+          });
+
+          ["timeupdate", "durationchange", "loadedmetadata", "progress", "play", "pause", "volumechange", "ratechange", "canplay"].forEach(function(name) {
+            video.addEventListener(name, updateDock);
+            try { player.on(name, updateDock); } catch {}
+          });
+
+          dock.addEventListener("mousemove", setDockActive);
+          dock.addEventListener("mouseenter", setDockActive);
+          setInterval(updateDock, 700);
+          updateDock();
         }
 
         function setVideoJsQualityMenu(player) {
@@ -36201,8 +36881,8 @@ async function watchPage(req, res, type) {
           destroyRegularMoviePlayers();
 
           if (playerShell) {
-            playerShell.classList.remove("usesPlyr", "usesMediaChrome", "usesNativeVideo", "isScrubbing", "v128VideoReady", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed", "v132SoftRectPlay", "v133HoverPreview", "v134SpeedPreviewFix", "v135VolumeImagePreview", "v136PillDockSkin");
-            playerShell.classList.add("usesVideoJs", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed", "v132SoftRectPlay", "v133HoverPreview", "v134SpeedPreviewFix", "v135VolumeImagePreview", "v136PillDockSkin");
+            playerShell.classList.remove("usesPlyr", "usesMediaChrome", "usesNativeVideo", "isScrubbing", "v128VideoReady", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed", "v132SoftRectPlay", "v133HoverPreview", "v134SpeedPreviewFix", "v135VolumeImagePreview", "v136PillDockSkin", "v137NativeDock");
+            playerShell.classList.add("usesVideoJs", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed", "v132SoftRectPlay", "v133HoverPreview", "v134SpeedPreviewFix", "v135VolumeImagePreview", "v136PillDockSkin", "v137NativeDock");
           }
 
           try {
@@ -36276,6 +36956,7 @@ async function watchPage(req, res, type) {
               setVideoJsVolumeMenu(movieButtonPlayer);
               prepareTimelinePreviewVideo(src);
               installVideoJsTimelinePreview(movieButtonPlayer);
+              installSwiflyNativeDock(movieButtonPlayer, src);
               wireVideoJsOverlayControls(movieButtonPlayer);
               // Video.js already has the main timeline. Keep the custom HLS helper hidden for this skin.
               if (seekDock) seekDock.hidden = true;
@@ -36287,12 +36968,12 @@ async function watchPage(req, res, type) {
                 if (playerEl && !playerEl.dataset.swiflyMenuFix) {
                   playerEl.dataset.swiflyMenuFix = "true";
                   playerEl.addEventListener("mouseover", function(event) {
-                    if (event.target && event.target.closest && event.target.closest(".vjs-menu, .vjs-menu-button, .vjs-progress-control, .dsVideoJsSpeed, .dsVideoJsQuality, .dsVideoJsVolume, .dsVideoJsTimelinePreview")) {
+                    if (event.target && event.target.closest && event.target.closest(".vjs-menu, .vjs-menu-button, .vjs-progress-control, .dsVideoJsSpeed, .dsVideoJsQuality, .dsVideoJsVolume, .dsVideoJsTimelinePreview, .swiflyVideoDock")) {
                       movieButtonPlayer.userActive(true);
                     }
                   });
                   playerEl.addEventListener("mousemove", function(event) {
-                    if (event.target && event.target.closest && event.target.closest(".vjs-menu, .vjs-menu-button, .vjs-progress-control, .dsVideoJsSpeed, .dsVideoJsQuality, .dsVideoJsVolume, .dsVideoJsTimelinePreview")) {
+                    if (event.target && event.target.closest && event.target.closest(".vjs-menu, .vjs-menu-button, .vjs-progress-control, .dsVideoJsSpeed, .dsVideoJsQuality, .dsVideoJsVolume, .dsVideoJsTimelinePreview, .swiflyVideoDock")) {
                       movieButtonPlayer.userActive(true);
                     }
                   });
