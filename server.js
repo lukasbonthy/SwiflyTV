@@ -28583,6 +28583,459 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v126 VIDEO.JS CINEMA PLAYER
+       User requested Video.js: this makes Video.js/VHS the main m3u8
+       player again, but keeps the better Swifly cinema shell.
+       ============================================================ */
+
+    .dsVideoJsCinemaShell {
+      min-height: clamp(430px, 74vh, 820px) !important;
+      border-radius: 32px !important;
+      background:
+        radial-gradient(1100px circle at 16% 0%, rgba(85,215,255,.13), transparent 44%),
+        radial-gradient(900px circle at 88% -10%, rgba(139,92,246,.14), transparent 44%),
+        #000 !important;
+      outline: 1px solid rgba(255,255,255,.10);
+      overflow: hidden !important;
+      isolation: isolate;
+    }
+
+    .dsVideoJsCinemaShell.usesVideoJs .dsSwiflyMediaController,
+    .dsVideoJsCinemaShell.usesVideoJs .dsMediaChromeControls,
+    .dsVideoJsCinemaShell.usesVideoJs .dsMediaChromeCenter,
+    .dsVideoJsCinemaShell.usesVideoJs .dsMediaChromeQuality,
+    .dsVideoJsCinemaShell.usesVideoJs .plyr {
+      display: none !important;
+    }
+
+    .dsVideoJsCinemaShell.usesVideoJs .video-js,
+    .dsVideoJsCinemaShell.usesVideoJs .dsCinemaHlsVideo {
+      display: block !important;
+      position: relative !important;
+      z-index: 4 !important;
+      width: 100% !important;
+      height: clamp(430px, 74vh, 820px) !important;
+      min-height: 430px !important;
+      max-height: 82vh !important;
+      object-fit: contain !important;
+      background: #000 !important;
+      border-radius: inherit !important;
+      overflow: hidden !important;
+    }
+
+    .dsVideoJsTop {
+      z-index: 30 !important;
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: opacity .16s ease, transform .16s ease;
+    }
+
+    .dsVideoJsCinemaShell:hover .dsVideoJsTop,
+    .dsVideoJsCinemaShell:focus-within .dsVideoJsTop,
+    .dsVideoJsCinemaShell.isScrubbing .dsVideoJsTop {
+      opacity: .96;
+      transform: translateY(0);
+    }
+
+    .dsVideoJsCenter {
+      position: absolute;
+      inset: 0;
+      z-index: 24;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(14px, 2vw, 22px);
+      pointer-events: none;
+      opacity: 0;
+      transform: scale(.985);
+      transition: opacity .16s ease, transform .16s ease;
+    }
+
+    .dsVideoJsCinemaShell:hover .dsVideoJsCenter,
+    .dsVideoJsCinemaShell:focus-within .dsVideoJsCenter,
+    .dsVideoJsCinemaShell .vjs-paused ~ .dsVideoJsCenter,
+    .dsVideoJsCinemaShell.isScrubbing .dsVideoJsCenter {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .dsVideoJsCenter button {
+      pointer-events: auto;
+      display: inline-grid;
+      place-items: center;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.18);
+      color: white;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.22), transparent 42%),
+        rgba(7,10,22,.58);
+      backdrop-filter: blur(20px) saturate(1.16);
+      -webkit-backdrop-filter: blur(20px) saturate(1.16);
+      box-shadow: 0 24px 84px rgba(0,0,0,.48), 0 0 38px rgba(85,215,255,.13);
+      cursor: pointer;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+    }
+
+    .dsVideoJsCenter button:hover {
+      transform: translateY(-2px) scale(1.035);
+      border-color: rgba(223,248,255,.32);
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.28), transparent 42%),
+        rgba(22,29,54,.72);
+    }
+
+    #movieButtonBigPlay {
+      width: clamp(78px, 8vw, 112px);
+      height: clamp(78px, 8vw, 112px);
+      font-size: clamp(28px, 3vw, 42px);
+      padding-left: .08em;
+    }
+
+    #movieButtonBack10,
+    #movieButtonForward10 {
+      width: clamp(54px, 5.2vw, 72px);
+      height: clamp(54px, 5.2vw, 72px);
+      font-size: 24px;
+      gap: 0;
+    }
+
+    #movieButtonBack10 small,
+    #movieButtonForward10 small {
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: -.04em;
+    }
+
+    .dsVideoJsQuality {
+      position: absolute;
+      right: 18px;
+      bottom: 132px;
+      z-index: 42;
+      pointer-events: auto;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity .18s ease, transform .18s ease;
+    }
+
+    .dsVideoJsCinemaShell:hover .dsVideoJsQuality,
+    .dsVideoJsCinemaShell:focus-within .dsVideoJsQuality,
+    .dsVideoJsCinemaShell.isScrubbing .dsVideoJsQuality {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .dsVideoJsQualityToggle {
+      min-height: 36px;
+      min-width: 72px;
+      padding: 0 12px;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 999px;
+      color: rgba(255,255,255,.86);
+      background: rgba(7,10,22,.72);
+      box-shadow: 0 14px 42px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.06);
+      backdrop-filter: blur(18px) saturate(1.14);
+      -webkit-backdrop-filter: blur(18px) saturate(1.14);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 950;
+    }
+
+    .dsVideoJsQualityToggle:hover {
+      color: #06101d;
+      background: linear-gradient(135deg, #ffffff, #dff8ff);
+    }
+
+    .dsVideoJsQualityMenu {
+      position: absolute;
+      right: 0;
+      bottom: 44px;
+      min-width: 120px;
+      display: grid;
+      gap: 6px;
+      padding: 8px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(7,10,22,.94);
+      box-shadow: 0 22px 70px rgba(0,0,0,.48), 0 0 42px rgba(85,215,255,.12);
+      backdrop-filter: blur(24px) saturate(1.18);
+      -webkit-backdrop-filter: blur(24px) saturate(1.18);
+    }
+
+    .dsVideoJsQualityMenu[hidden] {
+      display: none !important;
+    }
+
+    .dsVideoJsQualityMenu button {
+      min-height: 34px;
+      padding: 0 12px;
+      border: 0;
+      border-radius: 12px;
+      color: rgba(255,255,255,.74);
+      background: transparent;
+      text-align: left;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .dsVideoJsQualityMenu button:hover,
+    .dsVideoJsQualityMenu button.active {
+      color: #06101d;
+      background: linear-gradient(135deg, #ffffff, #dff8ff);
+    }
+
+    .dsVideoJsHint {
+      bottom: 142px !important;
+      right: 104px !important;
+      z-index: 35 !important;
+    }
+
+    .dsVideoJsCinemaShell.usesVideoJs .dsHlsStatus {
+      bottom: 132px !important;
+      left: 18px !important;
+      z-index: 35 !important;
+      max-width: min(520px, calc(100% - 36px));
+    }
+
+    .dsVideoJsCinemaShell.usesVideoJs .dsCinemaSeekDock {
+      left: 18px !important;
+      right: 18px !important;
+      bottom: 112px !important;
+      z-index: 36 !important;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .dsVideoJsCinemaShell.usesVideoJs:hover .dsCinemaSeekDock,
+    .dsVideoJsCinemaShell.usesVideoJs:focus-within .dsCinemaSeekDock,
+    .dsVideoJsCinemaShell.usesVideoJs.isScrubbing .dsCinemaSeekDock {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .vjs-theme-swifly {
+      --vjs-theme-primary: #55d7ff;
+      font-family: var(--font-ui, "Host Grotesk", Inter, system-ui, sans-serif) !important;
+    }
+
+    .vjs-theme-swifly .vjs-control-bar {
+      z-index: 28 !important;
+      min-height: 112px !important;
+      height: 112px !important;
+      display: flex !important;
+      align-items: flex-end !important;
+      gap: 4px !important;
+      padding: 52px 18px 18px !important;
+      background:
+        linear-gradient(to top, rgba(0,0,0,.96) 0%, rgba(0,0,0,.74) 44%, rgba(0,0,0,.18) 82%, transparent 100%) !important;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      opacity: 0 !important;
+      transform: translateY(14px);
+      transition: opacity .18s ease, transform .18s ease !important;
+      pointer-events: auto !important;
+    }
+
+    .vjs-theme-swifly:hover .vjs-control-bar,
+    .vjs-theme-swifly.vjs-user-active .vjs-control-bar,
+    .vjs-theme-swifly.vjs-paused .vjs-control-bar {
+      opacity: 1 !important;
+      transform: translateY(0);
+    }
+
+    .vjs-theme-swifly .vjs-progress-control {
+      position: absolute !important;
+      left: 18px !important;
+      right: 18px !important;
+      bottom: 72px !important;
+      width: auto !important;
+      height: 30px !important;
+      z-index: 31 !important;
+      cursor: pointer !important;
+    }
+
+    .vjs-theme-swifly .vjs-progress-holder {
+      height: 10px !important;
+      margin: 10px 0 0 !important;
+      border-radius: 999px !important;
+      background: rgba(255,255,255,.18) !important;
+    }
+
+    .vjs-theme-swifly .vjs-load-progress,
+    .vjs-theme-swifly .vjs-play-progress {
+      height: 10px !important;
+      border-radius: 999px !important;
+    }
+
+    .vjs-theme-swifly .vjs-play-progress {
+      background: linear-gradient(90deg, #55d7ff, #8b5cf6, #dff8ff) !important;
+      box-shadow: 0 0 22px rgba(85,215,255,.28);
+    }
+
+    .vjs-theme-swifly .vjs-slider {
+      background: rgba(255,255,255,.18) !important;
+    }
+
+    .vjs-theme-swifly .vjs-control {
+      width: 38px !important;
+      height: 38px !important;
+      border-radius: 999px !important;
+      color: rgba(255,255,255,.88) !important;
+      transition: color .14s ease, background .14s ease, transform .14s ease !important;
+    }
+
+    .vjs-theme-swifly .vjs-control:hover {
+      color: #06101d !important;
+      background: linear-gradient(135deg, #ffffff, #dff8ff) !important;
+      transform: translateY(-1px);
+    }
+
+    .vjs-theme-swifly .vjs-button > .vjs-icon-placeholder::before {
+      line-height: 38px !important;
+      font-size: 18px !important;
+    }
+
+    .vjs-theme-swifly .vjs-time-control {
+      display: block !important;
+      width: auto !important;
+      min-width: 46px !important;
+      padding: 0 4px !important;
+      color: rgba(255,255,255,.74) !important;
+      font-size: 12px !important;
+      font-weight: 850 !important;
+      line-height: 38px !important;
+    }
+
+    .vjs-theme-swifly .vjs-volume-panel {
+      width: 42px !important;
+    }
+
+    .vjs-theme-swifly .vjs-volume-panel.vjs-volume-panel-horizontal:hover,
+    .vjs-theme-swifly .vjs-volume-panel.vjs-volume-panel-horizontal.vjs-slider-active {
+      width: 128px !important;
+    }
+
+    .vjs-theme-swifly .vjs-playback-rate {
+      width: 54px !important;
+    }
+
+    .vjs-theme-swifly .vjs-playback-rate .vjs-playback-rate-value {
+      line-height: 38px !important;
+      font-size: 12px !important;
+      font-weight: 950 !important;
+    }
+
+    .vjs-theme-swifly .vjs-big-play-button {
+      display: none !important;
+    }
+
+    .vjs-swifly-skip-button .vjs-icon-placeholder::before {
+      content: "10" !important;
+      font-family: var(--font-ui, Inter, system-ui) !important;
+      font-size: 11px !important;
+      font-weight: 950 !important;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 999px;
+      width: 24px;
+      height: 24px;
+      line-height: 22px !important;
+      left: 7px !important;
+      top: 7px !important;
+      color: inherit !important;
+    }
+
+    .vjs-swifly-back-button::after,
+    .vjs-swifly-forward-button::after {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-size: 15px;
+      pointer-events: none;
+    }
+
+    .vjs-swifly-back-button::after {
+      content: "↺";
+      transform: translateX(-11px);
+    }
+
+    .vjs-swifly-forward-button::after {
+      content: "↻";
+      transform: translateX(11px);
+    }
+
+    @media(max-width: 900px) {
+      .dsVideoJsCinemaShell,
+      .dsVideoJsCinemaShell.usesVideoJs .video-js,
+      .dsVideoJsCinemaShell.usesVideoJs .dsCinemaHlsVideo {
+        height: clamp(330px, 62vh, 640px) !important;
+        min-height: 330px !important;
+        border-radius: 24px !important;
+      }
+
+      .vjs-theme-swifly .vjs-control-bar {
+        min-height: 100px !important;
+        height: 100px !important;
+        padding: 48px 10px 12px !important;
+        gap: 2px !important;
+      }
+
+      .vjs-theme-swifly .vjs-progress-control {
+        left: 10px !important;
+        right: 10px !important;
+        bottom: 64px !important;
+      }
+
+      .vjs-theme-swifly .vjs-time-control,
+      .vjs-theme-swifly .vjs-volume-panel,
+      .vjs-theme-swifly .vjs-picture-in-picture-control {
+        display: none !important;
+      }
+
+      .dsVideoJsQuality {
+        right: 10px;
+        bottom: 112px;
+      }
+
+      .dsVideoJsHint,
+      .dsVideoJsTop {
+        display: none !important;
+      }
+
+      .dsVideoJsCinemaShell.usesVideoJs .dsHlsStatus {
+        left: 10px !important;
+        right: 10px !important;
+        bottom: 112px !important;
+      }
+
+      .dsVideoJsCinemaShell.usesVideoJs .dsCinemaSeekDock {
+        left: 10px !important;
+        right: 10px !important;
+        bottom: 92px !important;
+      }
+    }
+
+    @media(max-width: 520px) {
+      .dsVideoJsCinemaShell,
+      .dsVideoJsCinemaShell.usesVideoJs .video-js,
+      .dsVideoJsCinemaShell.usesVideoJs .dsCinemaHlsVideo {
+        height: 56vh !important;
+        min-height: 292px !important;
+        border-radius: 20px !important;
+      }
+
+      .dsVideoJsCenter {
+        display: none !important;
+      }
+
+      .vjs-swifly-skip-button,
+      .vjs-theme-swifly .vjs-playback-rate {
+        display: none !important;
+      }
+    }
+
   </style>
 
     <script>
@@ -31828,54 +32281,36 @@ async function watchPage(req, res, type) {
             <a class="dsGhostPill" href="/watchrooms">Use Watch Room</a>
           </div>
         </div>
-        <div id="movieButtonPlayerShell" class="dsMovieButtonPlayerShell dsCinemaHlsShell dsMediaChromeShell" hidden>
+        <div id="movieButtonPlayerShell" class="dsMovieButtonPlayerShell dsCinemaHlsShell dsVideoJsCinemaShell" hidden>
           <div class="dsCinemaPlayerAura"></div>
-          <media-controller id="swiflyMediaController" class="dsSwiflyMediaController" gesturesenabled>
-            <video id="proxyVideoClientVideo" class="dsMovieButtonVideo dsCinemaHlsVideo" slot="media" playsinline crossorigin="anonymous" preload="auto"></video>
 
-            <div class="dsCinemaHlsTop dsMediaChromeTop" slot="top-chrome">
-              <span>SWIFLY CINEMA</span>
-              <b id="movieButtonHlsTitle">Preparing stream</b>
-              <small id="movieButtonHlsMeta">m3u8 player</small>
-            </div>
-
-            <media-loading-indicator class="dsMediaChromeLoading" slot="centered-chrome" noautohide></media-loading-indicator>
-
-            <div class="dsMediaChromeCenter" slot="centered-chrome">
-              <media-seek-backward-button seekoffset="10" aria-label="Back 10 seconds"></media-seek-backward-button>
-              <media-play-button class="dsMediaChromeBigPlay" aria-label="Play or pause"></media-play-button>
-              <media-seek-forward-button seekoffset="10" aria-label="Forward 10 seconds"></media-seek-forward-button>
-            </div>
-
-            <media-control-bar class="dsMediaChromeControls">
-              <media-play-button></media-play-button>
-              <media-seek-backward-button seekoffset="10"></media-seek-backward-button>
-              <media-seek-forward-button seekoffset="10"></media-seek-forward-button>
-              <media-time-display></media-time-display>
-              <media-time-range></media-time-range>
-              <media-time-display showduration remaining></media-time-display>
-              <media-mute-button></media-mute-button>
-              <media-volume-range></media-volume-range>
-              <media-captions-button></media-captions-button>
-              <media-playback-rate-button></media-playback-rate-button>
-              <media-pip-button></media-pip-button>
-              <media-fullscreen-button></media-fullscreen-button>
-            </media-control-bar>
-          </media-controller>
-
-          <div class="dsMediaChromeQuality">
-            <button id="movieButtonQualityToggle" type="button" class="dsMediaChromeQualityToggle">Auto</button>
-            <div id="movieButtonQualityMenu" class="dsMediaChromeQualityMenu" hidden></div>
+          <div class="dsCinemaHlsTop dsVideoJsTop">
+            <span>SWIFLY VIDEO.JS</span>
+            <b id="movieButtonHlsTitle">Preparing stream</b>
+            <small id="movieButtonHlsMeta">m3u8 player</small>
           </div>
 
-          <div class="dsCinemaHlsHint dsMediaChromeHint">
+          <div class="dsVideoJsCenter">
+            <button id="movieButtonBack10" type="button" aria-label="Back 10 seconds">↺<small>10</small></button>
+            <button id="movieButtonBigPlay" type="button" aria-label="Play or pause">▶</button>
+            <button id="movieButtonForward10" type="button" aria-label="Forward 10 seconds"><small>10</small>↻</button>
+          </div>
+
+          <video id="proxyVideoClientVideo" class="dsMovieButtonVideo dsCinemaHlsVideo video-js vjs-big-play-centered vjs-theme-swifly" controls playsinline crossorigin="anonymous" preload="auto"></video>
+
+          <div class="dsVideoJsQuality">
+            <button id="movieButtonQualityToggle" type="button" class="dsVideoJsQualityToggle">Auto</button>
+            <div id="movieButtonQualityMenu" class="dsVideoJsQualityMenu" hidden></div>
+          </div>
+
+          <div class="dsCinemaHlsHint dsVideoJsHint">
             <span>J</span><b>-10</b>
             <span>K</span><b>play</b>
             <span>L</span><b>+10</b>
             <span>F</span><b>full</b>
           </div>
 
-          <div id="movieButtonSeekDock" class="dsCinemaSeekDock" hidden>
+          <div id="movieButtonSeekDock" class="dsCinemaSeekDock">
             <div class="dsCinemaSeekTimes">
               <span id="movieButtonCurrentTime">0:00</span>
               <b id="movieButtonSeekLabel">Timeline</b>
@@ -31988,10 +32423,11 @@ async function watchPage(req, res, type) {
         var seekLabel = document.getElementById("movieButtonSeekLabel");
         var qualityToggle = document.getElementById("movieButtonQualityToggle");
         var qualityMenu = document.getElementById("movieButtonQualityMenu");
-        var mediaController = document.getElementById("swiflyMediaController");
+        var bigPlayButton = document.getElementById("movieButtonBigPlay");
+        var back10Button = document.getElementById("movieButtonBack10");
+        var forward10Button = document.getElementById("movieButtonForward10");
         var isSeekingWithRange = false;
         var customSeekReady = false;
-        var mediaChromeReady = false;
         var movieButtonPlayer = null;
         var movieButtonPlyr = null;
         var movieButtonHls = null;
@@ -32203,45 +32639,40 @@ async function watchPage(req, res, type) {
           next();
         }
 
-        function loadMediaChromeAssets(callback) {
-          if (customElements && customElements.get && customElements.get("media-controller")) {
-            mediaChromeReady = true;
-            return callback(true);
+        function loadVideoJsAssets(callback) {
+          if (window.videojs) return callback(true);
+
+          if (!document.querySelector('link[data-swifly-videojs-css]')) {
+            var link = document.createElement("link");
+            link.rel = "stylesheet";
+            link.href = "https://cdn.jsdelivr.net/npm/video.js@8.17.4/dist/video-js.min.css";
+            link.setAttribute("data-swifly-videojs-css", "true");
+            document.head.appendChild(link);
           }
 
-          var existing = document.querySelector("script[data-swifly-media-chrome]");
-          if (existing) {
-            existing.addEventListener("load", function(){
-              setTimeout(function(){
-                mediaChromeReady = Boolean(customElements && customElements.get && customElements.get("media-controller"));
-                callback(mediaChromeReady);
-              }, 0);
-            }, { once: true });
-            existing.addEventListener("error", function(){ callback(false); }, { once: true });
-            return;
+          var urls = [
+            "https://cdn.jsdelivr.net/npm/video.js@8.17.4/dist/video.min.js",
+            "https://unpkg.com/video.js@8.17.4/dist/video.min.js"
+          ];
+          var i = 0;
+          function next() {
+            if (window.videojs) return callback(true);
+            if (i >= urls.length) return callback(false);
+            var script = document.createElement("script");
+            script.src = urls[i++];
+            script.async = true;
+            script.onload = function(){ callback(Boolean(window.videojs)); };
+            script.onerror = next;
+            document.head.appendChild(script);
           }
-
-          var script = document.createElement("script");
-          script.type = "module";
-          script.src = "https://cdn.jsdelivr.net/npm/media-chrome@4/+esm";
-          script.setAttribute("data-swifly-media-chrome", "true");
-          script.onload = function(){
-            setTimeout(function(){
-              mediaChromeReady = Boolean(customElements && customElements.get && customElements.get("media-controller"));
-              callback(mediaChromeReady);
-            }, 0);
-          };
-          script.onerror = function(){ callback(false); };
-          document.head.appendChild(script);
+          next();
         }
 
-        function setMediaChromeQualityMenu(hlsInstance, levels) {
+        function setVideoJsQualityMenu(player) {
           if (!qualityToggle || !qualityMenu) return;
-
-          var heights = uniqueHlsHeights(levels || []);
           qualityMenu.innerHTML = "";
 
-          function makeButton(label, value, active) {
+          function addQualityButton(label, value, active) {
             var button = document.createElement("button");
             button.type = "button";
             button.textContent = label;
@@ -32249,21 +32680,26 @@ async function watchPage(req, res, type) {
             button.addEventListener("click", function(event) {
               event.preventDefault();
               event.stopPropagation();
-              if (!hlsInstance) return;
-              if (value === "auto") {
-                hlsInstance.currentLevel = -1;
-                qualityToggle.textContent = "Auto";
-                if (hlsMeta) hlsMeta.textContent = "Auto quality";
-              } else {
-                var target = Number(value);
-                var index = -1;
-                (hlsInstance.levels || []).forEach(function(level, i) {
-                  if (Number(level && level.height) === target && index === -1) index = i;
-                });
-                hlsInstance.currentLevel = index >= 0 ? index : -1;
-                qualityToggle.textContent = index >= 0 ? target + "p" : "Auto";
-                if (hlsMeta) hlsMeta.textContent = index >= 0 ? target + "p selected" : "Auto quality";
+
+              try {
+                if (value === "auto") {
+                  var repsAuto = player.tech(true).vhs && player.tech(true).vhs.representations ? player.tech(true).vhs.representations() : [];
+                  Array.from(repsAuto || []).forEach(function(rep) { rep.enabled(true); });
+                  qualityToggle.textContent = "Auto";
+                  if (hlsMeta) hlsMeta.textContent = "Auto quality";
+                } else {
+                  var selected = Number(value);
+                  var reps = player.tech(true).vhs && player.tech(true).vhs.representations ? player.tech(true).vhs.representations() : [];
+                  Array.from(reps || []).forEach(function(rep) {
+                    rep.enabled(Number(rep.height) === selected);
+                  });
+                  qualityToggle.textContent = selected + "p";
+                  if (hlsMeta) hlsMeta.textContent = selected + "p selected";
+                }
+              } catch {
+                qualityToggle.textContent = label;
               }
+
               Array.from(qualityMenu.querySelectorAll("button")).forEach(function(btn){ btn.classList.remove("active"); });
               button.classList.add("active");
               qualityMenu.hidden = true;
@@ -32271,22 +32707,33 @@ async function watchPage(req, res, type) {
             qualityMenu.appendChild(button);
           }
 
-          makeButton("Auto", "auto", true);
-          heights.forEach(function(height) {
-            makeButton(height + "p", String(height), false);
-          });
+          addQualityButton("Auto", "auto", true);
 
-          qualityToggle.hidden = false;
+          function refresh() {
+            var heights = [];
+            try {
+              var reps = player.tech(true).vhs && player.tech(true).vhs.representations ? player.tech(true).vhs.representations() : [];
+              Array.from(reps || []).forEach(function(rep) {
+                var height = Number(rep.height);
+                if (height && heights.indexOf(height) === -1) heights.push(height);
+              });
+            } catch {}
+
+            heights.sort(function(a, b){ return b - a; });
+            Array.from(qualityMenu.querySelectorAll("button:not(:first-child)")).forEach(function(btn){ btn.remove(); });
+            heights.forEach(function(height){ addQualityButton(height + "p", String(height), false); });
+            qualityToggle.hidden = false;
+          }
+
           qualityToggle.onclick = function(event) {
             event.preventDefault();
             event.stopPropagation();
             qualityMenu.hidden = !qualityMenu.hidden;
+            refresh();
           };
 
-          if (!heights.length) {
-            qualityToggle.textContent = "Auto";
-            qualityToggle.title = "Quality menu unavailable until stream reports levels";
-          }
+          setTimeout(refresh, 400);
+          setTimeout(refresh, 1400);
         }
 
         document.addEventListener("click", function(event) {
@@ -32295,120 +32742,180 @@ async function watchPage(req, res, type) {
           qualityMenu.hidden = true;
         });
 
-        function startMediaChromeHlsSource(src, data) {
-          setPlayerStatus("Loading m3u8...", "Starting Swifly Cinema player", false);
+        function addVideoJsSkipControls(player) {
+          if (!player || !player.controlBar || player.__swiflySkipControls) return;
+          player.__swiflySkipControls = true;
+
+          var Button = window.videojs.getComponent("Button");
+
+          var BackButton = window.videojs.extend(Button, {
+            constructor: function() {
+              Button.apply(this, arguments);
+              this.controlText("Back 10 seconds");
+              this.addClass("vjs-swifly-skip-button");
+              this.addClass("vjs-swifly-back-button");
+            },
+            handleClick: function() {
+              try {
+                var win = getSeekWindow();
+                video.currentTime = Math.max(win.start || 0, video.currentTime - 10);
+                syncCustomSeekBar();
+              } catch {}
+            }
+          });
+
+          var ForwardButton = window.videojs.extend(Button, {
+            constructor: function() {
+              Button.apply(this, arguments);
+              this.controlText("Forward 10 seconds");
+              this.addClass("vjs-swifly-skip-button");
+              this.addClass("vjs-swifly-forward-button");
+            },
+            handleClick: function() {
+              try {
+                var win = getSeekWindow();
+                video.currentTime = Math.min((win.end || video.currentTime + 10) - 0.15, video.currentTime + 10);
+                syncCustomSeekBar();
+              } catch {}
+            }
+          });
+
+          window.videojs.registerComponent("SwiflyBack10Button", BackButton);
+          window.videojs.registerComponent("SwiflyForward10Button", ForwardButton);
+
+          try {
+            player.controlBar.addChild("SwiflyBack10Button", {}, 1);
+            player.controlBar.addChild("SwiflyForward10Button", {}, 3);
+          } catch {}
+        }
+
+        function wireVideoJsOverlayControls(player) {
+          function seekBy(delta) {
+            try {
+              var win = getSeekWindow();
+              video.currentTime = Math.max(win.start || 0, Math.min((win.end || video.currentTime + delta) - 0.15, video.currentTime + delta));
+              syncCustomSeekBar();
+            } catch {}
+          }
+
+          if (bigPlayButton) {
+            bigPlayButton.onclick = function(event) {
+              event.preventDefault();
+              if (video.paused) video.play().catch(function(){});
+              else video.pause();
+            };
+          }
+
+          if (back10Button) back10Button.onclick = function(event){ event.preventDefault(); seekBy(-10); };
+          if (forward10Button) forward10Button.onclick = function(event){ event.preventDefault(); seekBy(10); };
+
+          if (video && bigPlayButton) {
+            video.addEventListener("play", function(){ bigPlayButton.textContent = "Ⅱ"; });
+            video.addEventListener("pause", function(){ bigPlayButton.textContent = "▶"; });
+          }
+        }
+
+        function startVideoJsCinemaSource(src, data) {
+          setPlayerStatus("Loading m3u8...", "Starting Video.js player", false);
           destroyRegularMoviePlayers();
 
           if (playerShell) {
-            playerShell.classList.remove("usesPlyr", "isScrubbing", "usesNativeVideo");
-            playerShell.classList.add("usesMediaChrome");
+            playerShell.classList.remove("usesPlyr", "usesMediaChrome", "usesNativeVideo", "isScrubbing");
+            playerShell.classList.add("usesVideoJs");
           }
 
           try {
-            video.className = "dsMovieButtonVideo dsCinemaHlsVideo";
-            video.setAttribute("slot", "media");
-            video.controls = false;
+            video.className = "dsMovieButtonVideo dsCinemaHlsVideo video-js vjs-big-play-centered vjs-theme-swifly";
+            video.controls = true;
             video.crossOrigin = "anonymous";
+            video.removeAttribute("slot");
             video.removeAttribute("src");
             video.load();
           } catch {}
 
-          loadMediaChromeAssets(function(mediaLoaded) {
-            if (!mediaLoaded) {
+          loadVideoJsAssets(function(loaded) {
+            if (!loaded || !window.videojs) {
               if (playerShell) {
-                playerShell.classList.remove("usesMediaChrome");
+                playerShell.classList.remove("usesVideoJs");
                 playerShell.classList.add("usesNativeVideo");
               }
+              video.src = src;
               video.controls = true;
-              setPlayerStatus("Player UI fallback", "Media Chrome did not load, using native controls.", true);
+              try { video.load(); } catch {}
+              setPlayerStatus("Video.js failed to load", "Using native controls fallback.", true);
+              setTimeout(syncCustomSeekBar, 500);
+              return;
             }
 
-            installCustomSeekBar();
+            movieButtonPlayer = window.videojs(video, {
+              controls: true,
+              autoplay: false,
+              preload: "auto",
+              fluid: false,
+              fill: true,
+              responsive: true,
+              inactivityTimeout: 1700,
+              liveui: false,
+              playbackRates: [0.5, 0.75, 1, 1.25, 1.5, 2],
+              controlBar: {
+                children: [
+                  "playToggle",
+                  "volumePanel",
+                  "currentTimeDisplay",
+                  "timeDivider",
+                  "durationDisplay",
+                  "progressControl",
+                  "remainingTimeDisplay",
+                  "playbackRateMenuButton",
+                  "pictureInPictureToggle",
+                  "fullscreenToggle"
+                ],
+                volumePanel: { inline: false },
+                remainingTimeDisplay: false,
+                pictureInPictureToggle: true
+              },
+              html5: {
+                vhs: {
+                  overrideNative: true,
+                  withCredentials: false,
+                  enableLowInitialPlaylist: true,
+                  smoothQualityChange: true,
+                  useDevicePixelRatio: true,
+                  handlePartialData: true
+                },
+                nativeAudioTracks: false,
+                nativeVideoTracks: false
+              },
+              sources: [{
+                src: src,
+                type: "application/x-mpegURL"
+              }]
+            });
 
-            var nativeHls = video.canPlayType("application/vnd.apple.mpegurl") || video.canPlayType("application/x-mpegURL");
+            movieButtonPlayer.ready(function() {
+              addVideoJsSkipControls(movieButtonPlayer);
+              setVideoJsQualityMenu(movieButtonPlayer);
+              wireVideoJsOverlayControls(movieButtonPlayer);
+              installCustomSeekBar();
 
-            loadHlsScript(function(hlsLoaded) {
-              if (hlsLoaded && window.Hls && window.Hls.isSupported()) {
-                movieButtonHls = new window.Hls({
-                  debug: false,
-                  enableWorker: true,
-                  lowLatencyMode: false,
-                  backBufferLength: 90,
-                  maxBufferLength: 60,
-                  maxMaxBufferLength: 180,
-                  startPosition: -1,
-                  capLevelToPlayerSize: true,
-                  manifestLoadingMaxRetry: 4,
-                  levelLoadingMaxRetry: 4,
-                  fragLoadingMaxRetry: 6,
-                  manifestLoadingTimeOut: 30000,
-                  levelLoadingTimeOut: 30000,
-                  fragLoadingTimeOut: 30000
+              setPlayerStatus("m3u8 ready", "Video.js VHS loaded. Timeline enabled.", false);
+              setStatus("m3u8 loaded. Timeline enabled.");
+              if (playerShell) { try { playerShell.focus({ preventScroll: true }); } catch {} }
+              setTimeout(syncCustomSeekBar, 500);
+              hidePlayerStatusSoon();
+
+              try {
+                movieButtonPlayer.on("timeupdate", syncCustomSeekBar);
+                movieButtonPlayer.on("durationchange", syncCustomSeekBar);
+                movieButtonPlayer.on("loadedmetadata", syncCustomSeekBar);
+                movieButtonPlayer.on("progress", syncCustomSeekBar);
+                movieButtonPlayer.on("play", hidePlayerStatusSoon);
+                movieButtonPlayer.on("playing", hidePlayerStatusSoon);
+                movieButtonPlayer.on("error", function() {
+                  var error = movieButtonPlayer.error && movieButtonPlayer.error();
+                  setPlayerStatus("Video.js error", (error && (error.message || error.code)) || "Playback error", true);
                 });
-
-                movieButtonHls.on(window.Hls.Events.MEDIA_ATTACHED, function() {
-                  setPlayerStatus("Loading m3u8...", "Fetching manifest", false);
-                  movieButtonHls.loadSource(src);
-                });
-
-                movieButtonHls.on(window.Hls.Events.MANIFEST_PARSED, function(event, parsed) {
-                  var levels = parsed && parsed.levels ? parsed.levels : [];
-                  var heights = uniqueHlsHeights(levels);
-                  setMediaChromeQualityMenu(movieButtonHls, levels);
-                  setPlayerStatus("m3u8 ready", "Swifly Cinema loaded" + (heights.length ? " • " + heights.join("p / ") + "p" : "") + ". Timeline enabled.", false);
-                  setStatus("m3u8 loaded. Timeline enabled.");
-                  if (playerShell) { try { playerShell.focus({ preventScroll: true }); } catch {} }
-                  setTimeout(syncCustomSeekBar, 500);
-                  hidePlayerStatusSoon();
-                });
-
-                movieButtonHls.on(window.Hls.Events.LEVEL_SWITCHED, function(event, data) {
-                  var level = movieButtonHls.levels && movieButtonHls.levels[data.level];
-                  if (level && level.height && hlsMeta) hlsMeta.textContent = level.height + "p";
-                });
-
-                movieButtonHls.on(window.Hls.Events.ERROR, function(event, err) {
-                  if (!err) return;
-                  var detail = String(err.details || err.reason || err.type || "Unknown HLS error");
-                  if (!err.fatal) {
-                    if (detail && !/bufferStalledError/i.test(detail)) {
-                      setPlayerStatus("HLS warning", detail, false);
-                      hidePlayerStatusSoon();
-                    }
-                    return;
-                  }
-                  if (err.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
-                    setPlayerStatus("HLS network error", "Retrying stream load...", true);
-                    try { movieButtonHls.startLoad(); } catch {}
-                    return;
-                  }
-                  if (err.type === window.Hls.ErrorTypes.MEDIA_ERROR) {
-                    setPlayerStatus("HLS media error", "Trying media recovery...", true);
-                    try { movieButtonHls.recoverMediaError(); } catch {}
-                    return;
-                  }
-                  setPlayerStatus("HLS failed", detail, true);
-                  setStatus("HLS failed: " + detail);
-                });
-
-                movieButtonHls.attachMedia(video);
-                return;
-              }
-
-              if (nativeHls) {
-                video.src = src;
-                try { video.load(); } catch {}
-                setMediaChromeQualityMenu(null, []);
-                setPlayerStatus("m3u8 ready", "Native HLS loaded. Timeline enabled.", false);
-                setStatus("m3u8 loaded. Timeline enabled.");
-                if (playerShell) { try { playerShell.focus({ preventScroll: true }); } catch {} }
-                setTimeout(syncCustomSeekBar, 500);
-                hidePlayerStatusSoon();
-                return;
-              }
-
-              setPlayerStatus("HLS could not load", "This browser needs hls.js or native HLS support to play this m3u8.", true);
-              setStatus("HLS player failed to load.");
+              } catch {}
             });
           });
         }
@@ -32716,7 +33223,7 @@ async function watchPage(req, res, type) {
           if (!hls) {
             setPlayerStatus("Loading video...", "Using direct video source.", false);
             if (playerShell) {
-              playerShell.classList.remove("usesPlyr", "usesMediaChrome");
+              playerShell.classList.remove("usesPlyr", "usesMediaChrome", "usesVideoJs");
               playerShell.classList.add("usesNativeVideo");
             }
             video.controls = true;
@@ -32726,7 +33233,7 @@ async function watchPage(req, res, type) {
             return;
           }
 
-          startMediaChromeHlsSource(src, data);
+          startVideoJsCinemaSource(src, data);
         }
 
         async function tryProxyVideo(manual) {
