@@ -33172,6 +33172,69 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v144 HERO TRAILER NO PLAY OVERLAY
+       Fixes the annoying YouTube play/pause overlay in the autoplay hero.
+       The iframe stays hidden until the IFrame API reports PLAYING, then
+       it fades in. This avoids showing YouTube's center overlay/loading UI.
+       ============================================================ */
+
+    .dsHeroHasTrailer .dsHeroTrailerLayer {
+      opacity: 0 !important;
+      animation: none !important;
+      transition: opacity 1.05s ease, transform 1.05s ease, filter .25s ease !important;
+      transform: scale(1.035) !important;
+    }
+
+    .dsHeroHasTrailer.dsHeroTrailerIsPlaying .dsHeroTrailerLayer {
+      opacity: .94 !important;
+      transform: scale(1) !important;
+    }
+
+    .dsHeroHasTrailer.dsHeroTrailerWaiting .dsHeroTrailerLayer {
+      opacity: 0 !important;
+      transform: scale(1.035) !important;
+    }
+
+    .dsHeroHasTrailer.dsHeroTrailerIsPlaying .dsHeroBg {
+      opacity: .16 !important;
+      filter: brightness(.48) saturate(1.02) contrast(1.03) !important;
+    }
+
+    .dsHeroHasTrailer:not(.dsHeroTrailerIsPlaying) .dsHeroBg {
+      opacity: 1 !important;
+      filter: brightness(.66) saturate(1.05) contrast(1.03) !important;
+    }
+
+    .dsHeroHasTrailer .dsHeroTrailerFrame {
+      pointer-events: none !important;
+    }
+
+    .dsHeroTrailerPill {
+      opacity: 0 !important;
+      animation: none !important;
+      transition: opacity .45s ease, transform .45s ease !important;
+    }
+
+    .dsHeroHasTrailer.dsHeroTrailerIsPlaying .dsHeroTrailerPill {
+      opacity: .92 !important;
+      transform: translateY(0) !important;
+    }
+
+    @media(max-width: 900px) {
+      .dsHeroHasTrailer .dsHeroTrailerLayer {
+        display: none !important;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .dsHeroHasTrailer .dsHeroTrailerLayer {
+        opacity: 0 !important;
+        transition: none !important;
+      }
+    }
+
   </style>
 
     <script>
@@ -35656,6 +35719,7 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = nu
         var iframe = document.getElementById("dsHeroTrailerFrame");
         var button = document.getElementById("dsHeroMuteToggle");
         var pill = document.getElementById("dsHeroTrailerPillText");
+        var hero = iframe && iframe.closest ? iframe.closest(".dsHero") : null;
         if (!iframe || !button) return;
 
         var muted = true;
@@ -35670,6 +35734,12 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = nu
           button.setAttribute("aria-pressed", muted ? "true" : "false");
           button.classList.toggle("isUnmuted", !muted);
           if (pill) pill.textContent = muted ? "Muted trailer preview" : "Trailer sound on";
+        }
+
+        function setTrailerPlaying(isPlaying) {
+          if (!hero) return;
+          hero.classList.toggle("dsHeroTrailerIsPlaying", Boolean(isPlaying));
+          hero.classList.toggle("dsHeroTrailerWaiting", !isPlaying);
         }
 
         function sendCommand(command, args) {
@@ -35712,11 +35782,20 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = nu
               events: {
                 onReady: function(event) {
                   ready = true;
+                  setTrailerPlaying(false);
                   try {
                     event.target.mute();
                     event.target.playVideo();
                   } catch {}
                   applyAudioState();
+                },
+                onStateChange: function(event) {
+                  var state = event && typeof event.data === "number" ? event.data : null;
+                  var playing = window.YT && window.YT.PlayerState ? window.YT.PlayerState.PLAYING : 1;
+                  setTrailerPlaying(state === playing);
+                  if (state === playing && pill && muted) {
+                    pill.textContent = "Muted trailer preview";
+                  }
                 }
               }
             });
@@ -35763,6 +35842,7 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = nu
         });
 
         setVisualState();
+        setTrailerPlaying(false);
         ensureYouTubeApi();
       })();
     </script>` : ""}
@@ -36231,7 +36311,7 @@ function youtubeHeroAutoplaySrc(videoKey = "", origin = "") {
   const key = encodeURIComponent(normalizeYouTubeVideoKey(videoKey));
   if (!key) return "";
   return withYouTubeIdentityParams(
-    `https://www.youtube.com/embed/${key}?autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&playsinline=1&loop=1&playlist=${key}&enablejsapi=1`,
+    `https://www.youtube.com/embed/${key}?autoplay=1&mute=1&controls=0&disablekb=1&fs=0&iv_load_policy=3&rel=0&modestbranding=1&playsinline=1&loop=1&playlist=${key}&enablejsapi=1`,
     origin
   );
 }
