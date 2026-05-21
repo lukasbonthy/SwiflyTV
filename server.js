@@ -32927,6 +32927,113 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v141 PLAYER FIT + SINGLE FULLSCREEN + PREVIEW FIX
+       Fixes:
+       - m3u8 video fills the whole player instead of letterboxing
+       - fullscreen activates on first press via pointerdown/user activation
+       - timeline preview uses the progress wrapper, not only the range thumb
+       ============================================================ */
+
+    .dsVideoJsCinemaShell.v141FitFullscreenPreviewFix {
+      background: #000 !important;
+    }
+
+    .dsVideoJsCinemaShell.v141FitFullscreenPreviewFix,
+    .dsVideoJsCinemaShell.v141FitFullscreenPreviewFix .video-js,
+    .dsVideoJsCinemaShell.v141FitFullscreenPreviewFix .dsCinemaHlsVideo,
+    .dsVideoJsCinemaShell.v141FitFullscreenPreviewFix .vjs-tech {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .dsVideoJsCinemaShell.v141FitFullscreenPreviewFix .vjs-tech,
+    .dsVideoJsCinemaShell.v141FitFullscreenPreviewFix .dsCinemaHlsVideo,
+    .dsVideoJsCinemaShell.v141FitFullscreenPreviewFix video {
+      object-fit: cover !important;
+      object-position: center center !important;
+      background: #000 !important;
+    }
+
+    .dsVideoJsCinemaShell.v141FitFullscreenPreviewFix.isFullscreen,
+    .dsVideoJsCinemaShell.v141FitFullscreenPreviewFix:fullscreen,
+    .dsVideoJsCinemaShell.v141FitFullscreenPreviewFix:-webkit-full-screen {
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: 100vw !important;
+      max-height: 100vh !important;
+      border-radius: 0 !important;
+    }
+
+    .dsVideoJsCinemaShell.v141FitFullscreenPreviewFix.isFullscreen .video-js,
+    .dsVideoJsCinemaShell.v141FitFullscreenPreviewFix.isFullscreen .dsCinemaHlsVideo,
+    .dsVideoJsCinemaShell.v141FitFullscreenPreviewFix:fullscreen .video-js,
+    .dsVideoJsCinemaShell.v141FitFullscreenPreviewFix:fullscreen .dsCinemaHlsVideo,
+    .dsVideoJsCinemaShell.v141FitFullscreenPreviewFix:-webkit-full-screen .video-js,
+    .dsVideoJsCinemaShell.v141FitFullscreenPreviewFix:-webkit-full-screen .dsCinemaHlsVideo {
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: 100vw !important;
+      max-height: 100vh !important;
+      border-radius: 0 !important;
+    }
+
+    .dsVideoJsCinemaShell.v141FitFullscreenPreviewFix .swiflyDockProgressWrap {
+      position: relative;
+      cursor: pointer;
+      touch-action: none;
+    }
+
+    .dsVideoJsCinemaShell.v141FitFullscreenPreviewFix .swiflyDockProgress {
+      position: relative;
+      z-index: 3;
+      pointer-events: auto;
+    }
+
+    .dsVideoJsCinemaShell.v141FitFullscreenPreviewFix .swiflyDockFull {
+      touch-action: manipulation;
+      cursor: pointer;
+    }
+
+    .dsVideoJsCinemaShell.v141FitFullscreenPreviewFix .dsVideoJsTimelinePreview:not([hidden]) {
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      z-index: 999 !important;
+      pointer-events: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v141FitFullscreenPreviewFix.isPreviewingTime .dsVideoJsTimelinePreview:not([hidden]) {
+      opacity: 1 !important;
+      transform: translateX(-50%) translateY(0) !important;
+    }
+
+    .dsVideoJsCinemaShell.v141FitFullscreenPreviewFix .dsVideoJsTimelinePreview span {
+      z-index: 8 !important;
+    }
+
+    .dsVideoJsCinemaShell.v141FitFullscreenPreviewFix .dsVideoJsTimelinePreview em {
+      z-index: 8 !important;
+    }
+
+    .dsVideoJsCinemaShell.v141FitFullscreenPreviewFix .dsVideoJsTimelinePreview video {
+      object-fit: cover !important;
+      object-position: center center !important;
+    }
+
+    .dsVideoJsCinemaShell.v141FitFullscreenPreviewFix:not(.hasFramePreview) .dsVideoJsTimelinePreview video {
+      opacity: .10 !important;
+    }
+
+    .dsVideoJsCinemaShell.v141FitFullscreenPreviewFix.isFullscreen .swiflyVideoDock,
+    .dsVideoJsCinemaShell.v141FitFullscreenPreviewFix:fullscreen .swiflyVideoDock,
+    .dsVideoJsCinemaShell.v141FitFullscreenPreviewFix:-webkit-full-screen .swiflyVideoDock {
+      left: max(16px, env(safe-area-inset-left)) !important;
+      right: max(16px, env(safe-area-inset-right)) !important;
+      bottom: max(16px, env(safe-area-inset-bottom)) !important;
+    }
+
   </style>
 
     <script>
@@ -36233,7 +36340,7 @@ async function watchPage(req, res, type) {
             <button id="swiflyDockBack" type="button" class="swiflyDockIcon swiflyDockSkip swiflyDockBack" aria-label="Back 10 seconds"></button>
             <button id="swiflyDockForward" type="button" class="swiflyDockIcon swiflyDockSkip swiflyDockForward" aria-label="Forward 10 seconds"></button>
             <span id="swiflyDockCurrent" class="swiflyDockTime">0:00</span>
-            <div class="swiflyDockProgressWrap">
+            <div id="swiflyDockProgressWrap" class="swiflyDockProgressWrap">
               <input id="swiflyDockProgress" class="swiflyDockProgress" type="range" min="0" max="1000" value="0" step="1" aria-label="Timeline" />
             </div>
             <span id="swiflyDockDuration" class="swiflyDockTime">0:00</span>
@@ -36392,6 +36499,7 @@ async function watchPage(req, res, type) {
         var dockCurrent = document.getElementById("swiflyDockCurrent");
         var dockDuration = document.getElementById("swiflyDockDuration");
         var dockProgress = document.getElementById("swiflyDockProgress");
+        var dockProgressWrap = document.getElementById("swiflyDockProgressWrap");
         var dockSpeed = document.getElementById("swiflyDockSpeed");
         var dockSpeedMenu = document.getElementById("swiflyDockSpeedMenu");
         var dockMute = document.getElementById("swiflyDockMute");
@@ -36795,32 +36903,63 @@ async function watchPage(req, res, type) {
             });
           });
 
+          function previewClientX(event) {
+            if (event && Number.isFinite(event.clientX)) return event.clientX;
+            if (event && event.touches && event.touches[0]) return event.touches[0].clientX;
+            if (event && event.changedTouches && event.changedTouches[0]) return event.changedTouches[0].clientX;
+            var rect = (dockProgressWrap || dockProgress).getBoundingClientRect();
+            return rect.left + rect.width / 2;
+          }
+
+          function hideDockPreview() {
+            if (timelinePreview) timelinePreview.hidden = true;
+            if (playerShell) playerShell.classList.remove("isPreviewingTime");
+          }
+
           function updatePreviewFromDock(event) {
-            if (!timelinePreview || !timelinePreviewTime) return;
-            var rect = dockProgress.getBoundingClientRect();
+            if (!timelinePreview || !timelinePreviewTime || !playerShell) return;
+            var targetEl = dockProgressWrap || dockProgress;
+            if (!targetEl) return;
+            var rect = targetEl.getBoundingClientRect();
             if (!rect || !rect.width) return;
-            var x = Math.max(0, Math.min(rect.width, event.clientX - rect.left));
+
+            var clientX = previewClientX(event);
+            var x = Math.max(0, Math.min(rect.width, clientX - rect.left));
             var ratio = x / rect.width;
             var info = getPlayerDuration();
-            if (!info.duration) return;
+            if (!info.duration || !Number.isFinite(info.duration)) {
+              timelinePreviewTime.textContent = "--:--";
+              if (timelinePreviewState) timelinePreviewState.textContent = "Loading preview";
+              return;
+            }
+
             var seconds = (info.win.start || 0) + info.duration * ratio;
-            timelinePreviewTime.textContent = formatClock(info.duration * ratio);
+            var displaySeconds = Math.max(0, info.duration * ratio);
+            timelinePreviewTime.textContent = formatClock(displaySeconds);
+
             var shellRect = playerShell.getBoundingClientRect();
-            var left = Math.max(86, Math.min(shellRect.width - 86, event.clientX - shellRect.left));
+            var left = Math.max(92, Math.min(shellRect.width - 92, clientX - shellRect.left));
             timelinePreview.style.left = left + "px";
             timelinePreview.style.setProperty("--preview-left", left + "px");
             timelinePreview.hidden = false;
             playerShell.classList.add("isPreviewingTime", "isUsingDock");
 
+            if (timelinePreviewState && !previewReadyForFrames) {
+              timelinePreviewState.textContent = "Loading frame";
+            }
+
             requestTimelinePreviewFrame(seconds, false);
+            setDockActive();
           }
 
-          dockProgress.addEventListener("mousemove", updatePreviewFromDock);
-          dockProgress.addEventListener("pointermove", updatePreviewFromDock);
-          dockProgress.addEventListener("mouseenter", updatePreviewFromDock);
-          dockProgress.addEventListener("mouseleave", function() {
-            if (timelinePreview) timelinePreview.hidden = true;
-            if (playerShell) playerShell.classList.remove("isPreviewingTime");
+          [dockProgress, dockProgressWrap].filter(Boolean).forEach(function(el) {
+            el.addEventListener("mousemove", updatePreviewFromDock);
+            el.addEventListener("pointermove", updatePreviewFromDock);
+            el.addEventListener("mouseenter", updatePreviewFromDock);
+            el.addEventListener("mouseover", updatePreviewFromDock);
+            el.addEventListener("touchmove", updatePreviewFromDock, { passive: true });
+            el.addEventListener("mouseleave", hideDockPreview);
+            el.addEventListener("touchend", hideDockPreview, { passive: true });
           });
 
           var speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
@@ -36903,23 +37042,58 @@ async function watchPage(req, res, type) {
             } catch {}
           };
 
-          if (dockFull) dockFull.onclick = function(event) {
-            event.preventDefault();
+          function swiflyRequestFullscreenOnce(event) {
+            if (event) {
+              event.preventDefault();
+              event.stopPropagation();
+            }
             setDockActive();
+
+            var target = playerShell || (player && player.el && player.el()) || video;
             try {
-              if (!document.fullscreenElement) {
-                if (playerShell.requestFullscreen) playerShell.requestFullscreen();
-              } else if (document.exitFullscreen) {
-                document.exitFullscreen();
+              var isFull = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+              if (!isFull) {
+                var request =
+                  (target && target.requestFullscreen) ||
+                  (target && target.webkitRequestFullscreen) ||
+                  (target && target.msRequestFullscreen) ||
+                  (video && video.requestFullscreen) ||
+                  (video && video.webkitEnterFullscreen);
+                if (request) {
+                  var result = request.call(target === video || request === video.webkitEnterFullscreen ? video : target, { navigationUI: "hide" });
+                  if (result && result.catch) result.catch(function(){});
+                }
+              } else {
+                var exit = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+                if (exit) {
+                  var exitResult = exit.call(document);
+                  if (exitResult && exitResult.catch) exitResult.catch(function(){});
+                }
               }
             } catch {}
-          };
+          }
+
+          if (dockFull) {
+            dockFull.addEventListener("pointerdown", swiflyRequestFullscreenOnce);
+            dockFull.addEventListener("click", function(event) {
+              event.preventDefault();
+              event.stopPropagation();
+            });
+          }
 
           document.addEventListener("click", function(event) {
             if (!dock) return;
             if (dock.contains(event.target)) return;
             if (dockSpeedMenu) dockSpeedMenu.hidden = true;
             if (dockVolumeMenu) dockVolumeMenu.hidden = true;
+          });
+
+          ["fullscreenchange", "webkitfullscreenchange", "MSFullscreenChange"].forEach(function(name) {
+            document.addEventListener(name, function() {
+              var isFull = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+              if (playerShell) playerShell.classList.toggle("isFullscreen", Boolean(isFull));
+              setDockActive();
+            });
           });
 
           ["timeupdate", "durationchange", "loadedmetadata", "progress", "play", "pause", "volumechange", "ratechange", "canplay"].forEach(function(name) {
@@ -37431,8 +37605,8 @@ async function watchPage(req, res, type) {
           destroyRegularMoviePlayers();
 
           if (playerShell) {
-            playerShell.classList.remove("usesPlyr", "usesMediaChrome", "usesNativeVideo", "isScrubbing", "v128VideoReady", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed", "v132SoftRectPlay", "v133HoverPreview", "v134SpeedPreviewFix", "v135VolumeImagePreview", "v136PillDockSkin", "v137NativeDock", "v138PreviewWarmup", "v139CleanIconDock");
-            playerShell.classList.add("usesVideoJs", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed", "v132SoftRectPlay", "v133HoverPreview", "v134SpeedPreviewFix", "v135VolumeImagePreview", "v136PillDockSkin", "v137NativeDock", "v138PreviewWarmup", "v139CleanIconDock");
+            playerShell.classList.remove("usesPlyr", "usesMediaChrome", "usesNativeVideo", "isScrubbing", "v128VideoReady", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed", "v132SoftRectPlay", "v133HoverPreview", "v134SpeedPreviewFix", "v135VolumeImagePreview", "v136PillDockSkin", "v137NativeDock", "v138PreviewWarmup", "v139CleanIconDock", "v141FitFullscreenPreviewFix");
+            playerShell.classList.add("usesVideoJs", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed", "v132SoftRectPlay", "v133HoverPreview", "v134SpeedPreviewFix", "v135VolumeImagePreview", "v136PillDockSkin", "v137NativeDock", "v138PreviewWarmup", "v139CleanIconDock", "v141FitFullscreenPreviewFix");
           }
 
           try {
