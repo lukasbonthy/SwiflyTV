@@ -29370,6 +29370,393 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v128 VIDEO.JS MODERN SKIN REFRESH
+       Better Video.js skin based on official Video.js model:
+       customize the base skin with CSS and use components/control bar
+       instead of stacking giant custom overlays.
+       ============================================================ */
+
+    .dsVideoJsCinemaShell {
+      --player-radius: 28px;
+      border-radius: var(--player-radius) !important;
+      background:
+        radial-gradient(1200px circle at 12% -10%, rgba(85,215,255,.11), transparent 42%),
+        radial-gradient(900px circle at 92% 0%, rgba(139,92,246,.11), transparent 44%),
+        #000 !important;
+      box-shadow:
+        0 36px 120px rgba(0,0,0,.54),
+        0 0 72px rgba(85,215,255,.07),
+        inset 0 1px 0 rgba(255,255,255,.06) !important;
+      outline: 1px solid rgba(255,255,255,.085) !important;
+    }
+
+    .dsVideoJsCinemaShell.usesVideoJs .video-js,
+    .dsVideoJsCinemaShell.usesVideoJs .dsCinemaHlsVideo {
+      border-radius: var(--player-radius) !important;
+      overflow: hidden !important;
+    }
+
+    .dsVideoJsCinemaShell::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 6;
+      background:
+        linear-gradient(to bottom, rgba(0,0,0,.40), transparent 24%, transparent 68%, rgba(0,0,0,.38)),
+        radial-gradient(800px circle at 50% 105%, rgba(85,215,255,.08), transparent 44%);
+      opacity: .66;
+      transition: opacity .18s ease;
+    }
+
+    .dsVideoJsCinemaShell.isPlaying::after {
+      opacity: .34;
+    }
+
+    .dsVideoJsTop {
+      z-index: 45 !important;
+      max-width: min(320px, calc(100% - 36px)) !important;
+      padding: 10px 12px !important;
+      border-radius: 18px !important;
+      background:
+        radial-gradient(180px circle at 0% 0%, rgba(85,215,255,.10), transparent 60%),
+        rgba(7,10,22,.50) !important;
+      border: 1px solid rgba(255,255,255,.095) !important;
+      box-shadow: 0 18px 52px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.055) !important;
+      backdrop-filter: blur(18px) saturate(1.12) !important;
+      -webkit-backdrop-filter: blur(18px) saturate(1.12) !important;
+    }
+
+    .dsVideoJsTop span {
+      color: #a7f3d0 !important;
+    }
+
+    .dsVideoJsTop b {
+      font-size: 16px !important;
+      letter-spacing: -.045em !important;
+    }
+
+    .dsVideoJsCenter {
+      z-index: 38 !important;
+    }
+
+    .dsVideoJsCenter button {
+      border: 1px solid rgba(255,255,255,.13) !important;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.18), transparent 42%),
+        rgba(7,10,22,.42) !important;
+      box-shadow:
+        0 20px 68px rgba(0,0,0,.42),
+        0 0 36px rgba(85,215,255,.10),
+        inset 0 1px 0 rgba(255,255,255,.07) !important;
+      backdrop-filter: blur(18px) saturate(1.12) !important;
+      -webkit-backdrop-filter: blur(18px) saturate(1.12) !important;
+    }
+
+    .dsVideoJsCenter button span {
+      display: block;
+      transform: translateY(-1px);
+    }
+
+    #movieButtonBigPlay {
+      background:
+        radial-gradient(circle at 28% 18%, rgba(255,255,255,.24), transparent 42%),
+        linear-gradient(135deg, rgba(85,215,255,.36), rgba(139,92,246,.28)),
+        rgba(7,10,22,.48) !important;
+    }
+
+    .vjs-theme-swifly {
+      color: white !important;
+      font-family: var(--font-ui, "Host Grotesk", Inter, system-ui, sans-serif) !important;
+    }
+
+    .vjs-theme-swifly .vjs-tech {
+      object-fit: contain !important;
+      background: #000 !important;
+    }
+
+    .vjs-theme-swifly .vjs-control-bar {
+      z-index: 44 !important;
+      height: 86px !important;
+      min-height: 86px !important;
+      padding: 40px 16px 14px !important;
+      gap: 4px !important;
+      align-items: flex-end !important;
+      background:
+        linear-gradient(to top, rgba(0,0,0,.88), rgba(0,0,0,.58) 58%, transparent) !important;
+      border-radius: 0 0 var(--player-radius) var(--player-radius) !important;
+      opacity: 0 !important;
+      transform: translateY(12px) !important;
+      transition: opacity .18s ease, transform .18s ease !important;
+    }
+
+    .vjs-theme-swifly.vjs-user-active .vjs-control-bar,
+    .vjs-theme-swifly.vjs-paused .vjs-control-bar,
+    .dsVideoJsCinemaShell.isPaused .vjs-theme-swifly .vjs-control-bar,
+    .dsVideoJsCinemaShell.isLoading .vjs-theme-swifly .vjs-control-bar {
+      opacity: 1 !important;
+      transform: translateY(0) !important;
+    }
+
+    .vjs-theme-swifly .vjs-progress-control {
+      left: 16px !important;
+      right: 16px !important;
+      bottom: 58px !important;
+      height: 28px !important;
+      width: auto !important;
+      z-index: 48 !important;
+    }
+
+    .vjs-theme-swifly .vjs-progress-holder {
+      height: 8px !important;
+      margin: 9px 0 0 !important;
+      border-radius: 999px !important;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,.18), rgba(255,255,255,.12)) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.07) !important;
+    }
+
+    .vjs-theme-swifly .vjs-load-progress {
+      height: 8px !important;
+      border-radius: 999px !important;
+      background: rgba(255,255,255,.24) !important;
+    }
+
+    .vjs-theme-swifly .vjs-play-progress {
+      height: 8px !important;
+      border-radius: 999px !important;
+      background: linear-gradient(90deg, #55d7ff 0%, #8b5cf6 72%, #dff8ff 100%) !important;
+      box-shadow: 0 0 18px rgba(85,215,255,.30) !important;
+    }
+
+    .vjs-theme-swifly .vjs-play-progress::before {
+      color: #dff8ff !important;
+      font-size: 14px !important;
+      text-shadow: 0 0 18px rgba(85,215,255,.42);
+      top: -3px !important;
+    }
+
+    .vjs-theme-swifly .vjs-control {
+      width: 36px !important;
+      height: 36px !important;
+      margin: 0 1px !important;
+      border-radius: 999px !important;
+      color: rgba(255,255,255,.82) !important;
+      background: transparent !important;
+    }
+
+    .vjs-theme-swifly .vjs-control:hover,
+    .vjs-theme-swifly .vjs-control:focus {
+      color: white !important;
+      background: rgba(255,255,255,.105) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+      transform: translateY(-1px);
+    }
+
+    .vjs-theme-swifly .vjs-button > .vjs-icon-placeholder::before {
+      line-height: 36px !important;
+      font-size: 16px !important;
+    }
+
+    .vjs-theme-swifly .vjs-time-control {
+      min-width: auto !important;
+      width: auto !important;
+      padding: 0 5px !important;
+      line-height: 36px !important;
+      color: rgba(255,255,255,.70) !important;
+      font-size: 11px !important;
+      font-weight: 850 !important;
+      letter-spacing: -.01em;
+    }
+
+    .vjs-theme-swifly .vjs-time-divider {
+      min-width: 8px !important;
+      padding: 0 !important;
+      color: rgba(255,255,255,.34) !important;
+    }
+
+    .vjs-theme-swifly .vjs-volume-panel {
+      border-radius: 999px !important;
+    }
+
+    .vjs-theme-swifly .vjs-volume-panel.vjs-volume-panel-horizontal:hover,
+    .vjs-theme-swifly .vjs-volume-panel.vjs-volume-panel-horizontal.vjs-slider-active {
+      width: 118px !important;
+      background: rgba(255,255,255,.07) !important;
+    }
+
+    .vjs-theme-swifly .vjs-volume-bar {
+      margin-top: 1.45em !important;
+    }
+
+    .vjs-theme-swifly .vjs-playback-rate {
+      width: 48px !important;
+    }
+
+    .vjs-theme-swifly .vjs-playback-rate .vjs-playback-rate-value {
+      line-height: 36px !important;
+      font-size: 11px !important;
+      font-weight: 950 !important;
+      color: rgba(255,255,255,.78) !important;
+    }
+
+    .vjs-theme-swifly .vjs-menu {
+      z-index: 60 !important;
+    }
+
+    .vjs-theme-swifly .vjs-menu-content {
+      border-radius: 16px !important;
+      border: 1px solid rgba(255,255,255,.12) !important;
+      background: rgba(6,9,20,.94) !important;
+      box-shadow: 0 22px 70px rgba(0,0,0,.46), 0 0 36px rgba(85,215,255,.10);
+      backdrop-filter: blur(22px) saturate(1.16);
+      -webkit-backdrop-filter: blur(22px) saturate(1.16);
+    }
+
+    .vjs-theme-swifly .vjs-menu li {
+      border-radius: 10px !important;
+      color: rgba(255,255,255,.72) !important;
+      font-weight: 850 !important;
+    }
+
+    .vjs-theme-swifly .vjs-menu li.vjs-selected,
+    .vjs-theme-swifly .vjs-menu li:hover {
+      color: #06101d !important;
+      background: linear-gradient(135deg, #ffffff, #dff8ff) !important;
+    }
+
+    .vjs-swifly-skip-button .vjs-icon-placeholder::before {
+      width: 22px !important;
+      height: 22px !important;
+      line-height: 20px !important;
+      left: 7px !important;
+      top: 7px !important;
+      font-size: 10px !important;
+      border: 1px solid rgba(255,255,255,.13) !important;
+      background: rgba(255,255,255,.04);
+    }
+
+    .dsVideoJsQuality {
+      right: 16px !important;
+      bottom: 88px !important;
+      z-index: 58 !important;
+    }
+
+    .dsVideoJsQualityToggle {
+      min-height: 34px !important;
+      min-width: 84px !important;
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 0 11px !important;
+      border-radius: 999px !important;
+      color: rgba(255,255,255,.82) !important;
+      background: rgba(6,9,20,.60) !important;
+      border: 1px solid rgba(255,255,255,.105) !important;
+      box-shadow: 0 12px 34px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.055) !important;
+      backdrop-filter: blur(16px) saturate(1.12);
+      -webkit-backdrop-filter: blur(16px) saturate(1.12);
+    }
+
+    .dsVideoJsQualityToggle span {
+      color: rgba(238,242,255,.46);
+      font-size: 10px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      font-weight: 950;
+    }
+
+    .dsVideoJsQualityToggle b {
+      color: white;
+      font-size: 11px;
+      font-weight: 950;
+    }
+
+    .dsVideoJsQualityToggle:hover {
+      color: #06101d !important;
+      background: linear-gradient(135deg, #ffffff, #dff8ff) !important;
+    }
+
+    .dsVideoJsQualityToggle:hover span,
+    .dsVideoJsQualityToggle:hover b {
+      color: #06101d !important;
+    }
+
+    .dsVideoJsQualityMenu {
+      bottom: 42px !important;
+      min-width: 132px !important;
+      border-radius: 16px !important;
+      background: rgba(6,9,20,.95) !important;
+    }
+
+    .dsVideoJsCinemaShell.usesVideoJs .dsHlsStatus {
+      max-width: min(300px, calc(100% - 36px)) !important;
+      padding: 9px 11px !important;
+      border-radius: 15px !important;
+    }
+
+    .dsVideoJsCinemaShell.usesVideoJs .dsHlsStatus b {
+      font-size: 13px !important;
+    }
+
+    .dsVideoJsCinemaShell.usesVideoJs .dsHlsStatus span {
+      font-size: 10px !important;
+    }
+
+    .dsVideoJsCinemaShell.v128VideoReady .dsHlsStatus:not(.isError) {
+      opacity: 0 !important;
+      transform: translateY(-8px) !important;
+      pointer-events: none !important;
+    }
+
+    @media(max-width: 900px) {
+      .dsVideoJsCinemaShell {
+        --player-radius: 22px;
+      }
+
+      .vjs-theme-swifly .vjs-control-bar {
+        height: 78px !important;
+        min-height: 78px !important;
+        padding: 36px 10px 10px !important;
+      }
+
+      .vjs-theme-swifly .vjs-progress-control {
+        left: 10px !important;
+        right: 10px !important;
+        bottom: 52px !important;
+      }
+
+      .vjs-theme-swifly .vjs-time-control,
+      .vjs-theme-swifly .vjs-volume-panel,
+      .vjs-theme-swifly .vjs-picture-in-picture-control {
+        display: none !important;
+      }
+
+      .dsVideoJsQuality {
+        right: 10px !important;
+        bottom: 78px !important;
+      }
+    }
+
+    @media(max-width: 520px) {
+      .dsVideoJsCinemaShell {
+        --player-radius: 18px;
+      }
+
+      .dsVideoJsQuality,
+      .dsVideoJsTop {
+        display: none !important;
+      }
+
+      .vjs-theme-swifly .vjs-control {
+        width: 32px !important;
+        height: 32px !important;
+      }
+    }
+
   </style>
 
     <script>
@@ -32619,21 +33006,21 @@ async function watchPage(req, res, type) {
           <div class="dsCinemaPlayerAura"></div>
 
           <div class="dsCinemaHlsTop dsVideoJsTop">
-            <span>SWIFLY VIDEO.JS</span>
+            <span>SWIFLY PLAYER</span>
             <b id="movieButtonHlsTitle">Preparing stream</b>
-            <small id="movieButtonHlsMeta">m3u8 player</small>
+            <small id="movieButtonHlsMeta">Video.js VHS</small>
           </div>
 
           <div class="dsVideoJsCenter">
-            <button id="movieButtonBack10" type="button" aria-label="Back 10 seconds">↺<small>10</small></button>
-            <button id="movieButtonBigPlay" type="button" aria-label="Play or pause">▶</button>
-            <button id="movieButtonForward10" type="button" aria-label="Forward 10 seconds"><small>10</small>↻</button>
+            <button id="movieButtonBack10" type="button" aria-label="Back 10 seconds"><span>↺</span><small>10</small></button>
+            <button id="movieButtonBigPlay" type="button" aria-label="Play or pause"><span>▶</span></button>
+            <button id="movieButtonForward10" type="button" aria-label="Forward 10 seconds"><small>10</small><span>↻</span></button>
           </div>
 
           <video id="proxyVideoClientVideo" class="dsMovieButtonVideo dsCinemaHlsVideo video-js vjs-big-play-centered vjs-theme-swifly" controls playsinline crossorigin="anonymous" preload="auto"></video>
 
           <div class="dsVideoJsQuality">
-            <button id="movieButtonQualityToggle" type="button" class="dsVideoJsQualityToggle">Auto</button>
+            <button id="movieButtonQualityToggle" type="button" class="dsVideoJsQualityToggle"><span>Quality</span><b>Auto</b></button>
             <div id="movieButtonQualityMenu" class="dsVideoJsQualityMenu" hidden></div>
           </div>
 
@@ -33027,7 +33414,7 @@ async function watchPage(req, res, type) {
                 if (value === "auto") {
                   var repsAuto = player.tech(true).vhs && player.tech(true).vhs.representations ? player.tech(true).vhs.representations() : [];
                   Array.from(repsAuto || []).forEach(function(rep) { rep.enabled(true); });
-                  qualityToggle.textContent = "Auto";
+                  var qb = qualityToggle.querySelector("b"); if (qb) qb.textContent = "Auto"; else qualityToggle.textContent = "Auto";
                   if (hlsMeta) hlsMeta.textContent = "Auto quality";
                 } else {
                   var selected = Number(value);
@@ -33035,11 +33422,11 @@ async function watchPage(req, res, type) {
                   Array.from(reps || []).forEach(function(rep) {
                     rep.enabled(Number(rep.height) === selected);
                   });
-                  qualityToggle.textContent = selected + "p";
+                  var qb = qualityToggle.querySelector("b"); if (qb) qb.textContent = selected + "p"; else qualityToggle.textContent = selected + "p";
                   if (hlsMeta) hlsMeta.textContent = selected + "p selected";
                 }
               } catch {
-                qualityToggle.textContent = label;
+                var qb = qualityToggle.querySelector("b"); if (qb) qb.textContent = label; else qualityToggle.textContent = label;
               }
 
               Array.from(qualityMenu.querySelectorAll("button")).forEach(function(btn){ btn.classList.remove("active"); });
@@ -33164,7 +33551,7 @@ async function watchPage(req, res, type) {
           destroyRegularMoviePlayers();
 
           if (playerShell) {
-            playerShell.classList.remove("usesPlyr", "usesMediaChrome", "usesNativeVideo", "isScrubbing");
+            playerShell.classList.remove("usesPlyr", "usesMediaChrome", "usesNativeVideo", "isScrubbing", "v128VideoReady");
             playerShell.classList.add("usesVideoJs");
           }
 
@@ -33244,6 +33631,7 @@ async function watchPage(req, res, type) {
               // Video.js already has the main timeline. Keep the custom HLS helper hidden for this skin.
               if (seekDock) seekDock.hidden = true;
 
+              if (playerShell) playerShell.classList.add("v128VideoReady");
               setPlayerStatus("Ready", "Video.js VHS loaded", false);
               setVideoUiState("ready");
               setStatus("m3u8 loaded. Timeline enabled.");
