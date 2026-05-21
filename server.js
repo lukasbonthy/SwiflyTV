@@ -25815,6 +25815,443 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v118 CLEAN CINEMA REFRESH
+       Same SwiflyTV identity, cleaner default design: calmer effects,
+       wide Spotlight module, consistent rows/cards, better Studio.
+       ============================================================ */
+
+    :root {
+      --clean-bg: #040712;
+      --clean-panel: rgba(9, 13, 28, .72);
+      --clean-panel-2: rgba(255,255,255,.055);
+      --clean-line: rgba(255,255,255,.105);
+      --clean-soft: rgba(235,240,255,.62);
+      --clean-title: rgba(255,255,255,.96);
+      --clean-cyan: #55d7ff;
+      --clean-violet: #8b5cf6;
+      --clean-radius: 24px;
+      --clean-shadow: 0 24px 84px rgba(0,0,0,.38);
+      --v111-glow: .14;
+      --studio-detail-glow: .16;
+      --studio-detail-lift: .72;
+      --studio-detail-saturation: 1.035;
+      --studio-detail-shine: .30;
+    }
+
+    body {
+      background:
+        radial-gradient(1200px circle at 16% -8%, rgba(85,215,255,.105), transparent 42%),
+        radial-gradient(900px circle at 88% -14%, rgba(139,92,246,.14), transparent 44%),
+        linear-gradient(180deg, #050815 0%, #03050d 48%, #02030a 100%) !important;
+    }
+
+    body::before {
+      opacity: .24 !important;
+    }
+
+    .dsContent {
+      padding-top: clamp(12px, 2vw, 22px) !important;
+      padding-bottom: 70px !important;
+    }
+
+    .dsContent::before {
+      opacity: .45 !important;
+      filter: blur(36px) !important;
+    }
+
+    .dsRow,
+    .nfRowSection {
+      margin-block: clamp(26px, 3vw, 44px) !important;
+    }
+
+    .dsRowHead,
+    .sectionHead {
+      min-height: 36px;
+      margin-bottom: 10px !important;
+    }
+
+    .dsRowHead h2,
+    .sectionHead h2,
+    .nfRowTitle {
+      font-family: var(--font-display, "Space Grotesk", Inter, sans-serif) !important;
+      font-size: clamp(22px, 2.1vw, 32px) !important;
+      line-height: .98 !important;
+      letter-spacing: -.065em !important;
+      color: var(--clean-title) !important;
+      text-shadow: none !important;
+    }
+
+    .dsRowHead h2::before,
+    .sectionHead h2::before {
+      content: "";
+      display: inline-block;
+      width: 7px;
+      height: 22px;
+      margin-right: 10px;
+      border-radius: 999px;
+      vertical-align: -3px;
+      background: linear-gradient(180deg, #55d7ff, #8b5cf6);
+      opacity: .88;
+    }
+
+    .dsRowTag {
+      border-radius: 999px !important;
+      color: rgba(223,248,255,.72) !important;
+      background: rgba(255,255,255,.06) !important;
+      border: 1px solid rgba(255,255,255,.10) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.055);
+    }
+
+    .movieRail,
+    .nfRail,
+    .showcaseRail,
+    .nfTopTenRail {
+      gap: clamp(12px, 1.18vw, 18px) !important;
+      padding-top: 24px !important;
+      padding-bottom: 44px !important;
+      margin-top: -18px !important;
+      margin-bottom: -24px !important;
+    }
+
+    .posterWrap,
+    .dsThumb,
+    .nfThumb,
+    .topTenPoster {
+      border-radius: var(--clean-radius) !important;
+      border: 1px solid rgba(255,255,255,.10) !important;
+      background:
+        radial-gradient(260px circle at 30% 0%, rgba(255,255,255,.095), transparent 52%),
+        rgba(255,255,255,.04) !important;
+      box-shadow:
+        0 18px 56px rgba(0,0,0,.32),
+        0 0 calc(42px * var(--studio-detail-glow)) rgba(85,215,255,.10) !important;
+      transition:
+        transform .22s cubic-bezier(.2,.8,.2,1),
+        box-shadow .22s ease,
+        border-color .22s ease,
+        filter .22s ease !important;
+    }
+
+    .posterWrap:hover,
+    .dsThumb:hover,
+    .nfThumb:hover {
+      transform: translateY(calc(-7px * var(--studio-detail-lift))) scale(1.018) !important;
+      border-color: rgba(223,248,255,.22) !important;
+      filter: saturate(var(--studio-detail-saturation)) brightness(1.035) !important;
+      box-shadow:
+        0 26px 72px rgba(0,0,0,.44),
+        0 0 calc(70px * var(--studio-detail-glow)) rgba(85,215,255,.18) !important;
+    }
+
+    .posterWrap::before {
+      opacity: 0 !important;
+      background:
+        radial-gradient(240px circle at var(--mx, 50%) var(--my, 22%), rgba(255,255,255,.18), transparent 48%),
+        linear-gradient(120deg, transparent 18%, rgba(255,255,255,.08) 42%, transparent 62%) !important;
+    }
+
+    .posterWrap:hover::before {
+      opacity: var(--studio-detail-shine) !important;
+    }
+
+    .posterWrap::after {
+      opacity: .45 !important;
+    }
+
+    .dsCardOverlay {
+      background:
+        linear-gradient(to top,
+          rgba(3,5,12,.96) 0%,
+          rgba(3,5,12,.72) 42%,
+          rgba(3,5,12,.20) 72%,
+          transparent 100%) !important;
+    }
+
+    .dsCardTitle {
+      font-size: 13px !important;
+      line-height: 1.05 !important;
+      letter-spacing: -.025em !important;
+    }
+
+    .dsMiniBtn,
+    .dsPlayDot {
+      border: 1px solid rgba(255,255,255,.12) !important;
+      background: rgba(4,7,18,.72) !important;
+      backdrop-filter: blur(14px) saturate(1.12);
+      -webkit-backdrop-filter: blur(14px) saturate(1.12);
+      box-shadow: 0 12px 32px rgba(0,0,0,.26) !important;
+    }
+
+    .dsPrimaryBtn,
+    .dsSecondaryBtn,
+    .dsGhostPill {
+      border-radius: 999px !important;
+      box-shadow: 0 16px 44px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.08) !important;
+    }
+
+    /* Wide featured card, replacing the tiny lonely featured rail */
+    .dsCleanSpotlightSection {
+      margin-top: clamp(30px, 4vw, 56px) !important;
+      margin-bottom: clamp(34px, 4vw, 58px) !important;
+    }
+
+    .dsCleanSpotlightHead {
+      margin-bottom: 14px !important;
+    }
+
+    .dsCleanSpotlightCard {
+      position: relative;
+      min-height: clamp(330px, 42vw, 520px);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(170px, 280px);
+      align-items: end;
+      gap: clamp(18px, 2.4vw, 36px);
+      overflow: hidden;
+      border-radius: 34px;
+      border: 1px solid rgba(255,255,255,.13);
+      background:
+        radial-gradient(900px circle at 0% 0%, rgba(85,215,255,.13), transparent 48%),
+        radial-gradient(800px circle at 100% 0%, rgba(139,92,246,.15), transparent 46%),
+        rgba(255,255,255,.055);
+      box-shadow:
+        0 34px 120px rgba(0,0,0,.44),
+        inset 0 1px 0 rgba(255,255,255,.07);
+      isolation: isolate;
+    }
+
+    .dsCleanSpotlightBg {
+      position: absolute;
+      inset: 0;
+      z-index: -3;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: .72;
+      filter: saturate(1.06) contrast(1.04);
+      transform: scale(1.035);
+    }
+
+    .dsCleanSpotlightVeil {
+      position: absolute;
+      inset: 0;
+      z-index: -2;
+      background:
+        radial-gradient(760px circle at 72% 38%, rgba(85,215,255,.10), transparent 42%),
+        linear-gradient(90deg, rgba(3,5,12,.94) 0%, rgba(3,5,12,.78) 42%, rgba(3,5,12,.32) 72%, rgba(3,5,12,.68) 100%),
+        linear-gradient(to top, rgba(3,5,12,.96), transparent 54%);
+    }
+
+    .dsCleanSpotlightContent {
+      padding: clamp(24px, 4vw, 54px);
+      max-width: 720px;
+    }
+
+    .dsCleanKicker {
+      min-height: 30px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 11px;
+      border-radius: 999px;
+      color: rgba(223,248,255,.82);
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .dsCleanSpotlightContent h3 {
+      margin: 13px 0 10px;
+      max-width: 750px;
+      font-family: var(--font-display, "Space Grotesk", Inter, sans-serif);
+      font-size: clamp(42px, 7vw, 92px);
+      line-height: .88;
+      letter-spacing: -.095em;
+      color: white;
+      text-wrap: balance;
+      filter: drop-shadow(0 24px 70px rgba(0,0,0,.55));
+    }
+
+    .dsCleanMeta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .dsCleanMeta b,
+    .dsCleanMeta span {
+      min-height: 26px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 9px;
+      border-radius: 999px;
+      color: rgba(255,255,255,.76);
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.09);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .dsCleanMeta b {
+      color: #a7f3d0;
+      background: rgba(28,185,119,.12);
+      border-color: rgba(28,185,119,.18);
+    }
+
+    .dsCleanSpotlightContent p {
+      max-width: 660px;
+      margin: 0 0 18px;
+      color: rgba(248,251,255,.68);
+      line-height: 1.55;
+      font-weight: 650;
+      text-wrap: pretty;
+    }
+
+    .dsCleanActions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .dsCleanSpotlightPoster {
+      align-self: center;
+      justify-self: center;
+      width: min(250px, 21vw);
+      margin-right: clamp(20px, 4vw, 56px);
+      transform: rotate(2deg);
+      filter: drop-shadow(0 34px 74px rgba(0,0,0,.50));
+    }
+
+    .dsCleanSpotlightPoster img,
+    .dsCleanSpotlightPoster .posterFallback {
+      width: 100%;
+      aspect-ratio: 2 / 3;
+      object-fit: cover;
+      border-radius: 26px;
+      border: 1px solid rgba(255,255,255,.18);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+    }
+
+    /* Cleaner, calmer Studio defaults */
+    .controlDock .controlButton.studioButton {
+      background:
+        radial-gradient(140px circle at 20% 0%, rgba(85,215,255,.18), transparent 62%),
+        linear-gradient(180deg, rgba(255,255,255,.11), rgba(255,255,255,.055)),
+        rgba(4,7,18,.86) !important;
+      border-color: rgba(255,255,255,.12) !important;
+      box-shadow: 0 18px 56px rgba(0,0,0,.40), inset 0 1px 0 rgba(255,255,255,.07) !important;
+    }
+
+    .controlPanel.v111StyleStudio.v114StudioDrawer {
+      border-radius: 28px !important;
+      background:
+        radial-gradient(520px circle at 0% 0%, rgba(85,215,255,.12), transparent 54%),
+        radial-gradient(520px circle at 100% 0%, rgba(139,92,246,.14), transparent 54%),
+        linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.040)),
+        rgba(4,7,18,.93) !important;
+    }
+
+    .compactStudioGrid button {
+      min-height: 34px !important;
+      border-radius: 14px !important;
+      min-width: 104px !important;
+    }
+
+    .studioHero {
+      border-radius: 22px !important;
+    }
+
+    body.effect-clean {
+      --v111-glow: .04;
+      --studio-detail-glow: .05;
+      --studio-detail-lift: .45;
+      --studio-detail-saturation: 1;
+      --studio-detail-shine: .10;
+    }
+
+    body.effect-glow {
+      --v111-glow: .30;
+      --studio-detail-glow: .34;
+      --studio-detail-lift: .92;
+      --studio-detail-saturation: 1.07;
+      --studio-detail-shine: .42;
+    }
+
+    body.effect-ultra {
+      --v111-glow: .46;
+      --studio-detail-glow: .50;
+      --studio-detail-lift: 1.12;
+      --studio-detail-saturation: 1.10;
+      --studio-detail-shine: .68;
+    }
+
+    body.effect-ultra .posterWrap:hover {
+      box-shadow:
+        0 36px 110px rgba(0,0,0,.56),
+        0 0 90px rgba(85,215,255,.22),
+        0 0 74px rgba(139,92,246,.16) !important;
+    }
+
+    body.effect-off,
+    body.effect-clean {
+      --gallery-edge-fade: 46px;
+    }
+
+    body.effect-off .posterWrap::after,
+    body.effect-clean .posterWrap::after {
+      display: none !important;
+    }
+
+    body.layout-posterwall .dsCleanSpotlightCard,
+    body.layout-dense .dsCleanSpotlightCard,
+    body.layout-cinema .dsCleanSpotlightCard,
+    body.layout-spotlight .dsCleanSpotlightCard {
+      min-height: clamp(320px, 40vw, 500px);
+    }
+
+    @media(max-width: 860px) {
+      .dsCleanSpotlightCard {
+        grid-template-columns: 1fr;
+        min-height: 560px;
+      }
+
+      .dsCleanSpotlightContent {
+        align-self: end;
+        padding: 28px;
+      }
+
+      .dsCleanSpotlightPoster {
+        position: absolute;
+        right: 18px;
+        top: 22px;
+        width: 112px;
+        margin: 0;
+        opacity: .92;
+      }
+
+      .dsCleanSpotlightContent h3 {
+        font-size: clamp(38px, 13vw, 66px);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .posterWrap,
+      .posterWrap img,
+      .dsHeroBg,
+      .showcaseHeroBg,
+      .browseHeroBg,
+      .dsCleanSpotlightBg,
+      .previewPoster::after {
+        animation: none !important;
+        transition-duration: .01ms !important;
+        transform: none !important;
+      }
+    }
+
   </style>
 
     <script>
@@ -26088,11 +26525,11 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
         <span>motion + glow</span>
       </div>
       <div class="styleGrid compactStudioGrid">
+        <button data-effect="clean">Clean</button>
         <button data-effect="cinematic">Cinematic</button>
-        <button data-effect="dropcart">Dropcart</button>
-        <button data-effect="neon">Neon</button>
+        <button data-effect="glow">Glow</button>
         <button data-effect="glass">Glass</button>
-        <button data-effect="calm">Calm</button>
+        <button data-effect="ultra">Ultra</button>
         <button data-effect="off">Off</button>
       </div>
     </div>
@@ -26427,7 +26864,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
     function applyEffect(effect) {
       const clean = effect || "cinematic";
-      document.body.classList.remove("effect-cinematic", "effect-dropcart", "effect-neon", "effect-glass", "effect-calm", "effect-off");
+      document.body.classList.remove("effect-clean", "effect-cinematic", "effect-dropcart", "effect-neon", "effect-glow", "effect-glass", "effect-calm", "effect-ultra", "effect-off");
       document.body.classList.add("effect-" + clean);
       localStorage.setItem("movieverse.effect", clean);
       setActiveStudioButton("[data-effect]", clean);
@@ -26493,7 +26930,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     document.querySelectorAll("[data-effect]").forEach((button) => {
       button.addEventListener("click", () => {
         applyEffect(button.dataset.effect);
-        showToast(button.dataset.effect === "dropcart" ? "Dropcart effects on" : "Effects changed");
+        showToast(button.dataset.effect === "ultra" ? "Ultra effects on" : "Effects changed");
       });
     });
 
@@ -26543,7 +26980,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     document.getElementById("styleReset")?.addEventListener("click", () => {
       applyTheme("default");
       applyFont("default");
-      applyEffect("cinematic");
+      applyEffect("clean");
       applyDensity("comfy");
       applyLayout("default");
       applyCardStyle("rounded");
@@ -26555,9 +26992,22 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       showToast("Style reset");
     });
 
+    if (localStorage.getItem("movieverse.cleanCinemaVersion") !== "v118") {
+      localStorage.setItem("movieverse.theme", "default");
+      localStorage.setItem("movieverse.font", "default");
+      localStorage.setItem("movieverse.effect", "clean");
+      localStorage.setItem("movieverse.density", "comfy");
+      localStorage.setItem("movieverse.layout", "default");
+      localStorage.setItem("movieverse.cardstyle", "rounded");
+      localStorage.setItem("movieverse.detail", "balanced");
+      localStorage.setItem("movieverse.backdrop", "smooth");
+      localStorage.setItem("movieverse.reduceMotion", "off");
+      localStorage.setItem("movieverse.cleanCinemaVersion", "v118");
+    }
+
     applyTheme(localStorage.getItem("movieverse.theme") || "default");
     applyFont(localStorage.getItem("movieverse.font") || "default");
-    applyEffect(localStorage.getItem("movieverse.effect") || "cinematic");
+    applyEffect(localStorage.getItem("movieverse.effect") || "clean");
     applyDensity(localStorage.getItem("movieverse.density") || "comfy");
     applyLayout(localStorage.getItem("movieverse.layout") || "default");
     applyCardStyle(localStorage.getItem("movieverse.cardstyle") || "rounded");
@@ -28155,7 +28605,7 @@ async function homePage(req, res) {
         <div class="dsRowHead"><h2>Continue Watching</h2><span class="dsRowTag">Saved watching</span></div>
         <div id="continueWatchingRail" class="movieRail dsRail"></div>
       </section>
-      ${dsRail("Featured Movie Spotlight", [{ ...spotlightMovie, media_type: "movie" }], "movie", { tag: "Featured" })}
+      ${dsCleanSpotlight(spotlightMovie, "movie")}
       ${dsRail("Trending Now", (trendingAll.results || []).filter((item) => ["movie", "tv"].includes(getType(item))), "", { tag: "Live" })}
       ${dsTopRail("Top Movies", popularMovies.results || [], "movie")}
       ${dsRail("Popular Drama Shows", dramaShows.results || [], "tv")}
@@ -28244,6 +28694,49 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "" }) {
     <div class="dsHeroRating"><span>🔇</span><b>${escapeHtml(maturity)}</b></div>
   </section>`;
 }
+
+
+function dsCleanSpotlight(item = {}, forcedType = "movie") {
+  if (!item || !item.id) return "";
+  const type = forcedType || getType(item);
+  const title = getTitle(item);
+  const href = `/${type}/${encodeURIComponent(item.id)}`;
+  const backdropUrl = item.backdrop_path ? fullBackdrop(item.backdrop_path) : img(item.poster_path, "w780");
+  const posterUrl = item.poster_path ? img(item.poster_path, "w500") : "";
+  const year = getYear(getDate(item));
+  const score = formatRating(item.vote_average);
+  const overview = item.overview || "A featured pick for your next SwiflyTV watch night.";
+  const match = metaMatch(item);
+  return `<section class="dsRow dsCleanSpotlightSection">
+    <div class="dsRowHead dsCleanSpotlightHead">
+      <h2>Featured Movie Spotlight</h2>
+      <span class="dsRowTag">Curated</span>
+    </div>
+    <article class="dsCleanSpotlightCard">
+      ${backdropUrl ? `<img class="dsCleanSpotlightBg" src="${escapeHtml(backdropUrl)}" alt="" loading="lazy" />` : ""}
+      <div class="dsCleanSpotlightVeil"></div>
+      <div class="dsCleanSpotlightContent">
+        <span class="dsCleanKicker">Tonight's pick</span>
+        <h3>${escapeHtml(title)}</h3>
+        <div class="dsCleanMeta">
+          <b>${escapeHtml(match)}</b>
+          <span>${escapeHtml(year)}</span>
+          <span>${escapeHtml(type === "tv" ? "TV" : "Movie")}</span>
+          <span>★ ${escapeHtml(score)}</span>
+        </div>
+        <p>${escapeHtml(overview).slice(0, 190)}${overview.length > 190 ? "…" : ""}</p>
+        <div class="dsCleanActions">
+          <a class="dsPrimaryBtn" href="${href}" data-play-id="${escapeHtml(item.id)}" data-play-type="${escapeHtml(type)}" data-play-title="${escapeHtml(title)}" data-play-poster="${escapeHtml(item.poster_path || "")}" data-play-backdrop="${escapeHtml(item.backdrop_path || "")}" data-play-rating="${escapeHtml(score)}" data-play-year="${escapeHtml(year)}"><span>▶</span> Watch</a>
+          <a class="dsSecondaryBtn" href="${href}"><span>ⓘ</span> Details</a>
+        </div>
+      </div>
+      <div class="dsCleanSpotlightPoster">
+        ${posterUrl ? `<img src="${escapeHtml(posterUrl)}" alt="${escapeHtml(title)} poster" loading="lazy" />` : `<div class="posterFallback"><span>${escapeHtml(title.slice(0, 1))}</span></div>`}
+      </div>
+    </article>
+  </section>`;
+}
+
 
 function dsRail(title, items = [], type = "", options = {}) {
   const cards = (items || []).slice(0, options.limit || 18).map((item) => movieCard(item, type)).join("");
