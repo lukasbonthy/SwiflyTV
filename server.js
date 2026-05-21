@@ -30143,6 +30143,37 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v130 STUCK RESOLVER FIX
+       The previous page could freeze on "Starting request..." when the
+       watch script crashed before the resolver loop started.
+       ============================================================ */
+
+    .dsProxyVideoWaitStatus {
+      min-width: min(420px, calc(100vw - 48px));
+      text-align: center;
+      border-color: rgba(223,248,255,.16) !important;
+      background:
+        radial-gradient(180px circle at 30% 0%, rgba(85,215,255,.12), transparent 60%),
+        rgba(255,255,255,.055) !important;
+    }
+
+    .dsProxyVideoWaitingCard .dsStableActions {
+      position: relative;
+      z-index: 3;
+    }
+
+    .dsProxyVideoWaitingCard .dsSecondaryBtn,
+    .dsProxyVideoWaitingCard .dsGhostPill {
+      pointer-events: auto !important;
+    }
+
+    .dsProxyVideoWaitingCard h2 {
+      max-width: 820px;
+      text-wrap: balance;
+    }
+
   </style>
 
     <script>
@@ -34392,6 +34423,35 @@ async function watchPage(req, res, type) {
           startVideoJsCinemaSource(src, data);
         }
 
+        async function fetchJsonWithTimeout(url, timeoutMs) {
+          var controller = new AbortController();
+          var timeout = setTimeout(function(){ controller.abort(); }, timeoutMs);
+          try {
+            var response = await fetch(url, {
+              cache: "no-store",
+              headers: { "Accept": "application/json" },
+              signal: controller.signal
+            });
+
+            var text = await response.text();
+            var data = {};
+            try {
+              data = text ? JSON.parse(text) : {};
+            } catch {
+              data = { status: "error", message: text.slice(0, 240) || "Non-JSON response" };
+            }
+
+            if (!response.ok) {
+              data.status = data.status || "error";
+              data.message = data.message || data.error || ("HTTP " + response.status);
+            }
+
+            return data;
+          } finally {
+            clearTimeout(timeout);
+          }
+        }
+
         async function tryProxyVideo(manual) {
           if (!clientWait || stopped) return;
 
@@ -34405,13 +34465,23 @@ async function watchPage(req, res, type) {
 
           setStatus((manual ? "Retrying" : "Trying") + " m3u8 source... attempt " + attempt + " • " + elapsed + "s");
 
+          var data = null;
           try {
-            var response = await fetch("/api/proxy-video-wait/movie/" + encodeURIComponent(movieId) + "?t=" + Date.now(), {
-              cache: "no-store",
-              headers: { "Accept": "application/json" }
-            });
+            data = await fetchJsonWithTimeout(
+              "/api/proxy-video-wait/movie/" + encodeURIComponent(movieId) + "?t=" + Date.now(),
+              28000
+            );
 
-            var data = await response.json();
+            if (!(data && data.status === "ok" && (data.playbackUrl || data.m3u8 || data.proxyVideo))) {
+              // Quick second chance endpoint. This helps when one route hangs/caches differently.
+              var quick = await fetchJsonWithTimeout(
+                "/api/hls-source/movie/" + encodeURIComponent(movieId) + "?t=" + Date.now(),
+                16000
+              );
+              if (quick && quick.status === "ok" && (quick.playbackUrl || quick.m3u8 || quick.proxyVideo)) {
+                data = quick;
+              }
+            }
 
             if (data && data.status === "ok" && (data.playbackUrl || data.m3u8 || data.proxyVideo)) {
               stopped = true;
@@ -34421,13 +34491,16 @@ async function watchPage(req, res, type) {
               return;
             }
 
-            var detail = (data && (data.message || (data.attempts && data.attempts[0]))) || "Waiting for provider...";
-            setStatus("Not ready yet: " + detail);
+            var detail = (data && (data.message || data.error || (data.attempts && data.attempts[0]))) || "Waiting for provider...";
+            setStatus("Not ready yet: " + String(detail).slice(0, 180));
           } catch (error) {
-            setStatus("Still waiting: " + (error.message || "request failed"));
+            var message = error && error.name === "AbortError"
+              ? "resolver took too long; trying again"
+              : (error && error.message ? error.message : "request failed");
+            setStatus("Still waiting: " + message);
           }
 
-          var delay = Math.min(15000, 2500 + attempt * 1500);
+          var delay = Math.min(12000, 1800 + attempt * 1200);
           setTimeout(function(){ tryProxyVideo(false); }, delay);
         }
 
@@ -34439,12 +34512,13 @@ async function watchPage(req, res, type) {
         }
 
         if (clientWait) {
-          tryProxyVideo(false);
+          setStatus("Starting resolver loop...");
+          setTimeout(function(){ tryProxyVideo(false); }, 50);
         } else {
-          var video = document.getElementById("movie-placeholder-video");
-          if (!video) return;
-          video.addEventListener("error", function(){
-            var videoShell = video.closest(".dsDirectVideoShell");
+          var placeholderVideo = document.getElementById("movie-placeholder-video");
+          if (!placeholderVideo) return;
+          placeholderVideo.addEventListener("error", function(){
+            var videoShell = placeholderVideo.closest(".dsDirectVideoShell");
             if (!videoShell || videoShell.querySelector(".dsMovieEmbedNotice.error")) return;
             var notice = document.createElement("div");
             notice.className = "dsMovieEmbedNotice error";
@@ -38703,8 +38777,23 @@ app.get("/favicon.ico", (req, res) => {
 
 app.get("/api/proxy-video-wait/movie/:id", async (req, res) => {
   res.set("Cache-Control", "no-store");
-  const result = await fetchProxyVideoSource({ type: "movie", id: req.params.id });
-  res.json(result);
+  try {
+    const result = await fetchProxyVideoSource({ type: "movie", id: req.params.id });
+    res.json(result);
+  } catch (error) {
+    res.status(200).json({
+      status: "error",
+      ok: false,
+      movieId: req.params.id,
+      message: error?.message || "proxy video wait failed",
+      attempts: [error?.message || "proxy video wait failed"],
+    });
+  }
+});
+
+app.get("/api/watch-client-health", (req, res) => {
+  res.set("Cache-Control", "no-store");
+  res.json({ ok: true, version: "v130", videoJsFix: true, stuckResolverFix: true });
 });
 
 app.get("/api/proxy-video/movie/:id", async (req, res) => {
