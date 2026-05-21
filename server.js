@@ -24232,6 +24232,366 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v112 STUDIO VISIBILITY + NO RED FOCUS
+       Makes the Studio button obvious and removes the red TV focus ring.
+       ============================================================ */
+
+    .controlDock {
+      z-index: 2147483200 !important;
+      right: 18px !important;
+      bottom: calc(22px + var(--safe-bottom)) !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 10px !important;
+    }
+
+    .controlButton.studioButton {
+      width: auto !important;
+      min-width: 128px !important;
+      height: 50px !important;
+      padding: 0 16px !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 9px !important;
+      border-radius: 999px !important;
+      color: #07101a !important;
+      background:
+        radial-gradient(circle at 20% 12%, rgba(255,255,255,.86), transparent 34%),
+        linear-gradient(135deg, #ffffff, #dff8ff 45%, #b7e9ff) !important;
+      border: 1px solid rgba(255,255,255,.42) !important;
+      box-shadow:
+        0 18px 54px rgba(0,0,0,.36),
+        0 0 34px rgba(85,215,255,.28),
+        inset 0 1px 0 rgba(255,255,255,.70) !important;
+      font-weight: 950 !important;
+      letter-spacing: -.02em !important;
+    }
+
+    .controlButton.studioButton span {
+      display: inline-grid;
+      place-items: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      color: white;
+      background: linear-gradient(135deg, #55d7ff, #8b5cf6);
+      box-shadow: 0 8px 24px rgba(85,215,255,.30);
+    }
+
+    .controlButton.studioButton b {
+      display: inline !important;
+      font-size: 14px !important;
+      font-weight: 950 !important;
+    }
+
+    .controlButton.studioButton:hover {
+      transform: translateY(-2px) scale(1.02) !important;
+      box-shadow:
+        0 24px 72px rgba(0,0,0,.42),
+        0 0 54px rgba(85,215,255,.42),
+        inset 0 1px 0 rgba(255,255,255,.78) !important;
+    }
+
+    .controlPanel.v111StyleStudio {
+      z-index: 2147483199 !important;
+      right: 18px !important;
+      bottom: calc(86px + var(--safe-bottom)) !important;
+      display: block !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+      transform: translateY(14px) scale(.98) !important;
+      pointer-events: none !important;
+      transition: opacity .18s ease, transform .18s ease, visibility .18s ease !important;
+    }
+
+    .controlPanel.v111StyleStudio.open {
+      opacity: 1 !important;
+      visibility: visible !important;
+      transform: translateY(0) scale(1) !important;
+      pointer-events: auto !important;
+    }
+
+    .controlPanel.v111StyleStudio::before {
+      content: "Effects Studio";
+      position: absolute;
+      right: 18px;
+      top: -38px;
+      min-height: 30px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 11px;
+      border-radius: 999px;
+      color: rgba(255,255,255,.86);
+      background: rgba(5,7,18,.78);
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: 0 14px 38px rgba(0,0,0,.28);
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: .01em;
+    }
+
+    .swifly-tv-focus-target {
+      outline: 4px solid rgba(223,248,255,.98) !important;
+      box-shadow:
+        0 0 0 8px rgba(85,215,255,.22),
+        0 0 54px rgba(85,215,255,.44),
+        0 0 92px rgba(139,92,246,.24) !important;
+      filter: brightness(1.12) saturate(1.06) !important;
+    }
+
+    .swifly-tv-focus-pressed {
+      box-shadow:
+        0 0 0 8px rgba(223,248,255,.30),
+        0 0 60px rgba(85,215,255,.50) !important;
+    }
+
+    .themeGrid.styleGrid button.active,
+    .styleGrid button.active,
+    .themeGrid.styleGrid button:hover,
+    .styleGrid button:hover {
+      box-shadow:
+        0 16px 44px rgba(0,0,0,.26),
+        0 0 30px rgba(85,215,255,.34) !important;
+    }
+
+    body.effect-neon .swifly-tv-focus-target {
+      outline-color: #dff8ff !important;
+      box-shadow:
+        0 0 0 8px rgba(85,215,255,.28),
+        0 0 72px rgba(85,215,255,.62),
+        0 0 110px rgba(139,92,246,.34) !important;
+    }
+
+    @media(max-width: 760px) {
+      .controlDock {
+        right: 12px !important;
+        bottom: calc(86px + var(--safe-bottom)) !important;
+      }
+
+      .controlButton.studioButton {
+        min-width: 112px !important;
+        height: 46px !important;
+      }
+
+      .controlPanel.v111StyleStudio {
+        right: 12px !important;
+        bottom: calc(142px + var(--safe-bottom)) !important;
+        width: min(390px, calc(100vw - 24px)) !important;
+      }
+    }
+
+
+    /* ============================================================
+       v113 NO OUTLINES + ALWAYS-VISIBLE STUDIO
+       Removes the visible button outlines and adds a second Studio
+       button in the top nav plus a fixed fallback button.
+       ============================================================ */
+
+    :root {
+      --studio-top-offset: 92px;
+    }
+
+    *:focus,
+    *:focus-visible {
+      outline: none !important;
+    }
+
+    .swifly-tv-focus-target {
+      outline: none !important;
+      outline-offset: 0 !important;
+      box-shadow: none !important;
+      border-color: rgba(255,255,255,.24) !important;
+      filter: brightness(1.18) saturate(1.06) !important;
+      transform: translateY(-2px) scale(1.025) !important;
+      background:
+        radial-gradient(260px circle at 50% 0%, rgba(255,255,255,.13), transparent 52%),
+        rgba(255,255,255,.105) !important;
+    }
+
+    .swifly-tv-focus-target::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: -7px;
+      width: min(74%, 92px);
+      height: 3px;
+      border-radius: 999px;
+      transform: translateX(-50%);
+      background: linear-gradient(90deg, transparent, rgba(85,215,255,.95), rgba(139,92,246,.84), transparent);
+      box-shadow: 0 0 18px rgba(85,215,255,.42);
+      pointer-events: none;
+    }
+
+    .swifly-tv-focus-target.navStudioButton::after,
+    .swifly-tv-focus-target.controlButton::after,
+    .swifly-tv-focus-target.studioButton::after,
+    .swifly-tv-focus-target input::after,
+    input.swifly-tv-focus-target::after,
+    textarea.swifly-tv-focus-target::after,
+    select.swifly-tv-focus-target::after {
+      display: none !important;
+    }
+
+    .swifly-tv-focus-pressed {
+      outline: none !important;
+      box-shadow: none !important;
+      transform: translateY(0) scale(.985) !important;
+      filter: brightness(1.26) saturate(1.12) !important;
+    }
+
+    .navStudioButton {
+      min-height: 38px;
+      padding: 0 14px;
+      border-radius: 999px;
+      border: 0 !important;
+      outline: none !important;
+      color: #06101d;
+      background:
+        radial-gradient(circle at 25% 18%, rgba(255,255,255,.95), transparent 38%),
+        linear-gradient(135deg, #ffffff, #dff8ff 45%, #c7bbff);
+      box-shadow:
+        0 12px 34px rgba(0,0,0,.28),
+        0 0 30px rgba(85,215,255,.22);
+      font-size: 13px;
+      font-weight: 950;
+      letter-spacing: -.02em;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .navStudioButton:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.05);
+    }
+
+    .controlDock {
+      left: 18px !important;
+      right: auto !important;
+      top: var(--studio-top-offset) !important;
+      bottom: auto !important;
+      z-index: 2147483646 !important;
+      display: flex !important;
+      pointer-events: none;
+    }
+
+    .controlDock .controlButton.studioButton {
+      pointer-events: auto;
+      min-width: 156px !important;
+      height: 54px !important;
+      padding: 0 18px !important;
+      border: 0 !important;
+      outline: none !important;
+      color: #06101d !important;
+      background:
+        radial-gradient(circle at 20% 12%, rgba(255,255,255,1), transparent 34%),
+        linear-gradient(135deg, #ffffff, #e7fbff 45%, #cabdff) !important;
+      box-shadow:
+        0 22px 70px rgba(0,0,0,.48),
+        0 0 46px rgba(85,215,255,.34),
+        0 0 82px rgba(139,92,246,.18) !important;
+      animation: swiflyStudioPulse 2.8s ease-in-out infinite;
+    }
+
+    .controlDock .controlButton.studioButton b {
+      font-size: 15px !important;
+    }
+
+    .controlDock .controlButton.studioButton::after {
+      content: "Effects";
+      margin-left: 2px;
+      opacity: .65;
+      font-size: 12px;
+      font-weight: 950;
+    }
+
+    .controlPanel.v111StyleStudio {
+      left: 18px !important;
+      right: auto !important;
+      top: calc(var(--studio-top-offset) + 66px) !important;
+      bottom: auto !important;
+      z-index: 2147483645 !important;
+      max-height: min(690px, calc(100dvh - var(--studio-top-offset) - 92px));
+      overflow-y: auto;
+      border: 0 !important;
+      outline: none !important;
+      box-shadow:
+        0 32px 110px rgba(0,0,0,.58),
+        0 0 72px rgba(85,215,255,.22) !important;
+    }
+
+    .controlPanel.v111StyleStudio::before {
+      display: none !important;
+    }
+
+    .themeGrid.styleGrid button,
+    .styleGrid button,
+    .styleReset,
+    .footerLinks a,
+    .footerLinks button,
+    .nav a,
+    .nav button,
+    .mobileNav a,
+    .controlButton,
+    button,
+    a {
+      outline: none !important;
+    }
+
+    .themeGrid.styleGrid button.active,
+    .styleGrid button.active,
+    .themeGrid.styleGrid button:hover,
+    .styleGrid button:hover {
+      border-color: rgba(255,255,255,.20) !important;
+      box-shadow:
+        0 14px 38px rgba(0,0,0,.24),
+        inset 0 1px 0 rgba(255,255,255,.15) !important;
+      transform: translateY(-1px) scale(1.015);
+    }
+
+    @keyframes swiflyStudioPulse {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-2px); }
+    }
+
+    @media(max-width: 760px) {
+      :root {
+        --studio-top-offset: 82px;
+      }
+
+      .navStudioButton {
+        min-height: 34px;
+        padding: 0 11px;
+        font-size: 12px;
+      }
+
+      .controlDock {
+        left: 12px !important;
+        top: auto !important;
+        bottom: calc(92px + var(--safe-bottom)) !important;
+      }
+
+      .controlDock .controlButton.studioButton {
+        min-width: 132px !important;
+        height: 48px !important;
+      }
+
+      .controlDock .controlButton.studioButton::after {
+        display: none;
+      }
+
+      .controlPanel.v111StyleStudio {
+        left: 12px !important;
+        right: 12px !important;
+        top: auto !important;
+        bottom: calc(148px + var(--safe-bottom)) !important;
+        width: auto !important;
+        max-height: min(640px, calc(100dvh - 182px));
+      }
+    }
+
   </style>
 
     <script>
@@ -24423,7 +24783,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
   </nav>
 
   <div class="controlDock">
-    <button id="controlToggle" class="controlButton" type="button">✦</button>
+    <button id="controlToggle" class="controlButton studioButton" type="button"><span>✦</span><b>Studio</b></button>
   </div>
 
   <section id="controlPanel" class="controlPanel v111StyleStudio" aria-label="Style Studio">
@@ -24434,7 +24794,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       </div>
       <button id="styleReset" class="styleReset" type="button">Reset</button>
     </div>
-    <p>Change the whole movie-site vibe. Saves in this browser.</p>
+    <p>Change fonts, themes, spacing, and effects. Your choices save in this browser.</p>
 
     <div class="styleGroup">
       <b>Theme</b>
@@ -24680,8 +25040,37 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     renderSavedGrid("likedGrid", "movieverse.liked", "liked");
 
     const panel = document.getElementById("controlPanel");
-    document.getElementById("controlToggle")?.addEventListener("click", () => {
-      panel?.classList.toggle("open");
+    const controlToggle = document.getElementById("controlToggle");
+    const controlToggleTop = document.getElementById("controlToggleTop");
+
+    function setStudioOpen(open) {
+      panel?.classList.toggle("open", Boolean(open));
+      const expanded = panel?.classList.contains("open") ? "true" : "false";
+      controlToggle?.setAttribute("aria-expanded", expanded);
+      controlToggleTop?.setAttribute("aria-expanded", expanded);
+    }
+
+    function toggleStudio() {
+      setStudioOpen(!panel?.classList.contains("open"));
+    }
+
+    controlToggle?.addEventListener("click", toggleStudio);
+    controlToggleTop?.addEventListener("click", toggleStudio);
+    controlToggle?.setAttribute("aria-label", "Open Swifly Studio effects");
+    controlToggleTop?.setAttribute("aria-label", "Open Swifly Studio effects");
+    controlToggle?.setAttribute("aria-expanded", "false");
+    controlToggleTop?.setAttribute("aria-expanded", "false");
+
+    if (window.location.hash === "#studio" || new URLSearchParams(window.location.search).get("studio") === "1") {
+      setStudioOpen(true);
+    }
+
+    document.addEventListener("keydown", (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "e") {
+        event.preventDefault();
+        toggleStudio();
+        showToast(panel?.classList.contains("open") ? "Studio opened" : "Studio closed");
+      }
     });
 
     function setActiveStudioButton(selector, value) {
