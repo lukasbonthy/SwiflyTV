@@ -31456,6 +31456,689 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v135 VIDEO.JS VOLUME + IMAGE PREVIEW FIX
+       Fixes:
+       - built-in audio/volume hover disappearing near timeframe
+       - no image preview while hovering the timeline
+       Strategy:
+       - hide built-in volume control and use a custom volume pill/slider
+       - preview box shows a silent preview video frame when possible
+       - fallback still shows time cleanly when cross-origin/frame preview fails
+       ============================================================ */
+
+    .dsVideoJsCinemaShell.v135VolumeImagePreview .vjs-volume-panel,
+    .dsVideoJsCinemaShell.v135VolumeImagePreview .vjs-volume-menu-button,
+    .dsVideoJsCinemaShell.v135VolumeImagePreview .vjs-mute-control {
+      display: none !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v135VolumeImagePreview .dsVideoJsVolume {
+      position: absolute;
+      right: calc(var(--dock-x, 18px) + 136px);
+      bottom: calc(var(--dock-bottom, 18px) + var(--dock-height, 58px) + 8px);
+      z-index: 98;
+      opacity: 0;
+      transform: translateY(5px);
+      transition: opacity .16s ease, transform .16s ease;
+      pointer-events: auto;
+    }
+
+    .dsVideoJsCinemaShell.v135VolumeImagePreview:hover .dsVideoJsVolume,
+    .dsVideoJsCinemaShell.v135VolumeImagePreview:focus-within .dsVideoJsVolume,
+    .dsVideoJsCinemaShell.v135VolumeImagePreview.isPaused .dsVideoJsVolume,
+    .dsVideoJsCinemaShell.v135VolumeImagePreview .dsVideoJsVolume:has(.dsVideoJsVolumeMenu:not([hidden])) {
+      opacity: .92;
+      transform: translateY(0);
+    }
+
+    .dsVideoJsVolumeToggle {
+      min-height: 26px;
+      min-width: 52px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 0 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.08);
+      color: rgba(255,255,255,.78);
+      background: rgba(5,8,18,.54);
+      box-shadow: 0 8px 22px rgba(0,0,0,.22);
+      backdrop-filter: blur(12px) saturate(1.06);
+      -webkit-backdrop-filter: blur(12px) saturate(1.06);
+      cursor: pointer;
+      font-family: var(--font-ui, "Host Grotesk", Inter, system-ui, sans-serif);
+    }
+
+    .dsVideoJsVolumeToggle span {
+      display: none;
+    }
+
+    .dsVideoJsVolumeToggle b {
+      font-size: 10px;
+      font-weight: 950;
+      color: rgba(255,255,255,.80);
+    }
+
+    .dsVideoJsVolumeToggle.isMuted b {
+      color: #ffb4b4;
+    }
+
+    .dsVideoJsVolumeToggle:hover {
+      color: #06101d;
+      background: linear-gradient(135deg, #ffffff, #dff8ff);
+    }
+
+    .dsVideoJsVolumeToggle:hover b {
+      color: #06101d;
+    }
+
+    .dsVideoJsVolumeMenu {
+      position: absolute;
+      right: 0;
+      bottom: 32px;
+      width: 138px;
+      padding: 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.09);
+      background: rgba(5,8,18,.96);
+      box-shadow: 0 14px 40px rgba(0,0,0,.40), 0 0 24px rgba(85,215,255,.07);
+      backdrop-filter: blur(16px) saturate(1.08);
+      -webkit-backdrop-filter: blur(16px) saturate(1.08);
+      pointer-events: auto;
+      z-index: 130;
+    }
+
+    .dsVideoJsVolumeMenu[hidden] {
+      display: none !important;
+    }
+
+    .dsVideoJsVolumeMenu input[type="range"] {
+      width: 100%;
+      height: 18px;
+      margin: 0;
+      appearance: none;
+      -webkit-appearance: none;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .dsVideoJsVolumeMenu input[type="range"]::-webkit-slider-runnable-track {
+      height: 6px;
+      border-radius: 999px;
+      background:
+        linear-gradient(90deg, #55d7ff, #8b5cf6) 0 / calc(var(--volume-pct, 100) * 1%) 100% no-repeat,
+        rgba(255,255,255,.16);
+    }
+
+    .dsVideoJsVolumeMenu input[type="range"]::-moz-range-track {
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.16);
+    }
+
+    .dsVideoJsVolumeMenu input[type="range"]::-moz-range-progress {
+      height: 6px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #55d7ff, #8b5cf6);
+    }
+
+    .dsVideoJsVolumeMenu input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      margin-top: -5px;
+      border-radius: 999px;
+      border: 2px solid rgba(255,255,255,.95);
+      background: linear-gradient(135deg, #ffffff, #dff8ff);
+      box-shadow: 0 0 0 5px rgba(85,215,255,.12), 0 8px 18px rgba(0,0,0,.34);
+    }
+
+    .dsVideoJsVolumeMenu input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      border: 2px solid rgba(255,255,255,.95);
+      background: linear-gradient(135deg, #ffffff, #dff8ff);
+      box-shadow: 0 0 0 5px rgba(85,215,255,.12), 0 8px 18px rgba(0,0,0,.34);
+    }
+
+    .dsVideoJsCinemaShell.v135VolumeImagePreview .dsVideoJsSpeed {
+      right: calc(var(--dock-x, 18px) + 76px) !important;
+    }
+
+    .dsVideoJsCinemaShell.v135VolumeImagePreview .dsVideoJsQuality {
+      right: calc(var(--dock-x, 18px) + 8px) !important;
+    }
+
+    .dsVideoJsCinemaShell.v135VolumeImagePreview .dsVideoJsTimelinePreview {
+      width: 168px;
+      height: 104px;
+      bottom: calc(var(--dock-bottom, 18px) + var(--dock-height, 58px) + 36px);
+      border-radius: 16px;
+      overflow: visible;
+      background: rgba(5,8,18,.92);
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 18px 54px rgba(0,0,0,.42), 0 0 24px rgba(85,215,255,.08);
+      backdrop-filter: blur(16px) saturate(1.08);
+      -webkit-backdrop-filter: blur(16px) saturate(1.08);
+    }
+
+    .dsVideoJsCinemaShell.v135VolumeImagePreview .dsVideoJsTimelinePreview video,
+    .dsVideoJsCinemaShell.v135VolumeImagePreview .dsVideoJsPreviewFallback {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 94px;
+      object-fit: cover;
+      border-radius: 16px;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(85,215,255,.18), transparent 42%),
+        radial-gradient(circle at 70% 40%, rgba(139,92,246,.18), transparent 46%),
+        linear-gradient(135deg, rgba(10,16,32,.95), rgba(3,5,12,.96));
+    }
+
+    .dsVideoJsCinemaShell.v135VolumeImagePreview .dsVideoJsTimelinePreview video {
+      z-index: 2;
+      opacity: .92;
+    }
+
+    .dsVideoJsCinemaShell.v135VolumeImagePreview:not(.hasFramePreview) .dsVideoJsTimelinePreview video {
+      opacity: 0;
+    }
+
+    .dsVideoJsCinemaShell.v135VolumeImagePreview .dsVideoJsPreviewFallback {
+      z-index: 1;
+    }
+
+    .dsVideoJsCinemaShell.v135VolumeImagePreview .dsVideoJsTimelinePreview::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      height: 94px;
+      border-radius: 16px;
+      z-index: 3;
+      pointer-events: none;
+      background:
+        linear-gradient(to top, rgba(0,0,0,.52), transparent 54%),
+        inset 0 0 0 1px rgba(255,255,255,.06);
+    }
+
+    .dsVideoJsCinemaShell.v135VolumeImagePreview .dsVideoJsTimelinePreview span {
+      position: absolute;
+      left: 8px;
+      bottom: 8px;
+      z-index: 5;
+      min-width: auto;
+      padding: 4px 7px;
+      border-radius: 999px;
+      color: #06101d;
+      background: linear-gradient(135deg, #ffffff, #dff8ff);
+      font-size: 10px;
+      font-weight: 950;
+      line-height: 1;
+      box-shadow: 0 8px 18px rgba(0,0,0,.24);
+    }
+
+    .dsVideoJsCinemaShell.v135VolumeImagePreview .dsVideoJsTimelinePreview em {
+      position: absolute;
+      right: 8px;
+      bottom: 8px;
+      z-index: 5;
+      max-width: 82px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: rgba(255,255,255,.70);
+      font-size: 9px;
+      font-style: normal;
+      font-weight: 850;
+      text-shadow: 0 1px 8px rgba(0,0,0,.75);
+    }
+
+    .dsVideoJsCinemaShell.v135VolumeImagePreview .dsVideoJsTimelinePreview i {
+      height: 28px;
+      top: 100%;
+      background: linear-gradient(to bottom, rgba(223,248,255,.95), transparent);
+    }
+
+    .dsVideoJsCinemaShell.v135VolumeImagePreview .vjs-control-bar:has(.dsVideoJsVolume:hover),
+    .dsVideoJsCinemaShell.v135VolumeImagePreview .vjs-control-bar:has(.dsVideoJsSpeed:hover),
+    .dsVideoJsCinemaShell.v135VolumeImagePreview .vjs-control-bar:has(.dsVideoJsQuality:hover) {
+      opacity: 1 !important;
+      transform: translateY(0) !important;
+    }
+
+    @media(max-width: 900px) {
+      .dsVideoJsCinemaShell.v135VolumeImagePreview .dsVideoJsVolume,
+      .dsVideoJsCinemaShell.v135VolumeImagePreview .dsVideoJsSpeed,
+      .dsVideoJsCinemaShell.v135VolumeImagePreview .dsVideoJsQuality,
+      .dsVideoJsCinemaShell.v135VolumeImagePreview .dsVideoJsTimelinePreview {
+        display: none !important;
+      }
+    }
+
+
+    /* ============================================================
+       v136 VIDEO.JS PILL DOCK SKIN
+       Matches the reference screenshot:
+       - one simple rounded pill control dock
+       - play/time/progress/duration/actions in one row
+       - no huge overlays
+       - progress bar spans cleanly inside dock
+       - speed/volume pills live visually inside the dock
+       ============================================================ */
+
+    .dsVideoJsCinemaShell.v136PillDockSkin {
+      --player-radius: 14px;
+      --dock-x: 12px;
+      --dock-bottom: 12px;
+      --dock-height: 48px;
+      background: #000 !important;
+      border-radius: var(--player-radius) !important;
+      outline: 1px solid rgba(255,255,255,.06) !important;
+      box-shadow: 0 28px 90px rgba(0,0,0,.52) !important;
+      overflow: hidden !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin::after,
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsCinemaPlayerAura,
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsTop,
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsHint,
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsCinemaSeekDock {
+      display: none !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      visibility: hidden !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .video-js,
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsCinemaHlsVideo {
+      border-radius: var(--player-radius) !important;
+      background: #000 !important;
+      overflow: hidden !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .vjs-tech {
+      object-fit: contain !important;
+      background: #000 !important;
+    }
+
+    /* Big play: keep it small and pill-like, not a circle. */
+    .dsVideoJsCinemaShell.v136PillDockSkin .vjs-big-play-button {
+      width: 72px !important;
+      height: 46px !important;
+      line-height: 46px !important;
+      left: 50% !important;
+      top: 50% !important;
+      margin-left: -36px !important;
+      margin-top: -23px !important;
+      display: grid !important;
+      place-items: center !important;
+      padding: 0 !important;
+      border-radius: 15px !important;
+      border: 1px solid rgba(255,255,255,.14) !important;
+      color: rgba(255,255,255,.96) !important;
+      background: rgba(12,17,31,.70) !important;
+      box-shadow: 0 18px 54px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.08) !important;
+      backdrop-filter: blur(14px) saturate(1.08) !important;
+      -webkit-backdrop-filter: blur(14px) saturate(1.08) !important;
+      opacity: .96 !important;
+      transition: transform .16s ease, background .16s ease, opacity .16s ease !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .vjs-big-play-button:hover,
+    .dsVideoJsCinemaShell.v136PillDockSkin .vjs-big-play-button:focus {
+      transform: translateY(-1px) scale(1.035) !important;
+      background: rgba(21,29,50,.82) !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .vjs-big-play-button .vjs-icon-placeholder {
+      position: static !important;
+      display: grid !important;
+      place-items: center !important;
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .vjs-big-play-button .vjs-icon-placeholder::before {
+      position: static !important;
+      width: auto !important;
+      height: auto !important;
+      line-height: 1 !important;
+      margin: 0 !important;
+      font-size: 22px !important;
+      transform: translateX(1.5px) !important;
+      text-shadow: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .vjs-has-started .vjs-big-play-button,
+    .dsVideoJsCinemaShell.v136PillDockSkin .vjs-playing .vjs-big-play-button {
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    /* One pill dock, screenshot style. */
+    .dsVideoJsCinemaShell.v136PillDockSkin .vjs-control-bar {
+      position: absolute !important;
+      left: var(--dock-x) !important;
+      right: var(--dock-x) !important;
+      bottom: var(--dock-bottom) !important;
+      width: auto !important;
+      height: var(--dock-height) !important;
+      min-height: var(--dock-height) !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+      padding: 0 14px !important;
+      border-radius: 999px !important;
+      background: rgba(34,38,42,.78) !important;
+      border: 1px solid rgba(255,255,255,.075) !important;
+      box-shadow: 0 12px 34px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.06) !important;
+      backdrop-filter: blur(12px) saturate(1.06) !important;
+      -webkit-backdrop-filter: blur(12px) saturate(1.06) !important;
+      opacity: 0 !important;
+      transform: translateY(8px) !important;
+      transition: opacity .16s ease, transform .16s ease !important;
+      pointer-events: auto !important;
+      z-index: 70 !important;
+      overflow: visible !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin:hover .vjs-control-bar,
+    .dsVideoJsCinemaShell.v136PillDockSkin:focus-within .vjs-control-bar,
+    .dsVideoJsCinemaShell.v136PillDockSkin .vjs-user-active .vjs-control-bar,
+    .dsVideoJsCinemaShell.v136PillDockSkin .vjs-paused .vjs-control-bar,
+    .dsVideoJsCinemaShell.v136PillDockSkin.isPreviewingTime .vjs-control-bar {
+      opacity: 1 !important;
+      transform: translateY(0) !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .vjs-control-bar > .vjs-control:not(.vjs-progress-control) {
+      flex: 0 0 auto !important;
+      width: 28px !important;
+      height: 28px !important;
+      min-width: 28px !important;
+      margin: 0 !important;
+      border-radius: 999px !important;
+      color: rgba(255,255,255,.88) !important;
+      background: transparent !important;
+      transition: background .14s ease, transform .14s ease, color .14s ease !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .vjs-control-bar > .vjs-control:not(.vjs-progress-control):hover,
+    .dsVideoJsCinemaShell.v136PillDockSkin .vjs-control-bar > .vjs-control:not(.vjs-progress-control):focus {
+      color: white !important;
+      background: rgba(255,255,255,.09) !important;
+      transform: translateY(-1px) !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .vjs-button > .vjs-icon-placeholder::before {
+      line-height: 28px !important;
+      font-size: 14px !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .vjs-time-control {
+      flex: 0 0 auto !important;
+      display: block !important;
+      width: auto !important;
+      min-width: auto !important;
+      height: 28px !important;
+      padding: 0 3px !important;
+      line-height: 28px !important;
+      color: rgba(255,255,255,.85) !important;
+      font-size: 12px !important;
+      font-weight: 850 !important;
+      white-space: nowrap !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .vjs-current-time {
+      margin-left: 0 !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .vjs-duration {
+      margin-right: 134px !important;
+    }
+
+    /* Critical: inline progress bar across the dock, not icon width and not above the dock. */
+    .dsVideoJsCinemaShell.v136PillDockSkin .vjs-control-bar .vjs-progress-control.vjs-control {
+      position: relative !important;
+      left: auto !important;
+      right: auto !important;
+      top: auto !important;
+      bottom: auto !important;
+      flex: 1 1 auto !important;
+      width: auto !important;
+      min-width: 140px !important;
+      max-width: none !important;
+      height: 28px !important;
+      margin: 0 4px !important;
+      padding: 0 !important;
+      cursor: pointer !important;
+      z-index: 76 !important;
+      overflow: visible !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .vjs-progress-control .vjs-progress-holder {
+      position: relative !important;
+      width: 100% !important;
+      height: 5px !important;
+      margin: 11px 0 0 !important;
+      border-radius: 999px !important;
+      background: rgba(255,255,255,.28) !important;
+      overflow: visible !important;
+      cursor: pointer !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .vjs-load-progress,
+    .dsVideoJsCinemaShell.v136PillDockSkin .vjs-play-progress {
+      height: 5px !important;
+      border-radius: 999px !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .vjs-play-progress {
+      background: #e9eef5 !important;
+      box-shadow: 0 0 10px rgba(223,248,255,.18) !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .vjs-play-progress::before {
+      top: -5px !important;
+      right: -0.45em !important;
+      font-size: 12px !important;
+      color: #dff8ff !important;
+      text-shadow: 0 0 10px rgba(223,248,255,.24) !important;
+    }
+
+    /* Put custom speed/volume/quality inside visual dock area at the right. */
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsSpeed,
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsVolume,
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsQuality {
+      bottom: calc(var(--dock-bottom) + 11px) !important;
+      z-index: 92 !important;
+      opacity: 0 !important;
+      transform: translateY(8px) !important;
+      transition: opacity .16s ease, transform .16s ease !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin:hover .dsVideoJsSpeed,
+    .dsVideoJsCinemaShell.v136PillDockSkin:hover .dsVideoJsVolume,
+    .dsVideoJsCinemaShell.v136PillDockSkin:hover .dsVideoJsQuality,
+    .dsVideoJsCinemaShell.v136PillDockSkin:focus-within .dsVideoJsSpeed,
+    .dsVideoJsCinemaShell.v136PillDockSkin:focus-within .dsVideoJsVolume,
+    .dsVideoJsCinemaShell.v136PillDockSkin:focus-within .dsVideoJsQuality,
+    .dsVideoJsCinemaShell.v136PillDockSkin .vjs-paused ~ .dsVideoJsSpeed,
+    .dsVideoJsCinemaShell.v136PillDockSkin.isPreviewingTime .dsVideoJsSpeed,
+    .dsVideoJsCinemaShell.v136PillDockSkin.isPreviewingTime .dsVideoJsVolume,
+    .dsVideoJsCinemaShell.v136PillDockSkin.isPreviewingTime .dsVideoJsQuality {
+      opacity: 1 !important;
+      transform: translateY(0) !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsQuality {
+      right: calc(var(--dock-x) + 82px) !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsSpeed {
+      right: calc(var(--dock-x) + 126px) !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsVolume {
+      right: calc(var(--dock-x) + 166px) !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsQualityToggle,
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsSpeedToggle,
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsVolumeToggle {
+      height: 28px !important;
+      min-height: 28px !important;
+      min-width: 34px !important;
+      padding: 0 7px !important;
+      border: 0 !important;
+      border-radius: 999px !important;
+      color: rgba(255,255,255,.88) !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      font-size: 12px !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsQualityToggle:hover,
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsSpeedToggle:hover,
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsVolumeToggle:hover {
+      color: white !important;
+      background: rgba(255,255,255,.09) !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsQualityToggle span,
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsSpeedToggle span,
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsVolumeToggle span {
+      display: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsQualityToggle b,
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsSpeedToggle b,
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsVolumeToggle b {
+      color: rgba(255,255,255,.88) !important;
+      font-size: 12px !important;
+      font-weight: 850 !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsVolumeToggle::before {
+      content: "🔊";
+      font-size: 13px;
+      line-height: 1;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsVolumeToggle.isMuted::before {
+      content: "🔇";
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsVolumeToggle b {
+      display: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsQualityToggle span,
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsQualityToggle b {
+      display: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsQualityToggle::after {
+      content: "Auto";
+      font-size: 11px;
+      font-weight: 850;
+      color: rgba(255,255,255,.88);
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsQualityMenu,
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsSpeedMenu,
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsVolumeMenu {
+      bottom: 38px !important;
+      border-radius: 14px !important;
+      background: rgba(24,28,34,.96) !important;
+      border: 1px solid rgba(255,255,255,.09) !important;
+      box-shadow: 0 14px 40px rgba(0,0,0,.38) !important;
+      backdrop-filter: blur(14px) saturate(1.08) !important;
+      -webkit-backdrop-filter: blur(14px) saturate(1.08) !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .vjs-picture-in-picture-control {
+      margin-left: auto !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .vjs-fullscreen-control {
+      margin-right: 0 !important;
+    }
+
+    /* Preview stays above the pill dock. */
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsTimelinePreview {
+      bottom: calc(var(--dock-bottom) + var(--dock-height) + 22px) !important;
+      z-index: 140 !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsHlsStatus {
+      left: 12px !important;
+      top: 12px !important;
+      max-width: min(200px, calc(100% - 24px)) !important;
+      padding: 7px 9px !important;
+      border-radius: 12px !important;
+      background: rgba(22,26,32,.62) !important;
+      border: 1px solid rgba(255,255,255,.08) !important;
+      box-shadow: 0 10px 28px rgba(0,0,0,.24) !important;
+      z-index: 75 !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsHlsStatus b {
+      font-size: 12px !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin .dsHlsStatus span {
+      font-size: 9px !important;
+    }
+
+    .dsVideoJsCinemaShell.v136PillDockSkin.v128VideoReady .dsHlsStatus:not(.isError),
+    .dsVideoJsCinemaShell.v136PillDockSkin.isPlaying .dsHlsStatus:not(.isError),
+    .dsVideoJsCinemaShell.v136PillDockSkin.isReady .dsHlsStatus:not(.isError) {
+      opacity: 0 !important;
+      transform: translateY(-6px) !important;
+      pointer-events: none !important;
+    }
+
+    @media(max-width: 900px) {
+      .dsVideoJsCinemaShell.v136PillDockSkin {
+        --player-radius: 12px;
+        --dock-x: 8px;
+        --dock-bottom: 8px;
+        --dock-height: 44px;
+      }
+
+      .dsVideoJsCinemaShell.v136PillDockSkin .vjs-control-bar {
+        padding: 0 10px !important;
+        gap: 6px !important;
+      }
+
+      .dsVideoJsCinemaShell.v136PillDockSkin .vjs-time-control,
+      .dsVideoJsCinemaShell.v136PillDockSkin .vjs-picture-in-picture-control {
+        display: none !important;
+      }
+
+      .dsVideoJsCinemaShell.v136PillDockSkin .vjs-control-bar .vjs-progress-control.vjs-control {
+        min-width: 90px !important;
+      }
+
+      .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsSpeed,
+      .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsVolume,
+      .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsQuality,
+      .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsTimelinePreview {
+        display: none !important;
+      }
+    }
+
   </style>
 
     <script>
@@ -34728,8 +35411,18 @@ async function watchPage(req, res, type) {
             <div id="movieButtonSpeedMenu" class="dsVideoJsSpeedMenu" hidden></div>
           </div>
 
-          <div id="movieButtonTimelinePreview" class="dsVideoJsTimelinePreview" hidden>
+          <div class="dsVideoJsVolume">
+            <button id="movieButtonVolumeToggle" type="button" class="dsVideoJsVolumeToggle" aria-label="Volume"><span>Vol</span><b>100</b></button>
+            <div id="movieButtonVolumeMenu" class="dsVideoJsVolumeMenu" hidden>
+              <input id="movieButtonVolumeRange" type="range" min="0" max="100" value="100" step="1" aria-label="Volume level" />
+            </div>
+          </div>
+
+          <div id="movieButtonTimelinePreview" class="dsVideoJsTimelinePreview dsVideoJsImagePreview" hidden>
+            <video id="movieButtonPreviewVideo" muted playsinline preload="metadata" crossorigin="anonymous"></video>
+            <div id="movieButtonPreviewFallback" class="dsVideoJsPreviewFallback"></div>
             <span id="movieButtonTimelinePreviewTime">0:00</span>
+            <em id="movieButtonPreviewState">Preview</em>
             <i></i>
           </div>
 
@@ -34855,8 +35548,17 @@ async function watchPage(req, res, type) {
         var qualityMenu = document.getElementById("movieButtonQualityMenu");
         var speedToggle = document.getElementById("movieButtonSpeedToggle");
         var speedMenu = document.getElementById("movieButtonSpeedMenu");
+        var volumeToggle = document.getElementById("movieButtonVolumeToggle");
+        var volumeMenu = document.getElementById("movieButtonVolumeMenu");
+        var volumeRange = document.getElementById("movieButtonVolumeRange");
         var timelinePreview = document.getElementById("movieButtonTimelinePreview");
         var timelinePreviewTime = document.getElementById("movieButtonTimelinePreviewTime");
+        var timelinePreviewVideo = document.getElementById("movieButtonPreviewVideo");
+        var timelinePreviewFallback = document.getElementById("movieButtonPreviewFallback");
+        var timelinePreviewState = document.getElementById("movieButtonPreviewState");
+        var previewHls = null;
+        var previewSourceUrl = "";
+        var previewSeekTimer = null;
         var bigPlayButton = document.getElementById("movieButtonBigPlay");
         var back10Button = document.getElementById("movieButtonBack10");
         var forward10Button = document.getElementById("movieButtonForward10");
@@ -35171,6 +35873,8 @@ async function watchPage(req, res, type) {
             event.preventDefault();
             event.stopPropagation();
             qualityMenu.hidden = !qualityMenu.hidden;
+            if (speedMenu) speedMenu.hidden = true;
+            if (volumeMenu) volumeMenu.hidden = true;
             refresh();
           };
 
@@ -35183,6 +35887,128 @@ async function watchPage(req, res, type) {
           if (event.target === qualityToggle || qualityMenu.contains(event.target)) return;
           qualityMenu.hidden = true;
         });
+
+        function setVideoJsVolumeMenu(player) {
+          if (!volumeToggle || !volumeMenu || !volumeRange || !player || !video) return;
+
+          function setVolumeUi() {
+            var muted = Boolean(video.muted || (player.muted && player.muted()));
+            var vol = muted ? 0 : Math.round(((player.volume && player.volume()) || video.volume || 0) * 100);
+            var b = volumeToggle.querySelector("b");
+            if (b) b.textContent = muted ? "Mute" : String(vol);
+            volumeToggle.classList.toggle("isMuted", muted || vol === 0);
+            volumeRange.value = String(vol);
+            volumeRange.style.setProperty("--volume-pct", String(vol));
+          }
+
+          volumeToggle.onclick = function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            volumeMenu.hidden = !volumeMenu.hidden;
+            if (speedMenu) speedMenu.hidden = true;
+            if (qualityMenu) qualityMenu.hidden = true;
+            if (volumeMenu) volumeMenu.hidden = true;
+            if (player.userActive) player.userActive(true);
+          };
+
+          volumeToggle.ondblclick = function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            try {
+              var next = !(player.muted && player.muted());
+              if (player.muted) player.muted(next);
+              video.muted = next;
+            } catch {}
+            setVolumeUi();
+          };
+
+          volumeRange.addEventListener("input", function(event) {
+            event.stopPropagation();
+            var value = Math.max(0, Math.min(100, Number(volumeRange.value || 0)));
+            try {
+              if (player.volume) player.volume(value / 100);
+              if (player.muted) player.muted(value === 0);
+              video.volume = value / 100;
+              video.muted = value === 0;
+            } catch {}
+            volumeRange.style.setProperty("--volume-pct", String(value));
+            setVolumeUi();
+            if (player.userActive) player.userActive(true);
+          });
+
+          volumeMenu.addEventListener("mousemove", function() {
+            if (player.userActive) player.userActive(true);
+          });
+
+          try {
+            player.on("volumechange", setVolumeUi);
+          } catch {}
+          setVolumeUi();
+        }
+
+        document.addEventListener("click", function(event) {
+          if (!volumeMenu || !volumeToggle) return;
+          if (event.target === volumeToggle || volumeMenu.contains(event.target)) return;
+          volumeMenu.hidden = true;
+        });
+
+        function prepareTimelinePreviewVideo(src) {
+          previewSourceUrl = src || "";
+          if (!timelinePreviewVideo || !previewSourceUrl) return;
+
+          try {
+            timelinePreviewVideo.pause();
+            timelinePreviewVideo.removeAttribute("src");
+            timelinePreviewVideo.load();
+          } catch {}
+
+          if (previewHls) {
+            try { previewHls.destroy(); } catch {}
+            previewHls = null;
+          }
+
+          timelinePreviewVideo.muted = true;
+          timelinePreviewVideo.playsInline = true;
+          timelinePreviewVideo.crossOrigin = "anonymous";
+
+          var nativeHls = timelinePreviewVideo.canPlayType("application/vnd.apple.mpegurl") || timelinePreviewVideo.canPlayType("application/x-mpegURL");
+          if (nativeHls) {
+            timelinePreviewVideo.src = previewSourceUrl;
+            try { timelinePreviewVideo.load(); } catch {}
+            return;
+          }
+
+          loadHlsScript(function(loaded) {
+            if (!loaded || !window.Hls || !window.Hls.isSupported() || !timelinePreviewVideo || !previewSourceUrl) {
+              if (timelinePreviewState) timelinePreviewState.textContent = "Time preview";
+              return;
+            }
+
+            try {
+              previewHls = new window.Hls({
+                debug: false,
+                enableWorker: true,
+                lowLatencyMode: false,
+                maxBufferLength: 12,
+                maxMaxBufferLength: 20,
+                backBufferLength: 10,
+                startPosition: -1,
+                capLevelToPlayerSize: true,
+                manifestLoadingMaxRetry: 2,
+                levelLoadingMaxRetry: 2,
+                fragLoadingMaxRetry: 2,
+                manifestLoadingTimeOut: 15000,
+                fragLoadingTimeOut: 15000
+              });
+              previewHls.attachMedia(timelinePreviewVideo);
+              previewHls.on(window.Hls.Events.MEDIA_ATTACHED, function() {
+                try { previewHls.loadSource(previewSourceUrl); } catch {}
+              });
+            } catch {
+              if (timelinePreviewState) timelinePreviewState.textContent = "Time preview";
+            }
+          });
+        }
 
         function setVideoJsSpeedMenu(player) {
           if (!speedToggle || !speedMenu || !player) return;
@@ -35285,12 +36111,27 @@ async function watchPage(req, res, type) {
               timelinePreviewTime.textContent = formatClock(displaySeconds);
 
               var shellRect = playerShell.getBoundingClientRect();
-              var left = Math.max(38, Math.min(shellRect.width - 38, event.clientX - shellRect.left));
+              var left = Math.max(78, Math.min(shellRect.width - 78, event.clientX - shellRect.left));
 
               timelinePreview.style.left = left + "px";
               timelinePreview.style.setProperty("--preview-left", left + "px");
               timelinePreview.hidden = false;
-              playerShell.classList.add("isPreviewingTime");
+              playerShell.classList.add("isPreviewingTime", "isUsingDock");
+
+              if (timelinePreviewVideo) {
+                if (previewSeekTimer) clearTimeout(previewSeekTimer);
+                var target = seconds;
+                previewSeekTimer = setTimeout(function() {
+                  try {
+                    if (timelinePreviewVideo.readyState >= 1 && Math.abs((timelinePreviewVideo.currentTime || 0) - target) > 1.2) {
+                      timelinePreviewVideo.currentTime = target;
+                      if (timelinePreviewState) timelinePreviewState.textContent = "Loading frame";
+                    }
+                  } catch {
+                    if (timelinePreviewState) timelinePreviewState.textContent = "Time preview";
+                  }
+                }, 80);
+              }
 
               if (player.userActive) player.userActive(true);
             }
@@ -35300,6 +36141,22 @@ async function watchPage(req, res, type) {
             progress.addEventListener("mouseenter", updatePreview);
             progress.addEventListener("mouseleave", hidePreview);
             progress.addEventListener("touchstart", hidePreview, { passive: true });
+
+            if (timelinePreviewVideo && !timelinePreviewVideo.dataset.swiflyPreviewStateReady) {
+              timelinePreviewVideo.dataset.swiflyPreviewStateReady = "true";
+              timelinePreviewVideo.addEventListener("loadeddata", function() {
+                if (timelinePreviewState) timelinePreviewState.textContent = "Frame preview";
+                if (playerShell) playerShell.classList.add("hasFramePreview");
+              });
+              timelinePreviewVideo.addEventListener("seeked", function() {
+                if (timelinePreviewState) timelinePreviewState.textContent = "Frame preview";
+                if (playerShell) playerShell.classList.add("hasFramePreview");
+              });
+              timelinePreviewVideo.addEventListener("error", function() {
+                if (timelinePreviewState) timelinePreviewState.textContent = "Time preview";
+                if (playerShell) playerShell.classList.remove("hasFramePreview");
+              });
+            }
 
             return true;
           }
@@ -35344,8 +36201,8 @@ async function watchPage(req, res, type) {
           destroyRegularMoviePlayers();
 
           if (playerShell) {
-            playerShell.classList.remove("usesPlyr", "usesMediaChrome", "usesNativeVideo", "isScrubbing", "v128VideoReady", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed", "v132SoftRectPlay", "v133HoverPreview", "v134SpeedPreviewFix");
-            playerShell.classList.add("usesVideoJs", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed", "v132SoftRectPlay", "v133HoverPreview", "v134SpeedPreviewFix");
+            playerShell.classList.remove("usesPlyr", "usesMediaChrome", "usesNativeVideo", "isScrubbing", "v128VideoReady", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed", "v132SoftRectPlay", "v133HoverPreview", "v134SpeedPreviewFix", "v135VolumeImagePreview", "v136PillDockSkin");
+            playerShell.classList.add("usesVideoJs", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed", "v132SoftRectPlay", "v133HoverPreview", "v134SpeedPreviewFix", "v135VolumeImagePreview", "v136PillDockSkin");
           }
 
           try {
@@ -35385,11 +36242,9 @@ async function watchPage(req, res, type) {
               controlBar: {
                 children: [
                   "playToggle",
-                  "volumePanel",
                   "currentTimeDisplay",
-                  "timeDivider",
-                  "durationDisplay",
                   "progressControl",
+                  "durationDisplay",
                   "pictureInPictureToggle",
                   "fullscreenToggle"
                 ],
@@ -35418,6 +36273,8 @@ async function watchPage(req, res, type) {
             movieButtonPlayer.ready(function() {
               setVideoJsQualityMenu(movieButtonPlayer);
               setVideoJsSpeedMenu(movieButtonPlayer);
+              setVideoJsVolumeMenu(movieButtonPlayer);
+              prepareTimelinePreviewVideo(src);
               installVideoJsTimelinePreview(movieButtonPlayer);
               wireVideoJsOverlayControls(movieButtonPlayer);
               // Video.js already has the main timeline. Keep the custom HLS helper hidden for this skin.
@@ -35430,12 +36287,12 @@ async function watchPage(req, res, type) {
                 if (playerEl && !playerEl.dataset.swiflyMenuFix) {
                   playerEl.dataset.swiflyMenuFix = "true";
                   playerEl.addEventListener("mouseover", function(event) {
-                    if (event.target && event.target.closest && event.target.closest(".vjs-menu, .vjs-menu-button, .vjs-progress-control, .dsVideoJsSpeed, .dsVideoJsQuality")) {
+                    if (event.target && event.target.closest && event.target.closest(".vjs-menu, .vjs-menu-button, .vjs-progress-control, .dsVideoJsSpeed, .dsVideoJsQuality, .dsVideoJsVolume, .dsVideoJsTimelinePreview")) {
                       movieButtonPlayer.userActive(true);
                     }
                   });
                   playerEl.addEventListener("mousemove", function(event) {
-                    if (event.target && event.target.closest && event.target.closest(".vjs-menu, .vjs-menu-button, .vjs-progress-control, .dsVideoJsSpeed, .dsVideoJsQuality")) {
+                    if (event.target && event.target.closest && event.target.closest(".vjs-menu, .vjs-menu-button, .vjs-progress-control, .dsVideoJsSpeed, .dsVideoJsQuality, .dsVideoJsVolume, .dsVideoJsTimelinePreview")) {
                       movieButtonPlayer.userActive(true);
                     }
                   });
