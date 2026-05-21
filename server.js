@@ -27390,6 +27390,223 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v122 HLS SEEKBAR / TIMEFRAME FIX
+       Makes m3u8 timeline scrubbing usable: bigger native Video.js
+       progress target + custom HLS seekbar that uses seekable ranges.
+       ============================================================ */
+
+    .dsCinemaSeekDock {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 104px;
+      z-index: 18;
+      display: grid;
+      gap: 8px;
+      padding: 11px 13px 10px;
+      border-radius: 18px;
+      background:
+        radial-gradient(260px circle at 0% 0%, rgba(85,215,255,.13), transparent 52%),
+        rgba(4,7,18,.70);
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 18px 54px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.055);
+      backdrop-filter: blur(18px) saturate(1.14);
+      -webkit-backdrop-filter: blur(18px) saturate(1.14);
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity .18s ease, transform .18s ease;
+    }
+
+    .dsCinemaHlsShell:hover .dsCinemaSeekDock,
+    .dsCinemaHlsShell:focus-within .dsCinemaSeekDock,
+    .dsCinemaHlsShell.isScrubbing .dsCinemaSeekDock {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .dsCinemaSeekDock[hidden] {
+      display: none !important;
+    }
+
+    .dsCinemaSeekTimes,
+    .dsCinemaSeekMeta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: rgba(238,242,255,.72);
+      font-size: 11px;
+      font-weight: 850;
+    }
+
+    .dsCinemaSeekTimes b {
+      color: rgba(255,255,255,.92);
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+    }
+
+    .dsCinemaSeekMeta {
+      color: rgba(238,242,255,.46);
+      font-size: 10px;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .dsCinemaSeekMeta span:first-child {
+      color: #a7f3d0;
+    }
+
+    .dsCinemaSeekDock.isLive .dsCinemaSeekMeta span:first-child {
+      color: #ffcc66;
+    }
+
+    .dsCinemaSeekRange {
+      width: 100%;
+      height: 18px;
+      margin: 0;
+      appearance: none;
+      -webkit-appearance: none;
+      background: transparent;
+      cursor: pointer;
+      pointer-events: auto;
+    }
+
+    .dsCinemaSeekRange::-webkit-slider-runnable-track {
+      height: 8px;
+      border-radius: 999px;
+      background:
+        linear-gradient(90deg, #55d7ff, #8b5cf6, #dff8ff) 0 / calc(var(--seek-pct, 0) * 1%) 100% no-repeat,
+        rgba(255,255,255,.18);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.07);
+    }
+
+    .dsCinemaSeekRange::-moz-range-track {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.18);
+    }
+
+    .dsCinemaSeekRange::-moz-range-progress {
+      height: 8px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #55d7ff, #8b5cf6, #dff8ff);
+    }
+
+    .dsCinemaSeekRange::-webkit-slider-thumb {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      margin-top: -6px;
+      border-radius: 999px;
+      border: 2px solid rgba(255,255,255,.95);
+      background: linear-gradient(135deg, #ffffff, #dff8ff);
+      box-shadow: 0 0 0 7px rgba(85,215,255,.14), 0 10px 26px rgba(0,0,0,.42);
+    }
+
+    .dsCinemaSeekRange::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      border: 2px solid rgba(255,255,255,.95);
+      background: linear-gradient(135deg, #ffffff, #dff8ff);
+      box-shadow: 0 0 0 7px rgba(85,215,255,.14), 0 10px 26px rgba(0,0,0,.42);
+    }
+
+    .dsCinemaSeekRange:disabled {
+      cursor: not-allowed;
+      opacity: .55;
+    }
+
+    .dsCinemaSeekDock.isDisabled .dsCinemaSeekRange::-webkit-slider-runnable-track {
+      background: rgba(255,255,255,.12);
+    }
+
+    .dsCinemaHlsHint {
+      bottom: 164px !important;
+    }
+
+    .dsCinemaHlsShell .dsHlsStatus {
+      bottom: 164px !important;
+    }
+
+    .dsCinemaHlsTop {
+      z-index: 16 !important;
+    }
+
+    .dsCinemaHlsVideo,
+    .dsCinemaHlsShell .video-js {
+      z-index: 2 !important;
+    }
+
+    .vjs-theme-swifly .vjs-control-bar {
+      z-index: 14 !important;
+      pointer-events: auto !important;
+    }
+
+    .vjs-theme-swifly .vjs-progress-control {
+      bottom: 64px !important;
+      height: 26px !important;
+      z-index: 16 !important;
+      pointer-events: auto !important;
+      cursor: pointer !important;
+    }
+
+    .vjs-theme-swifly .vjs-progress-holder {
+      height: 10px !important;
+      margin: 8px 0 0 !important;
+      pointer-events: auto !important;
+      cursor: pointer !important;
+    }
+
+    .vjs-theme-swifly .vjs-load-progress,
+    .vjs-theme-swifly .vjs-play-progress {
+      height: 10px !important;
+    }
+
+    .vjs-theme-swifly .vjs-mouse-display,
+    .vjs-theme-swifly .vjs-time-tooltip {
+      pointer-events: none !important;
+    }
+
+    .vjs-theme-swifly .vjs-control {
+      pointer-events: auto !important;
+    }
+
+    .vjs-theme-swifly .vjs-slider {
+      pointer-events: auto !important;
+    }
+
+    .vjs-theme-swifly.vjs-live .vjs-progress-control {
+      display: flex !important;
+    }
+
+    @media(max-width: 760px) {
+      .dsCinemaSeekDock {
+        left: 10px;
+        right: 10px;
+        bottom: 82px;
+        border-radius: 15px;
+        padding: 9px 10px;
+        opacity: 1;
+        transform: none;
+      }
+
+      .dsCinemaHlsShell .dsHlsStatus {
+        bottom: 148px !important;
+        left: 10px !important;
+        right: 10px !important;
+      }
+
+      .vjs-theme-swifly .vjs-progress-control {
+        bottom: 58px !important;
+      }
+    }
+
   </style>
 
     <script>
@@ -30648,6 +30865,18 @@ async function watchPage(req, res, type) {
             <span>F</span><b>fullscreen</b>
             <span>M</span><b>mute</b>
           </div>
+          <div id="movieButtonSeekDock" class="dsCinemaSeekDock" hidden>
+            <div class="dsCinemaSeekTimes">
+              <span id="movieButtonCurrentTime">0:00</span>
+              <b id="movieButtonSeekLabel">Timeline</b>
+              <span id="movieButtonDuration">0:00</span>
+            </div>
+            <input id="movieButtonSeekRange" class="dsCinemaSeekRange" type="range" min="0" max="1000" value="0" step="1" aria-label="Video timeline" />
+            <div class="dsCinemaSeekMeta">
+              <span id="movieButtonSeekMode">VOD</span>
+              <span>Drag to seek</span>
+            </div>
+          </div>
           <div id="movieButtonHlsStatus" class="dsHlsStatus"><b>Loading m3u8...</b><span>Preparing player</span></div>
         </div>
       </div>`
@@ -30740,6 +30969,14 @@ async function watchPage(req, res, type) {
         var hlsStatus = document.getElementById("movieButtonHlsStatus");
         var hlsTitle = document.getElementById("movieButtonHlsTitle");
         var hlsMeta = document.getElementById("movieButtonHlsMeta");
+        var seekDock = document.getElementById("movieButtonSeekDock");
+        var seekRange = document.getElementById("movieButtonSeekRange");
+        var seekCurrent = document.getElementById("movieButtonCurrentTime");
+        var seekDuration = document.getElementById("movieButtonDuration");
+        var seekMode = document.getElementById("movieButtonSeekMode");
+        var seekLabel = document.getElementById("movieButtonSeekLabel");
+        var isSeekingWithRange = false;
+        var customSeekReady = false;
         var movieButtonPlayer = null;
         var movieButtonHls = null;
         var shell = document.querySelector(".dsProxyVideoWaitingShell");
@@ -30770,6 +31007,124 @@ async function watchPage(req, res, type) {
           if (hlsMeta) hlsMeta.textContent = detail || "m3u8 player";
         }
 
+        function formatClock(seconds) {
+          seconds = Number(seconds || 0);
+          if (!Number.isFinite(seconds) || seconds < 0) seconds = 0;
+          var whole = Math.floor(seconds);
+          var h = Math.floor(whole / 3600);
+          var m = Math.floor((whole % 3600) / 60);
+          var s = whole % 60;
+          if (h > 0) return h + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+          return m + ":" + String(s).padStart(2, "0");
+        }
+
+        function getSeekWindow() {
+          if (!video) return { start: 0, end: 0, duration: 0, live: false, seekable: false };
+          var nativeDuration = Number(video.duration || 0);
+          var seekable = video.seekable;
+          var start = 0;
+          var end = Number.isFinite(nativeDuration) ? nativeDuration : 0;
+          var hasSeekable = false;
+
+          try {
+            if (seekable && seekable.length) {
+              start = seekable.start(0);
+              end = seekable.end(seekable.length - 1);
+              hasSeekable = end > start;
+            }
+          } catch {}
+
+          if (!hasSeekable && Number.isFinite(nativeDuration) && nativeDuration > 0) {
+            start = 0;
+            end = nativeDuration;
+            hasSeekable = true;
+          }
+
+          var duration = Math.max(0, end - start);
+          var live = !Number.isFinite(nativeDuration) || nativeDuration === Infinity || (video.duration === Infinity);
+          return { start: start, end: end, duration: duration, live: live, seekable: hasSeekable };
+        }
+
+        function syncCustomSeekBar() {
+          if (!seekDock || !seekRange || !video) return;
+
+          var win = getSeekWindow();
+          var canSeek = win.seekable && win.duration > 0.5;
+          seekDock.hidden = false;
+          seekRange.disabled = !canSeek;
+          seekDock.classList.toggle("isDisabled", !canSeek);
+          seekDock.classList.toggle("isLive", Boolean(win.live));
+
+          if (seekMode) seekMode.textContent = win.live ? "LIVE / DVR" : "VOD";
+          if (seekLabel) seekLabel.textContent = canSeek ? "Timeline" : "Waiting for seek data";
+
+          var currentOffset = Math.max(0, Math.min(win.duration || 0, Number(video.currentTime || 0) - win.start));
+          if (!isSeekingWithRange) {
+            var value = win.duration > 0 ? Math.round((currentOffset / win.duration) * 1000) : 0;
+            seekRange.value = String(Math.max(0, Math.min(1000, value)));
+            seekRange.style.setProperty("--seek-pct", String(Math.max(0, Math.min(100, value / 10))));
+          }
+
+          if (seekCurrent) seekCurrent.textContent = formatClock(currentOffset);
+          if (seekDuration) seekDuration.textContent = win.duration > 0 ? formatClock(win.duration) : "--:--";
+        }
+
+        function seekCustomRangeValue(value) {
+          if (!video || !seekRange) return;
+          var win = getSeekWindow();
+          if (!win.seekable || win.duration <= 0.5) return;
+          var ratio = Math.max(0, Math.min(1000, Number(value || 0))) / 1000;
+          var target = win.start + (win.duration * ratio);
+          try {
+            video.currentTime = Math.max(win.start, Math.min(win.end - 0.15, target));
+          } catch {}
+          syncCustomSeekBar();
+          if (seekRange) seekRange.style.setProperty("--seek-pct", String(Math.max(0, Math.min(100, Number(seekRange.value || 0) / 10))));
+        }
+
+        function installCustomSeekBar() {
+          if (!video || customSeekReady) return;
+          customSeekReady = true;
+
+          ["loadedmetadata", "durationchange", "progress", "timeupdate", "canplay", "playing", "seeking", "seeked"].forEach(function(name) {
+            video.addEventListener(name, syncCustomSeekBar);
+          });
+
+          if (seekRange) {
+            seekRange.addEventListener("pointerdown", function() {
+              isSeekingWithRange = true;
+              if (playerShell) playerShell.classList.add("isScrubbing");
+            });
+            seekRange.addEventListener("input", function() {
+              if (isSeekingWithRange) seekCustomRangeValue(seekRange.value);
+            });
+            seekRange.addEventListener("change", function() {
+              seekCustomRangeValue(seekRange.value);
+              isSeekingWithRange = false;
+              if (playerShell) playerShell.classList.remove("isScrubbing");
+            });
+            seekRange.addEventListener("pointerup", function() {
+              seekCustomRangeValue(seekRange.value);
+              isSeekingWithRange = false;
+              if (playerShell) playerShell.classList.remove("isScrubbing");
+            });
+            seekRange.addEventListener("keydown", function(event) {
+              var key = String(event.key || "").toLowerCase();
+              var win = getSeekWindow();
+              if (!win.seekable || win.duration <= 0.5) return;
+              if (key === "arrowright" || key === "arrowleft") {
+                event.stopPropagation();
+                var delta = key === "arrowright" ? 10 : -10;
+                try { video.currentTime = Math.max(win.start, Math.min(win.end - 0.15, Number(video.currentTime || 0) + delta)); } catch {}
+                syncCustomSeekBar();
+              }
+            });
+          }
+
+          setInterval(syncCustomSeekBar, 700);
+          syncCustomSeekBar();
+        }
+
         function installCinemaPlayerShortcuts() {
           if (!playerShell || playerShell.dataset.shortcutsReady === "true") return;
           playerShell.dataset.shortcutsReady = "true";
@@ -30789,10 +31144,10 @@ async function watchPage(req, res, type) {
               else document.exitFullscreen && document.exitFullscreen();
             } else if (key === "arrowright") {
               event.preventDefault();
-              try { video.currentTime = Math.min((video.duration || video.currentTime + 10), video.currentTime + 10); } catch {}
+              try { var win = getSeekWindow(); video.currentTime = Math.min((win.end || video.currentTime + 10) - 0.15, video.currentTime + 10); syncCustomSeekBar(); } catch {}
             } else if (key === "arrowleft") {
               event.preventDefault();
-              try { video.currentTime = Math.max(0, video.currentTime - 10); } catch {}
+              try { var win = getSeekWindow(); video.currentTime = Math.max(win.start || 0, video.currentTime - 10); syncCustomSeekBar(); } catch {}
             }
           });
           playerShell.setAttribute("tabindex", "0");
@@ -30837,7 +31192,7 @@ async function watchPage(req, res, type) {
             return;
           }
 
-          if (playerShell) { playerShell.hidden = false; installCinemaPlayerShortcuts(); }
+          if (playerShell) { playerShell.hidden = false; installCinemaPlayerShortcuts(); installCustomSeekBar(); }
           if (shell) shell.classList.add("isReady");
           setStatus("Source found. Loading player...");
 
@@ -30872,9 +31227,11 @@ async function watchPage(req, res, type) {
                 controls: true,
                 autoplay: false,
                 preload: "auto",
-                fluid: true,
+                fluid: false,
+                fill: true,
                 responsive: true,
-                liveui: true,
+                liveui: false,
+                inactivityTimeout: 1800,
                 playbackRates: [0.5, 0.75, 1, 1.25, 1.5, 2],
                 controlBar: {
                   pictureInPictureToggle: true,
@@ -30887,7 +31244,8 @@ async function watchPage(req, res, type) {
                     withCredentials: false,
                     enableLowInitialPlaylist: true,
                     smoothQualityChange: true,
-                    useDevicePixelRatio: true
+                    useDevicePixelRatio: true,
+                    handlePartialData: true
                   },
                   nativeAudioTracks: false,
                   nativeVideoTracks: false
@@ -30899,9 +31257,14 @@ async function watchPage(req, res, type) {
               });
 
               movieButtonPlayer.ready(function(){
-                setPlayerStatus("m3u8 ready", "Video.js loaded. Press play.", false);
-                setStatus("m3u8 loaded. Press play.");
+                setPlayerStatus("m3u8 ready", "Video.js loaded. Timeline enabled.", false);
+                setStatus("m3u8 loaded. Timeline enabled.");
+                installCustomSeekBar();
+                try { movieButtonPlayer.on("timeupdate", syncCustomSeekBar); } catch {}
+                try { movieButtonPlayer.on("durationchange", syncCustomSeekBar); } catch {}
+                try { movieButtonPlayer.on("loadedmetadata", syncCustomSeekBar); } catch {}
                 if (playerShell) { try { playerShell.focus({ preventScroll: true }); } catch {} }
+                setTimeout(syncCustomSeekBar, 500);
                 hidePlayerStatusSoon();
               });
 
@@ -30956,9 +31319,11 @@ async function watchPage(req, res, type) {
 
             movieButtonHls.on(window.Hls.Events.MANIFEST_PARSED, function(event, parsed) {
               var levels = parsed && parsed.levels ? parsed.levels.length : 0;
-              setPlayerStatus("m3u8 ready", "HLS.js loaded" + (levels ? " • " + levels + " qualities" : "") + ". Press play.", false);
-              setStatus("m3u8 loaded. Press play.");
+              setPlayerStatus("m3u8 ready", "HLS.js loaded" + (levels ? " • " + levels + " qualities" : "") + ". Timeline enabled.", false);
+              setStatus("m3u8 loaded. Timeline enabled.");
+              installCustomSeekBar();
               if (playerShell) { try { playerShell.focus({ preventScroll: true }); } catch {} }
+              setTimeout(syncCustomSeekBar, 500);
               hidePlayerStatusSoon();
             });
 
