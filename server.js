@@ -37118,49 +37118,82 @@ async function watchPage(req, res, type) {
 
         function loadVidstackAssets(callback) {
           function hasVidstack() {
-            return Boolean(window.customElements && customElements.get("media-player") && customElements.get("media-provider"));
+            return Boolean(
+              window.customElements &&
+              customElements.get("media-player") &&
+              customElements.get("media-provider") &&
+              customElements.get("media-video-layout")
+            );
           }
 
           if (hasVidstack()) return callback(true);
 
-          var cssFiles = [
-            ["https://cdn.jsdelivr.net/npm/vidstack@^1.0.0/player/styles/default/theme.min.css", "data-swifly-vidstack-theme"],
-            ["https://cdn.jsdelivr.net/npm/vidstack@^1.0.0/player/styles/default/layouts/video.min.css", "data-swifly-vidstack-video-layout"]
+          function addStylesheet(href, key) {
+            if (document.querySelector('link[data-swifly-vidstack-css="' + key + '"]')) return;
+            var link = document.createElement("link");
+            link.rel = "stylesheet";
+            link.href = href;
+            link.setAttribute("data-swifly-vidstack-css", key);
+            document.head.appendChild(link);
+          }
+
+          // v150: use the non-minified Vidstack CSS paths from the package. The old
+          // .min.css URLs could 404, which left the Default Layout broken/invisible.
+          var vidstackVersion = "1.12.13";
+          [
+            ["https://cdn.jsdelivr.net/npm/vidstack@" + vidstackVersion + "/player/styles/base.css", "base"],
+            ["https://cdn.jsdelivr.net/npm/vidstack@" + vidstackVersion + "/player/styles/default/theme.css", "theme"],
+            ["https://cdn.jsdelivr.net/npm/vidstack@" + vidstackVersion + "/player/styles/default/layouts/video.css", "video-layout"]
+          ].forEach(function(entry) { addStylesheet(entry[0], entry[1]); });
+
+          var scriptUrls = [
+            "https://cdn.jsdelivr.net/npm/vidstack@" + vidstackVersion + "/cdn/with-layouts/vidstack.js",
+            "https://cdn.jsdelivr.net/npm/vidstack@^1.12.0/cdn/with-layouts/vidstack.js",
+            "https://cdn.jsdelivr.net/npm/vidstack@^1.0.0/cdn/with-layouts/vidstack.js",
+            "https://unpkg.com/vidstack@" + vidstackVersion + "/cdn/with-layouts/vidstack.js"
           ];
 
-          cssFiles.forEach(function(entry) {
-            if (!document.querySelector("link[" + entry[1] + "]")) {
-              var link = document.createElement("link");
-              link.rel = "stylesheet";
-              link.href = entry[0];
-              link.setAttribute(entry[1], "true");
-              document.head.appendChild(link);
-            }
-          });
+          var finished = false;
+          function done(ok) {
+            if (finished) return;
+            finished = true;
+            callback(Boolean(ok));
+          }
 
-          function finishFromCustomElements() {
-            if (!window.customElements) return callback(false);
+          function waitForElements() {
+            if (!window.customElements) return done(false);
+            var timeout = setTimeout(function(){ done(hasVidstack()); }, 6500);
             Promise.all([
               customElements.whenDefined("media-player"),
-              customElements.whenDefined("media-provider")
+              customElements.whenDefined("media-provider"),
+              customElements.whenDefined("media-video-layout")
             ]).then(function() {
-              callback(hasVidstack());
+              clearTimeout(timeout);
+              done(hasVidstack());
             }).catch(function() {
-              callback(hasVidstack());
+              clearTimeout(timeout);
+              done(hasVidstack());
             });
           }
 
           if (document.querySelector('script[data-swifly-vidstack-js="true"]')) {
-            return finishFromCustomElements();
+            return waitForElements();
           }
 
-          var script = document.createElement("script");
-          script.type = "module";
-          script.src = "https://cdn.jsdelivr.net/npm/vidstack@^1.0.0/cdn/with-layouts/vidstack.js";
-          script.setAttribute("data-swifly-vidstack-js", "true");
-          script.onload = finishFromCustomElements;
-          script.onerror = function(){ callback(false); };
-          document.head.appendChild(script);
+          var i = 0;
+          function nextScript() {
+            if (hasVidstack()) return done(true);
+            if (i >= scriptUrls.length) return done(false);
+            var script = document.createElement("script");
+            script.type = "module";
+            script.src = scriptUrls[i++];
+            script.setAttribute("data-swifly-vidstack-js", "true");
+            script.onload = waitForElements;
+            script.onerror = nextScript;
+            document.head.appendChild(script);
+          }
+
+          nextScript();
         }
 
         function loadVideoJsAssets(callback) {
@@ -38030,8 +38063,157 @@ async function watchPage(req, res, type) {
           }
         }
 
+        function startModernHlsVideoFallback(src, data, reason) {
+          setPlayerStatus("Loading m3u8...", (reason ? reason + " • " : "") + "Using HLS.js recovery player", false);
+          setVideoUiState("loading");
+
+          if (movieButtonVidstack) {
+            try { movieButtonVidstack.pause && movieButtonVidstack.pause(); } catch {}
+            try { movieButtonVidstack.destroy && movieButtonVidstack.destroy(); } catch {}
+            try { movieButtonVidstack.remove(); } catch {}
+            movieButtonVidstack = null;
+          }
+
+          if (movieButtonHls) {
+            try { movieButtonHls.destroy(); } catch {}
+            movieButtonHls = null;
+          }
+
+          if (playerShell) {
+            playerShell.classList.remove("usesVidstack", "v149Vidstack", "v149Ready", "v149Playing");
+            playerShell.classList.add("usesNativeVideo", "v150HlsRecovery");
+            try {
+              playerShell.querySelectorAll(".swiflyVidstackPlayer").forEach(function(el) { el.remove(); });
+            } catch {}
+          }
+
+          try {
+            if (seekDock) seekDock.hidden = true;
+            if (qualityMenu) qualityMenu.hidden = true;
+            if (speedMenu) speedMenu.hidden = true;
+            if (volumeMenu) volumeMenu.hidden = true;
+          } catch {}
+
+          try {
+            video.hidden = false;
+            video.style.display = "";
+            video.className = "dsMovieButtonVideo dsCinemaHlsVideo swiflyNativeHlsVideo";
+            video.controls = true;
+            video.playsInline = true;
+            video.preload = "auto";
+            video.crossOrigin = "anonymous";
+            video.removeAttribute("src");
+            video.load();
+          } catch {}
+
+          function markFallbackReady(message) {
+            setVideoUiState("ready");
+            setPlayerStatus("m3u8 ready", message || "HLS recovery player loaded", false);
+            setStatus("m3u8 loaded in HLS recovery player.");
+            hidePlayerStatusSoon();
+          }
+
+          function wireVideoEvents() {
+            if (!video || video.dataset.v150HlsEvents === "true") return;
+            video.dataset.v150HlsEvents = "true";
+            video.addEventListener("playing", function(){ setVideoUiState("playing"); hidePlayerStatusSoon(); });
+            video.addEventListener("pause", function(){ setVideoUiState("paused"); });
+            video.addEventListener("error", function(){
+              var err = video && video.error;
+              setPlayerStatus("Video error", err && err.message ? err.message : "The browser could not decode this stream.", true);
+            });
+          }
+
+          wireVideoEvents();
+
+          var nativeHls = video && (video.canPlayType("application/vnd.apple.mpegurl") || video.canPlayType("application/x-mpegURL"));
+          if (nativeHls && !window.Hls) {
+            try {
+              video.src = src;
+              video.load();
+            } catch {}
+            markFallbackReady("Native HLS loaded");
+            return;
+          }
+
+          loadHlsScript(function(loaded) {
+            if (!loaded || !window.Hls || !window.Hls.isSupported()) {
+              if (nativeHls) {
+                try {
+                  video.src = src;
+                  video.load();
+                } catch {}
+                markFallbackReady("Native HLS loaded");
+                return;
+              }
+
+              setPlayerStatus("HLS could not load", "Vidstack did not start, and this browser needs HLS.js or native HLS support to play this m3u8.", true);
+              setStatus("HLS recovery failed to load.");
+              return;
+            }
+
+            movieButtonHls = new window.Hls({
+              debug: false,
+              enableWorker: true,
+              lowLatencyMode: false,
+              backBufferLength: 90,
+              maxBufferLength: 60,
+              maxMaxBufferLength: 180,
+              startPosition: -1,
+              capLevelToPlayerSize: true,
+              manifestLoadingMaxRetry: 5,
+              levelLoadingMaxRetry: 5,
+              fragLoadingMaxRetry: 7,
+              manifestLoadingTimeOut: 30000,
+              levelLoadingTimeOut: 30000,
+              fragLoadingTimeOut: 30000
+            });
+
+            movieButtonHls.on(window.Hls.Events.MEDIA_ATTACHED, function() {
+              setPlayerStatus("Loading m3u8...", "Fetching manifest through HLS.js", false);
+              movieButtonHls.loadSource(src);
+            });
+
+            movieButtonHls.on(window.Hls.Events.MANIFEST_PARSED, function(event, parsed) {
+              var levels = parsed && parsed.levels ? parsed.levels : [];
+              var heights = uniqueHlsHeights(levels);
+              markFallbackReady("HLS.js loaded" + (heights.length ? " • " + heights.join("p / ") + "p" : ""));
+            });
+
+            movieButtonHls.on(window.Hls.Events.ERROR, function(event, err) {
+              if (!err) return;
+              var detail = String(err.details || err.reason || err.type || "Unknown HLS error");
+
+              if (!err.fatal) {
+                if (detail && !/bufferStalledError/i.test(detail)) {
+                  setPlayerStatus("HLS warning", detail, false);
+                  hidePlayerStatusSoon();
+                }
+                return;
+              }
+
+              if (err.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
+                setPlayerStatus("HLS network error", "Retrying stream load...", true);
+                try { movieButtonHls.startLoad(); } catch {}
+                return;
+              }
+
+              if (err.type === window.Hls.ErrorTypes.MEDIA_ERROR) {
+                setPlayerStatus("HLS media error", "Trying media recovery...", true);
+                try { movieButtonHls.recoverMediaError(); } catch {}
+                return;
+              }
+
+              setPlayerStatus("HLS failed", detail, true);
+              setStatus("HLS failed: " + detail);
+            });
+
+            movieButtonHls.attachMedia(video);
+          });
+        }
+
         function startVideoJsCinemaSource(src, data) {
-          setPlayerStatus("Loading", "Starting Vidstack player", false);
+          setPlayerStatus("Loading m3u8...", "Starting Vidstack Default Layout", false);
           setVideoUiState("loading");
           destroyRegularMoviePlayers();
 
@@ -38041,6 +38223,7 @@ async function watchPage(req, res, type) {
               "usesMediaChrome",
               "usesNativeVideo",
               "usesVideoJs",
+              "v150HlsRecovery",
               "isScrubbing",
               "isUsingDock",
               "isPreviewingTime",
@@ -38059,9 +38242,11 @@ async function watchPage(req, res, type) {
               "v138PreviewWarmup",
               "v139CleanIconDock",
               "v141FitFullscreenPreviewFix",
-              "v148NeoCinema"
+              "v148NeoCinema",
+              "v149Ready",
+              "v149Playing"
             );
-            playerShell.classList.add("usesVidstack", "v149Vidstack");
+            playerShell.classList.add("usesVidstack", "v149Vidstack", "v150VidstackModern");
           }
 
           try {
@@ -38082,23 +38267,7 @@ async function watchPage(req, res, type) {
 
           loadVidstackAssets(function(loaded) {
             if (!loaded || !window.customElements || !customElements.get("media-player")) {
-              if (playerShell) {
-                playerShell.classList.remove("usesVidstack", "v149Vidstack");
-                playerShell.classList.add("usesNativeVideo");
-              }
-              try {
-                video.hidden = false;
-                video.style.display = "";
-                video.classList.remove("isVidstackHidden");
-                video.className = "dsMovieButtonVideo dsCinemaHlsVideo";
-                video.controls = true;
-                video.playsInline = true;
-                video.preload = "auto";
-                video.src = src;
-                video.load();
-              } catch {}
-              setVideoUiState("ready");
-              setPlayerStatus("Vidstack failed to load", "Using native controls fallback.", true);
+              startModernHlsVideoFallback(src, data, "Vidstack assets did not load");
               return;
             }
 
@@ -38115,10 +38284,11 @@ async function watchPage(req, res, type) {
             player.setAttribute("view-type", "video");
             player.setAttribute("stream-type", "on-demand");
             player.setAttribute("load", "eager");
+            player.setAttribute("preload", "auto");
             player.setAttribute("crossorigin", "anonymous");
             player.setAttribute("playsinline", "");
-            player.setAttribute("keep-alive", "");
             player.setAttribute("data-swifly-src", src);
+            player.setAttribute("data-swifly-player", "vidstack-v150");
 
             if (poster) {
               try { player.setAttribute("poster", poster); } catch {}
@@ -38126,8 +38296,8 @@ async function watchPage(req, res, type) {
 
             var provider = document.createElement("media-provider");
             var layout = document.createElement("media-video-layout");
-            layout.setAttribute("thumbnails", "");
             layout.setAttribute("data-swifly-layout", "default");
+            layout.setAttribute("small-when", "never");
 
             player.appendChild(provider);
             player.appendChild(layout);
@@ -38137,7 +38307,26 @@ async function watchPage(req, res, type) {
               movieButtonVidstack = player;
             }
 
+            var settled = false;
+            var fallbackStarted = false;
+            var softTimer = null;
+            var hardTimer = null;
+
+            function clearVidstackTimers() {
+              if (softTimer) { clearTimeout(softTimer); softTimer = null; }
+              if (hardTimer) { clearTimeout(hardTimer); hardTimer = null; }
+            }
+
+            function fallback(reasonText) {
+              if (fallbackStarted || settled) return;
+              fallbackStarted = true;
+              clearVidstackTimers();
+              startModernHlsVideoFallback(src, data, reasonText || "Vidstack did not start playback");
+            }
+
             function markReady(message) {
+              settled = true;
+              clearVidstackTimers();
               if (playerShell) playerShell.classList.add("v149Ready");
               setVideoUiState("ready");
               setPlayerStatus("Ready", message || "Vidstack player loaded", false);
@@ -38146,8 +38335,11 @@ async function watchPage(req, res, type) {
             }
 
             function markPlaying() {
-              if (playerShell) playerShell.classList.add("v149Playing");
+              settled = true;
+              clearVidstackTimers();
+              if (playerShell) playerShell.classList.add("v149Playing", "v149Ready");
               setVideoUiState("playing");
+              setStatus("m3u8 playing in Vidstack.");
               hidePlayerStatusSoon();
             }
 
@@ -38157,16 +38349,44 @@ async function watchPage(req, res, type) {
             }
 
             player.addEventListener("can-play", function(){ markReady("Vidstack m3u8 player ready"); });
+            player.addEventListener("canplay", function(){ markReady("Vidstack m3u8 player ready"); });
             player.addEventListener("loaded-metadata", function(){ markReady("Vidstack metadata loaded"); });
+            player.addEventListener("loadedmetadata", function(){ markReady("Vidstack metadata loaded"); });
             player.addEventListener("play", markPlaying);
             player.addEventListener("playing", markPlaying);
             player.addEventListener("pause", markPaused);
-            player.addEventListener("provider-change", function(){ markReady("Vidstack provider active"); });
+            player.addEventListener("provider-change", function(){
+              setPlayerStatus("Loading m3u8...", "Vidstack provider connected", false);
+            });
+            player.addEventListener("source-change", function(){
+              setPlayerStatus("Loading m3u8...", "Vidstack received stream source", false);
+            });
             player.addEventListener("error", function(event) {
               var detail = event && event.detail;
-              var message = (detail && (detail.message || detail.code)) || "Playback error";
-              setPlayerStatus("Vidstack error", String(message), true);
+              var message = (detail && (detail.message || detail.code || detail.type)) || "Playback error";
+              fallback("Vidstack error: " + String(message));
             });
+
+            // Set both the attribute and the JS property. Some Vidstack builds are
+            // stricter with HLS sources unless a MIME type is supplied as an object.
+            requestAnimationFrame(function() {
+              try {
+                player.src = { src: src, type: "application/x-mpegurl" };
+              } catch (error) {
+                try { player.src = src; } catch {}
+              }
+              try { player.load && player.load(); } catch {}
+            });
+
+            softTimer = setTimeout(function() {
+              if (!settled && !fallbackStarted) {
+                setPlayerStatus("Still loading m3u8...", "Vidstack is mounted. Waiting for can-play before falling back.", false);
+              }
+            }, 4500);
+
+            hardTimer = setTimeout(function() {
+              if (!settled && !fallbackStarted) fallback("Vidstack did not reach can-play");
+            }, 12000);
 
             // Keep simple keyboard shortcuts while letting Vidstack Default Layout own the UI.
             if (playerShell && !playerShell.dataset.v149Keys) {
@@ -38195,13 +38415,6 @@ async function watchPage(req, res, type) {
                 } catch {}
               });
             }
-
-            // If events are slow, still clear the loading state once the component has upgraded.
-            setTimeout(function() {
-              if (movieButtonVidstack === player && playerShell && !playerShell.classList.contains("v149Ready")) {
-                markReady("Vidstack player mounted");
-              }
-            }, 1400);
           });
         }
 
@@ -42620,41 +42833,66 @@ function watchroomPage(req, res) {
 
 
     /* ============================================================
-       v149 VIDSTACK M3U8 PLAYER
+       v150 VIDSTACK M3U8 PLAYER FIX
        - Vidstack Default Layout first
-       - Swifly-styled through CSS
-       - keeps m3u8/proxy src exactly as resolved
-       - removes broken Video.js/custom dock from active player
+       - reliable CDN paths + real can-play detection
+       - automatic HLS.js recovery if Vidstack never starts
+       - Swifly-styled modern player shell
        ============================================================ */
 
-    .dsVideoJsCinemaShell.v149Vidstack {
-      --v149-radius: 26px;
+    .dsVideoJsCinemaShell.v149Vidstack,
+    .dsVideoJsCinemaShell.v150HlsRecovery {
+      --v149-radius: 28px;
       --media-brand: #ffffff;
-      --media-focus-ring-color: rgba(255,255,255,.50);
+      --media-focus-ring-color: rgba(255,255,255,.58);
       --media-font-family: var(--font-ui, "Host Grotesk", Inter, system-ui, sans-serif);
       position: relative !important;
-      height: clamp(380px, 74vh, 860px) !important;
-      min-height: clamp(380px, 74vh, 860px) !important;
+      height: clamp(410px, 76vh, 900px) !important;
+      min-height: clamp(410px, 76vh, 900px) !important;
       border-radius: var(--v149-radius) !important;
-      background: #000 !important;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255,255,255,.09), transparent 30%),
+        linear-gradient(145deg, #05060a, #000) !important;
       overflow: hidden !important;
       isolation: isolate !important;
-      outline: 1px solid rgba(255,255,255,.075) !important;
+      outline: 1px solid rgba(255,255,255,.10) !important;
       box-shadow:
-        0 36px 120px rgba(0,0,0,.62),
-        0 0 58px rgba(120,150,255,.055) !important;
+        0 42px 130px rgba(0,0,0,.72),
+        0 0 0 1px rgba(255,255,255,.045) inset,
+        0 0 70px rgba(95,120,255,.075) !important;
     }
 
-    .dsVideoJsCinemaShell.v149Vidstack::after {
+    .dsVideoJsCinemaShell.v149Vidstack::before,
+    .dsVideoJsCinemaShell.v150HlsRecovery::before {
       content: "";
       position: absolute;
       inset: 0;
       z-index: 2;
       pointer-events: none;
       background:
-        linear-gradient(to top, rgba(0,0,0,.38), transparent 28%, transparent 72%, rgba(0,0,0,.16)),
-        radial-gradient(circle at 50% 100%, rgba(255,255,255,.08), transparent 34%);
-      opacity: .7;
+        linear-gradient(to bottom, rgba(0,0,0,.48), transparent 20%, transparent 66%, rgba(0,0,0,.64)),
+        radial-gradient(circle at 50% 115%, rgba(255,255,255,.13), transparent 36%);
+      opacity: .84;
+    }
+
+    .dsVideoJsCinemaShell.v149Vidstack::after,
+    .dsVideoJsCinemaShell.v150HlsRecovery::after {
+      content: "SWIFLY PLAYER";
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      z-index: 8;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font: 800 10px/1 var(--font-ui, Inter, system-ui, sans-serif);
+      letter-spacing: .16em;
+      color: rgba(255,255,255,.70);
+      background: rgba(12,14,20,.42);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 14px 36px rgba(0,0,0,.26);
+      backdrop-filter: blur(14px) saturate(1.12);
+      -webkit-backdrop-filter: blur(14px) saturate(1.12);
+      pointer-events: none;
     }
 
     .dsVideoJsCinemaShell.v149Vidstack #proxyVideoClientVideo,
@@ -42691,17 +42929,19 @@ function watchroomPage(req, res) {
       z-index: 1;
       --video-border-radius: var(--v149-radius);
       --media-font-family: var(--font-ui, "Host Grotesk", Inter, system-ui, sans-serif);
-      --media-brand: #f5f7fb;
-      --media-focus-ring-color: rgba(245,247,251,.54);
+      --media-brand: #f7f8ff;
+      --media-focus-ring-color: rgba(255,255,255,.56);
       --media-tooltip-bg: rgba(245,247,251,.96);
-      --media-tooltip-color: #080b12;
-      --media-menu-bg: rgba(17,20,26,.96);
-      --media-menu-color: rgba(255,255,255,.86);
-      --media-menu-border: 1px solid rgba(255,255,255,.10);
-      --media-slider-track-bg: rgba(255,255,255,.25);
-      --media-slider-track-fill-bg: #f5f7fb;
-      --media-slider-thumb-bg: #f5f7fb;
-      --media-controls-color: rgba(255,255,255,.92);
+      --media-tooltip-color: #070a10;
+      --media-menu-bg: rgba(14,16,22,.94);
+      --media-menu-color: rgba(255,255,255,.88);
+      --media-menu-border: 1px solid rgba(255,255,255,.12);
+      --media-slider-track-bg: rgba(255,255,255,.23);
+      --media-slider-track-fill-bg: #f7f8ff;
+      --media-slider-thumb-bg: #ffffff;
+      --media-controls-color: rgba(255,255,255,.94);
+      --media-button-hover-bg: rgba(255,255,255,.13);
+      --media-button-border-radius: 999px;
     }
 
     .dsVideoJsCinemaShell.v149Vidstack media-provider,
@@ -42716,30 +42956,49 @@ function watchroomPage(req, res) {
     }
 
     .dsVideoJsCinemaShell.v149Vidstack media-player.swiflyVidstackPlayer video,
-    .dsVideoJsCinemaShell.v149Vidstack media-player.swiflyVidstackPlayer [data-media-provider] video {
+    .dsVideoJsCinemaShell.v149Vidstack media-player.swiflyVidstackPlayer [data-media-provider] video,
+    .dsVideoJsCinemaShell.v150HlsRecovery video.swiflyNativeHlsVideo {
       width: 100% !important;
       height: 100% !important;
+      min-width: 100% !important;
+      min-height: 100% !important;
       object-fit: cover !important;
       object-position: center center !important;
       background: #000 !important;
     }
 
+    .dsVideoJsCinemaShell.v150HlsRecovery video.swiflyNativeHlsVideo {
+      position: absolute !important;
+      inset: 0 !important;
+      z-index: 1 !important;
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      pointer-events: auto !important;
+      border-radius: inherit !important;
+    }
+
     .dsVideoJsCinemaShell.v149Vidstack media-video-layout {
-      --media-button-size: 40px;
-      --media-menu-border-radius: 16px;
-      --media-slider-height: 36px;
+      --media-button-size: 42px;
+      --media-menu-border-radius: 18px;
+      --media-slider-height: 38px;
       --media-slider-track-height: 5px;
       --media-slider-thumb-size: 13px;
       --media-tooltip-border-radius: 999px;
-      z-index: 5;
+      z-index: 6;
       font-family: var(--font-ui, "Host Grotesk", Inter, system-ui, sans-serif);
     }
 
     .dsVideoJsCinemaShell.v149Vidstack media-player.swiflyVidstackPlayer [data-part="controls"],
     .dsVideoJsCinemaShell.v149Vidstack media-player.swiflyVidstackPlayer [data-media-controls],
     .dsVideoJsCinemaShell.v149Vidstack media-player.swiflyVidstackPlayer [data-controls] {
-      backdrop-filter: blur(18px) saturate(1.08);
-      -webkit-backdrop-filter: blur(18px) saturate(1.08);
+      margin: 14px !important;
+      border-radius: 24px !important;
+      background: linear-gradient(180deg, rgba(18,20,28,.38), rgba(7,8,12,.56)) !important;
+      border: 1px solid rgba(255,255,255,.10) !important;
+      box-shadow: 0 18px 60px rgba(0,0,0,.40) !important;
+      backdrop-filter: blur(20px) saturate(1.12) !important;
+      -webkit-backdrop-filter: blur(20px) saturate(1.12) !important;
     }
 
     .dsVideoJsCinemaShell.v149Vidstack media-player.swiflyVidstackPlayer [data-part="controls-group"],
@@ -42747,31 +43006,35 @@ function watchroomPage(req, res) {
       border-radius: 999px;
     }
 
-    .dsVideoJsCinemaShell.v149Vidstack .dsHlsStatus {
+    .dsVideoJsCinemaShell.v149Vidstack .dsHlsStatus,
+    .dsVideoJsCinemaShell.v150HlsRecovery .dsHlsStatus {
       left: 16px !important;
       top: 16px !important;
       bottom: auto !important;
-      max-width: min(250px, calc(100% - 32px)) !important;
-      padding: 8px 10px !important;
-      border-radius: 13px !important;
-      color: rgba(255,255,255,.86) !important;
-      background: rgba(15,18,28,.54) !important;
-      border: 1px solid rgba(255,255,255,.08) !important;
-      box-shadow: 0 12px 32px rgba(0,0,0,.28) !important;
-      backdrop-filter: blur(14px) saturate(1.08) !important;
-      -webkit-backdrop-filter: blur(14px) saturate(1.08) !important;
+      max-width: min(330px, calc(100% - 32px)) !important;
+      padding: 9px 11px !important;
+      border-radius: 15px !important;
+      color: rgba(255,255,255,.88) !important;
+      background: rgba(12,14,22,.58) !important;
+      border: 1px solid rgba(255,255,255,.10) !important;
+      box-shadow: 0 14px 36px rgba(0,0,0,.32) !important;
+      backdrop-filter: blur(16px) saturate(1.12) !important;
+      -webkit-backdrop-filter: blur(16px) saturate(1.12) !important;
       z-index: 12 !important;
     }
 
     .dsVideoJsCinemaShell.v149Vidstack.v149Ready .dsHlsStatus:not(.isError),
-    .dsVideoJsCinemaShell.v149Vidstack.v149Playing .dsHlsStatus:not(.isError) {
+    .dsVideoJsCinemaShell.v149Vidstack.v149Playing .dsHlsStatus:not(.isError),
+    .dsVideoJsCinemaShell.v150HlsRecovery .dsHlsStatus:not(.isError) {
       opacity: 0 !important;
       transform: translateY(-6px) !important;
       pointer-events: none !important;
     }
 
     .dsVideoJsCinemaShell.v149Vidstack:fullscreen,
-    .dsVideoJsCinemaShell.v149Vidstack:-webkit-full-screen {
+    .dsVideoJsCinemaShell.v149Vidstack:-webkit-full-screen,
+    .dsVideoJsCinemaShell.v150HlsRecovery:fullscreen,
+    .dsVideoJsCinemaShell.v150HlsRecovery:-webkit-full-screen {
       width: 100vw !important;
       height: 100vh !important;
       max-width: 100vw !important;
@@ -42780,21 +43043,31 @@ function watchroomPage(req, res) {
     }
 
     .dsVideoJsCinemaShell.v149Vidstack:fullscreen media-player.swiflyVidstackPlayer,
-    .dsVideoJsCinemaShell.v149Vidstack:-webkit-full-screen media-player.swiflyVidstackPlayer {
+    .dsVideoJsCinemaShell.v149Vidstack:-webkit-full-screen media-player.swiflyVidstackPlayer,
+    .dsVideoJsCinemaShell.v150HlsRecovery:fullscreen video.swiflyNativeHlsVideo,
+    .dsVideoJsCinemaShell.v150HlsRecovery:-webkit-full-screen video.swiflyNativeHlsVideo {
       width: 100vw !important;
       height: 100vh !important;
       border-radius: 0 !important;
     }
 
     @media(max-width: 900px) {
-      .dsVideoJsCinemaShell.v149Vidstack {
+      .dsVideoJsCinemaShell.v149Vidstack,
+      .dsVideoJsCinemaShell.v150HlsRecovery {
         --v149-radius: 18px;
-        height: clamp(300px, 58vh, 640px) !important;
-        min-height: clamp(300px, 58vh, 640px) !important;
+        height: clamp(310px, 60vh, 660px) !important;
+        min-height: clamp(310px, 60vh, 660px) !important;
+      }
+
+      .dsVideoJsCinemaShell.v149Vidstack::after,
+      .dsVideoJsCinemaShell.v150HlsRecovery::after {
+        top: 12px;
+        right: 12px;
+        font-size: 9px;
       }
 
       .dsVideoJsCinemaShell.v149Vidstack media-video-layout {
-        --media-button-size: 36px;
+        --media-button-size: 37px;
         --media-slider-height: 32px;
         --media-slider-track-height: 5px;
         --media-slider-thumb-size: 12px;
