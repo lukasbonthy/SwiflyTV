@@ -33234,8 +33234,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
         transition: none !important;
       }
     }
-
-  </style>
+</style>
 
     <script>
       window.syncWatchButtons = window.syncWatchButtons || function syncWatchButtons() {
@@ -35595,26 +35594,7 @@ async function homePage(req, res) {
   const body = `<main>
     ${dsHero({ hero, context: "Featured", eyebrow: "Watch now", trailer: heroTrailer, embedOrigin })}
     <section class="dsContent">
-
-      <section class="dsMovieHomeBoard">
-        <div>
-          <span class="dsEyebrow">Streaming made simple</span>
-          <h2>Movies, shows, watchlists, and watch rooms.</h2>
-          <p>Browse trending titles, save your list, continue watching, and jump into a synced room whenever you want.</p>
-        </div>
-        <div class="dsCoupleHomeActions">
-          <a class="dsPrimaryBtn" href="/movies">Browse Movies</a>
-          <a class="dsSecondaryBtn" href="/tv">Browse TV</a>
-          <a class="dsGhostPill" href="/watchrooms">Watch Parties</a>
-        </div>
-        <div class="dsCoupleHomeCards">
-          <article><b>01</b><span>Find something</span></article>
-          <article><b>02</b><span>Press play</span></article>
-          <article><b>03</b><span>Save your list</span></article>
-        </div>
-      </section>
-
-      <section id="continueWatchingSection" class="dsRow dsContinueSection" hidden>
+<section id="continueWatchingSection" class="dsRow dsContinueSection" hidden>
         <div class="dsRowHead"><h2>Continue Watching</h2><span class="dsRowTag">Saved watching</span></div>
         <div id="continueWatchingRail" class="movieRail dsRail"></div>
       </section>
@@ -35738,8 +35718,10 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = nu
 
         function setTrailerPlaying(isPlaying) {
           if (!hero) return;
-          hero.classList.toggle("dsHeroTrailerIsPlaying", Boolean(isPlaying));
-          hero.classList.toggle("dsHeroTrailerWaiting", !isPlaying);
+          if (isPlaying) {
+            hero.classList.add("dsHeroTrailerIsPlaying");
+          }
+          hero.classList.remove("dsHeroTrailerWaiting");
         }
 
         function sendCommand(command, args) {
@@ -35844,6 +35826,12 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = nu
         setVisualState();
         setTrailerPlaying(false);
         ensureYouTubeApi();
+
+        // Fallback reveal: YouTube sometimes does not fire PLAYING reliably in embedded/autoplay cases.
+        // This keeps the hero trailer visible instead of hiding it forever.
+        window.setTimeout(function() {
+          setTrailerPlaying(true);
+        }, 2600);
       })();
     </script>` : ""}
   </section>`;
@@ -42439,7 +42427,102 @@ function watchroomPage(req, res) {
       .dsStableRoom { padding: 0 !important; min-height: 100vh; }
       .dsStableRoomHero { margin-top: 0 !important; border-radius: 0 0 22px 22px !important; }
       .dsStableRoomGrid { margin-bottom: 0 !important; }
-    </style>` : "",
+  
+    /* ============================================================
+       v146 REMOVE HOME BOARD + FIX AUTOTRAILER VISIBILITY
+       - removes the entire old home board section
+       - keeps the YouTube hero trailer visible even if PLAYING state
+         does not fire
+       ============================================================ */
+
+    .dsMovieHomeBoard {
+      display: none !important;
+    }
+
+    .dsHeroHasTrailer .dsHeroTrailerLayer {
+      opacity: 0 !important;
+      animation: dsHeroTrailerFadeInV146 1.25s ease 2.15s forwards !important;
+      transition: opacity .85s ease, transform .85s ease, filter .25s ease !important;
+      transform: scale(1.03) !important;
+      filter: brightness(.92) saturate(1.08) contrast(1.04) !important;
+    }
+
+    .dsHeroHasTrailer.dsHeroTrailerIsPlaying .dsHeroTrailerLayer {
+      opacity: .96 !important;
+      transform: scale(1) !important;
+    }
+
+    .dsHeroHasTrailer.dsHeroTrailerWaiting .dsHeroTrailerLayer {
+      opacity: 0 !important;
+      animation: dsHeroTrailerFadeInV146 1.25s ease 2.15s forwards !important;
+    }
+
+    .dsHeroHasTrailer .dsHeroBg {
+      animation: dsHeroPosterFadeV146 6.8s ease 0s both !important;
+    }
+
+    .dsHeroHasTrailer.dsHeroTrailerIsPlaying .dsHeroBg {
+      opacity: .14 !important;
+      filter: brightness(.48) saturate(1.02) contrast(1.03) !important;
+    }
+
+    .dsHeroHasTrailer .dsHeroTrailerPill {
+      animation: dsHeroPreviewPillInV146 .65s ease 3s forwards !important;
+    }
+
+    @keyframes dsHeroTrailerFadeInV146 {
+      0% {
+        opacity: 0;
+        transform: scale(1.03);
+      }
+      100% {
+        opacity: .96;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes dsHeroPosterFadeV146 {
+      0%, 32% {
+        opacity: 1;
+        filter: brightness(.66) saturate(1.05) contrast(1.03) !important;
+      }
+      100% {
+        opacity: .14;
+        filter: brightness(.48) saturate(1.02) contrast(1.03) !important;
+      }
+    }
+
+    @keyframes dsHeroPreviewPillInV146 {
+      to {
+        opacity: .92;
+        transform: translateY(0);
+      }
+    }
+
+    @media(max-width: 900px) {
+      .dsHeroHasTrailer .dsHeroTrailerLayer {
+        display: none !important;
+      }
+
+      .dsHeroHasTrailer .dsHeroBg {
+        animation: none !important;
+        opacity: 1 !important;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .dsHeroHasTrailer .dsHeroTrailerLayer,
+      .dsHeroHasTrailer .dsHeroBg,
+      .dsHeroHasTrailer .dsHeroTrailerPill {
+        animation: none !important;
+      }
+
+      .dsHeroHasTrailer .dsHeroTrailerLayer {
+        opacity: 0 !important;
+      }
+    }
+
+  </style>` : "",
     body
   }));
 }
