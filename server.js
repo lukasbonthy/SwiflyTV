@@ -27828,93 +27828,360 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
 
     /* ============================================================
-       v124 PLAYER UI BUG CLEANUP
-       Fixes the v123 roughness: skin loads after Plyr CSS, progress
-       stays in Plyr's normal control flow, menus are cleaner, and old
-       custom overlays stop fighting the player.
+       v124 UI STABILIZER
+       Fixes common visual bugs from v123:
+       - no duplicate/overlapping player controls
+       - overlays do not block clicking/scrubbing
+       - Plyr layout is cleaner/responsive
+       - detail tabs/cards have calmer spacing
+       - shared z-index layers are more predictable
        ============================================================ */
 
-    .dsCinemaHlsShell {
-      background: #000 !important;
-      border-radius: 28px !important;
+    :root {
+      --z-base: 1;
+      --z-content: 10;
+      --z-row-controls: 60;
+      --z-floating: 500;
+      --z-player: 1200;
+      --z-player-ui: 1210;
+      --z-studio: 1300;
+      --z-nav: 1400;
+      --z-toast: 1600;
     }
 
-    .dsCinemaHlsShell.usesPlyr {
+    .topbar,
+    .netflixTopbar,
+    header[class*="top"] {
+      z-index: var(--z-nav) !important;
+    }
+
+    .controlDock {
+      z-index: var(--z-studio) !important;
+    }
+
+    .controlPanel.v111StyleStudio.v114StudioDrawer {
+      z-index: calc(var(--z-studio) - 1) !important;
+    }
+
+    .dsRowControls {
+      z-index: var(--z-row-controls) !important;
+      pointer-events: auto !important;
+    }
+
+    .dsRowBtn {
+      z-index: calc(var(--z-row-controls) + 1) !important;
+      pointer-events: auto !important;
+    }
+
+    .dsRowTag,
+    .ratingPill,
+    .typePill,
+    .livePill,
+    .dsLivePill,
+    [class*="live"],
+    [class*="Live"] {
+      pointer-events: none !important;
+    }
+
+    .dsCardControls,
+    .dsCardControls button,
+    .dsPlayDot {
+      pointer-events: auto !important;
+    }
+
+    .dsCardOverlay {
+      pointer-events: none !important;
+    }
+
+    .dsCardControls {
+      pointer-events: auto !important;
+      position: relative;
+      z-index: 12;
+    }
+
+    .dsCinemaHlsShell {
+      position: relative !important;
+      isolation: isolate !important;
+      z-index: var(--z-player) !important;
+      background: #000 !important;
+    }
+
+    .dsCinemaHlsShell * {
+      box-sizing: border-box;
+    }
+
+    .dsCinemaHlsShell .dsCinemaPlayerAura,
+    .dsCinemaHlsShell .dsCinemaHlsTop,
+    .dsCinemaHlsShell .dsCinemaHlsHint,
+    .dsCinemaHlsShell .dsHlsStatus {
+      pointer-events: none !important;
+    }
+
+    .dsCinemaHlsShell .plyr,
+    .dsCinemaHlsShell .plyr *,
+    .dsCinemaHlsShell video,
+    .dsCinemaHlsShell .vjs-control-bar,
+    .dsCinemaHlsShell .vjs-progress-control,
+    .dsCinemaHlsShell .vjs-control {
+      pointer-events: auto;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr {
+      height: clamp(360px, 70vh, 760px) !important;
+      min-height: 360px !important;
+      max-height: 78vh !important;
       border-radius: 28px !important;
       overflow: hidden !important;
-      background:
-        radial-gradient(900px circle at 18% 0%, rgba(85,215,255,.10), transparent 42%),
-        radial-gradient(760px circle at 82% 0%, rgba(139,92,246,.10), transparent 42%),
-        #000 !important;
+      box-shadow: none !important;
     }
 
-    .dsCinemaHlsShell.usesPlyr .plyr__progress {
-      position: relative !important;
-      left: auto !important;
-      right: auto !important;
-      bottom: auto !important;
+    .dsCinemaHlsShell.usesPlyr .plyr--video {
+      background: #000 !important;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr__video-wrapper {
+      background: #000 !important;
+      height: 100% !important;
+    }
+
+    .dsCinemaHlsShell.usesPlyr video {
       width: 100% !important;
-      flex: 1 0 100% !important;
-      order: -1 !important;
-      margin: 0 0 4px !important;
+      height: 100% !important;
+      object-fit: contain !important;
+      background: #000 !important;
     }
 
     .dsCinemaHlsShell.usesPlyr .plyr__controls {
-      display: flex !important;
-      flex-wrap: wrap !important;
-      align-items: center !important;
-      gap: 7px !important;
+      min-height: 78px !important;
+      padding: 24px 16px 14px !important;
+      gap: 5px !important;
+      background:
+        linear-gradient(to top, rgba(0,0,0,.94) 0%, rgba(0,0,0,.66) 56%, transparent 100%) !important;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr__progress {
+      left: 16px !important;
+      right: 16px !important;
+      bottom: 58px !important;
+      width: auto !important;
+      z-index: 5 !important;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr__progress input[type=range] {
+      min-height: 20px !important;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr__progress input[type=range]::-webkit-slider-runnable-track {
+      height: 8px !important;
+      border-radius: 999px !important;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr__progress input[type=range]::-moz-range-track {
+      height: 8px !important;
+      border-radius: 999px !important;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr__controls > .plyr__control,
+    .dsCinemaHlsShell.usesPlyr .plyr__volume,
+    .dsCinemaHlsShell.usesPlyr .plyr__time {
+      margin-top: 20px !important;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr__time {
+      min-width: auto !important;
+      padding-inline: 4px !important;
+      font-size: 11px !important;
+      color: rgba(255,255,255,.78) !important;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr__control {
+      width: 36px !important;
+      height: 36px !important;
+      padding: 9px !important;
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr__control svg {
+      width: 17px !important;
+      height: 17px !important;
     }
 
     .dsCinemaHlsShell.usesPlyr .plyr__volume {
-      max-width: 128px !important;
+      max-width: 118px !important;
+      min-width: 88px !important;
     }
 
     .dsCinemaHlsShell.usesPlyr .plyr__menu__container {
-      background: rgba(7,10,22,.96) !important;
-      color: rgba(255,255,255,.92) !important;
+      bottom: 100% !important;
+      max-height: min(360px, 52vh) !important;
+      overflow-y: auto !important;
     }
 
-    .dsCinemaHlsShell.usesPlyr .plyr--video .plyr__controls {
-      background:
-        linear-gradient(to top, rgba(0,0,0,.94), rgba(0,0,0,.62) 64%, transparent) !important;
+    .dsCinemaHlsShell.usesPlyr .plyr__control--overlaid {
+      width: clamp(70px, 7vw, 96px) !important;
+      height: clamp(70px, 7vw, 96px) !important;
+      padding: 0 !important;
+      opacity: .96 !important;
     }
 
-    .dsCinemaHlsShell.usesPlyr .plyr__control[data-plyr="settings"] {
-      background: rgba(255,255,255,.075);
+    .dsCinemaHlsShell.usesPlyr .plyr__control--overlaid svg {
+      width: 30px !important;
+      height: 30px !important;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .dsCinemaHlsTop {
+      max-width: min(480px, calc(100% - 36px)) !important;
+      opacity: 0 !important;
+      transform: translateY(-8px) !important;
+    }
+
+    .dsCinemaHlsShell.usesPlyr:hover .dsCinemaHlsTop,
+    .dsCinemaHlsShell.usesPlyr:focus-within .dsCinemaHlsTop {
+      opacity: .92 !important;
+      transform: translateY(0) !important;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .dsCinemaHlsHint {
+      display: none !important;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .dsHlsStatus {
+      left: 16px !important;
+      bottom: 96px !important;
+      max-width: min(460px, calc(100% - 32px)) !important;
+      opacity: .92;
     }
 
     .dsCinemaHlsShell.usesPlyr .dsCinemaSeekDock {
       display: none !important;
     }
 
-    .dsCinemaHlsShell.usesPlyr .dsHlsStatus {
-      pointer-events: none !important;
+    .dsCinemaHlsShell:not(.usesPlyr) .dsCinemaSeekDock {
+      pointer-events: auto !important;
+      z-index: var(--z-player-ui) !important;
     }
 
-    .dsCinemaHlsShell.usesPlyr .dsCinemaHlsHint {
-      bottom: 102px !important;
-      opacity: 0 !important;
+    .dsCinemaHlsShell:not(.usesPlyr) .dsCinemaSeekRange {
+      pointer-events: auto !important;
     }
 
-    .dsCinemaHlsShell.usesPlyr .dsCinemaHlsTop {
-      opacity: 0 !important;
+    .dsDetailTabsV121 {
+      z-index: 80 !important;
+      max-width: 100%;
     }
 
-    .dsCinemaHlsShell.usesPlyr:hover .dsCinemaHlsTop,
-    .dsCinemaHlsShell.usesPlyr:focus-within .dsCinemaHlsTop,
-    .dsCinemaHlsShell.usesPlyr:hover .dsCinemaHlsHint,
-    .dsCinemaHlsShell.usesPlyr:focus-within .dsCinemaHlsHint {
-      opacity: 1 !important;
+    .dsDetailTabPanels {
+      overflow: hidden !important;
+      min-height: 360px !important;
     }
 
-    @media(max-width: 760px) {
+    .dsDetailTabPanel {
+      width: 100%;
+    }
+
+    .dsDetailTabPanel:not(.active) {
+      display: none !important;
+    }
+
+    .dsDetailTabPanel.active {
+      display: block !important;
+    }
+
+    .dsDetailGridV121 aside,
+    .dsAboutGridV121,
+    .dsCastRailV121 .dsCastCard,
+    .dsTrailerGridV121 .trailerCard {
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.045) !important;
+    }
+
+    .dsTrailerGridV121 iframe,
+    .dsTrailerGridV121 video {
+      border: 0 !important;
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border-radius: 18px;
+      background: #000;
+    }
+
+    .dsMiniBtn,
+    .dsInfoBtn,
+    .dsHeartBtn {
+      flex: 0 0 auto;
+    }
+
+    .dsInfoBtn {
+      font-size: 13px !important;
+    }
+
+    @media(max-width: 900px) {
+      .dsCinemaHlsShell.usesPlyr .plyr {
+        height: clamp(330px, 62vh, 620px) !important;
+      }
+
+      .dsCinemaHlsShell.usesPlyr .plyr__controls {
+        padding-inline: 10px !important;
+        gap: 2px !important;
+      }
+
+      .dsCinemaHlsShell.usesPlyr .plyr__progress {
+        left: 10px !important;
+        right: 10px !important;
+        bottom: 56px !important;
+      }
+
       .dsCinemaHlsShell.usesPlyr .plyr__volume {
         display: none !important;
       }
 
-      .dsCinemaHlsShell.usesPlyr .plyr__controls {
-        gap: 4px !important;
+      .dsCinemaHlsShell.usesPlyr .plyr__time + .plyr__time {
+        display: none !important;
+      }
+
+      .dsCinemaHlsShell.usesPlyr .plyr__control {
+        width: 34px !important;
+        height: 34px !important;
+        padding: 8px !important;
+      }
+
+      .dsCinemaHlsTop {
+        display: none !important;
+      }
+
+      .dsCinemaHlsShell.usesPlyr .dsHlsStatus {
+        left: 10px !important;
+        right: 10px !important;
+        bottom: 90px !important;
+      }
+
+      .dsDetailTabsV121 {
+        position: relative !important;
+        top: auto !important;
+        border-radius: 18px !important;
+      }
+
+      .dsDetailTabPanels {
+        border-radius: 22px !important;
+      }
+    }
+
+    @media(max-width: 520px) {
+      .dsCinemaHlsShell.usesPlyr .plyr {
+        height: 56vh !important;
+        min-height: 290px !important;
+        border-radius: 20px !important;
+      }
+
+      .dsCinemaHlsShell {
+        border-radius: 20px !important;
+      }
+
+      .dsCinemaHlsShell.usesPlyr .plyr__control[data-plyr="pip"],
+      .dsCinemaHlsShell.usesPlyr .plyr__control[data-plyr="airplay"],
+      .dsCinemaHlsShell.usesPlyr .plyr__menu {
+        transform: scale(.92);
       }
     }
 
@@ -31493,115 +31760,21 @@ async function watchPage(req, res, type) {
           next();
         }
 
-        function injectPlyrSkin() {
-          if (document.querySelector("style[data-swifly-plyr-skin]")) return;
-
-          var style = document.createElement("style");
-          style.setAttribute("data-swifly-plyr-skin", "true");
-          style.textContent = [
-            ".dsCinemaHlsShell.usesPlyr {",
-            "  --plyr-color-main: #55d7ff;",
-            "  --plyr-video-control-color: rgba(255,255,255,.88);",
-            "  --plyr-video-control-color-hover: #06101d;",
-            "  --plyr-video-control-background-hover: linear-gradient(135deg,#ffffff,#dff8ff);",
-            "  --plyr-range-fill-background: linear-gradient(90deg,#55d7ff,#8b5cf6,#dff8ff);",
-            "  --plyr-menu-background: rgba(7,10,22,.96);",
-            "  --plyr-menu-color: rgba(255,255,255,.92);",
-            "  --plyr-control-radius: 999px;",
-            "}",
-            ".dsCinemaHlsShell.usesPlyr .plyr {",
-            "  width: 100% !important;",
-            "  height: min(76vh, 760px) !important;",
-            "  min-height: 420px !important;",
-            "  border-radius: 26px !important;",
-            "  overflow: hidden !important;",
-            "  background: #000 !important;",
-            "  font-family: var(--font-ui, Host Grotesk, Inter, system-ui, sans-serif) !important;",
-            "}",
-            ".dsCinemaHlsShell.usesPlyr .plyr video { object-fit: contain !important; background: #000 !important; }",
-            ".dsCinemaHlsShell.usesPlyr .plyr__controls {",
-            "  display: flex !important;",
-            "  flex-wrap: wrap !important;",
-            "  gap: 7px !important;",
-            "  min-height: 84px !important;",
-            "  padding: 14px 16px 16px !important;",
-            "  background: linear-gradient(to top, rgba(0,0,0,.94), rgba(0,0,0,.66) 62%, transparent) !important;",
-            "  backdrop-filter: blur(5px) !important;",
-            "  -webkit-backdrop-filter: blur(5px) !important;",
-            "}",
-            ".dsCinemaHlsShell.usesPlyr .plyr__progress {",
-            "  position: relative !important;",
-            "  left: auto !important;",
-            "  right: auto !important;",
-            "  bottom: auto !important;",
-            "  width: 100% !important;",
-            "  flex: 1 0 100% !important;",
-            "  order: -1 !important;",
-            "  margin: 0 0 4px !important;",
-            "  padding: 0 !important;",
-            "}",
-            ".dsCinemaHlsShell.usesPlyr .plyr__progress input[type=range] { min-height: 28px !important; cursor: pointer !important; }",
-            ".dsCinemaHlsShell.usesPlyr .plyr__progress input[type=range]::-webkit-slider-runnable-track { height: 9px !important; border-radius: 999px !important; }",
-            ".dsCinemaHlsShell.usesPlyr .plyr__progress input[type=range]::-moz-range-track { height: 9px !important; border-radius: 999px !important; }",
-            ".dsCinemaHlsShell.usesPlyr .plyr__progress input[type=range]::-webkit-slider-thumb { width: 19px !important; height: 19px !important; margin-top: -5px !important; box-shadow: 0 0 0 7px rgba(85,215,255,.15), 0 10px 26px rgba(0,0,0,.45) !important; }",
-            ".dsCinemaHlsShell.usesPlyr .plyr__time { font-size: 12px !important; font-weight: 850 !important; color: rgba(255,255,255,.82) !important; }",
-            ".dsCinemaHlsShell.usesPlyr .plyr__control { border-radius: 999px !important; }",
-            ".dsCinemaHlsShell.usesPlyr .plyr__control--overlaid {",
-            "  width: clamp(72px, 8vw, 104px) !important;",
-            "  height: clamp(72px, 8vw, 104px) !important;",
-            "  border: 1px solid rgba(255,255,255,.22) !important;",
-            "  background: rgba(7,10,22,.64) !important;",
-            "  box-shadow: 0 30px 110px rgba(0,0,0,.58), 0 0 70px rgba(85,215,255,.16) !important;",
-            "  backdrop-filter: blur(22px) saturate(1.18) !important;",
-            "  -webkit-backdrop-filter: blur(22px) saturate(1.18) !important;",
-            "}",
-            ".dsCinemaHlsShell.usesPlyr .plyr__menu__container {",
-            "  border-radius: 18px !important;",
-            "  border: 1px solid rgba(255,255,255,.12) !important;",
-            "  box-shadow: 0 22px 70px rgba(0,0,0,.52), 0 0 40px rgba(85,215,255,.10) !important;",
-            "  backdrop-filter: blur(22px) saturate(1.18) !important;",
-            "  -webkit-backdrop-filter: blur(22px) saturate(1.18) !important;",
-            "  overflow: hidden !important;",
-            "}",
-            ".dsCinemaHlsShell.usesPlyr .dsCinemaSeekDock { display: none !important; }",
-            ".dsCinemaHlsShell.usesPlyr .dsCinemaHlsTop, .dsCinemaHlsShell.usesPlyr .dsCinemaHlsHint { opacity: 0 !important; transform: translateY(-6px) !important; }",
-            ".dsCinemaHlsShell.usesPlyr:hover .dsCinemaHlsTop, .dsCinemaHlsShell.usesPlyr:focus-within .dsCinemaHlsTop, .dsCinemaHlsShell.usesPlyr:hover .dsCinemaHlsHint, .dsCinemaHlsShell.usesPlyr:focus-within .dsCinemaHlsHint { opacity: 1 !important; transform: translateY(0) !important; }",
-            "@media(max-width:760px) {",
-            "  .dsCinemaHlsShell.usesPlyr .plyr { height: 62vh !important; min-height: 330px !important; border-radius: 20px !important; }",
-            "  .dsCinemaHlsShell.usesPlyr .plyr__controls { min-height: 80px !important; padding-inline: 10px !important; }",
-            "  .dsCinemaHlsShell.usesPlyr .dsCinemaHlsTop, .dsCinemaHlsShell.usesPlyr .dsCinemaHlsHint { display: none !important; }",
-            "}"
-          ].join("\n");
-          document.head.appendChild(style);
-        }
-
         function loadPlyrAssets(callback) {
-          var cssLoaded = Boolean(document.querySelector('link[data-swifly-plyr-css]'));
-
-          function done(ok) {
-            injectPlyrSkin();
-            callback(Boolean(ok));
-          }
+          if (window.Plyr) return callback(true);
 
           if (!document.querySelector('link[data-swifly-plyr-css]')) {
             var link = document.createElement("link");
             link.rel = "stylesheet";
             link.href = "https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css";
             link.setAttribute("data-swifly-plyr-css", "true");
-            link.onload = function(){ cssLoaded = true; };
-            link.onerror = function(){ cssLoaded = true; };
             document.head.appendChild(link);
-          }
-
-          if (window.Plyr) {
-            setTimeout(function(){ done(true); }, cssLoaded ? 0 : 120);
-            return;
           }
 
           var existing = document.querySelector("script[data-swifly-plyr-js]");
           if (existing) {
-            existing.addEventListener("load", function(){ setTimeout(function(){ done(Boolean(window.Plyr)); }, 120); }, { once: true });
-            existing.addEventListener("error", function(){ done(false); }, { once: true });
+            existing.addEventListener("load", function(){ callback(Boolean(window.Plyr)); }, { once: true });
+            existing.addEventListener("error", function(){ callback(false); }, { once: true });
             return;
           }
 
@@ -31611,13 +31784,13 @@ async function watchPage(req, res, type) {
           ];
           var i = 0;
           function next() {
-            if (window.Plyr) return setTimeout(function(){ done(true); }, cssLoaded ? 0 : 120);
-            if (i >= urls.length) return done(false);
+            if (window.Plyr) return callback(true);
+            if (i >= urls.length) return callback(false);
             var script = document.createElement("script");
             script.src = urls[i++];
             script.async = true;
             script.setAttribute("data-swifly-plyr-js", "true");
-            script.onload = function(){ setTimeout(function(){ done(Boolean(window.Plyr)); }, 120); };
+            script.onload = function(){ callback(Boolean(window.Plyr)); };
             script.onerror = next;
             document.head.appendChild(script);
           }
@@ -31625,10 +31798,6 @@ async function watchPage(req, res, type) {
         }
 
         function destroyRegularMoviePlayers() {
-          if (playerShell) {
-            playerShell.classList.remove("usesPlyr", "isScrubbing", "playerReady", "playerError");
-          }
-
           if (movieButtonPlyr) {
             try { movieButtonPlyr.destroy(); } catch {}
             movieButtonPlyr = null;
@@ -31683,7 +31852,15 @@ async function watchPage(req, res, type) {
             if (hlsMeta) hlsMeta.textContent = index >= 0 ? value + "p selected" : "Auto quality";
           }
 
-          var plyrOptions = {
+          if (video && video.closest && video.closest(".plyr") && !movieButtonPlyr) {
+            var wrapper = video.closest(".plyr");
+            var parent = wrapper && wrapper.parentNode;
+            if (parent && wrapper !== video) {
+              try { parent.insertBefore(video, wrapper); wrapper.remove(); } catch {}
+            }
+          }
+
+          movieButtonPlyr = new window.Plyr(video, {
             controls: [
               "play-large",
               "play",
@@ -31697,28 +31874,22 @@ async function watchPage(req, res, type) {
               "airplay",
               "fullscreen"
             ],
-            settings: heights.length ? ["quality", "speed"] : ["speed"],
+            settings: ["quality", "speed"],
             speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
+            quality: {
+              default: defaultQuality,
+              options: qualityOptions,
+              forced: Boolean(hlsInstance && heights.length),
+              onChange: setQuality
+            },
             keyboard: { focused: true, global: false },
             tooltips: { controls: true, seek: true },
             invertTime: false,
             ratio: "16:9",
             blankVideo: "https://cdn.plyr.io/static/blank.mp4"
-          };
+          });
 
-          if (hlsInstance && heights.length) {
-            plyrOptions.quality = {
-              default: defaultQuality,
-              options: qualityOptions,
-              forced: true,
-              onChange: setQuality
-            };
-          }
-
-          injectPlyrSkin();
-          movieButtonPlyr = new window.Plyr(video, plyrOptions);
-
-          if (playerShell) playerShell.classList.add("usesPlyr", "playerReady");
+          if (playerShell) playerShell.classList.add("usesPlyr");
 
           if (hlsInstance) {
             hlsInstance.on(window.Hls.Events.LEVEL_SWITCHED, function(event, data) {
@@ -31735,6 +31906,8 @@ async function watchPage(req, res, type) {
             }
           });
 
+          movieButtonPlyr.on("play", hidePlayerStatusSoon);
+          movieButtonPlyr.on("playing", hidePlayerStatusSoon);
           movieButtonPlyr.on("timeupdate", syncCustomSeekBar);
           movieButtonPlyr.on("seeked", syncCustomSeekBar);
           movieButtonPlyr.on("loadedmetadata", syncCustomSeekBar);
@@ -31754,6 +31927,9 @@ async function watchPage(req, res, type) {
             destroyRegularMoviePlayers();
 
             try {
+              if (playerShell) {
+                playerShell.classList.remove("usesPlyr", "isScrubbing");
+              }
               video.className = "dsMovieButtonVideo dsCinemaHlsVideo";
               video.controls = true;
               video.crossOrigin = "anonymous";
@@ -31831,7 +32007,10 @@ async function watchPage(req, res, type) {
                 var detail = String(err.details || err.reason || err.type || "Unknown HLS error");
 
                 if (!err.fatal) {
-                  setPlayerStatus("HLS warning", detail, false);
+                  if (detail && !/bufferStalledError/i.test(detail)) {
+                    setPlayerStatus("HLS warning", detail, false);
+                    hidePlayerStatusSoon();
+                  }
                   return;
                 }
 
