@@ -48,8 +48,14 @@ app.use(
     contentSecurityPolicy: false,
     crossOriginEmbedderPolicy: false,
     crossOriginResourcePolicy: false,
+    referrerPolicy: { policy: "strict-origin-when-cross-origin" },
   })
 );
+
+app.use((req, res, next) => {
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  next();
+});
 
 app.use(
   rateLimit({
@@ -767,6 +773,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>${escapeHtml(title)}</title>
   <meta name="description" content="${escapeHtml(description)}" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta name="theme-color" content="#050712" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
@@ -33034,6 +33041,19 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       bottom: max(16px, env(safe-area-inset-bottom)) !important;
     }
 
+
+    /* ============================================================
+       v142 YOUTUBE ERROR 153 REFERRER FIX
+       YouTube embeds need a usable Referer. This build sets the
+       HTTP Referrer-Policy, meta referrer, iframe referrerpolicy,
+       and origin/widget_referrer params.
+       ============================================================ */
+
+    .dsHeroTrailerLayer iframe,
+    .dsWatchFrame iframe[src*="youtube.com/embed"] {
+      background: #050711;
+    }
+
   </style>
 
     <script>
@@ -35389,9 +35409,10 @@ async function homePage(req, res) {
     ? { ...spotlightMovie, media_type: "movie" }
     : pickHero((trendingAll.results || []).filter((item) => ["movie", "tv"].includes(getType(item))));
   const heroTrailer = pickBestTrailer((spotlightVideos && spotlightVideos.results) || []);
+  const embedOrigin = youtubeEmbedOrigin(req);
 
   const body = `<main>
-    ${dsHero({ hero, context: "Featured", eyebrow: "Watch now", trailer: heroTrailer })}
+    ${dsHero({ hero, context: "Featured", eyebrow: "Watch now", trailer: heroTrailer, embedOrigin })}
     <section class="dsContent">
 
       <section class="dsMovieHomeBoard">
@@ -35482,7 +35503,7 @@ function metaMatch(item = {}) {
   return `${score}% Match`;
 }
 
-function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = null }) {
+function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = null, embedOrigin = "" }) {
   const mediaType = type || getType(hero);
   const title = getTitle(hero);
   const href = `/${mediaType}/${encodeURIComponent(hero.id || "")}`;
@@ -35490,11 +35511,11 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = nu
   const desc = hero.overview || "A premium streaming discovery experience for movies, shows, trailers, cast, and your saved list.";
   const maturity = mediaType === "tv" ? "TV-14" : "PG-13";
   const trailerKey = trailer && trailer.key ? String(trailer.key) : "";
-  const trailerSrc = trailerKey ? youtubeHeroAutoplaySrc(trailerKey) : "";
+  const trailerSrc = trailerKey ? youtubeHeroAutoplaySrc(trailerKey, embedOrigin) : "";
   return `<section class="dsHero ${trailerSrc ? "dsHeroHasTrailer" : ""}">
     <div class="dsHeroBg" style="background-image:url('${escapeHtml(bg)}')"></div>
     ${trailerSrc ? `<div class="dsHeroTrailerLayer" aria-hidden="true">
-      <iframe src="${escapeHtml(trailerSrc)}" title="${escapeHtml(title)} muted trailer preview" loading="eager" allow="autoplay; encrypted-media; picture-in-picture; fullscreen"></iframe>
+      <iframe src="${escapeHtml(trailerSrc)}" title="${escapeHtml(title)} muted trailer preview" loading="eager" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
     </div>
     <div class="dsHeroTrailerPill"><span>Muted trailer preview</span></div>` : ""}
     <div class="dsHeroGlass"></div>
@@ -35892,14 +35913,91 @@ function pickBestTrailer(videos = []) {
     || null;
 }
 
-function youtubeEmbedSrc(videoKey = "") {
-  const key = encodeURIComponent(String(videoKey || ""));
-  return `https://www.youtube.com/embed/${key}?rel=0&modestbranding=1&playsinline=1&enablejsapi=1`;
+function normalizeYouTubeVideoKey(input = "") {
+  const raw = String(input || "").trim();
+  if (!raw) return "";
+
+  try {
+    const parsed = new URL(raw);
+    const host = parsed.hostname.replace(/^www\./, "").toLowerCase();
+
+    if (host === "youtube.com" || host === "m.youtube.com" || host === "music.youtube.com") {
+      if (parsed.searchParams.get("v")) return parsed.searchParams.get("v").trim();
+      const parts = parsed.pathname.split("/").filter(Boolean);
+      const embedIndex = parts.indexOf("embed");
+      const shortsIndex = parts.indexOf("shorts");
+      if (embedIndex >= 0 && parts[embedIndex + 1]) return parts[embedIndex + 1].trim();
+      if (shortsIndex >= 0 && parts[shortsIndex + 1]) return parts[shortsIndex + 1].trim();
+    }
+
+    if (host === "youtu.be" && parsed.pathname) {
+      return parsed.pathname.split("/").filter(Boolean)[0] || "";
+    }
+  } catch {}
+
+  return raw
+    .replace(/^.*youtube\.com\/watch\?v=/i, "")
+    .replace(/^.*youtu\.be\//i, "")
+    .split("&")[0]
+    .split("?")[0]
+    .trim();
 }
 
-function youtubeHeroAutoplaySrc(videoKey = "") {
-  const key = encodeURIComponent(String(videoKey || ""));
-  return `https://www.youtube.com/embed/${key}?autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&playsinline=1&loop=1&playlist=${key}&enablejsapi=1`;
+function youtubeEmbedOrigin(req) {
+  const configured = String(
+    process.env.YOUTUBE_EMBED_ORIGIN ||
+    process.env.PUBLIC_SITE_URL ||
+    process.env.SITE_ORIGIN ||
+    process.env.RENDER_EXTERNAL_URL ||
+    ""
+  ).trim().replace(/\/$/, "");
+
+  if (configured) return configured;
+
+  if (req && req.get) {
+    const proto = String(req.get("x-forwarded-proto") || req.protocol || "https").split(",")[0].trim() || "https";
+    const host = String(req.get("x-forwarded-host") || req.get("host") || "").split(",")[0].trim();
+    if (host) return `${proto}://${host}`;
+  }
+
+  return "";
+}
+
+function withYouTubeIdentityParams(urlString = "", origin = "") {
+  const cleanOrigin = String(origin || "").trim().replace(/\/$/, "");
+  try {
+    const url = new URL(urlString);
+    if (cleanOrigin) {
+      url.searchParams.set("origin", cleanOrigin);
+      url.searchParams.set("widget_referrer", cleanOrigin);
+    }
+    return url.toString();
+  } catch {
+    return urlString;
+  }
+}
+
+function youtubeWatchUrl(videoKey = "") {
+  const key = encodeURIComponent(normalizeYouTubeVideoKey(videoKey));
+  return key ? `https://www.youtube.com/watch?v=${key}` : "";
+}
+
+function youtubeEmbedSrc(videoKey = "", origin = "") {
+  const key = encodeURIComponent(normalizeYouTubeVideoKey(videoKey));
+  if (!key) return "";
+  return withYouTubeIdentityParams(
+    `https://www.youtube.com/embed/${key}?rel=0&modestbranding=1&playsinline=1&enablejsapi=1`,
+    origin
+  );
+}
+
+function youtubeHeroAutoplaySrc(videoKey = "", origin = "") {
+  const key = encodeURIComponent(normalizeYouTubeVideoKey(videoKey));
+  if (!key) return "";
+  return withYouTubeIdentityParams(
+    `https://www.youtube.com/embed/${key}?autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&playsinline=1&loop=1&playlist=${key}&enablejsapi=1`,
+    origin
+  );
 }
 
 function chooseLicensedStream(data = {}) {
@@ -36239,8 +36337,9 @@ async function watchPage(req, res, type) {
   const watchButtonLabel = type === "tv" ? "Episode" : "Movie";
   const watchModeLabel = type === "tv" ? "Episode mode" : "Movie mode";
   const heroBg = fullBackdrop(details.backdrop_path || details.poster_path);
-  const trailerEmbedSrc = trailer ? youtubeEmbedSrc(trailer.key) : "";
-  const youtubeUrl = trailer ? `https://www.youtube.com/watch?v=${encodeURIComponent(trailer.key)}` : "";
+  const embedOrigin = youtubeEmbedOrigin(req);
+  const trailerEmbedSrc = trailer ? youtubeEmbedSrc(trailer.key, embedOrigin) : "";
+  const youtubeUrl = trailer ? youtubeWatchUrl(trailer.key) : "";
   const clientProxyVideoWait = isMovieMode && process.env.MOVIE_PROXY_VIDEO_CLIENT_WAIT !== "false";
   const proxyVideoSource = { status: clientProxyVideoWait ? "waiting_client" : "disabled" };
   const proxyVideoUrl = "";
@@ -36391,7 +36490,7 @@ async function watchPage(req, res, type) {
         : movieEmbedUrl
           ? `<iframe class="dsMovieEmbedFrame" src="${escapeHtml(movieEmbedUrl)}" title="${escapeHtml(title)} movie embed" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write; web-share" allowfullscreen sandbox="allow-scripts allow-same-origin"></iframe>`
           : trailer && allowLegacyMovieFallback
-            ? `${providerStatusMessage}<div class="dsMovieEmbedNotice"><span>proxyVideo unavailable</span><strong>Using trailer fallback</strong><small>Set MOVIE_PROXY_VIDEO_ALLOW_LEGACY_FALLBACK=true to allow this fallback.</small></div><iframe src="${escapeHtml(trailerEmbedSrc)}" title="${escapeHtml(title)} trailer fallback" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin"></iframe>`
+            ? `${providerStatusMessage}<div class="dsMovieEmbedNotice"><span>proxyVideo unavailable</span><strong>Using trailer fallback</strong><small>Set MOVIE_PROXY_VIDEO_ALLOW_LEGACY_FALLBACK=true to allow this fallback.</small></div><iframe src="${escapeHtml(trailerEmbedSrc)}" title="${escapeHtml(title)} trailer fallback" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`
             : `<div class="dsNoTrailer dsProxyVideoFail"><h2>m3u8 source did not load</h2><p>Client wait is disabled and no fallback source was available.</p></div>`;
 
   const body = `<main class="dsWatchPage ${isMovieMode ? "dsWatchFullscreenMovie dsWatchEmbedMode" : "dsWatchTrailerMode"}">
@@ -36423,7 +36522,7 @@ async function watchPage(req, res, type) {
             ${isMovieMode
               ? movieFrame
               : trailer
-                ? `<iframe src="${escapeHtml(trailerEmbedSrc)}" title="${escapeHtml(title)} trailer" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin" referrerpolicy="no-referrer"></iframe>`
+                ? `<iframe src="${escapeHtml(trailerEmbedSrc)}" title="${escapeHtml(title)} trailer" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`
                 : `<div class="dsNoTrailer"><h2>No trailer found</h2><p>TMDB did not return a YouTube trailer for this title.</p></div>`}
           </div>
 
