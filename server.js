@@ -27826,6 +27826,98 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v124 PLAYER UI BUG CLEANUP
+       Fixes the v123 roughness: skin loads after Plyr CSS, progress
+       stays in Plyr's normal control flow, menus are cleaner, and old
+       custom overlays stop fighting the player.
+       ============================================================ */
+
+    .dsCinemaHlsShell {
+      background: #000 !important;
+      border-radius: 28px !important;
+    }
+
+    .dsCinemaHlsShell.usesPlyr {
+      border-radius: 28px !important;
+      overflow: hidden !important;
+      background:
+        radial-gradient(900px circle at 18% 0%, rgba(85,215,255,.10), transparent 42%),
+        radial-gradient(760px circle at 82% 0%, rgba(139,92,246,.10), transparent 42%),
+        #000 !important;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr__progress {
+      position: relative !important;
+      left: auto !important;
+      right: auto !important;
+      bottom: auto !important;
+      width: 100% !important;
+      flex: 1 0 100% !important;
+      order: -1 !important;
+      margin: 0 0 4px !important;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr__controls {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      align-items: center !important;
+      gap: 7px !important;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr__volume {
+      max-width: 128px !important;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr__menu__container {
+      background: rgba(7,10,22,.96) !important;
+      color: rgba(255,255,255,.92) !important;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr--video .plyr__controls {
+      background:
+        linear-gradient(to top, rgba(0,0,0,.94), rgba(0,0,0,.62) 64%, transparent) !important;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr__control[data-plyr="settings"] {
+      background: rgba(255,255,255,.075);
+    }
+
+    .dsCinemaHlsShell.usesPlyr .dsCinemaSeekDock {
+      display: none !important;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .dsHlsStatus {
+      pointer-events: none !important;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .dsCinemaHlsHint {
+      bottom: 102px !important;
+      opacity: 0 !important;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .dsCinemaHlsTop {
+      opacity: 0 !important;
+    }
+
+    .dsCinemaHlsShell.usesPlyr:hover .dsCinemaHlsTop,
+    .dsCinemaHlsShell.usesPlyr:focus-within .dsCinemaHlsTop,
+    .dsCinemaHlsShell.usesPlyr:hover .dsCinemaHlsHint,
+    .dsCinemaHlsShell.usesPlyr:focus-within .dsCinemaHlsHint {
+      opacity: 1 !important;
+    }
+
+    @media(max-width: 760px) {
+      .dsCinemaHlsShell.usesPlyr .plyr__volume {
+        display: none !important;
+      }
+
+      .dsCinemaHlsShell.usesPlyr .plyr__controls {
+        gap: 4px !important;
+      }
+    }
+
   </style>
 
     <script>
@@ -31401,21 +31493,115 @@ async function watchPage(req, res, type) {
           next();
         }
 
+        function injectPlyrSkin() {
+          if (document.querySelector("style[data-swifly-plyr-skin]")) return;
+
+          var style = document.createElement("style");
+          style.setAttribute("data-swifly-plyr-skin", "true");
+          style.textContent = [
+            ".dsCinemaHlsShell.usesPlyr {",
+            "  --plyr-color-main: #55d7ff;",
+            "  --plyr-video-control-color: rgba(255,255,255,.88);",
+            "  --plyr-video-control-color-hover: #06101d;",
+            "  --plyr-video-control-background-hover: linear-gradient(135deg,#ffffff,#dff8ff);",
+            "  --plyr-range-fill-background: linear-gradient(90deg,#55d7ff,#8b5cf6,#dff8ff);",
+            "  --plyr-menu-background: rgba(7,10,22,.96);",
+            "  --plyr-menu-color: rgba(255,255,255,.92);",
+            "  --plyr-control-radius: 999px;",
+            "}",
+            ".dsCinemaHlsShell.usesPlyr .plyr {",
+            "  width: 100% !important;",
+            "  height: min(76vh, 760px) !important;",
+            "  min-height: 420px !important;",
+            "  border-radius: 26px !important;",
+            "  overflow: hidden !important;",
+            "  background: #000 !important;",
+            "  font-family: var(--font-ui, Host Grotesk, Inter, system-ui, sans-serif) !important;",
+            "}",
+            ".dsCinemaHlsShell.usesPlyr .plyr video { object-fit: contain !important; background: #000 !important; }",
+            ".dsCinemaHlsShell.usesPlyr .plyr__controls {",
+            "  display: flex !important;",
+            "  flex-wrap: wrap !important;",
+            "  gap: 7px !important;",
+            "  min-height: 84px !important;",
+            "  padding: 14px 16px 16px !important;",
+            "  background: linear-gradient(to top, rgba(0,0,0,.94), rgba(0,0,0,.66) 62%, transparent) !important;",
+            "  backdrop-filter: blur(5px) !important;",
+            "  -webkit-backdrop-filter: blur(5px) !important;",
+            "}",
+            ".dsCinemaHlsShell.usesPlyr .plyr__progress {",
+            "  position: relative !important;",
+            "  left: auto !important;",
+            "  right: auto !important;",
+            "  bottom: auto !important;",
+            "  width: 100% !important;",
+            "  flex: 1 0 100% !important;",
+            "  order: -1 !important;",
+            "  margin: 0 0 4px !important;",
+            "  padding: 0 !important;",
+            "}",
+            ".dsCinemaHlsShell.usesPlyr .plyr__progress input[type=range] { min-height: 28px !important; cursor: pointer !important; }",
+            ".dsCinemaHlsShell.usesPlyr .plyr__progress input[type=range]::-webkit-slider-runnable-track { height: 9px !important; border-radius: 999px !important; }",
+            ".dsCinemaHlsShell.usesPlyr .plyr__progress input[type=range]::-moz-range-track { height: 9px !important; border-radius: 999px !important; }",
+            ".dsCinemaHlsShell.usesPlyr .plyr__progress input[type=range]::-webkit-slider-thumb { width: 19px !important; height: 19px !important; margin-top: -5px !important; box-shadow: 0 0 0 7px rgba(85,215,255,.15), 0 10px 26px rgba(0,0,0,.45) !important; }",
+            ".dsCinemaHlsShell.usesPlyr .plyr__time { font-size: 12px !important; font-weight: 850 !important; color: rgba(255,255,255,.82) !important; }",
+            ".dsCinemaHlsShell.usesPlyr .plyr__control { border-radius: 999px !important; }",
+            ".dsCinemaHlsShell.usesPlyr .plyr__control--overlaid {",
+            "  width: clamp(72px, 8vw, 104px) !important;",
+            "  height: clamp(72px, 8vw, 104px) !important;",
+            "  border: 1px solid rgba(255,255,255,.22) !important;",
+            "  background: rgba(7,10,22,.64) !important;",
+            "  box-shadow: 0 30px 110px rgba(0,0,0,.58), 0 0 70px rgba(85,215,255,.16) !important;",
+            "  backdrop-filter: blur(22px) saturate(1.18) !important;",
+            "  -webkit-backdrop-filter: blur(22px) saturate(1.18) !important;",
+            "}",
+            ".dsCinemaHlsShell.usesPlyr .plyr__menu__container {",
+            "  border-radius: 18px !important;",
+            "  border: 1px solid rgba(255,255,255,.12) !important;",
+            "  box-shadow: 0 22px 70px rgba(0,0,0,.52), 0 0 40px rgba(85,215,255,.10) !important;",
+            "  backdrop-filter: blur(22px) saturate(1.18) !important;",
+            "  -webkit-backdrop-filter: blur(22px) saturate(1.18) !important;",
+            "  overflow: hidden !important;",
+            "}",
+            ".dsCinemaHlsShell.usesPlyr .dsCinemaSeekDock { display: none !important; }",
+            ".dsCinemaHlsShell.usesPlyr .dsCinemaHlsTop, .dsCinemaHlsShell.usesPlyr .dsCinemaHlsHint { opacity: 0 !important; transform: translateY(-6px) !important; }",
+            ".dsCinemaHlsShell.usesPlyr:hover .dsCinemaHlsTop, .dsCinemaHlsShell.usesPlyr:focus-within .dsCinemaHlsTop, .dsCinemaHlsShell.usesPlyr:hover .dsCinemaHlsHint, .dsCinemaHlsShell.usesPlyr:focus-within .dsCinemaHlsHint { opacity: 1 !important; transform: translateY(0) !important; }",
+            "@media(max-width:760px) {",
+            "  .dsCinemaHlsShell.usesPlyr .plyr { height: 62vh !important; min-height: 330px !important; border-radius: 20px !important; }",
+            "  .dsCinemaHlsShell.usesPlyr .plyr__controls { min-height: 80px !important; padding-inline: 10px !important; }",
+            "  .dsCinemaHlsShell.usesPlyr .dsCinemaHlsTop, .dsCinemaHlsShell.usesPlyr .dsCinemaHlsHint { display: none !important; }",
+            "}"
+          ].join("\n");
+          document.head.appendChild(style);
+        }
+
         function loadPlyrAssets(callback) {
-          if (window.Plyr) return callback(true);
+          var cssLoaded = Boolean(document.querySelector('link[data-swifly-plyr-css]'));
+
+          function done(ok) {
+            injectPlyrSkin();
+            callback(Boolean(ok));
+          }
 
           if (!document.querySelector('link[data-swifly-plyr-css]')) {
             var link = document.createElement("link");
             link.rel = "stylesheet";
             link.href = "https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css";
             link.setAttribute("data-swifly-plyr-css", "true");
+            link.onload = function(){ cssLoaded = true; };
+            link.onerror = function(){ cssLoaded = true; };
             document.head.appendChild(link);
+          }
+
+          if (window.Plyr) {
+            setTimeout(function(){ done(true); }, cssLoaded ? 0 : 120);
+            return;
           }
 
           var existing = document.querySelector("script[data-swifly-plyr-js]");
           if (existing) {
-            existing.addEventListener("load", function(){ callback(Boolean(window.Plyr)); }, { once: true });
-            existing.addEventListener("error", function(){ callback(false); }, { once: true });
+            existing.addEventListener("load", function(){ setTimeout(function(){ done(Boolean(window.Plyr)); }, 120); }, { once: true });
+            existing.addEventListener("error", function(){ done(false); }, { once: true });
             return;
           }
 
@@ -31425,13 +31611,13 @@ async function watchPage(req, res, type) {
           ];
           var i = 0;
           function next() {
-            if (window.Plyr) return callback(true);
-            if (i >= urls.length) return callback(false);
+            if (window.Plyr) return setTimeout(function(){ done(true); }, cssLoaded ? 0 : 120);
+            if (i >= urls.length) return done(false);
             var script = document.createElement("script");
             script.src = urls[i++];
             script.async = true;
             script.setAttribute("data-swifly-plyr-js", "true");
-            script.onload = function(){ callback(Boolean(window.Plyr)); };
+            script.onload = function(){ setTimeout(function(){ done(Boolean(window.Plyr)); }, 120); };
             script.onerror = next;
             document.head.appendChild(script);
           }
@@ -31439,6 +31625,10 @@ async function watchPage(req, res, type) {
         }
 
         function destroyRegularMoviePlayers() {
+          if (playerShell) {
+            playerShell.classList.remove("usesPlyr", "isScrubbing", "playerReady", "playerError");
+          }
+
           if (movieButtonPlyr) {
             try { movieButtonPlyr.destroy(); } catch {}
             movieButtonPlyr = null;
@@ -31493,7 +31683,7 @@ async function watchPage(req, res, type) {
             if (hlsMeta) hlsMeta.textContent = index >= 0 ? value + "p selected" : "Auto quality";
           }
 
-          movieButtonPlyr = new window.Plyr(video, {
+          var plyrOptions = {
             controls: [
               "play-large",
               "play",
@@ -31507,22 +31697,28 @@ async function watchPage(req, res, type) {
               "airplay",
               "fullscreen"
             ],
-            settings: ["quality", "speed"],
+            settings: heights.length ? ["quality", "speed"] : ["speed"],
             speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
-            quality: {
-              default: defaultQuality,
-              options: qualityOptions,
-              forced: Boolean(hlsInstance && heights.length),
-              onChange: setQuality
-            },
             keyboard: { focused: true, global: false },
             tooltips: { controls: true, seek: true },
             invertTime: false,
             ratio: "16:9",
             blankVideo: "https://cdn.plyr.io/static/blank.mp4"
-          });
+          };
 
-          if (playerShell) playerShell.classList.add("usesPlyr");
+          if (hlsInstance && heights.length) {
+            plyrOptions.quality = {
+              default: defaultQuality,
+              options: qualityOptions,
+              forced: true,
+              onChange: setQuality
+            };
+          }
+
+          injectPlyrSkin();
+          movieButtonPlyr = new window.Plyr(video, plyrOptions);
+
+          if (playerShell) playerShell.classList.add("usesPlyr", "playerReady");
 
           if (hlsInstance) {
             hlsInstance.on(window.Hls.Events.LEVEL_SWITCHED, function(event, data) {
