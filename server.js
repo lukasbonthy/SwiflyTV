@@ -774,7 +774,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
   <link rel="preconnect" href="https://www.youtube.com" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700;800&family=Unbounded:wght@500;700;800&display=swap" rel="stylesheet" />
   ${extraHead}
   <style>
     :root {
@@ -23721,6 +23721,517 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v111 MOVIE SITE + FONT + EFFECTS STUDIO
+       Better movie-site typography, premium effects presets, and
+       a Dropcart-style customization studio.
+       ============================================================ */
+
+    :root {
+      --font-ui: "Host Grotesk", Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-display: "Space Grotesk", "Host Grotesk", Inter, sans-serif;
+      --v111-card-radius: 28px;
+      --v111-lift: 1;
+      --v111-glow: .22;
+      --v111-blur: 18px;
+    }
+
+    body {
+      font-family: var(--font-ui) !important;
+      text-rendering: geometricPrecision;
+      -webkit-font-smoothing: antialiased;
+      font-feature-settings: "ss01" 1, "cv05" 1, "kern" 1;
+    }
+
+    .brand,
+    .netflixWordmark,
+    .sectionHead h2,
+    .dsHeroContent h1,
+    .showcaseTitle,
+    .browseLogoTitle,
+    .dsDetailHeroContent h1,
+    .dsMovieClockHero h2,
+    .controlPanel h3,
+    .dsCleanHero h1,
+    .dsWelcomePage h1,
+    .dsWelcomePage h2,
+    .dsCardTitle {
+      font-family: var(--font-display) !important;
+    }
+
+    body.font-cinema {
+      --font-ui: "Space Grotesk", "Host Grotesk", Inter, sans-serif;
+      --font-display: "Space Grotesk", "Host Grotesk", Inter, sans-serif;
+    }
+
+    body.font-soft {
+      --font-ui: "Outfit", "Host Grotesk", Inter, sans-serif;
+      --font-display: "Outfit", "Space Grotesk", Inter, sans-serif;
+    }
+
+    body.font-wide {
+      --font-ui: "Host Grotesk", Inter, sans-serif;
+      --font-display: "Unbounded", "Space Grotesk", Inter, sans-serif;
+    }
+
+    body.font-wide .dsHeroContent h1,
+    body.font-wide .sectionHead h2,
+    body.font-wide .dsDetailHeroContent h1 {
+      letter-spacing: -.058em !important;
+    }
+
+    .netflixWordmark {
+      letter-spacing: -.075em !important;
+      font-weight: 900 !important;
+    }
+
+    .sectionHead h2 {
+      letter-spacing: -.078em;
+      text-shadow: 0 18px 62px rgba(0,0,0,.28);
+    }
+
+    .dsContent {
+      position: relative;
+      isolation: isolate;
+    }
+
+    .dsContent::before {
+      content: "";
+      position: absolute;
+      inset: -120px var(--v-right, 4vw) auto var(--v-left, 4vw);
+      height: 260px;
+      z-index: -1;
+      pointer-events: none;
+      background:
+        radial-gradient(520px circle at 10% 50%, color-mix(in srgb, var(--purple) 30%, transparent), transparent 62%),
+        radial-gradient(520px circle at 88% 0%, color-mix(in srgb, var(--cyan) 18%, transparent), transparent 58%);
+      filter: blur(22px);
+      opacity: .72;
+    }
+
+    .movieRail {
+      gap: clamp(14px, 1.25vw, 22px);
+      padding-block: 8px 26px;
+      scroll-padding-inline: var(--v-left, 4vw);
+    }
+
+    .movieGrid {
+      gap: clamp(18px, 2vw, 28px);
+    }
+
+    .posterWrap {
+      border-radius: var(--v111-card-radius) !important;
+      background:
+        radial-gradient(320px circle at 28% 0%, rgba(255,255,255,.12), transparent 50%),
+        rgba(255,255,255,.055) !important;
+      border-color: rgba(255,255,255,.13) !important;
+      box-shadow:
+        0 20px 68px rgba(0,0,0,.34),
+        0 0 calc(44px * var(--v111-glow)) color-mix(in srgb, var(--purple) 72%, transparent) !important;
+      transform: translateZ(0);
+      will-change: transform, box-shadow, filter;
+      transition:
+        transform .28s cubic-bezier(.2,.8,.2,1),
+        border-color .22s ease,
+        box-shadow .28s ease,
+        filter .28s ease !important;
+    }
+
+    .posterWrap::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      background:
+        radial-gradient(260px circle at var(--mx, 50%) var(--my, 20%), rgba(255,255,255,.22), transparent 44%),
+        linear-gradient(120deg, transparent 14%, rgba(255,255,255,.10) 38%, transparent 58%);
+      opacity: 0;
+      mix-blend-mode: screen;
+      transition: opacity .22s ease;
+    }
+
+    .posterWrap::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      background:
+        linear-gradient(115deg, transparent 0 36%, rgba(255,255,255,.18) 46%, transparent 56% 100%);
+      transform: translateX(-130%);
+      opacity: 0;
+    }
+
+    .posterWrap:hover {
+      transform:
+        perspective(900px)
+        rotateX(calc(var(--tilt-y, 0) * -1deg))
+        rotateY(calc(var(--tilt-x, 0) * 1deg))
+        translateY(calc(-10px * var(--v111-lift)))
+        scale(1.025) !important;
+      border-color: rgba(255,255,255,.30) !important;
+      filter: saturate(1.08) contrast(1.04);
+      box-shadow:
+        0 38px 100px rgba(0,0,0,.50),
+        0 0 calc(88px * var(--v111-glow)) color-mix(in srgb, var(--purple) 72%, transparent),
+        0 0 calc(62px * var(--v111-glow)) color-mix(in srgb, var(--cyan) 55%, transparent) !important;
+    }
+
+    .posterWrap:hover::before {
+      opacity: .82;
+    }
+
+    .posterWrap:hover::after {
+      animation: swiflyShine .72s ease;
+      opacity: 1;
+    }
+
+    .posterWrap img {
+      transition: transform .42s cubic-bezier(.2,.8,.2,1), filter .34s ease;
+    }
+
+    .posterWrap:hover img {
+      transform: scale(1.055);
+    }
+
+    .ratingPill,
+    .typePill,
+    .watchButton {
+      box-shadow: 0 14px 34px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.10);
+    }
+
+    .watchButton {
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.30), transparent 42%),
+        rgba(0,0,0,.58) !important;
+    }
+
+    .watchButton:hover {
+      transform: scale(1.08);
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.35), transparent 42%),
+        linear-gradient(135deg, var(--purple), var(--cyan)) !important;
+    }
+
+    .dsHeroBg,
+    .showcaseHeroBg,
+    .browseHeroBg {
+      transform: scale(1.025);
+      animation: swiflyHeroDrift 18s ease-in-out infinite alternate;
+    }
+
+    .dsHeroGlass {
+      background:
+        radial-gradient(920px circle at 24% 40%, color-mix(in srgb, var(--purple) 26%, transparent), transparent 48%),
+        radial-gradient(740px circle at 82% 20%, color-mix(in srgb, var(--cyan) 17%, transparent), transparent 46%),
+        linear-gradient(to top, var(--v-bg) 0%, rgba(5,7,18,.96) 8%, rgba(5,7,18,.58) 30%, rgba(5,7,18,.13) 58%, rgba(5,7,18,.74) 100%),
+        linear-gradient(90deg, rgba(5,7,18,.90) 0%, rgba(5,7,18,.54) 38%, rgba(5,7,18,.10) 76%) !important;
+    }
+
+    .dsHeroContent h1 {
+      filter: drop-shadow(0 24px 58px rgba(0,0,0,.55));
+    }
+
+    .dsPrimaryBtn,
+    .dsSecondaryBtn,
+    .heroActions a,
+    .heroActions button,
+    .sectionHead a,
+    .sectionHead button,
+    .dsRowBtn {
+      position: relative;
+      overflow: hidden;
+      transform: translateZ(0);
+    }
+
+    .dsPrimaryBtn::before,
+    .dsSecondaryBtn::before,
+    .heroActions a::before,
+    .heroActions button::before,
+    .sectionHead a::before,
+    .sectionHead button::before,
+    .dsRowBtn::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(110deg, transparent, rgba(255,255,255,.18), transparent);
+      transform: translateX(-120%);
+      transition: transform .55s ease;
+      pointer-events: none;
+    }
+
+    .dsPrimaryBtn:hover::before,
+    .dsSecondaryBtn:hover::before,
+    .heroActions a:hover::before,
+    .heroActions button:hover::before,
+    .sectionHead a:hover::before,
+    .sectionHead button:hover::before,
+    .dsRowBtn:hover::before {
+      transform: translateX(120%);
+    }
+
+    .dsRowControls {
+      filter: drop-shadow(0 22px 54px rgba(0,0,0,.35));
+    }
+
+    body.effect-dropcart {
+      --v111-glow: .42;
+      --v111-lift: 1.15;
+      --v111-card-radius: 32px;
+    }
+
+    body.effect-dropcart::before {
+      opacity: .72;
+      background:
+        linear-gradient(rgba(255,255,255,.030) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.030) 1px, transparent 1px),
+        radial-gradient(900px circle at 18% 4%, rgba(124,92,255,.28), transparent 42%),
+        radial-gradient(850px circle at 88% 12%, rgba(53,216,255,.18), transparent 40%);
+      background-size: 52px 52px, 52px 52px, auto, auto;
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,.95), transparent 85%);
+    }
+
+    body.effect-dropcart .dsContent::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      opacity: .075;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+      mix-blend-mode: screen;
+    }
+
+    body.effect-neon {
+      --v111-glow: .65;
+      --v111-lift: 1.22;
+    }
+
+    body.effect-neon .posterWrap,
+    body.effect-neon .dsPrimaryBtn,
+    body.effect-neon .dsRowBtn,
+    body.effect-neon .controlButton {
+      box-shadow:
+        0 22px 74px rgba(0,0,0,.38),
+        0 0 44px color-mix(in srgb, var(--purple) 55%, transparent),
+        0 0 28px color-mix(in srgb, var(--cyan) 42%, transparent) !important;
+    }
+
+    body.effect-glass {
+      --v111-glow: .24;
+      --v111-blur: 28px;
+    }
+
+    body.effect-glass .posterWrap,
+    body.effect-glass .controlPanel,
+    body.effect-glass .topbar,
+    body.effect-glass .dsMovieHomeBoard,
+    body.effect-glass .dsSocialSidebar,
+    body.effect-glass .sv100Main {
+      backdrop-filter: blur(var(--v111-blur)) saturate(1.18) !important;
+      -webkit-backdrop-filter: blur(var(--v111-blur)) saturate(1.18) !important;
+      border-color: rgba(255,255,255,.18) !important;
+    }
+
+    body.effect-calm,
+    body.effect-off {
+      --v111-glow: .04;
+      --v111-lift: .35;
+      --v111-card-radius: 20px;
+    }
+
+    body.effect-calm .dsHeroBg,
+    body.effect-off .dsHeroBg,
+    body.effect-calm .showcaseHeroBg,
+    body.effect-off .showcaseHeroBg,
+    body.effect-calm .browseHeroBg,
+    body.effect-off .browseHeroBg {
+      animation: none !important;
+    }
+
+    body.effect-off .posterWrap::before,
+    body.effect-off .posterWrap::after,
+    body.effect-off .dsPrimaryBtn::before,
+    body.effect-off .dsSecondaryBtn::before,
+    body.effect-off .heroActions a::before,
+    body.effect-off .heroActions button::before {
+      display: none !important;
+    }
+
+    body.density-compact .movieRail {
+      grid-auto-columns: minmax(136px, 168px);
+      gap: 12px;
+    }
+
+    body.density-compact .movieGrid {
+      grid-template-columns: repeat(auto-fill, minmax(138px, 1fr));
+      gap: 14px;
+    }
+
+    body.density-compact .sectionHead {
+      margin-bottom: 8px;
+    }
+
+    body.density-compact .posterWrap {
+      border-radius: 20px !important;
+    }
+
+    .controlPanel.v111StyleStudio {
+      z-index: 1300;
+      width: min(390px, calc(100vw - 32px));
+      padding: 16px;
+      border-radius: 28px;
+      background:
+        radial-gradient(420px circle at 0% 0%, color-mix(in srgb, var(--purple) 21%, transparent), transparent 55%),
+        radial-gradient(360px circle at 100% 0%, color-mix(in srgb, var(--cyan) 14%, transparent), transparent 54%),
+        rgba(4,7,18,.88);
+      border: 1px solid rgba(255,255,255,.15);
+    }
+
+    .styleStudioHead {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+
+    .styleStudioHead span {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: rgba(248,251,255,.54);
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .styleStudioHead h3 {
+      margin: 2px 0 0;
+      font-size: 34px;
+      line-height: .9;
+    }
+
+    .styleReset {
+      min-height: 34px;
+      padding: 0 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      color: white;
+      background: rgba(255,255,255,.075);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .styleGroup {
+      display: grid;
+      gap: 8px;
+      margin-top: 13px;
+    }
+
+    .styleGroup > b {
+      color: rgba(248,251,255,.70);
+      font-size: 12px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .themeGrid.styleGrid,
+    .styleGrid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .themeGrid.styleGrid button,
+    .styleGrid button {
+      min-height: 46px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.11);
+      color: rgba(255,255,255,.84);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.055));
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 920;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+      transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease;
+    }
+
+    .themeGrid.styleGrid button:hover,
+    .styleGrid button:hover,
+    .themeGrid.styleGrid button.active,
+    .styleGrid button.active {
+      transform: translateY(-1px);
+      color: white;
+      border-color: rgba(255,255,255,.24);
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.22), transparent 42%),
+        linear-gradient(135deg, var(--purple), var(--cyan));
+      box-shadow:
+        0 16px 44px rgba(0,0,0,.26),
+        0 0 30px color-mix(in srgb, var(--purple) 32%, transparent);
+    }
+
+    @keyframes swiflyShine {
+      from { transform: translateX(-130%); }
+      to { transform: translateX(130%); }
+    }
+
+    @keyframes swiflyHeroDrift {
+      from { transform: scale(1.025) translate3d(0,0,0); }
+      to { transform: scale(1.07) translate3d(-1.4%, -.8%, 0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .dsHeroBg,
+      .showcaseHeroBg,
+      .browseHeroBg,
+      .posterWrap,
+      .posterWrap img,
+      .posterWrap::after {
+        animation: none !important;
+        transition-duration: .01ms !important;
+      }
+    }
+
+
+    .v111Reveal {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity .55s ease, transform .55s cubic-bezier(.2,.8,.2,1);
+    }
+
+    .v111Reveal.isRevealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    body.reduceMotion .v111Reveal,
+    body.reduceMotion .v111Reveal.isRevealed {
+      opacity: 1 !important;
+      transform: none !important;
+    }
+
+    @media(max-width: 760px) {
+      .controlPanel.v111StyleStudio {
+        bottom: calc(86px + var(--safe-bottom));
+      }
+
+      .themeGrid.styleGrid,
+      .styleGrid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .posterWrap:hover {
+        transform: translateY(-4px) scale(1.012) !important;
+      }
+    }
+
   </style>
 
     <script>
@@ -23915,16 +24426,56 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <button id="controlToggle" class="controlButton" type="button">✦</button>
   </div>
 
-  <section id="controlPanel" class="controlPanel">
-    <h3>Style Studio</h3>
-    <p>Small visual controls. Your choices save in this browser.</p>
-    <div class="themeGrid">
-      <button data-theme="default">Purple</button>
-      <button data-theme="red">Red</button>
-      <button data-theme="blue">Blue</button>
-      <button data-theme="green">Green</button>
-      <button data-theme="mono">Mono</button>
-      <button id="motionToggle" type="button">Motion</button>
+  <section id="controlPanel" class="controlPanel v111StyleStudio" aria-label="Style Studio">
+    <div class="styleStudioHead">
+      <div>
+        <span>Swifly Studio</span>
+        <h3>Effects</h3>
+      </div>
+      <button id="styleReset" class="styleReset" type="button">Reset</button>
+    </div>
+    <p>Change the whole movie-site vibe. Saves in this browser.</p>
+
+    <div class="styleGroup">
+      <b>Theme</b>
+      <div class="themeGrid styleGrid">
+        <button data-theme="default">Swifly</button>
+        <button data-theme="red">Heat</button>
+        <button data-theme="blue">Ice</button>
+        <button data-theme="green">Mint</button>
+        <button data-theme="mono">Mono</button>
+      </div>
+    </div>
+
+    <div class="styleGroup">
+      <b>Font</b>
+      <div class="styleGrid">
+        <button data-font="default">Premium</button>
+        <button data-font="cinema">Cinema</button>
+        <button data-font="soft">Soft</button>
+        <button data-font="wide">Wide</button>
+      </div>
+    </div>
+
+    <div class="styleGroup">
+      <b>Effects</b>
+      <div class="styleGrid">
+        <button data-effect="cinematic">Cinematic</button>
+        <button data-effect="dropcart">Dropcart</button>
+        <button data-effect="neon">Neon</button>
+        <button data-effect="glass">Glass</button>
+        <button data-effect="calm">Calm</button>
+        <button data-effect="off">Off</button>
+      </div>
+    </div>
+
+    <div class="styleGroup">
+      <b>Experience</b>
+      <div class="styleGrid">
+        <button data-density="comfy">Comfy</button>
+        <button data-density="compact">Compact</button>
+        <button id="motionToggle" type="button">Motion</button>
+      </div>
     </div>
   </section>
 
@@ -24133,10 +24684,43 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       panel?.classList.toggle("open");
     });
 
+    function setActiveStudioButton(selector, value) {
+      document.querySelectorAll(selector).forEach((button) => {
+        const attr = selector.includes("theme") ? "theme" : selector.includes("font") ? "font" : selector.includes("effect") ? "effect" : "density";
+        button.classList.toggle("active", button.dataset[attr] === value);
+      });
+    }
+
     function applyTheme(theme) {
+      const clean = theme || "default";
       document.body.classList.remove("theme-red", "theme-blue", "theme-green", "theme-mono");
-      if (theme && theme !== "default") document.body.classList.add("theme-" + theme);
-      localStorage.setItem("movieverse.theme", theme || "default");
+      if (clean !== "default") document.body.classList.add("theme-" + clean);
+      localStorage.setItem("movieverse.theme", clean);
+      setActiveStudioButton("[data-theme]", clean);
+    }
+
+    function applyFont(font) {
+      const clean = font || "default";
+      document.body.classList.remove("font-cinema", "font-soft", "font-wide");
+      if (clean !== "default") document.body.classList.add("font-" + clean);
+      localStorage.setItem("movieverse.font", clean);
+      setActiveStudioButton("[data-font]", clean);
+    }
+
+    function applyEffect(effect) {
+      const clean = effect || "cinematic";
+      document.body.classList.remove("effect-cinematic", "effect-dropcart", "effect-neon", "effect-glass", "effect-calm", "effect-off");
+      document.body.classList.add("effect-" + clean);
+      localStorage.setItem("movieverse.effect", clean);
+      setActiveStudioButton("[data-effect]", clean);
+    }
+
+    function applyDensity(density) {
+      const clean = density || "comfy";
+      document.body.classList.remove("density-compact", "density-comfy");
+      document.body.classList.add("density-" + clean);
+      localStorage.setItem("movieverse.density", clean);
+      setActiveStudioButton("[data-density]", clean);
     }
 
     document.querySelectorAll("[data-theme]").forEach((button) => {
@@ -24146,15 +24730,90 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       });
     });
 
+    document.querySelectorAll("[data-font]").forEach((button) => {
+      button.addEventListener("click", () => {
+        applyFont(button.dataset.font);
+        showToast("Font changed");
+      });
+    });
+
+    document.querySelectorAll("[data-effect]").forEach((button) => {
+      button.addEventListener("click", () => {
+        applyEffect(button.dataset.effect);
+        showToast(button.dataset.effect === "dropcart" ? "Dropcart effects on" : "Effects changed");
+      });
+    });
+
+    document.querySelectorAll("[data-density]").forEach((button) => {
+      button.addEventListener("click", () => {
+        applyDensity(button.dataset.density);
+        showToast(button.dataset.density === "compact" ? "Compact rows on" : "Comfy rows on");
+      });
+    });
+
     document.getElementById("motionToggle")?.addEventListener("click", () => {
       const next = !document.body.classList.contains("reduceMotion");
       document.body.classList.toggle("reduceMotion", next);
       localStorage.setItem("movieverse.reduceMotion", next ? "on" : "off");
+      document.getElementById("motionToggle")?.classList.toggle("active", next);
       showToast(next ? "Motion reduced" : "Motion enabled");
     });
 
+    document.getElementById("styleReset")?.addEventListener("click", () => {
+      applyTheme("default");
+      applyFont("default");
+      applyEffect("cinematic");
+      applyDensity("comfy");
+      document.body.classList.remove("reduceMotion");
+      localStorage.setItem("movieverse.reduceMotion", "off");
+      document.getElementById("motionToggle")?.classList.remove("active");
+      showToast("Style reset");
+    });
+
     applyTheme(localStorage.getItem("movieverse.theme") || "default");
+    applyFont(localStorage.getItem("movieverse.font") || "default");
+    applyEffect(localStorage.getItem("movieverse.effect") || "cinematic");
+    applyDensity(localStorage.getItem("movieverse.density") || "comfy");
     document.body.classList.toggle("reduceMotion", localStorage.getItem("movieverse.reduceMotion") === "on");
+    document.getElementById("motionToggle")?.classList.toggle("active", localStorage.getItem("movieverse.reduceMotion") === "on");
+
+    (function enablePremiumPosterTilt(){
+      let raf = null;
+      document.addEventListener("pointermove", (event) => {
+        const wrap = event.target?.closest?.(".posterWrap");
+        if (!wrap || document.body.classList.contains("reduceMotion") || document.body.classList.contains("effect-off") || document.body.classList.contains("effect-calm")) return;
+        if (raf) cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(() => {
+          const rect = wrap.getBoundingClientRect();
+          const px = (event.clientX - rect.left) / rect.width;
+          const py = (event.clientY - rect.top) / rect.height;
+          wrap.style.setProperty("--mx", Math.round(px * 100) + "%");
+          wrap.style.setProperty("--my", Math.round(py * 100) + "%");
+          wrap.style.setProperty("--tilt-x", ((px - .5) * 7).toFixed(2));
+          wrap.style.setProperty("--tilt-y", ((py - .5) * 7).toFixed(2));
+        });
+      }, { passive: true });
+
+      document.addEventListener("pointerleave", (event) => {
+        const wrap = event.target?.closest?.(".posterWrap");
+        if (!wrap) return;
+        wrap.style.removeProperty("--tilt-x");
+        wrap.style.removeProperty("--tilt-y");
+      }, true);
+
+      if ("IntersectionObserver" in window) {
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) entry.target.classList.add("isRevealed");
+          });
+        }, { threshold: .08 });
+
+        document.querySelectorAll(".movieCard, .dsRow, .dsMovieHomeBoard, .sectionHead").forEach((el) => {
+          el.classList.add("v111Reveal");
+          observer.observe(el);
+        });
+      }
+    })();
 
     if (typeof syncWatchButtons === "function") syncWatchButtons();
     renderWatchlistPage();
