@@ -27607,6 +27607,225 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v123 PLYR HLS PLAYER REFRESH
+       Replaces the rough Video.js-first look with Plyr + HLS.js:
+       cleaner controls, better native scrubber, quality menu, and a
+       lighter cinema shell.
+       ============================================================ */
+
+    .dsCinemaHlsShell.usesPlyr {
+      --plyr-color-main: #55d7ff;
+      --plyr-video-control-color: rgba(255,255,255,.88);
+      --plyr-video-control-color-hover: #06101d;
+      --plyr-video-control-background-hover: linear-gradient(135deg, #ffffff, #dff8ff);
+      --plyr-video-controls-background: linear-gradient(to top, rgba(0,0,0,.92), rgba(0,0,0,.62) 54%, transparent);
+      --plyr-range-fill-background: linear-gradient(90deg, #55d7ff, #8b5cf6, #dff8ff);
+      --plyr-menu-background: rgba(7,10,22,.94);
+      --plyr-menu-color: rgba(255,255,255,.90);
+      --plyr-menu-border-color: rgba(255,255,255,.11);
+      --plyr-control-radius: 999px;
+      min-height: min(78vh, 780px) !important;
+      border-radius: 30px !important;
+      background:
+        radial-gradient(1200px circle at 18% 0%, rgba(85,215,255,.13), transparent 42%),
+        radial-gradient(900px circle at 86% 0%, rgba(139,92,246,.13), transparent 43%),
+        #000 !important;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr {
+      position: relative;
+      z-index: 3;
+      width: 100%;
+      height: min(78vh, 780px);
+      min-height: 440px;
+      border-radius: inherit;
+      overflow: hidden;
+      background: #000;
+      font-family: var(--font-ui, "Host Grotesk", Inter, system-ui, sans-serif);
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr video {
+      object-fit: contain;
+      background: #000;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr__poster {
+      background-size: cover;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr__controls {
+      min-height: 92px;
+      padding: 30px 18px 18px !important;
+      background:
+        linear-gradient(to top, rgba(0,0,0,.94) 0%, rgba(0,0,0,.68) 55%, transparent 100%) !important;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr__progress {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 68px;
+      width: auto;
+      margin: 0;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr__progress input[type=range],
+    .dsCinemaHlsShell.usesPlyr .plyr__volume input[type=range] {
+      min-height: 22px;
+      cursor: pointer;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr__progress input[type=range]::-webkit-slider-runnable-track {
+      height: 10px;
+      border-radius: 999px;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr__progress input[type=range]::-moz-range-track {
+      height: 10px;
+      border-radius: 999px;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr__progress input[type=range]::-webkit-slider-thumb {
+      width: 20px;
+      height: 20px;
+      margin-top: -5px;
+      box-shadow: 0 0 0 7px rgba(85,215,255,.16), 0 10px 28px rgba(0,0,0,.44);
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr__progress input[type=range]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      box-shadow: 0 0 0 7px rgba(85,215,255,.16), 0 10px 28px rgba(0,0,0,.44);
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr__time {
+      color: rgba(255,255,255,.82);
+      font-size: 12px;
+      font-weight: 850;
+      letter-spacing: -.01em;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr__control {
+      border-radius: 999px !important;
+      transition: transform .15s ease, background .15s ease, color .15s ease;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr__control:hover {
+      transform: translateY(-1px);
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr__control--overlaid {
+      width: clamp(76px, 8.4vw, 112px);
+      height: clamp(76px, 8.4vw, 112px);
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255,255,255,.22);
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.24), transparent 42%),
+        rgba(7,10,22,.60) !important;
+      box-shadow:
+        0 30px 110px rgba(0,0,0,.58),
+        0 0 70px rgba(85,215,255,.18);
+      backdrop-filter: blur(22px) saturate(1.18);
+      -webkit-backdrop-filter: blur(22px) saturate(1.18);
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr__control--overlaid svg {
+      left: 2px;
+      width: 34px;
+      height: 34px;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr__menu__container {
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow:
+        0 22px 70px rgba(0,0,0,.52),
+        0 0 40px rgba(85,215,255,.10);
+      backdrop-filter: blur(22px) saturate(1.18);
+      -webkit-backdrop-filter: blur(22px) saturate(1.18);
+      overflow: hidden;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr__menu__container .plyr__control {
+      border-radius: 12px !important;
+      font-weight: 850;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr__tooltip {
+      border-radius: 999px;
+      color: #06101d;
+      background: linear-gradient(135deg, #ffffff, #dff8ff);
+      font-weight: 900;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .plyr__tooltip::before {
+      border-top-color: #dff8ff;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .dsCinemaSeekDock {
+      display: none !important;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .dsCinemaHlsTop {
+      opacity: .0;
+      transform: translateY(-8px);
+    }
+
+    .dsCinemaHlsShell.usesPlyr:hover .dsCinemaHlsTop,
+    .dsCinemaHlsShell.usesPlyr:focus-within .dsCinemaHlsTop {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .dsCinemaHlsShell.usesPlyr .dsCinemaHlsHint {
+      bottom: 108px !important;
+      right: 18px;
+    }
+
+    .dsCinemaHlsShell.usesPlyr .dsHlsStatus {
+      bottom: 108px !important;
+      left: 18px !important;
+      max-width: min(520px, calc(100% - 36px));
+    }
+
+    .dsCinemaHlsShell.usesPlyr .vjs-theme-swifly {
+      display: none !important;
+    }
+
+    @media(max-width: 760px) {
+      .dsCinemaHlsShell.usesPlyr .plyr {
+        height: 62vh;
+        min-height: 330px;
+      }
+
+      .dsCinemaHlsShell.usesPlyr .plyr__controls {
+        min-height: 86px;
+        padding-inline: 10px !important;
+      }
+
+      .dsCinemaHlsShell.usesPlyr .plyr__progress {
+        left: 10px;
+        right: 10px;
+        bottom: 62px;
+      }
+
+      .dsCinemaHlsShell.usesPlyr .dsCinemaHlsTop,
+      .dsCinemaHlsShell.usesPlyr .dsCinemaHlsHint {
+        display: none !important;
+      }
+
+      .dsCinemaHlsShell.usesPlyr .dsHlsStatus {
+        bottom: 92px !important;
+        left: 10px !important;
+        right: 10px !important;
+      }
+    }
+
   </style>
 
     <script>
@@ -30864,6 +31083,7 @@ async function watchPage(req, res, type) {
             <span>Space</span><b>play / pause</b>
             <span>F</span><b>fullscreen</b>
             <span>M</span><b>mute</b>
+            <span>⚙</span><b>quality</b>
           </div>
           <div id="movieButtonSeekDock" class="dsCinemaSeekDock" hidden>
             <div class="dsCinemaSeekTimes">
@@ -30978,6 +31198,7 @@ async function watchPage(req, res, type) {
         var isSeekingWithRange = false;
         var customSeekReady = false;
         var movieButtonPlayer = null;
+        var movieButtonPlyr = null;
         var movieButtonHls = null;
         var shell = document.querySelector(".dsProxyVideoWaitingShell");
         var retryBtn = document.getElementById("retryProxyVideoBtn");
@@ -31180,6 +31401,265 @@ async function watchPage(req, res, type) {
           next();
         }
 
+        function loadPlyrAssets(callback) {
+          if (window.Plyr) return callback(true);
+
+          if (!document.querySelector('link[data-swifly-plyr-css]')) {
+            var link = document.createElement("link");
+            link.rel = "stylesheet";
+            link.href = "https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css";
+            link.setAttribute("data-swifly-plyr-css", "true");
+            document.head.appendChild(link);
+          }
+
+          var existing = document.querySelector("script[data-swifly-plyr-js]");
+          if (existing) {
+            existing.addEventListener("load", function(){ callback(Boolean(window.Plyr)); }, { once: true });
+            existing.addEventListener("error", function(){ callback(false); }, { once: true });
+            return;
+          }
+
+          var urls = [
+            "https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.polyfilled.min.js",
+            "https://unpkg.com/plyr@3.7.8/dist/plyr.polyfilled.min.js"
+          ];
+          var i = 0;
+          function next() {
+            if (window.Plyr) return callback(true);
+            if (i >= urls.length) return callback(false);
+            var script = document.createElement("script");
+            script.src = urls[i++];
+            script.async = true;
+            script.setAttribute("data-swifly-plyr-js", "true");
+            script.onload = function(){ callback(Boolean(window.Plyr)); };
+            script.onerror = next;
+            document.head.appendChild(script);
+          }
+          next();
+        }
+
+        function destroyRegularMoviePlayers() {
+          if (movieButtonPlyr) {
+            try { movieButtonPlyr.destroy(); } catch {}
+            movieButtonPlyr = null;
+          }
+
+          if (movieButtonPlayer) {
+            try { movieButtonPlayer.dispose(); } catch {}
+            movieButtonPlayer = null;
+          }
+
+          if (movieButtonHls) {
+            try { movieButtonHls.destroy(); } catch {}
+            movieButtonHls = null;
+          }
+        }
+
+        function uniqueHlsHeights(levels) {
+          var seen = {};
+          return (levels || [])
+            .map(function(level) { return Number(level && level.height); })
+            .filter(function(height) {
+              if (!height || seen[height]) return false;
+              seen[height] = true;
+              return true;
+            })
+            .sort(function(a, b) { return b - a; });
+        }
+
+        function initPlyrUi(hlsInstance, levels) {
+          if (!window.Plyr || !video) return null;
+
+          var heights = uniqueHlsHeights(levels);
+          var qualityOptions = heights.length ? [0].concat(heights) : [0];
+          var defaultQuality = 0;
+
+          function setQuality(value) {
+            value = Number(value || 0);
+            if (!hlsInstance) return;
+
+            if (!value) {
+              hlsInstance.currentLevel = -1;
+              if (hlsMeta) hlsMeta.textContent = "Auto quality";
+              return;
+            }
+
+            var index = -1;
+            (hlsInstance.levels || []).forEach(function(level, i) {
+              if (Number(level && level.height) === value && index === -1) index = i;
+            });
+
+            hlsInstance.currentLevel = index >= 0 ? index : -1;
+            if (hlsMeta) hlsMeta.textContent = index >= 0 ? value + "p selected" : "Auto quality";
+          }
+
+          movieButtonPlyr = new window.Plyr(video, {
+            controls: [
+              "play-large",
+              "play",
+              "progress",
+              "current-time",
+              "duration",
+              "mute",
+              "volume",
+              "settings",
+              "pip",
+              "airplay",
+              "fullscreen"
+            ],
+            settings: ["quality", "speed"],
+            speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
+            quality: {
+              default: defaultQuality,
+              options: qualityOptions,
+              forced: Boolean(hlsInstance && heights.length),
+              onChange: setQuality
+            },
+            keyboard: { focused: true, global: false },
+            tooltips: { controls: true, seek: true },
+            invertTime: false,
+            ratio: "16:9",
+            blankVideo: "https://cdn.plyr.io/static/blank.mp4"
+          });
+
+          if (playerShell) playerShell.classList.add("usesPlyr");
+
+          if (hlsInstance) {
+            hlsInstance.on(window.Hls.Events.LEVEL_SWITCHED, function(event, data) {
+              var level = hlsInstance.levels && hlsInstance.levels[data.level];
+              if (hlsMeta && level && level.height) hlsMeta.textContent = level.height + "p";
+            });
+          }
+
+          movieButtonPlyr.on("ready", function() {
+            installCustomSeekBar();
+            setTimeout(syncCustomSeekBar, 300);
+            if (playerShell) {
+              try { playerShell.focus({ preventScroll: true }); } catch {}
+            }
+          });
+
+          movieButtonPlyr.on("timeupdate", syncCustomSeekBar);
+          movieButtonPlyr.on("seeked", syncCustomSeekBar);
+          movieButtonPlyr.on("loadedmetadata", syncCustomSeekBar);
+          movieButtonPlyr.on("canplay", syncCustomSeekBar);
+
+          return movieButtonPlyr;
+        }
+
+        function startPlyrHlsSource(src, data) {
+          setPlayerStatus("Loading m3u8...", "Starting Plyr + HLS.js player", false);
+
+          loadPlyrAssets(function(plyrLoaded) {
+            if (!plyrLoaded || !window.Plyr) {
+              setPlayerStatus("Plyr failed to load", "Using native/HLS.js fallback controls.", true);
+            }
+
+            destroyRegularMoviePlayers();
+
+            try {
+              video.className = "dsMovieButtonVideo dsCinemaHlsVideo";
+              video.controls = true;
+              video.crossOrigin = "anonymous";
+              video.removeAttribute("src");
+              video.load();
+            } catch {}
+
+            var nativeHls = video.canPlayType("application/vnd.apple.mpegurl") || video.canPlayType("application/x-mpegURL");
+            if (nativeHls && !window.Hls) {
+              video.src = src;
+              try { video.load(); } catch {}
+              if (plyrLoaded) initPlyrUi(null, []);
+              installCustomSeekBar();
+              setPlayerStatus("m3u8 ready", "Native HLS loaded. Timeline enabled.", false);
+              setStatus("m3u8 loaded. Timeline enabled.");
+              setTimeout(syncCustomSeekBar, 500);
+              hidePlayerStatusSoon();
+              return;
+            }
+
+            loadHlsScript(function(loaded) {
+              if (!loaded || !window.Hls || !window.Hls.isSupported()) {
+                if (nativeHls) {
+                  video.src = src;
+                  try { video.load(); } catch {}
+                  if (plyrLoaded) initPlyrUi(null, []);
+                  installCustomSeekBar();
+                  setPlayerStatus("m3u8 ready", "Native HLS loaded. Timeline enabled.", false);
+                  setStatus("m3u8 loaded. Timeline enabled.");
+                  setTimeout(syncCustomSeekBar, 500);
+                  hidePlayerStatusSoon();
+                  return;
+                }
+
+                setPlayerStatus("HLS could not load", "This browser needs HLS.js or native HLS support to play this m3u8.", true);
+                setStatus("HLS player failed to load.");
+                return;
+              }
+
+              movieButtonHls = new window.Hls({
+                debug: false,
+                enableWorker: true,
+                lowLatencyMode: false,
+                backBufferLength: 90,
+                maxBufferLength: 60,
+                maxMaxBufferLength: 180,
+                startPosition: -1,
+                capLevelToPlayerSize: true,
+                manifestLoadingMaxRetry: 4,
+                levelLoadingMaxRetry: 4,
+                fragLoadingMaxRetry: 6,
+                manifestLoadingTimeOut: 30000,
+                levelLoadingTimeOut: 30000,
+                fragLoadingTimeOut: 30000
+              });
+
+              movieButtonHls.on(window.Hls.Events.MEDIA_ATTACHED, function() {
+                setPlayerStatus("Loading m3u8...", "Fetching manifest", false);
+                movieButtonHls.loadSource(src);
+              });
+
+              movieButtonHls.on(window.Hls.Events.MANIFEST_PARSED, function(event, parsed) {
+                var levels = parsed && parsed.levels ? parsed.levels : [];
+                var heights = uniqueHlsHeights(levels);
+                if (plyrLoaded) initPlyrUi(movieButtonHls, levels);
+                installCustomSeekBar();
+                setPlayerStatus("m3u8 ready", "Plyr + HLS.js loaded" + (heights.length ? " • " + heights.join("p / ") + "p" : "") + ". Timeline enabled.", false);
+                setStatus("m3u8 loaded. Timeline enabled.");
+                setTimeout(syncCustomSeekBar, 500);
+                hidePlayerStatusSoon();
+              });
+
+              movieButtonHls.on(window.Hls.Events.ERROR, function(event, err) {
+                if (!err) return;
+                var detail = String(err.details || err.reason || err.type || "Unknown HLS error");
+
+                if (!err.fatal) {
+                  setPlayerStatus("HLS warning", detail, false);
+                  return;
+                }
+
+                if (err.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
+                  setPlayerStatus("HLS network error", "Retrying stream load...", true);
+                  try { movieButtonHls.startLoad(); } catch {}
+                  return;
+                }
+
+                if (err.type === window.Hls.ErrorTypes.MEDIA_ERROR) {
+                  setPlayerStatus("HLS media error", "Trying media recovery...", true);
+                  try { movieButtonHls.recoverMediaError(); } catch {}
+                  return;
+                }
+
+                setPlayerStatus("HLS failed", detail, true);
+                setStatus("HLS failed: " + detail);
+              });
+
+              movieButtonHls.attachMedia(video);
+            });
+          });
+        }
+
         function isHlsUrl(url, data) {
           var value = String(url || "");
           var type = String((data && data.streamType) || "").toLowerCase();
@@ -31195,6 +31675,7 @@ async function watchPage(req, res, type) {
           if (playerShell) { playerShell.hidden = false; installCinemaPlayerShortcuts(); installCustomSeekBar(); }
           if (shell) shell.classList.add("isReady");
           setStatus("Source found. Loading player...");
+          destroyRegularMoviePlayers();
 
           try {
             video.crossOrigin = "anonymous";
@@ -31212,148 +31693,7 @@ async function watchPage(req, res, type) {
             return;
           }
 
-          setPlayerStatus("Loading m3u8...", "Starting Video.js player", false);
-
-          if (window.videojs) {
-            try {
-              if (movieButtonPlayer) {
-                try { movieButtonPlayer.dispose(); } catch {}
-                movieButtonPlayer = null;
-              }
-
-              video.classList.add("video-js", "vjs-big-play-centered", "vjs-theme-swifly");
-
-              movieButtonPlayer = window.videojs(video, {
-                controls: true,
-                autoplay: false,
-                preload: "auto",
-                fluid: false,
-                fill: true,
-                responsive: true,
-                liveui: false,
-                inactivityTimeout: 1800,
-                playbackRates: [0.5, 0.75, 1, 1.25, 1.5, 2],
-                controlBar: {
-                  pictureInPictureToggle: true,
-                  volumePanel: { inline: false },
-                  remainingTimeDisplay: false
-                },
-                html5: {
-                  vhs: {
-                    overrideNative: true,
-                    withCredentials: false,
-                    enableLowInitialPlaylist: true,
-                    smoothQualityChange: true,
-                    useDevicePixelRatio: true,
-                    handlePartialData: true
-                  },
-                  nativeAudioTracks: false,
-                  nativeVideoTracks: false
-                },
-                sources: [{
-                  src: src,
-                  type: "application/x-mpegURL"
-                }]
-              });
-
-              movieButtonPlayer.ready(function(){
-                setPlayerStatus("m3u8 ready", "Video.js loaded. Timeline enabled.", false);
-                setStatus("m3u8 loaded. Timeline enabled.");
-                installCustomSeekBar();
-                try { movieButtonPlayer.on("timeupdate", syncCustomSeekBar); } catch {}
-                try { movieButtonPlayer.on("durationchange", syncCustomSeekBar); } catch {}
-                try { movieButtonPlayer.on("loadedmetadata", syncCustomSeekBar); } catch {}
-                if (playerShell) { try { playerShell.focus({ preventScroll: true }); } catch {} }
-                setTimeout(syncCustomSeekBar, 500);
-                hidePlayerStatusSoon();
-              });
-
-              movieButtonPlayer.on("error", function(){
-                var err = movieButtonPlayer.error && movieButtonPlayer.error();
-                var message = err && (err.message || err.code) ? String(err.message || ("Code " + err.code)) : "Unknown Video.js error";
-                setPlayerStatus("Video.js error", message, true);
-                setStatus("Video.js error: " + message);
-              });
-
-              return;
-            } catch (error) {
-              setPlayerStatus("Video.js failed", error.message || "Trying HLS.js fallback", true);
-            }
-          }
-
-          loadHlsScript(function(loaded) {
-            if (!loaded || !window.Hls || !window.Hls.isSupported()) {
-              setPlayerStatus("HLS.js did not load", "This browser needs Video.js or HLS.js to play this m3u8.", true);
-              setStatus("HLS.js failed to load.");
-              return;
-            }
-
-            if (movieButtonHls) {
-              try { movieButtonHls.destroy(); } catch {}
-              movieButtonHls = null;
-            }
-
-            movieButtonHls = new window.Hls({
-              debug: false,
-              enableWorker: true,
-              lowLatencyMode: true,
-              backBufferLength: 90,
-              maxBufferLength: 45,
-              maxMaxBufferLength: 120,
-              liveSyncDurationCount: 3,
-              liveMaxLatencyDurationCount: 8,
-              startPosition: -1,
-              capLevelToPlayerSize: true,
-              manifestLoadingMaxRetry: 4,
-              levelLoadingMaxRetry: 4,
-              fragLoadingMaxRetry: 6,
-              manifestLoadingTimeOut: 30000,
-              levelLoadingTimeOut: 30000,
-              fragLoadingTimeOut: 30000
-            });
-
-            movieButtonHls.on(window.Hls.Events.MEDIA_ATTACHED, function() {
-              setPlayerStatus("Loading m3u8...", "Fetching manifest", false);
-              movieButtonHls.loadSource(src);
-            });
-
-            movieButtonHls.on(window.Hls.Events.MANIFEST_PARSED, function(event, parsed) {
-              var levels = parsed && parsed.levels ? parsed.levels.length : 0;
-              setPlayerStatus("m3u8 ready", "HLS.js loaded" + (levels ? " • " + levels + " qualities" : "") + ". Timeline enabled.", false);
-              setStatus("m3u8 loaded. Timeline enabled.");
-              installCustomSeekBar();
-              if (playerShell) { try { playerShell.focus({ preventScroll: true }); } catch {} }
-              setTimeout(syncCustomSeekBar, 500);
-              hidePlayerStatusSoon();
-            });
-
-            movieButtonHls.on(window.Hls.Events.ERROR, function(event, err) {
-              if (!err) return;
-              var detail = String(err.details || err.reason || err.type || "Unknown HLS error");
-
-              if (!err.fatal) {
-                setPlayerStatus("HLS warning", detail, false);
-                return;
-              }
-
-              if (err.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
-                setPlayerStatus("HLS network error", "Retrying stream load...", true);
-                try { movieButtonHls.startLoad(); } catch {}
-                return;
-              }
-
-              if (err.type === window.Hls.ErrorTypes.MEDIA_ERROR) {
-                setPlayerStatus("HLS media error", "Trying media recovery...", true);
-                try { movieButtonHls.recoverMediaError(); } catch {}
-                return;
-              }
-
-              setPlayerStatus("HLS failed", detail, true);
-              setStatus("HLS failed: " + detail);
-            });
-
-            movieButtonHls.attachMedia(video);
-          });
+          startPlyrHlsSource(src, data);
         }
 
         async function tryProxyVideo(manual) {
