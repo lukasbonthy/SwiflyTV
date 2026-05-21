@@ -25237,6 +25237,307 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v116 LAYOUT + ADVANCED EFFECTS STUDIO
+       Adds layout presets, card-style presets, stronger detailed
+       effects, backdrop modes, and more granular visual controls.
+       ============================================================ */
+
+    :root {
+      --studio-detail-glow: .28;
+      --studio-detail-lift: 1;
+      --studio-detail-saturation: 1.04;
+      --studio-detail-shine: .58;
+      --studio-layout-card-min: 164px;
+      --studio-layout-card-max: 292px;
+      --studio-row-gap: 16px;
+    }
+
+    body.detail-clean {
+      --studio-detail-glow: .08;
+      --studio-detail-lift: .45;
+      --studio-detail-saturation: 1;
+      --studio-detail-shine: .18;
+    }
+
+    body.detail-balanced {
+      --studio-detail-glow: .28;
+      --studio-detail-lift: 1;
+      --studio-detail-saturation: 1.05;
+      --studio-detail-shine: .58;
+    }
+
+    body.detail-max {
+      --studio-detail-glow: .58;
+      --studio-detail-lift: 1.28;
+      --studio-detail-saturation: 1.13;
+      --studio-detail-shine: .92;
+    }
+
+    body.detail-max .posterWrap::before,
+    body.detail-max .previewPoster::after {
+      opacity: var(--studio-detail-shine);
+    }
+
+    body.detail-max .posterWrap:hover {
+      filter: saturate(var(--studio-detail-saturation)) contrast(1.075) brightness(1.035);
+    }
+
+    body.backdrop-grain .dsContent::after,
+    body.backdrop-grain::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      opacity: .11;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.78' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.48'/%3E%3C/svg%3E");
+      mix-blend-mode: screen;
+    }
+
+    body.backdrop-aurora {
+      background:
+        radial-gradient(1100px circle at 10% -10%, rgba(85,215,255,.20), transparent 43%),
+        radial-gradient(900px circle at 88% 0%, rgba(139,92,246,.28), transparent 45%),
+        radial-gradient(900px circle at 50% 115%, rgba(229,9,20,.14), transparent 50%),
+        #050711 !important;
+    }
+
+    body.backdrop-aurora .dsContent::before {
+      opacity: .95;
+      filter: blur(38px);
+      animation: swiflyAuroraFloat 16s ease-in-out infinite alternate;
+    }
+
+    body.backdrop-grid::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background:
+        linear-gradient(rgba(255,255,255,.026) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.026) 1px, transparent 1px),
+        radial-gradient(880px circle at 15% 0%, rgba(85,215,255,.13), transparent 42%),
+        radial-gradient(880px circle at 90% 0%, rgba(139,92,246,.16), transparent 42%);
+      background-size: 56px 56px, 56px 56px, auto, auto;
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,.90), transparent 86%);
+    }
+
+    body.layout-cinema {
+      --studio-layout-card-min: 230px;
+      --studio-layout-card-max: 345px;
+      --studio-row-gap: 10px;
+    }
+
+    body.layout-cinema .movieRail,
+    body.layout-cinema .showcaseRail,
+    body.layout-cinema .nfRail {
+      grid-auto-columns: minmax(240px, 340px) !important;
+      gap: 10px !important;
+    }
+
+    body.layout-cinema .movieRail .posterWrap,
+    body.layout-cinema .showcaseRail .posterWrap,
+    body.layout-cinema .nfRail .posterWrap,
+    body.layout-cinema .netflixCatalog .posterWrap {
+      aspect-ratio: 16 / 9 !important;
+    }
+
+    body.layout-posterwall .movieRail,
+    body.layout-posterwall .showcaseRail,
+    body.layout-posterwall .nfRail {
+      grid-auto-columns: minmax(150px, 205px) !important;
+      gap: 16px !important;
+    }
+
+    body.layout-posterwall .movieRail .posterWrap,
+    body.layout-posterwall .showcaseRail .posterWrap,
+    body.layout-posterwall .nfRail .posterWrap,
+    body.layout-posterwall .netflixCatalog .posterWrap {
+      aspect-ratio: 2 / 3 !important;
+    }
+
+    body.layout-posterwall .movieGrid,
+    body.layout-posterwall .netflixCatalog .movieGrid {
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
+      gap: 20px !important;
+    }
+
+    body.layout-spotlight .section,
+    body.layout-spotlight .nfRowSection {
+      padding-block: 26px !important;
+    }
+
+    body.layout-spotlight .sectionHead h2,
+    body.layout-spotlight .showcaseRowTitle {
+      font-size: clamp(30px, 3.3vw, 56px) !important;
+      letter-spacing: -.085em !important;
+    }
+
+    body.layout-spotlight .movieRail,
+    body.layout-spotlight .showcaseRail,
+    body.layout-spotlight .nfRail {
+      grid-auto-columns: minmax(290px, 430px) !important;
+      gap: 18px !important;
+    }
+
+    body.layout-spotlight .movieRail .posterWrap,
+    body.layout-spotlight .showcaseRail .posterWrap,
+    body.layout-spotlight .nfRail .posterWrap {
+      aspect-ratio: 16 / 9 !important;
+      border-radius: 30px !important;
+    }
+
+    body.layout-dense .movieRail,
+    body.layout-dense .showcaseRail,
+    body.layout-dense .nfRail {
+      grid-auto-columns: minmax(128px, 174px) !important;
+      gap: 8px !important;
+    }
+
+    body.layout-dense .movieGrid,
+    body.layout-dense .netflixCatalog .movieGrid {
+      grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)) !important;
+      gap: 10px !important;
+    }
+
+    body.layout-dense .sectionHead {
+      margin-top: 26px !important;
+    }
+
+    body.cardstyle-sharp .posterWrap,
+    body.cardstyle-sharp .nfThumb,
+    body.cardstyle-sharp .topTenPoster,
+    body.cardstyle-sharp .previewPoster {
+      border-radius: 8px !important;
+    }
+
+    body.cardstyle-rounded .posterWrap,
+    body.cardstyle-rounded .nfThumb,
+    body.cardstyle-rounded .topTenPoster {
+      border-radius: 24px !important;
+    }
+
+    body.cardstyle-softglass .posterWrap,
+    body.cardstyle-softglass .nfThumb,
+    body.cardstyle-softglass .topTenPoster {
+      border: 1px solid rgba(255,255,255,.17) !important;
+      background:
+        radial-gradient(260px circle at 30% 0%, rgba(255,255,255,.13), transparent 52%),
+        rgba(255,255,255,.055) !important;
+      backdrop-filter: blur(16px) saturate(1.12);
+      -webkit-backdrop-filter: blur(16px) saturate(1.12);
+    }
+
+    body.cardstyle-float .posterWrap,
+    body.cardstyle-float .nfThumb,
+    body.cardstyle-float .topTenPoster {
+      border-radius: 28px !important;
+      box-shadow:
+        0 24px 82px rgba(0,0,0,.42),
+        0 0 calc(70px * var(--studio-detail-glow)) rgba(85,215,255,.28) !important;
+    }
+
+    body.cardstyle-float .movieCard,
+    body.cardstyle-float .nfTitleCard,
+    body.cardstyle-float .topTenCard {
+      transform: translateZ(0);
+    }
+
+    body.effect-cinematic.detail-max .posterWrap:hover,
+    body.effect-dropcart.detail-max .posterWrap:hover,
+    body.effect-neon.detail-max .posterWrap:hover {
+      box-shadow:
+        0 42px 118px rgba(0,0,0,.58),
+        0 0 calc(118px * var(--studio-detail-glow)) color-mix(in srgb, var(--purple) 70%, transparent),
+        0 0 calc(90px * var(--studio-detail-glow)) color-mix(in srgb, var(--cyan) 55%, transparent) !important;
+    }
+
+    body.effect-neon.detail-max .sectionHead h2,
+    body.effect-neon.detail-max .showcaseRowTitle {
+      text-shadow:
+        0 0 18px rgba(85,215,255,.26),
+        0 0 46px rgba(139,92,246,.24);
+    }
+
+    body.effect-dropcart.detail-max .posterWrap::after {
+      animation-duration: .55s;
+    }
+
+    body.effect-glass.detail-max .controlPanel,
+    body.effect-glass.detail-max .posterWrap,
+    body.effect-glass.detail-max .topbar {
+      backdrop-filter: blur(34px) saturate(1.26) !important;
+      -webkit-backdrop-filter: blur(34px) saturate(1.26) !important;
+    }
+
+    .studioMetricRow {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin: 12px 0 2px;
+    }
+
+    .studioMetric {
+      min-height: 58px;
+      padding: 10px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.045);
+      border: 1px solid rgba(255,255,255,.08);
+      display: grid;
+      align-content: center;
+      gap: 3px;
+    }
+
+    .studioMetric b {
+      color: white;
+      font-size: 13px;
+      font-weight: 950;
+      letter-spacing: -.02em;
+    }
+
+    .studioMetric span {
+      color: rgba(255,255,255,.44);
+      font-size: 10px;
+      font-weight: 850;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .compactStudioGrid button[data-layout],
+    .compactStudioGrid button[data-cardstyle],
+    .compactStudioGrid button[data-detail],
+    .compactStudioGrid button[data-backdrop] {
+      min-width: 118px;
+    }
+
+    @keyframes swiflyAuroraFloat {
+      from { transform: translate3d(-1.4%, -1%, 0) scale(1.04); }
+      to { transform: translate3d(1.2%, .8%, 0) scale(1.11); }
+    }
+
+
+    body.detail-max .posterWrap::before {
+      background:
+        radial-gradient(260px circle at var(--light-x, 50%) var(--light-y, 20%), rgba(255,255,255,.34), transparent 42%),
+        radial-gradient(380px circle at var(--mx, 50%) var(--my, 20%), color-mix(in srgb, var(--cyan) 22%, transparent), transparent 54%),
+        linear-gradient(120deg, transparent 14%, rgba(255,255,255,.14) 38%, transparent 58%) !important;
+    }
+
+    @media(max-width: 760px) {
+      body.layout-spotlight .movieRail,
+      body.layout-spotlight .showcaseRail,
+      body.layout-spotlight .nfRail {
+        grid-auto-columns: minmax(250px, 82vw) !important;
+      }
+
+      .studioMetricRow {
+        grid-template-columns: 1fr;
+      }
+    }
+
   </style>
 
     <script>
@@ -25446,7 +25747,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       <div class="previewPoster"></div>
       <div class="previewText">
         <b>Live preview</b>
-        <span>Theme, fonts, spacing, and effects save on this browser.</span>
+        <span>Layouts, cards, backdrops, fonts, and effects save on this browser.</span>
       </div>
     </div>
 
@@ -25479,6 +25780,33 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
     <div class="styleGroup">
       <div class="styleGroupTitle">
+        <b>Layout</b>
+        <span>gallery shape</span>
+      </div>
+      <div class="styleGrid compactStudioGrid">
+        <button data-layout="default">Default</button>
+        <button data-layout="cinema">Cinema Rows</button>
+        <button data-layout="posterwall">Poster Wall</button>
+        <button data-layout="spotlight">Spotlight</button>
+        <button data-layout="dense">Dense</button>
+      </div>
+    </div>
+
+    <div class="styleGroup">
+      <div class="styleGroupTitle">
+        <b>Cards</b>
+        <span>poster style</span>
+      </div>
+      <div class="styleGrid compactStudioGrid">
+        <button data-cardstyle="rounded">Rounded</button>
+        <button data-cardstyle="sharp">Sharp</button>
+        <button data-cardstyle="softglass">Soft Glass</button>
+        <button data-cardstyle="float">Floating</button>
+      </div>
+    </div>
+
+    <div class="styleGroup">
+      <div class="styleGroupTitle">
         <b>Effects</b>
         <span>motion + glow</span>
       </div>
@@ -25489,6 +25817,31 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
         <button data-effect="glass">Glass</button>
         <button data-effect="calm">Calm</button>
         <button data-effect="off">Off</button>
+      </div>
+    </div>
+
+    <div class="styleGroup">
+      <div class="styleGroupTitle">
+        <b>Detail</b>
+        <span>effect strength</span>
+      </div>
+      <div class="styleGrid compactStudioGrid">
+        <button data-detail="clean">Clean</button>
+        <button data-detail="balanced">Balanced</button>
+        <button data-detail="max">Max Detail</button>
+      </div>
+    </div>
+
+    <div class="styleGroup">
+      <div class="styleGroupTitle">
+        <b>Backdrop</b>
+        <span>page texture</span>
+      </div>
+      <div class="styleGrid compactStudioGrid">
+        <button data-backdrop="smooth">Smooth</button>
+        <button data-backdrop="grain">Film Grain</button>
+        <button data-backdrop="aurora">Aurora</button>
+        <button data-backdrop="grid">Grid Glow</button>
       </div>
     </div>
 
@@ -25749,9 +26102,34 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
     function setActiveStudioButton(selector, value) {
       document.querySelectorAll(selector).forEach((button) => {
-        const attr = selector.includes("theme") ? "theme" : selector.includes("font") ? "font" : selector.includes("effect") ? "effect" : "density";
+        const attr = selector.includes("theme") ? "theme"
+          : selector.includes("font") ? "font"
+          : selector.includes("effect") ? "effect"
+          : selector.includes("layout") ? "layout"
+          : selector.includes("cardstyle") ? "cardstyle"
+          : selector.includes("detail") ? "detail"
+          : selector.includes("backdrop") ? "backdrop"
+          : "density";
         button.classList.toggle("active", button.dataset[attr] === value);
       });
+    }
+
+    function studioLabel(value) {
+      return String(value || "")
+        .replace(/-/g, " ")
+        .replace(/\b\w/g, (letter) => letter.toUpperCase());
+    }
+
+    function updateStudioPreviewLabels() {
+      const layout = localStorage.getItem("movieverse.layout") || "default";
+      const effect = localStorage.getItem("movieverse.effect") || "cinematic";
+      const detail = localStorage.getItem("movieverse.detail") || "balanced";
+      const layoutLabel = document.getElementById("studioLayoutLabel");
+      const effectLabel = document.getElementById("studioEffectLabel");
+      const detailLabel = document.getElementById("studioDetailLabel");
+      if (layoutLabel) layoutLabel.textContent = studioLabel(layout);
+      if (effectLabel) effectLabel.textContent = studioLabel(effect);
+      if (detailLabel) detailLabel.textContent = studioLabel(detail);
     }
 
     function applyTheme(theme) {
@@ -25786,6 +26164,41 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       setActiveStudioButton("[data-density]", clean);
     }
 
+    function applyLayout(layout) {
+      const clean = layout || "default";
+      document.body.classList.remove("layout-default", "layout-cinema", "layout-posterwall", "layout-spotlight", "layout-dense");
+      document.body.classList.add("layout-" + clean);
+      localStorage.setItem("movieverse.layout", clean);
+      setActiveStudioButton("[data-layout]", clean);
+      updateStudioPreviewLabels();
+      requestAnimationFrame(() => window.dispatchEvent(new Event("resize")));
+    }
+
+    function applyCardStyle(cardstyle) {
+      const clean = cardstyle || "rounded";
+      document.body.classList.remove("cardstyle-rounded", "cardstyle-sharp", "cardstyle-softglass", "cardstyle-float");
+      document.body.classList.add("cardstyle-" + clean);
+      localStorage.setItem("movieverse.cardstyle", clean);
+      setActiveStudioButton("[data-cardstyle]", clean);
+    }
+
+    function applyDetail(detail) {
+      const clean = detail || "balanced";
+      document.body.classList.remove("detail-clean", "detail-balanced", "detail-max");
+      document.body.classList.add("detail-" + clean);
+      localStorage.setItem("movieverse.detail", clean);
+      setActiveStudioButton("[data-detail]", clean);
+      updateStudioPreviewLabels();
+    }
+
+    function applyBackdrop(backdrop) {
+      const clean = backdrop || "smooth";
+      document.body.classList.remove("backdrop-smooth", "backdrop-grain", "backdrop-aurora", "backdrop-grid");
+      document.body.classList.add("backdrop-" + clean);
+      localStorage.setItem("movieverse.backdrop", clean);
+      setActiveStudioButton("[data-backdrop]", clean);
+    }
+
     document.querySelectorAll("[data-theme]").forEach((button) => {
       button.addEventListener("click", () => {
         applyTheme(button.dataset.theme);
@@ -25814,6 +26227,34 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       });
     });
 
+    document.querySelectorAll("[data-layout]").forEach((button) => {
+      button.addEventListener("click", () => {
+        applyLayout(button.dataset.layout);
+        showToast("Layout changed");
+      });
+    });
+
+    document.querySelectorAll("[data-cardstyle]").forEach((button) => {
+      button.addEventListener("click", () => {
+        applyCardStyle(button.dataset.cardstyle);
+        showToast("Card style changed");
+      });
+    });
+
+    document.querySelectorAll("[data-detail]").forEach((button) => {
+      button.addEventListener("click", () => {
+        applyDetail(button.dataset.detail);
+        showToast(button.dataset.detail === "max" ? "Max detail on" : "Detail changed");
+      });
+    });
+
+    document.querySelectorAll("[data-backdrop]").forEach((button) => {
+      button.addEventListener("click", () => {
+        applyBackdrop(button.dataset.backdrop);
+        showToast("Backdrop changed");
+      });
+    });
+
     document.getElementById("motionToggle")?.addEventListener("click", () => {
       const next = !document.body.classList.contains("reduceMotion");
       document.body.classList.toggle("reduceMotion", next);
@@ -25827,6 +26268,10 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       applyFont("default");
       applyEffect("cinematic");
       applyDensity("comfy");
+      applyLayout("default");
+      applyCardStyle("rounded");
+      applyDetail("balanced");
+      applyBackdrop("smooth");
       document.body.classList.remove("reduceMotion");
       localStorage.setItem("movieverse.reduceMotion", "off");
       document.getElementById("motionToggle")?.classList.remove("active");
@@ -25837,6 +26282,11 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     applyFont(localStorage.getItem("movieverse.font") || "default");
     applyEffect(localStorage.getItem("movieverse.effect") || "cinematic");
     applyDensity(localStorage.getItem("movieverse.density") || "comfy");
+    applyLayout(localStorage.getItem("movieverse.layout") || "default");
+    applyCardStyle(localStorage.getItem("movieverse.cardstyle") || "rounded");
+    applyDetail(localStorage.getItem("movieverse.detail") || "balanced");
+    applyBackdrop(localStorage.getItem("movieverse.backdrop") || "smooth");
+    updateStudioPreviewLabels();
     document.body.classList.toggle("reduceMotion", localStorage.getItem("movieverse.reduceMotion") === "on");
     document.getElementById("motionToggle")?.classList.toggle("active", localStorage.getItem("movieverse.reduceMotion") === "on");
 
@@ -25852,8 +26302,12 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
           const py = (event.clientY - rect.top) / rect.height;
           wrap.style.setProperty("--mx", Math.round(px * 100) + "%");
           wrap.style.setProperty("--my", Math.round(py * 100) + "%");
-          wrap.style.setProperty("--tilt-x", ((px - .5) * 7).toFixed(2));
-          wrap.style.setProperty("--tilt-y", ((py - .5) * 7).toFixed(2));
+          const maxDetail = document.body.classList.contains("detail-max");
+          const tiltAmount = maxDetail ? 11 : 7;
+          wrap.style.setProperty("--tilt-x", ((px - .5) * tiltAmount).toFixed(2));
+          wrap.style.setProperty("--tilt-y", ((py - .5) * tiltAmount).toFixed(2));
+          wrap.style.setProperty("--light-x", ((px * 100).toFixed(1)) + "%");
+          wrap.style.setProperty("--light-y", ((py * 100).toFixed(1)) + "%");
         });
       }, { passive: true });
 
