@@ -29759,419 +29759,363 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
 
     /* ============================================================
-       v129 VIDEO.JS RELIABLE MINIMAL PLAYER
-       Fixes "doesn't even work" by rebuilding the video node after
-       disposal and removes the disliked custom play overlay.
+       v129 VIDEO.JS MINIMAL MODERN PLAYER
+       Fixes broken/ugly v128:
+       - removes custom overlay play/skip UI
+       - avoids fragile custom Video.js component registration
+       - uses native Video.js big play + control bar
+       - cleaner modern streaming-app skin
        ============================================================ */
 
-    .dsVideoJsCinemaShell {
+    .dsVideoJsCinemaShell.v129MinimalPlayer {
       --player-radius: 24px;
-      border-radius: var(--player-radius) !important;
       background: #000 !important;
+      border-radius: var(--player-radius) !important;
       outline: 1px solid rgba(255,255,255,.08) !important;
       box-shadow:
-        0 30px 96px rgba(0,0,0,.52),
-        0 0 48px rgba(85,215,255,.06) !important;
+        0 32px 110px rgba(0,0,0,.56),
+        0 0 56px rgba(85,215,255,.055) !important;
       overflow: hidden !important;
     }
 
-    .dsVideoJsCinemaShell::after,
-    .dsCinemaPlayerAura,
-    .dsVideoJsCenter,
-    .dsVideoJsCenterDeprecated,
-    .dsVideoJsHint,
-    .dsCinemaSeekDock {
-      display: none !important;
+    .dsVideoJsCinemaShell.v129MinimalPlayer::after {
+      opacity: .22 !important;
+      background:
+        linear-gradient(to bottom, rgba(0,0,0,.32), transparent 22%, transparent 74%, rgba(0,0,0,.36)) !important;
+      pointer-events: none !important;
     }
 
-    .dsVideoJsCinemaShell.usesVideoJs .video-js,
-    .dsVideoJsCinemaShell.usesVideoJs .dsCinemaHlsVideo {
-      width: 100% !important;
-      height: clamp(360px, 72vh, 760px) !important;
-      min-height: 360px !important;
-      max-height: 82vh !important;
+    .dsVideoJsCinemaShell.v129MinimalPlayer .dsCinemaPlayerAura {
+      opacity: .10 !important;
+      filter: blur(54px) !important;
+    }
+
+    .dsVideoJsCinemaShell.v129MinimalPlayer .dsVideoJsCenter,
+    .dsVideoJsCinemaShell.v129MinimalPlayer .dsCinemaSeekDock,
+    .dsVideoJsCinemaShell.v129MinimalPlayer .dsVideoJsHint {
+      display: none !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      visibility: hidden !important;
+    }
+
+    .dsVideoJsCinemaShell.v129MinimalPlayer .dsVideoJsTop {
+      max-width: min(300px, calc(100% - 28px)) !important;
+      left: 14px !important;
+      top: 14px !important;
+      padding: 8px 10px !important;
+      border-radius: 14px !important;
+      background: rgba(4,7,18,.48) !important;
+      border-color: rgba(255,255,255,.08) !important;
+      box-shadow: 0 12px 34px rgba(0,0,0,.24) !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v129MinimalPlayer:hover .dsVideoJsTop,
+    .dsVideoJsCinemaShell.v129MinimalPlayer:focus-within .dsVideoJsTop {
+      opacity: .74 !important;
+    }
+
+    .dsVideoJsCinemaShell.v129MinimalPlayer .dsVideoJsTop span {
+      font-size: 8px !important;
+      color: rgba(167,243,208,.82) !important;
+    }
+
+    .dsVideoJsCinemaShell.v129MinimalPlayer .dsVideoJsTop b {
+      font-size: 13px !important;
+      letter-spacing: -.03em !important;
+    }
+
+    .dsVideoJsCinemaShell.v129MinimalPlayer .dsVideoJsTop small {
+      font-size: 9px !important;
+      opacity: .7;
+    }
+
+    .dsVideoJsCinemaShell.v129MinimalPlayer .dsHlsStatus {
+      max-width: min(280px, calc(100% - 28px)) !important;
+      left: 14px !important;
+      top: 14px !important;
+      padding: 8px 10px !important;
+      border-radius: 14px !important;
+      background: rgba(4,7,18,.58) !important;
+      border: 1px solid rgba(255,255,255,.085) !important;
+      box-shadow: 0 12px 34px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.045) !important;
+      backdrop-filter: blur(14px) saturate(1.08) !important;
+      -webkit-backdrop-filter: blur(14px) saturate(1.08) !important;
+      z-index: 52 !important;
+    }
+
+    .dsVideoJsCinemaShell.v129MinimalPlayer .dsHlsStatus b {
+      font-size: 13px !important;
+      line-height: 1.05 !important;
+    }
+
+    .dsVideoJsCinemaShell.v129MinimalPlayer .dsHlsStatus span {
+      font-size: 10px !important;
+      margin-top: 2px !important;
+    }
+
+    .dsVideoJsCinemaShell.v129MinimalPlayer.isPlaying .dsHlsStatus:not(.isError),
+    .dsVideoJsCinemaShell.v129MinimalPlayer.v128VideoReady .dsHlsStatus:not(.isError),
+    .dsVideoJsCinemaShell.v129MinimalPlayer.isReady .dsHlsStatus:not(.isError) {
+      opacity: 0 !important;
+      transform: translateY(-8px) !important;
+      pointer-events: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v129MinimalPlayer .video-js {
       border-radius: var(--player-radius) !important;
       background: #000 !important;
       overflow: hidden !important;
     }
 
-    .vjs-theme-swifly {
-      color: white !important;
-      font-family: var(--font-ui, Inter, system-ui, sans-serif) !important;
-      background: #000 !important;
-    }
-
-    .vjs-theme-swifly .vjs-tech {
+    .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-tech {
       object-fit: contain !important;
       background: #000 !important;
     }
 
-    .vjs-theme-swifly .vjs-big-play-button {
+    .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-big-play-button {
       display: block !important;
-      width: 74px !important;
-      height: 74px !important;
-      line-height: 74px !important;
+      width: clamp(66px, 7vw, 96px) !important;
+      height: clamp(66px, 7vw, 96px) !important;
+      line-height: clamp(66px, 7vw, 96px) !important;
+      left: 50% !important;
+      top: 50% !important;
+      margin-left: calc(clamp(66px, 7vw, 96px) / -2) !important;
+      margin-top: calc(clamp(66px, 7vw, 96px) / -2) !important;
       border-radius: 999px !important;
-      border: 1px solid rgba(255,255,255,.16) !important;
+      border: 1px solid rgba(255,255,255,.18) !important;
+      color: white !important;
       background:
-        radial-gradient(circle at 35% 20%, rgba(255,255,255,.18), transparent 42%),
-        rgba(5,8,18,.62) !important;
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.20), transparent 44%),
+        rgba(8,12,24,.54) !important;
       box-shadow:
-        0 20px 70px rgba(0,0,0,.46),
+        0 24px 84px rgba(0,0,0,.54),
         0 0 34px rgba(85,215,255,.12) !important;
-      backdrop-filter: blur(16px) saturate(1.08);
-      -webkit-backdrop-filter: blur(16px) saturate(1.08);
-      margin-top: -37px !important;
-      margin-left: -37px !important;
-      transition: transform .16s ease, background .16s ease, border-color .16s ease !important;
+      backdrop-filter: blur(18px) saturate(1.10) !important;
+      -webkit-backdrop-filter: blur(18px) saturate(1.10) !important;
+      transition: transform .18s ease, background .18s ease, border-color .18s ease, opacity .18s ease !important;
+      opacity: .96 !important;
     }
 
-    .vjs-theme-swifly:hover .vjs-big-play-button,
-    .vjs-theme-swifly .vjs-big-play-button:focus {
-      transform: scale(1.04);
+    .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-big-play-button:hover,
+    .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-big-play-button:focus {
+      transform: scale(1.055) !important;
       border-color: rgba(223,248,255,.28) !important;
       background:
-        radial-gradient(circle at 35% 20%, rgba(255,255,255,.24), transparent 42%),
-        rgba(8,13,28,.76) !important;
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.26), transparent 44%),
+        rgba(18,25,46,.68) !important;
     }
 
-    .vjs-theme-swifly .vjs-big-play-button .vjs-icon-placeholder::before {
-      font-size: 42px !important;
-      line-height: 74px !important;
-      color: white !important;
+    .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-big-play-button .vjs-icon-placeholder::before {
+      font-size: clamp(28px, 3vw, 42px) !important;
+      line-height: clamp(66px, 7vw, 96px) !important;
       text-shadow: none !important;
     }
 
-    .vjs-theme-swifly.vjs-has-started .vjs-big-play-button {
-      display: none !important;
+    .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-has-started .vjs-big-play-button,
+    .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-playing .vjs-big-play-button {
+      opacity: 0 !important;
+      pointer-events: none !important;
     }
 
-    .vjs-theme-swifly .vjs-control-bar {
-      height: 72px !important;
-      min-height: 72px !important;
-      display: flex !important;
-      align-items: flex-end !important;
+    .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-control-bar {
+      height: 76px !important;
+      min-height: 76px !important;
+      padding: 34px 14px 12px !important;
       gap: 2px !important;
-      padding: 32px 14px 10px !important;
+      align-items: flex-end !important;
       background:
-        linear-gradient(to top, rgba(0,0,0,.82), rgba(0,0,0,.50) 58%, transparent) !important;
-      opacity: 0 !important;
-      transform: translateY(10px) !important;
-      transition: opacity .18s ease, transform .18s ease !important;
-      border-radius: 0 0 var(--player-radius) var(--player-radius) !important;
+        linear-gradient(to top, rgba(0,0,0,.86), rgba(0,0,0,.52) 56%, transparent) !important;
       backdrop-filter: none !important;
       -webkit-backdrop-filter: none !important;
-      z-index: 44 !important;
+      opacity: 0 !important;
+      transform: translateY(10px) !important;
+      transition: opacity .16s ease, transform .16s ease !important;
     }
 
-    .vjs-theme-swifly.vjs-user-active .vjs-control-bar,
-    .vjs-theme-swifly.vjs-paused .vjs-control-bar {
+    .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-user-active .vjs-control-bar,
+    .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-paused .vjs-control-bar,
+    .dsVideoJsCinemaShell.v129MinimalPlayer:hover .vjs-control-bar,
+    .dsVideoJsCinemaShell.v129MinimalPlayer:focus-within .vjs-control-bar {
       opacity: 1 !important;
       transform: translateY(0) !important;
     }
 
-    .vjs-theme-swifly .vjs-progress-control {
-      position: absolute !important;
+    .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-progress-control {
       left: 14px !important;
       right: 14px !important;
-      bottom: 47px !important;
-      width: auto !important;
+      bottom: 50px !important;
       height: 24px !important;
-      z-index: 48 !important;
-      cursor: pointer !important;
+      width: auto !important;
+      z-index: 54 !important;
     }
 
-    .vjs-theme-swifly .vjs-progress-holder {
+    .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-progress-holder {
       height: 7px !important;
       margin: 8px 0 0 !important;
       border-radius: 999px !important;
       background: rgba(255,255,255,.18) !important;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.06) !important;
     }
 
-    .vjs-theme-swifly .vjs-load-progress,
-    .vjs-theme-swifly .vjs-play-progress {
+    .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-play-progress,
+    .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-load-progress {
       height: 7px !important;
       border-radius: 999px !important;
     }
 
-    .vjs-theme-swifly .vjs-play-progress {
+    .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-play-progress {
       background: linear-gradient(90deg, #55d7ff, #8b5cf6) !important;
-      box-shadow: 0 0 16px rgba(85,215,255,.24) !important;
+      box-shadow: 0 0 14px rgba(85,215,255,.24) !important;
     }
 
-    .vjs-theme-swifly .vjs-play-progress::before {
+    .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-play-progress::before {
+      top: -4px !important;
+      font-size: 13px !important;
       color: #dff8ff !important;
-      font-size: 12px !important;
-      top: -3px !important;
-      text-shadow: 0 0 14px rgba(85,215,255,.35);
+      text-shadow: 0 0 14px rgba(85,215,255,.35) !important;
     }
 
-    .vjs-theme-swifly .vjs-control {
+    .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-control {
       width: 34px !important;
       height: 34px !important;
       border-radius: 999px !important;
-      color: rgba(255,255,255,.80) !important;
+      color: rgba(255,255,255,.78) !important;
       background: transparent !important;
-      margin: 0 1px !important;
       transition: background .14s ease, color .14s ease, transform .14s ease !important;
     }
 
-    .vjs-theme-swifly .vjs-control:hover,
-    .vjs-theme-swifly .vjs-control:focus {
+    .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-control:hover,
+    .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-control:focus {
       color: white !important;
       background: rgba(255,255,255,.10) !important;
-      transform: translateY(-1px);
+      transform: translateY(-1px) !important;
     }
 
-    .vjs-theme-swifly .vjs-button > .vjs-icon-placeholder::before {
+    .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-button > .vjs-icon-placeholder::before {
       line-height: 34px !important;
       font-size: 16px !important;
     }
 
-    .vjs-theme-swifly .vjs-time-control {
-      display: block !important;
-      width: auto !important;
-      min-width: 42px !important;
-      padding: 0 4px !important;
-      color: rgba(255,255,255,.68) !important;
+    .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-time-control {
       font-size: 11px !important;
-      font-weight: 850 !important;
       line-height: 34px !important;
+      color: rgba(255,255,255,.62) !important;
+      padding-inline: 4px !important;
     }
 
-    .vjs-theme-swifly .vjs-time-divider {
-      min-width: 8px !important;
-      padding: 0 !important;
-      color: rgba(255,255,255,.30) !important;
-    }
-
-    .vjs-theme-swifly .vjs-playback-rate {
+    .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-playback-rate {
       width: 48px !important;
     }
 
-    .vjs-theme-swifly .vjs-playback-rate .vjs-playback-rate-value {
+    .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-playback-rate .vjs-playback-rate-value {
       line-height: 34px !important;
       font-size: 11px !important;
       font-weight: 950 !important;
     }
 
-    .vjs-theme-swifly .vjs-volume-panel.vjs-volume-panel-horizontal:hover,
-    .vjs-theme-swifly .vjs-volume-panel.vjs-volume-panel-horizontal.vjs-slider-active {
-      width: 112px !important;
-      background: rgba(255,255,255,.07) !important;
-      border-radius: 999px !important;
-    }
-
-    .vjs-theme-swifly .vjs-menu-content {
+    .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-menu-content {
       border-radius: 14px !important;
       border: 1px solid rgba(255,255,255,.10) !important;
-      background: rgba(5,8,18,.95) !important;
+      background: rgba(6,9,20,.94) !important;
       box-shadow: 0 18px 54px rgba(0,0,0,.42);
       backdrop-filter: blur(18px) saturate(1.12);
       -webkit-backdrop-filter: blur(18px) saturate(1.12);
     }
 
-    .vjs-theme-swifly .vjs-menu li.vjs-selected,
-    .vjs-theme-swifly .vjs-menu li:hover {
-      color: #06101d !important;
-      background: linear-gradient(135deg, #ffffff, #dff8ff) !important;
-    }
-
-    .vjs-swifly-skip-button .vjs-icon-placeholder::before {
-      content: "10" !important;
-      font-family: var(--font-ui, Inter, system-ui) !important;
-      font-size: 10px !important;
-      font-weight: 950 !important;
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: 999px;
-      width: 22px;
-      height: 22px;
-      line-height: 20px !important;
-      left: 6px !important;
-      top: 6px !important;
-      color: inherit !important;
-    }
-
-    .vjs-swifly-back-button::after,
-    .vjs-swifly-forward-button::after {
-      opacity: .70;
-      font-size: 12px !important;
-    }
-
-    .dsVideoJsTop {
-      display: none !important;
-    }
-
-    .dsVideoJsQuality {
+    .dsVideoJsCinemaShell.v129MinimalPlayer .dsVideoJsQuality {
       right: 14px !important;
-      bottom: 76px !important;
-      z-index: 58 !important;
+      bottom: 78px !important;
       opacity: 0 !important;
-      transform: translateY(8px) !important;
-      transition: opacity .16s ease, transform .16s ease !important;
+      transform: translateY(6px) !important;
     }
 
-    .dsVideoJsCinemaShell:hover .dsVideoJsQuality,
-    .dsVideoJsCinemaShell:focus-within .dsVideoJsQuality,
-    .dsVideoJsCinemaShell.isPaused .dsVideoJsQuality {
+    .dsVideoJsCinemaShell.v129MinimalPlayer:hover .dsVideoJsQuality,
+    .dsVideoJsCinemaShell.v129MinimalPlayer:focus-within .dsVideoJsQuality,
+    .dsVideoJsCinemaShell.v129MinimalPlayer.isPaused .dsVideoJsQuality {
       opacity: 1 !important;
       transform: translateY(0) !important;
     }
 
-    .dsVideoJsQualityToggle {
+    .dsVideoJsCinemaShell.v129MinimalPlayer .dsVideoJsQualityToggle {
       min-height: 30px !important;
-      min-width: 72px !important;
-      display: inline-flex !important;
-      align-items: center;
-      justify-content: center;
-      gap: 5px;
+      min-width: 74px !important;
       padding: 0 9px !important;
-      border-radius: 999px !important;
-      color: rgba(255,255,255,.82) !important;
-      background: rgba(5,8,18,.66) !important;
-      border: 1px solid rgba(255,255,255,.10) !important;
-      box-shadow: 0 10px 28px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.05) !important;
-      backdrop-filter: blur(14px) saturate(1.10);
-      -webkit-backdrop-filter: blur(14px) saturate(1.10);
-    }
-
-    .dsVideoJsQualityToggle span {
-      display: none !important;
-    }
-
-    .dsVideoJsQualityToggle b {
-      color: white;
-      font-size: 11px;
-      font-weight: 950;
-    }
-
-    .dsVideoJsQualityMenu {
-      bottom: 38px !important;
-      min-width: 112px !important;
-      border-radius: 14px !important;
-      background: rgba(5,8,18,.95) !important;
-    }
-
-    .dsVideoJsCinemaShell.usesVideoJs .dsHlsStatus {
-      left: 14px !important;
-      top: 14px !important;
-      bottom: auto !important;
-      max-width: 260px !important;
-      padding: 8px 10px !important;
-      border-radius: 14px !important;
+      gap: 5px !important;
       background: rgba(5,8,18,.58) !important;
-      border: 1px solid rgba(255,255,255,.08) !important;
-      box-shadow: 0 14px 38px rgba(0,0,0,.28) !important;
-      backdrop-filter: blur(14px) saturate(1.08);
-      -webkit-backdrop-filter: blur(14px) saturate(1.08);
-      z-index: 60 !important;
+      border: 1px solid rgba(255,255,255,.09) !important;
+      box-shadow: 0 10px 28px rgba(0,0,0,.24) !important;
     }
 
-    .dsVideoJsCinemaShell.usesVideoJs .dsHlsStatus b {
-      font-size: 12px !important;
-      line-height: 1 !important;
-      letter-spacing: -.025em !important;
+    .dsVideoJsCinemaShell.v129MinimalPlayer .dsVideoJsQualityToggle span {
+      font-size: 9px !important;
+      color: rgba(238,242,255,.42) !important;
     }
 
-    .dsVideoJsCinemaShell.usesVideoJs .dsHlsStatus span {
+    .dsVideoJsCinemaShell.v129MinimalPlayer .dsVideoJsQualityToggle b {
       font-size: 10px !important;
-      color: rgba(238,242,255,.54) !important;
     }
 
-    .dsVideoJsCinemaShell.v128VideoReady .dsHlsStatus:not(.isError),
-    .dsVideoJsCinemaShell.isPlaying .dsHlsStatus:not(.isError),
-    .dsVideoJsCinemaShell.isReady .dsHlsStatus:not(.isError) {
-      opacity: 0 !important;
-      pointer-events: none !important;
-      transform: translateY(-8px) !important;
+    .dsVideoJsCinemaShell.v129MinimalPlayer .dsVideoJsQualityMenu {
+      min-width: 112px !important;
+      bottom: 36px !important;
+      border-radius: 13px !important;
+      padding: 6px !important;
+      background: rgba(6,9,20,.94) !important;
     }
 
     @media(max-width: 900px) {
-      .dsVideoJsCinemaShell {
+      .dsVideoJsCinemaShell.v129MinimalPlayer {
         --player-radius: 20px;
       }
 
-      .dsVideoJsCinemaShell.usesVideoJs .video-js,
-      .dsVideoJsCinemaShell.usesVideoJs .dsCinemaHlsVideo {
-        height: clamp(300px, 58vh, 620px) !important;
-        min-height: 300px !important;
+      .dsVideoJsCinemaShell.v129MinimalPlayer,
+      .dsVideoJsCinemaShell.v129MinimalPlayer .video-js,
+      .dsVideoJsCinemaShell.v129MinimalPlayer .dsCinemaHlsVideo {
+        height: clamp(310px, 58vh, 610px) !important;
+        min-height: 310px !important;
       }
 
-      .vjs-theme-swifly .vjs-control-bar {
-        height: 68px !important;
-        min-height: 68px !important;
-        padding: 30px 9px 9px !important;
+      .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-control-bar {
+        height: 70px !important;
+        min-height: 70px !important;
+        padding: 30px 9px 10px !important;
       }
 
-      .vjs-theme-swifly .vjs-progress-control {
+      .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-progress-control {
         left: 9px !important;
         right: 9px !important;
-        bottom: 44px !important;
+        bottom: 46px !important;
       }
 
-      .vjs-theme-swifly .vjs-time-control,
-      .vjs-theme-swifly .vjs-volume-panel,
-      .vjs-theme-swifly .vjs-picture-in-picture-control {
+      .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-time-control,
+      .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-volume-panel,
+      .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-picture-in-picture-control {
         display: none !important;
       }
 
-      .dsVideoJsQuality {
-        right: 9px !important;
-        bottom: 68px !important;
+      .dsVideoJsCinemaShell.v129MinimalPlayer .dsVideoJsQuality,
+      .dsVideoJsCinemaShell.v129MinimalPlayer .dsVideoJsTop {
+        display: none !important;
       }
     }
 
     @media(max-width: 520px) {
-      .dsVideoJsCinemaShell {
+      .dsVideoJsCinemaShell.v129MinimalPlayer {
         --player-radius: 18px;
       }
 
-      .dsVideoJsCinemaShell.usesVideoJs .video-js,
-      .dsVideoJsCinemaShell.usesVideoJs .dsCinemaHlsVideo {
+      .dsVideoJsCinemaShell.v129MinimalPlayer,
+      .dsVideoJsCinemaShell.v129MinimalPlayer .video-js,
+      .dsVideoJsCinemaShell.v129MinimalPlayer .dsCinemaHlsVideo {
         height: 52vh !important;
-        min-height: 270px !important;
+        min-height: 274px !important;
       }
 
-      .dsVideoJsQuality {
+      .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-playback-rate {
         display: none !important;
       }
-
-      .vjs-swifly-skip-button,
-      .vjs-theme-swifly .vjs-playback-rate {
-        display: none !important;
-      }
-    }
-
-
-    /* ============================================================
-       v130 STUCK RESOLVER FIX
-       The previous page could freeze on "Starting request..." when the
-       watch script crashed before the resolver loop started.
-       ============================================================ */
-
-    .dsProxyVideoWaitStatus {
-      min-width: min(420px, calc(100vw - 48px));
-      text-align: center;
-      border-color: rgba(223,248,255,.16) !important;
-      background:
-        radial-gradient(180px circle at 30% 0%, rgba(85,215,255,.12), transparent 60%),
-        rgba(255,255,255,.055) !important;
-    }
-
-    .dsProxyVideoWaitingCard .dsStableActions {
-      position: relative;
-      z-index: 3;
-    }
-
-    .dsProxyVideoWaitingCard .dsSecondaryBtn,
-    .dsProxyVideoWaitingCard .dsGhostPill {
-      pointer-events: auto !important;
-    }
-
-    .dsProxyVideoWaitingCard h2 {
-      max-width: 820px;
-      text-wrap: balance;
     }
 
   </style>
@@ -33428,7 +33372,7 @@ async function watchPage(req, res, type) {
             <small id="movieButtonHlsMeta">Video.js VHS</small>
           </div>
 
-          <div class="dsVideoJsCenter dsVideoJsCenterDeprecated" hidden>
+          <div class="dsVideoJsCenter">
             <button id="movieButtonBack10" type="button" aria-label="Back 10 seconds"><span>↺</span><small>10</small></button>
             <button id="movieButtonBigPlay" type="button" aria-label="Play or pause"><span>▶</span></button>
             <button id="movieButtonForward10" type="button" aria-label="Forward 10 seconds"><small>10</small><span>↻</span></button>
@@ -33548,7 +33492,7 @@ async function watchPage(req, res, type) {
         var movieId = ${JSON.stringify(id)};
         var clientWait = ${clientProxyVideoWait ? "true" : "false"};
         var waitStatus = document.getElementById("proxyVideoWaitStatus");
-        let video = document.getElementById("proxyVideoClientVideo");
+        var video = document.getElementById("proxyVideoClientVideo");
         var playerShell = document.getElementById("movieButtonPlayerShell");
         var hlsStatus = document.getElementById("movieButtonHlsStatus");
         var hlsTitle = document.getElementById("movieButtonHlsTitle");
@@ -33603,38 +33547,6 @@ async function watchPage(req, res, type) {
           playerShell.classList.toggle("isPaused", state === "paused");
           playerShell.classList.toggle("isLoading", state === "loading");
           playerShell.classList.toggle("isReady", state === "ready");
-        }
-
-        function rebuildVideoElementForVideoJs() {
-          if (!playerShell) return video;
-          var oldVideo = document.getElementById("proxyVideoClientVideo");
-          var fresh = document.createElement("video");
-          fresh.id = "proxyVideoClientVideo";
-          fresh.className = "dsMovieButtonVideo dsCinemaHlsVideo video-js vjs-big-play-centered vjs-theme-swifly";
-          fresh.setAttribute("controls", "");
-          fresh.setAttribute("playsinline", "");
-          fresh.setAttribute("crossorigin", "anonymous");
-          fresh.setAttribute("preload", "auto");
-
-          if (oldVideo && oldVideo.parentNode) {
-            oldVideo.parentNode.replaceChild(fresh, oldVideo);
-          } else {
-            var quality = playerShell.querySelector(".dsVideoJsQuality");
-            if (quality && quality.parentNode === playerShell) playerShell.insertBefore(fresh, quality);
-            else playerShell.appendChild(fresh);
-          }
-
-          video = fresh;
-          customSeekReady = false;
-          return video;
-        }
-
-        function safeDisposeVideoJs() {
-          if (movieButtonPlayer) {
-            try { movieButtonPlayer.off(); } catch {}
-            try { movieButtonPlayer.dispose(); } catch {}
-            movieButtonPlayer = null;
-          }
         }
 
         function formatClock(seconds) {
@@ -33906,8 +33818,8 @@ async function watchPage(req, res, type) {
           qualityToggle.onclick = function(event) {
             event.preventDefault();
             event.stopPropagation();
-            refresh();
             qualityMenu.hidden = !qualityMenu.hidden;
+            refresh();
           };
 
           setTimeout(refresh, 400);
@@ -33921,88 +33833,30 @@ async function watchPage(req, res, type) {
         });
 
         function addVideoJsSkipControls(player) {
-          if (!player || !player.controlBar || player.__swiflySkipControls) return;
-          player.__swiflySkipControls = true;
-
-          var Button = window.videojs.getComponent("Button");
-
-          var BackButton = window.videojs.extend(Button, {
-            constructor: function() {
-              Button.apply(this, arguments);
-              this.controlText("Back 10 seconds");
-              this.addClass("vjs-swifly-skip-button");
-              this.addClass("vjs-swifly-back-button");
-            },
-            handleClick: function() {
-              try {
-                var win = getSeekWindow();
-                video.currentTime = Math.max(win.start || 0, video.currentTime - 10);
-                syncCustomSeekBar();
-              } catch {}
-            }
-          });
-
-          var ForwardButton = window.videojs.extend(Button, {
-            constructor: function() {
-              Button.apply(this, arguments);
-              this.controlText("Forward 10 seconds");
-              this.addClass("vjs-swifly-skip-button");
-              this.addClass("vjs-swifly-forward-button");
-            },
-            handleClick: function() {
-              try {
-                var win = getSeekWindow();
-                video.currentTime = Math.min((win.end || video.currentTime + 10) - 0.15, video.currentTime + 10);
-                syncCustomSeekBar();
-              } catch {}
-            }
-          });
-
-          try {
-            if (!window.videojs.getComponent("SwiflyBack10Button")) {
-              window.videojs.registerComponent("SwiflyBack10Button", BackButton);
-            }
-          } catch {}
-          try {
-            if (!window.videojs.getComponent("SwiflyForward10Button")) {
-              window.videojs.registerComponent("SwiflyForward10Button", ForwardButton);
-            }
-          } catch {}
-
-          try {
-            if (!player.controlBar.getChild("SwiflyBack10Button")) {
-              player.controlBar.addChild("SwiflyBack10Button", {}, 1);
-            }
-            if (!player.controlBar.getChild("SwiflyForward10Button")) {
-              player.controlBar.addChild("SwiflyForward10Button", {}, 3);
-            }
-          } catch {}
+          // v129: Do not register custom Video.js components here.
+          // Some Video.js 8 CDN builds do not expose legacy helpers the same way,
+          // and a failed custom component can stop the player from finishing setup.
+          // Keyboard shortcuts still provide J/L and arrow seeking.
+          return;
         }
 
         function wireVideoJsOverlayControls(player) {
+          // v129: rely on Video.js's native big play/control bar instead of custom overlay buttons.
           function seekBy(delta) {
             try {
               var win = getSeekWindow();
               video.currentTime = Math.max(win.start || 0, Math.min((win.end || video.currentTime + delta) - 0.15, video.currentTime + delta));
-              syncCustomSeekBar();
             } catch {}
           }
 
+          if (back10Button) back10Button.onclick = function(event){ event.preventDefault(); seekBy(-10); };
+          if (forward10Button) forward10Button.onclick = function(event){ event.preventDefault(); seekBy(10); };
           if (bigPlayButton) {
             bigPlayButton.onclick = function(event) {
               event.preventDefault();
               if (video.paused) video.play().catch(function(){});
               else video.pause();
             };
-          }
-
-          if (back10Button) back10Button.onclick = function(event){ event.preventDefault(); seekBy(-10); };
-          if (forward10Button) forward10Button.onclick = function(event){ event.preventDefault(); seekBy(10); };
-
-          if (video && bigPlayButton) {
-            video.addEventListener("play", function(){ bigPlayButton.textContent = "Ⅱ"; setVideoUiState("playing"); });
-            video.addEventListener("playing", function(){ setVideoUiState("playing"); hidePlayerStatusSoon(); });
-            video.addEventListener("pause", function(){ bigPlayButton.textContent = "▶"; setVideoUiState("paused"); });
           }
         }
 
@@ -34012,12 +33866,12 @@ async function watchPage(req, res, type) {
           destroyRegularMoviePlayers();
 
           if (playerShell) {
-            playerShell.classList.remove("usesPlyr", "usesMediaChrome", "usesNativeVideo", "isScrubbing", "v128VideoReady");
-            playerShell.classList.add("usesVideoJs");
+            playerShell.classList.remove("usesPlyr", "usesMediaChrome", "usesNativeVideo", "isScrubbing", "v128VideoReady", "v129MinimalPlayer");
+            playerShell.classList.add("usesVideoJs", "v129MinimalPlayer");
           }
 
           try {
-            video = rebuildVideoElementForVideoJs();
+            video.className = "dsMovieButtonVideo dsCinemaHlsVideo video-js vjs-big-play-centered vjs-theme-swifly";
             video.controls = true;
             video.crossOrigin = "anonymous";
             video.removeAttribute("slot");
@@ -34047,10 +33901,22 @@ async function watchPage(req, res, type) {
               fluid: false,
               fill: true,
               responsive: true,
-              inactivityTimeout: 1800,
+              inactivityTimeout: 1700,
               liveui: false,
               playbackRates: [0.5, 0.75, 1, 1.25, 1.5, 2],
               controlBar: {
+                children: [
+                  "playToggle",
+                  "volumePanel",
+                  "currentTimeDisplay",
+                  "timeDivider",
+                  "durationDisplay",
+                  "progressControl",
+                  "remainingTimeDisplay",
+                  "playbackRateMenuButton",
+                  "pictureInPictureToggle",
+                  "fullscreenToggle"
+                ],
                 volumePanel: { inline: false },
                 remainingTimeDisplay: false,
                 pictureInPictureToggle: true
@@ -34062,28 +33928,25 @@ async function watchPage(req, res, type) {
                   enableLowInitialPlaylist: true,
                   smoothQualityChange: true,
                   useDevicePixelRatio: true,
-                  handlePartialData: true,
-                  experimentalBufferBasedABR: true
+                  handlePartialData: true
                 },
                 nativeAudioTracks: false,
                 nativeVideoTracks: false
-              }
-            });
-
-            movieButtonPlayer.src({
-              src: src,
-              type: "application/x-mpegURL"
+              },
+              sources: [{
+                src: src,
+                type: "application/x-mpegURL"
+              }]
             });
 
             movieButtonPlayer.ready(function() {
-              addVideoJsSkipControls(movieButtonPlayer);
               setVideoJsQualityMenu(movieButtonPlayer);
-              // v129: no custom center overlay; use the real Video.js play button instead.
+              wireVideoJsOverlayControls(movieButtonPlayer);
               // Video.js already has the main timeline. Keep the custom HLS helper hidden for this skin.
               if (seekDock) seekDock.hidden = true;
 
               if (playerShell) playerShell.classList.add("v128VideoReady");
-              setPlayerStatus("Ready", "Video.js VHS loaded", false);
+              setPlayerStatus("Ready", "Video.js loaded", false);
               setVideoUiState("ready");
               setStatus("m3u8 loaded. Timeline enabled.");
               if (playerShell) { try { playerShell.focus({ preventScroll: true }); } catch {} }
@@ -34151,7 +34014,8 @@ async function watchPage(req, res, type) {
           }
 
           if (movieButtonPlayer) {
-            safeDisposeVideoJs();
+            try { movieButtonPlayer.dispose(); } catch {}
+            movieButtonPlayer = null;
           }
 
           if (movieButtonHls) {
@@ -34423,35 +34287,6 @@ async function watchPage(req, res, type) {
           startVideoJsCinemaSource(src, data);
         }
 
-        async function fetchJsonWithTimeout(url, timeoutMs) {
-          var controller = new AbortController();
-          var timeout = setTimeout(function(){ controller.abort(); }, timeoutMs);
-          try {
-            var response = await fetch(url, {
-              cache: "no-store",
-              headers: { "Accept": "application/json" },
-              signal: controller.signal
-            });
-
-            var text = await response.text();
-            var data = {};
-            try {
-              data = text ? JSON.parse(text) : {};
-            } catch {
-              data = { status: "error", message: text.slice(0, 240) || "Non-JSON response" };
-            }
-
-            if (!response.ok) {
-              data.status = data.status || "error";
-              data.message = data.message || data.error || ("HTTP " + response.status);
-            }
-
-            return data;
-          } finally {
-            clearTimeout(timeout);
-          }
-        }
-
         async function tryProxyVideo(manual) {
           if (!clientWait || stopped) return;
 
@@ -34465,23 +34300,13 @@ async function watchPage(req, res, type) {
 
           setStatus((manual ? "Retrying" : "Trying") + " m3u8 source... attempt " + attempt + " • " + elapsed + "s");
 
-          var data = null;
           try {
-            data = await fetchJsonWithTimeout(
-              "/api/proxy-video-wait/movie/" + encodeURIComponent(movieId) + "?t=" + Date.now(),
-              28000
-            );
+            var response = await fetch("/api/proxy-video-wait/movie/" + encodeURIComponent(movieId) + "?t=" + Date.now(), {
+              cache: "no-store",
+              headers: { "Accept": "application/json" }
+            });
 
-            if (!(data && data.status === "ok" && (data.playbackUrl || data.m3u8 || data.proxyVideo))) {
-              // Quick second chance endpoint. This helps when one route hangs/caches differently.
-              var quick = await fetchJsonWithTimeout(
-                "/api/hls-source/movie/" + encodeURIComponent(movieId) + "?t=" + Date.now(),
-                16000
-              );
-              if (quick && quick.status === "ok" && (quick.playbackUrl || quick.m3u8 || quick.proxyVideo)) {
-                data = quick;
-              }
-            }
+            var data = await response.json();
 
             if (data && data.status === "ok" && (data.playbackUrl || data.m3u8 || data.proxyVideo)) {
               stopped = true;
@@ -34491,16 +34316,13 @@ async function watchPage(req, res, type) {
               return;
             }
 
-            var detail = (data && (data.message || data.error || (data.attempts && data.attempts[0]))) || "Waiting for provider...";
-            setStatus("Not ready yet: " + String(detail).slice(0, 180));
+            var detail = (data && (data.message || (data.attempts && data.attempts[0]))) || "Waiting for provider...";
+            setStatus("Not ready yet: " + detail);
           } catch (error) {
-            var message = error && error.name === "AbortError"
-              ? "resolver took too long; trying again"
-              : (error && error.message ? error.message : "request failed");
-            setStatus("Still waiting: " + message);
+            setStatus("Still waiting: " + (error.message || "request failed"));
           }
 
-          var delay = Math.min(12000, 1800 + attempt * 1200);
+          var delay = Math.min(15000, 2500 + attempt * 1500);
           setTimeout(function(){ tryProxyVideo(false); }, delay);
         }
 
@@ -34512,13 +34334,12 @@ async function watchPage(req, res, type) {
         }
 
         if (clientWait) {
-          setStatus("Starting resolver loop...");
-          setTimeout(function(){ tryProxyVideo(false); }, 50);
+          tryProxyVideo(false);
         } else {
-          var placeholderVideo = document.getElementById("movie-placeholder-video");
-          if (!placeholderVideo) return;
-          placeholderVideo.addEventListener("error", function(){
-            var videoShell = placeholderVideo.closest(".dsDirectVideoShell");
+          var video = document.getElementById("movie-placeholder-video");
+          if (!video) return;
+          video.addEventListener("error", function(){
+            var videoShell = video.closest(".dsDirectVideoShell");
             if (!videoShell || videoShell.querySelector(".dsMovieEmbedNotice.error")) return;
             var notice = document.createElement("div");
             notice.className = "dsMovieEmbedNotice error";
@@ -38777,23 +38598,8 @@ app.get("/favicon.ico", (req, res) => {
 
 app.get("/api/proxy-video-wait/movie/:id", async (req, res) => {
   res.set("Cache-Control", "no-store");
-  try {
-    const result = await fetchProxyVideoSource({ type: "movie", id: req.params.id });
-    res.json(result);
-  } catch (error) {
-    res.status(200).json({
-      status: "error",
-      ok: false,
-      movieId: req.params.id,
-      message: error?.message || "proxy video wait failed",
-      attempts: [error?.message || "proxy video wait failed"],
-    });
-  }
-});
-
-app.get("/api/watch-client-health", (req, res) => {
-  res.set("Cache-Control", "no-store");
-  res.json({ ok: true, version: "v130", videoJsFix: true, stuckResolverFix: true });
+  const result = await fetchProxyVideoSource({ type: "movie", id: req.params.id });
+  res.json(result);
 });
 
 app.get("/api/proxy-video/movie/:id", async (req, res) => {
