@@ -31058,6 +31058,199 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v133 VIDEO.JS HOVER PREVIEW + MENU FIX
+       Fixes:
+       - play icon off-center inside soft rectangle
+       - playback speed menu disappearing while moving mouse to it
+       - playback speed menu covering the timeline
+       - visible hover time preview on the progress bar
+       ============================================================ */
+
+    .dsVideoJsCinemaShell.v133HoverPreview .vjs-big-play-button {
+      display: grid !important;
+      place-items: center !important;
+      padding: 0 !important;
+      text-align: center !important;
+    }
+
+    .dsVideoJsCinemaShell.v133HoverPreview .vjs-big-play-button .vjs-icon-placeholder {
+      position: static !important;
+      display: grid !important;
+      place-items: center !important;
+      width: 100% !important;
+      height: 100% !important;
+      line-height: 1 !important;
+    }
+
+    .dsVideoJsCinemaShell.v133HoverPreview .vjs-big-play-button .vjs-icon-placeholder::before {
+      position: static !important;
+      display: block !important;
+      width: auto !important;
+      height: auto !important;
+      line-height: 1 !important;
+      margin: 0 !important;
+      transform: translateX(1.5px) translateY(0) !important;
+      text-align: center !important;
+      font-size: clamp(20px, 2vw, 25px) !important;
+    }
+
+    .dsVideoJsCinemaShell.v133HoverPreview .vjs-control-bar {
+      overflow: visible !important;
+      z-index: 70 !important;
+    }
+
+    .dsVideoJsCinemaShell.v133HoverPreview .vjs-menu-button,
+    .dsVideoJsCinemaShell.v133HoverPreview .vjs-menu-button-popup,
+    .dsVideoJsCinemaShell.v133HoverPreview .vjs-playback-rate {
+      overflow: visible !important;
+      z-index: 90 !important;
+    }
+
+    .dsVideoJsCinemaShell.v133HoverPreview .vjs-menu {
+      z-index: 120 !important;
+      pointer-events: auto !important;
+    }
+
+    .dsVideoJsCinemaShell.v133HoverPreview .vjs-playback-rate .vjs-menu {
+      bottom: 38px !important;
+      left: 50% !important;
+      transform: translateX(-50%) !important;
+      width: 96px !important;
+      margin-bottom: 0 !important;
+      padding-bottom: 10px !important;
+      pointer-events: auto !important;
+    }
+
+    .dsVideoJsCinemaShell.v133HoverPreview .vjs-playback-rate:hover .vjs-menu,
+    .dsVideoJsCinemaShell.v133HoverPreview .vjs-playback-rate:focus-within .vjs-menu,
+    .dsVideoJsCinemaShell.v133HoverPreview .vjs-playback-rate.vjs-hover .vjs-menu,
+    .dsVideoJsCinemaShell.v133HoverPreview .vjs-menu-button-popup:hover .vjs-menu,
+    .dsVideoJsCinemaShell.v133HoverPreview .vjs-menu-button-popup:focus-within .vjs-menu,
+    .dsVideoJsCinemaShell.v133HoverPreview .vjs-menu-button-popup.vjs-hover .vjs-menu {
+      display: block !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      pointer-events: auto !important;
+    }
+
+    .dsVideoJsCinemaShell.v133HoverPreview .vjs-playback-rate .vjs-menu-content {
+      position: relative !important;
+      bottom: auto !important;
+      max-height: 230px !important;
+      overflow-y: auto !important;
+      padding: 6px !important;
+      border-radius: 13px !important;
+      border: 1px solid rgba(255,255,255,.10) !important;
+      background: rgba(5,8,18,.96) !important;
+      box-shadow:
+        0 18px 54px rgba(0,0,0,.46),
+        0 0 28px rgba(85,215,255,.08) !important;
+      backdrop-filter: blur(18px) saturate(1.10) !important;
+      -webkit-backdrop-filter: blur(18px) saturate(1.10) !important;
+      pointer-events: auto !important;
+    }
+
+    .dsVideoJsCinemaShell.v133HoverPreview .vjs-playback-rate .vjs-menu li {
+      min-height: 28px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      border-radius: 9px !important;
+      font-size: 11px !important;
+      font-weight: 850 !important;
+      line-height: 1 !important;
+      color: rgba(255,255,255,.74) !important;
+      pointer-events: auto !important;
+    }
+
+    .dsVideoJsCinemaShell.v133HoverPreview .vjs-playback-rate .vjs-menu li:hover,
+    .dsVideoJsCinemaShell.v133HoverPreview .vjs-playback-rate .vjs-menu li.vjs-selected {
+      color: #06101d !important;
+      background: linear-gradient(135deg, #ffffff, #dff8ff) !important;
+    }
+
+    /* Keep the menu open and the dock visible while interacting with menus. */
+    .dsVideoJsCinemaShell.v133HoverPreview .vjs-control-bar:has(.vjs-menu-button:hover),
+    .dsVideoJsCinemaShell.v133HoverPreview .vjs-control-bar:has(.vjs-menu:hover),
+    .dsVideoJsCinemaShell.v133HoverPreview .vjs-control-bar:has(.vjs-menu-button:focus-within) {
+      opacity: 1 !important;
+      transform: translateY(0) !important;
+    }
+
+    /* Video.js already has MouseTimeDisplay + TimeTooltip; this makes it visible and modern. */
+    .dsVideoJsCinemaShell.v133HoverPreview .vjs-progress-control {
+      overflow: visible !important;
+      z-index: 80 !important;
+    }
+
+    .dsVideoJsCinemaShell.v133HoverPreview .vjs-progress-control .vjs-mouse-display {
+      display: block !important;
+      visibility: visible !important;
+      opacity: 0 !important;
+      height: 5px !important;
+      background: rgba(223,248,255,.86) !important;
+      border-radius: 999px !important;
+      pointer-events: none !important;
+      transition: opacity .12s ease !important;
+      z-index: 90 !important;
+    }
+
+    .dsVideoJsCinemaShell.v133HoverPreview .vjs-progress-control:hover .vjs-mouse-display,
+    .dsVideoJsCinemaShell.v133HoverPreview .vjs-progress-control:focus-within .vjs-mouse-display {
+      opacity: .9 !important;
+    }
+
+    .dsVideoJsCinemaShell.v133HoverPreview .vjs-progress-control .vjs-time-tooltip,
+    .dsVideoJsCinemaShell.v133HoverPreview .vjs-progress-control .vjs-mouse-display .vjs-time-tooltip,
+    .dsVideoJsCinemaShell.v133HoverPreview .vjs-progress-control .vjs-play-progress .vjs-time-tooltip {
+      display: block !important;
+      visibility: visible !important;
+      opacity: 0 !important;
+      bottom: 18px !important;
+      padding: 5px 8px !important;
+      border-radius: 999px !important;
+      color: #06101d !important;
+      background: linear-gradient(135deg, #ffffff, #dff8ff) !important;
+      box-shadow:
+        0 12px 28px rgba(0,0,0,.30),
+        0 0 18px rgba(85,215,255,.14) !important;
+      font-family: var(--font-ui, "Host Grotesk", Inter, system-ui, sans-serif) !important;
+      font-size: 11px !important;
+      font-weight: 900 !important;
+      line-height: 1 !important;
+      text-shadow: none !important;
+      pointer-events: none !important;
+      transform: translateY(-2px) !important;
+      transition: opacity .12s ease, transform .12s ease !important;
+      z-index: 100 !important;
+    }
+
+    .dsVideoJsCinemaShell.v133HoverPreview .vjs-progress-control:hover .vjs-time-tooltip,
+    .dsVideoJsCinemaShell.v133HoverPreview .vjs-progress-control:focus-within .vjs-time-tooltip,
+    .dsVideoJsCinemaShell.v133HoverPreview .vjs-progress-control:hover .vjs-mouse-display .vjs-time-tooltip,
+    .dsVideoJsCinemaShell.v133HoverPreview .vjs-progress-control:focus-within .vjs-mouse-display .vjs-time-tooltip {
+      opacity: 1 !important;
+      transform: translateY(-5px) !important;
+    }
+
+    /* Avoid the quality pill and playback menu competing for the same hover zone. */
+    .dsVideoJsCinemaShell.v133HoverPreview .dsVideoJsQuality {
+      bottom: calc(var(--dock-bottom) + var(--dock-height) + 18px) !important;
+      right: calc(var(--dock-x) + 4px) !important;
+    }
+
+    @media(max-width: 900px) {
+      .dsVideoJsCinemaShell.v133HoverPreview .vjs-playback-rate .vjs-menu {
+        bottom: 34px !important;
+      }
+
+      .dsVideoJsCinemaShell.v133HoverPreview .vjs-progress-control .vjs-time-tooltip {
+        bottom: 15px !important;
+      }
+    }
+
   </style>
 
     <script>
@@ -34806,8 +34999,8 @@ async function watchPage(req, res, type) {
           destroyRegularMoviePlayers();
 
           if (playerShell) {
-            playerShell.classList.remove("usesPlyr", "usesMediaChrome", "usesNativeVideo", "isScrubbing", "v128VideoReady", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed", "v132SoftRectPlay");
-            playerShell.classList.add("usesVideoJs", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed", "v132SoftRectPlay");
+            playerShell.classList.remove("usesPlyr", "usesMediaChrome", "usesNativeVideo", "isScrubbing", "v128VideoReady", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed", "v132SoftRectPlay", "v133HoverPreview");
+            playerShell.classList.add("usesVideoJs", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed", "v132SoftRectPlay", "v133HoverPreview");
           }
 
           try {
@@ -34887,6 +35080,20 @@ async function watchPage(req, res, type) {
               try {
                 movieButtonPlayer.fill(true);
                 movieButtonPlayer.responsive(true);
+                var playerEl = movieButtonPlayer.el && movieButtonPlayer.el();
+                if (playerEl && !playerEl.dataset.swiflyMenuFix) {
+                  playerEl.dataset.swiflyMenuFix = "true";
+                  playerEl.addEventListener("mouseover", function(event) {
+                    if (event.target && event.target.closest && event.target.closest(".vjs-menu, .vjs-menu-button, .vjs-progress-control")) {
+                      movieButtonPlayer.userActive(true);
+                    }
+                  });
+                  playerEl.addEventListener("mousemove", function(event) {
+                    if (event.target && event.target.closest && event.target.closest(".vjs-menu, .vjs-menu-button, .vjs-progress-control")) {
+                      movieButtonPlayer.userActive(true);
+                    }
+                  });
+                }
               } catch {}
               if (playerShell) playerShell.classList.add("v128VideoReady");
               setPlayerStatus("Ready", "Press play", false);
