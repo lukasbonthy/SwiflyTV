@@ -32592,6 +32592,210 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       to { background-position: 220px 0, center, center, center; }
     }
 
+
+    /* ============================================================
+       v139 CLEAN ICON DOCK
+       Fixes:
+       - removes the clunky blue progress thumb
+       - replaces emoji/text icons with clean inline SVG icons
+       - makes dock icons closer to the simple reference player
+       ============================================================ */
+
+    .dsVideoJsCinemaShell.v139CleanIconDock {
+      --player-radius: 15px;
+      --dock-height: 45px;
+      --dock-x: 14px;
+      --dock-bottom: 14px;
+    }
+
+    .dsVideoJsCinemaShell.v139CleanIconDock .swiflyVideoDock {
+      height: var(--dock-height, 45px);
+      gap: 8px;
+      padding: 0 13px;
+      background: rgba(35, 39, 43, .82);
+      border: 1px solid rgba(255,255,255,.07);
+      box-shadow: 0 14px 38px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.055);
+    }
+
+    .dsVideoJsCinemaShell.v139CleanIconDock .swiflyDockIcon,
+    .dsVideoJsCinemaShell.v139CleanIconDock .swiflyDockPill {
+      width: 28px;
+      min-width: 28px;
+      height: 28px;
+      padding: 0;
+      color: rgba(255,255,255,.90);
+      background: transparent;
+      border: 0;
+    }
+
+    .dsVideoJsCinemaShell.v139CleanIconDock .swiflyDockIcon:hover,
+    .dsVideoJsCinemaShell.v139CleanIconDock .swiflyDockPill:hover,
+    .dsVideoJsCinemaShell.v139CleanIconDock .swiflyDockIcon:focus-visible,
+    .dsVideoJsCinemaShell.v139CleanIconDock .swiflyDockPill:focus-visible {
+      background: rgba(255,255,255,.09);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+
+    .dsVideoJsCinemaShell.v139CleanIconDock .swiflyDockSvg {
+      width: 18px;
+      height: 18px;
+      display: block;
+      overflow: visible;
+    }
+
+    .dsVideoJsCinemaShell.v139CleanIconDock .swiflyDockPlay .swiflyDockSvg {
+      width: 17px;
+      height: 17px;
+      transform: translateX(1px);
+    }
+
+    .dsVideoJsCinemaShell.v139CleanIconDock .swiflyDockSkip .swiflyDockSvg {
+      width: 21px;
+      height: 21px;
+    }
+
+    .dsVideoJsCinemaShell.v139CleanIconDock .swiflyDockSvgText {
+      fill: currentColor;
+      stroke: none;
+      font-size: 6.2px;
+      font-weight: 900;
+      font-family: var(--font-ui, "Host Grotesk", Inter, system-ui, sans-serif);
+      letter-spacing: -.04em;
+    }
+
+    .dsVideoJsCinemaShell.v139CleanIconDock .swiflyDockBack small,
+    .dsVideoJsCinemaShell.v139CleanIconDock .swiflyDockForward small,
+    .dsVideoJsCinemaShell.v139CleanIconDock .swiflyDockSkip small {
+      display: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v139CleanIconDock .swiflyDockTime {
+      min-width: 38px;
+      color: rgba(255,255,255,.90);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .dsVideoJsCinemaShell.v139CleanIconDock .swiflyDockProgressWrap {
+      height: 28px;
+      min-width: 140px;
+    }
+
+    .dsVideoJsCinemaShell.v139CleanIconDock .swiflyDockProgress {
+      height: 18px;
+    }
+
+    .dsVideoJsCinemaShell.v139CleanIconDock .swiflyDockProgress::-webkit-slider-runnable-track {
+      height: 5px;
+      border-radius: 999px;
+      background:
+        linear-gradient(90deg, #f4f7fb, #f4f7fb) 0 / calc(var(--progress-pct, 0) * 1%) 100% no-repeat,
+        rgba(255,255,255,.31);
+    }
+
+    .dsVideoJsCinemaShell.v139CleanIconDock .swiflyDockProgress::-moz-range-track {
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.31);
+    }
+
+    .dsVideoJsCinemaShell.v139CleanIconDock .swiflyDockProgress::-moz-range-progress {
+      height: 5px;
+      border-radius: 999px;
+      background: #f4f7fb;
+    }
+
+    .dsVideoJsCinemaShell.v139CleanIconDock .swiflyDockProgress::-webkit-slider-thumb {
+      width: 10px;
+      height: 10px;
+      margin-top: -2.5px;
+      border: 0;
+      background: #f4f7fb;
+      box-shadow: 0 0 0 1px rgba(0,0,0,.16), 0 3px 8px rgba(0,0,0,.24);
+    }
+
+    .dsVideoJsCinemaShell.v139CleanIconDock .swiflyDockProgress::-moz-range-thumb {
+      width: 10px;
+      height: 10px;
+      border: 0;
+      background: #f4f7fb;
+      box-shadow: 0 0 0 1px rgba(0,0,0,.16), 0 3px 8px rgba(0,0,0,.24);
+    }
+
+    .dsVideoJsCinemaShell.v139CleanIconDock .swiflyDockProgress:hover::-webkit-slider-thumb {
+      width: 12px;
+      height: 12px;
+      margin-top: -3.5px;
+    }
+
+    .dsVideoJsCinemaShell.v139CleanIconDock .swiflyDockProgress:hover::-moz-range-thumb {
+      width: 12px;
+      height: 12px;
+    }
+
+    .dsVideoJsCinemaShell.v139CleanIconDock .swiflyDockPill {
+      width: auto;
+      min-width: 28px;
+      padding: 0 5px;
+      font-size: 12px;
+      font-weight: 850;
+      color: rgba(255,255,255,.90);
+    }
+
+    .dsVideoJsCinemaShell.v139CleanIconDock .swiflyDockVolumeMenu input::-webkit-slider-runnable-track {
+      background:
+        linear-gradient(90deg, #f4f7fb, #f4f7fb) 0 / calc(var(--volume-pct, 100) * 1%) 100% no-repeat,
+        rgba(255,255,255,.18);
+    }
+
+    .dsVideoJsCinemaShell.v139CleanIconDock .swiflyDockVolumeMenu input::-moz-range-progress {
+      background: #f4f7fb;
+    }
+
+    .dsVideoJsCinemaShell.v139CleanIconDock .swiflyDockVolumeMenu input::-webkit-slider-thumb {
+      background: #f4f7fb;
+      box-shadow: 0 4px 12px rgba(0,0,0,.28);
+    }
+
+    .dsVideoJsCinemaShell.v139CleanIconDock .swiflyDockVolumeMenu input::-moz-range-thumb {
+      background: #f4f7fb;
+      box-shadow: 0 4px 12px rgba(0,0,0,.28);
+    }
+
+    .dsVideoJsCinemaShell.v139CleanIconDock .vjs-big-play-button {
+      width: 68px !important;
+      height: 42px !important;
+      line-height: 42px !important;
+      margin-left: -34px !important;
+      margin-top: -21px !important;
+      border-radius: 14px !important;
+      background: rgba(12,17,31,.66) !important;
+      border-color: rgba(255,255,255,.12) !important;
+    }
+
+    .dsVideoJsCinemaShell.v139CleanIconDock .vjs-big-play-button .vjs-icon-placeholder::before {
+      font-size: 21px !important;
+      transform: translateX(1.5px) !important;
+    }
+
+    @media(max-width: 900px) {
+      .dsVideoJsCinemaShell.v139CleanIconDock {
+        --dock-x: 8px;
+        --dock-bottom: 8px;
+        --dock-height: 43px;
+      }
+
+      .dsVideoJsCinemaShell.v139CleanIconDock .swiflyVideoDock {
+        gap: 7px;
+        padding: 0 10px;
+      }
+
+      .dsVideoJsCinemaShell.v139CleanIconDock .swiflyDockProgressWrap {
+        min-width: 88px;
+      }
+    }
+
   </style>
 
     <script>
@@ -35880,9 +36084,9 @@ async function watchPage(req, res, type) {
           </div>
 
           <div id="swiflyVideoDock" class="swiflyVideoDock" aria-label="Video controls">
-            <button id="swiflyDockPlay" type="button" class="swiflyDockIcon swiflyDockPlay" aria-label="Play or pause">▶</button>
-            <button id="swiflyDockBack" type="button" class="swiflyDockIcon swiflyDockSkip" aria-label="Back 10 seconds">↺<small>10</small></button>
-            <button id="swiflyDockForward" type="button" class="swiflyDockIcon swiflyDockSkip" aria-label="Forward 10 seconds">↻<small>10</small></button>
+            <button id="swiflyDockPlay" type="button" class="swiflyDockIcon swiflyDockPlay" aria-label="Play or pause"></button>
+            <button id="swiflyDockBack" type="button" class="swiflyDockIcon swiflyDockSkip swiflyDockBack" aria-label="Back 10 seconds"></button>
+            <button id="swiflyDockForward" type="button" class="swiflyDockIcon swiflyDockSkip swiflyDockForward" aria-label="Forward 10 seconds"></button>
             <span id="swiflyDockCurrent" class="swiflyDockTime">0:00</span>
             <div class="swiflyDockProgressWrap">
               <input id="swiflyDockProgress" class="swiflyDockProgress" type="range" min="0" max="1000" value="0" step="1" aria-label="Timeline" />
@@ -35890,12 +36094,12 @@ async function watchPage(req, res, type) {
             <span id="swiflyDockDuration" class="swiflyDockTime">0:00</span>
             <button id="swiflyDockSpeed" type="button" class="swiflyDockPill" aria-label="Playback speed">1x</button>
             <div id="swiflyDockSpeedMenu" class="swiflyDockMenu" hidden></div>
-            <button id="swiflyDockMute" type="button" class="swiflyDockIcon" aria-label="Mute">🔊</button>
+            <button id="swiflyDockMute" type="button" class="swiflyDockIcon swiflyDockMute" aria-label="Mute"></button>
             <div id="swiflyDockVolumeMenu" class="swiflyDockVolumeMenu" hidden>
               <input id="swiflyDockVolume" type="range" min="0" max="100" value="100" step="1" aria-label="Volume" />
             </div>
-            <button id="swiflyDockPip" type="button" class="swiflyDockIcon" aria-label="Picture in picture">▣</button>
-            <button id="swiflyDockFull" type="button" class="swiflyDockIcon" aria-label="Fullscreen">⛶</button>
+            <button id="swiflyDockPip" type="button" class="swiflyDockIcon swiflyDockPip" aria-label="Picture in picture"></button>
+            <button id="swiflyDockFull" type="button" class="swiflyDockIcon swiflyDockFull" aria-label="Fullscreen"></button>
           </div>
 
           <div class="dsCinemaHlsHint dsVideoJsHint">
@@ -36304,6 +36508,46 @@ async function watchPage(req, res, type) {
           next();
         }
 
+        function swiflyDockIcon(name) {
+          var attrs = 'viewBox="0 0 24 24" aria-hidden="true" focusable="false" class="swiflyDockSvg"';
+          var stroke = 'fill="none" stroke="currentColor" stroke-width="2.15" stroke-linecap="round" stroke-linejoin="round"';
+          var fill = 'fill="currentColor"';
+
+          if (name === "play") {
+            return '<svg '+attrs+'><path '+fill+' d="M8.8 6.7v10.6c0 .72.78 1.17 1.4.8l8.1-5.3c.55-.36.55-1.24 0-1.6l-8.1-5.3c-.62-.39-1.4.06-1.4.8Z"/></svg>';
+          }
+          if (name === "pause") {
+            return '<svg '+attrs+'><path '+fill+' d="M8 6.5h2.7v11H8zM13.3 6.5H16v11h-2.7z"/></svg>';
+          }
+          if (name === "back10") {
+            return '<svg '+attrs+'><path '+stroke+' d="M8.1 7.7H5.2V4.8"/><path '+stroke+' d="M5.6 7.4a7.7 7.7 0 1 1-1 7.3"/><text x="12" y="15.4" text-anchor="middle" class="swiflyDockSvgText">10</text></svg>';
+          }
+          if (name === "forward10") {
+            return '<svg '+attrs+'><path '+stroke+' d="M15.9 7.7h2.9V4.8"/><path '+stroke+' d="M18.4 7.4a7.7 7.7 0 1 0 1 7.3"/><text x="12" y="15.4" text-anchor="middle" class="swiflyDockSvgText">10</text></svg>';
+          }
+          if (name === "volume") {
+            return '<svg '+attrs+'><path '+fill+' d="M4.5 9.2v5.6h3.2l4.5 3.3c.55.4 1.33.02 1.33-.66V6.56c0-.68-.78-1.06-1.33-.66L7.7 9.2H4.5Z"/><path '+stroke+' d="M16.2 9.2a4.2 4.2 0 0 1 0 5.6"/><path '+stroke+' d="M18.6 6.8a7.6 7.6 0 0 1 0 10.4"/></svg>';
+          }
+          if (name === "muted") {
+            return '<svg '+attrs+'><path '+fill+' d="M4.5 9.2v5.6h3.2l4.5 3.3c.55.4 1.33.02 1.33-.66V6.56c0-.68-.78-1.06-1.33-.66L7.7 9.2H4.5Z"/><path '+stroke+' d="m17 9.2 4 4M21 9.2l-4 4"/></svg>';
+          }
+          if (name === "pip") {
+            return '<svg '+attrs+'><rect '+stroke+' x="3.8" y="5.5" width="16.4" height="13" rx="2.2"/><rect '+fill+' x="11.9" y="12" width="5.9" height="3.9" rx="1"/></svg>';
+          }
+          if (name === "fullscreen") {
+            return '<svg '+attrs+'><path '+stroke+' d="M8.6 4.8H5.2v3.4M15.4 4.8h3.4v3.4M8.6 19.2H5.2v-3.4M15.4 19.2h3.4v-3.4"/></svg>';
+          }
+          return "";
+        }
+
+        function setDockButtonIcon(button, name) {
+          if (!button) return;
+          var html = swiflyDockIcon(name);
+          if (button.dataset.iconName === name && button.innerHTML === html) return;
+          button.dataset.iconName = name;
+          button.innerHTML = html;
+        }
+
         function installSwiflyNativeDock(player, src) {
           if (!player || !video || !dock || !dockProgress) return;
           if (dock.dataset.swiflyReady === "true") return;
@@ -36340,8 +36584,12 @@ async function watchPage(req, res, type) {
               dockProgress.style.setProperty("--progress-pct", String(pct / 10));
             }
 
-            if (dockPlay) dockPlay.textContent = video.paused ? "▶" : "Ⅱ";
-            if (dockMute) dockMute.textContent = video.muted || Number(video.volume || 0) === 0 ? "🔇" : "🔊";
+            setDockButtonIcon(dockPlay, video.paused ? "play" : "pause");
+            setDockButtonIcon(dockBack, "back10");
+            setDockButtonIcon(dockForward, "forward10");
+            setDockButtonIcon(dockMute, video.muted || Number(video.volume || 0) === 0 ? "muted" : "volume");
+            setDockButtonIcon(dockPip, "pip");
+            setDockButtonIcon(dockFull, "fullscreen");
             if (dockVolume) {
               var vol = Math.round((video.muted ? 0 : Number(video.volume || 0)) * 100);
               dockVolume.value = String(vol);
@@ -36536,6 +36784,12 @@ async function watchPage(req, res, type) {
 
           dock.addEventListener("mousemove", setDockActive);
           dock.addEventListener("mouseenter", setDockActive);
+          setDockButtonIcon(dockPlay, "play");
+          setDockButtonIcon(dockBack, "back10");
+          setDockButtonIcon(dockForward, "forward10");
+          setDockButtonIcon(dockMute, "volume");
+          setDockButtonIcon(dockPip, "pip");
+          setDockButtonIcon(dockFull, "fullscreen");
           setInterval(updateDock, 700);
           updateDock();
         }
@@ -37032,8 +37286,8 @@ async function watchPage(req, res, type) {
           destroyRegularMoviePlayers();
 
           if (playerShell) {
-            playerShell.classList.remove("usesPlyr", "usesMediaChrome", "usesNativeVideo", "isScrubbing", "v128VideoReady", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed", "v132SoftRectPlay", "v133HoverPreview", "v134SpeedPreviewFix", "v135VolumeImagePreview", "v136PillDockSkin", "v137NativeDock", "v138PreviewWarmup");
-            playerShell.classList.add("usesVideoJs", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed", "v132SoftRectPlay", "v133HoverPreview", "v134SpeedPreviewFix", "v135VolumeImagePreview", "v136PillDockSkin", "v137NativeDock", "v138PreviewWarmup");
+            playerShell.classList.remove("usesPlyr", "usesMediaChrome", "usesNativeVideo", "isScrubbing", "v128VideoReady", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed", "v132SoftRectPlay", "v133HoverPreview", "v134SpeedPreviewFix", "v135VolumeImagePreview", "v136PillDockSkin", "v137NativeDock", "v138PreviewWarmup", "v139CleanIconDock");
+            playerShell.classList.add("usesVideoJs", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed", "v132SoftRectPlay", "v133HoverPreview", "v134SpeedPreviewFix", "v135VolumeImagePreview", "v136PillDockSkin", "v137NativeDock", "v138PreviewWarmup", "v139CleanIconDock");
           }
 
           try {
