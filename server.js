@@ -26252,6 +26252,599 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v119 ACTION BUTTON VISIBILITY + NEXT POLISH PLAN
+       Makes Add to List / Like buttons lighter, clearer, and more
+       clickable without bringing back ugly outline boxes.
+       ============================================================ */
+
+    .dsCardControls {
+      gap: 8px !important;
+    }
+
+    .dsCardControls .dsMiniBtn,
+    .dsCardControls .dsIconBtn,
+    .dsThumb .dsMiniBtn,
+    .dsThumb [data-watch-id],
+    .dsThumb [data-like-id] {
+      width: 34px !important;
+      height: 34px !important;
+      border-radius: 999px !important;
+      color: #06101d !important;
+      border: 1px solid rgba(255,255,255,.44) !important;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.95), transparent 38%),
+        linear-gradient(135deg, rgba(255,255,255,.98), rgba(223,248,255,.88) 58%, rgba(199,187,255,.82)) !important;
+      box-shadow:
+        0 12px 30px rgba(0,0,0,.30),
+        0 0 24px rgba(85,215,255,.12),
+        inset 0 1px 0 rgba(255,255,255,.72) !important;
+      backdrop-filter: blur(14px) saturate(1.08) !important;
+      -webkit-backdrop-filter: blur(14px) saturate(1.08) !important;
+      font-size: 15px !important;
+      line-height: 1 !important;
+      text-shadow: none !important;
+      transform: translateZ(0);
+      transition:
+        transform .16s cubic-bezier(.2,.8,.2,1),
+        box-shadow .16s ease,
+        filter .16s ease,
+        background .16s ease !important;
+    }
+
+    .dsCardControls .dsMiniBtn:hover,
+    .dsCardControls .dsIconBtn:hover,
+    .dsThumb [data-watch-id]:hover,
+    .dsThumb [data-like-id]:hover {
+      color: #02040a !important;
+      transform: translateY(-2px) scale(1.08) !important;
+      filter: brightness(1.06) saturate(1.04) !important;
+      border-color: rgba(255,255,255,.62) !important;
+      box-shadow:
+        0 18px 44px rgba(0,0,0,.38),
+        0 0 34px rgba(85,215,255,.24),
+        inset 0 1px 0 rgba(255,255,255,.84) !important;
+    }
+
+    .dsCardControls .dsMiniBtn:active,
+    .dsCardControls .dsIconBtn:active {
+      transform: translateY(0) scale(.96) !important;
+    }
+
+    .dsCardControls .dsMiniBtn.saved,
+    .dsCardControls [data-watch-id].saved,
+    .dsIconBtn.saved,
+    .watchButton.saved {
+      color: #03100c !important;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.94), transparent 38%),
+        linear-gradient(135deg, #dfffea, #78ffc1 58%, #55d7ff) !important;
+      border-color: rgba(223,255,234,.70) !important;
+      box-shadow:
+        0 14px 38px rgba(0,0,0,.34),
+        0 0 32px rgba(103,248,196,.28),
+        inset 0 1px 0 rgba(255,255,255,.76) !important;
+    }
+
+    .dsCardControls .dsHeartBtn,
+    .dsCardControls [data-like-id] {
+      color: #130610 !important;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.94), transparent 38%),
+        linear-gradient(135deg, #ffffff, #ffe3f4 58%, #ffc7ee) !important;
+      border-color: rgba(255,255,255,.46) !important;
+    }
+
+    .dsCardControls .dsHeartBtn.liked,
+    .dsCardControls [data-like-id].liked {
+      color: white !important;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.26), transparent 38%),
+        linear-gradient(135deg, #ff5f9e, #ff7bd8 58%, #8b5cf6) !important;
+      border-color: rgba(255,255,255,.34) !important;
+      box-shadow:
+        0 14px 38px rgba(0,0,0,.34),
+        0 0 36px rgba(255,101,216,.32),
+        inset 0 1px 0 rgba(255,255,255,.22) !important;
+    }
+
+    .dsPlayDot {
+      color: #050711 !important;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,1), transparent 38%),
+        linear-gradient(135deg, #ffffff, #dff8ff) !important;
+      border-color: rgba(255,255,255,.72) !important;
+      box-shadow:
+        0 14px 34px rgba(0,0,0,.34),
+        0 0 28px rgba(223,248,255,.20),
+        inset 0 1px 0 rgba(255,255,255,.86) !important;
+    }
+
+    .dsCardControls .dsMiniBtn::after {
+      background:
+        linear-gradient(180deg, rgba(15,19,35,.96), rgba(5,7,18,.96)) !important;
+      border-color: rgba(223,248,255,.18) !important;
+      color: rgba(255,255,255,.92) !important;
+      box-shadow:
+        0 14px 38px rgba(0,0,0,.38),
+        0 0 24px rgba(85,215,255,.10) !important;
+    }
+
+    .dsThumb:hover .dsCardControls .dsMiniBtn,
+    .dsThumb:hover .dsCardControls .dsPlayDot {
+      animation: swiflyActionPop .18s cubic-bezier(.2,.8,.2,1) both;
+    }
+
+    .dsThumb:hover .dsCardControls .dsMiniBtn:nth-child(2) {
+      animation-delay: .025s;
+    }
+
+    .dsThumb:hover .dsCardControls .dsMiniBtn:nth-child(3) {
+      animation-delay: .05s;
+    }
+
+    @keyframes swiflyActionPop {
+      from { opacity: .72; transform: translateY(3px) scale(.94); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @media(max-width: 760px) {
+      .dsCardControls .dsMiniBtn,
+      .dsCardControls .dsIconBtn,
+      .dsThumb .dsMiniBtn,
+      .dsThumb [data-watch-id],
+      .dsThumb [data-like-id],
+      .dsPlayDot {
+        width: 38px !important;
+        height: 38px !important;
+        font-size: 16px !important;
+      }
+    }
+
+
+    /* ============================================================
+       v120 VISUAL HIERARCHY + CONSISTENCY REFRESH
+       Focus: same dark movie-row identity, but cleaner hierarchy,
+       consistent card families, calmer Studio grouping, and better
+       spacing rhythm. No extra random effects.
+       ============================================================ */
+
+    :root {
+      --vh-page-x: var(--v-left, clamp(18px, 4vw, 72px));
+      --vh-section-gap: clamp(34px, 4.2vw, 64px);
+      --vh-section-tight-gap: clamp(22px, 2.8vw, 42px);
+      --vh-row-head-gap: 12px;
+      --vh-rail-gap: clamp(12px, 1.05vw, 18px);
+      --vh-landscape-min: 226px;
+      --vh-landscape-max: 328px;
+      --vh-poster-min: 152px;
+      --vh-poster-max: 214px;
+      --vh-radius-landscape: 22px;
+      --vh-radius-poster: 24px;
+      --vh-line: rgba(255,255,255,.095);
+      --vh-soft-text: rgba(238,242,255,.62);
+      --vh-muted-text: rgba(238,242,255,.42);
+      --vh-panel: rgba(7,10,22,.70);
+      --vh-panel-soft: rgba(255,255,255,.052);
+    }
+
+    body { letter-spacing: -.012em; }
+
+    .dsContent {
+      max-width: none !important;
+      padding-left: var(--vh-page-x) !important;
+      padding-right: var(--vh-page-x) !important;
+    }
+
+    .dsContent::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      pointer-events: none;
+      opacity: .26;
+      background:
+        linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.014) 1px, transparent 1px);
+      background-size: 96px 96px;
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,.72), transparent 78%);
+    }
+
+    .dsRow,
+    .nfRowSection,
+    .section {
+      position: relative;
+      margin-top: var(--vh-section-gap) !important;
+      margin-bottom: 0 !important;
+    }
+
+    .dsRow + .dsRow,
+    .nfRowSection + .nfRowSection {
+      margin-top: var(--vh-section-tight-gap) !important;
+    }
+
+    .dsRow:not(.dsCleanSpotlightSection)::before,
+    .nfRowSection::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: -18px;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(255,255,255,.08), transparent 58%);
+      opacity: .48;
+      pointer-events: none;
+    }
+
+    .dsCleanSpotlightSection::before,
+    .dsContinueSection::before { display: none !important; }
+
+    .dsRowHead,
+    .sectionHead,
+    .nfRowHead {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      gap: 14px !important;
+      min-height: 42px !important;
+      margin-bottom: var(--vh-row-head-gap) !important;
+      padding-right: clamp(0px, 2vw, 18px);
+    }
+
+    .dsRowHead h2,
+    .sectionHead h2,
+    .nfRowTitle {
+      margin: 0 !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 10px !important;
+      max-width: min(760px, 74vw);
+      color: rgba(255,255,255,.94) !important;
+      font-size: clamp(22px, 2vw, 31px) !important;
+      line-height: .98 !important;
+      letter-spacing: -.066em !important;
+      text-wrap: balance;
+    }
+
+    .dsRowHead h2::before,
+    .sectionHead h2::before {
+      width: 6px !important;
+      height: 20px !important;
+      margin-right: 0 !important;
+      flex: 0 0 auto;
+      opacity: .82 !important;
+      background: linear-gradient(180deg, var(--clean-cyan, #55d7ff), var(--clean-violet, #8b5cf6)) !important;
+    }
+
+    .dsRowTag,
+    .sectionHead a,
+    .sectionHead button,
+    .dsRowHead a,
+    .dsRowHead button {
+      min-height: 30px !important;
+      padding: 0 11px !important;
+      border-radius: 999px !important;
+      color: rgba(238,242,255,.66) !important;
+      background: rgba(255,255,255,.055) !important;
+      border: 1px solid rgba(255,255,255,.095) !important;
+      font-size: 11px !important;
+      font-weight: 900 !important;
+      letter-spacing: .02em !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.045) !important;
+    }
+
+    .movieRail,
+    .nfRail,
+    .showcaseRail,
+    .nfTopTenRail {
+      gap: var(--vh-rail-gap) !important;
+      padding-top: 22px !important;
+      padding-bottom: 40px !important;
+      margin-top: -16px !important;
+      margin-bottom: -20px !important;
+    }
+
+    .movieRail,
+    .showcaseRail,
+    .nfRail {
+      grid-auto-columns: clamp(var(--vh-landscape-min), 18.5vw, var(--vh-landscape-max)) !important;
+    }
+
+    .posterWrap,
+    .dsThumb,
+    .nfThumb {
+      border-radius: var(--vh-radius-landscape) !important;
+      border: 1px solid rgba(255,255,255,.105) !important;
+      background:
+        radial-gradient(260px circle at 32% 0%, rgba(255,255,255,.085), transparent 52%),
+        rgba(255,255,255,.038) !important;
+      box-shadow:
+        0 16px 50px rgba(0,0,0,.31),
+        0 0 calc(34px * var(--studio-detail-glow, .16)) rgba(85,215,255,.10) !important;
+    }
+
+    .posterWrap:hover,
+    .dsThumb:hover,
+    .nfThumb:hover {
+      transform: translateY(calc(-6px * var(--studio-detail-lift, .72))) scale(1.015) !important;
+      border-color: rgba(223,248,255,.20) !important;
+      box-shadow:
+        0 24px 70px rgba(0,0,0,.42),
+        0 0 calc(58px * var(--studio-detail-glow, .16)) rgba(85,215,255,.15) !important;
+    }
+
+    .movieGrid {
+      grid-template-columns: repeat(auto-fill, minmax(var(--vh-poster-min), 1fr)) !important;
+      gap: clamp(14px, 1.5vw, 22px) !important;
+    }
+
+    .movieGrid .posterWrap,
+    .movieGrid .dsThumb,
+    .movieGrid .nfThumb {
+      border-radius: var(--vh-radius-poster) !important;
+    }
+
+    .dsContinueSection {
+      margin-top: var(--vh-section-tight-gap) !important;
+      margin-bottom: clamp(6px, 1vw, 16px) !important;
+    }
+
+    .dsContinueSection .movieRail,
+    body.layout-cinema .dsContinueSection .movieRail,
+    body.layout-posterwall .dsContinueSection .movieRail,
+    body.layout-spotlight .dsContinueSection .movieRail,
+    body.layout-dense .dsContinueSection .movieRail {
+      grid-auto-columns: clamp(240px, 18vw, 326px) !important;
+      gap: var(--vh-rail-gap) !important;
+      padding-top: 16px !important;
+      padding-bottom: 34px !important;
+    }
+
+    .dsContinueSection .dsThumb,
+    body.layout-cinema .dsContinueSection .dsThumb,
+    body.layout-posterwall .dsContinueSection .dsThumb,
+    body.layout-spotlight .dsContinueSection .dsThumb,
+    body.layout-dense .dsContinueSection .dsThumb {
+      aspect-ratio: 16 / 9 !important;
+      border-radius: 20px !important;
+    }
+
+    .dsCleanSpotlightSection {
+      margin-top: clamp(30px, 4.4vw, 68px) !important;
+      margin-bottom: clamp(30px, 4vw, 56px) !important;
+    }
+
+    .dsCleanSpotlightCard {
+      border-radius: clamp(26px, 2.6vw, 38px) !important;
+      border-color: rgba(255,255,255,.125) !important;
+      box-shadow:
+        0 34px 118px rgba(0,0,0,.42),
+        inset 0 1px 0 rgba(255,255,255,.065) !important;
+    }
+
+    .dsCardOverlay {
+      padding: 13px !important;
+      background:
+        linear-gradient(to top,
+          rgba(3,5,12,.94) 0%,
+          rgba(3,5,12,.70) 44%,
+          rgba(3,5,12,.20) 72%,
+          transparent 100%) !important;
+    }
+
+    .dsCardTitle {
+      font-size: 13px !important;
+      font-weight: 920 !important;
+      line-height: 1.08 !important;
+      letter-spacing: -.028em !important;
+    }
+
+    .dsCardMeta {
+      color: var(--vh-soft-text) !important;
+      font-size: 10.5px !important;
+      gap: 6px !important;
+    }
+
+    .dsCardMeta b { color: #a7f3d0 !important; }
+
+    .nfTopTenRail,
+    .topTenRail {
+      padding-top: 48px !important;
+      padding-bottom: 58px !important;
+    }
+
+    .topTenCard {
+      align-items: end !important;
+      padding-top: 8px !important;
+      padding-bottom: 10px !important;
+    }
+
+    .topTenNumber,
+    .nfTopNumber {
+      opacity: .38 !important;
+      color: transparent !important;
+      -webkit-text-stroke: 3px rgba(238,242,255,.28) !important;
+      text-shadow: none !important;
+      filter: none !important;
+    }
+
+    .topTenPoster {
+      border-radius: 20px !important;
+      box-shadow: 0 18px 58px rgba(0,0,0,.36) !important;
+    }
+
+    .controlPanel.v111StyleStudio.v114StudioDrawer {
+      width: min(420px, calc(100vw - 44px)) !important;
+      padding: 14px !important;
+    }
+
+    .studioHero {
+      padding: 12px !important;
+      grid-template-columns: 42px minmax(0, 1fr) auto !important;
+    }
+
+    .studioHeroOrb {
+      width: 42px !important;
+      height: 42px !important;
+      border-radius: 16px !important;
+    }
+
+    .studioHero h3 {
+      font-size: 25px !important;
+      letter-spacing: -.065em !important;
+    }
+
+    .studioHero p,
+    .previewText span { color: rgba(238,242,255,.50) !important; }
+
+    .styleGroup {
+      margin-top: 10px !important;
+      padding: 10px !important;
+      border-radius: 20px !important;
+    }
+
+    .styleGroupTitle b {
+      color: rgba(255,255,255,.84) !important;
+      font-size: 11px !important;
+    }
+
+    .styleGroupTitle span {
+      color: rgba(238,242,255,.34) !important;
+      font-size: 10px !important;
+    }
+
+    .compactStudioGrid {
+      gap: 7px !important;
+    }
+
+    .compactStudioGrid button {
+      min-height: 32px !important;
+      min-width: 92px !important;
+      border-radius: 13px !important;
+      font-size: 11.5px !important;
+      color: rgba(238,242,255,.70) !important;
+      background: rgba(255,255,255,.050) !important;
+    }
+
+    .compactStudioGrid button.active {
+      color: white !important;
+      background:
+        radial-gradient(130px circle at 28% 0%, rgba(85,215,255,.20), transparent 60%),
+        rgba(255,255,255,.095) !important;
+      border-color: rgba(223,248,255,.22) !important;
+    }
+
+    .styleGroup:has([data-detail]),
+    .styleGroup:has([data-backdrop]) {
+      background: rgba(255,255,255,.026) !important;
+      border-color: rgba(255,255,255,.060) !important;
+    }
+
+    .styleGroup:has([data-detail]) .styleGroupTitle span::after,
+    .styleGroup:has([data-backdrop]) .styleGroupTitle span::after {
+      content: " · advanced";
+      color: rgba(238,242,255,.28);
+    }
+
+    .studioMetricRow {
+      gap: 7px !important;
+    }
+
+    .studioMetric {
+      min-height: 52px !important;
+      border-radius: 16px !important;
+      background: rgba(255,255,255,.035) !important;
+    }
+
+    .studioMetric b { font-size: 12px !important; }
+    .studioMetric span { font-size: 9px !important; }
+
+    body.effect-clean {
+      --v111-glow: .035;
+      --studio-detail-glow: .045;
+      --studio-detail-lift: .36;
+      --studio-detail-saturation: 1;
+      --studio-detail-shine: .08;
+    }
+
+    body.effect-cinematic {
+      --v111-glow: .14;
+      --studio-detail-glow: .16;
+      --studio-detail-lift: .72;
+      --studio-detail-saturation: 1.035;
+      --studio-detail-shine: .28;
+    }
+
+    body.effect-glow {
+      --v111-glow: .24;
+      --studio-detail-glow: .28;
+      --studio-detail-lift: .86;
+      --studio-detail-saturation: 1.055;
+      --studio-detail-shine: .38;
+    }
+
+    body.effect-ultra {
+      --v111-glow: .36;
+      --studio-detail-glow: .42;
+      --studio-detail-lift: 1.03;
+      --studio-detail-saturation: 1.08;
+      --studio-detail-shine: .56;
+    }
+
+    body.layout-dense {
+      --vh-section-gap: clamp(24px, 3vw, 42px);
+      --vh-section-tight-gap: clamp(18px, 2vw, 30px);
+      --vh-rail-gap: 9px;
+    }
+
+    body.layout-dense .dsRowHead h2,
+    body.layout-dense .sectionHead h2 {
+      font-size: clamp(20px, 1.65vw, 26px) !important;
+    }
+
+    body.layout-spotlight .dsRow:not(.dsCleanSpotlightSection) {
+      margin-top: clamp(38px, 5vw, 76px) !important;
+    }
+
+    body.layout-posterwall .movieRail:not(.dsContinueSection .movieRail) {
+      grid-auto-columns: clamp(150px, 13vw, 205px) !important;
+    }
+
+    @media(max-width: 860px) {
+      :root {
+        --vh-page-x: clamp(14px, 4vw, 22px);
+        --vh-section-gap: 34px;
+        --vh-section-tight-gap: 26px;
+        --vh-landscape-min: 230px;
+        --vh-landscape-max: 82vw;
+      }
+
+      .dsRowHead,
+      .sectionHead {
+        min-height: 34px !important;
+        align-items: flex-start !important;
+      }
+
+      .dsRowHead h2,
+      .sectionHead h2 {
+        font-size: clamp(21px, 6vw, 28px) !important;
+        max-width: 100%;
+      }
+
+      .dsRowTag { display: none !important; }
+
+      .movieRail,
+      .showcaseRail,
+      .nfRail {
+        grid-auto-columns: minmax(230px, 78vw) !important;
+      }
+
+      .controlPanel.v111StyleStudio.v114StudioDrawer {
+        width: auto !important;
+      }
+    }
+
   </style>
 
     <script>
@@ -26992,7 +27585,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       showToast("Style reset");
     });
 
-    if (localStorage.getItem("movieverse.cleanCinemaVersion") !== "v118") {
+    if (localStorage.getItem("movieverse.cleanCinemaVersion") !== "v120") {
       localStorage.setItem("movieverse.theme", "default");
       localStorage.setItem("movieverse.font", "default");
       localStorage.setItem("movieverse.effect", "clean");
@@ -27002,7 +27595,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       localStorage.setItem("movieverse.detail", "balanced");
       localStorage.setItem("movieverse.backdrop", "smooth");
       localStorage.setItem("movieverse.reduceMotion", "off");
-      localStorage.setItem("movieverse.cleanCinemaVersion", "v118");
+      localStorage.setItem("movieverse.cleanCinemaVersion", "v120");
     }
 
     applyTheme(localStorage.getItem("movieverse.theme") || "default");
@@ -28274,6 +28867,7 @@ function movieCard(item = {}, forcedType = "") {
           <button
             class="dsMiniBtn"
             type="button"
+            aria-label="Add ${escapeHtml(title)} to My List"
             data-watch-id="${escapeHtml(id)}"
             data-watch-type="${escapeHtml(type)}"
             data-watch-title="${escapeHtml(title)}"
