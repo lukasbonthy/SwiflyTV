@@ -38003,20 +38003,77 @@ async function watchPage(req, res, type) {
         }
 
         function startVideoJsCinemaSource(src, data) {
-          setPlayerStatus("Loading", "Starting fresh Video.js player", false);
+          setPlayerStatus("Loading", "Starting Swifly Neo player", false);
           setVideoUiState("loading");
           destroyRegularMoviePlayers();
+
+          function neoIcon(name) {
+            var attrs = 'viewBox="0 0 24 24" aria-hidden="true" focusable="false" class="neoSvg"';
+            var stroke = 'fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"';
+            var fill = 'fill="currentColor"';
+            if (name === "play") return '<svg ' + attrs + '><path ' + fill + ' d="M8.7 6.75v10.5c0 .72.78 1.17 1.39.78l8.06-5.25c.55-.36.55-1.2 0-1.56L10.09 5.97c-.61-.39-1.39.06-1.39.78Z"/></svg>';
+            if (name === "pause") return '<svg ' + attrs + '><path ' + fill + ' d="M7.8 6.4h2.9v11.2H7.8zM13.3 6.4h2.9v11.2h-2.9z"/></svg>';
+            if (name === "back") return '<svg ' + attrs + '><path ' + stroke + ' d="M8.2 7.5H5.1V4.4"/><path ' + stroke + ' d="M5.45 7.35a7.9 7.9 0 1 1-.9 7.2"/><text x="12" y="15.35" text-anchor="middle" class="neoSvgText">10</text></svg>';
+            if (name === "forward") return '<svg ' + attrs + '><path ' + stroke + ' d="M15.8 7.5h3.1V4.4"/><path ' + stroke + ' d="M18.55 7.35a7.9 7.9 0 1 0 .9 7.2"/><text x="12" y="15.35" text-anchor="middle" class="neoSvgText">10</text></svg>';
+            if (name === "volume") return '<svg ' + attrs + '><path ' + fill + ' d="M4.3 9.25v5.5h3.2l4.45 3.25c.56.41 1.35.01 1.35-.68V6.68c0-.69-.79-1.09-1.35-.68L7.5 9.25H4.3Z"/><path ' + stroke + ' d="M16 9.2a4.4 4.4 0 0 1 0 5.6"/><path ' + stroke + ' d="M18.45 6.75a7.75 7.75 0 0 1 0 10.5"/></svg>';
+            if (name === "muted") return '<svg ' + attrs + '><path ' + fill + ' d="M4.3 9.25v5.5h3.2l4.45 3.25c.56.41 1.35.01 1.35-.68V6.68c0-.69-.79-1.09-1.35-.68L7.5 9.25H4.3Z"/><path ' + stroke + ' d="m17 9.1 4 4M21 9.1l-4 4"/></svg>';
+            if (name === "pip") return '<svg ' + attrs + '><rect ' + stroke + ' x="3.7" y="5.2" width="16.6" height="13.6" rx="2.25"/><rect ' + fill + ' x="12" y="12.2" width="5.85" height="3.85" rx=".95"/></svg>';
+            if (name === "full") return '<svg ' + attrs + '><path ' + stroke + ' d="M8.4 4.8H5.1v3.3M15.6 4.8h3.3v3.3M8.4 19.2H5.1v-3.3M15.6 19.2h3.3v-3.3"/></svg>';
+            return "";
+          }
+
+          function removeNeoDock() {
+            if (!playerShell) return;
+            var old = playerShell.querySelector(".swiflyNeoDock");
+            if (old) old.remove();
+          }
+
+          function createNeoDock() {
+            removeNeoDock();
+            var dock = document.createElement("div");
+            dock.className = "swiflyNeoDock";
+            dock.innerHTML = ''
+              + '<button class="neoBtn neoPlay" type="button" aria-label="Play">' + neoIcon("play") + '</button>'
+              + '<button class="neoBtn neoBack" type="button" aria-label="Back 10 seconds">' + neoIcon("back") + '</button>'
+              + '<button class="neoBtn neoForward" type="button" aria-label="Forward 10 seconds">' + neoIcon("forward") + '</button>'
+              + '<span class="neoTime neoCurrent">0:00</span>'
+              + '<div class="neoTimelineWrap">'
+              + '  <input class="neoTimeline" type="range" min="0" max="1000" value="0" step="1" aria-label="Timeline" />'
+              + '  <div class="neoPreview" hidden><b>0:00</b></div>'
+              + '</div>'
+              + '<span class="neoTime neoDuration">--:--</span>'
+              + '<button class="neoBtn neoSpeed" type="button" aria-label="Speed">1x</button>'
+              + '<div class="neoMenu neoSpeedMenu" hidden></div>'
+              + '<button class="neoBtn neoMute" type="button" aria-label="Mute">' + neoIcon("volume") + '</button>'
+              + '<div class="neoVolumeMenu" hidden><input class="neoVolume" type="range" min="0" max="100" value="100" step="1" aria-label="Volume" /></div>'
+              + '<button class="neoBtn neoPip" type="button" aria-label="Picture in picture">' + neoIcon("pip") + '</button>'
+              + '<button class="neoBtn neoFull" type="button" aria-label="Fullscreen">' + neoIcon("full") + '</button>';
+            playerShell.appendChild(dock);
+            return {
+              dock: dock,
+              play: dock.querySelector(".neoPlay"),
+              back: dock.querySelector(".neoBack"),
+              forward: dock.querySelector(".neoForward"),
+              current: dock.querySelector(".neoCurrent"),
+              duration: dock.querySelector(".neoDuration"),
+              timelineWrap: dock.querySelector(".neoTimelineWrap"),
+              timeline: dock.querySelector(".neoTimeline"),
+              preview: dock.querySelector(".neoPreview"),
+              speed: dock.querySelector(".neoSpeed"),
+              speedMenu: dock.querySelector(".neoSpeedMenu"),
+              mute: dock.querySelector(".neoMute"),
+              volumeMenu: dock.querySelector(".neoVolumeMenu"),
+              volume: dock.querySelector(".neoVolume"),
+              pip: dock.querySelector(".neoPip"),
+              full: dock.querySelector(".neoFull")
+            };
+          }
 
           if (playerShell) {
             playerShell.classList.remove(
               "usesPlyr",
               "usesMediaChrome",
               "usesNativeVideo",
-              "isScrubbing",
-              "isUsingDock",
-              "isPreviewingTime",
-              "previewLoadingFrame",
-              "hasFramePreview",
               "v128VideoReady",
               "v129MinimalPlayer",
               "v130SimpleModern",
@@ -38031,87 +38088,63 @@ async function watchPage(req, res, type) {
               "v139CleanIconDock",
               "v141FitFullscreenPreviewFix"
             );
-            playerShell.classList.add("usesVideoJs", "v147VideoJsFresh");
+            playerShell.classList.add("usesVideoJs", "v148NeoCinema");
           }
 
           try {
-            video.className = "dsMovieButtonVideo dsCinemaHlsVideo video-js vjs-big-play-centered swifly-v147-player";
-            video.controls = true;
+            video.className = "dsMovieButtonVideo dsCinemaHlsVideo video-js swifly-v148-video";
+            video.controls = false;
             video.playsInline = true;
             video.preload = "auto";
             video.crossOrigin = "anonymous";
             video.removeAttribute("slot");
             video.removeAttribute("src");
-            video.removeAttribute("poster");
             video.load();
           } catch {}
 
           loadVideoJsAssets(function(loaded) {
             if (!loaded || !window.videojs) {
               if (playerShell) {
-                playerShell.classList.remove("usesVideoJs", "v147VideoJsFresh");
+                playerShell.classList.remove("usesVideoJs", "v148NeoCinema");
                 playerShell.classList.add("usesNativeVideo");
               }
               video.src = src;
               video.controls = true;
-              video.preload = "auto";
               try { video.load(); } catch {}
+              setPlayerStatus("Video.js failed", "Native fallback loaded", true);
               setVideoUiState("ready");
-              setPlayerStatus("Video.js failed to load", "Using native controls fallback.", true);
               return;
             }
 
             try {
               movieButtonPlayer = window.videojs(video, {
-                controls: true,
+                controls: false,
                 autoplay: false,
                 preload: "auto",
                 fluid: false,
                 fill: true,
                 responsive: true,
                 restoreEl: true,
-                inactivityTimeout: 2100,
-                playbackRates: [0.5, 0.75, 1, 1.25, 1.5, 2],
-                userActions: {
-                  hotkeys: true
-                },
-                controlBar: {
-                  skipButtons: {
-                    backward: 10,
-                    forward: 10
-                  },
-                  volumePanel: {
-                    inline: false
-                  },
-                  pictureInPictureToggle: true,
-                  remainingTimeDisplay: false,
-                  currentTimeDisplay: true,
-                  durationDisplay: true,
-                  timeDivider: true,
-                  playbackRateMenuButton: true,
-                  fullscreenToggle: true
-                },
+                inactivityTimeout: 0,
+                userActions: { hotkeys: false },
                 html5: {
                   vhs: {
                     overrideNative: true,
                     withCredentials: false,
                     enableLowInitialPlaylist: true,
                     smoothQualityChange: true,
-                    useDevicePixelRatio: true,
                     handlePartialData: true,
+                    useDevicePixelRatio: true,
                     maxPlaylistRetries: 3
                   },
                   nativeAudioTracks: false,
                   nativeVideoTracks: false
                 },
-                sources: [{
-                  src: src,
-                  type: "application/x-mpegURL"
-                }]
+                sources: [{ src: src, type: "application/x-mpegURL" }]
               });
             } catch (error) {
               if (playerShell) {
-                playerShell.classList.remove("usesVideoJs", "v147VideoJsFresh");
+                playerShell.classList.remove("usesVideoJs", "v148NeoCinema");
                 playerShell.classList.add("usesNativeVideo");
               }
               video.src = src;
@@ -38124,6 +38157,249 @@ async function watchPage(req, res, type) {
 
             movieButtonPlayer.ready(function() {
               if (seekDock) seekDock.hidden = true;
+              var ui = createNeoDock();
+              var speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
+              var scrubbing = false;
+              var hideTimer = null;
+
+              function getDuration() {
+                var duration = 0;
+                try {
+                  duration = movieButtonPlayer.duration() || 0;
+                } catch {}
+                if (!duration || !Number.isFinite(duration)) {
+                  duration = video.duration || 0;
+                }
+                return Number.isFinite(duration) ? duration : 0;
+              }
+
+              function showDock() {
+                if (!playerShell || !ui || !ui.dock) return;
+                playerShell.classList.add("neoUserActive");
+                clearTimeout(hideTimer);
+                if (!movieButtonPlayer || movieButtonPlayer.paused()) return;
+                hideTimer = setTimeout(function() {
+                  if (playerShell && movieButtonPlayer && !movieButtonPlayer.paused()) {
+                    playerShell.classList.remove("neoUserActive");
+                  }
+                }, 2200);
+              }
+
+              function setTimelinePct(pct) {
+                pct = Math.max(0, Math.min(100, pct || 0));
+                ui.timeline.style.setProperty("--neo-progress", String(pct));
+              }
+
+              function updateUi() {
+                if (!ui || !movieButtonPlayer) return;
+                var duration = getDuration();
+                var current = 0;
+                try { current = movieButtonPlayer.currentTime() || 0; } catch {}
+                if (ui.current) ui.current.textContent = formatClock(current);
+                if (ui.duration) ui.duration.textContent = duration ? formatClock(duration) : "--:--";
+                if (!scrubbing && ui.timeline) {
+                  var raw = duration ? Math.round((current / duration) * 1000) : 0;
+                  ui.timeline.value = String(Math.max(0, Math.min(1000, raw)));
+                  setTimelinePct(raw / 10);
+                }
+                if (ui.play) {
+                  ui.play.innerHTML = movieButtonPlayer.paused() ? neoIcon("play") : neoIcon("pause");
+                  ui.play.setAttribute("aria-label", movieButtonPlayer.paused() ? "Play" : "Pause");
+                }
+                if (ui.mute) {
+                  var muted = movieButtonPlayer.muted() || movieButtonPlayer.volume() === 0;
+                  ui.mute.innerHTML = neoIcon(muted ? "muted" : "volume");
+                  ui.mute.classList.toggle("isMuted", muted);
+                }
+                if (ui.volume) {
+                  var vol = Math.round((movieButtonPlayer.muted() ? 0 : movieButtonPlayer.volume()) * 100);
+                  ui.volume.value = String(vol);
+                  ui.volume.style.setProperty("--neo-volume", String(vol));
+                }
+              }
+
+              function seekToValue(value) {
+                var duration = getDuration();
+                if (!duration) return;
+                var ratio = Math.max(0, Math.min(1000, Number(value || 0))) / 1000;
+                try { movieButtonPlayer.currentTime(duration * ratio); } catch {}
+                updateUi();
+              }
+
+              function previewAtEvent(event) {
+                if (!ui.preview || !ui.timelineWrap) return;
+                var rect = ui.timelineWrap.getBoundingClientRect();
+                if (!rect || !rect.width) return;
+                var clientX = event.clientX || (event.touches && event.touches[0] && event.touches[0].clientX) || rect.left;
+                var x = Math.max(0, Math.min(rect.width, clientX - rect.left));
+                var duration = getDuration();
+                if (!duration) return;
+                ui.preview.hidden = false;
+                ui.preview.style.left = x + "px";
+                ui.preview.querySelector("b").textContent = formatClock(duration * (x / rect.width));
+                showDock();
+              }
+
+              ui.play.addEventListener("click", function(event) {
+                event.preventDefault();
+                showDock();
+                try {
+                  movieButtonPlayer.paused() ? movieButtonPlayer.play() : movieButtonPlayer.pause();
+                } catch {}
+              });
+
+              ui.back.addEventListener("click", function(event) {
+                event.preventDefault();
+                showDock();
+                try { movieButtonPlayer.currentTime(Math.max(0, movieButtonPlayer.currentTime() - 10)); } catch {}
+              });
+
+              ui.forward.addEventListener("click", function(event) {
+                event.preventDefault();
+                showDock();
+                try { movieButtonPlayer.currentTime(movieButtonPlayer.currentTime() + 10); } catch {}
+              });
+
+              ui.timeline.addEventListener("pointerdown", function() {
+                scrubbing = true;
+                showDock();
+              });
+              ui.timeline.addEventListener("input", function() {
+                scrubbing = true;
+                setTimelinePct(Number(ui.timeline.value || 0) / 10);
+                seekToValue(ui.timeline.value);
+                showDock();
+              });
+              ["change", "pointerup", "pointercancel"].forEach(function(name) {
+                ui.timeline.addEventListener(name, function() {
+                  seekToValue(ui.timeline.value);
+                  scrubbing = false;
+                  showDock();
+                });
+              });
+              ui.timelineWrap.addEventListener("mousemove", previewAtEvent);
+              ui.timelineWrap.addEventListener("pointermove", previewAtEvent);
+              ui.timelineWrap.addEventListener("mouseenter", previewAtEvent);
+              ui.timelineWrap.addEventListener("mouseleave", function() {
+                if (ui.preview) ui.preview.hidden = true;
+              });
+
+              speeds.forEach(function(rate) {
+                var button = document.createElement("button");
+                button.type = "button";
+                button.textContent = rate === 1 ? "1x" : rate + "x";
+                button.dataset.speed = String(rate);
+                if (rate === 1) button.classList.add("active");
+                button.addEventListener("click", function(event) {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  try { movieButtonPlayer.playbackRate(rate); } catch {}
+                  ui.speed.textContent = rate === 1 ? "1x" : rate + "x";
+                  Array.from(ui.speedMenu.querySelectorAll("button")).forEach(function(x) { x.classList.remove("active"); });
+                  button.classList.add("active");
+                  ui.speedMenu.hidden = true;
+                  showDock();
+                });
+                ui.speedMenu.appendChild(button);
+              });
+
+              ui.speed.addEventListener("click", function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                ui.speedMenu.hidden = !ui.speedMenu.hidden;
+                ui.volumeMenu.hidden = true;
+                showDock();
+              });
+
+              ui.mute.addEventListener("click", function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                try { movieButtonPlayer.muted(!movieButtonPlayer.muted()); } catch {}
+                updateUi();
+                showDock();
+              });
+
+              ui.mute.addEventListener("mouseenter", function() {
+                ui.volumeMenu.hidden = false;
+                showDock();
+              });
+              ui.volumeMenu.addEventListener("mouseenter", showDock);
+              ui.volumeMenu.addEventListener("mousemove", showDock);
+              ui.volumeMenu.addEventListener("mouseleave", function() {
+                ui.volumeMenu.hidden = true;
+              });
+              ui.volume.addEventListener("input", function() {
+                var value = Math.max(0, Math.min(100, Number(ui.volume.value || 0)));
+                try {
+                  movieButtonPlayer.volume(value / 100);
+                  movieButtonPlayer.muted(value === 0);
+                } catch {}
+                ui.volume.style.setProperty("--neo-volume", String(value));
+                updateUi();
+                showDock();
+              });
+
+              ui.pip.addEventListener("click", async function(event) {
+                event.preventDefault();
+                showDock();
+                try {
+                  if (document.pictureInPictureElement) await document.exitPictureInPicture();
+                  else if (video.requestPictureInPicture) await video.requestPictureInPicture();
+                } catch {}
+              });
+
+              ui.full.addEventListener("pointerdown", function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                showDock();
+                try {
+                  if (movieButtonPlayer.isFullscreen && movieButtonPlayer.isFullscreen()) movieButtonPlayer.exitFullscreen();
+                  else movieButtonPlayer.requestFullscreen();
+                } catch {
+                  try {
+                    if (!document.fullscreenElement && playerShell.requestFullscreen) playerShell.requestFullscreen();
+                    else if (document.exitFullscreen) document.exitFullscreen();
+                  } catch {}
+                }
+              });
+              ui.full.addEventListener("click", function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+              });
+
+              document.addEventListener("click", function(event) {
+                if (!ui.dock || ui.dock.contains(event.target)) return;
+                ui.speedMenu.hidden = true;
+                ui.volumeMenu.hidden = true;
+              });
+
+              if (playerShell && !playerShell.dataset.v148Keys) {
+                playerShell.dataset.v148Keys = "true";
+                playerShell.addEventListener("keydown", function(event) {
+                  if (!movieButtonPlayer || !playerShell.classList.contains("v148NeoCinema")) return;
+                  var tag = event.target && event.target.tagName ? event.target.tagName.toLowerCase() : "";
+                  if (tag === "input" || tag === "textarea" || tag === "select") return;
+                  if (event.key === " " || event.key === "k" || event.key === "K") {
+                    event.preventDefault();
+                    try { movieButtonPlayer.paused() ? movieButtonPlayer.play() : movieButtonPlayer.pause(); } catch {}
+                  } else if (event.key === "j" || event.key === "J" || event.key === "ArrowLeft") {
+                    event.preventDefault();
+                    try { movieButtonPlayer.currentTime(Math.max(0, movieButtonPlayer.currentTime() - 10)); } catch {}
+                  } else if (event.key === "l" || event.key === "L" || event.key === "ArrowRight") {
+                    event.preventDefault();
+                    try { movieButtonPlayer.currentTime(movieButtonPlayer.currentTime() + 10); } catch {}
+                  } else if (event.key === "f" || event.key === "F") {
+                    event.preventDefault();
+                    try { movieButtonPlayer.isFullscreen() ? movieButtonPlayer.exitFullscreen() : movieButtonPlayer.requestFullscreen(); } catch {}
+                  }
+                  showDock();
+                });
+              }
+
+              ["timeupdate", "durationchange", "loadedmetadata", "progress", "volumechange", "ratechange", "play", "pause", "playing", "waiting"].forEach(function(eventName) {
+                try { movieButtonPlayer.on(eventName, updateUi); } catch {}
+                video.addEventListener(eventName, updateUi);
+              });
 
               try {
                 movieButtonPlayer.fill(true);
@@ -38132,68 +38408,43 @@ async function watchPage(req, res, type) {
               } catch {}
 
               if (playerShell) {
-                playerShell.classList.add("v147Ready");
+                playerShell.classList.add("v148Ready", "neoUserActive");
                 try { playerShell.focus({ preventScroll: true }); } catch {}
               }
 
               setVideoUiState("ready");
-              setPlayerStatus("Ready", "Fresh Video.js player loaded", false);
-              setStatus("m3u8 loaded in fresh Video.js player.");
+              setPlayerStatus("Ready", "Swifly Neo Video.js player loaded", false);
+              setStatus("m3u8 loaded in Swifly Neo Video.js player.");
               hidePlayerStatusSoon();
+              updateUi();
+              showDock();
 
               try {
                 movieButtonPlayer.on("play", function() {
                   setVideoUiState("playing");
-                  if (playerShell) playerShell.classList.add("v147Playing");
-                  hidePlayerStatusSoon();
+                  if (playerShell) playerShell.classList.add("v148Playing");
+                  showDock();
                 });
-
                 movieButtonPlayer.on("playing", function() {
                   setVideoUiState("playing");
-                  if (playerShell) playerShell.classList.add("v147Playing");
-                  hidePlayerStatusSoon();
+                  if (playerShell) playerShell.classList.add("v148Playing");
                 });
-
                 movieButtonPlayer.on("pause", function() {
                   setVideoUiState("paused");
-                  if (playerShell) playerShell.classList.remove("v147Playing");
+                  if (playerShell) {
+                    playerShell.classList.remove("v148Playing");
+                    playerShell.classList.add("neoUserActive");
+                  }
                 });
-
                 movieButtonPlayer.on("fullscreenchange", function() {
-                  if (playerShell) playerShell.classList.toggle("v147Fullscreen", movieButtonPlayer.isFullscreen && movieButtonPlayer.isFullscreen());
+                  if (playerShell) playerShell.classList.toggle("v148Fullscreen", movieButtonPlayer.isFullscreen && movieButtonPlayer.isFullscreen());
+                  showDock();
                 });
-
                 movieButtonPlayer.on("error", function() {
                   var error = movieButtonPlayer.error && movieButtonPlayer.error();
                   setPlayerStatus("Video.js error", (error && (error.message || error.code)) || "Playback error", true);
                 });
               } catch {}
-
-              // Keyboard shortcuts without adding custom visual controls.
-              if (playerShell && !playerShell.dataset.v147Keys) {
-                playerShell.dataset.v147Keys = "true";
-                playerShell.addEventListener("keydown", function(event) {
-                  if (!movieButtonPlayer || !playerShell.classList.contains("v147VideoJsFresh")) return;
-                  var tag = event.target && event.target.tagName ? event.target.tagName.toLowerCase() : "";
-                  if (tag === "input" || tag === "textarea" || tag === "select") return;
-
-                  if (event.key === "j" || event.key === "J" || event.key === "ArrowLeft") {
-                    event.preventDefault();
-                    try { movieButtonPlayer.currentTime(Math.max(0, movieButtonPlayer.currentTime() - 10)); } catch {}
-                  } else if (event.key === "l" || event.key === "L" || event.key === "ArrowRight") {
-                    event.preventDefault();
-                    try { movieButtonPlayer.currentTime(movieButtonPlayer.currentTime() + 10); } catch {}
-                  } else if (event.key === "k" || event.key === "K" || event.key === " ") {
-                    event.preventDefault();
-                    try { movieButtonPlayer.paused() ? movieButtonPlayer.play() : movieButtonPlayer.pause(); } catch {}
-                  } else if (event.key === "f" || event.key === "F") {
-                    event.preventDefault();
-                    try {
-                      movieButtonPlayer.isFullscreen() ? movieButtonPlayer.exitFullscreen() : movieButtonPlayer.requestFullscreen();
-                    } catch {}
-                  }
-                });
-              }
             });
           });
         }
@@ -42590,67 +42841,59 @@ function watchroomPage(req, res) {
 
 
     /* ============================================================
-       v147 FRESH VIDEO.JS MODERN PLAYER
-       Start-over player skin:
-       - uses Video.js controls directly
-       - no Swifly custom dock
-       - no old floating overlays
-       - m3u8 fills the player
-       - modern pill control bar
+       v148 SWIFLY NEO CINEMA PLAYER
+       Better direction after v147:
+       - Video.js is the playback engine
+       - Swifly owns the visual controls
+       - modern, minimal, not default Video.js
        ============================================================ */
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh {
-      --v147-radius: 24px;
-      --v147-bar-x: clamp(12px, 1.6vw, 22px);
-      --v147-bar-bottom: clamp(12px, 1.6vw, 22px);
+    .dsVideoJsCinemaShell.v148NeoCinema {
+      --neo-radius: 26px;
+      --neo-x: clamp(14px, 1.65vw, 24px);
+      --neo-bottom: clamp(14px, 1.65vw, 24px);
       position: relative !important;
-      min-height: clamp(360px, 72vh, 820px) !important;
-      height: clamp(360px, 72vh, 820px) !important;
-      border-radius: var(--v147-radius) !important;
+      height: clamp(380px, 74vh, 840px) !important;
+      min-height: clamp(380px, 74vh, 840px) !important;
+      border-radius: var(--neo-radius) !important;
       background: #000 !important;
       overflow: hidden !important;
       isolation: isolate !important;
-      outline: 1px solid rgba(255,255,255,.07) !important;
-      box-shadow: 0 34px 105px rgba(0,0,0,.56), 0 0 45px rgba(90,160,255,.045) !important;
+      outline: 1px solid rgba(255,255,255,.075) !important;
+      box-shadow: 0 36px 120px rgba(0,0,0,.62), 0 0 55px rgba(120,150,255,.055) !important;
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh::after {
+    .dsVideoJsCinemaShell.v148NeoCinema::after {
       content: "";
       position: absolute;
       inset: 0;
-      z-index: 6;
+      z-index: 5;
       pointer-events: none;
-      background:
-        linear-gradient(to top, rgba(0,0,0,.34), transparent 24%, transparent 76%, rgba(0,0,0,.14)),
-        radial-gradient(circle at 50% 100%, rgba(160,190,255,.10), transparent 34%);
-      opacity: .55;
+      background: linear-gradient(to top, rgba(0,0,0,.42), transparent 25%, transparent 70%, rgba(0,0,0,.14)), radial-gradient(circle at 50% 100%, rgba(255,255,255,.08), transparent 32%);
+      opacity: .7;
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .dsCinemaPlayerAura,
-    .dsVideoJsCinemaShell.v147VideoJsFresh .dsVideoJsTop,
-    .dsVideoJsCinemaShell.v147VideoJsFresh .dsVideoJsCenter,
-    .dsVideoJsCinemaShell.v147VideoJsFresh .dsVideoJsHint,
-    .dsVideoJsCinemaShell.v147VideoJsFresh .dsVideoJsQuality,
-    .dsVideoJsCinemaShell.v147VideoJsFresh .dsVideoJsSpeed,
-    .dsVideoJsCinemaShell.v147VideoJsFresh .dsVideoJsVolume,
-    .dsVideoJsCinemaShell.v147VideoJsFresh .dsVideoJsTimelinePreview,
-    .dsVideoJsCinemaShell.v147VideoJsFresh .swiflyVideoDock,
-    .dsVideoJsCinemaShell.v147VideoJsFresh .dsCinemaSeekDock,
-    .dsVideoJsCinemaShell.v147VideoJsFresh .dsSwiflyMediaController,
-    .dsVideoJsCinemaShell.v147VideoJsFresh .dsMediaChromeControls,
-    .dsVideoJsCinemaShell.v147VideoJsFresh .dsMediaChromeCenter,
-    .dsVideoJsCinemaShell.v147VideoJsFresh .dsMediaChromeQuality,
-    .dsVideoJsCinemaShell.v147VideoJsFresh .plyr {
+    .dsVideoJsCinemaShell.v148NeoCinema .dsCinemaPlayerAura,
+    .dsVideoJsCinemaShell.v148NeoCinema .dsVideoJsTop,
+    .dsVideoJsCinemaShell.v148NeoCinema .dsVideoJsCenter,
+    .dsVideoJsCinemaShell.v148NeoCinema .dsVideoJsHint,
+    .dsVideoJsCinemaShell.v148NeoCinema .dsVideoJsQuality,
+    .dsVideoJsCinemaShell.v148NeoCinema .dsVideoJsSpeed,
+    .dsVideoJsCinemaShell.v148NeoCinema .dsVideoJsVolume,
+    .dsVideoJsCinemaShell.v148NeoCinema .dsVideoJsTimelinePreview,
+    .dsVideoJsCinemaShell.v148NeoCinema .swiflyVideoDock,
+    .dsVideoJsCinemaShell.v148NeoCinema .dsCinemaSeekDock,
+    .dsVideoJsCinemaShell.v148NeoCinema .vjs-control-bar,
+    .dsVideoJsCinemaShell.v148NeoCinema .vjs-big-play-button {
       display: none !important;
-      visibility: hidden !important;
       opacity: 0 !important;
+      visibility: hidden !important;
       pointer-events: none !important;
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .video-js,
-    .dsVideoJsCinemaShell.v147VideoJsFresh .dsCinemaHlsVideo,
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-tech {
-      display: block !important;
+    .dsVideoJsCinemaShell.v148NeoCinema .video-js,
+    .dsVideoJsCinemaShell.v148NeoCinema .dsCinemaHlsVideo,
+    .dsVideoJsCinemaShell.v148NeoCinema .vjs-tech {
       position: absolute !important;
       inset: 0 !important;
       width: 100% !important;
@@ -42662,319 +42905,303 @@ function watchroomPage(req, res) {
       overflow: hidden !important;
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-tech {
+    .dsVideoJsCinemaShell.v148NeoCinema .vjs-tech,
+    .dsVideoJsCinemaShell.v148NeoCinema video {
       object-fit: cover !important;
       object-position: center center !important;
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .video-js {
-      font-family: var(--font-ui, "Host Grotesk", Inter, system-ui, sans-serif) !important;
-      color: #fff !important;
+    .dsVideoJsCinemaShell.v148NeoCinema .swiflyNeoDock {
+      position: absolute;
+      left: var(--neo-x);
+      right: var(--neo-x);
+      bottom: var(--neo-bottom);
+      height: 54px;
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 16px;
+      border-radius: 999px;
+      color: rgba(255,255,255,.92);
+      background: rgba(22,25,31,.74);
+      border: 1px solid rgba(255,255,255,.09);
+      box-shadow: 0 18px 50px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.07);
+      backdrop-filter: blur(18px) saturate(1.1);
+      -webkit-backdrop-filter: blur(18px) saturate(1.1);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity .18s ease, transform .18s ease;
+      font-family: var(--font-ui, "Host Grotesk", Inter, system-ui, sans-serif);
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-poster img {
-      object-fit: cover !important;
+    .dsVideoJsCinemaShell.v148NeoCinema:hover .swiflyNeoDock,
+    .dsVideoJsCinemaShell.v148NeoCinema:focus-within .swiflyNeoDock,
+    .dsVideoJsCinemaShell.v148NeoCinema.neoUserActive .swiflyNeoDock,
+    .dsVideoJsCinemaShell.v148NeoCinema:not(.v148Playing) .swiflyNeoDock {
+      opacity: 1;
+      transform: translateY(0);
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-big-play-button {
-      width: 76px !important;
-      height: 50px !important;
-      line-height: 50px !important;
-      left: 50% !important;
-      top: 50% !important;
-      margin-left: -38px !important;
-      margin-top: -25px !important;
-      display: grid !important;
-      place-items: center !important;
-      padding: 0 !important;
-      border: 1px solid rgba(255,255,255,.16) !important;
-      border-radius: 18px !important;
-      color: rgba(255,255,255,.98) !important;
-      background:
-        radial-gradient(circle at 30% 18%, rgba(255,255,255,.18), transparent 44%),
-        rgba(14,18,31,.62) !important;
-      box-shadow: 0 22px 70px rgba(0,0,0,.46), inset 0 1px 0 rgba(255,255,255,.075) !important;
-      backdrop-filter: blur(16px) saturate(1.08) !important;
-      -webkit-backdrop-filter: blur(16px) saturate(1.08) !important;
-      opacity: .96 !important;
-      transition: transform .16s ease, background .16s ease, opacity .16s ease, border-color .16s ease !important;
-      z-index: 14 !important;
+    .dsVideoJsCinemaShell.v148NeoCinema .neoBtn {
+      width: 32px;
+      height: 32px;
+      min-width: 32px;
+      display: inline-grid;
+      place-items: center;
+      padding: 0;
+      border: 0;
+      border-radius: 999px;
+      color: rgba(255,255,255,.9);
+      background: transparent;
+      cursor: pointer;
+      transition: background .14s ease, color .14s ease, transform .14s ease;
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-big-play-button:hover,
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-big-play-button:focus {
-      transform: translateY(-1px) scale(1.035) !important;
-      border-color: rgba(255,255,255,.26) !important;
-      background:
-        radial-gradient(circle at 30% 18%, rgba(255,255,255,.23), transparent 44%),
-        rgba(24,29,48,.72) !important;
+    .dsVideoJsCinemaShell.v148NeoCinema .neoBtn:hover,
+    .dsVideoJsCinemaShell.v148NeoCinema .neoBtn:focus-visible {
+      color: white;
+      background: rgba(255,255,255,.10);
+      transform: translateY(-1px);
+      outline: none;
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-big-play-button .vjs-icon-placeholder {
-      position: static !important;
-      display: grid !important;
-      place-items: center !important;
-      width: 100% !important;
-      height: 100% !important;
+    .dsVideoJsCinemaShell.v148NeoCinema .neoSvg {
+      width: 19px;
+      height: 19px;
+      display: block;
+      overflow: visible;
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-big-play-button .vjs-icon-placeholder::before {
-      position: static !important;
-      width: auto !important;
-      height: auto !important;
-      margin: 0 !important;
-      line-height: 1 !important;
-      font-size: 26px !important;
-      transform: translateX(2px) !important;
-      text-shadow: none !important;
+    .dsVideoJsCinemaShell.v148NeoCinema .neoPlay .neoSvg {
+      width: 18px;
+      height: 18px;
+      transform: translateX(1px);
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-has-started .vjs-big-play-button,
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-playing .vjs-big-play-button {
-      opacity: 0 !important;
-      pointer-events: none !important;
+    .dsVideoJsCinemaShell.v148NeoCinema .neoBack .neoSvg,
+    .dsVideoJsCinemaShell.v148NeoCinema .neoForward .neoSvg {
+      width: 22px;
+      height: 22px;
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-control-bar {
-      position: absolute !important;
-      left: var(--v147-bar-x) !important;
-      right: var(--v147-bar-x) !important;
-      bottom: var(--v147-bar-bottom) !important;
-      width: auto !important;
-      height: 50px !important;
-      min-height: 50px !important;
-      display: flex !important;
-      align-items: center !important;
-      gap: 8px !important;
-      padding: 0 14px !important;
-      border-radius: 999px !important;
-      color: rgba(255,255,255,.92) !important;
-      background: rgba(28,31,36,.78) !important;
-      border: 1px solid rgba(255,255,255,.08) !important;
-      box-shadow: 0 16px 44px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.06) !important;
-      backdrop-filter: blur(16px) saturate(1.08) !important;
-      -webkit-backdrop-filter: blur(16px) saturate(1.08) !important;
-      opacity: 0 !important;
-      transform: translateY(10px) !important;
-      transition: opacity .18s ease, transform .18s ease !important;
-      z-index: 30 !important;
-      overflow: visible !important;
+    .dsVideoJsCinemaShell.v148NeoCinema .neoSvgText {
+      fill: currentColor;
+      stroke: none;
+      font-size: 6px;
+      font-weight: 950;
+      letter-spacing: -.04em;
+      font-family: var(--font-ui, "Host Grotesk", Inter, system-ui, sans-serif);
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh:hover .vjs-control-bar,
-    .dsVideoJsCinemaShell.v147VideoJsFresh:focus-within .vjs-control-bar,
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-user-active .vjs-control-bar,
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-paused .vjs-control-bar {
-      opacity: 1 !important;
-      transform: translateY(0) !important;
+    .dsVideoJsCinemaShell.v148NeoCinema .neoTime {
+      min-width: 40px;
+      color: rgba(255,255,255,.88);
+      font-size: 12px;
+      font-weight: 850;
+      letter-spacing: -.015em;
+      text-align: center;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-control {
-      flex: 0 0 auto !important;
-      width: 30px !important;
-      height: 30px !important;
-      min-width: 30px !important;
-      margin: 0 !important;
-      padding: 0 !important;
-      border-radius: 999px !important;
-      color: rgba(255,255,255,.88) !important;
-      background: transparent !important;
-      transition: color .14s ease, background .14s ease, transform .14s ease !important;
+    .dsVideoJsCinemaShell.v148NeoCinema .neoTimelineWrap {
+      position: relative;
+      flex: 1 1 auto;
+      min-width: 150px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-control:hover,
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-control:focus {
-      color: #fff !important;
-      background: rgba(255,255,255,.09) !important;
-      transform: translateY(-1px) !important;
-      outline: none !important;
+    .dsVideoJsCinemaShell.v148NeoCinema .neoTimeline {
+      width: 100%;
+      height: 18px;
+      margin: 0;
+      appearance: none;
+      -webkit-appearance: none;
+      background: transparent;
+      cursor: pointer;
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-button > .vjs-icon-placeholder::before {
-      line-height: 30px !important;
-      font-size: 15px !important;
-      text-shadow: none !important;
+    .dsVideoJsCinemaShell.v148NeoCinema .neoTimeline::-webkit-slider-runnable-track {
+      height: 5px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #f3f7fb, #f3f7fb) 0 / calc(var(--neo-progress, 0) * 1%) 100% no-repeat, rgba(255,255,255,.27);
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-progress-control {
-      flex: 1 1 auto !important;
-      width: auto !important;
-      min-width: 160px !important;
-      max-width: none !important;
-      height: 30px !important;
-      padding: 0 !important;
-      margin: 0 4px !important;
-      cursor: pointer !important;
+    .dsVideoJsCinemaShell.v148NeoCinema .neoTimeline::-moz-range-track {
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.27);
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-progress-holder {
-      height: 5px !important;
-      margin: 12px 0 0 !important;
-      border-radius: 999px !important;
-      background: rgba(255,255,255,.26) !important;
-      overflow: visible !important;
-      box-shadow: none !important;
+    .dsVideoJsCinemaShell.v148NeoCinema .neoTimeline::-moz-range-progress {
+      height: 5px;
+      border-radius: 999px;
+      background: #f3f7fb;
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-load-progress,
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-play-progress {
-      height: 5px !important;
-      border-radius: 999px !important;
+    .dsVideoJsCinemaShell.v148NeoCinema .neoTimeline::-webkit-slider-thumb {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 11px;
+      height: 11px;
+      margin-top: -3px;
+      border-radius: 999px;
+      border: 0;
+      background: #f3f7fb;
+      box-shadow: 0 0 0 2px rgba(255,255,255,.10), 0 4px 12px rgba(0,0,0,.34);
+      transition: width .14s ease, height .14s ease, margin .14s ease;
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-load-progress {
-      background: rgba(255,255,255,.16) !important;
+    .dsVideoJsCinemaShell.v148NeoCinema .neoTimeline::-moz-range-thumb {
+      width: 11px;
+      height: 11px;
+      border-radius: 999px;
+      border: 0;
+      background: #f3f7fb;
+      box-shadow: 0 0 0 2px rgba(255,255,255,.10), 0 4px 12px rgba(0,0,0,.34);
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-play-progress {
-      background: #f3f7fb !important;
-      box-shadow: 0 0 14px rgba(243,247,251,.18) !important;
+    .dsVideoJsCinemaShell.v148NeoCinema .neoTimeline:hover::-webkit-slider-thumb {
+      width: 13px;
+      height: 13px;
+      margin-top: -4px;
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-play-progress::before {
-      top: -4px !important;
-      right: -0.38em !important;
-      font-size: 11px !important;
-      color: #f3f7fb !important;
-      text-shadow: 0 0 10px rgba(255,255,255,.25) !important;
+    .dsVideoJsCinemaShell.v148NeoCinema .neoPreview {
+      position: absolute;
+      left: 0;
+      bottom: 38px;
+      transform: translateX(-50%);
+      pointer-events: none;
+      z-index: 60;
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-mouse-display {
-      background: rgba(255,255,255,.9) !important;
-      width: 2px !important;
-      height: 13px !important;
-      top: -4px !important;
-      border-radius: 999px !important;
+    .dsVideoJsCinemaShell.v148NeoCinema .neoPreview b {
+      display: block;
+      min-width: 48px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      color: #080b12;
+      background: #f3f7fb;
+      box-shadow: 0 14px 34px rgba(0,0,0,.38);
+      font-size: 11px;
+      font-weight: 950;
+      line-height: 1;
+      text-align: center;
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-time-tooltip {
-      bottom: 22px !important;
-      padding: 5px 8px !important;
-      border-radius: 999px !important;
-      color: #080b12 !important;
-      background: #f3f7fb !important;
-      box-shadow: 0 14px 30px rgba(0,0,0,.34) !important;
-      font-family: var(--font-ui, "Host Grotesk", Inter, system-ui, sans-serif) !important;
-      font-size: 11px !important;
-      font-weight: 900 !important;
-      line-height: 1 !important;
-      text-shadow: none !important;
+    .dsVideoJsCinemaShell.v148NeoCinema .neoSpeed {
+      width: auto;
+      min-width: 34px;
+      padding: 0 7px;
+      color: rgba(255,255,255,.88);
+      font-size: 12px;
+      font-weight: 900;
+      font-family: var(--font-ui, "Host Grotesk", Inter, system-ui, sans-serif);
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-time-control {
-      display: block !important;
-      flex: 0 0 auto !important;
-      width: auto !important;
-      min-width: auto !important;
-      height: 30px !important;
-      padding: 0 3px !important;
-      line-height: 30px !important;
-      color: rgba(255,255,255,.86) !important;
-      font-size: 12px !important;
-      font-weight: 850 !important;
-      white-space: nowrap !important;
+    .dsVideoJsCinemaShell.v148NeoCinema .neoMenu,
+    .dsVideoJsCinemaShell.v148NeoCinema .neoVolumeMenu {
+      position: absolute;
+      bottom: 64px;
+      right: 86px;
+      z-index: 70;
+      min-width: 98px;
+      display: grid;
+      gap: 4px;
+      padding: 6px;
+      border-radius: 15px;
+      background: rgba(17,20,26,.96);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 18px 50px rgba(0,0,0,.44);
+      backdrop-filter: blur(18px) saturate(1.1);
+      -webkit-backdrop-filter: blur(18px) saturate(1.1);
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-time-divider {
-      min-width: 6px !important;
-      padding: 0 !important;
-      color: rgba(255,255,255,.42) !important;
+    .dsVideoJsCinemaShell.v148NeoCinema .neoMenu[hidden],
+    .dsVideoJsCinemaShell.v148NeoCinema .neoVolumeMenu[hidden],
+    .dsVideoJsCinemaShell.v148NeoCinema .neoPreview[hidden] {
+      display: none !important;
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-volume-panel {
-      width: 30px !important;
-      min-width: 30px !important;
-      overflow: visible !important;
+    .dsVideoJsCinemaShell.v148NeoCinema .neoMenu button {
+      min-height: 30px;
+      border: 0;
+      border-radius: 10px;
+      color: rgba(255,255,255,.74);
+      background: transparent;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 900;
+      font-family: var(--font-ui, "Host Grotesk", Inter, system-ui, sans-serif);
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-volume-panel.vjs-hover,
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-volume-panel:hover,
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-volume-panel:focus-within,
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-volume-panel.vjs-slider-active {
-      width: 106px !important;
-      min-width: 106px !important;
-      background: rgba(255,255,255,.06) !important;
+    .dsVideoJsCinemaShell.v148NeoCinema .neoMenu button:hover,
+    .dsVideoJsCinemaShell.v148NeoCinema .neoMenu button.active {
+      color: #080b12;
+      background: #f3f7fb;
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-volume-control {
-      width: 72px !important;
-      height: 30px !important;
-      opacity: 1 !important;
+    .dsVideoJsCinemaShell.v148NeoCinema .neoVolumeMenu {
+      right: 44px;
+      width: 132px;
+      padding: 10px;
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-volume-bar {
-      margin: 12px 10px 0 6px !important;
-      height: 5px !important;
-      border-radius: 999px !important;
-      background: rgba(255,255,255,.22) !important;
+    .dsVideoJsCinemaShell.v148NeoCinema .neoVolume {
+      width: 100%;
+      height: 18px;
+      margin: 0;
+      appearance: none;
+      -webkit-appearance: none;
+      background: transparent;
+      cursor: pointer;
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-volume-level {
-      height: 5px !important;
-      border-radius: 999px !important;
-      background: #f3f7fb !important;
+    .dsVideoJsCinemaShell.v148NeoCinema .neoVolume::-webkit-slider-runnable-track {
+      height: 6px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #f3f7fb, #f3f7fb) 0 / calc(var(--neo-volume, 100) * 1%) 100% no-repeat, rgba(255,255,255,.18);
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-volume-level::before {
-      top: -4px !important;
-      font-size: 11px !important;
-      color: #f3f7fb !important;
+    .dsVideoJsCinemaShell.v148NeoCinema .neoVolume::-webkit-slider-thumb {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 15px;
+      height: 15px;
+      margin-top: -4.5px;
+      border-radius: 999px;
+      border: 0;
+      background: #f3f7fb;
+      box-shadow: 0 4px 12px rgba(0,0,0,.34);
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-playback-rate {
-      width: 42px !important;
-      min-width: 42px !important;
-      overflow: visible !important;
+    .dsVideoJsCinemaShell.v148NeoCinema .neoVolume::-moz-range-track {
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.18);
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-playback-rate .vjs-playback-rate-value {
-      line-height: 30px !important;
-      color: rgba(255,255,255,.88) !important;
-      font-size: 12px !important;
-      font-weight: 900 !important;
+    .dsVideoJsCinemaShell.v148NeoCinema .neoVolume::-moz-range-progress {
+      height: 6px;
+      border-radius: 999px;
+      background: #f3f7fb;
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-menu {
-      bottom: 36px !important;
-      z-index: 80 !important;
+    .dsVideoJsCinemaShell.v148NeoCinema .neoVolume::-moz-range-thumb {
+      width: 15px;
+      height: 15px;
+      border: 0;
+      border-radius: 999px;
+      background: #f3f7fb;
+      box-shadow: 0 4px 12px rgba(0,0,0,.34);
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-menu-content {
-      min-width: 96px !important;
-      padding: 6px !important;
-      border-radius: 14px !important;
-      color: rgba(255,255,255,.78) !important;
-      background: rgba(18,21,27,.96) !important;
-      border: 1px solid rgba(255,255,255,.09) !important;
-      box-shadow: 0 18px 46px rgba(0,0,0,.42) !important;
-      backdrop-filter: blur(16px) saturate(1.08) !important;
-      -webkit-backdrop-filter: blur(16px) saturate(1.08) !important;
-    }
-
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-menu li {
-      min-height: 28px !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      border-radius: 9px !important;
-      color: rgba(255,255,255,.74) !important;
-      font-size: 11px !important;
-      font-weight: 850 !important;
-      text-transform: none !important;
-    }
-
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-menu li:hover,
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-menu li.vjs-selected {
-      color: #070b12 !important;
-      background: #f3f7fb !important;
-    }
-
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-picture-in-picture-control,
-    .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-fullscreen-control {
-      margin-left: 0 !important;
-    }
-
-    .dsVideoJsCinemaShell.v147VideoJsFresh .dsHlsStatus {
+    .dsVideoJsCinemaShell.v148NeoCinema .dsHlsStatus {
       left: 16px !important;
       top: 16px !important;
       bottom: auto !important;
@@ -42987,19 +43214,19 @@ function watchroomPage(req, res) {
       box-shadow: 0 12px 32px rgba(0,0,0,.28) !important;
       backdrop-filter: blur(14px) saturate(1.08) !important;
       -webkit-backdrop-filter: blur(14px) saturate(1.08) !important;
-      z-index: 35 !important;
+      z-index: 45 !important;
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh.v147Ready .dsHlsStatus:not(.isError),
-    .dsVideoJsCinemaShell.v147VideoJsFresh.v147Playing .dsHlsStatus:not(.isError) {
+    .dsVideoJsCinemaShell.v148NeoCinema.v148Ready .dsHlsStatus:not(.isError),
+    .dsVideoJsCinemaShell.v148NeoCinema.v148Playing .dsHlsStatus:not(.isError) {
       opacity: 0 !important;
       transform: translateY(-6px) !important;
       pointer-events: none !important;
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh.v147Fullscreen,
-    .dsVideoJsCinemaShell.v147VideoJsFresh:fullscreen,
-    .dsVideoJsCinemaShell.v147VideoJsFresh:-webkit-full-screen {
+    .dsVideoJsCinemaShell.v148NeoCinema.v148Fullscreen,
+    .dsVideoJsCinemaShell.v148NeoCinema:fullscreen,
+    .dsVideoJsCinemaShell.v148NeoCinema:-webkit-full-screen {
       width: 100vw !important;
       height: 100vh !important;
       max-width: 100vw !important;
@@ -43007,72 +43234,57 @@ function watchroomPage(req, res) {
       border-radius: 0 !important;
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh.v147Fullscreen .video-js,
-    .dsVideoJsCinemaShell.v147VideoJsFresh:fullscreen .video-js,
-    .dsVideoJsCinemaShell.v147VideoJsFresh:-webkit-full-screen .video-js {
+    .dsVideoJsCinemaShell.v148NeoCinema.v148Fullscreen .video-js,
+    .dsVideoJsCinemaShell.v148NeoCinema:fullscreen .video-js,
+    .dsVideoJsCinemaShell.v148NeoCinema:-webkit-full-screen .video-js {
       width: 100vw !important;
       height: 100vh !important;
       border-radius: 0 !important;
     }
 
-    .dsVideoJsCinemaShell.v147VideoJsFresh.v147Fullscreen .vjs-control-bar,
-    .dsVideoJsCinemaShell.v147VideoJsFresh:fullscreen .vjs-control-bar,
-    .dsVideoJsCinemaShell.v147VideoJsFresh:-webkit-full-screen .vjs-control-bar {
-      left: max(16px, env(safe-area-inset-left)) !important;
-      right: max(16px, env(safe-area-inset-right)) !important;
-      bottom: max(16px, env(safe-area-inset-bottom)) !important;
+    .dsVideoJsCinemaShell.v148NeoCinema.v148Fullscreen .swiflyNeoDock,
+    .dsVideoJsCinemaShell.v148NeoCinema:fullscreen .swiflyNeoDock,
+    .dsVideoJsCinemaShell.v148NeoCinema:-webkit-full-screen .swiflyNeoDock {
+      left: max(18px, env(safe-area-inset-left)) !important;
+      right: max(18px, env(safe-area-inset-right)) !important;
+      bottom: max(18px, env(safe-area-inset-bottom)) !important;
     }
 
     @media(max-width: 900px) {
-      .dsVideoJsCinemaShell.v147VideoJsFresh {
-        --v147-radius: 18px;
-        --v147-bar-x: 8px;
-        --v147-bar-bottom: 8px;
-        min-height: clamp(292px, 58vh, 620px) !important;
-        height: clamp(292px, 58vh, 620px) !important;
+      .dsVideoJsCinemaShell.v148NeoCinema {
+        --neo-radius: 18px;
+        --neo-x: 9px;
+        --neo-bottom: 9px;
+        height: clamp(300px, 58vh, 630px) !important;
+        min-height: clamp(300px, 58vh, 630px) !important;
       }
 
-      .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-control-bar {
-        height: 46px !important;
-        min-height: 46px !important;
-        gap: 6px !important;
-        padding: 0 10px !important;
+      .dsVideoJsCinemaShell.v148NeoCinema .swiflyNeoDock {
+        height: 48px;
+        padding: 0 10px;
+        gap: 7px;
       }
 
-      .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-time-control,
-      .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-picture-in-picture-control {
+      .dsVideoJsCinemaShell.v148NeoCinema .neoBack,
+      .dsVideoJsCinemaShell.v148NeoCinema .neoForward,
+      .dsVideoJsCinemaShell.v148NeoCinema .neoDuration,
+      .dsVideoJsCinemaShell.v148NeoCinema .neoPip {
         display: none !important;
       }
 
-      .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-progress-control {
-        min-width: 88px !important;
-      }
-
-      .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-volume-panel.vjs-hover,
-      .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-volume-panel:hover,
-      .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-volume-panel:focus-within,
-      .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-volume-panel.vjs-slider-active {
-        width: 30px !important;
-        min-width: 30px !important;
-      }
-
-      .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-volume-control {
-        display: none !important;
+      .dsVideoJsCinemaShell.v148NeoCinema .neoTimelineWrap {
+        min-width: 80px;
       }
     }
 
-    @media(max-width: 560px) {
-      .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-playback-rate,
-      .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-skip-backward-10,
-      .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-skip-forward-10 {
+    @media(max-width: 540px) {
+      .dsVideoJsCinemaShell.v148NeoCinema .neoSpeed {
         display: none !important;
       }
 
-      .dsVideoJsCinemaShell.v147VideoJsFresh .vjs-big-play-button {
-        width: 66px !important;
-        height: 44px !important;
-        margin-left: -33px !important;
-        margin-top: -22px !important;
+      .dsVideoJsCinemaShell.v148NeoCinema .neoTime {
+        min-width: 34px;
+        font-size: 11px;
       }
     }
 
