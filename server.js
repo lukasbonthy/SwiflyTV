@@ -25538,6 +25538,283 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v117 CONTINUE WATCHING CLEANUP
+       Fixes the ugly Continue Watching cards: no giant white play
+       button, no stretched layout presets, cleaner metadata, and
+       better blending with the gallery.
+       ============================================================ */
+
+    .dsContinueSection {
+      position: relative !important;
+      margin-top: clamp(18px, 2.8vw, 34px) !important;
+      padding-block: 0 4px !important;
+      isolation: isolate;
+    }
+
+    .dsContinueSection .dsRowHead {
+      margin-bottom: 8px !important;
+      align-items: center !important;
+    }
+
+    .dsContinueSection .dsRowHead h2 {
+      font-size: clamp(22px, 2vw, 30px) !important;
+      letter-spacing: -.055em !important;
+      line-height: .98 !important;
+    }
+
+    .dsContinueSection .dsRowTag {
+      color: rgba(223,248,255,.70) !important;
+      background: rgba(255,255,255,.07) !important;
+      border: 1px solid rgba(255,255,255,.10) !important;
+    }
+
+    .dsContinueSection .movieRail,
+    body.layout-cinema .dsContinueSection .movieRail,
+    body.layout-posterwall .dsContinueSection .movieRail,
+    body.layout-spotlight .dsContinueSection .movieRail,
+    body.layout-dense .dsContinueSection .movieRail {
+      grid-auto-columns: clamp(232px, 19vw, 334px) !important;
+      gap: clamp(12px, 1.15vw, 18px) !important;
+      padding-top: 18px !important;
+      padding-bottom: 36px !important;
+      margin-top: -12px !important;
+      margin-bottom: -14px !important;
+      -webkit-mask-image:
+        linear-gradient(90deg,
+          transparent 0,
+          #000 34px,
+          #000 calc(100% - 74px),
+          transparent 100%) !important;
+      mask-image:
+        linear-gradient(90deg,
+          transparent 0,
+          #000 34px,
+          #000 calc(100% - 74px),
+          transparent 100%) !important;
+    }
+
+    .dsContinueSection .dsContinueCard {
+      position: relative;
+      scroll-snap-align: start;
+      z-index: 1;
+    }
+
+    .dsContinueSection .dsContinueCard:hover {
+      z-index: 90 !important;
+    }
+
+    .dsContinueSection .dsThumb,
+    body.layout-cinema .dsContinueSection .dsThumb,
+    body.layout-posterwall .dsContinueSection .dsThumb,
+    body.layout-spotlight .dsContinueSection .dsThumb,
+    body.layout-dense .dsContinueSection .dsThumb {
+      aspect-ratio: 16 / 9 !important;
+      border-radius: 20px !important;
+      overflow: hidden !important;
+      border: 1px solid rgba(255,255,255,.12) !important;
+      background:
+        radial-gradient(260px circle at 28% 0%, rgba(255,255,255,.10), transparent 52%),
+        rgba(255,255,255,.045) !important;
+      box-shadow:
+        0 14px 42px rgba(0,0,0,.30),
+        0 0 30px rgba(85,215,255,.055) !important;
+      transform: translateZ(0) !important;
+      filter: none !important;
+      transition:
+        transform .22s cubic-bezier(.2,.8,.2,1),
+        box-shadow .22s ease,
+        border-color .22s ease,
+        filter .22s ease !important;
+    }
+
+    .dsContinueSection .dsThumb:hover {
+      transform: translateY(-5px) scale(1.018) !important;
+      border-color: rgba(223,248,255,.24) !important;
+      filter: brightness(1.045) saturate(1.06) !important;
+      box-shadow:
+        0 24px 68px rgba(0,0,0,.42),
+        0 0 44px rgba(85,215,255,.14) !important;
+    }
+
+    .dsContinueSection .dsThumb img {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+      object-position: center !important;
+      transform: scale(1.001) !important;
+      transition: transform .28s cubic-bezier(.2,.8,.2,1), filter .28s ease !important;
+    }
+
+    .dsContinueSection .dsThumb:hover img {
+      transform: scale(1.035) !important;
+    }
+
+    .dsContinueSection .dsCardOverlay {
+      inset: auto 0 0 !important;
+      min-height: 58%;
+      padding: 54px 13px 13px !important;
+      opacity: 1 !important;
+      transform: none !important;
+      z-index: 6 !important;
+      background:
+        linear-gradient(to top,
+          rgba(3,5,12,.96) 0%,
+          rgba(3,5,12,.74) 42%,
+          rgba(3,5,12,.22) 72%,
+          transparent 100%) !important;
+      pointer-events: none !important;
+    }
+
+    .dsContinueSection .dsCardTitle {
+      max-width: calc(100% - 84px);
+      color: rgba(255,255,255,.96) !important;
+      font-size: 13px !important;
+      font-weight: 950 !important;
+      line-height: 1.05 !important;
+      letter-spacing: -.025em !important;
+      text-shadow: 0 8px 26px rgba(0,0,0,.55);
+    }
+
+    .dsContinueSection .dsCardMeta {
+      gap: 7px !important;
+      margin-top: 7px !important;
+      color: rgba(255,255,255,.55) !important;
+      font-size: 10px !important;
+      font-weight: 850 !important;
+    }
+
+    .dsContinueSection .dsCardMeta b {
+      color: #dff8ff !important;
+      font-weight: 950 !important;
+    }
+
+    .dsContinueOverlay {
+      position: absolute !important;
+      inset: 11px 11px auto auto !important;
+      z-index: 10 !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 7px !important;
+      width: auto !important;
+      height: 34px !important;
+      min-width: 0 !important;
+      padding: 0 10px 0 7px !important;
+      border-radius: 999px !important;
+      opacity: 0 !important;
+      transform: translateY(-4px) scale(.98) !important;
+      background:
+        radial-gradient(90px circle at 20% 0%, rgba(85,215,255,.20), transparent 62%),
+        rgba(4,7,18,.78) !important;
+      border: 1px solid rgba(255,255,255,.14) !important;
+      box-shadow:
+        0 12px 34px rgba(0,0,0,.34),
+        inset 0 1px 0 rgba(255,255,255,.07) !important;
+      backdrop-filter: blur(16px) saturate(1.15);
+      -webkit-backdrop-filter: blur(16px) saturate(1.15);
+      transition: opacity .16s ease, transform .16s ease !important;
+      pointer-events: none !important;
+    }
+
+    .dsContinueSection .dsThumb:hover .dsContinueOverlay,
+    .dsContinueSection .dsThumb:focus-visible .dsContinueOverlay,
+    .dsContinueCard .dsThumb.swifly-tv-focus-target .dsContinueOverlay {
+      opacity: 1 !important;
+      transform: translateY(0) scale(1) !important;
+    }
+
+    .dsContinueOverlay span {
+      position: static !important;
+      width: 22px !important;
+      height: 22px !important;
+      display: grid !important;
+      place-items: center !important;
+      border-radius: 999px !important;
+      color: #06101d !important;
+      background:
+        radial-gradient(circle at 28% 20%, rgba(255,255,255,.96), transparent 42%),
+        linear-gradient(135deg, #dff8ff, #8b5cf6) !important;
+      font-size: 10px !important;
+      font-weight: 950 !important;
+      box-shadow: none !important;
+    }
+
+    .dsContinueOverlay b {
+      position: static !important;
+      bottom: auto !important;
+      color: rgba(255,255,255,.88) !important;
+      font-size: 10px !important;
+      line-height: 1 !important;
+      font-weight: 950 !important;
+      letter-spacing: .08em !important;
+      text-transform: uppercase !important;
+    }
+
+    .dsWatchProgress {
+      left: 12px !important;
+      right: 12px !important;
+      bottom: 10px !important;
+      z-index: 12 !important;
+      height: 4px !important;
+      border-radius: 999px !important;
+      background: rgba(255,255,255,.18) !important;
+      overflow: hidden !important;
+      box-shadow:
+        0 0 18px rgba(0,0,0,.32),
+        inset 0 1px 0 rgba(255,255,255,.08) !important;
+    }
+
+    .dsWatchProgress i {
+      background:
+        linear-gradient(90deg, #55d7ff, #8b5cf6 58%, #dff8ff) !important;
+      box-shadow: 0 0 16px rgba(85,215,255,.34) !important;
+    }
+
+    body.detail-max .dsContinueSection .dsThumb:hover,
+    body.effect-neon .dsContinueSection .dsThumb:hover,
+    body.effect-dropcart .dsContinueSection .dsThumb:hover {
+      box-shadow:
+        0 24px 68px rgba(0,0,0,.42),
+        0 0 46px rgba(85,215,255,.15) !important;
+      transform: translateY(-5px) scale(1.018) !important;
+    }
+
+    body.layout-dense .dsContinueSection .movieRail {
+      grid-auto-columns: clamp(220px, 18vw, 314px) !important;
+    }
+
+    body.layout-spotlight .dsContinueSection .movieRail {
+      grid-auto-columns: clamp(260px, 22vw, 360px) !important;
+    }
+
+    body.studio-open .dsContinueSection .movieRail {
+      padding-right: calc(var(--gallery-right-safe) + var(--gallery-paint-gutter) + 140px) !important;
+    }
+
+    @media(max-width: 760px) {
+      .dsContinueSection .movieRail,
+      body.layout-cinema .dsContinueSection .movieRail,
+      body.layout-posterwall .dsContinueSection .movieRail,
+      body.layout-spotlight .dsContinueSection .movieRail,
+      body.layout-dense .dsContinueSection .movieRail {
+        grid-auto-columns: minmax(230px, 78vw) !important;
+        gap: 12px !important;
+        padding-top: 14px !important;
+        padding-bottom: 34px !important;
+      }
+
+      .dsContinueOverlay {
+        opacity: 1 !important;
+        transform: none !important;
+      }
+
+      .dsContinueSection .dsCardTitle {
+        max-width: calc(100% - 74px);
+      }
+    }
+
   </style>
 
     <script>
