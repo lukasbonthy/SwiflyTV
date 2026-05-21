@@ -32796,6 +32796,137 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v140 HOME HERO TRAILER AUTOPLAY FADE
+       Netflix-style behavior:
+       - poster/backdrop is visible first
+       - muted trailer iframe fades in behind the title/actions
+       - text remains readable with the same hero gradient veil
+       ============================================================ */
+
+    .dsHeroHasTrailer .dsHeroBg {
+      animation: dsHeroPosterHoldThenDim 8s ease 0s both !important;
+    }
+
+    .dsHeroTrailerLayer {
+      position: absolute;
+      inset: -8%;
+      z-index: -3;
+      overflow: hidden;
+      opacity: 0;
+      transform: scale(1.04);
+      filter: brightness(.70) saturate(1.04) contrast(1.05);
+      pointer-events: none;
+      background: #050711;
+      animation: dsHeroTrailerFadeIn 1.55s ease 2.8s forwards;
+    }
+
+    .dsHeroTrailerLayer iframe {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 120vw;
+      height: 67.5vw;
+      min-width: 177.78vh;
+      min-height: 100vh;
+      transform: translate(-50%, -50%) scale(1.06);
+      border: 0;
+      pointer-events: none;
+    }
+
+    .dsHeroTrailerPill {
+      position: absolute;
+      right: var(--v-right, 44px);
+      bottom: clamp(196px, 26vh, 292px);
+      z-index: 15;
+      opacity: 0;
+      transform: translateY(8px);
+      animation: dsHeroPreviewPillIn .7s ease 4.05s forwards;
+      pointer-events: none;
+    }
+
+    .dsHeroTrailerPill span {
+      min-height: 34px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 12px;
+      border-radius: 999px;
+      color: rgba(255,255,255,.74);
+      background: rgba(5,7,18,.42);
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 14px 38px rgba(0,0,0,.26);
+      backdrop-filter: blur(14px) saturate(1.08);
+      -webkit-backdrop-filter: blur(14px) saturate(1.08);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .dsHeroHasTrailer .dsHeroGlass {
+      z-index: -1;
+      background:
+        radial-gradient(820px circle at 28% 46%, rgba(140,107,255,.12), transparent 44%),
+        linear-gradient(to top, var(--v-bg) 0%, rgba(5,7,18,.94) 8%, rgba(5,7,18,.54) 30%, rgba(5,7,18,.16) 58%, rgba(5,7,18,.70) 100%),
+        linear-gradient(90deg, rgba(5,7,18,.90) 0%, rgba(5,7,18,.56) 38%, rgba(5,7,18,.18) 76%);
+    }
+
+    @keyframes dsHeroTrailerFadeIn {
+      0% {
+        opacity: 0;
+        transform: scale(1.04);
+      }
+      100% {
+        opacity: .70;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes dsHeroPosterHoldThenDim {
+      0%, 36% {
+        opacity: 1;
+        filter: brightness(.64) saturate(1.05) contrast(1.03) !important;
+      }
+      100% {
+        opacity: .34;
+        filter: brightness(.52) saturate(1.02) contrast(1.03) !important;
+      }
+    }
+
+    @keyframes dsHeroPreviewPillIn {
+      to {
+        opacity: .92;
+        transform: translateY(0);
+      }
+    }
+
+    @media(max-width: 900px) {
+      .dsHeroTrailerLayer {
+        display: none !important;
+      }
+
+      .dsHeroHasTrailer .dsHeroBg {
+        animation: none !important;
+      }
+
+      .dsHeroTrailerPill {
+        display: none !important;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .dsHeroTrailerLayer,
+      .dsHeroHasTrailer .dsHeroBg,
+      .dsHeroTrailerPill {
+        animation: none !important;
+      }
+
+      .dsHeroTrailerLayer {
+        opacity: 0 !important;
+      }
+    }
+
   </style>
 
     <script>
@@ -35118,6 +35249,7 @@ async function homePage(req, res) {
     animationMovies,
     thrillerMovies,
     spotlightMovie,
+    spotlightVideos,
   ] = await Promise.all([
     tmdb("/trending/all/week", {}, CACHE_TTL.short),
     tmdb("/trending/movie/week", {}, CACHE_TTL.short),
@@ -35135,12 +35267,13 @@ async function homePage(req, res) {
     tmdb("/discover/movie", { with_genres: "16", sort_by: "popularity.desc" }, CACHE_TTL.medium),
     tmdb("/discover/movie", { with_genres: "53", sort_by: "popularity.desc" }, CACHE_TTL.medium),
     tmdb(`/movie/${SWIFLYTV_SPOTLIGHT_TMDB_ID}`, {}, CACHE_TTL.long),
+    tmdb(`/movie/${SWIFLYTV_SPOTLIGHT_TMDB_ID}/videos`, {}, CACHE_TTL.long),
   ]);
 
   const firstError = [
     trendingAll, trendingMovies, trendingTv, popularMovies, popularTv, topMovies, topTv,
     nowPlaying, upcomingMovies, actionMovies, comedyMovies, dramaShows, familyMovies,
-    animationMovies, thrillerMovies, spotlightMovie,
+    animationMovies, thrillerMovies, spotlightMovie, spotlightVideos,
   ].find((data) => data.__error);
 
   if (firstError) return res.send(setupNeededPage(firstError.message));
@@ -35148,9 +35281,10 @@ async function homePage(req, res) {
   const hero = spotlightMovie && !spotlightMovie.__error
     ? { ...spotlightMovie, media_type: "movie" }
     : pickHero((trendingAll.results || []).filter((item) => ["movie", "tv"].includes(getType(item))));
+  const heroTrailer = pickBestTrailer((spotlightVideos && spotlightVideos.results) || []);
 
   const body = `<main>
-    ${dsHero({ hero, context: "Featured", eyebrow: "Watch now" })}
+    ${dsHero({ hero, context: "Featured", eyebrow: "Watch now", trailer: heroTrailer })}
     <section class="dsContent">
 
       <section class="dsMovieHomeBoard">
@@ -35241,15 +35375,21 @@ function metaMatch(item = {}) {
   return `${score}% Match`;
 }
 
-function dsHero({ hero = {}, type = "", context = "", eyebrow = "" }) {
+function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = null }) {
   const mediaType = type || getType(hero);
   const title = getTitle(hero);
   const href = `/${mediaType}/${encodeURIComponent(hero.id || "")}`;
   const bg = fullBackdrop(hero.backdrop_path || hero.poster_path);
   const desc = hero.overview || "A premium streaming discovery experience for movies, shows, trailers, cast, and your saved list.";
   const maturity = mediaType === "tv" ? "TV-14" : "PG-13";
-  return `<section class="dsHero">
+  const trailerKey = trailer && trailer.key ? String(trailer.key) : "";
+  const trailerSrc = trailerKey ? youtubeHeroAutoplaySrc(trailerKey) : "";
+  return `<section class="dsHero ${trailerSrc ? "dsHeroHasTrailer" : ""}">
     <div class="dsHeroBg" style="background-image:url('${escapeHtml(bg)}')"></div>
+    ${trailerSrc ? `<div class="dsHeroTrailerLayer" aria-hidden="true">
+      <iframe src="${escapeHtml(trailerSrc)}" title="${escapeHtml(title)} muted trailer preview" loading="eager" allow="autoplay; encrypted-media; picture-in-picture; fullscreen"></iframe>
+    </div>
+    <div class="dsHeroTrailerPill"><span>Muted trailer preview</span></div>` : ""}
     <div class="dsHeroGlass"></div>
     <div class="dsHeroContent">
       <div class="dsEyebrow">${escapeHtml(eyebrow || context || BRAND_SUBMARK)}</div>
@@ -35648,6 +35788,11 @@ function pickBestTrailer(videos = []) {
 function youtubeEmbedSrc(videoKey = "") {
   const key = encodeURIComponent(String(videoKey || ""));
   return `https://www.youtube.com/embed/${key}?rel=0&modestbranding=1&playsinline=1&enablejsapi=1`;
+}
+
+function youtubeHeroAutoplaySrc(videoKey = "") {
+  const key = encodeURIComponent(String(videoKey || ""));
+  return `https://www.youtube.com/embed/${key}?autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&playsinline=1&loop=1&playlist=${key}&enablejsapi=1`;
 }
 
 function chooseLicensedStream(data = {}) {
