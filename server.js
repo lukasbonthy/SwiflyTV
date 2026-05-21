@@ -27793,7 +27793,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       max-width: min(520px, calc(100% - 36px));
     }
 
-    .dsCinemaHlsShell.usesPlyr .vjs-theme-swifly {
+    .dsCinemaHlsShell.usesPlyr .vjs-theme-swifly,
+    .dsCinemaHlsShell.usesMediaChrome .vjs-theme-swifly {
       display: none !important;
     }
 
@@ -28182,6 +28183,403 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       .dsCinemaHlsShell.usesPlyr .plyr__control[data-plyr="airplay"],
       .dsCinemaHlsShell.usesPlyr .plyr__menu {
         transform: scale(.92);
+      }
+    }
+
+
+    /* ============================================================
+       v125 MEDIA CHROME CINEMA PLAYER
+       Swifly-native player UI built from Media Chrome web components
+       with hls.js underneath for m3u8 playback.
+       ============================================================ */
+
+    .dsMediaChromeShell {
+      min-height: clamp(430px, 74vh, 820px) !important;
+      border-radius: 32px !important;
+      background:
+        radial-gradient(1000px circle at 18% 0%, rgba(85,215,255,.14), transparent 44%),
+        radial-gradient(900px circle at 85% -8%, rgba(139,92,246,.16), transparent 44%),
+        #000 !important;
+      outline: 1px solid rgba(255,255,255,.10);
+      overflow: hidden !important;
+      isolation: isolate;
+    }
+
+    .dsSwiflyMediaController {
+      --media-primary-color: #ffffff;
+      --media-secondary-color: rgba(255,255,255,.66);
+      --media-accent-color: #55d7ff;
+      --media-control-background: transparent;
+      --media-control-hover-background: rgba(255,255,255,.12);
+      --media-range-track-background: rgba(255,255,255,.18);
+      --media-range-bar-color: #55d7ff;
+      --media-time-range-buffered-color: rgba(255,255,255,.28);
+      --media-preview-background: rgba(4,7,18,.92);
+      --media-tooltip-background: linear-gradient(135deg, #ffffff, #dff8ff);
+      --media-tooltip-color: #06101d;
+      position: relative;
+      z-index: 4;
+      width: 100%;
+      height: clamp(430px, 74vh, 820px);
+      display: block;
+      border-radius: inherit;
+      overflow: hidden;
+      background: #000;
+      font-family: var(--font-ui, "Host Grotesk", Inter, system-ui, sans-serif);
+    }
+
+    .dsSwiflyMediaController video,
+    .dsMediaChromeShell .dsCinemaHlsVideo {
+      width: 100% !important;
+      height: 100% !important;
+      min-height: 0 !important;
+      object-fit: contain !important;
+      background: #000 !important;
+      border-radius: inherit !important;
+    }
+
+    .dsMediaChromeShell.usesMediaChrome .dsCinemaSeekDock,
+    .dsMediaChromeShell.usesMediaChrome .vjs-theme-swifly,
+    .dsMediaChromeShell.usesMediaChrome .plyr {
+      display: none !important;
+    }
+
+    .dsMediaChromeTop {
+      top: 18px !important;
+      left: 18px !important;
+      max-width: min(560px, calc(100% - 36px)) !important;
+      z-index: 30 !important;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: opacity .18s ease, transform .18s ease;
+    }
+
+    .dsMediaChromeShell:hover .dsMediaChromeTop,
+    .dsMediaChromeShell:focus-within .dsMediaChromeTop {
+      opacity: .96;
+      transform: translateY(0);
+    }
+
+    .dsMediaChromeLoading {
+      --media-loading-indicator-icon-height: 72px;
+      --media-loading-indicator-icon-width: 72px;
+      color: #dff8ff;
+      filter: drop-shadow(0 0 28px rgba(85,215,255,.30));
+    }
+
+    .dsMediaChromeCenter {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(14px, 2vw, 22px);
+      opacity: 0;
+      transform: scale(.98);
+      transition: opacity .16s ease, transform .16s ease;
+      pointer-events: none;
+    }
+
+    .dsMediaChromeShell:hover .dsMediaChromeCenter,
+    .dsMediaChromeShell:focus-within .dsMediaChromeCenter,
+    .dsMediaChromeShell media-controller[media-paused] .dsMediaChromeCenter {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .dsMediaChromeCenter media-play-button,
+    .dsMediaChromeCenter media-seek-backward-button,
+    .dsMediaChromeCenter media-seek-forward-button {
+      pointer-events: auto;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.18);
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.22), transparent 42%),
+        rgba(7,10,22,.58);
+      backdrop-filter: blur(20px) saturate(1.16);
+      -webkit-backdrop-filter: blur(20px) saturate(1.16);
+      box-shadow: 0 24px 84px rgba(0,0,0,.48), 0 0 38px rgba(85,215,255,.13);
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+    }
+
+    .dsMediaChromeCenter media-play-button {
+      width: clamp(78px, 8vw, 112px);
+      height: clamp(78px, 8vw, 112px);
+    }
+
+    .dsMediaChromeCenter media-seek-backward-button,
+    .dsMediaChromeCenter media-seek-forward-button {
+      width: clamp(54px, 5.2vw, 72px);
+      height: clamp(54px, 5.2vw, 72px);
+    }
+
+    .dsMediaChromeCenter media-play-button:hover,
+    .dsMediaChromeCenter media-seek-backward-button:hover,
+    .dsMediaChromeCenter media-seek-forward-button:hover {
+      transform: translateY(-2px) scale(1.035);
+      border-color: rgba(223,248,255,.32);
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.28), transparent 42%),
+        rgba(22,29,54,.72);
+    }
+
+    .dsMediaChromeControls {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 28;
+      min-height: 112px;
+      display: grid;
+      grid-template-columns: auto auto auto auto 1fr auto auto auto auto auto auto auto;
+      align-items: end;
+      gap: 6px;
+      padding: 52px 18px 18px;
+      background:
+        linear-gradient(to top, rgba(0,0,0,.96) 0%, rgba(0,0,0,.74) 44%, rgba(0,0,0,.18) 82%, transparent 100%);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      opacity: 0;
+      transform: translateY(14px);
+      transition: opacity .18s ease, transform .18s ease;
+    }
+
+    .dsMediaChromeShell:hover .dsMediaChromeControls,
+    .dsMediaChromeShell:focus-within .dsMediaChromeControls,
+    .dsMediaChromeShell media-controller[media-paused] .dsMediaChromeControls {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .dsMediaChromeControls media-time-range {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 72px;
+      width: auto;
+      height: 28px;
+      --media-range-track-height: 10px;
+      --media-range-thumb-width: 20px;
+      --media-range-thumb-height: 20px;
+      --media-range-thumb-background: linear-gradient(135deg, #ffffff, #dff8ff);
+      --media-range-thumb-border: 2px solid rgba(255,255,255,.95);
+      --media-range-thumb-box-shadow: 0 0 0 7px rgba(85,215,255,.16), 0 10px 28px rgba(0,0,0,.44);
+    }
+
+    .dsMediaChromeControls media-play-button,
+    .dsMediaChromeControls media-seek-backward-button,
+    .dsMediaChromeControls media-seek-forward-button,
+    .dsMediaChromeControls media-mute-button,
+    .dsMediaChromeControls media-captions-button,
+    .dsMediaChromeControls media-playback-rate-button,
+    .dsMediaChromeControls media-pip-button,
+    .dsMediaChromeControls media-fullscreen-button {
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      color: rgba(255,255,255,.88);
+      background: transparent;
+      transition: color .14s ease, background .14s ease, transform .14s ease;
+    }
+
+    .dsMediaChromeControls media-play-button:hover,
+    .dsMediaChromeControls media-seek-backward-button:hover,
+    .dsMediaChromeControls media-seek-forward-button:hover,
+    .dsMediaChromeControls media-mute-button:hover,
+    .dsMediaChromeControls media-captions-button:hover,
+    .dsMediaChromeControls media-playback-rate-button:hover,
+    .dsMediaChromeControls media-pip-button:hover,
+    .dsMediaChromeControls media-fullscreen-button:hover {
+      color: #06101d;
+      background: linear-gradient(135deg, #ffffff, #dff8ff);
+      transform: translateY(-1px);
+    }
+
+    .dsMediaChromeControls media-volume-range {
+      width: clamp(74px, 8vw, 120px);
+      --media-range-track-height: 6px;
+      --media-range-thumb-width: 16px;
+      --media-range-thumb-height: 16px;
+    }
+
+    .dsMediaChromeControls media-time-display {
+      min-width: 48px;
+      color: rgba(255,255,255,.75);
+      font-size: 12px;
+      font-weight: 850;
+      letter-spacing: -.01em;
+      align-self: center;
+      white-space: nowrap;
+    }
+
+    .dsMediaChromeQuality {
+      position: absolute;
+      right: 18px;
+      bottom: 132px;
+      z-index: 40;
+      pointer-events: auto;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity .18s ease, transform .18s ease;
+    }
+
+    .dsMediaChromeShell:hover .dsMediaChromeQuality,
+    .dsMediaChromeShell:focus-within .dsMediaChromeQuality {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .dsMediaChromeQualityToggle {
+      min-height: 36px;
+      min-width: 72px;
+      padding: 0 12px;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 999px;
+      color: rgba(255,255,255,.86);
+      background: rgba(7,10,22,.72);
+      box-shadow: 0 14px 42px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.06);
+      backdrop-filter: blur(18px) saturate(1.14);
+      -webkit-backdrop-filter: blur(18px) saturate(1.14);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 950;
+    }
+
+    .dsMediaChromeQualityToggle:hover {
+      color: #06101d;
+      background: linear-gradient(135deg, #ffffff, #dff8ff);
+    }
+
+    .dsMediaChromeQualityMenu {
+      position: absolute;
+      right: 0;
+      bottom: 44px;
+      min-width: 120px;
+      display: grid;
+      gap: 6px;
+      padding: 8px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(7,10,22,.94);
+      box-shadow: 0 22px 70px rgba(0,0,0,.48), 0 0 42px rgba(85,215,255,.12);
+      backdrop-filter: blur(24px) saturate(1.18);
+      -webkit-backdrop-filter: blur(24px) saturate(1.18);
+    }
+
+    .dsMediaChromeQualityMenu[hidden] {
+      display: none !important;
+    }
+
+    .dsMediaChromeQualityMenu button {
+      min-height: 34px;
+      padding: 0 12px;
+      border: 0;
+      border-radius: 12px;
+      color: rgba(255,255,255,.74);
+      background: transparent;
+      text-align: left;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .dsMediaChromeQualityMenu button:hover,
+    .dsMediaChromeQualityMenu button.active {
+      color: #06101d;
+      background: linear-gradient(135deg, #ffffff, #dff8ff);
+    }
+
+    .dsMediaChromeHint {
+      bottom: 142px !important;
+      right: 104px !important;
+      z-index: 35 !important;
+    }
+
+    .dsMediaChromeShell.usesMediaChrome .dsHlsStatus {
+      bottom: 132px !important;
+      left: 18px !important;
+      z-index: 35 !important;
+      max-width: min(520px, calc(100% - 36px));
+    }
+
+    .dsMediaChromeShell.usesNativeVideo video {
+      height: clamp(430px, 74vh, 820px) !important;
+      min-height: 430px !important;
+    }
+
+    .dsMediaChromeShell.usesNativeVideo .dsSwiflyMediaController {
+      display: block;
+    }
+
+    .dsMediaChromeShell.usesNativeVideo .dsMediaChromeControls,
+    .dsMediaChromeShell.usesNativeVideo .dsMediaChromeCenter,
+    .dsMediaChromeShell.usesNativeVideo .dsMediaChromeQuality {
+      display: none !important;
+    }
+
+    @media(max-width: 900px) {
+      .dsMediaChromeShell,
+      .dsSwiflyMediaController {
+        height: clamp(330px, 62vh, 640px) !important;
+        min-height: 330px !important;
+        border-radius: 24px !important;
+      }
+
+      .dsMediaChromeControls {
+        min-height: 100px;
+        grid-template-columns: auto auto auto auto 1fr auto auto auto;
+        gap: 3px;
+        padding: 48px 10px 12px;
+      }
+
+      .dsMediaChromeControls media-time-range {
+        left: 10px;
+        right: 10px;
+        bottom: 64px;
+      }
+
+      .dsMediaChromeControls media-volume-range,
+      .dsMediaChromeControls media-pip-button,
+      .dsMediaChromeControls media-captions-button {
+        display: none !important;
+      }
+
+      .dsMediaChromeControls media-time-display {
+        font-size: 11px;
+        min-width: 42px;
+      }
+
+      .dsMediaChromeQuality {
+        right: 10px;
+        bottom: 112px;
+      }
+
+      .dsMediaChromeHint,
+      .dsMediaChromeTop {
+        display: none !important;
+      }
+
+      .dsMediaChromeShell.usesMediaChrome .dsHlsStatus {
+        left: 10px !important;
+        right: 10px !important;
+        bottom: 112px !important;
+      }
+    }
+
+    @media(max-width: 520px) {
+      .dsMediaChromeShell,
+      .dsSwiflyMediaController {
+        height: 56vh !important;
+        min-height: 292px !important;
+        border-radius: 20px !important;
+      }
+
+      .dsMediaChromeCenter {
+        display: none !important;
+      }
+
+      .dsMediaChromeControls media-seek-backward-button,
+      .dsMediaChromeControls media-seek-forward-button,
+      .dsMediaChromeControls media-playback-rate-button {
+        display: none !important;
       }
     }
 
@@ -31430,20 +31828,53 @@ async function watchPage(req, res, type) {
             <a class="dsGhostPill" href="/watchrooms">Use Watch Room</a>
           </div>
         </div>
-        <div id="movieButtonPlayerShell" class="dsMovieButtonPlayerShell dsCinemaHlsShell" hidden>
+        <div id="movieButtonPlayerShell" class="dsMovieButtonPlayerShell dsCinemaHlsShell dsMediaChromeShell" hidden>
           <div class="dsCinemaPlayerAura"></div>
-          <video id="proxyVideoClientVideo" class="dsMovieButtonVideo dsCinemaHlsVideo video-js vjs-big-play-centered vjs-theme-swifly" controls playsinline crossorigin="anonymous" preload="auto"></video>
-          <div class="dsCinemaHlsTop">
-            <span>SWIFLY HLS</span>
-            <b id="movieButtonHlsTitle">Preparing stream</b>
-            <small id="movieButtonHlsMeta">m3u8 player</small>
+          <media-controller id="swiflyMediaController" class="dsSwiflyMediaController" gesturesenabled>
+            <video id="proxyVideoClientVideo" class="dsMovieButtonVideo dsCinemaHlsVideo" slot="media" playsinline crossorigin="anonymous" preload="auto"></video>
+
+            <div class="dsCinemaHlsTop dsMediaChromeTop" slot="top-chrome">
+              <span>SWIFLY CINEMA</span>
+              <b id="movieButtonHlsTitle">Preparing stream</b>
+              <small id="movieButtonHlsMeta">m3u8 player</small>
+            </div>
+
+            <media-loading-indicator class="dsMediaChromeLoading" slot="centered-chrome" noautohide></media-loading-indicator>
+
+            <div class="dsMediaChromeCenter" slot="centered-chrome">
+              <media-seek-backward-button seekoffset="10" aria-label="Back 10 seconds"></media-seek-backward-button>
+              <media-play-button class="dsMediaChromeBigPlay" aria-label="Play or pause"></media-play-button>
+              <media-seek-forward-button seekoffset="10" aria-label="Forward 10 seconds"></media-seek-forward-button>
+            </div>
+
+            <media-control-bar class="dsMediaChromeControls">
+              <media-play-button></media-play-button>
+              <media-seek-backward-button seekoffset="10"></media-seek-backward-button>
+              <media-seek-forward-button seekoffset="10"></media-seek-forward-button>
+              <media-time-display></media-time-display>
+              <media-time-range></media-time-range>
+              <media-time-display showduration remaining></media-time-display>
+              <media-mute-button></media-mute-button>
+              <media-volume-range></media-volume-range>
+              <media-captions-button></media-captions-button>
+              <media-playback-rate-button></media-playback-rate-button>
+              <media-pip-button></media-pip-button>
+              <media-fullscreen-button></media-fullscreen-button>
+            </media-control-bar>
+          </media-controller>
+
+          <div class="dsMediaChromeQuality">
+            <button id="movieButtonQualityToggle" type="button" class="dsMediaChromeQualityToggle">Auto</button>
+            <div id="movieButtonQualityMenu" class="dsMediaChromeQualityMenu" hidden></div>
           </div>
-          <div class="dsCinemaHlsHint">
-            <span>Space</span><b>play / pause</b>
-            <span>F</span><b>fullscreen</b>
-            <span>M</span><b>mute</b>
-            <span>⚙</span><b>quality</b>
+
+          <div class="dsCinemaHlsHint dsMediaChromeHint">
+            <span>J</span><b>-10</b>
+            <span>K</span><b>play</b>
+            <span>L</span><b>+10</b>
+            <span>F</span><b>full</b>
           </div>
+
           <div id="movieButtonSeekDock" class="dsCinemaSeekDock" hidden>
             <div class="dsCinemaSeekTimes">
               <span id="movieButtonCurrentTime">0:00</span>
@@ -31456,6 +31887,7 @@ async function watchPage(req, res, type) {
               <span>Drag to seek</span>
             </div>
           </div>
+
           <div id="movieButtonHlsStatus" class="dsHlsStatus"><b>Loading m3u8...</b><span>Preparing player</span></div>
         </div>
       </div>`
@@ -31554,8 +31986,12 @@ async function watchPage(req, res, type) {
         var seekDuration = document.getElementById("movieButtonDuration");
         var seekMode = document.getElementById("movieButtonSeekMode");
         var seekLabel = document.getElementById("movieButtonSeekLabel");
+        var qualityToggle = document.getElementById("movieButtonQualityToggle");
+        var qualityMenu = document.getElementById("movieButtonQualityMenu");
+        var mediaController = document.getElementById("swiflyMediaController");
         var isSeekingWithRange = false;
         var customSeekReady = false;
+        var mediaChromeReady = false;
         var movieButtonPlayer = null;
         var movieButtonPlyr = null;
         var movieButtonHls = null;
@@ -31722,10 +32158,17 @@ async function watchPage(req, res, type) {
               event.preventDefault();
               if (!document.fullscreenElement) playerShell.requestFullscreen && playerShell.requestFullscreen();
               else document.exitFullscreen && document.exitFullscreen();
-            } else if (key === "arrowright") {
+            } else if (key === "c") {
+              event.preventDefault();
+              try {
+                var tracks = Array.from(video.textTracks || []);
+                var showing = tracks.some(function(t){ return t.mode === "showing"; });
+                tracks.forEach(function(t){ t.mode = showing ? "disabled" : "showing"; });
+              } catch {}
+            } else if (key === "arrowright" || key === "l") {
               event.preventDefault();
               try { var win = getSeekWindow(); video.currentTime = Math.min((win.end || video.currentTime + 10) - 0.15, video.currentTime + 10); syncCustomSeekBar(); } catch {}
-            } else if (key === "arrowleft") {
+            } else if (key === "arrowleft" || key === "j") {
               event.preventDefault();
               try { var win = getSeekWindow(); video.currentTime = Math.max(win.start || 0, video.currentTime - 10); syncCustomSeekBar(); } catch {}
             }
@@ -31758,6 +32201,216 @@ async function watchPage(req, res, type) {
             document.head.appendChild(script);
           }
           next();
+        }
+
+        function loadMediaChromeAssets(callback) {
+          if (customElements && customElements.get && customElements.get("media-controller")) {
+            mediaChromeReady = true;
+            return callback(true);
+          }
+
+          var existing = document.querySelector("script[data-swifly-media-chrome]");
+          if (existing) {
+            existing.addEventListener("load", function(){
+              setTimeout(function(){
+                mediaChromeReady = Boolean(customElements && customElements.get && customElements.get("media-controller"));
+                callback(mediaChromeReady);
+              }, 0);
+            }, { once: true });
+            existing.addEventListener("error", function(){ callback(false); }, { once: true });
+            return;
+          }
+
+          var script = document.createElement("script");
+          script.type = "module";
+          script.src = "https://cdn.jsdelivr.net/npm/media-chrome@4/+esm";
+          script.setAttribute("data-swifly-media-chrome", "true");
+          script.onload = function(){
+            setTimeout(function(){
+              mediaChromeReady = Boolean(customElements && customElements.get && customElements.get("media-controller"));
+              callback(mediaChromeReady);
+            }, 0);
+          };
+          script.onerror = function(){ callback(false); };
+          document.head.appendChild(script);
+        }
+
+        function setMediaChromeQualityMenu(hlsInstance, levels) {
+          if (!qualityToggle || !qualityMenu) return;
+
+          var heights = uniqueHlsHeights(levels || []);
+          qualityMenu.innerHTML = "";
+
+          function makeButton(label, value, active) {
+            var button = document.createElement("button");
+            button.type = "button";
+            button.textContent = label;
+            button.className = active ? "active" : "";
+            button.addEventListener("click", function(event) {
+              event.preventDefault();
+              event.stopPropagation();
+              if (!hlsInstance) return;
+              if (value === "auto") {
+                hlsInstance.currentLevel = -1;
+                qualityToggle.textContent = "Auto";
+                if (hlsMeta) hlsMeta.textContent = "Auto quality";
+              } else {
+                var target = Number(value);
+                var index = -1;
+                (hlsInstance.levels || []).forEach(function(level, i) {
+                  if (Number(level && level.height) === target && index === -1) index = i;
+                });
+                hlsInstance.currentLevel = index >= 0 ? index : -1;
+                qualityToggle.textContent = index >= 0 ? target + "p" : "Auto";
+                if (hlsMeta) hlsMeta.textContent = index >= 0 ? target + "p selected" : "Auto quality";
+              }
+              Array.from(qualityMenu.querySelectorAll("button")).forEach(function(btn){ btn.classList.remove("active"); });
+              button.classList.add("active");
+              qualityMenu.hidden = true;
+            });
+            qualityMenu.appendChild(button);
+          }
+
+          makeButton("Auto", "auto", true);
+          heights.forEach(function(height) {
+            makeButton(height + "p", String(height), false);
+          });
+
+          qualityToggle.hidden = false;
+          qualityToggle.onclick = function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            qualityMenu.hidden = !qualityMenu.hidden;
+          };
+
+          if (!heights.length) {
+            qualityToggle.textContent = "Auto";
+            qualityToggle.title = "Quality menu unavailable until stream reports levels";
+          }
+        }
+
+        document.addEventListener("click", function(event) {
+          if (!qualityMenu || !qualityToggle) return;
+          if (event.target === qualityToggle || qualityMenu.contains(event.target)) return;
+          qualityMenu.hidden = true;
+        });
+
+        function startMediaChromeHlsSource(src, data) {
+          setPlayerStatus("Loading m3u8...", "Starting Swifly Cinema player", false);
+          destroyRegularMoviePlayers();
+
+          if (playerShell) {
+            playerShell.classList.remove("usesPlyr", "isScrubbing", "usesNativeVideo");
+            playerShell.classList.add("usesMediaChrome");
+          }
+
+          try {
+            video.className = "dsMovieButtonVideo dsCinemaHlsVideo";
+            video.setAttribute("slot", "media");
+            video.controls = false;
+            video.crossOrigin = "anonymous";
+            video.removeAttribute("src");
+            video.load();
+          } catch {}
+
+          loadMediaChromeAssets(function(mediaLoaded) {
+            if (!mediaLoaded) {
+              if (playerShell) {
+                playerShell.classList.remove("usesMediaChrome");
+                playerShell.classList.add("usesNativeVideo");
+              }
+              video.controls = true;
+              setPlayerStatus("Player UI fallback", "Media Chrome did not load, using native controls.", true);
+            }
+
+            installCustomSeekBar();
+
+            var nativeHls = video.canPlayType("application/vnd.apple.mpegurl") || video.canPlayType("application/x-mpegURL");
+
+            loadHlsScript(function(hlsLoaded) {
+              if (hlsLoaded && window.Hls && window.Hls.isSupported()) {
+                movieButtonHls = new window.Hls({
+                  debug: false,
+                  enableWorker: true,
+                  lowLatencyMode: false,
+                  backBufferLength: 90,
+                  maxBufferLength: 60,
+                  maxMaxBufferLength: 180,
+                  startPosition: -1,
+                  capLevelToPlayerSize: true,
+                  manifestLoadingMaxRetry: 4,
+                  levelLoadingMaxRetry: 4,
+                  fragLoadingMaxRetry: 6,
+                  manifestLoadingTimeOut: 30000,
+                  levelLoadingTimeOut: 30000,
+                  fragLoadingTimeOut: 30000
+                });
+
+                movieButtonHls.on(window.Hls.Events.MEDIA_ATTACHED, function() {
+                  setPlayerStatus("Loading m3u8...", "Fetching manifest", false);
+                  movieButtonHls.loadSource(src);
+                });
+
+                movieButtonHls.on(window.Hls.Events.MANIFEST_PARSED, function(event, parsed) {
+                  var levels = parsed && parsed.levels ? parsed.levels : [];
+                  var heights = uniqueHlsHeights(levels);
+                  setMediaChromeQualityMenu(movieButtonHls, levels);
+                  setPlayerStatus("m3u8 ready", "Swifly Cinema loaded" + (heights.length ? " • " + heights.join("p / ") + "p" : "") + ". Timeline enabled.", false);
+                  setStatus("m3u8 loaded. Timeline enabled.");
+                  if (playerShell) { try { playerShell.focus({ preventScroll: true }); } catch {} }
+                  setTimeout(syncCustomSeekBar, 500);
+                  hidePlayerStatusSoon();
+                });
+
+                movieButtonHls.on(window.Hls.Events.LEVEL_SWITCHED, function(event, data) {
+                  var level = movieButtonHls.levels && movieButtonHls.levels[data.level];
+                  if (level && level.height && hlsMeta) hlsMeta.textContent = level.height + "p";
+                });
+
+                movieButtonHls.on(window.Hls.Events.ERROR, function(event, err) {
+                  if (!err) return;
+                  var detail = String(err.details || err.reason || err.type || "Unknown HLS error");
+                  if (!err.fatal) {
+                    if (detail && !/bufferStalledError/i.test(detail)) {
+                      setPlayerStatus("HLS warning", detail, false);
+                      hidePlayerStatusSoon();
+                    }
+                    return;
+                  }
+                  if (err.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
+                    setPlayerStatus("HLS network error", "Retrying stream load...", true);
+                    try { movieButtonHls.startLoad(); } catch {}
+                    return;
+                  }
+                  if (err.type === window.Hls.ErrorTypes.MEDIA_ERROR) {
+                    setPlayerStatus("HLS media error", "Trying media recovery...", true);
+                    try { movieButtonHls.recoverMediaError(); } catch {}
+                    return;
+                  }
+                  setPlayerStatus("HLS failed", detail, true);
+                  setStatus("HLS failed: " + detail);
+                });
+
+                movieButtonHls.attachMedia(video);
+                return;
+              }
+
+              if (nativeHls) {
+                video.src = src;
+                try { video.load(); } catch {}
+                setMediaChromeQualityMenu(null, []);
+                setPlayerStatus("m3u8 ready", "Native HLS loaded. Timeline enabled.", false);
+                setStatus("m3u8 loaded. Timeline enabled.");
+                if (playerShell) { try { playerShell.focus({ preventScroll: true }); } catch {} }
+                setTimeout(syncCustomSeekBar, 500);
+                hidePlayerStatusSoon();
+                return;
+              }
+
+              setPlayerStatus("HLS could not load", "This browser needs hls.js or native HLS support to play this m3u8.", true);
+              setStatus("HLS player failed to load.");
+            });
+          });
         }
 
         function loadPlyrAssets(callback) {
@@ -32062,13 +32715,18 @@ async function watchPage(req, res, type) {
 
           if (!hls) {
             setPlayerStatus("Loading video...", "Using direct video source.", false);
+            if (playerShell) {
+              playerShell.classList.remove("usesPlyr", "usesMediaChrome");
+              playerShell.classList.add("usesNativeVideo");
+            }
+            video.controls = true;
             video.src = src;
             try { video.load(); } catch {}
             hidePlayerStatusSoon();
             return;
           }
 
-          startPlyrHlsSource(src, data);
+          startMediaChromeHlsSource(src, data);
         }
 
         async function tryProxyVideo(manual) {
