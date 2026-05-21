@@ -36948,30 +36948,59 @@ async function watchPage(req, res, type) {
         }
 
         function getSeekWindow() {
-          if (!video) return { start: 0, end: 0, duration: 0, live: false, seekable: false };
-          var nativeDuration = Number(video.duration || 0);
+          if (!video) return { start: 0, end: 0, duration: 0, live: false, seekable: false, buffered: false, playable: false, streamOnly: true };
+
+          var rawDuration = video.duration;
+          var nativeDuration = Number(rawDuration || 0);
+          var durationIsFinite = Number.isFinite(nativeDuration) && nativeDuration > 0;
           var seekable = video.seekable;
+          var buffered = video.buffered;
           var start = 0;
-          var end = Number.isFinite(nativeDuration) ? nativeDuration : 0;
+          var end = durationIsFinite ? nativeDuration : 0;
           var hasSeekable = false;
+          var hasBuffered = false;
+          var bufferedStart = 0;
+          var bufferedEnd = 0;
 
           try {
             if (seekable && seekable.length) {
               start = seekable.start(0);
               end = seekable.end(seekable.length - 1);
-              hasSeekable = end > start;
+              hasSeekable = Number.isFinite(start) && Number.isFinite(end) && end > start;
             }
           } catch {}
 
-          if (!hasSeekable && Number.isFinite(nativeDuration) && nativeDuration > 0) {
+          try {
+            if (buffered && buffered.length) {
+              bufferedStart = buffered.start(0);
+              bufferedEnd = buffered.end(buffered.length - 1);
+              hasBuffered = Number.isFinite(bufferedStart) && Number.isFinite(bufferedEnd) && bufferedEnd > bufferedStart;
+            }
+          } catch {}
+
+          // Some proxied HLS playlists are playable before the browser exposes a seekable
+          // range. In that case, do not block playback or keep the UI stuck on seek data.
+          if (!hasSeekable && durationIsFinite) {
             start = 0;
             end = nativeDuration;
-            hasSeekable = true;
+            hasSeekable = nativeDuration > 0.5;
           }
 
+          var live = !durationIsFinite || rawDuration === Infinity;
+          var streamOnly = !hasSeekable && (live || hasBuffered || Number(video.readyState || 0) >= 2);
           var duration = Math.max(0, end - start);
-          var live = !Number.isFinite(nativeDuration) || nativeDuration === Infinity || (video.duration === Infinity);
-          return { start: start, end: end, duration: duration, live: live, seekable: hasSeekable };
+          if (!duration && hasBuffered) duration = Math.max(0, bufferedEnd - bufferedStart);
+
+          return {
+            start: hasSeekable ? start : (hasBuffered ? bufferedStart : 0),
+            end: hasSeekable ? end : (hasBuffered ? bufferedEnd : 0),
+            duration: duration,
+            live: live,
+            seekable: hasSeekable,
+            buffered: hasBuffered,
+            playable: hasSeekable || hasBuffered || Number(video.readyState || 0) >= 2,
+            streamOnly: streamOnly
+          };
         }
 
         function syncCustomSeekBar() {
@@ -36979,23 +37008,25 @@ async function watchPage(req, res, type) {
 
           var win = getSeekWindow();
           var canSeek = win.seekable && win.duration > 0.5;
+          var hasStarted = win.playable || Number(video.currentTime || 0) > 0 || !video.paused;
           seekDock.hidden = false;
           seekRange.disabled = !canSeek;
           seekDock.classList.toggle("isDisabled", !canSeek);
           seekDock.classList.toggle("isLive", Boolean(win.live));
+          seekDock.classList.toggle("isStreamOnly", !canSeek && hasStarted);
 
-          if (seekMode) seekMode.textContent = win.live ? "LIVE / DVR" : "VOD";
-          if (seekLabel) seekLabel.textContent = canSeek ? "Timeline" : "Waiting for seek data";
+          if (seekMode) seekMode.textContent = win.live ? (canSeek ? "LIVE / DVR" : "LIVE") : (canSeek ? "VOD" : "STREAM");
+          if (seekLabel) seekLabel.textContent = canSeek ? "Timeline" : (hasStarted ? "Stream playing" : "Starting stream");
 
-          var currentOffset = Math.max(0, Math.min(win.duration || 0, Number(video.currentTime || 0) - win.start));
+          var currentOffset = canSeek ? Math.max(0, Math.min(win.duration || 0, Number(video.currentTime || 0) - win.start)) : Math.max(0, Number(video.currentTime || 0));
           if (!isSeekingWithRange) {
-            var value = win.duration > 0 ? Math.round((currentOffset / win.duration) * 1000) : 0;
+            var value = canSeek && win.duration > 0 ? Math.round((currentOffset / win.duration) * 1000) : 0;
             seekRange.value = String(Math.max(0, Math.min(1000, value)));
             seekRange.style.setProperty("--seek-pct", String(Math.max(0, Math.min(100, value / 10))));
           }
 
           if (seekCurrent) seekCurrent.textContent = formatClock(currentOffset);
-          if (seekDuration) seekDuration.textContent = win.duration > 0 ? formatClock(win.duration) : "--:--";
+          if (seekDuration) seekDuration.textContent = canSeek && win.duration > 0 ? formatClock(win.duration) : (win.live ? "LIVE" : "--:--");
         }
 
         function seekCustomRangeValue(value) {
@@ -38173,7 +38204,7 @@ async function watchPage(req, res, type) {
           var recoveryCard = null;
           if (playerShell) {
             playerShell.classList.remove("usesVidstack", "v149Vidstack", "v149Ready", "v149Playing");
-            playerShell.classList.add("usesNativeVideo", "v150HlsRecovery", "v151StreamPro", "v152StreamPlus");
+            playerShell.classList.add("usesNativeVideo", "v150HlsRecovery", "v151StreamPro", "v153SeeklessStart");
             try {
               playerShell.querySelectorAll(".swiflyVidstackPlayer, .swiflyVidstackChrome").forEach(function(el) { el.remove(); });
             } catch {}
@@ -38245,11 +38276,17 @@ async function watchPage(req, res, type) {
           }
 
           function wireVideoEvents() {
-            if (!video || video.dataset.v152HlsEvents === "true") return;
-            video.dataset.v152HlsEvents = "true";
-            video.addEventListener("playing", function(){ if (playerShell) playerShell.classList.add("v149Playing"); setVideoUiState("playing"); hidePlayerStatusSoon(); });
-            video.addEventListener("pause", function(){ if (playerShell) playerShell.classList.remove("v149Playing"); setVideoUiState("paused"); });
-            video.addEventListener("waiting", function(){ setPlayerStatus("Buffering...", "Network slowed down. Holding the stream steady.", false); });
+            if (!video || video.dataset.v153HlsEvents === "true") return;
+            video.dataset.v153HlsEvents = "true";
+            ["loadedmetadata", "loadeddata", "canplay", "canplaythrough", "progress", "durationchange"].forEach(function(name) {
+              video.addEventListener(name, function() {
+                syncCustomSeekBar();
+                if (Number(video.readyState || 0) >= 2) markFallbackReady("HLS recovery player loaded");
+              });
+            });
+            video.addEventListener("playing", function(){ if (playerShell) playerShell.classList.add("v149Playing"); setVideoUiState("playing"); syncCustomSeekBar(); hidePlayerStatusSoon(); });
+            video.addEventListener("pause", function(){ if (playerShell) playerShell.classList.remove("v149Playing"); setVideoUiState("paused"); syncCustomSeekBar(); });
+            video.addEventListener("waiting", function(){ setPlayerStatus("Buffering...", "Network slowed down. Holding the stream steady.", false); syncCustomSeekBar(); });
             video.addEventListener("error", function(){
               var err = video && video.error;
               setPlayerStatus("Video error", err && err.message ? err.message : "The browser could not decode this stream.", true);
@@ -38299,6 +38336,12 @@ async function watchPage(req, res, type) {
               highBufferWatchdogPeriod: 2,
               nudgeOffset: 0.12,
               nudgeMaxRetry: 5,
+              nudgeOnVideoHole: true,
+              maxFragLookUpTolerance: 0.8,
+              initialLiveManifestSize: 1,
+              liveSyncDurationCount: 2,
+              liveMaxLatencyDurationCount: 6,
+              liveDurationInfinity: true,
               startLevel: -1,
               capLevelToPlayerSize: true,
               abrEwmaDefaultEstimate: 4500000,
@@ -38324,8 +38367,21 @@ async function watchPage(req, res, type) {
             movieButtonHls.on(window.Hls.Events.MANIFEST_PARSED, function(event, parsed) {
               var levels = parsed && parsed.levels ? parsed.levels : [];
               var heights = uniqueHlsHeights(levels);
-              markFallbackReady("HLS.js loaded" + (heights.length ? " • Auto / " + heights.join("p / ") + "p" : ""));
+              markFallbackReady("HLS.js manifest loaded" + (heights.length ? " • Auto / " + heights.join("p / ") + "p" : ""));
+              try { movieButtonHls.startLoad(-1); } catch {}
               try { video.play && video.play().catch(function(){}); } catch {}
+              setTimeout(syncCustomSeekBar, 250);
+            });
+
+            [window.Hls.Events.FRAG_BUFFERED, window.Hls.Events.BUFFER_APPENDED, window.Hls.Events.LEVEL_LOADED].forEach(function(eventName) {
+              try {
+                movieButtonHls.on(eventName, function() {
+                  if (Number(video.readyState || 0) >= 2 || eventName === window.Hls.Events.FRAG_BUFFERED) {
+                    markFallbackReady("Stream data received");
+                    syncCustomSeekBar();
+                  }
+                });
+              } catch {}
             });
 
             movieButtonHls.on(window.Hls.Events.LEVEL_SWITCHED, function(event, data) {
@@ -38392,7 +38448,7 @@ async function watchPage(req, res, type) {
 
         function startVideoJsCinemaSource(src, data, vidstackAttempt) {
           vidstackAttempt = Number(vidstackAttempt || 0);
-          setPlayerStatus("Loading m3u8...", vidstackAttempt ? "Retrying Vidstack Stream+ Cinema" : "Starting Vidstack Stream+ Cinema", false);
+          setPlayerStatus("Loading m3u8...", vidstackAttempt ? "Retrying Vidstack Seekless Cinema" : "Starting Vidstack Seekless Cinema", false);
           setVideoUiState("loading");
           destroyRegularMoviePlayers();
 
@@ -38426,7 +38482,7 @@ async function watchPage(req, res, type) {
               "v149Playing",
               "v151StreamPro"
             );
-            playerShell.classList.add("usesVidstack", "v149Vidstack", "v150VidstackModern", "v151StreamPro", "v152StreamPlus");
+            playerShell.classList.add("usesVidstack", "v149Vidstack", "v150VidstackModern", "v151StreamPro", "v153SeeklessStart");
           }
 
           try {
@@ -38488,13 +38544,14 @@ async function watchPage(req, res, type) {
             player.setAttribute("title", title);
             player.setAttribute("src", src);
             player.setAttribute("view-type", "video");
-            player.setAttribute("stream-type", "on-demand");
+            // Let Vidstack infer stream type. Some proxied HLS sources look live until
+            // their media playlist finishes loading; forcing on-demand can leave seek UI waiting.
             player.setAttribute("load", "eager");
             player.setAttribute("preload", "auto");
             player.setAttribute("crossorigin", "anonymous");
             player.setAttribute("playsinline", "");
             player.setAttribute("data-swifly-src", src);
-            player.setAttribute("data-swifly-player", "vidstack-v152");
+            player.setAttribute("data-swifly-player", "vidstack-v153");
             player.setAttribute("key-target", "player");
             player.setAttribute("aria-keyshortcuts", "Space K J L ArrowLeft ArrowRight ArrowUp ArrowDown M F");
             player.setAttribute("aria-label", title + " player");
@@ -38507,7 +38564,8 @@ async function watchPage(req, res, type) {
             var layout = document.createElement("media-video-layout");
             layout.setAttribute("data-swifly-layout", "default");
             layout.setAttribute("small-when", "never");
-            layout.setAttribute("thumbnails", "");
+            // Do not set thumbnails until a real VTT URL exists; an empty value can make
+            // preview/seek UI wait on data that Swifly has not generated yet.
             layout.setAttribute("no-audio-gain", "");
 
             player.appendChild(provider);
@@ -38618,6 +38676,12 @@ async function watchPage(req, res, type) {
                     highBufferWatchdogPeriod: 2,
                     nudgeOffset: 0.12,
                     nudgeMaxRetry: 5,
+                    nudgeOnVideoHole: true,
+                    maxFragLookUpTolerance: 0.8,
+                    initialLiveManifestSize: 1,
+                    liveSyncDurationCount: 2,
+                    liveMaxLatencyDurationCount: 6,
+                    liveDurationInfinity: true,
                     xhrSetup: function(xhr) { try { xhr.withCredentials = false; } catch {} }
                   });
                 }
@@ -38629,8 +38693,12 @@ async function watchPage(req, res, type) {
             player.addEventListener("provider-setup", applyHlsProviderConfig);
             player.addEventListener("can-play", function(){ markReady("Vidstack m3u8 player ready", true); });
             player.addEventListener("canplay", function(){ markReady("Vidstack m3u8 player ready", true); });
-            player.addEventListener("loaded-metadata", function(){ setPlayerStatus("Loading m3u8...", "Metadata loaded; waiting for playable frames", false); });
-            player.addEventListener("loadedmetadata", function(){ setPlayerStatus("Loading m3u8...", "Metadata loaded; waiting for playable frames", false); });
+            player.addEventListener("loaded-data", function(){ markReady("Vidstack received video data", true); });
+            player.addEventListener("loadeddata", function(){ markReady("Vidstack received video data", true); });
+            player.addEventListener("hls-frag-buffered", function(){ markReady("Vidstack received HLS fragments", true); });
+            player.addEventListener("hls-buffer-appended", function(){ markReady("Vidstack buffer appended", true); });
+            player.addEventListener("loaded-metadata", function(){ setPlayerStatus("Loading m3u8...", "Metadata loaded; starting stream data", false); });
+            player.addEventListener("loadedmetadata", function(){ setPlayerStatus("Loading m3u8...", "Metadata loaded; starting stream data", false); });
             player.addEventListener("hls-instance", function(event){
               try { window.__swiflyActiveVidstackHls = event.detail || event.instance || null; } catch {}
             });
@@ -38695,8 +38763,8 @@ async function watchPage(req, res, type) {
             }, vidstackAttempt ? 14500 : 11500);
 
             // Keep simple streaming-app shortcuts while letting Vidstack Default Layout own the UI.
-            if (playerShell && !playerShell.dataset.v152Keys) {
-              playerShell.dataset.v152Keys = "true";
+            if (playerShell && !playerShell.dataset.v153Keys) {
+              playerShell.dataset.v153Keys = "true";
               playerShell.addEventListener("keydown", function(event) {
                 if (!movieButtonVidstack || !playerShell.classList.contains("v149Vidstack")) return;
                 var tag = event.target && event.target.tagName ? event.target.tagName.toLowerCase() : "";
@@ -43533,13 +43601,13 @@ function watchroomPage(req, res) {
 
 
     /* ============================================================
-       v152 VIDSTACK STREAM+ PLAYER
+       v153 VIDSTACK STREAM+ PLAYER
        - no fake-ready on metadata
        - hls.js 1.6.x loader queue
        - visible recovery card + one Vidstack remount before HLS fallback
        ============================================================ */
 
-    .dsVideoJsCinemaShell.v152StreamPlus {
+    .dsVideoJsCinemaShell.v153SeeklessStart {
       --v149-radius: 30px;
       background:
         radial-gradient(circle at 18% 8%, rgba(255,255,255,.15), transparent 31%),
@@ -43552,14 +43620,14 @@ function watchroomPage(req, res) {
         0 0 90px rgba(120,140,255,.09) !important;
     }
 
-    .dsVideoJsCinemaShell.v152StreamPlus::after {
+    .dsVideoJsCinemaShell.v153SeeklessStart::after {
       content: "SWIFLY STREAM+";
       color: rgba(255,255,255,.88);
       background: linear-gradient(180deg, rgba(255,255,255,.11), rgba(255,255,255,.055));
       border-color: rgba(255,255,255,.16);
     }
 
-    .dsVideoJsCinemaShell.v152StreamPlus media-player.swiflyVidstackPlayer {
+    .dsVideoJsCinemaShell.v153SeeklessStart media-player.swiflyVidstackPlayer {
       --media-brand: #ffffff;
       --media-focus-ring-color: rgba(255,255,255,.88);
       --media-button-hover-bg: rgba(255,255,255,.18);
@@ -43568,9 +43636,9 @@ function watchroomPage(req, res) {
       --media-slider-track-fill-bg: linear-gradient(90deg, #fff, rgba(212,220,255,.9));
     }
 
-    .dsVideoJsCinemaShell.v152StreamPlus media-player.swiflyVidstackPlayer [data-media-controls],
-    .dsVideoJsCinemaShell.v152StreamPlus media-player.swiflyVidstackPlayer [data-part="controls"],
-    .dsVideoJsCinemaShell.v152StreamPlus media-player.swiflyVidstackPlayer [data-controls] {
+    .dsVideoJsCinemaShell.v153SeeklessStart media-player.swiflyVidstackPlayer [data-media-controls],
+    .dsVideoJsCinemaShell.v153SeeklessStart media-player.swiflyVidstackPlayer [data-part="controls"],
+    .dsVideoJsCinemaShell.v153SeeklessStart media-player.swiflyVidstackPlayer [data-controls] {
       margin: 18px !important;
       padding: 10px !important;
       border-radius: 28px !important;
@@ -43581,13 +43649,13 @@ function watchroomPage(req, res) {
       -webkit-backdrop-filter: blur(28px) saturate(1.22) !important;
     }
 
-    .dsVideoJsCinemaShell.v152StreamPlus .swiflyVidstackChrome {
+    .dsVideoJsCinemaShell.v153SeeklessStart .swiflyVidstackChrome {
       border-color: rgba(255,255,255,.15);
       background: linear-gradient(180deg, rgba(20,22,32,.72), rgba(7,8,12,.50));
       box-shadow: 0 22px 52px rgba(0,0,0,.38);
     }
 
-    .dsVideoJsCinemaShell.v152StreamPlus .swiflyRecoveryCard {
+    .dsVideoJsCinemaShell.v153SeeklessStart .swiflyRecoveryCard {
       position: absolute;
       right: 18px;
       bottom: 94px;
@@ -43607,11 +43675,11 @@ function watchroomPage(req, res) {
       -webkit-backdrop-filter: blur(24px) saturate(1.20);
     }
 
-    .dsVideoJsCinemaShell.v152StreamPlus .swiflyRecoveryCard[hidden] {
+    .dsVideoJsCinemaShell.v153SeeklessStart .swiflyRecoveryCard[hidden] {
       display: none !important;
     }
 
-    .dsVideoJsCinemaShell.v152StreamPlus .swiflyRecoveryCard span {
+    .dsVideoJsCinemaShell.v153SeeklessStart .swiflyRecoveryCard span {
       display: block;
       margin-bottom: 5px;
       font: 900 10px/1 var(--font-ui, Inter, system-ui, sans-serif);
@@ -43620,26 +43688,26 @@ function watchroomPage(req, res) {
       color: rgba(255,255,255,.58);
     }
 
-    .dsVideoJsCinemaShell.v152StreamPlus .swiflyRecoveryCard b {
+    .dsVideoJsCinemaShell.v153SeeklessStart .swiflyRecoveryCard b {
       display: block;
       font: 900 16px/1.1 var(--font-display, Inter, system-ui, sans-serif);
     }
 
-    .dsVideoJsCinemaShell.v152StreamPlus .swiflyRecoveryCard small {
+    .dsVideoJsCinemaShell.v153SeeklessStart .swiflyRecoveryCard small {
       display: block;
       margin-top: 5px;
       color: rgba(255,255,255,.64);
       font: 700 12px/1.35 var(--font-ui, Inter, system-ui, sans-serif);
     }
 
-    .dsVideoJsCinemaShell.v152StreamPlus .swiflyRecoveryActions {
+    .dsVideoJsCinemaShell.v153SeeklessStart .swiflyRecoveryActions {
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
       justify-content: flex-end;
     }
 
-    .dsVideoJsCinemaShell.v152StreamPlus .swiflyRecoveryActions button {
+    .dsVideoJsCinemaShell.v153SeeklessStart .swiflyRecoveryActions button {
       min-height: 38px;
       padding: 0 13px;
       border: 1px solid rgba(255,255,255,.16);
@@ -43651,8 +43719,8 @@ function watchroomPage(req, res) {
       transition: transform .14s ease, background .14s ease, border-color .14s ease;
     }
 
-    .dsVideoJsCinemaShell.v152StreamPlus .swiflyRecoveryActions button:hover,
-    .dsVideoJsCinemaShell.v152StreamPlus .swiflyRecoveryActions button:focus-visible {
+    .dsVideoJsCinemaShell.v153SeeklessStart .swiflyRecoveryActions button:hover,
+    .dsVideoJsCinemaShell.v153SeeklessStart .swiflyRecoveryActions button:focus-visible {
       transform: translateY(-1px);
       background: rgba(255,255,255,.18);
       border-color: rgba(255,255,255,.30);
@@ -43661,13 +43729,13 @@ function watchroomPage(req, res) {
     }
 
     @media(max-width: 760px) {
-      .dsVideoJsCinemaShell.v152StreamPlus .swiflyRecoveryCard {
+      .dsVideoJsCinemaShell.v153SeeklessStart .swiflyRecoveryCard {
         left: 12px;
         right: 12px;
         bottom: 80px;
         grid-template-columns: 1fr;
       }
-      .dsVideoJsCinemaShell.v152StreamPlus .swiflyRecoveryActions {
+      .dsVideoJsCinemaShell.v153SeeklessStart .swiflyRecoveryActions {
         justify-content: flex-start;
       }
     }
