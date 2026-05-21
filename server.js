@@ -32537,6 +32537,61 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v138 PREVIEW WARMUP FIX
+       The hover image was blank because the hidden preview video was
+       not decoding a frame yet. This version warms the preview HLS and
+       shows a clear loading/fallback state instead of a dead black box.
+       ============================================================ */
+
+    .dsVideoJsCinemaShell.v138PreviewWarmup .dsVideoJsTimelinePreview {
+      background:
+        radial-gradient(circle at 24% 18%, rgba(85,215,255,.18), transparent 44%),
+        radial-gradient(circle at 72% 32%, rgba(139,92,246,.16), transparent 48%),
+        rgba(5,8,18,.94) !important;
+    }
+
+    .dsVideoJsCinemaShell.v138PreviewWarmup .dsVideoJsTimelinePreview video {
+      background: #050812 !important;
+      transition: opacity .14s ease, filter .14s ease;
+    }
+
+    .dsVideoJsCinemaShell.v138PreviewWarmup.previewLoadingFrame .dsVideoJsTimelinePreview video {
+      filter: brightness(.72) blur(.2px);
+    }
+
+    .dsVideoJsCinemaShell.v138PreviewWarmup.previewLoadingFrame .dsVideoJsTimelinePreview em::after {
+      content: "…";
+    }
+
+    .dsVideoJsCinemaShell.v138PreviewWarmup:not(.hasFramePreview) .dsVideoJsTimelinePreview video {
+      opacity: .18 !important;
+    }
+
+    .dsVideoJsCinemaShell.v138PreviewWarmup .dsVideoJsPreviewFallback::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background:
+        linear-gradient(110deg, transparent 0%, rgba(255,255,255,.10) 45%, transparent 58%) -160px 0 / 160px 100% no-repeat,
+        radial-gradient(circle at 30% 25%, rgba(85,215,255,.18), transparent 42%),
+        radial-gradient(circle at 70% 45%, rgba(139,92,246,.18), transparent 46%),
+        linear-gradient(135deg, rgba(10,16,32,.95), rgba(3,5,12,.96));
+      animation: dsPreviewWarmShimmer 1.3s linear infinite;
+    }
+
+    .dsVideoJsCinemaShell.v138PreviewWarmup.hasFramePreview .dsVideoJsPreviewFallback::before {
+      animation: none;
+      opacity: .18;
+    }
+
+    @keyframes dsPreviewWarmShimmer {
+      from { background-position: -180px 0, center, center, center; }
+      to { background-position: 220px 0, center, center, center; }
+    }
+
   </style>
 
     <script>
@@ -35976,6 +36031,11 @@ async function watchPage(req, res, type) {
         var previewHls = null;
         var previewSourceUrl = "";
         var previewSeekTimer = null;
+        var previewDecodeTimer = null;
+        var previewWarmupTimer = null;
+        var previewWarmupIndex = 0;
+        var previewLastRequested = -999;
+        var previewReadyForFrames = false;
         var dock = document.getElementById("swiflyVideoDock");
         var dockPlay = document.getElementById("swiflyDockPlay");
         var dockBack = document.getElementById("swiflyDockBack");
@@ -36359,19 +36419,7 @@ async function watchPage(req, res, type) {
             timelinePreview.hidden = false;
             playerShell.classList.add("isPreviewingTime", "isUsingDock");
 
-            if (timelinePreviewVideo) {
-              if (previewSeekTimer) clearTimeout(previewSeekTimer);
-              previewSeekTimer = setTimeout(function() {
-                try {
-                  if (timelinePreviewVideo.readyState >= 1 && Math.abs((timelinePreviewVideo.currentTime || 0) - seconds) > 1.2) {
-                    timelinePreviewVideo.currentTime = seconds;
-                    if (timelinePreviewState) timelinePreviewState.textContent = "Loading frame";
-                  }
-                } catch {
-                  if (timelinePreviewState) timelinePreviewState.textContent = "Time preview";
-                }
-              }, 90);
-            }
+            requestTimelinePreviewFrame(seconds, false);
           }
 
           dockProgress.addEventListener("mousemove", updatePreviewFromDock);
@@ -36632,6 +36680,110 @@ async function watchPage(req, res, type) {
           volumeMenu.hidden = true;
         });
 
+        function markPreviewFrameReady(label) {
+          previewReadyForFrames = true;
+          if (playerShell) {
+            playerShell.classList.add("hasFramePreview");
+            playerShell.classList.remove("previewLoadingFrame");
+          }
+          if (timelinePreviewState) timelinePreviewState.textContent = label || "Frame preview";
+        }
+
+        function requestTimelinePreviewFrame(targetSeconds, immediate) {
+          if (!timelinePreviewVideo || !previewSourceUrl) return;
+
+          var target = Math.max(0, Number(targetSeconds || 0));
+          if (!immediate && Math.abs(target - previewLastRequested) < 0.75) return;
+          previewLastRequested = target;
+
+          if (previewSeekTimer) clearTimeout(previewSeekTimer);
+          if (previewDecodeTimer) clearTimeout(previewDecodeTimer);
+
+          if (playerShell) playerShell.classList.add("previewLoadingFrame");
+          if (timelinePreviewState) timelinePreviewState.textContent = previewReadyForFrames ? "Loading frame" : "Warming preview";
+
+          previewSeekTimer = setTimeout(function() {
+            try {
+              if (previewHls && previewHls.startLoad) {
+                // Ask HLS.js to start fetching near the hovered timestamp instead of only from the start.
+                previewHls.startLoad(target);
+              }
+
+              if (timelinePreviewVideo.readyState >= 1) {
+                timelinePreviewVideo.currentTime = target;
+              }
+
+              // Muted autoplay is used only to force the browser to decode a frame, then we pause on it.
+              timelinePreviewVideo.muted = true;
+              timelinePreviewVideo.playsInline = true;
+              var playPromise = timelinePreviewVideo.play && timelinePreviewVideo.play();
+
+              if (playPromise && playPromise.then) {
+                playPromise.then(function() {
+                  previewDecodeTimer = setTimeout(function() {
+                    try { timelinePreviewVideo.pause(); } catch {}
+                    if (timelinePreviewVideo.readyState >= 2) markPreviewFrameReady("Frame preview");
+                  }, immediate ? 90 : 140);
+                }).catch(function() {
+                  if (timelinePreviewVideo.readyState >= 2) markPreviewFrameReady("Frame preview");
+                  else if (timelinePreviewState) timelinePreviewState.textContent = "Time preview";
+                });
+              } else {
+                previewDecodeTimer = setTimeout(function() {
+                  try { timelinePreviewVideo.pause(); } catch {}
+                  if (timelinePreviewVideo.readyState >= 2) markPreviewFrameReady("Frame preview");
+                }, immediate ? 90 : 140);
+              }
+            } catch {
+              if (timelinePreviewState) timelinePreviewState.textContent = "Time preview";
+              if (playerShell) playerShell.classList.remove("previewLoadingFrame");
+            }
+          }, immediate ? 0 : 60);
+        }
+
+        function schedulePreviewWarmup(player) {
+          if (!player || !timelinePreviewVideo) return;
+          if (previewWarmupTimer) clearTimeout(previewWarmupTimer);
+
+          function getDurationForWarmup() {
+            var duration = 0;
+            try {
+              var win = getSeekWindow();
+              duration = win.duration || 0;
+            } catch {}
+            try {
+              var d = player.duration && player.duration();
+              if (!duration && Number.isFinite(d) && d > 0) duration = d;
+            } catch {}
+            if (!duration && Number.isFinite(video.duration) && video.duration > 0) duration = video.duration;
+            return duration;
+          }
+
+          var duration = getDurationForWarmup();
+          if (!duration || !Number.isFinite(duration)) {
+            previewWarmupTimer = setTimeout(function(){ schedulePreviewWarmup(player); }, 900);
+            return;
+          }
+
+          var points = [0.02, 0.08, 0.18, 0.34, 0.50, 0.66, 0.82, 0.94];
+          previewWarmupIndex = 0;
+
+          function warmNext() {
+            if (!timelinePreviewVideo || !previewSourceUrl) return;
+            if (previewWarmupIndex >= points.length) {
+              if (timelinePreviewState) timelinePreviewState.textContent = previewReadyForFrames ? "Frame preview" : "Time preview";
+              if (playerShell) playerShell.classList.remove("previewLoadingFrame");
+              return;
+            }
+
+            var seconds = Math.max(0, Math.min(duration - 1, duration * points[previewWarmupIndex++]));
+            requestTimelinePreviewFrame(seconds, true);
+            previewWarmupTimer = setTimeout(warmNext, 1350);
+          }
+
+          previewWarmupTimer = setTimeout(warmNext, 700);
+        }
+
         function prepareTimelinePreviewVideo(src) {
           previewSourceUrl = src || "";
           if (!timelinePreviewVideo || !previewSourceUrl) return;
@@ -36649,12 +36801,14 @@ async function watchPage(req, res, type) {
 
           timelinePreviewVideo.muted = true;
           timelinePreviewVideo.playsInline = true;
+          timelinePreviewVideo.preload = "auto";
           timelinePreviewVideo.crossOrigin = "anonymous";
 
           var nativeHls = timelinePreviewVideo.canPlayType("application/vnd.apple.mpegurl") || timelinePreviewVideo.canPlayType("application/x-mpegURL");
           if (nativeHls) {
             timelinePreviewVideo.src = previewSourceUrl;
             try { timelinePreviewVideo.load(); } catch {}
+            setTimeout(function(){ requestTimelinePreviewFrame(0, true); }, 450);
             return;
           }
 
@@ -36669,20 +36823,33 @@ async function watchPage(req, res, type) {
                 debug: false,
                 enableWorker: true,
                 lowLatencyMode: false,
-                maxBufferLength: 12,
-                maxMaxBufferLength: 20,
-                backBufferLength: 10,
-                startPosition: -1,
+                autoStartLoad: false,
+                startFragPrefetch: true,
+                maxBufferLength: 40,
+                maxMaxBufferLength: 120,
+                backBufferLength: 30,
+                startPosition: 0,
                 capLevelToPlayerSize: true,
-                manifestLoadingMaxRetry: 2,
-                levelLoadingMaxRetry: 2,
-                fragLoadingMaxRetry: 2,
-                manifestLoadingTimeOut: 15000,
-                fragLoadingTimeOut: 15000
+                manifestLoadingMaxRetry: 3,
+                levelLoadingMaxRetry: 3,
+                fragLoadingMaxRetry: 4,
+                manifestLoadingTimeOut: 20000,
+                levelLoadingTimeOut: 20000,
+                fragLoadingTimeOut: 20000
               });
               previewHls.attachMedia(timelinePreviewVideo);
               previewHls.on(window.Hls.Events.MEDIA_ATTACHED, function() {
                 try { previewHls.loadSource(previewSourceUrl); } catch {}
+              });
+              previewHls.on(window.Hls.Events.MANIFEST_PARSED, function() {
+                if (timelinePreviewState) timelinePreviewState.textContent = "Warming preview";
+                requestTimelinePreviewFrame(0, true);
+              });
+              previewHls.on(window.Hls.Events.FRAG_BUFFERED, function() {
+                if (timelinePreviewVideo && timelinePreviewVideo.readyState >= 2) markPreviewFrameReady("Frame preview");
+              });
+              previewHls.on(window.Hls.Events.ERROR, function(event, err) {
+                if (err && err.fatal && timelinePreviewState) timelinePreviewState.textContent = "Time preview";
               });
             } catch {
               if (timelinePreviewState) timelinePreviewState.textContent = "Time preview";
@@ -36798,20 +36965,7 @@ async function watchPage(req, res, type) {
               timelinePreview.hidden = false;
               playerShell.classList.add("isPreviewingTime", "isUsingDock");
 
-              if (timelinePreviewVideo) {
-                if (previewSeekTimer) clearTimeout(previewSeekTimer);
-                var target = seconds;
-                previewSeekTimer = setTimeout(function() {
-                  try {
-                    if (timelinePreviewVideo.readyState >= 1 && Math.abs((timelinePreviewVideo.currentTime || 0) - target) > 1.2) {
-                      timelinePreviewVideo.currentTime = target;
-                      if (timelinePreviewState) timelinePreviewState.textContent = "Loading frame";
-                    }
-                  } catch {
-                    if (timelinePreviewState) timelinePreviewState.textContent = "Time preview";
-                  }
-                }, 80);
-              }
+              requestTimelinePreviewFrame(seconds, false);
 
               if (player.userActive) player.userActive(true);
             }
@@ -36824,13 +36978,10 @@ async function watchPage(req, res, type) {
 
             if (timelinePreviewVideo && !timelinePreviewVideo.dataset.swiflyPreviewStateReady) {
               timelinePreviewVideo.dataset.swiflyPreviewStateReady = "true";
-              timelinePreviewVideo.addEventListener("loadeddata", function() {
-                if (timelinePreviewState) timelinePreviewState.textContent = "Frame preview";
-                if (playerShell) playerShell.classList.add("hasFramePreview");
-              });
-              timelinePreviewVideo.addEventListener("seeked", function() {
-                if (timelinePreviewState) timelinePreviewState.textContent = "Frame preview";
-                if (playerShell) playerShell.classList.add("hasFramePreview");
+              ["loadedmetadata", "loadeddata", "canplay", "seeked", "timeupdate"].forEach(function(name) {
+                timelinePreviewVideo.addEventListener(name, function() {
+                  if (timelinePreviewVideo.readyState >= 2) markPreviewFrameReady("Frame preview");
+                });
               });
               timelinePreviewVideo.addEventListener("error", function() {
                 if (timelinePreviewState) timelinePreviewState.textContent = "Time preview";
@@ -36881,8 +37032,8 @@ async function watchPage(req, res, type) {
           destroyRegularMoviePlayers();
 
           if (playerShell) {
-            playerShell.classList.remove("usesPlyr", "usesMediaChrome", "usesNativeVideo", "isScrubbing", "v128VideoReady", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed", "v132SoftRectPlay", "v133HoverPreview", "v134SpeedPreviewFix", "v135VolumeImagePreview", "v136PillDockSkin", "v137NativeDock");
-            playerShell.classList.add("usesVideoJs", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed", "v132SoftRectPlay", "v133HoverPreview", "v134SpeedPreviewFix", "v135VolumeImagePreview", "v136PillDockSkin", "v137NativeDock");
+            playerShell.classList.remove("usesPlyr", "usesMediaChrome", "usesNativeVideo", "isScrubbing", "v128VideoReady", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed", "v132SoftRectPlay", "v133HoverPreview", "v134SpeedPreviewFix", "v135VolumeImagePreview", "v136PillDockSkin", "v137NativeDock", "v138PreviewWarmup");
+            playerShell.classList.add("usesVideoJs", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed", "v132SoftRectPlay", "v133HoverPreview", "v134SpeedPreviewFix", "v135VolumeImagePreview", "v136PillDockSkin", "v137NativeDock", "v138PreviewWarmup");
           }
 
           try {
@@ -36955,6 +37106,7 @@ async function watchPage(req, res, type) {
               setVideoJsSpeedMenu(movieButtonPlayer);
               setVideoJsVolumeMenu(movieButtonPlayer);
               prepareTimelinePreviewVideo(src);
+              schedulePreviewWarmup(movieButtonPlayer);
               installVideoJsTimelinePreview(movieButtonPlayer);
               installSwiflyNativeDock(movieButtonPlayer, src);
               wireVideoJsOverlayControls(movieButtonPlayer);
@@ -37056,6 +37208,24 @@ async function watchPage(req, res, type) {
             try { movieButtonHls.destroy(); } catch {}
             movieButtonHls = null;
           }
+
+          if (previewWarmupTimer) {
+            try { clearTimeout(previewWarmupTimer); } catch {}
+            previewWarmupTimer = null;
+          }
+          if (previewSeekTimer) {
+            try { clearTimeout(previewSeekTimer); } catch {}
+            previewSeekTimer = null;
+          }
+          if (previewDecodeTimer) {
+            try { clearTimeout(previewDecodeTimer); } catch {}
+            previewDecodeTimer = null;
+          }
+          if (previewHls) {
+            try { previewHls.destroy(); } catch {}
+            previewHls = null;
+          }
+          previewReadyForFrames = false;
         }
 
         function uniqueHlsHeights(levels) {
