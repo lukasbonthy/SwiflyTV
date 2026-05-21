@@ -25033,6 +25033,210 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v115 BLENDED GALLERY EDGES
+       Fixes clipped poster glow/hover effects at gallery edges by
+       giving rails extra paint room and fading overflow into the page.
+       ============================================================ */
+
+    :root {
+      --gallery-edge-fade: 74px;
+      --gallery-paint-gutter: 46px;
+      --gallery-right-safe: clamp(96px, 13vw, 240px);
+      --gallery-vertical-safe: 48px;
+    }
+
+    .section,
+    .nfRowSection,
+    .showcaseRowWrap,
+    .browseRows .showcaseInner,
+    .netflixCatalog,
+    .dsContent {
+      overflow: visible !important;
+      overflow-clip-margin: 96px;
+    }
+
+    .movieRail,
+    .nfRail,
+    .showcaseRail,
+    .nfTopTenRail {
+      position: relative !important;
+      overflow-x: auto !important;
+      overflow-y: hidden !important;
+      scrollbar-width: none !important;
+      padding-top: var(--gallery-vertical-safe) !important;
+      padding-bottom: var(--gallery-vertical-safe) !important;
+      padding-left: var(--gallery-paint-gutter) !important;
+      padding-right: calc(var(--gallery-right-safe) + var(--gallery-paint-gutter)) !important;
+      margin-top: calc(var(--gallery-vertical-safe) * -1) !important;
+      margin-bottom: calc(var(--gallery-vertical-safe) * -1 + 18px) !important;
+      margin-left: calc(var(--gallery-paint-gutter) * -1) !important;
+      margin-right: calc((var(--gallery-right-safe) + var(--gallery-paint-gutter)) * -1) !important;
+      scroll-padding-left: var(--gallery-paint-gutter) !important;
+      scroll-padding-right: calc(var(--gallery-right-safe) + var(--gallery-paint-gutter)) !important;
+      -webkit-mask-image:
+        linear-gradient(90deg,
+          transparent 0,
+          #000 var(--gallery-edge-fade),
+          #000 calc(100% - var(--gallery-edge-fade)),
+          transparent 100%);
+      mask-image:
+        linear-gradient(90deg,
+          transparent 0,
+          #000 var(--gallery-edge-fade),
+          #000 calc(100% - var(--gallery-edge-fade)),
+          transparent 100%);
+    }
+
+    .movieRail::-webkit-scrollbar,
+    .nfRail::-webkit-scrollbar,
+    .showcaseRail::-webkit-scrollbar,
+    .nfTopTenRail::-webkit-scrollbar {
+      display: none !important;
+    }
+
+    .movieRail > *,
+    .nfRail > *,
+    .showcaseRail > *,
+    .nfTopTenRail > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .movieRail > *:first-child,
+    .nfRail > *:first-child,
+    .showcaseRail > *:first-child,
+    .nfTopTenRail > *:first-child {
+      margin-left: 0 !important;
+    }
+
+    .movieRail .posterWrap,
+    .nfRail .posterWrap,
+    .showcaseRail .posterWrap,
+    .nfTopTenRail .posterWrap,
+    .topTenPoster,
+    .nfThumb {
+      overflow: hidden !important;
+      overflow-clip-margin: 36px;
+      will-change: transform, box-shadow, filter;
+    }
+
+    .movieRail .movieCard:hover,
+    .nfRail .movieCard:hover,
+    .showcaseRail .movieCard:hover,
+    .nfTopTenRail .topTenCard:hover,
+    .nfTitleCard:hover {
+      z-index: 80 !important;
+    }
+
+    .movieGrid {
+      padding: 28px var(--gallery-paint-gutter) 92px !important;
+      margin-left: calc(var(--gallery-paint-gutter) * -1) !important;
+      margin-right: calc(var(--gallery-paint-gutter) * -1) !important;
+      overflow: visible !important;
+      overflow-clip-margin: 90px;
+    }
+
+    .movieGrid .movieCard {
+      position: relative;
+    }
+
+    .movieGrid .movieCard:hover {
+      z-index: 50;
+    }
+
+    .sectionHead {
+      position: relative;
+      z-index: 5;
+      margin-bottom: 4px !important;
+    }
+
+    .browseRows .showcaseRail {
+      margin-bottom: 8px !important;
+    }
+
+    .nfTopTenRail {
+      padding-top: 64px !important;
+      padding-bottom: 74px !important;
+      margin-top: -48px !important;
+      margin-bottom: -36px !important;
+    }
+
+    .topTenCard {
+      padding-top: 20px !important;
+      padding-bottom: 20px !important;
+    }
+
+    .topTenPoster {
+      box-shadow:
+        0 18px 58px rgba(0,0,0,.44),
+        0 0 44px rgba(85,215,255,.10) !important;
+    }
+
+    body.studio-open .movieRail,
+    body.studio-open .nfRail,
+    body.studio-open .showcaseRail,
+    body.studio-open .nfTopTenRail {
+      --gallery-right-safe: clamp(240px, 31vw, 520px);
+    }
+
+    body.studio-open .controlPanel.v111StyleStudio.v114StudioDrawer {
+      box-shadow:
+        -34px 0 90px rgba(3,5,12,.56),
+        0 34px 120px rgba(0,0,0,.62),
+        0 0 70px rgba(85,215,255,.12),
+        inset 0 1px 0 rgba(255,255,255,.08) !important;
+    }
+
+    body.studio-open .controlPanel.v111StyleStudio.v114StudioDrawer::after {
+      content: "";
+      position: fixed;
+      top: 0;
+      right: min(452px, calc(100vw - 12px));
+      width: min(180px, 18vw);
+      height: 100dvh;
+      pointer-events: none;
+      background: linear-gradient(90deg, transparent, rgba(3,5,12,.74));
+      z-index: -1;
+    }
+
+    @supports not (mask-image: linear-gradient(90deg, transparent, #000)) {
+      .movieRail,
+      .nfRail,
+      .showcaseRail,
+      .nfTopTenRail {
+        -webkit-mask-image: none;
+        mask-image: none;
+        box-shadow:
+          inset 72px 0 50px -58px rgba(3,5,12,.98),
+          inset -92px 0 62px -62px rgba(3,5,12,.98);
+      }
+    }
+
+    @media(max-width: 900px) {
+      :root {
+        --gallery-edge-fade: 42px;
+        --gallery-paint-gutter: 24px;
+        --gallery-right-safe: 52px;
+        --gallery-vertical-safe: 32px;
+      }
+
+      body.studio-open .movieRail,
+      body.studio-open .nfRail,
+      body.studio-open .showcaseRail,
+      body.studio-open .nfTopTenRail {
+        --gallery-right-safe: 72px;
+      }
+
+      .movieGrid {
+        padding-left: 24px !important;
+        padding-right: 24px !important;
+        margin-left: -24px !important;
+        margin-right: -24px !important;
+      }
+    }
+
   </style>
 
     <script>
@@ -25511,6 +25715,9 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       const expanded = panel?.classList.contains("open") ? "true" : "false";
       controlToggle?.setAttribute("aria-expanded", expanded);
       controlToggleTop?.setAttribute("aria-expanded", expanded);
+      requestAnimationFrame(() => {
+        window.dispatchEvent(new Event("resize"));
+      });
     }
 
     function toggleStudio() {
