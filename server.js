@@ -33054,6 +33054,124 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       background: #050711;
     }
 
+
+    /* ============================================================
+       v143 HERO TRAILER VISIBILITY + MUTE TOGGLE
+       - makes the home hero autoplay trailer less transparent
+       - turns the age-rating mute icon into a real button
+       - uses YouTube IFrame API to mute/unmute the hero trailer
+       ============================================================ */
+
+    .dsHeroHasTrailer .dsHeroTrailerLayer {
+      filter: brightness(.88) saturate(1.08) contrast(1.04) !important;
+      animation: dsHeroTrailerFadeInV143 1.35s ease 2.15s forwards !important;
+    }
+
+    .dsHeroHasTrailer .dsHeroBg {
+      animation: dsHeroPosterHoldThenDimV143 7s ease 0s both !important;
+    }
+
+    .dsHeroHasTrailer .dsHeroGlass {
+      background:
+        radial-gradient(820px circle at 28% 46%, rgba(140,107,255,.08), transparent 44%),
+        linear-gradient(to top, var(--v-bg) 0%, rgba(5,7,18,.90) 8%, rgba(5,7,18,.42) 30%, rgba(5,7,18,.08) 58%, rgba(5,7,18,.56) 100%),
+        linear-gradient(90deg, rgba(5,7,18,.86) 0%, rgba(5,7,18,.48) 38%, rgba(5,7,18,.12) 76%) !important;
+    }
+
+    @keyframes dsHeroTrailerFadeInV143 {
+      0% {
+        opacity: 0;
+        transform: scale(1.035);
+      }
+      100% {
+        opacity: .94;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes dsHeroPosterHoldThenDimV143 {
+      0%, 32% {
+        opacity: 1;
+        filter: brightness(.66) saturate(1.05) contrast(1.03) !important;
+      }
+      100% {
+        opacity: .18;
+        filter: brightness(.48) saturate(1.02) contrast(1.03) !important;
+      }
+    }
+
+    .dsHeroRating .dsHeroMuteToggle {
+      width: 42px;
+      height: 42px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      color: white;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.24);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      cursor: pointer;
+      transition: transform .14s ease, background .14s ease, border-color .14s ease, box-shadow .14s ease;
+    }
+
+    .dsHeroRating .dsHeroMuteToggle:hover,
+    .dsHeroRating .dsHeroMuteToggle:focus-visible {
+      transform: translateY(-1px);
+      background: rgba(255,255,255,.16);
+      border-color: rgba(255,255,255,.36);
+      box-shadow: 0 12px 26px rgba(0,0,0,.24);
+      outline: none;
+    }
+
+    .dsHeroRating .dsHeroMuteToggle.isUnmuted {
+      background: rgba(255,255,255,.18);
+      border-color: rgba(223,248,255,.45);
+      box-shadow: 0 0 24px rgba(85,215,255,.13);
+    }
+
+    .dsHeroRating .dsHeroMuteToggle span {
+      width: auto;
+      height: auto;
+      border: 0;
+      background: transparent;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      font-size: 17px;
+      line-height: 1;
+    }
+
+    .dsHeroTrailerPill span {
+      background: rgba(5,7,18,.34) !important;
+    }
+
+    @media(max-width: 900px) {
+      .dsHeroHasTrailer .dsHeroTrailerLayer {
+        display: none !important;
+      }
+
+      .dsHeroHasTrailer .dsHeroBg {
+        animation: none !important;
+        opacity: 1 !important;
+      }
+
+      .dsHeroRating .dsHeroMuteToggle {
+        display: none !important;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .dsHeroHasTrailer .dsHeroTrailerLayer,
+      .dsHeroHasTrailer .dsHeroBg {
+        animation: none !important;
+      }
+
+      .dsHeroHasTrailer .dsHeroTrailerLayer {
+        opacity: 0 !important;
+      }
+    }
+
   </style>
 
     <script>
@@ -35515,9 +35633,9 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = nu
   return `<section class="dsHero ${trailerSrc ? "dsHeroHasTrailer" : ""}">
     <div class="dsHeroBg" style="background-image:url('${escapeHtml(bg)}')"></div>
     ${trailerSrc ? `<div class="dsHeroTrailerLayer" aria-hidden="true">
-      <iframe src="${escapeHtml(trailerSrc)}" title="${escapeHtml(title)} muted trailer preview" loading="eager" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      <iframe id="dsHeroTrailerFrame" class="dsHeroTrailerFrame" src="${escapeHtml(trailerSrc)}" title="${escapeHtml(title)} muted trailer preview" loading="eager" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
     </div>
-    <div class="dsHeroTrailerPill"><span>Muted trailer preview</span></div>` : ""}
+    <div class="dsHeroTrailerPill"><span id="dsHeroTrailerPillText">Trailer preview</span></div>` : ""}
     <div class="dsHeroGlass"></div>
     <div class="dsHeroContent">
       <div class="dsEyebrow">${escapeHtml(eyebrow || context || BRAND_SUBMARK)}</div>
@@ -35529,7 +35647,125 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = nu
         <a class="dsSecondaryBtn" href="${href}"><span>ⓘ</span> More Info</a>
       </div>
     </div>
-    <div class="dsHeroRating"><span>🔇</span><b>${escapeHtml(maturity)}</b></div>
+    <div class="dsHeroRating">
+      ${trailerSrc ? `<button id="dsHeroMuteToggle" class="dsHeroMuteToggle" type="button" aria-label="Unmute trailer" aria-pressed="true" data-hero-mute-toggle><span aria-hidden="true">🔇</span></button>` : `<span>🔇</span>`}
+      <b>${escapeHtml(maturity)}</b>
+    </div>
+    ${trailerSrc ? `<script>
+      (function swiflyHeroTrailerMuteControl(){
+        var iframe = document.getElementById("dsHeroTrailerFrame");
+        var button = document.getElementById("dsHeroMuteToggle");
+        var pill = document.getElementById("dsHeroTrailerPillText");
+        if (!iframe || !button) return;
+
+        var muted = true;
+        var player = null;
+        var ready = false;
+        var desiredVolume = 70;
+
+        function setVisualState() {
+          var icon = button.querySelector("span");
+          if (icon) icon.textContent = muted ? "🔇" : "🔊";
+          button.setAttribute("aria-label", muted ? "Unmute trailer" : "Mute trailer");
+          button.setAttribute("aria-pressed", muted ? "true" : "false");
+          button.classList.toggle("isUnmuted", !muted);
+          if (pill) pill.textContent = muted ? "Muted trailer preview" : "Trailer sound on";
+        }
+
+        function sendCommand(command, args) {
+          try {
+            iframe.contentWindow.postMessage(JSON.stringify({
+              event: "command",
+              func: command,
+              args: args || []
+            }), "https://www.youtube.com");
+          } catch {}
+        }
+
+        function applyAudioState() {
+          setVisualState();
+
+          if (player && ready) {
+            try {
+              if (muted) {
+                player.mute();
+              } else {
+                player.unMute();
+                player.setVolume(desiredVolume);
+                player.playVideo();
+              }
+              return;
+            } catch {}
+          }
+
+          sendCommand(muted ? "mute" : "unMute");
+          if (!muted) {
+            sendCommand("setVolume", [desiredVolume]);
+            sendCommand("playVideo");
+          }
+        }
+
+        function bootPlayer() {
+          if (player || !window.YT || !window.YT.Player) return;
+          try {
+            player = new window.YT.Player("dsHeroTrailerFrame", {
+              events: {
+                onReady: function(event) {
+                  ready = true;
+                  try {
+                    event.target.mute();
+                    event.target.playVideo();
+                  } catch {}
+                  applyAudioState();
+                }
+              }
+            });
+          } catch {}
+        }
+
+        function ensureYouTubeApi() {
+          if (window.YT && window.YT.Player) {
+            bootPlayer();
+            return;
+          }
+
+          window.__swiflyYouTubeReadyCallbacks = window.__swiflyYouTubeReadyCallbacks || [];
+          if (!window.__swiflyYouTubeReadyCallbacks._swiflyPatched) {
+            var oldReady = window.onYouTubeIframeAPIReady;
+            window.onYouTubeIframeAPIReady = function() {
+              if (typeof oldReady === "function") {
+                try { oldReady(); } catch {}
+              }
+              (window.__swiflyYouTubeReadyCallbacks || []).splice(0).forEach(function(callback) {
+                try { callback(); } catch {}
+              });
+            };
+            window.__swiflyYouTubeReadyCallbacks._swiflyPatched = true;
+          }
+
+          window.__swiflyYouTubeReadyCallbacks.push(bootPlayer);
+
+          if (!document.querySelector('script[data-swifly-youtube-api="true"]')) {
+            var tag = document.createElement("script");
+            tag.src = "https://www.youtube.com/iframe_api";
+            tag.async = true;
+            tag.dataset.swiflyYoutubeApi = "true";
+            document.head.appendChild(tag);
+          }
+        }
+
+        button.addEventListener("click", function(event) {
+          event.preventDefault();
+          event.stopPropagation();
+          muted = !muted;
+          applyAudioState();
+          ensureYouTubeApi();
+        });
+
+        setVisualState();
+        ensureYouTubeApi();
+      })();
+    </script>` : ""}
   </section>`;
 }
 
