@@ -29036,6 +29036,340 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v127 VIDEO.JS MODERN PLAYER CLEANUP
+       Fixes the ugly v126 look:
+       - removes huge custom timeline overlay
+       - smaller top status/HUD
+       - center buttons only show when paused/focused intentionally
+       - cleaner Video.js control bar and progress
+       - no giant glass block across the movie
+       ============================================================ */
+
+    .dsVideoJsCinemaShell {
+      border-radius: 26px !important;
+      background: #000 !important;
+      outline: 1px solid rgba(255,255,255,.075) !important;
+      box-shadow:
+        0 28px 100px rgba(0,0,0,.48),
+        0 0 54px rgba(85,215,255,.07) !important;
+    }
+
+    .dsVideoJsCinemaShell .dsCinemaPlayerAura {
+      opacity: .20 !important;
+      filter: blur(44px) !important;
+      pointer-events: none !important;
+    }
+
+    .dsVideoJsCinemaShell.usesVideoJs .dsCinemaSeekDock {
+      display: none !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      visibility: hidden !important;
+    }
+
+    .dsVideoJsCinemaShell.usesVideoJs .dsHlsStatus {
+      left: 18px !important;
+      top: 18px !important;
+      bottom: auto !important;
+      max-width: min(330px, calc(100% - 36px)) !important;
+      min-width: 0 !important;
+      padding: 10px 12px !important;
+      border-radius: 16px !important;
+      background:
+        radial-gradient(180px circle at 0% 0%, rgba(85,215,255,.13), transparent 54%),
+        rgba(4,7,18,.64) !important;
+      border: 1px solid rgba(255,255,255,.10) !important;
+      box-shadow: 0 16px 44px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.055) !important;
+      backdrop-filter: blur(18px) saturate(1.12) !important;
+      -webkit-backdrop-filter: blur(18px) saturate(1.12) !important;
+      opacity: .94;
+      transform: none !important;
+      z-index: 40 !important;
+    }
+
+    .dsVideoJsCinemaShell.usesVideoJs .dsHlsStatus b {
+      font-size: 14px !important;
+      line-height: 1.05 !important;
+      letter-spacing: -.035em !important;
+      color: white !important;
+    }
+
+    .dsVideoJsCinemaShell.usesVideoJs .dsHlsStatus span {
+      margin-top: 3px !important;
+      font-size: 11px !important;
+      color: rgba(238,242,255,.58) !important;
+    }
+
+    .dsVideoJsCinemaShell.usesVideoJs.isPlaying .dsHlsStatus:not(.isError),
+    .dsVideoJsCinemaShell.usesVideoJs.isReady .dsHlsStatus:not(.isError) {
+      opacity: 0 !important;
+      pointer-events: none !important;
+      transform: translateY(-8px) !important;
+    }
+
+    .dsVideoJsTop {
+      left: 18px !important;
+      top: 18px !important;
+      max-width: min(360px, calc(100% - 36px)) !important;
+      padding: 9px 11px !important;
+      border-radius: 15px !important;
+      background: rgba(4,7,18,.52) !important;
+      border: 1px solid rgba(255,255,255,.09) !important;
+      box-shadow: 0 14px 38px rgba(0,0,0,.26) !important;
+      backdrop-filter: blur(16px) saturate(1.12) !important;
+      -webkit-backdrop-filter: blur(16px) saturate(1.12) !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    .dsVideoJsTop span {
+      font-size: 9px !important;
+      letter-spacing: .12em !important;
+      color: #a7f3d0 !important;
+    }
+
+    .dsVideoJsTop b {
+      font-size: 15px !important;
+      line-height: 1 !important;
+      letter-spacing: -.04em !important;
+    }
+
+    .dsVideoJsTop small {
+      font-size: 10px !important;
+      color: rgba(238,242,255,.54) !important;
+    }
+
+    .dsVideoJsCinemaShell:hover .dsVideoJsTop,
+    .dsVideoJsCinemaShell:focus-within .dsVideoJsTop {
+      opacity: .90 !important;
+      transform: translateY(0) !important;
+    }
+
+    .dsVideoJsCinemaShell.isPlaying:hover .dsVideoJsTop {
+      opacity: .72 !important;
+    }
+
+    .dsVideoJsCenter {
+      opacity: 0 !important;
+      transform: scale(.96) !important;
+      transition: opacity .16s ease, transform .16s ease !important;
+    }
+
+    .dsVideoJsCinemaShell:hover .dsVideoJsCenter,
+    .dsVideoJsCinemaShell:focus-within .dsVideoJsCenter,
+    .dsVideoJsCinemaShell.isScrubbing .dsVideoJsCenter {
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    .dsVideoJsCinemaShell.isPaused .dsVideoJsCenter,
+    .dsVideoJsCinemaShell.isLoading .dsVideoJsCenter {
+      opacity: 1 !important;
+      transform: scale(1) !important;
+      pointer-events: auto !important;
+    }
+
+    .dsVideoJsCenter button {
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.16), transparent 42%),
+        rgba(4,7,18,.46) !important;
+      border-color: rgba(255,255,255,.12) !important;
+      box-shadow: 0 18px 58px rgba(0,0,0,.40), 0 0 26px rgba(85,215,255,.09) !important;
+    }
+
+    #movieButtonBigPlay {
+      width: clamp(64px, 6.8vw, 92px) !important;
+      height: clamp(64px, 6.8vw, 92px) !important;
+      font-size: clamp(24px, 2.6vw, 34px) !important;
+    }
+
+    #movieButtonBack10,
+    #movieButtonForward10 {
+      width: clamp(46px, 4.6vw, 62px) !important;
+      height: clamp(46px, 4.6vw, 62px) !important;
+      font-size: 18px !important;
+    }
+
+    .dsVideoJsHint {
+      display: none !important;
+    }
+
+    .dsVideoJsQuality {
+      right: 16px !important;
+      bottom: 74px !important;
+      z-index: 42 !important;
+      opacity: 0 !important;
+      transform: translateY(8px) !important;
+    }
+
+    .dsVideoJsCinemaShell:hover .dsVideoJsQuality,
+    .dsVideoJsCinemaShell:focus-within .dsVideoJsQuality,
+    .dsVideoJsCinemaShell.isPaused .dsVideoJsQuality {
+      opacity: 1 !important;
+      transform: translateY(0) !important;
+    }
+
+    .dsVideoJsQualityToggle {
+      min-height: 30px !important;
+      min-width: 58px !important;
+      padding: 0 10px !important;
+      font-size: 11px !important;
+      background: rgba(4,7,18,.58) !important;
+      border-color: rgba(255,255,255,.10) !important;
+      box-shadow: 0 10px 28px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.05) !important;
+    }
+
+    .dsVideoJsQualityMenu {
+      bottom: 38px !important;
+      border-radius: 14px !important;
+      background: rgba(5,8,18,.94) !important;
+    }
+
+    .vjs-theme-swifly .vjs-control-bar {
+      min-height: 74px !important;
+      height: 74px !important;
+      align-items: flex-end !important;
+      gap: 2px !important;
+      padding: 32px 14px 12px !important;
+      background:
+        linear-gradient(to top, rgba(0,0,0,.82) 0%, rgba(0,0,0,.50) 54%, transparent 100%) !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      opacity: 0 !important;
+      transform: translateY(10px) !important;
+      border-radius: 0 0 26px 26px !important;
+    }
+
+    .vjs-theme-swifly:hover .vjs-control-bar,
+    .vjs-theme-swifly.vjs-user-active .vjs-control-bar,
+    .vjs-theme-swifly.vjs-paused .vjs-control-bar {
+      opacity: 1 !important;
+      transform: translateY(0) !important;
+    }
+
+    .vjs-theme-swifly .vjs-progress-control {
+      left: 14px !important;
+      right: 14px !important;
+      bottom: 48px !important;
+      height: 22px !important;
+      z-index: 31 !important;
+    }
+
+    .vjs-theme-swifly .vjs-progress-holder {
+      height: 7px !important;
+      margin: 7px 0 0 !important;
+      background: rgba(255,255,255,.20) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06) !important;
+    }
+
+    .vjs-theme-swifly .vjs-load-progress,
+    .vjs-theme-swifly .vjs-play-progress {
+      height: 7px !important;
+    }
+
+    .vjs-theme-swifly .vjs-play-progress {
+      background: linear-gradient(90deg, #55d7ff, #8b5cf6) !important;
+      box-shadow: 0 0 16px rgba(85,215,255,.22) !important;
+    }
+
+    .vjs-theme-swifly .vjs-control {
+      width: 34px !important;
+      height: 34px !important;
+      color: rgba(255,255,255,.82) !important;
+      background: transparent !important;
+    }
+
+    .vjs-theme-swifly .vjs-control:hover {
+      color: white !important;
+      background: rgba(255,255,255,.10) !important;
+      transform: translateY(-1px) !important;
+    }
+
+    .vjs-theme-swifly .vjs-button > .vjs-icon-placeholder::before {
+      line-height: 34px !important;
+      font-size: 16px !important;
+    }
+
+    .vjs-theme-swifly .vjs-time-control {
+      min-width: 42px !important;
+      font-size: 11px !important;
+      line-height: 34px !important;
+      color: rgba(255,255,255,.68) !important;
+    }
+
+    .vjs-theme-swifly .vjs-playback-rate .vjs-playback-rate-value {
+      line-height: 34px !important;
+      font-size: 11px !important;
+    }
+
+    .vjs-swifly-skip-button .vjs-icon-placeholder::before {
+      width: 22px !important;
+      height: 22px !important;
+      line-height: 20px !important;
+      left: 6px !important;
+      top: 6px !important;
+      font-size: 10px !important;
+      border-color: rgba(255,255,255,.12) !important;
+    }
+
+    .vjs-swifly-back-button::after,
+    .vjs-swifly-forward-button::after {
+      opacity: .72;
+      font-size: 12px !important;
+    }
+
+    @media(max-width: 900px) {
+      .dsVideoJsCinemaShell.usesVideoJs .dsHlsStatus {
+        top: 10px !important;
+        left: 10px !important;
+        right: auto !important;
+        bottom: auto !important;
+        max-width: min(280px, calc(100% - 20px)) !important;
+      }
+
+      .dsVideoJsCinemaShell,
+      .dsVideoJsCinemaShell.usesVideoJs .video-js,
+      .dsVideoJsCinemaShell.usesVideoJs .dsCinemaHlsVideo {
+        height: clamp(320px, 58vh, 620px) !important;
+        min-height: 320px !important;
+        border-radius: 20px !important;
+      }
+
+      .vjs-theme-swifly .vjs-control-bar {
+        min-height: 70px !important;
+        height: 70px !important;
+        padding: 30px 9px 10px !important;
+      }
+
+      .vjs-theme-swifly .vjs-progress-control {
+        left: 9px !important;
+        right: 9px !important;
+        bottom: 46px !important;
+      }
+
+      .dsVideoJsQuality {
+        right: 9px !important;
+        bottom: 70px !important;
+      }
+    }
+
+    @media(max-width: 520px) {
+      .dsVideoJsCinemaShell,
+      .dsVideoJsCinemaShell.usesVideoJs .video-js,
+      .dsVideoJsCinemaShell.usesVideoJs .dsCinemaHlsVideo {
+        height: 54vh !important;
+        min-height: 280px !important;
+        border-radius: 18px !important;
+      }
+
+      .dsVideoJsTop,
+      .dsVideoJsQuality {
+        display: none !important;
+      }
+    }
+
   </style>
 
     <script>
@@ -32459,6 +32793,14 @@ async function watchPage(req, res, type) {
           if (hlsMeta) hlsMeta.textContent = detail || "m3u8 player";
         }
 
+        function setVideoUiState(state) {
+          if (!playerShell) return;
+          playerShell.classList.toggle("isPlaying", state === "playing");
+          playerShell.classList.toggle("isPaused", state === "paused");
+          playerShell.classList.toggle("isLoading", state === "loading");
+          playerShell.classList.toggle("isReady", state === "ready");
+        }
+
         function formatClock(seconds) {
           seconds = Number(seconds || 0);
           if (!Number.isFinite(seconds) || seconds < 0) seconds = 0;
@@ -32810,13 +33152,15 @@ async function watchPage(req, res, type) {
           if (forward10Button) forward10Button.onclick = function(event){ event.preventDefault(); seekBy(10); };
 
           if (video && bigPlayButton) {
-            video.addEventListener("play", function(){ bigPlayButton.textContent = "Ⅱ"; });
-            video.addEventListener("pause", function(){ bigPlayButton.textContent = "▶"; });
+            video.addEventListener("play", function(){ bigPlayButton.textContent = "Ⅱ"; setVideoUiState("playing"); });
+            video.addEventListener("playing", function(){ setVideoUiState("playing"); hidePlayerStatusSoon(); });
+            video.addEventListener("pause", function(){ bigPlayButton.textContent = "▶"; setVideoUiState("paused"); });
           }
         }
 
         function startVideoJsCinemaSource(src, data) {
           setPlayerStatus("Loading m3u8...", "Starting Video.js player", false);
+          setVideoUiState("loading");
           destroyRegularMoviePlayers();
 
           if (playerShell) {
@@ -32842,6 +33186,7 @@ async function watchPage(req, res, type) {
               video.src = src;
               video.controls = true;
               try { video.load(); } catch {}
+              setVideoUiState("ready");
               setPlayerStatus("Video.js failed to load", "Using native controls fallback.", true);
               setTimeout(syncCustomSeekBar, 500);
               return;
@@ -32896,21 +33241,24 @@ async function watchPage(req, res, type) {
               addVideoJsSkipControls(movieButtonPlayer);
               setVideoJsQualityMenu(movieButtonPlayer);
               wireVideoJsOverlayControls(movieButtonPlayer);
-              installCustomSeekBar();
+              // Video.js already has the main timeline. Keep the custom HLS helper hidden for this skin.
+              if (seekDock) seekDock.hidden = true;
 
-              setPlayerStatus("m3u8 ready", "Video.js VHS loaded. Timeline enabled.", false);
+              setPlayerStatus("Ready", "Video.js VHS loaded", false);
+              setVideoUiState("ready");
               setStatus("m3u8 loaded. Timeline enabled.");
               if (playerShell) { try { playerShell.focus({ preventScroll: true }); } catch {} }
               setTimeout(syncCustomSeekBar, 500);
               hidePlayerStatusSoon();
 
               try {
-                movieButtonPlayer.on("timeupdate", syncCustomSeekBar);
-                movieButtonPlayer.on("durationchange", syncCustomSeekBar);
-                movieButtonPlayer.on("loadedmetadata", syncCustomSeekBar);
-                movieButtonPlayer.on("progress", syncCustomSeekBar);
-                movieButtonPlayer.on("play", hidePlayerStatusSoon);
-                movieButtonPlayer.on("playing", hidePlayerStatusSoon);
+                movieButtonPlayer.on("timeupdate", function(){});
+                movieButtonPlayer.on("durationchange", function(){});
+                movieButtonPlayer.on("loadedmetadata", function(){});
+                movieButtonPlayer.on("progress", function(){});
+                movieButtonPlayer.on("play", function(){ setVideoUiState("playing"); hidePlayerStatusSoon(); });
+                movieButtonPlayer.on("playing", function(){ setVideoUiState("playing"); hidePlayerStatusSoon(); });
+                movieButtonPlayer.on("pause", function(){ setVideoUiState("paused"); });
                 movieButtonPlayer.on("error", function() {
                   var error = movieButtonPlayer.error && movieButtonPlayer.error();
                   setPlayerStatus("Video.js error", (error && (error.message || error.code)) || "Playback error", true);
@@ -33227,6 +33575,7 @@ async function watchPage(req, res, type) {
               playerShell.classList.add("usesNativeVideo");
             }
             video.controls = true;
+            setVideoUiState("ready");
             video.src = src;
             try { video.load(); } catch {}
             hidePlayerStatusSoon();
