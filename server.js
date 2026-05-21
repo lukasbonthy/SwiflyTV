@@ -31251,6 +31251,211 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
     }
 
+
+    /* ============================================================
+       v134 VIDEO.JS SPEED MENU + REAL HOVER PREVIEW FIX
+       Fixes:
+       - built-in playback-rate menu was hidden below the embed
+       - no hover preview was visible over the timeline
+       Strategy:
+       - hide the built-in Video.js playback menu control
+       - use a small custom speed pill positioned above the dock
+       - add a custom timeline hover preview wired to progressControl
+       ============================================================ */
+
+    .dsVideoJsCinemaShell.v134SpeedPreviewFix .vjs-playback-rate,
+    .dsVideoJsCinemaShell.v134SpeedPreviewFix .vjs-playback-rate .vjs-menu,
+    .dsVideoJsCinemaShell.v134SpeedPreviewFix .vjs-playback-rate .vjs-menu-content {
+      display: none !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v134SpeedPreviewFix .dsVideoJsSpeed {
+      position: absolute;
+      right: calc(var(--dock-x, 18px) + 76px);
+      bottom: calc(var(--dock-bottom, 18px) + var(--dock-height, 58px) + 8px);
+      z-index: 96;
+      opacity: 0;
+      transform: translateY(5px);
+      transition: opacity .16s ease, transform .16s ease;
+      pointer-events: auto;
+    }
+
+    .dsVideoJsCinemaShell.v134SpeedPreviewFix:hover .dsVideoJsSpeed,
+    .dsVideoJsCinemaShell.v134SpeedPreviewFix:focus-within .dsVideoJsSpeed,
+    .dsVideoJsCinemaShell.v134SpeedPreviewFix.isPaused .dsVideoJsSpeed,
+    .dsVideoJsCinemaShell.v134SpeedPreviewFix .dsVideoJsSpeed:has(.dsVideoJsSpeedMenu:not([hidden])) {
+      opacity: .92;
+      transform: translateY(0);
+    }
+
+    .dsVideoJsSpeedToggle {
+      min-height: 26px;
+      min-width: 52px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 0 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.08);
+      color: rgba(255,255,255,.78);
+      background: rgba(5,8,18,.54);
+      box-shadow: 0 8px 22px rgba(0,0,0,.22);
+      backdrop-filter: blur(12px) saturate(1.06);
+      -webkit-backdrop-filter: blur(12px) saturate(1.06);
+      cursor: pointer;
+      font-family: var(--font-ui, "Host Grotesk", Inter, system-ui, sans-serif);
+    }
+
+    .dsVideoJsSpeedToggle span {
+      display: none;
+    }
+
+    .dsVideoJsSpeedToggle b {
+      font-size: 10px;
+      font-weight: 950;
+      color: rgba(255,255,255,.80);
+    }
+
+    .dsVideoJsSpeedToggle:hover {
+      color: #06101d;
+      background: linear-gradient(135deg, #ffffff, #dff8ff);
+    }
+
+    .dsVideoJsSpeedToggle:hover b {
+      color: #06101d;
+    }
+
+    .dsVideoJsSpeedMenu {
+      position: absolute;
+      right: 0;
+      bottom: 32px;
+      min-width: 92px;
+      display: grid;
+      gap: 4px;
+      padding: 5px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.09);
+      background: rgba(5,8,18,.96);
+      box-shadow: 0 14px 40px rgba(0,0,0,.40), 0 0 24px rgba(85,215,255,.07);
+      backdrop-filter: blur(16px) saturate(1.08);
+      -webkit-backdrop-filter: blur(16px) saturate(1.08);
+      pointer-events: auto;
+      z-index: 120;
+    }
+
+    .dsVideoJsSpeedMenu[hidden] {
+      display: none !important;
+    }
+
+    .dsVideoJsSpeedMenu button {
+      min-height: 28px;
+      padding: 0 9px;
+      border: 0;
+      border-radius: 9px;
+      color: rgba(255,255,255,.72);
+      background: transparent;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 900;
+      text-align: center;
+      font-family: var(--font-ui, "Host Grotesk", Inter, system-ui, sans-serif);
+    }
+
+    .dsVideoJsSpeedMenu button:hover,
+    .dsVideoJsSpeedMenu button.active {
+      color: #06101d;
+      background: linear-gradient(135deg, #ffffff, #dff8ff);
+    }
+
+    .dsVideoJsCinemaShell.v134SpeedPreviewFix .dsVideoJsQuality {
+      right: calc(var(--dock-x, 18px) + 8px) !important;
+      bottom: calc(var(--dock-bottom, 18px) + var(--dock-height, 58px) + 8px) !important;
+    }
+
+    .dsVideoJsTimelinePreview {
+      position: absolute;
+      left: var(--preview-left, 50%);
+      bottom: calc(var(--dock-bottom, 18px) + var(--dock-height, 58px) + 27px);
+      z-index: 140;
+      transform: translateX(-50%) translateY(4px);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .10s ease, transform .10s ease;
+    }
+
+    .dsVideoJsCinemaShell.v134SpeedPreviewFix.isPreviewingTime .dsVideoJsTimelinePreview:not([hidden]) {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .dsVideoJsTimelinePreview[hidden] {
+      display: none !important;
+    }
+
+    .dsVideoJsTimelinePreview span {
+      display: block;
+      min-width: 48px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      color: #06101d;
+      background: linear-gradient(135deg, #ffffff, #dff8ff);
+      box-shadow: 0 12px 28px rgba(0,0,0,.32), 0 0 18px rgba(85,215,255,.12);
+      font-size: 11px;
+      font-weight: 950;
+      line-height: 1;
+      text-align: center;
+      font-family: var(--font-ui, "Host Grotesk", Inter, system-ui, sans-serif);
+    }
+
+    .dsVideoJsTimelinePreview i {
+      position: absolute;
+      left: 50%;
+      top: 100%;
+      width: 1px;
+      height: 22px;
+      transform: translateX(-50%);
+      background: linear-gradient(to bottom, rgba(223,248,255,.95), transparent);
+      box-shadow: 0 0 12px rgba(85,215,255,.34);
+    }
+
+    .dsVideoJsCinemaShell.v134SpeedPreviewFix .vjs-control-bar .vjs-progress-control.vjs-control {
+      overflow: visible !important;
+      z-index: 100 !important;
+    }
+
+    .dsVideoJsCinemaShell.v134SpeedPreviewFix .vjs-control-bar .vjs-progress-control .vjs-progress-holder {
+      overflow: visible !important;
+    }
+
+    .dsVideoJsCinemaShell.v134SpeedPreviewFix .vjs-control-bar .vjs-progress-control .vjs-mouse-display {
+      display: block !important;
+      visibility: visible !important;
+      opacity: .70 !important;
+      width: 2px !important;
+      height: 12px !important;
+      top: -3px !important;
+      border-radius: 999px !important;
+      background: rgba(223,248,255,.86) !important;
+      pointer-events: none !important;
+      box-shadow: 0 0 12px rgba(85,215,255,.28);
+    }
+
+    /* Hide the built-in tooltip if Video.js renders it weirdly; the custom preview above is the source of truth. */
+    .dsVideoJsCinemaShell.v134SpeedPreviewFix .vjs-time-tooltip {
+      display: none !important;
+    }
+
+    @media(max-width: 900px) {
+      .dsVideoJsCinemaShell.v134SpeedPreviewFix .dsVideoJsSpeed,
+      .dsVideoJsCinemaShell.v134SpeedPreviewFix .dsVideoJsQuality,
+      .dsVideoJsTimelinePreview {
+        display: none !important;
+      }
+    }
+
   </style>
 
     <script>
@@ -34518,6 +34723,16 @@ async function watchPage(req, res, type) {
             <div id="movieButtonQualityMenu" class="dsVideoJsQualityMenu" hidden></div>
           </div>
 
+          <div class="dsVideoJsSpeed">
+            <button id="movieButtonSpeedToggle" type="button" class="dsVideoJsSpeedToggle"><span>Speed</span><b>1x</b></button>
+            <div id="movieButtonSpeedMenu" class="dsVideoJsSpeedMenu" hidden></div>
+          </div>
+
+          <div id="movieButtonTimelinePreview" class="dsVideoJsTimelinePreview" hidden>
+            <span id="movieButtonTimelinePreviewTime">0:00</span>
+            <i></i>
+          </div>
+
           <div class="dsCinemaHlsHint dsVideoJsHint">
             <span>J</span><b>-10</b>
             <span>K</span><b>play</b>
@@ -34638,6 +34853,10 @@ async function watchPage(req, res, type) {
         var seekLabel = document.getElementById("movieButtonSeekLabel");
         var qualityToggle = document.getElementById("movieButtonQualityToggle");
         var qualityMenu = document.getElementById("movieButtonQualityMenu");
+        var speedToggle = document.getElementById("movieButtonSpeedToggle");
+        var speedMenu = document.getElementById("movieButtonSpeedMenu");
+        var timelinePreview = document.getElementById("movieButtonTimelinePreview");
+        var timelinePreviewTime = document.getElementById("movieButtonTimelinePreviewTime");
         var bigPlayButton = document.getElementById("movieButtonBigPlay");
         var back10Button = document.getElementById("movieButtonBack10");
         var forward10Button = document.getElementById("movieButtonForward10");
@@ -34965,6 +35184,132 @@ async function watchPage(req, res, type) {
           qualityMenu.hidden = true;
         });
 
+        function setVideoJsSpeedMenu(player) {
+          if (!speedToggle || !speedMenu || !player) return;
+
+          var speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
+          speedMenu.innerHTML = "";
+
+          function labelFor(rate) {
+            return rate === 1 ? "1x" : String(rate).replace(/\.0$/, "") + "x";
+          }
+
+          function setActive(rate) {
+            var label = labelFor(rate);
+            var b = speedToggle.querySelector("b");
+            if (b) b.textContent = label;
+            else speedToggle.textContent = label;
+
+            Array.from(speedMenu.querySelectorAll("button")).forEach(function(button) {
+              button.classList.toggle("active", Number(button.dataset.speed) === Number(rate));
+            });
+          }
+
+          speeds.forEach(function(rate) {
+            var button = document.createElement("button");
+            button.type = "button";
+            button.dataset.speed = String(rate);
+            button.textContent = labelFor(rate);
+            if (rate === 1) button.classList.add("active");
+
+            button.addEventListener("click", function(event) {
+              event.preventDefault();
+              event.stopPropagation();
+              try {
+                if (player.playbackRate) player.playbackRate(rate);
+                if (video) video.playbackRate = rate;
+              } catch {}
+              setActive(rate);
+              speedMenu.hidden = true;
+              if (player.userActive) player.userActive(true);
+            });
+
+            speedMenu.appendChild(button);
+          });
+
+          speedToggle.onclick = function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            speedMenu.hidden = !speedMenu.hidden;
+            if (qualityMenu) qualityMenu.hidden = true;
+            if (player.userActive) player.userActive(true);
+          };
+
+          try {
+            player.on("ratechange", function() {
+              setActive(player.playbackRate ? player.playbackRate() : (video && video.playbackRate) || 1);
+            });
+          } catch {}
+
+          setActive(1);
+        }
+
+        document.addEventListener("click", function(event) {
+          if (!speedMenu || !speedToggle) return;
+          if (event.target === speedToggle || speedMenu.contains(event.target)) return;
+          speedMenu.hidden = true;
+        });
+
+        function installVideoJsTimelinePreview(player) {
+          if (!player || !playerShell || !timelinePreview || !timelinePreviewTime) return;
+
+          function hook() {
+            var playerEl = player.el && player.el();
+            if (!playerEl) return false;
+
+            var progress = playerEl.querySelector(".vjs-progress-control");
+            var holder = playerEl.querySelector(".vjs-progress-holder");
+            if (!progress || !holder || progress.dataset.swiflyPreviewReady === "true") return Boolean(progress && holder);
+
+            progress.dataset.swiflyPreviewReady = "true";
+
+            function hidePreview() {
+              timelinePreview.hidden = true;
+              playerShell.classList.remove("isPreviewingTime");
+            }
+
+            function updatePreview(event) {
+              var rect = holder.getBoundingClientRect();
+              if (!rect || !rect.width) return;
+
+              var x = Math.max(0, Math.min(rect.width, event.clientX - rect.left));
+              var ratio = x / rect.width;
+              var win = getSeekWindow();
+              var duration = win.duration || (player.duration && player.duration()) || (video && video.duration) || 0;
+
+              if (!duration || !Number.isFinite(duration)) return hidePreview();
+
+              var seconds = (win.start || 0) + duration * ratio;
+              var displaySeconds = Math.max(0, seconds - (win.start || 0));
+
+              timelinePreviewTime.textContent = formatClock(displaySeconds);
+
+              var shellRect = playerShell.getBoundingClientRect();
+              var left = Math.max(38, Math.min(shellRect.width - 38, event.clientX - shellRect.left));
+
+              timelinePreview.style.left = left + "px";
+              timelinePreview.style.setProperty("--preview-left", left + "px");
+              timelinePreview.hidden = false;
+              playerShell.classList.add("isPreviewingTime");
+
+              if (player.userActive) player.userActive(true);
+            }
+
+            progress.addEventListener("mousemove", updatePreview);
+            progress.addEventListener("pointermove", updatePreview);
+            progress.addEventListener("mouseenter", updatePreview);
+            progress.addEventListener("mouseleave", hidePreview);
+            progress.addEventListener("touchstart", hidePreview, { passive: true });
+
+            return true;
+          }
+
+          if (!hook()) {
+            setTimeout(hook, 300);
+            setTimeout(hook, 1000);
+          }
+        }
+
         function addVideoJsSkipControls(player) {
           // v129: Do not register custom Video.js components here.
           // Some Video.js 8 CDN builds do not expose legacy helpers the same way,
@@ -34999,8 +35344,8 @@ async function watchPage(req, res, type) {
           destroyRegularMoviePlayers();
 
           if (playerShell) {
-            playerShell.classList.remove("usesPlyr", "usesMediaChrome", "usesNativeVideo", "isScrubbing", "v128VideoReady", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed", "v132SoftRectPlay", "v133HoverPreview");
-            playerShell.classList.add("usesVideoJs", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed", "v132SoftRectPlay", "v133HoverPreview");
+            playerShell.classList.remove("usesPlyr", "usesMediaChrome", "usesNativeVideo", "isScrubbing", "v128VideoReady", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed", "v132SoftRectPlay", "v133HoverPreview", "v134SpeedPreviewFix");
+            playerShell.classList.add("usesVideoJs", "v129MinimalPlayer", "v130SimpleModern", "v131TimelineFixed", "v132SoftRectPlay", "v133HoverPreview", "v134SpeedPreviewFix");
           }
 
           try {
@@ -35045,7 +35390,6 @@ async function watchPage(req, res, type) {
                   "timeDivider",
                   "durationDisplay",
                   "progressControl",
-                  "playbackRateMenuButton",
                   "pictureInPictureToggle",
                   "fullscreenToggle"
                 ],
@@ -35073,6 +35417,8 @@ async function watchPage(req, res, type) {
 
             movieButtonPlayer.ready(function() {
               setVideoJsQualityMenu(movieButtonPlayer);
+              setVideoJsSpeedMenu(movieButtonPlayer);
+              installVideoJsTimelinePreview(movieButtonPlayer);
               wireVideoJsOverlayControls(movieButtonPlayer);
               // Video.js already has the main timeline. Keep the custom HLS helper hidden for this skin.
               if (seekDock) seekDock.hidden = true;
@@ -35084,12 +35430,12 @@ async function watchPage(req, res, type) {
                 if (playerEl && !playerEl.dataset.swiflyMenuFix) {
                   playerEl.dataset.swiflyMenuFix = "true";
                   playerEl.addEventListener("mouseover", function(event) {
-                    if (event.target && event.target.closest && event.target.closest(".vjs-menu, .vjs-menu-button, .vjs-progress-control")) {
+                    if (event.target && event.target.closest && event.target.closest(".vjs-menu, .vjs-menu-button, .vjs-progress-control, .dsVideoJsSpeed, .dsVideoJsQuality")) {
                       movieButtonPlayer.userActive(true);
                     }
                   });
                   playerEl.addEventListener("mousemove", function(event) {
-                    if (event.target && event.target.closest && event.target.closest(".vjs-menu, .vjs-menu-button, .vjs-progress-control")) {
+                    if (event.target && event.target.closest && event.target.closest(".vjs-menu, .vjs-menu-button, .vjs-progress-control, .dsVideoJsSpeed, .dsVideoJsQuality")) {
                       movieButtonPlayer.userActive(true);
                     }
                   });
