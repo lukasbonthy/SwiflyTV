@@ -36696,7 +36696,7 @@ async function watchPage(req, res, type) {
             <a class="dsGhostPill" href="/watchrooms">Use Watch Room</a>
           </div>
         </div>
-        <div id="movieButtonPlayerShell" class="dsMovieButtonPlayerShell dsCinemaHlsShell dsVideoJsCinemaShell v157LeanVidstack v157VisibleControls" hidden>
+        <div id="movieButtonPlayerShell" class="dsMovieButtonPlayerShell dsCinemaHlsShell v160CleanHlsShell" hidden>
           <video id="proxyVideoClientVideo" class="dsMovieButtonVideo dsCinemaHlsVideo swiflyNativeHlsVideo" controls playsinline crossorigin="anonymous" preload="auto"></video>
           <div id="movieButtonHlsStatus" class="dsHlsStatus" hidden><b>Loading stream...</b><span>Preparing clean player</span></div>
         </div>
@@ -36782,3045 +36782,354 @@ async function watchPage(req, res, type) {
   const directVideoScript = isMovieMode
     ? `<script>
       (function(){
+        "use strict";
         var movieId = ${JSON.stringify(id)};
         var clientWait = ${clientProxyVideoWait ? "true" : "false"};
         var waitStatus = document.getElementById("proxyVideoWaitStatus");
-        var video = document.getElementById("proxyVideoClientVideo");
-        var playerShell = document.getElementById("movieButtonPlayerShell");
-        var hlsStatus = document.getElementById("movieButtonHlsStatus");
-        var hlsTitle = document.getElementById("movieButtonHlsTitle");
-        var hlsMeta = document.getElementById("movieButtonHlsMeta");
-        var seekDock = document.getElementById("movieButtonSeekDock");
-        var seekRange = document.getElementById("movieButtonSeekRange");
-        var seekCurrent = document.getElementById("movieButtonCurrentTime");
-        var seekDuration = document.getElementById("movieButtonDuration");
-        var seekMode = document.getElementById("movieButtonSeekMode");
-        var seekLabel = document.getElementById("movieButtonSeekLabel");
-        var qualityToggle = document.getElementById("movieButtonQualityToggle");
-        var qualityMenu = document.getElementById("movieButtonQualityMenu");
-        var speedToggle = document.getElementById("movieButtonSpeedToggle");
-        var speedMenu = document.getElementById("movieButtonSpeedMenu");
-        var volumeToggle = document.getElementById("movieButtonVolumeToggle");
-        var volumeMenu = document.getElementById("movieButtonVolumeMenu");
-        var volumeRange = document.getElementById("movieButtonVolumeRange");
-        var timelinePreview = document.getElementById("movieButtonTimelinePreview");
-        var timelinePreviewTime = document.getElementById("movieButtonTimelinePreviewTime");
-        var timelinePreviewVideo = document.getElementById("movieButtonPreviewVideo");
-        var timelinePreviewFallback = document.getElementById("movieButtonPreviewFallback");
-        var timelinePreviewState = document.getElementById("movieButtonPreviewState");
-        var previewHls = null;
-        var previewSourceUrl = "";
-        var previewSeekTimer = null;
-        var previewDecodeTimer = null;
-        var previewWarmupTimer = null;
-        var previewWarmupIndex = 0;
-        var previewLastRequested = -999;
-        var previewReadyForFrames = false;
-        var dock = document.getElementById("swiflyVideoDock");
-        try { document.body.classList.add("swiflyWatchMoviePlayer"); } catch {}
-        var dockPlay = document.getElementById("swiflyDockPlay");
-        var dockBack = document.getElementById("swiflyDockBack");
-        var dockForward = document.getElementById("swiflyDockForward");
-        var dockCurrent = document.getElementById("swiflyDockCurrent");
-        var dockDuration = document.getElementById("swiflyDockDuration");
-        var dockProgress = document.getElementById("swiflyDockProgress");
-        var dockProgressWrap = document.getElementById("swiflyDockProgressWrap");
-        var dockSpeed = document.getElementById("swiflyDockSpeed");
-        var dockSpeedMenu = document.getElementById("swiflyDockSpeedMenu");
-        var dockMute = document.getElementById("swiflyDockMute");
-        var dockVolumeMenu = document.getElementById("swiflyDockVolumeMenu");
-        var dockVolume = document.getElementById("swiflyDockVolume");
-        var dockPip = document.getElementById("swiflyDockPip");
-        var dockFull = document.getElementById("swiflyDockFull");
-        var dockScrubbing = false;
-        var bigPlayButton = document.getElementById("movieButtonBigPlay");
-        var back10Button = document.getElementById("movieButtonBack10");
-        var forward10Button = document.getElementById("movieButtonForward10");
-        var isSeekingWithRange = false;
-        var customSeekReady = false;
-        var movieButtonPlayer = null;
-        var movieButtonPlyr = null;
-        var movieButtonVidstack = null;
-        var movieButtonHls = null;
         var shell = document.querySelector(".dsProxyVideoWaitingShell");
+        var waitingCard = shell ? shell.querySelector(".dsProxyVideoWaitingCard") : null;
+        var playerShell = document.getElementById("movieButtonPlayerShell");
+        var video = document.getElementById("proxyVideoClientVideo");
+        var hlsStatus = document.getElementById("movieButtonHlsStatus");
         var retryBtn = document.getElementById("retryProxyVideoBtn");
         var startedAt = Date.now();
-        var attempt = 0;
         var stopped = false;
+        var attempt = 0;
         var maxWaitMs = Number(${JSON.stringify(String(process.env.MOVIE_PROXY_VIDEO_CLIENT_MAX_WAIT_MS || "180000"))}) || 180000;
-
-        function hardHideLegacyPlayerChrome() {
-          // v157: physically remove the old custom overlays instead of hoping CSS wins.
-          // These were causing the bad center play button, the fake Starting Stream bar,
-          // and a non-working custom timeframe slider.
-          try {
-            if (!playerShell) return;
-            [
-              ".dsCinemaPlayerAura",
-              ".dsCinemaHlsTop",
-              ".dsVideoJsTop",
-              ".dsVideoJsCenter",
-              ".dsVideoJsQuality",
-              ".dsVideoJsSpeed",
-              ".dsVideoJsVolume",
-              ".dsVideoJsTimelinePreview",
-              ".dsVideoJsHint",
-              ".dsCinemaSeekDock",
-              ".swiflyVidstackChrome",
-              ".swiflyVideoDock",
-              ".swiflyNeoDock",
-              ".swiflyDock"
-            ].forEach(function(selector) {
-              playerShell.querySelectorAll(selector).forEach(function(el) { try { el.remove(); } catch {} });
-            });
-            if (hlsStatus && !hlsStatus.classList.contains("isError")) hlsStatus.hidden = true;
-          } catch {}
-        }
-
-        hardHideLegacyPlayerChrome();
+        var hlsInstance = null;
+        var timelineTimer = null;
+        var statusTimer = null;
+        var lastSource = "";
 
         function setStatus(text) {
-          if (waitStatus) waitStatus.textContent = text;
+          if (waitStatus) waitStatus.textContent = String(text || "");
         }
 
         function showError(text) {
           setStatus(text);
           if (shell) shell.classList.add("hasError");
-        }
-
-        function setPlayerStatus(title, detail, isError) {
-          if (!hlsStatus) return;
-
-          // v157: no fake loading badge over the movie. The old badge made the
-          // player look stuck even while video was already playing. Only real
-          // errors are allowed to appear over the clean player.
-          try {
-            if (playerShell && playerShell.classList.contains("v157LeanVidstack") && !isError) {
-              hidePlayerStatusNow();
-              return;
-            }
-          } catch {}
-
-          // v155: the player should not keep an old loading/status badge on screen
-          // after actual playback has started. Proxied HLS can still emit soft fragment
-          // warnings while video keeps playing, so hide those instead of scaring the UI.
-          try {
-            var messageText = String((title || "") + " " + (detail || ""));
-            var softFragmentIssue = /fragLoad|FRAG_LOAD|fragment|bufferStalled|bufferNudge/i.test(messageText);
-            var alreadyPlaying = isMediaActuallyPlaying(getVisiblePlaybackVideo());
-            if (playerShell && playerShell.classList.contains("v155CleanVidstack") && alreadyPlaying && (!isError || softFragmentIssue)) {
-              hidePlayerStatusNow();
-              if (hlsTitle) hlsTitle.textContent = "Playing";
-              if (hlsMeta) hlsMeta.textContent = "Stream is playing";
-              return;
-            }
-          } catch {}
-
-          hlsStatus.hidden = false;
-          hlsStatus.classList.toggle("isError", Boolean(isError));
-          var b = hlsStatus.querySelector("b");
-          var s = hlsStatus.querySelector("span");
-          if (b) b.textContent = title || "Player";
-          if (s) s.textContent = detail || "";
-          if (hlsTitle) hlsTitle.textContent = title || "Player";
-          if (hlsMeta) hlsMeta.textContent = detail || "m3u8 player";
-        }
-
-        function setVideoUiState(state) {
-          if (!playerShell) return;
-          playerShell.classList.toggle("isPlaying", state === "playing");
-          playerShell.classList.toggle("isPaused", state === "paused");
-          playerShell.classList.toggle("isLoading", state === "loading");
-          playerShell.classList.toggle("isReady", state === "ready");
-          try { playerShell.setAttribute("data-player-state", state || "idle"); } catch {}
-        }
-
-        function getVisiblePlaybackVideo() {
-          try {
-            if (movieButtonVidstack) {
-              return movieButtonVidstack.querySelector("video") || movieButtonVidstack.querySelector("media-provider video") || null;
-            }
-          } catch {}
-          return video || null;
-        }
-
-        function isMediaActuallyPlaying(target) {
-          try {
-            var media = target || getVisiblePlaybackVideo();
-            if (media && !media.paused && !media.ended && Number(media.readyState || 0) >= 2) return true;
-            if (movieButtonVidstack) {
-              var state = movieButtonVidstack.state || {};
-              if (movieButtonVidstack.paused === false || state.playing === true || state.paused === false) return true;
-            }
-          } catch {}
-          return false;
-        }
-
-        function hidePlayerStatusNow() {
-          try {
-            if (hlsStatus) {
-              hlsStatus.hidden = true;
-              hlsStatus.classList.remove("isError");
-            }
-          } catch {}
-        }
-
-        function markShellPlaybackActive(detail) {
-          try {
-            if (playerShell) playerShell.classList.add("v149Ready", "v149Playing", "v154PlaybackLatched");
-            setVideoUiState("playing");
-            setStatus("m3u8 playing.");
-            if (seekDock) seekDock.hidden = true;
-            if (seekLabel) seekLabel.textContent = "Playing";
-            if (hlsTitle) hlsTitle.textContent = "Playing";
-            if (hlsMeta) hlsMeta.textContent = detail || "Stream is playing";
-            hidePlayerStatusNow();
-          } catch {}
-        }
-
-        function formatClock(seconds) {
-          seconds = Number(seconds || 0);
-          if (!Number.isFinite(seconds) || seconds < 0) seconds = 0;
-          var whole = Math.floor(seconds);
-          var h = Math.floor(whole / 3600);
-          var m = Math.floor((whole % 3600) / 60);
-          var s = whole % 60;
-          if (h > 0) return h + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
-          return m + ":" + String(s).padStart(2, "0");
-        }
-
-        function getSeekWindow() {
-          if (!video) return { start: 0, end: 0, duration: 0, live: false, seekable: false, buffered: false, playable: false, streamOnly: true };
-
-          var rawDuration = video.duration;
-          var nativeDuration = Number(rawDuration || 0);
-          var durationIsFinite = Number.isFinite(nativeDuration) && nativeDuration > 0;
-          var seekable = video.seekable;
-          var buffered = video.buffered;
-          var start = 0;
-          var end = durationIsFinite ? nativeDuration : 0;
-          var hasSeekable = false;
-          var hasBuffered = false;
-          var bufferedStart = 0;
-          var bufferedEnd = 0;
-
-          try {
-            if (seekable && seekable.length) {
-              start = seekable.start(0);
-              end = seekable.end(seekable.length - 1);
-              hasSeekable = Number.isFinite(start) && Number.isFinite(end) && end > start;
-            }
-          } catch {}
-
-          try {
-            if (buffered && buffered.length) {
-              bufferedStart = buffered.start(0);
-              bufferedEnd = buffered.end(buffered.length - 1);
-              hasBuffered = Number.isFinite(bufferedStart) && Number.isFinite(bufferedEnd) && bufferedEnd > bufferedStart;
-            }
-          } catch {}
-
-          // Some proxied HLS playlists are playable before the browser exposes a seekable
-          // range. In that case, do not block playback or keep the UI stuck on seek data.
-          if (!hasSeekable && durationIsFinite) {
-            start = 0;
-            end = nativeDuration;
-            hasSeekable = nativeDuration > 0.5;
+          if (hlsStatus) {
+            hlsStatus.hidden = false;
+            hlsStatus.classList.add("isError");
+            hlsStatus.innerHTML = "<b>Stream issue</b><span>" + escapeHtml(text) + "</span>";
           }
-
-          var live = !durationIsFinite || rawDuration === Infinity;
-          var streamOnly = !hasSeekable && (live || hasBuffered || Number(video.readyState || 0) >= 2);
-          var duration = Math.max(0, end - start);
-          if (!duration && hasBuffered) duration = Math.max(0, bufferedEnd - bufferedStart);
-
-          return {
-            start: hasSeekable ? start : (hasBuffered ? bufferedStart : 0),
-            end: hasSeekable ? end : (hasBuffered ? bufferedEnd : 0),
-            duration: duration,
-            live: live,
-            seekable: hasSeekable,
-            buffered: hasBuffered,
-            playable: hasSeekable || hasBuffered || Number(video.readyState || 0) >= 2,
-            streamOnly: streamOnly
-          };
         }
 
-        function syncCustomSeekBar() {
-          // v155: Vidstack/native controls own the timeline. The old Swifly custom
-          // timeline was the source of the stuck "Loading" label.
-          if (playerShell && playerShell.classList.contains("v155CleanVidstack")) {
-            try { if (seekDock) seekDock.hidden = true; } catch {}
-            return;
-          }
-          if (!seekDock || !seekRange || !video) return;
-
-          var win = getSeekWindow();
-          var canSeek = win.seekable && win.duration > 0.5;
-          var hasStarted = win.playable || Number(video.currentTime || 0) > 0 || !video.paused;
-          seekDock.hidden = false;
-          seekRange.disabled = !canSeek;
-          seekDock.classList.toggle("isDisabled", !canSeek);
-          seekDock.classList.toggle("isLive", Boolean(win.live));
-          seekDock.classList.toggle("isStreamOnly", !canSeek && hasStarted);
-
-          if (seekMode) seekMode.textContent = win.live ? (canSeek ? "LIVE / DVR" : "LIVE") : (canSeek ? "VOD" : "STREAM");
-          if (seekLabel) seekLabel.textContent = canSeek ? "Timeline" : (hasStarted ? "Stream playing" : "Loading");
-
-          var currentOffset = canSeek ? Math.max(0, Math.min(win.duration || 0, Number(video.currentTime || 0) - win.start)) : Math.max(0, Number(video.currentTime || 0));
-          if (!isSeekingWithRange) {
-            var value = canSeek && win.duration > 0 ? Math.round((currentOffset / win.duration) * 1000) : 0;
-            seekRange.value = String(Math.max(0, Math.min(1000, value)));
-            seekRange.style.setProperty("--seek-pct", String(Math.max(0, Math.min(100, value / 10))));
-          }
-
-          if (seekCurrent) seekCurrent.textContent = formatClock(currentOffset);
-          if (seekDuration) seekDuration.textContent = canSeek && win.duration > 0 ? formatClock(win.duration) : (win.live ? "LIVE" : "--:--");
-        }
-
-        function seekCustomRangeValue(value) {
-          if (!video || !seekRange) return;
-          var win = getSeekWindow();
-          if (!win.seekable || win.duration <= 0.5) return;
-          var ratio = Math.max(0, Math.min(1000, Number(value || 0))) / 1000;
-          var target = win.start + (win.duration * ratio);
-          try {
-            video.currentTime = Math.max(win.start, Math.min(win.end - 0.15, target));
-          } catch {}
-          syncCustomSeekBar();
-          if (seekRange) seekRange.style.setProperty("--seek-pct", String(Math.max(0, Math.min(100, Number(seekRange.value || 0) / 10))));
-        }
-
-        function installCustomSeekBar() {
-          if (!video || customSeekReady) return;
-          customSeekReady = true;
-
-          ["loadedmetadata", "durationchange", "progress", "timeupdate", "canplay", "playing", "seeking", "seeked"].forEach(function(name) {
-            video.addEventListener(name, syncCustomSeekBar);
+        function escapeHtml(value) {
+          return String(value == null ? "" : value).replace(/[&<>\"']/g, function(ch) {
+            return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" })[ch] || ch;
           });
-
-          if (seekRange) {
-            seekRange.addEventListener("pointerdown", function() {
-              isSeekingWithRange = true;
-              if (playerShell) playerShell.classList.add("isScrubbing");
-            });
-            seekRange.addEventListener("input", function() {
-              if (isSeekingWithRange) seekCustomRangeValue(seekRange.value);
-            });
-            seekRange.addEventListener("change", function() {
-              seekCustomRangeValue(seekRange.value);
-              isSeekingWithRange = false;
-              if (playerShell) playerShell.classList.remove("isScrubbing");
-            });
-            seekRange.addEventListener("pointerup", function() {
-              seekCustomRangeValue(seekRange.value);
-              isSeekingWithRange = false;
-              if (playerShell) playerShell.classList.remove("isScrubbing");
-            });
-            seekRange.addEventListener("keydown", function(event) {
-              var key = String(event.key || "").toLowerCase();
-              var win = getSeekWindow();
-              if (!win.seekable || win.duration <= 0.5) return;
-              if (key === "arrowright" || key === "arrowleft") {
-                event.stopPropagation();
-                var delta = key === "arrowright" ? 10 : -10;
-                try { video.currentTime = Math.max(win.start, Math.min(win.end - 0.15, Number(video.currentTime || 0) + delta)); } catch {}
-                syncCustomSeekBar();
-              }
-            });
-          }
-
-          setInterval(syncCustomSeekBar, 700);
-          syncCustomSeekBar();
         }
 
-        function installCinemaPlayerShortcuts() {
-          if (!playerShell || playerShell.dataset.shortcutsReady === "true") return;
-          playerShell.dataset.shortcutsReady = "true";
-          playerShell.addEventListener("keydown", function(event) {
-            if (!video) return;
-            var key = String(event.key || "").toLowerCase();
-            if (key === " " || key === "k") {
-              event.preventDefault();
-              if (video.paused) video.play().catch(function(){});
-              else video.pause();
-            } else if (key === "m") {
-              event.preventDefault();
-              video.muted = !video.muted;
-            } else if (key === "f") {
-              event.preventDefault();
-              if (!document.fullscreenElement) playerShell.requestFullscreen && playerShell.requestFullscreen();
-              else document.exitFullscreen && document.exitFullscreen();
-            } else if (key === "c") {
-              event.preventDefault();
-              try {
-                var tracks = Array.from(video.textTracks || []);
-                var showing = tracks.some(function(t){ return t.mode === "showing"; });
-                tracks.forEach(function(t){ t.mode = showing ? "disabled" : "showing"; });
-              } catch {}
-            } else if (key === "arrowright" || key === "l") {
-              event.preventDefault();
-              try { var win = getSeekWindow(); video.currentTime = Math.min((win.end || video.currentTime + 10) - 0.15, video.currentTime + 10); syncCustomSeekBar(); } catch {}
-            } else if (key === "arrowleft" || key === "j") {
-              event.preventDefault();
-              try { var win = getSeekWindow(); video.currentTime = Math.max(win.start || 0, video.currentTime - 10); syncCustomSeekBar(); } catch {}
-            }
-          });
-          playerShell.setAttribute("tabindex", "0");
+        function fmt(seconds) {
+          seconds = Math.max(0, Number(seconds || 0));
+          var h = Math.floor(seconds / 3600);
+          var m = Math.floor((seconds % 3600) / 60);
+          var s = Math.floor(seconds % 60);
+          return h ? (h + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0")) : (m + ":" + String(s).padStart(2, "0"));
         }
 
-        function hidePlayerStatusSoon(delay) {
-          setTimeout(function(){
-            hidePlayerStatusNow();
-          }, Number(delay || 1800));
+        function injectPlayerStyles() {
+          if (document.getElementById("swifly-v160-player-style")) return;
+          var style = document.createElement("style");
+          style.id = "swifly-v160-player-style";
+          style.textContent = "
+" +
+            ".dsProxyVideoWaitingShell.v160Ready{background:#000!important;}
+" +
+            ".dsProxyVideoWaitingShell.v160Ready .dsProxyVideoWaitingCard{display:none!important;}
+" +
+            ".dsMovieButtonPlayerShell.v160HlsPlayer{display:block!important;position:relative!important;width:100%!important;min-height:min(74vh,780px)!important;background:#000!important;overflow:hidden!important;border-radius:inherit!important;}
+" +
+            ".dsMovieButtonPlayerShell.v160HlsPlayer video{display:block!important;width:100%!important;height:min(74vh,780px)!important;min-height:420px!important;object-fit:contain!important;background:#000!important;border-radius:inherit!important;}
+" +
+            ".swiflyV160Controls{position:absolute;left:16px;right:16px;bottom:16px;z-index:80;display:grid;grid-template-columns:auto auto minmax(90px,1fr) auto auto auto;gap:12px;align-items:center;padding:13px 14px;border-radius:22px;background:linear-gradient(180deg,rgba(9,13,28,.76),rgba(4,7,17,.92));border:1px solid rgba(255,255,255,.16);box-shadow:0 18px 55px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.09);backdrop-filter:blur(22px);}
+" +
+            ".swiflyV160Btn{width:42px;height:42px;border:0;border-radius:999px;background:rgba(255,255,255,.10);color:#fff;font:900 15px Inter,system-ui,sans-serif;display:grid;place-items:center;cursor:pointer;transition:transform .15s ease,background .15s ease,box-shadow .15s ease;}
+" +
+            ".swiflyV160Btn:hover,.swiflyV160Btn:focus-visible{transform:scale(1.06);background:rgba(111,147,255,.34);box-shadow:0 0 0 4px rgba(111,147,255,.18);outline:none;}
+" +
+            ".swiflyV160Play{width:50px;height:50px;background:linear-gradient(135deg,#5ea2ff,#8b5cf6);box-shadow:0 18px 40px rgba(94,162,255,.30);}
+" +
+            ".swiflyV160Time{min-width:54px;text-align:center;color:rgba(255,255,255,.88);font:850 12px/1 Inter,system-ui,sans-serif;font-variant-numeric:tabular-nums;}
+" +
+            ".swiflyV160Duration{min-width:64px;}
+" +
+            ".swiflyV160Range{width:100%;height:30px;accent-color:#8ab4ff;cursor:pointer;}
+" +
+            ".swiflyV160Range:disabled{opacity:.45;cursor:not-allowed;}
+" +
+            ".swiflyV160Status{position:absolute;top:16px;left:16px;z-index:75;padding:9px 12px;border-radius:999px;background:rgba(3,7,18,.70);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.78);font:850 11px/1 Inter,system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;backdrop-filter:blur(16px);}
+" +
+            ".swiflyV160Click{position:absolute;inset:0;z-index:70;display:none;place-items:center;background:radial-gradient(circle at center,rgba(15,23,42,.20),rgba(0,0,0,.38));}
+" +
+            ".swiflyNeedsClick .swiflyV160Click{display:grid;}
+" +
+            ".swiflyV160Click button{border:0;border-radius:999px;padding:16px 22px;background:linear-gradient(135deg,#5ea2ff,#8b5cf6);color:#fff;font:900 15px Inter,system-ui,sans-serif;box-shadow:0 20px 55px rgba(94,162,255,.34);cursor:pointer;}
+" +
+            ".dsMovieButtonPlayerShell.v160HlsPlayer #swiflyTvHint{bottom:94px!important;}
+" +
+            ".dsMovieButtonPlayerShell.v160HlsPlayer .navStudioButton{bottom:94px!important;}
+" +
+            ".dsMovieButtonPlayerShell.v160HlsPlayer:fullscreen,.dsMovieButtonPlayerShell.v160HlsPlayer:-webkit-full-screen{width:100vw!important;height:100vh!important;border-radius:0!important;}
+" +
+            ".dsMovieButtonPlayerShell.v160HlsPlayer:fullscreen video,.dsMovieButtonPlayerShell.v160HlsPlayer:-webkit-full-screen video{width:100vw!important;height:100vh!important;min-height:100vh!important;border-radius:0!important;}
+" +
+            ".dsMovieButtonPlayerShell.v160HlsPlayer:fullscreen .swiflyV160Controls,.dsMovieButtonPlayerShell.v160HlsPlayer:-webkit-full-screen .swiflyV160Controls{bottom:24px;left:24px;right:24px;}
+" +
+            "@media(max-width:760px){.swiflyV160Controls{left:10px;right:10px;bottom:10px;grid-template-columns:auto minmax(80px,1fr) auto auto;gap:8px;padding:11px}.swiflyV160Current{display:none}.swiflyV160Duration{font-size:11px}.dsMovieButtonPlayerShell.v160HlsPlayer video{min-height:58vh!important;height:68vh!important}}
+";
+          document.head.appendChild(style);
         }
 
         function loadHlsScript(callback) {
-          callback = typeof callback === "function" ? callback : function(){};
-          if (window.Hls) return callback(true);
-
-          if (window.__swiflyHlsLoaderPromise) {
-            window.__swiflyHlsLoaderPromise.then(callback).catch(function(){ callback(false); });
+          if (window.Hls && window.Hls.isSupported) return callback(true);
+          if (window.__swiflyHlsLoading) {
+            window.__swiflyHlsCallbacks = window.__swiflyHlsCallbacks || [];
+            window.__swiflyHlsCallbacks.push(callback);
             return;
           }
-
+          window.__swiflyHlsLoading = true;
+          window.__swiflyHlsCallbacks = [callback];
           var urls = [
             "https://cdn.jsdelivr.net/npm/hls.js@1.6.16/dist/hls.min.js",
             "https://unpkg.com/hls.js@1.6.16/dist/hls.min.js",
-            "https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.6.16/hls.min.js",
-            "https://cdn.jsdelivr.net/npm/hls.js@^1.6.0/dist/hls.min.js"
+            "https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js"
           ];
-
-          window.__swiflyHlsLoaderPromise = new Promise(function(resolve) {
-            var i = 0;
-            var settled = false;
-
-            function done(ok) {
-              if (settled) return;
-              settled = true;
-              resolve(Boolean(ok));
-            }
-
-            function next() {
-              if (window.Hls) return done(true);
-              if (i >= urls.length) return done(false);
-
-              var url = urls[i++];
-              var existing = document.querySelector('script[data-swifly-hls-src="' + url + '"]');
-              if (existing) {
-                setTimeout(function(){ window.Hls ? done(true) : next(); }, 300);
-                return;
-              }
-
-              var script = document.createElement("script");
-              script.src = url;
-              script.async = true;
-              script.crossOrigin = "anonymous";
-              script.setAttribute("data-swifly-hls-src", url);
-              script.onload = function(){ window.Hls ? done(true) : next(); };
-              script.onerror = function(){ try { script.remove(); } catch {} next(); };
-              document.head.appendChild(script);
-
-              setTimeout(function(){
-                if (!settled && !window.Hls) next();
-              }, 7000);
-            }
-
-            next();
-          });
-
-          window.__swiflyHlsLoaderPromise.then(callback).catch(function(){ callback(false); });
-        }
-
-        function loadVidstackAssets(callback) {
-          // v151: load Vidstack like a real production dependency instead of a
-          // one-shot CDN gamble. The previous version could stop on a CDN script
-          // that loaded but did not define all custom elements.
-          function hasVidstack() {
-            return Boolean(
-              window.customElements &&
-              customElements.get("media-player") &&
-              customElements.get("media-provider") &&
-              customElements.get("media-video-layout")
-            );
-          }
-
+          var index = 0;
           function finish(ok) {
-            try { callback(Boolean(ok)); } catch {}
+            window.__swiflyHlsLoading = false;
+            var list = window.__swiflyHlsCallbacks || [];
+            window.__swiflyHlsCallbacks = [];
+            list.forEach(function(fn){ try { fn(ok); } catch {} });
           }
-
-          if (hasVidstack()) return finish(true);
-
-          if (window.__swiflyVidstackAssetsPromise) {
-            window.__swiflyVidstackAssetsPromise.then(finish).catch(function(){ finish(false); });
-            return;
-          }
-
-          function addPreconnect(url) {
-            try {
-              if (document.querySelector('link[data-swifly-preconnect="' + url + '"]')) return;
-              var link = document.createElement("link");
-              link.rel = "preconnect";
-              link.href = url;
-              link.crossOrigin = "anonymous";
-              link.setAttribute("data-swifly-preconnect", url);
-              document.head.appendChild(link);
-            } catch {}
-          }
-
-          addPreconnect("https://cdn.jsdelivr.net");
-          addPreconnect("https://unpkg.com");
-          addPreconnect("https://esm.sh");
-
-          function addStylesheetFallback(urls, key) {
-            if (document.querySelector('link[data-swifly-vidstack-css="' + key + '"]')) return;
-            var i = 0;
-            function next() {
-              if (i >= urls.length) return;
-              var link = document.createElement("link");
-              link.rel = "stylesheet";
-              link.href = urls[i++];
-              link.setAttribute("data-swifly-vidstack-css", key);
-              link.onerror = function() {
-                try { link.remove(); } catch {}
-                next();
-              };
-              document.head.appendChild(link);
-            }
-            next();
-          }
-
-          var vidstackVersion = "1.12.13";
-          addStylesheetFallback([
-            "https://cdn.jsdelivr.net/npm/vidstack@" + vidstackVersion + "/player/styles/base.css",
-            "https://unpkg.com/vidstack@" + vidstackVersion + "/player/styles/base.css"
-          ], "base");
-          addStylesheetFallback([
-            "https://cdn.jsdelivr.net/npm/vidstack@" + vidstackVersion + "/player/styles/default/theme.css",
-            "https://unpkg.com/vidstack@" + vidstackVersion + "/player/styles/default/theme.css"
-          ], "theme");
-          addStylesheetFallback([
-            "https://cdn.jsdelivr.net/npm/vidstack@" + vidstackVersion + "/player/styles/default/layouts/video.css",
-            "https://unpkg.com/vidstack@" + vidstackVersion + "/player/styles/default/layouts/video.css"
-          ], "video-layout");
-
-          // Give Vidstack and the fallback player a real HLS engine immediately.
-          try { loadHlsScript(function(){}); } catch {}
-
-          var scriptUrls = [
-            "https://cdn.jsdelivr.net/npm/vidstack@" + vidstackVersion + "/cdn/with-layouts/vidstack.js",
-            "https://unpkg.com/vidstack@" + vidstackVersion + "/cdn/with-layouts/vidstack.js",
-            "https://esm.sh/vidstack@" + vidstackVersion + "/cdn/with-layouts/vidstack.js",
-            "https://cdn.jsdelivr.net/npm/vidstack@^1.12.0/cdn/with-layouts/vidstack.js"
-          ];
-
-          window.__swiflyVidstackAssetsPromise = new Promise(function(resolve) {
-            var i = 0;
-            var resolved = false;
-
-            function resolveOnce(ok) {
-              if (resolved) return;
-              resolved = true;
-              resolve(Boolean(ok));
-            }
-
-            function waitForElements(done) {
-              if (hasVidstack()) return done(true);
-              if (!window.customElements) return done(false);
-              var timer = setTimeout(function(){ done(hasVidstack()); }, 7000);
-              Promise.all([
-                customElements.whenDefined("media-player"),
-                customElements.whenDefined("media-provider"),
-                customElements.whenDefined("media-video-layout")
-              ]).then(function() {
-                clearTimeout(timer);
-                done(hasVidstack());
-              }).catch(function() {
-                clearTimeout(timer);
-                done(hasVidstack());
-              });
-            }
-
-            function nextScript() {
-              if (hasVidstack()) return resolveOnce(true);
-              if (i >= scriptUrls.length) return resolveOnce(false);
-              var script = document.createElement("script");
-              script.type = "module";
-              script.src = scriptUrls[i++];
-              script.setAttribute("data-swifly-vidstack-js", String(i));
-              script.onload = function() {
-                waitForElements(function(ok) {
-                  if (ok) resolveOnce(true);
-                  else nextScript();
-                });
-              };
-              script.onerror = function() {
-                try { script.remove(); } catch {}
-                nextScript();
-              };
-              document.head.appendChild(script);
-            }
-
-            nextScript();
-          });
-
-          window.__swiflyVidstackAssetsPromise.then(finish).catch(function(){ finish(false); });
-        }
-
-        function loadVideoJsAssets(callback) {
-          if (window.videojs) return callback(true);
-
-          if (!document.querySelector('link[data-swifly-videojs-css]')) {
-            var link = document.createElement("link");
-            link.rel = "stylesheet";
-            link.href = "https://cdn.jsdelivr.net/npm/video.js@8.17.4/dist/video-js.min.css";
-            link.setAttribute("data-swifly-videojs-css", "true");
-            document.head.appendChild(link);
-          }
-
-          var urls = [
-            "https://cdn.jsdelivr.net/npm/video.js@8.17.4/dist/video.min.js",
-            "https://unpkg.com/video.js@8.17.4/dist/video.min.js"
-          ];
-          var i = 0;
           function next() {
-            if (window.videojs) return callback(true);
-            if (i >= urls.length) return callback(false);
+            if (window.Hls && window.Hls.isSupported) return finish(true);
+            if (index >= urls.length) return finish(Boolean(window.Hls));
             var script = document.createElement("script");
-            script.src = urls[i++];
+            script.src = urls[index++];
             script.async = true;
-            script.onload = function(){ callback(Boolean(window.videojs)); };
+            script.crossOrigin = "anonymous";
+            script.onload = function(){ finish(Boolean(window.Hls)); };
             script.onerror = next;
             document.head.appendChild(script);
           }
           next();
         }
 
-        function swiflyDockIcon(name) {
-          var attrs = 'viewBox="0 0 24 24" aria-hidden="true" focusable="false" class="swiflyDockSvg"';
-          var stroke = 'fill="none" stroke="currentColor" stroke-width="2.15" stroke-linecap="round" stroke-linejoin="round"';
-          var fill = 'fill="currentColor"';
-
-          if (name === "play") {
-            return '<svg '+attrs+'><path '+fill+' d="M8.8 6.7v10.6c0 .72.78 1.17 1.4.8l8.1-5.3c.55-.36.55-1.24 0-1.6l-8.1-5.3c-.62-.39-1.4.06-1.4.8Z"/></svg>';
-          }
-          if (name === "pause") {
-            return '<svg '+attrs+'><path '+fill+' d="M8 6.5h2.7v11H8zM13.3 6.5H16v11h-2.7z"/></svg>';
-          }
-          if (name === "back10") {
-            return '<svg '+attrs+'><path '+stroke+' d="M8.1 7.7H5.2V4.8"/><path '+stroke+' d="M5.6 7.4a7.7 7.7 0 1 1-1 7.3"/><text x="12" y="15.4" text-anchor="middle" class="swiflyDockSvgText">10</text></svg>';
-          }
-          if (name === "forward10") {
-            return '<svg '+attrs+'><path '+stroke+' d="M15.9 7.7h2.9V4.8"/><path '+stroke+' d="M18.4 7.4a7.7 7.7 0 1 0 1 7.3"/><text x="12" y="15.4" text-anchor="middle" class="swiflyDockSvgText">10</text></svg>';
-          }
-          if (name === "volume") {
-            return '<svg '+attrs+'><path '+fill+' d="M4.5 9.2v5.6h3.2l4.5 3.3c.55.4 1.33.02 1.33-.66V6.56c0-.68-.78-1.06-1.33-.66L7.7 9.2H4.5Z"/><path '+stroke+' d="M16.2 9.2a4.2 4.2 0 0 1 0 5.6"/><path '+stroke+' d="M18.6 6.8a7.6 7.6 0 0 1 0 10.4"/></svg>';
-          }
-          if (name === "muted") {
-            return '<svg '+attrs+'><path '+fill+' d="M4.5 9.2v5.6h3.2l4.5 3.3c.55.4 1.33.02 1.33-.66V6.56c0-.68-.78-1.06-1.33-.66L7.7 9.2H4.5Z"/><path '+stroke+' d="m17 9.2 4 4M21 9.2l-4 4"/></svg>';
-          }
-          if (name === "pip") {
-            return '<svg '+attrs+'><rect '+stroke+' x="3.8" y="5.5" width="16.4" height="13" rx="2.2"/><rect '+fill+' x="11.9" y="12" width="5.9" height="3.9" rx="1"/></svg>';
-          }
-          if (name === "fullscreen") {
-            return '<svg '+attrs+'><path '+stroke+' d="M8.6 4.8H5.2v3.4M15.4 4.8h3.4v3.4M8.6 19.2H5.2v-3.4M15.4 19.2h3.4v-3.4"/></svg>';
-          }
-          return "";
+        function destroyPlayer() {
+          if (timelineTimer) clearInterval(timelineTimer);
+          timelineTimer = null;
+          if (statusTimer) clearTimeout(statusTimer);
+          statusTimer = null;
+          try { if (hlsInstance) hlsInstance.destroy(); } catch {}
+          hlsInstance = null;
         }
 
-        function setDockButtonIcon(button, name) {
-          if (!button) return;
-          var html = swiflyDockIcon(name);
-          if (button.dataset.iconName === name && button.innerHTML === html) return;
-          button.dataset.iconName = name;
-          button.innerHTML = html;
+        function setupShell() {
+          injectPlayerStyles();
+          if (!playerShell || !video) return null;
+          playerShell.hidden = false;
+          playerShell.className = "dsMovieButtonPlayerShell v160HlsPlayer";
+          if (shell) shell.classList.add("isReady", "v160Ready");
+          if (waitingCard) waitingCard.style.display = "none";
+          if (hlsStatus) hlsStatus.hidden = true;
+          playerShell.querySelectorAll(".swiflyV160Controls,.swiflyV160Status,.swiflyV160Click,.swiflyVidstackPlayer,.swiflyVidstackChrome,.swiflyTimelineRescue,.swiflyLiteChrome,.swiflyLiteTopNote,.swiflyLiteUnlock,.dsVideoJsCenter,.dsCinemaSeekDock,.swiflyVideoDock").forEach(function(el){ try { el.remove(); } catch {} });
+          video.hidden = false;
+          video.controls = false;
+          video.playsInline = true;
+          video.preload = "auto";
+          video.crossOrigin = "anonymous";
+          video.className = "dsMovieButtonVideo swiflyV160Video";
+
+          var status = document.createElement("div");
+          status.className = "swiflyV160Status";
+          status.textContent = "Loading stream";
+          var clickLayer = document.createElement("div");
+          clickLayer.className = "swiflyV160Click";
+          clickLayer.innerHTML = '<button type="button">Click to play</button>';
+          var controls = document.createElement("div");
+          controls.className = "swiflyV160Controls";
+          controls.innerHTML = '<button type="button" class="swiflyV160Btn swiflyV160Play" aria-label="Play or pause">▶</button><span class="swiflyV160Time swiflyV160Current">0:00</span><input class="swiflyV160Range" type="range" min="0" max="1000" value="0" step="1" aria-label="Movie timeline"><span class="swiflyV160Time swiflyV160Duration">--:--</span><button type="button" class="swiflyV160Btn swiflyV160Mute" aria-label="Mute">🔊</button><button type="button" class="swiflyV160Btn swiflyV160Full" aria-label="Fullscreen">⛶</button>';
+          playerShell.appendChild(status);
+          playerShell.appendChild(clickLayer);
+          playerShell.appendChild(controls);
+          return { status: status, clickLayer: clickLayer, clickBtn: clickLayer.querySelector("button"), controls: controls, play: controls.querySelector(".swiflyV160Play"), current: controls.querySelector(".swiflyV160Current"), range: controls.querySelector(".swiflyV160Range"), duration: controls.querySelector(".swiflyV160Duration"), mute: controls.querySelector(".swiflyV160Mute"), full: controls.querySelector(".swiflyV160Full") };
         }
 
-        function installSwiflyNativeDock(player, src) {
-          if (!player || !video || !dock || !dockProgress) return;
-          if (dock.dataset.swiflyReady === "true") return;
-          dock.dataset.swiflyReady = "true";
-
-          function getPlayerDuration() {
-            var win = getSeekWindow();
-            var duration = win.duration || 0;
-            try {
-              var d = player.duration && player.duration();
-              if (!duration && Number.isFinite(d) && d > 0) duration = d;
-            } catch {}
-            if (!duration && Number.isFinite(video.duration) && video.duration > 0) duration = video.duration;
-            return { win: win, duration: duration };
-          }
-
-          function setDockActive() {
-            if (player && player.userActive) player.userActive(true);
-            if (playerShell) playerShell.classList.add("isUsingDock");
-          }
-
-          function updateDock() {
-            var info = getPlayerDuration();
-            var win = info.win;
-            var duration = info.duration;
-            var current = Math.max(0, (Number(video.currentTime || 0) - (win.start || 0)));
-
-            if (dockCurrent) dockCurrent.textContent = formatClock(current);
-            if (dockDuration) dockDuration.textContent = duration ? formatClock(duration) : "--:--";
-
-            if (!dockScrubbing && dockProgress) {
-              var pct = duration > 0 ? Math.max(0, Math.min(1000, Math.round((current / duration) * 1000))) : 0;
-              dockProgress.value = String(pct);
-              dockProgress.style.setProperty("--progress-pct", String(pct / 10));
-            }
-
-            setDockButtonIcon(dockPlay, video.paused ? "play" : "pause");
-            setDockButtonIcon(dockBack, "back10");
-            setDockButtonIcon(dockForward, "forward10");
-            setDockButtonIcon(dockMute, video.muted || Number(video.volume || 0) === 0 ? "muted" : "volume");
-            setDockButtonIcon(dockPip, "pip");
-            setDockButtonIcon(dockFull, "fullscreen");
-            if (dockVolume) {
-              var vol = Math.round((video.muted ? 0 : Number(video.volume || 0)) * 100);
-              dockVolume.value = String(vol);
-              dockVolume.style.setProperty("--volume-pct", String(vol));
-            }
-          }
-
-          function seekBy(delta) {
-            var info = getPlayerDuration();
-            var win = info.win;
-            var end = win.end || ((win.start || 0) + (info.duration || 0)) || (Number(video.currentTime || 0) + delta);
-            var target = Math.max(win.start || 0, Math.min(end - 0.15, Number(video.currentTime || 0) + delta));
-            try {
-              if (player.currentTime) player.currentTime(target);
-              else video.currentTime = target;
-            } catch {}
-            updateDock();
-          }
-
-          function seekToRatio(value) {
-            var info = getPlayerDuration();
-            var win = info.win;
-            var duration = info.duration;
-            if (!duration) return;
-            var ratio = Math.max(0, Math.min(1000, Number(value || 0))) / 1000;
-            var target = (win.start || 0) + duration * ratio;
-            try {
-              if (player.currentTime) player.currentTime(target);
-              else video.currentTime = target;
-            } catch {}
-            updateDock();
-          }
-
-          if (dockPlay) dockPlay.onclick = function(event) {
-            event.preventDefault();
-            setDockActive();
-            if (video.paused) video.play().catch(function(){});
-            else video.pause();
-          };
-          if (dockBack) dockBack.onclick = function(event) { event.preventDefault(); setDockActive(); seekBy(-10); };
-          if (dockForward) dockForward.onclick = function(event) { event.preventDefault(); setDockActive(); seekBy(10); };
-
-          dockProgress.addEventListener("pointerdown", function() {
-            dockScrubbing = true;
-            setDockActive();
-            if (playerShell) playerShell.classList.add("isScrubbing");
-          });
-          dockProgress.addEventListener("input", function() {
-            setDockActive();
-            seekToRatio(dockProgress.value);
-            dockProgress.style.setProperty("--progress-pct", String(Number(dockProgress.value || 0) / 10));
-          });
-          ["change", "pointerup", "pointercancel"].forEach(function(name) {
-            dockProgress.addEventListener(name, function() {
-              seekToRatio(dockProgress.value);
-              dockScrubbing = false;
-              if (playerShell) playerShell.classList.remove("isScrubbing");
-            });
-          });
-
-          function previewClientX(event) {
-            if (event && Number.isFinite(event.clientX)) return event.clientX;
-            if (event && event.touches && event.touches[0]) return event.touches[0].clientX;
-            if (event && event.changedTouches && event.changedTouches[0]) return event.changedTouches[0].clientX;
-            var rect = (dockProgressWrap || dockProgress).getBoundingClientRect();
-            return rect.left + rect.width / 2;
-          }
-
-          function hideDockPreview() {
-            if (timelinePreview) timelinePreview.hidden = true;
-            if (playerShell) playerShell.classList.remove("isPreviewingTime");
-          }
-
-          function updatePreviewFromDock(event) {
-            if (!timelinePreview || !timelinePreviewTime || !playerShell) return;
-            var targetEl = dockProgressWrap || dockProgress;
-            if (!targetEl) return;
-            var rect = targetEl.getBoundingClientRect();
-            if (!rect || !rect.width) return;
-
-            var clientX = previewClientX(event);
-            var x = Math.max(0, Math.min(rect.width, clientX - rect.left));
-            var ratio = x / rect.width;
-            var info = getPlayerDuration();
-            if (!info.duration || !Number.isFinite(info.duration)) {
-              timelinePreviewTime.textContent = "--:--";
-              if (timelinePreviewState) timelinePreviewState.textContent = "Loading preview";
-              return;
-            }
-
-            var seconds = (info.win.start || 0) + info.duration * ratio;
-            var displaySeconds = Math.max(0, info.duration * ratio);
-            timelinePreviewTime.textContent = formatClock(displaySeconds);
-
-            var shellRect = playerShell.getBoundingClientRect();
-            var left = Math.max(92, Math.min(shellRect.width - 92, clientX - shellRect.left));
-            timelinePreview.style.left = left + "px";
-            timelinePreview.style.setProperty("--preview-left", left + "px");
-            timelinePreview.hidden = false;
-            playerShell.classList.add("isPreviewingTime", "isUsingDock");
-
-            if (timelinePreviewState && !previewReadyForFrames) {
-              timelinePreviewState.textContent = "Loading frame";
-            }
-
-            requestTimelinePreviewFrame(seconds, false);
-            setDockActive();
-          }
-
-          [dockProgress, dockProgressWrap].filter(Boolean).forEach(function(el) {
-            el.addEventListener("mousemove", updatePreviewFromDock);
-            el.addEventListener("pointermove", updatePreviewFromDock);
-            el.addEventListener("mouseenter", updatePreviewFromDock);
-            el.addEventListener("mouseover", updatePreviewFromDock);
-            el.addEventListener("touchmove", updatePreviewFromDock, { passive: true });
-            el.addEventListener("mouseleave", hideDockPreview);
-            el.addEventListener("touchend", hideDockPreview, { passive: true });
-          });
-
-          var speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
-          if (dockSpeedMenu && dockSpeed) {
-            dockSpeedMenu.innerHTML = "";
-            speeds.forEach(function(rate) {
-              var b = document.createElement("button");
-              b.type = "button";
-              b.textContent = rate === 1 ? "1x" : rate + "x";
-              b.dataset.speed = String(rate);
-              if (rate === 1) b.classList.add("active");
-              b.onclick = function(event) {
-                event.preventDefault();
-                event.stopPropagation();
-                try {
-                  if (player.playbackRate) player.playbackRate(rate);
-                  video.playbackRate = rate;
-                } catch {}
-                dockSpeed.textContent = rate === 1 ? "1x" : rate + "x";
-                Array.from(dockSpeedMenu.querySelectorAll("button")).forEach(function(x) { x.classList.remove("active"); });
-                b.classList.add("active");
-                dockSpeedMenu.hidden = true;
-                setDockActive();
-              };
-              dockSpeedMenu.appendChild(b);
-            });
-            dockSpeed.onclick = function(event) {
-              event.preventDefault();
-              event.stopPropagation();
-              dockSpeedMenu.hidden = !dockSpeedMenu.hidden;
-              if (dockVolumeMenu) dockVolumeMenu.hidden = true;
-              setDockActive();
-            };
-          }
-
-          if (dockMute) dockMute.onclick = function(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            video.muted = !video.muted;
-            try { if (player.muted) player.muted(video.muted); } catch {}
-            updateDock();
-            if (dockVolumeMenu) dockVolumeMenu.hidden = true;
-            setDockActive();
-          };
-
-          if (dockMute && dockVolumeMenu) {
-            dockMute.onmouseenter = function() {
-              dockVolumeMenu.hidden = false;
-              setDockActive();
-            };
-          }
-          if (dockVolumeMenu) {
-            dockVolumeMenu.onmouseenter = setDockActive;
-            dockVolumeMenu.onmousemove = setDockActive;
-            dockVolumeMenu.onmouseleave = function() {
-              dockVolumeMenu.hidden = true;
-            };
-          }
-          if (dockVolume) {
-            dockVolume.addEventListener("input", function() {
-              var value = Math.max(0, Math.min(100, Number(dockVolume.value || 0)));
-              video.volume = value / 100;
-              video.muted = value === 0;
-              try {
-                if (player.volume) player.volume(value / 100);
-                if (player.muted) player.muted(value === 0);
-              } catch {}
-              dockVolume.style.setProperty("--volume-pct", String(value));
-              updateDock();
-              setDockActive();
-            });
-          }
-
-          if (dockPip) dockPip.onclick = async function(event) {
-            event.preventDefault();
-            setDockActive();
-            try {
-              if (document.pictureInPictureElement) await document.exitPictureInPicture();
-              else if (video.requestPictureInPicture) await video.requestPictureInPicture();
-            } catch {}
-          };
-
-          function swiflyRequestFullscreenOnce(event) {
-            if (event) {
-              event.preventDefault();
-              event.stopPropagation();
-            }
-            setDockActive();
-
-            var target = playerShell || (player && player.el && player.el()) || video;
-            try {
-              var isFull = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
-              if (!isFull) {
-                var request =
-                  (target && target.requestFullscreen) ||
-                  (target && target.webkitRequestFullscreen) ||
-                  (target && target.msRequestFullscreen) ||
-                  (video && video.requestFullscreen) ||
-                  (video && video.webkitEnterFullscreen);
-                if (request) {
-                  var result = request.call(target === video || request === video.webkitEnterFullscreen ? video : target, { navigationUI: "hide" });
-                  if (result && result.catch) result.catch(function(){});
-                }
-              } else {
-                var exit = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
-                if (exit) {
-                  var exitResult = exit.call(document);
-                  if (exitResult && exitResult.catch) exitResult.catch(function(){});
-                }
-              }
-            } catch {}
-          }
-
-          if (dockFull) {
-            dockFull.addEventListener("pointerdown", swiflyRequestFullscreenOnce);
-            dockFull.addEventListener("click", function(event) {
-              event.preventDefault();
-              event.stopPropagation();
-            });
-          }
-
-          document.addEventListener("click", function(event) {
-            if (!dock) return;
-            if (dock.contains(event.target)) return;
-            if (dockSpeedMenu) dockSpeedMenu.hidden = true;
-            if (dockVolumeMenu) dockVolumeMenu.hidden = true;
-          });
-
-          ["fullscreenchange", "webkitfullscreenchange", "MSFullscreenChange"].forEach(function(name) {
-            document.addEventListener(name, function() {
-              var isFull = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
-              if (playerShell) playerShell.classList.toggle("isFullscreen", Boolean(isFull));
-              setDockActive();
-            });
-          });
-
-          ["timeupdate", "durationchange", "loadedmetadata", "progress", "play", "pause", "volumechange", "ratechange", "canplay"].forEach(function(name) {
-            video.addEventListener(name, updateDock);
-            try { player.on(name, updateDock); } catch {}
-          });
-
-          dock.addEventListener("mousemove", setDockActive);
-          dock.addEventListener("mouseenter", setDockActive);
-          setDockButtonIcon(dockPlay, "play");
-          setDockButtonIcon(dockBack, "back10");
-          setDockButtonIcon(dockForward, "forward10");
-          setDockButtonIcon(dockMute, "volume");
-          setDockButtonIcon(dockPip, "pip");
-          setDockButtonIcon(dockFull, "fullscreen");
-          setInterval(updateDock, 700);
-          updateDock();
+        function isHls(url, data) {
+          var value = String(url || "");
+          var type = String((data && data.streamType) || "").toLowerCase();
+          return /\.m3u8([?#]|$)/i.test(value) || type === "m3u8" || type === "hls" || Boolean(data && data.m3u8);
         }
 
-        function setVideoJsQualityMenu(player) {
-          if (!qualityToggle || !qualityMenu) return;
-          qualityMenu.innerHTML = "";
-
-          function addQualityButton(label, value, active) {
-            var button = document.createElement("button");
-            button.type = "button";
-            button.textContent = label;
-            button.className = active ? "active" : "";
-            button.addEventListener("click", function(event) {
-              event.preventDefault();
-              event.stopPropagation();
-
-              try {
-                if (value === "auto") {
-                  var repsAuto = player.tech(true).vhs && player.tech(true).vhs.representations ? player.tech(true).vhs.representations() : [];
-                  Array.from(repsAuto || []).forEach(function(rep) { rep.enabled(true); });
-                  var qb = qualityToggle.querySelector("b"); if (qb) qb.textContent = "Auto"; else qualityToggle.textContent = "Auto";
-                  if (hlsMeta) hlsMeta.textContent = "Auto quality";
-                } else {
-                  var selected = Number(value);
-                  var reps = player.tech(true).vhs && player.tech(true).vhs.representations ? player.tech(true).vhs.representations() : [];
-                  Array.from(reps || []).forEach(function(rep) {
-                    rep.enabled(Number(rep.height) === selected);
-                  });
-                  var qb = qualityToggle.querySelector("b"); if (qb) qb.textContent = selected + "p"; else qualityToggle.textContent = selected + "p";
-                  if (hlsMeta) hlsMeta.textContent = selected + "p selected";
-                }
-              } catch {
-                var qb = qualityToggle.querySelector("b"); if (qb) qb.textContent = label; else qualityToggle.textContent = label;
-              }
-
-              Array.from(qualityMenu.querySelectorAll("button")).forEach(function(btn){ btn.classList.remove("active"); });
-              button.classList.add("active");
-              qualityMenu.hidden = true;
-            });
-            qualityMenu.appendChild(button);
-          }
-
-          addQualityButton("Auto", "auto", true);
-
-          function refresh() {
-            var heights = [];
-            try {
-              var reps = player.tech(true).vhs && player.tech(true).vhs.representations ? player.tech(true).vhs.representations() : [];
-              Array.from(reps || []).forEach(function(rep) {
-                var height = Number(rep.height);
-                if (height && heights.indexOf(height) === -1) heights.push(height);
-              });
-            } catch {}
-
-            heights.sort(function(a, b){ return b - a; });
-            Array.from(qualityMenu.querySelectorAll("button:not(:first-child)")).forEach(function(btn){ btn.remove(); });
-            heights.forEach(function(height){ addQualityButton(height + "p", String(height), false); });
-            qualityToggle.hidden = false;
-          }
-
-          qualityToggle.onclick = function(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            qualityMenu.hidden = !qualityMenu.hidden;
-            if (speedMenu) speedMenu.hidden = true;
-            if (volumeMenu) volumeMenu.hidden = true;
-            refresh();
-          };
-
-          setTimeout(refresh, 400);
-          setTimeout(refresh, 1400);
-        }
-
-        document.addEventListener("click", function(event) {
-          if (!qualityMenu || !qualityToggle) return;
-          if (event.target === qualityToggle || qualityMenu.contains(event.target)) return;
-          qualityMenu.hidden = true;
-        });
-
-        function setVideoJsVolumeMenu(player) {
-          if (!volumeToggle || !volumeMenu || !volumeRange || !player || !video) return;
-
-          function setVolumeUi() {
-            var muted = Boolean(video.muted || (player.muted && player.muted()));
-            var vol = muted ? 0 : Math.round(((player.volume && player.volume()) || video.volume || 0) * 100);
-            var b = volumeToggle.querySelector("b");
-            if (b) b.textContent = muted ? "Mute" : String(vol);
-            volumeToggle.classList.toggle("isMuted", muted || vol === 0);
-            volumeRange.value = String(vol);
-            volumeRange.style.setProperty("--volume-pct", String(vol));
-          }
-
-          volumeToggle.onclick = function(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            volumeMenu.hidden = !volumeMenu.hidden;
-            if (speedMenu) speedMenu.hidden = true;
-            if (qualityMenu) qualityMenu.hidden = true;
-            if (volumeMenu) volumeMenu.hidden = true;
-            if (player.userActive) player.userActive(true);
-          };
-
-          volumeToggle.ondblclick = function(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            try {
-              var next = !(player.muted && player.muted());
-              if (player.muted) player.muted(next);
-              video.muted = next;
-            } catch {}
-            setVolumeUi();
-          };
-
-          volumeRange.addEventListener("input", function(event) {
-            event.stopPropagation();
-            var value = Math.max(0, Math.min(100, Number(volumeRange.value || 0)));
-            try {
-              if (player.volume) player.volume(value / 100);
-              if (player.muted) player.muted(value === 0);
-              video.volume = value / 100;
-              video.muted = value === 0;
-            } catch {}
-            volumeRange.style.setProperty("--volume-pct", String(value));
-            setVolumeUi();
-            if (player.userActive) player.userActive(true);
-          });
-
-          volumeMenu.addEventListener("mousemove", function() {
-            if (player.userActive) player.userActive(true);
-          });
-
+        function getDuration(fallbackDuration) {
+          var d = Number(video && video.duration);
+          if (Number.isFinite(d) && d > 0 && d < 86400) return d;
+          if (Number.isFinite(fallbackDuration) && fallbackDuration > 0) return fallbackDuration;
           try {
-            player.on("volumechange", setVolumeUi);
-          } catch {}
-          setVolumeUi();
-        }
-
-        document.addEventListener("click", function(event) {
-          if (!volumeMenu || !volumeToggle) return;
-          if (event.target === volumeToggle || volumeMenu.contains(event.target)) return;
-          volumeMenu.hidden = true;
-        });
-
-        function markPreviewFrameReady(label) {
-          previewReadyForFrames = true;
-          if (playerShell) {
-            playerShell.classList.add("hasFramePreview");
-            playerShell.classList.remove("previewLoadingFrame");
-          }
-          if (timelinePreviewState) timelinePreviewState.textContent = label || "Frame preview";
-        }
-
-        function requestTimelinePreviewFrame(targetSeconds, immediate) {
-          if (!timelinePreviewVideo || !previewSourceUrl) return;
-
-          var target = Math.max(0, Number(targetSeconds || 0));
-          if (!immediate && Math.abs(target - previewLastRequested) < 0.75) return;
-          previewLastRequested = target;
-
-          if (previewSeekTimer) clearTimeout(previewSeekTimer);
-          if (previewDecodeTimer) clearTimeout(previewDecodeTimer);
-
-          if (playerShell) playerShell.classList.add("previewLoadingFrame");
-          if (timelinePreviewState) timelinePreviewState.textContent = previewReadyForFrames ? "Loading frame" : "Warming preview";
-
-          previewSeekTimer = setTimeout(function() {
-            try {
-              if (previewHls && previewHls.startLoad) {
-                // Ask HLS.js to start fetching near the hovered timestamp instead of only from the start.
-                previewHls.startLoad(target);
-              }
-
-              if (timelinePreviewVideo.readyState >= 1) {
-                timelinePreviewVideo.currentTime = target;
-              }
-
-              // Muted autoplay is used only to force the browser to decode a frame, then we pause on it.
-              timelinePreviewVideo.muted = true;
-              timelinePreviewVideo.playsInline = true;
-              var playPromise = timelinePreviewVideo.play && timelinePreviewVideo.play();
-
-              if (playPromise && playPromise.then) {
-                playPromise.then(function() {
-                  previewDecodeTimer = setTimeout(function() {
-                    try { timelinePreviewVideo.pause(); } catch {}
-                    if (timelinePreviewVideo.readyState >= 2) markPreviewFrameReady("Frame preview");
-                  }, immediate ? 90 : 140);
-                }).catch(function() {
-                  if (timelinePreviewVideo.readyState >= 2) markPreviewFrameReady("Frame preview");
-                  else if (timelinePreviewState) timelinePreviewState.textContent = "Time preview";
-                });
-              } else {
-                previewDecodeTimer = setTimeout(function() {
-                  try { timelinePreviewVideo.pause(); } catch {}
-                  if (timelinePreviewVideo.readyState >= 2) markPreviewFrameReady("Frame preview");
-                }, immediate ? 90 : 140);
-              }
-            } catch {
-              if (timelinePreviewState) timelinePreviewState.textContent = "Time preview";
-              if (playerShell) playerShell.classList.remove("previewLoadingFrame");
+            if (video.seekable && video.seekable.length) {
+              var start = video.seekable.start(0);
+              var end = video.seekable.end(video.seekable.length - 1);
+              if (Number.isFinite(end - start) && end - start > 0 && end - start < 86400) return end - start;
             }
-          }, immediate ? 0 : 60);
+          } catch {}
+          return 0;
         }
 
-        function schedulePreviewWarmup(player) {
-          if (!player || !timelinePreviewVideo) return;
-          if (previewWarmupTimer) clearTimeout(previewWarmupTimer);
+        function startPlayer(src, data) {
+          if (!src || !video) return showError("No playable m3u8 URL returned.");
+          if (lastSource === src && playerShell && playerShell.classList.contains("v160HlsPlayer")) return;
+          lastSource = src;
+          destroyPlayer();
+          var ui = setupShell();
+          if (!ui) return showError("Missing player element.");
+          var manifestDuration = 0;
+          var dragging = false;
 
-          function getDurationForWarmup() {
-            var duration = 0;
-            try {
-              var win = getSeekWindow();
-              duration = win.duration || 0;
-            } catch {}
-            try {
-              var d = player.duration && player.duration();
-              if (!duration && Number.isFinite(d) && d > 0) duration = d;
-            } catch {}
-            if (!duration && Number.isFinite(video.duration) && video.duration > 0) duration = video.duration;
-            return duration;
+          function update() {
+            var d = getDuration(manifestDuration);
+            var current = Number(video.currentTime || 0);
+            if (ui.play) ui.play.textContent = video.paused ? "▶" : "❚❚";
+            if (ui.current) ui.current.textContent = fmt(current);
+            if (ui.duration) ui.duration.textContent = d > 0 ? fmt(d) : "--:--";
+            if (ui.range && !dragging) {
+              ui.range.disabled = d <= 0;
+              ui.range.value = d > 0 ? String(Math.max(0, Math.min(1000, Math.round((current / d) * 1000)))) : "0";
+            }
+            if (ui.mute) ui.mute.textContent = video.muted ? "🔇" : "🔊";
           }
 
-          var duration = getDurationForWarmup();
-          if (!duration || !Number.isFinite(duration)) {
-            previewWarmupTimer = setTimeout(function(){ schedulePreviewWarmup(player); }, 900);
+          function mark(label) {
+            if (ui.status) ui.status.textContent = label || "Stream ready";
+            if (shell) shell.classList.add("isReady", "v160Ready");
+            if (playerShell) playerShell.classList.remove("swiflyNeedsClick");
+            update();
+          }
+
+          function play() {
+            try {
+              var p = video.play();
+              if (p && p.then) p.then(function(){ mark("Playing"); }).catch(function(){ if (playerShell) playerShell.classList.add("swiflyNeedsClick"); if (ui.status) ui.status.textContent = "Click to play"; });
+            } catch { if (playerShell) playerShell.classList.add("swiflyNeedsClick"); }
+          }
+          function toggle() { if (video.paused) play(); else { video.pause(); update(); } }
+
+          if (ui.play) ui.play.addEventListener("click", function(e){ e.preventDefault(); toggle(); });
+          if (ui.clickBtn) ui.clickBtn.addEventListener("click", function(e){ e.preventDefault(); play(); });
+          video.addEventListener("click", toggle);
+          if (ui.mute) ui.mute.addEventListener("click", function(e){ e.preventDefault(); video.muted = !video.muted; update(); });
+          if (ui.full) ui.full.addEventListener("click", function(e){ e.preventDefault(); try { var full = document.fullscreenElement || document.webkitFullscreenElement; if (full) { (document.exitFullscreen || document.webkitExitFullscreen).call(document); return; } var target = playerShell || video; if (target.requestFullscreen) target.requestFullscreen({ navigationUI: "hide" }).catch(function(){}); else if (target.webkitRequestFullscreen) target.webkitRequestFullscreen(); } catch {} });
+          if (ui.range) {
+            ui.range.addEventListener("input", function(){ dragging = true; var d = getDuration(manifestDuration); if (d > 0 && ui.current) ui.current.textContent = fmt((Number(ui.range.value || 0) / 1000) * d); });
+            ui.range.addEventListener("change", function(){ var d = getDuration(manifestDuration); if (d > 0) { try { video.currentTime = (Number(ui.range.value || 0) / 1000) * d; } catch {} } dragging = false; update(); });
+          }
+          ["loadedmetadata", "durationchange", "progress", "timeupdate", "canplay", "playing", "pause", "volumechange", "seeked"].forEach(function(name){
+            video.addEventListener(name, function(){ if (name === "playing") mark("Playing"); else if (name === "canplay" || name === "loadedmetadata") mark("Ready"); update(); });
+          });
+          video.addEventListener("waiting", function(){ if (ui.status) ui.status.textContent = "Buffering"; update(); });
+          timelineTimer = setInterval(update, 500);
+          update();
+
+          try { video.removeAttribute("src"); video.load(); } catch {}
+          if (!isHls(src, data)) {
+            video.src = src;
+            try { video.load(); } catch {}
+            mark("Video ready");
             return;
           }
-
-          var points = [0.02, 0.08, 0.18, 0.34, 0.50, 0.66, 0.82, 0.94];
-          previewWarmupIndex = 0;
-
-          function warmNext() {
-            if (!timelinePreviewVideo || !previewSourceUrl) return;
-            if (previewWarmupIndex >= points.length) {
-              if (timelinePreviewState) timelinePreviewState.textContent = previewReadyForFrames ? "Frame preview" : "Time preview";
-              if (playerShell) playerShell.classList.remove("previewLoadingFrame");
-              return;
-            }
-
-            var seconds = Math.max(0, Math.min(duration - 1, duration * points[previewWarmupIndex++]));
-            requestTimelinePreviewFrame(seconds, true);
-            previewWarmupTimer = setTimeout(warmNext, 1350);
-          }
-
-          previewWarmupTimer = setTimeout(warmNext, 700);
-        }
-
-        function prepareTimelinePreviewVideo(src) {
-          previewSourceUrl = src || "";
-          if (!timelinePreviewVideo || !previewSourceUrl) return;
-
-          try {
-            timelinePreviewVideo.pause();
-            timelinePreviewVideo.removeAttribute("src");
-            timelinePreviewVideo.load();
-          } catch {}
-
-          if (previewHls) {
-            try { previewHls.destroy(); } catch {}
-            previewHls = null;
-          }
-
-          timelinePreviewVideo.muted = true;
-          timelinePreviewVideo.playsInline = true;
-          timelinePreviewVideo.preload = "auto";
-          timelinePreviewVideo.crossOrigin = "anonymous";
-
-          var nativeHls = timelinePreviewVideo.canPlayType("application/vnd.apple.mpegurl") || timelinePreviewVideo.canPlayType("application/x-mpegURL");
-          if (nativeHls) {
-            timelinePreviewVideo.src = previewSourceUrl;
-            try { timelinePreviewVideo.load(); } catch {}
-            setTimeout(function(){ requestTimelinePreviewFrame(0, true); }, 450);
-            return;
-          }
-
-          loadHlsScript(function(loaded) {
-            if (!loaded || !window.Hls || !window.Hls.isSupported() || !timelinePreviewVideo || !previewSourceUrl) {
-              if (timelinePreviewState) timelinePreviewState.textContent = "Time preview";
-              return;
-            }
-
-            try {
-              previewHls = new window.Hls({
-                debug: false,
-                enableWorker: true,
-                lowLatencyMode: false,
-                autoStartLoad: false,
-                startFragPrefetch: true,
-                maxBufferLength: 40,
-                maxMaxBufferLength: 120,
-                backBufferLength: 30,
-                startPosition: 0,
-                capLevelToPlayerSize: true,
-                manifestLoadingMaxRetry: 3,
-                levelLoadingMaxRetry: 3,
-                fragLoadingMaxRetry: 4,
-                manifestLoadingTimeOut: 20000,
-                levelLoadingTimeOut: 20000,
-                fragLoadingTimeOut: 20000
-              });
-              previewHls.attachMedia(timelinePreviewVideo);
-              previewHls.on(window.Hls.Events.MEDIA_ATTACHED, function() {
-                try { previewHls.loadSource(previewSourceUrl); } catch {}
-              });
-              previewHls.on(window.Hls.Events.MANIFEST_PARSED, function() {
-                if (timelinePreviewState) timelinePreviewState.textContent = "Warming preview";
-                requestTimelinePreviewFrame(0, true);
-              });
-              previewHls.on(window.Hls.Events.FRAG_BUFFERED, function() {
-                if (timelinePreviewVideo && timelinePreviewVideo.readyState >= 2) markPreviewFrameReady("Frame preview");
-              });
-              previewHls.on(window.Hls.Events.ERROR, function(event, err) {
-                if (err && err.fatal && timelinePreviewState) timelinePreviewState.textContent = "Time preview";
-              });
-            } catch {
-              if (timelinePreviewState) timelinePreviewState.textContent = "Time preview";
-            }
-          });
-        }
-
-        function setVideoJsSpeedMenu(player) {
-          if (!speedToggle || !speedMenu || !player) return;
-
-          var speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
-          speedMenu.innerHTML = "";
-
-          function labelFor(rate) {
-            return rate === 1 ? "1x" : String(rate).replace(/\.0$/, "") + "x";
-          }
-
-          function setActive(rate) {
-            var label = labelFor(rate);
-            var b = speedToggle.querySelector("b");
-            if (b) b.textContent = label;
-            else speedToggle.textContent = label;
-
-            Array.from(speedMenu.querySelectorAll("button")).forEach(function(button) {
-              button.classList.toggle("active", Number(button.dataset.speed) === Number(rate));
-            });
-          }
-
-          speeds.forEach(function(rate) {
-            var button = document.createElement("button");
-            button.type = "button";
-            button.dataset.speed = String(rate);
-            button.textContent = labelFor(rate);
-            if (rate === 1) button.classList.add("active");
-
-            button.addEventListener("click", function(event) {
-              event.preventDefault();
-              event.stopPropagation();
-              try {
-                if (player.playbackRate) player.playbackRate(rate);
-                if (video) video.playbackRate = rate;
-              } catch {}
-              setActive(rate);
-              speedMenu.hidden = true;
-              if (player.userActive) player.userActive(true);
-            });
-
-            speedMenu.appendChild(button);
-          });
-
-          speedToggle.onclick = function(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            speedMenu.hidden = !speedMenu.hidden;
-            if (qualityMenu) qualityMenu.hidden = true;
-            if (player.userActive) player.userActive(true);
-          };
-
-          try {
-            player.on("ratechange", function() {
-              setActive(player.playbackRate ? player.playbackRate() : (video && video.playbackRate) || 1);
-            });
-          } catch {}
-
-          setActive(1);
-        }
-
-        document.addEventListener("click", function(event) {
-          if (!speedMenu || !speedToggle) return;
-          if (event.target === speedToggle || speedMenu.contains(event.target)) return;
-          speedMenu.hidden = true;
-        });
-
-        function installVideoJsTimelinePreview(player) {
-          if (!player || !playerShell || !timelinePreview || !timelinePreviewTime) return;
-
-          function hook() {
-            var playerEl = player.el && player.el();
-            if (!playerEl) return false;
-
-            var progress = playerEl.querySelector(".vjs-progress-control");
-            var holder = playerEl.querySelector(".vjs-progress-holder");
-            if (!progress || !holder || progress.dataset.swiflyPreviewReady === "true") return Boolean(progress && holder);
-
-            progress.dataset.swiflyPreviewReady = "true";
-
-            function hidePreview() {
-              timelinePreview.hidden = true;
-              playerShell.classList.remove("isPreviewingTime");
-            }
-
-            function updatePreview(event) {
-              var rect = holder.getBoundingClientRect();
-              if (!rect || !rect.width) return;
-
-              var x = Math.max(0, Math.min(rect.width, event.clientX - rect.left));
-              var ratio = x / rect.width;
-              var win = getSeekWindow();
-              var duration = win.duration || (player.duration && player.duration()) || (video && video.duration) || 0;
-
-              if (!duration || !Number.isFinite(duration)) return hidePreview();
-
-              var seconds = (win.start || 0) + duration * ratio;
-              var displaySeconds = Math.max(0, seconds - (win.start || 0));
-
-              timelinePreviewTime.textContent = formatClock(displaySeconds);
-
-              var shellRect = playerShell.getBoundingClientRect();
-              var left = Math.max(78, Math.min(shellRect.width - 78, event.clientX - shellRect.left));
-
-              timelinePreview.style.left = left + "px";
-              timelinePreview.style.setProperty("--preview-left", left + "px");
-              timelinePreview.hidden = false;
-              playerShell.classList.add("isPreviewingTime", "isUsingDock");
-
-              requestTimelinePreviewFrame(seconds, false);
-
-              if (player.userActive) player.userActive(true);
-            }
-
-            progress.addEventListener("mousemove", updatePreview);
-            progress.addEventListener("pointermove", updatePreview);
-            progress.addEventListener("mouseenter", updatePreview);
-            progress.addEventListener("mouseleave", hidePreview);
-            progress.addEventListener("touchstart", hidePreview, { passive: true });
-
-            if (timelinePreviewVideo && !timelinePreviewVideo.dataset.swiflyPreviewStateReady) {
-              timelinePreviewVideo.dataset.swiflyPreviewStateReady = "true";
-              ["loadedmetadata", "loadeddata", "canplay", "seeked", "timeupdate"].forEach(function(name) {
-                timelinePreviewVideo.addEventListener(name, function() {
-                  if (timelinePreviewVideo.readyState >= 2) markPreviewFrameReady("Frame preview");
-                });
-              });
-              timelinePreviewVideo.addEventListener("error", function() {
-                if (timelinePreviewState) timelinePreviewState.textContent = "Time preview";
-                if (playerShell) playerShell.classList.remove("hasFramePreview");
-              });
-            }
-
-            return true;
-          }
-
-          if (!hook()) {
-            setTimeout(hook, 300);
-            setTimeout(hook, 1000);
-          }
-        }
-
-        function addVideoJsSkipControls(player) {
-          // v129: Do not register custom Video.js components here.
-          // Some Video.js 8 CDN builds do not expose legacy helpers the same way,
-          // and a failed custom component can stop the player from finishing setup.
-          // Keyboard shortcuts still provide J/L and arrow seeking.
-          return;
-        }
-
-        function wireVideoJsOverlayControls(player) {
-          // v129: rely on Video.js's native big play/control bar instead of custom overlay buttons.
-          function seekBy(delta) {
-            try {
-              var win = getSeekWindow();
-              video.currentTime = Math.max(win.start || 0, Math.min((win.end || video.currentTime + delta) - 0.15, video.currentTime + delta));
-            } catch {}
-          }
-
-          if (back10Button) back10Button.onclick = function(event){ event.preventDefault(); seekBy(-10); };
-          if (forward10Button) forward10Button.onclick = function(event){ event.preventDefault(); seekBy(10); };
-          if (bigPlayButton) {
-            bigPlayButton.onclick = function(event) {
-              event.preventDefault();
-              if (video.paused) video.play().catch(function(){});
-              else video.pause();
-            };
-          }
-        }
-
-        function startModernHlsVideoFallback(src, data, reason) {
-          setPlayerStatus("Loading m3u8...", (reason ? reason + " • " : "") + "Using HLS.js recovery player", false);
-          setVideoUiState("loading");
-
-          if (movieButtonVidstack) {
-            try { movieButtonVidstack.pause && movieButtonVidstack.pause(); } catch {}
-            try { movieButtonVidstack.destroy && movieButtonVidstack.destroy(); } catch {}
-            try { movieButtonVidstack.remove(); } catch {}
-            movieButtonVidstack = null;
-          }
-
-          if (movieButtonHls) {
-            try { movieButtonHls.destroy(); } catch {}
-            movieButtonHls = null;
-          }
-
-          var recoveryCard = null;
-          if (playerShell) {
-            playerShell.classList.remove("usesVidstack", "v149Vidstack", "v149Ready", "v149Playing");
-            playerShell.classList.add("usesNativeVideo", "v150HlsRecovery", "v151StreamPro", "v154StreamLatchFix", "v155CleanVidstack", "v157LeanVidstack", "v157VisibleControls");
-            try {
-              playerShell.querySelectorAll(".swiflyVidstackPlayer, .swiflyVidstackChrome").forEach(function(el) { el.remove(); });
-            } catch {}
-
-            try {
-              recoveryCard = playerShell.querySelector(".swiflyRecoveryCard");
-              if (!recoveryCard) {
-                recoveryCard = document.createElement("div");
-                recoveryCard.className = "swiflyRecoveryCard";
-                recoveryCard.innerHTML = '<div><span>Recovery Mode</span><b>Keeping playback alive</b><small></small></div><div class="swiflyRecoveryActions"><button type="button" data-retry-vidstack>Retry Vidstack</button><button type="button" data-retry-hls>Restart HLS</button></div>';
-                playerShell.appendChild(recoveryCard);
-              }
-              recoveryCard.hidden = false;
-              var small = recoveryCard.querySelector("small");
-              if (small) small.textContent = reason || "Vidstack needed backup playback.";
-              var retryVidstack = recoveryCard.querySelector("[data-retry-vidstack]");
-              var retryHls = recoveryCard.querySelector("[data-retry-hls]");
-              if (retryVidstack) retryVidstack.onclick = function(event){ event.preventDefault(); startVideoJsCinemaSource(src, data, 1); };
-              if (retryHls) retryHls.onclick = function(event){ event.preventDefault(); startModernHlsVideoFallback(src, data, "Manual HLS restart"); };
-            } catch {}
-          }
-
-          try {
-            if (seekDock) seekDock.hidden = true;
-            if (qualityMenu) qualityMenu.hidden = true;
-            if (speedMenu) speedMenu.hidden = true;
-            if (volumeMenu) volumeMenu.hidden = true;
-            if (hlsStatus) hlsStatus.hidden = true;
-            if (playerShell) { playerShell.classList.add("v155CleanVidstack", "v157LeanVidstack", "v157VisibleControls", "v158NoWakeLoop"); hardHideLegacyPlayerChrome(); }
-          } catch {}
-
-          try {
-            video.hidden = false;
-            video.style.display = "";
-            video.className = "dsMovieButtonVideo dsCinemaHlsVideo swiflyNativeHlsVideo";
-            video.controls = true;
-            video.playsInline = true;
-            video.preload = "auto";
-            video.crossOrigin = "anonymous";
-            video.removeAttribute("src");
-            video.load();
-          } catch {}
-
-          function installMediaSession(target) {
-            try {
-              if (!("mediaSession" in navigator)) return;
-              var title = (data && (data.title || data.name)) || "SwiflyTV";
-              var poster = (data && (data.poster || data.backdrop || data.poster_path || data.backdrop_path)) || "";
-              if (poster && poster.indexOf("http") !== 0 && poster.charAt(0) === "/") poster = "https://image.tmdb.org/t/p/w500" + poster;
-              navigator.mediaSession.metadata = new MediaMetadata({
-                title: title,
-                artist: "SwiflyTV",
-                album: "Now Playing",
-                artwork: poster ? [{ src: poster, sizes: "500x750", type: "image/jpeg" }] : []
-              });
-              navigator.mediaSession.setActionHandler("seekbackward", function(){ try { target.currentTime = Math.max(0, Number(target.currentTime || 0) - 10); } catch {} });
-              navigator.mediaSession.setActionHandler("seekforward", function(){ try { target.currentTime = Number(target.currentTime || 0) + 10; } catch {} });
-              navigator.mediaSession.setActionHandler("play", function(){ try { target.play && target.play(); } catch {} });
-              navigator.mediaSession.setActionHandler("pause", function(){ try { target.pause && target.pause(); } catch {} });
-            } catch {}
-          }
-
-          function markFallbackReady(message) {
-            if (playerShell) playerShell.classList.add("v149Ready");
-            try { if (recoveryCard) recoveryCard.hidden = true; } catch {}
-            if (isMediaActuallyPlaying(video)) {
-              markShellPlaybackActive(message || "HLS recovery player is playing");
-            } else {
-              setVideoUiState("ready");
-              setPlayerStatus("m3u8 ready", message || "HLS recovery player loaded", false);
-              setStatus("m3u8 loaded in HLS recovery player.");
-              hidePlayerStatusSoon();
-            }
-            installMediaSession(video);
-          }
-
-          function wireVideoEvents() {
-            if (!video || video.dataset.v154HlsEvents === "true") return;
-            video.dataset.v154HlsEvents = "true";
-            ["loadedmetadata", "loadeddata", "canplay", "canplaythrough", "progress", "durationchange"].forEach(function(name) {
-              video.addEventListener(name, function() {
-                syncCustomSeekBar();
-                if (Number(video.readyState || 0) >= 2) markFallbackReady("HLS recovery player loaded");
-              });
-            });
-            video.addEventListener("playing", function(){
-              if (recoveryCard) recoveryCard.hidden = true;
-              markShellPlaybackActive("HLS recovery stream is playing");
-              syncCustomSeekBar();
-            });
-            video.addEventListener("pause", function(){ if (playerShell) playerShell.classList.remove("v149Playing"); setVideoUiState("paused"); syncCustomSeekBar(); });
-            video.addEventListener("waiting", function(){ setPlayerStatus("Buffering...", "Network slowed down. Holding the stream steady.", false); syncCustomSeekBar(); });
-            video.addEventListener("error", function(){
-              var err = video && video.error;
-              setPlayerStatus("Video error", err && err.message ? err.message : "The browser could not decode this stream.", true);
-            });
-          }
-
-          wireVideoEvents();
-
-          var nativeHls = video && (video.canPlayType("application/vnd.apple.mpegurl") || video.canPlayType("application/x-mpegURL") || video.canPlayType("application/x-mpegurl"));
-          if (nativeHls && !window.Hls) {
-            try {
-              video.src = src;
-              video.load();
-            } catch {}
-            markFallbackReady("Native HLS loaded");
-            return;
-          }
-
-          loadHlsScript(function(loaded) {
-            if (!loaded || !window.Hls || !window.Hls.isSupported()) {
-              if (nativeHls) {
-                try {
-                  video.src = src;
-                  video.load();
-                } catch {}
-                markFallbackReady("Native HLS loaded");
-                return;
-              }
-
-              setPlayerStatus("HLS could not load", "Vidstack did not start, and this browser needs HLS.js or native HLS support to play this m3u8.", true);
-              setStatus("HLS recovery failed to load.");
-              return;
-            }
-
-            var hlsFatalRetries = 0;
-            var hlsMediaRetries = 0;
-            try { video.controls = true; } catch {}
-            var lastStatusAt = 0;
-
-            movieButtonHls = new window.Hls({
-              debug: false,
-              enableWorker: true,
-              lowLatencyMode: false,
-              backBufferLength: 75,
-              maxBufferLength: 75,
-              maxMaxBufferLength: 240,
-              maxBufferHole: 1.5,
-              highBufferWatchdogPeriod: 2,
-              nudgeOffset: 0.12,
-              nudgeMaxRetry: 5,
-              nudgeOnVideoHole: true,
-              maxFragLookUpTolerance: 0.8,
-              initialLiveManifestSize: 1,
-              liveSyncDurationCount: 2,
-              liveMaxLatencyDurationCount: 6,
-              liveDurationInfinity: false,
-              startLevel: -1,
-              capLevelToPlayerSize: true,
-              abrEwmaDefaultEstimate: 4500000,
-              abrBandWidthFactor: 0.92,
-              abrBandWidthUpFactor: 0.72,
-              manifestLoadingMaxRetry: 6,
-              levelLoadingMaxRetry: 6,
-              fragLoadingMaxRetry: 9,
-              manifestLoadingRetryDelay: 900,
-              levelLoadingRetryDelay: 900,
-              fragLoadingRetryDelay: 900,
-              manifestLoadingTimeOut: 30000,
-              levelLoadingTimeOut: 30000,
-              fragLoadingTimeOut: 30000,
-              fragLoadPolicy: {
-                default: {
-                  maxTimeToFirstByteMs: 30000,
-                  maxLoadTimeMs: 120000,
-                  timeoutRetry: { maxNumRetry: 6, retryDelayMs: 900, maxRetryDelayMs: 7000, backoff: "exponential" },
-                  errorRetry: { maxNumRetry: 8, retryDelayMs: 900, maxRetryDelayMs: 7000, backoff: "exponential" }
-                }
-              },
-              xhrSetup: function(xhr) { try { xhr.withCredentials = false; } catch {} }
-            });
-
-            movieButtonHls.on(window.Hls.Events.MEDIA_ATTACHED, function() {
-              setPlayerStatus("Loading m3u8...", "Fetching manifest through HLS.js", false);
-              movieButtonHls.loadSource(src);
-            });
-
-            movieButtonHls.on(window.Hls.Events.MANIFEST_PARSED, function(event, parsed) {
-              var levels = parsed && parsed.levels ? parsed.levels : [];
-              var heights = uniqueHlsHeights(levels);
-              markFallbackReady("HLS.js manifest loaded" + (heights.length ? " • Auto / " + heights.join("p / ") + "p" : ""));
-              try { movieButtonHls.startLoad(-1); } catch {}
-              try { video.play && video.play().catch(function(){}); } catch {}
-              setTimeout(syncCustomSeekBar, 250);
-            });
-
-            [window.Hls.Events.FRAG_BUFFERED, window.Hls.Events.BUFFER_APPENDED, window.Hls.Events.LEVEL_LOADED].forEach(function(eventName) {
-              try {
-                movieButtonHls.on(eventName, function() {
-                  if (Number(video.readyState || 0) >= 2 || eventName === window.Hls.Events.FRAG_BUFFERED) {
-                    markFallbackReady("Stream data received");
-                    syncCustomSeekBar();
-                  }
-                });
-              } catch {}
-            });
-
-            movieButtonHls.on(window.Hls.Events.LEVEL_SWITCHED, function(event, data) {
-              try {
-                var level = movieButtonHls.levels && movieButtonHls.levels[data.level];
-                var label = level && level.height ? level.height + "p" : "Auto";
-                if (Date.now() - lastStatusAt > 2500) {
-                  lastStatusAt = Date.now();
-                  setPlayerStatus("Quality " + label, "Adaptive stream is running through HLS.js", false);
-                  hidePlayerStatusSoon();
-                }
-              } catch {}
-            });
-
-            movieButtonHls.on(window.Hls.Events.ERROR, function(event, err) {
-              if (!err) return;
-              var detail = String(err.details || err.reason || err.type || "Unknown HLS error");
-              var isFragProblem = /fragLoad|FRAG_LOAD|fragment|fragParsing/i.test(detail);
-              var playingNow = isMediaActuallyPlaying(video);
-
-              if (!err.fatal) {
-                if (/bufferStalledError|bufferNudgeOnStall/i.test(detail)) {
-                  try { movieButtonHls.startLoad(-1); } catch {}
-                  if (!playingNow) setPlayerStatus("Buffering...", "Recovering from a small stream stall", false);
-                  else markShellPlaybackActive("Stream is playing while HLS.js smooths a stall");
-                  return;
-                }
-                if (isFragProblem) {
-                  try { movieButtonHls.startLoad(-1); } catch {}
-                  if (playingNow) markShellPlaybackActive("Stream is playing; skipped one weak fragment retry");
-                  else { setPlayerStatus("Fragment retry", "Retrying a slow video fragment", false); hidePlayerStatusSoon(1200); }
-                  return;
-                }
-                if (detail) {
-                  if (playingNow) markShellPlaybackActive("Stream is playing");
-                  else { setPlayerStatus("HLS warning", detail, false); hidePlayerStatusSoon(1200); }
-                }
-                return;
-              }
-
-              if (err.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
-                hlsFatalRetries += 1;
-                try {
-                  if (hlsFatalRetries <= 4) {
-                    if (!playingNow) setPlayerStatus("HLS network retry", "Retry " + hlsFatalRetries + " • " + detail, true);
-                    movieButtonHls.startLoad(-1);
-                  } else {
-                    setPlayerStatus("Reloading stream", "Fragment loading kept failing, reloading the m3u8", true);
-                    movieButtonHls.stopLoad();
-                    movieButtonHls.loadSource(src);
-                    movieButtonHls.startLoad(-1);
-                    hlsFatalRetries = 0;
-                  }
-                } catch {}
-                return;
-              }
-
-              if (err.type === window.Hls.ErrorTypes.MEDIA_ERROR) {
-                hlsMediaRetries += 1;
-                setPlayerStatus("HLS media recovery", "Repairing decoder state...", true);
-                try {
-                  if (hlsMediaRetries === 1) movieButtonHls.recoverMediaError();
-                  else if (hlsMediaRetries === 2) { movieButtonHls.swapAudioCodec(); movieButtonHls.recoverMediaError(); }
-                  else startModernHlsVideoFallback(src, data, "Decoder recovery failed, restarting HLS.js");
-                } catch {}
-                return;
-              }
-
-              setPlayerStatus("HLS failed", detail, true);
-              setStatus("HLS failed: " + detail);
-            });
-
-            movieButtonHls.attachMedia(video);
-          });
-        }
-
-
-        function injectSwiflyLiteHlsStyles() {
-          try {
-            if (document.getElementById("swifly-lite-hls-style")) return;
-            var style = document.createElement("style");
-            style.id = "swifly-lite-hls-style";
-            style.textContent = "\n" +
-              ".dsMovieButtonPlayerShell.usesSwiflyLiteHls{position:relative;display:block!important;overflow:hidden;background:#02040a;border-radius:26px;border:1px solid rgba(148,163,184,.16);box-shadow:0 28px 80px rgba(0,0,0,.55);}\n" +
-              ".dsMovieButtonPlayerShell.usesSwiflyLiteHls .swiflyLiteVideo{display:block!important;width:100%!important;height:100%!important;min-height:clamp(420px,62vw,82vh);object-fit:contain;background:#000;border-radius:26px;}\n" +
-              ".dsMovieButtonPlayerShell.usesSwiflyLiteHls .swiflyVidstackPlayer,.dsMovieButtonPlayerShell.usesSwiflyLiteHls .swiflyTimelineRescue,.dsMovieButtonPlayerShell.usesSwiflyLiteHls .swiflyVideoDock,.dsMovieButtonPlayerShell.usesSwiflyLiteHls .swiflyNeoDock,.dsMovieButtonPlayerShell.usesSwiflyLiteHls .dsHlsStatus{display:none!important;visibility:hidden!important;pointer-events:none!important;}\n" +
-              ".swiflyLiteChrome{position:absolute;left:16px;right:16px;bottom:16px;z-index:60;display:grid;grid-template-columns:auto auto minmax(120px,1fr) auto auto auto;gap:12px;align-items:center;padding:14px 16px;border:1px solid rgba(255,255,255,.14);border-radius:22px;background:linear-gradient(180deg,rgba(15,23,42,.78),rgba(2,6,23,.92));box-shadow:0 18px 55px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.12);backdrop-filter:blur(20px);}\n" +
-              ".swiflyLiteBtn{width:42px;height:42px;border:0;border-radius:999px;display:grid;place-items:center;background:rgba(255,255,255,.12);color:#fff;font-weight:900;cursor:pointer;transition:transform .16s ease,background .16s ease,box-shadow .16s ease;}\n" +
-              ".swiflyLiteBtn:hover,.swiflyLiteBtn:focus-visible{transform:scale(1.06);background:rgba(122,162,255,.36);box-shadow:0 0 0 4px rgba(122,162,255,.18);outline:none;}\n" +
-              ".swiflyLitePlay{width:48px;height:48px;background:linear-gradient(135deg,#4f8cff,#8b5cf6);box-shadow:0 12px 28px rgba(79,140,255,.28);}\n" +
-              ".swiflyLiteTime{font:800 12px/1 Inter,system-ui,sans-serif;color:rgba(255,255,255,.86);font-variant-numeric:tabular-nums;min-width:48px;text-align:center;}\n" +
-              ".swiflyLiteDuration{min-width:58px;}\n" +
-              ".swiflyLiteRange{width:100%;accent-color:#7aa2ff;cursor:pointer;height:26px;}\n" +
-              ".swiflyLiteRange:disabled{opacity:.55;cursor:not-allowed;}\n" +
-              ".swiflyLiteBuffer{position:absolute;left:82px;right:152px;bottom:10px;height:3px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden;pointer-events:none;}\n" +
-              ".swiflyLiteBuffer span{display:block;height:100%;width:0%;background:linear-gradient(90deg,rgba(125,211,252,.55),rgba(167,139,250,.55));}\n" +
-              ".swiflyLiteTopNote{position:absolute;top:16px;left:16px;z-index:55;padding:9px 12px;border-radius:999px;background:rgba(2,6,23,.72);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.82);font:800 11px/1 Inter,system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;backdrop-filter:blur(16px);}\n" +
-              ".dsMovieButtonPlayerShell.usesSwiflyLiteHls #swiflyTvHint{bottom:92px!important;}\n" +
-              ".dsMovieButtonPlayerShell.usesSwiflyLiteHls .navStudioButton{bottom:92px!important;}\n" +
-              ".swiflyLiteUnlock{position:absolute;inset:0;z-index:54;display:none;place-items:center;background:radial-gradient(circle at center,rgba(15,23,42,.18),rgba(0,0,0,.34));}\n" +
-              ".swiflyLiteNeedsClick .swiflyLiteUnlock{display:grid;}\n" +
-              ".swiflyLiteUnlock button{border:0;border-radius:999px;padding:16px 22px;background:linear-gradient(135deg,#4f8cff,#8b5cf6);color:white;font:900 15px Inter,system-ui,sans-serif;box-shadow:0 18px 50px rgba(79,140,255,.34);cursor:pointer;}\n" +
-              "@media(max-width:760px){.swiflyLiteChrome{left:10px;right:10px;bottom:10px;grid-template-columns:auto 1fr auto auto;gap:8px;padding:12px}.swiflyLiteCurrent{display:none}.swiflyLiteDuration{font-size:11px}.swiflyLiteVideo{min-height:60vh!important}}\n" +
-              ":fullscreen .swiflyLiteVideo, .dsMovieButtonPlayerShell:fullscreen .swiflyLiteVideo{height:100vh!important;min-height:100vh!important;border-radius:0!important;}\n" +
-              ":fullscreen .swiflyLiteChrome, .dsMovieButtonPlayerShell:fullscreen .swiflyLiteChrome{bottom:22px;left:24px;right:24px;}\n";
-            document.head.appendChild(style);
-          } catch {}
-        }
-
-        function startSwiflyLiteHlsSource(src, data) {
-          setPlayerStatus("Loading m3u8...", "Starting Swifly Lite HLS player", false);
-          setVideoUiState("loading");
-          try {
-            if (window.__swiflyVidstackRescueTick) {
-              clearInterval(window.__swiflyVidstackRescueTick);
-              window.__swiflyVidstackRescueTick = null;
-            }
-          } catch {}
-          destroyRegularMoviePlayers();
-          injectSwiflyLiteHlsStyles();
-
-          if (!video) {
-            setPlayerStatus("Player error", "Missing video element", true);
-            return;
-          }
-
-          try {
-            if (playerShell) {
-              playerShell.hidden = false;
-              playerShell.classList.remove("usesVidstack", "v149Vidstack", "v150VidstackModern", "v151StreamPro", "v154StreamLatchFix", "v155CleanVidstack", "v157LeanVidstack", "v157VisibleControls", "v158NoWakeLoop", "usesVideoJs", "usesPlyr", "isScrubbing");
-              playerShell.classList.add("usesSwiflyLiteHls", "v159SwiflyLiteHls");
-              playerShell.querySelectorAll(".swiflyVidstackPlayer,.swiflyVidstackChrome,.swiflyTimelineRescue,.swiflyLiteChrome,.swiflyLiteTopNote,.swiflyLiteUnlock").forEach(function(el){ try { el.remove(); } catch {} });
-              hardHideLegacyPlayerChrome();
-            }
-            if (seekDock) seekDock.hidden = true;
-            if (hlsStatus) hlsStatus.hidden = true;
-            if (qualityMenu) qualityMenu.hidden = true;
-            if (speedMenu) speedMenu.hidden = true;
-            if (volumeMenu) volumeMenu.hidden = true;
-            video.hidden = false;
-            video.style.display = "block";
-            video.className = "swiflyLiteVideo dsMovieButtonVideo dsCinemaHlsVideo";
-            video.controls = false;
-            video.playsInline = true;
-            video.preload = "auto";
-            video.crossOrigin = "anonymous";
-            video.removeAttribute("src");
-            video.load();
-          } catch {}
-
-          var liteDuration = 0;
-          var liteDurationFromManifest = false;
-          var rangeDragging = false;
-          var statusQuietTimer = null;
-          var chrome = document.createElement("div");
-          chrome.className = "swiflyLiteChrome";
-          chrome.innerHTML = '<button type="button" class="swiflyLiteBtn swiflyLitePlay" aria-label="Play or pause">▶</button><span class="swiflyLiteTime swiflyLiteCurrent">0:00</span><input class="swiflyLiteRange" type="range" min="0" max="1000" value="0" step="1" aria-label="Movie timeline"><span class="swiflyLiteTime swiflyLiteDuration">--:--</span><button type="button" class="swiflyLiteBtn swiflyLiteMute" aria-label="Mute or unmute">🔊</button><button type="button" class="swiflyLiteBtn swiflyLiteFull" aria-label="Fullscreen">⛶</button><div class="swiflyLiteBuffer"><span></span></div>';
-          var note = document.createElement("div");
-          note.className = "swiflyLiteTopNote";
-          note.textContent = "Swifly Lite • HLS.js";
-          var unlock = document.createElement("div");
-          unlock.className = "swiflyLiteUnlock";
-          unlock.innerHTML = '<button type="button">Click to play</button>';
-          if (playerShell) {
-            playerShell.appendChild(note);
-            playerShell.appendChild(unlock);
-            playerShell.appendChild(chrome);
-          }
-
-          var playBtn = chrome.querySelector(".swiflyLitePlay");
-          var currentEl = chrome.querySelector(".swiflyLiteCurrent");
-          var durationEl = chrome.querySelector(".swiflyLiteDuration");
-          var range = chrome.querySelector(".swiflyLiteRange");
-          var muteBtn = chrome.querySelector(".swiflyLiteMute");
-          var fullBtn = chrome.querySelector(".swiflyLiteFull");
-          var bufferEl = chrome.querySelector(".swiflyLiteBuffer span");
-          var unlockBtn = unlock.querySelector("button");
-
-          function fmt(seconds) {
-            seconds = Math.max(0, Number(seconds || 0));
-            var h = Math.floor(seconds / 3600);
-            var m = Math.floor((seconds % 3600) / 60);
-            var s = Math.floor(seconds % 60);
-            return h ? (h + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0")) : (m + ":" + String(s).padStart(2, "0"));
-          }
-
-          function getDuration() {
-            var d = 0;
-            try { d = Number(video.duration); } catch {}
-            if (Number.isFinite(d) && d > 0 && d < 86400) return d;
-            if (Number.isFinite(liteDuration) && liteDuration > 0) return liteDuration;
-            try {
-              if (video.seekable && video.seekable.length) {
-                var start = video.seekable.start(0);
-                var end = video.seekable.end(video.seekable.length - 1);
-                if (Number.isFinite(end - start) && end - start > 0 && end - start < 86400) return end - start;
-              }
-            } catch {}
-            return 0;
-          }
-
-          function setQuietStatus(title, meta, error) {
-            setPlayerStatus(title, meta, Boolean(error));
-            if (statusQuietTimer) clearTimeout(statusQuietTimer);
-            statusQuietTimer = setTimeout(function(){ hidePlayerStatusSoon(400); }, 900);
-          }
-
-          function updateChrome() {
-            var d = getDuration();
-            var current = 0;
-            try { current = Number(video.currentTime || 0); } catch {}
-            if (playBtn) playBtn.textContent = video.paused ? "▶" : "❚❚";
-            if (currentEl) currentEl.textContent = fmt(current);
-            if (durationEl) durationEl.textContent = d > 0 ? fmt(d) : "--:--";
-            if (range && !rangeDragging) {
-              if (d > 0) {
-                range.disabled = false;
-                range.value = String(Math.max(0, Math.min(1000, Math.round((current / d) * 1000))));
-              } else {
-                range.disabled = true;
-                range.value = "0";
-              }
-            }
-            if (muteBtn) muteBtn.textContent = video.muted ? "🔇" : "🔊";
-            if (bufferEl) {
-              var buffered = 0;
-              try {
-                if (video.buffered && video.buffered.length && d > 0) buffered = Math.max(0, Math.min(100, (video.buffered.end(video.buffered.length - 1) / d) * 100));
-              } catch {}
-              bufferEl.style.width = buffered + "%";
-            }
-          }
-
-          function markPlayable(label) {
-            if (playerShell) {
-              playerShell.classList.add("v149Ready");
-              playerShell.classList.remove("swiflyLiteNeedsClick");
-            }
-            setVideoUiState(video.paused ? "ready" : "playing");
-            setStatus("m3u8 loaded in Swifly Lite player.");
-            setQuietStatus(video.paused ? "Ready" : "Playing", label || "Timeline enabled", false);
-            updateChrome();
-          }
-
-          function togglePlay() {
-            try {
-              if (!video.paused) {
-                video.pause();
-                updateChrome();
-                return;
-              }
-              var promise = video.play();
-              if (promise && promise.catch) {
-                promise.then(function(){ markPlayable("Playing"); }).catch(function(){
-                  if (playerShell) playerShell.classList.add("swiflyLiteNeedsClick");
-                  setPlayerStatus("Click to play", "Browser blocked autoplay, press the play button.", false);
-                });
-              }
-            } catch {
-              if (playerShell) playerShell.classList.add("swiflyLiteNeedsClick");
-            }
-          }
-
-          if (playBtn) playBtn.addEventListener("click", function(event){ event.preventDefault(); togglePlay(); });
-          if (unlockBtn) unlockBtn.addEventListener("click", function(event){ event.preventDefault(); togglePlay(); });
-          if (muteBtn) muteBtn.addEventListener("click", function(event){ event.preventDefault(); video.muted = !video.muted; updateChrome(); });
-          if (fullBtn) fullBtn.addEventListener("click", function(event){ event.preventDefault();
-            try {
-              var full = document.fullscreenElement || document.webkitFullscreenElement;
-              if (full) { if (document.exitFullscreen) document.exitFullscreen(); else if (document.webkitExitFullscreen) document.webkitExitFullscreen(); return; }
-              var target = playerShell || video;
-              if (target.requestFullscreen) target.requestFullscreen({ navigationUI: "hide" }).catch(function(){});
-              else if (target.webkitRequestFullscreen) target.webkitRequestFullscreen();
-            } catch {}
-          });
-          if (range) {
-            range.addEventListener("input", function(){ rangeDragging = true; var d = getDuration(); if (d > 0 && currentEl) currentEl.textContent = fmt((Number(range.value || 0) / 1000) * d); });
-            range.addEventListener("change", function(){
-              var d = getDuration();
-              if (d > 0) {
-                try { video.currentTime = (Number(range.value || 0) / 1000) * d; } catch {}
-              }
-              rangeDragging = false;
-              updateChrome();
-            });
-          }
-
-          ["loadedmetadata", "durationchange", "progress", "timeupdate", "seeking", "seeked", "volumechange", "play", "pause", "canplay", "playing", "waiting"].forEach(function(name){
-            video.addEventListener(name, function(){
-              if (name === "playing") markPlayable("Stream is playing");
-              else if (name === "canplay" || name === "loadedmetadata") markPlayable("Timeline enabled");
-              else if (name === "waiting") setPlayerStatus("Buffering...", "Loading the next stream chunk", false);
-              updateChrome();
-            });
-          });
-
-          if (playerShell && !playerShell.dataset.v159LiteKeys) {
-            playerShell.dataset.v159LiteKeys = "true";
-            playerShell.addEventListener("keydown", function(event){
-              if (!playerShell.classList.contains("usesSwiflyLiteHls")) return;
-              var tag = event.target && event.target.tagName ? event.target.tagName.toLowerCase() : "";
-              if (tag === "input" || tag === "textarea" || tag === "select") return;
-              try {
-                if (event.key === " " || event.key === "k" || event.key === "K") { event.preventDefault(); togglePlay(); }
-                else if (event.key === "ArrowLeft" || event.key === "j" || event.key === "J") { event.preventDefault(); video.currentTime = Math.max(0, Number(video.currentTime || 0) - 10); }
-                else if (event.key === "ArrowRight" || event.key === "l" || event.key === "L") { event.preventDefault(); video.currentTime = Number(video.currentTime || 0) + 10; }
-                else if (event.key === "m" || event.key === "M") { event.preventDefault(); video.muted = !video.muted; }
-                else if (event.key === "f" || event.key === "F") { event.preventDefault(); if (fullBtn) fullBtn.click(); }
-              } catch {}
-            });
-          }
-
-          try { video.addEventListener("click", function(){ togglePlay(); }); } catch {}
-          updateChrome();
 
           var nativeHls = video.canPlayType("application/vnd.apple.mpegurl") || video.canPlayType("application/x-mpegURL") || video.canPlayType("application/x-mpegurl");
           loadHlsScript(function(loaded) {
             if (loaded && window.Hls && window.Hls.isSupported()) {
-              var fatalNetworkRetries = 0;
-              var fatalMediaRetries = 0;
-              movieButtonHls = new window.Hls({
+              var networkRetries = 0;
+              var mediaRetries = 0;
+              hlsInstance = new window.Hls({
                 debug: false,
                 enableWorker: true,
                 lowLatencyMode: false,
-                backBufferLength: 90,
-                maxBufferLength: 75,
-                maxMaxBufferLength: 240,
-                startPosition: -1,
                 capLevelToPlayerSize: true,
-                manifestLoadingMaxRetry: 6,
-                levelLoadingMaxRetry: 6,
-                fragLoadingMaxRetry: 9,
-                manifestLoadingTimeOut: 30000,
-                levelLoadingTimeOut: 30000,
-                fragLoadingTimeOut: 30000,
-                liveDurationInfinity: false,
-                xhrSetup: function(xhr) { try { xhr.withCredentials = false; } catch {} }
-              });
-              movieButtonHls.on(window.Hls.Events.MEDIA_ATTACHED, function(){
-                setPlayerStatus("Loading m3u8...", "Fetching manifest with HLS.js", false);
-                try { movieButtonHls.loadSource(src); } catch {}
-              });
-              movieButtonHls.on(window.Hls.Events.MANIFEST_PARSED, function(event, parsed){
-                var levels = parsed && parsed.levels ? parsed.levels : [];
-                var heights = uniqueHlsHeights(levels);
-                markPlayable("HLS.js ready" + (heights.length ? " • Auto / " + heights.join("p / ") + "p" : ""));
-                try { movieButtonHls.startLoad(-1); } catch {}
-              });
-              movieButtonHls.on(window.Hls.Events.LEVEL_LOADED, function(event, info){
-                try {
-                  var details = info && info.details;
-                  if (details && !details.live && Number(details.totalduration) > 0) {
-                    liteDuration = Number(details.totalduration);
-                    liteDurationFromManifest = true;
-                  }
-                } catch {}
-                updateChrome();
-              });
-              movieButtonHls.on(window.Hls.Events.FRAG_BUFFERED, function(){ markPlayable("Stream data received"); });
-              movieButtonHls.on(window.Hls.Events.ERROR, function(event, err){
-                if (!err) return;
-                var detail = String(err.details || err.reason || err.type || "Unknown HLS error");
-                var playingNow = isMediaActuallyPlaying(video);
-                if (!err.fatal) {
-                  if (/fragLoad|FRAG_LOAD|bufferStalled|bufferNudge/i.test(detail)) {
-                    try { movieButtonHls.startLoad(-1); } catch {}
-                    if (!playingNow) setQuietStatus("Buffering", "Retrying stream chunk", false);
-                    return;
-                  }
-                  return;
-                }
-                if (err.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
-                  fatalNetworkRetries += 1;
-                  setPlayerStatus("Stream retry", "Network retry " + fatalNetworkRetries + " • " + detail, true);
-                  try { movieButtonHls.startLoad(-1); } catch {}
-                  return;
-                }
-                if (err.type === window.Hls.ErrorTypes.MEDIA_ERROR) {
-                  fatalMediaRetries += 1;
-                  setPlayerStatus("Decoder recovery", "Repairing playback", true);
-                  try { if (fatalMediaRetries <= 2) movieButtonHls.recoverMediaError(); else movieButtonHls.destroy(); } catch {}
-                  return;
-                }
-                setPlayerStatus("HLS failed", detail, true);
-              });
-              movieButtonHls.attachMedia(video);
-              return;
-            }
-            if (nativeHls) {
-              try { video.src = src; video.load(); } catch {}
-              markPlayable("Native HLS ready");
-              return;
-            }
-            setPlayerStatus("HLS could not load", "This browser needs HLS.js or native HLS support for m3u8.", true);
-          });
-        }
-
-        function startVideoJsCinemaSource(src, data, vidstackAttempt) {
-          vidstackAttempt = Number(vidstackAttempt || 0);
-          setPlayerStatus("Loading m3u8...", vidstackAttempt ? "Retrying Vidstack Clean Cinema" : "Starting Vidstack Clean Cinema", false);
-          setVideoUiState("loading");
-          try {
-            if (window.__swiflyVidstackRescueTick) {
-              clearInterval(window.__swiflyVidstackRescueTick);
-              window.__swiflyVidstackRescueTick = null;
-            }
-          } catch {}
-          destroyRegularMoviePlayers();
-
-          if (playerShell) {
-            playerShell.classList.remove(
-              "usesPlyr",
-              "usesMediaChrome",
-              "usesNativeVideo",
-              "usesVideoJs",
-              "v150HlsRecovery",
-              "isScrubbing",
-              "isUsingDock",
-              "isPreviewingTime",
-              "previewLoadingFrame",
-              "hasFramePreview",
-              "v128VideoReady",
-              "v129MinimalPlayer",
-              "v130SimpleModern",
-              "v131TimelineFixed",
-              "v132SoftRectPlay",
-              "v133HoverPreview",
-              "v134SpeedPreviewFix",
-              "v135VolumeImagePreview",
-              "v136PillDockSkin",
-              "v137NativeDock",
-              "v138PreviewWarmup",
-              "v139CleanIconDock",
-              "v141FitFullscreenPreviewFix",
-              "v148NeoCinema",
-              "v149Ready",
-              "v149Playing",
-              "v151StreamPro",
-              "v155CleanVidstack",
-              "v157LeanVidstack",
-              "v157VisibleControls",
-              "v158NoWakeLoop"
-            );
-            playerShell.classList.add("usesVidstack", "v149Vidstack", "v150VidstackModern", "v151StreamPro", "v154StreamLatchFix", "v155CleanVidstack", "v157LeanVidstack", "v157VisibleControls", "v158NoWakeLoop");
-          }
-
-          try {
-            if (seekDock) seekDock.hidden = true;
-            if (qualityMenu) qualityMenu.hidden = true;
-            if (speedMenu) speedMenu.hidden = true;
-            if (volumeMenu) volumeMenu.hidden = true;
-            if (hlsStatus) hlsStatus.hidden = true;
-            if (playerShell) { playerShell.classList.add("v155CleanVidstack", "v157LeanVidstack", "v157VisibleControls", "v158NoWakeLoop"); hardHideLegacyPlayerChrome(); }
-          } catch {}
-
-          try {
-            video.pause && video.pause();
-            video.removeAttribute("src");
-            video.load();
-            video.hidden = true;
-            video.style.display = "none";
-            video.classList.add("isVidstackHidden");
-          } catch {}
-
-          function installMediaSession(target, title, poster) {
-            try {
-              if (!target || !("mediaSession" in navigator)) return;
-              navigator.mediaSession.metadata = new MediaMetadata({
-                title: title || "SwiflyTV",
-                artist: "SwiflyTV",
-                album: "Now Playing",
-                artwork: poster ? [{ src: poster, sizes: "500x750", type: "image/jpeg" }] : []
-              });
-              navigator.mediaSession.setActionHandler("seekbackward", function(){ try { target.currentTime = Math.max(0, Number(target.currentTime || 0) - 10); } catch {} });
-              navigator.mediaSession.setActionHandler("seekforward", function(){ try { target.currentTime = Number(target.currentTime || 0) + 10; } catch {} });
-              navigator.mediaSession.setActionHandler("play", function(){ try { target.play && target.play(); } catch {} });
-              navigator.mediaSession.setActionHandler("pause", function(){ try { target.pause && target.pause(); } catch {} });
-            } catch {}
-          }
-
-          function syncFullscreenBodyLock() {
-            try {
-              var full = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
-              var active = full && playerShell && (full === playerShell || playerShell.contains(full));
-              document.documentElement.classList.toggle("swiflyPlayerFullscreenActive", Boolean(active));
-              document.body.classList.toggle("swiflyPlayerFullscreenActive", Boolean(active));
-              if (!active) return;
-              if (seekDock) seekDock.hidden = true;
-              hidePlayerStatusNow();
-            } catch {}
-          }
-
-          if (!window.__swiflyPlayerFullscreenListenerInstalled) {
-            window.__swiflyPlayerFullscreenListenerInstalled = true;
-            ["fullscreenchange", "webkitfullscreenchange", "MSFullscreenChange"].forEach(function(name) {
-              document.addEventListener(name, syncFullscreenBodyLock, { passive: true });
-            });
-          }
-
-          function requestShellFullscreen() {
-            try {
-              var target = playerShell || movieButtonVidstack;
-              if (!target) return;
-              if (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
-                if (document.exitFullscreen) document.exitFullscreen();
-                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-                return;
-              }
-              if (target.requestFullscreen) target.requestFullscreen({ navigationUI: "hide" }).then(syncFullscreenBodyLock).catch(function(){ syncFullscreenBodyLock(); });
-              else if (target.webkitRequestFullscreen) target.webkitRequestFullscreen();
-              else if (movieButtonVidstack && movieButtonVidstack.requestFullscreen) movieButtonVidstack.requestFullscreen();
-              setTimeout(syncFullscreenBodyLock, 60);
-            } catch {}
-          }
-
-          loadVidstackAssets(function(loaded) {
-            if (!loaded || !window.customElements || !customElements.get("media-player")) {
-              startModernHlsVideoFallback(src, data, "Vidstack assets did not load");
-              return;
-            }
-
-            var title = (data && (data.title || data.name)) || "SwiflyTV";
-            var poster = (data && (data.backdrop || data.poster || data.backdrop_path || data.poster_path)) || "";
-            if (poster && poster.indexOf("http") !== 0 && poster.charAt(0) === "/") {
-              poster = "https://image.tmdb.org/t/p/w1280" + poster;
-            }
-
-            var player = document.createElement("media-player");
-            player.className = "swiflyVidstackPlayer";
-            player.setAttribute("title", title);
-            player.setAttribute("src", src);
-            player.setAttribute("view-type", "video");
-            // Movie-button streams are VOD. Force on-demand UI so Vidstack does not
-            // show a live-only timeline when a proxied playlist is slow to expose seek ranges.
-            player.setAttribute("stream-type", "on-demand");
-            player.streamType = "on-demand";
-            player.setAttribute("min-live-dvr-window", "0");
-            player.setAttribute("load", "eager");
-            player.setAttribute("preload", "auto");
-            player.setAttribute("crossorigin", "anonymous");
-            player.setAttribute("playsinline", "");
-            player.setAttribute("data-swifly-src", src);
-            player.setAttribute("data-swifly-player", "vidstack-v158");
-            player.setAttribute("key-target", "player");
-            player.setAttribute("controls-delay", "3600000");
-            player.setAttribute("hide-controls-on-mouse-leave", "false");
-            player.setAttribute("aria-keyshortcuts", "Space K J L ArrowLeft ArrowRight ArrowUp ArrowDown M F");
-            try { player.controlsDelay = 3600000; } catch {}
-            try { player.hideControlsOnMouseLeave = false; } catch {}
-            try { player.controlsVisible = true; } catch {}
-            player.setAttribute("aria-label", title + " player");
-
-            if (poster) {
-              try { player.setAttribute("poster", poster); } catch {}
-            }
-
-            var provider = document.createElement("media-provider");
-            var layout = document.createElement("media-video-layout");
-            layout.setAttribute("data-swifly-layout", "default");
-            layout.setAttribute("small-when", "never");
-            layout.setAttribute("menu-group", "bottom");
-            layout.setAttribute("seek-step", "10");
-            layout.removeAttribute("disable-time-slider");
-            // Do not set thumbnails until a real VTT URL exists; an empty value can make
-            // preview/seek UI wait on data that Swifly has not generated yet.
-            layout.setAttribute("no-audio-gain", "");
-
-            player.appendChild(provider);
-            player.appendChild(layout);
-
-            if (playerShell) {
-              try { playerShell.querySelectorAll(".swiflyVidstackPlayer, .swiflyVidstackChrome").forEach(function(el){ el.remove(); }); } catch {}
-              hardHideLegacyPlayerChrome();
-              playerShell.appendChild(player);
-              movieButtonVidstack = player;
-              startVisibleControlsLoop();
-              ["pointermove", "mousemove", "touchstart", "click", "keydown"].forEach(function(eventName){
-                try { playerShell.addEventListener(eventName, wakeVidstackControls, { passive: true }); } catch {}
-              });
-            }
-
-            var settled = false;
-            var fallbackStarted = false;
-            var softTimer = null;
-            var hardTimer = null;
-            var stallTimer = null;
-            var providerReady = false;
-            var rescueControls = null;
-            var rescueRangeActive = false;
-            var rescueTick = null;
-
-            function getMediaDuration(target) {
-              try {
-                var d = Number(target && target.duration);
-                if (Number.isFinite(d) && d > 0) return d;
-              } catch {}
-              try {
-                var stateDuration = Number(player && player.state && player.state.duration);
-                if (Number.isFinite(stateDuration) && stateDuration > 0) return stateDuration;
-              } catch {}
-              try {
-                var inner = player && (player.querySelector("video") || player.querySelector("media-provider video"));
-                var vd = Number(inner && inner.duration);
-                if (Number.isFinite(vd) && vd > 0) return vd;
-              } catch {}
-              return 0;
-            }
-
-            function formatRescueTime(seconds) {
-              seconds = Math.max(0, Number(seconds || 0));
-              var h = Math.floor(seconds / 3600);
-              var m = Math.floor((seconds % 3600) / 60);
-              var s = Math.floor(seconds % 60);
-              return h ? (h + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0")) : (m + ":" + String(s).padStart(2, "0"));
-            }
-
-            function getControlTarget() {
-              try { if (player && typeof player.play === "function") return player; } catch {}
-              try { return player && (player.querySelector("video") || player.querySelector("media-provider video")); } catch {}
-              return null;
-            }
-
-            var wakeLock = false;
-            var lastWakeAt = 0;
-
-            function wakeVidstackControls() {
-              // v158: never dispatch synthetic pointer/mouse events from inside this function.
-              // In v157 those synthetic events bubbled back into the same shell listeners and
-              // created a recursive wakeVidstackControls stack spam. Keep this visual-only.
-              var now = Date.now();
-              if (wakeLock || now - lastWakeAt < 120) return;
-              wakeLock = true;
-              lastWakeAt = now;
-              try { player.controlsVisible = true; } catch {}
-              try { player.controlsHidden = false; } catch {}
-              try { player.removeAttribute("data-controls-hidden"); } catch {}
-              try { player.setAttribute("data-controls", ""); } catch {}
-              try { player.setAttribute("data-swifly-controls-awake", "true"); } catch {}
-              if (playerShell) playerShell.classList.add("v157ControlsAwake", "v158NoWakeLoop");
-              setTimeout(function(){ wakeLock = false; }, 0);
-            }
-
-            function ensureRescueControls() {
-              if (!playerShell || rescueControls) return rescueControls;
-              rescueControls = document.createElement("div");
-              rescueControls.className = "swiflyTimelineRescue";
-              rescueControls.innerHTML = '<button type="button" class="swiflyRescuePlay" aria-label="Play or pause">▶</button><span class="swiflyRescueCurrent">0:00</span><input class="swiflyRescueRange" type="range" min="0" max="1000" value="0" step="1" aria-label="Timeline"><span class="swiflyRescueDuration">--:--</span><button type="button" class="swiflyRescueMute" aria-label="Mute or unmute">🔊</button><button type="button" class="swiflyRescueFullscreen" aria-label="Fullscreen">⛶</button>';
-              playerShell.appendChild(rescueControls);
-
-              var playBtn = rescueControls.querySelector(".swiflyRescuePlay");
-              var range = rescueControls.querySelector(".swiflyRescueRange");
-              var muteBtn = rescueControls.querySelector(".swiflyRescueMute");
-              var fullscreenBtn = rescueControls.querySelector(".swiflyRescueFullscreen");
-
-              function target() { return getControlTarget(); }
-              if (playBtn) playBtn.addEventListener("click", function(event) {
-                event.preventDefault();
-                var t = target();
-                if (!t) return;
-                try {
-                  if (t.paused === false || (player && player.paused === false)) t.pause && t.pause();
-                  else {
-                    var promise = t.play && t.play();
-                    if (promise && promise.catch) promise.catch(function(){ try { player && player.play && player.play(); } catch {} });
-                  }
-                } catch {}
-                wakeVidstackControls();
-              });
-              if (range) {
-                range.addEventListener("input", function() { rescueRangeActive = true; });
-                range.addEventListener("change", function(event) {
-                  var t = target();
-                  var duration = getMediaDuration(t);
-                  if (t && duration > 0) {
-                    try { t.currentTime = (Number(event.target.value || 0) / 1000) * duration; } catch {}
-                    try { player.currentTime = (Number(event.target.value || 0) / 1000) * duration; } catch {}
-                  }
-                  rescueRangeActive = false;
-                  wakeVidstackControls();
-                });
-              }
-              if (muteBtn) muteBtn.addEventListener("click", function(event) {
-                event.preventDefault();
-                var t = target();
-                try {
-                  var muted = !(t && t.muted);
-                  if (t) t.muted = muted;
-                  if (player) player.muted = muted;
-                } catch {}
-                wakeVidstackControls();
-              });
-              if (fullscreenBtn) fullscreenBtn.addEventListener("click", function(event) {
-                event.preventDefault();
-                requestShellFullscreen();
-                wakeVidstackControls();
-              });
-              return rescueControls;
-            }
-
-            function updateRescueControls() {
-              var controls = ensureRescueControls();
-              if (!controls) return;
-              var t = getControlTarget();
-              var current = 0;
-              try { current = Number((t && t.currentTime) || player.currentTime || 0); } catch {}
-              var duration = getMediaDuration(t);
-              var playBtn = controls.querySelector(".swiflyRescuePlay");
-              var currentEl = controls.querySelector(".swiflyRescueCurrent");
-              var durationEl = controls.querySelector(".swiflyRescueDuration");
-              var range = controls.querySelector(".swiflyRescueRange");
-              var muteBtn = controls.querySelector(".swiflyRescueMute");
-              var paused = true;
-              var muted = false;
-              try { paused = t ? t.paused !== false : player.paused !== false; } catch {}
-              try { muted = Boolean((t && t.muted) || player.muted); } catch {}
-              if (playBtn) playBtn.textContent = paused ? "▶" : "❚❚";
-              if (currentEl) currentEl.textContent = formatRescueTime(current);
-              if (durationEl) durationEl.textContent = duration > 0 ? formatRescueTime(duration) : "LIVE";
-              if (range && !rescueRangeActive) {
-                if (duration > 0) {
-                  range.disabled = false;
-                  range.value = String(Math.max(0, Math.min(1000, Math.round((current / duration) * 1000))));
-                } else {
-                  range.disabled = true;
-                  range.value = "0";
-                }
-              }
-              if (muteBtn) muteBtn.textContent = muted ? "🔇" : "🔊";
-            }
-
-            function startVisibleControlsLoop() {
-              // Only one helper loop can exist at a time, even if the user changes movies.
-              try {
-                if (window.__swiflyVidstackRescueTick) {
-                  clearInterval(window.__swiflyVidstackRescueTick);
-                  window.__swiflyVidstackRescueTick = null;
-                }
-              } catch {}
-              wakeVidstackControls();
-              ensureRescueControls();
-              updateRescueControls();
-              if (rescueTick) clearInterval(rescueTick);
-              rescueTick = setInterval(function(){
-                // Update the backup timeline, but do not spam pointer/mouse events or force a wake loop.
-                updateRescueControls();
-              }, 750);
-              try { window.__swiflyVidstackRescueTick = rescueTick; } catch {}
-            }
-
-            function clearVidstackTimers() {
-              if (softTimer) { clearTimeout(softTimer); softTimer = null; }
-              if (hardTimer) { clearTimeout(hardTimer); hardTimer = null; }
-              if (stallTimer) { clearTimeout(stallTimer); stallTimer = null; }
-            }
-
-            function fallback(reasonText) {
-              if (fallbackStarted || settled) return;
-              fallbackStarted = true;
-              clearVidstackTimers();
-              reasonText = reasonText || "Vidstack did not start playback";
-
-              if (vidstackAttempt < 1) {
-                setPlayerStatus("Retrying Vidstack...", reasonText + " • rebuilding the player once", true);
-                try { player.remove(); } catch {}
-                setTimeout(function(){ startVideoJsCinemaSource(src, data, vidstackAttempt + 1); }, 380);
-                return;
-              }
-
-              startModernHlsVideoFallback(src, data, reasonText);
-            }
-
-            function hasPlayableVidstackMedia() {
-              try {
-                if (player && (player.canPlay === true || player.state && player.state.canPlay === true)) return true;
-                var innerVideo = player && (player.querySelector("video") || player.querySelector("media-provider video"));
-                if (innerVideo && innerVideo.readyState >= 3) return true;
-              } catch {}
-              return false;
-            }
-
-            function markReady(message, force) {
-              if (!force && !hasPlayableVidstackMedia()) {
-                setPlayerStatus("Loading m3u8...", "Metadata is present; waiting for playable video data", false);
-                return;
-              }
-              settled = true;
-              clearVidstackTimers();
-              if (isMediaActuallyPlaying(getVisiblePlaybackVideo())) {
-                markShellPlaybackActive(message || "Vidstack stream is playing");
-              } else {
-                if (playerShell) playerShell.classList.add("v149Ready");
-                setVideoUiState("ready");
-                setPlayerStatus("Ready", message || "Vidstack player loaded", false);
-                setStatus("m3u8 loaded in Vidstack player.");
-                hidePlayerStatusSoon(450);
-              }
-              installMediaSession(player, title, poster);
-            }
-
-            function markPlaying() {
-              settled = true;
-              clearVidstackTimers();
-              markShellPlaybackActive("Vidstack stream is playing");
-              wakeVidstackControls();
-              updateRescueControls();
-            }
-
-            function markPaused() {
-              if (playerShell) playerShell.classList.remove("v149Playing");
-              setVideoUiState("paused");
-              wakeVidstackControls();
-              updateRescueControls();
-            }
-
-            function applyHlsProviderConfig(event) {
-              try {
-                var hlsProvider = event && event.detail;
-                if (!hlsProvider) return;
-                providerReady = true;
-                if (window.Hls && ("library" in hlsProvider || hlsProvider.type === "hls")) hlsProvider.library = window.Hls;
-                if ("config" in hlsProvider) {
-                  hlsProvider.config = Object.assign({}, hlsProvider.config || {}, {
-                    lowLatencyMode: false,
-                    enableWorker: true,
-                    capLevelToPlayerSize: true,
-                    backBufferLength: 75,
-                    maxBufferLength: 75,
-                    maxMaxBufferLength: 240,
-                    abrEwmaDefaultEstimate: 4500000,
-                    manifestLoadingMaxRetry: 6,
-                    levelLoadingMaxRetry: 6,
-                    fragLoadingMaxRetry: 9,
-                    manifestLoadingTimeOut: 30000,
-                    levelLoadingTimeOut: 30000,
-                    fragLoadingTimeOut: 30000,
-                    fragLoadPolicy: {
-                      default: {
-                        maxTimeToFirstByteMs: 30000,
-                        maxLoadTimeMs: 120000,
-                        timeoutRetry: { maxNumRetry: 6, retryDelayMs: 900, maxRetryDelayMs: 7000, backoff: "exponential" },
-                        errorRetry: { maxNumRetry: 8, retryDelayMs: 900, maxRetryDelayMs: 7000, backoff: "exponential" }
-                      }
-                    },
-                    maxBufferHole: 1.5,
-                    highBufferWatchdogPeriod: 2,
-                    nudgeOffset: 0.12,
-                    nudgeMaxRetry: 5,
-                    nudgeOnVideoHole: true,
-                    maxFragLookUpTolerance: 0.8,
-                    initialLiveManifestSize: 1,
-                    liveSyncDurationCount: 2,
-                    liveMaxLatencyDurationCount: 6,
-                    liveDurationInfinity: false,
-                    xhrSetup: function(xhr) { try { xhr.withCredentials = false; } catch {} }
-                  });
-                }
-                setPlayerStatus("Loading m3u8...", "Vidstack HLS provider connected", false);
-              } catch {}
-            }
-
-            player.addEventListener("provider-change", applyHlsProviderConfig);
-            player.addEventListener("provider-setup", applyHlsProviderConfig);
-            player.addEventListener("can-play", function(){ markReady("Vidstack m3u8 player ready", true); });
-            player.addEventListener("canplay", function(){ markReady("Vidstack m3u8 player ready", true); });
-            player.addEventListener("loaded-data", function(){ markReady("Vidstack received video data", true); });
-            player.addEventListener("loadeddata", function(){ markReady("Vidstack received video data", true); });
-            player.addEventListener("hls-frag-buffered", function(){ markReady("Vidstack received HLS fragments", true); });
-            player.addEventListener("hls-buffer-appended", function(){ markReady("Vidstack buffer appended", true); });
-            player.addEventListener("loaded-metadata", function(){ setPlayerStatus("Loading m3u8...", "Metadata loaded; starting stream data", false); });
-            player.addEventListener("loadedmetadata", function(){ setPlayerStatus("Loading m3u8...", "Metadata loaded; starting stream data", false); });
-            player.addEventListener("hls-instance", function(event){
-              try { window.__swiflyActiveVidstackHls = event.detail || event.instance || null; } catch {}
-            });
-            player.addEventListener("hls-error", function(event){
-              try {
-                var err = event && event.detail;
-                var hls = window.__swiflyActiveVidstackHls;
-                var detail = String((err && (err.details || err.reason || err.type || err.message)) || "HLS error");
-                var playingNow = isMediaActuallyPlaying(getVisiblePlaybackVideo());
-                if (!err || !err.fatal) {
-                  if (/bufferStalled|bufferNudge|fragLoad|FRAG_LOAD/i.test(detail)) {
-                    if (hls && /fragLoad|FRAG_LOAD/i.test(detail)) { try { hls.startLoad(-1); } catch {} }
-                    if (playingNow) markShellPlaybackActive("Stream is playing; HLS is retrying fragments quietly");
-                    else { setPlayerStatus("Stream recovery", /fragLoad|FRAG_LOAD/i.test(detail) ? "Retrying a slow fragment" : detail, false); hidePlayerStatusSoon(1200); }
-                  }
-                  return;
-                }
-                if (hls && window.Hls) {
-                  if (err.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
-                    if (!playingNow) setPlayerStatus("Vidstack HLS retry", detail, true);
-                    hls.startLoad(-1);
-                    return;
-                  }
-                  if (err.type === window.Hls.ErrorTypes.MEDIA_ERROR) { setPlayerStatus("Vidstack media recovery", detail, true); hls.recoverMediaError(); return; }
-                }
-              } catch {}
-            });
-            player.addEventListener("play", markPlaying);
-            player.addEventListener("playing", markPlaying);
-            player.addEventListener("hls-frag-loaded", function(){ if (isMediaActuallyPlaying(getVisiblePlaybackVideo())) markShellPlaybackActive("Stream is playing"); });
-            player.addEventListener("hls-frag-buffered", function(){ if (isMediaActuallyPlaying(getVisiblePlaybackVideo())) markShellPlaybackActive("Stream is playing"); });
-            player.addEventListener("pause", markPaused);
-            player.addEventListener("time-update", updateRescueControls);
-            player.addEventListener("timeupdate", updateRescueControls);
-            player.addEventListener("duration-change", updateRescueControls);
-            player.addEventListener("durationchange", updateRescueControls);
-            player.addEventListener("can-seek-change", function(){ wakeVidstackControls(); updateRescueControls(); });
-            player.addEventListener("seeking", updateRescueControls);
-            player.addEventListener("seeked", updateRescueControls);
-            player.addEventListener("waiting", function(){
-              if (stallTimer) clearTimeout(stallTimer);
-              setPlayerStatus("Buffering...", "Vidstack is waiting on the stream", false);
-              stallTimer = setTimeout(function(){
-                if (!settled && !fallbackStarted) fallback("Vidstack stayed buffered too long");
-              }, 11000);
-            });
-            player.addEventListener("source-change", function(){
-              setPlayerStatus("Loading m3u8...", "Vidstack received stream source", false);
-            });
-            player.addEventListener("error", function(event) {
-              var detail = event && event.detail;
-              var message = (detail && (detail.message || detail.code || detail.type)) || "Playback error";
-              fallback("Vidstack error: " + String(message));
-            });
-            player.addEventListener("dblclick", function(event){ event.preventDefault(); requestShellFullscreen(); });
-
-            // Set both the attribute and the JS property. Supplying the HLS MIME type
-            // keeps Vidstack from treating the proxied m3u8 like a generic file.
-            requestAnimationFrame(function() {
-              try {
-                player.src = { src: src, type: "application/vnd.apple.mpegurl" };
-              } catch (error) {
-                try { player.src = { src: src, type: "application/x-mpegurl" }; } catch {}
-              }
-              try { player.load && player.load(); } catch {}
-            });
-
-            softTimer = setTimeout(function() {
-              if (!settled && !fallbackStarted) {
-                var detail = providerReady ? "Provider is connected. Waiting for can-play." : "Waiting for Vidstack HLS provider.";
-                setPlayerStatus("Still loading m3u8...", detail, false);
-              }
-            }, 4500);
-
-            var playableProbe = setInterval(function(){
-              if (settled || fallbackStarted) { clearInterval(playableProbe); return; }
-              if (hasPlayableVidstackMedia()) markReady("Vidstack has playable media", true);
-            }, 700);
-
-            hardTimer = setTimeout(function() {
-              try { clearInterval(playableProbe); } catch {}
-              if (!settled && !fallbackStarted) fallback("Vidstack did not reach can-play");
-            }, vidstackAttempt ? 14500 : 11500);
-
-            // Keep simple streaming-app shortcuts while letting Vidstack Default Layout own the UI.
-            if (playerShell && !playerShell.dataset.v154Keys) {
-              playerShell.dataset.v154Keys = "true";
-              playerShell.addEventListener("keydown", function(event) {
-                if (!movieButtonVidstack || !playerShell.classList.contains("v149Vidstack")) return;
-                var tag = event.target && event.target.tagName ? event.target.tagName.toLowerCase() : "";
-                if (tag === "input" || tag === "textarea" || tag === "select") return;
-
-                try {
-                  if (event.key === " " || event.key === "k" || event.key === "K") {
-                    event.preventDefault();
-                    if (movieButtonVidstack.paused) movieButtonVidstack.play && movieButtonVidstack.play();
-                    else movieButtonVidstack.pause && movieButtonVidstack.pause();
-                  } else if (event.key === "j" || event.key === "J" || event.key === "ArrowLeft") {
-                    event.preventDefault();
-                    movieButtonVidstack.currentTime = Math.max(0, Number(movieButtonVidstack.currentTime || 0) - 10);
-                  } else if (event.key === "l" || event.key === "L" || event.key === "ArrowRight") {
-                    event.preventDefault();
-                    movieButtonVidstack.currentTime = Number(movieButtonVidstack.currentTime || 0) + 10;
-                  } else if (event.key === "m" || event.key === "M") {
-                    event.preventDefault();
-                    movieButtonVidstack.muted = !movieButtonVidstack.muted;
-                  } else if (event.key === "ArrowUp") {
-                    event.preventDefault();
-                    movieButtonVidstack.volume = Math.min(1, Number(movieButtonVidstack.volume || 0) + 0.08);
-                  } else if (event.key === "ArrowDown") {
-                    event.preventDefault();
-                    movieButtonVidstack.volume = Math.max(0, Number(movieButtonVidstack.volume || 0) - 0.08);
-                  } else if (event.key === "f" || event.key === "F") {
-                    event.preventDefault();
-                    requestShellFullscreen();
-                  }
-                } catch {}
-              });
-            }
-          });
-        }
-
-        function destroyRegularMoviePlayers() {
-          if (movieButtonPlyr) {
-            try { movieButtonPlyr.destroy(); } catch {}
-            movieButtonPlyr = null;
-          }
-
-          if (movieButtonPlayer) {
-            try { movieButtonPlayer.dispose(); } catch {}
-            movieButtonPlayer = null;
-          }
-
-          if (movieButtonVidstack) {
-            try { movieButtonVidstack.pause && movieButtonVidstack.pause(); } catch {}
-            try { movieButtonVidstack.destroy && movieButtonVidstack.destroy(); } catch {}
-            try { movieButtonVidstack.remove(); } catch {}
-            movieButtonVidstack = null;
-          }
-
-          if (playerShell) {
-            try {
-              playerShell.querySelectorAll(".swiflyVidstackPlayer, .swiflyVidstackChrome, .swiflyVideoDock, .swiflyNeoDock").forEach(function(el) {
-                try { el.remove(); } catch {}
-              });
-            } catch {}
-          }
-
-          if (video) {
-            try {
-              video.hidden = false;
-              video.style.display = "";
-              video.classList.remove("isVidstackHidden");
-            } catch {}
-          }
-
-          if (movieButtonHls) {
-            try { movieButtonHls.destroy(); } catch {}
-            movieButtonHls = null;
-          }
-
-          if (previewWarmupTimer) {
-            try { clearTimeout(previewWarmupTimer); } catch {}
-            previewWarmupTimer = null;
-          }
-          if (previewSeekTimer) {
-            try { clearTimeout(previewSeekTimer); } catch {}
-            previewSeekTimer = null;
-          }
-          if (previewDecodeTimer) {
-            try { clearTimeout(previewDecodeTimer); } catch {}
-            previewDecodeTimer = null;
-          }
-          if (previewHls) {
-            try { previewHls.destroy(); } catch {}
-            previewHls = null;
-          }
-          previewReadyForFrames = false;
-        }
-
-        function uniqueHlsHeights(levels) {
-          var seen = {};
-          return (levels || [])
-            .map(function(level) { return Number(level && level.height); })
-            .filter(function(height) {
-              if (!height || seen[height]) return false;
-              seen[height] = true;
-              return true;
-            })
-            .sort(function(a, b) { return b - a; });
-        }
-
-        function initPlyrUi(hlsInstance, levels) {
-          if (!window.Plyr || !video) return null;
-
-          var heights = uniqueHlsHeights(levels);
-          var qualityOptions = heights.length ? [0].concat(heights) : [0];
-          var defaultQuality = 0;
-
-          function setQuality(value) {
-            value = Number(value || 0);
-            if (!hlsInstance) return;
-
-            if (!value) {
-              hlsInstance.currentLevel = -1;
-              if (hlsMeta) hlsMeta.textContent = "Auto quality";
-              return;
-            }
-
-            var index = -1;
-            (hlsInstance.levels || []).forEach(function(level, i) {
-              if (Number(level && level.height) === value && index === -1) index = i;
-            });
-
-            hlsInstance.currentLevel = index >= 0 ? index : -1;
-            if (hlsMeta) hlsMeta.textContent = index >= 0 ? value + "p selected" : "Auto quality";
-          }
-
-          if (video && video.closest && video.closest(".plyr") && !movieButtonPlyr) {
-            var wrapper = video.closest(".plyr");
-            var parent = wrapper && wrapper.parentNode;
-            if (parent && wrapper !== video) {
-              try { parent.insertBefore(video, wrapper); wrapper.remove(); } catch {}
-            }
-          }
-
-          movieButtonPlyr = new window.Plyr(video, {
-            controls: [
-              "play-large",
-              "play",
-              "progress",
-              "current-time",
-              "duration",
-              "mute",
-              "volume",
-              "settings",
-              "pip",
-              "airplay",
-              "fullscreen"
-            ],
-            settings: ["quality", "speed"],
-            speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
-            quality: {
-              default: defaultQuality,
-              options: qualityOptions,
-              forced: Boolean(hlsInstance && heights.length),
-              onChange: setQuality
-            },
-            keyboard: { focused: true, global: false },
-            tooltips: { controls: true, seek: true },
-            invertTime: false,
-            ratio: "16:9",
-            blankVideo: "https://cdn.plyr.io/static/blank.mp4"
-          });
-
-          if (playerShell) playerShell.classList.add("usesPlyr");
-
-          if (hlsInstance) {
-            hlsInstance.on(window.Hls.Events.LEVEL_SWITCHED, function(event, data) {
-              var level = hlsInstance.levels && hlsInstance.levels[data.level];
-              if (hlsMeta && level && level.height) hlsMeta.textContent = level.height + "p";
-            });
-          }
-
-          movieButtonPlyr.on("ready", function() {
-            installCustomSeekBar();
-            setTimeout(syncCustomSeekBar, 300);
-            if (playerShell) {
-              try { playerShell.focus({ preventScroll: true }); } catch {}
-            }
-          });
-
-          movieButtonPlyr.on("play", hidePlayerStatusSoon);
-          movieButtonPlyr.on("playing", hidePlayerStatusSoon);
-          movieButtonPlyr.on("timeupdate", syncCustomSeekBar);
-          movieButtonPlyr.on("seeked", syncCustomSeekBar);
-          movieButtonPlyr.on("loadedmetadata", syncCustomSeekBar);
-          movieButtonPlyr.on("canplay", syncCustomSeekBar);
-
-          return movieButtonPlyr;
-        }
-
-        function startPlyrHlsSource(src, data) {
-          setPlayerStatus("Loading m3u8...", "Starting Plyr + HLS.js player", false);
-
-          loadPlyrAssets(function(plyrLoaded) {
-            if (!plyrLoaded || !window.Plyr) {
-              setPlayerStatus("Plyr failed to load", "Using native/HLS.js fallback controls.", true);
-            }
-
-            destroyRegularMoviePlayers();
-
-            try {
-              if (playerShell) {
-                playerShell.classList.remove("usesPlyr", "isScrubbing");
-              }
-              video.className = "dsMovieButtonVideo dsCinemaHlsVideo";
-              video.controls = true;
-              video.crossOrigin = "anonymous";
-              video.removeAttribute("src");
-              video.load();
-            } catch {}
-
-            var nativeHls = video.canPlayType("application/vnd.apple.mpegurl") || video.canPlayType("application/x-mpegURL");
-            if (nativeHls && !window.Hls) {
-              video.src = src;
-              try { video.load(); } catch {}
-              if (plyrLoaded) initPlyrUi(null, []);
-              installCustomSeekBar();
-              setPlayerStatus("m3u8 ready", "Native HLS loaded. Timeline enabled.", false);
-              setStatus("m3u8 loaded. Timeline enabled.");
-              setTimeout(syncCustomSeekBar, 500);
-              hidePlayerStatusSoon();
-              return;
-            }
-
-            loadHlsScript(function(loaded) {
-              if (!loaded || !window.Hls || !window.Hls.isSupported()) {
-                if (nativeHls) {
-                  video.src = src;
-                  try { video.load(); } catch {}
-                  if (plyrLoaded) initPlyrUi(null, []);
-                  installCustomSeekBar();
-                  setPlayerStatus("m3u8 ready", "Native HLS loaded. Timeline enabled.", false);
-                  setStatus("m3u8 loaded. Timeline enabled.");
-                  setTimeout(syncCustomSeekBar, 500);
-                  hidePlayerStatusSoon();
-                  return;
-                }
-
-                setPlayerStatus("HLS could not load", "This browser needs HLS.js or native HLS support to play this m3u8.", true);
-                setStatus("HLS player failed to load.");
-                return;
-              }
-
-              movieButtonHls = new window.Hls({
-                debug: false,
-                enableWorker: true,
-                lowLatencyMode: false,
                 backBufferLength: 90,
                 maxBufferLength: 60,
                 maxMaxBufferLength: 180,
                 startPosition: -1,
-                capLevelToPlayerSize: true,
-                manifestLoadingMaxRetry: 4,
-                levelLoadingMaxRetry: 4,
-                fragLoadingMaxRetry: 6,
                 manifestLoadingTimeOut: 30000,
                 levelLoadingTimeOut: 30000,
-                fragLoadingTimeOut: 30000
+                fragLoadingTimeOut: 30000,
+                manifestLoadingMaxRetry: 6,
+                levelLoadingMaxRetry: 6,
+                fragLoadingMaxRetry: 10,
+                liveDurationInfinity: false,
+                xhrSetup: function(xhr){ try { xhr.withCredentials = false; } catch {} }
               });
-
-              movieButtonHls.on(window.Hls.Events.MEDIA_ATTACHED, function() {
-                setPlayerStatus("Loading m3u8...", "Fetching manifest", false);
-                movieButtonHls.loadSource(src);
-              });
-
-              movieButtonHls.on(window.Hls.Events.MANIFEST_PARSED, function(event, parsed) {
-                var levels = parsed && parsed.levels ? parsed.levels : [];
-                var heights = uniqueHlsHeights(levels);
-                if (plyrLoaded) initPlyrUi(movieButtonHls, levels);
-                installCustomSeekBar();
-                setPlayerStatus("m3u8 ready", "Plyr + HLS.js loaded" + (heights.length ? " • " + heights.join("p / ") + "p" : "") + ". Timeline enabled.", false);
-                setStatus("m3u8 loaded. Timeline enabled.");
-                setTimeout(syncCustomSeekBar, 500);
-                hidePlayerStatusSoon();
-              });
-
-              movieButtonHls.on(window.Hls.Events.ERROR, function(event, err) {
+              hlsInstance.on(window.Hls.Events.MEDIA_ATTACHED, function(){ if (ui.status) ui.status.textContent = "Fetching manifest"; try { hlsInstance.loadSource(src); } catch {} });
+              hlsInstance.on(window.Hls.Events.MANIFEST_PARSED, function(){ mark("Timeline ready"); try { hlsInstance.startLoad(-1); } catch {} });
+              hlsInstance.on(window.Hls.Events.LEVEL_LOADED, function(event, info){ try { if (info && info.details && !info.details.live && Number(info.details.totalduration) > 0) manifestDuration = Number(info.details.totalduration); } catch {} update(); });
+              hlsInstance.on(window.Hls.Events.FRAG_BUFFERED, function(){ mark(video.paused ? "Ready" : "Playing"); });
+              hlsInstance.on(window.Hls.Events.ERROR, function(event, err){
                 if (!err) return;
-                var detail = String(err.details || err.reason || err.type || "Unknown HLS error");
-
-                if (!err.fatal) {
-                  if (detail && !/bufferStalledError/i.test(detail)) {
-                    setPlayerStatus("HLS warning", detail, false);
-                    hidePlayerStatusSoon();
-                  }
-                  return;
-                }
-
-                if (err.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
-                  setPlayerStatus("HLS network error", "Retrying stream load...", true);
-                  try { movieButtonHls.startLoad(); } catch {}
-                  return;
-                }
-
-                if (err.type === window.Hls.ErrorTypes.MEDIA_ERROR) {
-                  setPlayerStatus("HLS media error", "Trying media recovery...", true);
-                  try { movieButtonHls.recoverMediaError(); } catch {}
-                  return;
-                }
-
-                setPlayerStatus("HLS failed", detail, true);
-                setStatus("HLS failed: " + detail);
+                var detail = String(err.details || err.reason || err.type || "HLS error");
+                if (!err.fatal) { if (/fragLoad|bufferStalled|bufferNudge/i.test(detail)) { try { hlsInstance.startLoad(-1); } catch {} } return; }
+                if (err.type === window.Hls.ErrorTypes.NETWORK_ERROR) { networkRetries += 1; if (ui.status) ui.status.textContent = "Retrying stream " + networkRetries; try { hlsInstance.startLoad(-1); } catch {} return; }
+                if (err.type === window.Hls.ErrorTypes.MEDIA_ERROR) { mediaRetries += 1; if (mediaRetries <= 2) { if (ui.status) ui.status.textContent = "Recovering video"; try { hlsInstance.recoverMediaError(); } catch {} return; } }
+                showError("HLS failed: " + detail);
               });
-
-              movieButtonHls.attachMedia(video);
-            });
+              hlsInstance.attachMedia(video);
+              return;
+            }
+            if (nativeHls) {
+              video.src = src;
+              try { video.load(); } catch {}
+              mark("Native HLS ready");
+              return;
+            }
+            showError("This browser needs HLS.js or native HLS support for m3u8.");
           });
         }
 
-        function isHlsUrl(url, data) {
-          var value = String(url || "");
-          var type = String((data && data.streamType) || "").toLowerCase();
-          return new RegExp("[.]m3u8([?#]|$)", "i").test(value) || type === "m3u8" || type === "hls" || Boolean(data && data.m3u8);
+        function schedulePoll(ms) {
+          if (stopped) return;
+          setTimeout(function(){ poll(false); }, Math.max(900, Number(ms || 1800)));
         }
 
-        function attachRegularMovieSource(src, data) {
-          if (!video || !src) {
-            showError("No movie source URL returned.");
-            return;
-          }
-
-          if (playerShell) { playerShell.hidden = false; hardHideLegacyPlayerChrome(); installCinemaPlayerShortcuts(); }
-          if (shell) shell.classList.add("isReady");
-          setStatus("Source found. Loading player...");
-          destroyRegularMoviePlayers();
-
-          try {
-            video.crossOrigin = "anonymous";
-            video.removeAttribute("src");
-            video.load();
-          } catch {}
-
-          var hls = isHlsUrl(src, data);
-
-          if (!hls) {
-            setPlayerStatus("Loading video...", "Using direct video source.", false);
-            if (playerShell) {
-              playerShell.classList.remove("usesPlyr", "usesMediaChrome", "usesVideoJs");
-              playerShell.classList.add("usesNativeVideo");
-            }
-            video.controls = true;
-            setVideoUiState("ready");
-            video.src = src;
-            try { video.load(); } catch {}
-            hidePlayerStatusSoon();
-            return;
-          }
-
-          startSwiflyLiteHlsSource(src, data);
-        }
-
-        async function tryProxyVideo(manual) {
+        async function poll(force) {
           if (!clientWait || stopped) return;
-
           attempt += 1;
           var elapsed = Math.round((Date.now() - startedAt) / 1000);
-
-          if (Date.now() - startedAt > maxWaitMs) {
-            showError("Still no m3u8 source after " + elapsed + " seconds. You can retry, refresh, or use a Watch Room.");
+          if (Date.now() - startedAt > maxWaitMs && !force) {
+            showError("Still no m3u8 after " + elapsed + " seconds. Press Retry now to restart the resolver.");
             return;
           }
-
-          setStatus((manual ? "Retrying" : "Trying") + " m3u8 source... attempt " + attempt + " • " + elapsed + "s");
-
+          setStatus((force ? "Restarting" : "Searching") + " m3u8... attempt " + attempt + " • " + elapsed + "s");
           try {
-            var response = await fetch("/api/proxy-video-wait/movie/" + encodeURIComponent(movieId) + "?t=" + Date.now(), {
-              cache: "no-store",
-              headers: { "Accept": "application/json" }
-            });
-
+            var url = "/api/proxy-video-wait/movie/" + encodeURIComponent(movieId) + "?t=" + Date.now() + (force ? "&force=1" : "");
+            var response = await fetch(url, { cache: "no-store", headers: { Accept: "application/json" } });
             var data = await response.json();
-
             if (data && data.status === "ok" && (data.playbackUrl || data.m3u8 || data.proxyVideo)) {
               stopped = true;
               var src = data.playbackUrl || data.m3u8 || data.proxyVideo;
-              setStatus((data.m3u8 || data.streamType === "m3u8" ? "m3u8" : "Source") + " found. Loading player...");
-              attachRegularMovieSource(src, data);
+              setStatus("m3u8 found. Loading player...");
+              startPlayer(src, data);
               return;
             }
-
-            var detail = (data && (data.message || (data.attempts && data.attempts[0]))) || "Waiting for provider...";
-            setStatus("Not ready yet: " + detail);
+            if (data && data.status === "pending") {
+              setStatus(data.message || ("Still searching m3u8... " + elapsed + "s"));
+              schedulePoll(data.pollMs || 1800);
+              return;
+            }
+            var msg = (data && (data.message || (data.attempts && data.attempts[0]))) || "Provider not ready yet.";
+            setStatus("Not ready yet: " + msg);
+            schedulePoll(2500);
           } catch (error) {
-            setStatus("Still waiting: " + (error.message || "request failed"));
+            setStatus("Resolver check failed, retrying: " + (error && error.message ? error.message : "request failed"));
+            schedulePoll(2500);
           }
-
-          var delay = Math.min(15000, 2500 + attempt * 1500);
-          setTimeout(function(){ tryProxyVideo(false); }, delay);
         }
 
-        if (retryBtn) {
-          retryBtn.addEventListener("click", function(){
-            stopped = false;
-            tryProxyVideo(true);
-          });
-        }
-
+        if (retryBtn) retryBtn.addEventListener("click", function(){ stopped = false; startedAt = Date.now(); attempt = 0; if (shell) shell.classList.remove("hasError"); setStatus("Restarting request..."); poll(true); });
         if (clientWait) {
-          tryProxyVideo(false);
-        } else {
-          var video = document.getElementById("movie-placeholder-video");
-          if (!video) return;
-          video.addEventListener("error", function(){
-            var videoShell = video.closest(".dsDirectVideoShell");
-            if (!videoShell || videoShell.querySelector(".dsMovieEmbedNotice.error")) return;
-            var notice = document.createElement("div");
-            notice.className = "dsMovieEmbedNotice error";
-            notice.innerHTML = "<span>Playback issue</span><strong>The MP4 source could not be decoded or loaded by this browser.</strong><small>Try Open MP4, disable blockers, or use Open Together in a Watch Room.</small>";
-            videoShell.prepend(notice);
-          });
+          setStatus("Starting resolver job...");
+          setTimeout(function(){ poll(false); }, 50);
         }
       })();
     </script>`
@@ -45252,10 +42561,132 @@ app.get("/favicon.ico", (req, res) => {
   res.status(204).end();
 });
 
+
+// ============================================================
+// v160 NON-BLOCKING M3U8 RESOLVER JOBS
+// The old wait endpoint could hold the browser request open while the
+// provider/resolver worked through long retries. The watch page now polls
+// this lightweight job state endpoint so the UI never sits on "Starting request".
+// ============================================================
+const movieM3u8ResolveJobs = new Map();
+const MOVIE_M3U8_JOB_TTL_MS = Math.max(60_000, Number(process.env.MOVIE_M3U8_JOB_TTL_MS || 10 * 60_000));
+const MOVIE_M3U8_STALE_PENDING_MS = Math.max(45_000, Number(process.env.MOVIE_M3U8_STALE_PENDING_MS || 4 * 60_000));
+
+function movieM3u8JobKey(type, id) {
+  return `${type}:${String(id || "").trim()}`;
+}
+
+function sanitizeMovieResolveResult(result = {}) {
+  return {
+    status: result.status || "error",
+    providerKind: result.providerKind || "",
+    movieId: result.movieId || "",
+    sourceUrl: result.sourceUrl || "",
+    playbackUrl: result.playbackUrl || result.m3u8 || result.proxyVideo || "",
+    originalPlaybackUrl: result.originalPlaybackUrl || "",
+    hlsProxyUrl: result.hlsProxyUrl || "",
+    hlsProxyId: result.hlsProxyId || "",
+    hlsProxyStatusUrl: result.hlsProxyStatusUrl || "",
+    m3u8: result.m3u8 || "",
+    proxyVideo: result.proxyVideo || result.playbackUrl || "",
+    streamType: result.streamType || "",
+    streamMode: result.streamMode || "",
+    streamQuality: result.streamQuality || "",
+    streamName: result.streamName || "",
+    isLiveM3u8: Boolean(result.isLiveM3u8),
+    message: result.message || "",
+    attempts: Array.isArray(result.attempts) ? result.attempts.slice(-8) : [],
+  };
+}
+
+function startMovieM3u8ResolveJob({ type = "movie", id, force = false } = {}) {
+  const key = movieM3u8JobKey(type, id);
+  const now = Date.now();
+  const existing = movieM3u8ResolveJobs.get(key);
+
+  if (!force && existing) {
+    const age = now - (existing.startedAt || now);
+    const freshDone = existing.state !== "pending" && now - (existing.finishedAt || existing.startedAt || now) < MOVIE_M3U8_JOB_TTL_MS;
+    const stillWorking = existing.state === "pending" && age < MOVIE_M3U8_STALE_PENDING_MS;
+    if (freshDone || stillWorking) return existing;
+  }
+
+  const job = {
+    key,
+    type,
+    id: String(id || ""),
+    state: "pending",
+    startedAt: now,
+    finishedAt: 0,
+    polls: 0,
+    result: null,
+    error: "",
+  };
+  movieM3u8ResolveJobs.set(key, job);
+
+  Promise.resolve()
+    .then(() => fetchProxyVideoSource({ type, id }))
+    .then((result) => {
+      job.finishedAt = Date.now();
+      job.result = sanitizeMovieResolveResult(result || {});
+      job.state = job.result.status === "ok" ? "ok" : "error";
+      if (job.state !== "ok") job.error = job.result.message || "m3u8 resolver did not return a playable source.";
+    })
+    .catch((error) => {
+      job.finishedAt = Date.now();
+      job.state = "error";
+      job.error = error?.message || "m3u8 resolver failed.";
+      job.result = sanitizeMovieResolveResult({ status: "error", message: job.error });
+    });
+
+  return job;
+}
+
+function movieM3u8JobPayload(job) {
+  const now = Date.now();
+  job.polls = (job.polls || 0) + 1;
+  const elapsedMs = now - (job.startedAt || now);
+
+  if (job.state === "ok" && job.result) {
+    return {
+      ...job.result,
+      ok: true,
+      status: "ok",
+      resolverJob: "complete",
+      elapsedMs,
+      pollMs: 0,
+    };
+  }
+
+  if (job.state === "error") {
+    return {
+      ...(job.result || {}),
+      ok: false,
+      status: "error",
+      resolverJob: "error",
+      elapsedMs,
+      pollMs: 2500,
+      message: job.error || job.result?.message || "m3u8 resolver failed.",
+    };
+  }
+
+  return {
+    ok: false,
+    status: "pending",
+    resolverJob: "pending",
+    elapsedMs,
+    pollMs: Math.min(4500, 1300 + (job.polls || 1) * 250),
+    message: elapsedMs < 4500
+      ? "Resolver started. Waiting for m3u8..."
+      : `Still searching for m3u8... ${Math.round(elapsedMs / 1000)}s`,
+  };
+}
+
 app.get("/api/proxy-video-wait/movie/:id", async (req, res) => {
   res.set("Cache-Control", "no-store");
-  const result = await fetchProxyVideoSource({ type: "movie", id: req.params.id });
-  res.json(result);
+  const force = String(req.query.force || req.query.retry || "") === "1";
+  const job = startMovieM3u8ResolveJob({ type: "movie", id: req.params.id, force });
+  res.json(movieM3u8JobPayload(job));
 });
 
 app.get("/api/proxy-video/movie/:id", async (req, res) => {
