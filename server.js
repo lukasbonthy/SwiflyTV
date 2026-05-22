@@ -36696,7 +36696,7 @@ async function watchPage(req, res, type) {
             <a class="dsGhostPill" href="/watchrooms">Use Watch Room</a>
           </div>
         </div>
-        <div id="movieButtonPlayerShell" class="dsMovieButtonPlayerShell dsCinemaHlsShell dsVideoJsCinemaShell v156LeanVidstack" hidden>
+        <div id="movieButtonPlayerShell" class="dsMovieButtonPlayerShell dsCinemaHlsShell dsVideoJsCinemaShell v157LeanVidstack v157VisibleControls" hidden>
           <video id="proxyVideoClientVideo" class="dsMovieButtonVideo dsCinemaHlsVideo swiflyNativeHlsVideo" controls playsinline crossorigin="anonymous" preload="auto"></video>
           <div id="movieButtonHlsStatus" class="dsHlsStatus" hidden><b>Loading stream...</b><span>Preparing clean player</span></div>
         </div>
@@ -36817,6 +36817,7 @@ async function watchPage(req, res, type) {
         var previewLastRequested = -999;
         var previewReadyForFrames = false;
         var dock = document.getElementById("swiflyVideoDock");
+        try { document.body.classList.add("swiflyWatchMoviePlayer"); } catch {}
         var dockPlay = document.getElementById("swiflyDockPlay");
         var dockBack = document.getElementById("swiflyDockBack");
         var dockForward = document.getElementById("swiflyDockForward");
@@ -36849,7 +36850,7 @@ async function watchPage(req, res, type) {
         var maxWaitMs = Number(${JSON.stringify(String(process.env.MOVIE_PROXY_VIDEO_CLIENT_MAX_WAIT_MS || "180000"))}) || 180000;
 
         function hardHideLegacyPlayerChrome() {
-          // v156: physically remove the old custom overlays instead of hoping CSS wins.
+          // v157: physically remove the old custom overlays instead of hoping CSS wins.
           // These were causing the bad center play button, the fake Starting Stream bar,
           // and a non-working custom timeframe slider.
           try {
@@ -36890,11 +36891,11 @@ async function watchPage(req, res, type) {
         function setPlayerStatus(title, detail, isError) {
           if (!hlsStatus) return;
 
-          // v156: no fake loading badge over the movie. The old badge made the
+          // v157: no fake loading badge over the movie. The old badge made the
           // player look stuck even while video was already playing. Only real
           // errors are allowed to appear over the clean player.
           try {
-            if (playerShell && playerShell.classList.contains("v156LeanVidstack") && !isError) {
+            if (playerShell && playerShell.classList.contains("v157LeanVidstack") && !isError) {
               hidePlayerStatusNow();
               return;
             }
@@ -38251,7 +38252,7 @@ async function watchPage(req, res, type) {
           var recoveryCard = null;
           if (playerShell) {
             playerShell.classList.remove("usesVidstack", "v149Vidstack", "v149Ready", "v149Playing");
-            playerShell.classList.add("usesNativeVideo", "v150HlsRecovery", "v151StreamPro", "v154StreamLatchFix", "v155CleanVidstack", "v156LeanVidstack");
+            playerShell.classList.add("usesNativeVideo", "v150HlsRecovery", "v151StreamPro", "v154StreamLatchFix", "v155CleanVidstack", "v157LeanVidstack", "v157VisibleControls");
             try {
               playerShell.querySelectorAll(".swiflyVidstackPlayer, .swiflyVidstackChrome").forEach(function(el) { el.remove(); });
             } catch {}
@@ -38280,7 +38281,7 @@ async function watchPage(req, res, type) {
             if (speedMenu) speedMenu.hidden = true;
             if (volumeMenu) volumeMenu.hidden = true;
             if (hlsStatus) hlsStatus.hidden = true;
-            if (playerShell) { playerShell.classList.add("v155CleanVidstack", "v156LeanVidstack"); hardHideLegacyPlayerChrome(); }
+            if (playerShell) { playerShell.classList.add("v155CleanVidstack", "v157LeanVidstack", "v157VisibleControls"); hardHideLegacyPlayerChrome(); }
           } catch {}
 
           try {
@@ -38560,9 +38561,10 @@ async function watchPage(req, res, type) {
               "v149Playing",
               "v151StreamPro",
               "v155CleanVidstack",
-              "v156LeanVidstack"
+              "v157LeanVidstack",
+              "v157VisibleControls"
             );
-            playerShell.classList.add("usesVidstack", "v149Vidstack", "v150VidstackModern", "v151StreamPro", "v154StreamLatchFix", "v155CleanVidstack", "v156LeanVidstack");
+            playerShell.classList.add("usesVidstack", "v149Vidstack", "v150VidstackModern", "v151StreamPro", "v154StreamLatchFix", "v155CleanVidstack", "v157LeanVidstack", "v157VisibleControls");
           }
 
           try {
@@ -38571,7 +38573,7 @@ async function watchPage(req, res, type) {
             if (speedMenu) speedMenu.hidden = true;
             if (volumeMenu) volumeMenu.hidden = true;
             if (hlsStatus) hlsStatus.hidden = true;
-            if (playerShell) { playerShell.classList.add("v155CleanVidstack", "v156LeanVidstack"); hardHideLegacyPlayerChrome(); }
+            if (playerShell) { playerShell.classList.add("v155CleanVidstack", "v157LeanVidstack", "v157VisibleControls"); hardHideLegacyPlayerChrome(); }
           } catch {}
 
           try {
@@ -38661,9 +38663,14 @@ async function watchPage(req, res, type) {
             player.setAttribute("crossorigin", "anonymous");
             player.setAttribute("playsinline", "");
             player.setAttribute("data-swifly-src", src);
-            player.setAttribute("data-swifly-player", "vidstack-v155");
+            player.setAttribute("data-swifly-player", "vidstack-v157");
             player.setAttribute("key-target", "player");
+            player.setAttribute("controls-delay", "3600000");
+            player.setAttribute("hide-controls-on-mouse-leave", "false");
             player.setAttribute("aria-keyshortcuts", "Space K J L ArrowLeft ArrowRight ArrowUp ArrowDown M F");
+            try { player.controlsDelay = 3600000; } catch {}
+            try { player.hideControlsOnMouseLeave = false; } catch {}
+            try { player.controlsVisible = true; } catch {}
             player.setAttribute("aria-label", title + " player");
 
             if (poster) {
@@ -38674,6 +38681,9 @@ async function watchPage(req, res, type) {
             var layout = document.createElement("media-video-layout");
             layout.setAttribute("data-swifly-layout", "default");
             layout.setAttribute("small-when", "never");
+            layout.setAttribute("menu-group", "bottom");
+            layout.setAttribute("seek-step", "10");
+            layout.removeAttribute("disable-time-slider");
             // Do not set thumbnails until a real VTT URL exists; an empty value can make
             // preview/seek UI wait on data that Swifly has not generated yet.
             layout.setAttribute("no-audio-gain", "");
@@ -38686,6 +38696,10 @@ async function watchPage(req, res, type) {
               hardHideLegacyPlayerChrome();
               playerShell.appendChild(player);
               movieButtonVidstack = player;
+              startVisibleControlsLoop();
+              ["pointermove", "mousemove", "touchstart", "click", "keydown"].forEach(function(eventName){
+                try { playerShell.addEventListener(eventName, wakeVidstackControls, { passive: true }); } catch {}
+              });
             }
 
             var settled = false;
@@ -38694,6 +38708,149 @@ async function watchPage(req, res, type) {
             var hardTimer = null;
             var stallTimer = null;
             var providerReady = false;
+            var rescueControls = null;
+            var rescueRangeActive = false;
+            var rescueTick = null;
+
+            function getMediaDuration(target) {
+              try {
+                var d = Number(target && target.duration);
+                if (Number.isFinite(d) && d > 0) return d;
+              } catch {}
+              try {
+                var stateDuration = Number(player && player.state && player.state.duration);
+                if (Number.isFinite(stateDuration) && stateDuration > 0) return stateDuration;
+              } catch {}
+              try {
+                var inner = player && (player.querySelector("video") || player.querySelector("media-provider video"));
+                var vd = Number(inner && inner.duration);
+                if (Number.isFinite(vd) && vd > 0) return vd;
+              } catch {}
+              return 0;
+            }
+
+            function formatRescueTime(seconds) {
+              seconds = Math.max(0, Number(seconds || 0));
+              var h = Math.floor(seconds / 3600);
+              var m = Math.floor((seconds % 3600) / 60);
+              var s = Math.floor(seconds % 60);
+              return h ? (h + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0")) : (m + ":" + String(s).padStart(2, "0"));
+            }
+
+            function getControlTarget() {
+              try { if (player && typeof player.play === "function") return player; } catch {}
+              try { return player && (player.querySelector("video") || player.querySelector("media-provider video")); } catch {}
+              return null;
+            }
+
+            function wakeVidstackControls() {
+              try { player.controlsVisible = true; } catch {}
+              try { player.controlsHidden = false; } catch {}
+              try { player.removeAttribute("data-controls-hidden"); } catch {}
+              try { player.setAttribute("data-controls", ""); } catch {}
+              try { player.dispatchEvent(new Event("pointermove", { bubbles: true })); } catch {}
+              try { player.dispatchEvent(new MouseEvent("mousemove", { bubbles: true, clientX: 24, clientY: 24 })); } catch {}
+              if (playerShell) playerShell.classList.add("v157ControlsAwake");
+            }
+
+            function ensureRescueControls() {
+              if (!playerShell || rescueControls) return rescueControls;
+              rescueControls = document.createElement("div");
+              rescueControls.className = "swiflyTimelineRescue";
+              rescueControls.innerHTML = '<button type="button" class="swiflyRescuePlay" aria-label="Play or pause">▶</button><span class="swiflyRescueCurrent">0:00</span><input class="swiflyRescueRange" type="range" min="0" max="1000" value="0" step="1" aria-label="Timeline"><span class="swiflyRescueDuration">--:--</span><button type="button" class="swiflyRescueMute" aria-label="Mute or unmute">🔊</button><button type="button" class="swiflyRescueFullscreen" aria-label="Fullscreen">⛶</button>';
+              playerShell.appendChild(rescueControls);
+
+              var playBtn = rescueControls.querySelector(".swiflyRescuePlay");
+              var range = rescueControls.querySelector(".swiflyRescueRange");
+              var muteBtn = rescueControls.querySelector(".swiflyRescueMute");
+              var fullscreenBtn = rescueControls.querySelector(".swiflyRescueFullscreen");
+
+              function target() { return getControlTarget(); }
+              if (playBtn) playBtn.addEventListener("click", function(event) {
+                event.preventDefault();
+                var t = target();
+                if (!t) return;
+                try {
+                  if (t.paused === false || (player && player.paused === false)) t.pause && t.pause();
+                  else {
+                    var promise = t.play && t.play();
+                    if (promise && promise.catch) promise.catch(function(){ try { player && player.play && player.play(); } catch {} });
+                  }
+                } catch {}
+                wakeVidstackControls();
+              });
+              if (range) {
+                range.addEventListener("input", function() { rescueRangeActive = true; });
+                range.addEventListener("change", function(event) {
+                  var t = target();
+                  var duration = getMediaDuration(t);
+                  if (t && duration > 0) {
+                    try { t.currentTime = (Number(event.target.value || 0) / 1000) * duration; } catch {}
+                    try { player.currentTime = (Number(event.target.value || 0) / 1000) * duration; } catch {}
+                  }
+                  rescueRangeActive = false;
+                  wakeVidstackControls();
+                });
+              }
+              if (muteBtn) muteBtn.addEventListener("click", function(event) {
+                event.preventDefault();
+                var t = target();
+                try {
+                  var muted = !(t && t.muted);
+                  if (t) t.muted = muted;
+                  if (player) player.muted = muted;
+                } catch {}
+                wakeVidstackControls();
+              });
+              if (fullscreenBtn) fullscreenBtn.addEventListener("click", function(event) {
+                event.preventDefault();
+                requestShellFullscreen();
+                wakeVidstackControls();
+              });
+              return rescueControls;
+            }
+
+            function updateRescueControls() {
+              var controls = ensureRescueControls();
+              if (!controls) return;
+              var t = getControlTarget();
+              var current = 0;
+              try { current = Number((t && t.currentTime) || player.currentTime || 0); } catch {}
+              var duration = getMediaDuration(t);
+              var playBtn = controls.querySelector(".swiflyRescuePlay");
+              var currentEl = controls.querySelector(".swiflyRescueCurrent");
+              var durationEl = controls.querySelector(".swiflyRescueDuration");
+              var range = controls.querySelector(".swiflyRescueRange");
+              var muteBtn = controls.querySelector(".swiflyRescueMute");
+              var paused = true;
+              var muted = false;
+              try { paused = t ? t.paused !== false : player.paused !== false; } catch {}
+              try { muted = Boolean((t && t.muted) || player.muted); } catch {}
+              if (playBtn) playBtn.textContent = paused ? "▶" : "❚❚";
+              if (currentEl) currentEl.textContent = formatRescueTime(current);
+              if (durationEl) durationEl.textContent = duration > 0 ? formatRescueTime(duration) : "LIVE";
+              if (range && !rescueRangeActive) {
+                if (duration > 0) {
+                  range.disabled = false;
+                  range.value = String(Math.max(0, Math.min(1000, Math.round((current / duration) * 1000))));
+                } else {
+                  range.disabled = true;
+                  range.value = "0";
+                }
+              }
+              if (muteBtn) muteBtn.textContent = muted ? "🔇" : "🔊";
+            }
+
+            function startVisibleControlsLoop() {
+              wakeVidstackControls();
+              ensureRescueControls();
+              updateRescueControls();
+              if (rescueTick) clearInterval(rescueTick);
+              rescueTick = setInterval(function(){
+                wakeVidstackControls();
+                updateRescueControls();
+              }, 500);
+            }
 
             function clearVidstackTimers() {
               if (softTimer) { clearTimeout(softTimer); softTimer = null; }
@@ -38749,11 +38906,15 @@ async function watchPage(req, res, type) {
               settled = true;
               clearVidstackTimers();
               markShellPlaybackActive("Vidstack stream is playing");
+              wakeVidstackControls();
+              updateRescueControls();
             }
 
             function markPaused() {
               if (playerShell) playerShell.classList.remove("v149Playing");
               setVideoUiState("paused");
+              wakeVidstackControls();
+              updateRescueControls();
             }
 
             function applyHlsProviderConfig(event) {
@@ -38844,6 +39005,13 @@ async function watchPage(req, res, type) {
             player.addEventListener("hls-frag-loaded", function(){ if (isMediaActuallyPlaying(getVisiblePlaybackVideo())) markShellPlaybackActive("Stream is playing"); });
             player.addEventListener("hls-frag-buffered", function(){ if (isMediaActuallyPlaying(getVisiblePlaybackVideo())) markShellPlaybackActive("Stream is playing"); });
             player.addEventListener("pause", markPaused);
+            player.addEventListener("time-update", updateRescueControls);
+            player.addEventListener("timeupdate", updateRescueControls);
+            player.addEventListener("duration-change", updateRescueControls);
+            player.addEventListener("durationchange", updateRescueControls);
+            player.addEventListener("can-seek-change", function(){ wakeVidstackControls(); updateRescueControls(); });
+            player.addEventListener("seeking", updateRescueControls);
+            player.addEventListener("seeked", updateRescueControls);
             player.addEventListener("waiting", function(){
               if (stallTimer) clearTimeout(stallTimer);
               setPlayerStatus("Buffering...", "Vidstack is waiting on the stream", false);
@@ -44085,13 +44253,13 @@ function watchroomPage(req, res) {
 
 
     /* ============================================================
-       v156 LEAN VIDSTACK PLAYER
+       v157 LEAN VIDSTACK PLAYER
        - deletes old overlay chrome from the visible player path
        - lets Vidstack/native controls own play + timeline
        - forces movie-button HLS to on-demand so seeking is available
        ============================================================ */
 
-    .dsVideoJsCinemaShell.v156LeanVidstack {
+    .dsVideoJsCinemaShell.v157LeanVidstack {
       background: #000 !important;
       border-radius: 24px !important;
       overflow: hidden !important;
@@ -44100,37 +44268,37 @@ function watchroomPage(req, res) {
       box-shadow: 0 40px 120px rgba(0,0,0,.62), 0 0 0 1px rgba(255,255,255,.06) inset !important;
     }
 
-    .dsVideoJsCinemaShell.v156LeanVidstack::before,
-    .dsVideoJsCinemaShell.v156LeanVidstack::after,
-    .dsVideoJsCinemaShell.v156LeanVidstack .dsCinemaPlayerAura,
-    .dsVideoJsCinemaShell.v156LeanVidstack .dsCinemaHlsTop,
-    .dsVideoJsCinemaShell.v156LeanVidstack .dsVideoJsTop,
-    .dsVideoJsCinemaShell.v156LeanVidstack .dsVideoJsCenter,
-    .dsVideoJsCinemaShell.v156LeanVidstack .dsVideoJsQuality,
-    .dsVideoJsCinemaShell.v156LeanVidstack .dsVideoJsSpeed,
-    .dsVideoJsCinemaShell.v156LeanVidstack .dsVideoJsVolume,
-    .dsVideoJsCinemaShell.v156LeanVidstack .dsVideoJsHint,
-    .dsVideoJsCinemaShell.v156LeanVidstack .dsVideoJsTimelinePreview,
-    .dsVideoJsCinemaShell.v156LeanVidstack .dsCinemaSeekDock,
-    .dsVideoJsCinemaShell.v156LeanVidstack #movieButtonSeekDock,
-    .dsVideoJsCinemaShell.v156LeanVidstack .swiflyVidstackChrome,
-    .dsVideoJsCinemaShell.v156LeanVidstack .swiflyVideoDock,
-    .dsVideoJsCinemaShell.v156LeanVidstack .swiflyNeoDock,
-    .dsVideoJsCinemaShell.v156LeanVidstack .swiflyDock {
+    .dsVideoJsCinemaShell.v157LeanVidstack::before,
+    .dsVideoJsCinemaShell.v157LeanVidstack::after,
+    .dsVideoJsCinemaShell.v157LeanVidstack .dsCinemaPlayerAura,
+    .dsVideoJsCinemaShell.v157LeanVidstack .dsCinemaHlsTop,
+    .dsVideoJsCinemaShell.v157LeanVidstack .dsVideoJsTop,
+    .dsVideoJsCinemaShell.v157LeanVidstack .dsVideoJsCenter,
+    .dsVideoJsCinemaShell.v157LeanVidstack .dsVideoJsQuality,
+    .dsVideoJsCinemaShell.v157LeanVidstack .dsVideoJsSpeed,
+    .dsVideoJsCinemaShell.v157LeanVidstack .dsVideoJsVolume,
+    .dsVideoJsCinemaShell.v157LeanVidstack .dsVideoJsHint,
+    .dsVideoJsCinemaShell.v157LeanVidstack .dsVideoJsTimelinePreview,
+    .dsVideoJsCinemaShell.v157LeanVidstack .dsCinemaSeekDock,
+    .dsVideoJsCinemaShell.v157LeanVidstack #movieButtonSeekDock,
+    .dsVideoJsCinemaShell.v157LeanVidstack .swiflyVidstackChrome,
+    .dsVideoJsCinemaShell.v157LeanVidstack .swiflyVideoDock,
+    .dsVideoJsCinemaShell.v157LeanVidstack .swiflyNeoDock,
+    .dsVideoJsCinemaShell.v157LeanVidstack .swiflyDock {
       display: none !important;
       visibility: hidden !important;
       opacity: 0 !important;
       pointer-events: none !important;
     }
 
-    .dsVideoJsCinemaShell.v156LeanVidstack .dsHlsStatus:not(.isError) {
+    .dsVideoJsCinemaShell.v157LeanVidstack .dsHlsStatus:not(.isError) {
       display: none !important;
       visibility: hidden !important;
       opacity: 0 !important;
       pointer-events: none !important;
     }
 
-    .dsVideoJsCinemaShell.v156LeanVidstack media-player.swiflyVidstackPlayer {
+    .dsVideoJsCinemaShell.v157LeanVidstack media-player.swiflyVidstackPlayer {
       position: absolute !important;
       inset: 0 !important;
       z-index: 10 !important;
@@ -44152,23 +44320,23 @@ function watchroomPage(req, res) {
       --media-tooltip-color: #070910;
     }
 
-    .dsVideoJsCinemaShell.v156LeanVidstack media-player.swiflyVidstackPlayer video,
-    .dsVideoJsCinemaShell.v156LeanVidstack media-player.swiflyVidstackPlayer [data-media-provider] video,
-    .dsVideoJsCinemaShell.v156LeanVidstack video.swiflyNativeHlsVideo {
+    .dsVideoJsCinemaShell.v157LeanVidstack media-player.swiflyVidstackPlayer video,
+    .dsVideoJsCinemaShell.v157LeanVidstack media-player.swiflyVidstackPlayer [data-media-provider] video,
+    .dsVideoJsCinemaShell.v157LeanVidstack video.swiflyNativeHlsVideo {
       width: 100% !important;
       height: 100% !important;
       object-fit: contain !important;
       background: #000 !important;
     }
 
-    .dsVideoJsCinemaShell.v156LeanVidstack.v149Vidstack > video#proxyVideoClientVideo.isVidstackHidden {
+    .dsVideoJsCinemaShell.v157LeanVidstack.v149Vidstack > video#proxyVideoClientVideo.isVidstackHidden {
       display: none !important;
       visibility: hidden !important;
       pointer-events: none !important;
     }
 
-    .dsVideoJsCinemaShell.v156LeanVidstack.v150HlsRecovery > video#proxyVideoClientVideo,
-    .dsVideoJsCinemaShell.v156LeanVidstack:not(.v149Vidstack) > video#proxyVideoClientVideo {
+    .dsVideoJsCinemaShell.v157LeanVidstack.v150HlsRecovery > video#proxyVideoClientVideo,
+    .dsVideoJsCinemaShell.v157LeanVidstack:not(.v149Vidstack) > video#proxyVideoClientVideo {
       position: absolute !important;
       inset: 0 !important;
       z-index: 10 !important;
@@ -44181,7 +44349,7 @@ function watchroomPage(req, res) {
       border-radius: inherit !important;
     }
 
-    .dsVideoJsCinemaShell.v156LeanVidstack media-video-layout {
+    .dsVideoJsCinemaShell.v157LeanVidstack media-video-layout {
       --media-button-size: 42px;
       --media-slider-height: 40px;
       --media-slider-track-height: 5px;
@@ -44191,9 +44359,9 @@ function watchroomPage(req, res) {
       font-family: var(--font-ui, Inter, system-ui, sans-serif);
     }
 
-    .dsVideoJsCinemaShell.v156LeanVidstack media-player.swiflyVidstackPlayer [data-media-controls],
-    .dsVideoJsCinemaShell.v156LeanVidstack media-player.swiflyVidstackPlayer [data-part="controls"],
-    .dsVideoJsCinemaShell.v156LeanVidstack media-player.swiflyVidstackPlayer [data-controls] {
+    .dsVideoJsCinemaShell.v157LeanVidstack media-player.swiflyVidstackPlayer [data-media-controls],
+    .dsVideoJsCinemaShell.v157LeanVidstack media-player.swiflyVidstackPlayer [data-part="controls"],
+    .dsVideoJsCinemaShell.v157LeanVidstack media-player.swiflyVidstackPlayer [data-controls] {
       margin: 16px !important;
       padding: 8px 10px !important;
       border-radius: 22px !important;
@@ -44204,8 +44372,8 @@ function watchroomPage(req, res) {
       -webkit-backdrop-filter: blur(22px) saturate(1.18) !important;
     }
 
-    .dsVideoJsCinemaShell.v156LeanVidstack:fullscreen,
-    .dsVideoJsCinemaShell.v156LeanVidstack:-webkit-full-screen {
+    .dsVideoJsCinemaShell.v157LeanVidstack:fullscreen,
+    .dsVideoJsCinemaShell.v157LeanVidstack:-webkit-full-screen {
       position: fixed !important;
       inset: 0 !important;
       width: 100vw !important;
@@ -44222,10 +44390,10 @@ function watchroomPage(req, res) {
       contain: strict !important;
     }
 
-    .dsVideoJsCinemaShell.v156LeanVidstack:fullscreen media-player.swiflyVidstackPlayer,
-    .dsVideoJsCinemaShell.v156LeanVidstack:-webkit-full-screen media-player.swiflyVidstackPlayer,
-    .dsVideoJsCinemaShell.v156LeanVidstack:fullscreen > video#proxyVideoClientVideo,
-    .dsVideoJsCinemaShell.v156LeanVidstack:-webkit-full-screen > video#proxyVideoClientVideo {
+    .dsVideoJsCinemaShell.v157LeanVidstack:fullscreen media-player.swiflyVidstackPlayer,
+    .dsVideoJsCinemaShell.v157LeanVidstack:-webkit-full-screen media-player.swiflyVidstackPlayer,
+    .dsVideoJsCinemaShell.v157LeanVidstack:fullscreen > video#proxyVideoClientVideo,
+    .dsVideoJsCinemaShell.v157LeanVidstack:-webkit-full-screen > video#proxyVideoClientVideo {
       position: fixed !important;
       inset: 0 !important;
       width: 100vw !important;
@@ -44234,6 +44402,145 @@ function watchroomPage(req, res) {
       max-height: 100vh !important;
       border-radius: 0 !important;
       object-fit: contain !important;
+    }
+
+
+    /* ============================================================
+       v157 VISIBLE TIMELINE FIX
+       - keeps Vidstack controls awake instead of autohiding forever
+       - adds a clean fallback timeline if the default layout still hides
+       - moves TV/studio overlays off the player controls
+       ============================================================ */
+
+    body.swiflyWatchMoviePlayer #swiflyTvHint {
+      bottom: 116px !important;
+      z-index: 120 !important;
+      opacity: .72 !important;
+      pointer-events: none !important;
+    }
+
+    body.swiflyWatchMoviePlayer .navStudioButton {
+      bottom: 104px !important;
+      z-index: 120 !important;
+    }
+
+    .dsVideoJsCinemaShell.v157VisibleControls media-player.swiflyVidstackPlayer {
+      --media-controls-color: rgba(255,255,255,.96);
+      --media-controls-bg: transparent;
+      --media-controls-padding: 14px;
+      --media-button-size: 42px;
+      --media-slider-track-height: 5px;
+      --media-slider-thumb-size: 14px;
+    }
+
+    .dsVideoJsCinemaShell.v157VisibleControls media-player.swiflyVidstackPlayer media-controls,
+    .dsVideoJsCinemaShell.v157VisibleControls media-player.swiflyVidstackPlayer [data-media-controls],
+    .dsVideoJsCinemaShell.v157VisibleControls media-player.swiflyVidstackPlayer [data-part="controls"],
+    .dsVideoJsCinemaShell.v157VisibleControls media-player.swiflyVidstackPlayer [data-controls] {
+      opacity: 1 !important;
+      visibility: visible !important;
+      pointer-events: auto !important;
+      transform: translateY(0) !important;
+      transition: opacity .16s ease, transform .16s ease !important;
+    }
+
+    .dsVideoJsCinemaShell.v157VisibleControls media-player.swiflyVidstackPlayer media-time-slider,
+    .dsVideoJsCinemaShell.v157VisibleControls media-player.swiflyVidstackPlayer [data-part="time-slider"],
+    .dsVideoJsCinemaShell.v157VisibleControls media-player.swiflyVidstackPlayer [part~="time-slider"] {
+      min-height: 34px !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      pointer-events: auto !important;
+    }
+
+    .dsVideoJsCinemaShell.v157VisibleControls .swiflyTimelineRescue {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 16px;
+      z-index: 80;
+      display: grid;
+      grid-template-columns: 42px max-content minmax(120px, 1fr) max-content 42px 42px;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(9,11,18,.40), rgba(0,0,0,.68));
+      border: 1px solid rgba(255,255,255,.13);
+      box-shadow: 0 22px 70px rgba(0,0,0,.50), inset 0 1px 0 rgba(255,255,255,.08);
+      backdrop-filter: blur(22px) saturate(1.18);
+      -webkit-backdrop-filter: blur(22px) saturate(1.18);
+      color: #fff;
+      opacity: .96;
+      pointer-events: auto;
+    }
+
+    .dsVideoJsCinemaShell.v157VisibleControls .swiflyTimelineRescue button {
+      width: 42px;
+      height: 42px;
+      border: 0;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: rgba(255,255,255,.10);
+      color: #fff;
+      font: 900 14px/1 var(--font-ui, Inter, system-ui, sans-serif);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+      cursor: pointer;
+      transition: transform .14s ease, background .14s ease;
+    }
+
+    .dsVideoJsCinemaShell.v157VisibleControls .swiflyTimelineRescue button:hover,
+    .dsVideoJsCinemaShell.v157VisibleControls .swiflyTimelineRescue button:focus-visible {
+      transform: translateY(-1px) scale(1.03);
+      background: rgba(255,255,255,.18);
+      outline: 2px solid rgba(255,255,255,.55);
+      outline-offset: 2px;
+    }
+
+    .dsVideoJsCinemaShell.v157VisibleControls .swiflyTimelineRescue span {
+      font: 850 12px/1 var(--font-ui, Inter, system-ui, sans-serif);
+      color: rgba(255,255,255,.84);
+      min-width: 42px;
+      text-align: center;
+      letter-spacing: .01em;
+    }
+
+    .dsVideoJsCinemaShell.v157VisibleControls .swiflyTimelineRescue input[type="range"] {
+      width: 100%;
+      accent-color: #fff;
+      cursor: pointer;
+    }
+
+    .dsVideoJsCinemaShell.v157VisibleControls .swiflyTimelineRescue input[type="range"]:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+
+    .dsVideoJsCinemaShell.v157VisibleControls:fullscreen .swiflyTimelineRescue,
+    .dsVideoJsCinemaShell.v157VisibleControls:-webkit-full-screen .swiflyTimelineRescue {
+      left: max(24px, env(safe-area-inset-left));
+      right: max(24px, env(safe-area-inset-right));
+      bottom: max(22px, env(safe-area-inset-bottom));
+    }
+
+    @media(max-width: 760px) {
+      .dsVideoJsCinemaShell.v157VisibleControls .swiflyTimelineRescue {
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+        grid-template-columns: 38px minmax(90px, 1fr) 38px;
+        gap: 8px;
+      }
+      .dsVideoJsCinemaShell.v157VisibleControls .swiflyTimelineRescue .swiflyRescueCurrent,
+      .dsVideoJsCinemaShell.v157VisibleControls .swiflyTimelineRescue .swiflyRescueDuration,
+      .dsVideoJsCinemaShell.v157VisibleControls .swiflyTimelineRescue .swiflyRescueMute {
+        display: none;
+      }
+      .dsVideoJsCinemaShell.v157VisibleControls .swiflyTimelineRescue button {
+        width: 38px;
+        height: 38px;
+      }
     }
 
   </style>` : "",
