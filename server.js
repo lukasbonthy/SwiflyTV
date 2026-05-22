@@ -36690,13 +36690,13 @@ async function watchPage(req, res, type) {
           <span>Getting m3u8</span>
           <h2>Finding your m3u8 source...</h2>
           <p>This provider can take a while. Keep this page open — SwiflyTV will keep trying and load the m3u8 stream as soon as it returns.</p>
-          <div id="proxyVideoWaitStatus" class="dsProxyVideoWaitStatus">Starting request...</div>
+          <div id="proxyVideoWaitStatus" class="dsProxyVideoWaitStatus">Loading resolver script...</div>
           <div class="dsStableActions">
             <button class="dsSecondaryBtn" id="retryProxyVideoBtn" type="button">Retry now</button>
             <a class="dsGhostPill" href="/watchrooms">Use Watch Room</a>
           </div>
         </div>
-        <div id="movieButtonPlayerShell" class="dsMovieButtonPlayerShell dsCinemaHlsShell v160CleanHlsShell" hidden>
+        <div id="movieButtonPlayerShell" class="dsMovieButtonPlayerShell dsCinemaHlsShell v161CleanHlsShell" hidden>
           <video id="proxyVideoClientVideo" class="dsMovieButtonVideo dsCinemaHlsVideo swiflyNativeHlsVideo" controls playsinline crossorigin="anonymous" preload="auto"></video>
           <div id="movieButtonHlsStatus" class="dsHlsStatus" hidden><b>Loading stream...</b><span>Preparing clean player</span></div>
         </div>
@@ -36830,54 +36830,54 @@ async function watchPage(req, res, type) {
         }
 
         function injectPlayerStyles() {
-          if (document.getElementById("swifly-v160-player-style")) return;
+          if (document.getElementById("swifly-v161-player-style")) return;
           var style = document.createElement("style");
-          style.id = "swifly-v160-player-style";
+          style.id = "swifly-v161-player-style";
           style.textContent = "
 " +
-            ".dsProxyVideoWaitingShell.v160Ready{background:#000!important;}
+            ".dsProxyVideoWaitingShell.v161Ready{background:#000!important;}
 " +
-            ".dsProxyVideoWaitingShell.v160Ready .dsProxyVideoWaitingCard{display:none!important;}
+            ".dsProxyVideoWaitingShell.v161Ready .dsProxyVideoWaitingCard{display:none!important;}
 " +
-            ".dsMovieButtonPlayerShell.v160HlsPlayer{display:block!important;position:relative!important;width:100%!important;min-height:min(74vh,780px)!important;background:#000!important;overflow:hidden!important;border-radius:inherit!important;}
+            ".dsMovieButtonPlayerShell.v161HlsPlayer{display:block!important;position:relative!important;width:100%!important;min-height:min(74vh,780px)!important;background:#000!important;overflow:hidden!important;border-radius:inherit!important;}
 " +
-            ".dsMovieButtonPlayerShell.v160HlsPlayer video{display:block!important;width:100%!important;height:min(74vh,780px)!important;min-height:420px!important;object-fit:contain!important;background:#000!important;border-radius:inherit!important;}
+            ".dsMovieButtonPlayerShell.v161HlsPlayer video{display:block!important;width:100%!important;height:min(74vh,780px)!important;min-height:420px!important;object-fit:contain!important;background:#000!important;border-radius:inherit!important;}
 " +
-            ".swiflyV160Controls{position:absolute;left:16px;right:16px;bottom:16px;z-index:80;display:grid;grid-template-columns:auto auto minmax(90px,1fr) auto auto auto;gap:12px;align-items:center;padding:13px 14px;border-radius:22px;background:linear-gradient(180deg,rgba(9,13,28,.76),rgba(4,7,17,.92));border:1px solid rgba(255,255,255,.16);box-shadow:0 18px 55px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.09);backdrop-filter:blur(22px);}
+            ".swiflyV161Controls{position:absolute;left:16px;right:16px;bottom:16px;z-index:80;display:grid;grid-template-columns:auto auto minmax(90px,1fr) auto auto auto;gap:12px;align-items:center;padding:13px 14px;border-radius:22px;background:linear-gradient(180deg,rgba(9,13,28,.76),rgba(4,7,17,.92));border:1px solid rgba(255,255,255,.16);box-shadow:0 18px 55px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.09);backdrop-filter:blur(22px);}
 " +
-            ".swiflyV160Btn{width:42px;height:42px;border:0;border-radius:999px;background:rgba(255,255,255,.10);color:#fff;font:900 15px Inter,system-ui,sans-serif;display:grid;place-items:center;cursor:pointer;transition:transform .15s ease,background .15s ease,box-shadow .15s ease;}
+            ".swiflyV161Btn{width:42px;height:42px;border:0;border-radius:999px;background:rgba(255,255,255,.10);color:#fff;font:900 15px Inter,system-ui,sans-serif;display:grid;place-items:center;cursor:pointer;transition:transform .15s ease,background .15s ease,box-shadow .15s ease;}
 " +
-            ".swiflyV160Btn:hover,.swiflyV160Btn:focus-visible{transform:scale(1.06);background:rgba(111,147,255,.34);box-shadow:0 0 0 4px rgba(111,147,255,.18);outline:none;}
+            ".swiflyV161Btn:hover,.swiflyV161Btn:focus-visible{transform:scale(1.06);background:rgba(111,147,255,.34);box-shadow:0 0 0 4px rgba(111,147,255,.18);outline:none;}
 " +
-            ".swiflyV160Play{width:50px;height:50px;background:linear-gradient(135deg,#5ea2ff,#8b5cf6);box-shadow:0 18px 40px rgba(94,162,255,.30);}
+            ".swiflyV161Play{width:50px;height:50px;background:linear-gradient(135deg,#5ea2ff,#8b5cf6);box-shadow:0 18px 40px rgba(94,162,255,.30);}
 " +
-            ".swiflyV160Time{min-width:54px;text-align:center;color:rgba(255,255,255,.88);font:850 12px/1 Inter,system-ui,sans-serif;font-variant-numeric:tabular-nums;}
+            ".swiflyV161Time{min-width:54px;text-align:center;color:rgba(255,255,255,.88);font:850 12px/1 Inter,system-ui,sans-serif;font-variant-numeric:tabular-nums;}
 " +
-            ".swiflyV160Duration{min-width:64px;}
+            ".swiflyV161Duration{min-width:64px;}
 " +
-            ".swiflyV160Range{width:100%;height:30px;accent-color:#8ab4ff;cursor:pointer;}
+            ".swiflyV161Range{width:100%;height:30px;accent-color:#8ab4ff;cursor:pointer;}
 " +
-            ".swiflyV160Range:disabled{opacity:.45;cursor:not-allowed;}
+            ".swiflyV161Range:disabled{opacity:.45;cursor:not-allowed;}
 " +
-            ".swiflyV160Status{position:absolute;top:16px;left:16px;z-index:75;padding:9px 12px;border-radius:999px;background:rgba(3,7,18,.70);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.78);font:850 11px/1 Inter,system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;backdrop-filter:blur(16px);}
+            ".swiflyV161Status{position:absolute;top:16px;left:16px;z-index:75;padding:9px 12px;border-radius:999px;background:rgba(3,7,18,.70);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.78);font:850 11px/1 Inter,system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;backdrop-filter:blur(16px);}
 " +
-            ".swiflyV160Click{position:absolute;inset:0;z-index:70;display:none;place-items:center;background:radial-gradient(circle at center,rgba(15,23,42,.20),rgba(0,0,0,.38));}
+            ".swiflyV161Click{position:absolute;inset:0;z-index:70;display:none;place-items:center;background:radial-gradient(circle at center,rgba(15,23,42,.20),rgba(0,0,0,.38));}
 " +
-            ".swiflyNeedsClick .swiflyV160Click{display:grid;}
+            ".swiflyNeedsClick .swiflyV161Click{display:grid;}
 " +
-            ".swiflyV160Click button{border:0;border-radius:999px;padding:16px 22px;background:linear-gradient(135deg,#5ea2ff,#8b5cf6);color:#fff;font:900 15px Inter,system-ui,sans-serif;box-shadow:0 20px 55px rgba(94,162,255,.34);cursor:pointer;}
+            ".swiflyV161Click button{border:0;border-radius:999px;padding:16px 22px;background:linear-gradient(135deg,#5ea2ff,#8b5cf6);color:#fff;font:900 15px Inter,system-ui,sans-serif;box-shadow:0 20px 55px rgba(94,162,255,.34);cursor:pointer;}
 " +
-            ".dsMovieButtonPlayerShell.v160HlsPlayer #swiflyTvHint{bottom:94px!important;}
+            ".dsMovieButtonPlayerShell.v161HlsPlayer #swiflyTvHint{bottom:94px!important;}
 " +
-            ".dsMovieButtonPlayerShell.v160HlsPlayer .navStudioButton{bottom:94px!important;}
+            ".dsMovieButtonPlayerShell.v161HlsPlayer .navStudioButton{bottom:94px!important;}
 " +
-            ".dsMovieButtonPlayerShell.v160HlsPlayer:fullscreen,.dsMovieButtonPlayerShell.v160HlsPlayer:-webkit-full-screen{width:100vw!important;height:100vh!important;border-radius:0!important;}
+            ".dsMovieButtonPlayerShell.v161HlsPlayer:fullscreen,.dsMovieButtonPlayerShell.v161HlsPlayer:-webkit-full-screen{width:100vw!important;height:100vh!important;border-radius:0!important;}
 " +
-            ".dsMovieButtonPlayerShell.v160HlsPlayer:fullscreen video,.dsMovieButtonPlayerShell.v160HlsPlayer:-webkit-full-screen video{width:100vw!important;height:100vh!important;min-height:100vh!important;border-radius:0!important;}
+            ".dsMovieButtonPlayerShell.v161HlsPlayer:fullscreen video,.dsMovieButtonPlayerShell.v161HlsPlayer:-webkit-full-screen video{width:100vw!important;height:100vh!important;min-height:100vh!important;border-radius:0!important;}
 " +
-            ".dsMovieButtonPlayerShell.v160HlsPlayer:fullscreen .swiflyV160Controls,.dsMovieButtonPlayerShell.v160HlsPlayer:-webkit-full-screen .swiflyV160Controls{bottom:24px;left:24px;right:24px;}
+            ".dsMovieButtonPlayerShell.v161HlsPlayer:fullscreen .swiflyV161Controls,.dsMovieButtonPlayerShell.v161HlsPlayer:-webkit-full-screen .swiflyV161Controls{bottom:24px;left:24px;right:24px;}
 " +
-            "@media(max-width:760px){.swiflyV160Controls{left:10px;right:10px;bottom:10px;grid-template-columns:auto minmax(80px,1fr) auto auto;gap:8px;padding:11px}.swiflyV160Current{display:none}.swiflyV160Duration{font-size:11px}.dsMovieButtonPlayerShell.v160HlsPlayer video{min-height:58vh!important;height:68vh!important}}
+            "@media(max-width:760px){.swiflyV161Controls{left:10px;right:10px;bottom:10px;grid-template-columns:auto minmax(80px,1fr) auto auto;gap:8px;padding:11px}.swiflyV161Current{display:none}.swiflyV161Duration{font-size:11px}.dsMovieButtonPlayerShell.v161HlsPlayer video{min-height:58vh!important;height:68vh!important}}
 ";
           document.head.appendChild(style);
         }
@@ -36930,31 +36930,31 @@ async function watchPage(req, res, type) {
           injectPlayerStyles();
           if (!playerShell || !video) return null;
           playerShell.hidden = false;
-          playerShell.className = "dsMovieButtonPlayerShell v160HlsPlayer";
-          if (shell) shell.classList.add("isReady", "v160Ready");
+          playerShell.className = "dsMovieButtonPlayerShell v161HlsPlayer";
+          if (shell) shell.classList.add("isReady", "v161Ready");
           if (waitingCard) waitingCard.style.display = "none";
           if (hlsStatus) hlsStatus.hidden = true;
-          playerShell.querySelectorAll(".swiflyV160Controls,.swiflyV160Status,.swiflyV160Click,.swiflyVidstackPlayer,.swiflyVidstackChrome,.swiflyTimelineRescue,.swiflyLiteChrome,.swiflyLiteTopNote,.swiflyLiteUnlock,.dsVideoJsCenter,.dsCinemaSeekDock,.swiflyVideoDock").forEach(function(el){ try { el.remove(); } catch {} });
+          playerShell.querySelectorAll(".swiflyV161Controls,.swiflyV161Status,.swiflyV161Click,.swiflyVidstackPlayer,.swiflyVidstackChrome,.swiflyTimelineRescue,.swiflyLiteChrome,.swiflyLiteTopNote,.swiflyLiteUnlock,.dsVideoJsCenter,.dsCinemaSeekDock,.swiflyVideoDock").forEach(function(el){ try { el.remove(); } catch {} });
           video.hidden = false;
           video.controls = false;
           video.playsInline = true;
           video.preload = "auto";
           video.crossOrigin = "anonymous";
-          video.className = "dsMovieButtonVideo swiflyV160Video";
+          video.className = "dsMovieButtonVideo swiflyV161Video";
 
           var status = document.createElement("div");
-          status.className = "swiflyV160Status";
+          status.className = "swiflyV161Status";
           status.textContent = "Loading stream";
           var clickLayer = document.createElement("div");
-          clickLayer.className = "swiflyV160Click";
+          clickLayer.className = "swiflyV161Click";
           clickLayer.innerHTML = '<button type="button">Click to play</button>';
           var controls = document.createElement("div");
-          controls.className = "swiflyV160Controls";
-          controls.innerHTML = '<button type="button" class="swiflyV160Btn swiflyV160Play" aria-label="Play or pause">▶</button><span class="swiflyV160Time swiflyV160Current">0:00</span><input class="swiflyV160Range" type="range" min="0" max="1000" value="0" step="1" aria-label="Movie timeline"><span class="swiflyV160Time swiflyV160Duration">--:--</span><button type="button" class="swiflyV160Btn swiflyV160Mute" aria-label="Mute">🔊</button><button type="button" class="swiflyV160Btn swiflyV160Full" aria-label="Fullscreen">⛶</button>';
+          controls.className = "swiflyV161Controls";
+          controls.innerHTML = '<button type="button" class="swiflyV161Btn swiflyV161Play" aria-label="Play or pause">▶</button><span class="swiflyV161Time swiflyV161Current">0:00</span><input class="swiflyV161Range" type="range" min="0" max="1000" value="0" step="1" aria-label="Movie timeline"><span class="swiflyV161Time swiflyV161Duration">--:--</span><button type="button" class="swiflyV161Btn swiflyV161Mute" aria-label="Mute">🔊</button><button type="button" class="swiflyV161Btn swiflyV161Full" aria-label="Fullscreen">⛶</button>';
           playerShell.appendChild(status);
           playerShell.appendChild(clickLayer);
           playerShell.appendChild(controls);
-          return { status: status, clickLayer: clickLayer, clickBtn: clickLayer.querySelector("button"), controls: controls, play: controls.querySelector(".swiflyV160Play"), current: controls.querySelector(".swiflyV160Current"), range: controls.querySelector(".swiflyV160Range"), duration: controls.querySelector(".swiflyV160Duration"), mute: controls.querySelector(".swiflyV160Mute"), full: controls.querySelector(".swiflyV160Full") };
+          return { status: status, clickLayer: clickLayer, clickBtn: clickLayer.querySelector("button"), controls: controls, play: controls.querySelector(".swiflyV161Play"), current: controls.querySelector(".swiflyV161Current"), range: controls.querySelector(".swiflyV161Range"), duration: controls.querySelector(".swiflyV161Duration"), mute: controls.querySelector(".swiflyV161Mute"), full: controls.querySelector(".swiflyV161Full") };
         }
 
         function isHls(url, data) {
@@ -36979,7 +36979,7 @@ async function watchPage(req, res, type) {
 
         function startPlayer(src, data) {
           if (!src || !video) return showError("No playable m3u8 URL returned.");
-          if (lastSource === src && playerShell && playerShell.classList.contains("v160HlsPlayer")) return;
+          if (lastSource === src && playerShell && playerShell.classList.contains("v161HlsPlayer")) return;
           lastSource = src;
           destroyPlayer();
           var ui = setupShell();
@@ -37002,7 +37002,7 @@ async function watchPage(req, res, type) {
 
           function mark(label) {
             if (ui.status) ui.status.textContent = label || "Stream ready";
-            if (shell) shell.classList.add("isReady", "v160Ready");
+            if (shell) shell.classList.add("isReady", "v161Ready");
             if (playerShell) playerShell.classList.remove("swiflyNeedsClick");
             update();
           }
@@ -37103,7 +37103,10 @@ async function watchPage(req, res, type) {
           setStatus((force ? "Restarting" : "Searching") + " m3u8... attempt " + attempt + " • " + elapsed + "s");
           try {
             var url = "/api/proxy-video-wait/movie/" + encodeURIComponent(movieId) + "?t=" + Date.now() + (force ? "&force=1" : "");
-            var response = await fetch(url, { cache: "no-store", headers: { Accept: "application/json" } });
+            var controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+            var timeoutId = controller ? setTimeout(function(){ try { controller.abort(); } catch {} }, 6500) : null;
+            var response = await fetch(url, { cache: "no-store", headers: { Accept: "application/json" }, signal: controller ? controller.signal : undefined });
+            if (timeoutId) clearTimeout(timeoutId);
             var data = await response.json();
             if (data && data.status === "ok" && (data.playbackUrl || data.m3u8 || data.proxyVideo)) {
               stopped = true;
@@ -37121,8 +37124,9 @@ async function watchPage(req, res, type) {
             setStatus("Not ready yet: " + msg);
             schedulePoll(2500);
           } catch (error) {
-            setStatus("Resolver check failed, retrying: " + (error && error.message ? error.message : "request failed"));
-            schedulePoll(2500);
+            var reason = error && error.name === "AbortError" ? "endpoint timeout" : (error && error.message ? error.message : "request failed");
+            setStatus("Resolver endpoint slow (" + reason + "). Retrying without freezing...");
+            schedulePoll(1600);
           }
         }
 
@@ -42564,9 +42568,11 @@ app.get("/favicon.ico", (req, res) => {
 
 // ============================================================
 // v160 NON-BLOCKING M3U8 RESOLVER JOBS
-// The old wait endpoint could hold the browser request open while the
-// provider/resolver worked through long retries. The watch page now polls
-// this lightweight job state endpoint so the UI never sits on "Starting request".
+// v161: make this endpoint truly instant. The resolver is launched on the
+// next timer tick, not in a promise microtask, so the first JSON response can
+// leave the server before any slow provider / DNS / fetch work begins.
+// The client also uses request timeouts so the UI cannot freeze on
+// "Starting request" if a route, proxy, or deployment hangs.
 // ============================================================
 const movieM3u8ResolveJobs = new Map();
 const MOVIE_M3U8_JOB_TTL_MS = Math.max(60_000, Number(process.env.MOVIE_M3U8_JOB_TTL_MS || 10 * 60_000));
@@ -42617,6 +42623,8 @@ function startMovieM3u8ResolveJob({ type = "movie", id, force = false } = {}) {
     id: String(id || ""),
     state: "pending",
     startedAt: now,
+    resolverStartedAt: 0,
+    lastTickAt: now,
     finishedAt: 0,
     polls: 0,
     result: null,
@@ -42624,20 +42632,31 @@ function startMovieM3u8ResolveJob({ type = "movie", id, force = false } = {}) {
   };
   movieM3u8ResolveJobs.set(key, job);
 
-  Promise.resolve()
-    .then(() => fetchProxyVideoSource({ type, id }))
-    .then((result) => {
-      job.finishedAt = Date.now();
-      job.result = sanitizeMovieResolveResult(result || {});
-      job.state = job.result.status === "ok" ? "ok" : "error";
-      if (job.state !== "ok") job.error = job.result.message || "m3u8 resolver did not return a playable source.";
-    })
-    .catch((error) => {
-      job.finishedAt = Date.now();
-      job.state = "error";
-      job.error = error?.message || "m3u8 resolver failed.";
-      job.result = sanitizeMovieResolveResult({ status: "error", message: job.error });
-    });
+  const runResolver = () => {
+    const current = movieM3u8ResolveJobs.get(key);
+    if (!current || current !== job || current.state !== "pending") return;
+    job.resolverStartedAt = Date.now();
+    job.lastTickAt = job.resolverStartedAt;
+
+    fetchProxyVideoSource({ type, id })
+      .then((result) => {
+        job.finishedAt = Date.now();
+        job.lastTickAt = job.finishedAt;
+        job.result = sanitizeMovieResolveResult(result || {});
+        job.state = job.result.status === "ok" ? "ok" : "error";
+        if (job.state !== "ok") job.error = job.result.message || "m3u8 resolver did not return a playable source.";
+      })
+      .catch((error) => {
+        job.finishedAt = Date.now();
+        job.lastTickAt = job.finishedAt;
+        job.state = "error";
+        job.error = error?.message || "m3u8 resolver failed.";
+        job.result = sanitizeMovieResolveResult({ status: "error", message: job.error });
+      });
+  };
+
+  if (typeof setImmediate === "function") setImmediate(runResolver);
+  else setTimeout(runResolver, 0);
 
   return job;
 }
@@ -42675,18 +42694,33 @@ function movieM3u8JobPayload(job) {
     status: "pending",
     resolverJob: "pending",
     elapsedMs,
-    pollMs: Math.min(4500, 1300 + (job.polls || 1) * 250),
-    message: elapsedMs < 4500
-      ? "Resolver started. Waiting for m3u8..."
-      : `Still searching for m3u8... ${Math.round(elapsedMs / 1000)}s`,
+    resolverStartedAt: job.resolverStartedAt || 0,
+    pollMs: Math.min(3500, 900 + (job.polls || 1) * 180),
+    message: !job.resolverStartedAt
+      ? "Resolver queued. Starting provider check..."
+      : elapsedMs < 4500
+        ? "Resolver started. Waiting for m3u8..."
+        : `Still searching for m3u8... ${Math.round(elapsedMs / 1000)}s`,
   };
 }
 
-app.get("/api/proxy-video-wait/movie/:id", async (req, res) => {
+app.get("/api/proxy-video-wait/movie/:id", (req, res) => {
   res.set("Cache-Control", "no-store");
-  const force = String(req.query.force || req.query.retry || "") === "1";
-  const job = startMovieM3u8ResolveJob({ type: "movie", id: req.params.id, force });
-  res.json(movieM3u8JobPayload(job));
+  res.set("X-Swifly-Resolver", "v161-instant-job");
+  try {
+    const force = String(req.query.force || req.query.retry || "") === "1";
+    const job = startMovieM3u8ResolveJob({ type: "movie", id: req.params.id, force });
+    const payload = movieM3u8JobPayload(job);
+    res.status(payload.status === "pending" ? 202 : 200).json(payload);
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      status: "error",
+      resolverJob: "route_error",
+      message: error?.message || "Resolver endpoint failed before job startup.",
+      pollMs: 2500,
+    });
+  }
 });
 
 app.get("/api/proxy-video/movie/:id", async (req, res) => {
