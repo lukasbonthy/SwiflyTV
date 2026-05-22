@@ -36918,6 +36918,22 @@ async function watchPage(req, res, type) {
 
         function setPlayerStatus(title, detail, isError) {
           if (!hlsStatus) return;
+
+          // v155: the player should not keep an old loading/status badge on screen
+          // after actual playback has started. Proxied HLS can still emit soft fragment
+          // warnings while video keeps playing, so hide those instead of scaring the UI.
+          try {
+            var messageText = String((title || "") + " " + (detail || ""));
+            var softFragmentIssue = /fragLoad|FRAG_LOAD|fragment|bufferStalled|bufferNudge/i.test(messageText);
+            var alreadyPlaying = isMediaActuallyPlaying(getVisiblePlaybackVideo());
+            if (playerShell && playerShell.classList.contains("v155CleanVidstack") && alreadyPlaying && (!isError || softFragmentIssue)) {
+              hidePlayerStatusNow();
+              if (hlsTitle) hlsTitle.textContent = "Playing";
+              if (hlsMeta) hlsMeta.textContent = "Stream is playing";
+              return;
+            }
+          } catch {}
+
           hlsStatus.hidden = false;
           hlsStatus.classList.toggle("isError", Boolean(isError));
           var b = hlsStatus.querySelector("b");
@@ -36949,8 +36965,11 @@ async function watchPage(req, res, type) {
         function isMediaActuallyPlaying(target) {
           try {
             var media = target || getVisiblePlaybackVideo();
-            if (!media) return false;
-            return !media.paused && !media.ended && Number(media.readyState || 0) >= 2;
+            if (media && !media.paused && !media.ended && Number(media.readyState || 0) >= 2) return true;
+            if (movieButtonVidstack) {
+              var state = movieButtonVidstack.state || {};
+              if (movieButtonVidstack.paused === false || state.playing === true || state.paused === false) return true;
+            }
           } catch {}
           return false;
         }
@@ -37045,6 +37064,12 @@ async function watchPage(req, res, type) {
         }
 
         function syncCustomSeekBar() {
+          // v155: Vidstack/native controls own the timeline. The old Swifly custom
+          // timeline was the source of the stuck "Loading" label.
+          if (playerShell && playerShell.classList.contains("v155CleanVidstack")) {
+            try { if (seekDock) seekDock.hidden = true; } catch {}
+            return;
+          }
           if (!seekDock || !seekRange || !video) return;
 
           var win = getSeekWindow();
@@ -37057,7 +37082,7 @@ async function watchPage(req, res, type) {
           seekDock.classList.toggle("isStreamOnly", !canSeek && hasStarted);
 
           if (seekMode) seekMode.textContent = win.live ? (canSeek ? "LIVE / DVR" : "LIVE") : (canSeek ? "VOD" : "STREAM");
-          if (seekLabel) seekLabel.textContent = canSeek ? "Timeline" : (hasStarted ? "Stream playing" : "Starting stream");
+          if (seekLabel) seekLabel.textContent = canSeek ? "Timeline" : (hasStarted ? "Stream playing" : "Loading");
 
           var currentOffset = canSeek ? Math.max(0, Math.min(win.duration || 0, Number(video.currentTime || 0) - win.start)) : Math.max(0, Number(video.currentTime || 0));
           if (!isSeekingWithRange) {
@@ -38245,7 +38270,7 @@ async function watchPage(req, res, type) {
           var recoveryCard = null;
           if (playerShell) {
             playerShell.classList.remove("usesVidstack", "v149Vidstack", "v149Ready", "v149Playing");
-            playerShell.classList.add("usesNativeVideo", "v150HlsRecovery", "v151StreamPro", "v154StreamLatchFix");
+            playerShell.classList.add("usesNativeVideo", "v150HlsRecovery", "v151StreamPro", "v154StreamLatchFix v155CleanVidstack");
             try {
               playerShell.querySelectorAll(".swiflyVidstackPlayer, .swiflyVidstackChrome").forEach(function(el) { el.remove(); });
             } catch {}
@@ -38273,6 +38298,8 @@ async function watchPage(req, res, type) {
             if (qualityMenu) qualityMenu.hidden = true;
             if (speedMenu) speedMenu.hidden = true;
             if (volumeMenu) volumeMenu.hidden = true;
+            if (hlsStatus) hlsStatus.hidden = true;
+            if (playerShell) playerShell.classList.add("v155CleanVidstack");
           } catch {}
 
           try {
@@ -38517,7 +38544,7 @@ async function watchPage(req, res, type) {
 
         function startVideoJsCinemaSource(src, data, vidstackAttempt) {
           vidstackAttempt = Number(vidstackAttempt || 0);
-          setPlayerStatus("Loading m3u8...", vidstackAttempt ? "Retrying Vidstack Seekless Cinema" : "Starting Vidstack Seekless Cinema", false);
+          setPlayerStatus("Loading m3u8...", vidstackAttempt ? "Retrying Vidstack Clean Cinema" : "Starting Vidstack Clean Cinema", false);
           setVideoUiState("loading");
           destroyRegularMoviePlayers();
 
@@ -38549,9 +38576,10 @@ async function watchPage(req, res, type) {
               "v148NeoCinema",
               "v149Ready",
               "v149Playing",
-              "v151StreamPro"
+              "v151StreamPro",
+              "v155CleanVidstack"
             );
-            playerShell.classList.add("usesVidstack", "v149Vidstack", "v150VidstackModern", "v151StreamPro", "v154StreamLatchFix");
+            playerShell.classList.add("usesVidstack", "v149Vidstack", "v150VidstackModern", "v151StreamPro", "v154StreamLatchFix v155CleanVidstack");
           }
 
           try {
@@ -38559,6 +38587,8 @@ async function watchPage(req, res, type) {
             if (qualityMenu) qualityMenu.hidden = true;
             if (speedMenu) speedMenu.hidden = true;
             if (volumeMenu) volumeMenu.hidden = true;
+            if (hlsStatus) hlsStatus.hidden = true;
+            if (playerShell) playerShell.classList.add("v155CleanVidstack");
           } catch {}
 
           try {
@@ -38645,7 +38675,7 @@ async function watchPage(req, res, type) {
             player.setAttribute("crossorigin", "anonymous");
             player.setAttribute("playsinline", "");
             player.setAttribute("data-swifly-src", src);
-            player.setAttribute("data-swifly-player", "vidstack-v154");
+            player.setAttribute("data-swifly-player", "vidstack-v155");
             player.setAttribute("key-target", "player");
             player.setAttribute("aria-keyshortcuts", "Space K J L ArrowLeft ArrowRight ArrowUp ArrowDown M F");
             player.setAttribute("aria-label", title + " player");
@@ -38730,7 +38760,7 @@ async function watchPage(req, res, type) {
                 setVideoUiState("ready");
                 setPlayerStatus("Ready", message || "Vidstack player loaded", false);
                 setStatus("m3u8 loaded in Vidstack player.");
-                hidePlayerStatusSoon();
+                hidePlayerStatusSoon(450);
               }
               installMediaSession(player, title, poster);
             }
@@ -43909,6 +43939,155 @@ function watchroomPage(req, res) {
 
     .dsVideoJsCinemaShell.v154StreamLatchFix.v149Vidstack:fullscreen > video.dsMovieButtonVideo,
     .dsVideoJsCinemaShell.v154StreamLatchFix.v149Vidstack:-webkit-full-screen > video.dsMovieButtonVideo {
+      display: none !important;
+    }
+
+
+
+    /* ============================================================
+       v155 CLEAN VIDSTACK PLAYER
+       - removes old custom Video.js-era overlays
+       - hides stale loading/status badges once real playback owns the surface
+       - makes fullscreen a single clean player with no page scrollbar/double shell
+       ============================================================ */
+
+    .dsVideoJsCinemaShell.v155CleanVidstack {
+      background: #000 !important;
+      border-radius: 26px !important;
+      overflow: hidden !important;
+      isolation: isolate !important;
+      outline: 1px solid rgba(255,255,255,.10) !important;
+      box-shadow: 0 42px 120px rgba(0,0,0,.62), 0 0 0 1px rgba(255,255,255,.05) inset !important;
+    }
+
+    .dsVideoJsCinemaShell.v155CleanVidstack::after,
+    .dsVideoJsCinemaShell.v155CleanVidstack .dsCinemaHlsTop,
+    .dsVideoJsCinemaShell.v155CleanVidstack .dsVideoJsTop,
+    .dsVideoJsCinemaShell.v155CleanVidstack .dsVideoJsCenter,
+    .dsVideoJsCinemaShell.v155CleanVidstack .dsVideoJsQuality,
+    .dsVideoJsCinemaShell.v155CleanVidstack .dsVideoJsSpeed,
+    .dsVideoJsCinemaShell.v155CleanVidstack .dsVideoJsVolume,
+    .dsVideoJsCinemaShell.v155CleanVidstack .dsVideoJsHint,
+    .dsVideoJsCinemaShell.v155CleanVidstack .dsVideoJsTimelinePreview,
+    .dsVideoJsCinemaShell.v155CleanVidstack .dsCinemaSeekDock,
+    .dsVideoJsCinemaShell.v155CleanVidstack #movieButtonSeekDock,
+    .dsVideoJsCinemaShell.v155CleanVidstack .swiflyVidstackChrome,
+    .dsVideoJsCinemaShell.v155CleanVidstack .swiflyVideoDock,
+    .dsVideoJsCinemaShell.v155CleanVidstack .swiflyNeoDock,
+    .dsVideoJsCinemaShell.v155CleanVidstack .swiflyDock {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v155CleanVidstack .dsHlsStatus:not(.isError) {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v155CleanVidstack .dsHlsStatus.isError {
+      top: 18px !important;
+      left: 18px !important;
+      right: auto !important;
+      max-width: min(420px, calc(100% - 36px)) !important;
+      border-radius: 18px !important;
+      background: rgba(12, 14, 20, .86) !important;
+      border: 1px solid rgba(255,255,255,.16) !important;
+      box-shadow: 0 20px 60px rgba(0,0,0,.50) !important;
+      backdrop-filter: blur(22px) saturate(1.18) !important;
+      -webkit-backdrop-filter: blur(22px) saturate(1.18) !important;
+    }
+
+    .dsVideoJsCinemaShell.v155CleanVidstack media-player.swiflyVidstackPlayer,
+    .dsVideoJsCinemaShell.v155CleanVidstack video.swiflyNativeHlsVideo {
+      position: absolute !important;
+      inset: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      min-height: 100% !important;
+      border-radius: inherit !important;
+      background: #000 !important;
+      object-fit: contain !important;
+      z-index: 2 !important;
+    }
+
+    .dsVideoJsCinemaShell.v155CleanVidstack media-player.swiflyVidstackPlayer {
+      --media-brand: #ffffff;
+      --media-focus-ring-color: rgba(255,255,255,.95);
+      --media-button-hover-bg: rgba(255,255,255,.13);
+      --media-slider-track-fill-bg: linear-gradient(90deg, #ffffff, #b7c5ff);
+      --media-menu-bg: rgba(9,10,16,.96);
+      --media-menu-border: 1px solid rgba(255,255,255,.16);
+    }
+
+    .dsVideoJsCinemaShell.v155CleanVidstack media-player.swiflyVidstackPlayer [data-media-controls],
+    .dsVideoJsCinemaShell.v155CleanVidstack media-player.swiflyVidstackPlayer [data-part="controls"],
+    .dsVideoJsCinemaShell.v155CleanVidstack media-player.swiflyVidstackPlayer [data-controls] {
+      margin: 18px !important;
+      padding: 8px 10px !important;
+      border-radius: 24px !important;
+      background: linear-gradient(180deg, rgba(16,17,24,.52), rgba(5,6,10,.78)) !important;
+      border: 1px solid rgba(255,255,255,.12) !important;
+      box-shadow: 0 24px 76px rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.08) !important;
+      backdrop-filter: blur(24px) saturate(1.20) !important;
+      -webkit-backdrop-filter: blur(24px) saturate(1.20) !important;
+    }
+
+    .dsVideoJsCinemaShell.v155CleanVidstack media-player.swiflyVidstackPlayer button,
+    .dsVideoJsCinemaShell.v155CleanVidstack media-player.swiflyVidstackPlayer [role="button"] {
+      border-radius: 16px !important;
+      transition: transform .14s ease, background .14s ease, opacity .14s ease !important;
+    }
+
+    .dsVideoJsCinemaShell.v155CleanVidstack media-player.swiflyVidstackPlayer button:hover,
+    .dsVideoJsCinemaShell.v155CleanVidstack media-player.swiflyVidstackPlayer [role="button"]:hover {
+      transform: translateY(-1px) !important;
+    }
+
+    .dsVideoJsCinemaShell.v155CleanVidstack:fullscreen,
+    .dsVideoJsCinemaShell.v155CleanVidstack:-webkit-full-screen {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: 100vw !important;
+      max-height: 100vh !important;
+      min-height: 100vh !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      overflow: hidden !important;
+      background: #000 !important;
+      contain: strict !important;
+    }
+
+    .dsVideoJsCinemaShell.v155CleanVidstack:fullscreen media-player.swiflyVidstackPlayer,
+    .dsVideoJsCinemaShell.v155CleanVidstack:-webkit-full-screen media-player.swiflyVidstackPlayer,
+    .dsVideoJsCinemaShell.v155CleanVidstack:fullscreen video.swiflyNativeHlsVideo,
+    .dsVideoJsCinemaShell.v155CleanVidstack:-webkit-full-screen video.swiflyNativeHlsVideo {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: 100vw !important;
+      max-height: 100vh !important;
+      border-radius: 0 !important;
+      object-fit: contain !important;
+    }
+
+    .dsVideoJsCinemaShell.v155CleanVidstack:fullscreen > video.dsMovieButtonVideo.isVidstackHidden,
+    .dsVideoJsCinemaShell.v155CleanVidstack:-webkit-full-screen > video.dsMovieButtonVideo.isVidstackHidden {
+      display: none !important;
+      visibility: hidden !important;
+    }
+
+    body.swiflyPlayerFullscreenActive .dsWatchHeader,
+    body.swiflyPlayerFullscreenActive .dsWatchPlayerTop,
+    body.swiflyPlayerFullscreenActive .dsWatchActions {
       display: none !important;
     }
 
