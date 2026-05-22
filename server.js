@@ -38281,7 +38281,7 @@ async function watchPage(req, res, type) {
             if (speedMenu) speedMenu.hidden = true;
             if (volumeMenu) volumeMenu.hidden = true;
             if (hlsStatus) hlsStatus.hidden = true;
-            if (playerShell) { playerShell.classList.add("v155CleanVidstack", "v157LeanVidstack", "v157VisibleControls"); hardHideLegacyPlayerChrome(); }
+            if (playerShell) { playerShell.classList.add("v155CleanVidstack", "v157LeanVidstack", "v157VisibleControls", "v158NoWakeLoop"); hardHideLegacyPlayerChrome(); }
           } catch {}
 
           try {
@@ -38529,6 +38529,12 @@ async function watchPage(req, res, type) {
           vidstackAttempt = Number(vidstackAttempt || 0);
           setPlayerStatus("Loading m3u8...", vidstackAttempt ? "Retrying Vidstack Clean Cinema" : "Starting Vidstack Clean Cinema", false);
           setVideoUiState("loading");
+          try {
+            if (window.__swiflyVidstackRescueTick) {
+              clearInterval(window.__swiflyVidstackRescueTick);
+              window.__swiflyVidstackRescueTick = null;
+            }
+          } catch {}
           destroyRegularMoviePlayers();
 
           if (playerShell) {
@@ -38562,9 +38568,10 @@ async function watchPage(req, res, type) {
               "v151StreamPro",
               "v155CleanVidstack",
               "v157LeanVidstack",
-              "v157VisibleControls"
+              "v157VisibleControls",
+              "v158NoWakeLoop"
             );
-            playerShell.classList.add("usesVidstack", "v149Vidstack", "v150VidstackModern", "v151StreamPro", "v154StreamLatchFix", "v155CleanVidstack", "v157LeanVidstack", "v157VisibleControls");
+            playerShell.classList.add("usesVidstack", "v149Vidstack", "v150VidstackModern", "v151StreamPro", "v154StreamLatchFix", "v155CleanVidstack", "v157LeanVidstack", "v157VisibleControls", "v158NoWakeLoop");
           }
 
           try {
@@ -38573,7 +38580,7 @@ async function watchPage(req, res, type) {
             if (speedMenu) speedMenu.hidden = true;
             if (volumeMenu) volumeMenu.hidden = true;
             if (hlsStatus) hlsStatus.hidden = true;
-            if (playerShell) { playerShell.classList.add("v155CleanVidstack", "v157LeanVidstack", "v157VisibleControls"); hardHideLegacyPlayerChrome(); }
+            if (playerShell) { playerShell.classList.add("v155CleanVidstack", "v157LeanVidstack", "v157VisibleControls", "v158NoWakeLoop"); hardHideLegacyPlayerChrome(); }
           } catch {}
 
           try {
@@ -38663,7 +38670,7 @@ async function watchPage(req, res, type) {
             player.setAttribute("crossorigin", "anonymous");
             player.setAttribute("playsinline", "");
             player.setAttribute("data-swifly-src", src);
-            player.setAttribute("data-swifly-player", "vidstack-v157");
+            player.setAttribute("data-swifly-player", "vidstack-v158");
             player.setAttribute("key-target", "player");
             player.setAttribute("controls-delay", "3600000");
             player.setAttribute("hide-controls-on-mouse-leave", "false");
@@ -38743,14 +38750,24 @@ async function watchPage(req, res, type) {
               return null;
             }
 
+            var wakeLock = false;
+            var lastWakeAt = 0;
+
             function wakeVidstackControls() {
+              // v158: never dispatch synthetic pointer/mouse events from inside this function.
+              // In v157 those synthetic events bubbled back into the same shell listeners and
+              // created a recursive wakeVidstackControls stack spam. Keep this visual-only.
+              var now = Date.now();
+              if (wakeLock || now - lastWakeAt < 120) return;
+              wakeLock = true;
+              lastWakeAt = now;
               try { player.controlsVisible = true; } catch {}
               try { player.controlsHidden = false; } catch {}
               try { player.removeAttribute("data-controls-hidden"); } catch {}
               try { player.setAttribute("data-controls", ""); } catch {}
-              try { player.dispatchEvent(new Event("pointermove", { bubbles: true })); } catch {}
-              try { player.dispatchEvent(new MouseEvent("mousemove", { bubbles: true, clientX: 24, clientY: 24 })); } catch {}
-              if (playerShell) playerShell.classList.add("v157ControlsAwake");
+              try { player.setAttribute("data-swifly-controls-awake", "true"); } catch {}
+              if (playerShell) playerShell.classList.add("v157ControlsAwake", "v158NoWakeLoop");
+              setTimeout(function(){ wakeLock = false; }, 0);
             }
 
             function ensureRescueControls() {
@@ -38842,14 +38859,22 @@ async function watchPage(req, res, type) {
             }
 
             function startVisibleControlsLoop() {
+              // Only one helper loop can exist at a time, even if the user changes movies.
+              try {
+                if (window.__swiflyVidstackRescueTick) {
+                  clearInterval(window.__swiflyVidstackRescueTick);
+                  window.__swiflyVidstackRescueTick = null;
+                }
+              } catch {}
               wakeVidstackControls();
               ensureRescueControls();
               updateRescueControls();
               if (rescueTick) clearInterval(rescueTick);
               rescueTick = setInterval(function(){
-                wakeVidstackControls();
+                // Update the backup timeline, but do not spam pointer/mouse events or force a wake loop.
                 updateRescueControls();
-              }, 500);
+              }, 750);
+              try { window.__swiflyVidstackRescueTick = rescueTick; } catch {}
             }
 
             function clearVidstackTimers() {
@@ -44543,7 +44568,21 @@ function watchroomPage(req, res) {
       }
     }
 
-  </style>` : "",
+  
+
+    /* v158: keep the backup timeline visible without forcing recursive Vidstack mouse events. */
+    .dsVideoJsCinemaShell.v158NoWakeLoop .swiflyVidstackPlayer {
+      --media-controls-delay: 3600000ms;
+    }
+    .dsVideoJsCinemaShell.v158NoWakeLoop .swiflyTimelineRescue {
+      opacity: 1 !important;
+      visibility: visible !important;
+      pointer-events: auto !important;
+    }
+    .dsVideoJsCinemaShell.v158NoWakeLoop .swiflyTimelineRescue input[type="range"] {
+      cursor: pointer;
+    }
+</style>` : "",
     body
   }));
 }
