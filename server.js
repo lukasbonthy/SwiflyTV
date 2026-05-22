@@ -36934,6 +36934,47 @@ async function watchPage(req, res, type) {
           playerShell.classList.toggle("isPaused", state === "paused");
           playerShell.classList.toggle("isLoading", state === "loading");
           playerShell.classList.toggle("isReady", state === "ready");
+          try { playerShell.setAttribute("data-player-state", state || "idle"); } catch {}
+        }
+
+        function getVisiblePlaybackVideo() {
+          try {
+            if (movieButtonVidstack) {
+              return movieButtonVidstack.querySelector("video") || movieButtonVidstack.querySelector("media-provider video") || null;
+            }
+          } catch {}
+          return video || null;
+        }
+
+        function isMediaActuallyPlaying(target) {
+          try {
+            var media = target || getVisiblePlaybackVideo();
+            if (!media) return false;
+            return !media.paused && !media.ended && Number(media.readyState || 0) >= 2;
+          } catch {}
+          return false;
+        }
+
+        function hidePlayerStatusNow() {
+          try {
+            if (hlsStatus) {
+              hlsStatus.hidden = true;
+              hlsStatus.classList.remove("isError");
+            }
+          } catch {}
+        }
+
+        function markShellPlaybackActive(detail) {
+          try {
+            if (playerShell) playerShell.classList.add("v149Ready", "v149Playing", "v154PlaybackLatched");
+            setVideoUiState("playing");
+            setStatus("m3u8 playing.");
+            if (seekDock) seekDock.hidden = true;
+            if (seekLabel) seekLabel.textContent = "Playing";
+            if (hlsTitle) hlsTitle.textContent = "Playing";
+            if (hlsMeta) hlsMeta.textContent = detail || "Stream is playing";
+            hidePlayerStatusNow();
+          } catch {}
         }
 
         function formatClock(seconds) {
@@ -37120,10 +37161,10 @@ async function watchPage(req, res, type) {
           playerShell.setAttribute("tabindex", "0");
         }
 
-        function hidePlayerStatusSoon() {
+        function hidePlayerStatusSoon(delay) {
           setTimeout(function(){
-            if (hlsStatus) hlsStatus.hidden = true;
-          }, 2500);
+            hidePlayerStatusNow();
+          }, Number(delay || 1800));
         }
 
         function loadHlsScript(callback) {
@@ -38204,7 +38245,7 @@ async function watchPage(req, res, type) {
           var recoveryCard = null;
           if (playerShell) {
             playerShell.classList.remove("usesVidstack", "v149Vidstack", "v149Ready", "v149Playing");
-            playerShell.classList.add("usesNativeVideo", "v150HlsRecovery", "v151StreamPro", "v153SeeklessStart");
+            playerShell.classList.add("usesNativeVideo", "v150HlsRecovery", "v151StreamPro", "v154StreamLatchFix");
             try {
               playerShell.querySelectorAll(".swiflyVidstackPlayer, .swiflyVidstackChrome").forEach(function(el) { el.remove(); });
             } catch {}
@@ -38268,23 +38309,31 @@ async function watchPage(req, res, type) {
           function markFallbackReady(message) {
             if (playerShell) playerShell.classList.add("v149Ready");
             try { if (recoveryCard) recoveryCard.hidden = true; } catch {}
-            setVideoUiState("ready");
-            setPlayerStatus("m3u8 ready", message || "HLS recovery player loaded", false);
-            setStatus("m3u8 loaded in HLS recovery player.");
+            if (isMediaActuallyPlaying(video)) {
+              markShellPlaybackActive(message || "HLS recovery player is playing");
+            } else {
+              setVideoUiState("ready");
+              setPlayerStatus("m3u8 ready", message || "HLS recovery player loaded", false);
+              setStatus("m3u8 loaded in HLS recovery player.");
+              hidePlayerStatusSoon();
+            }
             installMediaSession(video);
-            hidePlayerStatusSoon();
           }
 
           function wireVideoEvents() {
-            if (!video || video.dataset.v153HlsEvents === "true") return;
-            video.dataset.v153HlsEvents = "true";
+            if (!video || video.dataset.v154HlsEvents === "true") return;
+            video.dataset.v154HlsEvents = "true";
             ["loadedmetadata", "loadeddata", "canplay", "canplaythrough", "progress", "durationchange"].forEach(function(name) {
               video.addEventListener(name, function() {
                 syncCustomSeekBar();
                 if (Number(video.readyState || 0) >= 2) markFallbackReady("HLS recovery player loaded");
               });
             });
-            video.addEventListener("playing", function(){ if (playerShell) playerShell.classList.add("v149Playing"); setVideoUiState("playing"); syncCustomSeekBar(); hidePlayerStatusSoon(); });
+            video.addEventListener("playing", function(){
+              if (recoveryCard) recoveryCard.hidden = true;
+              markShellPlaybackActive("HLS recovery stream is playing");
+              syncCustomSeekBar();
+            });
             video.addEventListener("pause", function(){ if (playerShell) playerShell.classList.remove("v149Playing"); setVideoUiState("paused"); syncCustomSeekBar(); });
             video.addEventListener("waiting", function(){ setPlayerStatus("Buffering...", "Network slowed down. Holding the stream steady.", false); syncCustomSeekBar(); });
             video.addEventListener("error", function(){
@@ -38356,6 +38405,14 @@ async function watchPage(req, res, type) {
               manifestLoadingTimeOut: 30000,
               levelLoadingTimeOut: 30000,
               fragLoadingTimeOut: 30000,
+              fragLoadPolicy: {
+                default: {
+                  maxTimeToFirstByteMs: 30000,
+                  maxLoadTimeMs: 120000,
+                  timeoutRetry: { maxNumRetry: 6, retryDelayMs: 900, maxRetryDelayMs: 7000, backoff: "exponential" },
+                  errorRetry: { maxNumRetry: 8, retryDelayMs: 900, maxRetryDelayMs: 7000, backoff: "exponential" }
+                }
+              },
               xhrSetup: function(xhr) { try { xhr.withCredentials = false; } catch {} }
             });
 
@@ -38399,29 +38456,41 @@ async function watchPage(req, res, type) {
             movieButtonHls.on(window.Hls.Events.ERROR, function(event, err) {
               if (!err) return;
               var detail = String(err.details || err.reason || err.type || "Unknown HLS error");
+              var isFragProblem = /fragLoad|FRAG_LOAD|fragment|fragParsing/i.test(detail);
+              var playingNow = isMediaActuallyPlaying(video);
 
               if (!err.fatal) {
                 if (/bufferStalledError|bufferNudgeOnStall/i.test(detail)) {
                   try { movieButtonHls.startLoad(-1); } catch {}
-                  setPlayerStatus("Buffering...", "Recovering from a small stream stall", false);
+                  if (!playingNow) setPlayerStatus("Buffering...", "Recovering from a small stream stall", false);
+                  else markShellPlaybackActive("Stream is playing while HLS.js smooths a stall");
                   return;
                 }
-                if (detail && !/bufferStalledError/i.test(detail)) {
-                  setPlayerStatus("HLS warning", detail, false);
-                  hidePlayerStatusSoon();
+                if (isFragProblem) {
+                  try { movieButtonHls.startLoad(-1); } catch {}
+                  if (playingNow) markShellPlaybackActive("Stream is playing; skipped one weak fragment retry");
+                  else { setPlayerStatus("Fragment retry", "Retrying a slow video fragment", false); hidePlayerStatusSoon(1200); }
+                  return;
+                }
+                if (detail) {
+                  if (playingNow) markShellPlaybackActive("Stream is playing");
+                  else { setPlayerStatus("HLS warning", detail, false); hidePlayerStatusSoon(1200); }
                 }
                 return;
               }
 
               if (err.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
                 hlsFatalRetries += 1;
-                setPlayerStatus("HLS network retry", "Retry " + hlsFatalRetries + " • " + detail, true);
                 try {
-                  if (hlsFatalRetries <= 3) movieButtonHls.startLoad(-1);
-                  else {
+                  if (hlsFatalRetries <= 4) {
+                    if (!playingNow) setPlayerStatus("HLS network retry", "Retry " + hlsFatalRetries + " • " + detail, true);
+                    movieButtonHls.startLoad(-1);
+                  } else {
+                    setPlayerStatus("Reloading stream", "Fragment loading kept failing, reloading the m3u8", true);
                     movieButtonHls.stopLoad();
                     movieButtonHls.loadSource(src);
                     movieButtonHls.startLoad(-1);
+                    hlsFatalRetries = 0;
                   }
                 } catch {}
                 return;
@@ -38482,7 +38551,7 @@ async function watchPage(req, res, type) {
               "v149Playing",
               "v151StreamPro"
             );
-            playerShell.classList.add("usesVidstack", "v149Vidstack", "v150VidstackModern", "v151StreamPro", "v153SeeklessStart");
+            playerShell.classList.add("usesVidstack", "v149Vidstack", "v150VidstackModern", "v151StreamPro", "v154StreamLatchFix");
           }
 
           try {
@@ -38517,13 +38586,38 @@ async function watchPage(req, res, type) {
             } catch {}
           }
 
+          function syncFullscreenBodyLock() {
+            try {
+              var full = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+              var active = full && playerShell && (full === playerShell || playerShell.contains(full));
+              document.documentElement.classList.toggle("swiflyPlayerFullscreenActive", Boolean(active));
+              document.body.classList.toggle("swiflyPlayerFullscreenActive", Boolean(active));
+              if (!active) return;
+              if (seekDock) seekDock.hidden = true;
+              hidePlayerStatusNow();
+            } catch {}
+          }
+
+          if (!window.__swiflyPlayerFullscreenListenerInstalled) {
+            window.__swiflyPlayerFullscreenListenerInstalled = true;
+            ["fullscreenchange", "webkitfullscreenchange", "MSFullscreenChange"].forEach(function(name) {
+              document.addEventListener(name, syncFullscreenBodyLock, { passive: true });
+            });
+          }
+
           function requestShellFullscreen() {
             try {
               var target = playerShell || movieButtonVidstack;
               if (!target) return;
-              if (document.fullscreenElement) document.exitFullscreen && document.exitFullscreen();
-              else if (target.requestFullscreen) target.requestFullscreen();
+              if (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+                if (document.exitFullscreen) document.exitFullscreen();
+                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                return;
+              }
+              if (target.requestFullscreen) target.requestFullscreen({ navigationUI: "hide" }).then(syncFullscreenBodyLock).catch(function(){ syncFullscreenBodyLock(); });
+              else if (target.webkitRequestFullscreen) target.webkitRequestFullscreen();
               else if (movieButtonVidstack && movieButtonVidstack.requestFullscreen) movieButtonVidstack.requestFullscreen();
+              setTimeout(syncFullscreenBodyLock, 60);
             } catch {}
           }
 
@@ -38551,7 +38645,7 @@ async function watchPage(req, res, type) {
             player.setAttribute("crossorigin", "anonymous");
             player.setAttribute("playsinline", "");
             player.setAttribute("data-swifly-src", src);
-            player.setAttribute("data-swifly-player", "vidstack-v153");
+            player.setAttribute("data-swifly-player", "vidstack-v154");
             player.setAttribute("key-target", "player");
             player.setAttribute("aria-keyshortcuts", "Space K J L ArrowLeft ArrowRight ArrowUp ArrowDown M F");
             player.setAttribute("aria-label", title + " player");
@@ -38629,21 +38723,22 @@ async function watchPage(req, res, type) {
               }
               settled = true;
               clearVidstackTimers();
-              if (playerShell) playerShell.classList.add("v149Ready");
-              setVideoUiState("ready");
-              setPlayerStatus("Ready", message || "Vidstack player loaded", false);
-              setStatus("m3u8 loaded in Vidstack player.");
+              if (isMediaActuallyPlaying(getVisiblePlaybackVideo())) {
+                markShellPlaybackActive(message || "Vidstack stream is playing");
+              } else {
+                if (playerShell) playerShell.classList.add("v149Ready");
+                setVideoUiState("ready");
+                setPlayerStatus("Ready", message || "Vidstack player loaded", false);
+                setStatus("m3u8 loaded in Vidstack player.");
+                hidePlayerStatusSoon();
+              }
               installMediaSession(player, title, poster);
-              hidePlayerStatusSoon();
             }
 
             function markPlaying() {
               settled = true;
               clearVidstackTimers();
-              if (playerShell) playerShell.classList.add("v149Playing", "v149Ready");
-              setVideoUiState("playing");
-              setStatus("m3u8 playing in Vidstack.");
-              hidePlayerStatusSoon();
+              markShellPlaybackActive("Vidstack stream is playing");
             }
 
             function markPaused() {
@@ -38672,6 +38767,14 @@ async function watchPage(req, res, type) {
                     manifestLoadingTimeOut: 30000,
                     levelLoadingTimeOut: 30000,
                     fragLoadingTimeOut: 30000,
+                    fragLoadPolicy: {
+                      default: {
+                        maxTimeToFirstByteMs: 30000,
+                        maxLoadTimeMs: 120000,
+                        timeoutRetry: { maxNumRetry: 6, retryDelayMs: 900, maxRetryDelayMs: 7000, backoff: "exponential" },
+                        errorRetry: { maxNumRetry: 8, retryDelayMs: 900, maxRetryDelayMs: 7000, backoff: "exponential" }
+                      }
+                    },
                     maxBufferHole: 1.5,
                     highBufferWatchdogPeriod: 2,
                     nudgeOffset: 0.12,
@@ -38707,15 +38810,29 @@ async function watchPage(req, res, type) {
                 var err = event && event.detail;
                 var hls = window.__swiflyActiveVidstackHls;
                 var detail = String((err && (err.details || err.reason || err.type || err.message)) || "HLS error");
-                if (err && err.fatal && hls && window.Hls) {
-                  if (err.type === window.Hls.ErrorTypes.NETWORK_ERROR) { setPlayerStatus("Vidstack HLS retry", detail, true); hls.startLoad(-1); return; }
+                var playingNow = isMediaActuallyPlaying(getVisiblePlaybackVideo());
+                if (!err || !err.fatal) {
+                  if (/bufferStalled|bufferNudge|fragLoad|FRAG_LOAD/i.test(detail)) {
+                    if (hls && /fragLoad|FRAG_LOAD/i.test(detail)) { try { hls.startLoad(-1); } catch {} }
+                    if (playingNow) markShellPlaybackActive("Stream is playing; HLS is retrying fragments quietly");
+                    else { setPlayerStatus("Stream recovery", /fragLoad|FRAG_LOAD/i.test(detail) ? "Retrying a slow fragment" : detail, false); hidePlayerStatusSoon(1200); }
+                  }
+                  return;
+                }
+                if (hls && window.Hls) {
+                  if (err.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
+                    if (!playingNow) setPlayerStatus("Vidstack HLS retry", detail, true);
+                    hls.startLoad(-1);
+                    return;
+                  }
                   if (err.type === window.Hls.ErrorTypes.MEDIA_ERROR) { setPlayerStatus("Vidstack media recovery", detail, true); hls.recoverMediaError(); return; }
                 }
-                if (/bufferStalled|bufferNudge|fragLoad/i.test(detail)) setPlayerStatus("Stream recovery", detail, false);
               } catch {}
             });
             player.addEventListener("play", markPlaying);
             player.addEventListener("playing", markPlaying);
+            player.addEventListener("hls-frag-loaded", function(){ if (isMediaActuallyPlaying(getVisiblePlaybackVideo())) markShellPlaybackActive("Stream is playing"); });
+            player.addEventListener("hls-frag-buffered", function(){ if (isMediaActuallyPlaying(getVisiblePlaybackVideo())) markShellPlaybackActive("Stream is playing"); });
             player.addEventListener("pause", markPaused);
             player.addEventListener("waiting", function(){
               if (stallTimer) clearTimeout(stallTimer);
@@ -38763,8 +38880,8 @@ async function watchPage(req, res, type) {
             }, vidstackAttempt ? 14500 : 11500);
 
             // Keep simple streaming-app shortcuts while letting Vidstack Default Layout own the UI.
-            if (playerShell && !playerShell.dataset.v153Keys) {
-              playerShell.dataset.v153Keys = "true";
+            if (playerShell && !playerShell.dataset.v154Keys) {
+              playerShell.dataset.v154Keys = "true";
               playerShell.addEventListener("keydown", function(event) {
                 if (!movieButtonVidstack || !playerShell.classList.contains("v149Vidstack")) return;
                 var tag = event.target && event.target.tagName ? event.target.tagName.toLowerCase() : "";
@@ -43607,7 +43724,7 @@ function watchroomPage(req, res) {
        - visible recovery card + one Vidstack remount before HLS fallback
        ============================================================ */
 
-    .dsVideoJsCinemaShell.v153SeeklessStart {
+    .dsVideoJsCinemaShell.v154StreamLatchFix {
       --v149-radius: 30px;
       background:
         radial-gradient(circle at 18% 8%, rgba(255,255,255,.15), transparent 31%),
@@ -43620,14 +43737,14 @@ function watchroomPage(req, res) {
         0 0 90px rgba(120,140,255,.09) !important;
     }
 
-    .dsVideoJsCinemaShell.v153SeeklessStart::after {
+    .dsVideoJsCinemaShell.v154StreamLatchFix::after {
       content: "SWIFLY STREAM+";
       color: rgba(255,255,255,.88);
       background: linear-gradient(180deg, rgba(255,255,255,.11), rgba(255,255,255,.055));
       border-color: rgba(255,255,255,.16);
     }
 
-    .dsVideoJsCinemaShell.v153SeeklessStart media-player.swiflyVidstackPlayer {
+    .dsVideoJsCinemaShell.v154StreamLatchFix media-player.swiflyVidstackPlayer {
       --media-brand: #ffffff;
       --media-focus-ring-color: rgba(255,255,255,.88);
       --media-button-hover-bg: rgba(255,255,255,.18);
@@ -43636,9 +43753,9 @@ function watchroomPage(req, res) {
       --media-slider-track-fill-bg: linear-gradient(90deg, #fff, rgba(212,220,255,.9));
     }
 
-    .dsVideoJsCinemaShell.v153SeeklessStart media-player.swiflyVidstackPlayer [data-media-controls],
-    .dsVideoJsCinemaShell.v153SeeklessStart media-player.swiflyVidstackPlayer [data-part="controls"],
-    .dsVideoJsCinemaShell.v153SeeklessStart media-player.swiflyVidstackPlayer [data-controls] {
+    .dsVideoJsCinemaShell.v154StreamLatchFix media-player.swiflyVidstackPlayer [data-media-controls],
+    .dsVideoJsCinemaShell.v154StreamLatchFix media-player.swiflyVidstackPlayer [data-part="controls"],
+    .dsVideoJsCinemaShell.v154StreamLatchFix media-player.swiflyVidstackPlayer [data-controls] {
       margin: 18px !important;
       padding: 10px !important;
       border-radius: 28px !important;
@@ -43649,13 +43766,13 @@ function watchroomPage(req, res) {
       -webkit-backdrop-filter: blur(28px) saturate(1.22) !important;
     }
 
-    .dsVideoJsCinemaShell.v153SeeklessStart .swiflyVidstackChrome {
+    .dsVideoJsCinemaShell.v154StreamLatchFix .swiflyVidstackChrome {
       border-color: rgba(255,255,255,.15);
       background: linear-gradient(180deg, rgba(20,22,32,.72), rgba(7,8,12,.50));
       box-shadow: 0 22px 52px rgba(0,0,0,.38);
     }
 
-    .dsVideoJsCinemaShell.v153SeeklessStart .swiflyRecoveryCard {
+    .dsVideoJsCinemaShell.v154StreamLatchFix .swiflyRecoveryCard {
       position: absolute;
       right: 18px;
       bottom: 94px;
@@ -43675,11 +43792,11 @@ function watchroomPage(req, res) {
       -webkit-backdrop-filter: blur(24px) saturate(1.20);
     }
 
-    .dsVideoJsCinemaShell.v153SeeklessStart .swiflyRecoveryCard[hidden] {
+    .dsVideoJsCinemaShell.v154StreamLatchFix .swiflyRecoveryCard[hidden] {
       display: none !important;
     }
 
-    .dsVideoJsCinemaShell.v153SeeklessStart .swiflyRecoveryCard span {
+    .dsVideoJsCinemaShell.v154StreamLatchFix .swiflyRecoveryCard span {
       display: block;
       margin-bottom: 5px;
       font: 900 10px/1 var(--font-ui, Inter, system-ui, sans-serif);
@@ -43688,26 +43805,26 @@ function watchroomPage(req, res) {
       color: rgba(255,255,255,.58);
     }
 
-    .dsVideoJsCinemaShell.v153SeeklessStart .swiflyRecoveryCard b {
+    .dsVideoJsCinemaShell.v154StreamLatchFix .swiflyRecoveryCard b {
       display: block;
       font: 900 16px/1.1 var(--font-display, Inter, system-ui, sans-serif);
     }
 
-    .dsVideoJsCinemaShell.v153SeeklessStart .swiflyRecoveryCard small {
+    .dsVideoJsCinemaShell.v154StreamLatchFix .swiflyRecoveryCard small {
       display: block;
       margin-top: 5px;
       color: rgba(255,255,255,.64);
       font: 700 12px/1.35 var(--font-ui, Inter, system-ui, sans-serif);
     }
 
-    .dsVideoJsCinemaShell.v153SeeklessStart .swiflyRecoveryActions {
+    .dsVideoJsCinemaShell.v154StreamLatchFix .swiflyRecoveryActions {
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
       justify-content: flex-end;
     }
 
-    .dsVideoJsCinemaShell.v153SeeklessStart .swiflyRecoveryActions button {
+    .dsVideoJsCinemaShell.v154StreamLatchFix .swiflyRecoveryActions button {
       min-height: 38px;
       padding: 0 13px;
       border: 1px solid rgba(255,255,255,.16);
@@ -43719,8 +43836,8 @@ function watchroomPage(req, res) {
       transition: transform .14s ease, background .14s ease, border-color .14s ease;
     }
 
-    .dsVideoJsCinemaShell.v153SeeklessStart .swiflyRecoveryActions button:hover,
-    .dsVideoJsCinemaShell.v153SeeklessStart .swiflyRecoveryActions button:focus-visible {
+    .dsVideoJsCinemaShell.v154StreamLatchFix .swiflyRecoveryActions button:hover,
+    .dsVideoJsCinemaShell.v154StreamLatchFix .swiflyRecoveryActions button:focus-visible {
       transform: translateY(-1px);
       background: rgba(255,255,255,.18);
       border-color: rgba(255,255,255,.30);
@@ -43728,14 +43845,81 @@ function watchroomPage(req, res) {
       outline-offset: 2px;
     }
 
+
+
+    html.swiflyPlayerFullscreenActive,
+    body.swiflyPlayerFullscreenActive {
+      overflow: hidden !important;
+      overscroll-behavior: none !important;
+      scrollbar-width: none !important;
+    }
+
+    body.swiflyPlayerFullscreenActive::-webkit-scrollbar {
+      width: 0 !important;
+      height: 0 !important;
+    }
+
+    .dsVideoJsCinemaShell.v154StreamLatchFix.v149Vidstack #movieButtonSeekDock,
+    .dsVideoJsCinemaShell.v154StreamLatchFix.v149Vidstack .swiflyVideoDock,
+    .dsVideoJsCinemaShell.v154StreamLatchFix.v149Vidstack .swiflyNeoDock,
+    .dsVideoJsCinemaShell.v154StreamLatchFix.v149Vidstack .swiflyDock {
+      display: none !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v154StreamLatchFix.v154PlaybackLatched .dsHlsStatus:not(.isError),
+    .dsVideoJsCinemaShell.v154StreamLatchFix.isPlaying .dsHlsStatus:not(.isError),
+    .dsVideoJsCinemaShell.v154StreamLatchFix.isReady .dsHlsStatus:not(.isError) {
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v154StreamLatchFix:fullscreen,
+    .dsVideoJsCinemaShell.v154StreamLatchFix:-webkit-full-screen {
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: 100vw !important;
+      max-height: 100vh !important;
+      min-height: 100vh !important;
+      border-radius: 0 !important;
+      overflow: hidden !important;
+      display: block !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      background: #000 !important;
+      contain: layout paint size !important;
+    }
+
+    .dsVideoJsCinemaShell.v154StreamLatchFix:fullscreen media-player.swiflyVidstackPlayer,
+    .dsVideoJsCinemaShell.v154StreamLatchFix:-webkit-full-screen media-player.swiflyVidstackPlayer,
+    .dsVideoJsCinemaShell.v154StreamLatchFix:fullscreen video.swiflyNativeHlsVideo,
+    .dsVideoJsCinemaShell.v154StreamLatchFix:-webkit-full-screen video.swiflyNativeHlsVideo {
+      position: absolute !important;
+      inset: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: 100vw !important;
+      max-height: 100vh !important;
+      border-radius: 0 !important;
+      object-fit: contain !important;
+      z-index: 1 !important;
+    }
+
+    .dsVideoJsCinemaShell.v154StreamLatchFix.v149Vidstack:fullscreen > video.dsMovieButtonVideo,
+    .dsVideoJsCinemaShell.v154StreamLatchFix.v149Vidstack:-webkit-full-screen > video.dsMovieButtonVideo {
+      display: none !important;
+    }
+
     @media(max-width: 760px) {
-      .dsVideoJsCinemaShell.v153SeeklessStart .swiflyRecoveryCard {
+      .dsVideoJsCinemaShell.v154StreamLatchFix .swiflyRecoveryCard {
         left: 12px;
         right: 12px;
         bottom: 80px;
         grid-template-columns: 1fr;
       }
-      .dsVideoJsCinemaShell.v153SeeklessStart .swiflyRecoveryActions {
+      .dsVideoJsCinemaShell.v154StreamLatchFix .swiflyRecoveryActions {
         justify-content: flex-start;
       }
     }
