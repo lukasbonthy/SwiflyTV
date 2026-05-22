@@ -38525,6 +38525,327 @@ async function watchPage(req, res, type) {
           });
         }
 
+
+        function injectSwiflyLiteHlsStyles() {
+          try {
+            if (document.getElementById("swifly-lite-hls-style")) return;
+            var style = document.createElement("style");
+            style.id = "swifly-lite-hls-style";
+            style.textContent = "\n" +
+              ".dsMovieButtonPlayerShell.usesSwiflyLiteHls{position:relative;display:block!important;overflow:hidden;background:#02040a;border-radius:26px;border:1px solid rgba(148,163,184,.16);box-shadow:0 28px 80px rgba(0,0,0,.55);}\n" +
+              ".dsMovieButtonPlayerShell.usesSwiflyLiteHls .swiflyLiteVideo{display:block!important;width:100%!important;height:100%!important;min-height:clamp(420px,62vw,82vh);object-fit:contain;background:#000;border-radius:26px;}\n" +
+              ".dsMovieButtonPlayerShell.usesSwiflyLiteHls .swiflyVidstackPlayer,.dsMovieButtonPlayerShell.usesSwiflyLiteHls .swiflyTimelineRescue,.dsMovieButtonPlayerShell.usesSwiflyLiteHls .swiflyVideoDock,.dsMovieButtonPlayerShell.usesSwiflyLiteHls .swiflyNeoDock,.dsMovieButtonPlayerShell.usesSwiflyLiteHls .dsHlsStatus{display:none!important;visibility:hidden!important;pointer-events:none!important;}\n" +
+              ".swiflyLiteChrome{position:absolute;left:16px;right:16px;bottom:16px;z-index:60;display:grid;grid-template-columns:auto auto minmax(120px,1fr) auto auto auto;gap:12px;align-items:center;padding:14px 16px;border:1px solid rgba(255,255,255,.14);border-radius:22px;background:linear-gradient(180deg,rgba(15,23,42,.78),rgba(2,6,23,.92));box-shadow:0 18px 55px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.12);backdrop-filter:blur(20px);}\n" +
+              ".swiflyLiteBtn{width:42px;height:42px;border:0;border-radius:999px;display:grid;place-items:center;background:rgba(255,255,255,.12);color:#fff;font-weight:900;cursor:pointer;transition:transform .16s ease,background .16s ease,box-shadow .16s ease;}\n" +
+              ".swiflyLiteBtn:hover,.swiflyLiteBtn:focus-visible{transform:scale(1.06);background:rgba(122,162,255,.36);box-shadow:0 0 0 4px rgba(122,162,255,.18);outline:none;}\n" +
+              ".swiflyLitePlay{width:48px;height:48px;background:linear-gradient(135deg,#4f8cff,#8b5cf6);box-shadow:0 12px 28px rgba(79,140,255,.28);}\n" +
+              ".swiflyLiteTime{font:800 12px/1 Inter,system-ui,sans-serif;color:rgba(255,255,255,.86);font-variant-numeric:tabular-nums;min-width:48px;text-align:center;}\n" +
+              ".swiflyLiteDuration{min-width:58px;}\n" +
+              ".swiflyLiteRange{width:100%;accent-color:#7aa2ff;cursor:pointer;height:26px;}\n" +
+              ".swiflyLiteRange:disabled{opacity:.55;cursor:not-allowed;}\n" +
+              ".swiflyLiteBuffer{position:absolute;left:82px;right:152px;bottom:10px;height:3px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden;pointer-events:none;}\n" +
+              ".swiflyLiteBuffer span{display:block;height:100%;width:0%;background:linear-gradient(90deg,rgba(125,211,252,.55),rgba(167,139,250,.55));}\n" +
+              ".swiflyLiteTopNote{position:absolute;top:16px;left:16px;z-index:55;padding:9px 12px;border-radius:999px;background:rgba(2,6,23,.72);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.82);font:800 11px/1 Inter,system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;backdrop-filter:blur(16px);}\n" +
+              ".dsMovieButtonPlayerShell.usesSwiflyLiteHls #swiflyTvHint{bottom:92px!important;}\n" +
+              ".dsMovieButtonPlayerShell.usesSwiflyLiteHls .navStudioButton{bottom:92px!important;}\n" +
+              ".swiflyLiteUnlock{position:absolute;inset:0;z-index:54;display:none;place-items:center;background:radial-gradient(circle at center,rgba(15,23,42,.18),rgba(0,0,0,.34));}\n" +
+              ".swiflyLiteNeedsClick .swiflyLiteUnlock{display:grid;}\n" +
+              ".swiflyLiteUnlock button{border:0;border-radius:999px;padding:16px 22px;background:linear-gradient(135deg,#4f8cff,#8b5cf6);color:white;font:900 15px Inter,system-ui,sans-serif;box-shadow:0 18px 50px rgba(79,140,255,.34);cursor:pointer;}\n" +
+              "@media(max-width:760px){.swiflyLiteChrome{left:10px;right:10px;bottom:10px;grid-template-columns:auto 1fr auto auto;gap:8px;padding:12px}.swiflyLiteCurrent{display:none}.swiflyLiteDuration{font-size:11px}.swiflyLiteVideo{min-height:60vh!important}}\n" +
+              ":fullscreen .swiflyLiteVideo, .dsMovieButtonPlayerShell:fullscreen .swiflyLiteVideo{height:100vh!important;min-height:100vh!important;border-radius:0!important;}\n" +
+              ":fullscreen .swiflyLiteChrome, .dsMovieButtonPlayerShell:fullscreen .swiflyLiteChrome{bottom:22px;left:24px;right:24px;}\n";
+            document.head.appendChild(style);
+          } catch {}
+        }
+
+        function startSwiflyLiteHlsSource(src, data) {
+          setPlayerStatus("Loading m3u8...", "Starting Swifly Lite HLS player", false);
+          setVideoUiState("loading");
+          try {
+            if (window.__swiflyVidstackRescueTick) {
+              clearInterval(window.__swiflyVidstackRescueTick);
+              window.__swiflyVidstackRescueTick = null;
+            }
+          } catch {}
+          destroyRegularMoviePlayers();
+          injectSwiflyLiteHlsStyles();
+
+          if (!video) {
+            setPlayerStatus("Player error", "Missing video element", true);
+            return;
+          }
+
+          try {
+            if (playerShell) {
+              playerShell.hidden = false;
+              playerShell.classList.remove("usesVidstack", "v149Vidstack", "v150VidstackModern", "v151StreamPro", "v154StreamLatchFix", "v155CleanVidstack", "v157LeanVidstack", "v157VisibleControls", "v158NoWakeLoop", "usesVideoJs", "usesPlyr", "isScrubbing");
+              playerShell.classList.add("usesSwiflyLiteHls", "v159SwiflyLiteHls");
+              playerShell.querySelectorAll(".swiflyVidstackPlayer,.swiflyVidstackChrome,.swiflyTimelineRescue,.swiflyLiteChrome,.swiflyLiteTopNote,.swiflyLiteUnlock").forEach(function(el){ try { el.remove(); } catch {} });
+              hardHideLegacyPlayerChrome();
+            }
+            if (seekDock) seekDock.hidden = true;
+            if (hlsStatus) hlsStatus.hidden = true;
+            if (qualityMenu) qualityMenu.hidden = true;
+            if (speedMenu) speedMenu.hidden = true;
+            if (volumeMenu) volumeMenu.hidden = true;
+            video.hidden = false;
+            video.style.display = "block";
+            video.className = "swiflyLiteVideo dsMovieButtonVideo dsCinemaHlsVideo";
+            video.controls = false;
+            video.playsInline = true;
+            video.preload = "auto";
+            video.crossOrigin = "anonymous";
+            video.removeAttribute("src");
+            video.load();
+          } catch {}
+
+          var liteDuration = 0;
+          var liteDurationFromManifest = false;
+          var rangeDragging = false;
+          var statusQuietTimer = null;
+          var chrome = document.createElement("div");
+          chrome.className = "swiflyLiteChrome";
+          chrome.innerHTML = '<button type="button" class="swiflyLiteBtn swiflyLitePlay" aria-label="Play or pause">▶</button><span class="swiflyLiteTime swiflyLiteCurrent">0:00</span><input class="swiflyLiteRange" type="range" min="0" max="1000" value="0" step="1" aria-label="Movie timeline"><span class="swiflyLiteTime swiflyLiteDuration">--:--</span><button type="button" class="swiflyLiteBtn swiflyLiteMute" aria-label="Mute or unmute">🔊</button><button type="button" class="swiflyLiteBtn swiflyLiteFull" aria-label="Fullscreen">⛶</button><div class="swiflyLiteBuffer"><span></span></div>';
+          var note = document.createElement("div");
+          note.className = "swiflyLiteTopNote";
+          note.textContent = "Swifly Lite • HLS.js";
+          var unlock = document.createElement("div");
+          unlock.className = "swiflyLiteUnlock";
+          unlock.innerHTML = '<button type="button">Click to play</button>';
+          if (playerShell) {
+            playerShell.appendChild(note);
+            playerShell.appendChild(unlock);
+            playerShell.appendChild(chrome);
+          }
+
+          var playBtn = chrome.querySelector(".swiflyLitePlay");
+          var currentEl = chrome.querySelector(".swiflyLiteCurrent");
+          var durationEl = chrome.querySelector(".swiflyLiteDuration");
+          var range = chrome.querySelector(".swiflyLiteRange");
+          var muteBtn = chrome.querySelector(".swiflyLiteMute");
+          var fullBtn = chrome.querySelector(".swiflyLiteFull");
+          var bufferEl = chrome.querySelector(".swiflyLiteBuffer span");
+          var unlockBtn = unlock.querySelector("button");
+
+          function fmt(seconds) {
+            seconds = Math.max(0, Number(seconds || 0));
+            var h = Math.floor(seconds / 3600);
+            var m = Math.floor((seconds % 3600) / 60);
+            var s = Math.floor(seconds % 60);
+            return h ? (h + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0")) : (m + ":" + String(s).padStart(2, "0"));
+          }
+
+          function getDuration() {
+            var d = 0;
+            try { d = Number(video.duration); } catch {}
+            if (Number.isFinite(d) && d > 0 && d < 86400) return d;
+            if (Number.isFinite(liteDuration) && liteDuration > 0) return liteDuration;
+            try {
+              if (video.seekable && video.seekable.length) {
+                var start = video.seekable.start(0);
+                var end = video.seekable.end(video.seekable.length - 1);
+                if (Number.isFinite(end - start) && end - start > 0 && end - start < 86400) return end - start;
+              }
+            } catch {}
+            return 0;
+          }
+
+          function setQuietStatus(title, meta, error) {
+            setPlayerStatus(title, meta, Boolean(error));
+            if (statusQuietTimer) clearTimeout(statusQuietTimer);
+            statusQuietTimer = setTimeout(function(){ hidePlayerStatusSoon(400); }, 900);
+          }
+
+          function updateChrome() {
+            var d = getDuration();
+            var current = 0;
+            try { current = Number(video.currentTime || 0); } catch {}
+            if (playBtn) playBtn.textContent = video.paused ? "▶" : "❚❚";
+            if (currentEl) currentEl.textContent = fmt(current);
+            if (durationEl) durationEl.textContent = d > 0 ? fmt(d) : "--:--";
+            if (range && !rangeDragging) {
+              if (d > 0) {
+                range.disabled = false;
+                range.value = String(Math.max(0, Math.min(1000, Math.round((current / d) * 1000))));
+              } else {
+                range.disabled = true;
+                range.value = "0";
+              }
+            }
+            if (muteBtn) muteBtn.textContent = video.muted ? "🔇" : "🔊";
+            if (bufferEl) {
+              var buffered = 0;
+              try {
+                if (video.buffered && video.buffered.length && d > 0) buffered = Math.max(0, Math.min(100, (video.buffered.end(video.buffered.length - 1) / d) * 100));
+              } catch {}
+              bufferEl.style.width = buffered + "%";
+            }
+          }
+
+          function markPlayable(label) {
+            if (playerShell) {
+              playerShell.classList.add("v149Ready");
+              playerShell.classList.remove("swiflyLiteNeedsClick");
+            }
+            setVideoUiState(video.paused ? "ready" : "playing");
+            setStatus("m3u8 loaded in Swifly Lite player.");
+            setQuietStatus(video.paused ? "Ready" : "Playing", label || "Timeline enabled", false);
+            updateChrome();
+          }
+
+          function togglePlay() {
+            try {
+              if (!video.paused) {
+                video.pause();
+                updateChrome();
+                return;
+              }
+              var promise = video.play();
+              if (promise && promise.catch) {
+                promise.then(function(){ markPlayable("Playing"); }).catch(function(){
+                  if (playerShell) playerShell.classList.add("swiflyLiteNeedsClick");
+                  setPlayerStatus("Click to play", "Browser blocked autoplay, press the play button.", false);
+                });
+              }
+            } catch {
+              if (playerShell) playerShell.classList.add("swiflyLiteNeedsClick");
+            }
+          }
+
+          if (playBtn) playBtn.addEventListener("click", function(event){ event.preventDefault(); togglePlay(); });
+          if (unlockBtn) unlockBtn.addEventListener("click", function(event){ event.preventDefault(); togglePlay(); });
+          if (muteBtn) muteBtn.addEventListener("click", function(event){ event.preventDefault(); video.muted = !video.muted; updateChrome(); });
+          if (fullBtn) fullBtn.addEventListener("click", function(event){ event.preventDefault();
+            try {
+              var full = document.fullscreenElement || document.webkitFullscreenElement;
+              if (full) { if (document.exitFullscreen) document.exitFullscreen(); else if (document.webkitExitFullscreen) document.webkitExitFullscreen(); return; }
+              var target = playerShell || video;
+              if (target.requestFullscreen) target.requestFullscreen({ navigationUI: "hide" }).catch(function(){});
+              else if (target.webkitRequestFullscreen) target.webkitRequestFullscreen();
+            } catch {}
+          });
+          if (range) {
+            range.addEventListener("input", function(){ rangeDragging = true; var d = getDuration(); if (d > 0 && currentEl) currentEl.textContent = fmt((Number(range.value || 0) / 1000) * d); });
+            range.addEventListener("change", function(){
+              var d = getDuration();
+              if (d > 0) {
+                try { video.currentTime = (Number(range.value || 0) / 1000) * d; } catch {}
+              }
+              rangeDragging = false;
+              updateChrome();
+            });
+          }
+
+          ["loadedmetadata", "durationchange", "progress", "timeupdate", "seeking", "seeked", "volumechange", "play", "pause", "canplay", "playing", "waiting"].forEach(function(name){
+            video.addEventListener(name, function(){
+              if (name === "playing") markPlayable("Stream is playing");
+              else if (name === "canplay" || name === "loadedmetadata") markPlayable("Timeline enabled");
+              else if (name === "waiting") setPlayerStatus("Buffering...", "Loading the next stream chunk", false);
+              updateChrome();
+            });
+          });
+
+          if (playerShell && !playerShell.dataset.v159LiteKeys) {
+            playerShell.dataset.v159LiteKeys = "true";
+            playerShell.addEventListener("keydown", function(event){
+              if (!playerShell.classList.contains("usesSwiflyLiteHls")) return;
+              var tag = event.target && event.target.tagName ? event.target.tagName.toLowerCase() : "";
+              if (tag === "input" || tag === "textarea" || tag === "select") return;
+              try {
+                if (event.key === " " || event.key === "k" || event.key === "K") { event.preventDefault(); togglePlay(); }
+                else if (event.key === "ArrowLeft" || event.key === "j" || event.key === "J") { event.preventDefault(); video.currentTime = Math.max(0, Number(video.currentTime || 0) - 10); }
+                else if (event.key === "ArrowRight" || event.key === "l" || event.key === "L") { event.preventDefault(); video.currentTime = Number(video.currentTime || 0) + 10; }
+                else if (event.key === "m" || event.key === "M") { event.preventDefault(); video.muted = !video.muted; }
+                else if (event.key === "f" || event.key === "F") { event.preventDefault(); if (fullBtn) fullBtn.click(); }
+              } catch {}
+            });
+          }
+
+          try { video.addEventListener("click", function(){ togglePlay(); }); } catch {}
+          updateChrome();
+
+          var nativeHls = video.canPlayType("application/vnd.apple.mpegurl") || video.canPlayType("application/x-mpegURL") || video.canPlayType("application/x-mpegurl");
+          loadHlsScript(function(loaded) {
+            if (loaded && window.Hls && window.Hls.isSupported()) {
+              var fatalNetworkRetries = 0;
+              var fatalMediaRetries = 0;
+              movieButtonHls = new window.Hls({
+                debug: false,
+                enableWorker: true,
+                lowLatencyMode: false,
+                backBufferLength: 90,
+                maxBufferLength: 75,
+                maxMaxBufferLength: 240,
+                startPosition: -1,
+                capLevelToPlayerSize: true,
+                manifestLoadingMaxRetry: 6,
+                levelLoadingMaxRetry: 6,
+                fragLoadingMaxRetry: 9,
+                manifestLoadingTimeOut: 30000,
+                levelLoadingTimeOut: 30000,
+                fragLoadingTimeOut: 30000,
+                liveDurationInfinity: false,
+                xhrSetup: function(xhr) { try { xhr.withCredentials = false; } catch {} }
+              });
+              movieButtonHls.on(window.Hls.Events.MEDIA_ATTACHED, function(){
+                setPlayerStatus("Loading m3u8...", "Fetching manifest with HLS.js", false);
+                try { movieButtonHls.loadSource(src); } catch {}
+              });
+              movieButtonHls.on(window.Hls.Events.MANIFEST_PARSED, function(event, parsed){
+                var levels = parsed && parsed.levels ? parsed.levels : [];
+                var heights = uniqueHlsHeights(levels);
+                markPlayable("HLS.js ready" + (heights.length ? " • Auto / " + heights.join("p / ") + "p" : ""));
+                try { movieButtonHls.startLoad(-1); } catch {}
+              });
+              movieButtonHls.on(window.Hls.Events.LEVEL_LOADED, function(event, info){
+                try {
+                  var details = info && info.details;
+                  if (details && !details.live && Number(details.totalduration) > 0) {
+                    liteDuration = Number(details.totalduration);
+                    liteDurationFromManifest = true;
+                  }
+                } catch {}
+                updateChrome();
+              });
+              movieButtonHls.on(window.Hls.Events.FRAG_BUFFERED, function(){ markPlayable("Stream data received"); });
+              movieButtonHls.on(window.Hls.Events.ERROR, function(event, err){
+                if (!err) return;
+                var detail = String(err.details || err.reason || err.type || "Unknown HLS error");
+                var playingNow = isMediaActuallyPlaying(video);
+                if (!err.fatal) {
+                  if (/fragLoad|FRAG_LOAD|bufferStalled|bufferNudge/i.test(detail)) {
+                    try { movieButtonHls.startLoad(-1); } catch {}
+                    if (!playingNow) setQuietStatus("Buffering", "Retrying stream chunk", false);
+                    return;
+                  }
+                  return;
+                }
+                if (err.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
+                  fatalNetworkRetries += 1;
+                  setPlayerStatus("Stream retry", "Network retry " + fatalNetworkRetries + " • " + detail, true);
+                  try { movieButtonHls.startLoad(-1); } catch {}
+                  return;
+                }
+                if (err.type === window.Hls.ErrorTypes.MEDIA_ERROR) {
+                  fatalMediaRetries += 1;
+                  setPlayerStatus("Decoder recovery", "Repairing playback", true);
+                  try { if (fatalMediaRetries <= 2) movieButtonHls.recoverMediaError(); else movieButtonHls.destroy(); } catch {}
+                  return;
+                }
+                setPlayerStatus("HLS failed", detail, true);
+              });
+              movieButtonHls.attachMedia(video);
+              return;
+            }
+            if (nativeHls) {
+              try { video.src = src; video.load(); } catch {}
+              markPlayable("Native HLS ready");
+              return;
+            }
+            setPlayerStatus("HLS could not load", "This browser needs HLS.js or native HLS support for m3u8.", true);
+          });
+        }
+
         function startVideoJsCinemaSource(src, data, vidstackAttempt) {
           vidstackAttempt = Number(vidstackAttempt || 0);
           setPlayerStatus("Loading m3u8...", vidstackAttempt ? "Retrying Vidstack Clean Cinema" : "Starting Vidstack Clean Cinema", false);
@@ -39438,7 +39759,7 @@ async function watchPage(req, res, type) {
             return;
           }
 
-          startVideoJsCinemaSource(src, data);
+          startSwiflyLiteHlsSource(src, data);
         }
 
         async function tryProxyVideo(manual) {
