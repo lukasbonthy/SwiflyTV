@@ -36696,68 +36696,9 @@ async function watchPage(req, res, type) {
             <a class="dsGhostPill" href="/watchrooms">Use Watch Room</a>
           </div>
         </div>
-        <div id="movieButtonPlayerShell" class="dsMovieButtonPlayerShell dsCinemaHlsShell dsVideoJsCinemaShell" hidden>
-          <div class="dsCinemaPlayerAura"></div>
-
-          <div class="dsCinemaHlsTop dsVideoJsTop">
-            <span>SWIFLY PLAYER</span>
-            <b id="movieButtonHlsTitle">Preparing stream</b>
-            <small id="movieButtonHlsMeta">Video.js VHS</small>
-          </div>
-
-          <div class="dsVideoJsCenter">
-            <button id="movieButtonBack10" type="button" aria-label="Back 10 seconds"><span>↺</span><small>10</small></button>
-            <button id="movieButtonBigPlay" type="button" aria-label="Play or pause"><span>▶</span></button>
-            <button id="movieButtonForward10" type="button" aria-label="Forward 10 seconds"><small>10</small><span>↻</span></button>
-          </div>
-
-          <video id="proxyVideoClientVideo" class="dsMovieButtonVideo dsCinemaHlsVideo video-js vjs-big-play-centered vjs-theme-swifly" controls playsinline crossorigin="anonymous" preload="auto"></video>
-
-          <div class="dsVideoJsQuality">
-            <button id="movieButtonQualityToggle" type="button" class="dsVideoJsQualityToggle"><span>Quality</span><b>Auto</b></button>
-            <div id="movieButtonQualityMenu" class="dsVideoJsQualityMenu" hidden></div>
-          </div>
-
-          <div class="dsVideoJsSpeed">
-            <button id="movieButtonSpeedToggle" type="button" class="dsVideoJsSpeedToggle"><span>Speed</span><b>1x</b></button>
-            <div id="movieButtonSpeedMenu" class="dsVideoJsSpeedMenu" hidden></div>
-          </div>
-
-          <div class="dsVideoJsVolume">
-            <button id="movieButtonVolumeToggle" type="button" class="dsVideoJsVolumeToggle" aria-label="Volume"><span>Vol</span><b>100</b></button>
-            <div id="movieButtonVolumeMenu" class="dsVideoJsVolumeMenu" hidden>
-              <input id="movieButtonVolumeRange" type="range" min="0" max="100" value="100" step="1" aria-label="Volume level" />
-            </div>
-          </div>
-
-          <div id="movieButtonTimelinePreview" class="dsVideoJsTimelinePreview dsVideoJsImagePreview" hidden>
-            <video id="movieButtonPreviewVideo" muted playsinline preload="metadata" crossorigin="anonymous"></video>
-            <div id="movieButtonPreviewFallback" class="dsVideoJsPreviewFallback"></div>
-            <span id="movieButtonTimelinePreviewTime">0:00</span>
-            <em id="movieButtonPreviewState">Preview</em>
-            <i></i>
-          </div>
-          <div class="dsCinemaHlsHint dsVideoJsHint">
-            <span>J</span><b>-10</b>
-            <span>K</span><b>play</b>
-            <span>L</span><b>+10</b>
-            <span>F</span><b>full</b>
-          </div>
-
-          <div id="movieButtonSeekDock" class="dsCinemaSeekDock">
-            <div class="dsCinemaSeekTimes">
-              <span id="movieButtonCurrentTime">0:00</span>
-              <b id="movieButtonSeekLabel">Timeline</b>
-              <span id="movieButtonDuration">0:00</span>
-            </div>
-            <input id="movieButtonSeekRange" class="dsCinemaSeekRange" type="range" min="0" max="1000" value="0" step="1" aria-label="Video timeline" />
-            <div class="dsCinemaSeekMeta">
-              <span id="movieButtonSeekMode">VOD</span>
-              <span>Drag to seek</span>
-            </div>
-          </div>
-
-          <div id="movieButtonHlsStatus" class="dsHlsStatus"><b>Loading m3u8...</b><span>Preparing player</span></div>
+        <div id="movieButtonPlayerShell" class="dsMovieButtonPlayerShell dsCinemaHlsShell dsVideoJsCinemaShell v156LeanVidstack" hidden>
+          <video id="proxyVideoClientVideo" class="dsMovieButtonVideo dsCinemaHlsVideo swiflyNativeHlsVideo" controls playsinline crossorigin="anonymous" preload="auto"></video>
+          <div id="movieButtonHlsStatus" class="dsHlsStatus" hidden><b>Loading stream...</b><span>Preparing clean player</span></div>
         </div>
       </div>`
     : providerStream && providerStream.type === "mp4"
@@ -36907,6 +36848,36 @@ async function watchPage(req, res, type) {
         var stopped = false;
         var maxWaitMs = Number(${JSON.stringify(String(process.env.MOVIE_PROXY_VIDEO_CLIENT_MAX_WAIT_MS || "180000"))}) || 180000;
 
+        function hardHideLegacyPlayerChrome() {
+          // v156: physically remove the old custom overlays instead of hoping CSS wins.
+          // These were causing the bad center play button, the fake Starting Stream bar,
+          // and a non-working custom timeframe slider.
+          try {
+            if (!playerShell) return;
+            [
+              ".dsCinemaPlayerAura",
+              ".dsCinemaHlsTop",
+              ".dsVideoJsTop",
+              ".dsVideoJsCenter",
+              ".dsVideoJsQuality",
+              ".dsVideoJsSpeed",
+              ".dsVideoJsVolume",
+              ".dsVideoJsTimelinePreview",
+              ".dsVideoJsHint",
+              ".dsCinemaSeekDock",
+              ".swiflyVidstackChrome",
+              ".swiflyVideoDock",
+              ".swiflyNeoDock",
+              ".swiflyDock"
+            ].forEach(function(selector) {
+              playerShell.querySelectorAll(selector).forEach(function(el) { try { el.remove(); } catch {} });
+            });
+            if (hlsStatus && !hlsStatus.classList.contains("isError")) hlsStatus.hidden = true;
+          } catch {}
+        }
+
+        hardHideLegacyPlayerChrome();
+
         function setStatus(text) {
           if (waitStatus) waitStatus.textContent = text;
         }
@@ -36918,6 +36889,16 @@ async function watchPage(req, res, type) {
 
         function setPlayerStatus(title, detail, isError) {
           if (!hlsStatus) return;
+
+          // v156: no fake loading badge over the movie. The old badge made the
+          // player look stuck even while video was already playing. Only real
+          // errors are allowed to appear over the clean player.
+          try {
+            if (playerShell && playerShell.classList.contains("v156LeanVidstack") && !isError) {
+              hidePlayerStatusNow();
+              return;
+            }
+          } catch {}
 
           // v155: the player should not keep an old loading/status badge on screen
           // after actual playback has started. Proxied HLS can still emit soft fragment
@@ -38270,7 +38251,7 @@ async function watchPage(req, res, type) {
           var recoveryCard = null;
           if (playerShell) {
             playerShell.classList.remove("usesVidstack", "v149Vidstack", "v149Ready", "v149Playing");
-            playerShell.classList.add("usesNativeVideo", "v150HlsRecovery", "v151StreamPro", "v154StreamLatchFix v155CleanVidstack");
+            playerShell.classList.add("usesNativeVideo", "v150HlsRecovery", "v151StreamPro", "v154StreamLatchFix", "v155CleanVidstack", "v156LeanVidstack");
             try {
               playerShell.querySelectorAll(".swiflyVidstackPlayer, .swiflyVidstackChrome").forEach(function(el) { el.remove(); });
             } catch {}
@@ -38299,7 +38280,7 @@ async function watchPage(req, res, type) {
             if (speedMenu) speedMenu.hidden = true;
             if (volumeMenu) volumeMenu.hidden = true;
             if (hlsStatus) hlsStatus.hidden = true;
-            if (playerShell) playerShell.classList.add("v155CleanVidstack");
+            if (playerShell) { playerShell.classList.add("v155CleanVidstack", "v156LeanVidstack"); hardHideLegacyPlayerChrome(); }
           } catch {}
 
           try {
@@ -38399,6 +38380,7 @@ async function watchPage(req, res, type) {
 
             var hlsFatalRetries = 0;
             var hlsMediaRetries = 0;
+            try { video.controls = true; } catch {}
             var lastStatusAt = 0;
 
             movieButtonHls = new window.Hls({
@@ -38417,7 +38399,7 @@ async function watchPage(req, res, type) {
               initialLiveManifestSize: 1,
               liveSyncDurationCount: 2,
               liveMaxLatencyDurationCount: 6,
-              liveDurationInfinity: true,
+              liveDurationInfinity: false,
               startLevel: -1,
               capLevelToPlayerSize: true,
               abrEwmaDefaultEstimate: 4500000,
@@ -38577,9 +38559,10 @@ async function watchPage(req, res, type) {
               "v149Ready",
               "v149Playing",
               "v151StreamPro",
-              "v155CleanVidstack"
+              "v155CleanVidstack",
+              "v156LeanVidstack"
             );
-            playerShell.classList.add("usesVidstack", "v149Vidstack", "v150VidstackModern", "v151StreamPro", "v154StreamLatchFix v155CleanVidstack");
+            playerShell.classList.add("usesVidstack", "v149Vidstack", "v150VidstackModern", "v151StreamPro", "v154StreamLatchFix", "v155CleanVidstack", "v156LeanVidstack");
           }
 
           try {
@@ -38588,7 +38571,7 @@ async function watchPage(req, res, type) {
             if (speedMenu) speedMenu.hidden = true;
             if (volumeMenu) volumeMenu.hidden = true;
             if (hlsStatus) hlsStatus.hidden = true;
-            if (playerShell) playerShell.classList.add("v155CleanVidstack");
+            if (playerShell) { playerShell.classList.add("v155CleanVidstack", "v156LeanVidstack"); hardHideLegacyPlayerChrome(); }
           } catch {}
 
           try {
@@ -38668,8 +38651,11 @@ async function watchPage(req, res, type) {
             player.setAttribute("title", title);
             player.setAttribute("src", src);
             player.setAttribute("view-type", "video");
-            // Let Vidstack infer stream type. Some proxied HLS sources look live until
-            // their media playlist finishes loading; forcing on-demand can leave seek UI waiting.
+            // Movie-button streams are VOD. Force on-demand UI so Vidstack does not
+            // show a live-only timeline when a proxied playlist is slow to expose seek ranges.
+            player.setAttribute("stream-type", "on-demand");
+            player.streamType = "on-demand";
+            player.setAttribute("min-live-dvr-window", "0");
             player.setAttribute("load", "eager");
             player.setAttribute("preload", "auto");
             player.setAttribute("crossorigin", "anonymous");
@@ -38695,15 +38681,10 @@ async function watchPage(req, res, type) {
             player.appendChild(provider);
             player.appendChild(layout);
 
-            var chrome = document.createElement("div");
-            chrome.className = "swiflyVidstackChrome";
-            chrome.innerHTML = '<div><span>Now Playing</span><b></b></div><small>Auto quality • J/L skip • M mute • F fullscreen</small>';
-            try { chrome.querySelector("b").textContent = title; } catch {}
-
             if (playerShell) {
               try { playerShell.querySelectorAll(".swiflyVidstackPlayer, .swiflyVidstackChrome").forEach(function(el){ el.remove(); }); } catch {}
+              hardHideLegacyPlayerChrome();
               playerShell.appendChild(player);
-              playerShell.appendChild(chrome);
               movieButtonVidstack = player;
             }
 
@@ -38729,7 +38710,6 @@ async function watchPage(req, res, type) {
               if (vidstackAttempt < 1) {
                 setPlayerStatus("Retrying Vidstack...", reasonText + " • rebuilding the player once", true);
                 try { player.remove(); } catch {}
-                try { chrome.remove(); } catch {}
                 setTimeout(function(){ startVideoJsCinemaSource(src, data, vidstackAttempt + 1); }, 380);
                 return;
               }
@@ -38814,7 +38794,7 @@ async function watchPage(req, res, type) {
                     initialLiveManifestSize: 1,
                     liveSyncDurationCount: 2,
                     liveMaxLatencyDurationCount: 6,
-                    liveDurationInfinity: true,
+                    liveDurationInfinity: false,
                     xhrSetup: function(xhr) { try { xhr.withCredentials = false; } catch {} }
                   });
                 }
@@ -39238,7 +39218,7 @@ async function watchPage(req, res, type) {
             return;
           }
 
-          if (playerShell) { playerShell.hidden = false; installCinemaPlayerShortcuts(); installCustomSeekBar(); }
+          if (playerShell) { playerShell.hidden = false; hardHideLegacyPlayerChrome(); installCinemaPlayerShortcuts(); }
           if (shell) shell.classList.add("isReady");
           setStatus("Source found. Loading player...");
           destroyRegularMoviePlayers();
@@ -44101,6 +44081,159 @@ function watchroomPage(req, res) {
       .dsVideoJsCinemaShell.v154StreamLatchFix .swiflyRecoveryActions {
         justify-content: flex-start;
       }
+    }
+
+
+    /* ============================================================
+       v156 LEAN VIDSTACK PLAYER
+       - deletes old overlay chrome from the visible player path
+       - lets Vidstack/native controls own play + timeline
+       - forces movie-button HLS to on-demand so seeking is available
+       ============================================================ */
+
+    .dsVideoJsCinemaShell.v156LeanVidstack {
+      background: #000 !important;
+      border-radius: 24px !important;
+      overflow: hidden !important;
+      isolation: isolate !important;
+      min-height: clamp(440px, 68vh, 860px) !important;
+      box-shadow: 0 40px 120px rgba(0,0,0,.62), 0 0 0 1px rgba(255,255,255,.06) inset !important;
+    }
+
+    .dsVideoJsCinemaShell.v156LeanVidstack::before,
+    .dsVideoJsCinemaShell.v156LeanVidstack::after,
+    .dsVideoJsCinemaShell.v156LeanVidstack .dsCinemaPlayerAura,
+    .dsVideoJsCinemaShell.v156LeanVidstack .dsCinemaHlsTop,
+    .dsVideoJsCinemaShell.v156LeanVidstack .dsVideoJsTop,
+    .dsVideoJsCinemaShell.v156LeanVidstack .dsVideoJsCenter,
+    .dsVideoJsCinemaShell.v156LeanVidstack .dsVideoJsQuality,
+    .dsVideoJsCinemaShell.v156LeanVidstack .dsVideoJsSpeed,
+    .dsVideoJsCinemaShell.v156LeanVidstack .dsVideoJsVolume,
+    .dsVideoJsCinemaShell.v156LeanVidstack .dsVideoJsHint,
+    .dsVideoJsCinemaShell.v156LeanVidstack .dsVideoJsTimelinePreview,
+    .dsVideoJsCinemaShell.v156LeanVidstack .dsCinemaSeekDock,
+    .dsVideoJsCinemaShell.v156LeanVidstack #movieButtonSeekDock,
+    .dsVideoJsCinemaShell.v156LeanVidstack .swiflyVidstackChrome,
+    .dsVideoJsCinemaShell.v156LeanVidstack .swiflyVideoDock,
+    .dsVideoJsCinemaShell.v156LeanVidstack .swiflyNeoDock,
+    .dsVideoJsCinemaShell.v156LeanVidstack .swiflyDock {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v156LeanVidstack .dsHlsStatus:not(.isError) {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v156LeanVidstack media-player.swiflyVidstackPlayer {
+      position: absolute !important;
+      inset: 0 !important;
+      z-index: 10 !important;
+      width: 100% !important;
+      height: 100% !important;
+      display: block !important;
+      background: #000 !important;
+      border-radius: inherit !important;
+      overflow: hidden !important;
+      pointer-events: auto !important;
+      --media-brand: #ffffff;
+      --media-button-hover-bg: rgba(255,255,255,.14);
+      --media-focus-ring-color: rgba(255,255,255,.92);
+      --media-slider-track-fill-bg: #ffffff;
+      --media-slider-thumb-bg: #ffffff;
+      --media-menu-bg: rgba(8, 9, 14, .97);
+      --media-menu-border: 1px solid rgba(255,255,255,.16);
+      --media-tooltip-bg: rgba(245,247,255,.96);
+      --media-tooltip-color: #070910;
+    }
+
+    .dsVideoJsCinemaShell.v156LeanVidstack media-player.swiflyVidstackPlayer video,
+    .dsVideoJsCinemaShell.v156LeanVidstack media-player.swiflyVidstackPlayer [data-media-provider] video,
+    .dsVideoJsCinemaShell.v156LeanVidstack video.swiflyNativeHlsVideo {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: contain !important;
+      background: #000 !important;
+    }
+
+    .dsVideoJsCinemaShell.v156LeanVidstack.v149Vidstack > video#proxyVideoClientVideo.isVidstackHidden {
+      display: none !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+
+    .dsVideoJsCinemaShell.v156LeanVidstack.v150HlsRecovery > video#proxyVideoClientVideo,
+    .dsVideoJsCinemaShell.v156LeanVidstack:not(.v149Vidstack) > video#proxyVideoClientVideo {
+      position: absolute !important;
+      inset: 0 !important;
+      z-index: 10 !important;
+      width: 100% !important;
+      height: 100% !important;
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      pointer-events: auto !important;
+      border-radius: inherit !important;
+    }
+
+    .dsVideoJsCinemaShell.v156LeanVidstack media-video-layout {
+      --media-button-size: 42px;
+      --media-slider-height: 40px;
+      --media-slider-track-height: 5px;
+      --media-slider-thumb-size: 13px;
+      --media-menu-border-radius: 18px;
+      --media-tooltip-border-radius: 999px;
+      font-family: var(--font-ui, Inter, system-ui, sans-serif);
+    }
+
+    .dsVideoJsCinemaShell.v156LeanVidstack media-player.swiflyVidstackPlayer [data-media-controls],
+    .dsVideoJsCinemaShell.v156LeanVidstack media-player.swiflyVidstackPlayer [data-part="controls"],
+    .dsVideoJsCinemaShell.v156LeanVidstack media-player.swiflyVidstackPlayer [data-controls] {
+      margin: 16px !important;
+      padding: 8px 10px !important;
+      border-radius: 22px !important;
+      background: linear-gradient(180deg, rgba(12,13,18,.52), rgba(0,0,0,.72)) !important;
+      border: 1px solid rgba(255,255,255,.12) !important;
+      box-shadow: 0 24px 70px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.08) !important;
+      backdrop-filter: blur(22px) saturate(1.18) !important;
+      -webkit-backdrop-filter: blur(22px) saturate(1.18) !important;
+    }
+
+    .dsVideoJsCinemaShell.v156LeanVidstack:fullscreen,
+    .dsVideoJsCinemaShell.v156LeanVidstack:-webkit-full-screen {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: 100vw !important;
+      max-height: 100vh !important;
+      min-height: 100vh !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      overflow: hidden !important;
+      background: #000 !important;
+      contain: strict !important;
+    }
+
+    .dsVideoJsCinemaShell.v156LeanVidstack:fullscreen media-player.swiflyVidstackPlayer,
+    .dsVideoJsCinemaShell.v156LeanVidstack:-webkit-full-screen media-player.swiflyVidstackPlayer,
+    .dsVideoJsCinemaShell.v156LeanVidstack:fullscreen > video#proxyVideoClientVideo,
+    .dsVideoJsCinemaShell.v156LeanVidstack:-webkit-full-screen > video#proxyVideoClientVideo {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: 100vw !important;
+      max-height: 100vh !important;
+      border-radius: 0 !important;
+      object-fit: contain !important;
     }
 
   </style>` : "",
