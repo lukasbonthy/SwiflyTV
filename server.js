@@ -1874,9 +1874,25 @@ let LOCAL_SOURCE_PROVIDER_CACHE = null;
 let LOCAL_SOURCE_COOKIES_CACHE = null;
 
 const LOCAL_SOURCE_FALLBACK_PROVIDERS = {
-  moviebox: { name: "MovieBox", url: "https://themoviebox.org/" },
-  nfMirror: { name: "NetMirror", url: "https://net22.cc" },
-  netmirror: { name: "NetMirror", url: "https://net22.cc" }
+  moviebox: { name: "MovieBox", url: process.env.MOVIEBOX_BASE_URL || "https://themoviebox.org/" },
+  nfMirror: { name: "NetMirror", url: process.env.NETMIRROR_BASE_URL || "https://net22.cc" },
+  netmirror: { name: "NetMirror", url: process.env.NETMIRROR_BASE_URL || "https://net22.cc" },
+  "4khdhub": { name: "4kHDHub", url: process.env.PROVIDER_4KHDHUB_BASE_URL || "" },
+  "desiremovies": { name: "DesireMovies", url: process.env.PROVIDER_DESIREMOVIES_BASE_URL || "" },
+  "drive": { name: "Drive", url: process.env.PROVIDER_DRIVE_BASE_URL || "" },
+  "hdhub": { name: "HDHub4U", url: process.env.PROVIDER_HDHUB4U_BASE_URL || "" },
+  "hdhub4u": { name: "HDHub4U", url: process.env.PROVIDER_HDHUB4U_BASE_URL || "" },
+  "KMMovies": { name: "KMMovies", url: process.env.PROVIDER_KMMOVIES_BASE_URL || "" },
+  "kmmovies": { name: "KMMovies", url: process.env.PROVIDER_KMMOVIES_BASE_URL || "" },
+  "Moviesmod": { name: "Moviesmod", url: process.env.PROVIDER_MOVIESMOD_BASE_URL || "" },
+  "mod": { name: "Moviesmod", url: process.env.PROVIDER_MOVIESMOD_BASE_URL || "" },
+  "movies4u": { name: "Movies4u", url: process.env.PROVIDER_MOVIES4U_BASE_URL || "" },
+  "UhdMovies": { name: "UhdMovies", url: process.env.PROVIDER_UHDMOVIES_BASE_URL || "" },
+  "uhdmovies": { name: "UhdMovies", url: process.env.PROVIDER_UHDMOVIES_BASE_URL || "" },
+  "Vega": { name: "Vega", url: process.env.PROVIDER_VEGA_BASE_URL || "" },
+  "vega": { name: "Vega", url: process.env.PROVIDER_VEGA_BASE_URL || "" },
+  "zeefliz": { name: "Zeefliz", url: process.env.PROVIDER_ZEEFLIZ_BASE_URL || "" },
+  "zinkmovies": { name: "ZinkMovies", url: process.env.PROVIDER_ZINKMOVIES_BASE_URL || "" }
 };
 
 async function localSourceGetProviders() {
@@ -1907,8 +1923,8 @@ async function localSourceGetProviders() {
 async function localSourceGetBaseUrl(key = "") {
   const providers = await localSourceGetProviders();
   const provider = providers[key] || LOCAL_SOURCE_FALLBACK_PROVIDERS[key];
-  if (!provider || !provider.url) throw new Error(`Provider key "${key}" not found`);
-  return provider.url;
+  if (!provider || !provider.url) throw new Error(`Provider key "${key}" not found or has empty URL`);
+  return String(provider.url).replace(/\/$/, "");
 }
 
 async function localSourceGetCookies() {
@@ -3365,6 +3381,181 @@ async function localTrySourceCodeExtractorForUrl({ url = "", providerName = "", 
   return null;
 }
 
+
+// ===== Generic local URL providers from ScarperApi-main non-adult source routes =====
+const LOCAL_DOWNLOAD_SITE_PROVIDERS = [
+  { id: "4khdhub", label: "4kHDHub", baseKeys: ["4khdhub"], searchPaths: ["/?s={q}", "?s={q}"] },
+  { id: "desiremovies", label: "DesireMovies", baseKeys: ["desiremovies"], searchPaths: ["/?s={q}", "?s={q}"] },
+  { id: "drive", label: "Drive", baseKeys: ["drive"], searchPaths: ["/?s={q}", "?s={q}", "/search/{q}"] },
+  { id: "hdhub4u", label: "HDHub4U", baseKeys: ["hdhub4u", "hdhub"], searchPaths: ["/?s={q}", "?s={q}", "/search/{q}"] },
+  { id: "kmmovies", label: "KMMovies", baseKeys: ["KMMovies", "kmmovies"], searchPaths: ["/?s={q}", "?s={q}"] },
+  { id: "movies4u", label: "Movies4u", baseKeys: ["movies4u"], searchPaths: ["/?s={q}", "?s={q}"] },
+  { id: "moviesmod", label: "Moviesmod", baseKeys: ["Moviesmod", "mod"], searchPaths: ["/search/{q}", "search/{q}", "/?s={q}"] },
+  { id: "uhdmovies", label: "UhdMovies", baseKeys: ["UhdMovies", "uhdmovies"], searchPaths: ["/page/1/?s={q}", "/?s={q}", "?s={q}"] },
+  { id: "vega", label: "Vega", baseKeys: ["Vega", "vega"], searchPaths: ["/?s={q}", "?s={q}"] },
+  { id: "zeefliz", label: "Zeefliz", baseKeys: ["zeefliz"], searchPaths: ["/?s={q}", "?s={q}"] },
+  { id: "zinkmovies", label: "ZinkMovies", baseKeys: ["zinkmovies"], searchPaths: ["/?s={q}", "?s={q}"] }
+];
+
+function localDownloadSiteText(value = "") {
+  return String(value || "").toLowerCase().replace(/&amp;/g, "&").replace(/<[^>]+>/g, " ").replace(/[^a-z0-9]+/g, " ").replace(/\b(?:the|a|an|movie|film|download|watch|online|full|hd|bluray|webdl|webrip|dual|audio|hindi|english|season|episode)\b/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function localDownloadSiteScore(entry = {}, title = "", year = "") {
+  const hay = localDownloadSiteText(`${entry.title || ""} ${entry.href || ""} ${entry.around || ""}`);
+  const target = localDownloadSiteText(title);
+  let score = 0;
+  if (target && hay.includes(target)) score += 90;
+  if (target && hay.replace(/\s+/g, "").includes(target.replace(/\s+/g, ""))) score += 70;
+  for (const word of target.split(/\s+/).filter((w) => w.length > 2)) if (hay.includes(word)) score += 8;
+  if (year && `${entry.title || ""} ${entry.href || ""} ${entry.around || ""}`.includes(String(year))) score += 20;
+  if (/download|watch|online|play|stream|link|server|cloud|drive|episode/i.test(`${entry.title || ""} ${entry.href || ""}`)) score += 5;
+  if (/category|genre|tag|author|comment|privacy|contact|dmca|telegram|login|register/i.test(entry.href || "")) score -= 50;
+  return score;
+}
+
+function localDownloadSiteExtractAnchors(html = "", baseUrl = "") {
+  const source = String(html || "");
+  const anchors = [];
+  const seen = new Set();
+  const anchorRe = /<a\b([^>]*)>([\s\S]*?)<\/a>/gi;
+  let match;
+  while ((match = anchorRe.exec(source))) {
+    const attrs = match[1] || "";
+    const body = match[2] || "";
+    const hrefRaw = attrs.match(/\bhref\s*=\s*["']([^"']+)["']/i)?.[1] || "";
+    if (!hrefRaw || /^#|^javascript:|^mailto:/i.test(hrefRaw)) continue;
+    let href = "";
+    try {
+      const cleanHref = apiHtmlEntityDecodeLite(apiUnescapeJsStringLite(hrefRaw));
+      href = /^\/\//.test(cleanHref) ? `https:${cleanHref}` : new URL(cleanHref, baseUrl).toString();
+    } catch { continue; }
+    if (seen.has(href) || localDeepLooksUnsafeUrl(href) || apiLooksLikeImage(href)) continue;
+    seen.add(href);
+    const titleAttr = attrs.match(/\b(?:title|aria-label)\s*=\s*["']([^"']+)["']/i)?.[1] || "";
+    const imgAlt = body.match(/<img\b[^>]*\b(?:alt|title)\s*=\s*["']([^"']+)["']/i)?.[1] || "";
+    const bodyText = String(body).replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<style[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    const around = source.slice(Math.max(0, match.index - 700), Math.min(source.length, match.index + 1400)).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+    anchors.push({ href, title: apiHtmlEntityDecodeLite(titleAttr || imgAlt || bodyText || href), around });
+  }
+  return anchors;
+}
+
+function localDownloadSiteSearchUrl(baseUrl = "", searchPath = "", query = "") {
+  const safeQ = encodeURIComponent(query);
+  const plusQ = query.trim().replace(/\s+/g, "+");
+  try { return new URL(searchPath.replace("{q}", safeQ).replace("{q+}", plusQ), `${baseUrl.replace(/\/$/, "")}/`).toString(); } catch { return ""; }
+}
+
+async function localDownloadSiteFetch(url = "", referer = "") {
+  const response = await fetch(url, {
+    method: "GET", redirect: "follow", cache: "no-store",
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36",
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,application/json,text/plain,*/*;q=0.8",
+      "Accept-Language": "en-US,en;q=0.9",
+      "Referer": referer || url,
+      "Cache-Control": "no-cache",
+      "Pragma": "no-cache"
+    }
+  });
+  return { ok: response.ok, status: response.status, finalUrl: response.url || url, contentType: response.headers.get("content-type") || "", text: await response.text() };
+}
+
+async function localDownloadSiteBaseUrls(config = {}) {
+  const urls = [];
+  for (const key of config.baseKeys || []) {
+    try { const base = await localSourceGetBaseUrl(key); if (base && !urls.includes(base)) urls.push(base); } catch {}
+  }
+  const envName = `PROVIDER_${String(config.id || "").toUpperCase().replace(/[^A-Z0-9]/g, "_")}_BASE_URL`;
+  const envBase = process.env[envName] || "";
+  if (envBase && !urls.includes(envBase)) urls.unshift(envBase.replace(/\/$/, ""));
+  return urls;
+}
+
+async function localDownloadSiteSearch(config = {}, title = "", year = "", attempts = []) {
+  const variants = localSourceTitleVariants(title, year);
+  const bases = await localDownloadSiteBaseUrls(config);
+  const all = [];
+  if (!bases.length) { attempts.push(`${config.id}: no base URL from providers.json/env`); return []; }
+  for (const base of bases.slice(0, 3)) {
+    for (const q of variants.slice(0, 5)) {
+      for (const path of config.searchPaths || ["/?s={q}", "?s={q}"]) {
+        const searchUrl = localDownloadSiteSearchUrl(base, path, q);
+        if (!searchUrl) continue;
+        try {
+          const page = await localDownloadSiteFetch(searchUrl, base);
+          if (!page.ok) { attempts.push(`${config.id} search ${page.status}: ${searchUrl.slice(0, 100)}`); continue; }
+          const rows = localDownloadSiteExtractAnchors(page.text, page.finalUrl).map((entry) => ({ ...entry, provider: config.id, searchUrl, score: localDownloadSiteScore(entry, title, year) })).filter((entry) => entry.score > 10).sort((a, b) => b.score - a.score);
+          for (const row of rows.slice(0, 12)) if (!all.some((x) => x.href === row.href)) all.push(row);
+          if (rows.length) break;
+        } catch (error) { attempts.push(`${config.id} search "${q}": ${error.message || "failed"}`); }
+      }
+      if (all.length) break;
+    }
+    if (all.length) break;
+  }
+  return all.sort((a, b) => b.score - a.score);
+}
+
+async function localDownloadSiteDetailPayload(config = {}, detailUrl = "", attempts = []) {
+  const page = await localDownloadSiteFetch(detailUrl);
+  if (!page.ok) attempts.push(`${config.id} detail ${page.status}: ${detailUrl.slice(0, 100)}`);
+  const anchors = localDownloadSiteExtractAnchors(page.text, page.finalUrl);
+  const candidateUrls = Array.from(new Set([page.finalUrl, ...anchors.map((a) => a.href), ...localDeepExtractHtmlLinks(page.text, page.finalUrl), ...apiExtractUrlsFromStringDeep(page.text)].filter(Boolean)));
+  const importantUrls = candidateUrls.filter((url) => apiLooksPlayable(url, { url }) || /hubcloud|hub-cloud|gdflix|nextdrive|vcloud|v-cloud|zinkcloud|magic|tech\.unblockedgames|modpro|mdrive|gyaniguru|gadget|gadgetsworld|stream|watch|play|server|download|link|episode|cloud|drive/i.test(String(url || "").toLowerCase()));
+  return {
+    success: true, provider: `${config.id}-local`, finalUrl: page.finalUrl,
+    candidateUrls: importantUrls.slice(0, 140), allUrls: candidateUrls.slice(0, 240),
+    sources: apiExtractMediaUrlsFromStringDeep(page.text).map((url) => ({ name: apiIsM3u8Url(url) ? "hls" : "deep-file", quality: "", url, headers: {}, format: apiIsM3u8Url(url) ? "m3u8" : "" })),
+    textSample: page.text.slice(0, 1200)
+  };
+}
+
+async function localDownloadSitesByTitle({ title = "", year = "", mediaType = "movie", id = "", season = "", episode = "", attempts = [], providerIds = [] }) {
+  const configs = LOCAL_DOWNLOAD_SITE_PROVIDERS.filter((config) => !providerIds.length || providerIds.includes(config.id));
+  const providerSummaries = [];
+  for (const config of configs) {
+    const searchResults = await localDownloadSiteSearch(config, title, year, attempts);
+    providerSummaries.push({ provider: config.id, resultCount: searchResults.length, top: searchResults.slice(0, 5).map((r) => ({ title: r.title, href: r.href, score: r.score })) });
+    for (const result of searchResults.slice(0, 4)) {
+      try {
+        const payload = await localDownloadSiteDetailPayload(config, result.href, attempts);
+        const playable = await apiFindPlayableFromPayload({ payload, providerName: `${config.id}-local`, providerConfig: {}, mediaType, id, season, episode, attempts, depth: 0, seen: new Set() });
+        if (playable) { playable.searchProvider = config.id; playable.searchTitle = result.title; playable.searchUrl = result.href; playable.localProviderSummaries = providerSummaries; return playable; }
+      } catch (error) { attempts.push(`${config.id} detail/extract: ${error.message || "failed"} for ${result.href.slice(0, 80)}`); }
+    }
+  }
+  return { status: "not_found", providerSummaries };
+}
+
+async function localDownloadSitesDebug({ title = "", year = "", mediaType = "movie", id = "", season = "", episode = "", providerIds = [] }) {
+  const attempts = [];
+  const rows = [];
+  let winner = null;
+  const configs = LOCAL_DOWNLOAD_SITE_PROVIDERS.filter((config) => !providerIds.length || providerIds.includes(config.id));
+  for (const config of configs) {
+    const startedAt = Date.now();
+    try {
+      const searchResults = await localDownloadSiteSearch(config, title, year, attempts);
+      const providerRow = { provider: config.id, ms: Date.now() - startedAt, resultCount: searchResults.length, topResults: searchResults.slice(0, 8).map((r) => ({ title: r.title, href: r.href, score: r.score })), details: [] };
+      for (const result of searchResults.slice(0, 3)) {
+        const detailStarted = Date.now();
+        try {
+          const payload = await localDownloadSiteDetailPayload(config, result.href, attempts);
+          const urls = Array.from(new Set([...(payload.candidateUrls || []), ...(payload.allUrls || [])]));
+          const playable = await apiFindPlayableFromPayload({ payload, providerName: `${config.id}-local`, providerConfig: {}, mediaType, id, season, episode, attempts, depth: 0, seen: new Set() });
+          providerRow.details.push({ title: result.title, url: result.href, ms: Date.now() - detailStarted, ok: Boolean(playable), playable: playable || null, candidateUrlCount: urls.length, candidateUrls: urls.slice(0, 40) });
+          if (!winner && playable) winner = playable;
+        } catch (error) { providerRow.details.push({ title: result.title, url: result.href, ms: Date.now() - detailStarted, ok: false, error: error.message || "failed" }); }
+      }
+      rows.push(providerRow);
+    } catch (error) { rows.push({ provider: config.id, ms: Date.now() - startedAt, error: error.message || "failed" }); }
+  }
+  return { attempts, rows, winner };
+}
+
+
 // ===== End more local source ports =====
 
 
@@ -3568,6 +3759,17 @@ async function fetchApiProviderSource({ type = "movie", id = "", season = "1", e
         attempts.push("xprime-local: source-code flow returned no usable stream");
       } catch (error) {
         attempts.push(`xprime-local: ${error.message || "failed"}`);
+      }
+    }
+
+    if (preferred === "download-sites" || providerOrder.includes("download-sites") || process.env.LOCAL_DOWNLOAD_SITES !== "false") {
+      try {
+        const downloadSitesResult = await localDownloadSitesByTitle({ title, year: releaseYear, mediaType, id, season, episode, attempts });
+        if (downloadSitesResult && downloadSitesResult.status === "ok") return downloadSitesResult;
+        if (downloadSitesResult?.providerSummaries) attempts.push(`download-sites-local: no playable source; providers checked ${downloadSitesResult.providerSummaries.map((p) => `${p.provider}:${p.resultCount}`).join(", ")}`);
+        else attempts.push("download-sites-local: source-code search returned no usable stream");
+      } catch (error) {
+        attempts.push(`download-sites-local: ${error.message || "failed"}`);
       }
     }
   }
@@ -47187,6 +47389,30 @@ app.get("/api/local/source-audit", (req, res) => {
   res.json({ ok: true, generatedFrom: "ScarperApi-zero(1).zip static audit", routes: [{"route":"/api/4khdhub/details","chars":5899,"urls":[],"fields":["URL","downloadLinks","file","href","src","url"]},{"route":"/api/4khdhub/gadget","chars":5874,"urls":[],"fields":["URL","url"]},{"route":"/api/4khdhub","chars":2624,"urls":[],"fields":["href","src","url"]},{"route":"/api/4khdhub/search","chars":3092,"urls":[],"fields":["href","src","url"]},{"route":"/api/animepahe/details","chars":9219,"urls":["https://animepahe.si${href}","https://animepahe.si/api?m=release&id=${session}&sort=episode_asc&page=${currentPage}"],"fields":["URL","downloadLinks","href","src","streamUrl","url"]},{"route":"/api/animepahe","chars":2276,"urls":["https://animepahe.si/api?m=airing&page=${page}"],"fields":["URL","url"]},{"route":"/api/animepahe/search","chars":2194,"urls":["https://animepahe.si/api?m=search&q=${encodeURIComponent(query"],"fields":["URL","url"]},{"route":"/api/animepahe/stream","chars":4714,"urls":[],"fields":["URL","m3u8","url"]},{"route":"/api/animesalt/details","chars":8021,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/animesalt","chars":3376,"urls":[],"fields":["href","src","url"]},{"route":"/api/animesalt/search","chars":3322,"urls":[],"fields":["href","src","url"]},{"route":"/api/animesalt/stream","chars":3549,"urls":[],"fields":["URL","src","url"]},{"route":"/api/castel","chars":24315,"urls":["https://aesdec.nuvioapp.space/decrypt-castle","https://api.fstcy.com","https://api.themoviedb.org/3"],"fields":["URL","streams","url","videoUrl"]},{"route":"/api/desiremovies/details","chars":2863,"urls":[],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/desiremovies/gyaniguru","chars":1795,"urls":["https://desiremovies.gripe/"],"fields":["URL","downloadLinks","href","url"]},{"route":"/api/desiremovies","chars":2374,"urls":[],"fields":["href","src","url"]},{"route":"/api/desiremovies/search","chars":2779,"urls":["https://desiremovies.gripe/kalamkaval-2025-web-hdrip/"],"fields":["href","src","url"]},{"route":"/api/drive/details","chars":3945,"urls":[],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/drive/mdrive","chars":2523,"urls":[],"fields":["HubCloud","URL","href","hubcloud","url"]},{"route":"/api/drive","chars":2363,"urls":[],"fields":["href","src","url"]},{"route":"/api/drive/search","chars":2904,"urls":[],"fields":["url"]},{"route":"/api/extractors/gdflix","chars":1584,"urls":["https://scarperapi-extractor-7tr4.vercel.app/api/gdflix?url=${encodeURIComponent(url"],"fields":["URL","gdflix","url"]},{"route":"/api/extractors/hubcloud","chars":1590,"urls":["https://scarperapi-extractor-7tr4.vercel.app/api/hubcloud?url=${encodeURIComponent(url"],"fields":["URL","hubcloud","url"]},{"route":"/api/extractors/streamtape","chars":0,"urls":[],"fields":[]},{"route":"/api/extractors/xprime","chars":18282,"urls":["https://api.themoviedb.org/3","https://mznxiwqjdiq00239q.space","https://xprime.hunternisha55.workers.dev","https://xprime.su/watch/${tmdbId}","https://xprime.su/watch/${tmdbId}/${season}/${episode}"],"fields":["URL","XPrime","src","streams","url","xprime"]},{"route":"/api/hdhub4u/details","chars":4722,"urls":[],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/hdhub4u/extractor","chars":11472,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/hdhub4u","chars":2194,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/hdhub4u/search","chars":3147,"urls":["https://new2.hdhub4u.fo","https://new2.hdhub4u.fo/","https://search.pingora.fyi/collections/post/documents/search?q=${formattedQuery}&query_by=post_title&page=${page}"],"fields":["url"]},{"route":"/api/kmmovies/details","chars":6044,"urls":[],"fields":["URL","downloadLinks","file","href","src","url"]},{"route":"/api/kmmovies/magiclinks","chars":3981,"urls":["https://kmmovies.store/","https://net-cookie-kacj.vercel.app/api/redirect?url=${encodeURIComponent(link.url"],"fields":["File","URL","downloadLinks","file","href","url"]},{"route":"/api/kmmovies","chars":3220,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/kmmovies/search","chars":3067,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/mod/details","chars":5030,"urls":[],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/mod/modpro","chars":5122,"urls":["https://moviesmod.build/"],"fields":["URL","downloadLinks","href","serverLinks","techLinks","url"]},{"route":"/api/mod","chars":2418,"urls":[],"fields":["href","src","url"]},{"route":"/api/mod/search","chars":2163,"urls":[],"fields":["href","src","url"]},{"route":"/api/movies4u/details","chars":5470,"urls":[],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/movies4u/m4ulinks","chars":4568,"urls":[],"fields":["URL","href","hubcloud","hubcloudLinks","url"]},{"route":"/api/movies4u","chars":3432,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/movies4u/search","chars":2851,"urls":[],"fields":["href","src","url"]},{"route":"/api/netmirror/getpost","chars":3598,"urls":[],"fields":["URL","url"]},{"route":"/api/netmirror","chars":6442,"urls":["https://net22.cc"],"fields":["URL","net22.cc","src","url"]},{"route":"/api/netmirror/search","chars":3537,"urls":["https://net22.cc"],"fields":["URL","net22.cc","url"]},{"route":"/api/netmirror/stream","chars":6912,"urls":["https://net20.cc/","https://net22.cc/play.php","https://net51.cc","https://net51.cc/","https://net51.cc/playlist.php?id=${id}&tm=${currentTimestamp}&h=${encodeURIComponent(h","https://net52.cc/playlist.php?id=${id}&tm=${timestamp}&h=${encodeURIComponent(h"],"fields":["URL","file","net20.cc","net22.cc","net51.cc","net52.cc","playlist","sources","url"]},{"route":"/api/search","chars":5478,"urls":[],"fields":["url"]},{"route":"/api/themovie/det","chars":9305,"urls":["https://themoviebox.org/","https://themoviebox.org/movies/${slug}?id=${id}&type=${parsedUrl.searchParams.get(","https://themoviebox.org/wefeed-h5api-bff/subject/play"],"fields":["URL","playApiUrl","themoviebox","url"]},{"route":"/api/themovie","chars":2270,"urls":[],"fields":["URL","fullUrl","href","src"]},{"route":"/api/themovie/search","chars":8547,"urls":[],"fields":["URL","fullUrl","href","src","url"]},{"route":"/api/themovie/stream","chars":17695,"urls":["https://themoviebox.org/","https://themoviebox.org/movies/${slug}","https://themoviebox.org/moviesDetail/${slug}","https://themoviebox.org/wefeed-h5api-bff/subject/play"],"fields":["URL","src","themoviebox","url"]},{"route":"/api/tm","chars":5749,"urls":["https://vibuxer.com/","https://vibuxer.com/e/${code.trim("],"fields":["URL","streamUrl","streams","url","vibuxer"]},{"route":"/api/uhdmovies/details","chars":7162,"urls":[],"fields":["URL","downloadLinks","file","href","src","url"]},{"route":"/api/uhdmovies","chars":2234,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/uhdmovies/search","chars":2873,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/uhdmovies/tech","chars":9222,"urls":["https://${mainUrl}${path}","https://net-cookie-kacj.vercel.app/api/vlich?url=${encodeURIComponent(cdnInstantLink"],"fields":["URL","file","href","url","videoUrl"]},{"route":"/api/vega/details","chars":4450,"urls":[],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/vega/nextdrive","chars":1532,"urls":[],"fields":["URL","href","url","vcloudLinks"]},{"route":"/api/vega","chars":1967,"urls":[],"fields":["href","src","url"]},{"route":"/api/vega/search","chars":2567,"urls":[],"fields":["href","src","url"]},{"route":"/api/vid","chars":18078,"urls":["https://api.videasy.net/1movies/sources-with-title","https://api.videasy.net/cdn/sources-with-title","https://api.videasy.net/hdmovie/sources-with-title","https://api.videasy.net/m4uhd/sources-with-title","https://api.videasy.net/meine/sources-with-title","https://api.videasy.net/moviebox/sources-with-title","https://api.videasy.net/myflixerzupcloud/sources-with-title","https://api.videasy.net/onionplay/sources-with-title","https://api.videasy.net/superflix/sources-with-title","https://api.videasy.net/visioncine/sources-with-title","https://api2.videasy.net/cuevana-latino/sources-with-title","https://api2.videasy.net/cuevana-spanish/sources-with-title","https://api2.videasy.net/overflix/sources-with-title","https://api2.videasy.net/primewire/sources-with-title","https://enc-dec.app/api","https://image.tmdb.org/t/p/w1280${data.backdrop_path}","https://image.tmdb.org/t/p/w500${data.poster_path}","https://twilight-cake-defb.hunternisha55.workers.dev/3","https://videasy.net/"],"fields":["VIDEASY","m3u8","mp4","sources","streams","url","videasy"]},{"route":"/api/zeefliz/details","chars":7022,"urls":["https://www.youtube.com/watch?v=${trailerDiv.attr("],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/zeefliz/nextdrive","chars":3515,"urls":[],"fields":["URL","href","url","zeeCloudLinks"]},{"route":"/api/zeefliz","chars":2607,"urls":[],"fields":["href","src","url"]},{"route":"/api/zeefliz/search","chars":3681,"urls":[],"fields":["href","src","url"]},{"route":"/api/zinkmovies/details","chars":2064,"urls":[],"fields":["URL","downloadLinks","href","url"]},{"route":"/api/zinkmovies","chars":5927,"urls":[],"fields":["href","src","url"]},{"route":"/api/zinkmovies/search","chars":3245,"urls":[],"fields":["href","src","url"]},{"route":"/api/zinkmovies/zinkcloud","chars":2718,"urls":[],"fields":["File","URL","ZinkCloud","file","href","hubCloudLinks","hubcloud","url","zinkcloud"]}] });
 });
 
+app.get("/api/local/download-sites-debug", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const type = req.query.type === "tv" ? "tv" : "movie";
+  const id = apiClean(req.query.tmdb || req.query.tmdbId || req.query.id || "");
+  const provider = apiClean(req.query.provider || "");
+  const season = apiClean(req.query.season || req.query.s || "1");
+  const episode = apiClean(req.query.episode || req.query.e || "1");
+  let title = apiClean(req.query.q || req.query.title || "");
+  let year = apiClean(req.query.year || "");
+  const attempts = [];
+  if (!title && id) {
+    try {
+      const endpoint = type === "tv" ? `/tv/${id}` : `/movie/${id}`;
+      const details = await tmdb(endpoint, {}, CACHE_TTL.long);
+      title = getTitle(details);
+      year = getYear(type === "tv" ? details.first_air_date : details.release_date);
+    } catch (error) { attempts.push(`tmdb metadata: ${error.message || "failed"}`); }
+  }
+  if (!title) return res.status(400).json({ ok: false, error: "Pass ?q=title or ?tmdb=id" });
+  const providerIds = provider ? provider.split(",").map((x) => x.trim().toLowerCase()).filter(Boolean) : [];
+  const debug = await localDownloadSitesDebug({ title, year, mediaType: type, id, season, episode, providerIds });
+  res.json({ ok: Boolean(debug.winner), title, year, titleVariants: localSourceTitleVariants(title, year), winner: debug.winner, attempts: [...attempts, ...debug.attempts], providers: debug.rows });
+});
+
 app.get("/api/local/source-url-patterns", (req, res) => {
   res.set("Cache-Control", "no-store");
   res.json({
@@ -47220,7 +47446,8 @@ app.get("/api/local/source-url-patterns", (req, res) => {
       "themovie",
       "tm/vibuxer",
       "animepahe stream extractor",
-      "generic deep html/js/json digger"
+      "generic deep html/js/json digger",
+      "download-sites multi-provider: 4khdhub/hdhub4u/movies4u/zeefliz/vega/zinkmovies/kmmovies/uhdmovies/moviesmod/drive/desiremovies"
     ],
     safetySkips: [
       "/api/adult/*",
@@ -47313,6 +47540,14 @@ app.get("/api/local/super-source-debug", async (req, res) => {
       if (!winner && movieBox) winner = movieBox;
     } catch (error) {
       probes.push({ provider: "themovie-local", ok: false, error: error.message || "failed" });
+    }
+
+    try {
+      const debugDownloadSites = await localDownloadSitesDebug({ title, year: releaseYear, mediaType: type, id, season, episode });
+      probes.push({ provider: "download-sites-local", ok: Boolean(debugDownloadSites.winner), result: debugDownloadSites.winner || null, providerRows: debugDownloadSites.rows, attempts: debugDownloadSites.attempts });
+      if (!winner && debugDownloadSites.winner) winner = debugDownloadSites.winner;
+    } catch (error) {
+      probes.push({ provider: "download-sites-local", ok: false, error: error.message || "failed" });
     }
   }
 
