@@ -23,7 +23,7 @@ require("dotenv").config();
 
 // ===== SwiflyTV no-env mode =====
 // This build is meant to run without manually setting a pile of Render env vars.
-// It forces the known-good StreamProvider-only m3u8 path unless you explicitly set
+// It forces the known-good StreamProvider-only media path unless you explicitly set
 // SWIFLY_NO_ENV_MODE=false.
 if (process.env.SWIFLY_NO_ENV_MODE !== "false") {
   Object.assign(process.env, {
@@ -113,7 +113,7 @@ const FILMU_WAIT_MS = Math.max(2500, Number(process.env.FILMU_WAIT_MS || 12000))
 const FILMU_ROUTE_TIMEOUT_MS = Math.max(8000, Number(process.env.FILMU_ROUTE_TIMEOUT_MS || 35000));
 const FILMU_TRY_FALLBACKS = process.env.FILMU_TRY_FALLBACKS === "true";
 
-// Local StreamProvider-main m3u8 scrapers ported into SwiflyTV.
+// Local StreamProvider-main media scrapers ported into SwiflyTV.
 // Uses the uploaded StreamProvider source pattern: open provider page with Playwright
 // and capture real .m3u8 requests from Network, then send through Swifly HLS proxy.
 const STREAMPROVIDER_ENABLED = process.env.STREAMPROVIDER_ENABLED !== "false";
@@ -250,6 +250,13 @@ function apiIsAllowedMediaExtensionUrl(url = "") {
   // Do NOT treat every random extension as playable; .php/.xml/.html/.webmanifest
   // were being incorrectly embedded as video.
   return /\.(?:m3u8|mpd|mp4|m4v|webm|mkv|mov|avi|flv|ts|m2ts|mts|m4s|fmp4)(?:$)/i.test(path);
+}
+
+function apiStreamFormatForUrl(url = "") {
+  if (apiIsM3u8Url(url)) return "m3u8";
+  if (apiIsMpdUrl(url)) return "mpd";
+  const match = apiUrlPath(url).toLowerCase().match(/\.([a-z0-9]{2,8})$/);
+  return match ? match[1] : "";
 }
 
 
@@ -4325,7 +4332,7 @@ async function localVidSrcDebug({ mediaType = "movie", id = "", season = "1", ep
 
 
 
-// ===== StreamProvider-main local m3u8 scrapers =====
+// ===== StreamProvider-main local media scrapers =====
 let __streamProviderBrowserPromise = null;
 
 function localStreamProviderLoadChromium() {
@@ -4435,7 +4442,7 @@ async function localStreamProviderGetTmdbMetadata({ tmdbId = "", mediaType = "mo
   return out;
 }
 
-async function localStreamProviderCaptureM3u8({ provider = "", url = "", referer = "", attempts = [] }) {
+async function localStreamProviderCaptureMedia({ provider = "", url = "", referer = "", attempts = [] }) {
   const browser = await localStreamProviderBrowser();
   const context = await browser.newContext({
     userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
@@ -4455,9 +4462,18 @@ async function localStreamProviderCaptureM3u8({ provider = "", url = "", referer
     const value = String(rawUrl || "").trim();
     if (!value) return;
     if (apiIsYouTubeUrl(value) || apiLooksDefinitelyNonMediaUrl(value)) return;
-    if (!seen.includes(value) && seen.length < 120) seen.push(value);
-    if (!winner && apiIsM3u8Url(value)) {
-      winner = { url: value, referer: headers.referer || headers.Referer || page.url() || url, headers };
+    if (!seen.includes(value) && seen.length < 160) seen.push(value);
+
+    // Prefer HLS if it appears, but accept any real playable media extension.
+    // This fixes the "doesn't have to be m3u8" case.
+    if (apiIsM3u8Url(value)) {
+      winner = { url: value, referer: headers.referer || headers.Referer || page.url() || url, headers, format: "m3u8" };
+      return;
+    }
+
+    if (!winner && apiIsAllowedMediaExtensionUrl(value)) {
+      const format = apiStreamFormatForUrl(value) || "video";
+      winner = { url: value, referer: headers.referer || headers.Referer || page.url() || url, headers, format };
     }
   }
 
@@ -4480,7 +4496,7 @@ async function localStreamProviderCaptureM3u8({ provider = "", url = "", referer
       const headers = response.headers() || {};
       remember(responseUrl, { referer: page.url() || url });
       const contentType = String(headers["content-type"] || "");
-      if (!winner && /mpegurl|m3u8/i.test(contentType)) remember(responseUrl, { referer: page.url() || url });
+      if (!winner && /mpegurl|m3u8|video\/|application\/octet-stream|dash\+xml/i.test(contentType)) remember(responseUrl, { referer: page.url() || url });
       if (!winner && /json|javascript|html|text/i.test(contentType)) {
         try {
           const text = await response.text();
@@ -4523,8 +4539,8 @@ async function localStreamProviderCaptureM3u8({ provider = "", url = "", referer
     }
 
     if (!winner) {
-      attempts.push(`${provider}: no .m3u8 captured from ${url}`);
-      return { ok: false, provider, pageUrl: url, seen: seen.slice(0, 40), error: "no .m3u8 captured" };
+      attempts.push(`${provider}: no playable media captured from ${url}`);
+      return { ok: false, provider, pageUrl: url, seen: seen.slice(0, 40), error: "no playable media captured" };
     }
 
     const pageUrl = page.url() || url;
@@ -4537,8 +4553,8 @@ async function localStreamProviderCaptureM3u8({ provider = "", url = "", referer
         quality: "auto",
         url: winner.url,
         headers: localStreamProviderHeaders(winner.referer || pageUrl, winner.headers || {}),
-        format: "m3u8",
-        forceHls: true
+        format: winner.format || apiStreamFormatForUrl(winner.url) || "",
+        forceHls: apiIsM3u8Url(winner.url)
       },
       seen: seen.slice(0, 40)
     };
@@ -4637,10 +4653,10 @@ async function localStreamProviderGetStreams({ tmdbId = "", mediaType = "movie",
 
   for (const job of directJobs) {
     const startedAt = Date.now();
-    const result = await localStreamProviderCaptureM3u8({ provider: job.provider, url: job.url, attempts });
+    const result = await localStreamProviderCaptureMedia({ provider: job.provider, url: job.url, attempts });
     result.ms = Date.now() - startedAt;
     results.push(result);
-    if (result.ok && result.source?.url && apiIsM3u8Url(result.source.url)) {
+    if (result.ok && result.source?.url && apiIsAllowedMediaExtensionUrl(result.source.url)) {
       sources.push(result.source);
       return {
         success: true,
@@ -4668,10 +4684,10 @@ async function localStreamProviderGetStreams({ tmdbId = "", mediaType = "movie",
     ]);
 
     if (sflixUrl) {
-      const result = await localStreamProviderCaptureM3u8({ provider: "sflix", url: sflixUrl, attempts });
+      const result = await localStreamProviderCaptureMedia({ provider: "sflix", url: sflixUrl, attempts });
       result.ms = Date.now() - sflixStartedAt;
       results.push(result);
-      if (result.ok && result.source?.url && apiIsM3u8Url(result.source.url)) sources.push(result.source);
+      if (result.ok && result.source?.url && apiIsAllowedMediaExtensionUrl(result.source.url)) sources.push(result.source);
     }
   }
 
@@ -5135,12 +5151,12 @@ async function fetchApiProviderSource({ type = "movie", id = "", season = "1", e
     attempts.push(`tmdb metadata: ${error.message || "failed"}`);
   }
 
-  // 0-streamprovider) Local StreamProvider-main m3u8-only implementation.
+  // 0-streamprovider) Local StreamProvider-main any-media implementation.
   if (preferred === "streamprovider" || providerOrder.includes("streamprovider")) {
     try {
       const streamProviderResult = await localStreamProviderResult({ mediaType, id, season, episode, attempts });
       if (streamProviderResult) return streamProviderResult;
-      attempts.push("streamprovider-local: no m3u8 captured");
+      attempts.push("streamprovider-local: no playable media captured");
     } catch (error) {
       attempts.push(`streamprovider-local: ${error.message || "failed"}`);
     }
@@ -49011,7 +49027,7 @@ app.get("/api/local/streamprovider-debug", async (req, res) => {
     const debug = await localStreamProviderDebug({ mediaType: type, id, season, episode, attempts });
     res.json({
       ok: Boolean(debug.winner),
-      sourceMode: "local-streamprovider-main-m3u8-only",
+      sourceMode: "local-streamprovider-main-any-media",
       tmdb: debug.tmdbId || id,
       type,
       season: type === "tv" ? season : "",
@@ -49025,7 +49041,7 @@ app.get("/api/local/streamprovider-debug", async (req, res) => {
   } catch (error) {
     res.status(504).json({
       ok: false,
-      sourceMode: "local-streamprovider-main-m3u8-only",
+      sourceMode: "local-streamprovider-main-any-media",
       error: error.message || "failed",
       tmdb: id,
       type,
