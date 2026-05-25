@@ -1655,6 +1655,12 @@ async function localCastleGetStreams({ tmdbId = "", mediaType = "movie", season 
 let LOCAL_SOURCE_PROVIDER_CACHE = null;
 let LOCAL_SOURCE_COOKIES_CACHE = null;
 
+const LOCAL_SOURCE_FALLBACK_PROVIDERS = {
+  moviebox: { name: "MovieBox", url: "https://themoviebox.org/" },
+  nfMirror: { name: "NetMirror", url: "https://net22.cc" },
+  netmirror: { name: "NetMirror", url: "https://net22.cc" }
+};
+
 async function localSourceGetProviders() {
   if (LOCAL_SOURCE_PROVIDER_CACHE) return LOCAL_SOURCE_PROVIDER_CACHE;
 
@@ -1666,20 +1672,35 @@ async function localSourceGetProviders() {
     }
   });
 
-  if (!response.ok) throw new Error(`Failed to fetch providers: ${response.status}`);
-  LOCAL_SOURCE_PROVIDER_CACHE = await response.json();
-  return LOCAL_SOURCE_PROVIDER_CACHE;
+  if (!response.ok) {
+    LOCAL_SOURCE_PROVIDER_CACHE = LOCAL_SOURCE_FALLBACK_PROVIDERS;
+    return LOCAL_SOURCE_PROVIDER_CACHE;
+  }
+
+  try {
+    LOCAL_SOURCE_PROVIDER_CACHE = await response.json();
+  } catch {
+    LOCAL_SOURCE_PROVIDER_CACHE = LOCAL_SOURCE_FALLBACK_PROVIDERS;
+  }
+
+  return { ...LOCAL_SOURCE_FALLBACK_PROVIDERS, ...LOCAL_SOURCE_PROVIDER_CACHE };
 }
 
 async function localSourceGetBaseUrl(key = "") {
   const providers = await localSourceGetProviders();
-  const provider = providers[key];
+  const provider = providers[key] || LOCAL_SOURCE_FALLBACK_PROVIDERS[key];
   if (!provider || !provider.url) throw new Error(`Provider key "${key}" not found`);
   return provider.url;
 }
 
 async function localSourceGetCookies() {
-  if (LOCAL_SOURCE_COOKIES_CACHE) return LOCAL_SOURCE_COOKIES_CACHE;
+  if (LOCAL_SOURCE_COOKIES_CACHE !== null) return LOCAL_SOURCE_COOKIES_CACHE;
+
+  const envCookies = process.env.SOURCE_COOKIES || process.env.NETMIRROR_COOKIES || process.env.MOVIEBOX_COOKIES || "";
+  if (envCookies) {
+    LOCAL_SOURCE_COOKIES_CACHE = envCookies;
+    return LOCAL_SOURCE_COOKIES_CACHE;
+  }
 
   const response = await fetch("https://raw.githubusercontent.com/Anshu78780/json/main/cookies.json", {
     cache: "no-store",
@@ -1991,27 +2012,91 @@ function localTheMovieNormalizeTitle(title) {
   return String(title || "").toLowerCase().replace(/\s+/g, " ").trim();
 }
 
+function localTheMovieReadAttr(attrText = "", name = "") {
+  const re = new RegExp(`${name}\\s*=\\s*["']([^"']*)["']`, "i");
+  const match = String(attrText || "").match(re);
+  return match ? match[1] : "";
+}
+
+function localTheMovieStripHtml(value = "") {
+  return String(value || "")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function localTheMovieExtractCards(html, baseUrl) {
   const results = [];
-  const cardRegex = /<a\b[^>]*class=["'][^"']*\bcard\b[^"']*["'][^>]*href=["']([^"']*\/moviesDetail\/[^"']+)["'][\s\S]*?<\/a>/gi;
+  const seen = new Set();
+  const source = String(html || "");
+
+  // This mirrors the uploaded source selector:
+  // $('a.card[href^="/moviesDetail/"]')
+  // but without cheerio. It is order-independent, so it works if href comes
+  // before class or class comes before href.
+  const anchorRegex = /<a\b([^>]*)>([\s\S]*?)<\/a>/gi;
   let match;
 
-  while ((match = cardRegex.exec(html))) {
-    const block = match[0];
-    const href = match[1];
-    const titleMatch = block.match(/<h2[^>]*class=["'][^"']*card-title[^"']*["'][^>]*(?:title=["']([^"']+)["'])?[^>]*>([\s\S]*?)<\/h2>/i);
-    const title = (titleMatch?.[1] || titleMatch?.[2] || "").replace(/<[^>]+>/g, "").trim();
-    const imgMatch = block.match(/<img[^>]+(?:src|data-src)=["']([^"']+)["']/i);
-    const ratingMatch = block.match(/<span[^>]*class=["'][^"']*rate[^"']*["'][^>]*>([\s\S]*?)<\/span>/i);
+  while ((match = anchorRegex.exec(source))) {
+    const attrs = match[1] || "";
+    const block = match[2] || "";
+    const className = localTheMovieReadAttr(attrs, "class");
+    const href = localTheMovieReadAttr(attrs, "href");
+
+    if (!/\bcard\b/i.test(className)) continue;
+    if (!href || !/^\/?moviesDetail\//i.test(href.replace(/^https?:\/\/[^/]+/i, ""))) continue;
+
+    const titleTag =
+      block.match(/<h2\b([^>]*)class=["'][^"']*\bcard-title\b[^"']*["'][^>]*>([\s\S]*?)<\/h2>/i) ||
+      block.match(/<h2\b([^>]*)>([\s\S]*?)<\/h2>/i);
+
+    const titleAttr = titleTag ? localTheMovieReadAttr(titleTag[1], "title") : "";
+    const title = (titleAttr || localTheMovieStripHtml(titleTag ? titleTag[2] : "") || localTheMovieReadAttr(attrs, "title")).trim();
+
+    let imageUrl = "";
+    const imgMatch = block.match(/<img\b([^>]*)>/i);
+    if (imgMatch) {
+      imageUrl = localTheMovieReadAttr(imgMatch[1], "src") || localTheMovieReadAttr(imgMatch[1], "data-src") || "";
+    }
+
+    const ratingMatch = block.match(/<span\b[^>]*class=["'][^"']*\brate\b[^"']*["'][^>]*>([\s\S]*?)<\/span>/i);
+    const rating = ratingMatch ? localTheMovieStripHtml(ratingMatch[1]) : "";
 
     if (title && href) {
+      const fullUrl = href.startsWith("http") ? href : new URL(href.replace(/^\/+/, ""), baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`).toString();
+      if (seen.has(fullUrl)) continue;
+      seen.add(fullUrl);
+
       results.push({
         title,
         href,
-        fullUrl: href.startsWith("http") ? href : new URL(href, baseUrl).toString(),
-        imageUrl: imgMatch ? imgMatch[1] : "",
-        rating: ratingMatch ? ratingMatch[1].replace(/<[^>]+>/g, "").trim() : ""
+        fullUrl,
+        imageUrl,
+        rating
       });
+    }
+  }
+
+  // Fallback: if site changed class names but still has moviesDetail links,
+  // collect those links so details can still run.
+  if (!results.length) {
+    const linkRegex = /href=["']([^"']*\/moviesDetail\/[^"']+)["'][\s\S]{0,900}?/gi;
+    let m;
+    while ((m = linkRegex.exec(source))) {
+      const href = m[1];
+      const around = source.slice(Math.max(0, m.index - 700), Math.min(source.length, m.index + 1400));
+      const title =
+        (around.match(/<h2[^>]*(?:title=["']([^"']+)["'])?[^>]*>([\s\S]*?)<\/h2>/i)?.[1]) ||
+        localTheMovieStripHtml(around.match(/<h2[^>]*>([\s\S]*?)<\/h2>/i)?.[1] || "") ||
+        localTheMovieStripHtml(around.match(/title=["']([^"']+)["']/i)?.[1] || "");
+
+      if (!title) continue;
+      const fullUrl = href.startsWith("http") ? href : new URL(href.replace(/^\/+/, ""), baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`).toString();
+      if (seen.has(fullUrl)) continue;
+      seen.add(fullUrl);
+      results.push({ title, href, fullUrl, imageUrl: "", rating: "" });
     }
   }
 
@@ -2030,7 +2115,14 @@ async function localTheMovieSearchRaw(query) {
       "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
       "Accept-Language": "en-US,en;q=0.5",
       "Connection": "keep-alive",
-      "Upgrade-Insecure-Requests": "1"
+      "Upgrade-Insecure-Requests": "1",
+      "Sec-Ch-Ua": "\"Not(A:Brand\";v=\"8\", \"Chromium\";v=\"144\", \"Brave\";v=\"144\"",
+      "Sec-Ch-Ua-Mobile": "?1",
+      "Sec-Ch-Ua-Platform": "\"Android\"",
+      "Sec-Fetch-Dest": "document",
+      "Sec-Fetch-Mode": "navigate",
+      "Sec-Fetch-Site": "none",
+      "Sec-Gpc": "1"
     },
     cache: "no-store"
   });
