@@ -1,7 +1,8 @@
 services:
   - type: web
-    name: dropstream
+    name: swiflytv
     runtime: docker
+    dockerfilePath: ./Dockerfile
     plan: free
     envVars:
       - key: NODE_ENV
