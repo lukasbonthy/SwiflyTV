@@ -1,21 +1,20 @@
-FROM lscr.io/linuxserver/chromium:latest
+FROM mcr.microsoft.com/playwright:v1.49.1-noble
 
-# Render exposes one public HTTP port. LinuxServer's Chromium image supports
-# changing its internal HTTP listener with CUSTOM_PORT, so we bind it directly
-# to Render's default web-service port instead of running our own noVNC stack.
-ENV CUSTOM_PORT=10000 \
-    PUID=1000 \
-    PGID=1000 \
-    TZ=Etc/UTC \
-    CHROME_CLI="https://www.google.com --no-first-run --no-default-browser-check --disable-dev-shm-usage" \
-    TITLE="BrowserUnblocked Chromium" \
-    DISABLE_IPV6=true \
-    START_DOCKER=false \
-    DISABLE_SUDO=true \
-    DISABLE_TERMINALS=true \
-    DISABLE_OPEN_TOOLS=true \
-    SELKIES_ENABLE_SHARING=false \
-    SELKIES_ENABLE_COLLAB=false \
-    SELKIES_ENABLE_SHARED=false
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+ENV REMOTE_BROWSER_ENABLED=true
+ENV REMOTE_BROWSER_FPS=1
+ENV REMOTE_BROWSER_JPEG_QUALITY=58
+
+COPY package*.json ./
+RUN npm install --omit=dev
+RUN node -e "const v=require('playwright-core/package.json').version; if(v!=='1.49.1'){ console.error('Wrong playwright-core version:', v); process.exit(1); } console.log('playwright-core', v)"
+
+COPY . .
 
 EXPOSE 10000
+
+CMD ["npm", "start"]
