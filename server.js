@@ -90,55 +90,135 @@ function apiLooksLikeImage(url = "") {
   return /\.(?:jpe?g|png|webp|gif|avif|svg)(?:[?#]|$)/i.test(String(url || ""));
 }
 
+function apiIsM3u8Url(url = "") {
+  return /\.m3u8(?:[?#]|$)/i.test(String(url || ""));
+}
+
+function apiIsMpdUrl(url = "") {
+  return /\.mpd(?:[?#]|$)/i.test(String(url || ""));
+}
+
+function apiLooksLikeDownloadUrl(url = "", node = {}) {
+  const value = String(url || "").toLowerCase();
+  const nodeText = `${Object.keys(node || {}).join(" ")} ${Object.values(node || {}).slice(0, 12).join(" ")}`.toLowerCase();
+
+  // Never reject HLS just because a provider used a sloppy field name.
+  if (apiIsM3u8Url(value)) return false;
+
+  // These are usually detail/download/redirect pages, not media embeds.
+  if (/\b(download|downloads|downloadurl|directurl|gdtot|gdflix|hubcloud|hub-cloud|drivebot|resumebot|resume-bot|v-cloud|vcloud|nextdrive|zinkcloud|gadget|gadgetsworld|tech\.unblockedgames|ddl|torrent)\b/i.test(nodeText)) return true;
+  if (/(\/|\?|&|=)(download|dl|ddl|file|attachment|export=download)(\/|\?|&|=|$)/i.test(value)) return true;
+  if (/\.(?:mkv|avi|zip|rar|7z|tar|gz|torrent|srt|ass)(?:[?#]|$)/i.test(value)) return true;
+
+  return false;
+}
+
+function apiLooksStreamLike(url = "", node = {}) {
+  const value = String(url || "").toLowerCase();
+  const nodeText = `${Object.keys(node || {}).join(" ")} ${Object.values(node || {}).slice(0, 12).join(" ")}`.toLowerCase();
+
+  if (apiIsM3u8Url(value) || apiIsMpdUrl(value)) return true;
+  if (/\.(?:mp4|m4v|webm|mov)(?:[?#]|$)/i.test(value)) return true;
+  if (/(\/|\.|\b)(hls|m3u8|playlist|manifest|stream|embed|player|play|watch|video|source)(\/|\.|\?|&|=|$)/i.test(value)) return true;
+  if (/\b(hls|m3u8|playlist|manifest|stream|embed|player|playback|video|source|server|quality)\b/i.test(nodeText)) return true;
+
+  return false;
+}
+
+function apiSourceScore(source = {}) {
+  const url = String(source.url || "");
+  const text = `${source.name || ""} ${source.quality || ""} ${source.format || ""} ${source.type || ""}`.toLowerCase();
+
+  if (!apiLooksPlayable(url, source)) return -9999;
+
+  let score = 0;
+  if (apiIsM3u8Url(url)) score += 10000;
+  else if (/m3u8|hls/.test(text)) score += 9000;
+  else if (apiIsMpdUrl(url)) score += 5500;
+  else if (/(stream|embed|player|play|watch|manifest|playlist)/i.test(url)) score += 4200;
+  else if (/\.(?:mp4|m4v|webm|mov)(?:[?#]|$)/i.test(url)) score += 2500;
+  else score += 900;
+
+  if (/1080|fhd|full.?hd/i.test(text)) score += 240;
+  if (/720|hd/i.test(text)) score += 160;
+  if (/4k|2160|uhd/i.test(text)) score += 120;
+  if (/cam|ts|hdcam/i.test(text)) score -= 500;
+
+  // Prefer real embed/stream URLs over obvious file/download links.
+  if (apiLooksLikeDownloadUrl(url, source)) score -= 8000;
+
+  return score;
+}
+
 function apiLooksPlayable(url = "", node = {}) {
   const value = String(url || "").trim();
   if (!/^https?:\/\//i.test(value)) return false;
   if (apiLooksLikeImage(value)) return false;
 
-  // SwiflyTV API playback must embed HLS only.
-  // This intentionally rejects mp4/webm/mpd/direct file fallbacks so the selected
-  // embed source is always a URL whose path ends in .m3u8, optionally with ?query/#hash.
-  return /\.m3u8(?:[?#]|$)/i.test(value);
+  // Main target: actual HLS .m3u8 URLs.
+  if (apiIsM3u8Url(value)) return true;
+
+  // Secondary fallback: non-download stream/embed/media URLs only.
+  if (apiLooksLikeDownloadUrl(value, node)) return false;
+  if (!apiLooksStreamLike(value, node)) return false;
+
+  return true;
 }
 
 function apiNormalizeSources(input) {
   const sources = [];
+
   apiWalk(input, (node) => {
     if (typeof node === "string") {
       if (apiLooksPlayable(node, { raw: node })) {
-        sources.push({ name: "source", quality: "", url: node, headers: {} });
+        sources.push({
+          name: apiIsM3u8Url(node) ? "hls" : "source",
+          quality: "",
+          url: node,
+          headers: {},
+          format: apiIsM3u8Url(node) ? "m3u8" : ""
+        });
       }
       return;
     }
+
     if (!node || typeof node !== "object") return;
 
-    const mediaUrl = apiFirst(
-      node.m3u8,
-      node.playlist,
-      node.playbackUrl,
-      node.proxyVideo,
-      node.streamUrl,
-      node.streamingUrl,
-      node.videoUrl,
-      node.downloadUrl,
-      node.directUrl,
-      node.src,
-      node.file,
-      node.url,
-      node.link,
-      node.href
-    );
+    const candidates = [
+      ["m3u8", node.m3u8],
+      ["playlist", node.playlist],
+      ["playbackUrl", node.playbackUrl],
+      ["proxyVideo", node.proxyVideo],
+      ["streamUrl", node.streamUrl],
+      ["streamingUrl", node.streamingUrl],
+      ["videoUrl", node.videoUrl],
+      ["embedUrl", node.embedUrl],
+      ["playerUrl", node.playerUrl],
+      ["src", node.src],
+      ["file", node.file],
+      ["url", node.url],
+      ["link", node.link],
+      ["href", node.href],
+      ["downloadUrl", node.downloadUrl],
+      ["directUrl", node.directUrl]
+    ];
 
-    if (!apiLooksPlayable(mediaUrl, node)) return;
+    for (const [field, value] of candidates) {
+      const mediaUrl = apiClean(value);
+      if (!apiLooksPlayable(mediaUrl, { ...node, sourceField: field })) continue;
 
-    sources.push({
-      name: apiFirst(node.name, node.server, node.provider, node.label, node.source, node.host) || "source",
-      quality: apiFirst(node.quality, node.resolution, node.size, node.format, node.type),
-      url: mediaUrl,
-      headers: node.headers && typeof node.headers === "object" ? node.headers : {}
-    });
+      sources.push({
+        name: apiFirst(node.name, node.server, node.provider, node.label, node.source, node.host, field) || "source",
+        quality: apiFirst(node.quality, node.resolution, node.size, node.format, node.type),
+        url: mediaUrl,
+        headers: node.headers && typeof node.headers === "object" ? node.headers : {},
+        format: apiIsM3u8Url(mediaUrl) ? "m3u8" : (apiIsMpdUrl(mediaUrl) ? "mpd" : "")
+      });
+    }
   });
-  return Array.from(new Map(sources.map((source) => [source.url, source])).values());
+
+  return Array.from(new Map(sources.map((source) => [source.url, source])).values())
+    .sort((a, b) => apiSourceScore(b) - apiSourceScore(a));
 }
 
 function apiTopList(json) {
@@ -226,22 +306,22 @@ function apiGetProvider(name = "") {
 
 function apiSourceToProxyResult({ source, raw, provider, type, id, season = "", episode = "", attempts = [] }) {
   if (!source || !source.url) return null;
+
   let parsed;
   try { parsed = new URL(source.url); } catch { return null; }
   if (!["http:", "https:"].includes(parsed.protocol)) return null;
 
-  const originalM3u8 = parsed.toString();
-  const isHls = /\.m3u8(?:[?#]|$)/i.test(originalM3u8);
+  const originalUrl = parsed.toString();
+  const isHls = apiIsM3u8Url(originalUrl);
+  const isDash = apiIsMpdUrl(originalUrl);
 
-  // Hard requirement: embed only the API source that ends in .m3u8.
-  // Do not fall back to mp4/direct/download URLs.
-  if (!isHls) {
-    attempts.push(`${provider}: skipped non-m3u8 source`);
+  if (!apiLooksPlayable(originalUrl, source)) {
+    attempts.push(`${provider}: skipped download/detail URL`);
     return null;
   }
 
-  const hlsProxy = hlsProxyEnabled()
-    ? registerHlsProxySource(originalM3u8, source.headers || {}, {
+  const hlsProxy = isHls && hlsProxyEnabled()
+    ? registerHlsProxySource(originalUrl, source.headers || {}, {
         movieId: String(id || ""),
         provider,
         type,
@@ -252,30 +332,27 @@ function apiSourceToProxyResult({ source, raw, provider, type, id, season = "", 
       })
     : { enabled: false, id: "", url: "" };
 
-  const playbackUrl = hlsProxy.url || originalM3u8;
-
-  if (!/\.m3u8(?:[?#]|$)/i.test(playbackUrl)) {
-    attempts.push(`${provider}: generated playback URL was not m3u8`);
-    return null;
-  }
+  const playbackUrl = hlsProxy.url || originalUrl;
+  const streamType = isHls ? "m3u8" : (isDash ? "dash" : "video");
+  const streamMode = isHls ? "hls" : (isDash ? "dash" : "video");
 
   return {
     status: "ok",
-    providerKind: `api_${provider}${hlsProxy.url ? "_hls_proxy" : "_direct_hls"}`,
+    providerKind: `api_${provider}${isHls ? (hlsProxy.url ? "_hls_proxy" : "_direct_hls") : "_non_download"}`,
     movieId: String(id || ""),
     sourceUrl: String(raw?.sourceUrl || raw?.url || ""),
     playbackUrl,
     proxyVideo: playbackUrl,
-    originalPlaybackUrl: originalM3u8,
+    originalPlaybackUrl: originalUrl,
     hlsProxyUrl: hlsProxy.url || "",
     hlsProxyId: hlsProxy.id || "",
     hlsProxyStatusUrl: hlsProxy.id ? `/api/hls-proxy/${hlsProxy.id}/status` : "",
-    m3u8: originalM3u8,
-    streamType: "m3u8",
+    m3u8: isHls ? originalUrl : "",
+    streamType,
     streamQuality: source.quality || "",
     streamName: source.name || provider,
     streamHeaders: source.headers || {},
-    streamMode: "hls",
+    streamMode,
     isLiveM3u8: false,
     apiProvider: provider,
     normalized: raw,
@@ -369,7 +446,7 @@ async function fetchApiProviderSource({ type = "movie", id = "", season = "1", e
 
   return {
     status: "error",
-    message: attempts[0] || "API provider did not return an .m3u8 source.",
+    message: attempts[0] || "API provider did not return a non-download source. M3U8 is preferred.",
     attempts: attempts.slice(-16)
   };
 }
@@ -43606,6 +43683,24 @@ app.get("/api/provider/action", async (req, res) => {
   }
 });
 
+app.get("/api/provider/source-debug", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  try {
+    const type = req.query.type === "tv" ? "tv" : "movie";
+    const id = apiClean(req.query.tmdb || req.query.tmdbId || req.query.id || req.query.url);
+    const result = await fetchApiProviderSource({
+      type,
+      id,
+      season: apiClean(req.query.season || req.query.s || "1"),
+      episode: apiClean(req.query.episode || req.query.e || "1"),
+      provider: req.query.provider
+    });
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ status: "error", error: error.message });
+  }
+});
+
 app.get("/api/provider/embed", async (req, res) => {
   res.set("Cache-Control", "no-store");
   try {
@@ -43641,8 +43736,8 @@ app.get("/api/provider/embed", async (req, res) => {
         quality: result.streamQuality || "",
         url: result.playbackUrl,
         headers: result.streamHeaders || {},
-        type: "application/x-mpegurl",
-        format: "m3u8"
+        type: result.streamType === "m3u8" ? "application/x-mpegurl" : (result.streamType === "dash" ? "application/dash+xml" : "video/mp4"),
+        format: result.streamType || ""
       }],
       providerKind: result.providerKind,
       originalPlaybackUrl: result.originalPlaybackUrl || "",
