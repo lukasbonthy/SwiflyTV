@@ -118,6 +118,26 @@ function apiIsAllowedMediaExtensionUrl(url = "") {
   return /\.(?:m3u8|mpd|mp4|m4v|webm|mov)$/.test(path);
 }
 
+function apiNodeSaysHls(url = "", node = {}) {
+  const value = String(url || "").toLowerCase();
+  const text = `${Object.keys(node || {}).join(" ")} ${Object.values(node || {}).slice(0, 16).join(" ")}`.toLowerCase();
+
+  return (
+    apiIsM3u8Url(value) ||
+    /\b(hls|m3u8|mpegurl|mpeg-url|playlist|manifest)\b/i.test(text) ||
+    /(?:hls|m3u8|playlist|manifest)/i.test(value)
+  );
+}
+
+function apiHasEmbeddableFileExtensionOrHlsProxy(url = "", node = {}) {
+  if (apiIsAllowedMediaExtensionUrl(url)) return true;
+
+  // Some APIs return an extensionless HLS endpoint but mark it as hls/m3u8 in
+  // the response. That can still be embedded safely through our local HLS proxy,
+  // whose public URL ends in /master.m3u8.
+  return apiNodeSaysHls(url, node) && hlsProxyEnabled();
+}
+
 function apiIsYouTubeUrl(url = "") {
   const value = String(url || "").trim().toLowerCase();
   if (!value) return false;
@@ -208,8 +228,10 @@ function apiLooksLikeDownloadUrl(url = "", node = {}) {
   // YouTube links are never used for SwiflyTV provider embeds.
   if (apiIsYouTubeUrl(value)) return true;
 
-  // Provider embeds must be actual media file/manifest URLs, not extensionless pages.
-  if (!apiUrlEndsWithFileExtension(value)) return true;
+  // Provider embeds should be actual media file/manifest URLs. Exception:
+  // extensionless HLS endpoints are allowed only if we can expose them as our
+  // own /api/hls-proxy/<id>/master.m3u8 URL.
+  if (!apiUrlEndsWithFileExtension(value) && !apiHasEmbeddableFileExtensionOrHlsProxy(value, node)) return true;
 
   // Never reject HLS just because a provider used a sloppy field name.
   if (apiIsM3u8Url(value)) return false;
@@ -227,9 +249,12 @@ function apiLooksStreamLike(url = "", node = {}) {
 
   if (apiIsYouTubeUrl(value)) return false;
 
-  // Only embed URLs whose path ends with a supported media file extension.
-  // This prevents page/detail/download redirect URLs from being selected.
-  if (!apiIsAllowedMediaExtensionUrl(value)) return false;
+  // Prefer actual file-extension URLs. If the API gives an extensionless HLS
+  // endpoint but labels it hls/m3u8, it can still work through HLS proxy because
+  // the browser sees /master.m3u8.
+  if (!apiIsAllowedMediaExtensionUrl(value)) {
+    return apiHasEmbeddableFileExtensionOrHlsProxy(value, node);
+  }
 
   if (apiIsM3u8Url(value) || apiIsMpdUrl(value)) return true;
   if (/\.(?:mp4|m4v|webm|mov)(?:[?#]|$)/i.test(value)) return true;
@@ -268,12 +293,13 @@ function apiLooksPlayable(url = "", node = {}) {
   if (apiLooksLikeImage(value)) return false;
   if (apiIsYouTubeUrl(value)) return false;
 
-  // Only URLs ending in a media file extension can be embedded.
-  // Allowed: .m3u8, .mpd, .mp4, .m4v, .webm, .mov
-  if (!apiIsAllowedMediaExtensionUrl(value)) return false;
+  // Allowed browser embed URLs still end with a file extension. For extensionless
+  // upstream HLS endpoints, we only accept them when HLS proxy is enabled, because
+  // the actual browser URL becomes /api/hls-proxy/<id>/master.m3u8.
+  if (!apiIsAllowedMediaExtensionUrl(value) && !apiHasEmbeddableFileExtensionOrHlsProxy(value, node)) return false;
 
   // Main target: actual HLS .m3u8 URLs.
-  if (apiIsM3u8Url(value)) return true;
+  if (apiIsM3u8Url(value) || apiNodeSaysHls(value, node)) return true;
 
   // Secondary fallback: non-download media URLs only.
   if (apiLooksLikeDownloadUrl(value, node)) return false;
@@ -436,11 +462,11 @@ function apiSourceToProxyResult({ source, raw, provider, type, id, season = "", 
     return null;
   }
 
-  const isHls = apiIsM3u8Url(originalUrl);
+  const isHls = apiIsM3u8Url(originalUrl) || apiNodeSaysHls(originalUrl, source);
   const isDash = apiIsMpdUrl(originalUrl);
 
   if (!apiLooksPlayable(originalUrl, source)) {
-    attempts.push(`${provider}: skipped download/detail URL`);
+    attempts.push(`${provider}: skipped download/detail/non-media URL`);
     return null;
   }
 
@@ -457,6 +483,15 @@ function apiSourceToProxyResult({ source, raw, provider, type, id, season = "", 
     : { enabled: false, id: "", url: "" };
 
   const playbackUrl = hlsProxy.url || originalUrl;
+
+  // Hard final rule: the URL embedded into Vidstack must end with a supported
+  // media extension. With HLS proxy enabled, extensionless HLS APIs become
+  // /api/hls-proxy/<id>/master.m3u8 and pass this check.
+  if (!apiIsAllowedMediaExtensionUrl(playbackUrl)) {
+    attempts.push(`${provider}: final embed URL did not end with a media file extension`);
+    return null;
+  }
+
   const streamType = isHls ? "m3u8" : (isDash ? "dash" : "video");
   const streamMode = isHls ? "hls" : (isDash ? "dash" : "video");
 
@@ -37020,12 +37055,12 @@ async function fetchProxyVideoSource({ type, id, season = "1", episode = "1", pr
           continue;
         }
 
-        if (!apiIsAllowedMediaExtensionUrl(parsedProxy.toString())) {
-          errors.push(`${url.toString()} attempt ${attempt}: stream URL must end with a media file extension`);
+        const isHlsResolverSource = Boolean(resolverM3u8 || streamType === "m3u8" || streamType === "hls");
+
+        if (!apiIsAllowedMediaExtensionUrl(parsedProxy.toString()) && !(isHlsResolverSource && hlsProxyEnabled())) {
+          errors.push(`${url.toString()} attempt ${attempt}: stream URL must end with a media file extension or be proxied HLS`);
           continue;
         }
-
-        const isHlsResolverSource = Boolean(resolverM3u8 || streamType === "m3u8" || streamType === "hls");
         const hlsProxy = isHlsResolverSource && hlsProxyEnabled()
           ? registerHlsProxySource(parsedProxy.toString(), streamHeaders, {
               movieId: String(data.movieId || id),
