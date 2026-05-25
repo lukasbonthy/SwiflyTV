@@ -864,7 +864,9 @@ async function fetchApiProviderSource({ type = "movie", id = "", season = "1", e
         }
 
         const data = await apiProviderFetch(providerConfig.stream, {
+          id: tmdbId,
           tmdb: tmdbId,
+          tmdbId,
           type: mediaType,
           season: mediaType === "tv" ? season : "",
           episode: mediaType === "tv" ? episode : ""
