@@ -43,6 +43,9 @@ const API_PROVIDERS = {
   animesalt: { home: "/api/animesalt", search: "/api/animesalt/search", details: "/api/animesalt/details", stream: "/api/animesalt/stream" },
   animepahe: { home: "/api/animepahe", details: "/api/animepahe/details", stream: "/api/animepahe/stream" },
   castel: { stream: "/api/castel" },
+  vid: { stream: "/api/vid" },
+  themovie: { home: "/api/themovie", search: "/api/themovie/search", details: "/api/themovie/det", stream: "/api/themovie/stream" },
+  tm: { stream: "/api/tm" },
   kmmovies: { home: "/api/kmmovies", search: "/api/kmmovies/search", details: "/api/kmmovies/details", magiclinks: "/api/kmmovies/magiclinks" },
   uhdmovies: { home: "/api/uhdmovies", search: "/api/uhdmovies/search", details: "/api/uhdmovies/details", tech: "/api/uhdmovies/tech" },
   mod: { home: "/api/mod", search: "/api/mod/search", details: "/api/mod/details", modpro: "/api/mod/modpro" },
@@ -55,14 +58,17 @@ const API_SEARCH_PROVIDERS = [
   "animesalt", "kmmovies", "uhdmovies", "mod", "drive", "desiremovies"
 ];
 
-const API_STREAM_PROVIDER_ORDER = ["castel", "netmirror", "animepahe", "animesalt"];
+const API_STREAM_PROVIDER_ORDER = ["vid", "castel", "netmirror", "animepahe", "animesalt"];
 
 // Full provider order for finding .m3u8/media sources. The first four are direct-stream
 // providers; the rest usually need search -> details -> extractor/action.
 const API_M3U8_PROVIDER_ORDER = [
+  "vid",
   "castel",
+  "themovie",
   "netmirror",
   "animepahe",
+  "themovie",
   "animesalt",
   "4khdhub",
   "movies4u",
@@ -231,6 +237,7 @@ function apiProviderNeedsTmdb(providerName = "", action = "", endpoint = "") {
   // are clearly TMDB-based.
   return (
     provider === "castel" ||
+    provider === "vid" ||
     actionName === "tmdb" ||
     actionName === "stream-tmdb" ||
     /\btmdb\b/.test(actionName) ||
@@ -400,7 +407,19 @@ function apiNormalizeSources(input) {
       ["downloadUrl", node.downloadUrl],
       ["download_url", node.download_url],
       ["directUrl", node.directUrl],
-      ["direct_url", node.direct_url]
+      ["direct_url", node.direct_url],
+      ["fullUrl", node.fullUrl],
+      ["full_url", node.full_url],
+      ["watchUrl", node.watchUrl],
+      ["watch_url", node.watch_url],
+      ["playApiUrl", node.playApiUrl],
+      ["play_api_url", node.play_api_url],
+      ["hls4", node.hls4],
+      ["hls3", node.hls3],
+      ["hls2", node.hls2],
+      ["primary", node.primary],
+      ["fallback1", node.fallback1],
+      ["fallback2", node.fallback2]
     ];
 
     for (const [field, value] of candidates) {
@@ -448,7 +467,7 @@ function apiNormalizeItem(item = {}, provider = "", fallbackType = "movie") {
   return {
     provider,
     id: apiFirst(item.id, item.tmdb, item.tmdbId, item.postId, item.contentId, item.session, item._id),
-    url: apiFirst(item.url, item.link, item.href, item.path, item.detailsUrl, item.postUrl, item.playUrl),
+    url: apiFirst(item.fullUrl, item.url, item.link, item.href, item.path, item.detailsUrl, item.postUrl, item.playUrl, item.watchUrl),
     title,
     year: apiFirst(item.year, item.releaseYear, apiYearFrom(title), apiYearFrom(item.date), apiYearFrom(item.releaseDate)),
     type: apiInferType(item, fallbackType),
@@ -536,6 +555,9 @@ function apiCollectCandidateUrls(input) {
       "downloadUrl", "download_url", "directUrl", "direct_url",
       "redirectUrl", "redirect_url", "serverUrl", "server_url",
       "pageUrl", "page_url", "episodeUrl", "episode_url",
+      "fullUrl", "full_url", "watchUrl", "watch_url",
+      "playApiUrl", "play_api_url", "streamUrl", "stream_url",
+      "hls4", "hls3", "hls2", "primary", "fallback1", "fallback2",
       "next", "source"
     ]) {
       pushUrl(node[key]);
@@ -575,11 +597,24 @@ function apiExtractorJobsForUrl(providerName = "", providerConfig = {}, url = ""
     jobs.push({ provider, endpoint, params, action });
   }
 
-  // Exact/provider-specific extractors from the docs.
+  // Exact/provider-specific extractors from the source/docs.
   // AnimeSalt/AnimePahe details usually return episode/player URLs first; their
   // stream endpoints are the next step that returns the real .m3u8.
   if (providerConfig.stream && ["animepahe", "animesalt"].includes(apiClean(providerName).toLowerCase())) {
     add(providerName, providerConfig.stream, { url: value }, "stream");
+  }
+
+  // TheMovie route source shows search -> det -> stream. The stream route accepts
+  // a moviebox detail URL or play API URL as ?url= and returns playback data.
+  if (apiClean(providerName).toLowerCase() === "themovie" && providerConfig.stream) {
+    if (/themoviebox\.org|moviesDetail|wefeed-h5api-bff/i.test(lower)) {
+      add(providerName, providerConfig.stream, { url: value }, "stream");
+    }
+  }
+
+  // /api/tm extracts hls4/hls3/hls2 from vibuxer embeds.
+  if (API_PROVIDERS.tm?.stream && /vibuxer\.com\/e\//i.test(lower)) {
+    add("tm", API_PROVIDERS.tm.stream, { url: value, check: "0" }, "tm");
   }
 
   if (providerConfig.gadget) add(providerName, providerConfig.gadget, { link: value }, "gadget");
@@ -610,6 +645,14 @@ function apiExtractorJobsForUrl(providerName = "", providerConfig = {}, url = ""
   if (apiCanBeIntermediateExtractorUrl(value)) {
     if (providerConfig.stream && ["animepahe", "animesalt"].includes(apiClean(providerName).toLowerCase())) {
       add(providerName, providerConfig.stream, { url: value }, "stream");
+    }
+
+    if (apiClean(providerName).toLowerCase() === "themovie" && providerConfig.stream) {
+      add(providerName, providerConfig.stream, { url: value }, "stream");
+    }
+
+    if (API_PROVIDERS.tm?.stream && /vibuxer\.com\/e\//i.test(lower)) {
+      add("tm", API_PROVIDERS.tm.stream, { url: value, check: "0" }, "tm");
     }
     if (API_PROVIDERS.hubcloud?.extract) add("hubcloud", API_PROVIDERS.hubcloud.extract, { url: value }, "hubcloud");
     if (API_PROVIDERS.gdflix?.extract) add("gdflix", API_PROVIDERS.gdflix.extract, { url: value }, "gdflix");
@@ -1047,6 +1090,36 @@ async function fetchApiProviderSource({ type = "movie", id = "", season = "1", e
     if (!providerConfig) continue;
 
     try {
+      if (providerName === "vid" && providerConfig.stream) {
+        const tmdbId = await apiResolveTmdbIdForApi({ mediaType, id, attempts });
+
+        if (!tmdbId) {
+          attempts.push("vid: missing numeric TMDB id");
+          continue;
+        }
+
+        const data = await apiProviderFetch(providerConfig.stream, {
+          tmdb: tmdbId,
+          s: mediaType === "tv" ? season : "",
+          e: mediaType === "tv" ? episode : ""
+        });
+
+        const result = await apiFindPlayableFromPayload({
+          payload: data,
+          providerName,
+          providerConfig,
+          mediaType,
+          id: tmdbId,
+          season,
+          episode,
+          attempts
+        });
+
+        if (result) return result;
+        attempts.push("vid: no m3u8/media source in API response");
+        continue;
+      }
+
       if (providerName === "castel" && providerConfig.stream) {
         const tmdbId = await apiResolveTmdbIdForApi({ mediaType, id, attempts });
         if (!tmdbId) {
@@ -44441,6 +44514,15 @@ app.get("/api/provider/action", async (req, res) => {
       mediaType: params.type === "tv" ? "tv" : "movie",
       attempts: []
     });
+
+    if (providerName === "vid") {
+      const tmdbId = apiClean(params.tmdb || params.tmdbId || params.id);
+      params = {
+        tmdb: tmdbId,
+        s: params.s || params.season || "",
+        e: params.e || params.episode || ""
+      };
+    }
 
     const data = await apiProviderFetch(endpoint, params);
     res.json({
