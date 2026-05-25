@@ -448,6 +448,186 @@ function apiGetProvider(name = "") {
   return [provider, API_PROVIDERS[provider]];
 }
 
+
+function apiCollectCandidateUrls(input) {
+  const urls = [];
+
+  function pushUrl(value) {
+    const url = apiClean(value);
+    if (!/^https?:\/\//i.test(url)) return;
+    if (apiLooksLikeImage(url)) return;
+    if (apiIsYouTubeUrl(url)) return;
+    if (/\/api\/adult\//i.test(url)) return;
+    urls.push(url);
+  }
+
+  apiWalk(input, (node) => {
+    if (typeof node === "string") {
+      pushUrl(node);
+      return;
+    }
+
+    if (!node || typeof node !== "object") return;
+
+    for (const key of [
+      "m3u8", "playlist", "playbackUrl", "proxyVideo", "streamUrl", "streamingUrl",
+      "videoUrl", "embedUrl", "playerUrl", "src", "file", "url", "link", "href",
+      "downloadUrl", "directUrl", "redirectUrl", "serverUrl", "pageUrl", "episodeUrl",
+      "next", "source"
+    ]) {
+      pushUrl(node[key]);
+    }
+  });
+
+  return Array.from(new Set(urls));
+}
+
+function apiCanBeIntermediateExtractorUrl(url = "") {
+  const value = apiClean(url).toLowerCase();
+  if (!/^https?:\/\//i.test(value)) return false;
+  if (apiIsYouTubeUrl(value)) return false;
+  if (apiLooksLikeImage(value)) return false;
+  if (/\/api\/adult\//i.test(value)) return false;
+
+  // If it is already playable, it should be tested as a source first.
+  if (apiLooksPlayable(value, { url: value })) return false;
+
+  // These are known intermediate/detail/extractor links from the provided docs.
+  return (
+    /gadget|gadgetsweb|hubcloud|hub-cloud|gdflix|nextdrive|v[-]?cloud|vcloud|zinkcloud|magic|tech\.unblockedgames|modpro|mdrive|drive|server|link|episode|watch|play/i.test(value)
+  );
+}
+
+function apiExtractorJobsForUrl(providerName = "", providerConfig = {}, url = "") {
+  const value = apiClean(url);
+  const lower = value.toLowerCase();
+  const jobs = [];
+
+  function add(provider, endpoint, params, action) {
+    if (!endpoint || String(endpoint).includes("/api/adult/") || String(endpoint).includes("/api/youtubes/")) return;
+    jobs.push({ provider, endpoint, params, action });
+  }
+
+  // Provider-specific routes from the API docs.
+  if (providerConfig.gadget && /gadget|gadgetsweb/i.test(lower)) add(providerName, providerConfig.gadget, { link: value }, "gadget");
+  if (providerConfig.mdrive) add(providerName, providerConfig.mdrive, { url: value }, "mdrive");
+  if (providerConfig.m4ulinks) add(providerName, providerConfig.m4ulinks, { url: value }, "m4ulinks");
+  if (providerConfig.nextdrive) add(providerName, providerConfig.nextdrive, { url: value }, "nextdrive");
+  if (providerConfig.zinkcloud) add(providerName, providerConfig.zinkcloud, { url: value }, "zinkcloud");
+  if (providerConfig.magiclinks) add(providerName, providerConfig.magiclinks, { url: value }, "magiclinks");
+  if (providerConfig.tech) add(providerName, providerConfig.tech, { url: value }, "tech");
+  if (providerConfig.modpro) add(providerName, providerConfig.modpro, { url: value }, "modpro");
+
+  // Generic extractor routes from the API docs.
+  if (API_PROVIDERS.hubcloud?.extract && /hubcloud|hub-cloud/i.test(lower)) {
+    add("hubcloud", API_PROVIDERS.hubcloud.extract, { url: value }, "hubcloud");
+  }
+
+  if (API_PROVIDERS.gdflix?.extract && /gdflix/i.test(lower)) {
+    add("gdflix", API_PROVIDERS.gdflix.extract, { url: value }, "gdflix");
+  }
+
+  if (API_PROVIDERS.vega?.nextdrive && /nextdrive|v[-]?cloud|vcloud/i.test(lower)) {
+    add("vega", API_PROVIDERS.vega.nextdrive, { url: value }, "nextdrive");
+  }
+
+  if (API_PROVIDERS.uhdmovies?.tech && /tech\.unblockedgames/i.test(lower)) {
+    add("uhdmovies", API_PROVIDERS.uhdmovies.tech, { url: value }, "tech");
+  }
+
+  return jobs;
+}
+
+async function apiFindPlayableFromPayload({
+  payload,
+  providerName,
+  providerConfig,
+  mediaType,
+  id,
+  season = "",
+  episode = "",
+  attempts = [],
+  depth = 0,
+  seen = new Set()
+}) {
+  const normalized = apiNormalizeResponse(payload, providerName, mediaType);
+  const sources = Array.isArray(normalized.sources) ? normalized.sources : [];
+
+  for (const source of sources) {
+    const result = apiSourceToProxyResult({
+      source,
+      raw: normalized,
+      provider: providerName,
+      type: mediaType,
+      id,
+      season,
+      episode,
+      attempts
+    });
+    if (result) return result;
+  }
+
+  if (depth >= 2) return null;
+
+  const candidateUrls = apiCollectCandidateUrls(payload);
+
+  // Test playable-looking URLs directly first, in case the normalizer missed the field name.
+  const directUrls = candidateUrls
+    .map((url) => ({ url, name: apiIsM3u8Url(url) ? "hls" : "source", quality: "", headers: {}, format: apiIsM3u8Url(url) ? "m3u8" : "" }))
+    .filter((source) => apiLooksPlayable(source.url, source))
+    .sort((a, b) => apiSourceScore(b) - apiSourceScore(a));
+
+  for (const source of directUrls) {
+    const result = apiSourceToProxyResult({
+      source,
+      raw: normalized,
+      provider: providerName,
+      type: mediaType,
+      id,
+      season,
+      episode,
+      attempts
+    });
+    if (result) return result;
+  }
+
+  // Then try intermediate API extractor routes. This fixes details responses that
+  // return link pages first, then actual .m3u8/media URLs after a second API call.
+  for (const url of candidateUrls) {
+    if (!apiCanBeIntermediateExtractorUrl(url)) continue;
+
+    const jobs = apiExtractorJobsForUrl(providerName, providerConfig, url);
+
+    for (const job of jobs) {
+      const seenKey = `${job.provider}:${job.action}:${url}`;
+      if (seen.has(seenKey)) continue;
+      seen.add(seenKey);
+
+      try {
+        attempts.push(`${providerName}: trying ${job.action}`);
+        const extracted = await apiProviderFetch(job.endpoint, job.params);
+        const result = await apiFindPlayableFromPayload({
+          payload: extracted,
+          providerName: job.provider || providerName,
+          providerConfig: API_PROVIDERS[job.provider] || providerConfig,
+          mediaType,
+          id,
+          season,
+          episode,
+          attempts,
+          depth: depth + 1,
+          seen
+        });
+        if (result) return result;
+      } catch (error) {
+        attempts.push(`${job.provider || providerName}/${job.action}: ${error.message || "extract failed"}`);
+      }
+    }
+  }
+
+  return null;
+}
+
 function apiSourceToProxyResult({ source, raw, provider, type, id, season = "", episode = "", attempts = [] }) {
   if (!source || !source.url) return null;
 
@@ -527,6 +707,7 @@ async function fetchApiProviderSource({ type = "movie", id = "", season = "1", e
   const preferred = apiClean(provider || DEFAULT_PLAY_PROVIDER).toLowerCase();
   const providerOrder = Array.from(new Set([preferred, ...API_STREAM_PROVIDER_ORDER].filter(Boolean)));
 
+  // 1) Try providers that can return stream data directly.
   for (const providerName of providerOrder) {
     const providerConfig = API_PROVIDERS[providerName];
     if (!providerConfig) continue;
@@ -556,18 +737,26 @@ async function fetchApiProviderSource({ type = "movie", id = "", season = "1", e
         continue;
       }
 
-      const normalized = apiNormalizeResponse(data, providerName, mediaType);
-      const source = normalized.sources[0];
-      const result = apiSourceToProxyResult({ source, raw: normalized, provider: providerName, type: mediaType, id, season, episode, attempts });
+      const result = await apiFindPlayableFromPayload({
+        payload: data,
+        providerName,
+        providerConfig,
+        mediaType,
+        id,
+        season,
+        episode,
+        attempts
+      });
+
       if (result) return result;
-      attempts.push(`${providerName}: no playable source in API response`);
+      attempts.push(`${providerName}: API returned no usable media URL`);
     } catch (error) {
       attempts.push(`${providerName}: ${error.message || "request failed"}`);
     }
   }
 
-  // Fallback: use API search result return shapes, such as title/url/imageUrl/year/formats,
-  // then call that provider's details route and normalize any playable sources returned there.
+  // 2) Search by TMDB title/year, then call details, then recursively call
+  // provider-specific extractor routes if details returns intermediate links.
   if (process.env.API_PROVIDER_SEARCH_FALLBACK !== "false") {
     try {
       const endpoint = mediaType === "tv" ? `/tv/${id}` : `/movie/${id}`;
@@ -580,30 +769,50 @@ async function fetchApiProviderSource({ type = "movie", id = "", season = "1", e
         for (const providerName of API_DETAILS_SEARCH_FALLBACK_PROVIDERS) {
           const providerConfig = API_PROVIDERS[providerName];
           if (!providerConfig?.search || !providerConfig?.details) continue;
+
           try {
             const searchData = await apiProviderFetch(providerConfig.search, { q: title, page: 1 });
             const results = apiTopList(searchData).map((entry) => apiNormalizeItem(entry, providerName, mediaType));
-            const picked = results.find((entry) => releaseYear && String(entry.year) === String(releaseYear)) || results[0];
+            const picked =
+              results.find((entry) => releaseYear && String(entry.year) === String(releaseYear)) ||
+              results.find((entry) => entry.title && title && entry.title.toLowerCase().includes(title.toLowerCase().slice(0, 8))) ||
+              results[0];
+
             if (!picked?.url) {
-              attempts.push(`${providerName}: search had no detail url`);
+              attempts.push(`${providerName}: search had no detail URL`);
               continue;
             }
 
-            const detailData = await apiProviderFetch(providerConfig.details, { url: picked.url });
-            const normalized = apiNormalizeResponse(detailData, providerName, mediaType);
-            normalized.title = normalized.title || picked.title || title;
-            normalized.year = normalized.year || picked.year || releaseYear;
-            normalized.poster = normalized.poster || picked.poster;
-            normalized.backdrop = normalized.backdrop || picked.backdrop;
+            let detailParams = { url: picked.url };
+            detailParams = await apiApplyTmdbParamsIfNeeded({
+              providerName,
+              action: "details",
+              endpoint: providerConfig.details,
+              params: { ...detailParams, tmdb: id, tmdbId: id, id },
+              mediaType,
+              attempts
+            });
 
-            const source = normalized.sources[0];
-            const result = apiSourceToProxyResult({ source, raw: normalized, provider: providerName, type: mediaType, id, season, episode, attempts });
+            const detailData = await apiProviderFetch(providerConfig.details, detailParams);
+            const result = await apiFindPlayableFromPayload({
+              payload: detailData,
+              providerName,
+              providerConfig,
+              mediaType,
+              id,
+              season,
+              episode,
+              attempts
+            });
+
             if (result) return result;
-            attempts.push(`${providerName}: details returned no playable source`);
+            attempts.push(`${providerName}: details/extractors found no usable media URL`);
           } catch (error) {
             attempts.push(`${providerName}: ${error.message || "search/details failed"}`);
           }
         }
+      } else {
+        attempts.push("search fallback metadata: no TMDB title found");
       }
     } catch (error) {
       attempts.push(`search fallback metadata: ${error.message || "failed"}`);
@@ -612,8 +821,8 @@ async function fetchApiProviderSource({ type = "movie", id = "", season = "1", e
 
   return {
     status: "error",
-    message: attempts[0] || "API provider did not return a usable file-extension media source. M3U8 is preferred.",
-    attempts: attempts.slice(-16)
+    message: attempts[0] || "API provider did not return a usable media URL. M3U8 is preferred.",
+    attempts: attempts.slice(-24)
   };
 }
 
@@ -43937,7 +44146,8 @@ app.get("/api/provider/embed", async (req, res) => {
       apiProvider: result.apiProvider || "",
       tmdbId: result.movieId || "",
       originalPlaybackUrl: result.originalPlaybackUrl || "",
-      hlsProxyUrl: result.hlsProxyUrl || ""
+      hlsProxyUrl: result.hlsProxyUrl || "",
+      attempts: result.attempts || []
     });
   } catch (error) {
     res.status(500).json({ ok: false, error: error.message, sources: [] });
