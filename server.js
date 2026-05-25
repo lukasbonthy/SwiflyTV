@@ -27,6 +27,11 @@ const BRAND_SUBMARK = process.env.BRAND_SUBMARK || "SWIFLYTV";
 // These variables stay server-side. Never expose API_KEY in frontend JavaScript.
 const API_BASE_URL = (process.env.API_BASE_URL || "").replace(/\/$/, "");
 const API_KEY = process.env.API_KEY || "";
+
+// Strict mode: use the uploaded source-code flows locally.
+// The external API docs server is OFF by default. Turn it back on only with:
+// USE_EXTERNAL_PROVIDER_API=true
+const USE_EXTERNAL_PROVIDER_API = process.env.USE_EXTERNAL_PROVIDER_API === "true";
 const DEFAULT_PLAY_PROVIDER = String(process.env.DEFAULT_PLAY_PROVIDER || "castel").toLowerCase();
 const API_PROVIDER_TIMEOUT_MS = Math.max(8000, Number(process.env.API_PROVIDER_TIMEOUT_MS || 45000));
 
@@ -58,7 +63,7 @@ const API_SEARCH_PROVIDERS = [
   "animesalt", "kmmovies", "uhdmovies", "mod", "drive", "desiremovies"
 ];
 
-const API_STREAM_PROVIDER_ORDER = ["vid", "castel", "netmirror", "animepahe", "animesalt"];
+const API_STREAM_PROVIDER_ORDER = ["vid", "castel", "netmirror", "themovie", "animepahe", "animesalt"];
 
 // Full provider order for finding .m3u8/media sources. The first four are direct-stream
 // providers; the rest usually need search -> details -> extractor/action.
@@ -99,7 +104,7 @@ const API_DETAILS_SEARCH_FALLBACK_PROVIDERS = [
 ];
 
 function apiProviderConfigured() {
-  return Boolean(API_BASE_URL && API_KEY);
+  return Boolean(USE_EXTERNAL_PROVIDER_API && API_BASE_URL && API_KEY);
 }
 
 function apiClean(value) {
@@ -1632,6 +1637,591 @@ async function localCastleGetStreams({ tmdbId = "", mediaType = "movie", season 
 }
 // ===== End local Castle source port =====
 
+// ===== More local ports from uploaded ScarperApi-zero source =====
+let LOCAL_SOURCE_PROVIDER_CACHE = null;
+let LOCAL_SOURCE_COOKIES_CACHE = null;
+
+async function localSourceGetProviders() {
+  if (LOCAL_SOURCE_PROVIDER_CACHE) return LOCAL_SOURCE_PROVIDER_CACHE;
+
+  const response = await fetch("https://raw.githubusercontent.com/Anshu78780/json/main/providers.json", {
+    cache: "no-store",
+    headers: {
+      "User-Agent": "Mozilla/5.0 (compatible; ScraperAPI/1.0)",
+      "Accept": "application/json"
+    }
+  });
+
+  if (!response.ok) throw new Error(`Failed to fetch providers: ${response.status}`);
+  LOCAL_SOURCE_PROVIDER_CACHE = await response.json();
+  return LOCAL_SOURCE_PROVIDER_CACHE;
+}
+
+async function localSourceGetBaseUrl(key = "") {
+  const providers = await localSourceGetProviders();
+  const provider = providers[key];
+  if (!provider || !provider.url) throw new Error(`Provider key "${key}" not found`);
+  return provider.url;
+}
+
+async function localSourceGetCookies() {
+  if (LOCAL_SOURCE_COOKIES_CACHE) return LOCAL_SOURCE_COOKIES_CACHE;
+
+  const response = await fetch("https://raw.githubusercontent.com/Anshu78780/json/main/cookies.json", {
+    cache: "no-store",
+    headers: {
+      "User-Agent": "Mozilla/5.0 (compatible; ScraperAPI/1.0)",
+      "Accept": "application/json"
+    }
+  });
+
+  if (!response.ok) throw new Error(`Failed to fetch cookies: ${response.status}`);
+  const data = await response.json();
+  if (!data.cookies) throw new Error("Cookies not found in source cookies JSON");
+  LOCAL_SOURCE_COOKIES_CACHE = data.cookies;
+  return LOCAL_SOURCE_COOKIES_CACHE;
+}
+
+function localSourceDeepCollectIds(input) {
+  const ids = new Set();
+
+  apiWalk(input, (node) => {
+    if (typeof node === "string") {
+      const text = node;
+      for (const match of text.matchAll(/[?&](?:id|post|content|video)=([A-Za-z0-9_-]+)/g)) ids.add(match[1]);
+      for (const match of text.matchAll(/\b(?:id|post|content|video)["']?\s*[:=]\s*["']?([A-Za-z0-9_-]{2,})/g)) ids.add(match[1]);
+      return;
+    }
+
+    if (!node || typeof node !== "object") return;
+    for (const key of ["id", "postId", "contentId", "videoId", "movieId", "redirectId", "redirectIdStr", "subjectId"]) {
+      const value = node[key];
+      if (typeof value === "string" || typeof value === "number") ids.add(String(value));
+    }
+  });
+
+  return Array.from(ids).filter(Boolean);
+}
+
+// ===== Local NetMirror port from uploaded app/api/netmirror/* =====
+async function localNetMirrorFetchMaybeJson(url, headers, options = {}) {
+  const response = await fetch(url, {
+    method: options.method || "GET",
+    body: options.body,
+    cache: "no-store",
+    headers
+  });
+
+  if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+
+  const contentType = response.headers.get("content-type") || "";
+  const text = await response.text();
+
+  if (contentType.includes("application/json")) {
+    try { return JSON.parse(text); } catch {}
+  }
+
+  try { return JSON.parse(text); } catch {
+    return { rawResponse: text, contentType, url };
+  }
+}
+
+async function localNetMirrorSearchRaw(query) {
+  const baseUrl = "https://net22.cc";
+  const cookies = await localSourceGetCookies();
+  const t = Date.now().toString();
+  const searchUrl = `${baseUrl}/search.php?s=${encodeURIComponent(query)}&t=${t}`;
+
+  const data = await localNetMirrorFetchMaybeJson(searchUrl, {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Language": "en-US,en;q=0.5",
+    "Cookie": cookies,
+    "Referer": baseUrl,
+    "X-Requested-With": "XMLHttpRequest"
+  });
+
+  return { success: true, data: { searchUrl, searchResults: data, requestParams: { query, timestamp: t } } };
+}
+
+async function localNetMirrorGetPlayHash(id) {
+  const cookies = await localSourceGetCookies();
+
+  const response = await fetch("https://net22.cc/play.php", {
+    method: "POST",
+    cache: "no-store",
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      "Accept": "application/json, text/plain, */*",
+      "Accept-Language": "en-US,en;q=0.5",
+      "Content-Type": "application/x-www-form-urlencoded",
+      "Cookie": cookies,
+      "Referer": "https://net20.cc/",
+      "X-Requested-With": "XMLHttpRequest"
+    },
+    body: `id=${encodeURIComponent(id)}`
+  });
+
+  if (!response.ok) throw new Error(`play.php HTTP ${response.status}`);
+  const data = await response.json();
+  if (!data.h) throw new Error("Hash parameter not found in play.php response");
+  return data.h;
+}
+
+function localNetMirrorAddPrefixToSources(data) {
+  const PREFIX_URL = "https://net51.cc";
+
+  if (Array.isArray(data)) return data.map((item) => localNetMirrorAddPrefixToSources(item));
+
+  if (data && typeof data === "object") {
+    const processed = { ...data };
+
+    if (Array.isArray(processed.sources)) {
+      processed.sources = processed.sources.map((source) => {
+        if (source && typeof source.file === "string" && source.file.startsWith("/")) {
+          return { ...source, file: PREFIX_URL + source.file };
+        }
+        return source;
+      });
+    }
+
+    for (const key of Object.keys(processed)) {
+      if (processed[key] && typeof processed[key] === "object") {
+        processed[key] = localNetMirrorAddPrefixToSources(processed[key]);
+      }
+    }
+
+    return processed;
+  }
+
+  return data;
+}
+
+async function localNetMirrorStreamRaw(id) {
+  const cookies = await localSourceGetCookies();
+  const h = await localNetMirrorGetPlayHash(id);
+  const timestamp = Date.now().toString();
+  const playlistUrl = `https://net52.cc/playlist.php?id=${encodeURIComponent(id)}&tm=${timestamp}&h=${encodeURIComponent(h)}`;
+
+  const streamData = await localNetMirrorFetchMaybeJson(playlistUrl, {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Language": "en-US,en;q=0.5",
+    "Cookie": cookies,
+    "Referer": "https://net51.cc/",
+    "X-Requested-With": "XMLHttpRequest"
+  });
+
+  return {
+    success: true,
+    data: {
+      playlistUrl,
+      streamData: localNetMirrorAddPrefixToSources(streamData),
+      requestParams: { id, timestamp, h }
+    }
+  };
+}
+
+async function localNetMirrorByTitle({ title = "", year = "", mediaType = "movie", id = "", season = "", episode = "", attempts = [] }) {
+  const searchPayload = await localNetMirrorSearchRaw(title);
+  const ids = localSourceDeepCollectIds(searchPayload);
+  if (!ids.length) {
+    attempts.push("netmirror-local: search returned no IDs");
+    return null;
+  }
+
+  for (const netId of ids.slice(0, 12)) {
+    try {
+      const streamPayload = await localNetMirrorStreamRaw(netId);
+      const result = await apiFindPlayableFromPayload({
+        payload: streamPayload,
+        providerName: "netmirror",
+        providerConfig: API_PROVIDERS.netmirror || {},
+        mediaType,
+        id,
+        season,
+        episode,
+        attempts,
+        depth: 0,
+        seen: new Set()
+      });
+      if (result) return result;
+    } catch (error) {
+      attempts.push(`netmirror-local ${netId}: ${error.message || "failed"}`);
+    }
+  }
+
+  return null;
+}
+
+// ===== Local /api/tm port from uploaded source =====
+const LOCAL_TM_USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36";
+
+function localTmBuildEmbedUrl(url, code) {
+  if (url && /^https?:\/\//i.test(url)) return url;
+  if (code && String(code).trim()) return `https://vibuxer.com/e/${String(code).trim()}`;
+  return null;
+}
+
+function localTmDecodePackerPayload(payload, base, count, dict) {
+  let output = payload;
+  for (let i = count - 1; i >= 0; i -= 1) {
+    const token = dict[i];
+    if (!token) continue;
+    const word = i.toString(base);
+    const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    output = output.replace(new RegExp(`\\b${escaped}\\b`, "g"), token);
+  }
+  return output;
+}
+
+function localTmUnpackInlineScript(html) {
+  const packerMatch = String(html || "").match(/eval\(function\(p,a,c,k,e,d\)\{[\s\S]*?\}\('(.*?)',\s*(\d+),\s*(\d+),\s*'(.*?)'\.split\('\|'\)\)\)/);
+  if (!packerMatch) return null;
+
+  const payload = packerMatch[1];
+  const base = Number(packerMatch[2]);
+  const count = Number(packerMatch[3]);
+  const dict = packerMatch[4].split("|");
+
+  if (!Number.isFinite(base) || !Number.isFinite(count)) return null;
+  return localTmDecodePackerPayload(payload, base, count, dict);
+}
+
+function localTmSafeParseObjectLiteral(script, variableNames) {
+  for (const variableName of variableNames) {
+    const re = new RegExp(`var\\s+${variableName}\\s*=\\s*(\\{[\\s\\S]*?\\});`);
+    const match = String(script || "").match(re);
+    if (!match) continue;
+    try { return JSON.parse(match[1]); } catch {}
+  }
+  return null;
+}
+
+function localTmResolveMaybeRelative(url, baseUrl) {
+  if (!url) return undefined;
+  try { return new URL(url, baseUrl).toString(); } catch { return undefined; }
+}
+
+function localTmExtractStreams(script, embedUrl) {
+  const linksObj = localTmSafeParseObjectLiteral(script, ["links", "o"]);
+  if (!linksObj) return {};
+
+  const hls4 = localTmResolveMaybeRelative(linksObj.hls4 ?? linksObj["1f"], embedUrl);
+  const hls3 = localTmResolveMaybeRelative(linksObj.hls3 ?? linksObj["1c"], embedUrl);
+  const hls2 = localTmResolveMaybeRelative(linksObj.hls2 ?? linksObj["1m"], embedUrl);
+
+  return { hls4, hls3, hls2, primary: hls4 ?? hls3 ?? hls2, fallback1: hls3 ?? hls2, fallback2: hls2 };
+}
+
+async function localTmExtract({ url = "", code = "", check = "0" }) {
+  const embedUrl = localTmBuildEmbedUrl(url, code);
+  if (!embedUrl) throw new Error("Pass either url or code");
+
+  const response = await fetch(embedUrl, {
+    method: "GET",
+    headers: {
+      "user-agent": LOCAL_TM_USER_AGENT,
+      "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+      "accept-language": "en-US,en;q=0.9",
+      "referer": "https://vibuxer.com/"
+    },
+    redirect: "follow",
+    cache: "no-store"
+  });
+
+  if (!response.ok) throw new Error(`Failed to fetch embed page: ${response.status}`);
+
+  const html = await response.text();
+  const unpackedScript = localTmUnpackInlineScript(html);
+  if (!unpackedScript) throw new Error("Packed player script not found");
+
+  const streams = localTmExtractStreams(unpackedScript, embedUrl);
+  const streamUrl = streams.hls4 || streams.hls3 || streams.hls2;
+  if (!streamUrl) throw new Error("No stream URLs found in player script");
+
+  return { success: true, embedUrl, streamUrl, streams, checkAlive: false };
+}
+
+// ===== Local TheMovie partial port from uploaded source =====
+const LOCAL_THEMOVIE_PLAY_COOKIE =
+  'mb_token=%22eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOjEzMzI1MTYyOTA2MjM4NTEyMDgsImF0cCI6MywiZXh0IjoiMTc2OTU3NDU3NyIsImV4cCI6MTc3NzM1MDU3NywiaWF0IjoxNzY5NTc0Mjc3fQ.Gc4HmKDugVKcWSGoxtCqBTWdZix5dvRpp_22_Z7-7Vk%22; i18n_lang=en';
+
+function localTheMovieNormalizeTitle(title) {
+  return String(title || "").toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+function localTheMovieExtractCards(html, baseUrl) {
+  const results = [];
+  const cardRegex = /<a\b[^>]*class=["'][^"']*\bcard\b[^"']*["'][^>]*href=["']([^"']*\/moviesDetail\/[^"']+)["'][\s\S]*?<\/a>/gi;
+  let match;
+
+  while ((match = cardRegex.exec(html))) {
+    const block = match[0];
+    const href = match[1];
+    const titleMatch = block.match(/<h2[^>]*class=["'][^"']*card-title[^"']*["'][^>]*(?:title=["']([^"']+)["'])?[^>]*>([\s\S]*?)<\/h2>/i);
+    const title = (titleMatch?.[1] || titleMatch?.[2] || "").replace(/<[^>]+>/g, "").trim();
+    const imgMatch = block.match(/<img[^>]+(?:src|data-src)=["']([^"']+)["']/i);
+    const ratingMatch = block.match(/<span[^>]*class=["'][^"']*rate[^"']*["'][^>]*>([\s\S]*?)<\/span>/i);
+
+    if (title && href) {
+      results.push({
+        title,
+        href,
+        fullUrl: href.startsWith("http") ? href : new URL(href, baseUrl).toString(),
+        imageUrl: imgMatch ? imgMatch[1] : "",
+        rating: ratingMatch ? ratingMatch[1].replace(/<[^>]+>/g, "").trim() : ""
+      });
+    }
+  }
+
+  return results;
+}
+
+async function localTheMovieSearchRaw(query) {
+  const baseUrl = await localSourceGetBaseUrl("moviebox");
+  const searchUrlObj = new URL("newWeb/searchResult", baseUrl);
+  searchUrlObj.searchParams.set("keyword", query);
+
+  const response = await fetch(searchUrlObj.toString(), {
+    method: "GET",
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Mobile Safari/537.36",
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+      "Accept-Language": "en-US,en;q=0.5",
+      "Connection": "keep-alive",
+      "Upgrade-Insecure-Requests": "1"
+    },
+    cache: "no-store"
+  });
+
+  if (!response.ok) throw new Error(`TheMovie search failed: ${response.status}`);
+  const html = await response.text();
+
+  return {
+    success: true,
+    query,
+    baseUrl,
+    searchUrl: searchUrlObj.toString(),
+    totalResults: localTheMovieExtractCards(html, baseUrl).length,
+    results: localTheMovieExtractCards(html, baseUrl)
+  };
+}
+
+function localTheMovieBuildPlayApiUrl(subjectId, season, episode, detailPath) {
+  const playUrl = new URL("https://themoviebox.org/wefeed-h5api-bff/subject/play");
+  playUrl.searchParams.set("subjectId", subjectId);
+  playUrl.searchParams.set("se", String(season));
+  playUrl.searchParams.set("ep", String(episode));
+  playUrl.searchParams.set("detailPath", detailPath);
+  return playUrl.toString();
+}
+
+function localTheMovieResolveNuxt(html) {
+  const match = String(html || "").match(/<script[^>]+id="__NUXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
+  if (!match) return null;
+
+  let raw;
+  try { raw = JSON.parse(match[1]); } catch { return null; }
+
+  const payloadIdx = raw.findIndex((item) => item && typeof item === "object" && !Array.isArray(item) && "subject" in item && "resource" in item && "stars" in item);
+  if (payloadIdx === -1) return null;
+
+  const cache = new Map();
+  function r(idx) {
+    if (!Number.isInteger(idx) || idx < 0 || idx >= raw.length) return undefined;
+    if (cache.has(idx)) return cache.get(idx);
+
+    const v = raw[idx];
+    if (v === null || v === undefined || typeof v !== "object") {
+      cache.set(idx, v);
+      return v;
+    }
+
+    if (Array.isArray(v)) {
+      if (v[0] === "ShallowReactive" || v[0] === "Reactive") {
+        const res = r(v[1]);
+        cache.set(idx, res);
+        return res;
+      }
+      if (v[0] === "Set") {
+        const res = v.slice(1).map((x) => typeof x === "number" ? r(x) : x);
+        cache.set(idx, res);
+        return res;
+      }
+      const res = [];
+      cache.set(idx, res);
+      v.forEach((x) => res.push(typeof x === "number" ? r(x) : x));
+      return res;
+    }
+
+    const res = {};
+    cache.set(idx, res);
+    for (const [k, val] of Object.entries(v)) res[k] = typeof val === "number" ? r(val) : val;
+    return res;
+  }
+
+  const payload = r(payloadIdx);
+  if (!payload || !payload.subject) return null;
+
+  const subject = payload.subject || {};
+  const resource = payload.resource || {};
+  const subjectId = subject.subjectId;
+  const detailPath = subject.detailPath;
+
+  const seasons = [];
+  if (resource.seasons && Array.isArray(resource.seasons)) {
+    for (const s of resource.seasons) {
+      const seasonNumber = s.se ?? 0;
+      const totalEpisodes = s.maxEp ?? 0;
+      const episodeStart = seasonNumber > 0 ? 1 : 0;
+      const episodeEnd = totalEpisodes > 0 ? totalEpisodes : episodeStart;
+      for (let ep = episodeStart; ep <= episodeEnd; ep += 1) {
+        seasons.push({
+          season: seasonNumber,
+          episode: ep,
+          episodes: totalEpisodes,
+          playApiUrl: subjectId && detailPath ? localTheMovieBuildPlayApiUrl(subjectId, seasonNumber, ep, detailPath) : undefined
+        });
+      }
+    }
+  }
+
+  return {
+    subjectId,
+    subjectType: subject.subjectType,
+    title: subject.title,
+    description: subject.description,
+    releaseDate: subject.releaseDate,
+    detailPath,
+    source: resource.source,
+    seasons,
+    dubs: Array.isArray(subject.dubs) ? subject.dubs.map((d) => ({ name: d.lanName, code: d.lanCode, subjectId: d.subjectId, detailPath: d.detailPath })) : [],
+    subtitles: subject.subtitles
+  };
+}
+
+async function localTheMovieDetailsAndPlay(inputUrl, customSeason = "", customEpisode = "") {
+  const parsedUrl = new URL(inputUrl);
+  const pageRes = await fetch(inputUrl, {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Mobile Safari/537.36",
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "Accept-Language": "en-US,en;q=0.5",
+      "Cookie": LOCAL_THEMOVIE_PLAY_COOKIE,
+      "Referer": "https://themoviebox.org/"
+    },
+    cache: "no-store"
+  });
+
+  if (!pageRes.ok) throw new Error(`TheMovie detail fetch failed: ${pageRes.status}`);
+  const html = await pageRes.text();
+  const meta = localTheMovieResolveNuxt(html);
+  if (!meta) throw new Error("Could not parse TheMovie Nuxt data");
+
+  const slug = meta.detailPath || parsedUrl.pathname.split("/").pop() || "";
+  const subjectId = meta.subjectId || parsedUrl.searchParams.get("id");
+  const isTV = meta.subjectType === 2 || (meta.seasons && meta.seasons.length && meta.seasons[0].season > 0);
+  const finalSeason = customSeason || (isTV ? "1" : "0");
+  const finalEpisode = customEpisode || (isTV ? "1" : "0");
+  const playApiUrl = localTheMovieBuildPlayApiUrl(String(subjectId), Number(finalSeason), Number(finalEpisode), slug);
+  const referer = `https://themoviebox.org/movies/${slug}?id=${subjectId}&type=${parsedUrl.searchParams.get("type") || "/movie/detail"}`;
+
+  const playRes = await fetch(playApiUrl, {
+    headers: {
+      "Cookie": LOCAL_THEMOVIE_PLAY_COOKIE,
+      "User-Agent": "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Mobile Safari/537.36",
+      "X-Source": "h5",
+      "X-Client-Info": '{"timezone":"Asia/Calcutta"}',
+      "Referer": referer,
+      "Sec-Ch-Ua": '"Not(A:Brand";v="8", "Chromium";v="144", "Brave";v="144"',
+      "Sec-Ch-Ua-Mobile": "?1",
+      "Sec-Ch-Ua-Platform": '"Android"',
+      "Sec-Fetch-Dest": "empty",
+      "Sec-Fetch-Mode": "cors",
+      "Sec-Fetch-Site": "same-origin",
+      "Sec-Gpc": "1"
+    },
+    cache: "no-store"
+  });
+
+  let playData = null;
+  if (playRes.ok) {
+    try { playData = await playRes.json(); } catch {}
+  }
+
+  return {
+    success: true,
+    meta,
+    watchOnline: {
+      subjectId,
+      season: Number(finalSeason),
+      episode: Number(finalEpisode),
+      playApiUrl,
+      ...(playData && playData.data ? playData.data : {})
+    },
+    playbackHeaders: { Referer: referer },
+    data: playData ? { ...playData, playbackHeaders: { Referer: referer } } : null
+  };
+}
+
+async function localTheMovieByTitle({ title = "", year = "", mediaType = "movie", id = "", season = "", episode = "", attempts = [] }) {
+  const search = await localTheMovieSearchRaw(title);
+  const results = Array.isArray(search.results) ? search.results : [];
+  const picked =
+    results.find((entry) => year && String(entry.title || "").includes(String(year))) ||
+    results.find((entry) => entry.title && title && localTheMovieNormalizeTitle(entry.title).includes(localTheMovieNormalizeTitle(title).slice(0, 8))) ||
+    results[0];
+
+  if (!picked || !picked.fullUrl) {
+    attempts.push("themovie-local: search returned no usable details URL");
+    return null;
+  }
+
+  const detail = await localTheMovieDetailsAndPlay(picked.fullUrl, mediaType === "tv" ? season : "", mediaType === "tv" ? episode : "");
+  let result = await apiFindPlayableFromPayload({
+    payload: detail,
+    providerName: "themovie",
+    providerConfig: API_PROVIDERS.themovie || {},
+    mediaType,
+    id,
+    season,
+    episode,
+    attempts,
+    depth: 0,
+    seen: new Set()
+  });
+
+  if (result) return result;
+
+  const urls = apiCollectCandidateUrls(detail);
+  for (const url of urls) {
+    if (!/vibuxer\.com\/e\//i.test(url)) continue;
+    try {
+      const tmPayload = await localTmExtract({ url, check: "0" });
+      result = await apiFindPlayableFromPayload({
+        payload: tmPayload,
+        providerName: "tm",
+        providerConfig: API_PROVIDERS.tm || {},
+        mediaType,
+        id,
+        season,
+        episode,
+        attempts,
+        depth: 0,
+        seen: new Set()
+      });
+      if (result) return result;
+    } catch (error) {
+      attempts.push(`tm-local: ${error.message || "failed"}`);
+    }
+  }
+
+  return null;
+}
+// ===== End more local source ports =====
+
+
 // ===== End local uploaded API source port =====
 
 async function apiFetchCastelVariants({ tmdbId = "", mediaType = "movie", season = "", episode = "", attempts = [] }) {
@@ -1676,8 +2266,8 @@ async function apiFetchCastelVariants({ tmdbId = "", mediaType = "movie", season
 }
 
 async function fetchApiProviderSource({ type = "movie", id = "", season = "1", episode = "1", provider = "" }) {
-  if (!apiProviderConfigured()) return { status: "skipped", reason: "api_provider_missing_env" };
-
+  // Local uploaded source-code providers run even without API_BASE_URL/API_KEY.
+  // External provider API calls are optional and disabled unless USE_EXTERNAL_PROVIDER_API=true.
   const mediaType = type === "tv" ? "tv" : "movie";
   const attempts = [];
   const preferred = apiClean(provider || DEFAULT_PLAY_PROVIDER).toLowerCase();
@@ -1769,7 +2359,49 @@ async function fetchApiProviderSource({ type = "movie", id = "", season = "1", e
     }
   }
 
-  // 1) Direct stream providers.
+  // 0c) Local NetMirror and TheMovie ports from uploaded source. These do not use
+  // the external docs API/key; they copy the route.ts flows directly.
+  if (title) {
+    if (preferred === "netmirror" || providerOrder.includes("netmirror")) {
+      try {
+        const netResult = await localNetMirrorByTitle({
+          title,
+          year: releaseYear,
+          mediaType,
+          id,
+          season,
+          episode,
+          attempts
+        });
+        if (netResult) return netResult;
+        attempts.push("netmirror-local: source-code flow returned no usable stream");
+      } catch (error) {
+        attempts.push(`netmirror-local: ${error.message || "failed"}`);
+      }
+    }
+
+    if (preferred === "themovie" || providerOrder.includes("themovie")) {
+      try {
+        const movieBoxResult = await localTheMovieByTitle({
+          title,
+          year: releaseYear,
+          mediaType,
+          id,
+          season,
+          episode,
+          attempts
+        });
+        if (movieBoxResult) return movieBoxResult;
+        attempts.push("themovie-local: source-code flow returned no usable stream");
+      } catch (error) {
+        attempts.push(`themovie-local: ${error.message || "failed"}`);
+      }
+    }
+  }
+
+  // 1) Optional external docs API fallback.
+  // Disabled by default so SwiflyTV uses the uploaded source code directly.
+  if (USE_EXTERNAL_PROVIDER_API && apiProviderConfigured()) {
   for (const providerName of providerOrder) {
     const providerConfig = API_PROVIDERS[providerName];
     if (!providerConfig) continue;
@@ -1871,9 +2503,11 @@ async function fetchApiProviderSource({ type = "movie", id = "", season = "1", e
     }
   }
 
-  // 2) Details/extractor chain from docs. Search by TMDB title/year, call details,
+  }
+
+  // 2) Optional external docs API details/extractor chain. Search by TMDB title/year, call details,
   // then follow provider-specific extraction routes until a real media URL appears.
-  if (process.env.API_PROVIDER_SEARCH_FALLBACK !== "false" && title) {
+  if (USE_EXTERNAL_PROVIDER_API && apiProviderConfigured() && process.env.API_PROVIDER_SEARCH_FALLBACK !== "false" && title) {
     const providerList = Array.from(new Set([
       preferred,
       ...API_M3U8_PROVIDER_ORDER,
@@ -1943,13 +2577,16 @@ async function fetchApiProviderSource({ type = "movie", id = "", season = "1", e
       }
     }
   } else if (!title) {
-    attempts.push("search fallback skipped: no TMDB title");
+    attempts.push("local source lookup skipped title-based sources because TMDB title was not found");
+  } else if (!USE_EXTERNAL_PROVIDER_API) {
+    attempts.push("external API fallback disabled; using uploaded source-code providers only");
   }
 
   return {
     status: "error",
-    message: attempts[0] || "API provider did not return a usable m3u8/media URL.",
-    attempts: attempts.slice(-32)
+    message: attempts[0] || "Uploaded source-code providers did not return a usable m3u8/media URL.",
+    attempts: attempts.slice(-48),
+    sourceMode: USE_EXTERNAL_PROVIDER_API ? "local+external-api" : "local-source-code-only"
   };
 }
 
@@ -45221,6 +45858,134 @@ app.get("/api/provider/action", async (req, res) => {
     res.status(500).json({ ok: false, error: error.message });
   }
 });
+
+app.get("/api/local/all-source-debug", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const type = req.query.type === "tv" ? "tv" : "movie";
+  const id = apiClean(req.query.tmdb || req.query.tmdbId || req.query.id || req.query.url);
+  const season = apiClean(req.query.season || req.query.s || "1");
+  const episode = apiClean(req.query.episode || req.query.e || "1");
+
+  const attempts = [];
+  const results = [];
+
+  let title = "";
+  let releaseYear = "";
+
+  try {
+    const tmdbId = await apiResolveTmdbIdForApi({ mediaType: type, id, attempts });
+    const endpoint = type === "tv" ? `/tv/${tmdbId}` : `/movie/${tmdbId}`;
+    const details = await tmdb(endpoint, {}, CACHE_TTL.long);
+    title = getTitle(details);
+    releaseYear = getYear(type === "tv" ? details.first_air_date : details.release_date);
+  } catch (error) {
+    attempts.push(`tmdb metadata: ${error.message || "failed"}`);
+  }
+
+  async function tryPayload(label, promiseFactory, providerName, providerConfig) {
+    try {
+      const payload = await promiseFactory();
+      const result = await apiFindPlayableFromPayload({
+        payload,
+        providerName,
+        providerConfig,
+        mediaType: type,
+        id,
+        season,
+        episode,
+        attempts,
+        depth: 0,
+        seen: new Set()
+      });
+      results.push({
+        provider: label,
+        ok: Boolean(result),
+        result: result || null,
+        streamCount: Array.isArray(payload?.streams) ? payload.streams.length : undefined,
+        payloadSummary: payload && typeof payload === "object" ? Object.keys(payload) : []
+      });
+      return result;
+    } catch (error) {
+      results.push({ provider: label, ok: false, error: error.message || "failed" });
+      return null;
+    }
+  }
+
+  if (id) {
+    await tryPayload("vid-local", () => localVidGetStreams({ tmdbId: id, mediaType: type, season: type === "tv" ? season : "", episode: type === "tv" ? episode : "" }), "vid-local", API_PROVIDERS.vid || {});
+    await tryPayload("castle-local", () => localCastleGetStreams({ tmdbId: id, mediaType: type, season: type === "tv" ? season : "", episode: type === "tv" ? episode : "" }), "castle-local", API_PROVIDERS.castel || {});
+  }
+
+  if (title) {
+    try {
+      const net = await localNetMirrorByTitle({ title, year: releaseYear, mediaType: type, id, season, episode, attempts });
+      results.push({ provider: "netmirror-local", ok: Boolean(net), result: net || null });
+    } catch (error) {
+      results.push({ provider: "netmirror-local", ok: false, error: error.message || "failed" });
+    }
+
+    try {
+      const movieBox = await localTheMovieByTitle({ title, year: releaseYear, mediaType: type, id, season, episode, attempts });
+      results.push({ provider: "themovie-local", ok: Boolean(movieBox), result: movieBox || null });
+    } catch (error) {
+      results.push({ provider: "themovie-local", ok: false, error: error.message || "failed" });
+    }
+  }
+
+  res.json({
+    ok: results.some((entry) => entry.ok),
+    sourceMode: "local-source-code-only",
+    tmdb: id,
+    title,
+    year: releaseYear,
+    attempts,
+    results
+  });
+});
+
+
+app.get("/api/local/netmirror", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  try {
+    const q = apiClean(req.query.q || req.query.title);
+    const id = apiClean(req.query.id);
+    if (id) {
+      return res.json(await localNetMirrorStreamRaw(id));
+    }
+    if (!q) return res.status(400).json({ success: false, error: "Pass ?q=title or ?id=netmirror_id" });
+    const data = await localNetMirrorSearchRaw(q);
+    res.json({ ...data, extractedIds: localSourceDeepCollectIds(data) });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message || "local netmirror failed" });
+  }
+});
+
+app.get("/api/local/themovie", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  try {
+    const q = apiClean(req.query.q || req.query.title);
+    const url = apiClean(req.query.url);
+    if (url) {
+      return res.json(await localTheMovieDetailsAndPlay(url, apiClean(req.query.season), apiClean(req.query.episode)));
+    }
+    if (!q) return res.status(400).json({ success: false, error: "Pass ?q=title or ?url=detail_url" });
+    res.json(await localTheMovieSearchRaw(q));
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message || "local themovie failed" });
+  }
+});
+
+app.get("/api/local/tm", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  try {
+    const url = apiClean(req.query.url);
+    const code = apiClean(req.query.code);
+    res.json(await localTmExtract({ url, code, check: apiClean(req.query.check || "0") }));
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message || "local tm failed" });
+  }
+});
+
 
 app.get("/api/local/castle", async (req, res) => {
   res.set("Cache-Control", "no-store");
