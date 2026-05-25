@@ -56,7 +56,41 @@ const API_SEARCH_PROVIDERS = [
 ];
 
 const API_STREAM_PROVIDER_ORDER = ["castel", "netmirror", "animepahe", "animesalt"];
-const API_DETAILS_SEARCH_FALLBACK_PROVIDERS = ["4khdhub", "movies4u", "hdhub4u", "zeefliz", "vega", "zinkmovies", "kmmovies", "uhdmovies", "mod", "drive", "desiremovies"];
+
+// Full provider order for finding .m3u8/media sources. The first four are direct-stream
+// providers; the rest usually need search -> details -> extractor/action.
+const API_M3U8_PROVIDER_ORDER = [
+  "castel",
+  "netmirror",
+  "animepahe",
+  "animesalt",
+  "4khdhub",
+  "movies4u",
+  "hdhub4u",
+  "zeefliz",
+  "vega",
+  "zinkmovies",
+  "kmmovies",
+  "uhdmovies",
+  "mod",
+  "drive",
+  "desiremovies"
+];
+
+const API_DETAILS_SEARCH_FALLBACK_PROVIDERS = [
+  "animesalt",
+  "4khdhub",
+  "movies4u",
+  "hdhub4u",
+  "zeefliz",
+  "vega",
+  "zinkmovies",
+  "kmmovies",
+  "uhdmovies",
+  "mod",
+  "drive",
+  "desiremovies"
+];
 
 function apiProviderConfigured() {
   return Boolean(API_BASE_URL && API_KEY);
@@ -542,6 +576,12 @@ function apiExtractorJobsForUrl(providerName = "", providerConfig = {}, url = ""
   }
 
   // Exact/provider-specific extractors from the docs.
+  // AnimeSalt/AnimePahe details usually return episode/player URLs first; their
+  // stream endpoints are the next step that returns the real .m3u8.
+  if (providerConfig.stream && ["animepahe", "animesalt"].includes(apiClean(providerName).toLowerCase())) {
+    add(providerName, providerConfig.stream, { url: value }, "stream");
+  }
+
   if (providerConfig.gadget) add(providerName, providerConfig.gadget, { link: value }, "gadget");
   if (providerConfig.mdrive) add(providerName, providerConfig.mdrive, { url: value }, "mdrive");
   if (providerConfig.m4ulinks) add(providerName, providerConfig.m4ulinks, { url: value }, "m4ulinks");
@@ -568,6 +608,9 @@ function apiExtractorJobsForUrl(providerName = "", providerConfig = {}, url = ""
   // Broad fallback: docs use a lot of intermediate pages whose host/field names vary.
   // Try safe non-adult extractor/action endpoints, but cap recursion elsewhere.
   if (apiCanBeIntermediateExtractorUrl(value)) {
+    if (providerConfig.stream && ["animepahe", "animesalt"].includes(apiClean(providerName).toLowerCase())) {
+      add(providerName, providerConfig.stream, { url: value }, "stream");
+    }
     if (API_PROVIDERS.hubcloud?.extract) add("hubcloud", API_PROVIDERS.hubcloud.extract, { url: value }, "hubcloud");
     if (API_PROVIDERS.gdflix?.extract) add("gdflix", API_PROVIDERS.gdflix.extract, { url: value }, "gdflix");
     if (API_PROVIDERS.vega?.nextdrive) add("vega", API_PROVIDERS.vega.nextdrive, { url: value }, "nextdrive");
@@ -978,7 +1021,7 @@ async function fetchApiProviderSource({ type = "movie", id = "", season = "1", e
   const mediaType = type === "tv" ? "tv" : "movie";
   const attempts = [];
   const preferred = apiClean(provider || DEFAULT_PLAY_PROVIDER).toLowerCase();
-  const providerOrder = Array.from(new Set([preferred, ...API_STREAM_PROVIDER_ORDER].filter(Boolean)));
+  const providerOrder = Array.from(new Set([preferred, ...API_M3U8_PROVIDER_ORDER].filter(Boolean)));
 
   let title = "";
   let releaseYear = "";
@@ -1075,7 +1118,7 @@ async function fetchApiProviderSource({ type = "movie", id = "", season = "1", e
   if (process.env.API_PROVIDER_SEARCH_FALLBACK !== "false" && title) {
     const providerList = Array.from(new Set([
       preferred,
-      "netmirror",
+      ...API_M3U8_PROVIDER_ORDER,
       ...API_DETAILS_SEARCH_FALLBACK_PROVIDERS
     ].filter(Boolean)));
 
@@ -44410,6 +44453,35 @@ app.get("/api/provider/action", async (req, res) => {
   } catch (error) {
     res.status(500).json({ ok: false, error: error.message });
   }
+});
+
+app.get("/api/provider/all-source-debug", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const type = req.query.type === "tv" ? "tv" : "movie";
+  const id = apiClean(req.query.tmdb || req.query.tmdbId || req.query.id || req.query.url);
+  const results = [];
+
+  for (const providerName of API_M3U8_PROVIDER_ORDER) {
+    try {
+      const result = await fetchApiProviderSource({
+        type,
+        id,
+        season: apiClean(req.query.season || req.query.s || "1"),
+        episode: apiClean(req.query.episode || req.query.e || "1"),
+        provider: providerName
+      });
+      results.push({ provider: providerName, ...result });
+      if (result?.status === "ok" && req.query.stopOnFirst !== "false") break;
+    } catch (error) {
+      results.push({ provider: providerName, status: "error", message: error.message || "failed" });
+    }
+  }
+
+  res.json({
+    ok: results.some((entry) => entry.status === "ok"),
+    tried: API_M3U8_PROVIDER_ORDER,
+    results
+  });
 });
 
 app.get("/api/provider/raw-debug", async (req, res) => {
