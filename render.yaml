@@ -7,10 +7,6 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD
-        value: "1"
-      - key: PLAYWRIGHT_BROWSERS_PATH
-        value: "0"
       - key: REMOTE_BROWSER_ENABLED
         value: "true"
       - key: REMOTE_BROWSER_FPS
@@ -20,7 +16,7 @@ services:
       - key: CONSUMET_ENABLED
         value: "true"
       - key: VIDSRC_ENABLED
-        value: "true"
+        value: "false"
       - key: VIDSRC_TIMEOUT_MS
         value: "28000"
       - key: VIDSRC_WAIT_MS
