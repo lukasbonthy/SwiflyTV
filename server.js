@@ -94,9 +94,11 @@ function apiLooksPlayable(url = "", node = {}) {
   const value = String(url || "").trim();
   if (!/^https?:\/\//i.test(value)) return false;
   if (apiLooksLikeImage(value)) return false;
-  if (/\.(?:m3u8|mp4|m4v|webm|mov|mpd|mkv)(?:[?#]|$)/i.test(value)) return true;
-  const text = `${Object.keys(node || {}).join(" ")} ${Object.values(node || {}).slice(0, 8).join(" ")}`.toLowerCase();
-  return /stream|source|m3u8|playlist|video|hls|dash|quality|server|download|direct|cloud|cdn/.test(text);
+
+  // SwiflyTV API playback must embed HLS only.
+  // This intentionally rejects mp4/webm/mpd/direct file fallbacks so the selected
+  // embed source is always a URL whose path ends in .m3u8, optionally with ?query/#hash.
+  return /\.m3u8(?:[?#]|$)/i.test(value);
 }
 
 function apiNormalizeSources(input) {
@@ -228,9 +230,18 @@ function apiSourceToProxyResult({ source, raw, provider, type, id, season = "", 
   try { parsed = new URL(source.url); } catch { return null; }
   if (!["http:", "https:"].includes(parsed.protocol)) return null;
 
-  const isHls = /\.m3u8(?:[?#]|$)/i.test(parsed.toString()) || /hls|m3u8/i.test(`${source.quality || ""} ${source.name || ""}`);
-  const hlsProxy = isHls && hlsProxyEnabled()
-    ? registerHlsProxySource(parsed.toString(), source.headers || {}, {
+  const originalM3u8 = parsed.toString();
+  const isHls = /\.m3u8(?:[?#]|$)/i.test(originalM3u8);
+
+  // Hard requirement: embed only the API source that ends in .m3u8.
+  // Do not fall back to mp4/direct/download URLs.
+  if (!isHls) {
+    attempts.push(`${provider}: skipped non-m3u8 source`);
+    return null;
+  }
+
+  const hlsProxy = hlsProxyEnabled()
+    ? registerHlsProxySource(originalM3u8, source.headers || {}, {
         movieId: String(id || ""),
         provider,
         type,
@@ -241,24 +252,30 @@ function apiSourceToProxyResult({ source, raw, provider, type, id, season = "", 
       })
     : { enabled: false, id: "", url: "" };
 
-  const playbackUrl = hlsProxy.url || parsed.toString();
+  const playbackUrl = hlsProxy.url || originalM3u8;
+
+  if (!/\.m3u8(?:[?#]|$)/i.test(playbackUrl)) {
+    attempts.push(`${provider}: generated playback URL was not m3u8`);
+    return null;
+  }
+
   return {
     status: "ok",
-    providerKind: `api_${provider}${isHls ? (hlsProxy.url ? "_hls_proxy" : "_direct_hls") : "_direct"}`,
+    providerKind: `api_${provider}${hlsProxy.url ? "_hls_proxy" : "_direct_hls"}`,
     movieId: String(id || ""),
     sourceUrl: String(raw?.sourceUrl || raw?.url || ""),
     playbackUrl,
     proxyVideo: playbackUrl,
-    originalPlaybackUrl: parsed.toString(),
+    originalPlaybackUrl: originalM3u8,
     hlsProxyUrl: hlsProxy.url || "",
     hlsProxyId: hlsProxy.id || "",
     hlsProxyStatusUrl: hlsProxy.id ? `/api/hls-proxy/${hlsProxy.id}/status` : "",
-    m3u8: isHls ? parsed.toString() : "",
-    streamType: isHls ? "m3u8" : "video",
+    m3u8: originalM3u8,
+    streamType: "m3u8",
     streamQuality: source.quality || "",
     streamName: source.name || provider,
     streamHeaders: source.headers || {},
-    streamMode: isHls ? "hls" : "video",
+    streamMode: "hls",
     isLiveM3u8: false,
     apiProvider: provider,
     normalized: raw,
@@ -352,7 +369,7 @@ async function fetchApiProviderSource({ type = "movie", id = "", season = "1", e
 
   return {
     status: "error",
-    message: attempts[0] || "API provider did not return a playable source.",
+    message: attempts[0] || "API provider did not return an .m3u8 source.",
     attempts: attempts.slice(-16)
   };
 }
@@ -43623,7 +43640,9 @@ app.get("/api/provider/embed", async (req, res) => {
         name: result.streamName || result.apiProvider || "api source",
         quality: result.streamQuality || "",
         url: result.playbackUrl,
-        headers: result.streamHeaders || {}
+        headers: result.streamHeaders || {},
+        type: "application/x-mpegurl",
+        format: "m3u8"
       }],
       providerKind: result.providerKind,
       originalPlaybackUrl: result.originalPlaybackUrl || "",
