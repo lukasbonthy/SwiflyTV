@@ -753,7 +753,7 @@ async function apiTryNetMirrorByTmdb({ mediaType = "movie", id = "", season = "1
 
 
 function apiTrustedProviderCanForceHls(providerName = "") {
-  return ["vid", "vid-local", "castel", "netmirror", "animepahe", "animesalt", "themovie", "tm"].includes(apiClean(providerName).toLowerCase());
+  return ["vid", "vid-local", "castel", "castle", "castle-local", "netmirror", "animepahe", "animesalt", "themovie", "tm"].includes(apiClean(providerName).toLowerCase());
 }
 
 function apiCollectTrustedStreamSources(providerName = "", payload = {}) {
@@ -1028,6 +1028,8 @@ const LOCAL_VID_HEADERS = {
 };
 
 const LOCAL_VID_DEC_API = "https://enc-dec.app/api";
+const LOCAL_VID_TMDB_API_KEY = process.env.TMDB_API_KEY || "d131017ccc6e5462a81c9304d21476de";
+const LOCAL_VID_TMDB_BASE_URL = "https://twilight-cake-defb.hunternisha55.workers.dev/3";
 
 const LOCAL_VID_SERVERS = {
   Neon: { url: "https://api.videasy.net/myflixerzupcloud/sources-with-title", language: "Original" },
@@ -1080,10 +1082,13 @@ async function localVidDecryptVideoEasy(encryptedText, tmdbId) {
 }
 
 async function localVidFetchMediaDetails(tmdbId, mediaType = "movie") {
-  const endpoint = mediaType === "tv" ? `/tv/${tmdbId}` : `/movie/${tmdbId}`;
-  const data = await tmdb(endpoint, { append_to_response: "external_ids" }, CACHE_TTL.long);
-
-  if (data && data.__error) throw new Error(data.message || "TMDB metadata failed");
+  const endpoint = mediaType === "tv" ? "tv" : "movie";
+  const url = `${LOCAL_VID_TMDB_BASE_URL}/${endpoint}/${tmdbId}?api_key=${LOCAL_VID_TMDB_API_KEY}&append_to_response=external_ids`;
+  const data = await (async () => {
+    const response = await fetch(url, { method: "GET", headers: LOCAL_VID_HEADERS, cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    return response.json();
+  })();
 
   const title = mediaType === "tv" ? data.name : data.title;
   const date = mediaType === "tv" ? data.first_air_date : data.release_date;
@@ -1096,7 +1101,9 @@ async function localVidFetchMediaDetails(tmdbId, mediaType = "movie") {
     mediaType,
     overview: data.overview || "",
     poster: data.poster_path ? `https://image.tmdb.org/t/p/w500${data.poster_path}` : "",
-    backdrop: data.backdrop_path ? `https://image.tmdb.org/t/p/w1280${data.backdrop_path}` : ""
+    backdrop: data.backdrop_path ? `https://image.tmdb.org/t/p/w1280${data.backdrop_path}` : "",
+    numberOfSeasons: data.number_of_seasons,
+    numberOfEpisodes: data.number_of_episodes
   };
 }
 
@@ -1279,6 +1286,352 @@ async function localVidGetStreams({ tmdbId = "", mediaType = "movie", season = "
     count: unique.length
   };
 }
+
+// ===== Local port of uploaded ScarperApi-zero app/api/castel/route.ts =====
+const LOCAL_CASTLE_TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
+const LOCAL_CASTLE_TMDB_BASE_URL = "https://api.themoviedb.org/3";
+const LOCAL_CASTLE_BASE = "https://api.fstcy.com";
+const LOCAL_CASTLE_PKG = "com.external.castle";
+const LOCAL_CASTLE_CHANNEL = "IndiaA";
+const LOCAL_CASTLE_CLIENT = "1";
+const LOCAL_CASTLE_LANG = "en-US";
+
+const LOCAL_CASTLE_HEADERS = {
+  "User-Agent": "okhttp/4.9.3",
+  "Accept": "application/json",
+  "Accept-Language": "en-US,en;q=0.9",
+  "Connection": "Keep-Alive",
+  "Referer": LOCAL_CASTLE_BASE
+};
+
+const LOCAL_CASTLE_PLAYBACK_HEADERS = {
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
+  "Accept": "video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5",
+  "Accept-Language": "en-US,en;q=0.9",
+  "Accept-Encoding": "identity",
+  "Connection": "keep-alive",
+  "Sec-Fetch-Dest": "video",
+  "Sec-Fetch-Mode": "no-cors",
+  "Sec-Fetch-Site": "cross-site",
+  "DNT": "1"
+};
+
+async function localCastleDecrypt(encryptedB64, securityKeyB64) {
+  const response = await fetch("https://aesdec.nuvioapp.space/decrypt-castle", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ encryptedData: encryptedB64, securityKey: securityKeyB64 })
+  });
+
+  if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  const data = await response.json();
+  if (data.error) throw new Error(data.error);
+  return data.decrypted;
+}
+
+async function localCastleRequest(url, options = {}) {
+  const response = await fetch(url, {
+    method: options.method || "GET",
+    headers: { ...LOCAL_CASTLE_HEADERS, ...(options.headers || {}) },
+    body: options.body,
+    cache: "no-store"
+  });
+
+  if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  return response;
+}
+
+async function localCastleExtractCipher(response) {
+  const text = await response.text();
+  const trimmed = String(text || "").trim();
+  if (!trimmed) throw new Error("Empty response");
+
+  try {
+    const json = JSON.parse(trimmed);
+    if (json && json.data && typeof json.data === "string") return json.data.trim();
+  } catch {}
+
+  return trimmed;
+}
+
+async function localCastleGetSecurityKey() {
+  const url = `${LOCAL_CASTLE_BASE}/v0.1/system/getSecurityKey/1?channel=${LOCAL_CASTLE_CHANNEL}&clientType=${LOCAL_CASTLE_CLIENT}&lang=${LOCAL_CASTLE_LANG}`;
+  const response = await localCastleRequest(url);
+  const data = await response.json();
+
+  if (data.code !== 200 || !data.data) {
+    throw new Error(`Security key API error: ${JSON.stringify(data)}`);
+  }
+
+  return data.data;
+}
+
+async function localCastleSearch(securityKey, keyword, page = 1, size = 30) {
+  const params = new URLSearchParams({
+    channel: LOCAL_CASTLE_CHANNEL,
+    clientType: LOCAL_CASTLE_CLIENT,
+    keyword,
+    lang: LOCAL_CASTLE_LANG,
+    mode: "1",
+    packageName: LOCAL_CASTLE_PKG,
+    page: String(page),
+    size: String(size)
+  });
+
+  const url = `${LOCAL_CASTLE_BASE}/film-api/v1.1.0/movie/searchByKeyword?${params.toString()}`;
+  const response = await localCastleRequest(url);
+  const cipher = await localCastleExtractCipher(response);
+  const decrypted = await localCastleDecrypt(cipher, securityKey);
+  return JSON.parse(decrypted);
+}
+
+async function localCastleDetails(securityKey, movieId) {
+  const url = `${LOCAL_CASTLE_BASE}/film-api/v1.1/movie?channel=${LOCAL_CASTLE_CHANNEL}&clientType=${LOCAL_CASTLE_CLIENT}&lang=${LOCAL_CASTLE_LANG}&movieId=${movieId}&packageName=${LOCAL_CASTLE_PKG}`;
+  const response = await localCastleRequest(url);
+  const cipher = await localCastleExtractCipher(response);
+  const decrypted = await localCastleDecrypt(cipher, securityKey);
+  return JSON.parse(decrypted);
+}
+
+async function localCastleGetVideo2(securityKey, movieId, episodeId, resolution = 2) {
+  const url = `${LOCAL_CASTLE_BASE}/film-api/v2.0.1/movie/getVideo2?clientType=${LOCAL_CASTLE_CLIENT}&packageName=${LOCAL_CASTLE_PKG}&channel=${LOCAL_CASTLE_CHANNEL}&lang=${LOCAL_CASTLE_LANG}`;
+  const body = {
+    mode: "1",
+    appMarket: "GuanWang",
+    clientType: "1",
+    woolUser: "false",
+    apkSignKey: "ED0955EB04E67A1D9F3305B95454FED485261475",
+    androidVersion: "13",
+    movieId: String(movieId),
+    episodeId: String(episodeId),
+    isNewUser: "true",
+    resolution: String(resolution),
+    packageName: LOCAL_CASTLE_PKG
+  };
+
+  const response = await localCastleRequest(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+
+  const cipher = await localCastleExtractCipher(response);
+  const decrypted = await localCastleDecrypt(cipher, securityKey);
+  return JSON.parse(decrypted);
+}
+
+async function localCastleGetVideoV1(securityKey, movieId, episodeId, languageId, resolution = 2) {
+  const params = new URLSearchParams({
+    apkSignKey: "ED0955EB04E67A1D9F3305B95454FED485261475",
+    channel: LOCAL_CASTLE_CHANNEL,
+    clientType: LOCAL_CASTLE_CLIENT,
+    episodeId: String(episodeId),
+    lang: LOCAL_CASTLE_LANG,
+    languageId: String(languageId),
+    mode: "1",
+    movieId: String(movieId),
+    packageName: LOCAL_CASTLE_PKG,
+    resolution: String(resolution)
+  });
+
+  const url = `${LOCAL_CASTLE_BASE}/film-api/v1.9.1/movie/getVideo?${params.toString()}`;
+  const response = await localCastleRequest(url);
+  const cipher = await localCastleExtractCipher(response);
+  const decrypted = await localCastleDecrypt(cipher, securityKey);
+  return JSON.parse(decrypted);
+}
+
+function localCastleDataBlock(obj) {
+  if (obj && typeof obj === "object" && obj.data && typeof obj.data === "object") return obj.data;
+  return obj || {};
+}
+
+async function localCastleTmdbDetails(tmdbId, mediaType) {
+  const endpoint = mediaType === "tv" ? "tv" : "movie";
+  const url = `${LOCAL_CASTLE_TMDB_BASE_URL}/${endpoint}/${tmdbId}?api_key=${LOCAL_CASTLE_TMDB_API_KEY}&append_to_response=external_ids`;
+  const response = await localCastleRequest(url);
+  const data = await response.json();
+
+  const title = mediaType === "tv" ? (data.name || "") : (data.title || "");
+  const releaseDate = mediaType === "tv" ? data.first_air_date : data.release_date;
+  const year = releaseDate ? parseInt(String(releaseDate).split("-")[0], 10) : null;
+
+  return { title, year, tmdbId };
+}
+
+async function localCastleFindMovieId(securityKey, tmdbInfo) {
+  const searchTerm = tmdbInfo.year ? `${tmdbInfo.title} ${tmdbInfo.year}` : tmdbInfo.title;
+  const searchResult = await localCastleSearch(securityKey, searchTerm);
+  const data = localCastleDataBlock(searchResult);
+  const rows = Array.isArray(data.rows) ? data.rows : [];
+
+  if (!rows.length) throw new Error("No search results found");
+
+  for (const item of rows) {
+    const itemTitle = String(item.title || item.name || "").toLowerCase();
+    const searchTitle = String(tmdbInfo.title || "").toLowerCase();
+
+    if (itemTitle.includes(searchTitle) || searchTitle.includes(itemTitle)) {
+      const movieId = item.id || item.redirectId || item.redirectIdStr;
+      if (movieId) return String(movieId);
+    }
+  }
+
+  const firstItem = rows[0];
+  const movieId = firstItem.id || firstItem.redirectId || firstItem.redirectIdStr;
+  if (movieId) return String(movieId);
+
+  throw new Error("Could not extract movie ID from search results");
+}
+
+function localCastleQualityValue(quality) {
+  if (!quality) return 0;
+  const cleanQuality = String(quality).toLowerCase().replace(/^(sd|hd|fhd|uhd|4k)\s*/i, "").replace(/p$/, "").trim();
+  if (cleanQuality === "4k" || cleanQuality === "2160") return 2160;
+  if (cleanQuality === "1440") return 1440;
+  if (cleanQuality === "1080") return 1080;
+  if (cleanQuality === "720") return 720;
+  if (cleanQuality === "480") return 480;
+  if (cleanQuality === "360") return 360;
+  if (cleanQuality === "240") return 240;
+  const n = parseInt(cleanQuality, 10);
+  return !Number.isNaN(n) && n > 0 ? n : 0;
+}
+
+function localCastleProcessVideo(videoData, mediaInfo, seasonNum, episodeNum, resolution, languageInfo) {
+  const streams = [];
+  const data = localCastleDataBlock(videoData);
+  const videoUrl = data.videoUrl;
+
+  if (!videoUrl) return streams;
+
+  let mediaTitle = mediaInfo.title || "Unknown";
+  if (mediaInfo.year) mediaTitle += ` (${mediaInfo.year})`;
+  if (seasonNum && episodeNum) mediaTitle = `${mediaInfo.title} S${String(seasonNum).padStart(2, "0")}E${String(episodeNum).padStart(2, "0")}`;
+
+  const qualityMap = { 1: "480p", 2: "720p", 3: "1080p" };
+  const quality = qualityMap[resolution] || `${resolution}p`;
+
+  if (data.videos && Array.isArray(data.videos)) {
+    for (const video of data.videos) {
+      let videoQuality = video.resolutionDescription || video.resolution || quality;
+      videoQuality = String(videoQuality).replace(/^(SD|HD|FHD)\s+/i, "");
+
+      const sizeValue = video.size;
+      const formattedSize = (typeof sizeValue === "number" && sizeValue > 0)
+        ? (sizeValue > 1000000000 ? `${(sizeValue / 1000000000).toFixed(2)} GB` : `${(sizeValue / 1000000).toFixed(0)} MB`)
+        : "Unknown";
+
+      streams.push({
+        name: languageInfo ? `Castle ${languageInfo} - ${videoQuality}` : `Castle - ${videoQuality}`,
+        title: mediaTitle,
+        url: video.url || videoUrl,
+        quality: videoQuality,
+        size: formattedSize,
+        headers: LOCAL_CASTLE_PLAYBACK_HEADERS,
+        provider: "castle"
+      });
+    }
+  } else {
+    const sizeValue = data.size;
+    const formattedSize = (typeof sizeValue === "number" && sizeValue > 0)
+      ? (sizeValue > 1000000000 ? `${(sizeValue / 1000000000).toFixed(2)} GB` : `${(sizeValue / 1000000).toFixed(0)} MB`)
+      : "Unknown";
+
+    streams.push({
+      name: languageInfo ? `Castle ${languageInfo} - ${quality}` : `Castle - ${quality}`,
+      title: mediaTitle,
+      url: videoUrl,
+      quality,
+      size: formattedSize,
+      headers: LOCAL_CASTLE_PLAYBACK_HEADERS,
+      provider: "castle"
+    });
+  }
+
+  return streams;
+}
+
+async function localCastleGetStreams({ tmdbId = "", mediaType = "movie", season = "", episode = "" }) {
+  const seasonNum = mediaType === "tv" && season ? parseInt(season, 10) : null;
+  const episodeNum = mediaType === "tv" && episode ? parseInt(episode, 10) : null;
+
+  const tmdbInfo = await localCastleTmdbDetails(tmdbId, mediaType);
+  const securityKey = await localCastleGetSecurityKey();
+  const movieId = await localCastleFindMovieId(securityKey, tmdbInfo);
+
+  let details = await localCastleDetails(securityKey, movieId);
+  let finalMovieId = movieId;
+
+  if (mediaType === "tv" && seasonNum && episodeNum) {
+    const data = localCastleDataBlock(details);
+    const seasons = Array.isArray(data.seasons) ? data.seasons : [];
+    const seasonData = seasons.find((s) => s.number === seasonNum);
+    if (seasonData && seasonData.movieId && String(seasonData.movieId) !== movieId) {
+      details = await localCastleDetails(securityKey, String(seasonData.movieId));
+      finalMovieId = String(seasonData.movieId);
+    }
+  }
+
+  const data = localCastleDataBlock(details);
+  const episodes = Array.isArray(data.episodes) ? data.episodes : [];
+
+  let episodeId = null;
+  if (mediaType === "tv" && seasonNum && episodeNum) {
+    const ep = episodes.find((e) => e.number === episodeNum);
+    if (ep && ep.id) episodeId = String(ep.id);
+  } else if (episodes.length > 0) {
+    episodeId = String(episodes[0].id);
+  }
+
+  if (!episodeId) throw new Error("Could not find episode ID");
+
+  const episodeData = episodes.find((e) => String(e.id) === String(episodeId));
+  const tracks = (episodeData && Array.isArray(episodeData.tracks)) ? episodeData.tracks : [];
+  const resolution = 2;
+  const allStreams = [];
+
+  for (let i = 0; i < tracks.length; i += 1) {
+    const track = tracks[i];
+    const langName = track.languageName || track.abbreviate || `Lang${i + 1}`;
+
+    if (track.existIndividualVideo && track.languageId) {
+      try {
+        const videoData = await localCastleGetVideoV1(securityKey, finalMovieId, episodeId, track.languageId, resolution);
+        const langStreams = localCastleProcessVideo(videoData, tmdbInfo, seasonNum, episodeNum, resolution, `[${langName}]`);
+        allStreams.push(...langStreams);
+      } catch {}
+    }
+  }
+
+  if (!allStreams.length) {
+    const videoData = await localCastleGetVideo2(securityKey, finalMovieId, episodeId, resolution);
+    allStreams.push(...localCastleProcessVideo(videoData, tmdbInfo, seasonNum, episodeNum, resolution, "[Shared]"));
+  }
+
+  const seen = new Set();
+  const unique = [];
+  for (const stream of allStreams) {
+    if (!stream.url || seen.has(stream.url)) continue;
+    seen.add(stream.url);
+    unique.push(stream);
+  }
+
+  unique.sort((a, b) => localCastleQualityValue(b.quality) - localCastleQualityValue(a.quality));
+
+  return {
+    success: true,
+    provider: "castle-local",
+    tmdbId,
+    mediaType,
+    ...(seasonNum ? { season: seasonNum } : {}),
+    ...(episodeNum ? { episode: episodeNum } : {}),
+    streams: unique,
+    count: unique.length
+  };
+}
+// ===== End local Castle source port =====
+
 // ===== End local uploaded API source port =====
 
 async function apiFetchCastelVariants({ tmdbId = "", mediaType = "movie", season = "", episode = "", attempts = [] }) {
@@ -1379,6 +1732,40 @@ async function fetchApiProviderSource({ type = "movie", id = "", season = "1", e
       }
     } catch (error) {
       attempts.push(`vid-local: ${error.message || "failed"}`);
+    }
+  }
+
+  // 0b) Local uploaded /api/castel source-code implementation. This ports the
+  // Castle source route directly instead of relying on the external provider API.
+  if (preferred === "castel" || preferred === "castle" || providerOrder.includes("castel")) {
+    try {
+      const tmdbId = await apiResolveTmdbIdForApi({ mediaType, id, attempts });
+      if (tmdbId) {
+        const castlePayload = await localCastleGetStreams({
+          tmdbId,
+          mediaType,
+          season: mediaType === "tv" ? season : "",
+          episode: mediaType === "tv" ? episode : ""
+        });
+
+        const localCastleResult = await apiFindPlayableFromPayload({
+          payload: castlePayload,
+          providerName: "castle-local",
+          providerConfig: API_PROVIDERS.castel || {},
+          mediaType,
+          id: tmdbId,
+          season,
+          episode,
+          attempts
+        });
+
+        if (localCastleResult) return localCastleResult;
+        attempts.push("castle-local: uploaded source-code flow returned no usable stream");
+      } else {
+        attempts.push("castle-local: missing numeric TMDB id");
+      }
+    } catch (error) {
+      attempts.push(`castle-local: ${error.message || "failed"}`);
     }
   }
 
@@ -44834,6 +45221,30 @@ app.get("/api/provider/action", async (req, res) => {
     res.status(500).json({ ok: false, error: error.message });
   }
 });
+
+app.get("/api/local/castle", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  try {
+    const tmdbId = apiClean(req.query.id || req.query.tmdb || req.query.tmdbId);
+    const mediaType = req.query.type === "tv" ? "tv" : "movie";
+    const season = apiClean(req.query.season || req.query.s || "");
+    const episode = apiClean(req.query.episode || req.query.e || "");
+
+    if (!tmdbId) {
+      return res.status(400).json({ success: false, error: "Missing id/tmdb parameter", streams: [] });
+    }
+
+    if (mediaType === "tv" && (!season || !episode)) {
+      return res.status(400).json({ success: false, error: "TV requires season and episode", streams: [] });
+    }
+
+    const data = await localCastleGetStreams({ tmdbId, mediaType, season, episode });
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ success: false, provider: "castle-local", error: error.message || "local castle failed", streams: [] });
+  }
+});
+
 
 app.get("/api/local/vid", async (req, res) => {
   res.set("Cache-Control", "no-store");
