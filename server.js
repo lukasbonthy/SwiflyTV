@@ -321,6 +321,22 @@ function apiLooksStreamLike(url = "", node = {}) {
   return false;
 }
 
+
+function apiSourceIsM3u8(source = {}) {
+  return apiIsM3u8Url(source.url || "") || source.format === "m3u8" || /m3u8|hls/i.test(`${source.name || ""} ${source.quality || ""} ${source.type || ""}`);
+}
+
+function apiHasM3u8Source(sources = []) {
+  return Array.isArray(sources) && sources.some((source) => apiSourceIsM3u8(source));
+}
+
+function apiPreferM3u8Sources(sources = []) {
+  const list = Array.isArray(sources) ? sources : [];
+  const m3u8s = list.filter((source) => apiSourceIsM3u8(source));
+  if (m3u8s.length) return m3u8s.sort((a, b) => apiSourceScore(b) - apiSourceScore(a));
+  return list.sort((a, b) => apiSourceScore(b) - apiSourceScore(a));
+}
+
 function apiSourceScore(source = {}) {
   const url = String(source.url || "");
   const text = `${source.name || ""} ${source.quality || ""} ${source.format || ""} ${source.type || ""}`.toLowerCase();
@@ -453,8 +469,7 @@ function apiNormalizeSources(input) {
     }
   });
 
-  return Array.from(new Map(sources.map((source) => [source.url, source])).values())
-    .sort((a, b) => apiSourceScore(b) - apiSourceScore(a));
+  return apiPreferM3u8Sources(Array.from(new Map(sources.map((source) => [source.url, source])).values()));
 }
 
 function apiTopList(json) {
@@ -875,10 +890,10 @@ async function apiFindPlayableFromPayload({
 }) {
   const normalized = apiNormalizeResponse(payload, providerName, mediaType);
   const trustedSources = apiCollectTrustedStreamSources(providerName, payload);
-  const sources = [
+  const sources = apiPreferM3u8Sources([
     ...trustedSources,
     ...(Array.isArray(normalized.sources) ? normalized.sources : [])
-  ];
+  ]);
 
   for (const source of sources) {
     const result = apiSourceToProxyResult({
@@ -899,7 +914,7 @@ async function apiFindPlayableFromPayload({
   const candidateUrls = apiCollectCandidateUrls(payload);
 
   // Test playable-looking URLs directly first, in case the normalizer missed the field name.
-  const directUrls = candidateUrls
+  const directUrls = apiPreferM3u8Sources(candidateUrls
     .map((url) => ({
       url,
       name: apiIsM3u8Url(url) ? "hls" : "source",
@@ -908,8 +923,7 @@ async function apiFindPlayableFromPayload({
       format: apiIsM3u8Url(url) ? "m3u8" : "",
       forceHls: apiTrustedProviderCanForceHls(providerName) && !apiIsAllowedMediaExtensionUrl(url)
     }))
-    .filter((source) => apiLooksPlayable(source.url, source))
-    .sort((a, b) => apiSourceScore(b) - apiSourceScore(a));
+    .filter((source) => apiLooksPlayable(source.url, source)));
 
   for (const source of directUrls) {
     const result = apiSourceToProxyResult({
@@ -1023,6 +1037,8 @@ function apiSourceToProxyResult({ source, raw, provider, type, id, season = "", 
     hlsProxyId: hlsProxy.id || "",
     hlsProxyStatusUrl: hlsProxy.id ? `/api/hls-proxy/${hlsProxy.id}/status` : "",
     m3u8: isHls ? originalUrl : "",
+    embeddedM3u8Url: isHls ? playbackUrl : "",
+    m3u8Embedded: Boolean(isHls),
     streamType,
     streamQuality: source.quality || "",
     streamName: source.name || provider,
@@ -46308,6 +46324,9 @@ app.get("/api/provider/embed", async (req, res) => {
       providerKind: result.providerKind,
       apiProvider: result.apiProvider || "",
       tmdbId: result.movieId || "",
+      embedUrl: result.playbackUrl || "",
+      embeddedM3u8Url: result.embeddedM3u8Url || "",
+      m3u8Embedded: Boolean(result.m3u8Embedded),
       originalPlaybackUrl: result.originalPlaybackUrl || "",
       hlsProxyUrl: result.hlsProxyUrl || "",
       attempts: result.attempts || []
