@@ -10,7 +10,7 @@ services:
       - key: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD
         value: "1"
       - key: PLAYWRIGHT_BROWSERS_PATH
-        value: /ms-playwright
+        value: "0"
       - key: REMOTE_BROWSER_ENABLED
         value: "true"
       - key: REMOTE_BROWSER_FPS
