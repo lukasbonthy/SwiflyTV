@@ -1,0 +1,311 @@
+[
+  {
+    "route": "anime/9anime",
+    "providers": [
+      "NineAnime"
+    ],
+    "methods": [
+      "fetchAnimeInfo",
+      "fetchEpisodeServers",
+      "fetchEpisodeSources",
+      "search"
+    ],
+    "chars": 4127
+  },
+  {
+    "route": "anime/anify",
+    "providers": [
+      "Anify"
+    ],
+    "methods": [
+      "fetchAnimeInfo",
+      "fetchEpisodeSources",
+      "search"
+    ],
+    "chars": 2406
+  },
+  {
+    "route": "anime/animefox",
+    "providers": [
+      "AnimeFox"
+    ],
+    "methods": [
+      "fetchAnimeInfo",
+      "fetchEpisodeSources",
+      "search"
+    ],
+    "chars": 2271
+  },
+  {
+    "route": "anime/animepahe",
+    "providers": [
+      "AnimePahe"
+    ],
+    "methods": [
+      "fetchAnimeInfo",
+      "fetchEpisodeSources",
+      "search"
+    ],
+    "chars": 1900
+  },
+  {
+    "route": "anime/anix",
+    "providers": [
+      "Anix"
+    ],
+    "methods": [
+      "fetchAnimeInfo",
+      "fetchEpisodeServers",
+      "fetchEpisodeSources",
+      "search"
+    ],
+    "chars": 4235
+  },
+  {
+    "route": "anime/bilibili",
+    "providers": [
+      "Bilibili"
+    ],
+    "methods": [
+      "fetchAnimeInfo",
+      "fetchEpisodeSources",
+      "search"
+    ],
+    "chars": 2069
+  },
+  {
+    "route": "anime/crunchyroll",
+    "providers": [],
+    "methods": [
+      "fetchAnimeInfo",
+      "fetchEpisodeSources",
+      "search"
+    ],
+    "chars": 2395
+  },
+  {
+    "route": "anime/gogoanime",
+    "providers": [
+      "Gogoanime"
+    ],
+    "methods": [
+      "fetchAnimeInfo",
+      "fetchEpisodeServers",
+      "fetchEpisodeSources",
+      "fetchRecentMovies",
+      "fetchTopAiring",
+      "search"
+    ],
+    "chars": 9688
+  },
+  {
+    "route": "anime/index",
+    "providers": [],
+    "methods": [],
+    "chars": 2249
+  },
+  {
+    "route": "anime/marin",
+    "providers": [
+      "Marin"
+    ],
+    "methods": [
+      "fetchAnimeInfo",
+      "fetchEpisodeSources",
+      "search"
+    ],
+    "chars": 2433
+  },
+  {
+    "route": "anime/zoro",
+    "providers": [
+      "Zoro"
+    ],
+    "methods": [
+      "fetchAnimeInfo",
+      "fetchEpisodeSources",
+      "fetchTopAiring",
+      "search"
+    ],
+    "chars": 5486
+  },
+  {
+    "route": "meta/anilist-manga",
+    "providers": [
+      "Anilist",
+      "Anilist",
+      "Anilist",
+      "Anilist",
+      "Anilist"
+    ],
+    "methods": [
+      "search"
+    ],
+    "chars": 2840
+  },
+  {
+    "route": "meta/anilist",
+    "providers": [
+      "Anilist",
+      "Anilist",
+      "NineAnime",
+      "Anilist"
+    ],
+    "methods": [
+      "fetchAnimeInfo",
+      "fetchEpisodeServers",
+      "fetchEpisodeSources",
+      "fetchTrending",
+      "search"
+    ],
+    "chars": 13789
+  },
+  {
+    "route": "meta/index",
+    "providers": [],
+    "methods": [],
+    "chars": 1676
+  },
+  {
+    "route": "meta/mal",
+    "providers": [
+      "Myanimelist",
+      "Myanimelist",
+      "Myanimelist",
+      "Myanimelist",
+      "Myanimelist"
+    ],
+    "methods": [
+      "fetchAnimeInfo",
+      "fetchEpisodeSources",
+      "search"
+    ],
+    "chars": 3026
+  },
+  {
+    "route": "meta/tmdb",
+    "providers": [
+      "TMDB",
+      "TMDB",
+      "TMDB",
+      "TMDB",
+      "TMDB",
+      "TMDB"
+    ],
+    "methods": [
+      "fetchEpisodeSources",
+      "fetchMediaInfo",
+      "fetchTrending",
+      "search"
+    ],
+    "chars": 3479
+  },
+  {
+    "route": "movies/dramacool",
+    "providers": [
+      "DramaCool"
+    ],
+    "methods": [
+      "fetchEpisodeSources",
+      "fetchMediaInfo",
+      "fetchRecentMovies",
+      "fetchRecentTvShows",
+      "search"
+    ],
+    "chars": 3807
+  },
+  {
+    "route": "movies/flixhq",
+    "providers": [
+      "FlixHQ"
+    ],
+    "methods": [
+      "fetchEpisodeServers",
+      "fetchEpisodeSources",
+      "fetchMediaInfo",
+      "fetchRecentMovies",
+      "fetchRecentTvShows",
+      "fetchTrending",
+      "search"
+    ],
+    "chars": 7417
+  },
+  {
+    "route": "movies/fmovies",
+    "providers": [
+      "Fmovies"
+    ],
+    "methods": [
+      "fetchEpisodeSources",
+      "fetchMediaInfo",
+      "search"
+    ],
+    "chars": 3364
+  },
+  {
+    "route": "movies/goku",
+    "providers": [
+      "Goku"
+    ],
+    "methods": [
+      "fetchEpisodeServers",
+      "fetchEpisodeSources",
+      "fetchMediaInfo",
+      "fetchRecentMovies",
+      "fetchRecentTvShows",
+      "fetchTrending",
+      "search"
+    ],
+    "chars": 9111
+  },
+  {
+    "route": "movies/index",
+    "providers": [],
+    "methods": [],
+    "chars": 2008
+  },
+  {
+    "route": "movies/movieshd",
+    "providers": [
+      "MovieHdWatch"
+    ],
+    "methods": [
+      "fetchEpisodeServers",
+      "fetchEpisodeSources",
+      "fetchMediaInfo",
+      "fetchRecentMovies",
+      "fetchRecentTvShows",
+      "fetchTrending",
+      "search"
+    ],
+    "chars": 9262
+  },
+  {
+    "route": "movies/sflix",
+    "providers": [
+      "SFlix"
+    ],
+    "methods": [
+      "fetchEpisodeServers",
+      "fetchEpisodeSources",
+      "fetchMediaInfo",
+      "fetchRecentMovies",
+      "fetchRecentTvShows",
+      "fetchTrending",
+      "search"
+    ],
+    "chars": 7391
+  },
+  {
+    "route": "movies/viewasian",
+    "providers": [
+      "ViewAsian"
+    ],
+    "methods": [
+      "fetchEpisodeSources",
+      "fetchMediaInfo",
+      "search"
+    ],
+    "chars": 2431
+  }
+]
