@@ -607,60 +607,114 @@ function apiUnescapeJsStringLite(value = "") {
   return text;
 }
 
+
+function apiTryInflateEncodedUrlVariants(value = "") {
+  const source = String(value || "");
+  const out = [];
+  function add(v) {
+    if (!v || out.includes(v)) return;
+    if (out.length > 80) return;
+    out.push(v);
+  }
+
+  add(source);
+  add(apiHtmlEntityDecodeLite(source));
+  add(apiUnescapeJsStringLite(source));
+  add(apiTryDecodeURIComponentSafe(source));
+  add(apiTryDecodeURIComponentSafe(apiHtmlEntityDecodeLite(source)));
+  add(apiUnescapeJsStringLite(apiTryDecodeURIComponentSafe(source)));
+
+  for (const match of source.matchAll(/https?%3A%2F%2F[^\s"'<>]+/gi)) add(apiTryDecodeURIComponentSafe(match[0]));
+  for (const match of source.matchAll(/https?:\\\/\\\/[^\s"'<>]+/gi)) add(apiUnescapeJsStringLite(match[0]));
+
+  for (const match of source.matchAll(/atob\(\s*["']([A-Za-z0-9+/_=-]{16,})["']\s*\)/g)) {
+    const decoded = apiTryAtobText(match[1]);
+    if (decoded) add(decoded);
+  }
+
+  for (const match of source.matchAll(/decodeURIComponent\(\s*["']([^"']{12,})["']\s*\)/g)) add(apiTryDecodeURIComponentSafe(match[1]));
+  for (const match of source.matchAll(/["']((?:https?:)?\\?\/\\?\/[^"']+)["']/g)) add(apiUnescapeJsStringLite(match[1]));
+
+  return out;
+}
+
+function apiExtractLikelyUrlsFromConcatenatedStrings(value = "") {
+  const source = String(value || "");
+  const urls = [];
+
+  const concatRe = /((?:"[^"]*"|'[^']*')\s*(?:\+\s*(?:"[^"]*"|'[^']*')\s*){1,12})/g;
+  let match;
+  while ((match = concatRe.exec(source))) {
+    const parts = [];
+    const partRe = /"([^"]*)"|'([^']*)'/g;
+    let part;
+    while ((part = partRe.exec(match[1]))) parts.push(part[1] ?? part[2] ?? "");
+    const joined = apiUnescapeJsStringLite(parts.join(""));
+    if (/^https?:\/\//i.test(joined) || /\.(?:m3u8|mp4|mkv|webm|mov|avi|ts|m4s)(?:[?#]|$)/i.test(joined)) urls.push(joined);
+  }
+
+  const joinRe = /\[((?:"[^"]*"|'[^']*')\s*,\s*)+(?:"[^"]*"|'[^']*')\]\.join\(\s*["']{0,1}["']{0,1}\s*\)/g;
+  while ((match = joinRe.exec(source))) {
+    const parts = [];
+    const partRe = /"([^"]*)"|'([^']*)'/g;
+    let part;
+    while ((part = partRe.exec(match[0]))) parts.push(part[1] ?? part[2] ?? "");
+    const joined = apiUnescapeJsStringLite(parts.join(""));
+    if (/^https?:\/\//i.test(joined)) urls.push(joined);
+  }
+
+  return urls;
+}
+
 function apiExtractUrlsFromStringDeep(value = "") {
   const original = String(value || "");
   const variants = [];
+  const urls = [];
+
   function addVariant(v) {
     if (!v || variants.includes(v)) return;
+    if (variants.length > 80) return;
     variants.push(v);
   }
 
-  addVariant(original);
-  addVariant(apiHtmlEntityDecodeLite(original));
-  addVariant(apiUnescapeJsStringLite(original));
-  addVariant(apiTryDecodeURIComponentSafe(original));
+  for (const inflated of apiTryInflateEncodedUrlVariants(original)) addVariant(inflated);
 
   const b64Decoded = apiTryAtobText(original);
-  if (b64Decoded) {
-    addVariant(b64Decoded);
-    addVariant(apiTryDecodeURIComponentSafe(b64Decoded));
-    addVariant(apiUnescapeJsStringLite(b64Decoded));
-  }
+  if (b64Decoded) for (const inflated of apiTryInflateEncodedUrlVariants(b64Decoded)) addVariant(inflated);
 
-  const urls = [];
+  for (const concatenated of apiExtractLikelyUrlsFromConcatenatedStrings(original)) urls.push(concatenated);
 
   for (const text of variants) {
     const source = apiHtmlEntityDecodeLite(apiUnescapeJsStringLite(text));
+    for (const concatenated of apiExtractLikelyUrlsFromConcatenatedStrings(source)) urls.push(concatenated);
 
-    // Full absolute URLs hidden anywhere in HTML/JS/JSON.
     const absoluteRe = /https?:\/\/[^\s"'`<>\\)\\]}]+/gi;
     let match;
-    while ((match = absoluteRe.exec(source))) {
-      let url = match[0]
-        .replace(/[),.;]+$/g, "")
-        .replace(/&amp;/g, "&");
-      urls.push(url);
-    }
+    while ((match = absoluteRe.exec(source))) urls.push(match[0].replace(/[),.;]+$/g, "").replace(/&amp;/g, "&"));
 
-    // Common player object fields that might be protocol-relative.
-    const fieldRe = /\b(?:file|src|url|link|href|hls|m3u8|videoUrl|streamUrl|downloadUrl|directUrl|playbackUrl)\b\s*[:=]\s*["']([^"']+)["']/gi;
+    const protocolRelRe = /(?<!:)\/\/[a-z0-9.-]+\.[a-z]{2,}[^\s"'`<>\\)\\]}]*/gi;
+    while ((match = protocolRelRe.exec(source))) urls.push(`https:${match[0].replace(/[),.;]+$/g, "")}`);
+
+    const fieldRe = /\b(?:file|src|url|link|href|hls|m3u8|video|videoUrl|stream|streamUrl|downloadUrl|directUrl|playbackUrl|playlist|manifest|source|sources|master|fileUrl|embedUrl|playerUrl)\b\s*[:=]\s*["']([^"']+)["']/gi;
     while ((match = fieldRe.exec(source))) {
       const raw = apiHtmlEntityDecodeLite(apiUnescapeJsStringLite(match[1]));
       if (/^\/\//.test(raw)) urls.push(`https:${raw}`);
       else if (/^https?:\/\//i.test(raw)) urls.push(raw);
     }
 
-    // base64/URL-encoded nested q= payloads, e.g. playstream.m3u8?q=<base64 JSON containing url>
-    const qRe = /[?&](?:q|data|url)=([^&"'<>]+)/gi;
+    const attrRe = /\b(?:src|href|data-src|data-href|data-file|data-url|data-video|data-stream|data-hls|poster|action)\s*=\s*["']([^"']+)["']/gi;
+    while ((match = attrRe.exec(source))) {
+      const raw = apiHtmlEntityDecodeLite(apiUnescapeJsStringLite(match[1]));
+      if (/^\/\//.test(raw)) urls.push(`https:${raw}`);
+      else if (/^https?:\/\//i.test(raw)) urls.push(raw);
+    }
+
+    const qRe = /[?&](?:q|data|url|file|src|u|payload|source)=([^&"'<>]+)/gi;
     while ((match = qRe.exec(source))) {
       const decoded = apiTryDecodeURIComponentSafe(match[1]);
       const maybeB64 = apiTryAtobText(decoded);
-      if (maybeB64) {
-        for (const nested of apiExtractUrlsFromStringDeep(maybeB64)) urls.push(nested);
-      }
-      for (const nested of apiExtractUrlsFromStringDeep(decoded)) {
-        if (nested !== decoded) urls.push(nested);
-      }
+      if (maybeB64) for (const nested of apiExtractUrlsFromStringDeep(maybeB64)) urls.push(nested);
+      for (const nested of apiExtractUrlsFromStringDeep(decoded)) if (nested !== decoded) urls.push(nested);
     }
   }
 
@@ -2047,15 +2101,39 @@ async function localNetMirrorStreamRaw(id) {
   };
 }
 
+
+function localSourceTitleVariants(title = "", year = "") {
+  const raw = String(title || "").trim();
+  const y = String(year || "").trim();
+  const clean = raw.replace(/\s*\([^)]*\)\s*/g, " ").replace(/[:–—-]+/g, " ").replace(/\s+/g, " ").trim();
+  const noLeadingThe = clean.replace(/^the\s+/i, "").trim();
+  const compact = clean.replace(/[^a-z0-9]+/gi, " ").trim();
+  const variants = [raw, clean, y ? `${clean} ${y}` : "", y ? `${noLeadingThe} ${y}` : "", noLeadingThe, compact].filter(Boolean);
+  return Array.from(new Set(variants.map((v) => v.trim()).filter(Boolean)));
+}
+
 async function localNetMirrorByTitle({ title = "", year = "", mediaType = "movie", id = "", season = "", episode = "", attempts = [] }) {
-  const searchPayload = await localNetMirrorSearchRaw(title);
-  const ids = localSourceDeepCollectIds(searchPayload);
+  const variants = localSourceTitleVariants(title, year);
+  const ids = [];
+
+  for (const q of variants.slice(0, 6)) {
+    try {
+      const searchPayload = await localNetMirrorSearchRaw(q);
+      for (const found of localSourceDeepCollectIds(searchPayload)) {
+        if (!ids.includes(found)) ids.push(found);
+      }
+      if (ids.length) break;
+    } catch (error) {
+      attempts.push(`netmirror-local search "${q}": ${error.message || "failed"}`);
+    }
+  }
+
   if (!ids.length) {
     attempts.push("netmirror-local: search returned no IDs");
     return null;
   }
 
-  for (const netId of ids.slice(0, 12)) {
+  for (const netId of ids.slice(0, 16)) {
     try {
       const streamPayload = await localNetMirrorStreamRaw(netId);
       const result = await apiFindPlayableFromPayload({
@@ -2462,15 +2540,34 @@ async function localTheMovieDetailsAndPlay(inputUrl, customSeason = "", customEp
 }
 
 async function localTheMovieByTitle({ title = "", year = "", mediaType = "movie", id = "", season = "", episode = "", attempts = [] }) {
-  const search = await localTheMovieSearchRaw(title);
-  const results = Array.isArray(search.results) ? search.results : [];
+  const variants = localSourceTitleVariants(title, year);
+  let results = [];
+  let usedQuery = "";
+
+  for (const q of variants.slice(0, 7)) {
+    try {
+      const search = await localTheMovieSearchRaw(q);
+      const rows = Array.isArray(search.results) ? search.results : [];
+      if (rows.length) {
+        results = rows;
+        usedQuery = q;
+        break;
+      }
+    } catch (error) {
+      attempts.push(`themovie-local search "${q}": ${error.message || "failed"}`);
+    }
+  }
+
+  const normTitle = localTheMovieNormalizeTitle(title);
+  const normNoThe = normTitle.replace(/^the\s+/, "");
   const picked =
     results.find((entry) => year && String(entry.title || "").includes(String(year))) ||
-    results.find((entry) => entry.title && title && localTheMovieNormalizeTitle(entry.title).includes(localTheMovieNormalizeTitle(title).slice(0, 8))) ||
+    results.find((entry) => entry.title && localTheMovieNormalizeTitle(entry.title).includes(normTitle.slice(0, 8))) ||
+    results.find((entry) => entry.title && localTheMovieNormalizeTitle(entry.title).includes(normNoThe.slice(0, 8))) ||
     results[0];
 
   if (!picked || !picked.fullUrl) {
-    attempts.push("themovie-local: search returned no usable details URL");
+    attempts.push(`themovie-local: search returned no usable details URL${usedQuery ? ` for ${usedQuery}` : ""}`);
     return null;
   }
 
@@ -2512,6 +2609,19 @@ async function localTheMovieByTitle({ title = "", year = "", mediaType = "movie"
       attempts.push(`tm-local: ${error.message || "failed"}`);
     }
   }
+
+  const deepResult = await localDeepDigForPlayableUrl({
+    seedUrls: urls,
+    providerName: "themovie",
+    mediaType,
+    id,
+    season,
+    episode,
+    attempts,
+    seen: new Set(),
+    maxDepth: 3
+  });
+  if (deepResult) return deepResult;
 
   return null;
 }
@@ -2950,7 +3060,7 @@ function localDeepExtractHtmlLinks(text = "", baseUrl = "") {
   const html = apiHtmlEntityDecodeLite(apiUnescapeJsStringLite(String(text || "")));
 
   function push(raw) {
-    const value = apiClean(apiHtmlEntityDecodeLite(raw || ""));
+    const value = apiClean(apiHtmlEntityDecodeLite(apiUnescapeJsStringLite(raw || "")));
     if (!value) return;
     try {
       if (/^\/\//.test(value)) urls.push(`https:${value}`);
@@ -2959,17 +3069,21 @@ function localDeepExtractHtmlLinks(text = "", baseUrl = "") {
   }
 
   for (const re of [
-    /\b(?:src|href|data-src|data-href|poster|action)\s*=\s*["']([^"']+)["']/gi,
-    /\b(?:file|url|link|source|stream|hls|m3u8|videoUrl|streamUrl)\s*[:=]\s*["']([^"']+)["']/gi,
+    /\b(?:src|href|data-src|data-href|data-file|data-url|data-video|data-stream|data-hls|poster|action)\s*=\s*["']([^"']+)["']/gi,
+    /\b(?:file|url|link|source|sources|stream|hls|m3u8|videoUrl|streamUrl|downloadUrl|directUrl|playbackUrl|playlist|manifest|master)\b\s*[:=]\s*["']([^"']+)["']/gi,
     /window\.location(?:\.href|\.replace)?\s*(?:=|\()\s*["']([^"']+)["']/gi,
     /location\.replace\(\s*["']([^"']+)["']/gi,
-    /setAttribute\(\s*["'](?:href|src)["']\s*,\s*["']([^"']+)["']/gi,
-    /content=["'][^"']*url=([^"']+)["']/gi
+    /setAttribute\(\s*["'](?:href|src|data-src|data-url)["']\s*,\s*["']([^"']+)["']/gi,
+    /content=["'][^"']*url=([^"']+)["']/gi,
+    /<iframe\b[^>]*\bsrc=["']([^"']+)["']/gi,
+    /<source\b[^>]*\bsrc=["']([^"']+)["']/gi,
+    /<video\b[^>]*\bsrc=["']([^"']+)["']/gi
   ]) {
     let match;
     while ((match = re.exec(html))) push(match[1]);
   }
 
+  for (const match of html.matchAll(/["']([^"']+\.(?:m3u8|mp4|mkv|webm|mov|avi|ts|m4s)(?:\?[^"']*)?)["']/gi)) push(match[1]);
   for (const nested of apiExtractUrlsFromStringDeep(html)) push(nested);
 
   return Array.from(new Set(urls.filter((url) => !localDeepLooksUnsafeUrl(url))));
@@ -47068,6 +47182,11 @@ app.get("/api/local/deep-url-dig", async (req, res) => {
   });
 });
 
+app.get("/api/local/source-audit", (req, res) => {
+  res.set("Cache-Control", "no-store");
+  res.json({ ok: true, generatedFrom: "ScarperApi-zero(1).zip static audit", routes: [{"route":"/api/4khdhub/details","chars":5899,"urls":[],"fields":["URL","downloadLinks","file","href","src","url"]},{"route":"/api/4khdhub/gadget","chars":5874,"urls":[],"fields":["URL","url"]},{"route":"/api/4khdhub","chars":2624,"urls":[],"fields":["href","src","url"]},{"route":"/api/4khdhub/search","chars":3092,"urls":[],"fields":["href","src","url"]},{"route":"/api/animepahe/details","chars":9219,"urls":["https://animepahe.si${href}","https://animepahe.si/api?m=release&id=${session}&sort=episode_asc&page=${currentPage}"],"fields":["URL","downloadLinks","href","src","streamUrl","url"]},{"route":"/api/animepahe","chars":2276,"urls":["https://animepahe.si/api?m=airing&page=${page}"],"fields":["URL","url"]},{"route":"/api/animepahe/search","chars":2194,"urls":["https://animepahe.si/api?m=search&q=${encodeURIComponent(query"],"fields":["URL","url"]},{"route":"/api/animepahe/stream","chars":4714,"urls":[],"fields":["URL","m3u8","url"]},{"route":"/api/animesalt/details","chars":8021,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/animesalt","chars":3376,"urls":[],"fields":["href","src","url"]},{"route":"/api/animesalt/search","chars":3322,"urls":[],"fields":["href","src","url"]},{"route":"/api/animesalt/stream","chars":3549,"urls":[],"fields":["URL","src","url"]},{"route":"/api/castel","chars":24315,"urls":["https://aesdec.nuvioapp.space/decrypt-castle","https://api.fstcy.com","https://api.themoviedb.org/3"],"fields":["URL","streams","url","videoUrl"]},{"route":"/api/desiremovies/details","chars":2863,"urls":[],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/desiremovies/gyaniguru","chars":1795,"urls":["https://desiremovies.gripe/"],"fields":["URL","downloadLinks","href","url"]},{"route":"/api/desiremovies","chars":2374,"urls":[],"fields":["href","src","url"]},{"route":"/api/desiremovies/search","chars":2779,"urls":["https://desiremovies.gripe/kalamkaval-2025-web-hdrip/"],"fields":["href","src","url"]},{"route":"/api/drive/details","chars":3945,"urls":[],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/drive/mdrive","chars":2523,"urls":[],"fields":["HubCloud","URL","href","hubcloud","url"]},{"route":"/api/drive","chars":2363,"urls":[],"fields":["href","src","url"]},{"route":"/api/drive/search","chars":2904,"urls":[],"fields":["url"]},{"route":"/api/extractors/gdflix","chars":1584,"urls":["https://scarperapi-extractor-7tr4.vercel.app/api/gdflix?url=${encodeURIComponent(url"],"fields":["URL","gdflix","url"]},{"route":"/api/extractors/hubcloud","chars":1590,"urls":["https://scarperapi-extractor-7tr4.vercel.app/api/hubcloud?url=${encodeURIComponent(url"],"fields":["URL","hubcloud","url"]},{"route":"/api/extractors/streamtape","chars":0,"urls":[],"fields":[]},{"route":"/api/extractors/xprime","chars":18282,"urls":["https://api.themoviedb.org/3","https://mznxiwqjdiq00239q.space","https://xprime.hunternisha55.workers.dev","https://xprime.su/watch/${tmdbId}","https://xprime.su/watch/${tmdbId}/${season}/${episode}"],"fields":["URL","XPrime","src","streams","url","xprime"]},{"route":"/api/hdhub4u/details","chars":4722,"urls":[],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/hdhub4u/extractor","chars":11472,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/hdhub4u","chars":2194,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/hdhub4u/search","chars":3147,"urls":["https://new2.hdhub4u.fo","https://new2.hdhub4u.fo/","https://search.pingora.fyi/collections/post/documents/search?q=${formattedQuery}&query_by=post_title&page=${page}"],"fields":["url"]},{"route":"/api/kmmovies/details","chars":6044,"urls":[],"fields":["URL","downloadLinks","file","href","src","url"]},{"route":"/api/kmmovies/magiclinks","chars":3981,"urls":["https://kmmovies.store/","https://net-cookie-kacj.vercel.app/api/redirect?url=${encodeURIComponent(link.url"],"fields":["File","URL","downloadLinks","file","href","url"]},{"route":"/api/kmmovies","chars":3220,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/kmmovies/search","chars":3067,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/mod/details","chars":5030,"urls":[],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/mod/modpro","chars":5122,"urls":["https://moviesmod.build/"],"fields":["URL","downloadLinks","href","serverLinks","techLinks","url"]},{"route":"/api/mod","chars":2418,"urls":[],"fields":["href","src","url"]},{"route":"/api/mod/search","chars":2163,"urls":[],"fields":["href","src","url"]},{"route":"/api/movies4u/details","chars":5470,"urls":[],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/movies4u/m4ulinks","chars":4568,"urls":[],"fields":["URL","href","hubcloud","hubcloudLinks","url"]},{"route":"/api/movies4u","chars":3432,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/movies4u/search","chars":2851,"urls":[],"fields":["href","src","url"]},{"route":"/api/netmirror/getpost","chars":3598,"urls":[],"fields":["URL","url"]},{"route":"/api/netmirror","chars":6442,"urls":["https://net22.cc"],"fields":["URL","net22.cc","src","url"]},{"route":"/api/netmirror/search","chars":3537,"urls":["https://net22.cc"],"fields":["URL","net22.cc","url"]},{"route":"/api/netmirror/stream","chars":6912,"urls":["https://net20.cc/","https://net22.cc/play.php","https://net51.cc","https://net51.cc/","https://net51.cc/playlist.php?id=${id}&tm=${currentTimestamp}&h=${encodeURIComponent(h","https://net52.cc/playlist.php?id=${id}&tm=${timestamp}&h=${encodeURIComponent(h"],"fields":["URL","file","net20.cc","net22.cc","net51.cc","net52.cc","playlist","sources","url"]},{"route":"/api/search","chars":5478,"urls":[],"fields":["url"]},{"route":"/api/themovie/det","chars":9305,"urls":["https://themoviebox.org/","https://themoviebox.org/movies/${slug}?id=${id}&type=${parsedUrl.searchParams.get(","https://themoviebox.org/wefeed-h5api-bff/subject/play"],"fields":["URL","playApiUrl","themoviebox","url"]},{"route":"/api/themovie","chars":2270,"urls":[],"fields":["URL","fullUrl","href","src"]},{"route":"/api/themovie/search","chars":8547,"urls":[],"fields":["URL","fullUrl","href","src","url"]},{"route":"/api/themovie/stream","chars":17695,"urls":["https://themoviebox.org/","https://themoviebox.org/movies/${slug}","https://themoviebox.org/moviesDetail/${slug}","https://themoviebox.org/wefeed-h5api-bff/subject/play"],"fields":["URL","src","themoviebox","url"]},{"route":"/api/tm","chars":5749,"urls":["https://vibuxer.com/","https://vibuxer.com/e/${code.trim("],"fields":["URL","streamUrl","streams","url","vibuxer"]},{"route":"/api/uhdmovies/details","chars":7162,"urls":[],"fields":["URL","downloadLinks","file","href","src","url"]},{"route":"/api/uhdmovies","chars":2234,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/uhdmovies/search","chars":2873,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/uhdmovies/tech","chars":9222,"urls":["https://${mainUrl}${path}","https://net-cookie-kacj.vercel.app/api/vlich?url=${encodeURIComponent(cdnInstantLink"],"fields":["URL","file","href","url","videoUrl"]},{"route":"/api/vega/details","chars":4450,"urls":[],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/vega/nextdrive","chars":1532,"urls":[],"fields":["URL","href","url","vcloudLinks"]},{"route":"/api/vega","chars":1967,"urls":[],"fields":["href","src","url"]},{"route":"/api/vega/search","chars":2567,"urls":[],"fields":["href","src","url"]},{"route":"/api/vid","chars":18078,"urls":["https://api.videasy.net/1movies/sources-with-title","https://api.videasy.net/cdn/sources-with-title","https://api.videasy.net/hdmovie/sources-with-title","https://api.videasy.net/m4uhd/sources-with-title","https://api.videasy.net/meine/sources-with-title","https://api.videasy.net/moviebox/sources-with-title","https://api.videasy.net/myflixerzupcloud/sources-with-title","https://api.videasy.net/onionplay/sources-with-title","https://api.videasy.net/superflix/sources-with-title","https://api.videasy.net/visioncine/sources-with-title","https://api2.videasy.net/cuevana-latino/sources-with-title","https://api2.videasy.net/cuevana-spanish/sources-with-title","https://api2.videasy.net/overflix/sources-with-title","https://api2.videasy.net/primewire/sources-with-title","https://enc-dec.app/api","https://image.tmdb.org/t/p/w1280${data.backdrop_path}","https://image.tmdb.org/t/p/w500${data.poster_path}","https://twilight-cake-defb.hunternisha55.workers.dev/3","https://videasy.net/"],"fields":["VIDEASY","m3u8","mp4","sources","streams","url","videasy"]},{"route":"/api/zeefliz/details","chars":7022,"urls":["https://www.youtube.com/watch?v=${trailerDiv.attr("],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/zeefliz/nextdrive","chars":3515,"urls":[],"fields":["URL","href","url","zeeCloudLinks"]},{"route":"/api/zeefliz","chars":2607,"urls":[],"fields":["href","src","url"]},{"route":"/api/zeefliz/search","chars":3681,"urls":[],"fields":["href","src","url"]},{"route":"/api/zinkmovies/details","chars":2064,"urls":[],"fields":["URL","downloadLinks","href","url"]},{"route":"/api/zinkmovies","chars":5927,"urls":[],"fields":["href","src","url"]},{"route":"/api/zinkmovies/search","chars":3245,"urls":[],"fields":["href","src","url"]},{"route":"/api/zinkmovies/zinkcloud","chars":2718,"urls":[],"fields":["File","URL","ZinkCloud","file","href","hubCloudLinks","hubcloud","url","zinkcloud"]}] });
+});
+
 app.get("/api/local/source-url-patterns", (req, res) => {
   res.set("Cache-Control", "no-store");
   res.json({
@@ -47300,6 +47419,7 @@ app.get("/api/local/all-source-debug", async (req, res) => {
     tmdb: id,
     title,
     year: releaseYear,
+    titleVariants: localSourceTitleVariants(title, releaseYear),
     releaseStatus,
     note: releaseStatus.future
       ? "This title is not released yet. Local source-code providers returning zero streams is expected unless a provider has a pre-release placeholder stream."
