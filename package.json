@@ -1,7 +1,7 @@
 {
   "name": "swiflytv",
   "version": "2.0.0",
-  "description": "SwiflyTV v109 with Fire TV style focus navigation, no cursor.",
+  "description": "SwiflyTV v149 replaces the broken Video.js/custom dock player with Vidstack Default Layout for m3u8 playback.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -18,6 +18,9 @@
     "express-rate-limit": "^7.2.0",
     "helmet": "^7.1.0",
     "socket.io": "^4.8.1",
-    "playwright-core": "^1.49.1"
+    "playwright-core": "^1.49.1",
+    "@consumet/extensions": "latest",
+    "axios": "^1.0.0",
+    "cheerio": "1.0.0-rc.12"
   }
 }
