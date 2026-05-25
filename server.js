@@ -2913,6 +2913,44 @@ function hlsProxyAssetUrl(id, absoluteUrl) {
   return `/api/hls-proxy/${encodeURIComponent(id)}/asset?u=${encodeURIComponent(hlsProxyBase64UrlEncode(absoluteUrl))}`;
 }
 
+function hlsProxyRewriteUriValue(uri = "", baseUrl = "", id = "") {
+  try {
+    const value = String(uri || "").trim();
+    if (!value) return uri;
+    if (value.startsWith("/api/hls-proxy/")) return value;
+    if (/^(data|blob|javascript):/i.test(value)) return uri;
+    const absolute = new URL(value, baseUrl).toString();
+    return hlsProxyAssetUrl(id, absolute);
+  } catch {
+    return uri;
+  }
+}
+
+function rewriteHlsTagUris(line = "", baseUrl = "", id = "") {
+  let next = String(line || "");
+
+  // Quoted URI attributes: URI="..." or URI='...'
+  next = next.replace(/\bURI=(["'])(.*?)\1/g, (match, quote, uri) => {
+    return `URI=${quote}${hlsProxyRewriteUriValue(uri, baseUrl, id)}${quote}`;
+  });
+
+  // Unquoted URI attributes: URI=https://... or URI=segment.mp4
+  next = next.replace(/\bURI=([^,\s]+)/g, (match, uri) => {
+    // Skip if the quoted replacer already handled it.
+    if (/^["']/.test(uri)) return match;
+    return `URI=${hlsProxyRewriteUriValue(uri, baseUrl, id)}`;
+  });
+
+  // Some providers put absolute media URLs in non-standard tag attributes that
+  // are not named URI. Rewrite any raw http(s) URL still left in a tag line.
+  next = next.replace(/https?:\/\/[^\s,"')]+/g, (url) => {
+    if (url.includes("/api/hls-proxy/")) return url;
+    return hlsProxyRewriteUriValue(url, baseUrl, id);
+  });
+
+  return next;
+}
+
 function rewriteHlsPlaylist(text = "", baseUrl = "", id = "") {
   const lines = String(text || "").split(/\r?\n/);
 
@@ -2922,23 +2960,12 @@ function rewriteHlsPlaylist(text = "", baseUrl = "", id = "") {
     if (!trimmed) return line;
 
     if (trimmed.startsWith("#")) {
-      // Rewrite URI="..." inside EXT-X-KEY, EXT-X-MAP, I-FRAME-STREAM-INF, etc.
-      return line.replace(/URI="([^"]+)"/g, (match, uri) => {
-        try {
-          const absolute = new URL(uri, baseUrl).toString();
-          return `URI="${hlsProxyAssetUrl(id, absolute)}"`;
-        } catch {
-          return match;
-        }
-      });
+      // Rewrite URI attributes in EXT-X-KEY, EXT-X-MAP, EXT-X-PART,
+      // EXT-X-PRELOAD-HINT, I-FRAME-STREAM-INF, and provider-specific tags.
+      return rewriteHlsTagUris(line, baseUrl, id);
     }
 
-    try {
-      const absolute = new URL(trimmed, baseUrl).toString();
-      return hlsProxyAssetUrl(id, absolute);
-    } catch {
-      return line;
-    }
+    return hlsProxyRewriteUriValue(trimmed, baseUrl, id);
   }).join("\n");
 }
 
@@ -41282,14 +41309,23 @@ async function watchPage(req, res, type) {
           function clean(value) { return value == null ? "" : String(value).trim(); }
           function isM3u8(value) { return /\.m3u8(?:[?#]|$)/i.test(clean(value)); }
 
-          var candidates = [
+          var proxyCandidates = [
             data.embeddedM3u8Url,
             data.hlsProxyUrl,
             data.playbackUrl,
-            data.proxyVideo,
+            data.proxyVideo
+          ].map(clean).filter(Boolean);
+
+          for (var p = 0; p < proxyCandidates.length; p += 1) {
+            if (isM3u8(proxyCandidates[p]) && proxyCandidates[p].indexOf("/api/hls-proxy/") === 0) {
+              return proxyCandidates[p];
+            }
+          }
+
+          var candidates = proxyCandidates.concat([
             data.m3u8,
             data.originalPlaybackUrl
-          ].map(clean).filter(Boolean);
+          ].map(clean).filter(Boolean));
 
           for (var i = 0; i < candidates.length; i += 1) {
             if (isM3u8(candidates[i])) return candidates[i];
@@ -45807,6 +45843,8 @@ async function handleHlsProxyMaster(req, res) {
 
     res.set("Cache-Control", "no-store");
     res.set("Content-Type", "application/vnd.apple.mpegurl; charset=utf-8");
+      res.set("X-Swifly-HLS-Proxy", "playlist");
+    res.set("X-Swifly-HLS-Proxy", "master");
     if (req.method === "HEAD") return res.status(200).end();
     return res.status(200).send(rewritten);
   } catch (error) {
@@ -45908,6 +45946,28 @@ app.get("/api/hls-proxy/:id/master.m3u8", handleHlsProxyMaster);
 app.options("/api/hls-proxy/:id/asset", handleHlsProxyAsset);
 app.head("/api/hls-proxy/:id/asset", handleHlsProxyAsset);
 app.get("/api/hls-proxy/:id/asset", handleHlsProxyAsset);
+
+app.get("/api/hls-proxy/:id/debug-master", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  setHlsProxyCors(res);
+
+  const entry = getHlsProxyEntry(req.params.id);
+  if (!entry) {
+    return res.status(404).type("text/plain").send("HLS proxy source expired or missing.");
+  }
+
+  try {
+    const upstream = await fetchHlsProxyUrl(entry, entry.sourceUrl, req);
+    const playlist = await upstream.text();
+    const rewritten = rewriteHlsPlaylist(playlist, entry.sourceUrl, entry.id);
+
+    res.type("text/plain");
+    return res.send(rewritten);
+  } catch (error) {
+    return res.status(502).type("text/plain").send(`HLS debug failed: ${error.message || "unknown error"}`);
+  }
+});
+
 
 app.get("/api/hls-proxy/:id/status", (req, res) => {
   res.set("Cache-Control", "no-store");
