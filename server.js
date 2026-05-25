@@ -98,6 +98,26 @@ function apiIsMpdUrl(url = "") {
   return /\.mpd(?:[?#]|$)/i.test(String(url || ""));
 }
 
+function apiUrlPath(url = "") {
+  try {
+    return new URL(String(url || "")).pathname || "";
+  } catch {
+    return String(url || "").split(/[?#]/)[0] || "";
+  }
+}
+
+function apiUrlEndsWithFileExtension(url = "") {
+  const path = apiUrlPath(url).toLowerCase();
+  return /\.[a-z0-9]{2,8}$/.test(path);
+}
+
+function apiIsAllowedMediaExtensionUrl(url = "") {
+  const path = apiUrlPath(url).toLowerCase();
+
+  // M3U8 remains the main target. MPD/MP4/WebM/MOV are non-download fallbacks.
+  return /\.(?:m3u8|mpd|mp4|m4v|webm|mov)$/.test(path);
+}
+
 function apiIsYouTubeUrl(url = "") {
   const value = String(url || "").trim().toLowerCase();
   if (!value) return false;
@@ -147,12 +167,49 @@ async function apiResolveTmdbIdForApi({ mediaType = "movie", id = "", attempts =
   return "";
 }
 
+function apiProviderNeedsTmdb(providerName = "", action = "", endpoint = "") {
+  const provider = apiClean(providerName).toLowerCase();
+  const actionName = apiClean(action).toLowerCase();
+  const path = apiClean(endpoint).toLowerCase();
+
+  // Docs: Castel requires tmdb. This also catches future/provider actions that
+  // are clearly TMDB-based.
+  return (
+    provider === "castel" ||
+    actionName === "tmdb" ||
+    actionName === "stream-tmdb" ||
+    /\btmdb\b/.test(actionName) ||
+    /\btmdb\b/.test(path)
+  );
+}
+
+async function apiApplyTmdbParamsIfNeeded({ providerName = "", action = "", endpoint = "", params = {}, mediaType = "movie", attempts = [] }) {
+  if (!apiProviderNeedsTmdb(providerName, action, endpoint)) return params;
+
+  const sourceId = apiClean(params.tmdb || params.tmdbId || params.id || params.imdb || params.url);
+  const tmdbId = await apiResolveTmdbIdForApi({ mediaType, id: sourceId, attempts });
+
+  if (!tmdbId) {
+    throw new Error(`${providerName}: provider route needs a numeric TMDB id`);
+  }
+
+  const next = { ...params };
+  next.tmdb = tmdbId;
+  next.tmdbId = tmdbId;
+  next.id = tmdbId;
+  delete next.imdb;
+  return next;
+}
+
 function apiLooksLikeDownloadUrl(url = "", node = {}) {
   const value = String(url || "").toLowerCase();
   const nodeText = `${Object.keys(node || {}).join(" ")} ${Object.values(node || {}).slice(0, 12).join(" ")}`.toLowerCase();
 
   // YouTube links are never used for SwiflyTV provider embeds.
   if (apiIsYouTubeUrl(value)) return true;
+
+  // Provider embeds must be actual media file/manifest URLs, not extensionless pages.
+  if (!apiUrlEndsWithFileExtension(value)) return true;
 
   // Never reject HLS just because a provider used a sloppy field name.
   if (apiIsM3u8Url(value)) return false;
@@ -167,13 +224,15 @@ function apiLooksLikeDownloadUrl(url = "", node = {}) {
 
 function apiLooksStreamLike(url = "", node = {}) {
   const value = String(url || "").toLowerCase();
-  const nodeText = `${Object.keys(node || {}).join(" ")} ${Object.values(node || {}).slice(0, 12).join(" ")}`.toLowerCase();
 
   if (apiIsYouTubeUrl(value)) return false;
+
+  // Only embed URLs whose path ends with a supported media file extension.
+  // This prevents page/detail/download redirect URLs from being selected.
+  if (!apiIsAllowedMediaExtensionUrl(value)) return false;
+
   if (apiIsM3u8Url(value) || apiIsMpdUrl(value)) return true;
   if (/\.(?:mp4|m4v|webm|mov)(?:[?#]|$)/i.test(value)) return true;
-  if (/(\/|\.|\b)(hls|m3u8|playlist|manifest|stream|embed|player|play|watch|video|source)(\/|\.|\?|&|=|$)/i.test(value)) return true;
-  if (/\b(hls|m3u8|playlist|manifest|stream|embed|player|playback|video|source|server|quality)\b/i.test(nodeText)) return true;
 
   return false;
 }
@@ -209,10 +268,14 @@ function apiLooksPlayable(url = "", node = {}) {
   if (apiLooksLikeImage(value)) return false;
   if (apiIsYouTubeUrl(value)) return false;
 
+  // Only URLs ending in a media file extension can be embedded.
+  // Allowed: .m3u8, .mpd, .mp4, .m4v, .webm, .mov
+  if (!apiIsAllowedMediaExtensionUrl(value)) return false;
+
   // Main target: actual HLS .m3u8 URLs.
   if (apiIsM3u8Url(value)) return true;
 
-  // Secondary fallback: non-download stream/embed/media URLs only.
+  // Secondary fallback: non-download media URLs only.
   if (apiLooksLikeDownloadUrl(value, node)) return false;
   if (!apiLooksStreamLike(value, node)) return false;
 
@@ -514,7 +577,7 @@ async function fetchApiProviderSource({ type = "movie", id = "", season = "1", e
 
   return {
     status: "error",
-    message: attempts[0] || "API provider did not return a non-download source. M3U8 is preferred.",
+    message: attempts[0] || "API provider did not return a usable file-extension media source. M3U8 is preferred.",
     attempts: attempts.slice(-16)
   };
 }
@@ -36957,6 +37020,11 @@ async function fetchProxyVideoSource({ type, id, season = "1", episode = "1", pr
           continue;
         }
 
+        if (!apiIsAllowedMediaExtensionUrl(parsedProxy.toString())) {
+          errors.push(`${url.toString()} attempt ${attempt}: stream URL must end with a media file extension`);
+          continue;
+        }
+
         const isHlsResolverSource = Boolean(resolverM3u8 || streamType === "m3u8" || streamType === "hls");
         const hlsProxy = isHlsResolverSource && hlsProxyEnabled()
           ? registerHlsProxySource(parsedProxy.toString(), streamHeaders, {
@@ -43721,7 +43789,15 @@ app.get("/api/provider/details", async (req, res) => {
   try {
     const [providerName, providerConfig] = apiGetProvider(req.query.provider);
     if (!providerConfig.details) return res.status(400).json({ ok: false, error: "Provider has no details route" });
-    const params = providerName === "netmirror" ? { id: req.query.id || req.query.url, t: req.query.t } : { url: req.query.url };
+    let params = providerName === "netmirror" ? { id: req.query.id || req.query.url, t: req.query.t } : { url: req.query.url };
+    params = await apiApplyTmdbParamsIfNeeded({
+      providerName,
+      action: "details",
+      endpoint: providerConfig.details,
+      params: { ...params, tmdb: req.query.tmdb, tmdbId: req.query.tmdbId, id: req.query.id || params.id },
+      mediaType: req.query.type === "tv" ? "tv" : "movie",
+      attempts: []
+    });
     const data = await apiProviderFetch(providerConfig.details, params);
     res.json({
       ok: true,
@@ -43740,9 +43816,19 @@ app.get("/api/provider/action", async (req, res) => {
     const action = apiClean(req.query.action).toLowerCase();
     const endpoint = providerConfig[action];
     if (!endpoint || endpoint.includes("/api/adult/")) return res.status(400).json({ ok: false, error: "Unsupported action" });
-    const params = { ...req.query };
+    let params = { ...req.query };
     delete params.provider;
     delete params.action;
+
+    params = await apiApplyTmdbParamsIfNeeded({
+      providerName,
+      action,
+      endpoint,
+      params,
+      mediaType: params.type === "tv" ? "tv" : "movie",
+      attempts: []
+    });
+
     const data = await apiProviderFetch(endpoint, params);
     res.json({
       ok: true,
