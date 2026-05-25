@@ -6,11 +6,10 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "check": "node --check server.js",
-    "postinstall": "PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install chromium"
+    "check": "node --check server.js"
   },
   "engines": {
-    "node": ">=20"
+    "node": "20.x"
   },
   "dependencies": {
     "compression": "^1.7.4",
@@ -22,7 +21,6 @@
     "playwright-core": "1.49.1",
     "@consumet/extensions": "latest",
     "axios": "^1.0.0",
-    "cheerio": "1.0.0-rc.12",
-    "playwright": "1.49.1"
+    "cheerio": "1.0.0-rc.12"
   }
 }
