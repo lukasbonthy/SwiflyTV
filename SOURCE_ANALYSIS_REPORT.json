@@ -1,0 +1,69 @@
+{
+  "uploaded_source": "ScarperApi-zero(1).zip",
+  "non_adult_api_files_scanned": 70,
+  "major_playable_extractors": [
+    {
+      "name": "VID/VideoEasy",
+      "route": "app/api/vid/route.ts",
+      "output_fields": [
+        "streams[].url"
+      ],
+      "notes": "TMDB title/year/imdb -> VideoEasy endpoints -> dec-videasy -> sources"
+    },
+    {
+      "name": "Castle",
+      "route": "app/api/castel/route.ts",
+      "output_fields": [
+        "data.videoUrl",
+        "data.videos[].url"
+      ],
+      "notes": "Castle mobile API with security key + decryption"
+    },
+    {
+      "name": "TheMovie/MovieBox",
+      "route": "app/api/themovie/det and stream",
+      "output_fields": [
+        "watchOnline.playApiUrl",
+        "playData.data",
+        "playbackHeaders"
+      ],
+      "notes": "MovieBox detail Nuxt data -> H5 play API"
+    },
+    {
+      "name": "TM/Vibuxer",
+      "route": "app/api/tm/route.ts",
+      "output_fields": [
+        "streamUrl",
+        "streams.hls4",
+        "streams.hls3",
+        "streams.hls2"
+      ],
+      "notes": "Unpacks packed JS to find HLS vars"
+    },
+    {
+      "name": "NetMirror",
+      "route": "app/api/netmirror/stream/route.ts",
+      "output_fields": [
+        "sources[].file"
+      ],
+      "notes": "play.php hash -> playlist.php; prefixes net51"
+    },
+    {
+      "name": "XPrime",
+      "route": "app/api/extractors/xprime/route.ts",
+      "output_fields": [
+        "streams[]"
+      ],
+      "notes": "Discovers backend from Svelte chunks, probes servers, solves Altcha if needed"
+    }
+  ],
+  "new_routes_added": [
+    "/api/local/xprime",
+    "/api/local/super-source-debug"
+  ],
+  "disallowed_skipped": [
+    "/api/adult/*",
+    "/api/hentai/*",
+    "/api/youtubes/*"
+  ]
+}
