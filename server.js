@@ -156,11 +156,21 @@ function apiUrlEndsWithFileExtension(url = "") {
   return /\.[a-z0-9]{2,8}$/.test(path);
 }
 
+function apiIsBlockedFileExtensionUrl(url = "") {
+  const path = apiUrlPath(url).toLowerCase();
+
+  // Keep obvious non-video assets out, but do NOT block video files like mkv/avi/ts.
+  return /\.(?:jpe?g|png|webp|gif|avif|svg|ico|css|js|json|txt|srt|ass|vtt|zip|rar|7z|tar|gz|torrent|pdf)$/.test(path);
+}
+
 function apiIsAllowedMediaExtensionUrl(url = "") {
   const path = apiUrlPath(url).toLowerCase();
 
-  // M3U8 remains the main target. MPD/MP4/WebM/MOV are non-download fallbacks.
-  return /\.(?:m3u8|mpd|mp4|m4v|webm|mov)$/.test(path);
+  // New rule: it can be any playable/file source as long as the URL path ends
+  // with a file extension. M3U8 still gets highest priority elsewhere.
+  if (!apiUrlEndsWithFileExtension(url)) return false;
+  if (apiIsBlockedFileExtensionUrl(url)) return false;
+  return true;
 }
 
 function apiNodeSaysHls(url = "", node = {}) {
@@ -283,10 +293,13 @@ function apiLooksLikeDownloadUrl(url = "", node = {}) {
   // Never reject HLS just because a provider used a sloppy field name.
   if (apiIsM3u8Url(value)) return false;
 
-  // These are usually detail/download/redirect pages, not media embeds.
-  if (/\b(download|downloads|downloadurl|directurl|gdtot|gdflix|hubcloud|hub-cloud|drivebot|resumebot|resume-bot|v-cloud|vcloud|nextdrive|zinkcloud|gadget|gadgetsworld|tech\.unblockedgames|ddl|torrent)\b/i.test(nodeText)) return true;
-  if (/(\/|\?|&|=)(download|dl|ddl|file|attachment|export=download)(\/|\?|&|=|$)/i.test(value)) return true;
-  if (/\.(?:mkv|avi|zip|rar|7z|tar|gz|torrent|srt|ass)(?:[?#]|$)/i.test(value)) return true;
+  // New rule: actual file-extension URLs are allowed even if the field name
+  // is downloadUrl/directUrl/file/etc. Only block known non-video/archive/subtitle assets.
+  if (apiIsBlockedFileExtensionUrl(value)) return true;
+
+  // Extensionless known download/detail hosts are pages, not files.
+  if (!apiUrlEndsWithFileExtension(value) && /\b(download|downloads|gdtot|gdflix|hubcloud|hub-cloud|drivebot|resumebot|resume-bot|v-cloud|vcloud|nextdrive|zinkcloud|gadget|gadgetsworld|tech\.unblockedgames|ddl|torrent)\b/i.test(nodeText)) return true;
+  if (!apiUrlEndsWithFileExtension(value) && /(\/|\?|&|=)(download|dl|ddl|file|attachment|export=download)(\/|\?|&|=|$)/i.test(value)) return true;
 
   return false;
 }
@@ -303,8 +316,7 @@ function apiLooksStreamLike(url = "", node = {}) {
     return apiHasEmbeddableFileExtensionOrHlsProxy(value, node);
   }
 
-  if (apiIsM3u8Url(value) || apiIsMpdUrl(value)) return true;
-  if (/\.(?:mp4|m4v|webm|mov)(?:[?#]|$)/i.test(value)) return true;
+  if (apiIsAllowedMediaExtensionUrl(value)) return true;
 
   return false;
 }
@@ -341,9 +353,9 @@ function apiLooksPlayable(url = "", node = {}) {
   if (apiLooksLikeImage(value)) return false;
   if (apiIsYouTubeUrl(value)) return false;
 
-  // Allowed browser embed URLs still end with a file extension. For extensionless
-  // upstream HLS endpoints, we only accept them when HLS proxy is enabled, because
-  // the actual browser URL becomes /api/hls-proxy/<id>/master.m3u8.
+  // Allowed browser embed URLs now only need a real file extension.
+  // For extensionless upstream HLS endpoints, we only accept them when HLS proxy is enabled,
+  // because the actual browser URL becomes /api/hls-proxy/<id>/master.m3u8.
   if (!apiIsAllowedMediaExtensionUrl(value) && !apiHasEmbeddableFileExtensionOrHlsProxy(value, node)) return false;
 
   // Main target: actual HLS .m3u8 URLs.
@@ -994,7 +1006,9 @@ function apiSourceToProxyResult({ source, raw, provider, type, id, season = "", 
     return null;
   }
 
-  const streamType = isHls ? "m3u8" : (isDash ? "dash" : "video");
+  const pathExtMatch = apiUrlPath(playbackUrl).toLowerCase().match(/\.([a-z0-9]{2,8})$/);
+  const sourceExt = pathExtMatch ? pathExtMatch[1] : "";
+  const streamType = isHls ? "m3u8" : (isDash ? "dash" : (sourceExt || "video"));
   const streamMode = isHls ? "hls" : (isDash ? "dash" : "video");
 
   return {
@@ -1675,11 +1689,37 @@ async function localSourceGetCookies() {
     }
   });
 
-  if (!response.ok) throw new Error(`Failed to fetch cookies: ${response.status}`);
+  if (!response.ok) {
+    // The uploaded source depends on a remote cookies.json that can disappear/404.
+    // Keep local-source-only mode alive instead of killing the entire chain.
+    LOCAL_SOURCE_COOKIES_CACHE = "";
+    return LOCAL_SOURCE_COOKIES_CACHE;
+  }
+
   const data = await response.json();
-  if (!data.cookies) throw new Error("Cookies not found in source cookies JSON");
+  if (!data.cookies) {
+    LOCAL_SOURCE_COOKIES_CACHE = "";
+    return LOCAL_SOURCE_COOKIES_CACHE;
+  }
+
   LOCAL_SOURCE_COOKIES_CACHE = data.cookies;
   return LOCAL_SOURCE_COOKIES_CACHE;
+}
+
+
+function localSourceReleaseStatus({ mediaType = "movie", releaseDate = "", firstAirDate = "" } = {}) {
+  const dateText = mediaType === "tv" ? firstAirDate : releaseDate;
+  if (!dateText) return { known: false, future: false, label: "unknown" };
+
+  const release = new Date(`${dateText}T00:00:00Z`);
+  if (Number.isNaN(release.getTime())) return { known: false, future: false, label: "unknown" };
+
+  return {
+    known: true,
+    future: release.getTime() > Date.now(),
+    label: release.getTime() > Date.now() ? "unreleased" : "released",
+    date: dateText
+  };
 }
 
 function localSourceDeepCollectIds(input) {
@@ -2586,7 +2626,10 @@ async function fetchApiProviderSource({ type = "movie", id = "", season = "1", e
     status: "error",
     message: attempts[0] || "Uploaded source-code providers did not return a usable m3u8/media URL.",
     attempts: attempts.slice(-48),
-    sourceMode: USE_EXTERNAL_PROVIDER_API ? "local+external-api" : "local-source-code-only"
+    sourceMode: USE_EXTERNAL_PROVIDER_API ? "local+external-api" : "local-source-code-only",
+    note: title && releaseYear && Number(releaseYear) > new Date().getUTCFullYear()
+      ? "TMDB metadata says this title is unreleased/future-dated, so providers may correctly return no streams."
+      : ""
   };
 }
 
@@ -45871,6 +45914,7 @@ app.get("/api/local/all-source-debug", async (req, res) => {
 
   let title = "";
   let releaseYear = "";
+  let releaseStatus = { known: false, future: false, label: "unknown" };
 
   try {
     const tmdbId = await apiResolveTmdbIdForApi({ mediaType: type, id, attempts });
@@ -45878,6 +45922,11 @@ app.get("/api/local/all-source-debug", async (req, res) => {
     const details = await tmdb(endpoint, {}, CACHE_TTL.long);
     title = getTitle(details);
     releaseYear = getYear(type === "tv" ? details.first_air_date : details.release_date);
+    releaseStatus = localSourceReleaseStatus({
+      mediaType: type,
+      releaseDate: details.release_date,
+      firstAirDate: details.first_air_date
+    });
   } catch (error) {
     attempts.push(`tmdb metadata: ${error.message || "failed"}`);
   }
@@ -45938,6 +45987,10 @@ app.get("/api/local/all-source-debug", async (req, res) => {
     tmdb: id,
     title,
     year: releaseYear,
+    releaseStatus,
+    note: releaseStatus.future
+      ? "This title is not released yet. Local source-code providers returning zero streams is expected unless a provider has a pre-release placeholder stream."
+      : "",
     attempts,
     results
   });
@@ -46150,7 +46203,14 @@ app.get("/api/provider/embed", async (req, res) => {
         quality: result.streamQuality || "",
         url: result.playbackUrl,
         headers: result.streamHeaders || {},
-        type: result.streamType === "m3u8" ? "application/x-mpegurl" : (result.streamType === "dash" ? "application/dash+xml" : "video/mp4"),
+        type: result.streamType === "m3u8" ? "application/x-mpegurl" : (result.streamType === "dash" ? "application/dash+xml" : (
+          result.streamType === "webm" ? "video/webm" :
+          result.streamType === "mov" ? "video/quicktime" :
+          result.streamType === "mkv" ? "video/x-matroska" :
+          result.streamType === "avi" ? "video/x-msvideo" :
+          result.streamType === "ts" ? "video/mp2t" :
+          "video/mp4"
+        )),
         format: result.streamType || ""
       }],
       providerKind: result.providerKind,
