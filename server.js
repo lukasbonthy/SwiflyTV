@@ -98,9 +98,61 @@ function apiIsMpdUrl(url = "") {
   return /\.mpd(?:[?#]|$)/i.test(String(url || ""));
 }
 
+function apiIsYouTubeUrl(url = "") {
+  const value = String(url || "").trim().toLowerCase();
+  if (!value) return false;
+
+  try {
+    const parsed = new URL(value);
+    const host = parsed.hostname.replace(/^www\./, "");
+    return (
+      host === "youtube.com" ||
+      host.endsWith(".youtube.com") ||
+      host === "youtu.be" ||
+      host === "youtube-nocookie.com" ||
+      host.endsWith(".youtube-nocookie.com") ||
+      host === "googlevideo.com" ||
+      host.endsWith(".googlevideo.com") ||
+      host === "ytimg.com" ||
+      host.endsWith(".ytimg.com")
+    );
+  } catch {
+    return /(?:youtube\.com|youtu\.be|youtube-nocookie\.com|googlevideo\.com|ytimg\.com)/i.test(value);
+  }
+}
+
+function apiLooksTmdbId(value = "") {
+  return /^\d{1,10}$/.test(apiClean(value));
+}
+
+async function apiResolveTmdbIdForApi({ mediaType = "movie", id = "", attempts = [] }) {
+  const value = apiClean(id);
+
+  if (apiLooksTmdbId(value)) return value;
+
+  // Provider routes like Castel need numeric TMDB ids. If an older route sends an
+  // IMDb id, convert it before calling the provider API.
+  if (/^tt\d{6,}$/i.test(value)) {
+    try {
+      const found = await tmdb(`/find/${value}`, { external_source: "imdb_id" }, CACHE_TTL.long);
+      const list = mediaType === "tv" ? found?.tv_results : found?.movie_results;
+      const tmdbId = apiClean(list?.[0]?.id);
+      if (apiLooksTmdbId(tmdbId)) return tmdbId;
+      attempts.push(`tmdb: no ${mediaType} result found for IMDb id ${value}`);
+    } catch (error) {
+      attempts.push(`tmdb: failed to convert IMDb id ${value}: ${error.message || "request failed"}`);
+    }
+  }
+
+  return "";
+}
+
 function apiLooksLikeDownloadUrl(url = "", node = {}) {
   const value = String(url || "").toLowerCase();
   const nodeText = `${Object.keys(node || {}).join(" ")} ${Object.values(node || {}).slice(0, 12).join(" ")}`.toLowerCase();
+
+  // YouTube links are never used for SwiflyTV provider embeds.
+  if (apiIsYouTubeUrl(value)) return true;
 
   // Never reject HLS just because a provider used a sloppy field name.
   if (apiIsM3u8Url(value)) return false;
@@ -117,6 +169,7 @@ function apiLooksStreamLike(url = "", node = {}) {
   const value = String(url || "").toLowerCase();
   const nodeText = `${Object.keys(node || {}).join(" ")} ${Object.values(node || {}).slice(0, 12).join(" ")}`.toLowerCase();
 
+  if (apiIsYouTubeUrl(value)) return false;
   if (apiIsM3u8Url(value) || apiIsMpdUrl(value)) return true;
   if (/\.(?:mp4|m4v|webm|mov)(?:[?#]|$)/i.test(value)) return true;
   if (/(\/|\.|\b)(hls|m3u8|playlist|manifest|stream|embed|player|play|watch|video|source)(\/|\.|\?|&|=|$)/i.test(value)) return true;
@@ -154,6 +207,7 @@ function apiLooksPlayable(url = "", node = {}) {
   const value = String(url || "").trim();
   if (!/^https?:\/\//i.test(value)) return false;
   if (apiLooksLikeImage(value)) return false;
+  if (apiIsYouTubeUrl(value)) return false;
 
   // Main target: actual HLS .m3u8 URLs.
   if (apiIsM3u8Url(value)) return true;
@@ -270,6 +324,7 @@ function apiNormalizeResponse(raw = {}, provider = "", fallbackType = "movie") {
 async function apiProviderFetch(endpoint, params = {}) {
   if (!apiProviderConfigured()) throw new Error("Missing API_BASE_URL or API_KEY env vars");
   if (String(endpoint || "").includes("/api/adult/")) throw new Error("Adult provider routes are disabled");
+  if (String(endpoint || "").includes("/api/youtubes/")) throw new Error("YouTube API routes are disabled for SwiflyTV embeds");
 
   const url = new URL(API_BASE_URL + endpoint);
   for (const [key, value] of Object.entries(params || {})) {
@@ -312,6 +367,12 @@ function apiSourceToProxyResult({ source, raw, provider, type, id, season = "", 
   if (!["http:", "https:"].includes(parsed.protocol)) return null;
 
   const originalUrl = parsed.toString();
+
+  if (apiIsYouTubeUrl(originalUrl)) {
+    attempts.push(`${provider}: skipped YouTube source`);
+    return null;
+  }
+
   const isHls = apiIsM3u8Url(originalUrl);
   const isDash = apiIsMpdUrl(originalUrl);
 
@@ -376,8 +437,15 @@ async function fetchApiProviderSource({ type = "movie", id = "", season = "1", e
       let data = null;
 
       if (providerName === "castel" && providerConfig.stream) {
+        const tmdbId = await apiResolveTmdbIdForApi({ mediaType, id, attempts });
+
+        if (!tmdbId) {
+          attempts.push(`${providerName}: missing numeric TMDB id`);
+          continue;
+        }
+
         data = await apiProviderFetch(providerConfig.stream, {
-          tmdb: id,
+          tmdb: tmdbId,
           type: mediaType,
           season: mediaType === "tv" ? season : "",
           episode: mediaType === "tv" ? episode : ""
@@ -36884,6 +36952,11 @@ async function fetchProxyVideoSource({ type, id, season = "1", episode = "1", pr
           continue;
         }
 
+        if (apiIsYouTubeUrl(parsedProxy.toString())) {
+          errors.push(`${url.toString()} attempt ${attempt}: YouTube links are disabled`);
+          continue;
+        }
+
         const isHlsResolverSource = Boolean(resolverM3u8 || streamType === "m3u8" || streamType === "hls");
         const hlsProxy = isHlsResolverSource && hlsProxyEnabled()
           ? registerHlsProxySource(parsedProxy.toString(), streamHeaders, {
@@ -43740,6 +43813,8 @@ app.get("/api/provider/embed", async (req, res) => {
         format: result.streamType || ""
       }],
       providerKind: result.providerKind,
+      apiProvider: result.apiProvider || "",
+      tmdbId: result.movieId || "",
       originalPlaybackUrl: result.originalPlaybackUrl || "",
       hlsProxyUrl: result.hlsProxyUrl || ""
     });
