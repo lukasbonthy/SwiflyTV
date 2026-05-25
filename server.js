@@ -45,7 +45,7 @@ const CONSUMET_PROVIDER_ORDER = String(
 
 // Optional local VidSrc scraper bridge from uploaded vidsrc-scraper source.
 // Server-side only. Uses Playwright to watch network requests for real .m3u8 URLs.
-const VIDSRC_ENABLED = process.env.VIDSRC_ENABLED !== "false";
+const VIDSRC_ENABLED = process.env.VIDSRC_ENABLED === "true";
 const VIDSRC_PROVIDER_ORDER = String(
   process.env.VIDSRC_PROVIDER_ORDER ||
   "https://vidsrc.xyz,https://vidsrc.in,https://vidsrc.pm,https://vidsrc.net"
@@ -4078,6 +4078,9 @@ function localVidSrcIsSubtitleUrl(url = "") {
 }
 
 function localVidSrcLoadChromium() {
+  if (!VIDSRC_ENABLED) {
+    throw new Error("VIDSRC_ENABLED is false. Enable only on Docker/Playwright-ready Render, not native Node builds.");
+  }
   try {
     return require("playwright-core").chromium;
   } catch (coreError) {
