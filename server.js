@@ -74,11 +74,11 @@ const VIDSRC_WAIT_MS = Math.max(2500, Number(process.env.VIDSRC_WAIT_MS || 9000)
 const VIDSRC_CONCURRENCY = Math.max(1, Math.min(3, Number(process.env.VIDSRC_CONCURRENCY || 2)));
 
 // Filmu m3u8 backend-only scraper.
-// User-provided target: https://embedm3u8.filmu.in/movietrailer/use-tmdbid-for-your-scraper
+// User-provided target example: https://embedm3u8.filmu.in/movietrailer/112321
 // The scraper replaces "use-tmdbid-for-your-scraper" with the TMDB id, then watches
 // browser network traffic for real .m3u8 URLs exactly like DevTools Network.
 const FILMU_ENABLED = process.env.FILMU_ENABLED !== "false";
-const FILMU_EMBED_TEMPLATE = process.env.FILMU_EMBED_TEMPLATE || "https://embedm3u8.filmu.in/movietrailer/use-tmdbid-for-your-scraper";
+const FILMU_EMBED_TEMPLATE = process.env.FILMU_EMBED_TEMPLATE || "https://embedm3u8.filmu.in/movietrailer/{tmdb}";
 const FILMU_TIMEOUT_MS = Math.max(10000, Number(process.env.FILMU_TIMEOUT_MS || 30000));
 const FILMU_WAIT_MS = Math.max(2500, Number(process.env.FILMU_WAIT_MS || 12000));
 
@@ -4360,11 +4360,14 @@ function localFilmuBuildEmbedUrls({ tmdbId = "", mediaType = "movie", season = "
   const id = encodeURIComponent(String(tmdbId || "").trim());
   const s = encodeURIComponent(String(season || "1").trim());
   const e = encodeURIComponent(String(episode || "1").trim());
-  const template = String(FILMU_EMBED_TEMPLATE || "https://embedm3u8.filmu.in/movietrailer/use-tmdbid-for-your-scraper").trim();
+  const template = String(FILMU_EMBED_TEMPLATE || "https://embedm3u8.filmu.in/movietrailer/{tmdb}").trim();
   const urls = new Set();
 
+  // Exact user-provided pattern first:
+  // https://embedm3u8.filmu.in/movietrailer/112321
+  urls.add(`https://embedm3u8.filmu.in/movietrailer/${id}`);
+
   if (template) {
-    // Primary user-requested behavior.
     urls.add(template
       .replace(/\{tmdb(?:Id)?\}/gi, id)
       .replace(/\{id\}/gi, id)
