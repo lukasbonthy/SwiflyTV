@@ -9,6 +9,8 @@ services:
         value: production
       - key: PORT
         value: "10000"
+      - key: HOST
+        value: 0.0.0.0
       - key: PLAYWRIGHT_BROWSERS_PATH
         value: /ms-playwright
       - key: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD
@@ -24,7 +26,7 @@ services:
       - key: VIDSRC_ENABLED
         value: "true"
       - key: VIDSRC_PROVIDER_ORDER
-        value: https://vidsrc.xyz,https://vidsrc.in,https://vidsrc.pm,https://vidsrc.net
+        value: https://vidsrc-embed.ru,https://vidsrcme.ru,https://vsrc.su
       - key: VIDSRC_TIMEOUT_MS
         value: "28000"
       - key: VIDSRC_WAIT_MS
