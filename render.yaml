@@ -17,3 +17,13 @@ services:
         value: "1"
       - key: REMOTE_BROWSER_JPEG_QUALITY
         value: "58"
+      - key: CONSUMET_ENABLED
+        value: "true"
+      - key: VIDSRC_ENABLED
+        value: "true"
+      - key: VIDSRC_TIMEOUT_MS
+        value: "28000"
+      - key: VIDSRC_WAIT_MS
+        value: "9000"
+      - key: VIDSRC_CONCURRENCY
+        value: "2"
