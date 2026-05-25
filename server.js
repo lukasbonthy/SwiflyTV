@@ -753,7 +753,7 @@ async function apiTryNetMirrorByTmdb({ mediaType = "movie", id = "", season = "1
 
 
 function apiTrustedProviderCanForceHls(providerName = "") {
-  return ["castel", "netmirror", "animepahe", "animesalt"].includes(apiClean(providerName).toLowerCase());
+  return ["vid", "vid-local", "castel", "netmirror", "animepahe", "animesalt", "themovie", "tm"].includes(apiClean(providerName).toLowerCase());
 }
 
 function apiCollectTrustedStreamSources(providerName = "", payload = {}) {
@@ -1017,6 +1017,270 @@ function apiSourceToProxyResult({ source, raw, provider, type, id, season = "", 
 }
 
 
+
+// ===== Local port of uploaded ScarperApi-zero app/api/vid/route.ts =====
+// This does the API source-code flow directly inside SwiflyTV instead of burning
+// API quota on /api/vid. It uses TMDB id -> VideoEasy servers -> enc-dec decrypt
+// -> streams[].url, exactly like the uploaded source.
+const LOCAL_VID_HEADERS = {
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
+  Connection: "keep-alive"
+};
+
+const LOCAL_VID_DEC_API = "https://enc-dec.app/api";
+
+const LOCAL_VID_SERVERS = {
+  Neon: { url: "https://api.videasy.net/myflixerzupcloud/sources-with-title", language: "Original" },
+  Sage: { url: "https://api.videasy.net/1movies/sources-with-title", language: "Original" },
+  Cypher: { url: "https://api.videasy.net/moviebox/sources-with-title", language: "Original" },
+  Yoru: { url: "https://api.videasy.net/cdn/sources-with-title", language: "Original", moviesOnly: true },
+  Reyna: { url: "https://api2.videasy.net/primewire/sources-with-title", language: "Original" },
+  Omen: { url: "https://api.videasy.net/onionplay/sources-with-title", language: "Original" },
+  Breach: { url: "https://api.videasy.net/m4uhd/sources-with-title", language: "Original" },
+  Vyse: { url: "https://api.videasy.net/hdmovie/sources-with-title", language: "Original" },
+  Killjoy: { url: "https://api.videasy.net/meine/sources-with-title", language: "German", params: { language: "german" } },
+  Harbor: { url: "https://api.videasy.net/meine/sources-with-title", language: "Italian", params: { language: "italian" } },
+  Chamber: { url: "https://api.videasy.net/meine/sources-with-title", language: "French", params: { language: "french" }, moviesOnly: true },
+  Fade: { url: "https://api.videasy.net/hdmovie/sources-with-title", language: "Hindi" },
+  Gekko: { url: "https://api2.videasy.net/cuevana-latino/sources-with-title", language: "Latin" },
+  Kayo: { url: "https://api2.videasy.net/cuevana-spanish/sources-with-title", language: "Spanish" },
+  Raze: { url: "https://api.videasy.net/superflix/sources-with-title", language: "Portuguese" },
+  Phoenix: { url: "https://api2.videasy.net/overflix/sources-with-title", language: "Portuguese" },
+  Astra: { url: "https://api.videasy.net/visioncine/sources-with-title", language: "Portuguese" }
+};
+
+async function localVidFetchText(url) {
+  const response = await fetch(url, { method: "GET", headers: LOCAL_VID_HEADERS, cache: "no-store" });
+  if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  return response.text();
+}
+
+async function localVidPostJson(url, jsonBody, extraHeaders = {}) {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      ...LOCAL_VID_HEADERS,
+      "Content-Type": "application/json",
+      ...extraHeaders
+    },
+    body: JSON.stringify(jsonBody),
+    cache: "no-store"
+  });
+
+  if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  return response.json();
+}
+
+async function localVidDecryptVideoEasy(encryptedText, tmdbId) {
+  const data = await localVidPostJson(`${LOCAL_VID_DEC_API}/dec-videasy`, {
+    text: encryptedText,
+    id: tmdbId
+  });
+  return data && data.result ? data.result : {};
+}
+
+async function localVidFetchMediaDetails(tmdbId, mediaType = "movie") {
+  const endpoint = mediaType === "tv" ? `/tv/${tmdbId}` : `/movie/${tmdbId}`;
+  const data = await tmdb(endpoint, { append_to_response: "external_ids" }, CACHE_TTL.long);
+
+  if (data && data.__error) throw new Error(data.message || "TMDB metadata failed");
+
+  const title = mediaType === "tv" ? data.name : data.title;
+  const date = mediaType === "tv" ? data.first_air_date : data.release_date;
+
+  return {
+    id: data.id,
+    title: title || "",
+    year: date ? String(date).split("-")[0] : "",
+    imdbId: data.external_ids && data.external_ids.imdb_id ? data.external_ids.imdb_id : "",
+    mediaType,
+    overview: data.overview || "",
+    poster: data.poster_path ? `https://image.tmdb.org/t/p/w500${data.poster_path}` : "",
+    backdrop: data.backdrop_path ? `https://image.tmdb.org/t/p/w1280${data.backdrop_path}` : ""
+  };
+}
+
+function localVidBuildVideoEasyUrl(serverConfig, mediaType, title, year, tmdbId, imdbId, seasonId, episodeId) {
+  const params = {
+    title,
+    mediaType,
+    year,
+    tmdbId,
+    imdbId
+  };
+
+  if (serverConfig.params) Object.assign(params, serverConfig.params);
+
+  if (mediaType === "tv" && seasonId !== null && episodeId !== null) {
+    params.seasonId = String(seasonId);
+    params.episodeId = String(episodeId);
+  }
+
+  const queryString = Object.keys(params)
+    .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(params[key] || "")}`)
+    .join("&");
+
+  return `${serverConfig.url}?${queryString}`;
+}
+
+function localVidNormalizeLanguage(language = "") {
+  const map = {
+    en: "English", eng: "English", english: "English",
+    hi: "Hindi", hin: "Hindi", hindi: "Hindi",
+    de: "German", ger: "German", german: "German",
+    it: "Italian", ita: "Italian", italian: "Italian",
+    fr: "French", fre: "French", french: "French",
+    es: "Spanish", spa: "Spanish", spanish: "Spanish",
+    pt: "Portuguese", por: "Portuguese", portuguese: "Portuguese"
+  };
+  const key = String(language || "").toLowerCase().trim();
+  return map[key] || language || "";
+}
+
+function localVidExtractQuality(url = "") {
+  const value = String(url || "");
+  const patterns = [
+    /(\d{3,4})p/i,
+    /quality[_-]?(\d{3,4})/i,
+    /res[_-]?(\d{3,4})/i,
+    /(\d{3,4})x\d{3,4}/i
+  ];
+
+  for (const pattern of patterns) {
+    const match = value.match(pattern);
+    if (!match) continue;
+    const n = Number(match[1]);
+    if (n >= 240 && n <= 4320) return `${n}p`;
+  }
+
+  if (value.includes("2160") || value.toLowerCase().includes("4k")) return "2160p";
+  if (value.includes("1080") || value.includes("1920")) return "1080p";
+  if (value.includes("720") || value.includes("1280")) return "720p";
+  if (value.includes("480") || value.includes("854")) return "480p";
+  if (value.includes("360") || value.includes("640")) return "360p";
+  return "Adaptive";
+}
+
+function localVidQualityRank(quality = "") {
+  const q = String(quality || "").toLowerCase().replace(/p$/, "");
+  if (q === "4k" || q === "2160") return 2160;
+  if (q === "1440") return 1440;
+  if (q === "1080") return 1080;
+  if (q === "720") return 720;
+  if (q === "480") return 480;
+  if (q === "360") return 360;
+  if (q === "240") return 240;
+  if (q === "adaptive" || q === "auto") return 4000;
+  const n = Number(q);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function localVidFormatStreams(mediaData, serverName, serverConfig, mediaDetails) {
+  if (!mediaData || typeof mediaData !== "object" || !Array.isArray(mediaData.sources)) return [];
+
+  const streams = [];
+
+  for (const source of mediaData.sources) {
+    if (!source || !source.url) continue;
+    if (apiIsYouTubeUrl(source.url)) continue;
+
+    let quality = source.quality || localVidExtractQuality(source.url);
+    if (!quality || quality === "unknown") quality = source.url.includes(".m3u8") ? "Adaptive" : localVidExtractQuality(source.url);
+
+    let languageInfo = "";
+    if (source.language) {
+      const normalizedLanguage = localVidNormalizeLanguage(source.language);
+      if (normalizedLanguage) languageInfo = ` [${normalizedLanguage}]`;
+    }
+
+    const headers = source.url.includes(".m3u8")
+      ? {
+          ...LOCAL_VID_HEADERS,
+          Accept: "application/vnd.apple.mpegurl,application/x-mpegURL,*/*",
+          Referer: "https://videasy.net/"
+        }
+      : {
+          ...LOCAL_VID_HEADERS,
+          Accept: "video/mp4,video/x-matroska,*/*",
+          Range: "bytes=0-"
+        };
+
+    streams.push({
+      name: `VIDEASY ${serverName} (${serverConfig.language})${languageInfo} - ${quality}`,
+      title: `${mediaDetails.title} (${mediaDetails.year})`,
+      url: source.url,
+      quality,
+      size: "Unknown",
+      headers,
+      provider: "videasy",
+      forceHls: true
+    });
+  }
+
+  return streams;
+}
+
+async function localVidFetchFromServer(serverName, serverConfig, mediaType, title, year, tmdbId, imdbId, seasonId, episodeId, mediaDetails) {
+  if (mediaType === "tv" && serverConfig.moviesOnly) return [];
+
+  try {
+    const url = localVidBuildVideoEasyUrl(serverConfig, mediaType, title, year, tmdbId, imdbId, seasonId, episodeId);
+    const encryptedData = await localVidFetchText(url);
+    if (!encryptedData || !encryptedData.trim()) return [];
+    const decryptedData = await localVidDecryptVideoEasy(encryptedData, tmdbId);
+    return localVidFormatStreams(decryptedData, serverName, serverConfig, mediaDetails);
+  } catch (error) {
+    return [];
+  }
+}
+
+async function localVidGetStreams({ tmdbId = "", mediaType = "movie", season = "", episode = "" }) {
+  const seasonNum = mediaType === "tv" && season ? Number(season) : null;
+  const episodeNum = mediaType === "tv" && episode ? Number(episode) : null;
+
+  const mediaDetails = await localVidFetchMediaDetails(tmdbId, mediaType);
+  const names = Object.keys(LOCAL_VID_SERVERS);
+  const jobs = names.map((serverName) => {
+    const serverConfig = LOCAL_VID_SERVERS[serverName];
+    return localVidFetchFromServer(
+      serverName,
+      serverConfig,
+      mediaDetails.mediaType,
+      mediaDetails.title,
+      mediaDetails.year,
+      tmdbId,
+      mediaDetails.imdbId,
+      seasonNum,
+      episodeNum,
+      mediaDetails
+    );
+  });
+
+  const results = await Promise.all(jobs);
+  const allStreams = results.flat();
+  const unique = [];
+  const seen = new Set();
+
+  for (const stream of allStreams) {
+    if (!stream.url || seen.has(stream.url)) continue;
+    seen.add(stream.url);
+    unique.push(stream);
+  }
+
+  unique.sort((a, b) => localVidQualityRank(b.quality) - localVidQualityRank(a.quality));
+
+  return {
+    success: true,
+    provider: "vid-local",
+    tmdbId,
+    mediaType,
+    ...(mediaType === "tv" ? { season: seasonNum, episode: episodeNum } : {}),
+    streams: unique,
+    count: unique.length
+  };
+}
+// ===== End local uploaded API source port =====
+
 async function apiFetchCastelVariants({ tmdbId = "", mediaType = "movie", season = "", episode = "", attempts = [] }) {
   const providerConfig = API_PROVIDERS.castel;
   if (!providerConfig?.stream) throw new Error("castel stream endpoint missing");
@@ -1082,6 +1346,40 @@ async function fetchApiProviderSource({ type = "movie", id = "", season = "1", e
     }
   } catch (error) {
     attempts.push(`tmdb metadata: ${error.message || "failed"}`);
+  }
+
+  // 0) Local uploaded /api/vid source-code implementation. This bypasses the
+  // external API quota/key layer and does what the uploaded route.ts does directly.
+  if (preferred === "vid" || providerOrder.includes("vid")) {
+    try {
+      const tmdbId = await apiResolveTmdbIdForApi({ mediaType, id, attempts });
+      if (tmdbId) {
+        const vidPayload = await localVidGetStreams({
+          tmdbId,
+          mediaType,
+          season: mediaType === "tv" ? season : "",
+          episode: mediaType === "tv" ? episode : ""
+        });
+
+        const localVidResult = await apiFindPlayableFromPayload({
+          payload: vidPayload,
+          providerName: "vid-local",
+          providerConfig: API_PROVIDERS.vid || {},
+          mediaType,
+          id: tmdbId,
+          season,
+          episode,
+          attempts
+        });
+
+        if (localVidResult) return localVidResult;
+        attempts.push("vid-local: uploaded source-code flow returned no usable stream");
+      } else {
+        attempts.push("vid-local: missing numeric TMDB id");
+      }
+    } catch (error) {
+      attempts.push(`vid-local: ${error.message || "failed"}`);
+    }
   }
 
   // 1) Direct stream providers.
@@ -44534,6 +44832,25 @@ app.get("/api/provider/action", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.get("/api/local/vid", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  try {
+    const tmdbId = apiClean(req.query.tmdb || req.query.tmdbId || req.query.id);
+    const season = apiClean(req.query.s || req.query.season || "");
+    const episode = apiClean(req.query.e || req.query.episode || "");
+    const mediaType = season && episode ? "tv" : (req.query.type === "tv" ? "tv" : "movie");
+
+    if (!tmdbId) {
+      return res.status(400).json({ success: false, error: "Missing tmdb/id parameter" });
+    }
+
+    const data = await localVidGetStreams({ tmdbId, mediaType, season, episode });
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message || "local vid failed", streams: [] });
   }
 });
 
