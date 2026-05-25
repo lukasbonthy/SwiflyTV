@@ -11,6 +11,7 @@ ENV REMOTE_BROWSER_JPEG_QUALITY=58
 
 COPY package*.json ./
 RUN npm install --omit=dev
+RUN node -e "const v=require('playwright-core/package.json').version; if(v!=='1.49.1'){ console.error('Wrong playwright-core version:', v); process.exit(1); } console.log('playwright-core', v)"
 
 COPY . .
 
