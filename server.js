@@ -976,6 +976,66 @@ async function apiFindPlayableFromPayload({
   return null;
 }
 
+
+function apiFindBestM3u8Source(raw = {}) {
+  const candidates = [];
+
+  function collect(input) {
+    apiWalk(input, (node) => {
+      if (typeof node === "string") {
+        if (apiIsM3u8Url(node)) candidates.push({ name: "hls", quality: "", url: node, headers: {}, format: "m3u8" });
+        return;
+      }
+
+      if (!node || typeof node !== "object") return;
+
+      const urls = [
+        node.m3u8,
+        node.m3u8_url,
+        node.m3u8Url,
+        node.hls,
+        node.hls_url,
+        node.hlsUrl,
+        node.playlist,
+        node.playlist_url,
+        node.playlistUrl,
+        node.manifest,
+        node.manifest_url,
+        node.streamUrl,
+        node.stream_url,
+        node.playbackUrl,
+        node.playback_url,
+        node.url,
+        node.file,
+        node.src
+      ];
+
+      for (const url of urls) {
+        const clean = apiClean(url);
+        if (!apiIsM3u8Url(clean)) continue;
+        candidates.push({
+          name: apiFirst(node.name, node.server, node.provider, node.label, node.source, "hls") || "hls",
+          quality: apiFirst(node.quality, node.resolution, node.size, node.format, node.type),
+          url: clean,
+          headers: node.headers && typeof node.headers === "object" ? node.headers : {},
+          format: "m3u8"
+        });
+      }
+    });
+  }
+
+  collect(raw);
+  if (Array.isArray(raw?.sources)) {
+    for (const source of raw.sources) {
+      if (apiIsM3u8Url(source?.url)) {
+        candidates.push({ ...source, format: "m3u8", name: source.name || "hls" });
+      }
+    }
+  }
+
+  return apiPreferM3u8Sources(Array.from(new Map(candidates.map((source) => [source.url, source])).values()))[0] || null;
+}
+
 function apiSourceToProxyResult({ source, raw, provider, type, id, season = "", episode = "", attempts = [] }) {
   if (!source || !source.url) return null;
 
@@ -990,8 +1050,24 @@ function apiSourceToProxyResult({ source, raw, provider, type, id, season = "", 
     return null;
   }
 
-  const isHls = apiIsM3u8Url(originalUrl) || apiNodeSaysHls(originalUrl, source);
+  let isHls = apiIsM3u8Url(originalUrl) || apiNodeSaysHls(originalUrl, source);
   const isDash = apiIsMpdUrl(originalUrl);
+
+  if (!isHls) {
+    const betterM3u8 = apiFindBestM3u8Source(raw);
+    if (betterM3u8 && betterM3u8.url && betterM3u8.url !== originalUrl) {
+      return apiSourceToProxyResult({
+        source: betterM3u8,
+        raw,
+        provider,
+        type,
+        id,
+        season,
+        episode,
+        attempts
+      });
+    }
+  }
 
   if (!apiLooksPlayable(originalUrl, source)) {
     attempts.push(`${provider}: skipped download/detail/non-media URL`);
@@ -39073,6 +39149,22 @@ async function fetchProxyVideoSource({ type, id, season = "1", episode = "1", pr
 
   const apiResult = await fetchApiProviderSource({ type: mediaType, id, season, episode, provider });
   if (apiResult && apiResult.status === "ok") {
+    if (!apiResult.m3u8Embedded && !apiIsM3u8Url(apiResult.playbackUrl || "")) {
+      const betterM3u8 = apiFindBestM3u8Source(apiResult.normalized || {});
+      if (betterM3u8) {
+        const forced = apiSourceToProxyResult({
+          source: betterM3u8,
+          raw: apiResult.normalized || {},
+          provider: apiResult.apiProvider || provider || "api",
+          type: mediaType,
+          id,
+          season,
+          episode,
+          attempts: apiResult.attempts || []
+        });
+        if (forced) return forced;
+      }
+    }
     return apiResult;
   }
 
@@ -41321,6 +41413,8 @@ async function watchPage(req, res, type) {
 
           try {
             var waitUrl = "/api/proxy-video-wait/" + encodeURIComponent(movieType || "movie") + "/" + encodeURIComponent(movieId) + "?t=" + Date.now();
+            var currentProvider = new URLSearchParams(window.location.search).get("provider") || "";
+            if (currentProvider) waitUrl += "&provider=" + encodeURIComponent(currentProvider);
             if ((movieType || "movie") === "tv") waitUrl += "&season=" + encodeURIComponent(selectedSeason || "1") + "&episode=" + encodeURIComponent(selectedEpisode || "1");
             var response = await fetch(waitUrl, {
               cache: "no-store",
@@ -41329,10 +41423,20 @@ async function watchPage(req, res, type) {
 
             var data = await response.json();
 
-            if (data && data.status === "ok" && (data.playbackUrl || data.m3u8 || data.proxyVideo)) {
+            if (data && data.status === "ok" && (data.embeddedM3u8Url || data.hlsProxyUrl || data.m3u8 || data.playbackUrl || data.proxyVideo)) {
               stopped = true;
-              var src = data.playbackUrl || data.m3u8 || data.proxyVideo;
-              setStatus((data.m3u8 || data.streamType === "m3u8" ? "m3u8" : "Source") + " found. Loading player...");
+
+              // HLS must win over MP4 when the backend has both.
+              var src = data.embeddedM3u8Url || data.hlsProxyUrl || data.m3u8 || data.playbackUrl || data.proxyVideo;
+
+              if ((data.embeddedM3u8Url || data.hlsProxyUrl || data.m3u8) && data.playbackUrl && /\.mp4(?:[?#]|$)/i.test(String(data.playbackUrl))) {
+                data.playbackUrl = src;
+                data.proxyVideo = src;
+                data.streamType = "m3u8";
+                data.streamMode = "hls";
+              }
+
+              setStatus((data.m3u8 || data.embeddedM3u8Url || data.hlsProxyUrl || data.streamType === "m3u8" ? "m3u8" : "Source") + " found. Loading player...");
               attachRegularMovieSource(src, data);
               return;
             }
@@ -46309,7 +46413,7 @@ app.get("/api/provider/embed", async (req, res) => {
       sources: [{
         name: result.streamName || result.apiProvider || "api source",
         quality: result.streamQuality || "",
-        url: result.playbackUrl,
+        url: result.embeddedM3u8Url || result.hlsProxyUrl || result.m3u8 || result.playbackUrl,
         headers: result.streamHeaders || {},
         type: result.streamType === "m3u8" ? "application/x-mpegurl" : (result.streamType === "dash" ? "application/dash+xml" : (
           result.streamType === "webm" ? "video/webm" :
@@ -46384,7 +46488,9 @@ app.get("/api/hls-source/movie/:id", async (req, res) => {
     status: result.status,
     providerKind: result.providerKind || "",
     movieId: result.movieId || req.params.id,
-    playbackUrl: result.playbackUrl || "",
+    playbackUrl: result.embeddedM3u8Url || result.hlsProxyUrl || result.m3u8 || result.playbackUrl || "",
+    embeddedM3u8Url: result.embeddedM3u8Url || "",
+    m3u8Embedded: Boolean(result.m3u8Embedded),
     originalPlaybackUrl: result.originalPlaybackUrl || "",
     hlsProxyUrl: result.hlsProxyUrl || "",
     hlsProxyId: result.hlsProxyId || "",
