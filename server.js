@@ -51,7 +51,7 @@ const API_KEY = process.env.API_KEY || "";
 // The external API docs server is OFF by default. Turn it back on only with:
 // USE_EXTERNAL_PROVIDER_API=true
 const USE_EXTERNAL_PROVIDER_API = process.env.USE_EXTERNAL_PROVIDER_API === "true";
-const DEFAULT_PLAY_PROVIDER = String(process.env.DEFAULT_PLAY_PROVIDER || "castel").toLowerCase();
+const DEFAULT_PLAY_PROVIDER = String(process.env.DEFAULT_PLAY_PROVIDER || "filmu").toLowerCase();
 const API_PROVIDER_TIMEOUT_MS = Math.max(8000, Number(process.env.API_PROVIDER_TIMEOUT_MS || 45000));
 
 // Optional local Consumet bridge from uploaded api.consumet.org source.
@@ -72,6 +72,15 @@ const VIDSRC_PROVIDER_ORDER = String(
 const VIDSRC_TIMEOUT_MS = Math.max(12000, Number(process.env.VIDSRC_TIMEOUT_MS || 28000));
 const VIDSRC_WAIT_MS = Math.max(2500, Number(process.env.VIDSRC_WAIT_MS || 9000));
 const VIDSRC_CONCURRENCY = Math.max(1, Math.min(3, Number(process.env.VIDSRC_CONCURRENCY || 2)));
+
+// Filmu m3u8 backend-only scraper.
+// User-provided target: https://embedm3u8.filmu.in/movietrailer/use-tmdbid-for-your-scraper
+// The scraper replaces "use-tmdbid-for-your-scraper" with the TMDB id, then watches
+// browser network traffic for real .m3u8 URLs exactly like DevTools Network.
+const FILMU_ENABLED = process.env.FILMU_ENABLED !== "false";
+const FILMU_EMBED_TEMPLATE = process.env.FILMU_EMBED_TEMPLATE || "https://embedm3u8.filmu.in/movietrailer/use-tmdbid-for-your-scraper";
+const FILMU_TIMEOUT_MS = Math.max(10000, Number(process.env.FILMU_TIMEOUT_MS || 30000));
+const FILMU_WAIT_MS = Math.max(2500, Number(process.env.FILMU_WAIT_MS || 12000));
 
 const API_PROVIDERS = {
   "4khdhub": { home: "/api/4khdhub", search: "/api/4khdhub/search", details: "/api/4khdhub/details", gadget: "/api/4khdhub/gadget" },
@@ -107,11 +116,11 @@ const API_STREAM_PROVIDER_ORDER = ["vid", "castel", "themovie", "xprime", "netmi
 // Full provider order for finding .m3u8/media sources. The first four are direct-stream
 // providers; the rest usually need search -> details -> extractor/action.
 const API_M3U8_PROVIDER_ORDER = [
+  "filmu",
   "vid",
   "castel",
   "themovie",
   "xprime",
-  "vidsrc",
   "consumet",
   "netmirror",
   "animepahe",
@@ -4292,6 +4301,336 @@ async function localVidSrcDebug({ mediaType = "movie", id = "", season = "1", ep
 }
 
 
+
+// ===== Filmu m3u8 scraper: watches Network for .m3u8 =====
+let __filmuBrowserPromise = null;
+
+function localFilmuLoadChromium() {
+  try {
+    return require("playwright-core").chromium;
+  } catch (coreError) {
+    try {
+      return require("playwright").chromium;
+    } catch (fullError) {
+      throw new Error(`Playwright not installed/available: ${coreError.message || fullError.message || "missing package"}`);
+    }
+  }
+}
+
+async function localFilmuBrowser() {
+  if (__filmuBrowserPromise) return __filmuBrowserPromise;
+  const chromium = localFilmuLoadChromium();
+  const executablePath =
+    process.env.FILMU_BROWSER_EXECUTABLE_PATH ||
+    process.env.REMOTE_BROWSER_EXECUTABLE_PATH ||
+    process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ||
+    "";
+
+  __filmuBrowserPromise = chromium.launch({
+    headless: true,
+    executablePath: executablePath || undefined,
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-gpu",
+      "--disable-web-security",
+      "--autoplay-policy=no-user-gesture-required",
+      "--disable-features=IsolateOrigins,site-per-process"
+    ]
+  }).catch((error) => {
+    __filmuBrowserPromise = null;
+    throw error;
+  });
+
+  return __filmuBrowserPromise;
+}
+
+function localFilmuResolveUrl(input = "", base = "") {
+  try {
+    if (!input) return "";
+    if (/^\/\//.test(input)) return `https:${input}`;
+    return new URL(input, base || "https://embedm3u8.filmu.in/").toString();
+  } catch {
+    return "";
+  }
+}
+
+function localFilmuBuildEmbedUrls({ tmdbId = "", mediaType = "movie", season = "1", episode = "1" }) {
+  const id = encodeURIComponent(String(tmdbId || "").trim());
+  const s = encodeURIComponent(String(season || "1").trim());
+  const e = encodeURIComponent(String(episode || "1").trim());
+  const template = String(FILMU_EMBED_TEMPLATE || "https://embedm3u8.filmu.in/movietrailer/use-tmdbid-for-your-scraper").trim();
+  const urls = new Set();
+
+  if (template) {
+    // Primary user-requested behavior.
+    urls.add(template
+      .replace(/\{tmdb(?:Id)?\}/gi, id)
+      .replace(/\{id\}/gi, id)
+      .replace(/\{type\}/gi, encodeURIComponent(mediaType))
+      .replace(/\{season\}/gi, s)
+      .replace(/\{episode\}/gi, e)
+      .replace(/use-tmdbid-for-your-scraper/gi, id));
+
+    // If the template itself does not contain a placeholder, try it with query params too.
+    urls.add(`${template.replace(/\/$/, "")}?tmdb=${id}&type=${encodeURIComponent(mediaType)}${mediaType === "tv" ? `&season=${s}&episode=${e}` : ""}`);
+    urls.add(`${template.replace(/\/$/, "")}?tmdbId=${id}&type=${encodeURIComponent(mediaType)}${mediaType === "tv" ? `&season=${s}&episode=${e}` : ""}`);
+  }
+
+  const origin = (() => {
+    try { return new URL(template).origin; } catch { return "https://embedm3u8.filmu.in"; }
+  })();
+
+  // Extra common fallbacks, so changing one path on their side won't kill it.
+  urls.add(`${origin}/movietrailer/${id}`);
+  urls.add(`${origin}/movietrailer?tmdb=${id}`);
+  urls.add(`${origin}/movietrailer?tmdbId=${id}`);
+  urls.add(`${origin}/movie/${id}`);
+  urls.add(`${origin}/embed/movie/${id}`);
+  if (mediaType === "tv") {
+    urls.add(`${origin}/tv/${id}/${s}/${e}`);
+    urls.add(`${origin}/embed/tv/${id}/${s}/${e}`);
+    urls.add(`${origin}/movietrailer/${id}/${s}/${e}`);
+    urls.add(`${origin}/movietrailer?tmdb=${id}&season=${s}&episode=${e}`);
+  }
+
+  return Array.from(urls).filter((url) => /^https?:\/\//i.test(url));
+}
+
+function localFilmuLooksInterestingUrl(url = "") {
+  const value = String(url || "");
+  return (
+    apiIsM3u8Url(value) ||
+    /\.(?:mp4|webm|mkv|m4v|ts)(?:[?#]|$)/i.test(value) ||
+    /(?:m3u8|playlist|master|manifest|hls|stream|source|player|embed|file|media|video|api|ajax|movie|trailer)/i.test(value)
+  );
+}
+
+function localFilmuMaybeHeaders(embedUrl = "") {
+  let origin = "";
+  try { origin = new URL(embedUrl).origin; } catch {}
+  return {
+    "Referer": embedUrl,
+    ...(origin ? { "Origin": origin } : {}),
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36"
+  };
+}
+
+async function localFilmuScrapeOne(embedUrl = "") {
+  const browser = await localFilmuBrowser();
+  const found = {
+    embedUrl,
+    finalUrl: "",
+    hlsUrl: "",
+    mediaUrls: [],
+    interestingUrls: [],
+    responses: [],
+    errors: []
+  };
+
+  const context = await browser.newContext({
+    userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
+    ignoreHTTPSErrors: true,
+    javaScriptEnabled: true,
+    viewport: { width: 1365, height: 768 },
+    extraHTTPHeaders: {
+      "Accept-Language": "en-US,en;q=0.9",
+      "Referer": embedUrl
+    }
+  });
+
+  const page = await context.newPage();
+
+  function remember(url = "", meta = {}) {
+    const raw = String(url || "").trim();
+    if (!raw) return;
+    const resolved = localFilmuResolveUrl(raw, meta.base || found.finalUrl || embedUrl);
+    if (!resolved || apiLooksDefinitelyNonMediaUrl(resolved) || apiIsYouTubeUrl(resolved)) return;
+
+    if (apiIsM3u8Url(resolved) && !found.hlsUrl) found.hlsUrl = resolved;
+    if ((apiIsM3u8Url(resolved) || apiIsAllowedMediaExtensionUrl(resolved)) && !found.mediaUrls.includes(resolved)) found.mediaUrls.push(resolved);
+    if (localFilmuLooksInterestingUrl(resolved) && !found.interestingUrls.includes(resolved) && found.interestingUrls.length < 160) found.interestingUrls.push(resolved);
+  }
+
+  try {
+    await page.route("**/*", async (route) => {
+      const req = route.request();
+      remember(req.url(), { base: embedUrl });
+      await route.continue().catch(() => {});
+    });
+
+    page.on("request", (request) => remember(request.url(), { base: embedUrl }));
+    page.on("framenavigated", (frame) => remember(frame.url(), { base: embedUrl }));
+
+    page.on("response", async (response) => {
+      const url = response.url();
+      const headers = response.headers() || {};
+      const contentType = String(headers["content-type"] || headers["Content-Type"] || "");
+      remember(url, { base: embedUrl });
+      if (found.responses.length < 80 && (localFilmuLooksInterestingUrl(url) || /mpegurl|m3u8|json|javascript|html|text/i.test(contentType))) {
+        found.responses.push({ url, status: response.status(), contentType });
+      }
+      if (!found.hlsUrl && /mpegurl|m3u8/i.test(contentType)) remember(url, { base: embedUrl });
+      if (!found.hlsUrl && /json|javascript|html|text/i.test(contentType)) {
+        try {
+          const text = await response.text();
+          for (const u of apiExtractMediaUrlsFromStringDeep(text)) remember(u, { base: url });
+          // Also catch escaped URLs that may not include an extension until decoded.
+          const decoded = text.replace(/\\\//g, "/").replace(/&amp;/g, "&");
+          for (const u of apiExtractMediaUrlsFromStringDeep(decoded)) remember(u, { base: url });
+        } catch {}
+      }
+    });
+
+    await page.goto(embedUrl, { waitUntil: "domcontentloaded", timeout: FILMU_TIMEOUT_MS });
+    found.finalUrl = page.url();
+
+    // Network m3u8 often appears only after clicking the embedded player.
+    for (const selector of [
+      "video",
+      "iframe",
+      "#player",
+      "#the_frame",
+      ".jwplayer",
+      ".plyr",
+      ".vjs-big-play-button",
+      "button[aria-label*='play' i]",
+      "button[title*='play' i]",
+      ".play",
+      ".play-button",
+      "[class*='play']",
+      "body"
+    ]) {
+      if (found.hlsUrl) break;
+      try {
+        const loc = page.locator(selector).first();
+        if (await loc.count()) {
+          await loc.click({ timeout: 1800, force: true }).catch(() => {});
+          await page.waitForTimeout(700);
+        }
+      } catch {}
+    }
+
+    // Try clicking center of page/frames.
+    if (!found.hlsUrl) {
+      await page.mouse.click(683, 384).catch(() => {});
+      await page.waitForTimeout(1000).catch(() => {});
+    }
+
+    // Scan DOM, iframes, storage, and scripts.
+    const endAt = Date.now() + FILMU_WAIT_MS;
+    while (Date.now() < endAt && !found.hlsUrl) {
+      try {
+        const html = await page.content();
+        for (const u of apiExtractMediaUrlsFromStringDeep(html)) remember(u, { base: found.finalUrl || embedUrl });
+        const storageText = await page.evaluate(() => {
+          const out = [];
+          try { for (let i = 0; i < localStorage.length; i++) out.push(`${localStorage.key(i)}=${localStorage.getItem(localStorage.key(i))}`); } catch {}
+          try { for (let i = 0; i < sessionStorage.length; i++) out.push(`${sessionStorage.key(i)}=${sessionStorage.getItem(sessionStorage.key(i))}`); } catch {}
+          try { out.push(document.documentElement.innerHTML); } catch {}
+          return out.join("\n");
+        }).catch(() => "");
+        for (const u of apiExtractMediaUrlsFromStringDeep(storageText)) remember(u, { base: found.finalUrl || embedUrl });
+        for (const frame of page.frames()) {
+          remember(frame.url(), { base: embedUrl });
+          const frameHtml = await frame.content().catch(() => "");
+          for (const u of apiExtractMediaUrlsFromStringDeep(frameHtml)) remember(u, { base: frame.url() || found.finalUrl || embedUrl });
+        }
+      } catch {}
+      if (found.hlsUrl) break;
+      await page.waitForTimeout(700);
+    }
+
+    if (!found.hlsUrl && found.mediaUrls.find(apiIsM3u8Url)) found.hlsUrl = found.mediaUrls.find(apiIsM3u8Url);
+  } catch (error) {
+    found.errors.push(error.message || "scrape failed");
+  } finally {
+    await page.close().catch(() => {});
+    await context.close().catch(() => {});
+  }
+
+  return found;
+}
+
+async function localFilmuGetStreams({ tmdbId = "", mediaType = "movie", season = "1", episode = "1", attempts = [] }) {
+  if (!FILMU_ENABLED) throw new Error("FILMU_ENABLED=false");
+  if (!tmdbId) throw new Error("missing TMDB id");
+
+  const embedUrls = localFilmuBuildEmbedUrls({ tmdbId, mediaType, season, episode });
+  const results = [];
+  const sources = [];
+
+  for (const embedUrl of embedUrls) {
+    const startedAt = Date.now();
+    const result = await localFilmuScrapeOne(embedUrl);
+    result.ms = Date.now() - startedAt;
+    results.push(result);
+
+    if (result.hlsUrl) {
+      sources.push({
+        name: "Filmu HLS",
+        quality: "auto",
+        url: result.hlsUrl,
+        headers: localFilmuMaybeHeaders(result.finalUrl || embedUrl),
+        format: "m3u8",
+        forceHls: true
+      });
+      break;
+    }
+
+    attempts.push(`filmu: no m3u8 from ${embedUrl}${result.errors.length ? ` (${result.errors.join("; ")})` : ""}`);
+  }
+
+  return {
+    success: sources.length > 0,
+    provider: "filmu-local",
+    tmdbId,
+    mediaType,
+    season: mediaType === "tv" ? season : "",
+    episode: mediaType === "tv" ? episode : "",
+    embedUrls,
+    results,
+    streamsFound: sources.length,
+    sources
+  };
+}
+
+async function localFilmuResult({ mediaType = "movie", id = "", season = "1", episode = "1", attempts = [] }) {
+  const tmdbId = await apiResolveTmdbIdForApi({ mediaType, id, attempts });
+  if (!tmdbId) throw new Error("missing numeric TMDB id");
+  const payload = await localFilmuGetStreams({ tmdbId, mediaType, season, episode, attempts });
+  if (!Array.isArray(payload.sources) || payload.sources.length === 0) return null;
+  return await apiFindPlayableFromPayload({
+    payload,
+    providerName: "filmu-local",
+    providerConfig: {},
+    mediaType,
+    id: tmdbId,
+    season,
+    episode,
+    attempts
+  });
+}
+
+async function localFilmuDebug({ mediaType = "movie", id = "", season = "1", episode = "1" }) {
+  const attempts = [];
+  const tmdbId = await apiResolveTmdbIdForApi({ mediaType, id, attempts });
+  const payload = await localFilmuGetStreams({ tmdbId, mediaType, season, episode, attempts });
+  const winner = await apiFindPlayableFromPayload({
+    payload,
+    providerName: "filmu-local",
+    providerConfig: {},
+    mediaType,
+    id: tmdbId,
+    season,
+    episode,
+    attempts
+  });
+  return { attempts, payload, winner };
+}
+
+
 // ===== End more local source ports =====
 
 
@@ -4495,6 +4834,16 @@ async function fetchApiProviderSource({ type = "movie", id = "", season = "1", e
         attempts.push("xprime-local: source-code flow returned no usable stream");
       } catch (error) {
         attempts.push(`xprime-local: ${error.message || "failed"}`);
+      }
+    }
+
+    if (preferred === "filmu" || providerOrder.includes("filmu")) {
+      try {
+        const filmuResult = await localFilmuResult({ mediaType, id, season, episode, attempts });
+        if (filmuResult) return filmuResult;
+        attempts.push("filmu-local: no m3u8 captured");
+      } catch (error) {
+        attempts.push(`filmu-local: ${error.message || "failed"}`);
       }
     }
 
@@ -48183,6 +48532,34 @@ app.get("/api/local/runtime-debug", async (req, res) => {
   });
 });
 
+app.get("/api/local/filmu-debug", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const type = req.query.type === "tv" ? "tv" : "movie";
+  const id = apiClean(req.query.tmdb || req.query.tmdbId || req.query.id || "");
+  const season = apiClean(req.query.season || req.query.s || "1");
+  const episode = apiClean(req.query.episode || req.query.e || "1");
+
+  if (!id) return res.status(400).json({ ok: false, error: "Pass ?tmdb=id" });
+
+  try {
+    const debug = await localFilmuDebug({ mediaType: type, id, season, episode });
+    res.json({
+      ok: Boolean(debug.winner),
+      sourceMode: "local-filmu-network-m3u8",
+      target: FILMU_EMBED_TEMPLATE,
+      tmdb: id,
+      type,
+      season: type === "tv" ? season : "",
+      episode: type === "tv" ? episode : "",
+      winner: debug.winner,
+      attempts: debug.attempts,
+      payload: debug.payload
+    });
+  } catch (error) {
+    res.status(500).json({ ok: false, sourceMode: "local-filmu-network-m3u8", error: error.message || "failed" });
+  }
+});
+
 app.get("/api/local/vidsrc-debug", async (req, res) => {
   res.set("Cache-Control", "no-store");
   const type = req.query.type === "tv" ? "tv" : "movie";
@@ -48382,6 +48759,7 @@ app.get("/api/local/super-source-debug", async (req, res) => {
     await probe("vid-local", () => localVidGetStreams({ tmdbId: id, mediaType: type, season: type === "tv" ? season : "", episode: type === "tv" ? episode : "" }), "vid-local", API_PROVIDERS.vid || {});
     await probe("castle-local", () => localCastleGetStreams({ tmdbId: id, mediaType: type, season: type === "tv" ? season : "", episode: type === "tv" ? episode : "" }), "castle-local", API_PROVIDERS.castel || {});
     await probe("xprime-local", () => localXprimeGetStreams({ tmdbId: id, mediaType: type, season: type === "tv" ? season : "", episode: type === "tv" ? episode : "" }), "xprime-local", API_PROVIDERS.xprime || {});
+    await probe("filmu-local", () => localFilmuGetStreams({ tmdbId: id, mediaType: type, season: type === "tv" ? season : "", episode: type === "tv" ? episode : "" }), "filmu-local", {});
     await probe("vidsrc-local", () => localVidSrcGetStreams({ tmdbId: id, mediaType: type, season: type === "tv" ? season : "", episode: type === "tv" ? episode : "" }), "vidsrc-local", {});
   }
 
@@ -48504,6 +48882,7 @@ app.get("/api/local/all-source-debug", async (req, res) => {
     await tryPayload("vid-local", () => localVidGetStreams({ tmdbId: id, mediaType: type, season: type === "tv" ? season : "", episode: type === "tv" ? episode : "" }), "vid-local", API_PROVIDERS.vid || {});
     await tryPayload("castle-local", () => localCastleGetStreams({ tmdbId: id, mediaType: type, season: type === "tv" ? season : "", episode: type === "tv" ? episode : "" }), "castle-local", API_PROVIDERS.castel || {});
     await tryPayload("xprime-local", () => localXprimeGetStreams({ tmdbId: id, mediaType: type, season: type === "tv" ? season : "", episode: type === "tv" ? episode : "" }), "xprime-local", API_PROVIDERS.xprime || {});
+    await tryPayload("filmu-local", () => localFilmuGetStreams({ tmdbId: id, mediaType: type, season: type === "tv" ? season : "", episode: type === "tv" ? episode : "" }), "filmu-local", {});
     await tryPayload("vidsrc-local", () => localVidSrcGetStreams({ tmdbId: id, mediaType: type, season: type === "tv" ? season : "", episode: type === "tv" ? episode : "" }), "vidsrc-local", {});
   }
 
