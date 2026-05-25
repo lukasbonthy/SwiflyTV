@@ -329,21 +329,42 @@ function apiNormalizeSources(input) {
 
     const candidates = [
       ["m3u8", node.m3u8],
+      ["m3u8_url", node.m3u8_url],
+      ["m3u8Url", node.m3u8Url],
+      ["hls", node.hls],
+      ["hls_url", node.hls_url],
+      ["hlsUrl", node.hlsUrl],
       ["playlist", node.playlist],
+      ["playlist_url", node.playlist_url],
+      ["playlistUrl", node.playlistUrl],
+      ["manifest", node.manifest],
+      ["manifest_url", node.manifest_url],
       ["playbackUrl", node.playbackUrl],
+      ["playback_url", node.playback_url],
       ["proxyVideo", node.proxyVideo],
+      ["proxy_video", node.proxy_video],
       ["streamUrl", node.streamUrl],
+      ["stream_url", node.stream_url],
       ["streamingUrl", node.streamingUrl],
+      ["streaming_url", node.streaming_url],
       ["videoUrl", node.videoUrl],
+      ["video_url", node.video_url],
       ["embedUrl", node.embedUrl],
+      ["embed_url", node.embed_url],
       ["playerUrl", node.playerUrl],
+      ["player_url", node.player_url],
+      ["sourceUrl", node.sourceUrl],
+      ["source_url", node.source_url],
       ["src", node.src],
       ["file", node.file],
+      ["file_url", node.file_url],
       ["url", node.url],
       ["link", node.link],
       ["href", node.href],
       ["downloadUrl", node.downloadUrl],
-      ["directUrl", node.directUrl]
+      ["download_url", node.download_url],
+      ["directUrl", node.directUrl],
+      ["direct_url", node.direct_url]
     ];
 
     for (const [field, value] of candidates) {
@@ -470,9 +491,15 @@ function apiCollectCandidateUrls(input) {
     if (!node || typeof node !== "object") return;
 
     for (const key of [
-      "m3u8", "playlist", "playbackUrl", "proxyVideo", "streamUrl", "streamingUrl",
-      "videoUrl", "embedUrl", "playerUrl", "src", "file", "url", "link", "href",
-      "downloadUrl", "directUrl", "redirectUrl", "serverUrl", "pageUrl", "episodeUrl",
+      "m3u8", "m3u8_url", "m3u8Url", "hls", "hls_url", "hlsUrl",
+      "playlist", "playlist_url", "playlistUrl", "manifest", "manifest_url",
+      "playbackUrl", "playback_url", "proxyVideo", "proxy_video",
+      "streamUrl", "stream_url", "streamingUrl", "streaming_url",
+      "videoUrl", "video_url", "embedUrl", "embed_url", "playerUrl", "player_url",
+      "sourceUrl", "source_url", "src", "file", "file_url", "url", "link", "href",
+      "downloadUrl", "download_url", "directUrl", "direct_url",
+      "redirectUrl", "redirect_url", "serverUrl", "server_url",
+      "pageUrl", "page_url", "episodeUrl", "episode_url",
       "next", "source"
     ]) {
       pushUrl(node[key]);
@@ -502,14 +529,18 @@ function apiExtractorJobsForUrl(providerName = "", providerConfig = {}, url = ""
   const value = apiClean(url);
   const lower = value.toLowerCase();
   const jobs = [];
+  const seen = new Set();
 
   function add(provider, endpoint, params, action) {
     if (!endpoint || String(endpoint).includes("/api/adult/") || String(endpoint).includes("/api/youtubes/")) return;
+    const key = `${provider}:${action}:${endpoint}:${JSON.stringify(params)}`;
+    if (seen.has(key)) return;
+    seen.add(key);
     jobs.push({ provider, endpoint, params, action });
   }
 
-  // Provider-specific routes from the API docs.
-  if (providerConfig.gadget && /gadget|gadgetsweb/i.test(lower)) add(providerName, providerConfig.gadget, { link: value }, "gadget");
+  // Exact/provider-specific extractors from the docs.
+  if (providerConfig.gadget) add(providerName, providerConfig.gadget, { link: value }, "gadget");
   if (providerConfig.mdrive) add(providerName, providerConfig.mdrive, { url: value }, "mdrive");
   if (providerConfig.m4ulinks) add(providerName, providerConfig.m4ulinks, { url: value }, "m4ulinks");
   if (providerConfig.nextdrive) add(providerName, providerConfig.nextdrive, { url: value }, "nextdrive");
@@ -518,24 +549,118 @@ function apiExtractorJobsForUrl(providerName = "", providerConfig = {}, url = ""
   if (providerConfig.tech) add(providerName, providerConfig.tech, { url: value }, "tech");
   if (providerConfig.modpro) add(providerName, providerConfig.modpro, { url: value }, "modpro");
 
-  // Generic extractor routes from the API docs.
+  // Domain-matched generic extractors from the docs.
   if (API_PROVIDERS.hubcloud?.extract && /hubcloud|hub-cloud/i.test(lower)) {
     add("hubcloud", API_PROVIDERS.hubcloud.extract, { url: value }, "hubcloud");
   }
-
   if (API_PROVIDERS.gdflix?.extract && /gdflix/i.test(lower)) {
     add("gdflix", API_PROVIDERS.gdflix.extract, { url: value }, "gdflix");
   }
-
   if (API_PROVIDERS.vega?.nextdrive && /nextdrive|v[-]?cloud|vcloud/i.test(lower)) {
     add("vega", API_PROVIDERS.vega.nextdrive, { url: value }, "nextdrive");
   }
-
-  if (API_PROVIDERS.uhdmovies?.tech && /tech\.unblockedgames/i.test(lower)) {
+  if (API_PROVIDERS.uhdmovies?.tech && /tech\.unblockedgames|sid=/i.test(lower)) {
     add("uhdmovies", API_PROVIDERS.uhdmovies.tech, { url: value }, "tech");
   }
 
+  // Broad fallback: docs use a lot of intermediate pages whose host/field names vary.
+  // Try safe non-adult extractor/action endpoints, but cap recursion elsewhere.
+  if (apiCanBeIntermediateExtractorUrl(value)) {
+    if (API_PROVIDERS.hubcloud?.extract) add("hubcloud", API_PROVIDERS.hubcloud.extract, { url: value }, "hubcloud");
+    if (API_PROVIDERS.gdflix?.extract) add("gdflix", API_PROVIDERS.gdflix.extract, { url: value }, "gdflix");
+    if (API_PROVIDERS.vega?.nextdrive) add("vega", API_PROVIDERS.vega.nextdrive, { url: value }, "nextdrive");
+    if (API_PROVIDERS.uhdmovies?.tech) add("uhdmovies", API_PROVIDERS.uhdmovies.tech, { url: value }, "tech");
+  }
+
   return jobs;
+}
+
+async function apiTryNetMirrorByTmdb({ mediaType = "movie", id = "", season = "1", episode = "1", title = "", year = "", attempts = [] }) {
+  const providerName = "netmirror";
+  const providerConfig = API_PROVIDERS.netmirror;
+  if (!providerConfig?.search || !providerConfig?.stream) return null;
+
+  const q = apiClean(title);
+  if (!q) return null;
+
+  const searchData = await apiProviderFetch(providerConfig.search, { q });
+  const results = apiTopList(searchData).map((entry) => apiNormalizeItem(entry, providerName, mediaType));
+  const picked =
+    results.find((entry) => year && String(entry.year) === String(year)) ||
+    results.find((entry) => entry.title && entry.title.toLowerCase().includes(q.toLowerCase().slice(0, 8))) ||
+    results[0];
+
+  if (!picked) {
+    attempts.push("netmirror: search returned no result");
+    return null;
+  }
+
+  const possibleIds = Array.from(new Set([
+    apiClean(picked.id),
+    apiClean(picked.url),
+    apiClean(picked.link),
+    apiClean(picked.href),
+    apiClean(picked.contentId),
+    apiClean(picked.postId)
+  ].filter(Boolean)));
+
+  // getpost may expose the actual stream id even when search result shape changes.
+  if (providerConfig.details) {
+    for (const possibleId of possibleIds.slice()) {
+      try {
+        const postData = await apiProviderFetch(providerConfig.details, { id: possibleId });
+        const postIds = apiCollectCandidateUrls(postData);
+        const postNormalized = apiNormalizeResponse(postData, providerName, mediaType);
+        if (postNormalized.id) possibleIds.unshift(postNormalized.id);
+
+        // Some getpost responses contain stream-like URLs directly.
+        const direct = await apiFindPlayableFromPayload({
+          payload: postData,
+          providerName,
+          providerConfig,
+          mediaType,
+          id,
+          season,
+          episode,
+          attempts,
+          depth: 1,
+          seen: new Set()
+        });
+        if (direct) return direct;
+
+        for (const u of postIds) {
+          const match = String(u).match(/(?:id|post|content|video)[=/:-]([A-Za-z0-9_-]+)/i);
+          if (match?.[1]) possibleIds.unshift(match[1]);
+        }
+      } catch (error) {
+        attempts.push(`netmirror/getpost: ${error.message || "failed"}`);
+      }
+    }
+  }
+
+  for (const streamId of Array.from(new Set(possibleIds)).filter(Boolean)) {
+    try {
+      const streamData = await apiProviderFetch(providerConfig.stream, { id: streamId });
+      const result = await apiFindPlayableFromPayload({
+        payload: streamData,
+        providerName,
+        providerConfig,
+        mediaType,
+        id,
+        season,
+        episode,
+        attempts,
+        depth: 0,
+        seen: new Set()
+      });
+      if (result) return result;
+      attempts.push(`netmirror: stream id ${streamId} had no usable source`);
+    } catch (error) {
+      attempts.push(`netmirror/stream ${streamId}: ${error.message || "failed"}`);
+    }
+  }
+
+  return null;
 }
 
 async function apiFindPlayableFromPayload({
@@ -707,122 +832,174 @@ async function fetchApiProviderSource({ type = "movie", id = "", season = "1", e
   const preferred = apiClean(provider || DEFAULT_PLAY_PROVIDER).toLowerCase();
   const providerOrder = Array.from(new Set([preferred, ...API_STREAM_PROVIDER_ORDER].filter(Boolean)));
 
-  // 1) Try providers that can return stream data directly.
+  let title = "";
+  let releaseYear = "";
+
+  // TMDB id is the stable input. Use it to get title/year for providers that
+  // search by title before returning their own stream id.
+  try {
+    const tmdbId = await apiResolveTmdbIdForApi({ mediaType, id, attempts });
+    if (tmdbId) {
+      const endpoint = mediaType === "tv" ? `/tv/${tmdbId}` : `/movie/${tmdbId}`;
+      const details = await tmdb(endpoint, {}, CACHE_TTL.long);
+      title = getTitle(details);
+      releaseYear = getYear(mediaType === "tv" ? details.first_air_date : details.release_date);
+      id = tmdbId;
+    }
+  } catch (error) {
+    attempts.push(`tmdb metadata: ${error.message || "failed"}`);
+  }
+
+  // 1) Direct stream providers.
   for (const providerName of providerOrder) {
     const providerConfig = API_PROVIDERS[providerName];
     if (!providerConfig) continue;
 
     try {
-      let data = null;
-
       if (providerName === "castel" && providerConfig.stream) {
         const tmdbId = await apiResolveTmdbIdForApi({ mediaType, id, attempts });
-
         if (!tmdbId) {
-          attempts.push(`${providerName}: missing numeric TMDB id`);
+          attempts.push("castel: missing numeric TMDB id");
           continue;
         }
 
-        data = await apiProviderFetch(providerConfig.stream, {
+        const data = await apiProviderFetch(providerConfig.stream, {
           tmdb: tmdbId,
           type: mediaType,
           season: mediaType === "tv" ? season : "",
           episode: mediaType === "tv" ? episode : ""
         });
-      } else if (providerName === "netmirror" && providerConfig.stream) {
-        data = await apiProviderFetch(providerConfig.stream, { id });
-      } else if ((providerName === "animepahe" || providerName === "animesalt") && providerConfig.stream && String(id).startsWith("http")) {
-        data = await apiProviderFetch(providerConfig.stream, { url: id });
-      } else {
+
+        const result = await apiFindPlayableFromPayload({
+          payload: data,
+          providerName,
+          providerConfig,
+          mediaType,
+          id: tmdbId,
+          season,
+          episode,
+          attempts
+        });
+
+        if (result) return result;
+        attempts.push("castel: no m3u8/media source in API response");
         continue;
       }
 
-      const result = await apiFindPlayableFromPayload({
-        payload: data,
-        providerName,
-        providerConfig,
-        mediaType,
-        id,
-        season,
-        episode,
-        attempts
-      });
+      if (providerName === "netmirror" && providerConfig.stream) {
+        // NetMirror stream id is not the TMDB id. Search title/year first.
+        const result = await apiTryNetMirrorByTmdb({
+          mediaType,
+          id,
+          season,
+          episode,
+          title,
+          year: releaseYear,
+          attempts
+        });
+        if (result) return result;
+        continue;
+      }
 
-      if (result) return result;
-      attempts.push(`${providerName}: API returned no usable media URL`);
+      if ((providerName === "animepahe" || providerName === "animesalt") && providerConfig.stream && String(id).startsWith("http")) {
+        const data = await apiProviderFetch(providerConfig.stream, { url: id });
+        const result = await apiFindPlayableFromPayload({
+          payload: data,
+          providerName,
+          providerConfig,
+          mediaType,
+          id,
+          season,
+          episode,
+          attempts
+        });
+        if (result) return result;
+        attempts.push(`${providerName}: no m3u8/media source in API response`);
+      }
     } catch (error) {
       attempts.push(`${providerName}: ${error.message || "request failed"}`);
     }
   }
 
-  // 2) Search by TMDB title/year, then call details, then recursively call
-  // provider-specific extractor routes if details returns intermediate links.
-  if (process.env.API_PROVIDER_SEARCH_FALLBACK !== "false") {
-    try {
-      const endpoint = mediaType === "tv" ? `/tv/${id}` : `/movie/${id}`;
-      const details = await tmdb(endpoint, {}, CACHE_TTL.long);
-      const title = getTitle(details);
-      const releaseDate = mediaType === "tv" ? details.first_air_date : details.release_date;
-      const releaseYear = getYear(releaseDate);
+  // 2) Details/extractor chain from docs. Search by TMDB title/year, call details,
+  // then follow provider-specific extraction routes until a real media URL appears.
+  if (process.env.API_PROVIDER_SEARCH_FALLBACK !== "false" && title) {
+    const providerList = Array.from(new Set([
+      preferred,
+      "netmirror",
+      ...API_DETAILS_SEARCH_FALLBACK_PROVIDERS
+    ].filter(Boolean)));
 
-      if (title) {
-        for (const providerName of API_DETAILS_SEARCH_FALLBACK_PROVIDERS) {
-          const providerConfig = API_PROVIDERS[providerName];
-          if (!providerConfig?.search || !providerConfig?.details) continue;
+    for (const providerName of providerList) {
+      const providerConfig = API_PROVIDERS[providerName];
+      if (!providerConfig?.search) continue;
 
-          try {
-            const searchData = await apiProviderFetch(providerConfig.search, { q: title, page: 1 });
-            const results = apiTopList(searchData).map((entry) => apiNormalizeItem(entry, providerName, mediaType));
-            const picked =
-              results.find((entry) => releaseYear && String(entry.year) === String(releaseYear)) ||
-              results.find((entry) => entry.title && title && entry.title.toLowerCase().includes(title.toLowerCase().slice(0, 8))) ||
-              results[0];
-
-            if (!picked?.url) {
-              attempts.push(`${providerName}: search had no detail URL`);
-              continue;
-            }
-
-            let detailParams = { url: picked.url };
-            detailParams = await apiApplyTmdbParamsIfNeeded({
-              providerName,
-              action: "details",
-              endpoint: providerConfig.details,
-              params: { ...detailParams, tmdb: id, tmdbId: id, id },
-              mediaType,
-              attempts
-            });
-
-            const detailData = await apiProviderFetch(providerConfig.details, detailParams);
-            const result = await apiFindPlayableFromPayload({
-              payload: detailData,
-              providerName,
-              providerConfig,
-              mediaType,
-              id,
-              season,
-              episode,
-              attempts
-            });
-
-            if (result) return result;
-            attempts.push(`${providerName}: details/extractors found no usable media URL`);
-          } catch (error) {
-            attempts.push(`${providerName}: ${error.message || "search/details failed"}`);
-          }
+      try {
+        // NetMirror has its own id -> stream flow.
+        if (providerName === "netmirror") {
+          const result = await apiTryNetMirrorByTmdb({
+            mediaType,
+            id,
+            season,
+            episode,
+            title,
+            year: releaseYear,
+            attempts
+          });
+          if (result) return result;
+          continue;
         }
-      } else {
-        attempts.push("search fallback metadata: no TMDB title found");
+
+        if (!providerConfig.details) continue;
+
+        const searchData = await apiProviderFetch(providerConfig.search, { q: title, page: 1 });
+        const results = apiTopList(searchData).map((entry) => apiNormalizeItem(entry, providerName, mediaType));
+        const picked =
+          results.find((entry) => releaseYear && String(entry.year) === String(releaseYear)) ||
+          results.find((entry) => entry.title && title && entry.title.toLowerCase().includes(title.toLowerCase().slice(0, 8))) ||
+          results[0];
+
+        if (!picked?.url) {
+          attempts.push(`${providerName}: search had no detail URL`);
+          continue;
+        }
+
+        let detailParams = { url: picked.url };
+        detailParams = await apiApplyTmdbParamsIfNeeded({
+          providerName,
+          action: "details",
+          endpoint: providerConfig.details,
+          params: { ...detailParams, tmdb: id, tmdbId: id, id },
+          mediaType,
+          attempts
+        });
+
+        const detailData = await apiProviderFetch(providerConfig.details, detailParams);
+        const result = await apiFindPlayableFromPayload({
+          payload: detailData,
+          providerName,
+          providerConfig,
+          mediaType,
+          id,
+          season,
+          episode,
+          attempts
+        });
+
+        if (result) return result;
+        attempts.push(`${providerName}: details/extractors found no m3u8/media URL`);
+      } catch (error) {
+        attempts.push(`${providerName}: ${error.message || "search/details failed"}`);
       }
-    } catch (error) {
-      attempts.push(`search fallback metadata: ${error.message || "failed"}`);
     }
+  } else if (!title) {
+    attempts.push("search fallback skipped: no TMDB title");
   }
 
   return {
     status: "error",
-    message: attempts[0] || "API provider did not return a usable media URL. M3U8 is preferred.",
-    attempts: attempts.slice(-24)
+    message: attempts[0] || "API provider did not return a usable m3u8/media URL.",
+    attempts: attempts.slice(-32)
   };
 }
 
@@ -44079,6 +44256,44 @@ app.get("/api/provider/action", async (req, res) => {
       provider: providerName,
       action,
       item: apiNormalizeResponse(data, providerName, providerName.includes("anime") ? "anime" : "movie"),
+      raw: data
+    });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.get("/api/provider/raw-debug", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  try {
+    const providerName = apiClean(req.query.provider || DEFAULT_PLAY_PROVIDER).toLowerCase();
+    const action = apiClean(req.query.action || "stream").toLowerCase();
+    const providerConfig = API_PROVIDERS[providerName];
+    if (!providerConfig) return res.status(400).json({ ok: false, error: "Unsupported provider" });
+    const endpoint = providerConfig[action] || providerConfig.stream || providerConfig.details || providerConfig.search || providerConfig.home;
+    if (!endpoint) return res.status(400).json({ ok: false, error: "Provider action missing endpoint" });
+
+    let params = { ...req.query };
+    delete params.provider;
+    delete params.action;
+    params = await apiApplyTmdbParamsIfNeeded({
+      providerName,
+      action,
+      endpoint,
+      params,
+      mediaType: params.type === "tv" ? "tv" : "movie",
+      attempts: []
+    });
+
+    const data = await apiProviderFetch(endpoint, params);
+    res.json({
+      ok: true,
+      provider: providerName,
+      action,
+      endpoint,
+      paramsSent: params,
+      normalizedSources: apiNormalizeSources(data),
+      candidateUrls: apiCollectCandidateUrls(data),
       raw: data
     });
   } catch (error) {
