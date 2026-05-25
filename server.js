@@ -22,10 +22,343 @@ const TMDB_BASE = "https://api.themoviedb.org/3";
 const TMDB_IMG = "https://image.tmdb.org/t/p";
 const BRAND_WORDMARK = process.env.BRAND_WORDMARK || "SWIFLYTV";
 const BRAND_SUBMARK = process.env.BRAND_SUBMARK || "SWIFLYTV";
+
+// ===== SwiflyTV backend-only provider API integration =====
+// These variables stay server-side. Never expose API_KEY in frontend JavaScript.
 const API_BASE_URL = (process.env.API_BASE_URL || "").replace(/\/$/, "");
 const API_KEY = process.env.API_KEY || "";
-const DEFAULT_PLAY_PROVIDER = (process.env.DEFAULT_PLAY_PROVIDER || "castel").toLowerCase();
-const MOVIE_API_PROVIDER_ENABLED = process.env.MOVIE_API_PROVIDER_ENABLED !== "false";
+const DEFAULT_PLAY_PROVIDER = String(process.env.DEFAULT_PLAY_PROVIDER || "castel").toLowerCase();
+const API_PROVIDER_TIMEOUT_MS = Math.max(8000, Number(process.env.API_PROVIDER_TIMEOUT_MS || 45000));
+
+const API_PROVIDERS = {
+  "4khdhub": { home: "/api/4khdhub", search: "/api/4khdhub/search", details: "/api/4khdhub/details", gadget: "/api/4khdhub/gadget" },
+  desiremovies: { home: "/api/desiremovies", search: "/api/desiremovies/search", details: "/api/desiremovies/details" },
+  drive: { home: "/api/drive", search: "/api/drive/search", details: "/api/drive/details", mdrive: "/api/drive/mdrive" },
+  netmirror: { home: "/api/netmirror", search: "/api/netmirror/search", details: "/api/netmirror/getpost", stream: "/api/netmirror/stream", eps: "/api/netmirror/eps" },
+  movies4u: { home: "/api/movies4u", search: "/api/movies4u/search", details: "/api/movies4u/details", m4ulinks: "/api/movies4u/m4ulinks" },
+  hdhub4u: { home: "/api/hdhub4u", search: "/api/hdhub4u/search", details: "/api/hdhub4u/details" },
+  zeefliz: { home: "/api/zeefliz", search: "/api/zeefliz/search", details: "/api/zeefliz/details", nextdrive: "/api/zeefliz/nextdrive" },
+  vega: { home: "/api/vega", search: "/api/vega/search", details: "/api/vega/details", nextdrive: "/api/vega/nextdrive" },
+  zinkmovies: { home: "/api/zinkmovies", search: "/api/zinkmovies/search", details: "/api/zinkmovies/details", zinkcloud: "/api/zinkmovies/zinkcloud" },
+  animesalt: { home: "/api/animesalt", search: "/api/animesalt/search", details: "/api/animesalt/details", stream: "/api/animesalt/stream" },
+  animepahe: { home: "/api/animepahe", details: "/api/animepahe/details", stream: "/api/animepahe/stream" },
+  castel: { stream: "/api/castel" },
+  kmmovies: { home: "/api/kmmovies", search: "/api/kmmovies/search", details: "/api/kmmovies/details", magiclinks: "/api/kmmovies/magiclinks" },
+  uhdmovies: { home: "/api/uhdmovies", search: "/api/uhdmovies/search", details: "/api/uhdmovies/details", tech: "/api/uhdmovies/tech" },
+  mod: { home: "/api/mod", search: "/api/mod/search", details: "/api/mod/details", modpro: "/api/mod/modpro" },
+  hubcloud: { extract: "/api/extractors/hubcloud" },
+  gdflix: { extract: "/api/extractors/gdflix" }
+};
+
+const API_SEARCH_PROVIDERS = [
+  "netmirror", "4khdhub", "movies4u", "hdhub4u", "zeefliz", "vega", "zinkmovies",
+  "animesalt", "kmmovies", "uhdmovies", "mod", "drive", "desiremovies"
+];
+
+const API_STREAM_PROVIDER_ORDER = ["castel", "netmirror", "animepahe", "animesalt"];
+const API_DETAILS_SEARCH_FALLBACK_PROVIDERS = ["4khdhub", "movies4u", "hdhub4u", "zeefliz", "vega", "zinkmovies", "kmmovies", "uhdmovies", "mod", "drive", "desiremovies"];
+
+function apiProviderConfigured() {
+  return Boolean(API_BASE_URL && API_KEY);
+}
+
+function apiClean(value) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function apiFirst(...values) {
+  return values.map(apiClean).find(Boolean) || "";
+}
+
+function apiYearFrom(value) {
+  const match = String(value || "").match(/(?:19|20)\d{2}/);
+  return match ? match[0] : "";
+}
+
+function apiWalk(value, callback, seen = new Set()) {
+  if (value == null) return;
+  if (typeof value === "object") {
+    if (seen.has(value)) return;
+    seen.add(value);
+  }
+  callback(value);
+  if (Array.isArray(value)) return value.forEach((item) => apiWalk(item, callback, seen));
+  if (typeof value === "object") Object.values(value).forEach((item) => apiWalk(item, callback, seen));
+}
+
+function apiLooksLikeImage(url = "") {
+  return /\.(?:jpe?g|png|webp|gif|avif|svg)(?:[?#]|$)/i.test(String(url || ""));
+}
+
+function apiLooksPlayable(url = "", node = {}) {
+  const value = String(url || "").trim();
+  if (!/^https?:\/\//i.test(value)) return false;
+  if (apiLooksLikeImage(value)) return false;
+  if (/\.(?:m3u8|mp4|m4v|webm|mov|mpd|mkv)(?:[?#]|$)/i.test(value)) return true;
+  const text = `${Object.keys(node || {}).join(" ")} ${Object.values(node || {}).slice(0, 8).join(" ")}`.toLowerCase();
+  return /stream|source|m3u8|playlist|video|hls|dash|quality|server|download|direct|cloud|cdn/.test(text);
+}
+
+function apiNormalizeSources(input) {
+  const sources = [];
+  apiWalk(input, (node) => {
+    if (typeof node === "string") {
+      if (apiLooksPlayable(node, { raw: node })) {
+        sources.push({ name: "source", quality: "", url: node, headers: {} });
+      }
+      return;
+    }
+    if (!node || typeof node !== "object") return;
+
+    const mediaUrl = apiFirst(
+      node.m3u8,
+      node.playlist,
+      node.playbackUrl,
+      node.proxyVideo,
+      node.streamUrl,
+      node.streamingUrl,
+      node.videoUrl,
+      node.downloadUrl,
+      node.directUrl,
+      node.src,
+      node.file,
+      node.url,
+      node.link,
+      node.href
+    );
+
+    if (!apiLooksPlayable(mediaUrl, node)) return;
+
+    sources.push({
+      name: apiFirst(node.name, node.server, node.provider, node.label, node.source, node.host) || "source",
+      quality: apiFirst(node.quality, node.resolution, node.size, node.format, node.type),
+      url: mediaUrl,
+      headers: node.headers && typeof node.headers === "object" ? node.headers : {}
+    });
+  });
+  return Array.from(new Map(sources.map((source) => [source.url, source])).values());
+}
+
+function apiTopList(json) {
+  if (Array.isArray(json)) return json;
+  for (const key of ["data", "results", "items", "movies", "shows", "anime", "posts", "list", "latest", "trending", "popular", "slider"]) {
+    if (Array.isArray(json?.[key])) return json[key];
+  }
+  let found = null;
+  apiWalk(json, (node) => {
+    if (!found && Array.isArray(node) && node.some((entry) => entry && typeof entry === "object")) found = node;
+  });
+  return found || [];
+}
+
+function apiInferType(item = {}, fallback = "movie") {
+  const raw = String(item.type || item.mediaType || item.category || item.kind || item.contentType || "").toLowerCase();
+  if (raw.includes("anime")) return "anime";
+  if (raw.includes("tv") || raw.includes("show") || raw.includes("series")) return "tv";
+  if (raw.includes("movie") || raw.includes("film")) return "movie";
+  const title = String(item.title || item.name || "");
+  if (/season|episode|s\d{1,2}e\d{1,2}/i.test(title)) return "tv";
+  return fallback;
+}
+
+function apiNormalizeItem(item = {}, provider = "", fallbackType = "movie") {
+  const title = apiFirst(item.title, item.name, item.movie, item.post_title, item.label, item.original_title);
+  return {
+    provider,
+    id: apiFirst(item.id, item.tmdb, item.tmdbId, item.postId, item.contentId, item.session, item._id),
+    url: apiFirst(item.url, item.link, item.href, item.path, item.detailsUrl, item.postUrl, item.playUrl),
+    title,
+    year: apiFirst(item.year, item.releaseYear, apiYearFrom(title), apiYearFrom(item.date), apiYearFrom(item.releaseDate)),
+    type: apiInferType(item, fallbackType),
+    poster: apiFirst(item.poster, item.image, item.imageUrl, item.thumbnail, item.cover, item.logo, item.img),
+    backdrop: apiFirst(item.backdrop, item.banner, item.background, item.cover, item.backdropUrl),
+    overview: apiFirst(item.overview, item.description, item.plot, item.synopsis, item.content, item.excerpt),
+    formats: Array.isArray(item.formats) ? item.formats : [],
+    sources: apiNormalizeSources(item.sources || item.streams || item.links || item.downloads || item.servers || item.data)
+  };
+}
+
+function apiNormalizeResponse(raw = {}, provider = "", fallbackType = "movie") {
+  const root = raw?.data || raw?.result || raw;
+  const item = apiNormalizeItem(root && !Array.isArray(root) ? root : {}, provider, fallbackType);
+  item.sources = apiNormalizeSources(raw);
+  return item;
+}
+
+async function apiProviderFetch(endpoint, params = {}) {
+  if (!apiProviderConfigured()) throw new Error("Missing API_BASE_URL or API_KEY env vars");
+  if (String(endpoint || "").includes("/api/adult/")) throw new Error("Adult provider routes are disabled");
+
+  const url = new URL(API_BASE_URL + endpoint);
+  for (const [key, value] of Object.entries(params || {})) {
+    if (value !== undefined && value !== null && value !== "") url.searchParams.set(key, String(value));
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), API_PROVIDER_TIMEOUT_MS);
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      signal: controller.signal,
+      headers: {
+        "x-api-key": API_KEY,
+        "Content-Type": "application/json",
+        Accept: "application/json"
+      }
+    });
+    const text = await response.text();
+    let data;
+    try { data = JSON.parse(text); } catch { data = { raw: text }; }
+    if (!response.ok) throw new Error(data?.error || data?.message || `Provider HTTP ${response.status}`);
+    return data;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function apiGetProvider(name = "") {
+  const provider = apiClean(name).toLowerCase();
+  if (!API_PROVIDERS[provider]) throw new Error(`Unsupported provider: ${provider || "missing"}`);
+  return [provider, API_PROVIDERS[provider]];
+}
+
+function apiSourceToProxyResult({ source, raw, provider, type, id, season = "", episode = "", attempts = [] }) {
+  if (!source || !source.url) return null;
+  let parsed;
+  try { parsed = new URL(source.url); } catch { return null; }
+  if (!["http:", "https:"].includes(parsed.protocol)) return null;
+
+  const isHls = /\.m3u8(?:[?#]|$)/i.test(parsed.toString()) || /hls|m3u8/i.test(`${source.quality || ""} ${source.name || ""}`);
+  const hlsProxy = isHls && hlsProxyEnabled()
+    ? registerHlsProxySource(parsed.toString(), source.headers || {}, {
+        movieId: String(id || ""),
+        provider,
+        type,
+        season,
+        episode,
+        streamName: source.name || "",
+        streamQuality: source.quality || ""
+      })
+    : { enabled: false, id: "", url: "" };
+
+  const playbackUrl = hlsProxy.url || parsed.toString();
+  return {
+    status: "ok",
+    providerKind: `api_${provider}${isHls ? (hlsProxy.url ? "_hls_proxy" : "_direct_hls") : "_direct"}`,
+    movieId: String(id || ""),
+    sourceUrl: String(raw?.sourceUrl || raw?.url || ""),
+    playbackUrl,
+    proxyVideo: playbackUrl,
+    originalPlaybackUrl: parsed.toString(),
+    hlsProxyUrl: hlsProxy.url || "",
+    hlsProxyId: hlsProxy.id || "",
+    hlsProxyStatusUrl: hlsProxy.id ? `/api/hls-proxy/${hlsProxy.id}/status` : "",
+    m3u8: isHls ? parsed.toString() : "",
+    streamType: isHls ? "m3u8" : "video",
+    streamQuality: source.quality || "",
+    streamName: source.name || provider,
+    streamHeaders: source.headers || {},
+    streamMode: isHls ? "hls" : "video",
+    isLiveM3u8: false,
+    apiProvider: provider,
+    normalized: raw,
+    attempts
+  };
+}
+
+async function fetchApiProviderSource({ type = "movie", id = "", season = "1", episode = "1", provider = "" }) {
+  if (!apiProviderConfigured()) return { status: "skipped", reason: "api_provider_missing_env" };
+
+  const mediaType = type === "tv" ? "tv" : "movie";
+  const attempts = [];
+  const preferred = apiClean(provider || DEFAULT_PLAY_PROVIDER).toLowerCase();
+  const providerOrder = Array.from(new Set([preferred, ...API_STREAM_PROVIDER_ORDER].filter(Boolean)));
+
+  for (const providerName of providerOrder) {
+    const providerConfig = API_PROVIDERS[providerName];
+    if (!providerConfig) continue;
+
+    try {
+      let data = null;
+
+      if (providerName === "castel" && providerConfig.stream) {
+        data = await apiProviderFetch(providerConfig.stream, {
+          tmdb: id,
+          type: mediaType,
+          season: mediaType === "tv" ? season : "",
+          episode: mediaType === "tv" ? episode : ""
+        });
+      } else if (providerName === "netmirror" && providerConfig.stream) {
+        data = await apiProviderFetch(providerConfig.stream, { id });
+      } else if ((providerName === "animepahe" || providerName === "animesalt") && providerConfig.stream && String(id).startsWith("http")) {
+        data = await apiProviderFetch(providerConfig.stream, { url: id });
+      } else {
+        continue;
+      }
+
+      const normalized = apiNormalizeResponse(data, providerName, mediaType);
+      const source = normalized.sources[0];
+      const result = apiSourceToProxyResult({ source, raw: normalized, provider: providerName, type: mediaType, id, season, episode, attempts });
+      if (result) return result;
+      attempts.push(`${providerName}: no playable source in API response`);
+    } catch (error) {
+      attempts.push(`${providerName}: ${error.message || "request failed"}`);
+    }
+  }
+
+  // Fallback: use API search result return shapes, such as title/url/imageUrl/year/formats,
+  // then call that provider's details route and normalize any playable sources returned there.
+  if (process.env.API_PROVIDER_SEARCH_FALLBACK !== "false") {
+    try {
+      const endpoint = mediaType === "tv" ? `/tv/${id}` : `/movie/${id}`;
+      const details = await tmdb(endpoint, {}, CACHE_TTL.long);
+      const title = getTitle(details);
+      const releaseDate = mediaType === "tv" ? details.first_air_date : details.release_date;
+      const releaseYear = getYear(releaseDate);
+
+      if (title) {
+        for (const providerName of API_DETAILS_SEARCH_FALLBACK_PROVIDERS) {
+          const providerConfig = API_PROVIDERS[providerName];
+          if (!providerConfig?.search || !providerConfig?.details) continue;
+          try {
+            const searchData = await apiProviderFetch(providerConfig.search, { q: title, page: 1 });
+            const results = apiTopList(searchData).map((entry) => apiNormalizeItem(entry, providerName, mediaType));
+            const picked = results.find((entry) => releaseYear && String(entry.year) === String(releaseYear)) || results[0];
+            if (!picked?.url) {
+              attempts.push(`${providerName}: search had no detail url`);
+              continue;
+            }
+
+            const detailData = await apiProviderFetch(providerConfig.details, { url: picked.url });
+            const normalized = apiNormalizeResponse(detailData, providerName, mediaType);
+            normalized.title = normalized.title || picked.title || title;
+            normalized.year = normalized.year || picked.year || releaseYear;
+            normalized.poster = normalized.poster || picked.poster;
+            normalized.backdrop = normalized.backdrop || picked.backdrop;
+
+            const source = normalized.sources[0];
+            const result = apiSourceToProxyResult({ source, raw: normalized, provider: providerName, type: mediaType, id, season, episode, attempts });
+            if (result) return result;
+            attempts.push(`${providerName}: details returned no playable source`);
+          } catch (error) {
+            attempts.push(`${providerName}: ${error.message || "search/details failed"}`);
+          }
+        }
+      }
+    } catch (error) {
+      attempts.push(`search fallback metadata: ${error.message || "failed"}`);
+    }
+  }
+
+  return {
+    status: "error",
+    message: attempts[0] || "API provider did not return a playable source.",
+    attempts: attempts.slice(-16)
+  };
+}
+
+// ===== End backend-only provider API integration =====
+
 
 const CACHE_TTL = {
   short: 1000 * 60 * 5,
@@ -36350,472 +36683,20 @@ function listProviderStreams(data = {}) {
     .filter((entry) => entry.url && (entry.type === "mp4" || (allowHlsFallback && entry.type === "hls")));
 }
 
-/* ============================================================
-   API PROVIDER SYSTEM
-   Backend-only provider API integration. The x-api-key never goes
-   to frontend JavaScript. Adult provider paths are blocked here.
-   Normalized output:
-   { title, year, type, poster, backdrop, overview, sources: [{ name, quality, url, headers }] }
-   ============================================================ */
-
-const API_PROVIDER_ROUTES = {
-  "4khdhub": {
-    home: "/api/4khdhub",
-    search: "/api/4khdhub/search",
-    details: "/api/4khdhub/details",
-    gadget: "/api/4khdhub/gadget",
-  },
-  desiremovies: {
-    home: "/api/desiremovies",
-    search: "/api/desiremovies/search",
-    details: "/api/desiremovies/details",
-  },
-  drive: {
-    home: "/api/drive",
-    search: "/api/drive/search",
-    details: "/api/drive/details",
-    mdrive: "/api/drive/mdrive",
-  },
-  netmirror: {
-    home: "/api/netmirror",
-    search: "/api/netmirror/search",
-    details: "/api/netmirror/getpost",
-    stream: "/api/netmirror/stream",
-    eps: "/api/netmirror/eps",
-  },
-  movies4u: {
-    home: "/api/movies4u",
-    search: "/api/movies4u/search",
-    details: "/api/movies4u/details",
-    m4ulinks: "/api/movies4u/m4ulinks",
-  },
-  hdhub4u: {
-    home: "/api/hdhub4u",
-    search: "/api/hdhub4u/search",
-    details: "/api/hdhub4u/details",
-  },
-  zeefliz: {
-    home: "/api/zeefliz",
-    search: "/api/zeefliz/search",
-    details: "/api/zeefliz/details",
-    nextdrive: "/api/zeefliz/nextdrive",
-  },
-  vega: {
-    home: "/api/vega",
-    search: "/api/vega/search",
-    details: "/api/vega/details",
-    nextdrive: "/api/vega/nextdrive",
-  },
-  zinkmovies: {
-    home: "/api/zinkmovies",
-    search: "/api/zinkmovies/search",
-    details: "/api/zinkmovies/details",
-    zinkcloud: "/api/zinkmovies/zinkcloud",
-  },
-  animesalt: {
-    home: "/api/animesalt",
-    search: "/api/animesalt/search",
-    details: "/api/animesalt/details",
-    stream: "/api/animesalt/stream",
-  },
-  animepahe: {
-    home: "/api/animepahe",
-    details: "/api/animepahe/details",
-    stream: "/api/animepahe/stream",
-  },
-  castel: {
-    stream: "/api/castel",
-  },
-  kmmovies: {
-    home: "/api/kmmovies",
-    search: "/api/kmmovies/search",
-    details: "/api/kmmovies/details",
-    magiclinks: "/api/kmmovies/magiclinks",
-  },
-  uhdmovies: {
-    home: "/api/uhdmovies",
-    search: "/api/uhdmovies/search",
-    details: "/api/uhdmovies/details",
-    tech: "/api/uhdmovies/tech",
-  },
-  mod: {
-    home: "/api/mod",
-    search: "/api/mod/search",
-    details: "/api/mod/details",
-    modpro: "/api/mod/modpro",
-  },
-  hubcloud: {
-    extract: "/api/extractors/hubcloud",
-  },
-  gdflix: {
-    extract: "/api/extractors/gdflix",
-  },
-};
-
-const API_SEARCH_PROVIDERS = [
-  "netmirror",
-  "4khdhub",
-  "movies4u",
-  "hdhub4u",
-  "zeefliz",
-  "vega",
-  "zinkmovies",
-  "animesalt",
-  "kmmovies",
-  "uhdmovies",
-  "mod",
-  "drive",
-  "desiremovies",
-];
-
-function apiClean(value) {
-  return typeof value === "string" ? value.trim() : "";
-}
-
-function apiFirst(...values) {
-  return values.map(apiClean).find(Boolean) || "";
-}
-
-function apiFirstYear(value) {
-  const found = String(value || "").match(/(?:19|20)\d{2}/);
-  return found ? found[0] : "";
-}
-
-function apiWalk(value, callback, seen = new Set()) {
-  if (value == null) return;
-
-  if (typeof value === "object") {
-    if (seen.has(value)) return;
-    seen.add(value);
-  }
-
-  callback(value);
-
-  if (Array.isArray(value)) {
-    for (const child of value) apiWalk(child, callback, seen);
-    return;
-  }
-
-  if (typeof value === "object") {
-    for (const child of Object.values(value)) apiWalk(child, callback, seen);
-  }
-}
-
-function apiTypeFromItem(item = {}, fallbackType = "movie") {
-  const raw = String(item.type || item.mediaType || item.category || item.kind || item.contentType || "").toLowerCase();
-  if (raw.includes("anime")) return "anime";
-  if (raw.includes("tv") || raw.includes("show") || raw.includes("series")) return "tv";
-  if (raw.includes("movie") || raw.includes("film")) return "movie";
-
-  const title = String(item.title || item.name || "");
-  if (/season|episode|s\d{1,2}e\d{1,2}/i.test(title)) return "tv";
-
-  return fallbackType;
-}
-
-function normalizeApiSources(input) {
-  const out = [];
-
-  apiWalk(input, (node) => {
-    if (typeof node === "string") {
-      if (/^https?:\/\//i.test(node)) {
-        out.push({ name: "source", quality: "", url: node, headers: {} });
-      }
-      return;
-    }
-
-    if (!node || typeof node !== "object") return;
-
-    const url = apiFirst(
-      node.url,
-      node.src,
-      node.file,
-      node.link,
-      node.href,
-      node.stream,
-      node.streamUrl,
-      node.playbackUrl,
-      node.proxyVideo,
-      node.m3u8,
-      node.playlist,
-      node.downloadUrl
-    );
-
-    if (!url || !/^https?:\/\//i.test(url)) return;
-
-    const headers = node.headers && typeof node.headers === "object" ? node.headers : {};
-
-    out.push({
-      name: apiFirst(node.name, node.server, node.provider, node.label, node.source) || "source",
-      quality: apiFirst(node.quality, node.resolution, node.size, node.format),
-      url,
-      headers,
-    });
-  });
-
-  return [...new Map(out.map((source) => [source.url, source])).values()];
-}
-
-function apiTopList(json) {
-  if (Array.isArray(json)) return json;
-
-  for (const key of ["data", "results", "items", "movies", "shows", "anime", "posts", "list", "latest", "trending", "popular"]) {
-    if (Array.isArray(json?.[key])) return json[key];
-  }
-
-  let found = null;
-  apiWalk(json, (node) => {
-    if (!found && Array.isArray(node) && node.some((item) => item && typeof item === "object")) {
-      found = node;
-    }
-  });
-
-  return found || [];
-}
-
-function normalizeApiItem(item = {}, provider = "", fallbackType = "movie") {
-  const title = apiFirst(item.title, item.name, item.movie, item.post_title, item.label, item.original_title);
-
-  return {
-    provider,
-    id: apiFirst(item.id, item.tmdb, item.tmdbId, item.postId, item.contentId, item.session),
-    url: apiFirst(item.url, item.link, item.href, item.path, item.detailsUrl, item.postUrl, item.playUrl),
-    title,
-    year: apiFirst(item.year, item.releaseYear, apiFirstYear(title), apiFirstYear(item.date)),
-    type: apiTypeFromItem(item, fallbackType),
-    poster: apiFirst(item.poster, item.image, item.imageUrl, item.thumbnail, item.cover, item.logo, item.img),
-    backdrop: apiFirst(item.backdrop, item.banner, item.background, item.cover),
-    overview: apiFirst(item.overview, item.description, item.plot, item.synopsis, item.content, item.excerpt),
-    sources: normalizeApiSources(item.sources || item.streams || item.links || item.downloads || item.servers),
-  };
-}
-
-function normalizeApiProviderResponse(raw, provider = "", fallbackType = "movie") {
-  const root = raw?.data || raw?.result || raw;
-  const normalized = normalizeApiItem(root && !Array.isArray(root) ? root : {}, provider, fallbackType);
-  normalized.sources = normalizeApiSources(raw);
-  return normalized;
-}
-
-function getApiProvider(providerName) {
-  const key = apiClean(providerName || DEFAULT_PLAY_PROVIDER).toLowerCase();
-
-  if (!API_PROVIDER_ROUTES[key]) {
-    throw new Error(`Unsupported provider: ${key || "(missing)"}`);
-  }
-
-  return [key, API_PROVIDER_ROUTES[key]];
-}
-
-function isApiProviderConfigured() {
-  return Boolean(API_BASE_URL && API_KEY && MOVIE_API_PROVIDER_ENABLED);
-}
-
-async function apiProviderFetch(endpoint, params = {}) {
-  if (!isApiProviderConfigured()) {
-    throw new Error("Missing API_BASE_URL or API_KEY env vars");
-  }
-
-  if (String(endpoint || "").includes("/api/adult/")) {
-    throw new Error("Adult provider routes are disabled");
-  }
-
-  const url = new URL(API_BASE_URL + endpoint);
-
-  for (const [key, value] of Object.entries(params || {})) {
-    if (value !== undefined && value !== null && value !== "") {
-      url.searchParams.set(key, String(value));
-    }
-  }
-
-  const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      "x-api-key": API_KEY,
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-  });
-
-  const text = await response.text();
-  let data = null;
-
-  try {
-    data = JSON.parse(text);
-  } catch {
-    data = { raw: text };
-  }
-
-  if (!response.ok) {
-    throw new Error(data?.error || data?.message || `Provider HTTP ${response.status}`);
-  }
-
-  return data;
-}
-
-function apiSourceScore(source = {}) {
-  const q = String(source.quality || source.name || "").toLowerCase();
-  let score = 0;
-  if (/2160|4k|uhd/.test(q)) score += 900;
-  else if (/1080|fhd/.test(q)) score += 700;
-  else if (/720|hd/.test(q)) score += 500;
-  else if (/480/.test(q)) score += 300;
-  if (/\.m3u8([?#]|$)/i.test(source.url || "")) score += 80;
-  if (/mp4([?#]|$)/i.test(source.url || "")) score += 40;
-  if (/castel|netmirror|animepahe|animesalt/i.test(source.name || "")) score += 30;
-  return score;
-}
-
-function pickApiSource(sources = []) {
-  return [...sources]
-    .filter((source) => source && /^https?:\/\//i.test(source.url || ""))
-    .sort((a, b) => apiSourceScore(b) - apiSourceScore(a))[0] || null;
-}
-
-async function fetchApiProviderPlaybackSource({ type = "movie", id, season = "1", episode = "1", provider = "" } = {}) {
-  if (!isApiProviderConfigured()) {
-    return { status: "disabled", reason: "api_provider_missing_env" };
-  }
-
-  const mediaType = type === "tv" ? "tv" : type === "anime" ? "anime" : "movie";
-  const preferredProvider = apiClean(provider || DEFAULT_PLAY_PROVIDER).toLowerCase();
-  const tryProviders = [...new Set([preferredProvider, "castel", "netmirror", "animepahe", "animesalt"].filter(Boolean))];
-  const errors = [];
-
-  for (const providerName of tryProviders) {
-    const cfg = API_PROVIDER_ROUTES[providerName];
-    if (!cfg) continue;
-
-    try {
-      let endpoint = "";
-      let params = {};
-
-      if (providerName === "castel") {
-        if (!id || mediaType === "anime") continue;
-        endpoint = cfg.stream;
-        params = {
-          tmdb: id,
-          type: mediaType === "tv" ? "tv" : "movie",
-          season: mediaType === "tv" ? season || "1" : "",
-          episode: mediaType === "tv" ? episode || "1" : "",
-        };
-      } else if (providerName === "netmirror") {
-        if (!id) continue;
-        endpoint = cfg.stream;
-        params = { id };
-      } else if (providerName === "animepahe" || providerName === "animesalt") {
-        const directUrl = apiClean(id);
-        if (!/^https?:\/\//i.test(directUrl)) continue;
-        endpoint = cfg.stream;
-        params = { url: directUrl };
-      } else if (cfg.stream) {
-        endpoint = cfg.stream;
-        params = { id, tmdb: id, type: mediaType, season, episode };
-      } else {
-        continue;
-      }
-
-      const raw = await apiProviderFetch(endpoint, params);
-      const normalized = normalizeApiProviderResponse(raw, providerName, mediaType);
-
-      if (providerName === "animepahe") {
-        normalized.sources = normalized.sources.map((source) => ({
-          ...source,
-          headers: {
-            Referer: "https://kwik.cx/",
-            Origin: "https://kwik.cx",
-            ...(source.headers || {}),
-          },
-        }));
-      }
-
-      const picked = pickApiSource(normalized.sources);
-      if (!picked) {
-        errors.push(`${providerName}: no playable source`);
-        continue;
-      }
-
-      const isHls = /\.m3u8([?#]|$)/i.test(picked.url || "") || /hls|m3u8/i.test(picked.name || "");
-      const proxy = isHls && hlsProxyEnabled()
-        ? registerHlsProxySource(picked.url, picked.headers || {}, {
-            provider: providerName,
-            tmdb: String(id || ""),
-            type: mediaType,
-            sourceUrl: picked.url,
-            streamName: picked.name || "",
-            streamQuality: picked.quality || "",
-          })
-        : { enabled: false, id: "", url: "" };
-
-      const playbackUrl = proxy.url || picked.url;
-
-      return {
-        status: "ok",
-        ok: true,
-        providerKind: `api_provider_${providerName}`,
-        movieId: String(id || ""),
-        title: normalized.title || "",
-        year: normalized.year || "",
-        type: normalized.type || mediaType,
-        poster: normalized.poster || "",
-        backdrop: normalized.backdrop || "",
-        overview: normalized.overview || "",
-        playbackUrl,
-        proxyVideo: playbackUrl,
-        originalPlaybackUrl: picked.url,
-        m3u8: isHls ? picked.url : "",
-        hlsProxyUrl: proxy.url || "",
-        hlsProxyId: proxy.id || "",
-        hlsProxyStatusUrl: proxy.id ? `/api/hls-proxy/${proxy.id}/status` : "",
-        streamType: isHls ? "m3u8" : "video",
-        streamMode: isHls ? "hls" : "video",
-        streamName: picked.name || providerName,
-        streamQuality: picked.quality || "",
-        streamHeaders: picked.headers || {},
-        stream: {
-          name: picked.name || providerName,
-          quality: picked.quality || "",
-          type: isHls ? "hls" : "mp4",
-          url: playbackUrl,
-          originalUrl: picked.url,
-          headers: picked.headers || {},
-        },
-        streams: normalized.sources.map((source) => ({
-          name: source.name || providerName,
-          quality: source.quality || "",
-          type: /\.m3u8([?#]|$)/i.test(source.url || "") ? "hls" : "mp4",
-          url: source.url,
-          headers: source.headers || {},
-        })),
-        sources: normalized.sources,
-        provider: providerName,
-        apiProvider: providerName,
-        attempts: errors,
-      };
-    } catch (error) {
-      errors.push(`${providerName}: ${error.message || "request failed"}`);
-    }
-  }
-
-  return {
-    status: "error",
-    ok: false,
-    message: errors[0] || "API provider did not return a playable source.",
-    attempts: errors.slice(-12),
-  };
-}
-
-
 
 async function fetchProxyVideoSource({ type, id, season = "1", episode = "1", provider = "" }) {
-  const apiProviderSource = await fetchApiProviderPlaybackSource({ type, id, season, episode, provider });
-  if (apiProviderSource && apiProviderSource.status === "ok") {
-    return apiProviderSource;
+  const mediaType = type === "tv" ? "tv" : "movie";
+
+  const apiResult = await fetchApiProviderSource({ type: mediaType, id, season, episode, provider });
+  if (apiResult && apiResult.status === "ok") {
+    return apiResult;
   }
 
   const enabled = process.env.MOVIE_PROXY_VIDEO_PROVIDER_ENABLED !== "false";
-  if (!enabled || type !== "movie") {
-    return { status: "disabled", reason: "proxy_video_disabled" };
+  if (!enabled || mediaType !== "movie") {
+    return apiResult && apiResult.status === "error"
+      ? apiResult
+      : { status: "disabled", reason: "proxy_video_disabled", apiProvider: apiResult || null };
   }
 
   const primaryBase =
@@ -36966,12 +36847,7 @@ async function fetchProxyVideoSource({ type, id, season = "1", episode = "1", pr
   };
 }
 
-async function fetchMoviePlaceholderSource({ type, id, season = "1", episode = "1", provider = "" }) {
-  const apiProviderSource = await fetchApiProviderPlaybackSource({ type, id, season, episode, provider });
-  if (apiProviderSource && apiProviderSource.status === "ok") {
-    return apiProviderSource;
-  }
-
+async function fetchMoviePlaceholderSource({ type, id }) {
   const enabled =
     process.env.MOVIE_PLACEHOLDER_PROVIDER_ENABLED === "true" ||
     process.env.LICENSED_MOVIE_PROVIDER_ENABLED === "true";
@@ -37122,7 +36998,7 @@ async function watchPage(req, res, type) {
   const providerStream = placeholderSource.status === "ok" ? placeholderSource.stream : null;
   const movieEmbedUrl = isMovieMode && !clientProxyVideoWait && !providerStream && allowLegacyMovieFallback ? buildMovieEmbedProviderUrl({ req, type, id }) : "";
   const sourceLabel = isMovieMode
-    ? (clientProxyVideoWait ? "waiting for API source" : providerStream ? `${providerStream.quality || "ORG"} ${providerStream.type.toUpperCase()} placeholder` : movieEmbedUrl ? "Embed provider" : "Trailer fallback")
+    ? (clientProxyVideoWait ? "waiting for m3u8/stream" : providerStream ? `${providerStream.quality || "ORG"} ${providerStream.type.toUpperCase()} placeholder` : movieEmbedUrl ? "Embed provider" : "Trailer fallback")
     : "YouTube/TMDB";
   const selectedSeason = String(req.query.s || process.env.MOVIE_EMBED_DEFAULT_SEASON || "1");
   const selectedEpisode = String(req.query.e || process.env.MOVIE_EMBED_DEFAULT_EPISODE || "1");
@@ -37157,9 +37033,9 @@ async function watchPage(req, res, type) {
     ? `<div class="dsProxyVideoWaitingShell" data-movie-id="${escapeHtml(id)}">
         <div class="dsProxyVideoWaitingCard">
           <div class="dsProxyLoader"></div>
-          <span>Getting API source</span>
-          <h2>Finding your API source...</h2>
-          <p>This provider can take a while. Keep this page open — SwiflyTV will use the backend API source as soon as it returns.</p>
+          <span>Getting m3u8</span>
+          <h2>Finding your m3u8 source...</h2>
+          <p>This provider can take a while. Keep this page open — SwiflyTV will keep trying and load the m3u8 stream as soon as it returns.</p>
           <div id="proxyVideoWaitStatus" class="dsProxyVideoWaitStatus">Starting request...</div>
           <div class="dsStableActions">
             <button class="dsSecondaryBtn" id="retryProxyVideoBtn" type="button">Retry now</button>
@@ -37267,9 +37143,9 @@ async function watchPage(req, res, type) {
             <div>
               <span class="dsEyebrow">${isMovieMode ? watchModeLabel : "Trailer mode"}</span>
               <h1>${escapeHtml(title)}</h1>
-              <p>${isMovieMode ? (proxyVideoUrl ? "Movie button is playing the source returned by your backend API provider." : providerStream ? "Movie button is using the temporary ORG MP4 trailer/preview provider until licensed movie access is connected." : "Movie mode is waiting for the backend API provider source. Legacy fallback is off unless MOVIE_PROXY_VIDEO_ALLOW_LEGACY_FALLBACK=true.") : "Official trailer / preview playback."}</p>
+              <p>${isMovieMode ? (proxyVideoUrl ? "Movie button is playing the m3u8 URL returned by your movie API." : providerStream ? "Movie button is using the temporary ORG MP4 trailer/preview provider until licensed movie access is connected." : "Movie mode is waiting for the same m3u8 player source used in Watch Parties. Legacy fallback is off unless MOVIE_PROXY_VIDEO_ALLOW_LEGACY_FALLBACK=true.") : "Official trailer / preview playback."}</p>
             </div>
-            ${isMovieMode ? `<span class="dsPlaceholderBadge">${proxyVideoUrl ? "API source" : providerStream ? "ORG MP4" : movieEmbedUrl ? "Embed" : "Trailer fallback"}</span>` : `<span class="dsPlaceholderBadge trailer">Trailer</span>`}
+            ${isMovieMode ? `<span class="dsPlaceholderBadge">${proxyVideoUrl ? "proxyVideo" : providerStream ? "ORG MP4" : movieEmbedUrl ? "Embed" : "Trailer fallback"}</span>` : `<span class="dsPlaceholderBadge trailer">Trailer</span>`}
           </div>
 
           <div class="dsWatchFrame dsWatchEmbedFrame">
@@ -37312,10 +37188,9 @@ async function watchPage(req, res, type) {
     ? `<script>
       (function(){
         var movieId = ${JSON.stringify(id)};
-        var mediaType = ${JSON.stringify(type)};
-        var selectedSeason = ${JSON.stringify(String(req.query.s || process.env.MOVIE_EMBED_DEFAULT_SEASON || "1"))};
-        var selectedEpisode = ${JSON.stringify(String(req.query.e || process.env.MOVIE_EMBED_DEFAULT_EPISODE || "1"))};
-        var apiProvider = ${JSON.stringify(String(req.query.provider || process.env.DEFAULT_PLAY_PROVIDER || "castel"))};
+        var movieType = ${JSON.stringify(type)};
+        var selectedSeason = ${JSON.stringify(selectedSeason)};
+        var selectedEpisode = ${JSON.stringify(selectedEpisode)};
         var clientWait = ${clientProxyVideoWait ? "true" : "false"};
         var waitStatus = document.getElementById("proxyVideoWaitStatus");
         var video = document.getElementById("proxyVideoClientVideo");
@@ -38615,7 +38490,7 @@ async function watchPage(req, res, type) {
               if (playerShell) playerShell.classList.add("v149Ready");
               setVideoUiState("ready");
               setPlayerStatus("Ready", message || "Vidstack player loaded", false);
-              setStatus("API source loaded in Vidstack player.");
+              setStatus("m3u8 loaded in Vidstack player.");
               hidePlayerStatusSoon();
             }
 
@@ -38903,8 +38778,8 @@ async function watchPage(req, res, type) {
               try { video.load(); } catch {}
               if (plyrLoaded) initPlyrUi(null, []);
               installCustomSeekBar();
-              setPlayerStatus("API source ready", "Native HLS loaded. Timeline enabled.", false);
-              setStatus("API source loaded. Timeline enabled.");
+              setPlayerStatus("m3u8 ready", "Native HLS loaded. Timeline enabled.", false);
+              setStatus("m3u8 loaded. Timeline enabled.");
               setTimeout(syncCustomSeekBar, 500);
               hidePlayerStatusSoon();
               return;
@@ -38917,8 +38792,8 @@ async function watchPage(req, res, type) {
                   try { video.load(); } catch {}
                   if (plyrLoaded) initPlyrUi(null, []);
                   installCustomSeekBar();
-                  setPlayerStatus("API source ready", "Native HLS loaded. Timeline enabled.", false);
-                  setStatus("API source loaded. Timeline enabled.");
+                  setPlayerStatus("m3u8 ready", "Native HLS loaded. Timeline enabled.", false);
+                  setStatus("m3u8 loaded. Timeline enabled.");
                   setTimeout(syncCustomSeekBar, 500);
                   hidePlayerStatusSoon();
                   return;
@@ -38956,8 +38831,8 @@ async function watchPage(req, res, type) {
                 var heights = uniqueHlsHeights(levels);
                 if (plyrLoaded) initPlyrUi(movieButtonHls, levels);
                 installCustomSeekBar();
-                setPlayerStatus("API source ready", "Plyr + HLS.js loaded" + (heights.length ? " • " + heights.join("p / ") + "p" : "") + ". Timeline enabled.", false);
-                setStatus("API source loaded. Timeline enabled.");
+                setPlayerStatus("m3u8 ready", "Plyr + HLS.js loaded" + (heights.length ? " • " + heights.join("p / ") + "p" : "") + ". Timeline enabled.", false);
+                setStatus("m3u8 loaded. Timeline enabled.");
                 setTimeout(syncCustomSeekBar, 500);
                 hidePlayerStatusSoon();
               });
@@ -39044,14 +38919,16 @@ async function watchPage(req, res, type) {
           var elapsed = Math.round((Date.now() - startedAt) / 1000);
 
           if (Date.now() - startedAt > maxWaitMs) {
-            showError("Still no API source after " + elapsed + " seconds. You can retry, refresh, or use a Watch Room.");
+            showError("Still no m3u8 source after " + elapsed + " seconds. You can retry, refresh, or use a Watch Room.");
             return;
           }
 
-          setStatus((manual ? "Retrying" : "Trying") + " API source... attempt " + attempt + " • " + elapsed + "s");
+          setStatus((manual ? "Retrying" : "Trying") + " m3u8 source... attempt " + attempt + " • " + elapsed + "s");
 
           try {
-            var response = await fetch("/api/proxy-video-wait/" + encodeURIComponent(mediaType) + "/" + encodeURIComponent(movieId) + "?s=" + encodeURIComponent(selectedSeason) + "&e=" + encodeURIComponent(selectedEpisode) + "&provider=" + encodeURIComponent(apiProvider) + "&t=" + Date.now(), {
+            var waitUrl = "/api/proxy-video-wait/" + encodeURIComponent(movieType || "movie") + "/" + encodeURIComponent(movieId) + "?t=" + Date.now();
+            if ((movieType || "movie") === "tv") waitUrl += "&season=" + encodeURIComponent(selectedSeason || "1") + "&episode=" + encodeURIComponent(selectedEpisode || "1");
+            var response = await fetch(waitUrl, {
               cache: "no-store",
               headers: { "Accept": "application/json" }
             });
@@ -43620,30 +43497,30 @@ app.get("/api/hls-proxy/:id/status", (req, res) => {
 });
 
 
-app.get("/favicon.ico", (req, res) => {
-  res.status(204).end();
-});
 
 app.get("/api/providers", (req, res) => {
   res.set("Cache-Control", "no-store");
   res.json({
     ok: true,
-    providers: Object.keys(API_PROVIDER_ROUTES),
-    searchProviders: API_SEARCH_PROVIDERS,
+    configured: apiProviderConfigured(),
     defaultPlayProvider: DEFAULT_PLAY_PROVIDER,
-    configured: Boolean(API_BASE_URL && API_KEY),
+    providers: Object.keys(API_PROVIDERS),
+    searchProviders: API_SEARCH_PROVIDERS,
+    streamProviderOrder: API_STREAM_PROVIDER_ORDER
   });
 });
 
 app.get("/api/provider/home", async (req, res) => {
+  res.set("Cache-Control", "no-store");
   try {
-    const [providerName, providerConfig] = getApiProvider(req.query.provider || "netmirror");
+    const [providerName, providerConfig] = apiGetProvider(req.query.provider || "netmirror");
     if (!providerConfig.home) return res.status(400).json({ ok: false, error: "Provider has no home route" });
     const data = await apiProviderFetch(providerConfig.home, { page: req.query.page || 1, maxPages: req.query.maxPages });
     res.json({
       ok: true,
       provider: providerName,
-      results: apiTopList(data).map((entry) => normalizeApiItem(entry, providerName, providerName.includes("anime") ? "anime" : "movie")),
+      results: apiTopList(data).map((entry) => apiNormalizeItem(entry, providerName, providerName.includes("anime") ? "anime" : "movie")),
+      rawShapeUsed: ["title", "url", "imageUrl", "year", "formats"]
     });
   } catch (error) {
     res.status(500).json({ ok: false, error: error.message });
@@ -43651,48 +43528,38 @@ app.get("/api/provider/home", async (req, res) => {
 });
 
 app.get("/api/provider/search", async (req, res) => {
+  res.set("Cache-Control", "no-store");
   const q = apiClean(req.query.q);
   if (!q) return res.status(400).json({ ok: false, error: "Missing q" });
-
   const requestedProvider = apiClean(req.query.provider).toLowerCase();
   const providers = requestedProvider ? [requestedProvider] : API_SEARCH_PROVIDERS;
-
   const jobs = await Promise.all(providers.map(async (providerName) => {
     try {
-      const providerConfig = API_PROVIDER_ROUTES[providerName];
+      const providerConfig = API_PROVIDERS[providerName];
       if (!providerConfig?.search) return { provider: providerName, results: [] };
       const data = await apiProviderFetch(providerConfig.search, { q, page: req.query.page || 1 });
       return {
         provider: providerName,
-        results: apiTopList(data).map((entry) => normalizeApiItem(entry, providerName, providerName.includes("anime") ? "anime" : "movie")),
+        results: apiTopList(data).map((entry) => apiNormalizeItem(entry, providerName, providerName.includes("anime") ? "anime" : "movie"))
       };
     } catch (error) {
       return { provider: providerName, error: error.message, results: [] };
     }
   }));
-
-  res.json({
-    ok: true,
-    q,
-    results: jobs.flatMap((job) => job.results),
-    errors: jobs.filter((job) => job.error),
-  });
+  res.json({ ok: true, q, results: jobs.flatMap((job) => job.results), errors: jobs.filter((job) => job.error) });
 });
 
 app.get("/api/provider/details", async (req, res) => {
+  res.set("Cache-Control", "no-store");
   try {
-    const [providerName, providerConfig] = getApiProvider(req.query.provider);
+    const [providerName, providerConfig] = apiGetProvider(req.query.provider);
     if (!providerConfig.details) return res.status(400).json({ ok: false, error: "Provider has no details route" });
-
-    const params = providerName === "netmirror"
-      ? { id: req.query.id || req.query.url, t: req.query.t }
-      : { url: req.query.url };
-
+    const params = providerName === "netmirror" ? { id: req.query.id || req.query.url, t: req.query.t } : { url: req.query.url };
     const data = await apiProviderFetch(providerConfig.details, params);
     res.json({
       ok: true,
       provider: providerName,
-      item: normalizeApiProviderResponse(data, providerName, providerName.includes("anime") ? "anime" : "movie"),
+      item: apiNormalizeResponse(data, providerName, providerName.includes("anime") ? "anime" : "movie")
     });
   } catch (error) {
     res.status(500).json({ ok: false, error: error.message });
@@ -43700,26 +43567,22 @@ app.get("/api/provider/details", async (req, res) => {
 });
 
 app.get("/api/provider/action", async (req, res) => {
+  res.set("Cache-Control", "no-store");
   try {
-    const [providerName, providerConfig] = getApiProvider(req.query.provider);
+    const [providerName, providerConfig] = apiGetProvider(req.query.provider);
     const action = apiClean(req.query.action).toLowerCase();
     const endpoint = providerConfig[action];
-
-    if (!endpoint || endpoint.includes("/api/adult/")) {
-      return res.status(400).json({ ok: false, error: "Unsupported action" });
-    }
-
+    if (!endpoint || endpoint.includes("/api/adult/")) return res.status(400).json({ ok: false, error: "Unsupported action" });
     const params = { ...req.query };
     delete params.provider;
     delete params.action;
-
     const data = await apiProviderFetch(endpoint, params);
     res.json({
       ok: true,
       provider: providerName,
       action,
-      item: normalizeApiProviderResponse(data, providerName, providerName.includes("anime") ? "anime" : "movie"),
-      raw: data,
+      item: apiNormalizeResponse(data, providerName, providerName.includes("anime") ? "anime" : "movie"),
+      raw: data
     });
   } catch (error) {
     res.status(500).json({ ok: false, error: error.message });
@@ -43727,78 +43590,93 @@ app.get("/api/provider/action", async (req, res) => {
 });
 
 app.get("/api/provider/embed", async (req, res) => {
+  res.set("Cache-Control", "no-store");
   try {
-    const source = await fetchApiProviderPlaybackSource({
-      type: req.query.type || "movie",
-      id: req.query.tmdb || req.query.tmdbId || req.query.id || req.query.url,
-      season: req.query.season || req.query.s || "1",
-      episode: req.query.episode || req.query.e || "1",
-      provider: req.query.provider || DEFAULT_PLAY_PROVIDER,
+    const type = req.query.type === "tv" ? "tv" : "movie";
+    const id = apiClean(req.query.tmdb || req.query.tmdbId || req.query.id || req.query.url);
+    const result = await fetchApiProviderSource({
+      type,
+      id,
+      season: apiClean(req.query.season || req.query.s || "1"),
+      episode: apiClean(req.query.episode || req.query.e || "1"),
+      provider: req.query.provider
     });
 
+    if (result.status !== "ok") {
+      return res.status(404).json({
+        ok: false,
+        error: result.message || result.reason || "No API source found",
+        attempts: result.attempts || [],
+        sources: []
+      });
+    }
+
     res.json({
-      ok: source.status === "ok",
-      title: source.title || "",
-      year: source.year || "",
-      type: source.type || req.query.type || "movie",
-      poster: source.poster || "",
-      backdrop: source.backdrop || "",
-      overview: source.overview || "",
-      sources: source.sources || (source.stream ? [source.stream] : []),
-      error: source.status === "ok" ? undefined : source.message || source.reason || "No API provider source found",
-      attempts: source.attempts || [],
+      ok: true,
+      title: result.normalized?.title || "",
+      year: result.normalized?.year || "",
+      type,
+      poster: result.normalized?.poster || "",
+      backdrop: result.normalized?.backdrop || "",
+      overview: result.normalized?.overview || "",
+      sources: [{
+        name: result.streamName || result.apiProvider || "api source",
+        quality: result.streamQuality || "",
+        url: result.playbackUrl,
+        headers: result.streamHeaders || {}
+      }],
+      providerKind: result.providerKind,
+      originalPlaybackUrl: result.originalPlaybackUrl || "",
+      hlsProxyUrl: result.hlsProxyUrl || ""
     });
   } catch (error) {
     res.status(500).json({ ok: false, error: error.message, sources: [] });
   }
 });
 
+app.get("/favicon.ico", (req, res) => {
+  res.status(204).end();
+});
+
 app.get("/api/proxy-video-wait/:type/:id", async (req, res) => {
   res.set("Cache-Control", "no-store");
-  const type = req.params.type === "tv" ? "tv" : "movie";
   const result = await fetchProxyVideoSource({
-    type,
+    type: req.params.type === "tv" ? "tv" : "movie",
     id: req.params.id,
     season: req.query.season || req.query.s || "1",
     episode: req.query.episode || req.query.e || "1",
-    provider: req.query.provider || DEFAULT_PLAY_PROVIDER,
+    provider: req.query.provider || ""
+  });
+  res.json(result);
+});
+
+app.get("/api/proxy-video/:type/:id", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const result = await fetchProxyVideoSource({
+    type: req.params.type === "tv" ? "tv" : "movie",
+    id: req.params.id,
+    season: req.query.season || req.query.s || "1",
+    episode: req.query.episode || req.query.e || "1",
+    provider: req.query.provider || ""
   });
   res.json(result);
 });
 
 app.get("/api/proxy-video-wait/movie/:id", async (req, res) => {
   res.set("Cache-Control", "no-store");
-  const result = await fetchProxyVideoSource({
-    type: "movie",
-    id: req.params.id,
-    season: req.query.season || req.query.s || "1",
-    episode: req.query.episode || req.query.e || "1",
-    provider: req.query.provider || DEFAULT_PLAY_PROVIDER,
-  });
+  const result = await fetchProxyVideoSource({ type: "movie", id: req.params.id, provider: req.query.provider || "" });
   res.json(result);
 });
 
 app.get("/api/proxy-video/movie/:id", async (req, res) => {
   res.set("Cache-Control", "no-store");
-  const result = await fetchProxyVideoSource({
-    type: "movie",
-    id: req.params.id,
-    season: req.query.season || req.query.s || "1",
-    episode: req.query.episode || req.query.e || "1",
-    provider: req.query.provider || DEFAULT_PLAY_PROVIDER,
-  });
+  const result = await fetchProxyVideoSource({ type: "movie", id: req.params.id, provider: req.query.provider || "" });
   res.json(result);
 });
 
 app.get("/api/hls-source/movie/:id", async (req, res) => {
   res.set("Cache-Control", "no-store");
-  const result = await fetchProxyVideoSource({
-    type: "movie",
-    id: req.params.id,
-    season: req.query.season || req.query.s || "1",
-    episode: req.query.episode || req.query.e || "1",
-    provider: req.query.provider || DEFAULT_PLAY_PROVIDER,
-  });
+  const result = await fetchProxyVideoSource({ type: "movie", id: req.params.id, provider: req.query.provider || "" });
   res.json({
     ok: result.status === "ok",
     status: result.status,
@@ -43824,13 +43702,7 @@ app.get("/api/hls-source/movie/:id", async (req, res) => {
 
 app.get("/api/proxy-video-debug/movie/:id", async (req, res) => {
   res.set("Cache-Control", "no-store");
-  const result = await fetchProxyVideoSource({
-    type: "movie",
-    id: req.params.id,
-    season: req.query.season || req.query.s || "1",
-    episode: req.query.episode || req.query.e || "1",
-    provider: req.query.provider || DEFAULT_PLAY_PROVIDER,
-  });
+  const result = await fetchProxyVideoSource({ type: "movie", id: req.params.id, provider: req.query.provider || "" });
   res.json({
     ...result,
     hlsProxyEnabled: hlsProxyEnabled(),
@@ -43846,13 +43718,7 @@ app.get("/api/proxy-video-debug/movie/:id", async (req, res) => {
 
 app.get("/api/movie-placeholder/:type/:id", async (req, res) => {
   const type = req.params.type === "tv" ? "tv" : "movie";
-  const result = await fetchMoviePlaceholderSource({
-    type,
-    id: req.params.id,
-    season: req.query.season || req.query.s || "1",
-    episode: req.query.episode || req.query.e || "1",
-    provider: req.query.provider || DEFAULT_PLAY_PROVIDER,
-  });
+  const result = await fetchMoviePlaceholderSource({ type, id: req.params.id });
   res.json(result);
 });
 
@@ -45868,13 +45734,7 @@ app.get("/kids", async (req, res) => {
 app.get("/api/movie-source/:type/:id", async (req, res) => {
   try {
     const type = req.params.type === "tv" ? "tv" : "movie";
-    const source = await fetchMoviePlaceholderSource({
-      type,
-      id: req.params.id,
-      season: req.query.season || req.query.s || "1",
-      episode: req.query.episode || req.query.e || "1",
-      provider: req.query.provider || DEFAULT_PLAY_PROVIDER,
-    });
+    const source = await fetchMoviePlaceholderSource({ type, id: req.params.id });
     res.json(source);
   } catch (error) {
     res.status(500).json({
@@ -45925,9 +45785,6 @@ function apiStatus(req, res) {
       regularMovieM3u8Player: true,
       videojsM3u8Player: true,
       hlsProxyEnabled: typeof hlsProxyEnabled === "function" ? hlsProxyEnabled() : false,
-      apiProviderEnabled: MOVIE_API_PROVIDER_ENABLED,
-      apiProviderConfigured: Boolean(API_BASE_URL && API_KEY),
-      defaultPlayProvider: DEFAULT_PLAY_PROVIDER,
     },
   });
 }
