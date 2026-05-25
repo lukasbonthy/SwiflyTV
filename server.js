@@ -81,6 +81,8 @@ const FILMU_ENABLED = process.env.FILMU_ENABLED !== "false";
 const FILMU_EMBED_TEMPLATE = process.env.FILMU_EMBED_TEMPLATE || "https://embedm3u8.filmu.in/movietrailer/{tmdb}";
 const FILMU_TIMEOUT_MS = Math.max(10000, Number(process.env.FILMU_TIMEOUT_MS || 30000));
 const FILMU_WAIT_MS = Math.max(2500, Number(process.env.FILMU_WAIT_MS || 12000));
+const FILMU_ROUTE_TIMEOUT_MS = Math.max(8000, Number(process.env.FILMU_ROUTE_TIMEOUT_MS || 35000));
+const FILMU_TRY_FALLBACKS = process.env.FILMU_TRY_FALLBACKS === "true";
 
 const API_PROVIDERS = {
   "4khdhub": { home: "/api/4khdhub", search: "/api/4khdhub/search", details: "/api/4khdhub/details", gadget: "/api/4khdhub/gadget" },
@@ -4385,17 +4387,20 @@ function localFilmuBuildEmbedUrls({ tmdbId = "", mediaType = "movie", season = "
     try { return new URL(template).origin; } catch { return "https://embedm3u8.filmu.in"; }
   })();
 
-  // Extra common fallbacks, so changing one path on their side won't kill it.
-  urls.add(`${origin}/movietrailer/${id}`);
-  urls.add(`${origin}/movietrailer?tmdb=${id}`);
-  urls.add(`${origin}/movietrailer?tmdbId=${id}`);
-  urls.add(`${origin}/movie/${id}`);
-  urls.add(`${origin}/embed/movie/${id}`);
-  if (mediaType === "tv") {
-    urls.add(`${origin}/tv/${id}/${s}/${e}`);
-    urls.add(`${origin}/embed/tv/${id}/${s}/${e}`);
-    urls.add(`${origin}/movietrailer/${id}/${s}/${e}`);
-    urls.add(`${origin}/movietrailer?tmdb=${id}&season=${s}&episode=${e}`);
+  if (FILMU_TRY_FALLBACKS) {
+    // Optional extra fallbacks. Disabled by default because each fallback can take
+    // a full browser timeout and make /api/local/filmu-debug look stuck.
+    urls.add(`${origin}/movietrailer/${id}`);
+    urls.add(`${origin}/movietrailer?tmdb=${id}`);
+    urls.add(`${origin}/movietrailer?tmdbId=${id}`);
+    urls.add(`${origin}/movie/${id}`);
+    urls.add(`${origin}/embed/movie/${id}`);
+    if (mediaType === "tv") {
+      urls.add(`${origin}/tv/${id}/${s}/${e}`);
+      urls.add(`${origin}/embed/tv/${id}/${s}/${e}`);
+      urls.add(`${origin}/movietrailer/${id}/${s}/${e}`);
+      urls.add(`${origin}/movietrailer?tmdb=${id}&season=${s}&episode=${e}`);
+    }
   }
 
   return Array.from(urls).filter((url) => /^https?:\/\//i.test(url));
@@ -48544,23 +48549,66 @@ app.get("/api/local/filmu-debug", async (req, res) => {
 
   if (!id) return res.status(400).json({ ok: false, error: "Pass ?tmdb=id" });
 
+  const embedUrls = localFilmuBuildEmbedUrls({ tmdbId: id, mediaType: type, season, episode });
+  const startedAt = Date.now();
+
   try {
-    const debug = await localFilmuDebug({ mediaType: type, id, season, episode });
+    const debug = await Promise.race([
+      localFilmuDebug({ mediaType: type, id, season, episode }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error(`filmu debug timed out after ${FILMU_ROUTE_TIMEOUT_MS}ms`)), FILMU_ROUTE_TIMEOUT_MS))
+    ]);
+
     res.json({
       ok: Boolean(debug.winner),
       sourceMode: "local-filmu-network-m3u8",
       target: FILMU_EMBED_TEMPLATE,
+      embedUrls,
       tmdb: id,
       type,
       season: type === "tv" ? season : "",
       episode: type === "tv" ? episode : "",
+      ms: Date.now() - startedAt,
       winner: debug.winner,
       attempts: debug.attempts,
       payload: debug.payload
     });
   } catch (error) {
-    res.status(500).json({ ok: false, sourceMode: "local-filmu-network-m3u8", error: error.message || "failed" });
+    res.status(504).json({
+      ok: false,
+      sourceMode: "local-filmu-network-m3u8",
+      error: error.message || "failed",
+      target: FILMU_EMBED_TEMPLATE,
+      embedUrls,
+      tmdb: id,
+      type,
+      season: type === "tv" ? season : "",
+      episode: type === "tv" ? episode : "",
+      ms: Date.now() - startedAt,
+      hint: "This route uses Playwright. If it times out, test the first embedUrl directly in a browser and check Render logs for [fatal] or Playwright errors."
+    });
   }
+});
+
+app.get("/api/local/filmu-url", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const type = req.query.type === "tv" ? "tv" : "movie";
+  const id = apiClean(req.query.tmdb || req.query.tmdbId || req.query.id || "");
+  const season = apiClean(req.query.season || req.query.s || "1");
+  const episode = apiClean(req.query.episode || req.query.e || "1");
+  if (!id) return res.status(400).json({ ok: false, error: "Pass ?tmdb=id" });
+  const embedUrls = localFilmuBuildEmbedUrls({ tmdbId: id, mediaType: type, season, episode });
+  res.json({
+    ok: true,
+    sourceMode: "local-filmu-url-only",
+    tmdb: id,
+    type,
+    season: type === "tv" ? season : "",
+    episode: type === "tv" ? episode : "",
+    target: FILMU_EMBED_TEMPLATE,
+    embedUrl: embedUrls[0] || "",
+    embedUrls,
+    fallbackEnabled: FILMU_TRY_FALLBACKS
+  });
 });
 
 app.get("/api/local/vidsrc-debug", async (req, res) => {
