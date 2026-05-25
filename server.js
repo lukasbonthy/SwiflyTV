@@ -18,7 +18,36 @@ console.log("[boot] server.js starting", {
 });
 
 
+
 require("dotenv").config();
+
+// ===== SwiflyTV no-env mode =====
+// This build is meant to run without manually setting a pile of Render env vars.
+// It forces the known-good StreamProvider-only m3u8 path unless you explicitly set
+// SWIFLY_NO_ENV_MODE=false.
+if (process.env.SWIFLY_NO_ENV_MODE !== "false") {
+  Object.assign(process.env, {
+    DEFAULT_PLAY_PROVIDER: "streamprovider",
+    USE_EXTERNAL_PROVIDER_API: "false",
+
+    STREAMPROVIDER_ENABLED: "true",
+    STREAMPROVIDER_ORDER: "hexa,cinezo,sflix",
+    STREAMPROVIDER_NAV_TIMEOUT_MS: "18000",
+    STREAMPROVIDER_STREAM_TIMEOUT_MS: "18000",
+    STREAMPROVIDER_ROUTE_TIMEOUT_MS: "55000",
+    SFLIX_BASE_URL: "https://sflix2.to",
+
+    VIDSRC_ENABLED: "false",
+    CONSUMET_ENABLED: "false",
+    FILMU_ENABLED: "false",
+
+    PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1",
+    PLAYWRIGHT_BROWSERS_PATH: "/ms-playwright",
+    REMOTE_BROWSER_ENABLED: "true",
+    REMOTE_BROWSER_FPS: "1",
+    REMOTE_BROWSER_JPEG_QUALITY: "58"
+  });
+}
 
 const express = require("express");
 const helmet = require("helmet");
@@ -51,7 +80,7 @@ const API_KEY = process.env.API_KEY || "";
 // The external API docs server is OFF by default. Turn it back on only with:
 // USE_EXTERNAL_PROVIDER_API=true
 const USE_EXTERNAL_PROVIDER_API = process.env.USE_EXTERNAL_PROVIDER_API === "true";
-const DEFAULT_PLAY_PROVIDER = String(process.env.DEFAULT_PLAY_PROVIDER || "filmu").toLowerCase();
+const DEFAULT_PLAY_PROVIDER = String(process.env.DEFAULT_PLAY_PROVIDER || "streamprovider").toLowerCase();
 const API_PROVIDER_TIMEOUT_MS = Math.max(8000, Number(process.env.API_PROVIDER_TIMEOUT_MS || 45000));
 
 // Optional local Consumet bridge from uploaded api.consumet.org source.
@@ -83,6 +112,17 @@ const FILMU_TIMEOUT_MS = Math.max(10000, Number(process.env.FILMU_TIMEOUT_MS || 
 const FILMU_WAIT_MS = Math.max(2500, Number(process.env.FILMU_WAIT_MS || 12000));
 const FILMU_ROUTE_TIMEOUT_MS = Math.max(8000, Number(process.env.FILMU_ROUTE_TIMEOUT_MS || 35000));
 const FILMU_TRY_FALLBACKS = process.env.FILMU_TRY_FALLBACKS === "true";
+
+// Local StreamProvider-main m3u8 scrapers ported into SwiflyTV.
+// Uses the uploaded StreamProvider source pattern: open provider page with Playwright
+// and capture real .m3u8 requests from Network, then send through Swifly HLS proxy.
+const STREAMPROVIDER_ENABLED = process.env.STREAMPROVIDER_ENABLED !== "false";
+const STREAMPROVIDER_ORDER = String(process.env.STREAMPROVIDER_ORDER || "hexa,cinezo,sflix")
+  .split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
+const STREAMPROVIDER_NAV_TIMEOUT_MS = Math.max(8000, Number(process.env.STREAMPROVIDER_NAV_TIMEOUT_MS || 18000));
+const STREAMPROVIDER_STREAM_TIMEOUT_MS = Math.max(8000, Number(process.env.STREAMPROVIDER_STREAM_TIMEOUT_MS || 18000));
+const STREAMPROVIDER_ROUTE_TIMEOUT_MS = Math.max(12000, Number(process.env.STREAMPROVIDER_ROUTE_TIMEOUT_MS || 55000));
+const STREAMPROVIDER_SFLIX_BASE_URL = String(process.env.SFLIX_BASE_URL || "https://sflix2.to").replace(/\/+$/, "");
 
 const API_PROVIDERS = {
   "4khdhub": { home: "/api/4khdhub", search: "/api/4khdhub/search", details: "/api/4khdhub/details", gadget: "/api/4khdhub/gadget" },
@@ -118,27 +158,7 @@ const API_STREAM_PROVIDER_ORDER = ["vid", "castel", "themovie", "xprime", "netmi
 // Full provider order for finding .m3u8/media sources. The first four are direct-stream
 // providers; the rest usually need search -> details -> extractor/action.
 const API_M3U8_PROVIDER_ORDER = [
-  "filmu",
-  "vid",
-  "castel",
-  "themovie",
-  "xprime",
-  "consumet",
-  "netmirror",
-  "animepahe",
-  "themovie",
-  "animesalt",
-  "4khdhub",
-  "movies4u",
-  "hdhub4u",
-  "zeefliz",
-  "vega",
-  "zinkmovies",
-  "kmmovies",
-  "uhdmovies",
-  "mod",
-  "drive",
-  "desiremovies"
+  "streamprovider"
 ];
 
 const API_DETAILS_SEARCH_FALLBACK_PROVIDERS = [
@@ -1181,7 +1201,7 @@ async function apiFindPlayableFromPayload({
   // VidSrc Playwright provider should only trust URLs captured from browser network
   // as sources. If Playwright did not capture an m3u8, do not deep-dig 403/Cloudflare
   // pages because those can contain unrelated demo videos.
-  if (apiClean(providerName).toLowerCase() === "vidsrc-local") return null;
+  if (["vidsrc-local", "streamprovider-local"].includes(apiClean(providerName).toLowerCase())) return null;
 
   if (depth >= 2) return null;
 
@@ -4304,6 +4324,377 @@ async function localVidSrcDebug({ mediaType = "movie", id = "", season = "1", ep
 
 
 
+
+// ===== StreamProvider-main local m3u8 scrapers =====
+let __streamProviderBrowserPromise = null;
+
+function localStreamProviderLoadChromium() {
+  try {
+    return require("playwright-core").chromium;
+  } catch (coreError) {
+    try {
+      return require("playwright").chromium;
+    } catch (fullError) {
+      throw new Error(`Playwright not installed/available: ${coreError.message || fullError.message || "missing package"}`);
+    }
+  }
+}
+
+async function localStreamProviderBrowser() {
+  if (__streamProviderBrowserPromise) return __streamProviderBrowserPromise;
+  const chromium = localStreamProviderLoadChromium();
+  const executablePath =
+    process.env.STREAMPROVIDER_BROWSER_EXECUTABLE_PATH ||
+    process.env.FILMU_BROWSER_EXECUTABLE_PATH ||
+    process.env.REMOTE_BROWSER_EXECUTABLE_PATH ||
+    process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ||
+    "";
+
+  __streamProviderBrowserPromise = chromium.launch({
+    headless: true,
+    executablePath: executablePath || undefined,
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-gpu",
+      "--disable-web-security",
+      "--autoplay-policy=no-user-gesture-required",
+      "--disable-features=IsolateOrigins,site-per-process"
+    ]
+  }).catch((error) => {
+    __streamProviderBrowserPromise = null;
+    throw error;
+  });
+
+  return __streamProviderBrowserPromise;
+}
+
+function localStreamProviderHeaders(pageUrl = "", requestHeaders = {}) {
+  let origin = "";
+  try { origin = new URL(pageUrl).origin; } catch {}
+  return {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
+    ...(pageUrl ? { "Referer": pageUrl } : {}),
+    ...(origin ? { "Origin": origin } : {}),
+    ...Object.fromEntries(Object.entries(requestHeaders || {}).filter(([k]) => /^(referer|origin|user-agent)$/i.test(k)))
+  };
+}
+
+function localStreamProviderSearchSlug(title = "") {
+  return String(title || "")
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function localStreamProviderSimpleTitle(text = "") {
+  return String(text || "")
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\b(the|a|an)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function localStreamProviderTitleScore(candidateTitle = "", wantedTitle = "", candidateYear = "", wantedYear = "") {
+  const c = localStreamProviderSimpleTitle(candidateTitle);
+  const w = localStreamProviderSimpleTitle(wantedTitle);
+  if (!c || !w) return -9999;
+  let score = 0;
+  if (c === w) score += 1000;
+  else if (c.includes(w) || w.includes(c)) score += 650;
+  else {
+    const cw = new Set(c.split(" ").filter(Boolean));
+    const ww = w.split(" ").filter(Boolean);
+    const hits = ww.filter((x) => cw.has(x)).length;
+    score += hits * 80 - Math.max(0, ww.length - hits) * 40;
+  }
+  if (wantedYear && candidateYear) score += String(candidateYear) === String(wantedYear) ? 350 : -150;
+  return score;
+}
+
+async function localStreamProviderGetTmdbMetadata({ tmdbId = "", mediaType = "movie", season = "", episode = "", attempts = [] }) {
+  const out = { title: "", originalTitle: "", year: "", mediaType, seasonName: "", episodeName: "" };
+  try {
+    const endpoint = mediaType === "tv" ? `/tv/${tmdbId}` : `/movie/${tmdbId}`;
+    const details = await tmdb(endpoint, {}, CACHE_TTL.long);
+    out.title = getTitle(details);
+    out.originalTitle = details?.original_title || details?.original_name || "";
+    out.year = getYear(mediaType === "tv" ? details?.first_air_date : details?.release_date);
+    if (mediaType === "tv" && season && episode) {
+      const ep = await tmdb(`/tv/${tmdbId}/season/${season}/episode/${episode}`, {}, CACHE_TTL.long);
+      out.episodeName = ep?.name || "";
+    }
+  } catch (error) {
+    attempts.push(`streamprovider tmdb metadata: ${error.message || "failed"}`);
+  }
+  return out;
+}
+
+async function localStreamProviderCaptureM3u8({ provider = "", url = "", referer = "", attempts = [] }) {
+  const browser = await localStreamProviderBrowser();
+  const context = await browser.newContext({
+    userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
+    ignoreHTTPSErrors: true,
+    javaScriptEnabled: true,
+    viewport: { width: 1365, height: 768 },
+    extraHTTPHeaders: {
+      "Accept-Language": "en-US,en;q=0.9",
+      ...(referer ? { "Referer": referer } : {})
+    }
+  });
+  const page = await context.newPage();
+  const seen = [];
+  let winner = null;
+
+  function remember(rawUrl = "", headers = {}) {
+    const value = String(rawUrl || "").trim();
+    if (!value) return;
+    if (apiIsYouTubeUrl(value) || apiLooksDefinitelyNonMediaUrl(value)) return;
+    if (!seen.includes(value) && seen.length < 120) seen.push(value);
+    if (!winner && apiIsM3u8Url(value)) {
+      winner = { url: value, referer: headers.referer || headers.Referer || page.url() || url, headers };
+    }
+  }
+
+  try {
+    await page.route("**/*", async (route) => {
+      const req = route.request();
+      const resourceType = req.resourceType();
+      remember(req.url(), req.headers());
+      if (["font", "stylesheet", "image"].includes(resourceType)) {
+        await route.abort().catch(() => {});
+        return;
+      }
+      await route.continue().catch(() => {});
+    });
+
+    page.on("request", (req) => remember(req.url(), req.headers()));
+    page.on("framenavigated", (frame) => remember(frame.url(), { referer: page.url() || url }));
+    page.on("response", async (response) => {
+      const responseUrl = response.url();
+      const headers = response.headers() || {};
+      remember(responseUrl, { referer: page.url() || url });
+      const contentType = String(headers["content-type"] || "");
+      if (!winner && /mpegurl|m3u8/i.test(contentType)) remember(responseUrl, { referer: page.url() || url });
+      if (!winner && /json|javascript|html|text/i.test(contentType)) {
+        try {
+          const text = await response.text();
+          for (const u of apiExtractMediaUrlsFromStringDeep(text.replace(/\\\//g, "/").replace(/&amp;/g, "&"))) remember(u, { referer: responseUrl });
+        } catch {}
+      }
+    });
+
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: STREAMPROVIDER_NAV_TIMEOUT_MS });
+
+    // Click like a user would in DevTools; these providers often lazy-load HLS after play.
+    for (const selector of [
+      "video", "iframe", "#player", "#the_frame", ".jwplayer", ".plyr", ".vjs-big-play-button",
+      "button[aria-label*='play' i]", "button[title*='play' i]", ".play", ".play-button", "[class*='play']", "body"
+    ]) {
+      if (winner) break;
+      try {
+        const loc = page.locator(selector).first();
+        if (await loc.count()) {
+          await loc.click({ timeout: 1500, force: true }).catch(() => {});
+          await page.waitForTimeout(600).catch(() => {});
+        }
+      } catch {}
+    }
+    if (!winner) await page.mouse.click(683, 384).catch(() => {});
+
+    const endAt = Date.now() + STREAMPROVIDER_STREAM_TIMEOUT_MS;
+    while (!winner && Date.now() < endAt) {
+      try {
+        const html = await page.content();
+        for (const u of apiExtractMediaUrlsFromStringDeep(html.replace(/\\\//g, "/").replace(/&amp;/g, "&"))) remember(u, { referer: page.url() || url });
+        for (const frame of page.frames()) {
+          remember(frame.url(), { referer: page.url() || url });
+          const frameHtml = await frame.content().catch(() => "");
+          for (const u of apiExtractMediaUrlsFromStringDeep(frameHtml.replace(/\\\//g, "/").replace(/&amp;/g, "&"))) remember(u, { referer: frame.url() || url });
+        }
+      } catch {}
+      if (winner) break;
+      await page.waitForTimeout(700).catch(() => {});
+    }
+
+    if (!winner) {
+      attempts.push(`${provider}: no .m3u8 captured from ${url}`);
+      return { ok: false, provider, pageUrl: url, seen: seen.slice(0, 40), error: "no .m3u8 captured" };
+    }
+
+    const pageUrl = page.url() || url;
+    return {
+      ok: true,
+      provider,
+      pageUrl,
+      source: {
+        name: provider,
+        quality: "auto",
+        url: winner.url,
+        headers: localStreamProviderHeaders(winner.referer || pageUrl, winner.headers || {}),
+        format: "m3u8",
+        forceHls: true
+      },
+      seen: seen.slice(0, 40)
+    };
+  } catch (error) {
+    attempts.push(`${provider}: ${error.message || "failed"}`);
+    return { ok: false, provider, pageUrl: url, seen: seen.slice(0, 40), error: error.message || "failed" };
+  } finally {
+    await page.close().catch(() => {});
+    await context.close().catch(() => {});
+  }
+}
+
+async function localStreamProviderSflixWatchUrl({ tmdbId = "", mediaType = "movie", season = "", episode = "", attempts = [] }) {
+  if (mediaType === "tv") {
+    attempts.push("streamprovider-sflix: TV selection skipped; hexa/cinezo handle tv directly");
+    return "";
+  }
+
+  const metadata = await localStreamProviderGetTmdbMetadata({ tmdbId, mediaType, season, episode, attempts });
+  const titles = Array.from(new Set([metadata.title, metadata.originalTitle].filter(Boolean)));
+  if (!titles.length) {
+    attempts.push("streamprovider-sflix: missing TMDB title");
+    return "";
+  }
+
+  const browser = await localStreamProviderBrowser();
+  const context = await browser.newContext({
+    userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
+    ignoreHTTPSErrors: true,
+    javaScriptEnabled: true,
+    viewport: { width: 1365, height: 768 }
+  });
+  const page = await context.newPage();
+
+  try {
+    for (const title of titles) {
+      const slug = localStreamProviderSearchSlug(title);
+      if (!slug) continue;
+      const searchUrl = `${STREAMPROVIDER_SFLIX_BASE_URL}/search/${slug}`;
+      await page.goto(searchUrl, { waitUntil: "domcontentloaded", timeout: STREAMPROVIDER_NAV_TIMEOUT_MS });
+      const candidates = await page.evaluate(() => {
+        const cards = Array.from(document.querySelectorAll(".film_list-wrap > div, .film_list-grid > div, .flw-item"));
+        return cards.map((card, index) => {
+          const titleText = card.querySelector(".film-detail h2 a, h2 a, .film-name a, a")?.textContent?.trim() || "";
+          const yearText = card.querySelector(".fd-infor span, .fdi-item")?.textContent?.trim() || card.textContent || "";
+          const href = card.querySelector(".fd-btn a, h2 a, .film-name a, a")?.getAttribute("href") || "";
+          const yearMatch = String(yearText).match(/\b(19|20)\d{2}\b/);
+          return { index, title: titleText, year: yearMatch ? yearMatch[0] : "", href };
+        }).filter((x) => x.title && x.href);
+      });
+      let best = null;
+      let bestScore = -99999;
+      for (const candidate of candidates) {
+        const score = localStreamProviderTitleScore(candidate.title, title, candidate.year, metadata.year);
+        if (score > bestScore) { bestScore = score; best = candidate; }
+      }
+      if (best && bestScore > 100) {
+        let href = String(best.href || "");
+        if (!/^https?:\/\//i.test(href)) href = `${STREAMPROVIDER_SFLIX_BASE_URL}${href.startsWith("/") ? "" : "/"}${href}`;
+        if (!href.includes("/watch-movie/") && href.includes("/movie/")) href = href.replace("/movie/", "/watch-movie/");
+        return href;
+      }
+    }
+    attempts.push("streamprovider-sflix: no matching search result");
+    return "";
+  } catch (error) {
+    attempts.push(`streamprovider-sflix: ${error.message || "search failed"}`);
+    return "";
+  } finally {
+    await page.close().catch(() => {});
+    await context.close().catch(() => {});
+  }
+}
+
+async function localStreamProviderGetStreams({ tmdbId = "", mediaType = "movie", season = "1", episode = "1", attempts = [] }) {
+  if (!STREAMPROVIDER_ENABLED) throw new Error("STREAMPROVIDER_ENABLED=false");
+  if (!tmdbId) throw new Error("missing TMDB id");
+
+  const jobs = [];
+  for (const name of STREAMPROVIDER_ORDER) {
+    if (name === "hexa") {
+      jobs.push({ provider: "hexa", url: mediaType === "tv" ? `https://hexa.su/watch/tv/${tmdbId}/${season}/${episode}` : `https://hexa.su/watch/movie/${tmdbId}` });
+    } else if (name === "cinezo") {
+      jobs.push({ provider: "cinezo", url: mediaType === "tv" ? `https://www.cinezo.net/watch/tv/${tmdbId}?season=${season}&episode=${episode}` : `https://www.cinezo.net/watch/movie/${tmdbId}` });
+    } else if (name === "sflix") {
+      const sflixUrl = await localStreamProviderSflixWatchUrl({ tmdbId, mediaType, season, episode, attempts });
+      if (sflixUrl) jobs.push({ provider: "sflix", url: sflixUrl });
+    }
+  }
+
+  const results = [];
+  const sources = [];
+  for (const job of jobs) {
+    const startedAt = Date.now();
+    const result = await localStreamProviderCaptureM3u8({ provider: job.provider, url: job.url, attempts });
+    result.ms = Date.now() - startedAt;
+    results.push(result);
+    if (result.ok && result.source?.url && apiIsM3u8Url(result.source.url)) {
+      sources.push(result.source);
+      break;
+    }
+  }
+
+  return {
+    success: sources.length > 0,
+    provider: "streamprovider-local",
+    tmdbId,
+    mediaType,
+    season: mediaType === "tv" ? season : "",
+    episode: mediaType === "tv" ? episode : "",
+    providersTried: jobs.map((j) => j.provider),
+    results,
+    streamsFound: sources.length,
+    sources
+  };
+}
+
+async function localStreamProviderResult({ mediaType = "movie", id = "", season = "1", episode = "1", attempts = [] }) {
+  const tmdbId = await apiResolveTmdbIdForApi({ mediaType, id, attempts });
+  if (!tmdbId) throw new Error("missing numeric TMDB id");
+  const payload = await Promise.race([
+    localStreamProviderGetStreams({ tmdbId, mediaType, season, episode, attempts }),
+    new Promise((_, reject) => setTimeout(() => reject(new Error(`streamprovider timed out after ${STREAMPROVIDER_ROUTE_TIMEOUT_MS}ms`)), STREAMPROVIDER_ROUTE_TIMEOUT_MS))
+  ]);
+  if (!Array.isArray(payload.sources) || payload.sources.length === 0) return null;
+  return await apiFindPlayableFromPayload({
+    payload,
+    providerName: "streamprovider-local",
+    providerConfig: {},
+    mediaType,
+    id: tmdbId,
+    season,
+    episode,
+    attempts
+  });
+}
+
+async function localStreamProviderDebug({ mediaType = "movie", id = "", season = "1", episode = "1", attempts = [] }) {
+  const tmdbId = await apiResolveTmdbIdForApi({ mediaType, id, attempts });
+  const payload = await Promise.race([
+    localStreamProviderGetStreams({ tmdbId, mediaType, season, episode, attempts }),
+    new Promise((_, reject) => setTimeout(() => reject(new Error(`streamprovider debug timed out after ${STREAMPROVIDER_ROUTE_TIMEOUT_MS}ms`)), STREAMPROVIDER_ROUTE_TIMEOUT_MS))
+  ]);
+  const winner = await apiFindPlayableFromPayload({
+    payload,
+    providerName: "streamprovider-local",
+    providerConfig: {},
+    mediaType,
+    id: tmdbId,
+    season,
+    episode,
+    attempts
+  });
+  return { tmdbId, attempts, payload, winner };
+}
+
 // ===== Filmu m3u8 scraper: watches Network for .m3u8 =====
 let __filmuBrowserPromise = null;
 
@@ -4709,6 +5100,17 @@ async function fetchApiProviderSource({ type = "movie", id = "", season = "1", e
     }
   } catch (error) {
     attempts.push(`tmdb metadata: ${error.message || "failed"}`);
+  }
+
+  // 0-streamprovider) Local StreamProvider-main m3u8-only implementation.
+  if (preferred === "streamprovider" || providerOrder.includes("streamprovider")) {
+    try {
+      const streamProviderResult = await localStreamProviderResult({ mediaType, id, season, episode, attempts });
+      if (streamProviderResult) return streamProviderResult;
+      attempts.push("streamprovider-local: no m3u8 captured");
+    } catch (error) {
+      attempts.push(`streamprovider-local: ${error.message || "failed"}`);
+    }
   }
 
   // 0) Local uploaded /api/vid source-code implementation. This bypasses the
@@ -48540,6 +48942,47 @@ app.get("/api/local/runtime-debug", async (req, res) => {
   });
 });
 
+app.get("/api/local/streamprovider-debug", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const type = req.query.type === "tv" ? "tv" : "movie";
+  const id = apiClean(req.query.tmdb || req.query.tmdbId || req.query.id || "");
+  const season = apiClean(req.query.season || req.query.s || "1");
+  const episode = apiClean(req.query.episode || req.query.e || "1");
+
+  if (!id) return res.status(400).json({ ok: false, error: "Pass ?tmdb=id" });
+
+  const attempts = [];
+  const startedAt = Date.now();
+  try {
+    const debug = await localStreamProviderDebug({ mediaType: type, id, season, episode, attempts });
+    res.json({
+      ok: Boolean(debug.winner),
+      sourceMode: "local-streamprovider-main-m3u8-only",
+      tmdb: debug.tmdbId || id,
+      type,
+      season: type === "tv" ? season : "",
+      episode: type === "tv" ? episode : "",
+      ms: Date.now() - startedAt,
+      providerOrder: STREAMPROVIDER_ORDER,
+      winner: debug.winner,
+      attempts: debug.attempts,
+      payload: debug.payload
+    });
+  } catch (error) {
+    res.status(504).json({
+      ok: false,
+      sourceMode: "local-streamprovider-main-m3u8-only",
+      error: error.message || "failed",
+      tmdb: id,
+      type,
+      season: type === "tv" ? season : "",
+      episode: type === "tv" ? episode : "",
+      ms: Date.now() - startedAt,
+      attempts
+    });
+  }
+});
+
 app.get("/api/local/filmu-debug", async (req, res) => {
   res.set("Cache-Control", "no-store");
   const type = req.query.type === "tv" ? "tv" : "movie";
@@ -48807,6 +49250,7 @@ app.get("/api/local/super-source-debug", async (req, res) => {
   }
 
   if (id) {
+    await probe("streamprovider-local", () => localStreamProviderGetStreams({ tmdbId: id, mediaType: type, season: type === "tv" ? season : "", episode: type === "tv" ? episode : "" }), "streamprovider-local", {});
     await probe("vid-local", () => localVidGetStreams({ tmdbId: id, mediaType: type, season: type === "tv" ? season : "", episode: type === "tv" ? episode : "" }), "vid-local", API_PROVIDERS.vid || {});
     await probe("castle-local", () => localCastleGetStreams({ tmdbId: id, mediaType: type, season: type === "tv" ? season : "", episode: type === "tv" ? episode : "" }), "castle-local", API_PROVIDERS.castel || {});
     await probe("xprime-local", () => localXprimeGetStreams({ tmdbId: id, mediaType: type, season: type === "tv" ? season : "", episode: type === "tv" ? episode : "" }), "xprime-local", API_PROVIDERS.xprime || {});
@@ -48930,6 +49374,7 @@ app.get("/api/local/all-source-debug", async (req, res) => {
   }
 
   if (id) {
+    await tryPayload("streamprovider-local", () => localStreamProviderGetStreams({ tmdbId: id, mediaType: type, season: type === "tv" ? season : "", episode: type === "tv" ? episode : "" }), "streamprovider-local", {});
     await tryPayload("vid-local", () => localVidGetStreams({ tmdbId: id, mediaType: type, season: type === "tv" ? season : "", episode: type === "tv" ? episode : "" }), "vid-local", API_PROVIDERS.vid || {});
     await tryPayload("castle-local", () => localCastleGetStreams({ tmdbId: id, mediaType: type, season: type === "tv" ? season : "", episode: type === "tv" ? episode : "" }), "castle-local", API_PROVIDERS.castel || {});
     await tryPayload("xprime-local", () => localXprimeGetStreams({ tmdbId: id, mediaType: type, season: type === "tv" ? season : "", episode: type === "tv" ? episode : "" }), "xprime-local", API_PROVIDERS.xprime || {});
