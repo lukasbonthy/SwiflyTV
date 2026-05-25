@@ -7,6 +7,12 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: PORT
+        value: "10000"
+      - key: PLAYWRIGHT_BROWSERS_PATH
+        value: /ms-playwright
+      - key: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD
+        value: "1"
       - key: REMOTE_BROWSER_ENABLED
         value: "true"
       - key: REMOTE_BROWSER_FPS
@@ -16,7 +22,9 @@ services:
       - key: CONSUMET_ENABLED
         value: "true"
       - key: VIDSRC_ENABLED
-        value: "false"
+        value: "true"
+      - key: VIDSRC_PROVIDER_ORDER
+        value: https://vidsrc.xyz,https://vidsrc.in,https://vidsrc.pm,https://vidsrc.net
       - key: VIDSRC_TIMEOUT_MS
         value: "28000"
       - key: VIDSRC_WAIT_MS
