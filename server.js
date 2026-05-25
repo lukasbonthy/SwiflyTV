@@ -35,6 +35,14 @@ const USE_EXTERNAL_PROVIDER_API = process.env.USE_EXTERNAL_PROVIDER_API === "tru
 const DEFAULT_PLAY_PROVIDER = String(process.env.DEFAULT_PLAY_PROVIDER || "castel").toLowerCase();
 const API_PROVIDER_TIMEOUT_MS = Math.max(8000, Number(process.env.API_PROVIDER_TIMEOUT_MS || 45000));
 
+// Optional local Consumet bridge from uploaded api.consumet.org source.
+// This uses @consumet/extensions server-side only; nothing is exposed to frontend JS.
+const CONSUMET_ENABLED = process.env.CONSUMET_ENABLED !== "false";
+const CONSUMET_PROVIDER_ORDER = String(
+  process.env.CONSUMET_PROVIDER_ORDER ||
+  "flixhq,sflix,goku,movieshd,fmovies,zoro,gogoanime,animepahe"
+).split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
+
 const API_PROVIDERS = {
   "4khdhub": { home: "/api/4khdhub", search: "/api/4khdhub/search", details: "/api/4khdhub/details", gadget: "/api/4khdhub/gadget" },
   desiremovies: { home: "/api/desiremovies", search: "/api/desiremovies/search", details: "/api/desiremovies/details" },
@@ -73,6 +81,7 @@ const API_M3U8_PROVIDER_ORDER = [
   "castel",
   "themovie",
   "xprime",
+  "consumet",
   "netmirror",
   "animepahe",
   "themovie",
@@ -161,31 +170,40 @@ function apiUrlEndsWithFileExtension(url = "") {
 function apiIsBlockedFileExtensionUrl(url = "") {
   const path = apiUrlPath(url).toLowerCase();
 
-  // Keep obvious non-video assets out, but do NOT block video files like mkv/avi/ts.
-  return /\.(?:jpe?g|png|webp|gif|avif|svg|ico|css|js|json|txt|srt|ass|vtt|zip|rar|7z|tar|gz|torrent|pdf)$/.test(path);
+  // Hard block anything that is not a playable media file/playlist.
+  // This fixes false wins like:
+  //   /site.webmanifest
+  //   /xmlrpc.php
+  //   /sitemap.xml
+  //   /wp-comments-post.php
+  //   privacy-policy.html / terms / dmca
+  return /\.(?:jpe?g|png|webp|gif|avif|svg|ico|bmp|css|js|mjs|map|json|webmanifest|xml|rss|atom|php|html?|txt|md|csv|srt|ass|vtt|zip|rar|7z|tar|gz|torrent|pdf|apk|exe|dmg|pkg|deb|rpm|woff2?|ttf|eot|wasm)$/i.test(path);
 }
+
 
 function apiIsAllowedMediaExtensionUrl(url = "") {
   const path = apiUrlPath(url).toLowerCase();
 
-  // New rule: it can be any playable/file source as long as the URL path ends
-  // with a file extension. M3U8 still gets highest priority elsewhere.
-  if (!apiUrlEndsWithFileExtension(url)) return false;
-  if (apiIsBlockedFileExtensionUrl(url)) return false;
-  return true;
+  // Only real playable media files or playlist manifests.
+  // Do NOT treat every random extension as playable; .php/.xml/.html/.webmanifest
+  // were being incorrectly embedded as video.
+  return /\.(?:m3u8|mpd|mp4|m4v|webm|mkv|mov|avi|flv|ts|m2ts|mts|m4s|fmp4)(?:$)/i.test(path);
 }
+
 
 function apiNodeSaysHls(url = "", node = {}) {
   const value = String(url || "").toLowerCase();
   const text = `${Object.keys(node || {}).join(" ")} ${Object.values(node || {}).slice(0, 16).join(" ")}`.toLowerCase();
 
+  // Only force HLS when the API/source explicitly says HLS/m3u8.
+  // Do NOT treat the word "manifest" in a URL as HLS; site.webmanifest is not video.
   return (
     node?.forceHls === true ||
     apiIsM3u8Url(value) ||
-    /\b(hls|m3u8|mpegurl|mpeg-url|playlist|manifest)\b/i.test(text) ||
-    /(?:hls|m3u8|playlist|manifest)/i.test(value)
+    /\b(hls|m3u8|mpegurl|mpeg-url|application\/vnd\.apple\.mpegurl)\b/i.test(text)
   );
 }
+
 
 function apiHasEmbeddableFileExtensionOrHlsProxy(url = "", node = {}) {
   if (apiIsAllowedMediaExtensionUrl(url)) return true;
@@ -365,11 +383,46 @@ function apiSourceScore(source = {}) {
   return score;
 }
 
+function apiLooksDefinitelyNonMediaUrl(url = "") {
+  const value = String(url || "").trim().toLowerCase();
+  if (!value) return true;
+
+  let parsed = null;
+  try { parsed = new URL(value); } catch {}
+
+  const host = (parsed?.hostname || "").replace(/^www\./, "");
+  const path = parsed?.pathname || value.split(/[?#]/)[0] || "";
+  const query = parsed?.search || "";
+
+  if (apiIsYouTubeUrl(value)) return true;
+  if (apiLooksLikeImage(value)) return true;
+  if (/\/api\/adult\//i.test(value)) return true;
+
+  // Keep Swifly from following/embedding social/share/ad/analytics/admin pages.
+  if (/(^|\.)telegram\.org$|(^|\.)t\.me$|(^|\.)facebook\.com$|(^|\.)twitter\.com$|(^|\.)x\.com$|(^|\.)whatsapp\.com$|(^|\.)googletagmanager\.com$|(^|\.)google-analytics\.com$|(^|\.)cloudflareinsights\.com$|(^|\.)wordpress\.org$|(^|\.)googleapis\.com$|(^|\.)fontawesome\.com$|(^|\.)cdnjs\.cloudflare\.com$/i.test(host)) return true;
+
+  // Block obvious adult mirrors/categories even when they came from a non-adult page.
+  if (/(?:^|\.)zeefliz18\.|(?:^|\.)xhamster\.|(?:^|\.)xvideos\.|(?:^|\.)spankbang\.|(?:^|\.)xxx|(?:^|\.)porn|\/18(?:plus|\+|-adult|_adult)?\b|\/adult\b|\/hentai\b/i.test(value)) return true;
+
+  // WordPress/admin/nav/support files are not player sources.
+  if (/\/(?:xmlrpc\.php|wp-comments-post\.php|wp-login\.php|wp-admin\/|wp-json\/|feed\/|comments\/feed\/|privacy-policy|terms-of-service|dmca|contact|cdn-cgi\/|wp-content\/themes\/|wp-content\/plugins\/|wp-includes\/|sitemap\.xml|site\.webmanifest)(?:[?#]|$|\/)/i.test(value)) return true;
+
+  // Category/search/nav pages are not streams.
+  if (/\/(?:category|genre|tag|author|page|privacy-policy|terms|dmca|contact|how-to-download|report-broken-links)(?:\/|[?#]|$)/i.test(value)) return true;
+
+  // Homepage/root URLs are never playable.
+  if (parsed && (path === "/" || path === "")) return true;
+
+  // Hard block non-media file extensions.
+  if (apiIsBlockedFileExtensionUrl(value)) return true;
+
+  return false;
+}
+
 function apiLooksPlayable(url = "", node = {}) {
   const value = String(url || "").trim();
   if (!/^https?:\/\//i.test(value)) return false;
-  if (apiLooksLikeImage(value)) return false;
-  if (apiIsYouTubeUrl(value)) return false;
+  if (apiLooksDefinitelyNonMediaUrl(value)) return false;
 
   // Allowed browser embed URLs now only need a real file extension.
   // For extensionless upstream HLS endpoints, we only accept them when HLS proxy is enabled,
@@ -954,7 +1007,8 @@ async function apiTryNetMirrorByTmdb({ mediaType = "movie", id = "", season = "1
 
 
 function apiTrustedProviderCanForceHls(providerName = "") {
-  return ["vid", "vid-local", "castel", "castle", "castle-local", "xprime", "xprime-local", "netmirror", "animepahe", "animesalt", "themovie", "tm"].includes(apiClean(providerName).toLowerCase());
+  const p = apiClean(providerName).toLowerCase();
+  return ["vid", "vid-local", "castel", "castle", "castle-local", "xprime", "xprime-local", "netmirror", "animepahe", "animesalt", "themovie", "tm"].includes(p) || p.startsWith("consumet-");
 }
 
 function apiCollectTrustedStreamSources(providerName = "", payload = {}) {
@@ -1217,8 +1271,8 @@ function apiSourceToProxyResult({ source, raw, provider, type, id, season = "", 
   // Hard final rule: the URL embedded into Vidstack must end with a supported
   // media extension. With HLS proxy enabled, extensionless HLS APIs become
   // /api/hls-proxy/<id>/master.m3u8 and pass this check.
-  if (!apiIsAllowedMediaExtensionUrl(playbackUrl)) {
-    attempts.push(`${provider}: final embed URL did not end with a media file extension`);
+  if (!apiIsAllowedMediaExtensionUrl(playbackUrl) || apiLooksDefinitelyNonMediaUrl(playbackUrl)) {
+    attempts.push(`${provider}: final embed URL was not a real playable media file/playlist`);
     return null;
   }
 
@@ -3052,10 +3106,11 @@ async function localXprimeGetStreams({ tmdbId = "", mediaType = "movie", season 
 function localDeepLooksUnsafeUrl(url = "") {
   const value = apiClean(url).toLowerCase();
   return !/^https?:\/\//i.test(value) ||
-    apiIsYouTubeUrl(value) ||
+    apiLooksDefinitelyNonMediaUrl(value) ||
     /\/api\/adult\//i.test(value) ||
     /(?:^|\/)(adult|porn|hentai|xhamster|xvideos|spankbang|xxx|eporner)(?:\/|\.|$)/i.test(value);
 }
+
 
 function localDeepPageHeaders(url = "", ref = "") {
   let origin = "";
@@ -3402,17 +3457,39 @@ function localDownloadSiteText(value = "") {
 }
 
 function localDownloadSiteScore(entry = {}, title = "", year = "") {
-  const hay = localDownloadSiteText(`${entry.title || ""} ${entry.href || ""} ${entry.around || ""}`);
+  const titleText = localDownloadSiteText(entry.title || "");
+  const hrefText = localDownloadSiteText(entry.href || "");
+  const aroundText = localDownloadSiteText(entry.around || "");
+  const titleHref = `${titleText} ${hrefText}`;
   const target = localDownloadSiteText(title);
+  const targetCompact = target.replace(/\s+/g, "");
+  const titleHrefCompact = titleHref.replace(/\s+/g, "");
+
   let score = 0;
-  if (target && hay.includes(target)) score += 90;
-  if (target && hay.replace(/\s+/g, "").includes(target.replace(/\s+/g, ""))) score += 70;
-  for (const word of target.split(/\s+/).filter((w) => w.length > 2)) if (hay.includes(word)) score += 8;
-  if (year && `${entry.title || ""} ${entry.href || ""} ${entry.around || ""}`.includes(String(year))) score += 20;
-  if (/download|watch|online|play|stream|link|server|cloud|drive|episode/i.test(`${entry.title || ""} ${entry.href || ""}`)) score += 5;
-  if (/category|genre|tag|author|comment|privacy|contact|dmca|telegram|login|register/i.test(entry.href || "")) score -= 50;
+
+  // Main matching should come from the link title/href, not nearby page text.
+  // Nearby text made homepages like MoviesDrives.CV and Telegram look like winners.
+  if (target && titleHref.includes(target)) score += 100;
+  if (target && titleHrefCompact.includes(targetCompact)) score += 80;
+
+  for (const word of target.split(/\s+/).filter((w) => w.length > 2)) {
+    if (titleHref.includes(word)) score += 10;
+    else if (aroundText.includes(word)) score += 1;
+  }
+
+  if (year && `${entry.title || ""} ${entry.href || ""}`.includes(String(year))) score += 25;
+  if (year && !`${entry.title || ""} ${entry.href || ""}`.includes(String(year))) score -= 12;
+
+  if (/download|watch|play|stream|file|link|server|cloud|drive|episode|movie/i.test(`${entry.title || ""} ${entry.href || ""}`)) score += 8;
+
+  // Big penalties for navigation/social/admin/adult/junk pages.
+  if (apiLooksDefinitelyNonMediaUrl(entry.href || "")) score -= 80;
+  if (/category|genre|tag|author|comment|privacy|contact|dmca|telegram|login|register|lostpassword|how-to-download|report-broken-links/i.test(entry.href || "")) score -= 80;
+  if (/^(moviesdrive|telegram logo|join telegram|adult movies|4k uhd movies|hindi|urdu|web-series|music show|musical series|sitcom series)$/i.test(String(entry.title || "").trim())) score -= 90;
+
   return score;
 }
+
 
 function localDownloadSiteExtractAnchors(html = "", baseUrl = "") {
   const source = String(html || "");
@@ -3501,16 +3578,44 @@ async function localDownloadSiteSearch(config = {}, title = "", year = "", attem
 async function localDownloadSiteDetailPayload(config = {}, detailUrl = "", attempts = []) {
   const page = await localDownloadSiteFetch(detailUrl);
   if (!page.ok) attempts.push(`${config.id} detail ${page.status}: ${detailUrl.slice(0, 100)}`);
+
   const anchors = localDownloadSiteExtractAnchors(page.text, page.finalUrl);
-  const candidateUrls = Array.from(new Set([page.finalUrl, ...anchors.map((a) => a.href), ...localDeepExtractHtmlLinks(page.text, page.finalUrl), ...apiExtractUrlsFromStringDeep(page.text)].filter(Boolean)));
-  const importantUrls = candidateUrls.filter((url) => apiLooksPlayable(url, { url }) || /hubcloud|hub-cloud|gdflix|nextdrive|vcloud|v-cloud|zinkcloud|magic|tech\.unblockedgames|modpro|mdrive|gyaniguru|gadget|gadgetsworld|stream|watch|play|server|download|link|episode|cloud|drive/i.test(String(url || "").toLowerCase()));
+  const candidateUrls = Array.from(new Set([
+    page.finalUrl,
+    ...anchors.map((a) => a.href),
+    ...localDeepExtractHtmlLinks(page.text, page.finalUrl),
+    ...apiExtractUrlsFromStringDeep(page.text)
+  ].filter(Boolean)));
+
+  // Actual media goes to sources. Intermediate pages go to candidateUrls so the
+  // local source-code extractors can follow m4ulinks/magiclinks/zinkcloud/nexdrive/etc.
+  const mediaUrls = candidateUrls.filter((url) => apiLooksPlayable(url, { url }));
+  const intermediateUrls = candidateUrls.filter((url) => {
+    const lower = String(url || "").toLowerCase();
+    if (apiLooksDefinitelyNonMediaUrl(lower)) return false;
+    return apiCanBeIntermediateExtractorUrl(lower) ||
+      /m4uplay|m4ulinks|magiclinks|modpro|zinkcloud|nexdrive|nextdrive|hubcloud|hub-cloud|gdflix|vcloud|v-cloud|tech\.unblockedgames|cloud\.unblockedgames|gyaniguru|gadget|gadgetsworld|hrujo|play\//i.test(lower);
+  });
+
+  const importantUrls = Array.from(new Set([...mediaUrls, ...intermediateUrls]));
+
   return {
-    success: true, provider: `${config.id}-local`, finalUrl: page.finalUrl,
-    candidateUrls: importantUrls.slice(0, 140), allUrls: candidateUrls.slice(0, 240),
-    sources: apiExtractMediaUrlsFromStringDeep(page.text).map((url) => ({ name: apiIsM3u8Url(url) ? "hls" : "deep-file", quality: "", url, headers: {}, format: apiIsM3u8Url(url) ? "m3u8" : "" })),
+    success: true,
+    provider: `${config.id}-local`,
+    finalUrl: page.finalUrl,
+    candidateUrls: importantUrls.slice(0, 160),
+    allUrls: candidateUrls.filter((url) => !apiLooksDefinitelyNonMediaUrl(url)).slice(0, 260),
+    sources: mediaUrls.map((url) => ({
+      name: apiIsM3u8Url(url) ? "hls" : "media-file",
+      quality: "",
+      url,
+      headers: {},
+      format: apiIsM3u8Url(url) ? "m3u8" : ""
+    })),
     textSample: page.text.slice(0, 1200)
   };
 }
+
 
 async function localDownloadSitesByTitle({ title = "", year = "", mediaType = "movie", id = "", season = "", episode = "", attempts = [], providerIds = [] }) {
   const configs = LOCAL_DOWNLOAD_SITE_PROVIDERS.filter((config) => !providerIds.length || providerIds.includes(config.id));
@@ -3552,6 +3657,376 @@ async function localDownloadSitesDebug({ title = "", year = "", mediaType = "mov
       rows.push(providerRow);
     } catch (error) { rows.push({ provider: config.id, ms: Date.now() - startedAt, error: error.message || "failed" }); }
   }
+  return { attempts, rows, winner };
+}
+
+
+
+// ===== Local Consumet bridge from uploaded api.consumet.org source =====
+// The uploaded Consumet API routes are Fastify+TypeScript wrappers around
+// @consumet/extensions. For this Express app we call the same extension methods
+// directly, server-side only.
+let __consumetExtensionsCache = null;
+let __consumetModelsCache = null;
+
+function localConsumetExtensions() {
+  if (__consumetExtensionsCache) return __consumetExtensionsCache;
+  try {
+    __consumetExtensionsCache = require("@consumet/extensions");
+    return __consumetExtensionsCache;
+  } catch (error) {
+    throw new Error(`@consumet/extensions not installed: ${error.message || "npm install failed"}`);
+  }
+}
+
+function localConsumetStreamingServers() {
+  if (__consumetModelsCache) return __consumetModelsCache;
+  try {
+    const models = require("@consumet/extensions/dist/models");
+    __consumetModelsCache = Object.values(models.StreamingServers || {}).filter(Boolean);
+  } catch {
+    __consumetModelsCache = [];
+  }
+  return __consumetModelsCache;
+}
+
+function localConsumetProviderConfig(provider = "") {
+  const id = apiClean(provider).toLowerCase();
+  const configs = {
+    flixhq: {
+      id: "flixhq",
+      kind: "movie",
+      make: () => new (localConsumetExtensions().MOVIES.FlixHQ)(),
+      info: (p, id) => p.fetchMediaInfo(id),
+      sources: (p, episodeId, mediaId, server) => p.fetchEpisodeSources(episodeId, mediaId, server)
+    },
+    sflix: {
+      id: "sflix",
+      kind: "movie",
+      make: () => new (localConsumetExtensions().MOVIES.SFlix)(),
+      info: (p, id) => p.fetchMediaInfo(id),
+      sources: (p, episodeId, mediaId, server) => p.fetchEpisodeSources(episodeId, mediaId, server)
+    },
+    goku: {
+      id: "goku",
+      kind: "movie",
+      make: () => new (localConsumetExtensions().MOVIES.Goku)(),
+      info: (p, id) => p.fetchMediaInfo(id),
+      sources: (p, episodeId, mediaId, server) => p.fetchEpisodeSources(episodeId, mediaId, server)
+    },
+    movieshd: {
+      id: "movieshd",
+      kind: "movie",
+      make: () => new (localConsumetExtensions().MOVIES.MovieHdWatch)(),
+      info: (p, id) => p.fetchMediaInfo(id),
+      sources: (p, episodeId, mediaId, server) => p.fetchEpisodeSources(episodeId, mediaId, server)
+    },
+    fmovies: {
+      id: "fmovies",
+      kind: "movie",
+      make: () => new (localConsumetExtensions().MOVIES.Fmovies)(),
+      info: (p, id) => p.fetchMediaInfo(id),
+      sources: (p, episodeId, mediaId, server) => p.fetchEpisodeSources(episodeId, mediaId, server)
+    },
+    zoro: {
+      id: "zoro",
+      kind: "anime",
+      make: () => new (localConsumetExtensions().ANIME.Zoro)(process.env.ZORO_URL),
+      info: (p, id) => p.fetchAnimeInfo(id),
+      sources: (p, episodeId, _mediaId, server) => p.fetchEpisodeSources(episodeId, server)
+    },
+    gogoanime: {
+      id: "gogoanime",
+      kind: "anime",
+      make: () => new (localConsumetExtensions().ANIME.Gogoanime)(process.env.GOGOANIME_URL),
+      info: (p, id) => p.fetchAnimeInfo(id),
+      sources: (p, episodeId, _mediaId, server) => p.fetchEpisodeSources(episodeId, server)
+    },
+    animepahe: {
+      id: "animepahe",
+      kind: "anime",
+      make: () => new (localConsumetExtensions().ANIME.AnimePahe)(),
+      info: (p, id) => p.fetchAnimeInfo(id),
+      sources: (p, episodeId, _mediaId, server) => p.fetchEpisodeSources(episodeId, server)
+    }
+  };
+  return configs[id] || null;
+}
+
+function localConsumetSearchResults(payload = {}) {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.results)) return payload.results;
+  if (Array.isArray(payload?.data?.results)) return payload.data.results;
+  return apiTopList(payload);
+}
+
+function localConsumetTitleScore(entry = {}, title = "", year = "") {
+  const hay = `${entry.title || ""} ${entry.name || ""} ${entry.id || ""} ${entry.url || ""} ${entry.releaseDate || ""} ${entry.description || ""}`;
+  const target = apiClean(title);
+  let score = 0;
+  const cleanHay = localDownloadSiteText ? localDownloadSiteText(hay) : hay.toLowerCase().replace(/[^a-z0-9]+/g, " ");
+  const cleanTarget = localDownloadSiteText ? localDownloadSiteText(target) : target.toLowerCase().replace(/[^a-z0-9]+/g, " ");
+  if (cleanTarget && cleanHay.includes(cleanTarget)) score += 100;
+  if (cleanTarget && cleanHay.replace(/\s+/g, "").includes(cleanTarget.replace(/\s+/g, ""))) score += 80;
+  for (const word of cleanTarget.split(/\s+/).filter((w) => w.length > 2)) if (cleanHay.includes(word)) score += 8;
+  if (year && hay.includes(String(year))) score += 25;
+  if (/movie|film/i.test(`${entry.type || ""}`)) score += 8;
+  if (/tv|show|series/i.test(`${entry.type || ""}`)) score += 4;
+  return score;
+}
+
+async function localConsumetSearch(providerInstance, title = "", year = "", attempts = []) {
+  const variants = localSourceTitleVariants(title, year);
+  const all = [];
+
+  for (const q of variants.slice(0, 5)) {
+    try {
+      const payload = await providerInstance.search(q, 1);
+      const rows = localConsumetSearchResults(payload)
+        .map((entry) => ({ ...entry, score: localConsumetTitleScore(entry, title, year) }))
+        .filter((entry) => entry.id && entry.score > 8)
+        .sort((a, b) => b.score - a.score);
+
+      for (const row of rows.slice(0, 10)) {
+        if (!all.some((x) => String(x.id) === String(row.id))) all.push(row);
+      }
+      if (rows.length) break;
+    } catch (error) {
+      attempts.push(`consumet search "${q}": ${error.message || "failed"}`);
+    }
+  }
+
+  return all.sort((a, b) => b.score - a.score);
+}
+
+function localConsumetEpisodeCandidates(info = {}, mediaType = "movie", season = "1", episode = "1") {
+  const episodes = Array.isArray(info?.episodes) ? info.episodes : [];
+  const wantedSeason = Number(season || 1);
+  const wantedEpisode = Number(episode || 1);
+
+  const candidates = [];
+  function add(ep) {
+    const id = apiClean(ep?.id || ep?.episodeId || ep?.url);
+    if (!id) return;
+    if (!candidates.some((x) => x.id === id)) candidates.push({ id, raw: ep });
+  }
+
+  if (mediaType === "tv") {
+    for (const ep of episodes) {
+      const epSeason = Number(ep.season ?? ep.seasonNumber ?? ep.season_number ?? 1);
+      const epNumber = Number(ep.number ?? ep.episode ?? ep.episodeNumber ?? ep.episode_number ?? ep.ep ?? 0);
+      if ((epSeason === wantedSeason || !ep.season) && (epNumber === wantedEpisode || String(ep.title || "").match(new RegExp(`\\b${wantedEpisode}\\b`)))) add(ep);
+    }
+  } else {
+    for (const ep of episodes) add(ep);
+  }
+
+  if (!candidates.length && apiClean(info?.episodeId)) candidates.push({ id: apiClean(info.episodeId), raw: info });
+  if (!candidates.length && apiClean(info?.id) && mediaType === "movie") candidates.push({ id: apiClean(info.id), raw: info });
+  return candidates.slice(0, 8);
+}
+
+function localConsumetNormalizeSources(payload = {}, providerId = "") {
+  const out = [];
+  const payloadHeaders = payload?.headers && typeof payload.headers === "object" ? payload.headers : {};
+
+  function add(node = {}, field = "source") {
+    if (typeof node === "string") node = { url: node };
+    if (!node || typeof node !== "object") return;
+
+    const url = apiClean(node.url || node.file || node.src || node.link || node.m3u8 || node.hls);
+    if (!/^https?:\/\//i.test(url)) return;
+    if (apiLooksDefinitelyNonMediaUrl(url)) return;
+
+    const isHls = node.isM3U8 === true || node.isM3u8 === true || node.isHls === true || /m3u8|hls/i.test(`${node.quality || ""} ${node.type || ""} ${node.format || ""} ${node.name || ""}`);
+    const headers = {
+      ...payloadHeaders,
+      ...(node.headers && typeof node.headers === "object" ? node.headers : {})
+    };
+
+    out.push({
+      name: apiFirst(node.name, node.server, node.provider, providerId, field) || `consumet-${providerId}`,
+      quality: apiFirst(node.quality, node.resolution, node.type),
+      url,
+      headers,
+      format: apiIsM3u8Url(url) || isHls ? "m3u8" : (apiIsMpdUrl(url) ? "mpd" : ""),
+      forceHls: Boolean(isHls && !apiIsAllowedMediaExtensionUrl(url))
+    });
+  }
+
+  if (Array.isArray(payload?.sources)) payload.sources.forEach((s) => add(s, "sources"));
+  if (Array.isArray(payload?.data?.sources)) payload.data.sources.forEach((s) => add(s, "data.sources"));
+  if (Array.isArray(payload?.stream)) payload.stream.forEach((s) => add(s, "stream"));
+  if (Array.isArray(payload?.streams)) payload.streams.forEach((s) => add(s, "streams"));
+  apiWalk(payload, (node) => {
+    if (node && typeof node === "object" && !Array.isArray(node)) {
+      if (node.url || node.file || node.src || node.link || node.m3u8 || node.hls) add(node, "deep");
+    }
+  });
+
+  return apiPreferM3u8Sources(Array.from(new Map(out.map((source) => [source.url, source])).values()));
+}
+
+function localConsumetTrySources({ sourcePayload, providerId, mediaType, id, season, episode, attempts }) {
+  const sources = localConsumetNormalizeSources(sourcePayload, providerId);
+  for (const source of sources) {
+    const result = apiSourceToProxyResult({
+      source,
+      raw: sourcePayload,
+      provider: `consumet-${providerId}`,
+      type: mediaType,
+      id,
+      season,
+      episode,
+      attempts
+    });
+    if (result) {
+      result.normalized = {
+        provider: `consumet-${providerId}`,
+        id,
+        url: "",
+        title: "",
+        year: "",
+        type: mediaType,
+        poster: "",
+        backdrop: "",
+        overview: "",
+        formats: [],
+        sources
+      };
+      result.consumetProvider = providerId;
+      return result;
+    }
+  }
+  return null;
+}
+
+async function localConsumetProviderByTitle({ providerId = "", title = "", year = "", mediaType = "movie", id = "", season = "1", episode = "1", attempts = [] }) {
+  if (!CONSUMET_ENABLED) {
+    attempts.push("consumet: disabled by CONSUMET_ENABLED=false");
+    return null;
+  }
+
+  const config = localConsumetProviderConfig(providerId);
+  if (!config) {
+    attempts.push(`consumet-${providerId}: unknown provider`);
+    return null;
+  }
+
+  if (config.kind === "anime" && mediaType !== "anime" && !/anime/i.test(String(title || ""))) {
+    // Still usable manually with ?provider=consumet-zoro etc, but do not spam anime providers for normal movie titles.
+    if (!String(providerId).includes("anime") && !["zoro", "gogoanime"].includes(providerId)) return null;
+  }
+
+  const providerInstance = config.make();
+  const searchResults = await localConsumetSearch(providerInstance, title, year, attempts);
+  const debugRows = [];
+
+  for (const found of searchResults.slice(0, 5)) {
+    const row = { id: found.id, title: found.title || found.name || "", score: found.score, ok: false, attempts: [] };
+    try {
+      const info = await config.info(providerInstance, found.id);
+      row.infoTitle = info?.title || info?.name || "";
+      const episodes = localConsumetEpisodeCandidates(info, mediaType, season, episode);
+      row.episodeCount = Array.isArray(info?.episodes) ? info.episodes.length : 0;
+      row.candidateEpisodes = episodes.map((ep) => ({ id: ep.id, title: ep.raw?.title, number: ep.raw?.number, season: ep.raw?.season }));
+
+      const serverValues = [undefined, ...localConsumetStreamingServers(), "vidcloud", "upcloud", "mixdrop", "streamsb", "streamtape", "filemoon", "mp4upload"];
+      const seenServers = new Set();
+
+      for (const ep of episodes) {
+        for (const serverValue of serverValues) {
+          const serverKey = String(serverValue || "default").toLowerCase();
+          if (seenServers.has(`${ep.id}:${serverKey}`)) continue;
+          seenServers.add(`${ep.id}:${serverKey}`);
+
+          try {
+            const sourcePayload = await config.sources(providerInstance, ep.id, info?.id || found.id, serverValue);
+            const result = localConsumetTrySources({
+              sourcePayload,
+              providerId,
+              mediaType,
+              id,
+              season,
+              episode,
+              attempts
+            });
+            row.sourceKeys = Object.keys(sourcePayload || {});
+            row.ok = Boolean(result);
+            if (result) {
+              result.consumetSearch = {
+                provider: providerId,
+                searchTitle: found.title || found.name || "",
+                searchId: found.id,
+                infoTitle: row.infoTitle,
+                episodeId: ep.id,
+                server: serverValue || "default"
+              };
+              return { result, debugRows: [...debugRows, row] };
+            }
+            row.attempts.push(`${ep.id}:${serverValue || "default"} no playable media`);
+          } catch (error) {
+            row.attempts.push(`${ep.id}:${serverValue || "default"} ${error.message || "failed"}`);
+          }
+        }
+      }
+    } catch (error) {
+      row.error = error.message || "failed";
+    }
+    debugRows.push(row);
+  }
+
+  return { result: null, debugRows };
+}
+
+function localConsumetProviderIdsFromPreferred(preferred = "") {
+  const clean = apiClean(preferred).toLowerCase();
+  if (!clean || clean === "consumet") return CONSUMET_PROVIDER_ORDER;
+  if (clean.startsWith("consumet-")) return [clean.replace(/^consumet-/, "")];
+  return CONSUMET_PROVIDER_ORDER;
+}
+
+async function localConsumetByTitle({ title = "", year = "", mediaType = "movie", id = "", season = "1", episode = "1", attempts = [], preferred = "" }) {
+  const providerIds = localConsumetProviderIdsFromPreferred(preferred);
+  const rows = [];
+
+  for (const providerId of providerIds) {
+    const startedAt = Date.now();
+    try {
+      const probe = await localConsumetProviderByTitle({ providerId, title, year, mediaType, id, season, episode, attempts });
+      rows.push({ provider: providerId, ms: Date.now() - startedAt, ok: Boolean(probe?.result), rows: probe?.debugRows || [] });
+      if (probe?.result) {
+        probe.result.consumetProviderRows = rows;
+        return probe.result;
+      }
+    } catch (error) {
+      rows.push({ provider: providerId, ms: Date.now() - startedAt, ok: false, error: error.message || "failed" });
+      attempts.push(`consumet-${providerId}: ${error.message || "failed"}`);
+    }
+  }
+
+  return null;
+}
+
+async function localConsumetDebug({ title = "", year = "", mediaType = "movie", id = "", season = "1", episode = "1", provider = "" }) {
+  const attempts = [];
+  const providerIds = provider ? localConsumetProviderIdsFromPreferred(provider) : CONSUMET_PROVIDER_ORDER;
+  const rows = [];
+  let winner = null;
+
+  for (const providerId of providerIds) {
+    const startedAt = Date.now();
+    try {
+      const probe = await localConsumetProviderByTitle({ providerId, title, year, mediaType, id, season, episode, attempts });
+      const row = { provider: providerId, ms: Date.now() - startedAt, ok: Boolean(probe?.result), result: probe?.result || null, rows: probe?.debugRows || [] };
+      rows.push(row);
+      if (!winner && probe?.result) winner = probe.result;
+    } catch (error) {
+      rows.push({ provider: providerId, ms: Date.now() - startedAt, ok: false, error: error.message || "failed" });
+      attempts.push(`consumet-${providerId}: ${error.message || "failed"}`);
+    }
+  }
+
   return { attempts, rows, winner };
 }
 
@@ -3759,6 +4234,25 @@ async function fetchApiProviderSource({ type = "movie", id = "", season = "1", e
         attempts.push("xprime-local: source-code flow returned no usable stream");
       } catch (error) {
         attempts.push(`xprime-local: ${error.message || "failed"}`);
+      }
+    }
+
+    if ((preferred === "consumet" || preferred.startsWith("consumet-") || providerOrder.includes("consumet")) && title) {
+      try {
+        const consumetResult = await localConsumetByTitle({
+          title,
+          year: releaseYear,
+          mediaType,
+          id,
+          season,
+          episode,
+          attempts,
+          preferred
+        });
+        if (consumetResult) return consumetResult;
+        attempts.push("consumet: source-code flow returned no usable stream");
+      } catch (error) {
+        attempts.push(`consumet: ${error.message || "failed"}`);
       }
     }
 
@@ -47389,6 +47883,43 @@ app.get("/api/local/source-audit", (req, res) => {
   res.json({ ok: true, generatedFrom: "ScarperApi-zero(1).zip static audit", routes: [{"route":"/api/4khdhub/details","chars":5899,"urls":[],"fields":["URL","downloadLinks","file","href","src","url"]},{"route":"/api/4khdhub/gadget","chars":5874,"urls":[],"fields":["URL","url"]},{"route":"/api/4khdhub","chars":2624,"urls":[],"fields":["href","src","url"]},{"route":"/api/4khdhub/search","chars":3092,"urls":[],"fields":["href","src","url"]},{"route":"/api/animepahe/details","chars":9219,"urls":["https://animepahe.si${href}","https://animepahe.si/api?m=release&id=${session}&sort=episode_asc&page=${currentPage}"],"fields":["URL","downloadLinks","href","src","streamUrl","url"]},{"route":"/api/animepahe","chars":2276,"urls":["https://animepahe.si/api?m=airing&page=${page}"],"fields":["URL","url"]},{"route":"/api/animepahe/search","chars":2194,"urls":["https://animepahe.si/api?m=search&q=${encodeURIComponent(query"],"fields":["URL","url"]},{"route":"/api/animepahe/stream","chars":4714,"urls":[],"fields":["URL","m3u8","url"]},{"route":"/api/animesalt/details","chars":8021,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/animesalt","chars":3376,"urls":[],"fields":["href","src","url"]},{"route":"/api/animesalt/search","chars":3322,"urls":[],"fields":["href","src","url"]},{"route":"/api/animesalt/stream","chars":3549,"urls":[],"fields":["URL","src","url"]},{"route":"/api/castel","chars":24315,"urls":["https://aesdec.nuvioapp.space/decrypt-castle","https://api.fstcy.com","https://api.themoviedb.org/3"],"fields":["URL","streams","url","videoUrl"]},{"route":"/api/desiremovies/details","chars":2863,"urls":[],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/desiremovies/gyaniguru","chars":1795,"urls":["https://desiremovies.gripe/"],"fields":["URL","downloadLinks","href","url"]},{"route":"/api/desiremovies","chars":2374,"urls":[],"fields":["href","src","url"]},{"route":"/api/desiremovies/search","chars":2779,"urls":["https://desiremovies.gripe/kalamkaval-2025-web-hdrip/"],"fields":["href","src","url"]},{"route":"/api/drive/details","chars":3945,"urls":[],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/drive/mdrive","chars":2523,"urls":[],"fields":["HubCloud","URL","href","hubcloud","url"]},{"route":"/api/drive","chars":2363,"urls":[],"fields":["href","src","url"]},{"route":"/api/drive/search","chars":2904,"urls":[],"fields":["url"]},{"route":"/api/extractors/gdflix","chars":1584,"urls":["https://scarperapi-extractor-7tr4.vercel.app/api/gdflix?url=${encodeURIComponent(url"],"fields":["URL","gdflix","url"]},{"route":"/api/extractors/hubcloud","chars":1590,"urls":["https://scarperapi-extractor-7tr4.vercel.app/api/hubcloud?url=${encodeURIComponent(url"],"fields":["URL","hubcloud","url"]},{"route":"/api/extractors/streamtape","chars":0,"urls":[],"fields":[]},{"route":"/api/extractors/xprime","chars":18282,"urls":["https://api.themoviedb.org/3","https://mznxiwqjdiq00239q.space","https://xprime.hunternisha55.workers.dev","https://xprime.su/watch/${tmdbId}","https://xprime.su/watch/${tmdbId}/${season}/${episode}"],"fields":["URL","XPrime","src","streams","url","xprime"]},{"route":"/api/hdhub4u/details","chars":4722,"urls":[],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/hdhub4u/extractor","chars":11472,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/hdhub4u","chars":2194,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/hdhub4u/search","chars":3147,"urls":["https://new2.hdhub4u.fo","https://new2.hdhub4u.fo/","https://search.pingora.fyi/collections/post/documents/search?q=${formattedQuery}&query_by=post_title&page=${page}"],"fields":["url"]},{"route":"/api/kmmovies/details","chars":6044,"urls":[],"fields":["URL","downloadLinks","file","href","src","url"]},{"route":"/api/kmmovies/magiclinks","chars":3981,"urls":["https://kmmovies.store/","https://net-cookie-kacj.vercel.app/api/redirect?url=${encodeURIComponent(link.url"],"fields":["File","URL","downloadLinks","file","href","url"]},{"route":"/api/kmmovies","chars":3220,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/kmmovies/search","chars":3067,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/mod/details","chars":5030,"urls":[],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/mod/modpro","chars":5122,"urls":["https://moviesmod.build/"],"fields":["URL","downloadLinks","href","serverLinks","techLinks","url"]},{"route":"/api/mod","chars":2418,"urls":[],"fields":["href","src","url"]},{"route":"/api/mod/search","chars":2163,"urls":[],"fields":["href","src","url"]},{"route":"/api/movies4u/details","chars":5470,"urls":[],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/movies4u/m4ulinks","chars":4568,"urls":[],"fields":["URL","href","hubcloud","hubcloudLinks","url"]},{"route":"/api/movies4u","chars":3432,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/movies4u/search","chars":2851,"urls":[],"fields":["href","src","url"]},{"route":"/api/netmirror/getpost","chars":3598,"urls":[],"fields":["URL","url"]},{"route":"/api/netmirror","chars":6442,"urls":["https://net22.cc"],"fields":["URL","net22.cc","src","url"]},{"route":"/api/netmirror/search","chars":3537,"urls":["https://net22.cc"],"fields":["URL","net22.cc","url"]},{"route":"/api/netmirror/stream","chars":6912,"urls":["https://net20.cc/","https://net22.cc/play.php","https://net51.cc","https://net51.cc/","https://net51.cc/playlist.php?id=${id}&tm=${currentTimestamp}&h=${encodeURIComponent(h","https://net52.cc/playlist.php?id=${id}&tm=${timestamp}&h=${encodeURIComponent(h"],"fields":["URL","file","net20.cc","net22.cc","net51.cc","net52.cc","playlist","sources","url"]},{"route":"/api/search","chars":5478,"urls":[],"fields":["url"]},{"route":"/api/themovie/det","chars":9305,"urls":["https://themoviebox.org/","https://themoviebox.org/movies/${slug}?id=${id}&type=${parsedUrl.searchParams.get(","https://themoviebox.org/wefeed-h5api-bff/subject/play"],"fields":["URL","playApiUrl","themoviebox","url"]},{"route":"/api/themovie","chars":2270,"urls":[],"fields":["URL","fullUrl","href","src"]},{"route":"/api/themovie/search","chars":8547,"urls":[],"fields":["URL","fullUrl","href","src","url"]},{"route":"/api/themovie/stream","chars":17695,"urls":["https://themoviebox.org/","https://themoviebox.org/movies/${slug}","https://themoviebox.org/moviesDetail/${slug}","https://themoviebox.org/wefeed-h5api-bff/subject/play"],"fields":["URL","src","themoviebox","url"]},{"route":"/api/tm","chars":5749,"urls":["https://vibuxer.com/","https://vibuxer.com/e/${code.trim("],"fields":["URL","streamUrl","streams","url","vibuxer"]},{"route":"/api/uhdmovies/details","chars":7162,"urls":[],"fields":["URL","downloadLinks","file","href","src","url"]},{"route":"/api/uhdmovies","chars":2234,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/uhdmovies/search","chars":2873,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/uhdmovies/tech","chars":9222,"urls":["https://${mainUrl}${path}","https://net-cookie-kacj.vercel.app/api/vlich?url=${encodeURIComponent(cdnInstantLink"],"fields":["URL","file","href","url","videoUrl"]},{"route":"/api/vega/details","chars":4450,"urls":[],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/vega/nextdrive","chars":1532,"urls":[],"fields":["URL","href","url","vcloudLinks"]},{"route":"/api/vega","chars":1967,"urls":[],"fields":["href","src","url"]},{"route":"/api/vega/search","chars":2567,"urls":[],"fields":["href","src","url"]},{"route":"/api/vid","chars":18078,"urls":["https://api.videasy.net/1movies/sources-with-title","https://api.videasy.net/cdn/sources-with-title","https://api.videasy.net/hdmovie/sources-with-title","https://api.videasy.net/m4uhd/sources-with-title","https://api.videasy.net/meine/sources-with-title","https://api.videasy.net/moviebox/sources-with-title","https://api.videasy.net/myflixerzupcloud/sources-with-title","https://api.videasy.net/onionplay/sources-with-title","https://api.videasy.net/superflix/sources-with-title","https://api.videasy.net/visioncine/sources-with-title","https://api2.videasy.net/cuevana-latino/sources-with-title","https://api2.videasy.net/cuevana-spanish/sources-with-title","https://api2.videasy.net/overflix/sources-with-title","https://api2.videasy.net/primewire/sources-with-title","https://enc-dec.app/api","https://image.tmdb.org/t/p/w1280${data.backdrop_path}","https://image.tmdb.org/t/p/w500${data.poster_path}","https://twilight-cake-defb.hunternisha55.workers.dev/3","https://videasy.net/"],"fields":["VIDEASY","m3u8","mp4","sources","streams","url","videasy"]},{"route":"/api/zeefliz/details","chars":7022,"urls":["https://www.youtube.com/watch?v=${trailerDiv.attr("],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/zeefliz/nextdrive","chars":3515,"urls":[],"fields":["URL","href","url","zeeCloudLinks"]},{"route":"/api/zeefliz","chars":2607,"urls":[],"fields":["href","src","url"]},{"route":"/api/zeefliz/search","chars":3681,"urls":[],"fields":["href","src","url"]},{"route":"/api/zinkmovies/details","chars":2064,"urls":[],"fields":["URL","downloadLinks","href","url"]},{"route":"/api/zinkmovies","chars":5927,"urls":[],"fields":["href","src","url"]},{"route":"/api/zinkmovies/search","chars":3245,"urls":[],"fields":["href","src","url"]},{"route":"/api/zinkmovies/zinkcloud","chars":2718,"urls":[],"fields":["File","URL","ZinkCloud","file","href","hubCloudLinks","hubcloud","url","zinkcloud"]}] });
 });
 
+app.get("/api/local/consumet-debug", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const type = req.query.type === "tv" ? "tv" : (req.query.type === "anime" ? "anime" : "movie");
+  const id = apiClean(req.query.tmdb || req.query.tmdbId || req.query.id || "");
+  const provider = apiClean(req.query.provider || "");
+  const season = apiClean(req.query.season || req.query.s || "1");
+  const episode = apiClean(req.query.episode || req.query.e || "1");
+  let title = apiClean(req.query.q || req.query.title || "");
+  let year = apiClean(req.query.year || "");
+  const metaAttempts = [];
+
+  if (!title && id && type !== "anime") {
+    try {
+      const endpoint = type === "tv" ? `/tv/${id}` : `/movie/${id}`;
+      const details = await tmdb(endpoint, {}, CACHE_TTL.long);
+      title = getTitle(details);
+      year = getYear(type === "tv" ? details.first_air_date : details.release_date);
+    } catch (error) {
+      metaAttempts.push(`tmdb metadata: ${error.message || "failed"}`);
+    }
+  }
+
+  if (!title) return res.status(400).json({ ok: false, error: "Pass ?q=title or ?tmdb=id" });
+
+  const debug = await localConsumetDebug({ title, year, mediaType: type, id, season, episode, provider });
+  res.json({
+    ok: Boolean(debug.winner),
+    sourceMode: "local-consumet-source-code",
+    title,
+    year,
+    titleVariants: localSourceTitleVariants(title, year),
+    winner: debug.winner,
+    attempts: [...metaAttempts, ...debug.attempts],
+    providers: debug.rows
+  });
+});
+
 app.get("/api/local/download-sites-debug", async (req, res) => {
   res.set("Cache-Control", "no-store");
   const type = req.query.type === "tv" ? "tv" : "movie";
@@ -47447,7 +47978,8 @@ app.get("/api/local/source-url-patterns", (req, res) => {
       "tm/vibuxer",
       "animepahe stream extractor",
       "generic deep html/js/json digger",
-      "download-sites multi-provider: 4khdhub/hdhub4u/movies4u/zeefliz/vega/zinkmovies/kmmovies/uhdmovies/moviesmod/drive/desiremovies"
+      "download-sites multi-provider: 4khdhub/hdhub4u/movies4u/zeefliz/vega/zinkmovies/kmmovies/uhdmovies/moviesmod/drive/desiremovies",
+      "consumet local bridge: flixhq/sflix/goku/movieshd/fmovies/zoro/gogoanime/animepahe"
     ],
     safetySkips: [
       "/api/adult/*",
@@ -47540,6 +48072,20 @@ app.get("/api/local/super-source-debug", async (req, res) => {
       if (!winner && movieBox) winner = movieBox;
     } catch (error) {
       probes.push({ provider: "themovie-local", ok: false, error: error.message || "failed" });
+    }
+
+    try {
+      const debugConsumet = await localConsumetDebug({ title, year: releaseYear, mediaType: type, id, season, episode, provider });
+      probes.push({
+        provider: "consumet-local",
+        ok: Boolean(debugConsumet.winner),
+        result: debugConsumet.winner || null,
+        providerRows: debugConsumet.rows,
+        attempts: debugConsumet.attempts
+      });
+      if (!winner && debugConsumet.winner) winner = debugConsumet.winner;
+    } catch (error) {
+      probes.push({ provider: "consumet-local", ok: false, error: error.message || "failed" });
     }
 
     try {
