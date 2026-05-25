@@ -26,10 +26,20 @@ services:
       - key: VIDSRC_ENABLED
         value: "true"
       - key: VIDSRC_PROVIDER_ORDER
-        value: https://vidsrc-embed.ru,https://vidsrcme.ru,https://vsrc.su
+        value: https://vidsrc.xyz,https://vidsrc.in,https://vidsrc.pm,https://vidsrc.net
       - key: VIDSRC_TIMEOUT_MS
         value: "28000"
       - key: VIDSRC_WAIT_MS
         value: "9000"
       - key: VIDSRC_CONCURRENCY
         value: "2"
+      - key: DEFAULT_PLAY_PROVIDER
+        value: "filmu"
+      - key: FILMU_ENABLED
+        value: "true"
+      - key: FILMU_EMBED_TEMPLATE
+        value: "https://embedm3u8.filmu.in/movietrailer/{tmdb}"
+      - key: FILMU_TIMEOUT_MS
+        value: "30000"
+      - key: FILMU_WAIT_MS
+        value: "12000"
