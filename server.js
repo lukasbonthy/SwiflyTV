@@ -31,10 +31,10 @@ if (process.env.SWIFLY_NO_ENV_MODE !== "false") {
     USE_EXTERNAL_PROVIDER_API: "false",
 
     STREAMPROVIDER_ENABLED: "true",
-    STREAMPROVIDER_ORDER: "hexa,cinezo,sflix",
-    STREAMPROVIDER_NAV_TIMEOUT_MS: "18000",
-    STREAMPROVIDER_STREAM_TIMEOUT_MS: "18000",
-    STREAMPROVIDER_ROUTE_TIMEOUT_MS: "55000",
+    STREAMPROVIDER_ORDER: "hexa,cinezo",
+    STREAMPROVIDER_NAV_TIMEOUT_MS: "10000",
+    STREAMPROVIDER_STREAM_TIMEOUT_MS: "10000",
+    STREAMPROVIDER_ROUTE_TIMEOUT_MS: "30000",
     SFLIX_BASE_URL: "https://sflix2.to",
 
     VIDSRC_ENABLED: "false",
@@ -117,11 +117,11 @@ const FILMU_TRY_FALLBACKS = process.env.FILMU_TRY_FALLBACKS === "true";
 // Uses the uploaded StreamProvider source pattern: open provider page with Playwright
 // and capture real .m3u8 requests from Network, then send through Swifly HLS proxy.
 const STREAMPROVIDER_ENABLED = process.env.STREAMPROVIDER_ENABLED !== "false";
-const STREAMPROVIDER_ORDER = String(process.env.STREAMPROVIDER_ORDER || "hexa,cinezo,sflix")
+const STREAMPROVIDER_ORDER = String(process.env.STREAMPROVIDER_ORDER || "hexa,cinezo")
   .split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
-const STREAMPROVIDER_NAV_TIMEOUT_MS = Math.max(8000, Number(process.env.STREAMPROVIDER_NAV_TIMEOUT_MS || 18000));
-const STREAMPROVIDER_STREAM_TIMEOUT_MS = Math.max(8000, Number(process.env.STREAMPROVIDER_STREAM_TIMEOUT_MS || 18000));
-const STREAMPROVIDER_ROUTE_TIMEOUT_MS = Math.max(12000, Number(process.env.STREAMPROVIDER_ROUTE_TIMEOUT_MS || 55000));
+const STREAMPROVIDER_NAV_TIMEOUT_MS = Math.max(8000, Number(process.env.STREAMPROVIDER_NAV_TIMEOUT_MS || 10000));
+const STREAMPROVIDER_STREAM_TIMEOUT_MS = Math.max(8000, Number(process.env.STREAMPROVIDER_STREAM_TIMEOUT_MS || 10000));
+const STREAMPROVIDER_ROUTE_TIMEOUT_MS = Math.max(12000, Number(process.env.STREAMPROVIDER_ROUTE_TIMEOUT_MS || 30000));
 const STREAMPROVIDER_SFLIX_BASE_URL = String(process.env.SFLIX_BASE_URL || "https://sflix2.to").replace(/\/+$/, "");
 
 const API_PROVIDERS = {
@@ -4617,28 +4617,61 @@ async function localStreamProviderGetStreams({ tmdbId = "", mediaType = "movie",
   if (!STREAMPROVIDER_ENABLED) throw new Error("STREAMPROVIDER_ENABLED=false");
   if (!tmdbId) throw new Error("missing TMDB id");
 
-  const jobs = [];
-  for (const name of STREAMPROVIDER_ORDER) {
+  const order = STREAMPROVIDER_ORDER.length ? STREAMPROVIDER_ORDER : ["hexa", "cinezo"];
+  const directJobs = [];
+  const wantsSflix = order.includes("sflix");
+
+  // IMPORTANT: do NOT resolve sflix search before trying direct TMDB providers.
+  // Your debug showed sflix2.to search can hang on page.goto, which blocked
+  // hexa/cinezo from ever being tested.
+  for (const name of order) {
     if (name === "hexa") {
-      jobs.push({ provider: "hexa", url: mediaType === "tv" ? `https://hexa.su/watch/tv/${tmdbId}/${season}/${episode}` : `https://hexa.su/watch/movie/${tmdbId}` });
+      directJobs.push({ provider: "hexa", url: mediaType === "tv" ? `https://hexa.su/watch/tv/${tmdbId}/${season}/${episode}` : `https://hexa.su/watch/movie/${tmdbId}` });
     } else if (name === "cinezo") {
-      jobs.push({ provider: "cinezo", url: mediaType === "tv" ? `https://www.cinezo.net/watch/tv/${tmdbId}?season=${season}&episode=${episode}` : `https://www.cinezo.net/watch/movie/${tmdbId}` });
-    } else if (name === "sflix") {
-      const sflixUrl = await localStreamProviderSflixWatchUrl({ tmdbId, mediaType, season, episode, attempts });
-      if (sflixUrl) jobs.push({ provider: "sflix", url: sflixUrl });
+      directJobs.push({ provider: "cinezo", url: mediaType === "tv" ? `https://www.cinezo.net/watch/tv/${tmdbId}?season=${season}&episode=${episode}` : `https://www.cinezo.net/watch/movie/${tmdbId}` });
     }
   }
 
   const results = [];
   const sources = [];
-  for (const job of jobs) {
+
+  for (const job of directJobs) {
     const startedAt = Date.now();
     const result = await localStreamProviderCaptureM3u8({ provider: job.provider, url: job.url, attempts });
     result.ms = Date.now() - startedAt;
     results.push(result);
     if (result.ok && result.source?.url && apiIsM3u8Url(result.source.url)) {
       sources.push(result.source);
-      break;
+      return {
+        success: true,
+        provider: "streamprovider-local",
+        tmdbId,
+        mediaType,
+        season: mediaType === "tv" ? season : "",
+        episode: mediaType === "tv" ? episode : "",
+        providersTried: results.map((r) => r.provider),
+        results,
+        streamsFound: sources.length,
+        sources
+      };
+    }
+  }
+
+  if (wantsSflix) {
+    const sflixStartedAt = Date.now();
+    const sflixUrl = await Promise.race([
+      localStreamProviderSflixWatchUrl({ tmdbId, mediaType, season, episode, attempts }),
+      new Promise((resolve) => setTimeout(() => {
+        attempts.push(`streamprovider-sflix: skipped after ${STREAMPROVIDER_NAV_TIMEOUT_MS}ms resolving search URL`);
+        resolve("");
+      }, STREAMPROVIDER_NAV_TIMEOUT_MS))
+    ]);
+
+    if (sflixUrl) {
+      const result = await localStreamProviderCaptureM3u8({ provider: "sflix", url: sflixUrl, attempts });
+      result.ms = Date.now() - sflixStartedAt;
+      results.push(result);
+      if (result.ok && result.source?.url && apiIsM3u8Url(result.source.url)) sources.push(result.source);
     }
   }
 
@@ -4649,7 +4682,7 @@ async function localStreamProviderGetStreams({ tmdbId = "", mediaType = "movie",
     mediaType,
     season: mediaType === "tv" ? season : "",
     episode: mediaType === "tv" ? episode : "",
-    providersTried: jobs.map((j) => j.provider),
+    providersTried: results.map((r) => r.provider),
     results,
     streamsFound: sources.length,
     sources
@@ -48939,6 +48972,27 @@ app.get("/api/local/runtime-debug", async (req, res) => {
     consumetInstalled,
     vidsrcEnabled: VIDSRC_ENABLED,
     vidsrcDomains: localVidSrcDomains()
+  });
+});
+
+app.get("/api/local/streamprovider-urls", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const type = req.query.type === "tv" ? "tv" : "movie";
+  const id = apiClean(req.query.tmdb || req.query.tmdbId || req.query.id || "");
+  const season = apiClean(req.query.season || req.query.s || "1");
+  const episode = apiClean(req.query.episode || req.query.e || "1");
+  if (!id) return res.status(400).json({ ok: false, error: "Pass ?tmdb=id" });
+  res.json({
+    ok: true,
+    sourceMode: "streamprovider-url-list-no-browser",
+    tmdb: id,
+    type,
+    order: STREAMPROVIDER_ORDER,
+    urls: {
+      hexa: type === "tv" ? `https://hexa.su/watch/tv/${id}/${season}/${episode}` : `https://hexa.su/watch/movie/${id}`,
+      cinezo: type === "tv" ? `https://www.cinezo.net/watch/tv/${id}?season=${season}&episode=${episode}` : `https://www.cinezo.net/watch/movie/${id}`,
+      sflix: "disabled by default because sflix2.to search timed out"
+    }
   });
 });
 
