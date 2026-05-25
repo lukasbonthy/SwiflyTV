@@ -123,6 +123,7 @@ function apiNodeSaysHls(url = "", node = {}) {
   const text = `${Object.keys(node || {}).join(" ")} ${Object.values(node || {}).slice(0, 16).join(" ")}`.toLowerCase();
 
   return (
+    node?.forceHls === true ||
     apiIsM3u8Url(value) ||
     /\b(hls|m3u8|mpegurl|mpeg-url|playlist|manifest)\b/i.test(text) ||
     /(?:hls|m3u8|playlist|manifest)/i.test(value)
@@ -270,6 +271,7 @@ function apiSourceScore(source = {}) {
 
   let score = 0;
   if (apiIsM3u8Url(url)) score += 10000;
+  else if (source.forceHls === true) score += 9500;
   else if (/m3u8|hls/.test(text)) score += 9000;
   else if (apiIsMpdUrl(url)) score += 5500;
   else if (/(stream|embed|player|play|watch|manifest|playlist)/i.test(url)) score += 4200;
@@ -663,6 +665,75 @@ async function apiTryNetMirrorByTmdb({ mediaType = "movie", id = "", season = "1
   return null;
 }
 
+
+function apiCollectTrustedStreamSources(providerName = "", payload = {}) {
+  const provider = apiClean(providerName).toLowerCase();
+  const sources = [];
+
+  function addFromNode(node = {}, field = "url") {
+    if (!node || typeof node !== "object") return;
+    const url = apiFirst(
+      node.m3u8,
+      node.m3u8_url,
+      node.m3u8Url,
+      node.hls,
+      node.hls_url,
+      node.hlsUrl,
+      node.playlist,
+      node.playlist_url,
+      node.playbackUrl,
+      node.playback_url,
+      node.streamUrl,
+      node.stream_url,
+      node.url,
+      node.link,
+      node.file,
+      node.src
+    );
+
+    if (!/^https?:\/\//i.test(url)) return;
+    if (apiIsYouTubeUrl(url) || apiLooksLikeImage(url)) return;
+
+    const trustedHlsProvider = ["castel", "netmirror", "animepahe", "animesalt"].includes(provider);
+
+    sources.push({
+      name: apiFirst(node.name, node.server, node.provider, node.label, node.source, field) || provider || "api",
+      quality: apiFirst(node.quality, node.resolution, node.size, node.format, node.type),
+      url,
+      headers: node.headers && typeof node.headers === "object" ? node.headers : {},
+      format: apiIsM3u8Url(url) ? "m3u8" : "",
+      forceHls: trustedHlsProvider && !apiIsAllowedMediaExtensionUrl(url)
+    });
+  }
+
+  const roots = [
+    payload?.data,
+    payload?.result,
+    payload?.results,
+    payload?.sources,
+    payload?.streams,
+    payload?.links,
+    payload?.servers,
+    payload
+  ];
+
+  for (const root of roots) {
+    if (Array.isArray(root)) {
+      for (const node of root) addFromNode(node);
+    } else if (root && typeof root === "object") {
+      for (const key of ["data", "sources", "streams", "links", "servers", "results", "items"]) {
+        if (Array.isArray(root[key])) {
+          for (const node of root[key]) addFromNode(node, key);
+        }
+      }
+      addFromNode(root);
+    }
+  }
+
+  return Array.from(new Map(sources.map((source) => [source.url, source])).values())
+    .sort((a, b) => apiSourceScore(b) - apiSourceScore(a));
+}
+
 async function apiFindPlayableFromPayload({
   payload,
   providerName,
@@ -676,7 +747,11 @@ async function apiFindPlayableFromPayload({
   seen = new Set()
 }) {
   const normalized = apiNormalizeResponse(payload, providerName, mediaType);
-  const sources = Array.isArray(normalized.sources) ? normalized.sources : [];
+  const trustedSources = apiCollectTrustedStreamSources(providerName, payload);
+  const sources = [
+    ...trustedSources,
+    ...(Array.isArray(normalized.sources) ? normalized.sources : [])
+  ];
 
   for (const source of sources) {
     const result = apiSourceToProxyResult({
