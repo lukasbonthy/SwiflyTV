@@ -1,3 +1,22 @@
+// ===== Render/Docker startup diagnostics =====
+process.on("uncaughtException", (error) => {
+  console.error("[fatal] uncaughtException:", error && (error.stack || error.message || error));
+  process.exit(1);
+});
+process.on("unhandledRejection", (reason) => {
+  console.error("[fatal] unhandledRejection:", reason && (reason.stack || reason.message || reason));
+  process.exit(1);
+});
+console.log("[boot] server.js starting", {
+  node: process.version,
+  cwd: process.cwd(),
+  port: process.env.PORT || "",
+  host: process.env.HOST || "0.0.0.0",
+  playwrightBrowsersPath: process.env.PLAYWRIGHT_BROWSERS_PATH || "",
+  vidsrcEnabled: process.env.VIDSRC_ENABLED || "",
+  consumetEnabled: process.env.CONSUMET_ENABLED || ""
+});
+
 
 require("dotenv").config();
 
@@ -52121,6 +52140,11 @@ setInterval(() => {
   }
 }, 1000 * 60 * 10);
 
-httpServer.listen(PORT, () => {
-  console.log(`${SITE_NAME} running on port ${PORT}`);
+const HOST = process.env.HOST || "0.0.0.0";
+httpServer.on("error", (error) => {
+  console.error("[fatal] httpServer error:", error && (error.stack || error.message || error));
+  process.exit(1);
+});
+httpServer.listen(Number(PORT), HOST, () => {
+  console.log(`${SITE_NAME} running on http://${HOST}:${PORT}`);
 });
