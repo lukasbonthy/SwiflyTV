@@ -666,11 +666,35 @@ async function apiTryNetMirrorByTmdb({ mediaType = "movie", id = "", season = "1
 }
 
 
+function apiTrustedProviderCanForceHls(providerName = "") {
+  return ["castel", "netmirror", "animepahe", "animesalt"].includes(apiClean(providerName).toLowerCase());
+}
+
 function apiCollectTrustedStreamSources(providerName = "", payload = {}) {
   const provider = apiClean(providerName).toLowerCase();
   const sources = [];
 
+  function addStringUrl(value = "", field = "raw") {
+    const url = apiClean(value);
+    if (!/^https?:\/\//i.test(url)) return;
+    if (apiIsYouTubeUrl(url) || apiLooksLikeImage(url)) return;
+
+    sources.push({
+      name: apiIsM3u8Url(url) ? "hls" : field,
+      quality: "",
+      url,
+      headers: {},
+      format: apiIsM3u8Url(url) ? "m3u8" : "",
+      forceHls: apiTrustedProviderCanForceHls(provider) && !apiIsAllowedMediaExtensionUrl(url)
+    });
+  }
+
   function addFromNode(node = {}, field = "url") {
+    if (typeof node === "string") {
+      addStringUrl(node, field);
+      return;
+    }
+
     if (!node || typeof node !== "object") return;
     const url = apiFirst(
       node.m3u8,
@@ -694,15 +718,13 @@ function apiCollectTrustedStreamSources(providerName = "", payload = {}) {
     if (!/^https?:\/\//i.test(url)) return;
     if (apiIsYouTubeUrl(url) || apiLooksLikeImage(url)) return;
 
-    const trustedHlsProvider = ["castel", "netmirror", "animepahe", "animesalt"].includes(provider);
-
     sources.push({
       name: apiFirst(node.name, node.server, node.provider, node.label, node.source, field) || provider || "api",
       quality: apiFirst(node.quality, node.resolution, node.size, node.format, node.type),
       url,
       headers: node.headers && typeof node.headers === "object" ? node.headers : {},
       format: apiIsM3u8Url(url) ? "m3u8" : "",
-      forceHls: trustedHlsProvider && !apiIsAllowedMediaExtensionUrl(url)
+      forceHls: apiTrustedProviderCanForceHls(provider) && !apiIsAllowedMediaExtensionUrl(url)
     });
   }
 
@@ -718,7 +740,9 @@ function apiCollectTrustedStreamSources(providerName = "", payload = {}) {
   ];
 
   for (const root of roots) {
-    if (Array.isArray(root)) {
+    if (typeof root === "string") {
+      addStringUrl(root, "raw");
+    } else if (Array.isArray(root)) {
       for (const node of root) addFromNode(node);
     } else if (root && typeof root === "object") {
       for (const key of ["data", "sources", "streams", "links", "servers", "results", "items"]) {
@@ -773,7 +797,14 @@ async function apiFindPlayableFromPayload({
 
   // Test playable-looking URLs directly first, in case the normalizer missed the field name.
   const directUrls = candidateUrls
-    .map((url) => ({ url, name: apiIsM3u8Url(url) ? "hls" : "source", quality: "", headers: {}, format: apiIsM3u8Url(url) ? "m3u8" : "" }))
+    .map((url) => ({
+      url,
+      name: apiIsM3u8Url(url) ? "hls" : "source",
+      quality: "",
+      headers: {},
+      format: apiIsM3u8Url(url) ? "m3u8" : "",
+      forceHls: apiTrustedProviderCanForceHls(providerName) && !apiIsAllowedMediaExtensionUrl(url)
+    }))
     .filter((source) => apiLooksPlayable(source.url, source))
     .sort((a, b) => apiSourceScore(b) - apiSourceScore(a));
 
@@ -899,6 +930,48 @@ function apiSourceToProxyResult({ source, raw, provider, type, id, season = "", 
   };
 }
 
+
+async function apiFetchCastelVariants({ tmdbId = "", mediaType = "movie", season = "", episode = "", attempts = [] }) {
+  const providerConfig = API_PROVIDERS.castel;
+  if (!providerConfig?.stream) throw new Error("castel stream endpoint missing");
+
+  const variants = [
+    { id: tmdbId, type: mediaType },
+    { tmdb: tmdbId, type: mediaType },
+    { tmdbId, type: mediaType },
+    { id: tmdbId, tmdb: tmdbId, tmdbId, type: mediaType }
+  ].map((params) => ({
+    ...params,
+    season: mediaType === "tv" ? season : "",
+    episode: mediaType === "tv" ? episode : ""
+  }));
+
+  let lastError = null;
+
+  for (const params of variants) {
+    try {
+      const data = await apiProviderFetch(providerConfig.stream, params);
+
+      // If it contains any possible URL at all, use this response. The parser will
+      // decide what is playable. This prevents a good response from being overwritten
+      // by later variant calls.
+      const urls = apiCollectCandidateUrls(data);
+      const trusted = apiCollectTrustedStreamSources("castel", data);
+      if (urls.length || trusted.length) return data;
+
+      // Some APIs wrap source arrays without URLs until deeper parsing. Return first
+      // successful JSON response anyway, but record the attempt.
+      attempts.push(`castel: ${Object.keys(params).join("+")} returned JSON but no URLs`);
+      return data;
+    } catch (error) {
+      lastError = error;
+      attempts.push(`castel ${Object.keys(params).join("+")}: ${error.message || "failed"}`);
+    }
+  }
+
+  throw lastError || new Error("Castel failed");
+}
+
 async function fetchApiProviderSource({ type = "movie", id = "", season = "1", episode = "1", provider = "" }) {
   if (!apiProviderConfigured()) return { status: "skipped", reason: "api_provider_missing_env" };
 
@@ -938,13 +1011,12 @@ async function fetchApiProviderSource({ type = "movie", id = "", season = "1", e
           continue;
         }
 
-        const data = await apiProviderFetch(providerConfig.stream, {
-          id: tmdbId,
-          tmdb: tmdbId,
+        const data = await apiFetchCastelVariants({
           tmdbId,
-          type: mediaType,
-          season: mediaType === "tv" ? season : "",
-          episode: mediaType === "tv" ? episode : ""
+          mediaType,
+          season,
+          episode,
+          attempts
         });
 
         const result = await apiFindPlayableFromPayload({
@@ -959,7 +1031,7 @@ async function fetchApiProviderSource({ type = "movie", id = "", season = "1", e
         });
 
         if (result) return result;
-        attempts.push("castel: no m3u8/media source in API response");
+        attempts.push("castel: response parsed but no URL-like stream source was found; check /api/provider/raw-debug?provider=castel&action=stream&tmdb=<id>&type=movie");
         continue;
       }
 
