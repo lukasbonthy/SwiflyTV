@@ -411,13 +411,16 @@ function apiLooksDefinitelyNonMediaUrl(url = "") {
   if (/\/api\/adult\//i.test(value)) return true;
 
   // Keep Swifly from following/embedding social/share/ad/analytics/admin pages.
-  if (/(^|\.)telegram\.org$|(^|\.)t\.me$|(^|\.)facebook\.com$|(^|\.)twitter\.com$|(^|\.)x\.com$|(^|\.)whatsapp\.com$|(^|\.)googletagmanager\.com$|(^|\.)google-analytics\.com$|(^|\.)cloudflareinsights\.com$|(^|\.)wordpress\.org$|(^|\.)googleapis\.com$|(^|\.)fontawesome\.com$|(^|\.)cdnjs\.cloudflare\.com$/i.test(host)) return true;
+  if (/(^|\.)telegram\.org$|(^|\.)t\.me$|(^|\.)facebook\.com$|(^|\.)twitter\.com$|(^|\.)x\.com$|(^|\.)whatsapp\.com$|(^|\.)googletagmanager\.com$|(^|\.)google-analytics\.com$|(^|\.)cloudflareinsights\.com$|(^|\.)cloudflare\.com$|^dash\.cloudflare\.com$|(^|\.)wordpress\.org$|(^|\.)googleapis\.com$|(^|\.)fontawesome\.com$|(^|\.)cdnjs\.cloudflare\.com$/i.test(host)) return true;
+
+  // Never treat provider protection/landing-page demo videos as movie sources.
+  if (/hero-background-video|demo(?:[_-]?2x)?\.(?:mp4|webm)|sample\.(?:mp4|webm)|placeholder\.(?:mp4|webm)|background(?:[_-]?video)?\.(?:mp4|webm)/i.test(value)) return true;
 
   // Block obvious adult mirrors/categories even when they came from a non-adult page.
   if (/(?:^|\.)zeefliz18\.|(?:^|\.)xhamster\.|(?:^|\.)xvideos\.|(?:^|\.)spankbang\.|(?:^|\.)xxx|(?:^|\.)porn|\/18(?:plus|\+|-adult|_adult)?\b|\/adult\b|\/hentai\b/i.test(value)) return true;
 
   // WordPress/admin/nav/support files are not player sources.
-  if (/\/(?:xmlrpc\.php|wp-comments-post\.php|wp-login\.php|wp-admin\/|wp-json\/|feed\/|comments\/feed\/|privacy-policy|terms-of-service|dmca|contact|cdn-cgi\/|wp-content\/themes\/|wp-content\/plugins\/|wp-includes\/|sitemap\.xml|site\.webmanifest)(?:[?#]|$|\/)/i.test(value)) return true;
+  if (/\/(?:xmlrpc\.php|wp-comments-post\.php|wp-login\.php|wp-admin\/|wp-json\/|feed\/|comments\/feed\/|privacy-policy|terms-of-service|dmca|contact|sign-up|login|register|cdn-cgi\/|wp-content\/themes\/|wp-content\/plugins\/|wp-includes\/|sitemap\.xml|site\.webmanifest)(?:[?#]|$|\/)/i.test(value)) return true;
 
   // Category/search/nav pages are not streams.
   if (/\/(?:category|genre|tag|author|page|privacy-policy|terms|dmca|contact|how-to-download|report-broken-links)(?:\/|[?#]|$)/i.test(value)) return true;
@@ -796,6 +799,7 @@ function apiCollectCandidateUrls(input) {
   function pushUrl(value) {
     const url = apiClean(value);
     if (!/^https?:\/\//i.test(url)) return;
+    if (apiLooksDefinitelyNonMediaUrl(url)) return;
     if (apiLooksLikeImage(url)) return;
     if (apiIsYouTubeUrl(url)) return;
     if (/\/api\/adult\//i.test(url)) return;
@@ -1143,6 +1147,11 @@ async function apiFindPlayableFromPayload({
     });
     if (result) return result;
   }
+
+  // VidSrc Playwright provider should only trust URLs captured from browser network
+  // as sources. If Playwright did not capture an m3u8, do not deep-dig 403/Cloudflare
+  // pages because those can contain unrelated demo videos.
+  if (apiClean(providerName).toLowerCase() === "vidsrc-local") return null;
 
   if (depth >= 2) return null;
 
@@ -4223,6 +4232,7 @@ async function localVidSrcResult({ mediaType = "movie", id = "", season = "1", e
   if (!tmdbId) throw new Error("missing numeric TMDB id");
 
   const payload = await localVidSrcGetStreams({ tmdbId, mediaType, season, episode, attempts });
+  if (!Array.isArray(payload.sources) || payload.sources.length === 0) return null;
   return await apiFindPlayableFromPayload({ payload, providerName: "vidsrc-local", providerConfig: {}, mediaType, id: tmdbId, season, episode, attempts });
 }
 
@@ -4232,7 +4242,9 @@ async function localVidSrcDebug({ mediaType = "movie", id = "", season = "1", ep
   if (!tmdbId) throw new Error("missing numeric TMDB id");
 
   const payload = await localVidSrcGetStreams({ tmdbId, mediaType, season, episode, attempts });
-  const winner = await apiFindPlayableFromPayload({ payload, providerName: "vidsrc-local", providerConfig: {}, mediaType, id: tmdbId, season, episode, attempts });
+  const winner = Array.isArray(payload.sources) && payload.sources.length
+    ? await apiFindPlayableFromPayload({ payload, providerName: "vidsrc-local", providerConfig: {}, mediaType, id: tmdbId, season, episode, attempts })
+    : null;
   return { attempts, payload, winner };
 }
 
@@ -48097,6 +48109,35 @@ app.get("/api/local/deep-url-dig", async (req, res) => {
 app.get("/api/local/source-audit", (req, res) => {
   res.set("Cache-Control", "no-store");
   res.json({ ok: true, generatedFrom: "ScarperApi-zero(1).zip static audit", routes: [{"route":"/api/4khdhub/details","chars":5899,"urls":[],"fields":["URL","downloadLinks","file","href","src","url"]},{"route":"/api/4khdhub/gadget","chars":5874,"urls":[],"fields":["URL","url"]},{"route":"/api/4khdhub","chars":2624,"urls":[],"fields":["href","src","url"]},{"route":"/api/4khdhub/search","chars":3092,"urls":[],"fields":["href","src","url"]},{"route":"/api/animepahe/details","chars":9219,"urls":["https://animepahe.si${href}","https://animepahe.si/api?m=release&id=${session}&sort=episode_asc&page=${currentPage}"],"fields":["URL","downloadLinks","href","src","streamUrl","url"]},{"route":"/api/animepahe","chars":2276,"urls":["https://animepahe.si/api?m=airing&page=${page}"],"fields":["URL","url"]},{"route":"/api/animepahe/search","chars":2194,"urls":["https://animepahe.si/api?m=search&q=${encodeURIComponent(query"],"fields":["URL","url"]},{"route":"/api/animepahe/stream","chars":4714,"urls":[],"fields":["URL","m3u8","url"]},{"route":"/api/animesalt/details","chars":8021,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/animesalt","chars":3376,"urls":[],"fields":["href","src","url"]},{"route":"/api/animesalt/search","chars":3322,"urls":[],"fields":["href","src","url"]},{"route":"/api/animesalt/stream","chars":3549,"urls":[],"fields":["URL","src","url"]},{"route":"/api/castel","chars":24315,"urls":["https://aesdec.nuvioapp.space/decrypt-castle","https://api.fstcy.com","https://api.themoviedb.org/3"],"fields":["URL","streams","url","videoUrl"]},{"route":"/api/desiremovies/details","chars":2863,"urls":[],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/desiremovies/gyaniguru","chars":1795,"urls":["https://desiremovies.gripe/"],"fields":["URL","downloadLinks","href","url"]},{"route":"/api/desiremovies","chars":2374,"urls":[],"fields":["href","src","url"]},{"route":"/api/desiremovies/search","chars":2779,"urls":["https://desiremovies.gripe/kalamkaval-2025-web-hdrip/"],"fields":["href","src","url"]},{"route":"/api/drive/details","chars":3945,"urls":[],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/drive/mdrive","chars":2523,"urls":[],"fields":["HubCloud","URL","href","hubcloud","url"]},{"route":"/api/drive","chars":2363,"urls":[],"fields":["href","src","url"]},{"route":"/api/drive/search","chars":2904,"urls":[],"fields":["url"]},{"route":"/api/extractors/gdflix","chars":1584,"urls":["https://scarperapi-extractor-7tr4.vercel.app/api/gdflix?url=${encodeURIComponent(url"],"fields":["URL","gdflix","url"]},{"route":"/api/extractors/hubcloud","chars":1590,"urls":["https://scarperapi-extractor-7tr4.vercel.app/api/hubcloud?url=${encodeURIComponent(url"],"fields":["URL","hubcloud","url"]},{"route":"/api/extractors/streamtape","chars":0,"urls":[],"fields":[]},{"route":"/api/extractors/xprime","chars":18282,"urls":["https://api.themoviedb.org/3","https://mznxiwqjdiq00239q.space","https://xprime.hunternisha55.workers.dev","https://xprime.su/watch/${tmdbId}","https://xprime.su/watch/${tmdbId}/${season}/${episode}"],"fields":["URL","XPrime","src","streams","url","xprime"]},{"route":"/api/hdhub4u/details","chars":4722,"urls":[],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/hdhub4u/extractor","chars":11472,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/hdhub4u","chars":2194,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/hdhub4u/search","chars":3147,"urls":["https://new2.hdhub4u.fo","https://new2.hdhub4u.fo/","https://search.pingora.fyi/collections/post/documents/search?q=${formattedQuery}&query_by=post_title&page=${page}"],"fields":["url"]},{"route":"/api/kmmovies/details","chars":6044,"urls":[],"fields":["URL","downloadLinks","file","href","src","url"]},{"route":"/api/kmmovies/magiclinks","chars":3981,"urls":["https://kmmovies.store/","https://net-cookie-kacj.vercel.app/api/redirect?url=${encodeURIComponent(link.url"],"fields":["File","URL","downloadLinks","file","href","url"]},{"route":"/api/kmmovies","chars":3220,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/kmmovies/search","chars":3067,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/mod/details","chars":5030,"urls":[],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/mod/modpro","chars":5122,"urls":["https://moviesmod.build/"],"fields":["URL","downloadLinks","href","serverLinks","techLinks","url"]},{"route":"/api/mod","chars":2418,"urls":[],"fields":["href","src","url"]},{"route":"/api/mod/search","chars":2163,"urls":[],"fields":["href","src","url"]},{"route":"/api/movies4u/details","chars":5470,"urls":[],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/movies4u/m4ulinks","chars":4568,"urls":[],"fields":["URL","href","hubcloud","hubcloudLinks","url"]},{"route":"/api/movies4u","chars":3432,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/movies4u/search","chars":2851,"urls":[],"fields":["href","src","url"]},{"route":"/api/netmirror/getpost","chars":3598,"urls":[],"fields":["URL","url"]},{"route":"/api/netmirror","chars":6442,"urls":["https://net22.cc"],"fields":["URL","net22.cc","src","url"]},{"route":"/api/netmirror/search","chars":3537,"urls":["https://net22.cc"],"fields":["URL","net22.cc","url"]},{"route":"/api/netmirror/stream","chars":6912,"urls":["https://net20.cc/","https://net22.cc/play.php","https://net51.cc","https://net51.cc/","https://net51.cc/playlist.php?id=${id}&tm=${currentTimestamp}&h=${encodeURIComponent(h","https://net52.cc/playlist.php?id=${id}&tm=${timestamp}&h=${encodeURIComponent(h"],"fields":["URL","file","net20.cc","net22.cc","net51.cc","net52.cc","playlist","sources","url"]},{"route":"/api/search","chars":5478,"urls":[],"fields":["url"]},{"route":"/api/themovie/det","chars":9305,"urls":["https://themoviebox.org/","https://themoviebox.org/movies/${slug}?id=${id}&type=${parsedUrl.searchParams.get(","https://themoviebox.org/wefeed-h5api-bff/subject/play"],"fields":["URL","playApiUrl","themoviebox","url"]},{"route":"/api/themovie","chars":2270,"urls":[],"fields":["URL","fullUrl","href","src"]},{"route":"/api/themovie/search","chars":8547,"urls":[],"fields":["URL","fullUrl","href","src","url"]},{"route":"/api/themovie/stream","chars":17695,"urls":["https://themoviebox.org/","https://themoviebox.org/movies/${slug}","https://themoviebox.org/moviesDetail/${slug}","https://themoviebox.org/wefeed-h5api-bff/subject/play"],"fields":["URL","src","themoviebox","url"]},{"route":"/api/tm","chars":5749,"urls":["https://vibuxer.com/","https://vibuxer.com/e/${code.trim("],"fields":["URL","streamUrl","streams","url","vibuxer"]},{"route":"/api/uhdmovies/details","chars":7162,"urls":[],"fields":["URL","downloadLinks","file","href","src","url"]},{"route":"/api/uhdmovies","chars":2234,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/uhdmovies/search","chars":2873,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/uhdmovies/tech","chars":9222,"urls":["https://${mainUrl}${path}","https://net-cookie-kacj.vercel.app/api/vlich?url=${encodeURIComponent(cdnInstantLink"],"fields":["URL","file","href","url","videoUrl"]},{"route":"/api/vega/details","chars":4450,"urls":[],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/vega/nextdrive","chars":1532,"urls":[],"fields":["URL","href","url","vcloudLinks"]},{"route":"/api/vega","chars":1967,"urls":[],"fields":["href","src","url"]},{"route":"/api/vega/search","chars":2567,"urls":[],"fields":["href","src","url"]},{"route":"/api/vid","chars":18078,"urls":["https://api.videasy.net/1movies/sources-with-title","https://api.videasy.net/cdn/sources-with-title","https://api.videasy.net/hdmovie/sources-with-title","https://api.videasy.net/m4uhd/sources-with-title","https://api.videasy.net/meine/sources-with-title","https://api.videasy.net/moviebox/sources-with-title","https://api.videasy.net/myflixerzupcloud/sources-with-title","https://api.videasy.net/onionplay/sources-with-title","https://api.videasy.net/superflix/sources-with-title","https://api.videasy.net/visioncine/sources-with-title","https://api2.videasy.net/cuevana-latino/sources-with-title","https://api2.videasy.net/cuevana-spanish/sources-with-title","https://api2.videasy.net/overflix/sources-with-title","https://api2.videasy.net/primewire/sources-with-title","https://enc-dec.app/api","https://image.tmdb.org/t/p/w1280${data.backdrop_path}","https://image.tmdb.org/t/p/w500${data.poster_path}","https://twilight-cake-defb.hunternisha55.workers.dev/3","https://videasy.net/"],"fields":["VIDEASY","m3u8","mp4","sources","streams","url","videasy"]},{"route":"/api/zeefliz/details","chars":7022,"urls":["https://www.youtube.com/watch?v=${trailerDiv.attr("],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/zeefliz/nextdrive","chars":3515,"urls":[],"fields":["URL","href","url","zeeCloudLinks"]},{"route":"/api/zeefliz","chars":2607,"urls":[],"fields":["href","src","url"]},{"route":"/api/zeefliz/search","chars":3681,"urls":[],"fields":["href","src","url"]},{"route":"/api/zinkmovies/details","chars":2064,"urls":[],"fields":["URL","downloadLinks","href","url"]},{"route":"/api/zinkmovies","chars":5927,"urls":[],"fields":["href","src","url"]},{"route":"/api/zinkmovies/search","chars":3245,"urls":[],"fields":["href","src","url"]},{"route":"/api/zinkmovies/zinkcloud","chars":2718,"urls":[],"fields":["File","URL","ZinkCloud","file","href","hubCloudLinks","hubcloud","url","zinkcloud"]}] });
+});
+
+app.get("/api/local/runtime-debug", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  let playwrightCoreVersion = "";
+  let consumetInstalled = false;
+  let chromiumExecutablePath = "";
+  let chromiumExecutableExists = false;
+  try { playwrightCoreVersion = require("playwright-core/package.json").version; } catch {}
+  try { require.resolve("@consumet/extensions"); consumetInstalled = true; } catch {}
+  try {
+    const chromium = localVidSrcLoadChromium();
+    chromiumExecutablePath = chromium.executablePath();
+    chromiumExecutableExists = require("fs").existsSync(chromiumExecutablePath);
+  } catch (error) {
+    chromiumExecutablePath = error.message || "not available";
+  }
+  res.json({
+    ok: true,
+    node: process.version,
+    playwrightCoreVersion,
+    expectedPlaywrightCoreVersion: "1.49.1",
+    playwrightBrowsersPath: process.env.PLAYWRIGHT_BROWSERS_PATH || "",
+    chromiumExecutablePath,
+    chromiumExecutableExists,
+    consumetInstalled,
+    vidsrcEnabled: VIDSRC_ENABLED,
+    vidsrcDomains: localVidSrcDomains()
+  });
 });
 
 app.get("/api/local/vidsrc-debug", async (req, res) => {
