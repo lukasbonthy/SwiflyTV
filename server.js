@@ -4089,8 +4089,29 @@ function localVidSrcLoadChromium() {
   }
 }
 
+function localVidSrcPrepareBrowserEnv() {
+  const explicitExecutable = process.env.VIDSRC_BROWSER_EXECUTABLE_PATH || process.env.REMOTE_BROWSER_EXECUTABLE_PATH || process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || "";
+  if (explicitExecutable) return;
+
+  // Native Render Node deploys do NOT have the Playwright Docker image's /ms-playwright folder.
+  // The package postinstall below installs Chromium into node_modules with PLAYWRIGHT_BROWSERS_PATH=0,
+  // so force runtime to look there when /ms-playwright is missing.
+  if (process.env.PLAYWRIGHT_BROWSERS_PATH === "/ms-playwright" && !fs.existsSync("/ms-playwright")) {
+    process.env.PLAYWRIGHT_BROWSERS_PATH = "0";
+  }
+
+  try {
+    const corePkgDir = path.dirname(require.resolve("playwright-core/package.json"));
+    const localBrowserDir = path.join(corePkgDir, ".local-browsers");
+    if (fs.existsSync(localBrowserDir) && !process.env.PLAYWRIGHT_BROWSERS_PATH) {
+      process.env.PLAYWRIGHT_BROWSERS_PATH = "0";
+    }
+  } catch {}
+}
+
 async function localVidSrcBrowser() {
   if (__vidsrcBrowserPromise) return __vidsrcBrowserPromise;
+  localVidSrcPrepareBrowserEnv();
   const chromium = localVidSrcLoadChromium();
   const executablePath = process.env.VIDSRC_BROWSER_EXECUTABLE_PATH || process.env.REMOTE_BROWSER_EXECUTABLE_PATH || process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || "";
 
