@@ -43,6 +43,17 @@ const CONSUMET_PROVIDER_ORDER = String(
   "flixhq,sflix,goku,movieshd,fmovies,zoro,gogoanime,animepahe"
 ).split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
 
+// Optional local VidSrc scraper bridge from uploaded vidsrc-scraper source.
+// Server-side only. Uses Playwright to watch network requests for real .m3u8 URLs.
+const VIDSRC_ENABLED = process.env.VIDSRC_ENABLED !== "false";
+const VIDSRC_PROVIDER_ORDER = String(
+  process.env.VIDSRC_PROVIDER_ORDER ||
+  "https://vidsrc.xyz,https://vidsrc.in,https://vidsrc.pm,https://vidsrc.net"
+).split(",").map((x) => x.trim().replace(/\/$/, "")).filter(Boolean);
+const VIDSRC_TIMEOUT_MS = Math.max(12000, Number(process.env.VIDSRC_TIMEOUT_MS || 28000));
+const VIDSRC_WAIT_MS = Math.max(2500, Number(process.env.VIDSRC_WAIT_MS || 9000));
+const VIDSRC_CONCURRENCY = Math.max(1, Math.min(3, Number(process.env.VIDSRC_CONCURRENCY || 2)));
+
 const API_PROVIDERS = {
   "4khdhub": { home: "/api/4khdhub", search: "/api/4khdhub/search", details: "/api/4khdhub/details", gadget: "/api/4khdhub/gadget" },
   desiremovies: { home: "/api/desiremovies", search: "/api/desiremovies/search", details: "/api/desiremovies/details" },
@@ -81,6 +92,7 @@ const API_M3U8_PROVIDER_ORDER = [
   "castel",
   "themovie",
   "xprime",
+  "vidsrc",
   "consumet",
   "netmirror",
   "animepahe",
@@ -4031,6 +4043,200 @@ async function localConsumetDebug({ title = "", year = "", mediaType = "movie", 
 }
 
 
+
+// ===== Local VidSrc scraper bridge from uploaded vidsrc-scraper source =====
+let __vidsrcBrowserPromise = null;
+
+function localVidSrcNormalizeDomain(domain = "") {
+  const clean = String(domain || "").trim().replace(/\/$/, "");
+  if (!clean) return "";
+  if (/^https?:\/\//i.test(clean)) return clean;
+  return `https://${clean}`;
+}
+
+function localVidSrcDomains() {
+  return Array.from(new Set(VIDSRC_PROVIDER_ORDER.map(localVidSrcNormalizeDomain).filter(Boolean)));
+}
+
+function localVidSrcBuildEmbedUrl(domain = "", mediaType = "movie", tmdbId = "", season = "1", episode = "1") {
+  const base = localVidSrcNormalizeDomain(domain);
+  if (mediaType === "tv") return `${base}/embed/tv?tmdb=${encodeURIComponent(tmdbId)}&season=${encodeURIComponent(season || "1")}&episode=${encodeURIComponent(episode || "1")}`;
+  return `${base}/embed/movie/${encodeURIComponent(tmdbId)}`;
+}
+
+function localVidSrcIsSubtitleUrl(url = "") {
+  return /\.(?:vtt|srt|ass)(?:[?#]|$)/i.test(String(url || ""));
+}
+
+function localVidSrcLoadChromium() {
+  try {
+    return require("playwright-core").chromium;
+  } catch (coreError) {
+    try {
+      return require("playwright").chromium;
+    } catch (fullError) {
+      throw new Error(`Playwright not installed/available: ${coreError.message || fullError.message || "missing package"}`);
+    }
+  }
+}
+
+async function localVidSrcBrowser() {
+  if (__vidsrcBrowserPromise) return __vidsrcBrowserPromise;
+  const chromium = localVidSrcLoadChromium();
+  const executablePath = process.env.VIDSRC_BROWSER_EXECUTABLE_PATH || process.env.REMOTE_BROWSER_EXECUTABLE_PATH || process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || "";
+
+  __vidsrcBrowserPromise = chromium.launch({
+    headless: true,
+    executablePath: executablePath || undefined,
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-gpu",
+      "--disable-web-security",
+      "--autoplay-policy=no-user-gesture-required"
+    ]
+  }).catch((error) => {
+    __vidsrcBrowserPromise = null;
+    throw error;
+  });
+
+  return __vidsrcBrowserPromise;
+}
+
+async function localVidSrcScrapeProvider(domain = "", embedUrl = "") {
+  const browser = await localVidSrcBrowser();
+  const found = { domain, embedUrl, hls_url: "", subtitles: [], requests: [], error: null };
+  const context = await browser.newContext({
+    userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
+    ignoreHTTPSErrors: true,
+    javaScriptEnabled: true,
+    viewport: { width: 1365, height: 768 },
+    extraHTTPHeaders: { "Accept-Language": "en-US,en;q=0.9", "Referer": embedUrl }
+  });
+  const page = await context.newPage();
+
+  function rememberUrl(url = "") {
+    const value = String(url || "");
+    if (!value) return;
+    if (!found.requests.includes(value) && found.requests.length < 80) found.requests.push(value);
+    if (!found.hls_url && apiIsM3u8Url(value)) found.hls_url = value;
+    if (localVidSrcIsSubtitleUrl(value) && !found.subtitles.includes(value)) found.subtitles.push(value);
+  }
+
+  try {
+    await page.route("**/*", async (route) => {
+      rememberUrl(route.request().url());
+      await route.continue().catch(() => {});
+    });
+    page.on("request", (request) => rememberUrl(request.url()));
+    page.on("response", (response) => rememberUrl(response.url()));
+    page.on("framenavigated", (frame) => rememberUrl(frame.url()));
+
+    await page.goto(embedUrl, { waitUntil: "domcontentloaded", timeout: VIDSRC_TIMEOUT_MS });
+
+    for (const selector of ["#the_frame", "iframe", "video", ".jwplayer", ".plyr", "button[aria-label*='Play' i]", ".play", ".play-button", "[class*='play']"]) {
+      try {
+        const loc = page.locator(selector).first();
+        if (await loc.count()) {
+          await loc.click({ timeout: 2500, force: true }).catch(() => {});
+          await page.waitForTimeout(1000);
+          if (found.hls_url) break;
+        }
+      } catch {}
+    }
+
+    if (!found.hls_url) {
+      await page.mouse.click(683, 384).catch(() => {});
+    }
+
+    const endAt = Date.now() + VIDSRC_WAIT_MS;
+    while (!found.hls_url && Date.now() < endAt) await page.waitForTimeout(750);
+
+    try {
+      const html = await page.content();
+      for (const url of apiExtractMediaUrlsFromStringDeep(html)) rememberUrl(url);
+    } catch {}
+
+    if (!found.hls_url) found.error = "HLS URL not found";
+  } catch (error) {
+    found.error = error.message || "scrape failed";
+  } finally {
+    await page.close().catch(() => {});
+    await context.close().catch(() => {});
+  }
+
+  return found;
+}
+
+async function localVidSrcGetStreams({ tmdbId = "", mediaType = "movie", season = "1", episode = "1", attempts = [] }) {
+  if (!VIDSRC_ENABLED) throw new Error("VIDSRC_ENABLED=false");
+  if (!tmdbId) throw new Error("missing TMDB id");
+
+  const domains = localVidSrcDomains();
+  const results = {};
+  const streams = [];
+  let index = 0;
+
+  async function worker() {
+    while (index < domains.length) {
+      const domain = domains[index++];
+      const embedUrl = localVidSrcBuildEmbedUrl(domain, mediaType, tmdbId, season, episode);
+      const startedAt = Date.now();
+
+      try {
+        const result = await localVidSrcScrapeProvider(domain, embedUrl);
+        result.ms = Date.now() - startedAt;
+        results[domain] = result;
+
+        if (result.hls_url && apiIsM3u8Url(result.hls_url)) {
+          streams.push({
+            name: `vidsrc ${new URL(domain).hostname.replace(/^www\./, "")}`,
+            quality: "auto",
+            url: result.hls_url,
+            headers: {
+              "Referer": embedUrl,
+              "Origin": domain,
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36"
+            },
+            format: "m3u8",
+            forceHls: true,
+            subtitles: result.subtitles || []
+          });
+        } else {
+          attempts.push(`vidsrc ${domain}: ${result.error || "no m3u8"}`);
+        }
+      } catch (error) {
+        results[domain] = { domain, embedUrl, hls_url: "", subtitles: [], requests: [], error: error.message || "failed", ms: Date.now() - startedAt };
+        attempts.push(`vidsrc ${domain}: ${error.message || "failed"}`);
+      }
+    }
+  }
+
+  await Promise.all(Array.from({ length: Math.min(VIDSRC_CONCURRENCY, domains.length) }, () => worker()));
+
+  return { success: streams.length > 0, provider: "vidsrc-local", tmdbId, mediaType, season: mediaType === "tv" ? season : "", episode: mediaType === "tv" ? episode : "", domains, results, streamsFound: streams.length, sources: streams };
+}
+
+async function localVidSrcResult({ mediaType = "movie", id = "", season = "1", episode = "1", attempts = [] }) {
+  const tmdbId = await apiResolveTmdbIdForApi({ mediaType, id, attempts });
+  if (!tmdbId) throw new Error("missing numeric TMDB id");
+
+  const payload = await localVidSrcGetStreams({ tmdbId, mediaType, season, episode, attempts });
+  return await apiFindPlayableFromPayload({ payload, providerName: "vidsrc-local", providerConfig: {}, mediaType, id: tmdbId, season, episode, attempts });
+}
+
+async function localVidSrcDebug({ mediaType = "movie", id = "", season = "1", episode = "1" }) {
+  const attempts = [];
+  const tmdbId = await apiResolveTmdbIdForApi({ mediaType, id, attempts });
+  if (!tmdbId) throw new Error("missing numeric TMDB id");
+
+  const payload = await localVidSrcGetStreams({ tmdbId, mediaType, season, episode, attempts });
+  const winner = await apiFindPlayableFromPayload({ payload, providerName: "vidsrc-local", providerConfig: {}, mediaType, id: tmdbId, season, episode, attempts });
+  return { attempts, payload, winner };
+}
+
+
 // ===== End more local source ports =====
 
 
@@ -4234,6 +4440,16 @@ async function fetchApiProviderSource({ type = "movie", id = "", season = "1", e
         attempts.push("xprime-local: source-code flow returned no usable stream");
       } catch (error) {
         attempts.push(`xprime-local: ${error.message || "failed"}`);
+      }
+    }
+
+    if (preferred === "vidsrc" || providerOrder.includes("vidsrc")) {
+      try {
+        const vidsrcResult = await localVidSrcResult({ mediaType, id, season, episode, attempts });
+        if (vidsrcResult) return vidsrcResult;
+        attempts.push("vidsrc-local: source-code flow returned no usable stream");
+      } catch (error) {
+        attempts.push(`vidsrc-local: ${error.message || "failed"}`);
       }
     }
 
@@ -47883,6 +48099,33 @@ app.get("/api/local/source-audit", (req, res) => {
   res.json({ ok: true, generatedFrom: "ScarperApi-zero(1).zip static audit", routes: [{"route":"/api/4khdhub/details","chars":5899,"urls":[],"fields":["URL","downloadLinks","file","href","src","url"]},{"route":"/api/4khdhub/gadget","chars":5874,"urls":[],"fields":["URL","url"]},{"route":"/api/4khdhub","chars":2624,"urls":[],"fields":["href","src","url"]},{"route":"/api/4khdhub/search","chars":3092,"urls":[],"fields":["href","src","url"]},{"route":"/api/animepahe/details","chars":9219,"urls":["https://animepahe.si${href}","https://animepahe.si/api?m=release&id=${session}&sort=episode_asc&page=${currentPage}"],"fields":["URL","downloadLinks","href","src","streamUrl","url"]},{"route":"/api/animepahe","chars":2276,"urls":["https://animepahe.si/api?m=airing&page=${page}"],"fields":["URL","url"]},{"route":"/api/animepahe/search","chars":2194,"urls":["https://animepahe.si/api?m=search&q=${encodeURIComponent(query"],"fields":["URL","url"]},{"route":"/api/animepahe/stream","chars":4714,"urls":[],"fields":["URL","m3u8","url"]},{"route":"/api/animesalt/details","chars":8021,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/animesalt","chars":3376,"urls":[],"fields":["href","src","url"]},{"route":"/api/animesalt/search","chars":3322,"urls":[],"fields":["href","src","url"]},{"route":"/api/animesalt/stream","chars":3549,"urls":[],"fields":["URL","src","url"]},{"route":"/api/castel","chars":24315,"urls":["https://aesdec.nuvioapp.space/decrypt-castle","https://api.fstcy.com","https://api.themoviedb.org/3"],"fields":["URL","streams","url","videoUrl"]},{"route":"/api/desiremovies/details","chars":2863,"urls":[],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/desiremovies/gyaniguru","chars":1795,"urls":["https://desiremovies.gripe/"],"fields":["URL","downloadLinks","href","url"]},{"route":"/api/desiremovies","chars":2374,"urls":[],"fields":["href","src","url"]},{"route":"/api/desiremovies/search","chars":2779,"urls":["https://desiremovies.gripe/kalamkaval-2025-web-hdrip/"],"fields":["href","src","url"]},{"route":"/api/drive/details","chars":3945,"urls":[],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/drive/mdrive","chars":2523,"urls":[],"fields":["HubCloud","URL","href","hubcloud","url"]},{"route":"/api/drive","chars":2363,"urls":[],"fields":["href","src","url"]},{"route":"/api/drive/search","chars":2904,"urls":[],"fields":["url"]},{"route":"/api/extractors/gdflix","chars":1584,"urls":["https://scarperapi-extractor-7tr4.vercel.app/api/gdflix?url=${encodeURIComponent(url"],"fields":["URL","gdflix","url"]},{"route":"/api/extractors/hubcloud","chars":1590,"urls":["https://scarperapi-extractor-7tr4.vercel.app/api/hubcloud?url=${encodeURIComponent(url"],"fields":["URL","hubcloud","url"]},{"route":"/api/extractors/streamtape","chars":0,"urls":[],"fields":[]},{"route":"/api/extractors/xprime","chars":18282,"urls":["https://api.themoviedb.org/3","https://mznxiwqjdiq00239q.space","https://xprime.hunternisha55.workers.dev","https://xprime.su/watch/${tmdbId}","https://xprime.su/watch/${tmdbId}/${season}/${episode}"],"fields":["URL","XPrime","src","streams","url","xprime"]},{"route":"/api/hdhub4u/details","chars":4722,"urls":[],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/hdhub4u/extractor","chars":11472,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/hdhub4u","chars":2194,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/hdhub4u/search","chars":3147,"urls":["https://new2.hdhub4u.fo","https://new2.hdhub4u.fo/","https://search.pingora.fyi/collections/post/documents/search?q=${formattedQuery}&query_by=post_title&page=${page}"],"fields":["url"]},{"route":"/api/kmmovies/details","chars":6044,"urls":[],"fields":["URL","downloadLinks","file","href","src","url"]},{"route":"/api/kmmovies/magiclinks","chars":3981,"urls":["https://kmmovies.store/","https://net-cookie-kacj.vercel.app/api/redirect?url=${encodeURIComponent(link.url"],"fields":["File","URL","downloadLinks","file","href","url"]},{"route":"/api/kmmovies","chars":3220,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/kmmovies/search","chars":3067,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/mod/details","chars":5030,"urls":[],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/mod/modpro","chars":5122,"urls":["https://moviesmod.build/"],"fields":["URL","downloadLinks","href","serverLinks","techLinks","url"]},{"route":"/api/mod","chars":2418,"urls":[],"fields":["href","src","url"]},{"route":"/api/mod/search","chars":2163,"urls":[],"fields":["href","src","url"]},{"route":"/api/movies4u/details","chars":5470,"urls":[],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/movies4u/m4ulinks","chars":4568,"urls":[],"fields":["URL","href","hubcloud","hubcloudLinks","url"]},{"route":"/api/movies4u","chars":3432,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/movies4u/search","chars":2851,"urls":[],"fields":["href","src","url"]},{"route":"/api/netmirror/getpost","chars":3598,"urls":[],"fields":["URL","url"]},{"route":"/api/netmirror","chars":6442,"urls":["https://net22.cc"],"fields":["URL","net22.cc","src","url"]},{"route":"/api/netmirror/search","chars":3537,"urls":["https://net22.cc"],"fields":["URL","net22.cc","url"]},{"route":"/api/netmirror/stream","chars":6912,"urls":["https://net20.cc/","https://net22.cc/play.php","https://net51.cc","https://net51.cc/","https://net51.cc/playlist.php?id=${id}&tm=${currentTimestamp}&h=${encodeURIComponent(h","https://net52.cc/playlist.php?id=${id}&tm=${timestamp}&h=${encodeURIComponent(h"],"fields":["URL","file","net20.cc","net22.cc","net51.cc","net52.cc","playlist","sources","url"]},{"route":"/api/search","chars":5478,"urls":[],"fields":["url"]},{"route":"/api/themovie/det","chars":9305,"urls":["https://themoviebox.org/","https://themoviebox.org/movies/${slug}?id=${id}&type=${parsedUrl.searchParams.get(","https://themoviebox.org/wefeed-h5api-bff/subject/play"],"fields":["URL","playApiUrl","themoviebox","url"]},{"route":"/api/themovie","chars":2270,"urls":[],"fields":["URL","fullUrl","href","src"]},{"route":"/api/themovie/search","chars":8547,"urls":[],"fields":["URL","fullUrl","href","src","url"]},{"route":"/api/themovie/stream","chars":17695,"urls":["https://themoviebox.org/","https://themoviebox.org/movies/${slug}","https://themoviebox.org/moviesDetail/${slug}","https://themoviebox.org/wefeed-h5api-bff/subject/play"],"fields":["URL","src","themoviebox","url"]},{"route":"/api/tm","chars":5749,"urls":["https://vibuxer.com/","https://vibuxer.com/e/${code.trim("],"fields":["URL","streamUrl","streams","url","vibuxer"]},{"route":"/api/uhdmovies/details","chars":7162,"urls":[],"fields":["URL","downloadLinks","file","href","src","url"]},{"route":"/api/uhdmovies","chars":2234,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/uhdmovies/search","chars":2873,"urls":[],"fields":["URL","href","src","url"]},{"route":"/api/uhdmovies/tech","chars":9222,"urls":["https://${mainUrl}${path}","https://net-cookie-kacj.vercel.app/api/vlich?url=${encodeURIComponent(cdnInstantLink"],"fields":["URL","file","href","url","videoUrl"]},{"route":"/api/vega/details","chars":4450,"urls":[],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/vega/nextdrive","chars":1532,"urls":[],"fields":["URL","href","url","vcloudLinks"]},{"route":"/api/vega","chars":1967,"urls":[],"fields":["href","src","url"]},{"route":"/api/vega/search","chars":2567,"urls":[],"fields":["href","src","url"]},{"route":"/api/vid","chars":18078,"urls":["https://api.videasy.net/1movies/sources-with-title","https://api.videasy.net/cdn/sources-with-title","https://api.videasy.net/hdmovie/sources-with-title","https://api.videasy.net/m4uhd/sources-with-title","https://api.videasy.net/meine/sources-with-title","https://api.videasy.net/moviebox/sources-with-title","https://api.videasy.net/myflixerzupcloud/sources-with-title","https://api.videasy.net/onionplay/sources-with-title","https://api.videasy.net/superflix/sources-with-title","https://api.videasy.net/visioncine/sources-with-title","https://api2.videasy.net/cuevana-latino/sources-with-title","https://api2.videasy.net/cuevana-spanish/sources-with-title","https://api2.videasy.net/overflix/sources-with-title","https://api2.videasy.net/primewire/sources-with-title","https://enc-dec.app/api","https://image.tmdb.org/t/p/w1280${data.backdrop_path}","https://image.tmdb.org/t/p/w500${data.poster_path}","https://twilight-cake-defb.hunternisha55.workers.dev/3","https://videasy.net/"],"fields":["VIDEASY","m3u8","mp4","sources","streams","url","videasy"]},{"route":"/api/zeefliz/details","chars":7022,"urls":["https://www.youtube.com/watch?v=${trailerDiv.attr("],"fields":["URL","downloadLinks","href","src","url"]},{"route":"/api/zeefliz/nextdrive","chars":3515,"urls":[],"fields":["URL","href","url","zeeCloudLinks"]},{"route":"/api/zeefliz","chars":2607,"urls":[],"fields":["href","src","url"]},{"route":"/api/zeefliz/search","chars":3681,"urls":[],"fields":["href","src","url"]},{"route":"/api/zinkmovies/details","chars":2064,"urls":[],"fields":["URL","downloadLinks","href","url"]},{"route":"/api/zinkmovies","chars":5927,"urls":[],"fields":["href","src","url"]},{"route":"/api/zinkmovies/search","chars":3245,"urls":[],"fields":["href","src","url"]},{"route":"/api/zinkmovies/zinkcloud","chars":2718,"urls":[],"fields":["File","URL","ZinkCloud","file","href","hubCloudLinks","hubcloud","url","zinkcloud"]}] });
 });
 
+app.get("/api/local/vidsrc-debug", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const type = req.query.type === "tv" ? "tv" : "movie";
+  const id = apiClean(req.query.tmdb || req.query.tmdbId || req.query.id || "");
+  const season = apiClean(req.query.season || req.query.s || "1");
+  const episode = apiClean(req.query.episode || req.query.e || "1");
+
+  if (!id) return res.status(400).json({ ok: false, error: "Pass ?tmdb=id" });
+
+  try {
+    const debug = await localVidSrcDebug({ mediaType: type, id, season, episode });
+    res.json({
+      ok: Boolean(debug.winner),
+      sourceMode: "local-vidsrc-playwright-source-code",
+      tmdb: id,
+      type,
+      season: type === "tv" ? season : "",
+      episode: type === "tv" ? episode : "",
+      winner: debug.winner,
+      attempts: debug.attempts,
+      payload: debug.payload
+    });
+  } catch (error) {
+    res.status(500).json({ ok: false, sourceMode: "local-vidsrc-playwright-source-code", error: error.message || "failed" });
+  }
+});
+
 app.get("/api/local/consumet-debug", async (req, res) => {
   res.set("Cache-Control", "no-store");
   const type = req.query.type === "tv" ? "tv" : (req.query.type === "anime" ? "anime" : "movie");
@@ -48055,6 +48298,7 @@ app.get("/api/local/super-source-debug", async (req, res) => {
     await probe("vid-local", () => localVidGetStreams({ tmdbId: id, mediaType: type, season: type === "tv" ? season : "", episode: type === "tv" ? episode : "" }), "vid-local", API_PROVIDERS.vid || {});
     await probe("castle-local", () => localCastleGetStreams({ tmdbId: id, mediaType: type, season: type === "tv" ? season : "", episode: type === "tv" ? episode : "" }), "castle-local", API_PROVIDERS.castel || {});
     await probe("xprime-local", () => localXprimeGetStreams({ tmdbId: id, mediaType: type, season: type === "tv" ? season : "", episode: type === "tv" ? episode : "" }), "xprime-local", API_PROVIDERS.xprime || {});
+    await probe("vidsrc-local", () => localVidSrcGetStreams({ tmdbId: id, mediaType: type, season: type === "tv" ? season : "", episode: type === "tv" ? episode : "" }), "vidsrc-local", {});
   }
 
   if (title) {
@@ -48176,6 +48420,7 @@ app.get("/api/local/all-source-debug", async (req, res) => {
     await tryPayload("vid-local", () => localVidGetStreams({ tmdbId: id, mediaType: type, season: type === "tv" ? season : "", episode: type === "tv" ? episode : "" }), "vid-local", API_PROVIDERS.vid || {});
     await tryPayload("castle-local", () => localCastleGetStreams({ tmdbId: id, mediaType: type, season: type === "tv" ? season : "", episode: type === "tv" ? episode : "" }), "castle-local", API_PROVIDERS.castel || {});
     await tryPayload("xprime-local", () => localXprimeGetStreams({ tmdbId: id, mediaType: type, season: type === "tv" ? season : "", episode: type === "tv" ? episode : "" }), "xprime-local", API_PROVIDERS.xprime || {});
+    await tryPayload("vidsrc-local", () => localVidSrcGetStreams({ tmdbId: id, mediaType: type, season: type === "tv" ? season : "", episode: type === "tv" ? episode : "" }), "vidsrc-local", {});
   }
 
   if (title) {
