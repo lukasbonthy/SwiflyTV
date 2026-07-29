@@ -1,12 +1,13 @@
 {
   "name": "swiflytv",
-  "version": "2.0.0",
-  "description": "SwiflyTV v149 replaces the broken Video.js/custom dock player with Vidstack Default Layout for m3u8 playback.",
+  "version": "2.1.0",
+  "description": "SwiflyTV with an integrated Play Room for trivia, quick games, party prompts, and creative activities.",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js",
-    "check": "node --check server.js"
+    "start": "node scripts/start-integrated-play.js",
+    "dev": "node scripts/start-integrated-play.js",
+    "base": "node server.js",
+    "check": "node --check server.js && node --check creative-play.js && node --check creative-play-client.js && node --check scripts/start-integrated-play.js"
   },
   "engines": {
     "node": "20.x"
