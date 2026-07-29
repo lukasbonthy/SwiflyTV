@@ -6,7 +6,10 @@ const Module = require("module");
 
 const root = path.resolve(__dirname, "..");
 const serverPath = path.join(root, "server.js");
-let source = fs.readFileSync(serverPath, "utf8");
+
+// Git commonly checks files out with CRLF on Windows. Normalize the in-memory
+// source before matching so the same loader works on Windows, Linux, and macOS.
+let source = fs.readFileSync(serverPath, "utf8").replace(/\r\n?/g, "\n");
 
 function replaceOnce(label, needle, replacement) {
   if (!source.includes(needle)) {
@@ -50,6 +53,19 @@ replaceOnce(
   "app.get(\"/welcome\", welcomePage);\napp.get(\"/\", homePage);",
   "app.get(\"/swifly-play.js\", (_req, res) => {\n  const repairedClient = fs.readFileSync(path.join(__dirname, \"creative-play-client.js\"), \"utf8\").replace(\"}););\", \"}));\");\n  res.type(\"application/javascript\").send(repairedClient);\n});\nregisterCreativePlay({ app, pageShell });\n\napp.get(\"/welcome\", welcomePage);\napp.get(\"/\", homePage);"
 );
+
+const requiredMarkers = [
+  "registerCreativePlay({ app, pageShell });",
+  "href=\"/swifly-play.css\"",
+  "navLink(\"/play\", \"Play\", \"play\", active)",
+  "${playHomeSpotlight()}",
+];
+
+for (const marker of requiredMarkers) {
+  if (!source.includes(marker)) {
+    throw new Error(`[integrated-play] Verification failed for marker: ${marker}`);
+  }
+}
 
 const runtimeModule = new Module(serverPath, module);
 runtimeModule.filename = serverPath;
