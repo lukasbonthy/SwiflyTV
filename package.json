@@ -1,12 +1,13 @@
 {
-  "name": "swiflytv",
-  "version": "2.0.0",
-  "description": "SwiflyTV v149 replaces the broken Video.js/custom dock player with Vidstack Default Layout for m3u8 playback.",
-  "main": "server.js",
+  "name": "swifly-play",
+  "version": "3.0.0",
+  "description": "A glassy browser game hub with trivia, memory, reaction, word, daily challenge, XP, and local leaderboard experiences.",
+  "main": "playhub-server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js",
-    "check": "node --check server.js"
+    "start": "node playhub-server.js",
+    "dev": "node playhub-server.js",
+    "legacy": "node server.js",
+    "check": "node --check playhub-server.js && node --check playhub/app.js && node --check server.js"
   },
   "engines": {
     "node": "20.x"
