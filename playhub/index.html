@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#090816" />
+  <meta name="description" content="Swifly Play is a fast, social collection of trivia, memory, reaction, word, and party games." />
+  <title>Swifly Play</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="ambient" aria-hidden="true">
+    <span class="orb orb-a"></span>
+    <span class="orb orb-b"></span>
+    <span class="orb orb-c"></span>
+    <span class="grain"></span>
+  </div>
+
+  <header class="site-header">
+    <div class="shell header-inner">
+      <a class="brand" href="#top" aria-label="Swifly Play home">
+        <span class="brand-mark" aria-hidden="true">S</span>
+        <span class="brand-copy"><strong>Swifly</strong><small>PLAY</small></span>
+      </a>
+
+      <nav class="desktop-nav" aria-label="Main navigation">
+        <a href="#top">Home</a>
+        <a href="#games">Games</a>
+        <a href="#daily">Daily</a>
+        <a href="#leaderboard">Leaderboard</a>
+      </nav>
+
+      <div class="header-actions">
+        <button class="icon-button" id="motionToggle" type="button" aria-label="Toggle reduced motion" title="Toggle reduced motion">✦</button>
+        <button class="profile-chip" id="editProfile" type="button" aria-label="Edit player name">
+          <span class="avatar" id="headerAvatar">P</span>
+          <span><small>Playing as</small><strong id="headerName">Player</strong></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero shell" aria-labelledby="hero-title">
+      <div class="hero-copy glass-panel">
+        <div class="eyebrow"><span class="live-dot"></span> New games every session</div>
+        <h1 id="hero-title">One place to <span>play everything.</span></h1>
+        <p>Jump into fast trivia, memory battles, reaction tests, word games, and party questions. No account wall. No movie clutter. Just play.</p>
+        <div class="hero-actions">
+          <button class="primary-button" type="button" data-play="trivia">Play Trivia Blitz <span>→</span></button>
+          <a class="secondary-button" href="#games">Browse all games</a>
+        </div>
+        <div class="hero-trust" aria-label="Site features">
+          <span>✓ Saves progress</span>
+          <span>✓ Keyboard friendly</span>
+          <span>✓ Works on mobile</span>
+        </div>
+      </div>
+
+      <div class="hero-showcase" aria-label="Featured games preview">
+        <article class="floating-card float-one">
+          <div class="game-icon violet">?</div>
+          <div><small>FEATURED</small><strong>Trivia Blitz</strong><span>10 questions · instant XP</span></div>
+        </article>
+        <article class="floating-card float-two">
+          <div class="game-icon cyan">⚡</div>
+          <div><small>QUICK PLAY</small><strong>Reaction Rush</strong><span>How fast are you?</span></div>
+        </article>
+        <article class="floating-card float-three">
+          <div class="game-icon pink">🧠</div>
+          <div><small>CHALLENGE</small><strong>Memory Match</strong><span>Find every pair</span></div>
+        </article>
+        <div class="showcase-core glass-panel">
+          <div class="core-ring ring-one"></div>
+          <div class="core-ring ring-two"></div>
+          <span class="core-symbol">▶</span>
+          <strong>Pick a game</strong>
+          <small>Your progress saves automatically</small>
+        </div>
+      </div>
+    </section>
+
+    <section class="shell stats-grid" aria-label="Player progress">
+      <article class="stat-card glass-panel">
+        <span class="stat-icon">🔥</span>
+        <div><small>Daily streak</small><strong><span id="streakValue">1</span> days</strong></div>
+      </article>
+      <article class="stat-card glass-panel">
+        <span class="stat-icon">✦</span>
+        <div><small>Total XP</small><strong id="xpValue">0</strong></div>
+      </article>
+      <article class="stat-card glass-panel">
+        <span class="stat-icon">◈</span>
+        <div><small>Swifly coins</small><strong id="coinValue">0</strong></div>
+      </article>
+      <article class="stat-card glass-panel">
+        <span class="stat-icon">🏆</span>
+        <div><small>Games completed</small><strong id="gamesValue">0</strong></div>
+      </article>
+    </section>
+
+    <section class="section shell" id="daily" aria-labelledby="daily-title">
+      <div class="section-heading">
+        <div><span class="section-kicker">COME BACK TOMORROW</span><h2 id="daily-title">Daily challenge</h2></div>
+        <span class="reset-copy" id="dailyReset">Resets at midnight</span>
+      </div>
+      <article class="daily-card glass-panel">
+        <div class="daily-art" id="dailyArt" aria-hidden="true"><span>?</span></div>
+        <div class="daily-copy">
+          <span class="daily-label">TODAY'S PICK</span>
+          <h3 id="dailyName">Daily Trivia</h3>
+          <p id="dailyDescription">Finish today's challenge for a bonus reward and keep your streak alive.</p>
+          <div class="reward-row"><span>+150 XP</span><span>+40 coins</span><span id="dailyStatus">Not completed</span></div>
+        </div>
+        <button class="primary-button daily-button" id="dailyButton" type="button">Start challenge</button>
+      </article>
+    </section>
+
+    <section class="section shell" id="games" aria-labelledby="games-title">
+      <div class="section-heading games-heading">
+        <div><span class="section-kicker">PICK YOUR VIBE</span><h2 id="games-title">Game library</h2></div>
+        <label class="search-box">
+          <span aria-hidden="true">⌕</span>
+          <span class="sr-only">Search games</span>
+          <input id="gameSearch" type="search" placeholder="Search games" autocomplete="off" />
+        </label>
+      </div>
+      <div class="filter-row" role="group" aria-label="Filter games">
+        <button class="filter-chip active" type="button" data-filter="all">All games</button>
+        <button class="filter-chip" type="button" data-filter="brain">Brain</button>
+        <button class="filter-chip" type="button" data-filter="quick">Quick</button>
+        <button class="filter-chip" type="button" data-filter="party">Party</button>
+        <button class="filter-chip" type="button" data-filter="words">Words</button>
+      </div>
+      <div class="game-grid" id="gameGrid"></div>
+      <p class="empty-results" id="emptyResults" hidden>No games match that search.</p>
+    </section>
+
+    <section class="section shell split-section">
+      <article class="quest-card glass-panel">
+        <div class="quest-badge">WEEKLY QUEST</div>
+        <h2>Earn the “Brainstorm” badge</h2>
+        <p>Complete three different brain games this week.</p>
+        <div class="quest-progress"><span id="questProgress"></span></div>
+        <div class="quest-footer"><strong id="questText">0 / 3 games</strong><span>Reward: 300 XP</span></div>
+      </article>
+
+      <article class="party-card glass-panel">
+        <span class="section-kicker">PASS THE PHONE</span>
+        <h2>Need something for the group?</h2>
+        <p>Launch Would You Rather for instant questions everyone can answer.</p>
+        <button class="secondary-button" type="button" data-play="would-you-rather">Start party mode</button>
+      </article>
+    </section>
+
+    <section class="section shell" id="leaderboard" aria-labelledby="leaderboard-title">
+      <div class="section-heading">
+        <div><span class="section-kicker">LOCAL RANKING</span><h2 id="leaderboard-title">Leaderboard</h2></div>
+        <span class="reset-copy">Stored on this browser</span>
+      </div>
+      <div class="leaderboard glass-panel" id="leaderboardList"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <div class="brand footer-brand"><span class="brand-mark">S</span><span class="brand-copy"><strong>Swifly</strong><small>PLAY</small></span></div>
+      <p>Built for quick breaks, late-night challenges, and passing the phone around.</p>
+      <a href="#top">Back to top ↑</a>
+    </div>
+  </footer>
+
+  <nav class="mobile-nav" aria-label="Mobile navigation">
+    <a href="#top"><span>⌂</span>Home</a>
+    <a href="#games"><span>◆</span>Games</a>
+    <button type="button" data-play="trivia"><span>▶</span>Play</button>
+    <a href="#daily"><span>✦</span>Daily</a>
+    <a href="#leaderboard"><span>♛</span>Ranks</a>
+  </nav>
+
+  <dialog class="game-dialog" id="gameDialog" aria-labelledby="gameDialogTitle">
+    <div class="dialog-shell">
+      <header class="dialog-header">
+        <div><span class="dialog-kicker" id="gameDialogKicker">SWIFLY PLAY</span><h2 id="gameDialogTitle">Game</h2><p id="gameDialogSubtitle"></p></div>
+        <button class="dialog-close" id="closeDialog" type="button" aria-label="Close game">×</button>
+      </header>
+      <div class="dialog-body" id="gameBody"></div>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
