@@ -1,12 +1,12 @@
 {
   "name": "swiflytv",
-  "version": "2.0.0",
-  "description": "SwiflyTV v149 replaces the broken Video.js/custom dock player with Vidstack Default Layout for m3u8 playback.",
+  "version": "2.1.0",
+  "description": "SwiflyTV with a final responsive UI polish layer and LupeTube trailer embedding.",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js",
-    "check": "node --check server.js"
+    "start": "node scripts/start-ui.js",
+    "dev": "node scripts/start-ui.js",
+    "check": "node --check server.js && node --check scripts/start-ui.js"
   },
   "engines": {
     "node": "20.x"
