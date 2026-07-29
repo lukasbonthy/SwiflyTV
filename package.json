@@ -1,13 +1,13 @@
 {
-  "name": "swiflytv",
-  "version": "2.1.1",
-  "description": "SwiflyTV with an integrated Play Room for trivia, quick games, party prompts, and creative activities.",
+  "name": "swifly-games",
+  "version": "3.0.0",
+  "description": "The original SwiflyTV interface converted into a browser game catalog powered by MonkeyGG2 game entries.",
   "main": "server.js",
   "scripts": {
-    "start": "node scripts/start-integrated-play.js",
-    "dev": "node scripts/start-integrated-play.js",
+    "start": "node scripts/start-game-mode.js",
+    "dev": "node scripts/start-game-mode.js",
     "base": "node server.js",
-    "check": "node --check server.js && node --check creative-play.js && node --check scripts/start-integrated-play.js"
+    "check": "node --check server.js && node --check game-mode.js && node --check game-mode-client.js && node --check scripts/start-game-mode.js"
   },
   "engines": {
     "node": "20.x"
