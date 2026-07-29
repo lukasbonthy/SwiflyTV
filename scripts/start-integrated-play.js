@@ -48,7 +48,7 @@ replaceOnce(
 replaceOnce(
   "route registration",
   "app.get(\"/welcome\", welcomePage);\napp.get(\"/\", homePage);",
-  "registerCreativePlay({ app, pageShell });\n\napp.get(\"/welcome\", welcomePage);\napp.get(\"/\", homePage);"
+  "app.get(\"/swifly-play.js\", (_req, res) => {\n  const repairedClient = fs.readFileSync(path.join(__dirname, \"creative-play-client.js\"), \"utf8\").replace(\"}););\", \"}));\");\n  res.type(\"application/javascript\").send(repairedClient);\n});\nregisterCreativePlay({ app, pageShell });\n\napp.get(\"/welcome\", welcomePage);\napp.get(\"/\", homePage);"
 );
 
 const runtimeModule = new Module(serverPath, module);
