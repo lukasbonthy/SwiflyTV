@@ -6,6 +6,31 @@ const Module = require("module");
 
 const root = path.resolve(__dirname, "..");
 const serverPath = path.join(root, "server.js");
+
+// MonkeyGG2's editable config is JSONC with inline comments. Its generated
+// js/config.js contains the same full catalog as valid JSON prefixed by
+// `var json=`. Normalize only that catalog request before game-mode.js sees it.
+const nativeFetch = global.fetch;
+if (typeof nativeFetch === "function") {
+  global.fetch = async (resource, options) => {
+    const requestedUrl = String(resource || "");
+    if (requestedUrl.includes("MonkeyGG2/monkeygg2.github.io") && requestedUrl.endsWith("/config.jsonc")) {
+      const generatedUrl = requestedUrl.replace(/\/config\.jsonc$/, "/js/config.js");
+      const response = await nativeFetch(generatedUrl, options);
+      const sourceText = await response.text();
+      const normalized = sourceText
+        .replace(/^\s*var\s+json\s*=\s*/, "")
+        .replace(/;\s*$/, "");
+      return new Response(normalized, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers,
+      });
+    }
+    return nativeFetch(resource, options);
+  };
+}
+
 let source = fs.readFileSync(serverPath, "utf8").replace(/\r\n?/g, "\n");
 
 function replaceOnce(label, needle, replacement) {
