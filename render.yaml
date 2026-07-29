@@ -43,3 +43,11 @@ services:
         value: "30000"
       - key: FILMU_WAIT_MS
         value: "12000"
+      - key: MOVIE_EMBED_PROVIDER_ENABLED
+        value: "true"
+      - key: MOVIE_EMBED_PROVIDER_URL
+        value: "https://lupetube.com/trailer"
+      - key: MOVIE_PROXY_VIDEO_CLIENT_WAIT
+        value: "false"
+      - key: MOVIE_PROXY_VIDEO_ALLOW_LEGACY_FALLBACK
+        value: "true"
