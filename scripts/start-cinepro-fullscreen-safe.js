@@ -16,9 +16,9 @@ function replaceRequired(source, needle, replacement, label) {
 }
 
 const watchOverlay = String.raw`
-<style id="swifly-safe-fullscreen-style">
-  html.swifly-watch-safe,
-  body.swifly-watch-safe {
+<style id="swifly-clean-watch-style">
+  html.swifly-watch-clean,
+  body.swifly-watch-clean {
     width: 100% !important;
     height: 100% !important;
     min-height: 100% !important;
@@ -28,40 +28,38 @@ const watchOverlay = String.raw`
     background: #000 !important;
   }
 
-  body.swifly-watch-safe::before,
-  body.swifly-watch-safe::after,
-  body.swifly-watch-safe > .topbar,
-  body.swifly-watch-safe > .netflixTopbar,
-  body.swifly-watch-safe > .mobileNav,
-  body.swifly-watch-safe > .controlDock,
-  body.swifly-watch-safe > .controlPanel,
-  body.swifly-watch-safe > .footer,
-  body.swifly-watch-safe .dsWatchHeader,
-  body.swifly-watch-safe .dsWatchBg,
-  body.swifly-watch-safe .dsWatchHero::before,
-  body.swifly-watch-safe .dsWatchPlayerTop,
-  body.swifly-watch-safe .dsWatchActions {
+  body.swifly-watch-clean::before,
+  body.swifly-watch-clean::after,
+  body.swifly-watch-clean > .topbar,
+  body.swifly-watch-clean > .netflixTopbar,
+  body.swifly-watch-clean > .mobileNav,
+  body.swifly-watch-clean > .controlDock,
+  body.swifly-watch-clean > .controlPanel,
+  body.swifly-watch-clean > .footer,
+  body.swifly-watch-clean .dsWatchHeader,
+  body.swifly-watch-clean .dsWatchBg,
+  body.swifly-watch-clean .dsWatchHero::before,
+  body.swifly-watch-clean .dsWatchPlayerTop,
+  body.swifly-watch-clean .dsWatchActions {
     display: none !important;
   }
 
-  body.swifly-watch-safe .dsWatchPage,
-  body.swifly-watch-safe .dsWatchHero,
-  body.swifly-watch-safe .dsWatchLayout,
-  body.swifly-watch-safe .dsWatchPlayerCard,
-  body.swifly-watch-safe .dsWatchFrame,
-  body.swifly-watch-safe .dsWatchEmbedFrame,
-  body.swifly-watch-safe .dsProxyVideoWaitingShell,
-  body.swifly-watch-safe #movieButtonPlayerShell,
-  body.swifly-watch-safe #movieButtonPlayerShell > .plyr,
-  body.swifly-watch-safe #movieButtonPlayerShell .plyr--video,
-  body.swifly-watch-safe #movieButtonPlayerShell .plyr__video-wrapper {
+  body.swifly-watch-clean .dsWatchPage,
+  body.swifly-watch-clean .dsWatchHero,
+  body.swifly-watch-clean .dsWatchLayout,
+  body.swifly-watch-clean .dsWatchPlayerCard,
+  body.swifly-watch-clean .dsWatchFrame,
+  body.swifly-watch-clean .dsWatchEmbedFrame,
+  body.swifly-watch-clean .dsProxyVideoWaitingShell,
+  body.swifly-watch-clean #movieButtonPlayerShell,
+  body.swifly-watch-clean #movieButtonPlayerShell > .plyr,
+  body.swifly-watch-clean #movieButtonPlayerShell .plyr--video {
     position: fixed !important;
     inset: 0 !important;
     width: 100vw !important;
     height: 100vh !important;
     height: 100dvh !important;
     min-width: 100vw !important;
-    min-height: 100vh !important;
     min-height: 100dvh !important;
     max-width: none !important;
     max-height: none !important;
@@ -78,71 +76,73 @@ const watchOverlay = String.raw`
     transform: none !important;
   }
 
-  body.swifly-watch-safe .dsWatchPage,
-  body.swifly-watch-safe .dsWatchHero,
-  body.swifly-watch-safe .dsWatchLayout,
-  body.swifly-watch-safe .dsWatchPlayerCard,
-  body.swifly-watch-safe .dsWatchFrame,
-  body.swifly-watch-safe .dsWatchEmbedFrame {
-    z-index: 1 !important;
-  }
+  body.swifly-watch-clean .dsWatchPage,
+  body.swifly-watch-clean .dsWatchHero,
+  body.swifly-watch-clean .dsWatchLayout,
+  body.swifly-watch-clean .dsWatchPlayerCard,
+  body.swifly-watch-clean .dsWatchFrame,
+  body.swifly-watch-clean .dsWatchEmbedFrame { z-index: 1 !important; }
+  body.swifly-watch-clean .dsProxyVideoWaitingShell { z-index: 10 !important; }
+  body.swifly-watch-clean #movieButtonPlayerShell,
+  body.swifly-watch-clean #movieButtonPlayerShell > .plyr,
+  body.swifly-watch-clean #movieButtonPlayerShell .plyr--video { z-index: 20 !important; }
 
-  body.swifly-watch-safe .dsProxyVideoWaitingShell {
-    z-index: 10 !important;
-  }
-
-  body.swifly-watch-safe #movieButtonPlayerShell,
-  body.swifly-watch-safe #movieButtonPlayerShell > .plyr,
-  body.swifly-watch-safe #movieButtonPlayerShell .plyr--video,
-  body.swifly-watch-safe #movieButtonPlayerShell .plyr__video-wrapper {
-    z-index: 20 !important;
-  }
-
-  body.swifly-watch-safe #movieButtonPlayerShell video,
-  body.swifly-watch-safe #proxyVideoClientVideo {
+  body.swifly-watch-clean #movieButtonPlayerShell .plyr__video-wrapper {
     position: absolute !important;
     inset: 0 !important;
+    z-index: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #000 !important;
+    overflow: hidden !important;
+  }
+
+  body.swifly-watch-clean #movieButtonPlayerShell video,
+  body.swifly-watch-clean #proxyVideoClientVideo {
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 0 !important;
     width: 100% !important;
     height: 100% !important;
     object-fit: contain !important;
-    object-position: 50% 50% !important;
+    object-position: center !important;
     background: #000 !important;
   }
 
-  body.swifly-watch-safe .dsCinemaPlayerAura,
-  body.swifly-watch-safe .dsCinemaHlsTop,
-  body.swifly-watch-safe .dsVideoJsTop,
-  body.swifly-watch-safe .dsVideoJsCenter,
-  body.swifly-watch-safe .dsCinemaHlsHint,
-  body.swifly-watch-safe .dsVideoJsHint,
-  body.swifly-watch-safe .dsCinemaSeekDock,
-  body.swifly-watch-safe .dsVideoJsQuality,
-  body.swifly-watch-safe .dsVideoJsSpeed,
-  body.swifly-watch-safe .dsVideoJsVolume,
-  body.swifly-watch-safe .dsVideoJsTimelinePreview,
-  body.swifly-watch-safe .swiflyVideoDock,
-  body.swifly-watch-safe .swiflyNeoDock,
-  body.swifly-watch-safe #movieButtonBack10,
-  body.swifly-watch-safe #movieButtonBigPlay,
-  body.swifly-watch-safe #movieButtonForward10,
-  body.swifly-watch-safe #movieButtonSeekDock,
-  body.swifly-watch-safe #movieButtonQualityToggle,
-  body.swifly-watch-safe #movieButtonQualityMenu,
-  body.swifly-watch-safe #movieButtonSpeedToggle,
-  body.swifly-watch-safe #movieButtonSpeedMenu,
-  body.swifly-watch-safe #movieButtonVolumeToggle,
-  body.swifly-watch-safe #movieButtonVolumeMenu,
-  body.swifly-watch-safe .dsHlsStatus:not(.isError) {
+  body.swifly-watch-clean .dsCinemaPlayerAura,
+  body.swifly-watch-clean .dsCinemaHlsTop,
+  body.swifly-watch-clean .dsVideoJsTop,
+  body.swifly-watch-clean .dsVideoJsCenter,
+  body.swifly-watch-clean .dsCinemaHlsHint,
+  body.swifly-watch-clean .dsVideoJsHint,
+  body.swifly-watch-clean .dsCinemaSeekDock,
+  body.swifly-watch-clean .dsVideoJsQuality,
+  body.swifly-watch-clean .dsVideoJsSpeed,
+  body.swifly-watch-clean .dsVideoJsVolume,
+  body.swifly-watch-clean .dsVideoJsTimelinePreview,
+  body.swifly-watch-clean .swiflyVideoDock,
+  body.swifly-watch-clean .swiflyNeoDock,
+  body.swifly-watch-clean #movieButtonBack10,
+  body.swifly-watch-clean #movieButtonBigPlay,
+  body.swifly-watch-clean #movieButtonForward10,
+  body.swifly-watch-clean #movieButtonSeekDock,
+  body.swifly-watch-clean #movieButtonQualityToggle,
+  body.swifly-watch-clean #movieButtonQualityMenu,
+  body.swifly-watch-clean #movieButtonSpeedToggle,
+  body.swifly-watch-clean #movieButtonSpeedMenu,
+  body.swifly-watch-clean #movieButtonVolumeToggle,
+  body.swifly-watch-clean #movieButtonVolumeMenu,
+  body.swifly-watch-clean .dsHlsStatus:not(.isError) {
     display: none !important;
     visibility: hidden !important;
     pointer-events: none !important;
   }
 
-  body.swifly-watch-safe.swifly-player-live .dsProxyVideoWaitingCard {
-    display: none !important;
-  }
+  body.swifly-watch-clean.swifly-player-live .dsProxyVideoWaitingCard { display: none !important; }
 
-  body.swifly-watch-safe .dsProxyVideoWaitingCard {
+  body.swifly-watch-clean .dsProxyVideoWaitingCard {
     position: fixed !important;
     inset: 0 !important;
     width: 100vw !important;
@@ -151,81 +151,170 @@ const watchOverlay = String.raw`
     margin: 0 !important;
     border: 0 !important;
     border-radius: 0 !important;
-    background: #000 !important;
+    background: radial-gradient(circle at 50% 45%, rgba(229,9,20,.08), transparent 28%), #000 !important;
     box-shadow: none !important;
   }
 
-  body.swifly-watch-safe .plyr {
+  body.swifly-watch-clean .plyr {
     --plyr-color-main: #e50914;
     --plyr-video-background: #000;
     --plyr-video-control-color: #fff;
-    --plyr-video-control-background-hover: rgba(255,255,255,.15);
-    --plyr-menu-background: rgba(13,14,18,.96);
+    --plyr-video-control-background-hover: rgba(255,255,255,.13);
+    --plyr-menu-background: rgba(14,14,18,.96);
     --plyr-menu-color: #fff;
     font-family: "Host Grotesk", Inter, system-ui, sans-serif !important;
   }
 
-  body.swifly-watch-safe .plyr__controls {
+  body.swifly-watch-clean #movieButtonPlayerShell .plyr__controls {
+    position: absolute !important;
     left: 0 !important;
     right: 0 !important;
     bottom: 0 !important;
+    z-index: 40 !important;
     width: 100% !important;
-    padding: 76px 24px max(18px, env(safe-area-inset-bottom)) !important;
-    gap: 7px !important;
-    background: linear-gradient(to top, rgba(0,0,0,.98), rgba(0,0,0,.62) 44%, transparent) !important;
+    min-height: 86px !important;
+    display: flex !important;
+    align-items: flex-end !important;
+    gap: 6px !important;
+    padding: 76px 26px max(20px, env(safe-area-inset-bottom)) !important;
+    background: linear-gradient(to top, rgba(0,0,0,.96), rgba(0,0,0,.54) 42%, transparent) !important;
+    transition: opacity .22s ease, transform .22s ease !important;
   }
 
-  body.swifly-watch-safe .plyr__controls__item.plyr__progress__container {
+  body.swifly-watch-clean #movieButtonPlayerShell .plyr--hide-controls .plyr__controls {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transform: translateY(10px) !important;
+    pointer-events: none !important;
+  }
+
+  body.swifly-watch-clean #movieButtonPlayerShell .plyr--paused .plyr__controls,
+  body.swifly-watch-clean #movieButtonPlayerShell .plyr:hover .plyr__controls,
+  body.swifly-watch-clean #movieButtonPlayerShell .plyr:focus-within .plyr__controls {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: translateY(0) !important;
+    pointer-events: auto !important;
+  }
+
+  body.swifly-watch-clean #movieButtonPlayerShell .plyr__controls__item.plyr__progress__container {
     position: absolute !important;
-    left: 24px !important;
-    right: 24px !important;
-    bottom: 66px !important;
+    left: 28px !important;
+    right: 28px !important;
+    bottom: 72px !important;
     width: auto !important;
     margin: 0 !important;
   }
 
-  #swiflySafeBack {
+  body.swifly-watch-clean #movieButtonPlayerShell .plyr__control {
+    width: 42px !important;
+    height: 42px !important;
+    display: inline-grid !important;
+    place-items: center !important;
+    padding: 10px !important;
+    border-radius: 999px !important;
+    color: rgba(255,255,255,.94) !important;
+    background: transparent !important;
+    transition: background .16s ease, transform .16s ease, color .16s ease !important;
+  }
+
+  body.swifly-watch-clean #movieButtonPlayerShell .plyr__control:hover,
+  body.swifly-watch-clean #movieButtonPlayerShell .plyr__control:focus-visible {
+    color: #fff !important;
+    background: rgba(255,255,255,.14) !important;
+    transform: scale(1.06);
+  }
+
+  body.swifly-watch-clean #movieButtonPlayerShell .plyr__control--overlaid {
+    z-index: 35 !important;
+    width: 76px !important;
+    height: 76px !important;
+    padding: 22px !important;
+    border: 1px solid rgba(255,255,255,.22) !important;
+    color: #fff !important;
+    background: rgba(9,11,16,.62) !important;
+    box-shadow: 0 20px 58px rgba(0,0,0,.52), inset 0 1px 0 rgba(255,255,255,.12) !important;
+    backdrop-filter: blur(16px) saturate(1.1);
+  }
+
+  body.swifly-watch-clean #movieButtonPlayerShell .plyr__time {
+    min-width: max-content !important;
+    color: rgba(255,255,255,.82) !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    font-variant-numeric: tabular-nums;
+  }
+
+  body.swifly-watch-clean #movieButtonPlayerShell .plyr__volume {
+    width: auto !important;
+    min-width: 112px !important;
+  }
+
+  body.swifly-watch-clean #movieButtonPlayerShell .plyr__menu__container {
+    border: 1px solid rgba(255,255,255,.12) !important;
+    border-radius: 16px !important;
+    color: #fff !important;
+    background: rgba(14,14,18,.96) !important;
+    box-shadow: 0 24px 70px rgba(0,0,0,.62) !important;
+    backdrop-filter: blur(22px) saturate(1.12);
+  }
+
+  body.swifly-watch-clean #movieButtonPlayerShell .plyr__captions {
+    bottom: 100px !important;
+    font-size: clamp(18px, 2vw, 34px) !important;
+    line-height: 1.3 !important;
+    text-shadow: 0 2px 8px rgba(0,0,0,.98) !important;
+  }
+
+  #swiflyCleanBack {
     position: fixed !important;
-    top: max(14px, env(safe-area-inset-top)) !important;
-    left: max(14px, env(safe-area-inset-left)) !important;
-    z-index: 2147483647 !important;
-    width: 46px !important;
-    height: 46px !important;
+    top: max(16px, env(safe-area-inset-top)) !important;
+    left: max(16px, env(safe-area-inset-left)) !important;
+    z-index: 100 !important;
+    width: 44px !important;
+    height: 44px !important;
     display: grid !important;
     place-items: center !important;
-    border: 1px solid rgba(255,255,255,.17) !important;
+    border: 1px solid rgba(255,255,255,.14) !important;
     border-radius: 999px !important;
     color: #fff !important;
-    background: rgba(10,12,18,.64) !important;
-    box-shadow: 0 14px 42px rgba(0,0,0,.4) !important;
+    background: rgba(8,10,14,.52) !important;
+    box-shadow: 0 12px 34px rgba(0,0,0,.34) !important;
     cursor: pointer !important;
-    font: 700 25px/1 system-ui, sans-serif !important;
+    font: 700 24px/1 system-ui, sans-serif !important;
+    opacity: .78;
   }
 
   @media (max-width: 760px) {
-    body.swifly-watch-safe .plyr__controls {
-      padding: 60px 8px max(8px, env(safe-area-inset-bottom)) !important;
+    body.swifly-watch-clean #movieButtonPlayerShell .plyr__controls {
+      min-height: 76px !important;
       gap: 2px !important;
+      padding: 62px 8px max(10px, env(safe-area-inset-bottom)) !important;
     }
-
-    body.swifly-watch-safe .plyr__controls__item.plyr__progress__container {
-      left: 10px !important;
-      right: 10px !important;
-      bottom: 53px !important;
+    body.swifly-watch-clean #movieButtonPlayerShell .plyr__controls__item.plyr__progress__container {
+      left: 12px !important;
+      right: 12px !important;
+      bottom: 57px !important;
     }
+    body.swifly-watch-clean #movieButtonPlayerShell .plyr__control {
+      width: 38px !important;
+      height: 38px !important;
+      padding: 9px !important;
+    }
+    body.swifly-watch-clean #movieButtonPlayerShell .plyr__time--duration,
+    body.swifly-watch-clean #movieButtonPlayerShell .plyr__volume { display: none !important; }
   }
 </style>
 <script>
-(function swiflySafeWatchMount(){
+(function swiflyCleanWatchMount(){
   "use strict";
-
   var attempts = 0;
   var timer = null;
 
   function ensureBackButton() {
-    if (document.getElementById("swiflySafeBack")) return;
+    if (document.getElementById("swiflyCleanBack")) return;
     var back = document.createElement("button");
-    back.id = "swiflySafeBack";
+    back.id = "swiflyCleanBack";
     back.type = "button";
     back.setAttribute("aria-label", "Back to title");
     back.textContent = "←";
@@ -238,8 +327,8 @@ const watchOverlay = String.raw`
 
   function mount() {
     attempts += 1;
-    document.documentElement.classList.add("swifly-watch-safe");
-    document.body.classList.add("swifly-watch-safe");
+    document.documentElement.classList.add("swifly-watch-clean");
+    document.body.classList.add("swifly-watch-clean");
     ensureBackButton();
 
     var shell = document.getElementById("movieButtonPlayerShell");
@@ -248,14 +337,14 @@ const watchOverlay = String.raw`
       document.body.classList.add("swifly-player-live");
       if (timer) clearInterval(timer);
       timer = null;
-      console.log("[swifly-safe-watch] Player mounted; polling stopped.");
+      console.log("[swifly-clean-watch] Player mounted; clean controls active.");
       return true;
     }
 
     if (attempts >= 40 && timer) {
       clearInterval(timer);
       timer = null;
-      console.warn("[swifly-safe-watch] Player did not mount within 10 seconds.");
+      console.warn("[swifly-clean-watch] Player did not mount within 10 seconds.");
     }
     return false;
   }
@@ -265,13 +354,10 @@ const watchOverlay = String.raw`
     if (!timer) timer = setInterval(mount, 250);
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", start, { once: true });
-  } else {
-    start();
-  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once: true });
+  else start();
 
-  console.log("[swifly-safe-watch] Lightweight fullscreen watch layer loaded.");
+  console.log("[swifly-clean-watch] Clean streaming-player layout loaded.");
 })();
 </script>`;
 
@@ -286,19 +372,12 @@ fs.readFileSync = function swiflyFullscreenSafeRead(filePath, ...args) {
 
   const watchBodyMarker =
     '  const body = `<main class="dsWatchPage ${isMovieMode ? "dsWatchFullscreenMovie dsWatchEmbedMode" : "dsWatchTrailerMode"}">';
-
   const replacement =
-    `  const swiflySafeWatchMarkup = isMovieMode ? ${JSON.stringify(watchOverlay)} : "";\n\n` +
-    '  const body = `${swiflySafeWatchMarkup}<main class="dsWatchPage ${isMovieMode ? "dsWatchFullscreenMovie dsWatchEmbedMode" : "dsWatchTrailerMode"}">';
+    `  const swiflyCleanWatchMarkup = isMovieMode ? ${JSON.stringify(watchOverlay)} : "";\n\n` +
+    '  const body = `${swiflyCleanWatchMarkup}<main class="dsWatchPage ${isMovieMode ? "dsWatchFullscreenMovie dsWatchEmbedMode" : "dsWatchTrailerMode"}">';
 
-  source = replaceRequired(
-    source,
-    watchBodyMarker,
-    replacement,
-    "watchPage body marker",
-  );
-
-  console.log("[cinepro-fullscreen-safe] Lightweight fullscreen watch layer injected.");
+  source = replaceRequired(source, watchBodyMarker, replacement, "watchPage body marker");
+  console.log("[cinepro-fullscreen-safe] Clean full-window streaming-player layout injected.");
   return Buffer.isBuffer(result) ? Buffer.from(source, "utf8") : source;
 };
 
