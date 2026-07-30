@@ -21,6 +21,18 @@ services:
         value: "1"
       - key: REMOTE_BROWSER_JPEG_QUALITY
         value: "58"
+      - key: CINEPRO_ENABLED
+        value: "true"
+      - key: CINEPRO_AUTO_START
+        value: "true"
+      - key: CINEPRO_CORE_URL
+        value: http://127.0.0.1:3100
+      - key: CINEPRO_PORT
+        value: "3100"
+      - key: CINEPRO_TIMEOUT_MS
+        value: "90000"
+      - key: DEFAULT_PLAY_PROVIDER
+        value: cinepro
       - key: CONSUMET_ENABLED
         value: "true"
       - key: VIDSRC_ENABLED
@@ -33,8 +45,6 @@ services:
         value: "9000"
       - key: VIDSRC_CONCURRENCY
         value: "2"
-      - key: DEFAULT_PLAY_PROVIDER
-        value: "filmu"
       - key: FILMU_ENABLED
         value: "true"
       - key: FILMU_EMBED_TEMPLATE
@@ -48,6 +58,6 @@ services:
       - key: MOVIE_EMBED_PROVIDER_URL
         value: "https://lupetube.com/trailer"
       - key: MOVIE_PROXY_VIDEO_CLIENT_WAIT
-        value: "false"
+        value: "true"
       - key: MOVIE_PROXY_VIDEO_ALLOW_LEGACY_FALLBACK
         value: "true"
