@@ -80,7 +80,7 @@ function safeCoreProxyTarget(value) {
   const base = new URL(coreBaseUrl());
   let parsed;
   try {
-    parsed = new URL(clean(value), base);
+    parsed = new URL(clean(value), `${base.origin}/`);
   } catch {
     return null;
   }
@@ -91,10 +91,18 @@ function safeCoreProxyTarget(value) {
 }
 
 function relayFilename(kind) {
-  if (kind === "hls") return "master.m3u8";
+  if (kind === "hls") return "playlist.m3u8";
   if (kind === "dash") return "manifest.mpd";
   if (kind === "subtitle") return "subtitle.vtt";
-  return "video.mp4";
+  if (kind === "key") return "key.bin";
+  return "resource.bin";
+}
+
+function normalizeExpiry(expiresAt) {
+  const parsedExpiry = Date.parse(clean(expiresAt));
+  return Number.isFinite(parsedExpiry)
+    ? Math.max(Date.now() + 60_000, parsedExpiry)
+    : Date.now() + DEFAULT_RELAY_TTL_MS;
 }
 
 function registerRelayTarget(target, kind, expiresAt) {
@@ -103,13 +111,73 @@ function registerRelayTarget(target, kind, expiresAt) {
 
   cleanupRelayTargets();
   const token = crypto.randomBytes(24).toString("base64url");
-  const parsedExpiry = Date.parse(clean(expiresAt));
   relayTargets.set(token, {
     target: safeTarget,
-    kind,
-    expiresAt: Number.isFinite(parsedExpiry) ? Math.max(Date.now() + 60_000, parsedExpiry) : Date.now() + DEFAULT_RELAY_TTL_MS,
+    kind: clean(kind).toLowerCase() || "asset",
+    expiresAt: normalizeExpiry(expiresAt),
   });
   return `/api/cinepro/stream/${token}/${relayFilename(kind)}`;
+}
+
+function hlsKindForUri(uri, hint = "") {
+  const value = clean(uri).toLowerCase();
+  if (hint) return hint;
+  if (/\.m3u8(?:[?#]|$)/i.test(value)) return "hls";
+  if (/\.mpd(?:[?#]|$)/i.test(value)) return "dash";
+  if (/\.(?:vtt|srt|ass)(?:[?#]|$)/i.test(value)) return "subtitle";
+  if (/\.(?:key|bin)(?:[?#]|$)/i.test(value)) return "key";
+  return "asset";
+}
+
+function rewriteManifestUri(uri, expiresAt, hint = "") {
+  const value = clean(uri);
+  if (!value || value.startsWith("data:") || value.startsWith("blob:") || value.startsWith("/api/cinepro/stream/")) {
+    return value;
+  }
+
+  const rewritten = registerRelayTarget(value, hlsKindForUri(value, hint), expiresAt);
+  return rewritten || value;
+}
+
+function rewriteHlsManifest(manifest, expiresAt) {
+  const source = String(manifest || "");
+  if (!/^\s*#EXTM3U/m.test(source)) return { body: source, rewritten: 0 };
+
+  let rewritten = 0;
+  let nextLineHint = "";
+  const lines = source.split(/\r?\n/).map((line) => {
+    const trimmed = line.trim();
+    if (!trimmed) return line;
+
+    if (trimmed.startsWith("#")) {
+      if (/^#EXT-X-STREAM-INF:/i.test(trimmed)) nextLineHint = "hls";
+
+      let attributeHint = "";
+      if (/^#EXT-X-(?:MEDIA|I-FRAME-STREAM-INF|RENDITION-REPORT):/i.test(trimmed)) attributeHint = "hls";
+      else if (/^#EXT-X-KEY:/i.test(trimmed)) attributeHint = "key";
+      else if (/^#EXT-X-MAP:/i.test(trimmed)) attributeHint = "asset";
+
+      return line.replace(/URI="([^"]+)"/gi, (match, uri) => {
+        const next = rewriteManifestUri(uri, expiresAt, attributeHint);
+        if (next !== uri) rewritten += 1;
+        return `URI="${next}"`;
+      });
+    }
+
+    const hint = nextLineHint;
+    nextLineHint = "";
+    const next = rewriteManifestUri(trimmed, expiresAt, hint);
+    if (next === trimmed) return line;
+    rewritten += 1;
+    return line.replace(trimmed, next);
+  });
+
+  return { body: lines.join("\n"), rewritten };
+}
+
+function responseLooksLikeHls(upstream, entry) {
+  const contentType = clean(upstream && upstream.headers && upstream.headers.get("content-type")).toLowerCase();
+  return entry.kind === "hls" || contentType.includes("mpegurl") || contentType.includes("m3u8");
 }
 
 async function fetchJson(url, options = {}) {
@@ -250,7 +318,7 @@ function registerCineProBridge(app) {
     if (!enabled()) return res.status(503).json({ ok: false, enabled: false });
     try {
       const data = await fetchJson(`${coreBaseUrl()}/v1/health`, { timeoutMs: 10_000 });
-      return res.json({ ok: true, coreUrl: coreBaseUrl(), ...data });
+      return res.json({ ok: true, coreUrl: coreBaseUrl(), relayTargets: relayTargets.size, ...data });
     } catch (error) {
       return res.status(502).json({ ok: false, coreUrl: coreBaseUrl(), message: error.message || "CinePro unavailable" });
     }
@@ -258,15 +326,16 @@ function registerCineProBridge(app) {
 
   app.get("/api/cinepro/stream/:token/:filename", async (req, res) => {
     cleanupRelayTargets();
-    const entry = relayTargets.get(clean(req.params.token));
+    const token = clean(req.params.token);
+    const entry = relayTargets.get(token);
     if (!entry || entry.expiresAt <= Date.now()) {
-      relayTargets.delete(clean(req.params.token));
+      relayTargets.delete(token);
       return res.status(404).send("CinePro stream token expired or was not found.");
     }
 
     const controller = new AbortController();
     const onClose = () => controller.abort();
-    req.once("close", onClose);
+    res.once("close", onClose);
 
     try {
       const target = new URL(entry.target, coreBaseUrl()).toString();
@@ -281,6 +350,19 @@ function registerCineProBridge(app) {
       res.status(upstream.status);
       copyUpstreamHeaders(upstream, res);
       if (!upstream.body) return res.end();
+
+      if (upstream.ok && responseLooksLikeHls(upstream, entry)) {
+        const manifest = await upstream.text();
+        const rewritten = rewriteHlsManifest(manifest, entry.expiresAt);
+        res.setHeader("Content-Type", "application/vnd.apple.mpegurl; charset=utf-8");
+        res.setHeader("Cache-Control", "no-store");
+        res.setHeader("X-Swifly-CinePro-Rewritten", String(rewritten.rewritten));
+        if (rewritten.rewritten > 0) {
+          console.log(`[cinepro] Rewrote ${rewritten.rewritten} HLS child URL(s).`);
+        }
+        return res.send(rewritten.body);
+      }
+
       Readable.fromWeb(upstream.body).on("error", (error) => {
         if (!res.headersSent) res.status(502);
         try { res.end(error.message || "CinePro relay failed"); } catch {}
@@ -289,7 +371,7 @@ function registerCineProBridge(app) {
       if (!res.headersSent) res.status(error.name === "AbortError" ? 499 : 502);
       if (!res.writableEnded) res.end(error.name === "AbortError" ? "Request closed" : (error.message || "CinePro relay failed"));
     } finally {
-      req.off("close", onClose);
+      res.off("close", onClose);
     }
   });
 }
