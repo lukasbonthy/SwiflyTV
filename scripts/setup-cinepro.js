@@ -9,16 +9,54 @@ const vendorDir = path.join(root, "vendor", "cinepro-core");
 const repoUrl = "https://github.com/cinepro-org/core.git";
 const update = process.argv.includes("--update");
 const build = process.argv.includes("--build") || !process.argv.includes("--no-build");
-const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
 
-function run(command, args, cwd = root) {
+function run(command, args, cwd = root, options = {}) {
   const result = spawnSync(command, args, {
     cwd,
     stdio: "inherit",
     windowsHide: false,
+    shell: Boolean(options.shell),
     env: { ...process.env, NODE_ENV: "development" },
   });
-  if (result.status !== 0) throw new Error(`${command} ${args.join(" ")} failed with exit code ${result.status}`);
+
+  if (result.error) {
+    throw new Error(`${command} ${args.join(" ")} could not start: ${result.error.message}`);
+  }
+  if (result.signal) {
+    throw new Error(`${command} ${args.join(" ")} was terminated by signal ${result.signal}`);
+  }
+  if (result.status !== 0) {
+    throw new Error(`${command} ${args.join(" ")} failed with exit code ${result.status}`);
+  }
+}
+
+function resolveNpmCli() {
+  const candidates = [
+    process.env.npm_execpath,
+    path.join(path.dirname(process.execPath), "node_modules", "npm", "bin", "npm-cli.js"),
+  ].filter(Boolean);
+
+  return candidates.find((candidate) => {
+    try {
+      return fs.existsSync(candidate);
+    } catch {
+      return false;
+    }
+  }) || "";
+}
+
+function runNpm(args, cwd) {
+  const npmCli = resolveNpmCli();
+  if (npmCli) {
+    run(process.execPath, [npmCli, ...args], cwd);
+    return;
+  }
+
+  // Last-resort Windows fallback for installations where npm is available only
+  // through npm.cmd on PATH. shell=true is required for .cmd resolution.
+  run(process.platform === "win32" ? "npm.cmd" : "npm", args, cwd, {
+    shell: process.platform === "win32",
+  });
 }
 
 function main() {
@@ -35,17 +73,18 @@ function main() {
   }
 
   console.log("[cinepro] Installing Core dependencies...");
-  run(npmCommand, ["install", "--include=dev"], vendorDir);
+  runNpm(["install", "--include=dev"], vendorDir);
 
   if (build) {
     console.log("[cinepro] Building Core...");
-    run(npmCommand, ["run", "build"], vendorDir);
+    runNpm(["run", "build"], vendorDir);
   }
 
   const marker = {
     repository: repoUrl,
     installedAt: new Date().toISOString(),
     built: build,
+    node: process.version,
   };
   fs.writeFileSync(path.join(vendorDir, ".swifly-cinepro-ready.json"), JSON.stringify(marker, null, 2));
   console.log("[cinepro] CinePro Core is ready in vendor/cinepro-core.");
@@ -54,6 +93,6 @@ function main() {
 try {
   main();
 } catch (error) {
-  console.error("[cinepro] Setup failed:", error.message || error);
+  console.error("[cinepro] Setup failed:", error.stack || error.message || error);
   process.exit(1);
 }
