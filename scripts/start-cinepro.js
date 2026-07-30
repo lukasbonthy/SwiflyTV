@@ -18,8 +18,10 @@ const autoStart = process.env.CINEPRO_AUTO_START !== "false" && /^https?:\/\/(?:
 
 process.env.CINEPRO_ENABLED = process.env.CINEPRO_ENABLED || "true";
 process.env.CINEPRO_CORE_URL = coreUrl;
-process.env.DEFAULT_PLAY_PROVIDER = process.env.DEFAULT_PLAY_PROVIDER || "cinepro";
-process.env.MOVIE_PROXY_VIDEO_CLIENT_WAIT = process.env.MOVIE_PROXY_VIDEO_CLIENT_WAIT || "true";
+if (process.env.CINEPRO_ENABLED !== "false") {
+  process.env.DEFAULT_PLAY_PROVIDER = "cinepro";
+  process.env.MOVIE_PROXY_VIDEO_CLIENT_WAIT = "true";
+}
 
 let coreChild = null;
 
@@ -117,6 +119,13 @@ function runSwifly() {
   );
 
   source = source.replace('DEFAULT_PLAY_PROVIDER: "streamprovider"', 'DEFAULT_PLAY_PROVIDER: "cinepro"');
+
+  source = replaceOnce(
+    source,
+    "CinePro stream rate-limit exemption",
+    '    skip: (req) => String(req.path || "").startsWith("/api/hls-proxy/"),',
+    '    skip: (req) => String(req.path || "").startsWith("/api/hls-proxy/") || String(req.path || "").startsWith("/api/cinepro/stream/"),',
+  );
 
   source = replaceOnce(
     source,
