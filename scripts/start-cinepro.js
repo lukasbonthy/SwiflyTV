@@ -18,6 +18,7 @@ const autoStart = process.env.CINEPRO_AUTO_START !== "false" && /^https?:\/\/(?:
 
 process.env.CINEPRO_ENABLED = process.env.CINEPRO_ENABLED || "true";
 process.env.CINEPRO_STRICT = process.env.CINEPRO_STRICT || "true";
+process.env.CINEPRO_PROVIDER_ALLOWLIST = process.env.CINEPRO_PROVIDER_ALLOWLIST || "icefy,vixsrc";
 process.env.CINEPRO_CORE_URL = coreUrl;
 if (process.env.CINEPRO_ENABLED !== "false") {
   process.env.DEFAULT_PLAY_PROVIDER = "cinepro";
@@ -35,11 +36,14 @@ async function healthOkay() {
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 2500);
-    const response = await fetch(`${coreUrl}/v1/health`, { signal: controller.signal, headers: { Accept: "application/json" } });
+    const response = await fetch(`${coreUrl}/v1/health`, {
+      signal: controller.signal,
+      headers: { Accept: "application/json" },
+    });
     clearTimeout(timer);
     if (!response.ok) return false;
     const data = await response.json().catch(() => null);
-    return Boolean(data && (data.status === "operational" || data.spec === "omss"));
+    return Boolean(data && (data.status === "operational" || data.status === "healthy" || data.spec === "omss"));
   } catch {
     return false;
   }
@@ -54,9 +58,70 @@ function ensureCoreInstalled() {
     windowsHide: false,
     env: process.env,
   });
+  if (result.error) throw result.error;
   if (result.status !== 0 || !fs.existsSync(coreEntry)) {
     throw new Error("CinePro Core setup failed. Run npm run cinepro:setup and retry.");
   }
+}
+
+function normalizedAllowlist() {
+  const raw = String(process.env.CINEPRO_PROVIDER_ALLOWLIST || "icefy,vixsrc").trim();
+  if (!raw || raw === "*") return [];
+  return Array.from(new Set(raw.split(",").map((item) => item.trim().toLowerCase()).filter(Boolean)));
+}
+
+function prepareFilteredCoreEntry() {
+  const allowlist = normalizedAllowlist();
+  if (!allowlist.length) {
+    console.log("[cinepro] Provider allowlist disabled; loading every CinePro provider.");
+    return coreEntry;
+  }
+
+  const distDir = path.dirname(coreEntry);
+  const sourceProvidersDir = path.join(distDir, "providers");
+  const filteredProvidersDir = path.join(distDir, ".swifly-providers");
+  const runtimeEntry = path.join(distDir, "swifly-server.js");
+
+  if (!fs.existsSync(sourceProvidersDir)) {
+    throw new Error(`CinePro provider directory is missing: ${sourceProvidersDir}`);
+  }
+
+  fs.rmSync(filteredProvidersDir, { recursive: true, force: true });
+  fs.mkdirSync(filteredProvidersDir, { recursive: true });
+
+  const available = fs.readdirSync(sourceProvidersDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name);
+  const availableByLower = new Map(available.map((name) => [name.toLowerCase(), name]));
+  const copied = [];
+
+  for (const requested of allowlist) {
+    const actual = availableByLower.get(requested);
+    if (!actual) {
+      console.warn(`[cinepro] Requested provider '${requested}' was not found and will be skipped.`);
+      continue;
+    }
+    fs.cpSync(path.join(sourceProvidersDir, actual), path.join(filteredProvidersDir, actual), {
+      recursive: true,
+      force: true,
+    });
+    copied.push(actual);
+  }
+
+  if (!copied.length) {
+    throw new Error(`None of the requested CinePro providers were found: ${allowlist.join(", ")}`);
+  }
+
+  let runtimeSource = fs.readFileSync(coreEntry, "utf8");
+  const providerPathPattern = /path\.join\(__dirname,\s*["']\.\/providers\/?["']\)/;
+  if (!providerPathPattern.test(runtimeSource)) {
+    throw new Error("Could not patch CinePro provider discovery path for the Swifly allowlist.");
+  }
+  runtimeSource = runtimeSource.replace(providerPathPattern, 'path.join(__dirname, ".swifly-providers")');
+  fs.writeFileSync(runtimeEntry, runtimeSource);
+
+  console.log(`[cinepro] Fast provider allowlist: ${copied.join(", ")}`);
+  return runtimeEntry;
 }
 
 async function startCoreIfNeeded() {
@@ -77,8 +142,9 @@ async function startCoreIfNeeded() {
   }
 
   ensureCoreInstalled();
+  const runtimeEntry = prepareFilteredCoreEntry();
   console.log(`[cinepro] Starting Core locally on ${coreUrl}...`);
-  coreChild = spawn(process.execPath, [coreEntry], {
+  coreChild = spawn(process.execPath, [runtimeEntry], {
     cwd: coreDir,
     stdio: "inherit",
     windowsHide: false,
@@ -125,7 +191,7 @@ function runSwifly() {
     source,
     "Express app declaration",
     "const app = express();",
-    "const app = express();\nconst { fetchCineProSource, registerCineProBridge } = require(\"./cinepro-client\");",
+    'const app = express();\nconst { fetchCineProSource, registerCineProBridge } = require("./cinepro-client");',
   );
 
   source = source.replace('DEFAULT_PLAY_PROVIDER: "streamprovider"', 'DEFAULT_PLAY_PROVIDER: "cinepro"');
@@ -169,41 +235,21 @@ function runSwifly() {
   // 0-streamprovider) Local StreamProvider-main any-media implementation.`,
   );
 
-  source = replaceOnce(
-    source,
-    "CinePro source label",
-    'clientProxyVideoWait ? "waiting for m3u8/stream"',
-    'clientProxyVideoWait ? "waiting for CinePro"',
-  );
-
-  source = replaceOnce(
-    source,
-    "CinePro waiting-card eyebrow",
-    "<span>Getting m3u8</span>",
-    "<span>Contacting CinePro</span>",
-  );
-
-  source = replaceOnce(
-    source,
-    "CinePro waiting-card title",
-    "<h2>Finding your m3u8 source...</h2>",
-    "<h2>CinePro is finding a stream...</h2>",
-  );
-
+  source = replaceOnce(source, "CinePro source label", 'clientProxyVideoWait ? "waiting for m3u8/stream"', 'clientProxyVideoWait ? "waiting for CinePro"');
+  source = replaceOnce(source, "CinePro waiting-card eyebrow", "<span>Getting m3u8</span>", "<span>Contacting CinePro</span>");
+  source = replaceOnce(source, "CinePro waiting-card title", "<h2>Finding your m3u8 source...</h2>", "<h2>CinePro is finding a stream...</h2>");
   source = replaceOnce(
     source,
     "CinePro waiting-card description",
     "<p>This provider can take a while. Keep this page open — SwiflyTV will keep trying and load the m3u8 stream as soon as it returns.</p>",
     "<p>CinePro is checking its configured providers. Keep this page open — SwiflyTV will load the stream CinePro returns.</p>",
   );
-
   source = replaceOnce(
     source,
     "CinePro waiting-card initial status",
     '<div id="proxyVideoWaitStatus" class="dsProxyVideoWaitStatus">Starting request...</div>',
     '<div id="proxyVideoWaitStatus" class="dsProxyVideoWaitStatus">Starting CinePro request...</div>',
   );
-
   source = replaceOnce(
     source,
     "CinePro player loading label",
@@ -222,21 +268,18 @@ function runSwifly() {
     '            showError("Still no m3u8 source after " + elapsed + " seconds. You can retry, refresh, or use a Watch Room.");',
     '            showError("CinePro did not return a playable stream after " + elapsed + " seconds. Check /api/cinepro/health, then retry.");',
   );
-
   source = replaceOnce(
     source,
     "CinePro resolving label",
     '          setStatus((manual ? "Retrying" : "Trying") + " m3u8 source... attempt " + attempt + " • " + elapsed + "s");',
     '          setStatus((manual ? "Retrying CinePro" : "Contacting CinePro") + "... attempt " + attempt + " • " + elapsed + "s");',
   );
-
   source = replaceOnce(
     source,
     "CinePro success label",
     '              setStatus((isM3u8Selected || data.m3u8Embedded || data.streamType === "m3u8" ? "m3u8" : "Source") + " found. Loading player...");',
     '              setStatus((data && data.apiProvider === "cinepro" ? "CinePro stream" : (isM3u8Selected || data.m3u8Embedded || data.streamType === "m3u8" ? "HLS stream" : "Source")) + " found. Loading player...");',
   );
-
   source = replaceOnce(
     source,
     "CinePro player-ready label",
