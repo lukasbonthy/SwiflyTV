@@ -1,15 +1,15 @@
 {
   "name": "swiflytv",
-  "version": "3.3.1",
-  "description": "SwiflyTV movie interface with guarded CinePro source switching and persistent Aurora playback controls.",
+  "version": "3.2.1",
+  "description": "SwiflyTV movie interface restored to the last known working Aurora settings tray runtime.",
   "main": "server.js",
   "scripts": {
-    "start": "node scripts/start-cinepro-sources-hotfix.js",
-    "dev": "node scripts/start-cinepro-sources-hotfix.js",
+    "start": "node scripts/start-cinepro-settings-cinema.js",
+    "dev": "node scripts/start-cinepro-settings-cinema.js",
     "base": "node server.js",
     "cinepro:setup": "node scripts/setup-cinepro.js --build",
     "cinepro:update": "node scripts/setup-cinepro.js --update --build",
-    "check": "node --check server.js && node --check cinepro-client.js && node --check scripts/start-cinepro.js && node --check scripts/start-cinepro-preferred.js && node --check scripts/start-cinepro-layout.js && node --check scripts/start-cinepro-plyr.js && node --check scripts/start-cinepro-fullscreen-safe.js && node --check scripts/start-cinepro-custom-controls.js && node --check scripts/start-cinepro-premium.js && node --check scripts/start-cinepro-polished.js && node --check scripts/start-cinepro-compact.js && node --check scripts/start-cinepro-languages.js && node --check scripts/start-cinepro-languages-hotfix.js && node --check scripts/start-cinepro-theme-unified.js && node --check scripts/start-cinepro-settings-cinema.js && node --check scripts/start-cinepro-sources.js && node --check scripts/start-cinepro-sources-hotfix.js && node --check scripts/setup-cinepro.js"
+    "check": "node --check server.js && node --check cinepro-client.js && node --check scripts/start-cinepro.js && node --check scripts/start-cinepro-preferred.js && node --check scripts/start-cinepro-layout.js && node --check scripts/start-cinepro-plyr.js && node --check scripts/start-cinepro-fullscreen-safe.js && node --check scripts/start-cinepro-custom-controls.js && node --check scripts/start-cinepro-premium.js && node --check scripts/start-cinepro-polished.js && node --check scripts/start-cinepro-compact.js && node --check scripts/start-cinepro-languages.js && node --check scripts/start-cinepro-languages-hotfix.js && node --check scripts/start-cinepro-theme-unified.js && node --check scripts/start-cinepro-settings-cinema.js && node --check scripts/setup-cinepro.js"
   },
   "engines": {
     "node": "20.x"
