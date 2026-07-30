@@ -1,7 +1,7 @@
 {
   "name": "swiflytv",
-  "version": "2.3.1",
-  "description": "SwiflyTV movie interface with CinePro Core and a premium custom full-window streaming player.",
+  "version": "2.4.0",
+  "description": "SwiflyTV movie interface with CinePro Core and the Aurora Cinema full-window player.",
   "main": "server.js",
   "scripts": {
     "start": "node scripts/start-cinepro-premium.js",
