@@ -16,6 +16,10 @@ const languagesSource = fs.readFileSync(
   path.join(__dirname, "start-cinepro-languages.js"),
   "utf8",
 );
+const cinemaSettingsSource = fs.readFileSync(
+  path.join(__dirname, "start-cinepro-settings-cinema.js"),
+  "utf8",
+);
 
 const patchedControls = patchCustomControlsCompatible(controlsSource);
 const patchedLanguages = patchLanguagesCompatible(languagesSource);
@@ -61,4 +65,22 @@ if (!patchedLanguages.includes(hotfixUnsafePattern)) {
   throw new Error("[swifly-controls-compatible-qa] Existing captions hotfix can no longer patch the language layer.");
 }
 
-console.log("Swifly control/language startup compatibility QA passed.");
+const compactLayoutMarkers = [
+  "min-height:62px!important",
+  "position:absolute!important",
+  "inset:auto 46px 53px auto!important",
+  ".swiflySettingRow.isDisabled{display:none!important}",
+  "Compact floating playback tray mounted.",
+];
+
+for (const marker of compactLayoutMarkers) {
+  if (!cinemaSettingsSource.includes(marker)) {
+    throw new Error(`[swifly-controls-compatible-qa] Missing compact layout marker: ${marker}`);
+  }
+}
+
+if (cinemaSettingsSource.includes("position:relative!important;inset:auto!important;align-self:flex-end!important")) {
+  throw new Error("[swifly-controls-compatible-qa] Old in-flow settings tray layout survived.");
+}
+
+console.log("Swifly control/language and compact layout QA passed.");
