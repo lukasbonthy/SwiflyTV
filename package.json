@@ -1,15 +1,15 @@
 {
   "name": "swiflytv",
-  "version": "3.3.2",
-  "description": "SwiflyTV movie interface with compact floating playback settings and reliable video controls.",
+  "version": "3.4.0",
+  "description": "SwiflyTV movie interface with complete Source, quality, speed, audio, and caption settings.",
   "main": "server.js",
   "scripts": {
-    "start": "node scripts/start-cinepro-controls-compatible.js",
-    "dev": "node scripts/start-cinepro-controls-compatible.js",
+    "start": "node scripts/start-cinepro-stream-options.js",
+    "dev": "node scripts/start-cinepro-stream-options.js",
     "base": "node server.js",
     "cinepro:setup": "node scripts/setup-cinepro.js --build",
     "cinepro:update": "node scripts/setup-cinepro.js --update --build",
-    "check": "node --check server.js && node --check cinepro-client.js && node --check scripts/start-cinepro.js && node --check scripts/start-cinepro-preferred.js && node --check scripts/start-cinepro-layout.js && node --check scripts/start-cinepro-plyr.js && node --check scripts/start-cinepro-fullscreen-safe.js && node --check scripts/start-cinepro-custom-controls.js && node --check scripts/start-cinepro-premium.js && node --check scripts/start-cinepro-polished.js && node --check scripts/start-cinepro-compact.js && node --check scripts/start-cinepro-languages.js && node --check scripts/start-cinepro-languages-hotfix.js && node --check scripts/start-cinepro-theme-unified.js && node --check scripts/start-cinepro-settings-cinema.js && node --check scripts/start-cinepro-controls-fixed.js && node --check scripts/start-cinepro-controls-compatible.js && node --check scripts/qa-cinepro-controls-fixed.js && node scripts/qa-cinepro-controls-fixed.js && node --check scripts/qa-cinepro-controls-compatible.js && node scripts/qa-cinepro-controls-compatible.js && node --check scripts/setup-cinepro.js"
+    "check": "node --check server.js && node --check cinepro-client.js && node --check scripts/start-cinepro.js && node --check scripts/start-cinepro-preferred.js && node --check scripts/start-cinepro-layout.js && node --check scripts/start-cinepro-plyr.js && node --check scripts/start-cinepro-fullscreen-safe.js && node --check scripts/start-cinepro-custom-controls.js && node --check scripts/start-cinepro-premium.js && node --check scripts/start-cinepro-polished.js && node --check scripts/start-cinepro-compact.js && node --check scripts/start-cinepro-languages.js && node --check scripts/start-cinepro-languages-hotfix.js && node --check scripts/start-cinepro-theme-unified.js && node --check scripts/start-cinepro-settings-cinema.js && node --check scripts/start-cinepro-controls-fixed.js && node --check scripts/start-cinepro-controls-compatible.js && node --check scripts/start-cinepro-stream-options.js && node --check scripts/qa-cinepro-controls-fixed.js && node scripts/qa-cinepro-controls-fixed.js && node --check scripts/qa-cinepro-controls-compatible.js && node scripts/qa-cinepro-controls-compatible.js && node --check scripts/qa-cinepro-stream-options.js && node scripts/qa-cinepro-stream-options.js && node --check scripts/setup-cinepro.js"
   },
   "engines": {
     "node": "20.x"
