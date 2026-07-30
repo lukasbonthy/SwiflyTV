@@ -205,21 +205,16 @@ async function fetchJson(url, options = {}) {
   }
 }
 
-async function fetchCineProSource({ mediaType = "movie", id = "", season = "1", episode = "1", attempts = [] }) {
-  if (!enabled()) return null;
-
+function mediaEndpoint({ mediaType = "movie", id = "", season = "1", episode = "1" }) {
   const numericId = clean(id);
-  if (!/^\d{1,20}$/.test(numericId)) {
-    attempts.push("cinepro: TMDB id must be numeric");
-    return null;
-  }
-
-  const base = coreBaseUrl();
+  if (!/^\d{1,20}$/.test(numericId)) return null;
   const endpoint = mediaType === "tv"
     ? `/v1/tv/${encodeURIComponent(numericId)}/seasons/${encodeURIComponent(clean(season) || "1")}/episodes/${encodeURIComponent(clean(episode) || "1")}`
     : `/v1/movies/${encodeURIComponent(numericId)}`;
+  return { numericId, endpoint };
+}
 
-  const data = await fetchJson(`${base}${endpoint}`);
+function normalizeCineProData(data, { numericId, endpoint, attempts = [] }) {
   const sources = Array.isArray(data && data.sources) ? data.sources : [];
   const candidates = sources
     .map((source) => {
@@ -291,6 +286,46 @@ async function fetchCineProSource({ mediaType = "movie", id = "", season = "1", 
   };
 }
 
+async function fetchCineProSource({ mediaType = "movie", id = "", season = "1", episode = "1", attempts = [] }) {
+  if (!enabled()) return null;
+
+  const media = mediaEndpoint({ mediaType, id, season, episode });
+  if (!media) {
+    attempts.push("cinepro: TMDB id must be numeric");
+    return null;
+  }
+
+  const data = await fetchJson(`${coreBaseUrl()}${media.endpoint}`);
+  return normalizeCineProData(data, { ...media, attempts });
+}
+
+async function refreshCineProSource({ responseId = "", mediaType = "movie", id = "", season = "1", episode = "1", attempts = [] }) {
+  if (!enabled()) return null;
+
+  const media = mediaEndpoint({ mediaType, id, season, episode });
+  if (!media) {
+    attempts.push("cinepro: TMDB id must be numeric");
+    return null;
+  }
+
+  const cleanResponseId = clean(responseId);
+  if (!/^[A-Za-z0-9_-]{8,200}$/.test(cleanResponseId)) {
+    attempts.push("cinepro: invalid response id; resolving a fresh source");
+  } else {
+    try {
+      await fetchJson(`${coreBaseUrl()}/v1/refresh/${encodeURIComponent(cleanResponseId)}`, {
+        timeoutMs: timeoutMs(),
+      });
+      attempts.push("cinepro: cache invalidated for paused stream");
+    } catch (error) {
+      attempts.push(`cinepro: refresh endpoint failed (${error.message || "unknown error"}); resolving again`);
+    }
+  }
+
+  const data = await fetchJson(`${coreBaseUrl()}${media.endpoint}`);
+  return normalizeCineProData(data, { ...media, attempts });
+}
+
 function copyUpstreamHeaders(upstream, res) {
   const headers = [
     "content-type",
@@ -321,6 +356,42 @@ function registerCineProBridge(app) {
       return res.json({ ok: true, coreUrl: coreBaseUrl(), relayTargets: relayTargets.size, ...data });
     } catch (error) {
       return res.status(502).json({ ok: false, coreUrl: coreBaseUrl(), message: error.message || "CinePro unavailable" });
+    }
+  });
+
+  app.get("/api/cinepro/refresh/:responseId/:mediaType/:id", async (req, res) => {
+    res.set("Cache-Control", "no-store");
+    if (!enabled()) return res.status(503).json({ status: "error", message: "CinePro is disabled." });
+
+    const mediaType = clean(req.params.mediaType).toLowerCase() === "tv" ? "tv" : "movie";
+    const attempts = [];
+    try {
+      const result = await refreshCineProSource({
+        responseId: req.params.responseId,
+        mediaType,
+        id: req.params.id,
+        season: req.query.season || "1",
+        episode: req.query.episode || "1",
+        attempts,
+      });
+      if (!result) {
+        return res.status(502).json({
+          status: "error",
+          apiProvider: "cinepro",
+          message: attempts.slice(-3).join(" | ") || "CinePro did not return a refreshed source.",
+          attempts,
+        });
+      }
+      console.log(`[cinepro] Refreshed paused stream with ${result.streamName || "CinePro"}${result.streamQuality ? ` ${result.streamQuality}` : ""}.`);
+      return res.json(result);
+    } catch (error) {
+      attempts.push(`cinepro: ${error.message || "refresh failed"}`);
+      return res.status(502).json({
+        status: "error",
+        apiProvider: "cinepro",
+        message: attempts.slice(-3).join(" | "),
+        attempts,
+      });
     }
   });
 
@@ -378,5 +449,6 @@ function registerCineProBridge(app) {
 
 module.exports = {
   fetchCineProSource,
+  refreshCineProSource,
   registerCineProBridge,
 };
