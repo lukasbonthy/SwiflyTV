@@ -1,13 +1,15 @@
 {
   "name": "swifly-games",
-  "version": "3.0.0",
-  "description": "The original SwiflyTV interface converted into a browser game catalog powered by MonkeyGG2 game entries.",
+  "version": "3.1.0",
+  "description": "The original SwiflyTV interface converted into a locally served browser game catalog using MonkeyGG2 files.",
   "main": "server.js",
   "scripts": {
     "start": "node scripts/start-game-mode.js",
     "dev": "node scripts/start-game-mode.js",
+    "sync-games": "node scripts/sync-monkey-games.js",
+    "update-games": "node scripts/sync-monkey-games.js --update",
     "base": "node server.js",
-    "check": "node --check server.js && node --check game-mode.js && node --check game-mode-client.js && node --check scripts/start-game-mode.js"
+    "check": "node --check server.js && node --check game-mode-local.js && node --check game-mode-client.js && node --check scripts/start-game-mode.js && node --check scripts/sync-monkey-games.js"
   },
   "engines": {
     "node": "20.x"
