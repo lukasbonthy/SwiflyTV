@@ -34,40 +34,40 @@ const cinemaUpgrade = String.raw`
             var style = document.createElement("style");
             style.id = "swiflyCinemaSettingsStyle";
             style.textContent = [
-              "body.swifly-unified-theme.swifly-cinema-settings .swiflyUiMenu{width:min(344px,calc(100vw - 24px));border-radius:17px;border-color:rgba(255,255,255,.11);background:radial-gradient(circle at 84% -20%,rgba(126,88,255,.13),transparent 43%),linear-gradient(180deg,rgba(18,19,30,.95),rgba(7,8,14,.98));box-shadow:0 24px 72px rgba(0,0,0,.68),inset 0 1px 0 rgba(255,255,255,.07);backdrop-filter:blur(24px) saturate(1.22)}",
-              "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingsHome,body.swifly-unified-theme.swifly-cinema-settings .swiflySettingsDetail{padding:10px}",
-              "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingsHeader,body.swifly-unified-theme.swifly-cinema-settings .swiflyDetailHeader{min-height:40px;padding:2px 3px 9px;border-bottom:1px solid rgba(255,255,255,.06)}",
+              "body.swifly-unified-theme.swifly-cinema-settings .swiflyUiMenu{right:max(10px,calc((100vw - 980px)/2 + 46px));bottom:58px;width:min(286px,calc(100vw - 20px));border:1px solid rgba(255,255,255,.085);border-radius:14px;overflow:hidden;background:linear-gradient(180deg,rgba(16,16,27,.91),rgba(8,8,15,.96));box-shadow:0 18px 52px rgba(0,0,0,.58),inset 0 1px 0 rgba(255,255,255,.055),0 0 0 1px rgba(128,92,255,.025);backdrop-filter:blur(18px) saturate(1.16)}",
+              "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingsHome,body.swifly-unified-theme.swifly-cinema-settings .swiflySettingsDetail{padding:7px}",
+              "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingsHeader,body.swifly-unified-theme.swifly-cinema-settings .swiflyDetailHeader{min-height:32px;padding:0 3px 6px;border-bottom:1px solid rgba(255,255,255,.045)}",
               "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingsHeading{gap:0}",
               "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingsMark{display:none}",
-              "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingsHeading strong,body.swifly-unified-theme.swifly-cinema-settings .swiflyDetailHeader strong{font-size:13.5px;font-weight:800;letter-spacing:-.01em}",
+              "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingsHeading strong,body.swifly-unified-theme.swifly-cinema-settings .swiflyDetailHeader strong{font-size:12px;font-weight:780;letter-spacing:0;color:rgba(255,255,255,.88)}",
               "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingsHeading small,body.swifly-unified-theme.swifly-cinema-settings .swiflyDetailHeader small{display:none}",
-              "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingsClose,body.swifly-unified-theme.swifly-cinema-settings .swiflyDetailBack{width:30px;height:30px;border:0;border-radius:9px;background:transparent;color:rgba(255,255,255,.56);box-shadow:none}",
-              "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingsClose:hover,body.swifly-unified-theme.swifly-cinema-settings .swiflyDetailBack:hover{background:rgba(255,255,255,.07);color:#fff;transform:none}",
-              "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingsList{display:block;margin-top:8px;overflow:hidden;border:1px solid rgba(255,255,255,.07);border-radius:12px;background:rgba(255,255,255,.018)}",
-              "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingRow{min-height:50px;padding:0 11px;border:0;border-radius:0;background:transparent;box-shadow:none;grid-template-columns:24px minmax(0,1fr) minmax(82px,auto);gap:9px;transform:none}",
-              "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingRow+.swiflySettingRow{border-top:1px solid rgba(255,255,255,.055)}",
-              "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingRow:hover,body.swifly-unified-theme.swifly-cinema-settings .swiflySettingRow:focus-visible{border-color:transparent;background:linear-gradient(90deg,rgba(255,78,157,.055),rgba(126,88,255,.075));box-shadow:none;transform:none}",
-              "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingIcon{width:24px;height:24px;border:0;border-radius:0;background:transparent;box-shadow:none;color:rgba(219,207,255,.8);font-size:11px}",
-              "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingCopy strong{font-size:11.5px;font-weight:760;letter-spacing:0}",
+              "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingsClose,body.swifly-unified-theme.swifly-cinema-settings .swiflyDetailBack{width:25px;height:25px;border:0;border-radius:8px;background:transparent;color:rgba(255,255,255,.45);box-shadow:none;font-size:10px}",
+              "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingsClose:hover,body.swifly-unified-theme.swifly-cinema-settings .swiflyDetailBack:hover{background:rgba(255,255,255,.055);color:#fff;transform:none}",
+              "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingsList{display:block;margin-top:5px;overflow:hidden;border:0;border-radius:9px;background:rgba(255,255,255,.012)}",
+              "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingRow{min-height:40px;padding:0 8px;border:0;border-radius:0;background:transparent;box-shadow:none;grid-template-columns:20px minmax(0,1fr) minmax(74px,auto);gap:7px;transform:none}",
+              "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingRow+.swiflySettingRow{border-top:1px solid rgba(255,255,255,.042)}",
+              "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingRow:hover,body.swifly-unified-theme.swifly-cinema-settings .swiflySettingRow:focus-visible{border-color:transparent;background:linear-gradient(90deg,rgba(255,78,157,.04),rgba(126,88,255,.055));box-shadow:none;transform:none}",
+              "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingIcon{width:20px;height:20px;border:0;border-radius:0;background:transparent;box-shadow:none;color:rgba(221,211,255,.72);font-size:9.5px}",
+              "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingCopy strong{font-size:10.5px;font-weight:700;letter-spacing:0;color:rgba(255,255,255,.88)}",
               "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingCopy small{display:none}",
-              "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingMeta{gap:7px;color:rgba(255,255,255,.28)}",
-              "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingValue{max-width:142px;padding:0;border:0;border-radius:0;background:transparent;color:rgba(255,255,255,.56);font-size:10.5px;font-weight:650;box-shadow:none}",
-              "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingMeta>i{font-size:8px}",
-              "body.swifly-unified-theme.swifly-cinema-settings .swiflyDetailHeader{gap:8px;justify-content:flex-start}",
-              "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingsChoices{display:block;margin-top:8px;overflow:auto;border:1px solid rgba(255,255,255,.07);border-radius:12px;background:rgba(255,255,255,.018);padding:0;max-height:min(330px,55vh)}",
-              "body.swifly-unified-theme.swifly-cinema-settings .swiflyChoice{min-height:44px;padding:0 11px;border:0;border-radius:0;background:transparent;color:rgba(255,255,255,.7);box-shadow:none}",
-              "body.swifly-unified-theme.swifly-cinema-settings .swiflyChoice+.swiflyChoice{border-top:1px solid rgba(255,255,255,.055)}",
-              "body.swifly-unified-theme.swifly-cinema-settings .swiflyChoice:hover,body.swifly-unified-theme.swifly-cinema-settings .swiflyChoice:focus-visible{border-color:transparent;background:linear-gradient(90deg,rgba(255,78,157,.055),rgba(126,88,255,.075));color:#fff}",
-              "body.swifly-unified-theme.swifly-cinema-settings .swiflyChoice.selected{border-color:transparent;background:linear-gradient(90deg,rgba(255,78,157,.075),rgba(126,88,255,.1));box-shadow:none}",
-              "body.swifly-unified-theme.swifly-cinema-settings .swiflyChoiceText{font-size:11px;font-weight:690}",
-              "body.swifly-unified-theme.swifly-cinema-settings .swiflyChoiceCheck{width:20px;height:20px;color:transparent;background:transparent;box-shadow:none;font-size:9px}",
-              "body.swifly-unified-theme.swifly-cinema-settings .swiflyChoice.selected .swiflyChoiceCheck{color:#d7c7ff;background:transparent;box-shadow:none}",
-              "@media(max-width:720px){body.swifly-unified-theme.swifly-cinema-settings .swiflyUiMenu{width:calc(100vw - 12px)}body.swifly-unified-theme.swifly-cinema-settings .swiflySettingRow{grid-template-columns:24px minmax(0,1fr) minmax(72px,auto)}body.swifly-unified-theme.swifly-cinema-settings .swiflySettingValue{max-width:110px}}"
+              "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingMeta{gap:5px;color:rgba(255,255,255,.24)}",
+              "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingValue{max-width:112px;padding:0;border:0;border-radius:0;background:transparent;color:rgba(255,255,255,.5);font-size:9.5px;font-weight:620;box-shadow:none}",
+              "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingMeta>i{font-size:7px}",
+              "body.swifly-unified-theme.swifly-cinema-settings .swiflyDetailHeader{gap:6px;justify-content:flex-start}",
+              "body.swifly-unified-theme.swifly-cinema-settings .swiflySettingsChoices{display:block;margin-top:5px;overflow:auto;border:0;border-radius:9px;background:rgba(255,255,255,.012);padding:0;max-height:min(252px,48vh)}",
+              "body.swifly-unified-theme.swifly-cinema-settings .swiflyChoice{min-height:38px;padding:0 8px;border:0;border-radius:0;background:transparent;color:rgba(255,255,255,.64);box-shadow:none}",
+              "body.swifly-unified-theme.swifly-cinema-settings .swiflyChoice+.swiflyChoice{border-top:1px solid rgba(255,255,255,.042)}",
+              "body.swifly-unified-theme.swifly-cinema-settings .swiflyChoice:hover,body.swifly-unified-theme.swifly-cinema-settings .swiflyChoice:focus-visible{border-color:transparent;background:linear-gradient(90deg,rgba(255,78,157,.04),rgba(126,88,255,.055));color:#fff}",
+              "body.swifly-unified-theme.swifly-cinema-settings .swiflyChoice.selected{border-color:transparent;background:linear-gradient(90deg,rgba(255,78,157,.055),rgba(126,88,255,.075));box-shadow:none;color:#fff}",
+              "body.swifly-unified-theme.swifly-cinema-settings .swiflyChoiceText{font-size:10px;font-weight:650}",
+              "body.swifly-unified-theme.swifly-cinema-settings .swiflyChoiceCheck{width:18px;height:18px;color:transparent;background:transparent;box-shadow:none;font-size:8px}",
+              "body.swifly-unified-theme.swifly-cinema-settings .swiflyChoice.selected .swiflyChoiceCheck{color:#cbb8ff;background:transparent;box-shadow:none}",
+              "@media(max-width:720px){body.swifly-unified-theme.swifly-cinema-settings .swiflyUiMenu{right:6px;bottom:57px;width:min(278px,calc(100vw - 12px))}body.swifly-unified-theme.swifly-cinema-settings .swiflySettingRow{grid-template-columns:20px minmax(0,1fr) minmax(66px,auto)}body.swifly-unified-theme.swifly-cinema-settings .swiflySettingValue{max-width:96px}}"
             ].join("");
             document.head.appendChild(style);
           }
 
-          console.log("[swifly-cinema-settings] Minimal cinema settings sheet mounted.");
+          console.log("[swifly-cinema-settings] Compact docked cinema settings mounted.");
         }
 
 `;
@@ -98,7 +98,7 @@ fs.readFileSync = function swiflyCinemaSettingsRead(filePath, ...args) {
     "theme mount replacement",
   );
 
-  console.log("[swifly-cinema-settings] Minimal settings sheet injected above the working Aurora player.");
+  console.log("[swifly-cinema-settings] Compact settings popover injected above the working Aurora player.");
   return Buffer.isBuffer(result) ? Buffer.from(source, "utf8") : source;
 };
 
