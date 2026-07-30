@@ -1,7 +1,7 @@
 {
   "name": "swiflytv",
-  "version": "2.8.0",
-  "description": "SwiflyTV movie interface with CinePro Core and a minimal premium cinema settings sheet.",
+  "version": "2.8.1",
+  "description": "SwiflyTV movie interface with CinePro Core and compact docked cinema settings.",
   "main": "server.js",
   "scripts": {
     "start": "node scripts/start-cinepro-settings-cinema.js",
