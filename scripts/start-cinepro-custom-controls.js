@@ -30,7 +30,7 @@ const injected = String.raw`
               "#movieButtonPlayerShell.swiflyUiIdle{cursor:none!important}.swiflyPlayerUi{position:absolute;inset:0;z-index:100;color:#fff;font-family:Inter,system-ui,sans-serif;pointer-events:none;transition:opacity .2s ease}.swiflyPlayerUi:not(.show):not(.paused):not(.menuOpen){opacity:0}" +
               ".swiflyUiTop,.swiflyUiBottom,.swiflyUiCenter{position:absolute;left:0;right:0}.swiflyUiTop{top:0;display:flex;align-items:center;gap:14px;padding:22px 28px 72px;background:linear-gradient(#000c,transparent)}.swiflyUiBottom{bottom:0;padding:90px 28px max(22px,env(safe-area-inset-bottom));background:linear-gradient(transparent,#000e)}" +
               ".swiflyUiCenter{top:50%;left:50%;right:auto;transform:translate(-50%,-50%);display:flex;align-items:center;gap:18px;transition:.18s}.swiflyPlayerUi:not(.paused) .swiflyUiCenter{opacity:0;transform:translate(-50%,-46%) scale(.96)}" +
-              ".swiflyUiBtn{width:42px;height:42px;border:0;border-radius:999px;color:#fff;background:transparent;display:grid;place-items:center;cursor:pointer;pointer-events:auto;font-size:18px;transition:.15s}.swiflyUiBtn:hover{background:#ffffff24;transform:scale(1.06)}.swiflyUiBack{background:#090b11a8;border:1px solid #ffffff20;backdrop-filter:blur(14px)}" +
+              ".swiflyUiBtn{position:relative;width:42px;height:42px;border:0;border-radius:999px;color:#fff;background:transparent;display:grid;place-items:center;cursor:pointer;pointer-events:auto;font-size:18px;transition:.15s}.swiflyUiBtn:hover{background:#ffffff24;transform:scale(1.06)}.swiflyUiBack{background:#090b11a8;border:1px solid #ffffff20;backdrop-filter:blur(14px)}" +
               ".swiflyUiMain{width:76px;height:76px;color:#0a0c10;background:#fff;font-size:26px;box-shadow:0 18px 60px #0008}.swiflyUiMain:hover{background:#fff;transform:scale(1.08)}.swiflyUiSkip{width:54px;height:54px;background:#090b1190;border:1px solid #ffffff1c;font-size:19px}.swiflyUiSkip small{position:absolute;font-size:9px;font-weight:900}" +
               ".swiflyUiTitle{min-width:0;text-shadow:0 2px 15px #000}.swiflyUiTitle b{display:block;max-width:min(58vw,760px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:17px}.swiflyUiTitle span{display:block;margin-top:3px;color:#ffffff9c;font-size:10px;font-weight:800;letter-spacing:.13em;text-transform:uppercase}" +
               ".swiflyUiProgress{--p:0%;--b:0%;position:absolute;left:28px;right:28px;bottom:70px;width:calc(100% - 56px);height:4px;margin:0;appearance:none;border-radius:99px;cursor:pointer;pointer-events:auto;background:linear-gradient(90deg,#e50914 0 var(--p),#ffffff78 var(--p) var(--b),#ffffff35 var(--b))}.swiflyUiProgress:hover{height:6px}.swiflyUiProgress::-webkit-slider-thumb{appearance:none;width:0;height:0;border-radius:50%;background:#fff;transition:.12s}.swiflyUiProgress:hover::-webkit-slider-thumb{width:14px;height:14px}" +
@@ -77,7 +77,10 @@ const injected = String.raw`
             playerShell.classList.remove("swiflyUiIdle");
             clearTimeout(hideTimer);
             if (!sticky && !media.paused && menu.hidden) {
-              hideTimer = setTimeout(function(){ ui.classList.remove("show"); playerShell.classList.add("swiflyUiIdle"); }, 2400);
+              hideTimer = setTimeout(function(){
+                ui.classList.remove("show");
+                playerShell.classList.add("swiflyUiIdle");
+              }, 2400);
             }
           }
 
@@ -96,7 +99,11 @@ const injected = String.raw`
               progress.value = String(Math.round(played * 10));
               progress.style.setProperty("--p", played + "%");
               var buffered = played;
-              try { if (media.buffered.length) buffered = media.buffered.end(media.buffered.length - 1) / duration * 100; } catch {}
+              try {
+                if (media.buffered.length && duration) {
+                  buffered = media.buffered.end(media.buffered.length - 1) / duration * 100;
+                }
+              } catch {}
               progress.style.setProperty("--b", Math.max(played, buffered) + "%");
             }
             volume.value = media.muted ? "0" : String(media.volume);
@@ -131,7 +138,18 @@ const injected = String.raw`
             if (media.paused || media.ended) {
               var promise = media.play();
               if (promise && promise.catch) promise.catch(function(){});
-            } else media.pause();
+            } else {
+              media.pause();
+            }
+          }
+
+          function leaveWatchPage() {
+            var parts = String(location.pathname || "").split("/").filter(Boolean);
+            if (parts[0] === "watch" && (parts[1] === "movie" || parts[1] === "tv") && parts[2]) {
+              location.href = "/" + parts[1] + "/" + parts[2];
+              return;
+            }
+            location.href = "/";
           }
 
           ui.addEventListener("click", function(event){
@@ -144,12 +162,13 @@ const injected = String.raw`
             if (action === "back10") media.currentTime = Math.max(0, media.currentTime - 10);
             if (action === "forward10") media.currentTime = Math.min(media.duration || Infinity, media.currentTime + 10);
             if (action === "mute") media.muted = !media.muted;
-            if (action === "back") {
-              var match = location.pathname.match(/^\/watch\/(movie|tv)\/([^/?#]+)/);
-              location.href = match ? "/" + match[1] + "/" + match[2] : "/";
-            }
+            if (action === "back") leaveWatchPage();
             if (action === "fullscreen") {
-              try { player.fullscreen.toggle(); } catch { try { playerShell.requestFullscreen(); } catch {} }
+              try {
+                player.fullscreen.toggle();
+              } catch {
+                try { playerShell.requestFullscreen(); } catch {}
+              }
             }
             if (action === "settings") {
               menu.hidden = !menu.hidden;
@@ -178,16 +197,28 @@ const injected = String.raw`
             sync();
             show(false);
           });
-          volume.addEventListener("input", function(){ media.muted = false; media.volume = Number(volume.value || 0); sync(); });
-          quality.addEventListener("change", function(){ if (hlsInstance) hlsInstance.currentLevel = Number(quality.value); });
-          speed.addEventListener("change", function(){ media.playbackRate = Number(speed.value || 1); });
+          volume.addEventListener("input", function(){
+            media.muted = false;
+            media.volume = Number(volume.value || 0);
+            sync();
+          });
+          quality.addEventListener("change", function(){
+            if (hlsInstance) hlsInstance.currentLevel = Number(quality.value);
+          });
+          speed.addEventListener("change", function(){
+            media.playbackRate = Number(speed.value || 1);
+          });
           cc.addEventListener("change", function(){
             var selected = Number(cc.value);
-            Array.from(media.textTracks || []).forEach(function(track, index){ track.mode = index === selected ? "showing" : "disabled"; });
+            Array.from(media.textTracks || []).forEach(function(track, index){
+              track.mode = index === selected ? "showing" : "disabled";
+            });
             sync();
           });
 
-          ["play","pause","ended","timeupdate","durationchange","progress","volumechange"].forEach(function(name){ media.addEventListener(name, sync); });
+          ["play", "pause", "ended", "timeupdate", "durationchange", "progress", "volumechange"].forEach(function(name){
+            media.addEventListener(name, sync);
+          });
           media.addEventListener("loadedmetadata", function(){ fillSettings(); sync(); });
           playerShell.addEventListener("mousemove", function(){ show(false); });
           playerShell.addEventListener("pointerdown", function(){ show(false); });
@@ -230,7 +261,11 @@ fs.readFileSync = function swiflyPlayerRead(filePath, ...args) {
     "Plyr ready event",
   );
 
-  console.log("[swifly-player] Custom control markup injected.");
+  if (source.includes("location.pathname.match(/^/watch/")) {
+    throw new Error("[swifly-player] Unsafe rendered regex detected; refusing to start.");
+  }
+
+  console.log("[swifly-player] Custom control markup injected without browser regex literals.");
   return Buffer.isBuffer(result) ? Buffer.from(source, "utf8") : source;
 };
 
