@@ -17,13 +17,19 @@ const coreUrl = String(process.env.CINEPRO_CORE_URL || `http://127.0.0.1:${coreP
 const autoStart = process.env.CINEPRO_AUTO_START !== "false" && /^https?:\/\/(?:127\.0\.0\.1|localhost)(?::\d+)?$/i.test(coreUrl);
 
 process.env.CINEPRO_ENABLED = process.env.CINEPRO_ENABLED || "true";
+process.env.CINEPRO_STRICT = process.env.CINEPRO_STRICT || "true";
 process.env.CINEPRO_CORE_URL = coreUrl;
 if (process.env.CINEPRO_ENABLED !== "false") {
   process.env.DEFAULT_PLAY_PROVIDER = "cinepro";
   process.env.MOVIE_PROXY_VIDEO_CLIENT_WAIT = "true";
+  process.env.MOVIE_PROXY_VIDEO_PROVIDER_ENABLED = "false";
 }
 
 let coreChild = null;
+
+function strictMode() {
+  return process.env.CINEPRO_ENABLED !== "false" && process.env.CINEPRO_STRICT !== "false";
+}
 
 async function healthOkay() {
   try {
@@ -64,7 +70,9 @@ async function startCoreIfNeeded() {
   }
 
   if (!autoStart) {
-    console.warn(`[cinepro] Core is not reachable at ${coreUrl}; Swifly will use its existing fallback providers.`);
+    const message = `[cinepro] Core is not reachable at ${coreUrl}.`;
+    if (strictMode()) throw new Error(`${message} CinePro strict mode prevents old provider fallback.`);
+    console.warn(`${message} Swifly will use its existing fallback providers.`);
     return;
   }
 
@@ -100,7 +108,9 @@ async function startCoreIfNeeded() {
     await new Promise((resolve) => setTimeout(resolve, 900));
   }
 
-  console.warn("[cinepro] Core did not become healthy before the timeout; Swifly will still start with fallbacks available.");
+  const message = "[cinepro] Core did not become healthy before the startup timeout.";
+  if (strictMode()) throw new Error(`${message} CinePro strict mode prevents old provider fallback.`);
+  console.warn(`${message} Swifly will still start with fallbacks available.`);
 }
 
 function replaceOnce(source, label, needle, replacement) {
@@ -131,8 +141,67 @@ function runSwifly() {
     source,
     "provider insertion point",
     "  // 0-streamprovider) Local StreamProvider-main any-media implementation.",
-    `  // CinePro Core OMSS provider. This is primary; existing providers remain fallbacks.\n  if (preferred === "cinepro" || providerOrder.includes("cinepro")) {\n    try {\n      const cineproResult = await fetchCineProSource({ mediaType, id, season, episode, attempts });\n      if (cineproResult) return cineproResult;\n      attempts.push("cinepro: no playable OMSS source returned");\n    } catch (error) {\n      attempts.push(\`cinepro: \${error.message || "failed"}\`);\n    }\n  }\n\n  // 0-streamprovider) Local StreamProvider-main any-media implementation.`,
+    `  // CinePro Core OMSS provider. CinePro strict mode prevents silent fallback.
+  if (preferred === "cinepro" || providerOrder.includes("cinepro")) {
+    try {
+      console.log("[cinepro] Resolving " + mediaType + " TMDB " + id + (mediaType === "tv" ? " S" + season + "E" + episode : "") + "...");
+      const cineproResult = await fetchCineProSource({ mediaType, id, season, episode, attempts });
+      if (cineproResult) {
+        console.log("[cinepro] Selected " + (cineproResult.streamName || "CinePro source") + (cineproResult.streamQuality ? " " + cineproResult.streamQuality : "") + ".");
+        return cineproResult;
+      }
+      attempts.push("cinepro: no playable OMSS source returned");
+    } catch (error) {
+      attempts.push("cinepro: " + (error.message || "failed"));
+    }
+
+    if (process.env.CINEPRO_STRICT !== "false") {
+      return {
+        status: "error",
+        message: attempts.slice(-3).join(" | ") || "CinePro Core did not return a playable stream.",
+        attempts,
+        apiProvider: "cinepro",
+        providerKind: "cinepro_error"
+      };
+    }
+  }
+
+  // 0-streamprovider) Local StreamProvider-main any-media implementation.`,
   );
+
+  source = replaceOnce(
+    source,
+    "CinePro wait timeout label",
+    '            showError("Still no m3u8 source after " + elapsed + " seconds. You can retry, refresh, or use a Watch Room.");',
+    '            showError("CinePro did not return a playable stream after " + elapsed + " seconds. Check /api/cinepro/health, then retry.");',
+  );
+
+  source = replaceOnce(
+    source,
+    "CinePro resolving label",
+    '          setStatus((manual ? "Retrying" : "Trying") + " m3u8 source... attempt " + attempt + " • " + elapsed + "s");',
+    '          setStatus((manual ? "Retrying CinePro" : "Contacting CinePro") + "... attempt " + attempt + " • " + elapsed + "s");',
+  );
+
+  source = replaceOnce(
+    source,
+    "CinePro success label",
+    '              setStatus((isM3u8Selected || data.m3u8Embedded || data.streamType === "m3u8" ? "m3u8" : "Source") + " found. Loading player...");',
+    '              setStatus((data && data.apiProvider === "cinepro" ? "CinePro stream" : (isM3u8Selected || data.m3u8Embedded || data.streamType === "m3u8" ? "HLS stream" : "Source")) + " found. Loading player...");',
+  );
+
+  source = replaceOnce(
+    source,
+    "CinePro player-ready label",
+    '              setStatus("m3u8 loaded in Vidstack player.");',
+    '              setStatus((data && data.apiProvider === "cinepro" ? "CinePro" : "HLS") + " stream loaded in Vidstack.");',
+  );
+
+  source = source.replace(
+    "Movie mode is waiting for the same m3u8 player source used in Watch Parties. Legacy fallback is off unless MOVIE_PROXY_VIDEO_ALLOW_LEGACY_FALLBACK=true.",
+    "CinePro Core is resolving this title. The player will load the stream returned by CinePro.",
+  );
+  source = source.replace("<h2>m3u8 source did not load</h2>", "<h2>CinePro stream did not load</h2>");
 
   source = replaceOnce(
     source,
