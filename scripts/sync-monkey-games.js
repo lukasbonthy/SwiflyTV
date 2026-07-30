@@ -28,7 +28,7 @@ function run(command, args, options = {}) {
 }
 
 function ready() {
-  return fs.existsSync(gamesDir) && fs.existsSync(configFile);
+  return fs.existsSync(gamesDir) && fs.existsSync(configFile) && fs.existsSync(markerFile);
 }
 
 function cloneOrUpdate() {
@@ -48,7 +48,7 @@ function cloneOrUpdate() {
     ]);
     run("git", ["-c", "core.longpaths=true", "-C", vendorDir, "sparse-checkout", "set", "games", "imgs", "js"]);
   } else if (updateRequested || !ready()) {
-    console.log("[games] Updating the local MonkeyGG2 files...");
+    console.log("[games] Updating and sanitizing the local MonkeyGG2 files...");
     run("git", ["-c", "core.longpaths=true", "-C", vendorDir, "fetch", "--depth", "1", "origin", "main"]);
     run("git", ["-c", "core.longpaths=true", "-C", vendorDir, "reset", "--hard", "origin/main"]);
     run("git", ["-c", "core.longpaths=true", "-C", vendorDir, "sparse-checkout", "set", "games", "imgs", "js"]);
@@ -99,12 +99,14 @@ function currentCommit() {
 
 function main() {
   if (ready() && !updateRequested) {
-    console.log("[games] Local MonkeyGG2 files are already installed.");
+    console.log("[games] Local MonkeyGG2 files are already installed and sanitized.");
     return;
   }
 
   cloneOrUpdate();
-  if (!ready()) throw new Error("MonkeyGG2 checkout completed, but games/ or js/config.js is missing.");
+  if (!fs.existsSync(gamesDir) || !fs.existsSync(configFile)) {
+    throw new Error("MonkeyGG2 checkout completed, but games/ or js/config.js is missing.");
+  }
 
   const patchedFiles = patchRedirects();
   fs.writeFileSync(markerFile, JSON.stringify({
