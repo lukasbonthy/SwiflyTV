@@ -4,12 +4,12 @@
   "description": "SwiflyTV movie interface with CinePro Core as the primary OMSS streaming backend.",
   "main": "server.js",
   "scripts": {
-    "start": "node scripts/start-cinepro.js",
-    "dev": "node scripts/start-cinepro.js",
+    "start": "node scripts/start-cinepro-preferred.js",
+    "dev": "node scripts/start-cinepro-preferred.js",
     "base": "node server.js",
     "cinepro:setup": "node scripts/setup-cinepro.js --build",
     "cinepro:update": "node scripts/setup-cinepro.js --update --build",
-    "check": "node --check server.js && node --check cinepro-client.js && node --check scripts/start-cinepro.js && node --check scripts/setup-cinepro.js"
+    "check": "node --check server.js && node --check cinepro-client.js && node --check scripts/start-cinepro.js && node --check scripts/start-cinepro-preferred.js && node --check scripts/setup-cinepro.js"
   },
   "engines": {
     "node": "20.x"
