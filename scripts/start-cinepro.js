@@ -171,6 +171,53 @@ function runSwifly() {
 
   source = replaceOnce(
     source,
+    "CinePro source label",
+    'clientProxyVideoWait ? "waiting for m3u8/stream"',
+    'clientProxyVideoWait ? "waiting for CinePro"',
+  );
+
+  source = replaceOnce(
+    source,
+    "CinePro waiting-card eyebrow",
+    "<span>Getting m3u8</span>",
+    "<span>Contacting CinePro</span>",
+  );
+
+  source = replaceOnce(
+    source,
+    "CinePro waiting-card title",
+    "<h2>Finding your m3u8 source...</h2>",
+    "<h2>CinePro is finding a stream...</h2>",
+  );
+
+  source = replaceOnce(
+    source,
+    "CinePro waiting-card description",
+    "<p>This provider can take a while. Keep this page open — SwiflyTV will keep trying and load the m3u8 stream as soon as it returns.</p>",
+    "<p>CinePro is checking its configured providers. Keep this page open — SwiflyTV will load the stream CinePro returns.</p>",
+  );
+
+  source = replaceOnce(
+    source,
+    "CinePro waiting-card initial status",
+    '<div id="proxyVideoWaitStatus" class="dsProxyVideoWaitStatus">Starting request...</div>',
+    '<div id="proxyVideoWaitStatus" class="dsProxyVideoWaitStatus">Starting CinePro request...</div>',
+  );
+
+  source = replaceOnce(
+    source,
+    "CinePro player loading label",
+    '<div id="movieButtonHlsStatus" class="dsHlsStatus"><b>Loading m3u8...</b><span>Preparing player</span></div>',
+    '<div id="movieButtonHlsStatus" class="dsHlsStatus"><b>Loading CinePro stream...</b><span>Preparing player</span></div>',
+  );
+
+  source = source.replace(
+    'proxyVideoUrl ? "proxyVideo" : providerStream ? "ORG MP4" : movieEmbedUrl ? "Embed" : "Trailer fallback"',
+    'clientProxyVideoWait ? "CinePro" : proxyVideoUrl ? "proxyVideo" : providerStream ? "ORG MP4" : movieEmbedUrl ? "Embed" : "Trailer fallback"',
+  );
+
+  source = replaceOnce(
+    source,
     "CinePro wait timeout label",
     '            showError("Still no m3u8 source after " + elapsed + " seconds. You can retry, refresh, or use a Watch Room.");',
     '            showError("CinePro did not return a playable stream after " + elapsed + " seconds. Check /api/cinepro/health, then retry.");',
