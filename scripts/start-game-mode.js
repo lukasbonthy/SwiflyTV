@@ -10,16 +10,17 @@ const serverPath = path.join(root, "server.js");
 const syncScript = path.join(root, "scripts", "sync-monkey-games.js");
 const vendorGames = path.join(root, "vendor", "monkeygg2", "games");
 const vendorConfig = path.join(root, "vendor", "monkeygg2", "js", "config.js");
+const vendorMarker = path.join(root, "vendor", "monkeygg2", ".swifly-vendor-ready.json");
 
 function ensureLocalGames() {
-  if (fs.existsSync(vendorGames) && fs.existsSync(vendorConfig)) return;
-  console.log("[game-mode] Local game files are missing. Installing them now...");
+  if (fs.existsSync(vendorGames) && fs.existsSync(vendorConfig) && fs.existsSync(vendorMarker)) return;
+  console.log("[game-mode] Local game files are missing or have not been sanitized. Installing them now...");
   const result = spawnSync(process.execPath, [syncScript], {
     cwd: root,
     stdio: "inherit",
     windowsHide: false,
   });
-  if (result.status !== 0 || !fs.existsSync(vendorGames) || !fs.existsSync(vendorConfig)) {
+  if (result.status !== 0 || !fs.existsSync(vendorGames) || !fs.existsSync(vendorConfig) || !fs.existsSync(vendorMarker)) {
     throw new Error("Local MonkeyGG2 game files could not be installed. Run npm run sync-games, then retry npm start.");
   }
 }
