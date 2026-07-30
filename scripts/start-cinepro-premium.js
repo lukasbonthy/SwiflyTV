@@ -78,7 +78,7 @@ const premiumUpgrade = String.raw`
             style.id = "swiflyPremiumPlayerStyle";
             style.textContent = [
               "#swiflyCleanBack{display:none!important}",
-              "body.swifly-premium-player .swiflyPlayerUi{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif}",
+              "body.swifly-premium-player .swiflyPlayerUi{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif}",
               "body.swifly-premium-player .swiflyUiTop{gap:14px;padding:24px 32px 92px;background:linear-gradient(180deg,rgba(0,0,0,.64),rgba(0,0,0,.22) 52%,transparent)}",
               "body.swifly-premium-player .swiflyUiBottom{padding:104px 32px max(24px,env(safe-area-inset-bottom));background:linear-gradient(0deg,rgba(0,0,0,.94),rgba(0,0,0,.48) 48%,transparent)}",
               "body.swifly-premium-player .swiflyUiBack{width:46px;height:46px;background:rgba(11,13,18,.5);border:1px solid rgba(255,255,255,.16);box-shadow:0 14px 42px rgba(0,0,0,.38);backdrop-filter:blur(18px) saturate(1.15)}",
@@ -97,7 +97,7 @@ const premiumUpgrade = String.raw`
               ".swiflyPremiumPreview[hidden]{display:none}",
               "body.swifly-premium-player .swiflyUiRow{gap:2px}",
               "body.swifly-premium-player .swiflyUiVolume{width:0;opacity:0;transition:width .18s ease,opacity .18s ease}",
-              "body.swifly-premium-player [data-a=\"mute\"]:hover + .swiflyUiVolume,body.swifly-premium-player .swiflyUiVolume:hover,body.swifly-premium-player .swiflyUiVolume:focus{width:88px;opacity:1}",
+              "body.swifly-premium-player [data-a=mute]:hover + .swiflyUiVolume,body.swifly-premium-player .swiflyUiVolume:hover,body.swifly-premium-player .swiflyUiVolume:focus{width:88px;opacity:1}",
               "body.swifly-premium-player .swiflyUiTime{color:rgba(255,255,255,.7);font-size:12px;font-weight:700}",
               "body.swifly-premium-player .swiflyUiMenu{right:32px;bottom:90px;width:min(316px,calc(100vw - 32px));padding:12px;border-color:rgba(255,255,255,.14);border-radius:20px;background:rgba(13,15,21,.9);box-shadow:0 30px 90px rgba(0,0,0,.68);backdrop-filter:blur(28px) saturate(1.18)}",
               "body.swifly-premium-player .swiflyUiMenu h3{font-size:14px;font-weight:820}",
@@ -112,6 +112,10 @@ const premiumUpgrade = String.raw`
         }
 
 `;
+
+if (premiumUpgrade.includes(String.raw`\"`)) {
+  throw new Error("[swifly-premium] Nested escaped quotes are unsafe inside the rendered watch script.");
+}
 
 fs.readFileSync = function swiflyPremiumRead(filePath, ...args) {
   const result = originalReadFileSync(filePath, ...args);
@@ -136,7 +140,7 @@ fs.readFileSync = function swiflyPremiumRead(filePath, ...args) {
     "Plyr ready event",
   );
 
-  console.log("[swifly-premium] Premium player layer injected.");
+  console.log("[swifly-premium] Premium player layer injected without nested quote hazards.");
   return Buffer.isBuffer(result) ? Buffer.from(source, "utf8") : source;
 };
 
