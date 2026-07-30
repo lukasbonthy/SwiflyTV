@@ -1,7 +1,7 @@
 {
   "name": "swiflytv",
-  "version": "3.1.0",
-  "description": "SwiflyTV movie interface with CinePro Core and compact streaming settings chips integrated into the Aurora control deck.",
+  "version": "3.2.0",
+  "description": "SwiflyTV movie interface with CinePro Core and a morphing animated playback command strip inside the Aurora control deck.",
   "main": "server.js",
   "scripts": {
     "start": "node scripts/start-cinepro-settings-cinema.js",
