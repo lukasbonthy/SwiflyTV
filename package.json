@@ -1,7 +1,7 @@
 {
   "name": "swiflytv",
-  "version": "3.3.1",
-  "description": "SwiflyTV movie interface with compatible language settings and reliable video controls.",
+  "version": "3.3.2",
+  "description": "SwiflyTV movie interface with compact floating playback settings and reliable video controls.",
   "main": "server.js",
   "scripts": {
     "start": "node scripts/start-cinepro-controls-compatible.js",
