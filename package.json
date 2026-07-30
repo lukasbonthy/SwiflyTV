@@ -1,15 +1,15 @@
 {
   "name": "swiflytv",
-  "version": "2.4.0",
-  "description": "SwiflyTV movie interface with CinePro Core and the Aurora Cinema full-window player.",
+  "version": "2.4.1",
+  "description": "SwiflyTV movie interface with CinePro Core and the polished Aurora Cinema full-window player.",
   "main": "server.js",
   "scripts": {
-    "start": "node scripts/start-cinepro-premium.js",
-    "dev": "node scripts/start-cinepro-premium.js",
+    "start": "node scripts/start-cinepro-polished.js",
+    "dev": "node scripts/start-cinepro-polished.js",
     "base": "node server.js",
     "cinepro:setup": "node scripts/setup-cinepro.js --build",
     "cinepro:update": "node scripts/setup-cinepro.js --update --build",
-    "check": "node --check server.js && node --check cinepro-client.js && node --check scripts/start-cinepro.js && node --check scripts/start-cinepro-preferred.js && node --check scripts/start-cinepro-layout.js && node --check scripts/start-cinepro-plyr.js && node --check scripts/start-cinepro-fullscreen-safe.js && node --check scripts/start-cinepro-custom-controls.js && node --check scripts/start-cinepro-premium.js && node --check scripts/setup-cinepro.js"
+    "check": "node --check server.js && node --check cinepro-client.js && node --check scripts/start-cinepro.js && node --check scripts/start-cinepro-preferred.js && node --check scripts/start-cinepro-layout.js && node --check scripts/start-cinepro-plyr.js && node --check scripts/start-cinepro-fullscreen-safe.js && node --check scripts/start-cinepro-custom-controls.js && node --check scripts/start-cinepro-premium.js && node --check scripts/start-cinepro-polished.js && node --check scripts/setup-cinepro.js"
   },
   "engines": {
     "node": "20.x"
