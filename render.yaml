@@ -32,7 +32,9 @@ services:
       - key: CINEPRO_TIMEOUT_MS
         value: "90000"
       - key: CINEPRO_PROVIDER_ALLOWLIST
-        value: icefy,vixsrc
+        value: vixsrc,icefy
+      - key: CINEPRO_PROVIDER_ORDER
+        value: vixsrc,icefy
       - key: DEFAULT_PLAY_PROVIDER
         value: cinepro
       - key: CONSUMET_ENABLED
