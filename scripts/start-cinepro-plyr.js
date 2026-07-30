@@ -37,25 +37,14 @@ fs.readFileSync = function swiflyPlyrRead(filePath, ...args) {
     "movie player entry point",
   );
 
+  // Plyr remains responsible for its media/fullscreen API, but renders no stock UI.
+  // The custom Swifly overlay is the only control surface.
   source = replaceRegexRequired(
     source,
     /new window\.Plyr\(video,\s*\{\s*controls:\s*\[[\s\S]*?\],\s*settings:\s*\[\s*"quality"\s*,\s*"speed"\s*\],/,
     `new window.Plyr(video, {
-            controls: [
-              "play-large",
-              "rewind",
-              "play",
-              "fast-forward",
-              "progress",
-              "current-time",
-              "duration",
-              "mute",
-              "volume",
-              "captions",
-              "settings",
-              "fullscreen"
-            ],
-            settings: ["captions", "quality", "speed"],
+            controls: false,
+            settings: [],
             hideControls: true,
             clickToPlay: true,
             seekTime: 10,
@@ -70,6 +59,22 @@ fs.readFileSync = function swiflyPlyrRead(filePath, ...args) {
     'keyboard: { focused: true, global: true }',
     "Plyr keyboard configuration",
   );
+
+  // Keep native controls only when Plyr failed to load. When Plyr is present, the
+  // custom Swifly controls own the entire interface.
+  source = replaceRegexRequired(
+    source,
+    /(function startPlyrHlsSource\(src,\s*data\)\s*\{[\s\S]*?video\.className\s*=\s*"dsMovieButtonVideo dsCinemaHlsVideo";\s*\n\s*)video\.controls\s*=\s*true;/,
+    "$1video.controls = !plyrLoaded;",
+    "native controls fallback",
+  );
+
+  // The old Swifly seek dock was still being installed beside the new control UI.
+  // Remove every legacy seek-bar hook in this runtime build.
+  source = source
+    .replace(/^[ \t]*installCustomSeekBar\(\);\s*$/gm, "")
+    .replace(/^[ \t]*setTimeout\(syncCustomSeekBar,\s*\d+\);\s*$/gm, "")
+    .replace(/^[ \t]*movieButtonPlyr\.on\("(?:timeupdate|seeked|loadedmetadata|canplay)",\s*syncCustomSeekBar\);\s*$/gm, "");
 
   const subtitleCode = `
               Array.from(video.querySelectorAll("track[data-cinepro-track]"))
@@ -95,10 +100,10 @@ fs.readFileSync = function swiflyPlyrRead(filePath, ...args) {
     "Plyr subtitle setup",
   );
 
-  console.log("[cinepro-plyr] Clean Plyr controls, captions, seeking, and keyboard shortcuts enabled.");
+  console.log("[cinepro-plyr] Stock Plyr, native, and legacy seek controls disabled; custom Swifly UI only.");
   return Buffer.isBuffer(result) ? Buffer.from(source, "utf8") : source;
 };
 
 console.log(`[cinepro] Provider preference: ${process.env.CINEPRO_PROVIDER_ORDER}`);
-console.log("[cinepro-plyr] Plyr + HLS.js is the active movie player.");
+console.log("[cinepro-plyr] Plyr + HLS.js is the active movie engine.");
 require("./start-cinepro.js");
