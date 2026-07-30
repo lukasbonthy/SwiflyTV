@@ -1,7 +1,7 @@
 {
   "name": "swiflytv",
-  "version": "2.6.0",
-  "description": "SwiflyTV movie interface with CinePro Core and a responsive Aurora playback preference grid.",
+  "version": "2.7.0",
+  "description": "SwiflyTV movie interface with CinePro Core and premium two-level Aurora playback settings.",
   "main": "server.js",
   "scripts": {
     "start": "node scripts/start-cinepro-theme-unified.js",
