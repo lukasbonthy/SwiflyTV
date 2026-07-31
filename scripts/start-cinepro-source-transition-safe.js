@@ -41,8 +41,26 @@ function patchPlyrWrapper(source) {
 function patchSourceSpeedWrapper(source) {
   let next = String(source).replace(/\r\n?/g, "\n");
   const originalCall = '            startPlyrHlsSource(String(selected.playbackUrl), nextData);';
-  const replacement = `            activeSourceData = nextData;
+  const replacement = `            var retainedSourceOptions = Array.isArray(activeSourceData && activeSourceData.sourceOptions)
+              ? activeSourceData.sourceOptions.slice()
+              : (Array.isArray(window.__swiflySourceOptions) ? window.__swiflySourceOptions.slice() : []);
+            var retainedSubtitles = Array.isArray(activeSourceData && activeSourceData.subtitles)
+              ? activeSourceData.subtitles.slice()
+              : (Array.isArray(window.__swiflySubtitleOptions) ? window.__swiflySubtitleOptions.slice() : []);
+
+            if (retainedSourceOptions.length) nextData.sourceOptions = retainedSourceOptions;
+            if (retainedSubtitles.length) nextData.subtitles = retainedSubtitles;
+            nextData.selectedSourceId = String(selected.id || nextData.selectedSourceId || "");
+
+            activeSourceData = nextData;
             window.__swiflyActiveSourceData = nextData;
+            window.__swiflySelectedSourceId = nextData.selectedSourceId;
+            window.__swiflySourceOptions = Array.isArray(nextData.sourceOptions)
+              ? nextData.sourceOptions.slice()
+              : [];
+            window.__swiflySubtitleOptions = Array.isArray(nextData.subtitles)
+              ? nextData.subtitles.slice()
+              : [];
             window.__swiflyPendingSourceId = String(selected.id || "");
 
             if (source) {
@@ -73,7 +91,8 @@ function patchSourceSpeedWrapper(source) {
             setTimeout(finishSourceTransition, 10000);
 
             try {
-              return startPlyrHlsSource(String(selected.playbackUrl), nextData);
+            startPlyrHlsSource(String(selected.playbackUrl), nextData);
+              return;
             } catch (error) {
               finishSourceTransition();
               throw error;
@@ -85,6 +104,10 @@ function patchSourceSpeedWrapper(source) {
     replacement,
     "Source-switch player handoff",
   );
+
+  if (!next.includes(originalCall)) {
+    throw new Error("[swifly-source-transition] Stable-state Source handoff anchor was not preserved.");
+  }
 
   new vm.Script(next, { filename: sourceSpeedPath });
   return next;
