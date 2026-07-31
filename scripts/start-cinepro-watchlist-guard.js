@@ -1,12 +1,13 @@
 "use strict";
 
-const fs = require("fs");
+const Module = require("module");
 const path = require("path");
 const vm = require("vm");
 
 const root = path.resolve(__dirname, "..");
 const serverPath = path.join(root, "server.js");
-const originalReadFileSync = fs.readFileSync.bind(fs);
+const originalCompile = Module.prototype._compile;
+let installed = false;
 let patched = false;
 
 const unsafeWatchlistCall = /\brenderWatchlistPage\s*\(\s*\)\s*;/g;
@@ -34,7 +35,7 @@ function patchWatchlistReference(source, options = {}) {
 
   if (options.requireCall && replacementCount === 0) {
     throw new Error(
-      "[swifly-watchlist-guard] Could not find the crashing renderWatchlistPage() call.",
+      "[swifly-watchlist-guard] Could not find the crashing renderWatchlistPage() call in the final generated server source.",
     );
   }
 
@@ -46,21 +47,29 @@ function patchWatchlistReference(source, options = {}) {
 }
 
 function installPatch() {
-  fs.readFileSync = function swiflyWatchlistGuardRead(filePath, ...args) {
-    const result = originalReadFileSync(filePath, ...args);
-    let resolved = "";
-    try { resolved = path.resolve(String(filePath)); } catch {}
-    if (patched || resolved !== serverPath) return result;
+  if (installed) return;
+  installed = true;
 
+  Module.prototype._compile = function swiflyWatchlistGuardCompile(content, filename) {
+    let resolved = "";
+    try { resolved = path.resolve(String(filename)); } catch {}
+
+    if (patched || resolved !== serverPath) {
+      return originalCompile.call(this, content, filename);
+    }
+
+    const resultPatch = patchWatchlistReference(content, { requireCall: true });
     patched = true;
-    const source = Buffer.isBuffer(result) ? result.toString("utf8") : String(result);
-    const resultPatch = patchWatchlistReference(source, { requireCall: true });
+
+    // Restore the normal compiler before executing server.js. The source has
+    // already passed through every Swifly/CinePro transform at this point.
+    Module.prototype._compile = originalCompile;
+
     console.log(
-      `[swifly-watchlist-guard] Guarded ${resultPatch.replacementCount} missing Watchlist renderer call(s) before player startup.`,
+      `[swifly-watchlist-guard] Guarded ${resultPatch.replacementCount} Watchlist renderer call(s) in the final generated server source.`,
     );
-    return Buffer.isBuffer(result)
-      ? Buffer.from(resultPatch.source, "utf8")
-      : resultPatch.source;
+
+    return originalCompile.call(this, resultPatch.source, filename);
   };
 }
 
@@ -68,5 +77,6 @@ module.exports = {
   guardedWatchlistCall,
   installPatch,
   patchWatchlistReference,
+  serverPath,
   unsafeWatchlistCall,
 };
