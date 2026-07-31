@@ -21,6 +21,22 @@ function replaceExact(source, needle, replacement, label) {
   return source.replace(needle, replacement);
 }
 
+function insertSourceCapturePatch(source, addition) {
+  const sourceReadPattern =
+    /(\n[ \t]*patched = true;[ \t]*\r?\n[ \t]*let source = [^\r\n]+\.replace\(\/\\r\\n\?\/g,\s*["']\\n["']\);[ \t]*\r?\n)/;
+
+  if (!sourceReadPattern.test(source)) {
+    throw new Error(
+      "[swifly-source-speed-scope] Could not find normalized server source-read block; refusing a partial patch.",
+    );
+  }
+
+  sourceReadPattern.lastIndex = 0;
+  return source.replace(sourceReadPattern, function addCapturePatch(match) {
+    return match + "\n" + addition;
+  });
+}
+
 function patchCustomControlsScopeSafe(source) {
   let next = base.patchCustomControls(source);
 
@@ -31,9 +47,6 @@ function patchCustomControlsScopeSafe(source) {
     "free Source data argument",
   );
 
-  const sourceReadAnchor = String.raw`    let source = (Buffer.isBuffer(result) ? result.toString("utf8") : String(result)).replace(/\r\n?/g, "\n");
-
-`;
   const sourceCapturePatch = String.raw`    source = replaceRequired(
       source,
       /(\n[ \t]*function startPlyrHlsSource\(src,\s*data\)\s*\{)/,
@@ -43,12 +56,7 @@ function patchCustomControlsScopeSafe(source) {
 
 `;
 
-  next = replaceExact(
-    next,
-    sourceReadAnchor,
-    sourceReadAnchor + sourceCapturePatch,
-    "server source-read anchor",
-  );
+  next = insertSourceCapturePatch(next, sourceCapturePatch);
 
   if (/mountSwiflyControls\(movieButtonPlyr, video, hlsInstance,\s*data\s*\)/.test(next)) {
     throw new Error("[swifly-source-speed-scope] Free data identifier survived control patching.");
@@ -95,6 +103,7 @@ function installPatch() {
 
 module.exports = {
   installPatch,
+  insertSourceCapturePatch,
   patchCustomControlsScopeSafe,
 };
 
