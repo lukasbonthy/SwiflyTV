@@ -65,12 +65,24 @@ requireMarkers(patchedPlyrWrapper, [
 const sourceSpeedPath = path.join(__dirname, "start-cinepro-source-speed.js");
 const patchedSourceSpeed = transition.patchSourceSpeedWrapper(fs.readFileSync(sourceSpeedPath, "utf8"));
 new vm.Script(patchedSourceSpeed, { filename: sourceSpeedPath });
+const stableStateHandoffAnchor = "            startPlyrHlsSource(String(selected.playbackUrl), nextData);";
 requireMarkers(patchedSourceSpeed, [
+  "retainedSourceOptions",
+  "retainedSubtitles",
+  "window.__swiflySourceOptions",
+  "window.__swiflySubtitleOptions",
   "activeSourceData = nextData",
   "window.__swiflyActiveSourceData = nextData",
+  "window.__swiflySelectedSourceId = nextData.selectedSourceId",
   'source.setAttribute("aria-busy", "true")',
   'media.addEventListener("canplay", finishSourceTransition',
-  "return startPlyrHlsSource(String(selected.playbackUrl), nextData)",
+  stableStateHandoffAnchor,
 ], "Source handoff");
+if (!patchedSourceSpeed.includes(stableStateHandoffAnchor)) {
+  throw new Error("[swifly-source-transition-qa] Stable-state Source handoff anchor disappeared.");
+}
+if (patchedSourceSpeed.includes("return startPlyrHlsSource(String(selected.playbackUrl), nextData)")) {
+  throw new Error("[swifly-source-transition-qa] Incompatible returned Source handoff survived.");
+}
 
-console.log("Swifly safe HLS/direct Source transition QA passed.");
+console.log("Swifly safe HLS/direct Source transition and stable-state composition QA passed.");
