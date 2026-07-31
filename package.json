@@ -1,7 +1,7 @@
 {
   "name": "swiflytv",
-  "version": "3.7.10",
-  "description": "SwiflyTV with Watchlist-safe page startup, fail-safe movie controls, and persistent playback options.",
+  "version": "3.7.11",
+  "description": "SwiflyTV with final-compile Watchlist recovery, fail-safe movie controls, and persistent playback options.",
   "main": "server.js",
   "scripts": {
     "start": "node scripts/start-cinepro-all-sources-captions.js",
