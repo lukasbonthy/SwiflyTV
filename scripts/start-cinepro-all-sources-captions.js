@@ -27,6 +27,11 @@ function requireInstaller(moduleValue, label) {
 function start() {
   enableAllProviders();
 
+  // OMSS waits for every provider promise. Patch the installed framework so a
+  // stalled provider cannot block sources that other providers already found.
+  const providerTimeouts = require("./patch-cinepro-provider-timeouts.js");
+  providerTimeouts.applyProviderTimeoutPatch();
+
   const allMedia = requireInstaller(
     require("./start-cinepro-all-sources-captions-patch.js"),
     "Caption/source patch",
