@@ -301,15 +301,17 @@ function patchCompact(source) {
 }
 
 function patchCineProClient(source) {
-  const normalizedLanguage =
+  const normalizedProperty =
     "language: clean(subtitle && (subtitle.language || subtitle.lang || subtitle.srclang)) || clean(subtitle && subtitle.label),";
+  const normalizedVariable =
+    "const language = clean(subtitle && (subtitle.language || subtitle.lang || subtitle.srclang));";
 
-  if (source.includes(normalizedLanguage)) return source;
+  if (source.includes(normalizedProperty) || source.includes(normalizedVariable)) return source;
 
   return replaceRequired(
     source,
     /language:\s*clean\(subtitle && subtitle\.language\),/,
-    normalizedLanguage,
+    normalizedProperty,
     "subtitle language normalization",
   );
 }
