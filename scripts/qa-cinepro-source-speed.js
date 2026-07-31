@@ -26,9 +26,23 @@ const patchedLanguages = patchLanguages(originalLanguages);
 const patchedTheme = patchTheme(originalTheme);
 const patchedClient = patchCineProClient(originalClient);
 
+// npm start loads start-cinepro-languages-hotfix.js before the language layer
+// transforms the generated browser controls. Mirror that exact ordering here.
+const unsafeCaptionMatcher = String.raw`/cc\.addEventListener\("change", function\(\)\{[\s\S]*?\n\s*\}\);/`;
+const safeCaptionMatcher = String.raw`/cc\.addEventListener\("change", function\(\)\{\n\s*var selected = Number\(cc\.value\);\n\s*Array\.from\(media\.textTracks \|\| \[\]\)\.forEach\(function\(track, index\)\{\n\s*track\.mode = index === selected \? "showing" : "disabled";\n\s*\}\);\n\s*sync\(\);\n\s*\}\);/`;
+
+if (!patchedLanguages.includes(unsafeCaptionMatcher)) {
+  throw new Error("[swifly-source-speed-qa] Caption hotfix target is missing from the generated language layer.");
+}
+
+const runtimeLanguages = patchedLanguages.replace(unsafeCaptionMatcher, safeCaptionMatcher);
+if (runtimeLanguages.includes(unsafeCaptionMatcher) || !runtimeLanguages.includes(safeCaptionMatcher)) {
+  throw new Error("[swifly-source-speed-qa] Caption matcher hotfix was not applied in runtime order.");
+}
+
 for (const [filename, source] of [
   [controlsPath, patchedControls],
-  [languagesPath, patchedLanguages],
+  [languagesPath, runtimeLanguages],
   [themePath, patchedTheme],
   [clientPath, patchedClient],
 ]) {
@@ -61,7 +75,7 @@ const languageContext = {
   clearTimeout,
 };
 
-vm.runInNewContext(patchedLanguages, languageContext, { filename: languagesPath });
+vm.runInNewContext(runtimeLanguages, languageContext, { filename: languagesPath });
 const finalControls = fakeFs.readFileSync(controlsPath, "utf8");
 new vm.Script(finalControls, { filename: controlsPath });
 
