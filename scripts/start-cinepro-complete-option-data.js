@@ -76,12 +76,18 @@ function patchThemeCompleteOptions(source) {
 
             Array.from(select.options || []).forEach(function(option, index) {`,
     `            var optionNodes = completeOptionNodes(item, select);
-            detailTitle.textContent = item.label + (optionNodes.length ? " · " + optionNodes.length : "");
+            var optionCount = optionNodes.length;
+            var optionColumns = Math.min(5, Math.max(1, optionCount));
+            var panelWidth = Math.max(170, Math.min(420, optionColumns * 72 + Math.max(0, optionColumns - 1) * 6 + 20));
+            choices.style.setProperty("--swifly-option-columns", String(optionColumns));
+            menu.style.setProperty("--swifly-option-columns", String(optionColumns));
+            menu.style.setProperty("--swifly-option-panel-width", panelWidth + "px");
+            detailTitle.textContent = item.label + (optionCount ? " · " + optionCount : "");
             choices.innerHTML = "";
-            choices.dataset.optionCount = String(optionNodes.length);
+            choices.dataset.optionCount = String(optionCount);
 
             optionNodes.forEach(function(option, index) {`,
-    "complete choice rendering",
+    "complete choice rendering and content sizing",
   );
 
   new vm.Script(next, { filename: themePath });
@@ -136,7 +142,7 @@ function installPatch() {
     let label = "";
     if (resolved === themePath) {
       patcher = patchThemeCompleteOptions;
-      label = "complete option data renderer";
+      label = "complete option data and content-sized menus";
     }
     if (resolved === languagesPath) {
       patcher = patchLanguagesQualityRefresh;
