@@ -22,14 +22,22 @@ const patchedSettings = patchSettingsCinemaGrid(fs.readFileSync(settingsPath, "u
 new vm.Script(patchedSettings, { filename: settingsPath });
 
 for (const marker of [
-  ".swiflyUiMenu.swiflyTrayDetail{width:min(760px,calc(100vw - 48px))",
-  "grid-template-columns:repeat(5,minmax(72px,1fr))",
-  "grid-template-columns:repeat(3,minmax(72px,1fr))",
-  ".swiflyChoice{width:100%!important",
+  ".swiflyUiMenu.swiflyTrayDetail{width:min(var(--swifly-option-panel-width,420px),calc(100vw - 32px))",
+  "grid-template-columns:repeat(var(--swifly-option-columns,1),72px)",
+  "grid-template-columns:repeat(var(--swifly-option-columns,1),68px)",
+  ".swiflyChoice{width:72px!important;min-width:72px!important",
+  "accent-color:#ff4f9a!important",
+  "body.swifly-command-settings .swiflyPlayerUi.menuOpen .swiflyUiProgress",
+  "linear-gradient(90deg,#ff4f9a 0 var(--p)",
+  ".swiflyUiProgress::-webkit-slider-thumb{background:#fff!important",
 ]) {
   if (!patchedSettings.includes(marker)) {
-    throw new Error(`[swifly-complete-playback-qa] Missing option-grid marker: ${marker}`);
+    throw new Error(`[swifly-complete-playback-qa] Missing compact-grid or timeline marker: ${marker}`);
   }
+}
+
+if (patchedSettings.includes("width:min(760px,calc(100vw - 48px))")) {
+  throw new Error("[swifly-complete-playback-qa] Fixed 760px detail-panel width survived.");
 }
 
 const sourceAwareTheme = patchTheme(fs.readFileSync(themePath, "utf8"));
@@ -51,11 +59,16 @@ for (const marker of [
   '["3", "3×"]',
   '["4", "4×"]',
   "completeOptionNodes(item, select)",
-  'choices.dataset.optionCount = String(optionNodes.length)',
-  'detailTitle.textContent = item.label + (optionNodes.length ? " · " + optionNodes.length : "")',
+  "var optionCount = optionNodes.length",
+  "var optionColumns = Math.min(5, Math.max(1, optionCount))",
+  "var panelWidth = Math.max(170, Math.min(420",
+  'choices.style.setProperty("--swifly-option-columns", String(optionColumns))',
+  'menu.style.setProperty("--swifly-option-panel-width", panelWidth + "px")',
+  'choices.dataset.optionCount = String(optionCount)',
+  'detailTitle.textContent = item.label + (optionCount ? " · " + optionCount : "")',
 ]) {
   if (!patchedTheme.includes(marker)) {
-    throw new Error(`[swifly-complete-playback-qa] Missing complete-option marker: ${marker}`);
+    throw new Error(`[swifly-complete-playback-qa] Missing complete-option sizing marker: ${marker}`);
   }
 }
 
@@ -92,4 +105,4 @@ for (const marker of orderMarkers) {
   previous = index;
 }
 
-console.log("Swifly complete playback option data, live Quality refresh, and grid QA passed.");
+console.log("Swifly compact playback panels, stable timeline colors, live Quality refresh, and complete option QA passed.");
