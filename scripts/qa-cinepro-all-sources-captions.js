@@ -79,8 +79,8 @@ vm.runInNewContext(realReadFileSync(languagesPath, "utf8"), languageSandbox, {
 const languageCompatibleClient = fakeFs.readFileSync(cineproPath, "utf8");
 new vm.Script(String(languageCompatibleClient), { filename: "swifly-language-compatible-cinepro-client.js" });
 requireMarkers(String(languageCompatibleClient), [
-  "language: clean(subtitle && (subtitle.language || subtitle.lang || subtitle.srclang)) || clean(subtitle && subtitle.label),",
-], "idempotent subtitle language normalization");
+  "const language = clean(subtitle && (subtitle.language || subtitle.lang || subtitle.srclang));",
+], "idempotent aggregated subtitle language normalization");
 
 const executableClient = transformedClient +
   "\nmodule.exports.__swiflyCaptionTest = { subtitleBodyToVtt, detectSubtitleFormat, ensureCoreProxyTarget };\n";
