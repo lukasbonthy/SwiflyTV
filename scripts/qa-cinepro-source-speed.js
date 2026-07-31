@@ -78,6 +78,7 @@ const requiredControlMarkers = [
   '<option value="3">3×</option>',
   '<option value="4">4×</option>',
   "function fillSourceOptions()",
+  "source.disabled = false;",
   "function switchCineProSource(sourceId)",
   "mountSwiflyControls(player, media, hlsInstance, sourceData)",
   "__swiflyControlGeneration",
@@ -103,6 +104,10 @@ for (const marker of requiredClientMarkers) {
 
 if (!patchedTheme.includes('{ key: "source", label: "Source"')) {
   throw new Error("[swifly-source-speed-qa] Source row is missing from the settings theme.");
+}
+
+if (finalControls.includes("source.disabled = options.length < 2")) {
+  throw new Error("[swifly-source-speed-qa] Single-provider Source rows would still be hidden.");
 }
 
 if (finalControls.includes("[swifly-stream-options]")) {
