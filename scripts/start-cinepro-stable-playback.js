@@ -33,14 +33,23 @@ function start() {
   );
   stableState.installPatch();
 
-  // Install last so this receives the fully transformed Source-aware control
-  // mount. Native controls remain available until the custom deck is confirmed
-  // present, with retries on ready, metadata, canplay, and short startup timers.
+  // Install after the Source-aware control transforms. Native controls remain
+  // available until the custom deck is confirmed present, with retries on
+  // ready, metadata, canplay, and short startup timers.
   const controlPresence = requireInstaller(
     require("./start-cinepro-controls-presence.js"),
     "control presence guard",
   );
   controlPresence.installPatch();
+
+  // Install last so this sees the fully generated server source. A missing or
+  // differently-capitalized Watchlist renderer must not abort the entire page
+  // before the movie player and its controls have a chance to mount.
+  const watchlistGuard = requireInstaller(
+    require("./start-cinepro-watchlist-guard.js"),
+    "Watchlist bootstrap guard",
+  );
+  watchlistGuard.installPatch();
 
   return require("./start-cinepro-settings-cinema.js");
 }
