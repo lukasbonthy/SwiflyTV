@@ -4,11 +4,18 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 const { patchSettingsCinemaGrid } = require("./start-cinepro-options-grid.js");
-const { patchThemeCompleteOptions } = require("./start-cinepro-complete-option-data.js");
-const { patchTheme } = require("./start-cinepro-source-speed.js");
+const {
+  patchLanguagesQualityRefresh,
+  patchThemeCompleteOptions,
+} = require("./start-cinepro-complete-option-data.js");
+const {
+  patchLanguages,
+  patchTheme,
+} = require("./start-cinepro-source-speed.js");
 
 const settingsPath = path.join(__dirname, "start-cinepro-settings-cinema.js");
 const themePath = path.join(__dirname, "start-cinepro-theme-unified.js");
+const languagesPath = path.join(__dirname, "start-cinepro-languages.js");
 const launcherPath = path.join(__dirname, "start-cinepro-complete-playback-options.js");
 
 const patchedSettings = patchSettingsCinemaGrid(fs.readFileSync(settingsPath, "utf8"));
@@ -52,6 +59,22 @@ for (const marker of [
   }
 }
 
+const sourceAwareLanguages = patchLanguages(fs.readFileSync(languagesPath, "utf8"));
+const patchedLanguages = patchLanguagesQualityRefresh(sourceAwareLanguages);
+new vm.Script(patchedLanguages, { filename: languagesPath });
+for (const marker of [
+  "hlsEvents.MANIFEST_PARSED",
+  "hlsEvents.LEVELS_UPDATED",
+  "hlsEvents.LEVEL_UPDATED",
+  "hlsEvents.LEVEL_SWITCHED",
+  "fillSettings();",
+  "quality.value = String(Number.isInteger(hlsInstance.currentLevel)",
+]) {
+  if (!patchedLanguages.includes(marker)) {
+    throw new Error(`[swifly-complete-playback-qa] Missing live Quality marker: ${marker}`);
+  }
+}
+
 const launcher = fs.readFileSync(launcherPath, "utf8");
 new vm.Script(launcher, { filename: launcherPath });
 const orderMarkers = [
@@ -69,4 +92,4 @@ for (const marker of orderMarkers) {
   previous = index;
 }
 
-console.log("Swifly complete playback option data and grid QA passed.");
+console.log("Swifly complete playback option data, live Quality refresh, and grid QA passed.");
