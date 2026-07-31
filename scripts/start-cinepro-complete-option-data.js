@@ -6,8 +6,9 @@ const vm = require("vm");
 
 const root = path.resolve(__dirname, "..");
 const themePath = path.join(root, "scripts", "start-cinepro-theme-unified.js");
+const languagesPath = path.join(root, "scripts", "start-cinepro-languages.js");
 const originalReadFileSync = fs.readFileSync.bind(fs);
-let patched = false;
+const patchedPaths = new Set();
 
 function replaceRequired(source, needle, replacement, label) {
   if (!source.includes(needle)) {
@@ -92,19 +93,67 @@ function patchThemeCompleteOptions(source) {
   return next;
 }
 
+function patchLanguagesQualityRefresh(source) {
+  let next = String(source).replace(/\r\n?/g, "\n");
+
+  next = replaceRequired(
+    next,
+    `              if (hlsEvents.MANIFEST_PARSED) hlsInstance.on(hlsEvents.MANIFEST_PARSED, function(){ fillAudioLanguages(); fillCaptionLanguages(); });`,
+    `              if (hlsEvents.MANIFEST_PARSED) hlsInstance.on(hlsEvents.MANIFEST_PARSED, function(){
+                fillSettings();
+                try { quality.value = String(Number.isInteger(hlsInstance.currentLevel) ? hlsInstance.currentLevel : -1); } catch {}
+                sync();
+              });
+              if (hlsEvents.LEVELS_UPDATED) hlsInstance.on(hlsEvents.LEVELS_UPDATED, function(){
+                fillSettings();
+                try { quality.value = String(Number.isInteger(hlsInstance.currentLevel) ? hlsInstance.currentLevel : -1); } catch {}
+                sync();
+              });
+              if (hlsEvents.LEVEL_UPDATED) hlsInstance.on(hlsEvents.LEVEL_UPDATED, function(){
+                fillSettings();
+                try { quality.value = String(Number.isInteger(hlsInstance.currentLevel) ? hlsInstance.currentLevel : -1); } catch {}
+                sync();
+              });
+              if (hlsEvents.LEVEL_SWITCHED) hlsInstance.on(hlsEvents.LEVEL_SWITCHED, function(){
+                try { quality.value = String(Number.isInteger(hlsInstance.currentLevel) ? hlsInstance.currentLevel : -1); } catch {}
+                sync();
+              });`,
+    "HLS manifest settings refresh",
+  );
+
+  new vm.Script(next, { filename: languagesPath });
+  return next;
+}
+
 function installPatch() {
   fs.readFileSync = function swiflyCompleteOptionsRead(filePath, ...args) {
     const result = originalReadFileSync(filePath, ...args);
     let resolved = "";
     try { resolved = path.resolve(String(filePath)); } catch {}
-    if (patched || resolved !== themePath) return result;
+    if (patchedPaths.has(resolved)) return result;
 
-    patched = true;
+    let patcher = null;
+    let label = "";
+    if (resolved === themePath) {
+      patcher = patchThemeCompleteOptions;
+      label = "complete option data renderer";
+    }
+    if (resolved === languagesPath) {
+      patcher = patchLanguagesQualityRefresh;
+      label = "live Quality option refresh";
+    }
+    if (!patcher) return result;
+
     const source = Buffer.isBuffer(result) ? result.toString("utf8") : String(result);
-    const next = patchThemeCompleteOptions(source);
-    console.log("[swifly-complete-options] Complete option data renderer injected.");
+    const next = patcher(source);
+    patchedPaths.add(resolved);
+    console.log(`[swifly-complete-options] ${label} injected.`);
     return Buffer.isBuffer(result) ? Buffer.from(next, "utf8") : next;
   };
 }
 
-module.exports = { installPatch, patchThemeCompleteOptions };
+module.exports = {
+  installPatch,
+  patchLanguagesQualityRefresh,
+  patchThemeCompleteOptions,
+};
