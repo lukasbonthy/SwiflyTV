@@ -17,14 +17,29 @@ function enableAllProviders() {
   );
 }
 
+function requireInstaller(moduleValue, label) {
+  if (!moduleValue || typeof moduleValue.installPatch !== "function") {
+    throw new TypeError(`[swifly-all-media] ${label} does not export installPatch().`);
+  }
+  return moduleValue;
+}
+
 function start() {
   enableAllProviders();
 
-  const allMedia = require("./start-cinepro-all-sources-captions-patch.js");
-  if (!allMedia || typeof allMedia.installPatch !== "function") {
-    throw new TypeError("[swifly-all-media] Caption/source patch does not export installPatch().");
-  }
+  const allMedia = requireInstaller(
+    require("./start-cinepro-all-sources-captions-patch.js"),
+    "Caption/source patch",
+  );
   allMedia.installPatch();
+
+  // Install after the caption/source layer so direct URLs are normalized in
+  // the fully aggregated source and subtitle data before stable-state patches.
+  const directProxy = requireInstaller(
+    require("./start-cinepro-direct-source-proxy.js"),
+    "Direct source proxy patch",
+  );
+  directProxy.installPatch();
 
   const stablePlayback = require("./start-cinepro-stable-playback.js");
   if (!stablePlayback || typeof stablePlayback.start !== "function") {
