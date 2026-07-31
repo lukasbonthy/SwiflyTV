@@ -162,7 +162,7 @@ function patchLanguages(source) {
               source.appendChild(option);
             });
 
-            source.disabled = options.length < 2;
+            source.disabled = false;
             var selectedId = String(activeSourceData.selectedSourceId || options[0].id || "");
             source.value = Array.from(source.options).some(function(option) { return option.value === selectedId; })
               ? selectedId
