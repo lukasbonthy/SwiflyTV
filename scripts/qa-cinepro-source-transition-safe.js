@@ -14,7 +14,23 @@ function requireMarkers(source, markers, label) {
   }
 }
 
-const serverFixture = `
+function verifyCommonLifecycle(source, label) {
+  new vm.Script(source, { filename: `swifly-${label}-server.js` });
+  requireMarkers(source, [
+    "movieButtonHls.stopLoad()",
+    "movieButtonHls.detachMedia()",
+    'video.removeAttribute("src")',
+    "var sourceHls = movieButtonHls",
+    "window.__swiflySourceToken",
+    "movieButtonHls !== sourceHls",
+    "video.currentSrc || url",
+  ], label);
+  if (!core.isFullyPatched(source)) {
+    throw new Error(`[swifly-source-transition-qa] ${label} was not recognized as fully guarded.`);
+  }
+}
+
+const classicServerFixture = `
 let movieButtonHls = null;
 function startPlyrHlsSource(src, data) {
   var video = document.createElement("video");
@@ -40,18 +56,56 @@ function startPlyrHlsSource(src, data) {
 }
 `;
 
-const patchedServer = core.patchPlyrServerSource(serverFixture);
-requireMarkers(patchedServer, [
-  "movieButtonHls.stopLoad()",
-  "movieButtonHls.detachMedia()",
-  'video.removeAttribute("src")',
+const patchedClassicServer = core.patchPlyrServerSource(classicServerFixture);
+verifyCommonLifecycle(patchedClassicServer, "classic HLS lifecycle");
+requireMarkers(patchedClassicServer, [
   "Hls.Events.MEDIA_ATTACHED",
   "sourceHls.loadSource(url)",
-  "window.__swiflySourceToken",
-  "video.currentSrc || url",
-], "server lifecycle");
-if (/movieButtonHls\.loadSource\(url\);\s*movieButtonHls\.attachMedia\(video\);/.test(patchedServer)) {
-  throw new Error("[swifly-source-transition-qa] Unsafe HLS load/attach order survived.");
+  "sourceHls.attachMedia(video)",
+], "classic attach-on-ready lifecycle");
+
+// Runtime wrappers can alter the order and insert statements between attach,
+// load, and event registration. This mirrors the startup shape that previously
+// passed isolated QA and then failed inside npm start.
+const transformedServerFixture = `
+let movieButtonHls = null;
+function startPlyrHlsSource(src, data) {
+  var video = document.createElement("video");
+  var url = String(src || "");
+  if (movieButtonHls) {
+    try { movieButtonHls.destroy(); } catch {}
+    movieButtonHls = null;
+  }
+  if (window.Hls && window.Hls.isSupported()) {
+    movieButtonHls = new window.Hls({});
+    movieButtonHls.attachMedia(video);
+    var startupMarker = "already transformed";
+    movieButtonHls.loadSource(url);
+    movieButtonHls.on(window.Hls.Events.MANIFEST_PARSED, function(event, manifestData) {
+      if (startupMarker) video.play();
+    });
+    movieButtonHls.on(window.Hls.Events.ERROR, function(event, errorData) {
+      console.error(errorData);
+    });
+  } else {
+    video.src = url;
+    video.load();
+  }
+}
+`;
+
+const patchedTransformedServer = core.patchPlyrServerSource(transformedServerFixture);
+verifyCommonLifecycle(patchedTransformedServer, "transformed HLS lifecycle");
+requireMarkers(patchedTransformedServer, [
+  "movieButtonHls.attachMedia(video)",
+  "movieButtonHls.loadSource(url)",
+  "sourceHls.on(window.Hls.Events.MANIFEST_PARSED",
+  "sourceHls.on(window.Hls.Events.ERROR",
+], "transformed lifecycle preservation");
+
+const patchedTwice = core.patchPlyrServerSource(patchedTransformedServer);
+if (patchedTwice !== patchedTransformedServer) {
+  throw new Error("[swifly-source-transition-qa] Reapplying the lifecycle patch changed already-safe code.");
 }
 
 const plyrPath = path.join(__dirname, "start-cinepro-plyr.js");
@@ -85,4 +139,4 @@ if (patchedSourceSpeed.includes("return startPlyrHlsSource(String(selected.playb
   throw new Error("[swifly-source-transition-qa] Incompatible returned Source handoff survived.");
 }
 
-console.log("Swifly safe HLS/direct Source transition and stable-state composition QA passed.");
+console.log("Swifly transformed-runtime HLS transition and persistent-option QA passed.");
