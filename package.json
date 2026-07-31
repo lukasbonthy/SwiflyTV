@@ -1,7 +1,7 @@
 {
   "name": "swiflytv",
-  "version": "3.7.1",
-  "description": "SwiflyTV with every installed CinePro provider, direct Core proxying, and browser-ready captions.",
+  "version": "3.7.2",
+  "description": "SwiflyTV with all CinePro providers, browser-ready captions, and startup-order-safe language normalization.",
   "main": "server.js",
   "scripts": {
     "start": "node scripts/start-cinepro-all-sources-captions.js",
