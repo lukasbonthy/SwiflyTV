@@ -32,6 +32,12 @@ function start() {
   const providerTimeouts = require("./patch-cinepro-provider-timeouts.js");
   providerTimeouts.applyProviderTimeoutPatch();
 
+  // OMSS normally deduplicates only by the final upstream URL. Preserve one
+  // variant per provider/URL/type/quality so two providers sharing a CDN do not
+  // collapse into a single Source option in SwiflyTV.
+  const providerVariants = require("./patch-cinepro-provider-variants.js");
+  providerVariants.applyProviderVariantPatch();
+
   const allMedia = requireInstaller(
     require("./start-cinepro-all-sources-captions-patch.js"),
     "Caption/source patch",
