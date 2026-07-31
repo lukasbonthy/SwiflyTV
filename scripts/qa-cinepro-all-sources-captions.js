@@ -11,6 +11,7 @@ const stableState = require("./start-cinepro-stable-playback-state-v2.js");
 const root = path.resolve(__dirname, "..");
 const cineproPath = path.join(root, "cinepro-client.js");
 const plyrPath = path.join(__dirname, "start-cinepro-plyr.js");
+const languagesPath = path.join(__dirname, "start-cinepro-languages.js");
 const launcherPath = path.join(__dirname, "start-cinepro-all-sources-captions.js");
 
 function requireMarkers(source, markers, label) {
@@ -46,6 +47,40 @@ requireMarkers(transformedClient, [
 if (transformedClient.includes("candidates.slice(0, 16)")) {
   throw new Error("[swifly-all-media-qa] The old 16-source cutoff survived.");
 }
+
+// Execute the actual language wrapper against the fully transformed client.
+// This models the runtime read-hook order that previously crashed npm start.
+const realReadFileSync = fs.readFileSync.bind(fs);
+const fakeFs = {
+  readFileSync(filePath, ...args) {
+    const resolved = path.resolve(String(filePath));
+    if (resolved === cineproPath) return transformedClient;
+    return realReadFileSync(filePath, ...args);
+  },
+};
+const languageSandbox = {
+  module: { exports: {} },
+  exports: {},
+  console,
+  process,
+  Buffer,
+  __dirname: path.dirname(languagesPath),
+  __filename: languagesPath,
+  require(request) {
+    if (request === "fs") return fakeFs;
+    if (request === "path") return path;
+    if (request === "./start-cinepro-compact.js") return {};
+    throw new Error(`[swifly-all-media-qa] Unexpected language-wrapper require: ${request}`);
+  },
+};
+vm.runInNewContext(realReadFileSync(languagesPath, "utf8"), languageSandbox, {
+  filename: languagesPath,
+});
+const languageCompatibleClient = fakeFs.readFileSync(cineproPath, "utf8");
+new vm.Script(String(languageCompatibleClient), { filename: "swifly-language-compatible-cinepro-client.js" });
+requireMarkers(String(languageCompatibleClient), [
+  "language: clean(subtitle && (subtitle.language || subtitle.lang || subtitle.srclang)) || clean(subtitle && subtitle.label),",
+], "idempotent subtitle language normalization");
 
 const executableClient = transformedClient +
   "\nmodule.exports.__swiflyCaptionTest = { subtitleBodyToVtt, detectSubtitleFormat, ensureCoreProxyTarget };\n";
@@ -106,4 +141,4 @@ requireMarkers(launcher, [
   "stablePlayback.start()",
 ], "all-provider startup");
 
-console.log("Swifly all-provider sources, direct Core proxying, and WebVTT caption bridge QA passed.");
+console.log("Swifly full startup-order, all-provider Source, and WebVTT caption QA passed.");
