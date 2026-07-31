@@ -4,6 +4,7 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 const allMedia = require("./start-cinepro-all-sources-captions-patch.js");
+const directProxy = require("./start-cinepro-direct-source-proxy.js");
 const sourceSpeed = require("./start-cinepro-source-speed.js");
 const stableState = require("./start-cinepro-stable-playback-state-v2.js");
 
@@ -21,12 +22,16 @@ function requireMarkers(source, markers, label) {
 }
 
 const bridgedBase = allMedia.patchCineProClientAllMedia(fs.readFileSync(cineproPath, "utf8"));
-const sourceAware = sourceSpeed.patchCineProClient(bridgedBase);
+const proxyAwareBase = directProxy.patchDirectSourceProxy(bridgedBase);
+const sourceAware = sourceSpeed.patchCineProClient(proxyAwareBase);
 const transformedClient = stableState.patchCineProClientState(sourceAware);
 new vm.Script(transformedClient, { filename: cineproPath });
 
 requireMarkers(transformedClient, [
   "const sourceOptions = candidates.map((candidate) => {",
+  "function ensureCoreProxyTarget",
+  "const playbackTarget = ensureCoreProxyTarget",
+  "const subtitleTarget = ensureCoreProxyTarget",
   "const subtitleInputs = [",
   "item && item.subtitles",
   "item && item.captions",
@@ -43,7 +48,7 @@ if (transformedClient.includes("candidates.slice(0, 16)")) {
 }
 
 const executableClient = transformedClient +
-  "\nmodule.exports.__swiflyCaptionTest = { subtitleBodyToVtt, detectSubtitleFormat };\n";
+  "\nmodule.exports.__swiflyCaptionTest = { subtitleBodyToVtt, detectSubtitleFormat, ensureCoreProxyTarget };\n";
 const sandbox = {
   module: { exports: {} },
   exports: {},
@@ -61,6 +66,11 @@ vm.runInNewContext(executableClient, sandbox, { filename: "swifly-cinepro-captio
 const captionTest = sandbox.module.exports.__swiflyCaptionTest;
 if (!captionTest || typeof captionTest.subtitleBodyToVtt !== "function") {
   throw new Error("[swifly-all-media-qa] Caption converter was not executable.");
+}
+
+const directTarget = captionTest.ensureCoreProxyTarget("https://media.example/video.m3u8", { Referer: "https://media.example/" });
+if (!directTarget.startsWith("/v1/proxy?data=")) {
+  throw new Error("[swifly-all-media-qa] Direct media URL was not wrapped through CinePro Core.");
 }
 
 const srt = "1\n00:00:01,250 --> 00:00:03,500\nHello from SRT\n";
@@ -91,8 +101,9 @@ new vm.Script(launcher, { filename: launcherPath });
 requireMarkers(launcher, [
   'process.env.CINEPRO_PROVIDER_ALLOWLIST = "*"',
   'require("./start-cinepro-all-sources-captions-patch.js")',
+  'require("./start-cinepro-direct-source-proxy.js")',
   'require("./start-cinepro-stable-playback.js")',
   "stablePlayback.start()",
 ], "all-provider startup");
 
-console.log("Swifly all-provider sources and WebVTT caption bridge QA passed.");
+console.log("Swifly all-provider sources, direct Core proxying, and WebVTT caption bridge QA passed.");
