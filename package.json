@@ -1,7 +1,7 @@
 {
   "name": "swiflytv",
-  "version": "3.6.0",
-  "description": "SwiflyTV with complete playback option data and a full multi-option settings grid.",
+  "version": "3.6.1",
+  "description": "SwiflyTV with complete speed choices, live HLS quality levels, and a full multi-option settings grid.",
   "main": "server.js",
   "scripts": {
     "start": "node scripts/start-cinepro-complete-playback-options.js",
