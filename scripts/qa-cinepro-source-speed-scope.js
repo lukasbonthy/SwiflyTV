@@ -54,6 +54,7 @@ function initPlyrUi(hlsInstance, levels) {
 `;
 
 let transformedServer = "";
+let startupDependencyRequested = false;
 const fakeFs = {
   readFileSync(filePath) {
     const resolved = path.resolve(String(filePath));
@@ -66,6 +67,11 @@ const wrapperContext = {
   require(request) {
     if (request === "fs") return fakeFs;
     if (request === "path") return path;
+    if (request === "./start-cinepro-fullscreen-safe.js") {
+      startupDependencyRequested = true;
+      transformedServer = String(fakeFs.readFileSync(serverPath, "utf8"));
+      return {};
+    }
     if (request === "../server.js") {
       transformedServer = String(fakeFs.readFileSync(serverPath, "utf8"));
       return {};
@@ -81,6 +87,10 @@ const wrapperContext = {
 };
 
 vm.runInNewContext(patchedControls, wrapperContext, { filename: controlsPath });
+
+if (!startupDependencyRequested) {
+  throw new Error("[swifly-source-speed-scope-qa] Generated controls did not continue into the fullscreen-safe startup layer.");
+}
 
 if (!transformedServer) {
   throw new Error("[swifly-source-speed-scope-qa] Custom controls did not transform the server fixture.");
