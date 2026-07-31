@@ -1,7 +1,7 @@
 {
   "name": "swiflytv",
-  "version": "3.7.6",
-  "description": "SwiflyTV with provider-specific Sources and safe HLS/direct media transitions.",
+  "version": "3.7.7",
+  "description": "SwiflyTV with safe source transitions and persistent playback options across remounts.",
   "main": "server.js",
   "scripts": {
     "start": "node scripts/start-cinepro-all-sources-captions.js",
