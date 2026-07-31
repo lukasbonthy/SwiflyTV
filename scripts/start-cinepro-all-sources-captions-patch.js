@@ -44,7 +44,7 @@ function detectSubtitleFormat(value, target = "", contentType = "") {
   if (["srt", "subrip"].includes(explicit)) return "srt";
   if (["ass", "ssa"].includes(explicit)) return "ass";
 
-  const haystack = `${clean(target)} ${clean(contentType)}`.toLowerCase();
+  const haystack = (clean(target) + " " + clean(contentType)).toLowerCase();
   if (/\.(?:srt)(?:[?#]|\s|$)|subrip/.test(haystack)) return "srt";
   if (/\.(?:ass|ssa)(?:[?#]|\s|$)|substation/.test(haystack)) return "ass";
   return "vtt";
@@ -57,7 +57,7 @@ function assTimeToVtt(value) {
   const minutes = String(Number(match[2]) || 0).padStart(2, "0");
   const seconds = String(Number(match[3]) || 0).padStart(2, "0");
   const fraction = String(match[4] || "0").padEnd(3, "0").slice(0, 3);
-  return `${hours}:${minutes}:${seconds}.${fraction}`;
+  return hours + ":" + minutes + ":" + seconds + "." + fraction;
 }
 
 function subtitleBodyToVtt(body, format = "") {
@@ -79,15 +79,15 @@ function subtitleBodyToVtt(body, format = "") {
         .replace(/\\h/gi, " ")
         .replace(/\{[^}]*\}/g, "")
         .trim();
-      if (text) cues.push(`${start} --> ${end}\n${text}`);
+      if (text) cues.push(start + " --> " + end + "\n" + text);
     }
-    return `WEBVTT\n\n${cues.join("\n\n")}\n`;
+    return "WEBVTT\n\n" + cues.join("\n\n") + "\n";
   }
 
   const converted = source
     .replace(/(\d{1,2}:\d{2}:\d{2}),([0-9]{3})\s*-->\s*(\d{1,2}:\d{2}:\d{2}),([0-9]{3})/g, "$1.$2 --> $3.$4")
     .replace(/(\d{2}:\d{2}),([0-9]{3})\s*-->\s*(\d{2}:\d{2}),([0-9]{3})/g, "00:$1.$2 --> 00:$3.$4");
-  return `WEBVTT\n\n${converted.trim()}\n`;
+  return "WEBVTT\n\n" + converted.trim() + "\n";
 }
 `;
 
