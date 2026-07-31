@@ -22,21 +22,21 @@ function patchCustomControlsPresence(source) {
   next = replaceRequired(
     next,
     'body.swifly-watch-clean #movieButtonPlayerShell .plyr__controls,body.swifly-watch-clean #movieButtonPlayerShell .plyr__control--overlaid,#swiflyCleanBack{display:none!important}',
-    'body.swifly-watch-clean #movieButtonPlayerShell.swiflyCustomControlsMounted .plyr__controls,body.swifly-watch-clean #movieButtonPlayerShell.swiflyCustomControlsMounted .plyr__control--overlaid,body.swifly-watch-clean #movieButtonPlayerShell.swiflyCustomControlsMounted~#swiflyCleanBack{display:none!important}',
+    'body.swifly-watch-clean #movieButtonPlayerShell.swiflyCustomControlsMounted .plyr__controls,body.swifly-watch-clean #movieButtonPlayerShell.swiflyCustomControlsMounted .plyr__control--overlaid,body.swifly-watch-clean.swiflyCustomControlsMounted #swiflyCleanBack{display:none!important}',
     "custom-controls-only stock-control hiding rule",
   );
 
   next = replaceRequired(
     next,
     `          if (!playerShell || !media) return;\n`,
-    `          if (!playerShell || !media) return;\n          try { playerShell.classList.remove("swiflyCustomControlsMounted"); } catch {}\n`,
+    `          if (!playerShell || !media) return;\n          try {\n            playerShell.classList.remove("swiflyCustomControlsMounted");\n            document.body.classList.remove("swiflyCustomControlsMounted");\n          } catch {}\n`,
     "control mount entry point",
   );
 
   next = replaceRequired(
     next,
     `          playerShell.appendChild(ui);\n`,
-    `          playerShell.appendChild(ui);\n          playerShell.classList.add("swiflyCustomControlsMounted");\n          try { media.controls = false; } catch {}\n`,
+    `          playerShell.appendChild(ui);\n          playerShell.classList.add("swiflyCustomControlsMounted");\n          document.body.classList.add("swiflyCustomControlsMounted");\n          try { media.controls = false; } catch {}\n`,
     "successful custom-control mount marker",
   );
 
@@ -50,6 +50,7 @@ function patchCustomControlsPresence(source) {
     '              var existingControls = playerShell.querySelector(".swiflyPlayerUi");',
     '              if (existingControls && existingControls.isConnected && swiflyControlsMountedFor === movieButtonPlyr) {',
     '                playerShell.classList.add("swiflyCustomControlsMounted");',
+    '                document.body.classList.add("swiflyCustomControlsMounted");',
     '                try { video.controls = false; } catch {}',
     '                return;',
     '              }',
@@ -63,9 +64,11 @@ function patchCustomControlsPresence(source) {
     '                }',
     '                swiflyControlsMountedFor = movieButtonPlyr;',
     '                playerShell.classList.add("swiflyCustomControlsMounted");',
+    '                document.body.classList.add("swiflyCustomControlsMounted");',
     '                try { video.controls = false; } catch {}',
     '              } catch (controlError) {',
     '                playerShell.classList.remove("swiflyCustomControlsMounted");',
+    '                document.body.classList.remove("swiflyCustomControlsMounted");',
     '                try { video.controls = true; } catch {}',
     '                try { console.error("[swifly-controls-presence] Custom controls failed; native controls restored.", controlError); } catch {}',
     '              }',
