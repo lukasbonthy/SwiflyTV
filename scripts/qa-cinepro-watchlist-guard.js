@@ -1,10 +1,12 @@
 "use strict";
 
 const fs = require("fs");
-const path = require("path");
+const Module = require("module");
 const vm = require("vm");
 const {
+  installPatch,
   patchWatchlistReference,
+  serverPath,
 } = require("./start-cinepro-watchlist-guard.js");
 
 const aliasFixture = `
@@ -37,7 +39,6 @@ if (missingContext.startupContinued !== true) {
   throw new Error("[swifly-watchlist-guard-qa] Page startup did not continue after a missing Watchlist renderer.");
 }
 
-const serverPath = path.join(__dirname, "..", "server.js");
 const realServer = fs.readFileSync(serverPath, "utf8");
 const realPatched = patchWatchlistReference(realServer, { requireCall: true });
 if (realPatched.replacementCount < 1) {
@@ -45,6 +46,29 @@ if (realPatched.replacementCount < 1) {
 }
 new vm.Script(realPatched.source, { filename: serverPath });
 
+// Exercise the exact production interception point. start-cinepro.js compiles
+// the fully transformed server through Module._compile(source, serverPath).
+globalThis.__swiflyWatchlistCompileQa = { aliasCalls: 0, continued: false };
+installPatch();
+const runtimeModule = new Module(serverPath, module);
+runtimeModule.filename = serverPath;
+runtimeModule.paths = Module._nodeModulePaths(require("path").dirname(serverPath));
+runtimeModule._compile(`
+function renderWatchListPage() {
+  globalThis.__swiflyWatchlistCompileQa.aliasCalls += 1;
+}
+renderWatchlistPage();
+globalThis.__swiflyWatchlistCompileQa.continued = true;
+`, serverPath);
+
+if (globalThis.__swiflyWatchlistCompileQa.aliasCalls !== 1) {
+  throw new Error("[swifly-watchlist-guard-qa] Final compile hook did not resolve the compatible Watchlist renderer.");
+}
+if (globalThis.__swiflyWatchlistCompileQa.continued !== true) {
+  throw new Error("[swifly-watchlist-guard-qa] Final compile hook did not allow page startup to continue.");
+}
+delete globalThis.__swiflyWatchlistCompileQa;
+
 console.log(
-  `Swifly Watchlist bootstrap guard QA passed (${realPatched.replacementCount} real call(s) guarded).`,
+  `Swifly Watchlist final-compile guard QA passed (${realPatched.replacementCount} real call(s) found).`,
 );
