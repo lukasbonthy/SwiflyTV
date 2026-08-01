@@ -37,5 +37,4 @@ fs.readFileSync = function swiflyLanguagesHotfixRead(filePath, ...args) {
   return Buffer.isBuffer(result) ? Buffer.from(source, "utf8") : source;
 };
 
-const safeStyleChain = require("./start-cinepro-safe-style-chain.js");
-safeStyleChain.loadLanguagesWithoutLegacyStyles();
+require("./start-cinepro-languages.js");
