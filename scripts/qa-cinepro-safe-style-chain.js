@@ -45,13 +45,20 @@ if (start < 0 || end < 0) {
   throw new Error("[swifly-safe-style-qa] Could not extract the stable browser control payload.");
 }
 const browserPayload = controlsSource.slice(start + marker.length, end);
+
+// This is the source of truth for quote safety. Valid querySelector calls may
+// intentionally contain double quotes inside an outer single-quoted JS string,
+// such as '[data-a="mute"] i'. Rejecting the selector text itself was a false
+// positive; compiling the complete browser payload catches real quote damage.
 new vm.Script(browserPayload, { filename: "swifly-stable-browser-controls.js" });
 
 if (/font-family:[^\n]*["']Segoe UI["']/.test(browserPayload)) {
   throw new Error("[swifly-safe-style-qa] Unsafe nested Segoe UI quotes survived in the active browser payload.");
 }
-if (/\[data-a=["']mute["']\]/.test(browserPayload)) {
-  throw new Error("[swifly-safe-style-qa] Unsafe nested mute-selector quotes survived in the active browser payload.");
+
+const expectedMuteSelector = "ui.querySelector('[data-a=\"mute\"] i')";
+if (!browserPayload.includes(expectedMuteSelector)) {
+  throw new Error("[swifly-safe-style-qa] The valid mute-button selector is missing from the active controls.");
 }
 
 console.log("Swifly safe style chain and stable browser-control syntax QA passed.");
