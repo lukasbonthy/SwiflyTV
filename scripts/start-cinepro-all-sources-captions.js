@@ -52,15 +52,6 @@ function start() {
   );
   directProxy.installPatch();
 
-  // Install before the stable player modules are loaded. This gives Source
-  // changes a real media transition: stop/detach the old HLS instance, clear
-  // the video element, attach the selected stream, and ignore stale callbacks.
-  const sourceTransition = requireInstaller(
-    require("./start-cinepro-source-transition-safe.js"),
-    "Safe Source transition patch",
-  );
-  sourceTransition.installPatch();
-
   const stablePlayback = require("./start-cinepro-stable-playback.js");
   if (!stablePlayback || typeof stablePlayback.start !== "function") {
     throw new TypeError("[swifly-all-media] Stable playback launcher does not export start().");
