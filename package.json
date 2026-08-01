@@ -1,7 +1,7 @@
 {
   "name": "swiflytv",
-  "version": "3.7.12",
-  "description": "SwiflyTV with unsafe legacy browser-style injectors bypassed, fail-safe movie controls, and persistent playback options.",
+  "version": "3.7.13",
+  "description": "SwiflyTV with a safe browser-style chain, corrected selector QA, fail-safe movie controls, and persistent playback options.",
   "main": "server.js",
   "scripts": {
     "start": "node scripts/start-cinepro-all-sources-captions.js",
