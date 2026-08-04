@@ -24,18 +24,39 @@ function replaceRequired(source, pattern, replacement, label) {
 function patchCineProClientState(source) {
   let next = String(source).replace(/\r\n?/g, "\n");
 
-  next = replaceRequired(
-    next,
-    /  const sourceOptions = candidates\.slice\(0,\s*16\)\.map\(\(candidate,\s*index\) => \{/,
-    `  const sourceIdCounts = new Map();
-  const sourceOptions = candidates.map((candidate) => {`,
-    "arbitrary Source cutoff",
-  );
+  const cappedSourceHeader =
+    /  const sourceOptions = candidates\.slice\(0,\s*16\)\.map\(\(candidate,\s*index\) => \{/;
+  const unlimitedSourceHeader =
+    /  const sourceOptions = candidates\.map\(\(candidate,\s*index\) => \{/;
+  const stableSourceHeader =
+    /  const sourceIdCounts = new Map\(\);\n  const sourceOptions = candidates\.map\(\(candidate\) => \{/;
 
-  next = replaceRequired(
-    next,
-    /    const streamMode = candidate\.kind;\n    return \{/,
-    `    const streamMode = candidate.kind;
+  if (!stableSourceHeader.test(next)) {
+    const sourceHeader = cappedSourceHeader.test(next)
+      ? cappedSourceHeader
+      : unlimitedSourceHeader.test(next)
+        ? unlimitedSourceHeader
+        : null;
+
+    if (!sourceHeader) {
+      throw new Error(
+        "[swifly-stable-state] Could not find capped or already-unlimited Source options; refusing a partial state patch.",
+      );
+    }
+
+    sourceHeader.lastIndex = 0;
+    next = next.replace(
+      sourceHeader,
+      `  const sourceIdCounts = new Map();
+  const sourceOptions = candidates.map((candidate) => {`,
+    );
+  }
+
+  if (!next.includes("const stableSourceId =")) {
+    next = replaceRequired(
+      next,
+      /    const streamMode = candidate\.kind;\n    return \{/,
+      `    const streamMode = candidate.kind;
     const sourceIdentity = [
       clean(optionProvider.id || optionProvider.name),
       clean(optionSource.type),
@@ -47,19 +68,26 @@ function patchCineProClientState(source) {
     sourceIdCounts.set(sourceHash, duplicateNumber);
     const stableSourceId = "cinepro-source-" + sourceHash + (duplicateNumber > 1 ? "-" + duplicateNumber : "");
     return {`,
-    "stable Source identity",
-  );
+      "stable Source identity",
+    );
+  }
 
-  next = replaceRequired(
-    next,
-    /      id: `cinepro-source-\$\{index\}`,/,
-    "      id: stableSourceId,",
-    "sequential Source id",
-  );
+  if (!next.includes("id: stableSourceId")) {
+    next = replaceRequired(
+      next,
+      /      id: `cinepro-source-\$\{index\}`,/,
+      "      id: stableSourceId,",
+      "sequential Source id",
+    );
+  }
 
   if (next.includes("candidates.slice(0, 16)")) {
     throw new Error("[swifly-stable-state] Source cutoff survived patching.");
   }
+  if (!stableSourceHeader.test(next) || !next.includes("id: stableSourceId")) {
+    throw new Error("[swifly-stable-state] Stable unlimited Source state was not fully generated.");
+  }
+
   new vm.Script(next, { filename: cineproClientPath });
   return next;
 }
