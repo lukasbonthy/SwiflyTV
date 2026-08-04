@@ -80,12 +80,20 @@ function validateEsmSyntax(source) {
 function applyVidNestResiliencePatch() {
   if (!fs.existsSync(vidNestPath)) {
     console.warn("[swifly-vidnest] VidNest provider is not installed; skipping resilience patch.");
-    return { path: vidNestPath, changed: false, missing: true };
+    return { path: vidNestPath, changed: false, missing: true, unsupported: false };
   }
 
   const original = fs.readFileSync(vidNestPath, "utf8");
-  const patched = patchVidNestSource(original);
-  validateEsmSyntax(patched.source);
+  let patched;
+  try {
+    patched = patchVidNestSource(original);
+    validateEsmSyntax(patched.source);
+  } catch (error) {
+    console.warn(
+      `[swifly-vidnest] VidNest resilience patch was skipped safely: ${error.message || error}`,
+    );
+    return { path: vidNestPath, changed: false, missing: false, unsupported: true };
+  }
 
   if (patched.changed) {
     fs.writeFileSync(vidNestPath, patched.source, "utf8");
@@ -96,7 +104,7 @@ function applyVidNestResiliencePatch() {
       ? "[swifly-vidnest] Malformed VidNest sub-servers can no longer discard valid VidNest sources."
       : "[swifly-vidnest] VidNest resilience patch already active.",
   );
-  return { path: vidNestPath, changed: patched.changed, missing: false };
+  return { path: vidNestPath, changed: patched.changed, missing: false, unsupported: false };
 }
 
 module.exports = {
