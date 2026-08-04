@@ -2,7 +2,9 @@
 
 const fs = require("fs");
 const path = require("path");
+const vm = require("vm");
 const sourceList = require("./patch-cinepro-source-list.js");
+const stableState = require("./start-cinepro-stable-playback-state-v2.js");
 const vidNest = require("./patch-cinepro-vidnest-resilience.js");
 
 function requireMarker(source, marker) {
@@ -11,15 +13,49 @@ function requireMarker(source, marker) {
   }
 }
 
-const sourceListFixture = `function normalize() {
+const sourceListFixture = `
+const crypto = require("crypto");
+function clean(value) { return value == null ? "" : String(value).trim(); }
+function normalize() {
   const candidates = [];
-  const sourceOptions = candidates.slice(0, 16).map((candidate, index) => ({ index, candidate }));
+  const sourceOptions = candidates.slice(0, 16).map((candidate, index) => {
+    const optionSource = candidate.source || {};
+    const optionProvider = optionSource.provider || {};
+    const providerName = clean(optionProvider.name || optionProvider.id) || "CinePro source";
+    const quality = clean(optionSource.quality);
+    const streamMode = candidate.kind;
+    return {
+      id: \`cinepro-source-\${index}\`,
+      label: providerName + (quality ? \` · \${quality}\` : ""),
+      provider: providerName,
+      quality,
+      streamMode,
+      playbackUrl: candidate.playbackUrl,
+    };
+  });
   return sourceOptions;
-}`;
-const sourceListResult = sourceList.patchSourceList(sourceListFixture);
-requireMarker(sourceListResult, "const sourceOptions = candidates.map");
-if (sourceListResult.includes("slice(0, 16)")) {
+}
+`;
+
+const unlimitedSource = sourceList.patchSourceList(sourceListFixture);
+requireMarker(unlimitedSource, "const sourceOptions = candidates.map");
+if (unlimitedSource.includes("slice(0, 16)")) {
   throw new Error("[swifly-source-recovery-qa] The sixteen-source limit survived patching.");
+}
+
+const composedSource = stableState.patchCineProClientState(unlimitedSource);
+new vm.Script(composedSource, { filename: "swifly-unlimited-stable-source-fixture.js" });
+requireMarker(composedSource, "const sourceIdCounts = new Map();");
+requireMarker(composedSource, "const sourceOptions = candidates.map((candidate) => {");
+requireMarker(composedSource, "const stableSourceId =");
+requireMarker(composedSource, "id: stableSourceId");
+if (composedSource.includes("slice(0, 16)")) {
+  throw new Error("[swifly-source-recovery-qa] Stable-state composition restored the Source cutoff.");
+}
+
+const idempotentSource = stableState.patchCineProClientState(composedSource);
+if (idempotentSource !== composedSource) {
+  throw new Error("[swifly-source-recovery-qa] Stable Source state was not idempotent.");
 }
 
 const vidNestFixture = `export class VidNestProvider {
@@ -58,4 +94,4 @@ requireMarker(launcher, 'require("./patch-cinepro-vidnest-resilience.js")');
 requireMarker(launcher, "vidNestResilience.applyVidNestResiliencePatch();");
 requireMarker(launcher, 'process.env.CINEPRO_PROVIDER_TIMEOUT_MS = "20000"');
 
-console.log("Swifly all-source recovery QA passed.");
+console.log("Swifly unlimited Source and stable-state composition QA passed.");
