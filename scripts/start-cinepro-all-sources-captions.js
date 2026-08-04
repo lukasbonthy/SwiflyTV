@@ -10,10 +10,16 @@ function enableAllProviders() {
   if (!configured || legacyDefault) {
     process.env.CINEPRO_PROVIDER_ALLOWLIST = "*";
   }
+  if (!String(process.env.CINEPRO_PROVIDER_TIMEOUT_MS || "").trim()) {
+    process.env.CINEPRO_PROVIDER_TIMEOUT_MS = "20000";
+  }
   console.log(
     process.env.CINEPRO_PROVIDER_ALLOWLIST === "*"
       ? "[swifly-all-media] CinePro provider allowlist disabled; all installed providers will load."
       : `[swifly-all-media] Using explicit provider allowlist: ${process.env.CINEPRO_PROVIDER_ALLOWLIST}`,
+  );
+  console.log(
+    `[swifly-all-media] Provider timeout set to ${process.env.CINEPRO_PROVIDER_TIMEOUT_MS}ms so slower providers can finish.`,
   );
 }
 
@@ -38,6 +44,11 @@ function start() {
   const providerVariants = require("./patch-cinepro-provider-variants.js");
   providerVariants.applyProviderVariantPatch();
 
+  // VidNest queries several internal servers. One malformed response used to
+  // throw away every valid source returned by the other VidNest servers.
+  const vidNestResilience = require("./patch-cinepro-vidnest-resilience.js");
+  vidNestResilience.applyVidNestResiliencePatch();
+
   const allMedia = requireInstaller(
     require("./start-cinepro-all-sources-captions-patch.js"),
     "Caption/source patch",
@@ -51,6 +62,14 @@ function start() {
     "Direct source proxy patch",
   );
   directProxy.installPatch();
+
+  // The old Source normalization silently stopped after sixteen candidates.
+  // Remove that cap before the Source data module is loaded.
+  const sourceList = requireInstaller(
+    require("./patch-cinepro-source-list.js"),
+    "Complete Source list patch",
+  );
+  sourceList.installPatch();
 
   const stablePlayback = require("./start-cinepro-stable-playback.js");
   if (!stablePlayback || typeof stablePlayback.start !== "function") {
