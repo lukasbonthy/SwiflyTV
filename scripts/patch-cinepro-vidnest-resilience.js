@@ -23,7 +23,7 @@ function patchVidNestSource(source) {
     return { source: original, changed: false };
   }
 
-  const handlerBlock = /(\s*)const \{ sources: s, subtitles: sub \} = this\.handleServer\(\s*key,\s*result\.value\.data\s*\);\s*sources\.push\(\.\.\.s\);\s*subtitles\.push\(\.\.\.sub\);/m;
+  const handlerBlock = /(^[ \t]*)const \{ sources: s, subtitles: sub \} = this\.handleServer\(\s*key,\s*result\.value\.data\s*\);\s*sources\.push\(\.\.\.s\);\s*subtitles\.push\(\.\.\.sub\);/m;
   const match = original.match(handlerBlock);
   if (!match) {
     throw new Error(
