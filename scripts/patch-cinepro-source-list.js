@@ -34,8 +34,6 @@ function installPatch() {
     if (patched || resolved !== sourceSpeedPath) return result;
 
     patched = true;
-    fs.readFileSync = originalReadFileSync;
-
     const source = Buffer.isBuffer(result) ? result.toString("utf8") : String(result);
     const next = patchSourceList(source);
     console.log("[swifly-source-list] Every playable CinePro source will be exposed to the Source control.");
