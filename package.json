@@ -1,7 +1,7 @@
 {
   "name": "swiflytv",
-  "version": "3.7.15",
-  "description": "SwiflyTV exposes every playable CinePro source, tolerates malformed VidNest sub-servers, and gives slower providers more time to return.",
+  "version": "3.7.16",
+  "description": "SwiflyTV composes unlimited CinePro Source data with stable Source identities, tolerates malformed VidNest sub-servers, and gives slower providers more time to return.",
   "main": "server.js",
   "scripts": {
     "start": "node scripts/start-cinepro-all-sources-captions.js",
