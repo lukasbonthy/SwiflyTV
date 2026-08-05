@@ -1,0 +1,87 @@
+name: Hybrid provider core check
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/nuvio-provider-core-check.yml"
+      - ".env.example"
+      - ".gitignore"
+      - "package.json"
+      - "scripts/nuvio-provider-core.js"
+      - "scripts/hybrid-provider-gateway.js"
+      - "scripts/cinepro-core-service.js"
+      - "scripts/qa-nuvio-provider-core.js"
+      - "scripts/qa-hybrid-provider-core.js"
+      - "scripts/setup-nuvio-providers.js"
+      - "scripts/start-nuvio-provider-core.js"
+      - "scripts/start-hybrid-provider-core.js"
+      - "scripts/start-cinepro-*.js"
+      - "scripts/patch-cinepro-*.js"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 24]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Run Swifly checks
+        run: npm run check
+
+      - name: Install pinned Paregi provider pack
+        run: npm run nuvio:setup
+
+      - name: Smoke test Paregi Nuvio compatibility core
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/nuvio-provider-core.js > /tmp/swifly-nuvio-core.log 2>&1 &
+          CORE_PID=$!
+          trap 'kill "$CORE_PID" 2>/dev/null || true; cat /tmp/swifly-nuvio-core.log' EXIT
+
+          HEALTH=""
+          for attempt in $(seq 1 30); do
+            if HEALTH=$(curl --fail --silent --show-error http://127.0.0.1:3200/v1/health); then
+              break
+            fi
+            sleep 1
+          done
+
+          test -n "$HEALTH"
+          printf '%s\n' "$HEALTH"
+          node -e '
+            const health = JSON.parse(process.argv[1]);
+            if (health.status !== "operational") throw new Error("Nuvio core is not operational");
+            if (health.name !== "Swifly Nuvio Provider Core") throw new Error("Unexpected backend name");
+            if (!Number.isInteger(health.providerCount) || health.providerCount < 1) {
+              throw new Error("No enabled providers were loaded");
+            }
+            if (health.providerRef !== "8e31152f8fc6a0266c5153ec7641f7341d120fde") {
+              throw new Error("Paregi provider pack is not pinned to the reviewed commit");
+            }
+          ' "$HEALTH"
+
+          PROVIDERS=$(curl --fail --silent --show-error http://127.0.0.1:3200/v1/providers)
+          node -e '
+            const body = JSON.parse(process.argv[1]);
+            if (!Array.isArray(body.providers) || body.providers.length < 1) {
+              throw new Error("Provider registry endpoint is empty");
+            }
+          ' "$PROVIDERS"
