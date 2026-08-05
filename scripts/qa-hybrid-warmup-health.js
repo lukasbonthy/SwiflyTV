@@ -40,4 +40,4 @@ assert(
   "The non-strict warm-up continuation branch is missing from the CinePro launcher.",
 );
 
-console.log("Swifly hybrid gateway warm-up no longer triggers CinePro strict-mode termination.");
+console.log("Swifly warm-up-safe localhost startup and CinePro compatibility QA passed.");
