@@ -40,3 +40,44 @@ jobs:
 
       - name: Run Swifly checks
         run: npm run check
+
+      - name: Install pinned provider pack
+        run: npm run nuvio:setup
+
+      - name: Smoke test compatibility core
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/nuvio-provider-core.js > /tmp/swifly-nuvio-core.log 2>&1 &
+          CORE_PID=$!
+          trap 'kill "$CORE_PID" 2>/dev/null || true; cat /tmp/swifly-nuvio-core.log' EXIT
+
+          HEALTH=""
+          for attempt in $(seq 1 30); do
+            if HEALTH=$(curl --fail --silent --show-error http://127.0.0.1:3200/v1/health); then
+              break
+            fi
+            sleep 1
+          done
+
+          test -n "$HEALTH"
+          printf '%s\n' "$HEALTH"
+          node -e '
+            const health = JSON.parse(process.argv[1]);
+            if (health.status !== "operational") throw new Error("Nuvio core is not operational");
+            if (health.name !== "Swifly Nuvio Provider Core") throw new Error("Unexpected backend name");
+            if (!Number.isInteger(health.providerCount) || health.providerCount < 1) {
+              throw new Error("No enabled providers were loaded");
+            }
+            if (health.providerRef !== "ed38d1aee0024f56479369c9423fefb278e0b62a") {
+              throw new Error("Provider pack is not pinned to the reviewed commit");
+            }
+          ' "$HEALTH"
+
+          PROVIDERS=$(curl --fail --silent --show-error http://127.0.0.1:3200/v1/providers)
+          node -e '
+            const body = JSON.parse(process.argv[1]);
+            if (!Array.isArray(body.providers) || body.providers.length < 1) {
+              throw new Error("Provider registry endpoint is empty");
+            }
+          ' "$PROVIDERS"
