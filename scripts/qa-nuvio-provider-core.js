@@ -12,8 +12,12 @@ function assert(condition, message) {
 }
 
 assert(
-  setup.pinnedRef === "ed38d1aee0024f56479369c9423fefb278e0b62a",
-  "The reviewed provider-pack commit is not pinned.",
+  setup.repoUrl === "https://github.com/paregi12/nuvio-providers.git",
+  "The Paregi provider repository is not configured.",
+);
+assert(
+  setup.pinnedRef === "8e31152f8fc6a0266c5153ec7641f7341d120fde",
+  "The reviewed Paregi provider-pack commit is not pinned.",
 );
 
 assert(
@@ -111,4 +115,4 @@ assert(!startupSource.includes("applyVidNestResiliencePatch"), "CinePro VidNest 
 const gitignore = fs.readFileSync(path.join(__dirname, "..", ".gitignore"), "utf8");
 assert(gitignore.includes("vendor/nuvio-providers/"), "Vendored provider checkout is not ignored by Git.");
 
-console.log("Swifly pinned Nuvio provider core, proxy, isolation, lifecycle, and startup QA passed.");
+console.log("Swifly pinned Paregi Nuvio provider core, proxy, isolation, lifecycle, and startup QA passed.");
