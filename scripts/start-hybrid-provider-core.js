@@ -163,7 +163,10 @@ function installPlayerPatches() {
 
 function configureCompatibilityClient() {
   process.env.CINEPRO_ENABLED = "true";
-  process.env.CINEPRO_STRICT = "true";
+  // The local hybrid gateway starts before either scraper backend. During that
+  // warm-up window its health response can be degraded, so strict CinePro
+  // startup must not terminate SwiflyTV before port 3001 opens.
+  process.env.CINEPRO_STRICT = "false";
   process.env.CINEPRO_AUTO_START = "false";
   process.env.CINEPRO_CORE_URL = hybridUrl;
   process.env.CINEPRO_PROVIDER_ALLOWLIST = "*";
@@ -171,6 +174,7 @@ function configureCompatibilityClient() {
   process.env.MOVIE_PROXY_VIDEO_CLIENT_WAIT = "true";
   process.env.MOVIE_PROXY_VIDEO_PROVIDER_ENABLED = "false";
   process.env.SWIFLY_SCRAPER_BACKEND = "cinepro+nuvio";
+  console.log("[swifly-hybrid] Compatibility strict mode disabled until scraper warm-up completes.");
 }
 
 function installLifecycle() {
