@@ -67,6 +67,18 @@ assert(
   launcher.includes('require("dotenv").config'),
   "The hybrid launcher does not load .env before constructing child environments.",
 );
+assert(
+  launcher.includes('process.env.CINEPRO_STRICT = "false"'),
+  "Hybrid compatibility still enables strict CinePro startup during backend warm-up.",
+);
+assert(
+  !launcher.includes('process.env.CINEPRO_STRICT = "true"'),
+  "A strict-mode assignment can still terminate localhost before backends finish warming.",
+);
+assert(
+  launcher.includes("Compatibility strict mode disabled until scraper warm-up completes"),
+  "The startup log does not identify warm-up compatibility mode.",
+);
 
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 assert(
@@ -74,4 +86,4 @@ assert(
   "npm start is not using the localhost-first hybrid launcher.",
 );
 
-console.log("Swifly localhost-first hybrid startup, worker setup, and port fallback QA passed.");
+console.log("Swifly localhost-first hybrid startup, non-strict warm-up, worker setup, and port fallback QA passed.");
