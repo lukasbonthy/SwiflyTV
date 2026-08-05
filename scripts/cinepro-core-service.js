@@ -8,6 +8,7 @@ const root = path.resolve(__dirname, "..");
 const coreDir = path.join(root, "vendor", "cinepro-core");
 const coreEntry = path.join(coreDir, "dist", "server.js");
 const setupScript = path.join(root, "scripts", "setup-cinepro.js");
+const bootstrapScript = path.join(root, "scripts", "cinepro-provider-bootstrap.js");
 const coreHost = String(process.env.HYBRID_CINEPRO_HOST || "127.0.0.1");
 const corePort = String(process.env.HYBRID_CINEPRO_PORT || process.env.CINEPRO_PORT || "3100");
 const coreUrl = String(
@@ -34,6 +35,11 @@ function childEnvironment() {
   for (const name of names) {
     if (process.env[name] != null) env[name] = process.env[name];
   }
+  for (const [name, value] of Object.entries(process.env)) {
+    if (name.startsWith("CINEPRO_") || name.startsWith("HYBRID_CINEPRO_")) {
+      env[name] = value;
+    }
+  }
   env.NODE_ENV = process.env.NODE_ENV || "production";
   env.HOST = coreHost;
   env.PORT = corePort;
@@ -46,14 +52,14 @@ function childEnvironment() {
 }
 
 async function health() {
+  let timer;
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 2500);
+    timer = setTimeout(() => controller.abort(), 2500);
     const response = await fetch(`${coreUrl}/v1/health`, {
       signal: controller.signal,
       headers: { Accept: "application/json" },
     });
-    clearTimeout(timer);
     if (!response.ok) return null;
     const data = await response.json().catch(() => null);
     return data && (data.status === "operational" || data.status === "healthy" || data.spec === "omss")
@@ -61,6 +67,8 @@ async function health() {
       : null;
   } catch {
     return null;
+  } finally {
+    if (timer) clearTimeout(timer);
   }
 }
 
@@ -103,11 +111,9 @@ async function start(options = {}) {
   }
 
   try {
-    ensureInstalled();
-    applyRuntimePatches();
-    console.log(`[hybrid-cinepro] Starting CinePro Core at ${coreUrl}...`);
-    child = spawn(process.execPath, [coreEntry], {
-      cwd: coreDir,
+    console.log(`[hybrid-cinepro] Launching CinePro bootstrap worker for ${coreUrl}...`);
+    child = spawn(process.execPath, [bootstrapScript], {
+      cwd: root,
       stdio: "inherit",
       windowsHide: true,
       env: childEnvironment(),
@@ -117,7 +123,7 @@ async function start(options = {}) {
     child.once("exit", (code, signal) => {
       if (code && code !== 0) {
         console.error(
-          `[hybrid-cinepro] CinePro exited with code ${code}${signal ? ` (${signal})` : ""}.`,
+          `[hybrid-cinepro] Bootstrap exited with code ${code}${signal ? ` (${signal})` : ""}.`,
         );
       }
     });
@@ -132,6 +138,9 @@ async function start(options = {}) {
       if (current) {
         console.log("[hybrid-cinepro] CinePro Core is operational.");
         return { health: current, child, ownsChild, coreUrl };
+      }
+      if (child && child.exitCode != null) {
+        throw new Error(`CinePro bootstrap exited before health was ready (code ${child.exitCode}).`);
       }
       await new Promise((resolve) => setTimeout(resolve, 800));
     }
@@ -153,6 +162,7 @@ function shutdown(signal = "SIGTERM") {
 
 module.exports = {
   applyRuntimePatches,
+  bootstrapScript,
   childEnvironment,
   coreEntry,
   coreUrl,
