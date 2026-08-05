@@ -1,0 +1,42 @@
+name: Nuvio provider core check
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/nuvio-provider-core-check.yml"
+      - ".env.example"
+      - ".gitignore"
+      - "package.json"
+      - "scripts/nuvio-provider-core.js"
+      - "scripts/qa-nuvio-provider-core.js"
+      - "scripts/setup-nuvio-providers.js"
+      - "scripts/start-nuvio-provider-core.js"
+      - "scripts/start-cinepro-*.js"
+      - "scripts/patch-cinepro-*.js"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 24]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Run Swifly checks
+        run: npm run check
