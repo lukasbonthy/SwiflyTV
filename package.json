@@ -1,7 +1,7 @@
 {
   "name": "swiflytv",
-  "version": "3.8.2",
-  "description": "SwiflyTV opens localhost before CinePro and Paregi Nuvio warm up, with child-process setup and hybrid API port recovery.",
+  "version": "3.8.3",
+  "description": "SwiflyTV keeps localhost alive while CinePro and Paregi Nuvio warm up, without strict-mode startup termination.",
   "main": "server.js",
   "scripts": {
     "start": "node scripts/start-hybrid-provider-core.js",
