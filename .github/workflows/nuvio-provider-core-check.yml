@@ -1,4 +1,4 @@
-name: Nuvio provider core check
+name: Hybrid provider core check
 
 on:
   pull_request:
@@ -8,9 +8,13 @@ on:
       - ".gitignore"
       - "package.json"
       - "scripts/nuvio-provider-core.js"
+      - "scripts/hybrid-provider-gateway.js"
+      - "scripts/cinepro-core-service.js"
       - "scripts/qa-nuvio-provider-core.js"
+      - "scripts/qa-hybrid-provider-core.js"
       - "scripts/setup-nuvio-providers.js"
       - "scripts/start-nuvio-provider-core.js"
+      - "scripts/start-hybrid-provider-core.js"
       - "scripts/start-cinepro-*.js"
       - "scripts/patch-cinepro-*.js"
   workflow_dispatch:
@@ -41,10 +45,10 @@ jobs:
       - name: Run Swifly checks
         run: npm run check
 
-      - name: Install pinned provider pack
+      - name: Install pinned Paregi provider pack
         run: npm run nuvio:setup
 
-      - name: Smoke test compatibility core
+      - name: Smoke test Paregi Nuvio compatibility core
         shell: bash
         run: |
           set -euo pipefail
@@ -69,8 +73,8 @@ jobs:
             if (!Number.isInteger(health.providerCount) || health.providerCount < 1) {
               throw new Error("No enabled providers were loaded");
             }
-            if (health.providerRef !== "ed38d1aee0024f56479369c9423fefb278e0b62a") {
-              throw new Error("Provider pack is not pinned to the reviewed commit");
+            if (health.providerRef !== "8e31152f8fc6a0266c5153ec7641f7341d120fde") {
+              throw new Error("Paregi provider pack is not pinned to the reviewed commit");
             }
           ' "$HEALTH"
 
