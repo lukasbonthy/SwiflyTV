@@ -15,6 +15,7 @@ on:
       - "scripts/qa-nuvio-provider-core.js"
       - "scripts/qa-hybrid-provider-core.js"
       - "scripts/qa-hybrid-localhost-first.js"
+      - "scripts/qa-hybrid-warmup-health.js"
       - "scripts/setup-nuvio-providers.js"
       - "scripts/start-nuvio-provider-core.js"
       - "scripts/start-hybrid-provider-core.js"
