@@ -1,3 +1,4 @@
+# Verification-only change for the SwiflyTV 3.8.3 warm-up-safe release.
 name: Hybrid provider core check
 
 on:
