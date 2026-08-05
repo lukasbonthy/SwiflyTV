@@ -7,8 +7,8 @@ const { spawnSync } = require("child_process");
 const root = path.resolve(__dirname, "..");
 const vendorRoot = path.join(root, "vendor");
 const vendorDir = path.join(vendorRoot, "nuvio-providers");
-const repoUrl = "https://github.com/yoruix/nuvio-providers.git";
-const pinnedRef = "ed38d1aee0024f56479369c9423fefb278e0b62a";
+const repoUrl = "https://github.com/paregi12/nuvio-providers.git";
+const pinnedRef = "8e31152f8fc6a0266c5153ec7641f7341d120fde";
 const markerPath = path.join(vendorDir, ".swifly-nuvio-ready.json");
 
 function run(command, args, cwd = root, options = {}) {
@@ -71,10 +71,23 @@ function currentHead() {
   }
 }
 
+function currentOrigin() {
+  if (!fs.existsSync(path.join(vendorDir, ".git"))) return "";
+  try {
+    return String(run("git", ["remote", "get-url", "origin"], vendorDir, { capture: true }).stdout || "").trim();
+  } catch {
+    return "";
+  }
+}
+
 function markerMatches(ref) {
   try {
     const marker = JSON.parse(fs.readFileSync(markerPath, "utf8"));
-    return marker && marker.ref === ref && currentHead() === ref;
+    return marker &&
+      marker.ref === ref &&
+      marker.repository === repoUrl &&
+      currentHead() === ref &&
+      currentOrigin() === repoUrl;
   } catch {
     return false;
   }
@@ -87,11 +100,14 @@ function ensureRepository(ref) {
     if (fs.existsSync(vendorDir)) {
       fs.rmSync(vendorDir, { recursive: true, force: true });
     }
-    console.log("[nuvio-setup] Cloning the Nuvio provider pack...");
+    console.log("[nuvio-setup] Cloning the Paregi Nuvio provider pack...");
     run("git", ["clone", "--filter=blob:none", "--no-checkout", repoUrl, vendorDir], root);
+  } else if (currentOrigin() !== repoUrl) {
+    console.log(`[nuvio-setup] Switching provider origin to ${repoUrl}.`);
+    run("git", ["remote", "set-url", "origin", repoUrl], vendorDir);
   }
 
-  console.log(`[nuvio-setup] Pinning provider pack to ${ref}.`);
+  console.log(`[nuvio-setup] Pinning Paregi provider pack to ${ref}.`);
   run("git", ["fetch", "--depth", "1", "origin", ref], vendorDir);
   run("git", ["checkout", "--detach", "--force", ref], vendorDir);
   run("git", ["reset", "--hard", ref], vendorDir);
@@ -139,7 +155,7 @@ function ensureNuvioProviders(options = {}) {
   if (!force && markerMatches(ref)) {
     const marker = JSON.parse(fs.readFileSync(markerPath, "utf8"));
     console.log(
-      `[nuvio-setup] Provider pack already ready at ${ref.slice(0, 12)} (${marker.providerCount} manifest entries).`,
+      `[nuvio-setup] Paregi provider pack already ready at ${ref.slice(0, 12)} (${marker.providerCount} manifest entries).`,
     );
     return { vendorDir, marker, changed: false };
   }
@@ -148,12 +164,13 @@ function ensureNuvioProviders(options = {}) {
   installDependencies();
   const marker = validateInstall(ref);
   console.log(
-    `[nuvio-setup] Provider pack ready at ${ref.slice(0, 12)} with ${marker.providerCount} manifest entries.`,
+    `[nuvio-setup] Paregi provider pack ready at ${ref.slice(0, 12)} with ${marker.providerCount} manifest entries.`,
   );
   return { vendorDir, marker, changed: true };
 }
 
 module.exports = {
+  currentOrigin,
   ensureNuvioProviders,
   markerPath,
   pinnedRef,
