@@ -1,5 +1,6 @@
 name: Hybrid provider core check
 
+# This workflow also verifies that SwiflyTV binds localhost before scraper warm-up.
 on:
   pull_request:
     paths:
