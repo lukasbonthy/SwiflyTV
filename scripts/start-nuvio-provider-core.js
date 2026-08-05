@@ -11,6 +11,7 @@ const corePort = String(process.env.NUVIO_CORE_PORT || "3200");
 const coreUrl = String(process.env.NUVIO_CORE_PUBLIC_URL || `http://${coreHost}:${corePort}`).replace(/\/+$/, "");
 let coreChild = null;
 let ownsCore = false;
+let handlersInstalled = false;
 
 function childEnvironment() {
   const names = [
@@ -41,18 +42,20 @@ function childEnvironment() {
 }
 
 async function readHealth() {
+  let timer;
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 2500);
+    timer = setTimeout(() => controller.abort(), 2500);
     const response = await fetch(`${coreUrl}/v1/health`, {
       headers: { Accept: "application/json" },
       signal: controller.signal,
     });
-    clearTimeout(timer);
     if (!response.ok) return null;
     return response.json().catch(() => null);
   } catch {
     return null;
+  } finally {
+    if (timer) clearTimeout(timer);
   }
 }
 
@@ -87,6 +90,9 @@ async function startCore() {
         `[swifly-nuvio] Provider Core operational with ${health.providerCount || 0} enabled movie provider(s).`,
       );
       return health;
+    }
+    if (coreChild && coreChild.exitCode != null) {
+      throw new Error(`Nuvio Provider Core exited before becoming healthy (code ${coreChild.exitCode}).`);
     }
     await new Promise((resolve) => setTimeout(resolve, 700));
   }
@@ -131,7 +137,16 @@ function shutdown(signal) {
   }
 }
 
+function installSignalHandlers() {
+  if (handlersInstalled) return;
+  handlersInstalled = true;
+  process.once("SIGINT", () => { shutdown("SIGINT"); process.exit(0); });
+  process.once("SIGTERM", () => { shutdown("SIGTERM"); process.exit(0); });
+  process.once("exit", () => shutdown("SIGTERM"));
+}
+
 async function start() {
+  installSignalHandlers();
   console.log("[swifly-nuvio] Starting SwiflyTV with the pinned Nuvio provider backend.");
   const health = await startCore();
   configureCompatibilityClient();
@@ -151,16 +166,16 @@ async function start() {
   return stablePlayback.start();
 }
 
-process.on("SIGINT", () => { shutdown("SIGINT"); process.exit(0); });
-process.on("SIGTERM", () => { shutdown("SIGTERM"); process.exit(0); });
-process.on("exit", () => shutdown("SIGTERM"));
-
 module.exports = {
   childEnvironment,
   configureCompatibilityClient,
+  coreHost,
+  corePort,
   coreUrl,
   installPlayerPatches,
+  installSignalHandlers,
   readHealth,
+  shutdown,
   start,
   startCore,
 };
