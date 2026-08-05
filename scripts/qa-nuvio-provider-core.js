@@ -91,15 +91,24 @@ const childEnv = startup.childEnvironment();
 if (oldSecret == null) delete process.env.SWIFLY_QA_SECRET;
 else process.env.SWIFLY_QA_SECRET = oldSecret;
 assert(!("SWIFLY_QA_SECRET" in childEnv), "Unrelated Swifly secrets leak into provider workers.");
-assert(childEnv.NUVIO_CORE_PORT === "3200", "Provider worker port was not configured.");
+assert(childEnv.NUVIO_CORE_PORT === startup.corePort, "Provider worker port was not configured consistently.");
+assert(childEnv.NUVIO_CORE_HOST === startup.coreHost, "Provider worker host was not configured consistently.");
 
 const startupPath = path.join(__dirname, "start-nuvio-provider-core.js");
 const startupSource = fs.readFileSync(startupPath, "utf8").replace(/\r\n?/g, "\n");
 new vm.Script(startupSource, { filename: startupPath });
 assert(startupSource.includes('process.env.CINEPRO_AUTO_START = "false"'), "CinePro autostart is not disabled.");
 assert(startupSource.includes("Nuvio backend ready"), "Nuvio backend startup marker is missing.");
+assert(startupSource.includes("function installSignalHandlers()"), "Launcher lifecycle handler installer is missing.");
+assert(
+  startupSource.indexOf("process.once(\"SIGINT\"") > startupSource.indexOf("function installSignalHandlers()"),
+  "Signal handlers are still registered during a harmless module import.",
+);
 assert(!startupSource.includes("applyProviderTimeoutPatch"), "CinePro provider mutation leaked into Nuvio startup.");
 assert(!startupSource.includes("applyProviderVariantPatch"), "CinePro deduplication mutation leaked into Nuvio startup.");
 assert(!startupSource.includes("applyVidNestResiliencePatch"), "CinePro VidNest mutation leaked into Nuvio startup.");
 
-console.log("Swifly pinned Nuvio provider core, proxy, isolation, and startup QA passed.");
+const gitignore = fs.readFileSync(path.join(__dirname, "..", ".gitignore"), "utf8");
+assert(gitignore.includes("vendor/nuvio-providers/"), "Vendored provider checkout is not ignored by Git.");
+
+console.log("Swifly pinned Nuvio provider core, proxy, isolation, lifecycle, and startup QA passed.");
