@@ -1,3 +1,4 @@
 vendor/cinepro-core/
+vendor/nuvio-providers/
 .env
 node_modules/
