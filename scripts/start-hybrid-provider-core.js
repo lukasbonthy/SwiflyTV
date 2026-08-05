@@ -2,15 +2,18 @@
 
 const path = require("path");
 const { spawn } = require("child_process");
+
+const root = path.resolve(__dirname, "..");
+require("dotenv").config({ path: path.join(root, ".env") });
+
 const setup = require("./setup-nuvio-providers.js");
 const cinepro = require("./cinepro-core-service.js");
 const { createGateway } = require("./hybrid-provider-gateway.js");
 
-const root = path.resolve(__dirname, "..");
-const nuvioScript = path.join(__dirname, "nuvio-provider-core.js");
+const nuvioBootstrapScript = path.join(__dirname, "nuvio-provider-bootstrap.js");
 const hybridHost = String(process.env.HYBRID_CORE_HOST || "127.0.0.1");
-const hybridPort = String(process.env.HYBRID_CORE_PORT || "3200");
-const hybridUrl = String(
+let hybridPort = String(process.env.HYBRID_CORE_PORT || "3200");
+let hybridUrl = String(
   process.env.HYBRID_CORE_PUBLIC_URL || `http://${hybridHost}:${hybridPort}`,
 ).replace(/\/+$/, "");
 const nuvioHost = String(process.env.HYBRID_NUVIO_HOST || "127.0.0.1");
@@ -18,11 +21,13 @@ const nuvioPort = String(process.env.HYBRID_NUVIO_PORT || "3201");
 const nuvioUrl = String(
   process.env.HYBRID_NUVIO_URL || `http://${nuvioHost}:${nuvioPort}`,
 ).replace(/\/+$/, "");
+
 let nuvioChild = null;
 let ownsNuvio = false;
 let gateway = null;
 let gatewayServer = null;
 let lifecycleInstalled = false;
+let backendWarmupPromise = null;
 
 function childEnvironment() {
   const names = [
@@ -43,7 +48,9 @@ function childEnvironment() {
     if (process.env[name] != null) env[name] = process.env[name];
   }
   for (const [name, value] of Object.entries(process.env)) {
-    if (name.startsWith("NUVIO_")) env[name] = value;
+    if (name.startsWith("NUVIO_") || name.startsWith("HYBRID_NUVIO_")) {
+      env[name] = value;
+    }
   }
   env.NODE_ENV = process.env.NODE_ENV || "production";
   env.NUVIO_CORE_HOST = nuvioHost;
@@ -55,14 +62,14 @@ function childEnvironment() {
 }
 
 async function readHealth(url, timeoutMs = 2500) {
+  let timer;
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    timer = setTimeout(() => controller.abort(), timeoutMs);
     const response = await fetch(`${url}/v1/health`, {
       headers: { Accept: "application/json" },
       signal: controller.signal,
     });
-    clearTimeout(timer);
     if (!response.ok) return null;
     const data = await response.json().catch(() => null);
     return data && (data.status === "operational" || data.status === "healthy" || data.spec === "omss")
@@ -70,6 +77,8 @@ async function readHealth(url, timeoutMs = 2500) {
       : null;
   } catch {
     return null;
+  } finally {
+    if (timer) clearTimeout(timer);
   }
 }
 
@@ -81,19 +90,19 @@ async function startNuvioCore(options = {}) {
   }
 
   try {
-    setup.ensureNuvioProviders();
-    console.log(`[hybrid-nuvio] Starting Paregi Nuvio Core at ${nuvioUrl}...`);
-    nuvioChild = spawn(process.execPath, [nuvioScript], {
+    console.log(`[hybrid-nuvio] Launching Paregi Nuvio bootstrap worker for ${nuvioUrl}...`);
+    nuvioChild = spawn(process.execPath, [nuvioBootstrapScript], {
       cwd: root,
       stdio: "inherit",
       windowsHide: true,
       env: childEnvironment(),
     });
     ownsNuvio = true;
+
     nuvioChild.once("exit", (code, signal) => {
       if (code && code !== 0) {
         console.error(
-          `[hybrid-nuvio] Nuvio Core exited with code ${code}${signal ? ` (${signal})` : ""}.`,
+          `[hybrid-nuvio] Bootstrap exited with code ${code}${signal ? ` (${signal})` : ""}.`,
         );
       }
     });
@@ -111,6 +120,9 @@ async function startNuvioCore(options = {}) {
         );
         return { health, child: nuvioChild, ownsChild: ownsNuvio, coreUrl: nuvioUrl };
       }
+      if (nuvioChild && nuvioChild.exitCode != null) {
+        throw new Error(`Paregi Nuvio bootstrap exited before health was ready (code ${nuvioChild.exitCode}).`);
+      }
       await new Promise((resolve) => setTimeout(resolve, 700));
     }
     throw new Error("Paregi Nuvio Core did not become healthy before the startup timeout.");
@@ -119,7 +131,13 @@ async function startNuvioCore(options = {}) {
     console.warn(
       `[hybrid-nuvio] Nuvio unavailable; hybrid mode will continue with CinePro only: ${error.message || error}`,
     );
-    return { health: null, child: nuvioChild, ownsChild: ownsNuvio, coreUrl: nuvioUrl, error: error.message || String(error) };
+    return {
+      health: null,
+      child: nuvioChild,
+      ownsChild: ownsNuvio,
+      coreUrl: nuvioUrl,
+      error: error.message || String(error),
+    };
   }
 }
 
@@ -173,66 +191,122 @@ function shutdown(signal = "SIGTERM") {
   cinepro.shutdown(signal);
 }
 
-async function start() {
-  console.log("[swifly-hybrid] Starting CinePro + Paregi Nuvio provider mode.");
-  installLifecycle();
+function gatewayCandidates() {
+  const configured = Math.max(1, Number(hybridPort || 3200));
+  const explicitFallback = Number(process.env.HYBRID_CORE_FALLBACK_PORT || 0);
+  return Array.from(new Set([
+    configured,
+    explicitFallback > 0 ? explicitFallback : configured + 2,
+    configured + 3,
+  ])).filter((value) => Number.isInteger(value) && value > 0 && value <= 65535);
+}
 
+async function startGatewayWithFallback() {
+  let lastError = null;
+  for (const candidate of gatewayCandidates()) {
+    const candidateUrl = `http://${hybridHost}:${candidate}`;
+    const candidateGateway = createGateway({
+      host: hybridHost,
+      port: candidate,
+      publicUrl: candidateUrl,
+      backends: [
+        {
+          id: "cinepro",
+          name: "CinePro",
+          url: cinepro.coreUrl,
+          timeoutMs: Number(process.env.HYBRID_CINEPRO_RESOLVE_TIMEOUT_MS || 28_000),
+        },
+        {
+          id: "nuvio",
+          name: "Paregi Nuvio",
+          url: nuvioUrl,
+          timeoutMs: Number(process.env.HYBRID_NUVIO_RESOLVE_TIMEOUT_MS || 42_000),
+        },
+      ],
+    });
+
+    try {
+      const server = await candidateGateway.start();
+      gateway = candidateGateway;
+      gatewayServer = server;
+      hybridPort = String(candidate);
+      hybridUrl = candidateUrl;
+      if (candidate !== Number(process.env.HYBRID_CORE_PORT || 3200)) {
+        console.warn(
+          `[swifly-hybrid] Port ${process.env.HYBRID_CORE_PORT || 3200} was busy; Hybrid Core moved to ${hybridUrl}.`,
+        );
+      }
+      return { gateway, server, hybridUrl };
+    } catch (error) {
+      lastError = error;
+      if (!error || error.code !== "EADDRINUSE") throw error;
+      console.warn(`[swifly-hybrid] Hybrid port ${candidate} is already in use; trying another local port.`);
+    }
+  }
+  throw lastError || new Error("No local port was available for the Hybrid Provider Core.");
+}
+
+async function warmBackends() {
   const [cineproResult, nuvioResult] = await Promise.all([
     cinepro.start(),
     startNuvioCore(),
   ]);
-  if (!cineproResult.health && !nuvioResult.health) {
-    throw new Error("Neither CinePro nor Paregi Nuvio became operational.");
-  }
 
-  process.env.HYBRID_CINEPRO_URL = cinepro.coreUrl;
-  process.env.HYBRID_NUVIO_URL = nuvioUrl;
-  gateway = createGateway({
-    host: hybridHost,
-    port: Number(hybridPort),
-    publicUrl: hybridUrl,
-    backends: [
-      {
-        id: "cinepro",
-        name: "CinePro",
-        url: cinepro.coreUrl,
-        timeoutMs: Number(process.env.HYBRID_CINEPRO_RESOLVE_TIMEOUT_MS || 28_000),
-      },
-      {
-        id: "nuvio",
-        name: "Paregi Nuvio",
-        url: nuvioUrl,
-        timeoutMs: Number(process.env.HYBRID_NUVIO_RESOLVE_TIMEOUT_MS || 42_000),
-      },
-    ],
-  });
-  gatewayServer = await gateway.start();
-
-  configureCompatibilityClient();
-  installPlayerPatches();
-
-  console.log(`[swifly-hybrid] Hybrid Core ready at ${hybridUrl}.`);
   console.log(
-    `[swifly-hybrid] Backends: CinePro ${cineproResult.health ? "online" : "offline"} + Paregi Nuvio ${nuvioResult.health ? "online" : "offline"}.`,
+    `[swifly-hybrid] Backends ready: CinePro ${cineproResult.health ? "online" : "offline"} + Paregi Nuvio ${nuvioResult.health ? "online" : "offline"}.`,
   );
   console.log(`[swifly-hybrid] Nuvio provider ref ${setup.pinnedRef}.`);
+  if (!cineproResult.health && !nuvioResult.health) {
+    console.warn(
+      "[swifly-hybrid] Both scraper backends are offline. Localhost remains available, but movie resolution will fail until one recovers.",
+    );
+  }
+  return { cineproResult, nuvioResult };
+}
+
+function startBackendWarmup() {
+  if (backendWarmupPromise) return backendWarmupPromise;
+  backendWarmupPromise = new Promise((resolve) => {
+    setImmediate(resolve);
+  }).then(warmBackends).catch((error) => {
+    console.error("[swifly-hybrid] Backend warm-up failed:", error.stack || error.message || error);
+    return null;
+  });
+  return backendWarmupPromise;
+}
+
+async function start() {
+  console.log("[swifly-hybrid] Starting localhost first; CinePro and Paregi Nuvio will warm in the background.");
+  installLifecycle();
+
+  await startGatewayWithFallback();
+  configureCompatibilityClient();
+  installPlayerPatches();
 
   const stablePlayback = require("./start-cinepro-stable-playback.js");
   if (!stablePlayback || typeof stablePlayback.start !== "function") {
     throw new TypeError("Hybrid startup could not load the stable Swifly player launcher.");
   }
-  return stablePlayback.start();
+
+  const swifly = stablePlayback.start();
+  console.log("[swifly-hybrid] SwiflyTV localhost startup dispatched; open http://localhost:3001.");
+  console.log(`[swifly-hybrid] Hybrid API is available at ${hybridUrl}.`);
+  startBackendWarmup();
+  return swifly;
 }
 
 module.exports = {
   childEnvironment,
   configureCompatibilityClient,
-  hybridUrl,
+  getHybridUrl: () => hybridUrl,
   installPlayerPatches,
   readHealth,
   shutdown,
   start,
+  startBackendWarmup,
+  startGatewayWithFallback,
   startNuvioCore,
+  warmBackends,
 };
 
 if (require.main === module) {
