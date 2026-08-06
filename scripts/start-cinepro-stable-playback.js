@@ -25,8 +25,14 @@ function start() {
   );
   completeOptions.installPatch();
 
+  const sourceMenu = requireInstaller(
+    require("./start-cinepro-source-menu-polish.js"),
+    "Source menu polish",
+  );
+  sourceMenu.installPatch();
+
   // Install last so this layer receives the fully transformed Source, Speed,
-  // language, theme, and option-grid modules and can preserve their state.
+  // language, theme, option-grid, and readable Source-menu modules.
   const stableState = requireInstaller(
     require("./start-cinepro-stable-playback-state-v2.js"),
     "stable playback state",
