@@ -8,14 +8,17 @@ on:
       - ".gitignore"
       - "package.json"
       - "scripts/nuvio-provider-core.js"
+      - "scripts/nuvio-provider-core-reliable.js"
       - "scripts/nuvio-provider-bootstrap.js"
       - "scripts/hybrid-provider-gateway.js"
+      - "scripts/hybrid-provider-gateway-reliable.js"
       - "scripts/cinepro-core-service.js"
       - "scripts/cinepro-provider-bootstrap.js"
       - "scripts/qa-nuvio-provider-core.js"
       - "scripts/qa-hybrid-provider-core.js"
       - "scripts/qa-hybrid-localhost-first.js"
       - "scripts/qa-hybrid-warmup-health.js"
+      - "scripts/qa-nuvio-hls-source-menu.js"
       - "scripts/setup-nuvio-providers.js"
       - "scripts/start-nuvio-provider-core.js"
       - "scripts/start-hybrid-provider-core.js"
@@ -52,11 +55,11 @@ jobs:
       - name: Install pinned Paregi provider pack
         run: npm run nuvio:setup
 
-      - name: Smoke test Paregi Nuvio compatibility core
+      - name: Smoke test reliable Paregi Nuvio compatibility core
         shell: bash
         run: |
           set -euo pipefail
-          node scripts/nuvio-provider-core.js > /tmp/swifly-nuvio-core.log 2>&1 &
+          node scripts/nuvio-provider-bootstrap.js > /tmp/swifly-nuvio-core.log 2>&1 &
           CORE_PID=$!
           trap 'kill "$CORE_PID" 2>/dev/null || true; cat /tmp/swifly-nuvio-core.log' EXIT
 
@@ -81,6 +84,8 @@ jobs:
               throw new Error("Paregi provider pack is not pinned to the reviewed commit");
             }
           ' "$HEALTH"
+
+          grep -q "HLS proxy lifecycle and pre-playback source validation enabled" /tmp/swifly-nuvio-core.log
 
           PROVIDERS=$(curl --fail --silent --show-error http://127.0.0.1:3200/v1/providers)
           node -e '

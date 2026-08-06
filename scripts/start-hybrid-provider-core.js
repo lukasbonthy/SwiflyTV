@@ -8,7 +8,8 @@ require("dotenv").config({ path: path.join(root, ".env") });
 
 const setup = require("./setup-nuvio-providers.js");
 const cinepro = require("./cinepro-core-service.js");
-const { createGateway } = require("./hybrid-provider-gateway.js");
+const gatewayReliability = require("./hybrid-provider-gateway-reliable.js");
+const { createGateway } = gatewayReliability.loadReliableGateway();
 
 const nuvioBootstrapScript = path.join(__dirname, "nuvio-provider-bootstrap.js");
 const hybridHost = String(process.env.HYBRID_CORE_HOST || "127.0.0.1");
@@ -58,6 +59,9 @@ function childEnvironment() {
   env.NUVIO_CORE_PUBLIC_URL = nuvioUrl;
   env.NUVIO_PROVIDER_TIMEOUT_MS = String(process.env.NUVIO_PROVIDER_TIMEOUT_MS || "12000");
   env.NUVIO_PROVIDER_CONCURRENCY = String(process.env.NUVIO_PROVIDER_CONCURRENCY || "8");
+  env.NUVIO_SOURCE_VALIDATION = String(process.env.NUVIO_SOURCE_VALIDATION || "true");
+  env.NUVIO_SOURCE_VALIDATION_TIMEOUT_MS = String(process.env.NUVIO_SOURCE_VALIDATION_TIMEOUT_MS || "12000");
+  env.NUVIO_SOURCE_VALIDATION_CONCURRENCY = String(process.env.NUVIO_SOURCE_VALIDATION_CONCURRENCY || "4");
   return env;
 }
 
@@ -163,9 +167,6 @@ function installPlayerPatches() {
 
 function configureCompatibilityClient() {
   process.env.CINEPRO_ENABLED = "true";
-  // The local hybrid gateway starts before either scraper backend. During that
-  // warm-up window its health response can be degraded, so strict CinePro
-  // startup must not terminate SwiflyTV before port 3001 opens.
   process.env.CINEPRO_STRICT = "false";
   process.env.CINEPRO_AUTO_START = "false";
   process.env.CINEPRO_CORE_URL = hybridUrl;
@@ -222,7 +223,7 @@ async function startGatewayWithFallback() {
         },
         {
           id: "nuvio",
-          name: "Paregi Nuvio",
+          name: "Nuvio",
           url: nuvioUrl,
           timeoutMs: Number(process.env.HYBRID_NUVIO_RESOLVE_TIMEOUT_MS || 42_000),
         },

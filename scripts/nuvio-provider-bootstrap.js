@@ -5,7 +5,8 @@ const root = path.resolve(__dirname, "..");
 require("dotenv").config({ path: path.join(root, ".env") });
 
 const setup = require("./setup-nuvio-providers.js");
-const core = require("./nuvio-provider-core.js");
+const reliableCore = require("./nuvio-provider-core-reliable.js");
+const core = reliableCore.loadReliableCore();
 
 let server = null;
 let closing = false;
