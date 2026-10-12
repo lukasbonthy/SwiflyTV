@@ -1,4 +1,4 @@
-/* v159: details-first browsing and independent player and party return context. */
+/* v160: details-first browsing and independent solo/party player return context. */
 (() => {
   'use strict';
   if (window.SwiflyDetails) return;
@@ -36,7 +36,8 @@
     if (!player) return fallback;
     const expected='/'+player[1]+'/'+player[2];
     const valid=value=>{const url=localURL(value);return url&&(mediaRoute(url.href)||titleRoute(url.href))===expected&&(catalogURL(url.href)||titleRoute(url.href))?url:null;};
-    const referrer=valid(document.referrer),stored=valid(storageRead('swiflytv.playReturn'));
+    const query=new URLSearchParams(location.search),party=query.get('party')==='create'||Boolean(query.get('roomId'));
+    const referrer=valid(document.referrer),stored=valid(storageRead(party?'swiflytv.partyReturn':'swiflytv.playReturn'));
     if(referrer){if(stored&&stored.pathname+stored.search===referrer.pathname+referrer.search)return route(stored);return route(referrer);}
     return stored?route(stored):fallback;
   }
@@ -146,6 +147,7 @@
     for(const next of queue)open(next.href,next.from).then(next.resolve);
   }
   function rememberPlayback(link) {
+    if(link.hasAttribute('data-sv-party-movie-id'))return;
     const target=localURL(link.href),match=target?.pathname.match(/^\/watch\/(movie|tv)\/(\d+)\/?$/);if(!match)return;
     const expected='/'+match[1]+'/'+match[2];
     const currentPlayer=location.pathname.match(/^\/watch\/(movie|tv)\/(\d+)\/?$/);
@@ -160,7 +162,7 @@
     const id=link.getAttribute('data-sv-party-movie-id');
     if(!id||!/^[1-9]\d*$/.test(id)||!Number.isSafeInteger(Number(id)))return;
     const target=localURL(link.href);
-    if(!target||target.pathname!=='/social'||target.searchParams.getAll('movieId').length!==1||target.searchParams.get('movieId')!==id)return;
+    if(!target||target.pathname!=='/watch/movie/'+id||target.searchParams.getAll('party').length!==1||target.searchParams.get('party')!=='create')return;
     const expected='/movie/'+id,source=localURL(location.href);
     if(!source||!(titleRoute(source.href)===expected&&!mediaRoute(source.href)||catalogURL(source.href)&&mediaRoute(source.href)===expected))return;
     rememberDetailScroll();storageWrite('swiflytv.partyReturn',route(source));

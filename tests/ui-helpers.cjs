@@ -49,7 +49,7 @@ function loadServer() {
   const listen = http.Server.prototype.listen, interval = global.setInterval;
   http.Server.prototype.listen = function () {return this;};
   global.setInterval = (...args) => interval(...args).unref();
-  try {m._compile(fs.readFileSync(filename, 'utf8') + '\nmodule.exports = {detailPage, homePage, movieCard, pageShell, socialPage, app, httpServer, io, setTmdb(fn) {tmdb = fn;}};\n', filename);}
+  try {m._compile(fs.readFileSync(filename, 'utf8') + '\nmodule.exports = {detailPage, watchPage, listingPage, homePage, movieCard, pageShell, socialPage, app, httpServer, io, setTmdb(fn) {tmdb = fn;}, setSourceJobs(jobs) {movieSourceJobs.destroy(); movieSourceJobs = jobs;}};\n', filename);}
   finally {http.Server.prototype.listen = listen; global.setInterval = interval;}
   return m.exports;
 }

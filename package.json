@@ -1,12 +1,12 @@
 {
   "name": "swiflytv",
-  "version": "2.0.7",
-  "description": "SwiflyTV v159: catalog-style Party Hub and watch-party setup from movie details.",
+  "version": "2.0.8",
+  "description": "SwiflyTV v160: integrated watch parties, a clean native player, and bounded source loading.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "check": "node --check server.js && node --check public/liquid-glass/liquid-glass.js && node --check public/clean/clean.js && node --check public/liquid-glass/surfaces.js && node --check public/clean/continue.js && node --check public/clean/details.js && node --check public/clean/motion.js && node --check ui/studio.js && node --check public/studio/studio.js && node --check ui/party.js && node --check public/party/party.js",
+    "check": "node --check server.js && node --check public/liquid-glass/liquid-glass.js && node --check public/clean/clean.js && node --check public/liquid-glass/surfaces.js && node --check public/clean/continue.js && node --check public/clean/details.js && node --check public/clean/motion.js && node --check ui/studio.js && node --check public/studio/studio.js && node --check ui/party.js && node --check public/party/party.js && node --check lib/source-jobs.js && node --check ui/player.js && node --check public/player/player.js && node --check ui/watch-party.js && node --check public/player/watch-party.js",
     "test:ui": "node --test"
   },
   "engines": {

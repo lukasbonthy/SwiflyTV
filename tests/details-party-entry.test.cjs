@@ -34,7 +34,7 @@ test('Standalone movie details offer an accessible party action for the displaye
   const env = parse(await details()), d = env.window.document;
   const action = d.querySelector('.svDetailActions a[data-sv-party-movie-id="101"]');
   assert(action, 'Movie details need a Start a watch party link');
-  assert.equal(action.getAttribute('href'), '/social?tab=watchrooms&movieId=101');
+  assert.equal(action.getAttribute('href'), '/watch/movie/101?mode=movie&party=create');
   assert.equal(action.textContent.trim(), 'Start a watch party');
   assert.equal(action.getAttribute('aria-label'), 'Start a watch party for ' + movie.title);
   assert(action.classList.contains('dsSecondaryBtn'));
@@ -50,7 +50,7 @@ test('Modal movie details carry the actual selected movie into the party action'
   assert.equal(d.querySelector('h1').textContent.trim(), 'The Other Film');
   const action = d.querySelector('.svDetailActions a[data-sv-party-movie-id="202"]');
   assert(action, 'The shared details fragment needs its own movie party action');
-  assert.equal(action.getAttribute('href'), '/social?tab=watchrooms&movieId=202');
+  assert.equal(action.getAttribute('href'), '/watch/movie/202?mode=movie&party=create');
   assert.equal(action.getAttribute('aria-label'), 'Start a watch party for The Other Film');
 });
 
@@ -82,11 +82,13 @@ test('The synchronous party page passes only strict positive IDs into its select
 });
 
 test('Opening the party page with a movie does not create a room', async () => {
+  api.setTmdb(async endpoint => detailsMetadata(endpoint));
   const before = await (await fetch(base + '/api/social/watchrooms')).json();
   const response = await fetch(base + '/social?tab=watchrooms&movieId=101');
   assert.equal(response.status, 200);
   const env = parse(await response.text());
-  assert.equal(env.window.document.querySelector('.svPartyHub').getAttribute('data-selected-movie-id'), '101');
+  assert.equal(env.window.document.querySelector('.svPlayerPage').getAttribute('data-player-id'), '101');
+  assert(env.window.document.querySelector('dialog.svWatchPartyDialog'));
   const after = await (await fetch(base + '/api/social/watchrooms')).json();
   assert.deepEqual(after.rooms, before.rooms);
 });
