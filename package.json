@@ -7,7 +7,7 @@
     "start": "node server.js",
     "dev": "node server.js",
     "check": "node --check server.js && node --check public/liquid-glass/liquid-glass.js && node --check public/clean/clean.js && node --check public/liquid-glass/surfaces.js && node --check public/clean/continue.js && node --check public/clean/details.js && node --check public/clean/motion.js && node --check ui/studio.js && node --check public/studio/studio.js",
-    "test:ui": "node --test tests/*.test.cjs"
+    "test:ui": "node --test"
   },
   "engines": {
     "node": ">=20"
