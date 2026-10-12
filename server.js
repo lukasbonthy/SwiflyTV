@@ -38892,12 +38892,12 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/clean/details.css?v=156" />
     <link rel="stylesheet" href="/assets/clean/motion.css?v=154" />
     <script defer src="/assets/clean/motion.js?v=155"></script>
-    <script defer src="/assets/clean/details.js?v=157"></script>
+    <script defer src="/assets/clean/details.js?v=159"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=153" />
     <script defer src="/assets/liquid-glass/surfaces.js?v=155"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=158" />
     <script defer src="/assets/studio/studio.js?v=158"></script>
-    ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=158" /><script defer src="/assets/party/party.js?v=158"></script>' : ""}
+    ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=159" /><script defer src="/assets/party/party.js?v=159"></script>' : ""}
 </head>
 <body class="svCleanShell">
 
@@ -43683,6 +43683,7 @@ async function watchPage(req, res, type) {
 
 async function detailPage(req, res, type) {
   const id = req.params.id;
+  const partyId = type === "movie" ? partyMovieId(id) : "";
   const endpoint = type === "tv" ? `/tv/${id}` : `/movie/${id}`;
   const [details, videos, credits, similar, recommendations, externalIds, providers] = await Promise.all([
     tmdb(endpoint, { append_to_response: "images", include_image_language: "en,null" }, CACHE_TTL.long),
@@ -43761,6 +43762,7 @@ async function detailPage(req, res, type) {
           <div class="svDetailActions">
             <a class="dsPrimaryBtn" href="${watchHref}" ${mediaDataAttributes("play", details, type)}>${cleanIcon("play")}${escapeHtml(playLabel)}</a>
             ${trailers.length ? `<a class="dsSecondaryBtn" href="/watch/${type}/${encodeURIComponent(id)}?mode=trailer">${cleanIcon("play")}Trailer</a>` : ""}
+            ${partyId ? `<a class="dsSecondaryBtn" href="/social?tab=watchrooms&movieId=${partyId}" data-sv-party-movie-id="${partyId}" aria-label="Start a watch party for ${escapeHtml(title)}">${cleanIcon("user")}Start a watch party</a>` : ""}
             <button class="dsIconBtn" type="button" aria-label="Add ${escapeHtml(title)} to My List" ${mediaDataAttributes("watch", details, type)}>＋</button>
             <button class="dsIconBtn dsHeartBtn" type="button" aria-label="Like ${escapeHtml(title)}" ${mediaDataAttributes("like", details, type)}>♡</button>
           </div>
@@ -49663,6 +49665,20 @@ function socialPermissionsForName(name = "") {
 }
 
 
+function partyMovieId(value) {
+  if (typeof value !== "string" && typeof value !== "number") return "";
+  const id = String(value);
+  return /^[1-9]\d*$/.test(id) && Number.isSafeInteger(Number(id)) ? id : "";
+}
+
+function partyMovieMetadata(movie) {
+  const id = partyMovieId(movie?.id);
+  const title = (typeof movie?.title === "string" ? movie.title.trim() : "")
+    || (typeof movie?.original_title === "string" ? movie.original_title.trim() : "");
+  if (!id || !title || movie.adult) return null;
+  return { id: Number(id), title, year: movie.release_date ? getYear(movie.release_date) : "", poster: img(movie.poster_path, "w342"), backdrop: backdrop(movie.backdrop_path, "w1280"), overview: typeof movie.overview === "string" ? movie.overview : "" };
+}
+
 function socialPage(req, res) {
   const tab = String(req.query.tab || "").toLowerCase();
   const requestedRoomId = normalizeRoomId(req.query.roomId || (!/^(channel-|group-|dm-)/.test(String(req.query.room || "")) ? req.query.room : "") || "");
@@ -49673,8 +49689,9 @@ function socialPage(req, res) {
   const initialKind = String(req.query.kind || "").slice(0, 24);
   const initialVideoId = String(req.query.videoId || "").slice(0, 64);
   const initialEmbedUrl = String(req.query.embedUrl || "").slice(0, 1000);
+  const selectedMovieId = partyMovieId(req.query.movieId);
 
-  const body = partyMarkup({initialTab, requestedRoomId, initialRoomName, initialKind, initialVideoId, initialEmbedUrl, denied, allowedCreators, openRoomCreation:socialOpenRoomCreation()});
+  const body = partyMarkup({initialTab, requestedRoomId, initialRoomName, initialKind, initialVideoId, initialEmbedUrl, selectedMovieId, denied, allowedCreators, openRoomCreation:socialOpenRoomCreation()});
 
   res.send(pageShell({ title: `${SITE_NAME} — Party Hub`, active: "social", body }));
 }
@@ -49900,6 +49917,33 @@ app.get("/api/social/movies/search", async (req, res) => {
   }
 });
 
+app.get("/api/social/movies/featured", async (req, res) => {
+  try {
+    const data = await tmdb("/trending/movie/week", {}, CACHE_TTL.short);
+    if (!data || data.__error || !Array.isArray(data.results)) throw new Error("Metadata unavailable");
+    const movies = data.results.map(partyMovieMetadata).filter(Boolean).slice(0, 6);
+    res.json({ ok: true, movies });
+  } catch {
+    res.status(503).json({ ok: false, message: "Movie choices are unavailable right now. Please try again." });
+  }
+});
+
+app.get("/api/social/movies/:id", async (req, res) => {
+  const id = partyMovieId(req.params.id);
+  if (!id) return res.status(400).json({ ok: false, message: "Enter a valid movie ID." });
+  try {
+    const data = await tmdb(`/movie/${id}`, {}, CACHE_TTL.long);
+    if ((data?.__error && Number(data.status) === 404) || data?.adult) {
+      return res.status(404).json({ ok: false, message: "This movie was not found." });
+    }
+    const movie = data && !data.__error ? partyMovieMetadata(data) : null;
+    if (!movie || String(movie.id) !== id) throw new Error("Metadata unavailable");
+    res.json({ ok: true, movie });
+  } catch {
+    res.status(503).json({ ok: false, message: "Movie details are unavailable right now. Please try again." });
+  }
+});
+
 app.post("/api/social/watchrooms/create", (req, res) => {
   const creator = String(req.body?.creator || "").slice(0, 80);
   const perms = socialPermissionsForName(creator);
@@ -50033,14 +50077,14 @@ async function resolveDateRoomProxyVideoInBackground(roomId, movieId, selectedBy
       playAt: Date.now() + 7000,
       selectedBy,
       requestId,
-      message: "m3u8/stream ready. Sync countdown started.",
+      message: "The film is ready. Starting in 7 seconds.",
       sync: createMovieSyncState({ playing: true, offset: 0, startedAt: Date.now() + 7000 }),
       updatedAt: Date.now(),
     };
 
     room.messages.push({
       name: "System",
-      text: `m3u8/stream is ready for TMDB #${movieId}. Room starts in 7 seconds.`,
+      text: "The film is ready. Your party starts in 7 seconds.",
       createdAt: Date.now(),
     });
   } else {
@@ -50051,7 +50095,7 @@ async function resolveDateRoomProxyVideoInBackground(roomId, movieId, selectedBy
       playAt: 0,
       selectedBy,
       requestId,
-      message: result.message || "proxyVideo did not return for this movie.",
+      message: "This film could not start. Please retry or choose another film.",
       attempts: result.attempts || [],
       sync: createMovieSyncState(),
       updatedAt: Date.now(),
@@ -50059,7 +50103,7 @@ async function resolveDateRoomProxyVideoInBackground(roomId, movieId, selectedBy
 
     room.messages.push({
       name: "System",
-      text: `proxyVideo failed for TMDB #${movieId}: ${room.syncedMovie.message}`,
+      text: "This film could not start. Please retry or choose another film.",
       createdAt: Date.now(),
     });
   }
@@ -50146,14 +50190,14 @@ app.post("/api/date-room/:roomId/movie-select", (req, res) => {
     playAt: 0,
     selectedBy: name,
     requestId,
-    message: "Waiting for m3u8/stream...",
+    message: "Getting the film ready…",
     sync: createMovieSyncState(),
     updatedAt: Date.now(),
   };
 
   room.messages.push({
     name: "System",
-    text: `${name} selected TMDB #${movieId}. Waiting for m3u8/stream...`,
+    text: `${name} selected a film. Getting it ready…`,
     createdAt: Date.now(),
   });
   room.messages = room.messages.slice(-80);
@@ -50164,11 +50208,11 @@ app.post("/api/date-room/:roomId/movie-select", (req, res) => {
     movie: room.syncedMovie,
   });
 
-  resolveDateRoomProxyVideoInBackground(room.id, movieId, name, requestId).catch((error) => {
+  resolveDateRoomProxyVideoInBackground(room.id, movieId, name, requestId).catch(() => {
     const latest = watchRooms.get(room.id);
     if (!latest || !latest.syncedMovie || latest.syncedMovie.requestId !== requestId) return;
     latest.syncedMovie.status = "error";
-    latest.syncedMovie.message = error.message || "proxyVideo background request failed.";
+    latest.syncedMovie.message = "This film could not start. Please retry or choose another film.";
     latest.syncedMovie.updatedAt = Date.now();
     latest.updatedAt = Date.now();
   });
@@ -50540,7 +50584,7 @@ io.on("connection", (socket) => {
       playAt: 0,
       selectedBy,
       requestId,
-      message: "Waiting for m3u8/stream...",
+      message: "Getting the film ready…",
       updatedAt: Date.now(),
     };
     room.updatedAt = Date.now();
@@ -50552,7 +50596,7 @@ io.on("connection", (socket) => {
 
     io.to(room.id).emit("watchroom:message", {
       name: "System",
-      text: `${selectedBy} selected TMDB #${movieId}. Waiting for m3u8/stream...`,
+      text: `${selectedBy} selected a film. Getting it ready…`,
       createdAt: Date.now(),
     });
 
@@ -50582,7 +50626,7 @@ io.on("connection", (socket) => {
         playAt: Date.now() + 7000,
         selectedBy,
         requestId,
-        message: "m3u8/stream ready. Sync countdown started.",
+        message: "The film is ready. Starting in 7 seconds.",
         sync: createMovieSyncState({ playing: true, offset: 0, startedAt: Date.now() + 7000 }),
         updatedAt: Date.now(),
       };
@@ -50594,7 +50638,7 @@ io.on("connection", (socket) => {
         playAt: 0,
         selectedBy,
         requestId,
-        message: result.message || "proxyVideo did not return for this movie.",
+        message: "This film could not start. Please retry or choose another film.",
         sync: createMovieSyncState(),
         attempts: result.attempts || [],
         updatedAt: Date.now(),
@@ -50611,8 +50655,8 @@ io.on("connection", (socket) => {
     io.to(latest.id).emit("watchroom:message", {
       name: "System",
       text: latest.syncedMovie.status === "ready"
-        ? `m3u8/stream is ready for TMDB #${movieId}. Room starts in 7 seconds.`
-        : `proxyVideo failed for TMDB #${movieId}: ${latest.syncedMovie.message}`,
+        ? "The film is ready. Your party starts in 7 seconds."
+        : "This film could not start. Please retry or choose another film.",
       createdAt: Date.now(),
     });
   });

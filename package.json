@@ -1,7 +1,7 @@
 {
   "name": "swiflytv",
-  "version": "2.0.6",
-  "description": "SwiflyTV v158: cleaner Studio motion and a redesigned Party Hub with movie search and connected room chat.",
+  "version": "2.0.7",
+  "description": "SwiflyTV v159: catalog-style Party Hub and watch-party setup from movie details.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

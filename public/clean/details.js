@@ -1,4 +1,4 @@
-/* v157: details-first browsing and return context preserved through player controls. */
+/* v159: details-first browsing and independent player and party return context. */
 (() => {
   'use strict';
   if (window.SwiflyDetails) return;
@@ -156,16 +156,26 @@
     const url=new URL(catalogURL(location.href)||catalogURL(storageRead('swiflytv.browseReturn'))||'/',location.href);
     url.searchParams.set('media',match[1]+'-'+match[2]);storageWrite('swiflytv.playReturn',route(url));
   }
+  function rememberParty(link) {
+    const id=link.getAttribute('data-sv-party-movie-id');
+    if(!id||!/^[1-9]\d*$/.test(id)||!Number.isSafeInteger(Number(id)))return;
+    const target=localURL(link.href);
+    if(!target||target.pathname!=='/social'||target.searchParams.getAll('movieId').length!==1||target.searchParams.get('movieId')!==id)return;
+    const expected='/movie/'+id,source=localURL(location.href);
+    if(!source||!(titleRoute(source.href)===expected&&!mediaRoute(source.href)||catalogURL(source.href)&&mediaRoute(source.href)===expected))return;
+    rememberDetailScroll();storageWrite('swiflytv.partyReturn',route(source));
+  }
   function boot() {
     if(started)return;started=true;rememberCatalog();initialize(document);
     document.addEventListener('click',event=>{
       const link=event.target.closest('a[href]');if(!link||event.defaultPrevented||event.button>0||event.ctrlKey||event.metaKey||event.altKey||event.shiftKey||link.hasAttribute('download')||(link.target&&link.target!=='_self'))return;
+      rememberParty(link);
       rememberPlayback(link);
       if(link.hasAttribute('data-sv-player-back')&&history.length>1){
         const referrer=localURL(document.referrer),target=localURL(link.href);
         if(referrer&&target&&referrer.pathname+referrer.search===target.pathname+target.search){event.preventDefault();history.back();return;}
       }
-      if(link.hasAttribute('data-sv-details-back')||link.hasAttribute('data-sv-player-back')||link.hasAttribute('data-sv-detail-fallback')||link.hasAttribute('data-play-id'))return;
+      if(link.hasAttribute('data-sv-details-back')||link.hasAttribute('data-sv-player-back')||link.hasAttribute('data-party-return')||link.hasAttribute('data-sv-detail-fallback')||link.hasAttribute('data-play-id'))return;
       const href=titleRoute(link.href);if(!href||typeof window.HTMLDialogElement?.prototype.showModal!=='function')return;
       event.preventDefault();open(href,link);
     });

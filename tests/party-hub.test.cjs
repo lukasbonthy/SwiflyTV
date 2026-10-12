@@ -4,8 +4,10 @@ test.afterEach(async()=>{await tick();await tick();cleanup();});const api=loadSe
 const room={id:'movie-night',name:'Friday with friends',host:'Ava',mediaKind:'blank',viewers:1};
 function setup(options={}){
  let html;api.socialPage({query:{tab:'watchrooms'}},{send:value=>html=value});
- const parsed=browser(html),markup=parsed.window.document.querySelector('main.sv100').outerHTML;parsed.finish();
- const env=browser(markup,{path:'/social?tab=watchrooms'}),w=env.window,events=new Map(),sent=[],calls=[];
+ const parsed=browser(html),markup=parsed.window.document.querySelector('main.svPartyHub').outerHTML;parsed.finish();
+ const env=browser(markup,{path:'/social?tab=watchrooms'+(options.movieId?'&movieId='+options.movieId:''),referrer:options.referrer}),w=env.window,events=new Map(),sent=[],calls=[];
+ if(options.movieId)w.document.querySelector('.svPartyHub').dataset.selectedMovieId=options.movieId;
+ if(options.partyReturn)w.sessionStorage.setItem('swiflytv.partyReturn',options.partyReturn);
  const socket={id:'socket-ava',connected:options.connected!==false,on(name,fn){events.set(name,fn);return this;},emit(name,data){sent.push({name,data});return this;},receive(name,data){events.get(name)?.(data);}};
  w.io=()=>socket;w.localStorage.setItem('swiflytv.activeProfile',JSON.stringify({name:'Ava'}));
  w.HTMLMediaElement.prototype.pause=function(){};w.HTMLMediaElement.prototype.load=function(){};
@@ -15,6 +17,8 @@ function setup(options={}){
   else if(String(url).endsWith('/create')){const body=JSON.parse(init.body);data={ok:true,room:{...room,name:body.name}};}
   else if(String(url).includes('/date-room/movie-night/state'))data={ok:true,room};
   else if(String(url).includes('/movies/search'))data={results:[{id:101,title:'Arrival',year:'2016',poster:''}]};
+  else if(String(url).endsWith('/movies/featured'))data={ok:true,movies:[{id:202,title:'Interstellar',year:'2014',poster:'https://image.tmdb.org/t/p/w342/interstellar.jpg',backdrop:'https://image.tmdb.org/t/p/w1280/interstellar.jpg',overview:'A journey beyond Earth.'}]};
+  else if(String(url).endsWith('/movies/101')){if(options.movieFails)return {ok:false,json:async()=>({ok:false,message:'This movie is unavailable. Try again.'})};data={ok:true,movie:{id:101,title:'Arrival',year:'2016',poster:'https://image.tmdb.org/t/p/w342/arrival.jpg',backdrop:'https://image.tmdb.org/t/p/w1280/arrival.jpg',overview:'A linguist makes first contact.'}};}
   else {if(options.listFails)throw new Error('Party service unavailable');data={rooms:[room]};}
   return {ok:true,json:async()=>data};
  };
@@ -116,4 +120,51 @@ test('Dismissed device previews stop a media stream that arrives after closing',
  const env=await ready(setup()),w=env.window,d=w.document;let release,stopped=0;
  w.navigator.mediaDevices={getUserMedia:()=>new Promise(resolve=>release=resolve)};d.querySelector('[data-action="video"]').click();assert(release);d.querySelector('#sv100CallModal [data-action="close-call"]').click();release({getTracks:()=>[{stop(){stopped++;}}]});await ready(env);
  assert.equal(stopped,1);assert.equal(d.getElementById('sv100LocalVideo').srcObject,null);assert.equal(d.getElementById('sv100CallModal').open,false);env.finish();
+});
+test('Movie details entry loads the selected film without creating a room on page load',async()=>{
+ const env=await ready(setup({movieId:'101'})),d=env.window.document;
+ assert(env.calls.some(c=>c.url.endsWith('/movies/101')));assert.match(d.getElementById('partySelectedMovie').textContent,/Arrival/);assert(d.querySelector('#partySelectedMovie img[src*="arrival.jpg"]'));assert.equal(d.getElementById('partyRoomName').value,'Arrival — movie night');assert(!env.calls.some(c=>c.url.endsWith('/create')));env.finish();
+});
+test('Creating from a title selects that film once after the new room confirms hosting',async()=>{
+ const env=await ready(setup({movieId:'101'})),w=env.window,d=w.document;submit(w,d.getElementById('sv100CreateRoomForm'));await ready(env);
+ assert(!env.sent.some(e=>e.name==='watchroom:movie-select'),'Selection waits for host acknowledgement');env.socket.receive('watchroom:joined',{room,isHost:true,messages:[]});env.socket.receive('watchroom:joined',{room,isHost:true,messages:[]});
+ assert.equal(env.sent.filter(e=>e.name==='watchroom:movie-select').length,1);assert.equal(env.sent.find(e=>e.name==='watchroom:movie-select').data.movieId,'101');assert.equal(env.sent.find(e=>e.name==='watchroom:movie-select').data.roomId,room.id);env.finish();
+});
+test('Unavailable selected films offer retry or clear before hosting another party',async()=>{
+ const env=await ready(setup({movieId:'101',movieFails:true})),w=env.window,d=w.document;
+ assert.match(d.getElementById('partySelectedMovie').textContent,/unavailable/i);assert(d.getElementById('sv100CreateRoomForm').querySelector('button[type="submit"]').disabled);
+ d.querySelector('[data-action="clear-party-movie"]').click();assert.equal(d.getElementById('sv100CreateRoomForm').querySelector('button[type="submit"]').disabled,false);env.finish();
+});
+test('A title selected in the lobby is never sent to a party joined as a guest',async()=>{
+ const env=await ready(setup({movieId:'101'}));env.window.SwiflySocial.openNativeWatchRoom(room);env.socket.receive('watchroom:joined',{room,isHost:false,messages:[]});assert(!env.sent.some(e=>e.name==='watchroom:movie-select'));env.finish();
+});
+test('Leaving before host acknowledgement cancels the title queued for that party',async()=>{
+ const env=await ready(setup({movieId:'101'})),w=env.window,d=w.document;submit(w,d.getElementById('sv100CreateRoomForm'));await ready(env);d.querySelector('[data-action="leave-native-room"]').click();
+ const next={...room,id:'new-night'};w.SwiflySocial.openNativeWatchRoom(next);env.socket.receive('watchroom:joined',{room:next,isHost:true,messages:[]});assert(!env.sent.some(e=>e.name==='watchroom:movie-select'));env.finish();
+});
+test('Featured films can be chosen in the lobby and a late previous selection cannot replace them',async()=>{
+ const env=await ready(setup()),w=env.window,d=w.document,original=w.fetch;let release;
+ w.fetch=(url,options)=>String(url).endsWith('/movies/101')?new Promise(resolve=>release=resolve):original(url,options);
+ const query=d.getElementById('partyLobbyMovieQuery');query.value='Arrival';submit(w,d.getElementById('partyLobbyMovieForm'));await ready(env);d.querySelector('[data-party-lobby-movie-id="101"]').click();assert(release);
+ d.querySelector('[data-party-featured-id="202"]').click();release({ok:true,json:async()=>({ok:true,movie:{id:101,title:'Old Arrival',year:'2016'}})});await ready(env);assert.match(d.getElementById('partySelectedMovie').textContent,/Interstellar/);assert(!d.getElementById('partySelectedMovie').textContent.includes('Old Arrival'));env.finish();
+});
+test('Party return links preserve a local selected-title route and reject external destinations',async()=>{
+ const local=await ready(setup({partyReturn:'/movies?genre=878&media=movie-101#popular'}));assert.equal(local.window.document.querySelector('[data-party-return]').getAttribute('href'),'/movies?genre=878&media=movie-101#popular');
+ const unsafe=await ready(setup({partyReturn:'https://elsewhere.example/'}));assert.equal(unsafe.window.document.querySelector('[data-party-return]').getAttribute('href'),'/movies');local.finish();unsafe.finish();
+});
+test('Party Back uses browser history only when its real referrer matches the saved destination',async()=>{
+ const env=await ready(setup({partyReturn:'/movies?genre=878&media=movie-101#popular',referrer:'http://localhost:3000/movies?genre=878&media=movie-101'})),w=env.window;let calls=0;w.history.pushState({},'','/social?tab=watchrooms');w.history.back=()=>calls++;
+ const click=new w.MouseEvent('click',{bubbles:true,cancelable:true});w.document.querySelector('[data-party-return]').dispatchEvent(click);assert.equal(click.defaultPrevented,true);assert.equal(calls,1);
+ const unknown=await ready(setup({partyReturn:'/movie/101',referrer:'http://localhost:3000/account'})),u=unknown.window;u.history.pushState({},'','/social?tab=watchrooms');u.history.back=()=>calls++;const fallback=new u.MouseEvent('click',{bubbles:true,cancelable:true});u.document.querySelector('[data-party-return]').dispatchEvent(fallback);assert.equal(fallback.defaultPrevented,false);assert.equal(calls,1);env.finish();unknown.finish();
+});
+test('Connection updates keep Create disabled during an unfinished room request',async()=>{
+ const env=await ready(setup()),w=env.window,d=w.document,original=w.fetch;let release;
+ w.fetch=(url,options)=>String(url).endsWith('/create')?new Promise(resolve=>release=resolve):original(url,options);const form=d.getElementById('sv100CreateRoomForm');submit(w,form);assert(release);env.socket.receive('connect');assert(form.querySelector('button[type="submit"]').disabled,'A connection update must not enable a duplicate creation');release({ok:true,json:async()=>({ok:true,room})});await ready(env);env.finish();
+});
+test('Incoming movie setup uses its current referrer and keeps the hash only for a matching saved view',async()=>{
+ const fresh=await ready(setup({movieId:'101',partyReturn:'/movie/202',referrer:'http://localhost:3000/movie/101?source=search'}));assert.equal(fresh.window.document.querySelector('[data-party-return]').getAttribute('href'),'/movie/101?source=search');
+ const saved=await ready(setup({movieId:'101',partyReturn:'/movies?genre=878&media=movie-101#popular',referrer:'http://localhost:3000/movies?genre=878&media=movie-101'}));assert.equal(saved.window.document.querySelector('[data-party-return]').getAttribute('href'),'/movies?genre=878&media=movie-101#popular');fresh.finish();saved.finish();
+});
+test('A shared movie setup cannot borrow the return destination of an unrelated title',async()=>{
+ for(const partyReturn of ['/movie/202','/movies?media=movie-202','/tv/101']){const env=await ready(setup({movieId:'101',partyReturn}));assert.equal(env.window.document.querySelector('[data-party-return]').getAttribute('href'),'/movie/101');env.finish();}
 });
