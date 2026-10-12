@@ -1,12 +1,12 @@
 {
   "name": "swiflytv",
-  "version": "2.0.5",
-  "description": "SwiflyTV v157: cinematic details and reliable return navigation through player mode and episode changes.",
+  "version": "2.0.6",
+  "description": "SwiflyTV v158: cleaner Studio motion and a redesigned Party Hub with movie search and connected room chat.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "check": "node --check server.js && node --check public/liquid-glass/liquid-glass.js && node --check public/clean/clean.js && node --check public/liquid-glass/surfaces.js && node --check public/clean/continue.js && node --check public/clean/details.js && node --check public/clean/motion.js && node --check ui/studio.js && node --check public/studio/studio.js",
+    "check": "node --check server.js && node --check public/liquid-glass/liquid-glass.js && node --check public/clean/clean.js && node --check public/liquid-glass/surfaces.js && node --check public/clean/continue.js && node --check public/clean/details.js && node --check public/clean/motion.js && node --check ui/studio.js && node --check public/studio/studio.js && node --check ui/party.js && node --check public/party/party.js",
     "test:ui": "node --test"
   },
   "engines": {
@@ -25,6 +25,7 @@
     "cheerio": "1.0.0-rc.12"
   },
   "devDependencies": {
-    "jsdom": "22.1.0"
+    "jsdom": "22.1.0",
+    "ws": "8.22.0"
   }
 }

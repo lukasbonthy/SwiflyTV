@@ -1,0 +1,271 @@
+/* v158: one calm lobby, a focused screen, and your people alongside it. */
+body.svCleanShell:has(.svPartyHub) { overflow:auto !important; background:var(--st-canvas,#050506) !important; }
+body.svCleanShell:has(.svPartyHub) .footer { display:none; }
+body.svCleanShell .svPartyHub.svPartyHub { --party-line:#ffffff10; --party-muted:#8a8c96; display:grid !important; grid-template-columns:190px minmax(0,1fr); gap:0; width:min(1512px,calc(100% - 40px)); height:calc(100svh - 118px); min-height:610px; max-height:none; margin:100px auto 18px; padding:0 !important; overflow:hidden; border:1px solid var(--party-line); border-radius:24px; background:#0b0c0e; color:#eeeef0; box-shadow:0 28px 90px #0004; font-family:var(--st-font,"Host Grotesk",system-ui,sans-serif); }
+body.svCleanShell .svPartyHub[data-party-room="active"][data-party-view="rooms"] { grid-template-columns:170px minmax(0,1fr) 310px; }
+body.svCleanShell .svPartyHub * { box-sizing:border-box; }
+body.svCleanShell .svPartyHub [hidden] { display:none !important; }
+body.svCleanShell .svPartyHub :is(button,input,summary,a):focus-visible { outline:2px solid var(--st-accent,#ece9e2) !important; outline-offset:3px; }
+body.svCleanShell .svPartyHub svg { width:18px; height:18px; flex-shrink:0; vertical-align:middle; }
+body.svCleanShell .svPartyHub :is(button,input) { font-family:inherit !important; letter-spacing:normal; }
+body.svCleanShell .svPartyHub :is(h1,h2,h3,h4,p) { margin:0; text-shadow:none !important; }
+body.svCleanShell .svPartyHub button { cursor:pointer; transition:background .18s ease,border-color .18s ease,color .18s ease,translate .18s ease; }
+body.svCleanShell .svPartyHub button:disabled { opacity:.38; cursor:default; translate:none !important; }
+body.svCleanShell .svPartyHub .partySrOnly { position:absolute !important; width:1px !important; height:1px !important; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+body.svCleanShell .svPartyHub .partySidebar { display:flex; flex-direction:column; min-width:0; min-height:0; padding:26px 14px 16px; border:0; border-right:1px solid var(--party-line); border-radius:0; box-shadow:none; background:#0f1012; overflow-y:auto; scrollbar-width:thin; }
+body.svCleanShell .svPartyHub .partyBrand { display:flex; align-items:center; gap:10px; padding:0 8px; margin-bottom:28px; color:#eeeef0; text-decoration:none; font-weight:550; font-size:14px; letter-spacing:-.025em; }
+body.svCleanShell .svPartyHub .partyBrand > span { display:grid; place-items:center; width:32px; height:32px; border:1px solid #ffffff18; border-radius:11px; background:linear-gradient(135deg,#ffffff10,#ffffff03); color:var(--st-accent,#ece9e2); }
+body.svCleanShell .svPartyHub .partyBrand small { display:block; margin-top:5px; color:#62656c; font-size:9px; font-weight:400; letter-spacing:0; }
+body.svCleanShell .svPartyHub .partyNavigation { display:grid; gap:5px; padding:0; margin:0; border:0; border-radius:0; background:none; }
+body.svCleanShell .svPartyHub .partyNavigation button { display:flex; align-items:center; gap:9px; width:100%; padding:12px 9px; min-height:0; border:1px solid transparent; border-radius:11px; text-align:left; background:none; color:#83868e; font-size:11px; font-weight:450; box-shadow:none; }
+body.svCleanShell .svPartyHub .partyNavigation button.active { border-color:#ffffff0b; background:linear-gradient(135deg,#ffffff09,#ffffff03); color:#eceef0; box-shadow:inset 0 1px 0 #ffffff06; }
+body.svCleanShell .svPartyHub .partyNavigation button:hover { background:#ffffff06; color:#eceef0; }
+body.svCleanShell .svPartyHub .partyQuickActions { display:grid; gap:2px; margin-top:23px; padding-top:17px; border-top:1px solid var(--party-line); }
+body.svCleanShell .svPartyHub .partyQuickActions button { display:flex; align-items:center; gap:10px; padding:10px 9px; border:0; border-radius:9px; background:none; color:#858891; font-size:11px; text-align:left; }
+body.svCleanShell .svPartyHub .partyQuickActions button:hover { background:#ffffff04; color:#d4d7df; }
+body.svCleanShell .svPartyHub .partyChannels { padding:0; margin:23px 0 0; }
+body.svCleanShell .svPartyHub[data-party-view="rooms"] .partyChannels { display:none; }
+body.svCleanShell .svPartyHub .partyChannels header { display:flex; align-items:center; justify-content:space-between; padding:0 9px 9px; color:#555a65; font-size:9px; letter-spacing:.05em; }
+body.svCleanShell .svPartyHub .partyChannels header button { background:none; border:0; color:#656c79; padding:3px; }
+body.svCleanShell .svPartyHub .partyChannels .sv100Channel { display:flex; align-items:center; gap:8px; width:100%; margin:2px 0; padding:10px 9px; min-height:0; border:0; border-radius:8px; background:none; color:#868b94; font-size:10px; font-weight:400; box-shadow:none; }
+body.svCleanShell .svPartyHub .partyChannels .sv100Channel.active { background:#ffffff06; color:#eeeef0; }
+body.svCleanShell .svPartyHub .partyChannels b { font-weight:450; }
+body.svCleanShell .svPartyHub .partySidebarFoot { margin-top:auto; padding-top:28px; }
+body.svCleanShell .svPartyHub .partySidebarFoot > a { display:flex; align-items:center; gap:10px; margin:0 9px 23px; color:#787c84; font-size:10px; text-decoration:none; }
+body.svCleanShell .svPartyHub .sv100ProfilePill { display:flex; align-items:center; gap:9px; margin:0; padding:12px 5px; background:none; border:0; border-top:1px solid var(--party-line); border-radius:0; }
+body.svCleanShell .svPartyHub .sv100ProfilePill > span { display:grid; place-items:center; width:30px; height:30px; border:1px solid #ffffff12; border-radius:50%; background:#24262b; color:#d4d7df; font-size:11px; font-weight:500; }
+body.svCleanShell .svPartyHub .sv100ProfilePill b { color:#d4d7df; font-size:11px; font-weight:450; }
+body.svCleanShell .svPartyHub .sv100ProfilePill small { display:block; margin-top:4px; color:#626973; font-size:9px; }
+body.svCleanShell .svPartyHub .partyConnectionDot { width:5px; height:5px; margin-left:auto; border-radius:50%; background:#706250; }
+body.svCleanShell .svPartyHub[data-party-connection="online"] .partyConnectionDot { background:#a4b49b; }
+body.svCleanShell .svPartyHub .partyAccess { padding:0 5px; color:#515863; font-size:9px; line-height:1.6; }
+body.svCleanShell .svPartyHub .partyMain { display:grid; grid-template-rows:78px minmax(0,1fr); min-width:0; min-height:0; height:100%; border:0; border-radius:0; background:radial-gradient(ellipse at 70% -10%,#c4b1910a,transparent 60%),#0b0c0e; box-shadow:none; overflow:hidden; }
+body.svCleanShell .svPartyHub .partyTopbar { display:flex; align-items:center; justify-content:space-between; gap:16px; min-height:0; padding:0 30px; border:0; border-bottom:1px solid var(--party-line); border-radius:0; background:#0d0e10; box-shadow:none; backdrop-filter:none; }
+body.svCleanShell .svPartyHub .partyTopbar > div { min-width:0; }
+body.svCleanShell .svPartyHub .partyTopbar #sv100Kind { display:block; margin-bottom:6px; color:#646975; font-size:8px; letter-spacing:.13em; }
+body.svCleanShell .svPartyHub .partyTopbar h1 { max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:var(--st-display-font,"Host Grotesk",sans-serif) !important; font-size:20px !important; font-weight:500 !important; letter-spacing:-.04em; line-height:1.2; }
+body.svCleanShell .svPartyHub .partyRoomActions { display:flex; align-items:center; gap:9px; flex-shrink:0; }
+body.svCleanShell .svPartyHub .partyTopbar button,.svPartyHub .partyChecks summary { display:flex; align-items:center; gap:7px; min-height:32px; padding:8px 11px; border:1px solid #ffffff12; border-radius:10px; background:#ffffff03; color:#aeb2ba; font-size:10px; font-weight:400; box-shadow:none; }
+body.svCleanShell .svPartyHub[data-party-room="lobby"] .partyRoomActions { display:none; }
+body.svCleanShell .svPartyHub .partyChecks { position:relative; }
+body.svCleanShell .svPartyHub .partyChecks summary { cursor:pointer; list-style:none; }
+body.svCleanShell .svPartyHub .partyChecks summary::-webkit-details-marker { display:none; }
+body.svCleanShell .svPartyHub .partyChecks > div { position:absolute; z-index:5; right:0; top:calc(100% + 8px); display:grid; gap:5px; width:150px; padding:8px; border:1px solid #ffffff15; border-radius:12px; background:#1a1b1f; box-shadow:0 12px 35px #0006; }
+body.svCleanShell .svPartyHub .sv100RoomsPanel { min-width:0; padding:0; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; scrollbar-width:thin; scrollbar-color:#ffffff1c transparent; }
+body.svCleanShell .svPartyHub .sv100RoomsPanel.active { display:block; }
+body.svCleanShell .svPartyHub .sv103RoomShell { display:block; padding:30px; }
+body.svCleanShell .svPartyHub .sv103RoomHeader { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:0 0 18px; margin:0; border:0; border-radius:0; background:none; box-shadow:none; }
+body.svCleanShell .svPartyHub[data-party-room="lobby"] .sv103RoomHeader { display:none; }
+body.svCleanShell .svPartyHub .sv103RoomHeader p { color:#8b909a; font-size:11px; line-height:1.6; }
+body.svCleanShell .svPartyHub .sv103RoomHeader nav { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+body.svCleanShell .svPartyHub .sv103RoomHeader button { display:flex; align-items:center; gap:7px; padding:7px 9px; border:0; border-radius:9px; background:none; color:#7e8792; font-size:10px; }
+body.svCleanShell .svPartyHub .sv103RoomHeader button:hover { background:#ffffff06; color:#e1e4ec; }
+body.svCleanShell .svPartyHub .sv103NativeRoom { display:block; }
+body.svCleanShell .svPartyHub .partyHero { display:flex; align-items:center; justify-content:space-between; gap:25px; min-height:280px; margin:0 0 30px; padding:8px 12px 28px 0; border-bottom:1px solid var(--party-line); }
+body.svCleanShell .svPartyHub .partyEyebrow { display:block; color:#727987; font-size:8px; font-weight:450; letter-spacing:.14em; }
+body.svCleanShell .svPartyHub .partyHero h2 { margin:18px 0 14px; font-family:var(--st-display-font,"Host Grotesk",sans-serif) !important; font-size:clamp(34px,3.9vw,57px) !important; line-height:1.04; font-weight:450 !important; letter-spacing:-.065em; color:#eeedea; }
+body.svCleanShell .svPartyHub .partyHero h2 em { font-style:normal; color:#9a9590; }
+body.svCleanShell .svPartyHub .partyHero p { color:#767b85; font-size:12px; font-weight:400; line-height:1.9; }
+body.svCleanShell .svPartyHub .partyHeroNote { display:flex; align-items:center; gap:8px; margin-top:22px; color:#626c77; font-size:10px; }
+body.svCleanShell .svPartyHub .partyHeroNote svg { width:15px; height:15px; }
+body.svCleanShell .svPartyHub .partyHeroArt { position:relative; width:290px; flex-shrink:0; margin:5px 12px 0 0; padding-bottom:38px; }
+body.svCleanShell .svPartyHub .partyArtScreen { position:relative; padding:13px; aspect-ratio:1.7; border:1px solid #ffffff24; border-radius:16px; background:linear-gradient(145deg,#ffffff0c,#ffffff02),#111519; box-shadow:inset 0 1px 0 #ffffff0a,0 26px 50px #0007; rotate:-7deg; }
+body.svCleanShell .svPartyHub .partyArtNav { display:flex; align-items:center; gap:4px; }
+body.svCleanShell .svPartyHub .partyArtNav i { width:3px; height:3px; border-radius:50%; background:#bbb6a7; }
+body.svCleanShell .svPartyHub .partyArtScene { display:grid; place-items:center; width:100%; height:100px; margin:9px 0; border-radius:10px; background:radial-gradient(ellipse at 18% 12%,#65716c88,transparent 70%),radial-gradient(ellipse at 90% 90%,#81675855,transparent 70%),#1a2327; }
+body.svCleanShell .svPartyHub .partyArtScene svg { width:34px; height:34px; padding:9px; border:1px solid #ffffff30; border-radius:50%; background:#ffffff09; color:#c6c1b8; }
+body.svCleanShell .svPartyHub .partyArtTimeline { display:block; height:2px; border-radius:2px; background:#ffffff0e; }
+body.svCleanShell .svPartyHub .partyArtTimeline i { display:block; width:28%; height:100%; background:#c3b9a0; }
+body.svCleanShell .svPartyHub .partyArtTicket { display:flex; align-items:center; gap:9px; position:absolute; bottom:7px; right:-15px; padding:16px 18px; border:1px solid #ffffff20; border-radius:12px; background:linear-gradient(130deg,#323031e8,#1c2024e8); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); color:#ccc7bf; font-size:9px; font-weight:500; letter-spacing:.12em; rotate:5deg; box-shadow:0 12px 36px #0005; }
+body.svCleanShell .svPartyHub .partyArtTicket span { display:block; padding-left:12px; margin-left:3px; border-left:1px dashed #ffffff35; color:#7f858d; font-size:7px; max-width:60px; line-height:1.7; }
+body.svCleanShell .svPartyHub .partyEntryGrid { display:grid; grid-template-columns:1.12fr 1fr; align-items:stretch; gap:18px; margin-bottom:34px; }
+body.svCleanShell .svPartyHub .sv100Card { display:flex; flex-direction:column; align-items:stretch; gap:17px; padding:24px; border:1px solid #ffffff12; border-radius:16px; background:linear-gradient(135deg,#ffffff05,#ffffff01),#101114; box-shadow:inset 0 1px 0 #ffffff03; }
+body.svCleanShell .svPartyHub .partyCardHeading { display:flex; align-items:center; gap:12px; margin-bottom:4px; }
+body.svCleanShell .svPartyHub .partyCardIcon { display:grid; place-items:center; width:33px; height:33px; border:1px solid #ffffff19; border-radius:11px; background:#ffffff04; color:#b5b3ae; }
+body.svCleanShell .svPartyHub .sv100Card h3 { color:#d9d9de; font-size:16px !important; font-weight:450 !important; letter-spacing:-.04em; line-height:1.4; }
+body.svCleanShell .svPartyHub .partyCardHeading p { margin-top:4px; color:#696f7a; font-size:10px; font-weight:400; line-height:1.6; }
+body.svCleanShell .svPartyHub .sv100Card label { display:block; color:#959ba6; font-size:10px; font-weight:400; line-height:1.6; }
+body.svCleanShell .svPartyHub .sv100Card label small { margin-left:5px; color:#545c69; font-size:9px; }
+body.svCleanShell .svPartyHub input { display:block; width:100%; min-width:0; min-height:43px; margin-top:7px; padding:10px 12px; border:1px solid #ffffff12; border-radius:10px; background:#07080a88; color:#dedfe2; font-size:11px; font-weight:400; outline:none; box-shadow:none; }
+body.svCleanShell .svPartyHub input::placeholder { color:#545d6b; font-size:10px; }
+body.svCleanShell .svPartyHub input:focus { border-color:#ffffff32; box-shadow:0 0 0 3px #ffffff03; }
+body.svCleanShell .svPartyHub .sv100Btn { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:41px; margin-top:auto; padding:10px 13px; border:1px solid #ffffff1b; border-radius:10px; background:linear-gradient(140deg,#ffffff0b,#ffffff04); color:#c4c7cf; font-size:11px; font-weight:450; letter-spacing:0; box-shadow:inset 0 1px 0 #ffffff06; }
+body.svCleanShell .svPartyHub .sv100Btn.primary { color:#17181a; background:#d9d7d0; border-color:transparent; box-shadow:0 4px 15px #0002; }
+body.svCleanShell .svPartyHub .sv100Btn:hover { translate:0 -1px; border-color:#ffffff32; color:#efefed; }
+body.svCleanShell .svPartyHub .sv100Btn.primary:hover { background:#efede5; color:#17181a; }
+body.svCleanShell .svPartyHub .partyJoinNote { margin:2px 0 5px; color:#656d7a; font-size:11px; font-weight:400; line-height:1.9; max-width:250px; }
+body.svCleanShell .svPartyHub .partyFormStatus { color:#b7a890; font-size:10px; line-height:1.6; }
+body.svCleanShell .svPartyHub .partyFormStatus:empty { display:none; }
+body.svCleanShell .svPartyHub .partyLocked { padding:20px; border:1px solid #ffffff10; border-radius:16px; color:#8a909c; font-size:12px; }
+body.svCleanShell .svPartyHub .partyLocked h3 { margin-bottom:10px; color:#d3d6df; font-size:16px; font-weight:450; }
+body.svCleanShell .svPartyHub .partyRoomDirectory { grid-column:auto; padding:0; border:0; border-radius:0; background:none; }
+body.svCleanShell .svPartyHub .sv100CardHead { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+body.svCleanShell .svPartyHub .sv100CardHead h3 { margin-top:7px; color:#c3c7d0; font-size:17px; font-weight:450; letter-spacing:-.04em; }
+body.svCleanShell .svPartyHub .sv100CardHead h3 small { color:#586271; font-size:12px; font-weight:400; }
+body.svCleanShell .svPartyHub .sv100CardHead > button { display:grid; place-items:center; width:32px; height:32px; border:1px solid #ffffff12; border-radius:9px; background:none; color:#9da4ae; }
+body.svCleanShell .svPartyHub .sv100RoomsList { display:grid; grid-template-columns:repeat(auto-fill,minmax(225px,1fr)); gap:14px; max-height:none; overflow:visible; }
+body.svCleanShell .svPartyHub .sv100RoomItem { display:flex; flex-direction:column; align-items:stretch; gap:0; min-width:0; padding:0; overflow:hidden; border:1px solid #ffffff12; border-radius:14px; background:#111315; transition:border-color .2s ease,translate .2s ease; }
+body.svCleanShell .svPartyHub .sv100RoomItem:hover { border-color:#ffffff26; translate:0 -2px; box-shadow:none; }
+body.svCleanShell .svPartyHub .partyRoomCardArt { display:flex; align-items:center; justify-content:space-between; width:100%; height:95px; padding:20px; background:radial-gradient(ellipse at 0% 0%,#71706922,transparent 90%),#171e20; color:#a7b6b3; }
+body.svCleanShell .svPartyHub .sv100RoomItem:nth-child(3n+2) .partyRoomCardArt { background:radial-gradient(ellipse at 0% 0%,#69778620,transparent 90%),#141c27; color:#a7b4c7; }
+body.svCleanShell .svPartyHub .sv100RoomItem:nth-child(3n+3) .partyRoomCardArt { background:radial-gradient(ellipse at 0% 0%,#91715925,transparent 90%),#251e1b; color:#c4b3a5; }
+body.svCleanShell .svPartyHub .partyRoomCardArt > svg { width:22px; height:22px; }
+body.svCleanShell .svPartyHub .partyRoomCardArt > span { font-size:7px; letter-spacing:.14em; color:#88929b; }
+body.svCleanShell .svPartyHub .partyRoomCardCopy { display:block; padding:17px 17px 10px; }
+body.svCleanShell .svPartyHub .partyRoomCardCopy h4 { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; font-weight:450; letter-spacing:-.03em; }
+body.svCleanShell .svPartyHub .partyRoomCardCopy p { margin-top:6px; color:#606c7c; font-size:10px; }
+body.svCleanShell .svPartyHub .partyRoomCardCopy small { display:block; margin-top:13px; color:#8c958f; font-size:9px; }
+body.svCleanShell .svPartyHub .sv100RoomItem nav { display:flex; justify-content:space-between; gap:8px; padding:3px 12px 12px; margin-top:auto; }
+body.svCleanShell .svPartyHub .sv100RoomItem nav button { display:flex; align-items:center; justify-content:space-between; gap:7px; min-height:31px; padding:7px 9px; border:1px solid transparent; border-radius:8px; background:none; color:#929caa; font-size:10px; font-weight:400; }
+body.svCleanShell .svPartyHub .sv100RoomItem nav button:first-child { flex:1; color:#c6cbd3; border-color:#ffffff0c; background:#ffffff04; }
+body.svCleanShell .svPartyHub .sv100RoomItem nav button:hover { background:#ffffff09; color:#eceef0; }
+body.svCleanShell .svPartyHub .partyEmpty { grid-column:1/-1; padding:40px 20px; text-align:center; border:1px dashed #ffffff0c; border-radius:14px; color:#606978; }
+body.svCleanShell .svPartyHub .partyEmpty > span { display:block; color:#7d8993; margin-bottom:12px; }
+body.svCleanShell .svPartyHub .partyEmpty h3 { color:#929ba7; font-size:14px; font-weight:450; letter-spacing:-.03em; }
+body.svCleanShell .svPartyHub .partyEmpty p { margin:8px auto 0; color:#5c6676; max-width:310px; font-size:11px; line-height:1.7; }
+body.svCleanShell .svPartyHub .partyEmpty button { margin-top:16px; padding:8px 14px; border:1px solid #ffffff1a; border-radius:9px; background:#ffffff05; color:#bdc3ce; font-size:11px; }
+body.svCleanShell .svPartyHub .sv103Stage { display:block; }
+body.svCleanShell .svPartyHub .sv103Player { position:relative; min-height:0; width:100%; aspect-ratio:16/9; overflow:hidden; border:1px solid #ffffff15; border-radius:16px; background:#050606; box-shadow:0 18px 48px #0003; }
+body.svCleanShell .svPartyHub :is(.sv103Video,.sv103MediaFrame,.sv106NativePlayerShell) { display:block; width:100%; height:100%; min-height:0; border:0; border-radius:0; background:#050606; }
+body.svCleanShell .svPartyHub .sv103EmptyPlayer { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:13px; min-height:0; height:100%; padding:35px; text-align:center; color:#7c8691; background:radial-gradient(ellipse at 50% 100%,#252e3622,transparent 80%); }
+body.svCleanShell .svPartyHub .sv103EmptyPlayer > svg { width:30px; height:30px; margin-bottom:5px; color:#606c76; }
+body.svCleanShell .svPartyHub .sv103EmptyPlayer > b { color:#aab1bc; font-size:17px; font-weight:450; letter-spacing:-.035em; }
+body.svCleanShell .svPartyHub .sv103EmptyPlayer > span { max-width:330px; color:#606e7f; font-size:11px; line-height:1.8; }
+body.svCleanShell .svPartyHub .partyPlaybackBar { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:20px 0; }
+body.svCleanShell .svPartyHub .partyRoomFacts { display:flex; align-items:center; gap:24px; }
+body.svCleanShell .svPartyHub .partyRoomFacts > span { display:flex; flex-direction:column; gap:6px; }
+body.svCleanShell .svPartyHub .partyRoomFacts small { color:#4f5c6e; font-size:7px; letter-spacing:.11em; }
+body.svCleanShell .svPartyHub .partyRoomFacts b,.svPartyHub .partyRoomFacts button { margin:0; padding:0; border:0; background:none; color:#aab2bf; font-size:11px; font-weight:400; font-variant-numeric:tabular-nums; }
+body.svCleanShell .svPartyHub .partyHostBadge { flex-shrink:0; padding:7px 9px; border:1px solid #ffffff0d; border-radius:7px; background:#ffffff02; color:#737f8f; font-size:9px; }
+body.svCleanShell .svPartyHub[data-party-host="true"] .partyHostBadge { border-color:#b5b39821; color:#b7b4a4; }
+body.svCleanShell .svPartyHub .sv103ControlDock { display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding:12px; border:1px solid #ffffff13; border-radius:13px; background:linear-gradient(120deg,#ffffff05,#ffffff02); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); }
+body.svCleanShell .svPartyHub .sv103ControlDock button { display:flex; align-items:center; gap:7px; min-height:32px; padding:8px 10px; border:1px solid transparent; border-radius:9px; background:none; color:#a1aab7; font-size:10px; font-weight:400; }
+body.svCleanShell .svPartyHub .sv103ControlDock button:hover { border-color:#ffffff14; background:#ffffff07; color:#e0e4ea; }
+body.svCleanShell .svPartyHub .sv103ControlDock button[data-action="native-sync-me"] { margin-left:auto; border-color:#ffffff12; background:#ffffff03; }
+body.svCleanShell .svPartyHub .partyMediaTools { margin-top:23px; border:1px solid #ffffff0f; border-radius:13px; background:#ffffff01; }
+body.svCleanShell .svPartyHub .partyMediaTools > summary { display:flex; align-items:center; gap:10px; padding:16px; list-style:none; color:#b2bac5; font-size:11px; cursor:pointer; }
+body.svCleanShell .svPartyHub .partyMediaTools > summary::-webkit-details-marker { display:none; }
+body.svCleanShell .svPartyHub .partyMediaTools > summary span { margin-left:auto; color:#4d5d70; font-size:9px; }
+body.svCleanShell .svPartyHub .sv103ToolsGrid { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin:0; padding:6px 16px 18px; }
+body.svCleanShell .svPartyHub .sv103ToolCard { min-width:0; padding:0; border:0; border-radius:0; background:none; box-shadow:none; }
+body.svCleanShell .svPartyHub .sv103ToolCard > label { color:#6c7c90; font-size:10px; }
+body.svCleanShell .svPartyHub .sv103ToolCard > p { margin-top:9px; color:#4c5d73; font-size:9px; font-weight:400; line-height:1.8; }
+body.svCleanShell .svPartyHub .partyInputAction { display:flex; gap:6px; align-items:center; }
+body.svCleanShell .svPartyHub .partyInputAction > input { flex:1; }
+body.svCleanShell .svPartyHub .partyInputAction > button { display:grid; place-items:center; flex:0 0 34px; height:39px; margin-top:7px; padding:0; border:1px solid #ffffff13; border-radius:9px; background:#ffffff04; color:#a4aebb; }
+body.svCleanShell .svPartyHub .partyMovieResults { display:grid; gap:6px; max-height:260px; overflow:auto; margin-top:12px; scrollbar-width:thin; color:#7c8a9e; font-size:10px; }
+body.svCleanShell .svPartyHub .partyMovieResults:empty { display:none; }
+body.svCleanShell .svPartyHub .partyMovieResults > button { display:flex; align-items:center; gap:10px; min-width:0; padding:7px; border:1px solid #ffffff0b; border-radius:8px; background:#ffffff02; color:#b2bdca; text-align:left; }
+body.svCleanShell .svPartyHub .partyMovieResults img,.svPartyHub .partyMovieResults > button > span:first-child { width:29px; height:42px; flex-shrink:0; object-fit:cover; border-radius:4px; }
+body.svCleanShell .svPartyHub .partyMovieResults b { display:block; font-size:10px; font-weight:450; }
+body.svCleanShell .svPartyHub .partyMovieResults small { display:block; margin-top:5px; color:#526680; font-size:9px; }
+body.svCleanShell .svPartyHub .partyMovieResults i { margin-left:auto; padding-right:5px; font-style:normal; color:#7e8ea3; }
+body.svCleanShell .svPartyHub .partyConversation { display:flex; flex-direction:column; min-width:0; min-height:0; height:100%; border-left:1px solid var(--party-line); background:#101113; }
+body.svCleanShell .svPartyHub .partyChatHeader { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-shrink:0; height:78px; padding:0 20px; border-bottom:1px solid var(--party-line); }
+body.svCleanShell .svPartyHub .partyChatHeader > div { display:flex; align-items:center; gap:8px; color:#8e96a3; }
+body.svCleanShell .svPartyHub .partyChatHeader h2 { font-size:13px; font-weight:450; letter-spacing:-.025em; color:#c6cbd3; }
+body.svCleanShell .svPartyHub .partyChatHeader > span { color:#56677d; font-size:9px; }
+body.svCleanShell .svPartyHub .partyPeople { flex-shrink:0; border-bottom:1px solid var(--party-line); }
+body.svCleanShell .svPartyHub .partyPeople summary { display:flex; align-items:center; gap:8px; padding:14px 20px; list-style:none; font-size:10px; color:#67788e; cursor:pointer; }
+body.svCleanShell .svPartyHub .partyPeople summary::-webkit-details-marker { display:none; }
+body.svCleanShell .svPartyHub #sv100MembersList { padding:0 20px 13px; max-height:145px; overflow:auto; scrollbar-width:thin; }
+body.svCleanShell .svPartyHub #sv100MembersList p { display:flex; align-items:center; gap:8px; margin:5px 0; color:#a4b0c0; font-size:10px; }
+body.svCleanShell .svPartyHub #sv100MembersList p > span { display:grid; place-items:center; width:25px; height:25px; border-radius:50%; border:1px solid #ffffff10; background:#ffffff04; font-size:9px; }
+body.svCleanShell .svPartyHub #sv100MembersList b { font-weight:400; }
+body.svCleanShell .svPartyHub #sv100MembersList small { margin-left:auto; color:#8c8c75; font-size:8px; }
+body.svCleanShell .svPartyHub [data-party-chat-dock] { flex:1; min-height:0; }
+body.svCleanShell .svPartyHub [data-party-main-chat-slot] { min-height:0; }
+body.svCleanShell .svPartyHub #sv100ChatPanel.active { display:grid; grid-template-rows:auto minmax(0,1fr) auto; min-height:0; height:100%; }
+body.svCleanShell .svPartyHub .sv100Notice { display:flex; align-items:center; gap:8px; padding:15px 20px; margin:0; border:0; border-radius:0; background:none; color:#53677e; font-size:9px; line-height:1.8; }
+body.svCleanShell .svPartyHub .sv100Notice > svg { width:13px; height:13px; }
+body.svCleanShell .svPartyHub .sv100Messages { overflow-y:auto; overflow-x:hidden; min-height:0; padding:5px 14px 15px; scrollbar-width:thin; scrollbar-color:#ffffff18 transparent; background:none; }
+body.svCleanShell .svPartyHub .sv100Msg { display:flex; align-items:flex-start; gap:9px; max-width:none; padding:12px 5px; border:0; border-radius:0; background:none; box-shadow:none; }
+body.svCleanShell .svPartyHub .sv100Msg:hover { background:none; border:0; box-shadow:none; }
+body.svCleanShell .svPartyHub .sv100Msg > span { display:grid; place-items:center; width:26px; height:26px; flex-shrink:0; border:1px solid #ffffff12; border-radius:50%; background:#232932; color:#bbc3cf; font-size:9px; box-shadow:none; }
+body.svCleanShell .svPartyHub .sv100Msg > div { min-width:0; }
+body.svCleanShell .svPartyHub .sv100Msg.mine > div { background:none; }
+body.svCleanShell .svPartyHub .sv100Msg header { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+body.svCleanShell .svPartyHub .sv100Msg header b { color:#a2afc1; font-size:10px; font-weight:500; }
+body.svCleanShell .svPartyHub .sv100Msg header small { color:#485f7d; font-size:7px; }
+body.svCleanShell .svPartyHub .sv100Msg p { color:#8b9ab0; font-size:11px; font-weight:400; line-height:1.8; overflow-wrap:anywhere; white-space:pre-wrap; }
+body.svCleanShell .svPartyHub .partyChatEmpty { padding:34px 16px; margin-top:30px; text-align:center; }
+body.svCleanShell .svPartyHub .partyChatEmpty > span { display:block; color:#4a627e; margin-bottom:15px; }
+body.svCleanShell .svPartyHub .partyChatEmpty h3 { color:#8498b1; font-size:13px; font-weight:450; letter-spacing:-.025em; }
+body.svCleanShell .svPartyHub .partyChatEmpty p { color:#4d6584; font-size:10px; line-height:1.8; margin-top:8px; }
+body.svCleanShell .svPartyHub .sv100Composer { display:flex; align-items:center; gap:7px; min-height:0; margin:0 14px 14px; padding:5px 6px; border:1px solid #ffffff17; border-radius:11px; background:#ffffff04; box-shadow:none; }
+body.svCleanShell .svPartyHub .sv100Composer input { flex:1; min-height:35px; margin:0; padding:8px 5px; border:0; border-radius:0; background:none; font-size:10px; color:#becbdc; }
+body.svCleanShell .svPartyHub .sv100Composer input::placeholder { font-size:10px; color:#4f6685; }
+body.svCleanShell .svPartyHub .sv100Composer button { display:grid; place-items:center; width:28px; height:28px; min-width:0; margin:0; padding:0; flex-shrink:0; border:1px solid #ffffff13; border-radius:7px; background:#ffffff05; color:#a5b5c9; }
+body.svCleanShell .svPartyHub .sv100Composer button svg { width:14px; height:14px; }
+body.svCleanShell .svPartyHub .partyChatFootnote { padding:0 20px 18px; color:#354f70; font-size:8px; line-height:1.8; text-align:center; }
+body.svCleanShell .svPartyHub .sv100CallModal { position:fixed; inset:0; z-index:5000; display:none; place-items:center; box-sizing:border-box; width:100vw; height:100svh; max-width:none; max-height:none; margin:0; border:0; background:transparent; color:inherit; padding:20px; overflow-y:auto; }
+body.svCleanShell .svPartyHub .sv100CallModal[open] { display:grid; }
+body.svCleanShell .svPartyHub .sv100CallModal::backdrop { background:#000a; -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); }
+body.svCleanShell .svPartyHub .sv100CallCard { width:min(620px,100%); padding:24px; border:1px solid #ffffff1b; border-radius:20px; background:#111418; box-shadow:0 20px 100px #0008; }
+body.svCleanShell .svPartyHub .sv100CallCard header,.svPartyHub .sv100CallCard footer { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+body.svCleanShell .svPartyHub .sv100CallCard header span { color:#6c829c; font-size:10px; }
+body.svCleanShell .svPartyHub .sv100CallCard header h2 { color:#bdc8d7; font-size:20px; font-weight:450; letter-spacing:-.04em; margin-top:8px; }
+body.svCleanShell .svPartyHub .sv100CallCard button { display:flex; align-items:center; gap:7px; padding:9px 12px; border:1px solid #ffffff16; border-radius:9px; background:#ffffff04; color:#a2b2c6; font-size:10px; }
+body.svCleanShell .svPartyHub .sv100CallStage { display:block; position:relative; margin:20px 0; min-height:190px; border-radius:12px; overflow:hidden; background:#070a0e; }
+body.svCleanShell .svPartyHub .sv100CallStage video { width:100%; max-height:300px; object-fit:contain; }
+body.svCleanShell .svPartyHub .sv100CallStage > div { display:flex; align-items:center; justify-content:center; gap:12px; padding:20px; color:#66809f; font-size:11px; }
+body.svCleanShell .svPartyHub .partyDeviceNote { color:#607b9a; font-size:11px; font-weight:400; line-height:1.8; margin-bottom:20px; }
+body.svCleanShell .svPartyHub :is(.sv100Toast,.sv100Error) { position:fixed; bottom:26px; left:50%; transform:translateX(-50%); z-index:5200; max-width:min(500px,calc(100vw - 32px)); padding:13px 19px; border:1px solid #ffffff18; border-radius:12px; background:#202329ed; -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px); color:#cad1de; font-size:12px; font-weight:400; box-shadow:0 12px 40px #0007; }
+body.svCleanShell .svPartyHub .sv100Toast.error { color:#d1b8a8; }
+body.svCleanShell .svPartyHub[data-party-view="rooms"] [data-party-main-chat-slot] { display:none; }
+body.svCleanShell .svPartyHub[data-party-view="chat"] .partyMain { grid-template-rows:78px minmax(0,1fr); }
+body.svCleanShell .svPartyHub[data-party-view="chat"] [data-party-main-chat-slot] { display:block; }
+body.svCleanShell[data-st-glass="off"] .svPartyHub :is(.partyArtTicket,.sv103ControlDock,.sv100Toast) { background:#1a1c20; -webkit-backdrop-filter:none; backdrop-filter:none; }
+body.svCleanShell[data-st-glass="off"] .svPartyHub .sv100CallModal::backdrop { background:#000c; -webkit-backdrop-filter:none; backdrop-filter:none; }
+body.svCleanShell .svPartyHub .partyHero { animation:partyReveal .3s cubic-bezier(.16,1,.3,1) both; }
+body.svCleanShell .svPartyHub .partyEntryGrid { animation:partyReveal .3s .05s cubic-bezier(.16,1,.3,1) both; }
+body.svCleanShell .svPartyHub .partyRoomDirectory { animation:partyReveal .3s .1s cubic-bezier(.16,1,.3,1) both; }
+body.svCleanShell .svPartyHub .sv103NativeRoom:not([hidden]) { animation:partyReveal .26s cubic-bezier(.16,1,.3,1); }
+@keyframes partyReveal { from {opacity:0;translate:0 7px;} to {opacity:1;translate:0 0;} }
+@media(max-width:1250px) {
+ body.svCleanShell .svPartyHub.svPartyHub { grid-template-columns:165px minmax(0,1fr); }
+ body.svCleanShell .svPartyHub[data-party-room="active"][data-party-view="rooms"] { grid-template-columns:150px minmax(0,1fr) 280px; }
+ body.svCleanShell .svPartyHub .sv103RoomShell { padding:24px; } body.svCleanShell .svPartyHub .partyTopbar { padding:0 24px; }
+ body.svCleanShell .svPartyHub .partyHeroArt { width:230px; margin-right:0; } body.svCleanShell .svPartyHub .partyArtScene { height:80px; }
+ body.svCleanShell .svPartyHub .partyBrand small { display:none; } body.svCleanShell .svPartyHub .partyNavigation button { font-size:10px; }
+ body.svCleanShell .svPartyHub .sv103RoomHeader { flex-wrap:wrap; gap:10px; } body.svCleanShell .svPartyHub .partyRoomFacts { gap:16px; }
+ body.svCleanShell .svPartyHub .sv103ToolsGrid { grid-template-columns:1fr; }
+}
+@media(max-width:1000px) {
+ body.svCleanShell .svPartyHub.svPartyHub,body.svCleanShell .svPartyHub[data-party-room="active"][data-party-view="rooms"] { grid-template-columns:165px minmax(0,1fr); height:auto; min-height:calc(100svh - 125px); overflow:visible; }
+ body.svCleanShell .svPartyHub .partySidebar { grid-row:1/3; } body.svCleanShell .svPartyHub .partyMain { min-height:590px; }
+ body.svCleanShell .svPartyHub[data-party-view="chat"] .partyMain { height:calc(100svh - 125px); }
+ body.svCleanShell .svPartyHub .partyConversation { grid-column:2; grid-row:2; height:460px; border-left:0; border-top:1px solid var(--party-line); }
+ body.svCleanShell .svPartyHub .partyChatHeader { height:58px; } body.svCleanShell .svPartyHub .partyHeroArt { width:205px; }
+ body.svCleanShell .svPartyHub .partyHero { padding-right:0; gap:16px; min-height:230px; }
+ body.svCleanShell .svPartyHub .partyHero h2 { font-size:34px !important; } body.svCleanShell .svPartyHub .partyHero p { font-size:11px; }
+ body.svCleanShell .svPartyHub .partyEntryGrid { grid-template-columns:1fr; } body.svCleanShell .svPartyHub .partyJoinNote { max-width:none; }
+}
+@media(max-width:700px) {
+ body.svCleanShell .svPartyHub.svPartyHub,body.svCleanShell .svPartyHub[data-party-room="active"][data-party-view="rooms"] { display:flex !important; flex-direction:column; width:calc(100% - 18px); margin:86px auto 90px; border-radius:17px; }
+ body.svCleanShell .svPartyHub .partySidebar { display:block; padding:13px; border:0; border-bottom:1px solid var(--party-line); overflow:visible; }
+ body.svCleanShell .svPartyHub .partyBrand { padding:0 3px; margin-bottom:13px; font-size:13px; } body.svCleanShell .svPartyHub .partyBrand > span { width:27px; height:27px; border-radius:8px; }
+ body.svCleanShell .svPartyHub .partyBrand small { display:block; font-size:8px; margin-top:3px; }
+ body.svCleanShell .svPartyHub .partyNavigation { grid-template-columns:1fr 1fr; } body.svCleanShell .svPartyHub .partyNavigation button { justify-content:center; padding:10px; font-size:11px; }
+ body.svCleanShell .svPartyHub .partyQuickActions,.svPartyHub .partySidebarFoot { display:none; }
+ body.svCleanShell .svPartyHub .partyChannels { display:inline-grid; width:49%; margin-top:15px; vertical-align:top; }
+ body.svCleanShell .svPartyHub .partyMain { height:auto; min-height:0; overflow:visible; grid-template-rows:68px auto; }
+ body.svCleanShell .svPartyHub[data-party-view="chat"] .partyMain { height:calc(100svh - 210px); min-height:430px; grid-template-rows:68px minmax(0,1fr); }
+ body.svCleanShell .svPartyHub .partyTopbar { padding:0 18px; } body.svCleanShell .svPartyHub .partyTopbar h1 { font-size:18px !important; }
+ body.svCleanShell .svPartyHub .partyTopbar .partyChecks { display:none; } body.svCleanShell .svPartyHub .partyTopbar button { font-size:9px; padding:7px 9px; }
+ body.svCleanShell .svPartyHub .sv100RoomsPanel { overflow:visible; } body.svCleanShell .svPartyHub .sv103RoomShell { padding:24px 18px; }
+ body.svCleanShell .svPartyHub .partyHero { min-height:0; padding:3px 0 23px; margin-bottom:23px; } body.svCleanShell .svPartyHub .partyHero h2 { font-size:38px !important; }
+ body.svCleanShell .svPartyHub .partyHeroArt { display:none; } body.svCleanShell .svPartyHub .partyHeroNote { margin-top:17px; }
+ body.svCleanShell .svPartyHub .partyEntryGrid { gap:13px; margin-bottom:26px; } body.svCleanShell .svPartyHub .sv100Card { padding:20px; gap:17px; }
+ body.svCleanShell .svPartyHub .sv100RoomsList { grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); }
+ body.svCleanShell .svPartyHub .partyConversation { height:430px; border:0; border-top:1px solid var(--party-line); border-radius:0 0 17px 17px; overflow:hidden; }
+ body.svCleanShell .svPartyHub .partyRoomFacts { gap:17px; } body.svCleanShell .svPartyHub .partyPlaybackBar { flex-wrap:wrap; gap:15px; padding:18px 0; }
+ body.svCleanShell .svPartyHub .partyHostBadge { font-size:8px; } body.svCleanShell .svPartyHub .sv103ControlDock { gap:3px; padding:9px; }
+ body.svCleanShell .svPartyHub .sv103ControlDock button { padding:7px; font-size:9px; } body.svCleanShell .svPartyHub .sv103ControlDock button svg { width:14px; height:14px; }
+ body.svCleanShell .svPartyHub .sv103EmptyPlayer { padding:25px; } body.svCleanShell .svPartyHub .sv103EmptyPlayer > b { font-size:15px; }
+ body.svCleanShell .svPartyHub .partyMediaTools > summary { font-size:10px; } body.svCleanShell .svPartyHub .partyMediaTools > summary span { font-size:8px; }
+}
+body.svCleanShell.reduceMotion .svPartyHub,body.svCleanShell.reduceMotion .svPartyHub * { animation:none !important; transition:none !important; scroll-behavior:auto !important; }
+@media(prefers-reduced-motion:reduce) { body.svCleanShell .svPartyHub,body.svCleanShell .svPartyHub * { animation:none !important; transition:none !important; scroll-behavior:auto !important; } }
+@media(prefers-reduced-transparency:reduce) { body.svCleanShell .svPartyHub :is(.sv103ControlDock,.partyArtTicket,.sv100Toast,.sv100CallModal) { -webkit-backdrop-filter:none; backdrop-filter:none; background:#181b20; } }
+@media(prefers-reduced-transparency:reduce) { body.svCleanShell .svPartyHub .sv100CallModal::backdrop { background:#000c; -webkit-backdrop-filter:none; backdrop-filter:none; } }

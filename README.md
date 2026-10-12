@@ -1,8 +1,8 @@
-# SwiflyTV v157 — Details-first browsing and reliable player returns
+# SwiflyTV v158 — Cleaner Studio motion and a rebuilt Party Hub
 
 A cinematic catalog with liquid glass navigation, rich movie detail overlays, smooth scrolling and a redesigned appearance workspace. Posters open details first, with a separate Play action. Back and Close preserve browsing context, and titles can be shared through the selected-media URL.
 
-See [NAVIGATION_FOLLOWUP_v157.md](NAVIGATION_FOLLOWUP_v157.md) for the latest return-path fixes. [DETAILS_NAVIGATION_v156.md](DETAILS_NAVIGATION_v156.md) covers the richer details and collections. [STUDIO_v155.md](STUDIO_v155.md) covers the rebuilt Studio, and [DETAILS_MOTION_v154.md](DETAILS_MOTION_v154.md) covers the original overlay and scrolling update. [POLISH_v153.md](POLISH_v153.md) includes the Windows PowerShell setup.
+See [STUDIO_PARTY_v158.md](STUDIO_PARTY_v158.md) for the latest Studio animations and Party Hub rebuild. [NAVIGATION_FOLLOWUP_v157.md](NAVIGATION_FOLLOWUP_v157.md) covers the player return fixes. [DETAILS_NAVIGATION_v156.md](DETAILS_NAVIGATION_v156.md) covers the richer details and collections. [STUDIO_v155.md](STUDIO_v155.md) covers the appearance workspace, and [DETAILS_MOTION_v154.md](DETAILS_MOTION_v154.md) covers the original overlay and scrolling update. [POLISH_v153.md](POLISH_v153.md) includes the Windows PowerShell setup.
 
 ## Start locally
 

@@ -1,4 +1,4 @@
-/* v155: appearance drafts, live previews and one explicit persistent save. */
+/* v158: immediate appearance drafts with quiet, cancellable preview feedback. */
 (() => {
   'use strict';
   if (window.SwiflyStudio) return;
@@ -14,8 +14,25 @@
   const accents={default:'#ece9e2',red:'#e7baa3',blue:'#a9c7ed',green:'#b4cbb8',mono:'#c1c1c7'};
   const canvases={default:'#000000',red:'#080605',blue:'#05080d',green:'#050907',mono:'#09090b'};
   const fonts={default:'"Host Grotesk",system-ui,sans-serif',cinema:'"Space Grotesk","Host Grotesk",sans-serif',soft:'"Outfit","Host Grotesk",sans-serif',wide:'"Host Grotesk",system-ui,sans-serif'};
-  let dialog,trigger,saved,draft,started=false;
+  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
+  let dialog,trigger,saved,draft,previewAnimation,started=false;
   const equal=(a,b)=>Object.keys(defaults).every(name=>a[name]===b[name]);
+  function stopPreviewMotion() {
+    previewAnimation?.cancel();previewAnimation=null;
+  }
+  function previewChange() {
+    stopPreviewMotion();
+    if (!dialog.open || reduced.matches || document.body.classList.contains('reduceMotion')) return;
+    const preview=dialog.querySelector('[data-st-preview]');
+    if (typeof preview.animate!=='function') return;
+    const animation=preview.animate([{opacity:.8},{opacity:1}],{duration:180,easing:'cubic-bezier(.2,.7,.25,1)'});
+    previewAnimation=animation;
+    animation.onfinish=()=>{if (previewAnimation===animation) previewAnimation=null;};
+  }
+  function updateDraft(next) {
+    const changed=Object.keys(allowed).some(name=>draft[name]!==next[name]);
+    draft=next;apply(draft);sync();if (changed) previewChange();
+  }
   function validate(value) {
     const result={...defaults};
     if (!value || typeof value!=='object') return result;
@@ -44,6 +61,7 @@
     for (const name of Object.keys(allowed)) body.dataset['st'+name[0].toUpperCase()+name.slice(1)]=value[name];
     body.dataset.svScroll=value.smooth?'smooth':'native';
     body.classList.toggle('reduceMotion',value.reduceMotion);
+    if (value.reduceMotion) stopPreviewMotion();
     const legacyClasses=['effect-clean','effect-cinematic','effect-dropcart','effect-neon','effect-glow','effect-glass','effect-calm','effect-ultra','effect-off','detail-clean','detail-balanced','detail-max'];
     for (const [name,values] of Object.entries(allowed)) for (const item of values) legacyClasses.push(name+'-'+item);
     legacyClasses.push('layout-dense','layout-spotlight','cardstyle-float','backdrop-grid','backdrop-aurora');
@@ -106,12 +124,14 @@
   }
   function cleanup() {
     if (dialog.open) return;
+    stopPreviewMotion();
     apply(saved);draft={...saved};document.documentElement.classList.remove('svStudioOpen');
     document.getElementById('controlToggleTop')?.setAttribute('aria-expanded','false');
     if (trigger?.isConnected) trigger.focus({preventScroll:true});trigger=null;
   }
   function close() {
     if (!dialog?.open) return;
+    stopPreviewMotion();
     apply(saved);draft={...saved};if (typeof dialog.close==='function') dialog.close();else dialog.removeAttribute('open');cleanup();
   }
   function open(from) {
@@ -133,16 +153,16 @@
     saved=read();draft={...saved};apply(saved);sync();
     document.getElementById('controlToggleTop')?.addEventListener('click',event=>dialog.open?close():open(event.currentTarget));
     dialog.addEventListener('close',cleanup);
-    dialog.addEventListener('cancel',()=>{apply(saved);draft={...saved};});
+    dialog.addEventListener('cancel',()=>{stopPreviewMotion();apply(saved);draft={...saved};});
     dialog.addEventListener('click',event=>{
       const button=event.target.closest('button');
       if (button?.hasAttribute('data-st-cancel')) {close();return;}
       if (button?.hasAttribute('data-st-save')) {save();return;}
-      if (button?.hasAttribute('data-st-reset')) {draft={...defaults};apply(draft);sync();return;}
+      if (button?.hasAttribute('data-st-reset')) {updateDraft({...defaults});return;}
       if (button?.dataset.stTab) {setTab(button.dataset.stTab);return;}
-      if (presets[button?.dataset.stPreset]) {draft={...draft,...presets[button.dataset.stPreset]};apply(draft);sync();return;}
+      if (presets[button?.dataset.stPreset]) {updateDraft({...draft,...presets[button.dataset.stPreset]});return;}
       const field=button?.dataset.stField,value=button?.dataset.stValue;
-      if (allowed[field]?.includes(value)) {draft[field]=value;apply(draft);sync();return;}
+      if (allowed[field]?.includes(value)) {updateDraft({...draft,[field]:value});return;}
       if (event.target===dialog) {
         const rect=dialog.getBoundingClientRect();
         if (event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom) close();
@@ -166,6 +186,9 @@
     const narrow=window.matchMedia('(max-width:800px)');
     const orientation=()=>dialog.querySelector('[role="tablist"]').setAttribute('aria-orientation',narrow.matches?'horizontal':'vertical');
     narrow.addEventListener('change',orientation);orientation();
+    const motionPreference=()=>{if (reduced.matches || document.body.classList.contains('reduceMotion')) stopPreviewMotion();};
+    reduced.addEventListener('change',motionPreference);
+    new MutationObserver(motionPreference).observe(document.body,{attributes:true,attributeFilter:['class']});
     document.addEventListener('keydown',event=>{
       if ((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='e') {event.preventDefault();dialog.open?close():open();}
       else if (event.key==='Escape'&&dialog.open&&typeof dialog.showModal!=='function') {event.preventDefault();close();}

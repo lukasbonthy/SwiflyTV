@@ -51,6 +51,7 @@ if (process.env.SWIFLY_NO_ENV_MODE !== "false") {
 
 const express = require("express");
 const { studioMarkup } = require("./ui/studio");
+const { partyMarkup } = require("./ui/party");
 const helmet = require("helmet");
 const compression = require("compression");
 const rateLimit = require("express-rate-limit");
@@ -5584,6 +5585,7 @@ app.use("/assets/liquid-glass", express.static(path.join(__dirname, "public", "l
 // v151: shared clean catalog styles and compact navigation behavior.
 app.use("/assets/clean", express.static(path.join(__dirname, "public", "clean"), { maxAge: "1d", dotfiles: "deny" }));
 app.use("/assets/studio", express.static(path.join(__dirname, "public", "studio"), { maxAge: "1d", dotfiles: "deny" }));
+app.use("/assets/party", express.static(path.join(__dirname, "public", "party"), { maxAge: "1d", dotfiles: "deny" }));
 
 app.use(
   rateLimit({
@@ -38893,8 +38895,9 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/details.js?v=157"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=153" />
     <script defer src="/assets/liquid-glass/surfaces.js?v=155"></script>
-    <link rel="stylesheet" href="/assets/studio/studio.css?v=155" />
-    <script defer src="/assets/studio/studio.js?v=155"></script>
+    <link rel="stylesheet" href="/assets/studio/studio.css?v=158" />
+    <script defer src="/assets/studio/studio.js?v=158"></script>
+    ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=158" /><script defer src="/assets/party/party.js?v=158"></script>' : ""}
 </head>
 <body class="svCleanShell">
 
@@ -40204,7 +40207,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
       function goBack() {
         var modal = activeModal();
-        if (modal && modal.matches(".svDetailDialog, .svStudioDialog")) {
+        if (modal && modal.matches(".svDetailDialog, .svStudioDialog, .sv100CallModal")) {
           if (modal.matches(".svDetailDialog") && window.SwiflyDetails) window.SwiflyDetails.back();
           else modal.close();
           return;
@@ -49662,8 +49665,8 @@ function socialPermissionsForName(name = "") {
 
 function socialPage(req, res) {
   const tab = String(req.query.tab || "").toLowerCase();
-  const requestedRoomId = normalizeRoomId(req.query.roomId || req.query.room || "");
-  const initialTab = requestedRoomId || tab === "watchrooms" || tab === "rooms" ? "rooms" : "chat";
+  const requestedRoomId = normalizeRoomId(req.query.roomId || (!/^(channel-|group-|dm-)/.test(String(req.query.room || "")) ? req.query.room : "") || "");
+  const initialTab = requestedRoomId || (tab !== "chat" && !/^(channel-|group-|dm-)/.test(String(req.query.room || ""))) ? "rooms" : "chat";
   const denied = String(req.query.denied || "");
   const allowedCreators = socialCreatorNames();
   const initialRoomName = String(req.query.name || "Social Watch Room").slice(0, 80);
@@ -49671,1246 +49674,9 @@ function socialPage(req, res) {
   const initialVideoId = String(req.query.videoId || "").slice(0, 64);
   const initialEmbedUrl = String(req.query.embedUrl || "").slice(0, 1000);
 
-  const body = `<main class="sv100 sv103 sv104 sv105 sv106 sv110" data-initial-tab="${escapeHtml(initialTab)}" data-room-id="${escapeHtml(requestedRoomId)}" data-room-name="${escapeHtml(initialRoomName)}" data-room-kind="${escapeHtml(initialKind)}" data-room-video-id="${escapeHtml(initialVideoId)}" data-room-embed-url="${escapeHtml(initialEmbedUrl)}" data-denied="${escapeHtml(denied)}" data-allowed-creators="${escapeHtml(allowedCreators.join(","))}" data-open-room-creation="${socialOpenRoomCreation() ? "true" : "false"}">
-    <aside class="sv100Guilds" aria-label="Servers">
-      <a class="sv100Guild active" href="/social" title="Swifly Hub"><i class="ri-play-circle-fill"></i></a>
-      <a class="sv100Guild" href="/movies" title="Movies"><i class="ri-movie-2-fill"></i></a>
-      <a class="sv100Guild" href="/tv" title="TV Shows"><i class="ri-tv-2-fill"></i></a>
-      <a class="sv100Guild" href="/social?tab=watchrooms" title="Watch Parties"><i class="ri-vidicon-fill"></i></a>
-      <a class="sv100Guild" href="/profiles" title="Profiles"><i class="ri-user-smile-fill"></i></a>
-    </aside>
+  const body = partyMarkup({initialTab, requestedRoomId, initialRoomName, initialKind, initialVideoId, initialEmbedUrl, denied, allowedCreators, openRoomCreation:socialOpenRoomCreation()});
 
-    <aside class="sv100Channels">
-      <div class="sv100ServerHead">
-        <div>
-          <strong>Swifly Hub</strong>
-          <small id="sv100RoleText">Checking permissions...</small>
-        </div>
-        <button type="button" id="sv100ServerMenu" title="Server menu"><i class="ri-arrow-down-s-line"></i></button>
-      </div>
-
-      <div class="sv100ProfilePill">
-        <span id="sv100Avatar">S</span>
-        <div>
-          <b id="sv100Name">Guest</b>
-          <small id="sv100Status">Local mode</small>
-        </div>
-      </div>
-
-      <nav class="sv100ModeTabs">
-        <button type="button" class="${initialTab === "chat" ? "active" : ""}" data-tab="chat"><i class="ri-chat-3-fill"></i> Chat</button>
-        <button type="button" class="${initialTab === "rooms" ? "active" : ""}" data-tab="rooms"><i class="ri-tv-fill"></i> Watch</button>
-      </nav>
-
-      <section class="sv100ChannelGroup" data-nav-panel="chat">
-        <header><span>Social Lounges</span><button type="button" data-action="new-channel" data-requires="channels" title="Create channel"><i class="ri-add-line"></i></button></header>
-        <button type="button" class="sv100Channel active" data-room="channel-general" data-title="Lounge"><i class="ri-hashtag"></i><b>general</b></button>
-        <button type="button" class="sv100Channel" data-room="channel-recommendations" data-title="# recommendations"><i class="ri-hashtag"></i><b>recommendations</b></button>
-        <button type="button" class="sv100Channel" data-room="channel-watch" data-title="# watch-room-chat"><i class="ri-hashtag"></i><b>watch-room-chat</b></button>
-      </section>
-
-      <section class="sv100ChannelGroup" data-nav-panel="chat">
-        <header><span>Private Rooms</span><button type="button" data-action="new-group" data-requires="groups" title="Create group"><i class="ri-add-line"></i></button></header>
-        <button type="button" class="sv100Channel" data-room="dm-main" data-title="Main Chat"><i class="ri-user-3-fill"></i><b>Main Chat</b></button>
-        <button type="button" class="sv100Channel" data-room="group-watchparty" data-title="Watch Party"><i class="ri-group-fill"></i><b>Watch Party</b></button>
-      </section>
-
-      <section class="sv100ChannelGroup" data-nav-panel="rooms">
-        <header><span>Watch Parties</span><button type="button" data-action="rooms-tab" title="Open watch hub"><i class="ri-arrow-right-line"></i></button></header>
-        <button type="button" class="sv100Channel" data-tab="rooms"><i class="ri-tv-2-fill"></i><b>party-hub</b></button>
-        <button type="button" class="sv100Channel" data-action="native-create-party" data-requires="rooms"><i class="ri-add-box-fill"></i><b>create-party</b></button>
-        <button type="button" class="sv100Channel" data-action="native-join-room"><i class="ri-login-box-fill"></i><b>join-code</b></button>
-      </section>
-    </aside>
-
-    <section class="sv100Main">
-      <header class="sv100Topbar">
-        <div>
-          <span id="sv100Kind"><i class="ri-hashtag"></i> Social Lounge</span>
-          <h1 id="sv100Title">Lounge</h1>
-        </div>
-        <nav>
-          <button type="button" data-action="voice"><i class="ri-phone-fill"></i><span>Voice</span></button>
-          <button type="button" data-action="video"><i class="ri-vidicon-fill"></i><span>Video</span></button>
-          <button type="button" data-action="invite"><i class="ri-link"></i><span>Invite</span></button>
-        </nav>
-      </header>
-
-      <section id="sv100ChatPanel" class="sv100Panel ${initialTab === "chat" ? "active" : ""}">
-        <div class="sv100Notice">
-          <i class="ri-shield-check-fill"></i>
-          <span>Everyone can create Watch Parties. Groups and channels still need creator permission.</span>
-        </div>
-        <div id="sv100Messages" class="sv100Messages"></div>
-        <form id="sv100Composer" class="sv100Composer">
-          <button type="button" data-action="attach"><i class="ri-add-circle-fill"></i></button>
-          <input id="sv100Input" placeholder="Message Lounge" autocomplete="off" maxlength="1200" />
-          <button type="submit"><i class="ri-send-plane-fill"></i></button>
-        </form>
-      </section>
-
-      <section id="sv100RoomsPanel" class="sv100Panel sv100RoomsPanel ${initialTab === "rooms" ? "active" : ""}">
-        <div class="sv103RoomShell">
-          <header class="sv103RoomHeader">
-            <div>
-              <span class="dsEyebrow">Native Social Watchroom</span>
-              <h2 id="sv103RoomTitle">party-hub</h2>
-              <p id="sv103RoomSub">Create or join a room. The native room UI lives inside Swifly Hub.</p>
-            </div>
-            <nav>
-              <button type="button" data-action="copy-room-link"><i class="ri-link"></i> Copy</button>
-              <button type="button" data-action="share-room-chat"><i class="ri-chat-forward-fill"></i> Share</button>
-              <button type="button" data-action="leave-native-room"><i class="ri-logout-box-line"></i> Leave</button>
-            </nav>
-          </header>
-
-          <section id="sv103NativeRoom" class="sv103NativeRoom" hidden>
-            <div class="sv103Stage">
-              <div id="sv103Player" class="sv103Player">
-                <div class="sv103EmptyPlayer">
-                  <i class="ri-tv-2-fill"></i>
-                  <b>No media selected</b>
-                  <span>Host can paste a YouTube/link or select a TMDB movie.</span>
-                </div>
-              </div>
-
-              <aside class="sv103RoomMeta">
-                <div><span>Room code</span><b id="sv103RoomCode">—</b></div>
-                <div><span>Status</span><b id="sv103HostStatus">Joining...</b></div>
-                <div><span>Viewers</span><b id="sv103ViewerCount">0</b></div>
-                <div><span>Timer</span><b id="sv103Timer">0:00</b></div>
-              </aside>
-            </div>
-
-            <div class="sv103ControlDock">
-              <button type="button" data-action="native-play" class="hostOnly"><i class="ri-play-fill"></i> Play</button>
-              <button type="button" data-action="native-pause" class="hostOnly"><i class="ri-pause-fill"></i> Pause</button>
-              <button type="button" data-action="native-back" class="hostOnly"><i class="ri-replay-10-line"></i> -10</button>
-              <button type="button" data-action="native-forward" class="hostOnly"><i class="ri-forward-10-line"></i> +10</button>
-              <button type="button" data-action="native-sync-me"><i class="ri-refresh-line"></i> Sync Me</button>
-            </div>
-
-            <section class="sv103ToolsGrid">
-              <form id="sv103SetMediaForm" class="sv103ToolCard hostOnly">
-                <span>Host media</span>
-                <h3>Set YouTube / embed link</h3>
-                <input name="mediaUrl" placeholder="Paste YouTube, trailer, or website URL" />
-                <button type="submit"><i class="ri-links-fill"></i> Set Media</button>
-              </form>
-
-              <form id="sv103MovieForm" class="sv103ToolCard hostOnly">
-                <span>Movie resolver</span>
-                <h3>Select TMDB movie</h3>
-                <input name="movieId" placeholder="TMDB movie id" inputmode="numeric" />
-                <button type="submit"><i class="ri-movie-2-fill"></i> Load Movie</button>
-              </form>
-
-              <form id="sv103JoinForm" class="sv103ToolCard">
-                <span>Join</span>
-                <h3>Join another room</h3>
-                <input name="roomCode" placeholder="abc12-def34" />
-                <button type="submit"><i class="ri-login-box-fill"></i> Join</button>
-              </form>
-            </section>
-          </section>
-
-          <section id="sv103RoomLobby" class="sv103RoomLobby">
-            <div class="sv100RoomsIntro">
-              <div>
-                <span class="dsEyebrow">Integrated Watch Parties</span>
-                <h2>Watchrooms are native now.</h2>
-                <p>The player, controls, room code, viewers, and host tools are built directly into Swifly Hub.</p>
-              </div>
-              <button class="sv100Btn primary creatorOnly" type="button" data-action="native-create-party"><i class="ri-add-circle-fill"></i> Create Room</button>
-            </div>
-
-            <div class="sv100RoomsGrid">
-              <form class="sv100Card creatorOnly" method="get" action="/watchrooms/new" id="sv100CreateRoomForm">
-                <input type="hidden" name="creator" id="sv100CreatorInput" value="" />
-                <input type="hidden" name="social" value="1" />
-                <span>Watch tools</span>
-                <h3>Create Watch Room</h3>
-                <label>Room name<input name="name" placeholder="Friday movie night" /></label>
-                <label>Movie/site link<input name="watchLink" placeholder="YouTube, trailer, website, etc." /></label>
-                <button class="sv100Btn primary" type="submit"><i class="ri-tv-fill"></i> Create Room</button>
-              </form>
-
-              <div class="sv100Card lockedOnly" hidden>
-                <span>Locked</span>
-                <h3>Group/channel creation is restricted</h3>
-                <p>You can create and join Watch Parties. Only groups/channels are restricted.</p>
-              </div>
-
-              <form class="sv100Card" method="get" action="/watchrooms/join">
-                <span>Everyone</span>
-                <h3>Join by code</h3>
-                <label>Room code<input name="code" placeholder="abc12-def34" /></label>
-                <button class="sv100Btn" type="submit"><i class="ri-login-box-fill"></i> Join Room</button>
-              </form>
-
-              <section class="sv100Card sv100ActiveRooms">
-                <div class="sv100CardHead">
-                  <div>
-                    <span>Live rooms</span>
-                    <h3>Rooms list</h3>
-                  </div>
-                  <button type="button" data-action="refresh-rooms"><i class="ri-refresh-line"></i></button>
-                </div>
-                <div id="sv100RoomsList" class="sv100RoomsList">
-                  <p class="sv100Empty">No rooms yet.</p>
-                </div>
-              </section>
-            </div>
-          </section>
-        </div>
-      </section>
-    </section>
-
-    <aside class="sv100Members">
-      <div class="sv100MembersHead">
-        <span>Online</span>
-        <small id="sv100MemberCount">1 member</small>
-      </div>
-      <div id="sv100MembersList">
-        <p><i></i> You</p>
-      </div>
-
-      <div class="sv100Perms">
-        <span>Permissions</span>
-        <p id="sv100PermText">Loading creator rules...</p>
-      </div>
-    </aside>
-
-    <section id="sv100CallModal" class="sv100CallModal" hidden>
-      <div class="sv100CallCard">
-        <header>
-          <div>
-            <span id="sv100CallType">Voice call</span>
-            <h2 id="sv100CallTitle">Lounge</h2>
-          </div>
-          <button type="button" data-action="close-call"><i class="ri-close-line"></i></button>
-        </header>
-        <div class="sv100CallStage">
-          <video id="sv100LocalVideo" autoplay muted playsinline></video>
-          <div><i class="ri-group-fill"></i><b id="sv100CallStatus">Ready</b></div>
-        </div>
-        <footer>
-          <button type="button" data-action="mute"><i class="ri-mic-fill"></i> Mute</button>
-          <button type="button" data-action="camera"><i class="ri-vidicon-fill"></i> Camera</button>
-          <button type="button" data-action="close-call" class="danger"><i class="ri-phone-fill"></i> Leave</button>
-        </footer>
-      </div>
-    </section>
-
-    <div id="sv100Toast" class="sv100Toast" hidden></div>
-    <div id="sv100Error" class="sv100Error" hidden></div>
-
-    <script>
-      (function(){
-        const $ = (sel, root = document) => root.querySelector(sel);
-        const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
-        const app = $(".sv100");
-        const socket = window.io ? io() : null;
-
-        let currentRoom = "channel-general";
-        let currentTitle = "Lounge";
-        let username = "Guest";
-        let localStream = null;
-        let permissions = {
-          canCreateGroups: false,
-          canCreateChannels: false,
-          canCreateWatchRooms: false,
-          canManageSocial: false,
-          allowedCreators: [],
-          openRoomCreation: false
-        };
-
-        let activeWatchRoom = {
-          id: app?.dataset.roomId || "",
-          name: app?.dataset.roomName || "Social Watch Room",
-          kind: app?.dataset.roomKind || "",
-          videoId: app?.dataset.roomVideoId || "",
-          embedUrl: app?.dataset.roomEmbedUrl || "",
-          isHost: false,
-          joined: false,
-          syncedMovie: null,
-          sync: null
-        };
-
-        let hlsInstance = null;
-        let nativeVideoJsPlayer = null;
-        let nativeVideoControlBound = false;
-        let applyingRemote = false;
-
-        function esc(value) {
-          return String(value || "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
-        }
-
-        function toast(message, type) {
-          if (window.swiflyToast) window.swiflyToast(message, type || "success");
-          const el = $("#sv100Toast");
-          if (!el) return;
-          el.hidden = false;
-          el.textContent = message;
-          el.classList.toggle("error", type === "error");
-          clearTimeout(el._timer);
-          el._timer = setTimeout(() => el.hidden = true, 1800);
-        }
-
-        function showError(error) {
-          const el = $("#sv100Error");
-          if (!el) return;
-          el.hidden = false;
-          el.textContent = "Social error: " + (error?.message || String(error));
-          console.error(error);
-        }
-
-        function readProfile() {
-          try {
-            const profile = JSON.parse(localStorage.getItem("swiflytv.activeProfile") || "null");
-            const session = JSON.parse(localStorage.getItem("swiflytv.session") || "null");
-            username = profile?.name || session?.name || "Guest";
-          } catch {
-            username = "Guest";
-          }
-
-          $("#sv100Name").textContent = username;
-          $("#sv100Avatar").textContent = username.slice(0,1).toUpperCase() || "S";
-          $("#sv100CreatorInput").value = username;
-        }
-
-        async function loadPermissions() {
-          readProfile();
-
-          try {
-            const res = await fetch("/api/social/permissions?name=" + encodeURIComponent(username), { cache: "no-store" });
-            const data = await res.json();
-            if (data && data.permissions) permissions = data.permissions;
-          } catch {
-            const allowed = String(app?.dataset.allowedCreators || "").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
-            const open = app?.dataset.openRoomCreation === "true";
-            const isCreator = allowed.includes(username.trim().toLowerCase());
-            permissions = {
-              canCreateGroups: isCreator,
-              canCreateChannels: isCreator,
-              canCreateWatchRooms: isCreator || open,
-              canManageSocial: isCreator,
-              allowedCreators: allowed,
-              openRoomCreation: open
-            };
-          }
-
-          document.body.classList.toggle("sv100Creator", Boolean(permissions.canManageSocial || permissions.canCreateWatchRooms));
-          $$(".creatorOnly").forEach((el) => el.hidden = !permissions.canCreateWatchRooms);
-          $$(".lockedOnly").forEach((el) => el.hidden = Boolean(permissions.canCreateWatchRooms));
-          $$("[data-requires='groups']").forEach((el) => el.disabled = !permissions.canCreateGroups);
-          $$("[data-requires='channels']").forEach((el) => el.disabled = !permissions.canCreateChannels);
-          $$("[data-requires='rooms']").forEach((el) => el.disabled = !permissions.canCreateWatchRooms);
-
-          $("#sv100RoleText").textContent = permissions.canManageSocial ? "Creator permissions" : "Member access";
-          $("#sv100PermText").textContent = permissions.canManageSocial
-            ? "You can create groups/channels, and everyone can create Watch Parties."
-            : "You can chat, join rooms, and create Watch Parties. Groups/channels are locked.";
-        }
-
-        function roomKey(room) { return "swiflytv.social.v103." + room; }
-        function readMessages(room) {
-          try {
-            const saved = JSON.parse(localStorage.getItem(roomKey(room)) || "[]");
-            return Array.isArray(saved) ? saved : [];
-          } catch { return []; }
-        }
-        function saveMessages(room, messages) {
-          localStorage.setItem(roomKey(room), JSON.stringify(messages.slice(-160)));
-        }
-
-        function addMessage(message, persist) {
-          const list = $("#sv100Messages");
-          if (!list) return;
-          const author = message.author || message.name || "Guest";
-          const mine = author === username;
-          const node = document.createElement("article");
-          node.className = "sv100Msg" + (mine ? " mine" : "");
-          node.innerHTML = '<span>' + esc(author || "?").slice(0,1).toUpperCase() + '</span>' +
-            '<div><header><b>' + esc(author || "Guest") + '</b><small>' + new Date(message.createdAt || message.at || Date.now()).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) + '</small></header>' +
-            '<p>' + esc(message.text || "") + '</p></div>';
-          list.appendChild(node);
-          list.scrollTop = list.scrollHeight;
-
-          if (persist) {
-            const messages = readMessages(currentRoom);
-            messages.push({ author, text: message.text || "", createdAt: message.createdAt || message.at || Date.now() });
-            saveMessages(currentRoom, messages);
-          }
-        }
-
-        function renderMessages(seed) {
-          const list = $("#sv100Messages");
-          if (!list) return;
-          list.innerHTML = "";
-          const saved = readMessages(currentRoom);
-          const messages = saved.length ? saved : seed || [
-            { author: "Swifly", text: "Welcome to " + currentTitle + ".", createdAt: Date.now() },
-            { author: "Swifly", text: "Start a watch room, invite someone, and keep the movie night in one place.", createdAt: Date.now() + 10 }
-          ];
-          messages.forEach((msg) => addMessage(msg, false));
-        }
-
-        function switchTab(tab) {
-          const rooms = tab === "rooms";
-          $("#sv100ChatPanel").classList.toggle("active", !rooms);
-          $("#sv100RoomsPanel").classList.toggle("active", rooms);
-          $$("[data-tab]").forEach((btn) => btn.classList.toggle("active", btn.dataset.tab === tab));
-          if (rooms) {
-            $("#sv100Kind").innerHTML = '<i class="ri-tv-fill"></i> Watch Parties';
-            $("#sv100Title").textContent = activeWatchRoom.joined ? activeWatchRoom.name : "party-hub";
-            renderRooms();
-          } else {
-            $("#sv100Kind").innerHTML = currentRoom.startsWith("channel") ? '<i class="ri-hashtag"></i> Social Lounge' : currentRoom.startsWith("group") ? '<i class="ri-group-fill"></i> Group' : '<i class="ri-user-3-fill"></i> Direct Message';
-            $("#sv100Title").textContent = currentTitle;
-          }
-        }
-
-        function joinRoom(room, title) {
-          currentRoom = room || "channel-general";
-          currentTitle = title || currentRoom;
-          $$(".sv100Channel").forEach((btn) => btn.classList.toggle("active", btn.dataset.room === currentRoom));
-          const input = $("#sv100Input");
-          if (input) input.placeholder = "Message " + currentTitle;
-          switchTab("chat");
-          renderMessages();
-          socket?.emit("social:join", { roomId: currentRoom, name: username });
-        }
-
-        function requirePermission(type) {
-          const allowed = type === "groups" ? permissions.canCreateGroups :
-            type === "channels" ? permissions.canCreateChannels :
-            type === "rooms" ? permissions.canCreateWatchRooms :
-            false;
-
-          if (!allowed) {
-            toast("You don't have permission to create that.", "error");
-            return false;
-          }
-          return true;
-        }
-
-        function createVirtual(type) {
-          if (!requirePermission(type === "channel" ? "channels" : "groups")) return;
-
-          const name = prompt(type === "channel" ? "Channel name" : "Group name");
-          if (!name || !name.trim()) return;
-
-          const id = (type === "channel" ? "channel-" : "group-") + name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
-          const selectorText = type === "channel" ? "Social Lounges" : "Private Rooms";
-          const section = $$(".sv100ChannelGroup").find((sec) => (sec.querySelector("header span")?.textContent || "") === selectorText);
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = "sv100Channel";
-          btn.dataset.room = id;
-          btn.dataset.title = type === "channel" ? "# " + name.trim() : name.trim();
-          btn.innerHTML = '<i class="' + (type === "channel" ? "ri-hashtag" : "ri-group-fill") + '"></i><b>' + esc(type === "channel" ? name.trim().toLowerCase().replace(/\\s+/g, "-") : name.trim()) + '</b>';
-          section?.appendChild(btn);
-          joinRoom(id, btn.dataset.title);
-          toast((type === "channel" ? "Channel" : "Group") + " created");
-        }
-
-        function roomCode(value) {
-          return String(value || "").toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 40);
-        }
-
-        function createRoomId() {
-          return Math.random().toString(36).slice(2, 7) + "-" + Math.random().toString(36).slice(2, 7);
-        }
-
-        function parseYouTube(url) {
-          const pattern = new RegExp("(?:youtube\\\\.com/(?:watch\\\\?v=|embed/|shorts/)|youtu\\\\.be/)([A-Za-z0-9_-]{6,})");
-          const match = String(url || "").match(pattern);
-          return match ? match[1] : "";
-        }
-
-        function socialRoomUrl(room) {
-          const params = new URLSearchParams();
-          params.set("tab", "watchrooms");
-          params.set("roomId", room.id);
-          params.set("name", room.name || "SwiflyTV Watch Room");
-          params.set("kind", room.kind || room.mediaKind || "blank");
-          if (room.videoId) params.set("videoId", room.videoId);
-          if (room.embedUrl) params.set("embedUrl", room.embedUrl);
-          return "/social?" + params.toString();
-        }
-
-        async function createNativeRoom() {
-          if (!permissions.canCreateWatchRooms) return toast("Watch Room creation is locked by this server.", "error");
-          const name = prompt("Room name", "SwiflyTV Watch Room");
-          if (name === null) return;
-          const room = { id: createRoomId(), name: name.trim() || "SwiflyTV Watch Room", kind: "blank" };
-          openNativeWatchRoom(room);
-        }
-
-        function openNativeWatchRoom(room) {
-          if (!room || !room.id) return;
-          activeWatchRoom.id = room.id;
-          activeWatchRoom.name = room.name || "SwiflyTV Watch Room";
-          activeWatchRoom.kind = room.kind || room.mediaKind || "";
-          activeWatchRoom.videoId = room.videoId || "";
-          activeWatchRoom.embedUrl = room.embedUrl || "";
-          activeWatchRoom.joined = true;
-
-          $("#sv103NativeRoom").hidden = false;
-          $("#sv103RoomLobby").hidden = true;
-          $("#sv103RoomTitle").textContent = activeWatchRoom.name;
-          $("#sv103RoomSub").textContent = "Room code: " + activeWatchRoom.id + " • fully native inside Social";
-          $("#sv103RoomCode").textContent = activeWatchRoom.id;
-          $("#sv100Title").textContent = activeWatchRoom.name;
-          currentRoom = "watchroom-" + activeWatchRoom.id;
-          currentTitle = activeWatchRoom.name;
-
-          renderNativeMedia({
-            videoId: activeWatchRoom.videoId,
-            embedUrl: activeWatchRoom.embedUrl,
-            mediaKind: activeWatchRoom.kind
-          });
-
-          socket?.emit("watchroom:join", {
-            roomId: activeWatchRoom.id,
-            name: activeWatchRoom.name,
-            videoId: activeWatchRoom.videoId,
-            embedUrl: activeWatchRoom.embedUrl,
-            mediaKind: activeWatchRoom.kind,
-            user: username
-          });
-
-          switchTab("rooms");
-          toast("Opened native Watch Room");
-        }
-
-        function leaveNativeWatchRoom() {
-          activeWatchRoom = { id: "", name: "Social Watch Room", kind: "", videoId: "", embedUrl: "", isHost: false, joined: false, syncedMovie: null, sync: null };
-          $("#sv103NativeRoom").hidden = true;
-          $("#sv103RoomLobby").hidden = false;
-          $("#sv103Player").innerHTML = '<div class="sv103EmptyPlayer"><i class="ri-tv-2-fill"></i><b>No media selected</b><span>Host can paste a YouTube/link or select a TMDB movie.</span></div>';
-          $("#sv100Title").textContent = "party-hub";
-          $("#sv103RoomSub").textContent = "Create or join a room. The native room UI lives inside Swifly Hub.";
-          renderRooms();
-        }
-
-        function updateHostUi() {
-          document.body.classList.toggle("sv103IsHost", Boolean(activeWatchRoom.isHost));
-          $$(".hostOnly").forEach((el) => {
-            el.disabled = !activeWatchRoom.isHost;
-            el.classList.toggle("isLocked", !activeWatchRoom.isHost);
-          });
-          $("#sv103HostStatus").textContent = activeWatchRoom.isHost ? "You are host" : "Viewer";
-        }
-
-        function setNativePlayerStatus(title, detail, danger) {
-          const status = $("#sv106HlsStatus");
-          if (!status) return;
-          status.hidden = false;
-          status.classList.toggle("danger", Boolean(danger));
-          status.innerHTML = '<b>' + esc(title || "Loading") + '</b><span>' + esc(detail || "") + '</span>';
-        }
-
-        function hideNativePlayerStatus(delay) {
-          const status = $("#sv106HlsStatus");
-          if (!status) return;
-          clearTimeout(status._timer);
-          status._timer = setTimeout(() => {
-            status.hidden = true;
-          }, delay || 2600);
-        }
-
-        function destroyHls() {
-          if (nativeVideoJsPlayer) {
-            try { nativeVideoJsPlayer.dispose(); } catch {}
-            nativeVideoJsPlayer = null;
-          }
-          if (hlsInstance) {
-            try { hlsInstance.destroy(); } catch {}
-            hlsInstance = null;
-          }
-        }
-
-        function loadHls(cb) {
-          if (window.Hls) return cb(true);
-          const urls = [
-            "https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js",
-            "https://unpkg.com/hls.js@1.5.17/dist/hls.min.js",
-            "https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.17/hls.min.js"
-          ];
-          let i = 0;
-          function next() {
-            if (window.Hls) return cb(true);
-            if (i >= urls.length) return cb(false);
-            const script = document.createElement("script");
-            script.src = urls[i++];
-            script.async = true;
-            script.onload = () => cb(Boolean(window.Hls));
-            script.onerror = next;
-            document.head.appendChild(script);
-          }
-          next();
-        }
-
-        function isNativeHlsSource(src, media) {
-          const value = String(src || "");
-          const type = String(media?.streamType || media?.type || media?.movie?.streamType || "").toLowerCase();
-          return new RegExp("[.]m3u8([?#]|$)", "i").test(value) || type === "m3u8" || type === "hls" || Boolean(media?.m3u8 || media?.movie?.m3u8 || media?.hlsProxyUrl || media?.movie?.hlsProxyUrl);
-        }
-
-        function attachHlsJsSource(video, src) {
-          loadHls((ok) => {
-            if (!ok || !window.Hls || !window.Hls.isSupported()) {
-              setNativePlayerStatus("Using native video", "HLS.js was unavailable. Browser will try the source directly.", false);
-              video.src = src;
-              try { video.load(); } catch {}
-              hideNativePlayerStatus(3600);
-              return;
-            }
-
-            setNativePlayerStatus("Loading m3u8", "HLS.js attached. Waiting for playlist...", false);
-            hlsInstance = new window.Hls({
-              lowLatencyMode: false,
-              enableWorker: true,
-              maxBufferLength: 60,
-              backBufferLength: 90,
-              maxMaxBufferLength: 120,
-              fragLoadingTimeOut: 30000,
-              manifestLoadingTimeOut: 30000,
-              levelLoadingTimeOut: 30000
-            });
-
-            hlsInstance.on(window.Hls.Events.MANIFEST_PARSED, () => {
-              setNativePlayerStatus("m3u8 ready", "Press play when you are ready.", false);
-              hideNativePlayerStatus(2400);
-            });
-
-            hlsInstance.on(window.Hls.Events.ERROR, (event, data) => {
-              const details = data && (data.details || data.type) ? String(data.details || data.type) : "unknown error";
-              if (data && data.fatal) {
-                setNativePlayerStatus("m3u8 error", details + ". Trying to recover...", true);
-                try {
-                  if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR) hlsInstance.startLoad();
-                  else if (data.type === window.Hls.ErrorTypes.MEDIA_ERROR) hlsInstance.recoverMediaError();
-                  else {
-                    hlsInstance.destroy();
-                    hlsInstance = null;
-                    video.src = src;
-                    try { video.load(); } catch {}
-                  }
-                } catch {
-                  video.src = src;
-                  try { video.load(); } catch {}
-                }
-              }
-            });
-
-            hlsInstance.loadSource(src);
-            hlsInstance.attachMedia(video);
-          });
-        }
-
-        function attachVideoSource(video, src, media) {
-          destroyHls();
-
-          try {
-            video.removeAttribute("src");
-            video.load();
-          } catch {}
-
-          const hls = isNativeHlsSource(src, media);
-
-          if (!hls) {
-            setNativePlayerStatus("Loading video", "Using direct video source.", false);
-            video.src = src;
-            try { video.load(); } catch {}
-            hideNativePlayerStatus(2200);
-            return;
-          }
-
-          setNativePlayerStatus("Loading m3u8", "Starting stream player...", false);
-
-          if (window.videojs) {
-            try {
-              video.classList.add("video-js", "vjs-big-play-centered", "vjs-theme-swifly", "sv106VideoJs");
-              nativeVideoJsPlayer = window.videojs(video, {
-                controls: true,
-                autoplay: false,
-                preload: "auto",
-                fluid: false,
-                responsive: true,
-                liveui: true,
-                html5: {
-                  vhs: {
-                    overrideNative: true,
-                    withCredentials: false,
-                    enableLowInitialPlaylist: true,
-                    smoothQualityChange: true
-                  },
-                  nativeAudioTracks: false,
-                  nativeVideoTracks: false
-                },
-                sources: [{ src, type: "application/x-mpegURL" }]
-              });
-
-              nativeVideoJsPlayer.ready(() => {
-                setNativePlayerStatus("m3u8 ready", "Video.js loaded. Press play.", false);
-                hideNativePlayerStatus(2400);
-                bindNativeVideoControls();
-              });
-
-              nativeVideoJsPlayer.on("error", () => {
-                const err = nativeVideoJsPlayer.error && nativeVideoJsPlayer.error();
-                const message = err && (err.message || err.code) ? String(err.message || ("Code " + err.code)) : "Unknown player error";
-                setNativePlayerStatus("Video.js issue", message + ". Falling back to HLS.js.", true);
-                try { nativeVideoJsPlayer.dispose(); } catch {}
-                nativeVideoJsPlayer = null;
-                const fresh = document.createElement("video");
-                fresh.id = "sv103Video";
-                fresh.className = "sv103Video";
-                fresh.controls = true;
-                fresh.playsInline = true;
-                fresh.preload = "metadata";
-                const shell = $("#sv106NativePlayerShell");
-                if (shell) shell.insertBefore(fresh, shell.firstChild);
-                attachHlsJsSource(fresh, src);
-                bindNativeVideoControls();
-              });
-              return;
-            } catch (error) {
-              setNativePlayerStatus("Video.js failed", "Falling back to HLS.js.", true);
-            }
-          }
-
-          if (video.canPlayType && video.canPlayType("application/vnd.apple.mpegurl")) {
-            video.src = src;
-            try { video.load(); } catch {}
-            setNativePlayerStatus("m3u8 ready", "Using browser native HLS.", false);
-            hideNativePlayerStatus(2400);
-            return;
-          }
-
-          attachHlsJsSource(video, src);
-        }
-
-        function renderNativeMedia(media = {}) {
-          const root = $("#sv103Player");
-          if (!root) return;
-
-          destroyHls();
-          nativeVideoControlBound = false;
-
-          const movie = media.movie || null;
-          const src = movie?.playbackUrl || movie?.proxyVideo || movie?.hlsProxyUrl || movie?.m3u8 || media.playbackUrl || media.proxyVideo || media.hlsProxyUrl || media.m3u8 || "";
-          const videoId = media.videoId || "";
-          const embedUrl = media.embedUrl || "";
-          const kind = media.mediaKind || media.kind || "";
-
-          if (src) {
-            root.innerHTML = '<div id="sv106NativePlayerShell" class="sv106NativePlayerShell"><video id="sv103Video" class="sv103Video" controls playsinline preload="metadata"></video><div id="sv106HlsStatus" class="sv106HlsStatus"><b>Loading player</b><span>Preparing stream...</span></div></div>';
-            const video = $("#sv103Video");
-            attachVideoSource(video, src, Object.assign({}, media, movie || {}));
-            bindNativeVideoControls();
-            return;
-          }
-
-          if (videoId) {
-            root.innerHTML = '<iframe class="sv103MediaFrame" src="https://www.youtube.com/embed/' + encodeURIComponent(videoId) + '?rel=0&playsinline=1" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen></iframe>';
-            return;
-          }
-
-          if (embedUrl && new RegExp("^https?://", "i").test(embedUrl)) {
-            root.innerHTML = '<iframe class="sv103MediaFrame" src="' + esc(embedUrl) + '" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen referrerpolicy="no-referrer"></iframe>';
-            return;
-          }
-
-          root.innerHTML = '<div class="sv103EmptyPlayer"><i class="ri-tv-2-fill"></i><b>No media selected</b><span>Host can paste a YouTube/link or select a TMDB movie.</span></div>';
-        }
-
-        function targetSeconds(sync) {
-          if (!sync) return 0;
-          const offset = Number(sync.offset || 0);
-          if (!sync.playing) return offset;
-          return Math.max(0, offset + ((Date.now() - Number(sync.startedAt || Date.now())) / 1000));
-        }
-
-        function applyNativeSync(force) {
-          const video = $("#sv103Video");
-          const sync = activeWatchRoom.sync;
-          if (!video || !sync) return;
-          const target = targetSeconds(sync);
-          $("#sv103Timer").textContent = formatTime(target);
-
-          const drift = Math.abs(nativeVideoCurrentTime(video) - target);
-          if (force || drift > 10) {
-            applyingRemote = true;
-            nativeVideoSetTime(video, target);
-            setTimeout(() => applyingRemote = false, 600);
-          }
-
-          if (sync.playing && nativeVideoIsPaused(video)) {
-            nativeVideoPlay(video);
-          } else if (!sync.playing && !nativeVideoIsPaused(video)) {
-            nativeVideoPause(video);
-          }
-        }
-
-        function nativeVideoCurrentTime(video) {
-          try {
-            if (nativeVideoJsPlayer && typeof nativeVideoJsPlayer.currentTime === "function") return Number(nativeVideoJsPlayer.currentTime() || 0);
-          } catch {}
-          return Number(video?.currentTime || 0);
-        }
-
-        function nativeVideoSetTime(video, value) {
-          try {
-            if (nativeVideoJsPlayer && typeof nativeVideoJsPlayer.currentTime === "function") {
-              nativeVideoJsPlayer.currentTime(Number(value || 0));
-              return;
-            }
-          } catch {}
-          try { video.currentTime = Number(value || 0); } catch {}
-        }
-
-        function nativeVideoIsPaused(video) {
-          try {
-            if (nativeVideoJsPlayer && typeof nativeVideoJsPlayer.paused === "function") return Boolean(nativeVideoJsPlayer.paused());
-          } catch {}
-          return Boolean(video?.paused);
-        }
-
-        function nativeVideoPlay(video) {
-          try {
-            if (nativeVideoJsPlayer && typeof nativeVideoJsPlayer.play === "function") {
-              const p = nativeVideoJsPlayer.play();
-              if (p && p.catch) p.catch(() => {});
-              return;
-            }
-          } catch {}
-          try { video?.play()?.catch?.(() => {}); } catch {}
-        }
-
-        function nativeVideoPause(video) {
-          try {
-            if (nativeVideoJsPlayer && typeof nativeVideoJsPlayer.pause === "function") {
-              nativeVideoJsPlayer.pause();
-              return;
-            }
-          } catch {}
-          try { video?.pause(); } catch {}
-        }
-
-        function bindNativeVideoControls() {
-          const video = $("#sv103Video");
-          if (!video || nativeVideoControlBound) return;
-          nativeVideoControlBound = true;
-
-          function send(action, extra) {
-            if (!activeWatchRoom.isHost || applyingRemote || !activeWatchRoom.id) return;
-            socket?.emit("watchroom:movie-control", Object.assign({
-              roomId: activeWatchRoom.id,
-              action,
-              clientTime: nativeVideoCurrentTime(video),
-              name: username
-            }, extra || {}));
-          }
-
-          video.addEventListener("play", () => send("play"));
-          video.addEventListener("pause", () => send("pause"));
-          video.addEventListener("seeked", () => send("set", { time: nativeVideoCurrentTime(video) }));
-
-          if (nativeVideoJsPlayer && typeof nativeVideoJsPlayer.on === "function") {
-            nativeVideoJsPlayer.on("play", () => send("play"));
-            nativeVideoJsPlayer.on("pause", () => send("pause"));
-            nativeVideoJsPlayer.on("seeked", () => send("set", { time: nativeVideoCurrentTime(video) }));
-          }
-        }
-
-        function formatTime(seconds) {
-          const s = Math.max(0, Math.floor(Number(seconds || 0)));
-          return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
-        }
-
-        function setMediaFromUrl(url) {
-          if (!activeWatchRoom.id) return toast("Open a room first", "error");
-          if (!activeWatchRoom.isHost) return toast("Only the host can change media.", "error");
-          const videoId = parseYouTube(url);
-          const embedUrl = videoId ? "" : String(url || "").trim();
-          socket?.emit("watchroom:trailer", {
-            roomId: activeWatchRoom.id,
-            name: activeWatchRoom.name,
-            videoId,
-            embedUrl,
-            trailerUrl: embedUrl,
-            mediaKind: videoId ? "youtube" : embedUrl ? "embed" : "blank"
-          });
-        }
-
-        function selectTmdbMovie(movieId) {
-          if (!activeWatchRoom.id) return toast("Open a room first", "error");
-          if (!activeWatchRoom.isHost) return toast("Only the host can select movies.", "error");
-          const clean = String(movieId || "").replace(/\\D/g, "");
-          if (!clean) return toast("Enter a TMDB movie id", "error");
-          socket?.emit("watchroom:movie-select", { roomId: activeWatchRoom.id, movieId: clean, name: username });
-          toast("Loading movie stream...");
-        }
-
-        function buildRoomUrl(room) {
-          const params = new URLSearchParams();
-          params.set("tab", "watchrooms");
-          params.set("roomId", room.id);
-          params.set("name", room.name || "SwiflyTV Watch Room");
-          params.set("kind", room.kind || room.mediaKind || "blank");
-          if (room.videoId) params.set("videoId", room.videoId);
-          if (room.embedUrl) params.set("embedUrl", room.embedUrl);
-          return "/social?" + params.toString();
-        }
-
-        async function renderRooms() {
-          const target = $("#sv100RoomsList");
-          if (!target) return;
-
-          let rooms = [];
-          try {
-            const local = JSON.parse(localStorage.getItem("swiflytv.socialWatchRooms") || "[]");
-            if (Array.isArray(local)) rooms = local;
-          } catch {}
-
-          try {
-            const res = await fetch("/api/watchrooms", { cache: "no-store" });
-            const data = await res.json();
-            if (Array.isArray(data.rooms)) {
-              const seen = new Set(rooms.map((r) => r.id));
-              data.rooms.forEach((room) => {
-                if (room && room.id && !seen.has(room.id)) rooms.push(room);
-              });
-            }
-          } catch {}
-
-          if (!rooms.length) {
-            target.innerHTML = '<p class="sv100Empty">No rooms yet. Anyone can make the first one.</p>';
-            return;
-          }
-
-          target.innerHTML = rooms.slice(0, 24).map((room) => {
-            const href = buildRoomUrl(room);
-            const encoded = encodeURIComponent(JSON.stringify({
-              id: room.id,
-              name: room.name || "Watch Room",
-              kind: room.kind || room.mediaKind || "blank",
-              videoId: room.videoId || "",
-              embedUrl: room.embedUrl || ""
-            }));
-            return '<article class="sv100RoomItem">' +
-              '<div><i class="ri-tv-2-fill"></i><b>' + esc(room.name || "Watch Room") + '</b><small>' + esc(room.host || "Ready") + '</small></div>' +
-              '<nav><button type="button" data-open-native-room="' + encoded + '">Open</button><button type="button" data-copy="' + esc(location.origin + href) + '">Copy</button><button type="button" data-share="' + esc(href) + '">Share</button></nav>' +
-            '</article>';
-          }).join("");
-        }
-
-        async function openCall(video) {
-          const modal = $("#sv100CallModal");
-          modal.hidden = false;
-          $("#sv100CallTitle").textContent = currentTitle;
-          $("#sv100CallType").textContent = video ? "Video call" : "Voice call";
-          $("#sv100CallStatus").textContent = "Requesting permission...";
-          try {
-            localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: Boolean(video) });
-            $("#sv100LocalVideo").srcObject = localStream;
-            $("#sv100LocalVideo").hidden = !video;
-            $("#sv100CallStatus").textContent = video ? "Camera preview active" : "Microphone active";
-            socket?.emit("social:call-join", { roomId: currentRoom, name: username, video: Boolean(video) });
-          } catch {
-            $("#sv100CallStatus").textContent = "Permission blocked or unavailable";
-            toast("Permission blocked", "error");
-          }
-        }
-
-        function closeCall() {
-          if (localStream) localStream.getTracks().forEach((track) => track.stop());
-          localStream = null;
-          $("#sv100LocalVideo").srcObject = null;
-          $("#sv100CallModal").hidden = true;
-          socket?.emit("social:call-leave", { roomId: currentRoom, name: username });
-        }
-
-        document.addEventListener("click", async (event) => {
-          try {
-            const tab = event.target.closest("[data-tab]");
-            if (tab && tab.tagName !== "A") {
-              event.preventDefault();
-              switchTab(tab.dataset.tab);
-              return;
-            }
-
-            const channel = event.target.closest(".sv100Channel[data-room]");
-            if (channel && channel.tagName !== "A") {
-              event.preventDefault();
-              joinRoom(channel.dataset.room, channel.dataset.title);
-              return;
-            }
-
-            const nativeOpen = event.target.closest("[data-open-native-room]");
-            if (nativeOpen) {
-              event.preventDefault();
-              const room = JSON.parse(decodeURIComponent(nativeOpen.dataset.openNativeRoom || ""));
-              openNativeWatchRoom(room);
-              return;
-            }
-
-            const action = event.target.closest("[data-action]");
-            if (action) {
-              const name = action.dataset.action;
-
-              if (name === "new-group") return createVirtual("group");
-              if (name === "new-channel") return createVirtual("channel");
-              if (name === "rooms-tab") return switchTab("rooms");
-              if (name === "refresh-rooms") return renderRooms();
-              if (name === "native-create-party") return createNativeRoom();
-              if (name === "native-join-room") {
-                const code = roomCode(prompt("Room code") || "");
-                if (code) openNativeWatchRoom({ id: code, name: "SwiflyTV Watch Room", kind: "blank" });
-                return;
-              }
-
-              if (name === "native-play") return socket?.emit("watchroom:movie-control", { roomId: activeWatchRoom.id, action: "play", clientTime: nativeVideoCurrentTime($("#sv103Video")), name: username });
-              if (name === "native-pause") return socket?.emit("watchroom:movie-control", { roomId: activeWatchRoom.id, action: "pause", clientTime: nativeVideoCurrentTime($("#sv103Video")), name: username });
-              if (name === "native-back") return socket?.emit("watchroom:movie-control", { roomId: activeWatchRoom.id, action: "seek", delta: -10, name: username });
-              if (name === "native-forward") return socket?.emit("watchroom:movie-control", { roomId: activeWatchRoom.id, action: "seek", delta: 10, name: username });
-              if (name === "native-sync-me") return socket?.emit("watchroom:movie-control", { roomId: activeWatchRoom.id, action: "sync-me", name: username });
-
-              if (name === "copy-room-link") {
-                const link = location.origin + buildRoomUrl(activeWatchRoom);
-                if (window.swiflyCopy) await window.swiflyCopy(link);
-                else await navigator.clipboard.writeText(link);
-                return;
-              }
-
-              if (name === "share-room-chat") {
-                if (!activeWatchRoom.id) return toast("Open a room first", "error");
-                const text = "Join this native Social Watch Room: " + location.origin + buildRoomUrl(activeWatchRoom);
-                const message = { roomId: currentRoom, author: username, text, createdAt: Date.now() };
-                addMessage(message, true);
-                socket?.emit("social:message", message);
-                switchTab("chat");
-                return;
-              }
-
-              if (name === "leave-native-room") return leaveNativeWatchRoom();
-
-              if (name === "voice") return openCall(false);
-              if (name === "video") return openCall(true);
-              if (name === "close-call") return closeCall();
-
-              if (name === "invite") {
-                const link = activeWatchRoom.id ? location.origin + buildRoomUrl(activeWatchRoom) : location.origin + "/social?room=" + encodeURIComponent(currentRoom);
-                if (window.swiflyCopy) await window.swiflyCopy(link);
-                else await navigator.clipboard.writeText(link);
-                return;
-              }
-
-              if (name === "attach") {
-                toast("Attachments are not built yet.", "info");
-                return;
-              }
-
-              if (name === "mute") {
-                if (!localStream) return toast("No active call", "info");
-                localStream.getAudioTracks().forEach((track) => track.enabled = !track.enabled);
-                return toast("Mic toggled");
-              }
-
-              if (name === "camera") {
-                if (!localStream) return toast("No active camera", "info");
-                localStream.getVideoTracks().forEach((track) => track.enabled = !track.enabled);
-                return toast("Camera toggled");
-              }
-            }
-
-            const copy = event.target.closest("[data-copy]");
-            if (copy) {
-              event.preventDefault();
-              if (window.swiflyCopy) await window.swiflyCopy(copy.dataset.copy || "");
-              else await navigator.clipboard.writeText(copy.dataset.copy || "");
-              return;
-            }
-
-            const share = event.target.closest("[data-share]");
-            if (share) {
-              event.preventDefault();
-              const text = "Join this Watch Room: " + location.origin + share.dataset.share;
-              const message = { roomId: currentRoom, author: username, text, createdAt: Date.now() };
-              addMessage(message, true);
-              socket?.emit("social:message", message);
-              switchTab("chat");
-              return toast("Shared to chat");
-            }
-          } catch (error) {
-            showError(error);
-          }
-        });
-
-        $("#sv100Composer")?.addEventListener("submit", (event) => {
-          event.preventDefault();
-          const input = $("#sv100Input");
-          const text = String(input?.value || "").trim();
-          if (!text) return;
-          input.value = "";
-          const message = { roomId: currentRoom, author: username, text, createdAt: Date.now() };
-          addMessage(message, true);
-          if (activeWatchRoom.joined && currentRoom === "watchroom-" + activeWatchRoom.id) {
-            socket?.emit("watchroom:message", { roomId: activeWatchRoom.id, name: username, text });
-          } else {
-            socket?.emit("social:message", message);
-          }
-        });
-
-        $("#sv103SetMediaForm")?.addEventListener("submit", (event) => {
-          event.preventDefault();
-          const fd = new FormData(event.currentTarget);
-          setMediaFromUrl(fd.get("mediaUrl"));
-        });
-
-        $("#sv103MovieForm")?.addEventListener("submit", (event) => {
-          event.preventDefault();
-          const fd = new FormData(event.currentTarget);
-          selectTmdbMovie(fd.get("movieId"));
-        });
-
-        $("#sv103JoinForm")?.addEventListener("submit", (event) => {
-          event.preventDefault();
-          const fd = new FormData(event.currentTarget);
-          const code = roomCode(fd.get("roomCode"));
-          if (!code) return toast("Enter a room code", "error");
-          openNativeWatchRoom({ id: code, name: "SwiflyTV Watch Room", kind: "blank" });
-        });
-
-        $("#sv100CreateRoomForm")?.addEventListener("submit", (event) => {
-          if (!permissions.canCreateWatchRooms) {
-            event.preventDefault();
-            toast("Watch Room creation is locked by this server.", "error");
-          }
-        });
-
-        socket?.on("connect", () => {
-          $("#sv100Status").textContent = "Live connected";
-          socket.emit("social:join", { roomId: currentRoom, name: username });
-          if (activeWatchRoom.id && activeWatchRoom.joined) {
-            openNativeWatchRoom(activeWatchRoom);
-          }
-        });
-
-        socket?.on("disconnect", () => {
-          $("#sv100Status").textContent = "Local mode";
-        });
-
-        socket?.on("social:message", (message) => {
-          if (!message || message.roomId !== currentRoom || message.author === username) return;
-          addMessage(message, true);
-        });
-
-        socket?.on("social:members", (payload) => {
-          const list = $("#sv100MembersList");
-          if (!list || !payload || payload.roomId !== currentRoom) return;
-          const members = Array.isArray(payload.members) ? payload.members : [];
-          $("#sv100MemberCount").textContent = members.length + (members.length === 1 ? " member" : " members");
-          list.innerHTML = members.length ? members.map((name) => '<p><i></i> ' + esc(name) + '</p>').join("") : '<p><i></i> You</p>';
-        });
-
-        socket?.on("watchroom:joined", (data) => {
-          activeWatchRoom.isHost = Boolean(data.isHost);
-          activeWatchRoom.joined = true;
-          if (data.room) {
-            activeWatchRoom.name = data.room.name || activeWatchRoom.name;
-            activeWatchRoom.videoId = data.room.videoId || activeWatchRoom.videoId;
-            activeWatchRoom.embedUrl = data.room.embedUrl || activeWatchRoom.embedUrl;
-            activeWatchRoom.kind = data.room.mediaKind || activeWatchRoom.kind;
-            if (data.room.syncedMovie && data.room.syncedMovie.status === "ready") {
-              activeWatchRoom.syncedMovie = data.room.syncedMovie;
-              activeWatchRoom.sync = data.room.syncedMovie.sync;
-              renderNativeMedia({ movie: data.room.syncedMovie });
-            } else {
-              renderNativeMedia(data.room);
-            }
-          }
-          updateHostUi();
-          if (data.messages) data.messages.forEach((msg) => addMessage({ author: msg.name, text: msg.text, createdAt: msg.at || Date.now() }, false));
-        });
-
-        socket?.on("watchroom:host", (data) => {
-          activeWatchRoom.isHost = Boolean(data && data.isHost);
-          updateHostUi();
-        });
-
-        socket?.on("watchroom:viewers", (data) => {
-          if (!data || data.roomId !== activeWatchRoom.id) return;
-          $("#sv103ViewerCount").textContent = String(Number(data.viewers || 0));
-        });
-
-        socket?.on("watchroom:message", (msg) => {
-          if (!msg) return;
-          addMessage({ author: msg.name || "Guest", text: msg.text || "", createdAt: msg.at || Date.now() }, true);
-        });
-
-        socket?.on("watchroom:trailer", (data) => {
-          if (!data || data.roomId !== activeWatchRoom.id) return;
-          activeWatchRoom.videoId = data.videoId || "";
-          activeWatchRoom.embedUrl = data.embedUrl || data.trailerUrl || "";
-          activeWatchRoom.kind = data.mediaKind || (activeWatchRoom.videoId ? "youtube" : "embed");
-          renderNativeMedia(activeWatchRoom);
-          toast("Room media updated");
-        });
-
-        socket?.on("watchroom:movie-sync", (data) => {
-          if (!data || data.roomId !== activeWatchRoom.id || !data.movie) return;
-          activeWatchRoom.syncedMovie = data.movie;
-          activeWatchRoom.sync = data.movie.sync || null;
-          if (data.movie.status === "loading") {
-            $("#sv103Player").innerHTML = '<div class="sv103EmptyPlayer"><i class="ri-loader-4-line"></i><b>Loading movie stream...</b><span>' + esc(data.movie.message || "Waiting") + '</span></div>';
-            return;
-          }
-          if (data.movie.status === "error") {
-            $("#sv103Player").innerHTML = '<div class="sv103EmptyPlayer error"><i class="ri-error-warning-fill"></i><b>Movie failed</b><span>' + esc(data.movie.message || "No stream") + '</span></div>';
-            return;
-          }
-          renderNativeMedia({ movie: data.movie });
-          toast("Movie ready in native Social room");
-        });
-
-        socket?.on("watchroom:movie-sync-state", (data) => {
-          if (!data || data.roomId !== activeWatchRoom.id) return;
-          activeWatchRoom.sync = data.sync;
-          applyNativeSync(false);
-        });
-
-        setInterval(() => {
-          if (activeWatchRoom.sync) {
-            $("#sv103Timer").textContent = formatTime(targetSeconds(activeWatchRoom.sync));
-            applyNativeSync(false);
-          }
-        }, 1000);
-
-        readProfile();
-        loadPermissions().then(() => {
-          if (app.dataset.denied) toast("You do not have permission to create that.", "error");
-          const params = new URLSearchParams(location.search);
-          if (app.dataset.initialTab === "rooms" || params.get("tab") === "watchrooms") {
-            switchTab("rooms");
-            if (activeWatchRoom.id) openNativeWatchRoom(activeWatchRoom);
-            else renderRooms();
-          } else {
-            joinRoom(params.get("room") || currentRoom, currentTitle);
-            renderRooms();
-          }
-        });
-
-        window.SwiflySocial = { switchTab, joinRoom, renderRooms, openNativeWatchRoom, permissions: () => permissions };
-      })();
-    </script>
-  </main>`;
-
-  res.send(pageShell({ title: `${SITE_NAME} — Social`, active: "social", body }));
+  res.send(pageShell({ title: `${SITE_NAME} — Party Hub`, active: "social", body }));
 }
 
 
@@ -50950,7 +49716,7 @@ app.get("/watchrooms/new", (req, res) => {
     return res.redirect(`/social?${denied.toString()}`);
   }
 
-  const roomId = generateRoomId();
+  const roomId = createRoomId();
   const name = String(req.query.name || "SwiflyTV Watch Room").slice(0, 80);
   const rawLink = String(req.query.watchLink || req.query.url || "").trim();
   const params = new URLSearchParams();
@@ -50966,6 +49732,11 @@ app.get("/watchrooms/new", (req, res) => {
   } else {
     params.set("kind", "blank");
   }
+
+  getOrCreateWatchRoom(roomId, {
+    name, host: creator || "Host", mediaKind: params.get("kind"),
+    videoId: params.get("videoId") || "", embedUrl: params.get("embedUrl") || "",
+  });
 
   if (String(req.query.social || "") === "1") {
     const socialParams = new URLSearchParams(params);
@@ -51114,6 +49885,20 @@ function apiStatus(req, res) {
 app.get("/api/status", apiStatus);
 
 
+
+app.get("/api/social/movies/search", async (req, res) => {
+  const query = String(req.query.q || "").trim().slice(0, 120);
+  if (query.length < 2) return res.json({ ok: true, results: [] });
+  try {
+    const data = await tmdb("/search/movie", { query, include_adult: false, page: 1 }, CACHE_TTL.short);
+    if (data.__error) throw new Error("Metadata unavailable");
+    const results = (data.results || []).filter(movie => Number.isInteger(Number(movie.id)) && Number(movie.id) > 0 && !movie.adult).slice(0, 12)
+      .map(movie => ({ id: movie.id, title: movie.title || movie.original_title || "Movie", year: getYear(movie.release_date), poster: img(movie.poster_path, "w185") }));
+    res.json({ ok: true, results });
+  } catch {
+    res.status(503).json({ ok: false, message: "Movie search is unavailable right now. Please try again." });
+  }
+});
 
 app.post("/api/social/watchrooms/create", (req, res) => {
   const creator = String(req.body?.creator || "").slice(0, 80);
@@ -51501,6 +50286,47 @@ const io = new Server(httpServer, {
   },
 });
 
+function publishWatchRoomPresence(room) {
+  const ids = Array.from(io.sockets.adapter.rooms.get(room.id) || []);
+  room.viewers = ids.length;
+  room.updatedAt = Date.now();
+  io.to(room.id).emit("watchroom:viewers", { roomId: room.id, viewers: room.viewers });
+  io.to(room.id).emit("watchroom:members", { roomId: room.id, members: ids.map(id => ({
+    id, name: io.sockets.sockets.get(id)?.data.watchroomName || "Guest", isHost: room.hostSocketId === id,
+  })) });
+}
+
+function leaveWatchRoom(socket) {
+  const roomId = socket.data.roomId;
+  if (!roomId) return;
+  const room = watchRooms.get(roomId);
+  socket.data.roomId = "";
+  socket.data.isWatchroomHost = false;
+  socket.data.watchroomName = "";
+  socket.leave(roomId);
+  if (!room) return;
+  if (room.couplePlus) {
+    for (const key of ["ready", "moods", "tastes"]) if (room.couplePlus[key]) delete room.couplePlus[key][socket.id];
+  }
+  if (room.liveHostSocketId === socket.id) {
+    room.liveShareActive = false;
+    room.liveHostSocketId = "";
+    io.to(roomId).emit("watchroom:live-stop", { roomId });
+  }
+  if (room.hostSocketId === socket.id) {
+    const nextId = Array.from(io.sockets.adapter.rooms.get(roomId) || [])[0] || "";
+    room.hostSocketId = nextId;
+    const next = io.sockets.sockets.get(nextId);
+    if (next) {
+      next.data.isWatchroomHost = true;
+      room.host = next.data.watchroomName || "Host";
+      next.emit("watchroom:host", { roomId, isHost: true });
+    }
+  }
+  publishWatchRoomPresence(room);
+  if (room.viewers === 0) closeRemoteBrowserSession(roomId).catch(() => {});
+}
+
 io.on("connection", (socket) => {
 
   socket.on("social:join", (payload = {}) => {
@@ -51554,6 +50380,7 @@ io.on("connection", (socket) => {
   socket.on("watchroom:join", (payload = {}) => {
     const roomId = normalizeRoomId(payload.roomId);
     if (!roomId) return;
+    if (socket.data.roomId && socket.data.roomId !== roomId) leaveWatchRoom(socket);
 
     const room = getOrCreateWatchRoom(roomId, {
       name: payload.name,
@@ -51565,6 +50392,7 @@ io.on("connection", (socket) => {
     });
 
     socket.data.roomId = room.id;
+    socket.data.watchroomName = String(payload.user || "Guest").slice(0, 40);
     socket.join(room.id);
 
     if (!room.hostSocketId) room.hostSocketId = socket.id;
@@ -51600,8 +50428,10 @@ io.on("connection", (socket) => {
       });
     }
 
-    io.to(room.id).emit("watchroom:viewers", { roomId: room.id, viewers: room.viewers });
+    publishWatchRoomPresence(room);
   });
+
+  socket.on("watchroom:leave", () => leaveWatchRoom(socket));
 
   socket.on("watchroom:state", (payload = {}) => {
     const roomId = normalizeRoomId(payload.roomId || socket.data.roomId);
@@ -52245,6 +51075,7 @@ io.on("connection", (socket) => {
     if (!room) return;
 
     const message = {
+      roomId: room.id,
       name: String(payload.name || "Guest").slice(0, 40),
       text: String(payload.text || "").slice(0, 220),
       at: Date.now(),
@@ -52270,47 +51101,8 @@ io.on("connection", (socket) => {
     });
   });
 
-  socket.on("disconnect", () => {
-    const roomId = socket.data.roomId;
-    if (!roomId) return;
-    const room = watchRooms.get(roomId);
-    if (!room) return;
+  socket.on("disconnect", () => leaveWatchRoom(socket));
 
-    setTimeout(() => {
-      const viewers = io.sockets.adapter.rooms.get(roomId)?.size || 0;
-      room.viewers = viewers;
-      room.updatedAt = Date.now();
-
-      if (room.couplePlus) {
-        if (room.couplePlus.ready) delete room.couplePlus.ready[socket.id];
-        if (room.couplePlus.moods) delete room.couplePlus.moods[socket.id];
-        if (room.couplePlus.tastes) delete room.couplePlus.tastes[socket.id];
-      }
-
-      if (room.liveHostSocketId === socket.id) {
-        room.liveShareActive = false;
-        room.liveHostSocketId = "";
-        io.to(roomId).emit("watchroom:live-stop", { roomId });
-      }
-
-      if (room.hostSocketId === socket.id) {
-        room.hostSocketId = "";
-        const remaining = io.sockets.adapter.rooms.get(roomId);
-        const nextSocketId = remaining ? Array.from(remaining)[0] : "";
-        if (nextSocketId) {
-          room.hostSocketId = nextSocketId;
-          io.to(nextSocketId).emit("watchroom:host", { roomId, isHost: true });
-        }
-      }
-
-      io.to(roomId).emit("watchroom:viewers", { roomId, viewers });
-
-      if (viewers === 0) {
-        room.updatedAt = Date.now();
-        closeRemoteBrowserSession(roomId).catch(() => {});
-      }
-    }, 50);
-  });
 });
 
 setInterval(() => {

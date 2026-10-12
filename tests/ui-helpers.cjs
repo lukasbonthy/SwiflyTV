@@ -19,10 +19,10 @@ function browser(markup = '', options = {}) {
   w.flush = time => {const batch = [...frames.values()]; frames.clear(); batch.forEach(fn => fn(time));};
   w.frameCount = () => frames.size;
   w.matchMedia = query => {
-    if (!media.has(query)) media.set(query, {matches: query.includes('reduced-motion') ? !!options.reduced : query.includes('pointer: fine'), addEventListener(_name, fn) {this.listener = fn;}, removeEventListener() {}});
+    if (!media.has(query)) media.set(query, {matches: query.includes('reduced-motion') ? !!options.reduced : query.includes('pointer: fine'), listeners:new Set(), addEventListener(_name, fn) {this.listeners.add(fn);}, removeEventListener(_name,fn) {this.listeners.delete(fn);}});
     return media.get(query);
   };
-  w.reduceMotion = value => {const m = w.matchMedia('(prefers-reduced-motion: reduce)'); m.matches = value; m.listener?.({matches: value});};
+  w.reduceMotion = value => {const m = w.matchMedia('(prefers-reduced-motion: reduce)'); m.matches = value; for(const fn of m.listeners)fn({matches:value});};
   w.IntersectionObserver = class {observe() {} unobserve() {} disconnect() {}};
   w.ResizeObserver = class {observe() {} disconnect() {}};
   const page = w.document.documentElement;
@@ -49,7 +49,7 @@ function loadServer() {
   const listen = http.Server.prototype.listen, interval = global.setInterval;
   http.Server.prototype.listen = function () {return this;};
   global.setInterval = (...args) => interval(...args).unref();
-  try {m._compile(fs.readFileSync(filename, 'utf8') + '\nmodule.exports = {detailPage, homePage, movieCard, pageShell, setTmdb(fn) {tmdb = fn;}};\n', filename);}
+  try {m._compile(fs.readFileSync(filename, 'utf8') + '\nmodule.exports = {detailPage, homePage, movieCard, pageShell, socialPage, app, httpServer, io, setTmdb(fn) {tmdb = fn;}};\n', filename);}
   finally {http.Server.prototype.listen = listen; global.setInterval = interval;}
   return m.exports;
 }
