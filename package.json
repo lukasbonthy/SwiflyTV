@@ -1,13 +1,13 @@
 {
   "name": "swiflytv",
-  "version": "2.0.2",
-  "description": "SwiflyTV v154: cinematic movie detail overlays and responsive smooth scrolling with shared liquid glass controls.",
+  "version": "2.0.3",
+  "description": "SwiflyTV v155: a rebuilt Studio with curated looks, live appearance previews and reliable saving.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "check": "node --check server.js && node --check public/liquid-glass/liquid-glass.js && node --check public/clean/clean.js && node --check public/liquid-glass/surfaces.js && node --check public/clean/continue.js && node --check public/clean/details.js && node --check public/clean/motion.js",
-    "test:ui": "node --test tests/details-motion.test.cjs"
+    "check": "node --check server.js && node --check public/liquid-glass/liquid-glass.js && node --check public/clean/clean.js && node --check public/liquid-glass/surfaces.js && node --check public/clean/continue.js && node --check public/clean/details.js && node --check public/clean/motion.js && node --check ui/studio.js && node --check public/studio/studio.js",
+    "test:ui": "node --test tests/*.test.cjs"
   },
   "engines": {
     "node": ">=20"

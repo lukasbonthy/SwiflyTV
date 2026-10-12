@@ -45,7 +45,7 @@
     const current = position(element), max = bounds(element), job = jobs.get(element);
     const x = clamp(Number.isFinite(options.left) ? options.left : job?.x ?? current.x, max.x);
     const y = clamp(Number.isFinite(options.top) ? options.top : job?.y ?? current.y, max.y);
-    if (prefersReduced() || options.behavior === 'instant' || options.behavior === 'auto') {stop(element); write(element, x, y); return;}
+    if (prefersReduced() || document.body.dataset.svScroll === 'native' || options.behavior === 'instant' || options.behavior === 'auto') {stop(element); write(element, x, y); return;}
     element.classList.add('svMotionAnimating');
     jobs.set(element, {x, y, writtenX:current.x, writtenY:current.y});
     if (!frame) frame = requestAnimationFrame(step);
@@ -56,7 +56,7 @@
   }
   function onWheel(event) {
     if (event.defaultPrevented) return;
-    if (event.ctrlKey || event.metaKey || event.altKey || prefersReduced() || !fine.matches || location.pathname.startsWith('/watch/')) {stop(); return;}
+    if (event.ctrlKey || event.metaKey || event.altKey || prefersReduced() || document.body.dataset.svScroll === 'native' || !fine.matches || location.pathname.startsWith('/watch/')) {stop(); return;}
     const target = event.target instanceof Element ? event.target : null;
     if (!target || target.closest(native)) {stop(); return;}
     const modal = document.querySelector('dialog[open]');

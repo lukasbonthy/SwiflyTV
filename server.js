@@ -50,6 +50,7 @@ if (process.env.SWIFLY_NO_ENV_MODE !== "false") {
 }
 
 const express = require("express");
+const { studioMarkup } = require("./ui/studio");
 const helmet = require("helmet");
 const compression = require("compression");
 const rateLimit = require("express-rate-limit");
@@ -5582,6 +5583,7 @@ app.use((req, res, next) => {
 app.use("/assets/liquid-glass", express.static(path.join(__dirname, "public", "liquid-glass"), { maxAge: "1d", dotfiles: "deny" }));
 // v151: shared clean catalog styles and compact navigation behavior.
 app.use("/assets/clean", express.static(path.join(__dirname, "public", "clean"), { maxAge: "1d", dotfiles: "deny" }));
+app.use("/assets/studio", express.static(path.join(__dirname, "public", "studio"), { maxAge: "1d", dotfiles: "deny" }));
 
 app.use(
   rateLimit({
@@ -38887,10 +38889,12 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/continue.js?v=154"></script>
     <link rel="stylesheet" href="/assets/clean/details.css?v=154" />
     <link rel="stylesheet" href="/assets/clean/motion.css?v=154" />
-    <script defer src="/assets/clean/motion.js?v=154"></script>
+    <script defer src="/assets/clean/motion.js?v=155"></script>
     <script defer src="/assets/clean/details.js?v=154"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=153" />
-    <script defer src="/assets/liquid-glass/surfaces.js?v=154"></script>
+    <script defer src="/assets/liquid-glass/surfaces.js?v=155"></script>
+    <link rel="stylesheet" href="/assets/studio/studio.css?v=155" />
+    <script defer src="/assets/studio/studio.js?v=155"></script>
 </head>
 <body class="svCleanShell">
 
@@ -38949,7 +38953,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       </div>
       <div class="navRightCluster dsNavActions">
         <button id="svNavSearchToggle" class="svNavButton" type="button" aria-label="Search movies and series" aria-controls="svNavSearchPopup" aria-expanded="false">${cleanIcon("search")}</button>
-        <button id="controlToggleTop" class="svNavButton" type="button" aria-label="Open appearance settings" aria-controls="controlPanel" aria-expanded="false">${cleanIcon("settings")}</button>
+        <button id="controlToggleTop" class="svNavButton" type="button" aria-label="Open Swifly Studio" aria-haspopup="dialog" aria-controls="controlPanel" aria-expanded="false">${cleanIcon("settings")}</button>
         <details class="dsProfileMenu">
           <summary aria-label="Open profile menu"><span class="profilePill" aria-hidden="true">${cleanIcon("user")}</span></summary>
           <div class="dsProfileDropdown svLiquidDropdown">
@@ -38985,135 +38989,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${navLink("/my-list", "List", "watchlist", active)}
   </nav>
 
-  <div class="controlDock">
-    <button id="controlToggle" class="controlButton studioButton" type="button"><span>✦</span><b>Studio</b><small>Customize</small></button>
-  </div>
-
-    <section id="controlPanel" class="controlPanel v111StyleStudio v114StudioDrawer" aria-label="Swifly Studio">
-    <div class="studioHero">
-      <div class="studioHeroOrb">✦</div>
-      <div>
-        <span>Swifly Studio</span>
-        <h3>Customize the vibe</h3>
-        <p>Change how SwiflyTV looks without touching code.</p>
-      </div>
-      <button id="styleReset" class="styleReset" type="button">Reset</button>
-    </div>
-
-    <div class="studioPreview">
-      <div class="previewPoster"></div>
-      <div class="previewText">
-        <b>Live preview</b>
-        <span>Layouts, cards, backdrops, fonts, and effects save on this browser.</span>
-      </div>
-    </div>
-
-    <div class="styleGroup">
-      <div class="styleGroupTitle">
-        <b>Look</b>
-        <span>site colors</span>
-      </div>
-      <div class="themeGrid styleGrid compactStudioGrid">
-        <button data-theme="default"><i></i>Swifly</button>
-        <button data-theme="red"><i></i>Heat</button>
-        <button data-theme="blue"><i></i>Ice</button>
-        <button data-theme="green"><i></i>Mint</button>
-        <button data-theme="mono"><i></i>Mono</button>
-      </div>
-    </div>
-
-    <div class="styleGroup">
-      <div class="styleGroupTitle">
-        <b>Font</b>
-        <span>personality</span>
-      </div>
-      <div class="styleGrid compactStudioGrid">
-        <button data-font="default">Premium</button>
-        <button data-font="cinema">Cinema</button>
-        <button data-font="soft">Soft</button>
-        <button data-font="wide">Wide</button>
-      </div>
-    </div>
-
-    <div class="styleGroup">
-      <div class="styleGroupTitle">
-        <b>Layout</b>
-        <span>gallery shape</span>
-      </div>
-      <div class="styleGrid compactStudioGrid">
-        <button data-layout="default">Default</button>
-        <button data-layout="cinema">Cinema Rows</button>
-        <button data-layout="posterwall">Poster Wall</button>
-        <button data-layout="spotlight">Spotlight</button>
-        <button data-layout="dense">Dense</button>
-      </div>
-    </div>
-
-    <div class="styleGroup">
-      <div class="styleGroupTitle">
-        <b>Cards</b>
-        <span>poster style</span>
-      </div>
-      <div class="styleGrid compactStudioGrid">
-        <button data-cardstyle="rounded">Rounded</button>
-        <button data-cardstyle="sharp">Sharp</button>
-        <button data-cardstyle="softglass">Soft Glass</button>
-        <button data-cardstyle="float">Floating</button>
-      </div>
-    </div>
-
-    <div class="styleGroup">
-      <div class="styleGroupTitle">
-        <b>Effects</b>
-        <span>motion + glow</span>
-      </div>
-      <div class="styleGrid compactStudioGrid">
-        <button data-effect="clean">Clean</button>
-        <button data-effect="cinematic">Cinematic</button>
-        <button data-effect="glow">Glow</button>
-        <button data-effect="glass">Glass</button>
-        <button data-effect="ultra">Ultra</button>
-        <button data-effect="off">Off</button>
-      </div>
-    </div>
-
-    <div class="styleGroup">
-      <div class="styleGroupTitle">
-        <b>Detail</b>
-        <span>effect strength</span>
-      </div>
-      <div class="styleGrid compactStudioGrid">
-        <button data-detail="clean">Clean</button>
-        <button data-detail="balanced">Balanced</button>
-        <button data-detail="max">Max Detail</button>
-      </div>
-    </div>
-
-    <div class="styleGroup">
-      <div class="styleGroupTitle">
-        <b>Backdrop</b>
-        <span>page texture</span>
-      </div>
-      <div class="styleGrid compactStudioGrid">
-        <button data-backdrop="smooth">Smooth</button>
-        <button data-backdrop="grain">Film Grain</button>
-        <button data-backdrop="aurora">Aurora</button>
-        <button data-backdrop="grid">Grid Glow</button>
-      </div>
-    </div>
-
-    <div class="styleGroup">
-      <div class="styleGroupTitle">
-        <b>Experience</b>
-        <span>spacing</span>
-      </div>
-      <div class="styleGrid compactStudioGrid">
-        <button data-density="comfy">Comfy</button>
-        <button data-density="compact">Compact</button>
-        <button id="motionToggle" type="button">Reduce motion</button>
-      </div>
-    </div>
-  </section>
+  ${studioMarkup()}
 
   <footer class="footer">
     <div class="container footerGrid">
@@ -39321,251 +39197,6 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
     renderSavedGrid("watchlistGrid", "movieverse.watchlist", "watchlist");
     renderSavedGrid("likedGrid", "movieverse.liked", "liked");
-
-    const panel = document.getElementById("controlPanel");
-    const controlToggle = document.getElementById("controlToggle");
-    const controlToggleTop = document.getElementById("controlToggleTop");
-
-    function setStudioOpen(open) {
-      panel?.classList.toggle("open", Boolean(open));
-      document.body.classList.toggle("studio-open", Boolean(open));
-      const expanded = panel?.classList.contains("open") ? "true" : "false";
-      controlToggle?.setAttribute("aria-expanded", expanded);
-      controlToggleTop?.setAttribute("aria-expanded", expanded);
-      requestAnimationFrame(() => {
-        window.dispatchEvent(new Event("resize"));
-      });
-    }
-
-    function toggleStudio() {
-      setStudioOpen(!panel?.classList.contains("open"));
-    }
-
-    controlToggle?.addEventListener("click", toggleStudio);
-    controlToggleTop?.addEventListener("click", toggleStudio);
-    controlToggle?.setAttribute("aria-label", "Open Swifly Studio effects");
-    controlToggleTop?.setAttribute("aria-label", "Open appearance settings");
-    controlToggle?.setAttribute("aria-expanded", "false");
-    controlToggleTop?.setAttribute("aria-expanded", "false");
-
-    if (window.location.hash === "#studio" || new URLSearchParams(window.location.search).get("studio") === "1") {
-      setStudioOpen(true);
-    }
-
-    document.addEventListener("keydown", (event) => {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "e") {
-        event.preventDefault();
-        toggleStudio();
-        showToast(panel?.classList.contains("open") ? "Studio opened" : "Studio closed");
-      }
-      if (event.key === "Escape" && panel?.classList.contains("open")) {
-        setStudioOpen(false);
-        showToast("Studio closed");
-      }
-    });
-
-    function setActiveStudioButton(selector, value) {
-      document.querySelectorAll(selector).forEach((button) => {
-        const attr = selector.includes("theme") ? "theme"
-          : selector.includes("font") ? "font"
-          : selector.includes("effect") ? "effect"
-          : selector.includes("layout") ? "layout"
-          : selector.includes("cardstyle") ? "cardstyle"
-          : selector.includes("detail") ? "detail"
-          : selector.includes("backdrop") ? "backdrop"
-          : "density";
-        button.classList.toggle("active", button.dataset[attr] === value);
-      });
-    }
-
-    function studioLabel(value) {
-      return String(value || "")
-        .replace(/-/g, " ")
-        .replace(/\b\w/g, (letter) => letter.toUpperCase());
-    }
-
-    function updateStudioPreviewLabels() {
-      const layout = localStorage.getItem("movieverse.layout") || "default";
-      const effect = localStorage.getItem("movieverse.effect") || "cinematic";
-      const detail = localStorage.getItem("movieverse.detail") || "balanced";
-      const layoutLabel = document.getElementById("studioLayoutLabel");
-      const effectLabel = document.getElementById("studioEffectLabel");
-      const detailLabel = document.getElementById("studioDetailLabel");
-      if (layoutLabel) layoutLabel.textContent = studioLabel(layout);
-      if (effectLabel) effectLabel.textContent = studioLabel(effect);
-      if (detailLabel) detailLabel.textContent = studioLabel(detail);
-    }
-
-    function applyTheme(theme) {
-      const clean = theme || "default";
-      document.body.classList.remove("theme-red", "theme-blue", "theme-green", "theme-mono");
-      if (clean !== "default") document.body.classList.add("theme-" + clean);
-      localStorage.setItem("movieverse.theme", clean);
-      setActiveStudioButton("[data-theme]", clean);
-    }
-
-    function applyFont(font) {
-      const clean = font || "default";
-      document.body.classList.remove("font-cinema", "font-soft", "font-wide");
-      if (clean !== "default") document.body.classList.add("font-" + clean);
-      localStorage.setItem("movieverse.font", clean);
-      setActiveStudioButton("[data-font]", clean);
-    }
-
-    function applyEffect(effect) {
-      const clean = effect || "cinematic";
-      document.body.classList.remove("effect-clean", "effect-cinematic", "effect-dropcart", "effect-neon", "effect-glow", "effect-glass", "effect-calm", "effect-ultra", "effect-off");
-      document.body.classList.add("effect-" + clean);
-      localStorage.setItem("movieverse.effect", clean);
-      setActiveStudioButton("[data-effect]", clean);
-    }
-
-    function applyDensity(density) {
-      const clean = density || "comfy";
-      document.body.classList.remove("density-compact", "density-comfy");
-      document.body.classList.add("density-" + clean);
-      localStorage.setItem("movieverse.density", clean);
-      setActiveStudioButton("[data-density]", clean);
-    }
-
-    function applyLayout(layout) {
-      const clean = layout || "default";
-      document.body.classList.remove("layout-default", "layout-cinema", "layout-posterwall", "layout-spotlight", "layout-dense");
-      document.body.classList.add("layout-" + clean);
-      localStorage.setItem("movieverse.layout", clean);
-      setActiveStudioButton("[data-layout]", clean);
-      updateStudioPreviewLabels();
-      requestAnimationFrame(() => window.dispatchEvent(new Event("resize")));
-    }
-
-    function applyCardStyle(cardstyle) {
-      const clean = cardstyle || "rounded";
-      document.body.classList.remove("cardstyle-rounded", "cardstyle-sharp", "cardstyle-softglass", "cardstyle-float");
-      document.body.classList.add("cardstyle-" + clean);
-      localStorage.setItem("movieverse.cardstyle", clean);
-      setActiveStudioButton("[data-cardstyle]", clean);
-    }
-
-    function applyDetail(detail) {
-      const clean = detail || "balanced";
-      document.body.classList.remove("detail-clean", "detail-balanced", "detail-max");
-      document.body.classList.add("detail-" + clean);
-      localStorage.setItem("movieverse.detail", clean);
-      setActiveStudioButton("[data-detail]", clean);
-      updateStudioPreviewLabels();
-    }
-
-    function applyBackdrop(backdrop) {
-      const clean = backdrop || "smooth";
-      document.body.classList.remove("backdrop-smooth", "backdrop-grain", "backdrop-aurora", "backdrop-grid");
-      document.body.classList.add("backdrop-" + clean);
-      localStorage.setItem("movieverse.backdrop", clean);
-      setActiveStudioButton("[data-backdrop]", clean);
-    }
-
-    document.querySelectorAll("[data-theme]").forEach((button) => {
-      button.addEventListener("click", () => {
-        applyTheme(button.dataset.theme);
-        showToast("Theme changed");
-      });
-    });
-
-    document.querySelectorAll("[data-font]").forEach((button) => {
-      button.addEventListener("click", () => {
-        applyFont(button.dataset.font);
-        showToast("Font changed");
-      });
-    });
-
-    document.querySelectorAll("[data-effect]").forEach((button) => {
-      button.addEventListener("click", () => {
-        applyEffect(button.dataset.effect);
-        showToast(button.dataset.effect === "ultra" ? "Ultra effects on" : "Effects changed");
-      });
-    });
-
-    document.querySelectorAll("[data-density]").forEach((button) => {
-      button.addEventListener("click", () => {
-        applyDensity(button.dataset.density);
-        showToast(button.dataset.density === "compact" ? "Compact rows on" : "Comfy rows on");
-      });
-    });
-
-    document.querySelectorAll("[data-layout]").forEach((button) => {
-      button.addEventListener("click", () => {
-        applyLayout(button.dataset.layout);
-        showToast("Layout changed");
-      });
-    });
-
-    document.querySelectorAll("[data-cardstyle]").forEach((button) => {
-      button.addEventListener("click", () => {
-        applyCardStyle(button.dataset.cardstyle);
-        showToast("Card style changed");
-      });
-    });
-
-    document.querySelectorAll("[data-detail]").forEach((button) => {
-      button.addEventListener("click", () => {
-        applyDetail(button.dataset.detail);
-        showToast(button.dataset.detail === "max" ? "Max detail on" : "Detail changed");
-      });
-    });
-
-    document.querySelectorAll("[data-backdrop]").forEach((button) => {
-      button.addEventListener("click", () => {
-        applyBackdrop(button.dataset.backdrop);
-        showToast("Backdrop changed");
-      });
-    });
-
-    document.getElementById("motionToggle")?.addEventListener("click", () => {
-      const next = !document.body.classList.contains("reduceMotion");
-      document.body.classList.toggle("reduceMotion", next);
-      localStorage.setItem("movieverse.reduceMotion", next ? "on" : "off");
-      document.getElementById("motionToggle")?.classList.toggle("active", next);
-      showToast(next ? "Motion reduced" : "Motion enabled");
-    });
-
-    document.getElementById("styleReset")?.addEventListener("click", () => {
-      applyTheme("default");
-      applyFont("default");
-      applyEffect("clean");
-      applyDensity("comfy");
-      applyLayout("default");
-      applyCardStyle("rounded");
-      applyDetail("balanced");
-      applyBackdrop("smooth");
-      document.body.classList.remove("reduceMotion");
-      localStorage.setItem("movieverse.reduceMotion", "off");
-      document.getElementById("motionToggle")?.classList.remove("active");
-      showToast("Style reset");
-    });
-
-    if (localStorage.getItem("movieverse.cleanCinemaVersion") !== "v120") {
-      localStorage.setItem("movieverse.theme", "default");
-      localStorage.setItem("movieverse.font", "default");
-      localStorage.setItem("movieverse.effect", "clean");
-      localStorage.setItem("movieverse.density", "comfy");
-      localStorage.setItem("movieverse.layout", "default");
-      localStorage.setItem("movieverse.cardstyle", "rounded");
-      localStorage.setItem("movieverse.detail", "balanced");
-      localStorage.setItem("movieverse.backdrop", "smooth");
-      localStorage.setItem("movieverse.reduceMotion", "off");
-      localStorage.setItem("movieverse.cleanCinemaVersion", "v120");
-    }
-
-    applyTheme(localStorage.getItem("movieverse.theme") || "default");
-    applyFont(localStorage.getItem("movieverse.font") || "default");
-    applyEffect(localStorage.getItem("movieverse.effect") || "clean");
-    applyDensity(localStorage.getItem("movieverse.density") || "comfy");
-    applyLayout(localStorage.getItem("movieverse.layout") || "default");
-    applyCardStyle(localStorage.getItem("movieverse.cardstyle") || "rounded");
-    applyDetail(localStorage.getItem("movieverse.detail") || "balanced");
-    applyBackdrop(localStorage.getItem("movieverse.backdrop") || "smooth");
-    updateStudioPreviewLabels();
-    document.body.classList.toggle("reduceMotion", localStorage.getItem("movieverse.reduceMotion") === "on");
-    document.getElementById("motionToggle")?.classList.toggle("active", localStorage.getItem("movieverse.reduceMotion") === "on");
 
     (function enablePremiumPosterTilt(){
       if (document.body.classList.contains("svCleanShell")) return;
@@ -40329,9 +39960,15 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
         }, 2600);
       }
 
+      function activeModal() {
+        var focusedModal = document.activeElement && document.activeElement.closest("dialog[open]");
+        return focusedModal || document.querySelector(".svStudioDialog[open]") ||
+          Array.from(document.querySelectorAll("dialog[open]")).pop() || null;
+      }
+
       function isVisible(el) {
         if (!el || !el.isConnected) return false;
-        var modal = document.querySelector("dialog[open]");
+        var modal = activeModal();
         if (modal && !modal.contains(el)) return false;
         var r = el.getBoundingClientRect();
         var style = getComputedStyle(el);
@@ -40347,7 +39984,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
 
       function getFocusable() {
-        var root = document.querySelector("dialog[open]") || document;
+        var root = activeModal() || document;
         return Array.from(root.querySelectorAll(FOCUSABLE_SELECTOR))
           .filter(function(el) {
             if (!isVisible(el)) return false;
@@ -40566,8 +40203,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
 
       function goBack() {
-        var details = document.querySelector(".svDetailDialog[open]");
-        if (details) { details.close(); return; }
+        var modal = activeModal();
+        if (modal && modal.matches(".svDetailDialog, .svStudioDialog")) { modal.close(); return; }
         if (history.length > 1) history.back();
         else location.href = "/";
       }
@@ -40679,10 +40316,11 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
       document.addEventListener("keydown", function(event) {
         var key = event.key;
-        var modal = document.querySelector("dialog[open]");
+        var modal = activeModal();
         if (modal && key !== "F8" && (key === "Escape" || !enabled)) return;
         // Keep typing, native buttons, and popup menus usable in the compact header.
-        if (key !== "F8" && event.target?.closest?.("input, textarea, select, [contenteditable=true], .netflixNav")) return;
+        var studioSwitch = event.target?.closest?.(".svStudioDialog input[type=checkbox][data-st-setting]");
+        if (key !== "F8" && !studioSwitch && event.target?.closest?.("input, textarea, select, [contenteditable=true], .netflixNav")) return;
 
         if (key === "F8") {
           setEnabled(!enabled, enabled ? "TV mode disabled" : "TV mode enabled");

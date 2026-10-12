@@ -6,7 +6,7 @@ const { JSDOM, VirtualConsole } = require('jsdom');
 const root = path.resolve(__dirname, '..');
 const openWindows = new Set();
 function source(name) {
-  const file = path.join(root, 'public', 'clean', name);
+  const file = name.includes('/') ? path.join(root, 'public', name) : path.join(root, 'public', 'clean', name);
   return fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
 }
 function browser(markup = '', options = {}) {
