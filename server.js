@@ -38887,10 +38887,10 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/clean/clean.css?v=153" />
     <script defer src="/assets/clean/clean.js?v=151"></script>
     <script defer src="/assets/clean/continue.js?v=154"></script>
-    <link rel="stylesheet" href="/assets/clean/details.css?v=154" />
+    <link rel="stylesheet" href="/assets/clean/details.css?v=156" />
     <link rel="stylesheet" href="/assets/clean/motion.css?v=154" />
     <script defer src="/assets/clean/motion.js?v=155"></script>
-    <script defer src="/assets/clean/details.js?v=154"></script>
+    <script defer src="/assets/clean/details.js?v=156"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=153" />
     <script defer src="/assets/liquid-glass/surfaces.js?v=155"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=155" />
@@ -39179,11 +39179,11 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
         const attrs = Object.entries({ id: item.id, type, title: item.title, poster: item.poster || "", backdrop: item.backdrop || "", rating: item.rating || "", year: item.year || "" })
           .map(([key, value]) => ' data-' + prefix + '-' + key + '="' + escapeSaved(value) + '"').join('');
         return '<article class="movieCard dsCard"><div class="dsCardArtwork">' +
-          '<a href="' + href + '" class="posterWrap dsThumb" aria-label="Watch ' + title + '">' +
+          '<a href="' + details + '" class="posterWrap dsThumb" aria-label="Details for ' + title + '">' +
           (poster ? '<img src="' + escapeSaved(poster) + '" alt="' + title + ' poster" loading="lazy" />' : '<div class="posterFallback"><span>' + title.slice(0,1) + '</span></div>') +
-          '<span class="dsPlayDot" aria-hidden="true">▶</span></a>' +
+          '<span class="dsPlayDot" aria-hidden="true">ⓘ</span></a>' +
           '<div class="dsCardQuickActions"><button class="dsMiniBtn ' + (kind === "liked" ? "liked" : "saved") + '"' + attrs + ' aria-label="Remove ' + title + ' from ' + (kind === "liked" ? "Liked" : "My List") + '" type="button">' + symbol + '</button>' +
-          '<a class="dsMiniBtn dsInfoBtn" href="' + details + '" aria-label="Details for ' + title + '">ⓘ</a></div></div>' +
+          '<a class="dsMiniBtn dsQuickPlay" href="' + href + '" aria-label="Play ' + title + '">▶</a></div></div>' +
           '<div class="dsCardInfo"><a class="dsCardTitle" href="' + details + '" title="' + title + '">' + title + '</a>' +
           '<div class="dsCardMeta"><span>' + escapeSaved(item.year || "—") + '</span><span>' + (type === "tv" ? "Series" : "Movie") + '</span></div></div></article>';
       }).join("");
@@ -40204,7 +40204,13 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
       function goBack() {
         var modal = activeModal();
-        if (modal && modal.matches(".svDetailDialog, .svStudioDialog")) { modal.close(); return; }
+        if (modal && modal.matches(".svDetailDialog, .svStudioDialog")) {
+          if (modal.matches(".svDetailDialog") && window.SwiflyDetails) window.SwiflyDetails.back();
+          else modal.close();
+          return;
+        }
+        var backLink = document.querySelector("[data-sv-player-back], .svDetailPage [data-sv-details-back]");
+        if (backLink) { backLink.click(); return; }
         if (history.length > 1) history.back();
         else location.href = "/";
       }
@@ -40424,14 +40430,14 @@ function movieCard(item = {}, forcedType = "") {
   const poster = item.poster_path ? img(item.poster_path, "w342") : img(item.backdrop_path, "w500");
   return `<article class="movieCard dsCard" data-title="${escapeHtml(title.toLowerCase())}">
     <div class="dsCardArtwork">
-      <a href="${watchHref}" class="posterWrap dsThumb" aria-label="Watch ${escapeHtml(title)}" ${mediaDataAttributes("play", item, type)}>
+      <a href="${detailsHref}" class="posterWrap dsThumb" aria-label="Details for ${escapeHtml(title)}">
         ${poster ? `<img src="${escapeHtml(poster)}" alt="${escapeHtml(title)} poster" loading="lazy" decoding="async" />` : `<div class="posterFallback"><span>${escapeHtml(title.slice(0, 1))}</span></div>`}
-        <span class="dsPlayDot" aria-hidden="true">${cleanIcon("play")}</span>
+        <span class="dsPlayDot" aria-hidden="true">${cleanIcon("info")}</span>
       </a>
       <div class="dsCardQuickActions">
+        <a class="dsMiniBtn dsQuickPlay" href="${watchHref}" aria-label="Play ${escapeHtml(title)}" ${mediaDataAttributes("play", item, type)}>${cleanIcon("play")}</a>
         <button class="dsMiniBtn" type="button" aria-label="Add ${escapeHtml(title)} to My List" ${mediaDataAttributes("watch", item, type)}>＋</button>
         <button class="dsMiniBtn dsHeartBtn" type="button" aria-label="Like ${escapeHtml(title)}" ${mediaDataAttributes("like", item, type)}>♡</button>
-        <a class="dsMiniBtn dsInfoBtn" href="${detailsHref}" aria-label="Details for ${escapeHtml(title)}">${cleanIcon("info")}</a>
       </div>
     </div>
     <div class="dsCardInfo">
@@ -41770,7 +41776,7 @@ async function watchPage(req, res, type) {
     <section class="dsWatchHero">
       <div class="dsWatchBg" style="background-image:url('${escapeHtml(heroBg)}')"></div>
       <div class="dsWatchHeader">
-        <a class="dsGhostPill" href="/${escapeHtml(type)}/${escapeHtml(id)}">← Back</a>
+        <a class="dsGhostPill" href="/${escapeHtml(type)}/${escapeHtml(id)}" data-sv-player-back>← Back to details</a>
         <div class="dsWatchModeSwitch">
           <a class="${mode === "trailer" ? "active" : ""}" href="/watch/${escapeHtml(type)}/${escapeHtml(id)}?mode=trailer">Trailer</a>
           <a class="${mode === "movie" ? "active" : ""}" href="/watch/${escapeHtml(type)}/${escapeHtml(id)}?mode=movie${type === "tv" ? `&s=${escapeHtml(String(req.query.s || process.env.MOVIE_EMBED_DEFAULT_SEASON || "1"))}&e=${escapeHtml(String(req.query.e || process.env.MOVIE_EMBED_DEFAULT_EPISODE || "1"))}` : ""}">${escapeHtml(watchButtonLabel)}</a>
@@ -43693,6 +43699,12 @@ async function detailPage(req, res, type) {
   const logos = (details.images?.logos || []).filter(image => image.file_path && (!image.iso_639_1 || image.iso_639_1 === "en"))
     .sort((a, b) => Number(b.iso_639_1 === "en") - Number(a.iso_639_1 === "en") || Number(b.vote_average || 0) - Number(a.vote_average || 0));
   const titleLogo = logos[0] ? img(logos[0].file_path, "w500") : "";
+  const collectionId = Number(details.belongs_to_collection?.id);
+  const collection = type === "movie" && Number.isInteger(collectionId) && collectionId > 0
+    ? await tmdb(`/collection/${collectionId}`, {}, CACHE_TTL.long).catch(() => null) : null;
+  const collectionParts = (Array.isArray(collection?.parts) ? collection.parts : [])
+    .filter(item => item.id).sort((a, b) => String(a.release_date || "9999").localeCompare(String(b.release_date || "9999"))).slice(0, 18);
+  const collectionHtml = collectionParts.length ? `<section id="collection" class="svDetailSection"><h2>${escapeHtml(collection.name || details.belongs_to_collection.name)}</h2><div class="svDetailCollectionRail">${collectionParts.map(item => `<div class="svCollectionItem"${Number(item.id) === Number(id) ? ' aria-current="true"' : ""}>${movieCard(item, "movie")}${Number(item.id) === Number(id) ? '<span class="svCollectionViewing">Viewing</span>' : ""}</div>`).join("")}</div></section>` : "";
   const cast = Array.isArray(credits.cast) ? credits.cast.slice(0, 18) : [];
   const crew = Array.isArray(credits.crew) ? credits.crew : [];
   const director = crew.find(person => person.job === "Director");
@@ -43733,7 +43745,7 @@ async function detailPage(req, res, type) {
 
   const body = `<main class="dsDetailPage svDetailPage">
     <article class="dsDetailShell svTitleDetails" aria-labelledby="svDetailTitle" data-detail-id="${escapeHtml(id)}" data-detail-type="${type}">
-      <a class="dsClose svDetailClose" href="/" data-sv-details-back aria-label="Back to catalog"><svg class="svIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></a>
+      <a class="dsSecondaryBtn svDetailReturn" href="/" data-sv-details-back aria-label="Back to browsing"><svg class="svIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>Back to browsing</a>
       <section class="svDetailHero">
         <div class="svDetailBackdrop" style="background-image:url('${escapeHtml(heroBg)}')"></div><div class="svDetailShade"></div>
         <div class="svDetailIdentity">
@@ -43755,6 +43767,7 @@ async function detailPage(req, res, type) {
         <section id="overview" class="svDetailSection svDetailOverview"><h2 class="svDetailSrOnly">Overview</h2><p>${escapeHtml(details.overview || "No overview available yet.")}</p></section>
         ${castHtml ? `<section id="cast" class="svDetailSection"><h2>Cast</h2><div class="svDetailCastRail" aria-label="Cast">${castHtml}</div></section>` : ""}
         ${seasonHtml ? `<section id="episodes" class="svDetailSection"><h2>Episodes</h2>${seasonHtml}</section>` : ""}
+        ${collectionHtml}
         ${more.length ? `<section id="more-like-this" class="svDetailSection"><h2>More like this</h2><div class="svDetailRecommendations">${more.map(item => movieCard(item, type)).join("")}</div></section>` : ""}
         ${trailers.length ? `<section id="trailers" class="svDetailSection"><h2>Trailers</h2><div class="svDetailTrailers">${trailers.map(video => `<iframe src="https://www.youtube-nocookie.com/embed/${escapeHtml(video.key)}" title="${escapeHtml(video.name || title + " trailer")}" loading="lazy" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`).join("")}</div></section>` : ""}
         <section id="details" class="svDetailSection"><h2>Details</h2><dl class="svDetailAbout">${about}</dl></section>

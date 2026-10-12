@@ -1,8 +1,8 @@
-# SwiflyTV v155 — A completely rebuilt Swifly Studio
+# SwiflyTV v156 — Details-first browsing and reliable Back navigation
 
-A cinematic catalog with liquid glass navigation, movie detail overlays, smooth scrolling and a redesigned appearance workspace. Swifly Studio has curated looks, a real artwork preview, organized controls, and explicit Save and Cancel actions.
+A cinematic catalog with liquid glass navigation, rich movie detail overlays, smooth scrolling and a redesigned appearance workspace. Posters open details first, with a separate Play action. Back and Close preserve browsing context, and titles can be shared through the selected-media URL.
 
-See [STUDIO_v155.md](STUDIO_v155.md) for the latest changes. [DETAILS_MOTION_v154.md](DETAILS_MOTION_v154.md) covers movie details and scrolling. [POLISH_v153.md](POLISH_v153.md) includes the Windows PowerShell setup. Earlier UI changes are documented in [LIQUID_GLASS_v150.md](LIQUID_GLASS_v150.md), [CLEAN_DESIGN_v151.md](CLEAN_DESIGN_v151.md) and [EXPANDED_GLASS_v152.md](EXPANDED_GLASS_v152.md).
+See [DETAILS_NAVIGATION_v156.md](DETAILS_NAVIGATION_v156.md) for the latest changes. [STUDIO_v155.md](STUDIO_v155.md) covers the rebuilt Studio, and [DETAILS_MOTION_v154.md](DETAILS_MOTION_v154.md) covers the original overlay and scrolling update. [POLISH_v153.md](POLISH_v153.md) includes the Windows PowerShell setup.
 
 ## Start locally
 

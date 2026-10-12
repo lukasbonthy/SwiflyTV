@@ -10,7 +10,7 @@ function source(name) {
   return fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
 }
 function browser(markup = '', options = {}) {
-  const dom = new JSDOM('<!doctype html><html><body class="svCleanShell">' + markup + '</body></html>', {url: 'http://localhost:3000' + (options.path || '/'), pretendToBeVisual: true, runScripts: 'outside-only', virtualConsole: new VirtualConsole()});
+  const dom = new JSDOM('<!doctype html><html><body class="svCleanShell">' + markup + '</body></html>', {url: 'http://localhost:3000' + (options.path || '/'), ...(options.referrer ? {referrer:options.referrer} : {}), pretendToBeVisual: true, runScripts: 'outside-only', virtualConsole: new VirtualConsole()});
   const w = dom.window, frames = new Map(), media = new Map();
   openWindows.add(w);
   let id = 0;
@@ -49,7 +49,7 @@ function loadServer() {
   const listen = http.Server.prototype.listen, interval = global.setInterval;
   http.Server.prototype.listen = function () {return this;};
   global.setInterval = (...args) => interval(...args).unref();
-  try {m._compile(fs.readFileSync(filename, 'utf8') + '\nmodule.exports = {detailPage, homePage, pageShell, setTmdb(fn) {tmdb = fn;}};\n', filename);}
+  try {m._compile(fs.readFileSync(filename, 'utf8') + '\nmodule.exports = {detailPage, homePage, movieCard, pageShell, setTmdb(fn) {tmdb = fn;}};\n', filename);}
   finally {http.Server.prototype.listen = listen; global.setInterval = interval;}
   return m.exports;
 }

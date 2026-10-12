@@ -1,7 +1,7 @@
 {
   "name": "swiflytv",
-  "version": "2.0.3",
-  "description": "SwiflyTV v155: a rebuilt Studio with curated looks, live appearance previews and reliable saving.",
+  "version": "2.0.4",
+  "description": "SwiflyTV v156: details-first browsing, richer title views and predictable Back navigation.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
