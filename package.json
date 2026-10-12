@@ -1,12 +1,13 @@
 {
   "name": "swiflytv",
-  "version": "2.0.1",
-  "description": "SwiflyTV v153: refined liquid glass catalog and a rebuilt Continue Watching component with clean captions and honest progress.",
+  "version": "2.0.2",
+  "description": "SwiflyTV v154: cinematic movie detail overlays and responsive smooth scrolling with shared liquid glass controls.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "check": "node --check server.js && node --check public/liquid-glass/liquid-glass.js && node --check public/clean/clean.js && node --check public/liquid-glass/surfaces.js && node --check public/clean/continue.js"
+    "check": "node --check server.js && node --check public/liquid-glass/liquid-glass.js && node --check public/clean/clean.js && node --check public/liquid-glass/surfaces.js && node --check public/clean/continue.js && node --check public/clean/details.js && node --check public/clean/motion.js",
+    "test:ui": "node --test tests/details-motion.test.cjs"
   },
   "engines": {
     "node": ">=20"
@@ -22,5 +23,8 @@
     "@consumet/extensions": "latest",
     "axios": "^1.0.0",
     "cheerio": "1.0.0-rc.12"
+  },
+  "devDependencies": {
+    "jsdom": "22.1.0"
   }
 }

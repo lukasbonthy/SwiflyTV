@@ -30,7 +30,7 @@
     entries.delete(entry.host);
   }
   function ensure(host) {
-    if (!(host instanceof HTMLElement) || !host.isConnected || host.closest(".svLiquidPane, media-player, .vds-controls")) return;
+    if (!(host instanceof HTMLElement) || !host.isConnected || host.matches(".svDetailDialog") || host.closest(".svLiquidPane, media-player, .vds-controls")) return;
     let entry = entries.get(host);
     if (entry) { if (entry.visible) activate(entry); return; }
     const panel = host.matches(panels);

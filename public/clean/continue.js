@@ -54,7 +54,7 @@
       const remove = event.target.closest("[data-continue-remove]");
       if (remove) { localStorage.setItem(key, JSON.stringify(read().filter(item => item.key !== remove.dataset.continueRemove))); render(); if (typeof window.showToast === "function") window.showToast("Removed from Continue Watching"); return; }
       const scroll = event.target.closest("[data-continue-scroll]"), rail = document.getElementById("continueWatchingRail");
-      if (scroll && rail) { const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches; rail.scrollBy({ left: Number(scroll.dataset.continueScroll) * rail.clientWidth * .85, behavior: reduced ? "auto" : "smooth" }); }
+      if (scroll && rail) { const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches; if (window.SwiflyMotion) window.SwiflyMotion.scrollBy(rail, {left: Number(scroll.dataset.continueScroll) * rail.clientWidth * .85}); else rail.scrollBy({ left: Number(scroll.dataset.continueScroll) * rail.clientWidth * .85, behavior: reduced ? "auto" : "smooth" }); }
     });
   }
   window.SwiflyContinue = Object.freeze({ render, read });

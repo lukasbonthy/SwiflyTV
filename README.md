@@ -1,8 +1,8 @@
-# SwiflyTV v153 — Polished liquid glass catalog
+# SwiflyTV v154 — Cinematic details and smooth scrolling
 
-A cleaner black layout with floating liquid glass navigation, portrait posters, quieter controls and a rebuilt Continue Watching component.
+A black cinematic catalog with floating liquid glass navigation, movie detail overlays, portrait posters, clean Continue Watching cards and responsive smooth scrolling.
 
-See [POLISH_v153.md](POLISH_v153.md) for the latest changes and Windows PowerShell setup. Earlier UI changes are documented in [LIQUID_GLASS_v150.md](LIQUID_GLASS_v150.md), [CLEAN_DESIGN_v151.md](CLEAN_DESIGN_v151.md) and [EXPANDED_GLASS_v152.md](EXPANDED_GLASS_v152.md).
+See [DETAILS_MOTION_v154.md](DETAILS_MOTION_v154.md) for the latest changes. [POLISH_v153.md](POLISH_v153.md) includes the Windows PowerShell setup. Earlier UI changes are documented in [LIQUID_GLASS_v150.md](LIQUID_GLASS_v150.md), [CLEAN_DESIGN_v151.md](CLEAN_DESIGN_v151.md) and [EXPANDED_GLASS_v152.md](EXPANDED_GLASS_v152.md).
 
 ## Start locally
 
@@ -26,6 +26,7 @@ Open http://localhost:3000. Keep your existing `.env` when updating. The distrib
 
 ```powershell
 npm run check
+npm run test:ui
 ```
 
 The Docker and Render configuration and original server playback implementation remain in this release.

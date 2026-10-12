@@ -38884,9 +38884,13 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/liquid-glass/liquid-glass.js?v=150"></script>
     <link rel="stylesheet" href="/assets/clean/clean.css?v=153" />
     <script defer src="/assets/clean/clean.js?v=151"></script>
-    <script defer src="/assets/clean/continue.js?v=153"></script>
+    <script defer src="/assets/clean/continue.js?v=154"></script>
+    <link rel="stylesheet" href="/assets/clean/details.css?v=154" />
+    <link rel="stylesheet" href="/assets/clean/motion.css?v=154" />
+    <script defer src="/assets/clean/motion.js?v=154"></script>
+    <script defer src="/assets/clean/details.js?v=154"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=153" />
-    <script defer src="/assets/liquid-glass/surfaces.js?v=153"></script>
+    <script defer src="/assets/liquid-glass/surfaces.js?v=154"></script>
 </head>
 <body class="svCleanShell">
 
@@ -39656,8 +39660,12 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
           bar.style.transform = 'translateX(' + (ratio * (100 - width)) + '%)';
         }
 
-        controls.children[0].addEventListener('click', () => rail.scrollBy({ left: -rail.clientWidth * .88, behavior: 'smooth' }));
-        controls.children[1].addEventListener('click', () => rail.scrollBy({ left: rail.clientWidth * .88, behavior: 'smooth' }));
+        function moveRail(direction) {
+          if (window.SwiflyMotion) window.SwiflyMotion.scrollBy(rail, {left:direction * rail.clientWidth * .88});
+          else rail.scrollBy({left:direction * rail.clientWidth * .88, behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'});
+        }
+        controls.children[0].addEventListener('click', () => moveRail(-1));
+        controls.children[1].addEventListener('click', () => moveRail(1));
         rail.addEventListener('scroll', updateProgress, { passive: true });
         window.addEventListener('resize', updateProgress, { passive: true });
         updateProgress();
@@ -40274,6 +40282,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
       var FOCUSABLE_SELECTOR = [
         "a[href]",
+        "summary",
         "button:not([disabled])",
         "input:not([disabled])",
         "textarea:not([disabled])",
@@ -40322,6 +40331,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
       function isVisible(el) {
         if (!el || !el.isConnected) return false;
+        var modal = document.querySelector("dialog[open]");
+        if (modal && !modal.contains(el)) return false;
         var r = el.getBoundingClientRect();
         var style = getComputedStyle(el);
         return r.width > 6 &&
@@ -40336,7 +40347,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
 
       function getFocusable() {
-        return Array.from(document.querySelectorAll(FOCUSABLE_SELECTOR))
+        var root = document.querySelector("dialog[open]") || document;
+        return Array.from(root.querySelectorAll(FOCUSABLE_SELECTOR))
           .filter(function(el) {
             if (!isVisible(el)) return false;
             if (el.closest("[hidden], [aria-hidden='true']")) return false;
@@ -40554,6 +40566,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }
 
       function goBack() {
+        var details = document.querySelector(".svDetailDialog[open]");
+        if (details) { details.close(); return; }
         if (history.length > 1) history.back();
         else location.href = "/";
       }
@@ -40665,6 +40679,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
       document.addEventListener("keydown", function(event) {
         var key = event.key;
+        var modal = document.querySelector("dialog[open]");
+        if (modal && key !== "F8" && (key === "Escape" || !enabled)) return;
         // Keep typing, native buttons, and popup menus usable in the compact header.
         if (key !== "F8" && event.target?.closest?.("input, textarea, select, [contenteditable=true], .netflixNav")) return;
 
@@ -41010,7 +41026,7 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = nu
       <div class="dsHeroMeta">${Number(hero.vote_average) > 0 ? `<b>★ ${escapeHtml(formatRating(hero.vote_average))}<small>/10</small></b>` : ""}<span>${escapeHtml(getYear(getDate(hero)))}</span><span>${mediaType === "tv" ? "Series" : "Movie"}</span>${hero.runtime ? `<span>${escapeHtml(formatRuntime(hero.runtime))}</span>` : ""}</div>
       <p>${escapeHtml(desc)}</p>
       <div class="dsHeroActions">
-        <a class="dsPrimaryBtn" href="${href}" data-play-id="${escapeHtml(hero.id || "")}" data-play-type="${escapeHtml(mediaType)}" data-play-title="${escapeHtml(title)}" data-play-poster="${escapeHtml(hero.poster_path || "")}" data-play-backdrop="${escapeHtml(hero.backdrop_path || "")}" data-play-rating="${escapeHtml(formatRating(hero.vote_average))}" data-play-year="${escapeHtml(getYear(getDate(hero)))}"><span>▶</span> Play</a>
+        <a class="dsPrimaryBtn" href="/watch/${mediaType}/${encodeURIComponent(hero.id || "")}?mode=movie${mediaType === "tv" ? "&s=1&e=1" : ""}" data-play-id="${escapeHtml(hero.id || "")}" data-play-type="${escapeHtml(mediaType)}" data-play-title="${escapeHtml(title)}" data-play-poster="${escapeHtml(hero.poster_path || "")}" data-play-backdrop="${escapeHtml(hero.backdrop_path || "")}" data-play-rating="${escapeHtml(formatRating(hero.vote_average))}" data-play-year="${escapeHtml(getYear(getDate(hero)))}"><span>▶</span> Play</a>
         <a class="dsSecondaryBtn" href="${href}">Details</a>
         <button class="dsIconBtn" type="button" aria-label="Add ${escapeHtml(title)} to My List" ${mediaDataAttributes("watch", hero, mediaType)}>＋</button>
       </div>
@@ -44022,7 +44038,7 @@ async function detailPage(req, res, type) {
   const id = req.params.id;
   const endpoint = type === "tv" ? `/tv/${id}` : `/movie/${id}`;
   const [details, videos, credits, similar, recommendations, externalIds, providers] = await Promise.all([
-    tmdb(endpoint, { append_to_response: "" }, CACHE_TTL.long),
+    tmdb(endpoint, { append_to_response: "images", include_image_language: "en,null" }, CACHE_TTL.long),
     tmdb(`${endpoint}/videos`, {}, CACHE_TTL.long),
     tmdb(`${endpoint}/credits`, {}, CACHE_TTL.long),
     tmdb(`${endpoint}/similar`, {}, CACHE_TTL.medium),
@@ -44030,198 +44046,87 @@ async function detailPage(req, res, type) {
     tmdb(`${endpoint}/external_ids`, {}, CACHE_TTL.long),
     tmdb(`${endpoint}/watch/providers`, {}, CACHE_TTL.long),
   ]);
-
   if (details.__error) return res.send(setupNeededPage(details.message));
 
   const title = getTitle(details);
   const detailsDate = type === "tv" ? details.first_air_date : details.release_date;
-  const watchButtonLabel = type === "tv" ? "Episode" : "Movie";
+  const year = getYear(detailsDate);
   const heroBg = fullBackdrop(details.backdrop_path || details.poster_path);
+  const logos = (details.images?.logos || []).filter(image => image.file_path && (!image.iso_639_1 || image.iso_639_1 === "en"))
+    .sort((a, b) => Number(b.iso_639_1 === "en") - Number(a.iso_639_1 === "en") || Number(b.vote_average || 0) - Number(a.vote_average || 0));
+  const titleLogo = logos[0] ? img(logos[0].file_path, "w500") : "";
   const cast = Array.isArray(credits.cast) ? credits.cast.slice(0, 18) : [];
   const crew = Array.isArray(credits.crew) ? credits.crew : [];
-  const director = crew.find((p) => p.job === "Director");
-  const writers = crew.filter((p) => ["Writer", "Screenplay", "Story"].includes(p.job)).slice(0, 3);
-  const videoList = Array.isArray(videos.results) ? videos.results : [];
-  const trailers = videoList.filter((video) => video.site === "YouTube" && ["Trailer", "Teaser", "Clip"].includes(video.type)).slice(0, 6);
-  const similarItems = Array.isArray(similar.results) ? similar.results : [];
-  const recommendedItems = Array.isArray(recommendations.results) ? recommendations.results : [];
-  const combinedMore = [...recommendedItems, ...similarItems].filter((item, index, arr) => arr.findIndex((i) => i.id === item.id) === index).slice(0, 24);
+  const director = crew.find(person => person.job === "Director");
+  const writers = crew.filter(person => ["Writer", "Screenplay", "Story"].includes(person.job)).slice(0, 3);
+  const trailers = (videos.results || []).filter(video => video.site === "YouTube" && ["Trailer", "Teaser", "Clip"].includes(video.type)).slice(0, 3);
+  const more = [...(recommendations.results || []), ...(similar.results || [])]
+    .filter((item, index, items) => item.id && item.id !== Number(id) && items.findIndex(other => other.id === item.id) === index).slice(0, 18);
   const providersUS = providers.results?.US || {};
   const providerList = [...(providersUS.flatrate || []), ...(providersUS.rent || []), ...(providersUS.buy || [])]
-    .filter((provider, index, arr) => arr.findIndex((p) => p.provider_id === provider.provider_id) === index)
-    .slice(0, 8);
-
-  const runtime = type === "movie"
-    ? formatRuntime(details.runtime)
-    : `${details.number_of_seasons || 0} Season${details.number_of_seasons === 1 ? "" : "s"}`;
-  const maturity = type === "tv" ? "TV-14" : "PG-13";
-
-  const seasonRows = type === "tv"
-    ? (details.seasons || [])
-      .filter((season) => season.season_number > 0)
-      .slice(0, 10)
-      .map((season) => {
-        const seasonNumber = Number(season.season_number || 1);
-        const totalEpisodes = Math.max(1, Number(season.episode_count || 1));
-        const shownEpisodes = Math.min(totalEpisodes, 16);
-        const episodeLinks = Array.from({ length: shownEpisodes }, (_, i) => {
-          const episodeNumber = i + 1;
-          return `<a href="/watch/tv/${escapeHtml(id)}?mode=movie&s=${escapeHtml(String(seasonNumber))}&e=${escapeHtml(String(episodeNumber))}" aria-label="Watch season ${escapeHtml(String(seasonNumber))} episode ${escapeHtml(String(episodeNumber))}">Episode ${escapeHtml(String(episodeNumber))}</a>`;
-        }).join("");
-        return `<article class="dsSeasonBlock">
-          <a class="dsSeasonBlockHead" href="/watch/tv/${escapeHtml(id)}?mode=movie&s=${escapeHtml(String(seasonNumber))}&e=1">
-            <span>S${escapeHtml(String(seasonNumber))}</span>
-            <div>
-              <strong>${escapeHtml(season.name || `Season ${seasonNumber}`)}</strong>
-              <p>${escapeHtml(season.overview || `${totalEpisodes} episodes available. Tap a season or episode to start watching.`)}</p>
-            </div>
-            <b>${escapeHtml(String(totalEpisodes))} Episodes →</b>
-          </a>
-          <div class="dsEpisodeChips">${episodeLinks}${totalEpisodes > shownEpisodes ? `<a href="/watch/tv/${escapeHtml(id)}?mode=movie&s=${escapeHtml(String(seasonNumber))}&e=${escapeHtml(String(shownEpisodes + 1))}">+${escapeHtml(String(totalEpisodes - shownEpisodes))} more</a>` : ""}</div>
-        </article>`;
-      }).join("")
-    : "";
-
-  const castHtml = cast.map((p) => `<a class="dsCastCard" href="/person/${encodeURIComponent(p.id)}">
-    <div>${p.profile_path ? `<img src="${escapeHtml(img(p.profile_path, "w342"))}" alt="${escapeHtml(p.name)}" loading="lazy" />` : `<span>${escapeHtml(p.name.slice(0,1))}</span>`}</div>
-    <strong>${escapeHtml(p.name)}</strong>
-    <em>${escapeHtml(p.character || "Cast")}</em>
+    .filter((provider, index, list) => list.findIndex(other => other.provider_id === provider.provider_id) === index).slice(0, 8);
+  const seasons = type === "tv" ? (details.seasons || []).filter(season => season.season_number > 0).slice(0, 20) : [];
+  const startSeason = seasons[0]?.season_number || 1;
+  const runtime = type === "tv"
+    ? `${details.number_of_seasons || seasons.length || 1} Season${Number(details.number_of_seasons || seasons.length || 1) === 1 ? "" : "s"}`
+    : Number(details.runtime) > 0 ? formatRuntime(details.runtime) : "";
+  const watchHref = `/watch/${type}/${encodeURIComponent(id)}?mode=movie${type === "tv" ? `&s=${startSeason}&e=1` : ""}`;
+  const playLabel = type === "tv" ? `Play S${startSeason} E1` : "Play";
+  const genreHtml = (details.genres || []).map(genre => `<a href="/${type === "tv" ? "tv" : "movies"}?genre=${encodeURIComponent(genre.id)}">${escapeHtml(genre.name)}</a>`).join('<span class="svDetailDot" aria-hidden="true">·</span>');
+  const castHtml = cast.map(person => `<a class="dsCastCard" href="/person/${encodeURIComponent(person.id)}">
+    <div>${person.profile_path ? `<img src="${escapeHtml(img(person.profile_path, "w342"))}" alt="${escapeHtml(person.name)}" loading="lazy" decoding="async" />` : `<span>${escapeHtml(String(person.name || "?").slice(0, 1))}</span>`}</div>
+    <strong>${escapeHtml(person.name)}</strong><em>${escapeHtml(person.character || "Cast")}</em>
   </a>`).join("");
+  const seasonHtml = seasons.map((season, index) => {
+    const number = Number(season.season_number);
+    const total = Math.max(0, Number(season.episode_count || 0));
+    const shown = Math.min(total, 24);
+    const episodeLinks = Array.from({ length: shown }, (_, i) => `<a href="/watch/tv/${encodeURIComponent(id)}?mode=movie&s=${number}&e=${i + 1}" aria-label="Watch season ${number} episode ${i + 1}">Episode ${i + 1}</a>`).join("");
+    return `<details class="svSeason"${index === 0 ? " open" : ""}><summary><strong>${escapeHtml(season.name || `Season ${number}`)}</strong><span>${total} episodes</span></summary>
+      ${season.overview ? `<p>${escapeHtml(season.overview)}</p>` : ""}<div class="dsEpisodeChips">${episodeLinks}${total > shown ? `<a href="/watch/tv/${encodeURIComponent(id)}?mode=movie&s=${number}&e=${shown + 1}">Continue with episode ${shown + 1}</a>` : ""}</div></details>`;
+  }).join("");
+  const about = [
+    ["Release year", year], ["Runtime", runtime || "—"], ["Original language", String(details.original_language || "—").toUpperCase()],
+    ["Director", director?.name || "—"], ["Writers", writers.map(person => person.name).join(", ") || "—"], ["Status", details.status || "—"],
+    ["Genres", (details.genres || []).map(genre => genre.name).join(", ") || "—"],
+    ...(externalIds.imdb_id ? [["IMDb", externalIds.imdb_id]] : []),
+    ...(providerList.length ? [["Available on", providerList.map(provider => provider.provider_name).join(", ")]] : [])
+  ].map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("");
 
-  const trailerHtml = trailers.map((video) => `<article class="trailerCard"><iframe src="https://www.youtube.com/embed/${escapeHtml(video.key)}" title="${escapeHtml(video.name)}" loading="lazy" allowfullscreen></iframe></article>`).join("");
-  const moreHtml = combinedMore.map((item) => movieCard(item, type)).join("");
-
-  const body = `<main class="dsDetailPage">
-    <article class="dsDetailShell">
-      <a class="dsClose" href="javascript:history.length > 1 ? history.back() : '/'">×</a>
-      <section class="dsDetailHero">
-        <div class="dsDetailBg" style="background-image:url('${escapeHtml(heroBg)}')"></div>
-        <div class="dsDetailHeroContent">
-          <span class="dsEyebrow">${type === "tv" ? "Series" : "Movie"}</span>
-          <h1>${escapeHtml(title)}</h1>
-          <div class="dsDetailActions dsDetailActionsV27">
-            <a class="dsPrimaryBtn dsMoviePlayBtn" href="/watch/${escapeHtml(type)}/${escapeHtml(id)}?mode=movie" data-play-id="${escapeHtml(id)}" data-play-type="${escapeHtml(type)}" data-play-title="${escapeHtml(title)}" data-play-poster="${escapeHtml(details.poster_path || "")}" data-play-backdrop="${escapeHtml(details.backdrop_path || "")}" data-play-rating="${escapeHtml(formatRating(details.vote_average))}" data-play-year="${escapeHtml(getYear(detailsDate))}"><span>▶</span> ${escapeHtml(watchButtonLabel)}</a>
-            <a class="dsSecondaryBtn dsTrailerPlayBtn" href="/watch/${escapeHtml(type)}/${escapeHtml(id)}?mode=trailer" data-play-id="${escapeHtml(id)}" data-play-type="${escapeHtml(type)}" data-play-title="${escapeHtml(title)}" data-play-poster="${escapeHtml(details.poster_path || "")}" data-play-backdrop="${escapeHtml(details.backdrop_path || "")}" data-play-rating="${escapeHtml(formatRating(details.vote_average))}" data-play-year="${escapeHtml(getYear(detailsDate))}"><span>🎞</span> Trailer</a>
-            <span class="dsMoviePlaceholderNote">${type === "tv" ? "Episode embed mode" : "Movie embed mode"}</span>
-            <button class="dsIconBtn" data-watch-id="${escapeHtml(id)}" data-watch-type="${escapeHtml(type)}" data-watch-title="${escapeHtml(title)}" data-watch-poster="${escapeHtml(details.poster_path || "")}" data-watch-backdrop="${escapeHtml(details.backdrop_path || "")}" data-watch-rating="${escapeHtml(formatRating(details.vote_average))}" data-watch-year="${escapeHtml(getYear(detailsDate))}" type="button">＋</button>
-            <button class="dsIconBtn dsHeartBtn" data-like-id="${escapeHtml(id)}" data-like-type="${escapeHtml(type)}" data-like-title="${escapeHtml(title)}" data-like-poster="${escapeHtml(details.poster_path || "")}" data-like-backdrop="${escapeHtml(details.backdrop_path || "")}" data-like-rating="${escapeHtml(formatRating(details.vote_average))}" data-like-year="${escapeHtml(getYear(detailsDate))}" type="button">♡</button>
+  const body = `<main class="dsDetailPage svDetailPage">
+    <article class="dsDetailShell svTitleDetails" aria-labelledby="svDetailTitle" data-detail-id="${escapeHtml(id)}" data-detail-type="${type}">
+      <a class="dsClose svDetailClose" href="/" data-sv-details-back aria-label="Back to catalog"><svg class="svIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></a>
+      <section class="svDetailHero">
+        <div class="svDetailBackdrop" style="background-image:url('${escapeHtml(heroBg)}')"></div><div class="svDetailShade"></div>
+        <div class="svDetailIdentity">
+          <h1 id="svDetailTitle" class="svDetailTitle"><span class="svDetailTitleText">${escapeHtml(title)}</span>${titleLogo ? `<img class="svDetailLogo" src="${escapeHtml(titleLogo)}" alt="" aria-hidden="true" decoding="async" />` : ""}</h1>
+          ${genreHtml ? `<div class="svDetailGenres">${genreHtml}</div>` : ""}
+          <div class="svDetailFacts">
+            ${Number(details.vote_average) > 0 ? `<span class="svDetailScore"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.9-6.2-3.3-6.2 3.3 1.2-6.9-5-4.9 6.9-1Z"/></svg>${escapeHtml(formatRating(details.vote_average))}/10<small>TMDB</small></span>` : ""}
+            <span>${escapeHtml(year)}</span>${runtime ? `<span>${escapeHtml(runtime)}</span>` : ""}<span>${type === "tv" ? "Series" : "Movie"}</span>
+          </div>
+          <div class="svDetailActions">
+            <a class="dsPrimaryBtn" href="${watchHref}" ${mediaDataAttributes("play", details, type)}>${cleanIcon("play")}${escapeHtml(playLabel)}</a>
+            ${trailers.length ? `<a class="dsSecondaryBtn" href="/watch/${type}/${encodeURIComponent(id)}?mode=trailer">${cleanIcon("play")}Trailer</a>` : ""}
+            <button class="dsIconBtn" type="button" aria-label="Add ${escapeHtml(title)} to My List" ${mediaDataAttributes("watch", details, type)}>＋</button>
+            <button class="dsIconBtn dsHeartBtn" type="button" aria-label="Like ${escapeHtml(title)}" ${mediaDataAttributes("like", details, type)}>♡</button>
           </div>
         </div>
       </section>
-
-      <section class="dsDetailBody dsDetailBodyTabs">
-        <div class="dsMetaBand">
-          ${Number(details.vote_average) > 0 ? `<b>★ ${escapeHtml(formatRating(details.vote_average))}/10</b>` : ""}
-          <span>${escapeHtml(getYear(detailsDate))}</span>
-          <span>${type === "tv" ? "Series" : "Movie"}</span>
-          <span>${escapeHtml(runtime)}</span>
-        </div>
-
-        <nav class="dsDetailTabs dsDetailTabsV121" aria-label="Title sections">
-          <button type="button" class="active" data-detail-tab="overview">Overview</button>
-          ${castHtml ? `<button type="button" data-detail-tab="cast">Cast</button>` : ""}
-          ${type === "tv" && seasonRows ? `<button type="button" data-detail-tab="episodes">Episodes</button>` : ""}
-          <button type="button" data-detail-tab="trailers">Trailers</button>
-          <button type="button" data-detail-tab="more-like-this">More Like This</button>
-          <button type="button" data-detail-tab="details">Details</button>
-        </nav>
-
-        <section class="dsDetailTabPanels" data-active-tab="overview">
-          <section id="overview" class="dsDetailTabPanel active" data-tab-panel="overview">
-            <div class="dsDetailPanelHead">
-              <span>Story</span>
-              <h2>Overview</h2>
-            </div>
-            <div class="dsDetailGrid dsDetailGridV121">
-              <p>${escapeHtml(details.overview || "No overview available.")}</p>
-              <aside>
-                <div><span>Cast</span><strong>${escapeHtml(cast.slice(0, 4).map((p) => p.name).join(", ") || "—")}</strong></div>
-                <div><span>Genres</span><strong>${escapeHtml((details.genres || []).slice(0, 4).map((g) => g.name).join(", ") || "—")}</strong></div>
-                <div><span>Director</span><strong>${escapeHtml(director?.name || "—")}</strong></div>
-                <div><span>Writers</span><strong>${escapeHtml(writers.map((w) => w.name).join(", ") || "—")}</strong></div>
-                <div><span>Available data</span><strong>${escapeHtml(providerList.map((p) => p.provider_name).join(", ") || "TMDB")}</strong></div>
-              </aside>
-            </div>
-          </section>
-
-          ${castHtml ? `<section id="cast" class="dsDetailTabPanel" data-tab-panel="cast">
-            <div class="dsDetailPanelHead"><span>People</span><h2>Cast</h2></div>
-            <div class="dsCastRail dsCastRailV121">${castHtml}</div>
-          </section>` : ""}
-
-          ${type === "tv" && seasonRows ? `<section id="episodes" class="dsDetailTabPanel dsEpisodesClickable" data-tab-panel="episodes">
-            <div class="dsSectionTitleRow dsDetailPanelHead"><div><span>Episodes</span><h2>Seasons & Episodes</h2><p>Tap any season or episode to open it directly in the player.</p></div><a href="/watch/tv/${escapeHtml(id)}?mode=movie&s=1&e=1">Start S1:E1</a></div>
-            <div class="dsEpisodeList">${seasonRows}</div>
-          </section>` : ""}
-
-          <section id="trailers" class="dsDetailTabPanel" data-tab-panel="trailers">
-            <div class="dsDetailPanelHead"><span>Video</span><h2>Trailers</h2></div>
-            <div class="dsTrailerGrid dsTrailerGridV121">${trailerHtml || `<div class="emptyState">No trailers found.</div>`}</div>
-          </section>
-
-          <section id="more-like-this" class="dsDetailTabPanel" data-tab-panel="more-like-this">
-            <div class="dsDetailPanelHead"><span>Discover</span><h2>More Like This</h2></div>
-            <div class="dsGrid dsMoreGridV121">${moreHtml || `<div class="emptyState">No similar titles found.</div>`}</div>
-          </section>
-
-          <section id="details" class="dsDetailTabPanel" data-tab-panel="details">
-            <div class="dsDetailPanelHead"><span>Info</span><h2>About ${escapeHtml(title)}</h2></div>
-            <div class="dsAboutGrid dsAboutGridV121">
-              <div><span>Full title</span><strong>${escapeHtml(title)}</strong></div>
-              <div><span>Release year</span><strong>${escapeHtml(getYear(detailsDate))}</strong></div>
-              <div><span>Status</span><strong>${escapeHtml(details.status || "—")}</strong></div>
-              <div><span>Original language</span><strong>${escapeHtml(String(details.original_language || "—").toUpperCase())}</strong></div>
-              <div><span>Runtime</span><strong>${escapeHtml(runtime)}</strong></div>
-              <div><span>Rating</span><strong>${escapeHtml(formatRating(details.vote_average))}</strong></div>
-              ${externalIds.imdb_id ? `<div><span>IMDb</span><strong>${escapeHtml(externalIds.imdb_id)}</strong></div>` : ""}
-            </div>
-          </section>
-        </section>
-      </section>
-
-      <script>
-        (function swiflyDetailTabs(){
-          var root = document.currentScript.closest(".dsDetailShell") || document;
-          var buttons = Array.from(root.querySelectorAll("[data-detail-tab]"));
-          var panels = Array.from(root.querySelectorAll("[data-tab-panel]"));
-          var wrap = root.querySelector(".dsDetailTabPanels");
-          if (!buttons.length || !panels.length) return;
-
-          function showTab(tab, push) {
-            var next = panels.find(function(panel){ return panel.getAttribute("data-tab-panel") === tab; }) || panels[0];
-            if (!next) return;
-            var previous = panels.find(function(panel){ return panel.classList.contains("active"); });
-            var backwards = previous && panels.indexOf(next) < panels.indexOf(previous);
-            panels.forEach(function(panel){
-              var active = panel === next;
-              panel.classList.toggle("active", active);
-              panel.classList.toggle("slideBack", active && backwards);
-              panel.hidden = !active;
-            });
-            buttons.forEach(function(button){
-              var active = button.getAttribute("data-detail-tab") === next.getAttribute("data-tab-panel");
-              button.classList.toggle("active", active);
-              button.setAttribute("aria-selected", active ? "true" : "false");
-            });
-            if (wrap) wrap.setAttribute("data-active-tab", next.getAttribute("data-tab-panel"));
-            if (push) history.replaceState(null, "", "#" + next.id);
-          }
-
-          buttons.forEach(function(button){
-            button.addEventListener("click", function(){
-              showTab(button.getAttribute("data-detail-tab"), true);
-            });
-          });
-
-          var initial = String(location.hash || "").replace("#", "");
-          showTab(initial || "overview", false);
-        })();
-      </script>
+      <div class="svDetailBody">
+        <section id="overview" class="svDetailSection svDetailOverview"><h2 class="svDetailSrOnly">Overview</h2><p>${escapeHtml(details.overview || "No overview available yet.")}</p></section>
+        ${castHtml ? `<section id="cast" class="svDetailSection"><h2>Cast</h2><div class="svDetailCastRail" aria-label="Cast">${castHtml}</div></section>` : ""}
+        ${seasonHtml ? `<section id="episodes" class="svDetailSection"><h2>Episodes</h2>${seasonHtml}</section>` : ""}
+        ${more.length ? `<section id="more-like-this" class="svDetailSection"><h2>More like this</h2><div class="svDetailRecommendations">${more.map(item => movieCard(item, type)).join("")}</div></section>` : ""}
+        ${trailers.length ? `<section id="trailers" class="svDetailSection"><h2>Trailers</h2><div class="svDetailTrailers">${trailers.map(video => `<iframe src="https://www.youtube-nocookie.com/embed/${escapeHtml(video.key)}" title="${escapeHtml(video.name || title + " trailer")}" loading="lazy" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`).join("")}</div></section>` : ""}
+        <section id="details" class="svDetailSection"><h2>Details</h2><dl class="svDetailAbout">${about}</dl></section>
+      </div>
     </article>
   </main>`;
-
+  if (req.query.view === "modal") return res.send(body);
   res.send(pageShell({ title: `${SITE_NAME} — ${title}`, description: details.overview || title, body }));
 }
+
 
 async function peoplePage(req, res) {
   const page = pageNumber(req.query.page);
