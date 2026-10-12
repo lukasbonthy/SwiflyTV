@@ -75,3 +75,25 @@ Good result has:
 ```
 
 If `executablePath` is empty, the service is not running Docker.
+
+
+## Docker Playwright 1.60 Render fix
+
+This build is meant to run on Render as a **Docker** web service, not a native Node service.
+
+Dockerfile uses:
+
+```dockerfile
+FROM mcr.microsoft.com/playwright:v1.60.0-noble
+PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+```
+
+`package.json` pins:
+
+```json
+"playwright-core": "1.60.0"
+```
+
+This avoids the native Render `postinstall` Chromium download hang and keeps the installed Playwright package matched to the browser binaries inside the Docker image.
+
+Important: if Render logs still say `Requesting Node.js version` and `Running build command npm install`, the service is still a native Node service and is not using Docker. Switch the service environment to Docker, or create a new Render Web Service from the repo using the Dockerfile / render.yaml.

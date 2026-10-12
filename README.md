@@ -1,3 +1,39 @@
+# SwiflyTV v153 — Polished liquid glass catalog
+
+A cleaner black layout with floating liquid glass navigation, portrait posters, quieter controls and a rebuilt Continue Watching component.
+
+See [POLISH_v153.md](POLISH_v153.md) for the latest changes and Windows PowerShell setup. Earlier UI changes are documented in [LIQUID_GLASS_v150.md](LIQUID_GLASS_v150.md), [CLEAN_DESIGN_v151.md](CLEAN_DESIGN_v151.md) and [EXPANDED_GLASS_v152.md](EXPANDED_GLASS_v152.md).
+
+## Start locally
+
+Use Node.js 20 or later. In the project folder:
+
+```powershell
+npm install
+Copy-Item .env.example .env
+notepad .env
+```
+
+Set your own `TMDB_API_KEY` in `.env`. For Windows playback, follow the browser and environment settings in [POLISH_v153.md](POLISH_v153.md).
+
+```powershell
+npm start
+```
+
+Open http://localhost:3000. Keep your existing `.env` when updating. The distribution contains no private API keys, installed dependencies or browser binaries.
+
+## Validation
+
+```powershell
+npm run check
+```
+
+The Docker and Render configuration and original server playback implementation remain in this release.
+
+---
+
+## Earlier setup and release notes
+
 # MovieVerse TMDB Full v2
 
 This is a much fuller movie/TV website powered by TMDB.
@@ -793,7 +829,7 @@ Render setup:
    ```env
    REMOTE_BROWSER_ENABLED=true
    PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
-   PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+   PLAYWRIGHT_BROWSERS_PATH=0
    ```
 3. Do not set `REMOTE_BROWSER_WS_URL` unless you want to use an external browser service.
 
@@ -3620,3 +3656,279 @@ Consumet install fix:
 ```
 
 After deploying, clear Render's build cache or trigger a fresh deploy so `node_modules/@consumet/extensions` is actually installed.
+
+
+## Best fix notes: Playwright and fake video blockers
+
+This build fixes the Render Playwright mismatch shown by `Executable doesn't exist at /ms-playwright/chromium_headless_shell-1223/...` by pinning:
+
+```json
+"playwright-core": "1.49.1"
+```
+
+That matches the Docker base image:
+
+```dockerfile
+FROM mcr.microsoft.com/playwright:v1.49.1-noble
+```
+
+It also blocks false-positive videos from protection/landing pages such as Cloudflare's `hero-background-video.mp4`. VidSrc now only returns a winner when Playwright actually captures a trusted source from network requests.
+
+After deploying, use Render's **Clear build cache & deploy** so dependencies reinstall cleanly.
+
+Runtime check:
+
+```txt
+/api/local/runtime-debug
+/api/local/vidsrc-debug?tmdb=11836&type=movie
+/api/local/super-source-debug?tmdb=11836&type=movie
+```
+
+
+## Render native install fix
+
+If Render shows `Cannot find module '@consumet/extensions'`, the running deploy did not install the new `package.json`. Use **Clear build cache & deploy**. This build adds `@consumet/extensions` and a `postinstall` step that runs:
+
+```txt
+PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install chromium
+```
+
+For native Render Node services, set or keep:
+
+```env
+PLAYWRIGHT_BROWSERS_PATH=0
+```
+
+Do not use `/ms-playwright` unless the service is actually using the Playwright Docker image.
+
+## Render native Node build no-hang fix
+
+This build removes the project-level `postinstall` command that was forcing:
+
+```bash
+PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install chromium
+```
+
+That command is why Render reached `100% of 161.3 MiB` and then appeared stuck/extracting during `npm install`.
+
+For the normal Render **Node** service, keep:
+
+```env
+VIDSRC_ENABLED=false
+CONSUMET_ENABLED=true
+```
+
+Consumet does not need a browser. VidSrc uses Playwright/Chromium, so only enable VidSrc if you switch the Render service to Docker or otherwise provide a Chromium executable.
+
+Also changed `engines.node` to `20.x` so Render does not jump to Node 26.
+
+
+## Docker Playwright 1.60 Render fix
+
+This build is meant to run on Render as a **Docker** web service, not a native Node service.
+
+Dockerfile uses:
+
+```dockerfile
+FROM mcr.microsoft.com/playwright:v1.60.0-noble
+PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+```
+
+`package.json` pins:
+
+```json
+"playwright-core": "1.60.0"
+```
+
+This avoids the native Render `postinstall` Chromium download hang and keeps the installed Playwright package matched to the browser binaries inside the Docker image.
+
+Important: if Render logs still say `Requesting Node.js version` and `Running build command npm install`, the service is still a native Node service and is not using Docker. Switch the service environment to Docker, or create a new Render Web Service from the repo using the Dockerfile / render.yaml.
+
+## Docker runtime diagnostic build
+
+This build keeps the Playwright 1.60 Docker setup, but adds safer startup logging so Render shows the real crash reason instead of only `Application exited early`.
+
+It now logs:
+
+```txt
+[docker-start] node=...
+[docker-start] module express: ...
+[docker-start] playwright-core version: ...
+[docker-start] chromium executablePath: ...
+[boot] server.js starting ...
+SwiflyTV running on http://0.0.0.0:10000
+```
+
+It also binds explicitly to `0.0.0.0` using `HOST=0.0.0.0`.
+
+If Render still exits, copy the lines starting with `[fatal]` or `[docker-start]`.
+
+## Docker Playwright 1.49 stable build
+
+This build uses the Dockerfile pattern that worked before:
+
+```dockerfile
+FROM mcr.microsoft.com/playwright:v1.49.1-noble
+PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+CMD ["npm", "start"]
+```
+
+`playwright-core` is pinned to `1.49.1` so it matches the browser already included in the Docker image.
+
+## Filmu m3u8 scraper
+
+This build adds a backend-only Filmu scraper and makes it the default play provider.
+
+Target template:
+
+```txt
+https://embedm3u8.filmu.in/movietrailer/{tmdb}
+```
+
+The scraper replaces `use-tmdbid-for-your-scraper` with the TMDB id, opens it with Playwright, watches network requests/responses like DevTools, clicks the player, and returns the first captured `.m3u8` through SwiflyTV's HLS proxy.
+
+Debug routes:
+
+```txt
+/api/local/filmu-debug?tmdb=11836&type=movie
+/api/local/super-source-debug?tmdb=11836&type=movie
+```
+
+Default env:
+
+```env
+DEFAULT_PLAY_PROVIDER=filmu
+FILMU_ENABLED=true
+FILMU_EMBED_TEMPLATE=https://embedm3u8.filmu.in/movietrailer/{tmdb}
+VIDSRC_ENABLED=false
+```
+
+### Filmu exact URL format
+
+Example:
+
+```txt
+https://embedm3u8.filmu.in/movietrailer/112321
+```
+
+The backend now tries this exact format first:
+
+```txt
+https://embedm3u8.filmu.in/movietrailer/{tmdb}
+```
+
+## Filmu fast debug fix
+
+`/api/local/filmu-debug` now has a hard timeout so it returns JSON instead of loading forever.
+
+Quick URL-only test:
+
+```txt
+/api/local/filmu-url?tmdb=11836&type=movie
+```
+
+Main test:
+
+```txt
+/api/local/filmu-debug?tmdb=11836&type=movie
+```
+
+Env:
+
+```env
+FILMU_ROUTE_TIMEOUT_MS=35000
+FILMU_TRY_FALLBACKS=false
+```
+
+## StreamProvider-main m3u8-only scraper
+
+This build ports the uploaded `StreamProvider-main.zip` logic into SwiflyTV. It tries direct TMDB-id provider pages and captures real `.m3u8` requests from Playwright network traffic.
+
+Routes:
+
+```txt
+/api/local/streamprovider-debug?tmdb=11836&type=movie
+/api/local/streamprovider-debug?tmdb=1399&type=tv&season=1&episode=1
+```
+
+Default provider order:
+
+```env
+DEFAULT_PLAY_PROVIDER=streamprovider
+STREAMPROVIDER_ORDER=hexa,cinezo,sflix
+```
+
+Only `.m3u8` sources are accepted from this provider.
+
+## No-env StreamProvider build
+
+This build removes the need to manually set all those Render env vars.
+
+Important defaults are forced inside `server.js` when `SWIFLY_NO_ENV_MODE` is not set to `false`:
+
+```txt
+DEFAULT_PLAY_PROVIDER=streamprovider
+STREAMPROVIDER_ENABLED=true
+STREAMPROVIDER_ORDER=hexa,cinezo,sflix
+VIDSRC_ENABLED=false
+CONSUMET_ENABLED=false
+FILMU_ENABLED=false
+PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+```
+
+`render.yaml` is now minimal. The Dockerfile contains the Playwright/Docker defaults.
+
+Test:
+
+```txt
+/api/local/streamprovider-debug?tmdb=11836&type=movie
+```
+
+Optional env only:
+
+```txt
+TMDB_API_KEY=...
+```
+
+## StreamProvider timeout fix
+
+Your debug showed the hang was from `sflix2.to` search:
+
+```txt
+streamprovider-sflix: page.goto: Timeout 18000ms exceeded
+```
+
+This build removes `sflix` from the no-env default order and tries direct TMDB URL providers first:
+
+```txt
+STREAMPROVIDER_ORDER=hexa,cinezo
+```
+
+Quick URL-only test:
+
+```txt
+/api/local/streamprovider-urls?tmdb=11836&type=movie
+```
+
+Main test:
+
+```txt
+/api/local/streamprovider-debug?tmdb=11836&type=movie
+```
+
+## StreamProvider any-media build
+
+This build no longer requires `.m3u8`. StreamProvider now accepts the first real playable media URL it captures, including:
+
+```txt
+.m3u8 .mpd .mp4 .m4v .webm .mkv .mov .avi .flv .ts .m2ts .mts .m4s .fmp4
+```
+
+It still prefers `.m3u8` when one appears, but if the provider exposes a direct `.mp4` or similar, it returns that to Vidstack.
+
+Test:
+
+```txt
+/api/local/streamprovider-debug?tmdb=11836&type=movie
+```

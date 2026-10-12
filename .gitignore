@@ -1,4 +1,6 @@
-vendor/cinepro-core/
-vendor/nuvio-providers/
 .env
+.env.*
+!.env.example
 node_modules/
+npm-debug.log*
+*.zip

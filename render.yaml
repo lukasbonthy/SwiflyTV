@@ -4,64 +4,7 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     plan: free
+
     envVars:
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: "10000"
-      - key: HOST
-        value: 0.0.0.0
-      - key: PLAYWRIGHT_BROWSERS_PATH
-        value: /ms-playwright
-      - key: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD
-        value: "1"
-      - key: REMOTE_BROWSER_ENABLED
-        value: "true"
-      - key: REMOTE_BROWSER_FPS
-        value: "1"
-      - key: REMOTE_BROWSER_JPEG_QUALITY
-        value: "58"
-      - key: CINEPRO_ENABLED
-        value: "true"
-      - key: CINEPRO_AUTO_START
-        value: "true"
-      - key: CINEPRO_CORE_URL
-        value: http://127.0.0.1:3100
-      - key: CINEPRO_PORT
-        value: "3100"
-      - key: CINEPRO_TIMEOUT_MS
-        value: "90000"
-      - key: CINEPRO_PROVIDER_ALLOWLIST
-        value: vixsrc,icefy
-      - key: CINEPRO_PROVIDER_ORDER
-        value: vixsrc,icefy
-      - key: DEFAULT_PLAY_PROVIDER
-        value: cinepro
-      - key: CONSUMET_ENABLED
-        value: "true"
-      - key: VIDSRC_ENABLED
-        value: "true"
-      - key: VIDSRC_PROVIDER_ORDER
-        value: https://vidsrc.xyz,https://vidsrc.in,https://vidsrc.pm,https://vidsrc.net
-      - key: VIDSRC_TIMEOUT_MS
-        value: "28000"
-      - key: VIDSRC_WAIT_MS
-        value: "9000"
-      - key: VIDSRC_CONCURRENCY
-        value: "2"
-      - key: FILMU_ENABLED
-        value: "true"
-      - key: FILMU_EMBED_TEMPLATE
-        value: "https://embedm3u8.filmu.in/movietrailer/{tmdb}"
-      - key: FILMU_TIMEOUT_MS
-        value: "30000"
-      - key: FILMU_WAIT_MS
-        value: "12000"
-      - key: MOVIE_EMBED_PROVIDER_ENABLED
-        value: "true"
-      - key: MOVIE_EMBED_PROVIDER_URL
-        value: "https://lupetube.com/trailer"
-      - key: MOVIE_PROXY_VIDEO_CLIENT_WAIT
-        value: "true"
-      - key: MOVIE_PROXY_VIDEO_ALLOW_LEGACY_FALLBACK
+      - key: STREAMPROVIDER_ACCEPT_ANY_MEDIA
         value: "true"

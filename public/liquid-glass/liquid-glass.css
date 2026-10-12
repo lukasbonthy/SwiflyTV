@@ -1,0 +1,137 @@
+/* SwiflyTV v150: locally rendered liquid glass with a frosted fallback. */
+.svLiquidPane {
+  --sv-glass-radius: 24px;
+  --sv-glass-tint: var(--sv-glass-default-tint, .2);
+  --sv-glass-saturation: 1;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: var(--sv-glass-radius);
+  background: rgb(5 8 15 / .38);
+  -webkit-backdrop-filter: blur(12px) saturate(1.8) brightness(1.1);
+  backdrop-filter: blur(12px) saturate(1.8) brightness(1.1);
+  box-shadow: inset 0 0 0 .5px #ffffff29, 0 4px 16px #0000001a, 0 8px 24px #00000014;
+}
+.svLiquidPane[data-swifly-renderer="svg"] {
+  background: rgb(0 0 0 / var(--sv-glass-tint));
+  -webkit-backdrop-filter: var(--sv-glass-filter) saturate(var(--sv-glass-saturation));
+  backdrop-filter: var(--sv-glass-filter) saturate(var(--sv-glass-saturation));
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+.svLiquidPane__filters {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+}
+body [data-sv-liquid-nav].topbar {
+  position: fixed !important;
+  inset: 0 0 auto !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 14px 20px !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  pointer-events: none !important;
+}
+body [data-sv-liquid-nav].topbar > .container.nav.netflixNav {
+  position: relative !important;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  width: min(1320px, 100%);
+  min-height: 60px;
+  margin: 0 auto !important;
+  padding: 9px 18px;
+  border: 0 !important;
+  border-radius: 24px;
+  background: transparent !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  overflow: visible !important;
+  pointer-events: auto !important;
+}
+body [data-sv-liquid-nav].topbar .navLeftCluster,
+body [data-sv-liquid-nav].topbar .navRightCluster,
+body [data-sv-liquid-nav].topbar .mobileSearchForm {
+  position: relative;
+  z-index: 1;
+}
+body [data-sv-liquid-nav].topbar .navLeftCluster { display: flex; align-items: center; flex: 1; min-width: 0; gap: 22px; }
+body [data-sv-liquid-nav].topbar .navLinks { display: flex; align-items: center; flex: 1; gap: 14px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+body [data-sv-liquid-nav].topbar .navLinks::-webkit-scrollbar { display: none; }
+body [data-sv-liquid-nav].topbar .navLinks > a { min-height: 38px; }
+body .dsProfileDropdown.svLiquidDropdown {
+  isolation: isolate;
+  z-index: 5;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  overflow: visible;
+}
+body .dsProfileDropdown.svLiquidDropdown::before { display: none !important; }
+body .dsProfileDropdown.svLiquidDropdown > .svLiquidPane { --sv-glass-radius: 22px; }
+body .dsProfileDropdown.svLiquidDropdown > :not(.svLiquidPane) { position: relative; z-index: 1; }
+body .mobileNav[data-sv-liquid-nav] {
+  position: fixed !important;
+  inset: auto auto calc(14px + env(safe-area-inset-bottom)) 50% !important;
+  transform: translateX(-50%) !important;
+  width: min(460px, calc(100% - 24px)) !important;
+  padding: 7px 8px !important;
+  border: 0 !important;
+  border-radius: 26px;
+  background: transparent !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  isolation: isolate;
+  z-index: var(--z-nav, 1400);
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 2px;
+}
+body .mobileNav[data-sv-liquid-nav] > .svLiquidPane { --sv-glass-radius: 26px; }
+body .mobileNav[data-sv-liquid-nav] > a {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  padding: 4px;
+  font-size: 11px;
+  font-weight: 650;
+  border: 0;
+  border-radius: 18px;
+}
+body [data-sv-liquid-nav] a:focus-visible,
+body [data-sv-liquid-nav] button:focus-visible,
+body [data-sv-liquid-nav] summary:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+@media (min-width: 861px) { body .mobileNav[data-sv-liquid-nav] { display: none !important; } }
+@media (max-width: 860px) {
+  body [data-sv-liquid-nav].topbar { padding: 12px !important; }
+  body [data-sv-liquid-nav].topbar > .container.nav.netflixNav { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+  body [data-sv-liquid-nav].topbar .navLinks,
+  body [data-sv-liquid-nav].topbar .dsNavActions { display: none; }
+  body [data-sv-liquid-nav].topbar .mobileSearchForm { display: grid; grid-column: 1 / -1; grid-template-columns: 1fr 44px; }
+  body .mobileNav[data-sv-liquid-nav] { display: grid; }
+  body .controlDock { bottom: 90px; }
+}
+body:has(.dsAuthPage) .mobileNav[data-sv-liquid-nav],
+body:has(.dsWelcomePage) .mobileNav[data-sv-liquid-nav],
+body:has(.playerFullscreen) .mobileNav[data-sv-liquid-nav] { display: none !important; }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .svLiquidPane { background: rgb(15 17 22 / .94); } }
+@media (prefers-reduced-transparency: reduce) {
+  .svLiquidPane, .svLiquidPane[data-swifly-renderer="svg"] { background: rgb(15 17 22 / .96); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
