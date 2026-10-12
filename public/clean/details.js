@@ -1,4 +1,4 @@
-/* v156: details-first browsing, a shareable overlay and deliberate return routes. */
+/* v157: details-first browsing and return context preserved through player controls. */
 (() => {
   'use strict';
   if (window.SwiflyDetails) return;
@@ -25,7 +25,11 @@
   function storageRead(key) {try {return sessionStorage.getItem(key);} catch {return null;}}
   function storageWrite(key,value) {try {sessionStorage.setItem(key,value);} catch {}}
   function storageRemove(key) {try {sessionStorage.removeItem(key);} catch {}}
-  function returnToCatalog() {return catalogURL(document.referrer)||catalogURL(storageRead('swiflytv.browseReturn'))||'/';}
+  function returnToCatalog() {
+    const referrer=catalogURL(document.referrer),stored=catalogURL(storageRead('swiflytv.browseReturn'));
+    if(referrer&&stored){const source=localURL(referrer),saved=localURL(stored);if(source.pathname+source.search===saved.pathname+saved.search)return stored;}
+    return referrer||stored||'/';
+  }
   function rememberCatalog() {const href=catalogURL(location.href);if (href) storageWrite('swiflytv.browseReturn',href);}
   function playbackReturn(fallback) {
     const player=location.pathname.match(/^\/watch\/(movie|tv)\/(\d+)/);
@@ -144,6 +148,8 @@
   function rememberPlayback(link) {
     const target=localURL(link.href),match=target?.pathname.match(/^\/watch\/(movie|tv)\/(\d+)\/?$/);if(!match)return;
     const expected='/'+match[1]+'/'+match[2];
+    const currentPlayer=location.pathname.match(/^\/watch\/(movie|tv)\/(\d+)\/?$/);
+    if(currentPlayer&&'/'+currentPlayer[1]+'/'+currentPlayer[2]===expected)return;
     rememberDetailScroll();
     storageWrite('swiflytv.playContext',JSON.stringify({href:expected,base:catalogURL(location.href)||catalogURL(storageRead('swiflytv.browseReturn'))||'/',top:window.scrollY,detailTop:dialog?.open&&currentHref===expected?viewport.scrollTop:0}));
     if(titleRoute(location.href)===expected&&!mediaRoute()){storageWrite('swiflytv.playReturn',route(new URL(location.href)));return;}

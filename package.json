@@ -1,7 +1,7 @@
 {
   "name": "swiflytv",
-  "version": "2.0.4",
-  "description": "SwiflyTV v156: details-first browsing, richer title views and predictable Back navigation.",
+  "version": "2.0.5",
+  "description": "SwiflyTV v157: cinematic details and reliable return navigation through player mode and episode changes.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

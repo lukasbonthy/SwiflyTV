@@ -58,6 +58,24 @@ test('Player Back traverses history only when its actual referrer matches the va
  w.history.back=()=>back++;Object.defineProperty(w.history,'length',{value:3});w.sessionStorage.setItem('swiflytv.playReturn','/search?q=moon&media=movie-101');w.boot('details.js');
  d.querySelector('a').dispatchEvent(new w.MouseEvent('click',{bubbles:true,cancelable:true}));assert.equal(back,1,'Player Back should restore the existing document when its origin is proven');env.finish();
 });
+test('Player mode and episode controls preserve the original browsing scroll context',()=>{
+ for(const [type,next] of [['movie','?mode=trailer'],['tv','?mode=movie&s=2&e=5']]){
+  const href='/'+type+'/101',base='/search?q=moon#results',returnView='/search?q=moon&media='+type+'-101#results';
+  const env=browser('<a id="control" href="/watch/'+type+'/101'+next+'">Next</a>',{path:'/watch/'+type+'/101?mode=movie'}),w=env.window;
+  const context=JSON.stringify({href,base,top:650,detailTop:320});w.sessionStorage.setItem('swiflytv.browseReturn',base);w.sessionStorage.setItem('swiflytv.playReturn',returnView);w.sessionStorage.setItem('swiflytv.playContext',context);w.boot('details.js');w.document.getElementById('control').click();
+  assert.equal(w.sessionStorage.getItem('swiflytv.playReturn'),returnView);assert.equal(w.sessionStorage.getItem('swiflytv.playContext'),context);env.finish();
+ }
+});
+test('Switching player modes keeps a standalone title as the return destination',()=>{
+ const env=browser('<a href="/watch/movie/101?mode=trailer">Trailer</a>',{path:'/watch/movie/101?mode=movie'}),w=env.window;
+ w.sessionStorage.setItem('swiflytv.playReturn','/movie/101');w.boot('details.js');w.document.querySelector('a').click();assert.equal(w.sessionStorage.getItem('swiflytv.playReturn'),'/movie/101');env.finish();
+});
+test('Standalone Back preserves the saved hash only for the matching catalog referrer',()=>{
+ for(const [referrer,expected] of [['/search?q=moon','/search?q=moon#results'],['/search?q=stars','/search?q=stars']]){
+  const env=browser('<a href="/" data-sv-details-back>Back</a>',{path:'/movie/101',referrer:'http://localhost:3000'+referrer}),w=env.window;
+  w.sessionStorage.setItem('swiflytv.browseReturn','/search?q=moon#results');w.boot('details.js');assert.equal(w.document.querySelector('a').getAttribute('href'),expected);env.finish();
+ }
+});
 test('Returning from playback restores the saved catalog and details scroll positions',async()=>{
  // Simulate a new document returning from the player, using context saved by the real outgoing click.
  const source=setup(),sw=source.window,sd=sw.document;source.page.scrollTop=650;await sw.SwiflyDetails.open('/movie/101',sd.getElementById('open'));

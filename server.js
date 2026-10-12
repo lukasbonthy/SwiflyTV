@@ -38890,7 +38890,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/clean/details.css?v=156" />
     <link rel="stylesheet" href="/assets/clean/motion.css?v=154" />
     <script defer src="/assets/clean/motion.js?v=155"></script>
-    <script defer src="/assets/clean/details.js?v=156"></script>
+    <script defer src="/assets/clean/details.js?v=157"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=153" />
     <script defer src="/assets/liquid-glass/surfaces.js?v=155"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=155" />
