@@ -39032,7 +39032,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/studio/studio.js?v=158"></script>
     ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=159" /><script defer src="/assets/party/party.js?v=159"></script>' : ""}
     ${player ? '<link rel="stylesheet" href="/assets/player/player.css?v=160" /><script defer src="/assets/player/player.js?v=160"></script>' : ""}
-    ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=160" /><script defer src="/assets/player/watch-party.js?v=160"></script>' : ""}
+    ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=161" /><script defer src="/assets/player/watch-party.js?v=160"></script>' : ""}
 </head>
 <body class="svCleanShell">
 
@@ -41175,9 +41175,9 @@ async function listingPage(req, res, type = "movie", options = {}) {
         <div class="genreDropdownMenu">${genreLinks}</div>
       </details>
     </section>
-    ${partyBrowse ? partyBrowseMarkup() : ""}
     ${dsHero({ hero, type, context: label, eyebrow: `${label} spotlight` })}
     <section class="dsContent">
+      ${partyBrowse ? partyBrowseMarkup() : ""}
       ${dsRail(categoryOne, rowOne.results || [], type)}
       ${dsTopRail(type === "tv" ? "Top 10 TV Shows Today" : "Top Movies Today", data.results || [], type)}
       ${dsRail(categoryTwo, rowTwo.results || [], type)}
@@ -47914,7 +47914,7 @@ app.get("/social", (req, res) => {
   const roomMovieId = partyMovieId(room?.syncedMovie?.movieId);
   if (roomMovieId) return res.redirect(`/watch/movie/${roomMovieId}?mode=movie&roomId=${encodeURIComponent(roomId)}`);
   if (roomId || req.query.tab === "chat" || req.query.denied || req.query.kind || req.query.embedUrl || req.query.videoId) return socialPage(req, res);
-  res.redirect("/movies?party=1");
+  res.redirect("/movies?party=1#watch-together");
 });
 
 app.get("/kids", async (req, res) => {

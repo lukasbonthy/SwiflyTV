@@ -1,6 +1,6 @@
-# SwiflyTV v160 — One catalog, one player, watch together
+# SwiflyTV v161 — Party layout correction
 
-A cinematic catalog with liquid glass navigation, rich movie detail overlays, smooth scrolling and a redesigned appearance workspace. Posters open details first, with a separate Play action. Back and Close preserve browsing context, and titles can be shared through the selected-media URL.
+A cinematic catalog with liquid glass navigation, rich movie detail overlays, smooth scrolling and a redesigned appearance workspace. Watch-together tools now sit with the catalog rows below the hero, using the same gutter and pill controls. The Party entry scrolls to those tools with room for the floating navigation, correcting the overlapping banner in v160. Posters open details first, with a separate Play action. Back and Close preserve browsing context, and titles can be shared through the selected-media URL.
 
 Watch parties now start from the regular movie catalog and use the same player, with chat beside the film. Playback has a simpler glass control dock and a fixed source-loading deadline with a fresh Retry cycle. See [PLAYER_PARTIES_v160.md](PLAYER_PARTIES_v160.md) for the changes and update instructions. Earlier changes are documented in [PARTY_DETAILS_v159.md](PARTY_DETAILS_v159.md), [STUDIO_PARTY_v158.md](STUDIO_PARTY_v158.md), [NAVIGATION_FOLLOWUP_v157.md](NAVIGATION_FOLLOWUP_v157.md), [DETAILS_NAVIGATION_v156.md](DETAILS_NAVIGATION_v156.md), [STUDIO_v155.md](STUDIO_v155.md), and [DETAILS_MOTION_v154.md](DETAILS_MOTION_v154.md). [POLISH_v153.md](POLISH_v153.md) includes the Windows PowerShell setup.
 

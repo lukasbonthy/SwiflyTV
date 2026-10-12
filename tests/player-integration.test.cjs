@@ -41,7 +41,7 @@ test('Trailer mode keeps an official trailer and never renders a movie loading c
  assert.equal(d.querySelector('video'),null);assert.equal(d.querySelector('[data-player-party-open]'),null);
 });
 test('Party navigation opens the same movie catalog with its existing hero, genres, and rows',async()=>{
- const redirect=await fetch(base+'/social',{redirect:'manual'});assert.equal(redirect.status,302);assert.equal(redirect.headers.get('location'),'/movies?party=1');
+ const redirect=await fetch(base+'/social',{redirect:'manual'});assert.equal(redirect.status,302);assert.equal(redirect.headers.get('location'),'/movies?party=1#watch-together');
  const env=parse(await(await fetch(base+'/movies?party=1')).text()),d=env.window.document;
  assert.equal(d.querySelector('.dsBrowseTop h1').textContent.trim(),'Movies');assert(d.querySelector('.genreDropdown'));assert(d.querySelector('.dsHero'));
  assert(d.querySelector('[data-party-browse]'));assert(d.querySelector('.dsContent'));assert.equal(d.querySelector('.svPartyHub'),null);

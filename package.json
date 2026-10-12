@@ -1,7 +1,7 @@
 {
   "name": "swiflytv",
-  "version": "2.0.8",
-  "description": "SwiflyTV v160: integrated watch parties, a clean native player, and bounded source loading.",
+  "version": "2.0.9",
+  "description": "SwiflyTV v161: party tools aligned with catalog rows and shared pill controls.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

@@ -2,10 +2,10 @@
 .svPartyBrowse,.svInlineParty,.svWatchPartyDialog { --party-line:#ffffff16; --party-muted:#a5a5a5; font-family:var(--st-font,"Host Grotesk",system-ui,sans-serif); color:#eee; box-sizing:border-box; }
 .svPartyBrowse *,.svInlineParty *,.svWatchPartyDialog * { box-sizing:border-box; }
 .svPartyBrowse svg,.svInlineParty svg,.svWatchPartyDialog svg { width:19px; height:19px; flex:0 0 19px; }
-body.svCleanShell .svPartyBrowse { display:flex; align-items:center; gap:26px; margin:0 var(--sv-page-gutter,32px) 24px; padding:18px 22px; border:1px solid var(--party-line); border-radius:18px; background:linear-gradient(115deg,#ffffff07,#ffffff02); box-shadow:inset 0 1px #ffffff06; }
+body.svCleanShell .svPartyBrowse { position:relative; display:flex; flex-wrap:wrap; align-items:center; gap:24px; margin:0 0 34px; padding:8px 0 26px; border:0; border-bottom:1px solid var(--party-line); border-radius:0; background:none; box-shadow:none; scroll-margin-top:112px; }
 .svPartyBrowseIntro { display:flex; align-items:center; gap:13px; flex:1; min-width:210px; }
 .svPartyBrowseIntro>svg { width:24px; height:24px; color:#bbb; }
-body.svCleanShell .svPartyBrowse h2 { font-size:17px !important; font-weight:500 !important; margin:0 !important; letter-spacing:-.02em !important; }
+body.svCleanShell .svPartyBrowse h2 { font-size:clamp(19px,1.7vw,24px) !important; font-weight:600 !important; margin:0 !important; line-height:1.3 !important; letter-spacing:-.025em !important; }
 body.svCleanShell .svPartyBrowse p { font-size:12px !important; color:var(--party-muted) !important; line-height:1.5 !important; margin:5px 0 0 !important; }
 .svPartyBrowse .svPartyJoinForm { flex:0 1 345px; margin:0; }
 .svPartyJoinForm>label,.svPartyCreateForm>label { display:block; font-size:12px; color:#bcbcbc; margin-bottom:8px; }
@@ -15,6 +15,7 @@ body.svCleanShell :is(.svPartyBrowse,.svWatchPartyDialog,.svInlineParty) input {
 body.svCleanShell :is(.svPartyBrowse,.svWatchPartyDialog,.svInlineParty) input::placeholder { color:#7f7f7f; }
 body.svCleanShell :is(.svPartyBrowse,.svWatchPartyDialog,.svInlineParty) :is(.dsSecondaryBtn,.dsPrimaryBtn) { min-height:42px; border-radius:11px !important; font-size:12px !important; white-space:nowrap; gap:7px; }
 body.svCleanShell :is(.svPartyBrowse,.svWatchPartyDialog,.svInlineParty) .dsIconBtn { width:36px !important; height:36px !important; min-height:36px !important; padding:8px !important; border-radius:10px !important; }
+body.svCleanShell .svPartyBrowse :is(.dsSecondaryBtn,.dsPrimaryBtn,input) { border-radius:999px !important; }
 body.svCleanShell :is(.svPartyBrowse,.svWatchPartyDialog,.svInlineParty) :is(button,summary,input,a):focus-visible { outline:2px solid var(--st-accent,#eee) !important; outline-offset:4px !important; }
 body.svCleanShell :is(.svPartyBrowse,.svWatchPartyDialog,.svInlineParty) .swifly-tv-focus-target { outline:2px solid #eee !important; outline-offset:4px !important; }
 body.svCleanShell :is(.svPartyBrowse,.svWatchPartyDialog,.svInlineParty) button:disabled { cursor:default; opacity:.42; }
@@ -82,12 +83,12 @@ body.svCleanShell .svWatchPartyDialog .svPartySetupStatus { font-size:12px !impo
  .svInlineParty { height:480px; min-height:400px; }
 }
 @media (max-width:700px) {
- body.svCleanShell .svPartyBrowse { margin:0 16px 20px; padding:18px 16px; gap:16px; border-radius:15px; }
+ body.svCleanShell .svPartyBrowse { margin:0 0 28px; padding:8px 0 24px; gap:16px; border-radius:0; }
  .svPartyBrowseIntro { min-width:0; align-items:flex-start; }
  .svPartyBrowseIntro>svg { flex:0 0 21px; }
  .svPartyBrowse .svPartyJoinForm { flex-basis:100%; }
- .svPartyBrowse .svPartyDirectory { margin-left:34px; }
- .svPartyDirectory>section { left:-34px; right:auto; width:min(330px,calc(100vw - 66px)); }
+ .svPartyBrowse .svPartyDirectory { margin-left:0; }
+ .svPartyDirectory>section { left:0; right:auto; width:min(330px,calc(100vw - 40px)); }
  .svInlineParty { height:460px; border-radius:16px; }
  body.svCleanShell .svWatchPartyDialog { padding:25px 22px; border-radius:20px; }
  body.svCleanShell .svWatchPartyDialog h2 { font-size:26px !important; }
