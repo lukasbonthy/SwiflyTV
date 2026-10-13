@@ -20,17 +20,53 @@
   let intersection, mutations, frame = 0, stopped = false, removed = false;
   const liquidPreference = () => !['off', 'subtle'].includes(document.body.dataset.stGlass);
   const filter = host => host.querySelector(':scope > svg.svLiquidPane__filters');
+  // Only a handful of prominent, on-screen actions use the real navigation
+  // renderer. Repeated poster-grid controls intentionally stay lightweight.
+  const navOpticSelector = [
+    '.dsHeroActions > :is(.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn)',
+    '.svDetailActions > :is(.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn)',
+    '.dsWelcomeActions > :is(.dsPrimaryBtn,.dsSecondaryBtn)',
+    '.dsSafeAuthForm > .dsPrimaryBtn',
+    '.svAuthPasswordToggle',
+    '.dsAuthSwitch > a',
+    '.dsDropdownLogout',
+    '.svDetailChrome > :is(button,a)',
+    '.dsAuthTopActions button[data-st-open]',
+    '.dsAuthCard'
+  ].join(',');
   function deactivate(entry) {
-    entry.controller?.setEnabled(false); entry.host.dataset.swiflyRenderer = 'blur';
+    entry.opticController?.setEnabled(false);
+    entry.controller?.setEnabled(false);
+    entry.host.dataset.swiflyRenderer = 'blur';
   }
   function activate(entry) {
-    if (!entry.complex || !entry.visible || !entry.host.isConnected || document.hidden || !liquidPreference() || !window.SwiflyLiquidGlass) return;
+    if (!entry.visible || !entry.host.isConnected || document.hidden || !liquidPreference() || !window.SwiflyLiquidGlass) return;
+    // Same DOM architecture as the working navbar: actual backdrop-filter
+    // lives on a .svLiquidPane child, NOT on the isolated control itself.
+    if (entry.optic) {
+      if (!entry.opticPane) {
+        const pane=document.createElement('span');
+        pane.className='svLiquidPane svNavMatchedLens';
+        pane.setAttribute('aria-hidden','true');
+        entry.host.insertBefore(pane,entry.host.firstChild);
+        entry.opticPane=pane;
+      }
+      if (!entry.opticController) {
+        entry.opticController=window.SwiflyLiquidGlass.mount(entry.opticPane, {
+          tint:entry.panel?.24:.20,mapBlur:7,blend:'screen',
+          distortionScale:-180,channelOffsets:[0,10,20]
+        });
+      } else if (!entry.opticController.enabled) entry.opticController.setEnabled(true);
+    }
+    if (!entry.complex) return;
     if (!entry.controller) entry.controller = window.SwiflyLiquidGlass.mount(entry.host, {tint:.32, mapBlur:11, blend:'screen'});
     else if (!entry.controller.enabled) entry.controller.setEnabled(true);
     else if (entry.controller.supported && !filter(entry.host)) entry.controller.refresh();
   }
   function release(entry) {
-    intersection?.unobserve(entry.host); entry.controller?.destroy();
+    intersection?.unobserve(entry.host);
+    entry.opticController?.destroy();entry.opticPane?.remove();
+    entry.controller?.destroy();
     for (const name of entry.addedClasses) entry.host.classList.remove(name);
     if (entry.previousRenderer === undefined) delete entry.host.dataset.swiflyRenderer;
     else entry.host.dataset.swiflyRenderer = entry.previousRenderer;
@@ -51,13 +87,17 @@
       !host.closest('.dsCardQuickActions,.movieCard,.posterWrap,media-player,.vds-controls') &&
       (!host.closest('.netflixNav,.dsWelcomeNav,.mobileNav') || Boolean(host.closest('.dsProfileDropdown,.svLiquidDropdown'))) &&
       host.matches('.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn,.dsGhostPill,.dsRowBtn,.dsRowArrow,.svRowArrow,.dsClose,.dsHeroMuteToggle,.dsBigPlayBtn,.svDetailBack,.svDetailDismiss,.svDetailReturn,.svDetailClose,.svAuthPasswordToggle,.dsAuthSwitch > a,.dsAuthTopActions button[data-st-open],.dsDetailTabsV121 > button,.pagination a,.dsEpisodeChips a,.dsSearchBox button,.svSearchPopup button,.dsDropdownLogout,.dsEditProfileBtn');
-    const complex = panel && host.dataset.glassRefraction === 'true';
+    const optic = host.matches(navOpticSelector) && !host.closest('media-player,.vds-controls');
+    // When a real navbar pane is present, never mount the old filter on its
+    // parent or draw another shared filter on top of it.
+    const complex = !optic && panel && host.dataset.glassRefraction === 'true';
     const classes = ['svGlassSurface', panel ? 'svGlassPanel' : 'svGlassControl'];
-    if (sharedControl) classes.push('svSharedGlass');
+    if (sharedControl && !optic) classes.push('svSharedGlass');
+    if (optic) classes.push('svNavMatchedOptic');
     if (complex) {const position = getComputedStyle(host).position; if (!position || position === 'static') classes.push('svGlassRelative');}
-    entry = {host, complex, controller:null, visible:!intersection, addedClasses:classes.filter(name => !host.classList.contains(name)), previousRenderer:host.dataset.swiflyRenderer, previousProperties:rendererProperties.map(property => [property, host.style.getPropertyValue(property), host.style.getPropertyPriority(property)])};
+    entry = {host, panel, optic, opticPane:null, opticController:null, complex, controller:null, visible:!intersection, addedClasses:classes.filter(name => !host.classList.contains(name)), previousRenderer:host.dataset.swiflyRenderer, previousProperties:rendererProperties.map(property => [property, host.style.getPropertyValue(property), host.style.getPropertyPriority(property)])};
     entries.set(host, entry); host.classList.add(...classes); host.dataset.swiflyRenderer = 'blur';
-    if (complex && intersection) intersection.observe(host); else activate(entry);
+    if ((complex || optic) && intersection) intersection.observe(host); else activate(entry);
   }
   function scan(root) {
     if (!root || stopped) return;
@@ -82,7 +122,7 @@
   function onVisibility() {
     if (!document.hidden && liquidPreference()) installSharedLens();
     if (document.hidden) {cancelAnimationFrame(frame); frame = 0;}
-    for (const entry of entries.values()) if (entry.complex) {
+    for (const entry of entries.values()) if (entry.complex || entry.optic) {
       if (document.hidden || !liquidPreference()) deactivate(entry); else activate(entry);
     }
     schedule();
@@ -168,7 +208,7 @@
         if ([...change.removedNodes].some(node => node instanceof HTMLElement)) removed = true;
       }
       if (preferenceChanged && liquidPreference()) installSharedLens();
-      if (preferenceChanged) for (const entry of entries.values()) if (entry.complex) {
+      if (preferenceChanged) for (const entry of entries.values()) if (entry.complex || entry.optic) {
         if (liquidPreference()) activate(entry); else deactivate(entry);
       }
       schedule();
