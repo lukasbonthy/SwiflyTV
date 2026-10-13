@@ -171,7 +171,7 @@ test('the cinema image fade loads after Aurora and Welcome styles',async()=>{
    const d=parse(await response.text()).window.document;
    const styles=[...d.querySelectorAll('link[rel="stylesheet"]')].map(link=>link.getAttribute('href'));
    const aurora=styles.findIndex(v=>v.includes('/assets/clean/aurora.css?v=170'));
-   const fade=styles.findIndex(v=>v.includes('/assets/clean/hero-fade.css?v=184'));
+   const fade=styles.findIndex(v=>v.includes('/assets/clean/hero-fade.css?v=185'));
    assert(aurora>=0 && fade>aurora,route+' fade must follow aurora');
    if(route==='/welcome'){
      const welcome=styles.findIndex(v=>v.includes('/assets/clean/welcome.css'));
@@ -204,7 +204,7 @@ test('movie discovery artwork fades beyond the hero without a visible seam',asyn
  const d=parse(await(await fetch(base+'/welcome')).text()).window.document;
  assert(d.querySelector('.dsWelcomeHero .dsWelcomeHeroBg'));
  assert(d.querySelector('#discovery.dsWelcomeDiscovery'));
- const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=184')).text();
+ const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=185')).text();
  assert.match(css,/\.svWelcomeClean \.dsWelcomeHeroBg \{/);
  assert.match(css,/bottom:-36px !important/,'backdrop continues beneath the hero');
  assert.match(css,/\.svWelcomeClean \.svWelcomeDiscoveryIntro \{/);
@@ -212,7 +212,7 @@ test('movie discovery artwork fades beyond the hero without a visible seam',asyn
  assert.match(css,/main > \.dsHero \+ \.svHeroLightBridge \+ \.dsContent/);
  assert.doesNotMatch(css,/\.movieCard img/,'poster art is not masked');
 });
-test('Featured movie colors are painted INSIDE the catalog instead of a zero-height bridge',async()=>{
+test('Signed-in cinema shows exactly one movie backdrop that extends behind the first rail',async()=>{
  for(const route of ['/','/trending?type=all','/movies','/tv']){
   const response=await fetch(base+route);
   assert.equal(response.status,200,route+' should render');
@@ -220,24 +220,25 @@ test('Featured movie colors are painted INSIDE the catalog instead of a zero-hei
   const hero=d.querySelector('main > .dsHero');
   const bridge=d.querySelector('main > .svHeroLightBridge');
   const rows=d.querySelector('main > .dsContent');
-  assert(hero&&bridge&&rows,route+' must have adjacent hero, bridge, and discovery');
+  assert(hero&&bridge&&rows);
   assert.equal(hero.nextElementSibling,bridge);
   assert.equal(bridge.nextElementSibling,rows);
-  assert.equal(bridge.getAttribute('aria-hidden'),'true');
-  const heroImage=hero.querySelector('.dsHeroBg')?.getAttribute('style')||'';
-  const color=rows.getAttribute('style')||'';
-  assert.match(color,/--sv-cinema-art:url\('/,'discovery must receive the movie image, rather than inheriting a sibling-only variable');
-  assert.equal(color.replace('--sv-cinema-art:','background-image:'),heroImage,'rows must use same artwork as hero');
-  assert(d.querySelector('link[href="/assets/clean/hero-fade.css?v=184"]'));
+  assert.equal(hero.querySelectorAll('.dsHeroBg').length,1,'single original backdrop');
+  assert.match(hero.querySelector('.dsHeroBg').getAttribute('style')||'',/background-image:url\('/);
+  assert.equal(bridge.getAttribute('style'),null,'spacer must not receive a second artwork URL');
+  assert.equal(rows.getAttribute('style'),null,'catalog must not receive a duplicate image or palette');
+  assert(d.querySelector('link[href="/assets/clean/hero-fade.css?v=185"]'));
  }
- const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=184')).text();
+ const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=185')).text();
+ assert.match(css,/main > \.dsHero > \.dsHeroBg \{/);
+ assert.match(css,/overflow:visible !important/,'real hero artwork can paint below hero edge');
+ assert.match(css,/bottom:-320px !important/,'extend the single original backdrop on desktop');
+ assert.match(css,/bottom:-255px !important/,'extend the same backdrop on mobile');
+ assert.match(css,/background-repeat:no-repeat !important/);
  assert.match(css,/\.dsHero \+ \.svHeroLightBridge \+ \.dsContent:not\(\.noHero\)::before \{/);
- assert.match(css,/var\(--sv-cinema-art\)/,'actual movie colors are in the catalog paint layer');
- assert.match(css,/z-index:0 !important/,'ambient art must exist above the black page');
- assert.match(css,/\.dsContent:not\(\.noHero\) > \* \{/,'poster rows paint above the image glow');
- assert.match(css,/inset:-230px/,'colored art crosses the hero boundary');
- assert.match(css,/filter:blur\(13px\) saturate\(1\.5\) brightness\(\.75\)/);
- assert.doesNotMatch(css,/\.movieCard img/,'poster artwork must stay crisp');
+ assert.match(css,/content:none !important/,'hide all legacy duplicated art/reflection layers');
+ assert.doesNotMatch(css,/var\(--sv-cinema-art\)|var\(--sv-light-art\)/,'no second background rendered from movie URL');
+ assert.doesNotMatch(css,/\.movieCard img/,'poster artwork untouched');
 });
 test('Welcome uses the featured backdrop as an ambient discovery transition',async()=>{
  const response=await fetch(base+'/welcome');
