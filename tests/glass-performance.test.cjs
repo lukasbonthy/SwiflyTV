@@ -333,3 +333,49 @@ test('Liquid Glass activates real refraction in dynamically inserted details act
  for(const control of controls)assert.equal(control.dataset.swiflyRenderer,'blur');
  env.finish();
 });
+
+
+test('details chrome and every title action participate in one Studio-controlled lens system',async()=>{
+ const markup='<nav class="netflixNav"><button class="svNavButton" aria-label="Search">Search</button></nav>'+
+   '<div class="svDetailChrome"><button class="dsIconBtn svDetailBack">Back</button><button class="dsIconBtn svDetailDismiss">Close</button></div>'+
+   '<div class="svDetailActions"><a class="dsPrimaryBtn">Play</a><a class="dsSecondaryBtn">Trailer</a>'+
+   '<button class="dsSecondaryBtn">Watch Party</button><button class="dsIconBtn">Save</button><button class="dsIconBtn">Like</button></div>'+
+   '<a class="dsSecondaryBtn svDetailReturn">Return to browsing</a><button class="svRowArrow">Next</button>';
+ const env=glass(markup),w=env.window,d=w.document;
+ d.body.dataset.stGlass='liquid';
+ w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');
+ env.intersect(true);w.flush(16);
+ const featured=[...d.querySelectorAll('.svDetailActions > *, .svDetailChrome > button, .svDetailReturn')];
+ assert.equal(featured.length,8);
+ for(const control of featured){
+  assert(control.classList.contains('svGlassSurface'));
+  assert.equal(control.dataset.swiflyRenderer,'svg',control.textContent+' should refract in Liquid');
+  assert(control.querySelector('svg.svLiquidPane__filters'));
+ }
+ assert(!d.querySelector('.netflixNav .svNavButton').classList.contains('svGlassSurface'));
+ assert.equal(d.querySelector('.svRowArrow').dataset.swiflyRenderer,'blur','rails use inexpensive optical fallback');
+ d.body.dataset.stGlass='subtle';await tick();env.intersect(true);w.flush(32);
+ for(const control of featured)assert.equal(control.dataset.swiflyRenderer,'blur','Soft is not refractive');
+ d.body.dataset.stGlass='off';await tick();env.intersect(true);w.flush(48);
+ assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length,0,'Off frees expensive SVG filters');
+ env.finish();
+});
+
+test('all optical modes have explicit dark-surface shine, blur fallback and noninteractive highlights',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const css=fs.readFileSync(path.join(__dirname,'../public/liquid-glass/controls.css'),'utf8');
+ const finish=fs.readFileSync(path.join(__dirname,'../public/clean/finish.css'),'utf8');
+ const detail=fs.readFileSync(path.join(__dirname,'../public/clean/polish.css'),'utf8');
+ assert.match(css,/\.svGlassSurface\.svGlassControl::before/);
+ assert.match(css,/\.svGlassSurface\.svGlassControl::after/);
+ assert.match(css,/pointer-events:none/);
+ assert.match(css,/mask-composite:exclude/);
+ assert.match(css,/data-swifly-renderer="svg"/);
+ assert.match(css,/var\(--sv-glass-filter\)/);
+ assert.match(css,/data-st-glass="subtle"/);
+ assert.match(css,/data-st-glass="off"/);
+ assert.match(css,/prefers-reduced-transparency:reduce/);
+ assert.match(css,/prefers-reduced-motion:reduce/);
+ assert.doesNotMatch(finish,/\/\* A consistent, visibly refractive surface/,'remove conflicting v175 control material');
+ assert.doesNotMatch(detail,/\/\* Every DETAILS action uses the same liquid styling/,'remove conflicting v176 material');
+});
