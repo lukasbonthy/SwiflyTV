@@ -286,16 +286,16 @@ body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svNavMatchedOptic > .s
   border-radius:inherit !important;
   pointer-events:none !important;
   isolation:auto !important;
-  --sv-glass-default-tint:.20;
-  --sv-glass-saturation:1;
-  background:rgb(5 8 15 / .38);
-  -webkit-backdrop-filter:blur(12px) saturate(1.8) brightness(1.1);
-  backdrop-filter:blur(12px) saturate(1.8) brightness(1.1);
+  --sv-glass-default-tint:.10;
+  --sv-glass-saturation:1.15;
+  background:rgb(5 8 15 / .27);
+  -webkit-backdrop-filter:blur(11px) saturate(1.85) brightness(1.12);
+  backdrop-filter:blur(11px) saturate(1.85) brightness(1.12);
 }
 body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svNavMatchedOptic > .svNavMatchedLens.svLiquidPane[data-swifly-renderer="svg"] {
-  background:rgb(0 0 0 / .20) !important;
-  -webkit-backdrop-filter:var(--sv-glass-filter) saturate(1) !important;
-  backdrop-filter:var(--sv-glass-filter) saturate(1) !important;
+  background:rgb(0 0 0 / .10) !important;
+  -webkit-backdrop-filter:var(--sv-glass-filter) saturate(1.15) !important;
+  backdrop-filter:var(--sv-glass-filter) saturate(1.15) !important;
 }
 body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svNavMatchedOptic > :not(.svNavMatchedLens) {
   position:relative;
@@ -363,4 +363,28 @@ body.svCleanShell[data-st-glass="subtle"] .svNavMatchedOptic > .svNavMatchedLens
 body.svCleanShell[data-st-glass="liquid"] .svNavMatchedOptic > .svNavMatchedLabel {
   position:relative !important;z-index:2 !important;
   pointer-events:none;
+}
+
+/* v188 — refined refraction, not a gray pill. The tint is light enough to
+   let the hero's actual colors move through the navigation distortion map.
+   Paint only a subtle upper light catch, never another background image. */
+body.svCleanShell [data-sv-liquid-nav] .netflixNav > .svLiquidPane {
+  box-shadow:inset 0 1px 0 rgb(255 255 255 / .29),
+    inset 0 0 0 .65px rgb(255 255 255 / .17),
+    0 8px 23px rgb(0 0 0 / .21) !important;
+}
+body.svCleanShell [data-sv-liquid-nav] .netflixNav > .svLiquidPane::after {
+  content:"";
+  position:absolute;inset:1px;border-radius:inherit;
+  pointer-events:none;
+  background:linear-gradient(to bottom, rgb(255 255 255 / .10),
+    rgb(255 255 255 / .022) 22%,transparent 58%);
+}
+body.svCleanShell[data-st-glass="liquid"] [data-sv-liquid-nav] .netflixNav > .svLiquidPane:not([data-swifly-renderer="svg"]) {
+  background:rgb(5 8 15 / .26) !important;
+  -webkit-backdrop-filter:blur(11px) saturate(1.7) !important;
+  backdrop-filter:blur(11px) saturate(1.7) !important;
+}
+@media(prefers-reduced-transparency:reduce){
+  body.svCleanShell [data-sv-liquid-nav] .netflixNav > .svLiquidPane::after {display:none;}
 }
