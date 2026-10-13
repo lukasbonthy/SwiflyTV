@@ -444,3 +444,30 @@ test('Party Hub uses real optics on a few hero and navigation actions but not ev
  assert.equal(d.querySelectorAll('.partyFilmRail .svLiquidPane').length,0,'poster rails do not multiply expensive filters');
  env.finish();
 });
+
+test('SVG lens maps move along BOTH sampled channels in navbar and shared controls',()=>{
+ const env=glass('<nav class="netflixNav"><div class="svLiquidPane" data-swifly-glass></div><a href="/">Home</a></nav><div class="dsHeroActions"><a class="dsPrimaryBtn">Play</a></div>');
+ const w=env.window,d=w.document;d.body.dataset.stGlass='liquid';
+ w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');
+ env.intersect(true);w.flush(16);
+ const nav=d.querySelector('.netflixNav > .svLiquidPane');
+ assert.equal(nav.dataset.swiflyRenderer,'svg','navbar must render an SVG displacement graph');
+ const navFilter=nav.querySelector('svg.svLiquidPane__filters');
+ assert(navFilter);
+ assert.equal(navFilter.querySelectorAll('feDisplacementMap').length,3);
+ for(const displaced of navFilter.querySelectorAll('feDisplacementMap')){
+  assert.equal(displaced.getAttribute('xChannelSelector'),'R');
+  assert.equal(displaced.getAttribute('yChannelSelector'),'G');
+ }
+ const navMap=navFilter.querySelector('feImage').getAttribute('href');
+ const mapXml=decodeURIComponent(navMap.slice('data:image/svg+xml,'.length));
+ assert.match(mapXml,/stop-color="red"/,'horizontal lens map samples red');
+ assert.match(mapXml,/stop-color="lime"/,'vertical lens map must sample green');
+ assert.doesNotMatch(mapXml,/stop-color="blue"/,'blue gradient leaves green displacement stuck at zero');
+ const shared=d.querySelector('.svSharedGlassDefinitions feImage');
+ assert(shared,'shared button refraction definitions should mount once');
+ const sharedMap=decodeURIComponent(shared.getAttribute('href').slice('data:image/svg+xml,'.length));
+ assert.match(sharedMap,/stop-color="lime"/,'shared controls must have real vertical refraction too');
+ assert.equal(d.querySelectorAll('.svSharedGlassDefinitions').length,1,'do not allocate extra shared filter graphs');
+ env.finish();
+});
