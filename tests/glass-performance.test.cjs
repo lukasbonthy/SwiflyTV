@@ -366,3 +366,29 @@ test('all optical modes have explicit dark-surface shine, blur fallback and noni
  assert.doesNotMatch(finish,/\/\* A consistent, visibly refractive surface/,'remove conflicting v175 control material');
  assert.doesNotMatch(detail,/\/\* Every DETAILS action uses the same liquid styling/,'remove conflicting v176 material');
 });
+
+test('Logout inside the navigation dropdown gets a refractive lens without boxing navigation icons',()=>{
+ const env=glass('<nav class="netflixNav"><button class="svNavButton">Search</button><div class="dsProfileDropdown"><button class="dsDropdownLogout">Log out</button></div></nav>');
+ const w=env.window,d=w.document;d.body.dataset.stGlass='liquid';
+ w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');
+ const logout=d.querySelector('.dsDropdownLogout');
+ assert(logout.classList.contains('svSharedGlass'),'dropdown logout should not inherit nav icon exclusion');
+ assert(logout.classList.contains('svGlassControl'));
+ assert(!d.querySelector('.svNavButton').classList.contains('svGlassSurface'),'navbar icon must remain in the shared nav capsule');
+ assert.equal(d.querySelectorAll('svg.svSharedGlassDefinitions').length,1);
+ env.finish();
+});
+
+test('Auth password Show stays positioned INSIDE its input while sharing glass lens',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const css=fs.readFileSync(path.join(__dirname,'../public/liquid-glass/controls.css'),'utf8');
+ const match=css.match(/body\.svCleanShell main\.dsAuthPageSafe \.svAuthPasswordToggle\.svGlassControl \{([^}]+)\}/);
+ assert(match,'show toggle needs a higher-specificity positioning rule');
+ assert.match(match[1],/position:absolute !important/);
+ assert.match(match[1],/top:50% !important/);
+ assert.match(match[1],/right:9px !important/);
+ assert.match(match[1],/transform:translateY\(-50%\) !important/);
+ assert.match(css,/\.dsAuthCard\.svGlassPanel \{/);
+ assert.match(css,/url\(#sv-shared-panel-lens\)/,'auth panel uses the lighter shared SVG refraction');
+ assert.match(css,/\.svWelcomeClean \.dsWelcomeActions > a\.dsPrimaryBtn\.svSharedGlass/,'welcome CTA must not use solid white');
+});
