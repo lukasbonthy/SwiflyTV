@@ -71,43 +71,7 @@ body.svCleanShell :is(.svDetailDialog,.svDetailPage) .svDetailBody {
   position:relative;z-index:1;
 }
 
-/* Every DETAILS action uses the same liquid styling as its Home equivalent.
-   Film-detail actions are inserted dynamically, hence .svDetailActions was
-   previously missing from the SVG displacement renderer's allowlist. */
-body.svCleanShell[data-st-glass="liquid"] .svDetailActions > :is(.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn),
-body.svCleanShell[data-st-glass="liquid"] .svDetailDialog :is(.svDetailBack,.svDetailDismiss) {
-  background:linear-gradient(145deg,rgba(255,255,255,.23),
-    rgba(255,255,255,.075) 48%,rgba(255,255,255,.17)),rgba(12,19,24,.18) !important;
-  color:#f7fcfa !important;
-  border:1px solid rgba(255,255,255,.45) !important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.47),
-    inset 0 -1px 0 rgba(255,255,255,.08),0 4px 16px #0005 !important;
-  -webkit-backdrop-filter:blur(16px) saturate(1.45) !important;
-  backdrop-filter:blur(16px) saturate(1.45) !important;
-}
-body.svCleanShell[data-st-glass="liquid"] .svDetailActions > :is(.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn):hover,
-body.svCleanShell[data-st-glass="liquid"] .svDetailDialog :is(.svDetailBack,.svDetailDismiss):hover {
-  background:linear-gradient(140deg,rgba(255,255,255,.31),
-    rgba(255,255,255,.10) 52%,rgba(255,255,255,.20)),rgba(12,19,24,.24) !important;
-  border-color:rgba(255,255,255,.66) !important;
-}
-/* The real SVG refraction must win over the decorative blur above. */
-body.svCleanShell[data-st-glass="liquid"] .svDetailActions
-  > .svGlassSurface.svGlassControl[data-swifly-renderer="svg"],
-body.svCleanShell[data-st-glass="liquid"] .svDetailDialog
-  .svGlassSurface.svGlassControl[data-swifly-renderer="svg"] {
-  -webkit-backdrop-filter:var(--sv-glass-filter) saturate(1.35) !important;
-  backdrop-filter:var(--sv-glass-filter) saturate(1.35) !important;
-}
-body.svCleanShell[data-st-glass="subtle"] .svDetailActions > :is(.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn) {
-  background:rgba(19,24,29,.56) !important;
-  -webkit-backdrop-filter:blur(9px) !important;backdrop-filter:blur(9px) !important;
-}
-body.svCleanShell[data-st-glass="off"] .svDetailActions > :is(.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn) {
-  background:#15191d !important;
-  -webkit-backdrop-filter:none !important;backdrop-filter:none !important;
-}
-
+/* Liquid button surfaces are centralized in /assets/liquid-glass/controls.css. */
 /* Small liquid detail on BOTH auth pages, no size, padding or layout changes. */
 body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthCard {
   background:linear-gradient(145deg,rgba(38,52,54,.44),
