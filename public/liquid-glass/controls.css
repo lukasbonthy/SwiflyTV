@@ -353,3 +353,14 @@ body.svCleanShell main.dsAuthPageSafe .svAuthPasswordToggle.svNavMatchedOptic {
     display:none !important;
   }
 }
+
+/* Studio accessibility modes must remove the visual pane entirely;
+   otherwise an old blur pane can linger behind solid/soft controls. */
+body.svCleanShell[data-st-glass="off"] .svNavMatchedOptic > .svNavMatchedLens,
+body.svCleanShell[data-st-glass="subtle"] .svNavMatchedOptic > .svNavMatchedLens {
+  display:none !important;
+}
+body.svCleanShell[data-st-glass="liquid"] .svNavMatchedOptic > .svNavMatchedLabel {
+  position:relative !important;z-index:2 !important;
+  pointer-events:none;
+}
