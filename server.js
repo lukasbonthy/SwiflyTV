@@ -6397,7 +6397,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/aurora.js?v=168"></script>
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=163" />' : ""}
     ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=171" />' : ""}
-    <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=171" />
+    <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=172" />
     ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=159" /><script defer src="/assets/party/party.js?v=159"></script>' : ""}
     ${player ? '<link rel="stylesheet" href="/assets/player/player.css?v=160" /><script defer src="/assets/player/player.js?v=164"></script>' : ""}
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=161" /><script defer src="/assets/player/watch-party.js?v=160"></script>' : ""}
@@ -8312,7 +8312,8 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = nu
         }, 2600);
       })();
     </script>` : ""}
-  </section>`;
+  </section>
+  <div class="svHeroLightBridge" aria-hidden="true" style="--sv-light-art:url('${escapeHtml(bg)}')"></div>`;
 }
 
 
