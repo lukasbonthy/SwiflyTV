@@ -14,7 +14,7 @@ const group = (label,description,content) => '<section class="stGroup"><div clas
 const layoutDemo = value => '<span class="stLayoutDemo stLayoutDemo--'+value+'" aria-hidden="true"><i></i><i></i><i></i><i></i></span>';
 const preset = (value,title,copy) => '<button type="button" class="stPreset stPreset--'+value+'" data-st-preset="'+value+'" aria-pressed="false"><span class="stPresetArt" aria-hidden="true"><i class="stPresetNav"></i><i class="stPresetTitle"></i><i class="stPresetPoster"></i><i class="stPresetPoster"></i><i class="stPresetPoster"></i><b>'+icon('check')+'</b></span><strong>'+title+'</strong><small>'+copy+'</small></button>';
 function studioMarkup() {
-  return `<div class="svAuroraBackground" aria-hidden="true"><i class="svAuroraRibbon"></i></div>
+  return `<div class="svAuroraBackground" aria-hidden="true"><i class="svAuroraGlow"></i><i class="svAuroraRibbon svAuroraRibbon--first"></i><i class="svAuroraRibbon svAuroraRibbon--second"></i><i class="svAuroraRibbon svAuroraRibbon--third"></i></div>
   <div class="svAppearanceTexture" aria-hidden="true"></div>
   <dialog id="controlPanel" class="svStudioDialog" aria-labelledby="stTitle" aria-describedby="stDescription">
     <div class="stWorkspace">
@@ -85,7 +85,7 @@ function studioMarkup() {
           <div class="stPreviewLabel"><span>LIVE PREVIEW</span><i></i></div>
           <div class="stPreview" data-st-preview aria-label="Preview of your appearance settings">
             <div class="stPreviewScene" data-st-preview-scene>
-              <div class="stPreviewAurora" data-st-preview-aurora aria-hidden="true"><i class="svAuroraRibbon"></i></div>
+              <div class="stPreviewAurora" data-st-preview-aurora aria-hidden="true"><i class="svAuroraGlow"></i><i class="svAuroraRibbon svAuroraRibbon--first"></i><i class="svAuroraRibbon svAuroraRibbon--second"></i><i class="svAuroraRibbon svAuroraRibbon--third"></i></div>
               <div class="stPreviewNav"><b>SwiflyTV</b><span>Home</span><span>Movies</span><i></i></div>
               <div class="stPreviewCopy"><small>YOUR NEXT GREAT WATCH</small><h3 data-st-preview-title>Movie night, your way.</h3><p>Make yourself comfortable.</p><span class="stPreviewPlay">▶ &nbsp;Play</span></div>
             </div>
