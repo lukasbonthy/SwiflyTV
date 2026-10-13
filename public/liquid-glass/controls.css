@@ -200,3 +200,152 @@ body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthTopActions 
     background:#162124 !important;-webkit-backdrop-filter:none !important;backdrop-filter:none !important;
   }
 }
+
+/* v180 — actual optical refraction, not another pale opaque pill.
+   The shared SVG is generated once by surfaces.js and used by movie actions,
+   Welcome CTAs, dropdown actions and the auth controls. */
+body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svGlassControl.svSharedGlass {
+  background:
+    radial-gradient(ellipse 88% 118% at 18% -45%,rgba(255,255,255,.31),transparent 70%),
+    linear-gradient(161deg,rgba(255,255,255,.18),rgba(213,242,250,.045) 58%,rgba(255,255,255,.11)),
+    rgba(12,25,31,.075) !important;
+  border:1px solid rgba(250,255,255,.56) !important;
+  box-shadow:inset 0 1px rgba(255,255,255,.80),
+    inset 0 -1px rgba(210,243,247,.35),
+    0 4px 15px rgba(0,0,0,.28) !important;
+  -webkit-backdrop-filter:blur(9px) saturate(1.25) !important;
+  backdrop-filter:blur(9px) saturate(1.25) !important;
+}
+body.svCleanShell.svSharedGlassReady[data-st-glass="liquid"] .svGlassSurface.svGlassControl.svSharedGlass {
+  -webkit-backdrop-filter:url(#sv-shared-action-lens) saturate(1.25) !important;
+  backdrop-filter:url(#sv-shared-action-lens) saturate(1.25) !important;
+}
+body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svGlassControl.svSharedGlass::before {
+  background:
+    radial-gradient(ellipse 100% 85% at 22% -34%,rgba(255,255,255,.42),transparent 80%),
+    radial-gradient(ellipse 90% 60% at 78% 128%,rgba(207,246,255,.25),transparent 88%) !important;
+}
+body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svGlassControl.svSharedGlass:hover {
+  border-color:rgba(255,255,255,.83) !important;
+  background:
+    radial-gradient(ellipse 95% 98% at 12% -28%,rgba(255,255,255,.35),transparent 82%),
+    linear-gradient(153deg,rgba(243,255,255,.20),rgba(227,247,253,.06) 50%,rgba(250,255,255,.21)),
+    rgba(10,26,31,.105) !important;
+}
+/* Primary actions cannot be solid grey/white if they are meant to refract. */
+body.svCleanShell[data-st-glass="liquid"] :is(.dsHeroActions,.svDetailActions,.dsDetailActionsV121,.dsWelcomeActions) .svSharedGlass.dsPrimaryBtn,
+body.svCleanShell[data-st-glass="liquid"] .svWelcomeClean .dsWelcomeActions > a.dsPrimaryBtn.svSharedGlass {
+  color:#f9ffff !important;
+  text-shadow:0 1px 3px rgba(0,0,0,.65) !important;
+  background:
+    radial-gradient(ellipse 120% 135% at 12% -42%,rgba(255,255,255,.40),transparent 73%),
+    linear-gradient(142deg,rgba(241,255,254,.18),rgba(230,246,253,.045) 55%,rgba(255,255,255,.14)),
+    rgba(15,34,37,.13) !important;
+  border-color:rgba(251,255,255,.68) !important;
+}
+body.svCleanShell[data-st-glass="liquid"] .svWelcomeClean .dsWelcomeActions > a.dsSecondaryBtn.svSharedGlass {
+  background:linear-gradient(155deg,rgba(239,255,255,.13),rgba(203,246,250,.035)),rgba(9,21,27,.08) !important;
+  border-color:rgba(239,255,255,.54) !important;
+  color:#f1fbff !important;
+}
+body.svCleanShell[data-st-glass="liquid"] .svWelcomeClean .dsWelcomeActions > a.svSharedGlass {
+  -webkit-backdrop-filter:url(#sv-shared-action-lens) saturate(1.25) !important;
+  backdrop-filter:url(#sv-shared-action-lens) saturate(1.25) !important;
+}
+/* Dropdown actions were mistakenly excluded simply because the dropdown
+   lives inside the nav. Keep navbar icons unboxed, but not dropdown buttons. */
+body.svCleanShell[data-st-glass="liquid"] .dsProfileDropdown .dsDropdownLogout.svGlassControl {
+  position:relative !important;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(150deg,rgba(245,255,255,.23),rgba(207,243,246,.06)),rgba(8,23,28,.10) !important;
+  border:1px solid rgba(251,255,255,.63) !important;
+  border-radius:999px !important;
+  color:#fff !important;
+  box-shadow:inset 0 1px rgba(255,255,255,.74),0 5px 20px rgba(0,0,0,.27) !important;
+}
+body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe::before {
+  content:"";display:block !important;
+  position:absolute;inset:0;
+  z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(ellipse 38% 35% at 40% 52%,rgba(108,180,173,.21),transparent 78%),
+    radial-gradient(ellipse 29% 33% at 65% 48%,rgba(134,169,193,.16),transparent 80%);
+}
+/* Large card: a separate gentle SVG filter shares the same map, avoiding
+   the warped text/CPU hit of using a button-sized map at full strength. */
+body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthCard.svGlassPanel {
+  position:relative !important;isolation:isolate;overflow:hidden;
+  background:
+    radial-gradient(ellipse 105% 42% at 24% -11%,rgba(245,255,255,.14),transparent 76%),
+    linear-gradient(140deg,rgba(172,224,228,.13),rgba(8,22,27,.22) 52%,rgba(153,211,216,.07)),
+    rgba(6,15,20,.24) !important;
+  border:1px solid rgba(244,255,255,.45) !important;
+  box-shadow:inset 0 1px rgba(255,255,255,.46),
+    inset 0 -1px rgba(218,255,255,.13),0 23px 72px rgba(0,0,0,.41) !important;
+  -webkit-backdrop-filter:blur(13px) saturate(1.25) !important;
+  backdrop-filter:blur(13px) saturate(1.25) !important;
+}
+body.svCleanShell.svSharedGlassReady[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthCard.svGlassPanel {
+  -webkit-backdrop-filter:url(#sv-shared-panel-lens) saturate(1.27) !important;
+  backdrop-filter:url(#sv-shared-panel-lens) saturate(1.27) !important;
+}
+body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthCard.svGlassPanel::before {
+  display:block !important;content:"" !important;
+  position:absolute;inset:1px;
+  pointer-events:none;z-index:0;border-radius:inherit;
+  background:radial-gradient(ellipse 110% 28% at 15% -12%,rgba(255,255,255,.22),transparent 91%);
+}
+body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthCard.svGlassPanel > * {
+  position:relative;z-index:1;
+}
+body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthSwitch.svGlassPanel {
+  background:linear-gradient(154deg,rgba(232,255,253,.13),rgba(240,255,255,.018)),rgba(6,17,21,.18) !important;
+  border:1px solid rgba(245,255,255,.33) !important;
+  box-shadow:inset 0 1px rgba(255,255,255,.23) !important;
+  -webkit-backdrop-filter:blur(5px) !important;backdrop-filter:blur(5px) !important;
+}
+body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthSwitch > a.svGlassControl {
+  background:transparent !important;border-radius:9px !important;
+  border:1px solid transparent !important;box-shadow:none !important;
+}
+body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthSwitch > a.active.svSharedGlass {
+  background:linear-gradient(148deg,rgba(252,255,255,.23),rgba(222,249,251,.085)),rgba(14,33,39,.11) !important;
+  border-color:rgba(247,255,255,.57) !important;
+  box-shadow:inset 0 1px rgba(255,255,255,.44),0 3px 8px rgba(0,0,0,.18) !important;
+}
+body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsSafeAuthForm input {
+  background:linear-gradient(150deg,rgba(250,255,255,.115),rgba(223,248,250,.035)),rgba(6,19,23,.23) !important;
+  border:1px solid rgba(245,255,255,.34) !important;
+  box-shadow:inset 0 1px rgba(255,255,255,.13) !important;
+  -webkit-backdrop-filter:blur(4px) !important;backdrop-filter:blur(4px) !important;
+}
+/* Critical: the general glass rule sets position:relative!important and
+   moved the Show button BELOW its password field. Restore absolute layout. */
+body.svCleanShell main.dsAuthPageSafe .svAuthPasswordField {
+  position:relative !important;display:block !important;
+}
+body.svCleanShell main.dsAuthPageSafe .svAuthPasswordToggle.svGlassControl {
+  position:absolute !important;
+  top:50% !important;right:9px !important;left:auto !important;bottom:auto !important;
+  transform:translateY(-50%) !important;
+  min-height:32px !important;min-width:56px !important;
+  z-index:3 !important;border-radius:9px !important;
+}
+body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsSafeAuthForm .dsPrimaryBtn.svSharedGlass {
+  color:#f6ffff !important;text-shadow:0 1px 3px rgba(0,0,0,.50) !important;
+  background:linear-gradient(151deg,rgba(246,255,254,.35),rgba(194,232,233,.13) 63%,rgba(232,255,255,.29)),
+    rgba(13,31,35,.18) !important;
+  border:1px solid rgba(255,255,255,.79) !important;
+  box-shadow:inset 0 1px rgba(255,255,255,.75),inset 0 -1px rgba(227,250,253,.19),
+    0 5px 18px rgba(0,0,0,.26) !important;
+}
+body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsSafeAuthForm .dsPrimaryBtn.svSharedGlass > span {
+  color:#f6ffff !important;
+}
+@media(prefers-reduced-transparency:reduce) {
+  body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe::before {display:none !important;}
+  body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthCard.svGlassPanel {
+    background:#172023 !important;
+    -webkit-backdrop-filter:none !important;backdrop-filter:none !important;
+  }
+}
