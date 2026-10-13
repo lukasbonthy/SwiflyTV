@@ -48,8 +48,14 @@
     if (!(element instanceof HTMLElement)) throw new TypeError('SwiflyLiquidGlass.mount expects an HTML element.');
     if (mounted.has(element)) return mounted.get(element);
     const config = {
-      borderWidth:.07, brightness:50, opacity:.93, displace:.5,
-      distortionScale:-180, channelOffsets:[0, 10, 20], saturation:numeric(element, 'glassSaturation', 1),
+      // Only the navigation opts into the higher-definition edge lens; all
+      // existing action buttons and panels keep their established defaults.
+      borderWidth:numeric(element, 'glassBorderWidth', .07),
+      brightness:50, opacity:numeric(element, 'glassMapOpacity', .93),
+      displace:numeric(element, 'glassDisplace', .5),
+      distortionScale:numeric(element, 'glassDistortion', -180),
+      channelOffsets:[0, 10, 20],
+      saturation:numeric(element, 'glassSaturation', 1),
       mapBlur:numeric(element, 'glassBlur', 7), tint:numeric(element, 'glassTint', .2),
       blend:element.dataset.glassBlend === 'difference' ? 'difference' : 'screen', ...options
     };
