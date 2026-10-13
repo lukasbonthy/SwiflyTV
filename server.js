@@ -6403,7 +6403,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=161" /><script defer src="/assets/player/watch-party.js?v=160"></script>' : ""}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/finish.css?v=175" />'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/polish.css?v=176" />'}
-    <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=185" />
+    <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=186" />
+    ${player ? "" : '<script defer src="/assets/clean/hero-palette.js?v=186"></script>'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/liquid-glass/controls.css?v=182" />'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/experience.css?v=184" />'}
 </head>
@@ -8154,11 +8155,12 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = nu
   const title = getTitle(hero);
   const href = `/${mediaType}/${encodeURIComponent(hero.id || "")}`;
   const bg = fullBackdrop(hero.backdrop_path || hero.poster_path);
+  const paletteSrc = img(hero.backdrop_path || hero.poster_path, "w300");
   const desc = hero.overview || "Discover this title, explore the cast, and add it to your list.";
   const maturity = mediaType === "tv" ? "TV-14" : "PG-13";
   const trailerKey = trailer && trailer.key ? String(trailer.key) : "";
   const trailerSrc = trailerKey ? youtubeHeroAutoplaySrc(trailerKey, embedOrigin) : "";
-  return `<section class="dsHero ${trailerSrc ? "dsHeroHasTrailer" : ""}">
+  return `<section class="dsHero ${trailerSrc ? "dsHeroHasTrailer" : ""}" data-sv-palette-src="${escapeHtml(paletteSrc)}">
     <div class="dsHeroBg" style="background-image:url('${escapeHtml(bg)}')"></div>
     ${trailerSrc ? `<div class="dsHeroTrailerLayer" aria-hidden="true">
       <iframe id="dsHeroTrailerFrame" class="dsHeroTrailerFrame" src="${escapeHtml(trailerSrc)}" title="${escapeHtml(title)} muted trailer preview" loading="eager" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
