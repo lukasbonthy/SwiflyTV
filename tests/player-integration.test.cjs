@@ -326,7 +326,7 @@ test('v174 keeps Welcome soft without muddy light bridge or button clipping',asy
 test('Studio glass uses one material on every browsing route and native transitions remain independent',async()=>{
  const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=189')).text();
  const finish=await(await fetch(base+'/assets/clean/finish.css?v=175')).text();
- const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=182')).text();
+ const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=190')).text();
  assert.match(css,/data-st-glass="liquid"/);
  assert.match(css,/data-st-glass="subtle"/);
  assert.match(css,/data-st-glass="off"/);
@@ -342,7 +342,7 @@ test('Studio glass uses one material on every browsing route and native transiti
    assert.equal(response.status,200,route);
    const doc=parse(await response.text()).window.document;
    assert(doc.querySelector('link[href="/assets/liquid-glass/controls.css?v=189"]'),route+' lacks unified glass');
-   assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=182"]'),route+' uses stale glass renderer');
+   assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=190"]'),route+' uses stale glass renderer');
  }
  const watch=await(await fetch(base+'/watch/movie/101')).text();
  assert(!watch.includes('controls.css?v=189'),'watch page must be left alone');
@@ -354,7 +354,7 @@ test('hero and modal buttons match the dark navbar refraction material without b
  assert(hero.querySelector('.dsHeroActions .dsSecondaryBtn'));
  assert(hero.querySelector('.dsHeroActions .dsIconBtn'));
  const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=189')).text();
- const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=182')).text();
+ const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=190')).text();
  assert.match(css,/border:1px solid transparent !important/,'nav icons never get a second border');
  assert.match(css,/background:rgb\(5 8 15 \/ \.38\)/,'controls match the actual navbar smoke tint');
   assert.match(css,/background:rgb\(0 0 0 \/ \.20\)/,'SVG controls retain navbar transparency');
@@ -387,7 +387,7 @@ test('v176 supplies a real, masked details backdrop with no hard border at the o
  assert.match(lens,/\.svGlassSurface\.svGlassControl\[data-swifly-renderer="svg"\]/);
  assert.match(lens,/\.svDetailActions,\.dsDetailActionsV121/);
  assert(d.querySelector('link[href="/assets/clean/polish.css?v=176"]'));
- assert(d.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=182"]'));
+ assert(d.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=190"]'));
 });
 test('v176 adds subtle Liquid Glass to both compact auth pages without resizing',async()=>{
  const css=await(await fetch(base+'/assets/clean/polish.css?v=176')).text();
@@ -430,7 +430,7 @@ test('v188 lifts cinema brightness and hue without duplicating film art or darke
  assert.equal(nav.dataset.glassTint,'0.035');
  assert.equal(nav.dataset.glassBlur,'3.6');
  assert.equal(nav.dataset.glassSaturation,'1.25');
- assert(d.querySelector('script[src="/assets/liquid-glass/liquid-glass.js?v=189"]'));
+ assert(d.querySelector('script[src="/assets/liquid-glass/liquid-glass.js?v=190"]'));
  const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=188')).text();
  assert.match(css,/filter:brightness\(1\.10\) saturate\(1\.24\) contrast\(1\.035\)/);
  assert.match(css,/rgb\(0 0 0 \/ \.50\)/);
@@ -454,7 +454,7 @@ test('v189 navbar opts into edge-refraction, keeps a real SVG lens and bright ri
   assert.equal(nav.dataset.glassBorderWidth,'0.15');
   assert.equal(nav.dataset.glassMapOpacity,'0.98');
   assert.equal(nav.dataset.glassTint,'0.035');
-  const js=await(await fetch(base+'/assets/liquid-glass/liquid-glass.js?v=189')).text();
+  const js=await(await fetch(base+'/assets/liquid-glass/liquid-glass.js?v=190')).text();
   assert.match(js,/distortionScale:numeric\(element, 'glassDistortion', -180\)/);
   assert.match(js,/displace:numeric\(element, 'glassDisplace', .5\)/);
   const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=189')).text();
