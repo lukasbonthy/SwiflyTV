@@ -189,3 +189,68 @@ body.svCleanShell .svWelcomeClean .svWelcomeDiscoveryIntro {
 @media(prefers-reduced-motion:reduce) {
   ::view-transition-old(root),::view-transition-new(root){animation:none !important;}
 }
+
+/* v197 — warm image-to-color handoff inspired by the user's comparison.
+   The original movie is still the ONLY bitmap and is clipped to .dsHero.
+   The following are small COLOR-ONLY gradients, never a second movie image. */
+body.svCleanShell main > .dsHero > .dsHeroGlass {
+  background:
+    linear-gradient(90deg,rgb(0 0 0 / .44),rgb(0 0 0 / .12) 36%,transparent 84%),
+    linear-gradient(to bottom,rgb(0 0 0 / .03),transparent 59%,
+      rgb(0 0 0 / .055) 73%,rgb(0 0 0 / .27) 89%,
+      rgb(0 0 0 / .78) 100%) !important;
+}
+body.svCleanShell main > .dsHero::after {
+  /* Stay faintly colorful at the hero boundary so the next section picks
+     up the identical two hues, instead of black -> colored fog -> black. */
+  background:
+    radial-gradient(ellipse 77% 98% at 17% 82%,
+      rgb(var(--sv-art-glow-1,105 77 91) / .28) 0%,
+      rgb(var(--sv-art-glow-1,105 77 91) / .11) 55%,transparent 100%),
+    radial-gradient(ellipse 75% 94% at 84% 79%,
+      rgb(var(--sv-art-glow-2,84 106 122) / .22) 0%,
+      rgb(var(--sv-art-glow-2,84 106 122) / .08) 58%,transparent 100%) !important;
+  -webkit-mask-image:linear-gradient(to bottom,
+    transparent 0%,rgb(0 0 0 / .43) 35%,#000 71%,
+    rgb(0 0 0 / .62) 100%) !important;
+  mask-image:linear-gradient(to bottom,
+    transparent 0%,rgb(0 0 0 / .43) 35%,#000 71%,
+    rgb(0 0 0 / .62) 100%) !important;
+}
+/* The first catalog rows see only low-opacity sampled COLOR.
+   There is no repeated Spider-Man/Animals bitmap or large CSS blur. */
+body.svCleanShell main > .dsHero + .svHeroLightBridge + .dsContent:not(.noHero) {
+  position:relative !important;
+  isolation:isolate !important;
+  background:transparent !important;
+}
+body.svCleanShell main > .dsHero + .svHeroLightBridge + .dsContent:not(.noHero)::before {
+  content:"" !important;
+  display:block !important;
+  position:absolute !important;
+  top:0 !important;left:0 !important;right:0 !important;
+  height:clamp(210px,32svh,320px) !important;
+  pointer-events:none !important;
+  z-index:0 !important;
+  background:
+    radial-gradient(ellipse 72% 88% at 17% -16%,
+      rgb(var(--sv-art-glow-1,105 77 91) / .095),transparent 81%),
+    radial-gradient(ellipse 69% 84% at 84% -16%,
+      rgb(var(--sv-art-glow-2,84 106 122) / .075),transparent 81%) !important;
+  -webkit-mask-image:linear-gradient(to bottom,#000 0%,rgb(0 0 0 / .63) 34%,transparent 100%) !important;
+  mask-image:linear-gradient(to bottom,#000 0%,rgb(0 0 0 / .63) 34%,transparent 100%) !important;
+  filter:none !important;
+}
+body.svCleanShell main > .dsHero + .svHeroLightBridge + .dsContent:not(.noHero) > * {
+  position:relative;z-index:1;
+}
+@media(max-width:860px) {
+  body.svCleanShell main > .dsHero + .svHeroLightBridge + .dsContent:not(.noHero)::before {
+    height:240px !important;
+  }
+}
+@media(prefers-reduced-transparency:reduce) {
+  body.svCleanShell main > .dsHero + .svHeroLightBridge + .dsContent:not(.noHero)::before {
+    display:none !important;
+  }
+}
