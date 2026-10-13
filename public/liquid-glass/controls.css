@@ -248,7 +248,7 @@ body.svCleanShell[data-st-glass="liquid"] .svWelcomeClean .dsWelcomeActions > a.
   border-color:rgba(239,255,255,.54) !important;
   color:#f1fbff !important;
 }
-body.svCleanShell[data-st-glass="liquid"] .svWelcomeClean .dsWelcomeActions > a.svSharedGlass {
+body.svCleanShell.svSharedGlassReady[data-st-glass="liquid"] .svWelcomeClean .dsWelcomeActions > a.svSharedGlass {
   -webkit-backdrop-filter:url(#sv-shared-action-lens) saturate(1.25) !important;
   backdrop-filter:url(#sv-shared-action-lens) saturate(1.25) !important;
 }
