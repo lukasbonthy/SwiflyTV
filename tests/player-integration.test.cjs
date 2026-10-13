@@ -322,7 +322,7 @@ test('v174 liquid controls respond to the Studio setting and pages transition pr
    assert.equal(response.status,200,route);
    const doc=parse(await response.text()).window.document;
    assert(doc.querySelector('link[href="/assets/clean/finish.css?v=175"]'),route+' missing final styles');
-   assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=175"]'),route+' missing updated glass controls');
+   assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=176"]'),route+' missing updated glass controls');
  }
  const watch=await(await fetch(base+'/watch/movie/101')).text();
  assert(!watch.includes('finish.css?v=175'),'watch route must not have page dissolves');
@@ -338,7 +338,7 @@ test('v175 keeps the top bar one cohesive capsule and restores real Liquid Glass
  assert(hero.querySelector('.dsHeroActions .dsSecondaryBtn'),'Details button');
  assert(hero.querySelector('.dsHeroActions .dsIconBtn'),'Save button');
  const css=await (await fetch(base+'/assets/clean/finish.css?v=175')).text();
- const js=await (await fetch(base+'/assets/liquid-glass/surfaces.js?v=175')).text();
+ const js=await (await fetch(base+'/assets/liquid-glass/surfaces.js?v=176')).text();
  assert.match(css,/\.netflixNav,\.dsWelcomeNav\) :is\(\.svNavButton,\.svWelcomeStudio/);
  assert.match(css,/border:1px solid transparent !important/,'nav buttons should not be outlined separately');
  assert.match(css,/background:transparent !important/,'nav icons should live in one glass capsule');
@@ -349,5 +349,42 @@ test('v175 keeps the top bar one cohesive capsule and restores real Liquid Glass
  assert.doesNotMatch(css,/rgba\(255,255,255,\.92\)/,'old solid Play style must stay removed');
  const links=[...doc.querySelectorAll('link[rel=stylesheet]')].map(el=>el.getAttribute('href'));
  assert(links.includes('/assets/clean/finish.css?v=175'));
- assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=175"]'));
+ assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=176"]'));
+});
+
+test('v176 supplies a real, masked details backdrop with no hard border at the overview',async()=>{
+ const response=await fetch(base+'/movie/101');
+ assert.equal(response.status,200);
+ const d=parse(await response.text()).window.document;
+ const article=d.querySelector('.svTitleDetails[style*="--sv-detail-art"]');
+ assert(article,'details must reuse film art for the fade');
+ assert(article.querySelector('.svDetailBackdrop'));
+ assert(article.querySelector('.svDetailShade'));
+ assert(article.querySelector('.svDetailBody'));
+ assert.equal(article.querySelectorAll('.svDetailActions > .dsPrimaryBtn').length,1);
+ assert(article.querySelectorAll('.svDetailActions > .dsSecondaryBtn').length>=1);
+ assert(article.querySelectorAll('.svDetailActions > .dsIconBtn').length>=2);
+ const css=await(await fetch(base+'/assets/clean/polish.css?v=176')).text();
+ assert.match(css,/\.svDetailBackdrop \{/);
+ assert.match(css,/rgba\(0,0,0,\.22\) 94%,transparent 100%/);
+ assert.match(css,/\.svDetailShade \{/);
+ assert.match(css,/\.svDetailBody \{/);
+ assert.match(css,/\.svDetailActions > :is\(\.dsPrimaryBtn,\.dsSecondaryBtn,\.dsIconBtn\)/);
+ assert.match(css,/\[data-swifly-renderer="svg"\]/);
+ assert(d.querySelector('link[href="/assets/clean/polish.css?v=176"]'));
+ assert(d.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=176"]'));
+});
+test('v176 adds subtle Liquid Glass to both compact auth pages without resizing',async()=>{
+ const css=await(await fetch(base+'/assets/clean/polish.css?v=176')).text();
+ const auth=await(await fetch(base+'/assets/clean/auth.css?v=173')).text();
+ assert.match(auth,/max-width:430px !important/);
+ assert.doesNotMatch(css,/dsAuthShellSafe\s*\{[^}]*width:/);
+ assert.match(css,/main\.dsAuthPageSafe \.dsAuthCard/);
+ assert.match(css,/main\.dsAuthPageSafe \.dsSafeAuthForm \.dsPrimaryBtn/);
+ assert.match(css,/data-st-glass="liquid"/);
+ for(const route of ['/login','/signup']){
+  const d=parse(await(await fetch(base+route)).text()).window.document;
+  assert.equal(d.querySelectorAll('.dsAuthCard').length,1);
+  assert(d.querySelector('link[href="/assets/clean/polish.css?v=176"]'));
+ }
 });

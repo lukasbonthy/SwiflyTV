@@ -314,3 +314,22 @@ test('Unsupported SVG filters retain interactive frosted controls without standa
   assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length,0);
   env.finish();
 });
+
+test('Liquid Glass activates real refraction in dynamically inserted details action row',async()=>{
+ const env=glass('<div class="svDetailActions"><a class="dsPrimaryBtn">Play</a><a class="dsSecondaryBtn">Trailer</a><a class="dsSecondaryBtn">Start a watch party</a><button class="dsIconBtn">Save</button><button class="dsIconBtn">Like</button></div>');
+ const w=env.window,d=w.document;
+ d.body.dataset.stGlass='liquid';
+ w.boot('liquid-glass/liquid-glass.js');
+ w.boot('liquid-glass/surfaces.js');
+ env.intersect(true);w.flush(16);
+ const controls=[...d.querySelectorAll('.svDetailActions > *')];
+ assert.equal(controls.length,5);
+ for(const control of controls){
+  assert(control.classList.contains('svGlassControl'));
+  assert.equal(control.dataset.swiflyRenderer,'svg','all detail actions should refract in Liquid');
+ }
+ d.body.dataset.stGlass='subtle';
+ await tick();env.intersect(true);w.flush(32);
+ for(const control of controls)assert.equal(control.dataset.swiflyRenderer,'blur');
+ env.finish();
+});

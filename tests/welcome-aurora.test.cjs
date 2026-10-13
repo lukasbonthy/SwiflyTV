@@ -284,3 +284,20 @@ test('Recent hero-art fade is preserved while the WebGL overlay is removed',()=>
  assert.doesNotMatch(fade,/\.movieCard img/);
  assert.equal(fs.existsSync(path.join(__dirname,'../public/clean/aurora-shader.js')),false);
 });
+
+test('Welcome third poster keeps its title, year and type; Spider-Man art stays centered',()=>{
+ const env=browser(welcome()),d=env.window.document;
+ const cards=[...d.querySelectorAll('.svWelcomePoster')];
+ assert.equal(cards.length,3);
+ const third=cards[2],caption=third.querySelector('.svWelcomePosterCaption');
+ assert(third.classList.contains('svWelcomeSupportingPoster'));
+ assert(caption);
+ assert(caption.querySelector('strong')?.textContent.trim().length>0);
+ assert.match(caption.querySelector('span')?.textContent||'',/(Movie|Series)/);
+ const css=fs.readFileSync(path.join(__dirname,'../public/clean/polish.css'),'utf8');
+ assert.match(css,/\.dsWelcomeHeroBg > img \{/);
+ assert.match(css,/object-position:38% center/);
+ assert.match(css,/\.svWelcomeSupportingPoster:last-child \{/);
+ assert.match(css,/z-index:4 !important/,'third movie caption should not hide behind the spotlight poster');
+ assert.match(css,/\.svWelcomePosterCaption strong \{/);
+});
