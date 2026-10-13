@@ -136,8 +136,8 @@ body:has(.playerFullscreen) .mobileNav[data-sv-liquid-nav] { display: none !impo
   .svLiquidPane, .svLiquidPane[data-swifly-renderer="svg"] { background: rgb(15 17 22 / .96); -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 
-/* v193 — Safari/iPadOS renders a real SVG specular lens over WebKit's live
-   -webkit-backdrop-filter, rather than an unsupported URL backdrop filter. */
+/* v194 — Safari/iPadOS keeps live native blur in the center and refracts
+   actual page paint through a clipped inline SVG along the lens edge. */
 .svLiquidPane[data-swifly-renderer="webkit-svg"] {
   background:linear-gradient(120deg,rgb(243 249 255 / .095),
     rgb(180 207 233 / .035) 42%,rgb(8 18 30 / .125) 83%,

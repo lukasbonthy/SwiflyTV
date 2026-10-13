@@ -319,9 +319,9 @@ test('v174 keeps Welcome soft without muddy light bridge or button clipping',asy
 });
 
 test('Studio glass uses one material on every browsing route and native transitions remain independent',async()=>{
- const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=193')).text();
+ const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=194')).text();
  const finish=await(await fetch(base+'/assets/clean/finish.css?v=175')).text();
- const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=190')).text();
+ const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=194')).text();
  assert.match(css,/data-st-glass="liquid"/);
  assert.match(css,/data-st-glass="subtle"/);
  assert.match(css,/data-st-glass="off"/);
@@ -336,8 +336,8 @@ test('Studio glass uses one material on every browsing route and native transiti
    const response=await fetch(base+route);
    assert.equal(response.status,200,route);
    const doc=parse(await response.text()).window.document;
-   assert(doc.querySelector('link[href="/assets/liquid-glass/controls.css?v=193"]'),route+' lacks unified glass');
-   assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=190"]'),route+' uses stale glass renderer');
+   assert(doc.querySelector('link[href="/assets/liquid-glass/controls.css?v=194"]'),route+' lacks unified glass');
+   assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=194"]'),route+' uses stale glass renderer');
  }
  const watch=await(await fetch(base+'/watch/movie/101')).text();
  assert(!watch.includes('controls.css?v=189'),'watch page must be left alone');
@@ -348,8 +348,8 @@ test('hero and modal buttons match the dark navbar refraction material without b
  assert(hero.querySelector('.dsHeroActions .dsPrimaryBtn'));
  assert(hero.querySelector('.dsHeroActions .dsSecondaryBtn'));
  assert(hero.querySelector('.dsHeroActions .dsIconBtn'));
- const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=193')).text();
- const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=190')).text();
+ const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=194')).text();
+ const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=194')).text();
  assert.match(css,/border:1px solid transparent !important/,'nav icons never get a second border');
  assert.match(css,/background:rgb\(5 8 15 \/ \.38\)/,'controls match the actual navbar smoke tint');
   assert.match(css,/background:rgb\(0 0 0 \/ \.20\)/,'SVG controls retain navbar transparency');
@@ -378,11 +378,11 @@ test('v176 supplies a real, masked details backdrop with no hard border at the o
  assert.match(css,/rgba\(0,0,0,\.22\) 94%,transparent 100%/);
  assert.match(css,/\.svDetailShade \{/);
  assert.match(css,/\.svDetailBody \{/);
- const lens=await(await fetch(base+'/assets/liquid-glass/controls.css?v=193')).text();
+ const lens=await(await fetch(base+'/assets/liquid-glass/controls.css?v=194')).text();
  assert.match(lens,/\.svGlassSurface\.svGlassControl\[data-swifly-renderer="svg"\]/);
  assert.match(lens,/\.svDetailActions,\.dsDetailActionsV121/);
  assert(d.querySelector('link[href="/assets/clean/polish.css?v=176"]'));
- assert(d.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=190"]'));
+ assert(d.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=194"]'));
 });
 test('v176 adds subtle Liquid Glass to both compact auth pages without resizing',async()=>{
  const css=await(await fetch(base+'/assets/clean/polish.css?v=176')).text();
@@ -425,13 +425,13 @@ test('v188 lifts cinema brightness and hue without duplicating film art or darke
  assert.equal(nav.dataset.glassTint,'0.035');
  assert.equal(nav.dataset.glassBlur,'3.6');
  assert.equal(nav.dataset.glassSaturation,'1.25');
- assert(d.querySelector('script[src="/assets/liquid-glass/liquid-glass.js?v=193"]'));
+ assert(d.querySelector('script[src="/assets/liquid-glass/liquid-glass.js?v=194"]'));
  const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=192')).text();
  assert.match(css,/filter:brightness\(1\.10\) saturate\(1\.24\) contrast\(1\.035\)/);
  assert.match(css,/rgb\(0 0 0 \/ \.50\)/);
  assert.match(css,/overflow:hidden !important/,'movie picture remains clipped');
  assert.doesNotMatch(css,/background-image:var\(--sv-cinema-art\)|background-image:var\(--sv-light-art\)/,'no duplicated artwork');
- const glass=await(await fetch(base+'/assets/liquid-glass/controls.css?v=193')).text();
+ const glass=await(await fetch(base+'/assets/liquid-glass/controls.css?v=194')).text();
  assert.match(glass,/background:rgb\(0 0 0 \/ \.10\) !important/);
  assert.match(glass,/\.svNavMatchedLens\.svLiquidPane\[data-swifly-renderer="svg"\]/);
  const palette=await(await fetch(base+'/assets/clean/hero-palette.js?v=188')).text();
@@ -449,10 +449,10 @@ test('v189 navbar opts into edge-refraction, keeps a real SVG lens and bright ri
   assert.equal(nav.dataset.glassBorderWidth,'0.15');
   assert.equal(nav.dataset.glassMapOpacity,'0.98');
   assert.equal(nav.dataset.glassTint,'0.035');
-  const js=await(await fetch(base+'/assets/liquid-glass/liquid-glass.js?v=193')).text();
+  const js=await(await fetch(base+'/assets/liquid-glass/liquid-glass.js?v=194')).text();
   assert.match(js,/distortionScale:numeric\(element, 'glassDistortion', -180\)/);
   assert.match(js,/displace:numeric\(element, 'glassDisplace', .5\)/);
-  const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=193')).text();
+  const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=194')).text();
   assert.match(css,/\.netflixNav > \.svLiquidPane\[data-swifly-renderer="svg"\]/);
   assert.match(css,/backdrop-filter:var\(--sv-glass-filter\) saturate\(1\.25\)/);
   assert.match(css,/mask-composite:exclude/,'rim must remain a thin edge, not a white overlay');
