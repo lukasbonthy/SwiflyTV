@@ -44,7 +44,22 @@
     // Same DOM architecture as the working navbar: actual backdrop-filter
     // lives on a .svLiquidPane child, NOT on the isolated control itself.
     if (entry.optic) {
+      if (entry.opticPane && !entry.opticPane.isConnected) {
+        // Some live controls (e.g. password Show/Hide) use textContent=...,
+        // which replaces child nodes. Repair their pane after that update.
+        entry.opticController?.destroy();
+        entry.opticController=null;entry.opticPane=null;
+      }
       if (!entry.opticPane) {
+        // Preserve normal text labels above the optical pane; without this,
+        // an absolutely positioned backdrop can paint OVER bare text nodes.
+        if (!entry.panel) for (const child of [...entry.host.childNodes]) {
+          if (child.nodeType !== 3 || !child.textContent.trim()) continue;
+          const label=document.createElement('span');
+          label.className='svNavMatchedLabel';
+          label.textContent=child.textContent;
+          entry.host.replaceChild(label,child);
+        }
         const pane=document.createElement('span');
         pane.className='svLiquidPane svNavMatchedLens';
         pane.setAttribute('aria-hidden','true');
@@ -204,6 +219,12 @@
       for (const change of changes) {
         if (change.type === 'attributes') {if (change.target === document.body) preferenceChanged = true; continue;}
         if (change.target instanceof Element && change.target.closest('svg.svLiquidPane__filters')) continue;
+        // When an interactive label replaces its children, rescan the host
+        // to restore the navbar pane instead of silently losing refraction.
+        if (change.target instanceof HTMLElement) {
+          const entry=entries.get(change.target);
+          if (entry?.optic && entry.opticPane && !entry.opticPane.isConnected) enqueue(change.target);
+        }
         for (const node of change.addedNodes) if (node instanceof HTMLElement) enqueue(node);
         if ([...change.removedNodes].some(node => node instanceof HTMLElement)) removed = true;
       }
