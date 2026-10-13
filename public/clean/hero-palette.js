@@ -43,9 +43,16 @@
         const separation=Math.abs(g.index-primary.index);
         return Math.min(separation,12-separation)>=2;
       })||ranked[1];
-      const soften=group=>[group.r,group.g,group.b].map(v=>
-        Math.max(35,Math.min(185,Math.round(v/group.weight*.78+24)))
-      ).join(' ');
+      // Retain chroma, rather than washing every sampled hue into a gray/
+      // brown average. Only these three channel values reach CSS gradients;
+      // the movie bitmap is never copied beneath the catalog.
+      const soften=group=>{
+        const channels=[group.r,group.g,group.b].map(v=>v/group.weight);
+        const average=(channels[0]+channels[1]+channels[2])/3;
+        return channels.map(value=>
+          Math.max(26,Math.min(225,Math.round(average*.94+(value-average)*1.22+9)))
+        ).join(' ');
+      };
       const main=hero.parentElement;
       main.style.setProperty('--sv-art-glow-1',soften(primary));
       if(secondary)main.style.setProperty('--sv-art-glow-2',soften(secondary));
