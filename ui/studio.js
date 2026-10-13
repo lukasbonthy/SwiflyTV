@@ -51,6 +51,20 @@ function studioMarkup() {
             ],'stFonts'))}
             ${group('Glass','Choose how much of the scene shines through.', choices('glass',[['off','Solid'],['subtle','Soft glass'],['liquid','Liquid glass']],'stSegments'))}
             ${group('Atmosphere','Clean, softly textured, or a little northern light.',choices('backdrop',[['aurora','Aurora'],['smooth','Clean'],['grain','Film grain']],'stSegments stAtmosphere'))}
+            <div class="stAuroraSettings" data-st-aurora-settings>
+              <span class="stAuroraHeading">AURORA LAB <small>Fine-tune your northern lights</small></span>
+              ${group('Light palette','Choose a color for the floating ribbons.',choices('auroraColor',[
+                ['glacier','Glacier','<i class="stAuroraSwatch" style="--aurora-swatch:#6adbcf"></i>'],
+                ['violet','Violet','<i class="stAuroraSwatch" style="--aurora-swatch:#a193ec"></i>'],
+                ['rose','Rose','<i class="stAuroraSwatch" style="--aurora-swatch:#eb9aba"></i>'],
+                ['mint','Mint','<i class="stAuroraSwatch" style="--aurora-swatch:#90d9ab"></i>']
+              ],'stAuroraColors'))}
+              <section class="stGroup"><div class="stGroupHead"><h3>Light intensity</h3><p>From barely-there to an immersive glow.</p></div>
+                <label class="stAuroraRangeLabel" for="stAuroraStrength"><span>Brightness</span><output data-st-aurora-strength-value for="stAuroraStrength">80%</output></label>
+                <input type="range" id="stAuroraStrength" data-st-aurora-strength min="0" max="100" step="5" value="80" aria-label="Aurora brightness">
+              </section>
+              ${group('Movement','Subtle motion, a slower drift, or still light.',choices('auroraMotion',[['drift','Drift'],['slow','Slow'],['still','Still']],'stSegments'))}
+            </div>
           </section>
           <section id="stPanel-layout" class="stPanel" role="tabpanel" aria-labelledby="stTab-layout" hidden>
             <div class="stPanelTitle"><span>02 / LAYOUT</span><h2>Room for your favorites.</h2><p>Change the gallery without changing what you watch.</p></div>
