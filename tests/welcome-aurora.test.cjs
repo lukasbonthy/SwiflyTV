@@ -286,7 +286,7 @@ test('Recent hero-art fade is preserved while the WebGL overlay is removed',()=>
 });
 
 test('Welcome third poster keeps its title, year and type; Spider-Man art stays centered',()=>{
- const env=welcome(options),d=env.window.document;
+ const env=browser(welcome()),d=env.window.document;
  const cards=[...d.querySelectorAll('.svWelcomePoster')];
  assert.equal(cards.length,3);
  const third=cards[2],caption=third.querySelector('.svWelcomePosterCaption');
