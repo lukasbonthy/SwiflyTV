@@ -25,19 +25,19 @@ body.svCleanShell main > .dsHero {
   min-height: clamp(690px, 96svh, 990px) !important;
   padding: 125px 0 145px !important;
   height: auto !important;
-  overflow: hidden !important;
+  overflow:hidden !important;
   isolation: isolate !important;
   background: #000 !important;
 }
 body.svCleanShell main > .dsHero > .dsHeroBg {
   position: absolute !important;
   inset: 0 !important;
-  bottom: 0 !important;
+  bottom:0 !important;
   z-index: -4 !important;
   background-position: center 42% !important;
   background-size: cover !important;
-  background-repeat: no-repeat !important;
-  filter: brightness(1.10) saturate(1.24) contrast(1.035) !important;
+  background-repeat:no-repeat !important;
+  filter:brightness(1.10) saturate(1.24) contrast(1.035) !important;
   -webkit-mask-image: linear-gradient(to bottom,
     #000 0%, #000 60%, rgb(0 0 0 / .96) 69%,
     rgb(0 0 0 / .72) 82%, rgb(0 0 0 / .25) 94%, transparent 100%) !important;
