@@ -1,4 +1,4 @@
-/* v194: Chromium backdrop displacement and scene-backed WebKit SVG lenses. */
+/* v195: native SVG artwork refraction for WebKit, without HTML captures. */
 (() => {
   'use strict';
   if (window.SwiflyLiquidGlass) return;
@@ -36,45 +36,104 @@
     return styles.get(node);
   };
   const insideOptics = node => (node instanceof Element ? node : node.parentElement)?.closest('.svLiquidPane, .svWebkitGlassOptics, .svLiquidPane__filters');
+  const imageSizes = new Map();
+  function imageSize(url, original) {
+    if (original?.naturalWidth) return {width:original.naturalWidth,height:original.naturalHeight};
+    if (!imageSizes.has(url)) {
+      const size={width:0,height:0},image=new Image();imageSizes.set(url,size);
+      image.onload=()=>{size.width=image.naturalWidth;size.height=image.naturalHeight;sceneChanged();};
+      image.src=url;
+    }
+    return imageSizes.get(url);
+  }
+  function cssList(value) {
+    const result=[];let start=0,depth=0,quote='';
+    for(let i=0;i<value.length;i++) {
+      const c=value[i];
+      if(quote){if(c===quote && value[i-1]!=='\\')quote='';continue;}
+      if(c==='"'||c==="'"){quote=c;continue;}
+      if(c==='(')depth++;else if(c===')')depth--;else if(c===','&&!depth){result.push(value.slice(start,i).trim());start=i+1;}
+    }
+    result.push(value.slice(start).trim());return result;
+  }
+  function nativeGradient(value, rect, defs) {
+    const match=value.match(/^(repeating-)?linear-gradient\((.*)\)$/);if(!match)return null;
+    const parts=cssList(match[2]);let angle=180;
+    if(/deg$/.test(parts[0]))angle=parseFloat(parts.shift());
+    else if(parts[0].startsWith('to ')) {
+      const direction=parts.shift();angle=direction.includes('right')?(direction.includes('bottom')?135:direction.includes('top')?45:90):direction.includes('left')?(direction.includes('bottom')?225:direction.includes('top')?315:270):direction.includes('top')?0:180;
+    }
+    const radians=angle*Math.PI/180,dx=Math.sin(radians),dy=-Math.cos(radians);
+    const length=Math.abs(rect.width*dx)+Math.abs(rect.height*dy)||1;
+    const stops=[];
+    for(const part of parts) {
+      const position=part.match(/^(.*?)\s+(-?[\d.]+)(%|px)(?:\s+(-?[\d.]+)(%|px))?$/);
+      if(position){stops.push({color:position[1],offset:Number(position[2])/(position[3]==='%'?100:length)});if(position[4])stops.push({color:position[1],offset:Number(position[4])/(position[5]==='%'?100:length)});}
+      else stops.push({color:part,offset:null});
+    }
+    if(stops.length<2)return null;
+    stops[0].offset??=0;stops.at(-1).offset??=1;
+    for(let i=1;i<stops.length;i++)if(stops[i].offset===null){let end=i;while(stops[end].offset===null)end++;const begin=stops[i-1].offset,step=(stops[end].offset-begin)/(end-i+1);for(let j=i;j<end;j++)stops[j].offset=begin+step*(j-i+1);i=end;}
+    const first=match[1]?stops[0].offset:0,last=match[1]?stops.at(-1).offset:1,span=last-first||1;
+    const id='sv-scene-gradient-'+(++nextId),cx=rect.x+rect.width/2,cy=rect.y+rect.height/2;
+    const gradient=svgElement('linearGradient',{id,gradientUnits:'userSpaceOnUse',
+      x1:cx+dx*length*(first-.5),y1:cy+dy*length*(first-.5),
+      x2:cx+dx*length*(last-.5),y2:cy+dy*length*(last-.5),spreadMethod:match[1]?'repeat':'pad'});
+    let previous=0;
+    for(const stop of stops){const offset=Math.max(previous,Math.min(1,(stop.offset-first)/span));previous=offset;gradient.append(svgElement('stop',{offset,'stop-color':stop.color}));}
+    defs.append(gradient);return 'url(#'+id+')';
+  }
+  function fitArtwork(url, original, rect, fit, position) {
+    const size=imageSize(url,original);
+    if(!size.width || !size.height)return svgElement('image',{class:'svGlassArtwork',href:url,...rect,preserveAspectRatio:fit==='contain'?'xMidYMid meet':fit==='fill'?'none':'xMidYMid slice'});
+    const factor=fit==='fill'?null:fit==='none'?1:fit==='contain'||fit==='scale-down'?Math.min(rect.width/size.width,rect.height/size.height,fit==='scale-down'?1:Infinity):Math.max(rect.width/size.width,rect.height/size.height);
+    const width=factor===null?rect.width:size.width*factor,height=factor===null?rect.height:size.height*factor;
+    const values=(position||'50% 50%').split(/\s+/),offset=(value,space)=>value?.endsWith('%')?space*parseFloat(value)/100:value==='left'||value==='top'?0:value==='right'||value==='bottom'?space:value==='center'?space/2:parseFloat(value)||0;
+    return svgElement('image',{class:'svGlassArtwork',href:url,x:rect.x+offset(values[0],rect.width-width),y:rect.y+offset(values[1]||'50%',rect.height-height),width,height,preserveAspectRatio:'none'});
+  }
+  function nativeColorFilter(value, rect, defs) {
+    if(!value||value==='none')return null;
+    const filter=svgElement('filter',{id:'sv-scene-color-'+(++nextId),filterUnits:'userSpaceOnUse',x:rect.x-64,y:rect.y-64,width:rect.width+128,height:rect.height+128,'color-interpolation-filters':'sRGB'});
+    for(const part of value.matchAll(/(brightness|contrast|saturate|grayscale|blur)\(([-\d.]+)(%|px)?\)/g)) {
+      const type=part[1],amount=Number(part[2])/(part[3]==='%'?100:1);
+      if(type==='brightness'||type==='contrast') {
+        const transfer=svgElement('feComponentTransfer');
+        for(const channel of ['R','G','B'])transfer.append(svgElement('feFunc'+channel,{type:'linear',slope:amount,intercept:type==='contrast'?.5*(1-amount):0}));
+        filter.append(transfer);
+      } else if(type==='blur')filter.append(svgElement('feGaussianBlur',{stdDeviation:amount}));
+      else filter.append(svgElement('feColorMatrix',{type:'saturate',values:type==='grayscale'?1-amount:amount}));
+    }
+    if(!filter.childNodes.length)return null;
+    defs.append(filter);return 'url(#'+filter.id+')';
+  }
   function captureScene(host, bounds, padding) {
     const scene = svgElement('g'), left = bounds.left || 0, top = bounds.top || 0;
+    const definitions=svgElement('defs');scene.append(definitions);
     const area = {left:left-padding, top:top-padding, right:left+bounds.width+padding, bottom:top+bounds.height+padding};
     const overlaps = rect => rect.width > 0 && rect.height > 0 &&
       rect.left < area.right && rect.left+rect.width > area.left &&
       rect.top < area.bottom && rect.top+rect.height > area.top;
-    const paint = (node, rect, computed, text = '') => {
+    const paint = (node, rect, computed) => {
       const image = node.tagName === 'IMG' ? node.currentSrc || node.src : '';
       const background = computed.backgroundImage && computed.backgroundImage !== 'none' ||
         computed.backgroundColor && !['transparent','rgba(0, 0, 0, 0)'].includes(computed.backgroundColor);
-      if (!image && !background && !text) return null;
-      const cropLeft=Math.max(rect.left,area.left),cropTop=Math.max(rect.top,area.top);
-      const cropWidth=Math.min(rect.left+rect.width,area.right)-cropLeft;
-      const cropHeight=Math.min(rect.top+rect.height,area.bottom)-cropTop;
-      const foreign = svgElement('foreignObject', {x:cropLeft-left, y:cropTop-top, width:cropWidth, height:cropHeight});
-      foreign.style.overflow='hidden';
-      const copy = document.createElementNS('http://www.w3.org/1999/xhtml', image ? 'img' : 'div');
-      // WebKit's positioned HTML layers escape ancestor SVG filters. Keep the
-      // crop as a flat, static foreignObject, using margins for alignment.
-      // SVG clips the small viewport; masks/cover/typography retain source size.
-      copy.style.cssText = 'display:block!important;position:static!important;margin:0!important;min-width:0!important;min-height:0!important;box-sizing:border-box!important;pointer-events:none!important;';
-      copy.style.width=rect.width+'px';copy.style.height=rect.height+'px';
-      copy.style.setProperty('margin-left',(rect.left-cropLeft)+'px','important');
-      copy.style.setProperty('margin-top',(rect.top-cropTop)+'px','important');
-      // Copy only paint and typography, never IDs, scripts, handlers, links,
-      // form values, layout positioning or the original glass layers.
-      for (const name of ['background-image','background-color','background-size','background-position','background-repeat','background-origin','background-clip','border-radius','filter','-webkit-mask-image','mask-image','-webkit-mask-composite','mask-composite','mask-size','mask-position','mask-repeat']) {
-        const value = computed.getPropertyValue(name); if (value) copy.style.setProperty(name,value);
+      if (!image && !background) return null;
+      const local={x:rect.left-left,y:rect.top-top,width:rect.width,height:rect.height},paint=svgElement('g');
+      const crop=svgElement('clipPath',{id:'sv-scene-paint-clip-'+(++nextId),clipPathUnits:'userSpaceOnUse'});
+      crop.append(svgElement('rect',{x:Math.max(local.x,-padding),y:Math.max(local.y,-padding),
+        width:Math.min(local.x+local.width,bounds.width+padding)-Math.max(local.x,-padding),
+        height:Math.min(local.y+local.height,bounds.height+padding)-Math.max(local.y,-padding)}));
+      definitions.append(crop);
+      const output=svgElement('g',{'clip-path':'url(#'+crop.id+')'});output.append(paint);
+      if(computed.backgroundColor&&!['transparent','rgba(0, 0, 0, 0)'].includes(computed.backgroundColor))paint.append(svgElement('rect',{...local,fill:computed.backgroundColor}));
+      const layers=cssList(computed.backgroundImage||'none');
+      for(const layer of layers.reverse()) {
+        const url=layer.match(/^url\(["']?(.*?)["']?\)$/);
+        if(url)paint.append(fitArtwork(url[1],null,local,computed.backgroundSize==='contain'?'contain':'cover',computed.backgroundPosition));
+        else {const fill=nativeGradient(layer,local,definitions);if(fill)paint.append(svgElement('rect',{...local,fill}));}
       }
-      if (image) {
-        copy.setAttribute('src', image); copy.setAttribute('alt','');
-        copy.style.objectFit = computed.objectFit; copy.style.objectPosition = computed.objectPosition;
-      } else if (text) {
-        for (const name of ['font-family','font-size','font-weight','font-style','line-height','letter-spacing','word-spacing','color','text-align','text-transform','text-shadow','white-space','padding-top','padding-right','padding-bottom','padding-left']) {
-          const value = computed.getPropertyValue(name); if (value) copy.style.setProperty(name,value);
-        }
-        copy.textContent = text;
-      }
-      foreign.append(copy); return foreign;
+      if(image)paint.append(fitArtwork(image,node,local,computed.objectFit||'fill',computed.objectPosition));
+      return output;
     };
     function visit(node, parent) {
       if (!(node instanceof HTMLElement) || node === host || node === host.parentElement ||
@@ -91,8 +150,9 @@
       const group = svgElement('g');
       if (computed.opacity && computed.opacity !== '1') group.setAttribute('opacity',computed.opacity);
       if (intersects) {
-        const text = [...node.childNodes].filter(child => child.nodeType === 3).map(child => child.textContent).join('');
-        const layer = paint(node, rect, computed, text.trim() ? text : ''); if (layer) group.append(layer);
+        // Text stays in the live native backdrop. Pulling a nearby paragraph
+        // into a distorted HTML copy prints stray words over button labels.
+        const layer = paint(node, rect, computed); if (layer) group.append(layer);
       }
       let children = group;
       if (clips && intersects) {
@@ -105,7 +165,21 @@
       const ordered = [...node.children].filter(child => child instanceof HTMLElement);
       ordered.sort((a,b) => (parseFloat(styleOf(a).zIndex)||0)-(parseFloat(styleOf(b).zIndex)||0));
       for (const child of ordered) visit(child,children);
-      if (group.childNodes.length) parent.append(group);
+      if (group.childNodes.length) {
+        // CSS effects belong to the whole source element, including artwork
+        // inside wrappers that have no background paint of their own.
+        const filter=nativeColorFilter(computed.filter,{x:-padding,y:-padding,width:bounds.width+2*padding,height:bounds.height+2*padding},definitions);
+        if(filter)group.setAttribute('filter',filter);
+        const local={x:rect.left-left,y:rect.top-top,width:rect.width,height:rect.height};
+        let layer=group;
+        for(const value of cssList(computed.maskImage||computed.webkitMaskImage||'none')) {
+          const fill=nativeGradient(value,local,definitions);if(!fill)continue;
+          const mask=svgElement('mask',{id:'sv-scene-mask-'+(++nextId),maskUnits:'userSpaceOnUse',...local,style:'mask-type:alpha'});
+          mask.append(svgElement('rect',{...local,fill}));definitions.append(mask);
+          const wrapper=svgElement('g',{mask:'url(#'+mask.id+')'});wrapper.append(layer);layer=wrapper;
+        }
+        parent.append(layer);
+      }
     }
     for (const node of document.body.children) visit(node,scene);
     return scene;
@@ -236,22 +310,30 @@
         svgElement('feGaussianBlur',{in:'refracted',stdDeviation:.55}));
       const clip = svgElement('clipPath',{id:id+'-clip',clipPathUnits:'userSpaceOnUse'});
       clip.append(svgElement('rect',{width,height,rx:radius}));
+      const body=svgElement('filter',{id:id+'-body',filterUnits:'userSpaceOnUse',
+        x:-padding,y:-padding,width:width+2*padding,height:height+2*padding,'color-interpolation-filters':'sRGB'});
+      body.append(svgElement('feGaussianBlur',{in:'SourceGraphic',stdDeviation:2.8,result:'soft'}),
+        svgElement('feColorMatrix',{in:'soft',type:'saturate',values:1.08}));
       const feather = svgElement('filter',{id:id+'-feather'});
       feather.append(svgElement('feGaussianBlur',{stdDeviation:2.2}));
       const edge = Math.min(20,Math.max(7,height*.2));
       const edgeMask = svgElement('mask',{id:id+'-edge',maskUnits:'userSpaceOnUse',x:0,y:0,width,height});
       edgeMask.append(svgElement('rect',{width,height,fill:'white'}),
         svgElement('rect',{x:edge,y:edge,width:Math.max(0,width-edge*2),height:Math.max(0,height-edge*2),rx:Math.max(0,radius-edge),fill:'black',filter:'url(#'+id+'-feather)'}));
-      defs.append(refract,clip,feather,edgeMask);
+      defs.append(refract,clip,body,feather,edgeMask);
       const inset = Math.max(.75,Math.min(width,height)*.016);
       const x=inset,y=inset,w=Math.max(0,width-2*inset),h=Math.max(0,height-2*inset);
       const r=Math.max(1,Math.min(radius,Math.min(w,h)/2));
       svg=svgElement('svg',{class:'svWebkitGlassOptics','aria-hidden':'true',focusable:'false',
         viewBox:'0 0 '+width+' '+height,preserveAspectRatio:'none'});
-      scene=svgElement('g',{'data-sv-glass-scene':''});
+      scene=svgElement('g',{id:id+'-scene','data-sv-glass-scene':''});
       const sampled=svgElement('g',{filter:'url(#'+id+'-refract)'});sampled.append(scene);
       const edgeScene=svgElement('g',{'clip-path':'url(#'+id+'-clip)',mask:'url(#'+id+'-edge)'});edgeScene.append(sampled);
-      svg.append(defs,edgeScene,
+      // Render softness in SVG too, so the material does not depend on an
+      // accelerated CSS backdrop compositing path being available.
+      const bodyScene=svgElement('g',{'clip-path':'url(#'+id+'-clip)'});
+      bodyScene.append(svgElement('use',{href:'#'+id+'-scene',filter:'url(#'+id+'-body)',opacity:.78}));
+      svg.append(defs,bodyScene,edgeScene,
         svgElement('rect',{x,y,width:w,height:h,rx:r,fill:'url(#'+id+'-sheen)'}),
         svgElement('rect',{x,y,width:w,height:h,rx:r,fill:'url(#'+id+'-glow)'}),
         svgElement('rect',{x,y,width:w,height:h,rx:r,fill:'none',

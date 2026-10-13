@@ -535,7 +535,7 @@ test('WebKit optical CSS includes live blur and reduced-transparency fallback',(
  assert(controls.includes('prefers-reduced-transparency:reduce'));
 });
 
-test('Safari displacement receives the page artwork and text, rather than only a rim highlight',()=>{
+test('Safari displacement receives native artwork while text stays in the live backdrop',()=>{
  const env=glass('<main><div class="dsHeroBg" style="background-image:url(/movie-art.jpg)"></div><h1>Featured movie</h1></main><nav><div class="svLiquidPane" data-swifly-glass></div></nav>');
  const w=env.window,d=w.document;
  Object.defineProperty(w.navigator,'userAgent',{configurable:true,value:'Mozilla/5.0 AppleWebKit/605.1.15 Version/18.6 Safari/605.1.15'});
@@ -543,7 +543,8 @@ test('Safari displacement receives the page artwork and text, rather than only a
  const lens=d.querySelector('svg.svWebkitGlassOptics'),scene=lens.querySelector('[data-sv-glass-scene]');
  assert(scene,'the SVG must have real backdrop content to refract');
  assert.match(scene.innerHTML,/movie-art\.jpg/);
- assert.match(scene.textContent,/Featured movie/);
+ assert.equal(scene.textContent,'');
+ assert(scene.querySelector('image'));
  assert(lens.querySelector('feImage'),'displacement must sample a spatial map');
  const displaced=scene.closest('[filter]');
  assert(displaced,'actual artwork must pass through the SVG filter');
@@ -551,22 +552,22 @@ test('Safari displacement receives the page artwork and text, rather than only a
  env.finish();
 });
 
-test('Safari scene tracks scrolling and changed content without rebuilding the filter or running idle frames',async()=>{
- const env=glass('<main><h1>Before</h1></main><nav><div class="svLiquidPane" data-swifly-glass></div></nav>');
+test('Safari scene tracks scrolling and changed artwork without rebuilding the filter or running idle frames',async()=>{
+ const env=glass('<main><div class="art" style="background-image:url(/before.jpg)"></div></main><nav><div class="svLiquidPane" data-swifly-glass></div></nav>');
  const w=env.window,d=w.document;
  Object.defineProperty(w.navigator,'userAgent',{configurable:true,value:'Mozilla/5.0 AppleWebKit/605.1.15 Version/18.6 Safari/605.1.15'});
  let top=0;
- for(const node of d.querySelectorAll('main,h1'))node.getBoundingClientRect=()=>({width:400,height:200,top,left:0,bottom:top+200,right:400});
+ for(const node of d.querySelectorAll('main,.art'))node.getBoundingClientRect=()=>({width:400,height:200,top,left:0,bottom:top+200,right:400});
  d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);await tick();
  const pane=d.querySelector('.svLiquidPane'),lens=pane.querySelector('svg'),scene=lens.querySelector('[data-sv-glass-scene]');
  assert(scene,'a real background scene is required');
- const position=()=>{const layer=scene.querySelector('foreignObject');return Number(layer.getAttribute('y'))+parseFloat(layer.firstElementChild.style.marginTop);};
+ const position=()=>Number(scene.querySelector('image').getAttribute('y'));
  const before=position();
  top=-64;d.dispatchEvent(new w.Event('scroll'));w.flush(32);await tick();
  assert.equal(pane.querySelector('svg'),lens,'scrolling must reuse the optical graph');
  assert.equal(position(),before-64);
- d.querySelector('h1').textContent='After';await tick();w.flush(48);await tick();
- assert.match(scene.textContent,/After/);
+ d.querySelector('.art').style.backgroundImage='url(/after.jpg)';await tick();w.flush(48);await tick();
+ assert.match(scene.innerHTML,/after\.jpg/);
  assert.equal(w.frameCount(),0,'sampling must settle without its own mutation feedback loop');
  d.body.dataset.stGlass='off';await tick();w.flush(64);await tick();
  d.dispatchEvent(new w.Event('scroll'));
@@ -591,7 +592,7 @@ test('Safari ignores its sampled image loads while refreshing for an original im
  const env=glass('<main><img src="/poster.jpg" alt="Poster"></main><nav><div class="svLiquidPane" data-swifly-glass></div></nav>'),w=env.window,d=w.document;
  Object.defineProperty(w.navigator,'userAgent',{configurable:true,value:'Mozilla/5.0 AppleWebKit/605.1.15 Version/18.6 Safari/605.1.15'});
  d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);await tick();w.flush(20);await tick();
- const sampled=d.querySelector('[data-sv-glass-scene] img');assert(sampled);assert.equal(w.frameCount(),0);
+ const sampled=d.querySelector('[data-sv-glass-scene] image');assert(sampled);assert.equal(w.frameCount(),0);
  sampled.dispatchEvent(new w.Event('load'));
  assert.equal(w.frameCount(),0,'cloned image loads must not recursively schedule scene sampling');
  d.querySelector('main img').dispatchEvent(new w.Event('load'));
@@ -615,7 +616,7 @@ test('Safari refreshes settled transitions and animations without listening to i
  w.flush(32);await tick();assert(scene.innerHTML.includes('movie.jpg'));
  art.dispatchEvent(new w.Event('animationend',{bubbles:true}));assert.equal(w.frameCount(),1);
  w.flush(48);await tick();
- scene.querySelector('div').dispatchEvent(new w.Event('transitionend',{bubbles:true}));
+ scene.querySelector('image').dispatchEvent(new w.Event('transitionend',{bubbles:true}));
  assert.equal(w.frameCount(),0,'sampled content must not schedule another capture');
  env.finish();
 });
@@ -625,12 +626,37 @@ test('Safari bounds large artwork captures to the lens band while preserving sou
  Object.defineProperty(w.navigator,'userAgent',{configurable:true,value:'Mozilla/5.0 AppleWebKit/605.1.15 Version/18.6 Safari/605.1.15'});
  for(const node of d.querySelectorAll('main,.art'))node.getBoundingClientRect=()=>({width:3000,height:3000,left:-400,top:-200,right:2600,bottom:2800});
  d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);
- const source=d.querySelector('[data-sv-glass-scene] foreignObject');assert(source);
- assert(Number(source.getAttribute('width'))<=328 && Number(source.getAttribute('height'))<=168,'a large hero must not rasterize outside the sampled lens band');
- const copy=source.querySelector('[style*="background-image"]');assert(copy);
- assert.equal(copy.style.width,'3000px');assert.equal(copy.style.height,'3000px');
- assert.equal(Number(source.getAttribute('x'))+parseFloat(copy.style.marginLeft),-400);
- assert.equal(Number(source.getAttribute('y'))+parseFloat(copy.style.marginTop),-200);
- assert.match(copy.style.maskImage,/linear-gradient/);
+ const scene=d.querySelector('[data-sv-glass-scene]'),clip=scene.querySelector('clipPath rect'),copy=scene.querySelector('image');assert(clip&&copy);
+ assert(Number(clip.getAttribute('width'))<=328 && Number(clip.getAttribute('height'))<=168,'a large hero must not rasterize outside the sampled lens band');
+ assert.equal(copy.getAttribute('width'),'3000');assert.equal(copy.getAttribute('height'),'3000');
+ assert.equal(Number(copy.getAttribute('x')),-400);assert.equal(Number(copy.getAttribute('y')),-200);
+ const mask=scene.querySelector('mask rect');assert.equal(mask.getAttribute('height'),'3000');
+ env.finish();
+});
+
+test('Safari refracts native SVG artwork without copying paragraphs into its action lenses',()=>{
+ const env=glass('<main><div class="dsHeroBg" style="background-image:url(/actual-art.jpg);filter:brightness(1.1) saturate(1.24) contrast(1.035);mask-image:linear-gradient(black,transparent)"></div><p>side of their lives they never intended to expose</p><div class="dsHeroActions"><button class="dsPrimaryBtn">Play</button></div></main>'),w=env.window,d=w.document;
+ Object.defineProperty(w.navigator,'userAgent',{configurable:true,value:'Mozilla/5.0 AppleWebKit/605.1.15 Version/18.6 Safari/605.1.15'});
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');env.intersect(true);w.flush(16);
+ const scene=d.querySelector('[data-sv-glass-scene]');assert(scene);
+ assert(scene.querySelector('image[href="/actual-art.jpg"]'),'art must be an SVG image that participates in the SVG filter');
+ assert.equal(scene.querySelector('foreignObject'),null,'composited HTML must not escape the clipping or bypass refraction');
+ assert.equal(scene.textContent,'','caption text must remain in its original page layout');
+ assert(scene.querySelector('feComponentTransfer'),'brightness/contrast belong in the SVG paint graph');
+ assert(scene.querySelector('mask'),'the source fade must be an SVG mask, not a composited HTML layer');
+ env.finish();
+});
+
+test('Safari preserves artwork wrapper fades and color filters on descendant images',()=>{
+ const env=glass('<main><div class="dsWelcomeHeroBg" style="mask-image:linear-gradient(transparent,transparent);filter:brightness(.7)"><img src="/welcome-art.jpg" alt="Welcome"></div></main><nav><div class="svLiquidPane" data-swifly-glass></div></nav>'),w=env.window,d=w.document;
+ Object.defineProperty(w.navigator,'userAgent',{configurable:true,value:'Mozilla/5.0 AppleWebKit/605.1.15 Version/18.6 Safari/605.1.15'});
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);
+ const scene=d.querySelector('[data-sv-glass-scene]'),image=scene.querySelector('image');assert.match(image.getAttribute('href'),/\/welcome-art\.jpg$/);
+ const masked=image.closest('[mask]');
+ assert(masked&&scene.contains(masked),'a wrapper fade must cover its descendant artwork even when the wrapper has no paint of its own');
+ const mask=scene.querySelector(masked.getAttribute('mask').slice(4,-1));
+ assert(mask.querySelector('rect'),'the source wrapper mask must retain its geometry');
+ const filtered=image.closest('[filter]');assert(filtered&&scene.contains(filtered),'source wrapper color filters must include descendant artwork');
+ assert(scene.querySelector(filtered.getAttribute('filter').slice(4,-1)).querySelector('feFuncR[slope="0.7"]'));
  env.finish();
 });
