@@ -58,7 +58,7 @@
       host.matches('.dsHeroMuteToggle') ||
       host.matches('.dsSafeAuthForm > .dsPrimaryBtn')
     );
-    const complex = (panel && (host.dataset.glassRefraction === 'true' || host.matches('.dsAuthCard'))) || featuredControl;
+    const complex = (panel && host.dataset.glassRefraction === 'true') || featuredControl;
     const classes = ['svGlassSurface', panel ? 'svGlassPanel' : 'svGlassControl'];
     if (complex) {const position = getComputedStyle(host).position; if (!position || position === 'static') classes.push('svGlassRelative');}
     entry = {host, complex, controller:null, visible:!intersection, addedClasses:classes.filter(name => !host.classList.contains(name)), previousRenderer:host.dataset.swiflyRenderer, previousProperties:rendererProperties.map(property => [property, host.style.getPropertyValue(property), host.style.getPropertyPriority(property)])};
