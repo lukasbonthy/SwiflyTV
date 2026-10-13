@@ -3,8 +3,8 @@
   'use strict';
   if (window.SwiflyStudio) return;
   const key='swiflytv.appearance';
-  const defaults={theme:'default',font:'default',layout:'default',cardstyle:'rounded',density:'comfy',backdrop:'aurora',glass:'liquid',smooth:true,reduceMotion:false};
-  const allowed={theme:['default','red','blue','green','mono'],font:['default','cinema','soft','wide'],layout:['default','cinema','posterwall'],cardstyle:['rounded','sharp','softglass'],density:['comfy','compact'],backdrop:['aurora','smooth','grain'],glass:['off','subtle','liquid']};
+  const defaults={theme:'default',font:'default',layout:'default',cardstyle:'rounded',density:'comfy',backdrop:'aurora',auroraColor:'glacier',auroraStrength:80,auroraMotion:'drift',glass:'liquid',smooth:true,reduceMotion:false};
+  const allowed={theme:['default','red','blue','green','mono'],font:['default','cinema','soft','wide'],layout:['default','cinema','posterwall'],cardstyle:['rounded','sharp','softglass'],density:['comfy','compact'],backdrop:['aurora','smooth','grain'],auroraColor:['glacier','violet','rose','mint'],auroraMotion:['drift','slow','still'],glass:['off','subtle','liquid']};
   const presets={
     pure:{theme:'default',font:'default',layout:'default',cardstyle:'rounded',density:'comfy',backdrop:'smooth',glass:'liquid',smooth:true},
     cinema:{theme:'red',font:'cinema',layout:'cinema',cardstyle:'rounded',density:'comfy',backdrop:'grain',glass:'subtle',smooth:true},
@@ -14,6 +14,7 @@
   const accents={default:'#ece9e2',red:'#e7baa3',blue:'#a9c7ed',green:'#b4cbb8',mono:'#c1c1c7'};
   const canvases={default:'#000000',red:'#080605',blue:'#05080d',green:'#050907',mono:'#09090b'};
   const fonts={default:'"Host Grotesk",system-ui,sans-serif',cinema:'"Space Grotesk","Host Grotesk",sans-serif',soft:'"Outfit","Host Grotesk",sans-serif',wide:'"Host Grotesk",system-ui,sans-serif'};
+  const auroraHues={glacier:0,violet:95,rose:205,mint:310};
   const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
   let dialog,trigger,saved,draft,previewAnimation,started=false;
   const equal=(a,b)=>Object.keys(defaults).every(name=>a[name]===b[name]);
@@ -37,7 +38,8 @@
     const result={...defaults};
     if (!value || typeof value!=='object') return result;
     for (const name of Object.keys(defaults)) {
-      if (allowed[name]?.includes(value[name]) || (typeof defaults[name]==='boolean' && typeof value[name]==='boolean')) result[name]=value[name];
+      if (name==='auroraStrength' && Number.isInteger(value[name]) && value[name]>=0 && value[name]<=100) result[name]=value[name];
+      else if (allowed[name]?.includes(value[name]) || (typeof defaults[name]==='boolean' && typeof value[name]==='boolean')) result[name]=value[name];
     }
     return result;
   }
@@ -67,6 +69,10 @@
     legacyClasses.push('layout-dense','layout-spotlight','cardstyle-float','backdrop-grid','backdrop-aurora');
     body.classList.remove(...legacyClasses);body.classList.add('effect-clean','detail-balanced');
     for (const name of ['theme','font','layout','cardstyle','density','backdrop']) body.classList.add(name+'-'+value[name]);
+    body.style.setProperty('--sv-aurora-strength',String(value.auroraStrength/100));
+    body.style.setProperty('--sv-aurora-hue',auroraHues[value.auroraColor]+'deg');
+    body.style.setProperty('--sv-aurora-speed',value.auroraMotion==='slow'?'55s':'32s');
+    body.dataset.stAuroraMotion=value.auroraMotion;
     body.style.setProperty('--st-accent',accents[value.theme]);
     body.style.setProperty('--st-canvas',canvases[value.theme]);
     body.style.setProperty('--st-font',fonts[value.font]);
@@ -85,6 +91,9 @@
       const selected=draft[button.dataset.stField]===button.dataset.stValue;button.setAttribute('aria-pressed',String(selected));
     });
     dialog.querySelectorAll('[data-st-setting]').forEach(input=>input.checked=draft[input.dataset.stSetting]);
+    const strength=dialog.querySelector('[data-st-aurora-strength]');
+    if(strength){strength.value=String(draft.auroraStrength);dialog.querySelector('[data-st-aurora-strength-value]').textContent=draft.auroraStrength+'%';}
+    dialog.querySelector('[data-st-aurora-settings]').hidden=draft.backdrop!=='aurora';
     let look='Custom look';
     for (const [name,preset] of Object.entries(presets)) {
       const selected=Object.keys(preset).every(field=>draft[field]===preset[field]);
@@ -172,6 +181,9 @@
         const rect=dialog.getBoundingClientRect();
         if (event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom) close();
       }
+    });
+    dialog.addEventListener('input',event=>{
+      if(event.target?.matches('[data-st-aurora-strength]')) updateDraft({...draft,auroraStrength:Number(event.target.value)});
     });
     dialog.addEventListener('change',event=>{
       const input=event.target.closest('[data-st-setting]');
