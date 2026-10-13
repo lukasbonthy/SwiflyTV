@@ -59,3 +59,74 @@ body.svCleanShell[data-st-backdrop="aurora"] .svWelcomeClean .dsWelcomeDiscovery
 @media(prefers-reduced-motion:reduce) {
   body.svCleanShell .dsHeroBg {animation:none !important}
 }
+
+
+/* v171 — one continuous scene from featured artwork to discovery.
+   Extend the image beyond the hero's old cutoff and dissolve its alpha gradually.
+   Keep posters, typography, navigation, and the original Aurora untouched. */
+body.svCleanShell .svWelcomeClean .dsWelcomeHero {
+  min-height:clamp(640px,84svh,875px) !important;
+  padding-bottom:clamp(142px,17vh,195px) !important;
+  overflow:visible !important;
+}
+body.svCleanShell .svWelcomeClean .dsWelcomeHeroBg {
+  bottom:-clamp(88px,12vh,158px) !important;
+  opacity:.28 !important;
+  -webkit-mask-image:
+    linear-gradient(to right,transparent 0%,#000 32%,#000 100%),
+    linear-gradient(to bottom,transparent 0%,#000 17%,#000 43%,rgba(0,0,0,.84) 60%,rgba(0,0,0,.42) 80%,transparent 100%) !important;
+  mask-image:
+    linear-gradient(to right,transparent 0%,#000 32%,#000 100%),
+    linear-gradient(to bottom,transparent 0%,#000 17%,#000 43%,rgba(0,0,0,.84) 60%,rgba(0,0,0,.42) 80%,transparent 100%) !important;
+  -webkit-mask-composite:source-in;
+  mask-composite:intersect;
+}
+body.svCleanShell .svWelcomeClean .dsWelcomeHero::before {
+  bottom:-clamp(88px,12vh,158px) !important;
+  background:linear-gradient(to bottom,
+    transparent 0%,rgba(0,0,0,.02) 39%,rgba(0,0,0,.17) 64%,
+    rgba(0,0,0,.34) 81%,transparent 100%) !important;
+  pointer-events:none;
+}
+body.svCleanShell .svWelcomeClean .dsWelcomeDiscovery {
+  position:relative;z-index:1;
+  margin-top:-clamp(58px,8vh,88px) !important;
+  padding-top:clamp(58px,8vh,88px) !important;
+  background:transparent !important;
+}
+/* The old border was a visible horizontal section break. */
+body.svCleanShell .svWelcomeClean .svWelcomeDiscoveryIntro {
+  border-top:0 !important;
+  padding-top:25px;
+}
+/* The authenticated Home page needs the same continuous film-to-rows handoff. */
+body.svCleanShell .dsHero + .dsContent:not(.noHero) {
+  position:relative;z-index:2;
+  margin-top:-clamp(45px,8vh,90px) !important;
+  background:transparent !important;
+}
+@media(max-width:850px) {
+  body.svCleanShell .svWelcomeClean .dsWelcomeHero {
+    min-height:auto !important;
+    padding-bottom:122px !important;
+  }
+  body.svCleanShell .svWelcomeClean .dsWelcomeHeroBg {
+    bottom:-90px !important;
+    opacity:.18 !important;
+  }
+  body.svCleanShell .svWelcomeClean .dsWelcomeHero::before {bottom:-90px !important;}
+  body.svCleanShell .svWelcomeClean .dsWelcomeDiscovery {
+    margin-top:-38px !important;
+    padding-top:38px !important;
+  }
+  body.svCleanShell .dsHero + .dsContent:not(.noHero) {margin-top:-36px !important;}
+}
+@media(max-width:500px) {
+  body.svCleanShell .svWelcomeClean .dsWelcomeHero {padding-bottom:104px !important;}
+  body.svCleanShell .svWelcomeClean .dsWelcomeHeroBg {bottom:-65px !important;}
+  body.svCleanShell .svWelcomeClean .dsWelcomeHero::before {bottom:-65px !important;}
+  body.svCleanShell .svWelcomeClean .dsWelcomeDiscovery {
+    margin-top:-25px !important;
+    padding-top:25px !important;
+  }
+}

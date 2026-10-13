@@ -166,11 +166,48 @@ test('the cinema image fade loads after Aurora and Welcome styles',async()=>{
    const d=parse(await response.text()).window.document;
    const styles=[...d.querySelectorAll('link[rel="stylesheet"]')].map(link=>link.getAttribute('href'));
    const aurora=styles.findIndex(v=>v.includes('/assets/clean/aurora.css?v=170'));
-   const fade=styles.findIndex(v=>v.includes('/assets/clean/hero-fade.css?v=169'));
+   const fade=styles.findIndex(v=>v.includes('/assets/clean/hero-fade.css?v=171'));
    assert(aurora>=0 && fade>aurora,route+' fade must follow aurora');
    if(route==='/welcome'){
      const welcome=styles.findIndex(v=>v.includes('/assets/clean/welcome.css'));
      assert(fade>welcome,'fade must override welcome art masks');
    }
  }
+});
+
+test('signup is a single refined form with preserved fields and a usable password reveal',async()=>{
+ const response=await fetch(base+'/signup');
+ assert.equal(response.status,200);
+ const html=await response.text();
+ const d=parse(html).window.document;
+ assert(d.querySelector('main.svAuthSignupPage'));
+ assert.equal(d.querySelectorAll('.dsAuthCard').length,1);
+ assert.equal(d.querySelector('.dsAuthPitch,.svAuthShowcase,.svAuthSteps'),null);
+ assert.equal(d.querySelectorAll('#safeAuthForm input[required]').length,3);
+ assert(d.querySelector('#safeAuthForm input[name="name"][required]'));
+ assert(d.querySelector('#safeAuthForm input[name="email"][type="email"]'));
+ assert(d.querySelector('#safeAuthForm input[name="password"][type="password"]'));
+ assert.equal(d.querySelectorAll('[data-auth-toggle-password]').length,1);
+ assert.match(html,/passwordToggle\?\.addEventListener\("click"/);
+ assert.match(html,/aria-pressed/);
+ const css=await (await fetch(base+'/assets/clean/auth.css')).text();
+ assert.match(css,/\.svAuthSignupPage \.dsAuthCard/);
+ assert.match(css,/\.svAuthPasswordToggle:focus-visible/);
+ assert.match(html,/assets\/clean\/auth\.css\?v=171/);
+});
+test('movie discovery artwork fades beyond the hero instead of ending at a bordered section',async()=>{
+ const response=await fetch(base+'/welcome');
+ assert.equal(response.status,200);
+ const d=parse(await response.text()).window.document;
+ const hero=d.querySelector('.dsWelcomeHero'),bg=hero?.querySelector('.dsWelcomeHeroBg');
+ const discovery=d.querySelector('#discovery.dsWelcomeDiscovery');
+ assert(hero&&bg&&discovery,'Welcome should have featured image and discovery');
+ const css=await (await fetch(base+'/assets/clean/hero-fade.css')).text();
+ assert.match(css,/\.svWelcomeClean \.dsWelcomeHeroBg \{/);
+ assert.match(css,/bottom:-clamp\(88px,12vh,158px\)/,'artwork must extend past the old hero boundary');
+ assert.match(css,/\.svWelcomeClean \.svWelcomeDiscoveryIntro \{/);
+ assert.match(css,/border-top:0 !important/,'remove visible separator line');
+ assert.match(css,/margin-top:-clamp\(58px,8vh,88px\)/,'discovery should meet the hero gradually');
+ assert.match(css,/\.dsHero \+ \.dsContent:not\(\.noHero\)/,'signed-in home should share the fade treatment');
+ assert.doesNotMatch(css,/\.movieCard img/,'do not fade the actual poster cards');
 });

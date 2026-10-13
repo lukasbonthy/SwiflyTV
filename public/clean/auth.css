@@ -132,3 +132,109 @@ body.svCleanShell .dsAuthPageSafe :is(a,input,button):focus-visible {outline:2px
 @media(prefers-reduced-motion:reduce) {
  body.svCleanShell .dsSafeAuthForm .dsPrimaryBtn {transition:none !important;transform:none !important;}
 }
+
+
+/* v171 — quiet, polished signup. No extra panels, imagery or copy blocks. */
+body.svCleanShell .svAuthSignupPage .dsAuthShellSafe {
+  width:min(474px,100%) !important;
+  max-width:474px !important;
+  gap:22px;
+}
+body.svCleanShell .svAuthSignupPage .dsAuthBrand {font-size:20px !important;}
+body.svCleanShell .svAuthSignupPage .dsAuthCard {
+  position:relative;
+  padding:clamp(29px,4.3vw,43px) !important;
+  border:1px solid rgba(222,242,234,.23) !important;
+  border-radius:22px !important;
+  background:linear-gradient(152deg,rgba(30,39,41,.90),rgba(12,16,19,.95) 45%,rgba(8,12,15,.94)) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 28px 80px rgba(0,0,0,.42) !important;
+}
+body.svCleanShell .svAuthSignupPage .dsAuthSwitch {
+  display:grid !important;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:4px !important;
+  padding:5px !important;
+  margin-bottom:32px !important;
+  border:1px solid rgba(255,255,255,.12) !important;
+  border-radius:13px !important;
+  background:rgba(0,0,0,.31) !important;
+}
+body.svCleanShell .svAuthSignupPage .dsAuthSwitch a {
+  min-height:38px !important;
+  padding:7px 12px !important;
+  border-radius:9px !important;
+  color:#94a4a7 !important;
+  font-size:12px !important;
+  transition:background-color .2s,color .2s;
+}
+body.svCleanShell .svAuthSignupPage .dsAuthSwitch a.active {
+  background:rgba(226,240,236,.12) !important;
+  box-shadow:inset 0 1px rgba(255,255,255,.11) !important;
+  color:#f3f8f7 !important;
+}
+body.svCleanShell .svAuthSignupPage .dsAuthSwitch a.active::after {display:none !important;}
+body.svCleanShell .svAuthSignupPage .svAuthKicker {
+  display:block; margin-bottom:10px; color:#a6c9c1;
+  font-size:10px;font-weight:600;letter-spacing:.14em;line-height:1.5;
+}
+body.svCleanShell .svAuthSignupPage .dsAuthCard h1 {
+  font-size:clamp(32px,4vw,40px) !important;
+  line-height:1.12 !important;
+  margin-bottom:12px !important;
+  letter-spacing:-.058em !important;
+}
+body.svCleanShell .svAuthSignupPage .svAuthIntro {
+  max-width:330px !important;
+  color:#a6b5b6 !important;
+  font-size:13px !important;
+  line-height:1.68 !important;
+}
+body.svCleanShell .svAuthSignupPage .dsSafeAuthForm {gap:19px;margin-top:30px !important;}
+body.svCleanShell .svAuthSignupPage .dsSafeAuthForm label {color:#d1ddda !important;}
+body.svCleanShell .svAuthSignupPage .dsSafeAuthForm input {
+  min-height:53px;height:53px;
+  background:rgba(5,10,13,.57) !important;
+  border-color:rgba(226,242,234,.19) !important;
+  transition:border-color .17s ease,box-shadow .17s ease,background-color .17s ease;
+}
+body.svCleanShell .svAuthSignupPage .dsSafeAuthForm input:hover {
+  border-color:rgba(226,242,234,.36) !important;
+}
+body.svCleanShell .svAuthSignupPage .dsSafeAuthForm input:focus-visible {
+  border-color:rgba(194,240,223,.86) !important;
+  background:rgba(15,22,24,.75) !important;
+  box-shadow:0 0 0 3px rgba(155,216,196,.13) !important;
+}
+body.svCleanShell .svAuthSignupPage .dsSafeAuthForm .dsPrimaryBtn {
+  height:54px;min-height:54px;margin-top:9px !important;
+  background:#e5f1ec !important;color:#10211c !important;
+  box-shadow:0 8px 24px rgba(101,203,165,.08) !important;
+  transition:transform .18s,background-color .18s,box-shadow .18s;
+}
+body.svCleanShell .svAuthSignupPage .dsSafeAuthForm .dsPrimaryBtn:hover {
+  box-shadow:0 12px 32px rgba(101,203,165,.13) !important;
+}
+body.svCleanShell .svAuthSignupPage .dsAuthFinePrint {
+  margin-top:23px !important; padding-top:19px !important;
+}
+body.svCleanShell .svAuthSignupPage .svAuthPrivacy {margin-top:11px;}
+/* A useful control inside the existing password input, not an extra form field. */
+body.svCleanShell .svAuthPasswordField {display:block;position:relative;min-width:0;}
+body.svCleanShell .svAuthPasswordField input {padding-right:78px !important;}
+body.svCleanShell .svAuthPasswordToggle {
+  position:absolute;right:9px;top:50%;transform:translateY(-50%);
+  display:grid;place-items:center;min-width:57px;min-height:34px;
+  padding:4px 9px;border:0;border-radius:8px;
+  background:transparent;color:#aabbb9;
+  font:550 11px/1 "Host Grotesk",system-ui,sans-serif;
+  cursor:pointer;transition:color .18s,background-color .18s;
+}
+body.svCleanShell .svAuthPasswordToggle:hover {background:rgba(255,255,255,.08);color:#f5f8f6;}
+body.svCleanShell .svAuthPasswordToggle:focus-visible {outline:2px solid #b6e6d3;outline-offset:1px;}
+@media(max-width:480px) {
+  body.svCleanShell .svAuthSignupPage .dsAuthCard {padding:25px !important;border-radius:18px !important;}
+  body.svCleanShell .svAuthSignupPage .dsAuthCard h1 {font-size:34px !important;}
+}
+@media(prefers-reduced-motion:reduce) {
+  body.svCleanShell .svAuthSignupPage :is(input,.dsPrimaryBtn,.dsAuthSwitch a,.svAuthPasswordToggle) {transition:none !important;}
+}

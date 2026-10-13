@@ -6396,8 +6396,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/clean/aurora.css?v=170" />
     <script defer src="/assets/clean/aurora.js?v=168"></script>
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=163" />' : ""}
-    ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=167" />' : ""}
-    <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=169" />
+    ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=171" />' : ""}
+    <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=171" />
     ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=159" /><script defer src="/assets/party/party.js?v=159"></script>' : ""}
     ${player ? '<link rel="stylesheet" href="/assets/player/player.css?v=160" /><script defer src="/assets/player/player.js?v=164"></script>' : ""}
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=161" /><script defer src="/assets/player/watch-party.js?v=160"></script>' : ""}
@@ -14661,7 +14661,7 @@ function authPage(res, mode = "login") {
     ? "Make a local SwiflyTV account for profiles, watchlists, continue watching, and watch room features on this device."
     : "Log in to your SwiflyTV profile on this device.";
 
-  const body = `<main class="dsAuthPage dsAuthPageSafe">
+  const body = `<main class="dsAuthPage dsAuthPageSafe ${isSignup ? "svAuthSignupPage" : "svAuthLoginPage"}">
     <div class="dsAuthTopActions">
       <a href="/welcome">Explore Swifly</a>
       <button type="button" data-st-open aria-label="Customize appearance" title="Swifly Studio">
@@ -14675,12 +14675,13 @@ function authPage(res, mode = "login") {
           <a class="${!isSignup ? "active" : ""}" href="/login"${!isSignup ? ' aria-current="page"' : ""}>Log in</a>
           <a class="${isSignup ? "active" : ""}" href="/signup"${isSignup ? ' aria-current="page"' : ""}>Sign up</a>
         </div>
-        <h1>${isSignup ? "Create an account" : "Welcome back"}</h1>
-        <p class="svAuthIntro">${isSignup ? "Your movies, your list, your space." : "Log in to continue watching."}</p>
+        ${isSignup ? '<span class="svAuthKicker">SWIFLY / PERSONAL CINEMA</span>' : ""}
+        <h1>${isSignup ? "Create your space." : "Welcome back"}</h1>
+        <p class="svAuthIntro">${isSignup ? "Save your favorites. Make movie night your own." : "Log in to continue watching."}</p>
         <form id="safeAuthForm" class="dsSafeAuthForm">
           ${isSignup ? `<label><span>Name</span><input name="name" type="text" placeholder="Your name" autocomplete="name" required /></label>` : ""}
           <label><span>Email</span><input name="email" type="email" placeholder="you@example.com" autocomplete="email" required /></label>
-          <label><span>Password</span><input name="password" type="password" placeholder="Your password" autocomplete="${isSignup ? "new-password" : "current-password"}" required /></label>
+          <label><span>Password</span><span class="svAuthPasswordField"><input name="password" type="password" placeholder="Your password" autocomplete="${isSignup ? "new-password" : "current-password"}" required /><button type="button" class="svAuthPasswordToggle" data-auth-toggle-password aria-label="Show password" aria-pressed="false">Show</button></span></label>
           <button class="dsPrimaryBtn" type="submit"><span>${isSignup ? "Create account" : "Log in"}</span><span aria-hidden="true">↗</span></button>
         </form>
         <p class="dsAuthFinePrint">${isSignup ? `Already have an account? <a href="/login">Log in</a>` : `New to Swifly? <a href="/signup">Sign up</a>`}</p>
@@ -14694,6 +14695,16 @@ function authPage(res, mode = "login") {
         if (!form) return;
 
         const mode = "${isSignup ? "signup" : "login"}";
+        const passwordToggle = form.querySelector("[data-auth-toggle-password]");
+        passwordToggle?.addEventListener("click", function() {
+          const input = form.elements.namedItem("password");
+          if (!input) return;
+          const showing = input.type === "password";
+          input.type = showing ? "text" : "password";
+          passwordToggle.textContent = showing ? "Hide" : "Show";
+          passwordToggle.setAttribute("aria-label", showing ? "Hide password" : "Show password");
+          passwordToggle.setAttribute("aria-pressed", String(showing));
+        });
         const params = new URLSearchParams(location.search);
         const requestedRedirect=params.get("redirect") || "/profiles";
         const redirect=requestedRedirect.startsWith("/")&&!requestedRedirect.startsWith("//")?requestedRedirect:"/profiles";
