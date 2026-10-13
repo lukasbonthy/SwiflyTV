@@ -6393,9 +6393,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/liquid-glass/surfaces.js?v=163"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=164" />
     <script defer src="/assets/studio/studio.js?v=164"></script>
-    <link rel="stylesheet" href="/assets/clean/aurora.css?v=169" />
+    <link rel="stylesheet" href="/assets/clean/aurora.css?v=170" />
     <script defer src="/assets/clean/aurora.js?v=168"></script>
-    <script defer src="/assets/clean/aurora-shader.js?v=169"></script>
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=163" />' : ""}
     ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=167" />' : ""}
     <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=169" />
