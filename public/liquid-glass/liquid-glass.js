@@ -442,7 +442,8 @@
       const configuredBlur = computed.getPropertyValue('--sv-glass-map-blur').trim();
       const blur = configuredBlur !== '' && Number.isFinite(Number(configuredBlur)) ? Number(configuredBlur) : config.mapBlur;
       const blend = computed.getPropertyValue('--sv-glass-blend').trim() === 'difference' ? 'difference' : config.blend;
-      const key = [width, height, radius, blur, blend].join(':');
+      const curvedChromium = svgCapable && element.dataset.glassOptic === 'rounded';
+      const key = [width, height, radius, blur, blend, curvedChromium].join(':');
       if (webkitSvgCapable && key === dimensions && scene) {
         scene.replaceChildren(captureScene(element,bounds,64));renderer('webkit-svg');return;
       }
@@ -454,6 +455,20 @@
       } else if (!svg) createGraph();
       dimensions = key;
       if(webkitSvgCapable && map.hasAttribute('href')){renderer('webkit-svg');return;}
+      if (curvedChromium) {
+        // Match Safari's rounded Snell geometry but refract the LIVE Chromium
+        // backdrop. This vector map contains only lens geometry, no film pixels.
+        const texture=lensTexture(width,height,radius);
+        if (texture) {
+          const strength=Math.max(1,Math.min(2.4,numeric(element,'glassLensStrength',1.6)));
+          const scale=-texture.scale*strength;
+          const passes=svg?.querySelectorAll('feDisplacementMap')||[];
+          passes.forEach((pass,index)=>pass.setAttribute('scale',String(scale+config.channelOffsets[index])));
+          map.setAttribute('href',texture.map);
+          renderer('svg');
+          return;
+        }
+      }
       const inset = Math.min(width, height) * config.borderWidth * .5;
       const image = svgElement('svg', {viewBox:`0 0 ${width} ${height}`}), defs = svgElement('defs');
       for (const [id, attrs, color] of [
