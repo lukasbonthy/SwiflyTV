@@ -242,9 +242,9 @@ test('Hero and catalog share a single continuous movie-color gradient without du
  const heroLens=css.match(/body\.svCleanShell main > \.dsHero::after \{([\s\S]*?)\n\}/);
  const catalogLens=css.match(/body\.svCleanShell main > \.dsHero \+ \.svHeroLightBridge \+ \.dsContent:not\(\.noHero\)::before \{([\s\S]*?)\n\}/);
  assert(bridgeLens && heroLens && catalogLens,'single bridge glow and retired half-glows must exist');
- assert.match(bridgeLens[1],/background-image: var\\(--sv-cinema-haze\\) !important/);
- assert.match(bridgeLens[1],/height: var\\(--sv-cinema-bridge-height, 600px\\) !important/);
- assert.match(bridgeLens[1],/mask-image: linear-gradient\\(to bottom/,'feather both edges of the overlay');
+ assert.match(bridgeLens[1],/background-image: var\(--sv-cinema-haze\) !important/);
+ assert.match(bridgeLens[1],/height: var\(--sv-cinema-bridge-height, 600px\) !important/);
+ assert.match(bridgeLens[1],/mask-image: linear-gradient\(to bottom/,'feather both edges of the overlay');
  assert.match(bridgeLens[1],/filter: none !important/,'avoid expensive blur');
  assert.match(heroLens[1],/display: none !important/);
  assert.match(catalogLens[1],/display: none !important/);
