@@ -68,8 +68,8 @@
 
       float blend = clamp(uv.x * 0.7 + broad * 0.48 + 0.12 * sin(t * 0.13), 0.0, 1.0);
       vec3 tint = mix(uColorA, uColorB, blend);
-      vec3 color = tint * (0.53 + 0.43 * curtain) * energy;
-      float alpha = clamp(energy * 0.67, 0.0, 0.58);
+      vec3 color = tint * (0.73 + 0.27 * curtain);
+      float alpha = clamp(energy * 0.72, 0.0, 0.60);
       gl_FragColor = vec4(color, alpha);
     }
   `;
@@ -89,7 +89,7 @@
   const targetFps = 24;
   const getState = () => body.dataset.svAuroraState || 'off';
   const settings = () => ({
-    strength: Math.max(0, Math.min(1, parseFloat(body.style.getPropertyValue('--sv-aurora-strength')) || 0.8)),
+    strength: Math.max(0, Math.min(1, Number.isFinite(parseFloat(body.style.getPropertyValue('--sv-aurora-strength'))) ? parseFloat(body.style.getPropertyValue('--sv-aurora-strength')) : 0.8)),
     color: palettes[body.dataset.stAuroraColor] ? body.dataset.stAuroraColor : 'glacier',
     motion: body.dataset.stAuroraMotion || 'drift'
   });
