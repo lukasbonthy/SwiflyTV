@@ -238,9 +238,9 @@ test('Hero and catalog share a single continuous movie-color gradient without du
  assert.match(css,/--sv-cinema-bridge-height: 600px/);
  assert.match(css,/--sv-cinema-bridge-offset: 300px/);
  assert.match(css,/--sv-cinema-bridge-height: 450px/,'mobile sizes are tailored separately');
- const bridgeLens=css.match(/body\\.svCleanShell main > \\.dsHero \\+ \\.svHeroLightBridge::before \\{([\\s\\S]*?)\\n\\}/);
- const heroLens=css.match(/body\\.svCleanShell main > \\.dsHero::after \\{([\\s\\S]*?)\\n\\}/);
- const catalogLens=css.match(/body\\.svCleanShell main > \\.dsHero \\+ \\.svHeroLightBridge \\+ \\.dsContent:not\\(\\.noHero\\)::before \\{([\\s\\S]*?)\\n\\}/);
+ const bridgeLens=css.match(/body\.svCleanShell main > \.dsHero \+ \.svHeroLightBridge::before \{([\s\S]*?)\n\}/);
+ const heroLens=css.match(/body\.svCleanShell main > \.dsHero::after \{([\s\S]*?)\n\}/);
+ const catalogLens=css.match(/body\.svCleanShell main > \.dsHero \+ \.svHeroLightBridge \+ \.dsContent:not\(\.noHero\)::before \{([\s\S]*?)\n\}/);
  assert(bridgeLens && heroLens && catalogLens,'single bridge glow and retired half-glows must exist');
  assert.match(bridgeLens[1],/background-image: var\\(--sv-cinema-haze\\) !important/);
  assert.match(bridgeLens[1],/height: var\\(--sv-cinema-bridge-height, 600px\\) !important/);
