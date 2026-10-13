@@ -13,6 +13,8 @@ function glass(markup = '') {
   const env = browser(markup), w = env.window, intersections = [], sizes = [];
   Object.defineProperty(w.navigator, 'userAgent', {value:'Chrome/130.0.0.0', configurable:true});
   w.CSS = {supports:() => true};
+  const computed=w.getComputedStyle;
+  w.getComputedStyle=(node,pseudo)=>pseudo?{display:'none',content:'none'}:computed(node);
   w.HTMLElement.prototype.getBoundingClientRect = function () {return {width:200, height:40, top:0, left:0, bottom:40, right:200};};
   w.IntersectionObserver = class {
     constructor(callback) {this.callback = callback; this.nodes = new Set(); intersections.push(this);}
@@ -28,6 +30,15 @@ function glass(markup = '') {
   env.intersect = (value, target) => {for (const observer of intersections) observer.callback([...observer.nodes].filter(node => !target || node === target).map(node => ({target:node, isIntersecting:value})));};
   env.resize = () => {for (const observer of sizes) if (observer.nodes.size) observer.callback([...observer.nodes].map(target => ({target})));};
   env.watched = () => sizes.reduce((count, observer) => count + observer.nodes.size, 0);
+  env.textures = [];
+  w.HTMLCanvasElement.prototype.getContext = function () {
+    const canvas=this;
+    return {
+      createImageData:(width,height)=>({width,height,data:new Uint8ClampedArray(width*height*4)}),
+      putImageData:image=>env.textures.push({canvas,...image})
+    };
+  };
+  w.HTMLCanvasElement.prototype.toDataURL = () => 'data:image/png;base64,procedural-lens-map';
   const finish = env.finish;
   env.finish = () => {w.SwiflyGlassSurfaces?.destroy(); for (const node of w.document.querySelectorAll('[data-swifly-glass]')) w.SwiflyLiquidGlass?.mount(node).destroy(); finish();};
   return env;
@@ -530,7 +541,7 @@ test('WebKit optical CSS includes live blur and reduced-transparency fallback',(
  const controls=fs.readFileSync(path.join(__dirname,'../public/liquid-glass/controls.css'),'utf8');
  assert(css.includes('svg.svWebkitGlassOptics'));
  assert(css.includes('data-swifly-renderer="webkit-svg"'));
- assert(css.includes('-webkit-backdrop-filter:blur(10px)'));
+ assert(css.includes('-webkit-backdrop-filter:blur(2px)'));
  assert(controls.includes('netflixNav > .svLiquidPane[data-swifly-renderer="webkit-svg"]'));
  assert(controls.includes('prefers-reduced-transparency:reduce'));
 });
@@ -658,5 +669,54 @@ test('Safari preserves artwork wrapper fades and color filters on descendant ima
  assert(mask.querySelector('rect'),'the source wrapper mask must retain its geometry');
  const filtered=image.closest('[filter]');assert(filtered&&scene.contains(filtered),'source wrapper color filters must include descendant artwork');
  assert(scene.querySelector(filtered.getAttribute('filter').slice(4,-1)).querySelector('feFuncR[slope="0.7"]'));
+ env.finish();
+});
+
+test('Safari lens follows the rounded surface normals and leaves the center neutral',async()=>{
+ const env=glass('<main style="background-image:url(/art.jpg)"></main><div class="svLiquidPane" data-swifly-glass></div>'),w=env.window,d=w.document;
+ Object.defineProperty(w.navigator,'userAgent',{configurable:true,value:'Mozilla/5.0 AppleWebKit/605.1.15 Version/18.6 Safari/605.1.15'});
+ d.querySelector('.svLiquidPane').getBoundingClientRect=()=>({width:200,height:60,top:0,left:0,bottom:60,right:200});
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);await tick();
+ assert(env.textures.length,'refraction must be derived from the shape, not two full-pane linear gradients');
+ const {width,height,data}=env.textures[0];
+ const pixel=(x,y)=>[...data.slice((y*width+x)*4,(y*width+x)*4+2)];
+ const cx=Math.floor(width/2),cy=Math.floor(height/2);
+ const center=pixel(cx,cy),top=pixel(cx,2),bottom=pixel(cx,height-3),left=pixel(2,cy),right=pixel(width-3,cy),corner=pixel(7,7);
+ assert(center.every(channel=>Math.abs(channel-128)<=1),'the clear center must not translate the artwork');
+ assert(Math.abs(top[0]-128)<=1&&top[1]>128&&bottom[1]<128,'straight horizontal edges bend vertically in opposite directions');
+ assert(Math.abs(left[1]-128)<=1&&left[0]>128&&right[0]<128,'straight vertical edges bend horizontally in opposite directions');
+ assert(corner[0]>128&&corner[1]>128,'rounded corners must bend along both channels');
+ const generated=env.textures.length;
+ d.dispatchEvent(new w.Event('scroll'));w.flush(32);await tick();
+ assert.equal(env.textures.length,generated,'scrolling updates source artwork without regenerating lens geometry');
+ assert.equal(w.frameCount(),0);env.finish();
+});
+
+test('Safari glass preserves the hero ambient radial glow and its source fade',()=>{
+ const env=glass('<main><section class="dsHero"><div style="background-image:url(/hero.jpg)"></div></section></main><div class="svLiquidPane" data-swifly-glass></div>'),w=env.window,d=w.document;
+ Object.defineProperty(w.navigator,'userAgent',{configurable:true,value:'Mozilla/5.0 AppleWebKit/605.1.15 Version/18.6 Safari/605.1.15'});
+ const original=w.getComputedStyle;
+ w.getComputedStyle=(node,pseudo)=>node.classList.contains('dsHero')&&pseudo==='::after'?{
+  display:'block',content:'""',backgroundImage:'radial-gradient(ellipse 65% 78% at 19% 49%,rgba(181,97,54,.28) 0%,transparent 79%)',backgroundColor:'transparent',
+  left:'0px',right:'0px',top:'auto',bottom:'0px',width:'200px',height:'20px',filter:'none',opacity:'1',zIndex:'-1',maskImage:'linear-gradient(to bottom,transparent,black,transparent)'
+ }:original(node,pseudo);
+ d.body.dataset.stGlass='liquid';
+ w.boot('liquid-glass/liquid-glass.js');
+ w.flush(16);
+ const scene=d.querySelector('[data-sv-glass-scene]'),glow=scene.querySelector('radialGradient');
+ assert(glow,'the visible colored hero glow must participate in the lens, rather than exposing a different picture beneath it');
+ const coordinates=glow.getAttribute('gradientTransform').match(/-?[\d.]+/g).map(Number);
+ assert.deepEqual(coordinates,[38,29.8,130,15.6]);
+ assert.match(glow.querySelector('stop').getAttribute('stop-color'),/181,97,54/);
+ assert(scene.querySelector('mask rect[y="20"][height="20"]'),'the ambient glow must retain its source fade');
+ assert.equal(scene.textContent,'');env.finish();
+});
+
+test('Safari pill clipping uses the same radius as its rounded optical field',()=>{
+ const env=glass('<div class="svLiquidPane" data-swifly-glass style="border-top-left-radius:999px"></div>'),w=env.window,d=w.document;
+ Object.defineProperty(w.navigator,'userAgent',{configurable:true,value:'Mozilla/5.0 AppleWebKit/605.1.15 Version/18.6 Safari/605.1.15'});
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);
+ const clip=d.querySelector('.svWebkitGlassOptics clipPath[id$="-clip"] rect');
+ assert.equal(Number(clip.getAttribute('rx')),20,'a CSS pill is capped by half its height, rather than becoming a wide SVG ellipse');
  env.finish();
 });

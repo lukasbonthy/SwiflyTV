@@ -6380,8 +6380,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${body.includes("fa-solid") ? '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />' : ""}
     ${player || partyBrowse || active === "social" ? '<script defer src="/socket.io/socket.io.js"></script>' : ""}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/modern-normalize@2.0.0/modern-normalize.min.css" />
-    <link rel="stylesheet" href="/assets/liquid-glass/liquid-glass.css?v=195" />
-    <script defer src="/assets/liquid-glass/liquid-glass.js?v=195"></script>
+    <link rel="stylesheet" href="/assets/liquid-glass/liquid-glass.css?v=196" />
+    <script defer src="/assets/liquid-glass/liquid-glass.js?v=196"></script>
     <link rel="stylesheet" href="/assets/clean/clean.css?v=153" />
     <script defer src="/assets/clean/clean.js?v=151"></script>
     <script defer src="/assets/clean/continue.js?v=154"></script>
@@ -6390,7 +6390,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/motion.js?v=163"></script>
     <script defer src="/assets/clean/details.js?v=160"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=163" />
-    <script defer src="/assets/liquid-glass/surfaces.js?v=195"></script>
+    <script defer src="/assets/liquid-glass/surfaces.js?v=196"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=164" />
     <script defer src="/assets/studio/studio.js?v=164"></script>
     <link rel="stylesheet" href="/assets/clean/aurora.css?v=170" />
@@ -6405,7 +6405,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/polish.css?v=176" />'}
     <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=192" />
     ${player ? "" : '<script defer src="/assets/clean/hero-palette.js?v=188"></script>'}
-    ${player ? "" : '<link rel="stylesheet" href="/assets/liquid-glass/controls.css?v=195" />'}
+    ${player ? "" : '<link rel="stylesheet" href="/assets/liquid-glass/controls.css?v=196" />'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/experience.css?v=184" />'}
 </head>
 <body class="svCleanShell">

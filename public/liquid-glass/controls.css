@@ -446,20 +446,33 @@ body.svCleanShell .netflixNav .navLinks > a:is(:hover,.active) {
   body.svCleanShell [data-sv-liquid-nav] .netflixNav > .svLiquidPane::after {display:none !important;}
 }
 
-/* v193: dedicated Safari/iPad SVG optical material, loaded after older
-   :not([data-swifly-renderer="svg"]) blur rules. Chromium remains unchanged. */
+/* v196: the Safari SVG owns lensing and edge light. Suppress the older
+   frosted fill and CSS bevels so there is one clear optical material. */
 body.svCleanShell[data-st-glass="liquid"] [data-sv-liquid-nav] .netflixNav > .svLiquidPane[data-swifly-renderer="webkit-svg"] {
-  background:linear-gradient(112deg,rgb(248 252 255 / .12),
-    rgb(217 237 255 / .046) 38%,rgb(11 22 35 / .075) 73%,
-    rgb(248 253 255 / .09)) !important;
-  -webkit-backdrop-filter:blur(9px) saturate(1.86) contrast(1.07) brightness(1.095) !important;
-  backdrop-filter:blur(9px) saturate(1.86) contrast(1.07) brightness(1.095) !important;
+  background:rgb(0 0 0 / .035) !important;
+  -webkit-backdrop-filter:blur(2px) saturate(1.08) !important;
+  backdrop-filter:blur(2px) saturate(1.08) !important;
+  box-shadow:0 5px 20px rgb(0 0 0 / .22) !important;
+}
+body.svCleanShell [data-sv-liquid-nav] .netflixNav > .svLiquidPane[data-swifly-renderer="webkit-svg"]::before,
+body.svCleanShell [data-sv-liquid-nav] .netflixNav > .svLiquidPane[data-swifly-renderer="webkit-svg"]::after {
+  display:none !important;
 }
 body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svNavMatchedOptic > .svNavMatchedLens.svLiquidPane[data-swifly-renderer="webkit-svg"] {
-  background:linear-gradient(120deg,rgb(238 248 255 / .105),
-    rgb(180 209 232 / .028) 47%,rgb(9 20 31 / .13) 100%) !important;
-  -webkit-backdrop-filter:blur(9px) saturate(1.8) brightness(1.095) !important;
-  backdrop-filter:blur(9px) saturate(1.8) brightness(1.095) !important;
+  background:rgb(0 0 0 / .055) !important;
+  -webkit-backdrop-filter:blur(2px) saturate(1.08) !important;
+  backdrop-filter:blur(2px) saturate(1.08) !important;
+  box-shadow:none !important;
+}
+body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svNavMatchedOptic:has(> .svNavMatchedLens[data-swifly-renderer="webkit-svg"]) {
+  border-color:transparent !important;
+  background:transparent !important;
+  box-shadow:0 4px 14px rgb(0 0 0 / .22) !important;
+  text-shadow:0 1px 3px rgb(0 0 0 / .55);
+}
+body.svCleanShell[data-st-glass="liquid"] .svNavMatchedOptic:has(> .svNavMatchedLens[data-swifly-renderer="webkit-svg"])::before,
+body.svCleanShell[data-st-glass="liquid"] .svNavMatchedOptic:has(> .svNavMatchedLens[data-swifly-renderer="webkit-svg"])::after {
+  display:none !important;
 }
 body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthCard.svNavMatchedOptic > .svNavMatchedLens.svLiquidPane[data-swifly-renderer="webkit-svg"] {
   -webkit-backdrop-filter:blur(14px) saturate(1.55) !important;

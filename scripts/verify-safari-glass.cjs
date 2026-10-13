@@ -66,6 +66,21 @@ async function verify(type,size,identity) {
       assert.equal(await pane.locator('[data-sv-glass-scene]').count(),1);
       assert.equal(await pane.locator('[data-sv-glass-scene] foreignObject').count(),0);
       assert.equal(await pane.locator('[data-sv-glass-scene]').textContent(),'');
+      const optics=await pane.evaluate(async node=>{
+        const image=new Image();image.src=node.querySelector('feImage').getAttribute('href');await image.decode();
+        const canvas=document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;
+        const context=canvas.getContext('2d');context.drawImage(image,0,0);
+        const pixel=(x,y)=>[...context.getImageData(x,y,1,1).data].slice(0,2);
+        const x=Math.floor(canvas.width/2),y=Math.floor(canvas.height/2);
+        return {type:image.src.split(',')[0],width:canvas.width,height:canvas.height,center:pixel(x,y),top:pixel(x,2),bottom:pixel(x,canvas.height-3),
+          cssBlur:getComputedStyle(node).getPropertyValue('-webkit-backdrop-filter'),legacySheen:getComputedStyle(node,'::before').display};
+      });
+      assert.equal(optics.type,'data:image/png;base64');
+      assert(optics.width<=640&&optics.height<=240,'geometry textures must remain bounded');
+      assert(optics.center.every(value=>Math.abs(value-128)<=1),'the lens center must not shift the artwork');
+      assert(Math.abs(optics.top[0]-128)<=1&&optics.top[1]>128&&optics.bottom[1]<128,'opposite edges must bend along opposite surface normals');
+      assert.match(optics.cssBlur,/blur\(2px\)/,'native frosting must not obscure the clear SVG lens');
+      assert.equal(optics.legacySheen,'none','the old CSS highlight must not stack below the new lens');
       assert(await pane.evaluate(node=>{
         const scene=node.querySelector('[data-sv-glass-scene]'),url=document.querySelector('.fixturePoster').currentSrc;
         const image=[...scene.querySelectorAll('image')].find(image=>image.getAttribute('href')===url);
