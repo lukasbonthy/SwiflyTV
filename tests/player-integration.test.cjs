@@ -237,8 +237,8 @@ test('The featured movie art fades into discovery with no bridge stripe or dupli
  assert.match(css,/background-repeat:no-repeat !important/);
  assert.match(css,/--sv-cinema-fade-height: clamp\\(340px, 42svh, 470px\\)/);
  assert.match(css,/--sv-cinema-fade-height: clamp\\(250px, 36svh, 360px\\)/,'mobile fade is adaptive');
- const heroLens=css.match(/body\\.svCleanShell main > \\.dsHero::after \\{([\\s\\S]*?)\\n\\}/);
- const bridgeLens=css.match(/body\\.svCleanShell main > \\.dsHero \\+ \\.svHeroLightBridge::before,([\\s\\S]*?)\\n\\}/);
+ const heroLens=css.match(/body\.svCleanShell main > \.dsHero::after \{([\s\S]*?)\n\}/);
+ const bridgeLens=css.match(/body\.svCleanShell main > \.dsHero \+ \.svHeroLightBridge::before,([\s\S]*?)\n\}/);
  assert(heroLens&&bridgeLens,'color glow is clipped to hero and legacy bridge is disabled');
  assert.match(heroLens[1],/width: 100% !important/,'all film tones fill the width');
  assert.match(heroLens[1],/background:/);
