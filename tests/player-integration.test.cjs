@@ -171,7 +171,7 @@ test('the cinema image fade loads after Aurora and Welcome styles',async()=>{
    const d=parse(await response.text()).window.document;
    const styles=[...d.querySelectorAll('link[rel="stylesheet"]')].map(link=>link.getAttribute('href'));
    const aurora=styles.findIndex(v=>v.includes('/assets/clean/aurora.css?v=170'));
-   const fade=styles.findIndex(v=>v.includes('/assets/clean/hero-fade.css?v=187'));
+   const fade=styles.findIndex(v=>v.includes('/assets/clean/hero-fade.css?v=188'));
    assert(aurora>=0 && fade>aurora,route+' fade must follow aurora');
    if(route==='/welcome'){
      const welcome=styles.findIndex(v=>v.includes('/assets/clean/welcome.css'));
@@ -204,7 +204,7 @@ test('movie discovery artwork fades beyond the hero without a visible seam',asyn
  const d=parse(await(await fetch(base+'/welcome')).text()).window.document;
  assert(d.querySelector('.dsWelcomeHero .dsWelcomeHeroBg'));
  assert(d.querySelector('#discovery.dsWelcomeDiscovery'));
- const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=187')).text();
+ const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=188')).text();
  assert.match(css,/\.svWelcomeClean \.dsWelcomeHeroBg \{/);
  assert.match(css,/bottom:-36px !important/,'backdrop continues beneath the hero');
  assert.match(css,/\.svWelcomeClean \.svWelcomeDiscoveryIntro \{/);
@@ -228,10 +228,10 @@ test('Hero and catalog share a single continuous movie-color gradient without du
   assert.match(hero.getAttribute('data-sv-palette-src')||'',/\/w300\//);
   assert.equal(bridge.getAttribute('style'),null,'do not paint a second movie image on bridge');
   assert.equal(rows.getAttribute('style'),null,'do not paint another movie image behind rails');
-  assert(d.querySelector('link[href="/assets/clean/hero-fade.css?v=187"]'));
-  assert(d.querySelector('script[src="/assets/clean/hero-palette.js?v=186"]'));
+  assert(d.querySelector('link[href="/assets/clean/hero-fade.css?v=188"]'));
+  assert(d.querySelector('script[src="/assets/clean/hero-palette.js?v=188"]'));
  }
- const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=187')).text();
+ const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=188')).text();
  assert.match(css,/overflow:hidden !important/,'movie art must be clipped to hero bounds');
  assert.match(css,/bottom:0 !important/,'original art stops at the hero edge');
  assert.match(css,/background-repeat:no-repeat !important/,'no repeated picture');
@@ -252,7 +252,7 @@ test('Hero and catalog share a single continuous movie-color gradient without du
  assert.doesNotMatch(css,/background-image:var\(--sv-cinema-art\)|background-image:var\(--sv-light-art\)/);
  assert.doesNotMatch(css,/bottom:-(?:255|320)px/,'never leak artwork past the hero');
  assert.doesNotMatch(css,/\.movieCard img/);
- const palette=await(await fetch(base+'/assets/clean/hero-palette.js?v=186')).text();
+ const palette=await(await fetch(base+'/assets/clean/hero-palette.js?v=188')).text();
  assert.match(palette,/getImageData/);
  assert.match(palette,/main\.style\.setProperty\('--sv-art-glow-1'/);
  assert.doesNotMatch(palette,/appendChild\(image\)|backgroundImage/);
@@ -324,7 +324,7 @@ test('v174 keeps Welcome soft without muddy light bridge or button clipping',asy
 });
 
 test('Studio glass uses one material on every browsing route and native transitions remain independent',async()=>{
- const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=182')).text();
+ const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=188')).text();
  const finish=await(await fetch(base+'/assets/clean/finish.css?v=175')).text();
  const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=182')).text();
  assert.match(css,/data-st-glass="liquid"/);
@@ -341,11 +341,11 @@ test('Studio glass uses one material on every browsing route and native transiti
    const response=await fetch(base+route);
    assert.equal(response.status,200,route);
    const doc=parse(await response.text()).window.document;
-   assert(doc.querySelector('link[href="/assets/liquid-glass/controls.css?v=182"]'),route+' lacks unified glass');
+   assert(doc.querySelector('link[href="/assets/liquid-glass/controls.css?v=188"]'),route+' lacks unified glass');
    assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=182"]'),route+' uses stale glass renderer');
  }
  const watch=await(await fetch(base+'/watch/movie/101')).text();
- assert(!watch.includes('controls.css?v=182'),'watch page must be left alone');
+ assert(!watch.includes('controls.css?v=188'),'watch page must be left alone');
 });
 test('hero and modal buttons match the dark navbar refraction material without boxing nav icons',async()=>{
  const doc=parse(await(await fetch(base+'/')).text()).window.document;
@@ -353,7 +353,7 @@ test('hero and modal buttons match the dark navbar refraction material without b
  assert(hero.querySelector('.dsHeroActions .dsPrimaryBtn'));
  assert(hero.querySelector('.dsHeroActions .dsSecondaryBtn'));
  assert(hero.querySelector('.dsHeroActions .dsIconBtn'));
- const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=182')).text();
+ const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=188')).text();
  const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=182')).text();
  assert.match(css,/border:1px solid transparent !important/,'nav icons never get a second border');
  assert.match(css,/background:rgb\(5 8 15 \/ \.38\)/,'controls match the actual navbar smoke tint');
@@ -383,7 +383,7 @@ test('v176 supplies a real, masked details backdrop with no hard border at the o
  assert.match(css,/rgba\(0,0,0,\.22\) 94%,transparent 100%/);
  assert.match(css,/\.svDetailShade \{/);
  assert.match(css,/\.svDetailBody \{/);
- const lens=await(await fetch(base+'/assets/liquid-glass/controls.css?v=182')).text();
+ const lens=await(await fetch(base+'/assets/liquid-glass/controls.css?v=188')).text();
  assert.match(lens,/\.svGlassSurface\.svGlassControl\[data-swifly-renderer="svg"\]/);
  assert.match(lens,/\.svDetailActions,\.dsDetailActionsV121/);
  assert(d.querySelector('link[href="/assets/clean/polish.css?v=176"]'));
@@ -420,4 +420,26 @@ test('Genres, cinematic profiles and Party Hub use the same late-loaded site exp
   if(route==='/profiles/manage')assert(d.querySelector('.svProfilesCinematic #profileCreateForm'));
   if(route.startsWith('/social'))assert(d.querySelector('main.svPartyHub .partyHero'));
  }
+});
+
+test('v188 lifts cinema brightness and hue without duplicating film art or darkening optical glass',async()=>{
+ const d=parse(await(await fetch(base+'/')).text()).window.document;
+ const hero=d.querySelector('main > .dsHero');
+ const nav=d.querySelector('.netflixNav > .svLiquidPane');
+ assert(hero && nav);
+ assert.equal(nav.dataset.glassTint,'0.09');
+ assert.equal(nav.dataset.glassBlur,'5');
+ assert.equal(nav.dataset.glassSaturation,'1.18');
+ assert(d.querySelector('script[src="/assets/liquid-glass/liquid-glass.js?v=188"]'));
+ const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=188')).text();
+ assert.match(css,/filter:brightness\(1\.10\) saturate\(1\.24\) contrast\(1\.035\)/);
+ assert.match(css,/rgb\(0 0 0 \/ \.50\)/);
+ assert.match(css,/overflow:hidden !important/,'movie picture remains clipped');
+ assert.doesNotMatch(css,/background-image:var\(--sv-cinema-art\)|background-image:var\(--sv-light-art\)/,'no duplicated artwork');
+ const glass=await(await fetch(base+'/assets/liquid-glass/controls.css?v=188')).text();
+ assert.match(glass,/background:rgb\(0 0 0 \/ \.10\) !important/);
+ assert.match(glass,/\.svNavMatchedLens\.svLiquidPane\[data-swifly-renderer="svg"\]/);
+ const palette=await(await fetch(base+'/assets/clean/hero-palette.js?v=188')).text();
+ assert.match(palette,/\(value-average\)\*1\.22/,'film accents remain colorful');
+ assert.doesNotMatch(palette,/appendChild\(image\)/);
 });
