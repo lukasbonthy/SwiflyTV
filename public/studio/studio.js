@@ -15,6 +15,12 @@
   const canvases={default:'#000000',red:'#080605',blue:'#05080d',green:'#050907',mono:'#09090b'};
   const fonts={default:'"Host Grotesk",system-ui,sans-serif',cinema:'"Space Grotesk","Host Grotesk",sans-serif',soft:'"Outfit","Host Grotesk",sans-serif',wide:'"Host Grotesk",system-ui,sans-serif'};
   const auroraHues={glacier:0,violet:95,rose:205,mint:310};
+  const auroraWashes={
+    glacier:['#57a9b71a','#7e75b51c'],
+    violet:['#7966c41e','#5d6dab1c'],
+    rose:['#a470971b','#8468a51b'],
+    mint:['#65aa8e1d','#6b98a71c']
+  };
   const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
   let dialog,trigger,saved,draft,previewAnimation,started=false;
   const equal=(a,b)=>Object.keys(defaults).every(name=>a[name]===b[name]);
@@ -71,6 +77,8 @@
     for (const name of ['theme','font','layout','cardstyle','density','backdrop']) body.classList.add(name+'-'+value[name]);
     body.style.setProperty('--sv-aurora-strength',String(value.auroraStrength/100));
     body.style.setProperty('--sv-aurora-hue',auroraHues[value.auroraColor]+'deg');
+    body.style.setProperty('--sv-aurora-wash-a',auroraWashes[value.auroraColor][0]);
+    body.style.setProperty('--sv-aurora-wash-b',auroraWashes[value.auroraColor][1]);
     body.style.setProperty('--sv-aurora-speed',value.auroraMotion==='slow'?'55s':'32s');
     body.dataset.stAuroraMotion=value.auroraMotion;
     body.style.setProperty('--st-accent',accents[value.theme]);
