@@ -166,7 +166,7 @@ test('the cinema image fade loads after Aurora and Welcome styles',async()=>{
    const d=parse(await response.text()).window.document;
    const styles=[...d.querySelectorAll('link[rel="stylesheet"]')].map(link=>link.getAttribute('href'));
    const aurora=styles.findIndex(v=>v.includes('/assets/clean/aurora.css?v=170'));
-   const fade=styles.findIndex(v=>v.includes('/assets/clean/hero-fade.css?v=171'));
+   const fade=styles.findIndex(v=>v.includes('/assets/clean/hero-fade.css?v=172'));
    assert(aurora>=0 && fade>aurora,route+' fade must follow aurora');
    if(route==='/welcome'){
      const welcome=styles.findIndex(v=>v.includes('/assets/clean/welcome.css'));
@@ -210,4 +210,38 @@ test('movie discovery artwork fades beyond the hero instead of ending at a borde
  assert.match(css,/margin-top:-clamp\(58px,8vh,88px\)/,'discovery should meet the hero gradually');
  assert.match(css,/\.dsHero \+ \.dsContent:not\(\.noHero\)/,'signed-in home should share the fade treatment');
  assert.doesNotMatch(css,/\.movieCard img/,'do not fade the actual poster cards');
+});
+
+test('featured title ambience carries artwork behind the discovery rows without affecting poster cards',async()=>{
+ for(const route of ['/', '/trending?type=all', '/movies', '/tv']){
+   const response=await fetch(base+route);
+   assert.equal(response.status,200,route+' should render');
+   const d=parse(await response.text()).window.document;
+   const hero=d.querySelector('.dsHero');
+   const bridge=d.querySelector('.svHeroLightBridge');
+   const rows=d.querySelector('.dsContent');
+   assert(hero&&bridge&&rows,route+' needs hero, bridge and content');
+   assert.equal(hero.nextElementSibling,bridge,'light bridge must follow the hero');
+   assert.equal(bridge.nextElementSibling,rows,'movie rows must follow the bridge');
+   assert.equal(bridge.getAttribute('aria-hidden'),'true');
+   assert.match(bridge.getAttribute('style')||'',/--sv-light-art:url\('/);
+   assert(d.querySelector('link[href="/assets/clean/hero-fade.css?v=172"]'));
+ }
+ const css=await (await fetch(base+'/assets/clean/hero-fade.css?v=172')).text();
+ assert.match(css,/\.svHeroLightBridge,\s*body\.svCleanShell \.svWelcomeLightBridge/);
+ assert.match(css,/background-image:var\(--sv-light-art\)/);
+ assert.match(css,/mask-image:radial-gradient\(ellipse/,'reflection must fade out without a hard rectangle');
+ assert.match(css,/\.dsHero \+ \.svHeroLightBridge \+ \.dsContent/);
+ assert.doesNotMatch(css,/\.dsPoster.*mask-image/,'posters must never be masked');
+});
+test('Welcome uses the featured backdrop as an ambient discovery transition',async()=>{
+ const response=await fetch(base+'/welcome');
+ assert.equal(response.status,200);
+ const d=parse(await response.text()).window.document;
+ const bridge=d.querySelector('.svWelcomeLightBridge');
+ assert(bridge,'welcome bridge should exist when a hero artwork is available');
+ assert.equal(bridge.getAttribute('aria-hidden'),'true');
+ assert.equal(bridge.previousElementSibling?.classList.contains('dsWelcomeHero'),true);
+ assert.equal(bridge.nextElementSibling?.id,'discovery');
+ assert.match(bridge.getAttribute('style')||'',/--sv-light-art:url\('/);
 });
