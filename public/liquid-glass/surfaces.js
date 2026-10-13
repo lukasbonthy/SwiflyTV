@@ -68,7 +68,7 @@
       }
       if (!entry.opticController) {
         entry.opticController=window.SwiflyLiquidGlass.mount(entry.opticPane, {
-          tint:entry.panel?.24:.20,mapBlur:7,blend:'screen',
+          tint:entry.panel ? .24 : .20,mapBlur:7,blend:'screen',
           distortionScale:-180,channelOffsets:[0,10,20]
         });
       } else if (!entry.opticController.enabled) entry.opticController.setEnabled(true);
