@@ -390,5 +390,18 @@ test('Auth password Show stays positioned INSIDE its input while sharing glass l
  assert.match(match[1],/transform:translateY\(-50%\) !important/);
  assert.match(css,/\.dsAuthCard\.svGlassPanel \{/);
  assert.match(css,/url\(#sv-shared-panel-lens\)/,'auth panel uses the lighter shared SVG refraction');
- assert.match(css,/\.svWelcomeClean \.dsWelcomeActions > a\.dsPrimaryBtn\.svSharedGlass/,'welcome CTA must not use solid white');
+ assert.match(css,/\.svWelcomeClean \.dsWelcomeActions > a\.dsPrimaryBtn\.svGlassControl/,'welcome CTA uses navbar material');
+ assert.match(css,/background:rgb\(5 8 15 \/ \.38\)/,'match actual nav smoky surface');
+ assert.doesNotMatch(css,/radial-gradient\(ellipse 115% 155%/,'remove old silver-white button gradients');
+});
+
+test('Shared refraction uses the navbar map geometry, not the previous radial canvas',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const src=fs.readFileSync(path.join(__dirname,'../public/liquid-glass/surfaces.js'),'utf8');
+ const nav=fs.readFileSync(path.join(__dirname,'../public/liquid-glass/liquid-glass.js'),'utf8');
+ assert.match(nav,/mix-blend-mode:\$\{blend\}/,'navbar map mixes directional channels');
+ assert.match(src,/mix-blend-mode:screen/,'controls use the same directional map construction');
+ assert.match(src,/feDisplacementMap/,'shared graph refracts the real backdrop');
+ assert.match(src,/scale:'-118'/,'button refraction is stronger than the old barely visible effect');
+ assert.doesNotMatch(src,/document\.createElement\('canvas'\)/,'no heavyweight canvas redraw');
 });
