@@ -240,7 +240,7 @@ test('Original v163 aurora artwork is restored, with smooth multi-stage movement
  assert.match(css,/47% \{transform:/);
  assert.match(css,/73% \{transform:/);
  assert.match(css,/var\(--sv-aurora-speed,32s\)/);
- assert.match(css,/animation-play-state:paused/);
+ assert.match(css,/infinite alternate paused/,'animations default to paused in the CSS shorthand');
  assert.match(css,/animation-play-state:running/);
  assert.match(css,/prefers-reduced-motion/);
  assert.doesNotMatch(css,/\.svAuroraCanvas|mix-blend-mode:screen|\[data-sv-renderer="webgl"\]/);
