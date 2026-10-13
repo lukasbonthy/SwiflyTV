@@ -6403,8 +6403,9 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=161" /><script defer src="/assets/player/watch-party.js?v=160"></script>' : ""}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/finish.css?v=175" />'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/polish.css?v=176" />'}
-    <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=183" />
+    <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=184" />
     ${player ? "" : '<link rel="stylesheet" href="/assets/liquid-glass/controls.css?v=182" />'}
+    ${player ? "" : '<link rel="stylesheet" href="/assets/clean/experience.css?v=184" />'}
 </head>
 <body class="svCleanShell">
 
@@ -8085,7 +8086,7 @@ async function homePage(req, res) {
   const hero = pickHero([...(trendingMovies.results || []), ...(popularMovies.results || []), ...(trendingTv.results || []).map(item => ({ ...item, media_type: "tv" }))]);
   const body = `<main>
     ${hero.id ? dsHero({ hero, context: "Featured" }) : dsPageHeader("Discover", "Explore movies and series.")}
-    <section class="dsContent ${hero.id ? "" : "noHero"}">
+    <section class="dsContent ${hero.id ? "" : "noHero"}"${hero.id ? dsCinemaArtStyle(hero) : ""}>
       <section id="continueWatchingSection" class="svResumeSection" hidden>
         <div class="svSectionHead"><h2>Continue watching</h2><div class="svSectionActions"><a class="svRowMore" href="/continue-watching">View all</a><div class="svRowArrows"><button class="svRowArrow" type="button" data-continue-scroll="-1" aria-label="Scroll Continue Watching left">‹</button><button class="svRowArrow" type="button" data-continue-scroll="1" aria-label="Scroll Continue Watching right">›</button></div></div></div>
         <div id="continueWatchingRail" class="svResumeRail" aria-label="Continue Watching titles"></div>
@@ -8146,6 +8147,11 @@ function metaMatch(item = {}) {
   const rating = Number(item.vote_average || 0);
   const score = rating ? Math.round(Math.min(98, Math.max(72, rating * 10 + 8))) : 91;
   return `${score}% Match`;
+}
+
+function dsCinemaArtStyle(hero = {}) {
+  const path = hero?.backdrop_path || hero?.poster_path;
+  return path ? ` style="--sv-cinema-art:url('${escapeHtml(fullBackdrop(path))}')"` : "";
 }
 
 function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = null, embedOrigin = "" }) {
@@ -8539,7 +8545,7 @@ async function listingPage(req, res, type = "movie", options = {}) {
       </details>
     </section>
     ${dsHero({ hero, type, context: label, eyebrow: `${label} spotlight` })}
-    <section class="dsContent">
+    <section class="dsContent"${dsCinemaArtStyle(hero)}>
       ${partyBrowse ? partyBrowseMarkup() : ""}
       ${dsRail(categoryOne, rowOne.results || [], type)}
       ${dsTopRail(type === "tv" ? "Top 10 TV Shows Today" : "Top Movies Today", data.results || [], type)}
@@ -8569,7 +8575,7 @@ async function trendingPage(req, res) {
   const hero = pickHero((data.results || []).filter((item) => ["movie", "tv"].includes(getType(item))));
   const body = `<main>
     ${dsHero({ hero, context: "New & Popular", eyebrow: "Fresh on SwiflyTV" })}
-    <section class="dsContent">
+    <section class="dsContent"${dsCinemaArtStyle(hero)}>
       <div class="dsTabs">
         <a class="${type === "all" ? "active" : ""}" href="/trending?type=all">All</a>
         <a class="${type === "movie" ? "active" : ""}" href="/trending?type=movie">Movies</a>
@@ -14871,11 +14877,11 @@ function accountPage(req, res) {
 
 
 function profilesPage(req, res) {
-  const body = `<main class="dsPlainPage dsProfilesPage dsProfilesSelectPage">
+  const body = `<main class="dsPlainPage dsProfilesPage dsProfilesSelectPage svProfilesCinematic">
     <section class="dsProfilesHero dsCleanHero">
       <span class="dsEyebrow">Profiles</span>
       <h1>Who is watching?</h1>
-      <p>Pick a profile and jump straight into SwiflyTV. Profile editing lives on its own manage page now, so this screen stays clean.</p>
+      <p>Your movies, your favorites, your space. Choose who's watching.</p>
     </section>
 
     <section class="dsProfilesSelectShell">
@@ -14933,10 +14939,12 @@ function profilesPage(req, res) {
 
         const profiles = readProfiles();
         saveProfiles(profiles);
+        let currentProfile = null;
+        try { currentProfile = JSON.parse(localStorage.getItem("swiflytv.activeProfile") || "null"); } catch {}
 
         grid.innerHTML = profiles.map((profile, index) => {
           const initial = esc(profile.name).slice(0,1).toUpperCase() || "S";
-          return '<button class="dsProfileSelectCard" data-index="' + index + '" type="button">' +
+          return '<button class="dsProfileSelectCard" data-index="' + index + '" data-current="' + (currentProfile && (currentProfile.id === profile.id || currentProfile.name === profile.name) ? 'true' : 'false') + '" type="button">' +
             '<span class="dsProfileAvatarBig">' + initial + '</span>' +
             '<strong>' + esc(profile.name) + '</strong>' +
             '<small>' + modeLabel(profile.mode) + '</small>' +
@@ -14965,11 +14973,11 @@ function profilesPage(req, res) {
 
 
 function profilesManagePage(req, res) {
-  const body = `<main class="dsPlainPage dsProfilesManagePage">
+  const body = `<main class="dsPlainPage dsProfilesManagePage svProfilesCinematic">
     <section class="dsCleanHero dsProfilesManageHero">
       <span class="dsEyebrow">Profile Center</span>
       <h1>Manage profiles without the clutter.</h1>
-      <p>Create, rename, remove, and organize profiles from one dedicated control page.</p>
+      <p>Make space for everyone. Create a profile, personalize it, or manage the ones you already have.</p>
       <div class="dsHeroMiniActions">
         <a class="dsPrimaryBtn" href="/profiles"><i class="fa-solid fa-user-group"></i> Switch Profile</a>
         <a class="dsSecondaryBtn" href="/account"><i class="fa-solid fa-gear"></i> Account</a>
