@@ -6396,7 +6396,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/clean/aurora.css?v=170" />
     <script defer src="/assets/clean/aurora.js?v=168"></script>
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=163" />' : ""}
-    ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=171" />' : ""}
+    ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=173" />' : ""}
     <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=172" />
     ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=159" /><script defer src="/assets/party/party.js?v=159"></script>' : ""}
     ${player ? '<link rel="stylesheet" href="/assets/player/player.css?v=160" /><script defer src="/assets/player/player.js?v=164"></script>' : ""}
@@ -14676,8 +14676,7 @@ function authPage(res, mode = "login") {
           <a class="${!isSignup ? "active" : ""}" href="/login"${!isSignup ? ' aria-current="page"' : ""}>Log in</a>
           <a class="${isSignup ? "active" : ""}" href="/signup"${isSignup ? ' aria-current="page"' : ""}>Sign up</a>
         </div>
-        ${isSignup ? '<span class="svAuthKicker">SWIFLY / PERSONAL CINEMA</span>' : ""}
-        <h1>${isSignup ? "Create your space." : "Welcome back"}</h1>
+        <h1>${isSignup ? "Create account" : "Welcome back"}</h1>
         <p class="svAuthIntro">${isSignup ? "Save your favorites. Make movie night your own." : "Log in to continue watching."}</p>
         <form id="safeAuthForm" class="dsSafeAuthForm">
           ${isSignup ? `<label><span>Name</span><input name="name" type="text" placeholder="Your name" autocomplete="name" required /></label>` : ""}
