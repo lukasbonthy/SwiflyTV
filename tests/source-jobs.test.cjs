@@ -473,3 +473,49 @@ test('destroy aborts current and replaced work, settles waiters, and releases ev
   await flush();
   assert.equal(pending.length, 2, 'destroyed jobs never restart');
 });
+
+
+test('a temporary provider miss reuses the last recently verified source, but explicit Retry never does', async t => {
+  const time = clock(), pending = deferred(); let calls = 0;
+  const jobs = factory({ ...time, successTtlMs: 100, errorTtlMs: 5, staleSuccessTtlMs: 1000,
+    resolve() { calls++; return calls === 1 ? playable : calls === 2 ? { status:'error', code:'no_source' } : pending.promise; } });
+  t.after(() => jobs.destroy());
+  assert.equal((await jobs.resolve(movie)).status, 'ok');
+  time.advance(101);
+  const second = await jobs.resolve(movie);
+  assert.equal(second.status, 'ok', 'a short-lived scrape failure must not replace a recently working source');
+  assert.equal(second.staleSource, true);
+  assert.equal(second.playbackUrl, playable.playbackUrl);
+  const fresh = jobs.poll(movie, { retry:true });
+  assert.equal(fresh.status, 'loading', 'retry must bypass previously captured media');
+  await flush();
+  pending.resolve({ status:'error', code:'no_source' });
+  assert.equal((await jobs.resolve(movie)).status, 'error');
+});
+
+test('a stale fallback ends at its original deadline and never turns into permanent success', async t => {
+  const time=clock(); let calls=0;
+  const jobs=factory({ ...time, successTtlMs:100,errorTtlMs:5,staleSuccessTtlMs:250,
+    resolve(){ calls++;return calls===1?playable:{status:'error',code:'provider_blocked'}; } });
+  t.after(()=>jobs.destroy());
+  await jobs.resolve(movie);
+  time.advance(101);
+  assert.equal((await jobs.resolve(movie)).status,'ok');
+  time.advance(150);
+  const result=await jobs.resolve(movie);
+  assert.equal(result.status,'error');
+  assert.equal(result.code,'provider_blocked');
+});
+
+test('timeout fallback still aborts its timed-out provider capture', async t => {
+ const time=clock(), blocked=deferred(); let calls=0, signal;
+ const jobs=factory({ ...time,deadlineMs:50,successTtlMs:10,staleSuccessTtlMs:1000,
+   resolve(_params,context){ calls++; if(calls===1)return playable;signal=context.signal;return blocked.promise; } });
+ t.after(()=>jobs.destroy());
+ await jobs.resolve(movie);time.advance(11);
+ const next=jobs.resolve(movie);await flush();time.advance(50);
+ const recovered=await next;
+ assert.equal(recovered.status,'ok');assert.equal(recovered.staleSource,true);
+ assert.equal(signal.aborted,true,'recovery must not leave browser captures alive');
+ blocked.resolve(null);await flush();
+});
