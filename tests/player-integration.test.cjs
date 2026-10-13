@@ -119,6 +119,7 @@ test('main catalog, signup and login all have the ambient scene without compromi
    const env=parse(await response.text()),d=env.window.document;
    const aurora=d.querySelector('.svAuroraBackground');
    assert(aurora,route+' should mount shared aurora');
+   assert(d.querySelector('script[src="/assets/clean/aurora-shader.js?v=168"]'),route+' should load real aurora shader');
    assert.equal(aurora.querySelectorAll('.svAuroraRibbon').length,3,route+' should mount moving curtains');
    if(route==='/signup'||route==='/login'){
      assert(d.querySelector('.dsAuthBrand'),route+' account branding missing');
