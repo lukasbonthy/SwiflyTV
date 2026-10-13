@@ -1,0 +1,148 @@
+/* Swifly v174: preserve the original Aurora and existing content hierarchy.
+   Bring the FULL featured frame into view before fading to the gallery. */
+
+/* Signed-in Home, Movies, Series and Trending share dsHero. Welcome is separate. */
+body.svCleanShell main > .dsHero {
+  min-height:clamp(760px,calc(100svh + 95px),1120px) !important;
+  height:auto !important;
+  padding:136px 0 165px !important;
+  overflow:hidden !important;
+}
+body.svCleanShell main > .dsHero > .dsHeroBg {
+  background-position:center 43% !important;
+  -webkit-mask-image:linear-gradient(to bottom,
+    #000 0%,#000 68%,rgba(0,0,0,.94) 79%,rgba(0,0,0,.63) 89%,transparent 100%) !important;
+  mask-image:linear-gradient(to bottom,
+    #000 0%,#000 68%,rgba(0,0,0,.94) 79%,rgba(0,0,0,.63) 89%,transparent 100%) !important;
+}
+body.svCleanShell main > .dsHero > .dsHeroGlass {
+  background:
+    linear-gradient(90deg,rgba(0,0,0,.71) 0%,rgba(0,0,0,.39) 30%,rgba(0,0,0,.03) 78%),
+    linear-gradient(to bottom,rgba(0,0,0,.08),transparent 54%,rgba(0,0,0,.18) 75%,rgba(0,0,0,.54) 90%,#000 100%) !important;
+}
+/* Give the image its ending BEFORE the catalog begins. Don't pull rows over
+   the visible movie frame as earlier rules did. */
+body.svCleanShell main > .dsHero + .svHeroLightBridge + .dsContent:not(.noHero) {
+  margin-top:-8px !important;
+  padding-top:24px !important;
+  background:transparent !important;
+}
+/* The earlier image-derived double-blur was responsible for a muddy band
+   behind the first rail. Keep one quiet, feathered reflection only. */
+body.svCleanShell .svHeroLightBridge::before {
+  top:-150px !important;
+  height:300px !important;
+  left:6% !important;
+  width:88% !important;
+  opacity:.13 !important;
+  filter:blur(58px) saturate(.85) brightness(.52) !important;
+  -webkit-mask-image:radial-gradient(ellipse 60% 58% at 50% 43%,#000,transparent 100%) !important;
+  mask-image:radial-gradient(ellipse 60% 58% at 50% 43%,#000,transparent 100%) !important;
+}
+body.svCleanShell .svHeroLightBridge::after {display:none !important;}
+
+/* Welcome: the film should end as a picture, not as a huge, blurred orange/gray fog.
+   The natural backdrop and v170 Aurora remain. */
+body.svCleanShell .svWelcomeClean .dsWelcomeHeroBg {
+  bottom:-36px !important;
+  opacity:.21 !important;
+  -webkit-mask-image:
+    linear-gradient(to right,transparent 0%,#000 31%,#000 100%),
+    linear-gradient(to bottom,transparent 0%,#000 16%,#000 53%,rgba(0,0,0,.70) 77%,transparent 100%) !important;
+  mask-image:
+    linear-gradient(to right,transparent 0%,#000 31%,#000 100%),
+    linear-gradient(to bottom,transparent 0%,#000 16%,#000 53%,rgba(0,0,0,.70) 77%,transparent 100%) !important;
+}
+body.svCleanShell .svWelcomeClean .dsWelcomeHero::before {
+  bottom:-36px !important;
+  background:linear-gradient(to bottom,transparent 52%,rgba(0,0,0,.27) 75%,#000 100%) !important;
+}
+body.svCleanShell .svWelcomeClean .svWelcomeLightBridge::before {
+  top:-110px !important;
+  height:230px !important;
+  opacity:.075 !important;
+  filter:blur(52px) saturate(.78) brightness(.5) !important;
+}
+body.svCleanShell .svWelcomeClean .svWelcomeLightBridge::after {display:none !important;}
+body.svCleanShell .svWelcomeClean .dsWelcomeDiscovery {
+  background:transparent !important;
+}
+
+/* Studio > Glass: Liquid means the ACTUAL BUTTONS, not just the nav container.
+   Keep their original dimensions and native focus/click behavior. */
+body.svCleanShell[data-st-glass="liquid"] :is(
+  .svGlassSurface.svGlassControl.dsPrimaryBtn,
+  .svGlassSurface.svGlassControl.dsSecondaryBtn,
+  .svGlassSurface.svGlassControl.dsIconBtn,
+  .svGlassSurface.svGlassControl.dsRowBtn,
+  .svGlassSurface.svGlassControl.svRowArrow,
+  .svGlassSurface.svGlassControl.dsRowArrow,
+  .svGlassSurface.svGlassControl.svResumePlay,
+  .svGlassSurface.svGlassControl.svResumeRemove,
+  .svGlassSurface.svGlassControl.svWelcomeStudio,
+  .svGlassSurface.svGlassControl.svNavButton,
+  .svGlassSurface.svGlassControl.dsGhostPill,
+  .svGlassSurface.svGlassControl.svAuthPasswordToggle,
+  .svGlassSurface.svGlassControl[data-st-open]
+) {
+  background:linear-gradient(137deg,rgba(255,255,255,.20),rgba(255,255,255,.055) 48%,rgba(255,255,255,.105)),rgba(12,19,23,.24) !important;
+  border:1px solid rgba(247,255,253,.32) !important;
+  color:#f7faf9 !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.34),inset 0 -1px 0 rgba(255,255,255,.05),0 4px 15px rgba(0,0,0,.23) !important;
+  -webkit-backdrop-filter:blur(16px) saturate(1.6) brightness(1.08) !important;
+  backdrop-filter:blur(16px) saturate(1.6) brightness(1.08) !important;
+  transition:background-color .22s,border-color .22s,box-shadow .22s,filter .22s !important;
+}
+/* Preserve primary action prominence with a translucent pearl tint. */
+body.svCleanShell[data-st-glass="liquid"] :is(.dsHeroActions,.dsWelcomeActions,.dsDetailActionsV121) .svGlassSurface.svGlassControl.dsPrimaryBtn {
+  background:linear-gradient(145deg,rgba(255,255,255,.92),rgba(221,240,234,.76)) !important;
+  color:#11201c !important;
+  border-color:rgba(255,255,255,.76) !important;
+  -webkit-backdrop-filter:blur(15px) saturate(1.4) !important;
+  backdrop-filter:blur(15px) saturate(1.4) !important;
+}
+body.svCleanShell[data-st-glass="liquid"] :is(
+  .svGlassSurface.svGlassControl.dsSecondaryBtn,
+  .svGlassSurface.svGlassControl.dsIconBtn,
+  .svGlassSurface.svGlassControl.dsRowBtn,
+  .svGlassSurface.svGlassControl.svRowArrow,
+  .svGlassSurface.svGlassControl.svWelcomeStudio,
+  .svGlassSurface.svGlassControl.dsGhostPill
+):hover {
+  background:linear-gradient(130deg,rgba(255,255,255,.29),rgba(255,255,255,.09)),rgba(14,20,22,.3) !important;
+  border-color:rgba(255,255,255,.52) !important;
+  box-shadow:inset 0 1px 0 #ffffff75,0 5px 20px #0005 !important;
+}
+body.svCleanShell[data-st-glass="subtle"] :is(.svGlassSurface.svGlassControl,.svWelcomeStudio) {
+  -webkit-backdrop-filter:blur(9px) saturate(1.06) !important;
+  backdrop-filter:blur(9px) saturate(1.06) !important;
+}
+body.svCleanShell[data-st-glass="off"] .svGlassSurface.svGlassControl {
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
+  box-shadow:none !important;
+}
+@media(max-width:860px) {
+  body.svCleanShell main > .dsHero {
+    min-height:clamp(600px,94svh,870px) !important;
+    padding:112px 0 115px !important;
+  }
+  body.svCleanShell main > .dsHero > .dsHeroBg {
+    background-position:center 45% !important;
+    -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 65%,rgba(0,0,0,.72) 81%,transparent 100%) !important;
+    mask-image:linear-gradient(to bottom,#000 0%,#000 65%,rgba(0,0,0,.72) 81%,transparent 100%) !important;
+  }
+  body.svCleanShell main > .dsHero + .svHeroLightBridge + .dsContent:not(.noHero) {
+    margin-top:-8px !important;padding-top:18px !important;
+  }
+  body.svCleanShell .svWelcomeClean .dsWelcomeHeroBg {bottom:-22px !important;}
+}
+@media(prefers-reduced-transparency:reduce) {
+  body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svGlassControl {
+    background:#182023ed !important;
+    -webkit-backdrop-filter:none !important;backdrop-filter:none !important;
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svGlassControl {transition:none !important;}
+}
