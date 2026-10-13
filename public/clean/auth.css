@@ -1,94 +1,266 @@
-/* v164: Swifly's editorial onboarding, matching Welcome and Aurora Lab. */
+/* SwiflyTV v165 / The Screening Room — editorial signup and login. */
 body.svCleanShell .dsAuthPageSafe {
-  position:relative; display:grid; place-items:center; width:100%; min-height:100svh;
-  padding:clamp(104px,13vh,155px) clamp(20px,5vw,80px) 72px;
-  background:transparent !important; isolation:isolate;
+  position:relative; isolation:isolate; display:grid !important; place-items:center;
+  width:100%; min-height:100svh; padding:clamp(112px,12vh,155px) clamp(22px,5vw,88px) 75px !important;
+  overflow:hidden; background:transparent !important; color:#f4f5f4;
 }
 body.svCleanShell .dsAuthPageSafe::before {
-  content:""; position:absolute; inset:0; z-index:-1; pointer-events:none;
-  background:radial-gradient(ellipse at 68% 11%,#6caaa620,transparent 44%),linear-gradient(180deg,#05090cc7,#0004 55%,#000);
+  content:""; position:absolute; z-index:-1; inset:0; pointer-events:none;
+  background:radial-gradient(ellipse 70% 70% at 20% 6%,#5ce0c21c,transparent 72%),
+             linear-gradient(90deg,rgba(3,8,11,.20),rgba(3,8,11,.54) 85%);
+}
+body.svCleanShell .dsAuthPageSafe::after {
+  content:""; position:absolute; z-index:-1; inset:0; opacity:.1; pointer-events:none;
+  background-image:linear-gradient(#ffffff08 1px,transparent 1px),linear-gradient(90deg,#ffffff08 1px,transparent 1px);
+  background-size:64px 64px; mask-image:linear-gradient(160deg,#000,transparent 65%);
 }
 body.svCleanShell .dsAuthShellSafe {
-  width:min(1120px,100%); display:grid; grid-template-columns:minmax(0,1.05fr) minmax(340px,.85fr);
-  align-items:center; gap:clamp(26px,5vw,92px);
+  position:relative; width:min(1220px,100%); display:grid !important;
+  grid-template-columns:minmax(0,1.16fr) minmax(365px,.84fr); align-items:center;
+  column-gap:clamp(32px,6vw,110px); row-gap:28px;
 }
 body.svCleanShell .dsAuthBrand {
-  grid-column:1/-1; display:inline-flex; align-items:center; gap:10px; width:max-content;
-  color:#f2f6f6; font-size:16px; font-weight:650; letter-spacing:-.035em; text-decoration:none;
+  grid-column:1/-1; display:inline-flex; align-items:center; gap:12px; width:max-content;
+  font:650 19px/1 "Host Grotesk",system-ui,sans-serif; letter-spacing:-.065em;
+  color:#f7fbfa; text-decoration:none;
 }
-body.svCleanShell .dsAuthBrand > span { width:9px; height:9px; border-radius:50%; background:#a9e4d8; box-shadow:0 0 20px #72c7b9b3; }
+body.svCleanShell .dsAuthBrand > span {
+  width:29px; height:29px; display:grid; place-items:center; background:#d6eee9;
+  border-radius:10px 10px 10px 3px; box-shadow:0 0 30px #9be2d947; transform:rotate(-7deg);
+}
+body.svCleanShell .dsAuthBrand > span::after {
+  content:""; width:9px; height:9px; border:2px solid #132629; border-left-color:transparent;
+  border-radius:50%; transform:rotate(25deg);
+}
 body.svCleanShell .dsAuthPitch {
-  display:flex; flex-direction:column; align-items:flex-start; justify-content:center;
-  min-height:450px; padding:clamp(22px,4vw,50px) 0; gap:0; border:0;
-  background:none; box-shadow:none; backdrop-filter:none;
+  position:relative; display:flex !important; flex-direction:column; justify-content:center; align-items:stretch;
+  gap:32px !important; min-width:0; min-height:610px !important; padding:10px 0 14px !important;
+  border:0 !important; border-radius:0 !important; background:transparent !important;
+  box-shadow:none !important; backdrop-filter:none !important;
 }
-body.svCleanShell .dsAuthPitch .dsEyebrow { color:#9db8b8; font-size:10px; font-weight:500; letter-spacing:.16em; text-transform:uppercase; }
+body.svCleanShell .svAuthPitchIntro { position:relative; z-index:2; }
+body.svCleanShell .dsAuthPitch .dsEyebrow {
+  display:inline-flex; align-items:center; gap:9px; padding:0 !important; margin:0 !important;
+  background:none !important; border:none !important; min-height:0;
+  color:#b4d0cb; font-size:10px; font-weight:600; letter-spacing:.18em; text-transform:uppercase;
+}
+body.svCleanShell .dsAuthPitch .dsEyebrow i {
+  display:block; width:6px; height:6px; border-radius:50%;
+  background:#92ebd2; box-shadow:0 0 18px #85e4dca0;
+}
 body.svCleanShell .dsAuthPitch h1 {
-  margin:20px 0; color:#f2f6f5; font-family:var(--st-display-font,"Host Grotesk",sans-serif);
-  font-size:clamp(58px,6.9vw,95px); font-weight:500; letter-spacing:-.075em; line-height:.99; text-wrap:balance;
+  margin:22px 0 20px !important; max-width:710px; font-family:"Host Grotesk",system-ui,sans-serif !important;
+  font-size:clamp(62px,6.5vw,100px) !important; font-weight:500 !important;
+  line-height:.965 !important; letter-spacing:-.077em !important; text-wrap:balance;
+  color:#f8f9f7 !important;
 }
-body.svCleanShell .dsAuthPitch h1 em { color:#a7b9be; font-style:normal; }
-body.svCleanShell .dsAuthPitch > p { max-width:440px; color:#91a2aa; font-size:14px; font-weight:400; line-height:1.8; }
-body.svCleanShell .dsAuthFeatureList { display:flex; flex-wrap:wrap; gap:8px; margin-top:32px; }
-body.svCleanShell .dsAuthFeatureList > div { min-height:unset; padding:10px 13px; background:#ffffff06; border:1px solid #ffffff15; border-radius:100px; }
-body.svCleanShell .dsAuthFeatureList > div b { color:#c6d4d8; font-size:11px; font-weight:500; }
-body.svCleanShell .dsAuthFeatureList > div span { display:none; }
+body.svCleanShell .dsAuthPitch h1 em {
+  font-style:normal; color:transparent;
+  background:linear-gradient(115deg,#d6f5ec 8%,#a4bec5 60%,#b5a8d1 100%);
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+}
+body.svCleanShell .dsAuthPitch p {
+  margin:0 !important; max-width:455px; color:#9eb2b7 !important;
+  font-size:14px !important; line-height:1.85 !important; font-weight:400 !important;
+}
+body.svCleanShell .dsAuthFeatureList { display:flex !important; flex-wrap:wrap; gap:9px; margin:25px 0 0; }
+body.svCleanShell .dsAuthFeatureList > div {
+  display:inline-flex !important; align-items:center; gap:9px; min-height:34px !important;
+  padding:8px 13px !important; border:1px solid #ffffff23; border-radius:100px;
+  background:linear-gradient(130deg,#ffffff0d,#ffffff03);
+}
+body.svCleanShell .dsAuthFeatureList > div span {
+  display:inline !important; font-size:14px; color:#a9d9d0; line-height:1;
+}
+body.svCleanShell .dsAuthFeatureList > div b {
+  font-size:10px; font-weight:550; letter-spacing:.025em; color:#cedcde;
+}
+/* The pure-CSS film-art panel: no remote artwork, blocking resource or fake content. */
+body.svCleanShell .svAuthShowcase {
+  position:relative; isolation:isolate; display:flex; flex-direction:column; justify-content:space-between;
+  width:min(100%,600px); min-height:240px; padding:22px 25px 23px; margin:6px 0 0;
+  overflow:visible; border-radius:22px; border:1px solid #ffffff22;
+  background:linear-gradient(155deg,#10252b,#090f19 42%,#15132a 100%);
+  box-shadow:inset 0 1px 0 #ffffff24,0 22px 65px #0007;
+  transform:rotate(-1.3deg);
+}
+body.svCleanShell .svAuthShowcase::before {
+  content:""; position:absolute; inset:0; z-index:-1; border-radius:inherit; overflow:hidden;
+  background:
+    radial-gradient(ellipse 52% 82% at 61% 65%,#8e81dd42,transparent 72%),
+    radial-gradient(ellipse 36% 74% at 39% 40%,#52d6be64,transparent 74%),
+    linear-gradient(175deg,transparent 55%,#050910 100%);
+}
+body.svCleanShell .svAuthShowcase::after {
+  content:""; position:absolute; z-index:0; inset:0; border-radius:inherit;
+  background:repeating-linear-gradient(0deg,transparent 0 3px,#ffffff03 4px 5px);
+  pointer-events:none;
+}
+body.svCleanShell .svAuthShowcaseTop,body.svCleanShell .svAuthShowcaseBottom {
+  position:relative; z-index:2; display:flex; align-items:center; justify-content:space-between; gap:20px;
+  color:#cce5e6; font-size:9px; letter-spacing:.19em; font-weight:600;
+}
+body.svCleanShell .svAuthShowcaseTop > span:last-child { color:#aec7bd8c; }
+body.svCleanShell .svAuthShowcaseBottom { align-items:end; }
+body.svCleanShell .svAuthShowcaseBottom div { display:flex; flex-direction:column; gap:2px; }
+body.svCleanShell .svAuthShowcaseBottom small { color:#b1c9cb; font-size:9px; }
+body.svCleanShell .svAuthShowcaseBottom strong { font-size:22px; font-weight:550; letter-spacing:-.055em; color:#f4f9f8; }
+body.svCleanShell .svAuthShowcaseBottom > span { color:#9bb0bd99; font-size:9px; letter-spacing:.1em; }
+body.svCleanShell .svAuthShowcaseArt { position:absolute; inset:0; overflow:hidden; border-radius:inherit; }
+body.svCleanShell .svAuthShowcaseHalo {
+  position:absolute; left:30%; top:-100%; width:90%; aspect-ratio:1;
+  background:radial-gradient(circle,#67dabd5a 0%,#7982de31 21%,transparent 54%); border-radius:50%;
+  animation:svAuthLight 17s ease-in-out infinite alternate;
+}
+body.svCleanShell .svAuthShowcaseRing {
+  position:absolute; top:-30%; left:32%; width:63%; aspect-ratio:1; border-radius:50%;
+  border:1px solid #d5e8e68a; box-shadow:0 0 0 28px #d5f7ef0a,0 0 0 55px #b9ded809,0 0 72px #7fd4d544;
+  transform:rotateX(56deg) rotate(-18deg); animation:svAuthOrbit 29s ease-in-out infinite alternate;
+}
+body.svCleanShell .svAuthShowcaseDisc {
+  position:absolute; top:6%; right:18%; width:86px; aspect-ratio:1; border-radius:50%;
+  background:radial-gradient(circle at 30% 25%,#eaffec,#a9d3cc 30%,#558c9b 58%,#0b182b 75%);
+  box-shadow:0 0 28px #9ed8d583,0 0 95px #98c7c245;
+  opacity:.91;
+}
+body.svCleanShell .svAuthShowcaseGlyph {
+  position:absolute; top:12%; left:41%; color:#ffffff28;
+  font-family:"Unbounded",sans-serif; font-size:140px; font-weight:800; line-height:1; letter-spacing:-.1em;
+  transform:rotate(-12deg); user-select:none;
+}
+body.svCleanShell .svAuthFloatNote {
+  position:absolute; z-index:3; right:-14px; bottom:61px; display:flex; align-items:center; gap:11px;
+  padding:12px 13px; min-width:225px; border:1px solid #ffffff40; border-radius:13px;
+  background:linear-gradient(125deg,#e4f3efeb,#c7e2debf); backdrop-filter:blur(24px);
+  color:#172629; box-shadow:0 12px 35px #0008; transform:rotate(3deg);
+}
+body.svCleanShell .svAuthFloatNote i { display:grid; place-items:center; width:28px; height:28px; border-radius:9px; font:normal 16px sans-serif; background:#163c39; color:#ceeee4; }
+body.svCleanShell .svAuthFloatNote > span { display:grid; gap:3px; flex:1; font-size:9px; font-weight:800; letter-spacing:.09em; }
+body.svCleanShell .svAuthFloatNote small { color:#406568; font-size:10px; font-weight:400; letter-spacing:0; }
+body.svCleanShell .svAuthFloatNote b { font-size:16px; font-weight:400; }
+@keyframes svAuthLight { from {transform:translate(-7%,4%) scale(.9)} to {transform:translate(10%,-4%) scale(1.09)} }
+@keyframes svAuthOrbit { from {transform:rotateX(56deg) rotate(-18deg) translateX(-2%)} to {transform:rotateX(56deg) rotate(18deg) translateX(2%)} }
+/* Dark-glass profile setup module. */
 body.svCleanShell .dsAuthCard {
-  display:block; min-width:0; padding:clamp(23px,3vw,38px); border:1px solid #ffffff20 !important;
-  border-radius:25px !important; background:linear-gradient(145deg,#ffffff10,#ffffff05 55%),#0b1013d9 !important;
-  box-shadow:inset 0 1px 0 #ffffff14,0 30px 90px #0009 !important;
-  -webkit-backdrop-filter:blur(24px) saturate(1.3); backdrop-filter:blur(24px) saturate(1.3);
+  position:relative; overflow:hidden; min-width:0; padding:clamp(26px,3.5vw,46px) !important;
+  border:1px solid #c0f4e22e !important; border-radius:28px !important;
+  background:linear-gradient(155deg,#1c2428e0,#0b1016e9 52%,#0a1015e3) !important;
+  box-shadow:0 30px 100px #000a,inset 0 1px 0 #ffffff1f !important;
+  -webkit-backdrop-filter:blur(34px) saturate(1.22); backdrop-filter:blur(34px) saturate(1.22);
 }
 body.svCleanShell .dsAuthCard::before { display:none !important; }
-body.svCleanShell .dsAuthSwitch { display:flex; width:max-content; padding:4px; margin:0 0 28px; border:1px solid #ffffff12; border-radius:12px; background:#ffffff09; }
-body.svCleanShell .dsAuthSwitch a { padding:9px 20px; min-height:35px; border-radius:9px; font-size:12px; font-weight:500; color:#8d9ba2; text-decoration:none; }
-body.svCleanShell .dsAuthSwitch a.active { background:#e6efef; color:#0c191c; box-shadow:0 3px 12px #0004; }
+body.svCleanShell .dsAuthCard::after {
+  content:""; position:absolute; pointer-events:none; top:-100px; right:-170px; width:360px; height:330px;
+  border-radius:50%; background:radial-gradient(circle,#a3e9d61a,transparent 65%);
+}
+body.svCleanShell .svAuthCardTopline { display:flex; justify-content:space-between; align-items:center; gap:8px; margin:0 0 26px; color:#c2d4d5; font-size:9px; font-weight:600; letter-spacing:.12em; }
+body.svCleanShell .svAuthCardTopline > span:first-child { display:flex; align-items:center; gap:8px; }
+body.svCleanShell .svAuthCardTopline i { width:5px; height:5px; border-radius:50%; background:#b6ebd7; box-shadow:0 0 12px #6ddaba; }
+body.svCleanShell .svAuthCardTopline > span:last-child { color:#849b9f; }
+body.svCleanShell .dsAuthSwitch {
+  display:grid !important; width:100%; grid-template-columns:1fr 1fr; gap:5px; padding:5px !important;
+  margin:0 0 32px !important; border:1px solid #ffffff14; border-radius:13px;
+  background:#04080991;
+}
+body.svCleanShell .dsAuthSwitch a { display:grid; place-items:center; padding:10px 12px; min-height:40px;
+  border-radius:9px !important; color:#869ba1; font-size:12px; font-weight:550;
+  text-decoration:none; transition:color .2s,background .2s;
+}
+body.svCleanShell .dsAuthSwitch a:hover { color:#f4f8f7; }
+body.svCleanShell .dsAuthSwitch a.active { background:#e6f3ef !important; color:#132627 !important; box-shadow:0 2px 11px #0007; }
 body.svCleanShell .dsAuthCard h2 {
-  margin:0 0 8px; color:#f2f5f6; font-family:var(--st-display-font,"Host Grotesk",sans-serif);
-  font-size:clamp(27px,3vw,38px); font-weight:500; letter-spacing:-.055em;
+  margin:0 0 9px !important; color:#f4f8f7; font-family:"Host Grotesk",system-ui,sans-serif;
+  font-size:clamp(30px,3.1vw,42px); font-weight:550 !important; letter-spacing:-.06em; line-height:1.05;
 }
-body.svCleanShell .dsAuthCard > p:not(.dsAuthFinePrint) { margin:0; color:#8fa2aa; font-size:12px; font-weight:400; line-height:1.7; }
-body.svCleanShell .dsSafeAuthForm { display:grid; gap:18px; margin-top:30px; }
-body.svCleanShell .dsSafeAuthForm label { display:grid; gap:8px; color:#b2c3c8; font-size:11px; font-weight:500; letter-spacing:0; text-transform:none; }
+body.svCleanShell .dsAuthCard > p:not(.dsAuthFinePrint) {
+  margin:0; max-width:370px; color:#95a9ad; font-size:12px; font-weight:400; line-height:1.75;
+}
+body.svCleanShell .dsSafeAuthForm { display:grid; gap:17px; margin:29px 0 0; }
+body.svCleanShell .dsSafeAuthForm label {
+  display:grid; gap:9px; margin:0; color:#c6d5d6; font-size:11px; font-weight:550;
+  text-transform:none; letter-spacing:.025em;
+}
 body.svCleanShell .dsSafeAuthForm input {
-  width:100%; min-height:52px; padding:0 16px; border:1px solid #ffffff1c;
-  border-radius:12px; background:#ffffff06; color:#f3f6f7; font-size:14px; font-weight:400;
-  transition:background .2s,border-color .2s,box-shadow .2s;
+  display:block; width:100%; min-height:53px; padding:0 16px; border:1px solid #c3efde21;
+  border-radius:12px; background:#ffffff08 !important; color:#f7fcfa;
+  font-family:inherit; font-size:13px; font-weight:400;
+  transition:background .18s,border-color .18s,box-shadow .18s;
 }
-body.svCleanShell .dsSafeAuthForm input::placeholder { color:#77878d; }
-body.svCleanShell .dsSafeAuthForm input:focus-visible { border-color:#a5d2c9; background:#ffffff0d; box-shadow:0 0 0 3px #9ccfc425; outline:0; }
+body.svCleanShell .dsSafeAuthForm input::placeholder { color:#70858c; }
+body.svCleanShell .dsSafeAuthForm input:hover { border-color:#c3efde43; }
+body.svCleanShell .dsSafeAuthForm input:focus-visible {
+  outline:0; background:#ffffff0c !important; border-color:#a7ebd4;
+  box-shadow:0 0 0 3px #8be1c52c,0 0 21px #7edbc40b;
+}
 body.svCleanShell .dsSafeAuthForm .dsPrimaryBtn {
-  display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%;
-  min-height:52px; margin-top:5px; padding:0 19px; border:1px solid #edf9f6; border-radius:12px;
-  background:#e6efef; color:#112023; font-size:13px; font-weight:650; box-shadow:0 8px 22px #0004;
-  cursor:pointer; transition:background .2s,transform .2s;
+  display:flex; align-items:center; justify-content:space-between; width:100%; gap:15px;
+  min-height:54px; margin:7px 0 0; padding:0 17px 0 20px !important;
+  border:1px solid #e6faf4; border-radius:12px; background:linear-gradient(110deg,#e8f4f0,#b7dfd4);
+  color:#14272a; font-size:13px; font-weight:700;
+  box-shadow:0 10px 36px #9cefd218; cursor:pointer;
+  transition:transform .2s,box-shadow .2s,background .2s;
 }
-body.svCleanShell .dsSafeAuthForm .dsPrimaryBtn:hover { background:white; transform:translateY(-2px); }
-body.svCleanShell .dsAuthFinePrint { margin:23px 0 0 !important; font-size:12px; font-weight:400; color:#84969c; }
-body.svCleanShell .dsAuthFinePrint a { color:#e3f4f1; font-weight:500; text-decoration-color:#afcfc766; }
-body.svCleanShell .dsAuthPageSafe :is(a,button,input):focus-visible { outline:2px solid #c4ebe3; outline-offset:3px; }
+body.svCleanShell .dsSafeAuthForm .dsPrimaryBtn > span:last-child {
+  display:grid; place-items:center; width:32px; height:32px; border-radius:9px; background:#0f2d2d; color:#e4f9f1; font-size:17px;
+}
+body.svCleanShell .dsSafeAuthForm .dsPrimaryBtn:hover {
+  transform:translateY(-2px); background:#f3fffb; box-shadow:0 16px 42px #7ddabd23;
+}
+body.svCleanShell .svAuthPrivacy {
+  display:flex; align-items:center; justify-content:center; gap:7px;
+  margin-top:21px; padding:13px 0 2px; color:#82989c; font-size:10px;
+}
+body.svCleanShell .svAuthPrivacy span { color:#93cfc0; font-size:14px; }
+body.svCleanShell .dsAuthFinePrint {
+  margin:17px 0 0 !important; padding-top:19px; border-top:1px solid #ffffff12;
+  color:#8ca0a5; font-size:11px; font-weight:400; text-align:center;
+}
+body.svCleanShell .dsAuthFinePrint a { color:#dcf4eb; font-weight:600; text-decoration:none; }
+body.svCleanShell .dsAuthFinePrint a:hover { text-decoration:underline; }
 body.svCleanShell .dsAuthTopActions {
-  position:absolute; right:clamp(24px,5vw,80px); top:clamp(30px,4vw,55px);
-  display:flex; align-items:center; gap:15px;
+  position:absolute; z-index:5; right:clamp(22px,5vw,88px); top:clamp(30px,4vw,55px);
+  display:flex; align-items:center; gap:17px;
 }
-body.svCleanShell .dsAuthTopActions a { color:#b9c6c8; font-size:12px; text-decoration:none; }
+body.svCleanShell .dsAuthTopActions a { color:#b6c8c7; font-size:11px; font-weight:550; text-decoration:none; }
+body.svCleanShell .dsAuthTopActions a:hover { color:#fff; }
 body.svCleanShell .dsAuthTopActions [data-st-open] {
-  display:grid; place-items:center; width:37px; height:37px;
-  border:1px solid #ffffff29; border-radius:12px; background:#ffffff0a; color:#d7e9e8; cursor:pointer;
+  display:grid; place-items:center; width:39px; height:39px; border:1px solid #ffffff2f;
+  border-radius:12px; background:#ffffff0c; color:#dbf2ee; cursor:pointer;
+  transition:background .18s,transform .18s;
 }
-body.svCleanShell .dsAuthTopActions svg { width:17px; height:17px; }
-@media(max-width:820px) {
-  body.svCleanShell .dsAuthShellSafe { grid-template-columns:1fr; gap:15px; }
-  body.svCleanShell .dsAuthPitch { min-height:0; padding:28px 0 8px; }
-  body.svCleanShell .dsAuthPitch h1 { font-size:clamp(48px,10vw,76px); }
-  body.svCleanShell .dsAuthCard { max-width:580px; width:100%; }
-  body.svCleanShell .dsAuthPageSafe { padding-top:110px; }
+body.svCleanShell .dsAuthTopActions [data-st-open]:hover { background:#ffffff18; transform:rotate(-8deg); }
+body.svCleanShell .dsAuthTopActions svg { width:18px; height:18px; }
+body.svCleanShell .dsAuthPageSafe :is(a,button,input):focus-visible { outline:2px solid #aceed9; outline-offset:4px; }
+@media(max-width:1000px) {
+  body.svCleanShell .dsAuthShellSafe { column-gap:25px; grid-template-columns:minmax(0,1fr) minmax(340px,.95fr); }
+  body.svCleanShell .dsAuthPitch h1 { font-size:clamp(53px,6.6vw,72px) !important; }
+  body.svCleanShell .svAuthShowcase { min-height:215px; }
+  body.svCleanShell .svAuthFloatNote { min-width:186px; right:-4px; }
 }
-@media(max-width:440px) {
-  body.svCleanShell .dsAuthPitch h1 { font-size:49px; }
-  body.svCleanShell .dsAuthCard { padding:22px; border-radius:18px !important; }
-  body.svCleanShell .dsAuthTopActions { top:22px; right:22px; }
+@media(max-width:780px) {
+  body.svCleanShell .dsAuthPageSafe { padding-top:104px !important; padding-bottom:50px !important; }
+  body.svCleanShell .dsAuthShellSafe { display:grid !important; grid-template-columns:1fr; gap:18px; }
+  body.svCleanShell .dsAuthPitch { min-height:0 !important; padding:20px 0 10px !important; gap:24px !important; }
+  body.svCleanShell .dsAuthPitch h1 { font-size:clamp(52px,9vw,77px) !important; }
+  body.svCleanShell .svAuthShowcase { min-height:220px; max-width:610px; }
+  body.svCleanShell .dsAuthCard { width:100%; max-width:610px; }
+  body.svCleanShell .dsAuthBrand { margin-top:10px; }
+}
+@media(max-width:470px) {
+  body.svCleanShell .dsAuthPageSafe { padding-inline:18px !important; }
+  body.svCleanShell .dsAuthPitch h1 { font-size:clamp(45px,11.5vw,58px) !important; }
+  body.svCleanShell .dsAuthPitch p { font-size:12px !important; }
+  body.svCleanShell .dsAuthFeatureList > div { padding:8px 10px !important; }
+  body.svCleanShell .svAuthShowcase { min-height:195px; padding:17px; border-radius:18px; }
+  body.svCleanShell .svAuthShowcaseGlyph { font-size:96px; }
+  body.svCleanShell .svAuthShowcaseDisc { width:63px; }
+  body.svCleanShell .svAuthShowcaseBottom > span { display:none; }
+  body.svCleanShell .svAuthFloatNote { padding:8px; min-width:172px; bottom:53px; font-size:9px; }
+  body.svCleanShell .dsAuthCard { padding:23px !important; border-radius:20px !important; }
+  body.svCleanShell .dsAuthTopActions { top:22px; right:19px; }
 }
 @media(prefers-reduced-motion:reduce) {
-  body.svCleanShell .dsSafeAuthForm .dsPrimaryBtn { transition:none; transform:none !important; }
+  body.svCleanShell .svAuthShowcaseHalo,body.svCleanShell .svAuthShowcaseRing { animation:none !important; }
+  body.svCleanShell .dsSafeAuthForm .dsPrimaryBtn,body.svCleanShell .dsAuthTopActions [data-st-open] { transition:none; transform:none !important; }
 }
+body.reduceMotion .svAuthShowcaseHalo,body.reduceMotion .svAuthShowcaseRing { animation:none !important; }

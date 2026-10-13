@@ -110,3 +110,25 @@ test('Invalid media IDs and types do not reach providers, and direct lookups are
  for(const url of ['/api/proxy-video-wait/invalid/101','/api/proxy-video-wait/movie/abc','/api/proxy-video-wait/tv/101?s=bad']){const response=await fetch(base+url),data=await response.json();assert.equal(data.status,'error');assert.equal(data.code,'invalid_request');}
  assert.equal(started,0);const data=await(await fetch(base+'/api/proxy-video/movie/103')).json();assert.equal(data.status,'error');assert.equal(data.code,'timeout');
 });
+
+
+test('main catalog, signup and login all have the ambient scene without compromising forms',async()=>{
+ for(const route of ['/', '/movies', '/signup', '/login']){
+   const response=await fetch(base+route);
+   assert.equal(response.status,200,route+' status');
+   const env=parse(await response.text()),d=env.window.document;
+   const aurora=d.querySelector('.svAuroraBackground');
+   assert(aurora,route+' should mount shared aurora');
+   assert.equal(aurora.querySelectorAll('.svAuroraRibbon').length,3,route+' should mount moving curtains');
+   if(route==='/signup'||route==='/login'){
+     assert(d.querySelector('.svAuthShowcase'),route+' artwork missing');
+     assert(d.querySelector('.svAuthPrivacy'),route+' local-only description missing');
+     assert(d.querySelector('.dsAuthCard .svAuthCardTopline'),route+' editorial form missing');
+     const form=d.querySelector('#safeAuthForm');
+     assert(form);
+     assert(form.querySelector('input[name="email"][required]'));
+     assert(form.querySelector('input[name="password"][required]'));
+     assert(d.querySelector('[data-st-open]'));
+   }
+ }
+});

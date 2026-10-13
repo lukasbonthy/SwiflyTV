@@ -6393,10 +6393,10 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/liquid-glass/surfaces.js?v=163"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=164" />
     <script defer src="/assets/studio/studio.js?v=164"></script>
-    <link rel="stylesheet" href="/assets/clean/aurora.css?v=164" />
-    <script defer src="/assets/clean/aurora.js?v=163"></script>
+    <link rel="stylesheet" href="/assets/clean/aurora.css?v=165" />
+    <script defer src="/assets/clean/aurora.js?v=165"></script>
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=163" />' : ""}
-    ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=164" />' : ""}
+    ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=165" />' : ""}
     ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=159" /><script defer src="/assets/party/party.js?v=159"></script>' : ""}
     ${player ? '<link rel="stylesheet" href="/assets/player/player.css?v=160" /><script defer src="/assets/player/player.js?v=164"></script>' : ""}
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=161" /><script defer src="/assets/player/watch-party.js?v=160"></script>' : ""}
@@ -14666,25 +14666,33 @@ function authPage(res, mode = "login") {
       <a class="dsAuthBrand" href="/welcome"><span></span>${escapeHtml(SITE_NAME)}</a>
 
       <aside class="dsAuthPitch">
-        <span class="dsEyebrow">${isSignup ? "Start your profile" : "Welcome back"}</span>
-        <h1>${isSignup ? 'Your next movie<br><em>night starts here.</em>' : 'Welcome<br><em>back.</em>'}</h1>
-        <p>${escapeHtml(subtitle)}</p>
-
-        <div class="dsAuthFeatureList">
-          <div><b>Profiles</b><span>Regular and Kids profiles.</span></div>
-          <div><b>Watch Parties</b><span>Start synced rooms when you want.</span></div>
-          <div><b>My List</b><span>Save what you want next.</span></div>
+        <div class="svAuthPitchIntro">
+          <span class="dsEyebrow"><i aria-hidden="true"></i>${isSignup ? "YOUR SPACE STARTS HERE" : "GOOD TO SEE YOU AGAIN"}</span>
+          <h1>${isSignup ? 'Movie nights,<br><em>reimagined.</em>' : 'The screen<br><em>missed you.</em>'}</h1>
+          <p>${escapeHtml(subtitle)}</p>
+          <div class="dsAuthFeatureList">
+            <div><span aria-hidden="true">↗</span><b>Your collection</b></div>
+            <div><span aria-hidden="true">◎</span><b>Watch together</b></div>
+            <div><span aria-hidden="true">✦</span><b>Make it yours</b></div>
+          </div>
+        </div>
+        <div class="svAuthShowcase" aria-hidden="true">
+          <div class="svAuthShowcaseTop"><span>SWIFLY / AFTER DARK</span><span>VOL. 001</span></div>
+          <div class="svAuthShowcaseArt"><div class="svAuthShowcaseHalo"></div><div class="svAuthShowcaseRing"></div><div class="svAuthShowcaseDisc"></div><span class="svAuthShowcaseGlyph">S</span></div>
+          <div class="svAuthShowcaseBottom"><div><small>THE NEXT SCENE</small><strong>IS YOURS.</strong></div><span>EST. MOVIE NIGHT</span></div>
+          <div class="svAuthFloatNote"><i>✦</i><span>CURATED FOR YOU<small>A whole world of stories.</small></span><b>↗</b></div>
         </div>
       </aside>
 
       <section class="dsAuthCard">
+        <div class="svAuthCardTopline"><span><i aria-hidden="true"></i>${isSignup ? "A NEW BEGINNING" : "PICK UP WHERE YOU LEFT OFF"}</span><span>SWIFLY / ID</span></div>
         <div class="dsAuthSwitch">
           <a class="${!isSignup ? "active" : ""}" href="/login">Login</a>
           <a class="${isSignup ? "active" : ""}" href="/signup">Signup</a>
         </div>
 
-        <h2>${isSignup ? "Sign up" : "Log in"}</h2>
-        <p>${isSignup ? "This is a simple local account saved in your browser for your couple setup." : "Enter the same email/name you used on this device."}</p>
+        <h2>${isSignup ? "Create your space." : "Welcome back."}</h2>
+        <p>${isSignup ? "Set up your personal movie corner. Just a few details, and you're in." : "Sign in to your saved profile and continue the story."}</p>
 
         <form id="safeAuthForm" class="dsSafeAuthForm">
           <label>
@@ -14703,10 +14711,11 @@ function authPage(res, mode = "login") {
           <button class="dsPrimaryBtn" type="submit"><span>${isSignup ? "Create my account" : "Log in"}</span><span aria-hidden="true">↗</span></button>
         </form>
 
+        <div class="svAuthPrivacy"><span aria-hidden="true">◎</span> Local profile · Saved on this device</div>
         <p class="dsAuthFinePrint">
           ${isSignup
-            ? `Already have one? <a href="/login">Log in</a>`
-            : `Need an account? <a href="/signup">Sign up</a>`}
+            ? `Already have a profile? <a href="/login">Log in ↗</a>`
+            : `New to Swifly? <a href="/signup">Create a profile ↗</a>`}
         </p>
       </section>
     </section>

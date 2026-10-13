@@ -221,3 +221,25 @@ test('Aurora Lab hides its extra controls for a non-Aurora backdrop', () => {
  env.click('[data-st-field="backdrop"][data-st-value="aurora"]');
  assert.equal(d.querySelector('[data-st-aurora-settings]').hidden,false);
 });
+
+
+test('Studio mounts independently animated aurora curtains on the page and in its preview', () => {
+  const env=studio(),d=env.window.document;
+  for (const surface of ['.svAuroraBackground','.stPreviewAurora']) {
+    const layer=d.querySelector(surface);
+    assert(layer, surface+' missing');
+    assert.equal(layer.querySelectorAll('.svAuroraRibbon').length,3);
+    assert(layer.querySelector('.svAuroraGlow'));
+    assert(layer.querySelector('.svAuroraRibbon--first'));
+    assert(layer.querySelector('.svAuroraRibbon--second'));
+    assert(layer.querySelector('.svAuroraRibbon--third'));
+  }
+  const css=fs.readFileSync(path.join(__dirname,'../public/clean/aurora.css'),'utf8');
+  assert.match(css,/position:fixed; inset:0;/,'aurora should follow the viewport while browsing');
+  assert.match(css,/\.dsContent,\.dsPlainPage/,'aurora should be visible through catalog backgrounds');
+  assert.match(css,/svAuroraWaveA/);
+  assert.match(css,/svAuroraWaveB/);
+  assert.match(css,/svAuroraWaveC/);
+  assert.match(css,/svPlayerPage/,'playback should suppress the ambience');
+  assert.match(css,/prefers-reduced-motion/);
+});
