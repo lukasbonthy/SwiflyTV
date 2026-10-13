@@ -6403,7 +6403,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=161" /><script defer src="/assets/player/watch-party.js?v=160"></script>' : ""}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/finish.css?v=175" />'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/polish.css?v=176" />'}
-    <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=179" />
+    <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=183" />
     ${player ? "" : '<link rel="stylesheet" href="/assets/liquid-glass/controls.css?v=182" />'}
 </head>
 <body class="svCleanShell">
