@@ -6393,10 +6393,10 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/liquid-glass/surfaces.js?v=163"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=164" />
     <script defer src="/assets/studio/studio.js?v=164"></script>
-    <link rel="stylesheet" href="/assets/clean/aurora.css?v=166" />
+    <link rel="stylesheet" href="/assets/clean/aurora.css?v=167" />
     <script defer src="/assets/clean/aurora.js?v=165"></script>
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=163" />' : ""}
-    ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=166" />' : ""}
+    ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=167" />' : ""}
     ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=159" /><script defer src="/assets/party/party.js?v=159"></script>' : ""}
     ${player ? '<link rel="stylesheet" href="/assets/player/player.css?v=160" /><script defer src="/assets/player/player.js?v=164"></script>' : ""}
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=161" /><script defer src="/assets/player/watch-party.js?v=160"></script>' : ""}
@@ -14661,56 +14661,29 @@ function authPage(res, mode = "login") {
     : "Log in to your SwiflyTV profile on this device.";
 
   const body = `<main class="dsAuthPage dsAuthPageSafe">
-    <div class="dsAuthTopActions"><a href="/welcome">Explore Swifly</a><button type="button" data-st-open aria-label="Customize atmosphere" title="Swifly Studio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 3 14.7 9.3 21 12l-6.3 2.7L12 21l-2.7-6.3L3 12l6.3-2.7L12 3Z"/></svg></button></div>
+    <div class="dsAuthTopActions">
+      <a href="/welcome">Explore Swifly</a>
+      <button type="button" data-st-open aria-label="Customize appearance" title="Swifly Studio">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M12 3 14.7 9.3 21 12l-6.3 2.7L12 21l-2.7-6.3L3 12l6.3-2.7L12 3Z"/></svg>
+      </button>
+    </div>
     <section class="dsAuthShell dsAuthShellSafe">
-      <a class="dsAuthBrand" href="/welcome"><span></span>${escapeHtml(SITE_NAME)}</a>
-
-      <aside class="dsAuthPitch">
-        <div class="svAuthEditorialTop"><span class="svAuthRule"></span><span>SWIFLY / THE PERSONAL CINEMA</span><span class="svAuthIssue">EST. FOR YOU</span></div>
-        <div class="svAuthEditorialBody">
-          <span class="dsEyebrow">${isSignup ? "IT STARTS WITH A STORY" : "BACK FOR ANOTHER STORY"}</span>
-          <h1>${isSignup ? 'A world of film.<br><em>Made personal.</em>' : 'A good night<br><em>starts here.</em>'}</h1>
-          <p>${isSignup ? 'Build your list, discover what to watch, and share the moments that matter.' : 'Your saved titles and movie nights are right where you left them.'}</p>
-        </div>
-        <div class="svAuthEditorialFoot">
-          <div class="svAuthSteps"><span><i>01</i> DISCOVER</span><span><i>02</i> CURATE</span><span><i>03</i> WATCH TOGETHER</span></div>
-          <span class="svAuthEditorialCaption">EVERY STORY HAS A BEGINNING <span aria-hidden="true">↗</span></span>
-        </div>
-      </aside>
-
+      <a class="dsAuthBrand" href="/welcome"><span aria-hidden="true"></span>${escapeHtml(SITE_NAME)}</a>
       <section class="dsAuthCard">
-        <div class="svAuthCardTopline"><span>YOUR SPACE / YOUR SCREEN</span><span>${isSignup ? "01 / CREATE" : "02 / RETURN"}</span></div>
-        <div class="dsAuthSwitch">
-          <a class="${!isSignup ? "active" : ""}" href="/login">Login</a>
-          <a class="${isSignup ? "active" : ""}" href="/signup">Signup</a>
+        <div class="dsAuthSwitch" aria-label="Account options">
+          <a class="${!isSignup ? "active" : ""}" href="/login"${!isSignup ? ' aria-current="page"' : ""}>Log in</a>
+          <a class="${isSignup ? "active" : ""}" href="/signup"${isSignup ? ' aria-current="page"' : ""}>Sign up</a>
         </div>
-
-        <h2>${isSignup ? "Make yourself at home." : "Welcome back."}</h2>
-        <p>${isSignup ? "A place for your favorites, watchlists, and movie nights." : "Log in to your profile to pick up where you left off."}</p>
-
+        <h1>${isSignup ? "Create an account" : "Welcome back"}</h1>
+        <p class="svAuthIntro">${isSignup ? "Your movies, your list, your space." : "Log in to continue watching."}</p>
         <form id="safeAuthForm" class="dsSafeAuthForm">
-          ${isSignup ? `<label>
-            <span>Display name</span>
-            <input name="name" placeholder="What should we call you?" autocomplete="name" required />
-          </label>` : ""}
-          <label>
-            <span>Email</span>
-            <input name="email" type="email" placeholder="you@example.com" autocomplete="email" required />
-          </label>
-          <label>
-            <span>Password</span>
-            <input name="password" type="password" placeholder="Password" autocomplete="${isSignup ? "new-password" : "current-password"}" required />
-          </label>
-
-          <button class="dsPrimaryBtn" type="submit"><span>${isSignup ? "Create my account" : "Log in"}</span><span aria-hidden="true">↗</span></button>
+          ${isSignup ? `<label><span>Name</span><input name="name" type="text" placeholder="Your name" autocomplete="name" required /></label>` : ""}
+          <label><span>Email</span><input name="email" type="email" placeholder="you@example.com" autocomplete="email" required /></label>
+          <label><span>Password</span><input name="password" type="password" placeholder="Your password" autocomplete="${isSignup ? "new-password" : "current-password"}" required /></label>
+          <button class="dsPrimaryBtn" type="submit"><span>${isSignup ? "Create account" : "Log in"}</span><span aria-hidden="true">↗</span></button>
         </form>
-
-        <div class="svAuthPrivacy"><span aria-hidden="true">◎</span> Local profile · Saved on this device</div>
-        <p class="dsAuthFinePrint">
-          ${isSignup
-            ? `Already have a profile? <a href="/login">Log in ↗</a>`
-            : `New to Swifly? <a href="/signup">Create a profile ↗</a>`}
-        </p>
+        <p class="dsAuthFinePrint">${isSignup ? `Already have an account? <a href="/login">Log in</a>` : `New to Swifly? <a href="/signup">Sign up</a>`}</p>
+        <p class="svAuthPrivacy">Your profile is stored on this device.</p>
       </section>
     </section>
 

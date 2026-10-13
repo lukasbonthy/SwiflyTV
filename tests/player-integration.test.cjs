@@ -121,9 +121,9 @@ test('main catalog, signup and login all have the ambient scene without compromi
    assert(aurora,route+' should mount shared aurora');
    assert.equal(aurora.querySelectorAll('.svAuroraRibbon').length,3,route+' should mount moving curtains');
    if(route==='/signup'||route==='/login'){
-     assert(d.querySelector('.svAuthEditorialTop'),route+' editorial introduction missing');
+     assert(d.querySelector('.dsAuthBrand'),route+' account branding missing');
      assert(d.querySelector('.svAuthPrivacy'),route+' local-only description missing');
-     assert(d.querySelector('.dsAuthCard .svAuthCardTopline'),route+' editorial form missing');
+     assert(d.querySelector('.dsAuthCard h1'),route+' form heading missing');
      const form=d.querySelector('#safeAuthForm');
      assert(form);
      assert(form.querySelector('input[name="email"][required]'));
@@ -137,6 +137,22 @@ test('Signup has a name field while login keeps the form focused on actual crede
  for(const [route,hasName] of [['/signup',true],['/login',false]]){
   const env=parse(await(await fetch(base+route)).text()),d=env.window.document;
   assert.equal(Boolean(d.querySelector('#safeAuthForm input[name="name"]')),hasName);
-  assert(d.querySelector('.svAuthSteps'),'Editorial introduction should replace the former decorative artwork');
+  assert.equal(d.querySelector('.dsAuthPitch,.svAuthSteps,.svAuthShowcase,.svAuthEditorialTop'),null,'No extra marketing panels on auth');
+ }
+});
+
+test('simple auth pages share one centered panel and do not add distracting advertising',async()=>{
+ for(const route of ['/login','/signup']){
+  const response=await fetch(base+route);
+  const env=parse(await response.text()),d=env.window.document;
+  assert.equal(d.querySelectorAll('.dsAuthCard').length,1);
+  assert.equal(d.querySelectorAll('.dsAuthBrand').length,1);
+  assert.equal(d.querySelectorAll('.dsAuthCard h1').length,1);
+  assert.equal(d.querySelector('.dsAuthPitch,.svAuthShowcase,.svAuthEditorialFoot'),null);
+  assert(d.querySelector('#safeAuthForm input[name="email"][type="email"]'));
+  assert(d.querySelector('#safeAuthForm input[name="password"][type="password"]'));
+  assert(d.querySelector('[data-st-open]'));
+  const css=await(await fetch(base+'/assets/clean/auth.css')).text();
+  assert.match(css,/max-width:430px/);
  }
 });

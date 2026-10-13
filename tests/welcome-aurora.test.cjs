@@ -235,8 +235,8 @@ test('Studio mounts independently animated aurora curtains on the page and in it
     assert(layer.querySelector('.svAuroraRibbon--third'));
   }
   const css=fs.readFileSync(path.join(__dirname,'../public/clean/aurora.css'),'utf8');
-  assert.match(css,/position:fixed; inset:0;/,'aurora should follow the viewport while browsing');
-  assert.match(css,/\.dsContent,\.dsPlainPage/,'aurora should be visible through catalog backgrounds');
+  assert.match(css,/position:fixed;inset:0;/,'aurora should follow the viewport while browsing');
+  assert.match(css,/z-index:40;pointer-events:none/,'aurora must float over opaque page canvases without blocking clicks');
   assert.match(css,/svAuroraWaveA/);
   assert.match(css,/svAuroraWaveB/);
   assert.match(css,/svAuroraWaveC/);
@@ -253,9 +253,19 @@ test('Aurora palette reaches visible catalog sections and respects the saved bac
   env.click('[data-st-cancel]');
   assert.equal(d.body.style.getPropertyValue('--sv-aurora-wash-a'),'#57a9b71a');
   const css=fs.readFileSync(path.join(__dirname,'../public/clean/aurora.css'),'utf8');
-  assert.match(css,/\.dsContent,\.dsPlainPage,\.dsAccountPage,\.dsProfilesPage/);
-  assert.match(css,/--sv-aurora-wash-a/);
-  assert.match(css,/background-image:[\s\S]*radial-gradient/);
+  assert.match(css,/mix-blend-mode:screen/,'global light should blend over opaque canvases');
+  assert.match(css,/--sv-aurora-hue/,'Studio palette should color the site-wide clouds');
+  assert.match(css,/\.svAuroraRibbon--first/);
   assert.match(css,/data-st-backdrop="aurora"/);
   assert.match(css,/svPlayerPage/);
+});
+
+test('Aurora is one seamless layer, never a boxed background in the movie grids',()=>{
+  const css=fs.readFileSync(path.join(__dirname,'../public/clean/aurora.css'),'utf8');
+  assert.match(css,/mix-blend-mode:screen/);
+  assert.match(css,/z-index:40/);
+  assert.doesNotMatch(css,/body\.svCleanShell\[data-st-backdrop="aurora"\] :is\(\.dsContent/);
+  assert.doesNotMatch(css,/\.svAuroraBackground[^\\n]*background:url/);
+  assert.match(css,/filter:blur/,'soft clouds should be blurred rather than thin graphic ribbons');
+  assert.match(css,/prefers-reduced-motion/);
 });
