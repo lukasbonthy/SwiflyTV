@@ -23,15 +23,73 @@ body.svCleanShell main > .dsHero > .dsHeroTrailerLayer {
   -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 59%,rgba(0,0,0,.70) 79%,transparent 100%) !important;
   mask-image:linear-gradient(to bottom,#000 0%,#000 59%,rgba(0,0,0,.70) 79%,transparent 100%) !important;
 }
-/* The legacy image-derived blur bridges caused large repaints as the page
-   moved; let the original frame dissolve without duplicating the image. */
-body.svCleanShell .svHeroLightBridge::before,
-body.svCleanShell .svHeroLightBridge::after,
+/* v183 — image-colored cinematic bleed, not a hard black hero/rows seam.
+   dsHero() already passes the SAME movie backdrop as --sv-light-art on the
+   adjacent bridge. Let that image supply its real red/blue/green/amber colors
+   beneath the first catalog rows. Unlike the old two-layer blurred bridge,
+   this is ONE still image, one moderate blur, and NO scroll-tied animation.
+
+   The bridge is zero-height: restoring the glow must not push posters down,
+   overlap buttons, or leave an opaque horizontal strip in the layout. */
+body.svCleanShell main > .dsHero + .svHeroLightBridge {
+  position:relative !important;
+  display:block !important;
+  height:0 !important;
+  min-height:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  z-index:0;
+  pointer-events:none;
+  overflow:visible !important;
+}
+body.svCleanShell main > .dsHero + .svHeroLightBridge::before {
+  display:block !important;
+  content:"";
+  position:absolute;
+  left:0;right:0;
+  top:-235px;
+  height:clamp(800px,108svh,1090px);
+  z-index:0;
+  pointer-events:none;
+  background-image:var(--sv-light-art);
+  background-size:cover;
+  background-repeat:no-repeat;
+  background-position:center 43%;
+  opacity:.75;
+  filter:blur(22px) saturate(1.55) brightness(.67);
+  -webkit-mask-image:linear-gradient(to bottom,
+    transparent 0%,rgb(0 0 0 / .12) 9%,rgb(0 0 0 / .55) 19%,
+    rgb(0 0 0 / .97) 29%,#000 38%,rgb(0 0 0 / .94) 48%,
+    rgb(0 0 0 / .69) 67%,rgb(0 0 0 / .25) 84%,transparent 100%);
+  mask-image:linear-gradient(to bottom,
+    transparent 0%,rgb(0 0 0 / .12) 9%,rgb(0 0 0 / .55) 19%,
+    rgb(0 0 0 / .97) 29%,#000 38%,rgb(0 0 0 / .94) 48%,
+    rgb(0 0 0 / .69) 67%,rgb(0 0 0 / .25) 84%,transparent 100%);
+}
+/* A cheap gradient absorbs the image colors into black well below the
+   first rails. No second blurred art layer, no double reflection stripe. */
+body.svCleanShell main > .dsHero + .svHeroLightBridge::after {
+  display:block !important;
+  content:"";
+  position:absolute;
+  left:0;right:0;top:0;
+  height:clamp(730px,98svh,980px);
+  z-index:1;
+  pointer-events:none;
+  background:linear-gradient(to bottom,
+    transparent 0%,rgb(0 0 0 / .07) 22%,
+    rgb(0 0 0 / .25) 43%,rgb(0 0 0 / .70) 76%,
+    #000 100%);
+}
+body.svCleanShell main > .dsHero + .svHeroLightBridge + .dsContent:not(.noHero) {
+  position:relative;z-index:2;
+  margin-top:-2px !important;
+  padding-top:16px !important;
+  background:transparent !important;
+}
+/* Welcome has a different poster composition and keeps its existing fade. */
 body.svCleanShell .svWelcomeLightBridge::before,
 body.svCleanShell .svWelcomeLightBridge::after {display:none !important;}
-body.svCleanShell main > .dsHero + .svHeroLightBridge + .dsContent:not(.noHero) {
-  margin-top:-2px !important;padding-top:16px !important;background:transparent !important;
-}
 /* Title overview starts just below a feathered, full-width image, not
    beneath a 750px modal with oversized GPU-blurred reflections. */
 body.svCleanShell :is(.svDetailDialog,.svDetailPage) .svDetailHero {
@@ -73,8 +131,21 @@ body.svCleanShell .svWelcomeClean .svWelcomeDiscoveryIntro {
 ::view-transition-old(root){animation:140ms ease-out both svQuickPageOut;}
 ::view-transition-new(root){animation:240ms cubic-bezier(.2,.75,.3,1) both svQuickPageIn;}
 @media(max-width:860px){
+  body.svCleanShell main > .dsHero + .svHeroLightBridge::before {
+    top:-160px;
+    height:clamp(620px,87svh,830px);
+    filter:blur(15px) saturate(1.48) brightness(.68);
+  }
+  body.svCleanShell main > .dsHero + .svHeroLightBridge::after {
+    height:clamp(560px,78svh,770px);
+  }
   body.svCleanShell main > .dsHero {min-height:clamp(570px,90svh,800px) !important;padding:105px 0 114px !important;}
   body.svCleanShell :is(.svDetailDialog,.svDetailPage) .svDetailHero {min-height:450px !important;height:clamp(450px,68svh,555px) !important;}
+}
+@media(prefers-reduced-transparency:reduce) {
+  body.svCleanShell main > .dsHero + .svHeroLightBridge::before {
+    opacity:.44;filter:none;
+  }
 }
 @media(prefers-reduced-motion:reduce) {
   ::view-transition-old(root),::view-transition-new(root){animation:none !important;}
