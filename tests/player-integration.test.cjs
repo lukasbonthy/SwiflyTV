@@ -293,13 +293,13 @@ test('v174 keeps Welcome soft without muddy light bridge or button clipping',asy
 });
 
 test('Studio glass uses one material on every browsing route and native transitions remain independent',async()=>{
- const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=179')).text();
+ const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=181')).text();
  const finish=await(await fetch(base+'/assets/clean/finish.css?v=175')).text();
- const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=179')).text();
+ const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=181')).text();
  assert.match(css,/data-st-glass="liquid"/);
  assert.match(css,/data-st-glass="subtle"/);
  assert.match(css,/data-st-glass="off"/);
- assert.match(css,/var\(--sv-glass-filter\) saturate\(1\.24\)/);
+ assert.match(css,/var\(--sv-glass-filter\) saturate\(1\)/);
  assert.match(css,/\.svGlassSurface\.svGlassControl::before/);
  assert.match(css,/\.svGlassSurface\.svGlassControl::after/);
  assert.match(css,/\.netflixNav,\.dsWelcomeNav/);
@@ -310,22 +310,24 @@ test('Studio glass uses one material on every browsing route and native transiti
    const response=await fetch(base+route);
    assert.equal(response.status,200,route);
    const doc=parse(await response.text()).window.document;
-   assert(doc.querySelector('link[href="/assets/liquid-glass/controls.css?v=179"]'),route+' lacks unified glass');
-   assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=179"]'),route+' uses stale glass renderer');
+   assert(doc.querySelector('link[href="/assets/liquid-glass/controls.css?v=181"]'),route+' lacks unified glass');
+   assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=181"]'),route+' uses stale glass renderer');
  }
  const watch=await(await fetch(base+'/watch/movie/101')).text();
- assert(!watch.includes('controls.css?v=179'),'watch page must be left alone');
+ assert(!watch.includes('controls.css?v=181'),'watch page must be left alone');
 });
-test('hero and modal buttons get the same bright optical material without boxing nav icons',async()=>{
+test('hero and modal buttons match the dark navbar refraction material without boxing nav icons',async()=>{
  const doc=parse(await(await fetch(base+'/')).text()).window.document;
  const hero=doc.querySelector('.dsHero');
  assert(hero.querySelector('.dsHeroActions .dsPrimaryBtn'));
  assert(hero.querySelector('.dsHeroActions .dsSecondaryBtn'));
  assert(hero.querySelector('.dsHeroActions .dsIconBtn'));
- const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=179')).text();
- const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=179')).text();
+ const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=181')).text();
+ const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=181')).text();
  assert.match(css,/border:1px solid transparent !important/,'nav icons never get a second border');
- assert.match(css,/radial-gradient\(ellipse 115% 155%/,'bright curved light makes dark-background glass visible');
+ assert.match(css,/background:rgb\(5 8 15 \/ \.38\)/,'controls match the actual navbar smoke tint');
+  assert.match(css,/background:rgb\(0 0 0 \/ \.20\)/,'SVG controls retain navbar transparency');
+  assert.doesNotMatch(css,/radial-gradient\(ellipse 115% 155%/,'no old silver-white gradients');
  assert.match(css,/mask-composite:exclude/,'rim stays separate from button label');
  assert.match(css,/data-swifly-renderer="svg"/);
  assert.match(script,/sharedControl = !panel/);
@@ -350,11 +352,11 @@ test('v176 supplies a real, masked details backdrop with no hard border at the o
  assert.match(css,/rgba\(0,0,0,\.22\) 94%,transparent 100%/);
  assert.match(css,/\.svDetailShade \{/);
  assert.match(css,/\.svDetailBody \{/);
- const lens=await(await fetch(base+'/assets/liquid-glass/controls.css?v=179')).text();
+ const lens=await(await fetch(base+'/assets/liquid-glass/controls.css?v=181')).text();
  assert.match(lens,/\.svGlassSurface\.svGlassControl\[data-swifly-renderer="svg"\]/);
  assert.match(lens,/\.svDetailActions,\.dsDetailActionsV121/);
  assert(d.querySelector('link[href="/assets/clean/polish.css?v=176"]'));
- assert(d.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=179"]'));
+ assert(d.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=181"]'));
 });
 test('v176 adds subtle Liquid Glass to both compact auth pages without resizing',async()=>{
  const css=await(await fetch(base+'/assets/clean/polish.css?v=176')).text();
