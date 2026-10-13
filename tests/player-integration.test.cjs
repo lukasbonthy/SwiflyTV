@@ -325,7 +325,7 @@ test('v174 liquid controls respond to the Studio setting and pages transition pr
    assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=175"]'),route+' missing updated glass controls');
  }
  const watch=await(await fetch(base+'/watch/movie/101')).text();
- assert(!watch.includes('finish.css?v=174'),'watch route must not have page dissolves');
+ assert(!watch.includes('finish.css?v=175'),'watch route must not have page dissolves');
 });
 
 test('v175 keeps the top bar one cohesive capsule and restores real Liquid Glass on featured controls',async()=>{
