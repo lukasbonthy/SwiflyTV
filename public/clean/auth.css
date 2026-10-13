@@ -1,266 +1,193 @@
-/* SwiflyTV v165 / The Screening Room — editorial signup and login. */
+/* v166: The Swifly sign-in experience — quiet, film-editorial, deliberately minimal. */
 body.svCleanShell .dsAuthPageSafe {
-  position:relative; isolation:isolate; display:grid !important; place-items:center;
-  width:100%; min-height:100svh; padding:clamp(112px,12vh,155px) clamp(22px,5vw,88px) 75px !important;
-  overflow:hidden; background:transparent !important; color:#f4f5f4;
+  display:grid !important;place-items:center;position:relative;isolation:isolate;
+  width:100%;min-height:100svh;padding:clamp(105px,12vh,145px) clamp(22px,5vw,86px) 72px !important;
+  background:transparent !important;color:#f1f2f0;overflow:hidden;
 }
 body.svCleanShell .dsAuthPageSafe::before {
-  content:""; position:absolute; z-index:-1; inset:0; pointer-events:none;
-  background:radial-gradient(ellipse 70% 70% at 20% 6%,#5ce0c21c,transparent 72%),
-             linear-gradient(90deg,rgba(3,8,11,.20),rgba(3,8,11,.54) 85%);
+  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:linear-gradient(90deg,#02040752 0%,transparent 42%,#02030496 100%);
 }
-body.svCleanShell .dsAuthPageSafe::after {
-  content:""; position:absolute; z-index:-1; inset:0; opacity:.1; pointer-events:none;
-  background-image:linear-gradient(#ffffff08 1px,transparent 1px),linear-gradient(90deg,#ffffff08 1px,transparent 1px);
-  background-size:64px 64px; mask-image:linear-gradient(160deg,#000,transparent 65%);
-}
+body.svCleanShell .dsAuthPageSafe::after {display:none !important;}
 body.svCleanShell .dsAuthShellSafe {
-  position:relative; width:min(1220px,100%); display:grid !important;
-  grid-template-columns:minmax(0,1.16fr) minmax(365px,.84fr); align-items:center;
-  column-gap:clamp(32px,6vw,110px); row-gap:28px;
+  display:grid !important;align-items:center;width:min(1180px,100%);
+  grid-template-columns:minmax(0,1.05fr) minmax(370px,.85fr);
+  column-gap:clamp(50px,8vw,145px);row-gap:44px;
 }
 body.svCleanShell .dsAuthBrand {
-  grid-column:1/-1; display:inline-flex; align-items:center; gap:12px; width:max-content;
-  font:650 19px/1 "Host Grotesk",system-ui,sans-serif; letter-spacing:-.065em;
-  color:#f7fbfa; text-decoration:none;
+  grid-column:1/-1;display:inline-flex;align-items:center;gap:10px;width:fit-content;
+  color:#f0f1ee;text-decoration:none;font-family:"Host Grotesk",sans-serif;
+  font-size:17px;font-weight:650;letter-spacing:-.05em;line-height:1;
 }
 body.svCleanShell .dsAuthBrand > span {
-  width:29px; height:29px; display:grid; place-items:center; background:#d6eee9;
-  border-radius:10px 10px 10px 3px; box-shadow:0 0 30px #9be2d947; transform:rotate(-7deg);
+  display:grid;place-items:center;width:27px;height:27px;border-radius:9px 9px 9px 4px;
+  background:#e7ece8;box-shadow:none;transform:rotate(-7deg);
 }
 body.svCleanShell .dsAuthBrand > span::after {
-  content:""; width:9px; height:9px; border:2px solid #132629; border-left-color:transparent;
-  border-radius:50%; transform:rotate(25deg);
+  content:"";width:8px;height:8px;border:2px solid #26312d;border-left-color:transparent;
+  border-radius:50%;transform:rotate(26deg);
 }
 body.svCleanShell .dsAuthPitch {
-  position:relative; display:flex !important; flex-direction:column; justify-content:center; align-items:stretch;
-  gap:32px !important; min-width:0; min-height:610px !important; padding:10px 0 14px !important;
-  border:0 !important; border-radius:0 !important; background:transparent !important;
-  box-shadow:none !important; backdrop-filter:none !important;
+  min-width:0;min-height:470px !important;padding:26px 0 17px !important;
+  display:flex !important;flex-direction:column;align-items:stretch;justify-content:space-between;
+  gap:60px !important;border:0 !important;border-radius:0 !important;
+  background:none !important;box-shadow:none !important;backdrop-filter:none !important;
 }
-body.svCleanShell .svAuthPitchIntro { position:relative; z-index:2; }
+body.svCleanShell .svAuthEditorialTop {
+  display:flex;align-items:center;gap:11px;color:#859099;
+  font-size:9px;font-weight:550;letter-spacing:.15em;white-space:nowrap;
+}
+body.svCleanShell .svAuthRule {width:24px;height:1px;background:#b2bbb5;}
+body.svCleanShell .svAuthIssue {margin-left:auto;color:#66727c;font-size:8px;}
+body.svCleanShell .svAuthEditorialBody {max-width:610px;}
 body.svCleanShell .dsAuthPitch .dsEyebrow {
-  display:inline-flex; align-items:center; gap:9px; padding:0 !important; margin:0 !important;
-  background:none !important; border:none !important; min-height:0;
-  color:#b4d0cb; font-size:10px; font-weight:600; letter-spacing:.18em; text-transform:uppercase;
-}
-body.svCleanShell .dsAuthPitch .dsEyebrow i {
-  display:block; width:6px; height:6px; border-radius:50%;
-  background:#92ebd2; box-shadow:0 0 18px #85e4dca0;
+  width:auto;min-height:0;padding:0 !important;margin:0 !important;display:block;
+  color:#9dabaf;font-size:10px;font-weight:500;letter-spacing:.16em;
+  background:none !important;border:0 !important;backdrop-filter:none !important;
 }
 body.svCleanShell .dsAuthPitch h1 {
-  margin:22px 0 20px !important; max-width:710px; font-family:"Host Grotesk",system-ui,sans-serif !important;
-  font-size:clamp(62px,6.5vw,100px) !important; font-weight:500 !important;
-  line-height:.965 !important; letter-spacing:-.077em !important; text-wrap:balance;
-  color:#f8f9f7 !important;
+  margin:24px 0 22px !important;color:#f4f3ef !important;
+  font:500 clamp(52px,5.3vw,78px)/1.04 "Host Grotesk",system-ui,sans-serif !important;
+  letter-spacing:-.071em !important;text-wrap:balance;
 }
 body.svCleanShell .dsAuthPitch h1 em {
-  font-style:normal; color:transparent;
-  background:linear-gradient(115deg,#d6f5ec 8%,#a4bec5 60%,#b5a8d1 100%);
-  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+  color:#aab6b8 !important;font-style:normal !important;
+  background:none !important;-webkit-text-fill-color:currentColor !important;
 }
 body.svCleanShell .dsAuthPitch p {
-  margin:0 !important; max-width:455px; color:#9eb2b7 !important;
-  font-size:14px !important; line-height:1.85 !important; font-weight:400 !important;
+  max-width:400px;margin:0 !important;color:#9ba9ad !important;
+  font-size:14px !important;line-height:1.75 !important;font-weight:400 !important;
 }
-body.svCleanShell .dsAuthFeatureList { display:flex !important; flex-wrap:wrap; gap:9px; margin:25px 0 0; }
-body.svCleanShell .dsAuthFeatureList > div {
-  display:inline-flex !important; align-items:center; gap:9px; min-height:34px !important;
-  padding:8px 13px !important; border:1px solid #ffffff23; border-radius:100px;
-  background:linear-gradient(130deg,#ffffff0d,#ffffff03);
+body.svCleanShell .svAuthEditorialFoot {display:grid;gap:25px;}
+body.svCleanShell .svAuthSteps {
+  display:flex;align-items:center;flex-wrap:wrap;gap:9px 25px;
+  padding-top:22px;border-top:1px solid #ffffff20;
 }
-body.svCleanShell .dsAuthFeatureList > div span {
-  display:inline !important; font-size:14px; color:#a9d9d0; line-height:1;
+body.svCleanShell .svAuthSteps > span {display:flex;align-items:center;gap:8px;color:#aab7b9;font-size:9px;letter-spacing:.09em;font-weight:550;}
+body.svCleanShell .svAuthSteps i {color:#788f95;font-style:normal;font-size:9px;}
+body.svCleanShell .svAuthEditorialCaption {
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  color:#65777d;font-size:9px;font-weight:500;letter-spacing:.13em;
 }
-body.svCleanShell .dsAuthFeatureList > div b {
-  font-size:10px; font-weight:550; letter-spacing:.025em; color:#cedcde;
-}
-/* The pure-CSS film-art panel: no remote artwork, blocking resource or fake content. */
-body.svCleanShell .svAuthShowcase {
-  position:relative; isolation:isolate; display:flex; flex-direction:column; justify-content:space-between;
-  width:min(100%,600px); min-height:240px; padding:22px 25px 23px; margin:6px 0 0;
-  overflow:visible; border-radius:22px; border:1px solid #ffffff22;
-  background:linear-gradient(155deg,#10252b,#090f19 42%,#15132a 100%);
-  box-shadow:inset 0 1px 0 #ffffff24,0 22px 65px #0007;
-  transform:rotate(-1.3deg);
-}
-body.svCleanShell .svAuthShowcase::before {
-  content:""; position:absolute; inset:0; z-index:-1; border-radius:inherit; overflow:hidden;
-  background:
-    radial-gradient(ellipse 52% 82% at 61% 65%,#8e81dd42,transparent 72%),
-    radial-gradient(ellipse 36% 74% at 39% 40%,#52d6be64,transparent 74%),
-    linear-gradient(175deg,transparent 55%,#050910 100%);
-}
-body.svCleanShell .svAuthShowcase::after {
-  content:""; position:absolute; z-index:0; inset:0; border-radius:inherit;
-  background:repeating-linear-gradient(0deg,transparent 0 3px,#ffffff03 4px 5px);
-  pointer-events:none;
-}
-body.svCleanShell .svAuthShowcaseTop,body.svCleanShell .svAuthShowcaseBottom {
-  position:relative; z-index:2; display:flex; align-items:center; justify-content:space-between; gap:20px;
-  color:#cce5e6; font-size:9px; letter-spacing:.19em; font-weight:600;
-}
-body.svCleanShell .svAuthShowcaseTop > span:last-child { color:#aec7bd8c; }
-body.svCleanShell .svAuthShowcaseBottom { align-items:end; }
-body.svCleanShell .svAuthShowcaseBottom div { display:flex; flex-direction:column; gap:2px; }
-body.svCleanShell .svAuthShowcaseBottom small { color:#b1c9cb; font-size:9px; }
-body.svCleanShell .svAuthShowcaseBottom strong { font-size:22px; font-weight:550; letter-spacing:-.055em; color:#f4f9f8; }
-body.svCleanShell .svAuthShowcaseBottom > span { color:#9bb0bd99; font-size:9px; letter-spacing:.1em; }
-body.svCleanShell .svAuthShowcaseArt { position:absolute; inset:0; overflow:hidden; border-radius:inherit; }
-body.svCleanShell .svAuthShowcaseHalo {
-  position:absolute; left:30%; top:-100%; width:90%; aspect-ratio:1;
-  background:radial-gradient(circle,#67dabd5a 0%,#7982de31 21%,transparent 54%); border-radius:50%;
-  animation:svAuthLight 17s ease-in-out infinite alternate;
-}
-body.svCleanShell .svAuthShowcaseRing {
-  position:absolute; top:-30%; left:32%; width:63%; aspect-ratio:1; border-radius:50%;
-  border:1px solid #d5e8e68a; box-shadow:0 0 0 28px #d5f7ef0a,0 0 0 55px #b9ded809,0 0 72px #7fd4d544;
-  transform:rotateX(56deg) rotate(-18deg); animation:svAuthOrbit 29s ease-in-out infinite alternate;
-}
-body.svCleanShell .svAuthShowcaseDisc {
-  position:absolute; top:6%; right:18%; width:86px; aspect-ratio:1; border-radius:50%;
-  background:radial-gradient(circle at 30% 25%,#eaffec,#a9d3cc 30%,#558c9b 58%,#0b182b 75%);
-  box-shadow:0 0 28px #9ed8d583,0 0 95px #98c7c245;
-  opacity:.91;
-}
-body.svCleanShell .svAuthShowcaseGlyph {
-  position:absolute; top:12%; left:41%; color:#ffffff28;
-  font-family:"Unbounded",sans-serif; font-size:140px; font-weight:800; line-height:1; letter-spacing:-.1em;
-  transform:rotate(-12deg); user-select:none;
-}
-body.svCleanShell .svAuthFloatNote {
-  position:absolute; z-index:3; right:-14px; bottom:61px; display:flex; align-items:center; gap:11px;
-  padding:12px 13px; min-width:225px; border:1px solid #ffffff40; border-radius:13px;
-  background:linear-gradient(125deg,#e4f3efeb,#c7e2debf); backdrop-filter:blur(24px);
-  color:#172629; box-shadow:0 12px 35px #0008; transform:rotate(3deg);
-}
-body.svCleanShell .svAuthFloatNote i { display:grid; place-items:center; width:28px; height:28px; border-radius:9px; font:normal 16px sans-serif; background:#163c39; color:#ceeee4; }
-body.svCleanShell .svAuthFloatNote > span { display:grid; gap:3px; flex:1; font-size:9px; font-weight:800; letter-spacing:.09em; }
-body.svCleanShell .svAuthFloatNote small { color:#406568; font-size:10px; font-weight:400; letter-spacing:0; }
-body.svCleanShell .svAuthFloatNote b { font-size:16px; font-weight:400; }
-@keyframes svAuthLight { from {transform:translate(-7%,4%) scale(.9)} to {transform:translate(10%,-4%) scale(1.09)} }
-@keyframes svAuthOrbit { from {transform:rotateX(56deg) rotate(-18deg) translateX(-2%)} to {transform:rotateX(56deg) rotate(18deg) translateX(2%)} }
-/* Dark-glass profile setup module. */
+body.svCleanShell .svAuthEditorialCaption span {color:#bec9c7;font-size:16px;letter-spacing:0;}
 body.svCleanShell .dsAuthCard {
-  position:relative; overflow:hidden; min-width:0; padding:clamp(26px,3.5vw,46px) !important;
-  border:1px solid #c0f4e22e !important; border-radius:28px !important;
-  background:linear-gradient(155deg,#1c2428e0,#0b1016e9 52%,#0a1015e3) !important;
-  box-shadow:0 30px 100px #000a,inset 0 1px 0 #ffffff1f !important;
-  -webkit-backdrop-filter:blur(34px) saturate(1.22); backdrop-filter:blur(34px) saturate(1.22);
+  position:relative;min-width:0;overflow:hidden;
+  padding:clamp(26px,3.4vw,45px) !important;border:1px solid #ffffff22 !important;
+  border-radius:22px !important;background:#101317d9 !important;
+  box-shadow:0 32px 95px #0008,inset 0 1px #ffffff0c !important;
+  -webkit-backdrop-filter:blur(24px) saturate(1.06);backdrop-filter:blur(24px) saturate(1.06);
 }
-body.svCleanShell .dsAuthCard::before { display:none !important; }
-body.svCleanShell .dsAuthCard::after {
-  content:""; position:absolute; pointer-events:none; top:-100px; right:-170px; width:360px; height:330px;
-  border-radius:50%; background:radial-gradient(circle,#a3e9d61a,transparent 65%);
+body.svCleanShell .dsAuthCard::before,body.svCleanShell .dsAuthCard::after {display:none !important;}
+body.svCleanShell .svAuthCardTopline {
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin:0 0 28px;color:#9faeaf;font-size:9px;font-weight:600;letter-spacing:.13em;
 }
-body.svCleanShell .svAuthCardTopline { display:flex; justify-content:space-between; align-items:center; gap:8px; margin:0 0 26px; color:#c2d4d5; font-size:9px; font-weight:600; letter-spacing:.12em; }
-body.svCleanShell .svAuthCardTopline > span:first-child { display:flex; align-items:center; gap:8px; }
-body.svCleanShell .svAuthCardTopline i { width:5px; height:5px; border-radius:50%; background:#b6ebd7; box-shadow:0 0 12px #6ddaba; }
-body.svCleanShell .svAuthCardTopline > span:last-child { color:#849b9f; }
+body.svCleanShell .svAuthCardTopline > span:last-child {color:#62737c;}
 body.svCleanShell .dsAuthSwitch {
-  display:grid !important; width:100%; grid-template-columns:1fr 1fr; gap:5px; padding:5px !important;
-  margin:0 0 32px !important; border:1px solid #ffffff14; border-radius:13px;
-  background:#04080991;
+  width:100%;display:flex !important;align-items:center;gap:28px;
+  padding:0 0 12px !important;margin:0 0 30px !important;
+  background:transparent !important;border:0 !important;border-bottom:1px solid #ffffff1e !important;
+  border-radius:0 !important;
 }
-body.svCleanShell .dsAuthSwitch a { display:grid; place-items:center; padding:10px 12px; min-height:40px;
-  border-radius:9px !important; color:#869ba1; font-size:12px; font-weight:550;
-  text-decoration:none; transition:color .2s,background .2s;
+body.svCleanShell .dsAuthSwitch a {
+  position:relative;min-height:32px;display:inline-flex;align-items:center;justify-content:center;
+  padding:0 0 7px !important;border:0;border-radius:0 !important;
+  background:none !important;color:#6f7d83 !important;box-shadow:none !important;
+  font-size:12px;font-weight:500;text-decoration:none;
+  transition:color .2s;
 }
-body.svCleanShell .dsAuthSwitch a:hover { color:#f4f8f7; }
-body.svCleanShell .dsAuthSwitch a.active { background:#e6f3ef !important; color:#132627 !important; box-shadow:0 2px 11px #0007; }
+body.svCleanShell .dsAuthSwitch a.active {color:#f6f6f4 !important;font-weight:650 !important;}
+body.svCleanShell .dsAuthSwitch a.active::after {
+  content:"";position:absolute;left:0;right:0;bottom:-13px;height:2px;background:#e9eae6;
+}
+body.svCleanShell .dsAuthSwitch a:hover {color:#d5ddda !important;}
 body.svCleanShell .dsAuthCard h2 {
-  margin:0 0 9px !important; color:#f4f8f7; font-family:"Host Grotesk",system-ui,sans-serif;
-  font-size:clamp(30px,3.1vw,42px); font-weight:550 !important; letter-spacing:-.06em; line-height:1.05;
+  margin:0 0 10px !important;color:#f1f2f0 !important;
+  font:500 clamp(29px,3vw,39px)/1.11 "Host Grotesk",system-ui,sans-serif !important;
+  letter-spacing:-.059em !important;
 }
 body.svCleanShell .dsAuthCard > p:not(.dsAuthFinePrint) {
-  margin:0; max-width:370px; color:#95a9ad; font-size:12px; font-weight:400; line-height:1.75;
+  max-width:310px;margin:0 !important;color:#89999f !important;
+  font-size:12px;line-height:1.7;font-weight:400 !important;
 }
-body.svCleanShell .dsSafeAuthForm { display:grid; gap:17px; margin:29px 0 0; }
+body.svCleanShell .dsSafeAuthForm {display:grid;gap:17px;margin-top:28px;}
 body.svCleanShell .dsSafeAuthForm label {
-  display:grid; gap:9px; margin:0; color:#c6d5d6; font-size:11px; font-weight:550;
-  text-transform:none; letter-spacing:.025em;
+  display:grid;gap:8px;margin:0;color:#b4c1c3;font-size:11px;font-weight:550;
+  text-transform:none;letter-spacing:0;
 }
 body.svCleanShell .dsSafeAuthForm input {
-  display:block; width:100%; min-height:53px; padding:0 16px; border:1px solid #c3efde21;
-  border-radius:12px; background:#ffffff08 !important; color:#f7fcfa;
-  font-family:inherit; font-size:13px; font-weight:400;
-  transition:background .18s,border-color .18s,box-shadow .18s;
+  display:block;min-width:0;width:100%;height:49px;min-height:49px;padding:0 15px;
+  border:1px solid #ffffff20;border-radius:10px;
+  background:#080b0f8c !important;color:#f1f4f2 !important;
+  font:400 13px/1.4 "Host Grotesk",system-ui,sans-serif;
+  transition:border-color .18s,background .18s,box-shadow .18s;
 }
-body.svCleanShell .dsSafeAuthForm input::placeholder { color:#70858c; }
-body.svCleanShell .dsSafeAuthForm input:hover { border-color:#c3efde43; }
+body.svCleanShell .dsSafeAuthForm input::placeholder {color:#617079 !important;}
+body.svCleanShell .dsSafeAuthForm input:hover {border-color:#ffffff37;}
 body.svCleanShell .dsSafeAuthForm input:focus-visible {
-  outline:0; background:#ffffff0c !important; border-color:#a7ebd4;
-  box-shadow:0 0 0 3px #8be1c52c,0 0 21px #7edbc40b;
+  border-color:#b8ccc7;outline:0;background:#10161bb8 !important;
+  box-shadow:0 0 0 3px #b8ccc719;
 }
 body.svCleanShell .dsSafeAuthForm .dsPrimaryBtn {
-  display:flex; align-items:center; justify-content:space-between; width:100%; gap:15px;
-  min-height:54px; margin:7px 0 0; padding:0 17px 0 20px !important;
-  border:1px solid #e6faf4; border-radius:12px; background:linear-gradient(110deg,#e8f4f0,#b7dfd4);
-  color:#14272a; font-size:13px; font-weight:700;
-  box-shadow:0 10px 36px #9cefd218; cursor:pointer;
-  transition:transform .2s,box-shadow .2s,background .2s;
+  display:flex;align-items:center;justify-content:space-between;gap:15px;
+  width:100%;height:51px;min-height:51px;padding:0 10px 0 18px !important;margin:6px 0 0;
+  border:1px solid #f5f4ef;border-radius:10px;
+  background:#edeee9 !important;color:#192022 !important;
+  font-size:12px;font-weight:650;cursor:pointer;
+  box-shadow:none;transition:background .18s,transform .18s;
 }
 body.svCleanShell .dsSafeAuthForm .dsPrimaryBtn > span:last-child {
-  display:grid; place-items:center; width:32px; height:32px; border-radius:9px; background:#0f2d2d; color:#e4f9f1; font-size:17px;
+  display:grid;place-items:center;width:31px;height:31px;border:1px solid #d0d3ce;
+  background:transparent;color:#192022;border-radius:8px;font-size:16px;font-weight:400;
 }
-body.svCleanShell .dsSafeAuthForm .dsPrimaryBtn:hover {
-  transform:translateY(-2px); background:#f3fffb; box-shadow:0 16px 42px #7ddabd23;
-}
+body.svCleanShell .dsSafeAuthForm .dsPrimaryBtn:hover {background:#fff !important;transform:translateY(-1px);}
 body.svCleanShell .svAuthPrivacy {
-  display:flex; align-items:center; justify-content:center; gap:7px;
-  margin-top:21px; padding:13px 0 2px; color:#82989c; font-size:10px;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  margin-top:22px;color:#71858c;font-size:10px;letter-spacing:0;
 }
-body.svCleanShell .svAuthPrivacy span { color:#93cfc0; font-size:14px; }
+body.svCleanShell .svAuthPrivacy span {color:#91a7a3;}
 body.svCleanShell .dsAuthFinePrint {
-  margin:17px 0 0 !important; padding-top:19px; border-top:1px solid #ffffff12;
-  color:#8ca0a5; font-size:11px; font-weight:400; text-align:center;
+  margin:24px 0 0 !important;padding:20px 0 0;border-top:1px solid #ffffff16;
+  color:#809197;font-size:11px;font-weight:400;text-align:center;
 }
-body.svCleanShell .dsAuthFinePrint a { color:#dcf4eb; font-weight:600; text-decoration:none; }
-body.svCleanShell .dsAuthFinePrint a:hover { text-decoration:underline; }
+body.svCleanShell .dsAuthFinePrint a {color:#dce3e0;text-decoration:none;font-weight:600;}
+body.svCleanShell .dsAuthFinePrint a:hover {text-decoration:underline;}
 body.svCleanShell .dsAuthTopActions {
-  position:absolute; z-index:5; right:clamp(22px,5vw,88px); top:clamp(30px,4vw,55px);
-  display:flex; align-items:center; gap:17px;
+  position:absolute;right:clamp(22px,5vw,86px);top:clamp(24px,3.5vw,49px);
+  z-index:5;display:flex;align-items:center;gap:22px;
 }
-body.svCleanShell .dsAuthTopActions a { color:#b6c8c7; font-size:11px; font-weight:550; text-decoration:none; }
-body.svCleanShell .dsAuthTopActions a:hover { color:#fff; }
+body.svCleanShell .dsAuthTopActions a {color:#9ba9ac;font-size:11px;font-weight:500;text-decoration:none;}
+body.svCleanShell .dsAuthTopActions a:hover {color:#e9eae7;}
 body.svCleanShell .dsAuthTopActions [data-st-open] {
-  display:grid; place-items:center; width:39px; height:39px; border:1px solid #ffffff2f;
-  border-radius:12px; background:#ffffff0c; color:#dbf2ee; cursor:pointer;
-  transition:background .18s,transform .18s;
+  display:grid;place-items:center;width:37px;height:37px;
+  border:1px solid #ffffff2c;border-radius:11px;background:#ffffff08;
+  color:#d7e0dc;cursor:pointer;
 }
-body.svCleanShell .dsAuthTopActions [data-st-open]:hover { background:#ffffff18; transform:rotate(-8deg); }
-body.svCleanShell .dsAuthTopActions svg { width:18px; height:18px; }
-body.svCleanShell .dsAuthPageSafe :is(a,button,input):focus-visible { outline:2px solid #aceed9; outline-offset:4px; }
-@media(max-width:1000px) {
-  body.svCleanShell .dsAuthShellSafe { column-gap:25px; grid-template-columns:minmax(0,1fr) minmax(340px,.95fr); }
-  body.svCleanShell .dsAuthPitch h1 { font-size:clamp(53px,6.6vw,72px) !important; }
-  body.svCleanShell .svAuthShowcase { min-height:215px; }
-  body.svCleanShell .svAuthFloatNote { min-width:186px; right:-4px; }
+body.svCleanShell .dsAuthTopActions [data-st-open]:hover {background:#ffffff18;}
+body.svCleanShell .dsAuthTopActions svg {width:17px;height:17px;}
+body.svCleanShell .dsAuthPageSafe :is(a,input,button):focus-visible {outline:2px solid #dbe6e0;outline-offset:3px;}
+@media(max-width:900px) {
+  body.svCleanShell .dsAuthShellSafe {grid-template-columns:minmax(0,1fr) minmax(320px,.96fr);column-gap:34px;}
+  body.svCleanShell .dsAuthPitch h1 {font-size:clamp(48px,6.3vw,64px) !important;}
+  body.svCleanShell .svAuthIssue {display:none;}
 }
-@media(max-width:780px) {
-  body.svCleanShell .dsAuthPageSafe { padding-top:104px !important; padding-bottom:50px !important; }
-  body.svCleanShell .dsAuthShellSafe { display:grid !important; grid-template-columns:1fr; gap:18px; }
-  body.svCleanShell .dsAuthPitch { min-height:0 !important; padding:20px 0 10px !important; gap:24px !important; }
-  body.svCleanShell .dsAuthPitch h1 { font-size:clamp(52px,9vw,77px) !important; }
-  body.svCleanShell .svAuthShowcase { min-height:220px; max-width:610px; }
-  body.svCleanShell .dsAuthCard { width:100%; max-width:610px; }
-  body.svCleanShell .dsAuthBrand { margin-top:10px; }
+@media(max-width:730px) {
+  body.svCleanShell .dsAuthPageSafe {padding:107px 21px 45px !important;}
+  body.svCleanShell .dsAuthShellSafe {grid-template-columns:minmax(0,1fr);gap:22px;}
+  body.svCleanShell .dsAuthPitch {min-height:0 !important;gap:24px !important;padding:12px 0 10px !important;}
+  body.svCleanShell .dsAuthPitch h1 {font-size:clamp(44px,9vw,67px) !important;margin:19px 0 16px !important;}
+  body.svCleanShell .svAuthEditorialFoot {display:none;}
+  body.svCleanShell .dsAuthCard {max-width:540px;padding:30px !important;}
 }
-@media(max-width:470px) {
-  body.svCleanShell .dsAuthPageSafe { padding-inline:18px !important; }
-  body.svCleanShell .dsAuthPitch h1 { font-size:clamp(45px,11.5vw,58px) !important; }
-  body.svCleanShell .dsAuthPitch p { font-size:12px !important; }
-  body.svCleanShell .dsAuthFeatureList > div { padding:8px 10px !important; }
-  body.svCleanShell .svAuthShowcase { min-height:195px; padding:17px; border-radius:18px; }
-  body.svCleanShell .svAuthShowcaseGlyph { font-size:96px; }
-  body.svCleanShell .svAuthShowcaseDisc { width:63px; }
-  body.svCleanShell .svAuthShowcaseBottom > span { display:none; }
-  body.svCleanShell .svAuthFloatNote { padding:8px; min-width:172px; bottom:53px; font-size:9px; }
-  body.svCleanShell .dsAuthCard { padding:23px !important; border-radius:20px !important; }
-  body.svCleanShell .dsAuthTopActions { top:22px; right:19px; }
+@media(max-width:450px) {
+  body.svCleanShell .dsAuthPageSafe {padding-inline:17px !important;}
+  body.svCleanShell .dsAuthBrand {font-size:16px;}
+  body.svCleanShell .dsAuthPitch h1 {font-size:clamp(42px,11vw,54px) !important;}
+  body.svCleanShell .dsAuthPitch p {font-size:12px !important;}
+  body.svCleanShell .dsAuthCard {padding:23px !important;border-radius:16px !important;}
+  body.svCleanShell .dsAuthTopActions {top:20px;right:17px;gap:12px;}
+  body.svCleanShell .dsAuthTopActions a {font-size:10px;}
 }
 @media(prefers-reduced-motion:reduce) {
-  body.svCleanShell .svAuthShowcaseHalo,body.svCleanShell .svAuthShowcaseRing { animation:none !important; }
-  body.svCleanShell .dsSafeAuthForm .dsPrimaryBtn,body.svCleanShell .dsAuthTopActions [data-st-open] { transition:none; transform:none !important; }
+  body.svCleanShell .dsSafeAuthForm .dsPrimaryBtn {transition:none;transform:none !important;}
 }
-body.reduceMotion .svAuthShowcaseHalo,body.reduceMotion .svAuthShowcaseRing { animation:none !important; }
