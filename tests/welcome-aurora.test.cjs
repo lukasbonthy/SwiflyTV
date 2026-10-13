@@ -189,3 +189,35 @@ test('Watch pages suppress Aurora even when the user saved it', () => {
   assert.equal(env.window.getComputedStyle(d.querySelector('.svAuroraBackground')).display, 'none');
   assert.equal(env.window.frameCount(), 0);
 });
+
+test('Aurora Lab previews color, strength and movement; Cancel reverses and Save persists', () => {
+  const env=studio(), w=env.window, d=w.document;
+  env.click('#controlToggleTop');
+  const settings=d.querySelector('[data-st-aurora-settings]');
+  assert.equal(settings.hidden,false);
+  env.click('[data-st-field="auroraColor"][data-st-value="violet"]');
+  const slider=d.querySelector('[data-st-aurora-strength]');
+  slider.value='45';slider.dispatchEvent(new w.Event('input',{bubbles:true}));
+  env.click('[data-st-field="auroraMotion"][data-st-value="still"]');
+  assert.equal(d.body.dataset.stAuroraColor,'violet');
+  assert.equal(d.body.dataset.stAuroraMotion,'still');
+  assert.equal(d.body.style.getPropertyValue('--sv-aurora-strength'),'0.45');
+  assert.equal(d.querySelector('[data-st-aurora-strength-value]').textContent,'45%');
+  env.click('[data-st-cancel]');
+  assert.equal(d.body.dataset.stAuroraColor,'glacier');
+  assert.equal(d.body.style.getPropertyValue('--sv-aurora-strength'),'0.8');
+  assert.equal(w.localStorage.getItem(appearanceKey),null);
+  env.click('#controlToggleTop');
+  env.click('[data-st-field="auroraColor"][data-st-value="rose"]');
+  env.click('[data-st-save]');
+  assert.equal(JSON.parse(w.localStorage.getItem(appearanceKey)).values.auroraColor,'rose');
+});
+
+test('Aurora Lab hides its extra controls for a non-Aurora backdrop', () => {
+ const env=studio(), d=env.window.document;
+ env.click('#controlToggleTop');
+ env.click('[data-st-field="backdrop"][data-st-value="smooth"]');
+ assert.equal(d.querySelector('[data-st-aurora-settings]').hidden,true);
+ env.click('[data-st-field="backdrop"][data-st-value="aurora"]');
+ assert.equal(d.querySelector('[data-st-aurora-settings]').hidden,false);
+});

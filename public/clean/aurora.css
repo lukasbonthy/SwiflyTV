@@ -1,17 +1,27 @@
 /* v163: static curved light curtains, rasterized in one bounded atmosphere. */
 body.svCleanShell { isolation:isolate; position:relative; }
 body.svCleanShell .svAuroraBackground {
-  display:none; position:absolute; inset:0 0 auto; height:min(75svh,800px); z-index:-1;
+  display:none; position:absolute; inset:0 0 auto; height:min(95svh,960px); z-index:0;
   overflow:hidden; pointer-events:none; contain:layout paint;
   mask-image:linear-gradient(180deg,#000 0%,#000 42%,#0000 100%);
   -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 42%,#0000 100%);
 }
 body.svCleanShell[data-st-backdrop="aurora"] .svAuroraBackground { display:block; }
+/* Paint behind content but above the body canvas, without disturbing fixed navigation. */
+body.svCleanShell > main, body.svCleanShell > .topbar, body.svCleanShell > .footer { position:relative; z-index:1; }
+body.svCleanShell > .topbar { z-index:1005; }
+body.svCleanShell > .svAppearanceTexture { z-index:2; }
+body.svCleanShell > .svAuroraBackground { opacity:var(--sv-aurora-strength,.8); }
+body.svCleanShell .svAuroraRibbon { filter:hue-rotate(var(--sv-aurora-hue,0deg)) saturate(1.28); animation-duration:var(--sv-aurora-speed,32s); }
+body.svCleanShell[data-st-aurora-motion="still"] .svAuroraRibbon { animation:none !important; }
+body.svCleanShell .stPreviewAurora > .svAuroraRibbon { opacity:var(--sv-aurora-strength,.8); }
+body.svCleanShell[data-st-backdrop="aurora"] :is(.dsContent,.dsBrowseTop,.dsAccountPage,.dsProfilesPage,.dsWelcomePage,.dsAuthPageSafe) { background-color:transparent !important; }
+
 body.svCleanShell[data-sv-aurora-state="off"] .svAuroraBackground,
 body.svCleanShell:has(.svPlayerPage,.dsWatchPage) .svAuroraBackground { display:none; }
 .svAuroraRibbon {
   display:block; position:absolute; left:-4%; top:-4%; width:108%; height:108%; opacity:.8;
-  transform:rotate(-1deg); background:url("./aurora-ribbon.svg?v=163") center / 100% 100% no-repeat;
+  transform:rotate(-1deg); background:url("./aurora-ribbon.svg?v=164") center / 100% 100% no-repeat;
   animation:svAuroraDrift 32s ease-in-out infinite alternate paused;
 }
 .svAuroraBackground::after {
@@ -35,6 +45,6 @@ body[data-st-backdrop="aurora"] .stPreviewAurora { display:block; }
 body.reduceMotion .svAuroraRibbon { animation:none !important; }
 @media (prefers-reduced-motion:reduce) { .svAuroraRibbon { animation:none !important; } }
 @media (max-width:600px) {
-  body.svCleanShell .svAuroraBackground { height:min(72svh,640px); }
+  body.svCleanShell .svAuroraBackground { height:min(80svh,690px); }
   .svAuroraBackground > .svAuroraRibbon { width:190%; left:-45%; height:100%; top:0; }
 }

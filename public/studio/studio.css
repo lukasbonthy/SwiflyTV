@@ -238,3 +238,16 @@ body.svCleanShell.reduceMotion #controlPanel.svStudioDialog *,body.svCleanShell.
 body.svCleanShell.reduceMotion #controlPanel :is(button,.stPresetArt,.stPresetArt > b,.stSwatch) { translate:none !important; scale:1 !important; }
 body.svCleanShell.reduceMotion #controlPanel .stPreview { opacity:1 !important; }
 @media (prefers-reduced-transparency:reduce) { body.svCleanShell #controlPanel.svStudioDialog::backdrop { -webkit-backdrop-filter:none; backdrop-filter:none; background:#000d; } }
+
+/* Aurora Lab: color palettes, brightness, and CSS-only motion. */
+.stAuroraSettings { margin-top:20px; padding:18px 17px 20px; background:linear-gradient(150deg,#16212686,#0e1014 70%); border:1px solid #9bdacf22; border-radius:14px; }
+.stAuroraSettings[hidden] { display:none !important; }
+.stAuroraHeading { display:flex; justify-content:space-between; align-items:baseline; gap:10px; color:#adddd8; font-size:10px; font-weight:600; letter-spacing:.15em; }
+.stAuroraHeading small { color:#748b92; font-size:9px; font-weight:400; letter-spacing:0; }
+.stAuroraSettings .stGroup { margin-top:20px; }
+.stAuroraColors .stChoice { padding-block:11px; }
+.stAuroraSwatch { width:23px; height:23px; border-radius:50%; background:radial-gradient(circle at 28% 26%,#ffffffb0,transparent 40%),var(--aurora-swatch); box-shadow:0 0 16px color-mix(in srgb,var(--aurora-swatch),transparent 60%); }
+.stAuroraRangeLabel { display:flex; justify-content:space-between; margin:16px 0 11px; color:#c2d2d4; font-size:11px; }
+.stAuroraRangeLabel output { color:#aee5de; font-variant-numeric:tabular-nums; }
+.stAuroraSettings input[type="range"] { display:block; width:100%; height:5px; accent-color:#91d9ce; cursor:pointer; }
+.stAuroraSettings input[type="range"]:focus-visible { outline:2px solid #b9e9e2; outline-offset:7px; }
