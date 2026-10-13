@@ -2,19 +2,17 @@
 (() => {
   'use strict';
   if (window.SwiflyGlassSurfaces) return;
-  // Register actual interactive controls across Home, details, auth and discovery.
-  // Navigation icons stay part of their shared glass capsule, not separate tiles.
+  // Explicit interactive surfaces only. Poster-card actions remain cheap frost.
   const controls = [
-    '.dsPrimaryBtn', '.dsSecondaryBtn', '.dsIconBtn', '.dsGhostPill',
-    '.dsCardQuickActions .dsMiniBtn', '.dsRowBtn', '.dsRowArrow',
-    '.dsClose', '.dsHeroMuteToggle', '.dsBigPlayBtn', '.svResumePlay',
-    '.svResumeRemove', '.svRowArrow', '.svDetailBack', '.svDetailDismiss',
-    '.svDetailReturn', '.svDetailClose', '.svDetailChrome > button',
-    '.dsAuthTopActions button[data-st-open]', '.svAuthPasswordToggle',
-    '.dsAuthSwitch > a', '.genreDropdown summary', '.dsTabs a',
-    '.dsDetailTabsV121 > button', '.pagination a', '.dsEpisodeChips a',
-    '.dsSearchBox button', '.svSearchPopup button', '.dsDropdownLogout',
-    '.dsEditProfileBtn', '.dsProfileDropdown .logoutBtn'
+    '.dsPrimaryBtn','.dsSecondaryBtn','.dsIconBtn','.dsGhostPill',
+    '.dsCardQuickActions .dsMiniBtn','.dsRowBtn','.dsRowArrow','.svRowArrow',
+    '.dsClose','.dsHeroMuteToggle','.dsBigPlayBtn','.svResumePlay',
+    '.svResumeRemove','.svDetailBack','.svDetailDismiss','.svDetailReturn',
+    '.svDetailClose','.dsAuthTopActions button[data-st-open]',
+    '.svAuthPasswordToggle','.dsAuthSwitch > a','.genreDropdown summary',
+    '.dsTabs a','.dsDetailTabsV121 > button','.pagination a',
+    '.dsEpisodeChips a','.dsSearchBox button','.svSearchPopup button',
+    '.dsDropdownLogout','.dsEditProfileBtn'
   ].join(',');
   const panels = ['.svSearchPopup', '.dsSearchBox form', '.genreDropdownMenu', '.dsDetailTabsV121', '.dsAuthCard', '.dsAuthSwitch', '.dsProfileManagerPanel', '.dsAccountCard', '.dsProfileSelectCard', '.dsDetailGridV121 aside', '.dsAboutGridV121', '.dsSeasonBlock', '#controlPanel', '#toast', 'dialog'].join(',');
   const selector = controls + ',' + panels, entries = new Map(), pending = new Set();
@@ -46,20 +44,15 @@
     let entry = entries.get(host);
     if (entry) {activate(entry); return;}
     const panel = host.matches(panels);
-    // The navigation already lives in one refractive capsule; do not mount a
-    // second glass surface on each icon. Keep expensive SVG refraction to the
-    // small set of hero/action controls, not every card or scrolling row.
-    // Only a handful of prominent buttons need GPU refraction. Repeating
-    // cards and rails use the same lens appearance with cheaper frost.
-    const featuredControl = !panel && (
-      (host.matches('.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn') &&
-        Boolean(host.closest('.dsHeroActions,.dsWelcomeActions,.dsDetailActionsV121,.svDetailActions'))) ||
-      host.matches('.svDetailBack,.svDetailDismiss,.svDetailReturn,.svDetailClose') ||
-      host.matches('.dsHeroMuteToggle') ||
-      host.matches('.dsSafeAuthForm > .dsPrimaryBtn')
-    );
-    const complex = (panel && host.dataset.glassRefraction === 'true') || featuredControl;
+    // Shared, single-pass SVG refraction: one filter for every interactive lens.
+    // No per-button SVG graph, ResizeObserver or layout reads.
+    // Never refract cards in scrolling grids or navbar icons separately.
+    const sharedControl = !panel &&
+      !host.closest('.netflixNav,.dsWelcomeNav,.mobileNav,.dsCardQuickActions,.movieCard,.posterWrap,media-player,.vds-controls') &&
+      host.matches('.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn,.dsGhostPill,.dsRowBtn,.dsRowArrow,.svRowArrow,.dsClose,.dsHeroMuteToggle,.dsBigPlayBtn,.svDetailBack,.svDetailDismiss,.svDetailReturn,.svDetailClose,.svAuthPasswordToggle,.dsAuthSwitch > a,.dsAuthTopActions button[data-st-open],.dsDetailTabsV121 > button,.pagination a,.dsEpisodeChips a,.dsSearchBox button,.svSearchPopup button,.dsDropdownLogout,.dsEditProfileBtn');
+    const complex = panel && host.dataset.glassRefraction === 'true';
     const classes = ['svGlassSurface', panel ? 'svGlassPanel' : 'svGlassControl'];
+    if (sharedControl) classes.push('svSharedGlass');
     if (complex) {const position = getComputedStyle(host).position; if (!position || position === 'static') classes.push('svGlassRelative');}
     entry = {host, complex, controller:null, visible:!intersection, addedClasses:classes.filter(name => !host.classList.contains(name)), previousRenderer:host.dataset.swiflyRenderer, previousProperties:rendererProperties.map(property => [property, host.style.getPropertyValue(property), host.style.getPropertyPriority(property)])};
     entries.set(host, entry); host.classList.add(...classes); host.dataset.swiflyRenderer = 'blur';
@@ -92,8 +85,38 @@
     }
     schedule();
   }
+  // Chromium SVG backdrop-filter support needs a REAL displacement primitive,
+  // not just CSS glints. Share ONE static filter across buttons so multiple
+  // Play/Trailer/Save buttons don't each render three expensive color channels.
+  let sharedLens = null;
+  function installSharedLens() {
+    if (sharedLens) return;
+    const supported = typeof CSS !== 'undefined' &&
+      CSS.supports('backdrop-filter','url(#sv-shared-action-lens)') &&
+      /Chrome|Chromium|Edg|OPR/.test(navigator.userAgent) &&
+      !/iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (!supported) return;
+    const ns = 'http://www.w3.org/2000/svg';
+    function node(name, attrs = {}) {
+      const el = document.createElementNS(ns,name);
+      for (const [key,value] of Object.entries(attrs)) el.setAttribute(key,value);
+      return el;
+    }
+    const svg=node('svg',{'aria-hidden':'true',focusable:'false'});
+    svg.classList.add('svSharedGlassDefinitions');
+    svg.style.cssText='position:absolute!important;width:0!important;height:0!important;overflow:hidden!important;pointer-events:none!important';
+    const defs=node('defs');
+    const lens=node('filter',{id:'sv-shared-action-lens',x:'-20%',y:'-60%',width:'140%',height:'220%','color-interpolation-filters':'sRGB'});
+    lens.append(node('feImage',{href:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAABQCAIAAAB56TxyAAABOUlEQVR42u3d0YqCQBiGYccxb8Hb7dI7EGGmMQ86KfyeB5FgYTemefmXKC3b9pwOZTjm/twedXh8ev70o/GXzP0fap/AfkzHuX3Avyn9Xmpfyu82Ur3cY9cb6W0LtXtpN3vBSLZIgOwAqkVAACAAyAtgsQgkB/CwCAgAQgNYLQImAJgAIAAQAAgABAD3DsC7QJgAYAKAACArAJ8GRQCQGoAvxCAASA3AVSGIDsAlphAAZPIPEAIAAYAAQAAgABAACAAEAAIAAYAAQAAgABAACAAEAAIAAYAAQAAgABAACAAEAAIAAYAA4DdcHJfwAMwAogNwhxgEAKkBuEskAoDUANwpHgFAagCrRcAEABMABAACAAGAAODeAXgXCBMATAAQAGQF4NOgRAfgCzEIAAQAgQG4KgTBbH+ivQAMIANS6r6TbAAAAABJRU5ErkJggg==',x:'0',y:'0',width:'100%',height:'100%',preserveAspectRatio:'none',result:'map'}));
+    lens.append(node('feGaussianBlur',{in:'SourceGraphic',stdDeviation:'3',result:'soft'}));
+    lens.append(node('feDisplacementMap',{in:'soft',in2:'map',scale:'14',xChannelSelector:'R',yChannelSelector:'G'}));
+    defs.append(lens); svg.append(defs);
+    sharedLens=svg;document.body.append(svg);
+    document.body.classList.add('svSharedGlassReady');
+  }
   function boot() {
     if (stopped || mutations) return;
+    installSharedLens();
     if (typeof IntersectionObserver === 'function') intersection = new IntersectionObserver(changes => {
       for (const change of changes) {
         const entry = entries.get(change.target); if (!entry) continue;
@@ -122,6 +145,7 @@
     if (stopped) return; stopped = true;
     document.removeEventListener('DOMContentLoaded', boot); document.removeEventListener('visibilitychange', onVisibility);
     mutations?.disconnect(); intersection?.disconnect(); cancelAnimationFrame(frame); frame = 0; pending.clear();
+    sharedLens?.remove(); sharedLens=null; document.body.classList.remove('svSharedGlassReady');
     for (const entry of entries.values()) release(entry);
   }});
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true}); else boot();

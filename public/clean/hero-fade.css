@@ -1,135 +1,73 @@
-/* v178 — one source of truth for artwork-to-content transitions.
-   Loaded after the legacy page styles so Home, discovery and title details
-   share continuous, natural image dissolves instead of competing scrims. */
-
-/* Shared hero backdrops should never tile at unusual viewport sizes. */
-body.svCleanShell .dsHeroBg,
-body.svCleanShell .showcaseHeroBg,
-body.svCleanShell .browseHeroBg { background-repeat:no-repeat !important; }
-
-/* Signed-in landing, Movies, Series, and other featured catalog pages.
-   Allow the complete cinematic frame room before the first poster rail. */
+/* v179 — lightweight image dissolve. Keep the original content geometry.
+   This stylesheet loads after finish/polish. It replaces their conflicting
+   final fade only, not movie posters or the Welcome poster composition. */
 body.svCleanShell main > .dsHero {
-  min-height:clamp(780px,107svh,1120px) !important;
-  height:auto !important;
-  padding:136px 0 175px !important;
-  overflow:hidden !important;
+  min-height:clamp(690px,96svh,990px) !important;
+  padding:125px 0 145px !important;
   background:#000 !important;
 }
 body.svCleanShell main > .dsHero > .dsHeroBg {
-  background-position:center 42% !important;
+  background-position:center 40% !important;
   -webkit-mask-image:linear-gradient(to bottom,
-    #000 0%,#000 64%,rgb(0 0 0 / .98) 71%,
-    rgb(0 0 0 / .89) 78%,rgb(0 0 0 / .69) 86%,
-    rgb(0 0 0 / .34) 94%,transparent 100%) !important;
+    #000 0%,#000 59%,rgba(0,0,0,.96) 69%,
+    rgba(0,0,0,.77) 79%,rgba(0,0,0,.43) 91%,transparent 100%) !important;
   mask-image:linear-gradient(to bottom,
-    #000 0%,#000 64%,rgb(0 0 0 / .98) 71%,
-    rgb(0 0 0 / .89) 78%,rgb(0 0 0 / .69) 86%,
-    rgb(0 0 0 / .34) 94%,transparent 100%) !important;
+    #000 0%,#000 59%,rgba(0,0,0,.96) 69%,
+    rgba(0,0,0,.77) 79%,rgba(0,0,0,.43) 91%,transparent 100%) !important;
 }
 body.svCleanShell main > .dsHero > .dsHeroGlass {
-  background:
-    linear-gradient(90deg,rgb(0 0 0 / .66) 0%,rgb(0 0 0 / .33) 33%,transparent 83%),
-    linear-gradient(to bottom,rgb(0 0 0 / .10),transparent 32%,
-      transparent 78%,rgb(0 0 0 / .10) 92%,rgb(0 0 0 / .28) 100%) !important;
+  background:linear-gradient(90deg,rgba(0,0,0,.68),rgba(0,0,0,.29) 34%,transparent 81%),
+             linear-gradient(to bottom,rgba(0,0,0,.07),transparent 64%,rgba(0,0,0,.15) 84%,#000 100%) !important;
 }
-/* Trailer previews obey the same silhouette, rather than abruptly ending
-   behind the bottom edge of the hero. */
 body.svCleanShell main > .dsHero > .dsHeroTrailerLayer {
-  -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 61%,
-    rgb(0 0 0 / .84) 78%,rgb(0 0 0 / .34) 94%,transparent 100%) !important;
-  mask-image:linear-gradient(to bottom,#000 0%,#000 61%,
-    rgb(0 0 0 / .84) 78%,rgb(0 0 0 / .34) 94%,transparent 100%) !important;
+  -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 59%,rgba(0,0,0,.70) 79%,transparent 100%) !important;
+  mask-image:linear-gradient(to bottom,#000 0%,#000 59%,rgba(0,0,0,.70) 79%,transparent 100%) !important;
 }
-body.svCleanShell main > .svHeroLightBridge::before,
-body.svCleanShell main > .svHeroLightBridge::after {display:none !important;}
+/* The legacy image-derived blur bridges caused large repaints as the page
+   moved; let the original frame dissolve without duplicating the image. */
+body.svCleanShell .svHeroLightBridge::before,
+body.svCleanShell .svHeroLightBridge::after,
+body.svCleanShell .svWelcomeLightBridge::before,
+body.svCleanShell .svWelcomeLightBridge::after {display:none !important;}
 body.svCleanShell main > .dsHero + .svHeroLightBridge + .dsContent:not(.noHero) {
-  position:relative;z-index:2;
-  margin-top:-2px !important;
-  padding-top:18px !important;
-  background:transparent !important;
+  margin-top:-2px !important;padding-top:16px !important;background:transparent !important;
 }
-/* Details: backdrop opacity reaches black smoothly BEFORE the body begins.
-   More height shows the actual film rather than hiding its lower half. */
-body.svCleanShell :is(.svDetailPage,.svDetailDialog) .svDetailHero {
-  height:clamp(620px,64vw,750px) !important;
-  min-height:620px !important;
+/* Title overview starts just below a feathered, full-width image, not
+   beneath a 750px modal with oversized GPU-blurred reflections. */
+body.svCleanShell :is(.svDetailDialog,.svDetailPage) .svDetailHero {
+  height:clamp(520px,55vw,620px) !important;min-height:520px !important;
   background:#050505 !important;
 }
-body.svCleanShell :is(.svDetailPage,.svDetailDialog) .svDetailBackdrop {
-  background-position:center 31% !important;
-  -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 47%,
-    rgb(0 0 0 / .98) 55%,rgb(0 0 0 / .87) 67%,
-    rgb(0 0 0 / .66) 79%,rgb(0 0 0 / .32) 92%,transparent 100%) !important;
-  mask-image:linear-gradient(to bottom,#000 0%,#000 47%,
-    rgb(0 0 0 / .98) 55%,rgb(0 0 0 / .87) 67%,
-    rgb(0 0 0 / .66) 79%,rgb(0 0 0 / .32) 92%,transparent 100%) !important;
+body.svCleanShell :is(.svDetailDialog,.svDetailPage) .svDetailBackdrop {
+  -webkit-mask-image:linear-gradient(to bottom,
+    #000 0%,#000 51%,rgba(0,0,0,.92) 63%,
+    rgba(0,0,0,.68) 77%,rgba(0,0,0,.29) 91%,transparent 100%) !important;
+  mask-image:linear-gradient(to bottom,
+    #000 0%,#000 51%,rgba(0,0,0,.92) 63%,
+    rgba(0,0,0,.68) 77%,rgba(0,0,0,.29) 91%,transparent 100%) !important;
 }
-body.svCleanShell :is(.svDetailPage,.svDetailDialog) .svDetailShade {
-  background:
-    linear-gradient(90deg,rgb(0 0 0 / .30),transparent 76%),
-    linear-gradient(to bottom,transparent 0%,transparent 69%,
-      rgb(5 5 5 / .08) 81%,rgb(5 5 5 / .38) 95%,#050505 100%) !important;
+body.svCleanShell :is(.svDetailDialog,.svDetailPage) .svDetailShade {
+  background:linear-gradient(90deg,rgba(0,0,0,.39),transparent 77%),
+             linear-gradient(to bottom,transparent 0%,transparent 68%,rgba(5,5,5,.14) 85%,#050505 100%) !important;
 }
-body.svCleanShell :is(.svDetailPage,.svDetailDialog) .svDetailIdentity {bottom:31px;}
-body.svCleanShell :is(.svDetailPage,.svDetailDialog) .svDetailBody {
-  background:#050505 !important;
-}
-body.svCleanShell :is(.svDetailPage,.svDetailDialog) .svDetailBody::before {
-  display:none !important;content:none !important;
-}
-/* Welcome already has its own illustration and three-poster composition.
-   Keep that intact and use only a feathered lower edge. */
-body.svCleanShell .svWelcomeClean .dsWelcomeHero {
-  overflow:visible !important;
-}
+body.svCleanShell :is(.svDetailDialog,.svDetailPage) .svDetailBody::before {display:none !important;}
 body.svCleanShell .svWelcomeClean .dsWelcomeHeroBg {
   bottom:-36px !important;
-  -webkit-mask-image:
-    linear-gradient(to right,transparent 0%,#000 31%,#000 100%),
-    linear-gradient(to bottom,transparent 0%,#000 17%,#000 55%,
-      rgb(0 0 0 / .75) 75%,rgb(0 0 0 / .35) 90%,transparent 100%) !important;
-  mask-image:
-    linear-gradient(to right,transparent 0%,#000 31%,#000 100%),
-    linear-gradient(to bottom,transparent 0%,#000 17%,#000 55%,
-      rgb(0 0 0 / .75) 75%,rgb(0 0 0 / .35) 90%,transparent 100%) !important;
+  -webkit-mask-image:linear-gradient(to right,transparent,#000 31%),
+    linear-gradient(to bottom,transparent 0%,#000 18%,#000 53%,rgba(0,0,0,.66) 80%,transparent 100%) !important;
+  mask-image:linear-gradient(to right,transparent,#000 31%),
+    linear-gradient(to bottom,transparent 0%,#000 18%,#000 53%,rgba(0,0,0,.66) 80%,transparent 100%) !important;
   -webkit-mask-composite:source-in;mask-composite:intersect;
 }
-body.svCleanShell .svWelcomeClean .dsWelcomeHero::before {
-  bottom:-36px !important;
-  background:linear-gradient(to bottom,transparent 54%,rgb(0 0 0 / .10) 78%,#000 100%) !important;
-}
-body.svCleanShell .svWelcomeClean .svWelcomeLightBridge::before,
-body.svCleanShell .svWelcomeClean .svWelcomeLightBridge::after {display:none !important;}
-body.svCleanShell .svWelcomeClean .dsWelcomeDiscovery {
-  position:relative;z-index:2;
-  background:transparent !important;
-}
-@media(max-width:860px) {
-  body.svCleanShell main > .dsHero {
-    min-height:clamp(600px,94svh,865px) !important;
-    padding:116px 0 132px !important;
-  }
-  body.svCleanShell main > .dsHero > .dsHeroBg {
-    background-position:center 44% !important;
-    -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 51%,
-      rgb(0 0 0 / .83) 68%,rgb(0 0 0 / .4) 85%,transparent 100%) !important;
-    mask-image:linear-gradient(to bottom,#000 0%,#000 51%,
-      rgb(0 0 0 / .83) 68%,rgb(0 0 0 / .4) 85%,transparent 100%) !important;
-  }
-  body.svCleanShell main > .dsHero + .svHeroLightBridge + .dsContent:not(.noHero) {padding-top:16px !important;}
-  body.svCleanShell :is(.svDetailPage,.svDetailDialog) .svDetailHero {
-    height:clamp(490px,74svh,610px) !important;min-height:490px !important;
-  }
-  body.svCleanShell :is(.svDetailPage,.svDetailDialog) .svDetailIdentity {bottom:20px;}
-  body.svCleanShell .svWelcomeClean .dsWelcomeHeroBg {bottom:-22px !important;}
-}
-@media(max-width:500px) {
-  body.svCleanShell main > .dsHero {padding:105px 0 112px !important;}
-  body.svCleanShell :is(.svDetailPage,.svDetailDialog) .svDetailHero {
-    min-height:460px !important;height:clamp(460px,70svh,545px) !important;
-  }
+/* Full-page blur during navigation was needlessly expensive. */
+@keyframes svQuickPageOut {to{opacity:0;transform:translateY(-3px);}}
+@keyframes svQuickPageIn {from{opacity:0;transform:translateY(7px);}to{opacity:1;transform:none;}}
+::view-transition-old(root){animation:140ms ease-out both svQuickPageOut;}
+::view-transition-new(root){animation:240ms cubic-bezier(.2,.75,.3,1) both svQuickPageIn;}
+@media(max-width:860px){
+  body.svCleanShell main > .dsHero {min-height:clamp(570px,90svh,800px) !important;padding:105px 0 114px !important;}
+  body.svCleanShell :is(.svDetailDialog,.svDetailPage) .svDetailHero {min-height:450px !important;height:clamp(450px,68svh,555px) !important;}
 }
 @media(prefers-reduced-motion:reduce) {
-  body.svCleanShell :is(.dsHeroBg,.dsHeroTrailerLayer,.svDetailBackdrop) {animation:none !important;}
+  ::view-transition-old(root),::view-transition-new(root){animation:none !important;}
 }
