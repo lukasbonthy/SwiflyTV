@@ -300,58 +300,46 @@ test('v174 keeps Welcome soft without muddy light bridge or button clipping',asy
  assert(doc.querySelector('.dsWelcomeActions .dsPrimaryBtn'));
 });
 
-test('v174 liquid controls respond to the Studio setting and pages transition progressively',async()=>{
- const fs=require('node:fs');
- const css=await(await fetch(base+'/assets/clean/finish.css?v=175')).text();
- const script=fs.readFileSync(require('node:path').join(__dirname,'../public/liquid-glass/surfaces.js'),'utf8');
- assert.doesNotMatch(script,/'.svWelcomeStudio'/,'Studio icon inside navigation must not be its own glass control');
- assert.doesNotMatch(script,/'.svNavButton'/,'Navbar icons must be covered by one shared nav capsule');
- assert.match(script,/\.dsRowArrow/);
+test('Studio glass uses one material on every browsing route and native transitions remain independent',async()=>{
+ const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=177')).text();
+ const finish=await(await fetch(base+'/assets/clean/finish.css?v=175')).text();
+ const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=177')).text();
  assert.match(css,/data-st-glass="liquid"/);
- assert.match(css,/\.dsPrimaryBtn,\.dsSecondaryBtn,\.dsIconBtn/);
- assert.match(css,/data-swifly-renderer="svg"/,'allow actual displacement when available');
- assert.match(css,/\.netflixNav,\.dsWelcomeNav/,'nav icon glass must be suppressed');
- assert.match(css,/backdrop-filter:blur\(18px\) saturate\(1\.55\)/);
+ assert.match(css,/data-st-glass="subtle"/);
  assert.match(css,/data-st-glass="off"/);
- assert.match(css,/@view-transition \{ navigation:auto; \}/);
- assert.match(css,/::view-transition-new\(root\)/);
- assert.match(css,/prefers-reduced-motion:reduce/);
- const pages=['/','/movies','/tv','/welcome','/signup','/login'];
- for(const route of pages){
+ assert.match(css,/var\(--sv-glass-filter\) saturate\(1\.24\)/);
+ assert.match(css,/\.svGlassSurface\.svGlassControl::before/);
+ assert.match(css,/\.svGlassSurface\.svGlassControl::after/);
+ assert.match(css,/\.netflixNav,\.dsWelcomeNav/);
+ assert.match(script,/\.svDetailReturn/);
+ assert.match(finish,/@view-transition \{ navigation:auto; \}/);
+ assert.doesNotMatch(finish,/\.svGlassSurface\.svGlassControl\.dsPrimaryBtn/,'no conflicting page-level button material');
+ for(const route of ['/','/movies','/tv','/welcome','/signup','/login']){
    const response=await fetch(base+route);
    assert.equal(response.status,200,route);
    const doc=parse(await response.text()).window.document;
-   assert(doc.querySelector('link[href="/assets/clean/finish.css?v=175"]'),route+' missing final styles');
-   assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=176"]'),route+' missing updated glass controls');
+   assert(doc.querySelector('link[href="/assets/liquid-glass/controls.css?v=177"]'),route+' lacks unified glass');
+   assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=177"]'),route+' uses stale glass renderer');
  }
  const watch=await(await fetch(base+'/watch/movie/101')).text();
- assert(!watch.includes('finish.css?v=175'),'watch route must not have page dissolves');
+ assert(!watch.includes('controls.css?v=177'),'watch page must be left alone');
 });
-
-test('v175 keeps the top bar one cohesive capsule and restores real Liquid Glass on featured controls',async()=>{
- const response=await fetch(base+'/');
- assert.equal(response.status,200);
- const doc=parse(await response.text()).window.document;
+test('hero and modal buttons get the same bright optical material without boxing nav icons',async()=>{
+ const doc=parse(await(await fetch(base+'/')).text()).window.document;
  const hero=doc.querySelector('.dsHero');
- assert(hero);
- assert(hero.querySelector('.dsHeroActions .dsPrimaryBtn'),'Play button');
- assert(hero.querySelector('.dsHeroActions .dsSecondaryBtn'),'Details button');
- assert(hero.querySelector('.dsHeroActions .dsIconBtn'),'Save button');
- const css=await (await fetch(base+'/assets/clean/finish.css?v=175')).text();
- const js=await (await fetch(base+'/assets/liquid-glass/surfaces.js?v=176')).text();
- assert.match(css,/\.netflixNav,\.dsWelcomeNav\) :is\(\.svNavButton,\.svWelcomeStudio/);
- assert.match(css,/border:1px solid transparent !important/,'nav buttons should not be outlined separately');
- assert.match(css,/background:transparent !important/,'nav icons should live in one glass capsule');
- assert.match(js,/featuredControl = !panel/,'important hero actions must enable the glass refraction renderer');
- assert.match(js,/\.dsHeroActions,\.dsWelcomeActions,\.dsDetailActionsV121/);
- assert.match(css,/var\(--sv-glass-filter\) saturate\(1\.35\)/,'SVG liquid displacement must beat fallback blur CSS');
- assert.match(css,/rgba\(248,255,253,\.42\)/,'Play button may glow but should not become opaque white');
- assert.doesNotMatch(css,/rgba\(255,255,255,\.92\)/,'old solid Play style must stay removed');
- const links=[...doc.querySelectorAll('link[rel=stylesheet]')].map(el=>el.getAttribute('href'));
- assert(links.includes('/assets/clean/finish.css?v=175'));
- assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=176"]'));
+ assert(hero.querySelector('.dsHeroActions .dsPrimaryBtn'));
+ assert(hero.querySelector('.dsHeroActions .dsSecondaryBtn'));
+ assert(hero.querySelector('.dsHeroActions .dsIconBtn'));
+ const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=177')).text();
+ const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=177')).text();
+ assert.match(css,/border:1px solid transparent !important/,'nav icons never get a second border');
+ assert.match(css,/radial-gradient\(ellipse 115% 155%/,'bright curved light makes dark-background glass visible');
+ assert.match(css,/mask-composite:exclude/,'rim stays separate from button label');
+ assert.match(css,/data-swifly-renderer="svg"/);
+ assert.match(script,/featuredControl = !panel/);
+ assert.match(script,/\.svDetailBack,\.svDetailDismiss,\.svDetailReturn/);
+ assert.doesNotMatch(css,/rgba\(255,255,255,\.92\)/,'Play should not be a solid white pill');
 });
-
 test('v176 supplies a real, masked details backdrop with no hard border at the overview',async()=>{
  const response=await fetch(base+'/movie/101');
  assert.equal(response.status,200);
@@ -369,10 +357,11 @@ test('v176 supplies a real, masked details backdrop with no hard border at the o
  assert.match(css,/rgba\(0,0,0,\.22\) 94%,transparent 100%/);
  assert.match(css,/\.svDetailShade \{/);
  assert.match(css,/\.svDetailBody \{/);
- assert.match(css,/\.svDetailActions > :is\(\.dsPrimaryBtn,\.dsSecondaryBtn,\.dsIconBtn\)/);
- assert.match(css,/\[data-swifly-renderer="svg"\]/);
+ const lens=await(await fetch(base+'/assets/liquid-glass/controls.css?v=177')).text();
+ assert.match(lens,/\.svGlassSurface\.svGlassControl\[data-swifly-renderer="svg"\]/);
+ assert.match(lens,/\.svDetailActions,\.dsDetailActionsV121/);
  assert(d.querySelector('link[href="/assets/clean/polish.css?v=176"]'));
- assert(d.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=176"]'));
+ assert(d.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=177"]'));
 });
 test('v176 adds subtle Liquid Glass to both compact auth pages without resizing',async()=>{
  const css=await(await fetch(base+'/assets/clean/polish.css?v=176')).text();
