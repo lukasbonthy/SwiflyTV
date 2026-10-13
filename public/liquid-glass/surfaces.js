@@ -80,6 +80,7 @@
     for (const root of roots) if (root.isConnected) scan(root);
   }
   function onVisibility() {
+    if (!document.hidden && liquidPreference()) installSharedLens();
     if (document.hidden) {cancelAnimationFrame(frame); frame = 0;}
     for (const entry of entries.values()) if (entry.complex) {
       if (document.hidden || !liquidPreference()) deactivate(entry); else activate(entry);
@@ -98,24 +99,32 @@
       !/iPad|iPhone|iPod/.test(navigator.userAgent) &&
       !window.matchMedia('(prefers-reduced-transparency: reduce)').matches;
     if (!supported) return;
-    const canvas = document.createElement('canvas');
-    canvas.width=160; canvas.height=64;
-    const context=canvas.getContext('2d');
-    if (!context) return;
-    const map=context.createImageData(160,64);
-    for(let y=0;y<64;y++) for(let x=0;x<160;x++) {
-      const u=(x+.5)/160*2-1,v=(y+.5)/64*2-1;
-      const radius=Math.hypot(u*.90,v);
-      const edge=Math.exp(-Math.pow((radius-.78)/.21,2));
-      const strength=.13+.50*edge;
-      const radial=radius?strength/radius:0;
-      const i=(y*160+x)*4;
-      map.data[i]=Math.max(0,Math.min(255,Math.round(128+u*radial*110)));
-      map.data[i+1]=Math.max(0,Math.min(255,Math.round(128+v*radial*110)));
-      map.data[i+2]=128;map.data[i+3]=255;
+    let image;
+    try {
+      const canvas=document.createElement('canvas');
+      canvas.width=160;canvas.height=64;
+      const context=canvas.getContext('2d');
+      if(context) {
+        const map=context.createImageData(160,64);
+        for(let y=0;y<64;y++) for(let x=0;x<160;x++) {
+          const u=(x+.5)/160*2-1,v=(y+.5)/64*2-1;
+          const radius=Math.hypot(u*.90,v);
+          const edge=Math.exp(-Math.pow((radius-.78)/.21,2));
+          const strength=.13+.50*edge;
+          const radial=radius?strength/radius:0;
+          const i=(y*160+x)*4;
+          map.data[i]=Math.max(0,Math.min(255,Math.round(128+u*radial*110)));
+          map.data[i+1]=Math.max(0,Math.min(255,Math.round(128+v*radial*110)));
+          map.data[i+2]=128;map.data[i+3]=255;
+        }
+        context.putImageData(map,0,0);
+        image=canvas.toDataURL('image/png');
+      }
+    } catch (_) { /* Canvas can be disabled; keep a valid SVG fallback. */ }
+    if (!image) {
+      const fallback='<svg xmlns="http://www.w3.org/2000/svg" width="160" height="64"><defs><linearGradient id="x"><stop stop-color="red"/><stop offset=".5" stop-color="#808080"/><stop offset="1" stop-color="#00ffff"/></linearGradient></defs><rect width="160" height="64" fill="url(#x)"/></svg>';
+      image='data:image/svg+xml,'+encodeURIComponent(fallback);
     }
-    context.putImageData(map,0,0);
-    const image=canvas.toDataURL('image/png');
     const ns='http://www.w3.org/2000/svg';
     function node(name,attrs={}) {
       const el=document.createElementNS(ns,name);
@@ -161,6 +170,7 @@
         for (const node of change.addedNodes) if (node instanceof HTMLElement) enqueue(node);
         if ([...change.removedNodes].some(node => node instanceof HTMLElement)) removed = true;
       }
+      if (preferenceChanged && liquidPreference()) installSharedLens();
       if (preferenceChanged) for (const entry of entries.values()) if (entry.complex) {
         if (liquidPreference()) activate(entry); else deactivate(entry);
       }
