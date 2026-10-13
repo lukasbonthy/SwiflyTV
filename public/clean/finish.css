@@ -146,3 +146,27 @@ body.svCleanShell[data-st-glass="off"] .svGlassSurface.svGlassControl {
 @media(prefers-reduced-motion:reduce) {
   body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svGlassControl {transition:none !important;}
 }
+
+/* Progressive enhancement: cross-document navigation dissolves like glass,
+   without a fake loading overlay, navigation interception, or page-delay JS.
+   Unsupported browsers simply navigate normally. */
+@view-transition { navigation:auto; }
+@keyframes svPageOut {
+  from {opacity:1;filter:blur(0);transform:translateY(0) scale(1);}
+  to {opacity:0;filter:blur(3px);transform:translateY(-5px) scale(.997);}
+}
+@keyframes svPageIn {
+  from {opacity:0;filter:blur(5px);transform:translateY(12px) scale(.996);}
+  to {opacity:1;filter:blur(0);transform:translateY(0) scale(1);}
+}
+::view-transition-old(root) {
+  animation:170ms cubic-bezier(.4,0,.3,1) both svPageOut;
+}
+::view-transition-new(root) {
+  animation:340ms cubic-bezier(.17,1,.26,1) both svPageIn;
+}
+html:has(body.reduceMotion)::view-transition-old(root),\nhtml:has(body.reduceMotion)::view-transition-new(root) {animation-duration:0.01ms !important;}
+@media(prefers-reduced-motion:reduce) {
+  @view-transition {navigation:none;}
+  ::view-transition-old(root),::view-transition-new(root) {animation:none !important;}
+}
