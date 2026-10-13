@@ -150,3 +150,79 @@ body.svCleanShell .svWelcomeClean .svWelcomeDiscoveryIntro {
 @media(prefers-reduced-motion:reduce) {
   ::view-transition-old(root),::view-transition-new(root){animation:none !important;}
 }
+
+
+/* v184: the earlier zero-height blur bridge is behind the catalog's isolated
+   stacking context, hence the hard black line in real screenshots.
+   Move the SAME title backdrop into the actual dsContent paint layer.
+   dsCinemaArtStyle() sets --sv-cinema-art separately on every catalog page. */
+body.svCleanShell main > .dsHero + .svHeroLightBridge::before,
+body.svCleanShell main > .dsHero + .svHeroLightBridge::after {
+  display:none !important;
+  content:none !important;
+}
+body.svCleanShell main > .dsHero + .svHeroLightBridge + .dsContent:not(.noHero) {
+  position:relative !important;
+  isolation:isolate !important;
+  background:transparent !important;
+  overflow:visible !important;
+}
+/* This layer is INSIDE the catalog itself, not trapped behind an earlier
+   sibling. Foreground rails are lifted above it without touching their art. */
+body.svCleanShell main > .dsHero + .svHeroLightBridge + .dsContent:not(.noHero)::before {
+  content:"" !important;display:block !important;
+  position:absolute !important;
+  inset:-230px calc(-1 * var(--sv-page-gutter,32px)) auto !important;
+  height:clamp(930px,132svh,1470px) !important;
+  z-index:0 !important;
+  pointer-events:none !important;
+  background-image:
+    linear-gradient(to bottom,
+      rgb(0 0 0 / .14) 0%,rgb(0 0 0 / .02) 20%,
+      rgb(0 0 0 / .12) 44%,rgb(0 0 0 / .50) 72%,
+      #000 99%),
+    var(--sv-cinema-art) !important;
+  background-size:cover !important;
+  background-position:center 53% !important;
+  background-repeat:no-repeat !important;
+  opacity:.82 !important;
+  filter:blur(13px) saturate(1.5) brightness(.75) !important;
+  -webkit-mask-image:linear-gradient(to bottom,
+    rgb(0 0 0 / .21) 0%,#000 16%,#000 49%,
+    rgb(0 0 0 / .79) 70%,rgb(0 0 0 / .30) 88%,transparent 100%) !important;
+  mask-image:linear-gradient(to bottom,
+    rgb(0 0 0 / .21) 0%,#000 16%,#000 49%,
+    rgb(0 0 0 / .79) 70%,rgb(0 0 0 / .30) 88%,transparent 100%) !important;
+}
+body.svCleanShell main > .dsHero + .svHeroLightBridge + .dsContent:not(.noHero) > * {
+  position:relative;z-index:1;
+}
+/* Remove the full-black hard-stop at the hero's bottom. Let the backdrop keep
+   some image color to meet the continuation behind the first rows. */
+body.svCleanShell main > .dsHero > .dsHeroBg {
+  -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 61%,
+    rgb(0 0 0 / .96) 75%,rgb(0 0 0 / .76) 86%,
+    rgb(0 0 0 / .47) 95%,rgb(0 0 0 / .21) 100%) !important;
+  mask-image:linear-gradient(to bottom,#000 0%,#000 61%,
+    rgb(0 0 0 / .96) 75%,rgb(0 0 0 / .76) 86%,
+    rgb(0 0 0 / .47) 95%,rgb(0 0 0 / .21) 100%) !important;
+}
+body.svCleanShell main > .dsHero > .dsHeroGlass {
+  background:
+    linear-gradient(90deg,rgb(0 0 0 / .65) 0%,rgb(0 0 0 / .31) 35%,transparent 83%),
+    linear-gradient(to bottom,rgb(0 0 0 / .07),transparent 62%,
+      rgb(0 0 0 / .11) 79%,rgb(0 0 0 / .31) 100%) !important;
+}
+@media(max-width:860px) {
+  body.svCleanShell main > .dsHero + .svHeroLightBridge + .dsContent:not(.noHero)::before {
+    inset:-150px calc(-1 * var(--sv-page-gutter,16px)) auto !important;
+    height:clamp(670px,108svh,1020px) !important;
+    filter:blur(9px) saturate(1.38) brightness(.70) !important;
+  }
+}
+@media(prefers-reduced-transparency:reduce) {
+  body.svCleanShell main > .dsHero + .svHeroLightBridge + .dsContent:not(.noHero)::before {
+    filter:none !important;
+    opacity:.48 !important;
+  }
+}
