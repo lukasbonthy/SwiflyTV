@@ -224,7 +224,7 @@ test('Mobile hero art stays clipped while its sampled COLORS fade under catalog 
   assert.equal(hero.nextElementSibling,bridge);
   assert.equal(bridge.nextElementSibling,rows);
   assert.equal(hero.querySelectorAll('.dsHeroBg').length,1);
-  assert.match(hero.querySelector('.dsHeroBg').getAttribute('style')||'',/background-image:url\\('/);
+  assert((hero.querySelector('.dsHeroBg').getAttribute('style')||'').includes('background-image:url('),'hero displays one original movie image');
   assert.match(hero.getAttribute('data-sv-palette-src')||'',/\/w300\//,'only a small image is loaded for color sampling');
   assert.equal(bridge.getAttribute('style'),null,'bridge cannot paint a second image');
   assert.equal(rows.getAttribute('style'),null,'catalog cannot paint a second image');
