@@ -135,3 +135,38 @@ body:has(.playerFullscreen) .mobileNav[data-sv-liquid-nav] { display: none !impo
 @media (prefers-reduced-transparency: reduce) {
   .svLiquidPane, .svLiquidPane[data-swifly-renderer="svg"] { background: rgb(15 17 22 / .96); -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
+
+/* v193 — Safari/iPadOS renders a real SVG specular lens over WebKit's live
+   -webkit-backdrop-filter, rather than an unsupported URL backdrop filter. */
+.svLiquidPane[data-swifly-renderer="webkit-svg"] {
+  background:linear-gradient(120deg,rgb(243 249 255 / .095),
+    rgb(180 207 233 / .035) 42%,rgb(8 18 30 / .125) 83%,
+    rgb(247 251 255 / .075)) !important;
+  -webkit-backdrop-filter:blur(10px) saturate(1.75) brightness(1.09) !important;
+  backdrop-filter:blur(10px) saturate(1.75) brightness(1.09) !important;
+  transform:none !important;
+  backface-visibility:visible !important;
+}
+.svLiquidPane > svg.svWebkitGlassOptics {
+  position:absolute !important;
+  inset:0 !important;
+  display:block;
+  width:100% !important;
+  height:100% !important;
+  z-index:2;
+  overflow:hidden;
+  border-radius:inherit;
+  pointer-events:none !important;
+  opacity:1;
+}
+.svLiquidPane:not([data-swifly-renderer="webkit-svg"]) > svg.svWebkitGlassOptics {
+  display:none !important;
+}
+@media(prefers-reduced-transparency:reduce) {
+  .svLiquidPane[data-swifly-renderer="webkit-svg"] {
+    background:rgb(15 17 22 / .96) !important;
+    -webkit-backdrop-filter:none !important;
+    backdrop-filter:none !important;
+  }
+  .svLiquidPane > svg.svWebkitGlassOptics {display:none !important;}
+}
