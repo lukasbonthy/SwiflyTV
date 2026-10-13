@@ -8318,7 +8318,7 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = nu
       })();
     </script>` : ""}
   </section>
-  <div class="svHeroLightBridge" aria-hidden="true" style="--sv-light-art:url('${escapeHtml(bg)}')"></div>`;
+  <div class="svHeroLightBridge" aria-hidden="true"></div>`;
 }
 
 
