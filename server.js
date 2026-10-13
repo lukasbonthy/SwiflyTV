@@ -6390,7 +6390,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/motion.js?v=163"></script>
     <script defer src="/assets/clean/details.js?v=160"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=163" />
-    <script defer src="/assets/liquid-glass/surfaces.js?v=179"></script>
+    <script defer src="/assets/liquid-glass/surfaces.js?v=181"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=164" />
     <script defer src="/assets/studio/studio.js?v=164"></script>
     <link rel="stylesheet" href="/assets/clean/aurora.css?v=170" />
@@ -6404,7 +6404,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/finish.css?v=175" />'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/polish.css?v=176" />'}
     <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=179" />
-    ${player ? "" : '<link rel="stylesheet" href="/assets/liquid-glass/controls.css?v=179" />'}
+    ${player ? "" : '<link rel="stylesheet" href="/assets/liquid-glass/controls.css?v=181" />'}
 </head>
 <body class="svCleanShell">
 
