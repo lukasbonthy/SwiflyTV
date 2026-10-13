@@ -458,7 +458,8 @@
       if (curvedChromium) {
         // Match Safari's rounded Snell geometry but refract the LIVE Chromium
         // backdrop. This vector map contains only lens geometry, no film pixels.
-        const texture=lensTexture(width,height,radius);
+        let texture=null;
+        try {texture=lensTexture(width,height,radius);} catch (_) { /* blocked Canvas: keep CSS/gradient fallback */ }
         if (texture) {
           const strength=Math.max(1,Math.min(2.4,numeric(element,'glassLensStrength',1.6)));
           const scale=-texture.scale*strength;
