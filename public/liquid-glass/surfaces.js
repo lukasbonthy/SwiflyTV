@@ -176,8 +176,8 @@
     x.append(node('stop',{offset:'0%','stop-color':'red','stop-opacity':'0'}),
              node('stop',{offset:'100%','stop-color':'red'}));
     const y=node('linearGradient',{id:'sv-lens-y',x1:'0%',y1:'0%',x2:'0%',y2:'100%'});
-    y.append(node('stop',{offset:'0%','stop-color':'blue','stop-opacity':'0'}),
-             node('stop',{offset:'100%','stop-color':'blue'}));
+    y.append(node('stop',{offset:'0%','stop-color':'lime','stop-opacity':'0'}),
+             node('stop',{offset:'100%','stop-color':'lime'}));
     gradients.append(x,y);
     image.append(gradients,
       node('rect',{width:160,height:64,fill:'black'}),
