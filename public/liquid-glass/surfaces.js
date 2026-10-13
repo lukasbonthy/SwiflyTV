@@ -48,7 +48,8 @@
     // No per-button SVG graph, ResizeObserver or layout reads.
     // Never refract cards in scrolling grids or navbar icons separately.
     const sharedControl = !panel &&
-      !host.closest('.netflixNav,.dsWelcomeNav,.mobileNav,.dsCardQuickActions,.movieCard,.posterWrap,media-player,.vds-controls') &&
+      !host.closest('.dsCardQuickActions,.movieCard,.posterWrap,media-player,.vds-controls') &&
+      (!host.closest('.netflixNav,.dsWelcomeNav,.mobileNav') || Boolean(host.closest('.dsProfileDropdown,.svLiquidDropdown'))) &&
       host.matches('.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn,.dsGhostPill,.dsRowBtn,.dsRowArrow,.svRowArrow,.dsClose,.dsHeroMuteToggle,.dsBigPlayBtn,.svDetailBack,.svDetailDismiss,.svDetailReturn,.svDetailClose,.svAuthPasswordToggle,.dsAuthSwitch > a,.dsAuthTopActions button[data-st-open],.dsDetailTabsV121 > button,.pagination a,.dsEpisodeChips a,.dsSearchBox button,.svSearchPopup button,.dsDropdownLogout,.dsEditProfileBtn');
     const complex = panel && host.dataset.glassRefraction === 'true';
     const classes = ['svGlassSurface', panel ? 'svGlassPanel' : 'svGlassControl'];
@@ -85,33 +86,60 @@
     }
     schedule();
   }
-  // Chromium SVG backdrop-filter support needs a REAL displacement primitive,
-  // not just CSS glints. Share ONE static filter across buttons so multiple
-  // Play/Trailer/Save buttons don't each render three expensive color channels.
+  // Two real backdrop SVG filters share ONE displacement map. The map is
+  // generated once from a smooth radial lens field, not a blurred static stripe.
+  // Buttons use stronger displacement; the large auth panel is gentler.
   let sharedLens = null;
   function installSharedLens() {
-    if (sharedLens) return;
+    if (sharedLens || !liquidPreference()) return;
     const supported = typeof CSS !== 'undefined' &&
       CSS.supports('backdrop-filter','url(#sv-shared-action-lens)') &&
       /Chrome|Chromium|Edg|OPR/.test(navigator.userAgent) &&
-      !/iPad|iPhone|iPod/.test(navigator.userAgent);
+      !/iPad|iPhone|iPod/.test(navigator.userAgent) &&
+      !window.matchMedia('(prefers-reduced-transparency: reduce)').matches;
     if (!supported) return;
-    const ns = 'http://www.w3.org/2000/svg';
-    function node(name, attrs = {}) {
-      const el = document.createElementNS(ns,name);
-      for (const [key,value] of Object.entries(attrs)) el.setAttribute(key,value);
+    const canvas = document.createElement('canvas');
+    canvas.width=160; canvas.height=64;
+    const context=canvas.getContext('2d');
+    if (!context) return;
+    const map=context.createImageData(160,64);
+    for(let y=0;y<64;y++) for(let x=0;x<160;x++) {
+      const u=(x+.5)/160*2-1,v=(y+.5)/64*2-1;
+      const radius=Math.hypot(u*.90,v);
+      const edge=Math.exp(-Math.pow((radius-.78)/.21,2));
+      const strength=.13+.50*edge;
+      const radial=radius?strength/radius:0;
+      const i=(y*160+x)*4;
+      map.data[i]=Math.max(0,Math.min(255,Math.round(128+u*radial*110)));
+      map.data[i+1]=Math.max(0,Math.min(255,Math.round(128+v*radial*110)));
+      map.data[i+2]=128;map.data[i+3]=255;
+    }
+    context.putImageData(map,0,0);
+    const image=canvas.toDataURL('image/png');
+    const ns='http://www.w3.org/2000/svg';
+    function node(name,attrs={}) {
+      const el=document.createElementNS(ns,name);
+      for(const [key,value] of Object.entries(attrs)) el.setAttribute(key,value);
       return el;
     }
     const svg=node('svg',{'aria-hidden':'true',focusable:'false'});
     svg.classList.add('svSharedGlassDefinitions');
     svg.style.cssText='position:absolute!important;width:0!important;height:0!important;overflow:hidden!important;pointer-events:none!important';
     const defs=node('defs');
-    const lens=node('filter',{id:'sv-shared-action-lens',x:'-20%',y:'-60%',width:'140%',height:'220%','color-interpolation-filters':'sRGB'});
-    lens.append(node('feImage',{href:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAABQCAIAAAB56TxyAAABOUlEQVR42u3d0YqCQBiGYccxb8Hb7dI7EGGmMQ86KfyeB5FgYTemefmXKC3b9pwOZTjm/twedXh8ev70o/GXzP0fap/AfkzHuX3Avyn9Xmpfyu82Ur3cY9cb6W0LtXtpN3vBSLZIgOwAqkVAACAAyAtgsQgkB/CwCAgAQgNYLQImAJgAIAAQAAgABAD3DsC7QJgAYAKAACArAJ8GRQCQGoAvxCAASA3AVSGIDsAlphAAZPIPEAIAAYAAQAAgABAACAAEAAIAAYAAQAAgABAACAAEAAIAAYAAQAAgABAACAAEAAIAAYAA4DdcHJfwAMwAogNwhxgEAKkBuEskAoDUANwpHgFAagCrRcAEABMABAACAAGAAODeAXgXCBMATAAQAGQF4NOgRAfgCzEIAAQAgQG4KgTBbH+ivQAMIANS6r6TbAAAAABJRU5ErkJggg==',x:'0',y:'0',width:'100%',height:'100%',preserveAspectRatio:'none',result:'map'}));
-    lens.append(node('feGaussianBlur',{in:'SourceGraphic',stdDeviation:'3',result:'soft'}));
-    lens.append(node('feDisplacementMap',{in:'soft',in2:'map',scale:'14',xChannelSelector:'R',yChannelSelector:'G'}));
-    defs.append(lens); svg.append(defs);
-    sharedLens=svg;document.body.append(svg);
+    const action=node('filter',{id:'sv-shared-action-lens',x:'-15%',y:'-35%',width:'130%',height:'170%','color-interpolation-filters':'sRGB'});
+    action.append(
+      node('feImage',{href:image,x:'0',y:'0',width:'100%',height:'100%',preserveAspectRatio:'none',result:'map'}),
+      node('feDisplacementMap',{in:'SourceGraphic',in2:'map',scale:'31',xChannelSelector:'R',yChannelSelector:'G'})
+    );
+    const panel=node('filter',{id:'sv-shared-panel-lens',x:'-10%',y:'-10%',width:'120%',height:'120%','color-interpolation-filters':'sRGB'});
+    panel.append(
+      node('feImage',{href:image,x:'0',y:'0',width:'100%',height:'100%',preserveAspectRatio:'none',result:'map'}),
+      node('feGaussianBlur',{in:'SourceGraphic',stdDeviation:'5',result:'soft'}),
+      node('feDisplacementMap',{in:'soft',in2:'map',scale:'13',xChannelSelector:'R',yChannelSelector:'G'})
+    );
+    defs.append(action,panel);svg.append(defs);
+    document.body.append(svg);
+    sharedLens=svg;
     document.body.classList.add('svSharedGlassReady');
   }
   function boot() {
