@@ -12,6 +12,8 @@
     '.svAuthPasswordToggle','.dsAuthSwitch > a','.genreDropdown summary',
     '.dsTabs a','.dsDetailTabsV121 > button','.pagination a',
     '.dsEpisodeChips a','.dsSearchBox button','.svSearchPopup button',
+    '.svPartyHub .partyNavigation > button','.svPartyHub .partyHeroActions > button',
+    '.svPartyHub .partySetup .sv100Card > button[type="submit"]',
     '.dsDropdownLogout','.dsEditProfileBtn'
   ].join(',');
   const panels = ['.svSearchPopup', '.dsSearchBox form', '.genreDropdownMenu', '.dsDetailTabsV121', '.dsAuthCard', '.dsAuthSwitch', '.dsProfileManagerPanel', '.dsAccountCard', '.dsProfileSelectCard', '.dsDetailGridV121 aside', '.dsAboutGridV121', '.dsSeasonBlock', '#controlPanel', '#toast', 'dialog'].join(',');
@@ -33,6 +35,12 @@
     '.svDetailReturn',
     '.svDetailChrome > :is(button,a)',
     '.dsAuthTopActions button[data-st-open]',
+    '.genreDropdown > summary',
+    '.dsProfilesQuickActions > :is(.dsSecondaryBtn,.dsGhostPill)',
+    '.dsHeroMiniActions > :is(.dsPrimaryBtn,.dsSecondaryBtn)',
+    '.svPartyHub .partyNavigation > button',
+    '.svPartyHub .partyHeroActions > button',
+    '.svPartyHub .partySetup .sv100Card > button[type="submit"]',
     '.dsAuthCard'
   ].join(',');
   function deactivate(entry) {
