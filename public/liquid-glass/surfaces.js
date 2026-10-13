@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   if (window.SwiflyGlassSurfaces) return;
-  const controls = ['.dsPrimaryBtn', '.dsSecondaryBtn', '.dsIconBtn', '.dsGhostPill', '.dsCardQuickActions .dsMiniBtn', '.dsRowBtn', '.dsClose', '.svResumePlay', '.svResumeRemove', '.svRowArrow', '.genreDropdown summary', '.dsTabs a', '.pagination a', '.dsEpisodeChips a'].join(',');
+  const controls = ['.dsPrimaryBtn', '.dsSecondaryBtn', '.dsIconBtn', '.dsGhostPill', '.dsCardQuickActions .dsMiniBtn', '.dsRowBtn', '.dsRowArrow', '.dsClose', '.svResumePlay', '.svResumeRemove', '.svRowArrow', '.svWelcomeStudio', '.svNavButton', '.dsAuthTopActions button[data-st-open]', '.genreDropdown summary', '.dsTabs a', '.pagination a', '.dsEpisodeChips a'].join(',');
   const panels = ['.svSearchPopup', '.dsSearchBox form', '.genreDropdownMenu', '.dsDetailTabsV121', '.dsAuthCard', '.dsAuthSwitch', '.dsProfileManagerPanel', '.dsAccountCard', '.dsProfileSelectCard', '.dsDetailGridV121 aside', '.dsAboutGridV121', '.dsSeasonBlock', '#controlPanel', '#toast', 'dialog'].join(',');
   const selector = controls + ',' + panels, entries = new Map(), pending = new Set();
   const rendererProperties = ['--sv-glass-default-tint', '--sv-glass-saturation', '--sv-glass-filter'];
