@@ -107,7 +107,9 @@
       const image = svgElement('svg', {viewBox:`0 0 ${width} ${height}`}), defs = svgElement('defs');
       for (const [id, attrs, color] of [
         ['x', {x1:'100%', y1:'0%', x2:'0%', y2:'0%'}, 'red'],
-        ['y', {x1:'0%', y1:'0%', x2:'0%', y2:'100%'}, 'blue']
+        // feDisplacementMap reads G for vertical motion. Blue here left G=0,
+        // creating a constant vertical shift instead of optical refraction.
+        ['y', {x1:'0%', y1:'0%', x2:'0%', y2:'100%'}, 'lime']
       ]) {
         const gradient = svgElement('linearGradient', {id, ...attrs});
         gradient.append(svgElement('stop', {offset:'0%', 'stop-color':color, 'stop-opacity':0}), svgElement('stop', {offset:'100%', 'stop-color':color}));
