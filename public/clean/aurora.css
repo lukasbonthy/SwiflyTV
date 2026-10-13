@@ -1,117 +1,105 @@
-/* Swifly v166 — quiet, consistent Aurora across the actual catalog.
-   A soft ambient layer + explicit washes on opaque page sections. */
+/* v167 — ShuttleTV-inspired soft northern light. A single continuous scene across routes.
+   No boxed section gradients, no SVG stripes. Motion uses compositor transforms only. */
 body.svCleanShell { isolation:isolate;position:relative; }
-body.svCleanShell[data-st-backdrop="aurora"] { background-color:var(--st-canvas,#030508); }
 body.svCleanShell .svAuroraBackground {
-  display:none;position:fixed; inset:0; width:100%;height:100svh;z-index:0;
-  overflow:hidden;pointer-events:none;contain:layout paint;
-  opacity:calc(var(--sv-aurora-strength,.8) * .44);
-  -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 32%,#0009 60%,transparent 88%);
-  mask-image:linear-gradient(to bottom,#000 0%,#000 32%,#0009 60%,transparent 88%);
+  display:none;position:fixed;inset:0;width:100%;height:100svh;
+  z-index:40;pointer-events:none;overflow:hidden;contain:layout paint;
+  isolation:isolate;mix-blend-mode:screen;
+  opacity:var(--sv-aurora-strength,.8);
+  -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 25%,#000c 49%,transparent 84%);
+  mask-image:linear-gradient(180deg,#000 0%,#000 25%,#000c 49%,transparent 84%);
 }
 body.svCleanShell[data-st-backdrop="aurora"] .svAuroraBackground { display:block; }
 body.svCleanShell[data-sv-aurora-state="off"] .svAuroraBackground,
 body.svCleanShell:has(.svPlayerPage,.dsWatchPage) .svAuroraBackground {display:none;}
-/* Background is behind text and thumbnails, while navigation/dialogs stay interactive. */
+/* The background floats ABOVE opaque section canvases without intercepting any interaction.
+   The floating nav remains above the glow; forms stay visible through its dark glass. */
 body.svCleanShell > main,body.svCleanShell > .footer {position:relative;z-index:1;}
 body.svCleanShell > .topbar {z-index:1005;}
 body.svCleanShell > .svAppearanceTexture {z-index:2;pointer-events:none;}
-body.svCleanShell .svAuroraRibbon {
-  display:block;position:absolute;left:-18%;top:-25%;width:136%;height:94%;
-  background:url("./aurora-ribbon.svg?v=166") center / 100% 100% no-repeat;
-  filter:hue-rotate(var(--sv-aurora-hue,0deg)) saturate(.67);
-  transform-origin:50% 20%;
+body.svCleanShell .svAuroraBackground > .svAuroraGlow {
+  display:block;position:absolute;left:-18%;top:-35%;width:138%;height:102%;
+  background:radial-gradient(ellipse 55% 56% at 30% 45%,rgba(0,177,103,.22),transparent 76%),
+             radial-gradient(ellipse 55% 40% at 78% 36%,rgba(12,143,121,.18),transparent 82%);
+  filter:hue-rotate(var(--sv-aurora-hue,0deg));
+  animation:svAuroraBreath calc(var(--sv-aurora-speed,38s) * 1.35) ease-in-out infinite alternate paused;
+}
+body.svCleanShell .svAuroraBackground > .svAuroraRibbon {
+  display:block;position:absolute;border-radius:48% 52% 63% 37% / 65% 38% 62% 35%;
+  filter:blur(clamp(50px,6vw,100px)) hue-rotate(var(--sv-aurora-hue,0deg));
+  transform:translate3d(0,0,0);will-change:transform,opacity;
   animation:svAuroraWaveA var(--sv-aurora-speed,38s) ease-in-out infinite alternate paused;
 }
-body.svCleanShell .svAuroraRibbon--first {opacity:.48;}
-body.svCleanShell .svAuroraRibbon--second {
-  width:132%;height:90%;left:-38%;top:-12%;opacity:.23;
-  animation-name:svAuroraWaveB;
-  animation-duration:calc(var(--sv-aurora-speed,38s) * 1.34);
-  animation-delay:-16s;
+body.svCleanShell .svAuroraBackground > .svAuroraRibbon--first {
+  left:-26%;top:-33%;width:103%;height:66%;opacity:.78;
+  background:radial-gradient(ellipse 54% 65% at 49% 50%,rgba(0,219,116,.80) 0%,rgba(0,141,84,.48) 46%,transparent 78%);
 }
-body.svCleanShell .svAuroraRibbon--third {
-  width:136%;height:86%;left:11%;top:-35%;opacity:.16;
-  animation-name:svAuroraWaveC;
-  animation-duration:calc(var(--sv-aurora-speed,38s) * 1.76);
-  animation-delay:-23s;
+body.svCleanShell .svAuroraBackground > .svAuroraRibbon--second {
+  left:26%;top:-43%;width:91%;height:70%;opacity:.65;
+  background:radial-gradient(ellipse 56% 70% at 42% 48%,rgba(0,199,128,.70) 0%,rgba(0,110,101,.36) 51%,transparent 79%);
+  animation-name:svAuroraWaveB;animation-duration:calc(var(--sv-aurora-speed,38s) * 1.19);animation-delay:-12s;
 }
-body.svCleanShell .svAuroraGlow {
-  position:absolute;inset:-14%;display:block;opacity:.2;
-  background:radial-gradient(ellipse 40% 44% at 25% 18%,#4faba748,transparent 88%),
-             radial-gradient(ellipse 48% 40% at 86% 24%,#8b85c73b,transparent 84%);
-  filter:hue-rotate(var(--sv-aurora-hue,0deg));
-  animation:svAuroraBreath calc(var(--sv-aurora-speed,38s) * 1.6) ease-in-out infinite alternate paused;
+body.svCleanShell .svAuroraBackground > .svAuroraRibbon--third {
+  left:-8%;top:-10%;width:107%;height:55%;opacity:.40;
+  background:radial-gradient(ellipse 56% 56% at 48% 42%,rgba(0,129,118,.57) 0%,rgba(25,116,114,.29) 51%,transparent 80%);
+  animation-name:svAuroraWaveC;animation-duration:calc(var(--sv-aurora-speed,38s) * 1.55);animation-delay:-23s;
 }
-body.svCleanShell[data-sv-aurora-state="live"]:not([data-st-aurora-motion="still"]) .svAuroraBackground :is(.svAuroraRibbon,.svAuroraGlow) {animation-play-state:running;}
+body.svCleanShell[data-sv-aurora-state="live"]:not([data-st-aurora-motion="still"]) .svAuroraBackground > :is(.svAuroraRibbon,.svAuroraGlow) {
+  animation-play-state:running;
+}
 @keyframes svAuroraWaveA {
-  0% {transform:translate3d(-2%,-1%,0) rotate(-2deg) scaleX(.98);}
-  50% {transform:translate3d(2%,3%,0) rotate(2deg) scaleX(1.025);}
-  100% {transform:translate3d(5%,-2%,0) rotate(-1deg) scaleX(.96);}
+  0% {transform:translate3d(-10%,-5%,0) rotate(-6deg) scale(.9);opacity:.70;}
+  32% {transform:translate3d(1%,9%,0) rotate(3deg) scale(1.05);opacity:.87;}
+  66% {transform:translate3d(10%,-3%,0) rotate(-3deg) scale(.97);opacity:.75;}
+  100% {transform:translate3d(-1%,8%,0) rotate(5deg) scale(1.12);opacity:.96;}
 }
 @keyframes svAuroraWaveB {
-  0% {transform:translate3d(5%,-4%,0) rotate(3deg) scale(1.05);}
-  52% {transform:translate3d(-4%,2%,0) rotate(-3deg) scale(.95);}
-  100% {transform:translate3d(-7%,4%,0) rotate(1deg) scale(1.02);}
+  0% {transform:translate3d(10%,6%,0) rotate(4deg) scale(.96);}
+  38% {transform:translate3d(-9%,-8%,0) rotate(-5deg) scale(1.07);}
+  69% {transform:translate3d(-15%,6%,0) rotate(3deg) scale(.92);}
+  100% {transform:translate3d(5%,-4%,0) rotate(-2deg) scale(1.04);}
 }
 @keyframes svAuroraWaveC {
-  0% {transform:translate3d(-4%,2%,0) rotate(-2deg) scale(.98);}
-  50% {transform:translate3d(3%,-5%,0) rotate(2deg) scale(1.05);}
-  100% {transform:translate3d(6%,2%,0) rotate(-1deg) scale(.97);}
+  0% {transform:translate3d(-3%,7%,0) rotate(-3deg) scale(1.1);}
+  45% {transform:translate3d(9%,-11%,0) rotate(2deg) scale(.94);}
+  100% {transform:translate3d(-10%,8%,0) rotate(-4deg) scale(1.03);}
 }
 @keyframes svAuroraBreath {
-  from {transform:translate3d(-4%,1%,0) scale(.97);}
-  to {transform:translate3d(5%,-2%,0) scale(1.07);}
+  from {transform:translate3d(-5%,3%,0) scale(.96);opacity:.65;}
+  to {transform:translate3d(6%,-4%,0) scale(1.08);opacity:1;}
 }
-/* The v165 backdrop was hidden by individual opaque content backgrounds.
-   Paint very soft, palette-controlled light inside those surfaces themselves. */
-body.svCleanShell[data-st-backdrop="aurora"] :is(.dsHero,.dsPageHero,.dsBrowseTop,.dsWelcomePage,.dsAuthPageSafe) {
-  background-color:transparent !important;
-}
-body.svCleanShell[data-st-backdrop="aurora"] :is(.dsContent,.dsPlainPage,.dsAccountPage,.dsProfilesPage,.dsSearchPage,.dsWatchlistPage,.dsWelcomeDiscovery,.dsDetailBody,.netflixCatalog) {
-  background-color:transparent !important;
-  background-image:
-    radial-gradient(ellipse 55% 390px at 18% 4%,var(--sv-aurora-wash-a,#57a9b71a),transparent 94%),
-    radial-gradient(ellipse 45% 320px at 90% 22%,var(--sv-aurora-wash-b,#7e75b51c),transparent 90%) !important;
-  background-repeat:no-repeat !important;
-}
-/* Catalog rail sections remain transparent while having ambient light in their own canvas. */
-body.svCleanShell[data-st-backdrop="aurora"] :is(.dsRow,.nfRowSection,.dsRail,.dsWelcomeRail,.dsGrid,.movieRail) {background-color:transparent !important;}
-/* Hero artwork is real content. The ambient field complements it rather than blanketing posters. */
-body.svCleanShell[data-st-backdrop="aurora"] .dsHeroGlass::after {
-  content:"";position:absolute;inset:0;pointer-events:none;opacity:.075;
-  background:url("./aurora-ribbon.svg?v=166") center 15%/115% 95% no-repeat;
-  filter:hue-rotate(var(--sv-aurora-hue,0deg));
-  animation:svAuroraWaveB calc(var(--sv-aurora-speed,38s) * 1.5) ease-in-out infinite alternate paused;
-}
-body.svCleanShell[data-st-backdrop="aurora"][data-sv-aurora-state="live"]:not([data-st-aurora-motion="still"]) .dsHeroGlass::after {animation-play-state:running;}
-/* Only correct v165's heavy Aurora hero tint, not the underlying film artwork. */
-body.svCleanShell .dsContent::before,body.svCleanShell .dsContent::after {display:none !important;animation:none !important;}
+/* Studio miniature uses the same green-cloud aesthetic without an image asset. */
 .stPreviewAurora {
   display:none;position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;
-  background:linear-gradient(0deg,var(--st-canvas,#000),#0006 95%);
-  opacity:calc(var(--sv-aurora-strength,.8) * .7);
+  background:linear-gradient(0deg,var(--st-canvas,#000),transparent 85%);
+  opacity:var(--sv-aurora-strength,.8);
 }
 body[data-st-backdrop="aurora"] .stPreviewAurora {display:block;}
-body.svCleanShell .stPreviewAurora > .svAuroraRibbon {animation:none;top:-25%;height:150%;width:160%;left:-30%;}
-body.svCleanShell .stPreviewAurora > .svAuroraRibbon--second {left:-45%;top:-12%;}
-body.svCleanShell .stPreviewAurora > .svAuroraRibbon--third {left:3%;top:-35%;}
-body.svCleanShell .stPreviewAurora > .svAuroraGlow {animation:none;}
+body.svCleanShell .stPreviewAurora > .svAuroraGlow {
+  display:block;position:absolute;inset:-25%;
+  background:radial-gradient(ellipse 80% 50% at 30% 20%,rgba(0,169,119,.4),transparent 78%);
+  filter:hue-rotate(var(--sv-aurora-hue,0deg));
+}
+body.svCleanShell .stPreviewAurora > .svAuroraRibbon {
+  display:block;position:absolute;border-radius:50%;filter:blur(32px) hue-rotate(var(--sv-aurora-hue,0deg));
+  background:radial-gradient(ellipse at center,rgba(0,216,132,.6),transparent 72%);animation:none;
+}
+body.svCleanShell .stPreviewAurora > .svAuroraRibbon--first {width:85%;height:80%;left:-24%;top:-46%;}
+body.svCleanShell .stPreviewAurora > .svAuroraRibbon--second {width:88%;height:82%;left:35%;top:-44%;opacity:.8;}
+body.svCleanShell .stPreviewAurora > .svAuroraRibbon--third {width:80%;height:75%;left:2%;top:-16%;opacity:.25;}
 .stPreviewScene > :is(.stPreviewNav,.stPreviewCopy) {position:relative;z-index:1;}
 .stPreviewScene > .stPreviewCopy {position:absolute;}
+/* No extra panel backgrounds, no rectangular "aurora" box around welcome discovery. */
 body.reduceMotion .svAuroraBackground *,
-body.reduceMotion .dsHeroGlass::after,
 body.svCleanShell[data-sv-aurora-state="still"] .svAuroraBackground *,
 body.svCleanShell[data-st-aurora-motion="still"] .svAuroraBackground * {animation:none !important;}
 @media(prefers-reduced-motion:reduce) {
-  body.svCleanShell .svAuroraBackground *,
-  body.svCleanShell .dsHeroGlass::after {animation:none !important;}
+  body.svCleanShell .svAuroraBackground * {animation:none !important;}
 }
 @media(max-width:680px) {
-  body.svCleanShell .svAuroraBackground .svAuroraRibbon {left:-62%;width:224%;top:-15%;height:73%;}
-  body.svCleanShell .svAuroraBackground .svAuroraRibbon--third {display:none;}
-  body.svCleanShell[data-st-backdrop="aurora"] .dsHeroGlass::after {opacity:.04;}
-  body.svCleanShell[data-st-backdrop="aurora"] :is(.dsContent,.dsPlainPage,.dsAccountPage,.dsProfilesPage,.dsSearchPage,.dsWatchlistPage,.dsWelcomeDiscovery,.dsDetailBody,.netflixCatalog) {
-    background-image:radial-gradient(ellipse 95% 290px at 32% 0%,var(--sv-aurora-wash-a,#57a9b71a),transparent 92%) !important;
-  }
+  body.svCleanShell .svAuroraBackground > .svAuroraRibbon--first {width:170%;left:-61%;top:-19%;height:56%;}
+  body.svCleanShell .svAuroraBackground > .svAuroraRibbon--second {width:145%;left:25%;top:-31%;height:65%;}
+  body.svCleanShell .svAuroraBackground > .svAuroraRibbon--third {display:none;}
+  body.svCleanShell .svAuroraBackground > .svAuroraRibbon {filter:blur(54px) hue-rotate(var(--sv-aurora-hue,0deg));}
 }
+@media print {body.svCleanShell .svAuroraBackground {display:none !important;}}
