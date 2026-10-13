@@ -422,9 +422,9 @@ test('v188 lifts cinema brightness and hue without duplicating film art or darke
  const hero=d.querySelector('main > .dsHero');
  const nav=d.querySelector('.netflixNav > .svLiquidPane');
  assert(hero && nav);
- assert.equal(nav.dataset.glassTint,'0.035');
- assert.equal(nav.dataset.glassBlur,'3.6');
- assert.equal(nav.dataset.glassSaturation,'1.25');
+ assert.equal(nav.dataset.glassTint,'0.025');
+ assert.equal(nav.dataset.glassBlur,'2.4');
+ assert.equal(nav.dataset.glassSaturation,'1.28');
  assert(d.querySelector('script[src="/assets/liquid-glass/liquid-glass.js?v=196"]'));
  const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=197')).text();
  assert.match(css,/filter:brightness\(1\.10\) saturate\(1\.24\) contrast\(1\.035\)/);
@@ -439,22 +439,22 @@ test('v188 lifts cinema brightness and hue without duplicating film art or darke
  assert.doesNotMatch(palette,/appendChild\(image\)/);
 });
 
-test('v189 navbar opts into edge-refraction, keeps a real SVG lens and bright rim, and preserves high-contrast fallback',async()=>{
+test('v197 navbar has clearer edge-refraction while preserving fallback and Safari isolation',async()=>{
   const d=parse(await(await fetch(base+'/')).text()).window.document;
   const nav=d.querySelector('.netflixNav > .svLiquidPane');
   assert(nav,'navbar must have exactly one optical child pane');
   assert.equal(d.querySelectorAll('.netflixNav > .svLiquidPane').length,1);
-  assert.equal(nav.dataset.glassDistortion,'-220');
-  assert.equal(nav.dataset.glassDisplace,'0.22');
-  assert.equal(nav.dataset.glassBorderWidth,'0.15');
+  assert.equal(nav.dataset.glassDistortion,'-240');
+  assert.equal(nav.dataset.glassDisplace,'0.16');
+  assert.equal(nav.dataset.glassBorderWidth,'0.16');
   assert.equal(nav.dataset.glassMapOpacity,'0.98');
-  assert.equal(nav.dataset.glassTint,'0.035');
+  assert.equal(nav.dataset.glassTint,'0.025');
   const js=await(await fetch(base+'/assets/liquid-glass/liquid-glass.js?v=196')).text();
   assert.match(js,/distortionScale:numeric\(element, 'glassDistortion', -180\)/);
   assert.match(js,/displace:numeric\(element, 'glassDisplace', .5\)/);
   const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=197')).text();
   assert.match(css,/\.netflixNav > \.svLiquidPane\[data-swifly-renderer="svg"\]/);
-  assert.match(css,/backdrop-filter:var\(--sv-glass-filter\) saturate\(1\.25\)/);
+  assert.match(css,/backdrop-filter:var\(--sv-glass-filter\) saturate\(1\.30\)/);
   assert.match(css,/mask-composite:exclude/,'rim must remain a thin edge, not a white overlay');
   assert.match(css,/prefers-reduced-transparency:reduce/);
   assert.doesNotMatch(css,/data:image\/|background-image:url\(/,'navbar does not draw a second movie image');
