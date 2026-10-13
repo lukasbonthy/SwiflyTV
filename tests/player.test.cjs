@@ -153,10 +153,14 @@ test('Known discovery failures show useful safe messages in both solo and party 
   await e.api.loadSource({status:'error',code:'browser_unavailable',message:'SECRET provider path'});
   assert.match(e.d.querySelector('[data-player-status-copy]').textContent,/service|browser/i);
   assert.doesNotMatch(e.d.querySelector('[data-player-status-copy]').textContent,/SECRET/);
+  assert.equal(e.app.dataset.playerFailureCode,'browser_unavailable');
+  assert.match(e.d.querySelector('[data-player-status-label]').textContent,/BROWSER UNAVAILABLE/);
   const solo=setup({managed:false},env=>env.w.fetch=async()=>({ok:true,json:async()=>({status:'error',code:'provider_blocked',message:'SECRET'})}));
   await solo.advance(50);
   assert.match(solo.d.querySelector('[data-player-status-copy]').textContent,/source.*respond|source.*reject|provider|restricted/i);
   assert.doesNotMatch(solo.d.querySelector('[data-player-status-copy]').textContent,/SECRET/);
+  assert.equal(solo.app.dataset.playerFailureCode,'provider_blocked');
+  assert.match(solo.d.querySelector('[data-player-status-label]').textContent,/PROVIDER BLOCKED/);
 });
 test('Joining a party cancels solo resolution and guest Retry cannot request shared transport',async()=>{
   let signal,calls=0,retries=0;const e=setup({managed:false},e=>e.w.fetch=(_url,options)=>{calls++;signal=options.signal;return new Promise(()=>{});});await flush();e.app.addEventListener('swiflyplayer:retry',()=>retries++);e.api.setRemoteMode({enabled:true,isHost:false});assert.equal(signal.aborted,true);await e.api.loadSource({status:'error'});assert.equal(e.d.querySelector('[data-player-retry]').disabled,true);e.api.resolve({retry:true});assert.equal(retries,0);assert.equal(calls,1);e.api.setRemoteMode({enabled:true,isHost:true});e.api.resolve({retry:true});assert.equal(retries,1);e.api.setRemoteMode({enabled:false,isHost:false});e.api.resolve();await flush();assert.equal(calls,2);
