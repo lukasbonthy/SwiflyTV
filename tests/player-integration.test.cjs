@@ -68,8 +68,13 @@ test('An early legacy room update can attach desktop native HLS before optional 
  assert.equal(d.getElementById('roomMovieVideo').src,src);
  assert.equal(d.getElementById('roomMovieHlsStatus').classList.contains('isError'),false);
 });
-test('Party navigation opens the same movie catalog with its existing hero, genres, and rows',async()=>{
- const redirect=await fetch(base+'/social',{redirect:'manual'});assert.equal(redirect.status,302);assert.equal(redirect.headers.get('location'),'/movies?party=1#watch-together');
+test('Social navigation opens the integrated Party Hub while movie catalog party browse remains available',async()=>{
+ const response=await fetch(base+'/social',{redirect:'manual'});
+ assert.equal(response.status,200);
+ const social=parse(await response.text()).window.document;
+ assert(social.querySelector('main.svPartyHub .partyHero'),'Social link should show the proper cinematic Party Hub');
+ assert(social.querySelector('.partyNavigation [data-tab="rooms"]'));
+ assert(social.querySelector('link[href="/assets/clean/experience.css?v=184"]'));
  const env=parse(await(await fetch(base+'/movies?party=1')).text()),d=env.window.document;
  assert.equal(d.querySelector('.dsBrowseTop h1').textContent.trim(),'Movies');assert(d.querySelector('.genreDropdown'));assert(d.querySelector('.dsHero'));
  assert(d.querySelector('[data-party-browse]'));assert(d.querySelector('.dsContent'));assert.equal(d.querySelector('.svPartyHub'),null);
