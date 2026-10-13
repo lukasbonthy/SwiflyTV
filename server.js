@@ -6403,7 +6403,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=161" /><script defer src="/assets/player/watch-party.js?v=160"></script>' : ""}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/finish.css?v=175" />'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/polish.css?v=176" />'}
-    <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=184" />
+    <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=185" />
     ${player ? "" : '<link rel="stylesheet" href="/assets/liquid-glass/controls.css?v=182" />'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/experience.css?v=184" />'}
 </head>
@@ -8086,7 +8086,7 @@ async function homePage(req, res) {
   const hero = pickHero([...(trendingMovies.results || []), ...(popularMovies.results || []), ...(trendingTv.results || []).map(item => ({ ...item, media_type: "tv" }))]);
   const body = `<main>
     ${hero.id ? dsHero({ hero, context: "Featured" }) : dsPageHeader("Discover", "Explore movies and series.")}
-    <section class="dsContent ${hero.id ? "" : "noHero"}"${hero.id ? dsCinemaArtStyle(hero) : ""}>
+    <section class="dsContent ${hero.id ? "" : "noHero"}">
       <section id="continueWatchingSection" class="svResumeSection" hidden>
         <div class="svSectionHead"><h2>Continue watching</h2><div class="svSectionActions"><a class="svRowMore" href="/continue-watching">View all</a><div class="svRowArrows"><button class="svRowArrow" type="button" data-continue-scroll="-1" aria-label="Scroll Continue Watching left">‹</button><button class="svRowArrow" type="button" data-continue-scroll="1" aria-label="Scroll Continue Watching right">›</button></div></div></div>
         <div id="continueWatchingRail" class="svResumeRail" aria-label="Continue Watching titles"></div>
@@ -8147,11 +8147,6 @@ function metaMatch(item = {}) {
   const rating = Number(item.vote_average || 0);
   const score = rating ? Math.round(Math.min(98, Math.max(72, rating * 10 + 8))) : 91;
   return `${score}% Match`;
-}
-
-function dsCinemaArtStyle(hero = {}) {
-  const path = hero?.backdrop_path || hero?.poster_path;
-  return path ? ` style="--sv-cinema-art:url('${escapeHtml(fullBackdrop(path))}')"` : "";
 }
 
 function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = null, embedOrigin = "" }) {
@@ -8545,7 +8540,7 @@ async function listingPage(req, res, type = "movie", options = {}) {
       </details>
     </section>
     ${dsHero({ hero, type, context: label, eyebrow: `${label} spotlight` })}
-    <section class="dsContent"${dsCinemaArtStyle(hero)}>
+    <section class="dsContent">
       ${partyBrowse ? partyBrowseMarkup() : ""}
       ${dsRail(categoryOne, rowOne.results || [], type)}
       ${dsTopRail(type === "tv" ? "Top 10 TV Shows Today" : "Top Movies Today", data.results || [], type)}
@@ -8575,7 +8570,7 @@ async function trendingPage(req, res) {
   const hero = pickHero((data.results || []).filter((item) => ["movie", "tv"].includes(getType(item))));
   const body = `<main>
     ${dsHero({ hero, context: "New & Popular", eyebrow: "Fresh on SwiflyTV" })}
-    <section class="dsContent"${dsCinemaArtStyle(hero)}>
+    <section class="dsContent">
       <div class="dsTabs">
         <a class="${type === "all" ? "active" : ""}" href="/trending?type=all">All</a>
         <a class="${type === "movie" ? "active" : ""}" href="/trending?type=movie">Movies</a>
