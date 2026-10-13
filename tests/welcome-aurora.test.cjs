@@ -243,3 +243,19 @@ test('Studio mounts independently animated aurora curtains on the page and in it
   assert.match(css,/svPlayerPage/,'playback should suppress the ambience');
   assert.match(css,/prefers-reduced-motion/);
 });
+
+test('Aurora palette reaches visible catalog sections and respects the saved backdrop',()=>{
+  const env=studio(),w=env.window,d=w.document;
+  assert.equal(d.body.style.getPropertyValue('--sv-aurora-wash-a'),'#57a9b71a');
+  env.click('#controlToggleTop');
+  env.click('[data-st-field="auroraColor"][data-st-value="rose"]');
+  assert.equal(d.body.style.getPropertyValue('--sv-aurora-wash-a'),'#a470971b');
+  env.click('[data-st-cancel]');
+  assert.equal(d.body.style.getPropertyValue('--sv-aurora-wash-a'),'#57a9b71a');
+  const css=fs.readFileSync(path.join(__dirname,'../public/clean/aurora.css'),'utf8');
+  assert.match(css,/\.dsContent,\.dsPlainPage,\.dsAccountPage,\.dsProfilesPage/);
+  assert.match(css,/--sv-aurora-wash-a/);
+  assert.match(css,/background-image:[\s\S]*radial-gradient/);
+  assert.match(css,/data-st-backdrop="aurora"/);
+  assert.match(css,/svPlayerPage/);
+});
