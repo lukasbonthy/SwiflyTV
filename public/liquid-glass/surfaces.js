@@ -30,6 +30,7 @@
     '.svAuthPasswordToggle',
     '.dsAuthSwitch > a',
     '.dsDropdownLogout',
+    '.svDetailReturn',
     '.svDetailChrome > :is(button,a)',
     '.dsAuthTopActions button[data-st-open]',
     '.dsAuthCard'
