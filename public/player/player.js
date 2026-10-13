@@ -88,7 +88,7 @@
       statusPanel.hidden=!visible;stage.setAttribute('aria-busy',String(next==='loading'||next==='buffering'));
       find('status-title').textContent=title||({loading:'Getting your movie ready',waiting:'Waiting for your party',buffering:'Buffering…',error:'This movie couldn’t start.'}[next]||'');
       find('status-copy').textContent=copy||({loading:'Making your seat comfortable. This should only take a moment.',waiting:'Your host will choose when to start.',buffering:'Playback will continue as soon as the next scene is ready.'}[next]||'');
-      find('status-label').textContent=next==='error'?'PLAYBACK UNAVAILABLE':next==='buffering'?'ONE MOMENT':'YOUR MOVIE NIGHT';
+      find('status-label').textContent=next==='error'?(app.dataset.playerFailure==='no_source'?'NO VIDEO SOURCE':app.dataset.playerFailure==='provider_blocked'?'SOURCE REJECTED':app.dataset.playerFailure==='timeout'?'SOURCE TIMED OUT':'PLAYBACK UNAVAILABLE'):next==='buffering'?'ONE MOMENT':'YOUR MOVIE NIGHT';
       find('retry').hidden=next!=='error';updateControls();emitState();
     }
     function stopWatchdog() {clearTimeout(stallTimer);stallTimer=0;}
@@ -108,8 +108,9 @@
       if(replace){video=old.cloneNode(false);video.controls=false;video.volume=volume;video.muted=muted;video.playbackRate=rate;old.replaceWith(video);}
       updateControls();
     }
-    function fail(message) {
+    function fail(message,code='') {
       if(destroyed||suspended)return;
+      app.dataset.playerFailure=String(code||'playback_error').replace(/[^a-z_]/g,'').slice(0,40);
       retryResume=number(video.currentTime,0);cancelResolver();teardownMedia();
       sourceData=null;
       setStatus('error','This movie couldn’t start.',message||'The movie is unavailable right now. Try again in a moment.');
@@ -198,7 +199,7 @@
         cancelResolver();teardownMedia({replace:true});source='';sourceData=null;loadingKey=key;mediaId=nextId;mediaType=nextType;setStatus('loading');
         const deadline=deadlineForSnapshot(data,Date.now()+config.resolve);watchProgress({delay:Math.min(config.resolve,Math.max(1,deadline-Date.now()))});return false;
       }
-      if(['error','disabled','idle'].includes(data?.status)){fail(discoveryMessage(data));return false;}
+      if(['error','disabled','idle'].includes(data?.status)){fail(discoveryMessage(data),data?.code||'unavailable');return false;}
       const next=chooseSource(data);
       if(!next){fail('The movie is unavailable right now. Try again in a moment.');return false;}
       const nextId=String(data.movieId||data.mediaId||mediaId),nextType=data.type==='tv'?'tv':data.type==='movie'?'movie':mediaType;
@@ -278,7 +279,7 @@
             if(!await waitPoll(1000))return false;
             continue;
           }
-          if(data?.status!=='loading'){fail(discoveryMessage(data));return false;}
+          if(data?.status!=='loading'){fail(discoveryMessage(data),data?.code||'unavailable');return false;}
           const serverDeadline=deadlineForSnapshot(data,lookupDeadline);lookupDeadline=Math.min(lookupDeadline,serverDeadline);
           const remaining=lookupDeadline-Date.now();if(remaining<=0){fail('The movie took too long to become available. Try again in a moment.');return false;}
           const interval=Math.min(config.pollMax,Math.max(config.pollMin,number(data.retryAfterMs,700)));if(!await waitPoll(Math.min(interval,remaining)))return false;
