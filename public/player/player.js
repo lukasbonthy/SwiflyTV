@@ -261,6 +261,8 @@
         if(Date.now()>=lookupDeadline){fail('The movie took too long to become available. Try again in a moment.');return false;}
         const requestQuery=new URLSearchParams(query);if(retry&&first)requestQuery.set('retry','1');first=false;
         try {
+          const waitMs=Math.max(0,Math.min(8000,config.request-1000,lookupDeadline-Date.now()-1000));
+          if(waitMs>0)requestQuery.set('wait',String(Math.floor(waitMs)));
           const queryText=requestQuery.toString();
           const data=await requestJson(endpoint+(queryText?'?'+queryText:''),Math.min(config.request,lookupDeadline-Date.now()));
           if(destroyed||suspended||token!==resolverGeneration||!app.isConnected)return false;

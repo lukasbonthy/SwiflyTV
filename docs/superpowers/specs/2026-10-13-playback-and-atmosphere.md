@@ -1,0 +1,11 @@
+# SwiflyTV playback speed and atmosphere
+
+The current providers now work for Lukas. Keep those sources, their media validation, and the existing player; the CineSrc replacement is cancelled. Reduce unnecessary retrieval delay and frontend work, give mouse-wheel scrolling more weight without interfering with native input, and redesign the welcome page around the same dark glass visual system as the catalog. Add a restrained aurora backdrop with Studio preview/save/cancel support.
+
+Source discovery starts the preferred source immediately and hedges a second source after 1.8 seconds. At most two captures run per lookup. A validated winner cancels the other capture, and the lookup awaits physical cleanup before freeing its resolver slot. The existing route/provider/job deadlines, source cache, credential protection, TV episode inputs, and optional adapters remain. Capture must not wait for unrelated navigation after media has been verified.
+
+The shared legacy stylesheet becomes a local cached asset with identical CSS. Catalog/welcome pages stop fetching media libraries and unused UI frameworks. Ordinary glass surfaces use lightweight blur and highlights; navigation keeps its refraction. Observers and scroll presentation avoid repeated subtree scans/layout reads. Desktop wheel motion preserves distance, responds promptly to reversal, and settles naturally. Trackpad, touch, keyboard, player controls, nested panels, reduced motion, and native preference remain native.
+
+The welcome page uses real TMDB artwork, clear signup/login actions and catalog previews; it works without metadata. Aurora uses a bounded decorative layer with cyan/teal/violet ribbons, slow transforms, no continuous JavaScript drawing, and static reduced-motion rendering. It pauses in hidden tabs and on playback pages. Existing saved appearance choices survive; new users see Aurora.
+
+Reference: the requested ShuttleTV settings page and its linked .pk mirror both returned client-side exceptions in this session. The effect can follow the requested direction, but exact visual equivalence cannot be claimed. Local browser previews were previously denied; no browser or network workaround is permitted. Validate source behavior with fake Playwright fixtures and frontend behavior with DOM/HTTP fixtures.

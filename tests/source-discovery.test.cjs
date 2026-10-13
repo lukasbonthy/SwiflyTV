@@ -20,6 +20,7 @@ function fixture() {
     STREAMPROVIDER_ENABLED: true, STREAMPROVIDER_ORDER: ['hexa', 'cinezo'],
     STREAMPROVIDER_NAV_TIMEOUT_MS: 10, STREAMPROVIDER_STREAM_TIMEOUT_MS: 10,
     STREAMPROVIDER_ROUTE_TIMEOUT_MS: 30, STREAMPROVIDER_PROVIDER_TIMEOUT_MS: 20,
+    STREAMPROVIDER_HEDGE_DELAY_MS: 5, STREAMPROVIDER_MAX_CONCURRENT: 2,
     STREAMPROVIDER_SFLIX_BASE_URL: 'https://search.example',
     apiClean: value => String(value || '').trim(), apiResolveTmdbIdForApi: async () => '101',
     apiIsYouTubeUrl: () => false, apiLooksDefinitelyNonMediaUrl: () => false,
@@ -30,6 +31,7 @@ function fixture() {
     apiExtractMediaUrlsFromStringDeep: text => text.match(/https?:\/\/[^\s"<>]+\.(?:m3u8|mp4)(?:\?[^\s"<>]*)?/g) || [],
     apiFindPlayableFromPayload: async ({ payload }) => ({ status: 'ok', playbackUrl: payload.sources[0].url, streamType: payload.sources[0].format }),
     createBrowserRuntime: () => ({ getBrowser() { throw new Error('unexpected browser startup'); }, getStatus: () => ({ status: 'idle' }) }),
+    runProviderRace: require('../lib/provider-race').runProviderRace,
     ...(fs.existsSync(path.join(root, 'lib/provider-capture.js')) ? { captureProviderMedia: require('../lib/provider-capture') .captureProviderMedia } : {})
   };
   vm.runInNewContext(scraper + `\nglobalThis.api = {
@@ -71,6 +73,110 @@ function response(url, status = 200, contentType = 'video/mp4', text = '', reque
   };
 }
 const flush = async () => { for (let n = 0; n < 40; n++) await Promise.resolve(); };
+function deferred() {
+  let resolve, reject;
+  const promise = new Promise((done, fail) => { resolve = done; reject = fail; });
+  return { promise, resolve, reject };
+}
+
+test('a verified response returns before unrelated navigation finishes', async () => {
+  const f = fixture(), navigation = deferred();
+  const n = network(f, { navigate: async emit => {
+    await emit('response', response('https://media.example/master.m3u8', 200, 'application/x-mpegurl', '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=1\nmain.m3u8'));
+    await navigation.promise;
+  } });
+  let settled = false;
+  const pending = f.capture({ provider: 'hexa', url: n.page.url() }).then(result => { settled = true; return result; });
+  await flush();
+  const returnedBeforeNavigation = settled;
+  navigation.resolve();
+  const result = await pending;
+  assert.equal(returnedBeforeNavigation, true, 'confirmed media must not wait for domcontentloaded');
+  assert.equal(result.source.url, 'https://media.example/master.m3u8');
+  assert.equal(n.counts().closes, 1);
+});
+
+test('a verified network response interrupts an unfinished frame inspection', async () => {
+  const f = fixture(), frameRead = deferred();
+  const frame = { url: () => 'https://embed.example/player', evaluate: () => frameRead.promise, content: async () => '' };
+  const n = network(f, { childFrame: frame });
+  let settled = false;
+  const pending = f.capture({ provider: 'cinezo', url: n.page.url() }).then(result => { settled = true; return result; });
+  await flush();
+  await n.emit('response', response('https://media.example/movie.mp4'));
+  await flush();
+  const returnedBeforeFrame = settled;
+  frameRead.resolve([]);
+  const result = await pending;
+  assert.equal(returnedBeforeFrame, true, 'confirmed media must interrupt an unrelated frame read');
+  assert.equal(result.source.format, 'mp4');
+  assert.equal(n.counts().closes, 1);
+});
+
+test('a native playlist is verified while another frame is still loading', async () => {
+  const f = fixture(), frameRead = deferred();
+  const frame = { url: () => 'https://embed.example/player', evaluate: () => frameRead.promise, content: async () => '' };
+  const n = network(f, { childFrame: frame, domSources: [{ url: 'https://media.example/playlist', type: 'hls' }] });
+  let settled = false;
+  const pending = f.capture({ provider: 'hexa', url: n.page.url() }).then(result => { settled = true; return result; });
+  await flush();
+  const returnedBeforeFrame = settled;
+  frameRead.resolve([]);
+  const result = await pending;
+  assert.equal(returnedBeforeFrame, true, 'a usable DOM source must be verified before slower frames finish');
+  assert.equal(result.source.mediaVerified, true);
+});
+
+test('a slow candidate cannot hold up a second verified playlist', async () => {
+  const f = fixture(), firstRequest = deferred(), requests = [];
+  const n = network(f, { domSources: [
+    { url: 'https://media.example/slow.m3u8', type: 'hls' },
+    { url: 'https://media.example/ready.m3u8', type: 'hls' }
+  ] });
+  n.context.request.get = async url => {
+    requests.push(url);
+    return url.includes('slow') ? firstRequest.promise : response(url, 200, 'application/x-mpegurl', '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=1\nmain.m3u8');
+  };
+  n.context.request.dispose = async () => firstRequest.reject(new Error('request disposed'));
+  let settled = false;
+  const pending = f.capture({ provider: 'hexa', url: n.page.url() }).then(result => { settled = true; return result; });
+  await flush();
+  const returnedBeforeFirstRequest = settled;
+  firstRequest.resolve(response('https://media.example/slow.m3u8', 403, 'text/html', 'Forbidden'));
+  const result = await pending;
+  assert.equal(returnedBeforeFirstRequest, true, 'verification must permit a bounded second candidate');
+  assert.equal(result.source.url, 'https://media.example/ready.m3u8');
+  assert.equal(requests.length, 2);
+});
+
+test('cancellation interrupts navigation and awaits the own-context close', async () => {
+  const f = fixture(), controller = new AbortController(), navigation = deferred(), closing = deferred();
+  const n = network(f, { navigate: () => navigation.promise });
+  let closes = 0, settled = false;
+  n.context.close = () => { closes++; return closing.promise; };
+  const pending = f.capture({ provider: 'hexa', url: n.page.url(), signal: controller.signal }).catch(error => { settled = true; return error; });
+  await flush();
+  const reason = new Error('cancelled');
+  controller.abort(reason);
+  await flush();
+  assert.equal(closes, 1);
+  assert.equal(settled, false, 'cancellation must await resource cleanup');
+  closing.resolve();
+  await flush();
+  const returnedBeforeNavigation = settled;
+  navigation.reject(reason);
+  assert.equal(await pending, reason);
+  assert.equal(returnedBeforeNavigation, true, 'a cancelled capture must not await unrelated navigation after its context is closed');
+});
+
+test('an observed winning response is not fetched again for API verification', async () => {
+  const f = fixture(), url = 'https://media.example/master.m3u8';
+  const n = network(f, { domSources: [{ url, type: 'hls' }], navigate: emit => emit('response', response(url, 200, 'application/x-mpegurl', '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=1\nmain.m3u8')) });
+  let requests = 0;
+  n.context.request.get = async () => { requests++; throw new Error('duplicate verification'); };
+  assert.equal((await f.capture({ provider: 'hexa', url: n.page.url() })).ok, true);
+  assert.equal(requests, 0);
+});
 
 test('successful extensionless HLS response is found and retains its signed query', async () => {
   const f = fixture(), url = 'https://media.example/playlist?token=keep-this';

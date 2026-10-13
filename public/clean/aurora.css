@@ -1,0 +1,40 @@
+/* v163: static curved light curtains, rasterized in one bounded atmosphere. */
+body.svCleanShell { isolation:isolate; position:relative; }
+body.svCleanShell .svAuroraBackground {
+  display:none; position:absolute; inset:0 0 auto; height:min(75svh,800px); z-index:-1;
+  overflow:hidden; pointer-events:none; contain:layout paint;
+  mask-image:linear-gradient(180deg,#000 0%,#000 42%,#0000 100%);
+  -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 42%,#0000 100%);
+}
+body.svCleanShell[data-st-backdrop="aurora"] .svAuroraBackground { display:block; }
+body.svCleanShell[data-sv-aurora-state="off"] .svAuroraBackground,
+body.svCleanShell:has(.svPlayerPage,.dsWatchPage) .svAuroraBackground { display:none; }
+.svAuroraRibbon {
+  display:block; position:absolute; left:-4%; top:-4%; width:108%; height:108%; opacity:.8;
+  transform:rotate(-1deg); background:url("./aurora-ribbon.svg?v=163") center / 100% 100% no-repeat;
+  animation:svAuroraDrift 32s ease-in-out infinite alternate paused;
+}
+.svAuroraBackground::after {
+  content:""; position:absolute; inset:0; opacity:.028; pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+}
+body[data-sv-aurora-state="live"] .svAuroraBackground > .svAuroraRibbon { animation-play-state:running; }
+/* Replace the legacy fixed, blurred canvas instead of combining two effects. */
+body.svCleanShell .dsContent::before,body.svCleanShell .dsContent::after { display:none !important; animation:none !important; }
+body.svCleanShell[data-st-backdrop="aurora"] :is(.dsHero,.dsPlainPage,.dsPageHero,.dsSearchPage,.dsWatchlistPage) { background:transparent !important; }
+body.svCleanShell[data-st-backdrop="aurora"] .dsHeroBg { opacity:.74 !important; }
+.stPreviewAurora { display:none; position:absolute; inset:0; z-index:0; overflow:hidden; pointer-events:none; background:linear-gradient(0deg,var(--st-canvas,#000),#0008 85%); }
+body[data-st-backdrop="aurora"] .stPreviewAurora { display:block; }
+.stPreviewAurora > .svAuroraRibbon { animation:none; opacity:1; transform:none; }
+.stPreviewScene > :is(.stPreviewNav,.stPreviewCopy) { position:relative; z-index:1; }
+.stPreviewScene > .stPreviewCopy { position:absolute; }
+@keyframes svAuroraDrift {
+  from { transform:rotate(-1deg) translate3d(-1%,0,0); opacity:.74; }
+  to { transform:rotate(1deg) translate3d(1%,-2%,0); opacity:.95; }
+}
+body.reduceMotion .svAuroraRibbon { animation:none !important; }
+@media (prefers-reduced-motion:reduce) { .svAuroraRibbon { animation:none !important; } }
+@media (max-width:600px) {
+  body.svCleanShell .svAuroraBackground { height:min(72svh,640px); }
+  .svAuroraBackground > .svAuroraRibbon { width:190%; left:-45%; height:100%; top:0; }
+}

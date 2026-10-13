@@ -3,8 +3,8 @@
   'use strict';
   if (window.SwiflyStudio) return;
   const key='swiflytv.appearance';
-  const defaults={theme:'default',font:'default',layout:'default',cardstyle:'rounded',density:'comfy',backdrop:'smooth',glass:'liquid',smooth:true,reduceMotion:false};
-  const allowed={theme:['default','red','blue','green','mono'],font:['default','cinema','soft','wide'],layout:['default','cinema','posterwall'],cardstyle:['rounded','sharp','softglass'],density:['comfy','compact'],backdrop:['smooth','grain'],glass:['off','subtle','liquid']};
+  const defaults={theme:'default',font:'default',layout:'default',cardstyle:'rounded',density:'comfy',backdrop:'aurora',glass:'liquid',smooth:true,reduceMotion:false};
+  const allowed={theme:['default','red','blue','green','mono'],font:['default','cinema','soft','wide'],layout:['default','cinema','posterwall'],cardstyle:['rounded','sharp','softglass'],density:['comfy','compact'],backdrop:['aurora','smooth','grain'],glass:['off','subtle','liquid']};
   const presets={
     pure:{theme:'default',font:'default',layout:'default',cardstyle:'rounded',density:'comfy',backdrop:'smooth',glass:'liquid',smooth:true},
     cinema:{theme:'red',font:'cinema',layout:'cinema',cardstyle:'rounded',density:'comfy',backdrop:'grain',glass:'subtle',smooth:true},
@@ -75,6 +75,7 @@
     body.style.setProperty('--st-gap',value.density==='compact'?'10px':'16px');
     body.style.setProperty('--sv-poster-width',value.layout==='cinema'?'clamp(168px,18vw,250px)':value.density==='compact'?'clamp(126px,12vw,174px)':'clamp(150px,14vw,210px)');
     if (!value.smooth || value.reduceMotion) window.SwiflyMotion?.stop();
+    window.SwiflyAurora?.refresh();
   }
   function status(message,error=false) {
     const node=dialog.querySelector('[data-st-status]');node.textContent=message;node.classList.toggle('stStatusError',error);
@@ -95,15 +96,19 @@
     dialog.querySelector('[data-st-look-label]').textContent=look;
     const layout={default:'Classic rows',cinema:'Cinema rows',posterwall:'Poster wall'}[draft.layout];
     const glass={off:'Solid surfaces',subtle:'Soft glass',liquid:'Liquid glass'}[draft.glass];
-    dialog.querySelector('[data-st-preview-description]').textContent=layout+' · '+glass;
+    const backdrop={aurora:'Aurora',smooth:'Clean atmosphere',grain:'Film grain'}[draft.backdrop];
+    dialog.querySelector('[data-st-preview-description]').textContent=layout+' · '+glass+' · '+backdrop;
   }
   function previewArtwork() {
-    const title=document.querySelector('.dsHeroContent h1,.svDetailTitleText,main h1')?.textContent.trim();
+    const titleSource=document.querySelector('.dsHeroContent h1,.svDetailTitleText,.svWelcomeSpotlight strong')||document.querySelector('main h1');
+    const title=titleSource?.textContent.trim();
     dialog.querySelector('[data-st-preview-title]').textContent=title||'Movie night, your way.';
     const source=document.querySelector('.dsHeroBg,.dsWelcomeHeroBg,.svDetailBackdrop');
     const background=source?getComputedStyle(source).backgroundImage:'';
     dialog.querySelector('[data-st-preview-scene]').style.backgroundImage=background&&background!=='none'?background:'';
-    const images=[...document.querySelectorAll('.movieCard .posterWrap > img,.movieCard .dsThumb > img,.svResumeLink > img')].filter(image=>image.getAttribute('src'));
+    const sceneImage=source?.querySelector('img');
+    if ((!background || background==='none') && sceneImage?.getAttribute('src')) dialog.querySelector('[data-st-preview-scene]').style.backgroundImage='url('+JSON.stringify(sceneImage.src)+')';
+    const images=[...document.querySelectorAll('.movieCard .posterWrap > img,.movieCard .dsThumb > img,.svResumeLink > img,.svWelcomePosterArt > img,.dsWelcomeCard img')].filter(image=>image.getAttribute('src'));
     dialog.querySelectorAll('.stPreviewPoster img').forEach((image,index)=>{
       const source=images[index];image.hidden=!source;
       image.onerror=()=>{image.hidden=true;};
@@ -126,7 +131,7 @@
     if (dialog.open) return;
     stopPreviewMotion();
     apply(saved);draft={...saved};document.documentElement.classList.remove('svStudioOpen');
-    document.getElementById('controlToggleTop')?.setAttribute('aria-expanded','false');
+    document.querySelectorAll('#controlToggleTop,[data-st-open]').forEach(button=>button.setAttribute('aria-expanded','false'));
     if (trigger?.isConnected) trigger.focus({preventScroll:true});trigger=null;
   }
   function close() {
@@ -140,7 +145,7 @@
     apply(draft);sync();previewArtwork();window.SwiflyMotion?.stop();
     document.documentElement.classList.add('svStudioOpen');
     if (typeof dialog.showModal==='function') dialog.showModal();else dialog.setAttribute('open','');
-    document.getElementById('controlToggleTop')?.setAttribute('aria-expanded','true');
+    document.querySelectorAll('#controlToggleTop,[data-st-open]').forEach(button=>button.setAttribute('aria-expanded','true'));
     dialog.querySelector('[data-st-tab][aria-selected="true"]').focus({preventScroll:true});
   }
   function save() {
@@ -151,7 +156,7 @@
   function boot() {
     if (started) return;started=true;dialog=document.getElementById('controlPanel');if (!dialog) return;
     saved=read();draft={...saved};apply(saved);sync();
-    document.getElementById('controlToggleTop')?.addEventListener('click',event=>dialog.open?close():open(event.currentTarget));
+    document.querySelectorAll('#controlToggleTop,[data-st-open]').forEach(button=>button.addEventListener('click',event=>dialog.open?close():open(event.currentTarget)));
     dialog.addEventListener('close',cleanup);
     dialog.addEventListener('cancel',()=>{stopPreviewMotion();apply(saved);draft={...saved};});
     dialog.addEventListener('click',event=>{

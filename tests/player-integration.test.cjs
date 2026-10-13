@@ -20,7 +20,7 @@ test('The normal watch route renders one native movie player with shared assets 
  assert.equal(response.status,200);assert(d.querySelector('.dsHeader, .dsTopBar, .topbar'));
  assert.equal(d.querySelectorAll('.svPlayerPage video').length,1);
  assert.equal(d.querySelector('.svPlayerPage').dataset.playerId,'101');assert.equal(d.querySelector('h1').textContent.trim(),'Arrival');
- assert(d.querySelector('script[src="/assets/player/player.js?v=162"]'));assert(d.querySelector('script[src="/assets/player/watch-party.js?v=160"]'));
+ assert(d.querySelector('script[src="/assets/player/player.js?v=163"]'));assert(d.querySelector('script[src="/assets/player/watch-party.js?v=160"]'));
  assert(d.querySelector('link[href="/assets/player/player.css?v=160"]'));assert(d.querySelector('dialog.svWatchPartyDialog'));
  assert.equal(d.querySelector('.dsProxyVideoWaitingShell'),null);assert.equal(d.querySelector('.svPartyHub'),null);
  assert.equal(d.querySelector('[data-sv-player-back]').getAttribute('href'),'/movie/101');
@@ -39,6 +39,34 @@ test('Trailer mode keeps an official trailer and never renders a movie loading c
  const env=parse(await(await fetch(base+'/watch/movie/101?mode=trailer')).text()),d=env.window.document;
  assert.equal(d.querySelector('.svPlayerPage').dataset.playerMode,'trailer');assert(d.querySelector('iframe.svPlayerTrailer')?.src.includes('official01'));
  assert.equal(d.querySelector('video'),null);assert.equal(d.querySelector('[data-player-party-open]'),null);
+});
+test('The standalone M3U8 player retains native HLS without an unused media library',async()=>{
+ const src='https://media.example/master.m3u8';
+ const env=parse(await(await fetch(base+'/m3u8-player?url='+encodeURIComponent(src))).text()),w=env.window,d=w.document;
+ w.HTMLMediaElement.prototype.canPlayType=type=>/mpegurl/i.test(type)?'probably':'';
+ w.HTMLMediaElement.prototype.load=function(){};
+ w.Hls={isSupported:()=>false};
+ const script=[...d.querySelectorAll('script:not([src])')].find(node=>node.textContent.includes('standaloneM3u8Video'));
+ w.eval(script.textContent);
+ const video=d.getElementById('standaloneM3u8Video'),status=d.getElementById('standaloneHlsStatus');
+ assert.equal(video.getAttribute('src'),src);assert.equal(status.classList.contains('isError'),false);
+ video.dispatchEvent(new w.Event('canplay'));assert.match(status.querySelector('b').textContent,/ready/i);
+ video.dispatchEvent(new w.Event('error'));assert.equal(status.classList.contains('isError'),true);
+});
+test('An early legacy room update can attach desktop native HLS before optional libraries',async()=>{
+ const src='https://media.example/master.m3u8';
+ const env=parse(await(await fetch(base+'/watchrooms/embed/native-fixture')).text()),w=env.window,d=w.document,handlers=new Map();
+ Object.defineProperty(w.navigator,'userAgent',{value:'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Version/16.6 Safari/605.1.15'});
+ w.setInterval=()=>1;w.setTimeout=()=>1;w.clearInterval=()=>{};w.clearTimeout=()=>{};
+ w.HTMLMediaElement.prototype.canPlayType=type=>/mpegurl/i.test(type)?'probably':'';
+ w.HTMLMediaElement.prototype.load=function(){};w.HTMLMediaElement.prototype.pause=function(){};w.HTMLMediaElement.prototype.play=()=>Promise.resolve();
+ w.Hls={isSupported:()=>false};
+ w.io=()=>({id:'viewer',emit(){},on(name,callback){handlers.set(name,callback);}});
+ const script=[...d.querySelectorAll('script:not([src])')].find(node=>node.textContent.includes('function stableWatchroom'));
+ w.eval(script.textContent);
+ handlers.get('watchroom:joined')({isHost:false,room:{syncedMovie:{status:'ready',movieId:'101',playbackUrl:src,streamType:'m3u8',playAt:0,sync:{playing:false,offset:0}}}});
+ assert.equal(d.getElementById('roomMovieVideo').src,src);
+ assert.equal(d.getElementById('roomMovieHlsStatus').classList.contains('isError'),false);
 });
 test('Party navigation opens the same movie catalog with its existing hero, genres, and rows',async()=>{
  const redirect=await fetch(base+'/social',{redirect:'manual'});assert.equal(redirect.status,302);assert.equal(redirect.headers.get('location'),'/movies?party=1#watch-together');
@@ -60,6 +88,16 @@ test('Source polling returns pending immediately while one provider job remains 
  const again=await(await fetch(base+'/api/proxy-video-wait/movie/101')).json();assert.equal(again.jobId,first.jobId);assert.equal(starts,1);
  complete({status:'ok',playbackUrl:'/api/hls-proxy/source/master.m3u8',m3u8:'https://provider.example/raw.m3u8'});await tick();
  const ready=await(await fetch(base+'/api/proxy-video-wait/movie/101')).json();assert.equal(ready.status,'ok');assert.equal(ready.playbackUrl,'/api/hls-proxy/source/master.m3u8');
+});
+test('The player can wait for ready media in one bounded response',async()=>{
+ let complete,started;const began=new Promise(resolve=>started=resolve);
+ inject(()=>{started();return new Promise(resolve=>complete=resolve);});
+ const response=fetch(base+'/api/proxy-video-wait/movie/104?wait=8000');
+ await began;
+ complete({status:'ok',playbackUrl:'/api/hls-proxy/source/master.m3u8',streamHeaders:{cookie:'PRIVATE',Referer:'https://provider.example/watch'}});
+ const ready=await(await response).json();
+ assert.equal(ready.status,'ok');assert.equal(ready.playbackUrl,'/api/hls-proxy/source/master.m3u8');
+ assert.doesNotMatch(JSON.stringify(ready),/PRIVATE/);
 });
 test('An expired provider job becomes terminal and explicit retry gets a new deadline',async()=>{
  let starts=0;inject(()=>{starts++;return new Promise(()=>{});},40);

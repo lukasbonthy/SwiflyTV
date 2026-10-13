@@ -40,6 +40,64 @@ const flush = async () => { for (let turn = 0; turn < 6; turn += 1) await Promis
 const movie = { type: 'movie', id: '101' };
 const playable = { status: 'ok', playbackUrl: 'https://media.example/video.mp4', proxyVideo: 'https://media.example/video.mp4', streamType: 'mp4' };
 
+test('bounded wait delivers a ready source without another polling delay', async t => {
+  const pending = deferred(), time = clock(); let calls = 0;
+  const jobs = factory({ ...time, resolve() { calls++; return pending.promise; } });
+  t.after(() => jobs.destroy());
+  assert.equal(typeof jobs.wait, 'function');
+  const first = jobs.wait(movie, { timeoutMs: 8000 });
+  const second = jobs.wait(movie, { timeoutMs: 8000 });
+  await flush(); assert.equal(calls, 1);
+  pending.resolve(playable);
+  const [a, b] = await Promise.all([first, second]);
+  assert.equal(a.status, 'ok'); assert.equal(a.playbackUrl, playable.playbackUrl);
+  assert.equal(a.jobId, b.jobId); assert.equal(time.count(), 0);
+});
+
+test('a bounded wait timeout leaves shared extraction running', async t => {
+  const pending = deferred(), time = clock(); let signal;
+  const jobs = factory({ ...time, resolve(_params, options) { signal = options.signal; return pending.promise; } });
+  t.after(() => jobs.destroy());
+  assert.equal(typeof jobs.wait, 'function');
+  const result = jobs.wait(movie, { timeoutMs: 8000 });
+  await flush(); time.advance(8000);
+  assert.equal((await result).status, 'loading');
+  assert.equal(signal.aborted, false); assert.equal(time.count(), 1);
+  pending.resolve(playable); await jobs.resolve(movie);
+  assert.equal(time.count(), 0);
+});
+
+test('disconnect cancels only its bounded wait and retains other viewers', async t => {
+  const pending = deferred(), time = clock(), controller = new AbortController(); let signal;
+  const jobs = factory({ ...time, resolve(_params, options) { signal = options.signal; return pending.promise; } });
+  t.after(() => jobs.destroy());
+  assert.equal(typeof jobs.wait, 'function');
+  const disconnected = jobs.wait(movie, { timeoutMs: 8000, signal: controller.signal });
+  const observed = disconnected.catch(error => error);
+  const remaining = jobs.wait(movie, { timeoutMs: 8000 });
+  await flush(); controller.abort(new Error('client disconnected'));
+  assert.equal((await observed).message, 'client disconnected');
+  assert.equal(signal.aborted, false); assert.equal(time.count(), 2);
+  pending.resolve(playable); assert.equal((await remaining).status, 'ok');
+  assert.equal(time.count(), 0);
+});
+
+test('bounded waits cannot exceed eight seconds and return cached errors immediately', async t => {
+  const pending = deferred(), time = clock();
+  const jobs = factory({ ...time, resolve: () => pending.promise });
+  t.after(() => jobs.destroy());
+  assert.equal(typeof jobs.wait, 'function');
+  const result = jobs.wait(movie, { timeoutMs: 1000000 });
+  await flush(); time.advance(8000);
+  assert.equal((await result).status, 'loading');
+  assert.equal((await jobs.wait({ id: 'invalid' })).code, 'invalid_request');
+  assert.equal(time.count(), 1);
+  pending.resolve({ status: 'error', code: 'provider_blocked' });
+  await jobs.resolve(movie);
+  assert.equal((await jobs.wait(movie)).code, 'provider_blocked');
+  assert.equal(time.count(), 0);
+});
+
 test('known discovery failures survive polling without exposing provider diagnostics', async t => {
   for (const code of ['browser_unavailable', 'provider_blocked', 'no_source']) {
     const jobs = factory({ resolve: () => ({ status: 'error', code, message: 'C:\\private\\SECRET', attempts: ['https://private.example/?token=SECRET'] }) });

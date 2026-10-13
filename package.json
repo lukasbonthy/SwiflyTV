@@ -1,13 +1,13 @@
 {
   "name": "swiflytv",
-  "version": "2.0.10",
-  "description": "SwiflyTV v162: verified media discovery, fair provider fallback and reliable browser startup.",
+  "version": "2.0.11",
+  "description": "SwiflyTV v163: faster verified media lookup, lighter rendering, weighted scrolling and a new welcome atmosphere.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
     "install:browser": "node scripts/install-browser.cjs",
-    "check": "node --check server.js && node --check public/liquid-glass/liquid-glass.js && node --check public/clean/clean.js && node --check public/liquid-glass/surfaces.js && node --check public/clean/continue.js && node --check public/clean/details.js && node --check public/clean/motion.js && node --check ui/studio.js && node --check public/studio/studio.js && node --check ui/party.js && node --check public/party/party.js && node --check lib/source-jobs.js && node --check ui/player.js && node --check public/player/player.js && node --check ui/watch-party.js && node --check public/player/watch-party.js && node --check lib/browser-runtime.js && node --check lib/media-discovery.js && node --check lib/provider-capture.js && node --check scripts/install-browser.cjs",
+    "check": "node --check server.js && node --check public/liquid-glass/liquid-glass.js && node --check public/clean/clean.js && node --check public/liquid-glass/surfaces.js && node --check public/clean/continue.js && node --check public/clean/details.js && node --check public/clean/motion.js && node --check ui/studio.js && node --check public/studio/studio.js && node --check ui/party.js && node --check public/party/party.js && node --check lib/source-jobs.js && node --check ui/player.js && node --check public/player/player.js && node --check ui/watch-party.js && node --check public/player/watch-party.js && node --check lib/browser-runtime.js && node --check lib/media-discovery.js && node --check lib/provider-capture.js && node --check scripts/install-browser.cjs && node --check lib/provider-race.js && node --check ui/welcome.js && node --check public/clean/aurora.js",
     "test:ui": "node --test"
   },
   "engines": {

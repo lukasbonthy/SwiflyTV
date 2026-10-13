@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="800" viewBox="0 0 1600 800" fill="none">
+  <defs>
+    <linearGradient id="color" x1="90" y1="0" x2="1490" y2="320" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4cd9b8" stop-opacity=".1"/>
+      <stop offset=".24" stop-color="#68e2cb" stop-opacity=".75"/>
+      <stop offset=".53" stop-color="#6abbe6" stop-opacity=".65"/>
+      <stop offset=".78" stop-color="#9293ee" stop-opacity=".65"/>
+      <stop offset="1" stop-color="#a17ce1" stop-opacity=".05"/>
+    </linearGradient>
+    <linearGradient id="curtain" x1="0" y1="120" x2="0" y2="520" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#80dcd0" stop-opacity=".55"/>
+      <stop offset=".5" stop-color="#609fd0" stop-opacity=".15"/>
+      <stop offset="1" stop-color="#7983d0" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="haze" x="-25%" y="-100%" width="150%" height="300%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="30"/></filter>
+    <filter id="soft" x="-20%" y="-70%" width="140%" height="240%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="8"/></filter>
+    <filter id="wisp" x="-30%" y="-10%" width="160%" height="120%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="4"/></filter>
+    <path id="arc" d="M-160 205C95 29 298 281 528 168S840 30 1008 133 1265 323 1770 73"/>
+    <path id="echo" d="M-100 311C220 420 350 113 619 216S1004 361 1199 247 1480 100 1740 206"/>
+  </defs>
+  <!-- Static, pre-softened curves: movement belongs to the containing CSS layer. -->
+  <g stroke="url(#color)" stroke-linecap="round">
+    <use href="#arc" stroke-width="116" opacity=".32" filter="url(#haze)"/>
+    <use href="#arc" stroke-width="39" opacity=".42" filter="url(#soft)"/>
+    <use href="#arc" stroke-width="8" opacity=".35" filter="url(#soft)"/>
+    <use href="#echo" stroke-width="85" opacity=".15" filter="url(#haze)"/>
+    <use href="#echo" stroke-width="21" opacity=".22" filter="url(#soft)"/>
+  </g>
+  <g stroke="url(#curtain)" stroke-width="5" stroke-linecap="round" opacity=".32" filter="url(#wisp)">
+    <path d="M167 125C197 205 174 297 205 418M236 152C274 251 235 353 270 464M306 179C339 255 306 342 329 429M386 188C416 267 395 379 409 504M473 191C476 276 458 380 482 449M554 154C560 233 578 323 560 443M640 123C654 226 635 355 665 491M732 105C748 221 719 330 748 454M815 102C814 184 855 299 836 419M901 116C903 225 942 310 924 471M982 157C989 225 1032 333 1018 474M1065 204C1074 302 1098 391 1079 508M1156 232C1147 307 1192 395 1174 520M1243 226C1243 316 1280 409 1262 501M1341 188C1331 291 1390 365 1372 466M1434 142C1425 250 1471 336 1455 435"/>
+  </g>
+</svg>

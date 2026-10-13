@@ -48,10 +48,12 @@ function fixture(overrides = {}) {
   const context = {
     AbortController, URL, console,
     captureProviderMedia: require('../lib/provider-capture').captureProviderMedia,
+    runProviderRace: require('../lib/provider-race').runProviderRace,
     Date: class extends Date { static now() { return time.now(); } },
     setTimeout: time.setTimeout, clearTimeout: time.clearTimeout,
     STREAMPROVIDER_ENABLED: true, STREAMPROVIDER_ORDER: ['hexa', 'cinezo'],
     STREAMPROVIDER_NAV_TIMEOUT_MS: 10, STREAMPROVIDER_STREAM_TIMEOUT_MS: 10, STREAMPROVIDER_ROUTE_TIMEOUT_MS: 30, STREAMPROVIDER_PROVIDER_TIMEOUT_MS: 20,
+    STREAMPROVIDER_HEDGE_DELAY_MS: 5, STREAMPROVIDER_MAX_CONCURRENT: 2,
     STREAMPROVIDER_SFLIX_BASE_URL: 'https://search.example',
     DEFAULT_PLAY_PROVIDER: 'streamprovider', API_M3U8_PROVIDER_ORDER: ['streamprovider'], API_PROVIDERS: {},
     API_DETAILS_SEARCH_FALLBACK_PROVIDERS: [], USE_EXTERNAL_PROVIDER_API: false,
@@ -184,6 +186,24 @@ test('cancellation after a provider attempt prevents the next provider from star
   assert.deepEqual(calls, ['hexa']);
 });
 
+test('a slow preferred provider is hedged without waiting for its full timeout', async () => {
+  const f = fixture(), calls = [], cleanup = deferred(); let aborted = false;
+  f.api.setCapture(async ({ provider, signal }) => {
+    calls.push(provider);
+    if (provider === 'cinezo') return { ok: true, source: { url: 'https://media.example/master.m3u8', format: 'm3u8', mediaVerified: true } };
+    signal.addEventListener('abort', () => { aborted = true; }, { once: true });
+    return cleanup.promise;
+  });
+  const result = observe(f.api.streams({ tmdbId: '101' }));
+  await flush(); f.time.advance(5); await flush();
+  const hedged = calls.slice(), cancelled = aborted, returnedEarly = result.settled;
+  cleanup.resolve({ ok: false, code: 'no_source' }); await result.promise;
+  assert.deepEqual(hedged, ['hexa', 'cinezo']);
+  assert.equal(cancelled, true); assert.equal(returnedEarly, false, 'wait for losing physical cleanup');
+  assert.equal((await result.promise).value?.success, true);
+  assert.equal(f.time.count(), 0);
+});
+
 test('successful route discovery clears its deadline and preserves real non-HLS formats', async () => {
   const f = fixture(), controller = new AbortController();
   let signal;
@@ -201,7 +221,7 @@ test('the route deadline aborts and closes its active context before rejecting',
   f.api.setBrowser(async () => nav.browser);
   const result = observe(f.api.result({ id: '101', attempts }));
   await flush();
-  assert.equal(f.time.count(), 2);
+  assert(f.time.count() >= 2, 'route and capture deadlines are active');
   f.time.advance(30);
   await flush();
   assert.equal(nav.counts().contextCloses, 1);

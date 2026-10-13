@@ -65,6 +65,17 @@ test('Loading snapshots poll serially and become playable without reloading the 
   const urls=[],e=setup({managed:false,type:'tv',season:2,episode:4,provider:'choice'},e=>e.w.fetch=async url=>{urls.push(url);return {ok:true,json:async()=>urls.length===1?{status:'loading',deadlineAt:e.w.Date.now()+600,retryAfterMs:30,jobId:'same'}:{status:'ok',playbackUrl:'/episode.webm'}};});
   await e.advance(50);assert.equal(urls.length,2);assert.match(urls[0],/\/api\/proxy-video-wait\/tv\/42/);const u=new URL(urls[0],'https://swifly.test');assert.equal(u.searchParams.get('season'),'2');assert.equal(u.searchParams.get('episode'),'4');assert.equal(u.searchParams.get('provider'),'choice');assert.equal(e.video().getAttribute('src'),'/episode.webm');assert.equal(e.api.getState().ready,false);
 });
+test('Default playback requests a bounded ready response within its HTTP deadline',async()=>{
+ let requested;
+ const e=setup({managed:false},e=>{
+   e.app.dataset.playerResolveTimeoutMs='90000';e.app.dataset.playerRequestTimeoutMs='12000';
+   e.w.fetch=async url=>{requested=new URL(url,'https://swifly.test');return {ok:true,json:async()=>({status:'ok',playbackUrl:'/ready.mp4'})};};
+ });
+ await e.advance(0);
+ const wait=Number(requested.searchParams.get('wait'));
+ assert(wait>0&&wait<=8000&&wait<12000,'Wait must deliver media promptly and leave HTTP timeout headroom');
+ assert.equal(e.api.getState().source,'/ready.mp4');
+});
 test('A browser clock ahead of the server can poll a live source job without expiring it early',async()=>{
   let calls=0;const e=setup({managed:false},e=>e.w.fetch=async()=>{calls++;const serverTime=e.w.Date.now()-3600000;return {ok:true,json:async()=>calls===1?{status:'loading',serverTime,startedAt:serverTime,deadlineAt:serverTime+600,retryAfterMs:30}:{status:'ok',playbackUrl:'/clock-safe.mp4'}};});await e.advance(50);assert.equal(calls,2);assert.equal(e.api.getState().source,'/clock-safe.mp4');assert.equal(e.app.dataset.playerState,'loading');
 });

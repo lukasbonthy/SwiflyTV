@@ -14,7 +14,8 @@ const group = (label,description,content) => '<section class="stGroup"><div clas
 const layoutDemo = value => '<span class="stLayoutDemo stLayoutDemo--'+value+'" aria-hidden="true"><i></i><i></i><i></i><i></i></span>';
 const preset = (value,title,copy) => '<button type="button" class="stPreset stPreset--'+value+'" data-st-preset="'+value+'" aria-pressed="false"><span class="stPresetArt" aria-hidden="true"><i class="stPresetNav"></i><i class="stPresetTitle"></i><i class="stPresetPoster"></i><i class="stPresetPoster"></i><i class="stPresetPoster"></i><b>'+icon('check')+'</b></span><strong>'+title+'</strong><small>'+copy+'</small></button>';
 function studioMarkup() {
-  return `<div class="svAppearanceTexture" aria-hidden="true"></div>
+  return `<div class="svAuroraBackground" aria-hidden="true"><i class="svAuroraRibbon"></i></div>
+  <div class="svAppearanceTexture" aria-hidden="true"></div>
   <dialog id="controlPanel" class="svStudioDialog" aria-labelledby="stTitle" aria-describedby="stDescription">
     <div class="stWorkspace">
       <header class="stHeader">
@@ -49,7 +50,7 @@ function studioMarkup() {
               ['soft','Soft','<b class="stFontSample stFontSample--soft">Aa</b>'],['wide','Wide','<b class="stFontSample stFontSample--wide">Aa</b>']
             ],'stFonts'))}
             ${group('Glass','Choose how much of the scene shines through.', choices('glass',[['off','Solid'],['subtle','Soft glass'],['liquid','Liquid glass']],'stSegments'))}
-            ${group('Texture','A still, subtle layer over your movie artwork.',choices('backdrop',[['smooth','Clean'],['grain','Film grain']],'stSegments'))}
+            ${group('Atmosphere','Clean, softly textured, or a little northern light.',choices('backdrop',[['aurora','Aurora'],['smooth','Clean'],['grain','Film grain']],'stSegments stAtmosphere'))}
           </section>
           <section id="stPanel-layout" class="stPanel" role="tabpanel" aria-labelledby="stTab-layout" hidden>
             <div class="stPanelTitle"><span>02 / LAYOUT</span><h2>Room for your favorites.</h2><p>Change the gallery without changing what you watch.</p></div>
@@ -70,6 +71,7 @@ function studioMarkup() {
           <div class="stPreviewLabel"><span>LIVE PREVIEW</span><i></i></div>
           <div class="stPreview" data-st-preview aria-label="Preview of your appearance settings">
             <div class="stPreviewScene" data-st-preview-scene>
+              <div class="stPreviewAurora" data-st-preview-aurora aria-hidden="true"><i class="svAuroraRibbon"></i></div>
               <div class="stPreviewNav"><b>SwiflyTV</b><span>Home</span><span>Movies</span><i></i></div>
               <div class="stPreviewCopy"><small>YOUR NEXT GREAT WATCH</small><h3 data-st-preview-title>Movie night, your way.</h3><p>Make yourself comfortable.</p><span class="stPreviewPlay">▶ &nbsp;Play</span></div>
             </div>
