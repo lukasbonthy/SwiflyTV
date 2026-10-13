@@ -225,7 +225,7 @@ test('The featured movie art fades into discovery with no bridge stripe or dupli
   assert.equal(bridge.nextElementSibling,rows);
   assert.equal(hero.querySelectorAll('.dsHeroBg').length,1,'never duplicate the movie art');
   assert((hero.querySelector('.dsHeroBg').getAttribute('style')||'').includes('background-image:url('));
-  assert.match(hero.getAttribute('data-sv-palette-src')||'',/\\/w300\\//);
+  assert.match(hero.getAttribute('data-sv-palette-src')||'',/\/w300\//);
   assert.equal(bridge.getAttribute('style'),null,'bridge stays an inert spacer');
   assert.equal(rows.getAttribute('style'),null,'discovery never paints a second artwork');
   assert(d.querySelector('link[href="/assets/clean/hero-fade.css?v=192"]'));
@@ -235,22 +235,22 @@ test('The featured movie art fades into discovery with no bridge stripe or dupli
  assert.match(css,/overflow:hidden !important/,'movie must be clipped inside hero');
  assert.match(css,/bottom:0 !important/,'original art stops at hero bottom');
  assert.match(css,/background-repeat:no-repeat !important/);
- assert.match(css,/--sv-cinema-fade-height: clamp\\(340px, 42svh, 470px\\)/);
- assert.match(css,/--sv-cinema-fade-height: clamp\\(250px, 36svh, 360px\\)/,'mobile fade is adaptive');
+ assert.match(css,/--sv-cinema-fade-height: clamp\(340px, 42svh, 470px\)/);
+ assert.match(css,/--sv-cinema-fade-height: clamp\(250px, 36svh, 360px\)/,'mobile fade is adaptive');
  const heroLens=css.match(/body\.svCleanShell main > \.dsHero::after \{([\s\S]*?)\n\}/);
  const bridgeLens=css.match(/body\.svCleanShell main > \.dsHero \+ \.svHeroLightBridge::before,([\s\S]*?)\n\}/);
  assert(heroLens&&bridgeLens,'color glow is clipped to hero and legacy bridge is disabled');
  assert.match(heroLens[1],/width: 100% !important/,'all film tones fill the width');
  assert.match(heroLens[1],/background:/);
- assert.match(heroLens[1],/transparent 100%\\) !important/,'the glow disappears before discovery');
+ assert.match(heroLens[1],/transparent 100%\) !important/,'the glow disappears before discovery');
  assert.match(bridgeLens[1],/display:none !important/,'the old 88%-wide band is gone');
  assert.match(bridgeLens[1],/width:100% !important/,'never crop to 88% again');
- assert.doesNotMatch(css,/background-image:var\\(--sv-cinema-art\\)|background-image:var\\(--sv-light-art\\)/);
- assert.doesNotMatch(css,/\\.movieCard img/);
+ assert.doesNotMatch(css,/background-image:var\(--sv-cinema-art\)|background-image:var\(--sv-light-art\)/);
+ assert.doesNotMatch(css,/\.movieCard img/);
  const palette=await(await fetch(base+'/assets/clean/hero-palette.js?v=188')).text();
  assert.match(palette,/getImageData/);
- assert.match(palette,/main\\.style\\.setProperty\\('--sv-art-glow-1'/);
- assert.doesNotMatch(palette,/appendChild\\(image\\)|backgroundImage/);
+ assert.match(palette,/main\.style\.setProperty\('--sv-art-glow-1'/);
+ assert.doesNotMatch(palette,/appendChild\(image\)|backgroundImage/);
 });
 test('Welcome uses the featured backdrop as an ambient discovery transition',async()=>{
  const response=await fetch(base+'/welcome');
