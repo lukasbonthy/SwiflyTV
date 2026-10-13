@@ -417,3 +417,30 @@ test('Password show/hide text replacement repairs its real refractive pane',asyn
  assert.equal(replacement.dataset.swiflyRenderer,'svg');
  env.finish();
 });
+
+test('Genres mounts the SAME physical SVG pane as the navbar and stays keyboard accessible',()=>{
+ const env=glass('<section class="dsBrowseTop"><details class="genreDropdown"><summary>Genres <span>▾</span></summary><div class="genreDropdownMenu"><a href="/genre/movie/1">Action</a></div></details></section>'),w=env.window,d=w.document;
+ d.body.dataset.stGlass='liquid';
+ w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');
+ env.intersect(true);w.flush(16);
+ const summary=d.querySelector('.genreDropdown > summary'),pane=summary.querySelector(':scope > .svNavMatchedLens.svLiquidPane');
+ assert(summary.classList.contains('svNavMatchedOptic'),'Genres should no longer be only frosted');
+ assert(pane && pane.dataset.swiflyRenderer==='svg','use the navbar optical renderer');
+ assert.equal(pane.querySelectorAll('feDisplacementMap').length,3);
+ assert.equal(summary.textContent.includes('Genres'),true);
+ assert(!pane.hasAttribute('tabindex'),'optical backdrop is not a focus target');
+ env.finish();
+});
+
+test('Party Hub uses real optics on a few hero and navigation actions but not every poster',()=>{
+ const env=glass('<main class="svPartyHub"><nav class="partyNavigation"><button data-tab="rooms">Watch parties</button><button data-tab="chat">Community</button></nav><div class="partyHeroActions"><button class="dsPrimaryBtn">Host</button><button class="dsSecondaryBtn">Join</button></div><div class="partyFilmRail"><button class="partyFilmChoice">Film</button></div></main>'),w=env.window,d=w.document;
+ d.body.dataset.stGlass='liquid';
+ w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');
+ env.intersect(true);w.flush(16);
+ for(const item of d.querySelectorAll('.partyNavigation > button,.partyHeroActions > button')){
+  assert(item.classList.contains('svNavMatchedOptic'));
+  assert(item.querySelector('.svLiquidPane[data-swifly-renderer="svg"]'));
+ }
+ assert.equal(d.querySelectorAll('.partyFilmRail .svLiquidPane').length,0,'poster rails do not multiply expensive filters');
+ env.finish();
+});
