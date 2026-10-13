@@ -254,7 +254,7 @@
       if(destroyed||suspended)return false;
       if(managed||remoteMode.enabled){if(retry&&!locked())dispatch('retry',{mediaId,type:mediaType});return false;}
       cancelResolver();teardownMedia({replace:true});source='';sourceData=null;loadingKey='';setStatus('loading');
-      const token=resolverGeneration;lookupDeadline=Date.now()+config.resolve;let first=true,transportFailures=0,busyCount=0;
+      const token=resolverGeneration;lookupDeadline=Date.now()+config.resolve;let first=true,transportFailures=0,busyCount=0,providerRetries=0;
       const query=new URLSearchParams();if(mediaType==='tv'){query.set('season',app.dataset.playerSeason||'1');query.set('episode',app.dataset.playerEpisode||'1');}if(app.dataset.playerProvider)query.set('provider',app.dataset.playerProvider);
       const endpoint='/api/proxy-video-wait/'+encodeURIComponent(mediaType)+'/'+encodeURIComponent(mediaId);
       while(!destroyed&&!suspended&&app.isConnected&&token===resolverGeneration){
@@ -270,6 +270,12 @@
           if(data?.status==='ok'||data?.status==='ready')return loadSource(data,{resumeAt:retry?retryResume:0});
           if(data?.status==='error'&&data.code==='busy'&&busyCount++<8){
             if(!await waitPoll(Math.min(number(data.retryAfterMs,1500),lookupDeadline-Date.now())))return false;
+            continue;
+          }
+          if(data?.status==='error'&&['no_source','unavailable','provider_blocked','timeout'].includes(data.code)
+             &&providerRetries++<1&&lookupDeadline-Date.now()>7000){
+            retry=true;first=true;
+            if(!await waitPoll(1000))return false;
             continue;
           }
           if(data?.status!=='loading'){fail(discoveryMessage(data));return false;}
