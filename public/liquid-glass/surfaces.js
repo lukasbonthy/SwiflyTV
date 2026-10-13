@@ -2,7 +2,20 @@
 (() => {
   'use strict';
   if (window.SwiflyGlassSurfaces) return;
-  const controls = ['.dsPrimaryBtn', '.dsSecondaryBtn', '.dsIconBtn', '.dsGhostPill', '.dsCardQuickActions .dsMiniBtn', '.dsRowBtn', '.dsRowArrow', '.dsClose', '.dsHeroMuteToggle', '.svResumePlay', '.svResumeRemove', '.svRowArrow', '.svDetailBack', '.svDetailDismiss', '.svDetailReturn', '.dsAuthTopActions button[data-st-open]', '.genreDropdown summary', '.dsTabs a', '.pagination a', '.dsEpisodeChips a'].join(',');
+  // Register actual interactive controls across Home, details, auth and discovery.
+  // Navigation icons stay part of their shared glass capsule, not separate tiles.
+  const controls = [
+    '.dsPrimaryBtn', '.dsSecondaryBtn', '.dsIconBtn', '.dsGhostPill',
+    '.dsCardQuickActions .dsMiniBtn', '.dsRowBtn', '.dsRowArrow',
+    '.dsClose', '.dsHeroMuteToggle', '.dsBigPlayBtn', '.svResumePlay',
+    '.svResumeRemove', '.svRowArrow', '.svDetailBack', '.svDetailDismiss',
+    '.svDetailReturn', '.svDetailClose', '.svDetailChrome > button',
+    '.dsAuthTopActions button[data-st-open]', '.svAuthPasswordToggle',
+    '.dsAuthSwitch > a', '.genreDropdown summary', '.dsTabs a',
+    '.dsDetailTabsV121 > button', '.pagination a', '.dsEpisodeChips a',
+    '.dsSearchBox button', '.svSearchPopup button', '.dsDropdownLogout',
+    '.dsEditProfileBtn', '.dsProfileDropdown .logoutBtn'
+  ].join(',');
   const panels = ['.svSearchPopup', '.dsSearchBox form', '.genreDropdownMenu', '.dsDetailTabsV121', '.dsAuthCard', '.dsAuthSwitch', '.dsProfileManagerPanel', '.dsAccountCard', '.dsProfileSelectCard', '.dsDetailGridV121 aside', '.dsAboutGridV121', '.dsSeasonBlock', '#controlPanel', '#toast', 'dialog'].join(',');
   const selector = controls + ',' + panels, entries = new Map(), pending = new Set();
   const rendererProperties = ['--sv-glass-default-tint', '--sv-glass-saturation', '--sv-glass-filter'];
@@ -41,9 +54,11 @@
     const featuredControl = !panel && (
       (host.matches('.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn') &&
         Boolean(host.closest('.dsHeroActions,.dsWelcomeActions,.dsDetailActionsV121,.svDetailActions'))) ||
-      host.matches('.svDetailBack,.svDetailDismiss,.svDetailReturn')
+      host.matches('.svDetailBack,.svDetailDismiss,.svDetailReturn,.svDetailClose') ||
+      host.matches('.dsHeroMuteToggle') ||
+      host.matches('.dsSafeAuthForm > .dsPrimaryBtn')
     );
-    const complex = (panel && host.dataset.glassRefraction === 'true') || featuredControl;
+    const complex = (panel && (host.dataset.glassRefraction === 'true' || host.matches('.dsAuthCard'))) || featuredControl;
     const classes = ['svGlassSurface', panel ? 'svGlassPanel' : 'svGlassControl'];
     if (complex) {const position = getComputedStyle(host).position; if (!position || position === 'static') classes.push('svGlassRelative');}
     entry = {host, complex, controller:null, visible:!intersection, addedClasses:classes.filter(name => !host.classList.contains(name)), previousRenderer:host.dataset.swiflyRenderer, previousProperties:rendererProperties.map(property => [property, host.style.getPropertyValue(property), host.style.getPropertyPriority(property)])};

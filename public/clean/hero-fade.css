@@ -1,237 +1,130 @@
-/* Swifly v169 — cinema artwork that dissolves naturally into black.
-   Applied only to large hero image layers, never to actual posters or buttons. */
-body.svCleanShell .dsHeroBg,
-body.svCleanShell .showcaseHeroBg,
-body.svCleanShell .browseHeroBg {
+/* v178 — one source of truth for artwork-to-content transitions.
+   Loaded after the legacy page styles so Home, discovery and title details
+   share continuous, natural image dissolves instead of competing scrims. */
+
+/* Signed-in landing, Movies, Series, and other featured catalog pages.
+   Allow the complete cinematic frame room before the first poster rail. */
+body.svCleanShell main > .dsHero {
+  min-height:clamp(780px,107svh,1120px) !important;
+  height:auto !important;
+  padding:136px 0 175px !important;
+  overflow:hidden !important;
+  background:#000 !important;
+}
+body.svCleanShell main > .dsHero > .dsHeroBg {
+  background-position:center 42% !important;
   -webkit-mask-image:linear-gradient(to bottom,
-    #000 0%,#000 30%,rgba(0,0,0,.86) 46%,
-    rgba(0,0,0,.52) 62%,rgba(0,0,0,.12) 80%,transparent 95%) !important;
+    #000 0%,#000 64%,rgb(0 0 0 / .98) 71%,
+    rgb(0 0 0 / .89) 78%,rgb(0 0 0 / .69) 86%,
+    rgb(0 0 0 / .34) 94%,transparent 100%) !important;
   mask-image:linear-gradient(to bottom,
-    #000 0%,#000 30%,rgba(0,0,0,.86) 46%,
-    rgba(0,0,0,.52) 62%,rgba(0,0,0,.12) 80%,transparent 95%) !important;
+    #000 0%,#000 64%,rgb(0 0 0 / .98) 71%,
+    rgb(0 0 0 / .89) 78%,rgb(0 0 0 / .69) 86%,
+    rgb(0 0 0 / .34) 94%,transparent 100%) !important;
 }
-/* Maintain a real image near the top; the lower third gently reaches black.
-   Keep the dark scrim behind all title text, not in front of movie cards. */
-body.svCleanShell .dsHeroGlass {
+body.svCleanShell main > .dsHero > .dsHeroGlass {
   background:
-    linear-gradient(90deg,rgba(0,0,0,.79) 0%,rgba(0,0,0,.51) 30%,rgba(0,0,0,.12) 78%),
-    linear-gradient(to bottom,rgba(0,0,0,.08) 0%,rgba(0,0,0,.06) 30%,
-       rgba(0,0,0,.32) 52%,rgba(0,0,0,.78) 77%,#000 98%) !important;
+    linear-gradient(90deg,rgb(0 0 0 / .66) 0%,rgb(0 0 0 / .33) 33%,transparent 83%),
+    linear-gradient(to bottom,rgb(0 0 0 / .10),transparent 32%,
+      transparent 78%,rgb(0 0 0 / .10) 92%,rgb(0 0 0 / .28) 100%) !important;
 }
-/* A dark translucent canvas lets the aurora exist behind the film image,
-   while the image mask and scrim keep the movie as the visual priority. */
-body.svCleanShell[data-st-backdrop="aurora"] .dsHero {
+/* Trailer previews obey the same silhouette, rather than abruptly ending
+   behind the bottom edge of the hero. */
+body.svCleanShell main > .dsHero > .dsHeroTrailerLayer {
+  -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 61%,
+    rgb(0 0 0 / .84) 78%,rgb(0 0 0 / .34) 94%,transparent 100%) !important;
+  mask-image:linear-gradient(to bottom,#000 0%,#000 61%,
+    rgb(0 0 0 / .84) 78%,rgb(0 0 0 / .34) 94%,transparent 100%) !important;
+}
+body.svCleanShell main > .svHeroLightBridge::before,
+body.svCleanShell main > .svHeroLightBridge::after {display:none !important;}
+body.svCleanShell main > .dsHero + .svHeroLightBridge + .dsContent:not(.noHero) {
+  position:relative;z-index:2;
+  margin-top:-2px !important;
+  padding-top:18px !important;
   background:transparent !important;
 }
-body.svCleanShell .dsHeroTrailerLayer {
-  -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 37%,rgba(0,0,0,.72) 56%,transparent 95%);
-  mask-image:linear-gradient(to bottom,#000 0%,#000 37%,rgba(0,0,0,.72) 56%,transparent 95%);
+/* Details: backdrop opacity reaches black smoothly BEFORE the body begins.
+   More height shows the actual film rather than hiding its lower half. */
+body.svCleanShell :is(.svDetailPage,.svDetailDialog) .svDetailHero {
+  height:clamp(620px,64vw,750px) !important;
+  min-height:620px !important;
+  background:#050505 !important;
 }
-/* Welcome uses its own image element, so mask the existing artwork container. */
-body.svCleanShell .svWelcomeClean .dsWelcomeHeroBg {
-  -webkit-mask-image:
-    linear-gradient(to right,transparent 0%,#000 30%,#000 98%),
-    linear-gradient(to bottom,#000 0%,#000 40%,rgba(0,0,0,.60) 66%,transparent 94%) !important;
-  mask-image:
-    linear-gradient(to right,transparent 0%,#000 30%,#000 98%),
-    linear-gradient(to bottom,#000 0%,#000 40%,rgba(0,0,0,.60) 66%,transparent 94%) !important;
-  -webkit-mask-composite:source-in;
-  mask-composite:intersect;
+body.svCleanShell :is(.svDetailPage,.svDetailDialog) .svDetailBackdrop {
+  background-position:center 31% !important;
+  -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 47%,
+    rgb(0 0 0 / .98) 55%,rgb(0 0 0 / .87) 67%,
+    rgb(0 0 0 / .66) 79%,rgb(0 0 0 / .32) 92%,transparent 100%) !important;
+  mask-image:linear-gradient(to bottom,#000 0%,#000 47%,
+    rgb(0 0 0 / .98) 55%,rgb(0 0 0 / .87) 67%,
+    rgb(0 0 0 / .66) 79%,rgb(0 0 0 / .32) 92%,transparent 100%) !important;
 }
-/* No hard black panel between the bottom of the featured image and rows. */
-body.svCleanShell[data-st-backdrop="aurora"] .svWelcomeClean .dsWelcomeHero,
-body.svCleanShell[data-st-backdrop="aurora"] .svWelcomeClean .dsWelcomeDiscovery {
-  background:transparent !important;
+body.svCleanShell :is(.svDetailPage,.svDetailDialog) .svDetailShade {
+  background:
+    linear-gradient(90deg,rgb(0 0 0 / .30),transparent 76%),
+    linear-gradient(to bottom,transparent 0%,transparent 69%,
+      rgb(5 5 5 / .08) 81%,rgb(5 5 5 / .38) 95%,#050505 100%) !important;
 }
-@media(max-width:760px) {
-  body.svCleanShell .dsHeroBg,
-  body.svCleanShell .showcaseHeroBg,
-  body.svCleanShell .browseHeroBg {
-    -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 24%,rgba(0,0,0,.7) 45%,transparent 81%) !important;
-    mask-image:linear-gradient(to bottom,#000 0%,#000 24%,rgba(0,0,0,.7) 45%,transparent 81%) !important;
-  }
-  body.svCleanShell .dsHeroGlass {
-    background:
-      linear-gradient(to bottom,rgba(0,0,0,.26),rgba(0,0,0,.5) 45%,#000 95%),
-      linear-gradient(90deg,rgba(0,0,0,.43),transparent) !important;
-  }
+body.svCleanShell :is(.svDetailPage,.svDetailDialog) .svDetailIdentity {bottom:31px;}
+body.svCleanShell :is(.svDetailPage,.svDetailDialog) .svDetailBody {
+  background:#050505 !important;
 }
-@media(prefers-reduced-motion:reduce) {
-  body.svCleanShell .dsHeroBg {animation:none !important}
+body.svCleanShell :is(.svDetailPage,.svDetailDialog) .svDetailBody::before {
+  display:none !important;content:none !important;
 }
-
-
-/* v171 — one continuous scene from featured artwork to discovery.
-   Extend the image beyond the hero's old cutoff and dissolve its alpha gradually.
-   Keep posters, typography, navigation, and the original Aurora untouched. */
+/* Welcome already has its own illustration and three-poster composition.
+   Keep that intact and use only a feathered lower edge. */
 body.svCleanShell .svWelcomeClean .dsWelcomeHero {
-  min-height:clamp(640px,84svh,875px) !important;
-  padding-bottom:clamp(142px,17vh,195px) !important;
   overflow:visible !important;
 }
 body.svCleanShell .svWelcomeClean .dsWelcomeHeroBg {
-  bottom:-clamp(88px,12vh,158px) !important;
-  opacity:.28 !important;
+  bottom:-36px !important;
   -webkit-mask-image:
-    linear-gradient(to right,transparent 0%,#000 32%,#000 100%),
-    linear-gradient(to bottom,transparent 0%,#000 17%,#000 43%,rgba(0,0,0,.84) 60%,rgba(0,0,0,.42) 80%,transparent 100%) !important;
+    linear-gradient(to right,transparent 0%,#000 31%,#000 100%),
+    linear-gradient(to bottom,transparent 0%,#000 17%,#000 55%,
+      rgb(0 0 0 / .75) 75%,rgb(0 0 0 / .35) 90%,transparent 100%) !important;
   mask-image:
-    linear-gradient(to right,transparent 0%,#000 32%,#000 100%),
-    linear-gradient(to bottom,transparent 0%,#000 17%,#000 43%,rgba(0,0,0,.84) 60%,rgba(0,0,0,.42) 80%,transparent 100%) !important;
-  -webkit-mask-composite:source-in;
-  mask-composite:intersect;
+    linear-gradient(to right,transparent 0%,#000 31%,#000 100%),
+    linear-gradient(to bottom,transparent 0%,#000 17%,#000 55%,
+      rgb(0 0 0 / .75) 75%,rgb(0 0 0 / .35) 90%,transparent 100%) !important;
+  -webkit-mask-composite:source-in;mask-composite:intersect;
 }
 body.svCleanShell .svWelcomeClean .dsWelcomeHero::before {
-  bottom:-clamp(88px,12vh,158px) !important;
-  background:linear-gradient(to bottom,
-    transparent 0%,rgba(0,0,0,.02) 39%,rgba(0,0,0,.17) 64%,
-    rgba(0,0,0,.34) 81%,transparent 100%) !important;
-  pointer-events:none;
+  bottom:-36px !important;
+  background:linear-gradient(to bottom,transparent 54%,rgb(0 0 0 / .10) 78%,#000 100%) !important;
 }
+body.svCleanShell .svWelcomeClean .svWelcomeLightBridge::before,
+body.svCleanShell .svWelcomeClean .svWelcomeLightBridge::after {display:none !important;}
 body.svCleanShell .svWelcomeClean .dsWelcomeDiscovery {
-  position:relative;z-index:1;
-  margin-top:-clamp(58px,8vh,88px) !important;
-  padding-top:clamp(58px,8vh,88px) !important;
-  background:transparent !important;
-}
-/* The old border was a visible horizontal section break. */
-body.svCleanShell .svWelcomeClean .svWelcomeDiscoveryIntro {
-  border-top:0 !important;
-  padding-top:25px;
-}
-/* The authenticated Home page needs the same continuous film-to-rows handoff. */
-body.svCleanShell .dsHero + .dsContent:not(.noHero) {
   position:relative;z-index:2;
-  margin-top:-clamp(45px,8vh,90px) !important;
   background:transparent !important;
 }
-@media(max-width:850px) {
-  body.svCleanShell .svWelcomeClean .dsWelcomeHero {
-    min-height:auto !important;
-    padding-bottom:122px !important;
+@media(max-width:860px) {
+  body.svCleanShell main > .dsHero {
+    min-height:clamp(600px,94svh,865px) !important;
+    padding:116px 0 132px !important;
   }
-  body.svCleanShell .svWelcomeClean .dsWelcomeHeroBg {
-    bottom:-90px !important;
-    opacity:.18 !important;
+  body.svCleanShell main > .dsHero > .dsHeroBg {
+    background-position:center 44% !important;
+    -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 51%,
+      rgb(0 0 0 / .83) 68%,rgb(0 0 0 / .4) 85%,transparent 100%) !important;
+    mask-image:linear-gradient(to bottom,#000 0%,#000 51%,
+      rgb(0 0 0 / .83) 68%,rgb(0 0 0 / .4) 85%,transparent 100%) !important;
   }
-  body.svCleanShell .svWelcomeClean .dsWelcomeHero::before {bottom:-90px !important;}
-  body.svCleanShell .svWelcomeClean .dsWelcomeDiscovery {
-    margin-top:-38px !important;
-    padding-top:38px !important;
+  body.svCleanShell main > .dsHero + .svHeroLightBridge + .dsContent:not(.noHero) {padding-top:16px !important;}
+  body.svCleanShell :is(.svDetailPage,.svDetailDialog) .svDetailHero {
+    height:clamp(490px,74svh,610px) !important;min-height:490px !important;
   }
-  body.svCleanShell .dsHero + .dsContent:not(.noHero) {margin-top:-36px !important;}
+  body.svCleanShell :is(.svDetailPage,.svDetailDialog) .svDetailIdentity {bottom:20px;}
+  body.svCleanShell .svWelcomeClean .dsWelcomeHeroBg {bottom:-22px !important;}
 }
 @media(max-width:500px) {
-  body.svCleanShell .svWelcomeClean .dsWelcomeHero {padding-bottom:104px !important;}
-  body.svCleanShell .svWelcomeClean .dsWelcomeHeroBg {bottom:-65px !important;}
-  body.svCleanShell .svWelcomeClean .dsWelcomeHero::before {bottom:-65px !important;}
-  body.svCleanShell .svWelcomeClean .dsWelcomeDiscovery {
-    margin-top:-25px !important;
-    padding-top:25px !important;
-  }
-}
-
-
-/* v172 — The film-to-discovery handoff is its own layer, not a mask ending
-   at the hero boundary. We reuse the actual title artwork to get its colors. */
-body.svCleanShell .svHeroLightBridge,
-body.svCleanShell .svWelcomeLightBridge {
-  display:block;
-  position:relative;
-  height:0;
-  min-height:0;
-  z-index:0;
-  overflow:visible;
-  pointer-events:none;
-}
-/* The film image becomes a soft ambient reflection extending into the rows.
-   Radial edge masking keeps it from ever forming a horizontal colored strip. */
-body.svCleanShell :is(.svHeroLightBridge,.svWelcomeLightBridge)::before {
-  content:"";
-  position:absolute;
-  top:-245px;
-  left:-11%;
-  width:122%;
-  height:560px;
-  background-image:var(--sv-light-art);
-  background-size:cover;
-  background-position:center 67%;
-  background-repeat:no-repeat;
-  opacity:.49;
-  filter:blur(64px) saturate(1.16) brightness(.68);
-  -webkit-mask-image:radial-gradient(ellipse 73% 74% at 50% 42%,
-    #000 12%,rgba(0,0,0,.83) 48%,rgba(0,0,0,.35) 73%,transparent 100%);
-  mask-image:radial-gradient(ellipse 73% 74% at 50% 42%,
-    #000 12%,rgba(0,0,0,.83) 48%,rgba(0,0,0,.35) 73%,transparent 100%);
-}
-/* Two narrow reflections, also taken from the title art instead of an
-   unrelated magenta/green palette. They illuminate the negative space. */
-body.svCleanShell :is(.svHeroLightBridge,.svWelcomeLightBridge)::after {
-  content:"";
-  position:absolute;
-  top:-165px;
-  left:6%;
-  width:88%;
-  height:430px;
-  background-image:var(--sv-light-art);
-  background-position:center 72%;
-  background-size:cover;
-  background-repeat:no-repeat;
-  opacity:.26;
-  filter:blur(100px) saturate(1.3) brightness(.75);
-  -webkit-mask-image:radial-gradient(ellipse 70% 78% at 53% 46%,#000 8%,transparent 100%);
-  mask-image:radial-gradient(ellipse 70% 78% at 53% 46%,#000 8%,transparent 100%);
-}
-/* Explicit ordering. Film and posters remain crisp above the light bridge. */
-body.svCleanShell .dsHero {position:relative;z-index:1;}
-body.svCleanShell .svWelcomeClean .dsWelcomeHero {position:relative;z-index:1;}
-body.svCleanShell .dsHero + .svHeroLightBridge + .dsContent:not(.noHero) {
-  position:relative;
-  z-index:2;
-  margin-top:-clamp(45px,8vh,90px) !important;
-  background:transparent !important;
-}
-body.svCleanShell .svWelcomeClean .svWelcomeLightBridge + .dsWelcomeDiscovery {
-  position:relative;
-  z-index:2;
-  background:transparent !important;
-}
-/* Extend the actual frame before the bridge takes over; the soft edge is
-   deliberately gradual, while leaving the hero heading and controls alone. */
-body.svCleanShell .dsHeroBg,
-body.svCleanShell .showcaseHeroBg,
-body.svCleanShell .browseHeroBg {
-  -webkit-mask-image:linear-gradient(to bottom,
-    #000 0%,#000 44%,rgba(0,0,0,.94) 58%,
-    rgba(0,0,0,.69) 73%,rgba(0,0,0,.26) 88%,transparent 100%) !important;
-  mask-image:linear-gradient(to bottom,
-    #000 0%,#000 44%,rgba(0,0,0,.94) 58%,
-    rgba(0,0,0,.69) 73%,rgba(0,0,0,.26) 88%,transparent 100%) !important;
-}
-body.svCleanShell .dsHeroGlass {
-  background:
-    linear-gradient(90deg,rgba(0,0,0,.78) 0%,rgba(0,0,0,.46) 31%,rgba(0,0,0,.08) 78%),
-    linear-gradient(to bottom,rgba(0,0,0,.07) 0%,rgba(0,0,0,.04) 42%,
-      rgba(0,0,0,.34) 68%,rgba(0,0,0,.74) 88%,rgba(0,0,0,.92) 100%) !important;
-}
-/* The Welcome hero already has its own artwork mask. Its continuation is
-   visible only below the illustration; there is no independent section box. */
-body.svCleanShell .svWelcomeClean .svWelcomeLightBridge::before {opacity:.40;}
-body.svCleanShell .svWelcomeClean .svWelcomeLightBridge::after {opacity:.23;}
-@media(max-width:800px) {
-  body.svCleanShell :is(.svHeroLightBridge,.svWelcomeLightBridge)::before {
-    top:-155px;height:370px;filter:blur(51px) saturate(1.12) brightness(.63);opacity:.38;
-  }
-  body.svCleanShell :is(.svHeroLightBridge,.svWelcomeLightBridge)::after {
-    top:-135px;height:310px;filter:blur(70px) saturate(1.2) brightness(.7);opacity:.22;
-  }
-  body.svCleanShell .dsHero + .svHeroLightBridge + .dsContent:not(.noHero) {
-    margin-top:-36px !important;
+  body.svCleanShell main > .dsHero {padding:105px 0 112px !important;}
+  body.svCleanShell :is(.svDetailPage,.svDetailDialog) .svDetailHero {
+    min-height:460px !important;height:clamp(460px,70svh,545px) !important;
   }
 }
 @media(prefers-reduced-motion:reduce) {
-  body.svCleanShell :is(.svHeroLightBridge,.svWelcomeLightBridge)::before,
-  body.svCleanShell :is(.svHeroLightBridge,.svWelcomeLightBridge)::after {
-    transition:none !important;animation:none !important;
-  }
+  body.svCleanShell :is(.dsHeroBg,.dsHeroTrailerLayer,.svDetailBackdrop) {animation:none !important;}
 }

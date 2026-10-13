@@ -140,3 +140,169 @@ body.svCleanShell[data-st-glass="off"] .svGlassSurface.svGlassControl::after {
   body.svCleanShell .svGlassSurface.svGlassControl::before,
   body.svCleanShell .svGlassSurface.svGlassControl::after {transition:none !important;}
 }
+
+
+/* v178 — consistent opt-in lens material. The JS registers individual controls;
+   never style every link/button globally (the navbar is ONE glass capsule). */
+body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svGlassControl {
+  background:
+    radial-gradient(ellipse 90% 145% at 12% -55%,rgb(255 255 255 / .40),transparent 73%),
+    linear-gradient(145deg,rgb(250 255 255 / .23) 0%,rgb(246 255 255 / .07) 44%,rgb(213 243 249 / .09) 69%,rgb(255 255 255 / .20)),
+    rgb(12 21 27 / .20) !important;
+  border:1px solid rgb(247 255 255 / .53) !important;
+  box-shadow:inset 0 1px 0 rgb(255 255 255 / .74),
+    inset 0 -1px 0 rgb(205 244 249 / .25),
+    inset 1px 0 0 rgb(255 255 255 / .19),
+    0 3px 12px rgb(0 0 0 / .22),0 9px 27px rgb(0 0 0 / .16) !important;
+  -webkit-backdrop-filter:blur(14px) saturate(1.65) brightness(1.13) !important;
+  backdrop-filter:blur(14px) saturate(1.65) brightness(1.13) !important;
+}
+body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svGlassControl[data-swifly-renderer="svg"] {
+  -webkit-backdrop-filter:var(--sv-glass-filter) saturate(1.25) !important;
+  backdrop-filter:var(--sv-glass-filter) saturate(1.25) !important;
+}
+body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svGlassControl:is(:hover,:focus-visible) {
+  background:
+    radial-gradient(ellipse 100% 135% at 12% -54%,rgb(255 255 255 / .48),transparent 74%),
+    linear-gradient(139deg,rgb(255 255 255 / .30),rgb(238 252 255 / .11) 55%,rgb(228 249 253 / .24)),
+    rgb(12 24 31 / .23) !important;
+  border-color:rgb(255 255 255 / .8) !important;
+  box-shadow:inset 0 1px 0 rgb(255 255 255 / .85),inset 0 -1px 0 rgb(202 251 255 / .32),
+    0 6px 25px rgb(0 0 0 / .32) !important;
+}
+/* On dark media a glass pane still needs edge lighting. The optical surface
+   belongs to the interactive element, not separate click-catching overlays. */
+body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svGlassControl::before {
+  display:block !important;
+  content:"" !important;
+  pointer-events:none !important;
+  position:absolute !important;
+  inset:1px !important;
+  border-radius:inherit !important;
+  background:radial-gradient(ellipse 75% 130% at 12% -42%,rgb(255 255 255 / .28),transparent 85%),
+    radial-gradient(ellipse 75% 95% at 96% 134%,rgb(194 242 253 / .16),transparent 85%);
+  opacity:1 !important;
+  transform:none !important;
+}
+body.svCleanShell[data-st-glass="liquid"] :is(.svDetailActions,.dsHeroActions,.dsDetailActionsV121,.dsWelcomeActions) .svGlassControl.dsPrimaryBtn {
+  background:radial-gradient(ellipse 96% 140% at 8% -58%,rgb(255 255 255 / .55),transparent 71%),
+    linear-gradient(141deg,rgb(246 255 255 / .33),rgb(225 248 247 / .11) 55%,rgb(235 255 255 / .26)),
+    rgb(12 32 36 / .22) !important;
+  border-color:rgb(247 255 255 / .69) !important;
+}
+/* Round film controls remain round; form controls use the corners of the form. */
+body.svCleanShell[data-st-glass="liquid"] :is(.svDetailChrome,.svDetailActions) .svGlassControl.dsIconBtn,
+body.svCleanShell[data-st-glass="liquid"] .svDetailClose.svGlassControl {border-radius:50% !important;}
+body.svCleanShell[data-st-glass="liquid"] :is(.dsDetailTabsV121 > button,.svAuthPasswordToggle).svGlassControl {
+  border-radius:11px !important;
+}
+body.svCleanShell[data-st-glass="liquid"] .dsDetailTabsV121 > button.svGlassControl {
+  min-height:34px;
+  padding:9px 14px !important;
+}
+body.svCleanShell[data-st-glass="liquid"] .dsDetailTabsV121 > button.svGlassControl:not(.active) {
+  border-color:rgb(255 255 255 / .24) !important;
+}
+/* Glass needs something to refract on auth. This is a soft, fixed ambient
+   reflection behind the existing compact 430px form, not another card. */
+body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe::before {
+  display:block !important;
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  z-index:-1;
+  background:
+    radial-gradient(ellipse 43% 38% at 51% 37%,rgb(67 109 113 / .19),transparent 100%),
+    radial-gradient(ellipse 55% 42% at 57% 65%,rgb(64 98 110 / .13),transparent 100%);
+}
+body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthCard.svGlassPanel {
+  position:relative !important;
+  isolation:isolate;
+  overflow:hidden;
+  background:
+    radial-gradient(ellipse 110% 66% at 4% -37%,rgb(255 255 255 / .17),transparent 74%),
+    linear-gradient(148deg,rgb(230 251 250 / .12),rgb(116 169 177 / .055) 52%,rgb(214 244 248 / .09)),
+    rgb(15 23 28 / .53) !important;
+  border:1px solid rgb(244 255 255 / .38) !important;
+  box-shadow:inset 0 1px 0 rgb(255 255 255 / .46),inset 0 -1px 0 rgb(214 247 250 / .13),
+    0 24px 85px rgb(0 0 0 / .49),0 0 56px rgb(137 216 220 / .045) !important;
+  -webkit-backdrop-filter:blur(34px) saturate(1.5) brightness(1.06) !important;
+  backdrop-filter:blur(34px) saturate(1.5) brightness(1.06) !important;
+}
+body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthCard::before {
+  display:block !important;content:"" !important;
+  position:absolute;inset:1px;
+  z-index:-1;pointer-events:none;border-radius:inherit;
+  background:radial-gradient(ellipse 110% 40% at 16% -18%,rgb(255 255 255 / .18),transparent 78%);
+}
+body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthSwitch.svGlassPanel {
+  background:linear-gradient(150deg,rgb(239 255 255 / .11),rgb(183 223 232 / .04)),rgb(8 17 23 / .34) !important;
+  border:1px solid rgb(238 255 255 / .31) !important;
+  border-radius:14px !important;
+  box-shadow:inset 0 1px 0 rgb(255 255 255 / .20),0 4px 14px rgb(0 0 0 / .18) !important;
+  -webkit-backdrop-filter:blur(15px) saturate(1.4) !important;
+  backdrop-filter:blur(15px) saturate(1.4) !important;
+}
+body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthSwitch > a.svGlassControl {
+  min-height:34px !important;
+  border-radius:10px !important;
+  padding:7px 11px !important;
+  border-color:transparent !important;
+  background:transparent !important;
+  box-shadow:none !important;
+}
+body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthSwitch > a.svGlassControl::before,
+body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthSwitch > a.svGlassControl::after {
+  display:none !important;
+}
+body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthSwitch > a.svGlassControl:is(.active,[aria-current="page"]) {
+  background:linear-gradient(145deg,rgb(249 255 255 / .28),rgb(208 240 245 / .13)),rgb(21 42 48 / .18) !important;
+  border-color:rgb(240 255 255 / .40) !important;
+  box-shadow:inset 0 1px 0 rgb(255 255 255 / .40),0 2px 11px rgb(0 0 0 / .18) !important;
+}
+body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsSafeAuthForm input {
+  background:linear-gradient(145deg,rgb(243 255 255 / .075),rgb(213 242 246 / .027)),rgb(6 18 23 / .27) !important;
+  border:1px solid rgb(230 250 251 / .30) !important;
+  box-shadow:inset 0 1px 0 rgb(255 255 255 / .14),0 3px 10px rgb(0 0 0 / .11) !important;
+  -webkit-backdrop-filter:blur(12px) saturate(1.35) !important;
+  backdrop-filter:blur(12px) saturate(1.35) !important;
+}
+body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsSafeAuthForm input:focus-visible {
+  border-color:rgb(237 255 255 / .76) !important;
+  box-shadow:inset 0 1px 0 rgb(255 255 255 / .25),0 0 0 4px rgb(179 235 244 / .14) !important;
+}
+body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .svAuthPasswordToggle.svGlassControl {
+  border-radius:9px !important;
+  min-height:32px;
+  padding:4px 9px !important;
+  background:linear-gradient(145deg,rgb(240 255 255 / .19),rgb(208 245 250 / .055)),rgb(9 24 29 / .23) !important;
+}
+body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsSafeAuthForm .dsPrimaryBtn.svGlassControl {
+  border-radius:12px !important;
+  background:radial-gradient(ellipse 85% 110% at 7% -30%,rgb(255 255 255 / .66),transparent 90%),
+    linear-gradient(143deg,rgb(243 255 253 / .74),rgb(190 234 229 / .47)),rgb(101 152 151 / .16) !important;
+  border:1px solid rgb(249 255 255 / .85) !important;
+  color:#132a2c !important;
+  text-shadow:none !important;
+  box-shadow:inset 0 1px 0 rgb(255 255 255 / .89),inset 0 -1px 0 rgb(238 255 255 / .32),
+    0 6px 22px rgb(0 0 0 / .2) !important;
+}
+body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsSafeAuthForm .dsPrimaryBtn.svGlassControl:hover {
+  background:linear-gradient(145deg,rgb(252 255 255 / .83),rgb(207 246 242 / .58)),rgb(96 155 155 / .16) !important;
+}
+body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsSafeAuthForm .dsPrimaryBtn.svGlassControl > span {
+  position:relative;z-index:1;color:#132a2c !important;
+}
+body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthTopActions button.svGlassControl {border-radius:13px !important;}
+/* Never let the rich-liquid stylesheet override explicit accessibility modes. */
+body.svCleanShell[data-st-glass="off"] main.dsAuthPageSafe::before,
+body.svCleanShell[data-st-glass="subtle"] main.dsAuthPageSafe::before {display:none !important;}
+@media(prefers-reduced-transparency:reduce) {
+  body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthCard.svGlassPanel,
+  body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsSafeAuthForm input {
+    background:#1c282b !important;
+    -webkit-backdrop-filter:none !important;backdrop-filter:none !important;
+  }
+  body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe::before {display:none !important;}
+}
