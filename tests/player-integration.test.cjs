@@ -273,7 +273,7 @@ test('login and signup share one compact design with identical 430px card footpr
 
 
 test('v174 gives the featured movie enough height before fading into the first catalog row',async()=>{
- const css=await(await fetch(base+'/assets/clean/finish.css?v=174')).text();
+ const css=await(await fetch(base+'/assets/clean/finish.css?v=175')).text();
  assert.match(css,/main > \.dsHero \{/);
  assert.match(css,/calc\(100svh \+ 95px\)/,'desktop hero must be taller than one viewport');
  assert.match(css,/background-position:center 43%/,'retain more of the real featured art');
@@ -286,32 +286,32 @@ test('v174 gives the featured movie enough height before fading into the first c
  const hero=doc.querySelector('main > .dsHero');
  assert(hero && hero.querySelector('.dsHeroBg'));
  assert(hero.nextElementSibling?.classList.contains('svHeroLightBridge'));
- assert(doc.querySelector('link[href="/assets/clean/finish.css?v=174"]'));
+ assert(doc.querySelector('link[href="/assets/clean/finish.css?v=175"]'));
 });
 
 test('v174 keeps Welcome soft without muddy light bridge or button clipping',async()=>{
- const css=await(await fetch(base+'/assets/clean/finish.css?v=174')).text();
+ const css=await(await fetch(base+'/assets/clean/finish.css?v=175')).text();
  assert.match(css,/\.svWelcomeClean \.svWelcomeLightBridge::after \{display:none/);
  assert.match(css,/\.svWelcomeClean \.dsWelcomeHeroBg \{/);
  assert.match(css,/opacity:\.21 !important/);
  const doc=parse(await(await fetch(base+'/welcome')).text()).window.document;
  assert(doc.querySelector('.svWelcomeLightBridge'));
- assert(doc.querySelector('link[href="/assets/clean/finish.css?v=174"]'));
+ assert(doc.querySelector('link[href="/assets/clean/finish.css?v=175"]'));
  assert(doc.querySelector('.dsWelcomeActions .dsPrimaryBtn'));
 });
 
 test('v174 liquid controls respond to the Studio setting and pages transition progressively',async()=>{
  const fs=require('node:fs');
- const css=await(await fetch(base+'/assets/clean/finish.css?v=174')).text();
+ const css=await(await fetch(base+'/assets/clean/finish.css?v=175')).text();
  const script=fs.readFileSync(require('node:path').join(__dirname,'../public/liquid-glass/surfaces.js'),'utf8');
- assert.match(script,/\.svWelcomeStudio/);
- assert.match(script,/\.svNavButton/);
+ assert.doesNotMatch(script,/'.svWelcomeStudio'/,'Studio icon inside navigation must not be its own glass control');
+ assert.doesNotMatch(script,/'.svNavButton'/,'Navbar icons must be covered by one shared nav capsule');
  assert.match(script,/\.dsRowArrow/);
  assert.match(css,/data-st-glass="liquid"/);
- assert.match(css,/\.svGlassSurface\.svGlassControl\.dsPrimaryBtn/);
- assert.match(css,/\.svGlassSurface\.svGlassControl\.dsSecondaryBtn/);
- assert.match(css,/\.svGlassSurface\.svGlassControl\.svWelcomeStudio/);
- assert.match(css,/backdrop-filter:blur\(16px\) saturate\(1\.6\)/);
+ assert.match(css,/\.dsPrimaryBtn,\.dsSecondaryBtn,\.dsIconBtn/);
+ assert.match(css,/data-swifly-renderer="svg"/,'allow actual displacement when available');
+ assert.match(css,/\.netflixNav,\.dsWelcomeNav/,'nav icon glass must be suppressed');
+ assert.match(css,/backdrop-filter:blur\(18px\) saturate\(1\.55\)/);
  assert.match(css,/data-st-glass="off"/);
  assert.match(css,/@view-transition \{ navigation:auto; \}/);
  assert.match(css,/::view-transition-new\(root\)/);
@@ -321,9 +321,33 @@ test('v174 liquid controls respond to the Studio setting and pages transition pr
    const response=await fetch(base+route);
    assert.equal(response.status,200,route);
    const doc=parse(await response.text()).window.document;
-   assert(doc.querySelector('link[href="/assets/clean/finish.css?v=174"]'),route+' missing final styles');
-   assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=174"]'),route+' missing updated glass controls');
+   assert(doc.querySelector('link[href="/assets/clean/finish.css?v=175"]'),route+' missing final styles');
+   assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=175"]'),route+' missing updated glass controls');
  }
  const watch=await(await fetch(base+'/watch/movie/101')).text();
  assert(!watch.includes('finish.css?v=174'),'watch route must not have page dissolves');
+});
+
+test('v175 keeps the top bar one cohesive capsule and restores real Liquid Glass on featured controls',async()=>{
+ const response=await fetch(base+'/');
+ assert.equal(response.status,200);
+ const doc=parse(await response.text()).window.document;
+ const hero=doc.querySelector('.dsHero');
+ assert(hero);
+ assert(hero.querySelector('.dsHeroActions .dsPrimaryBtn'),'Play button');
+ assert(hero.querySelector('.dsHeroActions .dsSecondaryBtn'),'Details button');
+ assert(hero.querySelector('.dsHeroActions .dsIconBtn'),'Save button');
+ const css=await (await fetch(base+'/assets/clean/finish.css?v=175')).text();
+ const js=await (await fetch(base+'/assets/liquid-glass/surfaces.js?v=175')).text();
+ assert.match(css,/\.netflixNav,\.dsWelcomeNav\) :is\(\.svNavButton,\.svWelcomeStudio/);
+ assert.match(css,/border:1px solid transparent !important/,'nav buttons should not be outlined separately');
+ assert.match(css,/background:transparent !important/,'nav icons should live in one glass capsule');
+ assert.match(js,/featuredControl = !panel/,'important hero actions must enable the glass refraction renderer');
+ assert.match(js,/\.dsHeroActions,\.dsWelcomeActions,\.dsDetailActionsV121/);
+ assert.match(css,/var\(--sv-glass-filter\) saturate\(1\.35\)/,'SVG liquid displacement must beat fallback blur CSS');
+ assert.match(css,/rgba\(248,255,253,\.42\)/,'Play button may glow but should not become opaque white');
+ assert.doesNotMatch(css,/rgba\(255,255,255,\.92\)/,'old solid Play style must stay removed');
+ const links=[...doc.querySelectorAll('link[rel=stylesheet]')].map(el=>el.getAttribute('href'));
+ assert(links.includes('/assets/clean/finish.css?v=175'));
+ assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=175"]'));
 });
