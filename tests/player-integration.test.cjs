@@ -188,7 +188,7 @@ test('signup is a single refined form with preserved fields and a usable passwor
  assert(d.querySelector('#safeAuthForm input[name="email"][type="email"]'));
  assert(d.querySelector('#safeAuthForm input[name="password"][type="password"]'));
  assert.equal(d.querySelectorAll('[data-auth-toggle-password]').length,1);
- assert.match(html,/passwordToggle\.addEventListener\("click"/);
+ assert.match(html,/passwordToggle\?\.addEventListener\("click"/);
  assert.match(html,/aria-pressed/);
  const css=await (await fetch(base+'/assets/clean/auth.css')).text();
  assert.match(css,/\.svAuthSignupPage \.dsAuthCard/);
