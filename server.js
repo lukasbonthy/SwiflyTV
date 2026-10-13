@@ -15314,8 +15314,9 @@ app.get("/social", (req, res) => {
   const room = roomId ? watchRooms.get(roomId) : null;
   const roomMovieId = partyMovieId(room?.syncedMovie?.movieId);
   if (roomMovieId) return res.redirect(`/watch/movie/${roomMovieId}?mode=movie&roomId=${encodeURIComponent(roomId)}`);
-  if (roomId || req.query.tab === "chat" || req.query.denied || req.query.kind || req.query.embedUrl || req.query.videoId) return socialPage(req, res);
-  res.redirect("/movies?party=1#watch-together");
+  // The navigation's Social link should enter the real, integrated Party Hub,
+  // not unexpectedly jump into the catalog's embedded party section.
+  return socialPage(req, res);
 });
 
 app.get("/kids", async (req, res) => {
