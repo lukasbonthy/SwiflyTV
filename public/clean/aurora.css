@@ -21,7 +21,7 @@ body.svCleanShell[data-sv-aurora-state="off"] .svAuroraBackground,
 body.svCleanShell:has(.svPlayerPage,.dsWatchPage) .svAuroraBackground { display:none; }
 .svAuroraRibbon {
   display:block; position:absolute; left:-4%; top:-4%; width:108%; height:108%; opacity:.8;
-  transform:rotate(-1deg); background:url("./aurora-ribbon.svg?v=163") center / 100% 100% no-repeat;
+  transform:rotate(-1deg); background:url("./aurora-ribbon.svg?v=164") center / 100% 100% no-repeat;
   animation:svAuroraDrift 32s ease-in-out infinite alternate paused;
 }
 .svAuroraBackground::after {
