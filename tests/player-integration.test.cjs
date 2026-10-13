@@ -387,7 +387,7 @@ test('Genres, cinematic profiles and Party Hub use the same late-loaded site exp
  assert.match(cx,/\.dsProfilesSelectPage \.dsProfileSelectCard/);
  assert.match(cx,/\.svPartyHub \.partyHero/);
  assert.match(cx,/prefers-reduced-motion:reduce/);
- for(const route of ['/movies','/tv','/profiles','/profiles/manage','/social?tab=watchrooms&kind=blank']){
+ for(const route of ['/movies','/tv','/profiles','/profiles/manage','/social','/social?tab=watchrooms&kind=blank']){
   const response=await fetch(base+route);
   assert.equal(response.status,200,route+' should render');
   const d=parse(await response.text()).window.document;
