@@ -534,3 +534,103 @@ test('WebKit optical CSS includes live blur and reduced-transparency fallback',(
  assert(controls.includes('netflixNav > .svLiquidPane[data-swifly-renderer="webkit-svg"]'));
  assert(controls.includes('prefers-reduced-transparency:reduce'));
 });
+
+test('Safari displacement receives the page artwork and text, rather than only a rim highlight',()=>{
+ const env=glass('<main><div class="dsHeroBg" style="background-image:url(/movie-art.jpg)"></div><h1>Featured movie</h1></main><nav><div class="svLiquidPane" data-swifly-glass></div></nav>');
+ const w=env.window,d=w.document;
+ Object.defineProperty(w.navigator,'userAgent',{configurable:true,value:'Mozilla/5.0 AppleWebKit/605.1.15 Version/18.6 Safari/605.1.15'});
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);
+ const lens=d.querySelector('svg.svWebkitGlassOptics'),scene=lens.querySelector('[data-sv-glass-scene]');
+ assert(scene,'the SVG must have real backdrop content to refract');
+ assert.match(scene.innerHTML,/movie-art\.jpg/);
+ assert.match(scene.textContent,/Featured movie/);
+ assert(lens.querySelector('feImage'),'displacement must sample a spatial map');
+ const displaced=scene.closest('[filter]');
+ assert(displaced,'actual artwork must pass through the SVG filter');
+ assert(lens.querySelector('feDisplacementMap[in2="map"]'));
+ env.finish();
+});
+
+test('Safari scene tracks scrolling and changed content without rebuilding the filter or running idle frames',async()=>{
+ const env=glass('<main><h1>Before</h1></main><nav><div class="svLiquidPane" data-swifly-glass></div></nav>');
+ const w=env.window,d=w.document;
+ Object.defineProperty(w.navigator,'userAgent',{configurable:true,value:'Mozilla/5.0 AppleWebKit/605.1.15 Version/18.6 Safari/605.1.15'});
+ let top=0;
+ for(const node of d.querySelectorAll('main,h1'))node.getBoundingClientRect=()=>({width:400,height:200,top,left:0,bottom:top+200,right:400});
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);await tick();
+ const pane=d.querySelector('.svLiquidPane'),lens=pane.querySelector('svg'),scene=lens.querySelector('[data-sv-glass-scene]');
+ assert(scene,'a real background scene is required');
+ const position=()=>{const layer=scene.querySelector('foreignObject');return Number(layer.getAttribute('y'))+parseFloat(layer.firstElementChild.style.marginTop);};
+ const before=position();
+ top=-64;d.dispatchEvent(new w.Event('scroll'));w.flush(32);await tick();
+ assert.equal(pane.querySelector('svg'),lens,'scrolling must reuse the optical graph');
+ assert.equal(position(),before-64);
+ d.querySelector('h1').textContent='After';await tick();w.flush(48);await tick();
+ assert.match(scene.textContent,/After/);
+ assert.equal(w.frameCount(),0,'sampling must settle without its own mutation feedback loop');
+ d.body.dataset.stGlass='off';await tick();w.flush(64);await tick();
+ d.dispatchEvent(new w.Event('scroll'));
+ assert.equal(w.frameCount(),0,'disabled glass must not sample scrolling content');
+ assert.equal(pane.querySelector('svg'),null);
+ env.finish();
+});
+
+test('iPad desktop Chrome identity never installs an unsupported shared backdrop URL lens',()=>{
+ const env=glass('<div class="svLiquidPane" data-swifly-glass></div><button class="dsRowArrow">Next</button>'),w=env.window,d=w.document;
+ Object.defineProperty(w.navigator,'userAgent',{configurable:true,value:'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Chrome/155.0.0 Safari/605.1.15'});
+ Object.defineProperty(w.navigator,'platform',{configurable:true,value:'MacIntel'});
+ Object.defineProperty(w.navigator,'maxTouchPoints',{configurable:true,value:5});
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');w.flush(16);
+ assert.equal(d.querySelector('.svLiquidPane').dataset.swiflyRenderer,'webkit-svg');
+ assert.equal(d.querySelector('.svSharedGlassDefinitions'),null);
+ assert(!d.body.classList.contains('svSharedGlassReady'));
+ env.finish();
+});
+
+test('Safari ignores its sampled image loads while refreshing for an original image load',async()=>{
+ const env=glass('<main><img src="/poster.jpg" alt="Poster"></main><nav><div class="svLiquidPane" data-swifly-glass></div></nav>'),w=env.window,d=w.document;
+ Object.defineProperty(w.navigator,'userAgent',{configurable:true,value:'Mozilla/5.0 AppleWebKit/605.1.15 Version/18.6 Safari/605.1.15'});
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);await tick();w.flush(20);await tick();
+ const sampled=d.querySelector('[data-sv-glass-scene] img');assert(sampled);assert.equal(w.frameCount(),0);
+ sampled.dispatchEvent(new w.Event('load'));
+ assert.equal(w.frameCount(),0,'cloned image loads must not recursively schedule scene sampling');
+ d.querySelector('main img').dispatchEvent(new w.Event('load'));
+ assert.equal(w.frameCount(),1,'an original loaded image should refresh the lens');
+ w.flush(32);await tick();assert.equal(w.frameCount(),0);
+ env.finish();
+});
+
+test('Safari refreshes settled transitions and animations without listening to its own optics',async()=>{
+ const env=glass('<main><div class="art" style="background-image:url(/movie.jpg)"></div></main><nav><div class="svLiquidPane" data-swifly-glass></div></nav>'),w=env.window,d=w.document;
+ Object.defineProperty(w.navigator,'userAgent',{configurable:true,value:'Mozilla/5.0 AppleWebKit/605.1.15 Version/18.6 Safari/605.1.15'});
+ const art=d.querySelector('.art'),original=w.getComputedStyle;let opacity='0';
+ w.getComputedStyle=node=>{
+  const computed=original(node);if(node!==art)return computed;
+  return new Proxy(computed,{get(target,key){if(key==='opacity')return opacity;const value=Reflect.get(target,key);return typeof value==='function'?value.bind(target):value;}});
+ };
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);await tick();w.flush(20);await tick();
+ const scene=d.querySelector('[data-sv-glass-scene]');assert(!scene.innerHTML.includes('movie.jpg'));assert.equal(w.frameCount(),0);
+ opacity='1';art.dispatchEvent(new w.Event('transitionend',{bubbles:true}));
+ assert.equal(w.frameCount(),1,'finished transitions must sample their final paint');
+ w.flush(32);await tick();assert(scene.innerHTML.includes('movie.jpg'));
+ art.dispatchEvent(new w.Event('animationend',{bubbles:true}));assert.equal(w.frameCount(),1);
+ w.flush(48);await tick();
+ scene.querySelector('div').dispatchEvent(new w.Event('transitionend',{bubbles:true}));
+ assert.equal(w.frameCount(),0,'sampled content must not schedule another capture');
+ env.finish();
+});
+
+test('Safari bounds large artwork captures to the lens band while preserving source layout and mask',()=>{
+ const env=glass('<main><div class="art" style="background-image:url(/wide.jpg);background-position:center 43%;mask-image:linear-gradient(black,transparent)"></div></main><nav><div class="svLiquidPane" data-swifly-glass></div></nav>'),w=env.window,d=w.document;
+ Object.defineProperty(w.navigator,'userAgent',{configurable:true,value:'Mozilla/5.0 AppleWebKit/605.1.15 Version/18.6 Safari/605.1.15'});
+ for(const node of d.querySelectorAll('main,.art'))node.getBoundingClientRect=()=>({width:3000,height:3000,left:-400,top:-200,right:2600,bottom:2800});
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);
+ const source=d.querySelector('[data-sv-glass-scene] foreignObject');assert(source);
+ assert(Number(source.getAttribute('width'))<=328 && Number(source.getAttribute('height'))<=168,'a large hero must not rasterize outside the sampled lens band');
+ const copy=source.querySelector('[style*="background-image"]');assert(copy);
+ assert.equal(copy.style.width,'3000px');assert.equal(copy.style.height,'3000px');
+ assert.equal(Number(source.getAttribute('x'))+parseFloat(copy.style.marginLeft),-400);
+ assert.equal(Number(source.getAttribute('y'))+parseFloat(copy.style.marginTop),-200);
+ assert.match(copy.style.maskImage,/linear-gradient/);
+ env.finish();
+});

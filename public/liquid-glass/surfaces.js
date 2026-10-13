@@ -162,6 +162,7 @@
       CSS.supports('backdrop-filter','url(#sv-shared-action-lens)') &&
       /Chrome|Chromium|Edg|OPR/.test(navigator.userAgent) &&
       !/iPad|iPhone|iPod/.test(navigator.userAgent) &&
+      !(navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) &&
       !window.matchMedia('(prefers-reduced-transparency: reduce)').matches;
     if (!supported) return;
     const ns='http://www.w3.org/2000/svg';
