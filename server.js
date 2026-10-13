@@ -6393,10 +6393,10 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/liquid-glass/surfaces.js?v=163"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=164" />
     <script defer src="/assets/studio/studio.js?v=164"></script>
-    <link rel="stylesheet" href="/assets/clean/aurora.css?v=165" />
+    <link rel="stylesheet" href="/assets/clean/aurora.css?v=166" />
     <script defer src="/assets/clean/aurora.js?v=165"></script>
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=163" />' : ""}
-    ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=165" />' : ""}
+    ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=166" />' : ""}
     ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=159" /><script defer src="/assets/party/party.js?v=159"></script>' : ""}
     ${player ? '<link rel="stylesheet" href="/assets/player/player.css?v=160" /><script defer src="/assets/player/player.js?v=164"></script>' : ""}
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=161" /><script defer src="/assets/player/watch-party.js?v=160"></script>' : ""}
@@ -14666,39 +14666,33 @@ function authPage(res, mode = "login") {
       <a class="dsAuthBrand" href="/welcome"><span></span>${escapeHtml(SITE_NAME)}</a>
 
       <aside class="dsAuthPitch">
-        <div class="svAuthPitchIntro">
-          <span class="dsEyebrow"><i aria-hidden="true"></i>${isSignup ? "YOUR SPACE STARTS HERE" : "GOOD TO SEE YOU AGAIN"}</span>
-          <h1>${isSignup ? 'Movie nights,<br><em>reimagined.</em>' : 'The screen<br><em>missed you.</em>'}</h1>
-          <p>${escapeHtml(subtitle)}</p>
-          <div class="dsAuthFeatureList">
-            <div><span aria-hidden="true">↗</span><b>Your collection</b></div>
-            <div><span aria-hidden="true">◎</span><b>Watch together</b></div>
-            <div><span aria-hidden="true">✦</span><b>Make it yours</b></div>
-          </div>
+        <div class="svAuthEditorialTop"><span class="svAuthRule"></span><span>SWIFLY / THE PERSONAL CINEMA</span><span class="svAuthIssue">EST. FOR YOU</span></div>
+        <div class="svAuthEditorialBody">
+          <span class="dsEyebrow">${isSignup ? "IT STARTS WITH A STORY" : "BACK FOR ANOTHER STORY"}</span>
+          <h1>${isSignup ? 'A world of film.<br><em>Made personal.</em>' : 'A good night<br><em>starts here.</em>'}</h1>
+          <p>${isSignup ? 'Build your list, discover what to watch, and share the moments that matter.' : 'Your saved titles and movie nights are right where you left them.'}</p>
         </div>
-        <div class="svAuthShowcase" aria-hidden="true">
-          <div class="svAuthShowcaseTop"><span>SWIFLY / AFTER DARK</span><span>VOL. 001</span></div>
-          <div class="svAuthShowcaseArt"><div class="svAuthShowcaseHalo"></div><div class="svAuthShowcaseRing"></div><div class="svAuthShowcaseDisc"></div><span class="svAuthShowcaseGlyph">S</span></div>
-          <div class="svAuthShowcaseBottom"><div><small>THE NEXT SCENE</small><strong>IS YOURS.</strong></div><span>EST. MOVIE NIGHT</span></div>
-          <div class="svAuthFloatNote"><i>✦</i><span>CURATED FOR YOU<small>A whole world of stories.</small></span><b>↗</b></div>
+        <div class="svAuthEditorialFoot">
+          <div class="svAuthSteps"><span><i>01</i> DISCOVER</span><span><i>02</i> CURATE</span><span><i>03</i> WATCH TOGETHER</span></div>
+          <span class="svAuthEditorialCaption">EVERY STORY HAS A BEGINNING <span aria-hidden="true">↗</span></span>
         </div>
       </aside>
 
       <section class="dsAuthCard">
-        <div class="svAuthCardTopline"><span><i aria-hidden="true"></i>${isSignup ? "A NEW BEGINNING" : "PICK UP WHERE YOU LEFT OFF"}</span><span>SWIFLY / ID</span></div>
+        <div class="svAuthCardTopline"><span>YOUR SPACE / YOUR SCREEN</span><span>${isSignup ? "01 / CREATE" : "02 / RETURN"}</span></div>
         <div class="dsAuthSwitch">
           <a class="${!isSignup ? "active" : ""}" href="/login">Login</a>
           <a class="${isSignup ? "active" : ""}" href="/signup">Signup</a>
         </div>
 
-        <h2>${isSignup ? "Create your space." : "Welcome back."}</h2>
-        <p>${isSignup ? "Set up your personal movie corner. Just a few details, and you're in." : "Sign in to your saved profile and continue the story."}</p>
+        <h2>${isSignup ? "Make yourself at home." : "Welcome back."}</h2>
+        <p>${isSignup ? "A place for your favorites, watchlists, and movie nights." : "Log in to your profile to pick up where you left off."}</p>
 
         <form id="safeAuthForm" class="dsSafeAuthForm">
-          <label>
-            <span>Name</span>
-            <input name="name" placeholder="Your name" autocomplete="name" ${isSignup ? "required" : ""} />
-          </label>
+          ${isSignup ? `<label>
+            <span>Display name</span>
+            <input name="name" placeholder="What should we call you?" autocomplete="name" required />
+          </label>` : ""}
           <label>
             <span>Email</span>
             <input name="email" type="email" placeholder="you@example.com" autocomplete="email" required />
