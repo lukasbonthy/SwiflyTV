@@ -171,7 +171,7 @@ test('the cinema image fade loads after Aurora and Welcome styles',async()=>{
    const d=parse(await response.text()).window.document;
    const styles=[...d.querySelectorAll('link[rel="stylesheet"]')].map(link=>link.getAttribute('href'));
    const aurora=styles.findIndex(v=>v.includes('/assets/clean/aurora.css?v=170'));
-   const fade=styles.findIndex(v=>v.includes('/assets/clean/hero-fade.css?v=188'));
+   const fade=styles.findIndex(v=>v.includes('/assets/clean/hero-fade.css?v=191'));
    assert(aurora>=0 && fade>aurora,route+' fade must follow aurora');
    if(route==='/welcome'){
      const welcome=styles.findIndex(v=>v.includes('/assets/clean/welcome.css'));
@@ -204,7 +204,7 @@ test('movie discovery artwork fades beyond the hero without a visible seam',asyn
  const d=parse(await(await fetch(base+'/welcome')).text()).window.document;
  assert(d.querySelector('.dsWelcomeHero .dsWelcomeHeroBg'));
  assert(d.querySelector('#discovery.dsWelcomeDiscovery'));
- const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=188')).text();
+ const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=191')).text();
  assert.match(css,/\.svWelcomeClean \.dsWelcomeHeroBg \{/);
  assert.match(css,/bottom:-36px !important/,'backdrop continues beneath the hero');
  assert.match(css,/\.svWelcomeClean \.svWelcomeDiscoveryIntro \{/);
@@ -228,27 +228,26 @@ test('Hero and catalog share a single continuous movie-color gradient without du
   assert.match(hero.getAttribute('data-sv-palette-src')||'',/\/w300\//);
   assert.equal(bridge.getAttribute('style'),null,'do not paint a second movie image on bridge');
   assert.equal(rows.getAttribute('style'),null,'do not paint another movie image behind rails');
-  assert(d.querySelector('link[href="/assets/clean/hero-fade.css?v=188"]'));
+  assert(d.querySelector('link[href="/assets/clean/hero-fade.css?v=191"]'));
   assert(d.querySelector('script[src="/assets/clean/hero-palette.js?v=188"]'));
  }
- const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=188')).text();
+ const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=191')).text();
  assert.match(css,/overflow:hidden !important/,'movie art must be clipped to hero bounds');
  assert.match(css,/bottom:0 !important/,'original art stops at the hero edge');
  assert.match(css,/background-repeat:no-repeat !important/,'no repeated picture');
- assert.match(css,/--sv-cinema-halo-total:640px/);
- assert.match(css,/--sv-cinema-halo-half:320px/);
- assert.match(css,/--sv-cinema-halo-total:480px/,'mobile sizes are tailored separately');
- const heroLens=css.match(/body\.svCleanShell main > \.dsHero::after \{([\s\S]*?)\n\}/);
- const catalogLens=css.match(/body\.svCleanShell main > \.dsHero \+ \.svHeroLightBridge \+ \.dsContent:not\(\.noHero\)::before \{([\s\S]*?)\n\}/);
- assert(heroLens && catalogLens,'both halves must exist');
- for(const piece of [heroLens[1],catalogLens[1]]){
-  assert.match(piece,/background-image:var\(--sv-cinema-halo\) !important/);
-  assert.match(piece,/background-size:100% var\(--sv-cinema-halo-total, 640px\) !important/);
-  assert.match(piece,/height:var\(--sv-cinema-halo-half, 320px\) !important/);
-  assert.match(piece,/filter:none !important/,'glow must not add expensive blur');
- }
- assert.match(heroLens[1],/background-position:center top !important/);
- assert.match(catalogLens[1],/background-position:center bottom !important/);
+ assert.match(css,/--sv-cinema-bridge-height: 600px/);
+ assert.match(css,/--sv-cinema-bridge-offset: 300px/);
+ assert.match(css,/--sv-cinema-bridge-height: 450px/,'mobile sizes are tailored separately');
+ const bridgeLens=css.match(/body\\.svCleanShell main > \\.dsHero \\+ \\.svHeroLightBridge::before \\{([\\s\\S]*?)\\n\\}/);
+ const heroLens=css.match(/body\\.svCleanShell main > \\.dsHero::after \\{([\\s\\S]*?)\\n\\}/);
+ const catalogLens=css.match(/body\\.svCleanShell main > \\.dsHero \\+ \\.svHeroLightBridge \\+ \\.dsContent:not\\(\\.noHero\\)::before \\{([\\s\\S]*?)\\n\\}/);
+ assert(bridgeLens && heroLens && catalogLens,'single bridge glow and retired half-glows must exist');
+ assert.match(bridgeLens[1],/background-image: var\\(--sv-cinema-haze\\) !important/);
+ assert.match(bridgeLens[1],/height: var\\(--sv-cinema-bridge-height, 600px\\) !important/);
+ assert.match(bridgeLens[1],/mask-image: linear-gradient\\(to bottom/,'feather both edges of the overlay');
+ assert.match(bridgeLens[1],/filter: none !important/,'avoid expensive blur');
+ assert.match(heroLens[1],/display: none !important/);
+ assert.match(catalogLens[1],/display: none !important/);
  assert.doesNotMatch(css,/background-image:var\(--sv-cinema-art\)|background-image:var\(--sv-light-art\)/);
  assert.doesNotMatch(css,/bottom:-(?:255|320)px/,'never leak artwork past the hero');
  assert.doesNotMatch(css,/\.movieCard img/);
@@ -431,7 +430,7 @@ test('v188 lifts cinema brightness and hue without duplicating film art or darke
  assert.equal(nav.dataset.glassBlur,'3.6');
  assert.equal(nav.dataset.glassSaturation,'1.25');
  assert(d.querySelector('script[src="/assets/liquid-glass/liquid-glass.js?v=190"]'));
- const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=188')).text();
+ const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=191')).text();
  assert.match(css,/filter:brightness\(1\.10\) saturate\(1\.24\) contrast\(1\.035\)/);
  assert.match(css,/rgb\(0 0 0 \/ \.50\)/);
  assert.match(css,/overflow:hidden !important/,'movie picture remains clipped');
