@@ -178,14 +178,14 @@ test('Destroying motion leaves pending reveal sections visible', () => {
   assert.equal(w.frameCount(), 0); env.finish();
 });
 
-test('Catalog controls retain glass highlights without multiplying SVG filters or style reads', () => {
-  const env = glass('<div class="svLiquidPane" data-swifly-glass></div><div class="dsCardQuickActions">' + '<button class="dsMiniBtn">Save</button>'.repeat(60) + '</div><div class="dsAuthCard">Account</div>'), w = env.window, d = w.document;
+test('Repeated catalog controls stay lightweight without expensive SVG filters or style reads', () => {
+  const env = glass('<div class="svLiquidPane" data-swifly-glass></div><div class="dsCardQuickActions">' + '<button class="dsMiniBtn">Save</button>'.repeat(60) + '</div><div class="dsAccountCard">Account</div>'), w = env.window, d = w.document;
   w.boot('liquid-glass/liquid-glass.js'); w.flush(16);
   let reads = 0; const computed = w.getComputedStyle;
   w.getComputedStyle = (...args) => {reads++; return computed(...args);};
   w.boot('liquid-glass/surfaces.js'); env.intersect(true); w.flush(32);
   assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length, 1, 'Only the navigation pane should own a complex filter');
-  assert([...d.querySelectorAll('.dsMiniBtn,.dsAuthCard')].every(node => node.classList.contains('svGlassSurface') && node.dataset.swiflyRenderer === 'blur'));
+  assert([...d.querySelectorAll('.dsMiniBtn,.dsAccountCard')].every(node => node.classList.contains('svGlassSurface') && node.dataset.swiflyRenderer === 'blur'));
   assert.equal(reads, 0, 'Ordinary glass controls do not need computed-style measurements');
   assert.equal(w.frameCount(), 0); env.finish();
 });
@@ -268,30 +268,30 @@ test('Unsupported refraction refresh remains idle', () => {
 });
 
 
-test('One real shared SVG lens serves Play, Details and Save without multiplying GPU graphs',async()=>{
+test('Hero controls mount the SAME size-aware navbar renderer, not only a global filter URL',async()=>{
  const markup='<nav class="netflixNav"><button class="svNavButton">Search</button></nav>'+
-  '<div class="dsHeroActions"><a class="dsPrimaryBtn">Play</a><a class="dsSecondaryBtn">Details</a><button class="dsIconBtn">Save</button></div>'+
-  '<button class="svRowArrow">Next</button><div class="dsCardQuickActions"><button class="dsMiniBtn">Add</button></div>';
- const env=glass(markup),w=env.window,d=w.document;
- d.body.dataset.stGlass='liquid';
- w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');env.intersect(true);w.flush(16);
- const hero=[...d.querySelectorAll('.dsHeroActions > *')];
- assert.equal(hero.length,3);
- for(const control of hero){
-  assert(control.classList.contains('svSharedGlass'),'actions must reference the shared SVG lens');
-  assert(control.classList.contains('svGlassControl'));
-  assert.equal(control.querySelector('svg.svLiquidPane__filters'),null,'never mount separate filters per action');
+  '<div class="dsHeroActions"><a class="dsPrimaryBtn">Play</a><a class="dsSecondaryBtn">Trailer</a><button class="dsIconBtn">Save</button></div>'+
+  '<div class="dsCardQuickActions">'+ '<button class="dsMiniBtn">Add</button>'.repeat(50) +'</div>';
+ const env=glass(markup),w=env.window,d=w.document;d.body.dataset.stGlass='liquid';
+ w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');
+ assert.equal(d.querySelectorAll('.dsHeroActions > .svNavMatchedOptic').length,3);
+ assert.equal(d.querySelectorAll('.svNavMatchedLens').length,0,'only visible controls mount real optical panes');
+ env.intersect(true);w.flush(16);
+ const controls=[...d.querySelectorAll('.dsHeroActions > *')];
+ for(const control of controls){
+  const pane=control.querySelector(':scope > .svLiquidPane.svNavMatchedLens');
+  assert(pane,'button uses an actual child pane exactly like navbar');
+  assert.equal(pane.dataset.swiflyRenderer,'svg');
+  assert.equal(pane.querySelectorAll('feDisplacementMap').length,3,'reuse real three-channel navbar distortion');
+  assert(control.querySelector('.svNavMatchedLabel'),'direct labels remain above the pane');
+  assert(!control.classList.contains('svSharedGlass'),'no duplicate CSS filter on button host');
  }
- assert(d.body.classList.contains('svSharedGlassReady'));
- assert.equal(d.querySelectorAll('svg.svSharedGlassDefinitions').length,1);
- assert.equal(d.querySelectorAll('#sv-shared-action-lens > feDisplacementMap').length,1);
- assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length,0);
- assert(!d.querySelector('.netflixNav .svNavButton').classList.contains('svGlassSurface'));
- assert(!d.querySelector('.dsCardQuickActions .dsMiniBtn').classList.contains('svSharedGlass'),'card grids must remain inexpensive');
- d.body.dataset.stGlass='subtle';await tick();w.flush(32);
- assert.equal(d.querySelectorAll('svg.svSharedGlassDefinitions').length,1,'one static graph is reused when Studio switches modes');
- d.body.dataset.stGlass='liquid';await tick();w.flush(48);
- assert.equal(d.querySelectorAll('svg.svSharedGlassDefinitions').length,1);
+ assert.equal(d.querySelectorAll('.dsCardQuickActions .svLiquidPane').length,0);
+ env.intersect(false);w.flush(32);
+ for(const pane of d.querySelectorAll('.dsHeroActions .svLiquidPane'))assert.equal(pane.dataset.swiflyRenderer,'blur','offscreen effects pause');
+ env.intersect(true);w.flush(48);
+ assert.equal(d.querySelectorAll('.dsHeroActions .svLiquidPane[data-swifly-renderer="svg"]').length,3);
+ d.body.dataset.stGlass='off';await tick();w.flush(64);
  assert.equal(w.frameCount(),0);
  env.finish();
 });
@@ -311,21 +311,24 @@ test('Unsupported SVG filters retain interactive frosted controls without standa
   env.finish();
 });
 
-test('Details action row shares one SVG map for all five actions',async()=>{
+test('All five movie detail actions refract through independent, navbar-sized pane maps',async()=>{
  const env=glass('<div class="svDetailActions"><a class="dsPrimaryBtn">Play</a><a class="dsSecondaryBtn">Trailer</a><a class="dsSecondaryBtn">Start a watch party</a><button class="dsIconBtn">Save</button><button class="dsIconBtn">Like</button></div>');
  const w=env.window,d=w.document;d.body.dataset.stGlass='liquid';
  w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');env.intersect(true);w.flush(16);
  const controls=[...d.querySelectorAll('.svDetailActions > *')];
  assert.equal(controls.length,5);
- for(const control of controls)assert(control.classList.contains('svSharedGlass'),'all details actions use the shared lens');
- assert.equal(d.querySelectorAll('.svSharedGlassDefinitions').length,1);
- assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length,0);
+ for(const control of controls){
+  assert(control.classList.contains('svNavMatchedOptic'));
+  assert(control.querySelector('.svLiquidPane[data-swifly-renderer="svg"]'));
+ }
+ assert.equal(d.querySelectorAll('.svDetailActions .svLiquidPane__filters').length,5);
  d.body.dataset.stGlass='subtle';await tick();w.flush(32);
- assert.equal(w.frameCount(),0,'Studio mode switches do not re-allocate per-button SVG filters');
+ for(const pane of d.querySelectorAll('.svDetailActions .svLiquidPane'))assert.equal(pane.dataset.swiflyRenderer,'blur');
+ assert.equal(w.frameCount(),0);
  env.finish();
 });
 
-test('Modal chrome, auth and detail buttons share one low-cost lens without boxing navbar icons',async()=>{
+test('Auth card, tabs, modal chrome and details buttons use real panes without boxing navbar icons',()=>{
  const markup='<nav class="netflixNav"><button class="svNavButton">Search</button></nav>'+
   '<div class="svDetailChrome"><button class="dsIconBtn svDetailBack">Back</button><button class="dsIconBtn svDetailDismiss">Close</button></div>'+
   '<div class="svDetailActions"><a class="dsPrimaryBtn">Play</a><a class="dsSecondaryBtn">Trailer</a><button class="dsSecondaryBtn">Watch Party</button><button class="dsIconBtn">Save</button><button class="dsIconBtn">Like</button></div>'+
@@ -333,17 +336,14 @@ test('Modal chrome, auth and detail buttons share one low-cost lens without boxi
   '<main class="dsAuthPageSafe"><div class="dsAuthCard"><div class="dsAuthSwitch"><a href="/login">Log in</a></div><form class="dsSafeAuthForm"><button class="dsPrimaryBtn">Continue</button></form></div></main>';
  const env=glass(markup),w=env.window,d=w.document;d.body.dataset.stGlass='liquid';
  w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');env.intersect(true);w.flush(16);
- const featured=[...d.querySelectorAll('.svDetailActions > *, .svDetailChrome > button, .svDetailReturn,.dsAuthSwitch > a,.dsSafeAuthForm > button')];
- assert.equal(featured.length,10);
- for(const control of featured){
-  assert(control.classList.contains('svGlassSurface'));
-  assert(control.classList.contains('svSharedGlass'),control.textContent+' should reference one shared SVG lens');
-  assert.equal(control.querySelector('svg.svLiquidPane__filters'),null);
+ const targets=[...d.querySelectorAll('.svDetailActions > *, .svDetailChrome > button, .svDetailReturn,.dsAuthSwitch > a,.dsSafeAuthForm > button,.dsAuthCard')];
+ assert.equal(targets.length,11);
+ for(const node of targets){
+  assert(node.classList.contains('svNavMatchedOptic'),node.textContent+' should be truly refractive');
+  assert(node.querySelector(':scope > .svLiquidPane.svNavMatchedLens'));
+  assert(node.querySelector('.svLiquidPane__filters'),'navbar renderer owns a real SVG graph');
  }
- assert.equal(d.querySelectorAll('svg.svSharedGlassDefinitions').length,1);
  assert(!d.querySelector('.netflixNav .svNavButton').classList.contains('svGlassSurface'));
- d.body.dataset.stGlass='off';await tick();w.flush(32);
- assert.equal(w.frameCount(),0,'off mode must not schedule SVG rebuild work');
  env.finish();
 });
 
@@ -367,15 +367,14 @@ test('all optical modes have explicit dark-surface shine, blur fallback and noni
  assert.doesNotMatch(detail,/\/\* Every DETAILS action uses the same liquid styling/,'remove conflicting v176 material');
 });
 
-test('Logout inside the navigation dropdown gets a refractive lens without boxing navigation icons',()=>{
+test('Logout in the nav dropdown uses real navbar optics without boxing nav icons',()=>{
  const env=glass('<nav class="netflixNav"><button class="svNavButton">Search</button><div class="dsProfileDropdown"><button class="dsDropdownLogout">Log out</button></div></nav>');
  const w=env.window,d=w.document;d.body.dataset.stGlass='liquid';
- w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');
+ w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');env.intersect(true);w.flush(16);
  const logout=d.querySelector('.dsDropdownLogout');
- assert(logout.classList.contains('svSharedGlass'),'dropdown logout should not inherit nav icon exclusion');
- assert(logout.classList.contains('svGlassControl'));
- assert(!d.querySelector('.svNavButton').classList.contains('svGlassSurface'),'navbar icon must remain in the shared nav capsule');
- assert.equal(d.querySelectorAll('svg.svSharedGlassDefinitions').length,1);
+ assert(logout.classList.contains('svNavMatchedOptic'));
+ assert(logout.querySelector('.svLiquidPane[data-swifly-renderer="svg"]'));
+ assert(!d.querySelector('.svNavButton').classList.contains('svGlassSurface'));
  env.finish();
 });
 
@@ -404,4 +403,17 @@ test('Shared refraction uses the navbar map geometry, not the previous radial ca
  assert.match(src,/feDisplacementMap/,'shared graph refracts the real backdrop');
  assert.match(src,/scale:'-118'/,'button refraction is stronger than the old barely visible effect');
  assert.doesNotMatch(src,/document\.createElement\('canvas'\)/,'no heavyweight canvas redraw');
+});
+
+test('Password show/hide text replacement repairs its real refractive pane',async()=>{
+ const env=glass('<main class="dsAuthPageSafe"><button class="svAuthPasswordToggle">Show</button></main>'),w=env.window,d=w.document;
+ d.body.dataset.stGlass='liquid';
+ w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');env.intersect(true);w.flush(16);
+ const toggle=d.querySelector('button'),original=toggle.querySelector('.svLiquidPane');
+ assert(original);
+ toggle.textContent='Hide';await tick();w.flush(32);await tick();w.flush(48);
+ const replacement=toggle.querySelector('.svLiquidPane');
+ assert(replacement && replacement!==original,'resetting button text must restore the physical lens');
+ assert.equal(replacement.dataset.swiflyRenderer,'svg');
+ env.finish();
 });
