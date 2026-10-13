@@ -270,3 +270,60 @@ test('login and signup share one compact design with identical 430px card footpr
   assert(doc.querySelector('link[href="/assets/clean/auth.css?v=173"]'),'updated auth stylesheet should load');
  }
 });
+
+
+test('v174 gives the featured movie enough height before fading into the first catalog row',async()=>{
+ const css=await(await fetch(base+'/assets/clean/finish.css?v=174')).text();
+ assert.match(css,/main > \.dsHero \{/);
+ assert.match(css,/calc\(100svh \+ 95px\)/,'desktop hero must be taller than one viewport');
+ assert.match(css,/background-position:center 43%/,'retain more of the real featured art');
+ assert.match(css,/#000 68%,rgba\(0,0,0,\.94\) 79%/,'do not fade out the art halfway down');
+ assert.match(css,/\.dsHero \+ \.svHeroLightBridge \+ \.dsContent/);
+ assert.match(css,/margin-top:-8px/,'keep catalog rows below most of the art');
+ assert.match(css,/\.svHeroLightBridge::after \{display:none/,'eliminate double-blur stripe');
+ const response=await fetch(base+'/');
+ const doc=parse(await response.text()).window.document;
+ const hero=doc.querySelector('main > .dsHero');
+ assert(hero && hero.querySelector('.dsHeroBg'));
+ assert(hero.nextElementSibling?.classList.contains('svHeroLightBridge'));
+ assert(doc.querySelector('link[href="/assets/clean/finish.css?v=174"]'));
+});
+
+test('v174 keeps Welcome soft without muddy light bridge or button clipping',async()=>{
+ const css=await(await fetch(base+'/assets/clean/finish.css?v=174')).text();
+ assert.match(css,/\.svWelcomeClean \.svWelcomeLightBridge::after \{display:none/);
+ assert.match(css,/\.svWelcomeClean \.dsWelcomeHeroBg \{/);
+ assert.match(css,/opacity:\.21 !important/);
+ const doc=parse(await(await fetch(base+'/welcome')).text()).window.document;
+ assert(doc.querySelector('.svWelcomeLightBridge'));
+ assert(doc.querySelector('link[href="/assets/clean/finish.css?v=174"]'));
+ assert(doc.querySelector('.dsWelcomeActions .dsPrimaryBtn'));
+});
+
+test('v174 liquid controls respond to the Studio setting and pages transition progressively',async()=>{
+ const fs=require('node:fs');
+ const css=await(await fetch(base+'/assets/clean/finish.css?v=174')).text();
+ const script=fs.readFileSync(require('node:path').join(__dirname,'../public/liquid-glass/surfaces.js'),'utf8');
+ assert.match(script,/\.svWelcomeStudio/);
+ assert.match(script,/\.svNavButton/);
+ assert.match(script,/\.dsRowArrow/);
+ assert.match(css,/data-st-glass="liquid"/);
+ assert.match(css,/\.svGlassSurface\.svGlassControl\.dsPrimaryBtn/);
+ assert.match(css,/\.svGlassSurface\.svGlassControl\.dsSecondaryBtn/);
+ assert.match(css,/\.svGlassSurface\.svGlassControl\.svWelcomeStudio/);
+ assert.match(css,/backdrop-filter:blur\(16px\) saturate\(1\.6\)/);
+ assert.match(css,/data-st-glass="off"/);
+ assert.match(css,/@view-transition \{ navigation:auto; \}/);
+ assert.match(css,/::view-transition-new\(root\)/);
+ assert.match(css,/prefers-reduced-motion:reduce/);
+ const pages=['/','/movies','/tv','/welcome','/signup','/login'];
+ for(const route of pages){
+   const response=await fetch(base+route);
+   assert.equal(response.status,200,route);
+   const doc=parse(await response.text()).window.document;
+   assert(doc.querySelector('link[href="/assets/clean/finish.css?v=174"]'),route+' missing final styles');
+   assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=174"]'),route+' missing updated glass controls');
+ }
+ const watch=await(await fetch(base+'/watch/movie/101')).text();
+ assert(!watch.includes('finish.css?v=174'),'watch route must not have page dissolves');
+});
