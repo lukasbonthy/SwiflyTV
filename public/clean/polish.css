@@ -1,0 +1,172 @@
+/* SwiflyTV v176: targeted cinema fade + liquid controls.
+   Loaded last. No change to the original Aurora, page dimensions or routes. */
+
+/* FULL HEIGHT featured art. Preserve its center until the final part of the
+   signed-in catalog hero, then gradually disappear into the same black
+   used behind the cards. */
+body.svCleanShell main > .dsHero > .dsHeroBg {
+  background-position:center 43% !important;
+  -webkit-mask-image:linear-gradient(to bottom,
+    #000 0%,#000 61%,rgba(0,0,0,.93) 73%,
+    rgba(0,0,0,.66) 83%,rgba(0,0,0,.29) 94%,transparent 100%) !important;
+  mask-image:linear-gradient(to bottom,
+    #000 0%,#000 61%,rgba(0,0,0,.93) 73%,
+    rgba(0,0,0,.66) 83%,rgba(0,0,0,.29) 94%,transparent 100%) !important;
+}
+body.svCleanShell main > .dsHero > .dsHeroGlass {
+  background:
+    linear-gradient(90deg,#000a,rgba(0,0,0,.27) 36%,transparent 82%),
+    linear-gradient(to bottom,rgba(0,0,0,.07) 0%,transparent 55%,
+      rgba(0,0,0,.18) 72%,rgba(0,0,0,.52) 87%,#000 100%) !important;
+}
+/* Eliminate the remaining discontinuity introduced by the old glow bridge.
+   The film fades itself; it doesn't need another colored blurred panel. */
+body.svCleanShell main > .svHeroLightBridge::before,
+body.svCleanShell main > .svHeroLightBridge::after {display:none !important;}
+body.svCleanShell main > .dsHero + .svHeroLightBridge + .dsContent:not(.noHero) {
+  margin-top:-2px !important;
+  padding-top:16px !important;
+  background:transparent !important;
+}
+
+/* Details dialog AND full details route share the exact .svDetailHero.
+   Fade the actual art into the detail background rather than trying to fade
+   an unrelated Home hero. The image, title, and actions remain crisp above. */
+body.svCleanShell :is(.svDetailDialog,.svDetailPage) .svDetailHero {
+  background:#050505 !important;
+}
+body.svCleanShell :is(.svDetailDialog,.svDetailPage) .svDetailBackdrop {
+  -webkit-mask-image:linear-gradient(to bottom,
+    #000 0%,#000 49%,rgba(0,0,0,.94) 64%,
+    rgba(0,0,0,.67) 79%,rgba(0,0,0,.22) 94%,transparent 100%) !important;
+  mask-image:linear-gradient(to bottom,
+    #000 0%,#000 49%,rgba(0,0,0,.94) 64%,
+    rgba(0,0,0,.67) 79%,rgba(0,0,0,.22) 94%,transparent 100%) !important;
+}
+body.svCleanShell :is(.svDetailDialog,.svDetailPage) .svDetailShade {
+  background:
+    linear-gradient(90deg,rgba(0,0,0,.45),transparent 75%),
+    linear-gradient(to bottom,rgba(5,5,5,0) 12%,
+      rgba(5,5,5,.06) 48%,rgba(5,5,5,.35) 77%,
+      rgba(5,5,5,.86) 96%,#050505 100%) !important;
+}
+body.svCleanShell :is(.svDetailDialog,.svDetailPage) .svDetailBody {
+  background:#050505 !important;
+}
+/* Lightweight continuation using the film's own color, behind body copy.
+   Taper out both axes, no solid horizontal glow strip. */
+body.svCleanShell :is(.svDetailDialog,.svDetailPage) .svDetailBody::before {
+  content:"";
+  position:absolute;
+  top:-65px;left:8%;width:84%;height:145px;
+  pointer-events:none;z-index:-1;
+  background-image:var(--sv-detail-art);
+  background-position:center 70%;background-size:cover;
+  opacity:.10;
+  filter:blur(44px) saturate(.8);
+  -webkit-mask-image:radial-gradient(ellipse at 50% 45%,#000,transparent 80%);
+  mask-image:radial-gradient(ellipse at 50% 45%,#000,transparent 80%);
+}
+body.svCleanShell :is(.svDetailDialog,.svDetailPage) .svDetailBody {
+  position:relative;z-index:1;
+}
+
+/* Every DETAILS action uses the same liquid styling as its Home equivalent.
+   Film-detail actions are inserted dynamically, hence .svDetailActions was
+   previously missing from the SVG displacement renderer's allowlist. */
+body.svCleanShell[data-st-glass="liquid"] .svDetailActions > :is(.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn),
+body.svCleanShell[data-st-glass="liquid"] .svDetailDialog :is(.svDetailBack,.svDetailDismiss) {
+  background:linear-gradient(145deg,rgba(255,255,255,.23),
+    rgba(255,255,255,.075) 48%,rgba(255,255,255,.17)),rgba(12,19,24,.18) !important;
+  color:#f7fcfa !important;
+  border:1px solid rgba(255,255,255,.45) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.47),
+    inset 0 -1px 0 rgba(255,255,255,.08),0 4px 16px #0005 !important;
+  -webkit-backdrop-filter:blur(16px) saturate(1.45) !important;
+  backdrop-filter:blur(16px) saturate(1.45) !important;
+}
+body.svCleanShell[data-st-glass="liquid"] .svDetailActions > :is(.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn):hover,
+body.svCleanShell[data-st-glass="liquid"] .svDetailDialog :is(.svDetailBack,.svDetailDismiss):hover {
+  background:linear-gradient(140deg,rgba(255,255,255,.31),
+    rgba(255,255,255,.10) 52%,rgba(255,255,255,.20)),rgba(12,19,24,.24) !important;
+  border-color:rgba(255,255,255,.66) !important;
+}
+/* The real SVG refraction must win over the decorative blur above. */
+body.svCleanShell[data-st-glass="liquid"] .svDetailActions
+  > .svGlassSurface.svGlassControl[data-swifly-renderer="svg"],
+body.svCleanShell[data-st-glass="liquid"] .svDetailDialog
+  .svGlassSurface.svGlassControl[data-swifly-renderer="svg"] {
+  -webkit-backdrop-filter:var(--sv-glass-filter) saturate(1.35) !important;
+  backdrop-filter:var(--sv-glass-filter) saturate(1.35) !important;
+}
+body.svCleanShell[data-st-glass="subtle"] .svDetailActions > :is(.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn) {
+  background:rgba(19,24,29,.56) !important;
+  -webkit-backdrop-filter:blur(9px) !important;backdrop-filter:blur(9px) !important;
+}
+body.svCleanShell[data-st-glass="off"] .svDetailActions > :is(.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn) {
+  background:#15191d !important;
+  -webkit-backdrop-filter:none !important;backdrop-filter:none !important;
+}
+
+/* Small liquid detail on BOTH auth pages, no size, padding or layout changes. */
+body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthCard {
+  background:linear-gradient(145deg,rgba(38,52,54,.44),
+    rgba(17,24,29,.49) 48%,rgba(13,20,24,.54)) !important;
+  border:1px solid rgba(235,252,245,.32) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.20),
+    0 24px 70px #0008 !important;
+  -webkit-backdrop-filter:blur(28px) saturate(1.3) !important;
+  backdrop-filter:blur(28px) saturate(1.3) !important;
+}
+body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe :is(.dsAuthSwitch,.dsSafeAuthForm input) {
+  border-color:rgba(243,255,249,.26) !important;
+  background:rgba(11,22,25,.33) !important;
+  -webkit-backdrop-filter:blur(9px) saturate(1.12) !important;
+  backdrop-filter:blur(9px) saturate(1.12) !important;
+}
+body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsSafeAuthForm .dsPrimaryBtn {
+  background:linear-gradient(145deg,rgba(241,255,249,.80),rgba(206,235,226,.58)) !important;
+  border:1px solid rgba(255,255,255,.80) !important;
+  box-shadow:inset 0 1px 0 #ffffffa3,0 5px 17px #0004 !important;
+  -webkit-backdrop-filter:blur(13px) saturate(1.4) !important;
+  backdrop-filter:blur(13px) saturate(1.4) !important;
+}
+/* Welcome: move Spider-Man's source image nearer the visual center, but
+   preserve a soft left-side darkening so the headline stays readable. */
+body.svCleanShell .svWelcomeClean .dsWelcomeHeroBg {
+  left:17% !important;
+  right:0 !important;
+  opacity:.23 !important;
+}
+body.svCleanShell .svWelcomeClean .dsWelcomeHeroBg > img {
+  object-position:38% center !important;
+}
+/* Third supporting poster should be fully legible beside, not *behind*,
+   the central spotlight poster. */
+body.svCleanShell .svWelcomeClean .svWelcomeShowcase .svWelcomeSupportingPoster:last-child {
+  left:72% !important;top:19% !important;width:28% !important;
+  z-index:4 !important;
+  transform:rotate(6deg) !important;
+}
+body.svCleanShell .svWelcomeClean .svWelcomeSupportingPoster:last-child .svWelcomePosterCaption {
+  position:relative;z-index:2;display:block;
+  background:rgba(8,13,17,.96);
+}
+body.svCleanShell .svWelcomeClean .svWelcomeSupportingPoster:last-child .svWelcomePosterCaption strong {
+  display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+@media(max-width:850px){
+ body.svCleanShell .svWelcomeClean .dsWelcomeHeroBg {left:0 !important;opacity:.16 !important;}
+ body.svCleanShell .svWelcomeClean .svWelcomeShowcase .svWelcomeSupportingPoster:last-child {
+   left:72% !important;width:28% !important;top:17% !important;
+ }
+ body.svCleanShell main > .dsHero > .dsHeroBg {
+   -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 54%,rgba(0,0,0,.74) 74%,transparent 100%) !important;
+   mask-image:linear-gradient(to bottom,#000 0%,#000 54%,rgba(0,0,0,.74) 74%,transparent 100%) !important;
+ }
+}
+@media(prefers-reduced-transparency:reduce){
+ body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthCard {
+   background:#161c1ef0 !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;
+ }
+}
