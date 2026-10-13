@@ -87,9 +87,10 @@
     }
     schedule();
   }
-  // Two real backdrop SVG filters share ONE displacement map. The map is
-  // generated once from a smooth radial lens field, not a blurred static stripe.
-  // Buttons use stronger displacement; the large auth panel is gentler.
+  // Match the navigation lens rather than using a separate radial-canvas effect.
+  // This is the same red/blue directional gradient-map construction used by
+  // liquid-glass.js for the navbar. One reusable SVG graph serves all controls;
+  // no new canvases, per-button observers, or expensive RGB filter stacks.
   let sharedLens = null;
   function installSharedLens() {
     if (sharedLens || !liquidPreference()) return;
@@ -99,52 +100,48 @@
       !/iPad|iPhone|iPod/.test(navigator.userAgent) &&
       !window.matchMedia('(prefers-reduced-transparency: reduce)').matches;
     if (!supported) return;
-    let image;
-    try {
-      const canvas=document.createElement('canvas');
-      canvas.width=160;canvas.height=64;
-      const context=canvas.getContext('2d');
-      if(context) {
-        const map=context.createImageData(160,64);
-        for(let y=0;y<64;y++) for(let x=0;x<160;x++) {
-          const u=(x+.5)/160*2-1,v=(y+.5)/64*2-1;
-          const radius=Math.hypot(u*.90,v);
-          const edge=Math.exp(-Math.pow((radius-.78)/.21,2));
-          const strength=.13+.50*edge;
-          const radial=radius?strength/radius:0;
-          const i=(y*160+x)*4;
-          map.data[i]=Math.max(0,Math.min(255,Math.round(128+u*radial*110)));
-          map.data[i+1]=Math.max(0,Math.min(255,Math.round(128+v*radial*110)));
-          map.data[i+2]=128;map.data[i+3]=255;
-        }
-        context.putImageData(map,0,0);
-        image=canvas.toDataURL('image/png');
-      }
-    } catch (_) { /* Canvas can be disabled; keep a valid SVG fallback. */ }
-    if (!image) {
-      const fallback='<svg xmlns="http://www.w3.org/2000/svg" width="160" height="64"><defs><linearGradient id="x"><stop stop-color="red"/><stop offset=".5" stop-color="#808080"/><stop offset="1" stop-color="#00ffff"/></linearGradient></defs><rect width="160" height="64" fill="url(#x)"/></svg>';
-      image='data:image/svg+xml,'+encodeURIComponent(fallback);
-    }
     const ns='http://www.w3.org/2000/svg';
-    function node(name,attrs={}) {
-      const el=document.createElementNS(ns,name);
-      for(const [key,value] of Object.entries(attrs)) el.setAttribute(key,value);
+    const node=(tag,attrs={})=>{
+      const el=document.createElementNS(ns,tag);
+      for(const [key,value] of Object.entries(attrs))el.setAttribute(key,String(value));
       return el;
-    }
+    };
+    const image=node('svg',{viewBox:'0 0 160 64',xmlns:ns});
+    const gradients=node('defs');
+    const x=node('linearGradient',{id:'sv-lens-x',x1:'100%',y1:'0%',x2:'0%',y2:'0%'});
+    x.append(node('stop',{offset:'0%','stop-color':'red','stop-opacity':'0'}),
+             node('stop',{offset:'100%','stop-color':'red'}));
+    const y=node('linearGradient',{id:'sv-lens-y',x1:'0%',y1:'0%',x2:'0%',y2:'100%'});
+    y.append(node('stop',{offset:'0%','stop-color':'blue','stop-opacity':'0'}),
+             node('stop',{offset:'100%','stop-color':'blue'}));
+    gradients.append(x,y);
+    image.append(gradients,
+      node('rect',{width:160,height:64,fill:'black'}),
+      node('rect',{width:160,height:64,rx:27,fill:'url(#sv-lens-x)'}),
+      node('rect',{width:160,height:64,rx:27,fill:'url(#sv-lens-y)',style:'mix-blend-mode:screen'}),
+      node('rect',{x:2.3,y:2.3,width:155.4,height:59.4,rx:25,
+        fill:'hsl(0 0% 50% / .93)',style:'filter:blur(7px)'})
+    );
+    const mapUrl='data:image/svg+xml,'+
+      encodeURIComponent(new XMLSerializer().serializeToString(image));
     const svg=node('svg',{'aria-hidden':'true',focusable:'false'});
     svg.classList.add('svSharedGlassDefinitions');
     svg.style.cssText='position:absolute!important;width:0!important;height:0!important;overflow:hidden!important;pointer-events:none!important';
     const defs=node('defs');
-    const action=node('filter',{id:'sv-shared-action-lens',x:'-15%',y:'-35%',width:'130%',height:'170%','color-interpolation-filters':'sRGB'});
+    const action=node('filter',{id:'sv-shared-action-lens',
+      x:'-12%',y:'-30%',width:'124%',height:'160%','color-interpolation-filters':'sRGB'});
     action.append(
-      node('feImage',{href:image,x:'0',y:'0',width:'100%',height:'100%',preserveAspectRatio:'none',result:'map'}),
-      node('feDisplacementMap',{in:'SourceGraphic',in2:'map',scale:'31',xChannelSelector:'R',yChannelSelector:'G'})
+      node('feImage',{href:mapUrl,x:'0',y:'0',width:'100%',height:'100%',preserveAspectRatio:'none',result:'map'}),
+      node('feDisplacementMap',{in:'SourceGraphic',in2:'map',scale:'-118',
+        xChannelSelector:'R',yChannelSelector:'G'})
     );
-    const panel=node('filter',{id:'sv-shared-panel-lens',x:'-10%',y:'-10%',width:'120%',height:'120%','color-interpolation-filters':'sRGB'});
+    const panel=node('filter',{id:'sv-shared-panel-lens',
+      x:'-6%',y:'-8%',width:'112%',height:'116%','color-interpolation-filters':'sRGB'});
     panel.append(
-      node('feImage',{href:image,x:'0',y:'0',width:'100%',height:'100%',preserveAspectRatio:'none',result:'map'}),
-      node('feGaussianBlur',{in:'SourceGraphic',stdDeviation:'5',result:'soft'}),
-      node('feDisplacementMap',{in:'soft',in2:'map',scale:'13',xChannelSelector:'R',yChannelSelector:'G'})
+      node('feImage',{href:mapUrl,x:'0',y:'0',width:'100%',height:'100%',preserveAspectRatio:'none',result:'map'}),
+      node('feGaussianBlur',{in:'SourceGraphic',stdDeviation:'4',result:'soft'}),
+      node('feDisplacementMap',{in:'soft',in2:'map',scale:'-48',
+        xChannelSelector:'R',yChannelSelector:'G'})
     );
     defs.append(action,panel);svg.append(defs);
     document.body.append(svg);
