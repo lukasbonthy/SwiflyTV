@@ -1,4 +1,4 @@
-/* SwiflyTV v187 — continuous, palette-based cinema fade.
+/* SwiflyTV v188 — vibrant, continuous palette-based cinema fade.
    ONE movie backdrop, strictly contained in the hero. The ambient transition
    is a single colored GRADIENT IMAGE split across two adjacent surfaces.
    Both halves sample the SAME 640px gradient, so the boundary pixels match.
@@ -11,12 +11,12 @@ body.svCleanShell main:has(> .dsHero + .svHeroLightBridge + .dsContent:not(.noHe
   --sv-cinema-halo-half:320px;
   --sv-cinema-halo:
     radial-gradient(ellipse 62% 48% at 20% 50%,
-      rgb(var(--sv-art-glow-1, 105 77 91) / .63) 0%,
-      rgb(var(--sv-art-glow-1, 105 77 91) / .30) 47%,
+      rgb(var(--sv-art-glow-1, 105 77 91) / .44) 0%,
+      rgb(var(--sv-art-glow-1, 105 77 91) / .18) 47%,
       transparent 100%),
     radial-gradient(ellipse 62% 49% at 79% 50%,
-      rgb(var(--sv-art-glow-2, 84 106 122) / .53) 0%,
-      rgb(var(--sv-art-glow-2, 84 106 122) / .22) 50%,
+      rgb(var(--sv-art-glow-2, 84 106 122) / .38) 0%,
+      rgb(var(--sv-art-glow-2, 84 106 122) / .14) 50%,
       transparent 100%);
 }
 
@@ -38,6 +38,8 @@ body.svCleanShell main > .dsHero > .dsHeroBg {
   background-position:center 42% !important;
   background-size:cover !important;
   background-repeat:no-repeat !important;
+  /* Original TMDB film colors were losing saturation to the black veil. */
+  filter:brightness(1.10) saturate(1.24) contrast(1.035) !important;
   -webkit-mask-image:linear-gradient(to bottom,
     #000 0%,#000 59%,rgb(0 0 0 / .97) 67%,
     rgb(0 0 0 / .78) 80%,rgb(0 0 0 / .34) 92%,transparent 100%) !important;
@@ -47,9 +49,9 @@ body.svCleanShell main > .dsHero > .dsHeroBg {
 }
 body.svCleanShell main > .dsHero > .dsHeroGlass {
   background:
-    linear-gradient(90deg,rgb(0 0 0 / .64),rgb(0 0 0 / .29) 35%,transparent 83%),
+    linear-gradient(90deg,rgb(0 0 0 / .50),rgb(0 0 0 / .17) 35%,transparent 83%),
     linear-gradient(to bottom,rgb(0 0 0 / .06),transparent 55%,
-      rgb(0 0 0 / .08) 76%,rgb(0 0 0 / .27) 92%,#000 100%) !important;
+      rgb(0 0 0 / .05) 76%,rgb(0 0 0 / .18) 92%,#000 100%) !important;
 }
 /* Upper half of the SAME gradient. At the hero/catalog boundary, this is
    exactly the middle of --sv-cinema-halo, never a separate radial glow. */
