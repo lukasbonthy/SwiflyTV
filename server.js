@@ -132,8 +132,9 @@ const STREAMPROVIDER_ORDER = String(process.env.STREAMPROVIDER_ORDER || "hexa,ci
   .split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
 const STREAMPROVIDER_NAV_TIMEOUT_MS = Math.max(8000, Number(process.env.STREAMPROVIDER_NAV_TIMEOUT_MS || 10000));
 const STREAMPROVIDER_STREAM_TIMEOUT_MS = Math.max(8000, Number(process.env.STREAMPROVIDER_STREAM_TIMEOUT_MS || 15000));
-const STREAMPROVIDER_PROVIDER_TIMEOUT_MS = Math.max(8000, Math.min(30000, Number(process.env.STREAMPROVIDER_PROVIDER_TIMEOUT_MS || 27000)));
-const STREAMPROVIDER_ROUTE_TIMEOUT_MS = Math.max(12000, Math.min(60000, Number(process.env.STREAMPROVIDER_ROUTE_TIMEOUT_MS || 60000)));
+const STREAMPROVIDER_PROVIDER_TIMEOUT_MS = Math.max(8000, Math.min(30000, Number(process.env.STREAMPROVIDER_PROVIDER_TIMEOUT_MS || 24000)));
+// Reserve discovery time for other sources when the first browser capture stalls.
+const STREAMPROVIDER_ROUTE_TIMEOUT_MS = Math.max(12000, Math.min(45000, Number(process.env.STREAMPROVIDER_ROUTE_TIMEOUT_MS || 30000)));
 const configuredProviderHedge = Number(process.env.STREAMPROVIDER_HEDGE_DELAY_MS ?? 1800);
 const STREAMPROVIDER_HEDGE_DELAY_MS = Number.isFinite(configuredProviderHedge) ? Math.max(0, Math.min(10000, configuredProviderHedge)) : 1800;
 const configuredProviderConcurrency = Number(process.env.STREAMPROVIDER_MAX_CONCURRENT ?? 2);
@@ -8860,6 +8861,9 @@ async function fetchProxyVideoSourceRaw({ type, id, season = "1", episode = "1",
   const timeoutMs = Math.max(8000, Number(process.env.MOVIE_PROXY_VIDEO_TIMEOUT_MS || 60000));
   const attemptsPerBase = Math.max(1, Math.min(4, Number(process.env.MOVIE_PROXY_VIDEO_RETRIES || 2)));
   const errors = [];
+  // A slow/unreachable legacy resolver must not occupy the entire 75s source job.
+  // The API/local discovery path has already run; keep this fallback bounded.
+  const fallbackDeadline = Date.now() + Math.max(6000, Math.min(22000, Number(process.env.MOVIE_LEGACY_FALLBACK_BUDGET_MS || 18000)));
 
   function buildProxyUrl(base) {
     if (base.includes("{id}")) {
@@ -8870,6 +8874,7 @@ async function fetchProxyVideoSourceRaw({ type, id, season = "1", episode = "1",
 
   for (const base of bases) {
     signal?.throwIfAborted();
+    if (fallbackDeadline - Date.now() < 2500) break;
     let url;
     try {
       url = buildProxyUrl(base);
@@ -8880,8 +8885,11 @@ async function fetchProxyVideoSourceRaw({ type, id, season = "1", episode = "1",
 
     for (let attempt = 1; attempt <= attemptsPerBase; attempt += 1) {
       signal?.throwIfAborted();
+      const remaining = fallbackDeadline - Date.now();
+      if (remaining < 2500) break;
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), timeoutMs);
+      const attemptTimeoutMs = Math.min(timeoutMs, 9000, remaining);
+      const timeout = setTimeout(() => controller.abort(), attemptTimeoutMs);
       const onAbort = () => controller.abort(signal.reason);
       signal?.addEventListener("abort", onAbort, { once: true });
 
@@ -8987,7 +8995,7 @@ async function fetchProxyVideoSourceRaw({ type, id, season = "1", episode = "1",
         errors.push(
           `${url.toString()} attempt ${attempt}: ${
             error.name === "AbortError"
-              ? `timed out after ${Math.round(timeoutMs / 1000)} seconds`
+              ? `timed out after ${Math.round(attemptTimeoutMs / 1000)} seconds`
               : error.message || "request failed"
           }`
         );
