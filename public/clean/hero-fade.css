@@ -2,6 +2,11 @@
    Loaded after the legacy page styles so Home, discovery and title details
    share continuous, natural image dissolves instead of competing scrims. */
 
+/* Shared hero backdrops should never tile at unusual viewport sizes. */
+body.svCleanShell .dsHeroBg,
+body.svCleanShell .showcaseHeroBg,
+body.svCleanShell .browseHeroBg { background-repeat:no-repeat !important; }
+
 /* Signed-in landing, Movies, Series, and other featured catalog pages.
    Allow the complete cinematic frame room before the first poster rail. */
 body.svCleanShell main > .dsHero {
