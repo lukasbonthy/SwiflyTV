@@ -1,0 +1,61 @@
+/* Swifly v169 — cinema artwork that dissolves naturally into black.
+   Applied only to large hero image layers, never to actual posters or buttons. */
+body.svCleanShell .dsHeroBg,
+body.svCleanShell .showcaseHeroBg,
+body.svCleanShell .browseHeroBg {
+  -webkit-mask-image:linear-gradient(to bottom,
+    #000 0%,#000 30%,rgba(0,0,0,.86) 46%,
+    rgba(0,0,0,.52) 62%,rgba(0,0,0,.12) 80%,transparent 95%) !important;
+  mask-image:linear-gradient(to bottom,
+    #000 0%,#000 30%,rgba(0,0,0,.86) 46%,
+    rgba(0,0,0,.52) 62%,rgba(0,0,0,.12) 80%,transparent 95%) !important;
+}
+/* Maintain a real image near the top; the lower third gently reaches black.
+   Keep the dark scrim behind all title text, not in front of movie cards. */
+body.svCleanShell .dsHeroGlass {
+  background:
+    linear-gradient(90deg,rgba(0,0,0,.79) 0%,rgba(0,0,0,.51) 30%,rgba(0,0,0,.12) 78%),
+    linear-gradient(to bottom,rgba(0,0,0,.08) 0%,rgba(0,0,0,.06) 30%,
+       rgba(0,0,0,.32) 52%,rgba(0,0,0,.78) 77%,#000 98%) !important;
+}
+/* A dark translucent canvas lets the aurora exist behind the film image,
+   while the image mask and scrim keep the movie as the visual priority. */
+body.svCleanShell[data-st-backdrop="aurora"] .dsHero {
+  background:transparent !important;
+}
+body.svCleanShell .dsHeroTrailerLayer {
+  -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 37%,rgba(0,0,0,.72) 56%,transparent 95%);
+  mask-image:linear-gradient(to bottom,#000 0%,#000 37%,rgba(0,0,0,.72) 56%,transparent 95%);
+}
+/* Welcome uses its own image element, so mask the existing artwork container. */
+body.svCleanShell .svWelcomeClean .dsWelcomeHeroBg {
+  -webkit-mask-image:
+    linear-gradient(to right,transparent 0%,#000 30%,#000 98%),
+    linear-gradient(to bottom,#000 0%,#000 40%,rgba(0,0,0,.60) 66%,transparent 94%) !important;
+  mask-image:
+    linear-gradient(to right,transparent 0%,#000 30%,#000 98%),
+    linear-gradient(to bottom,#000 0%,#000 40%,rgba(0,0,0,.60) 66%,transparent 94%) !important;
+  -webkit-mask-composite:source-in;
+  mask-composite:intersect;
+}
+/* No hard black panel between the bottom of the featured image and rows. */
+body.svCleanShell[data-st-backdrop="aurora"] .svWelcomeClean .dsWelcomeHero,
+body.svCleanShell[data-st-backdrop="aurora"] .svWelcomeClean .dsWelcomeDiscovery {
+  background:transparent !important;
+}
+@media(max-width:760px) {
+  body.svCleanShell .dsHeroBg,
+  body.svCleanShell .showcaseHeroBg,
+  body.svCleanShell .browseHeroBg {
+    -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 24%,rgba(0,0,0,.7) 45%,transparent 81%) !important;
+    mask-image:linear-gradient(to bottom,#000 0%,#000 24%,rgba(0,0,0,.7) 45%,transparent 81%) !important;
+  }
+  body.svCleanShell .dsHeroGlass {
+    background:
+      linear-gradient(to bottom,rgba(0,0,0,.26),rgba(0,0,0,.5) 45%,#000 95%),
+      linear-gradient(90deg,rgba(0,0,0,.43),transparent) !important;
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  body.svCleanShell .dsHeroBg {animation:none !important}
+}

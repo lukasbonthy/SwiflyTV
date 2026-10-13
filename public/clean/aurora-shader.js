@@ -26,50 +26,46 @@
     float noise(vec2 p) {
       vec2 i = floor(p), f = fract(p);
       f = f * f * (3.0 - 2.0 * f);
-      return mix(
-        mix(hash(i), hash(i + vec2(1.0,0.0)), f.x),
-        mix(hash(i + vec2(0.0,1.0)), hash(i + vec2(1.0,1.0)), f.x),
-        f.y
-      );
+      return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
+                 mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
     }
     float fbm(vec2 p) {
-      float total = 0.0;
-      total += 0.52 * noise(p);
-      total += 0.26 * noise(p * 2.08 + 7.31);
-      total += 0.14 * noise(p * 4.14 + 12.9);
-      total += 0.08 * noise(p * 8.17 + 24.7);
-      return total;
+      return 0.52 * noise(p) + 0.26 * noise(p * 2.08 + 7.31)
+           + 0.14 * noise(p * 4.14 + 12.9)
+           + 0.08 * noise(p * 8.17 + 24.7);
     }
     void main() {
       vec2 uv = gl_FragCoord.xy / uResolution;
+      float x = uv.x;
       float t = uTime;
-      // Organic, gently changing edges: noise distorts both aurora curtains.
-      float broad = fbm(vec2(uv.x * 2.9 + t * 0.052, t * 0.043));
-      float fold = fbm(vec2(uv.x * 5.2 - t * 0.035, uv.y * 2.1 + t * 0.061));
-      float detail = fbm(vec2(uv.x * 9.1 + t * 0.055, t * 0.093 + uv.y * 2.0));
-      float ridge = 0.81 + 0.11 * (broad - 0.5) + 0.060 * sin(uv.x * 5.8 + t * 0.16);
-      ridge += 0.061 * (fold - 0.5);
-      float dr = (uv.y - ridge) / (0.18 + 0.063 * broad);
-      float curtain = exp(-2.0 * dr * dr);
-      float ribbons = mix(0.67, 1.15, smoothstep(0.24,0.88,detail));
-      curtain *= ribbons;
+      // A narrow moving ridge with irregular vertical folds, not a glowing cloud.
+      float current = fbm(vec2(x * 3.4 + t * 0.045, t * 0.034));
+      float twist = fbm(vec2(x * 8.1 - t * 0.041, t * 0.052 + 9.2));
+      float edgeA = 0.80 + 0.060 * sin(x * 7.0 + t * 0.15)
+                    + 0.15 * (current - 0.5) + 0.065 * (twist - 0.5);
+      float folds = pow(0.5 + 0.5 * sin(x * 35.0 + twist * 6.0 - t * 0.29), 3.0);
+      float fine = 0.55 + 0.45 * folds;
+      float ridgeA = exp(-pow((uv.y - edgeA) / 0.072, 2.0));
+      float tailA = exp(-max(edgeA - uv.y, 0.0) * 9.5);
+      tailA *= 1.0 - smoothstep(edgeA, edgeA + 0.095, uv.y);
+      float lightA = ridgeA * (0.48 + 0.52 * fine) + tailA * fine * 0.28;
 
-      float secondary = fbm(vec2(uv.x * 2.1 - t * 0.063 + 8.7, t * 0.054 + 18.1));
-      float centerB = 0.91 - 0.18 * secondary + 0.044 * sin(uv.x * 7.2 - t * 0.22);
-      float d2 = (uv.y - centerB) / 0.24;
-      float veil = exp(-1.9 * d2 * d2) * (0.67 + 0.33 * fold);
+      // A second translucent curtain travels at a different speed and phase.
+      float drift = fbm(vec2(x * 4.4 - t * 0.033 + 18.0, t * 0.057));
+      float edgeB = 0.88 + 0.047 * sin(x * 10.0 - t * 0.21)
+                    + 0.11 * (drift - 0.5);
+      float pleatsB = pow(0.5 + 0.5 * sin(x * 47.0 - drift * 5.0 + t * 0.19), 2.0);
+      float ridgeB = exp(-pow((uv.y - edgeB) / 0.060, 2.0));
+      float lightB = ridgeB * (0.42 + 0.58 * pleatsB) * 0.45;
 
-      // A wide glimmer behind the curtains, with a smooth taper into black.
-      float haze = smoothstep(0.40, 0.91, uv.y) * (0.32 + 0.3 * broad);
-      float mask = smoothstep(0.31, 0.66, uv.y);
-      float edge = smoothstep(0.0, 0.13, uv.x) * (1.0 - smoothstep(0.94, 1.08, uv.x));
-      float wave = curtain * 0.63 + veil * 0.26 + haze * 0.22;
-      float energy = wave * mask * edge * uStrength;
-
-      float blend = clamp(uv.x * 0.7 + broad * 0.48 + 0.12 * sin(t * 0.13), 0.0, 1.0);
-      vec3 tint = mix(uColorA, uColorB, blend);
-      vec3 color = tint * (0.73 + 0.27 * curtain);
-      float alpha = clamp(energy * 0.72, 0.0, 0.60);
+      // Cut off the glow towards the content rows instead of adding fog.
+      float lowerFade = smoothstep(0.46, 0.69, uv.y);
+      float upperFade = 1.0 - smoothstep(0.975, 1.02, uv.y);
+      float sides = smoothstep(0.0, 0.10, uv.x) * (1.0 - smoothstep(0.91, 1.0, uv.x));
+      float energy = (lightA * 0.70 + lightB * 0.48) * lowerFade * upperFade * sides;
+      float alpha = clamp(energy * uStrength * 0.82, 0.0, 0.55);
+      float tintMix = clamp(x * 0.53 + twist * 0.45 + lightB * 0.16, 0.0, 1.0);
+      vec3 color = mix(uColorA, uColorB, tintMix);
       gl_FragColor = vec4(color, alpha);
     }
   `;

@@ -119,7 +119,7 @@ test('main catalog, signup and login all have the ambient scene without compromi
    const env=parse(await response.text()),d=env.window.document;
    const aurora=d.querySelector('.svAuroraBackground');
    assert(aurora,route+' should mount shared aurora');
-   assert(d.querySelector('script[src="/assets/clean/aurora-shader.js?v=168"]'),route+' should load real aurora shader');
+   assert(d.querySelector('script[src="/assets/clean/aurora-shader.js?v=169"]'),route+' should load real aurora shader');
    assert.equal(aurora.querySelectorAll('.svAuroraRibbon').length,3,route+' should mount moving curtains');
    if(route==='/signup'||route==='/login'){
      assert(d.querySelector('.dsAuthBrand'),route+' account branding missing');
@@ -155,5 +155,21 @@ test('simple auth pages share one centered panel and do not add distracting adve
   assert(d.querySelector('[data-st-open]'));
   const css=await(await fetch(base+'/assets/clean/auth.css')).text();
   assert.match(css,/max-width:430px/);
+ }
+});
+
+test('the cinema image fade loads after Aurora and Welcome styles',async()=>{
+ for(const route of ['/', '/movies', '/tv', '/welcome']){
+   const response=await fetch(base+route);
+   assert.equal(response.status,200,route+' should load');
+   const d=parse(await response.text()).window.document;
+   const styles=[...d.querySelectorAll('link[rel="stylesheet"]')].map(link=>link.getAttribute('href'));
+   const aurora=styles.findIndex(v=>v.includes('/assets/clean/aurora.css?v=169'));
+   const fade=styles.findIndex(v=>v.includes('/assets/clean/hero-fade.css?v=169'));
+   assert(aurora>=0 && fade>aurora,route+' fade must follow aurora');
+   if(route==='/welcome'){
+     const welcome=styles.findIndex(v=>v.includes('/assets/clean/welcome.css'));
+     assert(fade>welcome,'fade must override welcome art masks');
+   }
  }
 });
