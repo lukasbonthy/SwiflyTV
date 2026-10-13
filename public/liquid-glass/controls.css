@@ -380,12 +380,12 @@ body.svCleanShell[data-st-glass="liquid"] [data-sv-liquid-nav] .netflixNav > .sv
   /* Transparent milky-white light rather than a black tint. Art stays visible
      through a high-definition SVG map with more bending at the edges. */
   background:linear-gradient(120deg,
-    rgb(255 255 255 / .135) 0%,
-    rgb(255 255 255 / .058) 31%,
-    rgb(20 27 37 / .024) 68%,
-    rgb(255 255 255 / .105) 100%) !important;
-  -webkit-backdrop-filter:var(--sv-glass-filter) saturate(1.25) contrast(1.07) brightness(1.05) !important;
-  backdrop-filter:var(--sv-glass-filter) saturate(1.25) contrast(1.07) brightness(1.05) !important;
+    rgb(255 255 255 / .096) 0%,
+    rgb(255 255 255 / .026) 32%,
+    rgb(20 27 37 / .012) 67%,
+    rgb(255 255 255 / .077) 100%) !important;
+  -webkit-backdrop-filter:var(--sv-glass-filter) saturate(1.30) contrast(1.07) brightness(1.08) !important;
+  backdrop-filter:var(--sv-glass-filter) saturate(1.30) contrast(1.07) brightness(1.08) !important;
 }
 body.svCleanShell [data-sv-liquid-nav] .netflixNav > .svLiquidPane::before {
   content:"";
