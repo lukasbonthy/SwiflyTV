@@ -6396,6 +6396,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/clean/aurora.css?v=163" />
     <script defer src="/assets/clean/aurora.js?v=163"></script>
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=163" />' : ""}
+    ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=164" />' : ""}
     ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=159" /><script defer src="/assets/party/party.js?v=159"></script>' : ""}
     ${player ? '<link rel="stylesheet" href="/assets/player/player.css?v=160" /><script defer src="/assets/player/player.js?v=163"></script>' : ""}
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=161" /><script defer src="/assets/player/watch-party.js?v=160"></script>' : ""}
@@ -9001,6 +9002,9 @@ const configuredSourceConcurrency = Number(process.env.MOVIE_SOURCE_MAX_CONCURRE
 let movieSourceJobs = createSourceJobs({
   deadlineMs: Number.isFinite(configuredSourceDeadline) ? Math.round(Math.max(10000, Math.min(75000, configuredSourceDeadline))) : 75000,
   maxConcurrentResolvers: Number.isFinite(configuredSourceConcurrency) ? Math.round(Math.max(1, Math.min(6, configuredSourceConcurrency))) : 2,
+  successTtlMs: 10 * 60 * 1000,
+  errorTtlMs: 2500,
+  staleSuccessTtlMs: 20 * 60 * 1000,
   resolve: (params, { signal }) => fetchProxyVideoSourceRaw({ ...params, signal }),
 });
 function fetchProxyVideoSource(params, options = {}) {
@@ -14657,12 +14661,13 @@ function authPage(res, mode = "login") {
     : "Log in to your SwiflyTV profile on this device.";
 
   const body = `<main class="dsAuthPage dsAuthPageSafe">
+    <div class="dsAuthTopActions"><a href="/welcome">Explore Swifly</a><button type="button" data-st-open aria-label="Customize atmosphere" title="Swifly Studio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 3 14.7 9.3 21 12l-6.3 2.7L12 21l-2.7-6.3L3 12l6.3-2.7L12 3Z"/></svg></button></div>
     <section class="dsAuthShell dsAuthShellSafe">
-      <a class="dsAuthBrand" href="/"><span></span>${escapeHtml(SITE_NAME)}</a>
+      <a class="dsAuthBrand" href="/welcome"><span></span>${escapeHtml(SITE_NAME)}</a>
 
       <aside class="dsAuthPitch">
         <span class="dsEyebrow">${isSignup ? "Start your profile" : "Welcome back"}</span>
-        <h1>${escapeHtml(title)}</h1>
+        <h1>${isSignup ? 'Your next movie<br><em>night starts here.</em>' : 'Welcome<br><em>back.</em>'}</h1>
         <p>${escapeHtml(subtitle)}</p>
 
         <div class="dsAuthFeatureList">
@@ -14695,7 +14700,7 @@ function authPage(res, mode = "login") {
             <input name="password" type="password" placeholder="Password" autocomplete="${isSignup ? "new-password" : "current-password"}" required />
           </label>
 
-          <button class="dsPrimaryBtn" type="submit">${isSignup ? "Create account" : "Log in"}</button>
+          <button class="dsPrimaryBtn" type="submit"><span>${isSignup ? "Create my account" : "Log in"}</span><span aria-hidden="true">↗</span></button>
         </form>
 
         <p class="dsAuthFinePrint">
@@ -14713,7 +14718,8 @@ function authPage(res, mode = "login") {
 
         const mode = "${isSignup ? "signup" : "login"}";
         const params = new URLSearchParams(location.search);
-        const redirect = params.get("redirect") || "/profiles";
+        const requestedRedirect=params.get("redirect") || "/profiles";
+        const redirect=requestedRedirect.startsWith("/")&&!requestedRedirect.startsWith("//")?requestedRedirect:"/profiles";
 
         function toast(msg) {
           if (window.showToast) showToast(msg);
