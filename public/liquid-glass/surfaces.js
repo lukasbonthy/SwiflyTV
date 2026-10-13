@@ -37,7 +37,7 @@
     // second glass surface on each icon. Keep expensive SVG refraction to the
     // small set of hero/action controls, not every card or scrolling row.
     const featuredControl = !panel && host.matches('.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn') &&
-      Boolean(host.closest('.dsHeroActions,.dsWelcomeActions,.dsDetailActionsV121'));
+      Boolean(host.closest('.dsHeroActions,.dsWelcomeActions,.dsDetailActionsV121,.svDetailActions'));
     const complex = (panel && host.dataset.glassRefraction === 'true') || featuredControl;
     const classes = ['svGlassSurface', panel ? 'svGlassPanel' : 'svGlassControl'];
     if (complex) {const position = getComputedStyle(host).position; if (!position || position === 'static') classes.push('svGlassRelative');}
