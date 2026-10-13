@@ -6381,7 +6381,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player || partyBrowse || active === "social" ? '<script defer src="/socket.io/socket.io.js"></script>' : ""}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/modern-normalize@2.0.0/modern-normalize.min.css" />
     <link rel="stylesheet" href="/assets/liquid-glass/liquid-glass.css?v=150" />
-    <script defer src="/assets/liquid-glass/liquid-glass.js?v=188"></script>
+    <script defer src="/assets/liquid-glass/liquid-glass.js?v=189"></script>
     <link rel="stylesheet" href="/assets/clean/clean.css?v=153" />
     <script defer src="/assets/clean/clean.js?v=151"></script>
     <script defer src="/assets/clean/continue.js?v=154"></script>
@@ -6405,7 +6405,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/polish.css?v=176" />'}
     <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=188" />
     ${player ? "" : '<script defer src="/assets/clean/hero-palette.js?v=188"></script>'}
-    ${player ? "" : '<link rel="stylesheet" href="/assets/liquid-glass/controls.css?v=188" />'}
+    ${player ? "" : '<link rel="stylesheet" href="/assets/liquid-glass/controls.css?v=189" />'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/experience.css?v=184" />'}
 </head>
 <body class="svCleanShell">
@@ -6450,7 +6450,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
   <header class="topbar netflixTopbar" data-sv-liquid-nav>
     <div class="container nav netflixNav">
-      <div class="svLiquidPane" data-swifly-glass data-glass-tint="0.09" data-glass-blur="5" data-glass-saturation="1.18" aria-hidden="true"></div>
+      <div class="svLiquidPane" data-swifly-glass data-glass-tint="0.035" data-glass-blur="3.6" data-glass-saturation="1.25" data-glass-distortion="-220" data-glass-displace="0.22" data-glass-border-width="0.15" data-glass-map-opacity="0.98" aria-hidden="true"></div>
       <div class="navLeftCluster">
         <a class="brand netflixBrand" href="/" aria-label="${escapeHtml(SITE_NAME)} home">
           <span class="netflixWordmark">${escapeHtml(BRAND_WORDMARK)}</span>
