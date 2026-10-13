@@ -68,83 +68,7 @@ body.svCleanShell .svWelcomeClean .dsWelcomeDiscovery {
   background:transparent !important;
 }
 
-/* v175: one smooth navigation capsule: no secondary floating boxes around
-   its Search / Studio / profile icons. The parent LiquidPane is the glass. */
-body.svCleanShell :is(.netflixNav,.dsWelcomeNav) :is(.svNavButton,.svWelcomeStudio),
-body.svCleanShell[data-st-glass="liquid"] :is(.netflixNav,.dsWelcomeNav) :is(.svNavButton,.svWelcomeStudio,.svGlassSurface.svGlassControl.svNavButton) {
-  border:1px solid transparent !important;
-  background:transparent !important;
-  box-shadow:none !important;
-  -webkit-backdrop-filter:none !important;
-  backdrop-filter:none !important;
-  filter:none !important;
-  border-radius:10px !important;
-  color:#e4edea !important;
-}
-body.svCleanShell :is(.netflixNav,.dsWelcomeNav) :is(.svNavButton,.svWelcomeStudio):hover,
-body.svCleanShell :is(.netflixNav,.dsWelcomeNav) :is(.svNavButton,.svWelcomeStudio):focus-visible {
-  background:rgba(255,255,255,.095) !important;
-  color:#fff !important;
-}
-/* A consistent, visibly refractive surface on the real action buttons.
-   Fallback uses clear translucency + a directional rim where SVG refraction
-   is not supported. We never change button dimensions or hit targets. */
-body.svCleanShell[data-st-glass="liquid"] :is(.dsHeroActions,.dsDetailActionsV121,.dsWelcomeActions) :is(.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn),
-body.svCleanShell[data-st-glass="liquid"] :is(.dsRowBtn,.dsRowArrow,.svRowArrow,.dsHeroMuteToggle,.svResumePlay,.svResumeRemove,.dsGhostPill,.dsCardQuickActions .dsMiniBtn) {
-  --sv-surface-blur:16px;
-  background:linear-gradient(145deg,
-    rgba(255,255,255,.26) 0%,rgba(255,255,255,.105) 23%,
-    rgba(255,255,255,.025) 55%,rgba(255,255,255,.14) 100%),rgba(8,14,19,.25) !important;
-  border:1px solid rgba(255,255,255,.40) !important;
-  color:#f8fbf9 !important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.60),
-    inset 0 -1px 0 rgba(255,255,255,.08),
-    0 4px 14px rgba(0,0,0,.27) !important;
-  -webkit-backdrop-filter:blur(18px) saturate(1.55) brightness(1.09) !important;
-  backdrop-filter:blur(18px) saturate(1.55) brightness(1.09) !important;
-  transition:background-color .2s,border-color .2s,box-shadow .2s !important;
-}
-body.svCleanShell[data-st-glass="liquid"] :is(.dsHeroActions,.dsDetailActionsV121,.dsWelcomeActions) :is(.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn):hover,
-body.svCleanShell[data-st-glass="liquid"] :is(.dsRowBtn,.dsRowArrow,.svRowArrow,.dsHeroMuteToggle,.svResumePlay,.svResumeRemove,.dsGhostPill):hover {
-  background:linear-gradient(140deg,
-    rgba(255,255,255,.32),rgba(255,255,255,.11) 58%,rgba(255,255,255,.2)),rgba(9,16,21,.30) !important;
-  border-color:rgba(255,255,255,.61) !important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.79),0 5px 18px rgba(0,0,0,.33) !important;
-}
-/* Play must be translucent too — v174's almost opaque pearl button was not glass. */
-body.svCleanShell[data-st-glass="liquid"] :is(.dsHeroActions,.dsDetailActionsV121) .dsPrimaryBtn {
-  background:linear-gradient(145deg,
-    rgba(248,255,253,.42),rgba(194,231,224,.16) 54%,rgba(228,250,246,.24)),
-    rgba(9,22,24,.30) !important;
-  border-color:rgba(237,255,249,.60) !important;
-  color:#fff !important;
-  text-shadow:0 1px 5px rgba(0,0,0,.38) !important;
-}
-/* Welcome's light CTA can still be more prominent without becoming opaque. */
-body.svCleanShell[data-st-glass="liquid"] .dsWelcomeActions .dsPrimaryBtn {
-  background:linear-gradient(150deg,rgba(255,255,255,.77),rgba(207,235,231,.52)) !important;
-  color:#10231e !important;
-  border-color:rgba(255,255,255,.85) !important;
-}
-/* IMPORTANT: Let the existing SVG displacement renderer win when available.
-   v174 forcibly set blur() with a stronger selector, disabling actual refraction. */
-body.svCleanShell[data-st-glass="liquid"] :is(.dsHeroActions,.dsWelcomeActions,.dsDetailActionsV121)
-  .svGlassSurface.svGlassControl[data-swifly-renderer="svg"] {
-  -webkit-backdrop-filter:var(--sv-glass-filter) saturate(1.35) !important;
-  backdrop-filter:var(--sv-glass-filter) saturate(1.35) !important;
-}
-body.svCleanShell[data-st-glass="subtle"] :is(.dsHeroActions,.dsWelcomeActions,.dsDetailActionsV121) :is(.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn) {
-  background:rgba(20,25,29,.55) !important;
-  border-color:rgba(255,255,255,.24) !important;
-  -webkit-backdrop-filter:blur(9px) saturate(1.04) !important;
-  backdrop-filter:blur(9px) saturate(1.04) !important;
-}
-body.svCleanShell[data-st-glass="off"] :is(.dsHeroActions,.dsWelcomeActions,.dsDetailActionsV121) :is(.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn) {
-  background:#15191d !important;
-  -webkit-backdrop-filter:none !important;
-  backdrop-filter:none !important;
-  box-shadow:none !important;
-}
+/* Liquid button surfaces are centralized in /assets/liquid-glass/controls.css. */
 @media(max-width:860px) {
   body.svCleanShell main > .dsHero {
     min-height:clamp(600px,94svh,870px) !important;
@@ -160,16 +84,6 @@ body.svCleanShell[data-st-glass="off"] :is(.dsHeroActions,.dsWelcomeActions,.dsD
   }
   body.svCleanShell .svWelcomeClean .dsWelcomeHeroBg {bottom:-22px !important;}
 }
-@media(prefers-reduced-transparency:reduce) {
-  body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svGlassControl {
-    background:#182023ed !important;
-    -webkit-backdrop-filter:none !important;backdrop-filter:none !important;
-  }
-}
-@media(prefers-reduced-motion:reduce) {
-  body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svGlassControl {transition:none !important;}
-}
-
 /* Progressive enhancement: cross-document navigation dissolves like glass,
    without a fake loading overlay, navigation interception, or page-delay JS.
    Unsupported browsers simply navigate normally. */

@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   if (window.SwiflyGlassSurfaces) return;
-  const controls = ['.dsPrimaryBtn', '.dsSecondaryBtn', '.dsIconBtn', '.dsGhostPill', '.dsCardQuickActions .dsMiniBtn', '.dsRowBtn', '.dsRowArrow', '.dsClose', '.dsHeroMuteToggle', '.svResumePlay', '.svResumeRemove', '.svRowArrow', '.dsAuthTopActions button[data-st-open]', '.genreDropdown summary', '.dsTabs a', '.pagination a', '.dsEpisodeChips a'].join(',');
+  const controls = ['.dsPrimaryBtn', '.dsSecondaryBtn', '.dsIconBtn', '.dsGhostPill', '.dsCardQuickActions .dsMiniBtn', '.dsRowBtn', '.dsRowArrow', '.dsClose', '.dsHeroMuteToggle', '.svResumePlay', '.svResumeRemove', '.svRowArrow', '.svDetailBack', '.svDetailDismiss', '.svDetailReturn', '.dsAuthTopActions button[data-st-open]', '.genreDropdown summary', '.dsTabs a', '.pagination a', '.dsEpisodeChips a'].join(',');
   const panels = ['.svSearchPopup', '.dsSearchBox form', '.genreDropdownMenu', '.dsDetailTabsV121', '.dsAuthCard', '.dsAuthSwitch', '.dsProfileManagerPanel', '.dsAccountCard', '.dsProfileSelectCard', '.dsDetailGridV121 aside', '.dsAboutGridV121', '.dsSeasonBlock', '#controlPanel', '#toast', 'dialog'].join(',');
   const selector = controls + ',' + panels, entries = new Map(), pending = new Set();
   const rendererProperties = ['--sv-glass-default-tint', '--sv-glass-saturation', '--sv-glass-filter'];
@@ -36,8 +36,13 @@
     // The navigation already lives in one refractive capsule; do not mount a
     // second glass surface on each icon. Keep expensive SVG refraction to the
     // small set of hero/action controls, not every card or scrolling row.
-    const featuredControl = !panel && host.matches('.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn') &&
-      Boolean(host.closest('.dsHeroActions,.dsWelcomeActions,.dsDetailActionsV121,.svDetailActions'));
+    // Only a handful of prominent buttons need GPU refraction. Repeating
+    // cards and rails use the same lens appearance with cheaper frost.
+    const featuredControl = !panel && (
+      (host.matches('.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn') &&
+        Boolean(host.closest('.dsHeroActions,.dsWelcomeActions,.dsDetailActionsV121,.svDetailActions'))) ||
+      host.matches('.svDetailBack,.svDetailDismiss,.svDetailReturn')
+    );
     const complex = (panel && host.dataset.glassRefraction === 'true') || featuredControl;
     const classes = ['svGlassSurface', panel ? 'svGlassPanel' : 'svGlassControl'];
     if (complex) {const position = getComputedStyle(host).position; if (!position || position === 'static') classes.push('svGlassRelative');}

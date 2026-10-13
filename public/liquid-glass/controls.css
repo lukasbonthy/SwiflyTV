@@ -1,0 +1,142 @@
+/* SwiflyTV v177 — ONE authoritative button material.
+   Keep refraction in surfaces.js / liquid-glass.js and the visual material here.
+   This stylesheet is loaded after all page-specific styles, so details, hero,
+   Welcome, auth and repeated control buttons share the same optical finish. */
+
+/* The navbar is ONE liquid capsule. The inner icons must never become boxes. */
+body.svCleanShell :is(.netflixNav,.dsWelcomeNav) :is(.svNavButton,.svWelcomeStudio),
+body.svCleanShell[data-st-glass="liquid"] :is(.netflixNav,.dsWelcomeNav) :is(.svNavButton,.svWelcomeStudio) {
+  background:transparent !important;border:1px solid transparent !important;
+  box-shadow:none !important;
+  -webkit-backdrop-filter:none !important;backdrop-filter:none !important;
+  border-radius:10px !important;color:#eef6f3 !important;
+}
+body.svCleanShell :is(.netflixNav,.dsWelcomeNav) :is(.svNavButton,.svWelcomeStudio):is(:hover,:focus-visible) {
+  background:rgba(255,255,255,.095) !important;
+}
+
+/* Reflective surfaces apply ONLY when the user selected Liquid in Studio.
+   Pseudo-element glints are what make the glass visible over a black movie frame,
+   which a simple blur by itself cannot do. */
+body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svGlassControl {
+  position:relative !important;
+  isolation:isolate;
+  background:
+    radial-gradient(ellipse 115% 155% at 4% -65%,rgba(255,255,255,.40),transparent 64%),
+    linear-gradient(154deg,rgba(246,255,253,.20) 0%,rgba(245,255,252,.052) 42%,
+      rgba(196,235,238,.065) 64%,rgba(250,255,255,.22) 100%),
+    rgba(18,30,35,.24) !important;
+  border:1px solid rgba(242,255,252,.49) !important;
+  color:#f9fffc !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.74),
+    inset 0 -1px 0 rgba(255,255,255,.22),
+    inset 1px 0 0 rgba(255,255,255,.18),
+    inset -1px 0 0 rgba(255,255,255,.13),
+    0 2px 8px rgba(0,0,0,.23),
+    0 7px 25px rgba(0,0,0,.18) !important;
+  -webkit-backdrop-filter:blur(10px) saturate(1.65) brightness(1.13) !important;
+  backdrop-filter:blur(10px) saturate(1.65) brightness(1.13) !important;
+  text-shadow:0 1px 2px rgba(0,0,0,.25);
+  transition:background-color .22s ease,border-color .22s ease,
+    box-shadow .22s ease,transform .22s ease !important;
+}
+/* A glass bead contains curved, directional reflections. These don't cover
+   the label and are never allowed to capture clicks. */
+body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svGlassControl::before {
+  content:"" !important;display:block !important;
+  position:absolute !important;inset:1px !important;
+  border-radius:inherit;pointer-events:none !important;
+  background:
+    radial-gradient(ellipse 68% 120% at 18% -46%,rgba(255,255,255,.29),transparent 85%),
+    radial-gradient(ellipse 58% 90% at 104% 132%,rgba(208,249,250,.19),transparent 90%);
+  opacity:1 !important;transform:none !important;transition:opacity .2s ease !important;
+}
+body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svGlassControl::after {
+  content:"";display:block;position:absolute;inset:0;border-radius:inherit;
+  padding:1px;pointer-events:none;
+  background:linear-gradient(134deg,#ffffffe0 0%,#ffffff18 19%,#ffffff0d 47%,#d9fdff85 78%,#ffffff83 100%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+  mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  mask-composite:exclude;
+  opacity:.80;transition:opacity .22s ease;
+}
+body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svGlassControl:is(:hover,:focus-visible) {
+  background:
+    radial-gradient(ellipse 120% 125% at 15% -45%,rgba(255,255,255,.49),transparent 69%),
+    linear-gradient(138deg,rgba(255,255,255,.30),rgba(255,255,255,.12) 43%,rgba(202,244,246,.21)),
+    rgba(17,31,38,.25) !important;
+  border-color:rgba(255,255,255,.75) !important;
+  box-shadow:inset 0 1px 0 #ffffffdf,inset 0 -1px 0 #c9ffff69,
+    0 3px 14px #0006,0 0 14px #b4ffff15 !important;
+}
+body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svGlassControl:is(:hover,:focus-visible)::after {opacity:1;}
+body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svGlassControl:active {
+  box-shadow:inset 0 2px 7px #0005,inset 0 1px 0 #ffffff5c,
+    0 1px 6px #0005 !important;
+}
+
+/* Real SVG backdrop displacement is ABOVE the generic fallback in the cascade.
+   If Chromium can refract pixels, never paint another blur on top of that. */
+body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svGlassControl[data-swifly-renderer="svg"] {
+  -webkit-backdrop-filter:var(--sv-glass-filter) saturate(1.24) !important;
+  backdrop-filter:var(--sv-glass-filter) saturate(1.24) !important;
+}
+
+/* Distinguish the primary button without making it opaque white or flat. */
+body.svCleanShell[data-st-glass="liquid"] :is(.dsHeroActions,.svDetailActions,.dsDetailActionsV121) .svGlassSurface.svGlassControl.dsPrimaryBtn {
+  background:
+    radial-gradient(ellipse 100% 150% at 5% -60%,rgba(255,255,255,.54),transparent 72%),
+    linear-gradient(136deg,rgba(239,255,248,.34),rgba(213,245,236,.11) 57%,rgba(225,254,250,.24)),
+    rgba(15,34,35,.22) !important;
+  border-color:rgba(237,255,246,.68) !important;
+}
+/* The Welcome/Auth main CTA remains deliberately brighter for legibility. */
+body.svCleanShell[data-st-glass="liquid"] :is(.dsWelcomeActions,.dsSafeAuthForm) .svGlassSurface.svGlassControl.dsPrimaryBtn {
+  background:linear-gradient(142deg,rgba(252,255,253,.79),rgba(205,238,229,.55)) !important;
+  color:#12221e !important;text-shadow:none;
+}
+
+/* Compact circles use the same optical material; don't force an extra pane. */
+body.svCleanShell[data-st-glass="liquid"] :is(.svDetailChrome,.svDetailDialog) :is(.svDetailBack,.svDetailDismiss,.svDetailReturn) {
+  border-color:rgba(255,255,255,.49) !important;
+}
+/* Selected/liked state carries a little more inner light. */
+body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svGlassControl:is(.active,.saved,.liked,[aria-pressed="true"]) {
+  border-color:rgba(245,255,252,.72) !important;
+  box-shadow:inset 0 1px 0 #ffffffbd,inset 0 -1px 0 #d6ffff45,0 3px 16px #0006 !important;
+}
+
+/* Distinct Studio modes: Soft is gentle frosting; Off never refracts or glows. */
+body.svCleanShell[data-st-glass="subtle"] .svGlassSurface.svGlassControl {
+  background:rgba(24,29,32,.49) !important;
+  border:1px solid rgba(255,255,255,.23) !important;
+  box-shadow:inset 0 1px 0 #ffffff24,0 4px 14px #0003 !important;
+  -webkit-backdrop-filter:blur(9px) saturate(1.12) !important;
+  backdrop-filter:blur(9px) saturate(1.12) !important;
+}
+body.svCleanShell[data-st-glass="off"] .svGlassSurface.svGlassControl {
+  background:#1b1d20 !important;
+  border:1px solid #ffffff20 !important;
+  box-shadow:none !important;
+  -webkit-backdrop-filter:none !important;backdrop-filter:none !important;
+}
+/* Decorative glints NEVER persist when glass isn't selected. */
+body.svCleanShell[data-st-glass="subtle"] .svGlassSurface.svGlassControl::before,
+body.svCleanShell[data-st-glass="subtle"] .svGlassSurface.svGlassControl::after,
+body.svCleanShell[data-st-glass="off"] .svGlassSurface.svGlassControl::before,
+body.svCleanShell[data-st-glass="off"] .svGlassSurface.svGlassControl::after {
+  display:none !important;content:none !important;
+}
+@media(prefers-reduced-transparency:reduce) {
+  body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svGlassControl {
+    background:#242b2e !important;
+    -webkit-backdrop-filter:none !important;backdrop-filter:none !important;
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  body.svCleanShell .svGlassSurface.svGlassControl,
+  body.svCleanShell .svGlassSurface.svGlassControl::before,
+  body.svCleanShell .svGlassSurface.svGlassControl::after {transition:none !important;}
+}
