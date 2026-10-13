@@ -191,9 +191,9 @@ test('signup is a single refined form with preserved fields and a usable passwor
  assert.match(html,/passwordToggle\?\.addEventListener\("click"/);
  assert.match(html,/aria-pressed/);
  const css=await (await fetch(base+'/assets/clean/auth.css')).text();
- assert.match(css,/\.svAuthSignupPage \.dsAuthCard/);
+ assert.match(css,/:is\(\.svAuthLoginPage,\.svAuthSignupPage\) \.dsAuthCard/);
  assert.match(css,/\.svAuthPasswordToggle:focus-visible/);
- assert.match(html,/assets\/clean\/auth\.css\?v=171/);
+ assert.match(html,/assets\/clean\/auth\.css\?v=173/);
 });
 test('movie discovery artwork fades beyond the hero instead of ending at a bordered section',async()=>{
  const response=await fetch(base+'/welcome');
@@ -244,4 +244,29 @@ test('Welcome uses the featured backdrop as an ambient discovery transition',asy
  assert.equal(bridge.previousElementSibling?.classList.contains('dsWelcomeHero'),true);
  assert.equal(bridge.nextElementSibling?.id,'discovery');
  assert.match(bridge.getAttribute('style')||'',/--sv-light-art:url\('/);
+});
+
+test('login and signup share one compact design with identical 430px card footprints',async()=>{
+ const stylesheet = await(await fetch(base+'/assets/clean/auth.css?v=173')).text();
+ const shared=':is(.svAuthLoginPage,.svAuthSignupPage)';
+ assert.match(stylesheet,/width:min\(430px,100%\) !important/);
+ assert.match(stylesheet,/max-width:430px !important/);
+ assert.doesNotMatch(stylesheet,/474px|\.svAuthSignupPage \.dsAuthShellSafe/,'signup must not be enlarged again');
+ assert.match(stylesheet,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/,'matching two-tab controls');
+ assert.match(stylesheet,/outline:2px solid rgba\(220,247,235,\.86\)/,'visible keyboard focus on fields');
+ assert.match(stylesheet,/\.svAuthPasswordToggle:focus-visible/);
+ assert.match(stylesheet,/prefers-reduced-motion:reduce/);
+ assert(stylesheet.includes(shared),'login and signup must share the refinements');
+ for(const [route,active,fields] of [['/login','Log in',2],['/signup','Sign up',3]]){
+  const response=await fetch(base+route);
+  assert.equal(response.status,200);
+  const doc=parse(await response.text()).window.document;
+  assert.equal(doc.querySelectorAll('.dsAuthCard').length,1);
+  assert.equal(doc.querySelectorAll('#safeAuthForm input[required]').length,fields);
+  assert.equal(doc.querySelectorAll('.svAuthKicker,.dsAuthPitch,.svAuthShowcase').length,0,'no extra decorations');
+  assert.equal(doc.querySelectorAll('.dsAuthSwitch a').length,2);
+  assert.equal(doc.querySelector('.dsAuthSwitch .active')?.textContent,active);
+  assert.equal(doc.querySelectorAll('.svAuthPasswordToggle').length,1);
+  assert(doc.querySelector('link[href="/assets/clean/auth.css?v=173"]'),'updated auth stylesheet should load');
+ }
 });
