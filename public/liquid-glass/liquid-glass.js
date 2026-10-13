@@ -49,7 +49,7 @@
     if (mounted.has(element)) return mounted.get(element);
     const config = {
       borderWidth:.07, brightness:50, opacity:.93, displace:.5,
-      distortionScale:-180, channelOffsets:[0, 10, 20], saturation:1,
+      distortionScale:-180, channelOffsets:[0, 10, 20], saturation:numeric(element, 'glassSaturation', 1),
       mapBlur:numeric(element, 'glassBlur', 7), tint:numeric(element, 'glassTint', .2),
       blend:element.dataset.glassBlend === 'difference' ? 'difference' : 'screen', ...options
     };
