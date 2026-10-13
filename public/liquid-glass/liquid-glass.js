@@ -1,4 +1,4 @@
-/* v163: lazy navigation refraction, suspended while unused. */
+/* v193: Chromium backdrop displacement plus WebKit SVG optical glass. */
 (() => {
   'use strict';
   if (window.SwiflyLiquidGlass) return;
@@ -62,13 +62,18 @@
     const filterId = 'swifly-liquid-filter-' + (++nextId), ua = navigator.userAgent;
     const isAppleTouch = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     const svgCapable = !isAppleTouch && /Chrome|Chromium|Edg|OPR/.test(ua) && typeof CSS !== 'undefined' && CSS.supports('backdrop-filter', 'url(#' + filterId + ')');
+    // Safari does not consistently distort live backdrop pixels through url(#svg).
+    // Native WebKit blur handles the backdrop while SVG bends the optical light.
+    const isWebKit = /AppleWebKit/.test(ua) && (isAppleTouch || !/Chrome|Chromium|Edg|OPR/.test(ua));
+    const webkitSvgCapable = isWebKit && typeof CSS !== 'undefined' &&
+      (CSS.supports('-webkit-backdrop-filter', 'blur(1px)') || CSS.supports('backdrop-filter', 'blur(1px)'));
     const previousRenderer = element.dataset.swiflyRenderer;
     const previousProperties = ['--sv-glass-default-tint', '--sv-glass-saturation', '--sv-glass-radius', '--sv-glass-filter'].map(property => [property, element.style.getPropertyValue(property), element.style.getPropertyPriority(property)]);
     element.style.setProperty('--sv-glass-default-tint', config.tint);
     element.style.setProperty('--sv-glass-saturation', config.saturation);
     if (element.dataset.glassRadius) element.style.setProperty('--sv-glass-radius', numeric(element, 'glassRadius', 20) + 'px');
     let svg, map, observer, observing = false, frame = 0, dimensions = '', enabled = true, destroyed = false;
-    const allowed = () => !destroyed && enabled && svgCapable && element.isConnected && !document.hidden && liquidPreference();
+    const allowed = () => !destroyed && enabled && (svgCapable || webkitSvgCapable) && element.isConnected && !document.hidden && liquidPreference();
     function renderer(value) {if (element.dataset.swiflyRenderer !== value) element.dataset.swiflyRenderer = value;}
     function removeGraph() {
       svg?.remove(); svg = null; map = null; dimensions = '';
@@ -89,6 +94,44 @@
       defs.append(filter); svg.append(defs); element.append(svg);
       element.style.setProperty('--sv-glass-filter', 'url(#' + filterId + ')');
     }
+    function createWebKitLens(width, height, radius) {
+      // True SVG-shaped refractive/specular highlights over native WebKit blur.
+      // The feDisplacementMap bends the rim highlight, not the DOM backdrop.
+      const id = filterId + '-webkit';
+      const grad = (suffix, attrs, stops) => {
+        const g = svgElement('linearGradient', {id:id+'-'+suffix, ...attrs});
+        stops.forEach(([offset,opacity]) => g.append(svgElement('stop',
+          {offset,'stop-color':'white','stop-opacity':opacity})));
+        return g;
+      };
+      const rim = grad('rim',{x1:'0%',y1:'0%',x2:'100%',y2:'100%'},
+        [['0%',.8],['22%',.23],['53%',.055],['79%',.2],['100%',.67]]);
+      const sheen = grad('sheen',{x1:'0%',y1:'0%',x2:'0%',y2:'100%'},
+        [['0%',.2],['29%',.07],['65%',.01],['100%',.075]]);
+      const glow = svgElement('radialGradient',{id:id+'-glow',cx:'13%',cy:'-35%',r:'99%'});
+      glow.append(svgElement('stop',{offset:'0%','stop-color':'white','stop-opacity':'.20'}),
+        svgElement('stop',{offset:'65%','stop-color':'white','stop-opacity':'.035'}),
+        svgElement('stop',{offset:'100%','stop-color':'white','stop-opacity':'0'}));
+      const opticalBend = svgElement('filter',{id:id+'-bend',x:'-10%',y:'-35%',width:'120%',height:'170%'});
+      opticalBend.append(svgElement('feDisplacementMap',
+        {in:'SourceGraphic',in2:'SourceGraphic',scale:1.7,xChannelSelector:'R',yChannelSelector:'G'}));
+      const defs = svgElement('defs');
+      defs.append(rim,sheen,glow,opticalBend);
+      const inset = Math.max(.75,Math.min(width,height)*.016);
+      const x=inset,y=inset,w=Math.max(0,width-2*inset),h=Math.max(0,height-2*inset);
+      const r=Math.max(1,Math.min(radius,Math.min(w,h)/2));
+      svg=svgElement('svg',{class:'svWebkitGlassOptics','aria-hidden':'true',focusable:'false',
+        viewBox:'0 0 '+width+' '+height,preserveAspectRatio:'none'});
+      svg.append(defs,
+        svgElement('rect',{x,y,width:w,height:h,rx:r,fill:'url(#'+id+'-sheen)'}),
+        svgElement('rect',{x,y,width:w,height:h,rx:r,fill:'url(#'+id+'-glow)'}),
+        svgElement('rect',{x,y,width:w,height:h,rx:r,fill:'none',
+          stroke:'url(#'+id+'-rim)','stroke-width':Math.min(1.8,Math.max(1.1,height*.026))}),
+        svgElement('path',{d:'M '+(r+inset)+' '+(inset+.7)+' H '+Math.max(r+inset,width-r-inset),
+          stroke:'white','stroke-opacity':'.23','stroke-width':'.75',
+          fill:'none',filter:'url(#'+id+'-bend)'}));
+      element.append(svg);
+    }
     function updateMap() {
       frame = 0;
       if (!allowed()) return;
@@ -100,7 +143,14 @@
       const blur = configuredBlur !== '' && Number.isFinite(Number(configuredBlur)) ? Number(configuredBlur) : config.mapBlur;
       const blend = computed.getPropertyValue('--sv-glass-blend').trim() === 'difference' ? 'difference' : config.blend;
       const key = [width, height, radius, blur, blend].join(':');
-      if (key === dimensions) {renderer('svg'); return;}
+      if (key === dimensions) {renderer(webkitSvgCapable ? 'webkit-svg' : 'svg'); return;}
+      if (webkitSvgCapable) {
+        if (svg) removeGraph();
+        createWebKitLens(width,height,radius);
+        dimensions = key;
+        renderer('webkit-svg');
+        return;
+      }
       if (!svg) createGraph();
       dimensions = key;
       const inset = Math.min(width, height) * config.borderWidth * .5;
@@ -138,7 +188,9 @@
     }
     function setEnabled(value) {enabled = Boolean(value); sync();}
     const controller = {
-      get supported() {return svgCapable;}, get enabled() {return enabled;}, setEnabled,
+      get supported() {return svgCapable || webkitSvgCapable;},
+      get mode() {return svgCapable ? 'svg' : webkitSvgCapable ? 'webkit-svg' : 'blur';},
+      get enabled() {return enabled;}, setEnabled,
       refresh() {dimensions = ''; scheduleMap();},
       destroy() {
         if (destroyed) return; destroyed = true;
