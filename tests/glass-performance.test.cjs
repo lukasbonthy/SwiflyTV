@@ -471,3 +471,66 @@ test('SVG lens maps move along BOTH sampled channels in navbar and shared contro
  assert.equal(d.querySelectorAll('.svSharedGlassDefinitions').length,1,'do not allocate extra shared filter graphs');
  env.finish();
 });
+
+test('iPad Chrome and Safari mount SVG liquid optics without unsupported backdrop URL filters',()=>{
+ const env=glass('<nav class="netflixNav"><div class="svLiquidPane" data-swifly-glass></div></nav>'+
+   '<div class="dsHeroActions"><a class="dsPrimaryBtn">Play</a><button class="dsIconBtn">Save</button></div>'+
+   '<div class="dsCardQuickActions">'+ '<button class="dsMiniBtn">Save</button>'.repeat(20)+'</div>');
+ const w=env.window,d=w.document;
+ Object.defineProperty(w.navigator,'userAgent',{configurable:true,value:'Mozilla/5.0 (iPad; CPU OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/155.0.0 Mobile/15E148 Safari/604.1'});
+ d.body.dataset.stGlass='liquid';
+ w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');
+ env.intersect(true);w.flush(16);
+ const pane=d.querySelector('.netflixNav > .svLiquidPane');
+ assert.equal(pane.dataset.swiflyRenderer,'webkit-svg');
+ assert.equal(w.SwiflyLiquidGlass.mount(pane).mode,'webkit-svg');
+ assert(pane.querySelector('svg.svWebkitGlassOptics'),'real SVG optical overlay');
+ assert(pane.querySelector('feDisplacementMap'),'SVG refracts the optical highlights');
+ assert.equal(pane.querySelector('.svLiquidPane__filters'),null,'no unsupported SVG backdrop filter');
+ for(const button of d.querySelectorAll('.dsHeroActions > *')){
+   const lens=button.querySelector('.svNavMatchedLens.svLiquidPane');
+   assert(lens);
+   assert.equal(lens.dataset.swiflyRenderer,'webkit-svg');
+   assert(lens.querySelector('svg.svWebkitGlassOptics'));
+ }
+ assert.equal(d.querySelectorAll('.dsCardQuickActions svg.svWebkitGlassOptics').length,0);
+ env.finish();
+});
+test('macOS Safari SVG optic resizes, pauses and obeys Reduce Transparency',()=>{
+ const env=glass('<div class="svLiquidPane" data-swifly-glass></div>');
+ const w=env.window,d=w.document,pane=d.querySelector('.svLiquidPane');
+ Object.defineProperty(w.navigator,'userAgent',{configurable:true,value:'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Safari/605.1.15'});
+ d.body.dataset.stGlass='liquid';
+ w.boot('liquid-glass/liquid-glass.js');w.flush(16);
+ const lens=pane.querySelector('svg.svWebkitGlassOptics');
+ assert(lens);
+ const controller=w.SwiflyLiquidGlass.mount(pane);
+ assert.equal(controller.supported,true);
+ pane.getBoundingClientRect=()=>({width:300,height:48});
+ env.resize();w.flush(32);
+ assert.equal(pane.querySelectorAll('svg.svWebkitGlassOptics').length,1);
+ assert.notEqual(pane.querySelector('svg.svWebkitGlassOptics'),lens);
+ Object.defineProperty(d,'hidden',{value:true,configurable:true});
+ d.dispatchEvent(new w.Event('visibilitychange'));
+ assert.equal(pane.dataset.swiflyRenderer,'blur');
+ assert.equal(w.frameCount(),0);
+ Object.defineProperty(d,'hidden',{value:false,configurable:true});
+ d.dispatchEvent(new w.Event('visibilitychange'));w.flush(48);
+ assert.equal(pane.dataset.swiflyRenderer,'webkit-svg');
+ const reduced=w.matchMedia('(prefers-reduced-transparency: reduce)');
+ reduced.matches=true;for(const listener of reduced.listeners)listener({matches:true});
+ assert.equal(pane.querySelector('svg.svWebkitGlassOptics'),null);
+ assert.equal(pane.dataset.swiflyRenderer,'blur');
+ assert.equal(w.frameCount(),0);
+ controller.destroy();env.finish();
+});
+test('WebKit optical CSS includes live blur and reduced-transparency fallback',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const css=fs.readFileSync(path.join(__dirname,'../public/liquid-glass/liquid-glass.css'),'utf8');
+ const controls=fs.readFileSync(path.join(__dirname,'../public/liquid-glass/controls.css'),'utf8');
+ assert(css.includes('svg.svWebkitGlassOptics'));
+ assert(css.includes('data-swifly-renderer="webkit-svg"'));
+ assert(css.includes('-webkit-backdrop-filter:blur(10px)'));
+ assert(controls.includes('netflixNav > .svLiquidPane[data-swifly-renderer="webkit-svg"]'));
+ assert(controls.includes('prefers-reduced-transparency:reduce'));
+});
