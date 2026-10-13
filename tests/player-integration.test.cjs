@@ -121,7 +121,7 @@ test('main catalog, signup and login all have the ambient scene without compromi
    assert(aurora,route+' should mount shared aurora');
    assert.equal(aurora.querySelectorAll('.svAuroraRibbon').length,3,route+' should mount moving curtains');
    if(route==='/signup'||route==='/login'){
-     assert(d.querySelector('.svAuthShowcase'),route+' artwork missing');
+     assert(d.querySelector('.svAuthEditorialTop'),route+' editorial introduction missing');
      assert(d.querySelector('.svAuthPrivacy'),route+' local-only description missing');
      assert(d.querySelector('.dsAuthCard .svAuthCardTopline'),route+' editorial form missing');
      const form=d.querySelector('#safeAuthForm');
@@ -130,5 +130,13 @@ test('main catalog, signup and login all have the ambient scene without compromi
      assert(form.querySelector('input[name="password"][required]'));
      assert(d.querySelector('[data-st-open]'));
    }
+ }
+});
+
+test('Signup has a name field while login keeps the form focused on actual credentials',async()=>{
+ for(const [route,hasName] of [['/signup',true],['/login',false]]){
+  const env=parse(await(await fetch(base+route)).text()),d=env.window.document;
+  assert.equal(Boolean(d.querySelector('#safeAuthForm input[name="name"]')),hasName);
+  assert(d.querySelector('.svAuthSteps'),'Editorial introduction should replace the former decorative artwork');
  }
 });
