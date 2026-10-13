@@ -40,6 +40,28 @@ const flush = async () => { for (let turn = 0; turn < 6; turn += 1) await Promis
 const movie = { type: 'movie', id: '101' };
 const playable = { status: 'ok', playbackUrl: 'https://media.example/video.mp4', proxyVideo: 'https://media.example/video.mp4', streamType: 'mp4' };
 
+test('known discovery failures survive polling without exposing provider diagnostics', async t => {
+  for (const code of ['browser_unavailable', 'provider_blocked', 'no_source']) {
+    const jobs = factory({ resolve: () => ({ status: 'error', code, message: 'C:\\private\\SECRET', attempts: ['https://private.example/?token=SECRET'] }) });
+    t.after(() => jobs.destroy());
+    const result = await jobs.resolve(movie);
+    assert.equal(result.code, code);
+    assert.doesNotMatch(JSON.stringify(result), /private|SECRET/);
+    assert.equal(jobs.poll(movie).code, code);
+  }
+  const jobs = factory({ resolve: () => { const error = new Error('SECRET'); error.code = 'browser_unavailable'; throw error; } });
+  t.after(() => jobs.destroy());
+  assert.equal((await jobs.resolve(movie)).code, 'browser_unavailable');
+});
+
+test('unknown provider error codes stay generic', async t => {
+  const jobs = factory({ resolve: () => ({ status: 'error', code: 'token=SECRET', message: 'SECRET' }) });
+  t.after(() => jobs.destroy());
+  const result = await jobs.resolve(movie);
+  assert.equal(result.code, 'unavailable');
+  assert.doesNotMatch(JSON.stringify(result), /SECRET/);
+});
+
 test('poll returns a pending snapshot immediately while discovery remains unresolved', async t => {
   const pending = deferred(), time = clock();
   let received;

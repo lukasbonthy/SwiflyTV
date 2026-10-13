@@ -1,3 +1,7 @@
+# SwiflyTV v162
+
+Source discovery and Windows/Render setup: [GETTER_FIX.md](GETTER_FIX.md). The getter validates successful media responses, inspects iframe/native players, and reserves time for fallback providers.
+
 # SwiflyTV v161 — Party layout correction
 
 A cinematic catalog with liquid glass navigation, rich movie detail overlays, smooth scrolling and a redesigned appearance workspace. Watch-together tools now sit with the catalog rows below the hero, using the same gutter and pill controls. The Party entry scrolls to those tools with room for the floating navigation, correcting the overlapping banner in v160. Posters open details first, with a separate Play action. Back and Close preserve browsing context, and titles can be shared through the selected-media URL.

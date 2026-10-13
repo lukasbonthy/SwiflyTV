@@ -35,6 +35,13 @@
     const clearListeners = bucket => {for(const remove of bucket.splice(0))remove();};
     const dispatch = (name,detail) => {if(!destroyed&&app.isConnected)app.dispatchEvent(new CustomEvent('swiflyplayer:'+name,{bubbles:true,detail}));};
     const format = seconds => {const value=Math.max(0,Math.floor(number(seconds,0)));const hours=Math.floor(value/3600),minutes=Math.floor(value%3600/60),secs=value%60;return (hours?hours+':'+String(minutes).padStart(2,'0'):String(minutes))+':'+String(secs).padStart(2,'0');};
+    const discoveryMessage = data => ({
+      browser_unavailable:'The playback service could not start. The site owner needs to check its browser installation.',
+      provider_blocked:'The video source rejected the request. Please try again later.',
+      no_source:'The video sources returned no playable movie or episode. Please try again later.',
+      busy:'Other movies are getting ready. Please try again shortly.',
+      timeout:'The movie took too long to become available. Try again in a moment.'
+    }[data?.code] || 'The movie is unavailable right now. Try again in a moment.');
     const cancelTasks = category => {for(const task of [...tasks])if(!category||task.category===category)task.cancel();};
     function getState() {
       return {currentTime:number(video?.currentTime,0),paused:phase==='ended'||phase==='error'||!video||video.paused,duration:video?.duration===Infinity?Infinity:number(video?.duration,0),ready:playable&&!destroyed&&!suspended,source,mediaId,type:mediaType,status:phase};
@@ -191,7 +198,7 @@
         cancelResolver();teardownMedia({replace:true});source='';sourceData=null;loadingKey=key;mediaId=nextId;mediaType=nextType;setStatus('loading');
         const deadline=deadlineForSnapshot(data,Date.now()+config.resolve);watchProgress({delay:Math.min(config.resolve,Math.max(1,deadline-Date.now()))});return false;
       }
-      if(['error','disabled','idle'].includes(data?.status)){fail('The movie is unavailable right now. Try again in a moment.');return false;}
+      if(['error','disabled','idle'].includes(data?.status)){fail(discoveryMessage(data));return false;}
       const next=chooseSource(data);
       if(!next){fail('The movie is unavailable right now. Try again in a moment.');return false;}
       const nextId=String(data.movieId||data.mediaId||mediaId),nextType=data.type==='tv'?'tv':data.type==='movie'?'movie':mediaType;
@@ -258,7 +265,7 @@
           const data=await requestJson(endpoint+(queryText?'?'+queryText:''),Math.min(config.request,lookupDeadline-Date.now()));
           if(destroyed||suspended||token!==resolverGeneration||!app.isConnected)return false;
           if(data?.status==='ok'||data?.status==='ready')return loadSource(data,{resumeAt:retry?retryResume:0});
-          if(data?.status!=='loading'){fail('The movie is unavailable right now. Try again in a moment.');return false;}
+          if(data?.status!=='loading'){fail(discoveryMessage(data));return false;}
           const serverDeadline=deadlineForSnapshot(data,lookupDeadline);lookupDeadline=Math.min(lookupDeadline,serverDeadline);
           const remaining=lookupDeadline-Date.now();if(remaining<=0){fail('The movie took too long to become available. Try again in a moment.');return false;}
           const interval=Math.min(config.pollMax,Math.max(config.pollMin,number(data.retryAfterMs,700)));if(!await waitPoll(Math.min(interval,remaining)))return false;

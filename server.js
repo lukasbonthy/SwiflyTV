@@ -20,10 +20,13 @@ console.log("[boot] server.js starting", {
 
 
 require("dotenv").config();
+const { configureBrowserEnvironment, createBrowserRuntime } = require("./lib/browser-runtime");
+const { captureProviderMedia } = require("./lib/provider-capture");
+const { classifyMediaCandidate } = require("./lib/media-discovery");
 
 // ===== SwiflyTV no-env mode =====
 // This build is meant to run without manually setting a pile of Render env vars.
-// It forces the known-good StreamProvider-only media path unless you explicitly set
+// It applies the StreamProvider defaults unless you explicitly set
 // SWIFLY_NO_ENV_MODE=false.
 if (process.env.SWIFLY_NO_ENV_MODE !== "false") {
   Object.assign(process.env, {
@@ -33,8 +36,9 @@ if (process.env.SWIFLY_NO_ENV_MODE !== "false") {
     STREAMPROVIDER_ENABLED: "true",
     STREAMPROVIDER_ORDER: "hexa,cinezo",
     STREAMPROVIDER_NAV_TIMEOUT_MS: "10000",
-    STREAMPROVIDER_STREAM_TIMEOUT_MS: "10000",
-    STREAMPROVIDER_ROUTE_TIMEOUT_MS: "30000",
+    STREAMPROVIDER_STREAM_TIMEOUT_MS: "15000",
+    STREAMPROVIDER_PROVIDER_TIMEOUT_MS: "27000",
+    STREAMPROVIDER_ROUTE_TIMEOUT_MS: "60000",
     SFLIX_BASE_URL: "https://sflix2.to",
 
     VIDSRC_ENABLED: "false",
@@ -42,12 +46,12 @@ if (process.env.SWIFLY_NO_ENV_MODE !== "false") {
     FILMU_ENABLED: "false",
 
     PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1",
-    PLAYWRIGHT_BROWSERS_PATH: "/ms-playwright",
     REMOTE_BROWSER_ENABLED: "true",
     REMOTE_BROWSER_FPS: "1",
     REMOTE_BROWSER_JPEG_QUALITY: "58"
   });
 }
+configureBrowserEnvironment();
 
 const express = require("express");
 const { studioMarkup } = require("./ui/studio");
@@ -125,8 +129,9 @@ const STREAMPROVIDER_ENABLED = process.env.STREAMPROVIDER_ENABLED !== "false";
 const STREAMPROVIDER_ORDER = String(process.env.STREAMPROVIDER_ORDER || "hexa,cinezo")
   .split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
 const STREAMPROVIDER_NAV_TIMEOUT_MS = Math.max(8000, Number(process.env.STREAMPROVIDER_NAV_TIMEOUT_MS || 10000));
-const STREAMPROVIDER_STREAM_TIMEOUT_MS = Math.max(8000, Number(process.env.STREAMPROVIDER_STREAM_TIMEOUT_MS || 10000));
-const STREAMPROVIDER_ROUTE_TIMEOUT_MS = Math.max(12000, Number(process.env.STREAMPROVIDER_ROUTE_TIMEOUT_MS || 30000));
+const STREAMPROVIDER_STREAM_TIMEOUT_MS = Math.max(8000, Number(process.env.STREAMPROVIDER_STREAM_TIMEOUT_MS || 15000));
+const STREAMPROVIDER_PROVIDER_TIMEOUT_MS = Math.max(8000, Math.min(30000, Number(process.env.STREAMPROVIDER_PROVIDER_TIMEOUT_MS || 27000)));
+const STREAMPROVIDER_ROUTE_TIMEOUT_MS = Math.max(12000, Math.min(60000, Number(process.env.STREAMPROVIDER_ROUTE_TIMEOUT_MS || 60000)));
 const STREAMPROVIDER_SFLIX_BASE_URL = String(process.env.SFLIX_BASE_URL || "https://sflix2.to").replace(/\/+$/, "");
 
 const API_PROVIDERS = {
@@ -285,7 +290,15 @@ function apiHasEmbeddableFileExtensionOrHlsProxy(url = "", node = {}) {
   // Some APIs return an extensionless HLS endpoint but mark it as hls/m3u8 in
   // the response. That can still be embedded safely through our local HLS proxy,
   // whose public URL ends in /master.m3u8.
-  return apiNodeSaysHls(url, node) && hlsProxyEnabled();
+  if (apiNodeSaysHls(url, node)) return hlsProxyEnabled();
+  return Boolean(apiVerifiedMediaFormat(url, node));
+}
+
+function apiVerifiedMediaFormat(url = "", node = {}) {
+  if (node?.mediaVerified !== true) return "";
+  return classifyMediaCandidate({ url, type: node.format, confirmed: true,
+    isNonMediaUrl: (value) => apiLooksDefinitelyNonMediaUrl(value, { allowManifestEndpoint: ["m3u8", "mpd"].includes(node.format) })
+  })?.format || "";
 }
 
 function apiIsYouTubeUrl(url = "") {
@@ -457,7 +470,7 @@ function apiSourceScore(source = {}) {
   return score;
 }
 
-function apiLooksDefinitelyNonMediaUrl(url = "") {
+function apiLooksDefinitelyNonMediaUrl(url = "", { allowManifestEndpoint = false } = {}) {
   const value = String(url || "").trim().toLowerCase();
   if (!value) return true;
 
@@ -477,6 +490,7 @@ function apiLooksDefinitelyNonMediaUrl(url = "") {
 
   // Never treat provider protection/landing-page demo videos as movie sources.
   if (/hero-background-video|demo(?:[_-]?2x)?\.(?:mp4|webm)|sample\.(?:mp4|webm)|placeholder\.(?:mp4|webm)|background(?:[_-]?video)?\.(?:mp4|webm)/i.test(value)) return true;
+  if (/(?:^|\/)(?:ads?|advertisements?|trailers?|teasers?)(?:[/.]|$)/i.test(path)) return true;
 
   // Block obvious adult mirrors/categories even when they came from a non-adult page.
   if (/(?:^|\.)zeefliz18\.|(?:^|\.)xhamster\.|(?:^|\.)xvideos\.|(?:^|\.)spankbang\.|(?:^|\.)xxx|(?:^|\.)porn|\/18(?:plus|\+|-adult|_adult)?\b|\/adult\b|\/hentai\b/i.test(value)) return true;
@@ -487,11 +501,11 @@ function apiLooksDefinitelyNonMediaUrl(url = "") {
   // Category/search/nav pages are not streams.
   if (/\/(?:category|genre|tag|author|page|privacy-policy|terms|dmca|contact|how-to-download|report-broken-links)(?:\/|[?#]|$)/i.test(value)) return true;
 
-  // Homepage/root URLs are never playable.
-  if (parsed && (path === "/" || path === "")) return true;
+  // A root endpoint is accepted only with verified playlist evidence.
+  if (!allowManifestEndpoint && parsed && (path === "/" || path === "")) return true;
 
   // Hard block non-media file extensions.
-  if (apiIsBlockedFileExtensionUrl(value)) return true;
+  if (apiIsBlockedFileExtensionUrl(value) && !(allowManifestEndpoint && /\.(?:php|xml|txt)$/i.test(path))) return true;
 
   return false;
 }
@@ -499,9 +513,9 @@ function apiLooksDefinitelyNonMediaUrl(url = "") {
 function apiLooksPlayable(url = "", node = {}) {
   const value = String(url || "").trim();
   if (!/^https?:\/\//i.test(value)) return false;
-  if (apiLooksDefinitelyNonMediaUrl(value)) return false;
+  if (apiLooksDefinitelyNonMediaUrl(value, { allowManifestEndpoint: node?.mediaVerified === true && (apiNodeSaysHls(value, node) || node.format === "mpd") })) return false;
 
-  // Allowed browser embed URLs now only need a real file extension.
+  // Accept known media extensions or explicitly verified media endpoints.
   // For extensionless upstream HLS endpoints, we only accept them when HLS proxy is enabled,
   // because the actual browser URL becomes /api/hls-proxy/<id>/master.m3u8.
   if (!apiIsAllowedMediaExtensionUrl(value) && !apiHasEmbeddableFileExtensionOrHlsProxy(value, node)) return false;
@@ -599,12 +613,20 @@ function apiNormalizeSources(input) {
         quality: apiFirst(node.quality, node.resolution, node.size, node.format, node.type),
         url: mediaUrl,
         headers: node.headers && typeof node.headers === "object" ? node.headers : {},
-        format: apiIsM3u8Url(mediaUrl) ? "m3u8" : (apiIsMpdUrl(mediaUrl) ? "mpd" : "")
+        format: apiNodeSaysHls(mediaUrl, node) ? "m3u8" : (apiIsMpdUrl(mediaUrl) ? "mpd" : apiVerifiedMediaFormat(mediaUrl, node) || apiStreamFormatForUrl(mediaUrl)),
+        forceHls: apiNodeSaysHls(mediaUrl, node),
+        mediaVerified: node.mediaVerified === true
       });
     }
   });
 
-  return apiPreferM3u8Sources(Array.from(new Map(sources.map((source) => [source.url, source])).values()));
+  const unique = new Map();
+  for (const source of sources) {
+    const previous = unique.get(source.url);
+    // apiWalk also visits raw URL strings inside source records. Keep the richer record.
+    if (!previous || source.mediaVerified === true || (!previous.mediaVerified && Object.keys(source.headers || {}).length > Object.keys(previous.headers || {}).length)) unique.set(source.url, source);
+  }
+  return apiPreferM3u8Sources(Array.from(unique.values()));
 }
 
 function apiTopList(json) {
@@ -1330,7 +1352,7 @@ function apiSourceToProxyResult({ source, raw, provider, type, id, season = "", 
   }
 
   const isHls = apiIsM3u8Url(originalUrl) || apiNodeSaysHls(originalUrl, source);
-  const isDash = apiIsMpdUrl(originalUrl);
+  const isDash = apiIsMpdUrl(originalUrl) || apiVerifiedMediaFormat(originalUrl, source) === "mpd";
 
   if (!apiLooksPlayable(originalUrl, source)) {
     attempts.push(`${provider}: skipped download/detail/non-media URL`);
@@ -1351,17 +1373,16 @@ function apiSourceToProxyResult({ source, raw, provider, type, id, season = "", 
 
   const playbackUrl = hlsProxy.url || originalUrl;
 
-  // Hard final rule: the URL embedded into Vidstack must end with a supported
-  // media extension. With HLS proxy enabled, extensionless HLS APIs become
-  // /api/hls-proxy/<id>/master.m3u8 and pass this check.
-  if (!apiIsAllowedMediaExtensionUrl(playbackUrl) || apiLooksDefinitelyNonMediaUrl(playbackUrl)) {
+  // HLS endpoints use the local master.m3u8 proxy. Direct extensionless media
+  // requires verified format evidence retained from the capture pipeline.
+  if ((!apiIsAllowedMediaExtensionUrl(playbackUrl) && !(source.mediaVerified && !isHls && apiVerifiedMediaFormat(playbackUrl, source))) || apiLooksDefinitelyNonMediaUrl(playbackUrl, { allowManifestEndpoint: isDash && source.mediaVerified === true })) {
     attempts.push(`${provider}: final embed URL was not a real playable media file/playlist`);
     return null;
   }
 
   const pathExtMatch = apiUrlPath(playbackUrl).toLowerCase().match(/\.([a-z0-9]{2,8})$/);
   const sourceExt = pathExtMatch ? pathExtMatch[1] : "";
-  const streamType = isHls ? "m3u8" : (isDash ? "dash" : (sourceExt || "video"));
+  const streamType = isHls ? "m3u8" : (isDash ? "dash" : (apiVerifiedMediaFormat(originalUrl, source) || sourceExt || "video"));
   const streamMode = isHls ? "hls" : (isDash ? "dash" : "video");
 
   return {
@@ -1381,11 +1402,11 @@ function apiSourceToProxyResult({ source, raw, provider, type, id, season = "", 
     streamType,
     streamQuality: source.quality || "",
     streamName: source.name || provider,
-    streamHeaders: source.headers || {},
+    streamHeaders: Object.fromEntries(Object.entries(source.headers || {}).filter(([key]) => !/^(cookie|authorization|proxy-authorization)$/i.test(key))),
     streamMode,
     isLiveM3u8: false,
     apiProvider: provider,
-    normalized: raw,
+    normalized: Object.fromEntries(["title", "year", "poster", "backdrop", "overview"].map(key => [key, ["string", "number"].includes(typeof raw?.[key]) ? raw[key] : ""])),
     attempts
   };
 }
@@ -4338,7 +4359,7 @@ async function localVidSrcDebug({ mediaType = "movie", id = "", season = "1", ep
 
 
 // ===== StreamProvider-main local media scrapers =====
-let __streamProviderBrowserPromise = null;
+let __streamProviderRuntime = null;
 
 async function localStreamProviderScope({ signal = null, timeoutMs, timeoutMessage }, run) {
   signal?.throwIfAborted();
@@ -4375,45 +4396,26 @@ function localStreamProviderLoadChromium() {
   }
 }
 
+function localStreamProviderRuntime() {
+  if (!__streamProviderRuntime) __streamProviderRuntime = createBrowserRuntime({ loadChromium: localStreamProviderLoadChromium });
+  return __streamProviderRuntime;
+}
+
 async function localStreamProviderBrowser() {
-  if (__streamProviderBrowserPromise) return __streamProviderBrowserPromise;
-  const chromium = localStreamProviderLoadChromium();
-  const executablePath =
-    process.env.STREAMPROVIDER_BROWSER_EXECUTABLE_PATH ||
-    process.env.FILMU_BROWSER_EXECUTABLE_PATH ||
-    process.env.REMOTE_BROWSER_EXECUTABLE_PATH ||
-    process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ||
-    "";
-
-  __streamProviderBrowserPromise = chromium.launch({
-    headless: true,
-    executablePath: executablePath || undefined,
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-gpu",
-      "--disable-web-security",
-      "--autoplay-policy=no-user-gesture-required",
-      "--disable-features=IsolateOrigins,site-per-process"
-    ]
-  }).catch((error) => {
-    __streamProviderBrowserPromise = null;
-    throw error;
-  });
-
-  return __streamProviderBrowserPromise;
+  return localStreamProviderRuntime().getBrowser();
 }
 
 function localStreamProviderHeaders(pageUrl = "", requestHeaders = {}) {
   let origin = "";
   try { origin = new URL(pageUrl).origin; } catch {}
-  return {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
-    ...(pageUrl ? { "Referer": pageUrl } : {}),
-    ...(origin ? { "Origin": origin } : {}),
-    ...Object.fromEntries(Object.entries(requestHeaders || {}).filter(([k]) => /^(referer|origin|user-agent)$/i.test(k)))
+  const headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
+    ...(pageUrl ? { referer: pageUrl } : {}), ...(origin ? { origin } : {})
   };
+  for (const [key, value] of Object.entries(requestHeaders || {})) {
+    if (/^(referer|origin|user-agent|accept|accept-language|cookie|authorization)$/i.test(key) && typeof value === "string" && value.length <= 16384 && !/[\r\n]/.test(value)) headers[key.toLowerCase()] = value;
+  }
+  return headers;
 }
 
 function localStreamProviderSearchSlug(title = "") {
@@ -4471,154 +4473,17 @@ async function localStreamProviderGetTmdbMetadata({ tmdbId = "", mediaType = "mo
 }
 
 async function localStreamProviderCaptureMedia({ provider = "", url = "", referer = "", attempts = [], signal = null }) {
-  signal?.throwIfAborted();
-  let context = null, page = null, closing = null;
-  const closeContext = () => {
-    if (!context) return Promise.resolve();
-    if (!closing) closing = Promise.resolve().then(() => context.close()).catch(() => {});
-    return closing;
-  };
-  const onAbort = () => { void closeContext(); };
-  const seen = [];
-  let winner = null;
-
-  function remember(rawUrl = "", headers = {}) {
-    if (signal?.aborted) return;
-    const value = String(rawUrl || "").trim();
-    if (!value) return;
-    if (apiIsYouTubeUrl(value) || apiLooksDefinitelyNonMediaUrl(value)) return;
-    if (!seen.includes(value) && seen.length < 160) seen.push(value);
-
-    // Prefer HLS if it appears, but accept any real playable media extension.
-    // This fixes the "doesn't have to be m3u8" case.
-    if (apiIsM3u8Url(value)) {
-      winner = { url: value, referer: headers.referer || headers.Referer || page.url() || url, headers, format: "m3u8" };
-      return;
-    }
-
-    if (!winner && apiIsAllowedMediaExtensionUrl(value)) {
-      const format = apiStreamFormatForUrl(value) || "video";
-      winner = { url: value, referer: headers.referer || headers.Referer || page.url() || url, headers, format };
-    }
-  }
-
-  try {
-    const browser = await localStreamProviderBrowser();
-    signal?.throwIfAborted();
-    context = await browser.newContext({
-      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
-      ignoreHTTPSErrors: true,
-      javaScriptEnabled: true,
-      viewport: { width: 1365, height: 768 },
-      extraHTTPHeaders: {
-        "Accept-Language": "en-US,en;q=0.9",
-        ...(referer ? { "Referer": referer } : {})
-      }
-    });
-    signal?.addEventListener("abort", onAbort, { once: true });
-    signal?.throwIfAborted();
-    page = await context.newPage();
-    signal?.throwIfAborted();
-    await page.route("**/*", async (route) => {
-      const req = route.request();
-      const resourceType = req.resourceType();
-      remember(req.url(), req.headers());
-      if (signal?.aborted || ["font", "stylesheet", "image"].includes(resourceType)) {
-        await route.abort().catch(() => {});
-        return;
-      }
-      await route.continue().catch(() => {});
-    });
-
-    page.on("request", (req) => remember(req.url(), req.headers()));
-    page.on("framenavigated", (frame) => remember(frame.url(), { referer: page.url() || url }));
-    page.on("response", async (response) => {
-      if (signal?.aborted) return;
-      const responseUrl = response.url();
-      const headers = response.headers() || {};
-      remember(responseUrl, { referer: page.url() || url });
-      const contentType = String(headers["content-type"] || "");
-      if (!winner && /mpegurl|m3u8|video\/|application\/octet-stream|dash\+xml/i.test(contentType)) remember(responseUrl, { referer: page.url() || url });
-      if (!winner && /json|javascript|html|text/i.test(contentType)) {
-        try {
-          const text = await response.text();
-          if (signal?.aborted) return;
-          for (const u of apiExtractMediaUrlsFromStringDeep(text.replace(/\\\//g, "/").replace(/&amp;/g, "&"))) remember(u, { referer: responseUrl });
-        } catch {}
-      }
-    });
-
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: STREAMPROVIDER_NAV_TIMEOUT_MS });
-    signal?.throwIfAborted();
-
-    // Click like a user would in DevTools; these providers often lazy-load HLS after play.
-    for (const selector of [
-      "video", "iframe", "#player", "#the_frame", ".jwplayer", ".plyr", ".vjs-big-play-button",
-      "button[aria-label*='play' i]", "button[title*='play' i]", ".play", ".play-button", "[class*='play']", "body"
-    ]) {
-      signal?.throwIfAborted();
-      if (winner) break;
-      try {
-        const loc = page.locator(selector).first();
-        if (await loc.count()) {
-          await loc.click({ timeout: 1500, force: true }).catch(() => {});
-          await page.waitForTimeout(600).catch(() => {});
-        }
-      } catch {}
-      signal?.throwIfAborted();
-    }
-    if (!winner) await page.mouse.click(683, 384).catch(() => {});
-    signal?.throwIfAborted();
-
-    const endAt = Date.now() + STREAMPROVIDER_STREAM_TIMEOUT_MS;
-    while (!winner && Date.now() < endAt) {
-      signal?.throwIfAborted();
-      try {
-        const html = await page.content();
-        signal?.throwIfAborted();
-        for (const u of apiExtractMediaUrlsFromStringDeep(html.replace(/\\\//g, "/").replace(/&amp;/g, "&"))) remember(u, { referer: page.url() || url });
-        for (const frame of page.frames()) {
-          remember(frame.url(), { referer: page.url() || url });
-          const frameHtml = await frame.content().catch(() => "");
-          signal?.throwIfAborted();
-          for (const u of apiExtractMediaUrlsFromStringDeep(frameHtml.replace(/\\\//g, "/").replace(/&amp;/g, "&"))) remember(u, { referer: frame.url() || url });
-        }
-      } catch {}
-      signal?.throwIfAborted();
-      if (winner) break;
-      await page.waitForTimeout(700).catch(() => {});
-    }
-
-    signal?.throwIfAborted();
-    if (!winner) {
-      attempts.push(`${provider}: no playable media captured from ${url}`);
-      return { ok: false, provider, pageUrl: url, seen: seen.slice(0, 40), error: "no playable media captured" };
-    }
-
-    const pageUrl = page.url() || url;
-    return {
-      ok: true,
-      provider,
-      pageUrl,
-      source: {
-        name: provider,
-        quality: "auto",
-        url: winner.url,
-        headers: localStreamProviderHeaders(winner.referer || pageUrl, winner.headers || {}),
-        format: winner.format || apiStreamFormatForUrl(winner.url) || "",
-        forceHls: apiIsM3u8Url(winner.url)
-      },
-      seen: seen.slice(0, 40)
-    };
-  } catch (error) {
-    signal?.throwIfAborted();
-    attempts.push(`${provider}: ${error.message || "failed"}`);
-    return { ok: false, provider, pageUrl: url, seen: seen.slice(0, 40), error: error.message || "failed" };
-  } finally {
-    signal?.removeEventListener("abort", onAbort);
-    await closeContext();
-    signal?.throwIfAborted();
-  }
+  const result = await captureProviderMedia({
+    getBrowser: localStreamProviderBrowser, provider, url, referer, signal,
+    navigationTimeoutMs: STREAMPROVIDER_NAV_TIMEOUT_MS,
+    streamTimeoutMs: STREAMPROVIDER_STREAM_TIMEOUT_MS,
+    isNonMediaUrl: (value) => apiLooksDefinitelyNonMediaUrl(value, { allowManifestEndpoint: true }),
+    extractUrls: apiExtractMediaUrlsFromStringDeep,
+    makeHeaders: localStreamProviderHeaders,
+    now: () => Date.now()
+  });
+  if (!result.ok) attempts.push(`${provider}: ${result.code}`);
+  return result;
 }
 
 async function localStreamProviderSflixWatchUrl({ tmdbId = "", mediaType = "movie", season = "", episode = "", attempts = [], signal = null }) {
@@ -4706,85 +4571,58 @@ async function localStreamProviderGetStreams({ tmdbId = "", mediaType = "movie",
   if (!STREAMPROVIDER_ENABLED) throw new Error("STREAMPROVIDER_ENABLED=false");
   if (!tmdbId) throw new Error("missing TMDB id");
 
-  const order = STREAMPROVIDER_ORDER.length ? STREAMPROVIDER_ORDER : ["hexa", "cinezo"];
-  const directJobs = [];
-  const wantsSflix = order.includes("sflix");
-
-  // IMPORTANT: do NOT resolve sflix search before trying direct TMDB providers.
-  // Your debug showed sflix2.to search can hang on page.goto, which blocked
-  // hexa/cinezo from ever being tested.
+  const order = Array.from(new Set(STREAMPROVIDER_ORDER.length ? STREAMPROVIDER_ORDER : ["hexa", "cinezo"]));
+  const jobs = [];
   for (const name of order) {
-    if (name === "hexa") {
-      directJobs.push({ provider: "hexa", url: mediaType === "tv" ? `https://hexa.su/watch/tv/${tmdbId}/${season}/${episode}` : `https://hexa.su/watch/movie/${tmdbId}` });
-    } else if (name === "cinezo") {
-      directJobs.push({ provider: "cinezo", url: mediaType === "tv" ? `https://www.cinezo.net/watch/tv/${tmdbId}?season=${season}&episode=${episode}` : `https://www.cinezo.net/watch/movie/${tmdbId}` });
-    }
+    if (name === "hexa") jobs.push({ provider: name, url: mediaType === "tv" ? `https://hexa.su/watch/tv/${tmdbId}/${season}/${episode}` : `https://hexa.su/watch/movie/${tmdbId}` });
+    if (name === "cinezo") jobs.push({ provider: name, url: mediaType === "tv" ? `https://www.cinezo.net/watch/tv/${tmdbId}?season=${season}&episode=${episode}` : `https://www.cinezo.net/watch/movie/${tmdbId}` });
   }
-
-  const results = [];
-  const sources = [];
-
-  for (const job of directJobs) {
+  // Optional title search runs after the direct TMDB providers.
+  if (order.includes("sflix") && mediaType === "movie") jobs.push({ provider: "sflix", url: "" });
+  const results = [], sources = [];
+  const endAt = Date.now() + STREAMPROVIDER_ROUTE_TIMEOUT_MS;
+  for (let index = 0; index < jobs.length; index++) {
     signal?.throwIfAborted();
-    const startedAt = Date.now();
-    const result = await localStreamProviderCaptureMedia({ provider: job.provider, url: job.url, attempts, signal });
+    const job = jobs[index], startedAt = Date.now();
+    // Reserve a share of the remaining route budget for every remaining provider.
+    const budget = Math.max(1, Math.min(STREAMPROVIDER_PROVIDER_TIMEOUT_MS, Math.floor((endAt - startedAt) / (jobs.length - index))));
+    let result;
+    try {
+      result = await localStreamProviderScope({ signal, timeoutMs: budget, timeoutMessage: `${job.provider}: provider timed out` }, async (providerSignal) => {
+        let watchUrl = job.url;
+        if (job.provider === "sflix") {
+          try {
+            watchUrl = await localStreamProviderScope({ signal: providerSignal, timeoutMs: Math.min(STREAMPROVIDER_NAV_TIMEOUT_MS, budget), timeoutMessage: "sflix: search timed out" },
+              (searchSignal) => localStreamProviderSflixWatchUrl({ tmdbId, mediaType, season, episode, attempts, signal: searchSignal }));
+          } catch (error) {
+            providerSignal.throwIfAborted();
+            attempts.push(`streamprovider-sflix: skipped after ${Math.min(STREAMPROVIDER_NAV_TIMEOUT_MS, budget)}ms resolving search URL`);
+          }
+        }
+        if (!watchUrl) return { ok: false, provider: job.provider, code: "no_source" };
+        return localStreamProviderCaptureMedia({ provider: job.provider, url: watchUrl, attempts, signal: providerSignal });
+      });
+    } catch (error) {
+      signal?.throwIfAborted();
+      result = { ok: false, provider: job.provider, code: error.code === "browser_unavailable" ? "browser_unavailable" : "provider_timeout" };
+      attempts.push(`${job.provider}: ${result.code}`);
+    }
     signal?.throwIfAborted();
     result.ms = Date.now() - startedAt;
     results.push(result);
-    if (result.ok && result.source?.url && apiIsAllowedMediaExtensionUrl(result.source.url)) {
+    if (result.ok && result.source?.url && apiHasEmbeddableFileExtensionOrHlsProxy(result.source.url, result.source)) {
       sources.push(result.source);
-      return {
-        success: true,
-        provider: "streamprovider-local",
-        tmdbId,
-        mediaType,
-        season: mediaType === "tv" ? season : "",
-        episode: mediaType === "tv" ? episode : "",
-        providersTried: results.map((r) => r.provider),
-        results,
-        streamsFound: sources.length,
-        sources
-      };
+      break;
     }
+    // Every local capture needs the same browser; another provider cannot fix a missing executable.
+    if (result.code === "browser_unavailable") break;
   }
-
-  if (wantsSflix) {
-    signal?.throwIfAborted();
-    const sflixStartedAt = Date.now();
-    let sflixUrl = "";
-    try {
-      sflixUrl = await localStreamProviderScope({
-        signal,
-        timeoutMs: STREAMPROVIDER_NAV_TIMEOUT_MS,
-        timeoutMessage: `streamprovider-sflix timed out after ${STREAMPROVIDER_NAV_TIMEOUT_MS}ms resolving search URL`
-      }, (searchSignal) => localStreamProviderSflixWatchUrl({ tmdbId, mediaType, season, episode, attempts, signal: searchSignal }));
-    } catch (error) {
-      signal?.throwIfAborted();
-      attempts.push(`streamprovider-sflix: skipped after ${STREAMPROVIDER_NAV_TIMEOUT_MS}ms resolving search URL`);
-    }
-    signal?.throwIfAborted();
-
-    if (sflixUrl) {
-      const result = await localStreamProviderCaptureMedia({ provider: "sflix", url: sflixUrl, attempts, signal });
-      signal?.throwIfAborted();
-      result.ms = Date.now() - sflixStartedAt;
-      results.push(result);
-      if (result.ok && result.source?.url && apiIsAllowedMediaExtensionUrl(result.source.url)) sources.push(result.source);
-    }
-  }
-
-  signal?.throwIfAborted();
+  const code = sources.length ? "" : results.some(result => result.code === "browser_unavailable") ? "browser_unavailable"
+    : results.some(result => result.code === "provider_blocked") ? "provider_blocked" : "no_source";
   return {
-    success: sources.length > 0,
-    provider: "streamprovider-local",
-    tmdbId,
-    mediaType,
-    season: mediaType === "tv" ? season : "",
-    episode: mediaType === "tv" ? episode : "",
-    providersTried: results.map((r) => r.provider),
-    results,
-    streamsFound: sources.length,
-    sources
+    success: sources.length > 0, code, provider: "streamprovider-local", tmdbId, mediaType,
+    season: mediaType === "tv" ? season : "", episode: mediaType === "tv" ? episode : "",
+    providersTried: results.map(result => result.provider), results, streamsFound: sources.length, sources
   };
 }
 
@@ -4799,7 +4637,11 @@ async function localStreamProviderResult({ mediaType = "movie", id = "", season 
     timeoutMessage: `streamprovider timed out after ${STREAMPROVIDER_ROUTE_TIMEOUT_MS}ms`
   }, (captureSignal) => localStreamProviderGetStreams({ tmdbId, mediaType, season, episode, attempts, signal: captureSignal }));
   signal?.throwIfAborted();
-  if (!Array.isArray(payload.sources) || payload.sources.length === 0) return null;
+  if (!Array.isArray(payload.sources) || payload.sources.length === 0) {
+    const error = new Error("Stream providers returned no playable source.");
+    error.code = payload.code || "no_source";
+    throw error;
+  }
   const result = await apiFindPlayableFromPayload({
     payload,
     providerName: "streamprovider-local",
@@ -4816,10 +4658,8 @@ async function localStreamProviderResult({ mediaType = "movie", id = "", season 
 
 async function localStreamProviderDebug({ mediaType = "movie", id = "", season = "1", episode = "1", attempts = [] }) {
   const tmdbId = await apiResolveTmdbIdForApi({ mediaType, id, attempts });
-  const payload = await Promise.race([
-    localStreamProviderGetStreams({ tmdbId, mediaType, season, episode, attempts }),
-    new Promise((_, reject) => setTimeout(() => reject(new Error(`streamprovider debug timed out after ${STREAMPROVIDER_ROUTE_TIMEOUT_MS}ms`)), STREAMPROVIDER_ROUTE_TIMEOUT_MS))
-  ]);
+  const payload = await localStreamProviderScope({ timeoutMs: STREAMPROVIDER_ROUTE_TIMEOUT_MS, timeoutMessage: "streamprovider debug timed out" },
+    (signal) => localStreamProviderGetStreams({ tmdbId, mediaType, season, episode, attempts, signal }));
   const winner = await apiFindPlayableFromPayload({
     payload,
     providerName: "streamprovider-local",
@@ -5222,12 +5062,26 @@ async function fetchApiProviderSource({ type = "movie", id = "", season = "1", e
   const attempts = [];
   const preferred = apiClean(provider || DEFAULT_PLAY_PROVIDER).toLowerCase();
   const providerOrder = Array.from(new Set([preferred, ...API_M3U8_PROVIDER_ORDER].filter(Boolean)));
+  let discoveryCode = "";
 
   let title = "";
   let releaseYear = "";
 
-  // TMDB id is the stable input. Use it to get title/year for providers that
-  // search by title before returning their own stream id.
+  // 0-streamprovider) Local StreamProvider-main any-media implementation.
+  if (preferred === "streamprovider" || providerOrder.includes("streamprovider")) {
+    try {
+      const streamProviderResult = await localStreamProviderResult({ mediaType, id, season, episode, attempts, signal });
+      signal?.throwIfAborted();
+      if (streamProviderResult) return streamProviderResult;
+      attempts.push("streamprovider-local: no playable media captured");
+    } catch (error) {
+      signal?.throwIfAborted();
+      if (["browser_unavailable", "provider_blocked", "no_source"].includes(error.code)) discoveryCode = error.code;
+      attempts.push(`streamprovider-local: ${error.message || "failed"}`);
+    }
+  }
+
+  // Title metadata is only needed once direct TMDB-id discovery has failed.
   try {
     const tmdbId = await apiResolveTmdbIdForApi({ mediaType, id, attempts });
     signal?.throwIfAborted();
@@ -5242,19 +5096,6 @@ async function fetchApiProviderSource({ type = "movie", id = "", season = "1", e
   } catch (error) {
     signal?.throwIfAborted();
     attempts.push(`tmdb metadata: ${error.message || "failed"}`);
-  }
-
-  // 0-streamprovider) Local StreamProvider-main any-media implementation.
-  if (preferred === "streamprovider" || providerOrder.includes("streamprovider")) {
-    try {
-      const streamProviderResult = await localStreamProviderResult({ mediaType, id, season, episode, attempts, signal });
-      signal?.throwIfAborted();
-      if (streamProviderResult) return streamProviderResult;
-      attempts.push("streamprovider-local: no playable media captured");
-    } catch (error) {
-      signal?.throwIfAborted();
-      attempts.push(`streamprovider-local: ${error.message || "failed"}`);
-    }
   }
 
   // 0) Local uploaded /api/vid source-code implementation. This bypasses the
@@ -5666,6 +5507,7 @@ async function fetchApiProviderSource({ type = "movie", id = "", season = "1", e
 
   return {
     status: "error",
+    code: discoveryCode || "unavailable",
     message: attempts[0] || "Uploaded source-code providers did not return a usable m3u8/media URL.",
     attempts: attempts.slice(-48),
     sourceMode: USE_EXTERNAL_PROVIDER_API ? "local+external-api" : "local-source-code-only",
@@ -5749,11 +5591,11 @@ function hlsProxyBase64UrlDecode(value = "") {
 
 function sanitizeHlsProxyHeaders(headers = {}) {
   const clean = {};
-  const allowed = new Set(["origin", "referer", "user-agent", "accept", "accept-language"]);
+  const allowed = new Set(["origin", "referer", "user-agent", "accept", "accept-language", "cookie", "authorization"]);
   for (const [key, value] of Object.entries(headers || {})) {
     const lower = String(key || "").toLowerCase();
     if (!allowed.has(lower)) continue;
-    if (typeof value !== "string" || !value.trim()) continue;
+    if (typeof value !== "string" || !value.trim() || value.length > 16384 || /[\r\n]/.test(value)) continue;
     clean[lower] = value.trim();
   }
   if (!clean["user-agent"]) {
@@ -5844,8 +5686,11 @@ function hlsProxyResponseHeaders(upstream, fallbackType = "application/octet-str
   return headers;
 }
 
-function hlsProxyRequestHeaders(entry, req = null) {
+function hlsProxyRequestHeaders(entry, req = null, targetUrl = entry.sourceUrl) {
   const headers = { ...(entry.headers || {}) };
+  let sameOrigin = false;
+  try { sameOrigin = new URL(targetUrl).origin === new URL(entry.sourceUrl).origin; } catch {}
+  if (!sameOrigin) { delete headers.cookie; delete headers.authorization; }
   if (req?.headers?.range) headers.range = req.headers.range;
   if (req?.headers?.accept && !headers.accept) headers.accept = req.headers.accept;
   return headers;
@@ -5912,10 +5757,16 @@ function rewriteHlsPlaylist(text = "", baseUrl = "", id = "") {
 }
 
 async function fetchHlsProxyUrl(entry, targetUrl, req = null) {
-  return fetch(targetUrl, {
-    headers: hlsProxyRequestHeaders(entry, req),
-    redirect: "follow",
-  });
+  let nextUrl = targetUrl;
+  for (let hop = 0; hop <= 5; hop++) {
+    const upstream = await fetch(nextUrl, { headers: hlsProxyRequestHeaders(entry, req, nextUrl), redirect: "manual" });
+    if (![301, 302, 303, 307, 308].includes(upstream.status) || !upstream.headers.get("location")) return upstream;
+    await upstream.body?.cancel().catch(() => {});
+    if (hop === 5) throw new Error("Playlist redirect limit reached.");
+    const redirected = new URL(upstream.headers.get("location"), nextUrl);
+    if (!["http:", "https:"].includes(redirected.protocol)) throw new Error("Invalid playlist redirect.");
+    nextUrl = redirected.toString();
+  }
 }
 
 function isHlsLikeResponse(url = "", contentType = "") {
@@ -39031,7 +38882,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/studio/studio.css?v=158" />
     <script defer src="/assets/studio/studio.js?v=158"></script>
     ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=159" /><script defer src="/assets/party/party.js?v=159"></script>' : ""}
-    ${player ? '<link rel="stylesheet" href="/assets/player/player.css?v=160" /><script defer src="/assets/player/player.js?v=160"></script>' : ""}
+    ${player ? '<link rel="stylesheet" href="/assets/player/player.css?v=160" /><script defer src="/assets/player/player.js?v=162"></script>' : ""}
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=161" /><script defer src="/assets/player/watch-party.js?v=160"></script>' : ""}
 </head>
 <body class="svCleanShell">
@@ -41634,14 +41485,17 @@ async function fetchProxyVideoSourceRaw({ type, id, season = "1", episode = "1",
 
   return {
     status: "error",
+    code: apiResult?.code || "unavailable",
     message: errors[0] || "proxyVideo provider failed.",
     attempts: errors.slice(-12),
   };
 }
 
 const configuredSourceDeadline = Number(process.env.MOVIE_SOURCE_DEADLINE_MS || 75000);
+const configuredSourceConcurrency = Number(process.env.MOVIE_SOURCE_MAX_CONCURRENT || 2);
 let movieSourceJobs = createSourceJobs({
   deadlineMs: Number.isFinite(configuredSourceDeadline) ? Math.round(Math.max(10000, Math.min(75000, configuredSourceDeadline))) : 75000,
+  maxConcurrentResolvers: Number.isFinite(configuredSourceConcurrency) ? Math.round(Math.max(1, Math.min(6, configuredSourceConcurrency))) : 2,
   resolve: (params, { signal }) => fetchProxyVideoSourceRaw({ ...params, signal }),
 });
 function fetchProxyVideoSource(params, options = {}) {
@@ -46461,6 +46315,14 @@ app.get("/api/local/streamprovider-urls", async (req, res) => {
   });
 });
 
+app.get("/api/playback/health", (req, res) => {
+  res.set("Cache-Control", "no-store");
+  res.json({
+    ok: true, browser: localStreamProviderRuntime().getStatus(),
+    discovery: { enabled: STREAMPROVIDER_ENABLED, providers: STREAMPROVIDER_ORDER, providerTimeoutMs: STREAMPROVIDER_PROVIDER_TIMEOUT_MS, routeTimeoutMs: STREAMPROVIDER_ROUTE_TIMEOUT_MS }
+  });
+});
+
 app.get("/api/local/streamprovider-debug", async (req, res) => {
   res.set("Cache-Control", "no-store");
   const type = req.query.type === "tv" ? "tv" : "movie";
@@ -46468,7 +46330,7 @@ app.get("/api/local/streamprovider-debug", async (req, res) => {
   const season = apiClean(req.query.season || req.query.s || "1");
   const episode = apiClean(req.query.episode || req.query.e || "1");
 
-  if (!id) return res.status(400).json({ ok: false, error: "Pass ?tmdb=id" });
+  if (!/^\d{1,10}$/.test(id) || !/^[1-9]\d{0,3}$/.test(season) || !/^[1-9]\d{0,3}$/.test(episode)) return res.status(400).json({ ok: false, error: "Pass a numeric TMDB id and valid season/episode." });
 
   const attempts = [];
   const startedAt = Date.now();
@@ -46483,21 +46345,25 @@ app.get("/api/local/streamprovider-debug", async (req, res) => {
       episode: type === "tv" ? episode : "",
       ms: Date.now() - startedAt,
       providerOrder: STREAMPROVIDER_ORDER,
-      winner: debug.winner,
-      attempts: debug.attempts,
-      payload: debug.payload
+      code: debug.payload?.code || "",
+      browser: localStreamProviderRuntime().getStatus(),
+      winner: debug.winner ? { playbackUrl: debug.winner.playbackUrl, streamType: debug.winner.streamType, apiProvider: debug.winner.apiProvider } : null,
+      providersTried: debug.payload?.providersTried || [],
+      results: (debug.payload?.results || []).map(result => ({ provider: result.provider, ok: result.ok, code: result.code || "", ms: result.ms, diagnostics: result.diagnostics || {} }))
     });
   } catch (error) {
     res.status(504).json({
       ok: false,
       sourceMode: "local-streamprovider-main-any-media",
-      error: error.message || "failed",
+      code: ["browser_unavailable", "provider_blocked", "no_source"].includes(error.code) ? error.code : "timeout",
+      error: "Source discovery did not complete. Check playback health and retry.",
+      browser: localStreamProviderRuntime().getStatus(),
       tmdb: id,
       type,
       season: type === "tv" ? season : "",
       episode: type === "tv" ? episode : "",
       ms: Date.now() - startedAt,
-      attempts
+      providerOrder: STREAMPROVIDER_ORDER
     });
   }
 });

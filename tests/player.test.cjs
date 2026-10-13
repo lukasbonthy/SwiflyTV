@@ -137,6 +137,16 @@ test('Ended media reports paused and offers replay without an empty buffering sc
 test('Managed failures request a room retry and never start a solo lookup',async()=>{
   let calls=0,retries=0;const e=setup({},e=>e.w.fetch=async()=>{calls++;return {ok:true,json:async()=>({status:'ok',playbackUrl:'/wrong.mp4'})};});e.app.addEventListener('swiflyplayer:retry',()=>retries++);await e.api.loadSource({status:'error'});e.d.querySelector('[data-player-retry]').click();await e.advance(300);assert.equal(retries,1);assert.equal(calls,0);assert.equal(e.app.dataset.playerState,'error');
 });
+test('Known discovery failures show useful safe messages in both solo and party playback',async()=>{
+  const e=setup();
+  await e.api.loadSource({status:'error',code:'browser_unavailable',message:'SECRET provider path'});
+  assert.match(e.d.querySelector('[data-player-status-copy]').textContent,/service|browser/i);
+  assert.doesNotMatch(e.d.querySelector('[data-player-status-copy]').textContent,/SECRET/);
+  const solo=setup({managed:false},env=>env.w.fetch=async()=>({ok:true,json:async()=>({status:'error',code:'provider_blocked',message:'SECRET'})}));
+  await solo.advance(50);
+  assert.match(solo.d.querySelector('[data-player-status-copy]').textContent,/source.*respond|source.*reject|provider|restricted/i);
+  assert.doesNotMatch(solo.d.querySelector('[data-player-status-copy]').textContent,/SECRET/);
+});
 test('Joining a party cancels solo resolution and guest Retry cannot request shared transport',async()=>{
   let signal,calls=0,retries=0;const e=setup({managed:false},e=>e.w.fetch=(_url,options)=>{calls++;signal=options.signal;return new Promise(()=>{});});await flush();e.app.addEventListener('swiflyplayer:retry',()=>retries++);e.api.setRemoteMode({enabled:true,isHost:false});assert.equal(signal.aborted,true);await e.api.loadSource({status:'error'});assert.equal(e.d.querySelector('[data-player-retry]').disabled,true);e.api.resolve({retry:true});assert.equal(retries,0);assert.equal(calls,1);e.api.setRemoteMode({enabled:true,isHost:true});e.api.resolve({retry:true});assert.equal(retries,1);e.api.setRemoteMode({enabled:false,isHost:false});e.api.resolve();await flush();assert.equal(calls,2);
 });

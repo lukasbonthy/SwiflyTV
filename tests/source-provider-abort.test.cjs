@@ -47,10 +47,11 @@ function fixture(overrides = {}) {
   const time = clock();
   const context = {
     AbortController, URL, console,
+    captureProviderMedia: require('../lib/provider-capture').captureProviderMedia,
     Date: class extends Date { static now() { return time.now(); } },
     setTimeout: time.setTimeout, clearTimeout: time.clearTimeout,
     STREAMPROVIDER_ENABLED: true, STREAMPROVIDER_ORDER: ['hexa', 'cinezo'],
-    STREAMPROVIDER_NAV_TIMEOUT_MS: 10, STREAMPROVIDER_STREAM_TIMEOUT_MS: 10, STREAMPROVIDER_ROUTE_TIMEOUT_MS: 30,
+    STREAMPROVIDER_NAV_TIMEOUT_MS: 10, STREAMPROVIDER_STREAM_TIMEOUT_MS: 10, STREAMPROVIDER_ROUTE_TIMEOUT_MS: 30, STREAMPROVIDER_PROVIDER_TIMEOUT_MS: 20,
     STREAMPROVIDER_SFLIX_BASE_URL: 'https://search.example',
     DEFAULT_PLAY_PROVIDER: 'streamprovider', API_M3U8_PROVIDER_ORDER: ['streamprovider'], API_PROVIDERS: {},
     API_DETAILS_SEARCH_FALLBACK_PROVIDERS: [], USE_EXTERNAL_PROVIDER_API: false,
@@ -59,6 +60,7 @@ function fixture(overrides = {}) {
     getTitle: item => item.title || '', getYear: value => String(value || '').slice(0, 4), apiClean: value => String(value || '').trim(),
     apiIsYouTubeUrl: () => false, apiLooksDefinitelyNonMediaUrl: () => false,
     apiIsM3u8Url: value => /\.m3u8(?:[?#]|$)/.test(value), apiIsAllowedMediaExtensionUrl: value => /\.(?:mp4|m3u8)(?:[?#]|$)/.test(value),
+    apiHasEmbeddableFileExtensionOrHlsProxy: (value, node) => node.forceHls || /\.(?:mp4|m3u8)(?:[?#]|$)/.test(value),
     apiStreamFormatForUrl: value => /\.mp4/.test(value) ? 'mp4' : 'm3u8', apiExtractMediaUrlsFromStringDeep: () => [],
     apiFindPlayableFromPayload: async ({ payload }) => ({ status: 'ok', playbackUrl: payload.sources[0].url, streamType: payload.sources[0].format }),
     ...overrides
@@ -148,7 +150,7 @@ test('capture page-creation failure still closes its newly created context', asy
 test('cancellation during successful capture cleanup rejects the source and closes only once', async () => {
   const f = fixture(), nav = navigationFixture(), cleanup = deferred(), controller = new AbortController(), reason = new Error('cancelled');
   let closes = 0;
-  nav.page.goto = async () => nav.handlers.get('request')({ url: () => 'https://media.example/movie.mp4', headers: () => ({}) });
+  nav.page.goto = async () => nav.handlers.get('response')({ url: () => 'https://media.example/movie.mp4', status: () => 200, headers: () => ({ 'content-type': 'video/mp4' }), request: () => ({ allHeaders: async () => ({}) }) });
   nav.context.close = () => { closes += 1; return cleanup.promise; };
   f.api.setBrowser(async () => nav.browser);
   const result = observe(f.api.capture({ provider: 'hexa', url: 'https://provider.example/watch', signal: controller.signal }));
@@ -176,7 +178,7 @@ test('abort closes a Sflix search context and rethrows cancellation', async t =>
 
 test('cancellation after a provider attempt prevents the next provider from starting', async () => {
   const f = fixture(), controller = new AbortController(), reason = new Error('cancelled'), calls = [];
-  f.api.setCapture(async ({ provider, signal }) => { calls.push(provider); assert.equal(signal, controller.signal); controller.abort(reason); return { ok: false }; });
+  f.api.setCapture(async ({ provider, signal }) => { calls.push(provider); assert.equal(signal.aborted, false); controller.abort(reason); assert.equal(signal.aborted, true); return { ok: false }; });
   const result = await observe(f.api.streams({ tmdbId: '101', signal: controller.signal })).promise;
   assert.equal(result.error, reason);
   assert.deepEqual(calls, ['hexa']);
@@ -194,12 +196,12 @@ test('successful route discovery clears its deadline and preserves real non-HLS 
 });
 
 test('the route deadline aborts and closes its active context before rejecting', async t => {
-  const f = fixture(), nav = navigationFixture(), attempts = [];
+  const f = fixture({ STREAMPROVIDER_ORDER: ['hexa'], STREAMPROVIDER_PROVIDER_TIMEOUT_MS: 100 }), nav = navigationFixture(), attempts = [];
   t.after(() => nav.navigation.reject(new Error('test cleanup')));
   f.api.setBrowser(async () => nav.browser);
   const result = observe(f.api.result({ id: '101', attempts }));
   await flush();
-  assert.equal(f.time.count(), 1);
+  assert.equal(f.time.count(), 2);
   f.time.advance(30);
   await flush();
   assert.equal(nav.counts().contextCloses, 1);
@@ -243,7 +245,19 @@ test('API provider discovery rejects an already-aborted request before metadata 
   assert.equal(metadataCalls, 0);
 });
 
-test('cancellation during metadata never falls through to source adapters', async () => {
+test('a direct TMDB-id source can start without waiting for title metadata', async () => {
+  const metadata = deferred(); let metadataCalls = 0;
+  const f = fixture({ tmdb: () => { metadataCalls++; return metadata.promise; } });
+  const playable = { status: 'ok', playbackUrl: 'https://media.example/movie.mp4' };
+  f.api.setResult(async () => playable);
+  const pending = observe(f.api.source({ id: '101' }));
+  await flush(); const returnedDirectly = pending.settled;
+  metadata.resolve({ title: 'Arrival' }); await pending.promise;
+  assert.equal(returnedDirectly, true);
+  assert.equal(metadataCalls, 0);
+});
+
+test('cancellation during fallback metadata never starts another source adapter', async () => {
   const metadata = deferred(), controller = new AbortController(), reason = new Error('cancelled');
   const f = fixture({ tmdb: () => metadata.promise });
   let streamCalls = 0;
@@ -253,7 +267,7 @@ test('cancellation during metadata never falls through to source adapters', asyn
   controller.abort(reason);
   metadata.resolve({ title: 'Arrival' });
   assert.equal((await result.promise).error, reason);
-  assert.equal(streamCalls, 0);
+  assert.equal(streamCalls, 1);
 });
 
 test('cancellation inside StreamProvider is rethrown instead of starting download adapters', async () => {
