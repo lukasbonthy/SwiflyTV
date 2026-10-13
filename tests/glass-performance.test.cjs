@@ -11,7 +11,7 @@ function wheel(w, target, options = {}) {
 function settle(w, start = 16) {for (let time = start; time < 2000; time += 16) w.flush(time);}
 function glass(markup = '') {
   const env = browser(markup), w = env.window, intersections = [], sizes = [];
-  Object.defineProperty(w.navigator, 'userAgent', {value:'Chrome/130.0.0.0'});
+  Object.defineProperty(w.navigator, 'userAgent', {value:'Chrome/130.0.0.0', configurable:true});
   w.CSS = {supports:() => true};
   w.HTMLElement.prototype.getBoundingClientRect = function () {return {width:200, height:40, top:0, left:0, bottom:40, right:200};};
   w.IntersectionObserver = class {
