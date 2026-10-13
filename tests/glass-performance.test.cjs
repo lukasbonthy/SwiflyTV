@@ -266,3 +266,51 @@ test('Unsupported refraction refresh remains idle', () => {
   assert.equal(controller.supported, false); controller.refresh();
   assert.equal(w.frameCount(), 0); env.finish();
 });
+
+
+test('Liquid Glass uses SVG refraction for Play/Details/Save, not boxed navbar icons', async () => {
+  const markup='<nav class="netflixNav"><button class="svNavButton" aria-label="Search">Search</button></nav>' +
+    '<div class="dsHeroActions"><a class="dsPrimaryBtn" href="/watch/movie/1">Play</a><a class="dsSecondaryBtn" href="/movie/1">Details</a><button class="dsIconBtn">Save</button></div>' +
+    '<button class="svRowArrow">Next</button><div class="dsCardQuickActions"><button class="dsMiniBtn">Add</button></div>';
+  const env=glass(markup),w=env.window,d=w.document;
+  d.body.dataset.stGlass='liquid';
+  w.boot('liquid-glass/liquid-glass.js');
+  w.boot('liquid-glass/surfaces.js');
+  env.intersect(true);w.flush(16);
+  const hero=[...d.querySelectorAll('.dsHeroActions > *')];
+  assert.equal(hero.length,3);
+  for (const node of hero) {
+    assert(node.classList.contains('svGlassControl'));
+    assert.equal(node.dataset.swiflyRenderer,'svg','featured controls should use real refraction when supported');
+    assert(node.querySelector('svg.svLiquidPane__filters'),'SVG distortion filter should be mounted');
+  }
+  const nav=d.querySelector('.svNavButton');
+  assert(!nav.classList.contains('svGlassSurface'),'nav icon should not get its own glass surface');
+  assert.equal(nav.querySelector('svg.svLiquidPane__filters'),null);
+  const row=d.querySelector('.svRowArrow'),card=d.querySelector('.dsMiniBtn');
+  assert(row.classList.contains('svGlassSurface') && card.classList.contains('svGlassSurface'));
+  assert.equal(row.dataset.swiflyRenderer,'blur','repeating rail controls stay low-cost');
+  assert.equal(card.dataset.swiflyRenderer,'blur');
+  assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length,3,'no filters on the navbar or card controls');
+  d.body.dataset.stGlass='subtle';await tick();w.flush(32);
+  assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length,0,'Soft glass must release refractive filters');
+  assert.equal(hero[0].dataset.swiflyRenderer,'blur');
+  d.body.dataset.stGlass='liquid';await tick();env.intersect(true);w.flush(48);
+  assert.equal(hero[0].dataset.swiflyRenderer,'svg','Studio Liquid can restore refraction without a reload');
+  env.finish();
+});
+
+test('Unsupported SVG filters retain interactive frosted controls without standalone navbar glass',()=>{
+  const env=glass('<nav class="netflixNav"><button class="svNavButton">Search</button></nav><div class="dsHeroActions"><a class="dsPrimaryBtn">Play</a></div>'),w=env.window,d=w.document;
+  d.body.dataset.stGlass='liquid';
+  w.CSS.supports=()=>false;
+  w.boot('liquid-glass/liquid-glass.js');
+  w.boot('liquid-glass/surfaces.js');
+  env.intersect(true);w.flush(16);
+  const play=d.querySelector('.dsHeroActions .dsPrimaryBtn');
+  assert(play.classList.contains('svGlassControl'));
+  assert.equal(play.dataset.swiflyRenderer,'blur');
+  assert(!d.querySelector('.netflixNav .svNavButton').classList.contains('svGlassControl'));
+  assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length,0);
+  env.finish();
+});
