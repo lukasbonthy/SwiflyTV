@@ -1,34 +1,23 @@
-/* SwiflyTV v191 — a single, continuous atmosphere crosses the hero/rails seam.
-   The ONE movie bitmap remains clipped inside .dsHero. Its color is sampled
-   only for CSS glow; the transition is rendered ONCE by the zero-height bridge.
-   No second artwork, blurred image copy, split gradients, or colored strip. */
+/* SwiflyTV v192: dissolve the ONE featured backdrop into the actual
+   catalog canvas. No bridge image, no overhanging pseudo-element, and no
+   two-part glow. The hero itself owns the entire color-to-black fade. */
 
 body.svCleanShell main:has(> .dsHero + .svHeroLightBridge + .dsContent:not(.noHero)) {
-  --sv-cinema-bridge-height: 600px;
-  --sv-cinema-bridge-offset: 300px;
-  --sv-cinema-haze:
-    radial-gradient(ellipse 59% 55% at 18% 34%,
-      rgb(var(--sv-art-glow-1, 105 77 91) / .24) 0%,
-      rgb(var(--sv-art-glow-1, 105 77 91) / .10) 55%, transparent 100%),
-    radial-gradient(ellipse 57% 55% at 82% 33%,
-      rgb(var(--sv-art-glow-2, 84 106 122) / .20) 0%,
-      rgb(var(--sv-art-glow-2, 84 106 122) / .08) 54%, transparent 100%),
-    linear-gradient(to bottom, transparent 0%, rgb(0 0 0 / .04) 25%,
-      rgb(0 0 0 / .22) 54%, rgb(0 0 0 / .62) 79%, #000 100%);
+  --sv-cinema-fade-height: clamp(340px, 42svh, 470px);
+  --sv-cinema-floor: var(--st-canvas, #000);
 }
-
-/* The picture stays bright up top, then gently disappears before the
-   catalog. Do not duplicate the bitmap or extend it beneath movie cards. */
 body.svCleanShell main > .dsHero {
   position: relative !important;
   z-index: 0 !important;
+  isolation: isolate !important;
+  overflow:hidden !important;
   min-height: clamp(690px, 96svh, 990px) !important;
   padding: 125px 0 145px !important;
   height: auto !important;
-  overflow:hidden !important;
-  isolation: isolate !important;
-  background: #000 !important;
+  background: var(--sv-cinema-floor, #000) !important;
 }
+/* ONE full-width bitmap. Do not crop the width to match the old 88%-wide
+   light bridge. The mask feathers the picture away before the section ends. */
 body.svCleanShell main > .dsHero > .dsHeroBg {
   position: absolute !important;
   inset: 0 !important;
@@ -38,86 +27,92 @@ body.svCleanShell main > .dsHero > .dsHeroBg {
   background-size: cover !important;
   background-repeat:no-repeat !important;
   filter:brightness(1.10) saturate(1.24) contrast(1.035) !important;
-  -webkit-mask-image: linear-gradient(to bottom,
-    #000 0%, #000 60%, rgb(0 0 0 / .96) 69%,
-    rgb(0 0 0 / .72) 82%, rgb(0 0 0 / .25) 94%, transparent 100%) !important;
-  mask-image: linear-gradient(to bottom,
-    #000 0%, #000 60%, rgb(0 0 0 / .96) 69%,
-    rgb(0 0 0 / .72) 82%, rgb(0 0 0 / .25) 94%, transparent 100%) !important;
+  -webkit-mask-image:linear-gradient(to bottom,
+    #000 0%, #000 60%, rgb(0 0 0 / .96) 70%,
+    rgb(0 0 0 / .78) 82%, rgb(0 0 0 / .31) 94%,
+    transparent 100%) !important;
+  mask-image:linear-gradient(to bottom,
+    #000 0%, #000 60%, rgb(0 0 0 / .96) 70%,
+    rgb(0 0 0 / .78) 82%, rgb(0 0 0 / .31) 94%,
+    transparent 100%) !important;
 }
+/* The existing legibility shade covers the image from edge to edge
+   and lands on exactly the same color as the catalog below. */
 body.svCleanShell main > .dsHero > .dsHeroGlass {
   background:
     linear-gradient(90deg, rgb(0 0 0 / .50), rgb(0 0 0 / .17) 35%, transparent 83%),
-    linear-gradient(to bottom, rgb(0 0 0 / .06), transparent 55%,
-      rgb(0 0 0 / .05) 76%, rgb(0 0 0 / .18) 92%, #000 100%) !important;
+    linear-gradient(to bottom,
+      rgb(0 0 0 / .06) 0%, transparent 53%,
+      rgb(0 0 0 / .12) 72%, rgb(0 0 0 / .56) 90%,
+      var(--sv-cinema-floor, #000) 100%) !important;
 }
-/* Retire the older hero half-glow. A single bridge overlay avoids a seam. */
+/* The soft image-derived color lives INSIDE the clipped hero,
+   then becomes fully transparent while the hero darkens to black. */
 body.svCleanShell main > .dsHero::after {
-  content: none !important;
-  display: none !important;
-}
-body.svCleanShell main > .dsHero > .dsHeroTrailerLayer {
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 59%,
-    rgb(0 0 0 / .70) 79%, transparent 100%) !important;
-  mask-image: linear-gradient(to bottom, #000 0%, #000 59%,
-    rgb(0 0 0 / .70) 79%, transparent 100%) !important;
-}
-
-/* The bridge takes up ZERO layout space but paints a single continuous,
-   softly feathered atmosphere above and below the hero/catalog boundary. */
-body.svCleanShell main > .dsHero + .svHeroLightBridge {
-  position: relative !important;
-  display: block !important;
-  z-index: 1 !important;
-  height: 0 !important;
-  min-height: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  overflow: visible !important;
-  pointer-events: none !important;
-  background: none !important;
-}
-body.svCleanShell main > .dsHero + .svHeroLightBridge::before {
   content: "" !important;
   display: block !important;
   position: absolute !important;
-  top: calc(-1 * var(--sv-cinema-bridge-offset, 300px)) !important;
-  left: 0 !important;
-  right: 0 !important;
-  height: var(--sv-cinema-bridge-height, 600px) !important;
-  z-index: 0 !important;
+  inset: auto 0 0 0 !important;
+  width: 100% !important;
+  height: var(--sv-cinema-fade-height, 440px) !important;
+  z-index: -1 !important;
   pointer-events: none !important;
-  background-image: var(--sv-cinema-haze) !important;
-  background-repeat: no-repeat !important;
+  background:
+    radial-gradient(ellipse 65% 78% at 19% 49%,
+      rgb(var(--sv-art-glow-1, 105 77 91) / .28) 0%,
+      rgb(var(--sv-art-glow-1, 105 77 91) / .12) 49%, transparent 79%),
+    radial-gradient(ellipse 64% 76% at 79% 43%,
+      rgb(var(--sv-art-glow-2, 84 106 122) / .22) 0%,
+      rgb(var(--sv-art-glow-2, 84 106 122) / .09) 53%, transparent 80%) !important;
   -webkit-mask-image: linear-gradient(to bottom,
-    transparent 0%, #000 19%, #000 73%, transparent 100%) !important;
+    transparent 0%, #000 24%, #000 61%, transparent 100%) !important;
   mask-image: linear-gradient(to bottom,
-    transparent 0%, #000 19%, #000 73%, transparent 100%) !important;
-  opacity: 1 !important;
-  filter: none !important;
+    transparent 0%, #000 24%, #000 61%, transparent 100%) !important;
+  filter:none !important;
 }
+body.svCleanShell main > .dsHero > .dsHeroTrailerLayer {
+  -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 59%,
+    rgb(0 0 0 / .70) 79%,transparent 100%) !important;
+  mask-image:linear-gradient(to bottom,#000 0%,#000 59%,
+    rgb(0 0 0 / .70) 79%,transparent 100%) !important;
+}
+/* Old finish.css forces the bridge pseudo to width:88% !important; that
+   literally caused the black 12%-wide rectangle in the iPad screenshot.
+   Retire its paint entirely rather than chasing competing width/mask layers. */
+body.svCleanShell main > .dsHero + .svHeroLightBridge {
+  position: relative !important;
+  display: block !important;
+  height:0 !important;
+  min-height:0 !important;
+  padding:0 !important;
+  margin:0 !important;
+  pointer-events:none !important;
+  background:none !important;
+}
+body.svCleanShell main > .dsHero + .svHeroLightBridge::before,
 body.svCleanShell main > .dsHero + .svHeroLightBridge::after {
-  content: none !important;
-  display: none !important;
+  content:none !important;
+  display:none !important;
+  width:100% !important;
+  height:0 !important;
+  opacity:0 !important;
+  background:none !important;
+  filter:none !important;
 }
 body.svCleanShell main > .dsHero + .svHeroLightBridge + .dsContent:not(.noHero) {
-  position: relative !important;
-  z-index: 2 !important;
-  isolation: isolate !important;
-  margin-top: 0 !important;
-  padding-top: 16px !important;
-  background: transparent !important;
-  overflow: visible !important;
+  position:relative !important;
+  isolation:auto !important;
+  margin-top:0 !important;
+  padding-top:16px !important;
+  background:transparent !important;
 }
-/* No extra layer over discovery: it inherits the SAME bridge glow. */
 body.svCleanShell main > .dsHero + .svHeroLightBridge + .dsContent:not(.noHero)::before {
-  content: none !important;
-  display: none !important;
+  content:none !important;
+  display:none !important;
+  background:none !important;
 }
-body.svCleanShell main > .dsHero + .svHeroLightBridge + .dsContent:not(.noHero) > * {
-  position: relative !important;
-  z-index: 1 !important;
-}
+/* Do not put a separate red panel, vignetting rectangle, or bitmap copy
+   behind the discovery cards. Their floor and the hero's final pixel match. */
 
 /* Title overview starts just below a feathered, full-width image, not
    beneath a 750px modal with oversized GPU-blurred reflections. */
@@ -169,8 +164,7 @@ body.svCleanShell .svWelcomeClean .svWelcomeDiscoveryIntro {
 ::view-transition-new(root){animation:240ms cubic-bezier(.2,.75,.3,1) both svQuickPageIn;}
 @media(max-width:860px) {
   body.svCleanShell main:has(> .dsHero + .svHeroLightBridge + .dsContent:not(.noHero)) {
-    --sv-cinema-bridge-height: 450px;
-    --sv-cinema-bridge-offset: 225px;
+    --sv-cinema-fade-height: clamp(250px, 36svh, 360px);
   }
   body.svCleanShell main > .dsHero {
     min-height:clamp(570px,90svh,800px) !important;
