@@ -19,6 +19,13 @@ These settings work in no-env mode. `/api/playback/health` reports their state
 under `discovery.nuvio`; source diagnostics label them `nuvio-vidlink`,
 `nuvio-vidsrc`, and `nuvio-videasy`.
 
+Nuvio debug results include request/response counts, rejected responses,
+connection errors, and DNS errors. `requests` counts adapter request attempts;
+`responses` also includes media verification responses. `metadataStatus` is the last TMDB HTTP status;
+`upstreamStatus` is the last other upstream HTTP status (zero means no response).
+These counters distinguish metadata failures from unavailable source helpers.
+They contain no upstream URLs, response bodies, or credentials.
+
 The v163 speed changes keep these providers. A second direct source starts after 1.8 seconds when the preferred source is still loading; the first verified source wins, and losing work is cancelled and cleaned up. Verified media can interrupt navigation immediately. The native player uses an optional bounded response wait to avoid an extra polling delay. See [PERFORMANCE_v163.md](PERFORMANCE_v163.md).
 
 The getter now checks successful HTTP responses instead of choosing an outgoing `.m3u8` request. It detects HLS by MIME type and playlist content, including signed URLs without a file extension. HTML errors, failed responses, ad/background/trailer videos, and individual `.ts`/`.m4s` fragments cannot win.
