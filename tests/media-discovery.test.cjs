@@ -14,6 +14,23 @@ function discovery() {
 const masterPlaylist = '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=800000\n720/index.m3u8\n';
 const mediaPlaylist = '#EXTM3U\n#EXT-X-TARGETDURATION:10\n#EXTINF:10,\nsegment-1.ts\n#EXT-X-ENDLIST\n';
 
+test('a known provider protection clip identity is rejected even on a successful MP4 response', () => {
+  const { classifyMediaCandidate } = discovery();
+  const responseHeaders = require('./fixtures/provider-warning-response.json');
+  assert.equal(classifyMediaCandidate({ url: 'https://media.example/protected-content', status: 200,
+    contentType: 'video/mp4', responseHeaders }), null);
+});
+
+test('the protection clip veto requires its exact response identity and preserves other small files', () => {
+  const { classifyMediaCandidate } = discovery();
+  const warning = require('./fixtures/provider-warning-response.json');
+  for (const responseHeaders of [{ ...warning, etag: '"short-film"' }, { ...warning, 'content-length': '31578' }, {}]) {
+    const candidate = classifyMediaCandidate({ url: 'https://media.example/short-film', status: 200,
+      contentType: 'video/mp4', responseHeaders });
+    assert.equal(candidate.format, 'mp4');
+  }
+});
+
 test('recognizes an extensionless successful HLS response and preserves its signed query', () => {
   const { classifyMediaCandidate } = discovery();
   const url = 'https://cdn.example/play?id=7&sig=a%2Fb%2B%3D&expires=99&literal=x+y';

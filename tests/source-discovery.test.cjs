@@ -10,6 +10,7 @@ const { JSDOM } = require('jsdom');
 const root = path.resolve(__dirname, '..');
 const source = fs.readFileSync(path.join(root, 'server.js'), 'utf8');
 const scraper = source.slice(source.indexOf('// ===== StreamProvider-main local media scrapers ====='), source.indexOf('// ===== Filmu m3u8 scraper:'));
+const providerWarningHeaders = require('./fixtures/provider-warning-response.json');
 
 function fixture() {
   let now = 0, serial = 0;
@@ -97,6 +98,43 @@ function deferred() {
   const promise = new Promise((done, fail) => { resolve = done; reject = fail; });
   return { promise, resolve, reject };
 }
+
+test('a provider protection MP4 cannot win before the selected episode playlist', async () => {
+  const f = fixture();
+  const warning = response('https://media.example/protected-content', 200, 'video/mp4');
+  warning.headers = () => providerWarningHeaders;
+  const n = network(f, { navigate: async emit => {
+    await emit('response', warning);
+    await emit('response', response('https://media.example/episode.m3u8', 200, 'application/x-mpegurl',
+      '#EXTM3U\n#EXT-X-TARGETDURATION:5\n#EXTINF:5,\nepisode.ts'));
+  } });
+  const result = await f.capture({ provider: 'cinezo', url: n.page.url() });
+  assert.equal(result.ok, true);
+  assert.equal(result.source.url, 'https://media.example/episode.m3u8');
+  assert.equal(result.source.format, 'm3u8');
+});
+
+test('a protection clip alone reports an upstream block instead of a playable episode', async () => {
+  const f = fixture();
+  const warning = response('https://media.example/protected-content', 200, 'video/mp4');
+  warning.headers = () => providerWarningHeaders;
+  const n = network(f, { navigate: emit => emit('response', warning) });
+  const result = await f.capture({ provider: 'cinezo', url: n.page.url() });
+  assert.equal(result.ok, false);
+  assert.equal(result.code, 'provider_blocked');
+  assert.equal(n.counts().closes, 1);
+});
+
+test('legitimate small MP4 responses remain playable with a different entity identity', async () => {
+  const f = fixture();
+  const movie = response('https://media.example/short-film', 200, 'video/mp4');
+  movie.headers = () => ({ ...providerWarningHeaders, etag: '"legitimate-short-film"' });
+  const n = network(f, { navigate: emit => emit('response', movie) });
+  const result = await f.capture({ provider: 'cinezo', url: n.page.url() });
+  assert.equal(result.ok, true);
+  assert.equal(result.source.url, 'https://media.example/short-film');
+  assert.equal(result.source.format, 'mp4');
+});
 
 test('retrieves a playlist that loads only after clicking a player surface', async t => {
   for (const markup of [

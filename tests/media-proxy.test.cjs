@@ -1,13 +1,13 @@
 'use strict';
 const test = require('node:test'), assert = require('node:assert/strict'), fs = require('node:fs'), path = require('node:path'), vm = require('node:vm');
 const source = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
-function fixture() {
+function fixture(overrides = {}) {
   const helpers = source.slice(source.indexOf('function apiClean('), source.indexOf('function apiTopList('));
   const proxy = source.slice(source.indexOf('function apiSourceToProxyResult('), source.indexOf('// ===== Local port of uploaded ScarperApi-zero'));
   const context = { URL, process: { env: {} }, hlsProxyEnabled: () => true,
     classifyMediaCandidate: require('../lib/media-discovery').classifyMediaCandidate,
     apiExtractMediaUrlsFromStringDeep: () => [],
-    registerHlsProxySource: () => ({ enabled: true, id: 'local', url: '/api/hls-proxy/local/master.m3u8' }) };
+    registerHlsProxySource: () => ({ enabled: true, id: 'local', url: '/api/hls-proxy/local/master.m3u8' }), ...overrides };
   vm.runInNewContext(helpers + proxy + '\nglobalThis.api = {normalize:apiNormalizeSources, playable:apiLooksPlayable, proxy:apiSourceToProxyResult};', context);
   return context.api;
 }
@@ -46,4 +46,23 @@ test('a nested raw URL does not overwrite the validated source and its request h
   const [value] = f.normalize({ sources: [{ url: 'https://media.example/movie.m3u8', format: 'm3u8', forceHls: true, mediaVerified: true, headers: { referer: 'https://provider.example/player', cookie: 'session=PRIVATE' } }] });
   assert.equal(value.mediaVerified, true);
   assert.equal(value.headers.cookie, 'session=PRIVATE');
+});
+test('a verified TV episode keeps its season and episode when registered with the HLS proxy', () => {
+  const registrations = [];
+  const f = fixture({ registerHlsProxySource: (url, headers, metadata) => {
+    registrations.push({ url, headers, ...metadata });
+    return { enabled: true, id: 'episode-' + metadata.episode, url: '/api/hls-proxy/episode-' + metadata.episode + '/master.m3u8' };
+  } });
+  for (const episode of ['3', '4']) {
+    const [source] = f.normalize({ sources: [{ url: 'https://media.example/season-2/episode-' + episode + '.m3u8',
+      format: 'm3u8', forceHls: true, mediaVerified: true, headers: { referer: 'https://provider.example/watch/tv/1399/2/' + episode } }] });
+    const result = f.proxy({ source, provider: 'streamprovider-local', type: 'tv', id: '1399', season: '2', episode });
+    assert.equal(result.streamType, 'm3u8');
+    assert.equal(result.playbackUrl, '/api/hls-proxy/episode-' + episode + '/master.m3u8');
+  }
+  assert.deepEqual(registrations.map(({ movieId, type, season, episode }) => ({ movieId, type, season, episode })), [
+    { movieId: '1399', type: 'tv', season: '2', episode: '3' },
+    { movieId: '1399', type: 'tv', season: '2', episode: '4' }
+  ]);
+  assert.equal(registrations[0].headers.referer, 'https://provider.example/watch/tv/1399/2/3');
 });

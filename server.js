@@ -59,7 +59,7 @@ const express = require("express");
 const { studioMarkup } = require("./ui/studio");
 const { welcomeMarkup } = require("./ui/welcome");
 const { partyMarkup } = require("./ui/party");
-const { playerMarkup } = require("./ui/player");
+const { playerMarkup, episodePickerMarkup } = require("./ui/player");
 const { watchPartyMarkup, partyBrowseMarkup } = require("./ui/watch-party");
 const { createSourceJobs } = require("./lib/source-jobs");
 const helmet = require("helmet");
@@ -6428,7 +6428,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=173" />' : ""}
     
     ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=159" /><script defer src="/assets/party/party.js?v=159"></script>' : ""}
-    ${player ? '<link rel="stylesheet" href="/assets/player/player.css?v=160" /><script defer src="/assets/player/player.js?v=164"></script>' : ""}
+    ${player ? '<link rel="stylesheet" href="/assets/player/player.css?v=165" /><script defer src="/assets/player/player.js?v=165"></script>' : ""}
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=161" /><script defer src="/assets/player/watch-party.js?v=160"></script>' : ""}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/finish.css?v=175" />'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/polish.css?v=176" />'}
@@ -9187,14 +9187,20 @@ async function watchPage(req, res, type) {
   const season = partyMovieId(req.query.s || req.query.season) || String(seasons[0]?.season_number || 1);
   const episode = partyMovieId(req.query.e || req.query.episode) || "1";
   const currentSeason = seasons.find(item => String(item.season_number) === season);
-  const episodeCount = Math.max(1, Math.min(200, Number(currentSeason?.episode_count || 1)));
-  const episodePickerHtml = type === "tv" && mode === "movie" ? `<section class="dsWatchEpisodePicker" aria-label="Choose an episode"><div><span>Now watching</span><strong>S${escapeHtml(season)} · E${escapeHtml(episode)}</strong></div><div class="dsWatchSeasonScroll">${seasons.slice(0,40).map(item => `<a class="${String(item.season_number) === season ? "active" : ""}" href="/watch/tv/${id}?mode=movie&s=${item.season_number}&e=1">Season ${item.season_number}</a>`).join("")}</div><div class="dsWatchEpisodeScroll">${Array.from({length:episodeCount},(_,index) => index+1).map(number => `<a class="${String(number) === episode ? "active" : ""}" href="/watch/tv/${id}?mode=movie&s=${season}&e=${number}">E${number}</a>`).join("")}</div></section>` : "";
+  const provider = typeof req.query.provider === "string" ? req.query.provider : "";
+  const seasonDetails = type === "tv" && mode === "movie"
+    ? await tmdb(`${endpoint}/season/${season}`, {}, CACHE_TTL.long).catch(() => ({ episodes: [] })) : { episodes: [] };
+  const episodes = (Array.isArray(seasonDetails.episodes) ? seasonDetails.episodes : []).map(item => ({ ...item, still: item.still_path ? img(item.still_path, "w342") : "" }));
+  const episodeTitle = episodes.find(item => String(item.episode_number) === episode)?.name || "";
+  const episodePickerHtml = type === "tv" && mode === "movie" ? episodePickerMarkup({
+    id, season, episode, seasons, provider, episodes, episodeCount: currentSeason?.episode_count || 1
+  }) : "";
   const body = playerMarkup({
     id, type, title, mode, season, episode,
     year: getYear(type === "tv" ? details.first_air_date : details.release_date),
     poster: details.poster_path ? img(details.poster_path, "w342") : "",
     backdrop: fullBackdrop(details.backdrop_path || details.poster_path),
-    provider: typeof req.query.provider === "string" ? req.query.provider : "",
+    provider, episodeTitle,
     trailerUrl: trailer ? youtubeEmbedSrc(trailer.key, youtubeEmbedOrigin(req)) : "",
     episodePickerHtml,
     managed: type === "movie" && mode === "movie" && Boolean(roomId),

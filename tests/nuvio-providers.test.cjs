@@ -94,6 +94,13 @@ test('direct movie files are verified with HEAD without buffering the movie', as
   assert.equal(f.requests[0].method, 'HEAD');
 });
 
+test('Nuvio verification rejects the known protection clip instead of forwarding it to the player', async () => {
+  const source = await verifyNuvioSource({ url: 'https://media.example/protected-content', type: 'mp4' }, {
+    fetchResource: async () => new Response(null, { headers: require('./fixtures/provider-warning-response.json') })
+  });
+  assert.equal(source, null);
+});
+
 function workerFactory(filename, options) {
   return new Worker(filename, { ...options, workerData: { ...options.workerData, adapterPath: path.join(__dirname,'fixtures','nuvio-adapter.cjs') } });
 }
@@ -177,6 +184,23 @@ test('the real VidLink movie adapter uses movie endpoints rather than season one
   assert(paths.includes('/3/movie/329865'));
   assert(paths.includes('/api/b/movie/encrypted-title-id'));
   assert.equal(paths.some(path=>path.includes('/tv/')),false);
+});
+test('the real VidLink TV adapter requests the selected episode in metadata and source endpoints', async () => {
+  const paths = [];
+  const result = await resolveNuvioProvider({ provider: 'vidlink', tmdbId: '1399', mediaType: 'tv', season: '2', episode: '3', timeoutMs: 2000,
+    fetchResource: async url => {
+      paths.push(new URL(url).pathname);
+      const body = url.includes('enc-vidlink') ? { result: 'encrypted-title-id' }
+        : new URL(url).hostname === 'api.themoviedb.org' ? { name: 'Test show', first_air_date: '2011-01-01' } : {};
+      return new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json' } });
+    }
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.code, 'no_source');
+  assert(paths.includes('/3/tv/1399'));
+  assert(paths.includes('/3/tv/1399/season/2/episode/3'));
+  assert(paths.includes('/api/b/tv/encrypted-title-id/2/3'));
+  assert.equal(paths.some(path => path.includes('/movie/')), false);
 });
 test('empty or null movie episode arguments still reach the pinned adapter',async()=>{
   for(const value of ['',null]){

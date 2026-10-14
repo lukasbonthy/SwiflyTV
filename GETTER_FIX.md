@@ -26,6 +26,22 @@ connection errors, and DNS errors. `requests` counts adapter request attempts;
 These counters distinguish metadata failures from unavailable source helpers.
 They contain no upstream URLs, response bodies, or credentials.
 
+TV playback uses the same verified-source and HLS proxy path, with season,
+episode, and source choice preserved through polling, cache identity, and
+fallback. The episode picker loads selected-season titles, stills, and runtimes;
+metadata failure retains numbered episode links. At most 200 cards are rendered
+around the selection, including accepted large episode numbers.
+
+An observed VidLove origin-warning MP4 is rejected by its exact strong ETag,
+byte count, and MIME type; it cannot masquerade as an episode. Capture continues
+searching for genuine media and reports a blocked provider if only the warning
+is returned. `protectionClips` is a safe diagnostic counter. Other short MP4s and
+the existing full-file formats remain supported.
+
+The player distinguishes a stalled download from interrupted playback. Paused
+or sufficiently buffered video stays visible; actual playback advancement
+clears the compact buffering indicator, while real stalls retain their deadline.
+
 The v163 speed changes keep these providers. A second direct source starts after 1.8 seconds when the preferred source is still loading; the first verified source wins, and losing work is cancelled and cleaned up. Verified media can interrupt navigation immediately. The native player uses an optional bounded response wait to avoid an extra polling delay. See [PERFORMANCE_v163.md](PERFORMANCE_v163.md).
 
 The getter now checks successful HTTP responses instead of choosing an outgoing `.m3u8` request. It detects HLS by MIME type and playlist content, including signed URLs without a file extension. HTML errors, failed responses, ad/background/trailer videos, and individual `.ts`/`.m4s` fragments cannot win.
