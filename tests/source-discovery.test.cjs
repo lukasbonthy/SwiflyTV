@@ -5,6 +5,8 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const http = require('node:http');
+const { JSDOM } = require('jsdom');
 const root = path.resolve(__dirname, '..');
 const source = fs.readFileSync(path.join(root, 'server.js'), 'utf8');
 const scraper = source.slice(source.indexOf('// ===== StreamProvider-main local media scrapers ====='), source.indexOf('// ===== Filmu m3u8 scraper:'));
@@ -42,7 +44,7 @@ function fixture() {
     now += ms;
     for (const [id, timer] of [...timers]) if (timer.at <= now) { timers.delete(id); timer.fn(); }
   }
-  return { ...sandbox.api, advance, timers };
+  return { ...sandbox.api, advance, timers, now: () => now };
 }
 
 function network(f, { navigate, childFrame, domSources = [] } = {}) {
@@ -72,12 +74,258 @@ function response(url, status = 200, contentType = 'video/mp4', text = '', reque
     request: () => ({ headers: () => requestHeaders, allHeaders: async () => requestHeaders }), dispose: async () => {}
   };
 }
+
+function lazyPlayerFrame(markup, play) {
+  const dom = new JSDOM(markup);
+  dom.window.document.querySelector('[data-start]').addEventListener('click', play);
+  return {
+    url: () => 'https://embed.example/player', evaluate: async () => [], content: async () => markup,
+    locator(selector) {
+      const element = dom.window.document.querySelector(selector);
+      return { first: () => ({
+        count: async () => Number(Boolean(element)),
+        click: async () => element?.click()
+      }) };
+    },
+    close: () => dom.window.close()
+  };
+}
 const flush = async () => { for (let n = 0; n < 40; n++) await Promise.resolve(); };
 function deferred() {
   let resolve, reject;
   const promise = new Promise((done, fail) => { resolve = done; reject = fail; });
   return { promise, resolve, reject };
 }
+
+test('retrieves a playlist that loads only after clicking a player surface', async t => {
+  for (const markup of [
+    '<div id="player" data-start></div>',
+    '<div class="play" data-start></div>',
+    '<div role="button" aria-label="Play movie" data-start></div>',
+    '<video data-start></video>'
+  ]) {
+    const f = fixture(); let n;
+    const frame = lazyPlayerFrame(markup, () => {
+      void n.emit('response', response('https://media.example/movie.m3u8?sig=SIGNED', 200,
+        'application/x-mpegurl', '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=1\nmain.m3u8'));
+    });
+    t.after(frame.close);
+    n = network(f, { childFrame: frame });
+    const result = await f.capture({ provider: 'hexa', url: n.page.url() });
+    assert.equal(result.ok, true, 'the lazy player must be activated: ' + markup);
+    assert.equal(result.source.url, 'https://media.example/movie.m3u8?sig=SIGNED');
+    assert.equal(result.source.mediaVerified, true);
+    assert.equal(result.diagnostics.playActions, 1);
+    assert.equal(n.counts().closes, 1);
+  }
+});
+
+test('a real play control is preferred over an inert video earlier in the document', async t => {
+  const f = fixture(); let n;
+  const frame = lazyPlayerFrame('<video></video><button aria-label="Play movie" data-start></button>', () => {
+    void n.emit('response', response('https://media.example/movie.m3u8', 200,
+      'application/x-mpegurl', '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=1\nmain.m3u8'));
+  });
+  t.after(frame.close);
+  n = network(f, { childFrame: frame });
+  const result = await f.capture({ provider: 'cinezo', url: n.page.url() });
+  assert.equal(result.ok, true);
+  assert.equal(result.source.url, 'https://media.example/movie.m3u8');
+});
+
+test('a play-labeled wrapper cannot shadow the actual play button inside it', async t => {
+  const f = fixture(); let n;
+  const frame = lazyPlayerFrame('<div class="play"><button aria-label="Play movie" data-start></button></div>', () => {
+    void n.emit('response', response('https://media.example/movie.m3u8', 200,
+      'application/x-mpegurl', '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=1\nmain.m3u8'));
+  });
+  t.after(frame.close);
+  n = network(f, { childFrame: frame });
+  assert.equal((await f.capture({ provider: 'cinezo', url: n.page.url() })).ok, true);
+});
+
+test('verifies a playlist after a browser CORS failure using its original request headers', async () => {
+  const f = fixture(), url = 'https://media.example/movie.m3u8?token=SIGNED';
+  const headers = { referer: 'https://embed.example/player', origin: 'https://embed.example', authorization: 'Bearer SESSION' };
+  const n = network(f, { navigate: emit => emit('requestfailed', {
+    url: () => url, failure: () => ({ errorText: 'net::ERR_FAILED' }),
+    headers: () => headers, allHeaders: async () => headers
+  }) });
+  n.context.request.get = async (target, options) => {
+    assert.equal(target, url);
+    assert.equal(options.headers.referer, headers.referer);
+    assert.equal(options.headers.authorization, headers.authorization);
+    return response(url, 200, 'application/x-mpegurl', '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=1\nmain.m3u8');
+  };
+  const result = await f.capture({ provider: 'cinezo', url: n.page.url() });
+  assert.equal(result.ok, true);
+  assert.equal(result.source.mediaVerified, true);
+  assert.equal(result.source.url, url);
+  assert.equal(result.source.headers.origin, headers.origin);
+});
+
+test('an inaccessible failed browser request remains rejected after server verification', async () => {
+  const f = fixture();
+  const n = network(f, { navigate: emit => emit('requestfailed', {
+    url: () => 'https://media.example/expired.m3u8', failure: () => ({ errorText: 'net::ERR_FAILED' }), headers: () => ({})
+  }) });
+  n.context.request.get = async url => response(url, 403, 'text/html', '<html>Forbidden</html>');
+  const result = await f.capture({ provider: 'cinezo', url: n.page.url() });
+  assert.equal(result.ok, false);
+  assert.equal(result.code, 'provider_blocked');
+});
+
+test('a visible verification gate stops provider work without clicking the challenge', async () => {
+  const f = fixture(); let clicks = 0;
+  const dom = new JSDOM('<body><div>Verification Required</div><p>Please complete the verification to continue watching.</p><button>Verify you\'re human</button></body>');
+  Object.defineProperty(dom.window.document.body, 'innerText', { get: () => dom.window.document.body.textContent });
+  const n = network(f);
+  n.page.evaluate = async fn => fn.toString().includes('navigator.userAgent') ? 'Actual Chromium UA'
+    : vm.runInNewContext('(' + fn.toString() + ')()', { document: dom.window.document });
+  n.page.locator = () => ({ first: () => ({ count: async () => 1, click: async () => { clicks++; } }) });
+  try {
+    const result = await f.capture({ provider: 'hexa', url: n.page.url() });
+    assert.equal(result.ok, false);
+    assert.equal(result.code, 'provider_blocked');
+    assert.equal(clicks, 0);
+    assert.equal(f.timers.size, 0);
+  } finally { dom.window.close(); }
+});
+
+test('a verification gate in the actual main Frame ends capture before its timeout', async t => {
+  const f = fixture(); let clicks = 0;
+  const dom = new JSDOM('<body><p>Verify you are human</p></body>');
+  Object.defineProperty(dom.window.document.body, 'innerText', { get: () => dom.window.document.body.textContent });
+  t.after(() => dom.window.close());
+  const main = { url: () => 'https://provider.example/watch', content: async () => '',
+    evaluate: async fn => vm.runInNewContext('(' + fn.toString() + ')()', { document: dom.window.document }),
+    locator: () => ({ first: () => ({ count: async () => 1, click: async () => { clicks++; } }) })
+  };
+  const n = network(f);
+  n.page.mainFrame = () => main;
+  n.page.frames = () => [main];
+  const result = await f.capture({ provider: 'hexa', url: n.page.url() });
+  assert.equal(result.code, 'provider_blocked');
+  assert.equal(f.now(), 0, 'a main-frame gate must release its slot immediately');
+  assert.equal(clicks, 0);
+});
+
+test('an unrelated child-frame challenge cannot discard a playable sibling frame', async t => {
+  const f = fixture(); let n;
+  const dom = new JSDOM('<body><p>Verify you are human</p></body>');
+  Object.defineProperty(dom.window.document.body, 'innerText', { get: () => dom.window.document.body.textContent });
+  t.after(() => dom.window.close());
+  const gated = { url: () => 'https://ad.example/challenge',
+    evaluate: async fn => vm.runInNewContext('(' + fn.toString() + ')()', { document: dom.window.document }),
+    content: async () => '', locator: () => { throw new Error('a challenge must never be clicked'); }
+  };
+  const player = lazyPlayerFrame('<button aria-label="Play movie" data-start></button>', () => {
+    void n.emit('response', response('https://media.example/movie.m3u8', 200,
+      'application/x-mpegurl', '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=1\nmain.m3u8'));
+  });
+  t.after(player.close);
+  n = network(f);
+  n.page.frames = () => [n.page, gated, player];
+  const result = await f.capture({ provider: 'cinezo', url: n.page.url() });
+  assert.equal(result.ok, true);
+  assert.equal(result.source.url, 'https://media.example/movie.m3u8');
+});
+
+test('capture skips decorative assets while preserving player styles, scripts and media', async () => {
+  const f = fixture(), outcomes = {};
+  let routeHandler;
+  const n = network(f, { navigate: async emit => {
+    for (const type of ['image', 'font', 'stylesheet', 'script', 'xhr', 'media']) {
+      if (routeHandler) await routeHandler({
+        request: () => ({ resourceType: () => type }),
+        abort: async () => { outcomes[type] = 'abort'; },
+        continue: async () => { outcomes[type] = 'continue'; }
+      });
+    }
+    await emit('response', response('https://media.example/movie.m3u8', 200,
+      'application/x-mpegurl', '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=1\nmain.m3u8'));
+  } });
+  n.page.route = async (_pattern, handler) => { routeHandler = handler; };
+  const result = await f.capture({ provider: 'cinezo', url: n.page.url() });
+  assert.equal(result.ok, true);
+  assert.deepEqual(outcomes, { image: 'abort', font: 'abort', stylesheet: 'continue', script: 'continue', xhr: 'continue', media: 'continue' });
+});
+
+test('failed-request verification removes session headers on a cross-origin redirect', async () => {
+  const f = fixture(), url = 'https://media.example/movie.m3u8', requests = [];
+  const n = network(f, { navigate: emit => emit('requestfailed', {
+    url: () => url, failure: () => ({ errorText: 'net::ERR_FAILED' }),
+    headers: () => ({ referer: 'https://embed.example/player', cookie: 'session=PRIVATE', authorization: 'Bearer PRIVATE' })
+  }) });
+  n.context.request.get = async (target, options) => {
+    requests.push({ target, headers: { ...options.headers }, maxRedirects: options.maxRedirects });
+    if (target === url) return { ...response(url, 302), headers: () => ({ location: 'https://other.example/movie.m3u8' }) };
+    return response(target, 200, 'application/x-mpegurl', '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=1\nmain.m3u8');
+  };
+  const result = await f.capture({ provider: 'cinezo', url: n.page.url() });
+  assert.equal(result.ok, true);
+  assert.equal(requests[0].headers.authorization, 'Bearer PRIVATE');
+  assert.equal(requests[0].maxRedirects, 0);
+  assert.equal(requests[1].headers.cookie, undefined);
+  assert.equal(requests[1].headers.authorization, undefined);
+  assert.equal(result.source.headers.authorization, undefined);
+});
+
+test('same-origin verification redirects use refreshed cookies from the shared request context', async t => {
+  const cookies = [];
+  const server = http.createServer((req, res) => {
+    cookies.push(req.headers.cookie);
+    if (req.url === '/movie.m3u8') {
+      res.writeHead(302, { Location: '/manifest.m3u8', 'Set-Cookie': 'session=NEW; Path=/' });
+      res.end();
+    } else if (req.headers.cookie === 'session=NEW') {
+      res.writeHead(200, { 'Content-Type': 'application/x-mpegurl' });
+      res.end('#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=1\nmain.m3u8');
+    } else {
+      res.writeHead(403, { 'Content-Type': 'text/html' }); res.end('Forbidden');
+    }
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => new Promise(resolve => server.close(resolve)));
+  const api = await require('playwright-core').request.newContext();
+  t.after(() => api.dispose());
+  const f = fixture(), url = 'http://127.0.0.1:' + server.address().port + '/movie.m3u8';
+  const n = network(f, { navigate: emit => emit('requestfailed', {
+    url: () => url, failure: () => ({ errorText: 'net::ERR_FAILED' }), headers: () => ({ cookie: 'session=OLD' })
+  }) });
+  n.context.request = api;
+  n.context.cookies = async () => (await api.storageState()).cookies;
+  n.page.waitForTimeout = ms => new Promise(resolve => setTimeout(resolve, Math.min(ms, 20)));
+  const result = await require('../lib/provider-capture').captureProviderMedia({
+    getBrowser: async () => ({ newContext: async () => n.context }), provider: 'cinezo', url,
+    navigationTimeoutMs: 2000, streamTimeoutMs: 2000
+  });
+  assert.equal(result.ok, true);
+  assert.deepEqual(cookies, ['session=OLD', 'session=NEW']);
+  assert.equal(result.source.headers.cookie, 'session=NEW');
+});
+
+test('actual failed-request headers can recover a URL first probed from a JSON source record', async () => {
+  const f = fixture(), url = 'https://media.example/movie.m3u8';
+  const requests = [];
+  const failed = { url: () => url, failure: () => ({ errorText: 'net::ERR_FAILED' }),
+    headers: () => ({ referer: 'https://embed.example/player', authorization: 'Bearer SESSION' }) };
+  const n = network(f, { navigate: async emit => {
+    await emit('response', response('https://provider.example/config', 200, 'application/json', JSON.stringify({ sources: [{ url }] })));
+    await flush();
+    await emit('requestfailed', failed);
+    await emit('requestfailed', failed);
+  } });
+  n.context.request.get = async (target, options) => {
+    requests.push(options.headers.authorization || '');
+    return options.headers.authorization === 'Bearer SESSION'
+      ? response(target, 200, 'application/x-mpegurl', '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=1\nmain.m3u8')
+      : response(target, 403, 'text/html', 'Forbidden');
+  };
+  const result = await f.capture({ provider: 'cinezo', url: n.page.url() });
+  assert.equal(result.ok, true);
+  assert.deepEqual(requests, ['', 'Bearer SESSION']);
+});
 
 test('a verified response returns before unrelated navigation finishes', async () => {
   const f = fixture(), navigation = deferred();
