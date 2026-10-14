@@ -26,6 +26,7 @@ const { runProviderRace } = require("./lib/provider-race");
 const { classifyMediaCandidate } = require("./lib/media-discovery");
 const { resolveNuvioProvider, PROVIDERS: NUVIO_ALLOWED_PROVIDERS } = require("./lib/nuvio-provider");
 const { createMediaFileProxy } = require("./lib/media-file-proxy");
+const { cleanHeaders: cleanNuvioHeaders } = require("./lib/nuvio-http");
 
 // ===== SwiflyTV no-env mode =====
 // This build is meant to run without manually setting a pile of Render env vars.
@@ -5664,7 +5665,11 @@ function registerHlsProxySource(sourceUrl, headers = {}, meta = {}) {
   hlsProxySources.set(id, {
     id,
     sourceUrl: parsed.toString(),
-    headers: sanitizeHlsProxyHeaders(headers),
+    // Native files must use the same headers that passed source verification.
+    // HLS-only defaults (especially User-Agent) can make signed MP4s return 428.
+    headers: String(meta?.sourceFormat || "").toLowerCase() === "mp4"
+      ? cleanNuvioHeaders(headers)
+      : sanitizeHlsProxyHeaders(headers),
     meta: meta || {},
     requests: [],
     lastError: "",
