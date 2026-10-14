@@ -15590,7 +15590,7 @@ app.get("/api/remote-browser/status", (req, res) => {
 app.get("/api/tmdb/:path(*)", async (req, res) => {
   const endpoint = `/${req.params.path}`;
   const data = await tmdb(endpoint, req.query, CACHE_TTL.short);
-  res.status(data.status || 200).json(data);
+  res.status(data.__error ? (data.status || 500) : 200).json(data);
 });
 
 
