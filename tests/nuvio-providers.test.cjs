@@ -104,6 +104,130 @@ test('Nuvio verification rejects the known protection clip instead of forwarding
 function workerFactory(filename, options) {
   return new Worker(filename, { ...options, workerData: { ...options.workerData, adapterPath: path.join(__dirname,'fixtures','nuvio-adapter.cjs') } });
 }
+function currentVidlinkQuality(quality, overrides = {}) {
+  return { type: 'mp4', url: `https://media.example/${quality}.mp4?token=fixture`, codecName: 'hevc', se: 1, ep: 1, headers: {}, requiresProxy: true, ...overrides };
+}
+function currentVidlinkPayload(qualities) {
+  return { sourceId: 'fixture-source', stream: { id: 'fixture-stream', type: 'file', deliveryType: 'file', qualities, captions: [] } };
+}
+function pinnedVidlinkUpstream({ payload, status = 200, finalUrl, helperPayload = {}, metadataPayload = {}, mediaResponse = () => new Response(null, { headers: { 'content-type': 'video/mp4' } }) }) {
+  const requests = [];
+  return { requests, fetchResource: async (url, options = {}) => {
+    requests.push({ url, ...options });
+    const target = new URL(url);
+    if (target.hostname === 'enc-dec.app') return new Response(JSON.stringify({ result: 'encrypted-title-id', ...helperPayload }), { headers: { 'content-type': 'application/json' } });
+    if (target.hostname === 'api.themoviedb.org') return new Response(JSON.stringify({ name: 'Test show', first_air_date: '2022-01-01', ...metadataPayload }), { headers: { 'content-type': 'application/json' } });
+    if (target.hostname === 'vidlink.pro') {
+      const response = new Response(JSON.stringify(payload), { status, headers: { 'content-type': 'application/json' } });
+      if (finalUrl) Object.defineProperty(response, 'url', { value: finalUrl });
+      return response;
+    }
+    if (target.hostname === 'media.example') return mediaResponse(url, options);
+    throw new Error('Unexpected fixture upstream');
+  } };
+}
+test('the pinned VidLink worker verifies the highest current file quality and preserves proxy metadata', async () => {
+  const upstream = pinnedVidlinkUpstream({ payload: currentVidlinkPayload({
+    360: currentVidlinkQuality(360),
+    480: currentVidlinkQuality(480),
+    1080: currentVidlinkQuality(1080, { codecName: 'HEVC', headers: { Host: 'media.example', Connection: 'keep-alive', 'Content-Length': '1', Referer: 'https://vidlink.pro/' } })
+  }) });
+  const result = await resolveNuvioProvider({ provider: 'vidlink', tmdbId: '108978', mediaType: 'tv', season: '1', episode: '1', timeoutMs: 2000, fetchResource: upstream.fetchResource });
+  assert.equal(result.ok, true);
+  assert.equal(result.source.url, 'https://media.example/1080.mp4?token=fixture');
+  assert.equal(result.source.quality, '1080p');
+  assert.equal(result.source.format, 'mp4');
+  assert.equal(result.source.mediaVerified, true);
+  assert.equal(result.source.requiresProxy, true);
+  assert.equal(result.source.codecName, 'hevc');
+  assert.deepEqual(result.source.headers, { referer: 'https://vidlink.pro/' });
+  assert.deepEqual(upstream.requests.filter(request => new URL(request.url).hostname === 'media.example').map(request => ({ method: request.method, maxBytes: request.maxBytes })), [{ method: 'HEAD', maxBytes: 1024 * 1024 }]);
+});
+test('current VidLink files must pass HTTP verification before falling back to a lower quality', async () => {
+  const upstream = pinnedVidlinkUpstream({ payload: currentVidlinkPayload({
+    360: currentVidlinkQuality(360, { codecName: 'hevc\nprivate' }),
+    480: currentVidlinkQuality(480),
+    1080: currentVidlinkQuality(1080)
+  }), mediaResponse: url => new URL(url).pathname === '/1080.mp4'
+    ? new Response(null, { status: 403, headers: { 'content-type': 'video/mp4' } })
+    : new URL(url).pathname === '/480.mp4'
+      ? new Response('<html>unavailable</html>', { headers: { 'content-type': 'text/html' } })
+      : new Response(null, { headers: { 'content-type': 'video/mp4' } }) });
+  const result = await resolveNuvioProvider({ provider: 'vidlink', tmdbId: '108978', mediaType: 'tv', timeoutMs: 2000, fetchResource: upstream.fetchResource });
+  assert.equal(result.ok, true);
+  assert.equal(result.source.quality, '360p');
+  assert.equal(result.source.codecName, undefined);
+  assert.equal(result.source.requiresProxy, true);
+  assert.deepEqual(upstream.requests.filter(request => request.method === 'HEAD').map(request => new URL(request.url).pathname), ['/1080.mp4', '/480.mp4', '/360.mp4']);
+});
+test('current VidLink file qualities must belong to the selected TV season and episode', async () => {
+  const upstream = pinnedVidlinkUpstream({ payload: currentVidlinkPayload({
+    2160: currentVidlinkQuality(2160),
+    1080: currentVidlinkQuality(1080, { se: 2, ep: 4 }),
+    720: currentVidlinkQuality(720, { se: undefined, ep: undefined }),
+    480: currentVidlinkQuality(480, { se: 2, ep: 3 })
+  }) });
+  const result = await resolveNuvioProvider({ provider: 'vidlink', tmdbId: '108978', mediaType: 'tv', season: '2', episode: '3', timeoutMs: 2000, fetchResource: upstream.fetchResource });
+  assert.equal(result.ok, true);
+  assert.equal(result.source.quality, '480p');
+  assert.deepEqual(upstream.requests.filter(request => request.method === 'HEAD').map(request => new URL(request.url).pathname), ['/480.mp4']);
+  assert(upstream.requests.some(request => new URL(request.url).pathname === '/api/b/tv/encrypted-title-id/2/3'));
+});
+test('current VidLink compatibility only reads successful responses from the requested source endpoint', async t => {
+  const current = currentVidlinkPayload({ 1080: currentVidlinkQuality(1080) });
+  for (const [name, response] of [
+    ['helper and metadata bodies', { payload: {}, helperPayload: current, metadataPayload: current }],
+    ['rejected source response', { payload: current, status: 403 }],
+    ['another response host', { payload: current, finalUrl: 'https://other.example/api/b/tv/encrypted-title-id/1/1' }],
+    ['another media type', { payload: current, finalUrl: 'https://vidlink.pro/api/b/movie/encrypted-title-id' }],
+    ['another episode', { payload: current, finalUrl: 'https://vidlink.pro/api/b/tv/encrypted-title-id/1/2' }],
+    ['another encrypted title', { payload: current, finalUrl: 'https://vidlink.pro/api/b/tv/another-title-id/1/1' }]
+  ]) await t.test(name, async () => {
+    const upstream = pinnedVidlinkUpstream(response);
+    const result = await resolveNuvioProvider({ provider: 'vidlink', tmdbId: '108978', mediaType: 'tv', timeoutMs: 2000, fetchResource: upstream.fetchResource });
+    assert.equal(result.ok, false);
+    assert.equal(result.code, 'no_source');
+    assert.equal(upstream.requests.some(request => request.method === 'HEAD'), false);
+  });
+});
+test('legacy VidLink playlists remain verified when current file qualities are rejected', async () => {
+  const payload = currentVidlinkPayload({ 1080: currentVidlinkQuality(1080) });
+  payload.stream.playlist = 'https://media.example/master.m3u8';
+  const upstream = pinnedVidlinkUpstream({ payload, mediaResponse: url => new URL(url).pathname === '/master.m3u8'
+    ? new Response(playlist, { headers: { 'content-type': 'application/vnd.apple.mpegurl' } })
+    : new Response(null, { status: 404, headers: { 'content-type': 'video/mp4' } }) });
+  const result = await resolveNuvioProvider({ provider: 'vidlink', tmdbId: '108978', mediaType: 'tv', timeoutMs: 2000, fetchResource: upstream.fetchResource });
+  assert.equal(result.ok, true);
+  assert.equal(result.source.format, 'm3u8');
+  assert.equal(result.source.mediaVerified, true);
+  assert.equal(result.source.url, payload.stream.playlist);
+  assert.equal(upstream.requests.some(request => request.method === 'HEAD'), true);
+});
+test('current VidLink compatibility does not bypass the broker body limit', async () => {
+  const payload = currentVidlinkPayload({ 1080: currentVidlinkQuality(1080) });
+  payload.padding = 'x'.repeat(1024 * 1024);
+  const upstream = pinnedVidlinkUpstream({ payload });
+  const result = await resolveNuvioProvider({ provider: 'vidlink', tmdbId: '108978', mediaType: 'tv', timeoutMs: 2000, fetchResource: upstream.fetchResource });
+  assert.equal(result.ok, false);
+  assert.equal(result.code, 'no_source');
+  assert.equal(upstream.requests.some(request => request.method === 'HEAD'), false);
+});
+test('cancelling current VidLink file verification aborts the owned request', async () => {
+  const signal = new AbortController();
+  let started;
+  const verificationStarted = new Promise(resolve => { started = resolve; });
+  let verificationSignal;
+  const upstream = pinnedVidlinkUpstream({ payload: currentVidlinkPayload({ 1080: currentVidlinkQuality(1080) }), mediaResponse: (_url, options) => {
+    verificationSignal = options.signal;
+    started();
+    return new Promise((_resolve, reject) => options.signal.addEventListener('abort', () => reject(options.signal.reason), { once: true }));
+  } });
+  const lookup = resolveNuvioProvider({ provider: 'vidlink', tmdbId: '108978', mediaType: 'tv', signal: signal.signal, timeoutMs: 2000, fetchResource: upstream.fetchResource });
+  await Promise.race([verificationStarted, lookup.then(() => { throw new Error('No file verification was attempted'); })]);
+  signal.abort(new Error('lookup cancelled'));
+  await assert.rejects(lookup, /lookup cancelled/);
+  assert.equal(verificationSignal.aborted, true);
+});
 test('the worker calls the movie/episode adapter and verifies its result in the parent', async () => {
   process.env.NUVIO_TEST_SECRET = 'do-not-pass';
   try {

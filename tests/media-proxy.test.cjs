@@ -3,12 +3,13 @@ const test = require('node:test'), assert = require('node:assert/strict'), fs = 
 const source = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
 function fixture(overrides = {}) {
   const helpers = source.slice(source.indexOf('function apiClean('), source.indexOf('function apiTopList('));
+  const handoff = source.slice(source.indexOf('function apiTopList('), source.indexOf('function apiSourceToProxyResult('));
   const proxy = source.slice(source.indexOf('function apiSourceToProxyResult('), source.indexOf('// ===== Local port of uploaded ScarperApi-zero'));
   const context = { URL, process: { env: {} }, hlsProxyEnabled: () => true,
     classifyMediaCandidate: require('../lib/media-discovery').classifyMediaCandidate,
     apiExtractMediaUrlsFromStringDeep: () => [],
     registerHlsProxySource: () => ({ enabled: true, id: 'local', url: '/api/hls-proxy/local/master.m3u8' }), ...overrides };
-  vm.runInNewContext(helpers + proxy + '\nglobalThis.api = {normalize:apiNormalizeSources, playable:apiLooksPlayable, proxy:apiSourceToProxyResult};', context);
+  vm.runInNewContext(helpers + handoff + proxy + '\nglobalThis.api = {normalize:apiNormalizeSources, playable:apiLooksPlayable, proxy:apiSourceToProxyResult, find:apiFindPlayableFromPayload};', context);
   return context.api;
 }
 test('verified HLS endpoints survive normalization and reach the local playlist proxy', () => {
@@ -65,4 +66,56 @@ test('a verified TV episode keeps its season and episode when registered with th
     { movieId: '1399', type: 'tv', season: '2', episode: '4' }
   ]);
   assert.equal(registrations[0].headers.referer, 'https://provider.example/watch/tv/1399/2/3');
+});
+
+test('a verified Reacher file requiring proxying retains its transport and selected episode', () => {
+  const registrations = [];
+  const f = fixture({ registerHlsProxySource(url, headers, metadata) {
+    registrations.push({ url, headers, metadata });
+    return { enabled: true, id: 'reacher-file', url: '/api/hls-proxy/reacher-file/master.m3u8' };
+  } });
+  const [source] = f.normalize({ sources: [{ url: 'https://media.example/reacher-1-1.mp4',
+    format: 'mp4', mediaVerified: true, requiresProxy: true, codecName: 'hevc',
+    headers: { referer: 'https://provider.example/', cookie: 'private=1' } }] });
+  const result = f.proxy({ source, provider: 'streamprovider-local', type: 'tv', id: '108978', season: '1', episode: '1' });
+  assert.equal(result.playbackUrl, '/api/media-file-proxy/reacher-file/video.mp4');
+  assert.equal(result.streamType, 'mp4');
+  assert.equal(result.streamCodec, 'hevc');
+  assert.equal(result.m3u8Embedded, false);
+  assert.equal(result.hlsProxyUrl, '');
+  assert.equal(result.streamHeaders.cookie, undefined);
+  assert.equal(registrations.length, 1);
+  assert.equal(registrations[0].metadata.sourceFormat, 'mp4');
+  assert.equal(registrations[0].metadata.season, '1');
+  assert.equal(registrations[0].metadata.episode, '1');
+  assert.equal(registrations[0].headers.cookie, 'private=1');
+});
+
+test('a required file proxy is never silently replaced with an unproxied file', () => {
+  const f = fixture({ hlsProxyEnabled: () => false });
+  const [source] = f.normalize({ sources: [{ url: 'https://media.example/reacher.mp4', format: 'mp4',
+    mediaVerified: true, requiresProxy: true }] });
+  assert.equal(f.proxy({ source, provider: 'streamprovider-local', type: 'tv', id: '108978', season: '1', episode: '1' }), null);
+});
+
+test('the actual provider handoff preserves required proxying for verified Reacher MP4', async () => {
+  const registrations = [];
+  const f = fixture({ registerHlsProxySource(url, headers, metadata) {
+    registrations.push({ url, headers, metadata });
+    return { enabled: true, id: 'reacher-file', url: '/api/hls-proxy/reacher-file/master.m3u8' };
+  } });
+  const result = await f.find({ payload: { sources: [{ url: 'https://media.example/reacher.mp4',
+    format: 'mp4', mediaVerified: true, requiresProxy: true, codecName: 'hevc' }] },
+    providerName: 'streamprovider-local', providerConfig: {}, mediaType: 'tv', id: '108978', season: '1', episode: '1' });
+  assert.equal(result.playbackUrl, '/api/media-file-proxy/reacher-file/video.mp4');
+  assert.equal(result.streamCodec, 'hevc');
+  assert.equal(registrations.length, 1);
+});
+
+test('the actual provider handoff cannot strip a required proxy when it is disabled', async () => {
+  const f = fixture({ hlsProxyEnabled: () => false });
+  const result = await f.find({ payload: { sources: [{ url: 'https://media.example/reacher.mp4',
+    format: 'mp4', mediaVerified: true, requiresProxy: true }] },
+    providerName: 'streamprovider-local', providerConfig: {}, mediaType: 'tv', id: '108978', season: '1', episode: '1' });
+  assert.equal(result, null);
 });
