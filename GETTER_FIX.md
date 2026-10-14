@@ -32,6 +32,11 @@ fallback. The episode picker loads selected-season titles, stills, and runtimes;
 metadata failure retains numbered episode links. At most 200 cards are rendered
 around the selection, including accepted large episode numbers.
 
+Default TV discovery does not fall into title-only download-site searches after
+episode-aware providers fail. Those searches cannot select the requested season
+and episode and previously consumed the remaining source-job deadline. Provider
+failure reasons are retained; automatic movie download-site fallback is preserved.
+
 An observed VidLove origin-warning MP4 is rejected by its exact strong ETag,
 byte count, and MIME type; it cannot masquerade as an episode. Capture continues
 searching for genuine media and reports a blocked provider if only the warning

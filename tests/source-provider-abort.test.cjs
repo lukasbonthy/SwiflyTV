@@ -311,6 +311,31 @@ test('normal StreamProvider failure preserves the existing download-site adapter
   assert.equal(downloadCalls, 1);
 });
 
+test('default TV lookup preserves a provider block without searching episode-agnostic download sites', async () => {
+  let downloadCalls = 0;
+  const f = fixture({
+    process: { env: {} },
+    tmdb: async () => ({ name: 'Example series', first_air_date: '2011-01-01' }),
+    getTitle: item => item.name || '',
+    localDownloadSitesByTitle: async () => {
+      downloadCalls += 1;
+      return { status: 'ok', playbackUrl: 'https://media.example/wrong-episode.mp4' };
+    }
+  });
+  f.api.setResult(async ({ mediaType, season, episode }) => {
+    assert.equal(mediaType, 'tv');
+    assert.equal(season, '2');
+    assert.equal(episode, '3');
+    const error = new Error('The episode provider is blocked.');
+    error.code = 'provider_blocked';
+    throw error;
+  });
+  const result = await f.api.source({ type: 'tv', id: '101', season: '2', episode: '3' });
+  assert.equal(downloadCalls, 0);
+  assert.equal(result.status, 'error');
+  assert.equal(result.code, 'provider_blocked');
+});
+
 test('cancellation during an unabortable adapter rejects its late success', async () => {
   const controller = new AbortController(), reason = new Error('cancelled');
   const f = fixture({ process: { env: {} }, localDownloadSitesByTitle: async () => { controller.abort(reason); return { status: 'ok', playbackUrl: 'https://media.example/movie.mp4' }; } });

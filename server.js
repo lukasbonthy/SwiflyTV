@@ -5312,7 +5312,9 @@ async function fetchApiProviderSource({ type = "movie", id = "", season = "1", e
       }
     }
 
-    if (preferred === "download-sites" || providerOrder.includes("download-sites") || process.env.LOCAL_DOWNLOAD_SITES !== "false") {
+    // Title-only download searches cannot identify the selected TV episode.
+    // Keep the automatic fallback for movies and explicitly selected adapters.
+    if (preferred === "download-sites" || providerOrder.includes("download-sites") || (mediaType === "movie" && process.env.LOCAL_DOWNLOAD_SITES !== "false")) {
       try {
         const downloadSitesResult = await localDownloadSitesByTitle({ title, year: releaseYear, mediaType, id, season, episode, attempts });
         signal?.throwIfAborted();
