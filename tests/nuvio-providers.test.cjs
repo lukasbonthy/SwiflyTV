@@ -143,6 +143,30 @@ test('all three pinned adapters run through the HTTP broker with upstream failur
     assert(requests>0,provider);
   }
 });
+test('the pinned VidSrc adapter reports working metadata and a rejected source request without upstream data',async()=>{
+  const result=await resolveNuvioProvider({provider:'vidsrc',tmdbId:'550',timeoutMs:2000,
+    fetchResource:async url=>new URL(url).hostname==='api.themoviedb.org'
+      ?new Response('{"imdb_id":"tt0137523"}')
+      :new Response('unavailable',{status:403})});
+  assert.equal(result.ok,false);
+  assert.equal(result.diagnostics.requests,2);
+  assert.equal(result.diagnostics.responses,2);
+  assert.equal(result.diagnostics.metadataStatus,200);
+  assert.equal(result.diagnostics.upstreamStatus,403);
+  assert.equal(result.diagnostics.rejectedResponses,1);
+  assert.equal(result.diagnostics.requestErrors,0);
+  assert.equal(/https?:|tt0137523|unavailable/.test(JSON.stringify(result.diagnostics)),false);
+});
+test('the pinned VidLink adapter reports a DNS failure even when it catches the request error',async()=>{
+  const result=await resolveNuvioProvider({provider:'vidlink',tmdbId:'550',timeoutMs:2000,
+    fetchResource:async()=>{throw Object.assign(new Error('private upstream error'),{code:'EAI_AGAIN'});}});
+  assert.equal(result.ok,false);
+  assert.equal(result.diagnostics.requests,1);
+  assert.equal(result.diagnostics.requestErrors,1);
+  assert.equal(result.diagnostics.dnsErrors,1);
+  assert.equal(result.diagnostics.responses,0);
+  assert.equal(JSON.stringify(result).includes('private upstream error'),false);
+});
 test('the real VidLink movie adapter uses movie endpoints rather than season one of a TV show',async()=>{
   const paths=[];
   await resolveNuvioProvider({provider:'vidlink',tmdbId:'329865',mediaType:'movie',timeoutMs:2000,
