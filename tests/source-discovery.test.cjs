@@ -371,6 +371,31 @@ test('provider timeouts also report browser startup, context creation and cleanu
   }
 });
 
+test('a stuck frame cannot prevent discovery of a later playable iframe', async t => {
+  const f = fixture(), read = deferred();
+  const n = network(f);
+  let attached = false, reads = 0;
+  const stalled = { url: () => 'https://provider.example/watch', evaluate: () => { reads++; return read.promise; }, content: async () => '' };
+  const player = { url: () => 'https://embed.example/player',
+    evaluate: async () => [{ url: 'https://media.example/movie.m3u8', type: 'hls' }], content: async () => ''
+  };
+  n.page.mainFrame = () => stalled;
+  n.page.frames = () => attached ? [stalled, player] : [stalled];
+  n.page.waitForTimeout = ms => new Promise(resolve => setTimeout(resolve, Math.min(ms, 20)));
+  n.context.close = async () => read.resolve([]);
+  const attachment = setTimeout(() => { attached = true; }, 20);
+  t.after(() => { clearTimeout(attachment); read.resolve([]); });
+  const result = await require('../lib/provider-race').runProviderRace({
+    jobs: [{ provider: 'cinezo', timeoutMs: 1000 }], timeoutMs: 1500,
+    run: (_job, { signal }) => require('../lib/provider-capture').captureProviderMedia({
+      getBrowser: async () => ({ newContext: async () => n.context }), provider: 'cinezo', url: n.page.url(),
+      signal, navigationTimeoutMs: 1000, streamTimeoutMs: 1000
+    })
+  });
+  assert.equal(result.winner?.source.url, 'https://media.example/movie.m3u8');
+  assert.equal(reads, 1, 'pending frame reads must stay deduplicated');
+});
+
 test('a verified response returns before unrelated navigation finishes', async () => {
   const f = fixture(), navigation = deferred();
   const n = network(f, { navigate: async emit => {
