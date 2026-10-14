@@ -1,4 +1,4 @@
-/* SwiflyTV movie playback: one media element, bounded lookup, local controls. */
+/* SwiflyTV playback: one media element, bounded lookup, local controls. */
 (() => {
   'use strict';
   if (window.SwiflyPlayer) return;
@@ -26,6 +26,7 @@
     let destroyed=false, suspended=false, generation=0, resolverGeneration=0, transportIntent=0;
     let managed=app.dataset.playerManaged==='true', remoteMode={enabled:managed,isHost:true};
     let phase=managed?'waiting':'loading', playable=false, source='', sourceData=null, mediaId=app.dataset.playerId, mediaType=app.dataset.playerType;
+    const mediaName = () => mediaType==='tv'?'episode':'movie';
     let hls=null,dash=null,pendingPlay=false,unlockRemote=true,resumeAt=0,retryResume=0,stallTimer=0,toastTimer=0,lookupDeadline=0,loadingKey='';
     let lastTime=0,lastBuffer=0,hlsRecovery={network:0,media:0};
     const tasks=new Set(),listeners=[],mediaListeners=[],libraryListeners=[];
@@ -33,15 +34,27 @@
     const locked = () => remoteMode.enabled && !remoteMode.isHost;
     const listen = (node,name,fn,bucket=listeners) => {node?.addEventListener(name,fn);bucket.push(()=>node?.removeEventListener(name,fn));};
     const clearListeners = bucket => {for(const remove of bucket.splice(0))remove();};
+    function revealSelectedEpisode() {
+      if(destroyed||suspended||!app.isConnected)return;
+      for(const [selector,containerSelector,horizontal] of [
+        ['[data-player-episode-link][aria-current="page"]','.svPlayerEpisodeGrid',false],
+        ['[data-player-season-link][aria-current="true"]','.svPlayerSeasons',true]
+      ]) {
+        const selected=app.querySelector(selector),container=selected?.closest(containerSelector);if(!container)continue;
+        const item=selected.getBoundingClientRect(),box=container.getBoundingClientRect();
+        if(horizontal){if(item.left<box.left||item.right>box.right)container.scrollLeft+=item.left-box.left-(box.width-item.width)/2;}
+        else if(item.top<box.top||item.bottom>box.bottom)container.scrollTop+=item.top-box.top-(box.height-item.height)/2;
+      }
+    }
     const dispatch = (name,detail) => {if(!destroyed&&app.isConnected)app.dispatchEvent(new CustomEvent('swiflyplayer:'+name,{bubbles:true,detail}));};
     const format = seconds => {const value=Math.max(0,Math.floor(number(seconds,0)));const hours=Math.floor(value/3600),minutes=Math.floor(value%3600/60),secs=value%60;return (hours?hours+':'+String(minutes).padStart(2,'0'):String(minutes))+':'+String(secs).padStart(2,'0');};
     const discoveryMessage = data => ({
       browser_unavailable:'The playback service could not start. The site owner needs to check its browser installation.',
       provider_blocked:'The video source rejected the request. Please try again later.',
-      no_source:'The video sources returned no playable movie or episode. Please try again later.',
-      busy:'Other movies are getting ready. Please try again shortly.',
-      timeout:'The movie took too long to become available. Try again in a moment.'
-    }[data?.code] || 'The movie is unavailable right now. Try again in a moment.');
+      no_source:'The video sources returned no playable '+mediaName()+'. Please try again later.',
+      busy:'Other '+mediaName()+'s are getting ready. Please try again shortly.',
+      timeout:'The '+mediaName()+' took too long to become available. Try again in a moment.'
+    }[data?.code] || 'The '+mediaName()+' is unavailable right now. Try again in a moment.');
     const cancelTasks = category => {for(const task of [...tasks])if(!category||task.category===category)task.cancel();};
     function getState() {
       return {currentTime:number(video?.currentTime,0),paused:phase==='ended'||phase==='error'||!video||video.paused,duration:video?.duration===Infinity?Infinity:number(video?.duration,0),ready:playable&&!destroyed&&!suspended,source,mediaId,type:mediaType,status:phase};
@@ -72,13 +85,14 @@
     }
     function updateControls() {
       const paused=getState().paused,play=find('play');
-      const label=phase==='ended'?'Replay movie':paused?'Play movie':'Pause movie';
+      const label=(phase==='ended'?'Replay ':paused?'Play ':'Pause ')+mediaName();
       play.setAttribute('aria-label',label);play.title=label;
+      stage.setAttribute('aria-label',mediaType==='tv'?'Episode player':'Movie player');find('seek').setAttribute('aria-label','Seek through '+mediaName());
       play.querySelector('.svPlayerIcon path')?.setAttribute('d',paused?'m9 5 11 7-11 7V5Z':'M8 5v14M16 5v14');
       for(const name of ['play','backward','forward'])find(name).disabled=!playable||locked();
       find('retry').disabled=locked();find('speed').disabled=remoteMode.enabled;
       find('volume').value=String(video.muted?0:video.volume);
-      const mute=find('mute');mute.setAttribute('aria-label',video.muted?'Unmute movie':'Mute movie');mute.title=video.muted?'Unmute movie':'Mute movie';mute.setAttribute('aria-pressed',String(video.muted));
+      const mute=find('mute'),muteLabel=(video.muted?'Unmute ':'Mute ')+mediaName();mute.setAttribute('aria-label',muteLabel);mute.title=muteLabel;mute.setAttribute('aria-pressed',String(video.muted));
       find('transport-note').textContent=remoteMode.enabled?(locked()?'Your host controls playback. Your volume and captions are yours.':'You control playback for everyone in this party.'):'Settle in. The rest can wait.';
       app.dataset.playerRemote=remoteMode.enabled?'true':'false';app.dataset.playerHost=remoteMode.isHost?'true':'false';updateTime();
     }
@@ -86,9 +100,9 @@
       phase=next;app.dataset.playerState=next;
       const visible=['loading','waiting','buffering','error'].includes(next);
       statusPanel.hidden=!visible;stage.setAttribute('aria-busy',String(next==='loading'||next==='buffering'));
-      find('status-title').textContent=title||({loading:'Getting your movie ready',waiting:'Waiting for your party',buffering:'Buffering…',error:'This movie couldn’t start.'}[next]||'');
+      find('status-title').textContent=title||({loading:'Getting your '+mediaName()+' ready',waiting:'Waiting for your party',buffering:'Buffering…',error:'This '+mediaName()+' couldn’t start.'}[next]||'');
       find('status-copy').textContent=copy||({loading:'Making your seat comfortable. This should only take a moment.',waiting:'Your host will choose when to start.',buffering:'Playback will continue as soon as the next scene is ready.'}[next]||'');
-      find('status-label').textContent=next==='error'?'PLAYBACK UNAVAILABLE':next==='buffering'?'ONE MOMENT':'YOUR MOVIE NIGHT';
+      find('status-label').textContent=next==='error'?'PLAYBACK UNAVAILABLE':next==='buffering'?'ONE MOMENT':mediaType==='tv'?'YOUR EPISODE':'YOUR MOVIE NIGHT';
       find('retry').hidden=next!=='error';updateControls();emitState();
     }
     function stopWatchdog() {clearTimeout(stallTimer);stallTimer=0;}
@@ -117,7 +131,7 @@
       const known=['browser_unavailable','provider_blocked','no_source','unavailable','busy','timeout'];
       const code=known.includes(sourceCode)?sourceCode:'playback_error';
       app.dataset.playerFailureCode=code;
-      setStatus('error','This movie couldn’t start.',message||'The movie is unavailable right now. Try again in a moment.');
+      setStatus('error','This '+mediaName()+' couldn’t start.',message||'The '+mediaName()+' is unavailable right now. Try again in a moment.');
       find('status-label').textContent='PLAYBACK UNAVAILABLE · '+code.replaceAll('_',' ').toUpperCase();
       dispatch('source-failure',{code,mediaType,hasPlayableSource:Boolean(source)});
     }
@@ -186,15 +200,29 @@
       listen(current,'play',guard(()=>{updateControls();if(playable)watchProgress();emitState();}),mediaListeners);
       listen(current,'pause',guard(()=>{if(playable)stopWatchdog();if(playable&&phase!=='ended')setStatus('ready');else updateControls();emitState();}),mediaListeners);
       listen(current,'ended',guard(()=>{stopWatchdog();try{current.pause();}catch{}setStatus('ended');}),mediaListeners);
-      const waiting=guard(()=>{if(playable)setStatus('buffering');watchProgress();});
+      const waiting=guard(event=>{
+        if(playable){
+          // A download stall can occur while buffered video is still playing.
+          if(current.paused||current.ended||(event.type==='stalled'&&current.readyState>=3))return;
+          lastTime=number(current.currentTime,0);setStatus('buffering');
+        }
+        watchProgress();
+      });
       listen(current,'waiting',waiting,mediaListeners);listen(current,'stalled',waiting,mediaListeners);
       listen(current,'seeking',guard(()=>{if(playable){setStatus('buffering');watchProgress();}}),mediaListeners);
       listen(current,'seeked',guard(()=>{if(playable&&current.readyState>=2){setStatus('ready');if(current.paused)stopWatchdog();else watchProgress();}updateTime();emitState();}),mediaListeners);
-      listen(current,'timeupdate',guard(()=>{const time=number(current.currentTime,0);if(Math.abs(time-lastTime)>.1){lastTime=time;if(!current.paused||phase==='buffering')watchProgress({renew:true});}updateTime();emitState();}),mediaListeners);
+      listen(current,'timeupdate',guard(()=>{
+        const time=number(current.currentTime,0),advance=time-lastTime;
+        if(Math.abs(advance)>.1){
+          lastTime=time;if(!current.paused||phase==='buffering')watchProgress({renew:true});
+          if(playable&&!current.paused&&!current.seeking&&advance>.1&&phase==='buffering')setStatus('ready');
+        }
+        updateTime();emitState();
+      }),mediaListeners);
       listen(current,'progress',guard(()=>{const end=bufferedEnd();if(end>lastBuffer+.1){lastBuffer=end;if(stallTimer)watchProgress({renew:true});}updateTime();}),mediaListeners);
       listen(current,'volumechange',guard(updateControls),mediaListeners);
       listen(current,'ratechange',guard(()=>{find('speed').value=String(current.playbackRate);emitState();}),mediaListeners);
-      listen(current,'error',guard(()=>{const code=current.error?.code;if(code===1)return;fail(code===3||code===4?'This browser could not play the movie’s format. Try another browser, or retry playback.':'The movie connection was interrupted. Check your connection, then try again.');}),mediaListeners);
+      listen(current,'error',guard(()=>{const code=current.error?.code;if(code===1)return;fail(code===3||code===4?'This browser could not play the '+mediaName()+'’s format. Try another browser, or retry playback.':'The '+mediaName()+' connection was interrupted. Check your connection, then try again.');}),mediaListeners);
       if(current.textTracks?.addEventListener)listen(current.textTracks,'addtrack',guard(updateCaptions),mediaListeners);
     }
     async function loadSource(data,{resumeAt:position=0}={}) {
@@ -207,7 +235,7 @@
       }
       if(['error','disabled','idle'].includes(data?.status)){fail(discoveryMessage(data),data?.code);return false;}
       const next=chooseSource(data);
-      if(!next){fail('The movie is unavailable right now. Try again in a moment.');return false;}
+      if(!next){fail('The '+mediaName()+' is unavailable right now. Try again in a moment.');return false;}
       const nextId=String(data.movieId||data.mediaId||mediaId),nextType=data.type==='tv'?'tv':data.type==='movie'?'movie':mediaType;
       if(next===source&&nextId===mediaId&&nextType===mediaType&&sourceData&&phase!=='error'){
         if(position>0)seek(position,{remote:true});return true;
@@ -228,19 +256,19 @@
             if(!error.fatal)return;
             if(error.type===Hls.ErrorTypes.MEDIA_ERROR&&hlsRecovery.media++===0){setStatus('buffering');instance.recoverMediaError();watchProgress();return;}
             if(error.type===Hls.ErrorTypes.NETWORK_ERROR&&hlsRecovery.network++===0){setStatus('buffering');instance.startLoad();watchProgress();return;}
-            fail(error.type===Hls.ErrorTypes.MEDIA_ERROR?'This browser could not play the movie’s format. Try another browser, or retry playback.':'The movie connection was interrupted. Check your connection, then try again.');
+            fail(error.type===Hls.ErrorTypes.MEDIA_ERROR?'This browser could not play the '+mediaName()+'’s format. Try another browser, or retry playback.':'The '+mediaName()+' connection was interrupted. Check your connection, then try again.');
           });
           instance.loadSource(next);instance.attachMedia(video);
         }else if(kind==='dash'){
           const library=await loadLibrary('dash');if(!alive(token))return false;
           dash=library.MediaPlayer().create();const instance=dash,events=library.MediaPlayer.events||{};
           const subscribe=(name,fn)=>{if(!name)return;const callback=event=>{if(alive(token)&&dash===instance)fn(event);};instance.on(name,callback);libraryListeners.push(()=>instance.off?.(name,callback));};
-          subscribe(events.STREAM_INITIALIZED,()=>{updateQuality();updateCaptions();});subscribe(events.TEXT_TRACKS_ADDED,updateCaptions);subscribe(events.ERROR,()=>fail('The movie could not load. Check your connection, then retry playback.'));
+          subscribe(events.STREAM_INITIALIZED,()=>{updateQuality();updateCaptions();});subscribe(events.TEXT_TRACKS_ADDED,updateCaptions);subscribe(events.ERROR,()=>fail('The '+mediaName()+' could not load. Check your connection, then retry playback.'));
           instance.initialize(video,next,false);
         }else {video.src=next;video.load();}
         return true;
       } catch(error) {
-        if(alive(token))fail(error.message==='unsupported'?'This browser does not support this movie format. Try another browser.':'Playback could not load. Check your connection or browser blockers, then try again.');return false;
+        if(alive(token))fail(error.message==='unsupported'?'This browser does not support this '+mediaName()+' format. Try another browser.':'Playback could not load. Check your connection or browser blockers, then try again.');return false;
       }
     }
     function requestJson(url,timeout) {
@@ -265,7 +293,7 @@
       const query=new URLSearchParams();if(mediaType==='tv'){query.set('season',app.dataset.playerSeason||'1');query.set('episode',app.dataset.playerEpisode||'1');}if(app.dataset.playerProvider)query.set('provider',app.dataset.playerProvider);
       const endpoint='/api/proxy-video-wait/'+encodeURIComponent(mediaType)+'/'+encodeURIComponent(mediaId);
       while(!destroyed&&!suspended&&app.isConnected&&token===resolverGeneration){
-        if(Date.now()>=lookupDeadline){fail('The movie took too long to become available. Try again in a moment.');return false;}
+        if(Date.now()>=lookupDeadline){fail('The '+mediaName()+' took too long to become available. Try again in a moment.');return false;}
         const requestQuery=new URLSearchParams(query);if(retry&&first)requestQuery.set('retry','1');first=false;
         try {
           const waitMs=Math.max(0,Math.min(8000,config.request-1000,lookupDeadline-Date.now()-1000));
@@ -287,7 +315,7 @@
           }
           if(data?.status!=='loading'){fail(discoveryMessage(data),data?.code);return false;}
           const serverDeadline=deadlineForSnapshot(data,lookupDeadline);lookupDeadline=Math.min(lookupDeadline,serverDeadline);
-          const remaining=lookupDeadline-Date.now();if(remaining<=0){fail('The movie took too long to become available. Try again in a moment.');return false;}
+          const remaining=lookupDeadline-Date.now();if(remaining<=0){fail('The '+mediaName()+' took too long to become available. Try again in a moment.');return false;}
           const interval=Math.min(config.pollMax,Math.max(config.pollMin,number(data.retryAfterMs,700)));if(!await waitPoll(Math.min(interval,remaining)))return false;
         }catch(error){
           if(token!==resolverGeneration||destroyed||suspended)return false;
@@ -297,7 +325,7 @@
             if(!await waitPoll(pause))return false;
             continue;
           }
-          fail('The movie connection did not respond. Check your connection, then try again.');return false;
+          fail('The '+mediaName()+' connection did not respond. Check your connection, then try again.');return false;
         }
       }return false;
     }
@@ -307,7 +335,7 @@
       const token=generation,current=video,intent=++transportIntent;
       if(phase==='ended'){try{current.currentTime=range()?.start||0;}catch{}}
       try {await current.play();if(!alive(token)||video!==current||intent!==transportIntent||(!remote&&locked()))return false;find('unlock').hidden=true;clearTimeout(toastTimer);toastTimer=0;find('toast').hidden=true;if(!remote)dispatch('action',{action:'play',time:number(current.currentTime,0)});updateControls();return true;}
-      catch(error){if(!alive(token)||intent!==transportIntent)return false;if(error?.name==='NotAllowedError'){unlockRemote=remote;find('unlock').querySelector('span').textContent=remoteMode.enabled&&remote?'Join playback':'Play movie';find('unlock').hidden=false;stopWatchdog();setStatus('ready');}else if(error?.name!=='AbortError')fail('Playback could not begin. Try again in a moment.');return false;}
+      catch(error){if(!alive(token)||intent!==transportIntent)return false;if(error?.name==='NotAllowedError'){unlockRemote=remote;find('unlock').querySelector('span').textContent=remoteMode.enabled&&remote?'Join playback':'Play '+mediaName();find('unlock').hidden=false;stopWatchdog();setStatus('ready');}else if(error?.name!=='AbortError')fail('Playback could not begin. Try again in a moment.');return false;}
     }
     function pause({remote=false}={}) {
       if(destroyed||suspended||(!remote&&locked()))return false;transportIntent++;pendingPlay=false;find('unlock').hidden=true;const changed=!getState().paused;video.pause();if(playable)stopWatchdog();updateControls();if(changed&&!remote)dispatch('action',{action:'pause',time:number(video.currentTime,0)});return true;
@@ -327,7 +355,7 @@
       try {if(document.fullscreenElement)await document.exitFullscreen();else if(stage.requestFullscreen)await stage.requestFullscreen();else if(video.webkitEnterFullscreen)video.webkitEnterFullscreen();}catch{showToast('Fullscreen is unavailable in this browser.');}
     }
     async function pictureInPicture() {
-      try {if(document.pictureInPictureElement)await document.exitPictureInPicture();else if(playable&&video.requestPictureInPicture)await video.requestPictureInPicture();}catch{showToast('Picture in picture is unavailable for this movie.');}
+      try {if(document.pictureInPictureElement)await document.exitPictureInPicture();else if(playable&&video.requestPictureInPicture)await video.requestPictureInPicture();}catch{showToast('Picture in picture is unavailable for this '+mediaName()+'.');}
     }
     function keyboard(event) {
       if(event.defaultPrevented||event.altKey||event.ctrlKey||event.metaKey||!stage.contains(event.target)||document.querySelector('dialog[open]'))return;
@@ -373,6 +401,7 @@
     });
     video.controls=false;controls.hidden=false;find('fullscreen').hidden=!(stage.requestFullscreen||video.webkitEnterFullscreen);
     find('pip').hidden=!(document.pictureInPictureEnabled&&video.requestPictureInPicture);updateControls();
+    revealSelectedEpisode();listen(window,'resize',revealSelectedEpisode);
     if(managed)setStatus('waiting');else resolve();
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();

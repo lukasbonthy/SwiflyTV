@@ -87,10 +87,10 @@ test('a failed preferred capture hands off immediately before the hedge delay', 
 test('Nuvio failure counters survive the race while upstream details remain excluded',async()=>{
   const f=fixture();
   const result=await f.race({jobs:[{provider:'nuvio-vidsrc'}],now:f.now,run:async()=>({
-    ok:false,code:'no_source',diagnostics:{requests:2,responses:2,rejectedResponses:1,requestErrors:0,dnsErrors:0,metadataStatus:200,upstreamStatus:403,
+    ok:false,code:'no_source',diagnostics:{requests:2,responses:2,rejectedResponses:1,protectionClips:1,requestErrors:0,dnsErrors:0,metadataStatus:200,upstreamStatus:403,
       url:'https://upstream.example/private',headers:{Authorization:'secret'},body:'secret',candidates:0}
   })});
-  assert.deepEqual({...result.results[0].diagnostics},{requests:2,responses:2,rejectedResponses:1,candidates:0,requestErrors:0,dnsErrors:0,metadataStatus:200,upstreamStatus:403});
+  assert.deepEqual({...result.results[0].diagnostics},{requests:2,responses:2,rejectedResponses:1,protectionClips:1,candidates:0,requestErrors:0,dnsErrors:0,metadataStatus:200,upstreamStatus:403});
   assert.equal(JSON.stringify(result).includes('secret'),false);
   assert.equal(JSON.stringify(result).includes('upstream.example'),false);
 });

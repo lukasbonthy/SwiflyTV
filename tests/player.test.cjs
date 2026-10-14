@@ -14,8 +14,8 @@ const ranges = values => ({length:values.length,start:i=>values[i][0],end:i=>val
 function setup(options={}, customize=()=>{}) {
   const dom=new JSDOM('<!doctype html><html><body class="svCleanShell">'+markup({...base,...options})+'</body></html>',{url:'https://swifly.test/watch/movie/42',runScripts:'outside-only',pretendToBeVisual:true,virtualConsole:new VirtualConsole()});
   const w=dom.window,d=w.document,states=new WeakMap(),timers=new Map();let id=0,now=1800000000000;
-  const state=v=>{if(!states.has(v))states.set(v,{paused:true,currentTime:0,duration:NaN,readyState:0,ended:false,volume:1,muted:false,playbackRate:1,buffered:ranges([]),seekable:ranges([]),textTracks:[],error:null});return states.get(v);};
-  for(const name of ['paused','currentTime','duration','readyState','ended','volume','muted','playbackRate','buffered','seekable','textTracks','error'])Object.defineProperty(w.HTMLMediaElement.prototype,name,{configurable:true,get(){return state(this)[name];},set(value){state(this)[name]=value;if(['volume','muted'].includes(name))this.dispatchEvent(new w.Event('volumechange'));}});
+  const state=v=>{if(!states.has(v))states.set(v,{paused:true,currentTime:0,duration:NaN,readyState:0,ended:false,seeking:false,volume:1,muted:false,playbackRate:1,buffered:ranges([]),seekable:ranges([]),textTracks:[],error:null});return states.get(v);};
+  for(const name of ['paused','currentTime','duration','readyState','ended','seeking','volume','muted','playbackRate','buffered','seekable','textTracks','error'])Object.defineProperty(w.HTMLMediaElement.prototype,name,{configurable:true,get(){return state(this)[name];},set(value){state(this)[name]=value;if(['volume','muted'].includes(name))this.dispatchEvent(new w.Event('volumechange'));}});
   w.HTMLMediaElement.prototype.load=function(){};
   w.HTMLMediaElement.prototype.play=function(){state(this).paused=false;state(this).ended=false;this.dispatchEvent(new w.Event('play'));this.dispatchEvent(new w.Event('playing'));return Promise.resolve();};
   w.HTMLMediaElement.prototype.pause=function(){const playing=!state(this).paused;state(this).paused=true;if(playing)this.dispatchEvent(new w.Event('pause'));};
@@ -104,6 +104,18 @@ test('HLS uses the proxy URL, real rendition metadata and finite fatal recovery'
   const q=e.d.querySelector('[data-player-quality]');assert(q.querySelector('option[value="1"]').textContent.includes('1080'));q.value='1';q.dispatchEvent(new e.w.Event('change',{bubbles:true}));assert.equal(h.currentLevel,1);
   h.emit(Hls.Events.ERROR,{fatal:true,type:Hls.ErrorTypes.MEDIA_ERROR});assert.equal(h.recoveries,1);h.emit(Hls.Events.ERROR,{fatal:true,type:Hls.ErrorTypes.MEDIA_ERROR});assert.equal(e.app.dataset.playerState,'error');assert.equal(h.destroyed,true);
 });
+test('Episode HLS playback uses episode copy and accessible labels throughout playback',async()=>{
+  let Hls;const e=setup({type:'tv',season:2,episode:4},e=>Hls=hlsMock(e.w));await e.api.loadSource({status:'ok',hlsProxyUrl:'/protected/episode.m3u8',type:'tv'});
+  assert.equal(Hls.instances[0].url,'/protected/episode.m3u8');assert.equal(e.api.getState().type,'tv');assert.equal(e.d.querySelector('[data-player-status-title]').textContent,'Getting your episode ready');assert.equal(e.d.querySelector('[data-player-status-label]').textContent,'YOUR EPISODE');
+  assert.equal(e.d.querySelector('[data-player-stage]').getAttribute('aria-label'),'Episode player');assert.equal(e.d.querySelector('[data-player-seek]').getAttribute('aria-label'),'Seek through episode');e.ready();assert.equal(e.d.querySelector('[data-player-play]').getAttribute('aria-label'),'Play episode');
+  await e.api.play();assert.equal(e.d.querySelector('[data-player-play]').getAttribute('aria-label'),'Pause episode');e.video().muted=true;assert.equal(e.d.querySelector('[data-player-mute]').getAttribute('aria-label'),'Unmute episode');e.event('ended');assert.equal(e.d.querySelector('[data-player-play]').getAttribute('aria-label'),'Replay episode');
+  e.video().play=()=>Promise.reject(Object.assign(new Error('Gesture required'),{name:'NotAllowedError'}));await e.api.play();assert.equal(e.d.querySelector('[data-player-unlock] span').textContent,'Play episode');
+  await e.api.loadSource({status:'error',code:'timeout'});assert.equal(e.d.querySelector('[data-player-status-title]').textContent,'This episode couldn’t start.');assert.match(e.d.querySelector('[data-player-status-copy]').textContent,/episode.*too long/i);assert.doesNotMatch(e.d.querySelector('[data-player-status-copy]').textContent,/movie/i);
+});
+test('Runtime player labels follow the media type of replacement sources',async()=>{
+  const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/episode.mp4',type:'tv'});e.ready();assert.equal(e.d.querySelector('[data-player-play]').getAttribute('aria-label'),'Play episode');assert.equal(e.d.querySelector('[data-player-mute]').getAttribute('aria-label'),'Mute episode');assert.equal(e.d.querySelector('[data-player-stage]').getAttribute('aria-label'),'Episode player');
+  await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4',type:'movie'});e.ready();assert.equal(e.d.querySelector('[data-player-play]').getAttribute('aria-label'),'Play movie');assert.equal(e.d.querySelector('[data-player-mute]').getAttribute('aria-label'),'Mute movie');assert.equal(e.d.querySelector('[data-player-stage]').getAttribute('aria-label'),'Movie player');assert.equal(e.d.querySelector('[data-player-seek]').getAttribute('aria-label'),'Seek through movie');
+});
 test('A blocked playback script ends with Retry and releases its script and timers',async()=>{
   const e=setup();const pending=e.api.loadSource({status:'ok',playbackUrl:'/movie.m3u8'});await flush();const loader=e.d.querySelector('script[data-player-library]');assert(loader,'Playback libraries should load only when required');await e.advance(110);await pending;
   assert.equal(e.app.dataset.playerState,'error');assert.equal(e.d.querySelector('script[data-player-library]'),null);assert.equal(e.timers.size,0);
@@ -137,6 +149,31 @@ test('Repeated waiting events cannot renew a stall deadline without real media p
 });
 test('Real buffered progress renews a stall deadline and paused ready movies need no watchdog',async()=>{
   const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();await e.advance(300);assert.equal(e.app.dataset.playerState,'ready');await e.api.play();e.event('waiting');await e.advance(130);e.state(e.video()).buffered=ranges([[0,20]]);e.event('progress');await e.advance(130);assert.equal(e.app.dataset.playerState,'buffering');await e.advance(80);assert.equal(e.app.dataset.playerState,'error');
+});
+for(const name of ['waiting','stalled'])test('Paused ready media ignores background '+name+' events',async()=>{
+  const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();e.event(name);
+  assert.equal(e.app.dataset.playerState,'ready');assert.equal(e.d.querySelector('[data-player-status]').hidden,true);assert.equal(e.d.querySelector('[data-player-stage]').getAttribute('aria-busy'),'false');
+  await e.advance(300);assert.equal(e.api.getState().ready,true);assert.equal(e.app.dataset.playerState,'ready');assert.equal(e.timers.size,0);
+});
+test('A download stall leaves buffered playback visible while its playback watchdog remains active',async()=>{
+  const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();Object.assign(e.state(e.video()),{currentTime:10,buffered:ranges([[0,60]])});await e.api.play();e.event('timeupdate');e.event('stalled');
+  assert.equal(e.app.dataset.playerState,'ready');assert.equal(e.d.querySelector('[data-player-status]').hidden,true);assert.equal(e.d.querySelector('[data-player-stage]').getAttribute('aria-busy'),'false');
+  await e.advance(130);e.state(e.video()).currentTime=11;e.event('timeupdate');await e.advance(130);assert.equal(e.app.dataset.playerState,'ready');await e.advance(80);assert.equal(e.app.dataset.playerState,'error');
+});
+test('Advancing playback dismisses buffering without another readiness event',async()=>{
+  const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();await e.api.play();Object.assign(e.state(e.video()),{currentTime:10,readyState:2});e.event('waiting');e.event('timeupdate');
+  assert.equal(e.app.dataset.playerState,'buffering','An unchanged playback position cannot claim recovery');assert.equal(e.d.querySelector('[data-player-status]').hidden,false);
+  await e.advance(130);Object.assign(e.state(e.video()),{currentTime:11,readyState:3});e.event('timeupdate');
+  assert.equal(e.app.dataset.playerState,'ready');assert.equal(e.d.querySelector('[data-player-status]').hidden,true);assert.equal(e.d.querySelector('[data-player-stage]').getAttribute('aria-busy'),'false');
+  await e.advance(130);assert.equal(e.app.dataset.playerState,'ready');await e.advance(80);assert.equal(e.app.dataset.playerState,'error','Resuming playback must retain a bounded watchdog');
+});
+test('A stall without future playback data shows buffering and ends at its original deadline',async()=>{
+  const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();await e.api.play();e.state(e.video()).readyState=2;e.event('stalled');assert.equal(e.app.dataset.playerState,'buffering');
+  await e.advance(130);e.event('stalled');await e.advance(80);assert.equal(e.app.dataset.playerState,'error');assert.equal(e.api.getState().ready,false);
+});
+test('Seeking position changes keep buffering visible until playback advances after the seek',async()=>{
+  const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();await e.api.play();Object.assign(e.state(e.video()),{currentTime:20,readyState:2,seeking:true});e.event('seeking');e.event('timeupdate');assert.equal(e.app.dataset.playerState,'buffering');
+  Object.assign(e.state(e.video()),{currentTime:21,readyState:3,seeking:false});e.event('timeupdate');assert.equal(e.app.dataset.playerState,'ready');
 });
 test('Replacing a source detaches old video callbacks and deferred play completions',async()=>{
   const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/first.mp4'});e.ready();const old=e.video();let completed;old.play=()=>new Promise(resolve=>completed=resolve);const pending=e.api.play();await e.api.loadSource({status:'ok',playbackUrl:'/second.mp4'});completed();await pending;Object.assign(e.state(old),{readyState:3,duration:120});e.event('canplay',old);e.state(old).error={code:4};e.event('error',old);

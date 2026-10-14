@@ -13,6 +13,34 @@ const paths = {
 const icon = name => `<svg class="svPlayerIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[name]}"/></svg>`;
 const button = (attribute, name, glyph, extra='') => `<button type="button" class="dsIconBtn svPlayerControl" ${attribute} aria-label="${name}" title="${name}" ${extra}>${icon(glyph)}</button>`;
 
+function episodePickerMarkup(options={}) {
+  const season=Math.max(1,parseInt(options.season,10)||1),episode=Math.max(1,parseInt(options.episode,10)||1);
+  const rows=new Map((Array.isArray(options.episodes)?options.episodes:[]).filter(row=>Number.isSafeInteger(row.episode_number)&&row.episode_number>0).map(row=>[row.episode_number,row]));
+  let count=Math.max(1,Number(options.episodeCount)||1,episode);
+  for(const number of rows.keys())count=Math.max(count,number);
+  count=Math.floor(Math.min(Number.MAX_SAFE_INTEGER,count));
+  const seasons=(Array.isArray(options.seasons)?options.seasons:[]).filter(row=>Number.isSafeInteger(row.season_number)&&row.season_number>0).slice(0,40);
+  const link=(s,e)=>`/watch/tv/${encodeURIComponent(String(options.id||''))}?`+new URLSearchParams({mode:'movie',s:String(s),e:String(e),...(options.provider?{provider:String(options.provider)}:{})});
+  const step=(attribute,e,label,glyph)=>e<1||e>count
+    ?`<button type="button" class="dsSecondaryBtn svPlayerEpisodeStep" ${attribute} disabled aria-label="${label}">${icon(glyph)}<span>${label}</span></button>`
+    :`<a class="dsSecondaryBtn svPlayerEpisodeStep" ${attribute} href="${escape(link(season,e))}" aria-label="${label}">${icon(glyph)}<span>${label}</span></a>`;
+  const selected=rows.get(episode),first=Math.max(1,Math.min(episode-20,count-199)),shown=Math.min(200,count);
+  const episodes=Array.from({length:shown},(_,index)=>{
+    const number=first+index,row=rows.get(number),name=String(row?.name||`Episode ${number}`),still=mediaUrl(row?.still);
+    const runtime=Number(row?.runtime)>0&&Number.isFinite(Number(row.runtime))?`${Math.round(Number(row.runtime))} min`:'';
+    return `<a class="svPlayerEpisode${number===episode?' active':''}" data-player-episode-link href="${escape(link(season,number))}" ${number===episode?'aria-current="page"':''} aria-label="${escape(`Play season ${season}, episode ${number}: ${name}`)}">
+      <span class="svPlayerEpisodeThumb">${still?`<img src="${escape(still)}" loading="lazy" decoding="async" alt=""/>`:icon('film')}<b>${String(number).padStart(2,'0')}</b></span>
+      <span class="svPlayerEpisodeText"><span class="svPlayerEpisodeKicker">Episode ${number}${runtime?`<span aria-hidden="true"> · </span>${runtime}`:''}</span><strong>${escape(name)}</strong>${number===episode?'<span class="svPlayerEpisodeSelected">Selected</span>':''}</span>
+      <span class="svPlayerEpisodePlay" aria-hidden="true">${icon('play')}</span></a>`;
+  }).join('');
+  return `<section class="svPlayerEpisodes svGlassSurface svGlassPanel" aria-labelledby="svPlayerEpisodesTitle">
+    <div class="svPlayerEpisodesHead"><div><span class="svPlayerEyebrow">THIS SERIES</span><h2 id="svPlayerEpisodesTitle">Episodes</h2><p>Season ${season} · Episode ${episode}${selected?.name?` — ${escape(selected.name)}`:''}</p></div>
+      <nav class="svPlayerEpisodeSteps" aria-label="Episode navigation">${step('data-player-episode-previous',episode-1,'Previous episode','back')}${step('data-player-episode-next',episode+1,'Next episode','forward')}</nav></div>
+    ${seasons.length?`<nav class="svPlayerSeasons" aria-label="Seasons">${seasons.map(row=>`<a class="dsSecondaryBtn svPlayerSeason${row.season_number===season?' active':''}" data-player-season-link href="${escape(link(row.season_number,1))}" ${row.season_number===season?'aria-current="true"':''}>Season ${row.season_number}</a>`).join('')}</nav>`:''}
+    <nav class="svPlayerEpisodeGrid" aria-label="Season ${season} episodes">${episodes}</nav>
+  </section>`;
+}
+
 function playerMarkup(options = {}) {
   const type = options.type === 'tv' ? 'tv' : 'movie';
   const mode = options.mode === 'trailer' ? 'trailer' : 'movie';
@@ -25,26 +53,27 @@ function playerMarkup(options = {}) {
   const watchUrl = `/watch/${type}/${encodeURIComponent(id)}`;
   const query = (choice) => '?' + new URLSearchParams({mode:choice,... (type==='tv' ? {s:String(season),e:String(episode)} : {}), ...(options.provider ? {provider:String(options.provider)} : {})}).toString();
   const episodeCopy = type === 'tv' ? `Season ${season} · Episode ${episode}` : 'Movie';
+  const mediaNoun=type==='tv'?'episode':'movie';
   const meta = [options.year,episodeCopy,mode==='trailer' ? 'Official trailer' : 'Now watching'].filter(Boolean).map(escape).join('<span aria-hidden="true">·</span>');
-  const statusTitle = options.managed ? 'Waiting for your party' : 'Getting your movie ready';
+  const statusTitle = options.managed ? 'Waiting for your party' : `Getting your ${mediaNoun} ready`;
   const statusCopy = options.managed ? 'Your host will choose when to start.' : 'Making your seat comfortable. This should only take a moment.';
-  const movieSurface = `<div class="svPlayerStage" data-player-stage tabindex="0" role="group" aria-label="Movie player" aria-describedby="svPlayerTransportNote">
+  const movieSurface = `<div class="svPlayerStage" data-player-stage tabindex="0" role="group" aria-label="${type==='tv'?'Episode':'Movie'} player" aria-describedby="svPlayerTransportNote">
     ${backdrop ? `<img class="svPlayerScene" data-player-art src="${escape(backdrop)}" alt="" aria-hidden="true"/>` : ''}
     <video class="svPlayerVideo" data-player-video controls playsinline preload="metadata" ${poster ? `poster="${escape(backdrop || poster)}"` : ''} aria-label="${escape(title)}"></video>
     <div class="svPlayerShade" aria-hidden="true"></div>
     <div class="svPlayerStatus" data-player-status role="status" aria-live="polite" aria-atomic="true">
       <span class="svPlayerStatusMark" data-player-status-mark aria-hidden="true">${icon('film')}</span>
-      <span class="svPlayerEyebrow" data-player-status-label>YOUR MOVIE NIGHT</span>
+      <span class="svPlayerEyebrow" data-player-status-label>${type==='tv'?'YOUR EPISODE':'YOUR MOVIE NIGHT'}</span>
       <h2 data-player-status-title>${statusTitle}</h2><p data-player-status-copy>${statusCopy}</p>
       <button type="button" class="dsPrimaryBtn svPlayerRetry" data-player-retry hidden>${icon('retry')}Retry playback</button>
     </div>
-    <div class="svPlayerDock" data-player-controls hidden>
-      <div class="svPlayerTimeline"><div class="svPlayerTimelineTrack" aria-hidden="true"><i data-player-buffered></i><b data-player-progress></b></div><input data-player-seek type="range" min="0" max="0" step="0.1" value="0" aria-label="Seek through movie" aria-valuetext="0:00" disabled/></div>
+    <div class="svPlayerDock svGlassSurface svGlassPanel" data-player-controls hidden>
+      <div class="svPlayerTimeline"><div class="svPlayerTimelineTrack" aria-hidden="true"><i data-player-buffered></i><b data-player-progress></b></div><input data-player-seek type="range" min="0" max="0" step="0.1" value="0" aria-label="Seek through ${mediaNoun}" aria-valuetext="0:00" disabled/></div>
       <div class="svPlayerDockRow"><div class="svPlayerTransport">
-        ${button('data-player-play','Play movie','play','disabled')}${button('data-player-backward','Back 10 seconds','rewind','disabled')}${button('data-player-forward','Forward 10 seconds','forward','disabled')}
+        ${button('data-player-play',`Play ${mediaNoun}`,'play','disabled')}${button('data-player-backward','Back 10 seconds','rewind','disabled')}${button('data-player-forward','Forward 10 seconds','forward','disabled')}
         <span class="svPlayerTime"><span data-player-current>0:00</span><span aria-hidden="true">/</span><span data-player-duration>—</span></span>
       </div><div class="svPlayerTools">
-        <details class="svPlayerPopover svPlayerVolume" data-player-volume-menu><summary class="dsIconBtn svPlayerControl" aria-label="Volume" title="Volume">${icon('volume')}</summary><div class="svPlayerPopoverBody"><label for="svPlayerVolume">Volume</label><input id="svPlayerVolume" data-player-volume type="range" min="0" max="1" step="0.01" value="1" aria-label="Volume"/>${button('data-player-mute','Mute movie','mute')}</div></details>
+        <details class="svPlayerPopover svPlayerVolume" data-player-volume-menu><summary class="dsIconBtn svPlayerControl" aria-label="Volume" title="Volume">${icon('volume')}</summary><div class="svPlayerPopoverBody"><label for="svPlayerVolume">Volume</label><input id="svPlayerVolume" data-player-volume type="range" min="0" max="1" step="0.01" value="1" aria-label="Volume"/>${button('data-player-mute',`Mute ${mediaNoun}`,'mute')}</div></details>
         <details class="svPlayerPopover" data-player-settings><summary class="dsIconBtn svPlayerControl" aria-label="Playback settings" title="Playback settings">${icon('settings')}</summary><div class="svPlayerPopoverBody svPlayerSettingsBody">
           <label for="svPlayerQuality">Picture quality<select id="svPlayerQuality" data-player-quality disabled><option value="-1">Original</option></select></label>
           <label for="svPlayerSpeed">Playback speed<select id="svPlayerSpeed" data-player-speed><option value="0.5">0.5×</option><option value="0.75">0.75×</option><option value="1" selected>Normal</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option></select></label>
@@ -58,16 +87,17 @@ function playerMarkup(options = {}) {
   </div>`;
   const trailerSurface = `<div class="svPlayerStage svPlayerStage--trailer">${trailer ? `<iframe class="svPlayerTrailer" src="${escape(trailer)}" title="${escape(title)} — official trailer" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>` : `<div class="svPlayerStatus"><span class="svPlayerEyebrow">OFFICIAL TRAILER</span><h2>There isn’t a trailer here yet.</h2><p>You can return to the movie when you’re ready.</p><a class="dsPrimaryBtn" href="${escape(watchUrl+query('movie'))}">Watch ${type==='tv'?'episode':'movie'}</a></div>`}</div>`;
   return `<main class="svPlayerPage" data-player-id="${escape(id)}" data-player-type="${type}" data-player-season="${season}" data-player-episode="${episode}" data-player-provider="${escape(options.provider || '')}" data-player-mode="${mode}" data-player-managed="${options.managed ? 'true':'false'}" data-player-state="${mode==='trailer'?'trailer':options.managed?'waiting':'loading'}">
+    ${type==='tv'&&backdrop?`<div class="svPlayerAmbient" aria-hidden="true"><img src="${escape(backdrop)}" alt=""/></div>`:''}
     <header class="svPlayerPageHead"><a class="dsSecondaryBtn svPlayerBack" href="${escape(detailUrl)}" data-sv-player-back>${icon('back')}<span>Back to details</span></a>
-      <nav class="svPlayerModes" aria-label="Watch mode"><a data-player-mode-link class="${mode==='movie'?'active':''}" href="${escape(watchUrl+query('movie'))}" ${mode==='movie'?'aria-current="page"':''}>${type==='tv'?'Episode':'Movie'}</a>${trailer ? `<a data-player-mode-link class="${mode==='trailer'?'active':''}" href="${escape(watchUrl+query('trailer'))}" ${mode==='trailer'?'aria-current="page"':''}>Trailer</a>` : ''}</nav>
+      <nav class="svPlayerModes svGlassSurface svGlassPanel" aria-label="Watch mode"><a data-player-mode-link class="${mode==='movie'?'active':''}" href="${escape(watchUrl+query('movie'))}" ${mode==='movie'?'aria-current="page"':''}>${type==='tv'?'Episode':'Movie'}</a>${trailer ? `<a data-player-mode-link class="${mode==='trailer'?'active':''}" href="${escape(watchUrl+query('trailer'))}" ${mode==='trailer'?'aria-current="page"':''}>Trailer</a>` : ''}</nav>
     </header>
     <div class="svPlayerLayout"><section class="svPlayerMain" aria-labelledby="svPlayerTitle">${mode==='trailer'?trailerSurface:movieSurface}
-      <div class="svPlayerBelow"><div class="svPlayerFilm">${poster ? `<a class="svPlayerPoster" href="${escape(detailUrl)}" tabindex="-1" aria-hidden="true"><img src="${escape(poster)}" alt=""/></a>`:''}<div><div class="svPlayerMetadata">${meta}</div><h1 id="svPlayerTitle">${escape(title)}</h1><p class="svPlayerTransportNote" id="svPlayerTransportNote" data-player-transport-note>${mode==='trailer'?'A first look at the story.':'Settle in. The rest can wait.'}</p></div></div>
+      <div class="svPlayerBelow"><div class="svPlayerFilm">${poster ? `<a class="svPlayerPoster" href="${escape(detailUrl)}" tabindex="-1" aria-hidden="true"><img src="${escape(poster)}" alt=""/></a>`:''}<div><div class="svPlayerMetadata">${meta}</div><h1 id="svPlayerTitle">${escape(title)}</h1>${type==='tv'&&options.episodeTitle&&mode==='movie'?`<p class="svPlayerEpisodeName">${escape(options.episodeTitle)}</p>`:''}<p class="svPlayerTransportNote" id="svPlayerTransportNote" data-player-transport-note>${mode==='trailer'?'A first look at the story.':'Settle in. The rest can wait.'}</p></div></div>
       ${type==='movie'&&mode==='movie' ? `<button type="button" class="dsSecondaryBtn svPlayerPartyButton" data-player-party-open>${icon('people')}<span>Watch together</span></button>`:''}</div>
       ${type==='tv'&&options.episodePickerHtml ? `<div class="svPlayerEpisodePicker">${options.episodePickerHtml}</div>` : ''}
-      <noscript><p class="svPlayerNoScript">Enable JavaScript to prepare movie playback.</p></noscript>
+      <noscript><p class="svPlayerNoScript">Enable JavaScript to prepare ${mediaNoun} playback.</p></noscript>
     </section><aside class="svPlayerPartySlot" data-player-party-slot aria-label="Watch party">${options.partyPanelHtml || ''}</aside></div>
   </main>`;
 }
 
-module.exports = {playerMarkup};
+module.exports = {playerMarkup,episodePickerMarkup};

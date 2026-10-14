@@ -1,4 +1,4 @@
-/* SwiflyTV v160: a quiet cinema surface, with the party beside the movie. */
+/* SwiflyTV v165: glass playback controls and a shared episode surface. */
 body.svCleanShell .svPlayerPage {
   --player-canvas:var(--st-canvas,#000);
   --player-accent:var(--st-accent,#eeebe4);
@@ -7,8 +7,10 @@ body.svCleanShell .svPlayerPage {
   max-width:1376px; width:100%; margin:0 auto;
   padding:110px var(--sv-page-gutter,32px) 64px;
   color:#f5f5f5; font-family:var(--st-font,"Host Grotesk",system-ui,sans-serif) !important;
-  box-sizing:border-box;
+  box-sizing:border-box; position:relative; isolation:isolate;
 }
+.svPlayerAmbient { position:absolute; z-index:-1; inset:64px 0 auto; height:620px; max-height:70vh; overflow:hidden; pointer-events:none; opacity:.2; filter:blur(38px) saturate(1.15); -webkit-mask-image:linear-gradient(#000,#000b 45%,transparent); mask-image:linear-gradient(#000,#000b 45%,transparent); }
+.svPlayerAmbient img { width:100%; height:100%; object-fit:cover; }
 body.svCleanShell .svPlayerPage[data-party-active="true"] { max-width:1640px; }
 .svPlayerPage *, .svPlayerPage *::before, .svPlayerPage *::after { box-sizing:border-box; }
 .svPlayerPageHead { display:flex; align-items:center; justify-content:space-between; gap:20px; margin-bottom:22px; }
@@ -36,10 +38,11 @@ body.svCleanShell .svPlayerBack { min-height:40px; gap:6px; padding:8px 13px !im
 body.svCleanShell .svPlayerStatus h2 { margin:10px 0 0 !important; max-width:560px; font-size:clamp(20px,2.35vw,34px) !important; line-height:1.17 !important; letter-spacing:-.035em !important; font-weight:500 !important; color:#f5f5f5 !important; text-wrap:balance; }
 body.svCleanShell .svPlayerStatus p { margin:12px 0 0 !important; max-width:400px; color:#b0b0b0 !important; font-size:13px !important; line-height:1.65 !important; text-wrap:balance; }
 .svPlayerPage[data-player-state="loading"] .svPlayerStatusMark { animation:svPlayerBreathe 1.8s ease-in-out infinite; }
-.svPlayerPage[data-player-state="buffering"] .svPlayerStatus { inset:36% 16% auto; padding:18px 20px; border:1px solid #ffffff14; border-radius:16px; background:#0b0b0be6; -webkit-backdrop-filter:blur(18px); backdrop-filter:blur(18px); box-shadow:0 8px 28px #0004; }
-.svPlayerPage[data-player-state="buffering"] :is(.svPlayerStatusMark,.svPlayerEyebrow) { display:none; }
-body.svCleanShell .svPlayerPage[data-player-state="buffering"] .svPlayerStatus h2 { font-size:18px !important; margin:0 !important; }
-body.svCleanShell .svPlayerPage[data-player-state="buffering"] .svPlayerStatus p { font-size:12px !important; margin-top:5px !important; }
+.svPlayerPage[data-player-state="buffering"] .svPlayerStatus { inset:18px auto auto 50%; transform:translateX(-50%); flex-direction:row; gap:10px; width:max-content; max-width:calc(100% - 32px); padding:12px 17px; border:1px solid #ffffff30; border-radius:999px; background:linear-gradient(135deg,#ffffff16,#ffffff06),#101218b8; -webkit-backdrop-filter:blur(18px) saturate(1.2); backdrop-filter:blur(18px) saturate(1.2); box-shadow:inset 0 1px #ffffff24,0 8px 28px #0004; pointer-events:none; }
+.svPlayerPage[data-player-state="buffering"] .svPlayerStatus::before { content:""; flex:0 0 auto; width:15px; height:15px; border:2px solid #ffffff30; border-top-color:var(--player-accent); border-radius:50%; animation:svPlayerSpin .8s linear infinite; }
+.svPlayerPage[data-player-state="buffering"] .svPlayerStatus :is(.svPlayerStatusMark,.svPlayerEyebrow) { display:none; }
+body.svCleanShell .svPlayerPage[data-player-state="buffering"] .svPlayerStatus h2 { font-size:13px !important; letter-spacing:0 !important; margin:0 !important; }
+body.svCleanShell .svPlayerPage[data-player-state="buffering"] .svPlayerStatus p { display:none; }
 body.svCleanShell .svPlayerRetry { display:inline-flex; align-items:center; gap:8px; min-height:42px; margin-top:21px; padding:10px 18px !important; font-size:13px !important; border-radius:12px !important; }
 .svPlayerDock { position:absolute; z-index:4; left:16px; right:16px; bottom:14px; padding:13px 15px 9px; border:1px solid #ffffff19; border-radius:15px; background-color:rgba(17,17,17,.92); background-image:linear-gradient(160deg,#ffffff04,#0000); box-shadow:0 8px 25px #0007,inset 0 1px #ffffff07; -webkit-backdrop-filter:blur(22px); backdrop-filter:blur(22px); transition:opacity .16s ease,border-color .16s ease; }
 .svPlayerDock:focus-within { opacity:1 !important; border-color:#ffffff35; }
@@ -86,6 +89,33 @@ body.svCleanShell .svPlayerTransportNote { margin:8px 0 0 !important; font-size:
 body.svCleanShell .svPlayerPartyButton { flex:0 0 auto; display:flex; align-items:center; gap:8px; min-height:43px; padding:11px 17px !important; border-radius:13px !important; font-size:12px !important; }
 .svPlayerEpisodePicker { margin-top:28px; padding-top:24px; border-top:1px solid #ffffff13; }
 .svPlayerEpisodePicker :is(select,a,button) { max-width:100%; }
+body.svCleanShell .svPlayerEpisodeName { margin:7px 0 0 !important; font-size:14px !important; color:#dedee3 !important; line-height:1.5 !important; }
+body.svCleanShell .svPlayerEpisodes { padding:26px; border-radius:24px !important; }
+.svPlayerEpisodesHead { display:flex; justify-content:space-between; align-items:center; gap:24px; }
+.svPlayerEpisodesHead > div { min-width:0; }
+body.svCleanShell .svPlayerEpisodes h2 { margin:7px 0 0 !important; color:#f4f4f7 !important; font-size:24px !important; line-height:1.2 !important; letter-spacing:-.03em !important; font-weight:500 !important; }
+body.svCleanShell .svPlayerEpisodesHead p { margin:8px 0 0 !important; color:#abaeb9 !important; font-size:12px !important; line-height:1.6 !important; overflow-wrap:anywhere; }
+.svPlayerEpisodeSteps { display:flex; align-items:center; gap:8px; flex:0 0 auto; }
+body.svCleanShell .svPlayerEpisodeStep { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:40px; padding:10px 14px !important; color:#ececf2 !important; font-size:12px !important; text-decoration:none; white-space:nowrap; }
+.svPlayerEpisodeStep .svPlayerIcon { width:16px; height:16px; flex-basis:16px; }
+body.svCleanShell .svPlayerEpisodeStep:disabled { opacity:.35; cursor:default; }
+.svPlayerSeasons { display:flex; gap:8px; margin-top:23px; padding:3px 3px 12px; overflow-x:auto; scrollbar-width:thin; scrollbar-color:#ffffff38 transparent; }
+body.svCleanShell .svPlayerSeason { display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto; min-height:38px; padding:9px 15px !important; font-size:12px !important; text-decoration:none; white-space:nowrap; }
+.svPlayerEpisodeGrid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:8px; max-height:430px; overflow-y:auto; padding:4px; scrollbar-width:thin; scrollbar-color:#ffffff38 transparent; overscroll-behavior:contain; }
+body.svCleanShell .svPlayerEpisode { display:flex; align-items:center; min-width:0; gap:12px; min-height:84px; padding:10px; border:1px solid #ffffff13; border-radius:16px; text-decoration:none; background:linear-gradient(140deg,#ffffff09,#ffffff02); color:#e8e9f0; transition:background .18s ease,border-color .18s ease; }
+body.svCleanShell .svPlayerEpisode:hover { border-color:#ffffff42; background:#ffffff0e; }
+body.svCleanShell .svPlayerEpisode[aria-current="page"] { border-color:#ffffff55; background:linear-gradient(135deg,#ffffff18,#ffffff08); box-shadow:inset 0 1px #ffffff18; }
+.svPlayerEpisodeThumb { position:relative; display:grid; place-items:center; flex:0 0 86px; width:86px; height:58px; overflow:hidden; border-radius:9px; background:linear-gradient(145deg,#282c3b,#141722); color:#737b92; }
+.svPlayerEpisodeThumb > img { width:100%; height:100%; object-fit:cover; }
+.svPlayerEpisodeThumb > b { position:absolute; left:5px; bottom:5px; padding:2px 5px; border-radius:5px; background:#06080cbf; color:#eeeeef; font-size:10px; font-variant-numeric:tabular-nums; }
+.svPlayerEpisodeText { display:flex; flex-direction:column; gap:5px; min-width:0; flex:1; }
+.svPlayerEpisodeKicker { color:#979eaf; font-size:10px; line-height:1.4; }
+body.svCleanShell .svPlayerEpisodeText strong { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; font-size:12px; line-height:1.45; font-weight:500; color:#e9eaf2; }
+.svPlayerEpisodeSelected { color:#d0d5e3; font-size:10px; }
+.svPlayerEpisodePlay { display:grid; place-items:center; flex:0 0 auto; width:25px; height:25px; border-radius:50%; border:1px solid #ffffff16; background:#ffffff08; opacity:.6; }
+.svPlayerEpisodePlay .svPlayerIcon { width:13px; height:13px; flex-basis:13px; }
+.svPlayerEpisode:is(:hover,[aria-current="page"]) .svPlayerEpisodePlay { opacity:1; }
+body.svCleanShell[data-st-glass="off"] .svPlayerPage[data-player-state="buffering"] .svPlayerStatus { background:#151619; -webkit-backdrop-filter:none; backdrop-filter:none; }
 body.svCleanShell .svPlayerNoScript { padding:16px; border:1px solid #ffffff15; border-radius:12px; color:#aaa; font-size:13px; }
 .svPlayerStage--trailer { overflow:hidden; }
 .svPlayerStage--trailer .svPlayerStatus { padding:30px; }
@@ -95,10 +125,12 @@ body.svCleanShell .svPlayerPage .swifly-tv-focus-target { outline:2px solid var(
 .svPlayerStage:fullscreen { display:block; width:100%; height:100%; aspect-ratio:auto; border:0; border-radius:0; background:#000; }
 .svPlayerStage:fullscreen .svPlayerDock { left:max(20px,4vw); right:max(20px,4vw); bottom:max(20px,3vh); }
 @keyframes svPlayerBreathe { 0%,100% { opacity:.65; } 50% { opacity:1; } }
+@keyframes svPlayerSpin { to { transform:rotate(360deg); } }
 @media (max-width:1100px) {
   .svPlayerPage[data-party-active="true"] .svPlayerLayout { grid-template-columns:minmax(0,1fr); gap:28px; }
   .svPlayerPage[data-party-active="true"] .svPlayerPartySlot { width:100%; }
   .svPlayerStage { border-radius:18px; }
+  .svPlayerEpisodeGrid { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
 @media (max-width:700px) {
   body.svCleanShell .svPlayerPage { padding:94px 16px 40px; }
@@ -126,7 +158,7 @@ body.svCleanShell .svPlayerPage .swifly-tv-focus-target { outline:2px solid var(
   .svPlayerPopoverBody { bottom:calc(100% + 14px); }
   .svPlayerVolume .svPlayerPopoverBody { right:-70px; min-width:220px; }
   .svPlayerVolume .svPlayerPopoverBody::after { right:86px; }
-  .svPlayerPage[data-player-state="buffering"] .svPlayerStatus { inset:24% 10% auto; padding:12px 16px; }
+  .svPlayerPage[data-player-state="buffering"] .svPlayerStatus { top:10px; padding:9px 13px; }
   body.svCleanShell .svPlayerPage[data-player-state="buffering"] .svPlayerStatus p { display:none; }
   .svPlayerToast { bottom:89px; font-size:11px; }
   .svPlayerBelow { flex-direction:column; align-items:stretch; gap:20px; padding-top:22px; }
@@ -136,6 +168,15 @@ body.svCleanShell .svPlayerPage .swifly-tv-focus-target { outline:2px solid var(
   body.svCleanShell .svPlayerPage h1 { font-size:25px !important; }
   body.svCleanShell .svPlayerTransportNote { font-size:11px !important; }
   body.svCleanShell .svPlayerPartyButton { justify-content:center; align-self:flex-start; }
+  body.svCleanShell .svPlayerEpisodes { padding:18px 14px; border-radius:20px !important; }
+  .svPlayerEpisodesHead { align-items:flex-start; gap:16px; }
+  .svPlayerEpisodeSteps { gap:6px; }
+  body.svCleanShell .svPlayerEpisodeStep { width:38px; min-height:38px; padding:9px !important; }
+  .svPlayerEpisodeStep span { display:none; }
+  body.svCleanShell .svPlayerEpisodes h2 { font-size:21px !important; }
+  .svPlayerEpisodeGrid { grid-template-columns:minmax(0,1fr); max-height:390px; }
+  .svPlayerEpisodeThumb { flex-basis:96px; width:96px; }
+  body.svCleanShell .svPlayerEpisodeText strong { font-size:13px; }
 }
 @media (max-width:420px) {
   .svPlayerPageHead { gap:5px; }
@@ -152,5 +193,6 @@ body.svCleanShell .svPlayerPage .swifly-tv-focus-target { outline:2px solid var(
   .svPlayerPage *, .svPlayerPage *::before, .svPlayerPage *::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; }
 }
 body.reduceMotion .svPlayerPage *, body[data-st-motion="reduce"] .svPlayerPage * { animation:none !important; transition:none !important; }
+body.reduceMotion .svPlayerPage *::before, body[data-st-motion="reduce"] .svPlayerPage *::before { animation:none !important; }
 /* Visibility wins over the glass renderer's control and panel display rules. */
 body.svCleanShell .svPlayerPage [hidden] { display:none !important; }

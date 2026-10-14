@@ -342,6 +342,34 @@ test('Nuvio failures and unverified URLs preserve the browser fallback', async (
     assert.equal(browsers,1);
   }
 });
+test('TV browser fallbacks keep the selected season and episode after all Nuvio providers fail', async () => {
+  const nuvioRequests = [], browserRequests = [];
+  const f = fixture({ NUVIO_ENABLED: true, resolveNuvioProvider: async ({ provider, tmdbId, mediaType, season, episode }) => {
+    nuvioRequests.push({ provider, tmdbId, mediaType, season, episode });
+    return { ok: false, provider: 'nuvio-' + provider, code: 'no_source' };
+  } });
+  f.api.setCapture(async ({ provider, url, signal }) => {
+    browserRequests.push({ provider, url });
+    assert.equal(signal.aborted, false);
+    return provider === 'cinezo'
+      ? { ok: true, source: { url: 'https://media.example/episode.m3u8', format: 'm3u8', forceHls: true, mediaVerified: true } }
+      : { ok: false, code: 'provider_blocked' };
+  });
+  const result = await f.api.streams({ tmdbId: '101', mediaType: 'tv', season: '2', episode: '3' });
+  assert.deepEqual(nuvioRequests, ['vidsrc', 'vidlink', 'videasy'].map(provider => ({
+    provider, tmdbId: '101', mediaType: 'tv', season: '2', episode: '3'
+  })));
+  assert.deepEqual(browserRequests, [
+    { provider: 'hexa', url: 'https://hexa.su/watch/tv/101/2/3' },
+    { provider: 'cinezo', url: 'https://www.cinezo.net/watch/tv/101?season=2&episode=3' }
+  ]);
+  assert.equal(result.success, true);
+  assert.equal(result.mediaType, 'tv');
+  assert.equal(result.season, '2');
+  assert.equal(result.episode, '3');
+  assert.equal(result.sources[0].url, 'https://media.example/episode.m3u8');
+  assert.equal(f.time.count(), 0);
+});
 test('cancellation during Nuvio extraction never opens a browser fallback', async () => {
   const signal=new AbortController(),reason=new Error('cancelled');let browsers=0;
   const f=fixture({NUVIO_ENABLED:true,resolveNuvioProvider:async()=>{signal.abort(reason);throw reason;}});
