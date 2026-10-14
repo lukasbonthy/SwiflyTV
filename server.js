@@ -24,6 +24,7 @@ const { configureBrowserEnvironment, createBrowserRuntime } = require("./lib/bro
 const { captureProviderMedia } = require("./lib/provider-capture");
 const { runProviderRace } = require("./lib/provider-race");
 const { classifyMediaCandidate } = require("./lib/media-discovery");
+const { resolveNuvioProvider, PROVIDERS: NUVIO_ALLOWED_PROVIDERS } = require("./lib/nuvio-provider");
 
 // ===== SwiflyTV no-env mode =====
 // This build is meant to run without manually setting a pile of Render env vars.
@@ -79,6 +80,10 @@ const SITE_NAME = process.env.SITE_NAME || "SwiflyTV";
 const TMDB_API_KEY = process.env.TMDB_API_KEY || "";
 const TMDB_BASE = "https://api.themoviedb.org/3";
 const TMDB_IMG = "https://image.tmdb.org/t/p";
+const NUVIO_ENABLED = process.env.NUVIO_ENABLED !== "false";
+const NUVIO_PROVIDER_ORDER = String(process.env.NUVIO_PROVIDER_ORDER || "vidlink,vidsrc,videasy").split(",").map(value => value.trim().toLowerCase()).filter(value => NUVIO_ALLOWED_PROVIDERS.includes(value));
+const NUVIO_PROVIDER_TIMEOUT_MS = Math.max(1000, Math.min(12000, Number(process.env.NUVIO_PROVIDER_TIMEOUT_MS) || 9000));
+const NUVIO_TIMEOUT_MS = Math.max(1000, Math.min(15000, Number(process.env.NUVIO_TIMEOUT_MS) || 12000));
 const BRAND_WORDMARK = process.env.BRAND_WORDMARK || "SWIFLYTV";
 const BRAND_SUBMARK = process.env.BRAND_SUBMARK || "SWIFLYTV";
 
@@ -4572,10 +4577,33 @@ async function localStreamProviderSflixWatchUrl({ tmdbId = "", mediaType = "movi
   }
 }
 
+async function localNuvioGetStreams({ tmdbId, mediaType, season, episode, signal }) {
+  if (!NUVIO_ENABLED) return { results: [], winner: null };
+  return runProviderRace({
+    jobs: Array.from(new Set(NUVIO_PROVIDER_ORDER)).map(id => ({ provider: `nuvio-${id}`, id, timeoutMs: NUVIO_PROVIDER_TIMEOUT_MS })),
+    signal, timeoutMs: NUVIO_TIMEOUT_MS, hedgeDelayMs: 300, maxConcurrent: 2,
+    now: () => Date.now(), setTimeout, clearTimeout,
+    isPlayable: result => result?.ok && result.source?.mediaVerified === true && apiHasEmbeddableFileExtensionOrHlsProxy(result.source.url, result.source),
+    run: (job, { signal: providerSignal, timeoutMs }) => resolveNuvioProvider({
+      provider: job.id, tmdbId, mediaType, season, episode, signal: providerSignal, timeoutMs,
+      isNonMediaUrl: value => apiLooksDefinitelyNonMediaUrl(value, { allowManifestEndpoint: true })
+    })
+  });
+}
+
 async function localStreamProviderGetStreams({ tmdbId = "", mediaType = "movie", season = "1", episode = "1", attempts = [], signal = null }) {
   signal?.throwIfAborted();
   if (!STREAMPROVIDER_ENABLED) throw new Error("STREAMPROVIDER_ENABLED=false");
   if (!tmdbId) throw new Error("missing TMDB id");
+
+  const nuvio = await localNuvioGetStreams({ tmdbId, mediaType, season, episode, signal });
+  signal?.throwIfAborted();
+  if (nuvio.winner) return {
+    success: true, code: "", provider: "streamprovider-local", tmdbId, mediaType,
+    season: mediaType === "tv" ? season : "", episode: mediaType === "tv" ? episode : "",
+    providersTried: nuvio.results.map(result => result.provider), results: nuvio.results,
+    streamsFound: 1, sources: [nuvio.winner.source]
+  };
 
   const order = Array.from(new Set(STREAMPROVIDER_ORDER.length ? STREAMPROVIDER_ORDER : ["hexa", "cinezo"]));
   const jobs = [];
@@ -4585,7 +4613,7 @@ async function localStreamProviderGetStreams({ tmdbId = "", mediaType = "movie",
   }
   // Optional title search runs after the direct TMDB providers.
   if (order.includes("sflix") && mediaType === "movie") jobs.push({ provider: "sflix", url: "", waitForPrevious: true });
-  const { results, winner } = await runProviderRace({
+  const { results: browserResults, winner } = await runProviderRace({
     jobs: jobs.map(job => ({ ...job, timeoutMs: STREAMPROVIDER_PROVIDER_TIMEOUT_MS })), signal,
     timeoutMs: STREAMPROVIDER_ROUTE_TIMEOUT_MS, hedgeDelayMs: STREAMPROVIDER_HEDGE_DELAY_MS,
     maxConcurrent: STREAMPROVIDER_MAX_CONCURRENT, now: () => Date.now(), setTimeout, clearTimeout,
@@ -4606,6 +4634,7 @@ async function localStreamProviderGetStreams({ tmdbId = "", mediaType = "movie",
     }
   });
   signal?.throwIfAborted();
+  const results = [...nuvio.results, ...browserResults];
   const sources = winner ? [winner.source] : [];
   for (const result of results) if (!result.ok) attempts.push(`${result.provider}: ${result.code}`);
   const code = sources.length ? "" : results.some(result => result.code === "browser_unavailable") ? "browser_unavailable"
@@ -13849,7 +13878,8 @@ app.get("/api/playback/health", (req, res) => {
   res.set("Cache-Control", "no-store");
   res.json({
     ok: true, browser: localStreamProviderRuntime().getStatus(),
-    discovery: { enabled: STREAMPROVIDER_ENABLED, providers: STREAMPROVIDER_ORDER, providerTimeoutMs: STREAMPROVIDER_PROVIDER_TIMEOUT_MS, routeTimeoutMs: STREAMPROVIDER_ROUTE_TIMEOUT_MS, hedgeDelayMs: STREAMPROVIDER_HEDGE_DELAY_MS, maxConcurrentCaptures: STREAMPROVIDER_MAX_CONCURRENT }
+    discovery: { enabled: STREAMPROVIDER_ENABLED, providers: STREAMPROVIDER_ORDER, providerTimeoutMs: STREAMPROVIDER_PROVIDER_TIMEOUT_MS, routeTimeoutMs: STREAMPROVIDER_ROUTE_TIMEOUT_MS, hedgeDelayMs: STREAMPROVIDER_HEDGE_DELAY_MS, maxConcurrentCaptures: STREAMPROVIDER_MAX_CONCURRENT,
+      nuvio: { enabled: NUVIO_ENABLED, providers: NUVIO_PROVIDER_ORDER, providerTimeoutMs: NUVIO_PROVIDER_TIMEOUT_MS, timeoutMs: NUVIO_TIMEOUT_MS } }
   });
 });
 

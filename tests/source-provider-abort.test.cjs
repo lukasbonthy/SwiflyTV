@@ -51,6 +51,7 @@ function fixture(overrides = {}) {
     runProviderRace: require('../lib/provider-race').runProviderRace,
     Date: class extends Date { static now() { return time.now(); } },
     setTimeout: time.setTimeout, clearTimeout: time.clearTimeout,
+    NUVIO_ENABLED: false, NUVIO_PROVIDER_ORDER: ['vidsrc','vidlink','videasy'], NUVIO_PROVIDER_TIMEOUT_MS: 10, NUVIO_TIMEOUT_MS: 15,
     STREAMPROVIDER_ENABLED: true, STREAMPROVIDER_ORDER: ['hexa', 'cinezo'],
     STREAMPROVIDER_NAV_TIMEOUT_MS: 10, STREAMPROVIDER_STREAM_TIMEOUT_MS: 10, STREAMPROVIDER_ROUTE_TIMEOUT_MS: 30, STREAMPROVIDER_PROVIDER_TIMEOUT_MS: 20,
     STREAMPROVIDER_HEDGE_DELAY_MS: 5, STREAMPROVIDER_MAX_CONCURRENT: 2,
@@ -316,4 +317,36 @@ test('cancellation during an unabortable adapter rejects its late success', asyn
   f.api.setResult(async () => null);
   const result = await observe(f.api.source({ id: '101', signal: controller.signal })).promise;
   assert.equal(result.error, reason);
+});
+
+test('verified Nuvio media wins without starting browser capture', async () => {
+  let browsers=0;
+  const f=fixture({NUVIO_ENABLED:true,resolveNuvioProvider:async ({provider,mediaType,season,episode})=>{
+    assert.equal(mediaType,'tv');assert.equal(season,'2');assert.equal(episode,'3');
+    return {ok:true,provider:'nuvio-'+provider,source:{url:'https://media.example/master.m3u8',format:'m3u8',forceHls:true,mediaVerified:true}};
+  }});
+  f.api.setCapture(async()=>{browsers++;return {ok:false};});
+  const result=await f.api.streams({tmdbId:'101',mediaType:'tv',season:'2',episode:'3'});
+  assert.equal(result.success,true);
+  assert.equal(result.sources[0].mediaVerified,true);
+  assert.equal(browsers,0);
+  assert(result.providersTried[0].startsWith('nuvio-'));
+});
+test('Nuvio failures and unverified URLs preserve the browser fallback', async () => {
+  for(const nuvioResult of [{ok:false,code:'no_source'},{ok:true,source:{url:'https://media.example/master.m3u8',format:'m3u8'}}]) {
+    let browsers=0;
+    const f=fixture({NUVIO_ENABLED:true,resolveNuvioProvider:async()=>nuvioResult});
+    f.api.setCapture(async()=>{browsers++;return {ok:true,source:{url:'https://media.example/fallback.m3u8',format:'m3u8',forceHls:true,mediaVerified:true}};});
+    const result=await f.api.streams({tmdbId:'101'});
+    assert.equal(result.sources[0].url,'https://media.example/fallback.m3u8');
+    assert.equal(browsers,1);
+  }
+});
+test('cancellation during Nuvio extraction never opens a browser fallback', async () => {
+  const signal=new AbortController(),reason=new Error('cancelled');let browsers=0;
+  const f=fixture({NUVIO_ENABLED:true,resolveNuvioProvider:async()=>{signal.abort(reason);throw reason;}});
+  f.api.setCapture(async()=>{browsers++;return {ok:false};});
+  const result=await observe(f.api.streams({tmdbId:'101',signal:signal.signal})).promise;
+  assert.equal(result.error,reason);
+  assert.equal(browsers,0);
 });

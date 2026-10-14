@@ -1,5 +1,24 @@
 # SwiflyTV source discovery
 
+All-in-One-Nuvio HTTP adapters now run before browser capture. The default order
+is VidLink, VidSrc, and VidEasy; only a successful, validated media response can
+win. If none resolves within 12 seconds, the existing Hexa/Cinezo browser path
+continues inside the original route deadline. The native player and HLS proxy
+receive the same verified source format as before.
+
+The pinned upstream scripts, attribution, and license are in `vendor/nuvio`.
+Workers have a 9-second provider budget, limited memory, and no inherited server
+environment. Public addresses are resolved and pinned on each HTTP redirect,
+response bodies are bounded, and cancellation stops requests and terminates the
+worker before releasing its provider slot. Adapter output is kept out of logs.
+
+Configuration: `NUVIO_ENABLED=false` disables these adapters;
+`NUVIO_PROVIDER_ORDER=vidlink,vidsrc,videasy` changes their order.
+`NUVIO_PROVIDER_TIMEOUT_MS` and `NUVIO_TIMEOUT_MS` adjust their bounded budgets.
+These settings work in no-env mode. `/api/playback/health` reports their state
+under `discovery.nuvio`; source diagnostics label them `nuvio-vidlink`,
+`nuvio-vidsrc`, and `nuvio-videasy`.
+
 The v163 speed changes keep these providers. A second direct source starts after 1.8 seconds when the preferred source is still loading; the first verified source wins, and losing work is cancelled and cleaned up. Verified media can interrupt navigation immediately. The native player uses an optional bounded response wait to avoid an extra polling delay. See [PERFORMANCE_v163.md](PERFORMANCE_v163.md).
 
 The getter now checks successful HTTP responses instead of choosing an outgoing `.m3u8` request. It detects HLS by MIME type and playlist content, including signed URLs without a file extension. HTML errors, failed responses, ad/background/trailer videos, and individual `.ts`/`.m4s` fragments cannot win.
