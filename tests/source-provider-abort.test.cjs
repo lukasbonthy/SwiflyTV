@@ -53,6 +53,7 @@ function fixture(overrides = {}) {
     setTimeout: time.setTimeout, clearTimeout: time.clearTimeout,
     NUVIO_ENABLED: false, NUVIO_PROVIDER_ORDER: ['vidsrc','vidlink','videasy'], NUVIO_PROVIDER_TIMEOUT_MS: 10, NUVIO_TIMEOUT_MS: 15,
     STREAMPROVIDER_ENABLED: true, STREAMPROVIDER_ORDER: ['hexa', 'cinezo'],
+    STREAMPROVIDER_TV_ORDER: ['vidrift', 'hexa', 'cinezo'],
     STREAMPROVIDER_NAV_TIMEOUT_MS: 10, STREAMPROVIDER_STREAM_TIMEOUT_MS: 10, STREAMPROVIDER_ROUTE_TIMEOUT_MS: 30, STREAMPROVIDER_PROVIDER_TIMEOUT_MS: 20,
     STREAMPROVIDER_HEDGE_DELAY_MS: 5, STREAMPROVIDER_MAX_CONCURRENT: 2,
     STREAMPROVIDER_SFLIX_BASE_URL: 'https://search.example',
@@ -385,6 +386,7 @@ test('TV browser fallbacks keep the selected season and episode after all Nuvio 
     provider, tmdbId: '101', mediaType: 'tv', season: '2', episode: '3'
   })));
   assert.deepEqual(browserRequests, [
+    { provider: 'vidrift', url: 'https://embed.vidrift.in/embed/tv/101/2/3' },
     { provider: 'hexa', url: 'https://hexa.su/watch/tv/101/2/3' },
     { provider: 'cinezo', url: 'https://www.cinezo.net/watch/tv/101?season=2&episode=3' }
   ]);
@@ -394,6 +396,38 @@ test('TV browser fallbacks keep the selected season and episode after all Nuvio 
   assert.equal(result.episode, '3');
   assert.equal(result.sources[0].url, 'https://media.example/episode.m3u8');
   assert.equal(f.time.count(), 0);
+});
+
+test('verified VidRift HLS wins for the selected TV episode before legacy browser wrappers start', async () => {
+  const requests = [];
+  const f = fixture();
+  f.api.setCapture(async ({ provider, url, signal }) => {
+    requests.push({ provider, url });
+    assert.equal(signal.aborted, false);
+    return provider === 'vidrift'
+      ? { ok: true, source: { url: 'https://media.example/1399/2/3/master.m3u8', format: 'm3u8', forceHls: true, mediaVerified: true } }
+      : { ok: false, code: 'no_source' };
+  });
+  const result = await f.api.streams({ tmdbId: '1399', mediaType: 'tv', season: '2', episode: '3' });
+  assert.equal(result.success, true);
+  assert.deepEqual(requests, [{ provider: 'vidrift', url: 'https://embed.vidrift.in/embed/tv/1399/2/3' }]);
+  assert.equal(result.sources[0].format, 'm3u8');
+  assert.equal(result.season, '2');
+  assert.equal(result.episode, '3');
+  assert.equal(f.time.count(), 0);
+});
+
+test('the TV provider order does not change movie browser capture', async () => {
+  const requests = [];
+  const f = fixture();
+  f.api.setCapture(async ({ provider, url }) => {
+    requests.push({ provider, url });
+    return { ok: true, source: { url: 'https://media.example/movie.mp4', format: 'mp4', mediaVerified: true } };
+  });
+  const result = await f.api.streams({ tmdbId: '550', mediaType: 'movie' });
+  assert.equal(result.success, true);
+  assert.deepEqual(requests, [{ provider: 'hexa', url: 'https://hexa.su/watch/movie/550' }]);
+  assert.equal(result.sources[0].format, 'mp4');
 });
 test('cancellation during Nuvio extraction never opens a browser fallback', async () => {
   const signal=new AbortController(),reason=new Error('cancelled');let browsers=0;

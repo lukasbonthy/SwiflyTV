@@ -37,6 +37,13 @@ episode-aware providers fail. Those searches cannot select the requested season
 and episode and previously consumed the remaining source-job deadline. Provider
 failure reasons are retained; automatic movie download-site fallback is preserved.
 
+TV browser fallback tries VidRift's public `/embed/tv/{tmdb}/{season}/{episode}`
+entrypoint before Hexa and Cinezo. This is the same episode URL offered by
+Cinezo's source menu, without loading its watch-page wrapper first. Capture uses
+the existing verified-response, gate handling, cancellation and HLS proxy path.
+Nuvio remains first, movie provider order is unchanged, and request budgets are
+unchanged. `STREAMPROVIDER_TV_ORDER` can override the TV browser order.
+
 An observed VidLove origin-warning MP4 is rejected by its exact strong ETag,
 byte count, and MIME type; it cannot masquerade as an episode. Capture continues
 searching for genuine media and reports a blocked provider if only the warning

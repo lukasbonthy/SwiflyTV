@@ -135,6 +135,8 @@ const FILMU_TRY_FALLBACKS = process.env.FILMU_TRY_FALLBACKS === "true";
 const STREAMPROVIDER_ENABLED = process.env.STREAMPROVIDER_ENABLED !== "false";
 const STREAMPROVIDER_ORDER = String(process.env.STREAMPROVIDER_ORDER || "hexa,cinezo")
   .split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
+const STREAMPROVIDER_TV_ORDER = String(process.env.STREAMPROVIDER_TV_ORDER || ["vidrift", ...STREAMPROVIDER_ORDER].join(","))
+  .split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
 const STREAMPROVIDER_NAV_TIMEOUT_MS = Math.max(8000, Number(process.env.STREAMPROVIDER_NAV_TIMEOUT_MS || 10000));
 const STREAMPROVIDER_STREAM_TIMEOUT_MS = Math.max(8000, Number(process.env.STREAMPROVIDER_STREAM_TIMEOUT_MS || 15000));
 const STREAMPROVIDER_PROVIDER_TIMEOUT_MS = Math.max(8000, Math.min(30000, Number(process.env.STREAMPROVIDER_PROVIDER_TIMEOUT_MS || 27000)));
@@ -4605,9 +4607,11 @@ async function localStreamProviderGetStreams({ tmdbId = "", mediaType = "movie",
     streamsFound: 1, sources: [nuvio.winner.source]
   };
 
-  const order = Array.from(new Set(STREAMPROVIDER_ORDER.length ? STREAMPROVIDER_ORDER : ["hexa", "cinezo"]));
+  const configuredOrder = mediaType === "tv" ? STREAMPROVIDER_TV_ORDER : STREAMPROVIDER_ORDER;
+  const order = Array.from(new Set(configuredOrder.length ? configuredOrder : ["hexa", "cinezo"]));
   const jobs = [];
   for (const name of order) {
+    if (name === "vidrift" && mediaType === "tv") jobs.push({ provider: name, url: `https://embed.vidrift.in/embed/tv/${tmdbId}/${season}/${episode}` });
     if (name === "hexa") jobs.push({ provider: name, url: mediaType === "tv" ? `https://hexa.su/watch/tv/${tmdbId}/${season}/${episode}` : `https://hexa.su/watch/movie/${tmdbId}` });
     if (name === "cinezo") jobs.push({ provider: name, url: mediaType === "tv" ? `https://www.cinezo.net/watch/tv/${tmdbId}?season=${season}&episode=${episode}` : `https://www.cinezo.net/watch/movie/${tmdbId}` });
   }
@@ -13873,8 +13877,9 @@ app.get("/api/local/streamprovider-urls", async (req, res) => {
     sourceMode: "streamprovider-url-list-no-browser",
     tmdb: id,
     type,
-    order: STREAMPROVIDER_ORDER,
+    order: type === "tv" ? STREAMPROVIDER_TV_ORDER : STREAMPROVIDER_ORDER,
     urls: {
+      vidrift: type === "tv" ? `https://embed.vidrift.in/embed/tv/${id}/${season}/${episode}` : "TV only",
       hexa: type === "tv" ? `https://hexa.su/watch/tv/${id}/${season}/${episode}` : `https://hexa.su/watch/movie/${id}`,
       cinezo: type === "tv" ? `https://www.cinezo.net/watch/tv/${id}?season=${season}&episode=${episode}` : `https://www.cinezo.net/watch/movie/${id}`,
       sflix: "disabled by default because sflix2.to search timed out"
@@ -13886,7 +13891,7 @@ app.get("/api/playback/health", (req, res) => {
   res.set("Cache-Control", "no-store");
   res.json({
     ok: true, browser: localStreamProviderRuntime().getStatus(),
-    discovery: { enabled: STREAMPROVIDER_ENABLED, providers: STREAMPROVIDER_ORDER, providerTimeoutMs: STREAMPROVIDER_PROVIDER_TIMEOUT_MS, routeTimeoutMs: STREAMPROVIDER_ROUTE_TIMEOUT_MS, hedgeDelayMs: STREAMPROVIDER_HEDGE_DELAY_MS, maxConcurrentCaptures: STREAMPROVIDER_MAX_CONCURRENT,
+    discovery: { enabled: STREAMPROVIDER_ENABLED, providers: STREAMPROVIDER_ORDER, tvProviders: STREAMPROVIDER_TV_ORDER, providerTimeoutMs: STREAMPROVIDER_PROVIDER_TIMEOUT_MS, routeTimeoutMs: STREAMPROVIDER_ROUTE_TIMEOUT_MS, hedgeDelayMs: STREAMPROVIDER_HEDGE_DELAY_MS, maxConcurrentCaptures: STREAMPROVIDER_MAX_CONCURRENT,
       nuvio: { enabled: NUVIO_ENABLED, providers: NUVIO_PROVIDER_ORDER, providerTimeoutMs: NUVIO_PROVIDER_TIMEOUT_MS, timeoutMs: NUVIO_TIMEOUT_MS } }
   });
 });
@@ -13912,7 +13917,7 @@ app.get("/api/local/streamprovider-debug", async (req, res) => {
       season: type === "tv" ? season : "",
       episode: type === "tv" ? episode : "",
       ms: Date.now() - startedAt,
-      providerOrder: STREAMPROVIDER_ORDER,
+      providerOrder: type === "tv" ? STREAMPROVIDER_TV_ORDER : STREAMPROVIDER_ORDER,
       code: debug.payload?.code || "",
       browser: localStreamProviderRuntime().getStatus(),
       winner: debug.winner ? { playbackUrl: debug.winner.playbackUrl, streamType: debug.winner.streamType, apiProvider: debug.winner.apiProvider } : null,
@@ -13931,7 +13936,7 @@ app.get("/api/local/streamprovider-debug", async (req, res) => {
       season: type === "tv" ? season : "",
       episode: type === "tv" ? episode : "",
       ms: Date.now() - startedAt,
-      providerOrder: STREAMPROVIDER_ORDER
+      providerOrder: type === "tv" ? STREAMPROVIDER_TV_ORDER : STREAMPROVIDER_ORDER
     });
   }
 });
