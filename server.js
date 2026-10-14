@@ -25,6 +25,7 @@ const { captureProviderMedia } = require("./lib/provider-capture");
 const { runProviderRace } = require("./lib/provider-race");
 const { classifyMediaCandidate } = require("./lib/media-discovery");
 const { resolveNuvioProvider, PROVIDERS: NUVIO_ALLOWED_PROVIDERS } = require("./lib/nuvio-provider");
+const { createMediaFileProxy } = require("./lib/media-file-proxy");
 
 // ===== SwiflyTV no-env mode =====
 // This build is meant to run without manually setting a pile of Render env vars.
@@ -628,7 +629,9 @@ function apiNormalizeSources(input) {
         headers: node.headers && typeof node.headers === "object" ? node.headers : {},
         format: apiNodeSaysHls(mediaUrl, node) ? "m3u8" : (apiIsMpdUrl(mediaUrl) ? "mpd" : apiVerifiedMediaFormat(mediaUrl, node) || apiStreamFormatForUrl(mediaUrl)),
         forceHls: apiNodeSaysHls(mediaUrl, node),
-        mediaVerified: node.mediaVerified === true
+        mediaVerified: node.mediaVerified === true,
+        requiresProxy: node.requiresProxy === true,
+        codecName: String(node.codecName || "").slice(0, 32)
       });
     }
   });
@@ -1177,8 +1180,11 @@ function apiCollectTrustedStreamSources(providerName = "", payload = {}) {
       quality: apiFirst(node.quality, node.resolution, node.size, node.format, node.type),
       url,
       headers: node.headers && typeof node.headers === "object" ? node.headers : {},
-      format: apiIsM3u8Url(url) ? "m3u8" : "",
-      forceHls: apiTrustedProviderCanForceHls(provider) && !apiIsAllowedMediaExtensionUrl(url)
+      format: apiIsM3u8Url(url) ? "m3u8" : apiVerifiedMediaFormat(url, node),
+      forceHls: apiTrustedProviderCanForceHls(provider) && !apiIsAllowedMediaExtensionUrl(url),
+      mediaVerified: node.mediaVerified === true,
+      requiresProxy: node.requiresProxy === true,
+      codecName: String(node.codecName || "").slice(0, 32)
     });
   }
 
@@ -1372,7 +1378,9 @@ function apiSourceToProxyResult({ source, raw, provider, type, id, season = "", 
     return null;
   }
 
-  const hlsProxy = isHls && hlsProxyEnabled()
+  const needsFileProxy = !isHls && source.mediaVerified === true && source.requiresProxy === true
+    && apiVerifiedMediaFormat(originalUrl, source) === "mp4";
+  const hlsProxy = (isHls || needsFileProxy) && hlsProxyEnabled()
     ? registerHlsProxySource(originalUrl, source.headers || {}, {
         movieId: String(id || ""),
         provider,
@@ -1380,11 +1388,14 @@ function apiSourceToProxyResult({ source, raw, provider, type, id, season = "", 
         season,
         episode,
         streamName: source.name || "",
-        streamQuality: source.quality || ""
+        streamQuality: source.quality || "",
+        ...(needsFileProxy ? { sourceFormat: "mp4" } : {})
       })
     : { enabled: false, id: "", url: "" };
 
-  const playbackUrl = hlsProxy.url || originalUrl;
+  const fileProxyUrl = needsFileProxy && hlsProxy.id ? `/api/media-file-proxy/${hlsProxy.id}/video.mp4` : "";
+  if (needsFileProxy && !fileProxyUrl) return null;
+  const playbackUrl = fileProxyUrl || hlsProxy.url || originalUrl;
 
   // HLS endpoints use the local master.m3u8 proxy. Direct extensionless media
   // requires verified format evidence retained from the capture pipeline.
@@ -1406,13 +1417,14 @@ function apiSourceToProxyResult({ source, raw, provider, type, id, season = "", 
     playbackUrl,
     proxyVideo: playbackUrl,
     originalPlaybackUrl: originalUrl,
-    hlsProxyUrl: hlsProxy.url || "",
-    hlsProxyId: hlsProxy.id || "",
-    hlsProxyStatusUrl: hlsProxy.id ? `/api/hls-proxy/${hlsProxy.id}/status` : "",
+    hlsProxyUrl: isHls ? hlsProxy.url || "" : "",
+    hlsProxyId: isHls ? hlsProxy.id || "" : "",
+    hlsProxyStatusUrl: isHls && hlsProxy.id ? `/api/hls-proxy/${hlsProxy.id}/status` : "",
     m3u8: isHls ? originalUrl : "",
     embeddedM3u8Url: isHls ? playbackUrl : "",
     m3u8Embedded: Boolean(isHls),
     streamType,
+    streamCodec: String(source.codecName || "").slice(0, 32),
     streamQuality: source.quality || "",
     streamName: source.name || provider,
     streamHeaders: Object.fromEntries(Object.entries(source.headers || {}).filter(([key]) => !/^(cookie|authorization|proxy-authorization)$/i.test(key))),
@@ -5594,7 +5606,7 @@ app.use(
     limit: Number(process.env.RATE_LIMIT_PER_MINUTE || 600),
     standardHeaders: true,
     legacyHeaders: false,
-    skip: (req) => String(req.path || "").startsWith("/api/hls-proxy/"),
+    skip: (req) => ["/api/hls-proxy/", "/api/media-file-proxy/"].some(prefix => String(req.path || "").startsWith(prefix)),
   })
 );
 
@@ -13484,7 +13496,7 @@ async function handleHlsProxyMaster(req, res) {
   if (req.method === "OPTIONS") return res.status(204).end();
 
   const entry = getHlsProxyEntry(req.params.id);
-  if (!entry) {
+  if (!entry || String(entry.meta?.sourceFormat || "").toLowerCase() === "mp4") {
     return res.status(404).type("text/plain").send("HLS proxy source expired or missing.");
   }
 
@@ -13537,7 +13549,7 @@ async function handleHlsProxyAsset(req, res) {
   if (req.method === "OPTIONS") return res.status(204).end();
 
   const entry = getHlsProxyEntry(req.params.id);
-  if (!entry) {
+  if (!entry || String(entry.meta?.sourceFormat || "").toLowerCase() === "mp4") {
     return res.status(404).type("text/plain").send("HLS proxy source expired or missing.");
   }
 
@@ -13613,6 +13625,11 @@ async function handleHlsProxyAsset(req, res) {
   }
 }
 
+const handleMediaFileProxy = createMediaFileProxy({ getEntry: getHlsProxyEntry });
+app.options("/api/media-file-proxy/:id/video.mp4", handleMediaFileProxy);
+app.head("/api/media-file-proxy/:id/video.mp4", handleMediaFileProxy);
+app.get("/api/media-file-proxy/:id/video.mp4", handleMediaFileProxy);
+
 app.options("/api/hls-proxy/:id/master.m3u8", handleHlsProxyMaster);
 app.head("/api/hls-proxy/:id/master.m3u8", handleHlsProxyMaster);
 app.get("/api/hls-proxy/:id/master.m3u8", handleHlsProxyMaster);
@@ -13626,7 +13643,7 @@ app.get("/api/hls-proxy/:id/debug-master", async (req, res) => {
   setHlsProxyCors(res);
 
   const entry = getHlsProxyEntry(req.params.id);
-  if (!entry) {
+  if (!entry || String(entry.meta?.sourceFormat || "").toLowerCase() === "mp4") {
     return res.status(404).type("text/plain").send("HLS proxy source expired or missing.");
   }
 
@@ -13646,7 +13663,7 @@ app.get("/api/hls-proxy/:id/debug-master", async (req, res) => {
 app.get("/api/hls-proxy/:id/status", (req, res) => {
   res.set("Cache-Control", "no-store");
   const entry = getHlsProxyEntry(req.params.id);
-  if (!entry) {
+  if (!entry || String(entry.meta?.sourceFormat || "").toLowerCase() === "mp4") {
     return res.status(404).json({ ok: false, error: "HLS proxy source expired or missing" });
   }
 

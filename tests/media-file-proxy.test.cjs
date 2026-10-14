@@ -1,0 +1,334 @@
+'use strict';
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const http = require('node:http');
+const { createMediaFileProxy } = require('../lib/media-file-proxy');
+
+async function listen(t, handler) {
+  const server = http.createServer(handler);
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => new Promise(resolve => {
+    server.close(resolve);
+    server.closeAllConnections();
+  }));
+  return `http://127.0.0.1:${server.address().port}`;
+}
+
+function entry(sourceUrl, overrides = {}) {
+  return { sourceUrl, headers: {}, meta: { sourceFormat: 'mp4' }, expiresAt: Date.now() + 60_000, ...overrides };
+}
+
+async function proxy(t, source, options = {}) {
+  const handler = createMediaFileProxy({
+    getEntry: () => source,
+    addressAllowed: address => address === '127.0.0.1',
+    ...options
+  });
+  return listen(t, (req, res) => {
+    req.params = { id: 'opaque-id' };
+    Promise.resolve(handler(req, res)).catch(error => {
+      assert.fail(`The handler leaked a rejection: ${error.message}`);
+    });
+  });
+}
+
+function request(url, { method = 'GET', headers = {} } = {}) {
+  return new Promise((resolve, reject) => {
+    const outbound = http.request(url, { method, headers, agent: false }, response => {
+      const chunks = [];
+      response.on('data', chunk => chunks.push(chunk));
+      response.on('error', reject);
+      response.on('end', () => resolve({ status: response.statusCode, headers: response.headers, body: Buffer.concat(chunks) }));
+    });
+    outbound.on('error', reject);
+    outbound.end();
+  });
+}
+
+const movie = Buffer.from('0123456789abcdefghijklmnopqrstuvwxyz');
+async function rangeSource(t, seen = []) {
+  return listen(t, (req, res) => {
+    seen.push({ method: req.method, headers: req.headers });
+    let start = 0, end = movie.length - 1;
+    if (req.headers.range) {
+      const [, first, last] = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range);
+      start = first ? Number(first) : Math.max(0, movie.length - Number(last));
+      end = first && last ? Math.min(Number(last), end) : end;
+      if (start >= movie.length) {
+        res.writeHead(416, { 'content-range': `bytes */${movie.length}` });
+        res.end('Private upstream diagnostic');
+        return;
+      }
+      res.statusCode = 206;
+      res.setHeader('content-range', `bytes ${start}-${end}/${movie.length}`);
+    }
+    res.setHeader('content-type', 'video/mp4');
+    res.setHeader('content-length', end - start + 1);
+    res.setHeader('accept-ranges', 'bytes');
+    res.end(req.method === 'HEAD' ? undefined : movie.subarray(start, end + 1));
+  });
+}
+
+test('GET streams a full MP4 and removes a stored verification range', async t => {
+  const seen = [];
+  const upstream = await rangeSource(t, seen);
+  const url = await proxy(t, entry(upstream, {
+    headers: { Range: 'bytes=0-3', Referer: 'https://provider.example/watch', Cookie: 'session=verified', Authorization: 'Bearer verified' }
+  }));
+  const response = await request(url);
+  assert.equal(response.status, 200);
+  assert.deepEqual(response.body, movie);
+  assert.equal(response.headers['content-type'], 'video/mp4');
+  assert.equal(response.headers['content-length'], String(movie.length));
+  assert.equal(response.headers['accept-ranges'], 'bytes');
+  assert.equal(response.headers['access-control-allow-origin'], '*');
+  assert.match(response.headers['access-control-expose-headers'], /Content-Range/i);
+  assert.equal(seen[0].headers.range, undefined);
+  assert.equal(seen[0].headers.referer, 'https://provider.example/watch');
+  assert.equal(seen[0].headers.cookie, 'session=verified');
+  assert.equal(seen[0].headers.authorization, 'Bearer verified');
+  assert.equal(seen[0].headers['accept-encoding'], 'identity');
+});
+
+for (const [range, start, end] of [
+  ['bytes=0-3', 0, 3], ['bytes=10-17', 10, 17], ['bytes=30-', 30, movie.length - 1], ['bytes=-5', movie.length - 5, movie.length - 1]
+]) {
+  test(`GET forwards ${range} and preserves the partial response`, async t => {
+    const seen = [];
+    const url = await proxy(t, entry(await rangeSource(t, seen)));
+    const response = await request(url, { headers: { Range: range } });
+    assert.equal(response.status, 206);
+    assert.deepEqual(response.body, movie.subarray(start, end + 1));
+    assert.equal(response.headers['content-length'], String(end - start + 1));
+    assert.equal(response.headers['content-range'], `bytes ${start}-${end}/${movie.length}`);
+    assert.equal(seen[0].headers.range, range);
+  });
+}
+
+test('HEAD forwards HEAD and preserves file headers without a body', async t => {
+  const seen = [];
+  const url = await proxy(t, entry(await rangeSource(t, seen)));
+  const response = await request(url, { method: 'HEAD', headers: { Range: 'bytes=4-8' } });
+  assert.equal(response.status, 206);
+  assert.equal(response.body.length, 0);
+  assert.equal(response.headers['content-length'], '5');
+  assert.equal(response.headers['content-range'], `bytes 4-8/${movie.length}`);
+  assert.equal(seen[0].method, 'HEAD');
+});
+
+test('a successful HTML response cannot be served at the media proxy origin', async t => {
+  const upstream = await listen(t, (_, res) => {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end('<script>PRIVATE_UPSTREAM_SCRIPT</script>');
+  });
+  const response = await request(await proxy(t, entry(upstream)));
+  assert.equal(response.status, 502);
+  assert.doesNotMatch(response.body.toString(), /PRIVATE_UPSTREAM_SCRIPT|<script/);
+});
+
+test('a verified MP4 with a generic binary MIME is served as video with nosniff', async t => {
+  const upstream = await listen(t, (_, res) => {
+    res.writeHead(200, { 'content-type': 'application/octet-stream' });
+    res.end(movie);
+  });
+  const response = await request(await proxy(t, entry(upstream)));
+  assert.equal(response.status, 200);
+  assert.deepEqual(response.body, movie);
+  assert.equal(response.headers['content-type'], 'video/mp4');
+  assert.equal(response.headers['x-content-type-options'], 'nosniff');
+});
+
+test('OPTIONS answers preflight without contacting the upstream', async t => {
+  let hits = 0;
+  const upstream = await listen(t, (_, res) => { hits++; res.end(); });
+  const url = await proxy(t, entry(upstream));
+  const response = await request(url, { method: 'OPTIONS' });
+  assert.equal(response.status, 204);
+  assert.equal(response.body.length, 0);
+  assert.equal(response.headers['access-control-allow-methods'], 'GET, HEAD, OPTIONS');
+  assert.match(response.headers['access-control-allow-headers'], /Range/i);
+  assert.equal(hits, 0);
+});
+
+test('missing, expired, and non-MP4 entries return 404 before lookup or HTTP', async t => {
+  let hits = 0, lookups = 0;
+  const upstream = await listen(t, (_, res) => { hits++; res.end(); });
+  for (const source of [null, entry(upstream, { expiresAt: Date.now() - 1 }), entry(upstream, { meta: {} }), entry(upstream, { meta: { sourceFormat: 'm3u8' } })]) {
+    const url = await proxy(t, source, { lookup: async () => { lookups++; return []; } });
+    assert.equal((await request(url)).status, 404);
+    assert.equal((await request(url, { method: 'OPTIONS' })).status, 404);
+  }
+  assert.equal(hits, 0);
+  assert.equal(lookups, 0);
+});
+
+test('unsupported methods and malformed byte ranges never contact the upstream', async t => {
+  let hits = 0;
+  const upstream = await listen(t, (_, res) => { hits++; res.end(); });
+  const url = await proxy(t, entry(upstream));
+  const post = await request(url, { method: 'POST' });
+  assert.equal(post.status, 405);
+  assert.equal(post.headers.allow, 'GET, HEAD, OPTIONS');
+  for (const range of ['bytes=', 'bytes=5-2', 'bytes=-0', 'bytes=0-1,4-5', 'items=0-1', 'bytes=banana-']) {
+    assert.equal((await request(url, { headers: { Range: range } })).status, 416);
+  }
+  assert.equal(hits, 0);
+});
+
+test('an unsatisfiable range preserves 416 metadata without exposing upstream diagnostics', async t => {
+  const url = await proxy(t, entry(await rangeSource(t)));
+  const response = await request(url, { headers: { Range: 'bytes=100-' } });
+  assert.equal(response.status, 416);
+  assert.equal(response.headers['content-range'], `bytes */${movie.length}`);
+  assert.doesNotMatch(response.body.toString(), /Private upstream diagnostic/);
+});
+
+test('the first chunk arrives before completion and abort destroys the upstream stream', { timeout: 5_000 }, async t => {
+  let produced = 0, completed = false, upstreamClosed;
+  const closed = new Promise(resolve => { upstreamClosed = resolve; });
+  const upstream = await listen(t, (req, res) => {
+    res.setHeader('content-type', 'video/mp4');
+    res.setHeader('content-length', 1024 * 1024);
+    produced += 1024;
+    res.write(Buffer.alloc(1024, 0x41));
+    const timer = setInterval(() => {
+      produced += 1024;
+      res.write(Buffer.alloc(1024, 0x42));
+      if (produced === 1024 * 1024) { completed = true; clearInterval(timer); res.end(); }
+    }, 20);
+    res.on('close', () => { clearInterval(timer); upstreamClosed(); });
+  });
+  const url = await proxy(t, entry(upstream));
+  await new Promise((resolve, reject) => {
+    const client = http.get(url, { agent: false }, response => {
+      response.on('error', () => {});
+      response.once('data', chunk => {
+        try {
+          assert(chunk.length > 0);
+          assert.equal(completed, false);
+          assert(produced < 1024 * 1024);
+          response.destroy();
+          client.destroy();
+          resolve();
+        } catch (error) { reject(error); }
+      });
+    });
+    client.on('error', reject);
+  });
+  await closed;
+  const stoppedAt = produced;
+  await new Promise(resolve => setTimeout(resolve, 45));
+  assert.equal(produced, stoppedAt);
+  assert.equal(completed, false);
+});
+
+test('every redirect is resolved and pinned, and cross-origin credentials are stripped', async t => {
+  const seen = [], resolved = [];
+  const target = await listen(t, (req, res) => { seen.push(req.headers); res.setHeader('content-type', 'video/mp4'); res.end(movie); });
+  const targetUrl = target.replace('127.0.0.1', 'target.test');
+  const origin = await listen(t, (req, res) => {
+    seen.push(req.headers);
+    res.writeHead(302, { location: req.url === '/start' ? '/same-origin' : targetUrl });
+    res.end();
+  });
+  const sourceUrl = origin.replace('127.0.0.1', 'source.test') + '/start';
+  const url = await proxy(t, entry(sourceUrl, { headers: { Cookie: 'session=SECRET', Authorization: 'Bearer SECRET', Referer: 'https://provider.example/watch' } }), {
+    lookup: async (hostname, options) => {
+      resolved.push(hostname);
+      assert.equal(options.all, true);
+      return [{ address: '127.0.0.1', family: 4 }];
+    }
+  });
+  const response = await request(url);
+  assert.deepEqual(response.body, movie);
+  assert.deepEqual(resolved, ['source.test', 'source.test', 'target.test']);
+  assert.equal(seen[0].cookie, 'session=SECRET');
+  assert.equal(seen[1].authorization, 'Bearer SECRET');
+  assert.equal(seen[2].cookie, undefined);
+  assert.equal(seen[2].authorization, undefined);
+  assert.equal(seen[2].referer, 'https://provider.example/watch');
+});
+
+test('private literal and DNS targets are refused before connecting', async t => {
+  let hits = 0;
+  const upstream = await listen(t, (_, res) => { hits++; res.end('SECRET'); });
+  const direct = await proxy(t, entry(upstream), { addressAllowed: undefined });
+  assert.equal((await request(direct)).status, 502);
+  const named = await proxy(t, entry(upstream.replace('127.0.0.1', 'private.test')), {
+    addressAllowed: undefined,
+    lookup: async () => [{ address: '127.0.0.1', family: 4 }]
+  });
+  assert.equal((await request(named)).status, 502);
+  const mixed = await proxy(t, entry(upstream.replace('127.0.0.1', 'mixed.test')), {
+    addressAllowed: undefined,
+    lookup: async () => [{ address: '8.8.8.8', family: 4 }, { address: '127.0.0.1', family: 4 }]
+  });
+  assert.equal((await request(mixed)).status, 502);
+  assert.equal(hits, 0);
+});
+
+test('redirects to private addresses are refused before contacting the destination', async t => {
+  let hits = 0;
+  const privateTarget = await listen(t, (_, res) => { hits++; res.end('SECRET'); });
+  const origin = await listen(t, (_, res) => { res.writeHead(302, { location: privateTarget }); res.end(); });
+  const url = await proxy(t, entry(origin.replace('127.0.0.1', 'public.test')), {
+    lookup: async () => [{ address: '127.0.0.1', family: 4 }],
+    addressAllowed: (address, url) => address === '127.0.0.1' && url?.hostname === 'public.test'
+  });
+  const response = await request(url);
+  assert.equal(response.status, 502);
+  assert.equal(hits, 0);
+});
+
+test('credential-bearing and non-HTTP source URLs return a safe error', async t => {
+  let hits = 0;
+  const upstream = await listen(t, (_, res) => { hits++; res.end(); });
+  for (const sourceUrl of [upstream.replace('http://', 'http://user:SECRET@'), 'file:///SECRET/movie.mp4']) {
+    const url = await proxy(t, entry(sourceUrl));
+    const response = await request(url);
+    assert.equal(response.status, 502);
+    assert.doesNotMatch(response.body.toString(), /SECRET|127\.0\.0\.1|file:/);
+  }
+  assert.equal(hits, 0);
+});
+
+test('redirect chains stop after five hops', async t => {
+  let hits = 0;
+  const upstream = await listen(t, (_, res) => { hits++; res.writeHead(302, { location: '/again' }); res.end(); });
+  const url = await proxy(t, entry(upstream));
+  const response = await request(url);
+  assert.equal(response.status, 502);
+  assert.equal(hits, 6);
+});
+
+test('headers timeout returns a safe error and closes a stalled upstream request', { timeout: 5_000 }, async t => {
+  let reportClosed;
+  const closed = new Promise(resolve => { reportClosed = resolve; });
+  const upstream = await listen(t, (_, res) => { res.on('close', reportClosed); });
+  const url = await proxy(t, entry(upstream + '/signed?token=SECRET'), { headersTimeoutMs: 40 });
+  const response = await request(url);
+  assert.equal(response.status, 504);
+  assert.doesNotMatch(response.body.toString(), /SECRET|127\.0\.0\.1/);
+  await closed;
+});
+
+test('idle timeout closes an upstream body that stalls after headers', { timeout: 5_000 }, async t => {
+  let reportClosed;
+  const closed = new Promise(resolve => { reportClosed = resolve; });
+  const upstream = await listen(t, (_, res) => {
+    res.writeHead(200, { 'content-type': 'video/mp4', 'content-length': '100' });
+    res.write('first');
+    res.on('close', reportClosed);
+  });
+  const url = await proxy(t, entry(upstream), { idleTimeoutMs: 40 });
+  await new Promise((resolve, reject) => {
+    const client = http.get(url, { agent: false }, response => {
+      response.on('error', () => {});
+      response.once('aborted', resolve);
+      response.once('end', () => reject(new Error('A stalled incomplete body must be aborted')));
+      response.resume();
+    });
+    client.on('error', reject);
+  });
+  await closed;
+});

@@ -12,6 +12,16 @@ environment. Public addresses are resolved and pinned on each HTTP redirect,
 response bodies are bounded, and cancellation stops requests and terminates the
 worker before releasing its provider slot. Adapter output is kept out of logs.
 
+VidLink's current `stream.qualities` response is accepted alongside the pinned
+adapter's playlist response. Only successful source responses for the requested
+media type and TV season/episode are considered, and each file still requires
+HTTP verification. Verified MP4 sources marked `requiresProxy` use an opaque
+`/api/media-file-proxy/{id}/video.mp4` URL. The proxy forwards byte ranges and
+streams with backpressure, preserving seeking without buffering the full file.
+Public-address checks apply on each redirect; client disconnects cancel the
+owned upstream request. Reacher's observed files contain HEVC video, whose
+playback depends on the browser's codec support. Provider budgets are unchanged.
+
 Configuration: `NUVIO_ENABLED=false` disables these adapters;
 `NUVIO_PROVIDER_ORDER=vidlink,vidsrc,videasy` changes their order.
 `NUVIO_PROVIDER_TIMEOUT_MS` and `NUVIO_TIMEOUT_MS` adjust their bounded budgets.
