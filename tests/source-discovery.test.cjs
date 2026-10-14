@@ -327,6 +327,50 @@ test('actual failed-request headers can recover a URL first probed from a JSON s
   assert.deepEqual(requests, ['', 'Bearer SESSION']);
 });
 
+test('a provider timeout reports its last capture phase without exposing source data', async t => {
+  const f = fixture(), logged = [], original = console.info;
+  console.info = (...args) => logged.push(args);
+  t.after(() => { console.info = original; });
+  const n = network(f, { navigate: emit => emit('response', response('https://provider.example/config?token=PRIVATE_TOKEN', 200, 'application/json', '{}')) });
+  n.page.waitForTimeout = ms => new Promise(resolve => setTimeout(resolve, Math.min(ms, 20)));
+  const result = await require('../lib/provider-race').runProviderRace({
+    jobs: [{ provider: 'hexa', timeoutMs: 30 }], timeoutMs: 500,
+    run: (_job, { signal }) => require('../lib/provider-capture').captureProviderMedia({
+      getBrowser: async () => ({ newContext: async () => n.context }), provider: 'hexa',
+      url: n.page.url(), signal, navigationTimeoutMs: 1000, streamTimeoutMs: 1000
+    })
+  });
+  assert.equal(result.results[0].code, 'provider_timeout');
+  assert.equal(logged.length, 1);
+  assert.equal(logged[0][1].responses, 1);
+  assert.equal(logged[0][1].stage, 'waiting');
+  assert.doesNotMatch(JSON.stringify(logged), /PRIVATE_TOKEN|https:\/\/|authorization|cookie/i);
+});
+
+test('provider timeouts also report browser startup, context creation and cleanup stalls', async t => {
+  const original = console.info, logged = [];
+  console.info = (...args) => logged.push(args);
+  t.after(() => { console.info = original; });
+  for (const stage of ['browser', 'context', 'closing']) {
+    const f = fixture(), controller = new AbortController(), gate = deferred();
+    const n = network(f, { navigate: emit => emit('response', response('https://media.example/movie.m3u8', 200,
+      'application/x-mpegurl', '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=1\nmain.m3u8')) });
+    if (stage === 'closing') n.context.close = () => gate.promise;
+    const getBrowser = stage === 'browser' ? () => gate.promise
+      : async () => ({ newContext: () => stage === 'context' ? gate.promise : Promise.resolve(n.context) });
+    const pending = require('../lib/provider-capture').captureProviderMedia({ getBrowser, provider: 'cinezo',
+      url: n.page.url(), signal: controller.signal }).catch(error => error);
+    await flush();
+    const reason = Object.assign(new Error('timeout'), { code: 'provider_timeout' });
+    controller.abort(reason);
+    await flush();
+    const diagnostic = logged.at(-1)?.[1];
+    gate.resolve(stage === 'browser' ? { newContext: async () => n.context } : stage === 'context' ? n.context : undefined);
+    assert.equal(await pending, reason);
+    assert.equal(diagnostic?.stage, stage);
+  }
+});
+
 test('a verified response returns before unrelated navigation finishes', async () => {
   const f = fixture(), navigation = deferred();
   const n = network(f, { navigate: async emit => {
