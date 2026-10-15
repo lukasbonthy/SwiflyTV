@@ -1392,7 +1392,7 @@ function apiSourceToProxyResult({ source, raw, provider, type, id, season = "", 
         episode,
         streamName: source.name || "",
         streamQuality: source.quality || "",
-        ...(needsFileProxy ? { sourceFormat: "mp4" } : {})
+        ...(needsFileProxy ? { sourceFormat: "mp4", sourceCodec: String(source.codecName || "").slice(0, 32) } : {})
       })
     : { enabled: false, id: "", url: "" };
 
