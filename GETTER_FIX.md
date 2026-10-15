@@ -15,7 +15,9 @@ worker before releasing its provider slot. Adapter output is kept out of logs.
 VidLink's current `stream.qualities` response is accepted alongside the pinned
 adapter's playlist response. Only successful source responses for the requested
 media type and TV season/episode are considered, and each file still requires
-HTTP verification. Verified MP4 sources marked `requiresProxy` use an opaque
+HTTP verification. Movie files accept the provider's explicit paired `0/0`
+season/episode sentinel or absent legacy coordinates; TV files must still match
+the exact selected season and episode. Verified MP4 sources marked `requiresProxy` use an opaque
 `/api/media-file-proxy/{id}/video.mp4` URL. The proxy forwards byte ranges and
 streams with backpressure, preserving seeking without buffering the full file.
 Public-address checks apply on each redirect; client disconnects cancel the
@@ -51,8 +53,12 @@ TV browser fallback tries VidRift's public `/embed/tv/{tmdb}/{season}/{episode}`
 entrypoint before Hexa and Cinezo. This is the same episode URL offered by
 Cinezo's source menu, without loading its watch-page wrapper first. Capture uses
 the existing verified-response, gate handling, cancellation and HLS proxy path.
-Nuvio remains first, movie provider order is unchanged, and request budgets are
-unchanged. `STREAMPROVIDER_TV_ORDER` can override the TV browser order.
+Movies use the offered `/embed/movie/{tmdb}` entrypoint too. The default browser
+order for both media types is VidRift, Hexa, Cinezo. `STREAMPROVIDER_ORDER` sets the
+shared order; `STREAMPROVIDER_MOVIE_ORDER` and `STREAMPROVIDER_TV_ORDER` override
+each type. Explicit shared order is retained in no-env mode. Nuvio remains first
+and request budgets are unchanged. Health/debug endpoints report the actual
+per-type order.
 
 An observed VidLove origin-warning MP4 is rejected by its exact strong ETag,
 byte count, and MIME type; it cannot masquerade as an episode. Capture continues

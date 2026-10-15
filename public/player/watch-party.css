@@ -97,3 +97,111 @@ body.svCleanShell .svWatchPartyDialog .svPartySetupStatus { font-size:12px !impo
  :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog),:is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) * { animation:none !important; transition:none !important; scroll-behavior:auto !important; }
 }
 body.reduceMotion :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) *,body[data-st-motion="reduce"] :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) * { animation:none !important; transition:none !important; }
+
+/* A room beside the film, using the same charcoal and luminous glass language. */
+body.svCleanShell :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) { --party-line:var(--sv-cinema-line,#dcedfa22); --party-muted:var(--sv-cinema-soft,#98abb9); --party-ease:var(--sv-cinema-ease,cubic-bezier(.2,.8,.2,1)); font-family:var(--font-ui,"Host Grotesk",system-ui,sans-serif); color:#e8f2f7; }
+body.svCleanShell :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) :is(h2,h3) { font-family:inherit !important; }
+body.svCleanShell :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) :is(button,summary,a) { -webkit-tap-highlight-color:transparent; transition:background-color .24s ease,border-color .24s ease,color .24s ease,transform .35s var(--party-ease),box-shadow .24s ease; }
+body.svCleanShell :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) :is(button,summary):active:not(:disabled) { transform:scale(.98); }
+body.svCleanShell :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) :is(.dsPrimaryBtn,.dsSecondaryBtn) { min-height:44px; border-radius:999px !important; padding:11px 17px !important; font-size:12px !important; }
+body.svCleanShell :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) .dsIconBtn { width:38px !important; height:38px !important; min-height:38px !important; border-radius:999px !important; }
+body.svCleanShell :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) input { min-height:46px; border-color:#d2e8f02a !important; background:#06131d5e !important; color:#eef7fa !important; box-shadow:inset 0 1px #ffffff04; transition:border-color .24s ease,background-color .24s ease,box-shadow .24s ease; }
+body.svCleanShell :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) input::placeholder { color:#7c97a7; }
+body.svCleanShell :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) input:focus { border-color:#aadff26a !important; background:#06131d80 !important; box-shadow:0 0 0 3px #addcfa08; }
+body.svCleanShell .svPartyBrowse { gap:26px; margin-bottom:40px; border-bottom-color:#d8eafa1c; }
+body.svCleanShell .svPartyBrowse .svPartyBrowseIntro { gap:15px; }
+body.svCleanShell .svPartyBrowse .svPartyBrowseIntro > svg { width:24px; height:24px; flex:0 0 24px; padding:13px; box-sizing:content-box; border:1px solid #d6edf326; border-radius:17px; color:#b7dce6; background:linear-gradient(135deg,#b9eaf50d,#bdcaff05); }
+body.svCleanShell .svPartyBrowse h2 { letter-spacing:-.035em !important; font-weight:600 !important; }
+body.svCleanShell .svPartyBrowse p { color:#8fa7b7 !important; font-size:12px !important; }
+body.svCleanShell .svPartyBrowse .svPartyJoinForm { flex-basis:370px; }
+body.svCleanShell .svPartyBrowse .svPartyJoinForm > div { gap:10px; }
+body.svCleanShell .svPartyDirectory > section { padding:22px; border-color:#d5eafa26; border-radius:21px; background:linear-gradient(150deg,#d9efff0b,transparent 65%),#10202bea; box-shadow:0 20px 60px #0006,inset 0 1px #ffffff0e; }
+body.svCleanShell .svPartyDirectory .svPartyRoomLink { padding:15px 0; border-color:#cdeafb13; }
+body.svCleanShell .svPartyRoomLink b { color:#dfeef6; overflow-wrap:anywhere; }
+body.svCleanShell .svPartyRoomLink small { color:#839faf; }
+body.svCleanShell .svPartyCommunityLink { border-color:#cdeafb1a; color:#96acbd; }
+body.svCleanShell .svInlineParty { min-width:0; min-height:640px; height:clamp(640px,calc(100svh - 170px),800px); border-color:var(--party-line); border-radius:24px; background:radial-gradient(ellipse at 12% 0%,#7895b514,transparent 54%),linear-gradient(140deg,#d5eaff08,transparent 60%),#101c26b3; box-shadow:inset 0 1px #ffffff10,0 16px 42px #0003; -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px); overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; scrollbar-color:#d5eaff26 transparent; }
+body.svCleanShell .svInlineParty > :not(.svInlinePartyMessages) { flex-shrink:0; }
+body.svCleanShell .svInlinePartyHead { align-items:flex-start; padding:25px 22px 15px; gap:12px; }
+body.svCleanShell .svInlinePartyHead > div { flex:1; min-width:0; }
+body.svCleanShell .svInlinePartyHead .dsEyebrow { margin-bottom:10px; font-size:8px; color:#8bb2c3; letter-spacing:.17em; }
+body.svCleanShell .svInlineParty h2 { font-size:23px !important; font-weight:550 !important; line-height:1.15 !important; letter-spacing:-.045em !important; color:#edf5fa; }
+body.svCleanShell .svInlinePartyHead .dsIconBtn { width:32px !important; height:32px !important; min-height:32px !important; padding:7px !important; color:#9fb9c8 !important; }
+body.svCleanShell .svInlinePartyConnection { align-items:center; gap:7px 10px; justify-content:flex-start; padding:0 22px; color:#849eaf; font-size:9px; }
+body.svCleanShell .svInlinePartyConnection [data-party-connection] { color:#b2cbd8; }
+body.svCleanShell .svInlinePartyConnection [data-party-role] { padding:5px 8px; border:1px solid #cde7f41a; border-radius:999px; background:#cce5ff06; color:#8fadb9; line-height:1.5; }
+body.svCleanShell .svInlinePartyFilm { display:flex; align-items:center; gap:11px; margin:19px 22px 0; padding:13px 14px; border:1px solid #d3eaff16; border-radius:14px; background:linear-gradient(125deg,#cde9ff09,#ffffff02); }
+body.svCleanShell .svInlinePartyFilm > svg { color:#8db3c6; width:20px; height:20px; }
+body.svCleanShell .svInlinePartyFilm > div { min-width:0; }
+body.svCleanShell .svInlinePartyFilm span { display:block; color:#7296aa; font-size:7px; font-weight:550; letter-spacing:.14em; margin-bottom:5px; }
+body.svCleanShell .svInlinePartyFilm b { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; color:#cfdee8; font-size:12px; font-weight:500; line-height:1.5; overflow-wrap:anywhere; }
+body.svCleanShell .svInlinePartyActions { padding:15px 22px 18px; gap:9px; align-items:center; }
+body.svCleanShell .svInlinePartyActions .dsSecondaryBtn { min-height:38px; padding:9px 14px !important; font-size:10px !important; }
+body.svCleanShell .svInlinePartyPeople { margin:0 22px; padding:0; border-block:1px solid #dcf0fa12; color:#91b0c0; }
+body.svCleanShell .svInlinePartyPeople summary { min-height:42px; font-size:10px; }
+body.svCleanShell .svInlinePartyPeople summary::after { content:'+'; margin-left:auto; color:#6e92a5; }
+body.svCleanShell .svInlinePartyPeople[open] summary::after { content:'−'; }
+body.svCleanShell .svInlinePartyPeople ul { padding:0 0 12px; scrollbar-width:thin; scrollbar-color:#e4f4ff24 transparent; }
+body.svCleanShell .svInlinePartyPeople li { display:flex; align-items:center; gap:8px; color:#bdd1df; font-size:11px; line-height:1.6; overflow-wrap:anywhere; }
+body.svCleanShell .svInlinePartyPeople li::before { content:''; flex:0 0 6px; width:6px; height:6px; border-radius:50%; background:#b2d4e538; }
+body.svCleanShell .svInlinePartyChatLabel { display:flex; align-items:baseline; flex-wrap:wrap; gap:8px; justify-content:space-between; margin:19px 22px 0; font-size:8px; letter-spacing:.12em; color:#7899ac; }
+body.svCleanShell .svInlinePartyChatLabel > :last-child { font-size:9px; letter-spacing:0; color:#617f93; }
+body.svCleanShell .svInlinePartyMessages { min-height:130px; padding:18px 22px 8px; }
+body.svCleanShell .svInlinePartyMessage { margin-bottom:18px; padding-left:12px; border-left:1px solid #b8dbf027; animation:svPartyMessageIn .35s var(--party-ease) backwards; }
+body.svCleanShell .svInlinePartyMessage b { display:block; color:#a7c5d6; font-size:10px; line-height:1.5; font-weight:550; }
+body.svCleanShell .svInlinePartyMessage p { margin:5px 0 0 !important; font-size:12px !important; line-height:1.65 !important; color:#dce9ef !important; }
+body.svCleanShell .svInlinePartyMessage.isSystem { border:0; padding:0; }
+body.svCleanShell .svInlinePartyMessage.isSystem p { color:#7395aa !important; font-size:10px !important; }
+body.svCleanShell .svInlineParty .svPartyEmpty { display:flex; align-items:center; justify-content:center; flex:1; min-height:100px; margin:0 !important; color:#8aa8ba !important; text-align:center; font-size:12px !important; line-height:1.8 !important; }
+body.svCleanShell .svInlinePartyComposer { margin:8px 14px 14px; gap:6px; padding:5px 6px 5px 14px; border:1px solid #d8eafa23; border-radius:999px; background:#06121c66; }
+body.svCleanShell .svInlinePartyComposer input { flex:1; min-height:34px; height:34px; padding:4px 0 !important; border:0 !important; background:none !important; box-shadow:none; font-size:11px !important; }
+body.svCleanShell .svInlinePartyComposer input:focus { box-shadow:none; }
+body.svCleanShell .svInlinePartyComposer .dsIconBtn { width:33px !important; height:33px !important; min-height:33px !important; padding:8px !important; }
+body.svCleanShell .svInlinePartyStatus { margin:0 22px 15px !important; color:#aec8d5 !important; font-size:10px !important; }
+body.svCleanShell .svWatchPartyDialog { width:min(500px,calc(100vw - 32px)); max-height:calc(100dvh - 40px); padding:34px; border:1px solid #d9f0ff30; border-radius:27px; color:#eaf3f9; background:radial-gradient(ellipse at 0% 0%,#6c9eb226,transparent 64%),radial-gradient(ellipse at 100% 20%,#5b608519,transparent 50%),linear-gradient(140deg,#1a2933ef,#0c1722f5); box-shadow:0 30px 100px #000a,inset 0 1px #ffffff13; -webkit-backdrop-filter:blur(24px) saturate(1.16); backdrop-filter:blur(24px) saturate(1.16); }
+body.svCleanShell .svWatchPartyDialog[open] { animation:svPartyDialogIn .42s var(--party-ease) backwards; }
+body.svCleanShell .svWatchPartyDialog::backdrop { background:#030810a3; -webkit-backdrop-filter:blur(9px); backdrop-filter:blur(9px); }
+body.svCleanShell .svWatchPartyDialog > header { align-items:flex-start; gap:15px; }
+body.svCleanShell .svWatchPartyDialog > header > div { min-width:0; }
+body.svCleanShell .svWatchPartyDialog .dsEyebrow { font-size:8px; color:#a3c9d5; letter-spacing:.17em; margin-bottom:12px; }
+body.svCleanShell .svWatchPartyDialog h2 { color:#eef5fa; font-size:39px !important; font-weight:550 !important; line-height:1.1 !important; letter-spacing:-.06em !important; }
+body.svCleanShell .svWatchPartyDialog > p { color:#a5bac8 !important; font-size:13px !important; line-height:1.75 !important; margin:18px 0 25px !important; }
+body.svCleanShell .svPartySelectedTitle { gap:13px; padding:17px; margin-bottom:24px; border-color:#d3ecfa1e; border-radius:16px; background:linear-gradient(130deg,#c5eafa09,#ffffff02); }
+body.svCleanShell .svPartySelectedTitle > svg { color:#91b8ce; width:23px; height:23px; flex:0 0 23px; }
+body.svCleanShell .svPartySelectedTitle > div { min-width:0; }
+body.svCleanShell .svPartySelectedTitle small { color:#7f9db0; font-size:8px; letter-spacing:.13em; margin-bottom:7px; }
+body.svCleanShell .svPartySelectedTitle strong { display:block; color:#d8e9f4; font-size:15px; font-weight:550; line-height:1.5; }
+body.svCleanShell .svPartyCreateForm > label,body.svCleanShell .svPartyJoinForm > label { color:#b9d0de; font-size:11px; margin-bottom:10px; }
+body.svCleanShell .svPartyCreateForm > .dsPrimaryBtn { margin-top:17px; min-height:47px; gap:11px; }
+body.svCleanShell .svPartyFormDivider { margin:28px 0 24px; color:#7794a7; font-size:10px; }
+body.svCleanShell .svPartyFormDivider::before,body.svCleanShell .svPartyFormDivider::after { background:#d5eafa18; }
+body.svCleanShell .svWatchPartyDialog .svPartySetupStatus { color:#bfd7e6 !important; }
+@keyframes svPartyMessageIn { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
+@keyframes svPartyDialogIn { from { opacity:0; transform:translateY(14px) scale(.985); } to { opacity:1; transform:translateY(0) scale(1); } }
+@media(max-width:1100px) {
+ body.svCleanShell .svPartyBrowse .svPartyBrowseIntro { flex-basis:100%; }
+ body.svCleanShell .svPartyBrowse .svPartyJoinForm { flex:1; }
+ body.svCleanShell .svInlineParty { height:640px; min-height:640px; }
+}
+@media(max-width:700px) {
+ body.svCleanShell .svPartyBrowse { gap:19px; padding-bottom:24px; margin-bottom:30px; }
+ body.svCleanShell .svPartyBrowse .svPartyBrowseIntro { align-items:center; }
+ body.svCleanShell .svPartyBrowse .svPartyBrowseIntro > svg { padding:11px; width:21px; height:21px; flex-basis:21px; border-radius:15px; }
+ body.svCleanShell .svPartyBrowse .svPartyJoinForm { flex-basis:100%; }
+ body.svCleanShell .svPartyBrowse .svPartyJoinForm > div { gap:8px; }
+ body.svCleanShell .svPartyBrowse :is(.dsPrimaryBtn,.dsSecondaryBtn) { padding-inline:14px !important; font-size:11px !important; }
+ body.svCleanShell .svInlineParty { height:640px; min-height:640px; border-radius:21px; }
+ body.svCleanShell .svInlinePartyHead { padding:23px 21px 14px; }
+ body.svCleanShell .svInlineParty h2 { font-size:22px !important; }
+ body.svCleanShell .svWatchPartyDialog { padding:27px 23px; border-radius:23px; }
+ body.svCleanShell .svWatchPartyDialog h2 { font-size:34px !important; }
+ body.svCleanShell .svWatchPartyDialog > p { font-size:12px !important; }
+ body.svCleanShell .svPartySelectedTitle { padding:15px; }
+ body.svCleanShell .svWatchPartyDialog .svPartyJoinForm > div { gap:8px; }
+ body.svCleanShell .svWatchPartyDialog .svPartyJoinForm .dsSecondaryBtn { padding-inline:15px !important; font-size:11px !important; }
+}
+body.svCleanShell[data-st-glass="off"] :is(.svInlineParty,.svWatchPartyDialog,.svPartyDirectory > section) { background:#111d28 !important; -webkit-backdrop-filter:none !important; backdrop-filter:none !important; }
+body.svCleanShell[data-st-glass="off"] .svWatchPartyDialog::backdrop { -webkit-backdrop-filter:none; backdrop-filter:none; }
+body.svCleanShell.reduceMotion :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog),body.svCleanShell.reduceMotion :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) *,body.svCleanShell[data-st-motion="reduce"] :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog),body.svCleanShell[data-st-motion="reduce"] :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) * { animation:none !important; transition:none !important; scroll-behavior:auto !important; }
+@media(prefers-reduced-motion:reduce) { body.svCleanShell :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog),body.svCleanShell :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) * { animation:none !important; transition:none !important; scroll-behavior:auto !important; } }
+@media(prefers-reduced-transparency:reduce) { body.svCleanShell :is(.svInlineParty,.svWatchPartyDialog,.svPartyDirectory > section) { background:#111d28 !important; -webkit-backdrop-filter:none !important; backdrop-filter:none !important; } body.svCleanShell .svWatchPartyDialog::backdrop { -webkit-backdrop-filter:none; backdrop-filter:none; } }

@@ -22,6 +22,7 @@ function fixture() {
     clearTimeout(id) { timers.delete(id); },
     NUVIO_ENABLED: false,
     STREAMPROVIDER_ENABLED: true, STREAMPROVIDER_ORDER: ['hexa', 'cinezo'],
+    STREAMPROVIDER_MOVIE_ORDER: ['hexa', 'cinezo'],
     STREAMPROVIDER_TV_ORDER: ['vidrift', 'hexa', 'cinezo'],
     STREAMPROVIDER_NAV_TIMEOUT_MS: 10, STREAMPROVIDER_STREAM_TIMEOUT_MS: 10,
     STREAMPROVIDER_ROUTE_TIMEOUT_MS: 30, STREAMPROVIDER_PROVIDER_TIMEOUT_MS: 20,

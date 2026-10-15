@@ -7,6 +7,30 @@ function setup(path='/search?q=moon#results'){
  w.fetch=async url=>({ok:true,text:async()=>fragment(url.match(/\/(?:movie|tv)\/(\d+)/)[1])});w.boot('details.js');return env;
 }
 function traversal(w,action){return new Promise(resolve=>{w.addEventListener('popstate',async()=>{await tick();resolve();},{once:true});action();});}
+const chapters='<article class="svTitleDetails"><h1>Movie 101</h1><nav class="svDetailChapterNav"><a href="#cast">Cast</a></nav><section id="cast">The cast</section></article>';
+test('Standalone title chapters scroll the current page without fetching another detail view',async()=>{
+ for(const type of ['movie','tv']){
+  const env=browser(chapters,{path:'/'+type+'/101',reduced:true}),w=env.window,d=w.document;let requests=0;
+  env.page.scrollTop=120;d.querySelector('#cast').getBoundingClientRect=()=>({top:450});
+  w.fetch=async()=>{requests++;return {ok:true,text:async()=>chapters};};w.boot('details.js');
+  const original=w.location.href,historyLength=w.history.length,click=new w.MouseEvent('click',{bubbles:true,cancelable:true});
+  d.querySelector('.svDetailChapterNav a').dispatchEvent(click);await tick();
+  assert(click.defaultPrevented);assert.equal(requests,0);assert.equal(d.querySelector('dialog'),null);
+  assert.equal(w.location.href,original);assert.equal(w.history.length,historyLength);assert.equal(env.page.scrollTop,470);env.finish();
+ }
+});
+test('Modal chapters scroll only the title viewport and preserve its catalog history entry',{timeout:2500},async()=>{
+ const env=setup(),w=env.window,d=w.document;let requests=0;
+ w.fetch=async()=>{requests++;return {ok:true,text:async()=>chapters};};env.page.scrollTop=650;
+ await w.SwiflyDetails.open('/movie/101',d.getElementById('open'));
+ const viewport=d.querySelector('.svDetailViewport');viewport.scrollTop=100;viewport.getBoundingClientRect=()=>({top:80});
+ d.querySelector('dialog #cast').getBoundingClientRect=()=>({top:480});
+ const original=w.location.href,state=JSON.stringify(w.history.state),historyLength=w.history.length;
+ d.querySelector('dialog .svDetailChapterNav a').click();await tick();
+ assert.equal(requests,1);assert.equal(viewport.scrollTop,480);assert.equal(env.page.scrollTop,650);
+ assert.equal(w.location.href,original);assert.equal(JSON.stringify(w.history.state),state);assert.equal(w.history.length,historyLength);
+ await traversal(w,()=>w.SwiflyDetails.close());assert.equal(w.location.pathname+w.location.search+w.location.hash,'/search?q=moon#results');env.finish();
+});
 test('Catalog posters open details and separate Play retains episode playback data',()=>{
  const env=browser(api.movieCard({id:101,name:'Series title',media_type:'tv'})),d=env.window.document;
  const poster=d.querySelector('.posterWrap');assert.equal(poster.getAttribute('href'),'/tv/101');assert(!poster.hasAttribute('data-play-id'));
