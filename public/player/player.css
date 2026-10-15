@@ -27,6 +27,8 @@ body.svCleanShell .svPlayerPage .svPlayerModes.svGlassPanel { display:flex; alig
 .svPlayerPartySlot { display:none; }
 .svPlayerPage[data-party-active="true"] .svPlayerPartySlot { display:block; }
 .svPlayerTheater { position:relative; border-radius:24px; }
+/* A fallback menu must also clear sibling page chrome in embedded hosts. */
+body.svCleanShell > main:has(.svPlayerPopover[open]),
 .svPlayer:has(.svPlayerPopover[open]) { z-index:30; }
 .svPlayerTheater:has(.svPlayerPopover[open]),.svPlayerEmbedded:has(.svPlayerPopover[open]) { z-index:15; }
 body.svCleanShell .svPlayerTheater:has(.svPlayerPopover[open]) { animation:none !important; transform:none !important; opacity:1 !important; }
@@ -59,45 +61,49 @@ body.svCleanShell .svPlayer[data-player-state="buffering"] .svPlayerStatus h2 { 
 .svPlayerAction:active { background:#d9d6e1; }
 .svPlayerAction:disabled { opacity:.45; cursor:default; }
 .svPlayerRetry { margin-top:20px; }
-/* A single floating glass instrument panel, with a quiet scrubbing rail above it. */
-.svPlayerDock { position:absolute; z-index:4; left:20px; right:20px; bottom:18px; padding:13px 18px 12px; border:1px solid #ffffff29; border-radius:22px; color:#f5f7fc; background-color:#11151dc9; background-image:linear-gradient(135deg,#ffffff0d,transparent 46%,#b9d5ff05); backdrop-filter:blur(28px) saturate(1.25); -webkit-backdrop-filter:blur(28px) saturate(1.25); box-shadow:inset 0 1px 0 #ffffff12,inset 0 -1px 0 #0004,0 12px 40px #0006; opacity:1; visibility:visible; transition:opacity .22s ease,visibility .22s ease; }
-.svPlayerStage::after { content:""; position:absolute; z-index:3; inset:auto 0 0; height:180px; border-radius:0 0 23px 23px; background:linear-gradient(transparent,#03060d66); pointer-events:none; transition:opacity .22s ease; }
+/* The transport belongs to the picture: one continuous cinema fade, no panel. */
+.svPlayerDock { position:absolute; z-index:4; left:28px; right:28px; bottom:18px; padding:0; border:0; border-radius:0; color:#fff; background:transparent; box-shadow:none; opacity:1; visibility:visible; transition:opacity .22s ease,visibility .22s ease; }
+.svPlayerStage::after { content:""; position:absolute; z-index:3; inset:auto 0 0; height:180px; max-height:75%; border-radius:inherit; background:linear-gradient(transparent,#0003 28%,#0009 72%,#000b); pointer-events:none; transition:opacity .22s ease; }
 .svPlayer[data-player-controls-visibility="hidden"] .svPlayerDock { opacity:0; visibility:hidden; pointer-events:none; }
 .svPlayer[data-player-controls-visibility="hidden"] .svPlayerStage::after { opacity:0; }
 .svPlayer[data-player-controls-visibility="hidden"] .svPlayerStage { cursor:none; }
-.svPlayerTimelineRow { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:13px; margin-bottom:7px; }
-.svPlayerTimeline { position:relative; display:flex; align-items:center; width:100%; height:28px; }
-.svPlayerTimelineTrack { position:absolute; inset:11px 0 auto; height:5px; overflow:hidden; border-radius:9px; background:#ffffff21; pointer-events:none; box-shadow:inset 0 1px 2px #0004; transition:height .15s ease,inset .15s ease; }
+.svPlayerTimelineRow { display:flex; align-items:center; width:100%; margin-bottom:8px; }
+.svPlayerTimeline { position:relative; display:flex; align-items:center; width:100%; height:24px; }
+.svPlayerTimelineTrack { position:absolute; inset:10px 0 auto; height:3px; overflow:hidden; border-radius:2px; background:#ffffff38; pointer-events:none; transition:height .15s ease,inset .15s ease; }
 .svPlayerTimelineTrack :is(i,b) { position:absolute; inset:0 auto 0 0; width:0; height:100%; border-radius:inherit; }
-.svPlayerTimelineTrack i { background:#ffffff38; }
-.svPlayerTimelineTrack b { background:linear-gradient(90deg,#b9d3f8,#f5f8ff); box-shadow:0 0 12px #c7dcff38; }
-body.svCleanShell .svPlayer .svPlayerTimeline input { position:relative; width:100%; min-width:0; height:28px; min-height:28px; margin:0 !important; padding:0 !important; border:0 !important; border-radius:6px !important; background:transparent !important; accent-color:#f5f8ff; cursor:pointer; appearance:none; -webkit-appearance:none; }
-.svPlayerTimeline input::-webkit-slider-runnable-track { height:5px; background:transparent; }
-.svPlayerTimeline input::-moz-range-track { height:5px; background:transparent; }
-.svPlayerTimeline input::-webkit-slider-thumb { width:13px; height:13px; margin-top:-4px; border:1px solid #fff; border-radius:50%; background:#f5f8ff; box-shadow:0 0 0 4px #cee2ff13,0 2px 8px #0007; appearance:none; -webkit-appearance:none; transition:box-shadow .15s ease; }
-.svPlayerTimeline input::-moz-range-thumb { width:13px; height:13px; border:1px solid #fff; border-radius:50%; background:#f5f8ff; box-shadow:0 0 0 4px #cee2ff13,0 2px 8px #0007; }
-.svPlayerTimeline:hover input::-webkit-slider-thumb,.svPlayerTimeline input:focus-visible::-webkit-slider-thumb { box-shadow:0 0 0 6px #cee2ff24,0 2px 8px #0007; }
+.svPlayerTimelineTrack i { background:#ffffff48; }
+.svPlayerTimelineTrack b { background:#fff; }
+body.svCleanShell .svPlayer .svPlayerTimeline input { position:relative; width:100%; min-width:0; height:24px; min-height:24px; margin:0 !important; padding:0 !important; border:0 !important; border-radius:3px !important; background:transparent !important; accent-color:#fff; cursor:pointer; appearance:none; -webkit-appearance:none; }
+.svPlayerTimeline input::-webkit-slider-runnable-track { height:3px; background:transparent; }
+.svPlayerTimeline input::-moz-range-track { height:3px; background:transparent; }
+.svPlayerTimeline input::-webkit-slider-thumb { width:12px; height:12px; margin-top:-4.5px; border:0; border-radius:50%; background:#fff; box-shadow:0 1px 5px #0006; appearance:none; -webkit-appearance:none; transition:opacity .15s ease,box-shadow .15s ease; }
+.svPlayerTimeline input::-moz-range-thumb { width:12px; height:12px; border:0; border-radius:50%; background:#fff; box-shadow:0 1px 5px #0006; }
+.svPlayerTimeline:hover input::-webkit-slider-thumb,.svPlayerTimeline input:focus-visible::-webkit-slider-thumb { box-shadow:0 0 0 5px #ffffff1c,0 1px 5px #0006; }
 .svPlayerTimeline input:disabled { cursor:default; opacity:.35; }
-.svPlayerDockRow { display:flex; align-items:center; justify-content:space-between; gap:16px; }
-.svPlayerTransport,.svPlayerTools { display:flex; align-items:center; gap:7px; min-width:0; }
-.svPlayerTools { padding-left:14px; border-left:1px solid #ffffff16; }
-body.svCleanShell .svPlayer .svPlayerControl { display:grid; place-items:center; flex:0 0 auto; width:var(--player-control-size); min-width:var(--player-control-size); height:44px; min-height:44px; margin:0; padding:10px; border:1px solid transparent; border-radius:50%; background:transparent; color:#e5eaf2; box-shadow:none; font:inherit; list-style:none; cursor:pointer; appearance:none; -webkit-appearance:none; transition:background .16s ease,color .16s ease,border-color .16s ease,box-shadow .16s ease; }
+@media (hover:hover) and (pointer:fine) {
+  .svPlayerTimeline input::-webkit-slider-thumb { opacity:0; }
+  .svPlayerTimeline input::-moz-range-thumb { opacity:0; }
+  .svPlayerTimeline:hover input::-webkit-slider-thumb,.svPlayerTimeline input:focus-visible::-webkit-slider-thumb { opacity:1; }
+  .svPlayerTimeline:hover input::-moz-range-thumb,.svPlayerTimeline input:focus-visible::-moz-range-thumb { opacity:1; }
+}
+.svPlayerDockRow { position:relative; display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.svPlayerTransport,.svPlayerTools { display:flex; align-items:center; gap:8px; min-width:0; }
+body.svCleanShell .svPlayer .svPlayerControl { display:grid; place-items:center; flex:0 0 auto; width:var(--player-control-size); min-width:var(--player-control-size); height:44px; min-height:44px; margin:0; padding:10px; border:1px solid transparent; border-radius:10px; background:transparent; color:#fff; box-shadow:none; font:inherit; list-style:none; cursor:pointer; appearance:none; -webkit-appearance:none; transition:background .16s ease,color .16s ease; }
 .svPlayerControl::-webkit-details-marker { display:none; }
-.svPlayerControl .svPlayerIcon { width:23px; height:23px; flex-basis:23px; }
-body.svCleanShell .svPlayer .svPlayerControl:hover { color:#fff; background:#ffffff12; border-color:#ffffff19; box-shadow:inset 0 1px #ffffff0c; }
-body.svCleanShell .svPlayer .svPlayerControl:active { background:#ffffff24; border-color:#ffffff30; box-shadow:inset 0 2px 5px #0003; }
+.svPlayerControl .svPlayerIcon { width:23px; height:23px; flex-basis:23px; filter:drop-shadow(0 1px 3px #0005); }
+body.svCleanShell .svPlayer .svPlayerControl:hover { color:#fff; background:#ffffff14; }
+body.svCleanShell .svPlayer .svPlayerControl:active { background:#ffffff25; }
 body.svCleanShell .svPlayer .svPlayerControl:disabled { opacity:.32; cursor:default; background:transparent; border-color:transparent; box-shadow:none; }
-body.svCleanShell .svPlayer .svPlayerPlay { width:52px; min-width:52px; height:52px; margin-right:8px; border:1px solid #fff; border-radius:50%; background:linear-gradient(145deg,#fff,#dce5f3); color:#142033; box-shadow:inset 0 1px 0 #fff,0 3px 12px #0005,0 0 0 4px #ffffff06; }
-body.svCleanShell .svPlayer .svPlayerPlay:hover { background:#fff; color:#142033; box-shadow:0 0 0 5px #e3edff18,0 3px 14px #0005; }
-body.svCleanShell .svPlayer .svPlayerPlay:active { background:#ced9e9; box-shadow:inset 0 2px 5px #66748c30; }
-body.svCleanShell .svPlayer .svPlayerPlay:disabled { background:#e4eaf3; color:#142033; border-color:#fff; }
+body.svCleanShell .svPlayer .svPlayerPlay { width:48px; min-width:48px; height:44px; margin-right:4px; }
+.svPlayerPlay .svPlayerIcon { width:28px; height:28px; flex-basis:28px; }
 .svPlayerPlay[data-paused="true"] path { fill:currentColor; stroke-width:1.4; }
 .svPlayerPlay[data-paused="true"] .svPlayerIcon { translate:1px 0; }
-.svPlayerTime { color:#e7edf6; font-size:11px; font-weight:500; font-variant-numeric:tabular-nums; letter-spacing:.015em; white-space:nowrap; }
-.svPlayerTimeDuration { color:#a8b3c5; text-align:right; }
+.svPlayerTimeGroup { display:flex; align-items:center; gap:6px; margin-left:12px; color:#ffffff85; white-space:nowrap; }
+.svPlayerTime { color:#fff; font-size:12px; font-weight:400; font-variant-numeric:tabular-nums; letter-spacing:.015em; line-height:1.4; white-space:nowrap; text-shadow:0 1px 4px #0006; }
+.svPlayerTimeDuration { color:#ffffffa6; }
 .svPlayerPopover { position:relative; }
 body.svCleanShell .svPlayer .svPlayerPopover[open] > .svPlayerControl { background:#ffffff18; border-color:#ffffff27; color:#fff; box-shadow:inset 0 1px #ffffff12; }
-.svPlayerPopoverBody { position:absolute; z-index:8; right:-4px; bottom:calc(100% + 27px); display:flex; flex-direction:column; align-items:stretch; gap:16px; width:300px; min-width:0; max-height:min(520px,calc(100dvh - 120px)); overflow:auto; padding:19px; border:1px solid #ffffff2b; border-radius:20px; background:linear-gradient(135deg,#ffffff09,transparent 60%),#151b26f5; backdrop-filter:blur(32px); -webkit-backdrop-filter:blur(32px); color:#e9eef8; box-shadow:0 20px 70px #000a,inset 0 1px #ffffff12; scrollbar-width:thin; scrollbar-color:#ffffff30 transparent; }
+.svPlayerPopoverBody { position:absolute; z-index:8; right:-4px; bottom:calc(100% + 27px); display:flex; flex-direction:column; align-items:stretch; gap:16px; width:300px; min-width:0; max-height:min(520px,calc(100dvh - 120px)); overflow:auto; padding:19px; border:1px solid #ffffff2b; border-radius:20px; background:linear-gradient(135deg,#ffffff06,transparent 60%),#191919f5; backdrop-filter:blur(32px); -webkit-backdrop-filter:blur(32px); color:#f1f1f1; box-shadow:0 20px 70px #000a,inset 0 1px #ffffff12; scrollbar-width:thin; scrollbar-color:#ffffff30 transparent; }
 .svPlayerPopover[open] > .svPlayerPopoverBody[data-player-menu-fallback] { display:flex; }
 /* Top-layer menus escape glass and container containing blocks. */
 @supports selector(:popover-open) {
@@ -105,45 +111,49 @@ body.svCleanShell .svPlayer .svPlayerPopover[open] > .svPlayerControl { backgrou
   .svPlayerPopoverBody[popover]:not(:popover-open) { display:none; }
 }
 .svPlayerPopover[open] .svPlayerPopoverBody { transform-origin:bottom right; animation:svPlayerMenuIn .18s var(--player-ease); }
-.svPlayerPopoverHeading { display:flex; align-items:center; justify-content:space-between; gap:12px; padding-bottom:13px; border-bottom:1px solid #ffffff16; color:#f3f6fc; font-size:14px; font-weight:600; letter-spacing:-.015em; }
-.svPlayerMenuClose { display:grid; place-items:center; flex:0 0 auto; width:32px; height:32px; min-height:32px; padding:6px; margin:-5px -6px -5px 0; border:1px solid transparent; border-radius:50%; background:transparent; color:#a6b3c7; cursor:pointer; }
+.svPlayerPopoverHeading { display:flex; align-items:center; justify-content:space-between; gap:12px; padding-bottom:13px; border-bottom:1px solid #ffffff16; color:#f5f5f5; font-size:14px; font-weight:600; letter-spacing:-.015em; }
+.svPlayerMenuClose { display:grid; place-items:center; flex:0 0 auto; width:32px; height:32px; min-height:32px; padding:6px; margin:-5px -6px -5px 0; border:1px solid transparent; border-radius:50%; background:transparent; color:#aaa; cursor:pointer; }
 .svPlayerMenuClose:hover { background:#ffffff12; border-color:#ffffff18; color:#fff; }
 .svPlayerMenuClose .svPlayerIcon { width:18px; height:18px; }
-.svPlayerSettingsBody label { display:flex; flex-direction:column; align-items:stretch; gap:8px; color:#aebbd0; font-size:11px; font-weight:500; }
-body.svCleanShell .svPlayerSettingsBody select { width:100%; min-height:42px; padding:9px 12px !important; border:1px solid #ffffff1f !important; border-radius:10px !important; background:#ffffff07 !important; color:#edf3fc !important; font:inherit; font-size:13px !important; box-shadow:inset 0 1px #ffffff05; cursor:pointer; color-scheme:dark; }
-.svPlayerSettingsBody select option { background:#1c2431; color:#f1f5fb; }
-.svPlayerSettingsBody select:disabled { color:#a6b1c3 !important; cursor:default; opacity:.65; }
-.svPlayerMenuAction { display:flex; align-items:center; justify-content:flex-start; gap:11px; min-height:44px; padding:11px 12px; border:1px solid #ffffff1b; border-radius:11px; background:#ffffff06; color:#e3ebf8; font:500 12px var(--st-font,system-ui,sans-serif); text-align:left; cursor:pointer; transition:background .16s ease,border-color .16s ease; }
+.svPlayerSettingsBody label { display:flex; flex-direction:column; align-items:stretch; gap:8px; color:#b7b7b7; font-size:11px; font-weight:500; }
+body.svCleanShell .svPlayerSettingsBody select { width:100%; min-height:42px; padding:9px 12px !important; border:1px solid #ffffff1f !important; border-radius:10px !important; background:#ffffff07 !important; color:#f2f2f2 !important; font:inherit; font-size:13px !important; box-shadow:inset 0 1px #ffffff05; cursor:pointer; color-scheme:dark; }
+.svPlayerSettingsBody select option { background:#242424; color:#f4f4f4; }
+.svPlayerSettingsBody select:disabled { color:#aaa !important; cursor:default; opacity:.65; }
+.svPlayerMenuAction { display:flex; align-items:center; justify-content:flex-start; gap:11px; min-height:44px; padding:11px 12px; border:1px solid #ffffff1b; border-radius:11px; background:#ffffff06; color:#e8e8e8; font:500 12px var(--st-font,system-ui,sans-serif); text-align:left; cursor:pointer; transition:background .16s ease,border-color .16s ease; }
 .svPlayerMenuAction:hover { background:#ffffff12; border-color:#ffffff30; }
-.svPlayerMenuAction .svPlayerIcon { width:19px; height:19px; flex-basis:19px; color:#becfe7; }
+.svPlayerMenuAction .svPlayerIcon { width:19px; height:19px; flex-basis:19px; color:#ccc; }
 .svPlayerVolumeBody { width:270px; }
 .svPlayerVolumeRow { display:flex; align-items:center; gap:12px; }
 body.svCleanShell .svPlayer .svPlayerVolumeRow .svPlayerControl { background:#ffffff08; border-color:#ffffff14; }
-body.svCleanShell .svPlayer .svPlayerVolumeBody input[type="range"] { flex:1 1 auto; width:140px; min-width:70px; height:30px; margin:0 !important; padding:0 !important; border:0 !important; background:transparent !important; accent-color:#edf4ff; cursor:pointer; }
-.svPlayerMenuHint { color:#8e9eb6; font-size:10px; line-height:1.5; }
+body.svCleanShell .svPlayer .svPlayerVolumeBody input[type="range"] { flex:1 1 auto; width:140px; min-width:70px; height:30px; margin:0 !important; padding:0 !important; border:0 !important; background:transparent !important; accent-color:#fff; cursor:pointer; }
+.svPlayerMenuHint { color:#999; font-size:10px; line-height:1.5; }
 /* Container widths keep room embeds responsive even on wide desktop pages. */
 @container sv-stage (max-width:560px) {
-  .svPlayerDock { left:10px; right:10px; bottom:10px; padding:9px 12px 10px; border-radius:18px; }
-  .svPlayerTimelineRow { gap:10px; margin-bottom:4px; }
+  .svPlayerDock { left:16px; right:16px; bottom:10px; }
+  .svPlayerTimelineRow { margin-bottom:18px; }
+  .svPlayerTimeline { height:32px; }
+  .svPlayerTimelineTrack { top:14px; }
+  body.svCleanShell .svPlayer .svPlayerTimeline input { height:32px; min-height:32px; }
   .svPlayerTransport,.svPlayerTools { gap:4px; }
-  .svPlayerTools { padding-left:8px; }
   .svPlayerDockRow { gap:8px; }
-  body.svCleanShell .svPlayer .svPlayerPlay { width:46px; min-width:46px; height:46px; margin-right:2px; }
-  .svPlayerPopoverBody,.svPlayerPopoverBody[popover] { position:fixed; top:auto; left:16px; right:16px; bottom:calc(88px + env(safe-area-inset-bottom,0px)); width:auto; max-width:360px; max-height:calc(100dvh - 132px); margin:0 auto; padding:20px; border-radius:22px; background:#151b26; box-shadow:0 0 0 100vmax #03060ca6,0 20px 70px #000a; }
+  .svPlayerTimeGroup { position:absolute; right:0; top:-19px; margin:0; gap:5px; }
+  .svPlayerTime { font-size:10px; }
+  body.svCleanShell .svPlayer .svPlayerPlay { width:44px; min-width:44px; margin-right:0; }
+  .svPlayerPopoverBody,.svPlayerPopoverBody[popover] { position:fixed; top:auto; left:16px; right:16px; bottom:calc(88px + env(safe-area-inset-bottom,0px)); width:auto; max-width:360px; max-height:calc(100dvh - 132px); margin:0 auto; padding:20px; border-radius:18px; background:#191919; box-shadow:0 0 0 100vmax #0009,0 20px 70px #000a; }
   .svPlayerPopover[open] .svPlayerPopoverBody { transform-origin:bottom center; }
   .svPlayerVolumeBody { max-width:320px; }
   .svPlayerToast { bottom:122px; }
 }
 @container sv-stage (max-width:380px) {
-  .svPlayerDock { --player-control-size:40px; left:6px; right:6px; bottom:7px; padding:7px 8px 8px; border-radius:16px; }
-  .svPlayerTimelineRow { gap:9px; margin-bottom:1px; }
-  .svPlayerTransport,.svPlayerTools { gap:2px; }
-  .svPlayerTools { padding-left:0; border-left:0; }
-  .svPlayerDockRow { gap:6px; }
-  body.svCleanShell .svPlayer .svPlayerPlay { width:40px; min-width:40px; height:40px; min-height:40px; margin-right:0; }
-  body.svCleanShell .svPlayer .svPlayerControl { padding:8px; }
+  .svPlayerDock { left:10px; right:10px; bottom:8px; }
+  .svPlayerTransport,.svPlayerTools { gap:0; }
+  .svPlayerDockRow { gap:2px; }
+  body.svCleanShell .svPlayer .svPlayerControl { padding:10px; }
   .svPlayerControl .svPlayerIcon { width:22px; height:22px; flex-basis:22px; }
-  .svPlayerTime { font-size:10px; }
+  .svPlayerPlay .svPlayerIcon { width:27px; height:27px; flex-basis:27px; }
+}
+@container sv-stage (max-width:300px) {
+  .svPlayerDock { left:5px; right:5px; }
 }
 @container sv-player (max-width:560px) {
   .svPlayerStage { border-radius:17px; }
@@ -290,12 +300,10 @@ body.svCleanShell .svPlayer .swifly-tv-focus-target { outline:2px solid #e4d7fa 
   .svPlayerEpisodeText { padding:12px 10px; }
   body.svCleanShell .svPlayerEpisodeText strong { font-size:13px; }
 }
-/* Glass-off preserves transport geometry, contrast and readable menu material. */
-body.svCleanShell[data-st-glass="off"] .svPlayer :is(.svPlayerModes,.svPlayerBelow,.svPlayerEpisodes,.svPlayerPopoverBody,.svPlayerDock) { background:#151b26 !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
-body.svCleanShell[data-st-glass="off"] .svPlayerDock { box-shadow:0 12px 40px #0006,inset 0 1px #ffffff12; }
+/* Glass preferences change menu material; the cinema overlay stays unframed. */
+body.svCleanShell[data-st-glass="off"] .svPlayer :is(.svPlayerModes,.svPlayerBelow,.svPlayerEpisodes,.svPlayerPopoverBody) { background:#191919 !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
 @media (prefers-reduced-transparency:reduce) {
-  .svPlayer :is(.svPlayerModes,.svPlayerBelow,.svPlayerEpisodes,.svPlayerPopoverBody,.svPlayerDock) { background:#151b26 !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
-  .svPlayerDock { box-shadow:0 12px 40px #0006,inset 0 1px #ffffff12; }
+  .svPlayer :is(.svPlayerModes,.svPlayerBelow,.svPlayerEpisodes,.svPlayerPopoverBody) { background:#191919 !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
 }
 @media (prefers-reduced-motion:reduce) {
   .svPlayer *, .svPlayer *::before, .svPlayer *::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; }

@@ -34,6 +34,13 @@ function setup(options={}){
 function submit(w,form){const event=new w.Event('submit',{bubbles:true,cancelable:true});form.dispatchEvent(event);return event;}
 async function ready(env){await tick();await tick();return env;}
 async function enter(env){await ready(env);env.window.SwiflySocial.openNativeWatchRoom(room);env.socket.receive('watchroom:joined',{room,isHost:true,messages:[]});await tick();}
+test('Party artwork belongs to the page atmosphere and retains the selected-film hook',async()=>{
+ const env=await ready(setup({movieId:'101'})),d=env.window.document,app=d.querySelector('.svPartyHub'),atmosphere=app.querySelector(':scope > .partyPageAtmosphere');
+ assert(atmosphere,'The shared artwork must back the page identity and lobby');assert.equal(atmosphere.getAttribute('aria-hidden'),'true');
+ assert(atmosphere.compareDocumentPosition(d.querySelector('.partyPageHeader'))&env.window.Node.DOCUMENT_POSITION_FOLLOWING);
+ assert.equal(d.querySelectorAll('[data-party-hero-art]').length,1);assert(atmosphere.contains(d.querySelector('[data-party-hero-art]')));assert(!d.querySelector('.partyLobbyStart [data-party-hero-art]'));
+ assert.match(d.querySelector('[data-party-hero-art]').style.backgroundImage,/arrival\.jpg/);env.finish();
+});
 test('Creating a party submits the room form and opens its room without a page reload',async()=>{
  const env=await ready(setup()),w=env.window,d=w.document,form=d.getElementById('sv100CreateRoomForm');
  form.elements.namedItem('name').value='Saturday movie night';form.elements.namedItem('watchLink').value='https://youtu.be/abcdefghijk';const event=submit(w,form);await ready(env);

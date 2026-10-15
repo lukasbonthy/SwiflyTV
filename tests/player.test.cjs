@@ -262,10 +262,10 @@ test('Caption selection uses the loaded native tracks and settings Escape restor
 function basePlayerCss(css) {
   return css.replace(/@container[^{}]+\{(?:[^{}]|\{[^{}]*\})*\}/g,'');
 }
-test('Player styling integrates the room grid and makes controls readable over dark artwork',()=>{
-  const file=path.join(root,'public/player/player.css');assert(fs.existsSync(file),'The player needs its own cohesive stylesheet');const css=fs.readFileSync(file,'utf8');const dom=new JSDOM('<body class="svCleanShell"><style>'+basePlayerCss(css)+'</style>'+markup(base)+'</body>'),w=dom.window,d=w.document;const app=d.querySelector('.svPlayerPage');assert.equal(w.getComputedStyle(d.querySelector('[data-player-stage]')).aspectRatio,'16 / 9');assert.notEqual(w.getComputedStyle(d.querySelector('[data-player-controls]')).backgroundColor,'rgba(0, 0, 0, 0)');app.dataset.partyActive='true';assert.match(w.getComputedStyle(d.querySelector('.svPlayerLayout')).gridTemplateColumns,/320px/);assert.match(css,/focus-visible[^}]*outline[^}]*!important/s);assert.match(css,/prefers-reduced-motion/);dom.window.close();
+test('Player styling integrates the room grid and preserves visible focus',()=>{
+  const file=path.join(root,'public/player/player.css');assert(fs.existsSync(file),'The player needs its own cohesive stylesheet');const css=fs.readFileSync(file,'utf8');const dom=new JSDOM('<body class="svCleanShell"><style>'+basePlayerCss(css)+'</style>'+markup(base)+'</body>'),w=dom.window,d=w.document;const app=d.querySelector('.svPlayerPage');assert.equal(w.getComputedStyle(d.querySelector('[data-player-stage]')).aspectRatio,'16 / 9');app.dataset.partyActive='true';assert.match(w.getComputedStyle(d.querySelector('.svPlayerLayout')).gridTemplateColumns,/320px/);assert.match(css,/focus-visible[^}]*outline[^}]*!important/s);assert.match(css,/prefers-reduced-motion/);dom.window.close();
 });
-test('Player support-hidden controls stay hidden despite the glass control display rule',()=>{
+test('Player support-hidden controls stay hidden despite the shared control display rule',()=>{
   const css=fs.readFileSync(path.join(root,'public/player/player.css'),'utf8');const dom=new JSDOM('<body class="svCleanShell"><style>'+basePlayerCss(css)+'</style>'+markup(base)+'</body>'),w=dom.window,d=w.document;
   for(const name of ['pip','fullscreen']){const node=d.querySelector('[data-player-'+name+']');assert.equal(node.hidden,true);assert.equal(w.getComputedStyle(node).display,'none','Unavailable '+name+' must not render');}dom.window.close();
 });
