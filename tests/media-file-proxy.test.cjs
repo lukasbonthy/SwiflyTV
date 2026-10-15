@@ -332,3 +332,122 @@ test('idle timeout closes an upstream body that stalls after headers', { timeout
   });
   await closed;
 });
+
+// Synthetic metadata only: no third-party video is retained in these fixtures.
+function hevcFile() {
+  const box = (type, ...parts) => {
+    const payload = Buffer.concat(parts), header = Buffer.alloc(8);
+    header.writeUInt32BE(payload.length + 8);
+    header.write(type, 4);
+    return Buffer.concat([header, payload]);
+  };
+  const config = Buffer.alloc(23);
+  config[0] = 1; config[21] = 3; config[22] = 3;
+  const hvcc = box('hvcC', config, ...[32, 33, 34].map(type => Buffer.from([type, 0, 1, 0, 3, type << 1, 1, 128])));
+  const count = Buffer.alloc(8); count.writeUInt32BE(1, 4);
+  return Buffer.concat([
+    box('ftyp', Buffer.from('isom0000')),
+    box('moov', box('trak', box('mdia', box('minf', box('stbl', box('stsd', count, box('hev1', Buffer.alloc(78), hvcc))))))),
+    box('mdat', Buffer.from('unchanged encoded bytes: hev1 hvcC'))
+  ]);
+}
+
+async function hevcSource(t, { seen = [], probeStatus = 206, probeType = 'video/mp4', probeDelay = 0, changed = false } = {}) {
+  const file = hevcFile();
+  const url = await listen(t, (req, res) => {
+    seen.push({ method: req.method, headers: req.headers });
+    const isProbe = req.headers.range === 'bytes=0-65535';
+    let start = 0, end = file.length - 1;
+    if (req.headers.range) {
+      const [, first, last] = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range);
+      start = first ? Number(first) : Math.max(0, file.length - Number(last));
+      end = first && last ? Math.min(Number(last), end) : end;
+      res.statusCode = isProbe ? probeStatus : 206;
+      res.setHeader('content-range', `bytes ${start}-${end}/${file.length}`);
+    }
+    res.setHeader('content-type', isProbe ? probeType : 'video/mp4');
+    res.setHeader('content-length', end - start + 1);
+    res.setHeader('accept-ranges', 'bytes');
+    res.setHeader('etag', !isProbe && changed ? '"replacement"' : '"original"');
+    res.setHeader('last-modified', 'Wed, 14 Oct 2026 00:00:00 GMT');
+    const finish = () => res.end(req.method === 'HEAD' ? undefined : file.subarray(start, end + 1));
+    if (isProbe && probeDelay) setTimeout(finish, probeDelay); else finish();
+  });
+  return { url, file };
+}
+
+const hevcEntry = sourceUrl => entry(sourceUrl, { meta: { sourceFormat: 'mp4', sourceCodec: 'hevc' },
+  headers: { Range: 'bytes=0-1', 'If-Range': 'old', Referer: 'https://provider.example/', 'X-Playback-Token': 'verified' } });
+
+test('HEVC proxy serves hvc1 and complete parameter sets without changing media bytes or lengths', async t => {
+  const seen = [], { url: upstream, file } = await hevcSource(t, { seen });
+  const url = await proxy(t, hevcEntry(upstream));
+  const response = await request(url);
+  const expected = Buffer.from(file), sample = file.indexOf('hev1'), config = file.indexOf('hvcC') + 4;
+  expected.write('hvc1', sample);
+  for (const offset of [config + 23, config + 31, config + 39]) expected[offset] |= 128;
+  assert.deepEqual(response.body, expected);
+  assert.equal(response.status, 200);
+  assert.equal(response.headers['content-length'], String(file.length));
+  assert.equal(response.headers.etag, undefined);
+  assert.equal(response.headers['last-modified'], undefined);
+  assert.equal(response.headers['cache-control'], 'no-store');
+  assert.equal(seen.filter(r => r.headers.range === 'bytes=0-65535').length, 1);
+  for (const r of seen) {
+    assert.equal(r.headers['if-range'], undefined);
+    assert.equal(r.headers.referer, 'https://provider.example/');
+    assert.equal(r.headers['x-playback-token'], 'verified');
+    assert.equal(r.headers['user-agent'], undefined);
+  }
+});
+
+test('HEVC compatibility preserves Safari two-byte probes, split header ranges and seeks using one cached probe', async t => {
+  const seen = [], { url: upstream, file } = await hevcSource(t, { seen, probeDelay: 25 });
+  const url = await proxy(t, hevcEntry(upstream));
+  const sample = file.indexOf('hev1');
+  const ranges = [['bytes=0-1', 0, 1], [`bytes=${sample + 1}-${sample + 2}`, sample + 1, sample + 2],
+    [`bytes=${file.length - 10}-`, file.length - 10, file.length - 1], ['bytes=-5', file.length - 5, file.length - 1]];
+  const replies = await Promise.all(ranges.map(async ([range, start, end]) => {
+    const response = await request(url, { headers: { Range: range } });
+    assert.equal(response.status, 206);
+    assert.equal(response.headers['content-range'], `bytes ${start}-${end}/${file.length}`);
+    assert.equal(response.headers['content-length'], String(end - start + 1));
+    return response.body;
+  }));
+  assert.deepEqual(replies[0], file.subarray(0, 2));
+  assert.equal(replies[1].toString(), 'vc');
+  assert.deepEqual(replies[2], file.subarray(file.length - 10));
+  assert.deepEqual(replies[3], file.subarray(file.length - 5));
+  assert.equal(seen.filter(r => r.headers.range === 'bytes=0-65535').length, 1);
+});
+
+test('HEVC HEAD and OPTIONS do not fetch a compatibility body', async t => {
+  const seen = [], { url: upstream, file } = await hevcSource(t, { seen });
+  const url = await proxy(t, hevcEntry(upstream));
+  const head = await request(url, { method: 'HEAD' });
+  assert.equal(head.status, 200);
+  assert.equal(head.headers['content-length'], String(file.length));
+  assert.equal(head.headers.etag, undefined);
+  assert.equal(head.body.length, 0);
+  assert.equal((await request(url, { method: 'OPTIONS' })).status, 204);
+  assert.deepEqual(seen.map(r => r.method), ['HEAD']);
+});
+
+test('unusable compatibility probes leave the original media untouched', async t => {
+  for (const options of [{ probeStatus: 200 }, { probeType: 'text/html' }, { changed: true }]) {
+    const { url: upstream, file } = await hevcSource(t, options);
+    const response = await request(await proxy(t, hevcEntry(upstream)));
+    assert.equal(response.status, 200);
+    assert.deepEqual(response.body, file);
+  }
+});
+
+test('an unusable HEVC header is inspected only once for the registered entry lifetime', async t => {
+  t.mock.timers.enable({ apis: ['Date'], now: Date.now() });
+  const seen = [], { url: upstream, file } = await hevcSource(t, { seen, probeStatus: 200 });
+  const url = await proxy(t, hevcEntry(upstream));
+  assert.deepEqual((await request(url)).body, file);
+  t.mock.timers.tick(6_000);
+  assert.deepEqual((await request(url)).body, file);
+  assert.equal(seen.filter(r => r.headers.range === 'bytes=0-65535').length, 1);
+});

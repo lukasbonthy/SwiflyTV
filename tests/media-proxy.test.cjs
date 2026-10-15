@@ -86,6 +86,7 @@ test('a verified Reacher file requiring proxying retains its transport and selec
   assert.equal(result.streamHeaders.cookie, undefined);
   assert.equal(registrations.length, 1);
   assert.equal(registrations[0].metadata.sourceFormat, 'mp4');
+  assert.equal(registrations[0].metadata.sourceCodec, 'hevc');
   assert.equal(registrations[0].metadata.season, '1');
   assert.equal(registrations[0].metadata.episode, '1');
   assert.equal(registrations[0].headers.cookie, 'private=1');
@@ -110,6 +111,7 @@ test('the actual provider handoff preserves required proxying for verified Reach
   assert.equal(result.playbackUrl, '/api/media-file-proxy/reacher-file/video.mp4');
   assert.equal(result.streamCodec, 'hevc');
   assert.equal(registrations.length, 1);
+  assert.equal(registrations[0].metadata.sourceCodec, 'hevc');
 });
 
 test('the actual provider handoff cannot strip a required proxy when it is disabled', async () => {
