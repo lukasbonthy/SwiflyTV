@@ -276,3 +276,54 @@ test('Supported mobile controls fit a 320px screen and picture in picture stays 
   const available=320-px(page,'paddingLeft')-px(page,'paddingRight')-px(stage,'borderLeftWidth')-px(stage,'borderRightWidth')-px(dock,'left')-px(dock,'right')-px(dock,'borderLeftWidth')-px(dock,'borderRightWidth')-px(dock,'paddingLeft')-px(dock,'paddingRight');
   const buttons=[...d.querySelectorAll('.svPlayerTransport > button,.svPlayerTools > button,.svPlayerTools > details > summary')].filter(node=>display(node)!=='none'),needed=buttons.reduce((sum,node)=>sum+px(node,'width'),0)+px(row,'gap');assert(needed<=available,'Visible controls need '+needed+'px but only '+available+'px is available');dom.window.close();
 });
+
+
+test('Embedded party markup renders the same stage without a second watch-page shell',()=>{
+  const dom=new JSDOM(markup({...base,embedded:true,videoId:'sv103Video'})),d=dom.window.document;
+  assert(d.querySelector('.svPlayerEmbedded[data-player-root]'),'Embedded markup needs its own mount boundary');
+  assert.equal(d.querySelectorAll('video#sv103Video').length,1);
+  assert.equal(d.querySelector('.svPlayerPage'),null);
+  assert.equal(d.querySelector('[data-player-party-slot],.svPlayerBelow,.svPlayerPageHead'),null);
+  assert(d.querySelector('[data-player-transport-note]'));
+  assert.equal(d.querySelector('.dsIconBtn'),null,'Transport controls must be owned by the player');
+  dom.window.close();
+});
+test('Mounting an embedded controller keeps solo playback independent and tears it down safely',async()=>{
+  const e=setup(),host=e.d.createElement('div');host.innerHTML=markup({...base,embedded:true,videoId:'sv103Video'});e.d.body.append(host);
+  assert.equal(typeof e.w.SwiflyPlayer.mount,'function','The shared runtime must be available outside solo watch pages');
+  const root=host.firstElementChild,party=e.w.SwiflyPlayer.mount(root,{managed:true,isHost:false});
+  assert.equal(e.w.SwiflyPlayer.mount(root),party,'A boundary has one controller');
+  assert(Object.isFrozen(party));assert.notEqual(party,e.api);
+  await e.api.loadSource({status:'ok',playbackUrl:'/solo.mp4'});
+  await party.loadSource({status:'ok',playbackUrl:'/party.mp4',movieId:'43'});
+  const v=root.querySelector('video');e.ready(v);e.ready(e.video());
+  assert.equal(e.api.getState().source,'/solo.mp4');assert.equal(party.getState().source,'/party.mp4');
+  assert.equal(root.querySelector('[data-player-play]').disabled,true);assert.equal(e.d.querySelector('[data-player-play]').disabled,false);
+  party.destroy();v.dispatchEvent(new e.w.Event('canplay'));assert.equal(party.getState().ready,false);assert.equal(e.api.getState().ready,true);
+  assert.equal(e.w.SwiflyPlayer.mount(e.d.createElement('section')),null,'Detached or incomplete roots must not create controllers');
+});
+test('Playing controls settle after inactivity and stay visible for pause, focus, menus and buffering',async()=>{
+  const e=setup({},e=>e.app.dataset.playerControlsTimeoutMs='40');await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();
+  await e.api.play();await e.advance(50);assert.equal(e.app.dataset.playerControlsVisibility,'hidden');
+  const stage=e.d.querySelector('[data-player-stage]');stage.dispatchEvent(new e.w.Event('pointermove'));assert.equal(e.app.dataset.playerControlsVisibility,'visible');
+  e.d.querySelector('[data-player-settings]').open=true;await e.advance(50);assert.equal(e.app.dataset.playerControlsVisibility,'visible');
+  e.d.querySelector('[data-player-settings]').open=false;e.d.querySelector('[data-player-volume]').focus();await e.advance(50);assert.equal(e.app.dataset.playerControlsVisibility,'visible');
+  e.d.activeElement.blur();e.event('waiting');await e.advance(30);assert.equal(e.app.dataset.playerControlsVisibility,'visible');
+  e.api.pause();await e.advance(60);assert.equal(e.app.dataset.playerControlsVisibility,'visible');
+});
+test('Seek previews remain steady during timeupdates and commit one explicit shared action',async()=>{
+  const e=setup(),actions=[];await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();
+  e.app.addEventListener('swiflyplayer:action',event=>actions.push(event.detail));
+  const seek=e.d.querySelector('[data-player-seek]');seek.value='75';seek.dispatchEvent(new e.w.Event('input',{bubbles:true}));
+  e.state(e.video()).currentTime=9;e.event('timeupdate');assert.equal(seek.value,'75');assert.equal(e.d.querySelector('[data-player-current]').textContent,'1:15');
+  assert.equal(e.api.getState().currentTime,9,'Scrubbing must not seek on every input');
+  seek.dispatchEvent(new e.w.Event('change',{bubbles:true}));assert.equal(e.api.getState().currentTime,75);assert.deepEqual(actions.map(x=>[x.action,x.time]),[['set',75]]);
+  seek.value='90';seek.dispatchEvent(new e.w.Event('input'));e.api.setRemoteMode({enabled:true,isHost:false});seek.dispatchEvent(new e.w.Event('change'));assert.equal(e.api.getState().currentTime,75,'Losing hosting during a scrub cannot move the party');
+});
+
+test('The volume button reflects local mute and settings can dismiss explicitly',async()=>{
+ const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();
+ const summary=e.d.querySelector('[data-player-volume-menu] summary'),volume=e.d.querySelector('[data-player-volume]');volume.value='0.35';volume.dispatchEvent(new e.w.Event('input'));assert.match(summary.getAttribute('aria-label'),/35 percent/);
+ e.d.querySelector('[data-player-mute]').click();assert.match(summary.getAttribute('aria-label'),/muted/);
+ const menu=e.d.querySelector('[data-player-settings]');menu.open=true;e.d.querySelector('[data-player-settings-close]').click();assert.equal(menu.open,false);assert.equal(e.d.activeElement,menu.querySelector('summary'));
+});

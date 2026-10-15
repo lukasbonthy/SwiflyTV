@@ -1,7 +1,7 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {browser,loadServer,source,tick,cleanup}=require('./ui-helpers.cjs');
 test.afterEach(async()=>{await tick();await tick();cleanup();});const api=loadServer();
-const room={id:'movie-night',name:'Friday with friends',host:'Ava',mediaKind:'blank',viewers:1};
+const room={id:'movie-night',name:'Friday with friends',host:'Ava',mediaKind:'blank',viewers:1,syncedMovie:{status:'idle',movieId:'',proxyVideo:'',sync:{playing:false,offset:0,startedAt:0}}};
 function setup(options={}){
  let html;api.socialPage({query:{tab:'watchrooms'}},{send:value=>html=value});
  const parsed=browser(html),markup=parsed.window.document.querySelector('main.svPartyHub').outerHTML;parsed.finish();
@@ -10,7 +10,13 @@ function setup(options={}){
  if(options.partyReturn)w.sessionStorage.setItem('swiflytv.partyReturn',options.partyReturn);
  const socket={id:'socket-ava',connected:options.connected!==false,on(name,fn){events.set(name,fn);return this;},emit(name,data){sent.push({name,data});return this;},receive(name,data){events.get(name)?.(data);}};
  w.io=()=>socket;w.localStorage.setItem('swiflytv.activeProfile',JSON.stringify({name:'Ava'}));
- w.HTMLMediaElement.prototype.pause=function(){};w.HTMLMediaElement.prototype.load=function(){};
+ const mediaStates=new WeakMap(),mediaState=video=>{if(!mediaStates.has(video))mediaStates.set(video,{paused:true,currentTime:0,duration:120,readyState:0,volume:1,muted:false,playbackRate:1,seekable:{length:1,start:()=>0,end:()=>120},buffered:{length:0},textTracks:[]});return mediaStates.get(video);};
+ for(const name of ['paused','currentTime','duration','readyState','volume','muted','playbackRate','seekable','buffered','textTracks'])Object.defineProperty(w.HTMLMediaElement.prototype,name,{configurable:true,get(){return mediaState(this)[name];},set(value){mediaState(this)[name]=value;}});
+ w.HTMLMediaElement.prototype.pause=function(){const changed=!this.paused;this.paused=true;if(changed)this.dispatchEvent(new w.Event('pause'));};w.HTMLMediaElement.prototype.load=function(){};
+ w.HTMLMediaElement.prototype.play=function(){this.paused=false;this.dispatchEvent(new w.Event('play'));this.dispatchEvent(new w.Event('playing'));return Promise.resolve();};w.HTMLMediaElement.prototype.canPlayType=()=>'';
+ assert(w.document.getElementById('partyPlayerTemplate'),'Production Party Hub must provide the shared player template');
+ w.eval(source('player/player.js'));w.document.dispatchEvent(new w.Event('DOMContentLoaded'));
+
  w.fetch=async(url,init={})=>{
   calls.push({url:String(url),init});let data;
   if(String(url).includes('/permissions'))data={permissions:{canCreateWatchRooms:options.allowed!==false,canCreateGroups:false,canCreateChannels:false,canManageSocial:false}};
@@ -23,7 +29,7 @@ function setup(options={}){
   return {ok:true,json:async()=>data};
  };
  const code=source('party/party.js')||[...browser(html).window.document.querySelectorAll('script:not([src])')].find(s=>s.textContent.includes('window.SwiflySocial'))?.textContent;
- assert(code);w.eval(code);return {...env,socket,sent,calls,finish(){}};
+ assert(code);w.eval(code);return {...env,socket,sent,calls,mediaState,readyVideo(){const video=w.document.getElementById('sv103Video');video.readyState=3;video.dispatchEvent(new w.Event('loadedmetadata'));video.dispatchEvent(new w.Event('canplay'));return video;},finish(){}};
 }
 function submit(w,form){const event=new w.Event('submit',{bubbles:true,cancelable:true});form.dispatchEvent(event);return event;}
 async function ready(env){await tick();await tick();return env;}
@@ -45,7 +51,7 @@ test('Watch-room chat stays beside the player and sends to the selected room',as
  d.getElementById('sv100Input').value='Ready for the movie';submit(w,d.getElementById('sv100Composer'));assert(env.sent.some(e=>e.name==='watchroom:message'&&e.data.roomId===room.id&&e.data.text==='Ready for the movie'));env.finish();
 });
 test('Guests cannot trigger host controls, including a dispatched click',async()=>{
- const env=setup();await enter(env);env.socket.receive('watchroom:joined',{room,isHost:false,messages:[]});const w=env.window,d=w.document,play=d.querySelector('[data-action="native-play"]');
+ const env=setup();await enter(env);env.socket.receive('watchroom:joined',{room,isHost:false,messages:[]});env.socket.receive('watchroom:movie-sync',{roomId:room.id,movie:{movieId:'101',status:'ready',playbackUrl:'/movie.mp4'}});env.readyVideo();const w=env.window,d=w.document,play=d.querySelector('[data-player-play]');
  assert(play.disabled);const count=env.sent.length;play.dispatchEvent(new w.MouseEvent('click',{bubbles:true,cancelable:true}));assert.equal(env.sent.length,count);env.finish();
 });
 test('Leaving releases the room subscription and stops its media',async()=>{
@@ -80,31 +86,48 @@ test('A movie search from the previous room cannot fill the new room after switc
  d.querySelector('[data-action="leave-native-room"]').click();const next={...room,id:'new-night',name:'Another night'};w.SwiflySocial.openNativeWatchRoom(next);env.socket.receive('watchroom:joined',{room:next,isHost:true,messages:[]});
  release({ok:true,json:async()=>({results:[{id:101,title:'Old result',year:'2016'}]})});await ready(env);assert(!d.getElementById('partyMovieResults').textContent.includes('Old result'));env.finish();
 });
-test('Only the current connected video can send playback controls after media or room replacement',async()=>{
+test('Only explicit shared player actions can control the current connected room',async()=>{
  const env=setup();await enter(env);const w=env.window,d=w.document;
- const media=(id,path)=>env.socket.receive('watchroom:movie-sync',{roomId:id,movie:{status:'ready',playbackUrl:'https://media.example/'+path+'.mp4'}});
- media(room.id,'first');const first=d.getElementById('sv103Video');first.currentTime=55;
- media(room.id,'second');const second=d.getElementById('sv103Video');
- const sentBeforeMedia=env.sent.length;first.dispatchEvent(new w.Event('pause'));first.dispatchEvent(new w.Event('seeked'));assert.equal(env.sent.length,sentBeforeMedia,'Detached media must not control its replacement');
- const next={...room,id:'new-night',name:'Another night'};w.SwiflySocial.openNativeWatchRoom(next);env.socket.receive('watchroom:joined',{room:next,isHost:true,messages:[]});media(next.id,'third');
- const current=d.getElementById('sv103Video'),sentBeforeRoom=env.sent.length;second.currentTime=25;second.dispatchEvent(new w.Event('play'));second.dispatchEvent(new w.Event('seeked'));assert.equal(env.sent.length,sentBeforeRoom,'A previous room video must not control the new room');
- current.currentTime=12;current.dispatchEvent(new w.Event('seeked'));assert.deepEqual(JSON.parse(JSON.stringify(env.sent.at(-1))),{name:'watchroom:movie-control',data:{roomId:next.id,action:'set',clientTime:12,name:'Ava',time:12}});
- env.socket.connected=false;const sentBeforeOffline=env.sent.length;current.dispatchEvent(new w.Event('pause'));assert.equal(env.sent.length,sentBeforeOffline,'Disconnected media events must not queue controls');env.finish();
+ const media=(id,path)=>env.socket.receive('watchroom:movie-sync',{roomId:id,movie:{movieId:'101',status:'ready',playbackUrl:'https://media.example/'+path+'.mp4'}});
+ media(room.id,'first');const first=env.readyVideo(),oldRoot=d.querySelector('.svPlayerEmbedded');first.currentTime=55;
+ media(room.id,'second');const second=env.readyVideo();
+ const before=env.sent.length;first.dispatchEvent(new w.Event('pause'));first.dispatchEvent(new w.Event('seeked'));second.dispatchEvent(new w.Event('play'));assert.equal(env.sent.length,before,'Native and detached events cannot broadcast transport');
+ const next={...room,id:'new-night',name:'Another night'};w.SwiflySocial.openNativeWatchRoom(next);env.socket.receive('watchroom:joined',{room:next,isHost:true,messages:[]});media(next.id,'third');const current=env.readyVideo();
+ const sentBeforeRoom=env.sent.length;oldRoot.dispatchEvent(new w.CustomEvent('swiflyplayer:action',{detail:{action:'set',time:25}}));assert.equal(env.sent.length,sentBeforeRoom,'A previous room controller must not control the new room');
+ current.currentTime=12;d.querySelector('[data-player-forward]').click();const command=env.sent.at(-1);assert.equal(command.name,'watchroom:movie-control');assert.equal(command.data.roomId,next.id);assert.equal(command.data.action,'set');assert.equal(command.data.time,22);assert.equal(command.data.clientTime,22);
+ env.socket.connected=false;env.socket.receive('disconnect');const offline=env.sent.length;d.querySelector('[data-player-play]').dispatchEvent(new w.MouseEvent('click',{bubbles:true}));assert.equal(env.sent.length,offline,'Disconnected controllers must not queue playback commands');env.finish();
 });
-test('Video.js callbacks work after wrapping the current video and ignore the previous film',async()=>{
- const env=setup();await enter(env);const w=env.window,d=w.document,players=[];
- w.videojs=video=>{const wrapper=d.createElement('div');wrapper.id=video.id;video.id+='_html5_api';video.replaceWith(wrapper);wrapper.append(video);const events=new Map(),player={video,disposed:0,on(name,fn){events.set(name,fn);},ready(fn){this.finishReady=fn;},dispose(){this.disposed++;this.video.parentElement.remove();},error(){return {message:'Source failed'};},receive(name){events.get(name)?.();}};players.push(player);return player;};
- const media=path=>env.socket.receive('watchroom:movie-sync',{roomId:room.id,movie:{status:'ready',playbackUrl:'https://media.example/'+path+'.m3u8'}});
- media('first');const old=players[0];media('second');const current=players[1],video=d.getElementById('sv103Video'),html=d.getElementById('sv103Player').innerHTML;
- old.finishReady();old.receive('error');assert.equal(current.disposed,0,'Old callbacks must not dispose the active player');assert.equal(d.getElementById('sv103Video'),video);assert.equal(d.getElementById('sv103Player').innerHTML,html,'Old callbacks must not rewrite the new player');
- current.finishReady();assert.match(d.getElementById('sv106HlsStatus').textContent,/Ready to watch/,'Current wrapped Video.js callbacks must remain active');w.Hls={isSupported:()=>false};current.receive('error');assert.equal(current.disposed,1);assert.equal(d.getElementById('sv103Video').tagName,'VIDEO');assert.equal(d.getElementById('sv103Video').src,'https://media.example/second.m3u8');env.finish();
+test('Party movies mount the shared controller once and never initialize Video.js',async()=>{
+ const env=setup();await enter(env);const w=env.window,d=w.document;let legacyCalls=0;w.videojs=()=>legacyCalls++;
+ const movie={movieId:'101',status:'ready',playbackUrl:'https://media.example/movie.mp4',sync:{playing:false,offset:20}};
+ env.socket.receive('watchroom:movie-sync',{roomId:room.id,movie});const root=d.querySelector('.svPlayerEmbedded');assert(root,'Direct party playback must use production shared stage markup');const controller=w.SwiflyPlayer.mount(root),video=env.readyVideo();
+ assert.equal(controller.getState().source,movie.playbackUrl);assert.equal(video.currentTime,20);assert.equal(d.querySelectorAll('#sv103Player video').length,1);assert.equal(d.querySelectorAll('#sv103Player [data-player-controls]').length,1);assert.equal(d.querySelector('.sv103ControlDock').hidden,true);assert.equal(legacyCalls,0);
+ env.socket.receive('watchroom:movie-sync',{roomId:room.id,movie});assert.equal(d.querySelector('.svPlayerEmbedded'),root);assert.equal(d.getElementById('sv103Video'),video,'Repeated source snapshots must preserve playback');
+ env.socket.receive('watchroom:trailer',{roomId:room.id,videoId:'abcdefghijk',mediaKind:'youtube'});assert.equal(controller.getState().ready,false);assert(d.querySelector('#sv103Player iframe[src*="youtube.com"]'));assert.equal(d.querySelector('.sv103ControlDock').hidden,false);env.finish();
 });
-test('Delayed HLS callbacks cannot alter or recover the next film',async()=>{
+test('Delayed HLS callbacks cannot alter or recover the next shared party film',async()=>{
  const env=setup();await enter(env);const w=env.window,d=w.document,players=[];
- w.Hls=class {static Events={MANIFEST_PARSED:'manifest',ERROR:'error'};static ErrorTypes={NETWORK_ERROR:'network',MEDIA_ERROR:'media'};static isSupported(){return true;}constructor(){this.events=new Map();this.starts=0;this.recoveries=0;players.push(this);}on(name,fn){this.events.set(name,fn);}loadSource(){}attachMedia(){}destroy(){}startLoad(){this.starts++;}recoverMediaError(){this.recoveries++;}receive(name,data){this.events.get(name)?.(name,data);}};
- const media=path=>env.socket.receive('watchroom:movie-sync',{roomId:room.id,movie:{status:'ready',playbackUrl:'https://media.example/'+path+'.m3u8'}});
- media('first');const old=players[0];media('second');const current=players[1],video=d.getElementById('sv103Video'),html=d.getElementById('sv103Player').innerHTML;
- old.receive('manifest');old.receive('error',{fatal:true,type:'network'});old.receive('error',{fatal:true,type:'media'});assert.equal(current.starts,0);assert.equal(current.recoveries,0);assert.equal(d.getElementById('sv103Video'),video);assert.equal(d.getElementById('sv103Player').innerHTML,html);env.finish();
+ w.Hls=class {static Events={MANIFEST_PARSED:'manifest',ERROR:'error'};static ErrorTypes={NETWORK_ERROR:'network',MEDIA_ERROR:'media'};static isSupported(){return true;}constructor(){this.events=new Map();this.starts=0;this.recoveries=0;players.push(this);}on(name,fn){this.events.set(name,fn);}loadSource(){}attachMedia(){}destroy(){this.destroyed=true;}startLoad(){this.starts++;}recoverMediaError(){this.recoveries++;}receive(name,data){this.events.get(name)?.(name,data);}};
+ const media=path=>env.socket.receive('watchroom:movie-sync',{roomId:room.id,movie:{movieId:'101',status:'ready',playbackUrl:'https://media.example/'+path+'.m3u8'}});
+ media('first');await tick();const old=players[0];media('second');await tick();const current=players[1],video=d.getElementById('sv103Video'),html=d.getElementById('sv103Player').innerHTML;
+ assert.equal(old.destroyed,true);old.receive('manifest');old.receive('error',{fatal:true,type:'network'});old.receive('error',{fatal:true,type:'media'});assert.equal(current.starts,0);assert.equal(current.recoveries,0);assert.equal(d.getElementById('sv103Video'),video);assert.equal(d.getElementById('sv103Player').innerHTML,html);
+ current.receive('error',{fatal:true,type:'network'});assert.equal(current.starts,1);current.receive('error',{fatal:true,type:'network'});assert.equal(d.querySelector('.svPlayerEmbedded').dataset.playerState,'error');assert.equal(current.destroyed,true);env.finish();
+});
+test('Guests retain local volume and a gesture join while shared play and seeking remain host only',async()=>{
+ const env=setup();await enter(env);const w=env.window,d=w.document;env.socket.receive('watchroom:host',{roomId:room.id,isHost:false});
+ env.socket.receive('watchroom:movie-sync',{roomId:room.id,movie:{movieId:'101',status:'ready',playbackUrl:'/guest.mp4',sync:{playing:false,offset:5}}});const video=env.readyVideo(),root=d.querySelector('.svPlayerEmbedded'),controller=w.SwiflyPlayer.mount(root);
+ assert(d.querySelector('[data-player-play]').disabled);assert(d.querySelector('[data-player-seek]').disabled);const before=env.sent.length;
+ const volume=d.querySelector('[data-player-volume]');volume.value='0.3';volume.dispatchEvent(new w.Event('input'));assert.equal(video.volume,0.3);assert.equal(env.sent.length,before);
+ video.play=()=>Promise.reject(Object.assign(new Error('Gesture required'),{name:'NotAllowedError'}));env.socket.receive('watchroom:movie-sync-state',{roomId:room.id,sync:{playing:true,offset:8,startedAt:Date.now()}});await tick();assert.equal(d.querySelector('[data-player-unlock]').hidden,false);
+ video.play=w.HTMLMediaElement.prototype.play;d.querySelector('[data-player-unlock]').click();await tick();assert.equal(controller.getState().paused,false);assert.equal(env.sent.length,before,'A guest gesture joins playback without echoing host commands');
+ env.socket.receive('watchroom:movie-sync-state',{roomId:'old-room',sync:{playing:false,offset:80}});assert.equal(controller.getState().paused,false);env.finish();
+});
+test('Shared preparing and failed sources keep Retry host only and a ready replacement cancels the old film',async()=>{
+ const env=setup();await enter(env);const w=env.window,d=w.document;
+ const movie={movieId:'101',status:'ready',playbackUrl:'/old.mp4'};env.socket.receive('watchroom:movie-sync',{roomId:room.id,movie});const old=env.readyVideo();
+ env.socket.receive('watchroom:movie-sync',{roomId:room.id,movie:{movieId:'102',status:'loading',playbackUrl:'/stale.mp4'}});const root=d.querySelector('.svPlayerEmbedded');assert.equal(root.dataset.playerState,'loading');assert.equal(old.getAttribute('src'),null);assert.notEqual(d.getElementById('sv103Video'),old);
+ env.socket.receive('watchroom:movie-sync',{roomId:room.id,movie:{movieId:'102',status:'error',code:'timeout'}});assert.equal(root.dataset.playerState,'error');d.querySelector('[data-player-retry]').click();assert(env.sent.some(e=>e.name==='watchroom:movie-select'&&e.data.movieId==='102'&&e.data.retry===true));
+ env.socket.receive('watchroom:host',{roomId:room.id,isHost:false});const count=env.sent.length;d.querySelector('[data-player-retry]').dispatchEvent(new w.MouseEvent('click',{bubbles:true}));assert.equal(env.sent.length,count);env.finish();
 });
 test('Device preview retains TV focus and Back closes it without navigating away',async()=>{
  const env=await ready(setup()),w=env.window,d=w.document;let stopped=0,backCalls=0;
@@ -167,4 +190,47 @@ test('Incoming movie setup uses its current referrer and keeps the hash only for
 });
 test('A shared movie setup cannot borrow the return destination of an unrelated title',async()=>{
  for(const partyReturn of ['/movie/202','/movies?media=movie-202','/tv/101']){const env=await ready(setup({movieId:'101',partyReturn}));assert.equal(env.window.document.querySelector('[data-party-return]').getAttribute('href'),'/movie/101');env.finish();}
+});
+
+
+test('A same-room sync for the previous movie cannot move a replacement and direct-link fallback clears it',async()=>{
+ const env=setup();await enter(env);const w=env.window,d=w.document;
+ env.socket.receive('watchroom:movie-sync',{roomId:room.id,movie:{movieId:'101',status:'ready',playbackUrl:'/first.mp4',sync:{playing:false,offset:40}}});env.readyVideo();
+ env.socket.receive('watchroom:movie-sync',{roomId:room.id,movie:{movieId:'102',status:'ready',playbackUrl:'/second.mp4',sync:{playing:false,offset:5}}});const second=env.readyVideo();
+ env.socket.receive('watchroom:movie-sync-state',{roomId:room.id,movieId:'101',sync:{playing:true,offset:90,startedAt:Date.now()}});assert.equal(second.currentTime,5);assert.equal(second.paused,true);
+ env.socket.receive('watchroom:trailer',{roomId:room.id,embedUrl:'https://media.example/direct.webm',mediaKind:'embed'});const direct=env.readyVideo();assert.equal(direct.currentTime,0);assert.equal(direct.paused,true);assert.equal(d.querySelector('#sv103Player iframe'),null);
+ for(const movieId of ['102',undefined])env.socket.receive('watchroom:movie-sync-state',{roomId:room.id,movieId,sync:{playing:true,offset:80,startedAt:Date.now()}});
+ assert.equal(direct.currentTime,0,'Previous movie clocks must not seek a direct link');assert.equal(direct.paused,true);env.finish();
+});
+test('A real empty-room snapshot retains the empty stage instead of mounting a failed movie',async()=>{
+ const env=setup();await enter(env);const d=env.window.document;
+ assert.equal(d.querySelector('.svPlayerEmbedded'),null);assert.match(d.getElementById('sv103Player').textContent,/No media selected/);assert.equal(d.getElementById('sv103ControlDock').hidden,true);env.finish();
+});
+test('A joined room with an idle movie placeholder preserves its direct or iframe link',async()=>{
+ for(const embedUrl of ['https://media.example/direct.mp4','https://video.example/embed/123']){
+  const env=await ready(setup()),w=env.window,d=w.document,linked={...room,embedUrl,mediaKind:'embed'};
+  w.SwiflySocial.openNativeWatchRoom(linked);env.socket.receive('watchroom:joined',{room:linked,isHost:false,messages:[]});
+  if(embedUrl.endsWith('.mp4'))assert.equal(w.SwiflyPlayer.mount(d.querySelector('.svPlayerEmbedded')).getState().source,embedUrl);
+  else {assert.equal(d.querySelector('#sv103Player iframe')?.src,embedUrl);assert.match(d.getElementById('sv103ControlDock').textContent,/own controls|manual/i);assert.equal(d.getElementById('sv103ControlDock').querySelector('button'),null);}
+  env.finish();
+ }
+});
+test('Direct-link guests have honest manual transport and retry locally without movie commands',async()=>{
+ const env=setup();await enter(env);const w=env.window,d=w.document;
+ env.socket.receive('watchroom:trailer',{roomId:room.id,embedUrl:'https://media.example/direct.mp4',mediaKind:'embed'});env.socket.receive('watchroom:host',{roomId:room.id,isHost:false});const video=env.readyVideo();
+ assert.equal(d.querySelector('[data-player-play]').disabled,false);assert.equal(d.querySelector('[data-player-seek]').disabled,false);assert.match(d.querySelector('[data-player-transport-note]').textContent,/manual|not synchronized/i);assert.equal(d.querySelector('[data-player-sync]').hidden,true);
+ const count=env.sent.length;d.querySelector('[data-player-play]').click();await tick();assert.equal(video.paused,false);d.querySelector('[data-player-forward]').click();assert.equal(video.currentTime,10);assert.equal(env.sent.length,count);
+ video.dispatchEvent(new w.Event('error'));d.querySelector('[data-player-retry]').click();env.readyVideo();assert.equal(d.querySelector('.svPlayerEmbedded').dataset.playerState,'ready');assert.equal(env.sent.length,count);assert(!env.calls.some(call=>call.url.includes('proxy-video-wait')));env.finish();
+});
+test('Party source formats share native HLS and DASH loading while retaining protected URL preference',async()=>{
+ const env=setup();await enter(env);const w=env.window,d=w.document;
+ w.HTMLMediaElement.prototype.canPlayType=()=> 'probably';
+ env.socket.receive('watchroom:movie-sync',{roomId:room.id,movie:{movieId:'101',status:'ready',playbackUrl:'/authorized.m3u8',proxyVideo:'https://raw.example/other.m3u8',m3u8:'https://raw.example/master.m3u8'}});const native=env.readyVideo();assert.equal(native.getAttribute('src'),'/authorized.m3u8');
+ let dash;const MediaPlayer=()=>({create:()=>dash={initialize(video,url,auto){this.video=video;this.url=url;this.auto=auto;},on(){},getTracksFor(){return [];},getBitrateInfoListFor(){return [];},destroy(){this.destroyed=true;}}});MediaPlayer.events={};w.dashjs={MediaPlayer};
+ env.socket.receive('watchroom:movie-sync',{roomId:room.id,movie:{movieId:'102',status:'ready',playbackUrl:'/authorized.mpd',m3u8:'https://raw.example/unused.m3u8'}});await tick();assert.equal(dash.url,'/authorized.mpd');assert.equal(dash.auto,false);
+ d.querySelector('[data-action="leave-native-room"]').click();assert.equal(dash.destroyed,true);assert.equal(d.getElementById('sv103Video'),null);env.finish();
+});
+test('Guests can request manual sync from shared settings without acquiring host transport',async()=>{
+ const env=setup();await enter(env);const w=env.window,d=w.document;env.socket.receive('watchroom:host',{roomId:room.id,isHost:false});env.socket.receive('watchroom:movie-sync',{roomId:room.id,movie:{movieId:'101',status:'ready',playbackUrl:'/movie.mp4'}});env.readyVideo();
+ d.querySelector('[data-player-settings]').open=true;d.querySelector('[data-player-sync]').click();assert.equal(env.sent.at(-1).name,'watchroom:movie-control');assert.equal(env.sent.at(-1).data.action,'sync-me');assert.equal(d.querySelector('[data-player-settings]').open,false);assert.equal(d.querySelector('[data-player-play]').disabled,true);env.finish();
 });

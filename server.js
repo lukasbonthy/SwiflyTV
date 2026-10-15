@@ -6435,7 +6435,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
 
     ${player || active === "watch" || active === "social" ? '<script defer src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>' : ""}
-    ${active === "social" ? '<link href="https://vjs.zencdn.net/8.16.1/video-js.css" rel="stylesheet" /><script defer src="https://vjs.zencdn.net/8.16.1/video.min.js"></script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" />' : ""}
+
     ${body.includes("fa-solid") ? '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />' : ""}
     ${player || partyBrowse || active === "social" ? '<script defer src="/socket.io/socket.io.js"></script>' : ""}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/modern-normalize@2.0.0/modern-normalize.min.css" />
@@ -6457,16 +6457,19 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=163" />' : ""}
     ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=173" />' : ""}
     
-    ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=198" /><script defer src="/assets/party/party.js?v=198"></script>' : ""}
-    ${player ? '<link rel="stylesheet" href="/assets/player/player.css?v=198" /><script defer src="/assets/player/player.js?v=165"></script>' : ""}
-    ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=198" /><script defer src="/assets/player/watch-party.js?v=160"></script>' : ""}
+    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=199"></script>' : ""}
+    ${active === "social" ? '<script defer src="/assets/party/party.js?v=199"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}
+    ${player || partyBrowse ? '<script defer src="/assets/player/watch-party.js?v=160"></script>' : ""}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/finish.css?v=175" />'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/polish.css?v=176" />'}
     <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=197" />
     ${player ? "" : '<script defer src="/assets/clean/hero-palette.js?v=188"></script>'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/liquid-glass/controls.css?v=197" />'}
-    ${player ? "" : '<link rel="stylesheet" href="/assets/clean/experience.css?v=184" />'}
-    <link rel="stylesheet" href="/assets/clean/cinema.css?v=198" />
+    ${player ? "" : '<link rel="stylesheet" href="/assets/clean/experience.css?v=199" />'}
+    <link rel="stylesheet" href="/assets/clean/cinema.css?v=199" />
+    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=199" />' : ""}
+    ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=199" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=199" />' : ""}
+    ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=199" />' : ""}
 </head>
 <body class="svCleanShell">
 
@@ -9235,7 +9238,7 @@ async function watchPage(req, res, type) {
     trailerUrl: trailer ? youtubeEmbedSrc(trailer.key, youtubeEmbedOrigin(req)) : "",
     episodePickerHtml,
     managed: type === "movie" && mode === "movie" && Boolean(roomId),
-    partyPanelHtml: type === "movie" && mode === "movie" ? watchPartyMarkup({movieId:id,title}) : "",
+    partyPanelHtml: type === "movie" && mode === "movie" ? watchPartyMarkup({movieId:id,title,poster:details.poster_path?img(details.poster_path,"w185"):""}) : "",
   });
   res.send(pageShell({title:`${SITE_NAME} — ${title}`,active:type === "tv" ? "tv" : "movies",body,player:true}));
 }
@@ -9622,19 +9625,19 @@ function watchroomPage(req, res) {
   const safeCountdown = escapeHtml(String(room.openTogetherCountdownEndsAt || 0));
 
   const isSocialEmbed = String(req.query.socialEmbed || "") === "1";
-  const body = `<main class="dsPlainPage dsStableRoom svCinemaPage ${isSocialEmbed ? "dsSocialEmbeddedRoom" : ""}" data-cinema-page="watchroom" data-room-id="${safeRoomId}">
+  const body = `<main class="dsPlainPage dsStableRoom svWatchroomPage svCinemaPage ${isSocialEmbed ? "dsSocialEmbeddedRoom" : ""}" data-cinema-page="watchroom" data-room-id="${safeRoomId}">
     <section class="dsStableRoomHero" data-cinema-reveal>
       <div>
-        ${isSocialEmbed ? "" : '<a class="dsGhostPill" href="/social?tab=watchrooms">← Social Rooms</a>'}
+        ${isSocialEmbed ? "" : '<a class="dsGhostPill" href="/social?tab=watchrooms">← Party Hub</a>'}
         <span class="dsEyebrow">SwiflyTV · Watch together</span>
         <h1>${safeName}</h1>
-        <p>Press play together. Stay for the company. Share a link, choose a room movie, or bring everyone into your tab.</p>
+        <p>Your screen. Your people. The same moment.</p>
       </div>
 
       <aside class="dsStableRoomMeta">
         <div><small>Room code</small><strong>${safeRoomId}</strong></div>
         <div><small>Status</small><strong id="stableHostStatus">Joining...</strong></div>
-        <div><small>Viewers</small><strong id="stableViewerCount">0</strong></div>
+        <div><small>Viewers</small><strong id="stableViewerCount">0</strong></div><button class="dsSecondaryBtn" id="stableCopyInviteBtn" type="button">Copy invite</button>
       </aside>
     </section>
 
@@ -9647,19 +9650,19 @@ function watchroomPage(req, res) {
     <section class="dsStableRoomGrid" data-cinema-reveal>
       <section class="dsStableMain">
         <div class="dsStableTabs">
-          <button class="active" type="button" data-stable-tab="open">Open Together</button>
-          <button type="button" data-stable-tab="movie">Room Movie</button>
-          <button type="button" data-stable-tab="live">Live Share</button>
-          <button type="button" data-stable-tab="couples">Couples+</button>
+          <button class="active" type="button" data-stable-tab="open">Shared link</button>
+          <button type="button" data-stable-tab="movie">Room movie</button>
+          <button type="button" data-stable-tab="live">Share a tab</button>
+          <button type="button" data-stable-tab="couples">Room tools</button>
           <button type="button" data-stable-tab="clock">Clock</button>
         </div>
 
         <section class="dsStablePanel active" id="stableOpenPanel">
           <div class="dsStablePanelHead">
             <div>
-              <span class="dsEyebrow">Best for distance</span>
-              <h2>Open Together</h2>
-              <p>Both of you open the real movie/site in your own tab, then use the shared clock and countdown to press play together.</p>
+              <span class="dsEyebrow">Bring your own film</span>
+              <h2>One link. One movie night.</h2>
+              <p>Open the same link, then use the countdown to press play together.</p>
             </div>
             <span class="dsHostBadge" id="stableOpenBadge">Host controls</span>
           </div>
@@ -9671,7 +9674,7 @@ function watchroomPage(req, res) {
 
           <div class="dsStableWatchCard">
             <div>
-              <small>Shared date link</small>
+              <small>Shared link</small>
               <h3 id="stableLinkTitle">${safeInitialUrl ? "Ready to open" : "No link shared yet"}</h3>
               <p id="stableLinkText">${safeInitialUrl || "Host can paste the link you both should open."}</p>
             </div>
@@ -9701,7 +9704,7 @@ function watchroomPage(req, res) {
             <div>
               <span class="dsEyebrow">Host movie sync</span>
               <h2>Pick a movie for the room.</h2>
-              <p>The host selects a TMDB movie ID. SwiflyTV waits for the proxyVideo URL, then everyone loads the same player at the same countdown.</p>
+              <p>Paste a movie page or its catalog ID. Your room will prepare the film and stay in sync.</p>
             </div>
             <span class="dsHostBadge" id="stableRoomMovieBadge">Host controls</span>
           </div>
@@ -9730,7 +9733,7 @@ function watchroomPage(req, res) {
           <div class="dsRoomSyncControls">
             <div>
               <small>Host sync controls</small>
-              <p>Host controls the room timer. If the player is a direct video, SwiflyTV auto-corrects anyone more than 10 seconds off. If it is a cross-site iframe, the timer still tells everyone exactly where to be.</p>
+              <p>Playback follows the host. Use Sync playback if your player drifts.</p>
             </div>
             <div class="dsStableActions">
               <button class="dsPrimaryBtn" id="roomMoviePlayBtn" type="button">Play</button>
@@ -9783,7 +9786,7 @@ function watchroomPage(req, res) {
             <div id="roomMovieEmpty" class="dsRoomMovieEmpty">
               <div class="dsProxyLoader"></div>
               <h3>Waiting for host</h3>
-              <p>Select a movie to start syncing the proxyVideo player for everyone.</p>
+              <p>Choose a film to watch together.</p>
             </div>
           </div>
 
@@ -9838,11 +9841,11 @@ function watchroomPage(req, res) {
         <section class="dsStablePanel" id="stableCouplesPanel">
           <div class="dsStablePanelHead">
             <div>
-              <span class="dsEyebrow">Couples+ exclusive</span>
-              <h2>Date-night tools no normal movie site has.</h2>
-              <p>Use real-time couple features made for distance: ready check, mood match, timed love notes, reactions, and a shared date jar.</p>
+              <span class="dsEyebrow">A little more company</span>
+              <h2>Make it your night.</h2>
+              <p>Ready checks, reactions and little moments between scenes.</p>
             </div>
-            <span class="dsHostBadge">Paid-worthy</span>
+
           </div>
 
           <div class="dsCouplesPlusGrid">
@@ -9990,12 +9993,7 @@ function watchroomPage(req, res) {
               <div id="timelineList" class="dsMiniState">No timeline yet.</div>
             </article>
 
-            <article class="dsCouplesPlusTool">
-              <span>Why paid?</span>
-              <h3>Not just streaming.</h3>
-              <p>Couples pay for the feeling: less “what do we do?”, more shared rituals, synced moments, and a room that feels made for the relationship.</p>
-              <a class="dsSecondaryBtn" href="/couples">Open Watch Parties</a>
-            </article>
+
           </div>
 
           <div id="coupleFloatingLayer" class="dsCoupleFloatingLayer"></div>
@@ -10003,13 +10001,6 @@ function watchroomPage(req, res) {
       </section>
 
       <aside class="dsStableSide">
-        <section class="dsStablePanel dsStableInvite">
-          <span class="dsEyebrow">Invite</span>
-          <h2>Bring friends in</h2>
-          <p>Send this room to your partner. First person in becomes host; if they leave, the other person becomes host.</p>
-          <button class="dsPrimaryBtn" id="stableCopyInviteBtn" type="button">Copy Invite</button>
-        </section>
-
         <section class="dsStablePanel dsStableChat">
           <div class="dsStableChatHead">
             <div>
