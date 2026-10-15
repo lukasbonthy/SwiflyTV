@@ -72,3 +72,22 @@ test('playlist registration still supplies HLS fallback headers', () => {
   assert.equal(headers.accept, '*/*');
   assert.equal(headers.referer, 'https://provider.example/');
 });
+
+test('registering a source removes expired unused quality entries', () => {
+  const { entries, register } = registration();
+  entries.set('expired-unused', { id: 'expired-unused', expiresAt: Date.now() - 1 });
+  entries.set('active', { id: 'active', expiresAt: Date.now() + 60_000 });
+  register('https://files.example/new.mp4', {}, { sourceFormat: 'mp4' });
+  assert.equal(entries.has('expired-unused'), false);
+  assert.equal(entries.has('active'), true);
+  assert.equal(entries.size, 2);
+});
+
+test('registration bounds retained media entries even when earlier options are never requested', () => {
+  const { entries, register } = registration();
+  for (let index = 0; index < 4096; index++) entries.set('old-' + index, { expiresAt: Date.now() + 60_000 });
+  const current = register('https://files.example/new.mp4', {}, { sourceFormat: 'mp4' });
+  assert.equal(entries.size, 4096);
+  assert.equal(entries.has('old-0'), false);
+  assert.equal(entries.has(current.id), true);
+});

@@ -413,3 +413,65 @@ test('an invalid upstream status rejects the request without crashing the server
   assert.equal(result.status,0,result.stderr);
   assert.match(result.stdout,/request rejected/);
 });
+
+test('current VidLink keeps scoped quality alternatives and captions without verifying every movie file', async () => {
+  const payload=currentVidlinkPayload({
+    360:currentVidlinkQuality(360,{audioLanguage:'eng'}),
+    720:currentVidlinkQuality(720,{audioLanguage:'eng'}),
+    1080:currentVidlinkQuality(1080,{audioLanguage:'eng',headers:{Referer:'https://vidlink.pro/'}})
+  });
+  payload.stream.captions=[{file:'https://captions.example/english.srt',language:'English',label:'English CC'}];
+  const upstream=pinnedVidlinkUpstream({payload});
+  const result=await resolveNuvioProvider({provider:'vidlink',tmdbId:'108978',mediaType:'tv',timeoutMs:2000,fetchResource:upstream.fetchResource});
+  assert.equal(result.ok,true);
+  assert.equal(result.source.audioLanguage,'en');
+  assert.equal(result.source.subtitles[0].url,'https://captions.example/english.srt');
+  assert.equal(result.source.subtitles[0].language,'en');
+  assert.deepEqual(result.sources.map(source=>source.quality),['1080p','720p','360p']);
+  assert.deepEqual(result.sources.map(source=>source.mediaVerified),[true,false,false]);
+  assert.deepEqual(result.subtitles,result.source.subtitles);
+  assert.deepEqual(upstream.requests.filter(request=>request.method==='HEAD').map(request=>new URL(request.url).pathname),['/1080.mp4']);
+});
+
+test('known English provider audio is preferred before a higher foreign file quality', async () => {
+  const upstream=pinnedVidlinkUpstream({payload:currentVidlinkPayload({
+    1080:currentVidlinkQuality(1080,{language:'Hindi'}),
+    720:currentVidlinkQuality(720,{language:'English'}),
+    360:currentVidlinkQuality(360)
+  })});
+  const result=await resolveNuvioProvider({provider:'vidlink',tmdbId:'108978',mediaType:'tv',timeoutMs:2000,fetchResource:upstream.fetchResource});
+  assert.equal(result.source.quality,'720p');
+  assert.equal(result.source.audioLanguage,'en');
+  assert.deepEqual(result.sources.map(source=>source.audioLanguage),['en','','hi']);
+  assert.deepEqual(upstream.requests.filter(request=>request.method==='HEAD').map(request=>new URL(request.url).pathname),['/720.mp4']);
+});
+
+test('file alternatives already rejected during default verification are omitted from playback options', async () => {
+  const upstream=pinnedVidlinkUpstream({payload:currentVidlinkPayload({
+    1080:currentVidlinkQuality(1080),720:currentVidlinkQuality(720),360:currentVidlinkQuality(360)
+  }),mediaResponse:url=>new URL(url).pathname==='/1080.mp4'?new Response(null,{status:403}):new Response(null,{headers:{'content-type':'video/mp4'}})});
+  const result=await resolveNuvioProvider({provider:'vidlink',tmdbId:'108978',mediaType:'tv',timeoutMs:2000,fetchResource:upstream.fetchResource});
+  assert.equal(result.source.audioLanguage,'');
+  assert.deepEqual(result.sources.map(source=>source.quality),['720p','360p']);
+});
+
+test('worker source metadata survives verification while upstream verification claims remain untrusted', async () => {
+  const result=await resolveNuvioProvider({provider:'vidsrc',tmdbId:'1',mediaType:'movie',createWorker:workerFactory,timeoutMs:2000,
+    fetchResource:async url=>url.includes('/sources/')?new Response(JSON.stringify([
+      {url:'https://media.example/main.mp4',type:'mp4',quality:'1080p',language:'eng',subtitles:[{src:'https://captions.example/en.vtt',lang:'en',name:'English'}]},
+      {url:'https://media.example/low.mp4',type:'mp4',quality:'720p',language:'eng',mediaVerified:true}
+    ]),{headers:{'content-type':'application/json'}}):new Response(null,{headers:{'content-type':'video/mp4'}})});
+  assert.equal(result.source.audioLanguage,'en');
+  assert.equal(result.subtitles[0].label,'English');
+  assert.equal(result.sources[1].mediaVerified,false);
+});
+
+test('relative current VidLink caption URLs stay scoped to the observed source API origin', async () => {
+  const payload=currentVidlinkPayload({720:currentVidlinkQuality(720,{headers:{Cookie:'media-session=fixture',Referer:'https://vidlink.pro/'}})});
+  payload.stream.captions=[{file:'/captions/english.srt',language:'English',label:'English - English [CC]'}];
+  const upstream=pinnedVidlinkUpstream({payload});
+  const result=await resolveNuvioProvider({provider:'vidlink',tmdbId:'108978',mediaType:'tv',timeoutMs:2000,fetchResource:upstream.fetchResource});
+  assert.equal(result.subtitles[0].url,'https://vidlink.pro/captions/english.srt');
+  assert.equal(result.subtitles[0].label,'English - English [CC]');
+  assert.equal(result.subtitles[0].headers.cookie,undefined);
+});

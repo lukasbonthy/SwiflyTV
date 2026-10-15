@@ -5,6 +5,7 @@
   const NS = 'http://www.w3.org/2000/svg';
   const mounted = new WeakMap(), live = new Map();
   const transparency = window.matchMedia('(prefers-reduced-transparency: reduce)');
+  const touch = window.matchMedia('(pointer: coarse)');
   let nextId = 0, preferences;
   const svgElement = (tag, attributes = {}) => {
     const node = document.createElementNS(NS, tag);
@@ -22,11 +23,47 @@
     // Sampled IMG loads and paint events belong to the lens itself. Feeding
     // them back into capture would recreate loaded images every frame.
     if (event && insideOptics(event.target)) return;
-    for (const entry of live.values()) if (entry.webkit) entry.schedule();
+    const source = event?.target instanceof HTMLElement ? event.target : null;
+    for (const entry of live.values()) if (entry.webkit) entry.sample(source);
   };
   // Several lenses share one paint's measurements. No idle animation loop,
   // artwork readback or full-page DOM clones are needed.
-  let sceneTime, boxes = new WeakMap(), styles = new WeakMap();
+  let sceneFrame = 0, sceneTimer = 0, lastSceneTime = -Infinity, boxes = new WeakMap(), styles = new WeakMap();
+  const pendingScenes = new Set(), changedPaint = new Set();
+  let wholeScene = false;
+  function flushScenes() {
+    sceneFrame = 0; lastSceneTime = performance.now(); boxes = new WeakMap(); styles = new WeakMap();
+    const work = [...pendingScenes]; pendingScenes.clear();
+    const sources = wholeScene ? null : [...changedPaint]; wholeScene = false; changedPaint.clear();
+    // Measurements and detached SVG paint are complete before any lens writes
+    // to the page. A later lens cannot force layout after an earlier commit.
+    const commits = work.map(prepare => prepare(sources)).filter(Boolean);
+    for (const commit of commits) commit();
+  }
+  function queueScene(prepare, sample = false, source = null) {
+    pendingScenes.add(prepare);
+    if (!sample || !source) wholeScene = true; else changedPaint.add(source);
+    if (sceneFrame) return;
+    // Native scrolling stays at display cadence; only the bounded SVG artwork
+    // copy is sampled at most every 50ms on a coarse pointer. The trailing
+    // timeout keeps the final position exact and never spins an idle RAF.
+    const delay = sample && touch.matches ? Math.max(0,50-(performance.now()-lastSceneTime)) : 0;
+    if (delay && sceneTimer) return;
+    if (sceneTimer) {clearTimeout(sceneTimer); sceneTimer = 0;}
+    if (delay) sceneTimer = setTimeout(() => {
+      sceneTimer = 0;
+      if (pendingScenes.size) sceneFrame = requestAnimationFrame(flushScenes);
+    },delay);
+    else sceneFrame = requestAnimationFrame(flushScenes);
+  }
+  function cancelScene(prepare) {
+    pendingScenes.delete(prepare);
+    if (!pendingScenes.size) {
+      if (sceneFrame) {cancelAnimationFrame(sceneFrame); sceneFrame = 0;}
+      if (sceneTimer) {clearTimeout(sceneTimer); sceneTimer = 0;}
+      wholeScene = false; changedPaint.clear();
+    }
+  }
   const boxOf = node => {
     if (!boxes.has(node)) boxes.set(node, node.getBoundingClientRect());
     return boxes.get(node);
@@ -186,6 +223,10 @@
     const overlaps = rect => rect.width > 0 && rect.height > 0 &&
       rect.left < area.right && rect.left+rect.width > area.left &&
       rect.top < area.bottom && rect.top+rect.height > area.top;
+    const boundaries = 'main > *, .dsRow, .svCatalogRow, .movieCard, .posterWrap, .dsWelcomeDiscovery';
+    const sourceNode = node => node instanceof HTMLElement && node !== host && node !== host.parentElement &&
+      !node.matches('script,style,link,svg,canvas,video,iframe,input,textarea,select,[hidden],.svLiquidPane,.svWebkitGlassOptics,[data-sv-liquid-nav],.dsWelcomeNav');
+    const inBand = node => !node.matches(boundaries) || overlaps(boxOf(node));
     const paint = (node, rect, computed) => {
       const image = node.tagName === 'IMG' ? node.currentSrc || node.src : '';
       const background = computed.backgroundImage && computed.backgroundImage !== 'none' ||
@@ -221,14 +262,10 @@
       return overlaps(box)?{computed,rect:box}:null;
     }
     function visit(node, parent) {
-      if (!(node instanceof HTMLElement) || node === host || node === host.parentElement ||
-        node.matches('script,style,link,svg,canvas,video,iframe,input,textarea,select,[hidden],.svLiquidPane,.svWebkitGlassOptics,[data-sv-liquid-nav],.dsWelcomeNav')) return;
+      if (!sourceNode(node) || !inBand(node)) return;
       const computed = styleOf(node);
       if (computed.display === 'none' || computed.visibility === 'hidden' || computed.opacity === '0') return;
       const rect = boxOf(node), intersects = overlaps(rect);
-      // Page sections and poster cards own their geometry. Rows below the
-      // sampled band must not cause hundreds of style/layout reads on scroll.
-      if (!intersects && node.matches('main > *, .dsRow, .movieCard, .posterWrap, .dsWelcomeDiscovery')) return;
       const clips = ['hidden','clip','auto','scroll'].includes(computed.overflowX) ||
         ['hidden','clip','auto','scroll'].includes(computed.overflowY);
       if (!intersects && clips) return;
@@ -247,7 +284,9 @@
       }
       // Negative-z artwork belongs below ordinary content, including on the
       // hero where its bitmap is deliberately placed after the shade in DOM.
-      const ordered = [...node.children].filter(child => child instanceof HTMLElement);
+      // Reject bounded rows/cards before sorting. Resolving every offscreen
+      // sibling's z-index first would undo the branch pruning below it.
+      const ordered = [...node.children].filter(child => sourceNode(child) && inBand(child));
       ordered.sort((a,b) => (parseFloat(styleOf(a).zIndex)||0)-(parseFloat(styleOf(b).zIndex)||0));
       // The cinema glow is a CSS pseudo-element rather than another image.
       // Sample only known artwork containers, avoiding pseudo-style reads for
@@ -293,10 +332,15 @@
   function watch() {
     if (preferences) return;
     preferences = new MutationObserver(changes => {
-      let changed = false, removed = false, backgroundChanged = false;
+      let changed = false, removed = false;
+      const backgroundSources = new Set();
       for (const change of changes) {
         if (insideOptics(change.target)) continue;
-        backgroundChanged = true;
+        // Captured scenes contain artwork, never text. Clocks and labels may
+        // update frequently without rebuilding every navigation/action lens.
+        if (change.type === 'characterData' || change.type === 'childList' &&
+          ![...change.addedNodes,...change.removedNodes].some(node => node instanceof HTMLElement)) continue;
+        backgroundSources.add(change.target);
         if (change.type === 'attributes' && change.target === document.body) changed = true;
         if (change.type === 'childList' && [...change.removedNodes].some(node => node instanceof HTMLElement)) removed = true;
         if (change.type === 'childList') for (const node of change.addedNodes) if (node instanceof HTMLElement) {
@@ -305,7 +349,7 @@
       }
       if (removed) for (const [host, entry] of live) if (!host.isConnected) entry.controller.destroy();
       if (changed) syncAll();
-      if (backgroundChanged) sceneChanged();
+      for (const target of backgroundSources) sceneChanged({target});
     });
     preferences.observe(document.body, {attributes:true, attributeFilter:['data-st-glass','style','class','src','srcset','open','hidden'], childList:true, characterData:true, subtree:true});
     document.addEventListener('visibilitychange', syncAll);
@@ -317,6 +361,7 @@
     window.visualViewport?.addEventListener('resize',sceneChanged,{passive:true});
     window.visualViewport?.addEventListener('scroll',sceneChanged,{passive:true});
     transparency.addEventListener('change', syncAll);
+    touch.addEventListener('change', syncAll);
   }
   function unwatch() {
     if (live.size) return;
@@ -330,6 +375,7 @@
     window.visualViewport?.removeEventListener('resize',sceneChanged);
     window.visualViewport?.removeEventListener('scroll',sceneChanged);
     transparency.removeEventListener('change', syncAll);
+    touch.removeEventListener('change', syncAll);
   }
   function mount(element, options = {}) {
     if (!(element instanceof HTMLElement)) throw new TypeError('SwiflyLiquidGlass.mount expects an HTML element.');
@@ -359,7 +405,7 @@
     element.style.setProperty('--sv-glass-default-tint', config.tint);
     element.style.setProperty('--sv-glass-saturation', config.saturation);
     if (element.dataset.glassRadius) element.style.setProperty('--sv-glass-radius', numeric(element, 'glassRadius', 20) + 'px');
-    let svg, map, scene, observer, observing = false, frame = 0, dimensions = '', enabled = true, destroyed = false;
+    let svg, map, scene, observer, observing = false, dimensions = '', enabled = true, destroyed = false;
     const allowed = () => !destroyed && enabled && (svgCapable || webkitSvgCapable) && element.isConnected && !document.hidden && liquidPreference();
     function renderer(value) {if (element.dataset.swiflyRenderer !== value) element.dataset.swiflyRenderer = value;}
     function removeGraph() {
@@ -431,26 +477,39 @@
       svg.append(svgElement('rect',{x:.5,y:.5,width:Math.max(0,width-1),height:Math.max(0,height-1),rx:radius,fill:'none',stroke:'white','stroke-opacity':.16,'stroke-width':.5}));
       element.append(svg);
     }
-    function updateMap(time) {
-      frame = 0;
+    function prepareMap(sources) {
       if (!allowed()) return;
-      if (time !== sceneTime) {sceneTime=time; boxes=new WeakMap();styles=new WeakMap();}
-      if (svg && !element.contains(svg)) removeGraph();
-      const bounds = element.getBoundingClientRect(), {width, height} = bounds;
-      if (width <= 0 || height <= 0) {renderer('blur'); return;}
-      const computed = getComputedStyle(element), radius = parseFloat(computed.borderTopLeftRadius) || 20;
+      const bounds = boxOf(element), {width, height} = bounds;
+      if (width <= 0 || height <= 0) return () => renderer('blur');
+      // Rail reveals, image loads and paint mutations elsewhere on the page
+      // do not alter this bounded lens. Filter them in the shared read phase.
+      if (sources && !sources.some(source => {
+        if (!source.isConnected || source.contains(element)) return true;
+        const rect = boxOf(source);
+        return rect.width > 0 && rect.height > 0 && rect.left < bounds.left+width+64 &&
+          rect.right > bounds.left-64 && rect.top < bounds.top+height+64 && rect.bottom > bounds.top-64;
+      })) return;
+      const computed = styleOf(element);
+      for (let node = element; node; node = node.parentElement) {
+        const style = node === element ? computed : styleOf(node);
+        if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return () => renderer('blur');
+      }
+      const radius = parseFloat(computed.borderTopLeftRadius) || 20;
       const configuredBlur = computed.getPropertyValue('--sv-glass-map-blur').trim();
       const blur = configuredBlur !== '' && Number.isFinite(Number(configuredBlur)) ? Number(configuredBlur) : config.mapBlur;
       const blend = computed.getPropertyValue('--sv-glass-blend').trim() === 'difference' ? 'difference' : config.blend;
       const key = [width, height, radius, blur, blend].join(':');
+      const captured = webkitSvgCapable ? captureScene(element,bounds,64) : null;
+      return () => {
+      if (svg && !element.contains(svg)) removeGraph();
       if (webkitSvgCapable && key === dimensions && scene) {
-        scene.replaceChildren(captureScene(element,bounds,64));renderer('webkit-svg');return;
+        scene.replaceChildren(captured);renderer('webkit-svg');return;
       }
       if (key === dimensions) {renderer('svg'); return;}
       if (webkitSvgCapable) {
         if (svg) removeGraph();
         createWebKitLens(width,height,radius);
-        scene.replaceChildren(captureScene(element,bounds,64));
+        scene.replaceChildren(captured);
       } else if (!svg) createGraph();
       dimensions = key;
       if(webkitSvgCapable && map.hasAttribute('href')){renderer('webkit-svg');return;}
@@ -474,12 +533,14 @@
       // Chromium retains its established live-backdrop SVG map.
       map.setAttribute('href', 'data:image/svg+xml,' + encodeURIComponent(new XMLSerializer().serializeToString(image)));
       renderer(webkitSvgCapable ? 'webkit-svg' : 'svg');
+      };
     }
-    function scheduleMap() {if (allowed() && !frame) frame = requestAnimationFrame(updateMap);}
+    function scheduleMap() {if (allowed()) queueScene(prepareMap);}
+    function sampleMap(source) {if (allowed()) queueScene(prepareMap,true,source);}
     function sync() {
       if (destroyed) return;
       if (!allowed()) {
-        cancelAnimationFrame(frame); frame = 0;
+        cancelScene(prepareMap);
         if (observing) {observer.disconnect(); observing = false;}
         if (!liquidPreference()) removeGraph();
         renderer('blur'); return;
@@ -497,7 +558,7 @@
       refresh() {dimensions = ''; scheduleMap();},
       destroy() {
         if (destroyed) return; destroyed = true;
-        observer?.disconnect(); cancelAnimationFrame(frame); frame = 0; removeGraph();
+        observer?.disconnect(); cancelScene(prepareMap); removeGraph();
         for (const [property, value, priority] of previousProperties) {
           if (value) element.style.setProperty(property, value, priority); else element.style.removeProperty(property);
         }
@@ -506,7 +567,7 @@
         mounted.delete(element); live.delete(element); unwatch();
       }
     };
-    mounted.set(element, controller); live.set(element, {controller, sync, schedule:scheduleMap,webkit:webkitSvgCapable}); watch(); sync();
+    mounted.set(element, controller); live.set(element, {controller, sync, schedule:scheduleMap,sample:sampleMap,webkit:webkitSvgCapable}); watch(); sync();
     return controller;
   }
   window.SwiflyLiquidGlass = Object.freeze({mount});

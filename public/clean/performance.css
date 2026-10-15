@@ -1,0 +1,7 @@
+/* Touch devices reserve continuous compositing for the bounded Aurora layer.
+   These decorative loops otherwise repaint a large image, text, or shadow. */
+@media (pointer: coarse) {
+  body.svCleanShell .netflixWordmark,
+  body.svCleanShell .dsHeroBg,
+  body.svCleanShell .dsHeroActions > .dsPrimaryBtn {animation:none !important}
+}
