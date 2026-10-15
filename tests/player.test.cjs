@@ -52,6 +52,22 @@ test('TV mode links preserve the selected episode and trailer mode has only its 
   for(const a of d.querySelectorAll('[data-player-mode-link]')){const u=new URL(a.href,'https://swifly.test');assert.equal(u.searchParams.get('s'),'3');assert.equal(u.searchParams.get('e'),'7');assert.equal(u.searchParams.has('season'),false);assert.match(u.search,/^\?mode=(movie|trailer)&s=3&e=7/);}
   assert.equal(d.querySelector('[data-player-party-open]'),null);
 });
+test('Movie and episode theater identity stays outside playable media and uses safe decorative artwork',()=>{
+  for(const type of ['movie','tv']){
+    const dom=new JSDOM(markup({...base,type,season:2,episode:8,episodeTitle:'A <new> chapter'})),d=dom.window.document;
+    const app=d.querySelector('main.svCinemaPage[data-cinema-page="player"]'),stage=d.querySelector('[data-player-stage]');
+    assert(app,'Both players should participate in the shared cinema experience');
+    assert.equal(d.querySelector('.svPlayerAmbient')?.getAttribute('aria-hidden'),'true');
+    assert.equal(stage.closest('.svPlayerTheater')?.hasAttribute('data-cinema-reveal'),true);
+    assert(!stage.contains(d.querySelector('#svPlayerTitle')),'The title must never cover playable frames');
+    assert.equal(d.querySelectorAll('video').length,1);
+    if(type==='tv')assert.equal(d.querySelector('.svPlayerChapter')?.textContent,'S02 · E08');
+    dom.window.close();
+  }
+  const dom=new JSDOM(markup({...base,backdrop:'javascript:alert(1)',poster:''}));
+  assert.equal(dom.window.document.querySelector('.svPlayerAmbient'),null);
+  dom.window.close();
+});
 test('Managed playback waits for room media without resolving a solo source',async()=>{
   let calls=0;const e=setup({},e=>e.w.fetch=async()=>{calls++;return {ok:true,json:async()=>({status:'loading'})};});await e.advance(900);
   assert.equal(calls,0);assert.equal(e.api.getState().ready,false);assert.equal(e.app.dataset.playerState,'waiting');assert.match(e.d.querySelector('[data-player-status-title]').textContent,/host|party/i);

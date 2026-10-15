@@ -38,7 +38,7 @@ if (process.env.SWIFLY_NO_ENV_MODE !== "false") {
     USE_EXTERNAL_PROVIDER_API: "false",
 
     STREAMPROVIDER_ENABLED: "true",
-    STREAMPROVIDER_ORDER: "hexa,cinezo",
+    STREAMPROVIDER_ORDER: process.env.STREAMPROVIDER_ORDER || "vidrift,hexa,cinezo",
     STREAMPROVIDER_NAV_TIMEOUT_MS: "10000",
     STREAMPROVIDER_STREAM_TIMEOUT_MS: "15000",
     STREAMPROVIDER_PROVIDER_TIMEOUT_MS: "27000",
@@ -135,7 +135,9 @@ const FILMU_TRY_FALLBACKS = process.env.FILMU_TRY_FALLBACKS === "true";
 // Uses the uploaded StreamProvider source pattern: open provider page with Playwright
 // and capture real .m3u8 requests from Network, then send through Swifly HLS proxy.
 const STREAMPROVIDER_ENABLED = process.env.STREAMPROVIDER_ENABLED !== "false";
-const STREAMPROVIDER_ORDER = String(process.env.STREAMPROVIDER_ORDER || "hexa,cinezo")
+const STREAMPROVIDER_ORDER = String(process.env.STREAMPROVIDER_ORDER || "vidrift,hexa,cinezo")
+  .split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
+const STREAMPROVIDER_MOVIE_ORDER = String(process.env.STREAMPROVIDER_MOVIE_ORDER || STREAMPROVIDER_ORDER.join(","))
   .split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
 const STREAMPROVIDER_TV_ORDER = String(process.env.STREAMPROVIDER_TV_ORDER || ["vidrift", ...STREAMPROVIDER_ORDER].join(","))
   .split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
@@ -4620,11 +4622,11 @@ async function localStreamProviderGetStreams({ tmdbId = "", mediaType = "movie",
     streamsFound: 1, sources: [nuvio.winner.source]
   };
 
-  const configuredOrder = mediaType === "tv" ? STREAMPROVIDER_TV_ORDER : STREAMPROVIDER_ORDER;
-  const order = Array.from(new Set(configuredOrder.length ? configuredOrder : ["hexa", "cinezo"]));
+  const configuredOrder = mediaType === "tv" ? STREAMPROVIDER_TV_ORDER : STREAMPROVIDER_MOVIE_ORDER;
+  const order = Array.from(new Set(configuredOrder.length ? configuredOrder : ["vidrift", "hexa", "cinezo"]));
   const jobs = [];
   for (const name of order) {
-    if (name === "vidrift" && mediaType === "tv") jobs.push({ provider: name, url: `https://embed.vidrift.in/embed/tv/${tmdbId}/${season}/${episode}` });
+    if (name === "vidrift") jobs.push({ provider: name, url: mediaType === "tv" ? `https://embed.vidrift.in/embed/tv/${tmdbId}/${season}/${episode}` : `https://embed.vidrift.in/embed/movie/${tmdbId}` });
     if (name === "hexa") jobs.push({ provider: name, url: mediaType === "tv" ? `https://hexa.su/watch/tv/${tmdbId}/${season}/${episode}` : `https://hexa.su/watch/movie/${tmdbId}` });
     if (name === "cinezo") jobs.push({ provider: name, url: mediaType === "tv" ? `https://www.cinezo.net/watch/tv/${tmdbId}?season=${season}&episode=${episode}` : `https://www.cinezo.net/watch/movie/${tmdbId}` });
   }
@@ -6355,7 +6357,12 @@ function cleanIcon(name) {
     settings: '<path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="currentColor"/><circle cx="15" cy="17" r="3" fill="currentColor"/>',
     user: '<circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>',
     play: '<path d="m9 5 11 7-11 7Z" fill="currentColor" stroke="none"/>',
-    info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v.5"/>'
+    info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v.5"/>',
+    bookmark: '<path d="M6 3h12v18l-6-4-6 4Z"/>',
+    heart: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/>',
+    people: '<circle cx="9" cy="8" r="3"/><path d="M2 21v-3a7 7 0 0 1 14 0v3M16 5a3 3 0 0 1 0 6M18 14a6 6 0 0 1 4 5v2"/>',
+    arrow: '<path d="M5 12h14m-6-6 6 6-6 6"/>',
+    film: '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7 3v18M17 3v18M3 8h4M3 16h4M17 8h4M17 16h4"/>'
   };
   return `<svg class="svIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${paths[name] || paths.info}</svg>`;
 }
@@ -6437,10 +6444,10 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/clean/clean.css?v=153" />
     <script defer src="/assets/clean/clean.js?v=151"></script>
     <script defer src="/assets/clean/continue.js?v=154"></script>
-    <link rel="stylesheet" href="/assets/clean/details.css?v=156" />
+    <link rel="stylesheet" href="/assets/clean/details.css?v=198" />
     <link rel="stylesheet" href="/assets/clean/motion.css?v=163" />
-    <script defer src="/assets/clean/motion.js?v=163"></script>
-    <script defer src="/assets/clean/details.js?v=160"></script>
+    <script defer src="/assets/clean/motion.js?v=198"></script>
+    <script defer src="/assets/clean/details.js?v=198"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=163" />
     <script defer src="/assets/liquid-glass/surfaces.js?v=196"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=164" />
@@ -6450,15 +6457,16 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=163" />' : ""}
     ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=173" />' : ""}
     
-    ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=159" /><script defer src="/assets/party/party.js?v=159"></script>' : ""}
-    ${player ? '<link rel="stylesheet" href="/assets/player/player.css?v=165" /><script defer src="/assets/player/player.js?v=165"></script>' : ""}
-    ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=161" /><script defer src="/assets/player/watch-party.js?v=160"></script>' : ""}
+    ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=198" /><script defer src="/assets/party/party.js?v=198"></script>' : ""}
+    ${player ? '<link rel="stylesheet" href="/assets/player/player.css?v=198" /><script defer src="/assets/player/player.js?v=165"></script>' : ""}
+    ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=198" /><script defer src="/assets/player/watch-party.js?v=160"></script>' : ""}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/finish.css?v=175" />'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/polish.css?v=176" />'}
     <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=197" />
     ${player ? "" : '<script defer src="/assets/clean/hero-palette.js?v=188"></script>'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/liquid-glass/controls.css?v=197" />'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/experience.css?v=184" />'}
+    <link rel="stylesheet" href="/assets/clean/cinema.css?v=198" />
 </head>
 <body class="svCleanShell">
 
@@ -9286,8 +9294,8 @@ async function detailPage(req, res, type) {
     const number = Number(season.season_number);
     const total = Math.max(0, Number(season.episode_count || 0));
     const shown = Math.min(total, 24);
-    const episodeLinks = Array.from({ length: shown }, (_, i) => `<a href="/watch/tv/${encodeURIComponent(id)}?mode=movie&s=${number}&e=${i + 1}" aria-label="Watch season ${number} episode ${i + 1}">Episode ${i + 1}</a>`).join("");
-    return `<details class="svSeason"${index === 0 ? " open" : ""}><summary><strong>${escapeHtml(season.name || `Season ${number}`)}</strong><span>${total} episodes</span></summary>
+    const episodeLinks = Array.from({ length: shown }, (_, i) => `<a class="svDetailEpisodeTile" href="/watch/tv/${encodeURIComponent(id)}?mode=movie&s=${number}&e=${i + 1}" aria-label="Watch season ${number} episode ${i + 1}"><span class="svEpisodeOrdinal">${String(i + 1).padStart(2, "0")}</span><span>Episode ${i + 1}</span>${cleanIcon("play")}</a>`).join("");
+    return `<details class="svSeason"${index === 0 ? " open" : ""}><summary><span class="svSeasonIdentity"><b class="svSeasonNumber">${String(number).padStart(2, "0")}</b><strong>${escapeHtml(season.name || `Season ${number}`)}</strong></span><span>${total} episodes</span></summary>
       ${season.overview ? `<p>${escapeHtml(season.overview)}</p>` : ""}<div class="dsEpisodeChips">${episodeLinks}${total > shown ? `<a href="/watch/tv/${encodeURIComponent(id)}?mode=movie&s=${number}&e=${shown + 1}">Continue with episode ${shown + 1}</a>` : ""}</div></details>`;
   }).join("");
   const about = [
@@ -9298,12 +9306,13 @@ async function detailPage(req, res, type) {
     ...(providerList.length ? [["Available on", providerList.map(provider => provider.provider_name).join(", ")]] : [])
   ].map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("");
 
-  const body = `<main class="dsDetailPage svDetailPage">
+  const body = `<main class="dsDetailPage svDetailPage svCinemaPage" data-cinema-page="details">
     <article class="dsDetailShell svTitleDetails" aria-labelledby="svDetailTitle" data-detail-id="${escapeHtml(id)}" data-detail-type="${type}" style="--sv-detail-art:url(\'${escapeHtml(heroBg)}\')">
       <a class="dsSecondaryBtn svDetailReturn" href="/" data-sv-details-back aria-label="Back to browsing"><svg class="svIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>Back to browsing</a>
       <section class="svDetailHero">
         <div class="svDetailBackdrop" style="background-image:url('${escapeHtml(heroBg)}')"></div><div class="svDetailShade"></div>
-        <div class="svDetailIdentity">
+        <div class="svDetailIdentity" data-cinema-reveal>
+          <span class="svDetailEdition">SwiflyTV <span aria-hidden="true">/</span> ${type === "tv" ? "Series" : "Cinema"}</span>
           <h1 id="svDetailTitle" class="svDetailTitle"><span class="svDetailTitleText">${escapeHtml(title)}</span>${titleLogo ? `<img class="svDetailLogo" src="${escapeHtml(titleLogo)}" alt="" aria-hidden="true" decoding="async" />` : ""}</h1>
           ${genreHtml ? `<div class="svDetailGenres">${genreHtml}</div>` : ""}
           <div class="svDetailFacts">
@@ -9318,9 +9327,11 @@ async function detailPage(req, res, type) {
             <button class="dsIconBtn dsHeartBtn" type="button" aria-label="Like ${escapeHtml(title)}" ${mediaDataAttributes("like", details, type)}>♡</button>
           </div>
         </div>
+        ${details.poster_path ? `<div class="svDetailPosterCard" aria-hidden="true"><img src="${escapeHtml(img(details.poster_path, "w342"))}" alt="" decoding="async"/><span>${type === "tv" ? "The series" : "The film"}</span></div>` : ""}
       </section>
       <div class="svDetailBody">
-        <section id="overview" class="svDetailSection svDetailOverview"><h2 class="svDetailSrOnly">Overview</h2><p>${escapeHtml(details.overview || "No overview available yet.")}</p></section>
+        <nav class="svDetailChapterNav" aria-label="Title sections"><a href="#overview">The story</a>${castHtml ? '<a href="#cast">Cast</a>' : ""}${seasonHtml ? '<a href="#episodes">Episodes</a>' : ""}${collectionHtml ? '<a href="#collection">Collection</a>' : ""}<a href="#details">Film notes</a></nav>
+        <section id="overview" class="svDetailSection svDetailOverview"><div><span class="svCinemaEyebrow">THE STORY</span><h2>${type === "tv" ? "One episode is never enough." : "A story worth settling into."}</h2></div><p>${escapeHtml(details.overview || "No overview available yet.")}</p></section>
         ${castHtml ? `<section id="cast" class="svDetailSection"><h2>Cast</h2><div class="svDetailCastRail" aria-label="Cast">${castHtml}</div></section>` : ""}
         ${seasonHtml ? `<section id="episodes" class="svDetailSection"><h2>Episodes</h2>${seasonHtml}</section>` : ""}
         ${collectionHtml}
@@ -9611,13 +9622,13 @@ function watchroomPage(req, res) {
   const safeCountdown = escapeHtml(String(room.openTogetherCountdownEndsAt || 0));
 
   const isSocialEmbed = String(req.query.socialEmbed || "") === "1";
-  const body = `<main class="dsPlainPage dsStableRoom ${isSocialEmbed ? "dsSocialEmbeddedRoom" : ""}" data-room-id="${safeRoomId}">
-    <section class="dsStableRoomHero">
+  const body = `<main class="dsPlainPage dsStableRoom svCinemaPage ${isSocialEmbed ? "dsSocialEmbeddedRoom" : ""}" data-cinema-page="watchroom" data-room-id="${safeRoomId}">
+    <section class="dsStableRoomHero" data-cinema-reveal>
       <div>
         ${isSocialEmbed ? "" : '<a class="dsGhostPill" href="/social?tab=watchrooms">← Social Rooms</a>'}
-        <span class="dsEyebrow">Reliable Watch Room</span>
+        <span class="dsEyebrow">SwiflyTV · Watch together</span>
         <h1>${safeName}</h1>
-        <p>Built for movie fans. Use <b>Open Together</b> when you both can open the movie site, or <b>Live Share</b> when one of you can share a tab.</p>
+        <p>Press play together. Stay for the company. Share a link, choose a room movie, or bring everyone into your tab.</p>
       </div>
 
       <aside class="dsStableRoomMeta">
@@ -9633,7 +9644,7 @@ function watchroomPage(req, res) {
     </div>
     <div id="missingYouAmbient" class="dsMissingYouAmbient" hidden>♡ ♡ ♡</div>
 
-    <section class="dsStableRoomGrid">
+    <section class="dsStableRoomGrid" data-cinema-reveal>
       <section class="dsStableMain">
         <div class="dsStableTabs">
           <button class="active" type="button" data-stable-tab="open">Open Together</button>
@@ -10003,12 +10014,12 @@ function watchroomPage(req, res) {
           <div class="dsStableChatHead">
             <div>
               <span class="dsEyebrow">Chat</span>
-              <h2>Date Chat</h2>
+              <h2>The conversation</h2>
             </div>
           </div>
           <div id="stableMessages" class="dsStableMessages"></div>
           <form id="stableChatForm">
-            <input name="message" placeholder="Send something sweet..." maxlength="220" />
+            <input name="message" placeholder="Add to the conversation…" maxlength="220" />
             <button class="dsPrimaryBtn" type="submit">Send</button>
           </form>
         </section>
@@ -13899,9 +13910,9 @@ app.get("/api/local/streamprovider-urls", async (req, res) => {
     sourceMode: "streamprovider-url-list-no-browser",
     tmdb: id,
     type,
-    order: type === "tv" ? STREAMPROVIDER_TV_ORDER : STREAMPROVIDER_ORDER,
+    order: type === "tv" ? STREAMPROVIDER_TV_ORDER : STREAMPROVIDER_MOVIE_ORDER,
     urls: {
-      vidrift: type === "tv" ? `https://embed.vidrift.in/embed/tv/${id}/${season}/${episode}` : "TV only",
+      vidrift: type === "tv" ? `https://embed.vidrift.in/embed/tv/${id}/${season}/${episode}` : `https://embed.vidrift.in/embed/movie/${id}`,
       hexa: type === "tv" ? `https://hexa.su/watch/tv/${id}/${season}/${episode}` : `https://hexa.su/watch/movie/${id}`,
       cinezo: type === "tv" ? `https://www.cinezo.net/watch/tv/${id}?season=${season}&episode=${episode}` : `https://www.cinezo.net/watch/movie/${id}`,
       sflix: "disabled by default because sflix2.to search timed out"
@@ -13913,7 +13924,7 @@ app.get("/api/playback/health", (req, res) => {
   res.set("Cache-Control", "no-store");
   res.json({
     ok: true, browser: localStreamProviderRuntime().getStatus(),
-    discovery: { enabled: STREAMPROVIDER_ENABLED, providers: STREAMPROVIDER_ORDER, tvProviders: STREAMPROVIDER_TV_ORDER, providerTimeoutMs: STREAMPROVIDER_PROVIDER_TIMEOUT_MS, routeTimeoutMs: STREAMPROVIDER_ROUTE_TIMEOUT_MS, hedgeDelayMs: STREAMPROVIDER_HEDGE_DELAY_MS, maxConcurrentCaptures: STREAMPROVIDER_MAX_CONCURRENT,
+    discovery: { enabled: STREAMPROVIDER_ENABLED, providers: STREAMPROVIDER_MOVIE_ORDER, tvProviders: STREAMPROVIDER_TV_ORDER, providerTimeoutMs: STREAMPROVIDER_PROVIDER_TIMEOUT_MS, routeTimeoutMs: STREAMPROVIDER_ROUTE_TIMEOUT_MS, hedgeDelayMs: STREAMPROVIDER_HEDGE_DELAY_MS, maxConcurrentCaptures: STREAMPROVIDER_MAX_CONCURRENT,
       nuvio: { enabled: NUVIO_ENABLED, providers: NUVIO_PROVIDER_ORDER, providerTimeoutMs: NUVIO_PROVIDER_TIMEOUT_MS, timeoutMs: NUVIO_TIMEOUT_MS } }
   });
 });
@@ -13939,7 +13950,7 @@ app.get("/api/local/streamprovider-debug", async (req, res) => {
       season: type === "tv" ? season : "",
       episode: type === "tv" ? episode : "",
       ms: Date.now() - startedAt,
-      providerOrder: type === "tv" ? STREAMPROVIDER_TV_ORDER : STREAMPROVIDER_ORDER,
+      providerOrder: type === "tv" ? STREAMPROVIDER_TV_ORDER : STREAMPROVIDER_MOVIE_ORDER,
       code: debug.payload?.code || "",
       browser: localStreamProviderRuntime().getStatus(),
       winner: debug.winner ? { playbackUrl: debug.winner.playbackUrl, streamType: debug.winner.streamType, apiProvider: debug.winner.apiProvider } : null,
@@ -13958,7 +13969,7 @@ app.get("/api/local/streamprovider-debug", async (req, res) => {
       season: type === "tv" ? season : "",
       episode: type === "tv" ? episode : "",
       ms: Date.now() - startedAt,
-      providerOrder: type === "tv" ? STREAMPROVIDER_TV_ORDER : STREAMPROVIDER_ORDER
+      providerOrder: type === "tv" ? STREAMPROVIDER_TV_ORDER : STREAMPROVIDER_MOVIE_ORDER
     });
   }
 });
@@ -14876,48 +14887,50 @@ app.get("/login", (req, res) => authPage(res, "login"));
 app.get("/signup", (req, res) => authPage(res, "signup"));
 
 function accountPage(req, res) {
-  const body = `<main class="dsPlainPage dsAccountPage">
-    <section class="dsAccountHero">
-      <div>
-        <span class="dsEyebrow">Account</span>
-        <h1>Your streaming profile</h1>
-        <p>Manage profiles, watchlists, liked titles, continue watching, and watch rooms.</p>
+  const body = `<main class="dsPlainPage dsAccountPage svCinemaPage" data-cinema-page="account">
+    <section class="dsAccountHero" data-cinema-reveal>
+      <div class="svAccountIdentity">
+        <span class="svAccountAvatar" data-account-avatar aria-hidden="true">S</span>
+        <span class="dsEyebrow">Your SwiflyTV</span>
+        <h1>Your world of stories.</h1>
+        <p>Your favorites, your next watch, your people. All in one place.</p>
       </div>
       <div class="dsAccountActions">
-        <a class="dsPrimaryBtn" href="/profiles">Profiles</a>
-        <a class="dsSecondaryBtn" href="/profiles/manage">Manage Profiles</a>
-        <a class="dsSecondaryBtn" href="/my-list">My List</a>
-        <a class="dsSecondaryBtn" href="/liked">Liked</a>
-        <a class="dsGhostPill" href="/watchrooms">Watch Parties</a>
+        <span class="svCinemaEyebrow">MAKE YOURSELF AT HOME</span>
+        <a class="dsPrimaryBtn" href="/continue">${cleanIcon("play")}Pick up where you left off</a>
+        <a class="dsSecondaryBtn" href="/profiles">${cleanIcon("user")}Switch profile</a>
+        <a class="dsGhostPill" href="/watchrooms">${cleanIcon("people")}Make it a movie night</a>
       </div>
     </section>
 
-    <section class="dsAccountGrid">
+    <div class="svAccountSectionHead" data-cinema-reveal><span class="svCinemaEyebrow">YOUR SPACE</span><h2>A little more you.</h2><p>Keep the stories you love close.</p></div>
+    <section class="dsAccountGrid" aria-label="Account shortcuts" data-cinema-reveal>
       <a class="dsAccountCard" href="/profiles">
-        <span>01</span>
+        <span class="svAccountTileIcon">${cleanIcon("user")}</span><span class="svAccountTileArrow">${cleanIcon("arrow")}</span>
         <h2>Profiles</h2>
-        <p>Switch into a profile quickly.</p>
+        <p>A seat for everyone. Choose who's watching.</p>
       </a>
       <a class="dsAccountCard" href="/profiles/manage">
-        <span>02</span>
+        <span class="svAccountTileIcon">${cleanIcon("settings")}</span><span class="svAccountTileArrow">${cleanIcon("arrow")}</span>
         <h2>Manage Profiles</h2>
         <p>Create, rename, or remove profiles.</p>
       </a>
       <a class="dsAccountCard" href="/continue">
-        <span>03</span>
+        <span class="svAccountTileIcon">${cleanIcon("play")}</span><span class="svAccountTileArrow">${cleanIcon("arrow")}</span>
         <h2>Continue Watching</h2>
         <p>Jump back into what you were watching.</p>
       </a>
       <a class="dsAccountCard" href="/my-list">
-        <span>04</span>
+        <span class="svAccountTileIcon">${cleanIcon("bookmark")}</span><span class="svAccountTileArrow">${cleanIcon("arrow")}</span>
         <h2>My List</h2>
         <p>View titles saved for later.</p>
       </a>
       <a class="dsAccountCard" href="/watchrooms">
-        <span>05</span>
+        <span class="svAccountTileIcon">${cleanIcon("people")}</span><span class="svAccountTileArrow">${cleanIcon("arrow")}</span>
         <h2>Watch Parties</h2>
         <p>Create or join a synced room.</p>
       </a>
+      <a class="dsAccountCard" href="/liked"><span class="svAccountTileIcon">${cleanIcon("heart")}</span><span class="svAccountTileArrow">${cleanIcon("arrow")}</span><h2>Favorites</h2><p>The films and series you keep coming back to.</p></a>
     </section>
 
     <script>
@@ -14929,6 +14942,8 @@ function accountPage(req, res) {
           if (title && (profile?.name || session?.name)) {
             title.textContent = "Welcome, " + (profile?.name || session?.name);
           }
+          var avatar = document.querySelector("[data-account-avatar]");
+          if (avatar) avatar.textContent = Array.from(String(profile?.name || session?.name || "SwiflyTV"))[0].toUpperCase();
         } catch {}
       })();
     </script>
@@ -14939,14 +14954,14 @@ function accountPage(req, res) {
 
 
 function profilesPage(req, res) {
-  const body = `<main class="dsPlainPage dsProfilesPage dsProfilesSelectPage svProfilesCinematic">
-    <section class="dsProfilesHero dsCleanHero">
-      <span class="dsEyebrow">Profiles</span>
+  const body = `<main class="dsPlainPage dsProfilesPage dsProfilesSelectPage svProfilesCinematic svCinemaPage" data-cinema-page="profiles">
+    <section class="dsProfilesHero dsCleanHero" data-cinema-reveal>
+      <span class="dsEyebrow">Your home cinema</span>
       <h1>Who is watching?</h1>
       <p>Your movies, your favorites, your space. Choose who's watching.</p>
     </section>
 
-    <section class="dsProfilesSelectShell">
+    <section class="dsProfilesSelectShell" data-cinema-reveal>
       <div class="dsProfilesGrid dsProfilesChoiceGrid" id="profilesGrid"></div>
 
       <div class="dsProfilesQuickActions">
@@ -15006,10 +15021,12 @@ function profilesPage(req, res) {
 
         grid.innerHTML = profiles.map((profile, index) => {
           const initial = esc(profile.name).slice(0,1).toUpperCase() || "S";
-          return '<button class="dsProfileSelectCard" data-index="' + index + '" data-current="' + (currentProfile && (currentProfile.id === profile.id || currentProfile.name === profile.name) ? 'true' : 'false') + '" type="button">' +
+          var selected = Boolean(currentProfile && (currentProfile.id === profile.id || currentProfile.name === profile.name));
+          return '<button class="dsProfileSelectCard" data-index="' + index + '" data-current="' + selected + '" aria-pressed="' + selected + '" type="button">' +
             '<span class="dsProfileAvatarBig">' + initial + '</span>' +
             '<strong>' + esc(profile.name) + '</strong>' +
             '<small>' + modeLabel(profile.mode) + '</small>' +
+            (selected ? '<span class="svProfileCurrent">Active profile</span>' : '') +
           '</button>';
         }).join("") +
         '<a class="dsProfileSelectCard dsAddProfileCard" href="/profiles/manage">' +
@@ -15035,18 +15052,18 @@ function profilesPage(req, res) {
 
 
 function profilesManagePage(req, res) {
-  const body = `<main class="dsPlainPage dsProfilesManagePage svProfilesCinematic">
-    <section class="dsCleanHero dsProfilesManageHero">
-      <span class="dsEyebrow">Profile Center</span>
-      <h1>Manage profiles without the clutter.</h1>
-      <p>Make space for everyone. Create a profile, personalize it, or manage the ones you already have.</p>
+  const body = `<main class="dsPlainPage dsProfilesManagePage svProfilesCinematic svCinemaPage" data-cinema-page="profile-settings">
+    <section class="dsCleanHero dsProfilesManageHero" data-cinema-reveal>
+      <span class="dsEyebrow">Your home cinema</span>
+      <h1>A space for everyone.</h1>
+      <p>Give every viewer a little corner of SwiflyTV.</p>
       <div class="dsHeroMiniActions">
         <a class="dsPrimaryBtn" href="/profiles"><i class="fa-solid fa-user-group"></i> Switch Profile</a>
         <a class="dsSecondaryBtn" href="/account"><i class="fa-solid fa-gear"></i> Account</a>
       </div>
     </section>
 
-    <section class="dsProfileManagerLayout">
+    <section class="dsProfileManagerLayout" data-cinema-reveal>
       <aside class="dsProfileManagerPanel">
         <span class="dsPanelLabel">Create profile</span>
         <h2>New profile</h2>
@@ -15128,9 +15145,9 @@ function profilesManagePage(req, res) {
                 '<small>' + modeLabel(profile.mode) + '</small>' +
               '</div>' +
               '<div class="dsManageProfileActions">' +
-                '<button type="button" data-action="rename">Rename</button>' +
-                '<button type="button" data-action="mode">' + (profile.mode === "kids" ? "Make Regular" : "Make Kids") + '</button>' +
-                '<button type="button" data-action="delete">Delete</button>' +
+                '<button type="button" class="dsSecondaryBtn" data-action="rename">Rename</button>' +
+                '<button type="button" class="dsSecondaryBtn" data-action="mode">' + (profile.mode === "kids" ? "Make Regular" : "Make Kids") + '</button>' +
+                '<button type="button" class="dsSecondaryBtn" data-action="delete">Delete</button>' +
               '</div>' +
             '</article>';
           }).join("");

@@ -1,4 +1,4 @@
-/* v160: details-first browsing and independent solo/party player return context. */
+/* v198: title chapters stay in their current page or catalog detail viewport. */
 (() => {
   'use strict';
   if (window.SwiflyDetails) return;
@@ -93,7 +93,7 @@
     const back=document.createElement('button');back.type='button';back.className='svDetailBack dsIconBtn';back.dataset.svDialogBack='';back.setAttribute('aria-label','Back to browsing');back.innerHTML=backIcon;
     const title=document.createElement('span');title.className='svDetailChromeTitle';title.textContent='Movie details';
     const dismiss=document.createElement('button');dismiss.type='button';dismiss.className='svDetailDismiss dsIconBtn';dismiss.dataset.svDetailClose='';dismiss.setAttribute('aria-label','Close movie details');dismiss.innerHTML=closeIcon;
-    chrome.append(back,title,dismiss);viewport=document.createElement('div');viewport.className='svDetailViewport';dialog.append(chrome,viewport);document.body.append(dialog);
+    chrome.append(back,title,dismiss);viewport=document.createElement('div');viewport.className='svDetailViewport svCinemaPage';viewport.dataset.cinemaPage='details';dialog.append(chrome,viewport);document.body.append(dialog);
     back.addEventListener('click',goBack);dismiss.addEventListener('click',close);
     viewport.addEventListener('scroll',()=>dialog.classList.toggle('svDetailScrolled',viewport.scrollTop>180),{passive:true});
     dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
@@ -167,10 +167,25 @@
     if(!source||!(titleRoute(source.href)===expected&&!mediaRoute(source.href)||catalogURL(source.href)&&mediaRoute(source.href)===expected))return;
     rememberDetailScroll();storageWrite('swiflytv.partyReturn',route(source));
   }
+  function scrollChapter(link,event) {
+    const root=link.closest('.svTitleDetails'),hash=link.getAttribute('href');
+    if(!root||!link.closest('.svDetailChapterNav')||!/^#(?:overview|cast|episodes|details|collection)$/.test(hash||''))return false;
+    event.preventDefault();
+    const target=root.querySelector(hash);if(!target)return true;
+    const host=root.closest('.svDetailViewport')||document.scrollingElement||document.documentElement;
+    const page=host===document.scrollingElement||host===document.documentElement;
+    const top=Math.max(0,target.getBoundingClientRect().top+(page?window.scrollY:host.scrollTop-host.getBoundingClientRect().top)-(page?100:20));
+    const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches||document.body.classList.contains('reduceMotion');
+    const options={top,behavior:reduced?'instant':'smooth'};
+    if(window.SwiflyMotion)window.SwiflyMotion.scrollTo(host,options);
+    else if(page)window.scrollTo(options);else host.scrollTo(options);
+    return true;
+  }
   function boot() {
     if(started)return;started=true;rememberCatalog();initialize(document);
     document.addEventListener('click',event=>{
       const link=event.target.closest('a[href]');if(!link||event.defaultPrevented||event.button>0||event.ctrlKey||event.metaKey||event.altKey||event.shiftKey||link.hasAttribute('download')||(link.target&&link.target!=='_self'))return;
+      if(scrollChapter(link,event))return;
       rememberParty(link);
       rememberPlayback(link);
       if(link.hasAttribute('data-sv-player-back')&&history.length>1){

@@ -143,6 +143,58 @@ test('the pinned VidLink worker verifies the highest current file quality and pr
   assert.deepEqual(result.source.headers, { referer: 'https://vidlink.pro/' });
   assert.deepEqual(upstream.requests.filter(request => new URL(request.url).hostname === 'media.example').map(request => ({ method: request.method, maxBytes: request.maxBytes })), [{ method: 'HEAD', maxBytes: 1024 * 1024 }]);
 });
+test('current VidLink movie file qualities use paired zero coordinates and keep verified MP4 headers', async () => {
+  const upstream = pinnedVidlinkUpstream({ payload: currentVidlinkPayload({
+    360: currentVidlinkQuality(360, { se: 0, ep: 0 }),
+    720: currentVidlinkQuality(720, { se: 0, ep: 0, headers: { Referer: 'https://vidlink.pro/', Origin: 'https://vidlink.pro', Cookie: 'movie=fixture', Host: 'media.example' } })
+  }) });
+  const result = await resolveNuvioProvider({ provider: 'vidlink', tmdbId: '550', mediaType: 'movie', season: '2', episode: '3', timeoutMs: 2000, fetchResource: upstream.fetchResource });
+  assert.equal(result.ok, true);
+  assert.equal(result.source.quality, '720p');
+  assert.equal(result.source.format, 'mp4');
+  assert.equal(result.source.mediaVerified, true);
+  assert.equal(result.source.requiresProxy, true);
+  assert.equal(result.source.codecName, 'hevc');
+  assert.deepEqual(result.source.headers, { referer: 'https://vidlink.pro/', origin: 'https://vidlink.pro', cookie: 'movie=fixture' });
+  const mediaRequests = upstream.requests.filter(request => new URL(request.url).hostname === 'media.example');
+  assert.deepEqual(mediaRequests.map(request => ({ path: new URL(request.url).pathname, method: request.method })), [{ path: '/720.mp4', method: 'HEAD' }]);
+  assert.deepEqual(mediaRequests[0].headers, result.source.headers);
+  assert(upstream.requests.some(request => new URL(request.url).pathname === '/api/b/movie/encrypted-title-id'));
+  assert.equal(upstream.requests.some(request => new URL(request.url).pathname.includes('/tv/')), false);
+});
+test('current VidLink movies reject episode-scoped and mixed coordinate qualities', async t => {
+  for (const [name, coordinates] of [
+    ['episode coordinates', { se: 1, ep: 1 }],
+    ['movie season with TV episode', { se: 0, ep: 1 }],
+    ['TV season with movie episode', { se: 1, ep: 0 }],
+    ['missing episode sentinel', { se: 0, ep: null }],
+    ['missing season sentinel', { se: undefined, ep: 0 }],
+    ['negative coordinates', { se: -1, ep: -1 }],
+    ['false coordinates', { se: false, ep: false }],
+    ['array coordinates', { se: [0], ep: [0] }]
+  ]) await t.test(name, async () => {
+    const upstream = pinnedVidlinkUpstream({ payload: currentVidlinkPayload({
+      1080: currentVidlinkQuality(1080, coordinates),
+      480: currentVidlinkQuality(480, { se: 0, ep: 0 })
+    }) });
+    const result = await resolveNuvioProvider({ provider: 'vidlink', tmdbId: '550', mediaType: 'movie', timeoutMs: 2000, fetchResource: upstream.fetchResource });
+    assert.equal(result.ok, true);
+    assert.equal(result.source.quality, '480p');
+    assert.deepEqual(upstream.requests.filter(request => request.method === 'HEAD').map(request => new URL(request.url).pathname), ['/480.mp4']);
+  });
+});
+test('current VidLink movie file qualities retain absent coordinates and accept explicit string zeros', async t => {
+  for (const [name, coordinates] of [
+    ['legacy absent coordinates', { se: undefined, ep: undefined }],
+    ['legacy null coordinates', { se: null, ep: null }],
+    ['string zero coordinates', { se: '0', ep: '0' }]
+  ]) await t.test(name, async () => {
+    const upstream = pinnedVidlinkUpstream({ payload: currentVidlinkPayload({ 720: currentVidlinkQuality(720, coordinates) }) });
+    const result = await resolveNuvioProvider({ provider: 'vidlink', tmdbId: '550', mediaType: 'movie', timeoutMs: 2000, fetchResource: upstream.fetchResource });
+    assert.equal(result.ok, true);
+    assert.equal(result.source.quality, '720p');
+  });
+});
 test('current VidLink files must pass HTTP verification before falling back to a lower quality', async () => {
   const upstream = pinnedVidlinkUpstream({ payload: currentVidlinkPayload({
     360: currentVidlinkQuality(360, { codecName: 'hevc\nprivate' }),

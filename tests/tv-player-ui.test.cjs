@@ -7,7 +7,7 @@ const {JSDOM}=require('jsdom');
 const {playerMarkup,episodePickerMarkup}=require('../ui/player');
 const {loadServer}=require('./ui-helpers.cjs');
 const seasons=[{season_number:1,episode_count:9},{season_number:2,episode_count:10}];
-const options={id:'101',type:'tv',title:'Severance',season:2,episode:8,episodeCount:10,seasons,provider:'cinezo',episodes:[{episode_number:8,name:'After Hours',runtime:48,still:'https://image.tmdb.org/t/p/w342/still.jpg'},{episode_number:9,name:'The Next Chapter',runtime:51}]};
+const options={id:'101',type:'tv',title:'Severance',season:2,episode:8,episodeCount:10,seasons,provider:'cinezo',episodes:[{episode_number:8,name:'After Hours',overview:'The team follows a new lead.',runtime:48,still:'https://image.tmdb.org/t/p/w342/still.jpg'},{episode_number:9,name:'The Next Chapter',runtime:51}]};
 const parse=html=>new JSDOM(html).window.document;
 
 test('TV player names its playback and status controls for the selected episode',()=>{
@@ -42,6 +42,18 @@ test('Episode navigation stops at season boundaries and escapes episode metadata
   assert.match(d.querySelector('[aria-current="page"]').textContent,/<img src=x onerror=bad>/);
   const last=parse(episodePickerMarkup({...options,episode:10}));
   assert(last.querySelector('[data-player-episode-next][disabled]'));
+});
+test('Episode cards show real synopsis and season counts without inventing missing metadata',()=>{
+  const d=parse(episodePickerMarkup({...options,episodes:[...options.episodes,{episode_number:10,name:'Finale',overview:'<img src=x onerror=bad>'}]}));
+  const selected=d.querySelector('[data-player-episode-link][aria-current="page"]');
+  assert.equal(selected.querySelector('.svPlayerEpisodeOverview')?.textContent,'The team follows a new lead.');
+  assert.match(d.querySelector('[data-player-season-link][aria-current="true"]').textContent,/10 episodes/);
+  const last=d.querySelector('[data-player-episode-link][href*="e=10"]');
+  assert.equal(last.querySelector('.svPlayerEpisodeOverview')?.textContent,'<img src=x onerror=bad>');
+  assert.equal(d.querySelector('[onerror]'),null);
+  assert.doesNotMatch(last.textContent,/\d+ min/,'Unknown runtime must remain unknown');
+  const unknown=parse(episodePickerMarkup({...options,seasons:[{season_number:2}]}));
+  assert.equal(unknown.querySelector('.svPlayerSeasonCount'),null,'Only actual season counts should be shown');
 });
 test('A long season keeps the requested episode selectable without an unbounded episode grid',()=>{
   assert.equal(typeof episodePickerMarkup,'function');

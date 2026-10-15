@@ -1,198 +1,298 @@
-/* SwiflyTV v165: glass playback controls and a shared episode surface. */
+/* SwiflyTV cinema: bright title art, a quiet theater and navigation-matched glass. */
 body.svCleanShell .svPlayerPage {
   --player-canvas:var(--st-canvas,#000);
-  --player-accent:var(--st-accent,#eeebe4);
-  --player-line:#ffffff19;
-  --player-muted:#a5a5a5;
-  max-width:1376px; width:100%; margin:0 auto;
-  padding:110px var(--sv-page-gutter,32px) 64px;
-  color:#f5f5f5; font-family:var(--st-font,"Host Grotesk",system-ui,sans-serif) !important;
+  --player-accent:var(--st-accent,#eff6f6);
+  --player-line:var(--sv-cinema-line,#ffffff24);
+  --player-muted:#a9b0bb;
+  --player-ease:var(--sv-cinema-ease,cubic-bezier(.2,.75,.25,1));
+  max-width:1424px; width:100%; margin:0 auto;
+  padding:110px var(--sv-page-gutter,32px) 80px;
+  color:#f4f6fa; font-family:var(--st-font,"Host Grotesk",system-ui,sans-serif) !important;
   box-sizing:border-box; position:relative; isolation:isolate;
 }
-.svPlayerAmbient { position:absolute; z-index:-1; inset:64px 0 auto; height:620px; max-height:70vh; overflow:hidden; pointer-events:none; opacity:.2; filter:blur(38px) saturate(1.15); -webkit-mask-image:linear-gradient(#000,#000b 45%,transparent); mask-image:linear-gradient(#000,#000b 45%,transparent); }
-.svPlayerAmbient img { width:100%; height:100%; object-fit:cover; }
-body.svCleanShell .svPlayerPage[data-party-active="true"] { max-width:1640px; }
 .svPlayerPage *, .svPlayerPage *::before, .svPlayerPage *::after { box-sizing:border-box; }
-.svPlayerPageHead { display:flex; align-items:center; justify-content:space-between; gap:20px; margin-bottom:22px; }
-body.svCleanShell .svPlayerBack { min-height:40px; gap:6px; padding:8px 13px !important; font-size:13px !important; color:#cecece !important; border-radius:13px !important; }
+.svPlayerAmbient { position:absolute; z-index:-1; inset:24px 0 auto; height:850px; max-height:90vh; overflow:hidden; pointer-events:none; opacity:.32; filter:blur(54px) saturate(1.35); -webkit-mask-image:linear-gradient(transparent,#000 16%,#0009 48%,transparent); mask-image:linear-gradient(transparent,#000 16%,#0009 48%,transparent); }
+.svPlayerAmbient img { width:100%; height:100%; object-fit:cover; }
+.svPlayerPage::before { content:""; position:absolute; z-index:-1; inset:40px 0 auto; height:800px; pointer-events:none; background:radial-gradient(ellipse at 15% 35%,#8adfe811,transparent 55%),radial-gradient(ellipse at 85% 55%,#b4a7f411,transparent 52%); }
+body.svCleanShell .svPlayerPage[data-party-active="true"] { max-width:1640px; }
+.svPlayerPageHead { display:flex; align-items:center; justify-content:space-between; gap:20px; margin-bottom:24px; }
+.svPlayerPageReturn { display:flex; align-items:center; gap:18px; min-width:0; }
+body.svCleanShell .svPlayerBack { display:inline-flex; align-items:center; min-height:42px; flex:0 0 auto; gap:7px; padding:9px 15px !important; font-size:12px !important; color:#dfe4ed !important; border-radius:16px !important; text-decoration:none; }
+.svPlayerHeadNote { color:#9ca7b6; font-size:12px; letter-spacing:.01em; }
 .svPlayerIcon { display:block; width:19px; height:19px; flex:0 0 19px; }
-.svPlayerModes { display:flex; align-items:center; gap:4px; padding:4px; border:1px solid #ffffff12; border-radius:14px; background:#ffffff04; }
-.svPlayerModes a { display:flex; align-items:center; justify-content:center; min-height:32px; padding:6px 17px; border-radius:10px; font-size:13px; font-weight:500; text-decoration:none; color:#999; transition:background .16s ease,color .16s ease; }
-.svPlayerModes a:hover { color:#fff; }
-.svPlayerModes a.active { background:#ffffff10; color:#fff; box-shadow:inset 0 1px #ffffff07; }
+body.svCleanShell .svPlayerPage .svPlayerModes.svGlassPanel { display:flex; align-items:center; gap:4px; padding:5px; border-radius:20px !important; background:linear-gradient(145deg,#ffffff0a,transparent 60%),#080b153d !important; box-shadow:inset 0 1px #ffffff24,0 8px 24px #0003 !important; }
+.svPlayerModes a { display:flex; align-items:center; justify-content:center; min-height:34px; padding:6px 20px; border:1px solid transparent; border-radius:14px; font-size:12px; font-weight:500; text-decoration:none; color:#a7b0bd; transition:background .22s ease,color .22s ease,border-color .22s ease; }
+.svPlayerModes a:hover { color:#fff; background:#ffffff07; }
+.svPlayerModes a.active { background:linear-gradient(150deg,#ffffff18,#ffffff09); color:#fff; border-color:#ffffff15; box-shadow:inset 0 1px #ffffff16,0 2px 8px #0002; }
 .svPlayerLayout { display:grid; grid-template-columns:minmax(0,1fr); gap:24px; align-items:start; }
 .svPlayerPage[data-party-active="true"] .svPlayerLayout { grid-template-columns:minmax(0,1fr) 320px; }
 .svPlayerMain { min-width:0; }
 .svPlayerPartySlot { display:none; min-width:0; }
 .svPlayerPage[data-party-active="true"] .svPlayerPartySlot { display:block; }
-.svPlayerStage { position:relative; isolation:isolate; width:100%; aspect-ratio:16 / 9; min-width:0; border:1px solid var(--player-line); border-radius:22px; background:#090909; box-shadow:0 24px 70px #0006,inset 0 1px #ffffff08; }
-.svPlayerScene { position:absolute; inset:0; width:100%; height:100%; border-radius:inherit; object-fit:cover; opacity:.29; filter:blur(1px) saturate(.72); pointer-events:none; }
+.svPlayerTheater { position:relative; border-radius:28px; }
+.svPlayerTheater:has(.svPlayerPopover[open]) { z-index:5; }
+.svPlayerTheater::before { content:""; position:absolute; inset:-1px; border-radius:inherit; pointer-events:none; background:linear-gradient(135deg,#d9edf048,transparent 24%,transparent 65%,#c9b9f439); opacity:.8; }
+/* A source can become playable during the entrance; hold its frames still. */
+body.svCleanShell .svPlayerPage:is([data-player-state="ready"],[data-player-state="buffering"],[data-player-state="ended"]) .svPlayerTheater { animation:none !important; transform:none !important; opacity:1 !important; }
+.svPlayerStage { position:relative; isolation:isolate; width:100%; aspect-ratio:16 / 9; min-width:0; border:1px solid var(--player-line); border-radius:28px; background:#07090d; box-shadow:0 28px 80px #0009,0 0 65px #889ce80c,inset 0 1px #ffffff16; }
+.svPlayerScene { position:absolute; inset:0; width:100%; height:100%; border-radius:inherit; object-fit:cover; opacity:.64; filter:saturate(1.12) brightness(1.08); pointer-events:none; }
 .svPlayerVideo { display:block; position:absolute; inset:0; width:100%; height:100%; border-radius:inherit; background:#000; object-fit:contain; }
-.svPlayerPage:is([data-player-state="loading"],[data-player-state="waiting"],[data-player-state="error"]) .svPlayerVideo { opacity:.18; }
+.svPlayerPage:is([data-player-state="loading"],[data-player-state="waiting"],[data-player-state="error"]) .svPlayerVideo { opacity:.04; }
 .svPlayerPage:is([data-player-state="ready"],[data-player-state="buffering"],[data-player-state="ended"]) .svPlayerScene { opacity:0; }
-.svPlayerShade { position:absolute; inset:0; pointer-events:none; border-radius:inherit; background:linear-gradient(0deg,#000a 0%,#0000 38%),linear-gradient(180deg,#0002,#0000 30%); }
-.svPlayerStatus { position:absolute; z-index:2; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:36px 24px 110px; text-align:center; border-radius:inherit; }
-.svPlayerStatusMark { display:grid; place-items:center; width:52px; height:52px; margin-bottom:20px; border:1px solid #ffffff1c; border-radius:17px; background:#ffffff08; color:#ddd; box-shadow:inset 0 1px #ffffff10; }
-.svPlayerStatusMark .svPlayerIcon { width:22px; height:22px; }
-.svPlayerEyebrow { display:block; font-size:10px; letter-spacing:.18em; color:#b7b7b7; font-weight:600; }
-body.svCleanShell .svPlayerStatus h2 { margin:10px 0 0 !important; max-width:560px; font-size:clamp(20px,2.35vw,34px) !important; line-height:1.17 !important; letter-spacing:-.035em !important; font-weight:500 !important; color:#f5f5f5 !important; text-wrap:balance; }
-body.svCleanShell .svPlayerStatus p { margin:12px 0 0 !important; max-width:400px; color:#b0b0b0 !important; font-size:13px !important; line-height:1.65 !important; text-wrap:balance; }
-.svPlayerPage[data-player-state="loading"] .svPlayerStatusMark { animation:svPlayerBreathe 1.8s ease-in-out infinite; }
-.svPlayerPage[data-player-state="buffering"] .svPlayerStatus { inset:18px auto auto 50%; transform:translateX(-50%); flex-direction:row; gap:10px; width:max-content; max-width:calc(100% - 32px); padding:12px 17px; border:1px solid #ffffff30; border-radius:999px; background:linear-gradient(135deg,#ffffff16,#ffffff06),#101218b8; -webkit-backdrop-filter:blur(18px) saturate(1.2); backdrop-filter:blur(18px) saturate(1.2); box-shadow:inset 0 1px #ffffff24,0 8px 28px #0004; pointer-events:none; }
-.svPlayerPage[data-player-state="buffering"] .svPlayerStatus::before { content:""; flex:0 0 auto; width:15px; height:15px; border:2px solid #ffffff30; border-top-color:var(--player-accent); border-radius:50%; animation:svPlayerSpin .8s linear infinite; }
+.svPlayerShade { position:absolute; inset:0; pointer-events:none; border-radius:inherit; background:linear-gradient(0deg,#000a 0%,#0000 30%),linear-gradient(180deg,#0002,#0000 24%); }
+.svPlayerPage:is([data-player-state="loading"],[data-player-state="waiting"],[data-player-state="error"]) .svPlayerShade { background:radial-gradient(ellipse at 50% 48%,#070b177d,transparent 75%),linear-gradient(0deg,#05070dec,#07091154 48%,#07091166); }
+.svPlayerStageChrome { position:absolute; inset:24px 28px auto; z-index:1; display:flex; align-items:center; justify-content:space-between; gap:16px; color:#d3dfe9b3; font-size:9px; font-weight:500; letter-spacing:.16em; pointer-events:none; }
+.svPlayerStageBrand { display:flex; align-items:center; gap:9px; }
+.svPlayerStageBrand i { width:5px; height:5px; border-radius:50%; background:#c4ebf1; box-shadow:0 0 12px #a5e6f378; }
+.svPlayerPage:is([data-player-state="ready"],[data-player-state="buffering"],[data-player-state="ended"]) .svPlayerStageChrome { display:none; }
+.svPlayerStatus { position:absolute; z-index:2; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:52px 24px 130px; text-align:center; border-radius:inherit; }
+.svPlayerStatusMark { position:relative; display:grid; place-items:center; width:74px; height:74px; margin-bottom:24px; border:1px solid #ffffff25; border-radius:24px; background:linear-gradient(150deg,#ffffff16,#ffffff03),#090f1b33; color:#e1f3f4; box-shadow:inset 0 1px #ffffff26,0 8px 28px #0002; }
+.svPlayerStatusMark::after { content:""; position:absolute; inset:-7px; border:1px solid #c7f3f00d; border-top-color:#c7f3f056; border-right-color:#bcb5f230; border-radius:29px; }
+.svPlayerStatusMark .svPlayerIcon { width:28px; height:28px; }
+.svPlayerEyebrow { display:block; font-size:9px; letter-spacing:.17em; color:#b6c5d2; font-weight:600; }
+body.svCleanShell .svPlayerStatus h2 { margin:12px 0 0 !important; max-width:640px; font-size:clamp(22px,2.5vw,37px) !important; line-height:1.14 !important; letter-spacing:-.045em !important; font-weight:500 !important; color:#f8fbfd !important; text-wrap:balance; }
+body.svCleanShell .svPlayerStatus p { margin:14px 0 0 !important; max-width:390px; color:#c1cbd7 !important; font-size:13px !important; line-height:1.7 !important; text-wrap:balance; }
+.svPlayerPage[data-player-state="loading"] .svPlayerStatusMark::after { animation:svPlayerSpin 3s linear infinite; }
+.svPlayerPage[data-player-state="error"] .svPlayerStatusMark { color:#e8dce5; }
+.svPlayerPage[data-player-state="error"] .svPlayerDock { display:none !important; }
+.svPlayerPage[data-player-state="error"] .svPlayerStatus { padding:48px 28px; }
+.svPlayerPage[data-player-state="buffering"] .svPlayerStatus { inset:18px auto auto 50%; transform:translateX(-50%); flex-direction:row; gap:10px; width:max-content; max-width:calc(100% - 32px); padding:12px 18px; border:1px solid #ffffff27; border-radius:18px; background:linear-gradient(135deg,#ffffff10,#ffffff03),#080c14bb; -webkit-backdrop-filter:blur(16px) saturate(1.2); backdrop-filter:blur(16px) saturate(1.2); box-shadow:inset 0 1px #ffffff1e,0 8px 28px #0004; pointer-events:none; }
+.svPlayerPage[data-player-state="buffering"] .svPlayerStatus::before { content:""; flex:0 0 auto; width:14px; height:14px; border:1.5px solid #ffffff30; border-top-color:#d5eef0; border-radius:50%; animation:svPlayerSpin .9s linear infinite; }
 .svPlayerPage[data-player-state="buffering"] .svPlayerStatus :is(.svPlayerStatusMark,.svPlayerEyebrow) { display:none; }
-body.svCleanShell .svPlayerPage[data-player-state="buffering"] .svPlayerStatus h2 { font-size:13px !important; letter-spacing:0 !important; margin:0 !important; }
+body.svCleanShell .svPlayerPage[data-player-state="buffering"] .svPlayerStatus h2 { font-size:12px !important; letter-spacing:0 !important; margin:0 !important; }
 body.svCleanShell .svPlayerPage[data-player-state="buffering"] .svPlayerStatus p { display:none; }
-body.svCleanShell .svPlayerRetry { display:inline-flex; align-items:center; gap:8px; min-height:42px; margin-top:21px; padding:10px 18px !important; font-size:13px !important; border-radius:12px !important; }
-.svPlayerDock { position:absolute; z-index:4; left:16px; right:16px; bottom:14px; padding:13px 15px 9px; border:1px solid #ffffff19; border-radius:15px; background-color:rgba(17,17,17,.92); background-image:linear-gradient(160deg,#ffffff04,#0000); box-shadow:0 8px 25px #0007,inset 0 1px #ffffff07; -webkit-backdrop-filter:blur(22px); backdrop-filter:blur(22px); transition:opacity .16s ease,border-color .16s ease; }
-.svPlayerDock:focus-within { opacity:1 !important; border-color:#ffffff35; }
-.svPlayerTimeline { position:relative; display:flex; align-items:center; height:18px; margin-bottom:4px; }
-.svPlayerTimelineTrack { position:absolute; inset:7px 0 auto; height:3px; border-radius:20px; overflow:hidden; background:#ffffff27; pointer-events:none; }
+body.svCleanShell .svPlayerRetry { display:inline-flex; align-items:center; gap:8px; min-height:44px; margin-top:24px; padding:11px 19px !important; font-size:12px !important; border-radius:16px !important; }
+.svPlayerDock { position:absolute; z-index:4; left:22px; right:22px; bottom:20px; padding:14px 16px 10px; border:1px solid #ffffff24; border-radius:20px; background-color:rgba(8,12,20,.8); background-image:linear-gradient(160deg,#ffffff0c,#0000 55%); box-shadow:0 8px 25px #0007,inset 0 1px #ffffff24; -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px); transition:border-color .22s ease,box-shadow .22s ease; }
+body.svCleanShell .svPlayerPage .svPlayerDock.svGlassPanel { --sv-surface-blur:16px; --sv-glass-tint:.64; border-radius:20px !important; background:linear-gradient(155deg,#ffffff0d,transparent 55%),rgb(6 9 16 / .76) !important; box-shadow:inset 0 1px #ffffff24,inset 0 -1px #ffffff05,0 12px 38px #0006 !important; }
+.svPlayerDock:focus-within { border-color:#ffffff45 !important; }
+.svPlayerTimeline { position:relative; display:flex; align-items:center; height:20px; margin-bottom:6px; }
+.svPlayerTimelineTrack { position:absolute; inset:8px 0 auto; height:3px; border-radius:20px; overflow:hidden; background:#ffffff24; pointer-events:none; }
 .svPlayerTimelineTrack :is(i,b) { position:absolute; inset:0 auto 0 0; height:100%; width:0; border-radius:inherit; }
-.svPlayerTimelineTrack i { background:#ffffff37; }
-.svPlayerTimelineTrack b { background:var(--player-accent); }
-body.svCleanShell .svPlayerTimeline input { position:relative; margin:0 !important; padding:0 !important; width:100%; min-height:18px; height:18px; background:transparent !important; border:0 !important; border-radius:8px !important; accent-color:var(--player-accent); cursor:pointer; -webkit-appearance:none; appearance:none; }
+.svPlayerTimelineTrack i { background:#ffffff34; }
+.svPlayerTimelineTrack b { background:var(--player-accent); box-shadow:0 0 9px #d0f5ff38; }
+body.svCleanShell .svPlayerTimeline input { position:relative; margin:0 !important; padding:0 !important; width:100%; min-height:20px; height:20px; background:transparent !important; border:0 !important; border-radius:8px !important; accent-color:var(--player-accent); cursor:pointer; -webkit-appearance:none; appearance:none; }
 .svPlayerTimeline input::-webkit-slider-runnable-track { height:3px; background:transparent; }
 .svPlayerTimeline input::-moz-range-track { height:3px; background:transparent; }
-.svPlayerTimeline input::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:10px; height:10px; margin-top:-3.5px; border:0; border-radius:50%; background:var(--player-accent); box-shadow:0 1px 5px #0009; }
-.svPlayerTimeline input::-moz-range-thumb { width:10px; height:10px; border:0; border-radius:50%; background:var(--player-accent); box-shadow:0 1px 5px #0009; }
+.svPlayerTimeline input::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:11px; height:11px; margin-top:-4px; border:0; border-radius:50%; background:var(--player-accent); box-shadow:0 0 0 4px #d6f4f411,0 1px 5px #0009; transition:box-shadow .18s ease; }
+.svPlayerTimeline input::-moz-range-thumb { width:11px; height:11px; border:0; border-radius:50%; background:var(--player-accent); box-shadow:0 0 0 4px #d6f4f411,0 1px 5px #0009; }
 .svPlayerTimeline input:disabled { cursor:default; opacity:.35; }
 .svPlayerDockRow { display:flex; align-items:center; justify-content:space-between; gap:10px; }
-.svPlayerTransport, .svPlayerTools { display:flex; align-items:center; gap:4px; min-width:0; }
-body.svCleanShell .svPlayerControl { display:grid !important; place-items:center; width:38px !important; height:38px !important; min-width:38px !important; min-height:38px !important; padding:8px !important; border:0 !important; border-radius:10px !important; margin:0 !important; color:#e5e5e5 !important; background-color:transparent !important; box-shadow:none; cursor:pointer; list-style:none; }
-body.svCleanShell .svPlayerControl:hover { background-color:#ffffff0d !important; color:#fff !important; }
-body.svCleanShell .svPlayerControl:disabled { opacity:.32; cursor:default; }
+.svPlayerTransport, .svPlayerTools { display:flex; align-items:center; gap:5px; min-width:0; }
+body.svCleanShell .svPlayerPage .svPlayerDock .svPlayerControl.svPlayerControl { display:grid !important; place-items:center; width:42px !important; height:42px !important; min-width:42px !important; min-height:42px !important; padding:10px !important; border:1px solid transparent !important; border-radius:13px !important; margin:0 !important; color:#e0e8ef !important; background:transparent !important; box-shadow:none !important; -webkit-backdrop-filter:none !important; backdrop-filter:none !important; text-shadow:none; cursor:pointer; list-style:none; transition:background .2s ease,color .2s ease,transform .2s var(--player-ease); }
+body.svCleanShell .svPlayerPage .svPlayerDock .svPlayerControl.svPlayerControl::before,
+body.svCleanShell .svPlayerPage .svPlayerDock .svPlayerControl.svPlayerControl::after { display:none !important; }
+body.svCleanShell .svPlayerPage .svPlayerDock .svPlayerControl.svPlayerControl:hover { background:#ffffff0d !important; color:#fff !important; transform:translateY(-1px); }
+body.svCleanShell .svPlayerPage .svPlayerDock .svPlayerControl.svPlayerControl:active { transform:scale(.94); }
+body.svCleanShell .svPlayerPage .svPlayerDock .svPlayerControl.svPlayerControl:disabled { opacity:.3; cursor:default; transform:none; }
+body.svCleanShell .svPlayerPage .svPlayerDock [data-player-play].svPlayerControl { background:linear-gradient(150deg,#ffffff20,#ffffff0b) !important; border-color:#ffffff1a !important; box-shadow:inset 0 1px #ffffff1c !important; color:#f4fafb !important; }
 .svPlayerControl::-webkit-details-marker { display:none; }
-.svPlayerTime { display:flex; align-items:center; gap:7px; margin-left:10px; color:#bfbfbf; font-size:11px; font-variant-numeric:tabular-nums; white-space:nowrap; }
-.svPlayerTime > span:first-child { color:#f0f0f0; }
-.svPlayerTime > span:nth-child(2) { color:#656565; }
+.svPlayerTime { display:flex; align-items:center; gap:9px; margin-left:15px; color:#aab7c6; font-size:11px; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.svPlayerTime > span:first-child { color:#f0f5f9; }
+.svPlayerTime > span:nth-child(2) { color:#6f798b; }
 .svPlayerPopover { position:relative; }
-.svPlayerPopover[open] > summary { background-color:#ffffff12 !important; }
-.svPlayerPopoverBody { position:absolute; z-index:8; right:-2px; bottom:calc(100% + 18px); display:flex; align-items:center; gap:9px; min-width:220px; padding:15px; border:1px solid #ffffff22; border-radius:14px; color:#dedede; background:#171717; box-shadow:0 15px 45px #0009; }
-.svPlayerPopoverBody::after { position:absolute; content:""; right:15px; bottom:-5px; width:9px; height:9px; border-right:1px solid #ffffff22; border-bottom:1px solid #ffffff22; transform:rotate(45deg); background:#171717; }
+body.svCleanShell .svPlayerPage .svPlayerDock .svPlayerPopover[open] > .svPlayerControl { background:#ffffff14 !important; }
+.svPlayerPopoverBody { position:absolute; z-index:8; right:-2px; bottom:calc(100% + 20px); display:flex; align-items:center; gap:9px; min-width:220px; padding:17px; border:1px solid #ffffff26; border-radius:20px; color:#e1e8ed; background:#121820eb; box-shadow:0 15px 45px #0009; }
+body.svCleanShell .svPlayerPage .svPlayerPopoverBody.svGlassPanel { --sv-surface-blur:18px; border-radius:20px !important; background:linear-gradient(145deg,#ffffff0c,transparent 65%),#0d121ced !important; box-shadow:inset 0 1px #ffffff25,0 16px 50px #0009 !important; }
+.svPlayerPopover[open] .svPlayerPopoverBody { animation:svPlayerMenuIn .2s var(--player-ease); }
 .svPlayerPopoverBody > label { font-size:11px; }
 body.svCleanShell .svPlayerPopoverBody input[type="range"] { width:100px; min-width:70px; margin:0 !important; padding:0 !important; border:0 !important; background:transparent !important; accent-color:var(--player-accent); }
-.svPlayerSettingsBody { display:flex; flex-direction:column; align-items:stretch; gap:14px; width:240px; }
-.svPlayerSettingsBody label { display:flex; flex-direction:column; align-items:stretch; gap:6px; font-size:12px; color:#aaa; }
-body.svCleanShell .svPlayerSettingsBody select { width:100%; height:36px; padding:7px 9px !important; border:1px solid #ffffff21 !important; border-radius:8px !important; font:inherit; font-size:12px !important; background:#222 !important; color:#f0f0f0 !important; cursor:pointer; }
-.svPlayerSettingsBody select:disabled { color:#888 !important; cursor:default; opacity:.65; }
-body.svCleanShell .svPlayerUnlock { position:absolute; z-index:5; left:50%; top:45%; transform:translate(-50%,-50%); display:flex; align-items:center; gap:9px; min-height:48px; padding:12px 21px !important; border-radius:14px !important; font-size:14px !important; box-shadow:0 12px 30px #0008; white-space:nowrap; }
-.svPlayerToast { position:absolute; z-index:6; left:50%; bottom:116px; transform:translateX(-50%); max-width:80%; padding:10px 15px; border:1px solid #ffffff24; border-radius:11px; color:#eee; background:#171717; font-size:12px; line-height:1.5; text-align:center; box-shadow:0 8px 24px #0005; }
-.svPlayerBelow { display:flex; align-items:center; justify-content:space-between; gap:26px; padding:27px 2px 0; }
-.svPlayerFilm { display:flex; align-items:center; gap:17px; min-width:0; }
-.svPlayerPoster { flex:0 0 auto; display:block; width:57px; height:84px; overflow:hidden; border:1px solid #ffffff12; border-radius:9px; background:#171717; }
+.svPlayerSettingsBody { display:flex; flex-direction:column; align-items:stretch; gap:15px; width:250px; }
+.svPlayerPopoverHeading { display:block; padding-bottom:12px; border-bottom:1px solid #ffffff12; font-size:15px; font-weight:500; letter-spacing:-.02em; color:#f2f7fb; }
+.svPlayerSettingsBody label { display:flex; flex-direction:column; align-items:stretch; gap:7px; font-size:11px; color:#a8b4c3; }
+body.svCleanShell .svPlayerSettingsBody select { width:100%; height:38px; padding:8px 11px !important; border:1px solid #ffffff1d !important; border-radius:11px !important; font:inherit; font-size:12px !important; background:#ffffff08 !important; color:#eef3f9 !important; cursor:pointer; }
+.svPlayerSettingsBody select option { background:#111720; color:#eef3f9; }
+.svPlayerSettingsBody select:disabled { color:#8591a2 !important; cursor:default; opacity:.65; }
+body.svCleanShell .svPlayerUnlock { position:absolute; z-index:5; left:50%; top:45%; transform:translate(-50%,-50%); display:flex; align-items:center; gap:9px; min-height:48px; padding:12px 21px !important; border-radius:18px !important; font-size:14px !important; box-shadow:0 12px 30px #0008; white-space:nowrap; }
+.svPlayerToast { position:absolute; z-index:6; left:50%; bottom:128px; transform:translateX(-50%); max-width:80%; padding:11px 16px; border:1px solid #ffffff24; border-radius:15px; color:#edf4fb; background:#0f151fee; font-size:12px; line-height:1.5; text-align:center; box-shadow:0 8px 24px #0005; }
+.svPlayerBelow { display:flex; align-items:center; justify-content:space-between; gap:28px; margin-top:20px; padding:24px 27px; }
+body.svCleanShell .svPlayerPage .svPlayerBelow.svGlassPanel { --sv-surface-blur:12px; --sv-glass-tint:.22; border-radius:24px !important; background:linear-gradient(140deg,#ffffff08,transparent 65%),#080d1733 !important; border-color:#ffffff16 !important; box-shadow:inset 0 1px #ffffff15,0 10px 30px #0002 !important; }
+.svPlayerFilm { display:flex; align-items:center; gap:22px; min-width:0; }
+.svPlayerPoster { flex:0 0 auto; display:block; width:67px; height:100px; overflow:hidden; border:1px solid #ffffff22; border-radius:12px; background:#121720; box-shadow:0 8px 24px #0005; }
 .svPlayerPoster img { display:block; width:100%; height:100%; object-fit:cover; }
-.svPlayerMetadata { display:flex; align-items:center; flex-wrap:wrap; gap:8px; color:#979797; font-size:11px; line-height:1.5; }
-.svPlayerMetadata > span { color:#555; }
-body.svCleanShell .svPlayerPage h1 { margin:5px 0 0 !important; font-family:var(--st-display-font,var(--st-font,"Host Grotesk",system-ui,sans-serif)) !important; font-size:clamp(23px,2.15vw,32px) !important; line-height:1.15 !important; letter-spacing:-.035em !important; font-weight:500 !important; color:#f5f5f5 !important; overflow-wrap:anywhere; }
-body.svCleanShell .svPlayerTransportNote { margin:8px 0 0 !important; font-size:12px !important; line-height:1.5 !important; color:#919191 !important; }
-body.svCleanShell .svPlayerPartyButton { flex:0 0 auto; display:flex; align-items:center; gap:8px; min-height:43px; padding:11px 17px !important; border-radius:13px !important; font-size:12px !important; }
-.svPlayerEpisodePicker { margin-top:28px; padding-top:24px; border-top:1px solid #ffffff13; }
+.svPlayerIdentity { min-width:0; }
+.svPlayerIdentityHead { display:flex; align-items:center; flex-wrap:wrap; gap:12px; }
+.svPlayerChapter { color:#d1e8ed; font-size:9px; letter-spacing:.12em; font-weight:600; }
+.svPlayerMetadata { display:flex; align-items:center; flex-wrap:wrap; gap:7px; color:#9ca9b9; font-size:10px; line-height:1.5; }
+.svPlayerMetadata > span { color:#687486; }
+body.svCleanShell .svPlayerPage h1 { margin:8px 0 0 !important; font-family:var(--st-display-font,var(--st-font,"Host Grotesk",system-ui,sans-serif)) !important; font-size:clamp(26px,2.3vw,35px) !important; line-height:1.1 !important; letter-spacing:-.045em !important; font-weight:600 !important; color:#f5f8fc !important; overflow-wrap:anywhere; }
+body.svCleanShell .svPlayerTransportNote { margin:11px 0 0 !important; font-size:12px !important; line-height:1.5 !important; color:#98a5b6 !important; }
+.svPlayerTogether { display:flex; flex-direction:column; align-items:flex-end; gap:11px; flex:0 0 auto; }
+.svPlayerTogether > span { color:#929fae; font-size:10px; }
+body.svCleanShell .svPlayerPartyButton { display:flex; align-items:center; justify-content:center; gap:9px; min-height:44px; padding:11px 17px !important; border-radius:17px !important; font-size:12px !important; white-space:nowrap; }
+.svPlayerEpisodePicker { margin-top:28px; }
 .svPlayerEpisodePicker :is(select,a,button) { max-width:100%; }
-body.svCleanShell .svPlayerEpisodeName { margin:7px 0 0 !important; font-size:14px !important; color:#dedee3 !important; line-height:1.5 !important; }
-body.svCleanShell .svPlayerEpisodes { padding:26px; border-radius:24px !important; }
+body.svCleanShell .svPlayerEpisodeName { margin:8px 0 0 !important; font-size:14px !important; color:#d7e1ee !important; line-height:1.5 !important; overflow-wrap:anywhere; }
+body.svCleanShell .svPlayerPage .svPlayerEpisodes.svGlassPanel { --sv-surface-blur:12px; --sv-glass-tint:.24; padding:30px; border-radius:28px !important; background:linear-gradient(135deg,#ffffff08,transparent 55%),#080c143d !important; border-color:#ffffff1a !important; box-shadow:inset 0 1px #ffffff1c,0 15px 50px #0003 !important; }
 .svPlayerEpisodesHead { display:flex; justify-content:space-between; align-items:center; gap:24px; }
 .svPlayerEpisodesHead > div { min-width:0; }
-body.svCleanShell .svPlayerEpisodes h2 { margin:7px 0 0 !important; color:#f4f4f7 !important; font-size:24px !important; line-height:1.2 !important; letter-spacing:-.03em !important; font-weight:500 !important; }
-body.svCleanShell .svPlayerEpisodesHead p { margin:8px 0 0 !important; color:#abaeb9 !important; font-size:12px !important; line-height:1.6 !important; overflow-wrap:anywhere; }
+body.svCleanShell .svPlayerEpisodes h2 { display:flex; align-items:center; flex-wrap:wrap; gap:13px; margin:9px 0 0 !important; color:#f4f8fc !important; font-size:29px !important; line-height:1.2 !important; letter-spacing:-.04em !important; font-weight:500 !important; }
+.svPlayerEpisodeSeason { display:inline-flex; padding:5px 9px; border:1px solid #ffffff16; border-radius:8px; color:#bac7d6; font-size:10px; letter-spacing:0; line-height:1.4; }
+body.svCleanShell .svPlayerEpisodesHead p { margin:10px 0 0 !important; color:#98a7ba !important; font-size:12px !important; line-height:1.6 !important; overflow-wrap:anywhere; }
 .svPlayerEpisodeSteps { display:flex; align-items:center; gap:8px; flex:0 0 auto; }
-body.svCleanShell .svPlayerEpisodeStep { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:40px; padding:10px 14px !important; color:#ececf2 !important; font-size:12px !important; text-decoration:none; white-space:nowrap; }
+body.svCleanShell .svPlayerEpisodeStep { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:42px; padding:10px 14px !important; color:#e2ebf5 !important; font-size:12px !important; border-radius:16px !important; text-decoration:none; white-space:nowrap; }
 .svPlayerEpisodeStep .svPlayerIcon { width:16px; height:16px; flex-basis:16px; }
 body.svCleanShell .svPlayerEpisodeStep:disabled { opacity:.35; cursor:default; }
-.svPlayerSeasons { display:flex; gap:8px; margin-top:23px; padding:3px 3px 12px; overflow-x:auto; scrollbar-width:thin; scrollbar-color:#ffffff38 transparent; }
-body.svCleanShell .svPlayerSeason { display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto; min-height:38px; padding:9px 15px !important; font-size:12px !important; text-decoration:none; white-space:nowrap; }
-.svPlayerEpisodeGrid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:8px; max-height:430px; overflow-y:auto; padding:4px; scrollbar-width:thin; scrollbar-color:#ffffff38 transparent; overscroll-behavior:contain; }
-body.svCleanShell .svPlayerEpisode { display:flex; align-items:center; min-width:0; gap:12px; min-height:84px; padding:10px; border:1px solid #ffffff13; border-radius:16px; text-decoration:none; background:linear-gradient(140deg,#ffffff09,#ffffff02); color:#e8e9f0; transition:background .18s ease,border-color .18s ease; }
-body.svCleanShell .svPlayerEpisode:hover { border-color:#ffffff42; background:#ffffff0e; }
-body.svCleanShell .svPlayerEpisode[aria-current="page"] { border-color:#ffffff55; background:linear-gradient(135deg,#ffffff18,#ffffff08); box-shadow:inset 0 1px #ffffff18; }
-.svPlayerEpisodeThumb { position:relative; display:grid; place-items:center; flex:0 0 86px; width:86px; height:58px; overflow:hidden; border-radius:9px; background:linear-gradient(145deg,#282c3b,#141722); color:#737b92; }
-.svPlayerEpisodeThumb > img { width:100%; height:100%; object-fit:cover; }
-.svPlayerEpisodeThumb > b { position:absolute; left:5px; bottom:5px; padding:2px 5px; border-radius:5px; background:#06080cbf; color:#eeeeef; font-size:10px; font-variant-numeric:tabular-nums; }
-.svPlayerEpisodeText { display:flex; flex-direction:column; gap:5px; min-width:0; flex:1; }
-.svPlayerEpisodeKicker { color:#979eaf; font-size:10px; line-height:1.4; }
-body.svCleanShell .svPlayerEpisodeText strong { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; font-size:12px; line-height:1.45; font-weight:500; color:#e9eaf2; }
-.svPlayerEpisodeSelected { color:#d0d5e3; font-size:10px; }
-.svPlayerEpisodePlay { display:grid; place-items:center; flex:0 0 auto; width:25px; height:25px; border-radius:50%; border:1px solid #ffffff16; background:#ffffff08; opacity:.6; }
-.svPlayerEpisodePlay .svPlayerIcon { width:13px; height:13px; flex-basis:13px; }
-.svPlayerEpisode:is(:hover,[aria-current="page"]) .svPlayerEpisodePlay { opacity:1; }
-body.svCleanShell[data-st-glass="off"] .svPlayerPage[data-player-state="buffering"] .svPlayerStatus { background:#151619; -webkit-backdrop-filter:none; backdrop-filter:none; }
-body.svCleanShell .svPlayerNoScript { padding:16px; border:1px solid #ffffff15; border-radius:12px; color:#aaa; font-size:13px; }
+.svPlayerSeasons { display:flex; gap:8px; margin-top:26px; padding:3px 3px 17px; overflow-x:auto; scrollbar-width:thin; scrollbar-color:#ffffff38 transparent; scroll-padding:4px; }
+body.svCleanShell .svPlayerSeason { display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto; gap:12px; min-height:42px; padding:10px 14px !important; border-radius:14px !important; font-size:12px !important; text-decoration:none; white-space:nowrap; }
+.svPlayerSeasonCount { padding-left:11px; border-left:1px solid #ffffff24; color:#98a6b8; font-size:10px; font-weight:400; }
+.svPlayerSeason[aria-current="true"] .svPlayerSeasonCount { color:#c8d7e6; }
+.svPlayerEpisodeGrid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin-top:6px; max-height:580px; overflow-y:auto; padding:5px 5px 8px; scrollbar-width:thin; scrollbar-color:#ffffff38 transparent; overscroll-behavior:contain; }
+body.svCleanShell .svPlayerEpisode { position:relative; display:flex; flex-direction:column; align-items:stretch; min-width:0; gap:0; padding:0; border:1px solid #ffffff16; border-radius:19px; text-decoration:none; background:linear-gradient(150deg,#ffffff07,#ffffff02); color:#e8edf5; transition:background .22s ease,border-color .22s ease,box-shadow .22s ease,transform .25s var(--player-ease); }
+body.svCleanShell .svPlayerEpisode:hover { transform:translateY(-3px); border-color:#ffffff40; background:linear-gradient(150deg,#ffffff0e,#ffffff04); box-shadow:0 9px 24px #0003; }
+body.svCleanShell .svPlayerEpisode:active { transform:scale(.986); }
+body.svCleanShell .svPlayerEpisode[aria-current="page"] { border-color:#cceaf477; background:linear-gradient(145deg,#bce9f313,#cbbaf407); box-shadow:0 0 0 2px #b8e0f00d,inset 0 1px #ffffff1b,0 8px 26px #0003; }
+.svPlayerEpisodeThumb { position:relative; display:grid; place-items:center; flex:0 0 auto; width:100%; aspect-ratio:16 / 9; overflow:hidden; border-radius:18px 18px 0 0; background:radial-gradient(ellipse at 70% 20%,#a3bde716,transparent 70%),linear-gradient(145deg,#1c2432,#0c101a); color:#60718b; }
+.svPlayerEpisodeThumb::after { content:""; position:absolute; inset:0; pointer-events:none; background:linear-gradient(0deg,#050910b3,transparent 65%); }
+.svPlayerEpisodeThumb > .svPlayerIcon { width:31px; height:31px; opacity:.65; }
+.svPlayerEpisodeThumb > img { width:100%; height:100%; position:absolute; inset:0; object-fit:cover; transition:transform .45s var(--player-ease); }
+.svPlayerEpisode:hover .svPlayerEpisodeThumb > img { transform:scale(1.04); }
+.svPlayerEpisodeThumb > b { position:absolute; z-index:1; left:14px; bottom:12px; color:#f1f6fc; font-size:22px; font-weight:500; letter-spacing:-.05em; line-height:1; font-variant-numeric:tabular-nums; text-shadow:0 2px 10px #0008; }
+.svPlayerEpisodeSelected { position:absolute; z-index:1; top:10px; left:10px; display:inline-flex; align-items:center; gap:6px; padding:5px 9px; border:1px solid #d0f2f447; border-radius:9px; background:#0a1427b3; color:#dfedf7; font-size:9px; line-height:1.4; box-shadow:inset 0 1px #ffffff13; }
+.svPlayerEpisodeSelected::before { content:""; width:4px; height:4px; border-radius:50%; background:#ccecf3; }
+.svPlayerEpisodeText { display:flex; flex-direction:column; gap:7px; min-width:0; flex:1; padding:15px 16px 18px; }
+.svPlayerEpisodeKicker { color:#92a3ba; font-size:10px; line-height:1.4; }
+body.svCleanShell .svPlayerEpisodeText strong { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; font-size:15px; letter-spacing:-.018em; line-height:1.35; font-weight:500; color:#eff4fc; }
+.svPlayerEpisodeOverview { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; color:#8d9db2; font-size:11px; line-height:1.6; }
+.svPlayerEpisodePlay { position:absolute; z-index:1; right:12px; bottom:12px; display:grid; place-items:center; width:32px; height:32px; border-radius:50%; border:1px solid #ffffff44; background:#0c122b66; color:#f3f7ff; opacity:.8; transform:translateY(2px); transition:opacity .2s ease,transform .25s var(--player-ease),background .2s ease; }
+.svPlayerEpisodePlay .svPlayerIcon { width:14px; height:14px; flex-basis:14px; }
+.svPlayerEpisode:is(:hover,[aria-current="page"]) .svPlayerEpisodePlay { opacity:1; transform:translateY(0); background:#182137b3; }
+body.svCleanShell .svPlayerNoScript { padding:16px; border:1px solid #ffffff15; border-radius:14px; color:#adb8c7; font-size:13px; }
 .svPlayerStage--trailer { overflow:hidden; }
 .svPlayerStage--trailer .svPlayerStatus { padding:30px; }
-.svPlayerTrailer { display:block; position:absolute; inset:0; width:100%; height:100%; border:0; border-radius:inherit; background:#090909; }
+.svPlayerTrailer { display:block; position:absolute; inset:0; width:100%; height:100%; border:0; border-radius:inherit; background:#090b10; }
 body.svCleanShell .svPlayerPage :is(button,a,summary,select,input,[tabindex]):focus-visible { outline:2px solid var(--player-accent,#fff) !important; outline-offset:4px !important; }
 body.svCleanShell .svPlayerPage .swifly-tv-focus-target { outline:2px solid var(--player-accent,#fff) !important; outline-offset:4px !important; }
-.svPlayerStage:fullscreen { display:block; width:100%; height:100%; aspect-ratio:auto; border:0; border-radius:0; background:#000; }
+.svPlayerStage:fullscreen { display:block; width:100%; height:100%; aspect-ratio:auto; border:0; border-radius:0; background:#000; box-shadow:none; }
 .svPlayerStage:fullscreen .svPlayerDock { left:max(20px,4vw); right:max(20px,4vw); bottom:max(20px,3vh); }
-@keyframes svPlayerBreathe { 0%,100% { opacity:.65; } 50% { opacity:1; } }
 @keyframes svPlayerSpin { to { transform:rotate(360deg); } }
+@keyframes svPlayerMenuIn { from { opacity:0; transform:translateY(8px) scale(.98); } to { opacity:1; transform:translateY(0) scale(1); } }
 @media (max-width:1100px) {
   .svPlayerPage[data-party-active="true"] .svPlayerLayout { grid-template-columns:minmax(0,1fr); gap:28px; }
   .svPlayerPage[data-party-active="true"] .svPlayerPartySlot { width:100%; }
-  .svPlayerStage { border-radius:18px; }
+  .svPlayerStage, .svPlayerTheater { border-radius:23px; }
   .svPlayerEpisodeGrid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .svPlayerHeadNote { display:none; }
+  .svPlayerStatus { padding-top:44px; padding-bottom:118px; }
+  .svPlayerStatusMark { width:59px; height:59px; margin-bottom:19px; border-radius:20px; }
+  .svPlayerStatusMark::after { border-radius:25px; }
 }
 @media (max-width:700px) {
-  body.svCleanShell .svPlayerPage { padding:94px 16px 40px; }
-  .svPlayerPageHead { margin-bottom:16px; gap:10px; }
-  body.svCleanShell .svPlayerBack { padding:8px !important; font-size:12px !important; }
-  .svPlayerModes a { padding:5px 12px; font-size:12px; }
-  .svPlayerStage { border-radius:14px; }
-  .svPlayerStatus { padding:16px 16px 82px; }
-  .svPlayerPage[data-player-state="error"] .svPlayerStatus { padding:16px; }
-  .svPlayerPage[data-player-state="error"] .svPlayerDock { display:none !important; }
-  .svPlayerStatusMark { width:38px; height:38px; margin-bottom:12px; border-radius:13px; }
+  body.svCleanShell .svPlayerPage { padding:94px 16px 108px; }
+  .svPlayerAmbient { inset:10px 0 auto; height:610px; opacity:.27; filter:blur(34px) saturate(1.2); }
+  .svPlayerPageHead { margin-bottom:17px; gap:10px; }
+  body.svCleanShell .svPlayerBack { padding:8px 10px !important; min-height:40px; font-size:11px !important; border-radius:14px !important; }
+  body.svCleanShell .svPlayerPage .svPlayerModes.svGlassPanel { padding:4px; border-radius:16px !important; }
+  .svPlayerModes a { min-height:30px; padding:5px 12px; font-size:11px; border-radius:11px; }
+  .svPlayerStage, .svPlayerTheater { border-radius:18px; }
+  .svPlayerStageChrome { inset:16px 18px auto; font-size:7px; letter-spacing:.12em; }
+  .svPlayerStatus { padding:20px 16px 100px; }
+  .svPlayerPage[data-player-state="error"] .svPlayerStatus { padding:24px 16px; }
+  .svPlayerStatusMark { width:40px; height:40px; margin-bottom:13px; border-radius:14px; }
+  .svPlayerStatusMark::after { inset:-5px; border-radius:18px; }
+  .svPlayerStatusMark .svPlayerIcon { width:20px; height:20px; }
   .svPlayerEyebrow { font-size:8px; }
-  body.svCleanShell .svPlayerStatus h2 { margin-top:7px !important; font-size:21px !important; }
-  body.svCleanShell .svPlayerStatus p { margin-top:7px !important; font-size:11px !important; max-width:290px; }
-  body.svCleanShell .svPlayerRetry { min-height:36px; padding:8px 12px !important; margin-top:12px; font-size:11px !important; }
-  .svPlayerDock { left:8px; right:8px; bottom:8px; padding:6px 8px 3px; border-radius:11px; }
+  body.svCleanShell .svPlayerStatus h2 { margin-top:8px !important; font-size:22px !important; }
+  body.svCleanShell .svPlayerStatus p { margin:8px 0 0 !important; font-size:11px !important; max-width:290px; }
+  body.svCleanShell .svPlayerRetry { min-height:38px; padding:8px 13px !important; margin-top:15px; font-size:11px !important; border-radius:13px !important; }
+  .svPlayerDock { left:8px; right:8px; bottom:8px; padding:6px 8px 4px; }
+  body.svCleanShell .svPlayerPage .svPlayerDock.svGlassPanel { border-radius:13px !important; }
   .svPlayerTimeline { height:18px; margin-right:98px; margin-bottom:0; }
-  .svPlayerTimelineTrack { inset:6px 0 auto; height:3px; }
-  body.svCleanShell .svPlayerControl { width:44px !important; height:44px !important; min-width:44px !important; min-height:44px !important; padding:11px !important; }
+  .svPlayerTimelineTrack { inset:7px 0 auto; }
+  body.svCleanShell .svPlayerPage .svPlayerDock .svPlayerControl.svPlayerControl { width:44px !important; height:44px !important; min-width:44px !important; min-height:44px !important; padding:11px !important; border-radius:11px !important; }
   .svPlayerTransport, .svPlayerTools { gap:0; }
   .svPlayerDockRow { gap:5px; }
   .svPlayerControl .svPlayerIcon { width:17px; height:17px; }
-  .svPlayerTime { position:absolute; right:11px; top:8px; gap:4px; margin-left:0; font-size:10px; }
-  body.svCleanShell .svPlayerPage .svPlayerTools [data-player-pip] { display:none !important; }
+  .svPlayerTime { position:absolute; right:11px; top:9px; gap:4px; margin-left:0; font-size:10px; }
+  body.svCleanShell .svPlayerPage .svPlayerDock .svPlayerTools [data-player-pip].svPlayerControl { display:none !important; }
   .svPlayerPopoverBody { bottom:calc(100% + 14px); }
+  .svPlayerSettingsBody { top:calc(100% + 12px); bottom:auto; padding:14px; gap:11px; }
+  .svPlayerSettingsBody .svPlayerPopoverHeading { display:none; }
+  .svPlayerSettingsBody label { gap:5px; }
+  body.svCleanShell .svPlayerSettingsBody select { height:36px; padding:7px 10px !important; }
   .svPlayerVolume .svPlayerPopoverBody { right:-70px; min-width:220px; }
-  .svPlayerVolume .svPlayerPopoverBody::after { right:86px; }
-  .svPlayerPage[data-player-state="buffering"] .svPlayerStatus { top:10px; padding:9px 13px; }
+  .svPlayerPage[data-player-state="buffering"] .svPlayerStatus { top:10px; padding:9px 13px; border-radius:13px; }
   body.svCleanShell .svPlayerPage[data-player-state="buffering"] .svPlayerStatus p { display:none; }
-  .svPlayerToast { bottom:89px; font-size:11px; }
-  .svPlayerBelow { flex-direction:column; align-items:stretch; gap:20px; padding-top:22px; }
-  .svPlayerFilm { gap:13px; }
-  .svPlayerPoster { width:48px; height:71px; border-radius:7px; }
-  .svPlayerMetadata { font-size:10px; gap:6px; }
-  body.svCleanShell .svPlayerPage h1 { font-size:25px !important; }
-  body.svCleanShell .svPlayerTransportNote { font-size:11px !important; }
-  body.svCleanShell .svPlayerPartyButton { justify-content:center; align-self:flex-start; }
-  body.svCleanShell .svPlayerEpisodes { padding:18px 14px; border-radius:20px !important; }
-  .svPlayerEpisodesHead { align-items:flex-start; gap:16px; }
+  .svPlayerToast { bottom:90px; font-size:11px; }
+  .svPlayerBelow { flex-direction:column; align-items:stretch; gap:18px; margin-top:15px; padding:20px; }
+  body.svCleanShell .svPlayerPage .svPlayerBelow.svGlassPanel { border-radius:20px !important; }
+  .svPlayerFilm { align-items:flex-start; gap:15px; }
+  .svPlayerPoster { width:53px; height:80px; border-radius:9px; }
+  .svPlayerIdentityHead { gap:5px 10px; }
+  .svPlayerChapter { font-size:8px; }
+  .svPlayerMetadata { font-size:9px; gap:5px; }
+  body.svCleanShell .svPlayerPage h1 { font-size:27px !important; }
+  body.svCleanShell .svPlayerTransportNote { font-size:11px !important; margin-top:9px !important; }
+  .svPlayerTogether { flex-direction:row; justify-content:space-between; align-items:center; gap:12px; padding-top:16px; border-top:1px solid #ffffff13; }
+  .svPlayerTogether > span { font-size:10px; }
+  body.svCleanShell .svPlayerPartyButton { min-height:42px; padding:10px 12px !important; border-radius:14px !important; }
+  .svPlayerEpisodePicker { margin-top:20px; }
+  body.svCleanShell .svPlayerPage .svPlayerEpisodes.svGlassPanel { padding:22px 14px 16px; border-radius:22px !important; }
+  .svPlayerEpisodesHead { align-items:flex-start; gap:13px; padding:0 5px; }
   .svPlayerEpisodeSteps { gap:6px; }
-  body.svCleanShell .svPlayerEpisodeStep { width:38px; min-height:38px; padding:9px !important; }
+  body.svCleanShell .svPlayerEpisodeStep { width:40px; min-height:40px; padding:10px !important; border-radius:13px !important; }
   .svPlayerEpisodeStep span { display:none; }
-  body.svCleanShell .svPlayerEpisodes h2 { font-size:21px !important; }
-  .svPlayerEpisodeGrid { grid-template-columns:minmax(0,1fr); max-height:390px; }
-  .svPlayerEpisodeThumb { flex-basis:96px; width:96px; }
-  body.svCleanShell .svPlayerEpisodeText strong { font-size:13px; }
+  body.svCleanShell .svPlayerEpisodes h2 { font-size:25px !important; gap:9px; }
+  .svPlayerEpisodeSeason { font-size:9px; padding:4px 7px; }
+  .svPlayerSeasons { margin-top:20px; padding-bottom:14px; }
+  body.svCleanShell .svPlayerSeason { gap:10px; min-height:42px; font-size:11px !important; }
+  .svPlayerEpisodeGrid { grid-template-columns:minmax(0,1fr); gap:11px; max-height:520px; }
+  body.svCleanShell .svPlayerEpisode { flex-direction:row; align-items:stretch; border-radius:15px; }
+  .svPlayerEpisodeThumb { align-self:stretch; flex:0 0 36%; width:36%; min-height:100px; aspect-ratio:auto; border-radius:14px 0 0 14px; }
+  .svPlayerEpisodeThumb > b { left:10px; bottom:10px; font-size:18px; }
+  .svPlayerEpisodeSelected { top:8px; left:8px; padding:4px 6px; font-size:8px; border-radius:7px; }
+  .svPlayerEpisodePlay { width:25px; height:25px; right:8px; bottom:8px; }
+  .svPlayerEpisodePlay .svPlayerIcon { width:12px; height:12px; }
+  .svPlayerEpisodeText { justify-content:center; padding:13px; gap:6px; }
+  body.svCleanShell .svPlayerEpisodeText strong { font-size:14px; }
+  .svPlayerEpisodeOverview { font-size:10px; }
+}
+@media (max-width:560px) {
+  .svPlayerStageChrome { display:none; }
+  .svPlayerStatusMark, .svPlayerStatus > .svPlayerEyebrow { display:none; }
+  .svPlayerStatus { padding:18px 16px 86px; }
+  body.svCleanShell .svPlayerStatus h2 { font-size:20px !important; }
+  body.svCleanShell .svPlayerStatus p { max-width:260px; font-size:10px !important; line-height:1.5 !important; }
+  .svPlayerPage[data-player-state="error"] .svPlayerStatus { padding:18px 16px; }
+  .svPlayerTogether > span { display:none; }
+  .svPlayerTogether { justify-content:flex-start; }
 }
 @media (max-width:420px) {
   .svPlayerPageHead { gap:5px; }
   .svPlayerBack span { max-width:85px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .svPlayerModes a { padding:5px 10px; }
-  .svPlayerStatusMark, .svPlayerStatus .svPlayerEyebrow { display:none; }
   body.svCleanShell .svPlayerStatus h2 { font-size:18px !important; }
-  body.svCleanShell .svPlayerStatus p { font-size:10px !important; line-height:1.4 !important; max-width:260px; }
-  body.svCleanShell .svPlayerControl { width:40px !important; min-width:40px !important; padding:10px !important; }
-  .svPlayerTime { font-size:9px; margin-left:2px; }
+  body.svCleanShell .svPlayerStatus p { font-size:10px !important; line-height:1.4 !important; max-width:250px; }
+  .svPlayerPage[data-player-state="error"] .svPlayerStage { min-height:210px; }
+  body.svCleanShell .svPlayerPage .svPlayerDock .svPlayerControl.svPlayerControl { width:40px !important; min-width:40px !important; padding:10px !important; }
+  .svPlayerTime { font-size:9px; }
   .svPlayerPopoverBody { right:-32px; }
+  .svPlayerBelow { padding:18px 16px; }
+  .svPlayerFilm { gap:13px; }
+  .svPlayerPoster { width:47px; height:71px; }
+  body.svCleanShell .svPlayerPage h1 { font-size:24px !important; }
+  body.svCleanShell .svPlayerEpisodeName { font-size:12px !important; }
+  .svPlayerIdentityHead { flex-direction:column; align-items:flex-start; gap:5px; }
+  .svPlayerEpisodeSeason { display:none; }
+  .svPlayerEpisodeText { padding:12px 10px; }
+  body.svCleanShell .svPlayerEpisodeText strong { font-size:13px; }
+}
+@media (max-width:360px) {
+  body.svCleanShell .svPlayerPage:not([data-player-state="error"]) .svPlayerStatus p { display:none; }
+}
+/* Reduced transparency uses the same geometry with a solid, readable material. */
+body.svCleanShell[data-st-glass="off"] .svPlayerPage :is(.svPlayerDock.svGlassPanel,.svPlayerModes.svGlassPanel,.svPlayerBelow.svGlassPanel,.svPlayerEpisodes.svGlassPanel,.svPlayerPopoverBody.svGlassPanel,.svPlayerStatus) { background:#111720 !important; -webkit-backdrop-filter:none !important; backdrop-filter:none !important; }
+body.svCleanShell[data-st-glass="off"] .svPlayerPage .svPlayerStatus { background:transparent !important; }
+body.svCleanShell[data-st-glass="off"] .svPlayerPage[data-player-state="buffering"] .svPlayerStatus { background:#111720 !important; }
+@media (prefers-reduced-transparency:reduce) {
+  body.svCleanShell .svPlayerPage :is(.svPlayerDock.svGlassPanel,.svPlayerModes.svGlassPanel,.svPlayerBelow.svGlassPanel,.svPlayerEpisodes.svGlassPanel,.svPlayerPopoverBody.svGlassPanel) { background:#111720 !important; -webkit-backdrop-filter:none !important; backdrop-filter:none !important; }
+  .svPlayerPage[data-player-state="buffering"] .svPlayerStatus { background:#111720; -webkit-backdrop-filter:none; backdrop-filter:none; }
 }
 @media (prefers-reduced-motion:reduce) {
   .svPlayerPage *, .svPlayerPage *::before, .svPlayerPage *::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; }
 }
 body.reduceMotion .svPlayerPage *, body[data-st-motion="reduce"] .svPlayerPage * { animation:none !important; transition:none !important; }
-body.reduceMotion .svPlayerPage *::before, body[data-st-motion="reduce"] .svPlayerPage *::before { animation:none !important; }
+body.reduceMotion .svPlayerPage *::before, body[data-st-motion="reduce"] .svPlayerPage *::before,
+body.reduceMotion .svPlayerPage *::after, body[data-st-motion="reduce"] .svPlayerPage *::after { animation:none !important; transition:none !important; }
 /* Visibility wins over the glass renderer's control and panel display rules. */
-body.svCleanShell .svPlayerPage [hidden] { display:none !important; }
+body.svCleanShell .svPlayerPage [hidden],
+body.svCleanShell .svPlayerPage .svPlayerDock .svPlayerControl[hidden] { display:none !important; }

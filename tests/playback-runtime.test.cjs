@@ -31,7 +31,7 @@ test('playback health is safe and does not start a browser', async () => {
     assert.equal(response.headers.get('cache-control'), 'no-store');
     const data = await response.json();
     assert.equal(data.browser.status, 'idle'); assert.equal(data.browser.ready, false);
-    assert.deepEqual(data.discovery.providers, ['hexa', 'cinezo']);
+    assert.deepEqual(data.discovery.providers, ['vidrift', 'hexa', 'cinezo']);
     assert.equal(data.discovery.routeTimeoutMs, 60000);
     assert.doesNotMatch(JSON.stringify(data), /executablePath|API_KEY|cookie|authorization|ms-playwright|Users|workspace/i);
   } finally { await new Promise(resolve => api.io.close(resolve)); }
