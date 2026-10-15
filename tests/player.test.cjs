@@ -257,26 +257,38 @@ test('BFCache return keeps a terminal source error terminal until the user retri
 test('Caption selection uses the loaded native tracks and settings Escape restores focus',async()=>{
   const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});const tracks=[{label:'English',language:'en',mode:'disabled'},{label:'French',language:'fr',mode:'disabled'}];e.state(e.video()).textTracks=tracks;e.ready();const captions=e.d.querySelector('[data-player-captions]');assert.equal(captions.disabled,false);captions.value='1';captions.dispatchEvent(new e.w.Event('change',{bubbles:true}));assert.equal(tracks[0].mode,'disabled');assert.equal(tracks[1].mode,'showing');const menu=e.d.querySelector('[data-player-settings]');menu.open=true;captions.focus();captions.dispatchEvent(new e.w.KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));assert.equal(menu.open,false);assert.equal(e.d.activeElement,menu.querySelector('summary'));
 });
+// jsdom 22 cannot parse @container and rejects the whole sheet. These two
+// assertions inspect base styles only; actual container layouts use Chromium QA.
+function basePlayerCss(css) {
+  return css.replace(/@container[^{}]+\{(?:[^{}]|\{[^{}]*\})*\}/g,'');
+}
 test('Player styling integrates the room grid and makes controls readable over dark artwork',()=>{
-  const file=path.join(root,'public/player/player.css');assert(fs.existsSync(file),'The player needs its own cohesive stylesheet');const css=fs.readFileSync(file,'utf8');const dom=new JSDOM('<body class="svCleanShell"><style>'+css+'</style>'+markup(base)+'</body>'),w=dom.window,d=w.document;const app=d.querySelector('.svPlayerPage');assert.equal(w.getComputedStyle(d.querySelector('[data-player-stage]')).aspectRatio,'16 / 9');assert.notEqual(w.getComputedStyle(d.querySelector('[data-player-controls]')).backgroundColor,'rgba(0, 0, 0, 0)');app.dataset.partyActive='true';assert.match(w.getComputedStyle(d.querySelector('.svPlayerLayout')).gridTemplateColumns,/320px/);assert.match(css,/focus-visible[^}]*outline[^}]*!important/s);assert.match(css,/prefers-reduced-motion/);dom.window.close();
+  const file=path.join(root,'public/player/player.css');assert(fs.existsSync(file),'The player needs its own cohesive stylesheet');const css=fs.readFileSync(file,'utf8');const dom=new JSDOM('<body class="svCleanShell"><style>'+basePlayerCss(css)+'</style>'+markup(base)+'</body>'),w=dom.window,d=w.document;const app=d.querySelector('.svPlayerPage');assert.equal(w.getComputedStyle(d.querySelector('[data-player-stage]')).aspectRatio,'16 / 9');assert.notEqual(w.getComputedStyle(d.querySelector('[data-player-controls]')).backgroundColor,'rgba(0, 0, 0, 0)');app.dataset.partyActive='true';assert.match(w.getComputedStyle(d.querySelector('.svPlayerLayout')).gridTemplateColumns,/320px/);assert.match(css,/focus-visible[^}]*outline[^}]*!important/s);assert.match(css,/prefers-reduced-motion/);dom.window.close();
 });
 test('Player support-hidden controls stay hidden despite the glass control display rule',()=>{
-  const css=fs.readFileSync(path.join(root,'public/player/player.css'),'utf8');const dom=new JSDOM('<body class="svCleanShell"><style>'+css+'</style>'+markup(base)+'</body>'),w=dom.window,d=w.document;
+  const css=fs.readFileSync(path.join(root,'public/player/player.css'),'utf8');const dom=new JSDOM('<body class="svCleanShell"><style>'+basePlayerCss(css)+'</style>'+markup(base)+'</body>'),w=dom.window,d=w.document;
   for(const name of ['pip','fullscreen']){const node=d.querySelector('[data-player-'+name+']');assert.equal(node.hidden,true);assert.equal(w.getComputedStyle(node).display,'none','Unavailable '+name+' must not render');}dom.window.close();
 });
-test('Supported mobile controls fit a 320px screen and picture in picture stays hidden',()=>{
-  const css=fs.readFileSync(path.join(root,'public/player/player.css'),'utf8');const dom=new JSDOM('<body class="svCleanShell"><style>'+css+'</style>'+markup(base)+'</body>'),w=dom.window,d=w.document,style=d.querySelector('style'),sheet=style.sheet;
-  // jsdom has no viewport layout: evaluate actual width media rules through CSSOM.
-  const active=[];for(const rule of sheet.cssRules){if(!rule.media){active.push(rule.cssText);continue;}const query=rule.conditionText;const bounds=[...query.matchAll(/\((max|min)-width:\s*(\d+)px\)/g)];if(bounds.length&&bounds.every(([,kind,size])=>kind==='max'?320<=Number(size):320>=Number(size)))for(const child of rule.cssRules)active.push(child.cssText);}style.textContent=active.join('\n');
-  // jsdom does not model selector specificity consistently; rank the matching
-  // display declarations by importance, specificity and actual stylesheet order.
-  const display=node=>{let order=0,winner;for(const rule of style.sheet.cssRules){order++;if(!rule.style?.getPropertyValue('display')||!rule.selectorText)continue;for(const selector of rule.selectorText.split(',')){let matches=false;try{matches=node.matches(selector);}catch{}if(!matches)continue;const attributes=selector.match(/\[[^\]]+\]/g)||[],withoutAttributes=selector.replace(/\[[^\]]+\]/g,''),ids=withoutAttributes.match(/#[\w-]+/g)||[],classes=withoutAttributes.match(/\.[\w-]+|:(?!:)[\w-]+/g)||[],types=withoutAttributes.replace(/#[\w-]+|\.[\w-]+|::?[\w-]+(?:\([^)]*\))?/g,'').match(/\b[a-zA-Z][\w-]*\b/g)||[],rank=[rule.style.getPropertyPriority('display')==='important'?1:0,ids.length,classes.length+attributes.length,types.length,order];if(!winner||rank.some((value,index)=>value!==winner.rank[index]&&rank.slice(0,index).every((prior,k)=>prior===winner.rank[k])&&value>winner.rank[index]))winner={rank,value:rule.style.getPropertyValue('display')};}}return winner?.value||w.getComputedStyle(node).display;};
-  d.querySelector('[data-player-controls]').hidden=false;d.querySelector('[data-player-pip]').hidden=false;d.querySelector('[data-player-fullscreen]').hidden=false;assert.equal(display(d.querySelector('[data-player-pip]')),'none','Mobile PiP must not compete for toolbar space');
-  const px=(node,property)=>parseFloat(w.getComputedStyle(node)[property])||0,page=d.querySelector('.svPlayerPage'),stage=d.querySelector('[data-player-stage]'),dock=d.querySelector('[data-player-controls]'),row=d.querySelector('.svPlayerDockRow');
-  const available=320-px(page,'paddingLeft')-px(page,'paddingRight')-px(stage,'borderLeftWidth')-px(stage,'borderRightWidth')-px(dock,'left')-px(dock,'right')-px(dock,'borderLeftWidth')-px(dock,'borderRightWidth')-px(dock,'paddingLeft')-px(dock,'paddingRight');
-  const buttons=[...d.querySelectorAll('.svPlayerTransport > button,.svPlayerTools > button,.svPlayerTools > details > summary')].filter(node=>display(node)!=='none'),needed=buttons.reduce((sum,node)=>sum+px(node,'width'),0)+px(row,'gap');assert(needed<=available,'Visible controls need '+needed+'px but only '+available+'px is available');dom.window.close();
+test('Picture in picture stays reachable in settings without crowding the transport',async()=>{
+  let requested=0;
+  const e=setup({},e=>{
+    Object.defineProperty(e.d,'pictureInPictureEnabled',{value:true,configurable:true});
+    e.w.HTMLVideoElement.prototype.requestPictureInPicture=async()=>{requested++;};
+  });
+  await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();
+  const menu=e.d.querySelector('[data-player-settings]'),pip=e.d.querySelector('[data-player-pip]');
+  assert.equal(e.d.querySelectorAll('[data-player-pip]').length,1);
+  assert(menu.contains(pip),'The display action belongs in the reachable settings menu at every player width');
+  assert.match(pip.textContent,/picture in picture/i);assert.equal(pip.hidden,false);
+  menu.open=true;pip.focus();pip.click();await flush();
+  assert.equal(requested,1);assert.equal(menu.open,false);assert.equal(e.d.activeElement,menu.querySelector('summary'));
 });
-
+test('Volume has an explicit dismissal that restores its trigger focus',()=>{
+  const e=setup(),menu=e.d.querySelector('[data-player-volume-menu]');menu.open=true;
+  const close=e.d.querySelector('[data-player-volume-close]');assert(close,'Volume needs a reachable close control in its compact sheet');
+  e.d.querySelector('[data-player-volume]').focus();close.click();
+  assert.equal(menu.open,false);assert.equal(e.d.activeElement,menu.querySelector('summary'));
+});
 
 test('Embedded party markup renders the same stage without a second watch-page shell',()=>{
   const dom=new JSDOM(markup({...base,embedded:true,videoId:'sv103Video'})),d=dom.window.document;
@@ -326,4 +338,17 @@ test('The volume button reflects local mute and settings can dismiss explicitly'
  const summary=e.d.querySelector('[data-player-volume-menu] summary'),volume=e.d.querySelector('[data-player-volume]');volume.value='0.35';volume.dispatchEvent(new e.w.Event('input'));assert.match(summary.getAttribute('aria-label'),/35 percent/);
  e.d.querySelector('[data-player-mute]').click();assert.match(summary.getAttribute('aria-label'),/muted/);
  const menu=e.d.querySelector('[data-player-settings]');menu.open=true;e.d.querySelector('[data-player-settings-close]').click();assert.equal(menu.open,false);assert.equal(e.d.activeElement,menu.querySelector('summary'));
+});
+
+test('Source replacement and fullscreen transitions dismiss stale playback menus',async()=>{
+  const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/first.mp4'});e.ready();
+  const settings=e.d.querySelector('[data-player-settings]'),volume=e.d.querySelector('[data-player-volume-menu]');
+  settings.open=true;await e.api.loadSource({status:'ok',playbackUrl:'/second.mp4'});
+  assert.equal(settings.open,false,'A replacement source must not keep its previous settings sheet open');
+  volume.open=true;e.d.dispatchEvent(new e.w.Event('fullscreenchange'));
+  assert.equal(volume.open,false,'A fullscreen transition must dismiss the old menu coordinates');
+});
+test('Destroy removes open playback menus along with the player controls',()=>{
+  const e=setup(),settings=e.d.querySelector('[data-player-settings]');settings.open=true;
+  e.api.destroy();assert.equal(settings.open,false);assert.equal(e.d.querySelector('[data-player-controls]').hidden,true);
 });

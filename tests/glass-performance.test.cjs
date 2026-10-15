@@ -443,16 +443,16 @@ test('Genres mounts the SAME physical SVG pane as the navbar and stays keyboard 
  env.finish();
 });
 
-test('Party Hub uses real optics on a few hero and navigation actions but not every poster',()=>{
- const env=glass('<main class="svPartyHub"><nav class="partyNavigation"><button data-tab="rooms">Watch parties</button><button data-tab="chat">Community</button></nav><div class="partyHeroActions"><button class="dsPrimaryBtn">Host</button><button class="dsSecondaryBtn">Join</button></div><div class="partyFilmRail"><button class="partyFilmChoice">Film</button></div></main>'),w=env.window,d=w.document;
+test('Owned Party surfaces retain their DOM while catalog actions receive shared optics',()=>{
+ const {partyMarkup}=require('../ui/party');
+ const env=glass(partyMarkup({initialTab:'rooms'})+'<div class="dsHeroActions"><button class="dsPrimaryBtn">Play movie</button></div>'),w=env.window,d=w.document;
+ const hub=d.querySelector('.svPartyHub'),original=hub.innerHTML;
  d.body.dataset.stGlass='liquid';
  w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');
  env.intersect(true);w.flush(16);
- for(const item of d.querySelectorAll('.partyNavigation > button,.partyHeroActions > button')){
-  assert(item.classList.contains('svNavMatchedOptic'));
-  assert(item.querySelector('.svLiquidPane[data-swifly-renderer="svg"]'));
- }
- assert.equal(d.querySelectorAll('.partyFilmRail .svLiquidPane').length,0,'poster rails do not multiply expensive filters');
+ assert.equal(hub.querySelectorAll('.svLiquidPane').length,0,'The shared renderer must not inject competing panes into owned controls');
+ assert(hub.innerHTML===original,'Enhancing catalog actions must preserve the Party component and its labels');
+ assert(d.querySelector('.dsHeroActions .svLiquidPane[data-swifly-renderer="svg"]'),'Catalog actions retain their shared optical renderer');
  env.finish();
 });
 

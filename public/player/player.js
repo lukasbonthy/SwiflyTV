@@ -127,6 +127,7 @@
     }
     function cancelResolver() {resolverGeneration++;cancelTasks('resolver');lookupDeadline=0;}
     function teardownMedia({replace=false}={}) {
+      for(const node of stage.querySelectorAll('details[open]'))closeMenu(node);
       generation++;transportIntent++;stopWatchdog();clearTimeout(controlsTimer);controlsTimer=0;scrubbing=false;app.dataset.playerControlsVisibility='visible';clearTimeout(toastTimer);toastTimer=0;find('toast').hidden=true;
       find('unlock').hidden=true;
       cancelTasks('library');clearListeners(mediaListeners);clearListeners(libraryListeners);
@@ -374,7 +375,7 @@
     }
     function keyboard(event) {
       if(event.defaultPrevented||event.altKey||event.ctrlKey||event.metaKey||!stage.contains(event.target)||document.querySelector('dialog[open]'))return;
-      if(event.key==='Escape'){const open=stage.querySelectorAll('details[open]');if(open.length){open.forEach(node=>{node.open=false;node.querySelector('summary')?.focus();});event.preventDefault();}return;}
+      if(event.key==='Escape'){const open=stage.querySelectorAll('details[open]');if(open.length){open.forEach(node=>{closeMenu(node);node.querySelector('summary')?.focus();});event.preventDefault();}return;}
       if(event.target.closest('input,select,textarea,button,a,summary,[contenteditable]:not([contenteditable="false"]),[role="textbox"],[role="menu"]')||stage.querySelector('details[open]'))return;
       const key=event.key.toLowerCase();if(['k',' ','j','l','arrowleft','arrowright'].includes(key)&&locked())return;
       if(key==='k'||key===' '){event.preventDefault();getState().paused?play():pause();}
@@ -394,21 +395,53 @@
     listen(find('seek'),'change',event=>{const value=Number(event.target.value);scrubbing=false;seek(value);updateTime();updateVisibility({reveal:true});});
     listen(find('seek'),'pointercancel',()=>{scrubbing=false;updateTime();updateVisibility({reveal:true});});
     listen(find('retry'),'click',()=>{if(!locked())resolve({retry:true});});
-    listen(find('settings-close'),'click',()=>{find('settings').open=false;find('settings').querySelector('summary').focus();});
-    listen(find('sync'),'click',()=>{dispatch('sync',getState());find('settings').open=false;});
+    listen(find('settings-close'),'click',()=>{closeMenu(find('settings'));find('settings').querySelector('summary').focus();});
+    listen(find('volume-close'),'click',()=>{closeMenu(find('volume-menu'));find('volume-menu').querySelector('summary').focus();});
+    listen(find('sync'),'click',()=>{dispatch('sync',getState());closeMenu(find('settings'));find('settings').querySelector('summary').focus();});
     listen(find('unlock'),'click',()=>play({remote:unlockRemote}));
     listen(find('volume'),'input',event=>{video.volume=Math.max(0,Math.min(1,Number(event.target.value)));video.muted=video.volume===0;updateControls();});
     listen(find('mute'),'click',()=>{video.muted=!video.muted;updateControls();});
     listen(find('speed'),'change',event=>{if(remoteMode.enabled)return;video.playbackRate=Number(event.target.value);});
     listen(find('quality'),'change',event=>{const quality=Number(event.target.value);try{if(hls)hls.currentLevel=quality;if(dash){dash.updateSettings({streaming:{abr:{autoSwitchBitrate:{video:quality<0}}}});if(quality>=0)dash.setQualityFor('video',quality,true);}}catch{showToast('That picture quality is unavailable.');}});
     listen(find('captions'),'change',event=>{const selected=Number(event.target.value);try{if(hls?.subtitleTracks?.length){hls.subtitleTrack=selected;hls.subtitleDisplay=selected>=0;}else if(dash)dash.setTextTrack(selected);else Array.from(video.textTracks||[]).forEach((track,index)=>track.mode=index===selected?'showing':'disabled');}catch{showToast('These captions are unavailable.');}});
-    listen(find('fullscreen'),'click',fullscreen);listen(find('pip'),'click',pictureInPicture);listen(app,'keydown',event=>{updateVisibility({reveal:true});keyboard(event);});
+    listen(find('fullscreen'),'click',fullscreen);listen(find('pip'),'click',()=>{pictureInPicture();closeMenu(find('settings'));find('settings').querySelector('summary').focus();});listen(app,'keydown',event=>{updateVisibility({reveal:true});keyboard(event);});
     listen(stage,'pointermove',()=>updateVisibility({reveal:true}));listen(stage,'pointerdown',()=>updateVisibility({reveal:true}));
     listen(stage,'focusin',()=>updateVisibility({reveal:true}));listen(stage,'focusout',()=>{const token=generation;queueMicrotask(()=>{if(alive(token))updateVisibility();});});
     listen(stage,'click',event=>{if(event.target===video||event.target===stage){stage.focus({preventScroll:true});if(playable&&!locked())getState().paused?play():pause();}});
-    for(const node of stage.querySelectorAll('details'))listen(node,'toggle',()=>{if(node.open)for(const other of stage.querySelectorAll('details[open]'))if(other!==node)other.open=false;updateVisibility({reveal:true});});
-    listen(document,'pointerdown',event=>{for(const node of stage.querySelectorAll('details[open]'))if(!node.contains(event.target))node.open=false;});
-    listen(document,'fullscreenchange',()=>{const active=!!document.fullscreenElement;find('fullscreen').setAttribute('aria-label',active?'Exit fullscreen':'Enter fullscreen');find('fullscreen').setAttribute('aria-pressed',String(active));});
+    function closeMenu(node) {
+      node.open=false;try{node.querySelector('[popover]')?.hidePopover?.();}catch{}
+    }
+    function positionMenu(node) {
+      const body=node.querySelector('[popover]');if(!node.open||!body)return;
+      const anchor=node.querySelector('summary').getBoundingClientRect();
+      if(body.showPopover){
+        body.style.setProperty('--player-menu-left',Math.max(12,Math.min(window.innerWidth-body.offsetWidth-12,anchor.right-body.offsetWidth))+'px');
+        body.style.setProperty('--player-menu-top',Math.max(12,Math.min(window.innerHeight-body.offsetHeight-12,anchor.top-body.offsetHeight-20))+'px');
+        return;
+      }
+      // Older engines keep the same reachable sheet. Calibrate against the
+      // actual containing block created by glass/containment, including embeds.
+      body.dataset.playerMenuFallback='true';
+      const compact=stage.clientWidth<=560,width=Math.min(compact?360:300,window.innerWidth-32);
+      Object.assign(body.style,{position:'fixed',inset:'auto',left:'0px',top:'0px',right:'auto',bottom:'auto',width:width+'px',maxWidth:'none',maxHeight:Math.max(100,window.innerHeight-132)+'px',margin:'0',animation:'none'});
+      const origin=body.getBoundingClientRect(),height=body.offsetHeight;
+      const left=compact?(window.innerWidth-width)/2:Math.max(12,Math.min(window.innerWidth-width-12,anchor.right-width));
+      const top=compact?Math.max(12,window.innerHeight-height-(document.fullscreenElement===stage?20:88)):Math.max(12,Math.min(window.innerHeight-height-12,anchor.top-height-20));
+      body.style.left=(left-origin.left)+'px';body.style.top=(top-origin.top)+'px';
+    }
+    for(const node of stage.querySelectorAll('details'))listen(node,'toggle',()=>{
+      const body=node.querySelector('[popover]');
+      if(node.open){
+        for(const other of stage.querySelectorAll('details[open]'))if(other!==node)closeMenu(other);
+        if(body?.showPopover){try{body.showPopover();}catch{}}
+        positionMenu(node);
+      }else if(body?.hidePopover){try{body.hidePopover();}catch{}}
+      updateVisibility({reveal:true});
+    });
+    const positionOpenMenus=()=>{for(const node of stage.querySelectorAll('details[open]'))positionMenu(node);};
+    listen(window,'resize',positionOpenMenus);listen(window,'scroll',positionOpenMenus);
+    listen(document,'pointerdown',event=>{for(const node of stage.querySelectorAll('details[open]'))if(!node.contains(event.target))closeMenu(node);});
+    listen(document,'fullscreenchange',()=>{for(const node of stage.querySelectorAll('details[open]'))closeMenu(node);const active=!!document.fullscreenElement;find('fullscreen').setAttribute('aria-label',active?'Exit fullscreen':'Enter fullscreen');find('fullscreen').setAttribute('aria-pressed',String(active));});
     listen(window,'pagehide',event=>{
       if(!event.persisted){destroy();return;}const snapshot=getState(),data=sourceData,copy=find('status-copy').textContent,title=find('status-title').textContent;suspended=true;cancelResolver();teardownMedia();sourceData=null;source='';suspendState={snapshot,data,copy,title};
     });

@@ -10,24 +10,23 @@ function partyMarkup(options={}){
      <div class="partyPageIdentity">
        <a href="/movies" class="partyBrowseLink" data-party-return>${icon('back')}Back to browsing</a>
        <span id="sv100Kind" class="partySrOnly">${rooms?'Watch together':'Community'}</span>
-       <h1 id="sv100Title">${rooms?'Party Hub':'Lounge'}</h1>
-       <p class="partyPageLead">A shared screen, with your people.</p>
+       <h1 id="sv100Title">${rooms?'Party Hub':'Community'}</h1>
+       <p class="partyPageLead">${rooms?'Good films. Better company.':'For the love of a good film.'}</p>
      </div>
      <div class="sv100ProfilePill"><span id="sv100Avatar">S</span><div><b id="sv100Name">Guest</b><small id="sv100Status" role="status">Connecting…</small></div><i class="partyConnectionDot" aria-hidden="true"></i></div>
    </header>
-   <nav class="sv100ModeTabs partyNavigation" aria-label="Party Hub navigation">
-     <button type="button" class="dsSecondaryBtn ${rooms?'active':''}" data-tab="rooms">${icon('people')}Watch parties</button>
-     <button type="button" class="dsSecondaryBtn ${rooms?'':'active'}" data-tab="chat">${icon('chat')}Community</button>
+   <nav class="sv100ModeTabs partyNavigation partyModeNav" aria-label="Party Hub navigation">
+     <button type="button" class="partySecondaryBtn ${rooms?'active':''}" data-tab="rooms">${icon('people')}Watch parties</button>
+     <button type="button" class="partySecondaryBtn ${rooms?'':'active'}" data-tab="chat">${icon('chat')}Community</button>
      <span id="sv100RoleText" class="partySrOnly">Checking access</span>
    </nav>
-   <details class="partyCommunityMenu" data-nav-panel="chat">
-     <summary class="dsSecondaryBtn">${icon('chat')}Choose a conversation</summary>
-     <div>
-       <section class="sv100ChannelGroup"><header><span>Social Lounges</span><button type="button" class="dsIconBtn" data-action="new-channel" data-requires="channels" aria-label="Create a community channel">${icon('plus')}</button></header><button type="button" class="sv100Channel active" data-room="channel-general" data-title="Lounge">General</button><button type="button" class="sv100Channel" data-room="channel-recommendations" data-title="Recommendations">Recommendations</button></section>
-       <section class="sv100ChannelGroup"><header><span>Private Rooms</span><button type="button" class="dsIconBtn" data-action="new-group" data-requires="groups" aria-label="Create a private group">${icon('plus')}</button></header><button type="button" class="sv100Channel" data-room="group-watchparty" data-title="Movie night">Movie night</button></section>
-     </div>
-   </details>
    <div class="partyLayout">
+     <nav class="partyCommunityNav" data-nav-panel="chat" aria-label="Conversations">
+       <div class="partyCommunityHeading">${icon('chat')}<h2>Your conversations</h2></div>
+       <section class="sv100ChannelGroup"><header><span>Social Lounges</span><button type="button" class="partyIconBtn" data-action="new-channel" data-requires="channels" aria-label="Create a community channel">${icon('plus')}</button></header><button type="button" class="sv100Channel active" data-room="channel-general" data-title="General" aria-current="true"><span class="partyChannelGlyph" aria-hidden="true">#</span><span>General<small>All things film</small></span></button><button type="button" class="sv100Channel" data-room="channel-recommendations" data-title="Recommendations" aria-current="false"><span class="partyChannelGlyph" aria-hidden="true">#</span><span>Recommendations<small>Your next great watch</small></span></button></section>
+       <section class="sv100ChannelGroup"><header><span>Private Rooms</span><button type="button" class="partyIconBtn" data-action="new-group" data-requires="groups" aria-label="Create a private group">${icon('plus')}</button></header><button type="button" class="sv100Channel" data-room="group-watchparty" data-title="Movie night" aria-current="false">${icon('people')}<span>Movie night<small>Your private conversation</small></span></button></section>
+       <a class="partyCommunityWatch" href="/social?tab=watchrooms">${icon('film')}<span>Make it a movie night<small>Start a watch party</small></span>${icon('arrow')}</a>
+     </nav>
      <section class="sv100Main partyMain">
        <section id="sv100RoomsPanel" class="sv100Panel sv100RoomsPanel ${rooms?'active':''}" aria-label="Watch parties">
          <div class="sv103RoomShell">
@@ -38,9 +37,9 @@ function partyMarkup(options={}){
                <div class="partyRoomFacts"><span>${icon('people')}<b id="sv103ViewerCount">0</b> watching</span><button type="button" id="sv103RoomCode" data-action="copy-room-code" title="Copy room code">—</button><span class="partySrOnly">Playback <b id="sv103Timer">0:00</b></span></div>
              </div>
              <nav class="partyRoomActions" aria-label="Room actions">
-               <details class="partyChecks"><summary class="dsIconBtn" aria-label="Check your camera or microphone" title="Device check">${icon('camera')}</summary><div><button class="dsSecondaryBtn" type="button" data-action="voice">${icon('mic')}Mic check</button><button class="dsSecondaryBtn" type="button" data-action="video">${icon('camera')}Camera check</button></div></details>
-               <button class="dsPrimaryBtn" type="button" data-action="copy-room-link">${icon('link')}Invite friends</button>
-               <button class="dsSecondaryBtn" type="button" data-action="leave-native-room">Leave</button>
+               <details class="partyChecks"><summary class="partyIconBtn" aria-label="Check your camera or microphone" title="Device check">${icon('camera')}</summary><div><button class="partySecondaryBtn" type="button" data-action="voice">${icon('mic')}Mic check</button><button class="partySecondaryBtn" type="button" data-action="video">${icon('camera')}Camera check</button></div></details>
+               <button class="partyPrimaryBtn" type="button" data-action="copy-room-link">${icon('link')}Invite friends</button>
+               <button class="partySecondaryBtn" type="button" data-action="leave-native-room">Leave</button>
              </nav>
            </header>
            <section id="sv103NativeRoom" class="sv103NativeRoom" hidden>
@@ -49,8 +48,8 @@ function partyMarkup(options={}){
              <details class="partyMediaTools hostOnly">
                <summary>${icon('film')}Change film <span>Search or video link</span>${icon('plus')}</summary>
                <section class="sv103ToolsGrid">
-                 <form id="sv103MovieForm" class="sv103ToolCard"><label for="partyMovieQuery">Find a film</label><div class="partyInputAction"><input id="partyMovieQuery" name="movieId" type="search" placeholder="Search movie titles" autocomplete="off" maxlength="120"/><button type="submit" class="dsIconBtn" aria-label="Search movies">${icon('search')}</button></div><div id="partyMovieResults" class="partyMovieResults" aria-live="polite"></div></form>
-                 <form id="sv103SetMediaForm" class="sv103ToolCard"><label for="partyMediaUrl">Use a video link</label><div class="partyInputAction"><input id="partyMediaUrl" name="mediaUrl" type="url" placeholder="YouTube or video page URL" maxlength="1000"/><button type="submit" class="dsIconBtn" aria-label="Set video link">${icon('arrow')}</button></div><p>Video pages open in their embedded player.</p></form>
+                 <form id="sv103MovieForm" class="sv103ToolCard"><label for="partyMovieQuery">Find a film</label><div class="partyInputAction"><input id="partyMovieQuery" name="movieId" type="search" placeholder="Search movie titles" autocomplete="off" maxlength="120"/><button type="submit" class="partyIconBtn" aria-label="Search movies">${icon('search')}</button></div><div id="partyMovieResults" class="partyMovieResults" aria-live="polite"></div></form>
+                 <form id="sv103SetMediaForm" class="sv103ToolCard"><label for="partyMediaUrl">Use a video link</label><div class="partyInputAction"><input id="partyMediaUrl" name="mediaUrl" type="url" placeholder="YouTube or video page URL" maxlength="1000"/><button type="submit" class="partyIconBtn" aria-label="Set video link">${icon('arrow')}</button></div><p>Video pages open in their embedded player.</p></form>
                </section>
              </details>
            </section>
@@ -59,8 +58,8 @@ function partyMarkup(options={}){
                <section class="partyHero" aria-labelledby="partyHeroTitle">
                  <div class="partyHeroBackdrop" data-party-hero-art hidden></div><div class="partyHeroShade"></div>
                  <span class="partyHeroGlyph" aria-hidden="true">${icon('film')}</span>
-                 <div class="partyHeroCopy"><span class="partyHeroLabel">On your shared screen</span><h2 id="partyHeroTitle">Make it a movie night.</h2><p data-party-hero-copy hidden></p><p class="partyHeroHint">Pick a film. Share the evening.</p></div>
-                 <button class="partyHeroPick" data-party-featured-host type="button" hidden><span>Try tonight</span><b></b>${icon('arrow')}</button>
+                 <div class="partyHeroCopy"><span class="partyHeroLabel" data-party-hero-label>Your next shared screen</span><h2 id="partyHeroTitle">Make it a movie night.</h2><p class="partyHeroOverview" data-party-hero-copy>Pick a film. Bring your people.</p></div>
+                 <button class="partyHeroPick" data-party-featured-host type="button" hidden>${icon('play')}<span><b>Host with this film</b><small data-party-hero-film></small></span>${icon('arrow')}</button>
                </section>
                <div class="partySetup" id="partySetup">
                  <div class="partyEntryTabs" role="tablist" aria-label="Start or join a watch party" data-party-entry-tabs hidden>
@@ -68,40 +67,40 @@ function partyMarkup(options={}){
                    <button type="button" id="partyJoinTab" role="tab" aria-selected="false" aria-controls="partyJoinPanel" tabindex="-1" data-party-entry="join">Join a party</button>
                  </div>
                  <div id="partyHostPanel" class="partyEntryPanel" data-party-entry-panel="create" role="tabpanel" aria-labelledby="partyHostTab">
-                   <form class="sv100Card creatorOnly partyCreateCard" method="get" action="/watchrooms/new" id="sv100CreateRoomForm">
+                   <form class="partyEntryForm creatorOnly partyCreateCard" method="get" action="/watchrooms/new" id="sv100CreateRoomForm">
                      <input type="hidden" name="creator" id="sv100CreatorInput" value=""/><input type="hidden" name="social" value="1"/>
                      <div id="partySelectedMovie" class="partySelectedMovie" hidden aria-live="polite"></div>
-                     <div class="partyCardHeading"><h3>Your next movie night</h3><p>Choose a film below, or pick one once everyone’s here.</p></div>
+                     <div class="partyCardHeading"><h3>Your movie night.</h3><p>Name your party. Pick a film now or decide together.</p></div>
                      <label for="partyRoomName">Party name<input id="partyRoomName" name="name" placeholder="Friday movie night" maxlength="80" autocomplete="off"/></label>
                      <details class="partyLinkChoice"><summary>Use a video link</summary><label for="partyStartLink">Video link<input id="partyStartLink" name="watchLink" type="url" placeholder="YouTube or a video page" maxlength="1000"/></label></details>
-                     <button class="dsPrimaryBtn" type="submit">Start watch party ${icon('arrow')}</button>
+                     <button class="partyPrimaryBtn" type="submit">Create watch party ${icon('arrow')}</button>
                      <p data-party-create-status class="partyFormStatus" role="status"></p><p id="sv100PermText" class="partyAccess partySrOnly">Checking room access…</p>
                    </form>
                    <div class="lockedOnly partyLocked" hidden><h3>Join your friends</h3><p>Hosting is unavailable here. Use a room code or invite to join your friends.</p></div>
                  </div>
                  <div id="partyJoinPanel" class="partyEntryPanel" data-party-entry-panel="join" role="tabpanel" aria-labelledby="partyJoinTab">
-                   <form class="sv100Card partyJoinCard" method="get" action="/watchrooms/join" id="partyJoinForm">
-                     <div class="partyCardHeading"><h3>Your friends are waiting</h3><p>Paste the invite they sent you.</p></div>
+                   <form class="partyEntryForm partyJoinCard" method="get" action="/watchrooms/join" id="partyJoinForm">
+                     <div class="partyCardHeading"><h3>Find your people.</h3><p>Use the room code or link your host shared.</p></div>
                      <label for="partyInvite">Room code or invite link<input id="partyInvite" name="code" placeholder="Paste a room code or invite" maxlength="1600" autocomplete="off" spellcheck="false"/></label>
-                     <button class="dsPrimaryBtn" type="submit">Join watch party ${icon('arrow')}</button><p data-party-join-status class="partyFormStatus" role="status"></p>
+                     <button class="partyPrimaryBtn" type="submit">Join watch party ${icon('arrow')}</button><p data-party-join-status class="partyFormStatus" role="status"></p>
                    </form>
                  </div>
                </div>
              </div>
              <section class="partyFilmSection" aria-labelledby="partyFilmTitle">
-               <header class="partySectionHead"><div><h2 id="partyFilmTitle">What are we watching?</h2><p>Choose a film for your party.</p></div><a class="partyTextLink" href="/movies">Browse all movies ${icon('arrow')}</a></header>
-               <form id="partyLobbyMovieForm" class="partyLobbySearch"><label for="partyLobbyMovieQuery" class="partySrOnly">Find a movie for your party</label>${icon('search')}<input id="partyLobbyMovieQuery" type="search" placeholder="Search for a movie" autocomplete="off" maxlength="120"/><button type="submit" class="dsSecondaryBtn">Search</button></form>
+               <header class="partySectionHead"><div><span class="partyEyebrow">The hardest part is choosing</span><h2 id="partyFilmTitle">Worth watching together.</h2></div><a class="partyTextLink" href="/movies">Browse movies ${icon('arrow')}</a></header>
+               <form id="partyLobbyMovieForm" class="partyLobbySearch"><label for="partyLobbyMovieQuery" class="partySrOnly">Find a movie for your party</label>${icon('search')}<input id="partyLobbyMovieQuery" type="search" placeholder="Search for a movie" autocomplete="off" maxlength="120"/><button type="submit" class="partySecondaryBtn">Search</button></form>
                <div id="partyLobbyMovieResults" class="partyFilmRail" aria-live="polite"></div><div id="partyFeaturedMovies" class="partyFilmRail"><p class="partyFilmStatus" role="status">Finding films for tonight…</p></div>
              </section>
              <section class="sv100ActiveRooms partyRoomDirectory" aria-labelledby="partyDirectoryTitle">
-               <header class="partySectionHead"><div><h2 id="partyDirectoryTitle">Open parties <small id="partyRoomCount"></small></h2><p>Find a room and join in.</p></div><button type="button" class="dsIconBtn" data-action="refresh-rooms" aria-label="Refresh party list">${icon('refresh')}</button></header>
+               <header class="partySectionHead"><div><h2 id="partyDirectoryTitle">Open parties <small id="partyRoomCount"></small></h2><p>A seat at someone’s movie night.</p></div><button type="button" class="partyIconBtn" data-action="refresh-rooms" aria-label="Refresh party list">${icon('refresh')}</button></header>
                <div id="sv100RoomsList" class="sv100RoomsList" aria-live="polite"><p class="partyEmpty">Finding open parties…</p></div>
              </section>
            </section>
          </div>
        </section>
        <div data-party-main-chat-slot>
-         <section id="sv100ChatPanel" class="sv100Panel ${rooms?'':'active'}" aria-label="Chat"><div class="sv100Notice">${icon('chat')}<span data-party-chat-description>Talk films with the community.</span></div><div id="sv100Messages" class="sv100Messages" role="log" aria-label="Messages" aria-live="polite"></div><form id="sv100Composer" class="sv100Composer"><label for="sv100Input" class="partySrOnly">Chat message</label><input id="sv100Input" placeholder="Say hello…" autocomplete="off" maxlength="220"/><button type="submit" class="dsIconBtn" aria-label="Send message">${icon('send')}</button></form></section>
+         <section id="sv100ChatPanel" class="sv100Panel ${rooms?'':'active'}" aria-label="Chat"><header class="partyCommunityHeader"><span class="partyChannelMark" aria-hidden="true">#</span><div><small data-party-channel-kind>Community channel</small><h2 data-party-channel-title>General</h2><p data-party-chat-description>Talk films with the community.</p></div></header><div id="sv100Messages" class="sv100Messages" role="log" aria-label="Messages" aria-live="polite"></div><form id="sv100Composer" class="sv100Composer"><label for="sv100Input" class="partySrOnly">Chat message</label><input id="sv100Input" placeholder="Message General…" autocomplete="off" maxlength="220"/><button type="submit" class="partyIconBtn" aria-label="Send message">${icon('send')}</button></form></section>
        </div>
      </section>
      <aside class="partyConversation" data-party-conversation hidden>
@@ -110,7 +109,7 @@ function partyMarkup(options={}){
        <div data-party-chat-dock></div>
      </aside>
    </div>
-   <dialog id="sv100CallModal" class="sv100CallModal" aria-labelledby="sv100CallTitle" aria-describedby="partyDeviceNote"><div class="sv100CallCard"><header><div><span id="sv100CallType">Device check</span><h2 id="sv100CallTitle">Preview</h2></div><button type="button" class="dsIconBtn" data-action="close-call" aria-label="Close device check">${icon('close')}</button></header><div class="sv100CallStage"><video id="sv100LocalVideo" autoplay muted playsinline></video><div>${icon('camera')}<b id="sv100CallStatus">Ready</b></div></div><p id="partyDeviceNote" class="partyDeviceNote">This is a local preview. Your camera and microphone are not sent to other people.</p><footer><button type="button" class="dsSecondaryBtn" data-action="mute">${icon('mic')}Toggle mic</button><button type="button" class="dsSecondaryBtn" data-action="camera">${icon('camera')}Toggle camera</button><button type="button" class="dsPrimaryBtn" data-action="close-call">Done</button></footer></div></dialog>
+   <dialog id="sv100CallModal" class="sv100CallModal" aria-labelledby="sv100CallTitle" aria-describedby="partyDeviceNote"><div class="sv100CallCard"><header><div><span id="sv100CallType">Device check</span><h2 id="sv100CallTitle">Preview</h2></div><button type="button" class="partyIconBtn" data-action="close-call" aria-label="Close device check">${icon('close')}</button></header><div class="sv100CallStage"><video id="sv100LocalVideo" autoplay muted playsinline></video><div>${icon('camera')}<b id="sv100CallStatus">Ready</b></div></div><p id="partyDeviceNote" class="partyDeviceNote">This is a local preview. Your camera and microphone are not sent to other people.</p><footer><button type="button" class="partySecondaryBtn" data-action="mute">${icon('mic')}Toggle mic</button><button type="button" class="partySecondaryBtn" data-action="camera">${icon('camera')}Toggle camera</button><button type="button" class="partyPrimaryBtn" data-action="close-call">Done</button></footer></div></dialog>
    <template id="partyPlayerTemplate">${playerMarkup({embedded:true,managed:true,videoId:'sv103Video',title:'Party playback'})}</template>
    <div id="sv100Toast" class="sv100Toast" hidden role="status"></div><div id="sv100Error" class="sv100Error" hidden role="alert"></div>
  </main>`;

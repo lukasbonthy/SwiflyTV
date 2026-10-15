@@ -1,4 +1,4 @@
-/* v163: lightweight glass surfaces; refraction is reserved for opted-in panels. */
+/* v200: shared optics respect components that own their complete surface treatment. */
 (() => {
   'use strict';
   if (window.SwiflyGlassSurfaces) return;
@@ -12,8 +12,6 @@
     '.svAuthPasswordToggle','.dsAuthSwitch > a','.genreDropdown summary',
     '.dsTabs a','.dsDetailTabsV121 > button','.pagination a',
     '.dsEpisodeChips a','.dsSearchBox button','.svSearchPopup button',
-    '.svPartyHub .partyNavigation > button','.svPartyHub .partyHeroActions > button',
-    '.svPartyHub .partySetup .sv100Card > button[type="submit"]',
     '.dsDropdownLogout','.dsEditProfileBtn'
   ].join(',');
   const panels = ['.svSearchPopup', '.dsSearchBox form', '.genreDropdownMenu', '.dsDetailTabsV121', '.dsAuthCard', '.dsAuthSwitch', '.dsProfileManagerPanel', '.dsAccountCard', '.dsProfileSelectCard', '.dsDetailGridV121 aside', '.dsAboutGridV121', '.dsSeasonBlock', '#controlPanel', '#toast', 'dialog'].join(',');
@@ -38,9 +36,6 @@
     '.genreDropdown > summary',
     '.dsProfilesQuickActions > :is(.dsSecondaryBtn,.dsGhostPill)',
     '.dsHeroMiniActions > :is(.dsPrimaryBtn,.dsSecondaryBtn)',
-    '.svPartyHub .partyNavigation > button',
-    '.svPartyHub .partyHeroActions > button',
-    '.svPartyHub .partySetup .sv100Card > button[type="submit"]',
     '.dsAuthCard'
   ].join(',');
   function deactivate(entry) {
@@ -100,7 +95,7 @@
     entries.delete(entry.host);
   }
   function ensure(host) {
-    if (!(host instanceof HTMLElement) || !host.isConnected || host.matches('.svDetailDialog, .svStudioDialog') || host.closest('.svLiquidPane, media-player, .vds-controls')) return;
+    if (!(host instanceof HTMLElement) || !host.isConnected || host.matches('.svDetailDialog, .svStudioDialog') || host.closest('.svPartyHub, .svLiquidPane, media-player, .vds-controls')) return;
     let entry = entries.get(host);
     if (entry) {activate(entry); return;}
     const panel = host.matches(panels);

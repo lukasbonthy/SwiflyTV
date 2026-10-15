@@ -50,6 +50,26 @@ test('Watch-room chat stays beside the player and sends to the selected room',as
  assert(d.querySelector('[data-party-chat-dock]')?.contains(d.getElementById('sv100ChatPanel')),'Chat must remain in the room view');
  d.getElementById('sv100Input').value='Ready for the movie';submit(w,d.getElementById('sv100Composer'));assert(env.sent.some(e=>e.name==='watchroom:message'&&e.data.roomId===room.id&&e.data.text==='Ready for the movie'));env.finish();
 });
+
+test('Visible community channels announce the active conversation and send only to that channel',async()=>{
+ const env=await ready(setup()),w=env.window,d=w.document;d.querySelector('[data-tab="chat"]').click();
+ const nav=d.querySelector('[data-nav-panel="chat"]');assert(nav&&!nav.closest('details'),'Channel choices must be visible without opening a menu');
+ const recommendations=d.querySelector('[data-room="channel-recommendations"]');recommendations.click();
+ assert.equal(recommendations.getAttribute('aria-current'),'true');assert.equal(d.querySelector('[data-room="channel-general"]').getAttribute('aria-current'),'false');
+ assert.equal(d.querySelector('[data-party-channel-title]').textContent,'Recommendations');assert.match(d.querySelector('[data-party-chat-description]').textContent,/recommend|watch/i);
+ assert.match(d.querySelector('.partyChatEmpty').textContent,/recommend|worth watching/i);assert.equal(d.getElementById('sv100Input').placeholder,'Message Recommendations…');
+ d.getElementById('sv100Input').value='Try Arrival';submit(w,d.getElementById('sv100Composer'));
+ assert(env.sent.some(event=>event.name==='social:message'&&event.data.roomId==='channel-recommendations'&&event.data.text==='Try Arrival'));
+ env.finish();
+});
+
+test('A featured film is clearly identified as inspiration until explicitly selected for hosting',async()=>{
+ const env=await ready(setup()),d=env.window.document;
+ assert.equal(d.getElementById('partyHeroTitle').textContent,'Interstellar');assert.match(d.querySelector('[data-party-hero-label]').textContent,/inspiration/i);
+ assert.equal(d.getElementById('partySelectedMovie').hidden,true);assert(!env.calls.some(call=>call.url.endsWith('/create')));
+ d.querySelector('[data-party-featured-host]').click();assert.match(d.querySelector('[data-party-hero-label]').textContent,/selected/i);assert.match(d.getElementById('partySelectedMovie').textContent,/Interstellar/);
+ d.querySelector('[data-action="clear-party-movie"]').click();assert.equal(d.getElementById('partySelectedMovie').hidden,true);assert.match(d.querySelector('[data-party-hero-label]').textContent,/inspiration/i);env.finish();
+});
 test('Guests cannot trigger host controls, including a dispatched click',async()=>{
  const env=setup();await enter(env);env.socket.receive('watchroom:joined',{room,isHost:false,messages:[]});env.socket.receive('watchroom:movie-sync',{roomId:room.id,movie:{movieId:'101',status:'ready',playbackUrl:'/movie.mp4'}});env.readyVideo();const w=env.window,d=w.document,play=d.querySelector('[data-player-play]');
  assert(play.disabled);const count=env.sent.length;play.dispatchEvent(new w.MouseEvent('click',{bubbles:true,cancelable:true}));assert.equal(env.sent.length,count);env.finish();
