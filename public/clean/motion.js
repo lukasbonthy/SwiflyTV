@@ -1,4 +1,4 @@
-/* v163: weighted, interruptible desktop wheel motion with bounded work. */
+/* v203: responsive desktop easing with native touch and bounded presentation work. */
 (() => {
   'use strict';
   if (window.SwiflyMotion) return;
@@ -7,20 +7,19 @@
   const page = document.scrollingElement || document.documentElement;
   const jobs = new Map(), observed = new WeakSet(), pendingReveal = new Set();
   const heroes = new Map(), dirtyHosts = new Set(), overflowCache = new WeakMap();
-  let frame = 0, presentationFrame = 0, previousTime = 0, observer, heroSizes, preferenceObserver;
+  let frame = 0, presentationFrame = 0, observer, heroSizes, preferenceObserver;
   let started = false, destroyed = false, preference = '', overflowEpoch = 0, nativeWheelUntil = 0;
   const rails = '.movieRail, .dsRail, .svResumeRail, .dsWelcomeRailTrack, .svDetailCastRail';
   const heroSelector = '.dsHero, .dsWelcomeHero, .svDetailHero';
-  const native = 'input, textarea, select, [contenteditable="true"], video, audio, media-player, .vds-controls, .vds-slider, [data-native-scroll], #controlPanel, .genreDropdownMenu, .dsProfileDropdown';
+  const native = 'input, textarea, select, [contenteditable="true"], video, audio, media-player, [data-player-root], .vds-controls, .vds-slider, [data-native-scroll], #controlPanel, .genreDropdownMenu, .dsProfileDropdown';
   const prefersReduced = () => reduced.matches || document.body.classList.contains('reduceMotion');
   const nativePreference = () => document.body.dataset.svScroll === 'native';
   const canAnimate = () => !destroyed && !document.hidden && !prefersReduced() && !nativePreference();
+  const canPresentHeroes = () => canAnimate() && fine.matches;
   const preferenceKey = () => String(prefersReduced()) + ':' + String(nativePreference());
   const clamp = (value, max) => Math.max(0, Math.min(Math.max(0, max), value));
   const position = element => element === page ? {x:window.scrollX || page.scrollLeft || 0, y:window.scrollY || page.scrollTop || 0} : {x:element.scrollLeft, y:element.scrollTop};
   const bounds = element => ({x:element.scrollWidth - element.clientWidth, y:element.scrollHeight - element.clientHeight});
-  // A one-pixel floor lets the damped tail settle on rounded scroll positions.
-  const advance = (value, target, weight) => value + Math.sign(target - value) * Math.min(Math.abs(target - value), Math.max(1, Math.abs(target - value) * weight));
   function write(element, x, y) {
     if (element === page) window.scrollTo({left:x, top:y, behavior:'instant'});
     else element.scrollTo({left:x, top:y, behavior:'instant'});
@@ -28,26 +27,32 @@
   function stop(element) {
     if (element) {jobs.delete(element); element.classList.remove('svMotionAnimating');}
     else {for (const host of jobs.keys()) host.classList.remove('svMotionAnimating'); jobs.clear();}
-    if (!jobs.size) {cancelAnimationFrame(frame); frame = 0; previousTime = 0;}
+    if (!jobs.size) {cancelAnimationFrame(frame); frame = 0;}
   }
   function step(time) {
     frame = 0;
     if (!canAnimate()) {stop(); return;}
-    const dt = previousTime ? Math.min(40, Math.max(1, time - previousTime)) : 16;
-    previousTime = time;
-    const weight = 1 - Math.exp(-dt / 110);
+    const updates = [];
     for (const [element, job] of jobs) {
       if (!element.isConnected) {stop(element); continue;}
       const max = bounds(element), current = position(element);
       if (Math.abs(current.x - job.writtenX) > 3 || Math.abs(current.y - job.writtenY) > 3) {stop(element); continue;}
       job.x = clamp(job.x, max.x); job.y = clamp(job.y, max.y);
-      let x = advance(current.x, job.x, weight), y = advance(current.y, job.y, weight);
-      const finished = Math.abs(job.x - x) < .5 && Math.abs(job.y - y) < .5;
-      if (finished) {x = job.x; y = job.y;}
+      // A finite ease-out gives the wheel an immediate response and a predictable
+      // finish, including after a delayed frame or rounded scroll positions.
+      if (job.started === null) job.started = time - 16;
+      const progress = Math.min(1, Math.max(0, (time - job.started) / 200));
+      const eased = 1 - (1 - progress) ** 3;
+      const x = clamp(job.fromX + (job.x - job.fromX) * eased, max.x);
+      const y = clamp(job.fromY + (job.y - job.fromY) * eased, max.y);
+      updates.push({element, job, x, y, finished:progress === 1});
+    }
+    // Finish all geometry reads before any host receives a scroll write.
+    for (const {element, job, x, y, finished} of updates) {
       write(element, x, y); job.writtenX = x; job.writtenY = y;
       if (finished) {jobs.delete(element); element.classList.remove('svMotionAnimating');}
     }
-    if (jobs.size) frame = requestAnimationFrame(step); else previousTime = 0;
+    if (jobs.size) frame = requestAnimationFrame(step);
   }
   function scrollTo(element, options = {}) {
     element = element || page;
@@ -58,7 +63,7 @@
     if (!canAnimate() || options.behavior === 'instant' || options.behavior === 'auto') {stop(element); write(element, x, y); return;}
     if (x === current.x && y === current.y) {stop(element); return;}
     element.classList.add('svMotionAnimating');
-    jobs.set(element, {x, y, writtenX:current.x, writtenY:current.y});
+    jobs.set(element, {x, y, fromX:current.x, fromY:current.y, started:null, writtenX:current.x, writtenY:current.y});
     if (!frame) frame = requestAnimationFrame(step);
   }
   function scrollBy(element, options = {}) {
@@ -79,7 +84,7 @@
     return horizontal ? cached.x : cached.y;
   }
   function onWheel(event) {
-    if (event.defaultPrevented) return;
+    if (event.defaultPrevented || !event.cancelable) {stop(); return;}
     if (event.ctrlKey || event.metaKey || event.altKey || !canAnimate() || !fine.matches || location.pathname.startsWith('/watch/')) {stop(); return;}
     const horizontal = event.shiftKey || Math.abs(event.deltaX) > Math.abs(event.deltaY);
     const raw = horizontal ? event.deltaX || event.deltaY : event.deltaY;
@@ -110,44 +115,54 @@
     if (next === current[axis]) return;
     event.preventDefault(); scrollTo(host, horizontal ? {left:next} : {top:next});
   }
-  function updateNav() {
-    const state = position(page).y > 48 ? 'true' : 'false';
+  function updateNav(y = position(page).y) {
+    const state = y > 48 ? 'true' : 'false';
     if (document.body.dataset.svScrolled !== state) document.body.dataset.svScrolled = state;
   }
   function measureHero(hero, record) {
     const rect = hero.getBoundingClientRect();
-    record.top = rect.top + position(record.host).y; record.height = rect.height; record.dirty = false;
+    record.top = rect.top + position(record.host).y; record.height = rect.height;
+    record.viewport = record.host === page ? window.innerHeight : record.host.clientHeight; record.dirty = false;
+  }
+  function heroOffset(record, y) {
+    if (record.height <= 0 || y >= record.top + record.height || y + record.viewport <= record.top) return null;
+    return Math.max(0, Math.min(36, (y - record.top) * .075)).toFixed(2) + 'px';
   }
   function updatePresentation() {
     presentationFrame = 0;
     if (document.hidden || destroyed) {dirtyHosts.clear(); return;}
-    if (dirtyHosts.has(page)) updateNav();
-    if (canAnimate()) for (const [hero, record] of heroes) {
+    const positions = new Map(), updates = [];
+    if (canPresentHeroes()) for (const [hero, record] of heroes) {
       if (!hero.isConnected) {heroSizes?.unobserve?.(hero); heroes.delete(hero); continue;}
       if (!dirtyHosts.has(record.host)) continue;
       if (record.dirty) measureHero(hero, record);
-      const offset = record.height > 0 ? Math.max(0, Math.min(36, (position(record.host).y - record.top) * .075)) : 0;
-      const value = offset.toFixed(2) + 'px';
-      if (record.offset !== value) {hero.style.setProperty('--sv-hero-offset', value); record.offset = value;}
+      if (!positions.has(record.host)) positions.set(record.host, position(record.host).y);
+      const value = heroOffset(record, positions.get(record.host));
+      if (value !== null && record.offset !== value) updates.push({hero, record, value});
     }
+    for (const {hero, record, value} of updates) {hero.style.setProperty('--sv-hero-offset', value); record.offset = value;}
     dirtyHosts.clear();
   }
-  function queuePresentation() {if (canAnimate() && dirtyHosts.size && !presentationFrame) presentationFrame = requestAnimationFrame(updatePresentation);}
+  function queuePresentation() {if (canPresentHeroes() && dirtyHosts.size && !presentationFrame) presentationFrame = requestAnimationFrame(updatePresentation);}
   function onScroll(event) {
     if (document.hidden || destroyed) return;
     const target = event.target;
     const host = target === document || target === window || target === page || target === document.body ? page : target;
-    if (host !== page && ![...heroes.values()].some(record => record.host === host)) return;
-    if (!canAnimate()) {if (host === page) updateNav(); return;}
-    dirtyHosts.add(host); queuePresentation();
+    const y = position(host).y;
+    if (host === page) updateNav(y);
+    if (!canPresentHeroes()) return;
+    for (const record of heroes.values()) if (record.host === host) {
+      const value = record.dirty ? null : heroOffset(record, y);
+      if (record.dirty || value !== null && value !== record.offset) {dirtyHosts.add(host); queuePresentation(); break;}
+    }
   }
   function refresh(root = document) {
     if (!root || destroyed) return;
     const registerHero = hero => {
       let record = heroes.get(hero);
       if (!record) {record = {host:hero.closest('.svDetailViewport') || page, dirty:true, offset:null}; heroes.set(hero, record);}
-      record.dirty = true; dirtyHosts.add(record.host);
-      if (canAnimate()) {measureHero(hero, record); heroSizes?.observe(hero);}
+      record.dirty = true;
+      if (canPresentHeroes()) {measureHero(hero, record); dirtyHosts.add(record.host); heroSizes?.observe(hero);}
     };
     if (root instanceof Element && root.matches(heroSelector)) registerHero(root);
     root.querySelectorAll?.(heroSelector).forEach(registerHero);
@@ -174,20 +189,25 @@
       for (const section of pendingReveal) {section.classList.add('svMotionVisible'); observer?.unobserve(section);}
       pendingReveal.clear(); heroSizes?.disconnect();
       for (const [hero, record] of heroes) {hero.style.removeProperty('--sv-hero-offset'); record.offset = null; record.dirty = true;}
-    } else {refresh(); dirtyHosts.add(page); queuePresentation();}
+    } else {refresh(); queuePresentation();}
+    updateNav();
   }
   function onResize() {
     overflowEpoch++;
-    for (const record of heroes.values()) {record.dirty = true; dirtyHosts.add(record.host);}
-    dirtyHosts.add(page); queuePresentation();
+    for (const record of heroes.values()) {record.dirty = true; if (canPresentHeroes()) dirtyHosts.add(record.host);}
+    updateNav(); queuePresentation();
   }
   function onKey(event) {if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','PageUp','PageDown','Home','End',' ','Tab','Escape'].includes(event.key)) stop();}
   const onPointer = () => stop();
-  const onFineChange = () => stop();
+  function onFineChange() {
+    stop(); cancelAnimationFrame(presentationFrame); presentationFrame = 0; dirtyHosts.clear(); heroSizes?.disconnect();
+    for (const [hero, record] of heroes) {hero.style.removeProperty('--sv-hero-offset'); record.offset = null; record.dirty = true;}
+    if (canPresentHeroes()) {refresh(); queuePresentation();}
+  }
   function onVisibility() {
     if (document.hidden) {stop(); cancelAnimationFrame(presentationFrame); presentationFrame = 0; dirtyHosts.clear(); heroSizes?.disconnect();}
     else {
-      if (canAnimate()) for (const hero of heroes.keys()) heroSizes?.observe(hero);
+      if (canPresentHeroes()) for (const hero of heroes.keys()) heroSizes?.observe(hero);
       onResize();
     }
   }
@@ -214,7 +234,7 @@
     document.addEventListener('visibilitychange', onVisibility);
     window.addEventListener('resize', onResize, {passive:true});
     reduced.addEventListener('change', onPreference); fine.addEventListener('change', onFineChange);
-    refresh(); cancelAnimationFrame(presentationFrame); presentationFrame = 0; dirtyHosts.add(page); updatePresentation();
+    refresh(); cancelAnimationFrame(presentationFrame); presentationFrame = 0; updateNav(); updatePresentation();
   }
   window.SwiflyMotion = Object.freeze({scrollTo,scrollBy,stop,refresh,release,destroy() {
     if (destroyed) return; destroyed = true;

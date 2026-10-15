@@ -44,14 +44,14 @@ function glass(markup = '') {
   return env;
 }
 
-test('Desktop wheel motion has a weighted onset and preserves ordinary wheel distance', () => {
+test('Desktop wheel motion responds promptly and preserves ordinary wheel distance', () => {
   const env = browser('<main>Catalog</main>'), w = env.window;
   w.boot('motion.js');
   assert.equal(wheel(w, w.document.querySelector('main')).defaultPrevented, true);
   w.flush(16);
-  assert(env.page.scrollTop > 12 && env.page.scrollTop < 23, 'The first frame should respond with roughly 110ms damping');
+  assert(env.page.scrollTop > 24 && env.page.scrollTop < 40, 'The first frame should respond while preserving a controlled ease-out');
   for (let time = 32; time <= 128; time += 16) w.flush(time);
-  assert(env.page.scrollTop > 75 && env.page.scrollTop < 89, 'Motion should retain some weight during the first 128ms');
+  assert(env.page.scrollTop > 110 && env.page.scrollTop < 120, 'Most wheel travel should finish in the first 128ms');
   settle(w, 144);
   assert.equal(env.page.scrollTop, 120, 'A 120px wheel input must travel exactly 120px');
   assert.equal(w.frameCount(), 0);

@@ -126,3 +126,49 @@ test('Movie collections show the actual related titles and mark the current movi
  });let html;await api.detailPage({params:{id:'101'},query:{view:'modal'}},{send:value=>html=value},'movie');
  const env=browser(html),d=env.window.document;assert(d.querySelector('#collection'),'Collection should appear for movies that belong to one');assert.match(d.querySelector('#collection').textContent,/First movie/);assert(d.querySelector('#collection [aria-current="true"]'));env.finish();
 });
+test('Recent titles reopen and recommendation Back restores content without another request',async()=>{
+ const env=setup(),w=env.window,d=w.document;let requests=0,saved=false;
+ w.syncLibraryButtons=()=>d.querySelectorAll('[data-watch-id]').forEach(button=>button.setAttribute('aria-pressed',String(saved)));
+ w.fetch=async url=>{requests++;const id=url.match(/\/(?:movie|tv)\/(\d+)/)[1];return {ok:true,text:async()=>fragment(id).replace('</article>','<button data-watch-id="'+id+'"></button></article>')};};
+ await w.SwiflyDetails.open('/movie/101',d.getElementById('open'));d.querySelector('.svDetailViewport').scrollTop=320;
+ await w.SwiflyDetails.open('/movie/202');saved=true;w.SwiflyDetails.back();await tick();
+ assert.equal(requests,2,'Back should reuse its validated recent fragment');assert.equal(d.querySelector('dialog h1').textContent,'Movie 101');assert.equal(d.querySelector('.svDetailViewport').scrollTop,320);
+ assert.equal(d.querySelector('dialog [data-watch-id="101"]').getAttribute('aria-pressed'),'true','Restored fragments must resync current My List state');
+ env.finish();
+});
+test('The recent fragment cache expires entries and evicts its least recently viewed title',async()=>{
+ const env=setup(),w=env.window,d=w.document;let now=1000,requests=0;
+ w.Date.now=()=>now;w.fetch=async url=>{requests++;return {ok:true,text:async()=>fragment(url.match(/\/(?:movie|tv)\/(\d+)/)[1])};};
+ for(let id=101;id<=108;id++)await w.SwiflyDetails.open('/movie/'+id,d.getElementById('open'));
+ await w.SwiflyDetails.open('/movie/101');assert.equal(requests,8,'Eight recent title fragments fit in the cache');
+ await w.SwiflyDetails.open('/movie/109');await w.SwiflyDetails.open('/movie/102');assert.equal(requests,10,'The least recently viewed title should be refetched');
+ now+=90001;await w.SwiflyDetails.open('/movie/102');assert.equal(requests,11,'Expired content should be refreshed');env.finish();
+});
+test('Changing the active profile or kids browsing context invalidates recent fragments',async()=>{
+ const env=setup(),w=env.window,d=w.document;let requests=0;
+ w.fetch=async()=>{requests++;return {ok:true,text:async()=>fragment(101)};};
+ w.localStorage.setItem('swiflytv.activeProfile',JSON.stringify({id:'main',mode:'standard'}));
+ await w.SwiflyDetails.open('/movie/101',d.getElementById('open'));await w.SwiflyDetails.open('/movie/101');assert.equal(requests,1);
+ w.localStorage.setItem('swiflytv.activeProfile',JSON.stringify({id:'kids',mode:'kids'}));await w.SwiflyDetails.open('/movie/101');assert.equal(requests,2);
+ w.history.replaceState(null,'','/kids?media=movie-101');await w.SwiflyDetails.open('/movie/101');assert.equal(requests,3);env.finish();
+});
+test('Reopening a recent title does not extend its original metadata freshness deadline',async()=>{
+ const env=setup(),w=env.window,d=w.document;let now=1000,requests=0;
+ w.Date.now=()=>now;w.fetch=async()=>{requests++;return {ok:true,text:async()=>fragment(101)};};
+ await w.SwiflyDetails.open('/movie/101',d.getElementById('open'));now+=60000;await w.SwiflyDetails.open('/movie/101');assert.equal(requests,1);
+ now+=30001;await w.SwiflyDetails.open('/movie/101');assert.equal(requests,2,'The cache deadline must remain tied to the network response');env.finish();
+});
+test('Invalid and oversized detail responses remain retryable and never enter the recent cache',async()=>{
+ const env=setup(),w=env.window,d=w.document;let requests=0,html='<p>Not a title fragment</p>';
+ w.fetch=async()=>{requests++;return {ok:true,text:async()=>html};};
+ await w.SwiflyDetails.open('/movie/101',d.getElementById('open'));assert(d.querySelector('.svDetailError'));
+ html=fragment(101);await w.SwiflyDetails.open('/movie/101');assert.equal(requests,2);assert(d.querySelector('dialog h1'));
+ html='<article class="svTitleDetails"><h1>Movie 202</h1><p>'+'a'.repeat(200*1024)+'</p></article>';
+ await w.SwiflyDetails.open('/movie/202');await w.SwiflyDetails.open('/movie/202');assert.equal(requests,4,'Large fragments should render without being retained');env.finish();
+});
+test('An aborted stale detail response cannot seed the recent cache',async()=>{
+ const env=setup(),w=env.window,d=w.document;let requests=0,late;
+ w.fetch=async url=>{requests++;if(requests===1)return new Promise(resolve=>late=resolve);return {ok:true,text:async()=>fragment(url.match(/\/(?:movie|tv)\/(\d+)/)[1])};};
+ const old=w.SwiflyDetails.open('/movie/101',d.getElementById('open'));await w.SwiflyDetails.open('/movie/202');
+ late({ok:true,text:async()=>fragment(101)});await old;await w.SwiflyDetails.open('/movie/101');assert.equal(requests,3);assert.equal(d.querySelector('dialog h1').textContent,'Movie 101');env.finish();
+});

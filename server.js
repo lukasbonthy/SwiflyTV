@@ -6482,10 +6482,10 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/clean/clean.css?v=153" />
     <script defer src="/assets/clean/clean.js?v=151"></script>
     <script defer src="/assets/clean/continue.js?v=154"></script>
-    <link rel="stylesheet" href="/assets/clean/details.css?v=198" />
-    <link rel="stylesheet" href="/assets/clean/motion.css?v=163" />
-    <script defer src="/assets/clean/motion.js?v=198"></script>
-    <script defer src="/assets/clean/details.js?v=198"></script>
+    <link rel="stylesheet" href="/assets/clean/details.css?v=203" />
+    <link rel="stylesheet" href="/assets/clean/motion.css?v=203" />
+    <script defer src="/assets/clean/motion.js?v=203"></script>
+    <script defer src="/assets/clean/details.js?v=203"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=163" />
     <script defer src="/assets/liquid-glass/surfaces.js?v=200"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=164" />
