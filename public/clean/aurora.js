@@ -3,11 +3,14 @@
   'use strict';
   if (window.SwiflyAurora) return;
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
-  let started = false, stopped = false, observer;
+  const touch = window.matchMedia('(pointer: coarse)');
+  let started = false, stopped = false, observer, viewport, background, inView = true;
   function refresh() {
     if (!document.body || stopped) return;
+    const policy = touch.matches ? 'touch' : 'full';
+    if (document.body.dataset.svPerformance !== policy) document.body.dataset.svPerformance = policy;
     const watch = /^\/(?:watch|embed)(?:\/|$)/.test(location.pathname) || Boolean(document.querySelector('.svPlayerPage,.dsWatchPage'));
-    const state = watch || document.body.dataset.stBackdrop !== 'aurora' ? 'off' : document.hidden || reduced.matches || document.body.classList.contains('reduceMotion') ? 'still' : 'live';
+    const state = watch || document.body.dataset.stBackdrop !== 'aurora' ? 'off' : document.hidden || !inView || reduced.matches || document.body.classList.contains('reduceMotion') ? 'still' : 'live';
     if (document.body.dataset.svAuroraState !== state) document.body.dataset.svAuroraState = state;
   }
   function boot() {
@@ -15,6 +18,15 @@
     refresh();
     document.addEventListener('visibilitychange', refresh);
     reduced.addEventListener('change', refresh);
+    touch.addEventListener('change', refresh);
+    background = document.querySelector('.svAuroraBackground');
+    if (background && typeof IntersectionObserver === 'function') {
+      viewport = new IntersectionObserver(entries => {
+        for (const entry of entries) if (entry.target === background) inView = entry.isIntersecting;
+        refresh();
+      });
+      viewport.observe(background);
+    }
     observer = new MutationObserver(refresh);
     observer.observe(document.body, {attributes:true,attributeFilter:['class','data-st-backdrop']});
   }
@@ -23,7 +35,9 @@
     document.removeEventListener('DOMContentLoaded', boot);
     document.removeEventListener('visibilitychange', refresh);
     reduced.removeEventListener('change', refresh);
+    touch.removeEventListener('change', refresh);
     observer?.disconnect();
+    viewport?.disconnect();
     if (document.body) document.body.dataset.svAuroraState = 'still';
   }
   window.SwiflyAurora = Object.freeze({refresh,destroy});

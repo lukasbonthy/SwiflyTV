@@ -720,3 +720,86 @@ test('Safari pill clipping uses the same radius as its rounded optical field',()
  assert.equal(Number(clip.getAttribute('rx')),20,'a CSS pill is capped by half its height, rather than becoming a wide SVG ellipse');
  env.finish();
 });
+
+test('Safari lenses share one frame and finish scene reads before committing either lens',async()=>{
+ const env=glass('<main style="background-image:url(/art.jpg)"></main><nav><div class="svLiquidPane" data-swifly-glass></div><div class="svLiquidPane" data-swifly-glass></div></nav>'),w=env.window,d=w.document;
+ Object.defineProperty(w.navigator,'userAgent',{configurable:true,value:'Mozilla/5.0 AppleWebKit/605.1.15 Version/18.6 Safari/605.1.15'});
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);await tick();
+ const order=[],computed=w.getComputedStyle;
+ w.getComputedStyle=(...args)=>{order.push('read');return computed(...args);};
+ for(const scene of d.querySelectorAll('[data-sv-glass-scene]')){
+  const replace=scene.replaceChildren.bind(scene);scene.replaceChildren=(...args)=>{order.push('commit');return replace(...args);};
+ }
+ d.dispatchEvent(new w.Event('scroll'));
+ assert.equal(w.frameCount(),1,'several lenses must share one scene update frame');
+ w.flush(32);await tick();
+ assert.equal(order.filter(value=>value==='commit').length,2);
+ assert(order.lastIndexOf('read')<order.indexOf('commit'),'no style read may follow the first SVG scene write');
+ assert.equal(w.frameCount(),0);env.finish();
+});
+
+test('Safari ignores text-only page mutations because its lens samples artwork rather than text',async()=>{
+ const env=glass('<main style="background-image:url(/art.jpg)"><span id="status">Ready</span></main><nav><div class="svLiquidPane" data-swifly-glass></div></nav>'),w=env.window,d=w.document;
+ Object.defineProperty(w.navigator,'userAgent',{configurable:true,value:'Mozilla/5.0 AppleWebKit/605.1.15 Version/18.6 Safari/605.1.15'});
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);await tick();w.flush(20);await tick();
+ assert.equal(w.frameCount(),0,'initial page load must settle before the text changes');
+ const status=d.getElementById('status');status.firstChild.data='1:24';await tick();
+ assert.equal(w.frameCount(),0,'a playback clock must not recapture every lens');
+ status.textContent='1:25';await tick();assert.equal(w.frameCount(),0);
+ d.querySelector('main').style.backgroundImage='url(/changed.jpg)';await tick();
+ assert.equal(w.frameCount(),1,'changed artwork must continue to refresh');w.flush(32);
+ assert.match(d.querySelector('[data-sv-glass-scene]').innerHTML,/changed\.jpg/);env.finish();
+});
+
+test('Safari does not build or sample panes hidden by an ancestor',async()=>{
+ const env=glass('<main style="background-image:url(/art.jpg)"></main><nav style="visibility:hidden"><div class="svLiquidPane" data-swifly-glass></div></nav>'),w=env.window,d=w.document;
+ Object.defineProperty(w.navigator,'userAgent',{configurable:true,value:'Mozilla/5.0 AppleWebKit/605.1.15 Version/18.6 Safari/605.1.15'});
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);await tick();
+ assert.equal(d.querySelector('.svWebkitGlassOptics'),null,'a closed profile menu needs no SVG scene');
+ d.querySelector('nav').style.visibility='visible';await tick();w.flush(32);await tick();
+ assert(d.querySelector('.svWebkitGlassOptics'),'opening the menu restores its original glass');env.finish();
+});
+
+test('Touch Safari bounds repeated scroll sampling and captures the final position without an idle frame loop',async()=>{
+ const env=glass('<main style="background-image:url(/art.jpg)"></main><nav><div class="svLiquidPane" data-swifly-glass></div></nav>'),w=env.window,d=w.document;
+ Object.defineProperty(w.navigator,'userAgent',{configurable:true,value:'Mozilla/5.0 AppleWebKit/605.1.15 Version/18.6 Safari/605.1.15'});
+ w.matchMedia('(pointer: coarse)').matches=true;
+ let clock=0;Object.defineProperty(w.performance,'now',{configurable:true,value:()=>clock});
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);await tick();w.flush(20);await tick();
+ const timers=new Map();let timerId=0;
+ w.setTimeout=(fn,delay)=>{timers.set(++timerId,{fn,at:clock+delay});return timerId;};w.clearTimeout=id=>timers.delete(id);
+ const runTimers=()=>{for(const [id,timer] of timers)if(timer.at<=clock){timers.delete(id);timer.fn();}};
+ const scene=d.querySelector('[data-sv-glass-scene]'),replace=scene.replaceChildren.bind(scene);let captures=0,top=0;
+ scene.replaceChildren=(...args)=>{captures++;return replace(...args);};
+ d.querySelector('main').getBoundingClientRect=()=>({width:400,height:1000,left:0,top,right:400,bottom:top+1000});
+ for(let i=1;i<=20;i++){clock=i*16;top=-i*4;d.dispatchEvent(new w.Event('scroll'));runTimers();w.flush(clock);}
+ clock+=60;runTimers();w.flush(clock);await tick();
+ assert(captures>0&&captures<=7,'20 scroll events should require at most seven artwork captures');
+ assert.equal(Number(scene.querySelector('image').getAttribute('y')),top,'the settled frame must sample the latest artwork position');
+ assert.equal(w.frameCount(),0);assert.equal(timers.size,0,'sampling must stop once the queued scene is current');env.finish();
+});
+
+test('Safari rejects offscreen catalog row branches before resolving their styles or sort order',()=>{
+ const env=glass('<main style="background-image:url(/hero.jpg)">'+('<section class="dsRow"><div>'+('<article class="movieCard"><img src="/poster.jpg"></article>'.repeat(20))+'</div></section>').repeat(40)+'</main><nav><div class="svLiquidPane" data-swifly-glass></div></nav>'),w=env.window,d=w.document;
+ Object.defineProperty(w.navigator,'userAgent',{configurable:true,value:'Mozilla/5.0 AppleWebKit/605.1.15 Version/18.6 Safari/605.1.15'});
+ for(const row of d.querySelectorAll('.dsRow'))row.getBoundingClientRect=()=>({width:800,height:400,left:0,top:2000,bottom:2400,right:800});
+ const computed=w.getComputedStyle;let offscreenStyles=0;
+ w.getComputedStyle=(node,...args)=>{if(node.closest('.dsRow'))offscreenStyles++;return computed(node,...args);};
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);
+ assert.equal(offscreenStyles,0,'rows below the sampled lens band must not resolve all their sibling styles for z-order');
+ assert.match(d.querySelector('[data-sv-glass-scene]').innerHTML,/hero\.jpg/);env.finish();
+});
+
+test('Safari does not recapture navigation for a settled paint change outside its sampled band',async()=>{
+ const env=glass('<main style="background-image:url(/hero.jpg)"><section class="below">More movies</section></main><nav><div class="svLiquidPane" data-swifly-glass></div></nav>'),w=env.window,d=w.document;
+ Object.defineProperty(w.navigator,'userAgent',{configurable:true,value:'Mozilla/5.0 AppleWebKit/605.1.15 Version/18.6 Safari/605.1.15'});
+ const below=d.querySelector('.below');below.getBoundingClientRect=()=>({width:400,height:200,left:0,top:2000,bottom:2200,right:400});
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);await tick();w.flush(20);await tick();
+ const scene=d.querySelector('[data-sv-glass-scene]'),replace=scene.replaceChildren.bind(scene);let captures=0;
+ scene.replaceChildren=(...args)=>{captures++;return replace(...args);};
+ below.dispatchEvent(new w.Event('transitionend',{bubbles:true}));w.flush(32);await tick();
+ assert.equal(captures,0,'an offscreen rail reveal must not redraw a fixed navigation lens');
+ below.style.backgroundImage='url(/below.jpg)';await tick();w.flush(48);await tick();assert.equal(captures,0);
+ d.querySelector('main').style.backgroundImage='url(/updated-hero.jpg)';await tick();w.flush(64);await tick();assert.equal(captures,1);
+ assert.match(scene.innerHTML,/updated-hero\.jpg/);env.finish();
+});

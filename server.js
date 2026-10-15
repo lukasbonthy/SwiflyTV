@@ -26,6 +26,10 @@ const { runProviderRace } = require("./lib/provider-race");
 const { classifyMediaCandidate } = require("./lib/media-discovery");
 const { resolveNuvioProvider, PROVIDERS: NUVIO_ALLOWED_PROVIDERS } = require("./lib/nuvio-provider");
 const { createMediaFileProxy } = require("./lib/media-file-proxy");
+const { normalizeAudioLanguage, normalizeSubtitles } = require("./lib/playback-options");
+const { createPlaybackHandoff } = require("./lib/playback-handoff");
+const { createVerifiedMediaEntryResolver } = require("./lib/native-source-entry");
+const { createSubtitleProxy } = require("./lib/subtitle-proxy");
 const { cleanHeaders: cleanNuvioHeaders } = require("./lib/nuvio-http");
 
 // ===== SwiflyTV no-env mode =====
@@ -634,7 +638,9 @@ function apiNormalizeSources(input) {
         forceHls: apiNodeSaysHls(mediaUrl, node),
         mediaVerified: node.mediaVerified === true,
         requiresProxy: node.requiresProxy === true,
-        codecName: String(node.codecName || "").slice(0, 32)
+        codecName: String(node.codecName || "").slice(0, 32),
+        audioLanguage: normalizeAudioLanguage(node.audioLanguage || node.audio_language || node.language || node.lang),
+        subtitles: normalizeSubtitles(node.subtitles || node.captions, { headers: node.headers || {}, baseUrl: mediaUrl })
       });
     }
   });
@@ -1187,7 +1193,9 @@ function apiCollectTrustedStreamSources(providerName = "", payload = {}) {
       forceHls: apiTrustedProviderCanForceHls(provider) && !apiIsAllowedMediaExtensionUrl(url),
       mediaVerified: node.mediaVerified === true,
       requiresProxy: node.requiresProxy === true,
-      codecName: String(node.codecName || "").slice(0, 32)
+      codecName: String(node.codecName || "").slice(0, 32),
+      audioLanguage: normalizeAudioLanguage(node.audioLanguage || node.audio_language || node.language || node.lang),
+      subtitles: normalizeSubtitles(node.subtitles || node.captions, { headers: node.headers || {}, baseUrl: url })
     });
   }
 
@@ -1235,10 +1243,14 @@ async function apiFindPlayableFromPayload({
 }) {
   const normalized = apiNormalizeResponse(payload, providerName, mediaType);
   const trustedSources = apiCollectTrustedStreamSources(providerName, payload);
-  const sources = apiPreferM3u8Sources([
+  const candidates = [
     ...trustedSources,
     ...(Array.isArray(normalized.sources) ? normalized.sources : [])
-  ]);
+  ];
+  // Captured providers verify their winner before returning. Alternate files
+  // stay available as options, but must never replace it before verification.
+  const captured = ["vidsrc-local", "streamprovider-local"].includes(apiClean(providerName).toLowerCase());
+  const sources = apiPreferM3u8Sources(captured ? candidates.filter(source => source.mediaVerified === true) : candidates);
 
   for (const source of sources) {
     const result = apiSourceToProxyResult({
@@ -1249,6 +1261,8 @@ async function apiFindPlayableFromPayload({
       id,
       season,
       episode,
+      playbackCandidates: Array.isArray(payload?.sources) ? payload.sources : candidates,
+      subtitles: payload?.subtitles || payload?.captions || [],
       attempts
     });
     if (result) return result;
@@ -1359,7 +1373,7 @@ async function apiFindPlayableFromPayload({
   return null;
 }
 
-function apiSourceToProxyResult({ source, raw, provider, type, id, season = "", episode = "", attempts = [] }) {
+function apiSourceToProxyResult({ source, raw, provider, type, id, season = "", episode = "", attempts = [], playbackCandidates = [], subtitles = [] }) {
   if (!source || !source.url) return null;
 
   let parsed;
@@ -1412,7 +1426,7 @@ function apiSourceToProxyResult({ source, raw, provider, type, id, season = "", 
   const streamType = isHls ? "m3u8" : (isDash ? "dash" : (apiVerifiedMediaFormat(originalUrl, source) || sourceExt || "video"));
   const streamMode = isHls ? "hls" : (isDash ? "dash" : "video");
 
-  return {
+  return preparePlaybackOptions({
     status: "ok",
     providerKind: `api_${provider}${isHls ? (hlsProxy.url ? "_hls_proxy" : "_direct_hls") : "_non_download"}`,
     movieId: String(id || ""),
@@ -1436,7 +1450,7 @@ function apiSourceToProxyResult({ source, raw, provider, type, id, season = "", 
     apiProvider: provider,
     normalized: Object.fromEntries(["title", "year", "poster", "backdrop", "overview"].map(key => [key, ["string", "number"].includes(typeof raw?.[key]) ? raw[key] : ""])),
     attempts
-  };
+  }, { source, sources: playbackCandidates, subtitles, metadata: { movieId: String(id || ""), provider, type, season, episode } });
 }
 
 
@@ -4619,7 +4633,8 @@ async function localStreamProviderGetStreams({ tmdbId = "", mediaType = "movie",
     success: true, code: "", provider: "streamprovider-local", tmdbId, mediaType,
     season: mediaType === "tv" ? season : "", episode: mediaType === "tv" ? episode : "",
     providersTried: nuvio.results.map(result => result.provider), results: nuvio.results,
-    streamsFound: 1, sources: [nuvio.winner.source]
+    streamsFound: (nuvio.winner.sources || [nuvio.winner.source]).length,
+    sources: nuvio.winner.sources || [nuvio.winner.source], subtitles: nuvio.winner.subtitles || []
   };
 
   const configuredOrder = mediaType === "tv" ? STREAMPROVIDER_TV_ORDER : STREAMPROVIDER_MOVIE_ORDER;
@@ -5572,6 +5587,9 @@ const memoryCache = new Map();
 const watchRooms = new Map();
 const remoteBrowserSessions = new Map();
 const hlsProxySources = new Map();
+const subtitleProxySources = new Map();
+const preparePlaybackOptions = createPlaybackHandoff({ registerSource: registerHlsProxySource,
+  registerSubtitle: registerSubtitleSource, enabled: hlsProxyEnabled });
 let remoteBrowserEngine = null;
 let remoteBrowserLaunchError = "";
 
@@ -5662,6 +5680,11 @@ function registerHlsProxySource(sourceUrl, headers = {}, meta = {}) {
     return { enabled: false, url: "", id: "" };
   }
 
+  // Unselected quality options may never be opened, so request-time cleanup
+  // alone cannot release them. Bound the registry when registering each source.
+  const now = Date.now();
+  for (const [key, entry] of hlsProxySources) if (Number(entry.expiresAt) <= now) hlsProxySources.delete(key);
+  while (hlsProxySources.size >= 4096) hlsProxySources.delete(hlsProxySources.keys().next().value);
   const id = hlsProxyId();
   const ttlMs = Math.max(5 * 60 * 1000, Number(process.env.HLS_PROXY_TTL_MS || 1000 * 60 * 60 * 2));
   hlsProxySources.set(id, {
@@ -5675,8 +5698,8 @@ function registerHlsProxySource(sourceUrl, headers = {}, meta = {}) {
     meta: meta || {},
     requests: [],
     lastError: "",
-    createdAt: Date.now(),
-    expiresAt: Date.now() + ttlMs,
+    createdAt: now,
+    expiresAt: now + ttlMs,
   });
 
   return {
@@ -5693,6 +5716,21 @@ function getHlsProxyEntry(id) {
     hlsProxySources.delete(entry.id);
     return null;
   }
+  return entry;
+}
+
+function registerSubtitleSource(track) {
+  const now = Date.now();
+  for (const [id, entry] of subtitleProxySources) if (entry.expiresAt <= now) subtitleProxySources.delete(id);
+  while (subtitleProxySources.size >= 4096) subtitleProxySources.delete(subtitleProxySources.keys().next().value);
+  const id = hlsProxyId();
+  subtitleProxySources.set(id, { sourceUrl: track.url, headers: cleanNuvioHeaders(track.headers || {}), expiresAt: now + 2 * 60 * 60 * 1000 });
+  return { id, url: `/api/subtitle-proxy/${id}/track.vtt` };
+}
+
+function getSubtitleProxyEntry(id) {
+  const entry = subtitleProxySources.get(String(id || ""));
+  if (!entry || entry.expiresAt <= Date.now()) { subtitleProxySources.delete(String(id || "")); return null; }
   return entry;
 }
 
@@ -6440,7 +6478,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player || partyBrowse || active === "social" ? '<script defer src="/socket.io/socket.io.js"></script>' : ""}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/modern-normalize@2.0.0/modern-normalize.min.css" />
     <link rel="stylesheet" href="/assets/liquid-glass/liquid-glass.css?v=197" />
-    <script defer src="/assets/liquid-glass/liquid-glass.js?v=196"></script>
+    <script defer src="/assets/liquid-glass/liquid-glass.js?v=202"></script>
     <link rel="stylesheet" href="/assets/clean/clean.css?v=153" />
     <script defer src="/assets/clean/clean.js?v=151"></script>
     <script defer src="/assets/clean/continue.js?v=154"></script>
@@ -6452,23 +6490,25 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/liquid-glass/surfaces.js?v=200"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=164" />
     <script defer src="/assets/studio/studio.js?v=164"></script>
-    <link rel="stylesheet" href="/assets/clean/aurora.css?v=170" />
-    <script defer src="/assets/clean/aurora.js?v=168"></script>
+    <link rel="stylesheet" href="/assets/clean/aurora.css?v=202" />
+    <script defer src="/assets/clean/aurora.js?v=202"></script>
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=163" />' : ""}
     ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=173" />' : ""}
     
-    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=200"></script>' : ""}
+    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=202"></script>' : ""}
     ${active === "social" ? '<script defer src="/assets/party/party.js?v=200"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}
     ${player || partyBrowse ? '<script defer src="/assets/player/watch-party.js?v=160"></script>' : ""}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/finish.css?v=175" />'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/polish.css?v=176" />'}
     <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=201" />
     ${player ? "" : '<link rel="stylesheet" href="/assets/liquid-glass/controls.css?v=197" />'}
-    ${player ? "" : '<link rel="stylesheet" href="/assets/clean/experience.css?v=199" />'}
+    ${player ? "" : '<link rel="stylesheet" href="/assets/clean/experience.css?v=202" />'}
     <link rel="stylesheet" href="/assets/clean/cinema.css?v=199" />
+    <link rel="stylesheet" href="/assets/clean/profiles.css?v=202" />
     ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=201" />' : ""}
     ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=201" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=199" />' : ""}
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=199" />' : ""}
+    <link rel="stylesheet" href="/assets/clean/performance.css?v=202" />
 </head>
 <body class="svCleanShell">
 
@@ -6527,6 +6567,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       </div>
       <div class="navRightCluster dsNavActions">
         <button id="svNavSearchToggle" class="svNavButton" type="button" aria-label="Search movies and series" aria-controls="svNavSearchPopup" aria-expanded="false">${cleanIcon("search")}</button>
+        <a class="svNavButton svNavPartyLink${active === "social" ? " active" : ""}" href="/social?tab=watchrooms" aria-label="Party Hub" title="Party Hub"${active === "social" ? ' aria-current="page"' : ""}>${cleanIcon("people")}</a>
         <button id="controlToggleTop" class="svNavButton" type="button" aria-label="Open Swifly Studio" aria-haspopup="dialog" aria-controls="controlPanel" aria-expanded="false">${cleanIcon("settings")}</button>
         <details class="dsProfileMenu">
           <summary aria-label="Open profile menu"><span class="profilePill" aria-hidden="true">${cleanIcon("user")}</span></summary>
@@ -13631,10 +13672,15 @@ async function handleHlsProxyAsset(req, res) {
   }
 }
 
-const handleMediaFileProxy = createMediaFileProxy({ getEntry: getHlsProxyEntry });
+const handleMediaFileProxy = createMediaFileProxy({ getEntry: createVerifiedMediaEntryResolver({ getEntry: getHlsProxyEntry }) });
 app.options("/api/media-file-proxy/:id/video.mp4", handleMediaFileProxy);
 app.head("/api/media-file-proxy/:id/video.mp4", handleMediaFileProxy);
 app.get("/api/media-file-proxy/:id/video.mp4", handleMediaFileProxy);
+
+const handleSubtitleProxy = createSubtitleProxy({ getEntry: getSubtitleProxyEntry });
+app.options("/api/subtitle-proxy/:id/track.vtt", handleSubtitleProxy);
+app.head("/api/subtitle-proxy/:id/track.vtt", handleSubtitleProxy);
+app.get("/api/subtitle-proxy/:id/track.vtt", handleSubtitleProxy);
 
 app.options("/api/hls-proxy/:id/master.m3u8", handleHlsProxyMaster);
 app.head("/api/hls-proxy/:id/master.m3u8", handleHlsProxyMaster);
@@ -14689,6 +14735,9 @@ app.get("/api/hls-source/movie/:id", async (req, res) => {
     streamQuality: result.streamQuality || "",
     streamName: result.streamName || "",
     streamNameFix: true,
+    audioLanguage: result.audioLanguage || "",
+    playbackSources: result.playbackSources || [],
+    subtitles: result.subtitles || [],
     m3u8ProxyDefault: true,
     hlsProxyEnabled: hlsProxyEnabled(),
     message: result.message || "",
@@ -14880,16 +14929,18 @@ function accountPage(req, res) {
   const body = `<main class="dsPlainPage dsAccountPage svCinemaPage" data-cinema-page="account">
     <section class="dsAccountHero" data-cinema-reveal>
       <div class="svAccountIdentity">
-        <span class="svAccountAvatar" data-account-avatar aria-hidden="true">S</span>
-        <span class="dsEyebrow">Your SwiflyTV</span>
+        <div class="svAccountIdentityHeader">
+          <span class="svAccountAvatar" data-account-avatar aria-hidden="true">S</span>
+          <span class="dsEyebrow">Your SwiflyTV<span class="svAccountIdentityCaption">A space that feels like you.</span></span>
+        </div>
         <h1>Your world of stories.</h1>
         <p>Your favorites, your next watch, your people. All in one place.</p>
       </div>
       <div class="dsAccountActions">
-        <span class="svCinemaEyebrow">MAKE YOURSELF AT HOME</span>
+        <span class="svCinemaEyebrow">YOUR NEXT GOOD EVENING</span>
         <a class="dsPrimaryBtn" href="/continue">${cleanIcon("play")}Pick up where you left off</a>
         <a class="dsSecondaryBtn" href="/profiles">${cleanIcon("user")}Switch profile</a>
-        <a class="dsGhostPill" href="/watchrooms">${cleanIcon("people")}Make it a movie night</a>
+        <a class="dsGhostPill" href="/social?tab=watchrooms">${cleanIcon("people")}Make it a movie night</a>
       </div>
     </section>
 
@@ -14915,9 +14966,9 @@ function accountPage(req, res) {
         <h2>My List</h2>
         <p>View titles saved for later.</p>
       </a>
-      <a class="dsAccountCard" href="/watchrooms">
+      <a class="dsAccountCard" href="/social?tab=watchrooms">
         <span class="svAccountTileIcon">${cleanIcon("people")}</span><span class="svAccountTileArrow">${cleanIcon("arrow")}</span>
-        <h2>Watch Parties</h2>
+        <h2>Party Hub</h2>
         <p>Create or join a synced room.</p>
       </a>
       <a class="dsAccountCard" href="/liked"><span class="svAccountTileIcon">${cleanIcon("heart")}</span><span class="svAccountTileArrow">${cleanIcon("arrow")}</span><h2>Favorites</h2><p>The films and series you keep coming back to.</p></a>
@@ -14955,8 +15006,8 @@ function profilesPage(req, res) {
       <div class="dsProfilesGrid dsProfilesChoiceGrid" id="profilesGrid"></div>
 
       <div class="dsProfilesQuickActions">
-        <a class="dsSecondaryBtn" href="/profiles/manage"><i class="fa-solid fa-pen-to-square"></i> Manage Profiles</a>
-        <a class="dsGhostPill" href="/account"><i class="fa-solid fa-gear"></i> Account</a>
+        <a class="dsSecondaryBtn" href="/profiles/manage">${cleanIcon("settings")}Manage profiles</a>
+        <a class="dsGhostPill" href="/account">${cleanIcon("user")}Your account</a>
       </div>
     </section>
 
@@ -15044,32 +15095,36 @@ function profilesPage(req, res) {
 function profilesManagePage(req, res) {
   const body = `<main class="dsPlainPage dsProfilesManagePage svProfilesCinematic svCinemaPage" data-cinema-page="profile-settings">
     <section class="dsCleanHero dsProfilesManageHero" data-cinema-reveal>
-      <span class="dsEyebrow">Your home cinema</span>
-      <h1>A space for everyone.</h1>
-      <p>Give every viewer a little corner of SwiflyTV.</p>
+      <div class="svProfileManageIntro">
+        <span class="dsEyebrow">Your home cinema</span>
+        <h1>A space for everyone.</h1>
+        <p>Personal lists. Familiar favorites. A seat of their own.</p>
+      </div>
       <div class="dsHeroMiniActions">
-        <a class="dsPrimaryBtn" href="/profiles"><i class="fa-solid fa-user-group"></i> Switch Profile</a>
-        <a class="dsSecondaryBtn" href="/account"><i class="fa-solid fa-gear"></i> Account</a>
+        <a class="dsPrimaryBtn" href="/profiles">${cleanIcon("people")}Choose a profile</a>
+        <a class="dsSecondaryBtn" href="/account">${cleanIcon("user")}Your account</a>
       </div>
     </section>
 
     <section class="dsProfileManagerLayout" data-cinema-reveal>
       <aside class="dsProfileManagerPanel">
+        <span class="svProfileCreateMark" aria-hidden="true">${cleanIcon("user")}</span>
         <span class="dsPanelLabel">Create profile</span>
-        <h2>New profile</h2>
+        <h2>Add someone new.</h2>
+        <p class="svProfilePanelCopy">A little corner of SwiflyTV, just for them.</p>
         <form id="profileCreateForm" class="dsStackedForm">
           <label>
             <span>Name</span>
             <input name="name" placeholder="Name this profile" maxlength="32" />
           </label>
           <label>
-            <span>Mode</span>
+            <span>Viewing experience</span>
             <select name="mode">
-              <option value="standard">Regular Movie Profile</option>
+              <option value="standard">Regular profile</option>
               <option value="kids">Kids Safe</option>
             </select>
           </label>
-          <button class="dsPrimaryBtn" type="submit"><i class="fa-solid fa-plus"></i> Add Profile</button>
+          <button class="dsPrimaryBtn" type="submit">${cleanIcon("user")}Add profile</button>
         </form>
       </aside>
 
@@ -15077,7 +15132,7 @@ function profilesManagePage(req, res) {
         <div class="dsSectionHeaderSplit">
           <div>
             <span class="dsEyebrow">Your profiles</span>
-            <h2>Profile list</h2>
+            <h2>Everyone at home.</h2>
           </div>
           <button id="resetProfilesBtn" class="dsGhostPill" type="button">Reset</button>
         </div>
@@ -15660,6 +15715,9 @@ async function resolveDateRoomProxyVideoInBackground(roomId, movieId, selectedBy
       streamQuality: result.streamQuality || "",
       streamName: result.streamName || "",
       streamMode: result.streamMode || "",
+      audioLanguage: result.audioLanguage || "",
+      playbackSources: result.playbackSources || [],
+      subtitles: result.subtitles || [],
       isLiveM3u8: Boolean(result.isLiveM3u8),
       originalPlaybackUrl: result.originalPlaybackUrl || "",
       hlsProxyUrl: result.hlsProxyUrl || "",

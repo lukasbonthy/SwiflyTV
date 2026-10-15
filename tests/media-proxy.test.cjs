@@ -6,9 +6,14 @@ function fixture(overrides = {}) {
   const handoff = source.slice(source.indexOf('function apiTopList('), source.indexOf('function apiSourceToProxyResult('));
   const proxy = source.slice(source.indexOf('function apiSourceToProxyResult('), source.indexOf('// ===== Local port of uploaded ScarperApi-zero'));
   const context = { URL, process: { env: {} }, hlsProxyEnabled: () => true,
+    ...require('../lib/playback-options'),
     classifyMediaCandidate: require('../lib/media-discovery').classifyMediaCandidate,
     apiExtractMediaUrlsFromStringDeep: () => [],
     registerHlsProxySource: () => ({ enabled: true, id: 'local', url: '/api/hls-proxy/local/master.m3u8' }), ...overrides };
+  context.preparePlaybackOptions = require('../lib/playback-handoff').createPlaybackHandoff({
+    registerSource: (...args) => context.registerHlsProxySource(...args),
+    registerSubtitle: () => ({ id: 'caption', url: '/api/subtitle-proxy/caption/track.vtt' })
+  });
   vm.runInNewContext(helpers + handoff + proxy + '\nglobalThis.api = {normalize:apiNormalizeSources, playable:apiLooksPlayable, proxy:apiSourceToProxyResult, find:apiFindPlayableFromPayload};', context);
   return context.api;
 }
@@ -120,4 +125,36 @@ test('the actual provider handoff cannot strip a required proxy when it is disab
     format: 'mp4', mediaVerified: true, requiresProxy: true }] },
     providerName: 'streamprovider-local', providerConfig: {}, mediaType: 'tv', id: '108978', season: '1', episode: '1' });
   assert.equal(result, null);
+});
+
+test('normalization retains known audio and caption metadata for the selected source', () => {
+  const f = fixture();
+  const [source] = f.normalize({ sources: [{ url: 'https://media.example/movie.mp4', format: 'mp4', mediaVerified: true,
+    audioLanguage: 'English', subtitles: [{ url: 'https://media.example/en.srt', language: 'English', label: 'English CC' }] }] });
+  assert.equal(source.audioLanguage, 'en');
+  assert.equal(source.subtitles.length, 1);
+  const output = f.proxy({ source, provider: 'streamprovider-local', type: 'movie', id: '329865' });
+  assert.equal(output.audioLanguage, 'en');
+  assert.equal(output.subtitles[0].url, '/api/subtitle-proxy/caption/track.vtt');
+});
+
+test('provider handoff keeps the verified winner while offering lazy real movie and episode qualities', async () => {
+  for (const type of ['movie', 'tv']) {
+    const registrations = [];
+    const f = fixture({ registerHlsProxySource(url, headers, metadata) {
+      registrations.push({ url, headers, metadata });
+      return { id: String(registrations.length), url: `/api/hls-proxy/${registrations.length}/master.m3u8` };
+    } });
+    const selected = { url: 'https://media.example/selected.mp4?key=PRIVATE', format: 'mp4', mediaVerified: true,
+      requiresProxy: true, codecName: 'hevc', quality: '720p', audioLanguage: 'en' };
+    const alternate = { ...selected, url: 'https://media.example/alternate.mp4?key=PRIVATE', quality: '1080p', mediaVerified: false };
+    const output = await f.find({ payload: { sources: [selected, alternate] }, providerName: 'streamprovider-local', providerConfig: {},
+      mediaType: type, id: '108978', season: '2', episode: '3' });
+    assert.equal(output.playbackUrl, '/api/media-file-proxy/1/video.mp4');
+    assert.equal(output.streamQuality, '720p');
+    assert.deepEqual(Array.from(output.playbackSources, s => s.streamQuality), ['720p', '1080p']);
+    assert.equal(registrations[1].metadata.verifyBeforePlayback, true);
+    assert.equal(registrations[1].metadata.episode, '3');
+    assert.doesNotMatch(JSON.stringify(output.playbackSources), /key=PRIVATE/);
+  }
 });

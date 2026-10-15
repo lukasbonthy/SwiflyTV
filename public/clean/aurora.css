@@ -27,6 +27,7 @@ body.svCleanShell .svAuroraBackground > .svAuroraRibbon {
   animation:svOriginalAuroraFlow var(--sv-aurora-speed,32s) ease-in-out infinite alternate paused;
 }
 body.svCleanShell .svAuroraBackground > .svAuroraRibbon--first {opacity:.85}
+body.svCleanShell[data-st-aurora-color="glacier"] .svAuroraRibbon {filter:none}
 /* Extremely faint phase-shifted echoes add depth without changing the artwork. */
 body.svCleanShell .svAuroraBackground > .svAuroraRibbon--second {
   left:-7%;top:-7%;width:114%;height:113%;opacity:.18;
@@ -90,6 +91,21 @@ body.svCleanShell[data-sv-aurora-state="still"] .svAuroraRibbon,
 body.svCleanShell[data-st-aurora-motion="still"] .svAuroraRibbon {animation:none !important}
 @media(prefers-reduced-motion:reduce) {
   body.svCleanShell .svAuroraRibbon {animation:none !important}
+}
+/* Coarse pointers keep the original artwork in one cached moving layer.
+   The faint echo is optional depth; no art or page image is cropped or dimmed. */
+@media(pointer:coarse) {
+  body.svCleanShell .svAuroraBackground > .svAuroraRibbon--first {
+    animation-name:svTouchAuroraFlow;
+    opacity:.9;
+  }
+  body.svCleanShell .svAuroraBackground > .svAuroraRibbon--second {display:none}
+  body.svCleanShell[data-sv-aurora-state="live"]:not([data-st-aurora-motion="still"]) .svAuroraBackground > .svAuroraRibbon--first {will-change:transform}
+}
+@keyframes svTouchAuroraFlow {
+  0% {transform:translate3d(-1%,0,0) rotate(-.5deg) scale(1)}
+  47% {transform:translate3d(1.2%,-.6%,0) rotate(.6deg) scaleX(1.01) scaleY(1.005)}
+  100% {transform:translate3d(-.5%,.7%,0) rotate(-.3deg) scaleX(1.015) scaleY(.995)}
 }
 @media(max-width:600px) {
   body.svCleanShell .svAuroraBackground {height:min(80svh,690px)}

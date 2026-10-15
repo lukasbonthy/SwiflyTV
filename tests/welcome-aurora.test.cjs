@@ -172,6 +172,35 @@ test('Aurora has no frame loop and pauses when the document is hidden', () => {
   assert.equal(w.frameCount(), 0, 'Ambient movement must use CSS rather than a scheduled frame loop');
 });
 
+test('Aurora pauses outside the viewport and resumes without changing Studio settings',()=>{
+ const env=browser(studioMarkup()),w=env.window,d=w.document,watched=[];
+ w.IntersectionObserver=class {
+  constructor(callback){this.callback=callback;watched.push(this);}
+  observe(node){this.node=node;}
+  disconnect(){this.node=null;}
+ };
+ w.boot('studio/studio.js');w.boot('clean/aurora.js');
+ const observer=watched.find(value=>value.node===d.querySelector('.svAuroraBackground'));
+ assert(observer,'Aurora should observe its bounded background instead of listening to every scroll');
+ const saved=d.body.dataset.stAuroraMotion;
+ observer.callback([{target:observer.node,isIntersecting:false}]);assert.equal(d.body.dataset.svAuroraState,'still');
+ assert.equal(d.body.dataset.stAuroraMotion,saved);
+ observer.callback([{target:observer.node,isIntersecting:true}]);assert.equal(d.body.dataset.svAuroraState,'live');
+ assert.equal(w.frameCount(),0);w.SwiflyAurora.destroy();assert.equal(observer.node,null);env.finish();
+});
+
+test('Automatic touch rendering uses pointer capability without replacing saved appearance choices',()=>{
+ const env=browser(studioMarkup()),w=env.window,d=w.document;
+ w.matchMedia('(pointer: coarse)').matches=true;
+ w.boot('studio/studio.js');w.boot('clean/aurora.js');
+ assert.equal(d.body.dataset.svPerformance,'touch');
+ assert.equal(d.body.dataset.stBackdrop,'aurora');assert.equal(d.body.dataset.stGlass,'liquid');
+ assert.equal(d.body.dataset.stAuroraMotion,'drift');
+ assert.equal(w.localStorage.getItem(appearanceKey),null);
+ const pointer=w.matchMedia('(pointer: coarse)');pointer.matches=false;for(const fn of pointer.listeners)fn({matches:false});
+ assert.equal(d.body.dataset.svPerformance,'full');env.finish();
+});
+
 test('Device and app reduced motion both keep Aurora still', async () => {
   const env = studio({}, {reduced:true}), w = env.window, d = w.document;
   assert.equal(d.body.dataset.svAuroraState, 'still');
