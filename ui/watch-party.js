@@ -4,21 +4,21 @@ const glyph = (name) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentCol
 function joinForm(id) {
  return `<form class="svPartyJoinForm" data-party-join-form><label for="${id}">Join your friends</label><div><input id="${id}" name="invite" placeholder="Paste an invite or room code" required autocomplete="off" maxlength="500"/><button class="dsSecondaryBtn" type="submit">Join</button></div></form>`;
 }
-function watchPartyMarkup({movieId='',title='Movie'}={}) {
+function watchPartyMarkup({movieId='',title='Movie',poster=''}={}) {
  return `<section class="svInlineParty" data-watch-party data-party-movie-id="${esc(movieId)}" hidden>
-  <header class="svInlinePartyHead"><div><span class="dsEyebrow">IN GOOD COMPANY</span><h2 data-party-room-name>Movie night</h2></div><button class="dsIconBtn" type="button" data-party-leave aria-label="Leave watch party" title="Leave party">${glyph('close')}</button></header>
+  <header class="svInlinePartyHead"><div><span class="dsEyebrow">Watch party</span><h2 data-party-room-name>Movie night</h2></div><button class="dsIconBtn" type="button" data-party-leave aria-label="Leave watch party" title="Leave party">${glyph('close')}</button></header>
   <div class="svInlinePartyConnection"><span data-party-connection role="status">Connecting…</span><span data-party-role>Guest</span></div>
-  <div class="svInlinePartyFilm">${glyph('film')}<div><span>NOW SHOWING</span><b title="${esc(title)}">${esc(title)}</b></div></div>
+  <div class="svInlinePartyFilm">${glyph('film')}<div><span>Watching together</span><b title="${esc(title)}">${esc(title)}</b></div></div>
   <div class="svInlinePartyActions"><button class="dsSecondaryBtn" type="button" data-party-invite>${glyph('link')}Invite friends</button><button class="dsIconBtn" type="button" data-party-sync aria-label="Sync with the host" title="Sync with host">${glyph('refresh')}</button></div>
   <details class="svInlinePartyPeople"><summary>${glyph('people')}<span data-party-member-count>Who’s here</span></summary><ul data-party-members></ul></details>
-  <div class="svInlinePartyChatLabel"><span>ROOM CHAT</span><span>Share the reactions.</span></div><div class="svInlinePartyMessages" data-party-messages role="log" aria-label="Party messages" aria-live="polite"><p class="svPartyEmpty">The film’s better with company. Say hello.</p></div>
+  <div class="svInlinePartyChatLabel"><span>Conversation</span><span>Stay for the reactions.</span></div><div class="svInlinePartyMessages" data-party-messages role="log" aria-label="Party messages" aria-live="polite"><p class="svPartyEmpty">The film’s better with company. Say hello.</p></div>
   <form class="svInlinePartyComposer" data-party-chat-form><label class="svPartySrOnly" for="svInlinePartyMessage">Message your party</label><input id="svInlinePartyMessage" name="message" placeholder="Talk about the film…" autocomplete="off" maxlength="220" disabled/><button type="submit" class="dsIconBtn" aria-label="Send party message" disabled>${glyph('send')}</button></form>
   <p class="svInlinePartyStatus" data-party-status role="status"></p>
  </section>
  <dialog class="svWatchPartyDialog svCinemaPage" data-cinema-page="party-setup" aria-labelledby="svWatchPartyTitle" aria-describedby="svWatchPartyDescription">
-  <header><div><span class="dsEyebrow">A FILM. YOUR PEOPLE.</span><h2 id="svWatchPartyTitle">Watch together</h2></div><button class="dsIconBtn" type="button" data-party-dialog-close aria-label="Close party setup">${glyph('close')}</button></header>
-  <p id="svWatchPartyDescription">Same film, same moment. The host controls playback for everyone.</p>
-  <form class="svPartyCreateForm" data-party-create-form><div class="svPartySelectedTitle">${glyph('film')}<div><small>TONIGHT’S FILM</small><strong data-party-selected-title>${esc(title)}</strong></div></div><label for="svPartyRoomName">Party name</label><input id="svPartyRoomName" name="roomName" value="Movie night" maxlength="80" required/><button class="dsPrimaryBtn" type="submit">Start watch party ${glyph('arrow')}</button></form>
+  <header><div><span class="dsEyebrow">Make a movie night.</span><h2 id="svWatchPartyTitle">Watch together</h2></div><button class="dsIconBtn" type="button" data-party-dialog-close aria-label="Close party setup">${glyph('close')}</button></header>
+  <p id="svWatchPartyDescription">Invite your people. Everyone watches in sync, with playback led by the host.</p>
+  <form class="svPartyCreateForm" data-party-create-form><div class="svPartySelectedTitle">${poster?`<img class="svPartySetupPoster" src="${esc(poster)}" alt=""/>`:glyph('film')}<div><small>Tonight’s film</small><strong data-party-selected-title>${esc(title)}</strong></div></div><label for="svPartyRoomName">Party name</label><input id="svPartyRoomName" name="roomName" value="Movie night" maxlength="80" required/><button class="dsPrimaryBtn" type="submit">Start watch party ${glyph('arrow')}</button></form>
   <div class="svPartyFormDivider"><span>or join a party</span></div>${joinForm('svPlayerPartyInvite')}
   <p class="svPartySetupStatus" data-party-setup-status role="status"></p>
  </dialog>`;

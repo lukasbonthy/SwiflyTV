@@ -1,0 +1,88 @@
+/* v199: link-sharing rooms use the same quiet theater as native parties. */
+body.svCleanShell main.svWatchroomPage {
+ --room-line:#ffffff18;--room-ink:#eeedf5;--room-muted:#9894a7;--room-glow:#a795c916;
+ width:min(1360px,calc(100% - 64px)) !important;max-width:1360px !important;margin:0 auto !important;padding:117px 0 70px !important;
+ color:var(--room-ink);font-family:var(--st-font,"Host Grotesk",system-ui,sans-serif) !important;background:transparent !important;
+}
+.svWatchroomPage *, .svWatchroomPage *::before {box-sizing:border-box;}
+body.svCleanShell .svWatchroomPage :is(h1,h2,h3,p,button,input,select) {font-family:inherit !important;}
+body.svCleanShell .svWatchroomPage .dsStableRoomHero {display:flex;justify-content:space-between;align-items:flex-end;gap:32px;margin:0 0 30px;padding:0 0 26px;border:0;border-bottom:1px solid var(--room-line);border-radius:0;background:none;box-shadow:none;}
+body.svCleanShell .svWatchroomPage .dsStableRoomHero>div {min-width:0;}
+body.svCleanShell .svWatchroomPage .dsStableRoomHero .dsGhostPill {margin-bottom:22px;padding:0;border:0;background:none;font-size:12px;color:#9992af;}
+body.svCleanShell .svWatchroomPage .dsEyebrow {font-size:11px;font-weight:400;letter-spacing:.02em;text-transform:none;color:#a59bb9;}
+body.svCleanShell .svWatchroomPage .dsStableRoomHero h1 {margin:10px 0 13px;font-size:clamp(32px,3.8vw,51px);font-weight:500;line-height:1.05;letter-spacing:-.055em;overflow-wrap:anywhere;}
+body.svCleanShell .svWatchroomPage .dsStableRoomHero p {margin:0;max-width:520px;font-size:13px;font-weight:400;line-height:1.7;color:var(--room-muted);}
+body.svCleanShell .svWatchroomPage .dsStableRoomMeta {display:flex;align-items:center;gap:24px;flex-wrap:wrap;border:0;padding:0;background:none;box-shadow:none;}
+body.svCleanShell .svWatchroomPage .dsStableRoomMeta>div {min-width:0;padding:0;border:0;border-radius:0;background:none;}
+body.svCleanShell .svWatchroomPage .dsStableRoomMeta small {margin-bottom:6px;color:#777181;font-size:10px;letter-spacing:0;}
+body.svCleanShell .svWatchroomPage .dsStableRoomMeta strong {font-size:12px;font-weight:500;color:#c4bbd4;overflow-wrap:anywhere;}
+body.svCleanShell .svWatchroomPage .dsStableRoomGrid {display:grid;grid-template-columns:minmax(0,1fr) 320px;align-items:start;gap:22px;}
+body.svCleanShell .svWatchroomPage :is(.dsStableMain,.dsStableSide) {min-width:0;}
+body.svCleanShell .svWatchroomPage .dsStableTabs {display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;max-width:100%;margin:0 0 21px;padding:0 0 15px;border:0;border-bottom:1px solid var(--room-line);border-radius:0;background:none;box-shadow:none;}
+body.svCleanShell .svWatchroomPage .dsStableTabs button {flex-shrink:0;min-height:42px;padding:10px 17px;border:1px solid transparent;border-radius:999px;background:transparent;box-shadow:none;color:#898293;font-size:12px;font-weight:400;transition:background .2s,color .2s;}
+body.svCleanShell .svWatchroomPage .dsStableTabs button.active {border-color:#ffffff1c;background:#ffffff0c;color:#ece5f8;box-shadow:inset 0 1px #ffffff0b;}
+body.svCleanShell .svWatchroomPage .dsStablePanel {display:none;gap:24px;margin:0;padding:30px;border:1px solid var(--room-line);border-radius:25px;background:radial-gradient(ellipse at 0 0,var(--room-glow),transparent 75%),#101116cc;box-shadow:inset 0 1px #ffffff09;backdrop-filter:blur(18px);}
+body.svCleanShell .svWatchroomPage .dsStablePanel.active {display:grid;}
+body.svCleanShell .svWatchroomPage .dsStablePanelHead {display:flex;align-items:start;justify-content:space-between;gap:20px;}
+body.svCleanShell .svWatchroomPage :is(.dsStablePanel h2,.dsStablePanelHead h2) {font-size:26px;font-weight:500;line-height:1.15;letter-spacing:-.045em;margin:8px 0 12px;color:#ece7f5;}
+body.svCleanShell .svWatchroomPage :is(.dsStablePanel p,.dsStablePanelHead p) {font-size:13px;line-height:1.75;font-weight:400;color:var(--room-muted);margin:0;overflow-wrap:anywhere;}
+body.svCleanShell .svWatchroomPage .dsHostBadge {flex-shrink:0;padding:7px 10px;border:1px solid #ffffff17;border-radius:999px;background:#ffffff05;color:#a59bb7;font-size:10px;font-weight:400;}
+body.svCleanShell .svWatchroomPage :is(input,select) {min-width:0;min-height:45px;border:1px solid #ffffff20;border-radius:12px;background:#06070c9e;color:#d8d0e5;padding:11px 14px;font-size:12px;box-shadow:none;}
+body.svCleanShell .svWatchroomPage :is(input,select)::placeholder {color:#767080;}
+body.svCleanShell .svWatchroomPage :is(button,input,select,a):focus-visible {outline:2px solid #c3b1e9;outline-offset:4px;}
+body.svCleanShell .svWatchroomPage :is(.dsPrimaryBtn,.dsSecondaryBtn,.dsGhostPill) {display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:43px;padding:10px 16px !important;border:1px solid #ffffff20 !important;border-radius:999px !important;font-size:12px !important;font-weight:500 !important;white-space:nowrap;box-shadow:inset 0 1px #ffffff08 !important;}
+body.svCleanShell .svWatchroomPage .dsPrimaryBtn {color:#19141e !important;background:linear-gradient(145deg,#faf7ff,#d5cce5) !important;border-color:#ffffff90 !important;}
+body.svCleanShell .svWatchroomPage :is(.dsSecondaryBtn,.dsGhostPill) {background:#ffffff06 !important;color:#c9bfd8 !important;}
+body.svCleanShell .svWatchroomPage .dsStableUrlForm {display:flex;gap:10px;}
+body.svCleanShell .svWatchroomPage .dsStableUrlForm input {flex:1;width:0;}
+body.svCleanShell .svWatchroomPage :is(.dsStableWatchCard,.dsStableSyncBoard,.dsRoomMovieStatusCard,.dsRoomSyncControls) {border:0;border-radius:0;padding:20px 0;background:none;box-shadow:none;border-top:1px solid #ffffff0d;}
+body.svCleanShell .svWatchroomPage .dsStableWatchCard {display:flex;align-items:center;justify-content:space-between;gap:20px;}
+body.svCleanShell .svWatchroomPage .dsStableWatchCard>div {min-width:0;}
+body.svCleanShell .svWatchroomPage .dsStableWatchCard h3 {font-size:19px;font-weight:500;margin:8px 0;color:#ded5ed;}
+body.svCleanShell .svWatchroomPage :is(.dsStableWatchCard small,.dsStableSyncBoard small,.dsRoomMovieStatusCard small) {color:#898092;font-size:11px;font-weight:400;letter-spacing:0;}
+body.svCleanShell .svWatchroomPage .dsStableSyncBoard {display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+body.svCleanShell .svWatchroomPage .dsStableSyncBoard>div {padding:0;border:0;background:none;}
+body.svCleanShell .svWatchroomPage .dsStableSyncBoard strong {color:#d8c9ed;font-size:29px;font-weight:400;font-variant-numeric:tabular-nums;letter-spacing:-.04em;}
+body.svCleanShell .svWatchroomPage .dsStableActions {display:flex;flex-wrap:wrap;gap:8px;}
+body.svCleanShell .svWatchroomPage .dsRoomMovieForm {display:flex;gap:9px;}
+body.svCleanShell .svWatchroomPage .dsRoomMovieForm input {flex:1;width:0;}
+body.svCleanShell .svWatchroomPage :is(.dsRoomMovieStage,.dsStableLiveStage) {aspect-ratio:16/9;min-height:0;border:1px solid #ffffff18;border-radius:20px;overflow:hidden;background:#050508;box-shadow:0 20px 55px #0005;}
+body.svCleanShell .svWatchroomPage .dsRoomMovieEmpty {background:radial-gradient(ellipse at 50% 30%,#7a619c17,transparent 65%),#090911;color:#b7a6ce;}
+body.svCleanShell .svWatchroomPage .dsRoomMovieEmpty h3 {font-size:20px;font-weight:500;letter-spacing:-.03em;}
+body.svCleanShell .svWatchroomPage .dsRoomMovieEmpty p {max-width:270px;font-size:12px;}
+body.svCleanShell .svWatchroomPage .dsStableSide {display:block;position:sticky;top:105px;}
+body.svCleanShell .svWatchroomPage .dsStableSide .dsStableChat {display:flex;flex-direction:column;padding:23px 0 0;gap:0;min-height:450px;height:clamp(500px,calc(100svh - 190px),680px);overflow:hidden;}
+body.svCleanShell .svWatchroomPage .dsStableChatHead {padding:0 22px 20px;border-bottom:1px solid #ffffff0d;}
+body.svCleanShell .svWatchroomPage .dsStableChatHead h2 {font-size:21px;margin:7px 0 0;}
+body.svCleanShell .svWatchroomPage .dsStableMessages {flex:1;min-height:150px;max-height:none;margin:0;padding:20px 22px;border:0;border-radius:0;overflow:auto;overscroll-behavior:contain;background:none;}
+body.svCleanShell .svWatchroomPage .dsStableMsg {padding:0;margin:0 0 18px;border:0;background:none;box-shadow:none;}
+body.svCleanShell .svWatchroomPage .dsStableMsg b {font-size:11px;font-weight:500;color:#b9a4d2;}
+body.svCleanShell .svWatchroomPage .dsStableMsg p {font-size:13px;color:#ddd3eb;}
+body.svCleanShell .svWatchroomPage #stableChatForm {display:flex;gap:6px;margin:8px 12px 12px;padding:5px;border:1px solid #ffffff1c;border-radius:16px;background:#05060b8f;}
+body.svCleanShell .svWatchroomPage #stableChatForm input {flex:1;width:0;min-height:36px;padding:6px 8px;border:0;background:none;}
+body.svCleanShell .svWatchroomPage #stableChatForm button {padding:8px 12px !important;min-height:36px;font-size:11px !important;}
+body.svCleanShell .svWatchroomPage .dsCouplesPlusGrid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;}
+body.svCleanShell .svWatchroomPage .dsCouplesPlusTool {padding:23px;border:1px solid #ffffff12;border-radius:19px;background:#ffffff03;box-shadow:none;}
+body.svCleanShell .svWatchroomPage .dsCouplesPlusTool h3 {font-size:19px;font-weight:500;letter-spacing:-.035em;}
+body.svCleanShell .svWatchroomPage .dsCouplesPlusTool>span {color:#9b8aa9;letter-spacing:0;text-transform:none;font-size:11px;}
+body.svCleanShell .svWatchroomPage :is(.dsMoodButtons,.dsTasteButtons,.dsThemeButtons,.dsReactionButtons) button {min-height:36px;border:1px solid #ffffff1c;border-radius:999px;background:#ffffff05;color:#b9adcb;font-size:11px;}
+body.svCleanShell .svWatchroomPage :is(.dsMoodButtons,.dsTasteButtons,.dsThemeButtons,.dsReactionButtons) button.active {border-color:#c2a4e766;background:#c2a4e716;color:#eee3ff;}
+body.svCleanShell .svWatchroomPage :is(.dsMiniState,.dsStableBigClock) {border:1px solid #ffffff10;border-radius:13px;background:#0808107d;color:#b8a4cd;box-shadow:none;}
+body.svCleanShell .svWatchroomPage .dsCustomPlayerChrome {background:linear-gradient(0deg,#050509ba,transparent 40%);}
+body.svCleanShell .svWatchroomPage .dsCustomPlayerTop {padding:22px;color:#d9cee8;background:linear-gradient(#05050980,transparent);}
+body.svCleanShell .svWatchroomPage .dsCustomPlayerTop span {font-size:9px;letter-spacing:.15em;}
+body.svCleanShell .svWatchroomPage .dsCustomPlayerTop b {font-size:16px;font-weight:500;}
+body.svCleanShell .svWatchroomPage .dsCustomPlayerTop em {display:none;}
+body.svCleanShell .svWatchroomPage .dsCustomPlayerControls {inset:auto 14px 14px;padding:12px 16px 10px;border:1px solid #ffffff22;border-radius:16px;background:#0c0c14db;backdrop-filter:blur(20px);box-shadow:inset 0 1px #ffffff0e,0 8px 30px #0006;}
+body.svCleanShell .svWatchroomPage .dsCustomControlRow {gap:8px;}
+body.svCleanShell .svWatchroomPage .dsCustomControlRow button {display:grid;place-items:center;width:36px;height:36px;min-height:36px;border:0;border-radius:10px;background:transparent;color:#e8e0f3;font-size:13px;font-weight:400;}
+body.svCleanShell .svWatchroomPage #roomMoviePlayerPlayBtn {background:#eee5ff;color:#16121c;}
+body.svCleanShell .svWatchroomPage :is(.dsCustomProgress,.dsCustomVolume) {accent-color:#d4bff2;border:0;padding:0;min-height:18px;background:none;}
+body.svCleanShell .svWatchroomPage .dsCustomTimeRow {font-size:10px;color:#9b8da9;}
+body.svCleanShell .svWatchroomPage .dsBigPlayBtn {width:62px;height:62px;border:1px solid #ffffff30;border-radius:50%;color:#ede3fa;background:#1f172bbb;backdrop-filter:blur(16px);box-shadow:inset 0 1px #ffffff18;}
+body.svCleanShell main.svWatchroomPage.dsSocialEmbeddedRoom {width:100% !important;padding:24px !important;}
+@media(max-width:1020px) {body.svCleanShell .svWatchroomPage .dsStableRoomHero {align-items:flex-start;flex-direction:column;gap:24px;}body.svCleanShell .svWatchroomPage .dsStableRoomGrid {grid-template-columns:1fr;}body.svCleanShell .svWatchroomPage .dsStableSide {position:static;}body.svCleanShell .svWatchroomPage .dsStableSide .dsStableChat {height:460px;}}
+@media(max-width:600px) {body.svCleanShell main.svWatchroomPage {width:calc(100% - 28px) !important;padding:101px 0 85px !important;}body.svCleanShell .svWatchroomPage .dsStableRoomHero {margin-bottom:22px;padding-bottom:23px;}body.svCleanShell .svWatchroomPage .dsStableRoomMeta {gap:17px;}body.svCleanShell .svWatchroomPage .dsStablePanel {padding:23px 20px;gap:22px;border-radius:21px;}body.svCleanShell .svWatchroomPage .dsStablePanelHead {flex-direction:column;gap:8px;}body.svCleanShell .svWatchroomPage .dsStablePanel h2 {font-size:24px;}body.svCleanShell .svWatchroomPage .dsStableTabs {gap:3px;}body.svCleanShell .svWatchroomPage .dsStableTabs button {padding:10px 13px;font-size:11px;}body.svCleanShell .svWatchroomPage .dsStableUrlForm {flex-wrap:wrap;}body.svCleanShell .svWatchroomPage .dsStableUrlForm input {flex-basis:100%;width:100%;}body.svCleanShell .svWatchroomPage .dsStableWatchCard {align-items:flex-start;flex-direction:column;}body.svCleanShell .svWatchroomPage .dsCouplesPlusGrid {grid-template-columns:1fr;}body.svCleanShell .svWatchroomPage .dsCoupleInlineForm {flex-wrap:wrap;}body.svCleanShell .svWatchroomPage .dsCustomPlayerControls {inset:auto 7px 7px;padding:8px 10px;border-radius:12px;}body.svCleanShell .svWatchroomPage .dsCustomControlRow {gap:1px;}body.svCleanShell .svWatchroomPage .dsCustomControlRow button {width:32px;height:32px;min-height:32px;}body.svCleanShell .svWatchroomPage .dsCustomVolume {max-width:55px;}body.svCleanShell .svWatchroomPage .dsCustomPlayerTop {padding:15px;}body.svCleanShell .svWatchroomPage .dsCustomPlayerTop b {font-size:13px;}}
+body.svCleanShell[data-st-glass="off"] .svWatchroomPage :is(.dsStablePanel,.dsCustomPlayerControls) {background:#13131b;backdrop-filter:none;}
+body.reduceMotion .svWatchroomPage * {animation:none !important;transition:none !important;}
+@media(prefers-reduced-motion:reduce) {.svWatchroomPage * {animation:none !important;transition:none !important;}}

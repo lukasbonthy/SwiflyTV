@@ -1,4 +1,4 @@
-/* v159: catalog styling and selected-title party setup over the existing room service. */
+/* v199: one lobby and the shared player over the existing room service. */
 (() => {
  'use strict';
  const app=document.querySelector('.svPartyHub');if(!app||window.SwiflySocial)return;
@@ -7,7 +7,8 @@
  const esc=value=>String(value??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
  let username='Guest',currentRoom='channel-general',currentTitle='Lounge',permissions={},pendingInvite='',joinEpoch=0,listEpoch=0,movieEpoch=0,callEpoch=0,disposed=false,localStream=null,callTrigger=null;
  let activeWatchRoom={id:'',name:'Movie night',joined:false,isHost:false,sync:null};
- let hlsInstance=null,nativeVideoJsPlayer=null,nativeVideoControlBound=false,applyingRemote=false,mediaEpoch=0;
+ let partyPlayer=null,partyPlayerRoot=null,partySourceData=null,mediaEpoch=0;
+ const partyMediaListeners=[];
  const messageKeys=new Set(),movies=new Map();
  const featuredMovies=new Map(),lobbyMovies=new Map();
  let selectedMovie=null,wantedMovieId='',selectionPending=false,selectionError='',selectionEpoch=0,featuredEpoch=0,lobbySearchEpoch=0,pendingRoomMovie=null;
@@ -78,7 +79,7 @@
  }
  function artwork(value){try{const url=new URL(String(value||''));return url.protocol==='https:'&&url.hostname==='image.tmdb.org'?url.href:'';}catch{return '';}}
  function movieValue(value){const id=Number(value?.id);if(!Number.isSafeInteger(id)||id<=0||!String(value?.title||'').trim())return null;return {id:String(id),title:String(value.title).slice(0,240),year:String(value.year||''),poster:artwork(value.poster),backdrop:artwork(value.backdrop),overview:String(value.overview||'').slice(0,1000)};}
- function filmChoices(values,attribute){return values.map((movie,index)=>'<button type="button" class="partyFilmChoice" style="--party-card-order:'+Math.min(index,7)+'" '+attribute+'="'+esc(movie.id)+'" aria-label="Host a watch party for '+esc(movie.title)+'" aria-pressed="'+(selectedMovie?.id===movie.id)+'"><span>'+(movie.poster?'<img src="'+esc(movie.poster)+'" alt="" loading="lazy" decoding="async">':glyph)+'<span class="partyFilmAffordance" aria-hidden="true">Host this film '+glyph+'</span></span><b>'+esc(movie.title)+'</b><small>'+esc(movie.year||'Movie')+' · Watch together</small></button>').join('');}
+ function filmChoices(values,attribute){return values.map((movie,index)=>'<button type="button" class="partyFilmChoice" style="--party-card-order:'+Math.min(index,7)+'" '+attribute+'="'+esc(movie.id)+'" aria-label="Choose '+esc(movie.title)+'" aria-pressed="'+(selectedMovie?.id===movie.id)+'"><span>'+(movie.poster?'<img src="'+esc(movie.poster)+'" alt="" loading="lazy" decoding="async">':glyph)+'<span class="partyFilmAffordance" aria-hidden="true">Choose film '+glyph+'</span></span><b>'+esc(movie.title)+'</b><small>'+esc(movie.year||'Movie')+'</small></button>').join('');}
  function updateSelectedUrl(){if(activeWatchRoom.joined)return;try{const url=new URL(location.href);if(wantedMovieId)url.searchParams.set('movieId',wantedMovieId);else url.searchParams.delete('movieId');history.replaceState(history.state,'',url.pathname+url.search+url.hash);}catch{}}
  function renderHero(){const film=selectedMovie||featuredMovies.values().next().value,art=$('[data-party-hero-art]');art.hidden=!film?.backdrop;art.style.backgroundImage=film?.backdrop?'url("'+film.backdrop.replaceAll('"','%22')+'")':'';$('#partyHeroTitle').textContent=selectedMovie?selectedMovie.title:'Make it a movie night.';$('[data-party-hero-copy]').textContent=selectedMovie?'Make a night of '+selectedMovie.title+'. Send one invite, then share the film and every reaction.':'One film, one invite, everyone together. Bring your friends and settle into something good.';const pick=$('[data-party-featured-host]');pick.hidden=!film||Boolean(selectedMovie);if(film){pick.dataset.partyFeaturedId=film.id;pick.querySelector('b').textContent=film.title+(film.year?' · '+film.year:'');}}
  function renderSelection(){
@@ -110,13 +111,20 @@
  }
  function readVideoLink(value){const text=String(value||'').trim();if(!text)return '';try{const url=new URL(text);if(['http:','https:'].includes(url.protocol))return url.href;}catch{}throw new Error('Use a complete http or https video link.');}
  function parseYouTube(value){try{const u=new URL(value),host=u.hostname.toLowerCase().replace(/^www\./,'');let id='';if(host==='youtu.be')id=u.pathname.split('/')[1];else if(host==='youtube.com'||host==='m.youtube.com')id=u.searchParams.get('v')||u.pathname.match(/^\/(?:embed|shorts)\/([^/]+)/)?.[1];return /^[A-Za-z0-9_-]{6,20}$/.test(id||'')?id:'';}catch{return '';}}
- function destroyMedia(){mediaEpoch++;const video=$('#sv103Video');try{video?.pause();}catch{}destroyHls();nativeVideoControlBound=false;activeWatchRoom.sync=null;}
- function mediaGuard(video){const roomId=activeWatchRoom.id,generation=mediaEpoch;return ()=>{const current=$('#sv103Video');return connected()&&activeWatchRoom.joined&&activeWatchRoom.id===roomId&&mediaEpoch===generation&&video.isConnected&&(current===video||current?.contains(video));};}
- function showMedia(media){destroyMedia();renderNativeMedia(media);if(media?.movie?.sync)activeWatchRoom.sync=media.movie.sync;}
+ function destroyMedia(){
+  mediaEpoch++;for(const remove of partyMediaListeners.splice(0))remove();
+  if(partyPlayer)partyPlayer.destroy();else {try{$('#sv103Video')?.pause();}catch{}}
+  partyPlayer=null;partyPlayerRoot=null;partySourceData=null;activeWatchRoom.sync=null;
+  const dock=$('#sv103ControlDock')||$('.sv103ControlDock');if(dock)dock.hidden=false;
+ }
+ function mediaGuard(root){const roomId=activeWatchRoom.id,generation=mediaEpoch;return ()=>connected()&&activeWatchRoom.joined&&activeWatchRoom.id===roomId&&mediaEpoch===generation&&root?.isConnected&&partyPlayerRoot===root;}
+ function selectedMovieState(movie){return Boolean(movie&&/^[1-9]\d{0,13}$/.test(String(movie.movieId||'')));}
+ function syncedTransport(){return selectedMovieState(activeWatchRoom.syncedMovie)&&String(partySourceData?.movieId)===String(activeWatchRoom.syncedMovie.movieId);}
+ function showMedia(media={}){const movie=selectedMovieState(media.movie)?media.movie:null;activeWatchRoom.syncedMovie=movie;renderNativeMedia({...media,movie});activeWatchRoom.sync=movie?.sync||null;if(movie)applyNativeSync(true);}
  function updateHostUi(){
   const host=activeWatchRoom.joined&&activeWatchRoom.isHost&&connected();app.dataset.partyHost=host?'true':'false';
+  partyPlayer?.setRemoteMode({enabled:syncedTransport(),isHost:host,manual:!syncedTransport()});
   $$('.hostOnly').forEach(el=>{el.disabled=!host;if(el.matches('details,form'))el.hidden=!host;el.querySelectorAll('input,button').forEach(n=>n.disabled=!host);});
-  $$('[data-action="native-sync-me"]').forEach(n=>n.disabled=!connected()||!activeWatchRoom.joined);
   $('#sv103HostStatus').textContent=!activeWatchRoom.joined?'Joining…':!connected()?'Reconnecting…':host?'You’re hosting':'Watching with the host';
   $$('[data-action="invite"],[data-action="copy-room-link"],[data-action="copy-room-code"]').forEach(n=>n.disabled=!activeWatchRoom.joined);
  }
@@ -171,345 +179,48 @@
  function closeCall(){const modal=$('#sv100CallModal');if(modal.open)modal.close();if(localStream||callTrigger)releaseCall();}
  function createVirtual(type){if(!(type==='channel'?permissions.canCreateChannels:permissions.canCreateGroups))return;const name=prompt(type==='channel'?'Channel name':'Group name');if(!name?.trim())return;const id=(type==='channel'?'channel-':'group-')+name.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,40);const section=$$('.sv100ChannelGroup').find(s=>s.querySelector('header span')?.textContent===(type==='channel'?'Social Lounges':'Private Rooms'));const button=document.createElement('button');button.type='button';button.className='sv100Channel';button.dataset.room=id;button.dataset.title=name.trim();button.textContent=name.trim();section?.append(button);joinRoom(id,name.trim());}
 
-        function setNativePlayerStatus(title, detail, danger) {
-          const status = $("#sv106HlsStatus");
-          if (!status) return;
-          status.hidden = false;
-          status.classList.toggle("danger", Boolean(danger));
-          status.innerHTML = '<b>' + esc(title || "Loading") + '</b><span>' + esc(detail || "") + '</span>';
-        }
-
-        function hideNativePlayerStatus(delay) {
-          const status = $("#sv106HlsStatus");
-          if (!status) return;
-          clearTimeout(status._timer);
-          status._timer = setTimeout(() => {
-            status.hidden = true;
-          }, delay || 2600);
-        }
-
-        function destroyHls() {
-          if (nativeVideoJsPlayer) {
-            try { nativeVideoJsPlayer.dispose(); } catch {}
-            nativeVideoJsPlayer = null;
-          }
-          if (hlsInstance) {
-            try { hlsInstance.destroy(); } catch {}
-            hlsInstance = null;
-          }
-        }
-
-        function loadHls(cb) {
-          if (window.Hls) return cb(true);
-          const urls = [
-            "https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js",
-            "https://unpkg.com/hls.js@1.5.17/dist/hls.min.js",
-            "https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.17/hls.min.js"
-          ];
-          let i = 0;
-          function next() {
-            if (window.Hls) return cb(true);
-            if (i >= urls.length) return cb(false);
-            const script = document.createElement("script");
-            script.src = urls[i++];
-            script.async = true;
-            script.onload = () => cb(Boolean(window.Hls));
-            script.onerror = next;
-            document.head.appendChild(script);
-          }
-          next();
-        }
-
-        function isNativeHlsSource(src, media) {
-          const value = String(src || "");
-          const type = String(media?.streamType || media?.type || media?.movie?.streamType || "").toLowerCase();
-          return new RegExp("[.]m3u8([?#]|$)", "i").test(value) || type === "m3u8" || type === "hls" || Boolean(media?.m3u8 || media?.movie?.m3u8 || media?.hlsProxyUrl || media?.movie?.hlsProxyUrl);
-        }
-
-        function attachHlsJsSource(video, src) {
-          const isCurrent = mediaGuard(video);
-          loadHls((ok) => {
-            if (!isCurrent()) return;
-            if (!ok || !window.Hls || !window.Hls.isSupported()) {
-              setNativePlayerStatus("Preparing playback", "Trying your browser’s player.", false);
-              video.src = src;
-              try { video.load(); } catch {}
-              hideNativePlayerStatus(3600);
-              return;
-            }
-
-            setNativePlayerStatus("Getting the film ready", "Connecting to the video source…", false);
-            const player = hlsInstance = new window.Hls({
-              lowLatencyMode: false,
-              enableWorker: true,
-              maxBufferLength: 60,
-              backBufferLength: 90,
-              maxMaxBufferLength: 120,
-              fragLoadingTimeOut: 30000,
-              manifestLoadingTimeOut: 30000,
-              levelLoadingTimeOut: 30000
-            });
-
-            player.on(window.Hls.Events.MANIFEST_PARSED, () => {
-              if (!isCurrent() || hlsInstance !== player) return;
-              setNativePlayerStatus("Ready to watch", "Press play when you are ready.", false);
-              hideNativePlayerStatus(2400);
-            });
-
-            player.on(window.Hls.Events.ERROR, (event, data) => {
-              if (!isCurrent() || hlsInstance !== player) return;
-              const details = data && (data.details || data.type) ? String(data.details || data.type) : "unknown error";
-              if (data && data.fatal) {
-                setNativePlayerStatus("Playback interrupted", "Trying to reconnect to the film…", true);
-                try {
-                  if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR) player.startLoad();
-                  else if (data.type === window.Hls.ErrorTypes.MEDIA_ERROR) player.recoverMediaError();
-                  else {
-                    player.destroy();
-                    hlsInstance = null;
-                    video.src = src;
-                    try { video.load(); } catch {}
-                  }
-                } catch {
-                  video.src = src;
-                  try { video.load(); } catch {}
-                }
-              }
-            });
-
-            player.loadSource(src);
-            player.attachMedia(video);
-          });
-        }
-
-        function attachVideoSource(video, src, media) {
-          destroyHls();
-          const isCurrent = mediaGuard(video);
-
-          try {
-            video.removeAttribute("src");
-            video.load();
-          } catch {}
-
-          const hls = isNativeHlsSource(src, media);
-
-          if (!hls) {
-            setNativePlayerStatus("Getting the film ready", "Preparing video playback…", false);
-            video.src = src;
-            try { video.load(); } catch {}
-            hideNativePlayerStatus(2200);
-            return;
-          }
-
-          setNativePlayerStatus("Getting the film ready", "Preparing video playback…", false);
-
-          if (window.videojs) {
-            try {
-              video.classList.add("video-js", "vjs-big-play-centered", "vjs-theme-swifly", "sv106VideoJs");
-              const player = nativeVideoJsPlayer = window.videojs(video, {
-                controls: true,
-                autoplay: false,
-                preload: "auto",
-                fluid: false,
-                responsive: true,
-                liveui: true,
-                html5: {
-                  vhs: {
-                    overrideNative: true,
-                    withCredentials: false,
-                    enableLowInitialPlaylist: true,
-                    smoothQualityChange: true
-                  },
-                  nativeAudioTracks: false,
-                  nativeVideoTracks: false
-                },
-                sources: [{ src, type: "application/x-mpegURL" }]
-              });
-
-              player.ready(() => {
-                if (!isCurrent() || nativeVideoJsPlayer !== player) return;
-                setNativePlayerStatus("Ready to watch", "Press play when you are ready.", false);
-                hideNativePlayerStatus(2400);
-                bindNativeVideoControls();
-              });
-
-              player.on("error", () => {
-                if (!isCurrent() || nativeVideoJsPlayer !== player) return;
-                const err = player.error && player.error();
-                const message = err && (err.message || err.code) ? String(err.message || ("Code " + err.code)) : "Unknown player error";
-                setNativePlayerStatus("Playback interrupted", "Trying another playback method…", true);
-                mediaEpoch++;
-                try { player.dispose(); } catch {}
-                nativeVideoJsPlayer = null;
-                nativeVideoControlBound = false;
-                const fresh = document.createElement("video");
-                fresh.id = "sv103Video";
-                fresh.className = "sv103Video";
-                fresh.controls = true;
-                fresh.playsInline = true;
-                fresh.preload = "metadata";
-                const shell = $("#sv106NativePlayerShell");
-                if (shell) shell.insertBefore(fresh, shell.firstChild);
-                attachHlsJsSource(fresh, src);
-                bindNativeVideoControls();
-              });
-              return;
-            } catch (error) {
-              setNativePlayerStatus("Preparing playback", "Trying another playback method…", true);
-            }
-          }
-
-          if (video.canPlayType && video.canPlayType("application/vnd.apple.mpegurl")) {
-            video.src = src;
-            try { video.load(); } catch {}
-            setNativePlayerStatus("Ready to watch", "Press play when you are ready.", false);
-            hideNativePlayerStatus(2400);
-            return;
-          }
-
-          attachHlsJsSource(video, src);
-        }
-
-        function renderNativeMedia(media = {}) {
-          const root = $("#sv103Player");
-          if (!root) return;
-
-          destroyHls();
-          nativeVideoControlBound = false;
-
-          const movie = media.movie || null;
-          const src = movie?.playbackUrl || movie?.proxyVideo || movie?.hlsProxyUrl || movie?.m3u8 || media.playbackUrl || media.proxyVideo || media.hlsProxyUrl || media.m3u8 || "";
-          const videoId = media.videoId || "";
-          const embedUrl = media.embedUrl || "";
-          const kind = media.mediaKind || media.kind || "";
-
-          if (src) {
-            root.innerHTML = '<div id="sv106NativePlayerShell" class="sv106NativePlayerShell"><video id="sv103Video" class="sv103Video" controls playsinline preload="metadata"></video><div id="sv106HlsStatus" class="sv106HlsStatus"><b>Loading player</b><span>Getting the film ready…</span></div></div>';
-            const video = $("#sv103Video");
-            attachVideoSource(video, src, Object.assign({}, media, movie || {}));
-            bindNativeVideoControls();
-            return;
-          }
-
-          if (videoId) {
-            root.innerHTML = '<iframe class="sv103MediaFrame" src="https://www.youtube.com/embed/' + encodeURIComponent(videoId) + '?rel=0&playsinline=1" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen></iframe>';
-            return;
-          }
-
-          if (embedUrl && new RegExp("^https?://", "i").test(embedUrl)) {
-            root.innerHTML = '<iframe class="sv103MediaFrame" src="' + esc(embedUrl) + '" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen referrerpolicy="no-referrer"></iframe>';
-            return;
-          }
-
-          root.innerHTML = '<div class="sv103EmptyPlayer"><i class="ri-tv-2-fill"></i><b>No media selected</b><span>The host can choose a film or add a video link.</span></div>';
-        }
-
-        function targetSeconds(sync) {
-          if (!sync) return 0;
-          const offset = Number(sync.offset || 0);
-          if (!sync.playing) return offset;
-          return Math.max(0, offset + ((Date.now() - Number(sync.startedAt || Date.now())) / 1000));
-        }
-
-        function applyNativeSync(force) {
-          const video = $("#sv103Video");
-          const sync = activeWatchRoom.sync;
-          if (!video || !sync) return;
-          const target = targetSeconds(sync);
-          $("#sv103Timer").textContent = formatTime(target);
-
-          const drift = Math.abs(nativeVideoCurrentTime(video) - target);
-          if (force || drift > 10) {
-            applyingRemote = true;
-            nativeVideoSetTime(video, target);
-            setTimeout(() => applyingRemote = false, 600);
-          }
-
-          if (sync.playing && nativeVideoIsPaused(video)) {
-            nativeVideoPlay(video);
-          } else if (!sync.playing && !nativeVideoIsPaused(video)) {
-            nativeVideoPause(video);
-          }
-        }
-
-        function nativeVideoCurrentTime(video) {
-          try {
-            if (nativeVideoJsPlayer && typeof nativeVideoJsPlayer.currentTime === "function") return Number(nativeVideoJsPlayer.currentTime() || 0);
-          } catch {}
-          return Number(video?.currentTime || 0);
-        }
-
-        function nativeVideoSetTime(video, value) {
-          try {
-            if (nativeVideoJsPlayer && typeof nativeVideoJsPlayer.currentTime === "function") {
-              nativeVideoJsPlayer.currentTime(Number(value || 0));
-              return;
-            }
-          } catch {}
-          try { video.currentTime = Number(value || 0); } catch {}
-        }
-
-        function nativeVideoIsPaused(video) {
-          try {
-            if (nativeVideoJsPlayer && typeof nativeVideoJsPlayer.paused === "function") return Boolean(nativeVideoJsPlayer.paused());
-          } catch {}
-          return Boolean(video?.paused);
-        }
-
-        function nativeVideoPlay(video) {
-          try {
-            if (nativeVideoJsPlayer && typeof nativeVideoJsPlayer.play === "function") {
-              const p = nativeVideoJsPlayer.play();
-              if (p && p.catch) p.catch(() => {});
-              return;
-            }
-          } catch {}
-          try { video?.play()?.catch?.(() => {}); } catch {}
-        }
-
-        function nativeVideoPause(video) {
-          try {
-            if (nativeVideoJsPlayer && typeof nativeVideoJsPlayer.pause === "function") {
-              nativeVideoJsPlayer.pause();
-              return;
-            }
-          } catch {}
-          try { video?.pause(); } catch {}
-        }
-
-        function bindNativeVideoControls() {
-          const video = $("#sv103Video");
-          if (!video || nativeVideoControlBound) return;
-          nativeVideoControlBound = true;
-          const isCurrent = mediaGuard(video);
-
-          function send(action, extra) {
-            if (!isCurrent() || !activeWatchRoom.isHost || applyingRemote) return;
-            socket?.emit("watchroom:movie-control", Object.assign({
-              roomId: activeWatchRoom.id,
-              action,
-              clientTime: nativeVideoCurrentTime(video),
-              name: username
-            }, extra || {}));
-          }
-
-          video.addEventListener("play", () => send("play"));
-          video.addEventListener("pause", () => send("pause"));
-          video.addEventListener("seeked", () => send("set", { time: nativeVideoCurrentTime(video) }));
-
-          if (nativeVideoJsPlayer && typeof nativeVideoJsPlayer.on === "function") {
-            nativeVideoJsPlayer.on("play", () => send("play"));
-            nativeVideoJsPlayer.on("pause", () => send("pause"));
-            nativeVideoJsPlayer.on("seeked", () => send("set", { time: nativeVideoCurrentTime(video) }));
-          }
-        }
-
-        function formatTime(seconds) {
-          const s = Math.max(0, Math.floor(Number(seconds || 0)));
-          return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
-        }
-
-
+ function directMediaUrl(value){
+  try{const url=new URL(String(value||''),location.href);return ['http:','https:'].includes(url.protocol)&&/\.(?:m3u8|mpd|mp4|webm|mov|m4v|ogv|ogg|mkv|avi|mp3|m4a|wav|flac)$/i.test(url.pathname)?String(value):'';}catch{return '';}
+ }
+ function renderNativeMedia(media={}){
+  const root=$('#sv103Player');if(!root)return;
+  const movie=selectedMovieState(media.movie)?media.movie:null,data={...media,...movie};
+  const src=['playbackUrl','hlsProxyUrl','embeddedM3u8Url','proxyVideo','m3u8','url'].map(key=>data[key]).find(Boolean)||directMediaUrl(media.embedUrl);
+  if(src||movie){
+   if(!partyPlayer||!partyPlayerRoot?.isConnected){
+    destroyMedia();const template=$('#partyPlayerTemplate');
+    if(!template?.content||!window.SwiflyPlayer?.mount){root.innerHTML='<div class="sv103EmptyPlayer error"><b>Playback could not load.</b><span>Refresh the page to try again.</span></div>';return;}
+    root.replaceChildren(template.content.cloneNode(true));partyPlayerRoot=root.querySelector('[data-player-root]');partyPlayer=window.SwiflyPlayer.mount(partyPlayerRoot,{managed:true,isHost:activeWatchRoom.isHost&&connected()});
+    if(!partyPlayer){root.innerHTML='<div class="sv103EmptyPlayer error"><b>Playback could not load.</b><span>Refresh the page to try again.</span></div>';return;}
+    const isCurrent=mediaGuard(partyPlayerRoot),listen=(name,fn)=>{const node=partyPlayerRoot,handler=event=>{if(isCurrent())fn(event);};node.addEventListener('swiflyplayer:'+name,handler);partyMediaListeners.push(()=>node.removeEventListener('swiflyplayer:'+name,handler));};
+    listen('action',event=>{const {action,time}=event.detail||{};if(!syncedTransport()||!activeWatchRoom.isHost||!['play','pause','set'].includes(action)||!Number.isFinite(time)||time<0)return;socket.emit('watchroom:movie-control',{roomId:activeWatchRoom.id,action,time,clientTime:time,name:username,intent:'user'});});
+    listen('ready',()=>applyNativeSync(true));
+    listen('retry',()=>{if(syncedTransport()){if(activeWatchRoom.isHost)socket.emit('watchroom:movie-select',{roomId:activeWatchRoom.id,movieId:String(partySourceData.movieId),name:username,retry:true});}else if(partySourceData)partyPlayer.loadSource(partySourceData,{resumeAt:partyPlayer.getState().currentTime});});
+    listen('sync',()=>{if(syncedTransport())socket.emit('watchroom:movie-control',{roomId:activeWatchRoom.id,action:'sync-me',name:username});});
+   }
+   app.dataset.partyMedia='video';const dock=$('#sv103ControlDock')||$('.sv103ControlDock');if(dock)dock.hidden=true;
+   partySourceData={...data,...(!data.playbackUrl&&src?{playbackUrl:src}:{})};
+   partyPlayer.setRemoteMode({enabled:Boolean(movie),isHost:activeWatchRoom.isHost&&connected(),manual:!movie});
+   const video=partyPlayerRoot.querySelector('[data-player-video]');if(data.title){video.setAttribute('aria-label',String(data.title));partyPlayerRoot.setAttribute('aria-label',String(data.title));}const poster=artwork(data.backdrop||data.poster);if(poster)video.poster=poster;
+   partyPlayer.loadSource(partySourceData,{resumeAt:targetSeconds(movie?.sync)});return;
+  }
+  destroyMedia();const videoId=media.videoId||'',embedUrl=media.embedUrl||'';
+  if(videoId){app.dataset.partyMedia='youtube';root.innerHTML='<iframe class="sv103MediaFrame" title="Shared YouTube video" src="https://www.youtube.com/embed/'+encodeURIComponent(videoId)+'?rel=0&playsinline=1" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen></iframe>';return;}
+  if(embedUrl&&/^https?:\/\//i.test(embedUrl)){app.dataset.partyMedia='embed';root.innerHTML='<iframe class="sv103MediaFrame" title="Shared video" src="'+esc(embedUrl)+'" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen referrerpolicy="no-referrer"></iframe>';return;}
+  app.dataset.partyMedia='blank';$('#sv103ControlDock').hidden=true;root.innerHTML='<div class="sv103EmptyPlayer"><b>No media selected</b><span>The host can choose a film or add a video link.</span></div>';
+ }
+ function targetSeconds(sync){
+  if(!sync)return 0;const offset=Math.max(0,Number(sync.offset)||0);return sync.playing?offset+Math.max(0,(Date.now()-(Number(sync.startedAt)||Date.now()))/1000):offset;
+ }
+ function applyNativeSync(force){
+  const sync=activeWatchRoom.sync;if(!partyPlayer||!syncedTransport()||!sync||!mediaGuard(partyPlayerRoot)())return;
+  const state=partyPlayer.getState(),target=targetSeconds(sync);$('#sv103Timer').textContent=formatTime(target);
+  if(state.status==='error'||!state.source)return;
+  if(force||Math.abs(state.currentTime-target)>1.5)partyPlayer.seek(target,{remote:true});
+  const playing=sync.playing&&(!Number(sync.startedAt)||Date.now()>=Number(sync.startedAt));
+  if(playing&&state.paused)partyPlayer.play({remote:true});else if(!playing&&!state.paused)partyPlayer.pause({remote:true});
+ }
+ function formatTime(seconds){const s=Math.max(0,Math.floor(Number(seconds)||0));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
 
  app.addEventListener('click',event=>{
   const returnLink=event.target.closest('[data-party-return]');if(returnLink&&!event.defaultPrevented&&!(event.button>0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)&&(!returnLink.target||returnLink.target==='_self')&&history.length>1){try{const target=new URL(returnLink.href),referrer=new URL(document.referrer);if(target.origin===origin&&referrer.origin===origin&&target.pathname+target.search===referrer.pathname+referrer.search){event.preventDefault();history.back();return;}}catch{}}
@@ -525,8 +236,6 @@
   if(action==='clear-party-movie'){clearMovie();$('#partyLobbyMovieQuery').focus({preventScroll:true});return;}if(action==='retry-party-movie'){loadLobbyMovie(wantedMovieId);return;}if(action==='retry-featured-movies'){loadFeaturedMovies();return;}
   if(action==='native-create-party'){focusEntry('create');return;}if(action==='native-join-room'){focusEntry('join');return;}if(action==='refresh-rooms'){renderRooms();return;}
   if(action==='leave-native-room'){leaveNativeWatchRoom();return;}if(action==='copy-room-link'||action==='invite'){if(activeWatchRoom.joined)copy(origin+roomUrl(activeWatchRoom));return;}if(action==='copy-room-code'){if(activeWatchRoom.joined)copy(activeWatchRoom.id);return;}
-  const commands={'native-play':{action:'play',clientTime:nativeVideoCurrentTime($('#sv103Video'))},'native-pause':{action:'pause',clientTime:nativeVideoCurrentTime($('#sv103Video'))},'native-back':{action:'seek',delta:-10},'native-forward':{action:'seek',delta:10},'native-sync-me':{action:'sync-me'}};
-  if(commands[action]){if(connected()&&activeWatchRoom.joined&&(activeWatchRoom.isHost||action==='native-sync-me'))socket.emit('watchroom:movie-control',{roomId:activeWatchRoom.id,...commands[action],name:username});return;}
   if(action==='new-channel'||action==='new-group'){createVirtual(action==='new-channel'?'channel':'group');return;}
   if(action==='voice'||action==='video'){openCall(action==='video');return;}if(action==='close-call'){closeCall();return;}if(action==='mute')localStream?.getAudioTracks().forEach(t=>t.enabled=!t.enabled);if(action==='camera')localStream?.getVideoTracks().forEach(t=>t.enabled=!t.enabled);
  });
@@ -544,14 +253,14 @@
  socket?.on('connect_error',()=>{updateConnection();$('#sv100Status').textContent='Connection unavailable';});
  socket?.on('social:message',message=>{if(message?.roomId===currentRoom)addMessage(message);});
  socket?.on('social:members',data=>{if(!data||data.roomId!==currentRoom||currentRoom.startsWith('watchroom-'))return;});
- socket?.on('watchroom:joined',data=>{if(!activeWatchRoom.joined||data?.room?.id!==activeWatchRoom.id)return;activeWatchRoom={...activeWatchRoom,...data.room,name:data.room.name||activeWatchRoom.name,isHost:Boolean(data.isHost),joined:true};$('#sv103RoomTitle').textContent=activeWatchRoom.name;$('#sv100Title').textContent=activeWatchRoom.name;const movie=data.room.syncedMovie;if(movie?.status==='ready')showMedia({movie});else showMedia(data.room);updateHostUi();renderMessages((data.messages||[]).map(m=>({author:m.name,text:m.text,createdAt:m.at})));startQueuedMovie();});
+ socket?.on('watchroom:joined',data=>{if(!activeWatchRoom.joined||data?.room?.id!==activeWatchRoom.id)return;activeWatchRoom={...activeWatchRoom,...data.room,name:data.room.name||activeWatchRoom.name,isHost:Boolean(data.isHost),joined:true};$('#sv103RoomTitle').textContent=activeWatchRoom.name;$('#sv100Title').textContent=activeWatchRoom.name;const movie=data.room.syncedMovie;if(selectedMovieState(movie))showMedia({movie});else showMedia(data.room);updateHostUi();renderMessages((data.messages||[]).map(m=>({author:m.name,text:m.text,createdAt:m.at})));startQueuedMovie();});
  socket?.on('watchroom:host',data=>{if(!activeWatchRoom.joined||(data.roomId&&data.roomId!==activeWatchRoom.id))return;activeWatchRoom.isHost=Boolean(data.isHost);updateHostUi();});
  socket?.on('watchroom:viewers',data=>{if(data?.roomId!==activeWatchRoom.id||!activeWatchRoom.joined)return;const people=Math.max(0,Number(data.viewers)||0);$('#sv103ViewerCount').textContent=people;$('#sv100MemberCount').textContent=people+(people===1?' person':' people');});
  socket?.on('watchroom:members',data=>{if(data?.roomId!==activeWatchRoom.id||!activeWatchRoom.joined)return;$('#sv100MembersList').innerHTML=(data.members||[]).map(m=>'<p><span>'+esc(String(m.name||'Guest').slice(0,1).toUpperCase())+'</span><b>'+esc(m.name||'Guest')+'</b>'+(m.isHost?'<small>Host</small>':'')+'</p>').join('');});
  socket?.on('watchroom:message',message=>{if(!activeWatchRoom.joined||(message?.roomId&&message.roomId!==activeWatchRoom.id))return;addMessage(message,true,'watchroom-'+activeWatchRoom.id);});
  socket?.on('watchroom:trailer',data=>{if(data?.roomId!==activeWatchRoom.id||!activeWatchRoom.joined)return;activeWatchRoom.videoId=data.videoId||'';activeWatchRoom.embedUrl=data.embedUrl||data.trailerUrl||'';showMedia({...data,embedUrl:activeWatchRoom.embedUrl});toast('The room’s video is ready.');});
- socket?.on('watchroom:movie-sync',data=>{if(data?.roomId!==activeWatchRoom.id||!activeWatchRoom.joined||!data.movie)return;activeWatchRoom.syncedMovie=data.movie;activeWatchRoom.sync=data.movie.sync||null;if(data.movie.status==='loading'||data.movie.status==='error'){destroyMedia();$('#sv103Player').innerHTML='<div class="sv103EmptyPlayer'+(data.movie.status==='error'?' error':'')+'"><b>'+esc(data.movie.status==='loading'?'Getting the film ready…':'That film couldn’t start.')+'</b><span>'+esc(data.movie.status==='loading'?'Your film will appear here when it is ready.':'Choose another film, or try this one again.')+'</span></div>';return;}showMedia({movie:data.movie});});
- socket?.on('watchroom:movie-sync-state',data=>{if(data?.roomId!==activeWatchRoom.id||!activeWatchRoom.joined)return;activeWatchRoom.sync=data.sync;applyNativeSync(false);});
+ socket?.on('watchroom:movie-sync',data=>{if(!connected()||data?.roomId!==activeWatchRoom.id||!activeWatchRoom.joined||!data.movie)return;activeWatchRoom.syncedMovie=data.movie;showMedia({movie:data.movie});});
+ socket?.on('watchroom:movie-sync-state',data=>{if(!connected()||data?.roomId!==activeWatchRoom.id||!activeWatchRoom.joined||!syncedTransport()||(data.movieId&&String(data.movieId)!==String(activeWatchRoom.syncedMovie.movieId)))return;activeWatchRoom.sync=data.sync;applyNativeSync(false);});
  let clock;function startClock(){clearInterval(clock);clock=setInterval(()=>{if(activeWatchRoom.joined&&activeWatchRoom.sync&&connected()){$('#sv103Timer').textContent=formatTime(targetSeconds(activeWatchRoom.sync));applyNativeSync(false);}},1000);}startClock();
  window.addEventListener('pagehide',()=>{disposed=true;joinEpoch++;listEpoch++;movieEpoch++;selectionEpoch++;featuredEpoch++;lobbySearchEpoch++;destroyMedia();closeCall();socket?.disconnect?.();clearInterval(clock);});
  window.addEventListener('pageshow',event=>{if(event.persisted){disposed=false;startClock();socket?.connect?.();if(selectionPending&&wantedMovieId)loadLobbyMovie(wantedMovieId);loadFeaturedMovies();}});

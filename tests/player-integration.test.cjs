@@ -20,8 +20,8 @@ test('The normal watch route renders one native movie player with shared assets 
  assert.equal(response.status,200);assert(d.querySelector('.dsHeader, .dsTopBar, .topbar'));
  assert.equal(d.querySelectorAll('.svPlayerPage video').length,1);
  assert.equal(d.querySelector('.svPlayerPage').dataset.playerId,'101');assert.equal(d.querySelector('h1').textContent.trim(),'Arrival');
- assert(d.querySelector('script[src="/assets/player/player.js?v=165"]'));assert(d.querySelector('script[src="/assets/player/watch-party.js?v=160"]'));
- assert(d.querySelector('link[href="/assets/player/player.css?v=198"]'));assert(d.querySelector('dialog.svWatchPartyDialog'));
+ assert(d.querySelector('script[src="/assets/player/player.js?v=199"]'));assert(d.querySelector('script[src="/assets/player/watch-party.js?v=160"]'));
+ assert(d.querySelector('link[href="/assets/player/player.css?v=199"]'));assert(d.querySelector('dialog.svWatchPartyDialog'));
  assert.equal(d.querySelector('.dsProxyVideoWaitingShell'),null);assert.equal(d.querySelector('.svPartyHub'),null);
  assert.equal(d.querySelector('[data-sv-player-back]').getAttribute('href'),'/movie/101');
 });
@@ -74,7 +74,13 @@ test('Social navigation opens the integrated Party Hub while movie catalog party
  const social=parse(await response.text()).window.document;
  assert(social.querySelector('main.svPartyHub .partyHero'),'Social link should show the proper cinematic Party Hub');
  assert(social.querySelector('.partyNavigation [data-tab="rooms"]'));
- assert(social.querySelector('link[href="/assets/clean/experience.css?v=184"]'));
+ assert(social.querySelector('link[href="/assets/clean/experience.css?v=199"]'));
+ assert(social.querySelector('link[href="/assets/player/player.css?v=199"]'));
+ const scripts=[...social.querySelectorAll('script[src]')].map(node=>node.getAttribute('src'));
+ const player=scripts.indexOf('/assets/player/player.js?v=199'),party=scripts.findIndex(src=>src.startsWith('/assets/party/party.js?'));
+ assert(player>=0&&party>player,'Party Hub must load the shared controller before its room bridge');
+ const template=social.getElementById('partyPlayerTemplate');assert(template?.content.querySelector('.svPlayerEmbedded [data-player-video]'));
+ assert.equal(social.querySelector('script[src*="video.js"]'),null,'Party Hub no longer loads a duplicate playback UI');
  const env=parse(await(await fetch(base+'/movies?party=1')).text()),d=env.window.document;
  assert.equal(d.querySelector('.dsBrowseTop h1').textContent.trim(),'Movies');assert(d.querySelector('.genreDropdown'));assert(d.querySelector('.dsHero'));
  assert(d.querySelector('[data-party-browse]'));assert(d.querySelector('.dsContent'));assert.equal(d.querySelector('.svPartyHub'),null);
@@ -399,21 +405,21 @@ test('v176 adds subtle Liquid Glass to both compact auth pages without resizing'
  }
 });
 
-test('Genres, cinematic profiles and Party Hub use the same late-loaded site experience',async()=>{
- const cx=await(await fetch(base+'/assets/clean/experience.css?v=184')).text();
+test('Catalog and profiles retain their theme while Party Hub owns its component styling',async()=>{
+ const cx=await(await fetch(base+'/assets/clean/experience.css?v=199')).text();
  assert.match(cx,/\.genreDropdown > summary\.svNavMatchedOptic/);
  assert.match(cx,/\.dsProfilesSelectPage \.dsProfileSelectCard/);
- assert.match(cx,/\.svPartyHub \.partyHero/);
+ assert.doesNotMatch(cx,/\.svPartyHub/,'Old Party Hub overrides must not compete with its component stylesheet');
  assert.match(cx,/prefers-reduced-motion:reduce/);
  for(const route of ['/movies','/tv','/profiles','/profiles/manage','/social','/social?tab=watchrooms&kind=blank']){
   const response=await fetch(base+route);
   assert.equal(response.status,200,route+' should render');
   const d=parse(await response.text()).window.document;
-  assert(d.querySelector('link[href="/assets/clean/experience.css?v=184"]'),route+' should load unified experience last');
+  assert(d.querySelector('link[href="/assets/clean/experience.css?v=199"]'),route+' should load unified experience last');
   if(route==='/movies'||route==='/tv')assert(d.querySelector('.genreDropdown > summary'));
   if(route==='/profiles')assert(d.querySelector('.svProfilesCinematic #profilesGrid'));
   if(route==='/profiles/manage')assert(d.querySelector('.svProfilesCinematic #profileCreateForm'));
-  if(route.startsWith('/social'))assert(d.querySelector('main.svPartyHub .partyHero'));
+  if(route.startsWith('/social')){assert(d.querySelector('main.svPartyHub .partyHero'));const theme=d.querySelector('link[href="/assets/party/party.css?v=199"]');assert(theme);assert(d.querySelector('link[href="/assets/clean/experience.css?v=199"]').compareDocumentPosition(theme)&d.defaultView.Node.DOCUMENT_POSITION_FOLLOWING);}
  }
 });
 
