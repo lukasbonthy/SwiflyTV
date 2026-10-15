@@ -20,8 +20,8 @@ test('The normal watch route renders one native movie player with shared assets 
  assert.equal(response.status,200);assert(d.querySelector('.dsHeader, .dsTopBar, .topbar'));
  assert.equal(d.querySelectorAll('.svPlayerPage video').length,1);
  assert.equal(d.querySelector('.svPlayerPage').dataset.playerId,'101');assert.equal(d.querySelector('h1').textContent.trim(),'Arrival');
- assert(d.querySelector('script[src="/assets/player/player.js?v=199"]'));assert(d.querySelector('script[src="/assets/player/watch-party.js?v=160"]'));
- assert(d.querySelector('link[href="/assets/player/player.css?v=199"]'));assert(d.querySelector('dialog.svWatchPartyDialog'));
+ assert(d.querySelector('script[src="/assets/player/player.js?v=200"]'));assert(d.querySelector('script[src="/assets/player/watch-party.js?v=160"]'));
+ assert(d.querySelector('link[href="/assets/player/player.css?v=200"]'));assert(d.querySelector('dialog.svWatchPartyDialog'));
  assert.equal(d.querySelector('.dsProxyVideoWaitingShell'),null);assert.equal(d.querySelector('.svPartyHub'),null);
  assert.equal(d.querySelector('[data-sv-player-back]').getAttribute('href'),'/movie/101');
 });
@@ -75,9 +75,9 @@ test('Social navigation opens the integrated Party Hub while movie catalog party
  assert(social.querySelector('main.svPartyHub .partyHero'),'Social link should show the proper cinematic Party Hub');
  assert(social.querySelector('.partyNavigation [data-tab="rooms"]'));
  assert(social.querySelector('link[href="/assets/clean/experience.css?v=199"]'));
- assert(social.querySelector('link[href="/assets/player/player.css?v=199"]'));
+ assert(social.querySelector('link[href="/assets/player/player.css?v=200"]'));
  const scripts=[...social.querySelectorAll('script[src]')].map(node=>node.getAttribute('src'));
- const player=scripts.indexOf('/assets/player/player.js?v=199'),party=scripts.findIndex(src=>src.startsWith('/assets/party/party.js?'));
+ const player=scripts.indexOf('/assets/player/player.js?v=200'),party=scripts.findIndex(src=>src.startsWith('/assets/party/party.js?'));
  assert(player>=0&&party>player,'Party Hub must load the shared controller before its room bridge');
  const template=social.getElementById('partyPlayerTemplate');assert(template?.content.querySelector('.svPlayerEmbedded [data-player-video]'));
  assert.equal(social.querySelector('script[src*="video.js"]'),null,'Party Hub no longer loads a duplicate playback UI');
@@ -327,7 +327,7 @@ test('v174 keeps Welcome soft without muddy light bridge or button clipping',asy
 test('Studio glass uses one material on every browsing route and native transitions remain independent',async()=>{
  const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=197')).text();
  const finish=await(await fetch(base+'/assets/clean/finish.css?v=175')).text();
- const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=196')).text();
+ const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=200')).text();
  assert.match(css,/data-st-glass="liquid"/);
  assert.match(css,/data-st-glass="subtle"/);
  assert.match(css,/data-st-glass="off"/);
@@ -343,7 +343,7 @@ test('Studio glass uses one material on every browsing route and native transiti
    assert.equal(response.status,200,route);
    const doc=parse(await response.text()).window.document;
    assert(doc.querySelector('link[href="/assets/liquid-glass/controls.css?v=197"]'),route+' lacks unified glass');
-   assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=196"]'),route+' uses stale glass renderer');
+   assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=200"]'),route+' uses stale glass renderer');
  }
  const watch=await(await fetch(base+'/watch/movie/101')).text();
  assert(!watch.includes('controls.css?v=189'),'watch page must be left alone');
@@ -355,7 +355,7 @@ test('hero and modal buttons match the dark navbar refraction material without b
  assert(hero.querySelector('.dsHeroActions .dsSecondaryBtn'));
  assert(hero.querySelector('.dsHeroActions .dsIconBtn'));
  const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=197')).text();
- const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=196')).text();
+ const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=200')).text();
  assert.match(css,/border:1px solid transparent !important/,'nav icons never get a second border');
  assert.match(css,/background:rgb\(5 8 15 \/ \.38\)/,'controls match the actual navbar smoke tint');
   assert.match(css,/background:rgb\(0 0 0 \/ \.20\)/,'SVG controls retain navbar transparency');
@@ -388,7 +388,7 @@ test('v176 supplies a real, masked details backdrop with no hard border at the o
  assert.match(lens,/\.svGlassSurface\.svGlassControl\[data-swifly-renderer="svg"\]/);
  assert.match(lens,/\.svDetailActions,\.dsDetailActionsV121/);
  assert(d.querySelector('link[href="/assets/clean/polish.css?v=176"]'));
- assert(d.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=196"]'));
+ assert(d.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=200"]'));
 });
 test('v176 adds subtle Liquid Glass to both compact auth pages without resizing',async()=>{
  const css=await(await fetch(base+'/assets/clean/polish.css?v=176')).text();
@@ -419,7 +419,7 @@ test('Catalog and profiles retain their theme while Party Hub owns its component
   if(route==='/movies'||route==='/tv')assert(d.querySelector('.genreDropdown > summary'));
   if(route==='/profiles')assert(d.querySelector('.svProfilesCinematic #profilesGrid'));
   if(route==='/profiles/manage')assert(d.querySelector('.svProfilesCinematic #profileCreateForm'));
-  if(route.startsWith('/social')){assert(d.querySelector('main.svPartyHub .partyHero'));const theme=d.querySelector('link[href="/assets/party/party.css?v=199"]');assert(theme);assert(d.querySelector('link[href="/assets/clean/experience.css?v=199"]').compareDocumentPosition(theme)&d.defaultView.Node.DOCUMENT_POSITION_FOLLOWING);}
+  if(route.startsWith('/social')){assert(d.querySelector('main.svPartyHub .partyHero'));const theme=d.querySelector('link[href="/assets/party/party.css?v=200"]');assert(theme);assert(d.querySelector('link[href="/assets/clean/experience.css?v=199"]').compareDocumentPosition(theme)&d.defaultView.Node.DOCUMENT_POSITION_FOLLOWING);}
  }
 });
 

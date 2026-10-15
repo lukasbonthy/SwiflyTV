@@ -6449,7 +6449,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/motion.js?v=198"></script>
     <script defer src="/assets/clean/details.js?v=198"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=163" />
-    <script defer src="/assets/liquid-glass/surfaces.js?v=196"></script>
+    <script defer src="/assets/liquid-glass/surfaces.js?v=200"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=164" />
     <script defer src="/assets/studio/studio.js?v=164"></script>
     <link rel="stylesheet" href="/assets/clean/aurora.css?v=170" />
@@ -6457,8 +6457,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=163" />' : ""}
     ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=173" />' : ""}
     
-    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=199"></script>' : ""}
-    ${active === "social" ? '<script defer src="/assets/party/party.js?v=199"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}
+    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=200"></script>' : ""}
+    ${active === "social" ? '<script defer src="/assets/party/party.js?v=200"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}
     ${player || partyBrowse ? '<script defer src="/assets/player/watch-party.js?v=160"></script>' : ""}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/finish.css?v=175" />'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/polish.css?v=176" />'}
@@ -6467,8 +6467,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player ? "" : '<link rel="stylesheet" href="/assets/liquid-glass/controls.css?v=197" />'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/experience.css?v=199" />'}
     <link rel="stylesheet" href="/assets/clean/cinema.css?v=199" />
-    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=199" />' : ""}
-    ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=199" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=199" />' : ""}
+    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=200" />' : ""}
+    ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=200" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=199" />' : ""}
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=199" />' : ""}
 </head>
 <body class="svCleanShell">

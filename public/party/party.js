@@ -5,7 +5,7 @@
  const $=(sel,root=app)=>root.querySelector(sel),$$=(sel,root=app)=>[...root.querySelectorAll(sel)];
  const origin=location.origin,socket=typeof window.io==='function'?window.io():null;
  const esc=value=>String(value??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
- let username='Guest',currentRoom='channel-general',currentTitle='Lounge',permissions={},pendingInvite='',joinEpoch=0,listEpoch=0,movieEpoch=0,callEpoch=0,disposed=false,localStream=null,callTrigger=null;
+ let username='Guest',currentRoom='channel-general',currentTitle='General',permissions={},pendingInvite='',joinEpoch=0,listEpoch=0,movieEpoch=0,callEpoch=0,disposed=false,localStream=null,callTrigger=null;
  let activeWatchRoom={id:'',name:'Movie night',joined:false,isHost:false,sync:null};
  let partyPlayer=null,partyPlayerRoot=null,partySourceData=null,mediaEpoch=0;
  const partyMediaListeners=[];
@@ -52,24 +52,28 @@
  }
  function renderMessages(seed=[]){
   $('#sv100Messages').replaceChildren();messageKeys.clear();const messages=[...readMessages(currentRoom),...(Array.isArray(seed)?seed:[])];
-  if(!messages.length){$('#sv100Messages').innerHTML='<div class="partyChatEmpty"><span>'+glyph+'</span><h3>Settle in. Say hello.</h3><p>A good movie night starts with your people.</p></div>';return;}
+  if(!messages.length){const watching=app.dataset.partyView==='rooms',recommendations=currentRoom==='channel-recommendations';$('#sv100Messages').innerHTML='<div class="partyChatEmpty"><span aria-hidden="true">'+glyph+'</span><small>'+esc(watching?'ROOM CHAT':currentTitle)+'</small><h3>'+esc(watching?'Everyone settled in?':recommendations?'What’s worth watching?':'The conversation starts here.')+'</h3><p>'+esc(watching?'Say hello while the host gets the film ready.':recommendations?'Share a recommendation. A hidden gem, an old favourite, or your latest great watch.':'Seen something good lately? Share a thought and start the conversation.')+'</p></div>';return;}
   messages.slice(-160).forEach(m=>addMessage(m,false));
  }
  function updateChatDock(){
   const roomView=app.dataset.partyView==='rooms'&&activeWatchRoom.joined;
   const panel=$('#sv100ChatPanel');(roomView?$('[data-party-chat-dock]'):$('[data-party-main-chat-slot]')).append(panel);
   $('[data-party-conversation]').hidden=!roomView;panel.hidden=app.dataset.partyView==='rooms'&&!activeWatchRoom.joined;panel.classList.toggle('active',!panel.hidden);
-  $('[data-party-chat-description]').textContent=roomView?'Your people, right beside the film.':'A little space to talk films.';
+  $('[data-party-channel-title]').textContent=roomView?'Room chat':currentTitle;
+  $('[data-party-channel-kind]').textContent=currentRoom.startsWith('group-')?'Private conversation':'Community channel';
+  $('[data-party-chat-description]').textContent=roomView?'Your people, right beside the film.':currentRoom==='channel-recommendations'?'Find your next great watch. Leave a recommendation.':currentRoom.startsWith('group-')?'A space for your movie night.':'Good films, hot takes, and everything in between.';
+  $$('.sv100Channel').forEach(button=>{const active=button.dataset.room===currentRoom;button.classList.toggle('active',active);button.setAttribute('aria-current',String(active));});
  }
  function switchTab(tab){
   const rooms=tab==='rooms';app.dataset.partyView=rooms?'rooms':'chat';$('#sv100RoomsPanel').classList.toggle('active',rooms);$('#sv100RoomsPanel').hidden=!rooms;
   $$('[data-tab]').forEach(b=>{const active=b.dataset.tab===(rooms?'rooms':'chat');b.classList.toggle('active',active);b.setAttribute('aria-current',active?'page':'false');});
   if(rooms&&activeWatchRoom.joined){currentRoom='watchroom-'+activeWatchRoom.id;currentTitle=activeWatchRoom.name;}
-  else if(!rooms&&currentRoom.startsWith('watchroom-')){currentRoom='channel-general';currentTitle='Lounge';socket?.emit('social:join',{roomId:currentRoom,name:username});}
-  $('#sv100Kind').textContent=rooms?'WATCH TOGETHER':'COMMUNITY';$('#sv100Title').textContent=rooms?(activeWatchRoom.joined?activeWatchRoom.name:'Party Hub'):currentTitle;
+  else if(!rooms&&currentRoom.startsWith('watchroom-')){currentRoom='channel-general';currentTitle='General';socket?.emit('social:join',{roomId:currentRoom,name:username});}
+  $('#sv100Kind').textContent=rooms?'WATCH TOGETHER':'COMMUNITY';$('#sv100Title').textContent=rooms?(activeWatchRoom.joined?activeWatchRoom.name:'Party Hub'):'Community';
+  $('.partyPageLead').textContent=rooms?'Good films. Better company.':'For the love of a good film.';
   $('#sv100Input').placeholder=rooms?'Say hello to the room…':'Message '+currentTitle+'…';updateChatDock();renderMessages();
  }
- function joinRoom(room,title){currentRoom=String(room||'channel-general').slice(0,80);currentTitle=title||'Lounge';switchTab('chat');$$('.sv100Channel').forEach(b=>b.classList.toggle('active',b.dataset.room===currentRoom));socket?.emit('social:join',{roomId:currentRoom,name:username});}
+ function joinRoom(room,title){currentRoom=String(room||'channel-general').slice(0,80);currentTitle=title||$$('.sv100Channel').find(button=>button.dataset.room===currentRoom)?.dataset.title||'Conversation';switchTab('chat');socket?.emit('social:join',{roomId:currentRoom,name:username});}
  function roomUrl(room){const url=new URL('/social',origin);url.searchParams.set('tab','watchrooms');url.searchParams.set('roomId',room.id);return url.pathname+url.search;}
  function setupReturnLink(){
   const valid=value=>{if(!value)return null;try{const url=new URL(value,origin);return url.origin===origin&&/^\/(?:$|movies\/?$|tv\/?$|search\/?$|trending\/?$|discover\/?$|genres\/?$|my-list\/?$|liked\/?$|continue-watching\/?$|kids\/?$|(?:movie|tv|genre|person)\/\d+\/?$)/.test(url.pathname)?url:null;}catch{return null;}};
@@ -81,12 +85,18 @@
  function movieValue(value){const id=Number(value?.id);if(!Number.isSafeInteger(id)||id<=0||!String(value?.title||'').trim())return null;return {id:String(id),title:String(value.title).slice(0,240),year:String(value.year||''),poster:artwork(value.poster),backdrop:artwork(value.backdrop),overview:String(value.overview||'').slice(0,1000)};}
  function filmChoices(values,attribute){return values.map((movie,index)=>'<button type="button" class="partyFilmChoice" style="--party-card-order:'+Math.min(index,7)+'" '+attribute+'="'+esc(movie.id)+'" aria-label="Choose '+esc(movie.title)+'" aria-pressed="'+(selectedMovie?.id===movie.id)+'"><span>'+(movie.poster?'<img src="'+esc(movie.poster)+'" alt="" loading="lazy" decoding="async">':glyph)+'<span class="partyFilmAffordance" aria-hidden="true">Choose film '+glyph+'</span></span><b>'+esc(movie.title)+'</b><small>'+esc(movie.year||'Movie')+'</small></button>').join('');}
  function updateSelectedUrl(){if(activeWatchRoom.joined)return;try{const url=new URL(location.href);if(wantedMovieId)url.searchParams.set('movieId',wantedMovieId);else url.searchParams.delete('movieId');history.replaceState(history.state,'',url.pathname+url.search+url.hash);}catch{}}
- function renderHero(){const film=selectedMovie||featuredMovies.values().next().value,art=$('[data-party-hero-art]');art.hidden=!film?.backdrop;art.style.backgroundImage=film?.backdrop?'url("'+film.backdrop.replaceAll('"','%22')+'")':'';$('#partyHeroTitle').textContent=selectedMovie?selectedMovie.title:'Make it a movie night.';$('[data-party-hero-copy]').textContent=selectedMovie?'Make a night of '+selectedMovie.title+'. Send one invite, then share the film and every reaction.':'One film, one invite, everyone together. Bring your friends and settle into something good.';const pick=$('[data-party-featured-host]');pick.hidden=!film||Boolean(selectedMovie);if(film){pick.dataset.partyFeaturedId=film.id;pick.querySelector('b').textContent=film.title+(film.year?' · '+film.year:'');}}
+ function renderHero(){
+  const film=selectedMovie||featuredMovies.values().next().value,art=$('[data-party-hero-art]');art.hidden=!film?.backdrop;art.style.backgroundImage=film?.backdrop?'url("'+film.backdrop.replaceAll('"','%22')+'")':'';
+  $('[data-party-hero-label]').textContent=selectedMovie?'Selected for your party':film?'Tonight’s inspiration':'Your next shared screen';
+  $('#partyHeroTitle').textContent=film?.title||'Make it a movie night.';
+  $('[data-party-hero-copy]').textContent=film?.overview||'Pick a film. Bring your people. Share the whole evening.';
+  const pick=$('[data-party-featured-host]');pick.hidden=!film||Boolean(selectedMovie);if(film){pick.dataset.partyFeaturedId=film.id;$('[data-party-hero-film]').textContent=film.year||'Choose this film';}
+ }
  function renderSelection(){
   const panel=$('#partySelectedMovie');panel.hidden=!selectedMovie&&!selectionPending&&!selectionError;panel.classList.toggle('error',Boolean(selectionError));
   if(selectionPending)panel.innerHTML='<span role="status">Loading your selected film…</span>';
-  else if(selectionError)panel.innerHTML='<div><b>This film is unavailable</b><p>'+esc(selectionError)+'</p></div><button type="button" class="dsSecondaryBtn" data-action="retry-party-movie">Try again</button><button type="button" class="dsSecondaryBtn" data-action="clear-party-movie">Choose another film</button>';
-  else if(selectedMovie)panel.innerHTML=(selectedMovie.poster?'<img src="'+esc(selectedMovie.poster)+'" alt="" decoding="async">':'')+'<div><small>Selected for your party</small><b>'+esc(selectedMovie.title)+'</b><small>'+esc(selectedMovie.year||'Movie')+'</small><a href="/movie/'+selectedMovie.id+'">Movie details</a></div><button type="button" class="dsIconBtn" data-action="clear-party-movie" aria-label="Clear selected film">'+glyph.replace('m9 5 11 7-11 7V5Z','m6 6 12 12M18 6 6 18')+'</button>';
+  else if(selectionError)panel.innerHTML='<div><b>This film is unavailable</b><p>'+esc(selectionError)+'</p></div><button type="button" class="partySecondaryBtn" data-action="retry-party-movie">Try again</button><button type="button" class="partySecondaryBtn" data-action="clear-party-movie">Choose another film</button>';
+  else if(selectedMovie)panel.innerHTML=(selectedMovie.poster?'<img src="'+esc(selectedMovie.poster)+'" alt="" decoding="async">':'')+'<div><small>Selected for your party</small><b>'+esc(selectedMovie.title)+'</b><small>'+esc(selectedMovie.year||'Movie')+'</small><a href="/movie/'+selectedMovie.id+'">Movie details</a></div><button type="button" class="partyIconBtn" data-action="clear-party-movie" aria-label="Clear selected film">'+glyph.replace('m9 5 11 7-11 7V5Z','m6 6 12 12M18 6 6 18')+'</button>';
   else panel.replaceChildren();
   $$('[data-party-featured-id],[data-party-lobby-movie-id]').forEach(button=>button.setAttribute('aria-pressed',String((button.dataset.partyFeaturedId||button.dataset.partyLobbyMovieId)===selectedMovie?.id)));
   renderHero();updateConnection();window.SwiflyGlassSurfaces?.refresh(app);
@@ -98,7 +108,7 @@
   catch(error){if(generation!==selectionEpoch||disposed)return;selectionPending=false;selectionError=error.message;renderSelection();}
  }
  async function loadFeaturedMovies(){const generation=++featuredEpoch,target=$('#partyFeaturedMovies');try{const data=await request('/api/social/movies/featured');if(generation!==featuredEpoch||disposed)return;featuredMovies.clear();const films=(Array.isArray(data.movies)?data.movies:[]).map(movieValue).filter(Boolean).slice(0,6);films.forEach(movie=>featuredMovies.set(movie.id,movie));target.innerHTML=films.length?filmChoices(films,'data-party-featured-id'):'<p class="partyFilmStatus">Search for a film above, or browse the movie catalog.</p>';renderHero();renderSelection();}
-  catch{if(generation!==featuredEpoch||disposed)return;target.innerHTML='<div class="partyFilmStatus"><p>Suggested films are unavailable right now. You can still search or browse movies.</p><button class="dsSecondaryBtn" type="button" data-action="retry-featured-movies">Try again</button></div>';window.SwiflyGlassSurfaces?.refresh(target);}
+  catch{if(generation!==featuredEpoch||disposed)return;target.innerHTML='<div class="partyFilmStatus"><p>Suggested films are unavailable right now. You can still search or browse movies.</p><button class="partySecondaryBtn" type="button" data-action="retry-featured-movies">Try again</button></div>';window.SwiflyGlassSurfaces?.refresh(target);}
  }
  async function searchLobbyMovies(value){const query=String(value||'').trim(),generation=++lobbySearchEpoch,target=$('#partyLobbyMovieResults');if(query.length<2){target.innerHTML='<p class="partyFilmStatus">Type at least two letters to find a film.</p>';return;}target.innerHTML='<p class="partyFilmStatus" role="status">Finding films…</p>';
   try{const data=await request('/api/social/movies/search?q='+encodeURIComponent(query));if(generation!==lobbySearchEpoch||disposed)return;lobbyMovies.clear();const films=(Array.isArray(data.results)?data.results:[]).map(movieValue).filter(Boolean);films.forEach(movie=>lobbyMovies.set(movie.id,movie));target.innerHTML=films.length?filmChoices(films,'data-party-lobby-movie-id'):'<p class="partyFilmStatus">No films found. Try another title.</p>';}catch(error){if(generation===lobbySearchEpoch&&!disposed)target.innerHTML='<p class="partyFilmStatus">'+esc(error.message)+'</p>';}
@@ -140,7 +150,7 @@
  }
  function leaveNativeWatchRoom(refresh=true){
   joinEpoch++;movieEpoch++;pendingRoomMovie=null;movies.clear();const id=activeWatchRoom.id;if(id)socket?.emit('watchroom:leave',{roomId:id});destroyMedia();closeCall();activeWatchRoom={id:'',name:'Movie night',joined:false,isHost:false,sync:null};
-  app.dataset.partyRoom='lobby';$('#sv103NativeRoom').hidden=true;$('#sv103RoomLobby').hidden=false;$('#sv103Player').innerHTML='<div class="sv103EmptyPlayer"><b>Your movie night starts here.</b><span>The host can choose a film or add a video link.</span></div>';$('#sv103RoomTitle').textContent='Party Hub';$('#sv103RoomSub').textContent='Make yourself comfortable.';$('#partyMovieResults').replaceChildren();currentRoom='channel-general';currentTitle='Lounge';updateHostUi();switchTab('rooms');try{history.replaceState(history.state,'','/social?tab=watchrooms');}catch{}if(refresh)renderRooms();
+  app.dataset.partyRoom='lobby';$('#sv103NativeRoom').hidden=true;$('#sv103RoomLobby').hidden=false;$('#sv103Player').innerHTML='<div class="sv103EmptyPlayer"><b>Your movie night starts here.</b><span>The host can choose a film or add a video link.</span></div>';$('#sv103RoomTitle').textContent='Party Hub';$('#sv103RoomSub').textContent='Make yourself comfortable.';$('#partyMovieResults').replaceChildren();currentRoom='channel-general';currentTitle='General';updateHostUi();switchTab('rooms');try{history.replaceState(history.state,'','/social?tab=watchrooms');}catch{}if(refresh)renderRooms();
  }
  async function createParty(form){
   if(form.getAttribute('aria-busy')==='true')return;
@@ -159,9 +169,9 @@
   const generation=++listEpoch,target=$('#sv100RoomsList');target.setAttribute('aria-busy','true');
   try{const data=await request('/api/social/watchrooms');if(generation!==listEpoch||disposed)return;const rooms=Array.isArray(data.rooms)?data.rooms:[];$('#partyRoomCount').textContent=rooms.length?'('+rooms.length+')':'';
    if(!rooms.length){target.innerHTML='<div class="partyEmpty"><span>'+glyph+'</span><h3>A quiet room, for now.</h3><p>Make the first party. Your people can join with one invite.</p></div>';return;}
-   target.innerHTML=rooms.slice(0,24).map(room=>{const encoded=encodeURIComponent(JSON.stringify(room)),people=Math.max(0,Number(room.viewers)||0);return '<article class="sv100RoomItem"><div class="partyRoomCardArt">'+glyph+'<span>'+esc(room.mediaKind==='youtube'?'VIDEO NIGHT':room.syncedMovie?.movieId?'MOVIE NIGHT':'WATCH TOGETHER')+'</span></div><div class="partyRoomCardCopy"><h4>'+esc(room.name||'Movie night')+'</h4><p>Hosted by '+esc(room.host||'Host')+'</p><small>'+people+(people===1?' person':' people')+'</small></div><nav><button type="button" class="dsSecondaryBtn" data-open-native-room="'+encoded+'">Join party <span aria-hidden="true">↗</span></button><button type="button" class="dsSecondaryBtn" data-copy="'+esc(origin+roomUrl(room))+'" aria-label="Copy invite for '+esc(room.name||'party')+'">Invite</button></nav></article>';}).join('');
+   target.innerHTML=rooms.slice(0,24).map(room=>{const encoded=encodeURIComponent(JSON.stringify(room)),people=Math.max(0,Number(room.viewers)||0);return '<article class="sv100RoomItem"><div class="partyRoomCardArt">'+glyph+'<span>'+esc(room.mediaKind==='youtube'?'VIDEO NIGHT':room.syncedMovie?.movieId?'MOVIE NIGHT':'WATCH TOGETHER')+'</span></div><div class="partyRoomCardCopy"><h4>'+esc(room.name||'Movie night')+'</h4><p>Hosted by '+esc(room.host||'Host')+'</p><small>'+people+(people===1?' person':' people')+'</small></div><nav><button type="button" class="partySecondaryBtn" data-open-native-room="'+encoded+'">Join party <span aria-hidden="true">↗</span></button><button type="button" class="partySecondaryBtn" data-copy="'+esc(origin+roomUrl(room))+'" aria-label="Copy invite for '+esc(room.name||'party')+'">Invite</button></nav></article>';}).join('');
    window.SwiflyGlassSurfaces?.refresh(target);
-  }catch{if(generation===listEpoch&&!disposed)target.innerHTML='<div class="partyEmpty partyListError"><h3>Parties are unavailable right now.</h3><p>Try again when the connection is ready.</p><button type="button" class="dsSecondaryBtn" data-action="refresh-rooms">Try again</button></div>';}finally{if(generation===listEpoch)target.removeAttribute('aria-busy');}
+  }catch{if(generation===listEpoch&&!disposed)target.innerHTML='<div class="partyEmpty partyListError"><h3>Parties are unavailable right now.</h3><p>Try again when the connection is ready.</p><button type="button" class="partySecondaryBtn" data-action="refresh-rooms">Try again</button></div>';}finally{if(generation===listEpoch)target.removeAttribute('aria-busy');}
  }
  async function searchMovies(value){
   if(!activeWatchRoom.isHost||!connected())return;const query=String(value||'').trim(),target=$('#partyMovieResults'),generation=++movieEpoch;if(query.length<2){target.textContent='Type at least two letters to find a film.';return;}target.textContent='Finding films…';
@@ -264,6 +274,6 @@
  let clock;function startClock(){clearInterval(clock);clock=setInterval(()=>{if(activeWatchRoom.joined&&activeWatchRoom.sync&&connected()){$('#sv103Timer').textContent=formatTime(targetSeconds(activeWatchRoom.sync));applyNativeSync(false);}},1000);}startClock();
  window.addEventListener('pagehide',()=>{disposed=true;joinEpoch++;listEpoch++;movieEpoch++;selectionEpoch++;featuredEpoch++;lobbySearchEpoch++;destroyMedia();closeCall();socket?.disconnect?.();clearInterval(clock);});
  window.addEventListener('pageshow',event=>{if(event.persisted){disposed=false;startClock();socket?.connect?.();if(selectionPending&&wantedMovieId)loadLobbyMovie(wantedMovieId);loadFeaturedMovies();}});
- profile();setupReturnLink();updateConnection();if(app.dataset.selectedMovieId)loadLobbyMovie(app.dataset.selectedMovieId);loadFeaturedMovies();loadPermissions().then(()=>{switchTab(app.dataset.initialTab==='rooms'?'rooms':'chat');const id=app.dataset.roomId;if(id){if(connected())joinInvite(id);else pendingInvite=id;}else if(app.dataset.initialTab!=='rooms')joinRoom(new URLSearchParams(location.search).get('room')||'channel-general','Lounge');if(app.dataset.denied)toast('Hosting is unavailable here. You can still join a party.',true);});renderRooms();
+ profile();setupReturnLink();updateConnection();if(app.dataset.selectedMovieId)loadLobbyMovie(app.dataset.selectedMovieId);loadFeaturedMovies();loadPermissions().then(()=>{switchTab(app.dataset.initialTab==='rooms'?'rooms':'chat');const id=app.dataset.roomId;if(id){if(connected())joinInvite(id);else pendingInvite=id;}else if(app.dataset.initialTab!=='rooms')joinRoom(new URLSearchParams(location.search).get('room')||'channel-general');if(app.dataset.denied)toast('Hosting is unavailable here. You can still join a party.',true);});renderRooms();
  window.SwiflySocial=Object.freeze({switchTab,joinRoom,renderRooms,openNativeWatchRoom,permissions:()=>({...permissions})});
 })();
