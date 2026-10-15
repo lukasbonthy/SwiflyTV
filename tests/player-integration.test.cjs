@@ -21,7 +21,7 @@ test('The normal watch route renders one native movie player with shared assets 
  assert.equal(d.querySelectorAll('.svPlayerPage video').length,1);
  assert.equal(d.querySelector('.svPlayerPage').dataset.playerId,'101');assert.equal(d.querySelector('h1').textContent.trim(),'Arrival');
  assert(d.querySelector('script[src="/assets/player/player.js?v=200"]'));assert(d.querySelector('script[src="/assets/player/watch-party.js?v=160"]'));
- assert(d.querySelector('link[href="/assets/player/player.css?v=200"]'));assert(d.querySelector('dialog.svWatchPartyDialog'));
+ assert(d.querySelector('link[href="/assets/player/player.css?v=201"]'));assert(d.querySelector('dialog.svWatchPartyDialog'));
  assert.equal(d.querySelector('.dsProxyVideoWaitingShell'),null);assert.equal(d.querySelector('.svPartyHub'),null);
  assert.equal(d.querySelector('[data-sv-player-back]').getAttribute('href'),'/movie/101');
 });
@@ -75,7 +75,7 @@ test('Social navigation opens the integrated Party Hub while movie catalog party
  assert(social.querySelector('main.svPartyHub .partyHero'),'Social link should show the proper cinematic Party Hub');
  assert(social.querySelector('.partyNavigation [data-tab="rooms"]'));
  assert(social.querySelector('link[href="/assets/clean/experience.css?v=199"]'));
- assert(social.querySelector('link[href="/assets/player/player.css?v=200"]'));
+ assert(social.querySelector('link[href="/assets/player/player.css?v=201"]'));
  const scripts=[...social.querySelectorAll('script[src]')].map(node=>node.getAttribute('src'));
  const player=scripts.indexOf('/assets/player/player.js?v=200'),party=scripts.findIndex(src=>src.startsWith('/assets/party/party.js?'));
  assert(player>=0&&party>player,'Party Hub must load the shared controller before its room bridge');
@@ -177,7 +177,7 @@ test('the cinema image fade loads after Aurora and Welcome styles',async()=>{
    const d=parse(await response.text()).window.document;
    const styles=[...d.querySelectorAll('link[rel="stylesheet"]')].map(link=>link.getAttribute('href'));
    const aurora=styles.findIndex(v=>v.includes('/assets/clean/aurora.css?v=170'));
-   const fade=styles.findIndex(v=>v.includes('/assets/clean/hero-fade.css?v=197'));
+   const fade=styles.findIndex(v=>v.includes('/assets/clean/hero-fade.css?v=201'));
    assert(aurora>=0 && fade>aurora,route+' fade must follow aurora');
    if(route==='/welcome'){
      const welcome=styles.findIndex(v=>v.includes('/assets/clean/welcome.css'));
@@ -210,7 +210,7 @@ test('movie discovery artwork fades beyond the hero without a visible seam',asyn
  const d=parse(await(await fetch(base+'/welcome')).text()).window.document;
  assert(d.querySelector('.dsWelcomeHero .dsWelcomeHeroBg'));
  assert(d.querySelector('#discovery.dsWelcomeDiscovery'));
- const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=197')).text();
+ const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=201')).text();
  assert.match(css,/\.svWelcomeClean \.dsWelcomeHeroBg \{/);
  assert.match(css,/bottom:-36px !important/,'backdrop continues beneath the hero');
  assert.match(css,/\.svWelcomeClean \.svWelcomeDiscoveryIntro \{/);
@@ -218,7 +218,7 @@ test('movie discovery artwork fades beyond the hero without a visible seam',asyn
  assert.match(css,/main > \.dsHero \+ \.svHeroLightBridge \+ \.dsContent/);
  assert.doesNotMatch(css,/\.movieCard img/,'poster art is not masked');
 });
-test('The featured movie art fades into discovery with no bridge stripe or duplicate bitmap',async()=>{
+test('Featured art carries one decorative low-resolution light spill into discovery',async()=>{
  for(const route of ['/','/trending?type=all','/movies','/tv']){
   const response=await fetch(base+route);
   assert.equal(response.status,200,route+' should render');
@@ -229,34 +229,30 @@ test('The featured movie art fades into discovery with no bridge stripe or dupli
   assert(hero&&bridge&&rows);
   assert.equal(hero.nextElementSibling,bridge);
   assert.equal(bridge.nextElementSibling,rows);
-  assert.equal(hero.querySelectorAll('.dsHeroBg').length,1,'never duplicate the movie art');
+  assert.equal(hero.querySelectorAll('.dsHeroBg').length,1,'one sharp featured frame');
+  assert(hero.querySelector('.dsHeroArt > .dsHeroBg'),'the parallax picture has a stationary fade boundary');
   assert((hero.querySelector('.dsHeroBg').getAttribute('style')||'').includes('background-image:url('));
-  assert.match(hero.getAttribute('data-sv-palette-src')||'',/\/w300\//);
-  assert.equal(bridge.getAttribute('style'),null,'bridge stays an inert spacer');
+  const spill=bridge.querySelector('.svHeroSpill img');
+  assert(spill,'the transition retains the actual artwork light');
+  assert.match(spill.getAttribute('src')||'',/\/w300\//,'ambient art uses the small CDN rendition');
+  assert.equal(spill.getAttribute('alt'),'','the light spill is decorative');
+  assert.equal(bridge.getAttribute('aria-hidden'),'true');
+  assert.equal(bridge.querySelectorAll('img').length,1,'one static ambient layer');
+  assert.equal(bridge.getAttribute('style'),null,'no unbounded inline background paint');
   assert.equal(rows.getAttribute('style'),null,'discovery never paints a second artwork');
-  assert(d.querySelector('link[href="/assets/clean/hero-fade.css?v=197"]'));
-  assert(d.querySelector('script[src="/assets/clean/hero-palette.js?v=188"]'));
+  assert(d.querySelector('link[href="/assets/clean/hero-fade.css?v=201"]'));
+  assert(!d.querySelector('script[src*="/assets/clean/hero-palette.js"]'),'CSS spill needs no canvas sampling');
  }
- const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=197')).text();
+ const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=201')).text();
  assert.match(css,/overflow:hidden !important/,'movie must be clipped inside hero');
  assert.match(css,/bottom:0 !important/,'original art stops at hero bottom');
  assert.match(css,/background-repeat:no-repeat !important/);
- assert.match(css,/--sv-cinema-fade-height: clamp\(340px, 42svh, 470px\)/);
- assert.match(css,/--sv-cinema-fade-height: clamp\(250px, 36svh, 360px\)/,'mobile fade is adaptive');
- const heroLens=css.match(/body\.svCleanShell main > \.dsHero::after \{([\s\S]*?)\n\}/);
- const bridgeLens=css.match(/body\.svCleanShell main > \.dsHero \+ \.svHeroLightBridge::before,([\s\S]*?)\n\}/);
- assert(heroLens&&bridgeLens,'color glow is clipped to hero and legacy bridge is disabled');
- assert.match(heroLens[1],/width: 100% !important/,'all film tones fill the width');
- assert.match(heroLens[1],/background:/);
- assert.match(heroLens[1],/transparent 100%\) !important/,'the glow disappears before discovery');
- assert.match(bridgeLens[1],/display:none !important/,'the old 88%-wide band is gone');
- assert.match(bridgeLens[1],/width:100% !important/,'never crop to 88% again');
+ assert.match(css,/\.svHeroSpill \{/);
+ assert.match(css,/pointer-events:none/,'artwork cannot intercept catalog actions');
+ assert.match(css,/@media\(prefers-reduced-transparency:reduce\)/,'respect reduced transparency');
+ assert.match(css,/-webkit-mask-image/,'Safari receives the same feathered transition');
  assert.doesNotMatch(css,/background-image:var\(--sv-cinema-art\)|background-image:var\(--sv-light-art\)/);
  assert.doesNotMatch(css,/\.movieCard img/);
- const palette=await(await fetch(base+'/assets/clean/hero-palette.js?v=188')).text();
- assert.match(palette,/getImageData/);
- assert.match(palette,/main\.style\.setProperty\('--sv-art-glow-1'/);
- assert.doesNotMatch(palette,/appendChild\(image\)|backgroundImage/);
 });
 test('Welcome uses the featured backdrop as an ambient discovery transition',async()=>{
  const response=await fetch(base+'/welcome');
@@ -419,11 +415,11 @@ test('Catalog and profiles retain their theme while Party Hub owns its component
   if(route==='/movies'||route==='/tv')assert(d.querySelector('.genreDropdown > summary'));
   if(route==='/profiles')assert(d.querySelector('.svProfilesCinematic #profilesGrid'));
   if(route==='/profiles/manage')assert(d.querySelector('.svProfilesCinematic #profileCreateForm'));
-  if(route.startsWith('/social')){assert(d.querySelector('main.svPartyHub .partyHero'));const theme=d.querySelector('link[href="/assets/party/party.css?v=200"]');assert(theme);assert(d.querySelector('link[href="/assets/clean/experience.css?v=199"]').compareDocumentPosition(theme)&d.defaultView.Node.DOCUMENT_POSITION_FOLLOWING);}
+  if(route.startsWith('/social')){assert(d.querySelector('main.svPartyHub .partyHero'));const theme=d.querySelector('link[href="/assets/party/party.css?v=201"]');assert(theme);assert(d.querySelector('link[href="/assets/clean/experience.css?v=199"]').compareDocumentPosition(theme)&d.defaultView.Node.DOCUMENT_POSITION_FOLLOWING);}
  }
 });
 
-test('v188 lifts cinema brightness and hue without duplicating film art or darkening optical glass',async()=>{
+test('Cinema keeps natural featured color and preserves the existing optical glass',async()=>{
  const d=parse(await(await fetch(base+'/')).text()).window.document;
  const hero=d.querySelector('main > .dsHero');
  const nav=d.querySelector('.netflixNav > .svLiquidPane');
@@ -432,9 +428,8 @@ test('v188 lifts cinema brightness and hue without duplicating film art or darke
  assert.equal(nav.dataset.glassBlur,'2.4');
  assert.equal(nav.dataset.glassSaturation,'1.28');
  assert(d.querySelector('script[src="/assets/liquid-glass/liquid-glass.js?v=196"]'));
- const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=197')).text();
- assert.match(css,/filter:brightness\(1\.10\) saturate\(1\.24\) contrast\(1\.035\)/);
- assert.match(css,/rgb\(0 0 0 \/ \.50\)/);
+ const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=201')).text();
+ assert.match(css,/filter:none !important/);
  assert.match(css,/overflow:hidden !important/,'movie picture remains clipped');
  assert.doesNotMatch(css,/background-image:var\(--sv-cinema-art\)|background-image:var\(--sv-light-art\)/,'no duplicated artwork');
  const glass=await(await fetch(base+'/assets/liquid-glass/controls.css?v=197')).text();

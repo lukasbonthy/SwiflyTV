@@ -6,6 +6,7 @@ const esc=value=>String(value??'').replaceAll('&','&amp;').replaceAll('<','&lt;'
 function partyMarkup(options={}){
  const rooms=options.initialTab==='rooms';
  return `<main class="svPartyHub svPartyPage" data-party-view="${rooms?'rooms':'chat'}" data-party-room="lobby" data-initial-tab="${esc(options.initialTab)}" data-room-id="${esc(options.requestedRoomId)}" data-room-name="${esc(options.initialRoomName)}" data-room-kind="${esc(options.initialKind)}" data-room-video-id="${esc(options.initialVideoId)}" data-room-embed-url="${esc(options.initialEmbedUrl)}" data-selected-movie-id="${esc(options.selectedMovieId||'')}" data-denied="${esc(options.denied)}" data-allowed-creators="${esc((options.allowedCreators||[]).join(','))}" data-open-room-creation="${options.openRoomCreation?'true':'false'}">
+   <div class="partyPageAtmosphere" aria-hidden="true"><div class="partyHeroBackdrop" data-party-hero-art hidden></div><div class="partyHeroShade"></div></div>
    <header class="partyPageHeader">
      <div class="partyPageIdentity">
        <a href="/movies" class="partyBrowseLink" data-party-return>${icon('back')}Back to browsing</a>
@@ -56,8 +57,6 @@ function partyMarkup(options={}){
            <section id="sv103RoomLobby" class="sv103RoomLobby">
              <div class="partyLobbyStart">
                <section class="partyHero" aria-labelledby="partyHeroTitle">
-                 <div class="partyHeroBackdrop" data-party-hero-art hidden></div><div class="partyHeroShade"></div>
-                 <span class="partyHeroGlyph" aria-hidden="true">${icon('film')}</span>
                  <div class="partyHeroCopy"><span class="partyHeroLabel" data-party-hero-label>Your next shared screen</span><h2 id="partyHeroTitle">Make it a movie night.</h2><p class="partyHeroOverview" data-party-hero-copy>Pick a film. Bring your people.</p></div>
                  <button class="partyHeroPick" data-party-featured-host type="button" hidden>${icon('play')}<span><b>Host with this film</b><small data-party-hero-film></small></span>${icon('arrow')}</button>
                </section>

@@ -51,14 +51,20 @@ body.svCleanShell .svPartyHub .sv100Panel.active { display:block; }
 body.svCleanShell .svPartyHub .sv103RoomShell { display:block; min-width:0; margin:0; padding:0; border:0; border-radius:0; background:none; box-shadow:none; }
 body.svCleanShell .svPartyHub .partyEyebrow { display:block; margin-bottom:9px; color:#ada6b9; font-size:10px; font-weight:500; letter-spacing:.13em; text-transform:uppercase; line-height:1.5; }
 
-/* One panoramic film surface, with a deliberate place to host or join. */
-body.svCleanShell .svPartyHub .partyLobbyStart { position:relative; isolation:isolate; display:grid; grid-template-columns:minmax(0,1fr) minmax(340px,400px); align-items:center; gap:44px; margin-bottom:48px; padding:36px; overflow:hidden; border:1px solid #eee8ff26; border-radius:28px; background:#19191e; box-shadow:inset 0 1px #ffffff0b,0 24px 80px #0003; }
-body.svCleanShell .svPartyHub .partyHero { position:static; display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-end; gap:26px; min-width:0; min-height:448px; padding:30px 6px 20px; }
-body.svCleanShell .svPartyHub .partyHeroBackdrop { position:absolute; inset:0; z-index:-3; background-size:cover; background-position:center; opacity:.9; }
-body.svCleanShell .svPartyHub .partyHeroShade { position:absolute; inset:0; z-index:-1; background:linear-gradient(0deg,#111116e8,transparent 90%),linear-gradient(90deg,#11111680,#11111608 48%,#11111669); }
-body.svCleanShell .svPartyHub .partyHeroGlyph { position:absolute; z-index:-2; top:16%; left:19%; color:#eee4ff13; }
-body.svCleanShell .svPartyHub .partyHeroGlyph svg { width:180px; height:180px; stroke-width:.5; }
-body.svCleanShell .svPartyHub .partyHeroBackdrop:not([hidden]) ~ .partyHeroGlyph { display:none; }
+/* One continuous artwork atmosphere, from the floating navigation to the lobby. */
+body.svCleanShell .svPartyHub[data-party-room="lobby"][data-party-view="rooms"] { position:relative; isolation:isolate; width:100%; margin:0 auto 72px; padding:112px max(var(--sv-page-gutter,32px),calc((100% - 1320px)/2)) 0; }
+body.svCleanShell .svPartyHub .partyPageAtmosphere { display:none; }
+body.svCleanShell .svPartyHub[data-party-room="lobby"][data-party-view="rooms"] .partyPageAtmosphere { position:absolute; inset:0 0 auto; z-index:-1; display:block; height:920px; overflow:hidden; pointer-events:none; background:linear-gradient(135deg,#25202f80,#16151b20); -webkit-mask-image:linear-gradient(#000 0%,#000 58%,transparent 100%); mask-image:linear-gradient(#000 0%,#000 58%,transparent 100%); }
+body.svCleanShell .svPartyHub[data-party-room="lobby"][data-party-view="rooms"] .partyPageHeader { margin-bottom:22px; }
+body.svCleanShell .svPartyHub[data-party-room="lobby"][data-party-view="rooms"] .partyModeNav { margin-bottom:16px; background:#14121830; }
+body.svCleanShell .svPartyHub[data-party-room="lobby"][data-party-view="rooms"] .partyPageLead { color:#d0cbd8; }
+body.svCleanShell .svPartyHub[data-party-room="lobby"][data-party-view="rooms"] .sv100ProfilePill { background:#17151b70; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); }
+body.svCleanShell .svPartyHub[data-party-room="lobby"][data-party-view="rooms"] .sv100ProfilePill small { color:#ddd7e4; }
+
+body.svCleanShell .svPartyHub .partyLobbyStart { display:grid; grid-template-columns:minmax(0,1fr) minmax(340px,400px); align-items:center; gap:64px; min-height:470px; margin-bottom:56px; padding:24px 0 38px; border:0; border-radius:0; background:none; box-shadow:none; }
+body.svCleanShell .svPartyHub .partyHero { display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-end; gap:26px; min-width:0; min-height:390px; padding:48px 0 22px; }
+body.svCleanShell .svPartyHub .partyHeroBackdrop { position:absolute; inset:0; background-size:cover; background-position:center top; background-repeat:no-repeat; opacity:.94; }
+body.svCleanShell .svPartyHub .partyHeroShade { position:absolute; inset:0; background:linear-gradient(0deg,#08070bba,transparent 65%),linear-gradient(90deg,#09080eb8,#09080e24 58%,#09080e60),linear-gradient(180deg,#08070b38,transparent 38%); }
 body.svCleanShell .svPartyHub .partyHeroCopy { min-width:0; max-width:640px; }
 body.svCleanShell .svPartyHub .partyHeroLabel { display:inline-flex; align-items:center; gap:8px; margin-bottom:18px; color:#e5deef; font-size:11px; font-weight:500; letter-spacing:.12em; text-transform:uppercase; line-height:1.5; }
 body.svCleanShell .svPartyHub .partyHeroLabel::before { content:''; width:21px; height:1px; background:#d9ccec; }
@@ -71,7 +77,7 @@ body.svCleanShell .svPartyHub .partyHeroPick b { display:block; color:inherit; f
 body.svCleanShell .svPartyHub .partyHeroPick small { display:block; margin-top:3px; color:#c0b6cc; font-size:11px; }
 body.svCleanShell .svPartyHub .partyHeroPick > svg:last-child { margin-left:14px; }
 body.svCleanShell .svPartyHub .partyHeroPick:hover { background:#ffffff18; border-color:#ffffff70; }
-body.svCleanShell .svPartyHub .partySetup { min-width:0; padding:25px; border:1px solid #f1eaff28; border-radius:22px; background:linear-gradient(145deg,#2e2a33bb,#19181edf); backdrop-filter:blur(30px); -webkit-backdrop-filter:blur(30px); box-shadow:inset 0 1px #ffffff0f,0 16px 40px #0002; }
+body.svCleanShell .svPartyHub .partySetup { min-width:0; padding:25px; border:1px solid #f1eaff28; border-radius:22px; background:linear-gradient(145deg,#29262f80,#19181ea8); backdrop-filter:blur(30px); -webkit-backdrop-filter:blur(30px); box-shadow:inset 0 1px #ffffff0f,0 16px 40px #0002; }
 body.svCleanShell .svPartyHub .partyEntryTabs { display:flex; gap:5px; margin-bottom:26px; padding:4px; border:1px solid #ffffff0e; border-radius:999px; background:#08080d66; }
 body.svCleanShell .svPartyHub .partyEntryTabs > button { flex:1; min-width:0; min-height:42px; padding:10px 12px; border:1px solid transparent; border-radius:999px; background:none; color:#b8b1c2; font-size:14px; font-weight:500; line-height:1.4; }
 body.svCleanShell .svPartyHub .partyEntryTabs > button[aria-selected="true"] { border-color:#e8ddff36; background:linear-gradient(135deg,#ece3ff26,#ece3ff0e); color:#fff; box-shadow:inset 0 1px #ffffff12,0 2px 8px #0002; }
@@ -293,8 +299,8 @@ body.svCleanShell .svPartyHub .sv100Toast.error { border-color:#e0abbd50; }
  body.svCleanShell .svPartyHub .partyFilmChoice:hover .partyFilmAffordance { opacity:1; transform:none; }
 }
 @media(max-width:1080px) {
- body.svCleanShell .svPartyHub .partyLobbyStart { gap:24px; padding:25px; grid-template-columns:minmax(0,1fr) minmax(310px,.9fr); }
- body.svCleanShell .svPartyHub .partyHero { min-height:430px; }
+ body.svCleanShell .svPartyHub .partyLobbyStart { gap:32px; padding:20px 0 32px; grid-template-columns:minmax(0,1fr) minmax(310px,.9fr); }
+ body.svCleanShell .svPartyHub .partyHero { min-height:390px; }
  body.svCleanShell .svPartyHub .partyHero h2 { font-size:52px; }
  body.svCleanShell .svPartyHub .partySetup { padding:22px; }
  body.svCleanShell .svPartyHub .partyCardHeading h3 { font-size:23px; }
@@ -307,6 +313,8 @@ body.svCleanShell .svPartyHub .sv100Toast.error { border-color:#e0abbd50; }
 }
 @media(max-width:760px) {
  body.svCleanShell .svPartyHub { width:calc(100% - 40px); margin:98px auto 44px; }
+ body.svCleanShell .svPartyHub[data-party-room="lobby"][data-party-view="rooms"] { width:100%; margin:0 auto 44px; padding:98px 20px 0; }
+ body.svCleanShell .svPartyHub[data-party-room="lobby"][data-party-view="rooms"] .partyPageAtmosphere { height:850px; }
  body.svCleanShell .svPartyHub .partyPageHeader { align-items:flex-end; gap:16px; margin-bottom:22px; }
  body.svCleanShell .svPartyHub .partyBrowseLink { margin-bottom:20px; font-size:12px; }
  body.svCleanShell .svPartyHub .partyPageIdentity h1 { font-size:36px; }
@@ -316,10 +324,10 @@ body.svCleanShell .svPartyHub .sv100Toast.error { border-color:#e0abbd50; }
  body.svCleanShell .svPartyHub .sv100ProfilePill b { font-size:12px; }
  body.svCleanShell .svPartyHub .sv100ProfilePill small { font-size:10px; }
  body.svCleanShell .svPartyHub .partyModeNav { margin-bottom:24px; }
- body.svCleanShell .svPartyHub .partyLobbyStart { display:flex; flex-direction:column; align-items:stretch; gap:0; margin-bottom:36px; padding:0 14px 14px; border-radius:24px; }
- body.svCleanShell .svPartyHub .partyHero { justify-content:flex-end; min-height:240px; gap:16px; padding:24px 12px 38px; }
- body.svCleanShell .svPartyHub .partyHeroBackdrop { inset:0 0 auto; height:300px; background-position:center top; }
- body.svCleanShell .svPartyHub .partyHeroShade { background:linear-gradient(0deg,#19191e 3%,#19191e20 90%),linear-gradient(90deg,#12111675,#12111600); }
+ body.svCleanShell .svPartyHub .partyLobbyStart { display:flex; flex-direction:column; align-items:stretch; gap:24px; min-height:0; margin-bottom:40px; padding:0; }
+ body.svCleanShell .svPartyHub .partyHero { justify-content:flex-start; min-height:0; gap:16px; padding:48px 0 0; }
+ body.svCleanShell .svPartyHub .partyHeroBackdrop { background-position:60% top; }
+ body.svCleanShell .svPartyHub .partyHeroShade { background:linear-gradient(0deg,#08070bc9,transparent 80%),linear-gradient(90deg,#09080e9c,#09080e18); }
  body.svCleanShell .svPartyHub .partyHero h2 { max-width:500px; font-size:44px; line-height:1; }
  body.svCleanShell .svPartyHub .partyHeroLabel { margin-bottom:13px; font-size:10px; }
  body.svCleanShell .svPartyHub .partyHeroOverview { display:none; }
@@ -327,7 +335,7 @@ body.svCleanShell .svPartyHub .sv100Toast.error { border-color:#e0abbd50; }
  body.svCleanShell .svPartyHub .partyHeroPick small { display:none; }
  body.svCleanShell .svPartyHub .partyHeroPick b { font-size:13px; }
  body.svCleanShell .svPartyHub .partyHeroPick > svg:last-child { margin-left:8px; }
- body.svCleanShell .svPartyHub .partySetup { position:relative; margin-top:-20px; padding:22px; border-radius:19px; background:linear-gradient(145deg,#302b35d9,#1d1b23ee); }
+ body.svCleanShell .svPartyHub .partySetup { padding:22px; border-radius:19px; background:linear-gradient(145deg,#29262f80,#19181eb8); }
  body.svCleanShell .svPartyHub .partyEntryTabs { margin-bottom:22px; }
  body.svCleanShell .svPartyHub .partyCardHeading h3 { font-size:25px; }
  body.svCleanShell .svPartyHub .partyCardHeading p { font-size:13px; }
@@ -386,8 +394,8 @@ body.svCleanShell .svPartyHub .sv100Toast.error { border-color:#e0abbd50; }
  body.svCleanShell .svPartyHub .sv100ProfilePill { max-width:108px; padding:7px 8px; }
  body.svCleanShell .svPartyHub .partyModeNav { width:100%; }
  body.svCleanShell .svPartyHub .partyModeNav > button { flex:1; gap:6px; padding:10px 11px; font-size:13px; }
- body.svCleanShell .svPartyHub .partyLobbyStart { padding:0 10px 10px; }
- body.svCleanShell .svPartyHub .partyHero { min-height:230px; padding:24px 10px 34px; }
+ body.svCleanShell .svPartyHub[data-party-room="lobby"][data-party-view="rooms"] { padding-inline:16px; }
+ body.svCleanShell .svPartyHub .partyHero { padding-top:38px; }
  body.svCleanShell .svPartyHub .partyHero h2 { font-size:38px; }
  body.svCleanShell .svPartyHub .partySetup { padding:18px; }
  body.svCleanShell .svPartyHub .partyEntryTabs > button { padding:10px 8px; font-size:12px; }

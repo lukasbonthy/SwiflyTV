@@ -6462,13 +6462,12 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player || partyBrowse ? '<script defer src="/assets/player/watch-party.js?v=160"></script>' : ""}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/finish.css?v=175" />'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/polish.css?v=176" />'}
-    <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=197" />
-    ${player ? "" : '<script defer src="/assets/clean/hero-palette.js?v=188"></script>'}
+    <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=201" />
     ${player ? "" : '<link rel="stylesheet" href="/assets/liquid-glass/controls.css?v=197" />'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/experience.css?v=199" />'}
     <link rel="stylesheet" href="/assets/clean/cinema.css?v=199" />
-    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=200" />' : ""}
-    ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=200" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=199" />' : ""}
+    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=201" />' : ""}
+    ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=201" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=199" />' : ""}
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=199" />' : ""}
 </head>
 <body class="svCleanShell">
@@ -8218,13 +8217,13 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = nu
   const title = getTitle(hero);
   const href = `/${mediaType}/${encodeURIComponent(hero.id || "")}`;
   const bg = fullBackdrop(hero.backdrop_path || hero.poster_path);
-  const paletteSrc = img(hero.backdrop_path || hero.poster_path, "w300");
+  const spillSrc = img(hero.backdrop_path || hero.poster_path, "w300");
   const desc = hero.overview || "Discover this title, explore the cast, and add it to your list.";
   const maturity = mediaType === "tv" ? "TV-14" : "PG-13";
   const trailerKey = trailer && trailer.key ? String(trailer.key) : "";
   const trailerSrc = trailerKey ? youtubeHeroAutoplaySrc(trailerKey, embedOrigin) : "";
-  return `<section class="dsHero ${trailerSrc ? "dsHeroHasTrailer" : ""}" data-sv-palette-src="${escapeHtml(paletteSrc)}">
-    <div class="dsHeroBg" style="background-image:url('${escapeHtml(bg)}')"></div>
+  return `<section class="dsHero ${trailerSrc ? "dsHeroHasTrailer" : ""}">
+    <div class="dsHeroArt" aria-hidden="true"><div class="dsHeroBg" style="background-image:url('${escapeHtml(bg)}')"></div></div>
     ${trailerSrc ? `<div class="dsHeroTrailerLayer" aria-hidden="true">
       <iframe id="dsHeroTrailerFrame" class="dsHeroTrailerFrame" src="${escapeHtml(trailerSrc)}" title="${escapeHtml(title)} muted trailer preview" loading="eager" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
     </div>
@@ -8383,7 +8382,7 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = nu
       })();
     </script>` : ""}
   </section>
-  <div class="svHeroLightBridge" aria-hidden="true"></div>`;
+  <div class="svHeroLightBridge" aria-hidden="true">${spillSrc ? `<div class="svHeroSpill"><img src="${escapeHtml(spillSrc)}" alt="" width="300" height="169" decoding="async" fetchpriority="low" /></div>` : ""}</div>`;
 }
 
 

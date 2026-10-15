@@ -277,7 +277,7 @@ test('Studio still controls original artwork colors, brightness, speed and motio
 
 test('Recent hero-art fade is preserved while the WebGL overlay is removed',()=>{
  const fade=fs.readFileSync(path.join(__dirname,'../public/clean/hero-fade.css'),'utf8');
- assert.match(fade,/main > \.dsHero > \.dsHeroBg \{/,'the current hero art receives the fade without changing poster cards');
+ assert.match(fade,/main > \.dsHero > \.dsHeroArt \{/,'the hero frame owns the fade without changing poster cards');
  assert.match(fade,/mask-image:linear-gradient\(to bottom/);
  assert.match(fade,/\.dsHeroTrailerLayer/);
  assert.match(fade,/\.svWelcomeClean \.dsWelcomeHeroBg/);
