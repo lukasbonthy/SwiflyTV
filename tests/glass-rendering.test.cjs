@@ -24,22 +24,12 @@ test('Visible optical panes stay inside their Party hosts and leave page content
    assert(graph,'supported segmented bars share an actual rounded lens');assert.equal(scale,180,'shared bars use the observed reference optics');
   }
   await page.waitForFunction(()=>document.querySelector('.dsHeroActions .svNavMatchedLens')?.dataset.swiflyRenderer==='svg');
-  const dispersion=await page.locator('.svNavMatchedLens filter').evaluateAll(filters=>filters.map(filter=>{
-    const pane=filter.closest('.svNavMatchedLens'),scales=[...filter.querySelectorAll('feDisplacementMap')].map(node=>Number(node.getAttribute('scale')));
-    return {width:pane.getBoundingClientRect().width,panel:pane.parentElement.matches('.partyModeNav,.partyEntryTabs'),scales};
-  }));
-  assert(dispersion.length>3,'segmented bars and independent actions have real RGB refraction');
-  for(const field of dispersion) {
-    assert.equal(field.scales.length,3);
-    const spread=field.scales[2]-field.scales[0];
-    if(field.panel) {
-      assert.deepEqual(field.scales,[-180,-170,-160],'shared wide navigation tabs retain exact nav map');
-    } else {
-      assert(field.scales[0]<0&&Math.abs(field.scales[0])<180,'buttons must not use 180px displacement');
-      assert(spread>0&&spread<20,'channel dispersion shrinks with the button');
-      assert(Math.abs(field.scales[0])<=Math.max(1,field.width*.42),'button displacement fits width');
-    }
-  }
+  const dispersion=await page.locator('.svNavMatchedLens filter').evaluateAll(filters=>filters.map(filter=>({
+   scales:[...filter.querySelectorAll('feDisplacementMap')].map(node=>Number(node.getAttribute('scale')))
+  })));
+  assert(dispersion.length>3,'hero and segmented surfaces must have actual RGB refraction');
+  assert(dispersion.every(field=>JSON.stringify(field.scales)===JSON.stringify([-180,-170,-160])),
+    'hero Play/Details/Save and the top navigation must use exactly the same optical field');
   assert.equal(await page.locator('main>.svNavMatchedLens,[data-player-root] .svNavMatchedLens,.partySetup>.svNavMatchedLens').count(),0);
   assert.equal(await page.locator('h1').textContent(),'Party Hub');
  }finally{await browser.close();}
@@ -79,17 +69,24 @@ for (const scheme of ['light','dark'])for (const native of [false,true]) test(sc
   assert.notEqual(await page.locator('.netflixNav .navLinks>a').evaluate(node=>getComputedStyle(node).textShadow),'none','labels retain a local shadow over bright art without obscuring the whole pane');
   for(const {round,hero,host,pane,hit} of state.actions){
    const actionColor=pane.fill.match(/[\d.]+/g).map(Number);assert.deepEqual(actionColor.slice(0,3),rgba.slice(0,3),'all prominent actions use the same clear glass family');assert.equal(actionColor[3],.14,'hero actions keep the same clear tint as navigation');
-   assert.equal(pane.shadow,'none','sampling pane edge stays hidden outside the clipped control');
-   assert.equal(host.shadow,state.nav.shadow,'visible button rim uses the exact navbar edge while its backdrop sampler extends behind it');
+   assert.equal(pane.shadow,state.nav.shadow,'the exact navbar optical edge belongs on every button lens');
+   assert.equal(host.shadow,'none','host must not draw a second glass border');
    assert.equal(host.border,'0px');assert.equal(host.image,'none','component styles must not add a pale fill over the shared material');
    assert.equal(host.before,'none');assert.equal(host.after,'none');
    assert(host.rect.width>=44&&host.rect.height>=44);assert(hit);if(round)assert.equal(host.radius,'50%','round detail actions retain the shared control shape');
-   assert(pane.rect.width>=host.rect.width+60&&pane.rect.height>=host.rect.height+34,'compact actions need a wider hidden backdrop sampling field');
-   assert(pane.rect.x<host.rect.x&&pane.rect.y<host.rect.y,'sampling pane must extend evenly behind the clipped host');
+   for(const key of ['x','y','width','height'])assert(Math.abs(host.rect[key]-pane.rect[key])<=1,'buttons use the correctly bounded navbar glass, not an enlarged sampler');
    if(native)assert(!pane.filter.includes('url('),'Safari uses only native backdrop blur');
   }
-  assert.equal(await page.locator('.dsHeroActions>.dsPrimaryBtn>.svNavMatchedLens').evaluate(node=>getComputedStyle(node,'::before').content),
-    'none','button refraction must not depend on fake shine overlays');
+  const reflections=await page.locator('.dsHeroActions>.dsPrimaryBtn>.svNavMatchedLens').evaluate(node=>({
+   near:getComputedStyle(node,'::before').backgroundImage,
+   edge:getComputedStyle(node,'::after').backgroundImage,
+   backdrop:getComputedStyle(node).backdropFilter,
+   clip:getComputedStyle(node).borderRadius
+  }));
+  assert.match(reflections.near,/linear-gradient/,'subtle glass face light remains visible against flat gray artwork');
+  assert.match(reflections.edge,/conic-gradient/,'a directional curved-glass edge is present');
+  assert.match(reflections.backdrop,/url\(/,'button highlight must accompany real SVG backdrop refraction in Chromium');
+  assert.notEqual(reflections.clip,'0px','the same glass pane clips to the actual button shape');
   assert(state.repeat.every(control=>!control.filter.includes('url(')),'repeated controls must stay lightweight');
   assert.equal(state.graphs,0,'removed optical renderers must not return');
   await page.locator('.dsHeroActions>.dsPrimaryBtn').hover();await page.waitForTimeout(220);
