@@ -53,26 +53,57 @@ body.svCleanShell .svNavMatchedOptic > .svNavMatchedLens.svLiquidPane {
   border-radius: inherit !important;
   pointer-events: none !important;
 }
-/* The wide navbar gets natural refraction because its pane samples hundreds
-   of pixels of the live backdrop. Compact controls used to sample only their
-   own 44-90px box, so their displacement field mostly read clipped/flat
-   pixels and looked like ordinary translucent pills. Give standalone controls
-   a larger hidden sampling halo while the host clips the visible result back
-   to the exact button shape. */
+/* Compact controls now use exactly the same correctly bounded, full-strength
+   backdrop lens as the navbar. No magnified sampling layer or separate
+   width-reduced optical filter. The lens itself owns its rounded clipping. */
 body.svCleanShell .svGlassControl.svNavMatchedOptic {
-  --sv-control-sample-x: 34px;
-  --sv-control-sample-y: 20px;
-  overflow: hidden !important;
-  box-shadow: var(--sv-glass-edge) !important;
+  overflow: visible !important;
 }
 body.svCleanShell .svGlassControl.svNavMatchedOptic > .svNavMatchedLens.svLiquidPane {
-  top: calc(-1 * var(--sv-control-sample-y)) !important;
-  right: calc(-1 * var(--sv-control-sample-x)) !important;
-  bottom: calc(-1 * var(--sv-control-sample-y)) !important;
-  left: calc(-1 * var(--sv-control-sample-x)) !important;
-  width: auto !important;
-  height: auto !important;
-  box-shadow: none !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  box-shadow: var(--sv-glass-edge) !important;
+}
+/* Curved glass catches directional illumination, especially against a plain
+   gray backdrop where pure refraction cannot be seen. The first reflection
+   is transparent across the body; the second is *rim-only* Fresnel lighting.
+   The actual background remains provided by the same nav refractive filter. */
+body.svCleanShell[data-st-glass="liquid"] .svGlassControl.svNavMatchedOptic > .svNavMatchedLens.svLiquidPane::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(150deg,
+    rgb(255 255 255 / .085) 0%,
+    rgb(255 255 255 / .012) 45%,
+    rgb(0 0 0 / .012) 100%);
+  pointer-events: none;
+}
+body.svCleanShell[data-st-glass="liquid"] .svGlassControl.svNavMatchedOptic > .svNavMatchedLens.svLiquidPane::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.2px;
+  pointer-events: none;
+  background: conic-gradient(from 190deg at 50% 50%,
+    rgb(255 255 255 / .28),
+    rgb(255 255 255 / .74) 20%,
+    rgb(255 255 255 / .05) 42%,
+    rgb(255 255 255 / .03) 60%,
+    rgb(255 255 255 / .58) 89%,
+    rgb(255 255 255 / .28));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+@media (prefers-reduced-transparency: reduce) {
+  body.svCleanShell .svGlassControl.svNavMatchedOptic > .svNavMatchedLens.svLiquidPane::before,
+  body.svCleanShell .svGlassControl.svNavMatchedOptic > .svNavMatchedLens.svLiquidPane::after {
+    display: none !important;
+  }
 }
 body.svCleanShell .svNavMatchedOptic > :not(.svNavMatchedLens) {
   position: relative;
