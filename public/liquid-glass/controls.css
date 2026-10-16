@@ -69,7 +69,7 @@ body.svCleanShell .svGlassControl.svNavMatchedOptic > .svNavMatchedLens.svLiquid
    gray backdrop where pure refraction cannot be seen. The first reflection
    is transparent across the body; the second is *rim-only* Fresnel lighting.
    The actual background remains provided by the same nav refractive filter. */
-body.svCleanShell[data-st-glass="liquid"] .svGlassControl.svNavMatchedOptic > .svNavMatchedLens.svLiquidPane::before {
+body.svCleanShell:not([data-st-glass="off"]):not([data-st-glass="subtle"]) .svGlassControl.svNavMatchedOptic > .svNavMatchedLens.svLiquidPane::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -80,7 +80,7 @@ body.svCleanShell[data-st-glass="liquid"] .svGlassControl.svNavMatchedOptic > .s
     rgb(0 0 0 / .012) 100%);
   pointer-events: none;
 }
-body.svCleanShell[data-st-glass="liquid"] .svGlassControl.svNavMatchedOptic > .svNavMatchedLens.svLiquidPane::after {
+body.svCleanShell:not([data-st-glass="off"]):not([data-st-glass="subtle"]) .svGlassControl.svNavMatchedOptic > .svNavMatchedLens.svLiquidPane::after {
   content: "";
   position: absolute;
   inset: 0;
