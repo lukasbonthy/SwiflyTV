@@ -314,14 +314,16 @@ test('Standalone buttons and action links get native glass at rest without a fil
  const env=glass('<section class="dsAccountActions"><a class="dsSecondaryBtn">Profile</a><a class="btn">Browse</a></section><form><input type="submit" value="Save"></form><div class="dsCardQuickActions"><button class="dsMiniBtn">Save</button></div>'),w=env.window,d=w.document;
  d.body.dataset.stGlass='liquid';
  w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');
- for(const node of d.querySelectorAll('.dsAccountActions>a,form>input')){
+ for(const node of d.querySelectorAll('.dsAccountActions>a')){
   assert(node.classList.contains('svNavMatchedOptic'),'standalone action missing nav material: '+node.outerHTML);
   assert(node.querySelector(':scope>.svNavMatchedLens'),'pane should not depend on hover or intersection');
  }
+ assert(d.querySelector('form>input').classList.contains('svGlassControl'),'submit inputs use native glass');
+ assert.equal(d.querySelector('form>input>.svNavMatchedLens'),null,'void form inputs must never receive child panes');
  assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length,0,'offscreen panes cost no SVG filter graphs');
  assert.equal(d.querySelector('.dsCardQuickActions .svNavMatchedLens'),null,'dense repeats remain native');
  env.intersect(true);w.flush(16);
- assert.equal(d.querySelectorAll('.dsAccountActions .svNavMatchedLens[data-swifly-renderer="svg"],form .svNavMatchedLens[data-swifly-renderer="svg"]').length,3);
+ assert.equal(d.querySelectorAll('.dsAccountActions .svNavMatchedLens[data-swifly-renderer="svg"],form .svNavMatchedLens[data-swifly-renderer="svg"]').length,2);
  env.finish();
 });
 
