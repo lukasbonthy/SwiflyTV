@@ -75,6 +75,14 @@ for (const scheme of ['light','dark'])for (const native of [false,true]) test(sc
    for(const key of ['x','y','width','height'])assert(Math.abs(host.rect[key]-pane.rect[key])<=1,'the lens stays bounded to its action');
    if(native)assert(!pane.filter.includes('url('),'Safari uses only native backdrop blur');
   }
+  const rim=await page.locator('.dsHeroActions>.dsPrimaryBtn>.svNavMatchedLens').evaluate(node=>{
+    const edge=getComputedStyle(node,'::before'),shine=getComputedStyle(node,'::after'),face=getComputedStyle(node);
+    return {rim:edge.backgroundImage,mask:edge.webkitMaskComposite,edgeFilter:edge.backdropFilter,shine:shine.backgroundImage,face:face.backgroundColor};
+  });
+  assert.match(rim.rim,/conic-gradient/,'hero buttons need a visible directional glass rim over plain art');
+  assert.match(rim.shine,/radial-gradient/,'only the top edge gets a tiny local highlight');
+  assert(!rim.edgeFilter.includes('url('),'rim needs no additional SVG displacement pass');
+  assert.equal(rim.face, state.nav.fill,'the visible rim must not tint the button center or navbar differently');
   assert(state.repeat.every(control=>!control.filter.includes('url(')),'repeated controls must stay lightweight');
   assert.equal(state.graphs,0,'removed optical renderers must not return');
   await page.locator('.dsHeroActions>.dsPrimaryBtn').hover();await page.waitForTimeout(220);
