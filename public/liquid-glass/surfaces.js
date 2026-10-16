@@ -93,9 +93,7 @@
       if (!entry.opticController) {
         entry.opticController=window.SwiflyLiquidGlass.mount(entry.opticPane, {
           tint:.14,saturation:1,
-          // Standalone controls normalize the nav optical field to their
-          // own width. Large panels still use the unmodified navbar lens.
-          fitControl:!entry.panel,
+          // Exactly the same renderer, RGB separation and displacement as nav.
           distortionScale:-180,channelOffsets:[0,10,20]
         });
         if(deferred)entry.opticController.setEnabled(false);
