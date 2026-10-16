@@ -68,8 +68,9 @@ body.svCleanShell .svCinemaPage .svDetailActions :is(.dsPrimaryBtn,.dsSecondaryB
   min-height:46px !important; padding:12px 18px !important; font-size:12px !important;
 }
 body.svCleanShell .svCinemaPage .svDetailActions .dsIconBtn {
-  width:46px !important; height:46px !important; min-height:46px !important; border-radius:16px !important;
+  width:46px !important; height:46px !important; min-height:46px !important;
 }
+body.svCleanShell .svCinemaPage .svDetailActions .dsIconBtn:not(.svGlassControl) {border-radius:16px !important;}
 body.svCleanShell .svDetailPosterCard {
   position:absolute; right:46px; bottom:37px; width:170px; padding:6px;
   border:1px solid #ffffff2c; border-radius:19px; background:#d8e8ff0b;

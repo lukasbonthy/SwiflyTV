@@ -28,7 +28,6 @@ body.svCleanShell .svDetailScore small { color: #999; font-size: 10px; margin-le
 body.svCleanShell .svDetailActions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 body.svCleanShell .svDetailActions :is(.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn) { min-height: 38px !important; padding: 9px 16px !important; font-size: 13px !important; }
 body.svCleanShell .svDetailActions .dsIconBtn { width: 38px !important; height: 38px !important; padding: 0 !important; }
-body.svCleanShell .svDetailActions .dsPrimaryBtn.svGlassControl { background: linear-gradient(140deg,#ffffff26,#ffffff12),#ffffff0a !important; border-color: #ffffff30 !important; }
 body.svCleanShell .svDetailBody { padding: 0 32px 32px; }
 body.svCleanShell .svDetailSection { margin: 0 0 32px; padding: 0; scroll-margin-top: 90px; }
 body.svCleanShell .svDetailSection:last-child { margin-bottom: 0; }

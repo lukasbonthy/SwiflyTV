@@ -1,490 +1,125 @@
-/* SwiflyTV v181 — the NAVBAR is the glass reference.
-   One dark smoke-tinted optical material, one shared SVG refraction map.
-   No opaque white primary buttons, duplicated gradients, or nested glass tiles.
-   Loaded after Welcome, Auth, Finish, Polish and all other page styles. */
-
-/* Navbar remains a SINGLE translucent .svLiquidPane. Its icon buttons are not
-   standalone pills; the dropdown actions themselves may still be glass. */
+/* Final material rules, after component styles. Navigation and prominent
+   actions use one pane; their hosts never add a second border or highlight. */
 body.svCleanShell :is(.netflixNav,.dsWelcomeNav) :is(.svNavButton,.svWelcomeStudio) {
-  background:transparent !important;
-  border:1px solid transparent !important;
-  box-shadow:none !important;
-  -webkit-backdrop-filter:none !important;
-  backdrop-filter:none !important;
-  border-radius:10px !important;
-  color:#eef6f3 !important;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  border-radius: 10px !important;
+  color: #f5f6f8 !important;
 }
 body.svCleanShell :is(.netflixNav,.dsWelcomeNav) :is(.svNavButton,.svWelcomeStudio):is(:hover,:focus-visible) {
-  background:rgb(255 255 255 / .075) !important;
-}
-
-/* The exact smoke tint, diffuse filter and quiet edge used by .svLiquidPane.
-   White pills and heavy gradients were the source of the mismatch. */
-body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svGlassControl {
-  position:relative;
-  isolation:isolate;
-  color:#f2f6f7 !important;
-  text-shadow:0 1px 2px rgb(0 0 0 / .33);
-  background:rgb(5 8 15 / .38) !important;
-  border:1px solid rgb(255 255 255 / .20) !important;
-  box-shadow:inset 0 1px 0 rgb(255 255 255 / .18),
-    inset 0 -1px 0 rgb(255 255 255 / .045),
-    0 4px 16px rgb(0 0 0 / .18),0 8px 24px rgb(0 0 0 / .08) !important;
-  -webkit-backdrop-filter:blur(12px) saturate(1.8) brightness(1.1) !important;
-  backdrop-filter:blur(12px) saturate(1.8) brightness(1.1) !important;
-  transition:background-color .18s ease,border-color .18s ease,
-    box-shadow .18s ease,transform .18s ease;
-}
-/* The SVG material is identical in tint and saturation to navbar
-   .svLiquidPane[data-swifly-renderer="svg"]. It is a real displaced backdrop. */
-body.svCleanShell.svSharedGlassReady[data-st-glass="liquid"] .svGlassSurface.svGlassControl.svSharedGlass {
-  background:rgb(0 0 0 / .20) !important;
-  -webkit-backdrop-filter:url(#sv-shared-action-lens) saturate(1) !important;
-  backdrop-filter:url(#sv-shared-action-lens) saturate(1) !important;
-}
-/* Never allow old per-control SVG CSS to override the shared map if a
-   legacy rendering flag is present. */
-body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svGlassControl[data-swifly-renderer="svg"]:not(.svSharedGlass) {
-  -webkit-backdrop-filter:var(--sv-glass-filter) saturate(1) !important;
-  backdrop-filter:var(--sv-glass-filter) saturate(1) !important;
-}
-
-/* Subtle, thin edge-light rather than fake full-white highlights. */
-body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svGlassControl::before {
-  display:block !important;
-  content:"" !important;
-  position:absolute !important;inset:1px !important;
-  border-radius:inherit;pointer-events:none !important;
-  background:linear-gradient(180deg,rgb(255 255 255 / .105),rgb(255 255 255 / .015) 38%,transparent 68%) !important;
-  opacity:1 !important;transform:none !important;
-}
-body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svGlassControl::after {
-  display:block !important;content:"" !important;
-  position:absolute;inset:0;border-radius:inherit;padding:1px;
-  pointer-events:none !important;
-  background:linear-gradient(135deg,rgb(255 255 255 / .30),transparent 25%,transparent 62%,
-    rgb(255 255 255 / .075) 85%,rgb(255 255 255 / .21)) !important;
-  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-  -webkit-mask-composite:xor;
-  mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-  mask-composite:exclude;
-  opacity:.65;
-}
-body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svGlassControl:is(:hover,:focus-visible) {
-  color:#fff !important;
-  background:rgb(8 12 19 / .31) !important;
-  border-color:rgb(255 255 255 / .34) !important;
-  box-shadow:inset 0 1px 0 rgb(255 255 255 / .26),
-    0 5px 18px rgb(0 0 0 / .22) !important;
-}
-body.svCleanShell.svSharedGlassReady[data-st-glass="liquid"] .svGlassSurface.svGlassControl.svSharedGlass:is(:hover,:focus-visible) {
-  background:rgb(0 0 0 / .16) !important;
-}
-body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svGlassControl:is(.active,.saved,.liked,[aria-pressed="true"]) {
-  border-color:rgb(255 255 255 / .36) !important;
-  background:rgb(6 10 16 / .24) !important;
-  box-shadow:inset 0 1px 0 rgb(255 255 255 / .26),0 4px 18px rgb(0 0 0 / .22) !important;
-}
-
-/* Consistency: Play, Trailer, Watch Party, Save, Like, Get Started and Log In
-   all use dark, transparent glass. Primary ≠ a silver filled pill. */
-body.svCleanShell[data-st-glass="liquid"] :is(.dsHeroActions,.svDetailActions,.dsDetailActionsV121,.dsWelcomeActions,.dsSafeAuthForm) .svGlassControl.dsPrimaryBtn,
-body.svCleanShell[data-st-glass="liquid"] .svWelcomeClean .dsWelcomeActions > a.dsPrimaryBtn.svGlassControl,
-body.svCleanShell[data-st-glass="liquid"] .svWelcomeClean .dsWelcomeActions > a.dsSecondaryBtn.svGlassControl {
-  background:rgb(5 8 15 / .38) !important;
-  border-color:rgb(255 255 255 / .23) !important;
-  color:#f3f8f8 !important;
-  -webkit-text-fill-color:currentColor !important;
-  text-shadow:0 1px 2px rgb(0 0 0 / .46) !important;
-}
-body.svCleanShell.svSharedGlassReady[data-st-glass="liquid"] :is(.dsHeroActions,.svDetailActions,.dsDetailActionsV121,.dsWelcomeActions,.dsSafeAuthForm) .svGlassControl.dsPrimaryBtn.svSharedGlass,
-body.svCleanShell.svSharedGlassReady[data-st-glass="liquid"] .svWelcomeClean .dsWelcomeActions > a.svSharedGlass {
-  background:rgb(0 0 0 / .20) !important;
-  -webkit-backdrop-filter:url(#sv-shared-action-lens) saturate(1) !important;
-  backdrop-filter:url(#sv-shared-action-lens) saturate(1) !important;
-}
-body.svCleanShell[data-st-glass="liquid"] .svWelcomeClean .dsWelcomeActions > a.svGlassControl {
-  border-radius:14px !important;transform:none !important;
-}
-/* True circles stay circular instead of inheriting a layout-wide radius. */
-body.svCleanShell[data-st-glass="liquid"] :is(.dsCardQuickActions,.svDetailChrome,.svDetailActions) .dsIconBtn.svGlassControl,
-body.svCleanShell[data-st-glass="liquid"] .svDetailClose.svGlassControl,
-body.svCleanShell[data-st-glass="liquid"] .dsClose.svGlassControl {
-  border-radius:50% !important;
-}
-
-/* Repeated poster-card actions MUST NOT allocate expensive GPU filters.
-   They carry the same subtle smoke tint but stay inexpensive while scrolling. */
-body.svCleanShell[data-st-glass="liquid"] .dsCardQuickActions .svGlassControl {
-  background:rgb(5 8 15 / .54) !important;
-  -webkit-backdrop-filter:none !important;
-  backdrop-filter:none !important;
-}
-body.svCleanShell[data-st-glass="liquid"] :is(.dsDetailTabsV121 > button,.svAuthPasswordToggle).svGlassControl {
-  border-radius:10px !important;
-}
-/* The entire dropdown already refracts using a .svLiquidPane. Its buttons
-   share the dark material, without another opaque grey-filled capsule. */
-body.svCleanShell[data-st-glass="liquid"] .dsProfileDropdown .dsDropdownLogout.svGlassControl {
-  display:flex;align-items:center;justify-content:center;
-  border-radius:999px !important;
-  color:#f4f8f9 !important;
-  background:rgb(0 0 0 / .20) !important;
-  border-color:rgb(255 255 255 / .20) !important;
-}
-
-/* Auth page: same nav-like material on the main 430px card, not a black
-   slab or giant light silver panel. The shared panel lens is gentler. */
-body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe::before {
-  display:block !important;content:"";position:absolute;inset:0;z-index:-1;
-  pointer-events:none;
-  background:radial-gradient(ellipse 45% 42% at 44% 51%,rgb(77 122 130 / .16),transparent 80%);
-}
-body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthCard.svGlassPanel {
-  isolation:isolate;position:relative !important;overflow:hidden;
-  background:rgb(5 8 15 / .38) !important;
-  border:1px solid rgb(255 255 255 / .23) !important;
-  border-radius:20px !important;
-  box-shadow:inset 0 1px rgb(255 255 255 / .18),
-    0 16px 56px rgb(0 0 0 / .37) !important;
-  -webkit-backdrop-filter:blur(12px) saturate(1.8) brightness(1.1) !important;
-  backdrop-filter:blur(12px) saturate(1.8) brightness(1.1) !important;
-}
-body.svCleanShell.svSharedGlassReady[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthCard.svGlassPanel {
-  background:rgb(0 0 0 / .20) !important;
-  -webkit-backdrop-filter:url(#sv-shared-panel-lens) saturate(1) !important;
-  backdrop-filter:url(#sv-shared-panel-lens) saturate(1) !important;
-}
-body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthCard.svGlassPanel::before {
-  display:block !important;content:"" !important;
-  position:absolute;inset:1px;border-radius:inherit;
-  z-index:0;pointer-events:none;
-  background:linear-gradient(180deg,rgb(255 255 255 / .065),transparent 30%);
-}
-body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthCard.svGlassPanel > * {
-  position:relative;z-index:1;
-}
-body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthSwitch.svGlassPanel {
-  background:rgb(5 8 15 / .25) !important;
-  border:1px solid rgb(255 255 255 / .18) !important;
-  border-radius:12px !important;
-  box-shadow:inset 0 1px rgb(255 255 255 / .10) !important;
-  -webkit-backdrop-filter:blur(8px) !important;backdrop-filter:blur(8px) !important;
-}
-body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthSwitch > a.svGlassControl {
-  background:transparent !important;border:1px solid transparent !important;
-  border-radius:8px !important;box-shadow:none !important;
-}
-body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthSwitch > a.svGlassControl::before,
-body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthSwitch > a.svGlassControl::after {
-  display:none !important;
-}
-body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthSwitch > a.svGlassControl.active {
-  background:rgb(255 255 255 / .085) !important;
-  border-color:rgb(255 255 255 / .18) !important;
-  box-shadow:inset 0 1px rgb(255 255 255 / .14) !important;
-}
-body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsSafeAuthForm input {
-  background:rgb(5 8 15 / .34) !important;
-  border:1px solid rgb(255 255 255 / .20) !important;
-  box-shadow:inset 0 1px rgb(255 255 255 / .10) !important;
-  -webkit-backdrop-filter:blur(8px) !important;backdrop-filter:blur(8px) !important;
-}
-body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsSafeAuthForm input:focus-visible {
-  border-color:rgb(255 255 255 / .56) !important;
-  box-shadow:0 0 0 3px rgb(255 255 255 / .09) !important;
-}
-body.svCleanShell main.dsAuthPageSafe .svAuthPasswordField {
-  position:relative !important;display:block !important;
-}
-body.svCleanShell main.dsAuthPageSafe .svAuthPasswordToggle.svGlassControl {
-  position:absolute !important;top:50% !important;right:9px !important;
-  left:auto !important;bottom:auto !important;
-  transform:translateY(-50%) !important;z-index:3 !important;
-  min-height:44px !important;min-width:56px !important;
-  border-radius:8px !important;
-}
-body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsSafeAuthForm .dsPrimaryBtn.svGlassControl {
-  border-radius:11px !important;background:rgb(5 8 15 / .38) !important;
-  color:#f4f8f9 !important;border:1px solid rgb(255 255 255 / .26) !important;
-}
-body.svCleanShell.svSharedGlassReady[data-st-glass="liquid"] main.dsAuthPageSafe .dsSafeAuthForm .dsPrimaryBtn.svSharedGlass {
-  background:rgb(0 0 0 / .20) !important;
-  -webkit-backdrop-filter:url(#sv-shared-action-lens) saturate(1) !important;
-  backdrop-filter:url(#sv-shared-action-lens) saturate(1) !important;
-}
-body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsSafeAuthForm .dsPrimaryBtn.svGlassControl > span {
-  color:#f4f8f9 !important;
-}
-body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsSafeAuthForm .dsPrimaryBtn > span:last-child {
-  border-color:rgb(255 255 255 / .20) !important;
-  background:rgb(255 255 255 / .06) !important;
-  color:#f4f8f9 !important;
-}
-
-/* Preserve Studio modes. Liquid = refraction; Soft = small blur; Off = none. */
-body.svCleanShell[data-st-glass="subtle"] .svGlassSurface.svGlassControl {
-  background:rgb(18 23 29 / .48) !important;
-  border:1px solid rgb(255 255 255 / .16) !important;
-  color:#f3f6f7 !important;
-  box-shadow:inset 0 1px rgb(255 255 255 / .09) !important;
-  -webkit-backdrop-filter:blur(8px) saturate(1.1) !important;
-  backdrop-filter:blur(8px) saturate(1.1) !important;
-}
-body.svCleanShell[data-st-glass="off"] .svGlassSurface.svGlassControl {
-  background:#16191e !important;border:1px solid #ffffff18 !important;
-  color:#f3f6f7 !important;box-shadow:none !important;
-  -webkit-backdrop-filter:none !important;backdrop-filter:none !important;
-}
-body.svCleanShell[data-st-glass="subtle"] .svGlassSurface.svGlassControl::before,
-body.svCleanShell[data-st-glass="subtle"] .svGlassSurface.svGlassControl::after,
-body.svCleanShell[data-st-glass="off"] .svGlassSurface.svGlassControl::before,
-body.svCleanShell[data-st-glass="off"] .svGlassSurface.svGlassControl::after {
-  display:none !important;content:none !important;
-}
-@media(prefers-reduced-transparency:reduce) {
-  body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svGlassControl,
-  body.svCleanShell.svSharedGlassReady[data-st-glass="liquid"] .svGlassSurface.svGlassControl.svSharedGlass {
-    background:#182027 !important;
-    -webkit-backdrop-filter:none !important;backdrop-filter:none !important;
-  }
-  body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe::before {display:none !important;}
-  body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthCard.svGlassPanel,
-  body.svCleanShell.svSharedGlassReady[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthCard.svGlassPanel {
-    background:#182027 !important;
-    -webkit-backdrop-filter:none !important;backdrop-filter:none !important;
-  }
-}
-@media(prefers-reduced-motion:reduce) {
-  body.svCleanShell .svGlassSurface.svGlassControl,
-  body.svCleanShell .svGlassSurface.svGlassControl::before,
-  body.svCleanShell .svGlassSurface.svGlassControl::after {transition:none !important;}
-}
-
-/* v182: TRUE navbar refraction for prominent controls.
-   The navbar's glass is a child .svLiquidPane with a size-aware SVG map.
-   Using url(#shared-filter) directly on the button never reproduced that.
-   Do not isolate these hosts: an isolated/backdrop-filtered parent prevents
-   the nested lens from seeing the artwork behind the button. */
-body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svNavMatchedOptic {
-  position:relative;
-  min-height:44px;
-  isolation:auto !important;
-  background:transparent !important;
-  -webkit-backdrop-filter:none !important;
-  backdrop-filter:none !important;
-  border:1px solid rgb(255 255 255 / .19) !important;
-  box-shadow:inset 0 1px 0 rgb(255 255 255 / .12),
-    0 4px 16px rgb(0 0 0 / .16) !important;
-  overflow:hidden;
-}
-body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svNavMatchedOptic > .svNavMatchedLens.svLiquidPane {
-  display:block !important;
-  position:absolute !important;
-  inset:0 !important;
-  width:100% !important;height:100% !important;
-  z-index:0 !important;
-  overflow:hidden !important;
-  border-radius:inherit !important;
-  pointer-events:none !important;
-  isolation:auto !important;
-  --sv-glass-default-tint:.10;
-  --sv-glass-saturation:1.15;
-  background:rgb(5 8 15 / .27);
-  -webkit-backdrop-filter:blur(11px) saturate(1.85) brightness(1.12);
-  backdrop-filter:blur(11px) saturate(1.85) brightness(1.12);
-}
-body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svNavMatchedOptic > .svNavMatchedLens.svLiquidPane[data-swifly-renderer="svg"] {
-  background:rgb(0 0 0 / .10) !important;
-  -webkit-backdrop-filter:var(--sv-glass-filter) saturate(1.15) !important;
-  backdrop-filter:var(--sv-glass-filter) saturate(1.15) !important;
-}
-body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svNavMatchedOptic > :not(.svNavMatchedLens) {
-  position:relative;
-  z-index:1;
-}
-/* An overlay lens is only the backdrop; the button itself remains clickable
-   and the image/data must be visible through the dark smoky material. */
-body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svNavMatchedOptic:is(:hover,:focus-visible,:active) {
-  background:rgb(255 255 255 / .035) !important;
-  border-color:rgb(255 255 255 / .29) !important;
-}
-body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svNavMatchedOptic::before {
-  background:linear-gradient(180deg,rgb(255 255 255 / .075),transparent 44%) !important;
-}
-body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svNavMatchedOptic::after {
-  opacity:.42 !important;
-}
-/* Older button-specific rules used filled backgrounds and SVG filters on
-   the parent. Explicitly suppress them in favor of the actual child pane. */
-body.svCleanShell[data-st-glass="liquid"] :is(.dsHeroActions,.svDetailActions,.dsWelcomeActions,.dsSafeAuthForm) .svNavMatchedOptic.dsPrimaryBtn,
-body.svCleanShell[data-st-glass="liquid"] .svWelcomeClean .dsWelcomeActions > a.svNavMatchedOptic,
-body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsSafeAuthForm .svNavMatchedOptic.dsPrimaryBtn,
-body.svCleanShell[data-st-glass="liquid"] .dsProfileDropdown .svNavMatchedOptic.dsDropdownLogout {
-  background:transparent !important;
-  -webkit-backdrop-filter:none !important;
-  backdrop-filter:none !important;
-  color:#f3f8f8 !important;
-  border-color:rgb(255 255 255 / .19) !important;
-}
-body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthCard.svNavMatchedOptic.svGlassPanel {
-  isolation:auto !important;
-  background:transparent !important;
-  -webkit-backdrop-filter:none !important;
-  backdrop-filter:none !important;
-  overflow:hidden !important;
-  border:1px solid rgb(255 255 255 / .19) !important;
-}
-body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthCard.svNavMatchedOptic.svGlassPanel > .svNavMatchedLens.svLiquidPane {
-  border-radius:inherit !important;
-}
-body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthCard.svNavMatchedOptic.svGlassPanel > :not(.svNavMatchedLens) {
-  position:relative;z-index:1;
-}
-/* Preserve the earlier password-toggle positioning repair. */
-body.svCleanShell main.dsAuthPageSafe .svAuthPasswordToggle.svNavMatchedOptic {
-  position:absolute !important;top:50% !important;right:9px !important;
-  transform:translateY(-50%) !important;z-index:3 !important;
-}
-@media (prefers-reduced-transparency:reduce) {
-  body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svNavMatchedOptic,
-  body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthCard.svNavMatchedOptic.svGlassPanel {
-    background:#151a20 !important;-webkit-backdrop-filter:none !important;backdrop-filter:none !important;
-  }
-  body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svNavMatchedOptic > .svNavMatchedLens.svLiquidPane {
-    display:none !important;
-  }
-}
-
-/* Studio accessibility modes must remove the visual pane entirely;
-   otherwise an old blur pane can linger behind solid/soft controls. */
-body.svCleanShell[data-st-glass="off"] .svNavMatchedOptic > .svNavMatchedLens,
-body.svCleanShell[data-st-glass="subtle"] .svNavMatchedOptic > .svNavMatchedLens {
-  display:none !important;
-}
-body.svCleanShell[data-st-glass="liquid"] .svNavMatchedOptic > .svNavMatchedLabel {
-  position:relative !important;z-index:2 !important;
-  pointer-events:none;
-}
-
-/* v189: a single optical lens, not a tinted black rectangle.
-   The navbar itself keeps the real SVG displacement filter. Its two tiny
-   highlight layers only catch the rim: they never duplicate the backdrop. */
-body.svCleanShell [data-sv-liquid-nav] .netflixNav > .svLiquidPane {
-  border-radius:20px !important;
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / .46),
-    inset 0 -1px 0 rgb(255 255 255 / .11),
-    inset 0 0 0 .7px rgb(255 255 255 / .29),
-    0 7px 23px rgb(0 0 0 / .18) !important;
-}
-body.svCleanShell[data-st-glass="liquid"] [data-sv-liquid-nav] .netflixNav > .svLiquidPane[data-swifly-renderer="svg"] {
-  /* Transparent milky-white light rather than a black tint. Art stays visible
-     through a high-definition SVG map with more bending at the edges. */
-  background:linear-gradient(120deg,
-    rgb(255 255 255 / .096) 0%,
-    rgb(255 255 255 / .026) 32%,
-    rgb(20 27 37 / .012) 67%,
-    rgb(255 255 255 / .077) 100%) !important;
-  -webkit-backdrop-filter:var(--sv-glass-filter) saturate(1.30) contrast(1.07) brightness(1.08) !important;
-  backdrop-filter:var(--sv-glass-filter) saturate(1.30) contrast(1.07) brightness(1.08) !important;
-}
-body.svCleanShell [data-sv-liquid-nav] .netflixNav > .svLiquidPane::before {
-  content:"";
-  position:absolute;inset:1px;
-  z-index:0;
-  border-radius:inherit;
-  pointer-events:none;
-  background:
-    radial-gradient(ellipse 56% 94% at 13% -26%,
-      rgb(255 255 255 / .18),transparent 82%),
-    linear-gradient(180deg,
-      rgb(255 255 255 / .14) 0%,
-      rgb(255 255 255 / .04) 20%,
-      transparent 55%);
-}
-body.svCleanShell [data-sv-liquid-nav] .netflixNav > .svLiquidPane::after {
-  content:"";
-  position:absolute;inset:0;
-  z-index:1;
-  padding:1.2px;
-  border-radius:inherit;
-  pointer-events:none;
-  background:linear-gradient(127deg,
-    rgb(255 255 255 / .56) 0%,
-    rgb(255 255 255 / .12) 22%,
-    rgb(255 255 255 / .07) 45%,
-    rgb(255 255 255 / .16) 72%,
-    rgb(255 255 255 / .47) 100%);
-  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-  -webkit-mask-composite:xor;
-  mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-  mask-composite:exclude;
-}
-body.svCleanShell[data-st-glass="liquid"] [data-sv-liquid-nav] .netflixNav > .svLiquidPane:not([data-swifly-renderer="svg"]) {
-  /* Mobile/WebKit fallback: clean translucent glass without costly canvases. */
-  background:linear-gradient(120deg,
-    rgb(255 255 255 / .14),rgb(255 255 255 / .052) 42%,
-    rgb(16 25 34 / .14) 100%) !important;
-  -webkit-backdrop-filter:blur(8px) saturate(1.55) contrast(1.08) brightness(1.06) !important;
-  backdrop-filter:blur(8px) saturate(1.55) contrast(1.08) brightness(1.06) !important;
+  background: rgb(255 255 255 / .08) !important;
 }
 body.svCleanShell .netflixNav .navLinks > a {
-  color:rgb(246 248 252 / .87) !important;
-  text-shadow:0 1px 3px rgb(0 0 0 / .38) !important;
+  color: #f5f6f8 !important;
+  text-shadow: 0 1px 2px rgb(0 0 0 / .2) !important;
 }
-body.svCleanShell .netflixNav .navLinks > a:is(:hover,.active) {
-  color:#fff !important;
+body.svCleanShell .svGlassSurface.svGlassControl.svGlassControl {
+  color: #f5f6f8 !important;
+  -webkit-text-fill-color: currentColor !important;
+  text-shadow: 0 1px 2px rgb(0 0 0 / .2);
 }
-@media(prefers-reduced-transparency:reduce){
-  body.svCleanShell [data-sv-liquid-nav] .netflixNav > .svLiquidPane,
-  body.svCleanShell[data-st-glass="liquid"] [data-sv-liquid-nav] .netflixNav > .svLiquidPane[data-swifly-renderer="svg"],
-  body.svCleanShell[data-st-glass="liquid"] [data-sv-liquid-nav] .netflixNav > .svLiquidPane:not([data-swifly-renderer="svg"]) {
-    background:rgb(16 20 26 / .97) !important;
-    -webkit-backdrop-filter:none !important;
-    backdrop-filter:none !important;
+/* Remove component bevels, which otherwise frame the pane a second time. */
+body.svCleanShell .svGlassSurface.svGlassSurface::before,
+body.svCleanShell .svGlassSurface.svGlassSurface::after {
+  display: none !important;
+  content: none !important;
+}
+body.svCleanShell .svGlassSurface.svNavMatchedOptic,
+body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe :is(.dsAuthCard,.dsPrimaryBtn).svNavMatchedOptic,
+body.svCleanShell .svWelcomeClean .dsWelcomeActions > a.svNavMatchedOptic {
+  position: relative !important;
+  isolation: auto !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  overflow: hidden;
+}
+body.svCleanShell .svGlassControl.svNavMatchedOptic {
+  min-width: 44px !important;
+  min-height: 44px !important;
+}
+body.svCleanShell .svNavMatchedOptic > .svNavMatchedLens.svLiquidPane {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: inherit !important;
+  pointer-events: none !important;
+}
+body.svCleanShell .svNavMatchedOptic > :not(.svNavMatchedLens) {
+  position: relative;
+  z-index: 1;
+}
+body.svCleanShell .svNavMatchedOptic > .svNavMatchedLabel {
+  position: relative !important;
+  z-index: 1 !important;
+  pointer-events: none;
+}
+body.svCleanShell .svGlassControl.svNavMatchedOptic:is(:hover,:focus-visible,.active,.saved,.liked,[aria-pressed="true"]) > .svLiquidPane {
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / .28), 0 6px 18px rgb(0 0 0 / .18) !important;
+}
+body.svCleanShell :is(.dsCardQuickActions,.svDetailChrome,.svDetailActions) .dsIconBtn.svGlassControl,
+body.svCleanShell :is(.svDetailClose,.dsClose).svGlassControl {
+  border-radius: 50% !important;
+}
+/* Repeated grid/rail controls share the tint without per-control GPU filters. */
+body.svCleanShell :is(.dsCardQuickActions .svGlassControl,.dsRowBtn,.dsRowArrow,.svRowArrow,.svResumeRemove,.pagination a,.dsEpisodeChips a).svGlassControl {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+body.svCleanShell .svWelcomeClean .dsWelcomeActions > a.svGlassControl {
+  border-radius: 14px !important;
+  color: #f5f6f8 !important;
+  transform: none !important;
+}
+body.svCleanShell main.dsAuthPageSafe .svAuthPasswordField { position: relative !important; display: block !important; }
+body.svCleanShell main.dsAuthPageSafe .svAuthPasswordToggle.svGlassControl {
+  position: absolute !important;
+  top: 50% !important;
+  right: 9px !important;
+  left: auto !important;
+  bottom: auto !important;
+  transform: translateY(-50%) !important;
+  z-index: 3 !important;
+  min-width: 56px !important;
+  min-height: 44px !important;
+  border-radius: 8px !important;
+}
+body.svCleanShell[data-st-glass="subtle"] .svLiquidPane,
+body.svCleanShell[data-st-glass="subtle"] .svGlassSurface.svGlassSurface,
+body.svCleanShell[data-st-glass="subtle"] main.dsAuthPageSafe :is(.dsAuthCard,.dsPrimaryBtn).svNavMatchedOptic,
+body.svCleanShell[data-st-glass="subtle"] .svWelcomeClean .dsWelcomeActions > a.svNavMatchedOptic {
+  background: rgb(12 15 20 / .72) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(1.05) !important;
+  backdrop-filter: blur(8px) saturate(1.05) !important;
+}
+body.svCleanShell[data-st-glass="off"] .svGlassSurface.svGlassSurface,
+body.svCleanShell[data-st-glass="off"] main.dsAuthPageSafe :is(.dsAuthCard,.dsPrimaryBtn).svNavMatchedOptic,
+body.svCleanShell[data-st-glass="off"] .svWelcomeClean .dsWelcomeActions > a.svNavMatchedOptic {
+  background: #15191e !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+body.svCleanShell:is([data-st-glass="off"],[data-st-glass="subtle"]) .svNavMatchedOptic > .svNavMatchedLens {
+  display: none !important;
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  body.svCleanShell .svLiquidPane.svLiquidPane { background: #15191e !important; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  body.svCleanShell .svLiquidPane.svLiquidPane,
+  body.svCleanShell .svGlassSurface.svGlassSurface,
+  body.svCleanShell .svGlassSurface.svNavMatchedOptic,
+  body.svCleanShell[data-st-glass] main.dsAuthPageSafe :is(.dsAuthCard,.dsPrimaryBtn).svNavMatchedOptic,
+  body.svCleanShell .svWelcomeClean .dsWelcomeActions > a.svNavMatchedOptic {
+    background: #15191e !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
   }
-  body.svCleanShell [data-sv-liquid-nav] .netflixNav > .svLiquidPane::before,
-  body.svCleanShell [data-sv-liquid-nav] .netflixNav > .svLiquidPane::after {display:none !important;}
-}
-
-/* v196: the Safari SVG owns lensing and edge light. Suppress the older
-   frosted fill and CSS bevels so there is one clear optical material. */
-body.svCleanShell[data-st-glass="liquid"] [data-sv-liquid-nav] .netflixNav > .svLiquidPane[data-swifly-renderer="webkit-svg"] {
-  background:rgb(0 0 0 / .035) !important;
-  -webkit-backdrop-filter:blur(2px) saturate(1.08) !important;
-  backdrop-filter:blur(2px) saturate(1.08) !important;
-  box-shadow:0 5px 20px rgb(0 0 0 / .22) !important;
-}
-body.svCleanShell [data-sv-liquid-nav] .netflixNav > .svLiquidPane[data-swifly-renderer="webkit-svg"]::before,
-body.svCleanShell [data-sv-liquid-nav] .netflixNav > .svLiquidPane[data-swifly-renderer="webkit-svg"]::after {
-  display:none !important;
-}
-body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svNavMatchedOptic > .svNavMatchedLens.svLiquidPane[data-swifly-renderer="webkit-svg"] {
-  background:rgb(0 0 0 / .055) !important;
-  -webkit-backdrop-filter:blur(2px) saturate(1.08) !important;
-  backdrop-filter:blur(2px) saturate(1.08) !important;
-  box-shadow:none !important;
-}
-body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svNavMatchedOptic:has(> .svNavMatchedLens[data-swifly-renderer="webkit-svg"]) {
-  border-color:transparent !important;
-  background:transparent !important;
-  box-shadow:0 4px 14px rgb(0 0 0 / .22) !important;
-  text-shadow:0 1px 3px rgb(0 0 0 / .55);
-}
-body.svCleanShell[data-st-glass="liquid"] .svNavMatchedOptic:has(> .svNavMatchedLens[data-swifly-renderer="webkit-svg"])::before,
-body.svCleanShell[data-st-glass="liquid"] .svNavMatchedOptic:has(> .svNavMatchedLens[data-swifly-renderer="webkit-svg"])::after {
-  display:none !important;
-}
-body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsAuthCard.svNavMatchedOptic > .svNavMatchedLens.svLiquidPane[data-swifly-renderer="webkit-svg"] {
-  -webkit-backdrop-filter:blur(14px) saturate(1.55) !important;
-  backdrop-filter:blur(14px) saturate(1.55) !important;
-}
-@media(prefers-reduced-transparency:reduce) {
-  body.svCleanShell[data-st-glass="liquid"] [data-sv-liquid-nav] .netflixNav > .svLiquidPane[data-swifly-renderer="webkit-svg"],
-  body.svCleanShell[data-st-glass="liquid"] .svNavMatchedOptic > .svNavMatchedLens.svLiquidPane[data-swifly-renderer="webkit-svg"] {
-    background:rgb(16 20 26 / .97) !important;
-    -webkit-backdrop-filter:none !important;
-    backdrop-filter:none !important;
-  }
+  body.svCleanShell .svNavMatchedOptic > .svNavMatchedLens { display: none !important; }
 }

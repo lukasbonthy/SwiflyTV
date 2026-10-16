@@ -15,13 +15,22 @@ test.after(async()=>{jobs?.destroy();await new Promise(resolve=>api.io.close(res
 test.afterEach(cleanup);
 const parse=html=>browser(html.replace(/<style\b[^>]*>[\s\S]*?<\/style>/g,''));
 function inject(resolve,deadlineMs=1000){jobs=createSourceJobs({resolve,deadlineMs});api.setSourceJobs(jobs);return jobs;}
+test('Movie and episode pages preload the same tested HLS version as the player fallback',async()=>{
+ for(const route of ['/watch/movie/101?mode=movie','/watch/tv/101?mode=movie&s=1&e=1']){
+  const d=parse(await(await fetch(base+route)).text()).window.document;
+  const scripts=[...d.querySelectorAll('script[src*="hls.js@"]')];assert.equal(scripts.length,1);
+  assert.equal(scripts[0].getAttribute('src'),'https://cdn.jsdelivr.net/npm/hls.js@1.7.3/dist/hls.min.js');
+ }
+ const script=await(await fetch(base+'/assets/player/player.js')).text();
+ assert(script.includes('https://cdn.jsdelivr.net/npm/hls.js@1.7.3/dist/hls.min.js'));
+});
 test('The normal watch route renders one native movie player with shared assets and inline party setup',async()=>{
  const response=await fetch(base+'/watch/movie/101?mode=movie'),env=parse(await response.text()),d=env.window.document;
  assert.equal(response.status,200);assert(d.querySelector('.dsHeader, .dsTopBar, .topbar'));
  assert.equal(d.querySelectorAll('.svPlayerPage video').length,1);
  assert.equal(d.querySelector('.svPlayerPage').dataset.playerId,'101');assert.equal(d.querySelector('h1').textContent.trim(),'Arrival');
- assert(d.querySelector('script[src="/assets/player/player.js?v=205"]'));assert(d.querySelector('script[src="/assets/player/watch-party.js?v=160"]'));
- assert(d.querySelector('link[href="/assets/player/player.css?v=201"]'));assert(d.querySelector('dialog.svWatchPartyDialog'));
+ assert(d.querySelector('script[src="/assets/player/player.js?v=207"]'));assert(d.querySelector('script[src="/assets/player/watch-party.js?v=160"]'));
+ assert(d.querySelector('link[href="/assets/player/player.css?v=207"]'));assert(d.querySelector('dialog.svWatchPartyDialog'));
  assert.equal(d.querySelector('.dsProxyVideoWaitingShell'),null);assert.equal(d.querySelector('.svPartyHub'),null);
  assert.equal(d.querySelector('[data-sv-player-back]').getAttribute('href'),'/movie/101');
 });
@@ -75,9 +84,9 @@ test('Social navigation opens the integrated Party Hub while movie catalog party
  assert(social.querySelector('main.svPartyHub .partyHero'),'Social link should show the proper cinematic Party Hub');
  assert(social.querySelector('.partyNavigation [data-tab="rooms"]'));
  assert(social.querySelector('link[href="/assets/clean/experience.css?v=202"]'));
- assert(social.querySelector('link[href="/assets/player/player.css?v=201"]'));
+ assert(social.querySelector('link[href="/assets/player/player.css?v=207"]'));
  const scripts=[...social.querySelectorAll('script[src]')].map(node=>node.getAttribute('src'));
- const player=scripts.indexOf('/assets/player/player.js?v=205'),party=scripts.findIndex(src=>src.startsWith('/assets/party/party.js?'));
+ const player=scripts.indexOf('/assets/player/player.js?v=207'),party=scripts.findIndex(src=>src.startsWith('/assets/party/party.js?'));
  assert(player>=0&&party>player,'Party Hub must load the shared controller before its room bridge');
  const template=social.getElementById('partyPlayerTemplate');assert(template?.content.querySelector('.svPlayerEmbedded [data-player-video]'));
  assert.equal(social.querySelector('script[src*="video.js"]'),null,'Party Hub no longer loads a duplicate playback UI');
@@ -321,15 +330,12 @@ test('v174 keeps Welcome soft without muddy light bridge or button clipping',asy
 });
 
 test('Studio glass uses one material on every browsing route and native transitions remain independent',async()=>{
- const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=205')).text();
+ const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=207')).text();
  const finish=await(await fetch(base+'/assets/clean/finish.css?v=175')).text();
- const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=205')).text();
+ const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=207')).text();
  assert.match(css,/data-st-glass="liquid"/);
  assert.match(css,/data-st-glass="subtle"/);
  assert.match(css,/data-st-glass="off"/);
- assert.match(css,/var\(--sv-glass-filter\) saturate\(1\)/);
- assert.match(css,/\.svGlassSurface\.svGlassControl::before/);
- assert.match(css,/\.svGlassSurface\.svGlassControl::after/);
  assert.match(css,/\.netflixNav,\.dsWelcomeNav/);
  assert.match(script,/\.svDetailReturn/);
  assert.match(finish,/@view-transition \{ navigation:auto; \}/);
@@ -338,30 +344,11 @@ test('Studio glass uses one material on every browsing route and native transiti
    const response=await fetch(base+route);
    assert.equal(response.status,200,route);
    const doc=parse(await response.text()).window.document;
-   assert(doc.querySelector('link[href="/assets/liquid-glass/controls.css?v=205"]'),route+' lacks unified glass');
-   assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=205"]'),route+' uses stale glass renderer');
+   assert(doc.querySelector('link[href="/assets/liquid-glass/controls.css?v=207"]'),route+' lacks unified glass');
+   assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=207"]'),route+' uses stale glass renderer');
  }
  const watch=await(await fetch(base+'/watch/movie/101')).text();
  assert(!watch.includes('controls.css?v=189'),'watch page must be left alone');
-});
-test('hero and modal buttons match the dark navbar refraction material without boxing nav icons',async()=>{
- const doc=parse(await(await fetch(base+'/')).text()).window.document;
- const hero=doc.querySelector('.dsHero');
- assert(hero.querySelector('.dsHeroActions .dsPrimaryBtn'));
- assert(hero.querySelector('.dsHeroActions .dsSecondaryBtn'));
- assert(hero.querySelector('.dsHeroActions .dsIconBtn'));
- const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=205')).text();
- const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=205')).text();
- assert.match(css,/border:1px solid transparent !important/,'nav icons never get a second border');
- assert.match(css,/background:rgb\(5 8 15 \/ \.38\)/,'controls match the actual navbar smoke tint');
-  assert.match(css,/background:rgb\(0 0 0 \/ \.20\)/,'SVG controls retain navbar transparency');
-  assert.doesNotMatch(css,/radial-gradient\(ellipse 115% 155%/,'no old silver-white gradients');
- assert.match(css,/mask-composite:exclude/,'rim stays separate from button label');
- assert.match(css,/data-swifly-renderer="svg"/);
- assert.match(script,/sharedControl = !panel/);
-  assert.match(script,/installSharedLens\(\)/);
- assert.match(script,/\.svDetailBack,\.svDetailDismiss,\.svDetailReturn/);
- assert.doesNotMatch(css,/rgba\(255,255,255,\.92\)/,'Play should not be a solid white pill');
 });
 test('v176 supplies a real, masked details backdrop with no hard border at the overview',async()=>{
  const response=await fetch(base+'/movie/101');
@@ -380,11 +367,8 @@ test('v176 supplies a real, masked details backdrop with no hard border at the o
  assert.match(css,/rgba\(0,0,0,\.22\) 94%,transparent 100%/);
  assert.match(css,/\.svDetailShade \{/);
  assert.match(css,/\.svDetailBody \{/);
- const lens=await(await fetch(base+'/assets/liquid-glass/controls.css?v=205')).text();
- assert.match(lens,/\.svGlassSurface\.svGlassControl\[data-swifly-renderer="svg"\]/);
- assert.match(lens,/\.svDetailActions,\.dsDetailActionsV121/);
  assert(d.querySelector('link[href="/assets/clean/polish.css?v=176"]'));
- assert(d.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=205"]'));
+ assert(d.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=207"]'));
 });
 test('v176 adds subtle Liquid Glass to both compact auth pages without resizing',async()=>{
  const css=await(await fetch(base+'/assets/clean/polish.css?v=176')).text();
@@ -422,41 +406,29 @@ test('Catalog and profiles retain their theme while Party Hub owns its component
  }
 });
 
-test('Cinema keeps natural featured color and preserves the existing optical glass',async()=>{
+test('Cinema keeps natural featured color alongside the shared glass assets',async()=>{
  const d=parse(await(await fetch(base+'/')).text()).window.document;
  const hero=d.querySelector('main > .dsHero');
  const nav=d.querySelector('.netflixNav > .svLiquidPane');
  assert(hero && nav);
- assert.equal(nav.dataset.glassTint,'0.025');
- assert.equal(nav.dataset.glassSaturation,'1.28');
- assert(d.querySelector('script[src="/assets/liquid-glass/liquid-glass.js?v=205"]'));
+ assert(d.querySelector('script[src="/assets/liquid-glass/liquid-glass.js?v=207"]'));
  const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=205')).text();
  assert.match(css,/filter:none !important/);
  assert.match(css,/overflow:hidden !important/,'movie picture remains clipped');
  assert.doesNotMatch(css,/background-image:var\(--sv-cinema-art\)|background-image:var\(--sv-light-art\)/,'no duplicated artwork');
- const glass=await(await fetch(base+'/assets/liquid-glass/controls.css?v=205')).text();
- assert.match(glass,/background:rgb\(0 0 0 \/ \.10\) !important/);
- assert.match(glass,/\.svNavMatchedLens\.svLiquidPane\[data-swifly-renderer="svg"\]/);
  const palette=await(await fetch(base+'/assets/clean/hero-palette.js?v=188')).text();
  assert.match(palette,/\(value-average\)\*1\.22/,'film accents remain colorful');
  assert.doesNotMatch(palette,/appendChild\(image\)/);
 });
 
-test('v197 navbar has clearer edge-refraction while preserving fallback and Safari isolation',async()=>{
-  const d=parse(await(await fetch(base+'/')).text()).window.document;
-  const nav=d.querySelector('.netflixNav > .svLiquidPane');
-  assert(nav,'navbar must have exactly one optical child pane');
-  assert.equal(d.querySelectorAll('.netflixNav > .svLiquidPane').length,1);
-  assert.equal(nav.dataset.glassDistortion,'-240');
-  assert.equal(nav.dataset.glassDisplace,'0.16');
-  assert.equal(nav.dataset.glassTint,'0.025');
-  const js=await(await fetch(base+'/assets/liquid-glass/liquid-glass.js?v=205')).text();
-  assert.match(js,/distortionScale:numeric\(element, 'glassDistortion', -180\)/);
-  assert.match(js,/displace:numeric\(element, 'glassDisplace', .5\)/);
-  const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=205')).text();
-  assert.match(css,/\.netflixNav > \.svLiquidPane\[data-swifly-renderer="svg"\]/);
-  assert.match(css,/backdrop-filter:var\(--sv-glass-filter\) saturate\(1\.30\)/);
-  assert.match(css,/mask-composite:exclude/,'rim must remain a thin edge, not a white overlay');
-  assert.match(css,/prefers-reduced-transparency:reduce/);
-  assert.doesNotMatch(css,/data:image\/|background-image:url\(/,'navbar does not draw a second movie image');
+test('Browsing and playback navigation declare the same neutral glass material',async()=>{
+ const materials=[];
+ for(const route of ['/','/watch/movie/101?mode=movie','/watch/tv/101?mode=movie&s=1&e=1']){
+  const d=parse(await(await fetch(base+route)).text()).window.document;
+  const nav=d.querySelector('.netflixNav');
+  assert.equal(nav.querySelectorAll(':scope > .svLiquidPane').length,1);
+  const panes=[...d.querySelectorAll('[data-swifly-glass]')];assert(panes.length>=3,'navigation, dropdown and mobile navigation need their shared pane');
+  for(const pane of panes)materials.push([pane.dataset.glassTint,pane.dataset.glassSaturation]);
+ }
+ for(const material of materials){assert.deepEqual(material,materials[0]);assert(Number(material[0])>=.6,'white artwork should retain readable navigation');}
 });
