@@ -1,35 +1,39 @@
-/* SwiflyTV v150: locally rendered liquid glass with a frosted fallback. */
+/* One neutral pane for native frost and supported live backdrop refraction. */
 .svLiquidPane {
   --sv-glass-radius: 24px;
-  --sv-glass-tint: var(--sv-glass-default-tint, .2);
-  --sv-glass-saturation: 1;
+  --sv-glass-tint: var(--sv-glass-default-tint, .62);
+  --sv-glass-saturation: 1.05;
   position: absolute;
   inset: 0;
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
   border-radius: var(--sv-glass-radius);
-  background: rgb(5 8 15 / .38);
-  -webkit-backdrop-filter: blur(12px) saturate(1.8) brightness(1.1);
-  backdrop-filter: blur(12px) saturate(1.8) brightness(1.1);
-  box-shadow: inset 0 0 0 .5px #ffffff29, 0 4px 16px #0000001a, 0 8px 24px #00000014;
+  background: rgb(12 15 20 / var(--sv-glass-tint));
+  -webkit-backdrop-filter: blur(14px) saturate(var(--sv-glass-saturation));
+  backdrop-filter: blur(14px) saturate(var(--sv-glass-saturation));
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / .16), 0 6px 18px rgb(0 0 0 / .18);
 }
 .svLiquidPane[data-swifly-renderer="svg"] {
-  background: rgb(0 0 0 / var(--sv-glass-tint));
   -webkit-backdrop-filter: var(--sv-glass-filter) saturate(var(--sv-glass-saturation));
   backdrop-filter: var(--sv-glass-filter) saturate(var(--sv-glass-saturation));
-  transform: translateZ(0);
-  backface-visibility: hidden;
 }
 .svLiquidPane__filters {
   position: absolute;
   inset: 0;
-  /* These dimensions define the displacement coordinate system. Component
-     icon selectors must never collapse an optical graph to an 18px glyph. */
+  /* The graph must use the pane's coordinates, even inside icon buttons. */
   width: 100% !important;
   height: 100% !important;
   opacity: 0;
   pointer-events: none;
+}
+/* Keep navigation identical on player routes, which omit control styles.
+   This also protects pane spans from component text-label resets. */
+body.svCleanShell .svLiquidPane.svLiquidPane {
+  --sv-glass-tint: .62 !important;
+  --sv-glass-saturation: 1.05 !important;
+  background: rgb(12 15 20 / var(--sv-glass-tint)) !important;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / .16), 0 6px 18px rgb(0 0 0 / .18) !important;
 }
 body [data-sv-liquid-nav].topbar {
   position: fixed !important;
@@ -133,49 +137,14 @@ body [data-sv-liquid-nav] summary:focus-visible { outline: 2px solid #fff; outli
 body:has(.dsAuthPage) .mobileNav[data-sv-liquid-nav],
 body:has(.dsWelcomePage) .mobileNav[data-sv-liquid-nav],
 body:has(.playerFullscreen) .mobileNav[data-sv-liquid-nav] { display: none !important; }
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .svLiquidPane { background: rgb(15 17 22 / .94); } }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  body.svCleanShell .svLiquidPane.svLiquidPane, .svLiquidPane { background: #15191e !important; }
+}
 @media (prefers-reduced-transparency: reduce) {
-  .svLiquidPane, .svLiquidPane[data-swifly-renderer="svg"] { background: rgb(15 17 22 / .96); -webkit-backdrop-filter: none; backdrop-filter: none; }
-}
-
-/* v196 — Clear media glass: the rounded SVG lens owns the edge lighting;
-   native blur remains subtle so it cannot bury the refracted artwork. */
-.svLiquidPane[data-swifly-renderer="webkit-svg"] {
-  background:rgb(0 0 0 / .045) !important;
-  -webkit-backdrop-filter:blur(2px) saturate(1.08) !important;
-  backdrop-filter:blur(2px) saturate(1.08) !important;
-  box-shadow:0 4px 16px rgb(0 0 0 / .18);
-  transform:none !important;
-  backface-visibility:visible !important;
-}
-.svLiquidPane > svg.svWebkitGlassOptics {
-  position:absolute !important;
-  inset:0 !important;
-  display:block;
-  width:100% !important;
-  height:100% !important;
-  z-index:2;
-  overflow:hidden;
-  border-radius:inherit;
-  pointer-events:none !important;
-  opacity:1;
-}
-.svWebkitGlassOptics .svGlassReflection {
-  opacity:.82;
-  transition:opacity 160ms ease;
-}
-.svNavMatchedOptic:is(:hover,:focus-visible,:active) .svGlassReflection {opacity:1;}
-@media(prefers-reduced-motion:reduce) {
-  .svWebkitGlassOptics .svGlassReflection {transition:none;}
-}
-.svLiquidPane:not([data-swifly-renderer="webkit-svg"]) > svg.svWebkitGlassOptics {
-  display:none !important;
-}
-@media(prefers-reduced-transparency:reduce) {
-  .svLiquidPane[data-swifly-renderer="webkit-svg"] {
-    background:rgb(15 17 22 / .96) !important;
-    -webkit-backdrop-filter:none !important;
-    backdrop-filter:none !important;
+  body.svCleanShell .svLiquidPane.svLiquidPane,
+  .svLiquidPane, .svLiquidPane[data-swifly-renderer="svg"] {
+    background: #15191e !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
   }
-  .svLiquidPane > svg.svWebkitGlassOptics {display:none !important;}
 }

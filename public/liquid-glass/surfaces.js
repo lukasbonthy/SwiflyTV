@@ -1,4 +1,4 @@
-/* v200: shared optics respect components that own their complete surface treatment. */
+/* Explicit, bounded prominent optics; repeated controls use native material. */
 (() => {
   'use strict';
   if (window.SwiflyGlassSurfaces) return;
@@ -75,13 +75,13 @@
       }
       if (!entry.opticController) {
         entry.opticController=window.SwiflyLiquidGlass.mount(entry.opticPane, {
-          tint:entry.panel ? .24 : .20,
+          tint:.62,saturation:1.05,
           distortionScale:-180,channelOffsets:[0,1,2]
         });
       } else if (!entry.opticController.enabled) entry.opticController.setEnabled(true);
     }
     if (!entry.complex) return;
-    if (!entry.controller) entry.controller = window.SwiflyLiquidGlass.mount(entry.host, {tint:.32});
+    if (!entry.controller) entry.controller = window.SwiflyLiquidGlass.mount(entry.host, {tint:.62,saturation:1.05});
     else if (!entry.controller.enabled) entry.controller.setEnabled(true);
     else if (entry.controller.supported && !filter(entry.host)) entry.controller.refresh();
   }
@@ -108,19 +108,11 @@
     let entry = entries.get(host);
     if (entry) {activate(entry); return;}
     const panel = host.matches(panels);
-    // Shared, single-pass SVG refraction: one filter for every interactive lens.
-    // No per-button SVG graph, ResizeObserver or layout reads.
-    // Never refract cards in scrolling grids or navbar icons separately.
-    const sharedControl = !panel &&
-      !host.closest('.dsCardQuickActions,.movieCard,.posterWrap,media-player,.vds-controls') &&
-      (!host.closest('.netflixNav,.dsWelcomeNav,.mobileNav') || Boolean(host.closest('.dsProfileDropdown,.svLiquidDropdown'))) &&
-      host.matches('.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn,.dsGhostPill,.dsRowBtn,.dsRowArrow,.svRowArrow,.dsClose,.dsHeroMuteToggle,.dsBigPlayBtn,.svDetailBack,.svDetailDismiss,.svDetailReturn,.svDetailClose,.svAuthPasswordToggle,.dsAuthSwitch > a,.dsAuthTopActions button[data-st-open],.dsDetailTabsV121 > button,.pagination a,.dsEpisodeChips a,.dsSearchBox button,.svSearchPopup button,.dsDropdownLogout,.dsEditProfileBtn');
     const optic = host.matches(navOpticSelector) && !host.closest('media-player,.vds-controls');
     // When a real navbar pane is present, never mount the old filter on its
     // parent or draw another shared filter on top of it.
     const complex = !optic && panel && host.dataset.glassRefraction === 'true';
     const classes = ['svGlassSurface', panel ? 'svGlassPanel' : 'svGlassControl'];
-    if (sharedControl && !optic) classes.push('svSharedGlass');
     if (optic) classes.push('svNavMatchedOptic');
     if (complex) {const position = getComputedStyle(host).position; if (!position || position === 'static') classes.push('svGlassRelative');}
     entry = {host, panel, optic, opticPane:null, opticController:null, complex, controller:null, visible:!intersection, addedClasses:classes.filter(name => !host.classList.contains(name)), previousRenderer:host.dataset.swiflyRenderer, previousProperties:rendererProperties.map(property => [property, host.style.getPropertyValue(property), host.style.getPropertyPriority(property)])};
@@ -148,61 +140,14 @@
     for (const root of roots) if (root.isConnected) scan(root);
   }
   function onVisibility() {
-    if (!document.hidden && liquidPreference()) installSharedLens();
     if (document.hidden) {cancelAnimationFrame(frame); frame = 0;}
     for (const entry of entries.values()) if (entry.complex || entry.optic) {
       if (document.hidden || !liquidPreference()) deactivate(entry); else activate(entry);
     }
     schedule();
   }
-  // Secondary controls reuse one bounded rounded field. Their inexpensive
-  // single pass never reintroduces the old pane-wide directional-map seams.
-  let sharedLens = null;
-  function installSharedLens() {
-    if (sharedLens || !liquidPreference()) return;
-    const supported = typeof CSS !== 'undefined' &&
-      CSS.supports('backdrop-filter','url(#sv-shared-action-lens)') &&
-      /Chrome|Chromium|Edg|OPR/.test(navigator.userAgent) &&
-      !/iPad|iPhone|iPod/.test(navigator.userAgent) &&
-      !(navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) &&
-      !window.matchMedia('(prefers-reduced-transparency: reduce)').matches;
-    if (!supported) return;
-    const ns='http://www.w3.org/2000/svg';
-    const node=(tag,attrs={})=>{
-      const el=document.createElementNS(ns,tag);
-      for(const [key,value] of Object.entries(attrs))el.setAttribute(key,String(value));
-      return el;
-    };
-    const texture=window.SwiflyLiquidGlass?.createTexture(160,64,32);
-    if (!texture) return;
-    const mapUrl=texture.map;
-    const svg=node('svg',{'aria-hidden':'true',focusable:'false'});
-    svg.classList.add('svSharedGlassDefinitions');
-    svg.style.cssText='position:absolute!important;width:0!important;height:0!important;overflow:hidden!important;pointer-events:none!important';
-    const defs=node('defs');
-    const action=node('filter',{id:'sv-shared-action-lens',
-      x:'-12%',y:'-30%',width:'124%',height:'160%','color-interpolation-filters':'sRGB'});
-    action.append(
-      node('feImage',{href:mapUrl,x:'0',y:'0',width:'100%',height:'100%',preserveAspectRatio:'none',result:'map'}),
-      node('feDisplacementMap',{in:'SourceGraphic',in2:'map',scale:texture.scale,
-        xChannelSelector:'R',yChannelSelector:'G'})
-    );
-    const panel=node('filter',{id:'sv-shared-panel-lens',
-      x:'-6%',y:'-8%',width:'112%',height:'116%','color-interpolation-filters':'sRGB'});
-    panel.append(
-      node('feImage',{href:mapUrl,x:'0',y:'0',width:'100%',height:'100%',preserveAspectRatio:'none',result:'map'}),
-      node('feGaussianBlur',{in:'SourceGraphic',stdDeviation:'4',result:'soft'}),
-      node('feDisplacementMap',{in:'soft',in2:'map',scale:texture.scale*.5,
-        xChannelSelector:'R',yChannelSelector:'G'})
-    );
-    defs.append(action,panel);svg.append(defs);
-    document.body.append(svg);
-    sharedLens=svg;
-    document.body.classList.add('svSharedGlassReady');
-  }
   function boot() {
     if (stopped || mutations) return;
-    installSharedLens();
     if (typeof IntersectionObserver === 'function') intersection = new IntersectionObserver(changes => {
       for (const change of changes) {
         const entry = entries.get(change.target); if (!entry) continue;
@@ -225,7 +170,6 @@
         for (const node of change.addedNodes) if (node instanceof HTMLElement) enqueue(node);
         if ([...change.removedNodes].some(node => node instanceof HTMLElement)) removed = true;
       }
-      if (preferenceChanged && liquidPreference()) installSharedLens();
       if (preferenceChanged) for (const entry of entries.values()) if (entry.complex || entry.optic) {
         if (liquidPreference()) activate(entry); else deactivate(entry);
       }
@@ -238,7 +182,6 @@
     if (stopped) return; stopped = true;
     document.removeEventListener('DOMContentLoaded', boot); document.removeEventListener('visibilitychange', onVisibility);
     mutations?.disconnect(); intersection?.disconnect(); cancelAnimationFrame(frame); frame = 0; pending.clear();
-    sharedLens?.remove(); sharedLens=null; document.body.classList.remove('svSharedGlassReady');
     for (const entry of entries.values()) release(entry);
   }});
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true}); else boot();

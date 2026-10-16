@@ -191,7 +191,7 @@
       if(kind==='dash'&&window.dashjs?.MediaPlayer)return Promise.resolve(window.dashjs);
       return new Promise((resolve,reject)=>{
         const script=document.createElement('script');script.dataset.playerLibrary=kind;script.async=true;
-        script.src=kind==='hls'?'https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js':'https://cdn.jsdelivr.net/npm/dashjs@4.7.4/dist/dash.all.min.js';
+        script.src=kind==='hls'?'https://cdn.jsdelivr.net/npm/hls.js@1.7.3/dist/hls.min.js':'https://cdn.jsdelivr.net/npm/dashjs@4.7.4/dist/dash.all.min.js';
         let timer=0,settled=false;
         const finish=(error,value)=>{if(settled)return;settled=true;clearTimeout(timer);script.onload=null;script.onerror=null;script.remove();tasks.delete(task);if(error)reject(error);else resolve(value);};
         const task={category:'library',cancel:()=>finish(new Error('cancelled'))};tasks.add(task);
@@ -401,9 +401,16 @@
       const kind=mediaKind(next,data);
       try {
         if(kind==='hls'){
-          if(video.canPlayType('application/vnd.apple.mpegurl')){video.src=next;video.load();return true;}
-          const Hls=await loadLibrary('hls');if(!alive(token))return false;
-          if(!Hls.isSupported())throw new Error('unsupported');
+          const nativeHls=video.canPlayType('application/vnd.apple.mpegurl');
+          const useNative=()=>{video.src=next;video.load();return true;};
+          // Chromium's tentative native HLS path can hand fMP4 playlists to its
+          // file demuxer. Prefer MSE for "maybe"; retain confident native HLS.
+          if(nativeHls==='probably')return useNative();
+          let Hls;
+          try {Hls=await loadLibrary('hls');}
+          catch(error){if(!alive(token))return false;if(nativeHls)return useNative();throw error;}
+          if(!alive(token))return false;
+          if(!Hls.isSupported()){if(nativeHls)return useNative();throw new Error('unsupported');}
           hls=new Hls({enableWorker:true,maxBufferLength:30,manifestLoadingTimeOut:config.request,manifestLoadingMaxRetry:1,levelLoadingTimeOut:config.request,levelLoadingMaxRetry:1,fragLoadingTimeOut:config.request,fragLoadingMaxRetry:1});
           const instance=hls,subscribe=(name,fn)=>{if(!name)return;const callback=(event,payload)=>{if(alive(token)&&hls===instance)fn(payload||{});};instance.on(name,callback);libraryListeners.push(()=>instance.off?.(name,callback));};
           subscribe(Hls.Events.MANIFEST_PARSED,()=>{updateQuality();updateCaptions({prefer:true});updateAudio({prefer:true});});subscribe(Hls.Events.LEVEL_SWITCHED,updateQuality);subscribe(Hls.Events.SUBTITLE_TRACKS_UPDATED,()=>updateCaptions({prefer:true}));subscribe(Hls.Events.SUBTITLE_TRACK_SWITCH,()=>{if(!applyingCaptions)updateCaptions({follow:true});});

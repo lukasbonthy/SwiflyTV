@@ -96,6 +96,25 @@ test('File audio alternatives expose known languages and source captions merge w
 test('Safari keeps native HLS while server rendition alternatives make picture quality usable',async()=>{
   let Hls;const e=setup({},e=>{Hls=hlsMock(e.w);e.w.HTMLMediaElement.prototype.canPlayType=type=>type==='application/vnd.apple.mpegurl'?'probably':'';});const data=fileChoices();data.playbackUrl='/hls/master.m3u8';data.streamType='hls';data.playbackSources=[{id:'master',playbackUrl:'/hls/master.m3u8',streamType:'hls',streamQuality:'Auto',selected:true},{id:'720',playbackUrl:'/hls/720.m3u8',streamType:'hls',streamQuality:'720p'}];await e.api.loadSource(data);e.ready();const quality=e.d.querySelector('[data-player-quality]'),option=[...quality.options].find(option=>/720p/.test(option.textContent));assert(option);quality.value=option.value;quality.dispatchEvent(new e.w.Event('change'));await flush();assert.equal(e.video().getAttribute('src'),'/hls/720.m3u8');assert.equal(Hls.instances.length,0,'Safari must retain native hardware playback');
 });
+test('Tentative native HLS support uses the MSE engine instead of sending a playlist to the file demuxer',async()=>{
+  let Hls;const e=setup({},e=>{Hls=hlsMock(e.w);e.w.HTMLMediaElement.prototype.canPlayType=type=>/mpegurl/.test(type)?'maybe':'';});
+  await e.api.loadSource({status:'ok',playbackUrl:'/hls/coco.m3u8'});
+  assert.equal(Hls.instances.length,1,'A maybe answer must not bypass the working HLS engine');
+  assert.equal(Hls.instances[0].url,'/hls/coco.m3u8');assert.equal(e.video().getAttribute('src'),null);
+  e.ready();assert.equal(e.api.getState().ready,true);
+});
+test('Native HLS remains available when tentative support is the only supported transport',async()=>{
+  let Hls;const e=setup({},e=>{Hls=hlsMock(e.w);Hls.isSupported=()=>false;e.w.HTMLMediaElement.prototype.canPlayType=type=>/mpegurl/.test(type)?'maybe':'';});
+  await e.api.loadSource({status:'ok',playbackUrl:'/hls/movie.m3u8'});
+  assert.equal(Hls.instances.length,0);assert.equal(e.video().getAttribute('src'),'/hls/movie.m3u8');e.ready();assert.equal(e.api.getState().ready,true);
+});
+test('A blocked HLS library still permits native playback when the browser offers it',async()=>{
+  const e=setup({},e=>{e.w.HTMLMediaElement.prototype.canPlayType=type=>/mpegurl/.test(type)?'maybe':'';});
+  const loading=e.api.loadSource({status:'ok',playbackUrl:'/hls/movie.m3u8'});await flush();
+  const script=e.d.querySelector('script[data-player-library="hls"]');assert(script,'Tentative support should try the HLS engine');
+  script.dispatchEvent(new e.w.Event('error'));await loading;
+  assert.equal(e.video().getAttribute('src'),'/hls/movie.m3u8');e.ready();assert.equal(e.api.getState().ready,true);
+});
 test('Unknown current file audio is displayed truthfully when another source declares a language',async()=>{
   const e=setup(),data=fileChoices();data.audioLanguage='';data.playbackSources[0].audioLanguage='';data.playbackSources[1].audioLanguage='fr';await e.api.loadSource(data);e.ready();assert.equal(e.api.getState().source,'/media/1080.mp4');const audio=e.d.querySelector('[data-player-audio]');assert.match(audio.selectedOptions[0].textContent,/language unavailable/i);assert.doesNotMatch(audio.selectedOptions[0].textContent,/English|French/);assert.equal(audio.disabled,false);
 });
