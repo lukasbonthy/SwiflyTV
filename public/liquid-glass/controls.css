@@ -53,6 +53,27 @@ body.svCleanShell .svNavMatchedOptic > .svNavMatchedLens.svLiquidPane {
   border-radius: inherit !important;
   pointer-events: none !important;
 }
+/* The wide navbar gets natural refraction because its pane samples hundreds
+   of pixels of the live backdrop. Compact controls used to sample only their
+   own 44-90px box, so their displacement field mostly read clipped/flat
+   pixels and looked like ordinary translucent pills. Give standalone controls
+   a larger hidden sampling halo while the host clips the visible result back
+   to the exact button shape. */
+body.svCleanShell .svGlassControl.svNavMatchedOptic {
+  --sv-control-sample-x: 34px;
+  --sv-control-sample-y: 20px;
+  overflow: hidden !important;
+  box-shadow: var(--sv-glass-edge) !important;
+}
+body.svCleanShell .svGlassControl.svNavMatchedOptic > .svNavMatchedLens.svLiquidPane {
+  top: calc(-1 * var(--sv-control-sample-y)) !important;
+  right: calc(-1 * var(--sv-control-sample-x)) !important;
+  bottom: calc(-1 * var(--sv-control-sample-y)) !important;
+  left: calc(-1 * var(--sv-control-sample-x)) !important;
+  width: auto !important;
+  height: auto !important;
+  box-shadow: none !important;
+}
 body.svCleanShell .svNavMatchedOptic > :not(.svNavMatchedLens) {
   position: relative;
   z-index: 1;
