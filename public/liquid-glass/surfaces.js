@@ -17,7 +17,14 @@
     '.svAuthPasswordToggle','.dsAuthSwitch > a','.genreDropdown summary',
     '.dsTabs a','.dsDetailTabsV121 > button','.pagination a',
     '.dsEpisodeChips a','.dsSearchBox button','.svSearchPopup button',
-    '.dsDropdownLogout','.dsEditProfileBtn',partyControls
+    '.dsDropdownLogout','.dsEditProfileBtn',
+    // Action links and standalone player chrome must be captured even without
+    // a generic button class. The transport buttons keep their owned dock.
+    '.svPlayerAction','.svPlayerBack','.svPlayerPartyButton',
+    '.svPlayerEpisodeStep','.svPlayerSeason',
+    '.dsAccountActions > a','.dsManageProfileActions > a',
+    '.svDetailActions > a','.svDetailChrome > a',
+    'a.btn','input:is([type="button"],[type="submit"],[type="reset"])',partyControls
   ].join(',');
   const panels = ['.svSearchPopup', '.dsSearchBox form', '.genreDropdownMenu', '.dsDetailTabsV121', '.dsAuthCard', '.dsAuthSwitch', '.dsProfileManagerPanel', '.dsAccountCard', '.dsProfileSelectCard', '.dsDetailGridV121 aside', '.dsAboutGridV121', '.dsSeasonBlock', '#controlPanel', '#toast', 'dialog','.svPlayerModes',partyPanels].join(',');
   const selector = controls + ',' + panels, entries = new Map(), pending = new Set();
@@ -47,45 +54,45 @@
     '.dsAuthCard',partyOptics
   ].join(',');
   const repeatedControls='.dsCardQuickActions .dsMiniBtn,.dsRowBtn,.dsRowArrow,.svRowArrow,.svResumeRemove,.pagination a,.dsEpisodeChips a,.sv100RoomItem button,.sv100RoomItem a,.partyMovieResults button,.partyMovieResults a,.sv100Channel,#controlPanel button,#controlPanel [role="button"]';
-  const outerPlayerControls='.svPlayerBack,.svPlayerPartyButton,.svPlayerEpisodeStep,.svPlayerSeason,.svPlayerModes';
+  const outerPlayerControls='.svPlayerBack,.svPlayerPartyButton,.svPlayerEpisodeStep,.svPlayerSeason,.svPlayerModes,.svPlayerAction';
   function deactivate(entry) {
     entry.opticController?.setEnabled(false);
     entry.controller?.setEnabled(false);
     entry.host.dataset.swiflyRenderer = 'blur';
   }
+  // Install a lightweight native pane immediately for every standalone
+  // action, so glass is present before hover, intersection or animation.
+  // The expensive SVG geometry remains strictly visibility-gated.
+  function ensureOpticPane(entry) {
+    if (!entry.optic) return;
+    if (entry.opticPane?.isConnected) return;
+    entry.opticController?.destroy();
+    entry.opticController = null;
+    entry.opticPane = null;
+    if (!entry.panel) for (const child of [...entry.host.childNodes]) {
+      if (child.nodeType !== 3 || !child.textContent.trim()) continue;
+      const label = document.createElement('span');
+      label.className = 'svNavMatchedLabel';
+      label.textContent = child.textContent;
+      entry.host.replaceChild(label, child);
+    }
+    const pane = document.createElement('span');
+    pane.className = 'svLiquidPane svNavMatchedLens';
+    pane.setAttribute('aria-hidden', 'true');
+    entry.host.insertBefore(pane, entry.host.firstChild);
+    entry.opticPane = pane;
+  }
   function activate(entry) {
+    ensureOpticPane(entry);
     if (!entry.visible || !entry.host.isConnected || document.hidden || !liquidPreference() || !window.SwiflyLiquidGlass) return;
     // Keep the native clear pane while the weighted sheet rises. Building its
     // optical maps at rest avoids competing with the first animation frames.
     const deferred=Boolean(entry.host.closest('.svDetailDialog[data-sv-detail-state="opening"]'));
-    // Same DOM architecture as the working navbar: actual backdrop-filter
-    // lives on a .svLiquidPane child, NOT on the isolated control itself.
+    // Use the same pane renderer and tint as the top navigation.
     if (entry.optic) {
-      if (entry.opticPane && !entry.opticPane.isConnected) {
-        // Some live controls (e.g. password Show/Hide) use textContent=...,
-        // which replaces child nodes. Repair their pane after that update.
-        entry.opticController?.destroy();
-        entry.opticController=null;entry.opticPane=null;
-      }
-      if (!entry.opticPane) {
-        // Preserve normal text labels above the optical pane; without this,
-        // an absolutely positioned backdrop can paint OVER bare text nodes.
-        if (!entry.panel) for (const child of [...entry.host.childNodes]) {
-          if (child.nodeType !== 3 || !child.textContent.trim()) continue;
-          const label=document.createElement('span');
-          label.className='svNavMatchedLabel';
-          label.textContent=child.textContent;
-          entry.host.replaceChild(label,child);
-        }
-        const pane=document.createElement('span');
-        pane.className='svLiquidPane svNavMatchedLens';
-        pane.setAttribute('aria-hidden','true');
-        entry.host.insertBefore(pane,entry.host.firstChild);
-        entry.opticPane=pane;
-      }
       if (!entry.opticController) {
         entry.opticController=window.SwiflyLiquidGlass.mount(entry.opticPane, {
-          tint:entry.host.closest('.dsHeroActions')?0:.2,saturation:1,
+          tint:.2,saturation:1,
           distortionScale:-180,channelOffsets:[0,10,20]
         });
         if(deferred)entry.opticController.setEnabled(false);
@@ -121,7 +128,7 @@
       if (host.closest(partyPanels) && !host.matches(partyPanels)) return;
     }
     let entry = entries.get(host);
-    if (entry) {activate(entry); return;}
+    if (entry) {ensureOpticPane(entry); activate(entry); return;}
     const panel = host.matches(panels);
     const optic = (host.matches(navOpticSelector)||!panel&&!host.matches(repeatedControls)) && !host.closest('media-player,.vds-controls,.sv100RoomItem,.partyMovieResults');
     // When a real navbar pane is present, never mount the old filter on its
@@ -132,6 +139,7 @@
     if (complex) {const position = getComputedStyle(host).position; if (!position || position === 'static') classes.push('svGlassRelative');}
     entry = {host, panel, optic, opticPane:null, opticController:null, complex, controller:null, visible:!intersection, addedClasses:classes.filter(name => !host.classList.contains(name)), previousRenderer:host.dataset.swiflyRenderer, previousProperties:rendererProperties.map(property => [property, host.style.getPropertyValue(property), host.style.getPropertyPriority(property)])};
     entries.set(host, entry); host.classList.add(...classes); host.dataset.swiflyRenderer = 'blur';
+    ensureOpticPane(entry);
     if ((complex || optic) && intersection) intersection.observe(host); else activate(entry);
   }
   function scan(root) {
