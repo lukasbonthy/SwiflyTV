@@ -107,8 +107,7 @@
       channelOffsets:[0, 10, 20],
       saturation:numeric(element, 'glassSaturation', 1),
       lensBlur:numeric(element, 'glassLensBlur', 7),
-      tint:numeric(element, 'glassTint', .2),
-      fitControl:false, ...options
+      tint:numeric(element, 'glassTint', .2), ...options
     };
     const filterId = 'swifly-liquid-filter-' + (++nextId), ua = navigator.userAgent;
     const isAppleTouch = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -128,16 +127,10 @@
       svg?.remove(); svg = null; map = null; dimensions = '';
       element.style.removeProperty('--sv-glass-filter');
     }
-    // The 180px navigation displacement is too large for 44-90px buttons:
-    // its samples run outside a narrow lens and flatten the refracted scene.
-    // Scale BOTH displacement and channel separation for compact controls,
-    // but leave the wide navbar's existing filter completely unchanged.
-    function displacementScales(width) {
-      const ratio = config.fitControl ? Math.min(1, Math.max(.09, width / 450)) : 1;
-      return config.channelOffsets.map(offset =>
-        Math.round((config.distortionScale + offset) * ratio * 100) / 100);
-    }
-    function createGraph(texture, scales) {
+    // All liquid surfaces, including compact hero controls, use the exact
+    // same three-channel optical field as the working navigation capsule.
+    // Width-normalizing displacement previously flattened compact controls.
+    function createGraph(texture) {
       svg = svgElement('svg', {class:'svLiquidPane__filters', 'aria-hidden':'true', focusable:'false'});
       const defs = svgElement('defs');
       const filter = svgElement('filter', {id:filterId, x:'0%', y:'0%', width:'100%', height:'100%', 'color-interpolation-filters':'sRGB'});
@@ -145,7 +138,7 @@
       filter.append(map);
       ['r', 'g', 'b'].forEach((channel, index) => {
         // Separate the three channels through the same softened lens field.
-        const scale=scales[index];
+        const scale=config.distortionScale+config.channelOffsets[index];
         filter.append(svgElement('feDisplacementMap', {in:'SourceGraphic', in2:'map', scale, xChannelSelector:'R', yChannelSelector:'G', result:'displaced-' + channel}));
         const matrix = Array(20).fill(0); matrix[index * 5 + index] = 1; matrix[18] = 1;
         filter.append(svgElement('feColorMatrix', {in:'displaced-' + channel, type:'matrix', values:matrix.join(' '), result:channel}));
@@ -171,15 +164,14 @@
       const blur=Number.isFinite(styledBlur)?styledBlur:config.lensBlur;
       const key = [width, height, radius, blur].join(':');
       const texture=key!==dimensions || svg&&!element.contains(svg)?lensTexture(width,height,radius,blur):null;
-      const scales=displacementScales(width);
       return () => {
         if (svg && !element.contains(svg)) removeGraph();
         if (key === dimensions) {renderer('svg'); return;}
         if (!texture) {removeGraph();renderer('blur');return;}
-        if (!svg) createGraph(texture,scales);
+        if (!svg) createGraph(texture);
         else {
           map.setAttribute('href',texture.map);
-          svg.querySelectorAll('feDisplacementMap').forEach((node,index)=>node.setAttribute('scale',scales[index]));
+          svg.querySelectorAll('feDisplacementMap').forEach((node,index)=>node.setAttribute('scale',config.distortionScale+config.channelOffsets[index]));
         }
         dimensions = key;
         renderer('svg');
