@@ -130,7 +130,9 @@
     let entry = entries.get(host);
     if (entry) {ensureOpticPane(entry); activate(entry); return;}
     const panel = host.matches(panels);
-    const optic = (host.matches(navOpticSelector)||!panel&&!host.matches(repeatedControls)) && !host.closest('media-player,.vds-controls,.sv100RoomItem,.partyMovieResults');
+    // Void HTML inputs cannot host a child optical pane. Give them the
+    // same native clear glass coating without inserting invalid children.
+    const optic = !host.matches('input,textarea,select') && (host.matches(navOpticSelector)||!panel&&!host.matches(repeatedControls)) && !host.closest('media-player,.vds-controls,.sv100RoomItem,.partyMovieResults');
     // When a real navbar pane is present, never mount the old filter on its
     // parent or draw another shared filter on top of it.
     const complex = !optic && panel && host.dataset.glassRefraction === 'true';
