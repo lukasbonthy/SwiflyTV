@@ -1,7 +1,11 @@
 /* Clear glass: a translucent face, rounded refracted rim and native fallback. */
+body.svCleanShell {
+  --sv-glass-reflection: linear-gradient(135deg, rgb(255 255 255 / .09), transparent 27%, transparent 68%, rgb(255 255 255 / .025));
+  --sv-glass-edge: inset 0 .75px 0 rgb(255 255 255 / .54), inset .5px 0 0 rgb(255 255 255 / .24), inset -.5px 0 0 rgb(255 255 255 / .1), inset 0 -.75px 0 rgb(255 255 255 / .13), 0 5px 18px rgb(0 0 0 / .16);
+}
 .svLiquidPane {
   --sv-glass-radius: 24px;
-  --sv-glass-tint: var(--sv-glass-default-tint, .2);
+  --sv-glass-tint: var(--sv-glass-default-tint, .06);
   --sv-glass-saturation: 1;
   position: absolute;
   inset: 0;
@@ -9,10 +13,10 @@
   pointer-events: none;
   overflow: hidden;
   border-radius: var(--sv-glass-radius);
-  background: rgb(255 255 255 / var(--sv-glass-tint));
-  -webkit-backdrop-filter: blur(12px) saturate(var(--sv-glass-saturation));
-  backdrop-filter: blur(12px) saturate(var(--sv-glass-saturation));
-  box-shadow: inset 0 0 0 .5px rgb(255 255 255 / .3), 0 4px 16px rgb(0 0 0 / .06), 0 8px 24px rgb(0 0 0 / .04);
+  background: var(--sv-glass-reflection), rgb(255 255 255 / var(--sv-glass-tint));
+  -webkit-backdrop-filter: blur(3px) saturate(var(--sv-glass-saturation));
+  backdrop-filter: blur(3px) saturate(var(--sv-glass-saturation));
+  box-shadow: var(--sv-glass-edge);
 }
 .svLiquidPane[data-swifly-renderer="svg"] {
   -webkit-backdrop-filter: var(--sv-glass-filter) saturate(var(--sv-glass-saturation));
@@ -30,8 +34,8 @@
 /* Keep navigation identical on player routes, which omit control styles.
    This also protects pane spans from component text-label resets. */
 body.svCleanShell .svLiquidPane.svLiquidPane {
-  background: rgb(255 255 255 / var(--sv-glass-tint)) !important;
-  box-shadow: inset 0 0 0 .5px rgb(255 255 255 / .3), 0 4px 16px rgb(0 0 0 / .06), 0 8px 24px rgb(0 0 0 / .04) !important;
+  background: var(--sv-glass-reflection), rgb(255 255 255 / var(--sv-glass-tint)) !important;
+  box-shadow: var(--sv-glass-edge) !important;
 }
 body [data-sv-liquid-nav].topbar {
   position: fixed !important;

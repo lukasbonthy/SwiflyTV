@@ -75,7 +75,7 @@
       // One static geometry lens belongs to the transport. Its backdrop is
       // composed by the browser; playback never samples or redraws the film.
       if(!glass&&!glassUnavailable&&!destroyed&&find('glass')&&window.SwiflyLiquidGlass?.mount){
-        try{glass=window.SwiflyLiquidGlass.mount(find('glass'),{tint:.16,saturation:1.35,distortionScale:-160,displace:.35});}
+        try{glass=window.SwiflyLiquidGlass.mount(find('glass'),{tint:.06,saturation:1.15,distortionScale:-160,displace:.35});}
         catch{glassUnavailable=true;}
       }
       const enabled=!destroyed&&!suspended&&app.isConnected&&!document.hidden&&!controls.hidden&&app.dataset.playerControlsVisibility!=='hidden';

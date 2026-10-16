@@ -5,7 +5,7 @@
   const NS = 'http://www.w3.org/2000/svg';
   const mounted = new WeakMap(), live = new Map();
   const transparency = window.matchMedia('(prefers-reduced-transparency: reduce)');
-  const pending = new Set();
+  const pending = new Set(), textures = new Map();
   let nextId = 0, preferences, frame = 0, boxes = new WeakMap(), styles = new WeakMap();
   const svgElement = (tag, attributes = {}) => {
     const node = document.createElementNS(NS, tag);
@@ -44,6 +44,8 @@
     if (!pending.size && frame) {cancelAnimationFrame(frame); frame = 0;}
   }
   function lensTexture(width, height, radius) {
+    const key=[width,height,radius].join(':');
+    if(textures.has(key)) {const texture=textures.get(key);textures.delete(key);textures.set(key,texture);return texture;}
     // The clear center stays aligned with the scene. A soft, narrow meniscus
     // bends only the rounded perimeter; the map contains geometry, never art.
     const ratio=Math.min(1,640/width,240/height),tw=Math.max(1,Math.min(640,Math.ceil(width*ratio))),th=Math.max(1,Math.min(240,Math.ceil(height*ratio)));
@@ -52,7 +54,7 @@
     if(!dc)return null;
     const vector=dc.createImageData(tw,th);
     const r=Math.max(1,Math.min(radius,width/2,height/2)),edge=Math.min(7,Math.max(2,Math.min(width,height)*.1));
-    const scale=Math.min(180,Math.min(width,height)*3);
+    const scale=Math.min(32,Math.min(width,height)*.55);
     for(let y=0;y<th;y++)for(let x=0;x<tw;x++) {
       const px=(x+.5)*width/tw-width/2,py=(y+.5)*height/th-height/2;
       const qx=Math.abs(px)-(width/2-r),qy=Math.abs(py)-(height/2-r);
@@ -72,7 +74,10 @@
       vector.data[offset+2]=128;vector.data[offset+3]=255;
     }
     dc.putImageData(vector,0,0);
-    return {map:displacement.toDataURL(),scale,edge};
+    const texture={map:displacement.toDataURL(),scale,edge};
+    textures.set(key,texture);
+    if(textures.size>48)textures.delete(textures.keys().next().value);
+    return texture;
   }
   function watch() {
     if (preferences) return;
@@ -115,14 +120,15 @@
       distortionScale:numeric(element, 'glassDistortion', -180),
       channelOffsets:[0, 1.5, 3],
       saturation:numeric(element, 'glassSaturation', 1),
-      tint:numeric(element, 'glassTint', .2), ...options
+      tint:numeric(element, 'glassTint', .06), ...options
     };
     const filterId = 'swifly-liquid-filter-' + (++nextId), ua = navigator.userAgent;
     const isAppleTouch = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    // Text-facing bars keep native frost: small scrolling text and adjacent
-    // panel borders must not stretch into reflections. Artwork retains optics.
-    const textSurface=element.closest('.mobileNav,.partyModeNav,.partyEntryTabs');
-    const svgCapable = !isAppleTouch && !textSurface && /Chrome|Chromium|Edg|OPR/.test(ua) && typeof CSS !== 'undefined' && CSS.supports('backdrop-filter', 'url(#' + filterId + ')');
+    // Text-facing bars keep a clear center and a shallow rim. Engine support
+    // determines fallback, rather than downgrading one navigation surface.
+    const textSurface=element.closest('.mobileNav,.partyModeNav,.partyEntryTabs,.svPlayerModes');
+    if(textSurface){config.distortionScale=-90;config.channelOffsets=[0,.5,1];config.displace=.2;}
+    const svgCapable = !isAppleTouch && /Chrome|Chromium|Edg|OPR/.test(ua) && typeof CSS !== 'undefined' && CSS.supports('backdrop-filter', 'url(#' + filterId + ')');
     const previousRenderer = element.dataset.swiflyRenderer;
     const previousProperties = ['--sv-glass-default-tint', '--sv-glass-saturation', '--sv-glass-radius', '--sv-glass-filter'].map(property => [property, element.style.getPropertyValue(property), element.style.getPropertyPriority(property)]);
     element.style.setProperty('--sv-glass-default-tint', config.tint);
