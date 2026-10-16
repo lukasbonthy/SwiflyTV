@@ -1,9 +1,15 @@
-/* v198: title chapters stay in their current page or catalog detail viewport. */
+/* Title details keep native modal semantics throughout the rising sheet transition. */
 (() => {
   'use strict';
   if (window.SwiflyDetails) return;
-  let dialog,viewport,trigger,lastTrigger,request,currentHref='',generation=0,started=false,closingHistory=false,closingDialog=false;
+  let dialog,viewport,scrim,trigger,lastTrigger,request,currentHref='',generation=0,started=false,closingHistory=false,closingDialog=false;
   let trail=[],pendingOpen=[],currentURL='';
+  let sheetTransition=null,transitionEpoch=0,closeWantsHistory=false;
+  const motionPreference=window.matchMedia('(prefers-reduced-motion: reduce)');
+  const reducedMotion=()=>motionPreference.matches||document.body.classList.contains('reduceMotion');
+  const enterDuration=620,exitDuration=280;
+  const fragments=new Map(),fragmentTTL=90000,fragmentLimit=8,fragmentByteLimit=2*1024*1024,fragmentSizeLimit=192*1024;
+  let fragmentScope=null,fragmentBytes=0;
   const scrollPositions=new Map();
   const icon=path=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="'+path+'"/></svg>';
   const closeIcon=icon('m6 6 12 12M18 6 6 18'),backIcon=icon('m14 6-6 6 6 6');
@@ -25,6 +31,26 @@
   function storageRead(key) {try {return sessionStorage.getItem(key);} catch {return null;}}
   function storageWrite(key,value) {try {sessionStorage.setItem(key,value);} catch {}}
   function storageRemove(key) {try {sessionStorage.removeItem(key);} catch {}}
+  function syncFragmentScope() {
+    let scope=null;
+    try {scope=(localStorage.getItem('swiflytv.activeProfile')||'')+'\n'+(localStorage.getItem('swiflytv.profiles')||'')+'\n'+String(location.pathname==='/kids'||Boolean(document.querySelector('.kidsModePage')));} catch {}
+    if(scope!==fragmentScope){fragments.clear();fragmentBytes=0;fragmentScope=scope;}
+    return scope;
+  }
+  function discardFragment(href) {const entry=fragments.get(href);if(entry){fragmentBytes-=entry.bytes;fragments.delete(href);}}
+  function recentFragment(href) {
+    const now=Date.now();
+    for(const [key,entry] of fragments)if(now-entry.at>fragmentTTL)discardFragment(key);
+    const entry=fragments.get(href);if(!entry)return null;
+    fragments.delete(href);fragments.set(href,entry);return entry.html;
+  }
+  function rememberFragment(href,html,scope) {
+    if(scope===null||syncFragmentScope()!==scope)return;
+    const bytes=new Blob([html]).size;if(bytes>fragmentSizeLimit)return;
+    discardFragment(href);
+    while(fragments.size>=fragmentLimit||fragmentBytes+bytes>fragmentByteLimit)discardFragment(fragments.keys().next().value);
+    fragments.set(href,{html,bytes,at:Date.now()});fragmentBytes+=bytes;
+  }
   function returnToCatalog() {
     const referrer=catalogURL(document.referrer),stored=catalogURL(storageRead('swiflytv.browseReturn'));
     if(referrer&&stored){const source=localURL(referrer),saved=localURL(stored);if(source.pathname+source.search===saved.pathname+saved.search)return stored;}
@@ -72,8 +98,59 @@
   function rememberDetailScroll() {
     const entry=ownEntry();if(entry){const scroll=dialog?.hasAttribute('aria-busy')?scrollPositions.get(currentURL)||0:viewport?.scrollTop||0;scrollPositions.set(currentURL,scroll);writeHistory('replaceState',{...history.state,svDetails:{...entry,scroll}},route(new URL(location.href)));}
   }
+  function cancelSheetTransition() {
+    transitionEpoch++;
+    const active=sheetTransition;sheetTransition=null;if(!active)return;
+    clearTimeout(active.timer);
+    for(const animation of active.animations)animation.cancel();
+  }
+  function moveSheet(state,complete) {
+    const entering=state==='opening',reversing=Boolean(sheetTransition);
+    const start=reversing?getComputedStyle(dialog).transform:(entering?'translate3d(0,var(--sv-detail-rise),0)':'none');
+    const opacity=reversing?getComputedStyle(scrim).opacity:(entering?'0':'1');
+    cancelSheetTransition();
+    const epoch=transitionEpoch,duration=entering?enterDuration:exitDuration;
+    const active={epoch,animations:[],timer:null,complete:null};sheetTransition=active;
+    dialog.dataset.svDetailState=state;scrim.dataset.svDetailState=state;
+    const settle=()=>{
+      if(sheetTransition!==active||epoch!==transitionEpoch)return;
+      sheetTransition=null;clearTimeout(active.timer);
+      dialog.dataset.svDetailState=entering?'open':'closed';scrim.dataset.svDetailState=entering?'open':'closed';
+      dialog.style.removeProperty('--sv-detail-start');scrim.style.removeProperty('--sv-detail-dim-start');
+      for(const animation of active.animations)animation.cancel();
+      complete?.();
+    };
+    active.complete=settle;
+    if(reducedMotion()){settle();return;}
+    dialog.style.setProperty('--sv-detail-start',start||'none');
+    scrim.style.setProperty('--sv-detail-dim-start',opacity||'0');
+    if(typeof dialog.animate==='function'){
+      dialog.dataset.svDetailMotion='waapi';scrim.dataset.svDetailMotion='waapi';
+      try {
+        const animate=(target,frames,options)=>{
+          const animation=target.animate(frames,{fill:'both',...options});active.animations.push(animation);
+          animation.finished.catch(()=>{});return animation.finished;
+        };
+        const sheet=animate(dialog,[{transform:start||'none'},{transform:entering?'none':'translate3d(0,var(--sv-detail-rise),0)'}],{duration,easing:entering?'cubic-bezier(.22,.8,.24,1)':'cubic-bezier(.4,0,.8,.3)'});
+        const dim=animate(scrim,[{opacity:opacity||'0'},{opacity:entering?'1':'0'}],{duration:entering?360:duration,easing:entering?'ease-out':'ease-in'});
+        Promise.all([sheet,dim]).then(settle,()=>{});
+        active.timer=setTimeout(settle,duration+100);return;
+      } catch {
+        for(const animation of active.animations)animation.cancel();active.animations=[];
+      }
+    }
+    dialog.dataset.svDetailMotion='css';scrim.dataset.svDetailMotion='css';
+    const name=entering?'svDetailsEnter':'svDetailsExit';
+    if(getComputedStyle(dialog).animationName!==name){settle();return;}
+    // CSS events from a cancelled animation can arrive after a new transition begins.
+    // A bounded timer also completes when a background tab drops animationend entirely.
+    active.timer=setTimeout(settle,duration+34);
+  }
+  function settleReducedMotion() {if(reducedMotion())sheetTransition?.complete();}
   function reset() {
-    generation++;request?.abort();request=null;window.SwiflyMotion?.stop(viewport);window.SwiflyMotion?.release(viewport);
+    cancelSheetTransition();generation++;request?.abort();request=null;window.SwiflyMotion?.stop(viewport);window.SwiflyMotion?.release(viewport);
+    if(scrim){scrim.hidden=true;scrim.dataset.svDetailState='closed';}
+    if(dialog){dialog.dataset.svDetailState='closed';dialog.removeAttribute('aria-busy');}
     document.documentElement.classList.remove('svDetailsOpen');
     if(trigger?.isConnected)trigger.focus({preventScroll:true});lastTrigger=trigger||lastTrigger;trigger=null;
     viewport?.replaceChildren();currentHref='';currentURL='';trail=[];
@@ -83,11 +160,22 @@
     if(ownEntry()?.pushed&&history.length>1){closingHistory=true;history.back();}
     else writeHistory('replaceState',historyState(),baseURL());
   }
+  function dismiss(updateHistory) {
+    if(!dialog?.open)return;
+    if(dialog.dataset.svDetailState==='closing'){if(!updateHistory)closeWantsHistory=false;return;}
+    closeWantsHistory=updateHistory;generation++;request?.abort();request=null;window.SwiflyMotion?.stop(viewport);
+    moveSheet('closing',()=>{
+      const leave=closeWantsHistory;closeWantsHistory=false;
+      closingDialog=true;dialog.close();reset();closingDialog=false;
+      if(leave)leaveHistory();
+    });
+  }
   function close() {
-    if(!dialog?.open)return;rememberDetailScroll();closingDialog=true;dialog.close();reset();closingDialog=false;leaveHistory();
+    if(!dialog?.open||dialog.dataset.svDetailState==='closing')return;rememberDetailScroll();dismiss(true);
   }
   function ensureDialog() {
     if(dialog)return;
+    scrim=document.createElement('div');scrim.className='svDetailScrim';scrim.hidden=true;scrim.setAttribute('aria-hidden','true');document.body.append(scrim);
     dialog=document.createElement('dialog');dialog.className='svDetailDialog';dialog.setAttribute('aria-label','Movie details');
     const chrome=document.createElement('div');chrome.className='svDetailChrome';
     const back=document.createElement('button');back.type='button';back.className='svDetailBack dsIconBtn';back.dataset.svDialogBack='';back.setAttribute('aria-label','Back to browsing');back.innerHTML=backIcon;
@@ -106,16 +194,20 @@
   async function render(href,from,scroll=0) {
     ensureDialog();request?.abort();window.SwiflyMotion?.stop(viewport);window.SwiflyMotion?.release(viewport);
     request=new AbortController();const current=++generation;currentHref=href;currentURL=route(new URL(location.href));scrollPositions.set(currentURL,scroll);
-    if(!dialog.open){trigger=from||lastTrigger||document.activeElement;window.SwiflyMotion?.stop();document.documentElement.classList.add('svDetailsOpen');dialog.showModal();}
+    const entering=!dialog.open||dialog.dataset.svDetailState==='closing';
+    if(!dialog.open){trigger=from||lastTrigger||document.activeElement;window.SwiflyMotion?.stop();document.documentElement.classList.add('svDetailsOpen');scrim.hidden=false;dialog.showModal();}
     viewport.scrollTop=0;dialog.classList.remove('svDetailScrolled');dialog.setAttribute('aria-busy','true');
     dialog.setAttribute('aria-label','Movie details');dialog.querySelector('.svDetailChromeTitle').textContent='Movie details';
     viewport.innerHTML='<div class="svDetailLoading" role="status"><div class="svDetailLoadingArt"></div><div class="svDetailLoadingCopy"><span></span><span></span><span></span></div><p>Loading details…</p></div>';
     dialog.querySelector('[data-sv-dialog-back]').setAttribute('aria-label',trail.length?'Back to previous title':'Back to browsing');
+    if(entering){closeWantsHistory=false;moveSheet('opening',()=>window.SwiflyMotion?.refresh(viewport));}
     try {
-      const response=await fetch(href+'?view=modal',{signal:request.signal,headers:{Accept:'text/html'}});if(!response.ok)throw new Error('Details unavailable');
-      const parsed=new DOMParser().parseFromString(await response.text(),'text/html');if(current!==generation||!dialog.open)return;
+      const scope=syncFragmentScope();let html=scope===null?null:recentFragment(href);const cached=html!==null;
+      if(html===null){const response=await fetch(href+'?view=modal',{signal:request.signal,headers:{Accept:'text/html'}});if(!response.ok)throw new Error('Details unavailable');html=await response.text();}
+      if(current!==generation||!dialog.open)return;
+      const parsed=new DOMParser().parseFromString(html,'text/html');
       const content=parsed.querySelector('.svTitleDetails');if(!content)throw new Error('Details unavailable');
-      content.querySelectorAll('script,[data-sv-details-back]').forEach(node=>node.remove());viewport.replaceChildren(content);
+      content.querySelectorAll('script,[data-sv-details-back]').forEach(node=>node.remove());if(!cached)rememberFragment(href,content.outerHTML,scope);viewport.replaceChildren(content);
       const name=content.querySelector('h1')?.textContent.trim()||'Movie';dialog.setAttribute('aria-label',name+' details');dialog.querySelector('.svDetailChromeTitle').textContent=name;
       initialize(content);viewport.scrollTop=scroll;dialog.classList.toggle('svDetailScrolled',scroll>180);
     }catch(error){
@@ -129,8 +221,8 @@
   async function open(value,from) {
     const href=titleRoute(value);if(!href)return;
     if(closingHistory)return new Promise(resolve=>pendingOpen.push({href,from,resolve}));
-    if(dialog?.open){if(currentHref&&currentHref!==href)trail.push({href:currentHref,scroll:viewport.scrollTop});selectURL(href,true);}
-    else {rememberCatalog();selectURL(href,false);}
+    if(dialog?.open&&mediaRoute()){if(currentHref&&currentHref!==href)trail.push({href:currentHref,scroll:viewport.scrollTop});selectURL(href,true);}
+    else {trail=[];rememberCatalog();selectURL(href,false);}
     return render(href,from);
   }
   function goBack() {
@@ -141,7 +233,7 @@
     if(dialog?.open&&!dialog.hasAttribute('aria-busy'))scrollPositions.set(currentURL,viewport.scrollTop);
     const href=mediaRoute(),entry=ownEntry();closingHistory=false;
     if(href){trail=[];render(href,lastTrigger,scrollPositions.get(route(new URL(location.href)))??entry?.scroll??0);}
-    else if(dialog?.open){closingDialog=true;dialog.close();reset();closingDialog=false;}
+    else if(dialog?.open){trail=[];dismiss(false);}
     rememberCatalog();
     const queue=pendingOpen;pendingOpen=[];
     for(const next of queue)open(next.href,next.from).then(next.resolve);
@@ -183,6 +275,8 @@
   }
   function boot() {
     if(started)return;started=true;rememberCatalog();initialize(document);
+    motionPreference.addEventListener?.('change',settleReducedMotion);
+    new MutationObserver(settleReducedMotion).observe(document.body,{attributes:true,attributeFilter:['class']});
     document.addEventListener('click',event=>{
       const link=event.target.closest('a[href]');if(!link||event.defaultPrevented||event.button>0||event.ctrlKey||event.metaKey||event.altKey||event.shiftKey||link.hasAttribute('download')||(link.target&&link.target!=='_self'))return;
       if(scrollChapter(link,event))return;
