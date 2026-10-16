@@ -23,6 +23,7 @@ test('Visible optical panes stay inside their Party hosts and leave page content
    for(const key of ['x','y','width','height'])assert(Math.abs(host[key]-pane[key])<=2,'a pane must be bounded by its own host, never the page');
    assert.equal(graph,null,'segmented bars must not refract neighboring panel borders');
   }
+  await page.waitForFunction(()=>document.querySelector('.dsHeroActions .svNavMatchedLens')?.dataset.swiflyRenderer==='svg');
   const dispersion=await page.locator('.svNavMatchedLens filter').evaluateAll(filters=>filters.map(filter=>{
    const scales=[...filter.querySelectorAll('feDisplacementMap')].map(node=>Number(node.getAttribute('scale')));
    return scales.length?Math.max(...scales)-Math.min(...scales):0;
@@ -105,4 +106,56 @@ test('Player pages retain the shared readable navigation without control overrid
   assert.equal(await page.locator('.netflixNav>.svLiquidPane').evaluate(node=>getComputedStyle(node).backgroundColor),'rgba(255, 255, 255, 0.2)','scrolling keeps clear navigation glass on player routes');
   assert.equal(await page.locator('[data-player-root] .svGlassSurface,[data-player-root] .svLiquidPane').count(),0);
  }finally{await browser.close();await new Promise(resolve=>api.io.close(resolve));}
+});
+
+test('Opacity entrances have visible refraction before pointer, keyboard or scroll input',{skip:!available&&'Chromium is not installed'},async()=>{
+ const browser=await chromium.launch({headless:true});
+ try{
+  const page=await browser.newPage({viewport:{width:900,height:500}});
+  await page.setContent('<!doctype html><style>'+asset('liquid-glass/liquid-glass.css')+asset('clean/motion.css')+
+   '*{box-sizing:border-box}body{margin:0;background:repeating-linear-gradient(37deg,#153351 0 14px,#dfb47f 14px 28px,#bc4366 28px 42px);height:900px}.entrance{position:absolute;top:50px;left:50px;width:580px;height:60px;border-radius:24px}</style><body class="svCleanShell" data-st-glass="liquid"><section class="entrance svMotionReveal"><div class="svLiquidPane" data-swifly-glass></div></section></body>');
+  await page.evaluate(()=>{window.glassInputs=[];for(const type of ['pointermove','pointerdown','click','keydown','wheel','scroll'])document.addEventListener(type,event=>{if(event.isTrusted)glassInputs.push(type);},true);});
+  await page.addScriptTag({content:asset('liquid-glass/liquid-glass.js')});
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  assert.equal(await page.locator('.svLiquidPane').getAttribute('data-swifly-renderer'),'svg','the geometry must be ready while opacity is still zero');
+  await page.evaluate(()=>document.querySelector('.entrance').classList.add('svMotionVisible'));
+  await page.waitForFunction(()=>getComputedStyle(document.querySelector('.entrance')).opacity==='1'&&getComputedStyle(document.querySelector('.entrance')).transform==='none');
+  assert.deepEqual(await page.evaluate(()=>glassInputs),[],'initial optical rendering must not depend on user input');
+  const clip={x:45,y:45,width:590,height:70},initial=await page.screenshot({clip});
+  await page.mouse.move(800,400);const afterInput=await page.screenshot({clip});
+  assert(initial.equals(afterInput),'a pointer event must not activate or alter the optical graph');
+  await page.evaluate(()=>document.querySelectorAll('feDisplacementMap').forEach(node=>node.setAttribute('scale','0')));
+  assert(!initial.equals(await page.screenshot({clip})),'the first visible image must contain real rounded refraction rather than only a filter attribute');
+ }finally{await browser.close();}
+});
+
+test('Native control material has one clear rim and preserves functional generated labels',{skip:!available&&'Chromium is not installed'},async()=>{
+ const browser=await chromium.launch({headless:true});
+ try{
+  const page=await browser.newPage({viewport:{width:740,height:900}});
+  await page.setContent('<!doctype html><style>'+['liquid-glass/liquid-glass.css','clean/clean.css','liquid-glass/surfaces.css','studio/studio.css','liquid-glass/controls.css','party/party.css'].map(asset).join('\n')+
+   '*{box-sizing:border-box}body{margin:0;padding:30px;background:#345}main{position:relative}.ordinary{border-radius:13px;padding:12px}.dsAccountActions{margin:20px}.svPartyHub{padding:20px}.stChoice{min-height:44px}body.svCleanShell .svGlassControl{transition:none!important}</style><body class="svCleanShell" data-st-glass="liquid"><main><button class="ordinary">Refresh</button><div class="dsAccountActions"><a class="dsSecondaryBtn">Switch profile</a></div><div class="dsCardQuickActions"><button class="dsMiniBtn">+</button></div><main class="svPartyHub"><button id="sv103RoomCode">ABCD</button><button class="sv100Channel active" aria-current="true">General</button><details class="partyLinkChoice"><summary>Use a video link</summary></details><section class="sv100ChannelGroup"><header><button class="partyIconBtn" data-action="new-channel"><svg viewBox="0 0 24 24"></svg></button></header></section><div class="sv100RoomItem"><button class="partySecondaryBtn">Join party</button></div></main><div id="controlPanel"><button class="stChoice" aria-pressed="true">Selected choice</button></div></main></body>');
+  for(const file of ['liquid-glass/liquid-glass.js','liquid-glass/surfaces.js'])await page.addScriptTag({content:asset(file)});
+  await page.waitForFunction(()=>document.querySelector('.ordinary').classList.contains('svGlassControl'));
+  const samples=await page.locator('.ordinary,.dsAccountActions a,.dsMiniBtn,#sv103RoomCode,.sv100Channel,.sv100RoomItem button,.stChoice').evaluateAll(nodes=>nodes.map(node=>{const s=getComputedStyle(node);return {class:node.className,fill:s.backgroundColor,image:s.backgroundImage,shadow:s.boxShadow,border:s.borderWidth,filter:s.backdropFilter};}));
+  for(const sample of samples){
+   const rgba=sample.fill.match(/[\d.]+/g).map(Number);
+   assert.deepEqual(rgba.slice(0,3),[255,255,255],sample.class+' must share the clear white material');
+   assert(rgba[3]>=.1&&rgba[3]<=.25,'native controls retain the artwork through the same light frost');
+   assert.equal(sample.image,'none');assert.equal(sample.border,'0px','a single inset rim must replace the old outer border: '+sample.class);
+   assert(!sample.filter.includes('url('),'ordinary and repeated controls never allocate SVG filters');
+  }
+  assert.equal(await page.locator('.ordinary').evaluate(node=>getComputedStyle(node).borderRadius),'13px','shared material must preserve a component’s shape');
+  assert.equal(await page.locator('.partyLinkChoice summary').evaluate(node=>getComputedStyle(node,'::after').content),'"+"','disclosure affordances are functional content');
+  assert.equal(await page.locator('.partyLinkChoice summary').evaluate(node=>getComputedStyle(node).borderRadius),'999px','the standalone link choice uses the shared rounded control shape');
+  assert.equal(await page.locator('[data-action="new-channel"]').evaluate(node=>getComputedStyle(node,'::after').content),'"New channel"','mobile channel actions must retain their visible labels');
+  assert.equal(await page.locator('.sv100RoomItem svg.svLiquidPane__filters,#controlPanel svg.svLiquidPane__filters').count(),0);
+  await page.evaluate(()=>document.body.dataset.stGlass='off');
+  const off=await page.locator('.ordinary,.sv100Channel,.stChoice').evaluateAll(nodes=>nodes.map(node=>({fill:getComputedStyle(node).backgroundColor,filter:getComputedStyle(node).backdropFilter})));
+  assert(off.every(style=>style.filter==='none'&&!style.fill.startsWith('rgba(')),'selected native controls must also obey solid mode: '+JSON.stringify(off));
+  await page.evaluate(()=>document.body.dataset.stGlass='liquid');
+  const session=await page.context().newCDPSession(page);await session.send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-transparency',value:'reduce'}]});
+  const reduced=await page.locator('.ordinary,.sv100Channel,.stChoice').evaluateAll(nodes=>nodes.map(node=>({fill:getComputedStyle(node).backgroundColor,filter:getComputedStyle(node).backdropFilter})));
+  assert(reduced.every(style=>style.filter==='none'&&!style.fill.startsWith('rgba(')),'selected native controls must also obey reduced transparency: '+JSON.stringify(reduced));
+ }finally{await browser.close();}
 });

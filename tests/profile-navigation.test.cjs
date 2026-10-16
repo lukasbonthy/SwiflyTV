@@ -35,6 +35,8 @@ test('the profile chooser keeps the selected identity and saves the chosen viewe
   w.localStorage.setItem('swiflytv.profiles', JSON.stringify(profiles));
   w.localStorage.setItem('swiflytv.activeProfile', JSON.stringify(profiles[0]));
   w.eval(w.document.querySelector('main script').textContent);
+  w.boot('avatars.js');
+  w.boot('profiles.js');
   const selected = w.document.querySelector('[data-current="true"]');
   assert.match(selected.textContent, /Alex/);
   assert.equal(selected.getAttribute('aria-pressed'), 'true');
@@ -47,6 +49,8 @@ test('profile settings preserve creation, rename, mode, deletion and reset actio
   const env = browser(page('/profiles/manage'));
   const w = env.window, d = w.document;
   w.eval(d.querySelector('main script').textContent);
+  w.boot('avatars.js');
+  w.boot('profiles.js');
   const saved = () => JSON.parse(w.localStorage.getItem('swiflytv.profiles'));
   const form = d.getElementById('profileCreateForm');
   form.elements.name.value = 'Another viewer';

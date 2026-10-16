@@ -21,9 +21,10 @@ body.svCleanShell .svGlassSurface.svGlassControl.svGlassControl {
   -webkit-text-fill-color: currentColor !important;
   text-shadow: 0 1px 3px rgb(0 0 0 / .7), 0 1px 8px rgb(0 0 0 / .3);
 }
-/* Remove component bevels, which otherwise frame the pane a second time. */
-body.svCleanShell .svGlassSurface.svGlassSurface::before,
-body.svCleanShell .svGlassSurface.svGlassSurface::after {
+/* Remove legacy bevels, preserving functional generated labels on other
+   controls, such as mobile Party actions and disclosure affordances. */
+body.svCleanShell .svGlassSurface:is(.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn,.dsGhostPill,.dsMiniBtn,.dsRowBtn,.dsRowArrow,.svRowArrow,.dsAuthCard)::before,
+body.svCleanShell .svGlassSurface:is(.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn,.dsGhostPill,.dsMiniBtn,.dsRowBtn,.dsRowArrow,.svRowArrow,.dsAuthCard)::after {
   display: none !important;
   content: none !important;
 }
@@ -68,9 +69,14 @@ body.svCleanShell :is(.svDetailClose,.dsClose).svGlassControl {
   border-radius: 50% !important;
 }
 /* Repeated grid/rail controls share the tint without per-control GPU filters. */
-body.svCleanShell :is(.dsCardQuickActions .svGlassControl,.dsRowBtn,.dsRowArrow,.svRowArrow,.svResumeRemove,.pagination a,.dsEpisodeChips a).svGlassControl {
+body.svCleanShell :is(.dsCardQuickActions .svGlassControl,.dsRowBtn,.dsRowArrow,.svRowArrow,.svResumeRemove,.pagination a,.dsEpisodeChips a,.sv100RoomItem .svGlassControl,.partyMovieResults .svGlassControl,#controlPanel .svGlassControl).svGlassControl {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
+}
+body.svCleanShell .partyLinkChoice > summary.svGlassControl {
+  min-height: 44px !important;
+  padding: 8px 12px !important;
+  border-radius: 999px !important;
 }
 body.svCleanShell .svWelcomeClean .dsWelcomeActions > a.svGlassControl {
   border-radius: 14px !important;

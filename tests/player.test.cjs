@@ -471,6 +471,43 @@ test('Playing controls settle after inactivity and stay visible for pause, focus
   e.d.activeElement.blur();e.event('waiting');await e.advance(30);assert.equal(e.app.dataset.playerControlsVisibility,'visible');
   e.api.pause();await e.advance(60);assert.equal(e.app.dataset.playerControlsVisibility,'visible');
 });
+test('One player-owned glass lens follows visible controls and releases its renderer across the page lifecycle',async()=>{
+  const mounted=[];
+  const e=setup({},e=>{
+    e.app.dataset.playerControlsTimeoutMs='40';
+    e.w.SwiflyLiquidGlass={mount(element){
+      const lens={element,enabled:null,destroyed:false,setEnabled(value){this.enabled=value;},destroy(){this.destroyed=true;}};
+      mounted.push(lens);return lens;
+    }};
+  });
+  assert.equal(mounted.length,1,'The complete transport must share one optical surface');
+  const lens=mounted[0];
+  assert.equal(lens.element,e.d.querySelector('[data-player-glass]'));
+  assert.equal(lens.element.hasAttribute('data-swifly-glass'),false,'The player owns its lens lifecycle instead of global auto-mounting');
+  assert.equal(lens.enabled,true,'Visible controls start with their static glass lens');
+  await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();await e.api.play();await e.advance(50);
+  assert.equal(lens.enabled,false,'Hidden playing controls must release optical work');
+  e.d.querySelector('[data-player-stage]').dispatchEvent(new e.w.Event('pointermove'));
+  assert.equal(lens.enabled,true,'Interaction restores the same lens');
+  e.api.pause();assert.equal(lens.enabled,true,'Paused visible controls retain static optics');
+  Object.defineProperty(e.d,'hidden',{configurable:true,value:true});e.d.dispatchEvent(new e.w.Event('visibilitychange'));
+  assert.equal(lens.enabled,false,'A background document must disable the lens');
+  Object.defineProperty(e.d,'hidden',{configurable:true,value:false});e.d.dispatchEvent(new e.w.Event('visibilitychange'));
+  assert.equal(lens.enabled,true);
+  const hide=new e.w.Event('pagehide');Object.defineProperty(hide,'persisted',{value:true});e.w.dispatchEvent(hide);
+  assert.equal(lens.enabled,false,'BFCache suspension stops the same renderer');
+  const show=new e.w.Event('pageshow');Object.defineProperty(show,'persisted',{value:true});e.w.dispatchEvent(show);await flush();
+  assert.equal(lens.enabled,true,'BFCache return restores visible control optics');
+  assert.equal(mounted.length,1,'Source replacement and BFCache return must not duplicate a lens');
+  e.api.destroy();assert.equal(lens.destroyed,true,'Destroy must release the renderer');
+});
+test('An unavailable optional glass renderer preserves usable native playback controls',async()=>{
+  const e=setup({},e=>{e.w.SwiflyLiquidGlass={mount(){throw new Error('Unsupported renderer');}};});
+  await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();
+  assert.equal(await e.api.play(),true);assert.equal(e.api.getState().paused,false);
+  assert.equal(e.d.querySelector('[data-player-controls]').hidden,false);
+  e.api.pause();assert.equal(e.api.getState().paused,true);
+});
 test('Seek previews remain steady during timeupdates and commit one explicit shared action',async()=>{
   const e=setup(),actions=[];await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();
   e.app.addEventListener('swiflyplayer:action',event=>actions.push(event.detail));

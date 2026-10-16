@@ -21,8 +21,8 @@ let browser, api;
 
 // Use pageShell's real stylesheet order: component-only CSS misses global nav,
 // containment and legacy rules. No media is loaded; these are layout checks.
-function documentFor(embedded = false) {
-  const markup = playerMarkup({...options, embedded,
+function documentFor(embedded = false, overrides = {}) {
+  const markup = playerMarkup({...options, ...overrides, embedded,
     episodePickerHtml:embedded ? '' : episodePickerMarkup(options)});
   const body = embedded
     ? '<main class="svPartyHub" data-party-media="video"><div class="sv103Player" style="width:min(100%,500px)">' + markup + '</div></main>'
@@ -53,12 +53,12 @@ test.after(async () => {
   if (api) await new Promise(resolve => api.io.close(resolve));
 });
 
-async function open(viewport, embedded = false) {
+async function open(viewport, embedded = false, overrides = {}) {
   const context = await browser.newContext({viewport, isMobile:viewport.width <= 430, hasTouch:viewport.width <= 430});
   const page = await context.newPage();
   await page.route('**/*', route => route.fulfill({status:200, body:''}));
   await page.emulateMedia({reducedMotion:'reduce'});
-  await page.setContent(documentFor(embedded));
+  await page.setContent(documentFor(embedded,overrides));
   await page.addScriptTag({content:asset('player/player.js')});
   await page.evaluate(embedded => {
     const root = document.querySelector('[data-player-root]');
@@ -125,6 +125,61 @@ test('The complete theater and transport fit the page viewport without cropping 
           assert(Math.min(target.right, other.right) - Math.max(target.left, other.left) <= .5 ||
             Math.min(target.bottom, other.bottom) - Math.max(target.top, other.top) <= .5, `${label}: transport targets must not overlap`);
         }
+      }
+    } finally {await context.close();}
+  }
+});
+
+test('The ambient artwork dissolves into the canvas at every edge of a bounded wide page', {skip:!available && 'Chromium is not installed'}, async () => {
+  const context=await browser.newContext({viewport:{width:2200,height:1100}}),page=await context.newPage();
+  try {
+    await page.route('**/*',route=>route.fulfill({status:200,body:''}));
+    await page.emulateMedia({reducedMotion:'reduce'});
+    await page.setContent(documentFor(false,{backdrop:'https://swifly.test/ambient.jpg'}));
+    await page.addStyleTag({content:'.svPlayerPage > :not(.svPlayerAmbient) {visibility:hidden !important;}'});
+    const bounds=await page.locator('.svPlayerAmbient').evaluate(async element=>{
+      const img=element.querySelector('img');img.src='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900"><path fill="white" d="M0 0h1600v900H0z"/></svg>');
+      await img.decode();const r=element.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};
+    });
+    const visible=(await page.screenshot()).toString('base64');
+    await page.locator('.svPlayerAmbient').evaluate(element=>element.hidden=true);
+    const baseline=(await page.screenshot()).toString('base64');
+    const differences=await page.evaluate(async({visible,baseline,bounds})=>{
+      const read=async src=>{const img=new Image();img.src='data:image/png;base64,'+src;await img.decode();const canvas=document.createElement('canvas');canvas.width=img.width;canvas.height=img.height;const c=canvas.getContext('2d');c.drawImage(img,0,0);return c;};
+      const a=await read(visible),b=await read(baseline),{x,y,width:w,height:h}=bounds;
+      return [[x+4,y+h/2],[x+w-4,y+h/2],[x+w/2,y+4],[x+w/2,y+h-4],[x+w/2,y+h/2]].map(([px,py])=>{
+        const first=a.getImageData(Math.floor(px),Math.floor(py),1,1).data,second=b.getImageData(Math.floor(px),Math.floor(py),1,1).data;
+        return Math.max(...[0,1,2].map(i=>Math.abs(first[i]-second[i])));
+      });
+    },{visible,baseline,bounds});
+    assert(differences[4]>10,'The ambient scene must remain visible toward its center');
+    assert(differences.slice(0,4).every(value=>value<=2),`Ambient color must reach the canvas before all four layer boundaries, without a rectangular cutoff (${differences})`);
+  } finally {await context.close();}
+});
+
+test('Player actions and menus use native glass and honor opaque transparency preferences', {skip:!available && 'Chromium is not installed'}, async () => {
+  for(const viewport of [{width:1440,height:900},{width:390,height:844}]){
+    const {page,context}=await open(viewport,false,{type:'movie'});
+    try {
+      const materials=()=>page.evaluate(()=>[...document.querySelectorAll('.svPlayerAction,.svPlayerBack,.svPlayerPartyButton,.svPlayerPopoverBody,.svPlayerDockGlass')].map(element=>{
+        const style=getComputedStyle(element),channels=style.backgroundColor.match(/rgba?\(([^)]+)\)/)?.[1].split(',');
+        return {name:element.className,alpha:channels?.length===4?Number(channels[3]):1,filter:style.backdropFilter};
+      }));
+      for(const material of await materials()){
+        assert(material.alpha>0&&material.alpha<=.85,`${viewport.width}: ${material.name} must retain a translucent face`);
+        assert.match(material.filter,/blur\(/,`${viewport.width}: native glass needs a readable frosted backdrop`);
+      }
+      await page.evaluate(()=>document.body.dataset.stGlass='off');
+      for(const material of await materials()){
+        assert.equal(material.alpha,1,`${material.name}: glass-off must be opaque`);
+        assert.equal(material.filter,'none',`${material.name}: glass-off must release backdrop filtering`);
+      }
+      await page.evaluate(()=>delete document.body.dataset.stGlass);
+      const session=await context.newCDPSession(page);
+      await session.send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-transparency',value:'reduce'}]});
+      for(const material of await materials()){
+        assert.equal(material.alpha,1,`${material.name}: reduced transparency must be opaque`);
+        assert.equal(material.filter,'none',`${material.name}: reduced transparency must release backdrop filtering`);
       }
     } finally {await context.close();}
   }

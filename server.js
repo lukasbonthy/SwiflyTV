@@ -6478,16 +6478,18 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player || partyBrowse || active === "social" ? '<script defer src="/socket.io/socket.io.js"></script>' : ""}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/modern-normalize@2.0.0/modern-normalize.min.css" />
     <link rel="stylesheet" href="/assets/liquid-glass/liquid-glass.css?v=208" />
-    <script defer src="/assets/liquid-glass/liquid-glass.js?v=208"></script>
+    <script defer src="/assets/liquid-glass/liquid-glass.js?v=209"></script>
     <link rel="stylesheet" href="/assets/clean/clean.css?v=153" />
     <script defer src="/assets/clean/clean.js?v=151"></script>
+    <script defer src="/assets/clean/avatars.js?v=209"></script>
+    ${active === "profiles" ? '<script defer src="/assets/clean/profiles.js?v=209"></script>' : ""}
     <script defer src="/assets/clean/continue.js?v=154"></script>
     <link rel="stylesheet" href="/assets/clean/details.css?v=208" />
     <link rel="stylesheet" href="/assets/clean/motion.css?v=208" />
     <script defer src="/assets/clean/motion.js?v=204"></script>
     <script defer src="/assets/clean/details.js?v=208"></script>
-    <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=208" />
-    <script defer src="/assets/liquid-glass/surfaces.js?v=208"></script>
+    <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=209" />
+    <script defer src="/assets/liquid-glass/surfaces.js?v=209"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=164" />
     <script defer src="/assets/studio/studio.js?v=164"></script>
     <link rel="stylesheet" href="/assets/clean/aurora.css?v=208" />
@@ -6495,17 +6497,17 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=205" />' : ""}
     ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=173" />' : ""}
     
-    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=208"></script>' : ""}
+    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=209"></script>' : ""}
     ${active === "social" ? '<script defer src="/assets/party/party.js?v=205"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}
     ${player || partyBrowse ? '<script defer src="/assets/player/watch-party.js?v=160"></script>' : ""}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/finish.css?v=175" />'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/polish.css?v=176" />'}
     <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=205" />
-    ${player ? "" : '<link rel="stylesheet" href="/assets/liquid-glass/controls.css?v=208" />'}
+    ${player ? "" : '<link rel="stylesheet" href="/assets/liquid-glass/controls.css?v=209" />'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/experience.css?v=202" />'}
     <link rel="stylesheet" href="/assets/clean/cinema.css?v=207" />
-    <link rel="stylesheet" href="/assets/clean/profiles.css?v=202" />
-    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=208" />' : ""}
+    <link rel="stylesheet" href="/assets/clean/profiles.css?v=209" />
+    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=209" />' : ""}
     ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=205" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=205" />' : ""}
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=199" />' : ""}
     <link rel="stylesheet" href="/assets/clean/performance.css?v=208" />
@@ -15014,79 +15016,9 @@ function profilesPage(req, res) {
       </div>
     </section>
 
+    <p class="svProfileError" data-profile-error role="alert" hidden></p>
     <script>
-      (function profileSelectUi(){
-        const grid = document.getElementById("profilesGrid");
-        if (!grid) return;
-
-        function readProfiles() {
-          try {
-            const saved = JSON.parse(localStorage.getItem("swiflytv.profiles") || "[]");
-            if (Array.isArray(saved) && saved.length) {
-              const cleaned = saved
-                .filter(Boolean)
-                .map((profile) => {
-                  if (profile.mode === "date") {
-                    return { ...profile, mode: "standard", name: profile.name === "Date Profile" ? "Main" : profile.name };
-                  }
-                  return profile;
-                });
-              return cleaned.length ? cleaned : [{ id: "main", name: "Main", mode: "standard" }, { id: "kids", name: "Kids", mode: "kids" }];
-            }
-          } catch {}
-          return [
-            { id: "main", name: "Main", mode: "standard" },
-            { id: "kids", name: "Kids", mode: "kids" }
-          ];
-        }
-
-        function saveProfiles(profiles) {
-          localStorage.setItem("swiflytv.profiles", JSON.stringify(profiles));
-        }
-
-        function esc(value) {
-          return String(value || "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
-        }
-
-        function modeLabel(mode) {
-          if (mode === "kids") return "Kids Safe";
-          return "Regular";
-        }
-
-        function destination(profile) {
-          if (profile.mode === "kids") return "/kids";
-          return "/";
-        }
-
-        const profiles = readProfiles();
-        saveProfiles(profiles);
-        let currentProfile = null;
-        try { currentProfile = JSON.parse(localStorage.getItem("swiflytv.activeProfile") || "null"); } catch {}
-
-        grid.innerHTML = profiles.map((profile, index) => {
-          const initial = esc(profile.name).slice(0,1).toUpperCase() || "S";
-          var selected = Boolean(currentProfile && (currentProfile.id === profile.id || currentProfile.name === profile.name));
-          return '<button class="dsProfileSelectCard" data-index="' + index + '" data-current="' + selected + '" aria-pressed="' + selected + '" type="button">' +
-            '<span class="dsProfileAvatarBig">' + initial + '</span>' +
-            '<strong>' + esc(profile.name) + '</strong>' +
-            '<small>' + modeLabel(profile.mode) + '</small>' +
-            (selected ? '<span class="svProfileCurrent">Active profile</span>' : '') +
-          '</button>';
-        }).join("") +
-        '<a class="dsProfileSelectCard dsAddProfileCard" href="/profiles/manage">' +
-          '<span class="dsProfileAvatarBig">+</span>' +
-          '<strong>Add Profile</strong>' +
-          '<small>Manage profiles</small>' +
-        '</a>';
-
-        grid.querySelectorAll("button.dsProfileSelectCard").forEach((button) => {
-          button.addEventListener("click", () => {
-            const profile = profiles[Number(button.dataset.index || 0)];
-            localStorage.setItem("swiflytv.activeProfile", JSON.stringify(profile));
-            location.href = destination(profile);
-          });
-        });
-      })();
+      document.addEventListener("DOMContentLoaded", function () { window.SwiflyProfiles?.mount(); }, { once: true });
     </script>
   </main>`;
 
@@ -15116,6 +15048,11 @@ function profilesManagePage(req, res) {
         <h2>Add someone new.</h2>
         <p class="svProfilePanelCopy">A little corner of SwiflyTV, just for them.</p>
         <form id="profileCreateForm" class="dsStackedForm">
+          <button id="profileCreateAvatar" class="svProfileCreateAvatar" type="button" aria-label="Choose icon for new profile">
+            <span class="svProfileCreatePreview" data-profile-create-preview aria-hidden="true"></span>
+            <span><strong>Profile icon</strong><small>Choose an icon or photo</small></span>
+            <span class="svProfileAvatarPencil" aria-hidden="true">${cleanIcon("settings")}</span>
+          </button>
           <label>
             <span>Name</span>
             <input name="name" placeholder="Name this profile" maxlength="32" />
@@ -15143,115 +15080,32 @@ function profilesManagePage(req, res) {
       </section>
     </section>
 
+    <p class="svProfileError" data-profile-error role="alert" hidden></p>
+    <dialog class="svAvatarDialog" id="profileAvatarDialog" aria-labelledby="profileAvatarTitle" aria-describedby="profileAvatarDescription">
+      <div class="svAvatarDialogHeader">
+        <div><span class="svAvatarEyebrow">PROFILE ICON</span><h2 id="profileAvatarTitle">Make it yours.</h2></div>
+        <button class="svAvatarClose" data-avatar-cancel type="button" aria-label="Close icon editor"><svg class="svIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button>
+      </div>
+      <p id="profileAvatarDescription">Choose a character. Bring a little personality.</p>
+      <div class="svAvatarIdentity">
+        <span class="svAvatarPreview" data-avatar-preview aria-hidden="true"></span>
+        <div><strong data-avatar-profile-name></strong><span data-avatar-status role="status" aria-live="polite"></span></div>
+      </div>
+      <div class="svAvatarPresetGrid" data-avatar-presets role="group" aria-label="Original profile icons"></div>
+      <div class="svAvatarPersonalChoice">
+        <button class="svAvatarUpload dsSecondaryBtn" data-avatar-upload type="button"><svg class="svIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="svAvatarUploadText">Upload a photo<small>PNG, JPG or WebP · up to 5 MB</small></span></button>
+        <input data-avatar-file type="file" accept="image/png,image/jpeg,image/webp" hidden aria-label="Choose profile photo" />
+        <button class="svAvatarInitial dsSecondaryBtn" data-avatar-initial type="button" aria-pressed="false">Use initial</button>
+      </div>
+      <p class="svAvatarLocalNote">Your photo stays in this browser.</p>
+      <p class="svAvatarError" data-avatar-error role="alert" aria-live="assertive"></p>
+      <div class="svAvatarDialogActions">
+        <button class="svAvatarCancel dsSecondaryBtn" data-avatar-cancel type="button">Cancel</button>
+        <button class="svAvatarSave dsPrimaryBtn" data-avatar-save type="button">Save icon</button>
+      </div>
+    </dialog>
     <script>
-      (function profileManageUi(){
-        const form = document.getElementById("profileCreateForm");
-        const list = document.getElementById("profilesManageList");
-        const resetBtn = document.getElementById("resetProfilesBtn");
-        if (!form || !list) return;
-
-        const fallback = [
-          { id: "main", name: "Main", mode: "standard" },
-          { id: "kids", name: "Kids", mode: "kids" }
-        ];
-
-        function readProfiles() {
-          try {
-            const saved = JSON.parse(localStorage.getItem("swiflytv.profiles") || "[]");
-            if (Array.isArray(saved) && saved.length) {
-              return saved.filter(Boolean).map((profile) => {
-                if (profile.mode === "date") return { ...profile, mode: "standard", name: profile.name === "Date Profile" ? "Main" : profile.name };
-                return profile;
-              });
-            }
-          } catch {}
-          return fallback.slice();
-        }
-
-        function saveProfiles(profiles) {
-          localStorage.setItem("swiflytv.profiles", JSON.stringify(profiles));
-        }
-
-        function esc(value) {
-          return String(value || "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
-        }
-
-        function modeLabel(mode) {
-          return mode === "kids" ? "Kids Safe" : "Regular";
-        }
-
-        function render() {
-          const profiles = readProfiles();
-          saveProfiles(profiles);
-
-          list.innerHTML = profiles.map((profile, index) => {
-            const initial = esc(profile.name).slice(0,1).toUpperCase() || "S";
-            return '<article class="dsManageProfileCard" data-index="' + index + '">' +
-              '<span class="dsProfileAvatarBig">' + initial + '</span>' +
-              '<div class="dsManageProfileMain">' +
-                '<strong>' + esc(profile.name) + '</strong>' +
-                '<small>' + modeLabel(profile.mode) + '</small>' +
-              '</div>' +
-              '<div class="dsManageProfileActions">' +
-                '<button type="button" class="dsSecondaryBtn" data-action="rename">Rename</button>' +
-                '<button type="button" class="dsSecondaryBtn" data-action="mode">' + (profile.mode === "kids" ? "Make Regular" : "Make Kids") + '</button>' +
-                '<button type="button" class="dsSecondaryBtn" data-action="delete">Delete</button>' +
-              '</div>' +
-            '</article>';
-          }).join("");
-
-          list.querySelectorAll(".dsManageProfileCard").forEach((card) => {
-            card.addEventListener("click", (event) => {
-              const btn = event.target.closest("button");
-              if (!btn) return;
-              const index = Number(card.dataset.index || 0);
-              const profiles = readProfiles();
-              const profile = profiles[index];
-              if (!profile) return;
-
-              if (btn.dataset.action === "rename") {
-                const next = prompt("Profile name", profile.name);
-                if (next && next.trim()) profile.name = next.trim().slice(0, 32);
-              }
-
-              if (btn.dataset.action === "mode") {
-                profile.mode = profile.mode === "kids" ? "standard" : "kids";
-              }
-
-              if (btn.dataset.action === "delete") {
-                if (profiles.length <= 1) {
-                  alert("Keep at least one profile.");
-                  return;
-                }
-                if (confirm("Delete " + profile.name + "?")) profiles.splice(index, 1);
-              }
-
-              saveProfiles(profiles);
-              render();
-            });
-          });
-        }
-
-        form.addEventListener("submit", (event) => {
-          event.preventDefault();
-          const fd = new FormData(form);
-          const name = String(fd.get("name") || "").trim() || "Profile";
-          const mode = String(fd.get("mode") || "standard");
-          const profiles = readProfiles();
-          profiles.push({ id: Date.now().toString(36), name, mode });
-          saveProfiles(profiles);
-          form.reset();
-          render();
-        });
-
-        resetBtn?.addEventListener("click", () => {
-          if (!confirm("Reset profiles to Main and Kids?")) return;
-          saveProfiles(fallback.slice());
-          render();
-        });
-
-        render();
-      })();
+      document.addEventListener("DOMContentLoaded", function () { window.SwiflyProfiles?.mount(); }, { once: true });
     </script>
   </main>`;
 
