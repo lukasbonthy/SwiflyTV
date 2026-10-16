@@ -45,6 +45,7 @@ body.svCleanShell .svGlassControl.svNavMatchedOptic {
   min-height: 44px !important;
 }
 body.svCleanShell .svNavMatchedOptic > .svNavMatchedLens.svLiquidPane {
+  --sv-glass-default-tint: .2;
   position: absolute !important;
   inset: 0 !important;
   width: 100% !important;
@@ -68,10 +69,12 @@ body.svCleanShell :is(.dsCardQuickActions,.svDetailChrome,.svDetailActions) .dsI
 body.svCleanShell :is(.svDetailClose,.dsClose).svGlassControl {
   border-radius: 50% !important;
 }
-/* Repeated grid/rail controls share the tint without per-control GPU filters. */
+/* Dense catalog/rail buttons keep the native (non-SVG) renderer, but no
+   longer lose backdrop blur entirely. This is the same clear nav coating,
+   without multiplying three-channel SVG graphs during scrolling. */
 body.svCleanShell :is(.dsCardQuickActions .svGlassControl,.dsRowBtn,.dsRowArrow,.svRowArrow,.svResumeRemove,.pagination a,.dsEpisodeChips a,.sv100RoomItem .svGlassControl,.partyMovieResults .svGlassControl,#controlPanel .svGlassControl).svGlassControl {
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
+  -webkit-backdrop-filter: blur(12px) saturate(1.8) brightness(1.05) !important;
+  backdrop-filter: blur(12px) saturate(1.8) brightness(1.05) !important;
 }
 body.svCleanShell .partyLinkChoice > summary.svGlassControl {
   min-height: 44px !important;
