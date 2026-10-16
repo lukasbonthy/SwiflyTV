@@ -188,6 +188,26 @@ test('Default playback requests a bounded ready response within its HTTP deadlin
  assert(wait>0&&wait<=8000&&wait<12000,'Wait must deliver media promptly and leave HTTP timeout headroom');
  assert.equal(e.api.getState().source,'/ready.mp4');
 });
+test('A slow movie fallback survives network latency around each long poll without losing the shared job',async()=>{
+ let calls=0,aborts=0;
+ const e=setup({managed:false,id:'354912'},e=>{
+   e.app.dataset.playerResolveTimeoutMs='90000';
+   e.app.dataset.playerRequestTimeoutMs='12000';
+   e.app.dataset.playerStallTimeoutMs='45000';
+   e.w.fetch=(url,{signal})=>new Promise((resolve,reject)=>{
+     calls++;
+     const wait=Number(new URL(url,'https://swifly.test').searchParams.get('wait')||0);
+     const timer=e.w.setTimeout(()=>resolve({ok:true,json:async()=>calls<3
+       ?{status:'loading',jobId:'coco-fallback',serverTime:e.w.Date.now(),deadlineAt:e.w.Date.now()+60000,retryAfterMs:250}
+       :{status:'ok',movieId:'354912',playbackUrl:'/verified-coco.webm'}}),wait+5000);
+     signal.addEventListener('abort',()=>{aborts++;e.w.clearTimeout(timer);reject(new Error('request aborted'));},{once:true});
+   });
+ });
+ await e.advance(35000);
+ assert.equal(e.api.getState().source,'/verified-coco.webm');
+ assert.equal(calls,3,'Polling stays serial and keeps the same shared lookup');
+ assert.equal(aborts,0,'The network and server wait both fit in the HTTP budget');
+});
 test('A browser clock ahead of the server can poll a live source job without expiring it early',async()=>{
   let calls=0;const e=setup({managed:false},e=>e.w.fetch=async()=>{calls++;const serverTime=e.w.Date.now()-3600000;return {ok:true,json:async()=>calls===1?{status:'loading',serverTime,startedAt:serverTime,deadlineAt:serverTime+600,retryAfterMs:30}:{status:'ok',playbackUrl:'/clock-safe.mp4'}};});await e.advance(50);assert.equal(calls,2);assert.equal(e.api.getState().source,'/clock-safe.mp4');assert.equal(e.app.dataset.playerState,'loading');
 });

@@ -11,7 +11,7 @@
  const partyMediaListeners=[];
  const messageKeys=new Set(),movies=new Map();
  const featuredMovies=new Map(),lobbyMovies=new Map();
- let selectedMovie=null,wantedMovieId='',selectionPending=false,selectionError='',selectionEpoch=0,featuredEpoch=0,lobbySearchEpoch=0,pendingRoomMovie=null;
+ let selectedMovie=null,roomFilm=null,wantedMovieId='',selectionPending=false,selectionError='',selectionEpoch=0,featuredEpoch=0,lobbySearchEpoch=0,pendingRoomMovie=null;
  const connected=()=>Boolean(socket?.connected)&&!disposed;
  const glyph='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m9 5 11 7-11 7V5Z"/></svg>';
  function toast(message,error=false){const el=$('#sv100Toast');el.textContent=message;el.hidden=false;el.classList.toggle('error',error);clearTimeout(el._timer);el._timer=setTimeout(()=>el.hidden=true,3200);}
@@ -82,11 +82,25 @@
   const matching=stored&&referrer&&stored.pathname+stored.search===referrer.pathname+referrer.search;const url=matching?stored:referrer||stored||new URL(/^[1-9]\d{0,13}$/.test(id||'')?'/movie/'+id:'/movies',origin);$('[data-party-return]').setAttribute('href',url.pathname+url.search+url.hash);
  }
  function artwork(value){try{const url=new URL(String(value||''));return url.protocol==='https:'&&url.hostname==='image.tmdb.org'?url.href:'';}catch{return '';}}
+ function renderPageArtwork(){
+  const film=activeWatchRoom.joined?roomFilm:selectedMovie||featuredMovies.values().next().value,art=$('[data-party-hero-art]'),backdrop=film?.backdrop||'';
+  art.hidden=!backdrop;art.style.backgroundImage=backdrop?'url("'+backdrop.replaceAll('"','%22')+'")':'';
+ }
+ function renderRoomFilm(movie){
+  const previous=roomFilm?.id===String(movie?.movieId)?roomFilm:null;
+  roomFilm=selectedMovieState(movie)?{id:String(movie.movieId),title:String(movie.title||previous?.title||'').trim().slice(0,240),backdrop:artwork(movie.backdrop)||(!movie.backdrop?previous?.backdrop:'')||''}:null;
+  const context=$('[data-party-now-watching]'),image=$('[data-party-now-art]');context.hidden=!roomFilm?.title;
+  $('[data-party-now-title]').textContent=roomFilm?.title||'';
+  $('[data-party-now-label]').textContent=['ready','ok'].includes(movie?.status)?'Now watching':['loading','preparing'].includes(movie?.status)?'Getting ready':'Selected film';
+  if(roomFilm){$('[data-party-now-link]').setAttribute('href','/movie/'+roomFilm.id);}else $('[data-party-now-link]').removeAttribute('href');
+  image.hidden=!roomFilm?.backdrop;if(roomFilm?.backdrop)image.src=roomFilm.backdrop;else image.removeAttribute('src');
+  renderPageArtwork();
+ }
  function movieValue(value){const id=Number(value?.id);if(!Number.isSafeInteger(id)||id<=0||!String(value?.title||'').trim())return null;return {id:String(id),title:String(value.title).slice(0,240),year:String(value.year||''),poster:artwork(value.poster),backdrop:artwork(value.backdrop),overview:String(value.overview||'').slice(0,1000)};}
  function filmChoices(values,attribute){return values.map((movie,index)=>'<button type="button" class="partyFilmChoice" style="--party-card-order:'+Math.min(index,7)+'" '+attribute+'="'+esc(movie.id)+'" aria-label="Choose '+esc(movie.title)+'" aria-pressed="'+(selectedMovie?.id===movie.id)+'"><span>'+(movie.poster?'<img src="'+esc(movie.poster)+'" alt="" loading="lazy" decoding="async">':glyph)+'<span class="partyFilmAffordance" aria-hidden="true">Choose film '+glyph+'</span></span><b>'+esc(movie.title)+'</b><small>'+esc(movie.year||'Movie')+'</small></button>').join('');}
  function updateSelectedUrl(){if(activeWatchRoom.joined)return;try{const url=new URL(location.href);if(wantedMovieId)url.searchParams.set('movieId',wantedMovieId);else url.searchParams.delete('movieId');history.replaceState(history.state,'',url.pathname+url.search+url.hash);}catch{}}
  function renderHero(){
-  const film=selectedMovie||featuredMovies.values().next().value,art=$('[data-party-hero-art]');art.hidden=!film?.backdrop;art.style.backgroundImage=film?.backdrop?'url("'+film.backdrop.replaceAll('"','%22')+'")':'';
+  const film=selectedMovie||featuredMovies.values().next().value;renderPageArtwork();
   $('[data-party-hero-label]').textContent=selectedMovie?'Selected for your party':film?'Tonight’s inspiration':'Your next shared screen';
   $('#partyHeroTitle').textContent=film?.title||'Make it a movie night.';
   $('[data-party-hero-copy]').textContent=film?.overview||'Pick a film. Bring your people. Share the whole evening.';
@@ -130,7 +144,7 @@
  function mediaGuard(root){const roomId=activeWatchRoom.id,generation=mediaEpoch;return ()=>connected()&&activeWatchRoom.joined&&activeWatchRoom.id===roomId&&mediaEpoch===generation&&root?.isConnected&&partyPlayerRoot===root;}
  function selectedMovieState(movie){return Boolean(movie&&/^[1-9]\d{0,13}$/.test(String(movie.movieId||'')));}
  function syncedTransport(){return selectedMovieState(activeWatchRoom.syncedMovie)&&String(partySourceData?.movieId)===String(activeWatchRoom.syncedMovie.movieId);}
- function showMedia(media={}){const movie=selectedMovieState(media.movie)?media.movie:null;activeWatchRoom.syncedMovie=movie;renderNativeMedia({...media,movie});activeWatchRoom.sync=movie?.sync||null;if(movie)applyNativeSync(true);}
+ function showMedia(media={}){const movie=selectedMovieState(media.movie)?media.movie:null;activeWatchRoom.syncedMovie=movie;renderNativeMedia({...media,movie});renderRoomFilm(movie);activeWatchRoom.sync=movie?.sync||null;if(movie)applyNativeSync(true);}
  function updateHostUi(){
   const host=activeWatchRoom.joined&&activeWatchRoom.isHost&&connected();app.dataset.partyHost=host?'true':'false';
   partyPlayer?.setRemoteMode({enabled:syncedTransport(),isHost:host,manual:!syncedTransport()});
@@ -150,7 +164,7 @@
  }
  function leaveNativeWatchRoom(refresh=true){
   joinEpoch++;movieEpoch++;pendingRoomMovie=null;movies.clear();const id=activeWatchRoom.id;if(id)socket?.emit('watchroom:leave',{roomId:id});destroyMedia();closeCall();activeWatchRoom={id:'',name:'Movie night',joined:false,isHost:false,sync:null};
-  app.dataset.partyRoom='lobby';$('#sv103NativeRoom').hidden=true;$('#sv103RoomLobby').hidden=false;$('#sv103Player').innerHTML='<div class="sv103EmptyPlayer"><b>Your movie night starts here.</b><span>The host can choose a film or add a video link.</span></div>';$('#sv103RoomTitle').textContent='Party Hub';$('#sv103RoomSub').textContent='Make yourself comfortable.';$('#partyMovieResults').replaceChildren();currentRoom='channel-general';currentTitle='General';updateHostUi();switchTab('rooms');try{history.replaceState(history.state,'','/social?tab=watchrooms');}catch{}if(refresh)renderRooms();
+  renderRoomFilm(null);app.dataset.partyRoom='lobby';$('#sv103NativeRoom').hidden=true;$('#sv103RoomLobby').hidden=false;$('#sv103Player').innerHTML='<div class="sv103EmptyPlayer"><b>Your movie night starts here.</b><span>The host can choose a film or add a video link.</span></div>';$('#sv103RoomTitle').textContent='Party Hub';$('#sv103RoomSub').textContent='Make yourself comfortable.';$('#partyMovieResults').replaceChildren();currentRoom='channel-general';currentTitle='General';updateHostUi();switchTab('rooms');try{history.replaceState(history.state,'','/social?tab=watchrooms');}catch{}if(refresh)renderRooms();
  }
  async function createParty(form){
   if(form.getAttribute('aria-busy')==='true')return;
@@ -217,7 +231,7 @@
   destroyMedia();const videoId=media.videoId||'',embedUrl=media.embedUrl||'';
   if(videoId){app.dataset.partyMedia='youtube';root.innerHTML='<iframe class="sv103MediaFrame" title="Shared YouTube video" src="https://www.youtube.com/embed/'+encodeURIComponent(videoId)+'?rel=0&playsinline=1" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen></iframe>';return;}
   if(embedUrl&&/^https?:\/\//i.test(embedUrl)){app.dataset.partyMedia='embed';root.innerHTML='<iframe class="sv103MediaFrame" title="Shared video" src="'+esc(embedUrl)+'" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen referrerpolicy="no-referrer"></iframe>';return;}
-  app.dataset.partyMedia='blank';$('#sv103ControlDock').hidden=true;root.innerHTML='<div class="sv103EmptyPlayer"><b>No media selected</b><span>The host can choose a film or add a video link.</span></div>';
+  app.dataset.partyMedia='blank';$('#sv103ControlDock').hidden=true;root.innerHTML='<div class="sv103EmptyPlayer"><span class="partyEmptyScreenMark" aria-hidden="true">'+glyph+'</span><b>Choose the first film.</b><span>The host can find a movie or add a video link below.</span></div>';
  }
  function targetSeconds(sync){
   if(!sync)return 0;const offset=Math.max(0,Number(sync.offset)||0);return sync.playing?offset+Math.max(0,(Date.now()-(Number(sync.startedAt)||Date.now()))/1000):offset;

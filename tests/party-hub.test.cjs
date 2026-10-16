@@ -41,6 +41,16 @@ test('Party artwork belongs to the page atmosphere and retains the selected-film
  assert.equal(d.querySelectorAll('[data-party-hero-art]').length,1);assert(atmosphere.contains(d.querySelector('[data-party-hero-art]')));assert(!d.querySelector('.partyLobbyStart [data-party-hero-art]'));
  assert.match(d.querySelector('[data-party-hero-art]').style.backgroundImage,/arrival\.jpg/);env.finish();
 });
+test('Room artwork and film context follow only the current shared film and reset on leaving',async()=>{
+ const env=setup();await enter(env);const d=env.window.document,art=d.querySelector('[data-party-hero-art]'),film=d.querySelector('[data-party-now-watching]');
+ assert(film,'The stage must provide a selected-film context');assert.equal(art.hidden,true,'A blank room cannot inherit tonight’s lobby inspiration');assert.equal(film.hidden,true);
+ const movie={movieId:'101',title:'Arrival',backdrop:'https://image.tmdb.org/t/p/w1280/arrival-room.jpg',status:'ready',playbackUrl:'/arrival.mp4'};
+ env.socket.receive('watchroom:movie-sync',{roomId:room.id,movie});assert.equal(art.hidden,false);assert.match(art.style.backgroundImage,/arrival-room\.jpg/);assert.equal(film.hidden,false);assert.equal(d.querySelector('[data-party-now-title]').textContent,'Arrival');assert.equal(d.querySelector('[data-party-now-link]').getAttribute('href'),'/movie/101');assert.equal(d.querySelector('[data-party-now-label]').textContent,'Now watching');
+ env.socket.receive('watchroom:movie-sync',{roomId:'another-room',movie:{...movie,title:'Wrong film',backdrop:'https://image.tmdb.org/t/p/w1280/wrong.jpg'}});assert.equal(d.querySelector('[data-party-now-title]').textContent,'Arrival');
+ env.socket.receive('watchroom:movie-sync',{roomId:room.id,movie:{movieId:'101',status:'loading'}});assert.match(art.style.backgroundImage,/arrival-room\.jpg/,'Partial updates to the same film keep its context');assert.equal(d.querySelector('[data-party-now-label]').textContent,'Getting ready');
+ env.socket.receive('watchroom:movie-sync',{roomId:room.id,movie:{movieId:'303',title:'Another film',backdrop:'https://untrusted.example/art.jpg',status:'loading'}});assert.equal(art.hidden,true);assert.equal(d.querySelector('[data-party-now-title]').textContent,'Another film');
+ d.querySelector('[data-action="leave-native-room"]').click();assert.equal(film.hidden,true);assert.match(art.style.backgroundImage,/interstellar\.jpg/);env.finish();
+});
 test('Creating a party submits the room form and opens its room without a page reload',async()=>{
  const env=await ready(setup()),w=env.window,d=w.document,form=d.getElementById('sv100CreateRoomForm');
  form.elements.namedItem('name').value='Saturday movie night';form.elements.namedItem('watchLink').value='https://youtu.be/abcdefghijk';const event=submit(w,form);await ready(env);
@@ -231,7 +241,7 @@ test('A same-room sync for the previous movie cannot move a replacement and dire
 });
 test('A real empty-room snapshot retains the empty stage instead of mounting a failed movie',async()=>{
  const env=setup();await enter(env);const d=env.window.document;
- assert.equal(d.querySelector('.svPlayerEmbedded'),null);assert.match(d.getElementById('sv103Player').textContent,/No media selected/);assert.equal(d.getElementById('sv103ControlDock').hidden,true);env.finish();
+ assert.equal(d.querySelector('.svPlayerEmbedded'),null);assert.match(d.getElementById('sv103Player').textContent,/Choose the first film/);assert.equal(d.getElementById('sv103ControlDock').hidden,true);env.finish();
 });
 test('A joined room with an idle movie placeholder preserves its direct or iframe link',async()=>{
  for(const embedUrl of ['https://media.example/direct.mp4','https://video.example/embed/123']){

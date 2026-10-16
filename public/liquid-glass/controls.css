@@ -201,7 +201,7 @@ body.svCleanShell main.dsAuthPageSafe .svAuthPasswordToggle.svGlassControl {
   position:absolute !important;top:50% !important;right:9px !important;
   left:auto !important;bottom:auto !important;
   transform:translateY(-50%) !important;z-index:3 !important;
-  min-height:32px !important;min-width:56px !important;
+  min-height:44px !important;min-width:56px !important;
   border-radius:8px !important;
 }
 body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe .dsSafeAuthForm .dsPrimaryBtn.svGlassControl {
@@ -267,6 +267,8 @@ body.svCleanShell[data-st-glass="off"] .svGlassSurface.svGlassControl::after {
    Do not isolate these hosts: an isolated/backdrop-filtered parent prevents
    the nested lens from seeing the artwork behind the button. */
 body.svCleanShell[data-st-glass="liquid"] .svGlassSurface.svNavMatchedOptic {
+  position:relative;
+  min-height:44px;
   isolation:auto !important;
   background:transparent !important;
   -webkit-backdrop-filter:none !important;
