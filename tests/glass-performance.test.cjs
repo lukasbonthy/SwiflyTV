@@ -482,6 +482,20 @@ for (const [name, identity, platform, points] of [
  controller.destroy();assert.equal(pane.dataset.swiflyRenderer,undefined);env.finish();
 });
 
+test('Android Chrome never allocates RGB SVG graphs for hero, detail or mobile navigation',()=>{
+ const env=glass('<nav class="netflixNav"><span class="svLiquidPane" data-swifly-glass></span></nav><div class="dsHeroActions"><a class="dsPrimaryBtn">Play</a><a class="dsSecondaryBtn">Details</a><button class="dsIconBtn">Save</button></div><div class="svDetailActions"><button class="dsPrimaryBtn">Play</button><button class="dsIconBtn">Like</button></div><nav class="mobileNav"><span class="svLiquidPane" data-swifly-glass></span><a>Home</a></nav>'),w=env.window,d=w.document;
+ Object.defineProperty(w.navigator,'userAgent',{configurable:true,value:'Mozilla/5.0 (Linux; Android 15; SM-S938U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Mobile Safari/537.36'});
+ d.body.dataset.stGlass='liquid';
+ w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');env.intersect(true);w.flush(16);
+ const lenses=[...d.querySelectorAll('.netflixNav>.svLiquidPane,.mobileNav>.svLiquidPane,.dsHeroActions>.svNavMatchedOptic>.svLiquidPane,.svDetailActions>.svNavMatchedOptic>.svLiquidPane')];
+ assert.equal(lenses.length,7,'all navigation, hero and detail lenses exist');
+ assert(lenses.every(l=>l.dataset.swiflyRenderer==='blur'),'touch UI uses native live frost, never broken SVG displacement');
+ assert.equal(d.querySelectorAll('feDisplacementMap').length,0,'mobile must not generate the rainbow RGB graph');
+ assert.equal(env.textures.length,0,'touch navigation does not allocate any lens maps');
+ assert.equal(w.frameCount(),0,'native frost does not require continuous animation');
+ env.finish();
+});
+
 test('Mobile and desktop navigation use the same live reference optics',()=>{
  const env=glass('<nav class="netflixNav"><div class="svLiquidPane" data-swifly-glass></div></nav><nav class="mobileNav"><div class="svLiquidPane" data-swifly-glass></div></nav>'),w=env.window,d=w.document;
  d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);
