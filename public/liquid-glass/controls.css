@@ -45,7 +45,7 @@ body.svCleanShell .svGlassControl.svNavMatchedOptic {
   min-height: 44px !important;
 }
 body.svCleanShell .svNavMatchedOptic > .svNavMatchedLens.svLiquidPane {
-  --sv-glass-default-tint: .2;
+  --sv-glass-default-tint: .14;
   position: absolute !important;
   inset: 0 !important;
   width: 100% !important;
@@ -73,8 +73,8 @@ body.svCleanShell :is(.svDetailClose,.dsClose).svGlassControl {
    longer lose backdrop blur entirely. This is the same clear nav coating,
    without multiplying three-channel SVG graphs during scrolling. */
 body.svCleanShell :is(.dsCardQuickActions .svGlassControl,.dsRowBtn,.dsRowArrow,.svRowArrow,.svResumeRemove,.pagination a,.dsEpisodeChips a,.sv100RoomItem .svGlassControl,.partyMovieResults .svGlassControl,#controlPanel .svGlassControl).svGlassControl {
-  -webkit-backdrop-filter: blur(15px) saturate(1.65) brightness(1.06) !important;
-  backdrop-filter: blur(15px) saturate(1.65) brightness(1.06) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(1.3) !important;
+  backdrop-filter: blur(10px) saturate(1.3) !important;
 }
 body.svCleanShell .partyLinkChoice > summary.svGlassControl {
   min-height: 44px !important;
