@@ -7,7 +7,7 @@
   let sheetTransition=null,transitionEpoch=0,closeWantsHistory=false;
   const motionPreference=window.matchMedia('(prefers-reduced-motion: reduce)');
   const reducedMotion=()=>motionPreference.matches||document.body.classList.contains('reduceMotion');
-  const enterDuration=620,exitDuration=280;
+  const enterDuration=900,exitDuration=560;
   const fragments=new Map(),fragmentTTL=90000,fragmentLimit=8,fragmentByteLimit=2*1024*1024,fragmentSizeLimit=192*1024;
   let fragmentScope=null,fragmentBytes=0;
   const scrollPositions=new Map();
@@ -131,8 +131,8 @@
           const animation=target.animate(frames,{fill:'both',...options});active.animations.push(animation);
           animation.finished.catch(()=>{});return animation.finished;
         };
-        const sheet=animate(dialog,[{transform:start||'none'},{transform:entering?'none':'translate3d(0,var(--sv-detail-rise),0)'}],{duration,easing:entering?'cubic-bezier(.22,.8,.24,1)':'cubic-bezier(.4,0,.8,.3)'});
-        const dim=animate(scrim,[{opacity:opacity||'0'},{opacity:entering?'1':'0'}],{duration:entering?360:duration,easing:entering?'ease-out':'ease-in'});
+        const sheet=animate(dialog,[{transform:start||'none'},{transform:entering?'none':'translate3d(0,var(--sv-detail-rise),0)'}],{duration,easing:entering?'cubic-bezier(.32,.08,.2,1)':'cubic-bezier(.4,0,.2,1)'});
+        const dim=animate(scrim,[{opacity:opacity||'0'},{opacity:entering?'1':'0'}],{duration:entering?620:duration,easing:entering?'ease-out':'ease-in'});
         Promise.all([sheet,dim]).then(settle,()=>{});
         active.timer=setTimeout(settle,duration+100);return;
       } catch {

@@ -1,7 +1,7 @@
-/* v203: prompt reveals, responsive desktop motion and native preference boundaries. */
+/* v204: measured reveals, weighted desktop motion and native preference boundaries. */
 html.svMotionAnimating, body.svCleanShell .svMotionAnimating { scroll-behavior: auto !important; scroll-snap-type: none !important; }
 body.svCleanShell :is(.movieRail,.dsRail,.svResumeRail,.dsWelcomeRailTrack,.svDetailCastRail) { overscroll-behavior-x: contain; scroll-padding-inline: 0; }
-body.svCleanShell .svMotionReveal.svMotionReveal { opacity: 0 !important; transform: translate3d(0,16px,0) !important; transition: opacity .32s ease-out, transform .42s cubic-bezier(.2,.75,.25,1) !important; }
+body.svCleanShell .svMotionReveal.svMotionReveal { opacity: 0 !important; transform: translate3d(0,18px,0) !important; transition: opacity .6s ease-out, transform .8s cubic-bezier(.32,.08,.2,1) !important; }
 body.svCleanShell .svMotionReveal.svMotionVisible { opacity: 1 !important; transform: translate3d(0,0,0) !important; }
 body.svCleanShell :is(.dsHeroBg,.dsWelcomeHeroBg) { transform: translate3d(0,var(--sv-hero-offset,0px),0) scale(1.035) !important; }
 body.svCleanShell[data-sv-scrolled="true"] .netflixNav > .svLiquidPane { background-color: rgb(4 5 7 / .52); box-shadow: inset 0 1px 0 #ffffff18, inset 0 0 0 .5px #ffffff14, 0 8px 28px #0005; }

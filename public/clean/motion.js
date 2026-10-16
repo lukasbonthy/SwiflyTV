@@ -1,4 +1,4 @@
-/* v203: responsive desktop easing with native touch and bounded presentation work. */
+/* v204: weighted desktop inertia with native touch and bounded presentation work. */
 (() => {
   'use strict';
   if (window.SwiflyMotion) return;
@@ -7,6 +7,7 @@
   const page = document.scrollingElement || document.documentElement;
   const jobs = new Map(), observed = new WeakSet(), pendingReveal = new Set();
   const heroes = new Map(), dirtyHosts = new Set(), overflowCache = new WeakMap();
+  const wheelDuration = 1000, wheelDecay = 6, wheelNormalization = 1 - Math.exp(-wheelDecay);
   let frame = 0, presentationFrame = 0, observer, heroSizes, preferenceObserver;
   let started = false, destroyed = false, preference = '', overflowEpoch = 0, nativeWheelUntil = 0;
   const rails = '.movieRail, .dsRail, .svResumeRail, .dsWelcomeRailTrack, .svDetailCastRail';
@@ -38,14 +39,15 @@
       const max = bounds(element), current = position(element);
       if (Math.abs(current.x - job.writtenX) > 3 || Math.abs(current.y - job.writtenY) > 3) {stop(element); continue;}
       job.x = clamp(job.x, max.x); job.y = clamp(job.y, max.y);
-      // A finite ease-out gives the wheel an immediate response and a predictable
-      // finish, including after a delayed frame or rounded scroll positions.
+      // A damped glide retains its weight while a finite duration and subpixel
+      // finish prevent a lingering animation loop on rounded scroll positions.
       if (job.started === null) job.started = time - 16;
-      const progress = Math.min(1, Math.max(0, (time - job.started) / 200));
-      const eased = 1 - (1 - progress) ** 3;
+      const progress = Math.min(1, Math.max(0, (time - job.started) / wheelDuration));
+      const eased = (1 - Math.exp(-wheelDecay * progress)) / wheelNormalization;
       const x = clamp(job.fromX + (job.x - job.fromX) * eased, max.x);
       const y = clamp(job.fromY + (job.y - job.fromY) * eased, max.y);
-      updates.push({element, job, x, y, finished:progress === 1});
+      const finished = progress === 1 || Math.abs(job.x - x) < .5 && Math.abs(job.y - y) < .5;
+      updates.push({element, job, x:finished ? job.x : x, y:finished ? job.y : y, finished});
     }
     // Finish all geometry reads before any host receives a scroll write.
     for (const {element, job, x, y, finished} of updates) {

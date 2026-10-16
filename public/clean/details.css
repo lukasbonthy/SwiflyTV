@@ -60,7 +60,7 @@ body.svCleanShell .svDetailAbout dt { margin-bottom: 6px; color: #6f6f6f; font-s
 body.svCleanShell .svDetailAbout dd { margin: 0; color: #bdbdbd; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
 body.svCleanShell .svDetailClose { position: absolute !important; top: 20px !important; right: 20px !important; z-index: 4; width: 34px !important; height: 34px !important; padding: 0 !important; display: grid !important; place-items: center; border-radius: 50% !important; }
 body.svCleanShell .svDetailDialog {
-  --sv-detail-rise: clamp(80px,12vh,128px);
+  --sv-detail-rise: calc(100svh + 24px);
   position: fixed; inset: 0; width: min(1100px,calc(100vw - 48px)); max-width: none;
   height: min(90svh,1100px); max-height: calc(100svh - 32px); margin: auto; padding: 0;
   overflow: hidden; border: 1px solid #ffffff1a; border-radius: 22px; color: #f5f5f5; background: #050505;
@@ -71,10 +71,10 @@ body.svCleanShell .svDetailScrim { position:fixed; inset:0; z-index:2147483646; 
 body.svCleanShell .svDetailScrim[hidden] { display:none !important; }
 body.svCleanShell .svDetailDialog:is([data-sv-detail-state="opening"],[data-sv-detail-state="closing"]) { will-change:transform; }
 body.svCleanShell .svDetailScrim:is([data-sv-detail-state="opening"],[data-sv-detail-state="closing"]) { will-change:opacity; }
-body.svCleanShell .svDetailDialog[data-sv-detail-motion="css"][data-sv-detail-state="opening"] { animation-name:svDetailsEnter; animation-duration:620ms; animation-timing-function:cubic-bezier(.22,.8,.24,1); animation-fill-mode:both; }
-body.svCleanShell .svDetailDialog[data-sv-detail-motion="css"][data-sv-detail-state="closing"] { animation-name:svDetailsExit; animation-duration:280ms; animation-timing-function:cubic-bezier(.4,0,.8,.3); animation-fill-mode:both; }
-body.svCleanShell .svDetailScrim[data-sv-detail-motion="css"][data-sv-detail-state="opening"] { animation:svDetailsDimIn 360ms ease-out both; }
-body.svCleanShell .svDetailScrim[data-sv-detail-motion="css"][data-sv-detail-state="closing"] { animation:svDetailsDimOut 280ms ease-in both; }
+body.svCleanShell .svDetailDialog[data-sv-detail-motion="css"][data-sv-detail-state="opening"] { animation-name:svDetailsEnter; animation-duration:900ms; animation-timing-function:cubic-bezier(.32,.08,.2,1); animation-fill-mode:both; }
+body.svCleanShell .svDetailDialog[data-sv-detail-motion="css"][data-sv-detail-state="closing"] { animation-name:svDetailsExit; animation-duration:560ms; animation-timing-function:cubic-bezier(.4,0,.2,1); animation-fill-mode:both; }
+body.svCleanShell .svDetailScrim[data-sv-detail-motion="css"][data-sv-detail-state="opening"] { animation:svDetailsDimIn 620ms ease-out both; }
+body.svCleanShell .svDetailScrim[data-sv-detail-motion="css"][data-sv-detail-state="closing"] { animation:svDetailsDimOut 560ms ease-in both; }
 body.svCleanShell .svDetailViewport { height: 100%; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-gutter:stable; scrollbar-width: thin; scrollbar-color: #ffffff26 transparent; -webkit-overflow-scrolling:touch; }
 body.svCleanShell .svDetailDialog .svTitleDetails.svTitleDetails { width: 100% !important; max-width: none !important; margin: 0 !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; animation:none !important; filter:none !important; }
 body.svCleanShell .svDetailDialog .svDetailHero { min-height: 520px; height: min(55vw,590px); }
@@ -121,7 +121,7 @@ body.svCleanShell .svDetailError p { margin: 14px 0 24px; color: #999; font-size
   body.svCleanShell .svDetailCastRail { grid-auto-columns: 88px; gap: 12px; }
   body.svCleanShell .svDetailRecommendations { grid-template-columns: repeat(auto-fill,minmax(126px,1fr)); gap: 22px 12px; }
   body.svCleanShell .svDetailAbout { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px; }
-  body.svCleanShell .svDetailDialog { --sv-detail-rise:calc(100% + 24px); width: calc(100vw - 12px); height: calc(100svh - 16px); max-height: calc(100svh - 16px); border-radius: 18px; }
+  body.svCleanShell .svDetailDialog { width: calc(100vw - 12px); height: calc(100svh - 16px); max-height: calc(100svh - 16px); border-radius: 18px; }
   body.svCleanShell .svDetailCollectionRail { grid-auto-columns:120px; gap:12px; }
   body.svCleanShell .svDetailDismiss.dsIconBtn { top: 12px; right: 12px; }
 }

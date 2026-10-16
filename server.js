@@ -6482,10 +6482,10 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/clean/clean.css?v=153" />
     <script defer src="/assets/clean/clean.js?v=151"></script>
     <script defer src="/assets/clean/continue.js?v=154"></script>
-    <link rel="stylesheet" href="/assets/clean/details.css?v=203" />
-    <link rel="stylesheet" href="/assets/clean/motion.css?v=203" />
-    <script defer src="/assets/clean/motion.js?v=203"></script>
-    <script defer src="/assets/clean/details.js?v=203"></script>
+    <link rel="stylesheet" href="/assets/clean/details.css?v=204" />
+    <link rel="stylesheet" href="/assets/clean/motion.css?v=204" />
+    <script defer src="/assets/clean/motion.js?v=204"></script>
+    <script defer src="/assets/clean/details.js?v=204"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=163" />
     <script defer src="/assets/liquid-glass/surfaces.js?v=200"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=164" />
@@ -6500,7 +6500,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player || partyBrowse ? '<script defer src="/assets/player/watch-party.js?v=160"></script>' : ""}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/finish.css?v=175" />'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/polish.css?v=176" />'}
-    <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=201" />
+    <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=204" />
     ${player ? "" : '<link rel="stylesheet" href="/assets/liquid-glass/controls.css?v=197" />'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/experience.css?v=202" />'}
     <link rel="stylesheet" href="/assets/clean/cinema.css?v=199" />
