@@ -6477,8 +6477,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${body.includes("fa-solid") ? '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />' : ""}
     ${player || partyBrowse || active === "social" ? '<script defer src="/socket.io/socket.io.js"></script>' : ""}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/modern-normalize@2.0.0/modern-normalize.min.css" />
-    <link rel="stylesheet" href="/assets/liquid-glass/liquid-glass.css?v=197" />
-    <script defer src="/assets/liquid-glass/liquid-glass.js?v=202"></script>
+    <link rel="stylesheet" href="/assets/liquid-glass/liquid-glass.css?v=205" />
+    <script defer src="/assets/liquid-glass/liquid-glass.js?v=205"></script>
     <link rel="stylesheet" href="/assets/clean/clean.css?v=153" />
     <script defer src="/assets/clean/clean.js?v=151"></script>
     <script defer src="/assets/clean/continue.js?v=154"></script>
@@ -6487,26 +6487,26 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/motion.js?v=204"></script>
     <script defer src="/assets/clean/details.js?v=204"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=163" />
-    <script defer src="/assets/liquid-glass/surfaces.js?v=200"></script>
+    <script defer src="/assets/liquid-glass/surfaces.js?v=205"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=164" />
     <script defer src="/assets/studio/studio.js?v=164"></script>
     <link rel="stylesheet" href="/assets/clean/aurora.css?v=202" />
     <script defer src="/assets/clean/aurora.js?v=202"></script>
-    ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=163" />' : ""}
+    ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=205" />' : ""}
     ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=173" />' : ""}
     
-    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=202"></script>' : ""}
-    ${active === "social" ? '<script defer src="/assets/party/party.js?v=200"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}
+    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=205"></script>' : ""}
+    ${active === "social" ? '<script defer src="/assets/party/party.js?v=205"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}
     ${player || partyBrowse ? '<script defer src="/assets/player/watch-party.js?v=160"></script>' : ""}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/finish.css?v=175" />'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/polish.css?v=176" />'}
-    <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=204" />
-    ${player ? "" : '<link rel="stylesheet" href="/assets/liquid-glass/controls.css?v=197" />'}
+    <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=205" />
+    ${player ? "" : '<link rel="stylesheet" href="/assets/liquid-glass/controls.css?v=205" />'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/experience.css?v=202" />'}
     <link rel="stylesheet" href="/assets/clean/cinema.css?v=199" />
     <link rel="stylesheet" href="/assets/clean/profiles.css?v=202" />
     ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=201" />' : ""}
-    ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=201" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=199" />' : ""}
+    ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=205" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=205" />' : ""}
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=199" />' : ""}
     <link rel="stylesheet" href="/assets/clean/performance.css?v=202" />
 </head>
@@ -6552,7 +6552,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
   <header class="topbar netflixTopbar" data-sv-liquid-nav>
     <div class="container nav netflixNav">
-      <div class="svLiquidPane" data-swifly-glass data-glass-tint="0.025" data-glass-blur="2.4" data-glass-saturation="1.28" data-glass-distortion="-240" data-glass-displace="0.16" data-glass-border-width="0.16" data-glass-map-opacity="0.98" aria-hidden="true"></div>
+      <div class="svLiquidPane" data-swifly-glass data-glass-tint="0.025" data-glass-saturation="1.28" data-glass-distortion="-240" data-glass-displace="0.16" aria-hidden="true"></div>
       <div class="navLeftCluster">
         <a class="brand netflixBrand" href="/" aria-label="${escapeHtml(SITE_NAME)} home">
           <span class="netflixWordmark">${escapeHtml(BRAND_WORDMARK)}</span>
@@ -6596,7 +6596,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
   ${body}
 
   <nav class="mobileNav" data-sv-liquid-nav aria-label="Mobile navigation">
-    <div class="svLiquidPane" data-swifly-glass data-glass-tint="0.15" data-glass-blur="11" data-glass-blend="difference" aria-hidden="true"></div>
+    <div class="svLiquidPane" data-swifly-glass data-glass-tint="0.15" aria-hidden="true"></div>
     ${navLink("/", "Home", "home", active)}
     ${navLink("/movies", "Movies", "movies", active)}
     ${navLink("/tv", "Series", "tv", active)}
@@ -10048,7 +10048,7 @@ function watchroomPage(req, res) {
               <h2>The conversation</h2>
             </div>
           </div>
-          <div id="stableMessages" class="dsStableMessages"></div>
+          <div id="stableMessages" class="dsStableMessages" role="log" aria-label="Room messages" aria-live="polite"><div class="dsStableChatEmpty"><span>Room chat</span><h3>Make yourself comfortable.</h3><p>Say hello while everyone gets ready.</p></div></div>
           <form id="stableChatForm">
             <input name="message" placeholder="Add to the conversation…" maxlength="220" />
             <button class="dsPrimaryBtn" type="submit">Send</button>
@@ -11336,6 +11336,7 @@ function watchroomPage(req, res) {
           var name = esc(message.name || "Guest");
           var text = esc(message.text || "");
           if (!text) return;
+          root.querySelector(".dsStableChatEmpty")?.remove();
           root.insertAdjacentHTML("beforeend", '<div class="dsStableMessage"><b>' + name + '</b><span>' + text + '</span></div>');
           root.scrollTop = root.scrollHeight;
         }

@@ -134,26 +134,75 @@ body.svCleanShell :is(.svDetailDialog,.svDetailPage) .svDetailBody::before {disp
 body.svCleanShell .svWelcomeClean .dsWelcomeHeroBg {
   bottom:-36px !important;
   -webkit-mask-image:linear-gradient(to right,transparent,#000 31%),
-    linear-gradient(to bottom,transparent 0%,#000 18%,#000 53%,rgba(0,0,0,.66) 80%,transparent 100%) !important;
+    linear-gradient(to bottom,transparent 0%,#000 18%,#000 53%,rgba(0,0,0,.82) 74%,rgba(0,0,0,.36) 90%,transparent 100%) !important;
   mask-image:linear-gradient(to right,transparent,#000 31%),
-    linear-gradient(to bottom,transparent 0%,#000 18%,#000 53%,rgba(0,0,0,.66) 80%,transparent 100%) !important;
+    linear-gradient(to bottom,transparent 0%,#000 18%,#000 53%,rgba(0,0,0,.82) 74%,rgba(0,0,0,.36) 90%,transparent 100%) !important;
   -webkit-mask-composite:source-in;mask-composite:intersect;
 }
-/* Keep the Welcome hero and discovery visually continuous. */
+/* Fade the picture itself. A second opaque shade made a black strip before
+   discovery, hiding both the lower image and the original Aurora beneath it. */
+body.svCleanShell .svWelcomeClean .dsWelcomeHero::before {
+  content:none !important;
+  display:none !important;
+}
+/* One quiet, bounded continuation carries the photograph's own color through
+   the introduction. It shares the loaded hero image and never covers controls. */
+body.svCleanShell .svWelcomeClean .svWelcomeLightBridge {
+  position:relative;
+  z-index:-1;
+  height:0;
+  pointer-events:none;
+}
+body.svCleanShell .svWelcomeClean .svWelcomeLightBridge::before {
+  content:none !important;
+  display:none !important;
+}
+body.svCleanShell .svWelcomeClean .svWelcomeSpill {
+  position:absolute;
+  top:-190px;
+  left:10%;
+  right:0;
+  height:420px;
+  overflow:hidden;
+  contain:paint;
+  -webkit-mask-image:linear-gradient(to bottom,transparent 0%,#000 34%,rgba(0,0,0,.8) 55%,rgba(0,0,0,.25) 77%,transparent 100%),linear-gradient(to right,transparent,#000 25%,#000 80%,transparent);
+  mask-image:linear-gradient(to bottom,transparent 0%,#000 34%,rgba(0,0,0,.8) 55%,rgba(0,0,0,.25) 77%,transparent 100%),linear-gradient(to right,transparent,#000 25%,#000 80%,transparent);
+  -webkit-mask-composite:source-in;
+  mask-composite:intersect;
+}
+body.svCleanShell .svWelcomeClean .svWelcomeSpill > img {
+  position:absolute;
+  inset:-12%;
+  width:124%;
+  height:124%;
+  max-width:none;
+  object-fit:cover;
+  object-position:38% 65%;
+  filter:blur(32px);
+  opacity:.16;
+}
+/* Preserve Welcome's separate poster composition and transparent discovery. */
 body.svCleanShell .svWelcomeClean .dsWelcomeDiscovery {
+  position:relative;
+  z-index:1;
   background:transparent !important;
 }
 body.svCleanShell .svWelcomeClean .svWelcomeDiscoveryIntro {
   border-top:0 !important;
 }
-
-
-/* Preserve Welcome's separate poster composition and its seam-free discovery. */
-body.svCleanShell .svWelcomeClean .dsWelcomeDiscovery {
-  background:transparent !important;
+@media(max-width:850px) {
+  body.svCleanShell .svWelcomeClean .svWelcomeSpill {
+    top:-160px;
+    left:0;
+    height:380px;
+  }
+  body.svCleanShell .svWelcomeClean .svWelcomeSpill > img {
+    filter:blur(24px);
+    opacity:.13;
+  }
 }
-body.svCleanShell .svWelcomeClean .svWelcomeDiscoveryIntro {
-  border-top:0 !important;
+@media(prefers-reduced-transparency:reduce) {
+  body.svCleanShell .svWelcomeClean .svWelcomeSpill {display:none;}
 }
 /* Navigation dissolves without full-screen blur on each route. */
 @keyframes svQuickPageOut {to{opacity:0;transform:translateY(-3px);}}

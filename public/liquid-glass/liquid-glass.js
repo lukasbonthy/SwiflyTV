@@ -1,4 +1,4 @@
-/* v196: rounded optical lensing and clear media glass for WebKit. */
+/* Rounded optical fields for live backdrops and sampled WebKit media glass. */
 (() => {
   'use strict';
   if (window.SwiflyLiquidGlass) return;
@@ -381,16 +381,11 @@
     if (!(element instanceof HTMLElement)) throw new TypeError('SwiflyLiquidGlass.mount expects an HTML element.');
     if (mounted.has(element)) return mounted.get(element);
     const config = {
-      // Only the navigation opts into the higher-definition edge lens; all
-      // existing action buttons and panels keep their established defaults.
-      borderWidth:numeric(element, 'glassBorderWidth', .07),
-      brightness:50, opacity:numeric(element, 'glassMapOpacity', .93),
       displace:numeric(element, 'glassDisplace', .5),
       distortionScale:numeric(element, 'glassDistortion', -180),
-      channelOffsets:[0, 10, 20],
+      channelOffsets:[0, 1, 2],
       saturation:numeric(element, 'glassSaturation', 1),
-      mapBlur:numeric(element, 'glassBlur', 7), tint:numeric(element, 'glassTint', .2),
-      blend:element.dataset.glassBlend === 'difference' ? 'difference' : 'screen', ...options
+      tint:numeric(element, 'glassTint', .2), ...options
     };
     const filterId = 'swifly-liquid-filter-' + (++nextId), ua = navigator.userAgent;
     const isAppleTouch = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -412,14 +407,18 @@
       svg?.remove(); svg = null; map = null; scene = null; dimensions = '';
       element.style.removeProperty('--sv-glass-filter');
     }
-    function createGraph() {
+    function createGraph(texture) {
       svg = svgElement('svg', {class:'svLiquidPane__filters', 'aria-hidden':'true', focusable:'false'});
       const defs = svgElement('defs');
       const filter = svgElement('filter', {id:filterId, x:'0%', y:'0%', width:'100%', height:'100%', 'color-interpolation-filters':'sRGB'});
-      map = svgElement('feImage', {x:0, y:0, width:'100%', height:'100%', preserveAspectRatio:'none', result:'map'});
+      map = svgElement('feImage', {href:texture.map,x:0, y:0, width:'100%', height:'100%', preserveAspectRatio:'none', result:'map'});
       filter.append(map);
       ['r', 'g', 'b'].forEach((channel, index) => {
-        filter.append(svgElement('feDisplacementMap', {in:'SourceGraphic', in2:'map', scale:config.distortionScale + config.channelOffsets[index], xChannelSelector:'R', yChannelSelector:'G', result:'displaced-' + channel}));
+        // The vector field owns the direction and settles to neutral in the
+        // flat center. Keep dispersion proportional to this bounded rim;
+        // Even sharp text behind the lens keeps subpixel color separation.
+        const scale=-texture.scale*(config.distortionScale+config.channelOffsets[index])/180;
+        filter.append(svgElement('feDisplacementMap', {in:'SourceGraphic', in2:'map', scale, xChannelSelector:'R', yChannelSelector:'G', result:'displaced-' + channel}));
         const matrix = Array(20).fill(0); matrix[index * 5 + index] = 1; matrix[18] = 1;
         filter.append(svgElement('feColorMatrix', {in:'displaced-' + channel, type:'matrix', values:matrix.join(' '), result:channel}));
       });
@@ -427,7 +426,7 @@
       defs.append(filter); svg.append(defs); element.append(svg);
       element.style.setProperty('--sv-glass-filter', 'url(#' + filterId + ')');
     }
-    function createWebKitLens(width, height, radius) {
+    function createWebKitLens(width, height, radius, texture) {
       // Safari renders SVG SourceGraphic filters correctly. Feed it page paint
       // rather than trying to filter a native backdrop (or just a white rim).
       // CSS clamps a pill's radius proportionally. SVG independently clamps
@@ -435,12 +434,11 @@
       radius=Math.max(0,Math.min(radius,width/2,height/2));
       const id = filterId + '-webkit';
       const defs = svgElement('defs');
-      const texture=lensTexture(width,height,radius);
-      const padding = 64, scale = texture?.scale || -Math.min(100,height*1.45,width*.45);
+      const padding = 64, scale = texture.scale;
       const refract = svgElement('filter',{id:id+'-refract',filterUnits:'userSpaceOnUse',
         x:-padding,y:-padding,width:width+2*padding,height:height+2*padding,'color-interpolation-filters':'sRGB'});
       map = svgElement('feImage',{x:0,y:0,width,height,preserveAspectRatio:'none',result:'map'});
-      if(texture)map.setAttribute('href',texture.map);
+      map.setAttribute('href',texture.map);
       refract.append(map);
       // WebKit renders reference filters in software. One full-color pass
       // gives real refraction without tripling the sampled artwork raster work.
@@ -455,7 +453,7 @@
         svgElement('feColorMatrix',{in:'soft',type:'saturate',values:1.025}));
       const feather = svgElement('filter',{id:id+'-feather'});
       feather.append(svgElement('feGaussianBlur',{stdDeviation:1.15}));
-      const edge = texture?.edge || Math.min(20,Math.max(7,height*.2));
+      const edge = texture.edge;
       const edgeMask = svgElement('mask',{id:id+'-edge',maskUnits:'userSpaceOnUse',x:0,y:0,width,height});
       edgeMask.append(svgElement('rect',{width,height,fill:'white'}),
         svgElement('rect',{x:edge,y:edge,width:Math.max(0,width-edge*2),height:Math.max(0,height-edge*2),rx:Math.max(0,radius-edge),fill:'black',filter:'url(#'+id+'-feather)'}));
@@ -471,7 +469,7 @@
       bodyScene.append(svgElement('use',{href:'#'+id+'-scene',filter:'url(#'+id+'-body)',opacity:.72}),
         svgElement('rect',{width,height,rx:radius,fill:'black',opacity:.075}));
       svg.append(defs,bodyScene,edgeScene);
-      if(texture)svg.append(svgElement('image',{class:'svGlassReflection',href:texture.reflection,width,height,preserveAspectRatio:'none','clip-path':'url(#'+id+'-clip)'}));
+      svg.append(svgElement('image',{class:'svGlassReflection',href:texture.reflection,width,height,preserveAspectRatio:'none','clip-path':'url(#'+id+'-clip)'}));
       // A faint silhouette supplements the directional reflection on plain
       // backgrounds. No opaque bevel or pane-wide white sheen is stacked here.
       svg.append(svgElement('rect',{x:.5,y:.5,width:Math.max(0,width-1),height:Math.max(0,height-1),rx:radius,fill:'none',stroke:'white','stroke-opacity':.16,'stroke-width':.5}));
@@ -495,10 +493,8 @@
         if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return () => renderer('blur');
       }
       const radius = parseFloat(computed.borderTopLeftRadius) || 20;
-      const configuredBlur = computed.getPropertyValue('--sv-glass-map-blur').trim();
-      const blur = configuredBlur !== '' && Number.isFinite(Number(configuredBlur)) ? Number(configuredBlur) : config.mapBlur;
-      const blend = computed.getPropertyValue('--sv-glass-blend').trim() === 'difference' ? 'difference' : config.blend;
-      const key = [width, height, radius, blur, blend].join(':');
+      const key = [width, height, radius].join(':');
+      const texture=key!==dimensions || svg&&!element.contains(svg)?lensTexture(width,height,radius):null;
       const captured = webkitSvgCapable ? captureScene(element,bounds,64) : null;
       return () => {
       if (svg && !element.contains(svg)) removeGraph();
@@ -506,32 +502,19 @@
         scene.replaceChildren(captured);renderer('webkit-svg');return;
       }
       if (key === dimensions) {renderer('svg'); return;}
+      if (!texture) {removeGraph();renderer('blur');return;}
       if (webkitSvgCapable) {
         if (svg) removeGraph();
-        createWebKitLens(width,height,radius);
+        createWebKitLens(width,height,radius,texture);
         scene.replaceChildren(captured);
-      } else if (!svg) createGraph();
-      dimensions = key;
-      if(webkitSvgCapable && map.hasAttribute('href')){renderer('webkit-svg');return;}
-      const inset = Math.min(width, height) * config.borderWidth * .5;
-      const image = svgElement('svg', {viewBox:`0 0 ${width} ${height}`}), defs = svgElement('defs');
-      for (const [id, attrs, color] of [
-        ['x', {x1:'100%', y1:'0%', x2:'0%', y2:'0%'}, 'red'],
-        // feDisplacementMap reads G for vertical motion. Blue here left G=0,
-        // creating a constant vertical shift instead of optical refraction.
-        ['y', {x1:'0%', y1:'0%', x2:'0%', y2:'100%'}, 'lime']
-      ]) {
-        const gradient = svgElement('linearGradient', {id, ...attrs});
-        gradient.append(svgElement('stop', {offset:'0%', 'stop-color':color, 'stop-opacity':0}), svgElement('stop', {offset:'100%', 'stop-color':color}));
-        defs.append(gradient);
+      } else {
+        if (!svg) createGraph(texture);
+        else {
+          map.setAttribute('href',texture.map);
+          svg.querySelectorAll('feDisplacementMap').forEach((node,index)=>node.setAttribute('scale',-texture.scale*(config.distortionScale+config.channelOffsets[index])/180));
+        }
       }
-      image.append(defs, svgElement('rect', {width, height, fill:'black'}),
-        svgElement('rect', {width, height, rx:radius, fill:'url(#x)'}),
-        svgElement('rect', {width, height, rx:radius, fill:'url(#y)', style:`mix-blend-mode:${blend}`}),
-        svgElement('rect', {x:inset, y:inset, width:Math.max(0, width - 2 * inset), height:Math.max(0, height - 2 * inset), rx:radius, fill:`hsl(0 0% ${config.brightness}% / ${config.opacity})`, style:`filter:blur(${blur}px)`}));
-      // The rounded WebKit texture is generated only when geometry changes;
-      // Chromium retains its established live-backdrop SVG map.
-      map.setAttribute('href', 'data:image/svg+xml,' + encodeURIComponent(new XMLSerializer().serializeToString(image)));
+      dimensions = key;
       renderer(webkitSvgCapable ? 'webkit-svg' : 'svg');
       };
     }
@@ -570,6 +553,6 @@
     mounted.set(element, controller); live.set(element, {controller, sync, schedule:scheduleMap,sample:sampleMap,webkit:webkitSvgCapable}); watch(); sync();
     return controller;
   }
-  window.SwiflyLiquidGlass = Object.freeze({mount});
+  window.SwiflyLiquidGlass = Object.freeze({mount,createTexture:lensTexture});
   document.querySelectorAll('[data-swifly-glass]').forEach(element => mount(element));
 })();

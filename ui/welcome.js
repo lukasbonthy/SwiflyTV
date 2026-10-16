@@ -50,7 +50,7 @@ function welcomeMarkup({siteName = 'SwiflyTV', brand = 'SwiflyTV', redirect = '%
       </div>
       <a class="svWelcomeDiscoverLink" href="#discovery"><span>A little inspiration for tonight</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14m-5-5 5 5 5-5"/></svg></a>
     </section>
-    ${scene ? `<div class="svWelcomeLightBridge" aria-hidden="true" style="--sv-light-art:url('${escape(scene)}')"></div>` : ''}
+    ${scene ? `<div class="svWelcomeLightBridge" aria-hidden="true" style="--sv-light-art:url('${escape(scene)}')"><span class="svWelcomeSpill"><img src="${escape(scene)}" alt="" width="1280" height="720" loading="lazy" decoding="async"></span></div>` : ''}
     <section id="discovery" class="dsWelcomeDiscovery" aria-labelledby="svWelcomeDiscoveryTitle" tabindex="-1">
       <div class="svWelcomeDiscoveryIntro"><div><span>FIND YOUR NEXT FAVORITE</span><h2 id="svWelcomeDiscoveryTitle">What are you in the mood for?</h2></div><p>A world of stories, ready to explore.</p></div>
       ${hasTitles ? renderRail('Trending movies',trending,'movie')+renderRail('Popular series',television,'tv')+renderRail('Popular movies',movies,'movie') : `<section class="dsWelcomeFallback"><h3>Discover movies and series</h3><p>Connect TMDB to show trending titles here. You can still create your profile and sign in.</p><a class="dsSecondaryBtn" href="${escape(signup)}">Create account ${arrow}</a></section>`}

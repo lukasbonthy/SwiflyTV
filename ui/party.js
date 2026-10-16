@@ -14,13 +14,25 @@ function partyMarkup(options={}){
        <h1 id="sv100Title">${rooms?'Party Hub':'Community'}</h1>
        <p class="partyPageLead">${rooms?'Good films. Better company.':'For the love of a good film.'}</p>
      </div>
+     <nav class="sv100ModeTabs partyNavigation partyModeNav" aria-label="Party Hub navigation">
+       <button type="button" class="partySecondaryBtn ${rooms?'active':''}" data-tab="rooms">${icon('people')}Watch parties</button>
+       <button type="button" class="partySecondaryBtn ${rooms?'':'active'}" data-tab="chat">${icon('chat')}Community</button>
+       <span id="sv100RoleText" class="partySrOnly">Checking access</span>
+     </nav>
      <div class="sv100ProfilePill"><span id="sv100Avatar">S</span><div><b id="sv100Name">Guest</b><small id="sv100Status" role="status">Connecting…</small></div><i class="partyConnectionDot" aria-hidden="true"></i></div>
    </header>
-   <nav class="sv100ModeTabs partyNavigation partyModeNav" aria-label="Party Hub navigation">
-     <button type="button" class="partySecondaryBtn ${rooms?'active':''}" data-tab="rooms">${icon('people')}Watch parties</button>
-     <button type="button" class="partySecondaryBtn ${rooms?'':'active'}" data-tab="chat">${icon('chat')}Community</button>
-     <span id="sv100RoleText" class="partySrOnly">Checking access</span>
-   </nav>
+   <header class="sv103RoomHeader">
+     <div class="partyRoomIdentity">
+       <div class="partyRoomHeading"><h1 id="sv103RoomTitle">Party Hub</h1><span id="sv103HostStatus" class="partyHostBadge" role="status">Joining…</span></div>
+       <p id="sv103RoomSub" class="partySrOnly" role="status">Make yourself comfortable.</p>
+       <div class="partyRoomFacts"><span>${icon('people')}<b id="sv103ViewerCount">0</b> watching</span><button type="button" id="sv103RoomCode" data-action="copy-room-code" title="Copy room code">—</button><span class="partySrOnly">Playback <b id="sv103Timer">0:00</b></span></div>
+     </div>
+     <nav class="partyRoomActions" aria-label="Room actions">
+       <details class="partyChecks"><summary class="partyIconBtn" aria-label="Check your camera or microphone" title="Device check">${icon('camera')}</summary><div><button class="partySecondaryBtn" type="button" data-action="voice">${icon('mic')}Mic check</button><button class="partySecondaryBtn" type="button" data-action="video">${icon('camera')}Camera check</button></div></details>
+       <button class="partyPrimaryBtn" type="button" data-action="copy-room-link">${icon('link')}Invite friends</button>
+       <button class="partySecondaryBtn" type="button" data-action="leave-native-room">Leave</button>
+     </nav>
+   </header>
    <div class="partyLayout">
      <nav class="partyCommunityNav" data-nav-panel="chat" aria-label="Conversations">
        <div class="partyCommunityHeading">${icon('chat')}<h2>Your conversations</h2></div>
@@ -31,20 +43,9 @@ function partyMarkup(options={}){
      <section class="sv100Main partyMain">
        <section id="sv100RoomsPanel" class="sv100Panel sv100RoomsPanel ${rooms?'active':''}" aria-label="Watch parties">
          <div class="sv103RoomShell">
-           <header class="sv103RoomHeader">
-             <div class="partyRoomIdentity">
-               <div class="partyRoomHeading"><h2 id="sv103RoomTitle">Party Hub</h2><span id="sv103HostStatus" class="partyHostBadge" role="status">Joining…</span></div>
-               <p id="sv103RoomSub" class="partySrOnly" role="status">Make yourself comfortable.</p>
-               <div class="partyRoomFacts"><span>${icon('people')}<b id="sv103ViewerCount">0</b> watching</span><button type="button" id="sv103RoomCode" data-action="copy-room-code" title="Copy room code">—</button><span class="partySrOnly">Playback <b id="sv103Timer">0:00</b></span></div>
-             </div>
-             <nav class="partyRoomActions" aria-label="Room actions">
-               <details class="partyChecks"><summary class="partyIconBtn" aria-label="Check your camera or microphone" title="Device check">${icon('camera')}</summary><div><button class="partySecondaryBtn" type="button" data-action="voice">${icon('mic')}Mic check</button><button class="partySecondaryBtn" type="button" data-action="video">${icon('camera')}Camera check</button></div></details>
-               <button class="partyPrimaryBtn" type="button" data-action="copy-room-link">${icon('link')}Invite friends</button>
-               <button class="partySecondaryBtn" type="button" data-action="leave-native-room">Leave</button>
-             </nav>
-           </header>
            <section id="sv103NativeRoom" class="sv103NativeRoom" hidden>
              <div class="sv103Stage"><div id="sv103Player" class="sv103Player"><div class="sv103EmptyPlayer">${icon('screen')}<b>Choose the first film.</b><span>The host can search for a movie or add a video link below.</span></div></div></div>
+             <div class="partyNowWatching" data-party-now-watching hidden><img data-party-now-art alt="" hidden/><div><span class="partyEyebrow" data-party-now-label>Selected film</span><a data-party-now-link><b data-party-now-title></b>${icon('arrow')}</a></div></div>
              <div id="sv103ControlDock" class="sv103ControlDock" role="note" hidden><p>Use the video’s own controls. Link playback is manual and isn’t synchronized.</p></div>
              <details class="partyMediaTools hostOnly">
                <summary>${icon('film')}Change film <span>Search or video link</span>${icon('plus')}</summary>

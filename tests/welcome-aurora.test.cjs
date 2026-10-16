@@ -61,6 +61,22 @@ test('Welcome showcases real catalog titles and artwork with bounded image loadi
   assert(!d.querySelector('video,iframe,script'), 'The welcome page should remain a static introduction');
 });
 
+test('Welcome carries the loaded artwork into discovery without adding an interactive or eager image', () => {
+  const env = browser(welcome()), d = env.window.document;
+  const bridge = d.querySelector('.svWelcomeLightBridge');
+  const spill = bridge?.querySelector('.svWelcomeSpill img');
+  assert(bridge && spill);
+  assert.equal(bridge.getAttribute('aria-hidden'), 'true');
+  assert.equal(bridge.previousElementSibling, d.querySelector('.dsWelcomeHero'));
+  assert.equal(bridge.nextElementSibling, d.querySelector('#discovery'));
+  assert.equal(spill.getAttribute('src'), d.querySelector('.dsWelcomeHeroBg img').getAttribute('src'), 'Reuse the critical image URL so the transition does not require another artwork download');
+  assert.equal(spill.getAttribute('alt'), '');
+  assert.equal(spill.getAttribute('loading'), 'lazy');
+  assert(!bridge.querySelector('a,button,[tabindex]'));
+  const withoutArt = browser(welcome({hero:{...hero,backdrop_path:''}}));
+  assert(!withoutArt.window.document.querySelector('.svWelcomeLightBridge'));
+});
+
 test('Welcome preserves signup and login redirects and real title destinations', () => {
   const redirect = '%2Fwatch%2Fmovie%2F42%3Fresume%3D120%26mode%3Dfull';
   const env = browser(welcome({redirect})), d = env.window.document;
@@ -82,6 +98,7 @@ test('Welcome escapes catalog text, branding, redirects and artwork attributes i
   assert.equal(d.querySelector('.dsWelcomeBrand').textContent.trim(), unsafe);
   assert.equal(d.querySelector('.svWelcomeSpotlight strong').textContent, unsafe);
   assert.equal(d.querySelector('.dsWelcomeHeroBg img').getAttribute('src'), artwork);
+  assert.equal(d.querySelector('.svWelcomeSpill img').getAttribute('src'), artwork);
   assert.equal(d.querySelector('.svWelcomeSpotlight img').getAttribute('alt'), unsafe+' poster');
   assert(!d.querySelector('[onerror],[data-attacker],script'));
   assert.equal(d.querySelector('.dsWelcomeActions .dsPrimaryBtn').getAttribute('href'), '/signup?redirect=%2Fprofiles" data-attacker="true');

@@ -21,7 +21,7 @@
     }
     const limit = (name, fallback, max) => Math.max(1, Math.min(max, number(app.dataset[name],fallback)));
     const config = {
-      resolve:limit('playerResolveTimeoutMs',90000,90000),request:limit('playerRequestTimeoutMs',12000,15000),
+      resolve:limit('playerResolveTimeoutMs',90000,90000),request:limit('playerRequestTimeoutMs',15000,15000),
       stall:limit('playerStallTimeoutMs',25000,45000),library:limit('playerLibraryTimeoutMs',12000,15000),
       pollMin:limit('playerPollMinMs',400,2500),pollMax:limit('playerPollMaxMs',2000,5000),
       controls:limit('playerControlsTimeoutMs',2600,10000)
@@ -452,7 +452,9 @@
         if(Date.now()>=lookupDeadline){fail('The '+mediaName()+' took too long to become available. Try again in a moment.');return false;}
         const requestQuery=new URLSearchParams(query);if(retry&&first)requestQuery.set('retry','1');first=false;
         try {
-          const waitMs=Math.max(0,Math.min(8000,config.request-1000,lookupDeadline-Date.now()-1000));
+          // Leave room for transport and response parsing around the server wait.
+          // Slow fallback lookups must not repeatedly lose their long-poll response.
+          const waitMs=Math.max(0,Math.min(6000,Math.floor(config.request/2),lookupDeadline-Date.now()-1000));
           if(waitMs>0)requestQuery.set('wait',String(Math.floor(waitMs)));
           const queryText=requestQuery.toString();
           const data=await requestJson(endpoint+(queryText?'?'+queryText:''),Math.min(config.request,lookupDeadline-Date.now()));

@@ -405,15 +405,16 @@ test('Auth password Show stays positioned INSIDE its input while sharing glass l
  assert.doesNotMatch(css,/radial-gradient\(ellipse 115% 155%/,'remove old silver-white button gradients');
 });
 
-test('Shared refraction uses the navbar map geometry, not the previous radial canvas',()=>{
- const fs=require('node:fs'),path=require('node:path');
- const src=fs.readFileSync(path.join(__dirname,'../public/liquid-glass/surfaces.js'),'utf8');
- const nav=fs.readFileSync(path.join(__dirname,'../public/liquid-glass/liquid-glass.js'),'utf8');
- assert.match(nav,/mix-blend-mode:\$\{blend\}/,'navbar map mixes directional channels');
- assert.match(src,/mix-blend-mode:screen/,'controls use the same directional map construction');
- assert.match(src,/feDisplacementMap/,'shared graph refracts the real backdrop');
- assert.match(src,/scale:'-118'/,'button refraction is stronger than the old barely visible effect');
- assert.doesNotMatch(src,/document\.createElement\('canvas'\)/,'no heavyweight canvas redraw');
+test('Adding secondary controls reuses the existing shared optical field',async()=>{
+ const env=glass('<button class="dsRowArrow">Next</button>'),w=env.window,d=w.document;
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');w.flush(16);
+ const graph=d.querySelector('.svSharedGlassDefinitions'),generated=env.textures.length;
+ assert(graph.querySelector('feDisplacementMap'),'the shared field must refract the live backdrop');
+ const control=d.createElement('button');control.className='dsRowArrow';control.textContent='Previous';d.body.append(control);await tick();w.flush(32);
+ assert(control.classList.contains('svSharedGlass'));
+ assert.equal(d.querySelector('.svSharedGlassDefinitions'),graph);
+ assert.equal(d.querySelectorAll('.svSharedGlassDefinitions').length,1);
+ assert.equal(env.textures.length,generated,'added secondary actions must not redraw the shared geometry');env.finish();
 });
 
 test('Password show/hide text replacement repairs its real refractive pane',async()=>{
@@ -443,15 +444,17 @@ test('Genres mounts the SAME physical SVG pane as the navbar and stays keyboard 
  env.finish();
 });
 
-test('Owned Party surfaces retain their DOM while catalog actions receive shared optics',()=>{
+test('Party optical enhancement preserves live controls, labels and player-owned surfaces',()=>{
  const {partyMarkup}=require('../ui/party');
  const env=glass(partyMarkup({initialTab:'rooms'})+'<div class="dsHeroActions"><button class="dsPrimaryBtn">Play movie</button></div>'),w=env.window,d=w.document;
- const hub=d.querySelector('.svPartyHub'),original=hub.innerHTML;
+ const hub=d.querySelector('.svPartyHub'),original=[...hub.querySelectorAll('button,a,input,select')].map(node=>({node,text:node.textContent}));
  d.body.dataset.stGlass='liquid';
  w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');
  env.intersect(true);w.flush(16);
- assert.equal(hub.querySelectorAll('.svLiquidPane').length,0,'The shared renderer must not inject competing panes into owned controls');
- assert(hub.innerHTML===original,'Enhancing catalog actions must preserve the Party component and its labels');
+ assert(hub.querySelector('.partyModeNav > .svLiquidPane'),'Party navigation should receive its own bounded optical surface');
+ assert(original.every(({node,text})=>node.isConnected&&node.textContent===text),'enhancement must preserve the original interactive nodes and labels');
+ assert.equal(hub.querySelectorAll('[data-player-root] .svLiquidPane').length,0,'the embedded player keeps its own optical treatment');
+ assert.equal(hub.querySelectorAll('.partySetup.svNavMatchedOptic,.partyConversation.svNavMatchedOptic').length,0,'owned content panels must not receive competing panes');
  assert(d.querySelector('.dsHeroActions .svLiquidPane[data-swifly-renderer="svg"]'),'Catalog actions retain their shared optical renderer');
  env.finish();
 });
@@ -470,15 +473,15 @@ test('SVG lens maps move along BOTH sampled channels in navbar and shared contro
   assert.equal(displaced.getAttribute('xChannelSelector'),'R');
   assert.equal(displaced.getAttribute('yChannelSelector'),'G');
  }
- const navMap=navFilter.querySelector('feImage').getAttribute('href');
- const mapXml=decodeURIComponent(navMap.slice('data:image/svg+xml,'.length));
- assert.match(mapXml,/stop-color="red"/,'horizontal lens map samples red');
- assert.match(mapXml,/stop-color="lime"/,'vertical lens map must sample green');
- assert.doesNotMatch(mapXml,/stop-color="blue"/,'blue gradient leaves green displacement stuck at zero');
+ assert.match(navFilter.querySelector('feImage').getAttribute('href'),/^data:image\/png;/);
  const shared=d.querySelector('.svSharedGlassDefinitions feImage');
  assert(shared,'shared button refraction definitions should mount once');
- const sharedMap=decodeURIComponent(shared.getAttribute('href').slice('data:image/svg+xml,'.length));
- assert.match(sharedMap,/stop-color="lime"/,'shared controls must have real vertical refraction too');
+ assert.match(shared.getAttribute('href'),/^data:image\/png;/);
+ for(const texture of env.textures.filter((_,index)=>index%2===0)){
+  const {width,height,data}=texture,pixel=(x,y,channel)=>data[(y*width+x)*4+channel];
+  assert(pixel(2,Math.floor(height/2),0)>128&&pixel(width-3,Math.floor(height/2),0)<128,'opposite vertical edges must move along red in opposite directions');
+  assert(pixel(Math.floor(width/2),2,1)>128&&pixel(Math.floor(width/2),height-3,1)<128,'opposite horizontal edges must move along green in opposite directions');
+ }
  assert.equal(d.querySelectorAll('.svSharedGlassDefinitions').length,1,'do not allocate extra shared filter graphs');
  env.finish();
 });
@@ -802,4 +805,63 @@ test('Safari does not recapture navigation for a settled paint change outside it
  below.style.backgroundImage='url(/below.jpg)';await tick();w.flush(48);await tick();assert.equal(captures,0);
  d.querySelector('main').style.backgroundImage='url(/updated-hero.jpg)';await tick();w.flush(64);await tick();assert.equal(captures,1);
  assert.match(scene.innerHTML,/updated-hero\.jpg/);env.finish();
+});
+
+test('Chromium uses a rounded vector field with a stationary center and restrained color dispersion',()=>{
+ const env=glass('<div class="svLiquidPane" data-swifly-glass style="border-top-left-radius:24px"></div>'),w=env.window,d=w.document;
+ d.querySelector('.svLiquidPane').getBoundingClientRect=()=>({width:240,height:60,left:0,top:0,right:240,bottom:60});
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);
+ assert(env.textures.length,'live Chromium refraction must use the curved surface field rather than a pane-wide directional gradient');
+ const {width,height,data}=env.textures[0],pixel=(x,y)=>[...data.slice((y*width+x)*4,(y*width+x)*4+2)];
+ const cx=Math.floor(width/2),cy=Math.floor(height/2),center=pixel(cx,cy),top=pixel(cx,2),left=pixel(2,cy),corner=pixel(7,7);
+ assert(center.every(value=>Math.abs(value-128)<=1),'flat centers must not introduce a horizontal sampling band');
+ assert(Math.abs(top[0]-128)<=1&&top[1]>128,'a horizontal rim must bend along its vertical normal');
+ assert(left[0]>128&&Math.abs(left[1]-128)<=1,'a vertical rim must bend along its horizontal normal');
+ assert(corner.every(value=>value>128),'rounded corners must bend in both dimensions');
+ const map=d.querySelector('feImage');assert.match(map.getAttribute('href'),/^data:image\/png;/);
+ const scales=[...d.querySelectorAll('feDisplacementMap')].map(node=>Number(node.getAttribute('scale')));
+ assert.equal(scales.length,3,'live backdrop optics retain full RGB channels');
+ assert(scales.every(value=>value>0&&value<=60),'displacement must be bounded by pane geometry');
+ assert(Math.max(...scales)-Math.min(...scales)<.75,'RGB separation must stay below a pixel over high-contrast artwork or text');
+ const generated=env.textures.length;w.dispatchEvent(new w.Event('resize'));w.flush(32);
+ assert.equal(env.textures.length,generated,'unchanged geometry must not regenerate its texture');env.finish();
+});
+
+test('Shared secondary optics reuse a bounded rounded map without per-control SVG graphs',()=>{
+ const env=glass('<button class="dsRowArrow">Next</button><button class="dsRowArrow">Previous</button>'),w=env.window,d=w.document;
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');w.flush(16);
+ const maps=d.querySelectorAll('.svSharedGlassDefinitions feImage');assert(maps.length);
+ assert([...maps].every(map=>map.getAttribute('href').startsWith('data:image/png;')),'the legacy shared lens must not reintroduce directional-gradient seams');
+ assert(env.textures.every(texture=>texture.width<=640&&texture.height<=240));
+ assert.equal(d.querySelectorAll('.dsRowArrow svg,.dsRowArrow .svLiquidPane').length,0,'repeated controls keep their shared inexpensive optics');
+ assert.equal(env.watched(),0);env.finish();
+});
+
+test('Party navigation containers and standalone actions gain bounded lenses while player controls keep their own renderer',async()=>{
+ const env=glass('<main class="svPartyHub"><nav class="partyModeNav"><button>Rooms</button><button>Community</button></nav><div class="partyEntryTabs"><button>Host</button><button>Join</button></div><button class="partySecondaryBtn">Invite friends</button><button class="partyIconBtn">Copy room link</button><button class="partyHeroPick">Choose film</button><section class="partySetup"><button>Setup</button></section><div data-player-root class="svPlayerEmbedded"><button class="partyIconBtn">Play</button><button class="dsPrimaryBtn">Player action</button></div></main>'),w=env.window,d=w.document;
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');
+ assert.equal(d.querySelectorAll('.svPartyHub>.svNavMatchedOptic').length,5,'only the selected Party surfaces should own lenses');
+ assert.equal(d.querySelectorAll('.svNavMatchedLens').length,0,'offscreen Party surfaces do not allocate optical panes');
+ env.intersect(true);w.flush(16);
+ assert.equal(d.querySelectorAll('.svPartyHub>.svNavMatchedOptic>.svNavMatchedLens[data-swifly-renderer="svg"]').length,5);
+ assert.equal(d.querySelectorAll('.partyModeNav button .svLiquidPane,.partyEntryTabs button .svLiquidPane,.svPlayerEmbedded .svLiquidPane').length,0,'tab children and player controls must not stack additional lenses');
+ const removed=d.querySelector('.partySecondaryBtn');removed.remove();await tick();w.flush(32);
+ assert.equal(removed.querySelector('.svLiquidPane'),null,'removed Party actions must release their child pane');
+ assert.equal(d.querySelectorAll('.svNavMatchedLens').length,4);env.finish();
+});
+
+test('Unavailable geometry textures leave Chromium on its supported native frost fallback',()=>{
+ const env=glass('<div class="svLiquidPane" data-swifly-glass></div>'),w=env.window,d=w.document;
+ w.HTMLCanvasElement.prototype.getContext=()=>null;d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);
+ assert.equal(d.querySelector('.svLiquidPane').dataset.swiflyRenderer,'blur');
+ assert.equal(d.querySelector('.svLiquidPane svg'),null,'a broken displacement graph must not obscure the fallback');env.finish();
+});
+
+for(const [name,identity] of [['Chromium','Chrome/130.0.0.0'],['Safari','Mozilla/5.0 AppleWebKit/605.1.15 Version/18.6 Safari/605.1.15']])test(name+' rebuilds an externally detached optical graph on the next refresh',async()=>{
+ const env=glass('<main style="background-image:url(/art.jpg)"></main><nav><div class="svLiquidPane" data-swifly-glass></div></nav>'),w=env.window,d=w.document;
+ Object.defineProperty(w.navigator,'userAgent',{configurable:true,value:identity});d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);await tick();w.flush(20);await tick();
+ const pane=d.querySelector('.svLiquidPane'),original=pane.querySelector('svg');assert(original);original.remove();await tick();
+ w.dispatchEvent(new w.Event('resize'));w.flush(32);
+ assert(pane.querySelector('svg'),'an unchanged box must still replace a detached graph in the same update');
+ assert.equal(pane.querySelectorAll(':scope > svg').length,1);assert.equal(pane.dataset.swiflyRenderer,name==='Safari'?'webkit-svg':'svg');env.finish();
 });

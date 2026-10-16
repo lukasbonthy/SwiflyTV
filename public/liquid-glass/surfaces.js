@@ -2,6 +2,9 @@
 (() => {
   'use strict';
   if (window.SwiflyGlassSurfaces) return;
+  const partyControls='.partySecondaryBtn,.partyIconBtn,.partyHeroPick';
+  const partyPanels='.partyModeNav,.partyEntryTabs';
+  const partyOptics=partyControls+','+partyPanels;
   // Explicit interactive surfaces only. Poster-card actions remain cheap frost.
   const controls = [
     '.dsPrimaryBtn','.dsSecondaryBtn','.dsIconBtn','.dsGhostPill',
@@ -12,9 +15,9 @@
     '.svAuthPasswordToggle','.dsAuthSwitch > a','.genreDropdown summary',
     '.dsTabs a','.dsDetailTabsV121 > button','.pagination a',
     '.dsEpisodeChips a','.dsSearchBox button','.svSearchPopup button',
-    '.dsDropdownLogout','.dsEditProfileBtn'
+    '.dsDropdownLogout','.dsEditProfileBtn',partyControls
   ].join(',');
-  const panels = ['.svSearchPopup', '.dsSearchBox form', '.genreDropdownMenu', '.dsDetailTabsV121', '.dsAuthCard', '.dsAuthSwitch', '.dsProfileManagerPanel', '.dsAccountCard', '.dsProfileSelectCard', '.dsDetailGridV121 aside', '.dsAboutGridV121', '.dsSeasonBlock', '#controlPanel', '#toast', 'dialog'].join(',');
+  const panels = ['.svSearchPopup', '.dsSearchBox form', '.genreDropdownMenu', '.dsDetailTabsV121', '.dsAuthCard', '.dsAuthSwitch', '.dsProfileManagerPanel', '.dsAccountCard', '.dsProfileSelectCard', '.dsDetailGridV121 aside', '.dsAboutGridV121', '.dsSeasonBlock', '#controlPanel', '#toast', 'dialog',partyPanels].join(',');
   const selector = controls + ',' + panels, entries = new Map(), pending = new Set();
   const rendererProperties = ['--sv-glass-default-tint', '--sv-glass-saturation', '--sv-glass-filter'];
   let intersection, mutations, frame = 0, stopped = false, removed = false;
@@ -36,7 +39,7 @@
     '.genreDropdown > summary',
     '.dsProfilesQuickActions > :is(.dsSecondaryBtn,.dsGhostPill)',
     '.dsHeroMiniActions > :is(.dsPrimaryBtn,.dsSecondaryBtn)',
-    '.dsAuthCard'
+    '.dsAuthCard',partyOptics
   ].join(',');
   function deactivate(entry) {
     entry.opticController?.setEnabled(false);
@@ -72,13 +75,13 @@
       }
       if (!entry.opticController) {
         entry.opticController=window.SwiflyLiquidGlass.mount(entry.opticPane, {
-          tint:entry.panel ? .24 : .20,mapBlur:7,blend:'screen',
-          distortionScale:-180,channelOffsets:[0,10,20]
+          tint:entry.panel ? .24 : .20,
+          distortionScale:-180,channelOffsets:[0,1,2]
         });
       } else if (!entry.opticController.enabled) entry.opticController.setEnabled(true);
     }
     if (!entry.complex) return;
-    if (!entry.controller) entry.controller = window.SwiflyLiquidGlass.mount(entry.host, {tint:.32, mapBlur:11, blend:'screen'});
+    if (!entry.controller) entry.controller = window.SwiflyLiquidGlass.mount(entry.host, {tint:.32});
     else if (!entry.controller.enabled) entry.controller.setEnabled(true);
     else if (entry.controller.supported && !filter(entry.host)) entry.controller.refresh();
   }
@@ -95,7 +98,13 @@
     entries.delete(entry.host);
   }
   function ensure(host) {
-    if (!(host instanceof HTMLElement) || !host.isConnected || host.matches('.svDetailDialog, .svStudioDialog') || host.closest('.svPartyHub, .svLiquidPane, media-player, .vds-controls')) return;
+    if (!(host instanceof HTMLElement) || !host.isConnected || host.matches('.svDetailDialog, .svStudioDialog') || host.closest('.svLiquidPane, media-player, .vds-controls, [data-player-root], .svPlayerEmbedded')) return;
+    if (host.closest('.svPartyHub')) {
+      if (!host.matches(partyOptics)) return;
+      // Tabs share the enclosing pill; filtering their child buttons too
+      // stacks several backdrops and obscures the active selection.
+      if (host.matches(partyControls) && host.closest(partyPanels)) return;
+    }
     let entry = entries.get(host);
     if (entry) {activate(entry); return;}
     const panel = host.matches(panels);
@@ -146,10 +155,8 @@
     }
     schedule();
   }
-  // Match the navigation lens rather than using a separate radial-canvas effect.
-  // This is the same red/blue directional gradient-map construction used by
-  // liquid-glass.js for the navbar. One reusable SVG graph serves all controls;
-  // no new canvases, per-button observers, or expensive RGB filter stacks.
+  // Secondary controls reuse one bounded rounded field. Their inexpensive
+  // single pass never reintroduces the old pane-wide directional-map seams.
   let sharedLens = null;
   function installSharedLens() {
     if (sharedLens || !liquidPreference()) return;
@@ -166,24 +173,9 @@
       for(const [key,value] of Object.entries(attrs))el.setAttribute(key,String(value));
       return el;
     };
-    const image=node('svg',{viewBox:'0 0 160 64',xmlns:ns});
-    const gradients=node('defs');
-    const x=node('linearGradient',{id:'sv-lens-x',x1:'100%',y1:'0%',x2:'0%',y2:'0%'});
-    x.append(node('stop',{offset:'0%','stop-color':'red','stop-opacity':'0'}),
-             node('stop',{offset:'100%','stop-color':'red'}));
-    const y=node('linearGradient',{id:'sv-lens-y',x1:'0%',y1:'0%',x2:'0%',y2:'100%'});
-    y.append(node('stop',{offset:'0%','stop-color':'lime','stop-opacity':'0'}),
-             node('stop',{offset:'100%','stop-color':'lime'}));
-    gradients.append(x,y);
-    image.append(gradients,
-      node('rect',{width:160,height:64,fill:'black'}),
-      node('rect',{width:160,height:64,rx:27,fill:'url(#sv-lens-x)'}),
-      node('rect',{width:160,height:64,rx:27,fill:'url(#sv-lens-y)',style:'mix-blend-mode:screen'}),
-      node('rect',{x:2.3,y:2.3,width:155.4,height:59.4,rx:25,
-        fill:'hsl(0 0% 50% / .93)',style:'filter:blur(7px)'})
-    );
-    const mapUrl='data:image/svg+xml,'+
-      encodeURIComponent(new XMLSerializer().serializeToString(image));
+    const texture=window.SwiflyLiquidGlass?.createTexture(160,64,32);
+    if (!texture) return;
+    const mapUrl=texture.map;
     const svg=node('svg',{'aria-hidden':'true',focusable:'false'});
     svg.classList.add('svSharedGlassDefinitions');
     svg.style.cssText='position:absolute!important;width:0!important;height:0!important;overflow:hidden!important;pointer-events:none!important';
@@ -192,7 +184,7 @@
       x:'-12%',y:'-30%',width:'124%',height:'160%','color-interpolation-filters':'sRGB'});
     action.append(
       node('feImage',{href:mapUrl,x:'0',y:'0',width:'100%',height:'100%',preserveAspectRatio:'none',result:'map'}),
-      node('feDisplacementMap',{in:'SourceGraphic',in2:'map',scale:'-118',
+      node('feDisplacementMap',{in:'SourceGraphic',in2:'map',scale:texture.scale,
         xChannelSelector:'R',yChannelSelector:'G'})
     );
     const panel=node('filter',{id:'sv-shared-panel-lens',
@@ -200,7 +192,7 @@
     panel.append(
       node('feImage',{href:mapUrl,x:'0',y:'0',width:'100%',height:'100%',preserveAspectRatio:'none',result:'map'}),
       node('feGaussianBlur',{in:'SourceGraphic',stdDeviation:'4',result:'soft'}),
-      node('feDisplacementMap',{in:'soft',in2:'map',scale:'-48',
+      node('feDisplacementMap',{in:'soft',in2:'map',scale:texture.scale*.5,
         xChannelSelector:'R',yChannelSelector:'G'})
     );
     defs.append(action,panel);svg.append(defs);

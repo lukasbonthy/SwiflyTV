@@ -24,8 +24,10 @@
 .svLiquidPane__filters {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
+  /* These dimensions define the displacement coordinate system. Component
+     icon selectors must never collapse an optical graph to an 18px glyph. */
+  width: 100% !important;
+  height: 100% !important;
   opacity: 0;
   pointer-events: none;
 }
