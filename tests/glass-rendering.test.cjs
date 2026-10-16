@@ -79,11 +79,13 @@ for (const scheme of ['light','dark'])for (const native of [false,true]) test(sc
   assert.notEqual(await page.locator('.netflixNav .navLinks>a').evaluate(node=>getComputedStyle(node).textShadow),'none','labels retain a local shadow over bright art without obscuring the whole pane');
   for(const {round,hero,host,pane,hit} of state.actions){
    const actionColor=pane.fill.match(/[\d.]+/g).map(Number);assert.deepEqual(actionColor.slice(0,3),rgba.slice(0,3),'all prominent actions use the same clear glass family');assert.equal(actionColor[3],.14,'hero actions keep the same clear tint as navigation');
-   assert.equal(pane.shadow,state.nav.shadow,'one quiet edge belongs to the pane');
-   assert.equal(host.shadow,'none');assert.equal(host.border,'0px');assert.equal(host.image,'none','component styles must not add a pale fill over the shared material');
+   assert.equal(pane.shadow,'none','sampling pane edge stays hidden outside the clipped control');
+   assert.equal(host.shadow,state.nav.shadow,'visible button rim uses the exact navbar edge while its backdrop sampler extends behind it');
+   assert.equal(host.border,'0px');assert.equal(host.image,'none','component styles must not add a pale fill over the shared material');
    assert.equal(host.before,'none');assert.equal(host.after,'none');
    assert(host.rect.width>=44&&host.rect.height>=44);assert(hit);if(round)assert.equal(host.radius,'50%','round detail actions retain the shared control shape');
-   for(const key of ['x','y','width','height'])assert(Math.abs(host.rect[key]-pane.rect[key])<=1,'the lens stays bounded to its action');
+   assert(pane.rect.width>=host.rect.width+60&&pane.rect.height>=host.rect.height+34,'compact actions need a wider hidden backdrop sampling field');
+   assert(pane.rect.x<host.rect.x&&pane.rect.y<host.rect.y,'sampling pane must extend evenly behind the clipped host');
    if(native)assert(!pane.filter.includes('url('),'Safari uses only native backdrop blur');
   }
   assert.equal(await page.locator('.dsHeroActions>.dsPrimaryBtn>.svNavMatchedLens').evaluate(node=>getComputedStyle(node,'::before').content),
@@ -197,6 +199,28 @@ function referenceMap(width,height,radius) {
  const inset=Math.min(width,height)*.035;
  return 'data:image/svg+xml,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}"><defs><linearGradient id="x" x1="100%" y1="0%" x2="0%" y2="0%"><stop stop-color="#0000"/><stop offset="1" stop-color="red"/></linearGradient><linearGradient id="y" x1="0%" y1="0%" x2="0%" y2="100%"><stop stop-color="#0000"/><stop offset="1" stop-color="blue"/></linearGradient></defs><rect width="${width}" height="${height}" fill="black"/><rect width="${width}" height="${height}" rx="${radius}" fill="url(#x)"/><rect width="${width}" height="${height}" rx="${radius}" fill="url(#y)" style="mix-blend-mode:screen"/><rect x="${inset}" y="${inset}" width="${width-2*inset}" height="${height-2*inset}" rx="${radius}" fill="hsl(0 0% 50% / .93)" style="filter:blur(7px)"/></svg>`);
 }
+test('Hero button visibly bends a diagonal backdrop instead of only drawing a translucent pill',{skip:!available&&'Chromium is not installed'},async()=>{
+ const browser=await chromium.launch({headless:true});
+ try{
+  const page=await browser.newPage({viewport:{width:420,height:220}});
+  await page.setContent('<!doctype html><style>'+['liquid-glass/liquid-glass.css','clean/clean.css','liquid-glass/surfaces.css','liquid-glass/controls.css'].map(asset).join('\n')+
+   '*{box-sizing:border-box}body{margin:0;background:#737373;min-height:220px}body::before{content:"";position:fixed;inset:0;background:linear-gradient(31deg,transparent 43%,#353535 44%,#353535 48%,transparent 49%)}.dsHeroActions{position:absolute;left:120px;top:88px}.dsHeroActions button{width:96px;height:44px}</style><body class="svCleanShell" data-st-glass="liquid"><div class="dsHeroActions"><button class="dsPrimaryBtn">Play</button></div></body>');
+  for(const file of ['liquid-glass/liquid-glass.js','liquid-glass/surfaces.js'])await page.addScriptTag({content:asset(file)});
+  await page.waitForFunction(()=>document.querySelector('.dsHeroActions .svNavMatchedLens')?.dataset.swiflyRenderer==='svg');
+  const box=await page.locator('.dsHeroActions button').boundingBox();
+  const distorted=(await page.screenshot({clip:box})).toString('base64');
+  await page.locator('.dsHeroActions .svNavMatchedLens').evaluate(pane=>pane.querySelectorAll('feDisplacementMap').forEach(map=>map.setAttribute('scale','0')));
+  const flat=(await page.screenshot({clip:box})).toString('base64');
+  const error=await page.evaluate(async({distorted,flat})=>{
+    const decode=async src=>{const im=new Image();im.src='data:image/png;base64,'+src;await im.decode();const c=document.createElement('canvas');c.width=im.width;c.height=im.height;const x=c.getContext('2d');x.drawImage(im,0,0);return x.getImageData(0,0,c.width,c.height).data;};
+    const a=await decode(distorted),b=await decode(flat);let sum=0,count=0;
+    for(let i=0;i<a.length;i+=4)for(let c=0;c<3;c++){sum+=Math.abs(a[i+c]-b[i+c]);count++;}
+    return sum/count;
+  },{distorted,flat});
+  assert(error>1.2,'real button refraction must measurably bend the line behind it; RGB delta was '+error.toFixed(2));
+ }finally{await browser.close();}
+});
+
 test('Glass pixels match the observed reference over detailed and dark backdrops',{skip:!available&&'Chromium is not installed'},async()=>{
  const browser=await chromium.launch({headless:true});
  try{
