@@ -3,8 +3,8 @@ body.svCleanShell .svGlassSurface.svGlassSurface {
   background: rgb(12 15 20 / .62) !important;
   border: 1px solid rgb(255 255 255 / .16) !important;
   box-shadow: 0 6px 18px rgb(0 0 0 / .18) !important;
-  -webkit-backdrop-filter: blur(var(--sv-surface-blur, 10px)) saturate(1.05) !important;
-  backdrop-filter: blur(var(--sv-surface-blur, 10px)) saturate(1.05) !important;
+  -webkit-backdrop-filter: blur(var(--sv-surface-blur, 12px)) saturate(1.8) brightness(1.05) !important;
+  backdrop-filter: blur(var(--sv-surface-blur, 12px)) saturate(1.8) brightness(1.05) !important;
 }
 body.svCleanShell .svGlassRelative { position: relative !important; }
 body.svCleanShell .svGlassSurface.svGlassSurface[data-swifly-renderer="svg"] {
