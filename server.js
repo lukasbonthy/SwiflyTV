@@ -5614,7 +5614,8 @@ app.use((req, res, next) => {
 });
 
 // v150: versioned, locally hosted navigation glass assets.
-// Glass material changes frequently during UI refinement; revalidate on navigation.\napp.use("/assets/liquid-glass", express.static(path.join(__dirname, "public", "liquid-glass"), { maxAge: 0, dotfiles: "deny" }));
+// Glass material changes frequently during UI refinement; revalidate on navigation.
+app.use("/assets/liquid-glass", express.static(path.join(__dirname, "public", "liquid-glass"), { maxAge: 0, dotfiles: "deny" }));
 // v151: shared clean catalog styles and compact navigation behavior.
 app.use("/assets/clean", express.static(path.join(__dirname, "public", "clean"), { maxAge: "1d", dotfiles: "deny" }));
 app.use("/assets/studio", express.static(path.join(__dirname, "public", "studio"), { maxAge: "1d", dotfiles: "deny" }));
