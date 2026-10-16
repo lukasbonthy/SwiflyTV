@@ -68,8 +68,11 @@ for (const scheme of ['light','dark'])for (const native of [false,true]) test(sc
   assert.equal(state.nav.before,'none','no milky painted highlight on the glass');assert.equal(state.nav.after,'none','the lens edge is handled by its one quiet shadow');
   assert.notEqual(await page.locator('.netflixNav .navLinks>a').evaluate(node=>getComputedStyle(node).textShadow),'none','labels retain a local shadow over bright art without obscuring the whole pane');
   for(const {round,hero,host,pane,hit} of state.actions){
-   const actionColor=pane.fill.match(/[\d.]+/g).map(Number);assert.deepEqual(actionColor.slice(0,3),rgba.slice(0,3),'all prominent actions use the same clear glass family');assert.equal(actionColor[3],.14,'hero actions keep the same clear tint as navigation');
-   assert.equal(pane.shadow,state.nav.shadow,'the exact navbar optical edge belongs on every button lens');
+   const actionColor=pane.fill.match(/[\d.]+/g).map(Number);
+   assert.deepEqual(actionColor.slice(0,3),[245,247,251],'buttons need a clearer neutral face where hero artwork is flat and dark');
+   assert.equal(actionColor[3],.13,'button center remains 87% clear with no milky overlay');
+   assert.notEqual(pane.shadow,'none','button uses a visible transparent optical edge');
+   assert(!pane.shadow.includes('0 0 0 5px'),'button must not acquire the previous opaque silver halo');
    assert.equal(host.shadow,'none','host must not draw a second glass border');
    assert.equal(host.border,'0px');assert.equal(host.image,'none','component styles must not add a pale fill over the shared material');
    assert.equal(host.before,'none');assert.equal(host.after,'none');
@@ -84,6 +87,10 @@ for (const scheme of ['light','dark'])for (const native of [false,true]) test(sc
    clip:getComputedStyle(node).borderRadius
   }));
   assert.match(reflections.near,/linear-gradient/,'subtle glass face light remains visible against flat gray artwork');
+  if(native) {
+   const material=await page.locator('.dsHeroActions>.dsPrimaryBtn>.svNavMatchedLens').evaluate(node=>getComputedStyle(node).backdropFilter);
+   assert.match(material,/blur\(14px\)/,'mobile and Safari buttons need visible real native frost, not only flat tint');
+  }
   assert.match(reflections.edge,/conic-gradient/,'a directional curved-glass edge is present');
   assert.match(reflections.backdrop,/url\(/,'button highlight must accompany real SVG backdrop refraction in Chromium');
   assert.notEqual(reflections.clip,'0px','the same glass pane clips to the actual button shape');
