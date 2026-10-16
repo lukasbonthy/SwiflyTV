@@ -73,8 +73,8 @@ body.svCleanShell :is(.svDetailClose,.dsClose).svGlassControl {
    longer lose backdrop blur entirely. This is the same clear nav coating,
    without multiplying three-channel SVG graphs during scrolling. */
 body.svCleanShell :is(.dsCardQuickActions .svGlassControl,.dsRowBtn,.dsRowArrow,.svRowArrow,.svResumeRemove,.pagination a,.dsEpisodeChips a,.sv100RoomItem .svGlassControl,.partyMovieResults .svGlassControl,#controlPanel .svGlassControl).svGlassControl {
-  -webkit-backdrop-filter: blur(12px) saturate(1.8) brightness(1.05) !important;
-  backdrop-filter: blur(12px) saturate(1.8) brightness(1.05) !important;
+  -webkit-backdrop-filter: blur(15px) saturate(1.65) brightness(1.06) !important;
+  backdrop-filter: blur(15px) saturate(1.65) brightness(1.06) !important;
 }
 body.svCleanShell .partyLinkChoice > summary.svGlassControl {
   min-height: 44px !important;
