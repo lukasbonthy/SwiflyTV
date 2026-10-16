@@ -330,7 +330,7 @@ test('v174 keeps Welcome soft without muddy light bridge or button clipping',asy
 });
 
 test('Studio glass uses one material on every browsing route and native transitions remain independent',async()=>{
- const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=218')).text();
+ const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=219')).text();
  const finish=await(await fetch(base+'/assets/clean/finish.css?v=175')).text();
  const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=215')).text();
  assert.match(css,/data-st-glass="liquid"/);
@@ -344,7 +344,7 @@ test('Studio glass uses one material on every browsing route and native transiti
    const response=await fetch(base+route);
    assert.equal(response.status,200,route);
    const doc=parse(await response.text()).window.document;
-   assert(doc.querySelector('link[href="/assets/liquid-glass/controls.css?v=218"]'),route+' lacks unified glass');
+   assert(doc.querySelector('link[href="/assets/liquid-glass/controls.css?v=219"]'),route+' lacks unified glass');
    assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=215"]'),route+' uses stale glass renderer');
  }
  const watch=await(await fetch(base+'/watch/movie/101')).text();
@@ -418,7 +418,7 @@ test('Cinema keeps natural featured color alongside the shared glass assets',asy
  const hero=d.querySelector('main > .dsHero');
  const nav=d.querySelector('.netflixNav > .svLiquidPane');
  assert(hero && nav);
- assert(d.querySelector('script[src="/assets/liquid-glass/liquid-glass.js?v=215"]'));
+ assert(d.querySelector('script[src="/assets/liquid-glass/liquid-glass.js?v=216"]'));
  assert(d.querySelector('link[href="/assets/liquid-glass/liquid-glass.css?v=213"]'),'new material tokens must bypass the previous cached base stylesheet');
  const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=205')).text();
  assert.match(css,/filter:none !important/);
