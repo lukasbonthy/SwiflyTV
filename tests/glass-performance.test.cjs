@@ -442,7 +442,18 @@ for (const [name, identity, platform, points] of [
  controller.destroy();assert.equal(pane.dataset.swiflyRenderer,undefined);env.finish();
 });
 
-test('Chromium uses a rounded vector field with a stationary center and restrained color dispersion',()=>{
+test('Persistent mobile navigation uses native frost so scrolling page text cannot stretch through its rim',()=>{
+ const env=glass('<nav class="netflixNav"><div class="svLiquidPane" data-swifly-glass></div></nav><main>Movie details and page text</main><nav class="mobileNav"><div class="svLiquidPane" data-swifly-glass></div></nav>'),w=env.window,d=w.document;
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);
+ const mobile=d.querySelector('.mobileNav>.svLiquidPane');
+ assert.equal(mobile.dataset.swiflyRenderer,'blur');
+ assert.equal(mobile.querySelector('svg'),null,'the fixed lower bar must never magnify scrolling text behind it');
+ assert.equal(w.SwiflyLiquidGlass.mount(mobile).supported,false);
+ assert.equal(d.querySelector('.netflixNav>.svLiquidPane').dataset.swiflyRenderer,'svg','the artwork-facing top navigation keeps its rounded live refraction');
+ assert.equal(env.textures.length,1);assert.equal(w.frameCount(),0);env.finish();
+});
+
+test('Chromium concentrates strong refraction at rounded rims while its center stays clear',()=>{
  const env=glass('<div class="svLiquidPane" data-swifly-glass style="border-top-left-radius:24px"></div>'),w=env.window,d=w.document;
  d.querySelector('.svLiquidPane').getBoundingClientRect=()=>({width:240,height:60,left:0,top:0,right:240,bottom:60});
  d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);
@@ -456,13 +467,27 @@ test('Chromium uses a rounded vector field with a stationary center and restrain
  const map=d.querySelector('feImage');assert.match(map.getAttribute('href'),/^data:image\/png;/);
  const scales=[...d.querySelectorAll('feDisplacementMap')].map(node=>Number(node.getAttribute('scale')));
  assert.equal(scales.length,3,'live backdrop optics retain full RGB channels');
- assert(scales.every(value=>value>0&&value<=60),'displacement must be bounded by pane geometry');
- assert(Math.max(...scales)-Math.min(...scales)<.75,'RGB separation must stay below a pixel over high-contrast artwork or text');
+ assert(scales.every(value=>value>=100&&value<=180),'prominent panes need a strongly refracted rim, bounded to 180px');
+ assert(Math.max(...scales)-Math.min(...scales)>=1&&Math.max(...scales)-Math.min(...scales)<=3,'the strong curved rim keeps RGB fringes below two pixels');
+ assert(pixel(cx,cy-8).every(value=>Math.abs(value-128)<=1),'refraction must settle before the center, keeping background artwork aligned');
  const generated=env.textures.length;w.dispatchEvent(new w.Event('resize'));w.flush(32);
  assert.equal(env.textures.length,generated,'unchanged geometry must not regenerate its texture');env.finish();
 });
 
 
+
+test('Rising detail sheets retain native glass and defer optical geometry until the sheet settles',()=>{
+ const env=glass('<dialog open class="svDetailDialog" data-sv-detail-state="opening"><div class="svDetailChrome"><button class="svDetailBack">Back</button><button class="svDetailDismiss">Close</button></div><div class="svDetailActions"><button class="dsPrimaryBtn">Play</button><button class="dsSecondaryBtn">Watch party</button></div></dialog>'),w=env.window,d=w.document;
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');env.intersect(true);w.flush(16);
+ const panes=[...d.querySelectorAll('.svNavMatchedLens')];
+ assert.equal(panes.length,4,'both the chrome and action panes remain visible throughout the entrance');
+ assert(panes.every(pane=>pane.dataset.swiflyRenderer==='blur'));
+ assert.equal(env.textures.length,0,'opening the sheet must not allocate displacement maps on the animation frame');
+ assert.equal(w.frameCount(),0,'deferred optics must not poll while the sheet is moving');
+ d.querySelector('dialog').dataset.svDetailState='open';w.SwiflyGlassSurfaces.refresh(d.querySelector('dialog'));w.flush(32);
+ assert(panes.every(pane=>pane.dataset.swiflyRenderer==='svg'),'settling the sheet enables its live rounded rims');
+ assert.equal(env.textures.length,4);env.finish();
+});
 
 test('Party navigation containers and standalone actions gain bounded lenses while player controls keep their own renderer',async()=>{
  const env=glass('<main class="svPartyHub"><nav class="partyModeNav"><button>Rooms</button><button>Community</button></nav><div class="partyEntryTabs"><button>Host</button><button>Join</button></div><button class="partySecondaryBtn">Invite friends</button><button class="partyIconBtn">Copy room link</button><button class="partyHeroPick">Choose film</button><section class="partySetup"><button>Setup</button></section><div data-player-root class="svPlayerEmbedded"><button class="partyIconBtn">Play</button><button class="dsPrimaryBtn">Player action</button></div></main>'),w=env.window,d=w.document;
@@ -470,7 +495,8 @@ test('Party navigation containers and standalone actions gain bounded lenses whi
  assert.equal(d.querySelectorAll('.svPartyHub>.svNavMatchedOptic').length,5,'only the selected Party surfaces should own lenses');
  assert.equal(d.querySelectorAll('.svNavMatchedLens').length,0,'offscreen Party surfaces do not allocate optical panes');
  env.intersect(true);w.flush(16);
- assert.equal(d.querySelectorAll('.svPartyHub>.svNavMatchedOptic>.svNavMatchedLens[data-swifly-renderer="svg"]').length,5);
+ assert.equal(d.querySelectorAll('.svPartyHub>.svNavMatchedOptic>.svNavMatchedLens[data-swifly-renderer="svg"]').length,3);
+ assert.equal(d.querySelectorAll(':is(.partyModeNav,.partyEntryTabs)>.svNavMatchedLens[data-swifly-renderer="blur"]').length,2,'segmented controls use the same clear frost without bending nearby panel borders');
  assert.equal(d.querySelectorAll('.partyModeNav button .svLiquidPane,.partyEntryTabs button .svLiquidPane,.svPlayerEmbedded .svLiquidPane').length,0,'tab children and player controls must not stack additional lenses');
  const removed=d.querySelector('.partySecondaryBtn');removed.remove();await tick();w.flush(32);
  assert.equal(removed.querySelector('.svLiquidPane'),null,'removed Party actions must release their child pane');

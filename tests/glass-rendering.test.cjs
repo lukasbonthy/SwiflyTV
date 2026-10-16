@@ -3,7 +3,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
 const {chromium}=require('playwright-core');
-const available=fs.existsSync(chromium.executablePath());
+const available=fs.existsSync(chromium.executablePath()) || fs.existsSync(chromium.executablePath().replace(/chromium-(\d+)\/chrome-linux\/chrome$/, 'chromium_headless_shell-$1/chrome-linux/headless_shell'));
 const asset=file=>fs.readFileSync(path.join(__dirname,'../public',file),'utf8');
 
 test('Visible optical panes stay inside their Party hosts and leave page content readable',{skip:!available&&'Chromium is not installed'},async()=>{
@@ -13,21 +13,21 @@ test('Visible optical panes stay inside their Party hosts and leave page content
   await page.setContent('<!doctype html><style>'+['liquid-glass/liquid-glass.css','clean/clean.css','liquid-glass/surfaces.css','party/party.css','liquid-glass/controls.css'].map(asset).join('\n')+
    '*{box-sizing:border-box}body{margin:0;background:repeating-linear-gradient(90deg,#778899 0 24px,#aabbcc 24px 48px);color:white}.svPartyHub{position:relative;min-height:700px;padding:80px 24px}.partyModeNav,.partyEntryTabs{display:flex;width:max-content;gap:8px;margin-bottom:32px;padding:5px;border-radius:24px}.partyModeNav button,.partyEntryTabs button{height:44px;padding:0 18px}.dsHeroActions{display:flex;gap:12px}.dsHeroActions button{height:40px;padding:0 24px}</style><body class="svCleanShell" data-st-glass="liquid"><main class="svPartyHub"><h1>Party Hub</h1><nav class="partyModeNav"><button class="partySecondaryBtn">Watch parties</button><button class="partySecondaryBtn">Community</button></nav><div class="partyEntryTabs"><button>Host a party</button><button>Join a party</button></div><section class="partySetup">Readable setup</section><div class="svPlayerEmbedded" data-player-root><button class="partyIconBtn">Play</button></div></main><div class="dsHeroActions"><button class="dsPrimaryBtn">Play</button><button class="dsSecondaryBtn">Details</button></div></body>');
   for(const file of ['liquid-glass/liquid-glass.js','liquid-glass/surfaces.js'])await page.addScriptTag({content:asset(file)});
-  await page.waitForFunction(()=>document.querySelector('.partyModeNav>.svLiquidPane')?.dataset.swiflyRenderer==='svg');
+  await page.waitForFunction(()=>document.querySelector('.partyModeNav>.svLiquidPane')?.dataset.swiflyRenderer==='blur');
   const bounds=await page.evaluate(()=>[...document.querySelectorAll('.partyModeNav,.partyEntryTabs')].map(host=>{
-   const pane=host.querySelector(':scope > .svNavMatchedLens'),a=host.getBoundingClientRect(),b=pane.getBoundingClientRect(),graph=pane.querySelector(':scope > svg').getBoundingClientRect();
-   return {nested:host.querySelectorAll('.svNavMatchedLens').length,host:{x:a.x,y:a.y,width:a.width,height:a.height},pane:{x:b.x,y:b.y,width:b.width,height:b.height},graph:{width:graph.width,height:graph.height}};
+   const pane=host.querySelector(':scope > .svNavMatchedLens'),a=host.getBoundingClientRect(),b=pane.getBoundingClientRect();
+   return {nested:host.querySelectorAll('.svNavMatchedLens').length,host:{x:a.x,y:a.y,width:a.width,height:a.height},pane:{x:b.x,y:b.y,width:b.width,height:b.height},graph:pane.querySelector(':scope > svg')};
   }));
   for(const {nested,host,pane,graph}of bounds){
    assert.equal(nested,1,'tab children must share the container lens');
    for(const key of ['x','y','width','height'])assert(Math.abs(host[key]-pane[key])<=2,'a pane must be bounded by its own host, never the page');
-   for(const key of ['width','height'])assert(Math.abs(graph[key]-pane[key])<=1,'icon SVG rules must not shrink the optical coordinate system');
+   assert.equal(graph,null,'segmented bars must not refract neighboring panel borders');
   }
   const dispersion=await page.locator('.svNavMatchedLens filter').evaluateAll(filters=>filters.map(filter=>{
    const scales=[...filter.querySelectorAll('feDisplacementMap')].map(node=>Number(node.getAttribute('scale')));
    return scales.length?Math.max(...scales)-Math.min(...scales):0;
   }));
-  assert(dispersion.length&&dispersion.every(value=>value<.75),'color separation must stay below a pixel even over high-contrast chat text');
+  assert(dispersion.length&&dispersion.every(value=>value>0&&value<=3),'RGB separation stays bounded at the rounded rim');
   assert.equal(await page.locator('main>.svNavMatchedLens,[data-player-root] .svNavMatchedLens,.partySetup>.svNavMatchedLens').count(),0);
   assert.equal(await page.locator('h1').textContent(),'Party Hub');
  }finally{await browser.close();}
@@ -46,12 +46,12 @@ test('Prominent refractive actions retain 44px pointer targets',{skip:!available
  }finally{await browser.close();}
 });
 
-for (const native of [false,true]) test((native?'Safari fallback':'Chromium')+' navigation and prominent actions share one readable neutral surface',{skip:!available&&'Chromium is not installed'},async()=>{
+for (const native of [false,true]) test((native?'Safari fallback':'Chromium')+' navigation and prominent actions share clear optical glass',{skip:!available&&'Chromium is not installed'},async()=>{
  const browser=await chromium.launch({headless:true});
  try{
   const context=await browser.newContext({viewport:{width:1024,height:800},...(native?{userAgent:'Mozilla/5.0 AppleWebKit/605.1.15 Version/18.6 Safari/605.1.15'}:{})}),page=await context.newPage();
   await page.setContent('<!doctype html><style>'+['liquid-glass/liquid-glass.css','clean/clean.css','clean/details.css','liquid-glass/surfaces.css','liquid-glass/controls.css','clean/cinema.css'].map(asset).join('\n')+
-   '*{box-sizing:border-box}body{margin:0;background:white;color:white}.dsHeroActions{position:absolute;top:200px;left:24px;display:flex;gap:12px}.dsHeroActions>*{height:40px;min-width:40px;padding:0 20px}.dsCardQuickActions{position:absolute;top:300px}.dsMiniBtn{width:32px;height:32px}a{color:white}.svCinemaPage{position:absolute;top:400px;left:24px}.svDetailActions button{height:40px;min-width:44px;padding:0 20px}</style><body class="svCleanShell" data-st-glass="liquid"><header class="topbar" data-sv-liquid-nav><nav class="container nav netflixNav"><div class="svLiquidPane" data-swifly-glass data-glass-tint=".025"></div><div class="navLeftCluster"><b>SWIFLYTV</b><div class="navLinks"><a>Home</a></div></div><button class="svNavButton">Search</button></nav></header><div class="dsHeroActions"><button class="dsPrimaryBtn">Play</button><button class="dsSecondaryBtn">Details</button><button class="dsIconBtn">+</button></div><div class="svCinemaPage"><div class="svDetailActions"><button class="dsPrimaryBtn">Play</button><button class="dsSecondaryBtn">Watch party</button><button class="dsIconBtn">+</button></div></div><div class="dsCardQuickActions"><button class="dsMiniBtn">+</button></div><button class="dsRowArrow">Next</button></body>');
+   '*{box-sizing:border-box}body{margin:0;background:white;color:white}.dsHeroActions{position:absolute;top:200px;left:24px;display:flex;gap:12px}.dsHeroActions>*{height:40px;min-width:40px;padding:0 20px}.dsCardQuickActions{position:absolute;top:300px}.dsMiniBtn{width:32px;height:32px}a{color:white}.svCinemaPage{position:absolute;top:400px;left:24px}.svDetailActions button{height:40px;min-width:44px;padding:0 20px}</style><body class="svCleanShell" data-st-glass="liquid"><header class="topbar" data-sv-liquid-nav><nav class="container nav netflixNav"><div class="svLiquidPane" data-swifly-glass data-glass-tint=".2"></div><div class="navLeftCluster"><b>SWIFLYTV</b><div class="navLinks"><a>Home</a></div></div><button class="svNavButton">Search</button></nav></header><div class="dsHeroActions"><button class="dsPrimaryBtn">Play</button><button class="dsSecondaryBtn">Details</button><button class="dsIconBtn">+</button></div><div class="svCinemaPage"><div class="svDetailActions"><button class="dsPrimaryBtn">Play</button><button class="dsSecondaryBtn">Watch party</button><button class="dsIconBtn">+</button></div></div><div class="dsCardQuickActions"><button class="dsMiniBtn">+</button></div><button class="dsRowArrow">Next</button></body>');
   for(const file of ['liquid-glass/liquid-glass.js','liquid-glass/surfaces.js'])await page.addScriptTag({content:asset(file)});
   await page.waitForFunction(()=>document.querySelectorAll('.dsHeroActions>.svNavMatchedOptic>.svNavMatchedLens').length===3);
   await page.waitForTimeout(80);
@@ -60,13 +60,13 @@ for (const native of [false,true]) test((native?'Safari fallback':'Chromium')+' 
    return {nav:sample(document.querySelector('.netflixNav>.svLiquidPane')),actions:[...document.querySelectorAll('.dsHeroActions>button,.svDetailActions>button')].map(host=>({round:host.matches('.svDetailActions .dsIconBtn'),host:sample(host),pane:sample(host.querySelector('.svNavMatchedLens')),hit:host.contains(document.elementFromPoint(host.getBoundingClientRect().x+host.offsetWidth/2,host.getBoundingClientRect().y+host.offsetHeight/2))})),repeat:[...document.querySelectorAll('.dsMiniBtn,.dsRowArrow')].map(sample),graphs:document.querySelectorAll('.svSharedGlassDefinitions,.svWebkitGlassOptics').length};
   });
   const rgba=state.nav.fill.match(/[\d.]+/g).map(Number),alpha=rgba[3]??1;
-  assert(alpha>=.6,'white artwork must not wash out the navigation');
-  assert.equal(state.nav.image,'none','one material fill must replace the stacked white gradients');
-  assert.equal(state.nav.before,'none');assert.equal(state.nav.after,'none','the material edge must not stack another white frame');
-  const composite=rgba.slice(0,3).map(c=>(c*alpha+255*(1-alpha))/255).map(c=>c<=.04045?c/12.92:((c+.055)/1.055)**2.4);
-  assert(1.05/(composite[0]*.2126+composite[1]*.7152+composite[2]*.0722+.05)>=4.5,'navigation labels must retain readable contrast over white artwork');
+  assert(alpha>=.1&&alpha<=.25,'artwork must remain visible through clear navigation glass');
+  assert.deepEqual(rgba.slice(0,3),[255,255,255],'the clear face adds white frost rather than an opaque dark plate');
+  assert.equal(state.nav.image,'none','one material fill must replace stacked gradients');
+  assert.equal(state.nav.before,'none');assert.equal(state.nav.after,'none','the optical rim must not stack another white frame');
+  assert.notEqual(await page.locator('.netflixNav .navLinks>a').evaluate(node=>getComputedStyle(node).textShadow),'none','labels retain a local shadow over bright art without obscuring the whole pane');
   for(const {round,host,pane,hit} of state.actions){
-   assert.equal(pane.fill,state.nav.fill,'Play, Details and icon actions use the navigation material');
+   const actionColor=pane.fill.match(/[\d.]+/g).map(Number);assert.deepEqual(actionColor.slice(0,3),rgba.slice(0,3),'all prominent actions use the same clear glass family');assert(actionColor[3]>0&&actionColor[3]<=.25,'prominent actions retain the artwork through a light frost');
    assert.equal(pane.shadow,state.nav.shadow,'one quiet edge belongs to the pane');
    assert.equal(host.shadow,'none');assert.equal(host.border,'0px');assert.equal(host.image,'none','component styles must not add a pale fill over the shared material');
    assert.equal(host.before,'none');assert.equal(host.after,'none');
@@ -102,7 +102,7 @@ test('Player pages retain the shared readable navigation without control overrid
   await page.evaluate(()=>{document.body.dataset.stGlass='liquid';document.body.dataset.svScrolled='true';});
   for(const file of ['liquid-glass/liquid-glass.js','liquid-glass/surfaces.js'])await page.addScriptTag({content:asset(file)});
   await page.waitForFunction(()=>document.querySelector('.netflixNav>.svLiquidPane')?.dataset.swiflyRenderer==='svg');
-  assert.equal(await page.locator('.netflixNav>.svLiquidPane').evaluate(node=>getComputedStyle(node).backgroundColor),'rgba(12, 15, 20, 0.62)','scrolling keeps the same neutral navigation material on player routes');
+  assert.equal(await page.locator('.netflixNav>.svLiquidPane').evaluate(node=>getComputedStyle(node).backgroundColor),'rgba(255, 255, 255, 0.2)','scrolling keeps clear navigation glass on player routes');
   assert.equal(await page.locator('[data-player-root] .svGlassSurface,[data-player-root] .svLiquidPane').count(),0);
  }finally{await browser.close();await new Promise(resolve=>api.io.close(resolve));}
 });

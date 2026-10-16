@@ -1,18 +1,18 @@
-/* One neutral pane for native frost and supported live backdrop refraction. */
+/* Clear glass: a translucent face, rounded refracted rim and native fallback. */
 .svLiquidPane {
   --sv-glass-radius: 24px;
-  --sv-glass-tint: var(--sv-glass-default-tint, .62);
-  --sv-glass-saturation: 1.05;
+  --sv-glass-tint: var(--sv-glass-default-tint, .2);
+  --sv-glass-saturation: 1;
   position: absolute;
   inset: 0;
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
   border-radius: var(--sv-glass-radius);
-  background: rgb(12 15 20 / var(--sv-glass-tint));
-  -webkit-backdrop-filter: blur(14px) saturate(var(--sv-glass-saturation));
-  backdrop-filter: blur(14px) saturate(var(--sv-glass-saturation));
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / .16), 0 6px 18px rgb(0 0 0 / .18);
+  background: rgb(255 255 255 / var(--sv-glass-tint));
+  -webkit-backdrop-filter: blur(12px) saturate(var(--sv-glass-saturation));
+  backdrop-filter: blur(12px) saturate(var(--sv-glass-saturation));
+  box-shadow: inset 0 0 0 .5px rgb(255 255 255 / .3), 0 4px 16px rgb(0 0 0 / .06), 0 8px 24px rgb(0 0 0 / .04);
 }
 .svLiquidPane[data-swifly-renderer="svg"] {
   -webkit-backdrop-filter: var(--sv-glass-filter) saturate(var(--sv-glass-saturation));
@@ -30,10 +30,8 @@
 /* Keep navigation identical on player routes, which omit control styles.
    This also protects pane spans from component text-label resets. */
 body.svCleanShell .svLiquidPane.svLiquidPane {
-  --sv-glass-tint: .62 !important;
-  --sv-glass-saturation: 1.05 !important;
-  background: rgb(12 15 20 / var(--sv-glass-tint)) !important;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / .16), 0 6px 18px rgb(0 0 0 / .18) !important;
+  background: rgb(255 255 255 / var(--sv-glass-tint)) !important;
+  box-shadow: inset 0 0 0 .5px rgb(255 255 255 / .3), 0 4px 16px rgb(0 0 0 / .06), 0 8px 24px rgb(0 0 0 / .04) !important;
 }
 body [data-sv-liquid-nav].topbar {
   position: fixed !important;
@@ -78,6 +76,21 @@ body [data-sv-liquid-nav].topbar .navLeftCluster { display: flex; align-items: c
 body [data-sv-liquid-nav].topbar .navLinks { display: flex; align-items: center; flex: 1; gap: 14px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
 body [data-sv-liquid-nav].topbar .navLinks::-webkit-scrollbar { display: none; }
 body [data-sv-liquid-nav].topbar .navLinks > a { min-height: 38px; }
+body.svCleanShell [data-sv-liquid-nav].topbar .netflixNav :is(.netflixWordmark,.navLinks > a,.svNavButton,.profilePill) {
+  color: #fff !important;
+  text-shadow: 0 1px 3px rgb(0 0 0 / .75), 0 1px 8px rgb(0 0 0 / .3) !important;
+}
+body.svCleanShell [data-sv-liquid-nav].topbar .netflixNav .navLinks { gap: 2px !important; }
+body.svCleanShell [data-sv-liquid-nav].topbar .netflixNav .navLinks > a {
+  padding-inline: 9px !important;
+  border-radius: 13px !important;
+  color: rgb(255 255 255 / .82) !important;
+}
+body.svCleanShell [data-sv-liquid-nav].topbar .netflixNav .navLinks > a:is(.active,:hover,:focus-visible) {
+  background: rgb(0 0 0 / .13) !important;
+  box-shadow: inset 0 0 0 .5px rgb(255 255 255 / .12) !important;
+  color: #fff !important;
+}
 body .dsProfileDropdown.svLiquidDropdown {
   isolation: isolate;
   z-index: 5;

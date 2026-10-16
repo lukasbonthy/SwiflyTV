@@ -269,7 +269,7 @@ test('Aurora Lab hides its extra controls for a non-Aurora backdrop', () => {
 });
 
 
-test('Original v163 aurora artwork is restored, with smooth multi-stage movement',()=>{
+test('Original v163 Aurora artwork stays cached while catalog interaction receives the motion budget',()=>{
  const env=studio(),d=env.window.document;
  const scene=d.querySelector('.svAuroraBackground');
  assert(scene);
@@ -279,15 +279,8 @@ test('Original v163 aurora artwork is restored, with smooth multi-stage movement
  assert.match(svg,/#4cd9b8/,'original colored ribbon asset should be unchanged');
  assert.match(svg,/id="arc"/,'original curved light art should be unchanged');
  assert.match(css,/aurora-ribbon\.svg\?v=170/);
- assert.match(css,/@keyframes svOriginalAuroraFlow/);
- assert.match(css,/@keyframes svOriginalAuroraEcho/);
- assert.match(css,/animation-delay:-17s/);
- assert.match(css,/22% \{transform:/);
- assert.match(css,/47% \{transform:/);
- assert.match(css,/73% \{transform:/);
- assert.match(css,/var\(--sv-aurora-speed,32s\)/);
- assert.match(css,/infinite alternate paused/,'animations default to paused in the CSS shorthand');
- assert.match(css,/animation-play-state:running/);
+ assert.match(css,/animation:none;animation-name:none;will-change:auto/,'Large ribbon layers must settle rather than invalidate the live glass continuously');
+ assert.doesNotMatch(css,/animation-name:sv(?:Original|Touch)Aurora|animation:svOriginalAurora/);
  assert.match(css,/prefers-reduced-motion/);
  assert.doesNotMatch(css,/\.svAuroraCanvas|mix-blend-mode:screen|\[data-sv-renderer="webgl"\]/);
 });
@@ -295,7 +288,7 @@ test('Original v163 aurora artwork is restored, with smooth multi-stage movement
 test('Original Aurora stays behind content instead of painting strips over rails',()=>{
  const css=fs.readFileSync(path.join(__dirname,'../public/clean/aurora.css'),'utf8');
  assert.match(css,/z-index:0;overflow:hidden;pointer-events:none/);
- assert.match(css,/body\.svCleanShell > main,body\.svCleanShell > \.footer \{position:relative;z-index:1\}/);
+ assert.match(css,/body\.svCleanShell > main,body\.svCleanShell > \.footer,\s*body\.svCleanShell > \.svBrowseScene \{position:relative;z-index:1\}/);
  assert.match(css,/\.dsPlainPage,\.dsSearchPage,\.dsWatchlistPage,\.dsAccountPage,\.dsProfilesPage,\.dsContent/);
  assert.match(css,/\.dsContent::before,body\.svCleanShell \.dsContent::after \{display:none !important/);
  assert.doesNotMatch(css,/body\.svCleanShell\[data-st-backdrop="aurora"\] :is\(\.dsContent[^)]*\) \{\s*background-image:radial-gradient/);

@@ -43,6 +43,19 @@ function observableTracks(w, tracks=[]) {
   list.add=track=>{list[list.length++]=track;list.dispatchEvent(new w.Event('addtrack'));};return list;
 }
 
+test('The theater follows real video dimensions and ignores detached source events',async()=>{
+  const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/wide.mp4'});
+  const original=e.video();let width=1920,height=800;
+  Object.defineProperties(original,{videoWidth:{get:()=>width},videoHeight:{get:()=>height}});
+  e.event('loadedmetadata');
+  assert.equal(Number(e.app.style.getPropertyValue('--player-aspect')),2.4);
+  width=1440;height=1080;e.event('resize');
+  assert(Math.abs(Number(e.app.style.getPropertyValue('--player-aspect'))-4/3)<.00001);
+  await e.api.loadSource({status:'ok',playbackUrl:'/next.mp4'});
+  width=800;height=1920;e.event('resize',original);
+  assert.notEqual(Number(e.app.style.getPropertyValue('--player-aspect')),width/height,'discarded video elements cannot resize a new source');
+});
+
 test('Native audio prefers a known English track and keeps a chosen language across source changes',async()=>{
   const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/multilingual.mp4'});
   const tracks=observableTracks(e.w,[{language:'fr',label:'Français',enabled:true},{language:'en',label:'English',enabled:false}]);e.state(e.video()).audioTracks=tracks;e.ready();
@@ -398,7 +411,7 @@ function basePlayerCss(css) {
   return css.replace(/@container[^{}]+\{(?:[^{}]|\{[^{}]*\})*\}/g,'');
 }
 test('Player styling integrates the room grid and preserves visible focus',()=>{
-  const file=path.join(root,'public/player/player.css');assert(fs.existsSync(file),'The player needs its own cohesive stylesheet');const css=fs.readFileSync(file,'utf8');const dom=new JSDOM('<body class="svCleanShell"><style>'+basePlayerCss(css)+'</style>'+markup(base)+'</body>'),w=dom.window,d=w.document;const app=d.querySelector('.svPlayerPage');assert.equal(w.getComputedStyle(d.querySelector('[data-player-stage]')).aspectRatio,'16 / 9');app.dataset.partyActive='true';assert.match(w.getComputedStyle(d.querySelector('.svPlayerLayout')).gridTemplateColumns,/320px/);assert.match(css,/focus-visible[^}]*outline[^}]*!important/s);assert.match(css,/prefers-reduced-motion/);dom.window.close();
+  const file=path.join(root,'public/player/player.css');assert(fs.existsSync(file),'The player needs its own cohesive stylesheet');const css=fs.readFileSync(file,'utf8');const dom=new JSDOM('<body class="svCleanShell"><style>'+basePlayerCss(css)+'</style>'+markup(base)+'</body>'),w=dom.window,d=w.document;const app=d.querySelector('.svPlayerPage');assert.equal(w.getComputedStyle(d.querySelector('[data-player-stage]')).aspectRatio,'var(--player-aspect)');app.dataset.partyActive='true';assert.match(w.getComputedStyle(d.querySelector('.svPlayerLayout')).gridTemplateColumns,/320px/);assert.match(css,/focus-visible[^}]*outline[^}]*!important/s);assert.match(css,/prefers-reduced-motion/);dom.window.close();
 });
 test('Player support-hidden controls stay hidden despite the shared control display rule',()=>{
   const css=fs.readFileSync(path.join(root,'public/player/player.css'),'utf8');const dom=new JSDOM('<body class="svCleanShell"><style>'+basePlayerCss(css)+'</style>'+markup(base)+'</body>'),w=dom.window,d=w.document;
