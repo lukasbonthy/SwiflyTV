@@ -10,15 +10,19 @@ function wheel(w, target, options = {}) {
   return event;
 }
 
-test('A discrete wheel step responds on the first frame and finishes within a quarter second', () => {
+test('A discrete wheel step builds gently and retains a bounded inertial settle', () => {
   for (const interval of [8, 16]) {
     const env = browser('<main>Catalog</main>'), w = env.window;
     w.boot('motion.js');
     assert.equal(wheel(w, w.document.querySelector('main')).defaultPrevented, true);
     w.flush(interval);
-    assert(env.page.scrollTop >= 24 && env.page.scrollTop < 65, 'The first frame should feel responsive without jumping the full wheel distance');
+    assert(env.page.scrollTop >= 6 && env.page.scrollTop < 18, 'The first frame should begin gently instead of spending most of the gesture immediately');
     for (let time = interval * 2; time <= 240; time += interval) w.flush(time);
-    assert.equal(env.page.scrollTop, 120, 'The browser must receive the ordinary wheel distance by 240ms');
+    assert(env.page.scrollTop > 75 && env.page.scrollTop < 110, 'The gesture should still have visible distance to settle after 240ms');
+    for (let time = 240 + interval; time <= 600; time += interval) w.flush(time);
+    assert(env.page.scrollTop > 114 && env.page.scrollTop < 120, 'The glide should retain its final controlled approach at 600ms');
+    for (let time = 600 + interval; time <= 1100; time += interval) w.flush(time);
+    assert.equal(env.page.scrollTop, 120, 'The ordinary wheel distance must finish within a bounded time');
     assert.equal(w.frameCount(), 0, 'The easing must have a bounded finish with no idle frame');
     env.finish();
   }
@@ -28,7 +32,7 @@ test('A delayed frame finishes wheel motion without adding a long settling tail'
   const env = browser('<main>Catalog</main>'), w = env.window;
   w.boot('motion.js');
   wheel(w, w.document.querySelector('main'));
-  w.flush(16); w.flush(300);
+  w.flush(16); w.flush(1400);
   assert.equal(env.page.scrollTop, 120, 'Elapsed time should finish the gesture after a delayed frame');
   assert.equal(w.frameCount(), 0);
   env.finish();
@@ -97,14 +101,14 @@ test('Non-cancelable wheel delivery and player surfaces retain native input', ()
   }
 });
 
-test('Section reveals finish promptly and remain visible without JavaScript or after preference changes', () => {
+test('Section reveals have a measured settle and remain visible without JavaScript or after preference changes', () => {
   const env = browser('<section class="svCatalogRow">Movies</section>'), w = env.window, d = w.document, section = d.querySelector('section');
   const style = d.createElement('style'); style.textContent = source('motion.css'); d.head.append(style);
   assert.notEqual(w.getComputedStyle(section).opacity, '0', 'Content is available before motion initializes');
   section.getBoundingClientRect = () => ({top:1600, height:400});
   w.boot('motion.js');
   const durations = [...w.getComputedStyle(section).transition.matchAll(/([.\d]+)(ms|s)\b/g)].map(([, value, unit]) => Number(value) * (unit === 's' ? 1000 : 1));
-  assert(durations.length > 0 && Math.max(...durations) <= 450, 'An entering section should finish its subtle reveal within 450ms');
+  assert(durations.length > 0 && Math.max(...durations) >= 650 && Math.max(...durations) <= 1000, 'Entering sections should settle gradually without keeping content in motion indefinitely');
   w.reduceMotion(true);
   assert.equal(w.getComputedStyle(section).opacity, '1', 'A preference change must reveal pending content immediately');
   env.finish();

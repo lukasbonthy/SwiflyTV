@@ -177,7 +177,7 @@ test('the cinema image fade loads after Aurora and Welcome styles',async()=>{
    const d=parse(await response.text()).window.document;
    const styles=[...d.querySelectorAll('link[rel="stylesheet"]')].map(link=>link.getAttribute('href'));
    const aurora=styles.findIndex(v=>v.includes('/assets/clean/aurora.css?v=202'));
-   const fade=styles.findIndex(v=>v.includes('/assets/clean/hero-fade.css?v=201'));
+   const fade=styles.findIndex(v=>v.includes('/assets/clean/hero-fade.css?v=204'));
    assert(aurora>=0 && fade>aurora,route+' fade must follow aurora');
    if(route==='/welcome'){
      const welcome=styles.findIndex(v=>v.includes('/assets/clean/welcome.css'));
@@ -210,7 +210,7 @@ test('movie discovery artwork fades beyond the hero without a visible seam',asyn
  const d=parse(await(await fetch(base+'/welcome')).text()).window.document;
  assert(d.querySelector('.dsWelcomeHero .dsWelcomeHeroBg'));
  assert(d.querySelector('#discovery.dsWelcomeDiscovery'));
- const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=201')).text();
+ const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=204')).text();
  assert.match(css,/\.svWelcomeClean \.dsWelcomeHeroBg \{/);
  assert.match(css,/bottom:-36px !important/,'backdrop continues beneath the hero');
  assert.match(css,/\.svWelcomeClean \.svWelcomeDiscoveryIntro \{/);
@@ -240,10 +240,10 @@ test('Featured art carries one decorative low-resolution light spill into discov
   assert.equal(bridge.querySelectorAll('img').length,1,'one static ambient layer');
   assert.equal(bridge.getAttribute('style'),null,'no unbounded inline background paint');
   assert.equal(rows.getAttribute('style'),null,'discovery never paints a second artwork');
-  assert(d.querySelector('link[href="/assets/clean/hero-fade.css?v=201"]'));
+  assert(d.querySelector('link[href="/assets/clean/hero-fade.css?v=204"]'));
   assert(!d.querySelector('script[src*="/assets/clean/hero-palette.js"]'),'CSS spill needs no canvas sampling');
  }
- const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=201')).text();
+ const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=204')).text();
  assert.match(css,/overflow:hidden !important/,'movie must be clipped inside hero');
  assert.match(css,/bottom:0 !important/,'original art stops at hero bottom');
  assert.match(css,/background-repeat:no-repeat !important/);
@@ -431,7 +431,7 @@ test('Cinema keeps natural featured color and preserves the existing optical gla
  assert.equal(nav.dataset.glassBlur,'2.4');
  assert.equal(nav.dataset.glassSaturation,'1.28');
  assert(d.querySelector('script[src="/assets/liquid-glass/liquid-glass.js?v=202"]'));
- const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=201')).text();
+ const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=204')).text();
  assert.match(css,/filter:none !important/);
  assert.match(css,/overflow:hidden !important/,'movie picture remains clipped');
  assert.doesNotMatch(css,/background-image:var\(--sv-cinema-art\)|background-image:var\(--sv-light-art\)/,'no duplicated artwork');
