@@ -337,7 +337,12 @@
     }
     function bindMedia(token) {
       const current=video,guard=fn=>event=>{if(alive(token)&&video===current)fn(event);};
-      listen(current,'loadedmetadata',guard(()=>{applyResume();updateTime();updateCaptions({prefer:true});updateAudio({prefer:true});}),mediaListeners);
+      const fitPicture=()=>{
+        const width=current.videoWidth,height=current.videoHeight;
+        if(width>0&&height>0)app.style.setProperty('--player-aspect',String(width/height));
+      };
+      listen(current,'loadedmetadata',guard(()=>{fitPicture();applyResume();updateTime();updateCaptions({prefer:true});updateAudio({prefer:true});}),mediaListeners);
+      listen(current,'resize',guard(fitPicture),mediaListeners);
       listen(current,'durationchange',guard(()=>{applyResume();updateTime();}),mediaListeners);
       const canPlay=guard(()=>{
         if(current.readyState<2)return;const first=!playable;playable=true;applyResume();if(first||current.paused)stopWatchdog();

@@ -1,7 +1,11 @@
-/* Touch devices reserve continuous compositing for the bounded Aurora layer.
+/* Touch devices keep decorative art cached while interaction receives motion.
    These decorative loops otherwise repaint a large image, text, or shadow. */
 @media (pointer: coarse) {
   body.svCleanShell .netflixWordmark,
   body.svCleanShell .dsHeroBg,
   body.svCleanShell .dsHeroActions > .dsPrimaryBtn {animation:none !important}
 }
+/* Legacy card/rail hints reserved a layer for every poster, even while idle.
+   Hover and row transitions can acquire a layer only for their active motion. */
+body.svCleanShell :is(.movieCard,.dsThumb,.dsRow,.movieRail,.dsRail,.nfTopTenRail,.dsWelcomeRailTrack) {will-change:auto !important}
+body.svCleanShell :is(.movieRail,.dsRail) {transform:none !important}

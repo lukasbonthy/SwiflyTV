@@ -9,7 +9,7 @@ const {playerMarkup, episodePickerMarkup} = require('../ui/player');
 const {loadServer} = require('./ui-helpers.cjs');
 
 const executablePath = process.env.SWIFLY_TEST_BROWSER_EXECUTABLE_PATH;
-const available = fs.existsSync(executablePath || chromium.executablePath());
+const available = fs.existsSync(executablePath || chromium.executablePath()) || (!executablePath && fs.existsSync(chromium.executablePath().replace(/chromium-(\d+)\/chrome-linux\/chrome$/, 'chromium_headless_shell-$1/chrome-linux/headless_shell')));
 const asset = file => fs.readFileSync(path.join(__dirname, '../public', file), 'utf8');
 const options = {
   id:'101', type:'tv', title:'A very long series title for a small screen', managed:true,
@@ -86,7 +86,7 @@ async function assertMenuReachable(page) {
 
 test('The complete theater and transport fit the page viewport without cropping the film', {skip:!available && 'Chromium is not installed'}, async () => {
   for (const viewport of [
-    {width:1440,height:900}, {width:1024,height:768}, {width:768,height:1024},
+    {width:1911,height:938}, {width:1440,height:900}, {width:1024,height:768}, {width:768,height:1024},
     {width:320,height:568}, {width:390,height:844}, {width:980,height:440}, {width:844,height:390}
   ]) {
     const {page, context} = await open(viewport);
@@ -115,6 +115,8 @@ test('The complete theater and transport fit the page viewport without cropping 
         assert(geometry.stage.height >= viewport.height - 120, `${label}: landscape cinema must leave most of the viewport for the picture`);
       }
       assert.equal(geometry.fit, 'contain', `${label}: retain every film edge and its original aspect ratio`);
+      assert(Math.abs(geometry.stage.width / geometry.stage.height - 16 / 9) < .015,
+        `${label}: a height-limited theater must narrow with the picture instead of adding internal side mattes`);
       assert(geometry.video.left >= geometry.stage.left && geometry.video.right <= geometry.stage.right + .5, `${label}: video bounds must stay inside the stage`);
       assert(geometry.seek.height >= 44, `${label}: seeking needs a 44px touch area`);
       for (const [index, target] of geometry.targets.entries()) {

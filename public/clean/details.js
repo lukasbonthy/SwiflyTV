@@ -5,6 +5,7 @@
   let dialog,viewport,scrim,trigger,lastTrigger,request,currentHref='',generation=0,started=false,closingHistory=false,closingDialog=false;
   let trail=[],pendingOpen=[],currentURL='';
   let sheetTransition=null,transitionEpoch=0,closeWantsHistory=false;
+  let sceneRecords=[];
   const motionPreference=window.matchMedia('(prefers-reduced-motion: reduce)');
   const reducedMotion=()=>motionPreference.matches||document.body.classList.contains('reduceMotion');
   const enterDuration=900,exitDuration=560;
@@ -98,6 +99,39 @@
   function rememberDetailScroll() {
     const entry=ownEntry();if(entry){const scroll=dialog?.hasAttribute('aria-busy')?scrollPositions.get(currentURL)||0:viewport?.scrollTop||0;scrollPositions.set(currentURL,scroll);writeHistory('replaceState',{...history.state,svDetails:{...entry,scroll}},route(new URL(location.href)));}
   }
+  function updateSceneGeometry() {
+    if(!sceneRecords.length)return;
+    const width=Math.max(1,window.innerWidth),height=window.innerHeight;
+    const scroll=window.scrollY||document.scrollingElement?.scrollTop||0;
+    // Fixed navigation keeps its own containing block. The flowing scene is
+    // clipped to the current viewport before scaling, rather than promoting a
+    // long catalog bitmap or changing the document's scroll position.
+    const geometry=sceneRecords.map(record=>{
+      const {element,scene}=record,origin=scene?Math.max(0,scroll-element.offsetTop):-element.offsetTop;
+      const bottom=scene?Math.max(0,element.offsetHeight-origin-height):0;
+      return {element,scene,origin,bottom};
+    });
+    for(const {element,scene,origin,bottom} of geometry){
+      element.style.setProperty('--sv-detail-scene-scale',String(Math.max(.85,1-26/width)));
+      element.style.setProperty('--sv-detail-scene-origin-y',origin+'px');
+      if(scene)element.style.setProperty('--sv-detail-scene-clip','inset('+origin+'px 0px '+bottom+'px round 8px)');
+    }
+  }
+  function prepareScene() {
+    if(reducedMotion()||sceneRecords.length)return;
+    const scene=document.querySelector('body > [data-sv-browse-scene]');
+    if(!scene)return;
+    const targets=[scene,...document.querySelectorAll('body > .topbar,body > .mobileNav')];
+    sceneRecords=targets.map(element=>({element,scene:element===scene,previous:['--sv-detail-scene-scale','--sv-detail-scene-origin-y','--sv-detail-scene-clip'].map(name=>[name,element.style.getPropertyValue(name)])}));
+    updateSceneGeometry();
+  }
+  function clearScene() {
+    delete document.documentElement.dataset.svDetailScene;
+    if(!sceneRecords.length)return;
+    for(const {element,previous} of sceneRecords)for(const [name,value] of previous){if(value)element.style.setProperty(name,value);else element.style.removeProperty(name);}
+    sceneRecords=[];
+  }
+  function sceneState(state) {if(sceneRecords.length&&!reducedMotion())document.documentElement.dataset.svDetailScene=state;}
   function cancelSheetTransition() {
     transitionEpoch++;
     const active=sheetTransition;sheetTransition=null;if(!active)return;
@@ -112,10 +146,12 @@
     const epoch=transitionEpoch,duration=entering?enterDuration:exitDuration;
     const active={epoch,animations:[],timer:null,complete:null};sheetTransition=active;
     dialog.dataset.svDetailState=state;scrim.dataset.svDetailState=state;
+    sceneState(state);
     const settle=()=>{
       if(sheetTransition!==active||epoch!==transitionEpoch)return;
       sheetTransition=null;clearTimeout(active.timer);
       dialog.dataset.svDetailState=entering?'open':'closed';scrim.dataset.svDetailState=entering?'open':'closed';
+      sceneState(entering?'open':'closed');
       dialog.style.removeProperty('--sv-detail-start');scrim.style.removeProperty('--sv-detail-dim-start');
       for(const animation of active.animations)animation.cancel();
       complete?.();
@@ -146,12 +182,13 @@
     // A bounded timer also completes when a background tab drops animationend entirely.
     active.timer=setTimeout(settle,duration+34);
   }
-  function settleReducedMotion() {if(reducedMotion())sheetTransition?.complete();}
+  function settleReducedMotion() {if(reducedMotion()){sheetTransition?.complete();clearScene();}}
   function reset() {
     cancelSheetTransition();generation++;request?.abort();request=null;window.SwiflyMotion?.stop(viewport);window.SwiflyMotion?.release(viewport);
     if(scrim){scrim.hidden=true;scrim.dataset.svDetailState='closed';}
     if(dialog){dialog.dataset.svDetailState='closed';dialog.removeAttribute('aria-busy');}
     document.documentElement.classList.remove('svDetailsOpen');
+    clearScene();
     if(trigger?.isConnected)trigger.focus({preventScroll:true});lastTrigger=trigger||lastTrigger;trigger=null;
     viewport?.replaceChildren();currentHref='';currentURL='';trail=[];
   }
@@ -195,12 +232,12 @@
     ensureDialog();request?.abort();window.SwiflyMotion?.stop(viewport);window.SwiflyMotion?.release(viewport);
     request=new AbortController();const current=++generation;currentHref=href;currentURL=route(new URL(location.href));scrollPositions.set(currentURL,scroll);
     const entering=!dialog.open||dialog.dataset.svDetailState==='closing';
-    if(!dialog.open){trigger=from||lastTrigger||document.activeElement;window.SwiflyMotion?.stop();document.documentElement.classList.add('svDetailsOpen');scrim.hidden=false;dialog.showModal();}
+    if(!dialog.open){trigger=from||lastTrigger||document.activeElement;window.SwiflyMotion?.stop();prepareScene();document.documentElement.classList.add('svDetailsOpen');scrim.hidden=false;dialog.showModal();}
     viewport.scrollTop=0;dialog.classList.remove('svDetailScrolled');dialog.setAttribute('aria-busy','true');
     dialog.setAttribute('aria-label','Movie details');dialog.querySelector('.svDetailChromeTitle').textContent='Movie details';
     viewport.innerHTML='<div class="svDetailLoading" role="status"><div class="svDetailLoadingArt"></div><div class="svDetailLoadingCopy"><span></span><span></span><span></span></div><p>Loading details…</p></div>';
     dialog.querySelector('[data-sv-dialog-back]').setAttribute('aria-label',trail.length?'Back to previous title':'Back to browsing');
-    if(entering){closeWantsHistory=false;moveSheet('opening',()=>window.SwiflyMotion?.refresh(viewport));}
+    if(entering){closeWantsHistory=false;moveSheet('opening',()=>{window.SwiflyGlassSurfaces?.refresh(dialog);window.SwiflyMotion?.refresh(viewport);});}
     try {
       const scope=syncFragmentScope();let html=scope===null?null:recentFragment(href);const cached=html!==null;
       if(html===null){const response=await fetch(href+'?view=modal',{signal:request.signal,headers:{Accept:'text/html'}});if(!response.ok)throw new Error('Details unavailable');html=await response.text();}
@@ -276,6 +313,7 @@
   function boot() {
     if(started)return;started=true;rememberCatalog();initialize(document);
     motionPreference.addEventListener?.('change',settleReducedMotion);
+    window.addEventListener('resize',()=>{if(dialog?.open)updateSceneGeometry();},{passive:true});
     new MutationObserver(settleReducedMotion).observe(document.body,{attributes:true,attributeFilter:['class']});
     document.addEventListener('click',event=>{
       const link=event.target.closest('a[href]');if(!link||event.defaultPrevented||event.button>0||event.ctrlKey||event.metaKey||event.altKey||event.shiftKey||link.hasAttribute('download')||(link.target&&link.target!=='_self'))return;

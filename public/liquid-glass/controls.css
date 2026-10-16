@@ -14,12 +14,12 @@ body.svCleanShell :is(.netflixNav,.dsWelcomeNav) :is(.svNavButton,.svWelcomeStud
 }
 body.svCleanShell .netflixNav .navLinks > a {
   color: #f5f6f8 !important;
-  text-shadow: 0 1px 2px rgb(0 0 0 / .2) !important;
+  text-shadow: 0 1px 3px rgb(0 0 0 / .8), 0 1px 8px rgb(0 0 0 / .35) !important;
 }
 body.svCleanShell .svGlassSurface.svGlassControl.svGlassControl {
   color: #f5f6f8 !important;
   -webkit-text-fill-color: currentColor !important;
-  text-shadow: 0 1px 2px rgb(0 0 0 / .2);
+  text-shadow: 0 1px 3px rgb(0 0 0 / .7), 0 1px 8px rgb(0 0 0 / .3);
 }
 /* Remove component bevels, which otherwise frame the pane a second time. */
 body.svCleanShell .svGlassSurface.svGlassSurface::before,

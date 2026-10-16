@@ -48,6 +48,9 @@
   }
   function activate(entry) {
     if (!entry.visible || !entry.host.isConnected || document.hidden || !liquidPreference() || !window.SwiflyLiquidGlass) return;
+    // Keep the native clear pane while the weighted sheet rises. Building its
+    // optical maps at rest avoids competing with the first animation frames.
+    const deferred=Boolean(entry.host.closest('.svDetailDialog[data-sv-detail-state="opening"]'));
     // Same DOM architecture as the working navbar: actual backdrop-filter
     // lives on a .svLiquidPane child, NOT on the isolated control itself.
     if (entry.optic) {
@@ -75,13 +78,14 @@
       }
       if (!entry.opticController) {
         entry.opticController=window.SwiflyLiquidGlass.mount(entry.opticPane, {
-          tint:.62,saturation:1.05,
-          distortionScale:-180,channelOffsets:[0,1,2]
+          tint:.12,saturation:1,
+          distortionScale:-180,channelOffsets:[0,1.5,3]
         });
-      } else if (!entry.opticController.enabled) entry.opticController.setEnabled(true);
+        if(deferred)entry.opticController.setEnabled(false);
+      } else if(entry.opticController.enabled===deferred)entry.opticController.setEnabled(!deferred);
     }
     if (!entry.complex) return;
-    if (!entry.controller) entry.controller = window.SwiflyLiquidGlass.mount(entry.host, {tint:.62,saturation:1.05});
+    if (!entry.controller) entry.controller = window.SwiflyLiquidGlass.mount(entry.host, {tint:.2,saturation:1});
     else if (!entry.controller.enabled) entry.controller.setEnabled(true);
     else if (entry.controller.supported && !filter(entry.host)) entry.controller.refresh();
   }

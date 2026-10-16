@@ -1,7 +1,7 @@
 /* One theater and transport for solo and shared playback. */
 .svPlayer {
   --player-canvas:#101012; --player-accent:#f2f1f6; --player-line:#ffffff24;
-  --player-muted:#afb0ba; --player-control-size:44px; --player-ease:cubic-bezier(.2,.75,.25,1);
+  --player-muted:#afb0ba; --player-control-size:44px; --player-aspect:1.7777778; --player-ease:cubic-bezier(.2,.75,.25,1);
   color:#f5f4f8; font-family:var(--st-font,"Host Grotesk",system-ui,sans-serif);
   min-width:0; position:relative; isolation:isolate; container-type:inline-size; container-name:sv-player;
 }
@@ -27,17 +27,18 @@ body.svCleanShell .svPlayerPage .svPlayerModes.svGlassPanel { display:flex; alig
 .svPlayerPartySlot { display:none; }
 .svPlayerPage[data-party-active="true"] .svPlayerPartySlot { display:block; }
 .svPlayerTheater { position:relative; width:100%; min-width:0; border-radius:20px; }
+.svPlayerPage .svPlayerTheater { width:min(100%,calc(var(--player-theater-height) * var(--player-aspect))); margin-inline:auto; }
 /* A fallback menu must also clear sibling page chrome in embedded hosts. */
-body.svCleanShell > main:has(.svPlayerPopover[open]),
+body.svCleanShell main:has(.svPlayerPopover[open]),
 .svPlayer:has(.svPlayerPopover[open]) { z-index:30; }
 .svPlayerTheater:has(.svPlayerPopover[open]),.svPlayerEmbedded:has(.svPlayerPopover[open]) { z-index:15; }
 body.svCleanShell .svPlayerTheater:has(.svPlayerPopover[open]) { animation:none !important; transform:none !important; opacity:1 !important; }
 /* Playback frames never enter, pulse, pan, fade or scale. */
 body.svCleanShell .svPlayer:is([data-player-state="ready"],[data-player-state="buffering"],[data-player-state="ended"]) .svPlayerTheater { animation:none !important; transform:none !important; opacity:1 !important; }
-.svPlayerStage { container-type:inline-size; container-name:sv-stage; position:relative; isolation:isolate; width:100%; aspect-ratio:16 / 9; min-width:0; border:1px solid var(--player-line); border-radius:20px; background:#000; box-shadow:0 20px 64px #0006; }
-/* Keep the complete frame and transport in view. A short viewport gets a
-   black cinema matte; the film itself always retains its original framing. */
-.svPlayerPage .svPlayerStage { max-height:var(--player-theater-height); }
+.svPlayerStage { container-type:inline-size; container-name:sv-stage; position:relative; isolation:isolate; width:100%; aspect-ratio:var(--player-aspect); min-width:0; border:1px solid var(--player-line); border-radius:20px; background:#000; box-shadow:0 20px 64px #0006; }
+/* Match the canvas to the picture as height becomes the limiting dimension.
+   The film retains its complete frame instead of sitting in extra side mattes. */
+.svPlayerPage .svPlayerStage { width:min(100%,calc(var(--player-theater-height) * var(--player-aspect))); margin-inline:auto; }
 .svPlayerScene { position:absolute; inset:0; width:100%; height:100%; border-radius:inherit; object-fit:cover; opacity:.58; pointer-events:none; }
 .svPlayerVideo { display:block; position:absolute; inset:0; width:100%; height:100%; max-width:none; max-height:none; border-radius:inherit; background:#000; object-fit:contain; object-position:center; animation:none !important; transition:none !important; transform:none !important; }
 .svPlayer:is([data-player-state="loading"],[data-player-state="waiting"],[data-player-state="error"]) .svPlayerVideo { opacity:.04; }
@@ -64,13 +65,13 @@ body.svCleanShell .svPlayer[data-player-state="buffering"] .svPlayerStatus h2 { 
 .svPlayerAction:active { background:#d9d6e1; }
 .svPlayerAction:disabled { opacity:.45; cursor:default; }
 .svPlayerRetry { margin-top:20px; }
-/* The transport belongs to the picture: one continuous cinema fade, no panel. */
-.svPlayerDock { position:absolute; z-index:4; left:28px; right:28px; bottom:18px; padding:0; border:0; border-radius:0; color:#fff; background:transparent; box-shadow:none; opacity:1; visibility:visible; transition:opacity .22s ease,visibility .22s ease; }
+/* A single quiet glass transport floats over a light cinema fade. */
+.svPlayerDock { position:absolute; z-index:4; left:clamp(16px,3%,40px); right:clamp(16px,3%,40px); bottom:16px; display:flex; flex-direction:column-reverse; align-items:center; gap:5px; padding:0; border:0; border-radius:0; color:#fff; background:transparent; box-shadow:none; opacity:1; visibility:visible; transition:opacity .3s ease,visibility .3s ease; }
 .svPlayerStage::after { content:""; position:absolute; z-index:3; inset:auto 0 0; height:180px; max-height:75%; border-radius:inherit; background:linear-gradient(transparent,#0003 28%,#0009 72%,#000b); pointer-events:none; transition:opacity .22s ease; }
 .svPlayer[data-player-controls-visibility="hidden"] .svPlayerDock { opacity:0; visibility:hidden; pointer-events:none; }
 .svPlayer[data-player-controls-visibility="hidden"] .svPlayerStage::after { opacity:0; }
 .svPlayer[data-player-controls-visibility="hidden"] .svPlayerStage { cursor:none; }
-.svPlayerTimelineRow { display:flex; align-items:center; width:100%; margin-bottom:0; }
+.svPlayerTimelineRow { display:flex; align-items:center; gap:14px; width:100%; margin-bottom:0; }
 .svPlayerTimeline { position:relative; display:flex; align-items:center; width:100%; height:44px; }
 .svPlayerTimelineTrack { position:absolute; inset:20px 0 auto; height:3px; overflow:hidden; border-radius:2px; background:#ffffff38; pointer-events:none; transition:height .15s ease,inset .15s ease; }
 .svPlayerTimelineTrack :is(i,b) { position:absolute; inset:0 auto 0 0; width:0; height:100%; border-radius:inherit; }
@@ -89,19 +90,23 @@ body.svCleanShell .svPlayer .svPlayerTimeline input { position:relative; width:1
   .svPlayerTimeline:hover input::-webkit-slider-thumb,.svPlayerTimeline input:focus-visible::-webkit-slider-thumb { opacity:1; }
   .svPlayerTimeline:hover input::-moz-range-thumb,.svPlayerTimeline input:focus-visible::-moz-range-thumb { opacity:1; }
 }
-.svPlayerDockRow { position:relative; display:flex; align-items:center; justify-content:space-between; gap:16px; }
-.svPlayerTransport,.svPlayerTools { display:flex; align-items:center; gap:8px; min-width:0; }
+.svPlayerDockRow { position:relative; display:flex; align-items:center; justify-content:center; gap:15px; min-height:60px; padding:5px 9px; border:1px solid #ffffff28; border-radius:24px; background:rgb(24 26 31 / .38); -webkit-backdrop-filter:blur(16px) saturate(1.1); backdrop-filter:blur(16px) saturate(1.1); box-shadow:inset 0 .5px #ffffff26,0 8px 24px #0003; }
+.svPlayerTransport,.svPlayerTools { display:flex; align-items:center; gap:6px; min-width:0; }
+.svPlayerTools { padding-left:14px; border-left:1px solid #ffffff24; }
 body.svCleanShell .svPlayer .svPlayerControl { display:grid; place-items:center; flex:0 0 auto; width:var(--player-control-size); min-width:var(--player-control-size); height:44px; min-height:44px; margin:0; padding:10px; border:1px solid transparent; border-radius:10px; background:transparent; color:#fff; box-shadow:none; font:inherit; list-style:none; cursor:pointer; appearance:none; -webkit-appearance:none; transition:background .16s ease,color .16s ease; }
 .svPlayerControl::-webkit-details-marker { display:none; }
 .svPlayerControl .svPlayerIcon { width:23px; height:23px; flex-basis:23px; filter:drop-shadow(0 1px 3px #0005); }
 body.svCleanShell .svPlayer .svPlayerControl:hover { color:#fff; background:#ffffff14; }
 body.svCleanShell .svPlayer .svPlayerControl:active { background:#ffffff25; }
 body.svCleanShell .svPlayer .svPlayerControl:disabled { opacity:.32; cursor:default; background:transparent; border-color:transparent; box-shadow:none; }
-body.svCleanShell .svPlayer .svPlayerPlay { width:48px; min-width:48px; height:44px; margin-right:4px; }
-.svPlayerPlay .svPlayerIcon { width:28px; height:28px; flex-basis:28px; }
+body.svCleanShell .svPlayer .svPlayerPlay { width:48px; min-width:48px; height:48px; min-height:48px; margin:0 3px; border-radius:50%; background:#f4f3f6; color:#15161a; box-shadow:0 2px 8px #0002; }
+body.svCleanShell .svPlayer .svPlayerPlay:hover { background:#fff; color:#15161a; }
+body.svCleanShell .svPlayer .svPlayerPlay:active { background:#d7d9df; }
+.svPlayerPlay .svPlayerIcon { width:24px; height:24px; flex-basis:24px; filter:none; }
 .svPlayerPlay[data-paused="true"] path { fill:currentColor; stroke-width:1.4; }
 .svPlayerPlay[data-paused="true"] .svPlayerIcon { translate:1px 0; }
-.svPlayerTimeGroup { display:flex; align-items:center; gap:6px; margin-left:12px; color:#ffffff85; white-space:nowrap; }
+.svPlayerTimeCurrent,.svPlayerTimeDuration { flex:0 0 auto; min-width:36px; }
+.svPlayerTimeDuration { text-align:right; }
 .svPlayerTime { color:#fff; font-size:12px; font-weight:400; font-variant-numeric:tabular-nums; letter-spacing:.015em; line-height:1.4; white-space:nowrap; text-shadow:0 1px 4px #0006; }
 .svPlayerTimeDuration { color:#ffffffa6; }
 .svPlayerPopover { position:relative; }
@@ -132,25 +137,26 @@ body.svCleanShell .svPlayer .svPlayerVolumeBody input[type="range"] { flex:1 1 a
 .svPlayerMenuHint { color:#999; font-size:10px; line-height:1.5; }
 /* Container widths keep room embeds responsive even on wide desktop pages. */
 @container sv-stage (max-width:560px) {
-  .svPlayerDock { left:16px; right:16px; bottom:10px; }
-  .svPlayerTimelineRow { margin-bottom:18px; }
-  .svPlayerTransport,.svPlayerTools { gap:4px; }
-  .svPlayerDockRow { gap:8px; }
-  .svPlayerTimeGroup { position:absolute; right:0; top:-18px; margin:0; gap:5px; }
+  .svPlayerDock { left:12px; right:12px; bottom:5px; gap:0; }
+  .svPlayerTimelineRow { gap:9px; }
+  .svPlayerTransport,.svPlayerTools { gap:2px; }
+  .svPlayerDockRow { min-height:52px; padding:3px 5px; gap:6px; border-radius:20px; }
+  .svPlayerTools { padding-left:6px; }
   .svPlayerTime { font-size:10px; }
-  body.svCleanShell .svPlayer .svPlayerPlay { width:44px; min-width:44px; margin-right:0; }
+  body.svCleanShell .svPlayer .svPlayerPlay { width:44px; min-width:44px; height:44px; min-height:44px; margin-inline:0; }
   .svPlayerPopoverBody,.svPlayerPopoverBody[popover] { position:fixed; top:auto; left:16px; right:16px; bottom:calc(88px + env(safe-area-inset-bottom,0px)); width:auto; max-width:360px; max-height:calc(100dvh - 132px); margin:0 auto; padding:20px; border-radius:18px; background:#191919; box-shadow:0 0 0 100vmax #0009,0 20px 70px #000a; }
   .svPlayerPopover[open] .svPlayerPopoverBody { transform-origin:bottom center; }
   .svPlayerVolumeBody { max-width:320px; }
   .svPlayerToast { bottom:122px; }
 }
 @container sv-stage (max-width:380px) {
-  .svPlayerDock { left:10px; right:10px; bottom:8px; }
+  .svPlayerDock { left:8px; right:8px; bottom:3px; }
   .svPlayerTransport,.svPlayerTools { gap:0; }
-  .svPlayerDockRow { gap:2px; }
+  .svPlayerDockRow { gap:4px; }
+  .svPlayerTools { padding-left:4px; }
   body.svCleanShell .svPlayer .svPlayerControl { padding:10px; }
   .svPlayerControl .svPlayerIcon { width:22px; height:22px; flex-basis:22px; }
-  .svPlayerPlay .svPlayerIcon { width:27px; height:27px; flex-basis:27px; }
+  .svPlayerPlay .svPlayerIcon { width:24px; height:24px; flex-basis:24px; }
 }
 @container sv-stage (max-width:300px) {
   .svPlayerDock { left:5px; right:5px; }
@@ -324,15 +330,16 @@ html:has(.svPlayerStage:fullscreen) { scrollbar-gutter:auto; }
 @media (max-height:360px) and (orientation:landscape) {
   /* There is nothing to seek before a source is ready. Keep the tools visible
      and let a short error message scroll instead of covering the return link. */
-  .svPlayer:is([data-player-state="loading"],[data-player-state="waiting"],[data-player-state="error"]) :is(.svPlayerTimelineRow,.svPlayerTimeGroup) { display:none; }
+  .svPlayer:is([data-player-state="loading"],[data-player-state="waiting"],[data-player-state="error"]) .svPlayerTimelineRow { display:none; }
   .svPlayer:is([data-player-state="loading"],[data-player-state="waiting"],[data-player-state="error"]) .svPlayerStatus { inset:0 0 calc(64px + env(safe-area-inset-bottom,0px)); justify-content:flex-start; padding:12px 16px; overflow-y:auto; overscroll-behavior:contain; scroll-padding-block:12px; scrollbar-width:thin; pointer-events:auto; }
   .svPlayer:is([data-player-state="loading"],[data-player-state="waiting"],[data-player-state="error"]) .svPlayerStatus > * { flex-shrink:0; }
 }
 /* Glass preferences change menu material; the cinema overlay stays unframed. */
-body.svCleanShell[data-st-glass="off"] .svPlayer :is(.svPlayerModes,.svPlayerBelow,.svPlayerEpisodes,.svPlayerPopoverBody) { background:#191919 !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
+body.svCleanShell[data-st-glass="off"] .svPlayer :is(.svPlayerModes,.svPlayerBelow,.svPlayerEpisodes,.svPlayerPopoverBody,.svPlayerDockRow) { background:#191919 !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
 @media (prefers-reduced-transparency:reduce) {
-  .svPlayer :is(.svPlayerModes,.svPlayerBelow,.svPlayerEpisodes,.svPlayerPopoverBody) { background:#191919 !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
+  .svPlayer :is(.svPlayerModes,.svPlayerBelow,.svPlayerEpisodes,.svPlayerPopoverBody,.svPlayerDockRow) { background:#191919 !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
 }
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) { .svPlayerDockRow {background:#191919;} }
 @media (prefers-reduced-motion:reduce) {
   .svPlayer *, .svPlayer *::before, .svPlayer *::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; }
 }
