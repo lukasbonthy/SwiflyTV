@@ -527,6 +527,23 @@ test('cancellation interrupts navigation and awaits the own-context close', asyn
   assert.equal(returnedBeforeNavigation, true, 'a cancelled capture must not await unrelated navigation after its context is closed');
 });
 
+test('a verified movie closes its media page before waiting for context network cleanup', async () => {
+  const f=fixture(),mediaStopped=deferred(),requestDisposed=deferred(),events=[];
+  const n=network(f,{navigate:emit=>emit('response',response('https://media.example/coco.m3u8',200,'application/x-mpegurl',
+    '#EXTM3U\n#EXT-X-TARGETDURATION:6\n#EXTINF:6,\npart.ts\n#EXT-X-ENDLIST\n'))});
+  n.page.close=async options=>{assert.equal(options.runBeforeUnload,false);events.push('page');mediaStopped.resolve();requestDisposed.resolve();};
+  n.context.request.dispose=()=>{events.push('request');return requestDisposed.promise;};
+  n.context.close=()=>{events.push('context');return mediaStopped.promise;};
+  const pending=f.capture({provider:'vidrift',url:n.page.url()});await flush();
+  const stoppedBeforeWaiting=events.includes('page');
+  // Release the old implementation too, so its regression fails by assertion.
+  mediaStopped.resolve();requestDisposed.resolve();
+  const result=await pending;
+  assert.equal(stoppedBeforeWaiting,true,'live media must be stopped even while another cleanup operation is pending');
+  assert.equal(events.filter(value=>value==='page').length,1);
+  assert.equal(result.ok,true);assert.equal(result.source.url,'https://media.example/coco.m3u8');
+});
+
 test('an observed winning response is not fetched again for API verification', async () => {
   const f = fixture(), url = 'https://media.example/master.m3u8';
   const n = network(f, { domSources: [{ url, type: 'hls' }], navigate: emit => emit('response', response(url, 200, 'application/x-mpegurl', '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=1\nmain.m3u8')) });
