@@ -62,7 +62,7 @@ test('Android mobile homepage and detail actions render coherent real glass with
   assert(result.modes.every(x=>x==='blur'),'all visible mobile surfaces use reliable native frost');
   assert(result.filters.every(x=>x.includes('blur(16px)')&&!x.includes('url(')),JSON.stringify(result.filters));
   assert.equal(result.graphs,0,'no enormous RGB displacement graphs on Android Chrome');
-  assert(result.tints.every(x=>/^rgba?\\(/.test(x)),'the lenses remain transparent');
+  assert(result.tints.every(x=>x.startsWith('rgba(')),'all mobile glass panes should remain translucent');
   assert(result.bounds.every(b=>Math.abs(b.y-result.bounds[0].y)<=2),'mobile hero actions must stay on one row');
   assert(result.bounds.every(b=>b.width>=44),'mobile hero controls keep usable hit targets');
   assert(result.nav.width>200&&result.bottom.width>250,'both navigation surfaces remain visible');
