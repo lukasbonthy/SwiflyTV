@@ -62,12 +62,12 @@ for (const scheme of ['light','dark'])for (const native of [false,true]) test(sc
   });
   const rgba=state.nav.fill.match(/[\d.]+/g).map(Number),alpha=rgba[3]??1;
   assert.equal(alpha,.2,'navigation follows the measured reference face');
-  assert.deepEqual(rgba.slice(0,3),scheme==='dark'?[0,0,0]:[255,255,255],'the face follows the device color scheme');
+  assert.deepEqual(rgba.slice(0,3),scheme==='dark'?[216,230,248]:[255,255,255],'the face follows the device color scheme');
   assert.equal(state.nav.image,'none','the reference gets its reflection from the backdrop, without a painted gradient');
-  assert.equal(state.nav.before,'none');assert.equal(state.nav.after,'none','the optical rim must not stack another white frame');
+  assert.notEqual(state.nav.before,'none','glass needs a subtle specular reflection even at rest');assert.notEqual(state.nav.after,'none','glass needs a fine upper edge rather than a flat gray fill');
   assert.notEqual(await page.locator('.netflixNav .navLinks>a').evaluate(node=>getComputedStyle(node).textShadow),'none','labels retain a local shadow over bright art without obscuring the whole pane');
   for(const {round,hero,host,pane,hit} of state.actions){
-   const actionColor=pane.fill.match(/[\d.]+/g).map(Number);assert.deepEqual(actionColor.slice(0,3),rgba.slice(0,3),'all prominent actions use the same clear glass family');assert.equal(actionColor[3],hero?0:.2,'hero actions keep the reference’s untinted face');
+   const actionColor=pane.fill.match(/[\d.]+/g).map(Number);assert.deepEqual(actionColor.slice(0,3),rgba.slice(0,3),'all prominent actions use the same clear glass family');assert.equal(actionColor[3],.2,'hero actions keep exactly the same clear face as navigation');
    assert.equal(pane.shadow,state.nav.shadow,'one quiet edge belongs to the pane');
    assert.equal(host.shadow,'none');assert.equal(host.border,'0px');assert.equal(host.image,'none','component styles must not add a pale fill over the shared material');
    assert.equal(host.before,'none');assert.equal(host.after,'none');
