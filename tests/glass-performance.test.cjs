@@ -288,7 +288,8 @@ test('Hero controls mount the SAME size-aware navbar renderer, not only a global
  const env=glass(markup),w=env.window,d=w.document;d.body.dataset.stGlass='liquid';
  w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');
  assert.equal(d.querySelectorAll('.dsHeroActions > .svNavMatchedOptic').length,3);
- assert.equal(d.querySelectorAll('.svNavMatchedLens').length,0,'only visible controls mount real optical panes');
+ assert.equal(d.querySelectorAll('.dsHeroActions > .svNavMatchedOptic > .svNavMatchedLens').length,3,'native panes exist before any hover/intersection');
+ assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length,0,'invisible buttons do not allocate SVG geometry');
  env.intersect(true);w.flush(16);
  const controls=[...d.querySelectorAll('.dsHeroActions > *')];
  for(const control of controls){
@@ -306,6 +307,23 @@ test('Hero controls mount the SAME size-aware navbar renderer, not only a global
  assert.equal(d.querySelectorAll('.dsHeroActions .svLiquidPane[data-swifly-renderer="svg"]').length,3);
  d.body.dataset.stGlass='off';await tick();w.flush(64);
  assert.equal(w.frameCount(),0);
+ env.finish();
+});
+
+test('Standalone buttons and action links get native glass at rest without a filter-graph burst',()=>{
+ const env=glass('<section class="dsAccountActions"><a class="dsSecondaryBtn">Profile</a><a class="btn">Browse</a></section><form><input type="submit" value="Save"></form><div class="dsCardQuickActions"><button class="dsMiniBtn">Save</button></div>'),w=env.window,d=w.document;
+ d.body.dataset.stGlass='liquid';
+ w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');
+ for(const node of d.querySelectorAll('.dsAccountActions>a')){
+  assert(node.classList.contains('svNavMatchedOptic'),'standalone action missing nav material: '+node.outerHTML);
+  assert(node.querySelector(':scope>.svNavMatchedLens'),'pane should not depend on hover or intersection');
+ }
+ assert(d.querySelector('form>input').classList.contains('svGlassControl'),'submit inputs use native glass');
+ assert.equal(d.querySelector('form>input>.svNavMatchedLens'),null,'void form inputs must never receive child panes');
+ assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length,0,'offscreen panes cost no SVG filter graphs');
+ assert.equal(d.querySelector('.dsCardQuickActions .svNavMatchedLens'),null,'dense repeats remain native');
+ env.intersect(true);w.flush(16);
+ assert.equal(d.querySelectorAll('.dsAccountActions .svNavMatchedLens[data-swifly-renderer="svg"],form .svNavMatchedLens[data-swifly-renderer="svg"]').length,2);
  env.finish();
 });
 
@@ -489,7 +507,8 @@ test('Party navigation containers and standalone actions gain bounded lenses whi
  const env=glass('<main class="svPartyHub"><nav class="partyModeNav"><button>Rooms</button><button>Community</button></nav><div class="partyEntryTabs"><button>Host</button><button>Join</button></div><button class="partySecondaryBtn">Invite friends</button><button class="partyIconBtn">Copy room link</button><button class="partyHeroPick">Choose film</button><section class="partySetup"><button>Setup</button></section><div data-player-root class="svPlayerEmbedded"><button class="partyIconBtn">Play</button><button class="dsPrimaryBtn">Player action</button></div></main>'),w=env.window,d=w.document;
  d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');
  assert.equal(d.querySelectorAll('.svPartyHub>.svNavMatchedOptic').length,5,'only the selected Party surfaces should own lenses');
- assert.equal(d.querySelectorAll('.svNavMatchedLens').length,0,'offscreen Party surfaces do not allocate optical panes');
+ assert.equal(d.querySelectorAll('.svNavMatchedLens').length,6,'offscreen Party actions already have their native glass panes');
+ assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length,0,'offscreen panes do not allocate optical geometry');
  env.intersect(true);w.flush(16);
  assert.equal(d.querySelectorAll('.svPartyHub>.svNavMatchedOptic>.svNavMatchedLens[data-swifly-renderer="svg"]').length,5);
  assert.equal(d.querySelectorAll(':is(.partyModeNav,.partyEntryTabs)>.svNavMatchedLens[data-swifly-renderer="svg"]').length,2,'segmented controls share one shallow optical surface');
