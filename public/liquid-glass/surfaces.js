@@ -92,14 +92,14 @@
     if (entry.optic) {
       if (!entry.opticController) {
         entry.opticController=window.SwiflyLiquidGlass.mount(entry.opticPane, {
-          tint:.2,saturation:1,
+          tint:.14,saturation:1,
           distortionScale:-180,channelOffsets:[0,10,20]
         });
         if(deferred)entry.opticController.setEnabled(false);
       } else if(entry.opticController.enabled===deferred)entry.opticController.setEnabled(!deferred);
     }
     if (!entry.complex) return;
-    if (!entry.controller) entry.controller = window.SwiflyLiquidGlass.mount(entry.host, {tint:.2,saturation:1});
+    if (!entry.controller) entry.controller = window.SwiflyLiquidGlass.mount(entry.host, {tint:.14,saturation:1});
     else if (!entry.controller.enabled) entry.controller.setEnabled(true);
     else if (entry.controller.supported && !filter(entry.host)) entry.controller.refresh();
   }
