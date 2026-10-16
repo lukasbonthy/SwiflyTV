@@ -28,7 +28,7 @@ body.svCleanShell :is(h1, h2, h3, h4, button, input, select, textarea) { font-fa
 body.svCleanShell :focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
 body.svCleanShell [hidden] { display: none !important; }
 body.svCleanShell .svIcon { width: 18px; height: 18px; flex: 0 0 18px; }
-body.svCleanShell .svLiquidPane { --sv-glass-default-tint: .24; }
+body.svCleanShell .svLiquidPane { --sv-glass-default-tint: .14; }
 
 /* The header stays compact even when the search field is open. */
 body.svCleanShell [data-sv-liquid-nav].topbar { padding: 16px 16px 0 !important; }
