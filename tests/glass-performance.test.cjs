@@ -442,13 +442,14 @@ for (const [name, identity, platform, points] of [
  controller.destroy();assert.equal(pane.dataset.swiflyRenderer,undefined);env.finish();
 });
 
-test('Persistent mobile navigation uses native frost so scrolling page text cannot stretch through its rim',()=>{
+test('Persistent mobile navigation has shallow optical glass while its center preserves scrolling text',()=>{
  const env=glass('<nav class="netflixNav"><div class="svLiquidPane" data-swifly-glass></div></nav><main>Movie details and page text</main><nav class="mobileNav"><div class="svLiquidPane" data-swifly-glass></div></nav>'),w=env.window,d=w.document;
  d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);
  const mobile=d.querySelector('.mobileNav>.svLiquidPane');
- assert.equal(mobile.dataset.swiflyRenderer,'blur');
- assert.equal(mobile.querySelector('svg'),null,'the fixed lower bar must never magnify scrolling text behind it');
- assert.equal(w.SwiflyLiquidGlass.mount(mobile).supported,false);
+ assert.equal(mobile.dataset.swiflyRenderer,'svg','supported mobile navigation must not be downgraded to opaque-looking frost');
+ const scales=[...mobile.querySelectorAll('feDisplacementMap')].map(node=>Math.abs(Number(node.getAttribute('scale'))));
+ assert.equal(scales.length,3);assert(scales.every(value=>value>0&&value<=18),'text-facing rims need shallow displacement instead of stretching page text');
+ assert.equal(w.SwiflyLiquidGlass.mount(mobile).supported,true);
  assert.equal(d.querySelector('.netflixNav>.svLiquidPane').dataset.swiflyRenderer,'svg','the artwork-facing top navigation keeps its rounded live refraction');
  assert.equal(env.textures.length,1);assert.equal(w.frameCount(),0);env.finish();
 });
@@ -467,8 +468,8 @@ test('Chromium concentrates strong refraction at rounded rims while its center s
  const map=d.querySelector('feImage');assert.match(map.getAttribute('href'),/^data:image\/png;/);
  const scales=[...d.querySelectorAll('feDisplacementMap')].map(node=>Number(node.getAttribute('scale')));
  assert.equal(scales.length,3,'live backdrop optics retain full RGB channels');
- assert(scales.every(value=>value>=100&&value<=180),'prominent panes need a strongly refracted rim, bounded to 180px');
- assert(Math.max(...scales)-Math.min(...scales)>=1&&Math.max(...scales)-Math.min(...scales)<=3,'the strong curved rim keeps RGB fringes below two pixels');
+ assert(scales.every(value=>value>=16&&value<=36),'refraction must stay within the glass thickness instead of sampling across the entire short pane');
+ assert(Math.max(...scales)-Math.min(...scales)>0&&Math.max(...scales)-Math.min(...scales)<=1,'color dispersion stays below a pixel at the clear rim');
  assert(pixel(cx,cy-8).every(value=>Math.abs(value-128)<=1),'refraction must settle before the center, keeping background artwork aligned');
  const generated=env.textures.length;w.dispatchEvent(new w.Event('resize'));w.flush(32);
  assert.equal(env.textures.length,generated,'unchanged geometry must not regenerate its texture');env.finish();
@@ -486,7 +487,7 @@ test('Rising detail sheets retain native glass and defer optical geometry until 
  assert.equal(w.frameCount(),0,'deferred optics must not poll while the sheet is moving');
  d.querySelector('dialog').dataset.svDetailState='open';w.SwiflyGlassSurfaces.refresh(d.querySelector('dialog'));w.flush(32);
  assert(panes.every(pane=>pane.dataset.swiflyRenderer==='svg'),'settling the sheet enables its live rounded rims');
- assert.equal(env.textures.length,4);env.finish();
+ assert.equal(env.textures.length,1,'identically sized lenses share one generated geometry map');env.finish();
 });
 
 test('Party navigation containers and standalone actions gain bounded lenses while player controls keep their own renderer',async()=>{
@@ -495,12 +496,12 @@ test('Party navigation containers and standalone actions gain bounded lenses whi
  assert.equal(d.querySelectorAll('.svPartyHub>.svNavMatchedOptic').length,5,'only the selected Party surfaces should own lenses');
  assert.equal(d.querySelectorAll('.svNavMatchedLens').length,0,'offscreen Party surfaces do not allocate optical panes');
  env.intersect(true);w.flush(16);
- assert.equal(d.querySelectorAll('.svPartyHub>.svNavMatchedOptic>.svNavMatchedLens[data-swifly-renderer="svg"]').length,3);
- assert.equal(d.querySelectorAll(':is(.partyModeNav,.partyEntryTabs)>.svNavMatchedLens[data-swifly-renderer="blur"]').length,2,'segmented controls use the same clear frost without bending nearby panel borders');
+ assert.equal(d.querySelectorAll('.svPartyHub>.svNavMatchedOptic>.svNavMatchedLens[data-swifly-renderer="svg"]').length,5);
+ assert.equal(d.querySelectorAll(':is(.partyModeNav,.partyEntryTabs)>.svNavMatchedLens[data-swifly-renderer="svg"]').length,2,'segmented controls share one shallow optical surface');
  assert.equal(d.querySelectorAll('.partyModeNav button .svLiquidPane,.partyEntryTabs button .svLiquidPane,.svPlayerEmbedded .svLiquidPane').length,0,'tab children and player controls must not stack additional lenses');
  const removed=d.querySelector('.partySecondaryBtn');removed.remove();await tick();w.flush(32);
  assert.equal(removed.querySelector('.svLiquidPane'),null,'removed Party actions must release their child pane');
- assert.equal(d.querySelectorAll('.svNavMatchedLens').length,4);env.finish();
+ assert.equal(d.querySelectorAll('.svNavMatchedLens').length,5,'the setup action also owns its visible lens');env.finish();
 });
 
 test('Unavailable geometry textures leave Chromium on its supported native frost fallback',()=>{
@@ -557,6 +558,21 @@ test('Ordinary buttons, Party primary actions and disclosure controls share glas
  assert(d.querySelector('.dsAccountActions .dsPrimaryBtn > .svNavMatchedLens'),'account primary actions share the prominent optical material');
  assert.equal(d.querySelector('.sv100RoomItem .svNavMatchedLens'),null,'repeated directory actions stay native rather than multiplying SVG filters');
  assert.equal(d.querySelectorAll('main.svGlassSurface,details.svGlassSurface,[data-player-root] .svGlassSurface').length,0,'only interactive surfaces are enhanced');
- assert.equal(d.querySelectorAll('#plain .svLiquidPane,.stChoice .svLiquidPane,.sv100Channel .svLiquidPane,#sv103RoomCode .svLiquidPane').length,0,'ordinary and repeated controls need no optical geometry');
+ assert(d.querySelector('#plain .svLiquidPane'));assert(d.querySelector('#sv103RoomCode .svLiquidPane'));
+ assert.equal(d.querySelectorAll('.stChoice .svLiquidPane,.sv100Channel .svLiquidPane').length,0,'dense repeated controls keep clear lightweight material');
  assert.equal(w.frameCount(),0);env.finish();
+});
+
+
+test('Secondary account, profile and dialog actions receive real lenses while the transport retains ownership',()=>{
+ const env=glass('<div class="dsAccountActions"><a class="dsSecondaryBtn">Switch profile</a><a class="dsGhostPill">Movie night</a></div><form id="profileCreateForm" class="dsStackedForm"><button class="dsPrimaryBtn">Add profile</button></form><button id="resetProfilesBtn">Reset</button><div class="dsManageProfileActions"><button>Icon</button><button>Rename</button><button>Make Kids</button><button>Delete</button></div><dialog open class="svAvatarDialog"><button class="svAvatarClose">Close</button><button class="svAvatarUpload dsSecondaryBtn">Upload</button><button class="svAvatarInitial">Initial</button><button data-avatar-cancel>Cancel</button></dialog><div class="dsTabs"><a>All</a><a>Movies</a></div><main data-player-root><nav class="svPlayerModes"><a>Movie</a><a>Trailer</a></nav><a class="dsSecondaryBtn svPlayerBack">Back</a><button class="dsSecondaryBtn svPlayerPartyButton">Watch together</button><div class="svPlayerStage"><button class="svPlayerControl">Play</button></div></main>'),w=env.window,d=w.document;
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');env.intersect(true);w.flush(16);
+ const targets=[...d.querySelectorAll('.dsAccountActions>a,#profileCreateForm button,#resetProfilesBtn,.dsManageProfileActions button,.svAvatarDialog button,.dsTabs>a,.svPlayerBack,.svPlayerPartyButton')];
+ assert.equal(targets.length,16);
+ for(const host of targets)assert(host.querySelector(':scope>.svLiquidPane[data-swifly-renderer="svg"]'),'missing real clear lens on '+host.textContent);
+ assert(d.querySelector('.svPlayerModes>.svLiquidPane[data-swifly-renderer="svg"]'),'watch mode tabs share a clear lens');
+ assert.equal(d.querySelector('.svPlayerModes a .svLiquidPane'),null,'mode tabs share one pane');
+ assert.equal(d.querySelector('.svPlayerControl .svLiquidPane'),null,'transport controls already share their player-owned dock');
+ assert.equal(env.textures.length,1,'same-size controls reuse their geometry instead of allocating a map per button');
+ assert.equal(w.frameCount(),0,'complete coverage must not introduce idle rendering');env.finish();
 });

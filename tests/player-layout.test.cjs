@@ -291,3 +291,15 @@ test('A playback error remains readable and Retry reachable in very short landsc
     } finally {await context.close();}
   }
 });
+
+test('Mobile episode navigation keeps its glass pane visible while hiding only the text label', {skip:!available && 'Chromium is not installed'}, async () => {
+  const {page,context}=await open({width:390,height:844});
+  try {
+    for(const file of ['liquid-glass/liquid-glass.js','liquid-glass/surfaces.js'])await page.addScriptTag({content:asset(file)});
+    const step=page.locator('.svPlayerEpisodeStep').first();await step.scrollIntoViewIfNeeded();
+    await page.waitForFunction(()=>document.querySelector('.svPlayerEpisodeStep>.svLiquidPane'));
+    const pane=await step.locator(':scope>.svLiquidPane').evaluate(node=>{const r=node.getBoundingClientRect();return {display:getComputedStyle(node).display,width:r.width,height:r.height};});
+    assert.notEqual(pane.display,'none','the mobile label rule must not hide the glass pane');
+    assert(pane.width>=44&&pane.height>=44,'episode navigation needs a visible 44px glass surface');
+  }finally{await context.close();}
+});

@@ -5,8 +5,8 @@
   const partyControls='.partyPrimaryBtn,.partySecondaryBtn,.partyIconBtn,.partyHeroPick';
   const partyPanels='.partyModeNav,.partyEntryTabs';
   const partyOptics=partyControls+','+partyPanels;
-  // Semantic controls share a cheap material; only selected prominent actions
-  // below receive an optical pane. Content panels never match by proximity.
+  // Standalone actions share the navigation lens. Repeated catalog/directory
+  // choices keep the same clear coating without a filter graph per item.
   const controls = [
     'button','summary','[role="button"]',
     '.dsPrimaryBtn','.dsSecondaryBtn','.dsIconBtn','.dsGhostPill',
@@ -19,7 +19,7 @@
     '.dsEpisodeChips a','.dsSearchBox button','.svSearchPopup button',
     '.dsDropdownLogout','.dsEditProfileBtn',partyControls
   ].join(',');
-  const panels = ['.svSearchPopup', '.dsSearchBox form', '.genreDropdownMenu', '.dsDetailTabsV121', '.dsAuthCard', '.dsAuthSwitch', '.dsProfileManagerPanel', '.dsAccountCard', '.dsProfileSelectCard', '.dsDetailGridV121 aside', '.dsAboutGridV121', '.dsSeasonBlock', '#controlPanel', '#toast', 'dialog',partyPanels].join(',');
+  const panels = ['.svSearchPopup', '.dsSearchBox form', '.genreDropdownMenu', '.dsDetailTabsV121', '.dsAuthCard', '.dsAuthSwitch', '.dsProfileManagerPanel', '.dsAccountCard', '.dsProfileSelectCard', '.dsDetailGridV121 aside', '.dsAboutGridV121', '.dsSeasonBlock', '#controlPanel', '#toast', 'dialog','.svPlayerModes',partyPanels].join(',');
   const selector = controls + ',' + panels, entries = new Map(), pending = new Set();
   const rendererProperties = ['--sv-glass-default-tint', '--sv-glass-saturation', '--sv-glass-filter'];
   let intersection, mutations, frame = 0, stopped = false, removed = false;
@@ -42,10 +42,12 @@
     '.dsProfilesQuickActions > :is(.dsSecondaryBtn,.dsGhostPill)',
     '.dsHeroMiniActions > :is(.dsPrimaryBtn,.dsSecondaryBtn)',
     '.dsAccountActions > .dsPrimaryBtn',
-    '.dsAddProfileForm .dsPrimaryBtn',
-    '.svAvatarSave',
+    '#profileCreateForm .dsPrimaryBtn',
+    '.svAvatarSave','.svPlayerModes',
     '.dsAuthCard',partyOptics
   ].join(',');
+  const repeatedControls='.dsCardQuickActions .dsMiniBtn,.dsRowBtn,.dsRowArrow,.svRowArrow,.svResumeRemove,.pagination a,.dsEpisodeChips a,.sv100RoomItem button,.sv100RoomItem a,.partyMovieResults button,.partyMovieResults a,.sv100Channel,#controlPanel button,#controlPanel [role="button"]';
+  const outerPlayerControls='.svPlayerBack,.svPlayerPartyButton,.svPlayerEpisodeStep,.svPlayerSeason,.svPlayerModes';
   function deactivate(entry) {
     entry.opticController?.setEnabled(false);
     entry.controller?.setEnabled(false);
@@ -83,7 +85,7 @@
       }
       if (!entry.opticController) {
         entry.opticController=window.SwiflyLiquidGlass.mount(entry.opticPane, {
-          tint:.12,saturation:1,
+          tint:.06,saturation:1,
           distortionScale:-180,channelOffsets:[0,1.5,3]
         });
         if(deferred)entry.opticController.setEnabled(false);
@@ -107,7 +109,8 @@
     entries.delete(entry.host);
   }
   function ensure(host) {
-    if (!(host instanceof HTMLElement) || !host.isConnected || host.matches('.svDetailDialog, .svStudioDialog') || host.closest('.svLiquidPane, media-player, .vds-controls, [data-player-root], .svPlayerEmbedded')) return;
+    if (!(host instanceof HTMLElement) || !host.isConnected || host.matches('.svDetailDialog, .svStudioDialog') || host.closest('.svLiquidPane, media-player, .vds-controls, .svPlayerEmbedded')) return;
+    if(host.closest('[data-player-root]')&&!host.matches(outerPlayerControls))return;
     // Artwork choices retain the frames around their thumbnails. Navigation
     // icons already sit on one shared pane and must not stack extra surfaces.
     if (host.matches('.partyFilmChoice,.stPreset,.svAvatarPreset,.svAvatarEditTrigger,.svProfileCreateAvatar') || host.matches('.svNavButton,.svWelcomeStudio,.dsProfileMenu > summary') && host.closest('.netflixNav,.dsWelcomeNav')) return;
@@ -120,7 +123,7 @@
     let entry = entries.get(host);
     if (entry) {activate(entry); return;}
     const panel = host.matches(panels);
-    const optic = host.matches(navOpticSelector) && !host.closest('media-player,.vds-controls,.sv100RoomItem,.partyMovieResults');
+    const optic = (host.matches(navOpticSelector)||!panel&&!host.matches(repeatedControls)) && !host.closest('media-player,.vds-controls,.sv100RoomItem,.partyMovieResults');
     // When a real navbar pane is present, never mount the old filter on its
     // parent or draw another shared filter on top of it.
     const complex = !optic && panel && host.dataset.glassRefraction === 'true';
