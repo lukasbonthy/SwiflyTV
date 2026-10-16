@@ -327,6 +327,26 @@ test('Standalone buttons and action links get native glass at rest without a fil
  env.finish();
 });
 
+test('Small hero lenses scale RGB distortion and update it on resize, without changing navbar optics',()=>{
+ const env=glass('<nav class="netflixNav"><div class="svLiquidPane" data-swifly-glass></div></nav><div class="dsHeroActions"><button class="dsPrimaryBtn">Play</button><button class="dsSecondaryBtn">Details</button><button class="dsIconBtn">Save</button></div>');
+ const w=env.window,d=w.document;
+ d.body.dataset.stGlass='liquid';
+ w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');env.intersect(true);w.flush(16);
+ const nav=d.querySelector('.netflixNav>.svLiquidPane');
+ const hero=d.querySelector('.dsHeroActions>.dsPrimaryBtn>.svNavMatchedLens');
+ const scales=pane=>[...pane.querySelectorAll('feDisplacementMap')].map(node=>Number(node.getAttribute('scale')));
+ assert.deepEqual(scales(nav),[-180,-170,-160],'navbar must keep the original reference field');
+ assert.deepEqual(scales(hero),[-80,-75.56,-71.11],'200px button must fit the distortion to its width');
+ const originalGraph=hero.querySelector('svg.svLiquidPane__filters');
+ hero.getBoundingClientRect=()=>({width:60,height:40,top:0,left:0,right:60,bottom:40});
+ env.resize();w.flush(32);
+ assert.deepEqual(scales(hero),[-24,-22.67,-21.33],'60px button should shrink both refraction and RGB separation');
+ assert.equal(hero.querySelector('svg.svLiquidPane__filters'),originalGraph,'resize reuses filter graph without leaking DOM nodes');
+ assert.deepEqual(scales(nav),[-180,-170,-160],'resizing a hero must never change navbar optics');
+ assert.equal(w.frameCount(),0,'button refraction must not start an idle animation loop');
+ env.finish();
+});
+
 test('Unsupported SVG filters retain interactive frosted controls without standalone navbar glass',()=>{
   const env=glass('<nav class="netflixNav"><button class="svNavButton">Search</button></nav><div class="dsHeroActions"><a class="dsPrimaryBtn">Play</a></div>'),w=env.window,d=w.document;
   d.body.dataset.stGlass='liquid';
