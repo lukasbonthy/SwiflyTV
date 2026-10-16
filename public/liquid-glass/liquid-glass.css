@@ -1,11 +1,18 @@
-/* Clear glass: a translucent face, rounded refracted rim and native fallback. */
+/* Shared refractive glass, with a quiet edge and a native browser fallback. */
 body.svCleanShell {
-  --sv-glass-reflection: linear-gradient(135deg, rgb(255 255 255 / .09), transparent 27%, transparent 68%, rgb(255 255 255 / .025));
-  --sv-glass-edge: inset 0 .75px 0 rgb(255 255 255 / .54), inset .5px 0 0 rgb(255 255 255 / .24), inset -.5px 0 0 rgb(255 255 255 / .1), inset 0 -.75px 0 rgb(255 255 255 / .13), 0 5px 18px rgb(0 0 0 / .16);
+  --sv-glass-color: 255 255 255;
+  --sv-glass-edge: inset 0 0 0 .5px rgb(255 255 255 / .15), 0 4px 16px rgb(0 0 0 / .06), 0 8px 24px rgb(0 0 0 / .04);
 }
+@media (prefers-color-scheme: dark) {
+  body.svCleanShell {
+    --sv-glass-color: 0 0 0;
+    --sv-glass-edge: inset 0 0 0 .5px rgb(255 255 255 / .1), 0 4px 16px rgb(0 0 0 / .1), 0 8px 24px rgb(0 0 0 / .08);
+  }
+}
+
 .svLiquidPane {
   --sv-glass-radius: 24px;
-  --sv-glass-tint: var(--sv-glass-default-tint, .06);
+  --sv-glass-tint: var(--sv-glass-default-tint, .2);
   --sv-glass-saturation: 1;
   position: absolute;
   inset: 0;
@@ -13,9 +20,9 @@ body.svCleanShell {
   pointer-events: none;
   overflow: hidden;
   border-radius: var(--sv-glass-radius);
-  background: var(--sv-glass-reflection), rgb(255 255 255 / var(--sv-glass-tint));
-  -webkit-backdrop-filter: blur(3px) saturate(var(--sv-glass-saturation));
-  backdrop-filter: blur(3px) saturate(var(--sv-glass-saturation));
+  background: rgb(var(--sv-glass-color, 255 255 255) / var(--sv-glass-tint));
+  -webkit-backdrop-filter: blur(12px) saturate(1.8) brightness(1.05);
+  backdrop-filter: blur(12px) saturate(1.8) brightness(1.05);
   box-shadow: var(--sv-glass-edge);
 }
 .svLiquidPane[data-swifly-renderer="svg"] {
@@ -34,7 +41,7 @@ body.svCleanShell {
 /* Keep navigation identical on player routes, which omit control styles.
    This also protects pane spans from component text-label resets. */
 body.svCleanShell .svLiquidPane.svLiquidPane {
-  background: var(--sv-glass-reflection), rgb(255 255 255 / var(--sv-glass-tint)) !important;
+  background: rgb(var(--sv-glass-color, 255 255 255) / var(--sv-glass-tint)) !important;
   box-shadow: var(--sv-glass-edge) !important;
 }
 body [data-sv-liquid-nav].topbar {
@@ -125,7 +132,7 @@ body .mobileNav[data-sv-liquid-nav] {
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 2px;
 }
-body .mobileNav[data-sv-liquid-nav] > .svLiquidPane { --sv-glass-radius: 26px; }
+body .mobileNav[data-sv-liquid-nav] > .svLiquidPane { --sv-glass-radius: 26px; --sv-glass-tint: .15; }
 body .mobileNav[data-sv-liquid-nav] > a {
   position: relative;
   z-index: 1;
@@ -144,6 +151,7 @@ body [data-sv-liquid-nav] summary:focus-visible { outline: 2px solid #fff; outli
 @media (min-width: 861px) { body .mobileNav[data-sv-liquid-nav] { display: none !important; } }
 @media (max-width: 860px) {
   body [data-sv-liquid-nav].topbar { padding: 12px !important; }
+  body [data-sv-liquid-nav].topbar .netflixNav > .svLiquidPane { --sv-glass-tint: .1; --sv-glass-lens-blur: 11px; }
   body [data-sv-liquid-nav].topbar > .container.nav.netflixNav { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
   body [data-sv-liquid-nav].topbar .navLinks,
   body [data-sv-liquid-nav].topbar .dsNavActions { display: none; }

@@ -43,38 +43,24 @@
     pending.delete(prepare);
     if (!pending.size && frame) {cancelAnimationFrame(frame); frame = 0;}
   }
-  function lensTexture(width, height, radius) {
-    const key=[width,height,radius].join(':');
+  function lensTexture(width, height, radius, blur = 7) {
+    if (![width,height,radius,blur].every(Number.isFinite) || width <= 0 || height <= 0) return null;
+    const r=Math.max(0,Math.min(radius,width/2,height/2)),softness=Math.max(0,Math.min(blur,24));
+    const key=[width,height,r,softness].join(':');
     if(textures.has(key)) {const texture=textures.get(key);textures.delete(key);textures.set(key,texture);return texture;}
-    // The clear center stays aligned with the scene. A soft, narrow meniscus
-    // bends only the rounded perimeter; the map contains geometry, never art.
-    const ratio=Math.min(1,640/width,240/height),tw=Math.max(1,Math.min(640,Math.ceil(width*ratio))),th=Math.max(1,Math.min(240,Math.ceil(height*ratio)));
-    const make=()=>{const canvas=document.createElement('canvas');canvas.width=tw;canvas.height=th;return canvas;};
-    const displacement=make(),dc=displacement.getContext('2d');
-    if(!dc)return null;
-    const vector=dc.createImageData(tw,th);
-    const r=Math.max(1,Math.min(radius,width/2,height/2)),edge=Math.min(7,Math.max(2,Math.min(width,height)*.1));
-    const scale=Math.min(32,Math.min(width,height)*.55);
-    for(let y=0;y<th;y++)for(let x=0;x<tw;x++) {
-      const px=(x+.5)*width/tw-width/2,py=(y+.5)*height/th-height/2;
-      const qx=Math.abs(px)-(width/2-r),qy=Math.abs(py)-(height/2-r);
-      const ox=Math.max(0,qx),oy=Math.max(0,qy),length=Math.hypot(ox,oy);
-      const distance=r-length-Math.min(Math.max(qx,qy),0);
-      let nx=0,ny=0,shift=0;
-      if(distance>=0 && distance<edge*3) {
-        if(length>0){nx=ox/length*Math.sign(px);ny=oy/length*Math.sign(py);}
-        else if(qx>qy)nx=Math.sign(px);else ny=Math.sign(py);
-        // A Gaussian shoulder gives the bright rim its weight without a hard
-        // crease or a pane-wide sampling band through the center.
-        shift=.46*Math.exp(-.5*(distance/edge)**2);
-      }
-      const offset=(y*tw+x)*4;
-      vector.data[offset]=Math.round(255*(.5-nx*shift));
-      vector.data[offset+1]=Math.round(255*(.5-ny*shift));
-      vector.data[offset+2]=128;vector.data[offset+3]=255;
-    }
-    dc.putImageData(vector,0,0);
-    const texture={map:displacement.toDataURL(),scale,edge};
+    // Crossed color fields curve into a softened neutral interior. This map
+    // describes the lens only: the browser refracts the actual live backdrop.
+    // A vector image has constant complexity at every pane size, avoiding a
+    // per-pixel JavaScript loop or a captured copy of the page/video.
+    const inset=Math.min(width,height)*.035;
+    const rect=`width="${width}" height="${height}" rx="${r}"`;
+    const geometry=`<svg xmlns="${NS}" viewBox="0 0 ${width} ${height}"><defs>
+      <linearGradient id="horizontal" x1="1" y1="0" x2="0" y2="0"><stop stop-color="transparent"/><stop offset="1" stop-color="#f00"/></linearGradient>
+      <linearGradient id="vertical" x1="0" y1="0" x2="0" y2="1"><stop stop-color="transparent"/><stop offset="1" stop-color="#00f"/></linearGradient>
+      </defs><rect width="${width}" height="${height}" fill="#000"/>
+      <rect ${rect} fill="url(#horizontal)"/><rect ${rect} fill="url(#vertical)" style="mix-blend-mode:screen"/>
+      <rect x="${inset}" y="${inset}" width="${width-2*inset}" height="${height-2*inset}" rx="${r}" fill="rgb(50% 50% 50% / .93)" style="filter:blur(${softness}px)"/></svg>`;
+    const texture=Object.freeze({map:'data:image/svg+xml,'+encodeURIComponent(geometry)});
     textures.set(key,texture);
     if(textures.size>48)textures.delete(textures.keys().next().value);
     return texture;
@@ -118,16 +104,16 @@
     const config = {
       displace:numeric(element, 'glassDisplace', .5),
       distortionScale:numeric(element, 'glassDistortion', -180),
-      channelOffsets:[0, 1.5, 3],
+      channelOffsets:[0, 10, 20],
       saturation:numeric(element, 'glassSaturation', 1),
-      tint:numeric(element, 'glassTint', .06), ...options
+      lensBlur:numeric(element, 'glassLensBlur', 7),
+      tint:numeric(element, 'glassTint', .2), ...options
     };
     const filterId = 'swifly-liquid-filter-' + (++nextId), ua = navigator.userAgent;
     const isAppleTouch = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    // Text-facing bars keep a clear center and a shallow rim. Engine support
-    // determines fallback, rather than downgrading one navigation surface.
-    const textSurface=element.closest('.mobileNav,.partyModeNav,.partyEntryTabs,.svPlayerModes');
-    if(textSurface){config.distortionScale=-90;config.channelOffsets=[0,.5,1];config.displace=.2;}
+    // Navigation and controls share one optical field. A wider shoulder on
+    // the mobile bar keeps its larger rounded silhouette equally soft.
+    if(element.closest('.mobileNav'))config.lensBlur=11;
     const svgCapable = !isAppleTouch && /Chrome|Chromium|Edg|OPR/.test(ua) && typeof CSS !== 'undefined' && CSS.supports('backdrop-filter', 'url(#' + filterId + ')');
     const previousRenderer = element.dataset.swiflyRenderer;
     const previousProperties = ['--sv-glass-default-tint', '--sv-glass-saturation', '--sv-glass-radius', '--sv-glass-filter'].map(property => [property, element.style.getPropertyValue(property), element.style.getPropertyPriority(property)]);
@@ -148,9 +134,8 @@
       map = svgElement('feImage', {href:texture.map,x:0, y:0, width:'100%', height:'100%', preserveAspectRatio:'none', result:'map'});
       filter.append(map);
       ['r', 'g', 'b'].forEach((channel, index) => {
-        // Dispersion follows the same rounded field, leaving the flat center
-        // clear while separating color only along the optical rim.
-        const scale=-texture.scale*(config.distortionScale+config.channelOffsets[index])/180;
+        // Separate the three channels through the same softened lens field.
+        const scale=config.distortionScale+config.channelOffsets[index];
         filter.append(svgElement('feDisplacementMap', {in:'SourceGraphic', in2:'map', scale, xChannelSelector:'R', yChannelSelector:'G', result:'displaced-' + channel}));
         const matrix = Array(20).fill(0); matrix[index * 5 + index] = 1; matrix[18] = 1;
         filter.append(svgElement('feColorMatrix', {in:'displaced-' + channel, type:'matrix', values:matrix.join(' '), result:channel}));
@@ -172,8 +157,10 @@
         if (style.display === 'none' || style.visibility === 'hidden') return () => renderer('blur');
       }
       const radius = parseFloat(computed.borderTopLeftRadius) || 20;
-      const key = [width, height, radius].join(':');
-      const texture=key!==dimensions || svg&&!element.contains(svg)?lensTexture(width,height,radius):null;
+      const styledBlur=parseFloat(computed.getPropertyValue('--sv-glass-lens-blur'));
+      const blur=Number.isFinite(styledBlur)?styledBlur:config.lensBlur;
+      const key = [width, height, radius, blur].join(':');
+      const texture=key!==dimensions || svg&&!element.contains(svg)?lensTexture(width,height,radius,blur):null;
       return () => {
         if (svg && !element.contains(svg)) removeGraph();
         if (key === dimensions) {renderer('svg'); return;}
@@ -181,7 +168,7 @@
         if (!svg) createGraph(texture);
         else {
           map.setAttribute('href',texture.map);
-          svg.querySelectorAll('feDisplacementMap').forEach((node,index)=>node.setAttribute('scale',-texture.scale*(config.distortionScale+config.channelOffsets[index])/180));
+          svg.querySelectorAll('feDisplacementMap').forEach((node,index)=>node.setAttribute('scale',config.distortionScale+config.channelOffsets[index]));
         }
         dimensions = key;
         renderer('svg');

@@ -85,8 +85,8 @@
       }
       if (!entry.opticController) {
         entry.opticController=window.SwiflyLiquidGlass.mount(entry.opticPane, {
-          tint:.06,saturation:1,
-          distortionScale:-180,channelOffsets:[0,1.5,3]
+          tint:entry.host.closest('.dsHeroActions')?0:.2,saturation:1,
+          distortionScale:-180,channelOffsets:[0,10,20]
         });
         if(deferred)entry.opticController.setEnabled(false);
       } else if(entry.opticController.enabled===deferred)entry.opticController.setEnabled(!deferred);

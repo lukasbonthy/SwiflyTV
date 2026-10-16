@@ -31,6 +31,8 @@ function glass(markup = '') {
   env.resize = () => {for (const observer of sizes) if (observer.nodes.size) observer.callback([...observer.nodes].map(target => ({target})));};
   env.watched = () => sizes.reduce((count, observer) => count + observer.nodes.size, 0);
   env.textures = [];
+  const encode=w.encodeURIComponent;
+  w.encodeURIComponent=value=>{if(String(value).startsWith('<svg'))env.textures.push(String(value));return encode(value);};
   w.HTMLCanvasElement.prototype.getContext = function () {
     const canvas=this;
     return {
@@ -442,40 +444,33 @@ for (const [name, identity, platform, points] of [
  controller.destroy();assert.equal(pane.dataset.swiflyRenderer,undefined);env.finish();
 });
 
-test('Persistent mobile navigation has shallow optical glass while its center preserves scrolling text',()=>{
- const env=glass('<nav class="netflixNav"><div class="svLiquidPane" data-swifly-glass></div></nav><main>Movie details and page text</main><nav class="mobileNav"><div class="svLiquidPane" data-swifly-glass></div></nav>'),w=env.window,d=w.document;
+test('Mobile and desktop navigation use the same live reference optics',()=>{
+ const env=glass('<nav class="netflixNav"><div class="svLiquidPane" data-swifly-glass></div></nav><nav class="mobileNav"><div class="svLiquidPane" data-swifly-glass></div></nav>'),w=env.window,d=w.document;
  d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);
- const mobile=d.querySelector('.mobileNav>.svLiquidPane');
- assert.equal(mobile.dataset.swiflyRenderer,'svg','supported mobile navigation must not be downgraded to opaque-looking frost');
- const scales=[...mobile.querySelectorAll('feDisplacementMap')].map(node=>Math.abs(Number(node.getAttribute('scale'))));
- assert.equal(scales.length,3);assert(scales.every(value=>value>0&&value<=18),'text-facing rims need shallow displacement instead of stretching page text');
- assert.equal(w.SwiflyLiquidGlass.mount(mobile).supported,true);
- assert.equal(d.querySelector('.netflixNav>.svLiquidPane').dataset.swiflyRenderer,'svg','the artwork-facing top navigation keeps its rounded live refraction');
- assert.equal(env.textures.length,1);assert.equal(w.frameCount(),0);env.finish();
+ for(const pane of d.querySelectorAll('.svLiquidPane')){
+  assert.equal(pane.dataset.swiflyRenderer,'svg');
+  assert.deepEqual([...pane.querySelectorAll('feDisplacementMap')].map(n=>Number(n.getAttribute('scale'))),[-180,-170,-160]);
+ }
+ assert.equal(env.textures.length,2,'the mobile bar has a softer shoulder, cached separately');assert.equal(w.frameCount(),0);env.finish();
 });
 
-test('Chromium concentrates strong refraction at rounded rims while its center stays clear',()=>{
- const env=glass('<div class="svLiquidPane" data-swifly-glass style="border-top-left-radius:24px"></div>'),w=env.window,d=w.document;
- d.querySelector('.svLiquidPane').getBoundingClientRect=()=>({width:240,height:60,left:0,top:0,right:240,bottom:60});
+test('Vector lens geometry is cached, bounded and independent of canvas or page artwork',()=>{
+ const env=glass('<div class="svLiquidPane" data-swifly-glass></div>'),w=env.window,d=w.document;
+ w.HTMLCanvasElement.prototype.getContext=()=>{throw Error('glass must not rasterize or sample artwork');};
  d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);
- assert(env.textures.length,'live Chromium refraction must use the curved surface field rather than a pane-wide directional gradient');
- const {width,height,data}=env.textures[0],pixel=(x,y)=>[...data.slice((y*width+x)*4,(y*width+x)*4+2)];
- const cx=Math.floor(width/2),cy=Math.floor(height/2),center=pixel(cx,cy),top=pixel(cx,2),left=pixel(2,cy),corner=pixel(7,7);
- assert(center.every(value=>Math.abs(value-128)<=1),'flat centers must not introduce a horizontal sampling band');
- assert(Math.abs(top[0]-128)<=1&&top[1]>128,'a horizontal rim must bend along its vertical normal');
- assert(left[0]>128&&Math.abs(left[1]-128)<=1,'a vertical rim must bend along its horizontal normal');
- assert(corner.every(value=>value>128),'rounded corners must bend in both dimensions');
- const map=d.querySelector('feImage');assert.match(map.getAttribute('href'),/^data:image\/png;/);
- const scales=[...d.querySelectorAll('feDisplacementMap')].map(node=>Number(node.getAttribute('scale')));
- assert.equal(scales.length,3,'live backdrop optics retain full RGB channels');
- assert(scales.every(value=>value>=16&&value<=36),'refraction must stay within the glass thickness instead of sampling across the entire short pane');
- assert(Math.max(...scales)-Math.min(...scales)>0&&Math.max(...scales)-Math.min(...scales)<=1,'color dispersion stays below a pixel at the clear rim');
- assert(pixel(cx,cy-8).every(value=>Math.abs(value-128)<=1),'refraction must settle before the center, keeping background artwork aligned');
+ const create=w.SwiflyLiquidGlass.createTexture,first=create(240,60,24);
+ assert.equal(create(240,60,24),first,'same geometry reuses the cached object');
+ assert.notEqual(create(240,60,24,11),first,'different shoulder widths must not alias');
+ const map=d.querySelector('feImage').getAttribute('href');assert.match(map,/^data:image\/svg\+xml,/);
+ assert(decodeURIComponent(map).length<2000,'vector complexity stays small');
+ const large=create(16000,9000,24);assert(large.map.length<4000,'large panes do not allocate page-size bitmaps');
+ for(let i=0;i<49;i++)create(300+i,50,20);
+ assert.notEqual(create(240,60,24),first,'old maps leave the bounded LRU cache');
+ for(const geometry of [[0,60,24],[-1,60,24],[NaN,60,24],[Infinity,60,24]])assert.equal(create(...geometry),null);
  const generated=env.textures.length;w.dispatchEvent(new w.Event('resize'));w.flush(32);
- assert.equal(env.textures.length,generated,'unchanged geometry must not regenerate its texture');env.finish();
+ assert.equal(env.textures.length,generated,'unchanged geometry does not regenerate its map');
+ assert.equal(w.frameCount(),0);env.finish();
 });
-
-
 
 test('Rising detail sheets retain native glass and defer optical geometry until the sheet settles',()=>{
  const env=glass('<dialog open class="svDetailDialog" data-sv-detail-state="opening"><div class="svDetailChrome"><button class="svDetailBack">Back</button><button class="svDetailDismiss">Close</button></div><div class="svDetailActions"><button class="dsPrimaryBtn">Play</button><button class="dsSecondaryBtn">Watch party</button></div></dialog>'),w=env.window,d=w.document;
@@ -504,11 +499,11 @@ test('Party navigation containers and standalone actions gain bounded lenses whi
  assert.equal(d.querySelectorAll('.svNavMatchedLens').length,5,'the setup action also owns its visible lens');env.finish();
 });
 
-test('Unavailable geometry textures leave Chromium on its supported native frost fallback',()=>{
+test('Chromium glass does not require a canvas context',()=>{
  const env=glass('<div class="svLiquidPane" data-swifly-glass></div>'),w=env.window,d=w.document;
  w.HTMLCanvasElement.prototype.getContext=()=>null;d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);
- assert.equal(d.querySelector('.svLiquidPane').dataset.swiflyRenderer,'blur');
- assert.equal(d.querySelector('.svLiquidPane svg'),null,'a broken displacement graph must not obscure the fallback');env.finish();
+ assert.equal(d.querySelector('.svLiquidPane').dataset.swiflyRenderer,'svg');
+ assert(d.querySelector('.svLiquidPane svg'),'vector glass remains available without a canvas');env.finish();
 });
 
 test('Chromium rebuilds an externally detached optical graph on the next refresh',async()=>{
@@ -575,4 +570,13 @@ test('Secondary account, profile and dialog actions receive real lenses while th
  assert.equal(d.querySelector('.svPlayerControl .svLiquidPane'),null,'transport controls already share their player-owned dock');
  assert.equal(env.textures.length,1,'same-size controls reuse their geometry instead of allocating a map per button');
  assert.equal(w.frameCount(),0,'complete coverage must not introduce idle rendering');env.finish();
+});
+
+test('Resizing a live pane keeps finite reference optics and refreshes its geometry',()=>{
+ const env=glass('<div class="svLiquidPane" data-swifly-glass></div>'),w=env.window,d=w.document,pane=d.querySelector('.svLiquidPane');
+ w.boot('liquid-glass/liquid-glass.js');w.flush(16);const previous=pane.querySelector('feImage').getAttribute('href');
+ pane.getBoundingClientRect=()=>({width:340,height:60,left:0,top:0,right:340,bottom:60});env.resize();w.flush(32);
+ assert.notEqual(pane.querySelector('feImage').getAttribute('href'),previous);
+ assert.deepEqual([...pane.querySelectorAll('feDisplacementMap')].map(n=>Number(n.getAttribute('scale'))),[-180,-170,-160]);
+ assert.equal(w.frameCount(),0);env.finish();
 });
