@@ -111,10 +111,15 @@
     };
     const filterId = 'swifly-liquid-filter-' + (++nextId), ua = navigator.userAgent;
     const isAppleTouch = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    // Navigation and controls share one optical field. A wider shoulder on
-    // the mobile bar keeps its larger rounded silhouette equally soft.
-    if(element.closest('.mobileNav'))config.lensBlur=11;
-    const svgCapable = !isAppleTouch && /Chrome|Chromium|Edg|OPR/.test(ua) && typeof CSS !== 'undefined' && CSS.supports('backdrop-filter', 'url(#' + filterId + ')');
+    // CSS.supports(url(#filter)) does not guarantee usable mobile compositing:
+    // Android Chrome renders the large RGB offsets as repeated rainbow
+    // copies of the whole nav/text instead of a clean refractive lens.
+    // Native backdrop blur/saturation is much more reliable for touch UIs.
+    const isTouchViewport = window.matchMedia('(pointer: coarse)').matches;
+    const mobileNative = isAppleTouch || /Android|Mobile|Silk\//i.test(ua) ||
+      isTouchViewport || Boolean(element.closest('.mobileNav'));
+    const svgCapable = !mobileNative && /Chrome|Chromium|Edg|OPR/.test(ua) &&
+      typeof CSS !== 'undefined' && CSS.supports('backdrop-filter', 'url(#' + filterId + ')');
     const previousRenderer = element.dataset.swiflyRenderer;
     const previousProperties = ['--sv-glass-default-tint', '--sv-glass-saturation', '--sv-glass-radius', '--sv-glass-filter'].map(property => [property, element.style.getPropertyValue(property), element.style.getPropertyPriority(property)]);
     element.style.setProperty('--sv-glass-default-tint', config.tint);

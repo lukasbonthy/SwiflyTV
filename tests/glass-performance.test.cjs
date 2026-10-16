@@ -482,14 +482,30 @@ for (const [name, identity, platform, points] of [
  controller.destroy();assert.equal(pane.dataset.swiflyRenderer,undefined);env.finish();
 });
 
-test('Mobile and desktop navigation use the same live reference optics',()=>{
+test('Android Chrome never allocates RGB SVG graphs for hero, detail or mobile navigation',()=>{
+ const env=glass('<nav class="netflixNav"><span class="svLiquidPane" data-swifly-glass></span></nav><div class="dsHeroActions"><a class="dsPrimaryBtn">Play</a><a class="dsSecondaryBtn">Details</a><button class="dsIconBtn">Save</button></div><div class="svDetailActions"><button class="dsPrimaryBtn">Play</button><button class="dsIconBtn">Like</button></div><nav class="mobileNav"><span class="svLiquidPane" data-swifly-glass></span><a>Home</a></nav>'),w=env.window,d=w.document;
+ Object.defineProperty(w.navigator,'userAgent',{configurable:true,value:'Mozilla/5.0 (Linux; Android 15; SM-S938U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Mobile Safari/537.36'});
+ d.body.dataset.stGlass='liquid';
+ w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');env.intersect(true);w.flush(16);
+ const lenses=[...d.querySelectorAll('.netflixNav>.svLiquidPane,.mobileNav>.svLiquidPane,.dsHeroActions>.svNavMatchedOptic>.svLiquidPane,.svDetailActions>.svNavMatchedOptic>.svLiquidPane')];
+ assert.equal(lenses.length,7,'all navigation, hero and detail lenses exist');
+ assert(lenses.every(l=>l.dataset.swiflyRenderer==='blur'),'touch UI uses native live frost, never broken SVG displacement');
+ assert.equal(d.querySelectorAll('feDisplacementMap').length,0,'mobile must not generate the rainbow RGB graph');
+ assert.equal(env.textures.length,0,'touch navigation does not allocate any lens maps');
+ assert.equal(w.frameCount(),0,'native frost does not require continuous animation');
+ env.finish();
+});
+
+test('Desktop navigation retains original SVG optics while mobile navigation uses clean native glass',()=>{
  const env=glass('<nav class="netflixNav"><div class="svLiquidPane" data-swifly-glass></div></nav><nav class="mobileNav"><div class="svLiquidPane" data-swifly-glass></div></nav>'),w=env.window,d=w.document;
  d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);
- for(const pane of d.querySelectorAll('.svLiquidPane')){
-  assert.equal(pane.dataset.swiflyRenderer,'svg');
-  assert.deepEqual([...pane.querySelectorAll('feDisplacementMap')].map(n=>Number(n.getAttribute('scale'))),[-180,-170,-160]);
- }
- assert.equal(env.textures.length,2,'the mobile bar has a softer shoulder, cached separately');assert.equal(w.frameCount(),0);env.finish();
+ const desktop=d.querySelector('.netflixNav>.svLiquidPane'),mobile=d.querySelector('.mobileNav>.svLiquidPane');
+ assert.equal(desktop.dataset.swiflyRenderer,'svg');
+ assert.deepEqual([...desktop.querySelectorAll('feDisplacementMap')].map(n=>Number(n.getAttribute('scale'))),[-180,-170,-160]);
+ assert.equal(mobile.dataset.swiflyRenderer,'blur','bottom navigation never uses RGB distortion, even under a desktop UA');
+ assert.equal(mobile.querySelectorAll('feDisplacementMap').length,0,'mobile panel is never over-distorted');
+ assert.equal(env.textures.length,1,'only the desktop navbar allocates an optical map');
+ assert.equal(w.frameCount(),0);env.finish();
 });
 
 test('Vector lens geometry is cached, bounded and independent of canvas or page artwork',()=>{

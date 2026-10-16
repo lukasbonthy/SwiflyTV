@@ -35,6 +35,41 @@ test('Visible optical panes stay inside their Party hosts and leave page content
  }finally{await browser.close();}
 });
 
+test('Android mobile homepage and detail actions render coherent real glass without rainbow SVG', {skip:!available&&'Chromium is not installed'},async()=>{
+ const browser=await chromium.launch({headless:true});
+ try {
+  const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,
+   userAgent:'Mozilla/5.0 (Linux; Android 15; SM-S938U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Mobile Safari/537.36'});
+  const page=await context.newPage();
+  await page.setContent('<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+['liquid-glass/liquid-glass.css','clean/clean.css','clean/details.css','liquid-glass/surfaces.css','liquid-glass/controls.css'].map(asset).join('\n')+
+    '*{box-sizing:border-box}body{margin:0;color:white;background:linear-gradient(125deg,#576a74 0%,#b9a79b 45%,#283b41 70%,#131a28 100%);height:1200px}.topbar{position:absolute!important;top:20px!important}.dsHeroContent{position:relative;top:290px;width:100%;padding:0 20px}.dsHeroActions{width:100%}.mobileNav{position:fixed!important}.detailFixture{position:absolute;top:500px;left:12px;right:12px}.svDetailActions{display:flex;gap:10px}.svDetailActions>*{padding:12px 16px}</style>'+
+    '<body class="svCleanShell" data-st-glass="liquid"><header class="topbar" data-sv-liquid-nav><nav class="container nav netflixNav"><span class="svLiquidPane" data-swifly-glass></span><div class="navLeftCluster"><b>SWIFLYTV</b></div><button class="svNavButton">Search</button></nav></header>'+
+    '<main><div class="dsHeroContent"><h1>Featured film</h1><div class="dsHeroActions"><a href="#" class="dsPrimaryBtn">▶ Play</a><a href="#" class="dsSecondaryBtn">Details</a><button class="dsIconBtn">+</button></div></div></main>'+
+    '<div class="detailFixture"><div class="svDetailActions"><button class="dsPrimaryBtn">Play</button><button class="dsSecondaryBtn">Trailer</button><button class="dsIconBtn">♡</button></div></div>'+
+    '<nav class="mobileNav" data-sv-liquid-nav><span class="svLiquidPane" data-swifly-glass></span><a href="#">Home</a><a href="#">Movies</a><a href="#">Series</a><a href="#">Discover</a><a href="#">List</a></nav></body>');
+  for(const file of ['liquid-glass/liquid-glass.js','liquid-glass/surfaces.js'])await page.addScriptTag({content:asset(file)});
+  await page.waitForFunction(()=>document.querySelectorAll('.dsHeroActions>.svNavMatchedOptic>.svNavMatchedLens[data-swifly-renderer="blur"]').length===3);
+  const result=await page.evaluate(()=>{
+   const nav=document.querySelector('.netflixNav>.svLiquidPane');
+   const bottom=document.querySelector('.mobileNav>.svLiquidPane');
+   const actions=[...document.querySelectorAll('.dsHeroActions>.svNavMatchedOptic>.svLiquidPane,.svDetailActions>.svNavMatchedOptic>.svLiquidPane')];
+   const all=[nav,bottom,...actions];
+   const r=node=>{const t=node.getBoundingClientRect();return {x:t.x,y:t.y,width:t.width,height:t.height};};
+   return {modes:all.map(node=>node.dataset.swiflyRenderer),filters:all.map(node=>getComputedStyle(node).backdropFilter),tints:all.map(node=>getComputedStyle(node).backgroundColor),graphs:document.querySelectorAll('feDisplacementMap').length,
+    bounds:[...document.querySelectorAll('.dsHeroActions>*')].map(r),nav:r(nav),bottom:r(bottom)};
+  });
+  assert.equal(result.modes.length,8,'top, bottom, three homepage buttons, three detail buttons need glass');
+  assert(result.modes.every(x=>x==='blur'),'all visible mobile surfaces use reliable native frost');
+  assert(result.filters.every(x=>x.includes('blur(16px)')&&!x.includes('url(')),JSON.stringify(result.filters));
+  assert.equal(result.graphs,0,'no enormous RGB displacement graphs on Android Chrome');
+  assert(result.tints.every(x=>x.startsWith('rgba(')),'all mobile glass panes should remain translucent');
+  assert(result.bounds.every(b=>Math.abs(b.y-result.bounds[0].y)<=2),'mobile hero actions must stay on one row');
+  assert(result.bounds.every(b=>b.width>=44),'mobile hero controls keep usable hit targets');
+  assert(result.nav.width>200&&result.bottom.width>250,'both navigation surfaces remain visible');
+  await page.screenshot({fullPage:false}); // Enforce successful real mobile rasterization, not just CSS assertions.
+ }finally{await browser.close();}
+});
+
 test('Prominent refractive actions retain 44px pointer targets',{skip:!available&&'Chromium is not installed'},async()=>{
  const browser=await chromium.launch({headless:true});
  try{
