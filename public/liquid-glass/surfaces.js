@@ -2,11 +2,13 @@
 (() => {
   'use strict';
   if (window.SwiflyGlassSurfaces) return;
-  const partyControls='.partySecondaryBtn,.partyIconBtn,.partyHeroPick';
+  const partyControls='.partyPrimaryBtn,.partySecondaryBtn,.partyIconBtn,.partyHeroPick';
   const partyPanels='.partyModeNav,.partyEntryTabs';
   const partyOptics=partyControls+','+partyPanels;
-  // Explicit interactive surfaces only. Poster-card actions remain cheap frost.
+  // Semantic controls share a cheap material; only selected prominent actions
+  // below receive an optical pane. Content panels never match by proximity.
   const controls = [
+    'button','summary','[role="button"]',
     '.dsPrimaryBtn','.dsSecondaryBtn','.dsIconBtn','.dsGhostPill',
     '.dsCardQuickActions .dsMiniBtn','.dsRowBtn','.dsRowArrow','.svRowArrow',
     '.dsClose','.dsHeroMuteToggle','.dsBigPlayBtn','.svResumePlay',
@@ -39,6 +41,9 @@
     '.genreDropdown > summary',
     '.dsProfilesQuickActions > :is(.dsSecondaryBtn,.dsGhostPill)',
     '.dsHeroMiniActions > :is(.dsPrimaryBtn,.dsSecondaryBtn)',
+    '.dsAccountActions > .dsPrimaryBtn',
+    '.dsAddProfileForm .dsPrimaryBtn',
+    '.svAvatarSave',
     '.dsAuthCard',partyOptics
   ].join(',');
   function deactivate(entry) {
@@ -103,16 +108,19 @@
   }
   function ensure(host) {
     if (!(host instanceof HTMLElement) || !host.isConnected || host.matches('.svDetailDialog, .svStudioDialog') || host.closest('.svLiquidPane, media-player, .vds-controls, [data-player-root], .svPlayerEmbedded')) return;
+    // Artwork choices retain the frames around their thumbnails. Navigation
+    // icons already sit on one shared pane and must not stack extra surfaces.
+    if (host.matches('.partyFilmChoice,.stPreset,.svAvatarPreset,.svAvatarEditTrigger,.svProfileCreateAvatar') || host.matches('.svNavButton,.svWelcomeStudio,.dsProfileMenu > summary') && host.closest('.netflixNav,.dsWelcomeNav')) return;
     if (host.closest('.svPartyHub')) {
-      if (!host.matches(partyOptics)) return;
+      if (host.matches(panels) && !host.matches(partyPanels)) return;
       // Tabs share the enclosing pill; filtering their child buttons too
       // stacks several backdrops and obscures the active selection.
-      if (host.matches(partyControls) && host.closest(partyPanels)) return;
+      if (host.closest(partyPanels) && !host.matches(partyPanels)) return;
     }
     let entry = entries.get(host);
     if (entry) {activate(entry); return;}
     const panel = host.matches(panels);
-    const optic = host.matches(navOpticSelector) && !host.closest('media-player,.vds-controls');
+    const optic = host.matches(navOpticSelector) && !host.closest('media-player,.vds-controls,.sv100RoomItem,.partyMovieResults');
     // When a real navbar pane is present, never mount the old filter on its
     // parent or draw another shared filter on top of it.
     const complex = !optic && panel && host.dataset.glassRefraction === 'true';

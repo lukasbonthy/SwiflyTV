@@ -160,7 +160,10 @@
       const computed = styleOf(element);
       for (let node = element; node; node = node.parentElement) {
         const style = node === element ? computed : styleOf(node);
-        if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return () => renderer('blur');
+        // Opacity entrances keep their layout geometry. Prepare the lens now:
+        // the first class/style mutation can arrive at opacity 0 and CSS does
+        // not emit another mutation when the fade becomes visible.
+        if (style.display === 'none' || style.visibility === 'hidden') return () => renderer('blur');
       }
       const radius = parseFloat(computed.borderTopLeftRadius) || 20;
       const key = [width, height, radius].join(':');

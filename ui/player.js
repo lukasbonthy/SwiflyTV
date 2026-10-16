@@ -73,6 +73,7 @@ function playerMarkup(options = {}) {
       <button type="button" class="svPlayerAction svPlayerRetry" data-player-retry hidden>${icon('retry')}Retry playback</button>
     </div>
     <div class="svPlayerDock" data-player-controls hidden>
+      <div class="svPlayerDockGlass svLiquidPane" data-player-glass aria-hidden="true"></div>
       <div class="svPlayerTimelineRow"><span class="svPlayerTime svPlayerTimeCurrent" data-player-current>0:00</span><div class="svPlayerTimeline"><div class="svPlayerTimelineTrack" aria-hidden="true"><i data-player-buffered></i><b data-player-progress></b></div><input data-player-seek type="range" min="0" max="0" step="0.1" value="0" aria-label="Seek through ${mediaNoun}" aria-valuetext="0:00" disabled/></div><span class="svPlayerTime svPlayerTimeDuration" data-player-duration>—</span></div>
       <div class="svPlayerDockRow"><div class="svPlayerTransport">
         ${button('data-player-backward','Back 10 seconds','rewind','disabled')}${button('data-player-play',`Play ${mediaNoun}`,'play','disabled')}${button('data-player-forward','Forward 10 seconds','forward','disabled')}

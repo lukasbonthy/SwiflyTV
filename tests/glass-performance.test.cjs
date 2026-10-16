@@ -528,3 +528,35 @@ test('Repeated secondary actions use native material without shared displacement
  assert.equal(d.querySelectorAll('svg,.svLiquidPane').length,0,'repeat controls must not stack displacement filters while scrolling');
  assert.equal(env.textures.length,0);assert.equal(env.watched(),0);assert.equal(w.frameCount(),0);env.finish();
 });
+
+test('A renderable pane prepares its geometry before an opacity entrance becomes visible',async()=>{
+ const env=glass('<section style="opacity:0"><div class="svLiquidPane" data-swifly-glass></div></section>'),w=env.window,d=w.document;
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);
+ const pane=d.querySelector('.svLiquidPane');
+ assert.equal(pane.dataset.swiflyRenderer,'svg','an opacity fade must begin with the rounded optical graph already ready, without later input');
+ assert.equal(env.textures.length,1);assert.equal(w.frameCount(),0,'a hidden entrance must not require a repaint loop');
+ d.querySelector('section').style.opacity='1';await tick();w.flush(32);
+ assert.equal(pane.dataset.swiflyRenderer,'svg');assert.equal(env.textures.length,1,'opacity changes reuse the same geometry');
+ assert.equal(w.frameCount(),0);env.finish();
+});
+
+test('Non-renderable ancestors still avoid allocating optical geometry',()=>{
+ for(const declaration of ['display:none','visibility:hidden']){
+  const env=glass('<section style="'+declaration+'"><div class="svLiquidPane" data-swifly-glass></div></section>'),w=env.window,d=w.document;
+  d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);
+  assert.equal(d.querySelector('.svLiquidPane').dataset.swiflyRenderer,'blur');assert.equal(env.textures.length,0);assert.equal(w.frameCount(),0);env.finish();
+ }
+});
+
+test('Ordinary buttons, Party primary actions and disclosure controls share glass without filtering page panels',()=>{
+ const env=glass('<main><button id="plain">Refresh</button><details><summary>Options</summary><p>Panel content</p></details><div id="controlPanel"><button class="stChoice">Appearance</button></div><button class="svAvatarClose">Close avatar picker</button><div class="dsAccountActions"><a class="dsPrimaryBtn">Continue watching</a></div></main><main class="svPartyHub"><button class="partyPrimaryBtn">Create watch party</button><button class="sv100Channel">General</button><button id="sv103RoomCode">ABCD</button><details class="partyLinkChoice"><summary>Use a video link</summary></details><div class="sv100RoomItem"><button class="partySecondaryBtn">Join party</button></div><div data-player-root><button>Player-owned</button></div></main>'),w=env.window,d=w.document;
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');
+ for(const node of d.querySelectorAll('button:not([data-player-root] button),summary,.dsAccountActions a'))assert(node.classList.contains('svGlassControl'),'missing glass material on '+node.outerHTML);
+ env.intersect(true);w.flush(16);
+ assert(d.querySelector('.partyPrimaryBtn > .svNavMatchedLens[data-swifly-renderer="svg"]'),'the main Party action uses the real bounded optical pane');
+ assert(d.querySelector('.dsAccountActions .dsPrimaryBtn > .svNavMatchedLens'),'account primary actions share the prominent optical material');
+ assert.equal(d.querySelector('.sv100RoomItem .svNavMatchedLens'),null,'repeated directory actions stay native rather than multiplying SVG filters');
+ assert.equal(d.querySelectorAll('main.svGlassSurface,details.svGlassSurface,[data-player-root] .svGlassSurface').length,0,'only interactive surfaces are enhanced');
+ assert.equal(d.querySelectorAll('#plain .svLiquidPane,.stChoice .svLiquidPane,.sv100Channel .svLiquidPane,#sv103RoomCode .svLiquidPane').length,0,'ordinary and repeated controls need no optical geometry');
+ assert.equal(w.frameCount(),0);env.finish();
+});

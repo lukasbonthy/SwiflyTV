@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+<defs><linearGradient id="b" x1="0" y1="0" x2="256" y2="256" gradientUnits="userSpaceOnUse"><stop stop-color="#70779A"/><stop offset="1" stop-color="#303B60"/></linearGradient><linearGradient id="f" x1="84" y1="68" x2="176" y2="210" gradientUnits="userSpaceOnUse"><stop stop-color="#D4DCED"/><stop offset="1" stop-color="#9CAED3"/></linearGradient><linearGradient id="r" x1="51" y1="107" x2="216" y2="167" gradientUnits="userSpaceOnUse"><stop stop-color="#C5B1D4"/><stop offset="1" stop-color="#E9D0AB"/></linearGradient></defs>
+<rect width="256" height="256" rx="64" fill="url(#b)"/><circle cx="128" cy="128" r="93" fill="#BEC2E3" fill-opacity=".04"/><path d="m50 47 3 8 8 3-8 3-3 8-3-8-8-3 8-3z" fill="#E3D1C0"/><circle cx="201" cy="60" r="4" fill="#DCDDF0"/><circle cx="48" cy="190" r="3" fill="#BDBEDC"/>
+<path d="M56 104c-25-2-33 4-29 16 8 22 92 59 151 73 65 15 85 2 64-18" stroke="#9B91BB" stroke-width="13" stroke-linecap="round"/>
+<circle cx="130" cy="127" r="67" fill="url(#f)"/><path d="M108 67c-20 16-28 49-17 71 14 28 48 44 84 37-14 15-33 23-55 20-37-5-63-39-58-75 3-23 22-46 46-53" fill="#8596BE" fill-opacity=".45"/><circle cx="149" cy="86" r="12" fill="#8295BE" fill-opacity=".25"/><circle cx="173" cy="105" r="5" fill="#8295BE" fill-opacity=".25"/><circle cx="102" cy="168" r="9" fill="#8295BE" fill-opacity=".25"/>
+<ellipse cx="110" cy="122" rx="5" ry="7" fill="#475575"/><ellipse cx="151" cy="122" rx="5" ry="7" fill="#475575"/><path d="M120 143c6 6 15 6 21 0" stroke="#63708F" stroke-width="4" stroke-linecap="round"/>
+<path d="M28 116c10 22 95 58 152 71 58 14 80 5 65-13" stroke="url(#r)" stroke-width="13" stroke-linecap="round"/>
+</svg>

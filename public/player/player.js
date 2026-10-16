@@ -32,6 +32,7 @@
     const mediaName = () => mediaType==='tv'?'episode':'movie';
     let hls=null,dash=null,pendingPlay=false,unlockRemote=true,resumeAt=0,retryResume=0,stallTimer=0,toastTimer=0,lookupDeadline=0,loadingKey='';
     let lastTime=0,lastBuffer=0,hlsRecovery={network:0,media:0},controlsTimer=0,scrubbing=false,scrubTime=0;
+    let glass=null,glassEnabled=null,glassUnavailable=false;
     let audioOptions=[],applyingAudio=false,observedAudio=null,observedText=null;
     let captionOptions=[],captionPreference=null,captionActive='-1',applyingCaptions=false;
     let sourceOptions=[],sourceSnapshotKey='',activeSourceData=null,failedPreferenceMedia='';
@@ -70,12 +71,23 @@
     function controlsPinned() {
       return phase!=='ready'||!playable||video.paused||video.seeking||scrubbing||!find('unlock').hidden||controls.contains(document.activeElement)||!!stage.querySelector('details[open]');
     }
+    function syncGlass() {
+      // One static geometry lens belongs to the transport. Its backdrop is
+      // composed by the browser; playback never samples or redraws the film.
+      if(!glass&&!glassUnavailable&&!destroyed&&find('glass')&&window.SwiflyLiquidGlass?.mount){
+        try{glass=window.SwiflyLiquidGlass.mount(find('glass'),{tint:.16,saturation:1.35,distortionScale:-160,displace:.35});}
+        catch{glassUnavailable=true;}
+      }
+      const enabled=!destroyed&&!suspended&&app.isConnected&&!document.hidden&&!controls.hidden&&app.dataset.playerControlsVisibility!=='hidden';
+      if(glass&&glassEnabled!==enabled){glassEnabled=enabled;glass.setEnabled(enabled);}
+    }
     function updateVisibility({reveal=false}={}) {
-      if(destroyed||suspended)return;
+      if(destroyed||suspended){syncGlass();return;}
       if(reveal||controlsPinned()){clearTimeout(controlsTimer);controlsTimer=0;app.dataset.playerControlsVisibility='visible';}
       if(!controlsPinned()&&app.dataset.playerControlsVisibility!=='hidden'&&!controlsTimer){
-        const token=generation;controlsTimer=setTimeout(()=>{controlsTimer=0;if(!alive(token))return;if(controlsPinned())updateVisibility();else app.dataset.playerControlsVisibility='hidden';},config.controls);
+        const token=generation;controlsTimer=setTimeout(()=>{controlsTimer=0;if(!alive(token))return;if(controlsPinned())updateVisibility();else {app.dataset.playerControlsVisibility='hidden';syncGlass();}},config.controls);
       }
+      syncGlass();
     }
     function showToast(message) {
       const node=find('toast');clearTimeout(toastTimer);node.textContent=message;node.hidden=false;
@@ -539,7 +551,7 @@
       else if(key==='f'){event.preventDefault();fullscreen();}
     }
     function destroy() {
-      if(destroyed)return;cancelResolver();teardownMedia();cancelTasks();clearListeners(listeners);destroyed=true;instances.delete(app);sourceData=null;resetSourceOptions();video.controls=true;controls.hidden=true;emitState();
+      if(destroyed)return;cancelResolver();teardownMedia();cancelTasks();clearListeners(listeners);destroyed=true;glass?.destroy();glass=null;instances.delete(app);sourceData=null;resetSourceOptions();video.controls=true;controls.hidden=true;emitState();
     }
     const api=Object.freeze({loadSource,resolve,retry:()=>resolve({retry:true}),getState,play,pause,seek,setRemoteMode,destroy});
     instances.set(app,api);
@@ -597,6 +609,7 @@
     listen(window,'resize',positionOpenMenus);listen(window,'scroll',positionOpenMenus);
     listen(document,'pointerdown',event=>{for(const node of stage.querySelectorAll('details[open]'))if(!node.contains(event.target))closeMenu(node);});
     listen(document,'fullscreenchange',()=>{for(const node of stage.querySelectorAll('details[open]'))closeMenu(node);const active=!!document.fullscreenElement;find('fullscreen').setAttribute('aria-label',active?'Exit fullscreen':'Enter fullscreen');find('fullscreen').setAttribute('aria-pressed',String(active));});
+    listen(document,'visibilitychange',syncGlass);
     listen(window,'pagehide',event=>{
       if(!event.persisted){destroy();return;}const snapshot=getState(),data=sourceData,copy=find('status-copy').textContent,title=find('status-title').textContent;suspended=true;cancelResolver();teardownMedia();sourceData=null;source='';suspendState={snapshot,data,copy,title};
     });
