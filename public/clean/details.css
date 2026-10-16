@@ -76,7 +76,7 @@ body.svCleanShell .svDetailDialog[data-sv-detail-motion="css"][data-sv-detail-st
 body.svCleanShell .svDetailScrim[data-sv-detail-motion="css"][data-sv-detail-state="opening"] { animation:svDetailsDimIn 360ms ease-out both; }
 body.svCleanShell .svDetailScrim[data-sv-detail-motion="css"][data-sv-detail-state="closing"] { animation:svDetailsDimOut 280ms ease-in both; }
 body.svCleanShell .svDetailViewport { height: 100%; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-gutter:stable; scrollbar-width: thin; scrollbar-color: #ffffff26 transparent; -webkit-overflow-scrolling:touch; }
-body.svCleanShell .svDetailDialog .svTitleDetails.svTitleDetails { width: 100% !important; max-width: none !important; margin: 0 !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
+body.svCleanShell .svDetailDialog .svTitleDetails.svTitleDetails { width: 100% !important; max-width: none !important; margin: 0 !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; animation:none !important; filter:none !important; }
 body.svCleanShell .svDetailDialog .svDetailHero { min-height: 520px; height: min(55vw,590px); }
 body.svCleanShell .svDetailDismiss.dsIconBtn { position: absolute !important; top: 16px; right: 16px; z-index: 5; width: 34px !important; height: 34px !important; min-height: 34px !important; padding: 0 !important; }
 body.svCleanShell .svDetailDismiss > svg:not(.svLiquidPane__filters) { width: 15px; height: 15px; }
