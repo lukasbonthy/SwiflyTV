@@ -71,14 +71,19 @@
     return box.width > 0 && box.height > 0 && box.bottom > 0 && box.right > 0 &&
       box.top < window.innerHeight + 80 && box.left < window.innerWidth + 80;
   }
-  function enteringDetailAction(host) {
-    return host.matches('.svDetailActions > :is(button,a),.svDetailChrome > :is(button,a)') &&
-      !!host.closest('.svDetailDialog[open][data-sv-detail-state="opening"]');
+  // Fragment loading can finish BEFORE OR AFTER the slide settles. Keep
+  // detail actions high-priority in both states rather than relying on the
+  // first IntersectionObserver notification for the late-created controls.
+  function activeDetailAction(host) {
+    if (!host.matches('.svDetailActions > :is(button,a),.svDetailChrome > :is(button,a)')) return false;
+    const dialog=host.closest('.svDetailDialog');
+    return !!dialog?.open && dialog.dataset.svDetailState !== 'closing' &&
+      dialog.dataset.svDetailState !== 'closed';
   }
   function primeFirstScreen(host) {
-    return (host.matches(firstScreenActions) &&
-      !host.closest('.svDetailDialog,.svStudioDialog') && inFirstScreen(host)) ||
-      enteringDetailAction(host);
+    return activeDetailAction(host) ||
+      (host.matches(firstScreenActions) &&
+      !host.closest('.svDetailDialog,.svStudioDialog') && inFirstScreen(host));
   }
   function activate(entry) {
     ensureOpticPane(entry);
@@ -122,7 +127,13 @@
       if (host.closest(partyPanels) && !host.matches(partyPanels)) return;
     }
     let entry = entries.get(host);
-    if (entry) {ensureOpticPane(entry); activate(entry); return;}
+    if (entry) {
+      // An early false intersection may have deactivated an existing lens
+      // while a fragment loads. A subsequent explicit refresh must be able
+      // to re-prime it, even if the browser never issues another IO event.
+      if (entry.optic && primeFirstScreen(host)) {entry.pinned=true;entry.visible=true;}
+      ensureOpticPane(entry); activate(entry); return;
+    }
     const panel = host.matches(panels);
     // Void HTML inputs cannot host a child optical pane. Give them the
     // same native clear glass coating without inserting invalid children.
@@ -180,7 +191,7 @@
         // must not blank an already visible hero/detail action. Release the
         // graph once the control has actually moved away from the viewport.
         if (!change.isIntersecting && entry.pinned &&
-            (inFirstScreen(entry.host) || enteringDetailAction(entry.host))) continue;
+            (inFirstScreen(entry.host) || activeDetailAction(entry.host))) continue;
         entry.visible = change.isIntersecting;
         if (!entry.visible) entry.pinned = false;
         if (entry.visible) activate(entry); else deactivate(entry);
@@ -212,13 +223,14 @@
       if (preferenceChanged) for (const entry of entries.values()) if (entry.complex || entry.optic) {
         if (liquidPreference()) activate(entry); else deactivate(entry);
       }
-      // Animation completion changes an attribute, not intersection. Without
-      // this, detail buttons can stay frosted until the user next interacts.
+      // Re-scan at settle even if no controls existed when the animation
+      // started. If data arrives afterward, refresh(root) takes the same path.
+      for (const dialog of settledDialogs) if (dialog.open) enqueue(dialog);
       if (settledDialogs.size) for (const entry of entries.values()) {
         if (!entry.optic || !settledDialogs.has(entry.host.closest('.svDetailDialog'))) continue;
-        if (inFirstScreen(entry.host)) {
-          entry.visible = true;
-          entry.pinned = true;
+        if (primeFirstScreen(entry.host)) {
+          entry.visible=true;
+          entry.pinned=true;
           activate(entry);
         }
       }

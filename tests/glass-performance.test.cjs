@@ -734,3 +734,38 @@ test('Detail action filters prepare before an intersection callback on the risin
  assert(panes.every(pane=>pane.dataset.swiflyRenderer==='svg'),'settling preserves the same filter graphs');
  assert.equal(w.frameCount(),0);env.finish();
 });
+
+test('Delayed movie fragment receives full glass after slide settles without waiting for intersection',async()=>{
+ const env=glass('<dialog open class="svDetailDialog" data-sv-detail-state="opening"><div class="svDetailChrome"><button class="svDetailBack">Back</button></div><div class="svDetailViewport"></div></dialog>'),w=env.window,d=w.document;
+ d.body.dataset.stGlass='liquid';
+ w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');w.flush(16);
+ const dialog=d.querySelector('dialog'),viewport=d.querySelector('.svDetailViewport');
+ dialog.dataset.svDetailState='open';
+ await tick();w.flush(32);
+ const hero=d.createElement('section');hero.className='svDetailHero';
+ hero.innerHTML='<div class="svDetailActions"><a class="dsPrimaryBtn">Play</a><a class="dsSecondaryBtn">Trailer</a><a class="dsSecondaryBtn">Watch party</a><button class="dsIconBtn">+</button><button class="dsIconBtn">Heart</button></div>';
+ viewport.replaceChildren(hero);
+ // Render completion explicitly calls refresh; the IO stub intentionally
+ // NEVER reports visibility, just like an interrupted animated modal.
+ w.SwiflyGlassSurfaces.refresh(hero);w.flush(48);
+ const panes=[...d.querySelectorAll('.svDetailActions .svNavMatchedLens')];
+ assert.equal(panes.length,5);
+ assert(panes.every(p=>p.dataset.swiflyRenderer==='svg'),'all five post-animation actions must be refractive immediately');
+ env.intersect(false);w.flush(64);
+ assert(panes.every(p=>p.dataset.swiflyRenderer==='svg'),'a delayed false IO notification cannot undo the active detail glass');
+ w.SwiflyGlassSurfaces.refresh(hero);w.flush(80);
+ assert(panes.every(p=>p.dataset.swiflyRenderer==='svg'),'re-refreshing cannot demote existing lenses');
+ assert.equal(w.frameCount(),0);
+ env.finish();
+});
+test('An existing details button recovers on refresh after false visibility and late mount',()=>{
+ const env=glass('<dialog open class="svDetailDialog" data-sv-detail-state="closed"><div class="svDetailActions"><button class="dsPrimaryBtn">Play</button></div></dialog>'),w=env.window,d=w.document;
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');
+ env.intersect(false);w.flush(16);
+ const pane=d.querySelector('.svDetailActions .svNavMatchedLens');
+ assert.equal(pane.dataset.swiflyRenderer,'blur');
+ d.querySelector('dialog').dataset.svDetailState='open';
+ w.SwiflyGlassSurfaces.refresh(d.querySelector('.svDetailActions'));w.flush(32);
+ assert.equal(pane.dataset.swiflyRenderer,'svg','an existing entry must reprime when its dialog becomes active');
+ assert.equal(w.frameCount(),0);env.finish();
+});
