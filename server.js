@@ -6478,8 +6478,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${body.includes("fa-solid") ? '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />' : ""}
     ${player || partyBrowse || active === "social" ? '<script defer src="/socket.io/socket.io.js"></script>' : ""}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/modern-normalize@2.0.0/modern-normalize.min.css" />
-    <link rel="stylesheet" href="/assets/liquid-glass/liquid-glass.css?v=213" />
-    <script defer src="/assets/liquid-glass/liquid-glass.js?v=219"></script>
+    <link rel="stylesheet" href="/assets/liquid-glass/liquid-glass.css?v=220" />
+    <script defer src="/assets/liquid-glass/liquid-glass.js?v=220"></script>
     <link rel="stylesheet" href="/assets/clean/clean.css?v=153" />
     <script defer src="/assets/clean/clean.js?v=151"></script>
     <script defer src="/assets/clean/avatars.js?v=209"></script>
@@ -6489,8 +6489,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/clean/motion.css?v=208" />
     <script defer src="/assets/clean/motion.js?v=204"></script>
     <script defer src="/assets/clean/details.js?v=208"></script>
-    <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=219" />
-    <script defer src="/assets/liquid-glass/surfaces.js?v=219"></script>
+    <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=220" />
+    <script defer src="/assets/liquid-glass/surfaces.js?v=220"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=164" />
     <script defer src="/assets/studio/studio.js?v=164"></script>
     <link rel="stylesheet" href="/assets/clean/aurora.css?v=208" />
@@ -6504,7 +6504,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/finish.css?v=175" />'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/polish.css?v=176" />'}
     <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=205" />
-    <link rel="stylesheet" href="/assets/liquid-glass/controls.css?v=219" />
+    <link rel="stylesheet" href="/assets/liquid-glass/controls.css?v=220" />
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/experience.css?v=202" />'}
     <link rel="stylesheet" href="/assets/clean/cinema.css?v=207" />
     <link rel="stylesheet" href="/assets/clean/profiles.css?v=209" />
@@ -6555,7 +6555,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
   <header class="topbar netflixTopbar" data-sv-liquid-nav>
     <div class="container nav netflixNav">
-      <div class="svLiquidPane" data-swifly-glass data-glass-tint="0.14" data-glass-saturation="1" aria-hidden="true"></div>
+      <div class="svLiquidPane" data-swifly-glass data-glass-tint="0.08" data-glass-saturation="1" aria-hidden="true"></div>
       <div class="navLeftCluster">
         <a class="brand netflixBrand" href="/" aria-label="${escapeHtml(SITE_NAME)} home">
           <span class="netflixWordmark">${escapeHtml(BRAND_WORDMARK)}</span>
@@ -6575,7 +6575,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
         <details class="dsProfileMenu">
           <summary aria-label="Open profile menu"><span class="profilePill" aria-hidden="true">${cleanIcon("user")}</span></summary>
           <div class="dsProfileDropdown svLiquidDropdown">
-            <div class="svLiquidPane" data-swifly-glass data-glass-tint="0.14" data-glass-saturation="1" data-glass-radius="22" aria-hidden="true"></div>
+            <div class="svLiquidPane" data-swifly-glass data-glass-tint="0.08" data-glass-saturation="1" data-glass-radius="22" aria-hidden="true"></div>
             <a href="/profiles"><span>☺</span><b>Switch profile</b></a>
             <a href="/profiles/manage"><span>✎</span><b>Manage profiles</b></a>
             <a href="/account"><span>⚙</span><b>Account</b></a>
@@ -6615,7 +6615,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
   </div>
 
   <nav class="mobileNav" data-sv-liquid-nav aria-label="Mobile navigation">
-    <div class="svLiquidPane" data-swifly-glass data-glass-tint="0.14" data-glass-saturation="1" aria-hidden="true"></div>
+    <div class="svLiquidPane" data-swifly-glass data-glass-tint="0.08" data-glass-saturation="1" aria-hidden="true"></div>
     ${navLink("/", "Home", "home", active)}
     ${navLink("/movies", "Movies", "movies", active)}
     ${navLink("/tv", "Series", "tv", active)}
