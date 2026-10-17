@@ -104,10 +104,9 @@
     const config = {
       displace:numeric(element, 'glassDisplace', .5),
       distortionScale:numeric(element, 'glassDistortion', -180),
-      channelOffsets:[0, 10, 20],
       saturation:numeric(element, 'glassSaturation', 1),
       lensBlur:numeric(element, 'glassLensBlur', 7),
-      tint:numeric(element, 'glassTint', .2), ...options
+      tint:numeric(element, 'glassTint', .14), ...options
     };
     const filterId = 'swifly-liquid-filter-' + (++nextId), ua = navigator.userAgent;
     const isAppleTouch = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -127,23 +126,17 @@
       svg?.remove(); svg = null; map = null; dimensions = '';
       element.style.removeProperty('--sv-glass-filter');
     }
-    // All liquid surfaces, including compact hero controls, use the exact
-    // same three-channel optical field as the working navigation capsule.
-    // Width-normalizing displacement previously flattened compact controls.
-    function createGraph(texture) {
+    // Refract the complete image once so neutral pixels stay neutral. The
+    // sample distance is bounded to the control's own thickness, rather than
+    // pulling unrelated artwork and text from far above or below the pane.
+    function createGraph(texture, scale) {
       svg = svgElement('svg', {class:'svLiquidPane__filters', 'aria-hidden':'true', focusable:'false'});
       const defs = svgElement('defs');
       const filter = svgElement('filter', {id:filterId, x:'0%', y:'0%', width:'100%', height:'100%', 'color-interpolation-filters':'sRGB'});
       map = svgElement('feImage', {href:texture.map,x:0, y:0, width:'100%', height:'100%', preserveAspectRatio:'none', result:'map'});
-      filter.append(map);
-      ['r', 'g', 'b'].forEach((channel, index) => {
-        // Separate the three channels through the same softened lens field.
-        const scale=config.distortionScale+config.channelOffsets[index];
-        filter.append(svgElement('feDisplacementMap', {in:'SourceGraphic', in2:'map', scale, xChannelSelector:'R', yChannelSelector:'G', result:'displaced-' + channel}));
-        const matrix = Array(20).fill(0); matrix[index * 5 + index] = 1; matrix[18] = 1;
-        filter.append(svgElement('feColorMatrix', {in:'displaced-' + channel, type:'matrix', values:matrix.join(' '), result:channel}));
-      });
-      filter.append(svgElement('feBlend', {in:'r', in2:'g', mode:'screen', result:'rg'}), svgElement('feBlend', {in:'rg', in2:'b', mode:'screen', result:'rgb'}), svgElement('feGaussianBlur', {in:'rgb', stdDeviation:config.displace}));
+      filter.append(map,
+        svgElement('feDisplacementMap', {in:'SourceGraphic', in2:'map', scale, xChannelSelector:'R', yChannelSelector:'G', result:'refracted'}),
+        svgElement('feGaussianBlur', {in:'refracted', stdDeviation:config.displace}));
       defs.append(filter); svg.append(defs); element.append(svg);
       element.style.setProperty('--sv-glass-filter', 'url(#' + filterId + ')');
     }
@@ -162,16 +155,17 @@
       const radius = parseFloat(computed.borderTopLeftRadius) || 20;
       const styledBlur=parseFloat(computed.getPropertyValue('--sv-glass-lens-blur'));
       const blur=Number.isFinite(styledBlur)?styledBlur:config.lensBlur;
+      const scale=Math.sign(config.distortionScale)*Math.min(Math.abs(config.distortionScale),width*.2,height*.2,12);
       const key = [width, height, radius, blur].join(':');
       const texture=key!==dimensions || svg&&!element.contains(svg)?lensTexture(width,height,radius,blur):null;
       return () => {
         if (svg && !element.contains(svg)) removeGraph();
         if (key === dimensions) {renderer('svg'); return;}
         if (!texture) {removeGraph();renderer('blur');return;}
-        if (!svg) createGraph(texture);
+        if (!svg) createGraph(texture,scale);
         else {
           map.setAttribute('href',texture.map);
-          svg.querySelectorAll('feDisplacementMap').forEach((node,index)=>node.setAttribute('scale',config.distortionScale+config.channelOffsets[index]));
+          svg.querySelector('feDisplacementMap').setAttribute('scale',scale);
         }
         dimensions = key;
         renderer('svg');

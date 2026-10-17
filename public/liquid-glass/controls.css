@@ -65,70 +65,8 @@ body.svCleanShell .svGlassControl.svNavMatchedOptic > .svNavMatchedLens.svLiquid
   height: 100% !important;
   box-shadow: var(--sv-glass-edge) !important;
 }
-/* An identical dark 14%-tint material does not look identical over two
-   very different backdrops. The navbar sits over bright, detailed art; hero
-   actions sit over an almost flat, darkened area. Use a transparent, neutral
-   LIGHT lens coating on standalone controls while preserving the EXACT same
-   underlying three-channel optical filter and glass markup.
-   Note: --sv-glass-tint (not default-tint) intentionally survives the
-   renderer's inline --sv-glass-default-tint assignment. */
-body.svCleanShell .svGlassControl.svNavMatchedOptic > .svNavMatchedLens.svLiquidPane {
-  --sv-glass-color: 245 247 251;
-  --sv-glass-tint: .13;
-  --sv-glass-edge: inset 0 0 0 .8px rgb(255 255 255 / .48),
-    inset 0 1px 0 rgb(255 255 255 / .24),
-    inset 0 -1px 0 rgb(0 0 0 / .09),
-    0 6px 16px rgb(0 0 0 / .17);
-}
-body.svCleanShell .svGlassControl.svNavMatchedOptic > .svNavMatchedLens.svLiquidPane[data-swifly-renderer="blur"] {
-  -webkit-backdrop-filter: blur(14px) saturate(1.6) brightness(1.075) !important;
-  backdrop-filter: blur(14px) saturate(1.6) brightness(1.075) !important;
-}
-body.svCleanShell .svGlassControl.svNavMatchedOptic > .svNavMatchedLens.svLiquidPane[data-swifly-renderer="svg"] {
-  -webkit-backdrop-filter: var(--sv-glass-filter) saturate(1.12) brightness(1.045) !important;
-  backdrop-filter: var(--sv-glass-filter) saturate(1.12) brightness(1.045) !important;
-}
-
-/* Curved glass catches directional illumination, especially against a plain
-   gray backdrop where pure refraction cannot be seen. The first reflection
-   is transparent across the body; the second is *rim-only* Fresnel lighting.
-   The actual background remains provided by the same nav refractive filter. */
-body.svCleanShell:not([data-st-glass="off"]):not([data-st-glass="subtle"]) .svGlassControl.svNavMatchedOptic > .svNavMatchedLens.svLiquidPane::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(150deg,
-    rgb(255 255 255 / .14) 0%,
-    rgb(255 255 255 / .022) 42%,
-    rgb(0 0 0 / .012) 100%);
-  pointer-events: none;
-}
-body.svCleanShell:not([data-st-glass="off"]):not([data-st-glass="subtle"]) .svGlassControl.svNavMatchedOptic > .svNavMatchedLens.svLiquidPane::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1.2px;
-  pointer-events: none;
-  background: conic-gradient(from 190deg at 50% 50%,
-    rgb(255 255 255 / .28),
-    rgb(255 255 255 / .74) 20%,
-    rgb(255 255 255 / .05) 42%,
-    rgb(255 255 255 / .03) 60%,
-    rgb(255 255 255 / .58) 89%,
-    rgb(255 255 255 / .28));
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  mask-composite: exclude;
-}
-@media (prefers-reduced-transparency: reduce) {
-  body.svCleanShell .svGlassControl.svNavMatchedOptic > .svNavMatchedLens.svLiquidPane::before,
-  body.svCleanShell .svGlassControl.svNavMatchedOptic > .svNavMatchedLens.svLiquidPane::after {
-    display: none !important;
-  }
-}
+/* The pane owns the same face, edge and filter as navigation. Per-button
+   shine, color overrides and a second rim would create a different material. */
 body.svCleanShell .svNavMatchedOptic > :not(.svNavMatchedLens) {
   position: relative;
   z-index: 1;
@@ -147,13 +85,6 @@ body.svCleanShell .svGlassControl.svNavMatchedOptic:is(:hover,:focus-visible,.ac
 body.svCleanShell :is(.dsCardQuickActions,.svDetailChrome,.svDetailActions) .dsIconBtn.svGlassControl,
 body.svCleanShell :is(.svDetailClose,.dsClose).svGlassControl {
   border-radius: 50% !important;
-}
-/* Dense catalog/rail buttons keep the native (non-SVG) renderer, but no
-   longer lose backdrop blur entirely. This is the same clear nav coating,
-   without multiplying three-channel SVG graphs during scrolling. */
-body.svCleanShell :is(.dsCardQuickActions .svGlassControl,.dsRowBtn,.dsRowArrow,.svRowArrow,.svResumeRemove,.pagination a,.dsEpisodeChips a,.sv100RoomItem .svGlassControl,.partyMovieResults .svGlassControl,#controlPanel .svGlassControl).svGlassControl {
-  -webkit-backdrop-filter: blur(10px) saturate(1.3) !important;
-  backdrop-filter: blur(10px) saturate(1.3) !important;
 }
 body.svCleanShell .partyLinkChoice > summary.svGlassControl {
   min-height: 44px !important;

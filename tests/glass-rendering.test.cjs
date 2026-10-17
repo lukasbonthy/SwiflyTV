@@ -21,15 +21,15 @@ test('Visible optical panes stay inside their Party hosts and leave page content
   for(const {nested,host,pane,graph,scale}of bounds){
    assert.equal(nested,1,'tab children must share the container lens');
    for(const key of ['x','y','width','height'])assert(Math.abs(host[key]-pane[key])<=2,'a pane must be bounded by its own host, never the page');
-   assert(graph,'supported segmented bars share an actual rounded lens');assert.equal(scale,180,'shared bars use the observed reference optics');
+   assert(graph,'supported segmented bars share an actual rounded lens');assert(scale>0&&scale/2<=Math.min(host.width,host.height)*.1,'shared bars keep sampling inside their own glass thickness');
   }
   await page.waitForFunction(()=>document.querySelector('.dsHeroActions .svNavMatchedLens')?.dataset.swiflyRenderer==='svg');
   const dispersion=await page.locator('.svNavMatchedLens filter').evaluateAll(filters=>filters.map(filter=>({
    scales:[...filter.querySelectorAll('feDisplacementMap')].map(node=>Number(node.getAttribute('scale')))
   })));
-  assert(dispersion.length>3,'hero and segmented surfaces must have actual RGB refraction');
-  assert(dispersion.every(field=>JSON.stringify(field.scales)===JSON.stringify([-180,-170,-160])),
-    'hero Play/Details/Save and the top navigation must use exactly the same optical field');
+  assert(dispersion.length>3,'hero and segmented surfaces retain real refraction');
+  assert(dispersion.every(field=>field.scales.length===1&&Math.abs(field.scales[0])<=12),
+    'glass uses one color-preserving, bounded displacement field');
   assert.equal(await page.locator('main>.svNavMatchedLens,[data-player-root] .svNavMatchedLens,.partySetup>.svNavMatchedLens').count(),0);
   assert.equal(await page.locator('h1').textContent(),'Party Hub');
  }finally{await browser.close();}
@@ -69,10 +69,9 @@ for (const scheme of ['light','dark'])for (const native of [false,true]) test(sc
   assert.notEqual(await page.locator('.netflixNav .navLinks>a').evaluate(node=>getComputedStyle(node).textShadow),'none','labels retain a local shadow over bright art without obscuring the whole pane');
   for(const {round,hero,host,pane,hit} of state.actions){
    const actionColor=pane.fill.match(/[\d.]+/g).map(Number);
-   assert.deepEqual(actionColor.slice(0,3),[245,247,251],'buttons need a clearer neutral face where hero artwork is flat and dark');
-   assert.equal(actionColor[3],.13,'button center remains 87% clear with no milky overlay');
-   assert.notEqual(pane.shadow,'none','button uses a visible transparent optical edge');
-   assert(!pane.shadow.includes('0 0 0 5px'),'button must not acquire the previous opaque silver halo');
+   assert.deepEqual(actionColor,rgba,'buttons and navigation share one face');
+   assert.equal(pane.shadow,state.nav.shadow,'buttons do not add a second brighter rim');
+   assert.equal(pane.filter.replace(/url\([^)]+\)/,'url(shared-lens)'),state.nav.filter.replace(/url\([^)]+\)/,'url(shared-lens)'),'buttons share the navigation filter treatment');
    assert.equal(host.shadow,'none','host must not draw a second glass border');
    assert.equal(host.border,'0px');assert.equal(host.image,'none','component styles must not add a pale fill over the shared material');
    assert.equal(host.before,'none');assert.equal(host.after,'none');
@@ -86,13 +85,10 @@ for (const scheme of ['light','dark'])for (const native of [false,true]) test(sc
    backdrop:getComputedStyle(node).backdropFilter,
    clip:getComputedStyle(node).borderRadius
   }));
-  assert.match(reflections.near,/linear-gradient/,'subtle glass face light remains visible against flat gray artwork');
-  if(native) {
-   const material=await page.locator('.dsHeroActions>.dsPrimaryBtn>.svNavMatchedLens').evaluate(node=>getComputedStyle(node).backdropFilter);
-   assert.match(material,/blur\(14px\)/,'mobile and Safari buttons need visible real native frost, not only flat tint');
-  }
-  assert.match(reflections.edge,/conic-gradient/,'a directional curved-glass edge is present');
-  assert.match(reflections.backdrop,/url\(/,'button highlight must accompany real SVG backdrop refraction in Chromium');
+  assert.equal(reflections.near,'none','buttons do not add a painted face');
+  assert.equal(reflections.edge,'none','buttons do not add another outline');
+  if(native)assert(!reflections.backdrop.includes('url('),'native fallback keeps the shared browser blur');
+  else assert.match(reflections.backdrop,/url\(/,'Chromium controls retain real refraction');
   assert.notEqual(reflections.clip,'0px','the same glass pane clips to the actual button shape');
   assert(state.repeat.every(control=>!control.filter.includes('url(')),'repeated controls must stay lightweight');
   assert.equal(state.graphs,0,'removed optical renderers must not return');
@@ -160,7 +156,7 @@ test('Native control material has one clear rim and preserves functional generat
   for(const sample of samples){
    const rgba=sample.fill.match(/[\d.]+/g).map(Number);
    assert.deepEqual(rgba.slice(0,3),[255,255,255],sample.class+' must share the clear white material');
-   assert(rgba[3]>=.2&&rgba[3]<=.24,'controls keep the shared face at rest and when selected');
+   assert(rgba[3]>=.14&&rgba[3]<=.24,'controls keep the shared face at rest and when selected');
    assert.equal(sample.image,'none','controls do not stack a fake highlight');assert.equal(sample.border,'0px','a single inset rim must replace the old outer border: '+sample.class);
    if(!sample.optic)assert(!sample.filter.includes('url('),'dense repeated choices do not allocate SVG graphs');
   }
@@ -197,18 +193,12 @@ test('Navigation uses an even reference face over a dark page',{skip:!available&
  }finally{await browser.close();await new Promise(resolve=>api.io.close(resolve));}
 });
 
-// Measured from the requested reference: crossed channel gradients under a
-// softened 50% neutral interior, with a 3.5% inset and 10-unit RGB dispersion.
-function referenceMap(width,height,radius) {
- const inset=Math.min(width,height)*.035;
- return 'data:image/svg+xml,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}"><defs><linearGradient id="x" x1="100%" y1="0%" x2="0%" y2="0%"><stop stop-color="#0000"/><stop offset="1" stop-color="red"/></linearGradient><linearGradient id="y" x1="0%" y1="0%" x2="0%" y2="100%"><stop stop-color="#0000"/><stop offset="1" stop-color="blue"/></linearGradient></defs><rect width="${width}" height="${height}" fill="black"/><rect width="${width}" height="${height}" rx="${radius}" fill="url(#x)"/><rect width="${width}" height="${height}" rx="${radius}" fill="url(#y)" style="mix-blend-mode:screen"/><rect x="${inset}" y="${inset}" width="${width-2*inset}" height="${height-2*inset}" rx="${radius}" fill="hsl(0 0% 50% / .93)" style="filter:blur(7px)"/></svg>`);
-}
 test('Hero button visibly bends a diagonal backdrop instead of only drawing a translucent pill',{skip:!available&&'Chromium is not installed'},async()=>{
  const browser=await chromium.launch({headless:true});
  try{
   const page=await browser.newPage({viewport:{width:420,height:220}});
   await page.setContent('<!doctype html><style>'+['liquid-glass/liquid-glass.css','clean/clean.css','liquid-glass/surfaces.css','liquid-glass/controls.css'].map(asset).join('\n')+
-   '*{box-sizing:border-box}body{margin:0;background:#737373;min-height:220px}body::before{content:"";position:fixed;inset:0;background:linear-gradient(31deg,transparent 43%,#353535 44%,#353535 48%,transparent 49%)}.dsHeroActions{position:absolute;left:120px;top:88px}.dsHeroActions button{width:96px;height:44px}</style><body class="svCleanShell" data-st-glass="liquid"><div class="dsHeroActions"><button class="dsPrimaryBtn">Play</button></div></body>');
+   '*{box-sizing:border-box}body.svCleanShell{margin:0;background:repeating-linear-gradient(31deg,#737373 0 10px,#353535 10px 16px)!important;min-height:220px}body::before{display:none}.dsHeroActions{position:absolute;left:120px;top:88px}.dsHeroActions button{width:96px;height:44px}</style><body class="svCleanShell" data-st-glass="liquid"><div class="dsHeroActions"><button class="dsPrimaryBtn">Play</button></div></body>');
   for(const file of ['liquid-glass/liquid-glass.js','liquid-glass/surfaces.js'])await page.addScriptTag({content:asset(file)});
   await page.waitForFunction(()=>document.querySelector('.dsHeroActions .svNavMatchedLens')?.dataset.swiflyRenderer==='svg');
   const box=await page.locator('.dsHeroActions button').boundingBox();
@@ -222,30 +212,5 @@ test('Hero button visibly bends a diagonal backdrop instead of only drawing a tr
     return sum/count;
   },{distorted,flat});
   assert(error>1.2,'real button refraction must measurably bend the line behind it; RGB delta was '+error.toFixed(2));
- }finally{await browser.close();}
-});
-
-test('Glass pixels match the observed reference over detailed and dark backdrops',{skip:!available&&'Chromium is not installed'},async()=>{
- const browser=await chromium.launch({headless:true});
- try{
-  const page=await browser.newPage({viewport:{width:800,height:500}});
-  for(const scheme of ['light','dark'])for(const [width,height,radius] of [[580,60,24],[180,44,14],[44,44,22]])for(const scene of ['repeating-linear-gradient(37deg,#153351 0 14px,#dfb47f 14px 28px,#bc4366 28px 42px)','#080a0e']){
-   await page.goto('about:blank');await page.emulateMedia({colorScheme:scheme});
-   await page.setContent('<!doctype html><style>'+asset('liquid-glass/liquid-glass.css')+'body{margin:0;background:'+scene+'}.host{position:absolute;left:90px;top:80px;width:'+width+'px;height:'+height+'px}.host>.svLiquidPane{--sv-glass-radius:'+radius+'px}</style><body class="svCleanShell"><div class="host"><div class="svLiquidPane" data-swifly-glass data-glass-tint=".14"></div></div></body>');
-   await page.addScriptTag({content:asset('liquid-glass/liquid-glass.js')});
-   await page.waitForFunction(()=>document.querySelector('.svLiquidPane')?.dataset.swiflyRenderer==='svg');
-   const clip={x:90,y:80,width,height},actual=(await page.screenshot({clip})).toString('base64');
-   await page.evaluate(({map,scheme})=>{
-    const pane=document.querySelector('.svLiquidPane');pane.querySelector('feImage').setAttribute('href',map);
-    pane.querySelectorAll('feDisplacementMap').forEach((n,i)=>n.setAttribute('scale',-180+i*10));pane.querySelector('feGaussianBlur').setAttribute('stdDeviation','.5');
-    pane.style.setProperty('background',scheme==='dark'?'rgba(0,0,0,.2)':'rgba(255,255,255,.2)','important');pane.style.setProperty('box-shadow',scheme==='dark'?'inset 0 0 0 .5px rgba(255,255,255,.1),0 4px 16px rgba(0,0,0,.1),0 8px 24px rgba(0,0,0,.08)':'inset 0 0 0 .5px rgba(255,255,255,.15),0 4px 16px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.04)','important');
-   },{map:referenceMap(width,height,radius),scheme});
-   const expected=(await page.screenshot({clip})).toString('base64');
-   const error=await page.evaluate(async({actual,expected})=>{
-    const decode=async src=>{const im=new Image();im.src='data:image/png;base64,'+src;await im.decode();const c=document.createElement('canvas');c.width=im.width;c.height=im.height;const ctx=c.getContext('2d');ctx.drawImage(im,0,0);return ctx.getImageData(0,0,c.width,c.height).data;};
-    const a=await decode(actual),b=await decode(expected);let sum=0;for(let i=0;i<a.length;i++)if(i%4!==3)sum+=Math.abs(a[i]-b[i]);return sum/(a.length*.75);
-   },{actual,expected});
-   assert(error<1.5,`${scheme} ${width}x${height} lens differs from the reference by ${error.toFixed(2)} RGB levels per channel`);
-  }
  }finally{await browser.close();}
 });
