@@ -144,6 +144,17 @@
       stallTimer=setTimeout(()=>{
         stallTimer=0;if(!alive(token))return;
         const message='Playback stopped responding. Check your connection, then try again.';
+        // Browsers can throttle timeupdate in background tabs. Inspect the
+        // clock itself before treating missing callbacks as a dead stream.
+        if(playable&&!video.paused&&!video.seeking){
+          const time=number(video.currentTime,0);
+          if(time>lastTime+.15){
+            lastTime=time;
+            if(phase==='buffering')setStatus('ready');
+            watchProgress();
+            return;
+          }
+        }
         if(playable&&sourceData&&source&&!video.paused&&!video.ended)recoverStall(message);
         else mediaFailure(message);
       },Math.max(1,delay));
