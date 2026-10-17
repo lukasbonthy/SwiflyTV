@@ -528,16 +528,16 @@ test('Vector lens geometry is cached, bounded and independent of canvas or page 
  assert.equal(w.frameCount(),0);env.finish();
 });
 
-test('Rising detail sheets retain native glass and defer optical geometry until the sheet settles',()=>{
+test('Rising detail sheets have the full native lens before the transition completes',()=>{
  const env=glass('<dialog open class="svDetailDialog" data-sv-detail-state="opening"><div class="svDetailChrome"><button class="svDetailBack">Back</button><button class="svDetailDismiss">Close</button></div><div class="svDetailActions"><button class="dsPrimaryBtn">Play</button><button class="dsSecondaryBtn">Watch party</button></div></dialog>'),w=env.window,d=w.document;
  d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');env.intersect(true);w.flush(16);
  const panes=[...d.querySelectorAll('.svNavMatchedLens')];
  assert.equal(panes.length,4,'both the chrome and action panes remain visible throughout the entrance');
- assert(panes.every(pane=>pane.dataset.swiflyRenderer==='blur'));
- assert.equal(env.textures.length,0,'opening the sheet must not allocate displacement maps on the animation frame');
- assert.equal(w.frameCount(),0,'deferred optics must not poll while the sheet is moving');
+ assert(panes.every(pane=>pane.dataset.swiflyRenderer==='svg'),'the same refraction must already be visible while the sheet rises');
+ assert.equal(env.textures.length,1,'entrance lenses share a cached displacement texture');
+ assert.equal(w.frameCount(),0,'lens presentation never polls during the entrance');
  d.querySelector('dialog').dataset.svDetailState='open';w.SwiflyGlassSurfaces.refresh(d.querySelector('dialog'));w.flush(32);
- assert(panes.every(pane=>pane.dataset.swiflyRenderer==='svg'),'settling the sheet enables its live rounded rims');
+ assert(panes.every(pane=>pane.dataset.swiflyRenderer==='svg'),'the full lens remains unchanged when the sheet settles');
  assert.equal(env.textures.length,1,'identically sized lenses share one generated geometry map');env.finish();
 });
 
@@ -660,7 +660,7 @@ test('Detail glass enables itself when the entrance state settles without manual
   w.boot('liquid-glass/liquid-glass.js'); w.boot('liquid-glass/surfaces.js');
   env.intersect(true); w.flush(16);
   const panes = [...d.querySelectorAll('.svDetailActions .svNavMatchedLens')];
-  assert(panes.every(pane => pane.dataset.swiflyRenderer === 'blur'), 'opening animation retains light native glass');
+  assert(panes.every(pane => pane.dataset.swiflyRenderer === 'svg'), 'opening animation already has full live refraction');
   d.querySelector('dialog').dataset.svDetailState = 'open';
   await tick(); w.flush(32);
   assert(panes.every(pane => pane.dataset.swiflyRenderer === 'svg'), 'settling must activate the same nav refraction without user action');
@@ -689,7 +689,9 @@ test('Full movie-details actions get the same refractive glass on the first fram
 test('The detail hero releases entrance filter layers after animation for readable live refraction', () => {
   const fs = require('node:fs'), path = require('node:path');
   const css = fs.readFileSync(path.join(__dirname, '../public/liquid-glass/controls.css'), 'utf8');
-  assert(css.includes('body.svCleanShell :is(.dsHeroActions,.dsDetailActions,.svDetailActions) {'));
+  assert(css.includes('body.svCleanShell :is(.dsHeroContent,.dsDetailHeroContent,.dsHeroActions,.dsDetailActions) {'));
+  assert(css.includes('animation-name: svGlassSafeRise !important;'));
+  assert(css.includes('body.svCleanShell .svDetailActions {'));
   assert(css.includes('animation-fill-mode: backwards !important;'));
 });
 
@@ -715,5 +717,20 @@ test('Animated panes measure layout size, not transform-scaled visual bounds',()
  w.boot('liquid-glass/liquid-glass.js');w.flush(16);
  const map=decodeURIComponent(pane.querySelector('feImage').getAttribute('href'));
  assert.match(map,/viewBox="0 0 200 40"/);
+ assert.equal(w.frameCount(),0);env.finish();
+});
+
+test('Detail action filters prepare before an intersection callback on the rising sheet',async()=>{
+ const env=glass('<dialog open class="svDetailDialog" data-sv-detail-state="opening"><div class="svDetailChrome"><button class="svDetailBack">Back</button></div><div class="svDetailActions"><a class="dsPrimaryBtn">Play</a><a class="dsSecondaryBtn">Trailer</a><button class="dsIconBtn">+</button></div></dialog>'),w=env.window,d=w.document;
+ d.body.dataset.stGlass='liquid';
+ w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');w.flush(16);
+ const panes=[...d.querySelectorAll('.svDetailDialog .svNavMatchedLens')];
+ assert.equal(panes.length,4);
+ assert(panes.every(pane=>pane.dataset.swiflyRenderer==='svg'),'the opening frame already owns full detail refraction');
+ env.intersect(false);w.flush(32);
+ assert(panes.every(pane=>pane.dataset.swiflyRenderer==='svg'),'offscreen IO before the sheet reaches the viewport cannot blank an opening pane');
+ const dialog=d.querySelector('dialog');dialog.dataset.svDetailState='open';
+ await tick();w.flush(48);
+ assert(panes.every(pane=>pane.dataset.swiflyRenderer==='svg'),'settling preserves the same filter graphs');
  assert.equal(w.frameCount(),0);env.finish();
 });

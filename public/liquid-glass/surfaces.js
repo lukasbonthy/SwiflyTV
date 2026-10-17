@@ -71,22 +71,24 @@
     return box.width > 0 && box.height > 0 && box.bottom > 0 && box.right > 0 &&
       box.top < window.innerHeight + 80 && box.left < window.innerWidth + 80;
   }
+  function enteringDetailAction(host) {
+    return host.matches('.svDetailActions > :is(button,a),.svDetailChrome > :is(button,a)') &&
+      !!host.closest('.svDetailDialog[open][data-sv-detail-state="opening"]');
+  }
   function primeFirstScreen(host) {
-    return host.matches(firstScreenActions) &&
-      !host.closest('.svDetailDialog,.svStudioDialog') && inFirstScreen(host);
+    return (host.matches(firstScreenActions) &&
+      !host.closest('.svDetailDialog,.svStudioDialog') && inFirstScreen(host)) ||
+      enteringDetailAction(host);
   }
   function activate(entry) {
     ensureOpticPane(entry);
     if (!entry.visible || !entry.host.isConnected || document.hidden || !liquidPreference() || !window.SwiflyLiquidGlass) return;
-    // Keep the native clear pane while the weighted sheet rises. Building its
-    // optical maps at rest avoids competing with the first animation frames.
-    const deferred=Boolean(entry.host.closest('.svDetailDialog[data-sv-detail-state="opening"]'));
-    // Use the same pane renderer and tint as the top navigation.
+    // The dialog moves as one sheet. Its action lenses can prepare cached
+    // geometry while it rises; delaying them until the end makes the row
+    // visibly change from frost to refraction after the animation.
     if (entry.optic) {
-      if (!entry.opticController) {
-        entry.opticController=window.SwiflyLiquidGlass.mount(entry.opticPane);
-        if(deferred)entry.opticController.setEnabled(false);
-      } else if(entry.opticController.enabled===deferred)entry.opticController.setEnabled(!deferred);
+      if (!entry.opticController) entry.opticController=window.SwiflyLiquidGlass.mount(entry.opticPane);
+      else if (!entry.opticController.enabled) entry.opticController.setEnabled(true);
     }
     if (!entry.complex) return;
     if (!entry.controller) entry.controller = window.SwiflyLiquidGlass.mount(entry.host);
@@ -177,7 +179,8 @@
         // A transient "not intersecting" notification during initial layout
         // must not blank an already visible hero/detail action. Release the
         // graph once the control has actually moved away from the viewport.
-        if (!change.isIntersecting && entry.pinned && inFirstScreen(entry.host)) continue;
+        if (!change.isIntersecting && entry.pinned &&
+            (inFirstScreen(entry.host) || enteringDetailAction(entry.host))) continue;
         entry.visible = change.isIntersecting;
         if (!entry.visible) entry.pinned = false;
         if (entry.visible) activate(entry); else deactivate(entry);
@@ -212,7 +215,12 @@
       // Animation completion changes an attribute, not intersection. Without
       // this, detail buttons can stay frosted until the user next interacts.
       if (settledDialogs.size) for (const entry of entries.values()) {
-        if (entry.visible && entry.optic && settledDialogs.has(entry.host.closest('.svDetailDialog'))) activate(entry);
+        if (!entry.optic || !settledDialogs.has(entry.host.closest('.svDetailDialog'))) continue;
+        if (inFirstScreen(entry.host)) {
+          entry.visible = true;
+          entry.pinned = true;
+          activate(entry);
+        }
       }
       schedule();
     });
