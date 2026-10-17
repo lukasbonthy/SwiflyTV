@@ -196,3 +196,23 @@ test('TV navigation can expand native season accordions inside details', () => {
   d.getElementById('dismiss').dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true,cancelable:true}));assert.equal(d.activeElement.id,'seasonSummary');
   d.activeElement.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));assert.equal(d.getElementById('season').open,true,'TV Enter should expand the selected season');env.finish();
 });
+
+test('Details slide animates its fixed bottom position, never a transform that blanks glass',async()=>{
+ const fragment=await render(),env=browser('<a id="details" href="/movie/101">Details</a>'),w=env.window,d=w.document;
+ w.fetch=async()=>({ok:true,text:async()=>fragment});
+ const frames=[];
+ const original=w.Element.prototype.animate;
+ w.Element.prototype.animate=function(keyframes,options){
+   if(this.matches?.('.svDetailDialog'))frames.push(keyframes);
+   return {finished:Promise.resolve(),cancel(){},play(){},pause(){}};
+ };
+ w.boot('details.js');
+ d.getElementById('details').dispatchEvent(new w.MouseEvent('click',{bubbles:true,cancelable:true}));
+ await tick();
+ assert(frames.length>0,'detail sheet must start the opening animation');
+ assert(frames[0].every(frame=>Object.hasOwn(frame,'bottom')),'fixed bottom changes preserve refraction while moving');
+ assert(frames[0].every(frame=>!Object.hasOwn(frame,'transform')),'do not create a transform-only compositing layer');
+ assert.equal(frames[0][1].bottom,'0px');
+ w.Element.prototype.animate=original;
+ env.finish();
+});
