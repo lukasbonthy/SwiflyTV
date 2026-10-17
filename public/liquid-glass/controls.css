@@ -1,4 +1,4 @@
-/* Final material rules, after component styles. Navigation and prominent
+/* Final material rules, after component styles. Navigation and standalone
    actions use one pane; their hosts never add a second border or highlight. */
 body.svCleanShell :is(.netflixNav,.dsWelcomeNav) :is(.svNavButton,.svWelcomeStudio) {
   background: transparent !important;
@@ -29,6 +29,7 @@ body.svCleanShell .svGlassSurface:is(.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn,.d
   content: none !important;
 }
 body.svCleanShell .svGlassSurface.svNavMatchedOptic.svNavMatchedOptic,
+body.svCleanShell #controlPanel .svGlassControl.svNavMatchedOptic,
 body.svCleanShell[data-st-glass="liquid"] main.dsAuthPageSafe :is(.dsAuthCard,.dsPrimaryBtn).svNavMatchedOptic,
 body.svCleanShell .svWelcomeClean .dsWelcomeActions > a.svNavMatchedOptic {
   position: relative !important;
@@ -40,12 +41,11 @@ body.svCleanShell .svWelcomeClean .dsWelcomeActions > a.svNavMatchedOptic {
   backdrop-filter: none !important;
   overflow: hidden;
 }
-body.svCleanShell .svGlassControl.svNavMatchedOptic {
+body.svCleanShell .svGlassControl.svNavMatchedOptic:not(.svGlassCompact) {
   min-width: 44px !important;
   min-height: 44px !important;
 }
 body.svCleanShell .svNavMatchedOptic > .svNavMatchedLens.svLiquidPane {
-  --sv-glass-default-tint: 0;
   position: absolute !important;
   inset: 0 !important;
   width: 100% !important;
@@ -53,11 +53,33 @@ body.svCleanShell .svNavMatchedOptic > .svNavMatchedLens.svLiquidPane {
   border-radius: inherit !important;
   pointer-events: none !important;
 }
+/* Popover content scrolls over one stationary, player-owned glass surface. */
+body.svCleanShell .svPlayerPopoverBody.svGlassSurface {
+  background: rgb(var(--sv-glass-color, 255 255 255) / .2) !important;
+  border: 0 !important;
+  box-shadow: var(--sv-glass-edge) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(1.3) !important;
+  backdrop-filter: blur(10px) saturate(1.3) !important;
+}
 /* Compact controls now use exactly the same correctly bounded, full-strength
    backdrop lens as the navbar. No magnified sampling layer or separate
    width-reduced optical filter. The lens itself owns its rounded clipping. */
 body.svCleanShell .svGlassControl.svNavMatchedOptic {
   overflow: visible !important;
+}
+body.svCleanShell .svResumeRemove.svGlassControl.svNavMatchedOptic {
+  position: absolute !important;
+}
+/* The added lens must not replace the movie picker's first artwork child. */
+body.svCleanShell .svPartyHub .partyMovieResults > button.svNavMatchedOptic > .svNavMatchedLens + :is(img,span) {
+  flex-shrink: 0;
+  width: 30px;
+  height: 45px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+body.svCleanShell .svPartyHub .partyMovieResults > button.svNavMatchedOptic > .svNavMatchedLens + :is(img,span) + span {
+  min-width: 0;
 }
 body.svCleanShell .svGlassControl.svNavMatchedOptic > .svNavMatchedLens.svLiquidPane {
   inset: 0 !important;
@@ -79,7 +101,7 @@ body.svCleanShell .svNavMatchedOptic > .svNavMatchedLabel {
 
 /* Compact controls now reuse the true refractive navigation lens.
    No separate fake shine or bright border is layered over the backdrop. */
-body.svCleanShell .svGlassControl.svNavMatchedOptic:is(:hover,:focus-visible,.active,.saved,.liked,[aria-pressed="true"]) > .svLiquidPane {
+body.svCleanShell .svGlassControl.svNavMatchedOptic:is(:hover,:focus-visible,.active,.saved,.liked,[aria-pressed="true"],[aria-selected="true"]) > .svLiquidPane {
   box-shadow: var(--sv-glass-edge), inset 0 0 0 1px rgb(255 255 255 / .15) !important;
 }
 body.svCleanShell :is(.dsCardQuickActions,.svDetailChrome,.svDetailActions) .dsIconBtn.svGlassControl,
@@ -122,6 +144,7 @@ body.svCleanShell main.dsAuthPageSafe .svAuthPasswordToggle.svGlassControl {
   min-height: 44px !important;
   border-radius: 8px !important;
 }
+body.svCleanShell[data-st-glass="subtle"] #controlPanel .svGlassControl.svNavMatchedOptic,
 body.svCleanShell[data-st-glass="subtle"] .svLiquidPane,
 body.svCleanShell[data-st-glass="subtle"] .svGlassSurface.svGlassSurface,
 body.svCleanShell[data-st-glass="subtle"] main.dsAuthPageSafe :is(.dsAuthCard,.dsPrimaryBtn).svNavMatchedOptic,
@@ -130,6 +153,7 @@ body.svCleanShell[data-st-glass="subtle"] .svWelcomeClean .dsWelcomeActions > a.
   -webkit-backdrop-filter: blur(8px) saturate(1.05) !important;
   backdrop-filter: blur(8px) saturate(1.05) !important;
 }
+body.svCleanShell[data-st-glass="off"] #controlPanel .svGlassControl.svNavMatchedOptic,
 body.svCleanShell[data-st-glass="off"] .svGlassSurface.svGlassSurface,
 body.svCleanShell[data-st-glass="off"] main.dsAuthPageSafe :is(.dsAuthCard,.dsPrimaryBtn).svNavMatchedOptic,
 body.svCleanShell[data-st-glass="off"] .svWelcomeClean .dsWelcomeActions > a.svNavMatchedOptic {
@@ -144,6 +168,7 @@ body.svCleanShell:is([data-st-glass="off"],[data-st-glass="subtle"]) .svNavMatch
   body.svCleanShell .svLiquidPane.svLiquidPane { background: #15191e !important; }
 }
 @media (prefers-reduced-transparency: reduce) {
+  body.svCleanShell #controlPanel .svGlassControl.svNavMatchedOptic,
   body.svCleanShell .svLiquidPane.svLiquidPane,
   body.svCleanShell .svGlassSurface.svGlassSurface,
   body.svCleanShell .svGlassSurface.svNavMatchedOptic.svNavMatchedOptic,

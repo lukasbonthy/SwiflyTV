@@ -41,6 +41,7 @@ body.svCleanShell {
 /* Keep navigation identical on player routes, which omit control styles.
    This also protects pane spans from component text-label resets. */
 body.svCleanShell .svLiquidPane.svLiquidPane {
+  --sv-glass-default-tint: .2;
   background: rgb(var(--sv-glass-color, 255 255 255) / var(--sv-glass-tint)) !important;
   box-shadow: var(--sv-glass-edge) !important;
 }
@@ -132,7 +133,7 @@ body .mobileNav[data-sv-liquid-nav] {
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 2px;
 }
-body .mobileNav[data-sv-liquid-nav] > .svLiquidPane { --sv-glass-radius: 50px; --sv-glass-tint: .15; }
+body .mobileNav[data-sv-liquid-nav] > .svLiquidPane { --sv-glass-radius: 50px; --sv-glass-tint: .2; }
 body .mobileNav[data-sv-liquid-nav] > a {
   position: relative;
   z-index: 1;
@@ -151,7 +152,7 @@ body [data-sv-liquid-nav] summary:focus-visible { outline: 2px solid #fff; outli
 @media (min-width: 861px) { body .mobileNav[data-sv-liquid-nav] { display: none !important; } }
 @media (max-width: 860px) {
   body [data-sv-liquid-nav].topbar { padding: 12px !important; }
-  body [data-sv-liquid-nav].topbar .netflixNav > .svLiquidPane { --sv-glass-radius: 50px; --sv-glass-tint: .1; --sv-glass-lens-blur: 11px; }
+  body [data-sv-liquid-nav].topbar .netflixNav > .svLiquidPane { --sv-glass-radius: 50px; --sv-glass-tint: .2; --sv-glass-lens-blur: 11px; }
   body [data-sv-liquid-nav].topbar > .container.nav.netflixNav { border-radius: 50px; display: grid; grid-template-columns: 1fr auto; gap: 10px; }
   body [data-sv-liquid-nav].topbar .navLinks,
   body [data-sv-liquid-nav].topbar .dsNavActions { display: none; }
