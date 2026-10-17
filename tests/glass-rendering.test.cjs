@@ -339,7 +339,7 @@ test('Moving movie sheet visibly refracts while its animation is PAUSED midway',
   await page.evaluate(()=>document.querySelector('dialog').showModal());
   for(const file of ['liquid-glass/liquid-glass.js','liquid-glass/surfaces.js'])await page.addScriptTag({content:asset(file)});
   await page.waitForFunction(()=>document.querySelector('.svDetailActions .svNavMatchedLens')?.dataset.swiflyRenderer==='svg');
-  await page.evaluate(()=>{const sheet=document.querySelector('dialog'); const animation=sheet.animate([{transform:'translateY(230px)'},{transform:'translateY(0px)'}],{duration:900,fill:'both'});animation.pause();animation.currentTime=450;});
+  await page.evaluate(()=>{const sheet=document.querySelector('dialog'); const animation=sheet.animate([{bottom:'-230px'},{bottom:'0px'}],{duration:900,fill:'both'});animation.pause();animation.currentTime=450;});
   await page.waitForTimeout(50);
   const pane=page.locator('.svDetailActions .svNavMatchedLens').first(),box=await pane.boundingBox();
   const refracted=(await page.screenshot({clip:box})).toString('base64');
