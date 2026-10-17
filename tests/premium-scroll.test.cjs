@@ -245,10 +245,10 @@ test('the shell loads the pinned local engine and adapter in order on catalog pa
   const api = loadServer();
   try {
     const html = api.pageShell({active:'home', body:'<main>Catalog</main>'});
-    const vendor = html.indexOf('/assets/vendor/lenis/lenis.min.js?v=1.3.16');
+    const vendor = html.indexOf('/assets/vendor/lenis/lenis.min.js?v=1.3.16-r1');
     const adapter = html.indexOf('/assets/clean/scroll.js?v=240');
     assert(vendor > 0 && adapter > vendor, 'the controller loads after the locally served Lenis engine');
-    assert(html.includes('/assets/vendor/lenis/lenis.css?v=1.3.16'));
+    assert(html.includes('/assets/vendor/lenis/lenis.css?v=1.3.16-r1'));
     assert(html.includes('/assets/clean/clean.css?v=154'));
   } finally {api.io.close(); api.httpServer.close();}
 });

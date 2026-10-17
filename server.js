@@ -5618,6 +5618,7 @@ app.use((req, res, next) => {
 app.use("/assets/liquid-glass", express.static(path.join(__dirname, "public", "liquid-glass"), { maxAge: "1d", dotfiles: "deny" }));
 // v151: shared clean catalog styles and compact navigation behavior.
 app.use("/assets/clean", express.static(path.join(__dirname, "public", "clean"), { maxAge: "1d", dotfiles: "deny" }));
+app.use("/assets/vendor/lenis", express.static(path.join(__dirname, "public", "vendor", "lenis"), { maxAge: "1d", dotfiles: "deny" }));
 app.use("/assets/studio", express.static(path.join(__dirname, "public", "studio"), { maxAge: "1d", dotfiles: "deny" }));
 app.use("/assets/party", express.static(path.join(__dirname, "public", "party"), { maxAge: "1d", dotfiles: "deny" }));
 app.use("/assets/player", express.static(path.join(__dirname, "public", "player"), { maxAge: "1d", dotfiles: "deny" }));
@@ -6487,8 +6488,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/continue.js?v=154"></script>
     <link rel="stylesheet" href="/assets/clean/details.css?v=229" />
     <link rel="stylesheet" href="/assets/clean/motion.css?v=208" />
-    <link rel="stylesheet" href="/assets/vendor/lenis/lenis.css?v=1.3.16" />
-    <script defer src="/assets/vendor/lenis/lenis.min.js?v=1.3.16"></script>
+    <link rel="stylesheet" href="/assets/vendor/lenis/lenis.css?v=1.3.16-r1" />
+    <script defer src="/assets/vendor/lenis/lenis.min.js?v=1.3.16-r1"></script>
     <script defer src="/assets/clean/motion.js?v=238"></script>
     <script defer src="/assets/clean/scroll.js?v=240"></script>
     <script defer src="/assets/clean/details.js?v=231"></script>

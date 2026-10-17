@@ -2,7 +2,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
-const path = require('node:path');
 const {chromium} = require('playwright-core');
 const {loadServer} = require('./ui-helpers.cjs');
 const available = fs.existsSync(chromium.executablePath()) ||
@@ -10,7 +9,10 @@ const available = fs.existsSync(chromium.executablePath()) ||
 
 async function catalog(browser, options = {}) {
   const api = loadServer();
+  let ready = false;
   try {
+    await new Promise(resolve => api.httpServer.listen(0, '127.0.0.1', resolve));
+    const origin = 'http://127.0.0.1:' + api.httpServer.address().port;
     const items = Array.from({length:18}, (_, index) => ({id:100 + index, title:'Film ' + index,
       backdrop_path:'/scene.jpg', poster_path:'/poster.jpg', release_date:'2026-01-01', vote_average:7.2, overview:'A featured film.'}));
     api.setTmdb(async () => ({results:items}));
@@ -27,18 +29,19 @@ async function catalog(browser, options = {}) {
     });
     await page.route('**/*', route => {
       const url = new URL(route.request().url());
-      if (url.hostname === 'catalog.test' && url.pathname === '/') return route.fulfill({body:html, contentType:'text/html'});
-      if (url.hostname === 'catalog.test' && url.pathname.startsWith('/assets/')) {
-        const file = path.join(__dirname, '../public', url.pathname.slice(8));
-        if (fs.existsSync(file)) return route.fulfill({path:file});
-      }
+      if (url.origin === origin && url.pathname === '/') return route.fulfill({body:html, contentType:'text/html'});
+      // Assets must traverse Express. Serving files directly here masked the
+      // missing production route and let the engine silently fail to load.
+      if (url.origin === origin && url.pathname.startsWith('/assets/')) return route.continue();
       if (url.hostname === 'image.tmdb.org') return route.fulfill({contentType:'image/svg+xml', body:
         '<svg xmlns="http://www.w3.org/2000/svg" width="900" height="600"><rect width="900" height="600" fill="#325776"/><circle cx="280" cy="240" r="180" fill="#afc3d7"/></svg>'});
       return route.fulfill({body:'', contentType:route.request().resourceType() === 'stylesheet' ? 'text/css' : 'text/plain'});
     });
-    await page.goto('http://catalog.test/');
+    await page.goto(origin);
+    page.once('close', () => api.io.close());
+    ready = true;
     return page;
-  } finally {await new Promise(resolve => api.io.close(resolve));}
+  } finally {if (!ready) await new Promise(resolve => api.io.close(resolve));}
 }
 
 test('the real catalog shell eases wheel input without changing its glass and preserves native modal scrolling', {skip:!available && 'Chromium is not installed'}, async () => {
