@@ -1,5 +1,10 @@
 /* Final material rules, after component styles. Navigation and standalone
    actions use one pane; their hosts never add a second border or highlight. */
+/* Keep the entrance, then release its opacity/filter layer so the buttons
+   can sample the hero artwork instead of an empty animated container. */
+body.svCleanShell .dsHeroActions {
+  animation-fill-mode: backwards !important;
+}
 body.svCleanShell :is(.netflixNav,.dsWelcomeNav) :is(.svNavButton,.svWelcomeStudio) {
   background: transparent !important;
   border: 1px solid transparent !important;
