@@ -1,8 +1,10 @@
 /* Final material rules, after component styles. Navigation and standalone
    actions use one pane; their hosts never add a second border or highlight. */
-/* Keep the entrance, then release its opacity/filter layer so the buttons
-   can sample the hero artwork instead of an empty animated container. */
-body.svCleanShell .dsHeroActions {
+/* Release entrance filter/opacity layers once animation completes.
+   A forwards-filled blur(0) creates an isolated backdrop boundary even
+   though the buttons look visible, preventing their lens from sampling
+   the movie artwork. Treat details and catalog heroes consistently. */
+body.svCleanShell :is(.dsHeroActions,.dsDetailActions,.svDetailActions) {
   animation-fill-mode: backwards !important;
 }
 body.svCleanShell :is(.netflixNav,.dsWelcomeNav) :is(.svNavButton,.svWelcomeStudio) {

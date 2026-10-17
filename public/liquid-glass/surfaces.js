@@ -62,14 +62,18 @@
     entry.host.insertBefore(pane, entry.host.firstChild);
     entry.opticPane = pane;
   }
-  // Prime only prominent first-screen actions; other controls remain gated
-  // by IntersectionObserver to avoid hundreds of idle GPU filter graphs.
-  function primeFirstScreen(host) {
-    if (!host.matches('.dsHeroActions > :is(button,a),.dsWelcomeActions > :is(button,a),.dsAuthPageSafe .dsPrimaryBtn')) return false;
-    if (host.closest('.svDetailDialog,.svStudioDialog')) return false;
+  // The main hero AND the full movie/TV detail page show action buttons
+  // immediately. An asynchronous intersection callback must never be the
+  // first thing that gives these prominent buttons their real refraction.
+  const firstScreenActions='.dsHeroActions > :is(button,a),.svDetailActions > :is(button,a),.dsWelcomeActions > :is(button,a),.dsAuthPageSafe .dsPrimaryBtn';
+  function inFirstScreen(host) {
     const box = host.getBoundingClientRect();
     return box.width > 0 && box.height > 0 && box.bottom > 0 && box.right > 0 &&
       box.top < window.innerHeight + 80 && box.left < window.innerWidth + 80;
+  }
+  function primeFirstScreen(host) {
+    return host.matches(firstScreenActions) &&
+      !host.closest('.svDetailDialog,.svStudioDialog') && inFirstScreen(host);
   }
   function activate(entry) {
     ensureOpticPane(entry);
@@ -129,7 +133,8 @@
     if (!panel&&host.matches(compactControls))classes.push('svGlassCompact');
     if (complex) {const position = getComputedStyle(host).position; if (!position || position === 'static') classes.push('svGlassRelative');}
     entry = {host, panel, optic, opticPane:null, opticController:null, complex, controller:null, visible:!intersection, addedClasses:classes.filter(name => !host.classList.contains(name)), previousRenderer:host.dataset.swiflyRenderer, previousProperties:rendererProperties.map(property => [property, host.style.getPropertyValue(property), host.style.getPropertyPriority(property)])};
-    entry.visible = !intersection || (optic && primeFirstScreen(host));
+    entry.pinned = Boolean(optic && primeFirstScreen(host));
+    entry.visible = !intersection || entry.pinned;
     entries.set(host, entry); host.classList.add(...classes); host.dataset.swiflyRenderer = 'blur';
     ensureOpticPane(entry);
     if ((complex || optic) && intersection) {
@@ -169,7 +174,12 @@
     if (typeof IntersectionObserver === 'function') intersection = new IntersectionObserver(changes => {
       for (const change of changes) {
         const entry = entries.get(change.target); if (!entry) continue;
+        // A transient "not intersecting" notification during initial layout
+        // must not blank an already visible hero/detail action. Release the
+        // graph once the control has actually moved away from the viewport.
+        if (!change.isIntersecting && entry.pinned && inFirstScreen(entry.host)) continue;
         entry.visible = change.isIntersecting;
+        if (!entry.visible) entry.pinned = false;
         if (entry.visible) activate(entry); else deactivate(entry);
       }
     }, {rootMargin:'80px', threshold:0});
