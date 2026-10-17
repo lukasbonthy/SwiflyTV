@@ -6515,7 +6515,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=211" />' : ""}
     ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=205" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=205" />' : ""}
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=199" />' : ""}
-    <link rel="stylesheet" href="/assets/clean/performance.css?v=210" />
+    <link rel="stylesheet" href="/assets/clean/performance.css?v=211" />
 </head>
 <body class="svCleanShell">
 

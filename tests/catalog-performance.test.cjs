@@ -14,6 +14,14 @@ test('The Aurora retains its original artwork without continuous animation or pe
  assert.equal(style.willChange,'auto');env.finish();
 });
 
+test('Desktop catalog art, wordmark and primary action do not run obsolete continuous animations',()=>{
+ const env=browser(actualStyles()+'<a class="netflixWordmark">SwiflyTV</a><main><section class="dsHero"><div class="dsHeroBg"></div><div class="dsHeroActions"><button class="dsPrimaryBtn">Watch</button></div></section></main>');
+ for(const selector of ['.netflixWordmark','.dsHeroBg','.dsHeroActions>.dsPrimaryBtn']) {
+  assert.equal(env.window.getComputedStyle(env.window.document.querySelector(selector)).animation,'none',selector+' must not invalidate styles on every idle frame');
+ }
+ env.finish();
+});
+
 test('Catalog cards and rails do not retain obsolete transform/filter promotion hints',()=>{
  const env=browser(actualStyles()+'<section class="dsRow svCatalogRow"><div class="movieRail dsRail"><article class="movieCard dsCard"><a class="posterWrap dsThumb">Title</a></article></div></section>'),w=env.window,d=w.document;
  for(const selector of ['.svCatalogRow','.movieRail','.movieCard','.dsThumb'])assert.equal(w.getComputedStyle(d.querySelector(selector)).willChange,'auto',selector+' should not reserve an idle compositor layer');
