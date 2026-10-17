@@ -354,3 +354,29 @@ test('Moving movie sheet visibly refracts while its animation is PAUSED midway',
   assert(delta>1.2,'an animated dialog must already show physical refraction, not just SVG nodes: '+delta.toFixed(3));
  } finally {await browser.close();}
 });
+
+test('Late-inserted movie buttons refract before any observer notification',{skip:!available&&'Chromium is not installed'},async()=>{
+ const browser=await chromium.launch({headless:true});
+ try {
+  const page=await browser.newPage({viewport:{width:720,height:490}});
+  await page.setContent('<!doctype html><style>'+['liquid-glass/liquid-glass.css','liquid-glass/surfaces.css','liquid-glass/controls.css','clean/details.css'].map(asset).join('\n')+
+   '*{box-sizing:border-box}body.svCleanShell{margin:0;background:#050505!important}.svDetailDialog{position:fixed!important;left:0!important;bottom:0!important;width:690px!important;height:480px!important;background:#141414!important}.svDetailHero{height:440px!important;position:relative;background:repeating-linear-gradient(31deg,#a7b6c5 0 13px,#162738 13px 23px)!important}.svDetailActions{position:absolute;top:200px;left:50px;display:flex;gap:10px}.svDetailActions a{display:flex;align-items:center;justify-content:center;color:white;width:155px;height:50px;border-radius:25px}</style><body class="svCleanShell" data-st-glass="liquid"><dialog class="svDetailDialog" data-sv-detail-state="opening"><div class="svDetailViewport"></div></dialog></body>');
+  await page.evaluate(()=>{const dialog=document.querySelector('dialog');dialog.showModal();dialog.dataset.svDetailState='open';});
+  for(const file of ['liquid-glass/liquid-glass.js','liquid-glass/surfaces.js'])await page.addScriptTag({content:asset(file)});
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  await page.evaluate(()=>{
+   document.querySelector('.svDetailViewport').innerHTML='<div class="svDetailHero"><div class="svDetailActions"><a class="dsPrimaryBtn">Play</a><a class="dsSecondaryBtn">Trailer</a></div></div>';
+   window.SwiflyGlassSurfaces.refresh(document.querySelector('.svDetailHero'));
+  });
+  await page.waitForFunction(()=>[...document.querySelectorAll('.svDetailActions .svNavMatchedLens')].length===2&&[...document.querySelectorAll('.svDetailActions .svNavMatchedLens')].every(p=>p.dataset.swiflyRenderer==='svg'));
+  const pane=page.locator('.svDetailActions .svNavMatchedLens').first(),box=await pane.boundingBox();
+  const withGlass=(await page.screenshot({clip:box})).toString('base64');
+  await pane.evaluate(node=>node.querySelectorAll('feDisplacementMap').forEach(field=>field.setAttribute('scale','0')));
+  const withoutGlass=(await page.screenshot({clip:box})).toString('base64');
+  const delta=await page.evaluate(async({withGlass,withoutGlass})=>{
+   const bytes=async src=>{const image=new Image();image.src='data:image/png;base64,'+src;await image.decode();const canvas=document.createElement('canvas');canvas.width=image.width;canvas.height=image.height;const ctx=canvas.getContext('2d');ctx.drawImage(image,0,0);return ctx.getImageData(0,0,image.width,image.height).data;};
+   const a=await bytes(withGlass),b=await bytes(withoutGlass);let sum=0;for(let i=0;i<a.length;i+=4)for(let j=0;j<3;j++)sum+=Math.abs(a[i+j]-b[i+j]);return sum/(a.length*.75);
+  },{withGlass,withoutGlass});
+  assert(delta>1.2,'late-loading real movie artwork must have visible refraction: '+delta.toFixed(3));
+ }finally{await browser.close();}
+});
