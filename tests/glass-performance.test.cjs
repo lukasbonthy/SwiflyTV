@@ -315,8 +315,12 @@ test('Hero controls mount the SAME size-aware navbar renderer, not only a global
   assert(!control.classList.contains('svSharedGlass'),'no duplicate CSS filter on button host');
  }
  assert.equal(d.querySelectorAll('.dsCardQuickActions .svLiquidPane').length,50);
+ // Moving the hero offscreen legitimately releases its filters, even while
+ // a transient false notification for an on-screen hero is ignored.
+ for(const control of controls)control.getBoundingClientRect=()=>({width:200,height:40,top:2400,bottom:2440,left:0,right:200});
  env.intersect(false);w.flush(32);
  for(const pane of d.querySelectorAll('.dsHeroActions .svLiquidPane'))assert.equal(pane.dataset.swiflyRenderer,'blur','offscreen effects pause');
+ for(const control of controls)control.getBoundingClientRect=()=>({width:200,height:40,top:0,bottom:40,left:0,right:200});
  env.intersect(true);w.flush(48);
  assert.equal(d.querySelectorAll('.dsHeroActions .svLiquidPane[data-swifly-renderer="svg"]').length,3);
  d.body.dataset.stGlass='off';await tick();w.flush(64);
