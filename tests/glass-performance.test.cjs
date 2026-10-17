@@ -50,13 +50,14 @@ test('Every visible action family uses the navigation lens and releases offscree
  const env=glass('<div class="dsCardQuickActions"><button class="dsMiniBtn">Save</button></div><a class="dsRowBtn">View all</a><button class="dsRowArrow">Next</button><nav class="pagination"><a>2</a></nav><div class="dsEpisodeChips"><a>Episode 1</a></div><div id="controlPanel"><button class="stChoice">Appearance</button></div><main class="svPartyHub"><button class="sv100Channel">General</button><div class="sv100RoomItem"><button class="partySecondaryBtn">Join</button></div><div class="partyMovieResults"><button>Pick film</button></div></main>'),w=env.window,d=w.document;
  d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');
  const controls=[...d.querySelectorAll('button,a')];assert.equal(controls.length,9);
- for(const host of controls)assert(host.querySelector(':scope>.svLiquidPane'),'no blur-only exception for '+host.textContent);
+ for(const host of controls.filter(host=>!host.closest('#controlPanel')))assert(host.querySelector(':scope>.svLiquidPane'),'no blur-only exception for '+host.textContent);
+  assert(!d.querySelector('#controlPanel .svLiquidPane'),'Studio owns the appearance of its settings buttons');
  assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length,0,'offscreen controls must not allocate graphs');
  env.intersect(true);w.flush(16);
- for(const host of controls){const pane=host.querySelector(':scope>.svLiquidPane');assert.equal(pane.dataset.swiflyRenderer,'svg');assert.equal(pane.style.getPropertyValue('--sv-glass-default-tint'),'0.2','the face must match navigation');}
+ for(const host of controls.filter(host=>!host.closest('#controlPanel'))){const pane=host.querySelector(':scope>.svLiquidPane');assert.equal(pane.dataset.swiflyRenderer,'svg');assert.equal(pane.style.getPropertyValue('--sv-glass-default-tint'),'0.2','the face must match navigation');}
  const generated=env.textures.length;assert.equal(generated,1,'same geometry shares a cached field');
  env.intersect(false);w.flush(32);assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length,0,'leaving the viewport releases the graphs');
- env.intersect(true);w.flush(48);assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length,9);assert.equal(env.textures.length,generated);
+ env.intersect(true);w.flush(48);assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length,8);assert.equal(env.textures.length,generated);
  assert.equal(w.frameCount(),0,'coverage must not add an idle render loop');env.finish();
 });
 
@@ -604,14 +605,16 @@ test('Non-renderable ancestors still avoid allocating optical geometry',()=>{
 test('Ordinary buttons, Party primary actions and disclosure controls share glass without filtering page panels',()=>{
  const env=glass('<main><button id="plain">Refresh</button><details><summary>Options</summary><p>Panel content</p></details><div id="controlPanel"><button class="stChoice">Appearance</button></div><button class="svAvatarClose">Close avatar picker</button><div class="dsAccountActions"><a class="dsPrimaryBtn">Continue watching</a></div></main><main class="svPartyHub"><button class="partyPrimaryBtn">Create watch party</button><button class="sv100Channel">General</button><button id="sv103RoomCode">ABCD</button><details class="partyLinkChoice"><summary>Use a video link</summary></details><div class="sv100RoomItem"><button class="partySecondaryBtn">Join party</button></div><div data-player-root><button>Player-owned</button></div></main>'),w=env.window,d=w.document;
  d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');
- for(const node of d.querySelectorAll('button:not([data-player-root] button),summary,.dsAccountActions a'))assert(node.classList.contains('svGlassControl'),'missing glass material on '+node.outerHTML);
+ for(const node of d.querySelectorAll('button:not([data-player-root] button):not(#controlPanel button),summary,.dsAccountActions a'))assert(node.classList.contains('svGlassControl'),'missing glass material on '+node.outerHTML);
+  assert.equal(d.querySelectorAll('#controlPanel .svGlassControl').length,0,'Studio controls keep their original styling');
  env.intersect(true);w.flush(16);
  assert(d.querySelector('.partyPrimaryBtn > .svNavMatchedLens[data-swifly-renderer="svg"]'),'the main Party action uses the real bounded optical pane');
  assert(d.querySelector('.dsAccountActions .dsPrimaryBtn > .svNavMatchedLens'),'account primary actions share the prominent optical material');
  assert(d.querySelector('.sv100RoomItem .svNavMatchedLens[data-swifly-renderer=svg]'),'visible directory actions use the nav renderer');
  assert.equal(d.querySelectorAll('main.svGlassSurface,details.svGlassSurface,[data-player-root] .svGlassSurface').length,0,'only interactive surfaces are enhanced');
  assert(d.querySelector('#plain .svLiquidPane'));assert(d.querySelector('#sv103RoomCode .svLiquidPane'));
- assert.equal(d.querySelectorAll('.stChoice .svLiquidPane,.sv100Channel .svLiquidPane').length,2,'settings and channels use the same material');
+ assert.equal(d.querySelectorAll('.stChoice .svLiquidPane').length,0,'Studio receives no extra optical pane');
+  assert.equal(d.querySelectorAll('.sv100Channel .svLiquidPane').length,1,'the Party directory retains global navigation glass');
  assert.equal(w.frameCount(),0);env.finish();
 });
 
@@ -775,4 +778,15 @@ test('Modal cinema identity never fades the ancestor of refractive action contro
  const css=fs.readFileSync(path.join(__dirname,'../public/liquid-glass/controls.css'),'utf8');
  assert(css.includes('body.svCleanShell .svDetailDialog .svCinemaPage .svDetailIdentity[data-cinema-reveal]'));
  assert(css.includes('animation: none !important;'));
+});
+
+test('Studio restores its own dense buttons without allocating per-control SVG lenses',()=>{
+ const choices=Array.from({length:80},(_,i)=>'<button class="stChoice">Option '+i+'</button>').join('');
+ const env=glass('<button id="studioLauncher">Studio</button><dialog id="controlPanel" class="svStudioDialog" open>'+choices+'<button data-st-save>Save</button></dialog><div class="dsHeroActions"><a class="dsPrimaryBtn">Play</a></div>'),w=env.window,d=w.document;
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');env.intersect(true);w.flush(16);
+ assert.equal(d.querySelectorAll('#controlPanel button').length,81);
+ assert.equal(d.querySelectorAll('#controlPanel .svLiquidPane,#controlPanel .svGlassControl,#controlPanel svg.svLiquidPane__filters').length,0,'Studio options should use their original materials and allocate zero glass maps');
+ assert(d.querySelector('.dsHeroActions .svNavMatchedLens[data-swifly-renderer="svg"]'),'real homepage glass is unaffected');
+ assert.equal(w.frameCount(),0,'Studio should not queue idle glass rendering');
+ env.finish();
 });

@@ -223,11 +223,15 @@
       queuePresentation();
     });
     preference = preferenceKey();
+    // A large catalog adds movie posters, player nodes and SVG optics
+    // continually. These mutations must not invalidate the cached overflow
+    // styles used by every wheel gesture. Watch only actual body preferences.
     preferenceObserver = new MutationObserver(changes => {
+      if (!changes.some(change => change.target === document.body)) return;
       overflowEpoch++;
-      if (changes.some(change => change.target === document.body) && preference !== preferenceKey()) onPreference();
+      if (preference !== preferenceKey()) onPreference();
     });
-    preferenceObserver.observe(document.body, {attributes:true, attributeFilter:['class','style','data-sv-scroll'], childList:true, subtree:true});
+    preferenceObserver.observe(document.body, {attributes:true, attributeFilter:['class','style','data-sv-scroll']});
     document.addEventListener('wheel', onWheel, {passive:false});
     document.addEventListener('scroll', onScroll, {passive:true,capture:true});
     document.addEventListener('keydown', onKey, true);

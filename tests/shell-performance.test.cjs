@@ -58,6 +58,6 @@ test('versioned glass assets are browser-cacheable without changing their materi
     }
     const html = api.pageShell({ active: 'home' });
     assert(html.includes('/assets/liquid-glass/liquid-glass.js?v=226'));
-    assert(html.includes('/assets/liquid-glass/surfaces.js?v=230'));
+    assert(html.includes('/assets/liquid-glass/surfaces.js?v=233'));
   } finally { await new Promise(resolve => api.io.close(resolve)); }
 });

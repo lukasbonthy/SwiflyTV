@@ -7,14 +7,15 @@ const available=fs.existsSync(chromium.executablePath())||fs.existsSync(chromium
 const asset=file=>fs.readFileSync(path.join(__dirname,'../public',file),'utf8');
 const styles=['liquid-glass/liquid-glass.css','clean/clean.css','clean/details.css','liquid-glass/surfaces.css','liquid-glass/controls.css','clean/cinema.css','studio/studio.css','party/party.css'];
 async function boot(page){for(const file of ['liquid-glass/liquid-glass.js','liquid-glass/surfaces.js'])await page.addScriptTag({content:asset(file)});}
-test('Glass preserves the selected Studio tab without changing its material tint',{skip:!available&&'Chromium is not installed'},async()=>{
+test('Studio restores its independent selected tab without adding an optical pane',{skip:!available&&'Chromium is not installed'},async()=>{
  const browser=await chromium.launch({headless:true});
  try{
   const page=await browser.newPage({viewport:{width:900,height:650}});
   await page.setContent('<!doctype html><style>'+styles.map(asset).join('\n')+'#controlPanel{position:static!important;display:block!important}.stNavigation{display:flex}</style><body class="svCleanShell" data-st-glass="liquid"><div id="controlPanel"><nav class="stNavigation"><button role="tab" aria-selected="true">Appearance</button><button role="tab" aria-selected="false">Layout</button></nav></div></body>');
-  await boot(page);await page.waitForFunction(()=>document.querySelectorAll('.stNavigation .svLiquidPane[data-swifly-renderer="svg"]').length===2);
-  const [selected,normal]=await page.locator('.stNavigation .svLiquidPane').evaluateAll(nodes=>nodes.map(node=>({fill:getComputedStyle(node).backgroundColor,edge:getComputedStyle(node).boxShadow})));
-  assert.equal(selected.fill,normal.fill);assert.notEqual(selected.edge,normal.edge,'selected tabs must remain identifiable');
+  await boot(page);
+  assert.equal(await page.locator('#controlPanel .svLiquidPane').count(),0,'Studio owns its button styles and must not acquire duplicated SVG lenses');
+  const [selected,normal]=await page.locator('.stNavigation button').evaluateAll(nodes=>nodes.map(node=>({fill:getComputedStyle(node).backgroundImage,color:getComputedStyle(node).color,border:getComputedStyle(node).borderColor})));
+  assert.notDeepEqual(selected,normal,'Studio must keep its original distinguishable selected tab');
  }finally{await browser.close();}
 });
 test('Continue-watching remove actions keep their overlay position and compact size',{skip:!available&&'Chromium is not installed'},async()=>{
@@ -57,7 +58,8 @@ for(const native of [false,true])test((native?'Native':'Refractive')+' button ma
  try{
   const page=await browser.newPage({viewport:{width:1024,height:1400},...(native?{userAgent:'Mozilla/5.0 AppleWebKit/605.1.15 Version/18.6 Safari/605.1.15'}:{})});
   await page.setContent('<!doctype html><style>'+styles.map(asset).join('\n')+'*{box-sizing:border-box;animation:none!important;transition:none!important}body{margin:0;background:#667}.netflixNav{position:relative;width:580px;height:60px}.dsHeroActions{display:flex;gap:20px;padding:100px 24px}.dsHeroActions button{height:44px;padding:0 24px}#controlPanel{position:static!important;display:block!important;opacity:1!important;width:400px!important;min-height:0!important;height:auto!important;max-height:none!important}.svPartyHub{padding:0!important;min-height:0!important}.dsCardQuickActions{position:static!important;display:flex!important;opacity:1!important}.sampleActions{display:flex;align-items:center;gap:12px}</style><body class="svCleanShell" data-st-glass="liquid"><nav class="netflixNav"><div class="svLiquidPane" data-swifly-glass data-glass-tint=".2"></div></nav><div class="dsHeroActions"><button class="dsPrimaryBtn">Play</button><button class="dsSecondaryBtn">Details</button></div><div class="sampleActions"><a class="dsRowBtn">View all</a><button class="dsRowArrow">Next</button><div class="dsCardQuickActions"><button class="dsMiniBtn">Save</button></div><nav class="pagination"><a>2</a></nav><div class="dsEpisodeChips"><a>Episode</a></div></div><section id="controlPanel"><button class="stChoice styleBtn">Appearance</button></section><main class="svPartyHub"><button class="sv100Channel">General</button><div class="sv100RoomItem"><button class="partySecondaryBtn">Join</button></div><div class="partyMovieResults"><button>Choose film</button></div></main></body>');
-  await boot(page);await page.waitForFunction(()=>document.querySelectorAll('.svNavMatchedLens').length===11);
+  await boot(page);await page.waitForFunction(()=>document.querySelectorAll('.svNavMatchedLens').length===10);
+  assert.equal(await page.locator('#controlPanel .svLiquidPane').count(),0,'Studio keeps its original buttons');
   if(!native)await page.waitForFunction(()=>[...document.querySelectorAll('.svNavMatchedLens')].every(p=>p.dataset.swiflyRenderer==='svg'));
   const material=await page.locator('.svLiquidPane').evaluateAll(nodes=>nodes.map(n=>{const s=getComputedStyle(n);return {fill:s.backgroundColor,shadow:s.boxShadow,filter:s.backdropFilter.replace(/url\([^)]+\)/,'url(shared-lens)'),before:getComputedStyle(n,'::before').content,after:getComputedStyle(n,'::after').content};}));
   const {fill,...nav}=material[0];assert.equal(fill,'rgba(255, 255, 255, 0.2)');
