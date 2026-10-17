@@ -46,6 +46,20 @@ function glass(markup = '') {
   return env;
 }
 
+test('Every visible action family uses the navigation lens and releases offscreen graphs',()=>{
+ const env=glass('<div class="dsCardQuickActions"><button class="dsMiniBtn">Save</button></div><a class="dsRowBtn">View all</a><button class="dsRowArrow">Next</button><nav class="pagination"><a>2</a></nav><div class="dsEpisodeChips"><a>Episode 1</a></div><div id="controlPanel"><button class="stChoice">Appearance</button></div><main class="svPartyHub"><button class="sv100Channel">General</button><div class="sv100RoomItem"><button class="partySecondaryBtn">Join</button></div><div class="partyMovieResults"><button>Pick film</button></div></main>'),w=env.window,d=w.document;
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');
+ const controls=[...d.querySelectorAll('button,a')];assert.equal(controls.length,9);
+ for(const host of controls)assert(host.querySelector(':scope>.svLiquidPane'),'no blur-only exception for '+host.textContent);
+ assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length,0,'offscreen controls must not allocate graphs');
+ env.intersect(true);w.flush(16);
+ for(const host of controls){const pane=host.querySelector(':scope>.svLiquidPane');assert.equal(pane.dataset.swiflyRenderer,'svg');assert.equal(pane.style.getPropertyValue('--sv-glass-default-tint'),'0.2','the face must match navigation');}
+ const generated=env.textures.length;assert.equal(generated,1,'same geometry shares a cached field');
+ env.intersect(false);w.flush(32);assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length,0,'leaving the viewport releases the graphs');
+ env.intersect(true);w.flush(48);assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length,9);assert.equal(env.textures.length,generated);
+ assert.equal(w.frameCount(),0,'coverage must not add an idle render loop');env.finish();
+});
+
 test('Desktop wheel motion has weight and preserves ordinary wheel distance', () => {
   const env = browser('<main>Catalog</main>'), w = env.window;
   w.boot('motion.js');
@@ -191,15 +205,15 @@ test('Destroying motion leaves pending reveal sections visible', () => {
   assert.equal(w.frameCount(), 0); env.finish();
 });
 
-test('Repeated catalog controls stay lightweight without expensive SVG filters or style reads', () => {
+test('Repeated catalog controls share cached nav geometry and release offscreen filters', () => {
   const env = glass('<div class="svLiquidPane" data-swifly-glass></div><div class="dsCardQuickActions">' + '<button class="dsMiniBtn">Save</button>'.repeat(60) + '</div><div class="dsAccountCard">Account</div>'), w = env.window, d = w.document;
   w.boot('liquid-glass/liquid-glass.js'); w.flush(16);
   let reads = 0; const computed = w.getComputedStyle;
   w.getComputedStyle = (...args) => {reads++; return computed(...args);};
   w.boot('liquid-glass/surfaces.js'); env.intersect(true); w.flush(32);
-  assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length, 1, 'Only the navigation pane should own a complex filter');
-  assert([...d.querySelectorAll('.dsMiniBtn,.dsAccountCard')].every(node => node.classList.contains('svGlassSurface') && node.dataset.swiflyRenderer === 'blur'));
-  assert.equal(reads, 0, 'Ordinary glass controls do not need computed-style measurements');
+  assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length,61,'visible catalog controls must use the actual nav renderer');
+  assert([...d.querySelectorAll('.dsMiniBtn')].every(node=>node.querySelector('.svLiquidPane[data-swifly-renderer=svg]')));assert.equal(env.textures.length,1,'repeated controls share the cached field');
+  assert(reads<250,'one batch shares ancestor style reads');env.intersect(false);w.flush(48);assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length,1,'only persistent navigation remains when controls leave view');
   assert.equal(w.frameCount(), 0); env.finish();
 });
 test('Surface mutations scan coalesced added subtrees instead of their catalog parent', async () => {
@@ -224,15 +238,15 @@ test('Text-only changes do not queue a surface reconciliation frame', async () =
   w.document.getElementById('status').textContent = 'Updated'; await tick();
   assert.equal(w.frameCount(), 0); env.finish();
 });
-test('Opted-in important panels pause offscreen and reuse their refraction filter on return', () => {
+test('Opted-in important panels release offscreen graphs and reuse cached geometry on return', () => {
   const env = glass('<div class="svSearchPopup" data-glass-refraction="true">Search</div>'), w = env.window, panel = w.document.querySelector('.svSearchPopup');
   w.boot('liquid-glass/liquid-glass.js'); w.boot('liquid-glass/surfaces.js');
   env.intersect(true, panel); w.flush(16); const original = panel.querySelector('svg.svLiquidPane__filters'); assert(original);
-  env.intersect(false, panel);
-  assert.equal(panel.querySelector('svg.svLiquidPane__filters'), original, 'Leaving the viewport should pause the filter rather than destroy it');
+  const generated=env.textures.length;env.intersect(false, panel);
+  assert.equal(panel.querySelector('svg.svLiquidPane__filters'), null, 'Leaving the viewport releases the graph');
   assert.equal(panel.dataset.swiflyRenderer, 'blur'); env.resize(); assert.equal(w.frameCount(), 0);
   env.intersect(true, panel); w.flush(32);
-  assert.equal(panel.querySelector('svg.svLiquidPane__filters'), original); assert.equal(panel.dataset.swiflyRenderer, 'svg');
+  assert(panel.querySelector('svg.svLiquidPane__filters'));assert.notEqual(panel.querySelector('svg.svLiquidPane__filters'), original);assert.equal(env.textures.length,generated);assert.equal(panel.dataset.swiflyRenderer, 'svg');
   env.finish();
 });
 test('Glass off/subtle skip SVG creation and dynamically release complex filter work', async () => {
@@ -300,7 +314,7 @@ test('Hero controls mount the SAME size-aware navbar renderer, not only a global
   assert(control.querySelector('.svNavMatchedLabel'),'direct labels remain above the pane');
   assert(!control.classList.contains('svSharedGlass'),'no duplicate CSS filter on button host');
  }
- assert.equal(d.querySelectorAll('.dsCardQuickActions .svLiquidPane').length,0);
+ assert.equal(d.querySelectorAll('.dsCardQuickActions .svLiquidPane').length,50);
  env.intersect(false);w.flush(32);
  for(const pane of d.querySelectorAll('.dsHeroActions .svLiquidPane'))assert.equal(pane.dataset.swiflyRenderer,'blur','offscreen effects pause');
  env.intersect(true);w.flush(48);
@@ -321,7 +335,7 @@ test('Standalone buttons and action links get native glass at rest without a fil
  assert(d.querySelector('form>input').classList.contains('svGlassControl'),'submit inputs use native glass');
  assert.equal(d.querySelector('form>input>.svNavMatchedLens'),null,'void form inputs must never receive child panes');
  assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length,0,'offscreen panes cost no SVG filter graphs');
- assert.equal(d.querySelector('.dsCardQuickActions .svNavMatchedLens'),null,'dense repeats remain native');
+ assert(d.querySelector('.dsCardQuickActions .svNavMatchedLens'),'repeated actions have the same face before intersection');
  env.intersect(true);w.flush(16);
  assert.equal(d.querySelectorAll('.dsAccountActions .svNavMatchedLens[data-swifly-renderer="svg"],form .svNavMatchedLens[data-swifly-renderer="svg"]').length,2);
  env.finish();
@@ -555,12 +569,12 @@ test('Chromium rebuilds an externally detached optical graph on the next refresh
 });
 
 
-test('Repeated secondary actions use native material without shared displacement graphs',async()=>{
+test('Repeated secondary actions prepare panes at rest and defer offscreen geometry',async()=>{
  const env=glass('<button class="dsRowArrow">Next</button><div class="dsCardQuickActions"><button class="dsMiniBtn">Save</button></div>'),w=env.window,d=w.document;
  d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');w.flush(16);
  const control=d.createElement('button');control.className='dsRowArrow';d.body.append(control);await tick();w.flush(32);
  assert([...d.querySelectorAll('button')].every(node=>node.classList.contains('svGlassControl')));
- assert.equal(d.querySelectorAll('svg,.svLiquidPane').length,0,'repeat controls must not stack displacement filters while scrolling');
+ assert.equal(d.querySelectorAll('.svLiquidPane').length,3,'each repeated action owns its shared material at rest');assert.equal(d.querySelectorAll('svg').length,0,'offscreen repeated actions do not allocate filters');
  assert.equal(env.textures.length,0);assert.equal(env.watched(),0);assert.equal(w.frameCount(),0);env.finish();
 });
 
@@ -590,10 +604,10 @@ test('Ordinary buttons, Party primary actions and disclosure controls share glas
  env.intersect(true);w.flush(16);
  assert(d.querySelector('.partyPrimaryBtn > .svNavMatchedLens[data-swifly-renderer="svg"]'),'the main Party action uses the real bounded optical pane');
  assert(d.querySelector('.dsAccountActions .dsPrimaryBtn > .svNavMatchedLens'),'account primary actions share the prominent optical material');
- assert.equal(d.querySelector('.sv100RoomItem .svNavMatchedLens'),null,'repeated directory actions stay native rather than multiplying SVG filters');
+ assert(d.querySelector('.sv100RoomItem .svNavMatchedLens[data-swifly-renderer=svg]'),'visible directory actions use the nav renderer');
  assert.equal(d.querySelectorAll('main.svGlassSurface,details.svGlassSurface,[data-player-root] .svGlassSurface').length,0,'only interactive surfaces are enhanced');
  assert(d.querySelector('#plain .svLiquidPane'));assert(d.querySelector('#sv103RoomCode .svLiquidPane'));
- assert.equal(d.querySelectorAll('.stChoice .svLiquidPane,.sv100Channel .svLiquidPane').length,0,'dense repeated controls keep clear lightweight material');
+ assert.equal(d.querySelectorAll('.stChoice .svLiquidPane,.sv100Channel .svLiquidPane').length,2,'settings and channels use the same material');
  assert.equal(w.frameCount(),0);env.finish();
 });
 

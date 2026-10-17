@@ -69,7 +69,7 @@ for (const scheme of ['light','dark'])for (const native of [false,true]) test(sc
   assert.notEqual(await page.locator('.netflixNav .navLinks>a').evaluate(node=>getComputedStyle(node).textShadow),'none','labels retain a local shadow over bright art without obscuring the whole pane');
   for(const {round,hero,host,pane,hit} of state.actions){
    const actionColor=pane.fill.match(/[\d.]+/g).map(Number);
-   assert.deepEqual(actionColor.slice(0,3),rgba.slice(0,3),'buttons and navigation share neutral material colors');assert.equal(actionColor[3],0,'reference hero actions retain a clear face');
+   assert.deepEqual(actionColor.slice(0,3),rgba.slice(0,3),'buttons and navigation share neutral material colors');assert.equal(actionColor[3],.2,'all actions retain the navigation face');
    assert.equal(pane.shadow,state.nav.shadow,'buttons do not add a second brighter rim');
    assert.equal(pane.image,state.nav.image,'buttons use the exact same clear face treatment as navigation');
    assert.equal(pane.filter.replace(/url\([^)]+\)/,'url(shared-lens)'),state.nav.filter.replace(/url\([^)]+\)/,'url(shared-lens)'),'buttons share the navigation filter treatment');
@@ -91,7 +91,7 @@ for (const scheme of ['light','dark'])for (const native of [false,true]) test(sc
   if(native)assert(!reflections.backdrop.includes('url('),'native fallback keeps the shared browser blur');
   else assert.match(reflections.backdrop,/url\(/,'Chromium controls retain real refraction');
   assert.notEqual(reflections.clip,'0px','the same glass pane clips to the actual button shape');
-  assert(state.repeat.every(control=>!control.filter.includes('url(')),'repeated controls must stay lightweight');
+  assert(state.repeat.every(control=>!control.filter.includes('url(')),'repeated action hosts must not stack another filter');
   assert.equal(state.graphs,0,'removed optical renderers must not return');
   await page.locator('.dsHeroActions>.dsPrimaryBtn').hover();await page.waitForTimeout(220);
   assert.equal(await page.locator('.dsHeroActions>.dsPrimaryBtn').evaluate(node=>getComputedStyle(node).backgroundColor),'rgba(0, 0, 0, 0)','hover changes the pane edge without adding another tinted host');
@@ -122,6 +122,31 @@ test('Player pages share clear navigation and outer actions while retaining tran
   assert.equal(await page.locator('.netflixNav>.svLiquidPane').evaluate(node=>getComputedStyle(node).backgroundColor),'rgba(255, 255, 255, 0.2)','scrolling preserves the shared navigation material on player routes');
   assert.equal(await page.locator('[data-player-root] .svGlassSurface,[data-player-root] .svLiquidPane').count(),0);
  }finally{await browser.close();await new Promise(resolve=>api.io.close(resolve));}
+});
+
+test('Standalone and watchroom player menus share one stationary nav lens while scrolling',{skip:!available&&'Chromium is not installed'},async()=>{
+ const {playerMarkup}=require('../ui/player.js'),browser=await chromium.launch({headless:true});
+ try{for(const embedded of [false,true]){
+  const page=await browser.newPage({viewport:{width:900,height:700}});
+  await page.setContent('<!doctype html><style>'+['liquid-glass/liquid-glass.css','clean/clean.css','player/player.css','liquid-glass/surfaces.css','liquid-glass/controls.css'].map(asset).join('\n')+'body{margin:0}.svPlayerStage{height:500px}.svPlayerPopoverBody{height:200px!important;max-height:200px!important}</style><body class="svCleanShell" data-st-glass="liquid">'+(embedded?'<main class="svPartyHub">':'')+playerMarkup({id:1,title:'Test film',embedded})+(embedded?'</main>':'')+'</body>');
+  await page.evaluate(()=>{
+   document.querySelector('[data-player-controls]').hidden=false;
+   const settings=document.querySelector('[data-player-settings]');settings.open=true;
+   const menu=settings.querySelector('[popover]');menu.style.setProperty('--player-menu-top','60px');menu.style.setProperty('--player-menu-left','40px');menu.showPopover();
+  });
+  for(const file of ['liquid-glass/liquid-glass.js','liquid-glass/surfaces.js'])await page.addScriptTag({content:asset(file)});
+  const menu=page.locator('.svPlayerSettingsBody');assert(await menu.evaluate(node=>node.classList.contains('svGlassSurface')),'menus inside the Party Hub must also receive the shared surface');await page.waitForFunction(()=>document.querySelector('.svPlayerSettingsBody').dataset.swiflyRenderer==='svg');await page.waitForTimeout(220);
+  assert.equal(await menu.locator(':scope>svg.svLiquidPane__filters').count(),1,'one menu graph owns the whole surface');
+  assert.equal(await menu.locator('.svLiquidPane').count(),0,'menu choices must not stack nested lenses');
+  const before=await menu.boundingBox();
+  const style=await menu.evaluate(node=>({position:getComputedStyle(node).position,fill:getComputedStyle(node).backgroundColor,filter:getComputedStyle(node).backdropFilter,overflow:getComputedStyle(node).overflow}));
+  assert.equal(style.position,'fixed');assert.equal(style.fill,'rgba(255, 255, 255, 0.2)');assert.match(style.filter,/url\(/);assert.equal(style.overflow,'auto');
+  await menu.evaluate(node=>node.scrollTop=node.scrollHeight);await page.waitForTimeout(30);
+  assert(await menu.evaluate(node=>node.scrollTop>0),'settings remain scrollable');assert.deepEqual(await menu.boundingBox(),before,'scrolling content does not move its glass surface');
+  await page.selectOption('[data-player-speed]','1.5');assert.equal(await page.locator('[data-player-speed]').inputValue(),'1.5');
+  await menu.evaluate(node=>node.hidePopover());await page.waitForFunction(()=>!document.querySelector('.svPlayerSettingsBody>svg.svLiquidPane__filters'));
+  await page.close();
+ }}finally{await browser.close();}
 });
 
 test('Opacity entrances have visible refraction before pointer, keyboard or scroll input',{skip:!available&&'Chromium is not installed'},async()=>{
@@ -157,7 +182,7 @@ test('Native control material has one clear rim and preserves functional generat
   for(const sample of samples){
    const rgba=sample.fill.match(/[\d.]+/g).map(Number);
    assert.deepEqual(rgba.slice(0,3),[255,255,255],sample.class+' must share the clear white material');
-   assert(sample.optic?rgba[3]===0:rgba[3]>=.1&&rgba[3]<=.24,'controls keep the reference clear face or lightweight native fill');
+   assert(rgba[3]>=.2&&rgba[3]<=.24,'every control family keeps the shared navigation fill');
    assert.equal(sample.image,'none','native controls do not add a painted reflection');assert.equal(sample.border,'0px','a single inset rim must replace the old outer border: '+sample.class);
    if(!sample.optic)assert(!sample.filter.includes('url('),'dense repeated choices do not allocate SVG graphs');
   }
@@ -165,7 +190,7 @@ test('Native control material has one clear rim and preserves functional generat
   assert.equal(await page.locator('.partyLinkChoice summary').evaluate(node=>getComputedStyle(node,'::after').content),'"+"','disclosure affordances are functional content');
   assert.equal(await page.locator('.partyLinkChoice summary').evaluate(node=>getComputedStyle(node).borderRadius),'999px','the standalone link choice uses the shared rounded control shape');
   assert.equal(await page.locator('[data-action="new-channel"]').evaluate(node=>getComputedStyle(node,'::after').content),'"New channel"','mobile channel actions must retain their visible labels');
-  assert.equal(await page.locator('.sv100RoomItem svg.svLiquidPane__filters,#controlPanel svg.svLiquidPane__filters').count(),0);
+  assert.equal(await page.locator('.sv100RoomItem .svLiquidPane,#controlPanel .svLiquidPane').count(),2,'directory and settings actions have real panes');
   await page.evaluate(()=>document.body.dataset.stGlass='off');
   const off=await page.locator('.ordinary,.sv100Channel,.stChoice').evaluateAll(nodes=>nodes.map(node=>({fill:getComputedStyle(node).backgroundColor,filter:getComputedStyle(node).backdropFilter})));
   assert(off.every(style=>style.filter==='none'&&!style.fill.startsWith('rgba(')),'selected native controls must also obey solid mode: '+JSON.stringify(off));
@@ -190,7 +215,7 @@ test('Navigation keeps a continuous clear coating over a dark page',{skip:!avail
    const img=new Image();img.src='data:image/png;base64,'+shot;await img.decode();const c=document.createElement('canvas');c.width=img.width;c.height=img.height;const context=c.getContext('2d');context.drawImage(img,0,0);
    return [.3,.5,.7].map(f=>[...context.getImageData(Math.round(r.x+r.width*f),Math.round(r.y+r.height*.5),1,1).data].slice(0,3));
   },{shot,bounds});
-  assert(pixels.every(pixel=>pixel.every(channel=>channel>=12&&channel<=50)),'the shared reflection must remain translucent over a dark page: '+JSON.stringify(pixels));
+  assert(pixels.every(pixel=>pixel.every(channel=>Math.abs(channel-51)<=1)),'the shared reflection must remain translucent over a dark page: '+JSON.stringify(pixels));
   assert(pixels.every(pixel=>Math.max(...pixel)-Math.min(...pixel)<=1),'the coating must stay neutral: '+JSON.stringify(pixels));
  }finally{await browser.close();await new Promise(resolve=>api.io.close(resolve));}
 });

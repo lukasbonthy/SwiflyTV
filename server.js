@@ -6478,7 +6478,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${body.includes("fa-solid") ? '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />' : ""}
     ${player || partyBrowse || active === "social" ? '<script defer src="/socket.io/socket.io.js"></script>' : ""}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/modern-normalize@2.0.0/modern-normalize.min.css" />
-    <link rel="stylesheet" href="/assets/liquid-glass/liquid-glass.css?v=221" />
+    <link rel="stylesheet" href="/assets/liquid-glass/liquid-glass.css?v=222" />
     <script defer src="/assets/liquid-glass/liquid-glass.js?v=221"></script>
     <link rel="stylesheet" href="/assets/clean/clean.css?v=153" />
     <script defer src="/assets/clean/clean.js?v=151"></script>
@@ -6489,8 +6489,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/clean/motion.css?v=208" />
     <script defer src="/assets/clean/motion.js?v=204"></script>
     <script defer src="/assets/clean/details.js?v=208"></script>
-    <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=221" />
-    <script defer src="/assets/liquid-glass/surfaces.js?v=221"></script>
+    <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=222" />
+    <script defer src="/assets/liquid-glass/surfaces.js?v=222"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=164" />
     <script defer src="/assets/studio/studio.js?v=164"></script>
     <link rel="stylesheet" href="/assets/clean/aurora.css?v=208" />
@@ -6504,7 +6504,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/finish.css?v=175" />'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/polish.css?v=176" />'}
     <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=205" />
-    <link rel="stylesheet" href="/assets/liquid-glass/controls.css?v=221" />
+    <link rel="stylesheet" href="/assets/liquid-glass/controls.css?v=222" />
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/experience.css?v=202" />'}
     <link rel="stylesheet" href="/assets/clean/cinema.css?v=207" />
     <link rel="stylesheet" href="/assets/clean/profiles.css?v=209" />

@@ -1,4 +1,4 @@
-/* Shared neutral surfaces; repeated catalog actions stay inexpensive. */
+/* Shared neutral surfaces; all visible action buttons use navigation optics. */
 body.svCleanShell .svGlassSurface.svGlassSurface {
   background: rgb(12 15 20 / .62) !important;
   border: 1px solid rgb(255 255 255 / .16) !important;
@@ -25,7 +25,7 @@ body.svCleanShell .svGlassControl.svGlassControl {
   --sv-surface-blur: 10px;
   -webkit-backdrop-filter: blur(10px) saturate(1.3) !important;
   backdrop-filter: blur(10px) saturate(1.3) !important;
-  background: rgb(var(--sv-glass-color, 255 255 255) / .1) !important;
+  background: rgb(var(--sv-glass-color, 255 255 255) / .2) !important;
   border: 0 !important;
   box-shadow: var(--sv-glass-edge) !important;
   color: #f1f1f1 !important;
