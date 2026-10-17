@@ -1,0 +1,47 @@
+{
+  "source": "https://shuttletv.pk/",
+  "observedAt": "2026-10-17",
+  "scales": [
+    -180,
+    -170,
+    -160
+  ],
+  "finalBlur": 0.5,
+  "neutralOpacity": 0.93,
+  "insetRatio": 0.035,
+  "channelSelectors": [
+    "R",
+    "G"
+  ],
+  "background": "repeating-linear-gradient(37deg,transparent 0 18px,#ffffff30 18px 21px,transparent 21px 42px),radial-gradient(ellipse at 20% 70%,#b78b53,transparent 65%),linear-gradient(112deg,#244653,#aebbc4 52%,#282b34)",
+  "cases": [
+    {
+      "name": "navigation",
+      "width": 520,
+      "height": 48,
+      "radius": 20,
+      "tint": 0.2,
+      "blur": 7
+    },
+    {
+      "name": "action",
+      "width": 144,
+      "height": 44,
+      "radius": 22,
+      "tint": 0,
+      "blur": 7
+    },
+    {
+      "name": "mobile",
+      "width": 366,
+      "height": 58,
+      "radius": 50,
+      "tint": 0.15,
+      "blur": 11
+    }
+  ],
+  "capturedBrowsers": [
+    "131.0.6778.33",
+    "155.0.8059.84"
+  ]
+}
