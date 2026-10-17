@@ -131,7 +131,7 @@
     if (root instanceof Element && root.matches(heroSelector)) registerHero(root);
     root.querySelectorAll?.(heroSelector).forEach(registerHero);
     if (!canAnimate() || !observer) return;
-    root.querySelectorAll?.('.svCatalogRow, .svResumeSection, .dsWelcomeRail, .svDetailSection, [data-cinema-reveal]').forEach(section => {
+    root.querySelectorAll?.('.dsWelcomeRail, .svDetailSection, [data-cinema-reveal]').forEach(section => {
       if (observed.has(section)) return; observed.add(section);
       if (section.getBoundingClientRect().top < window.innerHeight - 24) return;
       section.classList.add('svMotionReveal'); pendingReveal.add(section); observer.observe(section);
