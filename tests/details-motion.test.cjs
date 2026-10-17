@@ -110,15 +110,13 @@ test('Enabled TV keyboard navigation can reach and activate Play inside the over
   d.getElementById('play').dispatchEvent(new w.KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));assert.equal(clicks,1);
   const escape=new w.KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true});d.getElementById('play').dispatchEvent(escape);assert.equal(escape.defaultPrevented,false);env.finish();
 });
-test('Mouse wheel scrolling glides, settles and leaves no idle animation loop', () => {
-  const env=browser('<main>Catalog</main>'),w=env.window; w.boot('motion.js');
-  const wheel=new w.WheelEvent('wheel',{deltaY:120,bubbles:true,cancelable:true}); w.document.querySelector('main').dispatchEvent(wheel);
-  assert.equal(wheel.defaultPrevented,true,'Desktop mouse wheel should receive smooth motion');
-  w.flush(16); assert(env.page.scrollTop>0&&env.page.scrollTop<120);
-  let previous=env.page.scrollTop;
-  for(let t=32;t<1600;t+=16){w.flush(t);assert(env.page.scrollTop>=previous);previous=env.page.scrollTop;}
-  assert(env.page.scrollTop>=120&&env.page.scrollTop<=180); assert.equal(w.frameCount(),0);
-  env.finish();
+test('Mouse wheel uses browser-native scrolling without leaving an idle animation loop',()=>{
+ const env=browser('<main>Catalog</main>'),w=env.window;w.boot('motion.js');
+ const wheel=new w.WheelEvent('wheel',{deltaY:120,bubbles:true,cancelable:true});
+ w.document.querySelector('main').dispatchEvent(wheel);
+ assert.equal(wheel.defaultPrevented,false,'Native wheel input never waits for a JS animation');
+ assert.equal(w.frameCount(),0);
+ env.finish();
 });
 test('Reduced motion, zoom, form inputs and player pages retain native scrolling', () => {
   for(const options of [{reduced:true},{path:'/watch/movie/101'},{}]) {
@@ -138,19 +136,19 @@ test('Keyboard and a changed motion preference interrupt the current glide', () 
   w.SwiflyMotion.scrollBy(env.page,{top:100});assert.equal(env.page.scrollTop,current+100);
   env.finish();
 });
-test('The detail overlay scrolls independently of the background', () => {
-  const env=browser('<dialog open class="svDetailDialog"><div class="svDetailViewport"><p>Story</p></div></dialog>'),w=env.window,d=w.document;
-  const viewport=d.querySelector('.svDetailViewport');Object.defineProperty(viewport,'scrollHeight',{value:2400});Object.defineProperty(viewport,'clientHeight',{value:600});
-  w.boot('motion.js'); const wheel=new w.WheelEvent('wheel',{deltaY:120,bubbles:true,cancelable:true});d.querySelector('p').dispatchEvent(wheel);
-  assert.equal(wheel.defaultPrevented,true); w.flush(16);assert(viewport.scrollTop>0);assert.equal(env.page.scrollTop,0);env.finish();
-});
-test('Wheel input over overlay controls never scrolls the catalog behind them', () => {
-  const env=browser('<dialog open class="svDetailDialog"><button>Close</button><div class="svDetailViewport"><p>Story</p></div></dialog>'),w=env.window,d=w.document;
-  const viewport=d.querySelector('.svDetailViewport');Object.defineProperty(viewport,'scrollHeight',{value:2400});Object.defineProperty(viewport,'clientHeight',{value:600});
-  env.page.scrollTop=480;w.boot('motion.js');
-  d.querySelector('button').dispatchEvent(new w.WheelEvent('wheel',{deltaY:120,bubbles:true,cancelable:true}));w.flush(16);
-  assert.equal(env.page.scrollTop,480,'Overlay controls must not animate the background');
-  assert(viewport.scrollTop>0,'Wheel input over the overlay close control should scroll its content');env.finish();
+test('Movie-detail wheel scrolling is native, with no scripted page movement',()=>{
+ const env=browser('<dialog open class="svDetailDialog"><button>Close</button><div class="svDetailViewport"><p>Story</p></div></dialog>'),w=env.window,d=w.document;
+ const viewport=d.querySelector('.svDetailViewport');
+ Object.defineProperty(viewport,'scrollHeight',{value:2400});Object.defineProperty(viewport,'clientHeight',{value:600});
+ env.page.scrollTop=480;w.boot('motion.js');
+ for(const node of [d.querySelector('p'),d.querySelector('button')]){
+   const event=new w.WheelEvent('wheel',{deltaY:120,bubbles:true,cancelable:true});
+   node.dispatchEvent(event);
+   assert.equal(event.defaultPrevented,false,'browser owns the modal wheel gesture');
+ }
+ assert.equal(env.page.scrollTop,480,'SwiflyTV never scripts a background scroll while the overlay is open');
+ assert.equal(w.frameCount(),0,'modal scrolling does not schedule motion frames');
+ env.finish();
 });
 test('Nested native scroll panels keep their own wheel input', () => {
   const env=browser('<div style="overflow-y:auto"><p>Chat messages</p></div>'),w=env.window,d=w.document,panel=d.querySelector('div');
