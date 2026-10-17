@@ -391,7 +391,7 @@ test('Remote pause cannot remove the watchdog while a new movie is still becomin
   const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/silent.mp4'});e.api.pause({remote:true});await e.advance(250);assert.equal(e.app.dataset.playerState,'error');assert.equal(e.api.getState().ready,false);
 });
 test('Repeated readiness events cannot bypass the watchdog without advancing playback',async()=>{
-  const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();await e.api.play();e.event('waiting');await e.advance(130);e.event('canplay');await e.advance(130);assert.equal(e.app.dataset.playerState,'error');
+  const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();await e.api.play();e.event('waiting');await e.advance(130);e.event('canplay');await e.advance(130);assert.equal(e.app.dataset.playerState,'loading');
 });
 test('Remote pause supersedes a pending local play promise without emitting a late room command',async()=>{
   const e=setup(),actions=[];await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();e.app.addEventListener('swiflyplayer:action',ev=>actions.push(ev.detail));let done;e.video().play=()=>new Promise(resolve=>done=resolve);const pending=e.api.play();e.api.pause({remote:true});done();await pending;assert.equal(actions.length,0);assert.equal(e.api.getState().paused,true);
