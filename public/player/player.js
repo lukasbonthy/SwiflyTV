@@ -154,7 +154,7 @@
       // No unbounded loops: the retry budget survives cloned media elements.
       // Only 30 seconds of actual timeline progression replenishes it.
       if(stallRepairs&&position-repairPosition>=30)stallRepairs=0;
-      if(stallRepairs>=2){mediaFailure(message);return;}
+      if(stallRepairs>=2){fail(message);return;} // Never bounce back to a previously failed source.
       let next=source,choice=sourceOptions.find(item=>item.playbackUrl===source);
       if(stallRepairs===1){
         choice=sourceOptions.find(item=>item.playbackUrl!==source);
