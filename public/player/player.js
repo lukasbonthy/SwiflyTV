@@ -384,7 +384,7 @@
       updateCaptions({prefer:true});
     }
     function applyResume() {
-      if(resumeAt>0&&video.readyState>=1){const bounds=range();if(!bounds)return;try {video.currentTime=Math.max(bounds.start,Math.min(bounds.end,resumeAt));resumeAt=0;}catch{}}
+      if(resumeAt>0&&video.readyState>=1){const bounds=range();if(!bounds)return;try {video.currentTime=Math.max(bounds.start,Math.min(bounds.end,resumeAt));lastTime=number(video.currentTime,0);resumeAt=0;}catch{}}
     }
     function bindMedia(token) {
       const current=video,guard=fn=>event=>{if(alive(token)&&video===current)fn(event);};
