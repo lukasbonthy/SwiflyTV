@@ -140,7 +140,11 @@
   }
   function moveSheet(state,complete) {
     const entering=state==='opening',reversing=Boolean(sheetTransition);
-    const start=reversing?getComputedStyle(dialog).transform:(entering?'translate3d(0,var(--sv-detail-rise),0)':'none');
+    // Chromium composites transform-animated dialogs without repainting SVG
+    // backdrop displacement until the transform finishes. Animate fixed
+    // positioning instead so refraction stays visible WHILE the sheet rises.
+    const offscreen='calc(0px - var(--sv-detail-rise))';
+    const start=reversing?getComputedStyle(dialog).bottom:(entering?offscreen:'0px');
     const opacity=reversing?getComputedStyle(scrim).opacity:(entering?'0':'1');
     cancelSheetTransition();
     const epoch=transitionEpoch,duration=entering?enterDuration:exitDuration;
@@ -158,7 +162,7 @@
     };
     active.complete=settle;
     if(reducedMotion()){settle();return;}
-    dialog.style.setProperty('--sv-detail-start',start||'none');
+    dialog.style.setProperty('--sv-detail-start',start||'0px');
     scrim.style.setProperty('--sv-detail-dim-start',opacity||'0');
     if(typeof dialog.animate==='function'){
       dialog.dataset.svDetailMotion='waapi';scrim.dataset.svDetailMotion='waapi';
@@ -167,7 +171,7 @@
           const animation=target.animate(frames,{fill:'both',...options});active.animations.push(animation);
           animation.finished.catch(()=>{});return animation.finished;
         };
-        const sheet=animate(dialog,[{transform:start||'none'},{transform:entering?'none':'translate3d(0,var(--sv-detail-rise),0)'}],{duration,easing:entering?'cubic-bezier(.32,.08,.2,1)':'cubic-bezier(.4,0,.2,1)'});
+        const sheet=animate(dialog,[{bottom:start||'0px'},{bottom:entering?'0px':offscreen}],{duration,easing:entering?'cubic-bezier(.32,.08,.2,1)':'cubic-bezier(.4,0,.2,1)'});
         const dim=animate(scrim,[{opacity:opacity||'0'},{opacity:entering?'1':'0'}],{duration:entering?620:duration,easing:entering?'ease-out':'ease-in'});
         Promise.all([sheet,dim]).then(settle,()=>{});
         active.timer=setTimeout(settle,duration+100);return;
