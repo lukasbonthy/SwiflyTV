@@ -1,0 +1,5 @@
+These golden panes reconstruct the glass measured from https://shuttletv.pk/ on October 17, 2026. They contain a synthetic backdrop, not ShuttleTV branding or movie artwork.
+
+The live navigation and hero controls use three displacement samples (-180, -170, -160), R/G map selectors, screen-combined color channels, and a final 0.5px blur. The map has a 3.5% inset, a 93% neutral interior, and a softened directional field. Navigation has a 20% face; hero actions have a clear face. Mobile panes use an 11px map shoulder and a pill radius. The fixture sizes represent SwiflyTV's control sizes; they do not assert identical page layouts.
+
+Chromium 131 and 155 render SVG image filters differently, so each has its own reference captures. Compare each browser with its matching capture instead of loosening the visual threshold. The former single-pass/SDF invariants (zero channel dispersion, zero center movement, and shallow displacement caps) describe a different material and are superseded by these image comparisons.

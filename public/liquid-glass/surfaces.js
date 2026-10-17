@@ -92,7 +92,7 @@
     if (entry.optic) {
       if (!entry.opticController) {
         entry.opticController=window.SwiflyLiquidGlass.mount(entry.opticPane, {
-          tint:.08,saturation:1,
+          tint:0,saturation:1,
           // Share the bounded, color-preserving navigation renderer.
           distortionScale:-180
         });
@@ -100,7 +100,7 @@
       } else if(entry.opticController.enabled===deferred)entry.opticController.setEnabled(!deferred);
     }
     if (!entry.complex) return;
-    if (!entry.controller) entry.controller = window.SwiflyLiquidGlass.mount(entry.host, {tint:.08,saturation:1});
+    if (!entry.controller) entry.controller = window.SwiflyLiquidGlass.mount(entry.host, {tint:0,saturation:1});
     else if (!entry.controller.enabled) entry.controller.setEnabled(true);
     else if (entry.controller.supported && !filter(entry.host)) entry.controller.refresh();
   }

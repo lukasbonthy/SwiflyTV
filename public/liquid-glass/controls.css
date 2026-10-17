@@ -45,7 +45,7 @@ body.svCleanShell .svGlassControl.svNavMatchedOptic {
   min-height: 44px !important;
 }
 body.svCleanShell .svNavMatchedOptic > .svNavMatchedLens.svLiquidPane {
-  --sv-glass-default-tint: .08;
+  --sv-glass-default-tint: 0;
   position: absolute !important;
   inset: 0 !important;
   width: 100% !important;
@@ -95,6 +95,19 @@ body.svCleanShell .svWelcomeClean .dsWelcomeActions > a.svGlassControl {
   border-radius: 14px !important;
   color: #f5f6f8 !important;
   transform: none !important;
+}
+/* Compact hero pills keep the reference lens visible on narrow screens. */
+@media (max-width: 860px) {
+  body.svCleanShell .dsHeroActions {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+  }
+  body.svCleanShell .dsHeroActions > :is(.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn) {
+    width: auto !important;
+    flex: 0 0 auto !important;
+  }
 }
 body.svCleanShell main.dsAuthPageSafe .svAuthPasswordField { position: relative !important; display: block !important; }
 body.svCleanShell main.dsAuthPageSafe .svAuthPasswordToggle.svGlassControl {

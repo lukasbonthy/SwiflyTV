@@ -43,50 +43,24 @@
     pending.delete(prepare);
     if (!pending.size && frame) {cancelAnimationFrame(frame); frame = 0;}
   }
-  const shoulderWidth=(width,height,blur)=>Math.min(Math.min(width,height)*.38,11+Math.max(0,Math.min(blur,24)));
   function lensTexture(width, height, radius, blur = 7) {
     if (![width,height,radius,blur].every(Number.isFinite) || width <= 0 || height <= 0) return null;
     const r=Math.max(0,Math.min(radius,width/2,height/2)),softness=Math.max(0,Math.min(blur,24));
     const key=[width,height,r,softness].join(':');
     if(textures.has(key)) {const texture=textures.get(key);textures.delete(key);textures.set(key,texture);return texture;}
-    // Bake only the rounded lens normals, never page artwork or video. The
-    // rounded-rectangle distance field gives curved corners, a strong bevel
-    // and a neutral center. Sampling inward through the bevel magnifies the
-    // local backdrop; its bounded slope avoids folding rows across the pane.
-    // Resolution and cache size stay bounded even for very large panels.
-    const resolution=Math.min(1,640/width,160/height);
-    const canvas=document.createElement('canvas');
-    canvas.width=Math.max(1,Math.ceil(width*resolution));
-    canvas.height=Math.max(1,Math.ceil(height*resolution));
-    let mapURL;
-    try {
-      const context=canvas.getContext('2d');
-      if(!context)return null;
-      const image=context.createImageData(canvas.width,canvas.height),data=image.data;
-      const halfWidth=width/2,halfHeight=height/2;
-      const shoulder=shoulderWidth(width,height,softness);
-      for(let y=0;y<canvas.height;y++)for(let x=0;x<canvas.width;x++){
-        const px=(x+.5)*width/canvas.width-halfWidth,py=(y+.5)*height/canvas.height-halfHeight;
-        const ax=Math.abs(px),ay=Math.abs(py),qx=ax-(halfWidth-r),qy=ay-(halfHeight-r);
-        let distance,nx=0,ny=0;
-        if(qx>0&&qy>0){
-          const length=Math.hypot(qx,qy);
-          distance=r-length;nx=Math.sign(px)*qx/length;ny=Math.sign(py)*qy/length;
-        }else{
-          const dx=halfWidth-ax,dy=halfHeight-ay;
-          distance=Math.min(dx,dy);
-          if(dx<dy)nx=Math.sign(px);else ny=Math.sign(py);
-        }
-        const t=Math.max(0,Math.min(1,1-distance/shoulder)),bend=t*t*(3-2*t),i=(y*canvas.width+x)*4;
-        data[i]=Math.round(127.5+nx*127.5*bend);
-        data[i+1]=Math.round(127.5+ny*127.5*bend);
-        data[i+2]=128;data[i+3]=255;
-      }
-      context.putImageData(image,0,0);
-      mapURL=canvas.toDataURL('image/png');
-      if(!mapURL.startsWith('data:image/png'))return null;
-    }catch{return null;}
-    const texture=Object.freeze({map:mapURL});
+    // Crossed color fields curve into a softened neutral interior. This map
+    // describes the lens only: the browser refracts the actual live backdrop.
+    // A vector image has constant complexity at every pane size, avoiding a
+    // per-pixel JavaScript loop or a captured copy of the page/video.
+    const inset=Math.min(width,height)*.035;
+    const rect=`width="${width}" height="${height}" rx="${r}"`;
+    const geometry=`<svg xmlns="${NS}" viewBox="0 0 ${width} ${height}"><defs>
+      <linearGradient id="horizontal" x1="1" y1="0" x2="0" y2="0"><stop stop-color="transparent"/><stop offset="1" stop-color="#f00"/></linearGradient>
+      <linearGradient id="vertical" x1="0" y1="0" x2="0" y2="1"><stop stop-color="transparent"/><stop offset="1" stop-color="#00f"/></linearGradient>
+      </defs><rect width="${width}" height="${height}" fill="#000"/>
+      <rect ${rect} fill="url(#horizontal)"/><rect ${rect} fill="url(#vertical)" style="mix-blend-mode:screen"/>
+      <rect x="${inset}" y="${inset}" width="${width-2*inset}" height="${height-2*inset}" rx="${r}" fill="rgb(50% 50% 50% / .93)" style="filter:blur(${softness}px)"/></svg>`;
+    const texture=Object.freeze({map:'data:image/svg+xml,'+encodeURIComponent(geometry)});
     textures.set(key,texture);
     if(textures.size>48)textures.delete(textures.keys().next().value);
     return texture;
@@ -128,11 +102,11 @@
     if (!(element instanceof HTMLElement)) throw new TypeError('SwiflyLiquidGlass.mount expects an HTML element.');
     if (mounted.has(element)) return mounted.get(element);
     const config = {
-      displace:numeric(element, 'glassDisplace', .25),
+      displace:numeric(element, 'glassDisplace', .5),
       distortionScale:numeric(element, 'glassDistortion', -180),
       saturation:numeric(element, 'glassSaturation', 1),
       lensBlur:numeric(element, 'glassLensBlur', 7),
-      tint:numeric(element, 'glassTint', .08), ...options
+      tint:numeric(element, 'glassTint', .2), ...options
     };
     const filterId = 'swifly-liquid-filter-' + (++nextId), ua = navigator.userAgent;
     const isAppleTouch = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -152,17 +126,28 @@
       svg?.remove(); svg = null; map = null; dimensions = '';
       element.style.removeProperty('--sv-glass-filter');
     }
-    // Refract the complete image once so neutral pixels stay neutral. The
-    // sample distance is bounded to the control's own thickness, rather than
-    // pulling unrelated artwork and text from far above or below the pane.
+    // The measured ShuttleTV material separates and recombines three color
+    // samples. Keep its full lens depth, with one cached geometry field and
+    // one graph per visible control; do not add a second painted reflection.
     function createGraph(texture, scale) {
       svg = svgElement('svg', {class:'svLiquidPane__filters', 'aria-hidden':'true', focusable:'false'});
       const defs = svgElement('defs');
       const filter = svgElement('filter', {id:filterId, x:'0%', y:'0%', width:'100%', height:'100%', 'color-interpolation-filters':'sRGB'});
       map = svgElement('feImage', {href:texture.map,x:0, y:0, width:'100%', height:'100%', preserveAspectRatio:'none', result:'map'});
-      filter.append(map,
-        svgElement('feDisplacementMap', {in:'SourceGraphic', in2:'map', scale, xChannelSelector:'R', yChannelSelector:'G', result:'refracted'}),
-        svgElement('feGaussianBlur', {in:'refracted', stdDeviation:config.displace}));
+      filter.append(map);
+      const colors=['red','green','blue'];
+      for(let channel=0;channel<colors.length;channel++){
+        const color=colors[channel];
+        filter.append(
+          svgElement('feDisplacementMap',{in:'SourceGraphic',in2:'map',scale:scale+channel*10,xChannelSelector:'R',yChannelSelector:'G',result:'sample-'+color}),
+          svgElement('feColorMatrix',{in:'sample-'+color,type:'matrix',values:Array.from({length:20},(_,index)=>index===channel*6||index===18?1:0).join(' '),result:color})
+        );
+      }
+      filter.append(
+        svgElement('feBlend',{in:'red',in2:'green',mode:'screen',result:'rg'}),
+        svgElement('feBlend',{in:'rg',in2:'blue',mode:'screen',result:'refracted'}),
+        svgElement('feGaussianBlur',{in:'refracted',stdDeviation:config.displace})
+      );
       defs.append(filter); svg.append(defs); element.append(svg);
       element.style.setProperty('--sv-glass-filter', 'url(#' + filterId + ')');
     }
@@ -182,9 +167,7 @@
       const radius=Number.isFinite(parsedRadius)?parsedRadius:20;
       const styledBlur=parseFloat(computed.getPropertyValue('--sv-glass-lens-blur'));
       const blur=Number.isFinite(styledBlur)?styledBlur:config.lensBlur;
-      // Smoothstep has a maximum slope of 1.5. A sample distance at most
-      // .6 of the bevel keeps the mapping monotonic and the center stable.
-      const scale=Math.sign(config.distortionScale)*Math.min(Math.abs(config.distortionScale),shoulderWidth(width,height,blur)*1.2,36);
+      const scale=config.distortionScale;
       const key = [width, height, radius, blur].join(':');
       const texture=key!==dimensions || svg&&!element.contains(svg)?lensTexture(width,height,radius,blur):null;
       return () => {
@@ -194,7 +177,7 @@
         if (!svg) createGraph(texture,scale);
         else {
           map.setAttribute('href',texture.map);
-          svg.querySelector('feDisplacementMap').setAttribute('scale',scale);
+          svg.querySelectorAll('feDisplacementMap').forEach((field,channel)=>field.setAttribute('scale',scale+channel*10));
         }
         dimensions = key;
         renderer('svg');
