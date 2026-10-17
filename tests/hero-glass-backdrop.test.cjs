@@ -53,7 +53,7 @@ for (const width of [360, 1024]) for (const native of [false, true]) {
         assert(difference > 1.2, `${await control.innerText()} must visibly filter the artwork, not an empty ancestor layer (RGB delta ${difference.toFixed(2)})`);
       }
       assert.equal(await page.locator('.dsHeroActions').evaluate(node => getComputedStyle(node).filter), 'none', 'a completed entrance must release its backdrop boundary');
-      assert.equal(await page.locator('.dsHeroActions').evaluate(node => getComputedStyle(node).animationName), 'dsFadeUp', 'the existing entrance must remain');
+      assert.equal(await page.locator('.dsHeroActions').evaluate(node => getComputedStyle(node).animationName), 'svGlassSafeRise', 'the existing glass-safe entrance must remain');
     } finally { await browser.close(); await new Promise(resolve => api.io.close(resolve)); }
   });
 }
