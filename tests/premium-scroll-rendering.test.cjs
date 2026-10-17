@@ -92,6 +92,37 @@ test('the real catalog shell eases wheel input without changing its glass and pr
   } finally {await browser.close();}
 });
 
+test('real diagonal wheel input eases the page through intermediate positions', {skip:!available && 'Chromium is not installed'}, async () => {
+  const browser = await chromium.launch({headless:true});
+  try {
+    const page = await catalog(browser);
+    await page.waitForFunction(() => document.documentElement.classList.contains('lenis'));
+    await page.evaluate(() => {
+      window.__diagonalPositions = [];
+      const native = window.scrollTo.bind(window);
+      window.scrollTo = options => {window.__diagonalPositions.push(options.top); return native(options);};
+    });
+    await page.mouse.move(1220, 430);
+    await page.mouse.wheel(140, 120);
+    await page.waitForFunction(() => scrollY === 120 && !document.documentElement.classList.contains('lenis-smooth'));
+    const positions = await page.evaluate(() => window.__diagonalPositions);
+    assert(positions.some(y => y > 0 && y < 119), 'diagonal input must glide instead of falling back to an instant native jump');
+    assert.equal(await page.evaluate(() => scrollX), 0, 'vertical page input cannot move the page sideways');
+  } finally {await browser.close();}
+});
+
+test('mixed-axis horizontal rail input reaches the movie row', {skip:!available && 'Chromium is not installed'}, async () => {
+  const browser = await chromium.launch({headless:true});
+  try {
+    const page = await catalog(browser);
+    const rail = page.locator('.movieRail').first();
+    await rail.scrollIntoViewIfNeeded();
+    await rail.hover({position:{x:300, y:100}});
+    await page.mouse.wheel(160, 20);
+    await page.waitForFunction(() => document.querySelector('.movieRail').scrollLeft >= 150, null, {timeout:1500});
+  } finally {await browser.close();}
+});
+
 test('the real touch catalog keeps OS scrolling and all glass surfaces', {skip:!available && 'Chromium is not installed'}, async () => {
   const browser = await chromium.launch({headless:true});
   try {

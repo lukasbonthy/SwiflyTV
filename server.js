@@ -6490,7 +6490,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/vendor/lenis/lenis.css?v=1.3.16" />
     <script defer src="/assets/vendor/lenis/lenis.min.js?v=1.3.16"></script>
     <script defer src="/assets/clean/motion.js?v=238"></script>
-    <script defer src="/assets/clean/scroll.js?v=239"></script>
+    <script defer src="/assets/clean/scroll.js?v=240"></script>
     <script defer src="/assets/clean/details.js?v=231"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=222" />
     <script defer src="/assets/liquid-glass/surfaces.js?v=234"></script>
