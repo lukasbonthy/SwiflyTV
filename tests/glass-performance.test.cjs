@@ -61,42 +61,22 @@ test('Every visible action family uses the navigation lens and releases offscree
  assert.equal(w.frameCount(),0,'coverage must not add an idle render loop');env.finish();
 });
 
-test('Desktop wheel motion has weight and preserves ordinary wheel distance', () => {
-  const env = browser('<main>Catalog</main>'), w = env.window;
-  w.boot('motion.js');
-  assert.equal(wheel(w, w.document.querySelector('main')).defaultPrevented, true);
-  w.flush(16);
-  assert(env.page.scrollTop > 6 && env.page.scrollTop < 18, 'The first frame should start a measured glide');
-  for (let time = 32; time <= 128; time += 16) w.flush(time);
-  assert(env.page.scrollTop > 50 && env.page.scrollTop < 80, 'The first 128ms should leave distance for an inertial settle');
-  settle(w, 144);
-  assert.equal(env.page.scrollTop, 120, 'A 120px wheel input must travel exactly 120px');
-  assert.equal(w.frameCount(), 0);
-  env.finish();
+test('Desktop wheel input remains passive through bursts and rapid reversals',()=>{
+ const env=browser('<main>Catalog</main>'),w=env.window,target=w.document.querySelector('main');
+ w.boot('motion.js');
+ for(let i=0;i<30;i++)assert.equal(wheel(w,target,{deltaY:i%2?-120:120}).defaultPrevented,false);
+ assert.equal(env.page.scrollTop,0,'the test harness cannot scroll natively; JavaScript must not synthesize scroll');
+ assert.equal(w.frameCount(),0,'no compositor-competing JavaScript wheel animation');
+ env.finish();
 });
-test('Reversing a wheel gesture reverses the next frame without stale forward momentum', () => {
-  const env = browser('<main>Catalog</main>'), w = env.window, target = w.document.querySelector('main');
-  env.page.scrollTop = 600; w.boot('motion.js');
-  for (let i = 0; i < 3; i++) wheel(w, target);
-  w.flush(16); const before = env.page.scrollTop;
-  wheel(w, target, {deltaY:-120}); w.flush(32);
-  assert(env.page.scrollTop < before, 'A direction change must interrupt the pending forward distance');
-  settle(w, 48); assert.equal(w.frameCount(), 0); env.finish();
-});
-test('A burst of mouse wheel input caps outstanding momentum', () => {
-  const env = browser('<main>Catalog</main>'), w = env.window, target = w.document.querySelector('main');
-  w.boot('motion.js'); for (let i = 0; i < 24; i++) wheel(w, target);
-  settle(w);
-  assert(env.page.scrollTop > 120 && env.page.scrollTop <= 720, 'Fast wheel bursts must not queue screens of unconsumed travel');
-  assert.equal(w.frameCount(), 0); env.finish();
-});
-test('Wheel motion settles when browser scroll positions round to whole pixels', () => {
-  const env = browser('<main>Catalog</main>'), w = env.window;
-  w.scrollTo = options => {env.page.scrollTop = Math.round(options.top); env.page.scrollLeft = Math.round(options.left);};
-  w.boot('motion.js'); wheel(w, w.document.querySelector('main')); settle(w);
-  assert.equal(env.page.scrollTop, 120, 'The damped tail must reach its destination on integer scroll positions');
-  assert.equal(w.frameCount(), 0, 'Subpixel rounding must not leave a perpetual animation loop');
-  env.finish();
+test('Programmatic scroll finishes with rounded pixel positions and no lingering frames',()=>{
+ const env=browser('<main>Catalog</main>'),w=env.window;
+ w.scrollTo=options=>{env.page.scrollTop=Math.round(options.top);env.page.scrollLeft=Math.round(options.left);};
+ w.boot('motion.js');w.SwiflyMotion.scrollBy(env.page,{top:120});
+ for(const time of [16,100,240,440,480])w.flush(time);
+ assert.equal(env.page.scrollTop,120);
+ assert.equal(w.frameCount(),0);
+ env.finish();
 });
 test('High resolution trackpad input stays native without computing ancestor styles', () => {
   const env = browser('<main><div><section><p><span>Catalog</span></p></section></div></main>'), w = env.window;
@@ -112,7 +92,7 @@ test('A recognized trackpad gesture remains native when later deltas become larg
   assert.equal(wheel(w, target, {deltaY:2.5}).defaultPrevented, false);
   now = 16; assert.equal(wheel(w, target, {deltaY:120}).defaultPrevented, false, 'An accelerated trackpad sample must not switch into mouse-wheel inertia');
   assert.equal(w.frameCount(), 0);
-  now = 500; assert.equal(wheel(w, target, {deltaY:120}).defaultPrevented, true, 'The device heuristic must expire without a background timer');
+  now = 500; assert.equal(wheel(w, target, {deltaY:120}).defaultPrevented, false, 'The browser continues owning input even after the gesture pause');
   env.finish();
 });
 test('Repeated mouse wheel input avoids re-reading unchanged ancestor overflow', () => {
@@ -133,14 +113,15 @@ test('A newly scrollable nested panel immediately retains native wheel behavior'
   assert.equal(wheel(w, panel.firstElementChild).defaultPrevented, false);
   w.flush(32); assert.equal(env.page.scrollTop, current); env.finish();
 });
-test('Horizontal page-mode wheel input uses the rail width and respects its boundary', () => {
-  const env = browser('<div class="movieRail"><button>Movie</button></div>'), w = env.window, rail = w.document.querySelector('.movieRail');
-  Object.defineProperties(rail, {scrollWidth:{value:1800}, clientWidth:{value:600}, scrollHeight:{value:150}, clientHeight:{value:150}});
-  w.boot('motion.js'); assert.equal(wheel(w, rail.firstElementChild, {deltaY:1, deltaMode:2, shiftKey:true}).defaultPrevented, true);
-  settle(w); assert.equal(rail.scrollLeft, 540); assert.equal(env.page.scrollTop, 0);
-  rail.scrollLeft = 1200;
-  assert.equal(wheel(w, rail.firstElementChild, {deltaX:120, deltaY:0}).defaultPrevented, false);
-  assert.equal(w.frameCount(), 0); env.finish();
+test('Horizontal rail wheels are native and do not interfere with the background',()=>{
+ const env=browser('<div class="movieRail"><button>Movie</button></div>'),w=env.window,rail=w.document.querySelector('.movieRail');
+ Object.defineProperties(rail,{scrollWidth:{value:1800},clientWidth:{value:600},scrollHeight:{value:150},clientHeight:{value:150}});
+ w.boot('motion.js');
+ assert.equal(wheel(w,rail.firstElementChild,{deltaY:1,deltaMode:2,shiftKey:true}).defaultPrevented,false);
+ assert.equal(wheel(w,rail.firstElementChild,{deltaX:120,deltaY:0}).defaultPrevented,false);
+ assert.equal(env.page.scrollTop,0);
+ assert.equal(w.frameCount(),0);
+ env.finish();
 });
 test('Reduced motion and hidden tabs never schedule scroll presentation work', () => {
   const env = browser('<main>Catalog</main><div class="dsHero"></div>'), w = env.window, d = w.document;
@@ -158,7 +139,7 @@ test('Reduced motion and hidden tabs never schedule scroll presentation work', (
 test('Hero geometry observation pauses in hidden tabs and resumes when visible', () => {
   const env = browser('<div class="dsHero"></div>'), w = env.window, d = w.document, watched = new Set();
   w.ResizeObserver = class {observe(node) {watched.add(node);} unobserve(node) {watched.delete(node);} disconnect() {watched.clear();}};
-  w.boot('motion.js'); assert.equal(watched.size, 1);
+  d.body.dataset.svScrollArt='on';w.boot('motion.js'); assert.equal(watched.size, 1);
   Object.defineProperty(d, 'hidden', {value:true, configurable:true}); d.dispatchEvent(new w.Event('visibilitychange'));
   assert.equal(watched.size, 0, 'Hidden pages must suspend hero geometry observation'); assert.equal(w.frameCount(), 0);
   Object.defineProperty(d, 'hidden', {value:false, configurable:true}); d.dispatchEvent(new w.Event('visibilitychange')); w.flush(16);
@@ -178,7 +159,7 @@ test('Hero presentation uses cached geometry and ignores unrelated nested scroll
   const env = browser('<div class="dsHero"></div><div class="movieRail"><p>Rail</p></div>'), w = env.window, d = w.document;
   let geometry = 0, queries = 0;
   d.querySelector('.dsHero').getBoundingClientRect = () => {geometry++; return {top:-200, height:500};};
-  w.boot('motion.js'); geometry = 0;
+  d.body.dataset.svScrollArt='on';w.boot('motion.js'); geometry = 0;
   const query = d.querySelectorAll.bind(d);
   d.querySelectorAll = selector => {if (selector.includes('.dsHero')) queries++; return query(selector);};
   d.querySelector('.movieRail').dispatchEvent(new w.Event('scroll')); w.flush(16);
@@ -198,7 +179,7 @@ test('Destroying motion before DOM ready prevents later boot and animation sched
   env.finish();
 });
 test('Destroying motion leaves pending reveal sections visible', () => {
-  const env = browser('<section class="svCatalogRow">Movies</section>'), w = env.window, section = w.document.querySelector('section');
+  const env = browser('<section class="svDetailSection">Details</section>'), w = env.window, section = w.document.querySelector('section');
   section.getBoundingClientRect = () => ({top:1600, height:400}); w.boot('motion.js');
   assert.equal(section.classList.contains('svMotionReveal'), true);
   w.SwiflyMotion.destroy();
