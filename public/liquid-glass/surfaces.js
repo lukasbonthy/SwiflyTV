@@ -32,7 +32,7 @@
   const liquidPreference = () => !['off', 'subtle'].includes(document.body.dataset.stGlass);
   const filter = host => host.querySelector(':scope > svg.svLiquidPane__filters');
   const opticalPanels=['.dsAuthCard','.svPlayerModes',partyPanels].join(',');
-  const compactControls='.dsCardQuickActions .dsMiniBtn,.dsRowBtn,.dsRowArrow,.svRowArrow,.svResumeRemove,.pagination a,.dsEpisodeChips a,.sv100RoomItem button,.sv100RoomItem a,.partyMovieResults button,.partyMovieResults a,.sv100Channel,#controlPanel button,#controlPanel [role="button"]';
+  const compactControls='.dsCardQuickActions .dsMiniBtn,.dsRowBtn,.dsRowArrow,.svRowArrow,.svResumeRemove,.pagination a,.dsEpisodeChips a,.sv100RoomItem button,.sv100RoomItem a,.partyMovieResults button,.partyMovieResults a,.sv100Channel';
   const outerPlayerControls='.svPlayerPopoverBody,.svPlayerBack,.svPlayerPartyButton,.svPlayerEpisodeStep,.svPlayerSeason,.svPlayerModes,.svPlayerAction';
   function deactivate(entry) {
     entry.opticController?.destroy();entry.opticController=null;
@@ -113,7 +113,11 @@
     entries.delete(entry.host);
   }
   function ensure(host) {
-    if (!(host instanceof HTMLElement) || !host.isConnected || host.matches('.svDetailDialog, .svStudioDialog') || host.closest('.svLiquidPane, media-player, .vds-controls')) return;
+    // Studio owns its accessible buttons. Extra SVG panes across all its
+    // settings replaced their styling and imposed substantial rendering work.
+    if (!(host instanceof HTMLElement) || !host.isConnected || host.closest('#controlPanel') ||
+        host.matches('.svDetailDialog, .svStudioDialog') ||
+        host.closest('.svLiquidPane, media-player, .vds-controls')) return;
     if(host.closest('.svPlayerPopoverBody')&&!host.matches('.svPlayerPopoverBody'))return;
     if(host.closest('.svPlayerEmbedded')&&!host.matches('.svPlayerPopoverBody'))return;
     if(host.closest('[data-player-root]')&&!host.matches(outerPlayerControls))return;
