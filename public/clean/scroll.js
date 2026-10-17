@@ -1,17 +1,18 @@
-/* Weighted Lenis easing with immediate braking and native nested input. */
+/* ShuttleTV's Lenis curve and momentum, with native nested input. */
 (() => {
   'use strict';
   if (window.SwiflyPremiumScroll) return;
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
   const fine = window.matchMedia('(pointer: fine)');
   const native = 'input,textarea,select,[contenteditable]:not([contenteditable="false"]),video,audio,media-player,[data-player-root],.vds-controls,.vds-slider,[data-native-scroll],#controlPanel,.genreDropdownMenu,.dsProfileDropdown';
-  let engine, frame = 0, lastFrame = null, clock = 1, wheelDirection = 0, preferences, started = false, destroyed = false;
+  const horizontalRails = '.movieRail,.dsRail,.nfRail,.nfTopTenRail,.svResumeRail,.dsWelcomeRailTrack,.svDetailCastRail';
+  let engine, frame = 0, lastFrame = null, clock = 1, preferences, started = false, destroyed = false;
   const available = () => !destroyed && !document.hidden && fine.matches && !reduced.matches &&
     !document.body.classList.contains('reduceMotion') && document.body.dataset.svScroll !== 'native' &&
     !/^\/(?:watch|embed)(?:\/|$)/.test(location.pathname) && typeof window.Lenis === 'function';
 
   function cancel() {
-    cancelAnimationFrame(frame); frame = 0; lastFrame = null; wheelDirection = 0;
+    cancelAnimationFrame(frame); frame = 0; lastFrame = null;
     if (engine?.isScrolling === 'smooth') {
       // Reset to the actual position without finishing an obsolete target.
       // start() immediately restores ordinary native input and the next glide.
@@ -28,14 +29,19 @@
     if (!engine) return;
     // Advance only while moving. An active-time clock prevents a long idle
     // from turning the first frame of the next gesture into an instant jump.
-    clock += lastFrame === null ? 1000 / 60 : Math.max(0, time - lastFrame);
+    clock += Math.max(0, time - (lastFrame ?? time));
     lastFrame = time;
     engine.raf(clock);
     if (engine.isScrolling === 'smooth') frame = requestAnimationFrame(step);
     else lastFrame = null;
   }
   function wake() {
-    if (!frame && available()) frame = requestAnimationFrame(step);
+    if (!frame && available()) {
+      // Start at the gesture's actual time. Assuming a 60 Hz first frame
+      // produces a visible kick on 144/240 Hz displays after every idle.
+      lastFrame = performance.now();
+      frame = requestAnimationFrame(step);
+    }
   }
   function keepNative(event) {
     // Lenis leaves nested scrolling alone. If it did not consume this
@@ -46,22 +52,20 @@
     const target = event.target instanceof Element ? event.target : null;
     if (event.type !== 'wheel' || !available() || !event.cancelable || event.defaultPrevented ||
         event.ctrlKey || event.metaKey || event.altKey || event.shiftKey ||
-        Math.abs(deltaX) > Math.abs(deltaY) || !target || target.closest(native) ||
+        deltaY === 0 || !target || target.closest(native) ||
+        Math.abs(deltaX) > Math.abs(deltaY) && target.closest(horizontalRails) ||
         document.querySelector('dialog[open]')) {
       cancel(); return false;
     }
-    const direction = Math.sign(deltaY);
-    if (direction && wheelDirection && direction !== wheelDirection && engine?.isScrolling === 'smooth') cancel();
-    if (direction) wheelDirection = direction;
     return true;
   }
   function sync() {
     if (!available()) {dispose(); return;}
     if (engine) return;
-    // A longer damping tail gives the wheel perceptible weight. Reversals
-    // brake the queued travel so the extra weight never fights new input.
+    // Keep the reference's damping and accumulated wheel destination.
+    // Direction changes decelerate that momentum instead of discarding it.
     engine = new window.Lenis({
-      lerp:.065, wheelMultiplier:1, smoothWheel:true, syncTouch:false,
+      lerp:.1, wheelMultiplier:1, smoothWheel:true, syncTouch:false,
       allowNestedScroll:true, autoRaf:false, virtualScroll:accept
     });
     clock = 1; engine.raf(clock);
