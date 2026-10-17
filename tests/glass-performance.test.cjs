@@ -769,3 +769,10 @@ test('An existing details button recovers on refresh after false visibility and 
  assert.equal(pane.dataset.swiflyRenderer,'svg','an existing entry must reprime when its dialog becomes active');
  assert.equal(w.frameCount(),0);env.finish();
 });
+
+test('Modal cinema identity never fades the ancestor of refractive action controls',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const css=fs.readFileSync(path.join(__dirname,'../public/liquid-glass/controls.css'),'utf8');
+ assert(css.includes('body.svCleanShell .svDetailDialog .svCinemaPage .svDetailIdentity[data-cinema-reveal]'));
+ assert(css.includes('animation: none !important;'));
+});
