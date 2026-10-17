@@ -6491,14 +6491,14 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/details.js?v=231"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=222" />
     <script defer src="/assets/liquid-glass/surfaces.js?v=230"></script>
-    <link rel="stylesheet" href="/assets/studio/studio.css?v=164" />
+    <link rel="stylesheet" href="/assets/studio/studio.css?v=232" />
     <script defer src="/assets/studio/studio.js?v=164"></script>
     <link rel="stylesheet" href="/assets/clean/aurora.css?v=208" />
     <script defer src="/assets/clean/aurora.js?v=202"></script>
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=205" />' : ""}
     ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=173" />' : ""}
     
-    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=211"></script>' : ""}
+    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=232"></script>' : ""}
     ${active === "social" ? '<script defer src="/assets/party/party.js?v=205"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}
     ${player || partyBrowse ? '<script defer src="/assets/player/watch-party.js?v=160"></script>' : ""}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/finish.css?v=175" />'}

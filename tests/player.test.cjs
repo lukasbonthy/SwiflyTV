@@ -309,10 +309,10 @@ test('Live seek controls use the current seekable window instead of a zero or in
   const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/live.mp4'});const s=e.state(e.video());Object.assign(s,{duration:Infinity,readyState:3,currentTime:160,seekable:ranges([[120,180]])});e.event('loadedmetadata');e.event('canplay');const seek=e.d.querySelector('[data-player-seek]');assert.equal(seek.min,'120');assert.equal(seek.max,'180');assert.equal(seek.disabled,false);e.api.seek(0);assert.equal(e.api.getState().currentTime,120);e.api.seek(999);assert.equal(e.api.getState().currentTime,180);assert.match(e.d.querySelector('[data-player-duration]').textContent,/live/i);
 });
 test('Repeated waiting events cannot renew a stall deadline without real media progress',async()=>{
-  const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();await e.api.play();e.event('waiting');await e.advance(140);e.event('waiting');e.event('progress');await e.advance(80);assert.equal(e.app.dataset.playerState,'error');assert.equal(e.api.getState().ready,false);
+  const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();await e.api.play();e.event('waiting');await e.advance(140);e.event('waiting');e.event('progress');await e.advance(80);assert.equal(e.app.dataset.playerState,'loading');assert.equal(e.api.getState().ready,false);
 });
 test('Real buffered progress renews a stall deadline and paused ready movies need no watchdog',async()=>{
-  const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();await e.advance(300);assert.equal(e.app.dataset.playerState,'ready');await e.api.play();e.event('waiting');await e.advance(130);e.state(e.video()).buffered=ranges([[0,20]]);e.event('progress');await e.advance(130);assert.equal(e.app.dataset.playerState,'buffering');await e.advance(80);assert.equal(e.app.dataset.playerState,'error');
+  const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();await e.advance(300);assert.equal(e.app.dataset.playerState,'ready');await e.api.play();e.event('waiting');await e.advance(130);e.state(e.video()).buffered=ranges([[0,20]]);e.event('progress');await e.advance(130);assert.equal(e.app.dataset.playerState,'buffering');await e.advance(80);assert.equal(e.app.dataset.playerState,'loading');
 });
 for(const name of ['waiting','stalled'])test('Paused ready media ignores background '+name+' events',async()=>{
   const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();e.event(name);
@@ -322,18 +322,18 @@ for(const name of ['waiting','stalled'])test('Paused ready media ignores backgro
 test('A download stall leaves buffered playback visible while its playback watchdog remains active',async()=>{
   const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();Object.assign(e.state(e.video()),{currentTime:10,buffered:ranges([[0,60]])});await e.api.play();e.event('timeupdate');e.event('stalled');
   assert.equal(e.app.dataset.playerState,'ready');assert.equal(e.d.querySelector('[data-player-status]').hidden,true);assert.equal(e.d.querySelector('[data-player-stage]').getAttribute('aria-busy'),'false');
-  await e.advance(130);e.state(e.video()).currentTime=11;e.event('timeupdate');await e.advance(130);assert.equal(e.app.dataset.playerState,'ready');await e.advance(80);assert.equal(e.app.dataset.playerState,'error');
+  await e.advance(130);e.state(e.video()).currentTime=11;e.event('timeupdate');await e.advance(130);assert.equal(e.app.dataset.playerState,'ready');await e.advance(80);assert.equal(e.app.dataset.playerState,'loading');
 });
 test('Advancing playback dismisses buffering without another readiness event',async()=>{
   const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();await e.api.play();Object.assign(e.state(e.video()),{currentTime:10,readyState:2});e.event('waiting');e.event('timeupdate');
   assert.equal(e.app.dataset.playerState,'buffering','An unchanged playback position cannot claim recovery');assert.equal(e.d.querySelector('[data-player-status]').hidden,false);
   await e.advance(130);Object.assign(e.state(e.video()),{currentTime:11,readyState:3});e.event('timeupdate');
   assert.equal(e.app.dataset.playerState,'ready');assert.equal(e.d.querySelector('[data-player-status]').hidden,true);assert.equal(e.d.querySelector('[data-player-stage]').getAttribute('aria-busy'),'false');
-  await e.advance(130);assert.equal(e.app.dataset.playerState,'ready');await e.advance(80);assert.equal(e.app.dataset.playerState,'error','Resuming playback must retain a bounded watchdog');
+  await e.advance(130);assert.equal(e.app.dataset.playerState,'ready');await e.advance(80);assert.equal(e.app.dataset.playerState,'loading','Resuming playback should automatically reconnect rather than requiring a restart');
 });
 test('A stall without future playback data shows buffering and ends at its original deadline',async()=>{
   const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();await e.api.play();e.state(e.video()).readyState=2;e.event('stalled');assert.equal(e.app.dataset.playerState,'buffering');
-  await e.advance(130);e.event('stalled');await e.advance(80);assert.equal(e.app.dataset.playerState,'error');assert.equal(e.api.getState().ready,false);
+  await e.advance(130);e.event('stalled');await e.advance(80);assert.equal(e.app.dataset.playerState,'loading');assert.equal(e.api.getState().ready,false);
 });
 test('Seeking position changes keep buffering visible until playback advances after the seek',async()=>{
   const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();await e.api.play();Object.assign(e.state(e.video()),{currentTime:20,readyState:2,seeking:true});e.event('seeking');e.event('timeupdate');assert.equal(e.app.dataset.playerState,'buffering');
@@ -391,7 +391,7 @@ test('Remote pause cannot remove the watchdog while a new movie is still becomin
   const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/silent.mp4'});e.api.pause({remote:true});await e.advance(250);assert.equal(e.app.dataset.playerState,'error');assert.equal(e.api.getState().ready,false);
 });
 test('Repeated readiness events cannot bypass the watchdog without advancing playback',async()=>{
-  const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();await e.api.play();e.event('waiting');await e.advance(130);e.event('canplay');await e.advance(130);assert.equal(e.app.dataset.playerState,'error');
+  const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();await e.api.play();e.event('waiting');await e.advance(130);e.event('canplay');await e.advance(130);assert.equal(e.app.dataset.playerState,'loading');
 });
 test('Remote pause supersedes a pending local play promise without emitting a late room command',async()=>{
   const e=setup(),actions=[];await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();e.app.addEventListener('swiflyplayer:action',ev=>actions.push(ev.detail));let done;e.video().play=()=>new Promise(resolve=>done=resolve);const pending=e.api.play();e.api.pause({remote:true});done();await pending;assert.equal(actions.length,0);assert.equal(e.api.getState().paused,true);
@@ -536,4 +536,42 @@ test('Source replacement and fullscreen transitions dismiss stale playback menus
 test('Destroy removes open playback menus along with the player controls',()=>{
   const e=setup(),settings=e.d.querySelector('[data-player-settings]');settings.open=true;
   e.api.destroy();assert.equal(settings.open,false);assert.equal(e.d.querySelector('[data-player-controls]').hidden,true);
+});
+
+test('A buffering movie reconnects at the saved timestamp and resumes without a click',async()=>{
+ const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();
+ Object.assign(e.state(e.video()),{currentTime:57,readyState:2});await e.api.play();e.event('waiting');
+ const old=e.video();await e.advance(210);
+ assert.notEqual(e.video(),old);assert.equal(e.app.dataset.playerState,'loading');
+ assert.equal(e.api.getState().source,'/movie.mp4');assert.equal(e.d.querySelector('[data-player-retry]').hidden,true);
+ e.ready();assert.equal(e.api.getState().currentTime,57);assert.equal(e.api.getState().paused,false);
+ await e.advance(210);assert.equal(e.app.dataset.playerState,'error','a broken source cannot reconnect endlessly');
+});
+test('Episode buffering falls back to a second rendition without losing the episode timestamp',async()=>{
+ const e=setup({type:'tv',season:2,episode:3});
+ await e.api.loadSource({status:'ok',type:'tv',playbackUrl:'/episode-a.mp4',playbackSources:[{playbackUrl:'/episode-a.mp4'},{playbackUrl:'/episode-b.mp4'}]});
+ e.ready();e.state(e.video()).currentTime=62;await e.api.play();e.event('waiting');
+ await e.advance(205);assert.equal(e.api.getState().source,'/episode-a.mp4');e.ready();
+ await e.advance(205);assert.equal(e.api.getState().source,'/episode-b.mp4');
+ e.ready();assert.equal(e.api.getState().currentTime,62);assert.equal(e.api.getState().type,'tv');
+ assert.equal(e.api.getState().paused,false);
+ await e.advance(205);assert.equal(e.app.dataset.playerState,'error','source recovery is bounded');
+});
+test('A native network error reconnects but a codec failure does not retry the same source',async()=>{
+ const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();e.state(e.video()).currentTime=30;await e.api.play();
+ const first=e.video();e.state(first).error={code:2};e.event('error',first);
+ assert.notEqual(e.video(),first);e.ready();assert.equal(e.api.getState().currentTime,30);
+ const second=e.video();e.state(second).error={code:4};e.event('error',second);
+ assert.equal(e.app.dataset.playerState,'error');
+});
+
+test('Throttled timeupdate events cannot restart a healthy advancing film',async()=>{
+ const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();await e.api.play();
+ const original=e.video();
+ e.state(original).currentTime=10; // Clock advanced without a timeupdate event.
+ await e.advance(210);
+ assert.equal(e.video(),original,'an advancing video must not be destroyed on an expired watchdog');
+ assert.equal(e.app.dataset.playerState,'ready');
+ e.state(original).currentTime=12;await e.advance(210);
+ assert.equal(e.video(),original,'subsequent throttled events remain harmless when time advances');
 });

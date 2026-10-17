@@ -120,3 +120,14 @@ test('Switching Studio panels resets the mobile content scroller',()=>{
   const workspace=d.querySelector('.stWorkspaceBody');workspace.scrollTop=500;
   click(env,'[data-st-tab="motion"]');assert.equal(workspace.scrollTop,0,'A new panel must start at the top on small screens');env.finish();
 });
+
+test('Studio visual refinement preserves controls and selected tabs',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const css=fs.readFileSync(path.join(__dirname,'../public/studio/studio.css'),'utf8');
+ assert(css.includes('body.svCleanShell #controlPanel .stNavigation > button[aria-selected="true"]'));
+ assert(css.includes('body.svCleanShell #controlPanel .stChoice[aria-pressed="true"]'));
+ const env=setup(),d=env.window.document;click(env,'#controlToggleTop');
+ assert(d.querySelector('#controlPanel').open);
+ assert(d.querySelectorAll('#controlPanel [data-st-tab]').length>=3);
+ env.finish();
+});
