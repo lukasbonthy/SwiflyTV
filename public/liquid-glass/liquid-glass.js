@@ -84,7 +84,24 @@
       }
       if (removed) for (const [host, entry] of live) if (!host.isConnected) entry.controller.destroy();
       if (preferenceChanged) syncAll();
-      else for (const [host, entry] of live) if ([...changed].some(node => node === host || node.contains(host))) entry.sync();
+      else if (changed.size) {
+        // Resolve changes locally instead of testing every live lens against
+        // every changed node (quadratic when a catalog updates many controls).
+        const affected = new Set();
+        for (const node of changed) {
+          for (let parent = node; parent; parent = parent.parentElement) {
+            const entry = live.get(parent);
+            if (entry) affected.add(entry);
+          }
+          if (node instanceof Element) {
+            node.querySelectorAll('.svLiquidPane,[data-swifly-renderer]').forEach(host => {
+              const entry = live.get(host);
+              if (entry) affected.add(entry);
+            });
+          }
+        }
+        for (const entry of affected) entry.sync();
+      }
     });
     preferences.observe(document.body, {attributes:true, attributeFilter:['data-st-glass','style','class','open','hidden'], childList:true, subtree:true});
     document.addEventListener('visibilitychange', syncAll);

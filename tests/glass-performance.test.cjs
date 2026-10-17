@@ -633,3 +633,31 @@ test('Resizing a live pane keeps finite bounded optics and refreshes its geometr
  assert.deepEqual([...pane.querySelectorAll('feDisplacementMap')].map(n=>Number(n.getAttribute('scale'))),[-180,-170,-160]);
  assert.equal(w.frameCount(),0);env.finish();
 });
+
+test('First-screen hero actions turn refractive before any intersection callback', () => {
+  const env = glass('<div class="dsHeroActions"><button class="dsPrimaryBtn">Play</button><button class="dsSecondaryBtn">Details</button><button class="dsIconBtn">Save</button></div>'), w = env.window, d = w.document;
+  d.body.dataset.stGlass = 'liquid';
+  w.boot('liquid-glass/liquid-glass.js'); w.boot('liquid-glass/surfaces.js');
+  const panes = [...d.querySelectorAll('.dsHeroActions > button > .svNavMatchedLens')];
+  assert.equal(panes.length, 3);
+  assert(panes.every(pane => pane.dataset.swiflyRenderer !== 'svg'));
+  w.flush(16);
+  assert(panes.every(pane => pane.dataset.swiflyRenderer === 'svg'), 'hero glass should not wait for a delayed IO callback');
+  assert.equal(env.textures.length, 1, 'initial hero optics reuse cached geometry');
+  env.intersect(false); w.flush(32);
+  assert(panes.every(pane => pane.dataset.swiflyRenderer === 'blur'), 'offscreen optics must still be released');
+  assert.equal(w.frameCount(), 0); env.finish();
+});
+
+test('Detail glass enables itself when the entrance state settles without manual refresh', async () => {
+  const env = glass('<dialog open class="svDetailDialog" data-sv-detail-state="opening"><div class="svDetailActions"><button class="dsPrimaryBtn">Play</button><button class="dsSecondaryBtn">Watch party</button></div></dialog>'), w = env.window, d = w.document;
+  d.body.dataset.stGlass = 'liquid';
+  w.boot('liquid-glass/liquid-glass.js'); w.boot('liquid-glass/surfaces.js');
+  env.intersect(true); w.flush(16);
+  const panes = [...d.querySelectorAll('.svDetailActions .svNavMatchedLens')];
+  assert(panes.every(pane => pane.dataset.swiflyRenderer === 'blur'), 'opening animation retains light native glass');
+  d.querySelector('dialog').dataset.svDetailState = 'open';
+  await tick(); w.flush(32);
+  assert(panes.every(pane => pane.dataset.swiflyRenderer === 'svg'), 'settling must activate the same nav refraction without user action');
+  assert.equal(w.frameCount(), 0); env.finish();
+});

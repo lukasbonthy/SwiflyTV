@@ -5614,8 +5614,8 @@ app.use((req, res, next) => {
 });
 
 // v150: versioned, locally hosted navigation glass assets.
-// Glass material changes frequently during UI refinement; revalidate on navigation.
-app.use("/assets/liquid-glass", express.static(path.join(__dirname, "public", "liquid-glass"), { maxAge: 0, dotfiles: "deny" }));
+// Versioned glass URLs can be cached across navigation; v= tags change with edits.
+app.use("/assets/liquid-glass", express.static(path.join(__dirname, "public", "liquid-glass"), { maxAge: "1d", dotfiles: "deny" }));
 // v151: shared clean catalog styles and compact navigation behavior.
 app.use("/assets/clean", express.static(path.join(__dirname, "public", "clean"), { maxAge: "1d", dotfiles: "deny" }));
 app.use("/assets/studio", express.static(path.join(__dirname, "public", "studio"), { maxAge: "1d", dotfiles: "deny" }));
@@ -6479,7 +6479,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player || partyBrowse || active === "social" ? '<script defer src="/socket.io/socket.io.js"></script>' : ""}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/modern-normalize@2.0.0/modern-normalize.min.css" />
     <link rel="stylesheet" href="/assets/liquid-glass/liquid-glass.css?v=222" />
-    <script defer src="/assets/liquid-glass/liquid-glass.js?v=221"></script>
+    <script defer src="/assets/liquid-glass/liquid-glass.js?v=224"></script>
     <link rel="stylesheet" href="/assets/clean/clean.css?v=153" />
     <script defer src="/assets/clean/clean.js?v=151"></script>
     <script defer src="/assets/clean/avatars.js?v=209"></script>
@@ -6490,7 +6490,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/motion.js?v=204"></script>
     <script defer src="/assets/clean/details.js?v=208"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=222" />
-    <script defer src="/assets/liquid-glass/surfaces.js?v=222"></script>
+    <script defer src="/assets/liquid-glass/surfaces.js?v=224"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=164" />
     <script defer src="/assets/studio/studio.js?v=164"></script>
     <link rel="stylesheet" href="/assets/clean/aurora.css?v=208" />
