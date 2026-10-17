@@ -7,7 +7,8 @@
   const page = document.scrollingElement || document.documentElement;
   const jobs = new Map(), observed = new WeakSet(), pendingReveal = new Set();
   const heroes = new Map(), dirtyHosts = new Set();
-  const wheelTargets=new WeakMap();
+  const wheelTargets=new WeakMap(),overflowCache=new WeakMap();
+  let nativeWheelUntil=0;
   const rails='.movieRail,.dsRail,.svResumeRail,.dsWelcomeRailTrack,.svDetailCastRail';
   const native='input,textarea,select,[contenteditable="true"],video,audio,media-player,[data-player-root],.vds-controls,.vds-slider,[data-native-scroll],#controlPanel,.genreDropdownMenu,.dsProfileDropdown';
   const wheelDuration = 440, wheelDecay = 6, wheelNormalization = 1 - Math.exp(-wheelDecay);
@@ -83,25 +84,31 @@
     if(event.defaultPrevented||!event.cancelable){stop();return;}
     if(event.ctrlKey||event.metaKey||event.altKey||!canAnimate()||!fine.matches||location.pathname.startsWith('/watch/')){stop();return;}
     const horizontal=event.shiftKey||Math.abs(event.deltaX)>Math.abs(event.deltaY);
-    const raw=horizontal?(event.deltaX||event.deltaY):event.deltaY;
+    // The browser already handles horizontal rails and modal scroll physics
+    // efficiently; constrain our optional premium easing to the main page.
+    if(horizontal||document.querySelector('dialog[open]')){stop();return;}
+    const raw=event.deltaY;
     if(!raw)return;
     // Continuous trackpads already supply fine-grained, OS-eased momentum.
     // Preserve their compositor-native input and never capture tiny deltas.
-    if(event.deltaMode===0 && (Math.abs(raw)<72 || !Number.isInteger(raw))) {
+    const now=performance.now();
+    if(event.deltaMode===0 && (Math.abs(raw)<72 || !Number.isInteger(raw)||now<nativeWheelUntil)) {
+      if(Math.abs(raw)<72||!Number.isInteger(raw)) nativeWheelUntil=now+180;
       stop();return;
     }
     const target=event.target instanceof Element?event.target:null;
     if(!target||target.closest(native)){stop();return;}
-    const dialog=document.querySelector('dialog[open]');
-    if(dialog&&(!dialog.classList.contains('svDetailDialog')||!dialog.contains(target)||target===dialog)){stop();return;}
-    const rail=horizontal?target.closest(rails):null;
-    const host=rail||(dialog?dialog.querySelector('.svDetailViewport'):target.closest('.svDetailViewport'))||page;
-    if((dialog&&host===page)||(horizontal&&!rail))return;
+    const host=target.closest('.svDetailViewport')||page;
     // Never intercept nested scrolling; leave its inertia to the browser.
     for(let node=target;node&&node!==host&&node!==document.body&&node!==page;node=node.parentElement){
       if(node.scrollHeight>node.clientHeight+1||node.scrollWidth>node.clientWidth+1){
-        const style=getComputedStyle(node);
-        if((horizontal?/auto|scroll|overlay/.test(style.overflowX):/auto|scroll|overlay/.test(style.overflowY))) {
+        const key=node.getAttribute('class')+':'+node.getAttribute('style');
+        let state=overflowCache.get(node);
+        if(!state||state.key!==key){
+          state={key,style:getComputedStyle(node).overflowY};
+          overflowCache.set(node,state);
+        }
+        if(/auto|scroll|overlay/.test(state.style)) {
           stop(host);return;
         }
       }
@@ -109,7 +116,7 @@
     const scale=event.deltaMode===1?16:event.deltaMode===2?(horizontal?host.clientWidth:host.clientHeight)*.9:1;
     const delta=Math.max(-720,Math.min(720,raw*scale));
     const axis=horizontal?'x':'y',current=position(host),max=bounds(host);
-    const now=performance.now(),prior=wheelTargets.get(host);
+    const prior=wheelTargets.get(host);
     const continuous=prior&&prior.axis===axis&&prior.direction===Math.sign(delta)&&now-prior.time<420;
     const start=continuous?prior.target:current[axis];
     const next=clamp(start+delta,max[axis]);
