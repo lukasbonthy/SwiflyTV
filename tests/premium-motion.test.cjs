@@ -20,7 +20,7 @@ test('Mouse wheel retains premium browser easing while trackpads stay native',()
   assert.equal(first.defaultPrevented,true,'a discrete wheel notch gets the premium eased treatment');
   assert.equal(calls.length,1);
   assert.equal(calls[0].behavior,'smooth','the browser compositor, not a JS frame loop, owns the animation');
-  assert.equal(calls[0].top,120);
+  assert.equal(calls[0].top,134.4,'single notches cover ground without feeling slow');
   assert.equal(w.frameCount(),0);
   const precise=wheel(w,target,{deltaY:2.5,deltaMode:0});
   assert.equal(precise.defaultPrevented,false,'precision trackpad gestures retain native momentum');
@@ -29,16 +29,33 @@ test('Mouse wheel retains premium browser easing while trackpads stay native',()
   env.finish();
 });
 
-test('Repeated discrete mouse-wheel notches accumulate with a bounded destination',()=>{
+test('Repeated wheel notches coalesce without restarting the browser animation per sample',async()=>{
  const env=browser('<main>Catalog</main>'),w=env.window,d=w.document;
  const calls=[],native=w.scrollTo;
  w.scrollTo=options=>{calls.push(options);return native(options);};
  w.boot('motion.js');
  const target=d.querySelector('main');
  for(let i=0;i<4;i++)assert.equal(wheel(w,target,{deltaY:120}).defaultPrevented,true);
- assert.deepEqual(calls.map(x=>x.top),[120,240,360,480]);
+ assert.equal(calls.length,1,'a rapid wheel burst starts immediately then batches its destination');
+ assert.equal(calls[0].top,134.4);
+ assert.equal(w.frameCount(),0,'coalescing does not create a frame-driven wheel loop');
+ await new Promise(resolve=>setTimeout(resolve,120));
+ assert.equal(calls.length,2,'one trailing update should land the latest destination');
+ assert.equal(Math.round(calls[1].top),538);
  assert(calls.every(x=>x.behavior==='smooth'));
- assert.equal(w.frameCount(),0);
+ env.finish();
+});
+
+test('Arrow keys cancel queued mouse-wheel destinations',async()=>{
+ const env=browser('<main>Catalog</main>'),w=env.window,d=env.window.document;
+ let writes=0;const native=w.scrollTo;
+ w.scrollTo=options=>{writes++;return native(options);};
+ w.boot('motion.js');
+ wheel(w,d.querySelector('main'));wheel(w,d.querySelector('main'));
+ assert.equal(writes,1);
+ d.dispatchEvent(new w.KeyboardEvent('keydown',{key:'PageDown',bubbles:true}));
+ await new Promise(resolve=>setTimeout(resolve,115));
+ assert.equal(writes,1,'an old wheel destination never overwrites keyboard scrolling');
  env.finish();
 });
 
@@ -55,8 +72,8 @@ test('Programmatic carousel / navigation movement settles quickly but gives way 
   const current=env.page.scrollTop;
   assert.equal(wheel(w,d.querySelector('main')).defaultPrevented,true);
   assert.equal(w.frameCount(),0,'manual premium wheel preempts programmatic animation immediately');
-  assert.equal(env.page.scrollTop,current+120,'the browser receives the new gesture destination');
-  w.flush(560);assert.equal(env.page.scrollTop,current+120);
+  assert.equal(env.page.scrollTop,current+134.4,'the browser receives a quick weighted gesture destination');
+  w.flush(560);assert.equal(env.page.scrollTop,current+134.4);
   env.finish();
 });
 
