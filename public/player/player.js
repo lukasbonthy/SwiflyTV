@@ -32,6 +32,7 @@
     const mediaName = () => mediaType==='tv'?'episode':'movie';
     let hls=null,dash=null,pendingPlay=false,unlockRemote=true,resumeAt=0,retryResume=0,stallTimer=0,toastTimer=0,lookupDeadline=0,loadingKey='';
     let lastTime=0,lastBuffer=0,hlsRecovery={network:0,media:0},controlsTimer=0,scrubbing=false,scrubTime=0;
+    let stallRepairs=0,repairPosition=0;
     let glass=null,glassEnabled=null,glassUnavailable=false;
     let audioOptions=[],applyingAudio=false,observedAudio=null,observedText=null;
     let captionOptions=[],captionPreference=null,captionActive='-1',applyingCaptions=false;
@@ -139,7 +140,33 @@
     function stopWatchdog() {clearTimeout(stallTimer);stallTimer=0;}
     function watchProgress({renew=false,delay=config.stall}={}) {
       if(stallTimer&&!renew)return;
-      stopWatchdog();const token=generation;stallTimer=setTimeout(()=>{stallTimer=0;if(alive(token))mediaFailure('Playback stopped responding. Check your connection, then try again.');},Math.max(1,delay));
+      stopWatchdog();const token=generation;
+      stallTimer=setTimeout(()=>{
+        stallTimer=0;if(!alive(token))return;
+        const message='Playback stopped responding. Check your connection, then try again.';
+        if(playable&&sourceData&&source&&!video.paused&&!video.ended)recoverStall(message);
+        else mediaFailure(message);
+      },Math.max(1,delay));
+    }
+    function recoverStall(message) {
+      if(destroyed||suspended||!sourceData||!source||video.paused||video.ended)return;
+      const position=Math.max(0,number(video.currentTime,0));
+      // No unbounded loops: the retry budget survives cloned media elements.
+      // Only 30 seconds of actual timeline progression replenishes it.
+      if(stallRepairs&&position-repairPosition>=30)stallRepairs=0;
+      if(stallRepairs>=2){mediaFailure(message);return;}
+      let next=source,choice=sourceOptions.find(item=>item.playbackUrl===source);
+      if(stallRepairs===1){
+        choice=sourceOptions.find(item=>item.playbackUrl!==source);
+        if(!choice){mediaFailure(message);return;}
+        next=choice.playbackUrl;
+      }
+      stallRepairs++;repairPosition=position;
+      const attempt=stallRepairs;
+      const resume=attachSource(next,dataForSource(choice),{position,shouldPlay:true});
+      if(source===next&&phase==='loading')
+        setStatus('loading',attempt===1?'Reconnecting playback…':'Trying another source…','Keeping your place while the stream reconnects.');
+      resume.catch(()=>{}); // attachSource owns error handling.
     }
     function cancelResolver() {resolverGeneration++;cancelTasks('resolver');lookupDeadline=0;}
     function teardownMedia({replace=false}={}) {
@@ -252,6 +279,7 @@
     async function switchSource(index) {
       const choice=sourceOptions[index];if(destroyed||suspended||!sourceData||!choice||choice.playbackUrl===source)return false;
       const snapshot=getState(),position=playable?snapshot.currentTime:Math.max(resumeAt,snapshot.currentTime),shouldPlay=pendingPlay||!snapshot.paused;
+      stallRepairs=0;repairPosition=0;
       return attachSource(choice.playbackUrl,dataForSource(choice),{position,shouldPlay});
     }
     function languageOf(track) {
@@ -379,7 +407,9 @@
       listen(current,'timeupdate',guard(()=>{
         const time=number(current.currentTime,0),advance=time-lastTime;
         if(Math.abs(advance)>.1){
-          lastTime=time;if(!current.paused||phase==='buffering')watchProgress({renew:true});
+          lastTime=time;
+          if(stallRepairs&&time-repairPosition>=30){stallRepairs=0;repairPosition=0;}
+          if(!current.paused||phase==='buffering')watchProgress({renew:true});
           if(playable&&!current.paused&&!current.seeking&&advance>.1&&phase==='buffering')setStatus('ready');
         }
         updateTime();emitState();
@@ -387,7 +417,13 @@
       listen(current,'progress',guard(()=>{const end=bufferedEnd();if(end>lastBuffer+.1){lastBuffer=end;if(stallTimer)watchProgress({renew:true});}updateTime();}),mediaListeners);
       listen(current,'volumechange',guard(updateControls),mediaListeners);
       listen(current,'ratechange',guard(()=>{find('speed').value=String(current.playbackRate);emitState();}),mediaListeners);
-      listen(current,'error',guard(()=>{const code=current.error?.code;if(code===1)return;mediaFailure(code===3||code===4?'This browser could not play the '+mediaName()+'’s format. Try another browser, or retry playback.':'The '+mediaName()+' connection was interrupted. Check your connection, then try again.');}),mediaListeners);
+      listen(current,'error',guard(()=>{
+        const code=current.error?.code;if(code===1)return;
+        if(code===2&&playable&&sourceData&&!current.paused){
+          recoverStall('The '+mediaName()+' connection was interrupted.');return;
+        }
+        mediaFailure(code===3||code===4?'This browser could not play the '+mediaName()+'’s format. Try another browser, or retry playback.':'The '+mediaName()+' connection was interrupted. Check your connection, then try again.');
+      }),mediaListeners);
       observeTrackLists(token);
     }
     async function loadSource(data,{resumeAt:position=0,restoreSource=''}={}) {
@@ -407,6 +443,7 @@
         if(position>0)seek(position,{remote:true});return true;
       }
       sourceData={...data};sourceSnapshotKey=key;sourceOptions=prepareSources(data,next);mediaId=nextId;mediaType=nextType;loadingKey='';
+      stallRepairs=0;repairPosition=0;
       const preferred=failedPreferenceMedia===mediaKey(data,nextId,nextType)?null:sourceOptions[preferredAudioIndex(sourceOptions,item=>languageOf({language:item.audioLanguage}))];
       const choice=sourceOptions.find(item=>item.playbackUrl===restoreSource)||preferred||sourceOptions.find(item=>item.playbackUrl===next);return attachSource(choice.playbackUrl,dataForSource(choice),{position});
     }
