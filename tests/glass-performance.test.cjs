@@ -315,8 +315,12 @@ test('Hero controls mount the SAME size-aware navbar renderer, not only a global
   assert(!control.classList.contains('svSharedGlass'),'no duplicate CSS filter on button host');
  }
  assert.equal(d.querySelectorAll('.dsCardQuickActions .svLiquidPane').length,50);
+ // Moving the hero offscreen legitimately releases its filters, even while
+ // a transient false notification for an on-screen hero is ignored.
+ for(const control of controls)control.getBoundingClientRect=()=>({width:200,height:40,top:2400,bottom:2440,left:0,right:200});
  env.intersect(false);w.flush(32);
  for(const pane of d.querySelectorAll('.dsHeroActions .svLiquidPane'))assert.equal(pane.dataset.swiflyRenderer,'blur','offscreen effects pause');
+ for(const control of controls)control.getBoundingClientRect=()=>({width:200,height:40,top:0,bottom:40,left:0,right:200});
  env.intersect(true);w.flush(48);
  assert.equal(d.querySelectorAll('.dsHeroActions .svLiquidPane[data-swifly-renderer="svg"]').length,3);
  d.body.dataset.stGlass='off';await tick();w.flush(64);
@@ -644,6 +648,7 @@ test('First-screen hero actions turn refractive before any intersection callback
   w.flush(16);
   assert(panes.every(pane => pane.dataset.swiflyRenderer === 'svg'), 'hero glass should not wait for a delayed IO callback');
   assert.equal(env.textures.length, 1, 'initial hero optics reuse cached geometry');
+  for (const button of d.querySelectorAll('.dsHeroActions > button')) button.getBoundingClientRect = () => ({width:200,height:40,top:2400,bottom:2440,left:0,right:200});
   env.intersect(false); w.flush(32);
   assert(panes.every(pane => pane.dataset.swiflyRenderer === 'blur'), 'offscreen optics must still be released');
   assert.equal(w.frameCount(), 0); env.finish();
@@ -660,4 +665,30 @@ test('Detail glass enables itself when the entrance state settles without manual
   await tick(); w.flush(32);
   assert(panes.every(pane => pane.dataset.swiflyRenderer === 'svg'), 'settling must activate the same nav refraction without user action');
   assert.equal(w.frameCount(), 0); env.finish();
+});
+
+test('Full movie-details actions get the same refractive glass on the first frame', () => {
+  const env = glass('<main class="svCinemaPage"><section class="svDetailHero"><div class="svDetailActions"><a class="dsPrimaryBtn">Play</a><a class="dsSecondaryBtn">Trailer</a><a class="dsSecondaryBtn">Start a watch party</a><button class="dsIconBtn">+</button><button class="dsIconBtn">♡</button></div></section></main>'), w = env.window, d = w.document;
+  d.body.dataset.stGlass = 'liquid';
+  w.boot('liquid-glass/liquid-glass.js'); w.boot('liquid-glass/surfaces.js');
+  const actions = [...d.querySelectorAll('.svDetailActions > :is(a,button)')];
+  assert.equal(actions.length, 5);
+  assert(actions.every(host => host.querySelector(':scope > .svNavMatchedLens')), 'all five actions need panes before intersection');
+  w.flush(16);
+  const panes = actions.map(host => host.querySelector('.svNavMatchedLens'));
+  assert(panes.every(pane => pane.dataset.swiflyRenderer === 'svg'), 'details should not show outlines while waiting for IntersectionObserver');
+  assert.equal(env.textures.length, 1, 'buttons share their optical field, not five independent calculations');
+  env.intersect(false); w.flush(32);
+  assert(panes.every(pane => pane.dataset.swiflyRenderer === 'svg'), 'transient false visibility events must not blank onscreen actions');
+  for (const host of actions) host.getBoundingClientRect = () => ({width:200,height:40,top:2500,bottom:2540,left:0,right:200});
+  env.intersect(false); w.flush(48);
+  assert(panes.every(pane => pane.dataset.swiflyRenderer === 'blur'), 'real offscreen actions still release the expensive SVG filters');
+  assert.equal(w.frameCount(), 0); env.finish();
+});
+
+test('The detail hero releases entrance filter layers after animation for readable live refraction', () => {
+  const fs = require('node:fs'), path = require('node:path');
+  const css = fs.readFileSync(path.join(__dirname, '../public/liquid-glass/controls.css'), 'utf8');
+  assert(css.includes('body.svCleanShell :is(.dsHeroActions,.dsDetailActions,.svDetailActions) {'));
+  assert(css.includes('animation-fill-mode: backwards !important;'));
 });
