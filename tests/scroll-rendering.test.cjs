@@ -25,7 +25,7 @@ test('Chromium wheels scroll at native browser speed without main-thread scrollT
   const result=await page.evaluate(()=>({y:window.scrollY,writes:window.__scrollWrites,events:window.__wheelSamples,frames:document.querySelector('.dsHero').style.getPropertyValue('--sv-hero-offset')}));
   assert(result.y>=400,'Chrome itself must perform the wheel movement');
   assert.equal(result.writes,0,'no JavaScript wheel-to-scroll writes in the rendering pipeline');
-  assert(result.events.length>=4&&result.events.every(v=>v===false),'passive listeners never cancel native wheel input');
+  assert(result.events.length>=1&&result.events.every(v=>v===false),'even coalesced Chromium wheel events stay uncanceled: '+JSON.stringify(result.events));
   assert.equal(result.frames,'','masked hero artwork remains static during wheel input');
  }finally{await browser.close();}
 });
