@@ -564,3 +564,14 @@ test('A native network error reconnects but a codec failure does not retry the s
  const second=e.video();e.state(second).error={code:4};e.event('error',second);
  assert.equal(e.app.dataset.playerState,'error');
 });
+
+test('Throttled timeupdate events cannot restart a healthy advancing film',async()=>{
+ const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();await e.api.play();
+ const original=e.video();
+ e.state(original).currentTime=10; // Clock advanced without a timeupdate event.
+ await e.advance(210);
+ assert.equal(e.video(),original,'an advancing video must not be destroyed on an expired watchdog');
+ assert.equal(e.app.dataset.playerState,'ready');
+ e.state(original).currentTime=12;await e.advance(210);
+ assert.equal(e.video(),original,'subsequent throttled events remain harmless when time advances');
+});
