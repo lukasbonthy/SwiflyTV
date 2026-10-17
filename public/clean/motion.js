@@ -1,4 +1,4 @@
-/* v204: weighted desktop inertia with native touch and bounded presentation work. */
+/* v234: browser-native wheel input with bounded programmatic motion. */
 (() => {
   'use strict';
   if (window.SwiflyMotion) return;
@@ -6,18 +6,19 @@
   const fine = window.matchMedia('(pointer: fine)');
   const page = document.scrollingElement || document.documentElement;
   const jobs = new Map(), observed = new WeakSet(), pendingReveal = new Set();
-  const heroes = new Map(), dirtyHosts = new Set(), overflowCache = new WeakMap();
-  const wheelDuration = 1000, wheelDecay = 6, wheelNormalization = 1 - Math.exp(-wheelDecay);
+  const heroes = new Map(), dirtyHosts = new Set();
+  const wheelDuration = 440, wheelDecay = 6, wheelNormalization = 1 - Math.exp(-wheelDecay);
   let frame = 0, presentationFrame = 0, observer, heroSizes, preferenceObserver;
-  let started = false, destroyed = false, preference = '', overflowEpoch = 0, nativeWheelUntil = 0;
-  const rails = '.movieRail, .dsRail, .svResumeRail, .dsWelcomeRailTrack, .svDetailCastRail';
+  let started = false, destroyed = false, preference = '';
   const heroSelector = '.dsHero, .dsWelcomeHero, .svDetailHero';
-  const native = 'input, textarea, select, [contenteditable="true"], video, audio, media-player, [data-player-root], .vds-controls, .vds-slider, [data-native-scroll], #controlPanel, .genreDropdownMenu, .dsProfileDropdown';
   const prefersReduced = () => reduced.matches || document.body.classList.contains('reduceMotion');
   const nativePreference = () => document.body.dataset.svScroll === 'native';
   const canAnimate = () => !destroyed && !document.hidden && !prefersReduced() && !nativePreference();
-  const canPresentHeroes = () => canAnimate() && fine.matches;
-  const preferenceKey = () => String(prefersReduced()) + ':' + String(nativePreference());
+  // Repainting a full-size masked hero image on every wheel tick hurts
+  // high-refresh scrolling. Opt-in only, keeping the visual artwork static
+  // by default; all other animations and liquid glass remain unchanged.
+  const canPresentHeroes = () => canAnimate() && fine.matches && document.body.dataset.svScrollArt === 'on';
+  const preferenceKey = () => String(prefersReduced()) + ':' + String(nativePreference()) + ':' + String(document.body.dataset.svScrollArt === 'on');
   const clamp = (value, max) => Math.max(0, Math.min(Math.max(0, max), value));
   const position = element => element === page ? {x:window.scrollX || page.scrollLeft || 0, y:window.scrollY || page.scrollTop || 0} : {x:element.scrollLeft, y:element.scrollTop};
   const bounds = element => ({x:element.scrollWidth - element.clientWidth, y:element.scrollHeight - element.clientHeight});
@@ -72,50 +73,11 @@
     element = element || page; const job = jobs.get(element), current = position(element);
     scrollTo(element, {left:(job?.x ?? current.x) + (Number(options.left) || 0), top:(job?.y ?? current.y) + (Number(options.top) || 0), behavior:options.behavior});
   }
-  function hasNativeOverflow(node, horizontal) {
-    // Most target ancestors cannot scroll: avoid resolving their styles at all.
-    const extent = horizontal ? node.scrollWidth - node.clientWidth : node.scrollHeight - node.clientHeight;
-    if (extent <= 1) return false;
-    const signature = node.getAttribute('class') + ':' + node.getAttribute('style');
-    let cached = overflowCache.get(node);
-    if (!cached || cached.epoch !== overflowEpoch || cached.signature !== signature) {
-      const style = getComputedStyle(node);
-      cached = {epoch:overflowEpoch, signature, x:/auto|scroll|overlay/.test(style.overflowX), y:/auto|scroll|overlay/.test(style.overflowY)};
-      overflowCache.set(node, cached);
-    }
-    return horizontal ? cached.x : cached.y;
-  }
-  function onWheel(event) {
-    if (event.defaultPrevented || !event.cancelable) {stop(); return;}
-    if (event.ctrlKey || event.metaKey || event.altKey || !canAnimate() || !fine.matches || location.pathname.startsWith('/watch/')) {stop(); return;}
-    const horizontal = event.shiftKey || Math.abs(event.deltaX) > Math.abs(event.deltaY);
-    const raw = horizontal ? event.deltaX || event.deltaY : event.deltaY;
-    if (!raw) return;
-    // Trackpads already receive OS momentum. Recognize them before DOM/style work.
-    const now = performance.now();
-    if (event.deltaMode === 0 && (Math.abs(raw) < 45 || !Number.isInteger(raw) || now < nativeWheelUntil)) {
-      nativeWheelUntil = now + 160; stop(); return;
-    }
-    const target = event.target instanceof Element ? event.target : null;
-    if (!target || target.closest(native)) {stop(); return;}
-    const modal = document.querySelector('dialog[open]');
-    if (modal && (!modal.classList.contains('svDetailDialog') || !modal.contains(target) || target === modal)) {stop(); return;}
-    const rail = horizontal ? target.closest(rails) : null;
-    const host = rail || (modal ? modal.querySelector('.svDetailViewport') : target.closest('.svDetailViewport')) || page;
-    if ((modal && host === page) || (horizontal && !rail)) return;
-    for (let node = target; node && node !== host && node !== document.body && node !== page; node = node.parentElement) {
-      if (hasNativeOverflow(node, horizontal)) {stop(host); return;}
-    }
-    const scale = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? (horizontal ? host.clientWidth : host.clientHeight) * .9 : 1;
-    const delta = Math.max(-720, Math.min(720, raw * scale));
-    const max = bounds(host), current = position(host), axis = horizontal ? 'x' : 'y', job = jobs.get(host);
-    if ((delta < 0 && current[axis] <= 0) || (delta > 0 && current[axis] >= max[axis])) {stop(host); return;}
-    let remaining = job ? job[axis] - current[axis] : 0;
-    if (remaining * delta < 0) remaining = 0;
-    // Preserve normal wheel distances while bounding unconsumed burst momentum.
-    const next = clamp(current[axis] + Math.max(-720, Math.min(720, remaining + delta)), max[axis]);
-    if (next === current[axis]) return;
-    event.preventDefault(); scrollTo(host, horizontal ? {left:next} : {top:next});
+  // Passive wheel input stays in the browser compositor, including on
+  // high-refresh monitors, touchpads and scrollable rails. Cancel only
+  // *programmatic* motion so manual input always takes precedence.
+  function onWheel() {
+    if (jobs.size) stop();
   }
   function updateNav(y = position(page).y) {
     const state = y > 48 ? 'true' : 'false';
@@ -195,7 +157,6 @@
     updateNav();
   }
   function onResize() {
-    overflowEpoch++;
     for (const record of heroes.values()) {record.dirty = true; if (canPresentHeroes()) dirtyHosts.add(record.host);}
     updateNav(); queuePresentation();
   }
@@ -228,11 +189,10 @@
     // styles used by every wheel gesture. Watch only actual body preferences.
     preferenceObserver = new MutationObserver(changes => {
       if (!changes.some(change => change.target === document.body)) return;
-      overflowEpoch++;
       if (preference !== preferenceKey()) onPreference();
     });
-    preferenceObserver.observe(document.body, {attributes:true, attributeFilter:['class','style','data-sv-scroll']});
-    document.addEventListener('wheel', onWheel, {passive:false});
+    preferenceObserver.observe(document.body, {attributes:true, attributeFilter:['class','style','data-sv-scroll','data-sv-scroll-art']});
+    document.addEventListener('wheel', onWheel, {passive:true});
     document.addEventListener('scroll', onScroll, {passive:true,capture:true});
     document.addEventListener('keydown', onKey, true);
     document.addEventListener('pointerdown', onPointer, true);
