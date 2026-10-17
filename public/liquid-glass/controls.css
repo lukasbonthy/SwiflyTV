@@ -212,6 +212,6 @@ body.svCleanShell[data-st-glass="liquid"] :is(.dsHeroActions,.svDetailActions,.d
    to 1, descendant SVG backdrop filters only see that temporary root, not
    the real poster beneath them. Present the page at full opacity immediately.
    Buttons and copy keep their own safe entrance motion. */
-body.svCleanShell[data-st-glass="liquid"] {
+body.svCleanShell {
   animation-name: none !important;
 }
