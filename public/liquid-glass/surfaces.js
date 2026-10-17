@@ -62,6 +62,15 @@
     entry.host.insertBefore(pane, entry.host.firstChild);
     entry.opticPane = pane;
   }
+  // Prime only prominent first-screen actions; other controls remain gated
+  // by IntersectionObserver to avoid hundreds of idle GPU filter graphs.
+  function primeFirstScreen(host) {
+    if (!host.matches('.dsHeroActions > :is(button,a),.dsWelcomeActions > :is(button,a),.dsAuthPageSafe .dsPrimaryBtn')) return false;
+    if (host.closest('.svDetailDialog,.svStudioDialog')) return false;
+    const box = host.getBoundingClientRect();
+    return box.width > 0 && box.height > 0 && box.bottom > 0 && box.right > 0 &&
+      box.top < window.innerHeight + 80 && box.left < window.innerWidth + 80;
+  }
   function activate(entry) {
     ensureOpticPane(entry);
     if (!entry.visible || !entry.host.isConnected || document.hidden || !liquidPreference() || !window.SwiflyLiquidGlass) return;
@@ -120,9 +129,13 @@
     if (!panel&&host.matches(compactControls))classes.push('svGlassCompact');
     if (complex) {const position = getComputedStyle(host).position; if (!position || position === 'static') classes.push('svGlassRelative');}
     entry = {host, panel, optic, opticPane:null, opticController:null, complex, controller:null, visible:!intersection, addedClasses:classes.filter(name => !host.classList.contains(name)), previousRenderer:host.dataset.swiflyRenderer, previousProperties:rendererProperties.map(property => [property, host.style.getPropertyValue(property), host.style.getPropertyPriority(property)])};
+    entry.visible = !intersection || (optic && primeFirstScreen(host));
     entries.set(host, entry); host.classList.add(...classes); host.dataset.swiflyRenderer = 'blur';
     ensureOpticPane(entry);
-    if ((complex || optic) && intersection) intersection.observe(host); else activate(entry);
+    if ((complex || optic) && intersection) {
+      intersection.observe(host);
+      if (entry.visible) activate(entry);
+    } else activate(entry);
   }
   function scan(root) {
     if (!root || stopped) return;
@@ -163,8 +176,16 @@
     scan(document);
     mutations = new MutationObserver(changes => {
       let preferenceChanged = false;
+      const settledDialogs = new Set();
       for (const change of changes) {
-        if (change.type === 'attributes') {if (change.target === document.body) preferenceChanged = true; continue;}
+        if (change.type === 'attributes') {
+          if (change.target === document.body && change.attributeName === 'data-st-glass') preferenceChanged = true;
+          if (change.attributeName === 'data-sv-detail-state' &&
+              change.target.matches?.('.svDetailDialog') && change.target.dataset.svDetailState !== 'opening') {
+            settledDialogs.add(change.target);
+          }
+          continue;
+        }
         if (change.target instanceof Element && change.target.closest('svg.svLiquidPane__filters')) continue;
         // When an interactive label replaces its children, rescan the host
         // to restore the navbar pane instead of silently losing refraction.
@@ -178,9 +199,14 @@
       if (preferenceChanged) for (const entry of entries.values()) if (entry.complex || entry.optic) {
         if (liquidPreference()) activate(entry); else deactivate(entry);
       }
+      // Animation completion changes an attribute, not intersection. Without
+      // this, detail buttons can stay frosted until the user next interacts.
+      if (settledDialogs.size) for (const entry of entries.values()) {
+        if (entry.visible && entry.optic && settledDialogs.has(entry.host.closest('.svDetailDialog'))) activate(entry);
+      }
       schedule();
     });
-    mutations.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['data-st-glass']});
+    mutations.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['data-st-glass','data-sv-detail-state']});
     document.addEventListener('visibilitychange', onVisibility);
   }
   window.SwiflyGlassSurfaces = Object.freeze({refresh(root = document) {scan(root);}, destroy() {

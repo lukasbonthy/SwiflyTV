@@ -44,3 +44,20 @@ test('the complete shared theme is served with a cache policy and CSS content ty
     assert.match(css, /\.netflixNav/);
   } finally { await new Promise(resolve => api.io.close(resolve)); }
 });
+
+test('versioned glass assets are browser-cacheable without changing their material', async () => {
+  const api = loadServer();
+  await new Promise(resolve => api.httpServer.listen(0, '127.0.0.1', resolve));
+  try {
+    const origin = 'http://127.0.0.1:' + api.httpServer.address().port;
+    for (const file of ['liquid-glass.js?v=224', 'surfaces.js?v=224']) {
+      const response = await fetch(origin + '/assets/liquid-glass/' + file);
+      assert.equal(response.status, 200);
+      assert.match(response.headers.get('cache-control'), /max-age=86400/);
+      assert.match(response.headers.get('content-type'), /javascript/);
+    }
+    const html = api.pageShell({ active: 'home' });
+    assert(html.includes('/assets/liquid-glass/liquid-glass.js?v=224'));
+    assert(html.includes('/assets/liquid-glass/surfaces.js?v=224'));
+  } finally { await new Promise(resolve => api.io.close(resolve)); }
+});
