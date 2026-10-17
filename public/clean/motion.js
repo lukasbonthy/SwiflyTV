@@ -1,4 +1,4 @@
-/* v237: browser-owned, compositor-friendly scrolling with lightweight presentation. */
+/* v238: native input, scripted navigation, and optional Lenis wheel easing. */
 (() => {
   'use strict';
   if (window.SwiflyMotion) return;
@@ -27,6 +27,7 @@
     else element.scrollTo({left:x, top:y, behavior:'instant'});
   }
   function stop(element) {
+    if (!element || element === page) window.SwiflyPremiumScroll?.cancel();
     if (element) {jobs.delete(element); element.classList.remove('svMotionAnimating');}
     else {for (const host of jobs.keys()) host.classList.remove('svMotionAnimating'); jobs.clear();}
     if (!jobs.size) {cancelAnimationFrame(frame); frame = 0;}
@@ -59,6 +60,7 @@
   }
   function scrollTo(element, options = {}) {
     element = element || page;
+    if (element === page) window.SwiflyPremiumScroll?.cancel();
     if (element === page && document.querySelector('dialog[open]')) {stop(page); return;}
     const current = position(element), max = bounds(element), job = jobs.get(element);
     const x = clamp(Number.isFinite(options.left) ? options.left : job?.x ?? current.x, max.x);
@@ -73,11 +75,9 @@
     element = element || page; const job = jobs.get(element), current = position(element);
     scrollTo(element, {left:(job?.x ?? current.x) + (Number(options.left) || 0), top:(job?.y ?? current.y) + (Number(options.top) || 0), behavior:options.behavior});
   }
-  // A document-level non-passive wheel listener makes Chrome wait for the
-  // main thread before each scroll and is especially visible at 120/144 Hz.
-  // Let the browser handle every mouse-wheel and trackpad sample directly.
-  // The listener only interrupts an earlier scripted carousel/navigation
-  // animation; it never prevents default or writes the wheel position.
+  // This controller interrupts scripted carousel/navigation motion on input.
+  // scroll.js owns optional desktop wheel easing; without that adapter,
+  // mouse-wheel and trackpad scrolling remain entirely browser-native.
   function onWheel() {
     if (jobs.size) stop();
   }
