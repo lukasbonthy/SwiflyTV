@@ -16,3 +16,20 @@ body.svCleanShell :is(.movieRail,.dsRail) {transform:none !important}
 body.svCleanShell main > .svHeroLightBridge > .svHeroSpill {
   contain: paint;
 }
+
+/* Each browse rail contains up to 18 posters and dozens of button optics.
+   Below-the-fold rails should not repeatedly lay out and paint their entire
+   subtree. The browser renders each row before it approaches the viewport,
+   remembers its real height, and preserves accessible DOM semantics.
+   Exclude details, modals, player chrome and the featured hero. */
+@supports (content-visibility: auto) {
+  body.svCleanShell .dsContent > .dsRow.svCatalogRow {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 440px;
+  }
+  @media (max-width: 860px) {
+    body.svCleanShell .dsContent > .dsRow.svCatalogRow {
+      contain-intrinsic-size: auto 355px;
+    }
+  }
+}
