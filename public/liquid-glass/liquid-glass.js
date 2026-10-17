@@ -60,7 +60,15 @@
       </defs><rect width="${width}" height="${height}" fill="#000"/>
       <rect ${rect} fill="url(#horizontal)"/><rect ${rect} fill="url(#vertical)" style="mix-blend-mode:screen"/>
       <rect x="${inset}" y="${inset}" width="${width-2*inset}" height="${height-2*inset}" rx="${r}" fill="rgb(50% 50% 50% / .93)" style="filter:blur(${softness}px)"/></svg>`;
-    const texture=Object.freeze({map:'data:image/svg+xml,'+encodeURIComponent(geometry)});
+    const texture={map:'data:image/svg+xml,'+encodeURIComponent(geometry),ready:true,promise:null};
+    // Chromium can resolve a backdrop filter before feImage has rasterized.
+    // Decode this exact vector URI once, shared by every same-sized pane.
+    if (typeof Image === 'function' && typeof Image.prototype.decode === 'function') {
+      const image=new Image();
+      texture.ready=false;
+      image.src=texture.map;
+      texture.promise=image.decode().catch(()=>{}).then(()=>{texture.ready=true;});
+    }
     textures.set(key,texture);
     if(textures.size>48)textures.delete(textures.keys().next().value);
     return texture;
@@ -132,6 +140,8 @@
     if(element.closest('.mobileNav'))config.lensBlur=11;
     const svgCapable = !isAppleTouch && /Chrome|Chromium|Edg|OPR/.test(ua) && typeof CSS !== 'undefined' && CSS.supports('backdrop-filter', 'url(#' + filterId + ')');
     const previousRenderer = element.dataset.swiflyRenderer;
+    const previousSupport = element.dataset.swiflyOpticSupport;
+    if (svgCapable) element.dataset.swiflyOpticSupport = 'true';
     const previousProperties = ['--sv-glass-default-tint', '--sv-glass-saturation', '--sv-glass-radius', '--sv-glass-filter'].map(property => [property, element.style.getPropertyValue(property), element.style.getPropertyPriority(property)]);
     element.style.setProperty('--sv-glass-default-tint', config.tint);
     element.style.setProperty('--sv-glass-saturation', config.saturation);
@@ -170,7 +180,11 @@
     }
     function prepareMap() {
       if (!allowed()) return;
-      const bounds = boxOf(element), {width, height} = bounds;
+      // Transforms change visual bounds while the element enters, but not
+      // layout dimensions. Use those for a stable lens displacement field.
+      const bounds=boxOf(element);
+      const width=element.offsetWidth || bounds.width;
+      const height=element.offsetHeight || bounds.height;
       if (width <= 0 || height <= 0) return () => renderer('blur');
       const computed = styleOf(element);
       for (let node = element; node; node = node.parentElement) {
@@ -187,6 +201,12 @@
       const scale=config.distortionScale;
       const key = [width, height, radius, blur].join(':');
       const texture=key!==dimensions || svg&&!element.contains(svg)?lensTexture(width,height,radius,blur):null;
+      if (texture && !texture.ready) return () => {
+        renderer('blur');
+        // Stay in the coherent CSS glass tier while decoding; one wakeup,
+        // no polling, extra timers, or per-frame bitmap generation.
+        texture.promise.then(() => {if (allowed()) scheduleMap();});
+      };
       return () => {
         if (svg && !element.contains(svg)) removeGraph();
         if (key === dimensions) {renderer('svg'); return;}
@@ -228,6 +248,8 @@
         }
         if (previousRenderer === undefined) delete element.dataset.swiflyRenderer;
         else element.dataset.swiflyRenderer = previousRenderer;
+        if (previousSupport === undefined) delete element.dataset.swiflyOpticSupport;
+        else element.dataset.swiflyOpticSupport = previousSupport;
         mounted.delete(element); live.delete(element); unwatch();
       }
     };
