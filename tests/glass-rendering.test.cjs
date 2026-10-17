@@ -269,3 +269,40 @@ test('Full movie action refraction survives six cold browser documents',{skip:!a
   }
  }finally{await browser.close();}
 });
+
+test('Hero glass samples artwork after the entrance instead of an isolated blur root',{skip:!available&&'Chromium is not installed'},async()=>{
+ const browser=await chromium.launch({headless:true});
+ try{
+  const page=await browser.newPage({viewport:{width:720,height:380}});
+  await page.setContent('<!doctype html><style>'+['liquid-glass/liquid-glass.css','clean/base.css','liquid-glass/surfaces.css','liquid-glass/controls.css'].map(asset).join('\n')+
+   '*{box-sizing:border-box}body.svCleanShell{background:repeating-linear-gradient(35deg,#aeb8b9 0 14px,#343b48 14px 26px)!important;margin:0;min-height:380px}.dsHeroContent{position:absolute!important;left:85px!important;top:82px!important;bottom:auto!important;width:500px!important;max-width:500px!important}.dsHeroActions a,.dsHeroActions button{width:125px;height:54px;border-radius:27px;display:inline-flex;align-items:center;justify-content:center;color:white}</style><body class="svCleanShell" data-st-glass="liquid"><div class="dsHeroContent"><h1>Film</h1><div class="dsHeroActions"><a class="dsPrimaryBtn">Play</a><a class="dsSecondaryBtn">Details</a><button class="dsIconBtn">+</button></div></div></body>');
+  for(const file of ['liquid-glass/liquid-glass.js','liquid-glass/surfaces.js'])await page.addScriptTag({content:asset(file)});
+  await page.waitForFunction(()=>document.querySelector('.dsHeroActions .svNavMatchedLens')?.dataset.swiflyRenderer==='svg');
+  await page.waitForTimeout(850);
+  const styles=await page.locator('.dsHeroContent,.dsHeroActions').evaluateAll(nodes=>nodes.map(node=>({opacity:getComputedStyle(node).opacity,filter:getComputedStyle(node).filter})));
+  assert(styles.every(s=>s.opacity==='1'&&s.filter==='none'),'hero ancestors must never trap backdrop sampling: '+JSON.stringify(styles));
+  const lens=page.locator('.dsHeroActions .svNavMatchedLens').first(),box=await lens.boundingBox();
+  const full=(await page.screenshot({clip:box})).toString('base64');
+  await lens.evaluate(node=>node.querySelectorAll('feDisplacementMap').forEach(map=>map.setAttribute('scale','0')));
+  const flat=(await page.screenshot({clip:box})).toString('base64');
+  const difference=await page.evaluate(async({full,flat})=>{
+   const data=async src=>{const image=new Image();image.src='data:image/png;base64,'+src;await image.decode();const canvas=document.createElement('canvas');canvas.width=image.width;canvas.height=image.height;const ctx=canvas.getContext('2d');ctx.drawImage(image,0,0);return ctx.getImageData(0,0,image.width,image.height).data;};
+   const a=await data(full),b=await data(flat);let sum=0;
+   for(let i=0;i<a.length;i+=4)for(let c=0;c<3;c++)sum+=Math.abs(a[i+c]-b[i+c]);
+   return sum/(a.length*.75);
+  },{full,flat});
+  assert(difference>1.2,'homepage Play button must visibly bend underlying artwork, not just expose an SVG flag: '+difference);
+ }finally{await browser.close();}
+});
+test('Movie sheet builds glass during the opening animation rather than after it',{skip:!available&&'Chromium is not installed'},async()=>{
+ const browser=await chromium.launch({headless:true});
+ try{
+  const page=await browser.newPage({viewport:{width:750,height:450}});
+  await page.setContent('<!doctype html><style>'+['liquid-glass/liquid-glass.css','liquid-glass/surfaces.css','liquid-glass/controls.css','clean/details.css'].map(asset).join('\n')+
+   '*{box-sizing:border-box}body.svCleanShell{margin:0;background:#17212e}.svDetailDialog{position:fixed;left:0;right:0;bottom:0;margin:0;width:700px;height:380px;transform:translateY(80px)}.svDetailActions{position:absolute;left:40px;bottom:80px;display:flex;gap:10px}.svDetailActions a{display:inline-flex;align-items:center;justify-content:center;color:white;width:135px;height:48px;border-radius:25px;background:transparent}</style><body class="svCleanShell" data-st-glass="liquid"><dialog open class="svDetailDialog" data-sv-detail-state="opening"><div class="svDetailActions"><a class="dsPrimaryBtn">Play</a><a class="dsSecondaryBtn">Trailer</a></div></dialog></body>');
+  for(const file of ['liquid-glass/liquid-glass.js','liquid-glass/surfaces.js'])await page.addScriptTag({content:asset(file)});
+  await page.waitForFunction(()=>[...document.querySelectorAll('.svDetailActions .svNavMatchedLens')].length===2&&[...document.querySelectorAll('.svDetailActions .svNavMatchedLens')].every(pane=>pane.dataset.swiflyRenderer==='svg'));
+  assert.equal(await page.locator('.svDetailDialog').getAttribute('data-sv-detail-state'),'opening');
+  assert.equal(await page.locator('.svDetailActions .svNavMatchedLens svg.svLiquidPane__filters').count(),2);
+ }finally{await browser.close();}
+});
