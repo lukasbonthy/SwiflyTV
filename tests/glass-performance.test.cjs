@@ -689,7 +689,9 @@ test('Full movie-details actions get the same refractive glass on the first fram
 test('The detail hero releases entrance filter layers after animation for readable live refraction', () => {
   const fs = require('node:fs'), path = require('node:path');
   const css = fs.readFileSync(path.join(__dirname, '../public/liquid-glass/controls.css'), 'utf8');
-  assert(css.includes('body.svCleanShell :is(.dsHeroActions,.dsDetailActions,.svDetailActions) {'));
+  assert(css.includes('body.svCleanShell :is(.dsHeroContent,.dsDetailHeroContent,.dsHeroActions,.dsDetailActions) {'));
+  assert(css.includes('animation-name: svGlassSafeRise !important;'));
+  assert(css.includes('body.svCleanShell .svDetailActions {'));
   assert(css.includes('animation-fill-mode: backwards !important;'));
 });
 
