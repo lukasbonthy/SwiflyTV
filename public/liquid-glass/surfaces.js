@@ -29,6 +29,12 @@
   const selector = controls + ',' + panels, entries = new Map(), pending = new Set();
   const rendererProperties = ['--sv-glass-default-tint', '--sv-glass-saturation', '--sv-glass-filter'];
   let intersection, mutations, frame = 0, stopped = false, removed = false;
+  // A catalog row has 18 posters and three action lenses per poster.
+  // Those actions are opacity-hidden until a card is hovered or focused.
+  // Keep the inexpensive native glass coating, but don't allocate heavy
+  // SVG backdrop filters for buttons the visitor cannot currently see.
+  const hoveredArtworks = new WeakSet();
+  const hoverCapable = window.matchMedia('(hover: hover)');
   const liquidPreference = () => !['off', 'subtle'].includes(document.body.dataset.stGlass);
   const filter = host => host.querySelector(':scope > svg.svLiquidPane__filters');
   const opticalPanels=['.dsAuthCard','.svPlayerModes',partyPanels].join(',');
@@ -88,6 +94,18 @@
   function activate(entry) {
     ensureOpticPane(entry);
     if (!entry.visible || !entry.host.isConnected || document.hidden || !liquidPreference() || !window.SwiflyLiquidGlass) return;
+    if (entry.quickArtwork && hoverCapable.matches &&
+        !hoveredArtworks.has(entry.quickArtwork) &&
+        !entry.quickArtwork.matches(':hover, :focus-within')) {
+      // No visible button needs refraction while the artwork is idle.
+      // Preserve its always-present native lens so hovering remains seamless.
+      if (entry.opticController) {
+        entry.opticController.destroy();
+        entry.opticController = null;
+      }
+      entry.opticPane.dataset.swiflyRenderer = 'blur';
+      return;
+    }
     // The dialog moves as one sheet. Its action lenses can prepare cached
     // geometry while it rises; delaying them until the end makes the row
     // visibly change from frost to refraction after the animation.
@@ -149,7 +167,9 @@
     if (optic) classes.push('svNavMatchedOptic');
     if (!panel&&host.matches(compactControls))classes.push('svGlassCompact');
     if (complex) {const position = getComputedStyle(host).position; if (!position || position === 'static') classes.push('svGlassRelative');}
-    entry = {host, panel, optic, opticPane:null, opticController:null, complex, controller:null, visible:!intersection, addedClasses:classes.filter(name => !host.classList.contains(name)), previousRenderer:host.dataset.swiflyRenderer, previousProperties:rendererProperties.map(property => [property, host.style.getPropertyValue(property), host.style.getPropertyPriority(property)])};
+    entry = {host, panel, optic, opticPane:null, opticController:null, complex, controller:null,
+      quickArtwork:host.matches('.dsCardQuickActions .dsMiniBtn') ? host.closest('.dsCardArtwork') : null,
+      visible:!intersection, addedClasses:classes.filter(name => !host.classList.contains(name)), previousRenderer:host.dataset.swiflyRenderer, previousProperties:rendererProperties.map(property => [property, host.style.getPropertyValue(property), host.style.getPropertyPriority(property)])};
     entry.pinned = Boolean(optic && primeFirstScreen(host));
     entry.visible = !intersection || entry.pinned;
     entries.set(host, entry); host.classList.add(...classes); host.dataset.swiflyRenderer = 'blur';
@@ -178,6 +198,41 @@
     });
     pending.clear();
     for (const root of roots) if (root.isConnected) scan(root);
+  }
+  function syncCardActions(artwork, visible) {
+    if (!artwork) return;
+    if (visible) hoveredArtworks.add(artwork);
+    else hoveredArtworks.delete(artwork);
+    for (const control of artwork.querySelectorAll('.dsCardQuickActions .dsMiniBtn')) {
+      const entry = entries.get(control);
+      if (!entry) continue;
+      if (visible) activate(entry);
+      else if (entry.opticController) deactivate(entry);
+    }
+  }
+  function onCardEnter(event) {
+    if (!hoverCapable.matches) return;
+    const artwork = event.target instanceof Element ? event.target.closest('.dsCardArtwork') : null;
+    if (artwork && !(event.relatedTarget instanceof Node && artwork.contains(event.relatedTarget))) {
+      syncCardActions(artwork, true);
+    }
+  }
+  function onCardLeave(event) {
+    if (!hoverCapable.matches) return;
+    const artwork = event.target instanceof Element ? event.target.closest('.dsCardArtwork') : null;
+    if (artwork && !(event.relatedTarget instanceof Node && artwork.contains(event.relatedTarget))) {
+      // Focus must take precedence over a departing mouse pointer.
+      if (!artwork.matches(':focus-within')) syncCardActions(artwork, false);
+    }
+  }
+  function onCardFocus(event) {
+    const artwork = event.target instanceof Element ? event.target.closest('.dsCardArtwork') : null;
+    if (artwork) syncCardActions(artwork, true);
+  }
+  function onCardBlur(event) {
+    const artwork = event.target instanceof Element ? event.target.closest('.dsCardArtwork') : null;
+    if (artwork && !(event.relatedTarget instanceof Node && artwork.contains(event.relatedTarget)) &&
+        !artwork.matches(':hover')) syncCardActions(artwork, false);
   }
   function onVisibility() {
     if (document.hidden) {cancelAnimationFrame(frame); frame = 0;}
@@ -242,10 +297,16 @@
     });
     mutations.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['data-st-glass','data-sv-detail-state']});
     document.addEventListener('visibilitychange', onVisibility);
+    document.addEventListener('pointerover', onCardEnter, {passive:true});
+    document.addEventListener('pointerout', onCardLeave, {passive:true});
+    document.addEventListener('focusin', onCardFocus);
+    document.addEventListener('focusout', onCardBlur);
   }
   window.SwiflyGlassSurfaces = Object.freeze({refresh(root = document) {scan(root);}, destroy() {
     if (stopped) return; stopped = true;
     document.removeEventListener('DOMContentLoaded', boot); document.removeEventListener('visibilitychange', onVisibility);
+    document.removeEventListener('pointerover', onCardEnter); document.removeEventListener('pointerout', onCardLeave);
+    document.removeEventListener('focusin', onCardFocus); document.removeEventListener('focusout', onCardBlur);
     mutations?.disconnect(); intersection?.disconnect(); cancelAnimationFrame(frame); frame = 0; pending.clear();
     for (const entry of entries.values()) release(entry);
   }});
