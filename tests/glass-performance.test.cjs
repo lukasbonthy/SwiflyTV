@@ -692,3 +692,28 @@ test('The detail hero releases entrance filter layers after animation for readab
   assert(css.includes('body.svCleanShell :is(.dsHeroActions,.dsDetailActions,.svDetailActions) {'));
   assert(css.includes('animation-fill-mode: backwards !important;'));
 });
+
+test('Refraction waits for a decoded map rather than enabling an unpainted lens', async()=>{
+ const env=glass('<div class="svLiquidPane" data-swifly-glass></div>'),w=env.window,d=w.document;
+ let complete,calls=0;
+ w.Image=class {decode(){calls++;return new Promise(resolve=>{complete=resolve;});} set src(value){this.source=value;}};
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);
+ const pane=d.querySelector('.svLiquidPane');
+ assert.equal(calls,1);assert.equal(pane.dataset.swiflyRenderer,'blur');
+ assert.equal(pane.dataset.swiflyOpticSupport,'true');
+ assert.equal(w.frameCount(),0,'no idle renderer while waiting for image decode');
+ complete();for(let i=0;i<6;i++)await Promise.resolve();
+ assert.equal(w.frameCount(),1,'one decoder wakeup');
+ w.flush(32);assert.equal(pane.dataset.swiflyRenderer,'svg');
+ assert.equal(w.frameCount(),0);env.finish();
+});
+test('Animated panes measure layout size, not transform-scaled visual bounds',()=>{
+ const env=glass('<div class="svLiquidPane" data-swifly-glass></div>'),w=env.window,d=w.document;
+ const pane=d.querySelector('.svLiquidPane');
+ Object.defineProperties(pane,{offsetWidth:{get:()=>200},offsetHeight:{get:()=>40}});
+ pane.getBoundingClientRect=()=>({width:145,height:29,top:0,bottom:29,left:0,right:145});
+ w.boot('liquid-glass/liquid-glass.js');w.flush(16);
+ const map=decodeURIComponent(pane.querySelector('feImage').getAttribute('href'));
+ assert.match(map,/viewBox="0 0 200 40"/);
+ assert.equal(w.frameCount(),0);env.finish();
+});
