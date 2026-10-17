@@ -10,18 +10,36 @@ function wheel(w, target, options = {}) {
   return event;
 }
 
-test('Desktop wheel input is passive and schedules no JavaScript scroll frames',()=>{
+test('Mouse wheel retains premium browser easing while trackpads stay native',()=>{
   const env=browser('<main>Catalog</main>'),w=env.window,d=w.document;
-  let writes=0;const orig=w.scrollTo;
-  w.scrollTo=(...args)=>{writes++;return orig(...args);};
+  const calls=[],native=w.scrollTo;
+  w.scrollTo=options=>{calls.push(options);return native(options);};
   w.boot('motion.js');
-  for(let i=0;i<120;i++){
-    const gesture=wheel(w,d.querySelector('main'),{deltaY:i%2?2:120,deltaMode:0});
-    assert.equal(gesture.defaultPrevented,false,'mouse wheels and high-resolution trackpads retain compositor-native input');
-  }
-  assert.equal(writes,0,'the wheel gesture must not write JS scroll positions');
-  assert.equal(w.frameCount(),0,'the wheel gesture must not create an animation-frame loop');
+  const target=d.querySelector('main');
+  const first=wheel(w,target,{deltaY:120,deltaMode:0});
+  assert.equal(first.defaultPrevented,true,'a discrete wheel notch gets the premium eased treatment');
+  assert.equal(calls.length,1);
+  assert.equal(calls[0].behavior,'smooth','the browser compositor, not a JS frame loop, owns the animation');
+  assert.equal(calls[0].top,120);
+  assert.equal(w.frameCount(),0);
+  const precise=wheel(w,target,{deltaY:2.5,deltaMode:0});
+  assert.equal(precise.defaultPrevented,false,'precision trackpad gestures retain native momentum');
+  assert.equal(calls.length,1,'trackpad input never causes a JS scroll write');
+  assert.equal(w.frameCount(),0);
   env.finish();
+});
+
+test('Repeated discrete mouse-wheel notches accumulate with a bounded destination',()=>{
+ const env=browser('<main>Catalog</main>'),w=env.window,d=w.document;
+ const calls=[],native=w.scrollTo;
+ w.scrollTo=options=>{calls.push(options);return native(options);};
+ w.boot('motion.js');
+ const target=d.querySelector('main');
+ for(let i=0;i<4;i++)assert.equal(wheel(w,target,{deltaY:120}).defaultPrevented,true);
+ assert.deepEqual(calls.map(x=>x.top),[120,240,360,480]);
+ assert(calls.every(x=>x.behavior==='smooth'));
+ assert.equal(w.frameCount(),0);
+ env.finish();
 });
 
 test('Programmatic carousel / navigation movement settles quickly but gives way to a manual wheel',()=>{
@@ -35,9 +53,10 @@ test('Programmatic carousel / navigation movement settles quickly but gives way 
   assert.equal(w.frameCount(),0);
   w.SwiflyMotion.scrollBy(null,{top:240});w.flush(496);
   const current=env.page.scrollTop;
-  assert.equal(wheel(w,d.querySelector('main')).defaultPrevented,false);
-  assert.equal(w.frameCount(),0,'manual wheel preempts programmatic scrolling immediately');
-  w.flush(560);assert.equal(env.page.scrollTop,current);
+  assert.equal(wheel(w,d.querySelector('main')).defaultPrevented,true);
+  assert.equal(w.frameCount(),0,'manual premium wheel preempts programmatic animation immediately');
+  assert.equal(env.page.scrollTop,current+120,'the browser receives the new gesture destination');
+  w.flush(560);assert.equal(env.page.scrollTop,current+120);
   env.finish();
 });
 
