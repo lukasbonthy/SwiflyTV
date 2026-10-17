@@ -696,8 +696,7 @@ test('The detail hero releases entrance filter layers after animation for readab
 test('Refraction waits for a decoded map rather than enabling an unpainted lens', async()=>{
  const env=glass('<div class="svLiquidPane" data-swifly-glass></div>'),w=env.window,d=w.document;
  let complete,calls=0;
- const NativeImage=w.Image;
- w.Image=class extends NativeImage {decode(){calls++;return new Promise(resolve=>{complete=resolve;});}};
+ w.Image=class {decode(){calls++;return new Promise(resolve=>{complete=resolve;});} set src(value){this.source=value;}};
  d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);
  const pane=d.querySelector('.svLiquidPane');
  assert.equal(calls,1);assert.equal(pane.dataset.swiflyRenderer,'blur');
