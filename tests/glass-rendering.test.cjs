@@ -312,7 +312,7 @@ test('Glass refraction stays visible before the body entrance completes',{skip:!
  try {
   const page=await browser.newPage({viewport:{width:500,height:280}});
   await page.setContent('<!doctype html><style>'+['liquid-glass/liquid-glass.css','clean/base.css','liquid-glass/surfaces.css','liquid-glass/controls.css'].map(asset).join('\n')+
-    '*{box-sizing:border-box}body.svCleanShell{margin:0;min-height:280px;background:repeating-linear-gradient(37deg,#949494 0 13px,#242424 13px 21px)!important}.dsHeroActions{position:absolute;top:95px;left:120px;display:flex}.dsHeroActions button{width:160px;height:52px;border-radius:26px}</style><body class="svCleanShell" data-st-glass="liquid"><div class="dsHeroActions"><button class="dsPrimaryBtn">Play</button></div></body>');
+    '*{box-sizing:border-box}body.svCleanShell{margin:0;min-height:280px;background:repeating-linear-gradient(37deg,#949494 0 13px,#242424 13px 21px)!important}.dsHeroActions{position:absolute;top:95px;left:120px;display:flex}.dsHeroActions button{width:160px;height:52px;border-radius:26px}</style><body class="svCleanShell"><div class="dsHeroActions"><button class="dsPrimaryBtn">Play</button></div></body>');
   for (const file of ['liquid-glass/liquid-glass.js','liquid-glass/surfaces.js'])await page.addScriptTag({content:asset(file)});
   await page.waitForFunction(()=>document.querySelector('.dsHeroActions .svNavMatchedLens')?.dataset.swiflyRenderer==='svg');
   assert.equal(await page.locator('body').evaluate(node=>getComputedStyle(node).animationName),'none','the body must not fade the glass backdrop root');
