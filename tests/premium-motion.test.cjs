@@ -123,3 +123,9 @@ test('The native scroll preference immediately exposes pending reveals through C
   assert.equal(computed.transition, 'none');
   env.finish();
 });
+
+test('Motion preference observer ignores dynamic catalog subtree mutations',()=>{
+ const src=require('node:fs').readFileSync(require('node:path').join(__dirname,'../public/clean/motion.js'),'utf8');
+ assert(src.includes("preferenceObserver.observe(document.body, {attributes:true, attributeFilter:['class','style','data-sv-scroll']});"));
+ assert(!src.includes("attributeFilter:['class','style','data-sv-scroll'], childList:true, subtree:true"),'new SVG, poster and player elements cannot invalidate every wheel-style cache');
+});
