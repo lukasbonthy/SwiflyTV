@@ -243,3 +243,29 @@ test('Hero button visibly bends a diagonal backdrop instead of only drawing a tr
   assert(error>1.2,'real button refraction must measurably bend the line behind it; RGB delta was '+error.toFixed(2));
  }finally{await browser.close();}
 });
+
+test('Full movie action refraction survives six cold browser documents',{skip:!available&&'Chromium is not installed'},async()=>{
+ const browser=await chromium.launch({headless:true});
+ try{
+  for(let run=0;run<6;run++){
+   const page=await browser.newPage({viewport:{width:520,height:250},colorScheme:'light'});
+   try{
+    await page.setContent('<!doctype html><style>'+['liquid-glass/liquid-glass.css','liquid-glass/surfaces.css','liquid-glass/controls.css'].map(asset).join('\n')+
+      '*{box-sizing:border-box}body.svCleanShell{margin:0;background:repeating-linear-gradient(31deg,#999 0 12px,#252525 12px 18px)!important;min-height:250px}.svDetailActions{position:absolute;left:90px;top:90px;display:flex;gap:12px}.svDetailActions>a{width:135px;height:50px;border-radius:25px;display:flex;align-items:center;justify-content:center;color:white}</style><body class="svCleanShell" data-st-glass="liquid"><div class="svDetailActions"><a class="dsPrimaryBtn">Play</a><a class="dsSecondaryBtn">Trailer</a></div></body>');
+    for(const file of ['liquid-glass/liquid-glass.js','liquid-glass/surfaces.js'])await page.addScriptTag({content:asset(file)});
+    await page.waitForFunction(()=>[...document.querySelectorAll('.svDetailActions .svNavMatchedLens')].length===2&&[...document.querySelectorAll('.svDetailActions .svNavMatchedLens')].every(node=>node.dataset.swiflyRenderer==='svg'));
+    const pane=page.locator('.svDetailActions .svNavMatchedLens').first(),bounds=await pane.boundingBox();
+    const full=(await page.screenshot({clip:bounds})).toString('base64');
+    await pane.evaluate(node=>node.querySelectorAll('feDisplacementMap').forEach(map=>map.setAttribute('scale','0')));
+    const flat=(await page.screenshot({clip:bounds})).toString('base64');
+    const delta=await page.evaluate(async({full,flat})=>{
+      const data=async base64=>{const img=new Image();img.src='data:image/png;base64,'+base64;await img.decode();const canvas=document.createElement('canvas');canvas.width=img.width;canvas.height=img.height;const c=canvas.getContext('2d');c.drawImage(img,0,0);return c.getImageData(0,0,img.width,img.height).data;};
+      const a=await data(full),b=await data(flat);let sum=0;
+      for(let i=0;i<a.length;i+=4)for(let c=0;c<3;c++)sum+=Math.abs(a[i+c]-b[i+c]);
+      return sum/(a.length*.75);
+    },{full,flat});
+    assert(delta>1.2,'cold page '+(run+1)+' must show actual refraction, not just SVG state; pixel delta '+delta.toFixed(2));
+   }finally{await page.close();}
+  }
+ }finally{await browser.close();}
+});
