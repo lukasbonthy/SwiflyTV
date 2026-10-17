@@ -31,7 +31,7 @@ test('desktop wheel notches glide through intermediate positions and settle at t
   w.flush(16);
   assert(env.page.scrollTop > 0 && env.page.scrollTop < 30, 'the first frame starts the glide');
   w.flush(116);
-  assert(env.page.scrollTop > 45 && env.page.scrollTop < 90, 'a notch keeps moving smoothly after input ends');
+  assert(env.page.scrollTop > 30 && env.page.scrollTop < 60, 'a notch retains a weighted glide after input ends');
   env.settle(132);
   assert.equal(env.page.scrollTop, 120, 'easing keeps the original wheel travel distance');
   assert.equal(w.frameCount(), 0, 'settled scrolling must not retain an animation loop');
@@ -59,7 +59,7 @@ test('premium easing follows the same elapsed-time curve at 60 Hz and 144 Hz', (
     const position = env.page.scrollTop; env.finish(); return position;
   }
   const slow = sample(60), fast = sample(144);
-  assert(slow > 230 && slow < 290, 'the glide has a measurable eased position');
+  assert(slow > 180 && slow < 225, 'the glide keeps enough unconsumed travel to feel weighted');
   assert(Math.abs(slow - fast) <= 2, 'a high refresh rate must not change the motion speed');
 });
 
@@ -87,6 +87,20 @@ test('reversing a wheel gesture reverses the eased movement without a position j
   assert.equal(env.page.scrollTop, 0);
   assert.equal(w.frameCount(), 0);
   env.finish();
+});
+
+test('reversing during a wheel burst brakes queued travel on the very next frame', () => {
+  const env = setup(), w = env.window;
+  env.page.scrollTop = 800; w.dispatchEvent(new w.Event('scroll'));
+  for (let index = 0; index < 4; index++) {env.wheel(120); w.flush(16 + index * 16);}
+  const before = env.page.scrollTop;
+  env.wheel(-120);
+  assert.equal(env.page.scrollTop, before, 'reversing cannot jump to a queued destination');
+  w.flush(80);
+  assert(env.page.scrollTop < before, 'upward input must not keep drifting down through the earlier burst');
+  env.settle(96);
+  assert.equal(env.page.scrollTop, Math.round(before - 120));
+  assert.equal(w.frameCount(), 0); env.finish();
 });
 
 test('small wheel deltas use the same continuous easing as the reference', () => {
@@ -192,8 +206,9 @@ test('the shell loads the pinned local engine and adapter in order on catalog pa
   try {
     const html = api.pageShell({active:'home', body:'<main>Catalog</main>'});
     const vendor = html.indexOf('/assets/vendor/lenis/lenis.min.js?v=1.3.16');
-    const adapter = html.indexOf('/assets/clean/scroll.js?v=238');
+    const adapter = html.indexOf('/assets/clean/scroll.js?v=239');
     assert(vendor > 0 && adapter > vendor, 'the controller loads after the locally served Lenis engine');
     assert(html.includes('/assets/vendor/lenis/lenis.css?v=1.3.16'));
+    assert(html.includes('/assets/clean/clean.css?v=154'));
   } finally {api.io.close(); api.httpServer.close();}
 });

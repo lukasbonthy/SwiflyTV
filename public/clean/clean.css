@@ -168,7 +168,9 @@ body.svCleanShell .dsRow::before, body.svCleanShell .dsRow::after { display: non
 body.svCleanShell .dsRowHead { min-height: 30px !important; margin-bottom: 14px !important; padding-right: 72px !important; }
 body.svCleanShell .dsRowHead h2 { font-size: clamp(19px, 1.7vw, 24px) !important; font-weight: 600 !important; line-height: 1.3 !important; letter-spacing: -.025em !important; }
 body.svCleanShell .dsRowHead h2::before, body.svCleanShell .dsRowHead h2::after { display: none !important; }
-body.svCleanShell :is(.dsRowTag, .dsRowProgress) { display: none !important; }
+/* The legacy progress meter has a -24px top margin. In a paint-contained
+   catalog row it shortens the row and clips the year below the posters. */
+body.svCleanShell :is(.dsRowTag, .dsRowProgress, .dsProgress) { display: none !important; }
 body.svCleanShell :is(.movieRail, .dsRail, .nfRail, .nfTopTenRail) {
   display: grid !important; grid-auto-flow: column !important; grid-auto-columns: var(--sv-poster-width) !important;
   gap: 16px !important; overflow-x: auto !important; overflow-y: hidden !important;
