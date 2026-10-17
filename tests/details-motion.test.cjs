@@ -110,12 +110,15 @@ test('Enabled TV keyboard navigation can reach and activate Play inside the over
   d.getElementById('play').dispatchEvent(new w.KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));assert.equal(clicks,1);
   const escape=new w.KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true});d.getElementById('play').dispatchEvent(escape);assert.equal(escape.defaultPrevented,false);env.finish();
 });
-test('Mouse wheel uses browser-native scrolling without leaving an idle animation loop',()=>{
- const env=browser('<main>Catalog</main>'),w=env.window;w.boot('motion.js');
- const wheel=new w.WheelEvent('wheel',{deltaY:120,bubbles:true,cancelable:true});
- w.document.querySelector('main').dispatchEvent(wheel);
- assert.equal(wheel.defaultPrevented,false,'Native wheel input never waits for a JS animation');
- assert.equal(w.frameCount(),0);
+test('Mouse wheel preserves browser-smooth premium easing without an idle JS frame loop',()=>{
+ const env=browser('<main>Catalog</main>'),w=env.window;
+ const calls=[],native=w.scrollTo;w.scrollTo=options=>{calls.push(options);return native(options);};
+ w.boot('motion.js');
+ const gesture=new w.WheelEvent('wheel',{deltaY:120,bubbles:true,cancelable:true});
+ w.document.querySelector('main').dispatchEvent(gesture);
+ assert.equal(gesture.defaultPrevented,true);
+ assert.equal(calls[0].behavior,'smooth','browser handles weighted mouse-wheel animation');
+ assert.equal(w.frameCount(),0,'no frame-by-frame wheel work remains');
  env.finish();
 });
 test('Reduced motion, zoom, form inputs and player pages retain native scrolling', () => {
