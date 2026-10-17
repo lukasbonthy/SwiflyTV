@@ -61,12 +61,14 @@ test('Every visible action family uses the navigation lens and releases offscree
  assert.equal(w.frameCount(),0,'coverage must not add an idle render loop');env.finish();
 });
 
-test('Desktop wheel input remains passive through bursts and rapid reversals',()=>{
+test('Rapid mouse wheel reversals retain compositor easing without a JavaScript frame loop',()=>{
  const env=browser('<main>Catalog</main>'),w=env.window,target=w.document.querySelector('main');
+ const events=[];const original=w.scrollTo;w.scrollTo=options=>{events.push(options);return original(options);};
  w.boot('motion.js');
- for(let i=0;i<30;i++)assert.equal(wheel(w,target,{deltaY:i%2?-120:120}).defaultPrevented,false);
- assert.equal(env.page.scrollTop,0,'the test harness cannot scroll natively; JavaScript must not synthesize scroll');
- assert.equal(w.frameCount(),0,'no compositor-competing JavaScript wheel animation');
+ for(let i=0;i<30;i++)assert.equal(wheel(w,target,{deltaY:i%2?-120:120}).defaultPrevented,true);
+ assert(events.length===30&&events.every(event=>event.behavior==='smooth'),'mouse notches use native compositor easing');
+ assert.equal(env.page.scrollTop,0,'rapid alternating notches return to their starting position');
+ assert.equal(w.frameCount(),0,'no frame-by-frame JavaScript scroll animation');
  env.finish();
 });
 test('Programmatic scroll finishes with rounded pixel positions and no lingering frames',()=>{
@@ -92,7 +94,7 @@ test('A recognized trackpad gesture remains native when later deltas become larg
   assert.equal(wheel(w, target, {deltaY:2.5}).defaultPrevented, false);
   now = 16; assert.equal(wheel(w, target, {deltaY:120}).defaultPrevented, false, 'An accelerated trackpad sample must not switch into mouse-wheel inertia');
   assert.equal(w.frameCount(), 0);
-  now = 500; assert.equal(wheel(w, target, {deltaY:120}).defaultPrevented, false, 'The browser continues owning input even after the gesture pause');
+  now = 500; assert.equal(wheel(w, target, {deltaY:120}).defaultPrevented, true, 'A new discrete wheel gesture after momentum settles gets the premium easing');
   env.finish();
 });
 test('Repeated mouse wheel input avoids re-reading unchanged ancestor overflow', () => {

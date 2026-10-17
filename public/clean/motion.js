@@ -1,4 +1,4 @@
-/* v234: browser-native wheel input with bounded programmatic motion. */
+/* v235: premium browser-eased wheel with native precision trackpads and no wheel RAF. */
 (() => {
   'use strict';
   if (window.SwiflyMotion) return;
@@ -7,6 +7,10 @@
   const page = document.scrollingElement || document.documentElement;
   const jobs = new Map(), observed = new WeakSet(), pendingReveal = new Set();
   const heroes = new Map(), dirtyHosts = new Set();
+  const wheelTargets=new WeakMap(),overflowCache=new WeakMap();
+  let nativeWheelUntil=0;
+  const rails='.movieRail,.dsRail,.svResumeRail,.dsWelcomeRailTrack,.svDetailCastRail';
+  const native='input,textarea,select,[contenteditable="true"],video,audio,media-player,[data-player-root],.vds-controls,.vds-slider,[data-native-scroll],#controlPanel,.genreDropdownMenu,.dsProfileDropdown';
   const wheelDuration = 440, wheelDecay = 6, wheelNormalization = 1 - Math.exp(-wheelDecay);
   let frame = 0, presentationFrame = 0, observer, heroSizes, preferenceObserver;
   let started = false, destroyed = false, preference = '';
@@ -76,8 +80,56 @@
   // Passive wheel input stays in the browser compositor, including on
   // high-refresh monitors, touchpads and scrollable rails. Cancel only
   // *programmatic* motion so manual input always takes precedence.
-  function onWheel() {
-    if (jobs.size) stop();
+  function onWheel(event) {
+    if(event.defaultPrevented||!event.cancelable){stop();return;}
+    if(event.ctrlKey||event.metaKey||event.altKey||!canAnimate()||!fine.matches||location.pathname.startsWith('/watch/')){stop();return;}
+    const horizontal=event.shiftKey||Math.abs(event.deltaX)>Math.abs(event.deltaY);
+    // The browser already handles horizontal rails and modal scroll physics
+    // efficiently; constrain our optional premium easing to the main page.
+    if(horizontal||document.querySelector('dialog[open]')){stop();return;}
+    const raw=event.deltaY;
+    if(!raw)return;
+    // Continuous trackpads already supply fine-grained, OS-eased momentum.
+    // Preserve their compositor-native input and never capture tiny deltas.
+    const now=performance.now();
+    if(event.deltaMode===0 && (Math.abs(raw)<72 || !Number.isInteger(raw)||now<nativeWheelUntil)) {
+      if(Math.abs(raw)<72||!Number.isInteger(raw)) nativeWheelUntil=now+180;
+      stop();return;
+    }
+    const target=event.target instanceof Element?event.target:null;
+    if(!target||target.closest(native)){stop();return;}
+    const host=target.closest('.svDetailViewport')||page;
+    // Never intercept nested scrolling; leave its inertia to the browser.
+    for(let node=target;node&&node!==host&&node!==document.body&&node!==page;node=node.parentElement){
+      if(node.scrollHeight>node.clientHeight+1||node.scrollWidth>node.clientWidth+1){
+        const key=node.getAttribute('class')+':'+node.getAttribute('style');
+        let state=overflowCache.get(node);
+        if(!state||state.key!==key){
+          state={key,style:getComputedStyle(node).overflowY};
+          overflowCache.set(node,state);
+        }
+        if(/auto|scroll|overlay/.test(state.style)) {
+          stop(host);return;
+        }
+      }
+    }
+    const scale=event.deltaMode===1?16:event.deltaMode===2?(horizontal?host.clientWidth:host.clientHeight)*.9:1;
+    const delta=Math.max(-720,Math.min(720,raw*scale));
+    const axis=horizontal?'x':'y',current=position(host),max=bounds(host);
+    const prior=wheelTargets.get(host);
+    const continuous=prior&&prior.axis===axis&&prior.direction===Math.sign(delta)&&now-prior.time<420;
+    const start=continuous?prior.target:current[axis];
+    const next=clamp(start+delta,max[axis]);
+    if(next===start)return;
+    event.preventDefault();
+    // Native browser smooth scrolling provides the weighted easing in the
+    // compositor. Unlike v204, no JS scrollTo loop runs on every frame.
+    stop(host);
+    wheelTargets.set(host,{target:next,axis,direction:Math.sign(delta),time:now});
+    const options=horizontal
+      ? {left:next,top:current.y,behavior:'smooth'}
+      : {left:current.x,top:next,behavior:'smooth'};
+    if(host===page)window.scrollTo(options);else host.scrollTo(options);
   }
   function updateNav(y = position(page).y) {
     const state = y > 48 ? 'true' : 'false';
@@ -192,7 +244,7 @@
       if (preference !== preferenceKey()) onPreference();
     });
     preferenceObserver.observe(document.body, {attributes:true, attributeFilter:['class','style','data-sv-scroll','data-sv-scroll-art']});
-    document.addEventListener('wheel', onWheel, {passive:true});
+    document.addEventListener('wheel', onWheel, {passive:false});
     document.addEventListener('scroll', onScroll, {passive:true,capture:true});
     document.addEventListener('keydown', onKey, true);
     document.addEventListener('pointerdown', onPointer, true);
