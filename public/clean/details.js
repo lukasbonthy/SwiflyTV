@@ -11,6 +11,10 @@
   const enterDuration=900,exitDuration=560;
   const fragments=new Map(),fragmentTTL=90000,fragmentLimit=8,fragmentByteLimit=2*1024*1024,fragmentSizeLimit=192*1024;
   let fragmentScope=null,fragmentBytes=0;
+  // Intent prefetches are scoped to the current profile and share the actual
+  // click request. Two at most: moving across a poster rail cannot fan out.
+  const warmups=new Map(),warmupLimit=2;
+  let hoverTimer=0,hoverHref=null;
   const scrollPositions=new Map();
   const icon=path=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="'+path+'"/></svg>';
   const closeIcon=icon('m6 6 12 12M18 6 6 18'),backIcon=icon('m14 6-6 6 6 6');
@@ -51,6 +55,34 @@
     discardFragment(href);
     while(fragments.size>=fragmentLimit||fragmentBytes+bytes>fragmentByteLimit)discardFragment(fragments.keys().next().value);
     fragments.set(href,{html,bytes,at:Date.now()});fragmentBytes+=bytes;
+  }
+  // The movie actions and their SVG optics cannot exist before the fragment.
+  // Get that fragment on hover/focus/pointer-down so a later click can insert
+  // the real buttons while the sheet begins its entrance, not after loading.
+  function prefetchFragment(href) {
+    const scope=syncFragmentScope();
+    if(scope===null||recentFragment(href)!==null)return;
+    if(warmups.has(href)||warmups.size>=warmupLimit)return;
+    const promise=fetch(href+'?view=modal',{headers:{Accept:'text/html'}})
+      .then(response=>{if(!response.ok)throw new Error('Details unavailable');return response.text();})
+      .then(html=>{
+        const parsed=new DOMParser().parseFromString(html,'text/html');
+        const content=parsed.querySelector('.svTitleDetails');
+        if(!content||syncFragmentScope()!==scope)return null;
+        content.querySelectorAll('script,[data-sv-details-back]').forEach(node=>node.remove());
+        const fragment=content.outerHTML;
+        rememberFragment(href,fragment,scope);
+        return fragment;
+      })
+      .catch(()=>null)
+      .finally(()=>{if(warmups.get(href)?.promise===promise)warmups.delete(href);});
+    warmups.set(href,{scope,promise});
+  }
+  function detailIntent(target) {
+    const link=target?.closest?.('a[href]');
+    if(!link||link.closest('.svDetailDialog')||link.hasAttribute('download')||
+       (link.target&&link.target!=='_self')||link.hasAttribute('data-play-id'))return null;
+    return titleRoute(link.href);
   }
   function returnToCatalog() {
     const referrer=catalogURL(document.referrer),stored=catalogURL(storageRead('swiflytv.browseReturn'));
@@ -243,8 +275,20 @@
     dialog.querySelector('[data-sv-dialog-back]').setAttribute('aria-label',trail.length?'Back to previous title':'Back to browsing');
     if(entering){closeWantsHistory=false;moveSheet('opening',()=>{window.SwiflyGlassSurfaces?.refresh(dialog);window.SwiflyMotion?.refresh(viewport);});}
     try {
-      const scope=syncFragmentScope();let html=scope===null?null:recentFragment(href);const cached=html!==null;
-      if(html===null){const response=await fetch(href+'?view=modal',{signal:request.signal,headers:{Accept:'text/html'}});if(!response.ok)throw new Error('Details unavailable');html=await response.text();}
+      const scope=syncFragmentScope();let html=scope===null?null:recentFragment(href);
+      let cached=html!==null;
+      if(html===null){
+        const warming=warmups.get(href);
+        if(scope!==null && warming?.scope===scope) {
+          html=await warming.promise;
+          cached=html!==null;
+        }
+        if(html===null) {
+          const response=await fetch(href+'?view=modal',{signal:request.signal,headers:{Accept:'text/html'}});
+          if(!response.ok)throw new Error('Details unavailable');
+          html=await response.text();
+        }
+      }
       if(current!==generation||!dialog.open)return;
       const parsed=new DOMParser().parseFromString(html,'text/html');
       const content=parsed.querySelector('.svTitleDetails');if(!content)throw new Error('Details unavailable');
@@ -319,6 +363,23 @@
     motionPreference.addEventListener?.('change',settleReducedMotion);
     window.addEventListener('resize',()=>{if(dialog?.open)updateSceneGeometry();},{passive:true});
     new MutationObserver(settleReducedMotion).observe(document.body,{attributes:true,attributeFilter:['class']});
+    document.addEventListener('pointerover',event=>{
+      const href=detailIntent(event.target);
+      if(href===hoverHref)return;
+      clearTimeout(hoverTimer);hoverHref=href;
+      if(href)hoverTimer=setTimeout(()=>{hoverTimer=0;prefetchFragment(href);},80);
+    },{passive:true});
+    document.addEventListener('pointerout',event=>{
+      const from=detailIntent(event.target),to=detailIntent(event.relatedTarget);
+      if(from&&from!==to){clearTimeout(hoverTimer);hoverTimer=0;hoverHref=null;}
+    },{passive:true});
+    document.addEventListener('focusin',event=>{
+      const href=detailIntent(event.target);if(href)prefetchFragment(href);
+    },{passive:true});
+    document.addEventListener('pointerdown',event=>{
+      if(event.button>0)return;
+      const href=detailIntent(event.target);if(href)prefetchFragment(href);
+    },{passive:true});
     document.addEventListener('click',event=>{
       const link=event.target.closest('a[href]');if(!link||event.defaultPrevented||event.button>0||event.ctrlKey||event.metaKey||event.altKey||event.shiftKey||link.hasAttribute('download')||(link.target&&link.target!=='_self'))return;
       if(scrollChapter(link,event))return;

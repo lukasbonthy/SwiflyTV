@@ -215,3 +215,15 @@ body.svCleanShell[data-st-glass="liquid"] :is(.dsHeroActions,.svDetailActions,.d
 body.svCleanShell {
   animation-name: none !important;
 }
+
+/* The movie details fragment contains data-cinema-reveal on the *parent* of
+   the action row. cinema.css faded that parent from opacity:0 to 1 over .8s.
+   Any opacity <1 creates a backdrop root, so even an already-active SVG
+   lens cannot refract the movie artwork until that entrance finishes.
+   The dialog itself already slides into view: never fade/transform this
+   action ancestor a second time. Standalone movie pages keep their reveal. */
+body.svCleanShell .svDetailDialog .svCinemaPage .svDetailIdentity[data-cinema-reveal] {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}

@@ -380,3 +380,31 @@ test('Late-inserted movie buttons refract before any observer notification',{ski
   assert(delta>1.2,'late-loading real movie artwork must have visible refraction: '+delta.toFixed(3));
  }finally{await browser.close();}
 });
+
+test('Real cinema identity does not block refractive details glass for 800ms',{skip:!available&&'Chromium is not installed'},async()=>{
+ const browser=await chromium.launch({headless:true});
+ try {
+  const page=await browser.newPage({viewport:{width:780,height:560},reducedMotion:'no-preference'});
+  await page.setContent('<!doctype html><style>'+
+   ['liquid-glass/liquid-glass.css','clean/details.css','liquid-glass/surfaces.css','liquid-glass/controls.css','clean/cinema.css'].map(asset).join('\n')+
+   '*{box-sizing:border-box}body.svCleanShell{margin:0;background:#060606!important}.svDetailDialog{position:fixed!important;inset:auto 0 0!important;height:540px!important;width:760px!important}.svDetailViewport{overflow:hidden!important}.svCinemaPage .svDetailHero{position:relative!important;width:750px!important;height:505px!important;min-height:505px!important;background:repeating-linear-gradient(35deg,#c0c7d1 0 16px,#14243b 16px 27px)!important}.svDetailIdentity{left:30px!important;right:30px!important;bottom:70px!important}.svDetailActions{display:flex!important;gap:12px!important}.svDetailActions a{width:155px!important;height:52px!important;border-radius:26px!important;display:flex!important;align-items:center;justify-content:center;color:white}</style>'+
+   '<body class="svCleanShell" data-st-glass="liquid"><dialog class="svDetailDialog" data-sv-detail-state="opening"><div class="svDetailViewport svCinemaPage"><section class="svDetailHero"><div class="svDetailIdentity" data-cinema-reveal><div class="svDetailActions"><a class="dsPrimaryBtn">Play</a><a class="dsSecondaryBtn">Trailer</a></div></div></section></div></dialog></body>');
+  await page.evaluate(()=>document.querySelector('dialog').showModal());
+  for(const file of ['liquid-glass/liquid-glass.js','liquid-glass/surfaces.js'])await page.addScriptTag({content:asset(file)});
+  await page.waitForFunction(()=>document.querySelector('.svDetailActions .svNavMatchedLens')?.dataset.swiflyRenderer==='svg');
+  const identity=await page.locator('.svDetailIdentity').evaluate(node=>({animation:getComputedStyle(node).animationName,opacity:getComputedStyle(node).opacity,filter:getComputedStyle(node).filter,transform:getComputedStyle(node).transform}));
+  assert.equal(identity.animation,'none','the cinema parent must not fade the live SVG refraction');
+  assert.equal(identity.opacity,'1');
+  assert.equal(identity.filter,'none');
+  assert.equal(identity.transform,'none');
+  const pane=page.locator('.svDetailActions .svNavMatchedLens').first(),box=await pane.boundingBox();
+  const glass=(await page.screenshot({clip:box})).toString('base64');
+  await pane.evaluate(node=>node.querySelectorAll('feDisplacementMap').forEach(field=>field.setAttribute('scale','0')));
+  const flat=(await page.screenshot({clip:box})).toString('base64');
+  const delta=await page.evaluate(async({glass,flat})=>{
+   const data=async b=>{const image=new Image();image.src='data:image/png;base64,'+b;await image.decode();const canvas=document.createElement('canvas');canvas.width=image.width;canvas.height=image.height;const ctx=canvas.getContext('2d');ctx.drawImage(image,0,0);return ctx.getImageData(0,0,image.width,image.height).data;};
+   const a=await data(glass),b=await data(flat);let diff=0;for(let i=0;i<a.length;i+=4)for(let j=0;j<3;j++)diff+=Math.abs(a[i+j]-b[i+j]);return diff/(a.length*.75);
+  },{glass,flat});
+  assert(delta>1.2,'the visible glass must refract underlying art while the drawer is opening: '+delta.toFixed(2));
+ }finally{await browser.close();}
+});

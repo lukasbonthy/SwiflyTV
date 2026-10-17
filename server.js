@@ -6488,7 +6488,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/clean/details.css?v=229" />
     <link rel="stylesheet" href="/assets/clean/motion.css?v=208" />
     <script defer src="/assets/clean/motion.js?v=204"></script>
-    <script defer src="/assets/clean/details.js?v=229"></script>
+    <script defer src="/assets/clean/details.js?v=231"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=222" />
     <script defer src="/assets/liquid-glass/surfaces.js?v=230"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=164" />
@@ -6504,7 +6504,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/finish.css?v=175" />'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/polish.css?v=176" />'}
     <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=205" />
-    <link rel="stylesheet" href="/assets/liquid-glass/controls.css?v=228" />
+    <link rel="stylesheet" href="/assets/liquid-glass/controls.css?v=231" />
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/experience.css?v=202" />'}
     <link rel="stylesheet" href="/assets/clean/cinema.css?v=207" />
     <link rel="stylesheet" href="/assets/clean/profiles.css?v=209" />

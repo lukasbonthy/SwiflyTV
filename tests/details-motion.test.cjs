@@ -216,3 +216,43 @@ test('Details slide animates its fixed bottom position, never a transform that b
  w.Element.prototype.animate=original;
  env.finish();
 });
+
+test('Hover warms a movie before click so the real action buttons render from cache',async()=>{
+ const fragment=await render(),env=browser('<a id="movie" href="/movie/101"><span>Details</span></a>'),w=env.window,d=w.document;
+ let calls=0;
+ w.fetch=async()=>{calls++;return {ok:true,text:async()=>fragment};};
+ w.boot('details.js');
+ const link=d.getElementById('movie');
+ link.dispatchEvent(new w.FocusEvent('focusin',{bubbles:true}));
+ await tick();await tick();
+ assert.equal(calls,1,'intent begins the one allowed fragment request');
+ link.dispatchEvent(new w.MouseEvent('click',{bubbles:true,cancelable:true}));
+ await tick();await tick();
+ assert.equal(calls,1,'opening from cache must never refetch the movie');
+ assert(d.querySelector('.svDetailDialog .svDetailActions .dsPrimaryBtn'),'real movie actions are inserted from the warmed fragment');
+ env.finish();
+});
+test('A click reuses the in-flight touch prefetch instead of waiting on a second request',async()=>{
+ const fragment=await render(),env=browser('<a id="movie" href="/movie/101">Details</a>'),w=env.window,d=w.document;
+ let answer,calls=0;
+ w.fetch=()=>{calls++;return new Promise(resolve=>{answer=resolve;});};
+ w.boot('details.js');
+ const link=d.getElementById('movie');
+ link.dispatchEvent(new w.MouseEvent('pointerdown',{bubbles:true,button:0}));
+ link.dispatchEvent(new w.MouseEvent('click',{bubbles:true,cancelable:true}));
+ await tick();
+ assert.equal(calls,1,'intent request is shared with the click');
+ answer({ok:true,text:async()=>fragment});
+ await tick();await tick();await tick();
+ assert.equal(calls,1,'no duplicate after the warm fragment settles');
+ assert(d.querySelector('.svDetailDialog .svDetailActions .dsPrimaryBtn'));
+ env.finish();
+});
+test('Speculative movie fetches never activate for unrelated external links',async()=>{
+ const env=browser('<a id="away" href="https://elsewhere.example/movie/101">Away</a><a id="play" data-play-id href="/movie/101">Play link</a>'),w=env.window,d=w.document;
+ let calls=0;w.fetch=async()=>{calls++;return {ok:true,text:async()=>''};};
+ w.boot('details.js');
+ for(const node of d.querySelectorAll('a'))node.dispatchEvent(new w.MouseEvent('pointerdown',{bubbles:true,button:0}));
+ await tick();assert.equal(calls,0);
+ env.finish();
+});
