@@ -1,17 +1,17 @@
-/* Lenis 1.3.16, matching ShuttleTV's .1 damping and unscaled wheel distance. */
+/* Weighted Lenis easing with immediate braking and native nested input. */
 (() => {
   'use strict';
   if (window.SwiflyPremiumScroll) return;
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
   const fine = window.matchMedia('(pointer: fine)');
   const native = 'input,textarea,select,[contenteditable]:not([contenteditable="false"]),video,audio,media-player,[data-player-root],.vds-controls,.vds-slider,[data-native-scroll],#controlPanel,.genreDropdownMenu,.dsProfileDropdown';
-  let engine, frame = 0, lastFrame = null, clock = 1, preferences, started = false, destroyed = false;
+  let engine, frame = 0, lastFrame = null, clock = 1, wheelDirection = 0, preferences, started = false, destroyed = false;
   const available = () => !destroyed && !document.hidden && fine.matches && !reduced.matches &&
     !document.body.classList.contains('reduceMotion') && document.body.dataset.svScroll !== 'native' &&
     !/^\/(?:watch|embed)(?:\/|$)/.test(location.pathname) && typeof window.Lenis === 'function';
 
   function cancel() {
-    cancelAnimationFrame(frame); frame = 0; lastFrame = null;
+    cancelAnimationFrame(frame); frame = 0; lastFrame = null; wheelDirection = 0;
     if (engine?.isScrolling === 'smooth') {
       // Reset to the actual position without finishing an obsolete target.
       // start() immediately restores ordinary native input and the next glide.
@@ -50,15 +50,18 @@
         document.querySelector('dialog[open]')) {
       cancel(); return false;
     }
+    const direction = Math.sign(deltaY);
+    if (direction && wheelDirection && direction !== wheelDirection && engine?.isScrolling === 'smooth') cancel();
+    if (direction) wheelDirection = direction;
     return true;
   }
   function sync() {
     if (!available()) {dispose(); return;}
     if (engine) return;
-    // Use the reference's actual engine and defaults, not repeated native
-    // smooth-scroll commands that restart their easing on each wheel tick.
+    // A longer damping tail gives the wheel perceptible weight. Reversals
+    // brake the queued travel so the extra weight never fights new input.
     engine = new window.Lenis({
-      lerp:.1, wheelMultiplier:1, smoothWheel:true, syncTouch:false,
+      lerp:.065, wheelMultiplier:1, smoothWheel:true, syncTouch:false,
       allowNestedScroll:true, autoRaf:false, virtualScroll:accept
     });
     clock = 1; engine.raf(clock);

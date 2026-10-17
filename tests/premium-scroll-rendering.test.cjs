@@ -105,3 +105,33 @@ test('the real touch catalog keeps OS scrolling and all glass surfaces', {skip:!
     assert.equal(await page.locator('.mobileNav > .svLiquidPane').count(), 1, 'the touch navigation keeps its optical pane');
   } finally {await browser.close();}
 });
+
+for (const width of [390, 1440, 1920]) test(`catalog dates fit completely inside painted rows at ${width}px`, {skip:!available && 'Chromium is not installed'}, async () => {
+  const browser = await chromium.launch({headless:true});
+  try {
+    const page = await catalog(browser, {viewport:{width, height:960}});
+    for (const variant of [{layout:'default', density:'comfy'}, {layout:'default', density:'compact'}, {layout:'posterwall', density:'comfy'}]) {
+      await page.evaluate(({layout, density}) => {
+        document.body.dataset.stLayout = layout; document.body.dataset.stDensity = density;
+        document.body.style.setProperty('--sv-poster-width', density === 'compact' ? 'clamp(126px,12vw,174px)' : 'clamp(150px,14vw,210px)');
+      }, variant);
+      const row = page.locator('.svCatalogRow').first();
+      await row.scrollIntoViewIfNeeded();
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      const result = await row.evaluate(node => {
+        const bounds = node.getBoundingClientRect();
+        return {top:bounds.top, bottom:bounds.bottom, visibility:getComputedStyle(node).contentVisibility,
+          dates:[...node.querySelectorAll('.dsCardMeta')].map(meta => {
+            const rect = meta.getBoundingClientRect(); return {text:meta.textContent, top:rect.top, bottom:rect.bottom, height:rect.height};
+          })};
+      });
+      assert.equal(result.visibility, 'auto', 'offscreen rendering containment stays enabled');
+      assert.equal(result.dates.length, 18);
+      for (const date of result.dates) {
+        assert(date.height >= 12, 'date glyphs retain their full line height');
+        assert(date.top >= result.top && date.bottom <= result.bottom + .5,
+          `${variant.layout}/${variant.density}: ${date.text} must not extend beyond the row's paint clip (${date.bottom} > ${result.bottom})`);
+      }
+    }
+  } finally {await browser.close();}
+});

@@ -6480,7 +6480,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/modern-normalize@2.0.0/modern-normalize.min.css" />
     <link rel="stylesheet" href="/assets/liquid-glass/liquid-glass.css?v=222" />
     <script defer src="/assets/liquid-glass/liquid-glass.js?v=226"></script>
-    <link rel="stylesheet" href="/assets/clean/clean.css?v=153" />
+    <link rel="stylesheet" href="/assets/clean/clean.css?v=154" />
     <script defer src="/assets/clean/clean.js?v=151"></script>
     <script defer src="/assets/clean/avatars.js?v=209"></script>
     ${active === "profiles" ? '<script defer src="/assets/clean/profiles.js?v=209"></script>' : ""}
@@ -6490,7 +6490,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/vendor/lenis/lenis.css?v=1.3.16" />
     <script defer src="/assets/vendor/lenis/lenis.min.js?v=1.3.16"></script>
     <script defer src="/assets/clean/motion.js?v=238"></script>
-    <script defer src="/assets/clean/scroll.js?v=238"></script>
+    <script defer src="/assets/clean/scroll.js?v=239"></script>
     <script defer src="/assets/clean/details.js?v=231"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=222" />
     <script defer src="/assets/liquid-glass/surfaces.js?v=234"></script>
