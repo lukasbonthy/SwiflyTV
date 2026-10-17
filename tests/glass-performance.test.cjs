@@ -40,7 +40,7 @@ function glass(markup = '') {
       putImageData:image=>env.textures.push({canvas,...image})
     };
   };
-  w.HTMLCanvasElement.prototype.toDataURL = () => 'data:image/png;base64,procedural-lens-map';
+  w.HTMLCanvasElement.prototype.toDataURL = function () {return 'data:image/png;base64,'+w.btoa('lens:'+this.width+':'+this.height+':'+env.textures.length);};
   const finish = env.finish;
   env.finish = () => {w.SwiflyGlassSurfaces?.destroy(); for (const node of w.document.querySelectorAll('[data-swifly-glass]')) w.SwiflyLiquidGlass?.mount(node).destroy(); finish();};
   return env;
@@ -335,14 +335,14 @@ test('Hero glass shares bounded color-preserving nav optics and keeps its graph 
  const nav=d.querySelector('.netflixNav>.svLiquidPane');
  const hero=d.querySelector('.dsHeroActions>.dsPrimaryBtn>.svNavMatchedLens');
  const scales=pane=>[...pane.querySelectorAll('feDisplacementMap')].map(node=>Number(node.getAttribute('scale')));
- assert.deepEqual(scales(nav),[-8],'navbar sampling stays local to its 40px height');
+ assert.deepEqual(scales(nav),[-18.24],'navbar sampling stays local to its 40px height');
  assert.deepEqual(scales(hero),scales(nav),'hero Play must have exactly the same color-preserving refraction as navbar');
  const originalGraph=hero.querySelector('svg.svLiquidPane__filters');
  hero.getBoundingClientRect=()=>({width:60,height:40,top:0,left:0,right:60,bottom:40});
  env.resize();w.flush(32);
  assert.deepEqual(scales(hero),scales(nav),'button resize must preserve the identical navbar optical field');
  assert.equal(hero.querySelector('svg.svLiquidPane__filters'),originalGraph,'resize reuses filter graph without leaking DOM nodes');
- assert.deepEqual(scales(nav),[-8],'resizing a hero must never change navbar optics');
+ assert.deepEqual(scales(nav),[-18.24],'resizing a hero must never change navbar optics');
  assert.equal(w.frameCount(),0,'button refraction must not start an idle animation loop');
  env.finish();
 });
@@ -487,27 +487,40 @@ test('Mobile and desktop navigation share bounded live optics',()=>{
  d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);
  for(const pane of d.querySelectorAll('.svLiquidPane')){
   assert.equal(pane.dataset.swiflyRenderer,'svg');
-  assert.deepEqual([...pane.querySelectorAll('feDisplacementMap')].map(n=>Number(n.getAttribute('scale'))),[-8]);
+  assert.deepEqual([...pane.querySelectorAll('feDisplacementMap')].map(n=>Number(n.getAttribute('scale'))),[-18.24]);
  }
  assert.equal(env.textures.length,2,'the mobile bar has a softer shoulder, cached separately');assert.equal(w.frameCount(),0);env.finish();
 });
 
-test('Vector lens geometry is cached, bounded and independent of canvas or page artwork',()=>{
+test('Rounded lens geometry is cached and bounded without sampling page artwork',()=>{
  const env=glass('<div class="svLiquidPane" data-swifly-glass></div>'),w=env.window,d=w.document;
- w.HTMLCanvasElement.prototype.getContext=()=>{throw Error('glass must not rasterize or sample artwork');};
  d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);
  const create=w.SwiflyLiquidGlass.createTexture,first=create(240,60,24);
  assert.equal(create(240,60,24),first,'same geometry reuses the cached object');
  assert.notEqual(create(240,60,24,11),first,'different shoulder widths must not alias');
- const map=d.querySelector('feImage').getAttribute('href');assert.match(map,/^data:image\/svg\+xml,/);
- assert(decodeURIComponent(map).length<2000,'vector complexity stays small');
- const large=create(16000,9000,24);assert(large.map.length<4000,'large panes do not allocate page-size bitmaps');
+ const map=d.querySelector('feImage').getAttribute('href');assert.match(map,/^data:image\/png;base64,/);
+ assert(env.textures.every(image=>image.width<=640&&image.height<=160),'geometry allocation is capped independently of pane dimensions');
+ const large=create(16000,9000,24);assert(large);assert(env.textures.at(-1).width<=640&&env.textures.at(-1).height<=160,'large panes do not allocate page-size bitmaps');
  for(let i=0;i<49;i++)create(300+i,50,20);
  assert.notEqual(create(240,60,24),first,'old maps leave the bounded LRU cache');
  for(const geometry of [[0,60,24],[-1,60,24],[NaN,60,24],[Infinity,60,24]])assert.equal(create(...geometry),null);
  const generated=env.textures.length;w.dispatchEvent(new w.Event('resize'));w.flush(32);
  assert.equal(env.textures.length,generated,'unchanged geometry does not regenerate its map');
  assert.equal(w.frameCount(),0);env.finish();
+});
+
+test('Lens normals follow the rounded shape and leave the center neutral',()=>{
+ const env=glass(),w=env.window;
+ w.boot('liquid-glass/liquid-glass.js');w.SwiflyLiquidGlass.createTexture(240,60,24);
+ const image=env.textures.at(-1),at=(x,y)=>[...image.data.slice((y*image.width+x)*4,(y*image.width+x)*4+4)];
+ assert.deepEqual(at(120,30),[128,128,128,255],'the center must not shift or split backdrop colors');
+ const top=at(120,1),bottom=at(120,58),left=at(1,30),right=at(238,30);
+ assert(top[1]<8&&bottom[1]>247,'opposite horizontal edges must bend in opposite directions');
+ assert(left[0]<8&&right[0]>247,'opposite vertical edges must bend in opposite directions');
+ assert.equal(top[0],128);assert.equal(bottom[0],128);assert.equal(left[1],128);assert.equal(right[1],128);
+ const corner=at(7,7);assert(corner[0]<70&&corner[1]<70,'rounded corners need a diagonal normal, not crossed rectangular bands');
+ assert(Math.abs(corner[0]-corner[1])<=1,'a circular corner must be symmetric');
+ assert.equal(w.frameCount(),0,'baked geometry must not schedule rendering work');env.finish();
 });
 
 test('Rising detail sheets retain native glass and defer optical geometry until the sheet settles',()=>{
@@ -538,11 +551,11 @@ test('Party navigation containers and standalone actions gain bounded lenses whi
  assert.equal(d.querySelectorAll('.svNavMatchedLens').length,5,'the setup action also owns its visible lens');env.finish();
 });
 
-test('Chromium glass does not require a canvas context',()=>{
+test('Unavailable geometry contexts retain the native glass fallback',()=>{
  const env=glass('<div class="svLiquidPane" data-swifly-glass></div>'),w=env.window,d=w.document;
  w.HTMLCanvasElement.prototype.getContext=()=>null;d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);
- assert.equal(d.querySelector('.svLiquidPane').dataset.swiflyRenderer,'svg');
- assert(d.querySelector('.svLiquidPane svg'),'vector glass remains available without a canvas');env.finish();
+ assert.equal(d.querySelector('.svLiquidPane').dataset.swiflyRenderer,'blur');
+ assert.equal(d.querySelector('.svLiquidPane svg'),null,'a failed geometry allocation must not leave an empty optical graph');assert.equal(w.frameCount(),0);env.finish();
 });
 
 test('Chromium rebuilds an externally detached optical graph on the next refresh',async()=>{
@@ -616,6 +629,6 @@ test('Resizing a live pane keeps finite bounded optics and refreshes its geometr
  w.boot('liquid-glass/liquid-glass.js');w.flush(16);const previous=pane.querySelector('feImage').getAttribute('href');
  pane.getBoundingClientRect=()=>({width:340,height:60,left:0,top:0,right:340,bottom:60});env.resize();w.flush(32);
  assert.notEqual(pane.querySelector('feImage').getAttribute('href'),previous);
- assert.deepEqual([...pane.querySelectorAll('feDisplacementMap')].map(n=>Number(n.getAttribute('scale'))),[-12]);
+ assert(Math.abs(Number(pane.querySelector('feDisplacementMap').getAttribute('scale'))+21.6)<1e-6);
  assert.equal(w.frameCount(),0);env.finish();
 });

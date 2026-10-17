@@ -45,7 +45,7 @@ body.svCleanShell .svGlassControl.svNavMatchedOptic {
   min-height: 44px !important;
 }
 body.svCleanShell .svNavMatchedOptic > .svNavMatchedLens.svLiquidPane {
-  --sv-glass-default-tint: .14;
+  --sv-glass-default-tint: .08;
   position: absolute !important;
   inset: 0 !important;
   width: 100% !important;
@@ -80,7 +80,7 @@ body.svCleanShell .svNavMatchedOptic > .svNavMatchedLabel {
 /* Compact controls now reuse the true refractive navigation lens.
    No separate fake shine or bright border is layered over the backdrop. */
 body.svCleanShell .svGlassControl.svNavMatchedOptic:is(:hover,:focus-visible,.active,.saved,.liked,[aria-pressed="true"]) > .svLiquidPane {
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / .28), 0 6px 18px rgb(0 0 0 / .18) !important;
+  box-shadow: var(--sv-glass-edge), inset 0 0 0 1px rgb(255 255 255 / .15) !important;
 }
 body.svCleanShell :is(.dsCardQuickActions,.svDetailChrome,.svDetailActions) .dsIconBtn.svGlassControl,
 body.svCleanShell :is(.svDetailClose,.dsClose).svGlassControl {
