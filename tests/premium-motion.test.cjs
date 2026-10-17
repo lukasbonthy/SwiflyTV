@@ -124,8 +124,18 @@ test('Non-cancelable wheel delivery and player surfaces retain native input', ()
   }
 });
 
+test('Catalog rails stay visible and do not queue costly opacity/transform reveals',()=>{
+  const env=browser('<section class="svCatalogRow">Movies</section><section class="svResumeSection">Continue</section><section class="svDetailSection">Extra details</section>'),w=env.window,d=w.document;
+  for(const section of d.querySelectorAll('section'))section.getBoundingClientRect=()=>({top:2200,height:400});
+  w.boot('motion.js');
+  assert.equal(d.querySelector('.svCatalogRow').classList.contains('svMotionReveal'),false);
+  assert.equal(d.querySelector('.svResumeSection').classList.contains('svMotionReveal'),false);
+  assert.equal(d.querySelector('.svDetailSection').classList.contains('svMotionReveal'),true,'theater details can keep premium entrance reveals');
+  env.finish();
+});
+
 test('Section reveals have a measured settle and remain visible without JavaScript or after preference changes', () => {
-  const env = browser('<section class="svCatalogRow">Movies</section>'), w = env.window, d = w.document, section = d.querySelector('section');
+  const env = browser('<section class="svDetailSection">Details</section>'), w = env.window, d = w.document, section = d.querySelector('section');
   const style = d.createElement('style'); style.textContent = source('motion.css'); d.head.append(style);
   assert.notEqual(w.getComputedStyle(section).opacity, '0', 'Content is available before motion initializes');
   section.getBoundingClientRect = () => ({top:1600, height:400});
@@ -138,7 +148,7 @@ test('Section reveals have a measured settle and remain visible without JavaScri
 });
 
 test('The native scroll preference immediately exposes pending reveals through CSS', () => {
-  const env = browser('<section class="svCatalogRow svMotionReveal">Movies</section>'), w = env.window, d = w.document;
+  const env = browser('<section class="svDetailSection svMotionReveal">Details</section>'), w = env.window, d = w.document;
   const style = d.createElement('style'); style.textContent = source('motion.css'); d.head.append(style);
   d.body.dataset.svScroll = 'native';
   const computed = w.getComputedStyle(d.querySelector('section'));
