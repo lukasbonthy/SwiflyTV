@@ -93,8 +93,8 @@
       if (!entry.opticController) {
         entry.opticController=window.SwiflyLiquidGlass.mount(entry.opticPane, {
           tint:.14,saturation:1,
-          // Exactly the same renderer, RGB separation and displacement as nav.
-          distortionScale:-180,channelOffsets:[0,10,20]
+          // Share the bounded, color-preserving navigation renderer.
+          distortionScale:-180
         });
         if(deferred)entry.opticController.setEnabled(false);
       } else if(entry.opticController.enabled===deferred)entry.opticController.setEnabled(!deferred);
