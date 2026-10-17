@@ -1,4 +1,4 @@
-/* v235: premium browser-eased wheel with native precision trackpads and no wheel RAF. */
+/* v236: coalesced browser-eased wheel bursts; precision devices remain native. */
 (() => {
   'use strict';
   if (window.SwiflyMotion) return;
@@ -7,9 +7,11 @@
   const page = document.scrollingElement || document.documentElement;
   const jobs = new Map(), observed = new WeakSet(), pendingReveal = new Set();
   const heroes = new Map(), dirtyHosts = new Set();
-  const wheelTargets=new WeakMap(),overflowCache=new WeakMap();
-  let nativeWheelUntil=0;
-  const rails='.movieRail,.dsRail,.svResumeRail,.dsWelcomeRailTrack,.svDetailCastRail';
+  const wheelBursts = new Map(), overflowCache = new WeakMap();
+  let nativeWheelUntil = 0;
+  // Chrome/Edge restart a smooth-scroll trajectory when sent a new target.
+  // Batch rapid wheel notches instead of resetting that animation per event.
+  const wheelWriteInterval = 88, wheelBurstWindow = 360;
   const native='input,textarea,select,[contenteditable="true"],video,audio,media-player,[data-player-root],.vds-controls,.vds-slider,[data-native-scroll],#controlPanel,.genreDropdownMenu,.dsProfileDropdown';
   const wheelDuration = 440, wheelDecay = 6, wheelNormalization = 1 - Math.exp(-wheelDecay);
   let frame = 0, presentationFrame = 0, observer, heroSizes, preferenceObserver;
@@ -63,6 +65,7 @@
   }
   function scrollTo(element, options = {}) {
     element = element || page;
+    cancelWheelBurst(element);
     if (element === page && document.querySelector('dialog[open]')) {stop(page); return;}
     const current = position(element), max = bounds(element), job = jobs.get(element);
     const x = clamp(Number.isFinite(options.left) ? options.left : job?.x ?? current.x, max.x);
@@ -77,59 +80,95 @@
     element = element || page; const job = jobs.get(element), current = position(element);
     scrollTo(element, {left:(job?.x ?? current.x) + (Number(options.left) || 0), top:(job?.y ?? current.y) + (Number(options.top) || 0), behavior:options.behavior});
   }
-  // Passive wheel input stays in the browser compositor, including on
-  // high-refresh monitors, touchpads and scrollable rails. Cancel only
-  // *programmatic* motion so manual input always takes precedence.
+  // A wheel burst owns one destination, but never a frame-by-frame
+  // scroll animation. Native scrollTo({behavior:'smooth'}) handles painting.
+  function cancelWheelBurst(host) {
+    const state = wheelBursts.get(host);
+    if (!state) return;
+    if (state.flushTimer) clearTimeout(state.flushTimer);
+    if (state.expireTimer) clearTimeout(state.expireTimer);
+    wheelBursts.delete(host);
+  }
+  function cancelWheelBursts() {
+    for (const host of wheelBursts.keys()) cancelWheelBurst(host);
+  }
+  function sendWheelTarget(host, state) {
+    if (wheelBursts.get(host) !== state) return;
+    if (state.flushTimer) clearTimeout(state.flushTimer);
+    state.flushTimer = 0;
+    if (!canAnimate() || !host.isConnected) {cancelWheelBurst(host); return;}
+    const current = position(host);
+    const top = clamp(state.target, bounds(host).y);
+    state.target = top;
+    state.lastWrite = performance.now();
+    // Avoid restarting the browser's glide for imperceptible changes.
+    if (Math.abs(top - current.y) < 0.75) return;
+    const options = {left:current.x, top, behavior:'smooth'};
+    if (host === page) window.scrollTo(options); else host.scrollTo(options);
+  }
+  // High-resolution trackpads, native nested scrollers and touch retain their
+  // platform physics. Only clearly discrete mouse wheel notches use this path.
   function onWheel(event) {
-    if(event.defaultPrevented||!event.cancelable){stop();return;}
-    if(event.ctrlKey||event.metaKey||event.altKey||!canAnimate()||!fine.matches||location.pathname.startsWith('/watch/')){stop();return;}
-    const horizontal=event.shiftKey||Math.abs(event.deltaX)>Math.abs(event.deltaY);
-    // The browser already handles horizontal rails and modal scroll physics
-    // efficiently; constrain our optional premium easing to the main page.
-    if(horizontal||document.querySelector('dialog[open]')){stop();return;}
-    const raw=event.deltaY;
-    if(!raw)return;
-    // Continuous trackpads already supply fine-grained, OS-eased momentum.
-    // Preserve their compositor-native input and never capture tiny deltas.
-    const now=performance.now();
-    if(event.deltaMode===0 && (Math.abs(raw)<72 || !Number.isInteger(raw)||now<nativeWheelUntil)) {
-      if(Math.abs(raw)<72||!Number.isInteger(raw)) nativeWheelUntil=now+180;
-      stop();return;
+    if (event.defaultPrevented || !event.cancelable ||
+        event.ctrlKey || event.metaKey || event.altKey ||
+        !canAnimate() || !fine.matches || location.pathname.startsWith('/watch/')) {
+      cancelWheelBursts(); stop(); return;
     }
-    const target=event.target instanceof Element?event.target:null;
-    if(!target||target.closest(native)){stop();return;}
-    const host=target.closest('.svDetailViewport')||page;
-    // Never intercept nested scrolling; leave its inertia to the browser.
-    for(let node=target;node&&node!==host&&node!==document.body&&node!==page;node=node.parentElement){
-      if(node.scrollHeight>node.clientHeight+1||node.scrollWidth>node.clientWidth+1){
-        const key=node.getAttribute('class')+':'+node.getAttribute('style');
-        let state=overflowCache.get(node);
-        if(!state||state.key!==key){
-          state={key,style:getComputedStyle(node).overflowY};
+    const horizontal = event.shiftKey || Math.abs(event.deltaX) > Math.abs(event.deltaY);
+    if (horizontal || document.querySelector('dialog[open]')) {cancelWheelBursts(); stop(); return;}
+    const raw = event.deltaY;
+    if (!raw) return;
+    const now = performance.now();
+    // A small/fractional input identifies an OS-momentum gesture. Once
+    // identified, keep even its accelerated large samples native.
+    if (event.deltaMode === 0 && (Math.abs(raw) < 72 || !Number.isInteger(raw) || now < nativeWheelUntil)) {
+      if (Math.abs(raw) < 72 || !Number.isInteger(raw)) nativeWheelUntil = now + 200;
+      cancelWheelBursts(); stop(); return;
+    }
+    const target = event.target instanceof Element ? event.target : null;
+    if (!target || target.closest(native)) {cancelWheelBursts(); stop(); return;}
+    const host = target.closest('.svDetailViewport') || page;
+    // Native overflow rails, dialogs, dropdowns and editable controls have
+    // priority, so a vertical gesture never hijacks their scroll behavior.
+    for (let node=target;node&&node!==host&&node!==document.body&&node!==page;node=node.parentElement) {
+      if (node.scrollHeight > node.clientHeight+1 || node.scrollWidth > node.clientWidth+1) {
+        const key = node.getAttribute('class') + ':' + node.getAttribute('style');
+        let state = overflowCache.get(node);
+        if (!state || state.key !== key) {
+          state = {key, style:getComputedStyle(node).overflowY};
           overflowCache.set(node,state);
         }
-        if(/auto|scroll|overlay/.test(state.style)) {
-          stop(host);return;
-        }
+        if (/auto|scroll|overlay/.test(state.style)) {cancelWheelBursts(); stop(); return;}
       }
     }
-    const scale=event.deltaMode===1?16:event.deltaMode===2?(horizontal?host.clientWidth:host.clientHeight)*.9:1;
-    const delta=Math.max(-720,Math.min(720,raw*scale));
-    const axis=horizontal?'x':'y',current=position(host),max=bounds(host);
-    const prior=wheelTargets.get(host);
-    const continuous=prior&&prior.axis===axis&&prior.direction===Math.sign(delta)&&now-prior.time<420;
-    const start=continuous?prior.target:current[axis];
-    const next=clamp(start+delta,max[axis]);
-    if(next===start)return;
+    const scale = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? host.clientHeight*.9 : 1;
+    // Slightly fuller notches, without the excessively long 1s momentum tail.
+    const delta = Math.max(-680,Math.min(680,raw*scale*1.12));
+    const direction = Math.sign(delta), current = position(host), max = bounds(host);
+    let state = wheelBursts.get(host);
+    const continuous = state && state.direction === direction && now - state.time < wheelBurstWindow;
+    if (!continuous) {
+      cancelWheelBurst(host);
+      state = {direction, time:now, target:current.y, lastWrite:-Infinity, flushTimer:0, expireTimer:0};
+      wheelBursts.set(host,state);
+    }
+    // Never let a fast series of wheel pulses build an offscreen backlog.
+    // Keep the target within a viewport of the user's actual scroll position.
+    const viewport = host === page ? window.innerHeight : host.clientHeight;
+    const lead = Math.min(640,Math.max(240,viewport*.8));
+    const base = continuous
+      ? direction > 0 ? Math.min(state.target,current.y+lead) : Math.max(state.target,current.y-lead)
+      : current.y;
+    const next = clamp(base+delta,max.y);
+    if (next === base && !state.flushTimer) return;
     event.preventDefault();
-    // Native browser smooth scrolling provides the weighted easing in the
-    // compositor. Unlike v204, no JS scrollTo loop runs on every frame.
-    stop(host);
-    wheelTargets.set(host,{target:next,axis,direction:Math.sign(delta),time:now});
-    const options=horizontal
-      ? {left:next,top:current.y,behavior:'smooth'}
-      : {left:current.x,top:next,behavior:'smooth'};
-    if(host===page)window.scrollTo(options);else host.scrollTo(options);
+    stop(host); // Cancel programmatic carousel/navigation movement, not this wheel burst.
+    state.target = next; state.time = now;
+    if (state.expireTimer) clearTimeout(state.expireTimer);
+    state.expireTimer = setTimeout(() => cancelWheelBurst(host), wheelBurstWindow+120);
+    const wait = wheelWriteInterval - (now-state.lastWrite);
+    if (!continuous || wait <= 0) sendWheelTarget(host,state);
+    else if (!state.flushTimer) state.flushTimer = setTimeout(() => sendWheelTarget(host,state),Math.ceil(wait));
   }
   function updateNav(y = position(page).y) {
     const state = y > 48 ? 'true' : 'false';
@@ -200,7 +239,7 @@
     }
   }
   function onPreference() {
-    preference = preferenceKey(); stop(); cancelAnimationFrame(presentationFrame); presentationFrame = 0; dirtyHosts.clear();
+    preference = preferenceKey(); cancelWheelBursts(); stop(); cancelAnimationFrame(presentationFrame); presentationFrame = 0; dirtyHosts.clear();
     if (!canAnimate()) {
       for (const section of pendingReveal) {section.classList.add('svMotionVisible'); observer?.unobserve(section);}
       pendingReveal.clear(); heroSizes?.disconnect();
@@ -212,15 +251,19 @@
     for (const record of heroes.values()) {record.dirty = true; if (canPresentHeroes()) dirtyHosts.add(record.host);}
     updateNav(); queuePresentation();
   }
-  function onKey(event) {if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','PageUp','PageDown','Home','End',' ','Tab','Escape'].includes(event.key)) stop();}
-  const onPointer = () => stop();
+  function onKey(event) {
+    if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','PageUp','PageDown','Home','End',' ','Tab','Escape'].includes(event.key)) {
+      cancelWheelBursts(); stop();
+    }
+  }
+  const onPointer = () => {cancelWheelBursts(); stop();};
   function onFineChange() {
-    stop(); cancelAnimationFrame(presentationFrame); presentationFrame = 0; dirtyHosts.clear(); heroSizes?.disconnect();
+    cancelWheelBursts(); stop(); cancelAnimationFrame(presentationFrame); presentationFrame = 0; dirtyHosts.clear(); heroSizes?.disconnect();
     for (const [hero, record] of heroes) {hero.style.removeProperty('--sv-hero-offset'); record.offset = null; record.dirty = true;}
     if (canPresentHeroes()) {refresh(); queuePresentation();}
   }
   function onVisibility() {
-    if (document.hidden) {stop(); cancelAnimationFrame(presentationFrame); presentationFrame = 0; dirtyHosts.clear(); heroSizes?.disconnect();}
+    if (document.hidden) {cancelWheelBursts(); stop(); cancelAnimationFrame(presentationFrame); presentationFrame = 0; dirtyHosts.clear(); heroSizes?.disconnect();}
     else {
       if (canPresentHeroes()) for (const hero of heroes.keys()) heroSizes?.observe(hero);
       onResize();
@@ -256,7 +299,7 @@
   }
   window.SwiflyMotion = Object.freeze({scrollTo,scrollBy,stop,refresh,release,destroy() {
     if (destroyed) return; destroyed = true;
-    stop(); cancelAnimationFrame(presentationFrame); presentationFrame = 0; dirtyHosts.clear();
+    cancelWheelBursts(); stop(); cancelAnimationFrame(presentationFrame); presentationFrame = 0; dirtyHosts.clear();
     observer?.disconnect(); for (const section of pendingReveal) section.classList.add('svMotionVisible'); pendingReveal.clear();
     heroSizes?.disconnect(); preferenceObserver?.disconnect();
     for (const hero of heroes.keys()) hero.style.removeProperty('--sv-hero-offset'); heroes.clear();
