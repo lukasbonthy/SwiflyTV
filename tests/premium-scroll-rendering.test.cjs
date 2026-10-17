@@ -126,6 +126,48 @@ test('mixed-axis horizontal rail input reaches the movie row', {skip:!available 
   } finally {await browser.close();}
 });
 
+test('invisible poster actions skip backdrop work and retain glass on hover and keyboard focus', {skip:!available && 'Chromium is not installed'}, async () => {
+  const browser = await chromium.launch({headless:true});
+  try {
+    const page = await catalog(browser);
+    const artwork = page.locator('.dsCardArtwork').first();
+    await artwork.scrollIntoViewIfNeeded();
+    await page.mouse.move(1260, 30);
+    const pane = artwork.locator('.dsCardQuickActions .svLiquidPane').first();
+    await pane.waitFor({state:'attached'});
+    assert.equal(await pane.evaluate(node => getComputedStyle(node).backdropFilter), 'none', 'opacity-hidden buttons must not keep rendering blur filters');
+    assert.equal(await artwork.locator('.dsPlayDot').evaluate(node => getComputedStyle(node).backdropFilter), 'none');
+    await artwork.hover();
+    await page.waitForFunction(() => document.querySelector('.dsCardQuickActions .svLiquidPane')?.dataset.swiflyRenderer === 'svg');
+    assert.match(await pane.evaluate(node => getComputedStyle(node).backdropFilter), /url\(/, 'hovered actions retain the full refractive lens');
+    await page.mouse.move(1260, 30);
+    assert.equal(await pane.evaluate(node => getComputedStyle(node).backdropFilter), 'none');
+    await artwork.locator('.dsThumb').focus();
+    await page.keyboard.press('Tab');
+    assert.equal(await page.evaluate(() => !!document.activeElement.closest('.dsCardQuickActions')), true, 'quick actions stay reachable by keyboard');
+    await page.waitForFunction(() => document.querySelector('.dsCardQuickActions .svLiquidPane')?.dataset.swiflyRenderer === 'svg');
+    assert.match(await pane.evaluate(node => getComputedStyle(node).backdropFilter), /url\(/, 'focused actions retain the same glass');
+    assert.match(await page.locator('.netflixNav > .svLiquidPane').evaluate(node => getComputedStyle(node).backdropFilter), /url\(/, 'navigation refraction remains active');
+  } finally {await browser.close();}
+});
+
+test('visible quick actions retain glass in a narrow desktop catalog', {skip:!available && 'Chromium is not installed'}, async () => {
+  const browser = await chromium.launch({headless:true});
+  try {
+    const page = await catalog(browser, {viewport:{width:800, height:900}});
+    const artwork = page.locator('.dsCardArtwork').first();
+    await artwork.scrollIntoViewIfNeeded();
+    await page.mouse.move(790, 30);
+    const actions = artwork.locator('.dsCardQuickActions');
+    const pane = actions.locator('.svLiquidPane').first();
+    await pane.waitFor({state:'attached'});
+    assert.equal(await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches), true);
+    assert.equal(await actions.evaluate(node => getComputedStyle(node).opacity), '1', 'narrow desktop controls are visible without hover');
+    assert.notEqual(await pane.evaluate(node => getComputedStyle(node).backdropFilter), 'none', 'visible quick actions keep their glass while idle');
+    assert.equal(await artwork.locator('.dsPlayDot').evaluate(node => getComputedStyle(node).backdropFilter), 'none', 'the hidden play overlay still skips its filter');
+  } finally {await browser.close();}
+});
+
 test('the real touch catalog keeps OS scrolling and all glass surfaces', {skip:!available && 'Chromium is not installed'}, async () => {
   const browser = await chromium.launch({headless:true});
   try {

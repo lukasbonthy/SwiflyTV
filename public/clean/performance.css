@@ -1,9 +1,24 @@
-/* Touch devices keep decorative art cached while interaction receives motion.
-   These decorative loops otherwise repaint a large image, text, or shadow. */
-@media (pointer: coarse) {
-  body.svCleanShell .netflixWordmark,
-  body.svCleanShell .dsHeroBg,
-  body.svCleanShell .dsHeroActions > .dsPrimaryBtn {animation:none !important}
+/* Legacy shimmer, drift and pulse loops still invalidate styles even when
+   newer catalog rules override their painted properties. Keep them idle
+   on desktop as well as touch; entrance and interaction motion stay intact. */
+body.svCleanShell .netflixWordmark,
+body.svCleanShell .dsHeroBg,
+body.svCleanShell .dsHeroActions > .dsPrimaryBtn {animation:none !important}
+
+/* Opacity alone leaves backdrop filters in the compositor's scroll work.
+   Keep idle, hidden controls free of lenses without removing focus targets.
+   Narrow layouts always show quick actions, so keep their glass active. */
+@media (hover: hover) and (pointer: fine) {
+  body.svCleanShell .dsCardArtwork:not(:hover):not(:focus-within) .dsPlayDot {
+    -webkit-backdrop-filter:none !important;
+    backdrop-filter:none !important;
+  }
+}
+@media (hover: hover) and (pointer: fine) and (min-width: 861px) {
+  body.svCleanShell .dsCardArtwork:not(:hover):not(:focus-within) .dsCardQuickActions .svLiquidPane {
+    -webkit-backdrop-filter:none !important;
+    backdrop-filter:none !important;
+  }
 }
 /* Legacy card/rail hints reserved a layer for every poster, even while idle.
    Hover and row transitions can acquire a layer only for their active motion. */
