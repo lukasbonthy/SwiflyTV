@@ -10,31 +10,34 @@ function wheel(w, target, options = {}) {
   return event;
 }
 
-test('A discrete wheel step builds gently and retains a bounded inertial settle', () => {
-  for (const interval of [8, 16]) {
-    const env = browser('<main>Catalog</main>'), w = env.window;
-    w.boot('motion.js');
-    assert.equal(wheel(w, w.document.querySelector('main')).defaultPrevented, true);
-    w.flush(interval);
-    assert(env.page.scrollTop >= 6 && env.page.scrollTop < 18, 'The first frame should begin gently instead of spending most of the gesture immediately');
-    for (let time = interval * 2; time <= 240; time += interval) w.flush(time);
-    assert(env.page.scrollTop > 75 && env.page.scrollTop < 110, 'The gesture should still have visible distance to settle after 240ms');
-    for (let time = 240 + interval; time <= 600; time += interval) w.flush(time);
-    assert(env.page.scrollTop > 114 && env.page.scrollTop < 120, 'The glide should retain its final controlled approach at 600ms');
-    for (let time = 600 + interval; time <= 1100; time += interval) w.flush(time);
-    assert.equal(env.page.scrollTop, 120, 'The ordinary wheel distance must finish within a bounded time');
-    assert.equal(w.frameCount(), 0, 'The easing must have a bounded finish with no idle frame');
-    env.finish();
+test('Desktop wheel input is passive and schedules no JavaScript scroll frames',()=>{
+  const env=browser('<main>Catalog</main>'),w=env.window,d=w.document;
+  let writes=0;const orig=w.scrollTo;
+  w.scrollTo=(...args)=>{writes++;return orig(...args);};
+  w.boot('motion.js');
+  for(let i=0;i<120;i++){
+    const gesture=wheel(w,d.querySelector('main'),{deltaY:i%2?2:120,deltaMode:0});
+    assert.equal(gesture.defaultPrevented,false,'mouse wheels and high-resolution trackpads retain compositor-native input');
   }
+  assert.equal(writes,0,'the wheel gesture must not write JS scroll positions');
+  assert.equal(w.frameCount(),0,'the wheel gesture must not create an animation-frame loop');
+  env.finish();
 });
 
-test('A delayed frame finishes wheel motion without adding a long settling tail', () => {
-  const env = browser('<main>Catalog</main>'), w = env.window;
+test('Programmatic carousel / navigation movement settles quickly but gives way to a manual wheel',()=>{
+  const env=browser('<main>Catalog</main>'),w=env.window,d=w.document;
   w.boot('motion.js');
-  wheel(w, w.document.querySelector('main'));
-  w.flush(16); w.flush(1400);
-  assert.equal(env.page.scrollTop, 120, 'Elapsed time should finish the gesture after a delayed frame');
-  assert.equal(w.frameCount(), 0);
+  w.SwiflyMotion.scrollBy(null,{top:120});
+  assert.equal(w.frameCount(),1);
+  w.flush(16);assert(env.page.scrollTop>0,'programmatic scroll animates instead of jumping');
+  w.flush(240);assert(env.page.scrollTop>100,'deliberate navigation should not take a full second');
+  w.flush(480);assert.equal(env.page.scrollTop,120);
+  assert.equal(w.frameCount(),0);
+  w.SwiflyMotion.scrollBy(null,{top:240});w.flush(496);
+  const current=env.page.scrollTop;
+  assert.equal(wheel(w,d.querySelector('main')).defaultPrevented,false);
+  assert.equal(w.frameCount(),0,'manual wheel preempts programmatic scrolling immediately');
+  w.flush(560);assert.equal(env.page.scrollTop,current);
   env.finish();
 });
 
@@ -57,10 +60,30 @@ test('Native coarse scrolling changes navigation state without hero measurements
   env.finish();
 });
 
+test('A visible desktop hero does not repaint its masked artwork during manual scroll by default',()=>{
+  const env=browser('<div class="dsHero"></div>'),w=env.window,d=w.document,hero=d.querySelector('.dsHero');
+  let measurements=0,writes=0,schedules=0;
+  hero.getBoundingClientRect=()=>{measurements++;return {top:0,height:500};};
+  const previous=hero.style.setProperty.bind(hero.style),raf=w.requestAnimationFrame;
+  hero.style.setProperty=(...args)=>{writes++;return previous(...args);};
+  w.requestAnimationFrame=fn=>{schedules++;return raf(fn);};
+  w.boot('motion.js');
+  for(let i=0;i<140;i++){
+    env.page.scrollTop=i*4;
+    d.dispatchEvent(new w.Event('scroll'));
+    w.flush(i*7);
+  }
+  assert.equal(measurements,0,'no frame-time hero geometry reads on high-refresh catalog scrolls');
+  assert.equal(writes,0,'large hero image stays compositor-static instead of repainting every frame');
+  assert.equal(schedules,0,'hero art should not compete with native wheel animation');
+  env.finish();
+});
+
 test('Fine scrolling past an offscreen hero leaves no presentation frame queued', () => {
   const env = browser('<div class="dsHero"></div>'), w = env.window, d = w.document, hero = d.querySelector('.dsHero');
   let boxes = 0, writes = 0, schedules = 0;
   hero.getBoundingClientRect = () => {boxes++; return {top:0, height:500};};
+  d.body.dataset.svScrollArt = 'on'; // Explicit opt-in to the legacy decorative hero presentation.
   w.boot('motion.js'); boxes = 0;
   const set = hero.style.setProperty.bind(hero.style), raf = w.requestAnimationFrame;
   hero.style.setProperty = (...args) => {writes++; return set(...args);};
@@ -101,8 +124,18 @@ test('Non-cancelable wheel delivery and player surfaces retain native input', ()
   }
 });
 
+test('Catalog rails stay visible and do not queue costly opacity/transform reveals',()=>{
+  const env=browser('<section class="svCatalogRow">Movies</section><section class="svResumeSection">Continue</section><section class="svDetailSection">Extra details</section>'),w=env.window,d=w.document;
+  for(const section of d.querySelectorAll('section'))section.getBoundingClientRect=()=>({top:2200,height:400});
+  w.boot('motion.js');
+  assert.equal(d.querySelector('.svCatalogRow').classList.contains('svMotionReveal'),false);
+  assert.equal(d.querySelector('.svResumeSection').classList.contains('svMotionReveal'),false);
+  assert.equal(d.querySelector('.svDetailSection').classList.contains('svMotionReveal'),true,'theater details can keep premium entrance reveals');
+  env.finish();
+});
+
 test('Section reveals have a measured settle and remain visible without JavaScript or after preference changes', () => {
-  const env = browser('<section class="svCatalogRow">Movies</section>'), w = env.window, d = w.document, section = d.querySelector('section');
+  const env = browser('<section class="svDetailSection">Details</section>'), w = env.window, d = w.document, section = d.querySelector('section');
   const style = d.createElement('style'); style.textContent = source('motion.css'); d.head.append(style);
   assert.notEqual(w.getComputedStyle(section).opacity, '0', 'Content is available before motion initializes');
   section.getBoundingClientRect = () => ({top:1600, height:400});
@@ -115,7 +148,7 @@ test('Section reveals have a measured settle and remain visible without JavaScri
 });
 
 test('The native scroll preference immediately exposes pending reveals through CSS', () => {
-  const env = browser('<section class="svCatalogRow svMotionReveal">Movies</section>'), w = env.window, d = w.document;
+  const env = browser('<section class="svDetailSection svMotionReveal">Details</section>'), w = env.window, d = w.document;
   const style = d.createElement('style'); style.textContent = source('motion.css'); d.head.append(style);
   d.body.dataset.svScroll = 'native';
   const computed = w.getComputedStyle(d.querySelector('section'));
@@ -126,6 +159,6 @@ test('The native scroll preference immediately exposes pending reveals through C
 
 test('Motion preference observer ignores dynamic catalog subtree mutations',()=>{
  const src=require('node:fs').readFileSync(require('node:path').join(__dirname,'../public/clean/motion.js'),'utf8');
- assert(src.includes("preferenceObserver.observe(document.body, {attributes:true, attributeFilter:['class','style','data-sv-scroll']});"));
+ assert(src.includes("preferenceObserver.observe(document.body, {attributes:true, attributeFilter:['class','style','data-sv-scroll','data-sv-scroll-art']});"));
  assert(!src.includes("attributeFilter:['class','style','data-sv-scroll'], childList:true, subtree:true"),'new SVG, poster and player elements cannot invalidate every wheel-style cache');
 });
