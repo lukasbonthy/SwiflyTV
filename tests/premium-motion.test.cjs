@@ -10,71 +10,42 @@ function wheel(w, target, options = {}) {
   return event;
 }
 
-test('Mouse wheel retains premium browser easing while trackpads stay native',()=>{
-  const env=browser('<main>Catalog</main>'),w=env.window,d=w.document;
-  const calls=[],native=w.scrollTo;
-  w.scrollTo=options=>{calls.push(options);return native(options);};
-  w.boot('motion.js');
-  const target=d.querySelector('main');
-  const first=wheel(w,target,{deltaY:120,deltaMode:0});
-  assert.equal(first.defaultPrevented,true,'a discrete wheel notch gets the premium eased treatment');
-  assert.equal(calls.length,1);
-  assert.equal(calls[0].behavior,'smooth','the browser compositor, not a JS frame loop, owns the animation');
-  assert.equal(calls[0].top,134.4,'single notches cover ground without feeling slow');
-  assert.equal(w.frameCount(),0);
-  const precise=wheel(w,target,{deltaY:2.5,deltaMode:0});
-  assert.equal(precise.defaultPrevented,false,'precision trackpad gestures retain native momentum');
-  assert.equal(calls.length,1,'trackpad input never causes a JS scroll write');
-  assert.equal(w.frameCount(),0);
-  env.finish();
-});
-
-test('Repeated wheel notches coalesce without restarting the browser animation per sample',async()=>{
+test('Desktop wheel and trackpad scroll stay compositor-native without JS scroll writes',()=>{
  const env=browser('<main>Catalog</main>'),w=env.window,d=w.document;
- const calls=[],native=w.scrollTo;
- w.scrollTo=options=>{calls.push(options);return native(options);};
- w.boot('motion.js');
- const target=d.querySelector('main');
- for(let i=0;i<4;i++)assert.equal(wheel(w,target,{deltaY:120}).defaultPrevented,true);
- assert.equal(calls.length,1,'a rapid wheel burst starts immediately then batches its destination');
- assert.equal(calls[0].top,134.4);
- assert.equal(w.frameCount(),0,'coalescing does not create a frame-driven wheel loop');
- await new Promise(resolve=>setTimeout(resolve,120));
- assert.equal(calls.length,2,'one trailing update should land the latest destination');
- assert.equal(Math.round(calls[1].top),538);
- assert(calls.every(x=>x.behavior==='smooth'));
- env.finish();
-});
-
-test('Arrow keys cancel queued mouse-wheel destinations',async()=>{
- const env=browser('<main>Catalog</main>'),w=env.window,d=env.window.document;
  let writes=0;const native=w.scrollTo;
  w.scrollTo=options=>{writes++;return native(options);};
  w.boot('motion.js');
- wheel(w,d.querySelector('main'));wheel(w,d.querySelector('main'));
- assert.equal(writes,1);
- d.dispatchEvent(new w.KeyboardEvent('keydown',{key:'PageDown',bubbles:true}));
- await new Promise(resolve=>setTimeout(resolve,115));
- assert.equal(writes,1,'an old wheel destination never overwrites keyboard scrolling');
+ const target=d.querySelector('main');
+ for(const delta of [120,120,120,-120,2.5,180,-240]) {
+   const gesture=wheel(w,target,{deltaY:delta,deltaMode:0});
+   assert.equal(gesture.defaultPrevented,false,'never cancel native scroll input');
+ }
+ assert.equal(writes,0,'wheel input does not synthesize scrollTo calls');
+ assert.equal(w.frameCount(),0,'wheel input needs no JavaScript frame loop');
  env.finish();
 });
-
-test('Programmatic carousel / navigation movement settles quickly but gives way to a manual wheel',()=>{
-  const env=browser('<main>Catalog</main>'),w=env.window,d=w.document;
-  w.boot('motion.js');
-  w.SwiflyMotion.scrollBy(null,{top:120});
-  assert.equal(w.frameCount(),1);
-  w.flush(16);assert(env.page.scrollTop>0,'programmatic scroll animates instead of jumping');
-  w.flush(240);assert(env.page.scrollTop>100,'deliberate navigation should not take a full second');
-  w.flush(480);assert.equal(env.page.scrollTop,120);
-  assert.equal(w.frameCount(),0);
-  w.SwiflyMotion.scrollBy(null,{top:240});w.flush(496);
-  const current=env.page.scrollTop;
-  assert.equal(wheel(w,d.querySelector('main')).defaultPrevented,true);
-  assert.equal(w.frameCount(),0,'manual premium wheel preempts programmatic animation immediately');
-  assert.equal(env.page.scrollTop,current+134.4,'the browser receives a quick weighted gesture destination');
-  w.flush(560);assert.equal(env.page.scrollTop,current+134.4);
-  env.finish();
+test('No document-level blocking wheel handler remains in the motion controller',()=>{
+ const code=source('motion.js');
+ assert.match(code,/addEventListener\('wheel', onWheel, \{passive:true\}\)/);
+ assert.doesNotMatch(code,/event\.preventDefault\(\)/);
+ assert.doesNotMatch(code,/wheelBursts|sendWheelTarget|wheelWriteInterval/);
+});
+test('Programmatic carousel/navigation glides are interrupted by manual native wheel input',()=>{
+ const env=browser('<main>Catalog</main>'),w=env.window,d=w.document;
+ w.boot('motion.js');
+ w.SwiflyMotion.scrollBy(null,{top:120});
+ assert.equal(w.frameCount(),1);
+ w.flush(16);assert(env.page.scrollTop>0);
+ w.flush(240);assert(env.page.scrollTop>100);
+ w.flush(480);assert.equal(env.page.scrollTop,120);
+ assert.equal(w.frameCount(),0);
+ w.SwiflyMotion.scrollBy(null,{top:240});w.flush(496);
+ const current=env.page.scrollTop;
+ assert.equal(wheel(w,d.querySelector('main')).defaultPrevented,false);
+ assert.equal(w.frameCount(),0,'the native wheel cancels programmed glides');
+ assert.equal(env.page.scrollTop,current,'browser-native motion is not simulated by jsdom');
+ w.flush(560);assert.equal(env.page.scrollTop,current);
+ env.finish();
 });
 
 test('Native coarse scrolling changes navigation state without hero measurements, writes or RAFs', () => {

@@ -61,14 +61,14 @@ test('Every visible action family uses the navigation lens and releases offscree
  assert.equal(w.frameCount(),0,'coverage must not add an idle render loop');env.finish();
 });
 
-test('Rapid mouse wheel reversals retain compositor easing without a JavaScript frame loop',()=>{
+test('Rapid reversed wheel input stays browser-native without JavaScript scroll writes',()=>{
  const env=browser('<main>Catalog</main>'),w=env.window,target=w.document.querySelector('main');
  const events=[];const original=w.scrollTo;w.scrollTo=options=>{events.push(options);return original(options);};
  w.boot('motion.js');
- for(let i=0;i<30;i++)assert.equal(wheel(w,target,{deltaY:i%2?-120:120}).defaultPrevented,true);
- assert(events.length===30&&events.every(event=>event.behavior==='smooth'),'mouse notches use native compositor easing');
- assert.equal(env.page.scrollTop,0,'rapid alternating notches return to their starting position');
- assert.equal(w.frameCount(),0,'no frame-by-frame JavaScript scroll animation');
+ for(let i=0;i<30;i++)assert.equal(wheel(w,target,{deltaY:i%2?-120:120}).defaultPrevented,false);
+ assert.equal(events.length,0,'the browser owns all wheel inputs including reversals');
+ assert.equal(env.page.scrollTop,0,'jsdom has no native compositor');
+ assert.equal(w.frameCount(),0,'no JavaScript wheel animation loop');
  env.finish();
 });
 test('Programmatic scroll finishes with rounded pixel positions and no lingering frames',()=>{
@@ -94,7 +94,7 @@ test('A recognized trackpad gesture remains native when later deltas become larg
   assert.equal(wheel(w, target, {deltaY:2.5}).defaultPrevented, false);
   now = 16; assert.equal(wheel(w, target, {deltaY:120}).defaultPrevented, false, 'An accelerated trackpad sample must not switch into mouse-wheel inertia');
   assert.equal(w.frameCount(), 0);
-  now = 500; assert.equal(wheel(w, target, {deltaY:120}).defaultPrevented, true, 'A new discrete wheel gesture after momentum settles gets the premium easing');
+  now = 500; assert.equal(wheel(w, target, {deltaY:120}).defaultPrevented, false, 'Every wheel gesture stays native after momentum settles');
   env.finish();
 });
 test('Repeated mouse wheel input avoids re-reading unchanged ancestor overflow', () => {

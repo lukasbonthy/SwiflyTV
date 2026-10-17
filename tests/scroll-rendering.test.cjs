@@ -7,7 +7,7 @@ const {chromium}=require('playwright-core');
 const available=fs.existsSync(chromium.executablePath()) ||
   fs.existsSync(chromium.executablePath().replace(/chromium-(\d+)\/chrome-linux\/chrome$/, 'chromium_headless_shell-$1/chrome-linux/headless_shell'));
 
-test('Chromium keeps premium wheel easing without a main-thread animation loop', {skip:!available&&'Chromium is not installed'},async()=>{
+test('Chromium native wheel scroll is responsive with no blocking JavaScript motion', {skip:!available&&'Chromium is not installed'},async()=>{
  const browser=await chromium.launch({headless:true});
  try{
   const page=await browser.newPage({viewport:{width:1100,height:760}});
@@ -24,9 +24,8 @@ test('Chromium keeps premium wheel easing without a main-thread animation loop',
   await page.waitForFunction(()=>window.scrollY>=400);
   const result=await page.evaluate(()=>({y:window.scrollY,writes:window.__scrollWrites,events:window.__wheelSamples,frames:document.querySelector('.dsHero').style.getPropertyValue('--sv-hero-offset')}));
   assert(result.y>=400,'Chrome itself must perform the wheel movement');
-  assert(result.writes.length>=1,'mouse-wheel pulses should trigger the premium browser smoothing');
-  assert(result.writes.every(call=>call.behavior==='smooth'),'the compositor gets native eased destinations');
-  assert(result.events.length>=1&&result.events.every(v=>v===true),'mouse wheel notches are owned by the native-smooth route: '+JSON.stringify(result.events));
+  assert.equal(result.writes.length,0,'wheel pulses never invoke JavaScript scrollTo');
+  assert(result.events.length>=1&&result.events.every(v=>v===false),'native wheel events are never canceled: '+JSON.stringify(result.events));
   assert.equal(result.frames,'','masked hero artwork remains static during wheel input');
   const trackpad=await page.evaluate(()=>{
     const element=document.querySelector('.dsHero');

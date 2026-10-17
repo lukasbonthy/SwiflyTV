@@ -9,3 +9,10 @@
    Hover and row transitions can acquire a layer only for their active motion. */
 body.svCleanShell :is(.movieCard,.dsThumb,.dsRow,.movieRail,.dsRail,.nfTopTenRail,.dsWelcomeRailTrack) {will-change:auto !important}
 body.svCleanShell :is(.movieRail,.dsRail) {transform:none !important}
+
+/* The hero color spill is a large, blurred, masked image. Clip its paint to
+   its already-hidden bounds so scrolling catalog rows need not invalidate
+   pixels outside that region. Its opacity, mask and glass stay unchanged. */
+body.svCleanShell main > .svHeroLightBridge > .svHeroSpill {
+  contain: paint;
+}
