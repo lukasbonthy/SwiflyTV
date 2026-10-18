@@ -1,0 +1,56 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
+const {chromium}=require('playwright-core');
+const {loadServer}=require('./ui-helpers.cjs');
+const {createSourceJobs}=require('../lib/source-jobs');
+const available=fs.existsSync(chromium.executablePath());let api,browser,origin,jobs;
+test.before(async()=>{
+ if(!available)return;api=loadServer();
+ const titles=Array.from({length:12},(_,i)=>({id:101+i,title:'Cinema chapter '+(i+1),poster_path:'/poster.jpg',backdrop_path:'/backdrop.jpg',overview:'A story for the big screen.',vote_average:8.2,release_date:'2026-06-01',media_type:'movie'}));
+ api.setTmdb(async endpoint=>/^\/movie\/\d+$/.test(endpoint)?{...titles[0],runtime:118,genres:[],credits:{cast:[]},videos:{results:[]},recommendations:{results:titles},similar:{results:[]},images:{logos:[]}}:{results:titles,total_pages:1});
+ jobs=createSourceJobs({resolve:async()=>({status:'error',message:'Local controller fixture: playback unavailable.'}),deadlineMs:1000});api.setSourceJobs(jobs);
+ await new Promise(resolve=>api.httpServer.listen(0,'127.0.0.1',resolve));origin='http://127.0.0.1:'+api.httpServer.address().port;browser=await chromium.launch({headless:true});
+});
+test.after(async()=>{await browser?.close();jobs?.destroy();if(api)await new Promise(resolve=>api.io.close(resolve));});
+async function open(){
+ const context=await browser.newContext({viewport:{width:1280,height:720},reducedMotion:'reduce'});
+ await context.addInitScript(()=>{
+  localStorage.setItem('swiflytv.session',JSON.stringify({email:'xbox-browser@example.test'}));localStorage.setItem('swiflytv.activeProfile',JSON.stringify({id:'xbox',name:'Xbox Viewer'}));localStorage.setItem('swiflytv.tvFocusMode','true');
+  const listeners=new Map(),add=window.addEventListener.bind(window);
+  window.addEventListener=(type,listener,options)=>{if(['gamepadconnected','gamepaddisconnected'].includes(type)){if(!listeners.has(type))listeners.set(type,[]);listeners.get(type).push(listener);}else add(type,listener,options);};
+  const p={id:'Xbox Wireless Controller',index:0,connected:true,mapping:'standard',axes:[0,0,0,0],buttons:Array.from({length:17},()=>({pressed:false,value:0}))};
+  window.xbox={pad:p,set(index,value){p.buttons[index]={pressed:value,value:Number(value)};},disconnect(){p.connected=false;for(const fn of listeners.get('gamepaddisconnected')||[])fn({gamepad:p});}};
+  Object.defineProperty(navigator,'getGamepads',{value:()=>p.connected?[p]:[]});
+ });
+ await context.route('**/*',route=>{const url=new URL(route.request().url());if(url.origin===origin)return route.continue();const image=route.request().resourceType()==='image';return route.fulfill({contentType:image?'image/svg+xml':route.request().resourceType()==='stylesheet'?'text/css':'text/plain',body:image?'<svg xmlns="http://www.w3.org/2000/svg" width="640" height="960"><rect width="640" height="960" fill="#203347"/></svg>':''});});
+ const page=await context.newPage();await page.goto(origin+'/');await page.locator('#swiflyTvGuide[data-input="gamepad"]').waitFor();return {context,page};
+}
+async function press(page,index){await page.evaluate(async index=>{const frame=()=>new Promise(requestAnimationFrame);xbox.set(index,true);await frame();await frame();xbox.set(index,false);await frame();await frame();},index);}
+test('An Xbox controller browses real catalog rows, opens help, searches, and recovers after disconnect',{skip:!available&&'Chromium is not installed'},async()=>{
+ const {context,page}=await open();try{
+  const rail=page.locator('.movieRail').first();await rail.locator('.posterWrap').first().focus();
+  await press(page,5);let selected=await page.evaluate(()=>document.activeElement.closest('.movieRail')&&[...document.activeElement.closest('.movieRail').querySelectorAll('.posterWrap')].indexOf(document.activeElement));assert(selected>=3,'RB advances a visible page of titles');
+  const previous=await page.evaluate(()=>document.activeElement.getAttribute('href'));await press(page,7);assert.equal(await page.evaluate(()=>document.activeElement.closest('.movieRail')===document.querySelectorAll('.movieRail')[1]),true,'RT moves to the next actual row');await press(page,6);assert.equal(await page.evaluate(()=>document.activeElement.getAttribute('href')),previous);
+  const geometry=await page.evaluate(()=>({caption:document.activeElement.closest('.movieCard').querySelector('.dsCardMeta').getBoundingClientRect().bottom,guide:document.getElementById('swiflyTvGuide').getBoundingClientRect().top}));assert(geometry.caption<geometry.guide,'Selected movie date stays above the control guide');
+  await press(page,8);await page.locator('#swiflyTvHelp[open]').waitFor();assert.equal(await page.locator('#swiflyTvHelp [data-sv-tv-help-close]').evaluate(node=>node===document.activeElement),true);await press(page,1);await page.locator('#swiflyTvHelp').waitFor({state:'hidden'});assert.equal(await page.evaluate(()=>document.activeElement.getAttribute('href')),previous);
+  await press(page,3);await page.locator('#svNavSearchInput').waitFor({state:'visible'});assert.equal(await page.locator('#svNavSearchInput').evaluate(node=>node===document.activeElement),true);
+  await page.locator('#svNavSearchInput').fill('Northern lights');await press(page,8);await page.locator('#swiflyTvHelp[open]').waitFor();await press(page,1);await page.waitForFunction(()=>document.activeElement?.id==='svNavSearchInput');assert.equal(await page.locator('#svNavSearchInput').inputValue(),'Northern lights','Returning from help preserves the search context');
+  await press(page,1);assert.equal(await page.locator('#svNavSearchPopup').getAttribute('hidden'),'');
+  await page.evaluate(()=>xbox.disconnect());assert.equal(await page.locator('#swiflyTvGuide').getAttribute('data-input'),'remote');await page.keyboard.press('ArrowLeft');assert.equal(await page.evaluate(()=>document.documentElement.dataset.svTv),'true');
+ }finally{await context.close();}
+});
+test('Xbox player settings and unavailable playback remain navigable without leaving the movie',{skip:!available&&'Chromium is not installed'},async()=>{
+ const {context,page}=await open();try{
+  await page.goto(origin+'/watch/movie/101?mode=movie');await page.locator('[data-player-stage]').waitFor();await page.locator('[data-player-stage]').focus();
+  const before=page.url();await press(page,2);await press(page,7);assert.equal(page.url(),before);assert.equal(await page.evaluate(()=>document.querySelector('[data-player-video]').paused),true,'Unavailable transport cannot start raw video');
+  await press(page,8);await page.locator('#swiflyTvHelp[open]').waitFor();await press(page,1);assert.equal(page.url(),before);assert.equal(await page.locator('[data-player-stage]').evaluate(node=>node===document.activeElement),true);
+  await press(page,9);const options=page.locator('.svPlayerPopover[open],.dsProfileMenu[open]');await options.waitFor();assert.equal(await options.evaluate(node=>node.contains(document.activeElement)),true,'Menu remains useful while playback is unavailable');await press(page,1);assert.equal(await options.count(),0);
+ }finally{await context.close();}
+});
+test('Xbox search leaves real browser fullscreen before focusing the search field',{skip:!available&&'Chromium is not installed'},async()=>{
+ const {context,page}=await open();try{
+  await page.goto(origin+'/watch/movie/101?mode=movie');await page.locator('[data-player-stage]').focus();await page.keyboard.press('f');await page.waitForFunction(()=>document.fullscreenElement?.matches('[data-player-stage]'));
+  await press(page,3);await page.waitForFunction(()=>!document.fullscreenElement&&document.activeElement?.id==='svNavSearchInput');assert.equal(await page.locator('#svNavSearchPopup').getAttribute('hidden'),null);
+  await page.keyboard.press('ArrowDown');assert.equal(await page.evaluate(()=>document.getElementById('svNavSearchPopup').contains(document.activeElement)),true,'Directional focus stays in the now visible search');
+ }finally{await context.close();}
+});
