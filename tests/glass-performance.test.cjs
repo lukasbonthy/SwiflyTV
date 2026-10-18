@@ -71,6 +71,18 @@ test('Rapid reversed wheel input stays browser-native without JavaScript scroll 
  assert.equal(w.frameCount(),0,'no JavaScript wheel animation loop');
  env.finish();
 });
+
+test('The temporary intro skip control does not allocate a navigation glass lens', () => {
+  const env = glass('<div class="svLiquidPane" data-swifly-glass></div><section data-sv-intro-root><button data-sv-intro-skip>Skip intro</button></section>');
+  const w = env.window, d = w.document;
+  w.boot('liquid-glass/liquid-glass.js'); w.boot('liquid-glass/surfaces.js');
+  env.intersect(true); w.flush(16);
+  const skip = d.querySelector('[data-sv-intro-skip]');
+  assert.equal(skip.classList.contains('svGlassSurface'), false);
+  assert.equal(skip.querySelector('.svLiquidPane'), null);
+  assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length, 1, 'the existing navigation lens stays active');
+  env.finish();
+});
 test('Programmatic scroll finishes with rounded pixel positions and no lingering frames',()=>{
  const env=browser('<main>Catalog</main>'),w=env.window;
  w.scrollTo=options=>{env.page.scrollTop=Math.round(options.top);env.page.scrollLeft=Math.round(options.left);};

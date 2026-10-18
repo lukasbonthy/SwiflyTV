@@ -133,7 +133,7 @@
   function ensure(host) {
     // Studio owns its accessible buttons. Extra SVG panes across all its
     // settings replaced their styling and imposed substantial rendering work.
-    if (!(host instanceof HTMLElement) || !host.isConnected || host.closest('#controlPanel') ||
+    if (!(host instanceof HTMLElement) || !host.isConnected || host.closest('#controlPanel,[data-sv-intro-root]') ||
         host.matches('.svDetailDialog, .svStudioDialog') ||
         host.closest('.svLiquidPane, media-player, .vds-controls')) return;
     if(host.closest('.svPlayerPopoverBody')&&!host.matches('.svPlayerPopoverBody'))return;
