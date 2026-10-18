@@ -25,7 +25,9 @@ async function open(){
  await context.route('**/*',route=>{const url=new URL(route.request().url());if(url.origin===origin)return route.continue();const image=route.request().resourceType()==='image';return route.fulfill({contentType:image?'image/svg+xml':route.request().resourceType()==='stylesheet'?'text/css':'text/plain',body:image?'<svg xmlns="http://www.w3.org/2000/svg" width="640" height="960"><rect width="640" height="960" fill="#203347"/></svg>':''});});
  const page=await context.newPage();await page.goto(origin+'/');await page.locator('#swiflyTvGuide[data-input="gamepad"]').waitFor();return {context,page};
 }
-async function press(page,index){await page.evaluate(async index=>{const frame=()=>new Promise(requestAnimationFrame);xbox.set(index,true);await frame();await frame();xbox.set(index,false);await frame();await frame();},index);}
+// One polling frame represents a tap; keeping the button down over several
+// slow CI frames would correctly start the player's held-trigger repeat.
+async function press(page,index){await page.evaluate(async index=>{const frame=()=>new Promise(requestAnimationFrame);xbox.set(index,true);await frame();xbox.set(index,false);await frame();},index);}
 test('An Xbox controller browses real catalog rows, opens help, searches, and recovers after disconnect',{skip:!available&&'Chromium is not installed'},async()=>{
  const {context,page}=await open();try{
   const rail=page.locator('.movieRail').first();await rail.locator('.posterWrap').first().focus();

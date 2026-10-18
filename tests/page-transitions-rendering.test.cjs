@@ -95,6 +95,8 @@ test('Home, Movies and Series use one finite native dissolve and keep their live
     assert.equal(await page.locator('[data-sv-intro-root],[data-sv-intro-gate],body[inert]').count(),0,'First entry must open directly without an intro or locked page');
     await navigate(page, '.netflixLinks a[href="/movies"]', '/movies');
     await navigate(page, '.netflixLinks a[href="/tv"]', '/tv');
+    // Lens decoding and its render frame can finish after the dissolve.
+    await page.waitForFunction(() => document.querySelector('.netflixNav>.svLiquidPane')?.dataset.swiflyRenderer === 'svg');
     const state = await page.evaluate(() => {
       const body = getComputedStyle(document.body), scene = getComputedStyle(document.querySelector('.svBrowseScene'));
       const lens = document.querySelector('.netflixNav>.svLiquidPane');
