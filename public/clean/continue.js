@@ -1,29 +1,133 @@
-/* SwiflyTV v153: one history component for homepage and Continue Watching. */
+/* Profile-local playback progress and Continue Watching controls. */
 (() => {
   "use strict";
   if (window.SwiflyContinue) return;
   const key = "movieverse.continue";
+  const legacyKey = "swiflytv.continueWatching";
+  const actionStates = new WeakMap();
   let started = false, renderFrame = 0;
+  const text = value => typeof value === "string" || typeof value === "number" ? String(value) : "";
+  const numeric = value => typeof value === "number" || typeof value === "string" ? Number(value) : NaN;
   const escape = value => String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
-  function read() {
+  function json(name, fallback) {
+    try { const value = JSON.parse(localStorage.getItem(name) || "null"); return value === null ? fallback : value; } catch { return fallback; }
+  }
+  const sameProfile = (a, b) => a && b && (a.id && b.id ? a.id === b.id : a.name && a.name === b.name);
+  function viewer() {
+    const selected = json("swiflytv.activeProfile", null);
+    const configured = json("swiflytv.profiles", []);
+    // Match the IDs supplied by the profile chooser before comparing names.
+    let profiles = Array.isArray(configured) ? configured.filter(item => item && typeof item === "object")
+      .map((item, index) => ({...item, id:item.id || "legacy-" + index})) : [];
+    if (!profiles.length) profiles = [{id:"main", name:"Main"}, {id:"kids", name:"Kids"}];
+    const index = selected ? profiles.findIndex(item => sameProfile(item, selected)) : profiles.length ? 0 : -1;
+    const active = profiles[index] || selected || profiles[0];
+    const id = text(active?.id) || (index >= 0 ? "legacy-" + index : text(active?.name) ? "name:" + text(active.name) : "main");
+    return { id, adoptLegacy: profiles.length === 1 && (!selected || sameProfile(profiles[0], selected)) };
+  }
+  const profileId = () => viewer().id;
+  function write(items, announce = true) {
     try {
-      const raw = localStorage.getItem(key);
-      const items = JSON.parse(raw === null ? localStorage.getItem("swiflytv.continueWatching") || "[]" : raw);
-      if (!Array.isArray(items)) return [];
-      const seen = new Set();
-      return items.filter(item => item && (item.id || item.tmdbId)).map(item => {
-        const id = String(item.id || item.tmdbId);
-        const type = ["tv", "series"].includes(item.type || item.media_type) ? "tv" : "movie";
-        return { ...item, id, type, key: type + ":" + id, title: item.title || item.name || "Untitled", poster: item.poster || item.poster_path || "", backdrop: item.backdrop || item.backdrop_path || "" };
-      }).filter(item => { if (seen.has(item.key)) return false; seen.add(item.key); return true; });
-    } catch { return []; }
+      localStorage.setItem(key, JSON.stringify(items));
+      if (announce) window.dispatchEvent(new Event("swifly:continue-change"));
+      return true;
+    } catch { return false; }
+  }
+  function all() {
+    let raw;
+    try { raw = localStorage.getItem(key); } catch { return []; }
+    const items = json(raw === null ? legacyKey : key, []);
+    if (!Array.isArray(items)) return [];
+    const owner = viewer();
+    if (owner.adoptLegacy && items.some(item => item && !item.profileId)) {
+      const adopted = items.map(item => item && typeof item === "object" && !item.profileId ? { ...item, profileId: owner.id } : item);
+      write(adopted, false);
+      return adopted;
+    }
+    return items;
+  }
+  const positiveInteger = value => Number.isSafeInteger(numeric(value)) && numeric(value) > 0 ? numeric(value) : null;
+  function normalize(item) {
+    if (!item || typeof item !== "object") return null;
+    const id = positiveInteger(item.id || item.tmdbId);
+    const rawType = item.type || item.media_type || "movie";
+    const type = ["tv", "series"].includes(rawType) ? "tv" : rawType === "movie" ? "movie" : "";
+    if (!id || !type) return null;
+    const rawTime = numeric(item.currentTime ?? item.positionSeconds ?? item.position);
+    const rawDuration = numeric(item.duration ?? item.durationSeconds);
+    const currentTime = Number.isFinite(rawTime) && rawTime >= 0 ? rawTime : 0;
+    const duration = Number.isFinite(rawDuration) && rawDuration > 0 ? rawDuration : 0;
+    const season = positiveInteger(item.season ?? item.s), episode = positiveInteger(item.episode ?? item.e);
+    const completed = item.completed === true || item.ended === true || duration > 0 && currentTime >= duration;
+    return { ...item, id: String(id), type, key: type + ":" + id, title: text(item.title) || text(item.name) || "Untitled",
+      year:text(item.year), rating:text(item.rating),
+      poster: typeof (item.poster || item.poster_path) === "string" ? item.poster || item.poster_path : "",
+      backdrop: typeof (item.backdrop || item.backdrop_path) === "string" ? item.backdrop || item.backdrop_path : "",
+      currentTime, duration, season: season || 1, episode: episode || 1, completed,
+      resumable: !completed && currentTime >= 1 && duration > currentTime && (type !== "tv" || Boolean(season && episode)) };
+  }
+  function read(owner = profileId()) {
+    const seen = new Set();
+    return all().filter(item => item?.profileId === owner).map(normalize).filter(item => {
+      if (!item || item.completed || seen.has(item.key)) return false;
+      seen.add(item.key); return true;
+    });
+  }
+  function find(type, id, owner = profileId()) {
+    return read(owner).find(item => item.type === type && item.id === String(id) && item.resumable) || null;
+  }
+  function remove(itemKey, owner = profileId()) {
+    return write(all().filter(item => item?.profileId !== owner || normalize(item)?.key !== itemKey));
+  }
+  function saveProgress(progress, owner = profileId()) {
+    const next = normalize(progress);
+    if (!next || !Number.isFinite(numeric(progress.currentTime)) || numeric(progress.currentTime) < 0 || !next.duration
+        || next.type === "tv" && (!positiveInteger(progress.season) || !positiveInteger(progress.episode))) return false;
+    const items = all(), previous = items.find(item => item?.profileId === owner && normalize(item)?.key === next.key) || {};
+    const remaining = items.filter(item => item?.profileId !== owner || normalize(item)?.key !== next.key);
+    if (next.completed) return write(remaining);
+    const saved = { ...previous, profileId: owner, key: next.key, id: next.id, type: next.type,
+      title: next.title, poster: next.poster, backdrop: next.backdrop, year: progress.year || previous.year || "",
+      rating: progress.rating || previous.rating || "", currentTime: next.currentTime, duration: next.duration, completed: false, ended: false,
+      ...(next.type === "tv" ? { season: next.season, episode: next.episode } : {}), watchedAt: new Date().toISOString() };
+    let count = 0;
+    return write([saved, ...remaining].filter(item => item?.profileId !== owner || ++count <= 80));
+  }
+  function watchHref(item) {
+    const params = new URLSearchParams({ mode: "movie" });
+    if (item.type === "tv") { params.set("s", item.season); params.set("e", item.episode); }
+    if (item.resumable) params.set("resume", "1");
+    return "/watch/" + item.type + "/" + encodeURIComponent(item.id) + "?" + params;
+  }
+  function formatTime(seconds) {
+    const value = Math.floor(seconds), hours = Math.floor(value / 3600), minutes = Math.floor(value % 3600 / 60);
+    return (hours ? hours + ":" + String(minutes).padStart(2, "0") : minutes) + ":" + String(value % 60).padStart(2, "0");
+  }
+  function decorate(root = document) {
+    for (const link of root.querySelectorAll(".dsHeroActions a[data-play-id], .svDetailActions a[data-play-id]")) {
+      let url; try { url = new URL(link.href, location.href); } catch { continue; }
+      if (url.origin !== location.origin || !/^\/watch\/(movie|tv)\/\d+$/.test(url.pathname) || url.searchParams.get("mode") === "trailer" || url.searchParams.has("roomId") || url.searchParams.has("party")) continue;
+      const saved = find(link.dataset.playType || "movie", link.dataset.playId);
+      let state = actionStates.get(link);
+      if (!saved) {
+        if (state) { state.resume.remove(); link.classList.toggle("dsPrimaryBtn", state.primary); link.classList.toggle("dsSecondaryBtn", state.secondary); actionStates.delete(link); }
+        continue;
+      }
+      if (!state) {
+        const resume = document.createElement("a"); resume.className = "dsPrimaryBtn"; resume.dataset.resumeAction = saved.key;
+        const label = document.createElement("span"); resume.append(label);
+        state = { resume, label, primary: link.classList.contains("dsPrimaryBtn"), secondary: link.classList.contains("dsSecondaryBtn") }; actionStates.set(link, state);
+        link.before(resume); link.classList.remove("dsPrimaryBtn"); link.classList.add("dsSecondaryBtn");
+      }
+      state.resume.href = watchHref(saved);
+      state.label.textContent = "Resume" + (saved.type === "tv" ? " S" + saved.season + " E" + saved.episode : "") + " · " + formatTime(saved.currentTime);
+      state.resume.setAttribute("aria-label", "Resume " + saved.title + (saved.type === "tv" ? ", season " + saved.season + ", episode " + saved.episode : "") + " at " + formatTime(saved.currentTime));
+    }
   }
   function imageUrl(path) { if (!path) return ""; if (/^https?:\/\//i.test(path)) return path; return path.startsWith("/") ? "https://image.tmdb.org/t/p/w780" + path : ""; }
   function card(item) {
     const id = encodeURIComponent(item.id);
-    const season = Math.max(1, Math.floor(Number(item.season || item.s) || 1));
-    const episode = Math.max(1, Math.floor(Number(item.episode || item.e) || 1));
-    const href = "/watch/" + item.type + "/" + id + "?mode=movie" + (item.type === "tv" ? "&s=" + season + "&e=" + episode : "");
+    const href = watchHref(item);
     const details = "/" + item.type + "/" + id;
     const title = escape(item.title), image = imageUrl(item.backdrop || item.poster);
     const fields = { id: item.id, type: item.type, title: item.title, poster: item.poster, backdrop: item.backdrop, rating: item.rating || "", year: item.year || "" };
@@ -37,7 +141,7 @@
       '<span class="svResumePlay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m9 5 11 7-11 7Z"/></svg></span></a>' +
       '<button class="svResumeRemove" type="button" data-continue-remove="' + escape(item.key) + '" aria-label="Remove ' + title + ' from Continue Watching"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>' +
       progress + '</div><div class="svResumeCaption"><a class="svResumeTitle" href="' + escape(details) + '" title="' + title + '">' + title + '</a>' +
-      '<div class="svResumeMeta">' + (item.year ? '<span>' + escape(item.year) + '</span><span aria-hidden="true">·</span>' : '') + '<span>' + (item.type === "tv" ? "Series" : "Movie") + '</span></div></div></article>';
+      '<div class="svResumeMeta">' + (item.year ? '<span>' + escape(item.year) + '</span><span aria-hidden="true">·</span>' : '') + '<span>' + (item.type === "tv" ? "S" + item.season + " · E" + item.episode : "Movie") + '</span>' + (item.resumable ? '<span aria-hidden="true">·</span><span>' + formatTime(item.currentTime) + '</span>' : '') + '</div></div></article>';
   }
   function render() {
     const items = read(), section = document.getElementById("continueWatchingSection"), rail = document.getElementById("continueWatchingRail");
@@ -45,18 +149,21 @@
     for (const id of ["continueWatchingPageRail", "continueGrid"]) { const grid = document.getElementById(id); if (grid) { grid.hidden = items.length === 0; grid.innerHTML = items.map(card).join(""); } }
     const empty = document.getElementById("continueWatchingEmpty"); if (empty) empty.hidden = items.length > 0;
     document.querySelectorAll("[data-continue-count]").forEach(node => { node.textContent = items.length + (items.length === 1 ? " title" : " titles"); });
+    const accountCount = document.getElementById("statContinue"); if (accountCount) accountCount.textContent = String(items.length);
+    decorate();
   }
   function boot() {
     if (started) return; started = true; render();
     window.addEventListener("swifly:continue-change", () => { if (renderFrame) return; renderFrame = requestAnimationFrame(() => { renderFrame = 0; render(); }); });
-    window.addEventListener("storage", event => { if (!event.key || [key, "swiflytv.continueWatching"].includes(event.key)) render(); });
+    window.addEventListener("storage", event => { if (!event.key || [key, legacyKey, "swiflytv.activeProfile", "swiflytv.profiles"].includes(event.key)) render(); });
+    document.addEventListener("swifly:profile-changed", render);
     document.addEventListener("click", event => {
       const remove = event.target.closest("[data-continue-remove]");
-      if (remove) { localStorage.setItem(key, JSON.stringify(read().filter(item => item.key !== remove.dataset.continueRemove))); render(); if (typeof window.showToast === "function") window.showToast("Removed from Continue Watching"); return; }
+      if (remove) { if (window.SwiflyContinue.remove(remove.dataset.continueRemove)) { render(); if (typeof window.showToast === "function") window.showToast("Removed from Continue Watching"); } return; }
       const scroll = event.target.closest("[data-continue-scroll]"), rail = document.getElementById("continueWatchingRail");
       if (scroll && rail) { const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches; if (window.SwiflyMotion) window.SwiflyMotion.scrollBy(rail, {left: Number(scroll.dataset.continueScroll) * rail.clientWidth * .85}); else rail.scrollBy({ left: Number(scroll.dataset.continueScroll) * rail.clientWidth * .85, behavior: reduced ? "auto" : "smooth" }); }
     });
   }
-  window.SwiflyContinue = Object.freeze({ render, read });
+  window.SwiflyContinue = Object.freeze({ render, read, find, saveProgress, remove, profileId, decorate });
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once: true }); else boot();
 })();

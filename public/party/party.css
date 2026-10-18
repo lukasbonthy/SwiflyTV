@@ -97,7 +97,7 @@ body.svCleanShell .svPartyHub .partyLinkChoice label { margin-top:12px; }
 body.svCleanShell .svPartyHub .partyEntryForm :is(.partyFormStatus,.partyAccess) { color:#c6b8d2; font-size:12px; line-height:1.5; }
 body.svCleanShell .svPartyHub .partyFormStatus:empty { display:none; }
 body.svCleanShell .svPartyHub .partySelectedMovie { display:flex; align-items:center; gap:13px; min-width:0; padding:0 0 18px; border:0; border-bottom:1px solid var(--party-line); background:none; color:var(--party-muted); font-size:14px; line-height:1.5; }
-body.svCleanShell .svPartyHub .partySelectedMovie:not([hidden]) + .partyCardHeading { display:none; }
+body.svCleanShell .svPartyHub .partySelectedMovie:not([hidden]) ~ .partyCardHeading { display:none; }
 body.svCleanShell .svPartyHub .partySelectedMovie > img { flex-shrink:0; width:52px; height:78px; object-fit:cover; border:1px solid #ffffff26; border-radius:8px; box-shadow:0 4px 12px #0004; }
 body.svCleanShell .svPartyHub .partySelectedMovie > div { flex:1; min-width:0; }
 body.svCleanShell .svPartyHub .partySelectedMovie b { display:block; margin:4px 0; color:#faf5ff; font-size:17px; font-weight:550; line-height:1.25; overflow-wrap:anywhere; }
@@ -120,6 +120,25 @@ body.svCleanShell .svPartyHub .partyTextLink:hover { color:#fff; }
 body.svCleanShell .svPartyHub .partyLobbySearch { display:flex; align-items:center; gap:12px; width:min(470px,100%); margin:0 0 22px; padding:4px 5px 4px 16px; border:1px solid var(--party-line); border-radius:999px; background:#ffffff05; color:#adb6c5; }
 body.svCleanShell .svPartyHub .partyLobbySearch input { flex:1; min-height:38px; padding:8px 0; border:0; border-radius:0; background:none; box-shadow:none; }
 body.svCleanShell .svPartyHub .partyLobbySearch .partySecondaryBtn { min-height:38px; padding:9px 16px; font-size:13px; }
+body.svCleanShell .svPartyHub select { width:100%; min-width:0; min-height:44px; padding:10px 30px 10px 13px; border:1px solid var(--party-line); border-radius:12px; background:#111721; color:#e7edf5; font:inherit; font-size:13px; color-scheme:dark; }
+body.svCleanShell .svPartyHub select:focus-visible { outline:2px solid #b8c7e0; outline-offset:3px; }
+body.svCleanShell .svPartyHub .partyLobbySearch { width:min(600px,100%); }
+body.svCleanShell .svPartyHub .partyLobbySearch select { flex:0 0 110px; width:110px; min-height:38px; padding:8px 17px 8px 0; border:0; border-radius:0; background:transparent; font-size:12px; }
+body.svCleanShell .svPartyHub .partyLobbySearch input { width:0; min-width:0; }
+body.svCleanShell .svPartyHub .partyEpisodeChoice { min-width:0; }
+body.svCleanShell .svPartyHub .partyEpisodeFields { display:grid; grid-template-columns:minmax(135px,.8fr) minmax(0,1.2fr); gap:12px; }
+body.svCleanShell .svPartyHub .partyEpisodeFields label,body.svCleanShell .svPartyHub .partyMediaTypeLabel { display:flex; flex-direction:column; gap:8px; min-width:0; color:#b8c4d3; font-size:12px; }
+body.svCleanShell .svPartyHub .partyRoomEpisodes { padding:8px 0 22px; }
+body.svCleanShell .svPartyHub .partyRoomEpisodes .svPlayerEpisodes { margin:0; padding:22px; }
+body.svCleanShell .svPartyHub .partyEpisodeHostNote { margin:0 0 14px; color:var(--party-muted); font-size:12px; }
+body.svCleanShell .svPartyHub .partyRoomEpisodes a[aria-disabled="true"] { opacity:.65; cursor:default; }
+@media(max-width:600px) {
+ body.svCleanShell .svPartyHub .partyLobbySearch { flex-wrap:wrap; border-radius:20px; padding:8px 12px; gap:8px; }
+ body.svCleanShell .svPartyHub .partyLobbySearch>svg { display:none; }
+ body.svCleanShell .svPartyHub .partyLobbySearch select { flex-basis:100%; width:100%; border-bottom:1px solid var(--party-line); }
+ body.svCleanShell .svPartyHub .partyEpisodeFields { grid-template-columns:minmax(0,1fr); }
+ body.svCleanShell .svPartyHub .partyRoomEpisodes .svPlayerEpisodes { padding:16px; }
+}
 body.svCleanShell .svPartyHub .partyFilmRail { display:grid; grid-auto-flow:column; grid-auto-columns:calc((100% - 110px)/6); align-items:start; gap:22px; max-width:100%; padding:4px 2px 18px; overflow-x:auto; overscroll-behavior-x:contain; scroll-snap-type:x proximity; scrollbar-width:thin; scrollbar-color:#bfb4d638 transparent; }
 body.svCleanShell .svPartyHub .partyFilmRail:empty { display:none; }
 body.svCleanShell .svPartyHub #partyLobbyMovieResults:not(:empty) { margin-bottom:14px; }

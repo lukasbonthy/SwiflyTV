@@ -8,7 +8,7 @@ const available = fs.existsSync(chromium.executablePath()) ||
   fs.existsSync(chromium.executablePath().replace(/chromium-(\d+)\/chrome-linux\/chrome$/, 'chromium_headless_shell-$1/chrome-linux/headless_shell'));
 const requiresBrowser = {skip:!available && 'Chromium is not installed'};
 
-async function entry(browser, options = {}, {failController = false, authenticated = true, path = '/'} = {}) {
+async function entry(browser, options = {}, {failController = false, authenticated = true, path = '/', freezeIntro = false} = {}) {
   const api = loadServer();
   let ready = false;
   try {
@@ -19,6 +19,18 @@ async function entry(browser, options = {}, {failController = false, authenticat
     api.setTmdb(async () => ({results:items}));
     let html; await api.homePage({}, {send(value) {html = value;}});
     const page = await browser.newPage({viewport:{width:1440, height:960}, colorScheme:'dark', ...options});
+    if (freezeIntro) {
+      // Geometry is independent of the finite ident's real-time deadline.
+      // Hold both its timers and CSS pose while a busy runner measures it.
+      await page.clock.install();
+      await page.clock.pauseAt(Date.now() + 1000);
+      await page.addInitScript(() => document.addEventListener('DOMContentLoaded', () => {
+        for (const animation of document.getAnimations()) {
+          if (!animation.effect?.target?.closest('[data-sv-intro-root]')) continue;
+          animation.pause(); animation.currentTime = 1100;
+        }
+      }, {once:true}));
+    }
     await page.addInitScript(authenticated => {
       // Retain the real keyboard navigation code. Only physical controller
       // discovery is unavailable in the Chromium test container.
@@ -104,15 +116,22 @@ test('the visible skip action and Escape both release the real catalog immediate
 test('the mobile intro fits its viewport and a touch releases the page', requiresBrowser, async () => {
   const browser = await chromium.launch({headless:true});
   try {
-    const page = await entry(browser, {viewport:{width:390, height:844}, isMobile:true, hasTouch:true});
-    await page.waitForFunction(() => document.documentElement.dataset.svIntro === 'running');
-    const box = await page.locator('.svIntroWordmark').boundingBox();
-    assert(box.x >= 0 && box.x + box.width <= 390);
-    const skip = await page.getByRole('button', {name:'Skip intro'}).boundingBox();
-    assert(skip.height >= 44 && skip.y + skip.height <= 844);
-    await page.touchscreen.tap(195, 400);
-    assert.equal(await page.locator('[data-sv-intro-root]').count(), 0);
-    assert.equal(await page.locator('main').evaluate(node => node.inert), false);
+    for (const [width, height] of [[390,844], [600,320]]) {
+      const page = await entry(browser, {viewport:{width,height}, isMobile:true, hasTouch:true}, {freezeIntro:true});
+      await page.waitForFunction(() => document.documentElement.dataset.svIntro === 'running');
+      const box = await page.locator('.svIntroWordmark').boundingBox();
+      assert(box.x >= 0 && box.x + box.width <= width);
+      const mark = await page.locator('.svIntroMark').boundingBox();
+      assert(mark.x >= 0 && mark.x + mark.width <= width && mark.y >= 0, 'the monogram stays within the phone viewport');
+      const tagline = await page.locator('.svIntroTagline').boundingBox();
+      assert(tagline.y >= 0 && tagline.y + tagline.height < height - 44, 'the tagline fits above the skip control row');
+      const skip = await page.getByRole('button', {name:'Skip intro'}).boundingBox();
+      assert(skip.height >= 44 && skip.y + skip.height <= height);
+      await page.touchscreen.tap(width / 2, height / 2);
+      assert.equal(await page.locator('[data-sv-intro-root]').count(), 0);
+      assert.equal(await page.locator('main').evaluate(node => node.inert), false);
+      await page.close();
+    }
   } finally {await browser.close();}
 });
 

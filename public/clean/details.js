@@ -110,6 +110,7 @@
   const scrollValue=value=>Number.isFinite(value)&&value>=0&&value<=1000000?value:0;
   function initialize(root) {
     if (typeof window.syncLibraryButtons==='function') window.syncLibraryButtons();
+    window.SwiflyContinue?.decorate?.(root);
     root.querySelectorAll('[data-sv-details-back]').forEach(link=>link.setAttribute('href',returnToCatalog()));
     root.querySelectorAll('[data-sv-player-back]').forEach(link=>link.setAttribute('href',playbackReturn(link.getAttribute('href'))));
     root.querySelectorAll('.svDetailLogo').forEach(image=>{
@@ -338,9 +339,10 @@
   function rememberParty(link) {
     const id=link.getAttribute('data-sv-party-movie-id');
     if(!id||!/^[1-9]\d*$/.test(id)||!Number.isSafeInteger(Number(id)))return;
+    const type=link.getAttribute('data-sv-party-type')==='tv'?'tv':'movie';
     const target=localURL(link.href);
-    if(!target||target.pathname!=='/watch/movie/'+id||target.searchParams.getAll('party').length!==1||target.searchParams.get('party')!=='create')return;
-    const expected='/movie/'+id,source=localURL(location.href);
+    if(!target||target.pathname!=='/watch/'+type+'/'+id||target.searchParams.getAll('party').length!==1||target.searchParams.get('party')!=='create')return;
+    const expected='/'+type+'/'+id,source=localURL(location.href);
     if(!source||!(titleRoute(source.href)===expected&&!mediaRoute(source.href)||catalogURL(source.href)&&mediaRoute(source.href)===expected))return;
     rememberDetailScroll();storageWrite('swiflytv.partyReturn',route(source));
   }

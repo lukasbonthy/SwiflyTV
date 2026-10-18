@@ -1,0 +1,20 @@
+/* Native same-origin navigation: one short dissolve, with no loading delay.
+   Only transition images animate; the live glass and its ancestors stay put. */
+@view-transition {navigation:auto;}
+
+@keyframes svNavigationOut {from {opacity:1;} to {opacity:0;}}
+@keyframes svNavigationIn {from {opacity:0;} to {opacity:1;}}
+
+::view-transition {pointer-events:none;}
+::view-transition-group(root) {animation-duration:320ms;}
+::view-transition-old(root) {animation:320ms cubic-bezier(.22,.7,.25,1) both svNavigationOut;}
+::view-transition-new(root) {animation:320ms cubic-bezier(.22,.7,.25,1) both svNavigationIn;}
+
+html:is([data-sv-intro],:has(body.reduceMotion))::view-transition-group(root),
+html:is([data-sv-intro],:has(body.reduceMotion))::view-transition-old(root),
+html:is([data-sv-intro],:has(body.reduceMotion))::view-transition-new(root) {animation:none !important;}
+
+@media(prefers-reduced-motion:reduce) {
+  @view-transition {navigation:none;}
+  ::view-transition-group(root),::view-transition-old(root),::view-transition-new(root) {animation:none !important;}
+}
