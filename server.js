@@ -70,6 +70,7 @@ const { partyMarkup } = require("./ui/party");
 const { playerMarkup, episodePickerMarkup, episodeNavigationMarkup } = require("./ui/player");
 const { watchPartyMarkup, partyBrowseMarkup } = require("./ui/watch-party");
 const { createSourceJobs } = require("./lib/source-jobs");
+const { createWatchroomCalls } = require("./lib/watchroom-calls");
 const helmet = require("helmet");
 const compression = require("compression");
 const rateLimit = require("express-rate-limit");
@@ -6510,8 +6511,9 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=173" />' : ""}
     
     ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=234"></script>' : ""}
-    ${active === "social" ? '<script defer src="/assets/party/party.js?v=206"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}
-    ${player || partyBrowse ? '<script defer src="/assets/player/watch-party.js?v=162"></script>' : ""}
+    ${player || active === "social" ? '<script defer src="/assets/party/watchroom-call.js?v=1"></script>' : ""}
+    ${active === "social" ? '<script defer src="/assets/party/party.js?v=207"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}
+    ${player || partyBrowse ? '<script defer src="/assets/player/watch-party.js?v=163"></script>' : ""}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/finish.css?v=176" />'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/polish.css?v=176" />'}
     <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=206" />
@@ -6522,6 +6524,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=213" />' : ""}
     ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=206" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=205" />' : ""}
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=200" />' : ""}
+    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/party/watchroom-call.css?v=1" />' : ""}
     <link rel="stylesheet" href="/assets/clean/performance.css?v=211" />
     <link rel="stylesheet" href="/assets/clean/tv.css?v=1" />
 </head>
@@ -14948,6 +14951,18 @@ app.get("/api/social/media/search", async (req, res) => {
   }
 });
 
+app.get("/api/social/media/featured", async (req, res) => {
+  if (req.query.type !== "tv") return res.status(400).json({ ok: false, message: "Choose TV shows." });
+  try {
+    const data = await tmdb("/trending/tv/week", {}, CACHE_TTL.short);
+    if (!data || data.__error || !Array.isArray(data.results)) throw new Error("Metadata unavailable");
+    const results = data.results.map(row => partyMediaMetadata(row, "tv")).filter(Boolean).slice(0, 6);
+    res.json({ ok: true, results });
+  } catch {
+    res.status(503).json({ ok: false, message: "TV show choices are unavailable right now. Please try again." });
+  }
+});
+
 app.get("/api/social/media/:type/:id", async (req, res) => {
   const type = req.params.type, id = partyMovieId(req.params.id);
   const requestedSeason = req.query.season === undefined ? null : partyMovieId(req.query.season);
@@ -15408,6 +15423,8 @@ const io = new Server(httpServer, {
   },
 });
 
+const watchroomCalls = createWatchroomCalls({ io, watchRooms, env: process.env });
+
 function publishWatchRoomPresence(room) {
   const ids = Array.from(io.sockets.adapter.rooms.get(room.id) || []);
   room.viewers = ids.length;
@@ -15419,6 +15436,7 @@ function publishWatchRoomPresence(room) {
 }
 
 function leaveWatchRoom(socket) {
+  watchroomCalls.leave(socket);
   const roomId = socket.data.roomId;
   if (!roomId) return;
   const room = watchRooms.get(roomId);
@@ -15450,6 +15468,7 @@ function leaveWatchRoom(socket) {
 }
 
 io.on("connection", (socket) => {
+  watchroomCalls.attach(socket);
 
   socket.on("social:join", (payload = {}) => {
     const roomId = String(payload.roomId || "general").slice(0, 80);
@@ -15552,6 +15571,7 @@ io.on("connection", (socket) => {
       });
     }
 
+    watchroomCalls.sendMembers(socket);
     publishWatchRoomPresence(room);
   });
 

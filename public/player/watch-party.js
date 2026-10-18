@@ -4,12 +4,14 @@
  const app=document.querySelector('.svPlayerPage[data-player-mode="movie"]'), browse=document.querySelector('[data-party-browse]');
  if ((!app&&!browse)||window.SwiflyWatchParty) return;
  const root=app||browse, panel=app?.querySelector('[data-watch-party]'), dialog=app?.querySelector('.svWatchPartyDialog');
+ const callRoot=panel?.querySelector('[data-watchroom-call]');
  const $=(selector,within=root)=>within?.querySelector(selector);
  if (dialog) document.body.append(dialog);
+ if (callRoot) {const main=app.querySelector('.svPlayerMain');main?.insertBefore(callRoot,main.querySelector('.svPlayerBelow'));}
  const movieId=app?.dataset.playerId||'',pageType=app?.dataset.playerType==='tv'?'tv':'movie', player=()=>window.SwiflyPlayer;
  let username='Guest';
  try {username=String(JSON.parse(localStorage.getItem('swiflytv.activeProfile')||'null')?.name||JSON.parse(localStorage.getItem('swiflytv.session')||'null')?.name||'Guest').slice(0,40);} catch {}
- let socket=null, epoch=0, roomId='', room=null, isHost=false, joined=false, online=false, disposed=false, suspended=false, pendingSelect=false, sourceKey='', readyMovie=null, sync=null, clock=null, ackTimer=null, listEpoch=0, serverOffset=0,pickerEpoch=0,setupEpoch=0,setupLoading=false,setupError='';
+ let call=null,socket=null, epoch=0, roomId='', room=null, isHost=false, joined=false, online=false, disposed=false, suspended=false, pendingSelect=false, sourceKey='', readyMovie=null, sync=null, clock=null, ackTimer=null, listEpoch=0, serverOffset=0,pickerEpoch=0,setupEpoch=0,setupLoading=false,setupError='';
  let currentMedia={movieId,type:pageType,...(pageType==='tv'?{season:app.dataset.playerSeason||'1',episode:app.dataset.playerEpisode||'1'}:{})},setupMedia={...currentMedia},currentSnapshot=null;
  const requests=new Set(), messageKeys=new Set();
  const validRoom=value=>typeof value==='string'&&/^[a-z0-9][a-z0-9-]{0,31}$/.test(value)?value:'';
@@ -105,10 +107,11 @@
  function ensureSocket() {
   if(socket)return socket;if(typeof window.io!=='function')throw Error('Party connection is unavailable. Reload and try again.');
   socket=window.io();online=Boolean(socket.connected);
+  if(callRoot&&window.SwiflyWatchroomCall)call=window.SwiflyWatchroomCall.mount(callRoot,{socket});
   socket.on('connect',()=>{if(disposed||suspended)return;emitJoin();});
-  socket.on('disconnect',()=>{if(disposed||suspended)return;online=false;joined=false;isHost=false;clearTimeout(ackTimer);resetClock();player()?.pause({remote:true});update();status('Connection lost. Your party will reconnect automatically.');});
+  socket.on('disconnect',()=>{if(disposed||suspended)return;call?.setRoom('');online=false;joined=false;isHost=false;clearTimeout(ackTimer);resetClock();player()?.pause({remote:true});update();status('Connection lost. Your party will reconnect automatically.');});
   socket.on('watchroom:joined',data=>{
-   if(disposed||suspended||data?.room?.id!==roomId||!roomId)return;serverClock(data);clearTimeout(ackTimer);room=data.room;joined=true;online=true;isHost=Boolean(data.isHost);update();setUrl(true);if(dialog?.open)dialog.close();busy(false);setupStatus('');
+   if(disposed||suspended||data?.room?.id!==roomId||!roomId)return;serverClock(data);clearTimeout(ackTimer);room=data.room;joined=true;online=true;isHost=Boolean(data.isHost);call?.setRoom(roomId);update();setUrl(true);if(dialog?.open)dialog.close();busy(false);setupStatus('');
    (data.messages||[]).forEach(addMessage);applyMovie(room.syncedMovie);resetClock();
    if(pendingSelect&&isHost){pendingSelect=false;socket.emit('watchroom:movie-select',{roomId,...selectIdentity(),name:username});}
   });
@@ -125,7 +128,7 @@
  function attach(next,created=false) {
   if(!next||!validRoom(next.id))throw Error('This invite is unavailable. Check the room code.');
   const film=selection(next.syncedMovie);if(browse||film&&(film.movieId!==movieId||film.type!==pageType)||!film&&!created){navigateRoom(next);return;}
-  ensureSocket();if(roomId&&roomId!==next.id)socket.emit('watchroom:leave');if(roomId!==next.id)clearConversation();roomId=next.id;room=next;pendingSelect=created;sourceKey='';readyMovie=null;sync=null;joined=false;isHost=false;player()?.pause({remote:true});update();player()?.loadSource({status:'loading',message:'Joining your watch party…'});
+  ensureSocket();if(roomId!==next.id)call?.setRoom('');if(roomId&&roomId!==next.id)socket.emit('watchroom:leave');if(roomId!==next.id)clearConversation();roomId=next.id;room=next;pendingSelect=created;sourceKey='';readyMovie=null;sync=null;joined=false;isHost=false;player()?.pause({remote:true});update();player()?.loadSource({status:'loading',message:'Joining your watch party…'});
   if(socket.connected)emitJoin();else socket.connect?.();
  }
  async function join(value) {
@@ -136,7 +139,7 @@
   finally{if(current===epoch)busy(false);}
  }
  function leave() {
-  ++epoch;abortRequests();clearTimeout(ackTimer);clearInterval(clock);clock=null;if(roomId&&socket?.connected)socket.emit('watchroom:leave');roomId='';room=null;joined=false;isHost=false;pendingSelect=false;sourceKey='';readyMovie=null;currentSnapshot=null;sync=null;clearConversation();player()?.pause({remote:true});update();setUrl(false);status('');refreshSoloEpisode();player()?.resolve?.();
+  call?.setRoom('');++epoch;abortRequests();clearTimeout(ackTimer);clearInterval(clock);clock=null;if(roomId&&socket?.connected)socket.emit('watchroom:leave');roomId='';room=null;joined=false;isHost=false;pendingSelect=false;sourceKey='';readyMovie=null;currentSnapshot=null;sync=null;clearConversation();player()?.pause({remote:true});update();setUrl(false);status('');refreshSoloEpisode();player()?.resolve?.();
  }
  function refreshSoloEpisode(){if(!roomId&&!disposed&&!suspended&&currentMedia.type==='tv'&&renderedEpisodeKey!==mediaKey(currentMedia))updateEpisode();}
  async function loadSetupEpisodes(season=setupMedia.season,episode=setupMedia.episode){
@@ -175,8 +178,8 @@
  app?.addEventListener('swiflyplayer:retry',()=>{if(joined&&online&&isHost)socket.emit('watchroom:movie-select',{roomId,...selectIdentity(),...transportIdentity(),name:username,retry:true});});
  app?.addEventListener('swiflyplayer:ready',applySync);
  $('[data-party-directory]')?.addEventListener('toggle',event=>{if(event.currentTarget.open)directory();});$('[data-party-refresh]')?.addEventListener('click',directory);
- function suspend(){++epoch;++listEpoch;abortRequests();clearTimeout(ackTimer);clearInterval(clock);clock=null;if(roomId&&socket?.connected)socket.emit('watchroom:leave');socket?.disconnect?.();joined=false;online=false;suspended=true;}
- function destroy(){if(disposed)return;suspend();disposed=true;dialog?.remove();}
+ function suspend(){call?.setRoom('');++epoch;++listEpoch;abortRequests();clearTimeout(ackTimer);clearInterval(clock);clock=null;if(roomId&&socket?.connected)socket.emit('watchroom:leave');socket?.disconnect?.();joined=false;online=false;suspended=true;}
+ function destroy(){if(disposed)return;suspend();call?.destroy();disposed=true;dialog?.remove();}
  window.addEventListener('pagehide',event=>{if(event.persisted)suspend();else destroy();});
  window.addEventListener('pageshow',event=>{if(!event.persisted||disposed)return;suspended=false;if(roomId){socket?.connect?.();if(socket?.connected)emitJoin();}else refreshSoloEpisode();});
  window.SwiflyWatchParty=Object.freeze({open,leave,destroy});
