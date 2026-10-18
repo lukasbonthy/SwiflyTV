@@ -6,7 +6,7 @@ test.afterEach(cleanup);
 const shows=Array.from({length:8},(_,index)=>({id:101+index,type:'tv',title:index?'Show '+(index+1):'The Office',year:'2005',poster:'https://image.tmdb.org/t/p/w342/show.jpg'}));
 const movie={id:101,type:'movie',title:'Arrival',year:'2016',backdrop:'https://image.tmdb.org/t/p/w1280/movie.jpg'};
 function setup(options={}){
- const env=browser(partyMarkup({initialTab:'rooms',openRoomCreation:true}),{path:'/social?tab=watchrooms'}),w=env.window,handlers={},sent=[],calls=[];
+ const env=browser(partyMarkup({initialTab:'rooms',openRoomCreation:true,selectedMovieId:options.movieId}),{path:options.path||'/social?tab=watchrooms'}),w=env.window,handlers={},sent=[],calls=[];
  const room={id:'show-discovery-room',name:'Series night',mediaKind:'blank',syncedMovie:{status:'idle',movieId:''}};
  const socket={connected:true,on(name,fn){handlers[name]=fn;return this;},emit(name,data){sent.push({name,data});},disconnect(){this.connected=false;},connect(){this.connected=true;}};w.io=()=>socket;
  w.fetch=async(url,init={})=>{const u=new URL(String(url),w.location.href);calls.push(u.pathname+u.search);let data;
@@ -14,6 +14,7 @@ function setup(options={}){
   else if(u.pathname.endsWith('/movies/featured'))data={movies:[movie]};
   else if(u.pathname.endsWith('/media/featured')){assert.equal(u.searchParams.get('type'),'tv');return options.featured?options.featured():response({results:shows});}
   else if(u.pathname.endsWith('/media/tv/101'))data={media:{...shows[0],season:u.searchParams.get('season')||'1',episode:u.searchParams.get('episode')||'1',seasons:[{season_number:1},{season_number:2}],episodes:[{episode_number:1,name:'First'},{episode_number:2,name:'Second'},{episode_number:3,name:'Third'}]}};
+  else if(u.pathname.endsWith('/movies/101'))data={movie};
   else if(u.pathname.endsWith('/create')){assert.equal(init.method,'POST');data={room};}
   else data={rooms:[]};return response(data);
  };
@@ -56,4 +57,16 @@ test('An empty TV selection offers search, catalog browsing and another attempt'
 test('Choosing a suggested show from Join reveals the existing host form and episode picker',async()=>{
  const env=setup({lobby:true});await ready();const d=env.w.document;d.querySelector('[data-party-entry="join"]').click();assert.equal(d.querySelector('[data-party-entry-panel="create"]').hidden,true);
  d.querySelector('[data-party-featured-show-id="101"]').click();await ready();assert.equal(d.querySelector('[data-party-entry-panel="create"]').hidden,false);assert.equal(d.querySelector('[data-party-entry-panel="join"]').hidden,true);assert.equal(d.activeElement,d.getElementById('partyRoomName'));assert(d.querySelector('[data-party-lobby-season]'));assert(!env.calls.some(url=>url.endsWith('/create')));
+});
+
+
+test('Reloading a chosen show restores its media type and exact season and episode',async()=>{
+ const env=setup({movieId:'101',path:'/social?tab=watchrooms&movieId=101&type=tv&s=2&e=3'});await ready();const d=env.w.document;
+ assert(env.calls.includes('/api/social/media/tv/101?season=2&episode=3'));assert.match(d.getElementById('partySelectedMovie').textContent,/The Office/);
+ assert.equal(d.querySelector('[data-party-lobby-season]').value,'2');assert.equal(d.querySelector('[data-party-lobby-episode]').value,'3');assert.equal(d.querySelector('[data-party-return]').getAttribute('href'),'/tv/101');
+ assert(!env.calls.some(url=>url.endsWith('/create')));
+});
+test('A movie selection link retains its legacy movie identity',async()=>{
+ const env=setup({movieId:'101',path:'/social?tab=watchrooms&movieId=101'});await ready();const d=env.w.document;
+ assert(env.calls.includes('/api/social/movies/101'));assert.match(d.getElementById('partySelectedMovie').textContent,/Arrival/);assert.equal(d.querySelector('[data-party-lobby-season]'),null);assert.equal(d.querySelector('[data-party-return]').getAttribute('href'),'/movie/101');
 });
