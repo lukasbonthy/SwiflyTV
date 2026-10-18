@@ -165,7 +165,7 @@ html[data-sv-tv="true"] body.svCleanShell #controlPanel .stSidebarLabel {font-si
 /* The transport enlarges in place; the movie always keeps its complete frame. */
 html[data-sv-tv="true"] body.svCleanShell .svPlayerPage {
   --player-control-size:56px; --player-theater-height:calc(100svh - 245px);
-  max-width:none; padding:42px var(--sv-tv-safe) 70px;
+  max-width:none; padding:140px var(--sv-tv-safe) 70px;
 }
 html[data-sv-tv="true"] body.svCleanShell .svPlayerPageHead {margin-bottom:22px;}
 html[data-sv-tv="true"] body.svCleanShell .svPlayer :is(.svPlayerBack,.svPlayerEpisodeStep,.svPlayerPartyButton) {font-size:20px !important; min-height:56px !important;}

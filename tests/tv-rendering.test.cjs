@@ -134,3 +134,27 @@ for(const viewport of [{width:390,height:844},{width:960,height:540}])test('Narr
     assert.deepEqual(await page.locator('.netflixNav').evaluate(node=>({width:node.getBoundingClientRect().width,height:node.getBoundingClientRect().height})),normal,'Touching exit restores the normal header');
   }finally{await context.close();}
 });
+
+for(const viewport of [{width:1280,height:720},{width:1920,height:1080}])test('TV watch header clears navigation and its theater fits the screen at '+viewport.width+'px',{skip:!available&&'Chromium is not installed'},async t=>{
+  const {context,page}=await open(viewport);
+  try{
+    await context.route('**/api/proxy-video-wait/**',route=>route.fulfill({contentType:'application/json',body:JSON.stringify({status:'error',message:'Local layout fixture'})}));
+    await page.goto(origin+'/watch/movie/101?provider=fixture');
+    await page.waitForFunction(()=>Boolean(window.SwiflyPlayer));
+    const geometry=await page.evaluate(()=>{
+      const box=selector=>{const r=document.querySelector(selector).getBoundingClientRect();return {top:r.top,bottom:r.bottom,left:r.left,right:r.right};};
+      return {nav:box('.netflixNav'),head:box('.svPlayerPageHead'),theater:box('.svPlayerTheater'),dock:box('.svPlayerDock'),overflow:document.documentElement.scrollWidth};
+    });
+    assert(geometry.head.top>=geometry.nav.bottom+12,'Watch heading clears fixed navigation: '+JSON.stringify(geometry));
+    assert(geometry.theater.top>=geometry.head.bottom,'Theater sits below the watch heading');
+    assert(geometry.theater.bottom<=viewport.height-16,'The entire theater fits above the safe bottom: '+JSON.stringify(geometry));
+    assert(geometry.dock.bottom<=viewport.height-16&&geometry.dock.top>=geometry.theater.top,'Transport stays inside the visible theater');
+    assert(geometry.overflow<=viewport.width,'Watch page has no horizontal overflow');
+    await page.locator('[data-player-settings] > summary').click();
+    const settings=page.locator('.svPlayerSettingsBody');
+    await settings.waitFor({state:'visible'});
+    const menu=await settings.boundingBox();
+    assert(menu.x>=16&&menu.y>=16&&menu.x+menu.width<=viewport.width-16&&menu.y+menu.height<=viewport.height-16,'Playback settings stay inside screen safe edges: '+JSON.stringify(menu));
+    t.diagnostic('TV watch geometry '+JSON.stringify({...geometry,settings:menu}));
+  }finally{await context.close();}
+});
