@@ -46,20 +46,6 @@ test('ordinary navigation keeps its native event, history and scroll state', () 
   env.finish();
 });
 
-test('intro guards skip the document transition without consuming or changing the intro', () => {
-  const env = setup(), w = env.window, root = w.document.documentElement;
-  for (const state of ['pending', 'running']) {
-    root.dataset.svIntro = state;
-    assert.equal(env.transition().skipped, 1);
-    assert.equal(env.transition('pageswap').skipped, 1);
-    assert.equal(root.dataset.svIntro, state);
-    assert.equal(w.sessionStorage.getItem('swiflytv.intro.v2'), null);
-  }
-  delete root.dataset.svIntro;
-  assert.equal(env.transition().skipped, 0, 'the finished intro must not disable future transitions');
-  env.finish();
-});
-
 test('system, stored, legacy and live reduced motion skip navigation animation', () => {
   for (const options of [
     {reduced:true},
@@ -119,6 +105,7 @@ test('the shell opts in ordinary pages and excludes playback, party and party br
   try {
     for (const active of ['home', 'movies', 'tv', 'account', 'profiles', 'welcome', 'login', 'signup']) {
       const html = server.pageShell({active});
+      assert.doesNotMatch(html,/data-sv-intro|\/assets\/clean\/intro\./,active+' must open without an intro');
       const document = new JSDOM(html).window.document;
       const gate = document.querySelector('script[data-sv-navigation-gate]');
       const stylesheet = document.querySelector('link[href*="/assets/clean/navigation.css?"]');

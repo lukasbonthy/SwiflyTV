@@ -212,6 +212,12 @@ body.svCleanShell .svPlayerEpisodesHead p { margin:10px 0 0 !important; color:#9
 body.svCleanShell .svPlayerEpisodeStep { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:10px 14px !important; color:#e2ebf5 !important; font-size:12px !important; border-radius:16px !important; text-decoration:none; white-space:nowrap; }
 .svPlayerEpisodeStep .svPlayerIcon { width:16px; height:16px; flex-basis:16px; }
 body.svCleanShell .svPlayerEpisodeStep:disabled { opacity:.35; cursor:default; }
+.svPlayerEpisodeNavigation { margin:16px 0 0; }
+.svPlayerEpisodeNavigation .svPlayerEpisodeSteps { justify-content:space-between; gap:12px; }
+body.svCleanShell .svPlayerEpisodeNavigation .svPlayerEpisodeStep { flex:1; width:auto; min-width:0; max-width:220px; min-height:48px; padding:13px 16px !important; }
+.svPlayerEpisodeNavigation .svPlayerEpisodeStep > span:not(.svLiquidPane) { display:inline-flex; }
+.svPlayerEpisodeNavigation [data-player-episode-next] > .svPlayerIcon { order:1; }
+.svPlayerEpisodeNavigation [aria-disabled="true"] { opacity:.45; cursor:default; }
 .svPlayerSeasons { display:flex; gap:8px; margin-top:26px; padding:3px 3px 17px; overflow-x:auto; scrollbar-width:thin; scrollbar-color:#ffffff38 transparent; scroll-padding:4px; }
 body.svCleanShell .svPlayerSeason { display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto; gap:12px; min-height:44px; padding:10px 14px !important; border-radius:14px !important; font-size:12px !important; text-decoration:none; white-space:nowrap; }
 .svPlayerSeasonCount { padding-left:11px; border-left:1px solid #ffffff24; color:#98a6b8; font-size:10px; font-weight:400; }

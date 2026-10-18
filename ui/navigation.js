@@ -1,7 +1,7 @@
 'use strict';
 
 // Native document navigation owns history, scroll restoration and timing.
-// Register before the first render so an incoming intro can take precedence.
+// Register before the first render so motion preferences apply immediately.
 function navigationGate() {
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
 
@@ -23,7 +23,7 @@ function navigationGate() {
         (!appearance && localStorage.getItem('movieverse.reduceMotion') === 'on');
     } catch (_) { /* Storage restrictions must not interfere with navigation. */ }
     const activation = event.activation || window.navigation?.activation;
-    if (document.documentElement.hasAttribute('data-sv-intro') || reduced.matches || savedReduced ||
+    if (reduced.matches || savedReduced ||
         document.body?.classList.contains('reduceMotion') ||
         [location.href, activation?.from?.url, activation?.entry?.url].some(excluded)) {
       event.viewTransition.skipTransition();

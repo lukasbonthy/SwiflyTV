@@ -64,10 +64,9 @@ configureBrowserEnvironment();
 const express = require("express");
 const { studioMarkup } = require("./ui/studio");
 const { welcomeMarkup } = require("./ui/welcome");
-const { introHead, introMarkup } = require("./ui/intro");
 const { navigationHead } = require("./ui/navigation");
 const { partyMarkup } = require("./ui/party");
-const { playerMarkup, episodePickerMarkup } = require("./ui/player");
+const { playerMarkup, episodePickerMarkup, episodeNavigationMarkup } = require("./ui/player");
 const { watchPartyMarkup, partyBrowseMarkup } = require("./ui/watch-party");
 const { createSourceJobs } = require("./lib/source-jobs");
 const helmet = require("helmet");
@@ -6415,7 +6414,6 @@ function mediaDataAttributes(prefix, item = {}, type = "") {
 }
 
 function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, trailers, cast pages, watchlists, and synced watch rooms.", body = "", active = "", extraHead = "", player = false, partyBrowse = false }) {
-  const showIntro = !player && active !== "watch" && active !== "social";
   const showNavigation = !player && !partyBrowse && !["watch", "social", "watchrooms"].includes(active);
   return `<!doctype html>
 <html lang="en">
@@ -6427,8 +6425,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta name="theme-color" content="#000000" />
   ${showNavigation ? navigationHead() : ""}
-  ${showNavigation ? '<link rel="stylesheet" href="/assets/clean/navigation.css?v=1" />' : ""}
-  ${showIntro ? introHead() : ""}
+  ${showNavigation ? '<link rel="stylesheet" href="/assets/clean/navigation.css?v=2" />' : ""}
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <link rel="preconnect" href="https://image.tmdb.org" />
@@ -6501,7 +6498,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/scroll.js?v=240"></script>
     <script defer src="/assets/clean/details.js?v=232"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=222" />
-    <script defer src="/assets/liquid-glass/surfaces.js?v=235"></script>
+    <script defer src="/assets/liquid-glass/surfaces.js?v=236"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=233" />
     <script defer src="/assets/studio/studio.js?v=164"></script>
     <link rel="stylesheet" href="/assets/clean/aurora.css?v=208" />
@@ -6511,7 +6508,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     
     ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=233"></script>' : ""}
     ${active === "social" ? '<script defer src="/assets/party/party.js?v=206"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}
-    ${player || partyBrowse ? '<script defer src="/assets/player/watch-party.js?v=161"></script>' : ""}
+    ${player || partyBrowse ? '<script defer src="/assets/player/watch-party.js?v=162"></script>' : ""}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/finish.css?v=176" />'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/polish.css?v=176" />'}
     <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=206" />
@@ -6519,13 +6516,12 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/experience.css?v=202" />'}
     <link rel="stylesheet" href="/assets/clean/cinema.css?v=207" />
     <link rel="stylesheet" href="/assets/clean/profiles.css?v=209" />
-    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=212" />' : ""}
+    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=213" />' : ""}
     ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=206" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=205" />' : ""}
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=200" />' : ""}
     <link rel="stylesheet" href="/assets/clean/performance.css?v=211" />
 </head>
 <body class="svCleanShell">
-  ${showIntro ? introMarkup() : ""}
 
   <script>
     (function swiflytvAuthRequired(){
@@ -9237,9 +9233,10 @@ async function watchPage(req, res, type) {
     ? await tmdb(`${endpoint}/season/${season}`, {}, CACHE_TTL.long).catch(() => ({ episodes: [] })) : { episodes: [] };
   const episodes = (Array.isArray(seasonDetails.episodes) ? seasonDetails.episodes : []).map(item => ({ ...item, still: item.still_path ? img(item.still_path, "w342") : "" }));
   const episodeTitle = episodes.find(item => String(item.episode_number) === episode)?.name || "";
-  const episodePickerHtml = type === "tv" && mode === "movie" ? episodePickerMarkup({
+  const episodeOptions = {
     id, season, episode, seasons, provider, episodes, roomId, episodeCount: currentSeason?.episode_count || 1
-  }) : "";
+  };
+  const episodePickerHtml = type === "tv" && mode === "movie" ? episodePickerMarkup({...episodeOptions,navigation:false}) : "";
   const body = playerMarkup({
     id, type, title, mode, season, episode,
     year: getYear(type === "tv" ? details.first_air_date : details.release_date),
@@ -9247,7 +9244,7 @@ async function watchPage(req, res, type) {
     backdrop: fullBackdrop(details.backdrop_path || details.poster_path),
     provider, episodeTitle,
     trailerUrl: trailer ? youtubeEmbedSrc(trailer.key, youtubeEmbedOrigin(req)) : "",
-    episodePickerHtml,
+    episodePickerHtml, episodeNavigationHtml: episodePickerHtml ? episodeNavigationMarkup(episodeOptions) : "",
     managed: mode === "movie" && Boolean(roomId),
     partyPanelHtml: mode === "movie" ? watchPartyMarkup({movieId:id,type,season,episode,title,poster:details.poster_path?img(details.poster_path,"w185"):""}) : "",
   });
