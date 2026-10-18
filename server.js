@@ -65,6 +65,7 @@ const express = require("express");
 const { studioMarkup } = require("./ui/studio");
 const { welcomeMarkup } = require("./ui/welcome");
 const { navigationHead } = require("./ui/navigation");
+const { tvHead, tvScript } = require("./ui/tv");
 const { partyMarkup } = require("./ui/party");
 const { playerMarkup, episodePickerMarkup, episodeNavigationMarkup } = require("./ui/player");
 const { watchPartyMarkup, partyBrowseMarkup } = require("./ui/watch-party");
@@ -6403,6 +6404,7 @@ function cleanIcon(name) {
     heart: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/>',
     people: '<circle cx="9" cy="8" r="3"/><path d="M2 21v-3a7 7 0 0 1 14 0v3M16 5a3 3 0 0 1 0 6M18 14a6 6 0 0 1 4 5v2"/>',
     arrow: '<path d="M5 12h14m-6-6 6 6-6 6"/>',
+    tv: '<rect x="3" y="5" width="18" height="13" rx="3"/><path d="M8 22h8M8 2l4 3 4-3"/>',
     film: '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7 3v18M17 3v18M3 8h4M3 16h4M17 8h4M17 16h4"/>'
   };
   return `<svg class="svIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${paths[name] || paths.info}</svg>`;
@@ -6424,6 +6426,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
   <meta name="description" content="${escapeHtml(description)}" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta name="theme-color" content="#000000" />
+  ${tvHead()}
   ${showNavigation ? navigationHead() : ""}
   ${showNavigation ? '<link rel="stylesheet" href="/assets/clean/navigation.css?v=2" />' : ""}
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -6506,7 +6509,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=205" />' : ""}
     ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=173" />' : ""}
     
-    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=233"></script>' : ""}
+    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=234"></script>' : ""}
     ${active === "social" ? '<script defer src="/assets/party/party.js?v=206"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}
     ${player || partyBrowse ? '<script defer src="/assets/player/watch-party.js?v=162"></script>' : ""}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/finish.css?v=176" />'}
@@ -6520,6 +6523,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=206" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=205" />' : ""}
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=200" />' : ""}
     <link rel="stylesheet" href="/assets/clean/performance.css?v=211" />
+    <link rel="stylesheet" href="/assets/clean/tv.css?v=1" />
 </head>
 <body class="svCleanShell">
 
@@ -6580,10 +6584,12 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
         <button id="svNavSearchToggle" class="svNavButton" type="button" aria-label="Search movies and series" aria-controls="svNavSearchPopup" aria-expanded="false">${cleanIcon("search")}</button>
         <a class="svNavButton svNavPartyLink${active === "social" ? " active" : ""}" href="/social?tab=watchrooms" aria-label="Party Hub" title="Party Hub"${active === "social" ? ' aria-current="page"' : ""}>${cleanIcon("people")}</a>
         <button id="controlToggleTop" class="svNavButton" type="button" aria-label="Open Swifly Studio" aria-haspopup="dialog" aria-controls="controlPanel" aria-expanded="false">${cleanIcon("settings")}</button>
+        <button class="svNavButton svTvModePill" type="button" data-sv-tv-toggle data-sv-tv-active-only aria-pressed="false" aria-label="Exit TV mode">${cleanIcon("tv")}<span>TV mode</span></button>
         <details class="dsProfileMenu">
           <summary aria-label="Open profile menu"><span class="profilePill" aria-hidden="true">${cleanIcon("user")}</span></summary>
           <div class="dsProfileDropdown svLiquidDropdown">
             <div class="svLiquidPane" data-swifly-glass data-glass-tint="0.2" data-glass-saturation="1" data-glass-radius="22" aria-hidden="true"></div>
+            <button class="svTvMenuToggle" type="button" data-sv-tv-toggle aria-pressed="false"><span>${cleanIcon("tv")}</span><b>TV mode</b><small data-sv-tv-state>Off</small></button>
             <a href="/profiles"><span>☺</span><b>Switch profile</b></a>
             <a href="/profiles/manage"><span>✎</span><b>Manage profiles</b></a>
             <a href="/account"><span>⚙</span><b>Account</b></a>
@@ -7474,497 +7480,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     }, true);
   </script>
 
-  <script>
-    (function swiflyTvFocusNavigation(){
-      if (window.__swiflyTvFocusNavigationLoaded) return;
-      window.__swiflyTvFocusNavigationLoaded = true;
-
-      var enabled = localStorage.getItem("swiflytv.tvFocusMode") === "true" ||
-        localStorage.getItem("swiflytv.tvControllerMode") === "true";
-
-      var focused = null;
-      var hint = null;
-      var raf = null;
-      var lastFrame = performance.now();
-      var lastButtons = {};
-      var lastMoveAt = 0;
-      var lastAxisDirection = "";
-      var axisRepeatStartedAt = 0;
-      var lastScrollAt = 0;
-      var hintTimer = null;
-
-      var FOCUSABLE_SELECTOR = [
-        "a[href]",
-        "summary",
-        "button:not([disabled])",
-        "input:not([disabled])",
-        "textarea:not([disabled])",
-        "select:not([disabled])",
-        "[role='button']",
-        "[role='link']",
-        "[tabindex]:not([tabindex='-1'])",
-        "video",
-        ".movieCard",
-        ".posterCard",
-        ".nfCard",
-        ".topTenPoster",
-        ".dsCustomControlRow button",
-        "#roomMoviePlayerSyncBtn",
-        "#roomMovieProgress",
-        "#roomMovieVolume"
-      ].join(",");
-
-      function escapeHtml(value) {
-        return String(value || "")
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;");
-      }
-
-      function ensureHint() {
-        if (!hint) {
-          hint = document.createElement("div");
-          hint.id = "swiflyTvHint";
-          hint.innerHTML = "<b>TV Mode:</b> D-pad moves • Select clicks • Back goes back • Menu fullscreen";
-          document.body.appendChild(hint);
-        }
-      }
-
-      function showHint(reason) {
-        ensureHint();
-        if (reason) {
-          hint.innerHTML = "<b>TV Mode:</b> " + escapeHtml(reason) + " • D-pad moves • Select clicks • Back goes back";
-        }
-        clearTimeout(hintTimer);
-        hintTimer = setTimeout(function(){
-          if (hint) hint.innerHTML = "<b>TV Mode:</b> D-pad moves • Select clicks • Back goes back • Menu fullscreen";
-        }, 2600);
-      }
-
-      function activeModal() {
-        var focusedModal = document.activeElement && document.activeElement.closest("dialog[open]");
-        return focusedModal || document.querySelector(".svStudioDialog[open]") ||
-          Array.from(document.querySelectorAll("dialog[open]")).pop() || null;
-      }
-
-      function isVisible(el) {
-        if (!el || !el.isConnected) return false;
-        var modal = activeModal();
-        if (modal && !modal.contains(el)) return false;
-        var r = el.getBoundingClientRect();
-        var style = getComputedStyle(el);
-        return r.width > 6 &&
-          r.height > 6 &&
-          r.bottom > 0 &&
-          r.right > 0 &&
-          r.top < window.innerHeight &&
-          r.left < window.innerWidth &&
-          style.visibility !== "hidden" &&
-          style.display !== "none" &&
-          Number(style.opacity || 1) > 0.05;
-      }
-
-      function getFocusable() {
-        var root = activeModal() || document;
-        return Array.from(root.querySelectorAll(FOCUSABLE_SELECTOR))
-          .filter(function(el) {
-            if (!isVisible(el)) return false;
-            if (el.closest("[hidden], [aria-hidden='true']")) return false;
-            if (el.disabled) return false;
-            return true;
-          });
-      }
-
-      function centerOf(el) {
-        var r = el.getBoundingClientRect();
-        return {
-          x: r.left + r.width / 2,
-          y: r.top + r.height / 2,
-          rect: r
-        };
-      }
-
-      function clearFocus() {
-        if (focused && focused.classList) {
-          focused.classList.remove("swifly-tv-focus-target", "swifly-tv-focus-pressed");
-        }
-        focused = null;
-      }
-
-      function setFocus(el, options) {
-        if (!el || !isVisible(el)) return false;
-        if (focused === el) return true;
-
-        clearFocus();
-        focused = el;
-        focused.classList.add("swifly-tv-focus-target");
-
-        try { focused.focus?.({ preventScroll: true }); } catch {}
-
-        if (!options || options.scroll !== false) {
-          try {
-            focused.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
-          } catch {
-            focused.scrollIntoView?.();
-          }
-        }
-
-        return true;
-      }
-
-      function firstFocus() {
-        var active = document.activeElement;
-        if (active && active !== document.body && isVisible(active) && active.matches?.(FOCUSABLE_SELECTOR)) {
-          return setFocus(active);
-        }
-
-        var all = getFocusable();
-        if (!all.length) return false;
-
-        var preferred = all.find(function(el) {
-          return el.matches(".active, [aria-current='page'], .is-active, .selected");
-        }) || all[0];
-
-        return setFocus(preferred);
-      }
-
-      function setEnabled(value, reason) {
-        enabled = Boolean(value);
-        localStorage.setItem("swiflytv.tvFocusMode", enabled ? "true" : "false");
-        localStorage.removeItem("swiflytv.tvControllerMode");
-
-        document.body.classList.toggle("swifly-tv-focus-mode", enabled);
-        document.body.classList.remove("swifly-tv-controller-mode");
-
-        ensureHint();
-
-        var oldCursor = document.getElementById("swiflyTvCursor");
-        if (oldCursor) oldCursor.remove();
-
-        if (enabled) {
-          showHint(reason || "TV focus mode enabled");
-          firstFocus();
-          startLoop();
-        } else {
-          clearFocus();
-          cancelAnimationFrame(raf);
-          raf = null;
-        }
-      }
-
-      function directionFromAxes(x, y) {
-        var dead = 0.34;
-        if (Math.abs(x) < dead && Math.abs(y) < dead) return "";
-        if (Math.abs(x) > Math.abs(y)) return x > 0 ? "right" : "left";
-        return y > 0 ? "down" : "up";
-      }
-
-      function moveFocus(direction, force) {
-        if (!enabled) setEnabled(true, "TV focus mode enabled");
-        if (!focused || !isVisible(focused)) firstFocus();
-        if (!focused) return;
-
-        var now = Date.now();
-        if (!force && now - lastMoveAt < 135) return;
-        lastMoveAt = now;
-
-        var current = centerOf(focused);
-        var candidates = getFocusable().filter(function(el) { return el !== focused; });
-        var best = null;
-        var bestScore = Infinity;
-
-        candidates.forEach(function(el) {
-          var c = centerOf(el);
-          var dx = c.x - current.x;
-          var dy = c.y - current.y;
-          var absX = Math.abs(dx);
-          var absY = Math.abs(dy);
-
-          if (direction === "left" && dx >= -8) return;
-          if (direction === "right" && dx <= 8) return;
-          if (direction === "up" && dy >= -8) return;
-          if (direction === "down" && dy <= 8) return;
-
-          var primary = direction === "left" || direction === "right" ? absX : absY;
-          var secondary = direction === "left" || direction === "right" ? absY : absX;
-
-          // Fire TV-like behavior: prefer items lined up in the requested direction.
-          var alignmentPenalty = secondary * 2.2;
-          var distancePenalty = primary * 1.05;
-          var diagonalPenalty = secondary > primary * 1.6 ? 1200 : 0;
-          var score = distancePenalty + alignmentPenalty + diagonalPenalty;
-
-          if (score < bestScore) {
-            bestScore = score;
-            best = el;
-          }
-        });
-
-        if (best) {
-          setFocus(best);
-          return;
-        }
-
-        if (direction === "up") scrollByAmount(0, -360);
-        if (direction === "down") scrollByAmount(0, 360);
-        if (direction === "left") scrollByAmount(-360, 0);
-        if (direction === "right") scrollByAmount(360, 0);
-
-        setTimeout(function(){ firstVisibleAfterScroll(direction); }, 160);
-      }
-
-      function firstVisibleAfterScroll(direction) {
-        var all = getFocusable();
-        if (!all.length) return;
-
-        var current = focused && isVisible(focused) ? centerOf(focused) : { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-        var best = null;
-        var bestScore = Infinity;
-
-        all.forEach(function(el) {
-          var c = centerOf(el);
-          var score = Math.abs(c.x - current.x) + Math.abs(c.y - current.y);
-          if (direction === "down") score += c.y < current.y ? 1000 : 0;
-          if (direction === "up") score += c.y > current.y ? 1000 : 0;
-          if (score < bestScore) {
-            bestScore = score;
-            best = el;
-          }
-        });
-
-        if (best) setFocus(best, { scroll: false });
-      }
-
-      function scrollByAmount(dx, dy) {
-        var now = Date.now();
-        if (now - lastScrollAt < 20) return;
-        lastScrollAt = now;
-
-        var base = focused || document.activeElement;
-        var scrollParent = base;
-
-        while (scrollParent && scrollParent !== document.body) {
-          var style = getComputedStyle(scrollParent);
-          var canScrollY = /(auto|scroll)/.test(style.overflowY) && scrollParent.scrollHeight > scrollParent.clientHeight + 4;
-          var canScrollX = /(auto|scroll)/.test(style.overflowX) && scrollParent.scrollWidth > scrollParent.clientWidth + 4;
-          if (canScrollY || canScrollX) {
-            scrollParent.scrollBy({ left: dx, top: dy, behavior: "auto" });
-            return;
-          }
-          scrollParent = scrollParent.parentElement;
-        }
-
-        window.scrollBy({ left: dx, top: dy, behavior: "auto" });
-      }
-
-      function clickFocused() {
-        if (!enabled) setEnabled(true, "TV focus mode enabled");
-        if (!focused || !isVisible(focused)) firstFocus();
-        if (!focused) return;
-
-        focused.classList.add("swifly-tv-focus-pressed");
-        setTimeout(function(){ focused && focused.classList.remove("swifly-tv-focus-pressed"); }, 140);
-
-        try { focused.focus?.({ preventScroll: true }); } catch {}
-
-        if (focused.tagName === "VIDEO") {
-          if (focused.paused) focused.play?.().catch(function(){});
-          else focused.pause?.();
-          return;
-        }
-
-        if (focused.matches("input, textarea, select")) {
-          focused.click();
-          return;
-        }
-
-        focused.dispatchEvent(new MouseEvent("click", {
-          bubbles: true,
-          cancelable: true,
-          view: window
-        }));
-      }
-
-      function goBack() {
-        var modal = activeModal();
-        if (modal && modal.matches(".svDetailDialog, .svStudioDialog, .sv100CallModal, .svWatchPartyDialog")) {
-          if (modal.matches(".svDetailDialog") && window.SwiflyDetails) window.SwiflyDetails.back();
-          else modal.close();
-          return;
-        }
-        var backLink = document.querySelector("[data-sv-player-back], .svDetailPage [data-sv-details-back]");
-        if (backLink) { backLink.click(); return; }
-        if (history.length > 1) history.back();
-        else location.href = "/";
-      }
-
-      function focusSearch() {
-        var search = document.querySelector("input[type='search'], input[name='q'], input[placeholder*='Search' i], .searchInput");
-        if (search && isVisible(search)) {
-          setFocus(search);
-          try { search.focus(); } catch {}
-        } else {
-          showHint("No search box on this page");
-        }
-      }
-
-      function tryMenu() {
-        var menu = document.querySelector(".mobileMenuButton, [aria-label*='menu' i], [data-menu], .menu button, nav a");
-        if (menu && isVisible(menu)) {
-          setFocus(menu);
-          clickFocused();
-        }
-      }
-
-      function toggleFullscreen() {
-        var target = document.querySelector(".dsRoomMovieStage, .dsWatchShell, .watchPlayer, main") || document.documentElement;
-        if (!document.fullscreenElement) target.requestFullscreen?.();
-        else document.exitFullscreen?.();
-      }
-
-      function buttonPressed(gamepad, index) {
-        return Boolean(gamepad && gamepad.buttons && gamepad.buttons[index] && gamepad.buttons[index].pressed);
-      }
-
-      function onButtonEdge(gamepad, index, key, callback) {
-        var pressed = buttonPressed(gamepad, index);
-        if (pressed && !lastButtons[key]) callback();
-        lastButtons[key] = pressed;
-      }
-
-      function processGamepad(gamepad) {
-        if (!gamepad) return;
-
-        var dir = "";
-
-        if (buttonPressed(gamepad, 12)) dir = "up";
-        else if (buttonPressed(gamepad, 13)) dir = "down";
-        else if (buttonPressed(gamepad, 14)) dir = "left";
-        else if (buttonPressed(gamepad, 15)) dir = "right";
-        else dir = directionFromAxes(Number(gamepad.axes?.[0] || 0), Number(gamepad.axes?.[1] || 0));
-
-        var now = Date.now();
-        if (dir) {
-          if (dir !== lastAxisDirection) {
-            lastAxisDirection = dir;
-            axisRepeatStartedAt = now;
-            moveFocus(dir, true);
-          } else if (now - axisRepeatStartedAt > 340) {
-            moveFocus(dir, false);
-          }
-        } else {
-          lastAxisDirection = "";
-          axisRepeatStartedAt = 0;
-        }
-
-        var scrollX = 0;
-        var scrollY = 0;
-        var rx = Math.abs(Number(gamepad.axes?.[2] || 0)) > 0.25 ? Number(gamepad.axes?.[2] || 0) : 0;
-        var ry = Math.abs(Number(gamepad.axes?.[3] || 0)) > 0.25 ? Number(gamepad.axes?.[3] || 0) : 0;
-        scrollX += rx * 42;
-        scrollY += ry * 42;
-        if (buttonPressed(gamepad, 4)) scrollY -= 46;
-        if (buttonPressed(gamepad, 5)) scrollY += 46;
-        if (scrollX || scrollY) scrollByAmount(scrollX, scrollY);
-
-        onButtonEdge(gamepad, 0, "a", clickFocused);       // A / Cross
-        onButtonEdge(gamepad, 1, "b", goBack);             // B / Circle
-        onButtonEdge(gamepad, 2, "x", focusSearch);        // X / Square
-        onButtonEdge(gamepad, 3, "y", tryMenu);            // Y / Triangle
-        onButtonEdge(gamepad, 8, "select", function(){ showHint("D-pad moves • A selects • B goes back • Start fullscreen"); });
-        onButtonEdge(gamepad, 9, "start", toggleFullscreen);
-        onButtonEdge(gamepad, 16, "home", function(){ location.href = "/"; });
-      }
-
-      function loop(now) {
-        raf = null;
-        if (!enabled || document.hidden) return;
-
-        var pads = navigator.getGamepads ? Array.from(navigator.getGamepads()).filter(Boolean) : [];
-        if (!pads.length) return;
-
-        if (!focused || !isVisible(focused)) firstFocus();
-
-        processGamepad(pads[0]);
-
-        lastFrame = now;
-        if (enabled && !document.hidden) raf = requestAnimationFrame(loop);
-      }
-
-      function startLoop() {
-        if (enabled && !document.hidden && !raf) {
-          lastFrame = performance.now();
-          raf = requestAnimationFrame(loop);
-        }
-      }
-
-      window.addEventListener("gamepadconnected", function(event) {
-        setEnabled(true, (event.gamepad && event.gamepad.id ? event.gamepad.id : "Controller") + " connected");
-      });
-
-      window.addEventListener("gamepaddisconnected", function() {
-        showHint("Controller disconnected");
-      });
-
-      document.addEventListener("visibilitychange", function() {
-        if (document.hidden) { cancelAnimationFrame(raf); raf = null; }
-        else startLoop();
-      });
-
-      document.addEventListener("keydown", function(event) {
-        var key = event.key;
-        var modal = activeModal();
-        if (modal && key !== "F8" && (key === "Escape" || !enabled)) return;
-        // Keep typing, native buttons, and popup menus usable in the compact header.
-        var studioSwitch = event.target?.closest?.(".svStudioDialog input[type=checkbox][data-st-setting]");
-        if (key !== "F8" && !studioSwitch && event.target?.closest?.("input, textarea, select, [contenteditable=true], .netflixNav")) return;
-
-        if (key === "F8") {
-          setEnabled(!enabled, enabled ? "TV mode disabled" : "TV mode enabled");
-          event.preventDefault();
-          return;
-        }
-
-        if (!enabled && ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Enter", "Escape", "Backspace"].includes(key)) {
-          setEnabled(true, "TV focus mode enabled");
-        }
-
-        if (!enabled) return;
-
-        if (key === "ArrowUp") { moveFocus("up", true); event.preventDefault(); }
-        else if (key === "ArrowDown") { moveFocus("down", true); event.preventDefault(); }
-        else if (key === "ArrowLeft") { moveFocus("left", true); event.preventDefault(); }
-        else if (key === "ArrowRight") { moveFocus("right", true); event.preventDefault(); }
-        else if (key === "Enter" || key === " ") { clickFocused(); event.preventDefault(); }
-        else if (key === "Escape" || key === "Backspace") { goBack(); event.preventDefault(); }
-        else if (key.toLowerCase() === "f") { toggleFullscreen(); event.preventDefault(); }
-        else if (key === "/") { focusSearch(); event.preventDefault(); }
-      }, true);
-
-      document.addEventListener("focusin", function(event) {
-        if (!enabled) return;
-        if (event.target && event.target.matches && event.target.matches(FOCUSABLE_SELECTOR)) {
-          setFocus(event.target, { scroll: false });
-        }
-      });
-
-      document.addEventListener("DOMContentLoaded", function() {
-        var oldCursor = document.getElementById("swiflyTvCursor");
-        if (oldCursor) oldCursor.remove();
-
-        ensureHint();
-        if (enabled) setEnabled(true, "TV mode restored");
-        startLoop();
-      });
-
-      setInterval(function() {
-        if (document.hidden || !navigator.getGamepads) return;
-        var pads = Array.from(navigator.getGamepads()).filter(Boolean);
-        if (pads.length && !enabled) setEnabled(true, "Controller detected");
-      }, 1500);
-    })();
-  </script>
+  ${tvScript()}
 
 
 </body>
