@@ -193,7 +193,7 @@ body.svCleanShell .svPlayerPage .svPlayerBelow.svGlassPanel { --sv-surface-blur:
 .svPlayerIdentityHead { display:flex; align-items:center; flex-wrap:wrap; gap:12px; }
 .svPlayerChapter { color:#d1e8ed; font-size:9px; letter-spacing:.12em; font-weight:600; }
 .svPlayerMetadata { display:flex; align-items:center; flex-wrap:wrap; gap:7px; color:#9ca9b9; font-size:10px; line-height:1.5; }
-.svPlayerMetadata > span { color:#687486; }
+.svPlayerMetadata > span[aria-hidden="true"] { color:#687486; }
 body.svCleanShell .svPlayerPage h1 { margin:8px 0 0 !important; font-family:var(--st-display-font,var(--st-font,"Host Grotesk",system-ui,sans-serif)) !important; font-size:clamp(26px,2.3vw,35px) !important; line-height:1.1 !important; letter-spacing:-.045em !important; font-weight:600 !important; color:#f5f8fc !important; overflow-wrap:anywhere; }
 body.svCleanShell .svPlayerTransportNote { margin:11px 0 0 !important; font-size:12px !important; line-height:1.5 !important; color:#98a5b6 !important; }
 .svPlayerTogether { display:flex; flex-direction:column; align-items:flex-end; gap:11px; flex:0 0 auto; }

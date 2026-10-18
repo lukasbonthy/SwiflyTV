@@ -44,7 +44,7 @@
     intro = document.querySelector('[data-sv-intro-root]');
     if (!intro || page.dataset.svIntro !== 'pending' || reduced.matches ||
         document.body.classList.contains('reduceMotion') || document.hidden) {finish(); return;}
-    try {sessionStorage.setItem('swiflytv.intro.v1', '1');} catch (_) {finish(); return;}
+    try {sessionStorage.setItem('swiflytv.intro.v2', '1');} catch (_) {finish(); return;}
     skip = intro.querySelector('[data-sv-intro-skip]');
     previousFocus = document.activeElement;
     for (const node of document.body.children) {

@@ -204,11 +204,6 @@ body.svCleanShell .svWelcomeClean .svWelcomeDiscoveryIntro {
 @media(prefers-reduced-transparency:reduce) {
   body.svCleanShell .svWelcomeClean .svWelcomeSpill {display:none;}
 }
-/* Navigation dissolves without full-screen blur on each route. */
-@keyframes svQuickPageOut {to{opacity:0;transform:translateY(-3px);}}
-@keyframes svQuickPageIn {from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
-::view-transition-old(root){animation:220ms ease-out both svQuickPageOut;}
-::view-transition-new(root){animation:500ms cubic-bezier(.32,.08,.2,1) both svQuickPageIn;}
 @media(max-width:860px) {
   body.svCleanShell main:has(> .dsHero + .svHeroLightBridge + .dsContent:not(.noHero)) {
     --sv-hero-tail:clamp(230px,32svh,330px);
@@ -235,7 +230,4 @@ body.svCleanShell .svWelcomeClean .svWelcomeDiscoveryIntro {
 }
 @media(prefers-reduced-transparency:reduce) {
   body.svCleanShell .svHeroSpill {display:none;}
-}
-@media(prefers-reduced-motion:reduce) {
-  ::view-transition-old(root),::view-transition-new(root){animation:none !important;}
 }

@@ -1,14 +1,16 @@
-/* A short, composited studio ident. All moving layers leave the DOM at exit. */
+/* A finite studio ident. Only transforms and opacity move; all layers leave at exit. */
 html[data-sv-intro="pending"]::before {
   content:"";
   position:fixed;
   inset:0;
   z-index:2147483000;
-  background:#030305;
+  background:#03040a;
 }
-html[data-sv-intro] {scrollbar-color:#030305 #030305}
+html[data-sv-intro],html[data-sv-intro] body {scrollbar-color:#03040a #03040a}
 html[data-sv-intro]::-webkit-scrollbar,
-html[data-sv-intro]::-webkit-scrollbar-thumb {background:#030305}
+html[data-sv-intro]::-webkit-scrollbar-thumb,
+html[data-sv-intro] body::-webkit-scrollbar,
+html[data-sv-intro] body::-webkit-scrollbar-thumb {background:#03040a}
 body.svCleanShell .svIntro {
   position:fixed;
   inset:0;
@@ -17,7 +19,7 @@ body.svCleanShell .svIntro {
   place-items:center;
   overflow:hidden;
   isolation:isolate;
-  color:#f6f5f2;
+  color:#f6f7ff;
   font-family:Arial,"Helvetica Neue",sans-serif;
 }
 body.svCleanShell .svIntro[hidden] {display:none !important}
@@ -26,7 +28,7 @@ body.svCleanShell .svIntro[hidden] {display:none !important}
   left:0;
   width:100%;
   height:50.2%;
-  background:#030305;
+  background:#03040a;
   pointer-events:none;
 }
 .svIntroCurtainTop {top:0}
@@ -40,19 +42,31 @@ body.svCleanShell .svIntro[hidden] {display:none !important}
 }
 .svIntroAtmosphere {
   position:absolute;
-  width:min(1180px,135vw);
-  height:min(680px,80vh);
-  border-radius:50%;
-  background:radial-gradient(ellipse at 34% 49%,#66649520,transparent 54%),radial-gradient(ellipse at 66% 51%,#b5c9d31b,transparent 49%);
+  inset:0;
+  background:radial-gradient(ellipse at 49% 40%,#283b685c,transparent 43%),radial-gradient(ellipse at 24% 31%,#674b8f35,transparent 35%),radial-gradient(ellipse at 73% 57%,#23678a24,transparent 40%);
   opacity:0;
 }
+.svIntroRays {position:absolute;inset:-35% -10% -15%;overflow:hidden}
+.svIntroRay {
+  position:absolute;
+  left:calc(24% + var(--ray) * 12%);
+  top:-30%;
+  height:125%;
+  width:clamp(90px,12vw,210px);
+  background:linear-gradient(90deg,transparent,#9995ff03 18%,#9995ff16 46%,#c7d4ff21 50%,#9995ff0b 68%,transparent);
+  mask-image:linear-gradient(180deg,transparent,black 18%,black 61%,transparent);
+  transform-origin:50% 0;
+  transform:rotate(calc(-26deg + var(--ray) * 8deg)) translateY(-7%);
+  opacity:0;
+}
+.svIntroRay:nth-child(even) {background:linear-gradient(90deg,transparent,#53adff03 20%,#74b8ff13 45%,#b6ddff1c 50%,#74b8ff08 63%,transparent)}
 .svIntroHorizon {
   position:absolute;
-  top:50%;
-  left:0;
-  right:0;
+  top:calc(50% + 96px);
+  left:12%;
+  right:12%;
   height:1px;
-  background:linear-gradient(90deg,transparent 8%,#adb9e007 30%,#d2d6ef24 50%,#adb9e007 70%,transparent 92%);
+  background:linear-gradient(90deg,transparent,#8da7e51a 30%,#c8d9ff5c 50%,#8da7e51a 70%,transparent);
   opacity:0;
   transform:scaleX(.2);
 }
@@ -63,49 +77,55 @@ body.svCleanShell .svIntro[hidden] {display:none !important}
   align-items:center;
   width:max-content;
   max-width:92vw;
-  padding:30px 8px;
-  transform:translateY(-5px);
+  padding:24px 8px;
+  transform:translateY(-10px);
+  perspective:700px;
 }
+.svIntroMark {
+  position:relative;
+  width:216px;
+  height:248px;
+  margin-bottom:26px;
+  opacity:0;
+  transform:translateY(22px) rotateY(-25deg) rotateX(8deg) scale(.92);
+}
+.svIntroMark::before {
+  content:"";
+  position:absolute;
+  inset:-12% -45% -10%;
+  background:radial-gradient(ellipse,#8c9eff25,transparent 64%);
+}
+.svIntroMark svg {position:relative;display:block;width:100%;height:100%;overflow:visible}
+.svIntroShine {transform:translateX(0) skewX(-14deg);opacity:0}
 .svIntroWordmark {
   position:relative;
   display:flex;
   align-items:baseline;
   overflow:hidden;
   padding:4px 0 8px;
-  font-size:clamp(34px,7.1vw,94px);
-  font-weight:750;
-  line-height:1.06;
-  letter-spacing:.075em;
+  font-size:clamp(32px,3.5vw,46px);
+  font-weight:700;
+  line-height:1.08;
+  letter-spacing:.16em;
 }
 .svIntroLetterClip {display:block;overflow:hidden;padding:0 .015em .04em}
-.svIntroLetterClip > span {display:block;opacity:0;transform:translateY(115%) rotate(5deg)}
-.svIntroTV {color:#bac4e3;font-weight:400}
-.svIntroTV:nth-child(7) {margin-left:.055em}
-.svIntroSweep {
-  position:absolute;
-  top:0;
-  bottom:0;
-  left:-24%;
-  width:20%;
-  background:linear-gradient(100deg,transparent,#f1f2ff16 42%,#ffffff4a 50%,#f1f2ff16 58%,transparent);
-  opacity:0;
-  transform:translateX(0) skewX(-12deg);
-  mix-blend-mode:screen;
-}
+.svIntroLetterClip > span {display:block;opacity:0;transform:translateY(110%)}
+.svIntroTV {color:#aab9de;font-weight:400}
+.svIntroTV:nth-child(7) {margin-left:.06em}
 .svIntroRule {
-  width:45%;
+  width:64px;
   height:1px;
-  margin:18px 0 21px;
-  background:linear-gradient(90deg,transparent,#e0e1f365,transparent);
+  margin:13px 0 18px;
+  background:linear-gradient(90deg,transparent,#b8c9f799,transparent);
   transform:scaleX(0);
 }
 body.svCleanShell .svIntroTagline {
   margin:0;
-  color:#b4b3bf;
-  font-size:clamp(9px,1.1vw,11px);
+  color:#a2acc6;
+  font-size:10px;
   font-weight:400;
   line-height:1.5;
-  letter-spacing:.32em;
+  letter-spacing:.27em;
   text-transform:uppercase;
   opacity:0;
   transform:translateY(7px);
@@ -116,48 +136,60 @@ body.svCleanShell .svIntroSkip {
   bottom:max(25px,env(safe-area-inset-bottom));
   display:flex;
   align-items:center;
-  gap:20px;
+  gap:22px;
   min-height:44px;
-  padding:10px 2px;
-  border:0;
-  border-radius:0;
-  background:none;
+  padding:10px 17px;
+  border:1px solid #b8c8f324;
+  border-radius:999px;
+  background:#151b2b45;
   box-shadow:none;
-  color:#b6b5c0;
+  color:#b7c0d5;
   font:400 11px/1.4 Arial,"Helvetica Neue",sans-serif;
-  letter-spacing:.08em;
+  letter-spacing:.06em;
   cursor:pointer;
   opacity:0;
 }
-.svIntroSkip span {font-size:18px;color:#e1e1e8}
-body.svCleanShell .svIntroSkip:focus-visible {outline:1px solid #b7bbd3;outline-offset:7px}
-body.svCleanShell .svIntroSkip:hover {color:#fff;background:none}
-html[data-sv-intro="running"] .svIntroCurtainTop {animation:svIntroOpenTop .8s cubic-bezier(.76,0,.2,1) 1.38s both}
-html[data-sv-intro="running"] .svIntroCurtainBottom {animation:svIntroOpenBottom .8s cubic-bezier(.76,0,.2,1) 1.38s both}
-html[data-sv-intro="running"] .svIntroStage {animation:svIntroStage 1.7s cubic-bezier(.2,.7,.2,1) both}
-html[data-sv-intro="running"] .svIntroAtmosphere {animation:svIntroAtmosphere 1.7s ease-out both}
-html[data-sv-intro="running"] .svIntroHorizon {animation:svIntroHorizon 1.4s ease-out .05s both}
-html[data-sv-intro="running"] .svIntroLetterClip > span {animation:svIntroLetter .72s cubic-bezier(.16,1,.3,1) calc(.14s + var(--sv-intro-order) * .032s) both}
-html[data-sv-intro="running"] .svIntroSweep {animation:svIntroSweep .85s cubic-bezier(.2,.65,.3,1) .72s both}
-html[data-sv-intro="running"] .svIntroRule {animation:svIntroRule .8s cubic-bezier(.16,1,.3,1) .57s both}
-html[data-sv-intro="running"] .svIntroTagline {animation:svIntroTagline .65s ease-out .63s both}
-html[data-sv-intro="running"] .svIntroSkip {animation:svIntroSkip .4s ease-out .25s both}
-@keyframes svIntroLetter {to{opacity:1;transform:translateY(0) rotate(0)}}
+.svIntroSkip span {font-size:17px;color:#e1e8fa}
+body.svCleanShell .svIntroSkip:focus-visible {outline:1px solid #b7c9f3;outline-offset:5px}
+body.svCleanShell .svIntroSkip:hover {color:#fff;background:#25304c80;border-color:#b8c8f355}
+html[data-sv-intro="running"] .svIntroCurtainTop {animation:svIntroOpenTop .76s cubic-bezier(.76,0,.2,1) 1.73s both}
+html[data-sv-intro="running"] .svIntroCurtainBottom {animation:svIntroOpenBottom .76s cubic-bezier(.76,0,.2,1) 1.73s both}
+html[data-sv-intro="running"] .svIntroStage {animation:svIntroStage 2.47s ease-out both}
+html[data-sv-intro="running"] .svIntroAtmosphere {animation:svIntroAtmosphere 2.35s ease-out both}
+html[data-sv-intro="running"] .svIntroRay {animation:svIntroRay 2.15s ease-out calc(var(--ray) * .025s) both}
+html[data-sv-intro="running"] .svIntroHorizon {animation:svIntroHorizon 1.8s ease-out .2s both}
+html[data-sv-intro="running"] .svIntroMark {animation:svIntroMark .95s cubic-bezier(.16,1,.3,1) .05s both}
+html[data-sv-intro="running"] .svIntroLetterClip > span {animation:svIntroLetter .62s cubic-bezier(.16,1,.3,1) calc(.42s + var(--sv-intro-order) * .024s) both}
+html[data-sv-intro="running"] .svIntroShine {animation:svIntroShine .95s cubic-bezier(.2,.65,.3,1) .65s both}
+html[data-sv-intro="running"] .svIntroRule {animation:svIntroRule .65s cubic-bezier(.16,1,.3,1) .7s both}
+html[data-sv-intro="running"] .svIntroTagline {animation:svIntroTagline .6s ease-out .78s both}
+html[data-sv-intro="running"] .svIntroSkip {animation:svIntroSkip .35s ease-out .2s both}
+@keyframes svIntroMark {to{opacity:1;transform:translateY(0) rotateY(0) rotateX(0) scale(1)}}
+@keyframes svIntroLetter {to{opacity:1;transform:translateY(0)}}
 @keyframes svIntroRule {to{transform:scaleX(1)}}
 @keyframes svIntroTagline {to{opacity:1;transform:translateY(0)}}
 @keyframes svIntroSkip {to{opacity:1}}
-@keyframes svIntroSweep {0%{opacity:0;transform:translateX(0) skewX(-12deg)}25%{opacity:1}80%{opacity:.7}100%{opacity:0;transform:translateX(680%) skewX(-12deg)}}
-@keyframes svIntroAtmosphere {0%{opacity:0;transform:scale(.82)}40%{opacity:1}100%{opacity:0;transform:scale(1.12)}}
-@keyframes svIntroHorizon {0%{opacity:0;transform:scaleX(.2)}48%{opacity:1;transform:scaleX(1)}100%{opacity:0;transform:scaleX(1.08)}}
-@keyframes svIntroStage {0%{opacity:1;transform:scale(.975)}74%{opacity:1}100%{opacity:0;transform:scale(1.035)}}
+@keyframes svIntroShine {0%{opacity:0;transform:translateX(0) skewX(-14deg)}20%{opacity:1}80%{opacity:.8}100%{opacity:0;transform:translateX(340px) skewX(-14deg)}}
+@keyframes svIntroAtmosphere {0%{opacity:0}35%,75%{opacity:1}100%{opacity:0}}
+@keyframes svIntroRay {0%{opacity:0;transform:rotate(calc(-26deg + var(--ray) * 8deg)) translateY(-7%)}40%,70%{opacity:1}100%{opacity:0;transform:rotate(calc(-23deg + var(--ray) * 8deg)) translateY(0)}}
+@keyframes svIntroHorizon {0%{opacity:0;transform:scaleX(.2)}45%,65%{opacity:1;transform:scaleX(1)}100%{opacity:0;transform:scaleX(1.1)}}
+@keyframes svIntroStage {0%,70%{opacity:1}100%{opacity:0}}
 @keyframes svIntroOpenTop {to{transform:translateY(-100.5%)}}
 @keyframes svIntroOpenBottom {to{transform:translateY(100.5%)}}
 @media (max-width:600px) {
-  .svIntroWordmark {font-size:clamp(29px,9.1vw,54px);letter-spacing:.045em}
-  .svIntroIdentity {transform:translateY(-12px)}
-  .svIntroRule {margin:14px 0 19px}
-  body.svCleanShell .svIntroTagline {letter-spacing:.21em}
+  .svIntroWordmark {font-size:clamp(25px,7.5vw,37px);letter-spacing:.12em}
+  .svIntroMark {width:178px;height:204px;margin-bottom:29px}
+  .svIntroIdentity {transform:translateY(-17px)}
+  .svIntroHorizon {left:4%;right:4%;top:calc(50% + 74px)}
+  .svIntroRule {margin:12px 0 17px}
+  body.svCleanShell .svIntroTagline {font-size:9px;letter-spacing:.21em}
   body.svCleanShell .svIntroSkip {right:max(22px,env(safe-area-inset-right));bottom:max(19px,env(safe-area-inset-bottom))}
+}
+@media (max-height:520px) {
+  .svIntroMark {width:130px;height:149px;margin-bottom:12px}
+  .svIntroWordmark {font-size:30px}
+  .svIntroIdentity {transform:translateY(-22px);padding:12px 8px}
+  .svIntroRule {margin:8px 0 10px}
 }
 @media (prefers-reduced-motion:reduce) {
   html[data-sv-intro="pending"]::before {display:none}

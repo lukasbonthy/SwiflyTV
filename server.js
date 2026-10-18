@@ -65,6 +65,7 @@ const express = require("express");
 const { studioMarkup } = require("./ui/studio");
 const { welcomeMarkup } = require("./ui/welcome");
 const { introHead, introMarkup } = require("./ui/intro");
+const { navigationHead } = require("./ui/navigation");
 const { partyMarkup } = require("./ui/party");
 const { playerMarkup, episodePickerMarkup } = require("./ui/player");
 const { watchPartyMarkup, partyBrowseMarkup } = require("./ui/watch-party");
@@ -6415,6 +6416,7 @@ function mediaDataAttributes(prefix, item = {}, type = "") {
 
 function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, trailers, cast pages, watchlists, and synced watch rooms.", body = "", active = "", extraHead = "", player = false, partyBrowse = false }) {
   const showIntro = !player && active !== "watch" && active !== "social";
+  const showNavigation = !player && !partyBrowse && !["watch", "social", "watchrooms"].includes(active);
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -6424,6 +6426,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
   <meta name="description" content="${escapeHtml(description)}" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta name="theme-color" content="#000000" />
+  ${showNavigation ? navigationHead() : ""}
+  ${showNavigation ? '<link rel="stylesheet" href="/assets/clean/navigation.css?v=1" />' : ""}
   ${showIntro ? introHead() : ""}
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
@@ -6488,14 +6492,14 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/clean.js?v=151"></script>
     <script defer src="/assets/clean/avatars.js?v=209"></script>
     ${active === "profiles" ? '<script defer src="/assets/clean/profiles.js?v=209"></script>' : ""}
-    <script defer src="/assets/clean/continue.js?v=154"></script>
+    <script defer src="/assets/clean/continue.js?v=155"></script>
     <link rel="stylesheet" href="/assets/clean/details.css?v=229" />
     <link rel="stylesheet" href="/assets/clean/motion.css?v=208" />
     <link rel="stylesheet" href="/assets/vendor/lenis/lenis.css?v=1.3.16-r1" />
     <script defer src="/assets/vendor/lenis/lenis.min.js?v=1.3.16-r1"></script>
     <script defer src="/assets/clean/motion.js?v=238"></script>
     <script defer src="/assets/clean/scroll.js?v=240"></script>
-    <script defer src="/assets/clean/details.js?v=231"></script>
+    <script defer src="/assets/clean/details.js?v=232"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=222" />
     <script defer src="/assets/liquid-glass/surfaces.js?v=235"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=233" />
@@ -6505,19 +6509,19 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=205" />' : ""}
     ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=173" />' : ""}
     
-    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=232"></script>' : ""}
-    ${active === "social" ? '<script defer src="/assets/party/party.js?v=205"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}
-    ${player || partyBrowse ? '<script defer src="/assets/player/watch-party.js?v=160"></script>' : ""}
-    ${player ? "" : '<link rel="stylesheet" href="/assets/clean/finish.css?v=175" />'}
+    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=233"></script>' : ""}
+    ${active === "social" ? '<script defer src="/assets/party/party.js?v=206"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}
+    ${player || partyBrowse ? '<script defer src="/assets/player/watch-party.js?v=161"></script>' : ""}
+    ${player ? "" : '<link rel="stylesheet" href="/assets/clean/finish.css?v=176" />'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/polish.css?v=176" />'}
-    <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=205" />
+    <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=206" />
     <link rel="stylesheet" href="/assets/liquid-glass/controls.css?v=231" />
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/experience.css?v=202" />'}
     <link rel="stylesheet" href="/assets/clean/cinema.css?v=207" />
     <link rel="stylesheet" href="/assets/clean/profiles.css?v=209" />
-    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=211" />' : ""}
-    ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=205" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=205" />' : ""}
-    ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=199" />' : ""}
+    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=212" />' : ""}
+    ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=206" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=205" />' : ""}
+    ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=200" />' : ""}
     <link rel="stylesheet" href="/assets/clean/performance.css?v=211" />
 </head>
 <body class="svCleanShell">
@@ -7316,52 +7320,6 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
         updateAccountStats();
       }
-
-      function continueKey(type, id) {
-        return type + ":" + id;
-      }
-
-      function readContinue() {
-        const list = readJson(CONTINUE_KEY, []);
-        return Array.isArray(list) ? list : [];
-      }
-
-      function saveContinue(list) {
-        writeJson(CONTINUE_KEY, list.slice(0, 80));
-        window.dispatchEvent(new Event("swifly:continue-change"));
-      }
-
-      function addContinueFromButton(button) {
-        const type = button.dataset.playType || "movie";
-        const id = String(button.dataset.playId || "");
-        if (!id) return;
-
-        const key = continueKey(type, id);
-        const previous = readContinue().find((item) => item.key === key) || {};
-        const list = readContinue().filter((item) => item.key !== key);
-        list.unshift({
-          ...previous,
-          key,
-          type,
-          id,
-          title: button.dataset.playTitle || "Untitled",
-          poster: button.dataset.playPoster || "",
-          backdrop: button.dataset.playBackdrop || "",
-          rating: button.dataset.playRating || "",
-          year: button.dataset.playYear || "",
-          watchedAt: new Date().toISOString()
-        });
-        saveContinue(list);
-      }
-
-      document.addEventListener("click", (event) => {
-        const play = event.target.closest("[data-play-id]");
-        if (!play) return;
-        addContinueFromButton(play);
-        showToast("Saved to Continue Watching");
-      }, true);
-
-
 
       document.getElementById("manageProfilesBtn")?.addEventListener("click", () => {
         const reset = confirm("Reset custom profiles back to the defaults?");
@@ -9280,7 +9238,7 @@ async function watchPage(req, res, type) {
   const episodes = (Array.isArray(seasonDetails.episodes) ? seasonDetails.episodes : []).map(item => ({ ...item, still: item.still_path ? img(item.still_path, "w342") : "" }));
   const episodeTitle = episodes.find(item => String(item.episode_number) === episode)?.name || "";
   const episodePickerHtml = type === "tv" && mode === "movie" ? episodePickerMarkup({
-    id, season, episode, seasons, provider, episodes, episodeCount: currentSeason?.episode_count || 1
+    id, season, episode, seasons, provider, episodes, roomId, episodeCount: currentSeason?.episode_count || 1
   }) : "";
   const body = playerMarkup({
     id, type, title, mode, season, episode,
@@ -9290,15 +9248,15 @@ async function watchPage(req, res, type) {
     provider, episodeTitle,
     trailerUrl: trailer ? youtubeEmbedSrc(trailer.key, youtubeEmbedOrigin(req)) : "",
     episodePickerHtml,
-    managed: type === "movie" && mode === "movie" && Boolean(roomId),
-    partyPanelHtml: type === "movie" && mode === "movie" ? watchPartyMarkup({movieId:id,title,poster:details.poster_path?img(details.poster_path,"w185"):""}) : "",
+    managed: mode === "movie" && Boolean(roomId),
+    partyPanelHtml: mode === "movie" ? watchPartyMarkup({movieId:id,type,season,episode,title,poster:details.poster_path?img(details.poster_path,"w185"):""}) : "",
   });
   res.send(pageShell({title:`${SITE_NAME} — ${title}`,active:type === "tv" ? "tv" : "movies",body,player:true}));
 }
 
 async function detailPage(req, res, type) {
   const id = req.params.id;
-  const partyId = type === "movie" ? partyMovieId(id) : "";
+  const partyId = partyMovieId(id);
   const endpoint = type === "tv" ? `/tv/${id}` : `/movie/${id}`;
   const [details, videos, credits, similar, recommendations, externalIds, providers] = await Promise.all([
     tmdb(endpoint, { append_to_response: "images", include_image_language: "en,null" }, CACHE_TTL.long),
@@ -9378,7 +9336,7 @@ async function detailPage(req, res, type) {
           <div class="svDetailActions">
             <a class="dsPrimaryBtn" href="${watchHref}" ${mediaDataAttributes("play", details, type)}>${cleanIcon("play")}${escapeHtml(playLabel)}</a>
             ${trailers.length ? `<a class="dsSecondaryBtn" href="/watch/${type}/${encodeURIComponent(id)}?mode=trailer">${cleanIcon("play")}Trailer</a>` : ""}
-            ${partyId ? `<a class="dsSecondaryBtn" href="/watch/movie/${partyId}?mode=movie&party=create" data-sv-party-movie-id="${partyId}" aria-label="Start a watch party for ${escapeHtml(title)}">${cleanIcon("user")}Start a watch party</a>` : ""}
+            ${partyId ? `<a class="dsSecondaryBtn" href="${escapeHtml(partyMediaWatchUrl({movieId:partyId,type,season:String((details.seasons||[]).filter(row=>Number.isSafeInteger(row.season_number)&&row.season_number>0).sort((a,b)=>a.season_number-b.season_number)[0]?.season_number||1),episode:"1"},"",true))}" data-sv-party-movie-id="${partyId}" data-sv-party-type="${type}" aria-label="Start a watch party for ${escapeHtml(title)}">${cleanIcon("user")}Start a watch party</a>` : ""}
             <button class="dsIconBtn" type="button" aria-label="Add ${escapeHtml(title)} to My List" ${mediaDataAttributes("watch", details, type)}>＋</button>
             <button class="dsIconBtn dsHeartBtn" type="button" aria-label="Like ${escapeHtml(title)}" ${mediaDataAttributes("like", details, type)}>♡</button>
           </div>
@@ -15174,6 +15132,49 @@ function partyMovieId(value) {
   return /^[1-9]\d*$/.test(id) && Number.isSafeInteger(Number(id)) ? id : "";
 }
 
+// Keep the original movie field/event names for clients already in a room.
+// The complete tuple distinguishes a series episode from a movie with the same ID.
+function partyMediaSelection(value = {}) {
+  const type = value.type === undefined ? "movie" : value.type;
+  const movieId = partyMovieId(value.movieId ?? value.id);
+  if (!movieId || !["movie", "tv"].includes(type)) return null;
+  if (type === "movie") return { movieId, type };
+  const season = partyMovieId(value.season), episode = partyMovieId(value.episode);
+  return season && episode ? { movieId, type, season, episode } : null;
+}
+
+function partyMediaIdentity(movie = {}) {
+  const selection = partyMediaSelection(movie);
+  return selection ? { ...selection, requestId: movie.requestId || "" } : {};
+}
+
+function partyTransportMatches(movie, payload) {
+  if (payload.requestId !== undefined && payload.requestId !== movie.requestId) return false;
+  if (movie.type === "tv" || payload.type !== undefined || payload.movieId !== undefined) {
+    const incoming = partyMediaSelection(payload), current = partyMediaSelection(movie);
+    if (!incoming || !current || ["movieId", "type", "season", "episode"].some(key => incoming[key] !== current[key])) return false;
+    if (current.type === "tv" && payload.requestId !== movie.requestId) return false;
+  }
+  return true;
+}
+
+function partyMediaWatchUrl(movie, roomId = "", create = false) {
+  const selection = partyMediaSelection(movie);
+  if (!selection) return "";
+  const query = new URLSearchParams({ mode: "movie" });
+  if (selection.type === "tv") { query.set("s", selection.season); query.set("e", selection.episode); }
+  if (roomId) query.set("roomId", roomId);
+  if (create) query.set("party", "create");
+  return `/watch/${selection.type}/${selection.movieId}?${query}`;
+}
+
+function partyMediaMetadata(value, type) {
+  if (!["movie", "tv"].includes(type)) return null;
+  const movie = type === "tv" ? { ...value, title: value?.name, original_title: value?.original_name, release_date: value?.first_air_date } : value;
+  const metadata = partyMovieMetadata(movie);
+  return metadata ? { ...metadata, type } : null;
+}
+
 function partyMovieMetadata(movie) {
   const id = partyMovieId(movie?.id);
   const title = (typeof movie?.title === "string" ? movie.title.trim() : "")
@@ -15209,7 +15210,7 @@ function continueWatchingPage(req, res) {
     <section class="svHistoryPanel">
       <div class="svSectionHead"><h2>Recent titles</h2><span class="svHistoryCount" data-continue-count></span></div>
       <div id="continueWatchingPageRail" class="svResumeGrid"></div>
-      <div id="continueWatchingEmpty" class="svHistoryEmpty" hidden><h2>Nothing here yet</h2><p>Open a movie or series and it will appear here for your next visit.</p><a class="dsSecondaryBtn" href="/movies">Find something to watch</a></div>
+      <div id="continueWatchingEmpty" class="svHistoryEmpty" hidden><h2>Nothing here yet</h2><p>Start watching a movie or episode and your progress will appear here.</p><a class="dsSecondaryBtn" href="/movies">Find something to watch</a></div>
     </section>
   </main>`;
   res.send(pageShell({ title: `${SITE_NAME} — Continue Watching`, active: "continue", body }));
@@ -15299,11 +15300,14 @@ app.get("/profiles", profilesPage);
 app.get("/profiles/manage", profilesManagePage);
 app.get("/social", (req, res) => {
   const movieId = partyMovieId(req.query.movieId);
-  if (movieId) return res.redirect(`/watch/movie/${movieId}?mode=movie&party=create`);
+  if (movieId) {
+    const selected = partyMediaSelection({ movieId, type: req.query.type, season: req.query.s || req.query.season || "1", episode: req.query.e || req.query.episode || "1" });
+    if (selected) return res.redirect(partyMediaWatchUrl(selected, "", true));
+  }
   const roomId = normalizeRoomId(req.query.roomId || req.query.room || "");
   const room = roomId ? watchRooms.get(roomId) : null;
-  const roomMovieId = partyMovieId(room?.syncedMovie?.movieId);
-  if (roomMovieId) return res.redirect(`/watch/movie/${roomMovieId}?mode=movie&roomId=${encodeURIComponent(roomId)}`);
+  const roomWatchUrl = room && partyMediaWatchUrl(room.syncedMovie, roomId);
+  if (roomWatchUrl) return res.redirect(roomWatchUrl);
   // The navigation's Social link should enter the real, integrated Party Hub,
   // not unexpectedly jump into the catalog's embedded party section.
   return socialPage(req, res);
@@ -15415,6 +15419,48 @@ function apiStatus(req, res) {
 app.get("/api/status", apiStatus);
 
 
+
+app.get("/api/social/media/search", async (req, res) => {
+  const query = String(req.query.q || "").trim().slice(0, 120);
+  const type = req.query.type;
+  if (type !== undefined && !["movie", "tv"].includes(type)) return res.status(400).json({ ok: false, message: "Choose movies or TV shows." });
+  if (query.length < 2) return res.json({ ok: true, results: [] });
+  try {
+    const data = await tmdb(`/search/${type || "multi"}`, { query, include_adult: false, page: 1 }, CACHE_TTL.short);
+    if (!data || data.__error || !Array.isArray(data.results)) throw new Error("Metadata unavailable");
+    const results = data.results.map(row => partyMediaMetadata(row, type || row.media_type)).filter(Boolean).slice(0, 12);
+    res.json({ ok: true, results });
+  } catch {
+    res.status(503).json({ ok: false, message: "Title search is unavailable right now. Please try again." });
+  }
+});
+
+app.get("/api/social/media/:type/:id", async (req, res) => {
+  const type = req.params.type, id = partyMovieId(req.params.id);
+  const requestedSeason = req.query.season === undefined ? null : partyMovieId(req.query.season);
+  const episode = req.query.episode === undefined ? "1" : partyMovieId(req.query.episode);
+  if (!id || !["movie", "tv"].includes(type) || requestedSeason === "" || !episode) return res.status(400).json({ ok: false, message: "Choose a valid title, season and episode." });
+  try {
+    const details = await tmdb(`/${type}/${id}`, {}, CACHE_TTL.long);
+    if ((details?.__error && Number(details.status) === 404) || details?.adult) return res.status(404).json({ ok: false, message: "This title was not found." });
+    const media = details && !details.__error ? partyMediaMetadata(details, type) : null;
+    if (!media || String(media.id) !== id) throw new Error("Metadata unavailable");
+    if (type === "movie") return res.json({ ok: true, media });
+    const seasons = (Array.isArray(details.seasons) ? details.seasons : []).filter(row => Number.isSafeInteger(row.season_number) && row.season_number > 0).sort((a, b) => a.season_number - b.season_number);
+    const season = requestedSeason || String(seasons[0]?.season_number || 1);
+    const selectedSeason = seasons.find(row => String(row.season_number) === season);
+    if (!selectedSeason) return res.status(404).json({ ok: false, message: "This season was not found. Choose another season." });
+    const data = await tmdb(`/tv/${id}/season/${season}`, {}, CACHE_TTL.long);
+    if (!data || data.__error || !Array.isArray(data.episodes)) throw new Error("Metadata unavailable");
+    const episodes = data.episodes.filter(row => Number.isSafeInteger(row.episode_number) && row.episode_number > 0)
+      .map(row => ({ episode_number: row.episode_number, name: String(row.name || ""), overview: String(row.overview || ""), runtime: row.runtime, still: row.still_path ? img(row.still_path, "w342") : "" }));
+    if (!episodes.some(row => String(row.episode_number) === episode)) return res.status(404).json({ ok: false, message: "This episode was not found. Choose another episode." });
+    const episodePickerHtml = episodePickerMarkup({ id, season, episode, seasons, episodes, episodeCount: selectedSeason.episode_count });
+    res.json({ ok: true, media: { ...media, season, episode, seasons, episodes }, episodePickerHtml });
+  } catch {
+    res.status(503).json({ ok: false, message: "Title details are unavailable right now. Please try again." });
+  }
+});
 
 app.get("/api/social/movies/search", async (req, res) => {
   const query = String(req.query.q || "").trim().slice(0, 120);
@@ -15549,6 +15595,9 @@ function dateRoomRestClientId(value) {
 }
 
 function dateRoomRestIsHost(room, clientId) {
+  // Socket parties already have an elected host. The legacy REST fallback may
+  // elect a host only for a room without a socket owner.
+  if (room.hostSocketId) return false;
   if (!room.restHostClientId && clientId) {
     room.restHostClientId = clientId;
   }
@@ -16092,20 +16141,23 @@ io.on("connection", (socket) => {
       return;
     }
 
-    const movieId = partyMovieId(payload.movieId);
-    if (!movieId) return;
+    const selection = partyMediaSelection(payload);
+    if (!selection) return;
+    if (payload.retry === true && payload.requestId !== undefined && !partyTransportMatches(room.syncedMovie, payload)) return;
+    const { movieId, type, season, episode } = selection;
+    const noun = type === "tv" ? "episode" : "film";
 
     const selectedBy = String(payload.name || room.host || "Host").slice(0, 40);
     const requestId = Math.random().toString(36).slice(2, 10);
 
     room.syncedMovie = {
       status: "loading",
-      movieId,
+      ...selection,
       proxyVideo: "",
       playAt: 0,
       selectedBy,
       requestId,
-      message: "Getting the film ready…",
+      message: `Getting the ${noun} ready…`,
       updatedAt: Date.now(),
     };
     room.updatedAt = Date.now();
@@ -16119,11 +16171,11 @@ io.on("connection", (socket) => {
     io.to(room.id).emit("watchroom:message", {
       roomId: room.id,
       name: "System",
-      text: `${selectedBy} selected a film. Getting it ready…`,
+      text: `${selectedBy} selected ${type === "tv" ? `season ${season}, episode ${episode}` : "a film"}. Getting it ready…`,
       createdAt: Date.now(),
     });
 
-    const result = await fetchProxyVideoSource({ type: "movie", id: movieId, retry: payload.retry === true });
+    const result = await fetchProxyVideoSource({ type, id: movieId, ...(type === "tv" ? { season, episode } : {}), retry: payload.retry === true });
 
     const latest = watchRooms.get(roomId);
     if (!latest || !latest.syncedMovie || latest.syncedMovie.requestId !== requestId) return;
@@ -16133,7 +16185,7 @@ io.on("connection", (socket) => {
       latest.syncedMovie = {
         ...result,
         status: "ready",
-        movieId,
+        ...selection,
         playbackUrl,
         proxyVideo: playbackUrl,
         providerUrl: result.providerUrl || "",
@@ -16151,19 +16203,19 @@ io.on("connection", (socket) => {
         playAt: Date.now() + 7000,
         selectedBy,
         requestId,
-        message: "The film is ready. Starting in 7 seconds.",
+        message: `The ${noun} is ready. Starting in 7 seconds.`,
         sync: createMovieSyncState({ playing: true, offset: 0, startedAt: Date.now() + 7000 }),
         updatedAt: Date.now(),
       };
     } else {
       latest.syncedMovie = {
         status: "error",
-        movieId,
+        ...selection,
         proxyVideo: "",
         playAt: 0,
         selectedBy,
         requestId,
-        message: "This film could not start. Please retry or choose another film.",
+        message: `This ${noun} could not start. Please retry or choose another ${noun}.`,
         sync: createMovieSyncState(),
         attempts: result.attempts || [],
         updatedAt: Date.now(),
@@ -16182,8 +16234,8 @@ io.on("connection", (socket) => {
       roomId: latest.id,
       name: "System",
       text: latest.syncedMovie.status === "ready"
-        ? "The film is ready. Your party starts in 7 seconds."
-        : "This film could not start. Please retry or choose another film.",
+        ? `The ${noun} is ready. Your party starts in 7 seconds.`
+        : `This ${noun} could not start. Please retry or choose another ${noun}.`,
       createdAt: Date.now(),
     });
   });
@@ -16194,6 +16246,8 @@ io.on("connection", (socket) => {
     if (!room || socket.data.roomId !== roomId || !room.syncedMovie || !room.syncedMovie.movieId) return;
 
     const action = String(payload.action || "").slice(0, 30);
+
+    if (action !== "sync-me" && !partyTransportMatches(room.syncedMovie, payload)) return;
 
     if (action !== "sync-me" && room.hostSocketId && room.hostSocketId !== socket.id) {
       socket.emit("watchroom:message", {
@@ -16238,7 +16292,7 @@ io.on("connection", (socket) => {
         socket.emit("watchroom:movie-sync-state", {
           serverTime: Date.now(),
           roomId: room.id,
-          movieId: room.syncedMovie.movieId,
+          ...partyMediaIdentity(room.syncedMovie),
           sync: room.syncedMovie.sync,
           message: `Already within ${setDriftLimit}s tolerance.`,
         });
@@ -16251,6 +16305,7 @@ io.on("connection", (socket) => {
       socket.emit("watchroom:movie-sync-state", {
           serverTime: Date.now(),
         roomId: room.id,
+        ...partyMediaIdentity(room.syncedMovie),
         sync: room.syncedMovie.sync,
         message: "Synced to current room timer.",
       });
@@ -16271,7 +16326,7 @@ io.on("connection", (socket) => {
     io.to(room.id).emit("watchroom:movie-sync-state", {
       serverTime: Date.now(),
       roomId: room.id,
-      movieId: room.syncedMovie.movieId,
+      ...partyMediaIdentity(room.syncedMovie),
       sync: room.syncedMovie.sync,
       message,
     });
@@ -16287,7 +16342,7 @@ io.on("connection", (socket) => {
   socket.on("watchroom:movie-sync-start", (payload = {}) => {
     const roomId = normalizeRoomId(payload.roomId || socket.data.roomId);
     const room = watchRooms.get(roomId);
-    if (!room || !room.syncedMovie || !room.syncedMovie.proxyVideo) return;
+    if (!room || socket.data.roomId !== roomId || !room.syncedMovie || !room.syncedMovie.proxyVideo || !partyTransportMatches(room.syncedMovie, payload)) return;
 
     if (room.hostSocketId && room.hostSocketId !== socket.id) {
       socket.emit("watchroom:message", {

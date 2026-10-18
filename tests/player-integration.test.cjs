@@ -29,8 +29,8 @@ test('The normal watch route renders one native movie player with shared assets 
  assert.equal(response.status,200);assert(d.querySelector('.dsHeader, .dsTopBar, .topbar'));
  assert.equal(d.querySelectorAll('.svPlayerPage video').length,1);
  assert.equal(d.querySelector('.svPlayerPage').dataset.playerId,'101');assert.equal(d.querySelector('h1').textContent.trim(),'Arrival');
- assert(d.querySelector('script[src="/assets/player/player.js?v=232"]'));assert(d.querySelector('script[src="/assets/player/watch-party.js?v=160"]'));
- assert(d.querySelector('link[href="/assets/player/player.css?v=211"]'));assert(d.querySelector('dialog.svWatchPartyDialog'));
+ assert(d.querySelector('script[src="/assets/player/player.js?v=233"]'));assert(d.querySelector('script[src="/assets/player/watch-party.js?v=161"]'));
+ assert(d.querySelector('link[href="/assets/player/player.css?v=212"]'));assert(d.querySelector('dialog.svWatchPartyDialog'));
  assert.equal(d.querySelector('.dsProxyVideoWaitingShell'),null);assert.equal(d.querySelector('.svPartyHub'),null);
  assert.equal(d.querySelector('[data-sv-player-back]').getAttribute('href'),'/movie/101');
 });
@@ -39,9 +39,10 @@ test('A room invite enters managed movie playback and a create link waits for ex
   const env=parse(await(await fetch(base+'/watch/movie/101?mode=movie&'+query)).text());assert.equal(env.window.document.querySelector('.svPlayerPage').dataset.playerManaged,managed);
  }
 });
-test('TV player preserves selected season and episode in links without claiming movie party support',async()=>{
+test('TV player preserves selected season and episode and offers matching watch-party setup',async()=>{
  const env=parse(await(await fetch(base+'/watch/tv/101?mode=movie&s=2&e=8')).text()),d=env.window.document,app=d.querySelector('.svPlayerPage');
- assert.equal(app.dataset.playerSeason,'2');assert.equal(app.dataset.playerEpisode,'8');assert.equal(d.querySelector('[data-player-party-open]'),null);
+ assert.equal(app.dataset.playerSeason,'2');assert.equal(app.dataset.playerEpisode,'8');assert(d.querySelector('[data-player-party-open]'));
+ assert(d.querySelector('dialog.svWatchPartyDialog'));assert.match(d.querySelector('[data-party-watching-label]').textContent,/Season 2.*Episode 8/);
  assert(d.querySelector('a[href="/watch/tv/101?mode=movie&s=2&e=9"]'));assert(d.querySelector('a[href="/watch/tv/101?mode=trailer&s=2&e=8"]'));
 });
 test('Trailer mode keeps an official trailer and never renders a movie loading controller surface',async()=>{
@@ -84,16 +85,16 @@ test('Social navigation opens the integrated Party Hub while movie catalog party
  assert(social.querySelector('main.svPartyHub .partyHero'),'Social link should show the proper cinematic Party Hub');
  assert(social.querySelector('.partyNavigation [data-tab="rooms"]'));
  assert(social.querySelector('link[href="/assets/clean/experience.css?v=202"]'));
- assert(social.querySelector('link[href="/assets/player/player.css?v=211"]'));
+ assert(social.querySelector('link[href="/assets/player/player.css?v=212"]'));
  const scripts=[...social.querySelectorAll('script[src]')].map(node=>node.getAttribute('src'));
- const player=scripts.indexOf('/assets/player/player.js?v=232'),party=scripts.findIndex(src=>src.startsWith('/assets/party/party.js?'));
+ const player=scripts.indexOf('/assets/player/player.js?v=233'),party=scripts.findIndex(src=>src.startsWith('/assets/party/party.js?'));
  assert(player>=0&&party>player,'Party Hub must load the shared controller before its room bridge');
  const template=social.getElementById('partyPlayerTemplate');assert(template?.content.querySelector('.svPlayerEmbedded [data-player-video]'));
  assert.equal(social.querySelector('script[src*="video.js"]'),null,'Party Hub no longer loads a duplicate playback UI');
  const env=parse(await(await fetch(base+'/movies?party=1')).text()),d=env.window.document;
  assert.equal(d.querySelector('.dsBrowseTop h1').textContent.trim(),'Movies');assert(d.querySelector('.genreDropdown'));assert(d.querySelector('.dsHero'));
  assert(d.querySelector('[data-party-browse]'));assert(d.querySelector('.dsContent'));assert.equal(d.querySelector('.svPartyHub'),null);
- assert(d.querySelector('script[src="/assets/player/watch-party.js?v=160"]'));assert.equal(d.querySelector('script[src*="player/player.js"]'),null);
+ assert(d.querySelector('script[src="/assets/player/watch-party.js?v=161"]'));assert.equal(d.querySelector('script[src*="player/player.js"]'),null);
 });
 test('Old movie party setup links redirect to the regular movie player',async()=>{
  const response=await fetch(base+'/social?tab=watchrooms&movieId=101',{redirect:'manual'});assert.equal(response.status,302);assert.equal(response.headers.get('location'),'/watch/movie/101?mode=movie&party=create');
@@ -186,7 +187,7 @@ test('the cinema image fade loads after Aurora and Welcome styles',async()=>{
    const d=parse(await response.text()).window.document;
    const styles=[...d.querySelectorAll('link[rel="stylesheet"]')].map(link=>link.getAttribute('href'));
    const aurora=styles.findIndex(v=>v.includes('/assets/clean/aurora.css?v=208'));
-   const fade=styles.findIndex(v=>v.includes('/assets/clean/hero-fade.css?v=205'));
+   const fade=styles.findIndex(v=>v.includes('/assets/clean/hero-fade.css?v=206'));
    assert(aurora>=0 && fade>aurora,route+' fade must follow aurora');
    if(route==='/welcome'){
      const welcome=styles.findIndex(v=>v.includes('/assets/clean/welcome.css'));
@@ -219,7 +220,7 @@ test('movie discovery artwork fades beyond the hero without a visible seam',asyn
  const d=parse(await(await fetch(base+'/welcome')).text()).window.document;
  assert(d.querySelector('.dsWelcomeHero .dsWelcomeHeroBg'));
  assert(d.querySelector('#discovery.dsWelcomeDiscovery'));
- const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=205')).text();
+ const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=206')).text();
  assert.match(css,/\.svWelcomeClean \.dsWelcomeHeroBg \{/);
  assert.match(css,/bottom:-36px !important/,'backdrop continues beneath the hero');
  assert.match(css,/\.svWelcomeClean \.svWelcomeDiscoveryIntro \{/);
@@ -249,10 +250,10 @@ test('Featured art carries one decorative low-resolution light spill into discov
   assert.equal(bridge.querySelectorAll('img').length,1,'one static ambient layer');
   assert.equal(bridge.getAttribute('style'),null,'no unbounded inline background paint');
   assert.equal(rows.getAttribute('style'),null,'discovery never paints a second artwork');
-  assert(d.querySelector('link[href="/assets/clean/hero-fade.css?v=205"]'));
+  assert(d.querySelector('link[href="/assets/clean/hero-fade.css?v=206"]'));
   assert(!d.querySelector('script[src*="/assets/clean/hero-palette.js"]'),'CSS spill needs no canvas sampling');
  }
- const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=205')).text();
+ const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=206')).text();
  assert.match(css,/overflow:hidden !important/,'movie must be clipped inside hero');
  assert.match(css,/bottom:0 !important/,'original art stops at hero bottom');
  assert.match(css,/background-repeat:no-repeat !important/);
@@ -302,7 +303,7 @@ test('login and signup share one compact design with identical 430px card footpr
 
 
 test('v174 gives the featured movie enough height before fading into the first catalog row',async()=>{
- const css=await(await fetch(base+'/assets/clean/finish.css?v=175')).text();
+ const css=await(await fetch(base+'/assets/clean/finish.css?v=176')).text();
  assert.match(css,/main > \.dsHero \{/);
  assert.match(css,/calc\(100svh \+ 95px\)/,'desktop hero must be taller than one viewport');
  assert.match(css,/background-position:center 43%/,'retain more of the real featured art');
@@ -315,30 +316,31 @@ test('v174 gives the featured movie enough height before fading into the first c
  const hero=doc.querySelector('main > .dsHero');
  assert(hero && hero.querySelector('.dsHeroBg'));
  assert(hero.nextElementSibling?.classList.contains('svHeroLightBridge'));
- assert(doc.querySelector('link[href="/assets/clean/finish.css?v=175"]'));
+ assert(doc.querySelector('link[href="/assets/clean/finish.css?v=176"]'));
 });
 
 test('v174 keeps Welcome soft without muddy light bridge or button clipping',async()=>{
- const css=await(await fetch(base+'/assets/clean/finish.css?v=175')).text();
+ const css=await(await fetch(base+'/assets/clean/finish.css?v=176')).text();
  assert.match(css,/\.svWelcomeClean \.svWelcomeLightBridge::after \{display:none/);
  assert.match(css,/\.svWelcomeClean \.dsWelcomeHeroBg \{/);
  assert.match(css,/opacity:\.21 !important/);
  const doc=parse(await(await fetch(base+'/welcome')).text()).window.document;
  assert(doc.querySelector('.svWelcomeLightBridge'));
- assert(doc.querySelector('link[href="/assets/clean/finish.css?v=175"]'));
+ assert(doc.querySelector('link[href="/assets/clean/finish.css?v=176"]'));
  assert(doc.querySelector('.dsWelcomeActions .dsPrimaryBtn'));
 });
 
 test('Studio glass uses one material on every browsing route and native transitions remain independent',async()=>{
  const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=231')).text();
- const finish=await(await fetch(base+'/assets/clean/finish.css?v=175')).text();
+ const finish=await(await fetch(base+'/assets/clean/finish.css?v=176')).text();
+ const navigation=await(await fetch(base+'/assets/clean/navigation.css?v=1')).text();
  const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=235')).text();
  assert.match(css,/data-st-glass="liquid"/);
  assert.match(css,/data-st-glass="subtle"/);
  assert.match(css,/data-st-glass="off"/);
  assert.match(css,/\.netflixNav,\.dsWelcomeNav/);
  assert.match(script,/\.svDetailReturn/);
- assert.match(finish,/@view-transition \{ navigation:auto; \}/);
+ assert.match(navigation,/@view-transition \{navigation:auto;\}/);
  assert.doesNotMatch(finish,/\.svGlassSurface\.svGlassControl\.dsPrimaryBtn/,'no conflicting page-level button material');
  for(const route of ['/','/movies','/tv','/welcome','/signup','/login']){
    const response=await fetch(base+route);
@@ -409,7 +411,7 @@ test('Catalog and profiles retain their theme while Party Hub owns its component
   }else assert.equal(profileScript,null,route+' does not need the profile editor');
   if(route==='/profiles')assert(d.querySelector('.svProfilesCinematic #profilesGrid'));
   if(route==='/profiles/manage')assert(d.querySelector('.svProfilesCinematic #profileCreateForm'));
-  if(route.startsWith('/social')){assert(d.querySelector('main.svPartyHub .partyHero'));const theme=d.querySelector('link[href="/assets/party/party.css?v=205"]');assert(theme);assert(d.querySelector('link[href="/assets/clean/experience.css?v=202"]').compareDocumentPosition(theme)&d.defaultView.Node.DOCUMENT_POSITION_FOLLOWING);}
+  if(route.startsWith('/social')){assert(d.querySelector('main.svPartyHub .partyHero'));const theme=d.querySelector('link[href="/assets/party/party.css?v=206"]');assert(theme);assert(d.querySelector('link[href="/assets/clean/experience.css?v=202"]').compareDocumentPosition(theme)&d.defaultView.Node.DOCUMENT_POSITION_FOLLOWING);}
  }
 });
 
@@ -420,7 +422,7 @@ test('Cinema keeps natural featured color alongside the shared glass assets',asy
  assert(hero && nav);
  assert(d.querySelector('script[src="/assets/liquid-glass/liquid-glass.js?v=226"]'));
  assert(d.querySelector('link[href="/assets/liquid-glass/liquid-glass.css?v=222"]'),'new material tokens must bypass the previous cached base stylesheet');
- const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=205')).text();
+ const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=206')).text();
  assert.match(css,/filter:none !important/);
  assert.match(css,/overflow:hidden !important/,'movie picture remains clipped');
  assert.doesNotMatch(css,/background-image:var\(--sv-cinema-art\)|background-image:var\(--sv-light-art\)/,'no duplicated artwork');

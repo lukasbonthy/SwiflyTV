@@ -27,7 +27,8 @@ function setup(options = {}) {
   w.clearTimeout = id => timers.delete(id);
   env.advance = time => {now = time; for (const [id, timer] of [...timers]) if (timer.at <= time) {timers.delete(id); timer.callback();}};
   env.timerCount = () => timers.size;
-  if (options.seen) w.sessionStorage.setItem('swiflytv.intro.v1', '1');
+  if (options.seen) w.sessionStorage.setItem('swiflytv.intro.v2', '1');
+  if (options.priorSeen) w.sessionStorage.setItem('swiflytv.intro.v1', '1');
   if (options.authenticated !== false) w.localStorage.setItem('swiflytv.session', '{"email":"intro@example.test"}');
   if (options.storedReduced) w.localStorage.setItem('swiflytv.appearance', JSON.stringify({version:1, values:{reduceMotion:true}}));
   if (options.savedReduced) w.document.body.classList.add('reduceMotion');
@@ -55,6 +56,14 @@ test('the intro covers the first entry and restores existing focus and inert sta
   assert.equal(d.activeElement, d.querySelector('#browse'));
   assert.equal(env.timerCount(), 0);
   assert.equal(w.frameCount(), 0, 'the intro must leave no animation loop behind');
+  env.finish();
+});
+
+test('the redesigned intro plays once even when the previous ident was seen', () => {
+  const env = setup({priorSeen:true}), w = env.window;
+  assert.equal(w.document.documentElement.dataset.svIntro, 'pending');
+  env.start();
+  assert.equal(w.document.documentElement.dataset.svIntro, 'running');
   env.finish();
 });
 
@@ -90,7 +99,7 @@ test('documents that redirect for authentication do not consume the first intro'
     const env = setup(options), w = env.window;
     env.start();
     assert.equal(w.document.documentElement.hasAttribute('data-sv-intro'), false);
-    assert.equal(w.sessionStorage.getItem('swiflytv.intro.v1'), null, 'the destination document must still be able to present the intro');
+    assert.equal(w.sessionStorage.getItem('swiflytv.intro.v2'), null, 'the destination document must still be able to present the intro');
     env.finish();
   }
 });
@@ -140,7 +149,7 @@ test('the shell serves the exact versioned intro assets and excludes playback an
     const html = api.pageShell({active:'welcome'});
     const origin = 'http://127.0.0.1:' + api.httpServer.address().port;
     for (const file of ['intro.css', 'intro.js']) {
-      const match = html.match(new RegExp('/assets/clean/' + file.replace('.', '\\.') + '\\?v=1'));
+      const match = html.match(new RegExp('/assets/clean/' + file.replace('.', '\\.') + '\\?v=2'));
       assert(match, 'the entry shell must reference ' + file);
       const response = await fetch(origin + match[0]);
       assert.equal(response.status, 200);

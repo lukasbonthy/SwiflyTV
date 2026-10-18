@@ -44,13 +44,15 @@ function partyMarkup(options={}){
        <section id="sv100RoomsPanel" class="sv100Panel sv100RoomsPanel ${rooms?'active':''}" aria-label="Watch parties">
          <div class="sv103RoomShell">
            <section id="sv103NativeRoom" class="sv103NativeRoom" hidden>
-             <div class="sv103Stage"><div id="sv103Player" class="sv103Player"><div class="sv103EmptyPlayer">${icon('screen')}<b>Choose the first film.</b><span>The host can search for a movie or add a video link below.</span></div></div></div>
+             <div class="sv103Stage"><div id="sv103Player" class="sv103Player"><div class="sv103EmptyPlayer">${icon('screen')}<b>Choose the first film.</b><span>The host can choose a movie, TV show or video link below.</span></div></div></div>
              <div class="partyNowWatching" data-party-now-watching hidden><img data-party-now-art alt="" hidden/><div><span class="partyEyebrow" data-party-now-label>Selected film</span><a data-party-now-link><b data-party-now-title></b>${icon('arrow')}</a></div></div>
+             <div class="partyRoomEpisodes" data-party-room-episodes hidden></div>
              <div id="sv103ControlDock" class="sv103ControlDock" role="note" hidden><p>Use the video’s own controls. Link playback is manual and isn’t synchronized.</p></div>
              <details class="partyMediaTools hostOnly">
-               <summary>${icon('film')}Change film <span>Search or video link</span>${icon('plus')}</summary>
+               <summary>${icon('film')}Change what’s playing <span>Movies, TV shows or video link</span>${icon('plus')}</summary>
                <section class="sv103ToolsGrid">
-                 <form id="sv103MovieForm" class="sv103ToolCard"><label for="partyMovieQuery">Find a film</label><div class="partyInputAction"><input id="partyMovieQuery" name="movieId" type="search" placeholder="Search movie titles" autocomplete="off" maxlength="120"/><button type="submit" class="partyIconBtn" aria-label="Search movies">${icon('search')}</button></div><div id="partyMovieResults" class="partyMovieResults" aria-live="polite"></div></form>
+                 <form id="sv103MovieForm" class="sv103ToolCard"><label for="partyMovieQuery">Find something to watch</label><label class="partyMediaTypeLabel">Choose from<select data-party-room-media-type aria-label="Room search category"><option value="movie">Movies</option><option value="tv">TV shows</option></select></label><div class="partyInputAction"><input id="partyMovieQuery" name="movieId" type="search" placeholder="Search titles" autocomplete="off" maxlength="120"/><button type="submit" class="partyIconBtn" aria-label="Search titles">${icon('search')}</button></div><div id="partyMovieResults" class="partyMovieResults" aria-live="polite"></div></form>
+                 <form id="partyRoomEpisodeForm" class="sv103ToolCard partyEpisodeChoice" hidden><h3 data-party-room-choice-title></h3><div data-party-room-choice-fields></div><button type="submit" class="partyPrimaryBtn">Watch episode ${icon('play')}</button><p data-party-room-choice-status role="status"></p></form>
                  <form id="sv103SetMediaForm" class="sv103ToolCard"><label for="partyMediaUrl">Use a video link</label><div class="partyInputAction"><input id="partyMediaUrl" name="mediaUrl" type="url" placeholder="YouTube or video page URL" maxlength="1000"/><button type="submit" class="partyIconBtn" aria-label="Set video link">${icon('arrow')}</button></div><p>Video pages open in their embedded player.</p></form>
                </section>
              </details>
@@ -70,7 +72,8 @@ function partyMarkup(options={}){
                    <form class="partyEntryForm creatorOnly partyCreateCard" method="get" action="/watchrooms/new" id="sv100CreateRoomForm">
                      <input type="hidden" name="creator" id="sv100CreatorInput" value=""/><input type="hidden" name="social" value="1"/>
                      <div id="partySelectedMovie" class="partySelectedMovie" hidden aria-live="polite"></div>
-                     <div class="partyCardHeading"><h3>Your movie night.</h3><p>Name your party. Pick a film now or decide together.</p></div>
+                     <div class="partyEpisodeChoice" data-party-lobby-episode-choice hidden></div>
+                     <div class="partyCardHeading"><h3>Your movie night.</h3><p>Name your party. Pick a movie or TV show, or decide together.</p></div>
                      <label for="partyRoomName">Party name<input id="partyRoomName" name="name" placeholder="Friday movie night" maxlength="80" autocomplete="off"/></label>
                      <details class="partyLinkChoice"><summary>Use a video link</summary><label for="partyStartLink">Video link<input id="partyStartLink" name="watchLink" type="url" placeholder="YouTube or a video page" maxlength="1000"/></label></details>
                      <button class="partyPrimaryBtn" type="submit">Create watch party ${icon('arrow')}</button>
@@ -89,7 +92,7 @@ function partyMarkup(options={}){
              </div>
              <section class="partyFilmSection" aria-labelledby="partyFilmTitle">
                <header class="partySectionHead"><div><span class="partyEyebrow">The hardest part is choosing</span><h2 id="partyFilmTitle">Worth watching together.</h2></div><a class="partyTextLink" href="/movies">Browse movies ${icon('arrow')}</a></header>
-               <form id="partyLobbyMovieForm" class="partyLobbySearch"><label for="partyLobbyMovieQuery" class="partySrOnly">Find a movie for your party</label>${icon('search')}<input id="partyLobbyMovieQuery" type="search" placeholder="Search for a movie" autocomplete="off" maxlength="120"/><button type="submit" class="partySecondaryBtn">Search</button></form>
+               <form id="partyLobbyMovieForm" class="partyLobbySearch"><label for="partyLobbyMovieQuery" class="partySrOnly">Find a movie or TV show for your party</label>${icon('search')}<select data-party-lobby-media-type aria-label="Search category"><option value="movie">Movies</option><option value="tv">TV shows</option></select><input id="partyLobbyMovieQuery" type="search" placeholder="Search titles" autocomplete="off" maxlength="120"/><button type="submit" class="partySecondaryBtn">Search</button></form>
                <div id="partyLobbyMovieResults" class="partyFilmRail" aria-live="polite"></div><div id="partyFeaturedMovies" class="partyFilmRail"><p class="partyFilmStatus" role="status">Finding films for tonight…</p></div>
              </section>
              <section class="sv100ActiveRooms partyRoomDirectory" aria-labelledby="partyDirectoryTitle">

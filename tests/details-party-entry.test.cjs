@@ -54,10 +54,12 @@ test('Modal movie details carry the actual selected movie into the party action'
   assert.equal(action.getAttribute('aria-label'), 'Start a watch party for The Other Film');
 });
 
-test('Series details keep episode playback without claiming movie party support', async () => {
+test('Series details offer a typed watch party while retaining individual episode playback', async () => {
   for (const modal of [false, true]) {
     const env = parse(await details('tv', '101', modal)), d = env.window.document;
-    assert.equal(d.querySelector('[data-sv-party-movie-id]'), null);
+    const action=d.querySelector('[data-sv-party-movie-id="101"][data-sv-party-type="tv"]');
+    assert(action);
+    assert.equal(action.getAttribute('href'), '/watch/tv/101?mode=movie&s=1&e=1&party=create');
     assert(d.querySelector('.svDetailActions a[href="/watch/tv/101?mode=movie&s=1&e=1"]'));
     assert(d.querySelector('#episodes a[href="/watch/tv/101?mode=movie&s=1&e=2"]'));
   }

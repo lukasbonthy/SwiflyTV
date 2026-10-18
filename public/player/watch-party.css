@@ -93,6 +93,13 @@ body.svCleanShell .svWatchPartyDialog>p {margin:16px 0 25px !important;color:#9e
 .svPartySelectedTitle small {display:block;margin-bottom:6px;color:#7f778f;font-size:11px;}
 .svPartySelectedTitle strong {display:block;color:#d6cfe2;font-size:16px;font-weight:500;line-height:1.4;overflow-wrap:anywhere;}
 .svPartyCreateForm .dsPrimaryBtn {width:100%;margin-top:15px;}
+.svPartyEpisodeChoices {display:grid;grid-template-columns:minmax(100px,.65fr) minmax(0,1.35fr);gap:12px;margin:0 0 18px;}
+.svPartyEpisodeChoices label {display:flex;flex-direction:column;gap:8px;min-width:0;color:#b9b8c6;font-size:12px;}
+body.svCleanShell .svPartyEpisodeChoices select {width:100%;min-width:0;min-height:44px;padding:10px 12px;border:1px solid var(--party-line);border-radius:12px;background:#101118;color:#eeeef4;font:inherit;font-size:13px;color-scheme:dark;}
+body.svCleanShell .svPartyEpisodeChoices select:focus-visible {outline:2px solid #c3bcf6;outline-offset:3px;}
+.svPlayerPage[data-party-active="true"] .svPlayerEpisodes a[aria-disabled="true"] {opacity:.65;cursor:default;}
+.svPlayerPartyEpisodeNote {margin:0 0 14px;color:#a2a4b0;font-size:12px;}
+@media(max-width:480px){.svPartyEpisodeChoices{grid-template-columns:minmax(0,1fr);}}
 .svPartyFormDivider {display:flex;align-items:center;gap:14px;margin:25px 0 22px;color:#787080;font-size:11px;}
 .svPartyFormDivider::before,.svPartyFormDivider::after {content:"";height:1px;background:#ffffff0d;flex:1;}
 body.svCleanShell .svWatchPartyDialog .svPartySetupStatus {margin:17px 0 0 !important;color:#b9aec9 !important;font-size:12px !important;font-weight:400 !important;line-height:1.7 !important;}
