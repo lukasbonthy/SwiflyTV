@@ -17,4 +17,4 @@ jobs:
       - run: npm run check
       - run: npm run test:ui
       - run: node node_modules/playwright-core/cli.js install chromium
-      - run: node --test tests/glass-rendering.test.cjs tests/glass-reference.test.cjs tests/glass-integrity.test.cjs tests/scroll-rendering.test.cjs tests/premium-scroll-rendering.test.cjs tests/resume-browser.test.cjs tests/page-transitions-rendering.test.cjs tests/tv-player-rendering.test.cjs
+      - run: node --test tests/glass-rendering.test.cjs tests/glass-reference.test.cjs tests/glass-integrity.test.cjs tests/scroll-rendering.test.cjs tests/premium-scroll-rendering.test.cjs tests/resume-browser.test.cjs tests/page-transitions-rendering.test.cjs tests/tv-player-rendering.test.cjs tests/tv-rendering.test.cjs

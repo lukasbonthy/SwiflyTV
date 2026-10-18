@@ -1,0 +1,266 @@
+/* A ten-foot layout, enabled before first paint by the saved TV preference.
+   All existing glass renderers keep their surfaces and backdrop ancestry. */
+body.svCleanShell .svTvMenuToggle {
+  display:flex; align-items:center; gap:10px; width:100%; min-height:40px;
+  padding:9px 12px; border:0; border-radius:10px; background:transparent;
+  color:inherit; font:inherit; font-size:13px; font-weight:500; text-align:left; cursor:pointer;
+}
+body.svCleanShell .svTvMenuToggle:hover {background:#ffffff12;}
+body.svCleanShell .svTvMenuToggle [data-sv-tv-state] {
+  margin-left:auto; padding:3px 8px; border:1px solid #ffffff24; border-radius:999px;
+  color:#c8c8cc; font-size:11px; line-height:1.4;
+}
+html:not([data-sv-tv="true"]) body.svCleanShell [data-sv-tv-active-only] {display:none !important;}
+
+html[data-sv-tv="true"] {scroll-padding-top:140px;}
+html[data-sv-tv="true"] body.svCleanShell {
+  --sv-tv-safe:4.5vw; --sv-tv-gap:clamp(22px,1.65vw,32px);
+  --sv-page-gutter:var(--sv-tv-safe); --v-left:var(--sv-tv-safe); --v-right:var(--sv-tv-safe);
+  --sv-poster-width:calc((100vw - 2 * var(--sv-tv-safe) - 4 * var(--sv-tv-gap) - 28px) / 5) !important;
+  font-size:clamp(19px,1.45vw,26px); line-height:1.5;
+}
+html[data-sv-tv="true"] body.svCleanShell [data-sv-liquid-nav].topbar {
+  padding:clamp(24px,3.4vh,38px) var(--sv-tv-safe) 0 !important;
+}
+html[data-sv-tv="true"] body.svCleanShell [data-sv-liquid-nav].topbar > .container.nav.netflixNav {
+  display:flex !important; justify-content:space-between !important;
+  width:100% !important; max-width:none !important; min-height:76px !important; height:76px !important;
+  margin:0 !important; padding:8px 18px 8px 24px !important; gap:20px !important; border-radius:28px !important;
+}
+html[data-sv-tv="true"] body.svCleanShell .netflixNav > .svLiquidPane {--sv-glass-radius:28px;}
+html[data-sv-tv="true"] body.svCleanShell .netflixNav .navLeftCluster {gap:clamp(24px,3vw,58px) !important; min-width:0;}
+html[data-sv-tv="true"] body.svCleanShell .netflixNav .netflixWordmark {font-size:clamp(20px,1.5vw,28px) !important;}
+html[data-sv-tv="true"] body.svCleanShell .netflixNav .navLinks {gap:clamp(12px,1.6vw,30px) !important;}
+html[data-sv-tv="true"] body.svCleanShell .netflixNav .navLinks > a {
+  min-height:52px !important; padding:0 7px !important; font-size:clamp(19px,1.35vw,25px) !important;
+  border-radius:14px !important; color:#d4d4d8 !important;
+}
+html[data-sv-tv="true"] body.svCleanShell .netflixNav .navLinks > a.active {color:#fff !important;}
+html[data-sv-tv="true"] body.svCleanShell .netflixNav .dsNavActions {gap:10px !important; margin-left:auto;}
+html[data-sv-tv="true"] body.svCleanShell .netflixNav :is(.svNavButton,.dsProfileMenu > summary) {
+  width:52px !important; height:52px !important; min-width:52px !important; min-height:52px !important; border-radius:17px !important;
+}
+html[data-sv-tv="true"] body.svCleanShell .netflixNav .svNavButton.svTvModePill {
+  display:flex !important; justify-content:center; gap:9px; width:auto !important;
+  flex:0 0 auto !important; min-width:max-content !important; max-width:none !important;
+  padding:0 15px !important; color:#fff !important; font-size:17px !important; white-space:nowrap;
+  background:#ffffff0b !important;
+}
+html[data-sv-tv="true"] body.svCleanShell .netflixNav .profilePill {width:32px !important; height:32px !important; font-size:23px !important;}
+html[data-sv-tv="true"] body.svCleanShell .netflixNav .svIcon {width:25px; height:25px; flex-basis:25px;}
+html[data-sv-tv="true"] body.svCleanShell .netflixNav .dsNavSearch.svSearchPopup {height:76px !important; padding:12px 18px !important;}
+html[data-sv-tv="true"] body.svCleanShell .netflixNav .svSearchPopup input {height:48px !important; font-size:23px !important;}
+html[data-sv-tv="true"] body.svCleanShell .netflixNav .svSearchPopup button {width:48px !important; height:48px !important;}
+html[data-sv-tv="true"] body.svCleanShell .dsProfileDropdown.svLiquidDropdown {
+  width:350px !important; max-height:calc(100svh - 170px) !important; padding:16px !important;
+}
+html[data-sv-tv="true"] body.svCleanShell .dsProfileDropdown > a,
+html[data-sv-tv="true"] body.svCleanShell .svTvMenuToggle {
+  min-height:58px !important; padding:12px !important; font-size:20px !important; border-radius:13px !important;
+}
+html[data-sv-tv="true"] body.svCleanShell .svTvMenuToggle [data-sv-tv-state] {font-size:16px;}
+html[data-sv-tv="true"] body.svCleanShell .dsProfileUser :is(strong,b) {font-size:21px !important;}
+html[data-sv-tv="true"] body.svCleanShell .dsProfileUser small {font-size:16px !important;}
+
+/* The featured title and first gallery form one screen-height composition. */
+html[data-sv-tv="true"] body.svCleanShell main > .dsHero {
+  height:auto !important; min-height:76svh !important;
+  padding:clamp(155px,19svh,210px) 0 clamp(70px,9svh,110px) !important;
+}
+html[data-sv-tv="true"] body.svCleanShell .dsHeroContent {
+  width:min(900px,66vw) !important; max-width:900px !important; margin-left:var(--sv-tv-safe) !important;
+}
+html[data-sv-tv="true"] body.svCleanShell .dsHeroContent h1 {
+  font-size:clamp(54px,4.6vw,88px) !important; line-height:1.04 !important; max-width:900px;
+}
+html[data-sv-tv="true"] body.svCleanShell .dsEyebrow {font-size:clamp(17px,1.2vw,22px) !important; margin-bottom:18px !important;}
+html[data-sv-tv="true"] body.svCleanShell .dsHeroMeta {gap:12px !important; margin:22px 0 16px !important;}
+html[data-sv-tv="true"] body.svCleanShell .dsHeroMeta > :is(b,span) {font-size:clamp(18px,1.3vw,24px) !important; padding:4px 10px !important;}
+html[data-sv-tv="true"] body.svCleanShell .dsHeroMeta small {font-size:15px;}
+html[data-sv-tv="true"] body.svCleanShell .dsHeroContent > p {
+  max-width:800px !important; font-size:clamp(21px,1.45vw,28px) !important; line-height:1.5 !important;
+  margin-bottom:28px !important; -webkit-line-clamp:2; color:#d0d0d5 !important;
+}
+html[data-sv-tv="true"] body.svCleanShell :is(.dsHeroActions,.svDetailActions) {gap:16px !important;}
+html[data-sv-tv="true"] body.svCleanShell :is(.dsHeroActions,.svDetailActions) :is(.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn) {
+  min-height:60px !important; padding:15px 28px !important; font-size:22px !important; gap:12px !important;
+}
+html[data-sv-tv="true"] body.svCleanShell :is(.dsHeroActions,.svDetailActions) .dsIconBtn {width:60px !important; height:60px !important; padding:0 !important;}
+html[data-sv-tv="true"] body.svCleanShell .dsHeroActions > :is(.dsPrimaryBtn,.dsSecondaryBtn) > span {font-size:20px !important;}
+html[data-sv-tv="true"] body.svCleanShell :is(.dsHeroActions,.svDetailActions) .svNavMatchedLabel {font-size:22px !important; line-height:1.2 !important;}
+html[data-sv-tv="true"] body.svCleanShell .dsContent {padding:0 var(--sv-tv-safe) 80px !important;}
+html[data-sv-tv="true"] body.svCleanShell main > .dsHero + .svHeroLightBridge + .dsContent:not(.noHero) {padding-top:12px !important; margin-top:0 !important;}
+html[data-sv-tv="true"] body.svCleanShell :is(.dsRow,.svResumeSection) {margin-bottom:54px !important;}
+html[data-sv-tv="true"] body.svCleanShell :is(.svSectionHead,.dsRowHead) {min-height:52px !important; margin-bottom:20px !important;}
+html[data-sv-tv="true"] body.svCleanShell :is(.svSectionHead > h2,.dsRowHead h2) {font-size:clamp(27px,1.9vw,36px) !important;}
+html[data-sv-tv="true"] body.svCleanShell .svRowMore {min-height:48px; padding:0 9px !important; font-size:20px !important; border-radius:10px !important;}
+html[data-sv-tv="true"] body.svCleanShell :is(.svRowArrow,.dsRowBtn) {width:48px !important; height:48px !important; font-size:29px !important; border-color:#ffffff35 !important;}
+html[data-sv-tv="true"] body.svCleanShell .svRowArrows {gap:12px;}
+html[data-sv-tv="true"] body.svCleanShell :is(.movieRail,.dsRail,.nfRail,.nfTopTenRail,.svResumeRail,.svDetailCollectionRail) {
+  gap:var(--sv-tv-gap) !important; padding:10px 10px 22px !important; margin-inline:0 !important;
+  scroll-padding-inline:10px; overflow-y:hidden !important; scroll-snap-type:x proximity;
+}
+html[data-sv-tv="true"] body.svCleanShell :is(.movieRail,.dsRail,.nfRail,.nfTopTenRail) {grid-auto-columns:var(--sv-poster-width) !important;}
+html[data-sv-tv="true"] body.svCleanShell .svResumeRail {grid-auto-columns:clamp(320px,29vw,530px);}
+html[data-sv-tv="true"] body.svCleanShell :is(.dsCardQuickActions,.dsPlayDot,.svResumeRemove) {display:none !important;}
+html[data-sv-tv="true"] body.svCleanShell .dsCardInfo {padding-top:16px !important;}
+html[data-sv-tv="true"] body.svCleanShell :is(.dsCardInfo .dsCardTitle,.svResumeTitle) {
+  font-size:clamp(21px,1.45vw,28px) !important; font-weight:550 !important; line-height:1.35 !important;
+  white-space:normal !important; display:-webkit-box !important; -webkit-box-orient:vertical; -webkit-line-clamp:2;
+  overflow:hidden; color:#f0f0f2 !important;
+}
+html[data-sv-tv="true"] body.svCleanShell :is(.dsCardMeta,.dsCardMeta > *,.svResumeMeta) {
+  font-size:clamp(17px,1.1vw,21px) !important; line-height:1.45 !important; color:#b5b5bc !important;
+}
+html[data-sv-tv="true"] body.svCleanShell :is(.dsCardMeta,.svResumeMeta) {margin-top:8px !important; gap:12px !important; flex-wrap:wrap;}
+html[data-sv-tv="true"] body.svCleanShell :is(.dsGrid,.movieGrid,.dsMoreGridV121,.svDetailRecommendations) {
+  grid-template-columns:repeat(5,minmax(0,1fr)) !important; gap:36px var(--sv-tv-gap) !important;
+}
+html[data-sv-tv="true"] body.svCleanShell :is(.dsPlainPage,.dsSearchPage,.dsWatchlistPage) {padding-top:150px !important;}
+html[data-sv-tv="true"] body.svCleanShell :is(.dsPageHeader,.dsPageHero) h1 {font-size:clamp(42px,3.2vw,62px) !important;}
+html[data-sv-tv="true"] body.svCleanShell :is(.dsPageHeader,.dsPageHero) p {font-size:22px !important; max-width:900px !important;}
+html[data-sv-tv="true"] body.svCleanShell :is(.dsTabs a,.genreDropdown summary,.pagination a,.dsSearchBox input,.dsSearchBox button) {font-size:21px !important; min-height:56px !important;}
+
+/* Bounded dialogs keep primary actions visible even on a 720p television. */
+html[data-sv-tv="true"] body.svCleanShell .svDetailDialog {
+  width:calc(100vw - 2 * var(--sv-tv-safe)); height:90svh; max-height:90svh; border-radius:28px 28px 0 0;
+}
+html[data-sv-tv="true"] body.svCleanShell .svCinemaPage .svTitleDetails.svTitleDetails {width:calc(100% - 2 * var(--sv-tv-safe)) !important; max-width:1700px !important;}
+html[data-sv-tv="true"] body.svCleanShell .svDetailDialog .svDetailViewport.svCinemaPage .svTitleDetails.svTitleDetails {width:100% !important; max-width:none !important;}
+html[data-sv-tv="true"] body.svCleanShell .dsDetailPage.svDetailPage.svCinemaPage {padding-top:150px !important;}
+html[data-sv-tv="true"] body.svCleanShell .svCinemaPage .svDetailHero {height:66svh !important; min-height:430px !important; max-height:740px !important;}
+html[data-sv-tv="true"] body.svCleanShell .svCinemaPage .svDetailIdentity {left:42px; right:230px; bottom:30px; max-width:1100px;}
+html[data-sv-tv="true"] body.svCleanShell .svCinemaPage .svDetailTitle {font-size:clamp(46px,4vw,76px) !important;}
+html[data-sv-tv="true"] body.svCleanShell .svCinemaPage :is(.svDetailGenres,.svDetailFacts) {font-size:clamp(18px,1.3vw,24px);}
+html[data-sv-tv="true"] body.svCleanShell .svDetailEdition {font-size:15px;}
+html[data-sv-tv="true"] body.svCleanShell .svCinemaPage .svDetailBody {padding:0 42px 48px;}
+html[data-sv-tv="true"] body.svCleanShell .svDetailChapterNav {padding:8px 8px 20px;}
+html[data-sv-tv="true"] body.svCleanShell .svDetailChapterNav a {font-size:21px; padding:14px 19px;}
+html[data-sv-tv="true"] body.svCleanShell .svCinemaPage .svDetailOverview {grid-template-columns:230px minmax(0,1fr); gap:28px;}
+html[data-sv-tv="true"] body.svCleanShell .svCinemaPage .svDetailOverview > p {font-size:22px; line-height:1.65;}
+html[data-sv-tv="true"] body.svCleanShell .svCinemaPage .svDetailSection > h2 {font-size:30px !important;}
+html[data-sv-tv="true"] body.svCleanShell .svCinemaPage .svDetailCastRail {grid-auto-columns:160px; padding:10px 10px 22px;}
+html[data-sv-tv="true"] body.svCleanShell .svDetailCastRail .dsCastCard strong {font-size:20px !important;}
+html[data-sv-tv="true"] body.svCleanShell .svDetailCastRail .dsCastCard em {font-size:17px !important;}
+html[data-sv-tv="true"] body.svCleanShell .svCinemaPage :is(.svSeasonIdentity strong,.dsEpisodeChips a.svDetailEpisodeTile) {font-size:21px !important;}
+html[data-sv-tv="true"] body.svCleanShell .svSeason > summary {min-height:70px;}
+html[data-sv-tv="true"] body.svCleanShell .svDetailChrome :is(.svDetailBack,.svDetailDismiss).dsIconBtn {width:56px !important; height:56px !important; min-height:56px !important;}
+html[data-sv-tv="true"] body.svCleanShell .svDetailChromeTitle {font-size:20px;}
+html[data-sv-tv="true"] body.svCleanShell .svDetailChrome {inset:16px 20px auto; padding:8px;}
+html[data-sv-tv="true"] body.svCleanShell .svDetailSection {scroll-margin-top:110px;}
+
+html[data-sv-tv="true"] body.svCleanShell #controlPanel.svStudioDialog {
+  width:calc(100vw - 2 * var(--sv-tv-safe)) !important; max-width:1640px !important;
+  height:calc(100svh - 80px) !important; font-size:19px !important;
+}
+html[data-sv-tv="true"] body.svCleanShell #controlPanel .stWorkspaceBody {grid-template-columns:210px minmax(0,1fr) 29%;}
+html[data-sv-tv="true"] body.svCleanShell #controlPanel :is(.stNavigation > button,.stChoice,.stFooter button) {min-height:52px;}
+html[data-sv-tv="true"] body.svCleanShell #controlPanel .stIconButton {width:48px; height:48px;}
+html[data-sv-tv="true"] body.svCleanShell #controlPanel :is(.stChoice > span,.stPreset > strong,.stToggleRow b,.stGroupHead h3,.stBrand h2) {font-size:18px !important; white-space:normal;}
+html[data-sv-tv="true"] body.svCleanShell #controlPanel :is(.stPanelTitle > p,.stToggleRow small,.stGroupHead p,.stPreset > small) {font-size:16px !important;}
+html[data-sv-tv="true"] body.svCleanShell #controlPanel .stChoices {flex-wrap:wrap;}
+html[data-sv-tv="true"] body.svCleanShell #controlPanel .stChoice {flex-basis:24%;}
+html[data-sv-tv="true"] body.svCleanShell #controlPanel .stSidebarLabel {font-size:13px;}
+
+/* The transport enlarges in place; the movie always keeps its complete frame. */
+html[data-sv-tv="true"] body.svCleanShell .svPlayerPage {
+  --player-control-size:56px; --player-theater-height:calc(100svh - 245px);
+  max-width:none; padding:42px var(--sv-tv-safe) 70px;
+}
+html[data-sv-tv="true"] body.svCleanShell .svPlayerPageHead {margin-bottom:22px;}
+html[data-sv-tv="true"] body.svCleanShell .svPlayer :is(.svPlayerBack,.svPlayerEpisodeStep,.svPlayerPartyButton) {font-size:20px !important; min-height:56px !important;}
+html[data-sv-tv="true"] body.svCleanShell .svPlayerEpisodeNavigation .svPlayerEpisodeStep {max-width:330px;}
+html[data-sv-tv="true"] body.svCleanShell .svPlayerModes a {font-size:19px; min-height:52px;}
+html[data-sv-tv="true"] body.svCleanShell .svPlayerDock {width:min(1100px,calc(100% - 64px)); padding:14px 18px; gap:20px; bottom:24px;}
+html[data-sv-tv="true"] body.svCleanShell .svPlayer .svPlayerControl {height:56px; min-height:56px;}
+html[data-sv-tv="true"] body.svCleanShell .svPlayer .svPlayerPlay {width:62px; min-width:62px; height:62px; min-height:62px;}
+html[data-sv-tv="true"] body.svCleanShell .svPlayerTime {font-size:17px;}
+html[data-sv-tv="true"] body.svCleanShell .svPlayerControl .svPlayerIcon {width:27px; height:27px; flex-basis:27px;}
+html[data-sv-tv="true"] body.svCleanShell .svPlayerPopoverBody {width:380px; max-height:calc(100svh - 100px);}
+html[data-sv-tv="true"] body.svCleanShell :is(.svPlayerMenuAction,.svPlayerSettingsBody label,.svPlayerSettingsBody select,.svPlayerPopoverHeading) {font-size:19px !important;}
+html[data-sv-tv="true"] body.svCleanShell .svPlayerMenuAction {min-height:56px;}
+
+/* A white ring is legible over every poster. Never filter or transform a
+   focused glass host: that would stop the existing backdrop from sampling. */
+html[data-sv-tv="true"] body.svCleanShell :is(a,button,input,select,textarea,summary,[role="button"],[tabindex]) {scroll-margin:140px 24px 60px;}
+html[data-sv-tv="true"] body.svCleanShell .movieCard :is(.posterWrap,.dsThumb) {scroll-margin-bottom:140px;}
+html[data-sv-tv="true"] body.svCleanShell .movieCard {scroll-margin:140px 24px 60px;}
+html[data-sv-tv="true"] body.svCleanShell .swifly-tv-focus-target,
+html[data-sv-tv="true"] body.svCleanShell .swifly-tv-focus-target:focus,
+html[data-sv-tv="true"] body.svCleanShell #controlPanel.svStudioDialog .swifly-tv-focus-target {
+  outline:3px solid #fff !important; outline-offset:5px !important;
+  box-shadow:0 0 0 7px #0008 !important; filter:none !important; transform:none !important;
+  transition:outline-offset .15s ease,box-shadow .15s ease !important;
+}
+html[data-sv-tv="true"] body.svCleanShell .movieCard:has(.swifly-tv-focus-target) .dsCardTitle {color:#fff !important;}
+html[data-sv-tv="true"] body.svCleanShell .swifly-tv-focus-target.swifly-tv-focus-pressed {outline-offset:2px !important; filter:none !important; transform:none !important;}
+html[data-sv-tv="true"] body.svCleanShell .svPlayer[data-player-controls-visibility="hidden"] [data-player-stage].swifly-tv-focus-target {outline:none !important; box-shadow:none !important;}
+html[data-sv-tv="true"] body.svCleanShell #swiflyTvHint {
+  display:none !important; opacity:0 !important; bottom:4.5vh; max-width:86vw;
+  padding:14px 22px; border:1px solid #ffffff2e; border-radius:20px;
+  color:#ededf1; background:#121316ed; font-size:19px; font-weight:400; line-height:1.5;
+  box-shadow:0 8px 32px #0005; backdrop-filter:none; -webkit-backdrop-filter:none;
+}
+html[data-sv-tv="true"] body.svCleanShell #swiflyTvHint[data-visible="true"] {display:block !important; opacity:1 !important;}
+html[data-sv-tv="true"] body.svCleanShell #swiflyTvHint kbd {display:inline-block; padding:2px 7px; margin:0 3px; border:1px solid #ffffff45; border-radius:5px; font:inherit; color:#fff;}
+
+@media (max-width:1400px) {
+  html[data-sv-tv="true"] body.svCleanShell {--sv-poster-width:calc((100vw - 2 * var(--sv-tv-safe) - 3 * var(--sv-tv-gap) - 28px) / 4) !important;}
+  html[data-sv-tv="true"] body.svCleanShell .netflixNav .navLeftCluster {gap:22px !important;}
+  html[data-sv-tv="true"] body.svCleanShell .netflixNav .navLinks {gap:9px !important;}
+  html[data-sv-tv="true"] body.svCleanShell .netflixNav .svNavButton.svTvModePill {padding:0 11px !important; font-size:15px !important;}
+  html[data-sv-tv="true"] body.svCleanShell :is(.dsGrid,.movieGrid,.dsMoreGridV121,.svDetailRecommendations) {grid-template-columns:repeat(4,minmax(0,1fr)) !important;}
+  html[data-sv-tv="true"] body.svCleanShell .svCinemaPage .svDetailIdentity {right:42px;}
+  html[data-sv-tv="true"] body.svCleanShell .svDetailPosterCard {display:none;}
+  html[data-sv-tv="true"] body.svCleanShell #controlPanel .stWorkspaceBody {grid-template-columns:190px minmax(0,1fr);}
+  html[data-sv-tv="true"] body.svCleanShell #controlPanel .stPreviewColumn {display:none;}
+}
+@media (max-width:900px) {
+  html[data-sv-tv="true"] body.svCleanShell .netflixNav .netflixWordmark {font-size:18px !important;}
+  html[data-sv-tv="true"] body.svCleanShell .netflixNav .navLinks {display:none !important;}
+  html[data-sv-tv="true"] body.svCleanShell .dsHeroContent {width:88vw !important;}
+  html[data-sv-tv="true"] body.svCleanShell {--sv-poster-width:calc((100vw - 2 * var(--sv-tv-safe) - 2 * var(--sv-tv-gap) - 28px) / 3) !important;}
+}
+/* Some televisions report a compact CSS viewport. Keep every category on
+   those screens and make the exit usable when TV mode is enabled on a phone. */
+@media (max-width:1100px) {
+  html[data-sv-tv="true"] body.svCleanShell [data-sv-liquid-nav].topbar > .container.nav.netflixNav {
+    padding:8px 12px !important; gap:12px !important; height:68px !important; min-height:68px !important;
+  }
+  html[data-sv-tv="true"] body.svCleanShell .netflixNav .navLeftCluster {gap:12px !important;}
+  html[data-sv-tv="true"] body.svCleanShell .netflixNav .netflixWordmark {font-size:18px !important;}
+  html[data-sv-tv="true"] body.svCleanShell .netflixNav .navLinks {display:flex !important; gap:4px !important;}
+  html[data-sv-tv="true"] body.svCleanShell .netflixNav .navLinks > a {font-size:16px !important; min-height:44px !important; padding:0 5px !important;}
+  html[data-sv-tv="true"] body.svCleanShell .netflixNav .dsNavActions {gap:6px !important;}
+  html[data-sv-tv="true"] body.svCleanShell .netflixNav :is(.svNavButton,.dsProfileMenu > summary) {
+    width:44px !important; min-width:44px !important; height:44px !important; min-height:44px !important;
+  }
+  html[data-sv-tv="true"] body.svCleanShell .netflixNav .svNavButton.svTvModePill {padding:0 10px !important; gap:7px; font-size:14px !important;}
+  html[data-sv-tv="true"] body.svCleanShell .netflixNav .svIcon {width:22px; height:22px; flex-basis:22px;}
+}
+@media (min-width:651px) and (max-width:900px) {
+  html[data-sv-tv="true"] body.svCleanShell [data-sv-liquid-nav].topbar > .container.nav.netflixNav {
+    flex-wrap:wrap; height:auto !important; padding:10px 14px !important;
+  }
+  html[data-sv-tv="true"] body.svCleanShell .netflixNav .navLeftCluster {flex:1 0 100% !important; justify-content:space-between;}
+}
+@media (max-width:650px) {
+  html[data-sv-tv="true"] body.svCleanShell [data-sv-liquid-nav].topbar > .container.nav.netflixNav {gap:8px !important; padding:8px !important;}
+  html[data-sv-tv="true"] body.svCleanShell .netflixNav .navLinks {display:none !important;}
+  html[data-sv-tv="true"] body.svCleanShell .netflixNav .netflixWordmark {font-size:15px !important;}
+  html[data-sv-tv="true"] body.svCleanShell .netflixNav .navLeftCluster {flex:0 1 auto !important; gap:0 !important;}
+  html[data-sv-tv="true"] body.svCleanShell .netflixNav .dsNavActions {gap:3px !important; flex:0 0 auto !important;}
+  html[data-sv-tv="true"] body.svCleanShell .netflixNav .svNavPartyLink {display:none !important;}
+  html[data-sv-tv="true"] body.svCleanShell .netflixNav .svNavButton.svTvModePill {
+    width:44px !important; min-width:44px !important; padding:0 !important; gap:0;
+  }
+  html[data-sv-tv="true"] body.svCleanShell .netflixNav .svTvModePill > span {display:none !important;}
+  html[data-sv-tv="true"] body.svCleanShell .dsProfileDropdown.svLiquidDropdown {width:min(350px,calc(100vw - 36px)) !important;}
+}
+@media (prefers-reduced-motion:reduce) {
+  html[data-sv-tv="true"] body.svCleanShell .swifly-tv-focus-target,
+  html[data-sv-tv="true"] body.svCleanShell #swiflyTvHint {transition:none !important;}
+}
+@media (prefers-reduced-transparency:reduce) {
+  html[data-sv-tv="true"] body.svCleanShell #swiflyTvHint {background:#151619;}
+}

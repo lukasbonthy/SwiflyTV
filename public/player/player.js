@@ -111,6 +111,13 @@
       }
       syncGlass();
     }
+    function tvControls(event) {
+      if(destroyed||suspended||!app.isConnected||document.documentElement.dataset.svTv!=='true'||!document.body.classList.contains('swifly-tv-focus-mode'))return;
+      if(event.detail?.action==='show'){updateVisibility({reveal:true});return;}
+      if(event.detail?.action!=='hide'||phase!=='ready'||!playable||video.paused||video.ended||video.seeking||scrubbing||!find('unlock').hidden||stage.querySelector('details[open]'))return;
+      if(controls.contains(document.activeElement))stage.focus({preventScroll:true});
+      clearTimeout(controlsTimer);controlsTimer=0;app.dataset.playerControlsVisibility='hidden';syncGlass();
+    }
     function showToast(message) {
       const node=find('toast');clearTimeout(toastTimer);node.textContent=message;node.hidden=false;
       const token=generation;toastTimer=setTimeout(()=>{if(alive(token))node.hidden=true;toastTimer=0;},4000);
@@ -632,6 +639,7 @@
     }
     const api=Object.freeze({loadSource,resolve,retry:()=>resolve({retry:true}),getState,play,pause,seek,setRemoteMode,destroy});
     instances.set(app,api);
+    listen(app,'swiflyplayer:tv-controls',tvControls);
     listen(find('play'),'click',()=>getState().paused?play():pause());
     listen(find('backward'),'click',()=>seek(number(video.currentTime,0)-10));listen(find('forward'),'click',()=>seek(number(video.currentTime,0)+10));
     listen(find('seek'),'input',event=>{if(locked())return;scrubbing=true;scrubTime=Number(event.target.value);updateTime();updateVisibility({reveal:true});});
@@ -648,7 +656,7 @@
     listen(find('audio'),'change',event=>{const index=Number(event.target.value),choice=audioOptions[index];if(!choice)return;try{applyAudio(index);audioPreference=languageOf(choice.track);try{localStorage.setItem('swifly.player.audioLanguage',audioPreference);}catch{}updateAudio();}catch{showToast('That audio track is unavailable.');}});
     listen(find('quality'),'change',event=>{const value=String(event.target.value);if(value.startsWith('source:')){switchSource(Number(value.slice(7)));return;}const quality=Number(value);try{if(hls)hls.currentLevel=quality;if(dash){dash.updateSettings({streaming:{abr:{autoSwitchBitrate:{video:quality<0}}}});if(quality>=0)dash.setQualityFor('video',quality,true);}}catch{showToast('That picture quality is unavailable.');}});
     listen(find('captions'),'change',event=>{const selected=String(event.target.value),choice=captionOptions.find(item=>item.value===selected);try{applyCaption(selected);captionPreference=choice?{key:choice.key,language:choice.language,label:choice.label}:null;updateCaptions();}catch{showToast('These captions are unavailable.');}});
-    listen(find('fullscreen'),'click',fullscreen);listen(find('pip'),'click',()=>{pictureInPicture();closeMenu(find('settings'));find('settings').querySelector('summary').focus();});listen(app,'keydown',event=>{updateVisibility({reveal:true});keyboard(event);});
+    listen(find('fullscreen'),'click',fullscreen);listen(find('pip'),'click',()=>{pictureInPicture();closeMenu(find('settings'));find('settings').querySelector('summary').focus();});listen(app,'keydown',event=>{if(!event.defaultPrevented)updateVisibility({reveal:true});keyboard(event);});
     listen(stage,'pointermove',()=>updateVisibility({reveal:true}));listen(stage,'pointerdown',()=>updateVisibility({reveal:true}));
     listen(stage,'focusin',()=>updateVisibility({reveal:true}));listen(stage,'focusout',()=>{const token=generation;queueMicrotask(()=>{if(alive(token))updateVisibility();});});
     listen(stage,'click',event=>{if(event.target===video||event.target===stage){stage.focus({preventScroll:true});if(playable&&!locked())getState().paused?play():pause();}});
