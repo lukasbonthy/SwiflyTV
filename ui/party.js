@@ -1,5 +1,6 @@
 'use strict';
 const {playerMarkup}=require('./player');
+const {watchroomCallMarkup}=require('./watchroom-call');
 const paths={film:'M4 3h16v18H4zM4 7h16M4 17h16M8 3v4M16 3v4M8 17v4M16 17v4',people:'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M20 21v-2a4 4 0 0 0-3-3.87M9 3a4 4 0 1 1 0 8 4 4 0 0 1 0-8M16 3.13a4 4 0 0 1 0 7.75',chat:'M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5Z',plus:'M12 5v14M5 12h14',link:'M10 13a5 5 0 0 0 7 .1l3-3a5 5 0 0 0-7-7l-1.5 1.5M14 11a5 5 0 0 0-7-.1l-3 3a5 5 0 0 0 7 7l1.5-1.5',arrow:'M5 12h14M12 5l7 7-7 7',back:'M19 12H5M12 5l-7 7 7 7',send:'m22 2-7 20-4-9-9-4 20-7ZM22 2 11 13',refresh:'M20 7v5h-5M4 17v-5h5M6 7a7 7 0 0 1 11.6-2L20 8M4 16l2.4 3A7 7 0 0 0 18 17',play:'m9 5 11 7-11 7V5Z',pause:'M7 4v16M17 4v16',search:'M21 21l-4.4-4.4M10.5 3a7.5 7.5 0 1 1 0 15 7.5 7.5 0 0 1 0-15',close:'m6 6 12 12M18 6 6 18',camera:'M15 10l6-4v12l-6-4M3 5h12v14H3z',mic:'M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3ZM5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8',screen:'M3 3h18v14H3zM8 21h8M12 17v4',home:'m3 10 9-7 9 7M5 9v12h14V9M9 21v-8h6v8'};
 const icon=name=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+paths[name]+'"/></svg>';
 const esc=value=>String(value??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
@@ -45,6 +46,7 @@ function partyMarkup(options={}){
          <div class="sv103RoomShell">
            <section id="sv103NativeRoom" class="sv103NativeRoom" hidden>
              <div class="sv103Stage"><div id="sv103Player" class="sv103Player"><div class="sv103EmptyPlayer">${icon('screen')}<b>Choose the first film.</b><span>The host can choose a movie, TV show or video link below.</span></div></div></div>
+             ${watchroomCallMarkup()}
              <div class="partyNowWatching" data-party-now-watching hidden><img data-party-now-art alt="" hidden/><div><span class="partyEyebrow" data-party-now-label>Selected film</span><a data-party-now-link><b data-party-now-title></b>${icon('arrow')}</a></div></div>
              <div class="partyRoomEpisodes" data-party-room-episodes hidden></div>
              <div id="sv103ControlDock" class="sv103ControlDock" role="note" hidden><p>Use the video’s own controls. Link playback is manual and isn’t synchronized.</p></div>
@@ -94,6 +96,10 @@ function partyMarkup(options={}){
                <header class="partySectionHead"><div><span class="partyEyebrow">The hardest part is choosing</span><h2 id="partyFilmTitle">Worth watching together.</h2></div><a class="partyTextLink" href="/movies">Browse movies ${icon('arrow')}</a></header>
                <form id="partyLobbyMovieForm" class="partyLobbySearch"><label for="partyLobbyMovieQuery" class="partySrOnly">Find a movie or TV show for your party</label>${icon('search')}<select data-party-lobby-media-type aria-label="Search category"><option value="movie">Movies</option><option value="tv">TV shows</option></select><input id="partyLobbyMovieQuery" type="search" placeholder="Search titles" autocomplete="off" maxlength="120"/><button type="submit" class="partySecondaryBtn">Search</button></form>
                <div id="partyLobbyMovieResults" class="partyFilmRail" aria-live="polite"></div><div id="partyFeaturedMovies" class="partyFilmRail"><p class="partyFilmStatus" role="status">Finding films for tonight…</p></div>
+             </section>
+             <section class="partyFilmSection partyShowSection" aria-labelledby="partyShowTitle">
+               <header class="partySectionHead"><div><span class="partyEyebrow">One more episode, together</span><h2 id="partyShowTitle">Shows worth sharing.</h2><p>Choose a show, then pick your season and episode.</p></div><a class="partyTextLink" href="/tv">Browse TV shows ${icon('arrow')}</a></header>
+               <div id="partyFeaturedShows" class="partyFilmRail" aria-live="polite" aria-busy="true"><p class="partyFilmStatus" role="status">Finding shows for your next series night…</p></div>
              </section>
              <section class="sv100ActiveRooms partyRoomDirectory" aria-labelledby="partyDirectoryTitle">
                <header class="partySectionHead"><div><h2 id="partyDirectoryTitle">Open parties <small id="partyRoomCount"></small></h2><p>A seat at someone’s movie night.</p></div><button type="button" class="partyIconBtn" data-action="refresh-rooms" aria-label="Refresh party list">${icon('refresh')}</button></header>
