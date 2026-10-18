@@ -20,16 +20,17 @@ test.before(async () => {
 });
 test.after(async () => {await browser?.close(); if (api) await new Promise(resolve => api.io.close(resolve));});
 
-async function open(viewport, tv = true) {
+async function open(viewport, tv = true, controller = false) {
   const context = await browser.newContext({viewport,reducedMotion:'reduce'});
-  await context.addInitScript(tv => {
+  await context.addInitScript(({tv,controller}) => {
     localStorage.setItem('swiflytv.session', JSON.stringify({email:'tv-layout@example.test'}));
     localStorage.setItem('swiflytv.activeProfile', JSON.stringify({id:'fixture',name:'Viewer'}));
     if(localStorage.getItem('swiflytv.tvFocusMode')===null)localStorage.setItem('swiflytv.tvFocusMode', String(tv));
     const add = window.addEventListener.bind(window);
     window.addEventListener = (type,listener,options) => {if(type !== 'gamepadconnected' && type !== 'gamepaddisconnected') add(type,listener,options);};
-    Object.defineProperty(navigator,'getGamepads',{value:() => []});
-  }, tv);
+    window.__tvLayoutPad={id:'Xbox layout fixture',mapping:'standard',index:0,connected:true,buttons:Array.from({length:17},()=>({pressed:false,value:0})),axes:[0,0,0,0]};
+    Object.defineProperty(navigator,'getGamepads',{value:() => controller?[window.__tvLayoutPad]:[]});
+  }, {tv,controller});
   await context.route('**/*', route => {
     const url = new URL(route.request().url());
     if(url.origin === origin) return route.continue();
@@ -42,6 +43,58 @@ async function open(viewport, tv = true) {
   if (tv) await page.waitForFunction(() => document.documentElement.dataset.svTv==='true' && document.body.classList.contains('swifly-tv-focus-mode'));
   return {context,page};
 }
+
+for(const viewport of [{width:1280,height:720},{width:1920,height:1080}])test('Xbox guide fits the TV safe frame and leaves selected card captions visible at '+viewport.width+'px',{skip:!available&&'Chromium is not installed'},async()=>{
+  const {context,page}=await open(viewport,true,true);
+  try{
+    await page.locator('.movieCard .posterWrap').first().focus();
+    await page.keyboard.press('ArrowRight');
+    await page.locator('#swiflyTvGuide[data-input="gamepad"]').waitFor({state:'visible'});
+    await page.waitForFunction(()=>{const card=document.querySelector('.movieCard:has(.swifly-tv-focus-target)');return card&&getComputedStyle(card.querySelector('.dsCardInfo')).backgroundColor!=='rgba(0, 0, 0, 0)';});
+    const geometry=await page.evaluate(()=>{
+      const bounds=node=>{const b=node.getBoundingClientRect();return {top:b.top,bottom:b.bottom,left:b.left,right:b.right,width:b.width,height:b.height};};
+      const guide=document.getElementById('swiflyTvGuide'),focused=document.querySelector('.movieCard:has(.swifly-tv-focus-target)'),other=[...focused.parentElement.querySelectorAll('.movieCard')].find(card=>card!==focused),caption=focused.querySelector('.dsCardInfo'),heading=focused.closest('.dsRow').querySelector('.svSectionHead h2,.dsRowHead h2');
+      return {scrollY,scrollMargin:getComputedStyle(focused).scrollMarginBottom,card:bounds(focused),railScroll:focused.parentElement.scrollTop,nav:bounds(document.querySelector('.netflixNav')),heading:bounds(heading),guide:bounds(guide),caption:bounds(caption),meta:bounds(focused.querySelector('.dsCardMeta')),commands:[...guide.querySelectorAll('.svTvCommand')].map(node=>({...bounds(node),font:parseFloat(getComputedStyle(node).fontSize),client:node.clientWidth,scroll:node.scrollWidth})),selectedBackground:getComputedStyle(caption).backgroundColor,otherBackground:getComputedStyle(other.querySelector('.dsCardInfo')).backgroundColor,rowMarker:{width:parseFloat(getComputedStyle(heading).borderInlineStartWidth),color:getComputedStyle(heading).borderInlineStartColor},posterTransform:getComputedStyle(focused.querySelector('.posterWrap')).transform,pageWidth:document.documentElement.scrollWidth};
+    });
+    assert(geometry.guide.left>=viewport.width*.035&&geometry.guide.right<=viewport.width*.965,'Controller guide stays within television safe edges: '+JSON.stringify(geometry));
+    assert(geometry.guide.height>=68&&geometry.guide.height<=100,'Guide remains compact enough for catalog browsing');
+    assert(geometry.guide.bottom<=viewport.height-20,'Guide clears the lower TV safe edge');
+    assert(geometry.commands.every(command=>command.font>=17&&command.scroll<=command.client+1&&command.left>=geometry.guide.left&&command.right<=geometry.guide.right),'Every Xbox command remains readable and unclipped');
+    assert(geometry.caption.bottom<=geometry.guide.top-14&&geometry.meta.bottom<=geometry.guide.top-14,'Title and year clear the persistent controller guide: '+JSON.stringify(geometry));
+    assert(geometry.heading.top>=geometry.nav.bottom+12,'The selected row heading clears fixed navigation: '+JSON.stringify(geometry));
+    assert.notEqual(geometry.selectedBackground,geometry.otherBackground,'Selected title has a clear identity beyond its poster outline: '+JSON.stringify(geometry));
+    assert(geometry.rowMarker.width>=3&&geometry.rowMarker.color==='rgb(255, 255, 255)','The current row has a visible heading marker');
+    assert.equal(geometry.posterTransform,'none','Selection never scales a poster beyond its rail');
+    assert(geometry.pageWidth<=viewport.width,'Guide does not introduce horizontal page overflow');
+    await page.keyboard.press('ArrowLeft');
+    const longCaption=await page.locator('.movieCard').first().locator('.dsCardInfo').evaluate(node=>({bottom:node.getBoundingClientRect().bottom,guideTop:document.getElementById('swiflyTvGuide').getBoundingClientRect().top}));
+    assert(longCaption.bottom<=longCaption.guideTop-14,'A selected two-line title also clears the controller guide: '+JSON.stringify(longCaption));
+    await page.keyboard.press('F8');
+    await page.waitForFunction(()=>!document.documentElement.hasAttribute('data-sv-tv'));
+    await page.locator('#swiflyTvGuide').evaluate(node=>{node.hidden=false;});
+    assert.equal(await page.locator('#swiflyTvGuide').evaluate(node=>getComputedStyle(node).display),'none','A retained guide cannot cover the desktop after TV mode is disabled');
+  }finally{await context.close();}
+});
+
+test('Xbox help keeps readable commands and both actions within a 720p safe frame',{skip:!available&&'Chromium is not installed'},async()=>{
+  const {context,page}=await open({width:1280,height:720},true,true);
+  try{
+    await page.evaluate(()=>{window.__tvLayoutPad.buttons[8]={pressed:true,value:1};});
+    await page.locator('#swiflyTvHelp').waitFor({state:'visible'});
+    await page.evaluate(()=>{window.__tvLayoutPad.buttons[8]={pressed:false,value:0};});
+    const geometry=await page.locator('#swiflyTvHelp').evaluate(node=>{
+      const bounds=el=>{const b=el.getBoundingClientRect();return {top:b.top,bottom:b.bottom,left:b.left,right:b.right,width:b.width,height:b.height};};
+      const focus=document.activeElement,style=getComputedStyle(focus);
+      return {...bounds(node),heading:bounds(node.querySelector('h2')),descriptionFont:parseFloat(getComputedStyle(node.querySelector('p')).fontSize),commands:[...node.querySelectorAll('.svTvHelpItem')].map(el=>({...bounds(el),font:parseFloat(getComputedStyle(el.querySelector('span')).fontSize)})),actions:[...node.querySelectorAll('button')].map(bounds),focus:bounds(focus),focusOutset:parseFloat(style.outlineWidth)+parseFloat(style.outlineOffset),client:node.clientWidth,scroll:node.scrollWidth};
+    });
+    assert(geometry.left>=40&&geometry.right<=1240&&geometry.top>=24&&geometry.bottom<=696,'Help fits the television safe frame: '+JSON.stringify(geometry));
+    assert(geometry.descriptionFont>=20&&geometry.commands.every(command=>command.font>=20),'Help can be read from the sofa');
+    assert(geometry.heading.top>=geometry.top&&geometry.commands.every(command=>command.top>=geometry.top&&command.bottom<=geometry.bottom),'The controller map is visible without scrolling away its heading: '+JSON.stringify(geometry));
+    assert(geometry.actions.length===2&&geometry.actions.every(action=>action.height>=52&&action.top>=geometry.top&&action.bottom<=geometry.bottom),'Continue and Exit TV mode remain visible and usable');
+    assert(geometry.focus.top-geometry.focusOutset>=geometry.top+8&&geometry.focus.bottom+geometry.focusOutset<=geometry.bottom-8&&geometry.focus.left-geometry.focusOutset>=geometry.left+8&&geometry.focus.right+geometry.focusOutset<=geometry.right-8,'The complete help action focus ring fits inside its panel: '+JSON.stringify(geometry));
+    assert(geometry.scroll<=geometry.client+1,'Help has no horizontal scrolling');
+  }finally{await context.close();}
+});
 
 for (const viewport of [{width:1920,height:1080},{width:1280,height:720}]) test('TV catalog has safe framing and readable, clearly focused posters at '+viewport.width+'px', {skip:!available && 'Chromium is not installed'}, async () => {
   const {context,page} = await open(viewport);
@@ -93,7 +146,7 @@ test('TV styling leaves desktop sizing intact and restores it immediately when d
     assert(desktop.nav<1000); assert.equal(desktop.title,'14px');
     await page.keyboard.press('F8');
     await page.waitForFunction(()=>document.documentElement.dataset.svTv==='true');
-    const tv=await measure(); assert(tv.poster>desktop.poster*1.2,'Enabling TV grows posters');
+    const tv=await measure(); assert(tv.poster>desktop.poster*1.2,'Enabling TV grows posters: '+JSON.stringify({desktop,tv}));
     await page.keyboard.press('F8');
     await page.waitForFunction(()=>!document.documentElement.hasAttribute('data-sv-tv')&&getComputedStyle(document.querySelector('.dsCardTitle')).fontSize==='14px');
     assert.deepEqual(await measure(),desktop,'Disabling TV restores exact desktop geometry');

@@ -21,7 +21,7 @@ test('The profile menu provides a visible TV mode switch and every page loads it
  const env=browser(shell),d=env.window.document;
  assert(d.querySelector('.dsProfileDropdown [data-sv-tv-toggle]'),'TV mode must be discoverable without F8');
  assert(d.querySelector('script[data-sv-tv-gate]'),'Saved TV layout must apply before the first paint');
- assert(d.querySelector('link[href="/assets/clean/tv.css?v=1"]'));
+ assert(d.querySelector('link[href="/assets/clean/tv.css?v=2"]'));
 });
 test('TV mode leaves ordinary desktop arrow and Enter keys native until explicitly enabled',()=>{
  const env=setup('<button id="first">Play</button>',{first:[40,80]},{enabled:false});
