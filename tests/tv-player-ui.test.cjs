@@ -34,14 +34,24 @@ test('Episode picker exposes titles and selection while every navigation link re
     assert.equal(u.searchParams.get('mode'),'movie');
   }
 });
-test('Episode navigation stops at season boundaries and escapes episode metadata',()=>{
+test('Episode navigation stops at series boundaries and escapes episode metadata',()=>{
   assert.equal(typeof episodePickerMarkup,'function');
-  const d=parse(episodePickerMarkup({...options,episode:1,episodes:[{episode_number:1,name:'<img src=x onerror=bad>',still:'javascript:alert(1)'}]}));
+  const d=parse(episodePickerMarkup({...options,season:1,episode:1,episodes:[{episode_number:1,name:'<img src=x onerror=bad>',still:'javascript:alert(1)'}]}));
   assert(d.querySelector('[data-player-episode-previous][disabled]'));
   assert.equal(d.querySelector('[onerror],[src^="javascript:"]'),null);
   assert.match(d.querySelector('[aria-current="page"]').textContent,/<img src=x onerror=bad>/);
   const last=parse(episodePickerMarkup({...options,episode:10}));
   assert(last.querySelector('[data-player-episode-next][disabled]'));
+});
+test('Previous and Next episode continue across available seasons',()=>{
+  const end=parse(episodePickerMarkup({...options,season:1,episode:9,episodeCount:9,episodes:[]}));
+  const next=end.querySelector('[data-player-episode-next][href]');assert(next);
+  const nextUrl=new URL(next.href,'https://swifly.test');assert.equal(nextUrl.searchParams.get('s'),'2');assert.equal(nextUrl.searchParams.get('e'),'1');
+  const start=parse(episodePickerMarkup({...options,season:2,episode:1,episodes:[]}));
+  const previous=start.querySelector('[data-player-episode-previous][href]');assert(previous);
+  const previousUrl=new URL(previous.href,'https://swifly.test');assert.equal(previousUrl.searchParams.get('s'),'1');assert.equal(previousUrl.searchParams.get('e'),'9');
+  const finale=parse(episodePickerMarkup({...options,episode:10,seasons:[...seasons,{season_number:3,episode_count:0}]}));
+  assert(finale.querySelector('[data-player-episode-next][disabled]'),'An announced empty season is not playable');
 });
 test('Episode cards show real synopsis and season counts without inventing missing metadata',()=>{
   const d=parse(episodePickerMarkup({...options,episodes:[...options.episodes,{episode_number:10,name:'Finale',overview:'<img src=x onerror=bad>'}]}));
@@ -104,6 +114,17 @@ test('TV watch route loads selected-season metadata and preserves source choice 
   const next=new URL(d.querySelector('[data-player-episode-next]')?.href||'/',base);
   assert.equal(next.searchParams.get('s'),'2');assert.equal(next.searchParams.get('e'),'9');assert.equal(next.searchParams.get('provider'),'cinezo');
   assert.equal(d.querySelector('.svPlayerPage').dataset.playerEpisode,'8');
+});
+test('TV watch pages put labeled episode controls directly beneath the video',async()=>{
+  const d=parse(await(await fetch(base+'/watch/tv/101?s=2&e=8&provider=cinezo')).text());
+  const controls=d.querySelector('[data-player-episode-navigation]');assert(controls,'Episode buttons must be visible beside the video');
+  assert.equal(d.querySelector('.svPlayerTheater').nextElementSibling,controls);
+  for(const [attribute,number,label]of [['previous','7','Previous episode'],['next','9','Next episode']]){
+    const link=controls.querySelector('[data-player-episode-'+attribute+']');assert(link);assert.match(link.textContent,new RegExp(label));
+    const url=new URL(link.href,base);assert.equal(url.searchParams.get('e'),number);assert.equal(url.searchParams.get('provider'),'cinezo');
+    assert.equal(link.querySelector('svg text'),null,'Episode buttons must not look like 10-second seek controls');
+  }
+  assert.equal(d.querySelectorAll('[data-player-episode-next]').length,1,'Only one visible episode navigation belongs to the standalone player');
 });
 test('Unavailable season metadata leaves the selected episode and basic navigation usable',async()=>{
   seasonUnavailable=true;

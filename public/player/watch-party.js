@@ -36,7 +36,7 @@
   try {return await Promise.race([(async()=>{const response=await fetch(url,{cache:'no-store',...options,signal:controller.signal}),data=await response.json();if(!response.ok||data.ok===false)throw Error(data.message||'The party service is unavailable. Please try again.');return data;})(),timeout]);}
   finally {clearTimeout(timer);requests.delete(controller);}
  }
- function abortRequests(){++pickerEpoch;pendingEpisodeKey='';app?.querySelector('.svPlayerEpisodePicker')?.removeAttribute('aria-busy');requests.forEach(controller=>controller.abort());requests.clear();}
+ function abortRequests(){++pickerEpoch;pendingEpisodeKey='';app?.querySelectorAll('.svPlayerEpisodePicker,[data-player-episode-navigation]').forEach(element=>element.removeAttribute('aria-busy'));requests.forEach(controller=>controller.abort());requests.clear();}
  function busy(value){for(const form of [...root.querySelectorAll('[data-party-join-form]'),...(dialog?[...dialog.querySelectorAll('form')]:[])]){form.setAttribute('aria-busy',String(value));const button=form.querySelector('button[type="submit"]');if(button)button.disabled=value;}}
  function roomUrl(id=roomId,media=currentMedia){const selected=selection(media);if(!selected)return '/social?tab=watchrooms&roomId='+encodeURIComponent(id);const query=new URLSearchParams({mode:'movie',...(selected.type==='tv'?{s:selected.season,e:selected.episode}:{}),roomId:id});return '/watch/'+selected.type+'/'+encodeURIComponent(selected.movieId)+'?'+query;}
  function navigateRoom(next) {
@@ -52,7 +52,7 @@
   const form=$('[data-party-chat-form]',panel);form.querySelector('input').disabled=!joined||!online;form.querySelector('button').disabled=!joined||!online;
   player()?.setRemoteMode?.({enabled:Boolean(roomId),isHost:Boolean(isHost&&joined&&online)});
   const picker=app.querySelector('.svPlayerEpisodePicker');if(picker){let note=picker.querySelector('[data-party-episode-note]');if(!note){note=document.createElement('p');note.dataset.partyEpisodeNote='';note.className='svPlayerPartyEpisodeNote';picker.prepend(note);}note.hidden=!roomId;note.textContent=isHost&&joined&&online?'Choose an episode for everyone.':'The host chooses the episode for everyone.';}
-  for(const link of app.querySelectorAll('[data-player-episode-link],[data-player-season-link],[data-player-episode-next],[data-player-episode-previous]')){if(roomId)link.setAttribute('aria-disabled',String(!joined||!online||!isHost));else link.removeAttribute('aria-disabled');if(link.matches('a')){const url=new URL(link.href,location.href);if(roomId)url.searchParams.set('roomId',roomId);else url.searchParams.delete('roomId');link.href=url.pathname+url.search;}}
+  for(const link of app.querySelectorAll('[data-player-episode-link],[data-player-season-link],[data-player-episode-next],[data-player-episode-previous]')){const stale=link.closest('[data-player-episode-navigation]')&&renderedEpisodeKey!==mediaKey(currentMedia);if(roomId||stale)link.setAttribute('aria-disabled',String(Boolean(stale)||!joined||!online||!isHost));else link.removeAttribute('aria-disabled');if(link.matches('a')){const url=new URL(link.href,location.href);if(roomId)url.searchParams.set('roomId',roomId);else url.searchParams.delete('roomId');if(app.dataset.playerProvider)url.searchParams.set('provider',app.dataset.playerProvider);link.href=url.pathname+url.search;}}
   for(const link of app.querySelectorAll('[data-player-mode-link]')){const url=new URL(link.href,location.href);if(currentMedia.type==='tv'){url.searchParams.set('s',currentMedia.season);url.searchParams.set('e',currentMedia.episode);}if(roomId&&url.searchParams.get('mode')==='movie')url.searchParams.set('roomId',roomId);else url.searchParams.delete('roomId');link.href=url.pathname+url.search+url.hash;}
  }
  function addMessage(message) {
@@ -74,21 +74,21 @@
  function resetClock(){clearInterval(clock);clock=null;if(joined&&online)clock=setInterval(applySync,1000);}
  async function updateEpisode(){
   if(!app||currentMedia.type!=='tv')return;
-  const selected={...currentMedia},key=mediaKey(selected);
+  const selected={...currentMedia},key=mediaKey(selected),requestedRoom=roomId;
   app.dataset.playerSeason=selected.season;app.dataset.playerEpisode=selected.episode;
   const metadata=app.querySelector('[data-player-episode-label]');if(metadata)metadata.textContent='Season '+selected.season+' · Episode '+selected.episode;
   const label=$('[data-party-watching-label]',panel);if(label)label.textContent='Season '+selected.season+' · Episode '+selected.episode;
   const chapter='S'+selected.season.padStart(2,'0')+' · E'+selected.episode.padStart(2,'0');for(const element of app.querySelectorAll('.svPlayerChapter,.svPlayerStageChrome>span:last-child'))element.textContent=chapter;
-  setUrl(true);update();
+  setUrl(Boolean(roomId));update();
   if(renderedEpisodeKey===key||pendingEpisodeKey===key)return;
   const generation=++pickerEpoch;pendingEpisodeKey=key;
-  const picker=app.querySelector('.svPlayerEpisodePicker');if(picker)picker.setAttribute('aria-busy','true');
-  try{const data=await request('/api/social/media/tv/'+selected.movieId+'?season='+selected.season+'&episode='+selected.episode);if(generation!==pickerEpoch||!joined||disposed||suspended||key!==mediaKey(currentMedia))return;
-   if(picker&&typeof data.episodePickerHtml==='string'){picker.innerHTML=data.episodePickerHtml;renderedEpisodeKey=key;}
+  const picker=app.querySelector('.svPlayerEpisodePicker'),navigation=app.querySelector('[data-player-episode-navigation]');for(const element of [picker,navigation])element?.setAttribute('aria-busy','true');
+  try{const data=await request('/api/social/media/tv/'+selected.movieId+'?season='+selected.season+'&episode='+selected.episode);if(generation!==pickerEpoch||requestedRoom!==roomId||requestedRoom&&!joined||disposed||suspended||key!==mediaKey(currentMedia))return;
+   if(picker&&typeof data.episodePickerHtml==='string'){picker.innerHTML=data.episodePickerHtml;const steps=picker.querySelector('.svPlayerEpisodeSteps');if(navigation&&steps)navigation.replaceChildren(steps);renderedEpisodeKey=key;}
    const name=data.media?.episodes?.find(row=>String(row.episode_number)===selected.episode)?.name||'';const episodeName=app.querySelector('.svPlayerEpisodeName');if(episodeName)episodeName.textContent=name;
    update();
   }catch{if(generation===pickerEpoch&&joined)status('Episode details could not refresh. Playback is still shared with your party.');}
-  finally{if(generation===pickerEpoch){pendingEpisodeKey='';picker?.removeAttribute('aria-busy');}}
+  finally{if(generation===pickerEpoch){pendingEpisodeKey='';for(const element of [picker,navigation])element?.removeAttribute('aria-busy');}}
  }
  function applyMovie(movie) {
   if(!joined||!movie)return;const selected=selection(movie);if(!selected)return;if(selected.movieId!==movieId||selected.type!==pageType){navigateRoom({...room,syncedMovie:movie});return;}
@@ -136,8 +136,9 @@
   finally{if(current===epoch)busy(false);}
  }
  function leave() {
-  ++epoch;abortRequests();clearTimeout(ackTimer);clearInterval(clock);clock=null;if(roomId&&socket?.connected)socket.emit('watchroom:leave');roomId='';room=null;joined=false;isHost=false;pendingSelect=false;sourceKey='';readyMovie=null;currentSnapshot=null;sync=null;clearConversation();player()?.pause({remote:true});update();setUrl(false);status('');player()?.resolve?.();
+  ++epoch;abortRequests();clearTimeout(ackTimer);clearInterval(clock);clock=null;if(roomId&&socket?.connected)socket.emit('watchroom:leave');roomId='';room=null;joined=false;isHost=false;pendingSelect=false;sourceKey='';readyMovie=null;currentSnapshot=null;sync=null;clearConversation();player()?.pause({remote:true});update();setUrl(false);status('');refreshSoloEpisode();player()?.resolve?.();
  }
+ function refreshSoloEpisode(){if(!roomId&&!disposed&&!suspended&&currentMedia.type==='tv'&&renderedEpisodeKey!==mediaKey(currentMedia))updateEpisode();}
  async function loadSetupEpisodes(season=setupMedia.season,episode=setupMedia.episode){
   if(pageType!=='tv'||!dialog)return;const generation=++setupEpoch;setupLoading=true;setupError='';busy(true);setupStatus('Loading episodes…');
   try{const data=await request('/api/social/media/tv/'+movieId+'?season='+season+'&episode='+episode);if(generation!==setupEpoch||disposed||suspended||!dialog.open)return;
@@ -148,7 +149,7 @@
   finally{if(generation===setupEpoch){setupLoading=false;busy(false);}}
  }
  function open() {if(roomId){$('[data-party-chat-form]',panel)?.querySelector('input')?.focus();return;}if(!dialog)return;setupStatus('');busy(false);setupMedia={...currentMedia};if(!dialog.open)dialog.showModal();loadSetupEpisodes();}
- function cancelSetup() {if(roomId)return;++epoch;++setupEpoch;setupLoading=false;abortRequests();busy(false);setupStatus('');}
+ function cancelSetup() {if(roomId)return;++epoch;++setupEpoch;setupLoading=false;abortRequests();busy(false);setupStatus('');refreshSoloEpisode();}
  async function create(event) {
   event.preventDefault();if(roomId||disposed||suspended||setupLoading||setupError)return;const current=++epoch;abortRequests();busy(true);setupStatus('Creating your party…');
   try {const data=await request('/api/social/watchrooms/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:String(new FormData(event.currentTarget).get('roomName')||'Movie night').slice(0,80),creator:username,...setupMedia})});if(current!==epoch||disposed||suspended)return;currentMedia={...setupMedia};attach(data.room,true);}
@@ -165,7 +166,7 @@
  if(dialog){$('[data-party-join-form]',dialog).addEventListener('submit',event=>{event.preventDefault();join(new FormData(event.currentTarget).get('invite'));});$('[data-party-create-form]',dialog).addEventListener('submit',create);$('[data-party-dialog-close]',dialog).addEventListener('click',()=>dialog.close());dialog.addEventListener('cancel',cancelSetup);dialog.addEventListener('close',cancelSetup);}
  $('[data-party-setup-season]',dialog)?.addEventListener('change',event=>loadSetupEpisodes(event.target.value,'1'));$('[data-party-setup-episode]',dialog)?.addEventListener('change',event=>{setupMedia.episode=event.target.value;});
  app?.addEventListener('click',event=>{const link=event.target.closest('[data-player-mode-link]');if(!link||!roomId||event.defaultPrevented||event.button>0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;if(new URL(link.href,location.href).searchParams.get('mode')==='movie')event.preventDefault();});
- app?.addEventListener('click',event=>{const link=event.target.closest('[data-player-episode-link],[data-player-season-link],[data-player-episode-next],[data-player-episode-previous]');if(!link||!roomId||!link.matches('a'))return;event.preventDefault();if(!joined||!online||!isHost){status('The host chooses the episode for everyone.');return;}const url=new URL(link.href,location.href),selected=selection({movieId,type:'tv',season:url.searchParams.get('s'),episode:url.searchParams.get('e')});if(selected)socket.emit('watchroom:movie-select',{roomId,...selected,name:username});});
+ app?.addEventListener('click',event=>{const link=event.target.closest('[data-player-episode-link],[data-player-season-link],[data-player-episode-next],[data-player-episode-previous]');if(!link||!link.matches('a'))return;if(link.closest('[data-player-episode-navigation]')&&renderedEpisodeKey!==mediaKey(currentMedia)){event.preventDefault();return;}if(!roomId)return;event.preventDefault();if(!joined||!online||!isHost){status('The host chooses the episode for everyone.');return;}const url=new URL(link.href,location.href),selected=selection({movieId,type:'tv',season:url.searchParams.get('s'),episode:url.searchParams.get('e')});if(selected)socket.emit('watchroom:movie-select',{roomId,...selected,name:username});});
  $('[data-player-party-open]')?.addEventListener('click',open);$('[data-party-leave]',panel)?.addEventListener('click',leave);
  $('[data-party-sync]',panel)?.addEventListener('click',()=>{if(joined&&online){if(player()?.getState().status==='error'&&readyMovie)applyMovie(readyMovie);socket.emit('watchroom:movie-control',{roomId,...transportIdentity(),action:'sync-me'});}});
  $('[data-party-chat-form]',panel)?.addEventListener('submit',event=>{event.preventDefault();if(!joined||!online)return;const input=event.currentTarget.querySelector('input'),text=input.value.trim().slice(0,220);if(!text)return;socket.emit('watchroom:message',{roomId,name:username,text});input.value='';});
@@ -177,7 +178,7 @@
  function suspend(){++epoch;++listEpoch;abortRequests();clearTimeout(ackTimer);clearInterval(clock);clock=null;if(roomId&&socket?.connected)socket.emit('watchroom:leave');socket?.disconnect?.();joined=false;online=false;suspended=true;}
  function destroy(){if(disposed)return;suspend();disposed=true;dialog?.remove();}
  window.addEventListener('pagehide',event=>{if(event.persisted)suspend();else destroy();});
- window.addEventListener('pageshow',event=>{if(!event.persisted||disposed)return;suspended=false;if(roomId){socket?.connect?.();if(socket?.connected)emitJoin();}});
+ window.addEventListener('pageshow',event=>{if(!event.persisted||disposed)return;suspended=false;if(roomId){socket?.connect?.();if(socket?.connected)emitJoin();}else refreshSoloEpisode();});
  window.SwiflyWatchParty=Object.freeze({open,leave,destroy});
  const query=new URLSearchParams(location.search);if(app&&query.get('roomId'))join(query.get('roomId'));else if(app&&query.get('party')==='create')open();
 })();

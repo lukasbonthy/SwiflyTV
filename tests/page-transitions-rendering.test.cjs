@@ -41,9 +41,9 @@ function probe() {
 }
 
 async function entry(pathname = '/', options = {}) {
-  const {authenticated = true, seenIntro = true, storedReduced = false, ...contextOptions} = options;
+  const {authenticated = true, storedReduced = false, ...contextOptions} = options;
   const context = await browser.newContext({viewport:{width:1440, height:960}, ...contextOptions});
-  await context.addInitScript(({authenticated, seenIntro, storedReduced}) => {
+  await context.addInitScript(({authenticated, storedReduced}) => {
     // The browser container has no physical gamepad service. Keep the site's
     // keyboard handler and all navigation, scroll and glass scripts intact.
     const add = window.addEventListener.bind(window);
@@ -55,10 +55,8 @@ async function entry(pathname = '/', options = {}) {
       localStorage.setItem('swiflytv.session', JSON.stringify({email:'navigation@example.test'}));
       localStorage.setItem('swiflytv.activeProfile', JSON.stringify({id:'fixture', name:'Viewer'}));
     }
-    if (seenIntro && !sessionStorage.getItem('navigation-fixture-seeded')) sessionStorage.setItem('swiflytv.intro.v2', '1');
-    sessionStorage.setItem('navigation-fixture-seeded', '1');
     if (storedReduced) localStorage.setItem('swiflytv.appearance', JSON.stringify({version:1, values:{reduceMotion:true}}));
-  }, {authenticated, seenIntro, storedReduced});
+  }, {authenticated, storedReduced});
   await context.addInitScript(probe);
   await context.route('**/*', route => {
     const url = new URL(route.request().url());
@@ -94,6 +92,7 @@ async function navigate(page, selector, pathname) {
 test('Home, Movies and Series use one finite native dissolve and keep their live glass', requiresBrowser, async () => {
   const page = await entry();
   try {
+    assert.equal(await page.locator('[data-sv-intro-root],[data-sv-intro-gate],body[inert]').count(),0,'First entry must open directly without an intro or locked page');
     await navigate(page, '.netflixLinks a[href="/movies"]', '/movies');
     await navigate(page, '.netflixLinks a[href="/tv"]', '/tv');
     const state = await page.evaluate(() => {
@@ -139,22 +138,6 @@ test('system and saved reduced motion preserve normal navigation without a disso
       assert.equal(await page.locator('main').count(), 1);
     } finally {await page.context().close();}
   }
-});
-
-test('an unseen intro on the destination takes precedence over a document transition', requiresBrowser, async () => {
-  const page = await entry();
-  try {
-    // Reset the visit marker after the source has opened, forcing the next
-    // document to present its intro while both documents otherwise opt in.
-    await page.evaluate(() => sessionStorage.removeItem('swiflytv.intro.v2'));
-    await page.locator('.netflixLinks a[href="/tv"]').click();
-    await page.waitForURL(origin + '/tv');
-    await page.waitForFunction(() => document.documentElement.dataset.svIntro === 'running');
-    assert.equal((await page.evaluate(() => window.__navigationProbe.reveals)).some(record => record.ready), false);
-    await page.getByRole('button', {name:'Skip intro'}).click();
-    await navigate(page, '.netflixLinks a[href="/movies"]', '/movies');
-    assert.equal(await page.locator('[data-sv-intro-root]').count(), 0);
-  } finally {await page.context().close();}
 });
 
 test('JavaScript-disabled and modified-click navigation retain normal links', requiresBrowser, async () => {

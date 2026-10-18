@@ -2,7 +2,7 @@
 const test=require('node:test'),assert=require('node:assert/strict'),WebSocket=require('ws');
 const {loadServer,browser,tick,cleanup}=require('./ui-helpers.cjs');
 const {createSourceJobs}=require('../lib/source-jobs');
-const {playerMarkup,episodePickerMarkup}=require('../ui/player');
+const {playerMarkup,episodePickerMarkup,episodeNavigationMarkup}=require('../ui/player');
 const {watchPartyMarkup}=require('../ui/watch-party');
 const {partyMarkup}=require('../ui/party');
 const api=loadServer();let base,port,jobs;const clients=[];
@@ -73,8 +73,9 @@ test('Legacy REST movie controls cannot claim hosting over an active socket part
 });
 
 function playerEnv(isHost=true,options={}){
- const picker=episodePickerMarkup({id:'101',season:2,episode:3,seasons:series.seasons,episodes,episodeCount:4});
- const env=browser(playerMarkup({id:'101',type:'tv',title:series.name,season:2,episode:3,managed:true,episodePickerHtml:picker,partyPanelHtml:watchPartyMarkup({movieId:'101',type:'tv',title:series.name,season:2,episode:3}),...options}),{path:'/watch/tv/101?mode=movie&s=2&e=3&roomId=tv-browser-room'}),w=env.window,handlers={},sent=[],calls=[];
+ const episodeOptions={id:'101',season:2,episode:3,seasons:series.seasons,episodes,episodeCount:4,provider:options.provider};
+ const picker=episodePickerMarkup({...episodeOptions,navigation:false});
+ const env=browser(playerMarkup({id:'101',type:'tv',title:series.name,season:2,episode:3,managed:true,episodePickerHtml:picker,episodeNavigationHtml:episodeNavigationMarkup(episodeOptions),partyPanelHtml:watchPartyMarkup({movieId:'101',type:'tv',title:series.name,season:2,episode:3}),...options}),{path:'/watch/tv/101?mode=movie&s=2&e=3&roomId=tv-browser-room'}),w=env.window,handlers={},sent=[],calls=[];
  const room={id:'tv-browser-room',name:'Series night',syncedMovie:{...selection,status:'ready',requestId:'episode-three',playbackUrl:'/three.mp4',sync:{playing:false,offset:0}}};
  const socket={connected:true,on(name,fn){handlers[name]=fn;return this;},emit(name,data){sent.push({name,data});},disconnect(){this.connected=false;},connect(){this.connected=true;}};w.io=()=>socket;
  w.SwiflyPlayer={setRemoteMode:value=>calls.push(['remote',value]),loadSource:value=>calls.push(['source',value]),pause(){},play(){},seek:time=>calls.push(['seek',time]),resolve(){},getState:()=>({ready:true,paused:true,currentTime:0})};
@@ -102,8 +103,47 @@ test('A shared episode switch refreshes metadata and mode links without leaving 
  assert.match(d.querySelector('.svPlayerMetadata').textContent,/2005.*Season 2 · Episode 4.*Now watching/);
  for(const link of [episodeLink,trailerLink]){const url=new URL(link.href);assert.equal(url.searchParams.get('s'),'2');assert.equal(url.searchParams.get('e'),'4');assert.equal(url.searchParams.get('provider'),'fixture');}
  assert.equal(new URL(episodeLink.href).searchParams.get('roomId'),env.room.id);
+ const controls=d.querySelector('[data-player-episode-navigation]'),previous=controls.querySelector('[data-player-episode-previous]');
+ assert.equal(new URL(previous.href).searchParams.get('e'),'3','The primary buttons must follow the host’s new episode');
+ assert.equal(new URL(previous.href).searchParams.get('provider'),'fixture');assert.equal(new URL(previous.href).searchParams.get('roomId'),env.room.id);
+ assert(controls.querySelector('[data-player-episode-next][disabled]'),'Next stops at the last available episode');
+ assert.equal(d.querySelectorAll('[data-player-episode-next]').length,1,'Refreshing party metadata must not duplicate episode navigation');
  const click=new env.w.MouseEvent('click',{bubbles:true,cancelable:true});episodeLink.dispatchEvent(click);assert.equal(click.defaultPrevented,true,'The current Episode tab keeps the connected room in place');assert.equal(env.sent.filter(row=>row.name==='watchroom:leave').length,0);
  env.w.SwiflyWatchParty.leave();for(const link of [episodeLink,trailerLink]){const url=new URL(link.href);assert.equal(url.searchParams.get('roomId'),null);assert.equal(url.searchParams.get('e'),'4');}
+ assert.equal(new URL(previous.href).searchParams.get('roomId'),null);
+});
+
+test('Primary episode buttons cannot select an old target while party metadata refreshes',async()=>{
+ const env=playerEnv();await tick();env.ack();let finish;
+ env.w.fetch=()=>new Promise(resolve=>finish=()=>resolve({ok:true,json:async()=>({ok:true,media:{episodes},episodePickerHtml:episodePickerMarkup({id:'101',season:2,episode:4,seasons:series.seasons,episodes,episodeCount:4})})}));
+ env.handlers['watchroom:movie-sync']({roomId:env.room.id,movie:{...selection,episode:'4',requestId:'episode-four',status:'loading'}});await tick();
+ const controls=env.w.document.querySelector('[data-player-episode-navigation]'),previous=controls.querySelector('[data-player-episode-previous]');
+ assert.equal(controls.getAttribute('aria-busy'),'true');assert.equal(previous.getAttribute('aria-disabled'),'true');
+ const click=new env.w.MouseEvent('click',{bubbles:true,cancelable:true});previous.dispatchEvent(click);assert.equal(click.defaultPrevented,true);assert.equal(env.sent.filter(row=>row.name==='watchroom:movie-select').length,0);
+ finish();await tick();await tick();assert.equal(controls.hasAttribute('aria-busy'),false);assert.equal(new URL(controls.querySelector('[data-player-episode-previous]').href).searchParams.get('e'),'3');
+});
+
+test('Leaving during an episode refresh restores the current solo navigation and ignores the old response',async()=>{
+ const env=playerEnv(true,{provider:'fixture'});await tick();env.ack();let finishOld,calls=0;
+ const data=episode=>({ok:true,media:{episodes},episodePickerHtml:episodePickerMarkup({id:'101',season:2,episode,seasons:series.seasons,episodes,episodeCount:4})});
+ env.w.fetch=async()=>{calls++;if(calls===1)return new Promise(resolve=>finishOld=()=>resolve({ok:true,json:async()=>data(3)}));return {ok:true,json:async()=>data(4)};};
+ env.handlers['watchroom:movie-sync']({roomId:env.room.id,movie:{...selection,episode:'4',requestId:'episode-four',status:'loading'}});await tick();
+ env.w.SwiflyWatchParty.leave();await tick();await tick();
+ const controls=env.w.document.querySelector('[data-player-episode-navigation]'),previous=controls.querySelector('[data-player-episode-previous]');
+ assert.equal(calls,2,'Solo playback must request fresh metadata after aborting the party request');assert.equal(new URL(env.w.location.href).searchParams.has('roomId'),false);
+ assert.equal(new URL(previous.href).searchParams.get('e'),'3');assert.equal(new URL(previous.href).searchParams.get('provider'),'fixture');assert.equal(new URL(previous.href).searchParams.has('roomId'),false);assert.equal(previous.hasAttribute('aria-disabled'),false);assert.equal(controls.hasAttribute('aria-busy'),false);
+ finishOld();await tick();await tick();assert.equal(new URL(controls.querySelector('[data-player-episode-previous]').href).searchParams.get('e'),'3','The canceled party response cannot replace solo controls');
+});
+
+for(const action of ['cancel setup','restore page'])test('Solo episode navigation recovers after '+action,async()=>{
+ const env=playerEnv();await tick();env.ack();let calls=0;const pending=[];
+ const data={ok:true,media:{season:'2',episode:'4',seasons:series.seasons,episodes},episodePickerHtml:episodePickerMarkup({id:'101',season:2,episode:4,seasons:series.seasons,episodes,episodeCount:4})};
+ env.w.fetch=async()=>{calls++;if(calls<=2)return new Promise(resolve=>pending.push(()=>resolve({ok:true,json:async()=>data})));return {ok:true,json:async()=>data};};
+ env.handlers['watchroom:movie-sync']({roomId:env.room.id,movie:{...selection,episode:'4',requestId:'episode-four',status:'loading'}});await tick();env.w.SwiflyWatchParty.leave();await tick();
+ if(action==='cancel setup'){env.w.SwiflyWatchParty.open();env.w.document.querySelector('.svWatchPartyDialog').close();}
+ else{env.w.dispatchEvent(new env.w.PageTransitionEvent('pagehide',{persisted:true}));env.w.dispatchEvent(new env.w.PageTransitionEvent('pageshow',{persisted:true}));}
+ await tick();await tick();pending.forEach(finish=>finish());await tick();await tick();
+ const controls=env.w.document.querySelector('[data-player-episode-navigation]'),previous=controls.querySelector('[data-player-episode-previous]');assert.equal(new URL(previous.href).searchParams.get('e'),'3');assert.equal(previous.hasAttribute('aria-disabled'),false);assert.equal(controls.hasAttribute('aria-busy'),false);assert.equal(new URL(env.w.location.href).searchParams.has('roomId'),false);
 });
 
 
@@ -112,7 +152,7 @@ test('Rejoining during an unfinished episode picker refresh starts a fresh picke
  const pickerData={ok:true,media:{id:101,type:'tv',title:series.name,season:'2',episode:'4',seasons:series.seasons,episodes},episodePickerHtml:episodePickerMarkup({id:'101',season:2,episode:4,seasons:series.seasons,episodes,episodeCount:4})};
  env.w.fetch=async url=>{if(!String(url).includes('/api/social/media/'))return {ok:true,json:async()=>({ok:true,room})};pickerCalls++;if(pickerCalls===1)return new Promise(resolve=>finishPrevious=()=>resolve({ok:true,json:async()=>pickerData}));return {ok:true,json:async()=>pickerData};};
  env.handlers['watchroom:movie-sync']({roomId:room.id,movie});await tick();env.w.SwiflyWatchParty.leave();const form=env.w.document.querySelector('[data-party-join-form]');form.querySelector('input').value=room.id;form.dispatchEvent(new env.w.Event('submit',{bubbles:true,cancelable:true}));await tick();env.handlers['watchroom:joined']({room,isHost:true,messages:[]});await tick();await tick();finishPrevious();await tick();
- assert.equal(pickerCalls,2);const selected=env.w.document.querySelector('[data-player-episode-link][aria-current="page"]');assert.equal(new URL(selected.href).searchParams.get('e'),'4');
+ assert.equal(pickerCalls,3,'Leaving refreshes solo controls, and rejoining starts a new room request');const selected=env.w.document.querySelector('[data-player-episode-link][aria-current="page"]');assert.equal(new URL(selected.href).searchParams.get('e'),'4');
 });
 
 function hubEnv(){
