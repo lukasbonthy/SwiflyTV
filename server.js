@@ -64,6 +64,7 @@ configureBrowserEnvironment();
 const express = require("express");
 const { studioMarkup } = require("./ui/studio");
 const { welcomeMarkup } = require("./ui/welcome");
+const { introHead, introMarkup } = require("./ui/intro");
 const { partyMarkup } = require("./ui/party");
 const { playerMarkup, episodePickerMarkup } = require("./ui/player");
 const { watchPartyMarkup, partyBrowseMarkup } = require("./ui/watch-party");
@@ -6413,6 +6414,7 @@ function mediaDataAttributes(prefix, item = {}, type = "") {
 }
 
 function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, trailers, cast pages, watchlists, and synced watch rooms.", body = "", active = "", extraHead = "", player = false, partyBrowse = false }) {
+  const showIntro = !player && active !== "watch" && active !== "social";
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -6422,6 +6424,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
   <meta name="description" content="${escapeHtml(description)}" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta name="theme-color" content="#000000" />
+  ${showIntro ? introHead() : ""}
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <link rel="preconnect" href="https://image.tmdb.org" />
@@ -6494,7 +6497,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/scroll.js?v=240"></script>
     <script defer src="/assets/clean/details.js?v=231"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=222" />
-    <script defer src="/assets/liquid-glass/surfaces.js?v=234"></script>
+    <script defer src="/assets/liquid-glass/surfaces.js?v=235"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=233" />
     <script defer src="/assets/studio/studio.js?v=164"></script>
     <link rel="stylesheet" href="/assets/clean/aurora.css?v=208" />
@@ -6518,6 +6521,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/clean/performance.css?v=211" />
 </head>
 <body class="svCleanShell">
+  ${showIntro ? introMarkup() : ""}
 
   <script>
     (function swiflytvAuthRequired(){
