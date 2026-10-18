@@ -56,11 +56,11 @@ test('Full Party Hub and TV player exchange real call media through room signali
     await host.locator('[data-party-featured-show-id="101"]').click();await host.locator('[data-party-lobby-season]').selectOption('2');await host.locator('[data-party-lobby-episode] option[value="2"]').waitFor({state:'attached'});await host.locator('[data-party-lobby-episode]').selectOption('2');
     await host.locator('#sv100CreateRoomForm button[type="submit"]').click();await host.locator('[data-call-join]:not(:disabled)').waitFor();const roomId=new URL(host.url()).searchParams.get('roomId');assert(roomId);
     await host.locator('[data-call-join]').click();await host.locator('[data-call-controls]').waitFor({state:'visible'});assert.equal(await host.evaluate(()=>captureRequests.length),0);
-    await controlsFit(host,false);await host.screenshot({path:'/workspace/scratch/81ab9e7d17ef/party-calls-logs/hub-390.png'});
+    await controlsFit(host,false);
     const guest=await guestContext.newPage();await guest.goto(origin+'/watch/tv/101?mode=movie&s=2&e=2&roomId='+roomId);await guest.locator('[data-call-join]:not(:disabled)').waitFor();await guest.locator('[data-call-join]').click();await guest.locator('[data-call-controls]').waitFor({state:'visible'});assert.equal(await guest.evaluate(()=>captureRequests.length),0);
     await Promise.all([host.locator('[data-call-audio]').click(),guest.locator('[data-call-video]').click()]);await Promise.all([inbound(host,'video'),inbound(guest,'audio')]);
     assert.equal(await host.evaluate(()=>captureRequests[0].video),false);assert.equal(await guest.evaluate(()=>captureRequests[0].audio),false);await controlsFit(guest,true);
-    await guest.keyboard.press('F8');await guest.waitForFunction(()=>document.documentElement.dataset.svTv==='true');await controlsFit(guest,true,true);await guest.screenshot({path:'/workspace/scratch/81ab9e7d17ef/party-calls-logs/player-tv-1280.png'});
+    await guest.keyboard.press('F8');await guest.waitForFunction(()=>document.documentElement.dataset.svTv==='true');await controlsFit(guest,true,true);
     await guest.locator('[data-call-leave]').click();await guest.waitForFunction(()=>captureTracks.every(track=>track.readyState==='ended')&&callPeers.every(peer=>peer.connectionState==='closed'));await host.waitForFunction(()=>document.querySelectorAll('[data-call-peer]').length===0);
     await host.locator('[data-call-leave]').click();await host.waitForFunction(()=>captureTracks.every(track=>track.readyState==='ended'));
   }finally{await hostContext.close();await guestContext.close();}
