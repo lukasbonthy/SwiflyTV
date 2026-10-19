@@ -12,6 +12,7 @@ function setup(markup,rects={},options={}){
  w.HTMLElement.prototype.scrollIntoView=function(value){scrolled.push({id:this.id,...value});};
  w.HTMLElement.prototype.scrollTo=function(value){scrolled.push({id:this.id,...value});};
  w.scrollTo=value=>scrolled.push({id:'window',...value});
+ if(options.xbox)d.documentElement.dataset.svXbox='true';
  if(options.enabled!==false)w.localStorage.setItem('swiflytv.tvFocusMode','true');
  if(options.savedMode!==undefined)w.localStorage.setItem('swiflytv.tvFocusMode',String(options.savedMode));
  if(options.legacyMode)w.localStorage.setItem('swiflytv.tvControllerMode','true');
@@ -121,4 +122,17 @@ test('Returning to a catalog restores the remembered card without overwriting na
  const env=setup(markup,rects);env.d.getElementById('second').focus();env.w.dispatchEvent(new env.w.PageTransitionEvent('pagehide',{persisted:false}));
  const history=env.w.sessionStorage.getItem('swiflytv.tvFocusHistory');assert(history,'TV focus must survive a normal document navigation');
  const returned=setup(markup,rects,{focusHistory:history});assert.equal(returned.d.activeElement.id,'second');assert.equal(returned.scrolled.length,0,'The browser retains ownership of scroll restoration');
+});
+
+
+test('Xbox single-controller idle polling reuses button snapshots instead of allocating arrays',()=>{
+ const env=setup('<button id="first">Play</button>',{first:[50,50]},{xbox:true});
+ const pad={id:'Xbox Wireless Controller',index:0,connected:true,mapping:'standard',axes:[0,0,0,0],buttons:Array.from({length:17},()=>({pressed:false,value:0}))};
+ env.pads([pad]);env.w.dispatchEvent(new env.w.Event('gamepadconnected'));
+ let allocations=0;const from=env.w.Array.from;
+ env.w.Array.from=function(...args){allocations++;return from.apply(this,args);};
+ try{for(let i=1;i<=15;i++)env.w.flush(i*16);}finally{env.w.Array.from=from;}
+ assert.equal(allocations,0,'Idle Xbox polling should not allocate per-frame button arrays');
+ pad.buttons[3]={pressed:true,value:1};env.w.flush(256);
+ assert.equal(env.d.activeElement.id,'first','Other inputs keep focus rather than breaking gamepad polling');
 });
