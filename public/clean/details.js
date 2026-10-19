@@ -7,7 +7,10 @@
   let sheetTransition=null,transitionEpoch=0,closeWantsHistory=false;
   let sceneRecords=[],entryFocus=null;
   const motionPreference=window.matchMedia('(prefers-reduced-motion: reduce)');
-  const reducedMotion=()=>motionPreference.matches||document.body.classList.contains('reduceMotion');
+  // Xbox Edge needs the dialog to appear at the button press, not after the
+  // 900ms cinematic rise. Keep all desktop animations unchanged.
+  const xboxInstant = /Xbox|XboxOne|Xbox Series/i.test(navigator.userAgent) || document.documentElement.dataset.svXbox === 'true';
+  const reducedMotion=()=>xboxInstant||motionPreference.matches||document.body.classList.contains('reduceMotion');
   const enterDuration=900,exitDuration=560;
   const fragments=new Map(),fragmentTTL=90000,fragmentLimit=8,fragmentByteLimit=2*1024*1024,fragmentSizeLimit=192*1024;
   let fragmentScope=null,fragmentBytes=0;
