@@ -443,10 +443,10 @@ html[data-sv-tv="true"] body.svCleanShell #swiflyTvHint kbd {display:inline-bloc
 @media (min-width:1101px) and (max-height:800px) {
   html[data-sv-tv="true"] body.svCleanShell [data-sv-liquid-nav].topbar {padding-top:16px !important;}
   html[data-sv-tv="true"] body.svCleanShell [data-sv-liquid-nav].topbar > .container.nav.netflixNav {
-    min-height:66px !important;height:66px !important;border-radius:23px !important;
+    min-height:72px !important;height:72px !important;border-radius:23px !important;
   }
   html[data-sv-tv="true"] body.svCleanShell #swiflyTvSpotlight {
-    top:94px;--sv-tv-spotlight-height:clamp(120px,21svh,155px);
+    top:100px;--sv-tv-spotlight-height:clamp(120px,21svh,155px);
   }
   html[data-sv-tv="true"] body.svCleanShell .svTvSpotlightVisual {inset:-8px calc(-1 * var(--sv-tv-safe)) -8px 31%;}
   html[data-sv-tv="true"] body.svCleanShell .svTvSpotlightCopy {width:min(65%,800px);}
@@ -456,7 +456,7 @@ html[data-sv-tv="true"] body.svCleanShell #swiflyTvHint kbd {display:inline-bloc
   html[data-sv-tv="true"] body.svCleanShell .svDetailDialog {height:calc(100svh - 40px);max-height:calc(100svh - 40px);}
   html[data-sv-tv="true"] body.svCleanShell .svPlayerPage {padding-top:112px;}
   html[data-sv-tv="true"] body.svCleanShell .svPlayerDock {bottom:16px;}
-  html[data-sv-tv="true"] body.svCleanShell #swiflyTvGuide {bottom:12px;min-height:55px;padding:8px 18px;}
+  html[data-sv-tv="true"] body.svCleanShell #swiflyTvGuide {bottom:24px;min-height:64px;padding:10px 18px;}
   html[data-sv-tv="true"] body.svCleanShell .svTvGuideCommands {gap:8px 15px;}
 }
 /* Short browser viewports may never hide the currently selected action. */
