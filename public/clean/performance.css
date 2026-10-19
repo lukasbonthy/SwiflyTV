@@ -48,3 +48,20 @@ body.svCleanShell main > .svHeroLightBridge > .svHeroSpill {
     }
   }
 }
+
+
+/* Keep original liquid-glass optics on every visible navigation/control.
+   Idle Xbox poster quick actions need not sample the backdrop repeatedly. */
+html[data-sv-xbox="true"] body.svCleanShell .dsCardArtwork:not(:focus-within) .dsCardQuickActions .svLiquidPane,
+html[data-sv-xbox="true"] body.svCleanShell .dsCardArtwork:not(:focus-within) .dsPlayDot {
+  -webkit-backdrop-filter:none !important;backdrop-filter:none !important;
+}
+@supports (content-visibility:auto) {
+  html[data-sv-tv="true"] body.svCleanShell .dsContent > .dsRow.svCatalogRow {
+    content-visibility:auto;contain-intrinsic-size:auto 390px;
+  }
+}
+/* Bounding poster-row paint stops distant rows invalidating the viewport. */
+html[data-sv-xbox="true"] body.svCleanShell .dsContent > .dsRow .movieRail {
+  contain:layout paint;
+}
