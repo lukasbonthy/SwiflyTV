@@ -30,6 +30,7 @@ const { normalizeAudioLanguage, normalizeSubtitles } = require("./lib/playback-o
 const { createPlaybackHandoff } = require("./lib/playback-handoff");
 const { createVerifiedMediaEntryResolver } = require("./lib/native-source-entry");
 const { createSubtitleProxy } = require("./lib/subtitle-proxy");
+const { createSiteGate } = require("./lib/site-gate");
 const { cleanHeaders: cleanNuvioHeaders } = require("./lib/nuvio-http");
 
 // ===== SwiflyTV no-env mode =====
@@ -5597,6 +5598,8 @@ let remoteBrowserEngine = null;
 let remoteBrowserLaunchError = "";
 
 app.disable("x-powered-by");
+// Render uses a trusted reverse proxy; preserve HTTPS when issuing session cookies.
+if (process.env.RENDER || process.env.SWIFLY_TRUST_PROXY === "true") app.set("trust proxy", 1);
 
 app.use(compression());
 app.use(express.json({ limit: "1mb" }));
@@ -5615,6 +5618,11 @@ app.use((req, res, next) => {
   res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
   next();
 });
+
+// Check friends-only access before pages, assets and API routes.
+const siteGate = createSiteGate();
+app.use(siteGate.router);
+app.use(siteGate.protect);
 
 // v150: versioned, locally hosted navigation glass assets.
 // Versioned glass URLs can be cached across navigation; v= tags change with edits.
@@ -15423,6 +15431,9 @@ const io = new Server(httpServer, {
   },
 });
 
+// Engine.IO handles sockets outside Express: require the same access cookie.
+io.use((socket, next) => siteGate.validCookie(socket.handshake.headers.cookie)
+  ? next() : next(new Error("Access code required.")));
 const watchroomCalls = createWatchroomCalls({ io, watchRooms, env: process.env });
 
 function publishWatchRoomPresence(room) {
