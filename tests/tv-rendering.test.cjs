@@ -20,8 +20,8 @@ test.before(async () => {
 });
 test.after(async () => {await browser?.close(); if (api) await new Promise(resolve => api.io.close(resolve));});
 
-async function open(viewport, tv = true, controller = false) {
-  const context = await browser.newContext({viewport,reducedMotion:'reduce'});
+async function open(viewport, tv = true, controller = false, reducedMotion = 'reduce') {
+  const context = await browser.newContext({viewport,reducedMotion});
   await context.addInitScript(({tv,controller}) => {
     localStorage.setItem('swiflytv.session', JSON.stringify({email:'tv-layout@example.test'}));
     localStorage.setItem('swiflytv.activeProfile', JSON.stringify({id:'fixture',name:'Viewer'}));
@@ -43,6 +43,111 @@ async function open(viewport, tv = true, controller = false) {
   if (tv) await page.waitForFunction(() => document.documentElement.dataset.svTv==='true' && document.body.classList.contains('swifly-tv-focus-mode'));
   return {context,page};
 }
+
+async function settleScroll(page) {
+  await page.evaluate(() => new Promise(resolve => {
+    let previous = '', stable = 0, frames = 0;
+    const sample = () => {
+      const position = [scrollY,...[...document.querySelectorAll('.movieRail')].map(rail => rail.scrollLeft)].join(',');
+      stable = position === previous ? stable + 1 : 0; previous = position;
+      if (++frames > 240 || stable >= 8) resolve(); else requestAnimationFrame(sample);
+    };
+    requestAnimationFrame(sample);
+  }));
+}
+
+for (const viewport of [{width:1363,height:936},{width:1280,height:720},{width:1920,height:1080}]) test('TV browsing settles whole rows in a consistent safe frame with normal motion at '+viewport.width+'px', {skip:!available&&'Chromium is not installed'}, async () => {
+  const {context,page} = await open(viewport,true,true,'no-preference');
+  try {
+    const read = () => page.evaluate(() => {
+      const bounds = node => {const r=node.getBoundingClientRect();return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,height:r.height};};
+      const card=document.activeElement.closest('.movieCard'),row=card?.closest('.dsRow'),rail=card?.closest('.movieRail');
+      return {nav:bounds(document.querySelector('.netflixNav')),guide:bounds(document.getElementById('swiflyTvGuide')),hero:bounds(document.querySelector('.dsHero')),heading:bounds((row||document.querySelector('.dsRow')).querySelector('h2')),card:card&&bounds(card),caption:card&&bounds(card.querySelector('.dsCardInfo')),poster:card&&bounds(card.querySelector('.posterWrap')),railTop:rail?.scrollTop,scrollY,selected:card&&[...rail.querySelectorAll('.movieCard')].indexOf(card),row:row&&[...document.querySelectorAll('.dsRow')].indexOf(row)};
+    });
+    await settleScroll(page);
+    const initial=await read();
+    assert(initial.heading.bottom+64<=initial.guide.top,'The home screen reveals its first gallery below the featured title: '+JSON.stringify(initial));
+    await page.locator('.dsHeroActions .dsPrimaryBtn').focus();
+    await page.keyboard.press('ArrowDown');
+    await settleScroll(page);
+    const first=await read();
+    assert.equal(first.row,0,'Down from the feature enters the first gallery');
+    assert(first.heading.top>=first.nav.bottom+16&&first.heading.top<=first.nav.bottom+44,'The row settles just below navigation without a large empty gap: '+JSON.stringify(first));
+    assert(first.caption.bottom<=first.guide.top-16,'The complete two-line title and date clear the guide: '+JSON.stringify(first));
+    assert.equal(first.railTop,0,'Focus never scrolls the poster rail vertically');
+    await page.keyboard.press('ArrowRight');await page.keyboard.press('ArrowRight');await settleScroll(page);
+    const across=await read();
+    assert.equal(across.selected,2);assert(Math.abs(across.scrollY-first.scrollY)<=1,'Moving across a row keeps the same vertical anchor');
+    await page.keyboard.press('ArrowDown');await settleScroll(page);
+    const next=await read();
+    assert.equal(next.row,1);assert(Math.abs(next.heading.top-first.heading.top)<=2,'The next row uses the same vertical anchor: '+JSON.stringify({first,next}));
+    assert(next.caption.bottom<=next.guide.top-16,'The next row also keeps its metadata above controls');
+    await page.keyboard.press('ArrowUp');await settleScroll(page);
+    assert.equal((await read()).selected,2,'Returning up remembers the title in that gallery');
+    await page.keyboard.press('ArrowUp');await settleScroll(page);
+    assert.equal(await page.locator('.dsHeroActions .dsPrimaryBtn').evaluate(node=>node===document.activeElement),true,'Up from the first gallery returns to the feature');
+    assert.equal(await page.evaluate(()=>scrollY),0,'Returning to the feature restores the complete home composition');
+  } finally {await context.close();}
+});
+
+test('Rapid TV row entry and horizontal taps keep the full long-title caption above controls', {skip:!available&&'Chromium is not installed'}, async () => {
+  const {context,page}=await open({width:1363,height:936},true,true,'no-preference');
+  try {
+    await page.locator('.dsHeroActions .dsPrimaryBtn').focus();
+    await page.keyboard.press('ArrowDown');await page.keyboard.press('ArrowRight');await page.keyboard.press('ArrowRight');await page.keyboard.press('ArrowLeft');await page.keyboard.press('ArrowLeft');
+    await settleScroll(page);
+    const geometry=await page.evaluate(()=>{const card=document.activeElement.closest('.movieCard'),heading=card.closest('.dsRow').querySelector('h2');return {title:card.querySelector('.dsCardTitle').textContent,caption:card.querySelector('.dsCardInfo').getBoundingClientRect().bottom,heading:heading.getBoundingClientRect().top,nav:document.querySelector('.netflixNav').getBoundingClientRect().bottom,guide:document.getElementById('swiflyTvGuide').getBoundingClientRect().top};});
+    assert.match(geometry.title,/Northern Lights/);
+    assert(geometry.caption<=geometry.guide-16,'Rapid input cannot leave the date under the guide: '+JSON.stringify(geometry));
+    assert(geometry.heading<=geometry.nav+44,'Rapid horizontal input must not interrupt row settling: '+JSON.stringify(geometry));
+  }finally{await context.close();}
+});
+
+test('TV movie detail entry focuses Play and Back restores the exact card without moving either page', {skip:!available&&'Chromium is not installed'}, async () => {
+  const {context,page}=await open({width:1363,height:936},true,true,'no-preference');
+  try {
+    await page.locator('.dsHeroActions .dsPrimaryBtn').focus();await page.keyboard.press('ArrowDown');await page.keyboard.press('ArrowRight');await page.keyboard.press('ArrowRight');await settleScroll(page);
+    const before=await page.evaluate(()=>({href:document.activeElement.getAttribute('href'),index:[...document.querySelectorAll('.movieRail .posterWrap')].indexOf(document.activeElement),top:scrollY}));
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(()=>document.activeElement.matches('.svDetailDialog .svDetailActions .dsPrimaryBtn')&&!document.querySelector('.svDetailDialog').hasAttribute('aria-busy'));
+    await page.waitForFunction(()=>document.querySelector('.svDetailDialog').dataset.svDetailState==='open');
+    const opened=await page.evaluate(()=>({top:scrollY,detailTop:document.querySelector('.svDetailViewport').scrollTop,guide:document.getElementById('swiflyTvGuide').hidden,ring:document.activeElement.classList.contains('swifly-tv-focus-target')}));
+    assert.equal(opened.detailTop,0,'Default Play focus never scrolls the cinematic detail sheet');assert.equal(opened.top,before.top,'Opening details preserves the catalog anchor');assert(opened.guide&&opened.ring,'The movie action owns focus while catalog controls stay hidden');
+    await page.keyboard.press('Escape');await page.waitForFunction(()=>!document.querySelector('.svDetailDialog').open);
+    const returned=await page.evaluate(()=>({href:document.activeElement.getAttribute('href'),index:[...document.querySelectorAll('.movieRail .posterWrap')].indexOf(document.activeElement),top:scrollY}));
+    assert.deepEqual(returned,before,'Closing details restores the exact selected poster and scroll position');
+  }finally{await context.close();}
+});
+
+test('TV navigation includes real Continue Watching cards and remembers their saved episode', {skip:!available&&'Chromium is not installed'}, async () => {
+  const {context,page}=await open({width:1280,height:720},true,true,'no-preference');
+  try {
+    await page.evaluate(()=>{for(let id=201;id<=203;id++)SwiflyContinue.saveProgress({id,type:'tv',title:'An unfinished journey '+id,year:'2026',backdrop:'/backdrop.jpg',season:2,episode:3,currentTime:600,duration:2400});});
+    await page.locator('#continueWatchingRail .svResumeLink').first().waitFor();
+    await page.locator('.dsHeroActions .dsPrimaryBtn').focus();await page.keyboard.press('ArrowDown');await settleScroll(page);
+    assert.equal(await page.evaluate(()=>document.activeElement.matches('#continueWatchingRail .svResumeLink')),true,'The first Down enters saved progress before new titles');
+    await page.keyboard.press('ArrowRight');await settleScroll(page);
+    const resume=await page.evaluate(()=>({href:document.activeElement.getAttribute('href'),title:document.activeElement.closest('.svResumeCard').querySelector('.svResumeTitle').textContent,caption:document.activeElement.closest('.svResumeCard').querySelector('.svResumeCaption').getBoundingClientRect().bottom,guide:document.getElementById('swiflyTvGuide').getBoundingClientRect().top,context:document.getElementById('swiflyTvGuide').textContent}));
+    assert.match(resume.href,/s=2&e=3&resume=1/);assert(resume.caption<=resume.guide-16,'Saved episode and progress labels clear the guide');assert(resume.context.includes(resume.title),'The guide names the saved title');
+    await page.keyboard.press('ArrowDown');await settleScroll(page);assert.equal(await page.evaluate(()=>document.activeElement.matches('.dsRow .posterWrap')),true,'Down continues into the movie gallery');
+    await page.keyboard.press('ArrowUp');await settleScroll(page);assert.equal(await page.evaluate(()=>document.activeElement.getAttribute('href')),resume.href,'Up restores the selected saved episode');
+    await page.keyboard.press('ArrowUp');await settleScroll(page);assert.equal(await page.locator('.dsHeroActions .dsPrimaryBtn').evaluate(node=>node===document.activeElement),true,'The feature remains above Continue Watching');
+    await page.keyboard.press('ArrowDown');await settleScroll(page);assert.equal(await page.evaluate(()=>document.activeElement.getAttribute('href')),resume.href,'Returning down remembers the saved title');
+  }finally{await context.close();}
+});
+
+test('Moving upward in TV movie details keeps the focused action below fixed dialog chrome', {skip:!available&&'Chromium is not installed'}, async () => {
+  const {context,page}=await open({width:1280,height:720},true,true);
+  try {
+    await page.locator('.movieRail .posterWrap').first().click();
+    await page.waitForFunction(()=>document.activeElement.matches('.svDetailDialog .svDetailActions .dsPrimaryBtn'));
+    await page.locator('.svDetailChapterNav a').first().focus();
+    await page.locator('.svDetailViewport').evaluate(node=>node.scrollTo({top:node.scrollHeight,behavior:'instant'}));
+    await page.keyboard.press('ArrowUp');
+    const geometry=await page.evaluate(()=>{const focus=document.activeElement,rect=focus.getBoundingClientRect();return {name:focus.getAttribute('aria-label')||focus.textContent.trim(),top:rect.top,bottom:rect.bottom,chrome:document.querySelector('.svDetailChrome').getBoundingClientRect().bottom,viewport:document.querySelector('.svDetailViewport').getBoundingClientRect().bottom,inside:focus.closest('.svDetailDialog')!==null};});
+    assert(geometry.inside&&geometry.top>=geometry.chrome+8&&geometry.bottom<=geometry.viewport-8,'The complete focused control clears the fixed detail toolbar: '+JSON.stringify(geometry));
+  }finally{await context.close();}
+});
 
 for(const viewport of [{width:1280,height:720},{width:1920,height:1080}])test('Xbox guide fits the TV safe frame and leaves selected card captions visible at '+viewport.width+'px',{skip:!available&&'Chromium is not installed'},async()=>{
   const {context,page}=await open(viewport,true,true);

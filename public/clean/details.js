@@ -5,7 +5,7 @@
   let dialog,viewport,scrim,trigger,lastTrigger,request,currentHref='',generation=0,started=false,closingHistory=false,closingDialog=false;
   let trail=[],pendingOpen=[],currentURL='';
   let sheetTransition=null,transitionEpoch=0,closeWantsHistory=false;
-  let sceneRecords=[];
+  let sceneRecords=[],entryFocus=null;
   const motionPreference=window.matchMedia('(prefers-reduced-motion: reduce)');
   const reducedMotion=()=>motionPreference.matches||document.body.classList.contains('reduceMotion');
   const enterDuration=900,exitDuration=560;
@@ -220,8 +220,21 @@
     active.timer=setTimeout(settle,duration+34);
   }
   function settleReducedMotion() {if(reducedMotion()){sheetTransition?.complete();clearScene();}}
+  function focusReadyEntry(current) {
+    const entry=entryFocus;if(!entry||entry.current!==current)return;entryFocus=null;
+    if(entry.cancelled||current!==generation||!dialog.open||dialog.dataset.svDetailState==='closing'||document.documentElement.dataset.svTv!=='true')return;
+    const active=document.activeElement;
+    if(active!==document.body&&active!==dialog&&!dialog.contains(active))return;
+    const action=viewport.querySelector('.svDetailActions .dsPrimaryBtn');
+    if(!action?.matches('a[href],button')||action.tabIndex<0||action.closest('[disabled],[hidden],[inert],[aria-hidden="true"],[aria-disabled="true"]'))return;
+    const rect=action.getBoundingClientRect(),style=getComputedStyle(action);
+    if(rect.width<=6||rect.height<=6||style.display==='none'||style.visibility==='hidden'||Number(style.opacity||1)<=.05)return;
+    // Native showModal focuses chrome while metadata is loading. Hand that
+    // default to Play once, without moving a restored title or catalog scroll.
+    try {action.focus({preventScroll:true});} catch {}
+  }
   function reset() {
-    cancelSheetTransition();generation++;request?.abort();request=null;window.SwiflyMotion?.stop(viewport);window.SwiflyMotion?.release(viewport);
+    cancelSheetTransition();generation++;entryFocus=null;request?.abort();request=null;window.SwiflyMotion?.stop(viewport);window.SwiflyMotion?.release(viewport);
     if(scrim){scrim.hidden=true;scrim.dataset.svDetailState='closed';}
     if(dialog){dialog.dataset.svDetailState='closed';dialog.removeAttribute('aria-busy');}
     document.documentElement.classList.remove('svDetailsOpen');
@@ -237,7 +250,7 @@
   function dismiss(updateHistory) {
     if(!dialog?.open)return;
     if(dialog.dataset.svDetailState==='closing'){if(!updateHistory)closeWantsHistory=false;return;}
-    closeWantsHistory=updateHistory;generation++;request?.abort();request=null;window.SwiflyMotion?.stop(viewport);
+    closeWantsHistory=updateHistory;generation++;entryFocus=null;request?.abort();request=null;window.SwiflyMotion?.stop(viewport);
     moveSheet('closing',()=>{
       const leave=closeWantsHistory;closeWantsHistory=false;
       closingDialog=true;dialog.close();reset();closingDialog=false;
@@ -257,6 +270,11 @@
     const dismiss=document.createElement('button');dismiss.type='button';dismiss.className='svDetailDismiss dsIconBtn';dismiss.dataset.svDetailClose='';dismiss.setAttribute('aria-label','Close movie details');dismiss.innerHTML=closeIcon;
     chrome.append(back,title,dismiss);viewport=document.createElement('div');viewport.className='svDetailViewport svCinemaPage';viewport.dataset.cinemaPage='details';dialog.append(chrome,viewport);document.body.append(dialog);
     back.addEventListener('click',goBack);dismiss.addEventListener('click',close);
+    const cancelEntryFocus=event=>{if(entryFocus&&dialog.contains(event.target))entryFocus.cancelled=true;};
+    // Capture before the TV controller handles activation: the key that opens
+    // another title must not count as navigation within the new request.
+    window.addEventListener('keydown',cancelEntryFocus,true);dialog.addEventListener('pointerdown',cancelEntryFocus,true);
+    dialog.addEventListener('focusin',event=>{if(entryFocus&&event.target!==entryFocus.initial&&event.target!==back)entryFocus.cancelled=true;});
     viewport.addEventListener('scroll',()=>dialog.classList.toggle('svDetailScrolled',viewport.scrollTop>180),{passive:true});
     dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
     dialog.addEventListener('close',()=>{
@@ -266,13 +284,14 @@
     dialog.addEventListener('click',event=>{if(event.target!==dialog)return;const r=dialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)close();});
   }
   async function render(href,from,scroll=0) {
-    ensureDialog();request?.abort();window.SwiflyMotion?.stop(viewport);window.SwiflyMotion?.release(viewport);
+    ensureDialog();entryFocus=null;request?.abort();window.SwiflyMotion?.stop(viewport);window.SwiflyMotion?.release(viewport);
     request=new AbortController();const current=++generation;currentHref=href;currentURL=route(new URL(location.href));scrollPositions.set(currentURL,scroll);
     const entering=!dialog.open||dialog.dataset.svDetailState==='closing';
     if(!dialog.open){trigger=from||lastTrigger||document.activeElement;window.SwiflyMotion?.stop();prepareScene();document.documentElement.classList.add('svDetailsOpen');scrim.hidden=false;dialog.showModal();}
     viewport.scrollTop=0;dialog.classList.remove('svDetailScrolled');dialog.setAttribute('aria-busy','true');
     dialog.setAttribute('aria-label','Movie details');dialog.querySelector('.svDetailChromeTitle').textContent='Movie details';
     viewport.innerHTML='<div class="svDetailLoading" role="status"><div class="svDetailLoadingArt"></div><div class="svDetailLoadingCopy"><span></span><span></span><span></span></div><p>Loading details…</p></div>';
+    entryFocus={current,initial:document.activeElement,cancelled:false};
     dialog.querySelector('[data-sv-dialog-back]').setAttribute('aria-label',trail.length?'Back to previous title':'Back to browsing');
     if(entering){closeWantsHistory=false;moveSheet('opening',()=>{window.SwiflyGlassSurfaces?.refresh(dialog);window.SwiflyMotion?.refresh(viewport);});}
     try {
@@ -302,7 +321,7 @@
       const heading=document.createElement('h2');heading.textContent='Details are taking a moment';
       const copy=document.createElement('p');copy.textContent='Open the full title page or return to browsing.';
       const link=document.createElement('a');link.href=href;link.className='dsSecondaryBtn';link.dataset.svDetailFallback='';link.textContent='Open full details';panel.append(heading,copy,link);viewport.replaceChildren(panel);
-    }finally{if(current===generation)dialog.removeAttribute('aria-busy');}
+    }finally{if(current===generation){dialog.removeAttribute('aria-busy');focusReadyEntry(current);}}
   }
   async function open(value,from) {
     const href=titleRoute(value);if(!href)return;

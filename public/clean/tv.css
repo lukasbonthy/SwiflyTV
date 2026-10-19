@@ -14,14 +14,13 @@ html:not([data-sv-tv="true"]) body.svCleanShell [data-sv-tv-active-only] {displa
 html:not([data-sv-tv="true"]) body.svCleanShell #swiflyTvGuide,
 html:not([data-sv-tv="true"]) body.svCleanShell #swiflyTvHint {display:none !important;}
 
-html[data-sv-tv="true"] {--sv-tv-bottom-safe:140px; scroll-padding-top:140px; scroll-padding-bottom:var(--sv-tv-bottom-safe);}
-html[data-sv-tv="true"]:has(.svCatalogRow) {scroll-padding-top:180px;}
+html[data-sv-tv="true"] {--sv-tv-bottom-safe:124px; scroll-padding-top:120px; scroll-padding-bottom:var(--sv-tv-bottom-safe);}
 html[data-sv-tv="true"]:has(#swiflyTvGuide[hidden]) {scroll-padding-bottom:0;}
 html[data-sv-tv="true"] body.svCleanShell {
   --sv-tv-safe:4.5vw; --sv-tv-gap:clamp(22px,1.65vw,32px);
-  --sv-tv-guide-height:76px;
+  --sv-tv-guide-height:68px;
   --sv-page-gutter:var(--sv-tv-safe); --v-left:var(--sv-tv-safe); --v-right:var(--sv-tv-safe);
-  --sv-poster-width:calc((100vw - 2 * var(--sv-tv-safe) - 4 * var(--sv-tv-gap) - 28px) / 5) !important;
+  --sv-poster-width:min(calc((100vw - 2 * var(--sv-tv-safe) - 4 * var(--sv-tv-gap) - 28px) / 5),max(216px,calc((100svh - 396px) * 2 / 3))) !important;
   font-size:clamp(19px,1.45vw,26px); line-height:1.5;
 }
 html[data-sv-tv="true"] body.svCleanShell [data-sv-liquid-nav].topbar {
@@ -69,8 +68,8 @@ html[data-sv-tv="true"] body.svCleanShell .dsProfileUser small {font-size:16px !
 
 /* The featured title and first gallery form one screen-height composition. */
 html[data-sv-tv="true"] body.svCleanShell main > .dsHero {
-  height:auto !important; min-height:76svh !important;
-  padding:clamp(155px,19svh,210px) 0 clamp(70px,9svh,110px) !important;
+  height:auto !important; min-height:62svh !important;
+  padding:clamp(140px,16svh,174px) 0 clamp(34px,4.5svh,58px) !important;
 }
 html[data-sv-tv="true"] body.svCleanShell .dsHeroContent {
   width:min(900px,66vw) !important; max-width:900px !important; margin-left:var(--sv-tv-safe) !important;
@@ -78,13 +77,13 @@ html[data-sv-tv="true"] body.svCleanShell .dsHeroContent {
 html[data-sv-tv="true"] body.svCleanShell .dsHeroContent h1 {
   font-size:clamp(54px,4.6vw,88px) !important; line-height:1.04 !important; max-width:900px;
 }
-html[data-sv-tv="true"] body.svCleanShell .dsEyebrow {font-size:clamp(17px,1.2vw,22px) !important; margin-bottom:18px !important;}
-html[data-sv-tv="true"] body.svCleanShell .dsHeroMeta {gap:12px !important; margin:22px 0 16px !important;}
+html[data-sv-tv="true"] body.svCleanShell .dsEyebrow {font-size:clamp(17px,1.2vw,22px) !important; margin-bottom:12px !important;}
+html[data-sv-tv="true"] body.svCleanShell .dsHeroMeta {gap:12px !important; margin:16px 0 12px !important;}
 html[data-sv-tv="true"] body.svCleanShell .dsHeroMeta > :is(b,span) {font-size:clamp(18px,1.3vw,24px) !important; padding:4px 10px !important;}
 html[data-sv-tv="true"] body.svCleanShell .dsHeroMeta small {font-size:15px;}
 html[data-sv-tv="true"] body.svCleanShell .dsHeroContent > p {
-  max-width:800px !important; font-size:clamp(21px,1.45vw,28px) !important; line-height:1.5 !important;
-  margin-bottom:28px !important; -webkit-line-clamp:2; color:#d0d0d5 !important;
+  max-width:800px !important; font-size:clamp(21px,1.45vw,28px) !important; line-height:1.45 !important;
+  margin-bottom:22px !important; -webkit-line-clamp:2; color:#d0d0d5 !important;
 }
 html[data-sv-tv="true"] body.svCleanShell :is(.dsHeroActions,.svDetailActions) {gap:16px !important;}
 html[data-sv-tv="true"] body.svCleanShell :is(.dsHeroActions,.svDetailActions) :is(.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn) {
@@ -114,7 +113,7 @@ html[data-sv-tv="true"] body.svCleanShell :is(.movieRail,.dsRail,.nfRail,.nfTopT
 html[data-sv-tv="true"] body.svCleanShell :is(.movieRail,.dsRail,.nfRail,.nfTopTenRail) {grid-auto-columns:var(--sv-poster-width) !important;}
 html[data-sv-tv="true"] body.svCleanShell .svResumeRail {grid-auto-columns:clamp(320px,29vw,530px);}
 html[data-sv-tv="true"] body.svCleanShell :is(.dsCardQuickActions,.dsPlayDot,.svResumeRemove) {display:none !important;}
-html[data-sv-tv="true"] body.svCleanShell .dsCardInfo {padding:16px 12px 12px !important; border-radius:0 0 12px 12px;}
+html[data-sv-tv="true"] body.svCleanShell :is(.dsCardInfo,.svResumeCaption) {padding:14px 12px 10px !important; border-radius:0 0 12px 12px;}
 html[data-sv-tv="true"] body.svCleanShell :is(.dsCardInfo .dsCardTitle,.svResumeTitle) {
   font-size:clamp(21px,1.45vw,28px) !important; font-weight:550 !important; line-height:1.35 !important;
   white-space:normal !important; display:-webkit-box !important; -webkit-box-orient:vertical; -webkit-line-clamp:2;
@@ -124,10 +123,10 @@ html[data-sv-tv="true"] body.svCleanShell :is(.dsCardMeta,.dsCardMeta > *,.svRes
   font-size:clamp(17px,1.1vw,21px) !important; line-height:1.45 !important; color:#b5b5bc !important;
 }
 html[data-sv-tv="true"] body.svCleanShell :is(.dsCardMeta,.svResumeMeta) {margin-top:8px !important; gap:12px !important; flex-wrap:wrap;}
-html[data-sv-tv="true"] body.svCleanShell :is(.movieCard.svTvFocusedCard,.movieCard:has(.swifly-tv-focus-target)) .dsCardInfo {
+html[data-sv-tv="true"] body.svCleanShell :is(.movieCard,.svResumeCard):is(.svTvFocusedCard,:has(.swifly-tv-focus-target)) :is(.dsCardInfo,.svResumeCaption) {
   background:#171b22 !important; box-shadow:inset 0 -2px 0 #ffffff38;
 }
-html[data-sv-tv="true"] body.svCleanShell :is(.movieCard.svTvFocusedCard,.movieCard:has(.swifly-tv-focus-target)) :is(.dsCardMeta,.dsCardMeta > *) {color:#d5d9e2 !important;}
+html[data-sv-tv="true"] body.svCleanShell :is(.movieCard,.svResumeCard):is(.svTvFocusedCard,:has(.swifly-tv-focus-target)) :is(.dsCardMeta,.dsCardMeta > *,.svResumeMeta,.svResumeMeta > *) {color:#d5d9e2 !important;}
 html[data-sv-tv="true"] body.svCleanShell :is(.dsGrid,.movieGrid,.dsMoreGridV121,.svDetailRecommendations) {
   grid-template-columns:repeat(5,minmax(0,1fr)) !important; gap:36px var(--sv-tv-gap) !important;
 }
@@ -140,6 +139,7 @@ html[data-sv-tv="true"] body.svCleanShell :is(.dsTabs a,.genreDropdown summary,.
 html[data-sv-tv="true"] body.svCleanShell .svDetailDialog {
   width:calc(100vw - 2 * var(--sv-tv-safe)); height:90svh; max-height:90svh; border-radius:28px 28px 0 0;
 }
+html[data-sv-tv="true"] body.svCleanShell .svDetailDialog .svDetailViewport {scroll-padding-block:96px 24px;}
 html[data-sv-tv="true"] body.svCleanShell .svCinemaPage .svTitleDetails.svTitleDetails {width:calc(100% - 2 * var(--sv-tv-safe)) !important; max-width:1700px !important;}
 html[data-sv-tv="true"] body.svCleanShell .svDetailDialog .svDetailViewport.svCinemaPage .svTitleDetails.svTitleDetails {width:100% !important; max-width:none !important;}
 html[data-sv-tv="true"] body.svCleanShell .dsDetailPage.svDetailPage.svCinemaPage {padding-top:150px !important;}
@@ -197,9 +197,8 @@ html[data-sv-tv="true"] body.svCleanShell .svPlayerMenuAction {min-height:56px;}
 
 /* A white ring is legible over every poster. Never filter or transform a
    focused glass host: that would stop the existing backdrop from sampling. */
-html[data-sv-tv="true"] body.svCleanShell :is(a,button,input,select,textarea,summary,[role="button"],[tabindex]) {scroll-margin:140px 24px var(--sv-tv-bottom-safe);}
-html[data-sv-tv="true"] body.svCleanShell .movieCard :is(.posterWrap,.dsThumb) {scroll-margin-bottom:var(--sv-tv-bottom-safe);}
-html[data-sv-tv="true"] body.svCleanShell .movieCard {scroll-margin:140px 24px var(--sv-tv-bottom-safe);}
+html[data-sv-tv="true"] body.svCleanShell :is(a,button,input,select,textarea,summary,[role="button"],[tabindex]) {scroll-margin:24px;}
+html[data-sv-tv="true"] body.svCleanShell .movieCard {scroll-margin:24px;}
 html[data-sv-tv="true"] body.svCleanShell .swifly-tv-focus-target,
 html[data-sv-tv="true"] body.svCleanShell .swifly-tv-focus-target:focus,
 html[data-sv-tv="true"] body.svCleanShell #controlPanel.svStudioDialog .swifly-tv-focus-target {
@@ -217,14 +216,14 @@ html[data-sv-tv="true"] body.svCleanShell .svPlayer[data-player-controls-visibil
 html[data-sv-tv="true"] body.svCleanShell #swiflyTvGuide {
   position:fixed; z-index:550; inset:auto var(--sv-tv-safe) 24px;
   display:flex; align-items:center; justify-content:space-between; gap:24px;
-  min-height:var(--sv-tv-guide-height); padding:14px 22px; box-sizing:border-box;
-  border:1px solid #ffffff29; border-radius:20px; background:#0d1015f7; color:#edf0f5;
-  box-shadow:0 12px 44px #0008; font-size:clamp(18px,1.15vw,22px); line-height:1.3;
+  min-height:var(--sv-tv-guide-height); padding:11px 22px; box-sizing:border-box;
+  border:1px solid #ffffff16; border-radius:16px; background:linear-gradient(110deg,#151921f7,#0b0d12f7); color:#edf0f5;
+  box-shadow:0 8px 28px #0005; font-size:clamp(18px,1.15vw,22px); line-height:1.3;
   pointer-events:none;
 }
 html[data-sv-tv="true"] body.svCleanShell #swiflyTvGuide[hidden] {display:none !important;}
-html[data-sv-tv="true"] body.svCleanShell .svTvGuideContext {display:grid; gap:4px; min-width:0; flex:1 1 180px; max-width:32%;}
-html[data-sv-tv="true"] body.svCleanShell .svTvGuideEyebrow {font-size:12px; font-weight:600; letter-spacing:.09em; text-transform:uppercase; color:#9ca7b8;}
+html[data-sv-tv="true"] body.svCleanShell .svTvGuideContext {display:grid; gap:3px; min-width:0; flex:1 1 180px; max-width:32%;}
+html[data-sv-tv="true"] body.svCleanShell .svTvGuideEyebrow {overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:clamp(13px,.85vw,16px); font-weight:500; letter-spacing:.055em; text-transform:uppercase; color:#a5aebe;}
 html[data-sv-tv="true"] body.svCleanShell .svTvGuideTitle {display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:inherit; font-weight:550; color:#fff;}
 html[data-sv-tv="true"] body.svCleanShell .svTvGuideCommands {display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:12px 24px; min-width:0;}
 html[data-sv-tv="true"] body.svCleanShell .svTvCommand {display:inline-flex; align-items:center; gap:9px; white-space:nowrap;}
@@ -278,11 +277,12 @@ html[data-sv-tv="true"] body.svCleanShell #swiflyTvHint kbd {display:inline-bloc
 /* Short televisions keep the complete row heading, original poster ratio,
    two caption lines, and the controller strip inside one safe composition. */
 @media (min-width:1101px) and (max-height:800px) {
-  html[data-sv-tv="true"]:has(.svCatalogRow) {scroll-padding-top:160px;}
+  html[data-sv-tv="true"] body.svCleanShell main > .dsHero {padding:132px 0 24px !important;}
+  html[data-sv-tv="true"] body.svCleanShell .dsHeroContent h1 {font-size:clamp(46px,4vw,64px) !important;}
   html[data-sv-tv="true"] body.svCleanShell :is(.svSectionHead,.dsRowHead) {min-height:44px !important; margin-bottom:8px !important;}
   html[data-sv-tv="true"] body.svCleanShell .svRowMore {min-height:44px;}
   html[data-sv-tv="true"] body.svCleanShell :is(.svRowArrow,.dsRowBtn) {width:44px !important; height:44px !important;}
-  html[data-sv-tv="true"] body.svCleanShell .dsCardInfo {padding:12px 12px 10px !important;}
+  html[data-sv-tv="true"] body.svCleanShell :is(.dsCardInfo,.svResumeCaption) {padding:10px 12px 8px !important;}
 }
 @media (max-width:900px) {
   html[data-sv-tv="true"] body.svCleanShell .netflixNav .netflixWordmark {font-size:18px !important;}
