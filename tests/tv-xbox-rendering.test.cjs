@@ -43,7 +43,11 @@ test('An Xbox controller browses real catalog rows, opens help, searches, and re
 });
 test('Xbox player settings and unavailable playback remain navigable without leaving the movie',{skip:!available&&'Chromium is not installed'},async()=>{
  const {context,page}=await open();try{
-  await page.goto(origin+'/watch/movie/101?mode=movie');await page.locator('[data-player-stage]').waitFor();await page.locator('[data-player-stage]').focus();
+  await page.goto(origin+'/watch/movie/101?mode=movie');await page.locator('[data-player-stage]').waitFor();
+  // The unavailable case starts after resolution finishes. A late error tears
+  // down an open loading-state menu before Back can close that same menu.
+  await page.waitForFunction(()=>document.querySelector('[data-player-root]').dataset.playerState==='error');
+  await page.locator('[data-player-stage]').focus();
   const before=page.url();await press(page,2);await press(page,7);assert.equal(page.url(),before);assert.equal(await page.evaluate(()=>document.querySelector('[data-player-video]').paused),true,'Unavailable transport cannot start raw video');
   await press(page,8);await page.locator('#swiflyTvHelp[open]').waitFor();await press(page,1);assert.equal(page.url(),before);assert.equal(await page.locator('[data-player-stage]').evaluate(node=>node===document.activeElement),true);
   await press(page,9);const options=page.locator('.svPlayerPopover[open],.dsProfileMenu[open]');await options.waitFor();assert.equal(await options.evaluate(node=>node.contains(document.activeElement)),true,'Menu remains useful while playback is unavailable');await press(page,1);assert.equal(await options.count(),0);
