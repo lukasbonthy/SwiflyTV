@@ -18,6 +18,7 @@ function setup(options = {}) {
   const env = browser('<main><a href="/movies">Movies</a></main>', options), w = env.window;
   if (options.appearance !== undefined) w.localStorage.setItem('swiflytv.appearance', options.appearance);
   if (options.legacyReduced) w.localStorage.setItem('movieverse.reduceMotion', 'on');
+  if(options.xbox)Object.defineProperty(w.navigator,'userAgent',{configurable:true,value:'Mozilla/5.0 (Xbox; Xbox One) Edg/125.0'});
   w.eval(code);
   env.transition = (type = 'pagereveal', activation) => {
     let skipped = 0;
@@ -121,4 +122,11 @@ test('the shell opts in ordinary pages and excludes playback, party and party br
       assert.doesNotMatch(html, /data-sv-navigation-gate|\/assets\/clean\/navigation\.css/);
     }
   } finally {server.io.close();}
+});
+
+test('Xbox avoids the native 320ms page dissolve on both sides of navigation',()=>{
+  const env=setup({xbox:true});
+  assert.deepEqual(env.transition(),{skipped:1,canceled:false});
+  assert.deepEqual(env.transition('pageswap',{entry:{url:'http://localhost:3000/movies'}}),{skipped:1,canceled:false});
+  env.finish();
 });

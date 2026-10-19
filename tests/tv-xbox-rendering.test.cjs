@@ -12,8 +12,8 @@ test.before(async()=>{
  await new Promise(resolve=>api.httpServer.listen(0,'127.0.0.1',resolve));origin='http://127.0.0.1:'+api.httpServer.address().port;browser=await chromium.launch({headless:true});
 });
 test.after(async()=>{await browser?.close();jobs?.destroy();if(api)await new Promise(resolve=>api.io.close(resolve));});
-async function open(){
- const context=await browser.newContext({viewport:{width:1280,height:720},reducedMotion:'reduce',userAgent:'Mozilla/5.0 (Xbox; Xbox One; Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'});
+async function open(motion='reduce'){
+ const context=await browser.newContext({viewport:{width:1280,height:720},reducedMotion:motion,userAgent:'Mozilla/5.0 (Xbox; Xbox One; Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'});
  await context.addInitScript(()=>{
   const Base=window.IntersectionObserver;
   window.__svXboxNearObservers={observed:0,targets:[]};
@@ -117,5 +117,22 @@ test('Xbox catalog defers hidden optic allocation while preserving visible nav g
   assert.equal(await page.evaluate(()=>{
    const selected=document.activeElement,rail=selected.closest('.movieRail');return [...rail.querySelectorAll('.posterWrap')].indexOf(selected);
   }),3,'Down from a title retains its column without measuring offscreen geometry');
+ }finally{await context.close();}
+});
+
+test('An Xbox A press shows movie details without waiting for the 900ms entrance',{skip:!available&&'Chromium is not installed'},async()=>{
+ const {context,page}=await open('no-preference');
+ try{
+  const first=page.locator('.movieRail').first().locator('.posterWrap').first();
+  await first.focus();
+  await press(page,0);
+  const result=await page.evaluate(()=>({
+    modalOpen:!!document.querySelector('.svDetailDialog[open]'),
+    motionState:document.querySelector('.svDetailDialog')?.dataset.svDetailState,
+    catalogScene:document.documentElement.dataset.svDetailScene
+  }));
+  assert.equal(result.modalOpen,true,'A opens movie details on the first press');
+  assert.equal(result.motionState,'open','Xbox skips the 900ms dialog entrance even with full-motion preferences');
+  assert.equal(result.catalogScene,undefined,'Heavy background scale/clip transition never runs on Xbox');
  }finally{await context.close();}
 });

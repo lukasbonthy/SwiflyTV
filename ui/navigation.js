@@ -4,6 +4,9 @@
 // Register before the first render so motion preferences apply immediately.
 function navigationGate() {
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+  // Skip the 320ms old/new-page dissolve on the console; the new document
+  // should become interactive as soon as its content is ready.
+  const xboxInstant = /Xbox|XboxOne|Xbox Series/i.test(navigator.userAgent) || document.documentElement.dataset.svXbox === 'true';
 
   function excluded(value) {
     if (!value) return false;
@@ -23,7 +26,7 @@ function navigationGate() {
         (!appearance && localStorage.getItem('movieverse.reduceMotion') === 'on');
     } catch (_) { /* Storage restrictions must not interfere with navigation. */ }
     const activation = event.activation || window.navigation?.activation;
-    if (reduced.matches || savedReduced ||
+    if (xboxInstant || reduced.matches || savedReduced ||
         document.body?.classList.contains('reduceMotion') ||
         [location.href, activation?.from?.url, activation?.entry?.url].some(excluded)) {
       event.viewTransition.skipTransition();
