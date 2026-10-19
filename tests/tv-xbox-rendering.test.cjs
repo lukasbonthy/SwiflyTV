@@ -13,7 +13,7 @@ test.before(async()=>{
 });
 test.after(async()=>{await browser?.close();jobs?.destroy();if(api)await new Promise(resolve=>api.io.close(resolve));});
 async function open(){
- const context=await browser.newContext({viewport:{width:1280,height:720},reducedMotion:'reduce'});
+ const context=await browser.newContext({viewport:{width:1280,height:720},reducedMotion:'reduce',userAgent:'Mozilla/5.0 (Xbox; Xbox One; Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'});
  await context.addInitScript(()=>{
   localStorage.setItem('swiflytv.session',JSON.stringify({email:'xbox-browser@example.test'}));localStorage.setItem('swiflytv.activeProfile',JSON.stringify({id:'xbox',name:'Xbox Viewer'}));localStorage.setItem('swiflytv.tvFocusMode','true');
   const listeners=new Map(),add=window.addEventListener.bind(window);
@@ -30,6 +30,7 @@ async function open(){
 async function press(page,index){await page.evaluate(async index=>{const frame=()=>new Promise(requestAnimationFrame);xbox.set(index,true);await frame();xbox.set(index,false);await frame();},index);}
 test('An Xbox controller browses real catalog rows, opens help, searches, and recovers after disconnect',{skip:!available&&'Chromium is not installed'},async()=>{
  const {context,page}=await open();try{
+  assert.equal(await page.evaluate(()=>document.documentElement.dataset.svXbox),'true','The real Xbox browser profile activates the graphics fast path');
   const rail=page.locator('.movieRail').first();await rail.locator('.posterWrap').first().focus();
   await press(page,5);let selected=await page.evaluate(()=>document.activeElement.closest('.movieRail')&&[...document.activeElement.closest('.movieRail').querySelectorAll('.posterWrap')].indexOf(document.activeElement));assert(selected>=3,'RB advances a visible page of titles');
   const previous=await page.evaluate(()=>document.activeElement.getAttribute('href'));await press(page,7);assert.equal(await page.evaluate(()=>document.activeElement.closest('.movieRail')===document.querySelectorAll('.movieRail')[1]),true,'RT moves to the next actual row');await press(page,6);assert.equal(await page.evaluate(()=>document.activeElement.getAttribute('href')),previous);
@@ -58,5 +59,26 @@ test('Xbox search leaves real browser fullscreen before focusing the search fiel
   await page.goto(origin+'/watch/movie/101?mode=movie');await page.locator('[data-player-stage]').focus();await page.keyboard.press('f');await page.waitForFunction(()=>document.fullscreenElement?.matches('[data-player-stage]'));
   await press(page,3);await page.waitForFunction(()=>!document.fullscreenElement&&document.activeElement?.id==='svNavSearchInput');assert.equal(await page.locator('#svNavSearchPopup').getAttribute('hidden'),null);
   await page.keyboard.press('ArrowDown');assert.equal(await page.evaluate(()=>document.getElementById('svNavSearchPopup').contains(document.activeElement)),true,'Directional focus stays in the now visible search');
+ }finally{await context.close();}
+});
+
+test('Xbox catalog defers hidden optic allocation while preserving visible nav glass and row positions',{skip:!available&&'Chromium is not installed'},async()=>{
+ const {context,page}=await open();
+ try{
+  await page.waitForFunction(()=>document.querySelectorAll('.movieCard').length>=12);
+  const stats=await page.evaluate(()=>{
+   const quick=[...document.querySelectorAll('.dsCardQuickActions')];
+   return {quick:quick.length,hiddenOptics:quick.reduce((n,node)=>n+node.querySelectorAll('.svLiquidPane').length,0),
+    navPane:!!document.querySelector('.netflixNav > .svLiquidPane'),
+    materials:document.querySelectorAll('.svLiquidPane').length};
+  });
+  assert(stats.quick>0,'Catalog includes poster quick actions');
+  assert.equal(stats.hiddenOptics,0,'Invisible Xbox poster actions never allocate backdrop panes');
+  assert(stats.navPane,'The visible shared navigation material remains present');
+  const first=page.locator('.movieRail').first().locator('.posterWrap');
+  await first.nth(3).focus();await press(page,7);
+  assert.equal(await page.evaluate(()=>{
+   const selected=document.activeElement,rail=selected.closest('.movieRail');return [...rail.querySelectorAll('.posterWrap')].indexOf(selected);
+  }),3,'Down from a title retains its column without measuring offscreen geometry');
  }finally{await context.close();}
 });
