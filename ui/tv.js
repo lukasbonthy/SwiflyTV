@@ -3,7 +3,9 @@
 function tvGate() {
   let saved=null;
   try {saved=localStorage.getItem('swiflytv.tvFocusMode');if(saved===null&&localStorage.getItem('swiflytv.tvControllerMode')==='true')saved='true';} catch {}
-  const television=/SmartTV|Smart-TV|Tizen|Web0S|webOS|NetCast|HbbTV|AFT[A-Z]|Android.*\bTV\b|BRAVIA/i.test(navigator.userAgent);
+  const xbox=/Xbox|XboxOne|Xbox Series/i.test(navigator.userAgent);
+  if(xbox)document.documentElement.dataset.svXbox='true';
+  const television=xbox||/SmartTV|Smart-TV|Tizen|Web0S|webOS|NetCast|HbbTV|AFT[A-Z]|Android.*\bTV\b|BRAVIA/i.test(navigator.userAgent);
   if(saved==='true'||saved===null&&television)document.documentElement.dataset.svTv='true';
 }
 
