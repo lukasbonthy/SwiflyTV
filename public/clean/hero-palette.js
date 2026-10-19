@@ -3,6 +3,9 @@
    failure simply leaves the quiet neutral CSS fallback glow in place. */
 (() => {
   'use strict';
+  // Console paints the same artwork without an extra canvas readback and
+  // backdrop-image download solely for a decorative gradient tint.
+  if (document.documentElement.dataset.svXbox === 'true') return;
   const hero=document.querySelector('main > .dsHero[data-sv-palette-src]');
   if(!hero || !hero.parentElement) return;
   const src=hero.getAttribute('data-sv-palette-src');

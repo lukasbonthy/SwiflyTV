@@ -24,6 +24,16 @@ test('Movie and episode pages preload the same tested HLS version as the player 
  const script=await(await fetch(base+'/assets/player/player.js')).text();
  assert(script.includes('https://cdn.jsdelivr.net/npm/hls.js@1.7.3/dist/hls.min.js'));
 });
+test('Xbox movie player selects a bounded image rather than the unbounded TMDB original',async()=>{
+ const desktop=await(await fetch(base+'/watch/movie/101?mode=movie')).text();
+ const xbox=await(await fetch(base+'/watch/movie/101?mode=movie',{headers:{'User-Agent':'Mozilla/5.0 (Xbox; Xbox One; Windows NT 10.0) AppleWebKit/537.36 Edg/125.0'}})).text();
+ const desktopArt=parse(desktop).window.document.querySelector('[data-player-art]');
+ const xboxArt=parse(xbox).window.document.querySelector('[data-player-art]');
+ assert.match(desktopArt?.getAttribute('src')||'',/\/original\/arrival-wide\.jpg/,'Desktop retains full-resolution player imagery');
+ assert.match(xboxArt?.getAttribute('src')||'',/\/w780\/arrival-wide\.jpg/,'Xbox player uses a smaller 780px backdrop');
+ assert.match(xbox,/data-player-root/,'Playback markup and transport still load on Xbox');
+});
+
 test('The normal watch route renders one native movie player with shared assets and inline party setup',async()=>{
  const response=await fetch(base+'/watch/movie/101?mode=movie'),env=parse(await response.text()),d=env.window.document;
  assert.equal(response.status,200);assert(d.querySelector('.dsHeader, .dsTopBar, .topbar'));

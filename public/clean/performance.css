@@ -65,3 +65,22 @@ html[data-sv-xbox="true"] body.svCleanShell .dsCardArtwork:not(:focus-within) .d
 html[data-sv-xbox="true"] body.svCleanShell .dsContent > .dsRow .movieRail {
   contain:layout paint;
 }
+
+/* Xbox Lite: bound hero textures to 780px on a console browser rather than
+   downloading and compositing TMDB's unbounded original photographs.
+   This rule overrides only the image URL; gradients and layout stay intact. */
+html[data-sv-xbox="true"] body.svCleanShell :is(.dsHeroBg,.browseHeroBg,.svDetailBackdrop) {
+  background-image:var(--sv-xbox-art) !important;
+}
+html[data-sv-xbox="true"] body.svCleanShell .svDetailShell {
+  --sv-detail-art:var(--sv-xbox-detail-art) !important;
+}
+/* Avoid decorative full-screen offscreen effects on Xbox's weaker compositor.
+   The real liquid-glass optics of the nav and currently focused actions stay. */
+html[data-sv-xbox="true"] body.svCleanShell :is(
+  .dsHeroTrailerLayer,.dsHeroTrailerPill,.dsHeroRating,
+  .svHeroSpill,.svAppearanceTexture
+) {display:none !important}
+html[data-sv-xbox="true"] body.svCleanShell .svAuroraBackground::after,
+html[data-sv-xbox="true"] body.svCleanShell .svAuroraRibbon--second {display:none !important}
+html[data-sv-xbox="true"] body.svCleanShell .dsHeroHasTrailer .dsHeroBg {animation:none !important}

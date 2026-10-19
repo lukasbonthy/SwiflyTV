@@ -160,7 +160,7 @@ function swiflyTvFocusNavigation() {
     if(spotlightCard!==card){
       spotlightCard=card;
       const backdrop=data.playBackdrop||'',poster=card.querySelector('img');
-      queueSpotlightArt(/^\/[^\s?#]+$/.test(backdrop)?'https://image.tmdb.org/t/p/w1280'+backdrop:poster?.currentSrc||poster?.src||'');
+      queueSpotlightArt(/^\/[^\s?#]+$/.test(backdrop)?'https://image.tmdb.org/t/p/'+(xboxFast?'w780':'w1280')+backdrop:poster?.currentSrc||poster?.src||'');
     }
   }
   function syncGuide(){
