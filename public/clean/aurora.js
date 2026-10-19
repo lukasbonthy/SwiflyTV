@@ -7,10 +7,10 @@
   let started = false, stopped = false, observer, viewport, background, inView = true;
   function refresh() {
     if (!document.body || stopped) return;
-    const policy = touch.matches ? 'touch' : 'full';
+    const policy = document.documentElement.dataset.svXbox === 'true' ? 'console' : touch.matches ? 'touch' : 'full';
     if (document.body.dataset.svPerformance !== policy) document.body.dataset.svPerformance = policy;
     const watch = /^\/(?:watch|embed)(?:\/|$)/.test(location.pathname) || Boolean(document.querySelector('.svPlayerPage,.dsWatchPage'));
-    const state = watch || document.body.dataset.stBackdrop !== 'aurora' ? 'off' : document.hidden || !inView || reduced.matches || document.body.classList.contains('reduceMotion') ? 'still' : 'live';
+    const state = watch || document.body.dataset.stBackdrop !== 'aurora' ? 'off' : document.hidden || !inView || reduced.matches || policy === 'console' || document.body.classList.contains('reduceMotion') ? 'still' : 'live';
     if (document.body.dataset.svAuroraState !== state) document.body.dataset.svAuroraState = state;
   }
   function boot() {
