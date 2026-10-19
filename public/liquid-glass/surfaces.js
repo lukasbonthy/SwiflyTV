@@ -136,10 +136,10 @@
     entries.delete(entry.host);
   }
   function ensure(host, approached = false) {
+    // Guard BOTH initial scans and later intersection callbacks: the latter
+    // pass approached=true and used to recreate every hidden poster lens.
+    if (xbox && document.documentElement.dataset.svTv === 'true' && host.closest?.('.dsCardQuickActions')) return;
     if (xbox && !approached) {
-      // TV mode hides all quick actions: this guard does not depend on
-      // IntersectionObserver support, including older console Chromium.
-      if (document.documentElement.dataset.svTv === 'true' && host.closest?.('.dsCardQuickActions')) return;
       if (nearObserver && host.closest?.('.dsContent .dsRow,.dsContent .dsGrid,.dsContent .movieGrid,.svPlayerEpisodePicker,.svPlayerEpisodeGrid') &&
           !host.matches?.(firstScreenActions) && !host.closest?.('.svDetailDialog[open]')) {
         if (!nearPending.has(host)) {nearPending.add(host);nearObserver.observe(host);}
@@ -256,8 +256,21 @@
     }
     schedule();
   }
+  let tvModeObserver = null;
+  function clearHiddenTvOptics() {
+    if (!xbox || document.documentElement.dataset.svTv !== 'true') return;
+    for (const entry of [...entries.values()]) {
+      if (entry.host.closest('.dsCardQuickActions')) release(entry);
+    }
+  }
   function boot() {
     if (stopped || mutations) return;
+    if (xbox) {
+      // TV mode can initialize after the optics have booted. Reclaim them
+      // when the mode flag appears, including back-forward restored pages.
+      tvModeObserver = new MutationObserver(clearHiddenTvOptics);
+      tvModeObserver.observe(document.documentElement,{attributes:true,attributeFilter:['data-sv-tv']});
+    }
     if (xbox && typeof IntersectionObserver === 'function') {
       nearObserver = new IntersectionObserver(changes => {
         for (const change of changes) {
@@ -282,6 +295,7 @@
       }
     }, {rootMargin:'80px', threshold:0});
     scan(document);
+    clearHiddenTvOptics();
     mutations = new MutationObserver(changes => {
       let preferenceChanged = false;
       const settledDialogs = new Set();
@@ -330,6 +344,7 @@
   window.SwiflyGlassSurfaces = Object.freeze({refresh(root = document) {scan(root);}, destroy() {
     if (stopped) return; stopped = true;
     nearObserver?.disconnect(); nearObserver = null;
+    tvModeObserver?.disconnect(); tvModeObserver = null;
     document.removeEventListener('DOMContentLoaded', boot); document.removeEventListener('visibilitychange', onVisibility);
     document.removeEventListener('pointerover', onCardEnter); document.removeEventListener('pointerout', onCardLeave);
     document.removeEventListener('focusin', onCardFocus); document.removeEventListener('focusout', onCardBlur);
