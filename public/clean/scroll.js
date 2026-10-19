@@ -9,7 +9,8 @@
   let engine, frame = 0, lastFrame = null, clock = 1, preferences, started = false, destroyed = false;
   const available = () => !destroyed && !document.hidden && fine.matches && !reduced.matches &&
     !document.body.classList.contains('reduceMotion') && document.body.dataset.svScroll !== 'native' &&
-    !/^\/(?:watch|embed)(?:\/|$)/.test(location.pathname) && typeof window.Lenis === 'function';
+    !/^\/(?:watch|embed)(?:\/|$)/.test(location.pathname) && document.documentElement.dataset.svTv !== 'true' &&
+    document.documentElement.dataset.svXbox !== 'true' && typeof window.Lenis === 'function';
 
   function cancel() {
     cancelAnimationFrame(frame); frame = 0; lastFrame = null;

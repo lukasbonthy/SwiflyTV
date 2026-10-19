@@ -30,6 +30,7 @@ const { normalizeAudioLanguage, normalizeSubtitles } = require("./lib/playback-o
 const { createPlaybackHandoff } = require("./lib/playback-handoff");
 const { createVerifiedMediaEntryResolver } = require("./lib/native-source-entry");
 const { createSubtitleProxy } = require("./lib/subtitle-proxy");
+const { createSiteGate } = require("./lib/site-gate");
 const { cleanHeaders: cleanNuvioHeaders } = require("./lib/nuvio-http");
 
 // ===== SwiflyTV no-env mode =====
@@ -5597,6 +5598,8 @@ let remoteBrowserEngine = null;
 let remoteBrowserLaunchError = "";
 
 app.disable("x-powered-by");
+// Render uses a trusted reverse proxy; preserve HTTPS when issuing session cookies.
+if (process.env.RENDER || process.env.SWIFLY_TRUST_PROXY === "true") app.set("trust proxy", 1);
 
 app.use(compression());
 app.use(express.json({ limit: "1mb" }));
@@ -5615,6 +5618,11 @@ app.use((req, res, next) => {
   res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
   next();
 });
+
+// Check friends-only access before pages, assets and API routes.
+const siteGate = createSiteGate();
+app.use(siteGate.router);
+app.use(siteGate.protect);
 
 // v150: versioned, locally hosted navigation glass assets.
 // Versioned glass URLs can be cached across navigation; v= tags change with edits.
@@ -6499,14 +6507,14 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/vendor/lenis/lenis.css?v=1.3.16-r1" />
     <script defer src="/assets/vendor/lenis/lenis.min.js?v=1.3.16-r1"></script>
     <script defer src="/assets/clean/motion.js?v=238"></script>
-    <script defer src="/assets/clean/scroll.js?v=240"></script>
+    <script defer src="/assets/clean/scroll.js?v=241"></script>
     <script defer src="/assets/clean/details.js?v=233"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=222" />
     <script defer src="/assets/liquid-glass/surfaces.js?v=236"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=233" />
     <script defer src="/assets/studio/studio.js?v=164"></script>
     <link rel="stylesheet" href="/assets/clean/aurora.css?v=208" />
-    <script defer src="/assets/clean/aurora.js?v=202"></script>
+    <script defer src="/assets/clean/aurora.js?v=203"></script>
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=205" />' : ""}
     ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=173" />' : ""}
     
@@ -6525,8 +6533,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=206" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=205" />' : ""}
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=200" />' : ""}
     ${player || active === "social" ? '<link rel="stylesheet" href="/assets/party/watchroom-call.css?v=1" />' : ""}
-    <link rel="stylesheet" href="/assets/clean/performance.css?v=211" />
-    <link rel="stylesheet" href="/assets/clean/tv.css?v=4" />
+    <link rel="stylesheet" href="/assets/clean/performance.css?v=212" />
+    <link rel="stylesheet" href="/assets/clean/tv.css?v=5" />
 </head>
 <body class="svCleanShell">
 
@@ -15423,6 +15431,9 @@ const io = new Server(httpServer, {
   },
 });
 
+// Engine.IO handles sockets outside Express: require the same access cookie.
+io.use((socket, next) => siteGate.validCookie(socket.handshake.headers.cookie)
+  ? next() : next(new Error("Access code required.")));
 const watchroomCalls = createWatchroomCalls({ io, watchRooms, env: process.env });
 
 function publishWatchRoomPresence(room) {
