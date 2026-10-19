@@ -257,3 +257,22 @@ test('Speculative movie fetches never activate for unrelated external links',asy
  await tick();assert.equal(calls,0);
  env.finish();
 });
+
+test('Xbox opens details synchronously without waiting for the 900ms slide animation',async()=>{
+  const fragment=await render();
+  const env=browser('<a id="details" href="/movie/101">Open details</a>'),w=env.window,d=w.document;
+  Object.defineProperty(w.navigator,'userAgent',{configurable:true,value:'Mozilla/5.0 (Xbox; Xbox One) Edg/125.0'});
+  let finishFetch;
+  w.fetch=()=>new Promise(resolve=>{finishFetch=resolve;});
+  w.boot('details.js');
+  const link=d.getElementById('details');
+  link.click();
+  const modal=d.querySelector('.svDetailDialog');
+  assert.equal(modal?.open,true,'First A press opens the actual modal immediately');
+  assert.equal(modal.dataset.svDetailState,'open','The Xbox dialog skips the full 900ms animation');
+  assert.equal(d.documentElement.dataset.svDetailScene,undefined,'The catalog is not re-composited behind the console modal');
+  assert.match(modal.textContent,/Loading details/,'Immediate visual feedback exists while network is pending');
+  finishFetch({ok:true,text:async()=>fragment});await tick();
+  assert.match(modal.textContent,/A Complete Movie Title/);
+  env.finish();
+});
