@@ -31,7 +31,7 @@
   // On Xbox defer below-the-fold catalog optics until their controls approach
   // the screen. This retains the exact original refraction on visible buttons.
   let nearObserver = null;
-  const nearPending = new WeakSet();
+  const nearPending = new WeakSet(), nearReady = new WeakSet();
   const rendererProperties = ['--sv-glass-default-tint', '--sv-glass-saturation', '--sv-glass-filter'];
   let intersection, mutations, frame = 0, stopped = false, removed = false;
   // A catalog row has 18 posters and three action lenses per poster.
@@ -139,10 +139,13 @@
     // Guard BOTH initial scans and later intersection callbacks: the latter
     // pass approached=true and used to recreate every hidden poster lens.
     if (xbox && document.documentElement.dataset.svTv === 'true' && host.closest?.('.dsCardQuickActions')) return;
-    if (xbox && !approached) {
-      if (nearObserver && host.closest?.('.dsContent .dsRow,.dsContent .dsGrid,.dsContent .movieGrid,.svPlayerEpisodePicker,.svPlayerEpisodeGrid') &&
-          !host.matches?.(firstScreenActions) && !host.closest?.('.svDetailDialog[open]')) {
-        if (!nearPending.has(host)) {nearPending.add(host);nearObserver.observe(host);}
+    if (xbox && !approached && nearObserver && !host.matches?.(firstScreenActions) &&
+        !host.closest?.('.svDetailDialog[open]')) {
+      // Catalog rows are the correct unit of visibility: observing each of
+      // hundreds of buttons created long queues and defeated lazy startup.
+      const row = host.closest?.('.dsContent .dsRow,.dsContent .dsGrid,.dsContent .movieGrid,.svPlayerEpisodePicker,.svPlayerEpisodeGrid');
+      if (row && !nearReady.has(row)) {
+        if (!nearPending.has(row)) {nearPending.add(row);nearObserver.observe(row);}
         return;
       }
     }
@@ -194,10 +197,12 @@
       if (entry.visible) activate(entry);
     } else activate(entry);
   }
-  function scan(root) {
+  function scan(root, approached = false) {
     if (!root || stopped) return;
-    if (root instanceof HTMLElement && root.matches(selector)) ensure(root);
-    root.querySelectorAll?.(selector).forEach(ensure);
+    if (root instanceof HTMLElement && root.matches(selector)) ensure(root, approached);
+    // Never pass ensure directly to forEach: its second argument is the node
+    // index, not our approached flag. That previously disabled lazy loading.
+    root.querySelectorAll?.(selector).forEach(host => ensure(host, approached));
   }
   function enqueue(root) {
     for (let parent = root.parentElement; parent; parent = parent.parentElement) if (pending.has(parent)) return;
@@ -277,7 +282,8 @@
           if (!change.isIntersecting) continue;
           nearObserver.unobserve(change.target);
           nearPending.delete(change.target);
-          if (change.target.isConnected) ensure(change.target, true);
+          nearReady.add(change.target);
+          if (change.target.isConnected) scan(change.target, true);
         }
       }, {rootMargin:'320px 120px', threshold:0});
     }
