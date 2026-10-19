@@ -36,6 +36,27 @@ async function open(){
 // One polling frame represents a tap; keeping the button down over several
 // slow CI frames would correctly start the player's held-trigger repeat.
 async function press(page,index){await page.evaluate(async index=>{const frame=()=>new Promise(requestAnimationFrame);xbox.set(index,true);await frame();xbox.set(index,false);await frame();},index);}
+
+test('Xbox uses lightweight hero imagery and avoids decorative full-screen compositing',{skip:!available&&'Chromium is not installed'},async()=>{
+ const {context,page}=await open();
+ try{
+  await page.locator('main .dsHeroBg').waitFor();
+  const sampled=await page.evaluate(()=>{
+   const hero=document.querySelector('main .dsHeroBg');
+   const nav=document.querySelector('.netflixNav > .svLiquidPane');
+   const light=document.querySelector('.svHeroSpill');
+   return {art:getComputedStyle(hero).backgroundImage,
+    nav:!!nav && getComputedStyle(nav).display!=='none',
+    spill:light?getComputedStyle(light).display:'absent',
+    canvas:document.documentElement.dataset.svXbox};
+  });
+  assert.match(sampled.art,/\/w780\/backdrop\.jpg/,'Xbox must not paint the full-size original hero image');
+  assert.equal(sampled.nav,true,'The original navbar glass must stay visible');
+  assert.equal(sampled.spill,'none','Decorative full-screen artwork is removed from Xbox compositor');
+  assert.equal(sampled.canvas,'true');
+ }finally{await context.close();}
+});
+
 test('An Xbox controller browses real catalog rows, opens help, searches, and recovers after disconnect',{skip:!available&&'Chromium is not installed'},async()=>{
  const {context,page}=await open();try{
   assert.equal(await page.evaluate(()=>document.documentElement.dataset.svXbox),'true','The real Xbox browser profile activates the graphics fast path');
