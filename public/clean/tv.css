@@ -460,7 +460,7 @@ html[data-sv-tv="true"] body.svCleanShell #swiflyTvHint kbd {display:inline-bloc
   html[data-sv-tv="true"] body.svCleanShell .svTvGuideCommands {gap:8px 15px;}
   /* Keep the 19px+ typography and full two-line title, but reclaim vertical
      padding at 720p so the year and focus ring never meet the guide. */
-  html[data-sv-tv="true"] body.svCleanShell :is(.dsCardInfo,.svResumeCaption) {padding:6px 12px 4px !important;}
+  html[data-sv-tv="true"] body.svCleanShell :is(.dsCardInfo,.svResumeCaption) {padding:6px 12px 0 !important;}
   html[data-sv-tv="true"] body.svCleanShell :is(.dsCardInfo .dsCardTitle,.svResumeTitle) {line-height:1.2 !important;}
   html[data-sv-tv="true"] body.svCleanShell :is(.dsCardMeta,.svResumeMeta) {margin-top:3px !important;line-height:1.2 !important;}
 }
