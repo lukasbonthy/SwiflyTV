@@ -70,10 +70,14 @@ test('Xbox catalog defers hidden optic allocation while preserving visible nav g
    const quick=[...document.querySelectorAll('.dsCardQuickActions')];
    return {quick:quick.length,hiddenOptics:quick.reduce((n,node)=>n+node.querySelectorAll('.svLiquidPane').length,0),
     navPane:!!document.querySelector('.netflixNav > .svLiquidPane'),
-    materials:document.querySelectorAll('.svLiquidPane').length};
+    materials:document.querySelectorAll('.svLiquidPane').length,
+    xbox:document.documentElement.dataset.svXbox, tv:document.documentElement.dataset.svTv,
+    ua:navigator.userAgent, io:typeof IntersectionObserver,
+    firstQuick:quick[0]?.outerHTML.slice(0,1300),
+    glassLoaded:!!window.SwiflyGlassSurfaces};
   });
   assert(stats.quick>0,'Catalog includes poster quick actions');
-  assert.equal(stats.hiddenOptics,0,'Invisible Xbox poster actions never allocate backdrop panes');
+  assert.equal(stats.hiddenOptics,0,'Invisible Xbox poster actions never allocate backdrop panes: '+JSON.stringify(stats));
   assert(stats.navPane,'The visible shared navigation material remains present');
   const first=page.locator('.movieRail').first().locator('.posterWrap');
   await first.nth(3).focus();await press(page,7);
