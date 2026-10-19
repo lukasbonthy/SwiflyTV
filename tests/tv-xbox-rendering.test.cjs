@@ -15,6 +15,14 @@ test.after(async()=>{await browser?.close();jobs?.destroy();if(api)await new Pro
 async function open(){
  const context=await browser.newContext({viewport:{width:1280,height:720},reducedMotion:'reduce',userAgent:'Mozilla/5.0 (Xbox; Xbox One; Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'});
  await context.addInitScript(()=>{
+  const Base=window.IntersectionObserver;
+  window.__svXboxNearObservers={observed:0,targets:[]};
+  window.IntersectionObserver=class extends Base {
+   constructor(callback,options){super(callback,options);this._near=options?.rootMargin==='320px 120px';}
+   observe(element){if(this._near){window.__svXboxNearObservers.observed++;window.__svXboxNearObservers.targets.push(element.className);}return super.observe(element);}
+  };
+ });
+ await context.addInitScript(()=>{
   localStorage.setItem('swiflytv.session',JSON.stringify({email:'xbox-browser@example.test'}));localStorage.setItem('swiflytv.activeProfile',JSON.stringify({id:'xbox',name:'Xbox Viewer'}));localStorage.setItem('swiflytv.tvFocusMode','true');
   const listeners=new Map(),add=window.addEventListener.bind(window);
   window.addEventListener=(type,listener,options)=>{if(['gamepadconnected','gamepaddisconnected'].includes(type)){if(!listeners.has(type))listeners.set(type,[]);listeners.get(type).push(listener);}else add(type,listener,options);};
@@ -74,11 +82,15 @@ test('Xbox catalog defers hidden optic allocation while preserving visible nav g
     xbox:document.documentElement.dataset.svXbox, tv:document.documentElement.dataset.svTv,
     ua:navigator.userAgent, io:typeof IntersectionObserver,
     firstQuick:quick[0]?.outerHTML.slice(0,1300),
-    glassLoaded:!!window.SwiflyGlassSurfaces};
+    glassLoaded:!!window.SwiflyGlassSurfaces,
+    near:window.__svXboxNearObservers?.observed,
+    nearTargets:window.__svXboxNearObservers?.targets?.slice(0,15),
+    catalogRows:document.querySelectorAll('.dsContent .dsRow,.dsContent .dsGrid,.svPlayerEpisodePicker').length};
   });
   assert(stats.quick>0,'Catalog includes poster quick actions');
   assert.equal(stats.hiddenOptics,0,'Invisible Xbox poster actions never allocate backdrop panes: '+JSON.stringify(stats));
   assert(stats.navPane,'The visible shared navigation material remains present');
+  assert(stats.near>0 && stats.near<=stats.catalogRows+12,'Near-viewport glass allocation must observe rows instead of hundreds of individual buttons: '+JSON.stringify(stats));
   const first=page.locator('.movieRail').first().locator('.posterWrap');
   await first.nth(3).focus();await press(page,7);
   assert.equal(await page.evaluate(()=>{
