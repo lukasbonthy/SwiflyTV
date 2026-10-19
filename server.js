@@ -6500,7 +6500,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/vendor/lenis/lenis.min.js?v=1.3.16-r1"></script>
     <script defer src="/assets/clean/motion.js?v=238"></script>
     <script defer src="/assets/clean/scroll.js?v=240"></script>
-    <script defer src="/assets/clean/details.js?v=232"></script>
+    <script defer src="/assets/clean/details.js?v=233"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=222" />
     <script defer src="/assets/liquid-glass/surfaces.js?v=236"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=233" />
@@ -6526,7 +6526,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=200" />' : ""}
     ${player || active === "social" ? '<link rel="stylesheet" href="/assets/party/watchroom-call.css?v=1" />' : ""}
     <link rel="stylesheet" href="/assets/clean/performance.css?v=211" />
-    <link rel="stylesheet" href="/assets/clean/tv.css?v=2" />
+    <link rel="stylesheet" href="/assets/clean/tv.css?v=3" />
 </head>
 <body class="svCleanShell">
 

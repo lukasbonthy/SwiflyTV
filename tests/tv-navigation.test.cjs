@@ -10,6 +10,8 @@ function setup(markup,rects={},options={}){
  w.navigator.getGamepads=()=>pads;
  for(const [id,box]of Object.entries(rects))d.getElementById(id).getBoundingClientRect=()=>{const [left,top,width=120,height=48]=box;return {left,top,width,height,right:left+width,bottom:top+height};};
  w.HTMLElement.prototype.scrollIntoView=function(value){scrolled.push({id:this.id,...value});};
+ w.HTMLElement.prototype.scrollTo=function(value){scrolled.push({id:this.id,...value});};
+ w.scrollTo=value=>scrolled.push({id:'window',...value});
  if(options.enabled!==false)w.localStorage.setItem('swiflytv.tvFocusMode','true');
  if(options.savedMode!==undefined)w.localStorage.setItem('swiflytv.tvFocusMode',String(options.savedMode));
  if(options.legacyMode)w.localStorage.setItem('swiflytv.tvControllerMode','true');
@@ -21,7 +23,7 @@ test('The profile menu provides a visible TV mode switch and every page loads it
  const env=browser(shell),d=env.window.document;
  assert(d.querySelector('.dsProfileDropdown [data-sv-tv-toggle]'),'TV mode must be discoverable without F8');
  assert(d.querySelector('script[data-sv-tv-gate]'),'Saved TV layout must apply before the first paint');
- assert(d.querySelector('link[href="/assets/clean/tv.css?v=2"]'));
+ assert(d.querySelector('link[href="/assets/clean/tv.css?v=3"]'));
 });
 test('TV mode leaves ordinary desktop arrow and Enter keys native until explicitly enabled',()=>{
  const env=setup('<button id="first">Play</button>',{first:[40,80]},{enabled:false});
@@ -37,6 +39,12 @@ test('TV focus can leave the navigation bar and reach the content below',()=>{
 test('A TV details page starts on its primary Play action',()=>{
  const env=setup('<nav><a id="brand" href="/">SwiflyTV</a></nav><main><div class="svDetailActions"><a class="dsPrimaryBtn" id="play" href="/watch/movie/1">Play</a></div></main>',{brand:[50,40],play:[50,350]});assert.equal(env.d.activeElement.id,'play');
 });
+test('TV catalog edges connect the feature, remembered first row, and navigation deliberately',()=>{
+ const env=setup('<nav class="netflixNav"><a id="home" class="active" href="/">Home</a><button id="search">Search</button></nav><main><div class="dsHeroActions"><a class="dsPrimaryBtn" id="hero" href="/watch/movie/1">Play</a></div><section class="dsRow"><div class="movieRail"><article class="movieCard"><a class="posterWrap" id="first" href="/movie/1">One</a></article><article class="movieCard"><a class="posterWrap" id="second" href="/movie/2">Two</a></article></div></section></main>',{home:[50,40],search:[600,40],hero:[50,180],first:[50,400,200,300],second:[650,400,200,300]});
+ env.d.getElementById('second').focus();env.key('ArrowUp');assert.equal(env.d.activeElement.id,'hero','Up from the first row must not choose the nearest unrelated header action');
+ env.key('ArrowDown');assert.equal(env.d.activeElement.id,'second','Down from the feature restores the first-row selection');
+ env.d.getElementById('search').focus();env.key('ArrowDown');assert.equal(env.d.activeElement.id,'hero','Down from navigation reaches the feature before the gallery');
+});
 test('An explicit TV-mode off preference wins over a legacy controller preference',()=>{
  const env=setup('<button id="first">Play</button>',{first:[50,50]},{enabled:false,savedMode:false,legacyMode:true});assert.equal(env.d.documentElement.dataset.svTv,undefined);assert.equal(env.w.localStorage.getItem('swiflytv.tvFocusMode'),'false');
 });
@@ -45,9 +53,17 @@ test('A restored browser page adopts the latest saved TV-mode setting',()=>{
  env.w.localStorage.setItem('swiflytv.tvFocusMode','true');env.w.dispatchEvent(new env.w.PageTransitionEvent('pageshow',{persisted:true}));assert.equal(env.d.documentElement.dataset.svTv,'true');
 });
 test('Horizontal TV navigation reaches the next offscreen card without entering tiny quick actions',()=>{
- const env=setup('<div class="movieRail dsRail"><article class="movieCard"><a class="dsThumb" id="first" href="/movie/1">One</a><div class="dsCardQuickActions"><button id="tiny">Like</button></div></article><article class="movieCard" id="secondCard"><a class="dsThumb" id="next" href="/movie/2">Two</a><div>Film title · 2026</div></article></div>',{first:[850,200,150,220],tiny:[980,380,30,30],next:[1060,200,150,220]});
- env.d.getElementById('first').focus();env.key('ArrowRight');assert.equal(env.d.activeElement.id,'next');assert(env.scrolled.some(row=>row.id==='secondCard'),'The whole card, including its date, must scroll into view');
+ const env=setup('<section class="dsRow"><div class="movieRail dsRail" id="rail"><article class="movieCard"><a class="dsThumb" id="first" href="/movie/1">One</a><div class="dsCardQuickActions"><button id="tiny">Like</button></div></article><article class="movieCard" id="secondCard"><a class="dsThumb" id="next" href="/movie/2">Two</a><div>Film title · 2026</div></article></div></section>',{rail:[0,180,1024,500],first:[850,200,150,220],tiny:[980,380,30,30],next:[1060,200,150,220],secondCard:[1060,200,150,280]});
+ env.d.getElementById('first').focus();env.key('ArrowRight');assert.equal(env.d.activeElement.id,'next');assert(env.scrolled.some(row=>row.id==='rail'&&row.left===196&&row.top===0),'Horizontal navigation reveals the whole card inside its rail without moving the rail vertically');
  env.key('ArrowLeft');assert.equal(env.d.activeElement.id,'first');
+});
+test('Horizontal TV input shares one row transition and fresh manual scrolling can re-anchor it',()=>{
+ const env=setup('<nav class="netflixNav" id="nav"></nav><section class="dsRow"><h2 id="heading">Movies</h2><div class="movieRail" id="rail"><article class="movieCard" id="card0"><a class="posterWrap" id="first" href="/movie/1">One</a></article><article class="movieCard" id="card1"><a class="posterWrap" id="next" href="/movie/2">Two</a></article></div></section>',{nav:[40,20,800,90],heading:[40,200,800,36],rail:[40,240,800,400],card0:[50,250,180,340],card1:[250,250,180,340],first:[50,250,180,270],next:[250,250,180,270]});
+ Object.defineProperty(env.d.documentElement,'scrollHeight',{value:4000});let cancelled=0;env.w.SwiflyPremiumScroll={cancel:()=>cancelled++};
+ env.d.getElementById('first').focus();env.key('ArrowRight');env.key('ArrowLeft');env.key('ArrowRight');
+ assert.deepEqual(env.scrolled.filter(row=>row.id==='window').map(row=>row.top),[70],'Rapid horizontal input must not restart vertical movement');assert.equal(cancelled,1,'The previous wheel glide is cancelled when controller scrolling takes over');
+ env.w.dispatchEvent(new env.w.Event('wheel'));env.key('ArrowLeft');assert.deepEqual(env.scrolled.filter(row=>row.id==='window').map(row=>row.top),[70,70],'New manual scrolling releases the old destination');
+ env.key('F8');env.key('F8');env.key('ArrowRight');assert.deepEqual(env.scrolled.filter(row=>row.id==='window').map(row=>row.top),[70,70,70],'Re-enabling TV mode starts with a fresh scroll destination');
 });
 test('Directional focus skips inert, aria-disabled and closed disclosure content',()=>{
  const env=setup('<button id="first">Start</button><div inert><button id="inert">Hidden</button></div><button id="disabled" aria-disabled="true">Guest only</button><details><summary id="summary">Options</summary><button id="closed">Closed</button></details><button id="last">End</button>',{first:[50,50],inert:[50,110],disabled:[50,150],summary:[400,170],closed:[50,190],last:[50,240]});

@@ -13,11 +13,12 @@ function swiflyTvFocusNavigation() {
   let enabled=document.documentElement.dataset.svTv==='true';
   try {const saved=localStorage.getItem('swiflytv.tvFocusMode');enabled=saved===null?enabled||localStorage.getItem('swiflytv.tvControllerMode')==='true':saved==='true';} catch {}
   let focused=null,hint=null,hintTimer=0,raf=0,connected=false,lastMoveAt=0,lastAxisDirection='',axisRepeatStartedAt=0,lastFrame=null;
-  let guide=null,help=null,helpReturn=null,engagedSelect=null,inputReturn=null,windowActive=true,activePadKey='',lastButtons=[],stickScrolling=false;
+  let guide=null,help=null,helpReturn=null,engagedSelect=null,inputReturn=null,windowActive=true,activePadKey='',lastButtons=[],stickScrolling=false,scrollDestination=null;
   const padStates=new Map(),railMemory=new WeakMap();
   var FOCUSABLE_SELECTOR='a[href],summary,button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),[role="button"],[role="link"],[tabindex]:not([tabindex="-1"]),video';
   const rails='.movieRail,.dsRail,.nfRail,.nfTopTenRail,.svResumeRail,.dsWelcomeRailTrack,.svDetailCastRail,.svDetailCollectionRail';
-  const railItems='.dsThumb,.posterWrap,[data-resume-action],.dsCastCard';
+  const railItems='.dsThumb,.posterWrap,.svResumeLink,[data-resume-action],.dsCastCard';
+  const cardSelector='.movieCard,.svResumeCard';
   const rowSelector='.dsRow,.svResumeSection,.svDetailSection,section';
   const directions={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'};
   const codes={13:'Enter',19:'MediaPause',27:'Escape',37:'ArrowLeft',38:'ArrowUp',39:'ArrowRight',40:'ArrowDown',412:'MediaRewind',413:'MediaStop',415:'MediaPlay',417:'MediaFastForward',461:'BrowserBack',10009:'BrowserBack',10252:'MediaPlayPause',10232:'MediaTrackPrevious',10233:'MediaTrackNext'};
@@ -38,6 +39,7 @@ function swiflyTvFocusNavigation() {
     if(!el?.isConnected||el.disabled||el.closest('[hidden],[inert],[aria-hidden="true"],[aria-disabled="true"],dialog:not([open])'))return false;
     if(el.matches('video')&&(el.closest('[data-player-root],[data-watchroom-call]')||!el.hasAttribute('controls')&&!el.hasAttribute('tabindex')))return false;
     if(el.closest('.dsCardQuickActions')||el.matches('.dsCardTitle')&&el.closest('.movieCard')?.querySelector('.dsThumb'))return false;
+    if(el.matches('.svResumeTitle')&&el.closest('.svResumeCard')?.querySelector('.svResumeLink'))return false;
     const closed=el.closest('details:not([open])');if(closed&&!closed.querySelector('summary')?.contains(el))return false;
     if(root!==document&&!root.contains(el))return false;
     const dock=el.closest('[data-player-controls]');if(dock&&dock.closest('[data-player-root]')?.dataset.playerControlsVisibility==='hidden')return false;
@@ -48,13 +50,36 @@ function swiflyTvFocusNavigation() {
   function centerOf(el){const rect=el.getBoundingClientRect();return {x:rect.left+rect.width/2,y:rect.top+rect.height/2,rect};}
   function clearFocus(){
     focused?.classList.remove('swifly-tv-focus-target','swifly-tv-focus-pressed');
-    focused?.closest('.movieCard')?.classList.remove('svTvFocusedCard');focused?.closest(rowSelector)?.classList.remove('svTvFocusedRow');focused=null;
+    focused?.closest(cardSelector)?.classList.remove('svTvFocusedCard');focused?.closest(rowSelector)?.classList.remove('svTvFocusedRow');focused=null;
   }
   function disengageSelect(){engagedSelect?.removeAttribute('data-sv-tv-engaged');engagedSelect=null;}
+  function scrollWindow(top,behavior){
+    const destination=Math.max(0,Math.min(top,Math.max(0,document.documentElement.scrollHeight-innerHeight)));
+    // Repeated horizontal input must not restart an in-flight row transition.
+    if(scrollDestination!==null&&Math.abs(scrollDestination-destination)<1)return;
+    scrollDestination=destination;window.SwiflyPremiumScroll?.cancel();window.scrollTo({top:destination,behavior});
+  }
+  function revealFocus(el){
+    const behavior=reduced()?'instant':'smooth',root=scope(),rail=el.closest(rails),card=el.closest(cardSelector)||el;
+    if(root===document&&rail&&rail.closest('.dsRow,.svResumeSection')&&!rail.closest('.svCinemaPage')&&el.matches(railItems)){
+      const box=card.getBoundingClientRect(),frame=rail.getBoundingClientRect();
+      let left=rail.scrollLeft;
+      if(box.left<frame.left+10)left+=box.left-frame.left-10;
+      else if(box.right>frame.right-10)left+=box.right-frame.right+10;
+      if(Math.abs(left-rail.scrollLeft)>1){window.SwiflyPremiumScroll?.cancel();rail.scrollTo({left,top:0,behavior});}
+      const row=rail.closest(rowSelector),heading=row?.querySelector('.svSectionHead h2,.dsRowHead h2,h2'),nav=document.querySelector('.netflixNav');
+      const top=(nav?.getBoundingClientRect().bottom||0)+20;
+      scrollWindow(scrollY+(heading||card).getBoundingClientRect().top-top,behavior);
+      return;
+    }
+    if(root===document&&(el.closest('.dsHeroActions')||el.closest('.netflixNav'))){scrollWindow(0,behavior);return;}
+    scrollDestination=null;window.SwiflyPremiumScroll?.cancel();
+    card.scrollIntoView({block:'nearest',inline:'nearest',behavior:reduced()?'instant':'smooth'});
+  }
   function setFocus(el,options={}){
     if(!eligible(el))return false;
-    if(focused!==el){if(el.matches('input,textarea,[contenteditable="true"]')&&!focused?.matches('input,textarea,[contenteditable="true"]'))inputReturn=focused;disengageSelect();clearFocus();focused=el;el.classList.add('swifly-tv-focus-target');el.closest('.movieCard')?.classList.add('svTvFocusedCard');el.closest(rowSelector)?.classList.add('svTvFocusedRow');if(el.closest(rails)&&el.matches(railItems))railMemory.set(el.closest(rails),el);try{el.focus({preventScroll:true});}catch{}}
-    if(options.scroll!==false)try{const target=el.matches('.dsThumb,.posterWrap')?el.closest('.movieCard')||el:el;target.scrollIntoView({block:'nearest',inline:'nearest',behavior:reduced()?'auto':'smooth'});}catch{}
+    if(focused!==el){if(el.matches('input,textarea,[contenteditable="true"]')&&!focused?.matches('input,textarea,[contenteditable="true"]'))inputReturn=focused;disengageSelect();clearFocus();focused=el;el.classList.add('swifly-tv-focus-target');el.closest(cardSelector)?.classList.add('svTvFocusedCard');el.closest(rowSelector)?.classList.add('svTvFocusedRow');if(el.closest(rails)&&el.matches(railItems))railMemory.set(el.closest(rails),el);try{el.focus({preventScroll:true});}catch{}}
+    if(options.scroll!==false)try{revealFocus(el);}catch{}
     syncGuide();
     return true;
   }
@@ -79,10 +104,11 @@ function swiflyTvFocusNavigation() {
   function syncGuide(){
     if(!enabled){if(guide)guide.hidden=true;return;}
     if(!guide){guide=document.createElement('aside');guide.id='swiflyTvGuide';guide.setAttribute('aria-label','TV controls');guide.innerHTML='<div class="svTvGuideContext"><span class="svTvGuideEyebrow"></span><strong class="svTvGuideTitle"></strong></div><div class="svTvGuideCommands"></div>';document.body.append(guide);}
-    const root=playerRoot(),card=focused?.closest('.movieCard'),row=focused?.closest(rowSelector),title=card?.querySelector('.dsCardTitle')?.textContent.trim()||focused?.getAttribute('aria-label')||focused?.textContent.trim()||'Find your next story';
+    const root=playerRoot(),card=focused?.closest(cardSelector),row=focused?.closest(rowSelector),title=card?.querySelector('.dsCardTitle,.svResumeTitle')?.textContent.trim()||focused?.getAttribute('aria-label')||focused?.textContent.trim()||'Find your next story';
     guide.dataset.input=connected?'gamepad':'remote';
     const hidden=Boolean(activeModal()||document.fullscreenElement||focused?.closest('[data-player-stage],[data-player-controls]'));if(guide.hidden!==hidden)guide.hidden=hidden;
-    const eyebrow=engagedSelect?'CHOOSE AN OPTION':row?.querySelector('h2')?.textContent.trim()||(root?'NOW WATCHING':'TV MODE');
+    const rail=focused?.closest(rails),items=rail&&Array.from(rail.querySelectorAll(railItems)),position=items?.indexOf(focused);
+    const eyebrow=(engagedSelect?'CHOOSE AN OPTION':row?.querySelector('h2')?.textContent.trim()||(root?'NOW WATCHING':'TV MODE'))+(position>=0?' · '+(position+1)+' / '+items.length:'');
     const text=engagedSelect?focused.options[focused.selectedIndex]?.textContent||title:title;
     const label=guide.querySelector('.svTvGuideTitle'),category=guide.querySelector('.svTvGuideEyebrow');
     if(label.textContent!==text)label.textContent=text;if(category.textContent!==eyebrow)category.textContent=eyebrow;
@@ -104,6 +130,7 @@ function swiflyTvFocusNavigation() {
   }
   function syncToggles(){for(const button of document.querySelectorAll('[data-sv-tv-toggle]')){button.setAttribute('aria-pressed',String(enabled));button.setAttribute('aria-label',enabled?'Exit TV mode':'Turn on TV mode');const state=button.querySelector('[data-sv-tv-state]');if(state)state.textContent=enabled?'On':'Off';}}
   function setEnabled(value,reason){
+    scrollDestination=null;
     const wasEnabled=enabled;enabled=Boolean(value);if(enabled&&!wasEnabled){connected=pads().length>0;primeGamepads();}try{localStorage.setItem('swiflytv.tvFocusMode',String(enabled));localStorage.removeItem('swiflytv.tvControllerMode');}catch{}
     if(enabled)document.documentElement.dataset.svTv='true';else delete document.documentElement.dataset.svTv;
     document.body.classList.toggle('swifly-tv-focus-mode',enabled);document.body.classList.remove('swifly-tv-controller-mode');document.getElementById('swiflyTvCursor')?.remove();syncToggles();
@@ -121,9 +148,25 @@ function swiflyTvFocusNavigation() {
   function itemsIn(rail){return Array.from(rail.querySelectorAll(railItems)).filter(el=>eligible(el));}
   function moveRow(direction){
     const rail=focused?.closest(rails);if(!rail||!focused.matches(railItems))return false;
-    const rows=Array.from(scope().querySelectorAll(rails)).filter(el=>itemsIn(el).length),next=rows[rows.indexOf(rail)+(direction==='down'?1:-1)];if(!next)return false;
-    const items=itemsIn(next),remembered=railMemory.get(next),x=centerOf(focused).x;
-    const target=items.includes(remembered)?remembered:items.reduce((best,el)=>Math.abs(centerOf(el).x-x)<Math.abs(centerOf(best).x-x)?el:best,items[0]);return setFocus(target);
+    const rows=Array.from(scope().querySelectorAll(rails)),step=direction==='down'?1:-1;let index=rows.indexOf(rail)+step,items=[];
+    while(index>=0&&index<rows.length){items=itemsIn(rows[index]);if(items.length)break;index+=step;}if(!items.length)return false;
+    const remembered=railMemory.get(rows[index]);if(items.includes(remembered))return setFocus(remembered);
+    const x=centerOf(focused).x;let target=items[0],distance=Infinity;
+    for(const el of items){const nextDistance=Math.abs(centerOf(el).x-x);if(nextDistance<distance){target=el;distance=nextDistance;}}
+    return setFocus(target);
+  }
+  function moveCatalogEdge(direction){
+    if(!['up','down'].includes(direction)||scope()!==document||!focused||focused.closest('.svCinemaPage'))return false;
+    const first=Array.from(document.querySelectorAll(rails)).find(rail=>rail.closest('.dsRow,.svResumeSection')&&!rail.closest('.svCinemaPage')&&itemsIn(rail).length);
+    if(!first)return false;
+    const hero=document.querySelector('.dsHeroActions .dsPrimaryBtn'),feature=hero&&eligible(hero)?hero:null;
+    const nav=document.querySelector('.netflixNav .navLinks .active,.netflixNav [aria-current="page"]')||document.querySelector('.netflixNav a');
+    if(direction==='up'&&focused.closest(rails)===first)return setFocus(feature||nav);
+    if(direction==='down'&&(focused.closest('.dsHeroActions')||focused.closest('.netflixNav'))){
+      if(focused.closest('.netflixNav')&&feature)return setFocus(feature);
+      const items=itemsIn(first),remembered=railMemory.get(first);return setFocus(items.includes(remembered)?remembered:items[0]);
+    }
+    return false;
   }
   function pageFocus(direction){
     if(activeModal()||engagedSelect)return;
@@ -143,6 +186,7 @@ function swiflyTvFocusNavigation() {
     if(!enabled)return;if(!focused||!eligible(focused))firstFocus();if(!focused)return;
     const now=Date.now();if(!force&&now-lastMoveAt<135)return;lastMoveAt=now;
     if(adjustControl(direction))return;
+    if(moveCatalogEdge(direction))return;
     if(['up','down'].includes(direction)&&moveRow(direction))return;
     if(focused.matches('[data-player-stage]')){const root=focused.closest('[data-player-root]'),control=root?.querySelector(direction==='up'?'[data-player-seek]':direction==='left'?'[data-player-backward]':direction==='right'?'[data-player-forward]':'[data-player-play]');if(control&&setFocus(control))return;}
     const rail=focused.closest(rails);
@@ -161,6 +205,7 @@ function swiflyTvFocusNavigation() {
     else if(!horizontal)scrollByAmount(0,(direction==='down'?1:-1)*Math.round(innerHeight*.65));
   }
   function scrollByAmount(dx,dy){
+    scrollDestination=null;window.SwiflyPremiumScroll?.cancel();
     let parent=focused?.parentElement;
     while(parent&&parent!==document.body){const style=getComputedStyle(parent),vertical=dy&&/(auto|scroll)/.test(style.overflowY)&&parent.scrollHeight>parent.clientHeight+4,horizontal=dx&&/(auto|scroll)/.test(style.overflowX)&&parent.scrollWidth>parent.clientWidth+4;if(vertical||horizontal){parent.scrollBy({left:dx,top:dy,behavior:'auto'});return;}parent=parent.parentElement;}
     window.scrollBy({left:dx,top:dy,behavior:'auto'});
@@ -255,11 +300,12 @@ function swiflyTvFocusNavigation() {
   window.addEventListener('gamepadconnected',event=>{const received=event.gamepad,valid=received&&received.connected!==false&&(!received.mapping||received.mapping==='standard');connected=pads().length>0||Boolean(valid);if(!connected)return;primeGamepads();setEnabled(true,'Controller connected · View for all controls');if(valid){padStates.set(padKey(received,0),padState(received));connected=true;startLoop();}});
   window.addEventListener('gamepaddisconnected',()=>{connected=pads().length>0;primeGamepads();if(!connected){cancelAnimationFrame(raf);raf=0;}syncGuide();showHint(connected?'Controller ready':'Controller disconnected · arrow keys still work');});
   function suspendInput(){windowActive=false;cancelAnimationFrame(raf);raf=0;}
-  function resumeInput(){windowActive=true;connected=pads().length>0;primeGamepads();syncGuide();startLoop();}
+  function resumeInput(){scrollDestination=null;windowActive=true;connected=pads().length>0;primeGamepads();syncGuide();startLoop();}
   window.addEventListener('blur',suspendInput);window.addEventListener('focus',resumeInput);
   document.addEventListener('visibilitychange',()=>{if(document.hidden)suspendInput();else resumeInput();});
   document.addEventListener('keydown',event=>{
     let key=event.key;if(!key||key==='Unidentified')key=codes[event.keyCode]||key;if(key==='Back'||key==='GoBack')key='BrowserBack';
+    if(['PageUp','PageDown','Home','End'].includes(key))scrollDestination=null;
     if(event.altKey||event.ctrlKey||event.metaKey||event.defaultPrevented)return;
     if(key==='F8'){event.preventDefault();setEnabled(!enabled);return;}if(!enabled)return;
     const modal=activeModal();if(modal&&key==='Escape')return;
@@ -275,6 +321,7 @@ function swiflyTvFocusNavigation() {
     else if(key==='ContextMenu'||key==='Menu'){tryMenu();event.preventDefault();}
   },true);
   document.addEventListener('focusin',event=>{if(enabled&&event.target.matches?.(FOCUSABLE_SELECTOR))setFocus(event.target,{scroll:false});});
+  for(const type of ['wheel','touchstart','pointerdown','resize'])window.addEventListener(type,()=>{scrollDestination=null;},{passive:true});
   document.addEventListener('click',event=>{
     const toggle=event.target.closest?.('[data-sv-tv-toggle]');if(!toggle)return;event.preventDefault();const menu=toggle.closest('details');if(menu)menu.open=false;setEnabled(!enabled);if(!enabled){const summary=menu?.querySelector('summary')||document.querySelector('.dsProfileMenu > summary');summary?.focus({preventScroll:true});}
   });
