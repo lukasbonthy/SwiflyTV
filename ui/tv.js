@@ -12,6 +12,7 @@ function tvGate() {
 function swiflyTvFocusNavigation() {
   if(window.__swiflyTvFocusNavigationLoaded)return;
   window.__swiflyTvFocusNavigationLoaded=true;
+  const xboxFast = document.documentElement.dataset.svXbox === 'true';
   let enabled=document.documentElement.dataset.svTv==='true';
   try {const saved=localStorage.getItem('swiflytv.tvFocusMode');enabled=saved===null?enabled||localStorage.getItem('swiflytv.tvControllerMode')==='true':saved==='true';} catch {}
   let focused=null,hint=null,hintTimer=0,raf=0,connected=false,lastMoveAt=0,lastAxisDirection='',axisRepeatStartedAt=0,lastFrame=null;
@@ -329,7 +330,7 @@ function swiflyTvFocusNavigation() {
   }
   function directionFromAxes(x,y,holding=false){const threshold=holding?.28:.52;if(Math.abs(x)<threshold&&Math.abs(y)<threshold)return '';return Math.abs(x)>Math.abs(y)?x>0?'right':'left':y>0?'down':'up';}
   function buttonDown(pad,index){return Boolean(pad.buttons?.[index]?.pressed)||Number(pad.buttons?.[index]?.value||0)>.55;}
-  function padDirection(pad,holding=false){for(const [index,value]of [[12,'up'],[13,'down'],[14,'left'],[15,'right']])if(buttonDown(pad,index))return value;return directionFromAxes(Number(pad.axes?.[0]||0),Number(pad.axes?.[1]||0),holding);}
+  function padDirection(pad,holding=false){if(buttonDown(pad,12))return 'up';if(buttonDown(pad,13))return 'down';if(buttonDown(pad,14))return 'left';if(buttonDown(pad,15))return 'right';return directionFromAxes(Number(pad.axes?.[0]||0),Number(pad.axes?.[1]||0),holding);}
   function padKey(pad,index){return String(pad.index??index)+':'+String(pad.id||'controller');}
   function snapshot(pad){return Array.from({length:Math.max(17,pad.buttons?.length||0)},(_,index)=>buttonDown(pad,index));}
   function scrollingPad(pad){return Math.abs(pad.axes?.[2]||0)>.25||Math.abs(pad.axes?.[3]||0)>.25;}
@@ -354,8 +355,41 @@ function swiflyTvFocusNavigation() {
     trigger(pad,6,state,()=>{if(transportContext())mediaKey('MediaRewind');else pageFocus('up');});trigger(pad,7,state,()=>{if(transportContext())mediaKey('MediaFastForward');else pageFocus('down');});
     onButtonEdge(pad,8,showHelp);onButtonEdge(pad,9,tryMenu);onButtonEdge(pad,11,()=>{if(!activeModal()){revealPlayer();setFocus(focused);}});
   }
+  // Most Xbox setups have exactly one controller. Poll it without creating a
+  // 17-button snapshot, several arrays and rows every animation frame.
+  // Keep the multi-controller scheduler below for shared-room setups.
+  function singleXboxPad(){
+    if(!xboxFast || !navigator.getGamepads)return null;
+    let list;try{list=navigator.getGamepads();}catch{return null;}
+    let single=null;
+    for(let i=0;i<(list?.length||0);i++){
+      const pad=list[i];if(!pad||pad.connected===false||pad.mapping&&pad.mapping!=='standard')continue;
+      if(single)return null;
+      single=pad;
+    }
+    return single;
+  }
   function loop(time){
-    raf=0;if(!enabled||document.hidden||!windowActive)return;const current=pads();if(!current.length){connected=false;padStates.clear();syncGuide();return;}
+    raf=0;if(!enabled||document.hidden||!windowActive)return;
+    const single=singleXboxPad();
+    if(single){
+      const key=padKey(single,single.index||0);
+      let state=padStates.get(key);
+      if(!state){state=padState(single);padStates.set(key,state);}
+      if(activePadKey!==key){activePadKey=key;lastAxisDirection='';axisRepeatStartedAt=0;}
+      lastButtons=state.buttons;
+      const elapsed=lastFrame===null?1000/60:Math.min(32,Math.max(0,time-lastFrame));
+      lastFrame=time;
+      processGamepad(single,elapsed,state);
+      // Update the previous-frame snapshot *after* edge detection; reuse
+      // the same array on the next poll to avoid controller GC spikes.
+      for(let i=0,n=Math.max(17,single.buttons?.length||0);i<n;i++)state.buttons[i]=buttonDown(single,i);
+      state.direction=padDirection(single,Boolean(state.direction));
+      state.scrolling=scrollingPad(single);
+      if(enabled&&!document.hidden&&windowActive)raf=requestAnimationFrame(loop);
+      return;
+    }
+    const current=pads();if(!current.length){connected=false;padStates.clear();syncGuide();return;}
     const rows=current.map((pad,index)=>{const key=padKey(pad,index);if(!padStates.has(key))padStates.set(key,padState(pad));return {pad,key,state:padStates.get(key)};});
     const input=rows.find(({pad,state})=>snapshot(pad).some((value,index)=>value&&!state.buttons[index]))||rows.find(({pad,state})=>padDirection(pad)&&padDirection(pad)!==state.direction)||rows.find(({pad,state})=>scrollingPad(pad)&&!state.scrolling);
     const selected=input||rows.find(row=>row.key===activePadKey)||rows[0];if(activePadKey!==selected.key){activePadKey=selected.key;lastAxisDirection='';axisRepeatStartedAt=0;}
