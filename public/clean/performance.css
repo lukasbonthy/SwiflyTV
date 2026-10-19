@@ -65,18 +65,3 @@ html[data-sv-xbox="true"] body.svCleanShell .dsCardArtwork:not(:focus-within) .d
 html[data-sv-xbox="true"] body.svCleanShell .dsContent > .dsRow .movieRail {
   contain:layout paint;
 }
-
-
-/* Horizontal poster virtualization: the browser retains real card dimensions
-   and keyboard semantics but skips layout/paint for cards outside the view.
-   The optical renderer is untouched and visible cards keep full refraction. */
-@supports (content-visibility:auto) {
-  body.svCleanShell :is(.movieRail,.dsRail,.nfRail,.nfTopTenRail) > .movieCard,
-  body.svCleanShell :is(.dsGrid,.movieGrid,.dsMoreGridV121) > .movieCard {
-    content-visibility:auto;
-    contain-intrinsic-size:auto 330px;
-  }
-  html[data-sv-tv="true"] body.svCleanShell :is(.movieRail,.dsRail,.nfRail,.nfTopTenRail) > .movieCard {
-    contain-intrinsic-size:auto 290px;
-  }
-}
