@@ -27,7 +27,7 @@
   ].join(',');
   const panels = ['.svSearchPopup', '.dsSearchBox form', '.genreDropdownMenu', '.dsDetailTabsV121', '.dsAuthCard', '.dsAuthSwitch', '.dsProfileManagerPanel', '.dsAccountCard', '.dsProfileSelectCard', '.dsDetailGridV121 aside', '.dsAboutGridV121', '.dsSeasonBlock', '#controlPanel', '#toast', 'dialog','.svPlayerModes','.svPlayerPopoverBody',partyPanels].join(',');
   const selector = controls + ',' + panels, entries = new Map(), pending = new Set();
-  const xbox = document.documentElement.dataset.svXbox === 'true';
+  const xbox = /Xbox|XboxOne|Xbox Series/i.test(navigator.userAgent) || document.documentElement.dataset.svXbox === 'true';
   // On Xbox defer below-the-fold catalog optics until their controls approach
   // the screen. This retains the exact original refraction on visible buttons.
   let nearObserver = null;
@@ -136,11 +136,11 @@
     entries.delete(entry.host);
   }
   function ensure(host, approached = false) {
-    if (xbox && !approached && nearObserver) {
-      // TV mode hides all quick actions, yet without this guard hundreds of
-      // invisible buttons each allocate a pane and a live observer.
+    if (xbox && !approached) {
+      // TV mode hides all quick actions: this guard does not depend on
+      // IntersectionObserver support, including older console Chromium.
       if (document.documentElement.dataset.svTv === 'true' && host.closest?.('.dsCardQuickActions')) return;
-      if (host.closest?.('.dsContent .dsRow,.dsContent .dsGrid,.dsContent .movieGrid,.svPlayerEpisodePicker,.svPlayerEpisodeGrid') &&
+      if (nearObserver && host.closest?.('.dsContent .dsRow,.dsContent .dsGrid,.dsContent .movieGrid,.svPlayerEpisodePicker,.svPlayerEpisodeGrid') &&
           !host.matches?.(firstScreenActions) && !host.closest?.('.svDetailDialog[open]')) {
         if (!nearPending.has(host)) {nearPending.add(host);nearObserver.observe(host);}
         return;
