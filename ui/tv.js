@@ -63,7 +63,7 @@ function swiflyTvFocusNavigation() {
     scrollDestination=destination;window.SwiflyPremiumScroll?.cancel();window.scrollTo({top:destination,behavior});
   }
   function revealFocus(el){
-    const behavior=reduced()?'instant':'smooth',root=scope(),rail=el.closest(rails),card=el.closest(cardSelector)||el;
+    const behavior=reduced()||document.documentElement.dataset.svXbox==='true'?'instant':'smooth',root=scope(),rail=el.closest(rails),card=el.closest(cardSelector)||el;
     if(root===document&&rail&&rail.closest('.dsRow,.svResumeSection')&&!rail.closest('.svCinemaPage')&&el.matches(railItems)){
       const box=card.getBoundingClientRect(),frame=rail.getBoundingClientRect();
       let left=rail.scrollLeft;
@@ -133,7 +133,7 @@ function swiflyTvFocusNavigation() {
         shownArt=url;spotlight.dataset.artState='ready';artRequest=null;
       };
       image.src=url;
-    },180);
+    },document.documentElement.dataset.svXbox==='true'?280:180);
   }
   function syncSpotlight(){
     const card=focused?.closest(cardSelector),rail=focused?.closest(rails);
@@ -196,7 +196,11 @@ function swiflyTvFocusNavigation() {
     const wasEnabled=enabled;enabled=Boolean(value);if(enabled&&!wasEnabled){connected=pads().length>0;primeGamepads();}try{localStorage.setItem('swiflytv.tvFocusMode',String(enabled));localStorage.removeItem('swiflytv.tvControllerMode');}catch{}
     if(enabled)document.documentElement.dataset.svTv='true';else delete document.documentElement.dataset.svTv;
     document.body.classList.toggle('swifly-tv-focus-mode',enabled);document.body.classList.remove('swifly-tv-controller-mode');document.getElementById('swiflyTvCursor')?.remove();syncToggles();
-    if(enabled){firstFocus();syncGuide();observeFocus();if(reason!==false)showHint(reason);startLoop();}else{disengageSelect();clearFocus();focusObserver.disconnect();if(help?.open)help.close();syncGuide();cancelAnimationFrame(raf);raf=0;clearTimeout(hintTimer);if(hint){hint.hidden=true;hint.removeAttribute('data-visible');}}
+    if(enabled){firstFocus();syncGuide();observeFocus();if(reason!==false)showHint(reason);startLoop();}else{disengageSelect();clearFocus();focusObserver.disconnect();if(help?.open)help.close();syncGuide();cancelAnimationFrame(raf);raf=0;clearTimeout(hintTimer);if(hint){hint.hidden=true;hint.removeAttribute('data-visible');}
+      // Offscreen quick-action lenses were deliberately skipped in Xbox TV
+      // mode. Build them only if the visitor deliberately returns to desktop.
+      if(wasEnabled&&document.documentElement.dataset.svXbox==='true')window.SwiflyGlassSurfaces?.refresh(document);
+    }
   }
   function adjustControl(direction){
     if(!focused||focused.disabled)return false;
@@ -213,9 +217,10 @@ function swiflyTvFocusNavigation() {
     const rows=Array.from(scope().querySelectorAll(rails)),step=direction==='down'?1:-1;let index=rows.indexOf(rail)+step,items=[];
     while(index>=0&&index<rows.length){items=itemsIn(rows[index]);if(items.length)break;index+=step;}if(!items.length)return false;
     const remembered=railMemory.get(rows[index]);if(items.includes(remembered))return setFocus(remembered);
-    const x=centerOf(focused).x;let target=items[0],distance=Infinity;
-    for(const el of items){const nextDistance=Math.abs(centerOf(el).x-x);if(nextDistance<distance){target=el;distance=nextDistance;}}
-    return setFocus(target);
+    // Keep the same column across movie rows. Screen-space comparison
+    // jumps randomly when the source row is scrolled farther right.
+    const source=itemsIn(rail),column=Math.max(0,source.indexOf(focused));
+    return setFocus(items[Math.min(column,items.length-1)]);
   }
   function moveCatalogEdge(direction){
     if(!['up','down'].includes(direction)||scope()!==document||!focused||focused.closest('.svCinemaPage'))return false;
