@@ -8780,7 +8780,11 @@ async function watchPage(req, res, type) {
     id, type, title, mode, season, episode,
     year: getYear(type === "tv" ? details.first_air_date : details.release_date),
     poster: details.poster_path ? img(details.poster_path, "w342") : "",
-    backdrop: fullBackdrop(details.backdrop_path || details.poster_path),
+    // The player decorates video with a backdrop in two places. Cap Xbox
+    // image dimensions before the browser downloads/decodes both layers.
+    backdrop: /Xbox|XboxOne|Xbox Series/i.test(req.get("user-agent") || "")
+      ? img(details.backdrop_path || details.poster_path, "w780")
+      : fullBackdrop(details.backdrop_path || details.poster_path),
     provider, episodeTitle,
     trailerUrl: trailer ? youtubeEmbedSrc(trailer.key, youtubeEmbedOrigin(req)) : "",
     episodePickerHtml, episodeNavigationHtml: episodePickerHtml ? episodeNavigationMarkup(episodeOptions) : "",
