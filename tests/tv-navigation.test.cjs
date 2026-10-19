@@ -129,6 +129,9 @@ test('Xbox single-controller idle polling reuses button snapshots instead of all
  const env=setup('<button id="first">Play</button>',{first:[50,50]},{xbox:true});
  const pad={id:'Xbox Wireless Controller',index:0,connected:true,mapping:'standard',axes:[0,0,0,0],buttons:Array.from({length:17},()=>({pressed:false,value:0}))};
  env.pads([pad]);env.w.dispatchEvent(new env.w.Event('gamepadconnected'));
+ // The Xbox guide intentionally updates two frames after the initial focus
+ // ring is painted. Drain that one-time setup before measuring idle polling.
+ env.w.flush(0);env.w.flush(16);
  let allocations=0;const from=env.w.Array.from;
  env.w.Array.from=function(...args){allocations++;return from.apply(this,args);};
  try{for(let i=1;i<=15;i++)env.w.flush(i*16);}finally{env.w.Array.from=from;}
