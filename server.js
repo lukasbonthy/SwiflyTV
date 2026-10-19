@@ -6496,7 +6496,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player || partyBrowse || active === "social" ? '<script defer src="/socket.io/socket.io.js"></script>' : ""}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/modern-normalize@2.0.0/modern-normalize.min.css" />
     <link rel="stylesheet" href="/assets/liquid-glass/liquid-glass.css?v=222" />
-    <script defer src="/assets/liquid-glass/liquid-glass.js?v=226"></script>
+    <script defer src="/assets/liquid-glass/liquid-glass.js?v=227"></script>
     <link rel="stylesheet" href="/assets/clean/clean.css?v=154" />
     <script defer src="/assets/clean/clean.js?v=151"></script>
     <script defer src="/assets/clean/avatars.js?v=209"></script>
@@ -6510,7 +6510,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/scroll.js?v=241"></script>
     <script defer src="/assets/clean/details.js?v=233"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=222" />
-    <script defer src="/assets/liquid-glass/surfaces.js?v=236"></script>
+    <script defer src="/assets/liquid-glass/surfaces.js?v=237"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=233" />
     <script defer src="/assets/studio/studio.js?v=164"></script>
     <link rel="stylesheet" href="/assets/clean/aurora.css?v=208" />
