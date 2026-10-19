@@ -7758,9 +7758,9 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = nu
   const trailerKey = trailer && trailer.key ? String(trailer.key) : "";
   const trailerSrc = trailerKey ? youtubeHeroAutoplaySrc(trailerKey, embedOrigin) : "";
   return `<section class="dsHero ${trailerSrc ? "dsHeroHasTrailer" : ""}">
-    <div class="dsHeroArt" aria-hidden="true"><div class="dsHeroBg" style="background-image:url('${escapeHtml(bg)}')"></div></div>
+    <div class="dsHeroArt" aria-hidden="true"><div class="dsHeroBg" style="background-image:url('${escapeHtml(bg)}');--sv-xbox-art:url('${escapeHtml(img(hero.backdrop_path || hero.poster_path, "w780"))}')"></div></div>
     ${trailerSrc ? `<div class="dsHeroTrailerLayer" aria-hidden="true">
-      <iframe id="dsHeroTrailerFrame" class="dsHeroTrailerFrame" src="${escapeHtml(trailerSrc)}" title="${escapeHtml(title)} muted trailer preview" loading="eager" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      <iframe id="dsHeroTrailerFrame" class="dsHeroTrailerFrame" data-src="${escapeHtml(trailerSrc)}" title="${escapeHtml(title)} muted trailer preview" loading="eager" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
     </div>
     <div class="dsHeroTrailerPill"><span id="dsHeroTrailerPillText">Trailer preview</span></div>` : ""}
     <div class="dsHeroGlass"></div>
@@ -7783,6 +7783,18 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = nu
         var pill = document.getElementById("dsHeroTrailerPillText");
         var hero = iframe && iframe.closest ? iframe.closest(".dsHero") : null;
         if (!iframe || !button) return;
+        // Xbox Edge struggles with simultaneous autoplay video, full-screen
+        // masks and a glass navbar. Keep the beautiful still hero instead of
+        // ever requesting the YouTube iframe/player API on the console.
+        if (document.documentElement.dataset.svXbox === "true") {
+          hero && hero.classList.remove("dsHeroHasTrailer");
+          iframe.parentNode && iframe.parentNode.remove();
+          button.parentNode && button.parentNode.remove();
+          var preview = document.querySelector(".dsHeroTrailerPill");
+          preview && preview.remove();
+          return;
+        }
+        iframe.src = iframe.getAttribute("data-src");
 
         var muted = true;
         var player = null;
@@ -8045,7 +8057,7 @@ function netflixBrowseHero({ type, label, hero, genres, rank = 6 }) {
   const maturity = heroType === "tv" ? "TV-14" : "PG-13";
 
   return `<section class="browseHero">
-    <div class="browseHeroBg" style="background-image:url('${escapeHtml(bg)}')"></div>
+    <div class="browseHeroBg" style="background-image:url('${escapeHtml(bg)}');--sv-xbox-art:url('${escapeHtml(img(hero?.backdrop_path || hero?.poster_path, "w780"))}')"></div>
 
     <div class="browseHeroTop">
       <h1>${escapeHtml(label)}</h1>
@@ -8845,10 +8857,10 @@ async function detailPage(req, res, type) {
   ].map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("");
 
   const body = `<main class="dsDetailPage svDetailPage svCinemaPage" data-cinema-page="details">
-    <article class="dsDetailShell svTitleDetails" aria-labelledby="svDetailTitle" data-detail-id="${escapeHtml(id)}" data-detail-type="${type}" style="--sv-detail-art:url(\'${escapeHtml(heroBg)}\')">
+    <article class="dsDetailShell svTitleDetails" aria-labelledby="svDetailTitle" data-detail-id="${escapeHtml(id)}" data-detail-type="${type}" style="--sv-detail-art:url(\'${escapeHtml(heroBg)}\');--sv-xbox-detail-art:url(\'${escapeHtml(img(details.backdrop_path || details.poster_path, "w780"))}\')">
       <a class="dsSecondaryBtn svDetailReturn" href="/" data-sv-details-back aria-label="Back to browsing"><svg class="svIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>Back to browsing</a>
       <section class="svDetailHero">
-        <div class="svDetailBackdrop" style="background-image:url('${escapeHtml(heroBg)}')"></div><div class="svDetailShade"></div>
+        <div class="svDetailBackdrop" style="background-image:url('${escapeHtml(heroBg)}');--sv-xbox-art:url('${escapeHtml(img(details.backdrop_path || details.poster_path, "w780"))}')"></div><div class="svDetailShade"></div>
         <div class="svDetailIdentity" data-cinema-reveal>
           <span class="svDetailEdition">SwiflyTV <span aria-hidden="true">/</span> ${type === "tv" ? "Series" : "Cinema"}</span>
           <h1 id="svDetailTitle" class="svDetailTitle"><span class="svDetailTitleText">${escapeHtml(title)}</span>${titleLogo ? `<img class="svDetailLogo" src="${escapeHtml(titleLogo)}" alt="" aria-hidden="true" decoding="async" />` : ""}</h1>
