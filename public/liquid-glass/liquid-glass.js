@@ -5,6 +5,7 @@
   const NS = 'http://www.w3.org/2000/svg';
   const mounted = new WeakMap(), live = new Map();
   const transparency = window.matchMedia('(prefers-reduced-transparency: reduce)');
+  const xbox = document.documentElement.dataset.svXbox === 'true';
   const pending = new Set(), textures = new Map();
   let nextId = 0, preferences, frame = 0, boxes = new WeakMap(), styles = new WeakMap();
   const svgElement = (tag, attributes = {}) => {
@@ -111,7 +112,10 @@
         for (const entry of affected) entry.sync();
       }
     });
-    preferences.observe(document.body, {attributes:true, attributeFilter:['data-st-glass','style','class','open','hidden'], childList:true, subtree:true});
+    // On Xbox, card focus, scroll and transition class/style churn does not
+    // require rebuilding live optics: Intersection/ResizeObservers already
+    // track visibility and actual geometry changes.
+    preferences.observe(document.body, {attributes:true, attributeFilter:xbox?['data-st-glass','open','hidden']:['data-st-glass','style','class','open','hidden'], childList:true, subtree:true});
     document.addEventListener('visibilitychange', syncAll);
     window.addEventListener('resize', resizeAll, {passive:true});
     transparency.addEventListener('change', syncAll);
