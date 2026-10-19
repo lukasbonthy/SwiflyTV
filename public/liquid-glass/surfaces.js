@@ -27,6 +27,11 @@
   ].join(',');
   const panels = ['.svSearchPopup', '.dsSearchBox form', '.genreDropdownMenu', '.dsDetailTabsV121', '.dsAuthCard', '.dsAuthSwitch', '.dsProfileManagerPanel', '.dsAccountCard', '.dsProfileSelectCard', '.dsDetailGridV121 aside', '.dsAboutGridV121', '.dsSeasonBlock', '#controlPanel', '#toast', 'dialog','.svPlayerModes','.svPlayerPopoverBody',partyPanels].join(',');
   const selector = controls + ',' + panels, entries = new Map(), pending = new Set();
+  const xbox = document.documentElement.dataset.svXbox === 'true';
+  // On Xbox defer below-the-fold catalog optics until their controls approach
+  // the screen. This retains the exact original refraction on visible buttons.
+  let nearObserver = null;
+  const nearPending = new WeakSet();
   const rendererProperties = ['--sv-glass-default-tint', '--sv-glass-saturation', '--sv-glass-filter'];
   let intersection, mutations, frame = 0, stopped = false, removed = false;
   // A catalog row has 18 posters and three action lenses per poster.
@@ -130,7 +135,17 @@
     }
     entries.delete(entry.host);
   }
-  function ensure(host) {
+  function ensure(host, approached = false) {
+    if (xbox && !approached && nearObserver) {
+      // TV mode hides all quick actions, yet without this guard hundreds of
+      // invisible buttons each allocate a pane and a live observer.
+      if (document.documentElement.dataset.svTv === 'true' && host.closest?.('.dsCardQuickActions')) return;
+      if (host.closest?.('.dsContent .dsRow,.dsContent .dsGrid,.dsContent .movieGrid,.svPlayerEpisodePicker,.svPlayerEpisodeGrid') &&
+          !host.matches?.(firstScreenActions) && !host.closest?.('.svDetailDialog[open]')) {
+        if (!nearPending.has(host)) {nearPending.add(host);nearObserver.observe(host);}
+        return;
+      }
+    }
     // Studio owns its accessible buttons. Extra SVG panes across all its
     // settings replaced their styling and imposed substantial rendering work.
     if (!(host instanceof HTMLElement) || !host.isConnected || host.closest('#controlPanel') ||
@@ -243,6 +258,16 @@
   }
   function boot() {
     if (stopped || mutations) return;
+    if (xbox && typeof IntersectionObserver === 'function') {
+      nearObserver = new IntersectionObserver(changes => {
+        for (const change of changes) {
+          if (!change.isIntersecting) continue;
+          nearObserver.unobserve(change.target);
+          nearPending.delete(change.target);
+          if (change.target.isConnected) ensure(change.target, true);
+        }
+      }, {rootMargin:'320px 120px', threshold:0});
+    }
     if (typeof IntersectionObserver === 'function') intersection = new IntersectionObserver(changes => {
       for (const change of changes) {
         const entry = entries.get(change.target); if (!entry) continue;
@@ -304,6 +329,7 @@
   }
   window.SwiflyGlassSurfaces = Object.freeze({refresh(root = document) {scan(root);}, destroy() {
     if (stopped) return; stopped = true;
+    nearObserver?.disconnect(); nearObserver = null;
     document.removeEventListener('DOMContentLoaded', boot); document.removeEventListener('visibilitychange', onVisibility);
     document.removeEventListener('pointerover', onCardEnter); document.removeEventListener('pointerout', onCardLeave);
     document.removeEventListener('focusin', onCardFocus); document.removeEventListener('focusout', onCardBlur);
