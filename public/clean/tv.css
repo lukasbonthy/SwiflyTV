@@ -436,3 +436,34 @@ html[data-sv-tv="true"] body.svCleanShell #swiflyTvHint kbd {display:inline-bloc
 @media (prefers-reduced-transparency:reduce) {
   html[data-sv-tv="true"] body.svCleanShell #swiflyTvHint {background:#151619;}
 }
+
+
+/* 720p Xbox composition: more breathing space, less clipped title chrome.
+   No changes to glass gradients, refraction, lens or button optics. */
+@media (min-width:1101px) and (max-height:800px) {
+  html[data-sv-tv="true"] body.svCleanShell [data-sv-liquid-nav].topbar {padding-top:16px !important;}
+  html[data-sv-tv="true"] body.svCleanShell [data-sv-liquid-nav].topbar > .container.nav.netflixNav {
+    min-height:66px !important;height:66px !important;border-radius:23px !important;
+  }
+  html[data-sv-tv="true"] body.svCleanShell #swiflyTvSpotlight {
+    top:94px;--sv-tv-spotlight-height:clamp(120px,21svh,155px);
+  }
+  html[data-sv-tv="true"] body.svCleanShell .svTvSpotlightVisual {inset:-8px calc(-1 * var(--sv-tv-safe)) -8px 31%;}
+  html[data-sv-tv="true"] body.svCleanShell .svTvSpotlightCopy {width:min(65%,800px);}
+  html[data-sv-tv="true"] body.svCleanShell .dsContent {padding-bottom:calc(var(--sv-tv-bottom-safe) + 52px) !important;}
+  html[data-sv-tv="true"] body.svCleanShell :is(.dsPlainPage,.dsSearchPage,.dsWatchlistPage) {padding-top:116px !important;}
+  html[data-sv-tv="true"] body.svCleanShell .dsDetailPage.svDetailPage.svCinemaPage {padding-top:114px !important;}
+  html[data-sv-tv="true"] body.svCleanShell .svDetailDialog {height:calc(100svh - 40px);max-height:calc(100svh - 40px);}
+  html[data-sv-tv="true"] body.svCleanShell .svPlayerPage {padding-top:112px;}
+  html[data-sv-tv="true"] body.svCleanShell .svPlayerDock {bottom:16px;}
+  html[data-sv-tv="true"] body.svCleanShell #swiflyTvGuide {bottom:12px;min-height:55px;padding:8px 18px;}
+  html[data-sv-tv="true"] body.svCleanShell .svTvGuideCommands {gap:8px 15px;}
+}
+/* Short browser viewports may never hide the currently selected action. */
+@media (max-height:670px) {
+  html[data-sv-tv="true"] {--sv-tv-bottom-safe:90px;}
+  html[data-sv-tv="true"] body.svCleanShell #swiflyTvGuide {bottom:8px;padding:8px 12px;min-height:46px;}
+  html[data-sv-tv="true"] body.svCleanShell .svTvGuideContext {display:none;}
+  html[data-sv-tv="true"] body.svCleanShell .svTvGuideCommands {flex-wrap:nowrap;overflow:hidden;gap:10px;}
+  html[data-sv-tv="true"] body.svCleanShell .svTvCommand {font-size:14px;}
+}
