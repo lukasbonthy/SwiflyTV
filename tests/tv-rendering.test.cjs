@@ -56,13 +56,54 @@ async function settleScroll(page) {
   }));
 }
 
+for (const viewport of [{width:1101,height:700},{width:1280,height:720},{width:1363,height:936},{width:1920,height:1080}]) test('TV selection has a cinematic artwork preview without covering its gallery at '+viewport.width+'px', {skip:!available&&'Chromium is not installed'}, async () => {
+  const {context,page}=await open(viewport,true,true,'no-preference');
+  try {
+    await page.locator('.dsHeroActions .dsPrimaryBtn').focus();await page.keyboard.press('ArrowDown');
+    const preview=page.locator('#swiflyTvSpotlight');
+    assert.equal(await preview.count(),1,'TV browsing creates a dedicated selection preview');
+    await preview.waitFor({state:'visible'});await settleScroll(page);
+    assert.equal(await preview.locator('.svTvSpotlightTitle').textContent(),'Beyond the Northern Lights');
+    assert.match(await preview.locator('.svTvSpotlightFacts').textContent(),/2026/);
+    assert.match(await preview.locator('.svTvSpotlightFacts').textContent(),/8\.2/);
+    await page.waitForFunction(()=>document.getElementById('swiflyTvSpotlight').dataset.artState==='ready');
+    const geometry=await page.evaluate(()=>{
+      const bounds=n=>{const r=n.getBoundingClientRect();return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,height:r.height};};
+      const p=document.getElementById('swiflyTvSpotlight'),card=document.activeElement.closest('.movieCard');
+      return {nav:bounds(document.querySelector('.netflixNav')),preview:bounds(p),title:bounds(p.querySelector('.svTvSpotlightTitle')),titleClient:p.querySelector('.svTvSpotlightTitle').clientHeight,titleScroll:p.querySelector('.svTvSpotlightTitle').scrollHeight,heading:bounds(card.closest('.dsRow').querySelector('h2')),caption:bounds(card.querySelector('.dsCardInfo')),guide:bounds(document.getElementById('swiflyTvGuide')),pageWidth:document.documentElement.scrollWidth,interactive:p.querySelectorAll('a,button,input,[tabindex]').length};
+    });
+    assert(geometry.preview.top>=geometry.nav.bottom+12,'The selection preview clears navigation: '+JSON.stringify(geometry));
+    assert(geometry.heading.top>=geometry.preview.bottom+16,'The gallery heading clears the selection preview: '+JSON.stringify(geometry));
+    assert(geometry.caption.bottom<=geometry.guide.top-16,'Poster titles and dates fit below the preview and above controller commands: '+JSON.stringify(geometry));
+    assert(geometry.titleScroll<=geometry.titleClient+1,'The complete selected title fits its preview');
+    assert.equal(geometry.interactive,0,'The preview never introduces a competing focus stop');assert(geometry.pageWidth<=viewport.width);
+    const longTitle='Before the Last Sunrise: A Journey Across the Stars and Back Again';
+    await page.locator('.dsCardTitle').first().evaluate((node,title)=>{node.textContent=title;},longTitle);
+    await page.keyboard.press('ArrowRight');await page.keyboard.press('ArrowLeft');
+    const longBounds=await preview.evaluate(node=>{const box=node.getBoundingClientRect(),parts=[...node.querySelector('.svTvSpotlightCopy').children].filter(child=>getComputedStyle(child).display!=='none').map(child=>child.getBoundingClientRect());return {top:box.top,bottom:box.bottom,first:Math.min(...parts.map(r=>r.top)),last:Math.max(...parts.map(r=>r.bottom))};});
+    assert(longBounds.first>=longBounds.top-1&&longBounds.last<=longBounds.bottom+1,'A real two-line title, its facts, and overview stay inside the preview: '+JSON.stringify(longBounds));
+    await page.keyboard.press('ArrowRight');await settleScroll(page);assert.equal(await preview.locator('.svTvSpotlightTitle').textContent(),'Cinema chapter 2','The large preview follows the actual focused title');
+    await page.keyboard.press('F8');assert.equal(await preview.isVisible(),false,'Exiting TV mode removes the cinematic overlay');
+  }finally{await context.close();}
+});
+
+test('Short TV viewports use a clear catalog fallback with complete dates',{skip:!available&&'Chromium is not installed'},async()=>{
+  const {context,page}=await open({width:1101,height:640},true,true);
+  try{
+    await page.locator('.dsHeroActions .dsPrimaryBtn').focus();await page.keyboard.press('ArrowDown');await settleScroll(page);
+    const g=await page.evaluate(()=>{const card=document.activeElement.closest('.movieCard'),nav=document.querySelector('.netflixNav').getBoundingClientRect(),guide=document.getElementById('swiflyTvGuide').getBoundingClientRect();return {preview:document.getElementById('swiflyTvSpotlight')?.hidden??true,heading:card.closest('.dsRow').querySelector('h2').getBoundingClientRect().top,caption:card.querySelector('.dsCardInfo').getBoundingClientRect().bottom,nav:nav.bottom,guide:guide.top,width:document.documentElement.scrollWidth};});
+    assert(g.preview);assert(g.heading>=g.nav+16);assert(g.caption<=g.guide-16,'Fallback keeps title and year above the controller strip: '+JSON.stringify(g));assert(g.width<=1101);
+  }finally{await context.close();}
+});
+
 for (const viewport of [{width:1363,height:936},{width:1280,height:720},{width:1920,height:1080}]) test('TV browsing settles whole rows in a consistent safe frame with normal motion at '+viewport.width+'px', {skip:!available&&'Chromium is not installed'}, async () => {
   const {context,page} = await open(viewport,true,true,'no-preference');
   try {
     const read = () => page.evaluate(() => {
       const bounds = node => {const r=node.getBoundingClientRect();return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,height:r.height};};
       const card=document.activeElement.closest('.movieCard'),row=card?.closest('.dsRow'),rail=card?.closest('.movieRail');
-      return {nav:bounds(document.querySelector('.netflixNav')),guide:bounds(document.getElementById('swiflyTvGuide')),hero:bounds(document.querySelector('.dsHero')),heading:bounds((row||document.querySelector('.dsRow')).querySelector('h2')),card:card&&bounds(card),caption:card&&bounds(card.querySelector('.dsCardInfo')),poster:card&&bounds(card.querySelector('.posterWrap')),railTop:rail?.scrollTop,scrollY,selected:card&&[...rail.querySelectorAll('.movieCard')].indexOf(card),row:row&&[...document.querySelectorAll('.dsRow')].indexOf(row)};
+      const preview=document.getElementById('swiflyTvSpotlight');
+      return {nav:bounds(document.querySelector('.netflixNav')),preview:preview&&!preview.hidden?bounds(preview):null,guide:bounds(document.getElementById('swiflyTvGuide')),hero:bounds(document.querySelector('.dsHero')),heading:bounds((row||document.querySelector('.dsRow')).querySelector('h2')),card:card&&bounds(card),caption:card&&bounds(card.querySelector('.dsCardInfo')),poster:card&&bounds(card.querySelector('.posterWrap')),railTop:rail?.scrollTop,scrollY,selected:card&&[...rail.querySelectorAll('.movieCard')].indexOf(card),row:row&&[...document.querySelectorAll('.dsRow')].indexOf(row)};
     });
     await settleScroll(page);
     const initial=await read();
@@ -72,7 +113,8 @@ for (const viewport of [{width:1363,height:936},{width:1280,height:720},{width:1
     await settleScroll(page);
     const first=await read();
     assert.equal(first.row,0,'Down from the feature enters the first gallery');
-    assert(first.heading.top>=first.nav.bottom+16&&first.heading.top<=first.nav.bottom+44,'The row settles just below navigation without a large empty gap: '+JSON.stringify(first));
+    const anchor=(first.preview||first.nav).bottom;
+    assert(first.heading.top>=anchor+16&&first.heading.top<=anchor+44,'The row settles immediately below the selected-title preview: '+JSON.stringify(first));
     assert(first.caption.bottom<=first.guide.top-16,'The complete two-line title and date clear the guide: '+JSON.stringify(first));
     assert.equal(first.railTop,0,'Focus never scrolls the poster rail vertically');
     await page.keyboard.press('ArrowRight');await page.keyboard.press('ArrowRight');await settleScroll(page);
@@ -96,10 +138,10 @@ test('Rapid TV row entry and horizontal taps keep the full long-title caption ab
     await page.locator('.dsHeroActions .dsPrimaryBtn').focus();
     await page.keyboard.press('ArrowDown');await page.keyboard.press('ArrowRight');await page.keyboard.press('ArrowRight');await page.keyboard.press('ArrowLeft');await page.keyboard.press('ArrowLeft');
     await settleScroll(page);
-    const geometry=await page.evaluate(()=>{const card=document.activeElement.closest('.movieCard'),heading=card.closest('.dsRow').querySelector('h2');return {title:card.querySelector('.dsCardTitle').textContent,caption:card.querySelector('.dsCardInfo').getBoundingClientRect().bottom,heading:heading.getBoundingClientRect().top,nav:document.querySelector('.netflixNav').getBoundingClientRect().bottom,guide:document.getElementById('swiflyTvGuide').getBoundingClientRect().top};});
+    const geometry=await page.evaluate(()=>{const card=document.activeElement.closest('.movieCard'),heading=card.closest('.dsRow').querySelector('h2');return {title:card.querySelector('.dsCardTitle').textContent,caption:card.querySelector('.dsCardInfo').getBoundingClientRect().bottom,heading:heading.getBoundingClientRect().top,anchor:document.getElementById('swiflyTvSpotlight').getBoundingClientRect().bottom,guide:document.getElementById('swiflyTvGuide').getBoundingClientRect().top};});
     assert.match(geometry.title,/Northern Lights/);
     assert(geometry.caption<=geometry.guide-16,'Rapid input cannot leave the date under the guide: '+JSON.stringify(geometry));
-    assert(geometry.heading<=geometry.nav+44,'Rapid horizontal input must not interrupt row settling: '+JSON.stringify(geometry));
+    assert(geometry.heading<=geometry.anchor+44,'Rapid horizontal input must not interrupt row settling: '+JSON.stringify(geometry));
   }finally{await context.close();}
 });
 
@@ -127,6 +169,8 @@ test('TV navigation includes real Continue Watching cards and remembers their sa
     await page.locator('.dsHeroActions .dsPrimaryBtn').focus();await page.keyboard.press('ArrowDown');await settleScroll(page);
     assert.equal(await page.evaluate(()=>document.activeElement.matches('#continueWatchingRail .svResumeLink')),true,'The first Down enters saved progress before new titles');
     await page.keyboard.press('ArrowRight');await settleScroll(page);
+    const savedFacts=await page.locator('.svTvSpotlightFacts').textContent();
+    assert.equal((savedFacts.match(/2026/g)||[]).length,1,'The saved title preview shows its year once');assert.match(savedFacts,/S2.*E3/,'The saved title preview identifies the episode to resume');
     const resume=await page.evaluate(()=>({href:document.activeElement.getAttribute('href'),title:document.activeElement.closest('.svResumeCard').querySelector('.svResumeTitle').textContent,caption:document.activeElement.closest('.svResumeCard').querySelector('.svResumeCaption').getBoundingClientRect().bottom,guide:document.getElementById('swiflyTvGuide').getBoundingClientRect().top,context:document.getElementById('swiflyTvGuide').textContent}));
     assert.match(resume.href,/s=2&e=3&resume=1/);assert(resume.caption<=resume.guide-16,'Saved episode and progress labels clear the guide');assert(resume.context.includes(resume.title),'The guide names the saved title');
     await page.keyboard.press('ArrowDown');await settleScroll(page);assert.equal(await page.evaluate(()=>document.activeElement.matches('.dsRow .posterWrap')),true,'Down continues into the movie gallery');
@@ -155,14 +199,14 @@ for(const viewport of [{width:1280,height:720},{width:1920,height:1080}])test('X
     await page.locator('.movieCard .posterWrap').first().focus();
     await page.keyboard.press('ArrowRight');
     await page.locator('#swiflyTvGuide[data-input="gamepad"]').waitFor({state:'visible'});
-    await page.waitForFunction(()=>{const card=document.querySelector('.movieCard:has(.swifly-tv-focus-target)');return card&&getComputedStyle(card.querySelector('.dsCardInfo')).backgroundColor!=='rgba(0, 0, 0, 0)';});
+    await page.waitForFunction(()=>{const card=document.querySelector('.movieCard:has(.swifly-tv-focus-target)');return card&&getComputedStyle(card.querySelector('.dsCardInfo')).backgroundImage!=='none';});
     const geometry=await page.evaluate(()=>{
       const bounds=node=>{const b=node.getBoundingClientRect();return {top:b.top,bottom:b.bottom,left:b.left,right:b.right,width:b.width,height:b.height};};
       const guide=document.getElementById('swiflyTvGuide'),focused=document.querySelector('.movieCard:has(.swifly-tv-focus-target)'),other=[...focused.parentElement.querySelectorAll('.movieCard')].find(card=>card!==focused),caption=focused.querySelector('.dsCardInfo'),heading=focused.closest('.dsRow').querySelector('.svSectionHead h2,.dsRowHead h2');
-      return {scrollY,scrollMargin:getComputedStyle(focused).scrollMarginBottom,card:bounds(focused),railScroll:focused.parentElement.scrollTop,nav:bounds(document.querySelector('.netflixNav')),heading:bounds(heading),guide:bounds(guide),caption:bounds(caption),meta:bounds(focused.querySelector('.dsCardMeta')),commands:[...guide.querySelectorAll('.svTvCommand')].map(node=>({...bounds(node),font:parseFloat(getComputedStyle(node).fontSize),client:node.clientWidth,scroll:node.scrollWidth})),selectedBackground:getComputedStyle(caption).backgroundColor,otherBackground:getComputedStyle(other.querySelector('.dsCardInfo')).backgroundColor,rowMarker:{width:parseFloat(getComputedStyle(heading).borderInlineStartWidth),color:getComputedStyle(heading).borderInlineStartColor},posterTransform:getComputedStyle(focused.querySelector('.posterWrap')).transform,pageWidth:document.documentElement.scrollWidth};
+      return {scrollY,scrollMargin:getComputedStyle(focused).scrollMarginBottom,card:bounds(focused),railScroll:focused.parentElement.scrollTop,nav:bounds(document.querySelector('.netflixNav')),heading:bounds(heading),guide:bounds(guide),caption:bounds(caption),meta:bounds(focused.querySelector('.dsCardMeta')),commands:[...guide.querySelectorAll('.svTvCommand')].map(node=>({...bounds(node),font:parseFloat(getComputedStyle(node).fontSize),client:node.clientWidth,scroll:node.scrollWidth})),selectedBackground:getComputedStyle(caption).backgroundImage,otherBackground:getComputedStyle(other.querySelector('.dsCardInfo')).backgroundImage,rowMarker:{width:parseFloat(getComputedStyle(heading).borderInlineStartWidth),color:getComputedStyle(heading).borderInlineStartColor},posterTransform:getComputedStyle(focused.querySelector('.posterWrap')).transform,pageWidth:document.documentElement.scrollWidth};
     });
     assert(geometry.guide.left>=viewport.width*.035&&geometry.guide.right<=viewport.width*.965,'Controller guide stays within television safe edges: '+JSON.stringify(geometry));
-    assert(geometry.guide.height>=68&&geometry.guide.height<=100,'Guide remains compact enough for catalog browsing');
+    assert(geometry.guide.height>=56&&geometry.guide.height<=80,'Guide remains compact enough for catalog browsing');
     assert(geometry.guide.bottom<=viewport.height-20,'Guide clears the lower TV safe edge');
     assert(geometry.commands.every(command=>command.font>=17&&command.scroll<=command.client+1&&command.left>=geometry.guide.left&&command.right<=geometry.guide.right),'Every Xbox command remains readable and unclipped');
     assert(geometry.caption.bottom<=geometry.guide.top-14&&geometry.meta.bottom<=geometry.guide.top-14,'Title and year clear the persistent controller guide: '+JSON.stringify(geometry));
@@ -210,14 +254,15 @@ for (const viewport of [{width:1920,height:1080},{width:1280,height:720}]) test(
     const geometry = await page.evaluate(() => {
       const box = node => {const r=node.getBoundingClientRect();return {left:r.left,right:r.right,width:r.width,height:r.height,top:r.top,bottom:r.bottom};};
       const nav=document.querySelector('.netflixNav'),rail=document.querySelector('.svCatalogRow .movieRail,.dsRow .movieRail'),poster=document.querySelector('.movieCard .posterWrap'),title=document.querySelector('.dsCardTitle');
-      return {nav:box(nav),row:box(rail.closest('.dsRow')),rail:box(rail),poster:box(poster),title:{font:parseFloat(getComputedStyle(title).fontSize),whiteSpace:getComputedStyle(title).whiteSpace},meta:parseFloat(getComputedStyle(document.querySelector('.dsCardMeta')).fontSize),outline:getComputedStyle(poster).outlineWidth,outlineStyle:getComputedStyle(poster).outlineStyle,outlineColor:getComputedStyle(poster).outlineColor,quick:getComputedStyle(document.querySelector('.dsCardQuickActions')).display,overflow:document.documentElement.scrollWidth,visible:[...rail.querySelectorAll('.movieCard')].filter(node=>{const b=box(node),r=box(rail);return b.left>=r.left && b.right<=r.right+1;}).length};
+      return {nav:box(nav),row:box(rail.closest('.dsRow')),rail:box(rail),poster:box(poster),title:{font:parseFloat(getComputedStyle(title).fontSize),whiteSpace:getComputedStyle(title).whiteSpace},previewTitle:parseFloat(getComputedStyle(document.querySelector('.svTvSpotlightTitle')).fontSize),meta:parseFloat(getComputedStyle(document.querySelector('.dsCardMeta')).fontSize),outline:getComputedStyle(poster).outlineWidth,outlineStyle:getComputedStyle(poster).outlineStyle,outlineColor:getComputedStyle(poster).outlineColor,quick:getComputedStyle(document.querySelector('.dsCardQuickActions')).display,overflow:document.documentElement.scrollWidth,visible:[...rail.querySelectorAll('.movieCard')].filter(node=>{const b=box(node),r=box(rail);return b.left>=r.left && b.right<=r.right+1;}).length};
     });
     assert(geometry.nav.left >= viewport.width*.035 && geometry.nav.right <= viewport.width*.965,'Navigation stays inside TV safe edges');
     assert(geometry.nav.width >= viewport.width*.87,'Navigation fills the TV safe frame');
     assert(geometry.nav.height >= 68,'Navigation controls are readable from a sofa');
     assert(geometry.rail.left >= viewport.width*.035,'Posters keep TV safe margins');
-    assert(geometry.visible >= 4 && geometry.visible <= 5,'A TV rail shows four or five full portrait cards: '+geometry.visible);
-    assert(geometry.title.font >= 21 && geometry.meta >= 17,'Card labels and year remain readable');
+    assert(geometry.visible >= 5 && geometry.visible <= 8,'The cinematic TV layout provides a browseable row of five to eight complete posters: '+geometry.visible);
+    assert(geometry.title.font >= 19 && geometry.meta >= 16 && geometry.previewTitle>=30,'The large selection title and its complete card labels remain readable');
+    assert(Math.abs(geometry.poster.height/geometry.poster.width-1.5)<.02,'Cinematic framing preserves the original portrait artwork');
     assert.notEqual(geometry.title.whiteSpace,'nowrap','Long title labels can wrap');
     assert.equal(geometry.outline,'3px'); assert.equal(geometry.outlineStyle,'solid'); assert.equal(geometry.outlineColor,'rgb(255, 255, 255)');
     assert(geometry.poster.left-8>=geometry.row.left,'The first focus ring fits inside its paint-contained row');
@@ -251,7 +296,7 @@ test('TV styling leaves desktop sizing intact and restores it immediately when d
     assert(desktop.nav<1000); assert.equal(desktop.title,'14px');
     await page.keyboard.press('F8');
     await page.waitForFunction(()=>document.documentElement.dataset.svTv==='true');
-    const tv=await measure(); assert(tv.poster>desktop.poster*1.2,'Enabling TV grows posters: '+JSON.stringify({desktop,tv}));
+    const tv=await measure(); assert(tv.nav>=1280*.87&&parseFloat(tv.title)>=19,'Enabling TV expands navigation and introduces couch-readable labels: '+JSON.stringify({desktop,tv}));
     await page.keyboard.press('F8');
     await page.waitForFunction(()=>!document.documentElement.hasAttribute('data-sv-tv')&&getComputedStyle(document.querySelector('.dsCardTitle')).fontSize==='14px');
     assert.deepEqual(await measure(),desktop,'Disabling TV restores exact desktop geometry');

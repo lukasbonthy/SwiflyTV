@@ -6526,7 +6526,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=200" />' : ""}
     ${player || active === "social" ? '<link rel="stylesheet" href="/assets/party/watchroom-call.css?v=1" />' : ""}
     <link rel="stylesheet" href="/assets/clean/performance.css?v=211" />
-    <link rel="stylesheet" href="/assets/clean/tv.css?v=3" />
+    <link rel="stylesheet" href="/assets/clean/tv.css?v=4" />
 </head>
 <body class="svCleanShell">
 
@@ -7539,7 +7539,7 @@ function movieCard(item = {}, forcedType = "") {
   const detailsHref = `/${type}/${encodeURIComponent(id)}`;
   const watchHref = `/watch/${type}/${encodeURIComponent(id)}?mode=movie${type === "tv" ? "&s=1&e=1" : ""}`;
   const poster = item.poster_path ? img(item.poster_path, "w342") : img(item.backdrop_path, "w500");
-  return `<article class="movieCard dsCard" data-title="${escapeHtml(title.toLowerCase())}">
+  return `<article class="movieCard dsCard" data-title="${escapeHtml(title.toLowerCase())}" data-tv-overview="${escapeHtml(String(item.overview || "").slice(0, 420))}">
     <div class="dsCardArtwork">
       <a href="${detailsHref}" class="posterWrap dsThumb" aria-label="Details for ${escapeHtml(title)}">
         ${poster ? `<img src="${escapeHtml(poster)}" alt="${escapeHtml(title)} poster" loading="lazy" decoding="async" />` : `<div class="posterFallback"><span>${escapeHtml(title.slice(0, 1))}</span></div>`}
