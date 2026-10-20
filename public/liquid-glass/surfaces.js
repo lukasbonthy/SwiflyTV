@@ -39,7 +39,6 @@
   // Keep the inexpensive native glass coating, but don't allocate heavy
   // SVG backdrop filters for buttons the visitor cannot currently see.
   const hoveredArtworks = new WeakSet();
-  let activeHoveredArtwork = null;
   const cardScrollBusy = () => document.documentElement.dataset.svCardScrolling === 'true' &&
     window.innerWidth > 860;
   const hoverCapable = window.matchMedia('(hover: hover)');
@@ -102,10 +101,13 @@
   function activate(entry) {
     ensureOpticPane(entry);
     if (!entry.visible || !entry.host.isConnected || document.hidden || !liquidPreference() || !window.SwiflyLiquidGlass) return;
+    // Moving cards use the CSS soft-glass tier. Preserve an existing graph
+    // and avoid allocating a new one until the glide settles or focus enters.
+    if (entry.quickArtwork && hoverCapable.matches && cardScrollBusy() &&
+        !entry.quickArtwork.matches(':focus-within')) return;
     if (entry.quickArtwork && hoverCapable.matches &&
-        (cardScrollBusy() && !entry.quickArtwork.matches(':focus-within') ||
-         !hoveredArtworks.has(entry.quickArtwork) &&
-         !entry.quickArtwork.matches(':hover, :focus-within'))) {
+        !hoveredArtworks.has(entry.quickArtwork) &&
+        !entry.quickArtwork.matches(':hover, :focus-within')) {
       // No visible button needs refraction while the artwork is idle.
       // Preserve its always-present native lens so hovering remains seamless.
       if (entry.opticController) {
@@ -225,8 +227,8 @@
   }
   function syncCardActions(artwork, visible) {
     if (!artwork) return;
-    if (visible) {hoveredArtworks.add(artwork);activeHoveredArtwork = artwork;}
-    else {hoveredArtworks.delete(artwork);if(activeHoveredArtwork === artwork)activeHoveredArtwork = null;}
+    if (visible) hoveredArtworks.add(artwork);
+    else hoveredArtworks.delete(artwork);
     for (const control of artwork.querySelectorAll('.dsCardQuickActions .dsMiniBtn')) {
       const entry = entries.get(control);
       if (!entry) continue;
@@ -258,12 +260,6 @@
     const artwork = event.target instanceof Element ? event.target.closest('.dsCardArtwork') : null;
     if (artwork && !(event.relatedTarget instanceof Node && artwork.contains(event.relatedTarget)) &&
         !artwork.matches(':hover')) syncCardActions(artwork, false);
-  }
-  function onCardScrollStart() {
-    if (!cardScrollBusy()) return;
-    // Avoid a document-wide :hover selector during a hot wheel gesture.
-    const artwork = activeHoveredArtwork;
-    if (artwork && !artwork.matches(':focus-within')) syncCardActions(artwork, false);
   }
   function onCardScrollEnd() {
     if (!hoverCapable.matches) return;
@@ -360,7 +356,6 @@
     });
     mutations.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['data-st-glass','data-sv-detail-state']});
     document.addEventListener('visibilitychange', onVisibility);
-    document.addEventListener('swifly:card-scroll-start', onCardScrollStart);
     document.addEventListener('swifly:card-scroll-end', onCardScrollEnd);
     document.addEventListener('pointerover', onCardEnter, {passive:true});
     document.addEventListener('pointerout', onCardLeave, {passive:true});
@@ -372,7 +367,6 @@
     nearObserver?.disconnect(); nearObserver = null;
     tvModeObserver?.disconnect(); tvModeObserver = null;
     document.removeEventListener('DOMContentLoaded', boot); document.removeEventListener('visibilitychange', onVisibility);
-    document.removeEventListener('swifly:card-scroll-start', onCardScrollStart);
     document.removeEventListener('swifly:card-scroll-end', onCardScrollEnd);
     document.removeEventListener('pointerover', onCardEnter); document.removeEventListener('pointerout', onCardLeave);
     document.removeEventListener('focusin', onCardFocus); document.removeEventListener('focusout', onCardBlur);

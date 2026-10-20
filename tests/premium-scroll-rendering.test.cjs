@@ -168,6 +168,64 @@ test('visible quick actions retain glass in a narrow desktop catalog', {skip:!av
   } finally {await browser.close();}
 });
 
+test('movie actions stay visible and clickable during a wheel glide without rebuilding their lenses', {skip:!available && 'Chromium is not installed'}, async () => {
+  const browser = await chromium.launch({headless:true});
+  try {
+    const page = await catalog(browser);
+    const artwork = page.locator('.dsCardArtwork').first();
+    await artwork.scrollIntoViewIfNeeded();
+    await artwork.hover();
+    await page.waitForFunction(() => document.querySelector('.dsCardQuickActions .svLiquidPane')?.dataset.swiflyRenderer === 'svg');
+    const result = await artwork.evaluate(art => {
+      const actions = art.querySelector('.dsCardQuickActions');
+      const button = actions.querySelector('button');
+      const lens = button.querySelector('.svLiquidPane');
+      const graph = lens.querySelector('svg');
+      let clicked = false;
+      button.addEventListener('click', event => {event.preventDefault();event.stopImmediatePropagation();clicked = true;}, {once:true});
+      art.dispatchEvent(new WheelEvent('wheel', {deltaY:80,bubbles:true,cancelable:true}));
+      const rect = button.getBoundingClientRect();
+      const hit = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
+      hit?.dispatchEvent(new MouseEvent('click', {bubbles:true,cancelable:true}));
+      return {scrolling:document.documentElement.dataset.svCardScrolling,
+        opacity:getComputedStyle(actions).opacity, clickable:clicked,
+        backdrop:getComputedStyle(lens).backdropFilter, sameGraph:graph === lens.querySelector('svg')};
+    });
+    assert.equal(result.scrolling, 'true', 'exercise the live scrolling state');
+    assert.equal(result.opacity, '1', 'hover controls must not disappear during scrolling');
+    assert(result.clickable, 'a visible quick action must receive a real hit-tested click');
+    assert.match(result.backdrop, /blur\(4px\)/, 'moving controls use the inexpensive soft-glass tier');
+    assert(result.sameGraph, 'an existing lens is cached across the gesture');
+    await page.waitForFunction(() => !document.documentElement.classList.contains('lenis-smooth'));
+  } finally {await browser.close();}
+});
+
+test('poster hover shades with opacity instead of filtering the entire image', {skip:!available && 'Chromium is not installed'}, async () => {
+  const browser = await chromium.launch({headless:true});
+  try {
+    const page = await catalog(browser);
+    const artwork = page.locator('.dsCardArtwork').first();
+    await artwork.scrollIntoViewIfNeeded();
+    await artwork.hover();
+    const style = await artwork.locator('.dsThumb').evaluate(poster => ({
+      filter:getComputedStyle(poster).filter,
+      transition:getComputedStyle(poster).transitionProperty,
+      shadeDisplay:getComputedStyle(poster, '::after').display,
+      shadeTransition:getComputedStyle(poster, '::after').transitionProperty,
+      shadeWidth:parseFloat(getComputedStyle(poster, '::after').width),
+      posterWidth:poster.getBoundingClientRect().width
+    }));
+    assert.equal(style.filter, 'none', 'a parked pointer must not create a full-poster filter layer');
+    assert.doesNotMatch(style.transition, /filter/, 'crossing posters cannot schedule image filter transitions');
+    assert.notEqual(style.shadeDisplay, 'none', 'keep the hover shading visible');
+    assert.equal(style.shadeTransition, 'opacity');
+    assert(Math.abs(style.shadeWidth - style.posterWidth) < .05, 'the shade covers the whole poster rather than a legacy shimmer strip');
+    await page.emulateMedia({reducedMotion:'reduce'});
+    assert.equal(await artwork.locator('.dsThumb').evaluate(poster =>
+      getComputedStyle(poster, '::after').transitionDuration), '0s', 'reduced motion skips the new hover fade');
+  } finally {await browser.close();}
+});
+
 test('the real touch catalog keeps OS scrolling and all glass surfaces', {skip:!available && 'Chromium is not installed'}, async () => {
   const browser = await chromium.launch({headless:true});
   try {

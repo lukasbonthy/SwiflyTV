@@ -38,7 +38,7 @@ test('nested rail movement and focused controls do not interrupt normal UI', asy
   env.finish();
 });
 
-test('stationary mouse hover mounts true glass; passing-by scroll hover waits and keyboard focus remains responsive', async () => {
+test('scrolling caches the hovered lens, defers new hover optics and keeps focus responsive', async () => {
   const markup='<div class="dsHeroActions"><button class="dsPrimaryBtn">Play featured</button></div>'+
     '<article class="movieCard"><div class="dsCardArtwork"><a class="dsThumb">Poster</a>'+
     '<div class="dsCardQuickActions"><a class="dsMiniBtn">Play</a><button class="dsMiniBtn">Save</button><button class="dsMiniBtn">Like</button></div></div></article>';
@@ -64,7 +64,10 @@ test('stationary mouse hover mounts true glass; passing-by scroll hover waits an
   const oldMatches=artwork.matches.bind(artwork);
   artwork.matches=selector=>selector===':hover'?true:oldMatches(selector);
   artwork.dispatchEvent(new w.WheelEvent('wheel',{deltaY:130,bubbles:true,cancelable:true}));
-  assert.equal(quickCount(),0,'wheel input immediately releases transient hover lenses');
+  assert.equal(quickCount(),3,'wheel input preserves the existing lens while CSS switches it to soft glass');
+  artwork.matches=selector=>selector===':hover'?false:oldMatches(selector);
+  artwork.dispatchEvent(new w.MouseEvent('pointerout',{bubbles:true,relatedTarget:d.body}));
+  assert.equal(quickCount(),0,'a departing card releases its lens');
   artwork.dispatchEvent(new w.MouseEvent('pointerover',{bubbles:true}));
   assert.equal(quickCount(),0,'new passing hover must not mount optics while moving');
   controls[1].focus();
@@ -80,7 +83,7 @@ test('stationary mouse hover mounts true glass; passing-by scroll hover waits an
   w.SwiflyGlassSurfaces.destroy();w.SwiflyPremiumScroll.destroy();env.finish();
 });
 
-test('scroll CSS suppresses only accidental catalog hover, never primary glass or focused actions',()=>{
+test('scroll guard continues to defer incidental metadata prefetch',()=>{
   const css=source('performance.css');
   assert.match(css,/data-sv-card-scrolling="true"/);
   assert.match(css,/@media \(hover: hover\) and \(pointer: fine\) and \(min-width: 861px\)/);
