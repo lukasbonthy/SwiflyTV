@@ -146,3 +146,14 @@ body.svCleanShell .dsContent > .dsRow.svCatalogRow > .movieRail {contain:layout 
     backdrop-filter: none !important;
   }
 }
+
+/* Preserve the zero-paint fast path for invisible poster actions. The soft
+   tier must not accidentally re-enable blur on offscreen/opacity-hidden
+   button panes during a wheel glide. */
+@media (hover: hover) and (pointer: fine) and (min-width: 861px) {
+  html[data-sv-scroll-glass="soft"] body.svCleanShell:not([data-st-glass="off"]):not([data-st-glass="subtle"]) .dsCardArtwork:not(:hover):not(:focus-within) .dsCardQuickActions .svLiquidPane.svLiquidPane,
+  html[data-sv-scroll-glass="soft"][data-sv-card-scrolling="true"] body.svCleanShell:not([data-st-glass="off"]):not([data-st-glass="subtle"]) .dsCardArtwork:not(:focus-within) .dsCardQuickActions .svLiquidPane.svLiquidPane {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
