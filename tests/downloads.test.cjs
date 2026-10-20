@@ -15,7 +15,7 @@ test('Licensed movie/episode files download with real bytes and attachments; una
  const root=fs.mkdtempSync(path.join(os.tmpdir(),'swifly-download-'));
  const outside=fs.mkdtempSync(path.join(os.tmpdir(),'swifly-outside-'));
  const app=express();app.use('/api/download',createDownloadRouter({root}));
- const server=app.listen(0,'127.0.0.1');
+ const server=await new Promise(resolve=>{const server=app.listen(0,'127.0.0.1',()=>resolve(server));});
  const base='http://127.0.0.1:'+server.address().port+'/api/download';
  try {
   fs.mkdirSync(path.join(root,'movie'),{recursive:true});
