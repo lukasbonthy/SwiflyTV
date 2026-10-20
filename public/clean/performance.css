@@ -90,3 +90,7 @@ html[data-sv-xbox="true"] body.svCleanShell .dsHeroHasTrailer .dsHeroBg {animati
 @supports(content-visibility:auto){
   body.svCleanShell .dsGrid > .movieCard{content-visibility:auto;contain-intrinsic-size:auto 360px}
 }
+
+/* Keep long horizontal catalog rails in their own paint boundary while the
+   user scrolls. This avoids re-painting unrelated hero and footer layers. */
+body.svCleanShell .dsContent > .dsRow.svCatalogRow > .movieRail {contain:layout paint}
