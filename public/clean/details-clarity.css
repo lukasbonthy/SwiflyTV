@@ -86,6 +86,13 @@ body.svCleanShell .svDetailActionGlyph {
   color:inherit; pointer-events:none;
 }
 body.svCleanShell .svCinemaPage .svDetailActions .dsIconBtn {display:inline-grid;place-items:center;}
+/* The full-width scrolled modal chrome used an unnecessary 16px backdrop
+   blur across the entire sheet. Keep its dark reading strip, while Back
+   and Close buttons keep the existing independent liquid-glass optics. */
+body.svCleanShell .svDetailScrolled .svDetailChrome {
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
+}
 /* Refractive optics still belong to the shared renderer; explicit Off/Subtle
    modes and reduced transparency are never forced into full liquid mode. */
 body.svCleanShell[data-st-glass="off"] .svCinemaPage .svDetailActions > :is(a,button).svGlassControl {
