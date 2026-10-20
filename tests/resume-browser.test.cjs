@@ -66,11 +66,11 @@ for(const type of ['movie','tv'])test(`Real ${type} playback persists progress a
     assert.match(href,/resume=1/);if(type==='tv')assert.match(href,/s=2&e=8/);
     assert.equal(await page.locator('.svResumeLink').getAttribute('href'),href);
     await page.locator('[data-resume-action]').click();
-    await page.waitForFunction(expected=>SwiflyPlayer.getState().ready&&Math.abs(SwiflyPlayer.getState().currentTime-expected)<.2,saved.currentTime);
+    await page.waitForFunction(expected=>window.SwiflyPlayer?.getState().ready&&Math.abs(SwiflyPlayer.getState().currentTime-expected)<.2,saved.currentTime);
     await page.reload();
-    await page.waitForFunction(expected=>SwiflyPlayer.getState().ready&&Math.abs(SwiflyPlayer.getState().currentTime-expected)<.2,saved.currentTime);
+    await page.waitForFunction(expected=>window.SwiflyPlayer?.getState().ready&&Math.abs(SwiflyPlayer.getState().currentTime-expected)<.2,saved.currentTime);
     await page.goto(origin+'/browse?type='+type);await page.locator('.dsHeroActions [data-play-id]').click();
-    await page.waitForFunction(()=>SwiflyPlayer.getState().ready);assert.equal(await page.evaluate(()=>SwiflyPlayer.getState().currentTime),0,'The original Play action still starts fresh');
+    await page.waitForFunction(()=>window.SwiflyPlayer?.getState().ready);assert.equal(await page.evaluate(()=>SwiflyPlayer.getState().currentTime),0,'The original Play action still starts fresh');
     assert.deepEqual(errors,[]);
   }finally{await context.close();}
 });
