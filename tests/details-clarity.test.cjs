@@ -24,7 +24,7 @@ async function detailsFixture(backdrops) {
   return html;
 }
 
-test('story backdrop belongs to the selected movie and prefers wordless art',async()=>{
+test('story artwork uses the proven hero art, not an arbitrary cropped second still',async()=>{
   const html=await detailsFixture([
     {file_path:'/hero.jpg',iso_639_1:null,aspect_ratio:1.8},
     {file_path:'/lettered.jpg',iso_639_1:'en',aspect_ratio:1.8,vote_count:500},
@@ -39,7 +39,7 @@ test('story backdrop belongs to the selected movie and prefers wordless art',asy
   env.finish();
 });
 
-test('story artwork falls back to the hero when no second film still exists',async()=>{
+test('story keeps one shared hero image even when no other film still exists',async()=>{
   const env=browser(await detailsFixture([]));
   assert.match(env.window.document.querySelector('#overview').getAttribute('style'),/\/w780\/hero\.jpg/);
   env.finish();
@@ -73,7 +73,7 @@ test('detail save and heart state never destroy existing liquid-glass panes',()=
 
 test('detail visual polish preserves user opacity controls and minimizes compositing',()=>{
   const server=fs.readFileSync(path.join(__dirname,'../server.js'),'utf8');
-  assert(server.includes('/assets/clean/details-clarity.css?v=1'));
+  assert(server.includes('/assets/clean/details-clarity.css?v=2'));
   assert(server.includes('family=Manrope:wght@400;500;600;700;800'));
   assert.match(css,/\.svDetailActions[\s\S]*\.svNavMatchedLens\.svLiquidPane/);
   assert.match(css,/data-st-glass="off"/);
