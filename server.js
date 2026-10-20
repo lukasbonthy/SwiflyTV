@@ -31,6 +31,7 @@ const { createPlaybackHandoff } = require("./lib/playback-handoff");
 const { createVerifiedMediaEntryResolver } = require("./lib/native-source-entry");
 const { createSubtitleProxy } = require("./lib/subtitle-proxy");
 const { createSiteGate } = require("./lib/site-gate");
+const { createDownloadRouter } = require("./lib/downloads");
 const { cleanHeaders: cleanNuvioHeaders } = require("./lib/nuvio-http");
 
 // ===== SwiflyTV no-env mode =====
@@ -5623,6 +5624,8 @@ app.use((req, res, next) => {
 const siteGate = createSiteGate();
 app.use(siteGate.router);
 app.use(siteGate.protect);
+// Same friends-only protection applies to authorized movie/episode file downloads.
+app.use("/api/download", createDownloadRouter());
 
 // v150: versioned, locally hosted navigation glass assets.
 // Versioned glass URLs can be cached across navigation; v= tags change with edits.
@@ -6502,13 +6505,14 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/avatars.js?v=209"></script>
     ${active === "profiles" ? '<script defer src="/assets/clean/profiles.js?v=209"></script>' : ""}
     <script defer src="/assets/clean/continue.js?v=155"></script>
-    <link rel="stylesheet" href="/assets/clean/details.css?v=229" />
+    <link rel="stylesheet" href="/assets/clean/details.css?v=230" />
     <link rel="stylesheet" href="/assets/clean/motion.css?v=208" />
     <link rel="stylesheet" href="/assets/vendor/lenis/lenis.css?v=1.3.16-r1" />
     <script defer src="/assets/vendor/lenis/lenis.min.js?v=1.3.16-r1"></script>
     <script defer src="/assets/clean/motion.js?v=238"></script>
-    <script defer src="/assets/clean/scroll.js?v=241"></script>
-    <script defer src="/assets/clean/details.js?v=234"></script>
+    <script defer src="/assets/clean/scroll.js?v=242"></script>
+    <script defer src="/assets/clean/details.js?v=235"></script>
+    <script defer src="/assets/clean/download.js?v=2"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=222" />
     <script defer src="/assets/liquid-glass/surfaces.js?v=238"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=233" />
@@ -6529,11 +6533,11 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/experience.css?v=202" />'}
     <link rel="stylesheet" href="/assets/clean/cinema.css?v=207" />
     <link rel="stylesheet" href="/assets/clean/profiles.css?v=209" />
-    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=213" />' : ""}
+    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=214" />' : ""}
     ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=206" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=205" />' : ""}
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=200" />' : ""}
     ${player || active === "social" ? '<link rel="stylesheet" href="/assets/party/watchroom-call.css?v=1" />' : ""}
-    <link rel="stylesheet" href="/assets/clean/performance.css?v=213" />
+    <link rel="stylesheet" href="/assets/clean/performance.css?v=214" />
     <link rel="stylesheet" href="/assets/clean/tv.css?v=5" />
 </head>
 <body class="svCleanShell">
@@ -8848,7 +8852,7 @@ async function detailPage(req, res, type) {
     const number = Number(season.season_number);
     const total = Math.max(0, Number(season.episode_count || 0));
     const shown = Math.min(total, 24);
-    const episodeLinks = Array.from({ length: shown }, (_, i) => `<a class="svDetailEpisodeTile" href="/watch/tv/${encodeURIComponent(id)}?mode=movie&s=${number}&e=${i + 1}" aria-label="Watch season ${number} episode ${i + 1}"><span class="svEpisodeOrdinal">${String(i + 1).padStart(2, "0")}</span><span>Episode ${i + 1}</span>${cleanIcon("play")}</a>`).join("");
+    const episodeLinks = Array.from({ length: shown }, (_, i) => `<span class="svDetailEpisodeChoice"><a class="svDetailEpisodeTile" href="/watch/tv/${encodeURIComponent(id)}?mode=movie&s=${number}&e=${i + 1}" aria-label="Watch season ${number} episode ${i + 1}"><span class="svEpisodeOrdinal">${String(i + 1).padStart(2, "0")}</span><span>Episode ${i + 1}</span>${cleanIcon("play")}</a><a class="svDetailEpisodeDownload" href="/api/download/tv/${encodeURIComponent(id)}?s=${number}&e=${i + 1}" data-sv-download data-sv-download-type="episode" aria-label="Download season ${number} episode ${i + 1}" title="Download episode">↓</a></span>`).join("");
     return `<details class="svSeason"${index === 0 ? " open" : ""}><summary><span class="svSeasonIdentity"><b class="svSeasonNumber">${String(number).padStart(2, "0")}</b><strong>${escapeHtml(season.name || `Season ${number}`)}</strong></span><span>${total} episodes</span></summary>
       ${season.overview ? `<p>${escapeHtml(season.overview)}</p>` : ""}<div class="dsEpisodeChips">${episodeLinks}${total > shown ? `<a href="/watch/tv/${encodeURIComponent(id)}?mode=movie&s=${number}&e=${shown + 1}">Continue with episode ${shown + 1}</a>` : ""}</div></details>`;
   }).join("");
@@ -8876,6 +8880,7 @@ async function detailPage(req, res, type) {
           <div class="svDetailActions">
             <a class="dsPrimaryBtn" href="${watchHref}" ${mediaDataAttributes("play", details, type)}>${cleanIcon("play")}${escapeHtml(playLabel)}</a>
             ${trailers.length ? `<a class="dsSecondaryBtn" href="/watch/${type}/${encodeURIComponent(id)}?mode=trailer">${cleanIcon("play")}Trailer</a>` : ""}
+            <a class="dsSecondaryBtn svDownloadAction" href="/api/download/${type}/${encodeURIComponent(id)}${type==="tv"?`?s=${startSeason}&e=1`:""}" data-sv-download data-sv-download-type="${type==="tv"?"episode":"movie"}" aria-label="Download ${type==="tv"?"first episode of "+escapeHtml(title):escapeHtml(title)}">↓ Download</a>
             ${partyId ? `<a class="dsSecondaryBtn" href="${escapeHtml(partyMediaWatchUrl({movieId:partyId,type,season:String((details.seasons||[]).filter(row=>Number.isSafeInteger(row.season_number)&&row.season_number>0).sort((a,b)=>a.season_number-b.season_number)[0]?.season_number||1),episode:"1"},"",true))}" data-sv-party-movie-id="${partyId}" data-sv-party-type="${type}" aria-label="Start a watch party for ${escapeHtml(title)}">${cleanIcon("user")}Start a watch party</a>` : ""}
             <button class="dsIconBtn" type="button" aria-label="Add ${escapeHtml(title)} to My List" ${mediaDataAttributes("watch", details, type)}>＋</button>
             <button class="dsIconBtn dsHeartBtn" type="button" aria-label="Like ${escapeHtml(title)}" ${mediaDataAttributes("like", details, type)}>♡</button>

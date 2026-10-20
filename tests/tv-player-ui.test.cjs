@@ -27,7 +27,7 @@ test('Episode picker exposes titles and selection while every navigation link re
   assert.equal(new URL(selected.href,'https://swifly.test').searchParams.get('e'),'8');
   assert.equal(new URL(d.querySelector('[data-player-episode-next]').href,'https://swifly.test').searchParams.get('e'),'9');
   assert.equal(new URL(d.querySelector('[data-player-episode-previous]').href,'https://swifly.test').searchParams.get('e'),'7');
-  for(const a of d.querySelectorAll('a')){
+  for(const a of d.querySelectorAll('a:not([data-sv-download])')){
     const u=new URL(a.href,'https://swifly.test');
     assert.equal(u.searchParams.get('provider'),'cinezo');
     assert.equal(u.pathname,'/watch/tv/101');

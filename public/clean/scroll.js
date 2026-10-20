@@ -66,6 +66,7 @@
     // Keep the reference's damping and accumulated wheel destination.
     // Direction changes decelerate that momentum instead of discarding it.
     engine = new window.Lenis({
+      // Preserve the tested ShuttleTV-style reference curve across refresh rates.
       lerp:.1, wheelMultiplier:1, smoothWheel:true, syncTouch:false,
       allowNestedScroll:true, autoRaf:false, virtualScroll:accept
     });

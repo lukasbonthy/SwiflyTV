@@ -90,6 +90,23 @@ test('GET streams a full MP4 and removes a stored verification range', async t =
   assert.equal(seen[0].headers['accept-encoding'], 'identity');
 });
 
+test('Explicit MP4 download uses the same temporary proxy source but streams an attachment', async t => {
+  const upstream = await rangeSource(t);
+  const url = await proxy(t, entry(upstream));
+  const regular = await request(url);
+  assert.equal(regular.headers['content-disposition'], undefined, 'Normal inline playback is unchanged');
+  const downloading = await request(url + '?download=1');
+  assert.equal(downloading.status, 200);
+  assert.deepEqual(downloading.body, movie, 'The complete video is streamed from the existing verified MP4');
+  assert.match(downloading.headers['content-disposition'] || '', /^attachment; filename="swiflytv-opaque-id\.mp4"$/);
+  const head = await request(url + '?download=1', {method:'HEAD'});
+  assert.equal(head.status, 200);
+  assert.match(head.headers['content-disposition'] || '', /^attachment/);
+  const partial = await request(url + '?download=1', {headers:{Range:'bytes=0-3'}});
+  assert.equal(partial.status, 206);
+  assert.deepEqual(partial.body, movie.subarray(0,4),'Resume/range support is preserved');
+});
+
 for (const [range, start, end] of [
   ['bytes=0-3', 0, 3], ['bytes=10-17', 10, 17], ['bytes=30-', 30, movie.length - 1], ['bytes=-5', movie.length - 5, movie.length - 1]
 ]) {

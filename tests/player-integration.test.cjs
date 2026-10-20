@@ -41,9 +41,23 @@ test('The normal watch route renders one native movie player with shared assets 
  const preview=d.querySelector('[data-call-local] video');assert(preview?.hasAttribute('muted'));assert(preview?.closest('[hidden]'),'The optional camera preview starts hidden');
  assert.equal(d.querySelector('.svPlayerPage').dataset.playerId,'101');assert.equal(d.querySelector('h1').textContent.trim(),'Arrival');
  assert(d.querySelector('script[src="/assets/player/player.js?v=234"]'));assert(d.querySelector('script[src="/assets/player/watch-party.js?v=163"]'));
- assert(d.querySelector('link[href="/assets/player/player.css?v=213"]'));assert(d.querySelector('dialog.svWatchPartyDialog'));
+ assert(d.querySelector('link[href="/assets/player/player.css?v=214"]'));assert(d.querySelector('dialog.svWatchPartyDialog'));
  assert.equal(d.querySelector('.dsProxyVideoWaitingShell'),null);assert.equal(d.querySelector('.svPartyHub'),null);
  assert.equal(d.querySelector('[data-sv-player-back]').getAttribute('href'),'/movie/101');
+});
+test('Movie and episode interfaces expose independent playable and downloadable actions',async()=>{
+ const movie=parse(await(await fetch(base+'/watch/movie/101?mode=movie')).text()).window.document;
+ assert(movie.querySelector('a.svPlayerDownload[data-sv-download][href="/api/download/movie/101"]'));
+ const tv=parse(await(await fetch(base+'/watch/tv/101?mode=movie&s=1&e=3')).text()).window.document;
+ assert(tv.querySelector('a.svPlayerDownload[href="/api/download/tv/101?s=1&e=3"]'));
+ const choices=[...tv.querySelectorAll('.svPlayerEpisodeChoice')];
+ assert(choices.length>=3,'Every episode in the player gets an individual download action');
+ assert(choices.every(choice=>choice.querySelector('a[data-player-episode-link]')&&choice.querySelector('a[data-sv-download]')));
+ assert(choices.every(choice=>!choice.querySelector('a a')),'Never nest one link inside another');
+ const detail=parse(await(await fetch(base+'/movie/101')).text()).window.document;
+ assert(detail.querySelector('.svDetailActions a[data-sv-download][href="/api/download/movie/101"]'));
+ const seasonDetail=parse(await(await fetch(base+'/tv/101')).text()).window.document;
+ assert(seasonDetail.querySelectorAll('.svDetailEpisodeChoice a[data-sv-download]').length>=2);
 });
 test('A room invite enters managed movie playback and a create link waits for explicit submission',async()=>{
  for(const [query,managed]of[['roomId=room-one','true'],['party=create','false']]){
@@ -96,7 +110,7 @@ test('Social navigation opens the integrated Party Hub while movie catalog party
  assert(social.querySelector('main.svPartyHub .partyHero'),'Social link should show the proper cinematic Party Hub');
  assert(social.querySelector('.partyNavigation [data-tab="rooms"]'));
  assert(social.querySelector('link[href="/assets/clean/experience.css?v=202"]'));
- assert(social.querySelector('link[href="/assets/player/player.css?v=213"]'));
+ assert(social.querySelector('link[href="/assets/player/player.css?v=214"]'));
  const scripts=[...social.querySelectorAll('script[src]')].map(node=>node.getAttribute('src'));
  const player=scripts.indexOf('/assets/player/player.js?v=234'),party=scripts.findIndex(src=>src.startsWith('/assets/party/party.js?'));
  assert(player>=0&&party>player,'Party Hub must load the shared controller before its room bridge');
