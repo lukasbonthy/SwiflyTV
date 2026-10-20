@@ -66,9 +66,8 @@
     // Keep the reference's damping and accumulated wheel destination.
     // Direction changes decelerate that momentum instead of discarding it.
     engine = new window.Lenis({
-      // A slightly firmer glide reaches its destination in fewer painted
-      // frames without removing Lenis momentum or changing wheel distance.
-      lerp:.15, wheelMultiplier:1, smoothWheel:true, syncTouch:false,
+      // Preserve the tested ShuttleTV-style reference curve across refresh rates.
+      lerp:.1, wheelMultiplier:1, smoothWheel:true, syncTouch:false,
       allowNestedScroll:true, autoRaf:false, virtualScroll:accept
     });
     clock = 1; engine.raf(clock);
