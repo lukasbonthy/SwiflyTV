@@ -33,5 +33,5 @@ test('Licensed movie/episode files download with real bytes and attachments; una
   fs.writeFileSync(path.join(outside,'stolen.mp4'),'outside-data');
   try{fs.symlinkSync(path.join(outside,'stolen.mp4'),path.join(root,'movie','102.mp4'));}catch{}
   const escape=await fetch(base+'/movie/102');assert.equal(escape.status,404,'Never follow an in-root symlink to files outside the licensed directory');
- }finally{await new Promise(resolve=>server.close(resolve));fs.rmSync(root,{recursive:true,force:true});fs.rmSync(outside,{recursive:true,force:true});}
+ }finally{server.closeAllConnections?.();await new Promise(resolve=>server.close(resolve));fs.rmSync(root,{recursive:true,force:true});fs.rmSync(outside,{recursive:true,force:true});}
 });
