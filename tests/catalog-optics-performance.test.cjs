@@ -41,10 +41,9 @@ test('hidden movie-card quick actions avoid allocating dozens of invisible SVG l
   env.finish();
 });
 
-test('offscreen catalog rendering is isolated without hiding player or detail sections',()=>{
+test('catalog paint is isolated without substituting estimated row heights',()=>{
   const css=source('performance.css');
-  assert.match(css,/\.dsContent > \.dsRow\.svCatalogRow\s*\{\s*content-visibility: auto/);
-  assert.match(css,/contain-intrinsic-size: auto 440px/);
-  assert.match(css,/@media \(max-width: 860px\)/);
+  assert.match(css,/\.dsContent > \.dsRow\.svCatalogRow\s*\{\s*contain: layout style paint/);
+  assert.doesNotMatch(css,/contain-intrinsic-size/);
   assert.doesNotMatch(css,/\.svDetailSection\s*\{\s*content-visibility/);
 });

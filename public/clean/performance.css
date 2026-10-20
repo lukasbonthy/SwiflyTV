@@ -57,21 +57,12 @@ body.svCleanShell main > .svHeroLightBridge > .svHeroSpill {
   contain: paint;
 }
 
-/* Each browse rail contains up to 18 posters and dozens of button optics.
-   Below-the-fold rails should not repeatedly lay out and paint their entire
-   subtree. The browser renders each row before it approaches the viewport,
-   remembers its real height, and preserves accessible DOM semantics.
-   Exclude details, modals, player chrome and the featured hero. */
-@supports (content-visibility: auto) {
-  body.svCleanShell .dsContent > .dsRow.svCatalogRow {
-    content-visibility: auto;
-    contain-intrinsic-size: auto 440px;
-  }
-  @media (max-width: 860px) {
-    body.svCleanShell .dsContent > .dsRow.svCatalogRow {
-      contain-intrinsic-size: auto 355px;
-    }
-  }
+/* Keep each row's actual geometry from the first frame. Estimated intrinsic
+   heights changed the scroll range as rows appeared, making a steady glide
+   skip even without a slow frame. Optics are prepared on approach instead;
+   ordinary offscreen poster painting remains culled by the browser. */
+body.svCleanShell .dsContent > .dsRow.svCatalogRow {
+  contain: layout style paint;
 }
 
 
@@ -80,11 +71,6 @@ body.svCleanShell main > .svHeroLightBridge > .svHeroSpill {
 html[data-sv-xbox="true"] body.svCleanShell .dsCardArtwork:not(:focus-within) .dsCardQuickActions .svLiquidPane,
 html[data-sv-xbox="true"] body.svCleanShell .dsCardArtwork:not(:focus-within) .dsPlayDot {
   -webkit-backdrop-filter:none !important;backdrop-filter:none !important;
-}
-@supports (content-visibility:auto) {
-  html[data-sv-tv="true"] body.svCleanShell .dsContent > .dsRow.svCatalogRow {
-    content-visibility:auto;contain-intrinsic-size:auto 390px;
-  }
 }
 /* Bounding poster-row paint stops distant rows invalidating the viewport. */
 html[data-sv-xbox="true"] body.svCleanShell .dsContent > .dsRow .movieRail {
@@ -110,10 +96,16 @@ html[data-sv-xbox="true"] body.svCleanShell .svAuroraBackground::after,
 html[data-sv-xbox="true"] body.svCleanShell .svAuroraRibbon--second {display:none !important}
 html[data-sv-xbox="true"] body.svCleanShell .dsHeroHasTrailer .dsHeroBg {animation:none !important}
 
-/* Skip painting card interiors that are far offscreen in grids. The card DOM
-   and keyboard targets remain available and become visible on approach. */
-@supports(content-visibility:auto){
-  body.svCleanShell .dsGrid > .movieCard{content-visibility:auto;contain-intrinsic-size:auto 360px}
+/* Grid cards also keep their real height rather than a placeholder estimate. */
+body.svCleanShell .dsGrid > .movieCard {contain:layout style paint}
+
+/* Bound artwork decode size to the display. Wide desktops retain the full
+   photograph; smaller screens use the same composition at a suitable size. */
+@media (max-width:860px) {
+  body.svCleanShell :is(.dsHeroBg,.browseHeroBg) {background-image:var(--sv-art-mobile) !important}
+}
+@media (min-width:1600px) {
+  body.svCleanShell :is(.dsHeroBg,.browseHeroBg) {background-image:var(--sv-art-large) !important}
 }
 
 /* Keep long horizontal catalog rails in their own paint boundary while the

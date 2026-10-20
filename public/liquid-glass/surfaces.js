@@ -28,10 +28,10 @@
   const panels = ['.svSearchPopup', '.dsSearchBox form', '.genreDropdownMenu', '.dsDetailTabsV121', '.dsAuthCard', '.dsAuthSwitch', '.dsProfileManagerPanel', '.dsAccountCard', '.dsProfileSelectCard', '.dsDetailGridV121 aside', '.dsAboutGridV121', '.dsSeasonBlock', '#controlPanel', '#toast', 'dialog','.svPlayerModes','.svPlayerPopoverBody',partyPanels].join(',');
   const selector = controls + ',' + panels, entries = new Map(), pending = new Set();
   const xbox = /Xbox|XboxOne|Xbox Series/i.test(navigator.userAgent) || document.documentElement.dataset.svXbox === 'true';
-  // On Xbox defer below-the-fold catalog optics until their controls approach
-  // the screen. This retains the exact original refraction on visible buttons.
+  // Prepare a row shortly before it reaches the screen on every device.
+  // Building hundreds of offscreen panes up front delays the first interaction.
   let nearObserver = null;
-  const nearPending = new WeakSet(), nearReady = new WeakSet();
+  const nearPending = new Set(), nearReady = new WeakSet();
   const rendererProperties = ['--sv-glass-default-tint', '--sv-glass-saturation', '--sv-glass-filter'];
   let intersection, mutations, frame = 0, stopped = false, removed = false;
   // A catalog row has 18 posters and three action lenses per poster.
@@ -145,11 +145,11 @@
     // Guard BOTH initial scans and later intersection callbacks: the latter
     // pass approached=true and used to recreate every hidden poster lens.
     if (xbox && document.documentElement.dataset.svTv === 'true' && host.closest?.('.dsCardQuickActions')) return;
-    if (xbox && !approached && nearObserver && !host.matches?.(firstScreenActions) &&
+    if (!approached && nearObserver && !host.matches?.(firstScreenActions) &&
         !host.closest?.('.svDetailDialog[open]')) {
       // Catalog rows are the correct unit of visibility: observing each of
       // hundreds of buttons created long queues and defeated lazy startup.
-      const row = host.closest?.('.dsContent .dsRow,.dsContent .dsGrid,.dsContent .movieGrid,.svPlayerEpisodePicker,.svPlayerEpisodeGrid');
+      const row = host.closest?.('.dsContent .dsRow,.dsContent .dsGrid > .movieCard,.dsContent .movieGrid > .movieCard,.svPlayerEpisodePicker,.svPlayerEpisodeGrid');
       if (row && !nearReady.has(row)) {
         if (!nearPending.has(row)) {nearPending.add(row);nearObserver.observe(row);}
         return;
@@ -217,7 +217,11 @@
   function schedule() {if (!stopped && !document.hidden && (pending.size || removed) && !frame) frame = requestAnimationFrame(reconcile);}
   function reconcile() {
     frame = 0; if (stopped || document.hidden) return;
-    if (removed) {for (const entry of entries.values()) if (!entry.host.isConnected) release(entry); removed = false;}
+    if (removed) {
+      for (const entry of entries.values()) if (!entry.host.isConnected) release(entry);
+      for (const row of nearPending) if(!row.isConnected){nearObserver?.unobserve(row);nearPending.delete(row);}
+      removed = false;
+    }
     const roots = [...pending].filter(root => {
       for (let parent = root.parentElement; parent; parent = parent.parentElement) if (pending.has(parent)) return false;
       return true;
@@ -230,9 +234,10 @@
     if (visible) hoveredArtworks.add(artwork);
     else hoveredArtworks.delete(artwork);
     for (const control of artwork.querySelectorAll('.dsCardQuickActions .dsMiniBtn')) {
+      if (visible && !entries.has(control)) ensure(control,true);
       const entry = entries.get(control);
       if (!entry) continue;
-      if (visible) activate(entry);
+      if (visible) {entry.visible=true;activate(entry);}
       else if (entry.opticController) deactivate(entry);
     }
   }
@@ -253,6 +258,8 @@
     }
   }
   function onCardFocus(event) {
+    const host=event.target instanceof Element ? event.target.closest(selector) : null;
+    if(host&&!entries.has(host)){ensure(host,true);const entry=entries.get(host);if(entry){entry.visible=true;activate(entry);}}
     const artwork = event.target instanceof Element ? event.target.closest('.dsCardArtwork') : null;
     if (artwork) syncCardActions(artwork, true);
   }
@@ -290,7 +297,7 @@
       tvModeObserver = new MutationObserver(clearHiddenTvOptics);
       tvModeObserver.observe(document.documentElement,{attributes:true,attributeFilter:['data-sv-tv']});
     }
-    if (xbox && typeof IntersectionObserver === 'function') {
+    if (typeof IntersectionObserver === 'function') {
       nearObserver = new IntersectionObserver(changes => {
         for (const change of changes) {
           if (!change.isIntersecting) continue;
@@ -364,7 +371,7 @@
   }
   window.SwiflyGlassSurfaces = Object.freeze({refresh(root = document) {scan(root);}, destroy() {
     if (stopped) return; stopped = true;
-    nearObserver?.disconnect(); nearObserver = null;
+    nearObserver?.disconnect(); nearObserver = null;nearPending.clear();
     tvModeObserver?.disconnect(); tvModeObserver = null;
     document.removeEventListener('DOMContentLoaded', boot); document.removeEventListener('visibilitychange', onVisibility);
     document.removeEventListener('swifly:card-scroll-end', onCardScrollEnd);

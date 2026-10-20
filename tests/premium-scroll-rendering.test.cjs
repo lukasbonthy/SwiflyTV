@@ -44,6 +44,52 @@ async function catalog(browser, options = {}) {
   } finally {if (!ready) await new Promise(resolve => api.io.close(resolve));}
 }
 
+for (const width of [1280,390]) test(width+'px catalog keeps its scroll geometry stable as distant rows render', {skip:!available&&'Chromium is not installed'},async()=>{
+ const browser=await chromium.launch({headless:true});
+ try{
+  const page=await catalog(browser,{viewport:{width,height:900},hasTouch:width<500,isMobile:width<500});
+  await page.waitForFunction(()=>document.querySelector('.netflixNav > .svLiquidPane')?.dataset.swiflyRenderer==='svg');
+  const heights=await page.evaluate(async()=>{
+   await document.fonts.ready;
+   const heights=[document.documentElement.scrollHeight];
+   for(const top of [600,1000,1500,2000,2500]){
+    SwiflyMotion.stop();window.scrollTo({top,behavior:'instant'});
+    await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);
+    heights.push(document.documentElement.scrollHeight);
+   }
+   return heights;
+  });
+  assert(Math.max(...heights)-Math.min(...heights)<2,'Rendering the next row must not shrink the page under an active scroll: '+JSON.stringify(heights));
+ }finally{await browser.close();}
+});
+
+test('distant catalog controls defer their panes and prime immediately for keyboard focus',{skip:!available&&'Chromium is not installed'},async()=>{
+ const browser=await chromium.launch({headless:true});
+ try{
+  const page=await catalog(browser);
+  await page.waitForFunction(()=>document.querySelector('.netflixNav > .svLiquidPane')?.dataset.swiflyRenderer==='svg');
+  const last=page.locator('.svCatalogRow').last();
+  assert.equal(await last.locator('.svNavMatchedLens').count(),0,'Distant rows must not build hidden optical controls at startup');
+  await last.locator('.dsMiniBtn').first().focus();
+  await page.waitForFunction(()=>document.activeElement?.querySelector('.svNavMatchedLens')?.dataset.swiflyRenderer==='svg');
+  assert.equal(await last.locator('.dsCardQuickActions').first().evaluate(n=>getComputedStyle(n).opacity),'1');
+  await page.waitForFunction(()=>!document.documentElement.dataset.svScrollGlass);
+  assert.match(await last.locator('.dsMiniBtn').first().evaluate(n=>getComputedStyle(n.querySelector('.svNavMatchedLens')).backdropFilter),/url\(/);
+ }finally{await browser.close();}
+});
+
+test('featured artwork uses a bounded image on phones and preserves full resolution on wide screens',{skip:!available&&'Chromium is not installed'},async()=>{
+ const browser=await chromium.launch({headless:true});
+ try{
+  const page=await catalog(browser,{viewport:{width:390,height:900}});
+  for(const [width,size] of [[390,'w780'],[1280,'w1280'],[1920,'original']]){
+   await page.setViewportSize({width,height:900});
+   const image=await page.locator('.dsHeroBg').evaluate(n=>getComputedStyle(n).backgroundImage);
+   assert(image.includes('/'+size+'/'),'Artwork should match the display size: '+width+'px '+image);
+  }
+ }finally{await browser.close();}
+});
+
 test('the real catalog shell eases wheel input without changing its glass and preserves native modal scrolling', {skip:!available && 'Chromium is not installed'}, async () => {
   const browser = await chromium.launch({headless:true});
   try {
@@ -254,12 +300,12 @@ for (const width of [390, 1440, 1920]) test(`catalog dates fit completely inside
       await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
       const result = await row.evaluate(node => {
         const bounds = node.getBoundingClientRect();
-        return {top:bounds.top, bottom:bounds.bottom, visibility:getComputedStyle(node).contentVisibility,
+        return {top:bounds.top, bottom:bounds.bottom, containment:getComputedStyle(node).contain,
           dates:[...node.querySelectorAll('.dsCardMeta')].map(meta => {
             const rect = meta.getBoundingClientRect(); return {text:meta.textContent, top:rect.top, bottom:rect.bottom, height:rect.height};
           })};
       });
-      assert.equal(result.visibility, 'auto', 'offscreen rendering containment stays enabled');
+      assert.match(result.containment,/paint|content/,'each row keeps its paint boundary');
       assert.equal(result.dates.length, 18);
       for (const date of result.dates) {
         assert(date.height >= 12, 'date glyphs retain their full line height');

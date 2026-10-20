@@ -12,6 +12,8 @@ function welcomeMarkup({siteName = 'SwiflyTV', brand = 'SwiflyTV', redirect = '%
   const hasTitles = [trending,movies,television].some(list => list.length);
   const signup = '/signup?redirect='+redirect, login = '/login?redirect='+redirect;
   const scene = hero?.backdrop_path ? backdropUrl(hero.backdrop_path) : '';
+  const sceneSmall = hero?.backdrop_path ? backdropUrl(hero.backdrop_path,'w780') : '';
+  const spill = hero?.backdrop_path ? backdropUrl(hero.backdrop_path,'w300') : '';
   const seen = new Set();
   const selection = [{item:hero,type:typeOf(hero)}, ...trending.map(item => ({item,type:'movie'})), ...television.map(item => ({item,type:'tv'})), ...movies.map(item => ({item,type:'movie'}))].filter(({item,type}) => {
     if (!titleOf(item) || item?.id == null || item.id === '') return false;
@@ -37,7 +39,7 @@ function welcomeMarkup({siteName = 'SwiflyTV', brand = 'SwiflyTV', redirect = '%
       <div class="dsWelcomeNavLinks"><a href="#discovery">Browse</a><a href="${escape(login)}">Log in</a><button class="svWelcomeStudio" type="button" data-st-open aria-label="Open appearance Studio" aria-controls="controlPanel" aria-expanded="false" title="Appearance Studio">${studioIcon}</button></div>
     </nav>
     <section class="dsWelcomeHero" aria-labelledby="svWelcomeTitle" data-has-art="${Boolean(showcase)}">
-      ${scene ? `<div class="dsWelcomeHeroBg" aria-hidden="true"><img src="${escape(scene)}" alt="" width="1280" height="720" loading="eager" fetchpriority="high" decoding="async"></div>` : ''}
+      ${scene ? `<div class="dsWelcomeHeroBg" aria-hidden="true"><img src="${escape(scene)}" srcset="${escape(sceneSmall)} 780w, ${escape(scene)} 1280w" sizes="100vw" alt="" width="1280" height="720" loading="eager" fetchpriority="high" decoding="async"></div>` : ''}
       <div class="svWelcomeHeroGrid">
         <div class="dsWelcomeHeroCopy">
           <span class="dsEyebrow"><i aria-hidden="true"></i>${escape(siteName)} · Movies &amp; series</span>
@@ -50,7 +52,7 @@ function welcomeMarkup({siteName = 'SwiflyTV', brand = 'SwiflyTV', redirect = '%
       </div>
       <a class="svWelcomeDiscoverLink" href="#discovery"><span>A little inspiration for tonight</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14m-5-5 5 5 5-5"/></svg></a>
     </section>
-    ${scene ? `<div class="svWelcomeLightBridge" aria-hidden="true" style="--sv-light-art:url('${escape(scene)}')"><span class="svWelcomeSpill"><img src="${escape(scene)}" alt="" width="1280" height="720" loading="lazy" decoding="async"></span></div>` : ''}
+    ${scene ? `<div class="svWelcomeLightBridge" aria-hidden="true" style="--sv-light-art:url('${escape(spill)}')"><span class="svWelcomeSpill"><img src="${escape(spill)}" alt="" width="300" height="169" loading="lazy" decoding="async"></span></div>` : ''}
     <section id="discovery" class="dsWelcomeDiscovery" aria-labelledby="svWelcomeDiscoveryTitle" tabindex="-1">
       <div class="svWelcomeDiscoveryIntro"><div><span>FIND YOUR NEXT FAVORITE</span><h2 id="svWelcomeDiscoveryTitle">What are you in the mood for?</h2></div><p>A world of stories, ready to explore.</p></div>
       ${hasTitles ? renderRail('Trending movies',trending,'movie')+renderRail('Popular series',television,'tv')+renderRail('Popular movies',movies,'movie') : `<section class="dsWelcomeFallback"><h3>Discover movies and series</h3><p>Connect TMDB to show trending titles here. You can still create your profile and sign in.</p><a class="dsSecondaryBtn" href="${escape(signup)}">Create account ${arrow}</a></section>`}
