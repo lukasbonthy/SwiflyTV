@@ -38,7 +38,7 @@ test('Standalone movie details offer an accessible party action for the displaye
   assert.equal(action.textContent.trim(), 'Start a watch party');
   assert.equal(action.getAttribute('aria-label'), 'Start a watch party for ' + movie.title);
   assert(action.classList.contains('dsSecondaryBtn'));
-  assert.equal(action.querySelector('svg.svIcon')?.getAttribute('aria-hidden'), 'true');
+  assert.equal(action.querySelector('i.svIcon.fa-user-group')?.getAttribute('aria-hidden'), 'true');
   assert.equal(action.hasAttribute('data-play-id'), false, 'Starting a party must not count as playback');
   assert(d.querySelector('.svDetailActions a[href="/watch/movie/101?mode=movie"]'));
   assert(d.querySelector('.svDetailActions a[href="/watch/movie/101?mode=trailer"]'));
