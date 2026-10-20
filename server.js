@@ -6418,7 +6418,11 @@ function cleanIcon(name) {
     people: '<circle cx="9" cy="8" r="3"/><path d="M2 21v-3a7 7 0 0 1 14 0v3M16 5a3 3 0 0 1 0 6M18 14a6 6 0 0 1 4 5v2"/>',
     arrow: '<path d="M5 12h14m-6-6 6 6-6 6"/>',
     tv: '<rect x="3" y="5" width="18" height="13" rx="3"/><path d="M8 22h8M8 2l4 3 4-3"/>',
-    film: '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7 3v18M17 3v18M3 8h4M3 16h4M17 8h4M17 16h4"/>'
+    film: '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7 3v18M17 3v18M3 8h4M3 16h4M17 8h4M17 16h4"/>',
+    'play-circle': '<circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4Z" fill="currentColor" stroke="none"/>',
+    download: '<path d="M12 3v12m-4-4 4 4 4-4M5 17v3h14v-3"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    check: '<path d="m5 12 4.5 4.5L19 7"/>',
   };
   return `<svg class="svIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${paths[name] || paths.info}</svg>`;
 }
@@ -6448,7 +6452,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
   <link rel="preconnect" href="https://www.youtube.com" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700;800&family=Unbounded:wght@500;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700;800&family=Unbounded:wght@500;700;800&display=swap" rel="stylesheet" />
   ${extraHead}
   <link rel="stylesheet" href="/assets/clean/base.css?v=163" />
 
@@ -6541,6 +6545,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/clean/performance.css?v=214" />
     <link rel="stylesheet" href="/assets/clean/tv.css?v=5" />
     <link rel="stylesheet" href="/assets/clean/details-premium.css?v=1" />
+    <link rel="stylesheet" href="/assets/clean/details-clarity.css?v=1" />
 </head>
 <body class="svCleanShell">
 
@@ -6721,6 +6726,32 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       };
     }
 
+    // Library state refreshes must not replace a mounted glass lens with
+    // text glyphs. Update only the icon span on detail-page controls.
+    function decorateDetailGlyph(button, name) {
+      if (!button.closest(".svDetailActions")) return false;
+      var paths = {
+        plus: '<path d="M12 5v14M5 12h14"/>',
+        check: '<path d="m5 12 4.5 4.5L19 7"/>',
+        heart: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/>',
+        heartFilled: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" fill="currentColor"/>'
+      };
+      var glyph = button.querySelector(":scope > .svDetailActionGlyph");
+      if (!glyph) {
+        var initial = button.querySelector(":scope > svg.svIcon");
+        if (initial) initial.remove();
+        glyph = document.createElement("span");
+        glyph.className = "svDetailActionGlyph";
+        glyph.setAttribute("aria-hidden", "true");
+        button.appendChild(glyph);
+      }
+      if (glyph.dataset.kind !== name) {
+        glyph.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" focusable="false" aria-hidden="true">' + paths[name] + '</svg>';
+        glyph.dataset.kind = name;
+      }
+      return true;
+    }
+
     function syncLibraryButtons() {
       const watchlist = readWatchlist();
       const liked = readLiked();
@@ -6732,7 +6763,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
         const isSaved = savedWatch.has(key);
         button.classList.toggle("saved", isSaved);
         button.setAttribute("aria-pressed", isSaved ? "true" : "false");
-        button.textContent = isSaved ? "✓" : (button.dataset.long === "true" ? "Save to My List" : "+");
+        if (!decorateDetailGlyph(button, isSaved ? "check" : "plus")) button.textContent = isSaved ? "✓" : (button.dataset.long === "true" ? "Save to My List" : "+");
         button.title = isSaved ? "Remove from My List" : "Add to My List";
         button.setAttribute("aria-label", (isSaved ? "Remove " : "Add ") + (button.dataset.watchTitle || "title") + (isSaved ? " from My List" : " to My List"));
       });
@@ -6742,7 +6773,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
         const isLiked = savedLiked.has(key);
         button.classList.toggle("liked", isLiked);
         button.setAttribute("aria-pressed", isLiked ? "true" : "false");
-        button.textContent = isLiked ? "♥" : "♡";
+        if (!decorateDetailGlyph(button, isLiked ? "heartFilled" : "heart")) button.textContent = isLiked ? "♥" : "♡";
         button.title = isLiked ? "Remove from Liked" : "Like this";
         button.setAttribute("aria-label", (isLiked ? "Unlike " : "Like ") + (button.dataset.likeTitle || "title"));
       });
@@ -8849,6 +8880,16 @@ async function detailPage(req, res, type) {
   const detailsDate = type === "tv" ? details.first_air_date : details.release_date;
   const year = getYear(detailsDate);
   const heroBg = fullBackdrop(details.backdrop_path || details.poster_path);
+  // Use another still from the same film for the synopsis, never a random
+  // stock image. TMDB already returned these via append_to_response=images.
+  // Language-neutral backdrops favor photography without overprinted titles.
+  const storyStill = (Array.isArray(details.images?.backdrops) ? details.images.backdrops : [])
+    .filter(image => image.file_path && image.file_path !== details.backdrop_path &&
+      (!image.iso_639_1 || image.iso_639_1 === "en") && Number(image.aspect_ratio) > 1.4)
+    .sort((a, b) => Number(!b.iso_639_1) - Number(!a.iso_639_1) ||
+      Number(b.vote_count || 0) - Number(a.vote_count || 0) ||
+      Number(b.vote_average || 0) - Number(a.vote_average || 0))[0];
+  const storyArt = img(storyStill?.file_path || details.backdrop_path || details.poster_path, "w780");
   const logos = (details.images?.logos || []).filter(image => image.file_path && (!image.iso_639_1 || image.iso_639_1 === "en"))
     .sort((a, b) => Number(b.iso_639_1 === "en") - Number(a.iso_639_1 === "en") || Number(b.vote_average || 0) - Number(a.vote_average || 0));
   const titleLogo = logos[0] ? img(logos[0].file_path, "w500") : "";
@@ -8884,7 +8925,7 @@ async function detailPage(req, res, type) {
     const number = Number(season.season_number);
     const total = Math.max(0, Number(season.episode_count || 0));
     const shown = Math.min(total, 24);
-    const episodeLinks = Array.from({ length: shown }, (_, i) => `<span class="svDetailEpisodeChoice"><a class="svDetailEpisodeTile" href="/watch/tv/${encodeURIComponent(id)}?mode=movie&s=${number}&e=${i + 1}" aria-label="Watch season ${number} episode ${i + 1}"><span class="svEpisodeOrdinal">${String(i + 1).padStart(2, "0")}</span><span>Episode ${i + 1}</span>${cleanIcon("play")}</a><a class="svDetailEpisodeDownload" href="/download/tv/${encodeURIComponent(id)}?s=${number}&e=${i + 1}" data-sv-download data-sv-download-type="episode" aria-label="Download season ${number} episode ${i + 1}" title="Download episode">↓</a></span>`).join("");
+    const episodeLinks = Array.from({ length: shown }, (_, i) => `<span class="svDetailEpisodeChoice"><a class="svDetailEpisodeTile" href="/watch/tv/${encodeURIComponent(id)}?mode=movie&s=${number}&e=${i + 1}" aria-label="Watch season ${number} episode ${i + 1}"><span class="svEpisodeOrdinal">${String(i + 1).padStart(2, "0")}</span><span>Episode ${i + 1}</span>${cleanIcon("play")}</a><a class="svDetailEpisodeDownload" href="/download/tv/${encodeURIComponent(id)}?s=${number}&e=${i + 1}" data-sv-download data-sv-download-type="episode" aria-label="Download season ${number} episode ${i + 1}" title="Download episode">${cleanIcon("download")}</a></span>`).join("");
     return `<details class="svSeason"${index === 0 ? " open" : ""}><summary><span class="svSeasonIdentity"><b class="svSeasonNumber">${String(number).padStart(2, "0")}</b><strong>${escapeHtml(season.name || `Season ${number}`)}</strong></span><span>${total} episodes</span></summary>
       ${season.overview ? `<p>${escapeHtml(season.overview)}</p>` : ""}<div class="dsEpisodeChips">${episodeLinks}${total > shown ? `<a href="/watch/tv/${encodeURIComponent(id)}?mode=movie&s=${number}&e=${shown + 1}">Continue with episode ${shown + 1}</a>` : ""}</div></details>`;
   }).join("");
@@ -8911,18 +8952,18 @@ async function detailPage(req, res, type) {
           </div>
           <div class="svDetailActions">
             <a class="dsPrimaryBtn" href="${watchHref}" ${mediaDataAttributes("play", details, type)}>${cleanIcon("play")}${escapeHtml(playLabel)}</a>
-            ${trailers.length ? `<a class="dsSecondaryBtn" href="/watch/${type}/${encodeURIComponent(id)}?mode=trailer">${cleanIcon("play")}Trailer</a>` : ""}
-            <a class="dsSecondaryBtn svDownloadAction" href="/download/${type}/${encodeURIComponent(id)}${type==="tv"?`?s=${startSeason}&e=1`:""}" data-sv-download data-sv-download-type="${type==="tv"?"episode":"movie"}" aria-label="Download ${type==="tv"?"first episode of "+escapeHtml(title):escapeHtml(title)}">↓ Download</a>
-            ${partyId ? `<a class="dsSecondaryBtn" href="${escapeHtml(partyMediaWatchUrl({movieId:partyId,type,season:String((details.seasons||[]).filter(row=>Number.isSafeInteger(row.season_number)&&row.season_number>0).sort((a,b)=>a.season_number-b.season_number)[0]?.season_number||1),episode:"1"},"",true))}" data-sv-party-movie-id="${partyId}" data-sv-party-type="${type}" aria-label="Start a watch party for ${escapeHtml(title)}">${cleanIcon("user")}Start a watch party</a>` : ""}
-            <button class="dsIconBtn" type="button" aria-label="Add ${escapeHtml(title)} to My List" ${mediaDataAttributes("watch", details, type)}>＋</button>
-            <button class="dsIconBtn dsHeartBtn" type="button" aria-label="Like ${escapeHtml(title)}" ${mediaDataAttributes("like", details, type)}>♡</button>
+            ${trailers.length ? `<a class="dsSecondaryBtn" href="/watch/${type}/${encodeURIComponent(id)}?mode=trailer">${cleanIcon("play-circle")}Trailer</a>` : ""}
+            <a class="dsSecondaryBtn svDownloadAction" href="/download/${type}/${encodeURIComponent(id)}${type==="tv"?`?s=${startSeason}&e=1`:""}" data-sv-download data-sv-download-type="${type==="tv"?"episode":"movie"}" aria-label="Download ${type==="tv"?"first episode of "+escapeHtml(title):escapeHtml(title)}">${cleanIcon("download")}Download</a>
+            ${partyId ? `<a class="dsSecondaryBtn" href="${escapeHtml(partyMediaWatchUrl({movieId:partyId,type,season:String((details.seasons||[]).filter(row=>Number.isSafeInteger(row.season_number)&&row.season_number>0).sort((a,b)=>a.season_number-b.season_number)[0]?.season_number||1),episode:"1"},"",true))}" data-sv-party-movie-id="${partyId}" data-sv-party-type="${type}" aria-label="Start a watch party for ${escapeHtml(title)}">${cleanIcon("people")}Start a watch party</a>` : ""}
+            <button class="dsIconBtn" type="button" aria-label="Add ${escapeHtml(title)} to My List" ${mediaDataAttributes("watch", details, type)}>${cleanIcon("plus")}</button>
+            <button class="dsIconBtn dsHeartBtn" type="button" aria-label="Like ${escapeHtml(title)}" ${mediaDataAttributes("like", details, type)}>${cleanIcon("heart")}</button>
           </div>
         </div>
         ${details.poster_path ? `<div class="svDetailPosterCard" aria-hidden="true"><img src="${escapeHtml(img(details.poster_path, "w342"))}" alt="" decoding="async"/><span>${type === "tv" ? "The series" : "The film"}</span></div>` : ""}
       </section>
       <div class="svDetailBody">
         <nav class="svDetailChapterNav" aria-label="Title sections"><a href="#overview">The story</a>${castHtml ? '<a href="#cast">Cast</a>' : ""}${seasonHtml ? '<a href="#episodes">Episodes</a>' : ""}${collectionHtml ? '<a href="#collection">Collection</a>' : ""}<a href="#details">Film notes</a></nav>
-        <section id="overview" class="svDetailSection svDetailOverview"><div><span class="svCinemaEyebrow">THE STORY</span><h2>A closer look</h2></div><p>${escapeHtml(details.overview || "No overview available yet.")}</p></section>
+        <section id="overview" class="svDetailSection svDetailOverview" style="--sv-story-art:url('${escapeHtml(storyArt)}')"><div><span class="svCinemaEyebrow">THE STORY</span><h2>A closer look</h2></div><p>${escapeHtml(details.overview || "No overview available yet.")}</p></section>
         ${castHtml ? `<section id="cast" class="svDetailSection"><h2>Cast</h2><div class="svDetailCastRail" aria-label="Cast">${castHtml}</div></section>` : ""}
         ${seasonHtml ? `<section id="episodes" class="svDetailSection"><h2>Episodes</h2>${seasonHtml}</section>` : ""}
         ${collectionHtml}
