@@ -6406,34 +6406,25 @@ function navLink(href, label, key, active) {
   return `<a class="${active === key ? "active" : ""}" href="${href}"${active === key ? ' aria-current="page"' : ""}>${label}</a>`;
 }
 
-// Font Awesome Free 6.5.2, via the existing on-demand stylesheet.
-// Decorative icons are hidden from assistive technology; the containing
-// links and buttons already have meaningful labels.
 function cleanIcon(name) {
-  const names = {
-    search: "fa-solid fa-magnifying-glass",
-    settings: "fa-solid fa-sliders",
-    user: "fa-solid fa-user",
-    play: "fa-solid fa-play",
-    info: "fa-solid fa-circle-info",
-    bookmark: "fa-regular fa-bookmark",
-    heart: "fa-regular fa-heart",
-    heartFilled: "fa-solid fa-heart",
-    people: "fa-solid fa-user-group",
-    arrow: "fa-solid fa-arrow-right",
-    back: "fa-solid fa-chevron-left",
-    tv: "fa-solid fa-tv",
-    film: "fa-solid fa-film",
-    "play-circle": "fa-regular fa-circle-play",
-    download: "fa-solid fa-download",
-    plus: "fa-solid fa-plus",
-    check: "fa-solid fa-check",
-    star: "fa-solid fa-star",
-    close: "fa-solid fa-xmark",
-    pencil: "fa-solid fa-pen",
-    profile: "fa-solid fa-id-badge"
+  const paths = {
+    search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/>',
+    settings: '<path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="currentColor"/><circle cx="15" cy="17" r="3" fill="currentColor"/>',
+    user: '<circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>',
+    play: '<path d="m9 5 11 7-11 7Z" fill="currentColor" stroke="none"/>',
+    info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v.5"/>',
+    bookmark: '<path d="M6 3h12v18l-6-4-6 4Z"/>',
+    heart: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/>',
+    people: '<circle cx="9" cy="8" r="3"/><path d="M2 21v-3a7 7 0 0 1 14 0v3M16 5a3 3 0 0 1 0 6M18 14a6 6 0 0 1 4 5v2"/>',
+    arrow: '<path d="M5 12h14m-6-6 6 6-6 6"/>',
+    tv: '<rect x="3" y="5" width="18" height="13" rx="3"/><path d="M8 22h8M8 2l4 3 4-3"/>',
+    film: '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7 3v18M17 3v18M3 8h4M3 16h4M17 8h4M17 16h4"/>',
+    'play-circle': '<circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4Z" fill="currentColor" stroke="none"/>',
+    download: '<path d="M12 3v12m-4-4 4 4 4-4M5 17v3h14v-3"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    check: '<path d="m5 12 4.5 4.5L19 7"/>',
   };
-  return `<i class="svIcon ${names[name] || names.info}" aria-hidden="true"></i>`;
+  return `<svg class="svIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${paths[name] || paths.info}</svg>`;
 }
 
 function mediaDataAttributes(prefix, item = {}, type = "") {
@@ -6509,7 +6500,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
     ${player || active === "watch" || active === "social" ? '<script defer src="https://cdn.jsdelivr.net/npm/hls.js@1.7.3/dist/hls.min.js"></script>' : ""}
 
-    ${(showNavigation || /fa-(?:solid|regular|brands)/.test(body)) ? '<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin /><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />' : ""}
+    ${body.includes("fa-solid") ? '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />' : ""}
     ${player || partyBrowse || active === "social" ? '<script defer src="/socket.io/socket.io.js"></script>' : ""}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/modern-normalize@2.0.0/modern-normalize.min.css" />
     <link rel="stylesheet" href="/assets/liquid-glass/liquid-glass.css?v=222" />
@@ -6555,7 +6546,6 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/clean/tv.css?v=5" />
     <link rel="stylesheet" href="/assets/clean/details-premium.css?v=1" />
     <link rel="stylesheet" href="/assets/clean/details-clarity.css?v=2" />
-    <link rel="stylesheet" href="/assets/clean/fontawesome-ui.css?v=1" />
 </head>
 <body class="svCleanShell">
 
@@ -6622,8 +6612,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
           <div class="dsProfileDropdown svLiquidDropdown">
             <div class="svLiquidPane" data-swifly-glass data-glass-tint="0.2" data-glass-saturation="1" data-glass-radius="22" aria-hidden="true"></div>
             <button class="svTvMenuToggle" type="button" data-sv-tv-toggle aria-pressed="false"><span>${cleanIcon("tv")}</span><b>TV mode</b><small data-sv-tv-state>Off</small></button>
-            <a href="/profiles"><span>${cleanIcon("user")}</span><b>Switch profile</b></a>
-            <a href="/profiles/manage"><span>${cleanIcon("pencil")}</span><b>Manage profiles</b></a>
+            <a href="/profiles"><span>☺</span><b>Switch profile</b></a>
+            <a href="/profiles/manage"><span>✎</span><b>Manage profiles</b></a>
             <a href="/account"><span>⚙</span><b>Account</b></a>
             <a href="/continue-watching"><span>▶</span><b>Continue watching</b></a>
             <a href="/my-list"><span>＋</span><b>My List</b></a>
@@ -6740,15 +6730,15 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     // text glyphs. Update only the icon span on detail-page controls.
     function decorateDetailGlyph(button, name) {
       if (!button.closest(".svDetailActions")) return false;
-      var icons = {
-        plus: "fa-solid fa-plus",
-        check: "fa-solid fa-check",
-        heart: "fa-regular fa-heart",
-        heartFilled: "fa-solid fa-heart"
+      var paths = {
+        plus: '<path d="M12 5v14M5 12h14"/>',
+        check: '<path d="m5 12 4.5 4.5L19 7"/>',
+        heart: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/>',
+        heartFilled: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" fill="currentColor"/>'
       };
       var glyph = button.querySelector(":scope > .svDetailActionGlyph");
       if (!glyph) {
-        var initial = button.querySelector(":scope > .svIcon");
+        var initial = button.querySelector(":scope > svg.svIcon");
         if (initial) initial.remove();
         glyph = document.createElement("span");
         glyph.className = "svDetailActionGlyph";
@@ -6756,13 +6746,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
         button.appendChild(glyph);
       }
       if (glyph.dataset.kind !== name) {
-        var icon = glyph.querySelector("i");
-        if (!icon) {
-          icon = document.createElement("i");
-          glyph.replaceChildren(icon);
-        }
-        icon.className = icons[name] || icons.plus;
-        icon.setAttribute("aria-hidden", "true");
+        glyph.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" focusable="false" aria-hidden="true">' + paths[name] + '</svg>';
         glyph.dataset.kind = name;
       }
       return true;
@@ -8949,7 +8933,7 @@ async function detailPage(req, res, type) {
 
   const body = `<main class="dsDetailPage svDetailPage svCinemaPage" data-cinema-page="details">
     <article class="dsDetailShell svTitleDetails" aria-labelledby="svDetailTitle" data-detail-id="${escapeHtml(id)}" data-detail-type="${type}" style="--sv-detail-art:url(\'${escapeHtml(heroBg)}\');--sv-xbox-detail-art:url(\'${escapeHtml(img(details.backdrop_path || details.poster_path, "w780"))}\')">
-      <a class="dsSecondaryBtn svDetailReturn" href="/" data-sv-details-back aria-label="Back to browsing">${cleanIcon("back")}Back to browsing</a>
+      <a class="dsSecondaryBtn svDetailReturn" href="/" data-sv-details-back aria-label="Back to browsing"><svg class="svIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>Back to browsing</a>
       <section class="svDetailHero">
         <div class="svDetailBackdrop" style="background-image:url('${escapeHtml(heroBg)}');--sv-xbox-art:url('${escapeHtml(img(details.backdrop_path || details.poster_path, "w780"))}')"></div><div class="svDetailShade"></div>
         <div class="svDetailIdentity" data-cinema-reveal>
@@ -8957,7 +8941,7 @@ async function detailPage(req, res, type) {
           <h1 id="svDetailTitle" class="svDetailTitle"><span class="svDetailTitleText">${escapeHtml(title)}</span>${titleLogo ? `<img class="svDetailLogo" src="${escapeHtml(titleLogo)}" alt="" aria-hidden="true" decoding="async" />` : ""}</h1>
           ${genreHtml ? `<div class="svDetailGenres">${genreHtml}</div>` : ""}
           <div class="svDetailFacts">
-            ${Number(details.vote_average) > 0 ? `<span class="svDetailScore">${cleanIcon("star")}${escapeHtml(formatRating(details.vote_average))}/10<small>TMDB</small></span>` : ""}
+            ${Number(details.vote_average) > 0 ? `<span class="svDetailScore"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.9-6.2-3.3-6.2 3.3 1.2-6.9-5-4.9 6.9-1Z"/></svg>${escapeHtml(formatRating(details.vote_average))}/10<small>TMDB</small></span>` : ""}
             <span>${escapeHtml(year)}</span>${runtime ? `<span>${escapeHtml(runtime)}</span>` : ""}<span>${type === "tv" ? "Series" : "Movie"}</span>
           </div>
           <div class="svDetailActions">

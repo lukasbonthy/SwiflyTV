@@ -38,7 +38,7 @@ test('Standalone movie details offer an accessible party action for the displaye
   assert.equal(action.textContent.trim(), 'Start a watch party');
   assert.equal(action.getAttribute('aria-label'), 'Start a watch party for ' + movie.title);
   assert(action.classList.contains('dsSecondaryBtn'));
-  assert.equal(action.querySelector('i.svIcon.fa-user-group')?.getAttribute('aria-hidden'), 'true');
+  assert.equal(action.querySelector('svg.svIcon')?.getAttribute('aria-hidden'), 'true');
   assert.equal(action.hasAttribute('data-play-id'), false, 'Starting a party must not count as playback');
   assert(d.querySelector('.svDetailActions a[href="/watch/movie/101?mode=movie"]'));
   assert(d.querySelector('.svDetailActions a[href="/watch/movie/101?mode=trailer"]'));
@@ -198,7 +198,7 @@ test('A normal standalone party click remembers its title page and preserves pla
   const action = d.querySelector('[data-sv-party-movie-id]');
   assert(action);
   const click = new w.MouseEvent('click', {bubbles:true, cancelable:true});
-  action.querySelector('i.svIcon.fa-user-group').dispatchEvent(click);
+  action.querySelector('svg').dispatchEvent(click);
   assert.equal(click.defaultPrevented, false, 'The party link should navigate normally');
   assert.equal(w.sessionStorage.getItem('swiflytv.partyReturn'), '/movie/101?source=search#overview');
   assert.equal(w.sessionStorage.getItem('swiflytv.playReturn'), '/search?q=previous&media=movie-99');
