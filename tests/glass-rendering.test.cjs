@@ -419,7 +419,7 @@ test('Movie details match navbar refraction instead of replacing it with gray ti
   const sheets=['liquid-glass/liquid-glass.css','clean/clean.css','clean/details.css','liquid-glass/surfaces.css','liquid-glass/controls.css','clean/cinema.css','clean/details-premium.css','clean/details-clarity.css'];
   await page.setContent('<!doctype html><style>'+sheets.map(asset).join('\\n')+
     '*{box-sizing:border-box}body{margin:0;background:repeating-linear-gradient(45deg,#142539 0 25px,#b17943 25px 50px)}.netflixNav{position:relative!important;width:700px;height:58px;margin:22px;padding:0;border-radius:24px}.netflixNav>.svLiquidPane{border-radius:24px}.svCinemaPage{position:relative!important;width:100%!important}.svDetailHero{height:460px!important;min-height:460px!important;background:repeating-linear-gradient(45deg,#274862 0 27px,#a56844 27px 54px)!important}.svDetailIdentity{left:32px!important;right:32px!important;bottom:24px!important}.svDetailActions{display:flex!important;gap:12px!important}.svDetailActions>a{width:155px!important;height:52px!important;padding:12px!important;border-radius:26px!important;display:flex!important;justify-content:center;align-items:center;color:white}</style>'+
-    '<body class="svCleanShell" data-st-glass="liquid"><header class="netflixNav"><div class="svLiquidPane" data-swifly-glass data-glass-tint=".2"></div></header><main class="svCinemaPage"><section class="svDetailHero"><div class="svDetailIdentity" data-cinema-reveal><div class="svDetailActions"><a class="dsPrimaryBtn">Play</a><a class="dsSecondaryBtn">Trailer</a></div></div></section><section class="svDetailOverview" style="--sv-story-art:linear-gradient(120deg,#466f9a,#d2a46f)"><div><h2>A closer look</h2></div><p>Readable film copy</p></section></main></body>');
+    '<body class="svCleanShell" data-st-glass="liquid"><header class="netflixNav"><div class="svLiquidPane" data-swifly-glass data-glass-tint=".2"></div></header><main class="svCinemaPage"><section class="svDetailHero"><div class="svDetailIdentity" data-cinema-reveal><div class="svDetailActions"><a class="dsPrimaryBtn">Play</a><a class="dsSecondaryBtn">Trailer</a></div></div></section><section class="svDetailOverview" style="--sv-story-art:url(https://example.com/film-backdrop.jpg)"><div><h2>A closer look</h2></div><p>Readable film copy</p></section></main></body>');
   for(const file of ['liquid-glass/liquid-glass.js','liquid-glass/surfaces.js'])await page.addScriptTag({content:asset(file)});
   await page.waitForFunction(()=>document.querySelector('.svDetailActions .svNavMatchedLens')?.dataset.swiflyRenderer==='svg');
   const state=await page.evaluate(()=>{
@@ -439,7 +439,7 @@ test('Movie details match navbar refraction instead of replacing it with gray ti
   assert.equal(state.detailColor,state.navColor,'film controls must share the unmodified clear nav face');
   assert.equal(state.detailShadow,state.navShadow,'one shared lens rim rather than silver pills');
   assert.equal(state.detailFilter,state.navFilter,'film and nav use the same refraction');
-  assert.match(state.art,/linear-gradient/);
+  assert.match(state.art,/film-backdrop\.jpg/);
   assert.equal(state.storyMask,'none','full story artwork must not get masked into a crop');
  } finally {await browser.close();}
 });
