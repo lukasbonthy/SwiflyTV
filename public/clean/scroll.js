@@ -29,8 +29,11 @@
     if (event.type === 'scroll' && event.target !== document &&
         event.target !== document.scrollingElement && event.target !== document.documentElement &&
         event.target !== document.body) return;
-    if (event.type === 'wheel' && event.target instanceof Element &&
-        event.target.closest('dialog[open],[data-player-root],.movieRail,.dsRail,.nfRail,.nfTopTenRail,.svResumeRail,.dsWelcomeRailTrack,.svDetailCastRail')) return;
+    if (event.type === 'wheel' && event.target instanceof Element) {
+      if (event.target.closest('dialog[open],[data-player-root]')) return;
+      if ((Math.abs(event.deltaX) > Math.abs(event.deltaY) || event.shiftKey) &&
+          event.target.closest(horizontalRails)) return;
+    }
     if (!cardScrollActive) {
       cardScrollActive = true;
       document.documentElement.dataset.svCardScrolling = 'true';
