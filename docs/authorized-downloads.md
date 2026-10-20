@@ -41,3 +41,16 @@ files show an informative unavailable message rather than a broken stream.
 
 Some browsers on consoles restrict saving files to local storage; desktop
 browser download behavior should be verified separately.
+
+## Downloading from existing MP4 playback sources
+
+When a player already has a current MP4 proxy URL, the player Download action
+uses that source with `?download=1`. Other movie/episode actions request the
+matching source using `/api/proxy-video-wait/:type/:id`, and only show a
+completed-file download when the resulting source is the existing same-origin
+`/api/media-file-proxy/.../video.mp4` route. The proxy streams the file
+without reading it all into memory and sets `Content-Disposition: attachment`.
+
+Proxy IDs are ephemeral and expire; copied URLs are **not** permanent catalog
+links. Some providers supply only HLS/DASH or restricted content, in which
+case no MP4 download is offered. Browser and source terms still apply.
