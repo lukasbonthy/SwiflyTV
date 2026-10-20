@@ -8886,7 +8886,7 @@ async function detailPage(req, res, type) {
   const storyStill = (Array.isArray(details.images?.backdrops) ? details.images.backdrops : [])
     .filter(image => image.file_path && image.file_path !== details.backdrop_path &&
       (!image.iso_639_1 || image.iso_639_1 === "en") && Number(image.aspect_ratio) > 1.4)
-    .sort((a, b) => Number(!a.iso_639_1) - Number(!b.iso_639_1) ||
+    .sort((a, b) => Number(!b.iso_639_1) - Number(!a.iso_639_1) ||
       Number(b.vote_count || 0) - Number(a.vote_count || 0) ||
       Number(b.vote_average || 0) - Number(a.vote_average || 0))[0];
   const storyArt = img(storyStill?.file_path || details.backdrop_path || details.poster_path, "w780");
