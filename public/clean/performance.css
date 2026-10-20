@@ -94,3 +94,29 @@ html[data-sv-xbox="true"] body.svCleanShell .dsHeroHasTrailer .dsHeroBg {animati
 /* Keep long horizontal catalog rails in their own paint boundary while the
    user scrolls. This avoids re-painting unrelated hero and footer layers. */
 body.svCleanShell .dsContent > .dsRow.svCatalogRow > .movieRail {contain:layout paint}
+
+
+/* A parked cursor glides across multiple movie cards as the document scrolls.
+   Don't rebuild SVG-lens layers or animate poster shadows under that pointer.
+   After 170ms of scroll idleness the ordinary premium hover returns. Keyboard
+   focus remains fully interactive, and touch/mobile uses the original styles. */
+@media (hover: hover) and (pointer: fine) and (min-width: 861px) {
+  html[data-sv-card-scrolling="true"] body.svCleanShell .movieCard:not(:focus-within) :is(.posterWrap,.dsThumb,.nfThumb,.nfTopTenPoster):hover {
+    transform: none !important;
+    transition: none !important;
+    box-shadow: none !important;
+  }
+  html[data-sv-card-scrolling="true"] body.svCleanShell .movieCard:not(:focus-within) .dsThumb:hover::after {
+    opacity: 0 !important;
+    animation: none !important;
+  }
+  html[data-sv-card-scrolling="true"] body.svCleanShell .dsCardArtwork:not(:focus-within) :is(.dsCardQuickActions,.dsPlayDot) {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: none !important;
+  }
+  html[data-sv-card-scrolling="true"] body.svCleanShell .dsCardArtwork:not(:focus-within) :is(.dsCardQuickActions .svLiquidPane,.dsPlayDot) {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
