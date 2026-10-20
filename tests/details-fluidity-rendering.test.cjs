@@ -9,7 +9,7 @@ const fragment='<article class="svTitleDetails"><div class="svDetailHero" style=
 
 async function fixture(browser,cssFallback=false){
  const page=await browser.newPage({viewport:{width:1100,height:900}});
- await page.route('**/*',route=>route.fulfill({contentType:'text/html',body:route.request().url().includes('/movie/101')?fragment:'<!doctype html><style>'+styles+'*{box-sizing:border-box}body{margin:0;background:#17212a;color:white}main{padding:100px 20px;min-height:2200px}.svDetailIdentity{position:absolute;bottom:45px;left:45px}.svDetailActions{display:flex;gap:12px}</style><body class="svCleanShell" data-st-glass="liquid"><main><a id="open" href="/movie/101">Open details</a></main></body>'}));
+ await page.route('**/*',route=>route.fulfill({contentType:'text/html',body:route.request().url().includes('/movie/101')?fragment:'<!doctype html><style>'+styles+'*{box-sizing:border-box}body{margin:0;background:#17212a;color:white}main{padding:100px 20px;min-height:2200px}.svDetailIdentity{position:absolute;bottom:45px;left:45px}.svDetailActions{display:flex;gap:12px}</style><body class="svCleanShell" data-st-glass="liquid"><main data-sv-browse-scene><a id="open" href="/movie/101">Open details</a></main></body>'}));
  await page.goto('http://motion.fixture/');
  if(cssFallback)await page.evaluate(()=>{window.nativeAnimate=Element.prototype.animate;Element.prototype.animate=undefined;});
  for(const file of ['liquid-glass/liquid-glass.js','liquid-glass/surfaces.js','clean/details.js'])await page.addScriptTag({content:asset(file)});
@@ -39,6 +39,15 @@ for(const cssFallback of [false,true])test((cssFallback?'CSS fallback':'Native a
    window.probeAnimation=animate.call(dialog,entryFrames,{...entryTiming,duration:1000,fill:'both'});
    probeAnimation.pause();probeAnimation.currentTime=0;dialog.getBoundingClientRect();
   });
+  const start=await page.evaluate(()=>{
+   const sheet=document.querySelector('dialog'),duration=entryTiming.duration;
+   probeAnimation.effect.updateTiming({duration});probeAnimation.currentTime=0;const from=sheet.getBoundingClientRect().top;
+   probeAnimation.currentTime=duration;const to=sheet.getBoundingClientRect().top;
+   probeAnimation.currentTime=16;const first=sheet.getBoundingClientRect().top;
+   probeAnimation.effect.updateTiming({duration:1000});probeAnimation.currentTime=0;
+   return {distance:from-to,firstStep:from-first};
+  });
+  assert(start.firstStep<start.distance*.025,'The first frame must ease into the rise instead of jumping a large part of the screen: '+JSON.stringify(start));
   const before=(await cdp.send('Performance.getMetrics')).metrics.find(m=>m.name==='LayoutCount').value;
   const positions=await page.evaluate(()=>{
    const dialog=document.querySelector('dialog'),positions=[];
@@ -63,6 +72,38 @@ for(const cssFallback of [false,true])test((cssFallback?'CSS fallback':'Native a
   },{refracted,flat});
   await page.evaluate(()=>{probeAnimation.cancel();document.querySelector('dialog').dataset.svDetailState='open';});
   assert(delta>1.2,'The moving Play button must retain real visible refraction: '+delta);
+ }finally{await browser.close();}
+});
+
+test('Closing the sheet returns the catalog to rest before releasing its scene geometry',{skip:!available&&'Chromium is not installed'},async()=>{
+ const browser=await chromium.launch({headless:true});
+ try{
+  const page=await fixture(browser);
+  await page.evaluate(async()=>{
+   const opening=SwiflyDetails.open('/movie/101',document.getElementById('open'));
+   document.querySelector('dialog').getAnimations().forEach(a=>a.finish());await opening;
+  });
+  await page.waitForFunction(()=>document.querySelector('dialog')?.dataset.svDetailState==='open');
+  await page.evaluate(()=>{
+   const scene=document.querySelector('[data-sv-browse-scene]');
+   scene.getAnimations().forEach(a=>a.finish());scene.getBoundingClientRect();
+   SwiflyDetails.close();
+  });
+  await page.waitForFunction(()=>document.querySelector('dialog').getAnimations().some(a=>a.playState==='running'));
+  const result=await page.evaluate(async()=>{
+   const sheet=document.querySelector('dialog'),scene=document.querySelector('[data-sv-browse-scene]');
+   const sheetAnimations=sheet.getAnimations(),duration=sheetAnimations[0].effect.getTiming().duration;
+   const sceneAnimations=scene.getAnimations();
+   for(const a of sceneAnimations){a.pause();a.currentTime=duration;}
+   const before=scene.getBoundingClientRect();
+   for(const a of [...sheetAnimations,...document.querySelector('.svDetailScrim').getAnimations()])a.finish();
+   await Promise.resolve();await Promise.resolve();await Promise.resolve();
+   const after=scene.getBoundingClientRect();
+   return {transitions:sceneAnimations.length,open:sheet.open,shift:Math.max(Math.abs(after.top-before.top),Math.abs(after.width-before.width))};
+  });
+  assert(result.transitions>0,'The background still has its depth transition');
+  assert.equal(result.open,false);
+  assert(result.shift<.5,'Closing must not snap an unfinished background zoom back into place: '+JSON.stringify(result));
  }finally{await browser.close();}
 });
 
@@ -97,5 +138,18 @@ test('Preparing page reveals batches geometry before changing section styles',{s
   assert.equal(result.readsAfterWrites,0,'A reveal style change must not force the next section geometry read to flush styles');
   // Allow transition setup passes; the cost must stay below a pass per section.
   assert(after-before<=4,'Registering reveals must not flush styles once per section: '+(after-before));
+ }finally{await browser.close();}
+});
+
+test('A scrolling section begins revealing before its leading edge reaches the viewport',{skip:!available&&'Chromium is not installed'},async()=>{
+ const browser=await chromium.launch({headless:true});
+ try{
+  const page=await browser.newPage({viewport:{width:1100,height:900}});
+  await page.setContent('<style>'+asset('clean/motion.css')+'body{margin:0}main{padding-top:1600px}section{height:400px}</style><body class="svCleanShell"><main><section data-cinema-reveal>Next collection</section></main></body>');
+  await page.addScriptTag({content:asset('clean/motion.js')});
+  await page.evaluate(()=>window.scrollTo({top:650,behavior:'instant'}));
+  await page.waitForFunction(()=>document.querySelector('section').classList.contains('svMotionVisible'),{},{timeout:1500});
+  const ready=await page.locator('section').evaluate(node=>({top:node.getBoundingClientRect().top,viewport:innerHeight}));
+  assert(ready.top>ready.viewport,'The reveal must start while the next section is still just below the viewport');
  }finally{await browser.close();}
 });

@@ -13,15 +13,15 @@ body.svCleanShell > [data-sv-browse-scene] { display:flow-root; }
 html[data-sv-detail-scene] body.svCleanShell > :is([data-sv-browse-scene],.topbar,.mobileNav) {
   transform-origin:50% var(--sv-detail-scene-origin-y,0px);
   scale:1; translate:0px 0px;
-  transition:scale 560ms cubic-bezier(.4,0,.2,1),translate 560ms cubic-bezier(.4,0,.2,1);
+  transition:scale 360ms cubic-bezier(.4,0,.2,1),translate 360ms cubic-bezier(.4,0,.2,1);
 }
 /* left:50% plus translateX(-50%) already anchors this nav at its center. */
 html[data-sv-detail-scene] body.svCleanShell > .mobileNav { transform-origin:0% var(--sv-detail-scene-origin-y,0px); }
 html[data-sv-detail-scene] body.svCleanShell > [data-sv-browse-scene] { clip-path:var(--sv-detail-scene-clip); }
 html:is([data-sv-detail-scene="opening"],[data-sv-detail-scene="open"]) body.svCleanShell > :is([data-sv-browse-scene],.topbar,.mobileNav) {
   scale:var(--sv-detail-scene-scale,1); translate:0px 14px;
-  transition-duration:460ms;
-  transition-timing-function:cubic-bezier(.22,.74,.22,1);
+  transition-duration:640ms;
+  transition-timing-function:cubic-bezier(.32,0,.15,1);
 }
 html:is([data-sv-detail-scene="opening"],[data-sv-detail-scene="closing"]) body.svCleanShell > :is([data-sv-browse-scene],.topbar,.mobileNav) { will-change:scale,translate; }
 html[data-sv-detail-scene] body.svCleanShell.reduceMotion > :is([data-sv-browse-scene],.topbar,.mobileNav) { scale:none !important; translate:none !important; clip-path:none !important; transition:none !important; will-change:auto !important; }
@@ -83,7 +83,7 @@ body.svCleanShell .svDetailAbout dt { margin-bottom: 6px; color: #6f6f6f; font-s
 body.svCleanShell .svDetailAbout dd { margin: 0; color: #bdbdbd; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
 body.svCleanShell .svDetailClose { position: absolute !important; top: 20px !important; right: 20px !important; z-index: 4; width: 34px !important; height: 34px !important; padding: 0 !important; display: grid !important; place-items: center; border-radius: 50% !important; }
 body.svCleanShell .svDetailDialog {
-  --sv-detail-rise: calc(100svh + 24px);
+  --sv-detail-rise: calc(100% + 1px);
   position: fixed; inset: auto 0 0; width: min(1100px,calc(100vw - 48px)); max-width: none;
   height: min(90svh,1100px); max-height: 90svh; margin: 0 auto; padding: 0;
   overflow: hidden; border: 1px solid #ffffff1a; border-bottom:0; border-radius: 22px 22px 0 0; color: #f5f5f5; background: #050505;
@@ -95,10 +95,10 @@ body.svCleanShell .svDetailScrim[hidden] { display:none !important; }
 /* One moving layer; bottom/height stay fixed throughout the slide. */
 body.svCleanShell .svDetailDialog:is([data-sv-detail-state="opening"],[data-sv-detail-state="closing"]) { will-change:transform; }
 body.svCleanShell .svDetailScrim:is([data-sv-detail-state="opening"],[data-sv-detail-state="closing"]) { will-change:opacity; }
-body.svCleanShell .svDetailDialog[data-sv-detail-motion="css"][data-sv-detail-state="opening"] { animation-name:svDetailsEnter; animation-duration:460ms; animation-timing-function:cubic-bezier(.22,.74,.22,1); animation-fill-mode:both; }
-body.svCleanShell .svDetailDialog[data-sv-detail-motion="css"][data-sv-detail-state="closing"] { animation-name:svDetailsExit; animation-duration:300ms; animation-timing-function:cubic-bezier(.4,0,.2,1); animation-fill-mode:both; }
-body.svCleanShell .svDetailScrim[data-sv-detail-motion="css"][data-sv-detail-state="opening"] { animation:svDetailsDimIn 330ms ease-out both; }
-body.svCleanShell .svDetailScrim[data-sv-detail-motion="css"][data-sv-detail-state="closing"] { animation:svDetailsDimOut 300ms ease-in both; }
+body.svCleanShell .svDetailDialog[data-sv-detail-motion="css"][data-sv-detail-state="opening"] { animation-name:svDetailsEnter; animation-duration:640ms; animation-timing-function:cubic-bezier(.32,0,.15,1); animation-fill-mode:both; }
+body.svCleanShell .svDetailDialog[data-sv-detail-motion="css"][data-sv-detail-state="closing"] { animation-name:svDetailsExit; animation-duration:360ms; animation-timing-function:cubic-bezier(.4,0,.2,1); animation-fill-mode:both; }
+body.svCleanShell .svDetailScrim[data-sv-detail-motion="css"][data-sv-detail-state="opening"] { animation:svDetailsDimIn 640ms cubic-bezier(.32,0,.15,1) both; }
+body.svCleanShell .svDetailScrim[data-sv-detail-motion="css"][data-sv-detail-state="closing"] { animation:svDetailsDimOut 360ms cubic-bezier(.4,0,.2,1) both; }
 body.svCleanShell :is(.svDetailDialog,.svDetailScrim)[data-sv-detail-motion="css"]:is([data-sv-detail-state="opening"],[data-sv-detail-state="closing"]) { animation-play-state:paused; }
 body.svCleanShell .svDetailViewport { height: 100%; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-gutter:stable; scrollbar-width: thin; scrollbar-color: #ffffff26 transparent; -webkit-overflow-scrolling:touch; }
 body.svCleanShell .svDetailDialog .svTitleDetails.svTitleDetails { width: 100% !important; max-width: none !important; margin: 0 !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; animation:none !important; filter:none !important; }

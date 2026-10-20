@@ -21,7 +21,7 @@ test('Entrance time starts with the first render frame, after fragment initializ
  assert(env.animations.every(animation=>animation.paused),'Both sheet and scrim must stay at their first keyframe until rendering can begin');
  w.flush(16);
  assert(env.animations.every(animation=>!animation.paused),'The first render frame starts the sheet and scrim together');
- assert.equal(timers.length,1);assert.equal(timers[0].delay,560);
+ assert.equal(timers.length,1);assert.equal(timers[0].delay,740);
  await finish(env.animations);assert.equal(d.querySelector('dialog').dataset.svDetailState,'open');env.finish();
 });
 test('Hiding the tab settles a pending entrance or exit even before its first render frame',async()=>{

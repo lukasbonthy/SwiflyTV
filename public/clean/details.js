@@ -7,13 +7,13 @@
   let sheetTransition=null,transitionEpoch=0,closeWantsHistory=false;
   let sceneRecords=[],entryFocus=null;
   const motionPreference=window.matchMedia('(prefers-reduced-motion: reduce)');
-  // Xbox Edge needs the dialog to appear at the button press, not after the
-  // 900ms cinematic rise. Keep all desktop animations unchanged.
+  // Xbox Edge needs the dialog to appear at the button press.
   const xboxInstant = /Xbox|XboxOne|Xbox Series/i.test(navigator.userAgent) || document.documentElement.dataset.svXbox === 'true';
   const reducedMotion=()=>xboxInstant||motionPreference.matches||document.body.classList.contains('reduceMotion');
-  // Short, front-loaded rise: the dialog reads as instant, not sluggish.
-  // Xbox retains its zero-duration fast path.
-  const enterDuration=460,exitDuration=300;
+  // A full-height sheet needs a gentle takeoff and a long deceleration.
+  // Share its clock with the scrim and catalog, including the final frame.
+  const enterDuration=640,exitDuration=360;
+  const enterEase='cubic-bezier(.32,0,.15,1)',exitEase='cubic-bezier(.4,0,.2,1)';
   const fragments=new Map(),fragmentTTL=90000,fragmentLimit=8,fragmentByteLimit=2*1024*1024,fragmentSizeLimit=192*1024;
   let fragmentScope=null,fragmentBytes=0;
   // Intent prefetches are scoped to the current profile and share the actual
@@ -164,6 +164,10 @@
     const targets=[scene,...document.querySelectorAll('body > .topbar,body > .mobileNav')];
     sceneRecords=targets.map(element=>({element,scene:element===scene,previous:['--sv-detail-scene-scale','--sv-detail-scene-origin-y','--sv-detail-scene-clip'].map(name=>[name,element.style.getPropertyValue(name)])}));
     updateSceneGeometry();
+    sceneState('closed');
+    // Establish the resting style once, before the shared first render frame.
+    // Without this, the catalog can appear directly at its scaled endpoint.
+    getComputedStyle(scene).scale;
   }
   function clearScene() {
     delete document.documentElement.dataset.svDetailScene;
@@ -191,7 +195,6 @@
     const active={epoch,animations:[],frame:0,timer:null,complete:null};sheetTransition=active;
     dialog.style.removeProperty('animation-play-state');scrim.style.removeProperty('animation-play-state');
     dialog.dataset.svDetailState=state;scrim.dataset.svDetailState=state;
-    sceneState(state);
     const settle=()=>{
       if(sheetTransition!==active||epoch!==transitionEpoch)return;
       sheetTransition=null;clearTimeout(active.timer);cancelAnimationFrame(active.frame);
@@ -209,7 +212,7 @@
     const begin=(play,timeout)=>{
       active.frame=requestAnimationFrame(()=>{
         active.frame=0;if(sheetTransition!==active)return;
-        play();active.timer=setTimeout(settle,timeout);
+        sceneState(state);play();active.timer=setTimeout(settle,timeout);
       });
     };
     dialog.style.setProperty('--sv-detail-start',start||'translateY(0px)');
@@ -222,8 +225,9 @@
           animation.pause?.();animation.currentTime=0;
           animation.finished.catch(()=>{});return animation.finished;
         };
-        const sheet=animate(dialog,[{transform:start||'translateY(0px)'},{transform:entering?'translateY(0px)':offscreen}],{duration,easing:entering?'cubic-bezier(.22,.74,.22,1)':'cubic-bezier(.4,0,.2,1)'});
-        const dim=animate(scrim,[{opacity:opacity||'0'},{opacity:entering?'1':'0'}],{duration:entering?330:duration,easing:entering?'ease-out':'ease-in'});
+        const easing=entering?enterEase:exitEase;
+        const sheet=animate(dialog,[{transform:start||'translateY(0px)'},{transform:entering?'translateY(0px)':offscreen}],{duration,easing});
+        const dim=animate(scrim,[{opacity:opacity||'0'},{opacity:entering?'1':'0'}],{duration,easing});
         Promise.all([sheet,dim]).then(settle,()=>{});
         begin(()=>{for(const animation of active.animations)animation.play?.();},duration+100);return;
       } catch {
