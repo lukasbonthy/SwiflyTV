@@ -40,16 +40,15 @@ test('legacy catalog style still retains its existing scroll meter',()=>{
 test('muted homepage trailer pauses offscreen and on hidden tabs, then resumes when visible',()=>{
   const env=browser('<section class="dsHero dsHeroHasTrailer"><div class="dsHeroTrailerLayer"><iframe id="dsHeroTrailerFrame" data-src="https://www.youtube.com/embed/abc"></iframe></div><div class="dsHeroTrailerPill"><span id="dsHeroTrailerPillText"></span></div><button id="dsHeroMuteToggle"><span></span></button></section>');
   const w=env.window,d=w.document,hero=d.querySelector('.dsHero');
-  let callback,observer,ready,played=0,paused=0,muted=0;
+  let callback,observer,ready,ytInstance,played=0,paused=0,muted=0;
   w.IntersectionObserver=class {constructor(fn){callback=fn;observer=this;} observe(){}disconnect(){this.disconnected=true;}};
-  w.YT={Player:class {constructor(_id,options){ready=options.events.onReady;this.options=options;}},PlayerState:{PLAYING:1}};
+  w.YT={Player:class {constructor(_id,options){ready=options.events.onReady;ytInstance=this;} mute(){muted++;} playVideo(){played++;} pauseVideo(){paused++;}},PlayerState:{PLAYING:1}};
   w.setTimeout=()=>0;
   let hidden=false;
   Object.defineProperty(d,'hidden',{configurable:true,get(){return hidden;}});
   w.eval(scriptFrom('(function swiflyHeroTrailerMuteControl(){','\n      })();'));
   assert(callback,'visibility observer attached');
-  const player={mute(){muted++;},playVideo(){played++;},pauseVideo(){paused++;}};
-  ready({target:player});
+  ready({target:ytInstance});
   assert(played>0,'visible hero starts trailer normally');
   callback([{target:hero,isIntersecting:false}]);
   assert.equal(paused,1,'offscreen preview pauses video decode');
