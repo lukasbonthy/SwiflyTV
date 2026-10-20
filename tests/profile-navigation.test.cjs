@@ -22,7 +22,7 @@ test('the shared top navigation opens Party Hub directly and marks its active pa
     assert(link, 'Party Hub must be reachable beside the other top navigation icons');
     assert.equal(link.getAttribute('aria-label'), 'Party Hub');
     assert.equal(link.getAttribute('title'), 'Party Hub');
-    assert(link.querySelector('svg[aria-hidden="true"]'), 'Party Hub uses the shared SVG icon style');
+    assert(link.querySelector('i.svIcon.fa-user-group[aria-hidden="true"]'), 'Party Hub uses the shared Font Awesome icon style');
     assert.equal(link.getAttribute('aria-current'), active === 'social' ? 'page' : null);
     env.finish();
   }
