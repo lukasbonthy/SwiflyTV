@@ -44,6 +44,37 @@ async function catalog(browser, options = {}) {
   } finally {if (!ready) await new Promise(resolve => api.io.close(resolve));}
 }
 
+test('wheel scrolling does not construct approaching rows or animate invisible button finishes', {skip:!available&&'Chromium is not installed'}, async()=>{
+ const browser=await chromium.launch({headless:true});
+ try{
+  const page=await catalog(browser);
+  await page.waitForFunction(()=>document.querySelector('.netflixNav > .svLiquidPane')?.dataset.swiflyRenderer==='svg');
+  const result=await page.evaluate(async()=>{
+   await document.fonts.ready;
+   const nextFrame=()=>new Promise(requestAnimationFrame);
+   await nextFrame();await nextFrame();
+   let added=0;const animated=new Set();
+   const observer=new MutationObserver(changes=>{
+    for(const change of changes)for(const node of change.addedNodes){
+     if(node instanceof Element&&node.matches('.svNavMatchedLens')&&node.closest('.dsRow'))added++;
+    }
+   });observer.observe(document.body,{subtree:true,childList:true});
+   for(let index=0;index<12;index++){
+    document.querySelector('.dsHeroContent').dispatchEvent(new WheelEvent('wheel',{deltaY:120,bubbles:true,cancelable:true}));
+    await nextFrame();await nextFrame();
+    for(const animation of document.getAnimations())if(animation.effect?.target?.matches('.dsCardQuickActions .dsMiniBtn,.dsRowBtn'))animated.add(animation.transitionProperty||animation.animationName);
+   }
+   observer.disconnect();
+   return {added,animated:[...animated],y:scrollY};
+  });
+  assert(result.y>500,'the measurement must cross catalog rows');
+  assert.equal(result.added,0,'approaching rows must not build controls on scrolling frames');
+  assert.deepEqual(result.animated,[],'hidden button colors and borders must not run hundreds of transitions');
+  await page.waitForFunction(()=>!document.documentElement.dataset.svCardScrolling&&!document.documentElement.dataset.svScrollGlass);
+  await page.waitForFunction(()=>document.querySelectorAll('.svCatalogRow .svNavMatchedLens').length>56);
+ }finally{await browser.close();}
+});
+
 for (const width of [1280,390]) test(width+'px catalog keeps its scroll geometry stable as distant rows render', {skip:!available&&'Chromium is not installed'},async()=>{
  const browser=await chromium.launch({headless:true});
  try{

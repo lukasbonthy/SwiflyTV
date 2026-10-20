@@ -152,6 +152,30 @@ test('small wheel deltas use the same continuous easing as the reference', () =>
   env.finish();
 });
 
+test('fractional wheel input accumulates without losing or inflating tiny movements', () => {
+  for (const delta of [.25, .8, 3.3, -0.25, -3.3]) {
+    const env = setup(), w = env.window;
+    env.page.scrollTop = 800; w.dispatchEvent(new w.Event('scroll'));
+    for (let index = 0; index < 40; index++) {
+      assert.equal(env.wheel(delta).defaultPrevented, true, 'fractional input must have a single scroll owner');
+      w.flush(8 + index * 8);
+    }
+    env.settle(328);
+    assert.equal(env.page.scrollTop, 800 + delta * 40, 'keep the total distance for ' + delta + 'px inputs');
+    assert.equal(w.frameCount(), 0);
+    env.finish();
+  }
+});
+
+test('subpixel wheel pulses keep one glass tier throughout the gesture', () => {
+  const env = setup(), w = env.window, root = w.document.documentElement;
+  for (let index = 0; index < 20; index++) {
+    env.at(index * 8); env.wheel(.25); w.flush(index * 8 + 4);
+    assert.equal(root.dataset.svScrollGlass, 'soft', 'tiny input must not toggle every lens off and on each frame');
+  }
+  env.finish();
+});
+
 test('keyboard, pointer and programmatic navigation interrupt pending wheel inertia', () => {
   for (const action of ['keyboard', 'pointer', 'programmatic']) {
     const env = setup(), w = env.window, d = w.document;

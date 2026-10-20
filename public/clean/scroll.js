@@ -42,7 +42,7 @@
     clearTimeout(cardIdleTimer);
     cardIdleTimer = setTimeout(clearCardScroll, 170);
   }
-  let engine, frame = 0, lastFrame = null, clock = 1, preferences, started = false, destroyed = false;
+  let engine, frame = 0, lastFrame = null, clock = 1, wheelRemainder = 0, preferences, started = false, destroyed = false;
   // Refraction is costly while the backdrop is moving. Switch only the CSS
   // paint tier (not the SVG graph/controller lifecycle) during fast scroll.
   // That keeps the existing real lens cached and avoids rebuilding it at rest.
@@ -60,7 +60,10 @@
     if (next === glassSoft) return;
     glassSoft = next;
     if (next) document.documentElement.dataset.svScrollGlass = 'soft';
-    else delete document.documentElement.dataset.svScrollGlass;
+    else {
+      delete document.documentElement.dataset.svScrollGlass;
+      document.dispatchEvent(new Event('swifly:scroll-glass-end'));
+    }
   }
   function resetGlass() {
     clearTimeout(glassIdleTimer); glassIdleTimer = 0;
@@ -136,6 +139,7 @@
 
   function cancel() {
     cancelAnimationFrame(frame); frame = 0; lastFrame = null;
+    wheelRemainder = 0;
     recentFrames.length = 0; activeMotionMs = 0;
     if (engine?.isScrolling === 'smooth') {
       // Reset to the actual position without finishing an obsolete target.
@@ -179,7 +183,10 @@
         dispose();
         return;
       }
-      glassTier(false);
+      // Tiny gestures can briefly reach an integer destination between input
+      // events. Keep one paint tier until the gesture's idle timer expires,
+      // rather than switching every backdrop shader twice per rendered frame.
+      if (glassSoft) scheduleGlassIdle();
       lastFrame = null; recentFrames.length = 0; activeMotionMs = 0;
     }
   }
@@ -197,7 +204,8 @@
     // gesture, stop the earlier page glide before the native panel moves.
     if (!event.defaultPrevented) cancel();
   }
-  function accept({event, deltaX, deltaY}) {
+  function accept(input) {
+    const {event, deltaX, deltaY} = input;
     const target = event.target instanceof Element ? event.target : null;
     if (event.type !== 'wheel' || !available() || !event.cancelable || event.defaultPrevented ||
         event.ctrlKey || event.metaKey || event.altKey || event.shiftKey ||
@@ -206,6 +214,14 @@
         document.querySelector('dialog[open]')) {
       cancel(); return false;
     }
+    // The pinned engine rounds each destination to an integer. Carry the
+    // fractional part across pulses so precision wheels/trackpads and line
+    // deltas retain their distance instead of stalling or drifting. Own even
+    // a zero-pixel pulse: handing it to native scroll would mix two engines.
+    const distance = deltaY + wheelRemainder;
+    input.deltaY = Math.round(distance);
+    wheelRemainder = distance - input.deltaY;
+    if (!input.deltaY) {event.preventDefault(); return false;}
     return true;
   }
   function sync() {

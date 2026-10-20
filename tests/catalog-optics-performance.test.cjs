@@ -47,3 +47,69 @@ test('catalog paint is isolated without substituting estimated row heights',()=>
   assert.doesNotMatch(css,/contain-intrinsic-size/);
   assert.doesNotMatch(css,/\.svDetailSection\s*\{\s*content-visibility/);
 });
+
+test('approaching rows wait for scrolling to settle while focused controls prepare immediately',()=>{
+  const env=browser('<main class="dsContent"><section class="dsRow"><div class="dsCardArtwork"><div class="dsCardQuickActions"><button class="dsMiniBtn">Save</button><button class="dsMiniBtn">Like</button></div></div></section></main>');
+  const w=env.window,d=w.document,observers=[];
+  w.IntersectionObserver=class {
+    constructor(callback,options){this.callback=callback;this.options=options;observers.push(this);}
+    observe(){} unobserve(){} disconnect(){}
+  };
+  w.SwiflyLiquidGlass={mount(){return {enabled:true,supported:true,destroy(){}};}};
+  w.boot('liquid-glass/surfaces.js');
+  const row=d.querySelector('.dsRow'),control=row.querySelector('button');
+  const near=observers.find(observer=>observer.options.rootMargin==='320px 120px');
+  d.documentElement.dataset.svScrollGlass='soft';
+  near.callback([{target:row,isIntersecting:true}]);
+  assert.equal(row.querySelectorAll('.svNavMatchedLens').length,0,'approaching a row must not construct dozens of controls during motion');
+  control.focus();
+  assert(control.querySelector('.svNavMatchedLens'),'keyboard focus prepares controls immediately during motion');
+  delete d.documentElement.dataset.svScrollGlass;
+  d.dispatchEvent(new w.Event('swifly:scroll-glass-end'));
+  assert.equal(row.querySelectorAll('.svNavMatchedLens').length,2,'the near row finishes preparing once movement settles');
+  w.SwiflyGlassSurfaces.destroy();env.finish();
+});
+
+test('a row passed during a fling stays unprepared until it approaches again',()=>{
+  const env=browser('<main class="dsContent"><section class="dsRow"><button class="dsRowBtn">Next</button></section></main>');
+  const w=env.window,d=w.document,observers=[];
+  w.IntersectionObserver=class {
+    constructor(callback,options){this.callback=callback;this.options=options;observers.push(this);}
+    observe(){} unobserve(){} disconnect(){}
+  };
+  w.SwiflyLiquidGlass={mount(){return {enabled:true,supported:true,destroy(){}};}};
+  w.boot('liquid-glass/surfaces.js');
+  const row=d.querySelector('.dsRow'),near=observers.find(observer=>observer.options.rootMargin==='320px 120px');
+  d.documentElement.dataset.svScrollGlass='soft';
+  near.callback([{target:row,isIntersecting:true},{target:row,isIntersecting:false}]);
+  delete d.documentElement.dataset.svScrollGlass;
+  d.dispatchEvent(new w.Event('swifly:scroll-glass-end'));
+  assert.equal(row.querySelectorAll('.svNavMatchedLens').length,0,'settling must not prepare every row already passed');
+  near.callback([{target:row,isIntersecting:true}]);
+  assert.equal(row.querySelectorAll('.svNavMatchedLens').length,1);
+  w.SwiflyGlassSurfaces.destroy();env.finish();
+});
+
+test('already prepared controls defer new SVG graphs during motion and resume at rest',()=>{
+  const env=browser('<button class="dsRowBtn">Next</button>'),w=env.window,d=w.document;
+  const observers=[],mounts=new Set();
+  w.IntersectionObserver=class {
+    constructor(callback,options){this.callback=callback;this.options=options;observers.push(this);}
+    observe(){} unobserve(){} disconnect(){}
+  };
+  w.SwiflyLiquidGlass={mount(node){mounts.add(node);return {enabled:true,supported:true,destroy(){mounts.delete(node);}};}};
+  w.boot('liquid-glass/surfaces.js');
+  const host=d.querySelector('button'),pane=host.querySelector('.svNavMatchedLens');
+  assert(pane,'native glass is already available');
+  const visibility=observers.find(observer=>observer.options.rootMargin==='80px');
+  d.documentElement.dataset.svScrollGlass='soft';
+  visibility.callback([{target:host,isIntersecting:true}]);
+  assert.equal(mounts.size,0,'entering the viewport must not create SVG graphs on a scrolling frame');
+  delete d.documentElement.dataset.svScrollGlass;
+  d.dispatchEvent(new w.Event('swifly:scroll-glass-end'));
+  assert(mounts.has(pane),'the same native pane acquires its real refraction at rest');
+  d.documentElement.dataset.svScrollGlass='soft';
+  visibility.callback([{target:host,isIntersecting:true}]);
+  assert(mounts.has(pane),'movement preserves an existing cached optical graph');
+  w.SwiflyGlassSurfaces.destroy();env.finish();
+});
