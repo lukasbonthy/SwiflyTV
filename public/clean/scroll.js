@@ -6,6 +6,42 @@
   const fine = window.matchMedia('(pointer: fine)');
   const native = 'input,textarea,select,[contenteditable]:not([contenteditable="false"]),video,audio,media-player,[data-player-root],.vds-controls,.vds-slider,[data-native-scroll],#controlPanel,.genreDropdownMenu,.dsProfileDropdown';
   const horizontalRails = '.movieRail,.dsRail,.nfRail,.nfTopTenRail,.svResumeRail,.dsWelcomeRailTrack,.svDetailCastRail';
+  // A stationary pointer can cross many posters while Lenis moves the page.
+  // Don't treat that as deliberate hover: each card would spin up three SVG
+  // refraction graphs, paint a large shadow and queue a metadata prefetch.
+  // This is independent of Lenis, so trackpads and native wheel scrolling
+  // benefit too. The dataset changes only at the beginning/end of a gesture,
+  // never once per animation frame.
+  const hoverDesktop = window.matchMedia('(hover: hover) and (pointer: fine)');
+  let cardIdleTimer = 0, cardScrollActive = false;
+  function clearCardScroll() {
+    clearTimeout(cardIdleTimer); cardIdleTimer = 0;
+    if (!cardScrollActive) return;
+    cardScrollActive = false;
+    delete document.documentElement.dataset.svCardScrolling;
+    document.dispatchEvent(new Event('swifly:card-scroll-end'));
+  }
+  function markCardScroll(event) {
+    if (!hoverDesktop.matches || document.hidden ||
+        document.documentElement.dataset.svTv === 'true' ||
+        document.documentElement.dataset.svXbox === 'true') return;
+    // Nested carousels, casts and dialogs have their own scroll surfaces.
+    if (event.type === 'scroll' && event.target !== document &&
+        event.target !== document.scrollingElement && event.target !== document.documentElement &&
+        event.target !== document.body) return;
+    if (event.type === 'wheel' && event.target instanceof Element) {
+      if (event.target.closest('dialog[open],[data-player-root]')) return;
+      if ((Math.abs(event.deltaX) > Math.abs(event.deltaY) || event.shiftKey) &&
+          event.target.closest(horizontalRails)) return;
+    }
+    if (!cardScrollActive) {
+      cardScrollActive = true;
+      document.documentElement.dataset.svCardScrolling = 'true';
+      document.dispatchEvent(new Event('swifly:card-scroll-start'));
+    }
+    clearTimeout(cardIdleTimer);
+    cardIdleTimer = setTimeout(clearCardScroll, 170);
+  }
   let engine, frame = 0, lastFrame = null, clock = 1, preferences, started = false, destroyed = false;
   // Preserve premium Lenis easing on machines that can paint it. If actual
   // animation frames repeatedly miss the budget, stop scripting page scroll
@@ -106,22 +142,30 @@
     // preferences recreate it, so this observes the final input decision.
     window.addEventListener('wheel', keepNative, {passive:true});
   }
+  function onPageHide() {clearCardScroll(); dispose();}
   function boot() {
     if (started || destroyed) return; started = true;
     sync();
     preferences = new MutationObserver(sync);
     preferences.observe(document.body, {attributes:true, attributeFilter:['class','data-sv-scroll']});
+    document.addEventListener('wheel', markCardScroll, {capture:true, passive:true});
+    document.addEventListener('scroll', markCardScroll, {capture:true, passive:true});
+    hoverDesktop.addEventListener?.('change', clearCardScroll);
     reduced.addEventListener('change', sync); fine.addEventListener('change', sync);
     document.addEventListener('visibilitychange', sync);
-    window.addEventListener('pagehide', dispose); window.addEventListener('pageshow', sync);
+    window.addEventListener('pagehide', onPageHide); window.addEventListener('pageshow', sync);
   }
   window.SwiflyPremiumScroll = Object.freeze({cancel, refresh() {engine?.resize();}, destroy() {
     if (destroyed) return; destroyed = true; dispose();
     preferences?.disconnect();
+    clearCardScroll();
+    document.removeEventListener('wheel', markCardScroll, true);
+    document.removeEventListener('scroll', markCardScroll, true);
+    hoverDesktop.removeEventListener?.('change', clearCardScroll);
     document.removeEventListener('DOMContentLoaded', boot);
     reduced.removeEventListener('change', sync); fine.removeEventListener('change', sync);
     document.removeEventListener('visibilitychange', sync);
-    window.removeEventListener('pagehide', dispose); window.removeEventListener('pageshow', sync);
+    window.removeEventListener('pagehide', onPageHide); window.removeEventListener('pageshow', sync);
   }});
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true}); else boot();
 })();

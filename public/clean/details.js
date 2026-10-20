@@ -389,11 +389,22 @@
     motionPreference.addEventListener?.('change',settleReducedMotion);
     window.addEventListener('resize',()=>{if(dialog?.open)updateSceneGeometry();},{passive:true});
     new MutationObserver(settleReducedMotion).observe(document.body,{attributes:true,attributeFilter:['class']});
+    // Passing over movie cards during a wheel glide is not a real intent to
+    // open them. Avoid parsing/fetching metadata for titles under the pointer.
+    document.addEventListener('swifly:card-scroll-start',()=>{
+      clearTimeout(hoverTimer);hoverTimer=0;hoverHref=null;
+    });
     document.addEventListener('pointerover',event=>{
+      if(document.documentElement.dataset.svCardScrolling==='true'){
+        clearTimeout(hoverTimer);hoverTimer=0;hoverHref=null;return;
+      }
       const href=detailIntent(event.target);
       if(href===hoverHref)return;
       clearTimeout(hoverTimer);hoverHref=href;
-      if(href)hoverTimer=setTimeout(()=>{hoverTimer=0;prefetchFragment(href);},80);
+      if(href)hoverTimer=setTimeout(()=>{
+        hoverTimer=0;
+        if(document.documentElement.dataset.svCardScrolling!=='true')prefetchFragment(href);
+      },100);
     },{passive:true});
     document.addEventListener('pointerout',event=>{
       const from=detailIntent(event.target),to=detailIntent(event.relatedTarget);
