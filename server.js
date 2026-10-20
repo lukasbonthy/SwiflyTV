@@ -6295,6 +6295,10 @@ function fullBackdrop(path) {
   return path ? `${TMDB_IMG}/original${path}` : "";
 }
 
+function responsiveBackdropStyle(path) {
+  return `background-image:url('${escapeHtml(backdrop(path))}');--sv-art-mobile:url('${escapeHtml(backdrop(path,"w780"))}');--sv-art-large:url('${escapeHtml(fullBackdrop(path))}');--sv-xbox-art:url('${escapeHtml(backdrop(path,"w780"))}')`;
+}
+
 function toQuery(params = {}) {
   const out = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
@@ -6325,7 +6329,7 @@ function setCached(key, value, ttl = CACHE_TTL.medium) {
   });
 }
 
-async function tmdb(endpoint, params = {}, ttl = CACHE_TTL.medium) {
+async function tmdb(endpoint, params = {}, ttl = CACHE_TTL.medium, signal) {
   if (!TMDB_API_KEY) {
     return {
       __error: true,
@@ -6350,6 +6354,7 @@ async function tmdb(endpoint, params = {}, ttl = CACHE_TTL.medium) {
 
   try {
     const response = await fetch(url, {
+      signal,
       headers: {
         accept: "application/json",
         "user-agent": `${SITE_NAME}/2.0`,
@@ -6357,6 +6362,9 @@ async function tmdb(endpoint, params = {}, ttl = CACHE_TTL.medium) {
     });
 
     const data = await response.json().catch(() => ({}));
+    // A deadline can abort the body after successful response headers.
+    // Never let the JSON fallback turn that interruption into cached data.
+    signal?.throwIfAborted();
 
     if (!response.ok) {
       return {
@@ -6519,7 +6527,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/details.js?v=252"></script>
     <script defer src="/assets/clean/download.js?v=2"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=222" />
-    <script defer src="/assets/liquid-glass/surfaces.js?v=240"></script>
+    <script defer src="/assets/liquid-glass/surfaces.js?v=253"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=233" />
     <script defer src="/assets/studio/studio.js?v=164"></script>
     <link rel="stylesheet" href="/assets/clean/aurora.css?v=208" />
@@ -6542,7 +6550,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=206" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=205" />' : ""}
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=200" />' : ""}
     ${player || active === "social" ? '<link rel="stylesheet" href="/assets/party/watchroom-call.css?v=1" />' : ""}
-    <link rel="stylesheet" href="/assets/clean/performance.css?v=217" />
+    <link rel="stylesheet" href="/assets/clean/performance.css?v=253" />
     <link rel="stylesheet" href="/assets/clean/tv.css?v=5" />
     <link rel="stylesheet" href="/assets/clean/details-premium.css?v=1" />
     <link rel="stylesheet" href="/assets/clean/details-clarity.css?v=2" />
@@ -7698,23 +7706,24 @@ function welcomePreviewRail(title = "", items = [], type = "") {
 
 
 async function welcomePage(req, res) {
-  const [trendingMovies, popularMovies, popularTv] = await Promise.all([
+  const [trendingMovies, popularMovies, popularTv, featured] = await Promise.all([
     tmdb("/trending/movie/week", {}, CACHE_TTL.short),
     tmdb("/movie/popular", {}, CACHE_TTL.medium),
     tmdb("/tv/popular", {}, CACHE_TTL.medium),
+    curatedFeaturedMovie(),
   ]);
-  const hero = pickHero([...(trendingMovies.results || []), ...(popularMovies.results || [])]);
+  const hero = featured || pickHero([...(trendingMovies.results || []), ...(popularMovies.results || [])]);
   const redirect = encodeURIComponent(String(req.query.redirect || "/profiles"));
   const body = welcomeMarkup({
     siteName: SITE_NAME, brand: BRAND_WORDMARK, redirect, hero,
     trendingMovies: trendingMovies.results || [], popularMovies: popularMovies.results || [], popularTv: popularTv.results || [],
-    renderRail: welcomePreviewRail, backdropUrl: fullBackdrop, posterUrl: value => img(value, "w342")
+    renderRail: welcomePreviewRail, backdropUrl: backdrop, posterUrl: value => img(value, "w342")
   });
   res.send(pageShell({ title: `${SITE_NAME} — Welcome`, active: "welcome", body }));
 }
 
 async function homePage(req, res) {
-  const [trendingMovies, trendingTv, popularMovies, popularTv, topMovies, topTv, nowPlaying] = await Promise.all([
+  const [trendingMovies, trendingTv, popularMovies, popularTv, topMovies, topTv, nowPlaying, featured] = await Promise.all([
     tmdb("/trending/movie/week", {}, CACHE_TTL.short),
     tmdb("/trending/tv/week", {}, CACHE_TTL.short),
     tmdb("/movie/popular", {}, CACHE_TTL.medium),
@@ -7722,10 +7731,11 @@ async function homePage(req, res) {
     tmdb("/movie/top_rated", {}, CACHE_TTL.medium),
     tmdb("/tv/top_rated", {}, CACHE_TTL.medium),
     tmdb("/movie/now_playing", {}, CACHE_TTL.short),
+    curatedFeaturedMovie(),
   ]);
   const sources = [trendingMovies, trendingTv, popularMovies, popularTv, topMovies, topTv, nowPlaying];
   if (sources.every(data => data.__error)) return res.send(setupNeededPage(sources[0].message));
-  const hero = pickHero([...(trendingMovies.results || []), ...(popularMovies.results || []), ...(trendingTv.results || []).map(item => ({ ...item, media_type: "tv" }))]);
+  const hero = featured || pickHero([...(trendingMovies.results || []), ...(popularMovies.results || []), ...(trendingTv.results || []).map(item => ({ ...item, media_type: "tv" }))]);
   const body = `<main>
     ${hero.id ? dsHero({ hero, context: "Featured" }) : dsPageHeader("Discover", "Explore movies and series.")}
     <section class="dsContent ${hero.id ? "" : "noHero"}">
@@ -7776,6 +7786,24 @@ function pickHero(items = []) {
     || {};
 }
 
+async function curatedFeaturedMovie() {
+  // Barbie first; the other requested films cover temporarily missing artwork
+  // or metadata. Optional feature data must not hold up a ready catalog.
+  const controller=new AbortController();let timer;
+  const deadline=new Promise(resolve=>{timer=setTimeout(()=>{controller.abort();resolve(null);},900);});
+  const lookup=async()=>{
+    for (const id of [346698,634649,687163]) {
+      if(controller.signal.aborted)return null;
+      try {
+        const movie=await tmdb(`/movie/${id}`,{},CACHE_TTL.long,controller.signal);
+        if(!movie.__error&&Number(movie.id)===id&&movie.title&&movie.backdrop_path)return {...movie,media_type:"movie"};
+      } catch {}
+    }
+    return null;
+  };
+  try{return await Promise.race([lookup(),deadline]);}finally{clearTimeout(timer);}
+}
+
 function titleArtText(title = "") {
   const clean = String(title || "Featured").trim();
   if (!clean) return "Featured";
@@ -7795,14 +7823,13 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = nu
   const mediaType = type || getType(hero);
   const title = getTitle(hero);
   const href = `/${mediaType}/${encodeURIComponent(hero.id || "")}`;
-  const bg = fullBackdrop(hero.backdrop_path || hero.poster_path);
   const spillSrc = img(hero.backdrop_path || hero.poster_path, "w300");
   const desc = hero.overview || "Discover this title, explore the cast, and add it to your list.";
   const maturity = mediaType === "tv" ? "TV-14" : "PG-13";
   const trailerKey = trailer && trailer.key ? String(trailer.key) : "";
   const trailerSrc = trailerKey ? youtubeHeroAutoplaySrc(trailerKey, embedOrigin) : "";
   return `<section class="dsHero ${trailerSrc ? "dsHeroHasTrailer" : ""}">
-    <div class="dsHeroArt" aria-hidden="true"><div class="dsHeroBg" style="background-image:url('${escapeHtml(bg)}');--sv-xbox-art:url('${escapeHtml(img(hero.backdrop_path || hero.poster_path, "w780"))}')"></div></div>
+    <div class="dsHeroArt" aria-hidden="true"><div class="dsHeroBg" style="${responsiveBackdropStyle(hero.backdrop_path || hero.poster_path)}"></div></div>
     ${trailerSrc ? `<div class="dsHeroTrailerLayer" aria-hidden="true">
       <iframe id="dsHeroTrailerFrame" class="dsHeroTrailerFrame" data-src="${escapeHtml(trailerSrc)}" title="${escapeHtml(title)} muted trailer preview" loading="eager" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
     </div>
@@ -8130,12 +8157,11 @@ function netflixBrowseHero({ type, label, hero, genres, rank = 6 }) {
   const heroType = type === "tv" ? "tv" : "movie";
   const title = getTitle(hero || {});
   const href = `/${heroType}/${encodeURIComponent(hero?.id || "")}`;
-  const bg = fullBackdrop(hero?.backdrop_path || hero?.poster_path);
   const desc = hero?.overview || `Browse ${label.toLowerCase()} with a Netflix-style full-screen category page.`;
   const maturity = heroType === "tv" ? "TV-14" : "PG-13";
 
   return `<section class="browseHero">
-    <div class="browseHeroBg" style="background-image:url('${escapeHtml(bg)}');--sv-xbox-art:url('${escapeHtml(img(hero?.backdrop_path || hero?.poster_path, "w780"))}')"></div>
+    <div class="browseHeroBg" style="${responsiveBackdropStyle(hero?.backdrop_path || hero?.poster_path)}"></div>
 
     <div class="browseHeroTop">
       <h1>${escapeHtml(label)}</h1>
