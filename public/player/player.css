@@ -365,3 +365,10 @@ body.reduceMotion .svPlayer *::before,body[data-st-motion="reduce"] .svPlayer *:
 body.reduceMotion .svPlayer *::after,body[data-st-motion="reduce"] .svPlayer *::after { animation:none !important; transition:none !important; }
 /* Unsupported controls and inactive status panels always honor their hidden attribute. */
 body.svCleanShell .svPlayer [hidden] { display:none !important; }
+
+/* Independent download target under every selectable episode; never nest links. */
+.svPlayerEpisodeChoice{display:flex;flex-direction:column;min-width:0}
+.svPlayerEpisodeChoice > .svPlayerEpisode{flex:1 1 auto}
+body.svCleanShell .svPlayerEpisodeDownload{display:block;align-self:stretch;margin:5px 1px 0;padding:8px 12px;border:1px solid #ffffff22;border-radius:11px;background:#ffffff0d;color:#e6f1ff;text-align:center;font-size:12px;text-decoration:none}
+body.svCleanShell .svPlayerEpisodeDownload:is(:focus-visible,:hover){border-color:#ffffff60;background:#ffffff22}
+body.svCleanShell .svPlayer .svPlayerDownload{font-size:24px;text-decoration:none}
