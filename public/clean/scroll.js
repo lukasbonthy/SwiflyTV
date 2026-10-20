@@ -7,13 +7,21 @@
   const native = 'input,textarea,select,[contenteditable]:not([contenteditable="false"]),video,audio,media-player,[data-player-root],.vds-controls,.vds-slider,[data-native-scroll],#controlPanel,.genreDropdownMenu,.dsProfileDropdown';
   const horizontalRails = '.movieRail,.dsRail,.nfRail,.nfTopTenRail,.svResumeRail,.dsWelcomeRailTrack,.svDetailCastRail';
   let engine, frame = 0, lastFrame = null, clock = 1, preferences, started = false, destroyed = false;
-  const available = () => !destroyed && !document.hidden && fine.matches && !reduced.matches &&
+  // Preserve premium Lenis easing on machines that can paint it. If actual
+  // animation frames repeatedly miss the budget, stop scripting page scroll
+  // for this document and let the browser's compositor handle it natively.
+  // One delayed frame (tab suspension/GC) must not disable the experience.
+  let performanceFallback = false;
+  const recentFrames = [];
+  let activeMotionMs = 0;
+  const available = () => !destroyed && !performanceFallback && !document.hidden && fine.matches && !reduced.matches &&
     !document.body.classList.contains('reduceMotion') && document.body.dataset.svScroll !== 'native' &&
     !/^\/(?:watch|embed)(?:\/|$)/.test(location.pathname) && document.documentElement.dataset.svTv !== 'true' &&
     document.documentElement.dataset.svXbox !== 'true' && typeof window.Lenis === 'function';
 
   function cancel() {
     cancelAnimationFrame(frame); frame = 0; lastFrame = null;
+    recentFrames.length = 0; activeMotionMs = 0;
     if (engine?.isScrolling === 'smooth') {
       // Reset to the actual position without finishing an obsolete target.
       // start() immediately restores ordinary native input and the next glide.
@@ -30,11 +38,25 @@
     if (!engine) return;
     // Advance only while moving. An active-time clock prevents a long idle
     // from turning the first frame of the next gesture into an instant jump.
-    clock += Math.max(0, time - (lastFrame ?? time));
+    const elapsed = Math.max(0, time - (lastFrame ?? time));
+    clock += elapsed;
     lastFrame = time;
     engine.raf(clock);
-    if (engine.isScrolling === 'smooth') frame = requestAnimationFrame(step);
-    else lastFrame = null;
+    if (engine.isScrolling === 'smooth') {
+      activeMotionMs += elapsed;
+      // 4+ slow frames of the last 10 is sustained jank, not occasional work.
+      // No extra RAF/polling/observer: sample the frames Lenis already owns.
+      if (elapsed > 0 && elapsed < 250) {
+        recentFrames.push(elapsed > 36);
+        if (recentFrames.length > 10) recentFrames.shift();
+      }
+      if (activeMotionMs >= 3200 && recentFrames.length === 10 && recentFrames.filter(Boolean).length >= 4) {
+        performanceFallback = true;
+        dispose();
+        return;
+      }
+      frame = requestAnimationFrame(step);
+    } else {lastFrame = null;recentFrames.length = 0;activeMotionMs = 0;}
   }
   function wake() {
     if (!frame && available()) {

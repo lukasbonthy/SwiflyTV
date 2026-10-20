@@ -24,7 +24,7 @@ async function detailsFixture(backdrops) {
   return html;
 }
 
-test('story backdrop belongs to the selected movie and prefers wordless art',async()=>{
+test('story artwork uses the proven hero art, not an arbitrary cropped second still',async()=>{
   const html=await detailsFixture([
     {file_path:'/hero.jpg',iso_639_1:null,aspect_ratio:1.8},
     {file_path:'/lettered.jpg',iso_639_1:'en',aspect_ratio:1.8,vote_count:500},
@@ -32,16 +32,18 @@ test('story backdrop belongs to the selected movie and prefers wordless art',asy
   ]);
   const env=browser(html);
   const section=env.window.document.querySelector('#overview');
-  assert.match(section.getAttribute('style'),/\/w780\/alternate\.jpg/);
+  assert.match(section.getAttribute('style'),/\/w1280\/hero\.jpg/);
   assert(!section.getAttribute('style').includes('lettered.jpg'));
+  assert(!section.getAttribute('style').includes('alternate.jpg'));
+  assert.match(env.window.document.querySelector('.svDetailBackdrop').getAttribute('style'), /w1280/);
   assert(env.window.document.querySelector('.svDetailActions .svDownloadAction svg.svIcon'));
   assert(env.window.document.querySelector('.svDetailActions a[data-sv-party-movie-id] svg.svIcon'));
   env.finish();
 });
 
-test('story artwork falls back to the hero when no second film still exists',async()=>{
+test('story keeps one shared hero image even when no other film still exists',async()=>{
   const env=browser(await detailsFixture([]));
-  assert.match(env.window.document.querySelector('#overview').getAttribute('style'),/\/w780\/hero\.jpg/);
+  assert.match(env.window.document.querySelector('#overview').getAttribute('style'),/\/w1280\/hero\.jpg/);
   env.finish();
 });
 
@@ -73,9 +75,11 @@ test('detail save and heart state never destroy existing liquid-glass panes',()=
 
 test('detail visual polish preserves user opacity controls and minimizes compositing',()=>{
   const server=fs.readFileSync(path.join(__dirname,'../server.js'),'utf8');
-  assert(server.includes('/assets/clean/details-clarity.css?v=1'));
+  assert(server.includes('/assets/clean/details-clarity.css?v=2'));
   assert(server.includes('family=Manrope:wght@400;500;600;700;800'));
-  assert.match(css,/\.svDetailActions[\s\S]*\.svNavMatchedLens\.svLiquidPane/);
+  assert(!/--sv-glass-default-tint\\s*:\\s*\\./.test(css),'no gray tint overrides allowed');
+  assert(!/--sv-glass-color\\s*:/.test(css),'no opaque white glass face overrides allowed');
+  assert(!css.includes('mask-image'),'no chopped/masked synopsis photo');
   assert.match(css,/data-st-glass="off"/);
   assert.match(css,/data-st-glass="subtle"/);
   assert.match(css,/prefers-reduced-transparency:reduce/);

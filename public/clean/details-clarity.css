@@ -49,41 +49,24 @@ body.svCleanShell .svCinemaPage .svDetailCastRail .dsCastCard strong {
 body.svCleanShell .svCinemaPage .svDetailCastRail .dsCastCard em {font-size:12px !important;color:#b0bfce !important;}
 body.svCleanShell .svCinemaPage .svDetailAbout dd {font-size:13.5px; font-weight:560;}
 
-/* The original glass lens stays mounted and retains live SVG refraction.
-   A brighter translucent face and visible edge make it recognizable on
-   black movie artwork instead of looking like six black pills. */
+/* Preserve the exact navbar glass face, displacement and tint.
+   The previous iteration forced .29-.50 white tint and therefore looked
+   like opaque gray plastic instead of showing the movie through the lens.
+   This host-only hairline improves definition without changing the optics. */
 body.svCleanShell .svCinemaPage .svDetailActions > :is(a,button) {
   font-family:"Manrope","Host Grotesk",system-ui,sans-serif !important;
   font-size:13px !important;
   font-weight:750 !important;
   color:#fff !important;
-  text-shadow:0 1px 2px rgba(0,0,0,.68) !important;
+  text-shadow:0 1px 3px rgba(0,0,0,.72) !important;
   letter-spacing:0 !important;
 }
-body.svCleanShell .svCinemaPage .svDetailActions > :is(a,button).svNavMatchedOptic > .svNavMatchedLens.svLiquidPane {
-  --sv-glass-color:244 249 255;
-  --sv-glass-default-tint:.29 !important;
-  box-shadow:
-    inset 0 0 0 1px rgba(247,250,255,.49),
-    inset 0 2px 2px rgba(255,255,255,.11),
-    0 7px 20px rgba(0,0,0,.27) !important;
+body.svCleanShell .svCinemaPage .svDetailActions > :is(a,button).svNavMatchedOptic {
+  outline:1px solid rgba(239,247,255,.25);
+  outline-offset:-1px;
 }
-body.svCleanShell .svCinemaPage .svDetailActions > .dsPrimaryBtn.svNavMatchedOptic > .svNavMatchedLens.svLiquidPane {
-  --sv-glass-default-tint:.40 !important;
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.66),
-    inset 0 2px 3px rgba(255,255,255,.19),
-    0 8px 26px rgba(0,0,0,.28) !important;
-}
-body.svCleanShell .svCinemaPage .svDetailActions > :is(a,button).svNavMatchedOptic:is(:hover,:focus-visible) > .svNavMatchedLens.svLiquidPane {
-  --sv-glass-default-tint:.43 !important;
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.78),
-    inset 0 2px 4px rgba(255,255,255,.25),
-    0 10px 28px rgba(0,0,0,.33) !important;
-}
-body.svCleanShell .svCinemaPage .svDetailActions > :is(a,button).svNavMatchedOptic:active > .svNavMatchedLens.svLiquidPane {
-  --sv-glass-default-tint:.50 !important;
+body.svCleanShell .svCinemaPage .svDetailActions > :is(a,button).svNavMatchedOptic:is(:hover,:focus-visible) {
+  outline-color:rgba(243,249,255,.46);
 }
 /* Prevent the hero's fade from darkening the control backing excessively. */
 body.svCleanShell .svCinemaPage .svDetailShade {
@@ -103,6 +86,13 @@ body.svCleanShell .svDetailActionGlyph {
   color:inherit; pointer-events:none;
 }
 body.svCleanShell .svCinemaPage .svDetailActions .dsIconBtn {display:inline-grid;place-items:center;}
+/* The full-width scrolled modal chrome used an unnecessary 16px backdrop
+   blur across the entire sheet. Keep its dark reading strip, while Back
+   and Close buttons keep the existing independent liquid-glass optics. */
+body.svCleanShell .svDetailScrolled .svDetailChrome {
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
+}
 /* Refractive optics still belong to the shared renderer; explicit Off/Subtle
    modes and reduced transparency are never forced into full liquid mode. */
 body.svCleanShell[data-st-glass="off"] .svCinemaPage .svDetailActions > :is(a,button).svGlassControl {
@@ -122,60 +112,62 @@ body.svCleanShell[data-st-glass="subtle"] .svCinemaPage .svDetailActions > :is(a
   }
 }
 
-/* Film-specific atmosphere: use an alternate TMDB backdrop, not a generic
-   stock texture or the same hero repeated. Keep artwork off the copy column. */
+/* The story uses the SAME cinematic hero photo at a smaller shared
+   resolution, not a random secondary still. Its full-width composition
+   avoids a tiny cropped face or an arbitrary dark rectangle. */
 body.svCleanShell .svCinemaPage .svDetailOverview {
   isolation:isolate;overflow:hidden;min-height:197px;
-  background:#101821 !important;
-  border-color:rgba(240,248,255,.24);
-  box-shadow:inset 0 1px rgba(255,255,255,.14),0 13px 36px rgba(0,0,0,.14);
+  background:#111720 !important;
+  border-color:rgba(240,248,255,.18);
+  box-shadow:inset 0 1px rgba(255,255,255,.12),0 13px 32px rgba(0,0,0,.13);
   contain:paint;
 }
 body.svCleanShell .svCinemaPage .svDetailOverview::before {
-  content:"";position:absolute;z-index:-2;
-  inset:0 45% 0 0;width:auto;height:auto;
-  background:var(--sv-story-art,none) center 45%/cover no-repeat;
-  opacity:.56;
-  -webkit-mask-image:linear-gradient(90deg,#000 5%,#000 32%,transparent 100%);
-  mask-image:linear-gradient(90deg,#000 5%,#000 32%,transparent 100%);
+  content:"";position:absolute;z-index:-2;inset:0;width:auto;height:auto;
+  background-image:var(--sv-story-art,none);
+  background-position:center 42%;
+  background-size:cover;
+  background-repeat:no-repeat;
+  opacity:.83;
   pointer-events:none;
 }
 body.svCleanShell .svCinemaPage .svDetailOverview::after {
   content:"";position:absolute;z-index:-1;inset:0;
-  background:linear-gradient(90deg,rgba(9,13,20,.55),rgba(9,13,20,.66) 30%,rgba(11,16,24,.94) 49%,rgba(9,13,20,.94) 100%);
+  background:linear-gradient(90deg,rgba(9,14,21,.50) 0%,rgba(9,14,21,.62) 30%,rgba(9,14,21,.85) 56%,rgba(9,14,21,.94) 100%);
   pointer-events:none;
 }
 body.svCleanShell .svCinemaPage .svDetailOverview > :is(div,p) {position:relative;z-index:1;}
 body.svCleanShell .svCinemaPage .svDetailOverview h2 {
   color:#fff !important;
-  text-shadow:0 2px 16px rgba(0,0,0,.72);
+  text-shadow:0 2px 16px rgba(0,0,0,.75);
 }
 body.svCleanShell .svCinemaPage .svDetailOverview .svCinemaEyebrow {
-  color:#d8e9ff !important;
-  text-shadow:0 1px 8px rgba(0,0,0,.58);
+  color:#e5f1ff !important;
+  text-shadow:0 1px 7px rgba(0,0,0,.60);
 }
 body.svCleanShell .svCinemaPage .svDetailOverview > p {
-  color:#e7edf6 !important;
-  text-shadow:0 1px 8px rgba(0,0,0,.26);
+  color:#f0f4fa !important;
+  text-shadow:0 1px 7px rgba(0,0,0,.38);
+}
+/* This tab sits above the artwork during modal scroll. It does not require
+   its own large backdrop sampling layer; action buttons retain real glass. */
+body.svCleanShell[data-st-glass="liquid"] .svDetailChapterNav {
+  -webkit-backdrop-filter:none !important;backdrop-filter:none !important;
 }
 /* Avoid a second expensive backdrop filter or a large animated art layer. */
 html[data-sv-xbox="true"] body.svCleanShell .svCinemaPage .svDetailOverview::before {
-  opacity:.37;
+  opacity:.65;
 }
 @media(max-width:980px) {
-  body.svCleanShell .svCinemaPage .svDetailOverview::before {inset:0 38% 0 0;opacity:.36;}
+  body.svCleanShell .svCinemaPage .svDetailOverview::before {background-position:45% 40%;}
 }
 @media(max-width:680px) {
   body.svCleanShell .svCinemaPage .svDetailIdentity :is(.svDetailGenres,.svDetailFacts) {font-size:12px;}
   body.svCleanShell .svCinemaPage .svDetailActions > :is(a,button) {font-size:12px !important;}
   body.svCleanShell .svDetailChapterNav a {font-size:12px;}
-  body.svCleanShell .svCinemaPage .svDetailOverview::before {
-    inset:0 0 45% 0;opacity:.42;
-    -webkit-mask-image:linear-gradient(180deg,#000,transparent 95%);
-    mask-image:linear-gradient(180deg,#000,transparent 95%);
-  }
+  body.svCleanShell .svCinemaPage .svDetailOverview::before {background-position:47% 36%;opacity:.74;}
   body.svCleanShell .svCinemaPage .svDetailOverview::after {
-    background:linear-gradient(180deg,rgba(9,13,20,.46),rgba(9,13,20,.83) 39%,#101821 77%);
+    background:linear-gradient(180deg,rgba(9,14,21,.48),rgba(9,14,21,.75) 40%,#101721 94%);
   }
   body.svCleanShell .svCinemaPage .svDetailOverview > p {font-size:13.5px;}
 }

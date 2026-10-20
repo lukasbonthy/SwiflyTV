@@ -6515,7 +6515,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/vendor/lenis/lenis.css?v=1.3.16-r1" />
     <script defer src="/assets/vendor/lenis/lenis.min.js?v=1.3.16-r1"></script>
     <script defer src="/assets/clean/motion.js?v=238"></script>
-    <script defer src="/assets/clean/scroll.js?v=242"></script>
+    <script defer src="/assets/clean/scroll.js?v=243"></script>
     <script defer src="/assets/clean/details.js?v=235"></script>
     <script defer src="/assets/clean/download.js?v=2"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=222" />
@@ -6545,7 +6545,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/clean/performance.css?v=214" />
     <link rel="stylesheet" href="/assets/clean/tv.css?v=5" />
     <link rel="stylesheet" href="/assets/clean/details-premium.css?v=1" />
-    <link rel="stylesheet" href="/assets/clean/details-clarity.css?v=1" />
+    <link rel="stylesheet" href="/assets/clean/details-clarity.css?v=2" />
 </head>
 <body class="svCleanShell">
 
@@ -8879,17 +8879,11 @@ async function detailPage(req, res, type) {
   const title = getTitle(details);
   const detailsDate = type === "tv" ? details.first_air_date : details.release_date;
   const year = getYear(detailsDate);
-  const heroBg = fullBackdrop(details.backdrop_path || details.poster_path);
-  // Use another still from the same film for the synopsis, never a random
-  // stock image. TMDB already returned these via append_to_response=images.
-  // Language-neutral backdrops favor photography without overprinted titles.
-  const storyStill = (Array.isArray(details.images?.backdrops) ? details.images.backdrops : [])
-    .filter(image => image.file_path && image.file_path !== details.backdrop_path &&
-      (!image.iso_639_1 || image.iso_639_1 === "en") && Number(image.aspect_ratio) > 1.4)
-    .sort((a, b) => Number(!b.iso_639_1) - Number(!a.iso_639_1) ||
-      Number(b.vote_count || 0) - Number(a.vote_count || 0) ||
-      Number(b.vote_average || 0) - Number(a.vote_average || 0))[0];
-  const storyArt = img(storyStill?.file_path || details.backdrop_path || details.poster_path, "w780");
+  // Keep the hero and story on ONE browser-cached image; original-sized
+  // photographs can consume enormous decode memory and scroll compositing
+  // work for a 1250px detail sheet. w1280 preserves its film composition.
+  const heroBg = img(details.backdrop_path || details.poster_path, "w1280");
+  const storyArt = heroBg;
   const logos = (details.images?.logos || []).filter(image => image.file_path && (!image.iso_639_1 || image.iso_639_1 === "en"))
     .sort((a, b) => Number(b.iso_639_1 === "en") - Number(a.iso_639_1 === "en") || Number(b.vote_average || 0) - Number(a.vote_average || 0));
   const titleLogo = logos[0] ? img(logos[0].file_path, "w500") : "";
