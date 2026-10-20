@@ -191,7 +191,7 @@ test('A normal standalone party click remembers its title page and preserves pla
   w.sessionStorage.setItem('swiflytv.playReturn', '/search?q=previous&media=movie-99');
   w.sessionStorage.setItem('swiflytv.playContext', '{"previous":true}');
   w.localStorage.setItem('movieverse.continue', '[{"id":"99","title":"Previous movie"}]');
-  const library = [...d.querySelectorAll('script:not([src])')].find(script => script.textContent.includes('function syncLibraryButtons()'));
+  const library = [...d.querySelectorAll('script:not([src])')].find(script => script.textContent.includes('function syncLibraryButtons('));
   assert(library, 'The actual watch-history controller should be exercised');
   w.eval(library.textContent);
   w.boot('details.js');

@@ -136,11 +136,17 @@
     if (root instanceof Element && root.matches(heroSelector)) registerHero(root);
     root.querySelectorAll?.(heroSelector).forEach(registerHero);
     if (!canAnimate() || !observer) return;
+    const reveal = [];
     root.querySelectorAll?.('.dsWelcomeRail, .svDetailSection, [data-cinema-reveal]').forEach(section => {
       if (observed.has(section)) return; observed.add(section);
       if (section.getBoundingClientRect().top < window.innerHeight - 24) return;
-      section.classList.add('svMotionReveal'); pendingReveal.add(section); observer.observe(section);
+      reveal.push(section);
     });
+    // Measure every section before adding classes. Reading the next section
+    // after a transform write forces one style/layout flush per reveal.
+    for (const section of reveal) {
+      section.classList.add('svMotionReveal'); pendingReveal.add(section); observer.observe(section);
+    }
     if (started) queuePresentation();
   }
   function release(root) {

@@ -6510,13 +6510,13 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/avatars.js?v=209"></script>
     ${active === "profiles" ? '<script defer src="/assets/clean/profiles.js?v=209"></script>' : ""}
     <script defer src="/assets/clean/continue.js?v=155"></script>
-    <link rel="stylesheet" href="/assets/clean/details.css?v=230" />
+    <link rel="stylesheet" href="/assets/clean/details.css?v=251" />
     <link rel="stylesheet" href="/assets/clean/motion.css?v=208" />
     <link rel="stylesheet" href="/assets/vendor/lenis/lenis.css?v=1.3.16-r1" />
     <script defer src="/assets/vendor/lenis/lenis.min.js?v=1.3.16-r1"></script>
-    <script defer src="/assets/clean/motion.js?v=238"></script>
+    <script defer src="/assets/clean/motion.js?v=251"></script>
     <script defer src="/assets/clean/scroll.js?v=245"></script>
-    <script defer src="/assets/clean/details.js?v=236"></script>
+    <script defer src="/assets/clean/details.js?v=251"></script>
     <script defer src="/assets/clean/download.js?v=2"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=222" />
     <script defer src="/assets/liquid-glass/surfaces.js?v=240"></script>
@@ -6752,13 +6752,13 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       return true;
     }
 
-    function syncLibraryButtons() {
+    function syncLibraryButtons(root = document) {
       const watchlist = readWatchlist();
       const liked = readLiked();
       const savedWatch = new Set(watchlist.map((item) => item.key));
       const savedLiked = new Set(liked.map((item) => item.key));
 
-      document.querySelectorAll("[data-watch-id]").forEach((button) => {
+      root.querySelectorAll("[data-watch-id]").forEach((button) => {
         const key = watchKey(button.dataset.watchType || "movie", button.dataset.watchId);
         const isSaved = savedWatch.has(key);
         button.classList.toggle("saved", isSaved);
@@ -6768,7 +6768,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
         button.setAttribute("aria-label", (isSaved ? "Remove " : "Add ") + (button.dataset.watchTitle || "title") + (isSaved ? " from My List" : " to My List"));
       });
 
-      document.querySelectorAll("[data-like-id]").forEach((button) => {
+      root.querySelectorAll("[data-like-id]").forEach((button) => {
         const key = watchKey(button.dataset.likeType || "movie", button.dataset.likeId);
         const isLiked = savedLiked.has(key);
         button.classList.toggle("liked", isLiked);

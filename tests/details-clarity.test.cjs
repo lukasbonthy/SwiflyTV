@@ -50,7 +50,7 @@ test('story keeps one shared hero image even when no other film still exists',as
 test('detail save and heart state never destroy existing liquid-glass panes',()=>{
   const html=api.pageShell({body:'<div class="svDetailActions"><button data-watch-id="101" data-watch-type="movie" data-watch-title="Example Film"></button><button data-like-id="101" data-like-type="movie" data-like-title="Example Film"></button></div><button id="catalogSave" data-watch-id="102" data-watch-type="movie"></button>'});
   const env=browser(html),w=env.window,d=w.document;
-  const library=[...d.querySelectorAll('script:not([src])')].find(x=>x.textContent.includes('function syncLibraryButtons()'));
+  const library=[...d.querySelectorAll('script:not([src])')].find(x=>x.textContent.includes('function syncLibraryButtons('));
   assert(library);
   w.eval(library.textContent);
   const [watch,like]=d.querySelectorAll('.svDetailActions button');

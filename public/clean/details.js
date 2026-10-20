@@ -114,7 +114,9 @@
   }
   const scrollValue=value=>Number.isFinite(value)&&value>=0&&value<=1000000?value:0;
   function initialize(root) {
-    if (typeof window.syncLibraryButtons==='function') window.syncLibraryButtons();
+    // Only the inserted fragment needs library state. Rewriting the catalog's
+    // labels here tears down its existing glass while the sheet is moving.
+    if (typeof window.syncLibraryButtons==='function') window.syncLibraryButtons(root);
     window.SwiflyContinue?.decorate?.(root);
     root.querySelectorAll('[data-sv-details-back]').forEach(link=>link.setAttribute('href',returnToCatalog()));
     root.querySelectorAll('[data-sv-player-back]').forEach(link=>link.setAttribute('href',playbackReturn(link.getAttribute('href'))));
@@ -174,45 +176,56 @@
     transitionEpoch++;
     const active=sheetTransition;sheetTransition=null;if(!active)return;
     clearTimeout(active.timer);
+    cancelAnimationFrame(active.frame);
     for(const animation of active.animations)animation.cancel();
   }
   function moveSheet(state,complete) {
     const entering=state==='opening',reversing=Boolean(sheetTransition);
-    // Chromium composites transform-animated dialogs without repainting SVG
-    // backdrop displacement until the transform finishes. Animate fixed
-    // positioning instead so refraction stays visible WHILE the sheet rises.
-    const offscreen='calc(0px - var(--sv-detail-rise))';
-    const start=reversing?getComputedStyle(dialog).bottom:(entering?offscreen:'0px');
+    // Keep the sheet's layout stationary. The shared glass renderer measures
+    // layout dimensions, so its prepared lenses can travel with this layer.
+    const offscreen='translateY(var(--sv-detail-rise))';
+    const start=reversing?getComputedStyle(dialog).transform:(entering?offscreen:'translateY(0px)');
     const opacity=reversing?getComputedStyle(scrim).opacity:(entering?'0':'1');
     cancelSheetTransition();
     const epoch=transitionEpoch,duration=entering?enterDuration:exitDuration;
-    const active={epoch,animations:[],timer:null,complete:null};sheetTransition=active;
+    const active={epoch,animations:[],frame:0,timer:null,complete:null};sheetTransition=active;
+    dialog.style.removeProperty('animation-play-state');scrim.style.removeProperty('animation-play-state');
     dialog.dataset.svDetailState=state;scrim.dataset.svDetailState=state;
     sceneState(state);
     const settle=()=>{
       if(sheetTransition!==active||epoch!==transitionEpoch)return;
-      sheetTransition=null;clearTimeout(active.timer);
+      sheetTransition=null;clearTimeout(active.timer);cancelAnimationFrame(active.frame);
       dialog.dataset.svDetailState=entering?'open':'closed';scrim.dataset.svDetailState=entering?'open':'closed';
       sceneState(entering?'open':'closed');
       dialog.style.removeProperty('--sv-detail-start');scrim.style.removeProperty('--sv-detail-dim-start');
+      dialog.style.removeProperty('animation-play-state');scrim.style.removeProperty('animation-play-state');
       for(const animation of active.animations)animation.cancel();
       complete?.();
     };
     active.complete=settle;
     if(reducedMotion()){settle();return;}
-    dialog.style.setProperty('--sv-detail-start',start||'0px');
+    // Fragment parsing, library state and the first layout must not consume
+    // the entrance or its watchdog before the browser can show one frame.
+    const begin=(play,timeout)=>{
+      active.frame=requestAnimationFrame(()=>{
+        active.frame=0;if(sheetTransition!==active)return;
+        play();active.timer=setTimeout(settle,timeout);
+      });
+    };
+    dialog.style.setProperty('--sv-detail-start',start||'translateY(0px)');
     scrim.style.setProperty('--sv-detail-dim-start',opacity||'0');
     if(typeof dialog.animate==='function'){
       dialog.dataset.svDetailMotion='waapi';scrim.dataset.svDetailMotion='waapi';
       try {
         const animate=(target,frames,options)=>{
           const animation=target.animate(frames,{fill:'both',...options});active.animations.push(animation);
+          animation.pause?.();animation.currentTime=0;
           animation.finished.catch(()=>{});return animation.finished;
         };
-        const sheet=animate(dialog,[{bottom:start||'0px'},{bottom:entering?'0px':offscreen}],{duration,easing:entering?'cubic-bezier(.22,.74,.22,1)':'cubic-bezier(.4,0,.2,1)'});
+        const sheet=animate(dialog,[{transform:start||'translateY(0px)'},{transform:entering?'translateY(0px)':offscreen}],{duration,easing:entering?'cubic-bezier(.22,.74,.22,1)':'cubic-bezier(.4,0,.2,1)'});
         const dim=animate(scrim,[{opacity:opacity||'0'},{opacity:entering?'1':'0'}],{duration:entering?330:duration,easing:entering?'ease-out':'ease-in'});
         Promise.all([sheet,dim]).then(settle,()=>{});
-        active.timer=setTimeout(settle,duration+100);return;
+        begin(()=>{for(const animation of active.animations)animation.play?.();},duration+100);return;
       } catch {
         for(const animation of active.animations)animation.cancel();active.animations=[];
       }
@@ -222,7 +235,7 @@
     if(getComputedStyle(dialog).animationName!==name){settle();return;}
     // CSS events from a cancelled animation can arrive after a new transition begins.
     // A bounded timer also completes when a background tab drops animationend entirely.
-    active.timer=setTimeout(settle,duration+34);
+    begin(()=>{dialog.style.animationPlayState='running';scrim.style.animationPlayState='running';},duration+34);
   }
   function settleReducedMotion() {if(reducedMotion()){sheetTransition?.complete();clearScene();}}
   function focusReadyEntry(current) {
@@ -387,6 +400,7 @@
   function boot() {
     if(started)return;started=true;rememberCatalog();initialize(document);
     motionPreference.addEventListener?.('change',settleReducedMotion);
+    document.addEventListener('visibilitychange',()=>{if(document.hidden)sheetTransition?.complete();});
     window.addEventListener('resize',()=>{if(dialog?.open)updateSceneGeometry();},{passive:true});
     new MutationObserver(settleReducedMotion).observe(document.body,{attributes:true,attributeFilter:['class']});
     // Passing over movie cards during a wheel glide is not a real intent to
