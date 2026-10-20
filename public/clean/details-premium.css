@@ -1,0 +1,322 @@
+/* Film-detail art direction. Intentionally isolated from the catalog, player,
+   account pages and the shared refractive liquid-glass renderer. */
+body.svCleanShell .svCinemaPage .svTitleDetails.svTitleDetails {
+  --sv-cinema-line: rgba(228,236,248,.15);
+  background:#080b10 !important;
+}
+body.svCleanShell .svDetailDialog {
+  width:min(1250px,calc(100vw - 36px));
+  height:min(93svh,1100px); max-height:93svh;
+  border-radius:28px 28px 0 0;
+  border-color:rgba(231,242,255,.19);
+  background:#080b10;
+  box-shadow:0 32px 110px rgba(0,0,0,.78),inset 0 1px rgba(255,255,255,.12);
+}
+body.svCleanShell .svCinemaPage .svDetailHero,
+body.svCleanShell .svDetailDialog .svCinemaPage .svDetailHero {
+  height:clamp(540px,53vw,650px);
+  min-height:540px;
+  background:#141920;
+}
+body.svCleanShell .svCinemaPage .svDetailBackdrop {
+  background-position:center 30%;
+}
+/* Keep the middle of the actual artwork luminous; protect only the text area
+   and the bottom transition. No giant filter/opacity parent above the lenses. */
+body.svCleanShell .svCinemaPage .svDetailShade {
+  background:
+    linear-gradient(0deg,#080b10 0%,rgba(8,11,16,.97) 5%,rgba(8,11,16,.72) 22%,rgba(8,11,16,.12) 62%,rgba(8,11,16,.10) 100%),
+    linear-gradient(90deg,rgba(3,7,12,.63) 0%,rgba(3,7,12,.25) 42%,transparent 80%);
+}
+body.svCleanShell .svCinemaPage .svDetailIdentity {
+  left:clamp(26px,4vw,55px);
+  right:255px; bottom:43px; max-width:840px;
+}
+body.svCleanShell .svDetailEdition {
+  gap:11px; margin-bottom:17px;
+  font-size:10px; letter-spacing:.24em; font-weight:750;
+  color:rgba(243,248,255,.89);
+}
+body.svCleanShell .svDetailEdition::before {
+  content:""; display:inline-block; width:19px; height:2px;
+  border-radius:3px; background:linear-gradient(90deg,#fff,rgba(255,255,255,.2));
+  flex:none;
+}
+body.svCleanShell .svCinemaPage .svDetailTitle {
+  margin:0 0 17px !important;
+  font-size:clamp(52px,6.5vw,88px) !important;
+  font-weight:770 !important;
+  line-height:.98 !important;
+  letter-spacing:-.065em !important;
+  max-width:780px;
+  text-shadow:0 6px 36px rgba(0,0,0,.35) !important;
+  overflow-wrap:break-word;
+}
+body.svCleanShell .svCinemaPage .svDetailLogo {
+  max-width:min(450px,65vw); max-height:172px;
+}
+body.svCleanShell .svCinemaPage .svDetailGenres {
+  gap:9px; margin-bottom:13px;
+  font-size:12px; font-weight:530;
+  color:rgba(233,239,249,.80);
+}
+body.svCleanShell .svCinemaPage .svDetailGenres a {
+  text-decoration:none; text-underline-offset:4px;
+  transition:color .15s ease;
+}
+body.svCleanShell .svCinemaPage .svDetailGenres a:is(:hover,:focus-visible) {
+  color:white; text-decoration:underline;
+}
+body.svCleanShell .svCinemaPage .svDetailFacts {
+  margin-bottom:21px; gap:10px; font-size:12px;
+  font-weight:570; color:rgba(243,247,254,.90);
+}
+body.svCleanShell .svCinemaPage .svDetailFacts > span + span::before {
+  color:rgba(230,237,248,.37); padding-right:10px;
+}
+body.svCleanShell .svCinemaPage .svDetailFacts .svDetailScore {
+  padding:7px 11px; border-radius:999px;
+  background:rgba(208,174,96,.13);
+  border:1px solid rgba(252,226,164,.28);
+  box-shadow:inset 0 1px rgba(255,255,255,.06);
+  color:#fff4d8;
+}
+body.svCleanShell .svCinemaPage .svDetailScore small {color:rgba(250,230,181,.72);}
+body.svCleanShell .svCinemaPage .svDetailActions {
+  gap:10px; max-width:850px; align-items:center;
+}
+/* The shared SwiflyGlassSurfaces optics still own every action face and lens.
+   No opaque faux material is painted above the actual SVG refraction. */
+body.svCleanShell .svCinemaPage .svDetailActions :is(.dsPrimaryBtn,.dsSecondaryBtn) {
+  display:inline-flex; align-items:center; justify-content:center;
+  gap:9px; min-height:49px !important;
+  padding:11px 18px !important;
+  border-radius:999px !important;
+  font-size:12px !important; font-weight:650 !important;
+  letter-spacing:.005em; white-space:nowrap;
+}
+body.svCleanShell .svCinemaPage .svDetailActions .dsPrimaryBtn {
+  min-width:126px !important; font-weight:770 !important;
+}
+body.svCleanShell .svCinemaPage .svDetailActions .dsIconBtn {
+  width:49px !important; height:49px !important;
+  min-width:49px !important; min-height:49px !important;
+  border-radius:50% !important; padding:0 !important;
+  font-size:19px !important;
+}
+body.svCleanShell .svCinemaPage .svDetailActions :is(a,button):focus-visible,
+body.svCleanShell .svDetailChapterNav a:focus-visible {
+  outline:2px solid #e6f3ff !important; outline-offset:4px !important;
+}
+body.svCleanShell .svDetailPosterCard {
+  right:clamp(28px,4vw,56px); bottom:53px; width:clamp(172px,18vw,214px);
+  padding:7px; border-radius:23px;
+  border:1px solid rgba(245,249,255,.38);
+  background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.035) 48%,rgba(12,19,28,.18));
+  box-shadow:0 23px 60px rgba(0,0,0,.58),inset 0 1px rgba(255,255,255,.28);
+  transform:rotate(1.5deg);
+}
+body.svCleanShell .svDetailPosterCard img {border-radius:17px; aspect-ratio:2/3;}
+body.svCleanShell .svDetailPosterCard > span {
+  padding:11px 4px 6px; font-size:9px; font-weight:720;
+  color:rgba(232,241,255,.89); letter-spacing:.2em;
+}
+/* A narrow, lightweight top chrome gives Back/Close a clear hit target
+   without introducing a giant backdrop-filter surface over the artwork. */
+body.svCleanShell .svDetailChrome {inset:16px 18px auto; padding:0; gap:10px;}
+body.svCleanShell .svDetailChrome :is(.svDetailBack,.svDetailDismiss).dsIconBtn {
+  width:45px !important; height:45px !important;
+  min-width:45px !important; min-height:45px !important;
+}
+body.svCleanShell .svDetailScrolled .svDetailChrome {
+  padding:5px; margin:-5px; border-radius:19px;
+  border-color:rgba(229,241,255,.14); background:rgba(12,16,22,.84);
+}
+body.svCleanShell .svDetailChromeTitle {font-weight:650; letter-spacing:-.01em;}
+body.svCleanShell .svCinemaPage .svDetailBody {
+  padding:7px clamp(24px,4vw,55px) 50px;
+  background:linear-gradient(180deg,#080b10,#07090e 70%);
+}
+body.svCleanShell .svDetailChapterNav {
+  display:flex; align-items:center; gap:4px; width:max-content; max-width:100%;
+  padding:5px; margin:0 0 30px;
+  border:1px solid rgba(235,245,255,.13);
+  border-radius:999px;
+  background:rgba(40,49,61,.31);
+  box-shadow:inset 0 1px rgba(255,255,255,.055);
+  scrollbar-width:none; overscroll-behavior-x:contain;
+}
+body.svCleanShell .svDetailChapterNav a {
+  min-height:37px; display:inline-flex; align-items:center; justify-content:center;
+  padding:10px 17px; border-radius:999px;
+  color:#aebbcf; font-weight:570; font-size:12px;
+  white-space:nowrap;
+  transition:color .16s ease,background-color .16s ease;
+}
+body.svCleanShell .svDetailChapterNav a:first-child {
+  background:rgba(230,240,255,.12); color:#f5f9ff;
+  box-shadow:inset 0 1px rgba(255,255,255,.10);
+}
+body.svCleanShell .svDetailChapterNav a:is(:hover,:focus-visible) {
+  background:rgba(230,240,255,.14); color:white;
+}
+body.svCleanShell[data-st-glass="liquid"] .svDetailChapterNav {
+  -webkit-backdrop-filter:blur(10px) saturate(1.25);
+  backdrop-filter:blur(10px) saturate(1.25);
+}
+/* A film-journal layout rather than a generic full-width information box. */
+body.svCleanShell .svCinemaPage .svDetailOverview {
+  position:relative;
+  display:grid; grid-template-columns:minmax(170px, .43fr) minmax(0,1fr);
+  align-items:start; gap:clamp(24px,4vw,60px);
+  margin:0 0 46px; padding:31px clamp(24px,3.1vw,39px) 35px !important;
+  border:1px solid rgba(234,245,255,.13);
+  border-radius:27px;
+  background:linear-gradient(125deg,rgba(218,233,255,.085),rgba(161,189,228,.018) 58%,rgba(255,255,255,.01));
+  box-shadow:inset 0 1px rgba(255,255,255,.085),0 16px 38px rgba(0,0,0,.10);
+}
+body.svCleanShell .svCinemaPage .svDetailOverview::before {
+  content:""; position:absolute; left:34px; right:34px; top:0;
+  height:1px; background:linear-gradient(90deg,rgba(255,255,255,.44),transparent 70%);
+  pointer-events:none;
+}
+body.svCleanShell .svCinemaPage .svDetailOverview .svCinemaEyebrow {
+  font-size:10px; letter-spacing:.22em; color:#aabed9;
+}
+body.svCleanShell .svCinemaPage .svDetailOverview h2 {
+  margin:11px 0 0 !important; max-width:270px;
+  font-size:clamp(25px,2.6vw,32px) !important;
+  font-weight:640 !important; line-height:1.13;
+  letter-spacing:-.045em; color:#fafcff;
+}
+body.svCleanShell .svCinemaPage .svDetailOverview > p {
+  max-width:790px; margin:1px 0 0;
+  font-size:14px; font-weight:440; line-height:1.85;
+  color:#cad3e0;
+}
+body.svCleanShell .svCinemaPage .svDetailSection {margin-bottom:44px;}
+body.svCleanShell .svCinemaPage .svDetailSection > h2 {
+  display:flex; align-items:center; gap:13px;
+  margin-bottom:20px !important; font-size:25px !important;
+  color:#f4f8fe; font-weight:635 !important;
+}
+body.svCleanShell .svCinemaPage .svDetailSection:not(.svDetailOverview) > h2::before {
+  content:""; width:3px; height:21px; border-radius:4px;
+  background:linear-gradient(#dcecff,#647e9d); flex:none;
+}
+body.svCleanShell .svCinemaPage .svDetailCastRail {grid-auto-columns:121px; gap:18px;}
+body.svCleanShell .svCinemaPage .svDetailCastRail .dsCastCard > div {
+  border:1px solid rgba(231,242,255,.18) !important;
+  border-radius:17px !important; background:#19202b;
+  box-shadow:0 10px 25px rgba(0,0,0,.25) !important;
+}
+body.svCleanShell .svCinemaPage .svDetailCastRail .dsCastCard img {
+  transition:transform .22s ease;
+}
+body.svCleanShell .svCinemaPage .svDetailCastRail .dsCastCard:is(:hover,:focus-visible) img {
+  transform:scale(1.035);
+}
+body.svCleanShell .svCinemaPage .svDetailCastRail .dsCastCard:focus-visible {
+  outline:2px solid #e6f3ff; outline-offset:4px;
+}
+body.svCleanShell .svCinemaPage .svSeason {
+  border-radius:22px;
+  background:linear-gradient(125deg,rgba(227,239,255,.055),rgba(227,239,255,.017));
+  box-shadow:inset 0 1px rgba(255,255,255,.045);
+}
+body.svCleanShell .svCinemaPage .svSeason[open] {
+  background:linear-gradient(125deg,rgba(227,239,255,.075),rgba(227,239,255,.025));
+}
+body.svCleanShell .svCinemaPage .svSeason > summary {min-height:63px;}
+body.svCleanShell .svCinemaPage .dsEpisodeChips a.svDetailEpisodeTile {
+  min-height:62px; border-radius:15px !important;
+}
+body.svCleanShell .svCinemaPage .dsEpisodeChips a.svDetailEpisodeTile:is(:hover,:focus-visible) {
+  transform:none !important; background:rgba(230,240,255,.105) !important;
+}
+body.svCleanShell .svDetailEpisodeChoice > .svDetailEpisodeDownload {
+  min-width:44px; border-radius:13px; font-size:18px;
+}
+body.svCleanShell .svCinemaPage .svDetailAbout > div {
+  min-height:93px; padding:22px;
+  border-radius:18px; border-color:rgba(233,242,255,.12);
+  background:linear-gradient(145deg,rgba(227,239,255,.045),rgba(227,239,255,.017));
+}
+body.svCleanShell .svCinemaPage .svDetailAbout dt {
+  margin-bottom:10px; color:#8da2be;
+  font-size:10px; font-weight:700; letter-spacing:.11em;
+  text-transform:uppercase;
+}
+body.svCleanShell .svCinemaPage .svDetailAbout dd {font-size:13px; color:#e1e8f2;}
+/* Wide-screen focus and performance budgets: avoid expensive sheet-sized
+   transparency or extra poster effects on Xbox. Keep action lenses intact. */
+html[data-sv-xbox="true"] body.svCleanShell .svDetailChapterNav,
+html[data-sv-tv="true"] body.svCleanShell .svDetailChapterNav {
+  -webkit-backdrop-filter:none !important; backdrop-filter:none !important;
+}
+html[data-sv-tv="true"] body.svCleanShell .svCinemaPage .svDetailActions :is(a,button) {
+  min-height:54px !important; font-size:14px !important;
+}
+html[data-sv-tv="true"] body.svCleanShell .svCinemaPage .svDetailActions .dsIconBtn {
+  min-width:54px !important; width:54px !important; height:54px !important;
+}
+html[data-sv-tv="true"] body.svCleanShell .svDetailPosterCard {display:none;}
+html[data-sv-tv="true"] body.svCleanShell .svCinemaPage .svDetailIdentity {right:43px;}
+/* Subtle and Off retain the actual user appearance preference; the redesign
+   never forces a lens, filter or translucent material in those modes. */
+body.svCleanShell[data-st-glass="off"] .svDetailChapterNav,
+body.svCleanShell[data-st-glass="off"] .svCinemaPage .svDetailOverview,
+body.svCleanShell[data-st-glass="off"] .svCinemaPage .svDetailAbout > div {
+  background:#141922 !important;
+  -webkit-backdrop-filter:none !important; backdrop-filter:none !important;
+}
+@media(max-width:980px) {
+  body.svCleanShell .svCinemaPage .svDetailIdentity {right:32px; left:33px;}
+  body.svCleanShell .svDetailPosterCard {display:none;}
+  body.svCleanShell .svCinemaPage .svDetailActions {max-width:780px;}
+  body.svCleanShell .svCinemaPage .svDetailBody {padding-left:32px; padding-right:32px;}
+}
+@media(max-width:680px) {
+  body.svCleanShell .svDetailDialog {width:calc(100vw - 12px);height:94svh;max-height:94svh;border-radius:21px 21px 0 0;}
+  body.svCleanShell .svCinemaPage .svDetailHero,
+  body.svCleanShell .svDetailDialog .svCinemaPage .svDetailHero {height:auto;min-height:610px;}
+  body.svCleanShell .svCinemaPage .svDetailBackdrop {background-position:58% 22%;}
+  body.svCleanShell .svCinemaPage .svDetailShade {
+    background:linear-gradient(0deg,#080b10 0%,rgba(8,11,16,.9) 23%,rgba(8,11,16,.12) 78%,rgba(8,11,16,.1));
+  }
+  body.svCleanShell .svCinemaPage .svDetailIdentity {left:23px;right:23px;bottom:29px;}
+  body.svCleanShell .svCinemaPage .svDetailTitle {font-size:clamp(42px,10vw,60px) !important;line-height:1 !important;}
+  body.svCleanShell .svCinemaPage .svDetailLogo {max-width:min(290px,80vw);max-height:133px;}
+  body.svCleanShell .svDetailEdition {font-size:9px;letter-spacing:.18em;}
+  body.svCleanShell .svCinemaPage .svDetailActions {gap:8px;}
+  body.svCleanShell .svCinemaPage .svDetailActions :is(.dsPrimaryBtn,.dsSecondaryBtn) {min-height:45px !important;padding:10px 14px !important;font-size:11px !important;}
+  body.svCleanShell .svCinemaPage .svDetailActions .dsPrimaryBtn {min-width:101px !important;}
+  body.svCleanShell .svCinemaPage .svDetailActions .dsIconBtn {width:45px !important;height:45px !important;min-width:45px !important;min-height:45px !important;}
+  body.svCleanShell .svCinemaPage .svDetailBody {padding:5px 20px 35px;}
+  body.svCleanShell .svDetailChapterNav {max-width:100%;margin-bottom:24px;}
+  body.svCleanShell .svDetailChapterNav a {min-height:34px;padding:9px 13px;font-size:11px;}
+  body.svCleanShell .svCinemaPage .svDetailOverview {grid-template-columns:1fr;gap:13px;padding:25px 23px 28px !important;margin-bottom:38px;border-radius:22px;}
+  body.svCleanShell .svCinemaPage .svDetailOverview h2 {margin-top:9px !important;max-width:none;font-size:27px !important;}
+  body.svCleanShell .svCinemaPage .svDetailOverview > p {font-size:13px;line-height:1.8;}
+  body.svCleanShell .svCinemaPage .svDetailSection {margin-bottom:33px;}
+  body.svCleanShell .svCinemaPage .svDetailAbout {grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+  body.svCleanShell .svCinemaPage .svDetailAbout > div {padding:16px;min-height:88px;}
+  body.svCleanShell .svCinemaPage .svSeason .dsEpisodeChips {grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@media(max-width:390px) {
+  body.svCleanShell .svCinemaPage .svDetailHero,
+  body.svCleanShell .svDetailDialog .svCinemaPage .svDetailHero {min-height:655px;}
+  body.svCleanShell .svCinemaPage .svDetailIdentity {left:17px;right:17px;}
+  body.svCleanShell .svCinemaPage .svDetailBody {padding-left:15px;padding-right:15px;}
+  body.svCleanShell .svCinemaPage .svDetailActions {gap:7px;}
+  body.svCleanShell .svCinemaPage .svDetailFacts {gap:7px;}
+  body.svCleanShell .svCinemaPage .svDetailFacts > span + span::before {padding-right:7px;}
+}
+@media(prefers-reduced-transparency:reduce) {
+  body.svCleanShell .svDetailChapterNav {background:#141922 !important;-webkit-backdrop-filter:none !important;backdrop-filter:none !important;}
+}
+@media(prefers-reduced-motion:reduce) {
+  body.svCleanShell .svDetailChapterNav a,
+  body.svCleanShell .svCinemaPage .svDetailCastRail .dsCastCard img,
+  body.svCleanShell .svCinemaPage .svDetailGenres a {transition:none !important;}
+}
