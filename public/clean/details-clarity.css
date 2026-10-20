@@ -124,7 +124,10 @@ body.svCleanShell .svCinemaPage .svDetailOverview {
 }
 body.svCleanShell .svCinemaPage .svDetailOverview::before {
   content:"";position:absolute;z-index:-2;inset:0;width:auto;height:auto;
-  background:var(--sv-story-art,none) center 42%/cover no-repeat;
+  background-image:var(--sv-story-art,none);
+  background-position:center 42%;
+  background-size:cover;
+  background-repeat:no-repeat;
   opacity:.83;
   pointer-events:none;
 }
