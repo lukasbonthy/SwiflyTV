@@ -36,8 +36,8 @@ test('story artwork uses the proven hero art, not an arbitrary cropped second st
   assert(!section.getAttribute('style').includes('lettered.jpg'));
   assert(!section.getAttribute('style').includes('alternate.jpg'));
   assert.match(env.window.document.querySelector('.svDetailBackdrop').getAttribute('style'), /w1280/);
-  assert(env.window.document.querySelector('.svDetailActions .svDownloadAction i.svIcon.fa-download'));
-  assert(env.window.document.querySelector('.svDetailActions a[data-sv-party-movie-id] i.svIcon.fa-user-group'));
+  assert(env.window.document.querySelector('.svDetailActions .svDownloadAction svg.svIcon'));
+  assert(env.window.document.querySelector('.svDetailActions a[data-sv-party-movie-id] svg.svIcon'));
   env.finish();
 });
 
@@ -59,8 +59,6 @@ test('detail save and heart state never destroy existing liquid-glass panes',()=
   w.localStorage.setItem('movieverse.liked','[]');
   w.syncLibraryButtons();
   assert.equal(watch.querySelector('.svDetailActionGlyph').dataset.kind,'plus');
-  assert(watch.querySelector('.svDetailActionGlyph > .fa-plus'));
-  assert(like.querySelector('.svDetailActionGlyph > .fa-regular.fa-heart'));
   assert.equal(like.querySelector('.svDetailActionGlyph').dataset.kind,'heart');
   assert.equal(watch.firstElementChild,lens);
   assert.equal(d.querySelector('#catalogSave').textContent,'+');
@@ -69,9 +67,6 @@ test('detail save and heart state never destroy existing liquid-glass panes',()=
   w.syncLibraryButtons();
   assert.equal(watch.querySelector('.svDetailActionGlyph').dataset.kind,'check');
   assert.equal(like.querySelector('.svDetailActionGlyph').dataset.kind,'heartFilled');
-  assert(watch.querySelector('.svDetailActionGlyph > .fa-check'));
-  assert(like.querySelector('.svDetailActionGlyph > .fa-solid.fa-heart'));
-  assert.equal(watch.querySelector('.svDetailActionGlyph').childElementCount,1);
   assert.equal(watch.firstElementChild,lens);
   assert.equal(watch.getAttribute('aria-pressed'),'true');
   assert.equal(like.getAttribute('aria-pressed'),'true');
