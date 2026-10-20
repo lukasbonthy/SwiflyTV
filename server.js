@@ -6540,6 +6540,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player || active === "social" ? '<link rel="stylesheet" href="/assets/party/watchroom-call.css?v=1" />' : ""}
     <link rel="stylesheet" href="/assets/clean/performance.css?v=214" />
     <link rel="stylesheet" href="/assets/clean/tv.css?v=5" />
+    <link rel="stylesheet" href="/assets/clean/details-premium.css?v=1" />
 </head>
 <body class="svCleanShell">
 
@@ -8921,7 +8922,7 @@ async function detailPage(req, res, type) {
       </section>
       <div class="svDetailBody">
         <nav class="svDetailChapterNav" aria-label="Title sections"><a href="#overview">The story</a>${castHtml ? '<a href="#cast">Cast</a>' : ""}${seasonHtml ? '<a href="#episodes">Episodes</a>' : ""}${collectionHtml ? '<a href="#collection">Collection</a>' : ""}<a href="#details">Film notes</a></nav>
-        <section id="overview" class="svDetailSection svDetailOverview"><div><span class="svCinemaEyebrow">THE STORY</span><h2>${type === "tv" ? "One episode is never enough." : "A story worth settling into."}</h2></div><p>${escapeHtml(details.overview || "No overview available yet.")}</p></section>
+        <section id="overview" class="svDetailSection svDetailOverview"><div><span class="svCinemaEyebrow">THE STORY</span><h2>A closer look</h2></div><p>${escapeHtml(details.overview || "No overview available yet.")}</p></section>
         ${castHtml ? `<section id="cast" class="svDetailSection"><h2>Cast</h2><div class="svDetailCastRail" aria-label="Cast">${castHtml}</div></section>` : ""}
         ${seasonHtml ? `<section id="episodes" class="svDetailSection"><h2>Episodes</h2>${seasonHtml}</section>` : ""}
         ${collectionHtml}
