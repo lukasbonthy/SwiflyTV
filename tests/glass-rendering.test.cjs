@@ -425,7 +425,7 @@ test('Movie details match navbar refraction instead of replacing it with gray ti
   const state=await page.evaluate(()=>{
     const nav=document.querySelector('.netflixNav>.svLiquidPane');
     const detail=document.querySelector('.svDetailActions .svNavMatchedLens');
-    const style=node=>getComputedStyle(node);
+    const style=(node,pseudo)=>getComputedStyle(node,pseudo);
     const f=node=>style(node).backdropFilter.replace(/swifly-liquid-filter-[0-9]+/g,'shared');
     const story=document.querySelector('.svDetailOverview');
     return {navColor:style(nav).backgroundColor,detailColor:style(detail).backgroundColor,
