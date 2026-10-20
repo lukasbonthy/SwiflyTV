@@ -77,7 +77,9 @@ test('detail visual polish preserves user opacity controls and minimizes composi
   const server=fs.readFileSync(path.join(__dirname,'../server.js'),'utf8');
   assert(server.includes('/assets/clean/details-clarity.css?v=2'));
   assert(server.includes('family=Manrope:wght@400;500;600;700;800'));
-  assert.match(css,/\.svDetailActions[\s\S]*\.svNavMatchedLens\.svLiquidPane/);
+  assert(!/--sv-glass-default-tint\\s*:\\s*\\./.test(css),'no gray tint overrides allowed');
+  assert(!/--sv-glass-color\\s*:/.test(css),'no opaque white glass face overrides allowed');
+  assert(!css.includes('mask-image'),'no chopped/masked synopsis photo');
   assert.match(css,/data-st-glass="off"/);
   assert.match(css,/data-st-glass="subtle"/);
   assert.match(css,/prefers-reduced-transparency:reduce/);
