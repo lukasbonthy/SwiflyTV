@@ -211,3 +211,28 @@ for (const width of [390, 1440, 1920]) test(`catalog dates fit completely inside
     }
   } finally {await browser.close();}
 });
+
+
+test('movie catalog uses soft-glass optics during wheel motion and restores the original SVG lens near rest', {skip:!available && 'Chromium is not installed'}, async () => {
+  const browser = await chromium.launch({headless:true});
+  try {
+    const page = await catalog(browser);
+    await page.waitForFunction(() => document.querySelector('.netflixNav > .svLiquidPane')?.dataset.swiflyRenderer === 'svg');
+    const result = await page.evaluate(() => {
+      const nav = document.querySelector('.netflixNav > .svLiquidPane');
+      const full = getComputedStyle(nav).backdropFilter;
+      const wheel = new WheelEvent('wheel', {deltaY:260,bubbles:true,cancelable:true});
+      document.querySelector('.dsHeroContent').dispatchEvent(wheel);
+      return {consumed:wheel.defaultPrevented, soft:document.documentElement.dataset.svScrollGlass,
+        full, moving:getComputedStyle(nav).backdropFilter};
+    });
+    assert(result.consumed);
+    assert.match(result.full,/url\(/,'initial navigation must have the real liquid refraction');
+    assert.equal(result.soft,'soft');
+    assert.match(result.moving,/blur\(4px\)/,'movement should use inexpensive frosted glass rather than the SVG filter');
+    await page.waitForFunction(() => !document.documentElement.dataset.svScrollGlass, null,{timeout:4500});
+    const restored=await page.locator('.netflixNav > .svLiquidPane').evaluate(node=>getComputedStyle(node).backdropFilter);
+    assert.match(restored,/url\(/,'the original full lens returns after deceleration');
+    assert.equal(await page.evaluate(() => document.documentElement.dataset.svCardScrolling), undefined);
+  } finally {await browser.close();}
+});
