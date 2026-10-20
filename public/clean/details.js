@@ -11,7 +11,9 @@
   // 900ms cinematic rise. Keep all desktop animations unchanged.
   const xboxInstant = /Xbox|XboxOne|Xbox Series/i.test(navigator.userAgent) || document.documentElement.dataset.svXbox === 'true';
   const reducedMotion=()=>xboxInstant||motionPreference.matches||document.body.classList.contains('reduceMotion');
-  const enterDuration=900,exitDuration=560;
+  // Short, front-loaded rise: the dialog reads as instant, not sluggish.
+  // Xbox retains its zero-duration fast path.
+  const enterDuration=460,exitDuration=300;
   const fragments=new Map(),fragmentTTL=90000,fragmentLimit=8,fragmentByteLimit=2*1024*1024,fragmentSizeLimit=192*1024;
   let fragmentScope=null,fragmentBytes=0;
   // Intent prefetches are scoped to the current profile and share the actual
@@ -207,8 +209,8 @@
           const animation=target.animate(frames,{fill:'both',...options});active.animations.push(animation);
           animation.finished.catch(()=>{});return animation.finished;
         };
-        const sheet=animate(dialog,[{bottom:start||'0px'},{bottom:entering?'0px':offscreen}],{duration,easing:entering?'cubic-bezier(.32,.08,.2,1)':'cubic-bezier(.4,0,.2,1)'});
-        const dim=animate(scrim,[{opacity:opacity||'0'},{opacity:entering?'1':'0'}],{duration:entering?620:duration,easing:entering?'ease-out':'ease-in'});
+        const sheet=animate(dialog,[{bottom:start||'0px'},{bottom:entering?'0px':offscreen}],{duration,easing:entering?'cubic-bezier(.22,.74,.22,1)':'cubic-bezier(.4,0,.2,1)'});
+        const dim=animate(scrim,[{opacity:opacity||'0'},{opacity:entering?'1':'0'}],{duration:entering?330:duration,easing:entering?'ease-out':'ease-in'});
         Promise.all([sheet,dim]).then(settle,()=>{});
         active.timer=setTimeout(settle,duration+100);return;
       } catch {
