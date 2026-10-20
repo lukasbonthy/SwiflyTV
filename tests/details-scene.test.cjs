@@ -19,6 +19,7 @@ async function finish(animations){animations.forEach(a=>a.finish());await tick()
 test('The catalog scene and fixed navigation recede around the visible viewport, while the modal stays outside',async()=>{
  const env=setup(),w=env.window,d=w.document,html=d.documentElement;
  await w.SwiflyDetails.open('/movie/101',d.getElementById('open'));
+ assert.equal(html.dataset.svDetailScene,'closed','The catalog holds its resting pose until the sheet can render');w.flush(16);
  assert.equal(html.dataset.svDetailScene,'opening');
  assert.equal(html.style.getPropertyValue('--sv-detail-scene-scale'),'','Scene geometry must not invalidate the entire document by inheritance');
  for(const target of [env.scene,env.header,env.mobile])assert.equal(Number(target.style.getPropertyValue('--sv-detail-scene-scale')),1-26/1024);
@@ -35,9 +36,10 @@ test('Background recession reverses with the weighted exit, then releases all te
  const env=setup(),w=env.window,d=w.document,trigger=d.getElementById('open');trigger.focus();
  await w.SwiflyDetails.open('/movie/101',trigger);await finish(env.animations);
  const start=env.animations.length;w.history.back=()=>{};w.SwiflyDetails.close();
+ w.flush(16);
  assert.equal(d.documentElement.dataset.svDetailScene,'closing');assert(d.querySelector('dialog').open);
  assert(env.scene.style.getPropertyValue('--sv-detail-scene-clip'),'The visible catalog remains clipped through the exit');
- assert.equal(env.animations[start].settings.duration,300);
+ assert.equal(env.animations[start].settings.duration,360);
  await finish(env.animations.slice(start));
  assert.equal(d.documentElement.dataset.svDetailScene,undefined);
  assert.equal(d.documentElement.style.getPropertyValue('--sv-detail-scene-scale'),'');
@@ -51,6 +53,7 @@ test('An interrupted exit retains scene geometry for the new entrance and ignore
  await w.SwiflyDetails.open('/movie/101',d.getElementById('open'));await finish(env.animations);
  const start=env.animations.length;w.SwiflyDetails.close();const stale=env.animations.slice(start);
  await w.SwiflyDetails.open('/movie/202');await finish(stale);
+ w.flush(16);
  assert.equal(d.documentElement.dataset.svDetailScene,'opening');assert(d.querySelector('dialog').open);
  assert.equal(env.scene.style.getPropertyValue('--sv-detail-scene-origin-y'),'640px');
  await finish(env.animations);assert.equal(d.documentElement.dataset.svDetailScene,'open');env.finish();

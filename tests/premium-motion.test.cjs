@@ -148,7 +148,7 @@ test('Section reveals have a measured settle and remain visible without JavaScri
   section.getBoundingClientRect = () => ({top:1600, height:400});
   w.boot('motion.js');
   const durations = [...w.getComputedStyle(section).transition.matchAll(/([.\d]+)(ms|s)\b/g)].map(([, value, unit]) => Number(value) * (unit === 's' ? 1000 : 1));
-  assert(durations.length > 0 && Math.max(...durations) >= 650 && Math.max(...durations) <= 1000, 'Entering sections should settle gradually without keeping content in motion indefinitely');
+  assert(durations.length > 0 && Math.max(...durations) >= 450 && Math.max(...durations) <= 650, 'Short section reveals should settle within one scroll gesture');
   w.reduceMotion(true);
   assert.equal(w.getComputedStyle(section).opacity, '1', 'A preference change must reveal pending content immediately');
   env.finish();

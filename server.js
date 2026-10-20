@@ -6510,13 +6510,13 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/avatars.js?v=209"></script>
     ${active === "profiles" ? '<script defer src="/assets/clean/profiles.js?v=209"></script>' : ""}
     <script defer src="/assets/clean/continue.js?v=155"></script>
-    <link rel="stylesheet" href="/assets/clean/details.css?v=251" />
-    <link rel="stylesheet" href="/assets/clean/motion.css?v=208" />
+    <link rel="stylesheet" href="/assets/clean/details.css?v=252" />
+    <link rel="stylesheet" href="/assets/clean/motion.css?v=252" />
     <link rel="stylesheet" href="/assets/vendor/lenis/lenis.css?v=1.3.16-r1" />
     <script defer src="/assets/vendor/lenis/lenis.min.js?v=1.3.16-r1"></script>
-    <script defer src="/assets/clean/motion.js?v=251"></script>
+    <script defer src="/assets/clean/motion.js?v=252"></script>
     <script defer src="/assets/clean/scroll.js?v=245"></script>
-    <script defer src="/assets/clean/details.js?v=251"></script>
+    <script defer src="/assets/clean/details.js?v=252"></script>
     <script defer src="/assets/clean/download.js?v=2"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=222" />
     <script defer src="/assets/liquid-glass/surfaces.js?v=240"></script>

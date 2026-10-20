@@ -191,7 +191,7 @@
     if (started || destroyed) return; started = true;
     if (typeof IntersectionObserver === 'function') observer = new IntersectionObserver(entries => {
       for (const entry of entries) if (entry.isIntersecting) {entry.target.classList.add('svMotionVisible'); observer.unobserve(entry.target); pendingReveal.delete(entry.target);}
-    }, {threshold:.05, rootMargin:'0px 0px -20px 0px'});
+    }, {threshold:.01, rootMargin:'0px 0px 160px 0px'});
     if (typeof ResizeObserver === 'function') heroSizes = new ResizeObserver(entries => {
       for (const entry of entries) {const record = heroes.get(entry.target); if (record) {record.dirty = true; dirtyHosts.add(record.host);}}
       queuePresentation();
