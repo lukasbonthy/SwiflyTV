@@ -86,7 +86,7 @@
         event.shiftKey || !event.deltaY ||
         Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
     const target = event.target instanceof Element ? event.target : null;
-    if (target?.closest('dialog[open],[data-player-root],.vds-controls')) return;
+    if (target?.closest('dialog[open],[data-player-root],.vds-controls,'+native)) return;
     glassLastInput = performance.now();glassSlowSamples=0;
     glassLastY = pageY();glassLastTime = glassLastInput;
     glassTier(true); scheduleGlassIdle();
@@ -225,6 +225,7 @@
     window.addEventListener('wheel', keepNative, {passive:true});
   }
   function onPageHide() {clearCardScroll(); resetGlass(); dispose();}
+  function onVisibilityChanged() {if (document.hidden) resetGlass(); sync();}
   function boot() {
     if (started || destroyed) return; started = true;
     sync();
@@ -236,8 +237,7 @@
     document.addEventListener('scroll', markCardScroll, {capture:true, passive:true});
     hoverDesktop.addEventListener?.('change', clearCardScroll);
     reduced.addEventListener('change', sync); fine.addEventListener('change', sync);
-    document.addEventListener('visibilitychange', sync);
-    document.addEventListener('visibilitychange', () => {if(document.hidden) resetGlass();});
+    document.addEventListener('visibilitychange', onVisibilityChanged);
     window.addEventListener('pagehide', onPageHide); window.addEventListener('pageshow', sync);
   }
   window.SwiflyPremiumScroll = Object.freeze({cancel, refresh() {engine?.resize();}, destroy() {
@@ -251,7 +251,7 @@
     hoverDesktop.removeEventListener?.('change', clearCardScroll);
     document.removeEventListener('DOMContentLoaded', boot);
     reduced.removeEventListener('change', sync); fine.removeEventListener('change', sync);
-    document.removeEventListener('visibilitychange', sync);
+    document.removeEventListener('visibilitychange', onVisibilityChanged);
     window.removeEventListener('pagehide', onPageHide); window.removeEventListener('pageshow', sync);
   }});
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true}); else boot();
