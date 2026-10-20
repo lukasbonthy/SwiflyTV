@@ -85,6 +85,11 @@ body.svCleanShell .svCinemaPage .svDetailScore small {color:rgba(250,230,181,.72
 body.svCleanShell .svCinemaPage .svDetailActions {
   gap:10px; max-width:850px; align-items:center;
 }
+/* An opacity entrance on the identity makes backdrop refraction appear late
+   on standalone pages. The modal already disables it; share that safeguard. */
+body.svCleanShell .svCinemaPage .svDetailIdentity[data-cinema-reveal] {
+  animation:none !important; opacity:1 !important; transform:none !important;
+}
 /* The shared SwiflyGlassSurfaces optics still own every action face and lens.
    No opaque faux material is painted above the actual SVG refraction. */
 body.svCleanShell .svCinemaPage .svDetailActions :is(.dsPrimaryBtn,.dsSecondaryBtn) {
