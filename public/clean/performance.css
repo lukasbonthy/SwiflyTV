@@ -84,3 +84,9 @@ html[data-sv-xbox="true"] body.svCleanShell :is(
 html[data-sv-xbox="true"] body.svCleanShell .svAuroraBackground::after,
 html[data-sv-xbox="true"] body.svCleanShell .svAuroraRibbon--second {display:none !important}
 html[data-sv-xbox="true"] body.svCleanShell .dsHeroHasTrailer .dsHeroBg {animation:none !important}
+
+/* Skip painting card interiors that are far offscreen in grids. The card DOM
+   and keyboard targets remain available and become visible on approach. */
+@supports(content-visibility:auto){
+  body.svCleanShell .dsGrid > .movieCard{content-visibility:auto;contain-intrinsic-size:auto 360px}
+}
