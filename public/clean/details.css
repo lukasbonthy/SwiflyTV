@@ -5,6 +5,8 @@ html.svDetailsOpen { overflow: hidden !important; }
 @property --sv-detail-scene-scale { syntax:"<number>"; inherits:false; initial-value:1; }
 @property --sv-detail-scene-origin-y { syntax:"<length>"; inherits:false; initial-value:0px; }
 @property --sv-detail-scene-clip { syntax:"*"; inherits:false; initial-value:inset(0px); }
+@property --sv-detail-start { syntax:"*"; inherits:false; initial-value:translateY(0px); }
+@property --sv-detail-dim-start { syntax:"<number>"; inherits:false; initial-value:1; }
 /* The catalog and fixed navigation recede together; the native dialog stays
    outside the scene. Individual transforms preserve the mobile nav's centering. */
 body.svCleanShell > [data-sv-browse-scene] { display:flow-root; }
@@ -90,14 +92,14 @@ body.svCleanShell .svDetailDialog {
 body.svCleanShell .svDetailDialog::backdrop { background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
 body.svCleanShell .svDetailScrim { position:fixed; inset:0; z-index:2147483646; background:#000b; opacity:1; pointer-events:none; }
 body.svCleanShell .svDetailScrim[hidden] { display:none !important; }
-/* The compositor drops live SVG displacement on moving transform layers.
-   Bottom-position motion keeps an active, paintable backdrop during entry. */
-body.svCleanShell .svDetailDialog:is([data-sv-detail-state="opening"],[data-sv-detail-state="closing"]) { will-change:auto; transform:none; }
+/* One moving layer; bottom/height stay fixed throughout the slide. */
+body.svCleanShell .svDetailDialog:is([data-sv-detail-state="opening"],[data-sv-detail-state="closing"]) { will-change:transform; }
 body.svCleanShell .svDetailScrim:is([data-sv-detail-state="opening"],[data-sv-detail-state="closing"]) { will-change:opacity; }
 body.svCleanShell .svDetailDialog[data-sv-detail-motion="css"][data-sv-detail-state="opening"] { animation-name:svDetailsEnter; animation-duration:460ms; animation-timing-function:cubic-bezier(.22,.74,.22,1); animation-fill-mode:both; }
 body.svCleanShell .svDetailDialog[data-sv-detail-motion="css"][data-sv-detail-state="closing"] { animation-name:svDetailsExit; animation-duration:300ms; animation-timing-function:cubic-bezier(.4,0,.2,1); animation-fill-mode:both; }
 body.svCleanShell .svDetailScrim[data-sv-detail-motion="css"][data-sv-detail-state="opening"] { animation:svDetailsDimIn 330ms ease-out both; }
 body.svCleanShell .svDetailScrim[data-sv-detail-motion="css"][data-sv-detail-state="closing"] { animation:svDetailsDimOut 300ms ease-in both; }
+body.svCleanShell :is(.svDetailDialog,.svDetailScrim)[data-sv-detail-motion="css"]:is([data-sv-detail-state="opening"],[data-sv-detail-state="closing"]) { animation-play-state:paused; }
 body.svCleanShell .svDetailViewport { height: 100%; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-gutter:stable; scrollbar-width: thin; scrollbar-color: #ffffff26 transparent; -webkit-overflow-scrolling:touch; }
 body.svCleanShell .svDetailDialog .svTitleDetails.svTitleDetails { width: 100% !important; max-width: none !important; margin: 0 !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; animation:none !important; filter:none !important; }
 body.svCleanShell .svDetailDialog .svDetailHero { min-height: 520px; height: min(55vw,590px); }
@@ -125,8 +127,8 @@ body.svCleanShell .svDetailLoading > p { padding: 0 32px; color: #888; font-size
 body.svCleanShell .svDetailError { padding: 90px 32px; }
 body.svCleanShell .svDetailError h2 { font-size: 24px; font-weight: 500; }
 body.svCleanShell .svDetailError p { margin: 14px 0 24px; color: #999; font-size: 14px; line-height: 1.6; }
-@keyframes svDetailsEnter { from {bottom:var(--sv-detail-start,calc(0px - var(--sv-detail-rise)));} to {bottom:0px;} }
-@keyframes svDetailsExit { from {bottom:var(--sv-detail-start,0px);} to {bottom:calc(0px - var(--sv-detail-rise));} }
+@keyframes svDetailsEnter { from {transform:var(--sv-detail-start,translateY(var(--sv-detail-rise)));} to {transform:translateY(0px);} }
+@keyframes svDetailsExit { from {transform:var(--sv-detail-start,translateY(0px));} to {transform:translateY(var(--sv-detail-rise));} }
 @keyframes svDetailsDimIn { from {opacity:var(--sv-detail-dim-start,0);} to {opacity:1;} }
 @keyframes svDetailsDimOut { from {opacity:var(--sv-detail-dim-start,1);} to {opacity:0;} }
 @keyframes svDetailsLoading { from {transform:translate3d(-100%,0,0);} to {transform:translate3d(100%,0,0);} }

@@ -5,7 +5,7 @@ const fragment=id=>'<article class="svTitleDetails"><h1>Movie '+id+'</h1><a href
 function setup(options={}){
  const env=browser('<a id="open" href="/movie/101">Movie 101</a>',{path:'/search?q=moon#results',...options}),w=env.window,animations=[];
  w.HTMLElement.prototype.animate=function(keyframes,settings){
-  let resolve,reject;const animation={target:this,keyframes,settings,cancelled:false,finished:new Promise((yes,no)=>{resolve=yes;reject=no;}),finish(){resolve();},cancel(){this.cancelled=true;reject(new Error('Animation cancelled'));}};
+  let resolve,reject;const animation={target:this,keyframes,settings,cancelled:false,paused:false,pause(){this.paused=true;},play(){this.paused=false;},finished:new Promise((yes,no)=>{resolve=yes;reject=no;}),finish(){resolve();},cancel(){this.cancelled=true;reject(new Error('Animation cancelled'));}};
   animations.push(animation);return animation;
  };
  w.fetch=async url=>({ok:true,text:async()=>fragment(url.match(/\/(?:movie|tv)\/(\d+)/)[1])});
@@ -13,6 +13,30 @@ function setup(options={}){
 }
 function finish(animations){for(const animation of animations)animation.finish();return tick();}
 function traversal(w,action){return new Promise(resolve=>{w.addEventListener('popstate',async()=>{await tick();resolve();},{once:true});action();});}
+test('Entrance time starts with the first render frame, after fragment initialization',async()=>{
+ const env=setup(),w=env.window,d=w.document,timers=[];
+ w.setTimeout=(callback,delay)=>{timers.push({callback,delay});return timers.length;};w.clearTimeout=()=>{};
+ await w.SwiflyDetails.open('/movie/101',d.getElementById('open'));
+ assert.equal(timers.length,0,'The entrance watchdog must not expire while the first frame is still being prepared');
+ assert(env.animations.every(animation=>animation.paused),'Both sheet and scrim must stay at their first keyframe until rendering can begin');
+ w.flush(16);
+ assert(env.animations.every(animation=>!animation.paused),'The first render frame starts the sheet and scrim together');
+ assert.equal(timers.length,1);assert.equal(timers[0].delay,560);
+ await finish(env.animations);assert.equal(d.querySelector('dialog').dataset.svDetailState,'open');env.finish();
+});
+test('Hiding the tab settles a pending entrance or exit even before its first render frame',async()=>{
+ for(const closing of [false,true]){
+  const env=setup(),w=env.window,d=w.document;let hidden=false,back=0;
+  Object.defineProperty(d,'hidden',{configurable:true,get:()=>hidden});w.history.back=()=>back++;
+  await w.SwiflyDetails.open('/movie/101',d.getElementById('open'));
+  if(closing){await finish(env.animations);w.SwiflyDetails.close();}
+  hidden=true;d.dispatchEvent(new w.Event('visibilitychange'));
+  const dialog=d.querySelector('dialog');
+  assert.equal(dialog.open,!closing);assert.equal(dialog.dataset.svDetailState,closing?'closed':'open');
+  assert.equal(w.frameCount(),0,'No suspended RAF may retain the transition');
+  assert.equal(back,closing?1:0);env.finish();
+ }
+});
 test('The sheet opens immediately and receives ready details while its entrance is running',async()=>{
  const env=setup(),w=env.window,d=w.document;let respond;
  w.fetch=()=>new Promise(resolve=>respond=resolve);
@@ -109,7 +133,7 @@ test('The real CSS fallback retains modal semantics until its bounded exit compl
  w.setTimeout=callback=>{timers.set(++timerID,callback);return timerID;};w.clearTimeout=id=>timers.delete(id);
  w.fetch=async()=>({ok:true,text:async()=>fragment(101)});w.boot('details.js');await w.SwiflyDetails.open('/movie/101',d.getElementById('open'));
  const dialog=d.querySelector('dialog');assert.equal(dialog.dataset.svDetailMotion,'css');assert.equal(dialog.dataset.svDetailState,'opening');
- const settle=()=>{const batch=[...timers.values()];timers.clear();batch.forEach(callback=>callback());};
+ const settle=()=>{w.flush(16);const batch=[...timers.values()];timers.clear();batch.forEach(callback=>callback());};
  settle();assert.equal(dialog.dataset.svDetailState,'open');w.SwiflyDetails.close();assert(dialog.open);assert.equal(dialog.dataset.svDetailState,'closing');
  settle();assert.equal(dialog.open,false);env.finish();
 });
@@ -117,7 +141,7 @@ test('CSS fallback ignores an old exit event and finishes even when the browser 
  const env=browser('<style>'+source('details.css')+'</style><a id="open" href="/movie/101">Movie 101</a>'),w=env.window,d=w.document,timers=new Map();let timerID=0,back=0;
  w.setTimeout=callback=>{timers.set(++timerID,callback);return timerID;};w.clearTimeout=id=>timers.delete(id);w.history.back=()=>back++;
  w.fetch=async()=>({ok:true,text:async()=>fragment(101)});w.boot('details.js');await w.SwiflyDetails.open('/movie/101',d.getElementById('open'));
- const dialog=d.querySelector('dialog'),settle=()=>{const batch=[...timers.values()];timers.clear();batch.forEach(callback=>callback());};settle();
+ const dialog=d.querySelector('dialog'),settle=()=>{w.flush(16);const batch=[...timers.values()];timers.clear();batch.forEach(callback=>callback());};settle();
  w.SwiflyDetails.close();await w.SwiflyDetails.open('/movie/202');settle();w.SwiflyDetails.close();
  const event=new w.Event('animationend');Object.defineProperty(event,'animationName',{value:'svDetailsExit'});dialog.dispatchEvent(event);
  assert(dialog.open,'A delayed old CSS event cannot finish the current exit');assert(d.documentElement.classList.contains('svDetailsOpen'));

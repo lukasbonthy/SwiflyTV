@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const {browser, loadServer, tick, cleanup} = require('./ui-helpers.cjs');
+const {browser, loadServer, source, tick, cleanup} = require('./ui-helpers.cjs');
 test.afterEach(cleanup);
 const api = loadServer();
 const title = 'A Complete Movie Title & Its Subtitle';
@@ -69,13 +69,28 @@ test('A newly opened overlay reflects titles already saved in My List', async ()
   const html = api.pageShell({title:'Catalog',body:'<main><a id="openDetails" href="/movie/101">Details</a></main>'});
   const env=browser(html),w=env.window,d=w.document;
   w.localStorage.setItem('movieverse.watchlist',JSON.stringify([{key:'movie:101',id:'101',type:'movie',title}]));
-  const library=[...d.querySelectorAll('script:not([src])')].find(script=>script.textContent.includes('function syncLibraryButtons()'));
+  const library=[...d.querySelectorAll('script:not([src])')].find(script=>script.textContent.includes('function syncLibraryButtons('));
   assert(library,'The actual catalog library script is required');
   w.eval(library.textContent);w.fetch=async()=>({ok:true,text:async()=>fragment});w.boot('details.js');
   d.getElementById('openDetails').dispatchEvent(new w.MouseEvent('click',{bubbles:true,cancelable:true}));await tick();
   const save=d.querySelector('.svDetailDialog [data-watch-id="101"]');
   assert.equal(save?.getAttribute('aria-pressed'),'true','Saved titles should appear saved when the overlay opens');
   assert.match(save.getAttribute('aria-label'),/Remove.*from My List/);env.finish();
+});
+test('Opening details preserves the existing catalog button lenses and labels', async () => {
+  const fragment = await render();
+  const html = api.pageShell({title:'Catalog',body:'<main><button id="catalogSave" class="dsIconBtn" data-watch-id="202" data-watch-type="movie">+</button><a id="openDetails" href="/movie/101">Details</a></main>'});
+  const env=browser(html),w=env.window,d=w.document;
+  const library=[...d.querySelectorAll('script:not([src])')].find(script=>script.textContent.includes('function syncLibraryButtons('));
+  w.eval(library.textContent);w.boot('liquid-glass/surfaces.js');await tick();
+  w.fetch=async()=>({ok:true,text:async()=>fragment});w.eval(source('details.js'));
+  const button=d.getElementById('catalogSave'),lens=button.querySelector('.svNavMatchedLens'),label=button.querySelector('.svNavMatchedLabel');
+  assert(lens&&label,'The existing catalog control must have its real glass structure');
+  await w.SwiflyDetails.open('/movie/101',d.getElementById('openDetails'));
+  assert.equal(button.querySelector('.svNavMatchedLens'),lens,'Inserting new details must not destroy or rebuild a catalog lens');
+  assert.equal(button.querySelector('.svNavMatchedLabel'),label,'Unrelated catalog labels must stay untouched during the entrance');
+  assert(d.querySelector('.svDetailDialog [data-watch-id="101"]'),'New detail actions must still initialize');
+  env.finish();
 });
 test('Legacy TV keyboard controls leave Escape available to the native details dialog', () => {
   const html=api.pageShell({title:'Catalog',body:'<dialog open class="svDetailDialog"><button id="close">Close</button></dialog>'}).replace(/<style\b[^>]*>[\s\S]*?<\/style>/g,'');
@@ -196,26 +211,6 @@ test('TV navigation can expand native season accordions inside details', () => {
   const controller=[...d.querySelectorAll('script:not([src])')].find(script=>script.textContent.includes('var FOCUSABLE_SELECTOR'));w.eval(controller.textContent);d.dispatchEvent(new w.Event('DOMContentLoaded'));
   d.getElementById('dismiss').dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true,cancelable:true}));assert.equal(d.activeElement.id,'seasonSummary');
   d.activeElement.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));assert.equal(d.getElementById('season').open,true,'TV Enter should expand the selected season');env.finish();
-});
-
-test('Details slide animates its fixed bottom position, never a transform that blanks glass',async()=>{
- const fragment=await render(),env=browser('<a id="details" href="/movie/101">Details</a>'),w=env.window,d=w.document;
- w.fetch=async()=>({ok:true,text:async()=>fragment});
- const frames=[];
- const original=w.Element.prototype.animate;
- w.Element.prototype.animate=function(keyframes,options){
-   if(this.matches?.('.svDetailDialog'))frames.push(keyframes);
-   return {finished:Promise.resolve(),cancel(){},play(){},pause(){}};
- };
- w.boot('details.js');
- d.getElementById('details').dispatchEvent(new w.MouseEvent('click',{bubbles:true,cancelable:true}));
- await tick();
- assert(frames.length>0,'detail sheet must start the opening animation');
- assert(frames[0].every(frame=>Object.hasOwn(frame,'bottom')),'fixed bottom changes preserve refraction while moving');
- assert(frames[0].every(frame=>!Object.hasOwn(frame,'transform')),'do not create a transform-only compositing layer');
- assert.equal(frames[0][1].bottom,'0px');
- w.Element.prototype.animate=original;
- env.finish();
 });
 
 test('Hover warms a movie before click so the real action buttons render from cache',async()=>{
