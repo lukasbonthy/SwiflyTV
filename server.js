@@ -6958,14 +6958,19 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
         controls.innerHTML = '<button class="dsRowBtn" type="button" aria-label="Scroll row left">‹</button><button class="dsRowBtn" type="button" aria-label="Scroll row right">›</button>';
         (section.querySelector(".svSectionActions") || section).appendChild(controls);
 
-        const progress = document.createElement('div');
-        progress.className = 'dsProgress';
-        progress.innerHTML = '<span></span>';
-        section.appendChild(progress);
-
-        const bar = progress.querySelector('span');
-
-        function updateProgress(){
+        // The current clean design hides these legacy progress meters
+        // entirely. Do not create them or attach a scroll/resize listener
+        // for every catalog rail; measuring hidden bars on every scroll
+        // creates needless main-thread work. Keep legacy skin behavior.
+        const usesLegacyMeter = !document.body.classList.contains('svCleanShell');
+        const progress = usesLegacyMeter ? document.createElement('div') : null;
+        const bar = progress?.appendChild(document.createElement('span'));
+        if (progress) {
+          progress.className = 'dsProgress';
+          section.appendChild(progress);
+        }
+        function updateProgress() {
+          if (!bar) return;
           const max = Math.max(1, rail.scrollWidth - rail.clientWidth);
           const ratio = rail.scrollLeft / max;
           const width = Math.max(22, Math.min(100, (rail.clientWidth / Math.max(rail.scrollWidth, 1)) * 100));
@@ -6979,9 +6984,11 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
         }
         controls.children[0].addEventListener('click', () => moveRail(-1));
         controls.children[1].addEventListener('click', () => moveRail(1));
-        rail.addEventListener('scroll', updateProgress, { passive: true });
-        window.addEventListener('resize', updateProgress, { passive: true });
-        updateProgress();
+        if (usesLegacyMeter) {
+          rail.addEventListener('scroll', updateProgress, { passive: true });
+          window.addEventListener('resize', updateProgress, { passive: true });
+          updateProgress();
+        }
       });
     })();
   </script>
@@ -7545,7 +7552,7 @@ function netflixTopNumberCard(item = {}, index = 1, forcedType = "") {
   return `<article class="topTenCard">
     <span class="topTenNumber">${escapeHtml(String(index))}</span>
     <a href="${href}" class="topTenPoster" aria-label="${escapeHtml(title)}">
-      ${thumb ? `<img src="${escapeHtml(thumb)}" alt="${escapeHtml(title)} poster" loading="lazy" />` : `<div class="posterFallback"><span>${escapeHtml(title.slice(0, 1))}</span></div>`}
+      ${thumb ? `<img src="${escapeHtml(thumb)}" alt="${escapeHtml(title)} poster" width="342" height="513" loading="lazy" decoding="async" fetchpriority="low" />` : `<div class="posterFallback"><span>${escapeHtml(title.slice(0, 1))}</span></div>`}
     </a>
   </article>`;
 }
@@ -7587,7 +7594,7 @@ function movieCard(item = {}, forcedType = "") {
   return `<article class="movieCard dsCard" data-title="${escapeHtml(title.toLowerCase())}" data-tv-overview="${escapeHtml(String(item.overview || "").slice(0, 420))}">
     <div class="dsCardArtwork">
       <a href="${detailsHref}" class="posterWrap dsThumb" aria-label="Details for ${escapeHtml(title)}">
-        ${poster ? `<img src="${escapeHtml(poster)}" alt="${escapeHtml(title)} poster" loading="lazy" decoding="async" />` : `<div class="posterFallback"><span>${escapeHtml(title.slice(0, 1))}</span></div>`}
+        ${poster ? `<img src="${escapeHtml(poster)}" alt="${escapeHtml(title)} poster" width="342" height="513" loading="lazy" decoding="async" fetchpriority="low" />` : `<div class="posterFallback"><span>${escapeHtml(title.slice(0, 1))}</span></div>`}
         <span class="dsPlayDot" aria-hidden="true">${cleanIcon("info")}</span>
       </a>
       <div class="dsCardQuickActions">
@@ -7608,7 +7615,7 @@ function personCard(person = {}) {
   const profile = img(person.profile_path, "w342");
   return `<article class="movieCard">
     <a href="/person/${encodeURIComponent(person.id)}" class="posterWrap" aria-label="${escapeHtml(name)}">
-      ${profile ? `<img src="${escapeHtml(profile)}" alt="${escapeHtml(name)}" loading="lazy" />` : `<div class="posterFallback"><span>${escapeHtml(name.slice(0, 1))}</span></div>`}
+      ${profile ? `<img src="${escapeHtml(profile)}" alt="${escapeHtml(name)}" width="342" height="513" loading="lazy" decoding="async" fetchpriority="low" />` : `<div class="posterFallback"><span>${escapeHtml(name.slice(0, 1))}</span></div>`}
       <div class="posterShade"></div>
       <span class="typePill">Person</span>
     </a>
@@ -7837,6 +7844,41 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = nu
         var player = null;
         var ready = false;
         var desiredVolume = 70;
+        var heroVisible = true;
+        var previewObserver = null;
+
+        // Background preview decoding costs GPU and CPU time even beneath
+        // poster rows. Pause the *preview only* while the hero is out of
+        // view or the tab is hidden. It resumes if the viewer returns.
+        function syncPreviewVisibility() {
+          var shouldPlay = heroVisible && !document.hidden;
+          try {
+            if (player && ready) {
+              if (shouldPlay) player.playVideo();
+              else player.pauseVideo();
+            } else {
+              sendCommand(shouldPlay ? "playVideo" : "pauseVideo");
+            }
+          } catch {}
+          if (!shouldPlay && hero) hero.classList.remove("dsHeroTrailerIsPlaying");
+        }
+        if (hero && typeof IntersectionObserver === "function") {
+          previewObserver = new IntersectionObserver(function(entries) {
+            for (var entry of entries) {
+              if (entry.target !== hero) continue;
+              var nextVisible = entry.isIntersecting;
+              if (nextVisible === heroVisible) continue;
+              heroVisible = nextVisible;
+              syncPreviewVisibility();
+            }
+          }, {rootMargin:"0px",threshold:0});
+          previewObserver.observe(hero);
+        }
+        document.addEventListener("visibilitychange",syncPreviewVisibility);
+        window.addEventListener("pagehide",function(){
+          previewObserver && previewObserver.disconnect();
+          document.removeEventListener("visibilitychange",syncPreviewVisibility);
+        },{once:true});
 
         function setVisualState() {
           var icon = button.querySelector("span");
@@ -7849,9 +7891,7 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = nu
 
         function setTrailerPlaying(isPlaying) {
           if (!hero) return;
-          if (isPlaying) {
-            hero.classList.add("dsHeroTrailerIsPlaying");
-          }
+          hero.classList.toggle("dsHeroTrailerIsPlaying",Boolean(isPlaying && heroVisible && !document.hidden));
           hero.classList.remove("dsHeroTrailerWaiting");
         }
 
@@ -7898,7 +7938,8 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = nu
                   setTrailerPlaying(false);
                   try {
                     event.target.mute();
-                    event.target.playVideo();
+                    if (heroVisible && !document.hidden) event.target.playVideo();
+                    else event.target.pauseVideo();
                   } catch {}
                   applyAudioState();
                 },
@@ -7961,7 +8002,7 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = nu
         // Fallback reveal: YouTube sometimes does not fire PLAYING reliably in embedded/autoplay cases.
         // This keeps the hero trailer visible instead of hiding it forever.
         window.setTimeout(function() {
-          setTrailerPlaying(true);
+          if (heroVisible && !document.hidden) setTrailerPlaying(true);
         }, 2600);
       })();
     </script>` : ""}
