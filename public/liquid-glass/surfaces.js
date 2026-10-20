@@ -39,6 +39,7 @@
   // Keep the inexpensive native glass coating, but don't allocate heavy
   // SVG backdrop filters for buttons the visitor cannot currently see.
   const hoveredArtworks = new WeakSet();
+  let activeHoveredArtwork = null;
   const cardScrollBusy = () => document.documentElement.dataset.svCardScrolling === 'true' &&
     window.innerWidth > 860;
   const hoverCapable = window.matchMedia('(hover: hover)');
@@ -224,8 +225,8 @@
   }
   function syncCardActions(artwork, visible) {
     if (!artwork) return;
-    if (visible) hoveredArtworks.add(artwork);
-    else hoveredArtworks.delete(artwork);
+    if (visible) {hoveredArtworks.add(artwork);activeHoveredArtwork = artwork;}
+    else {hoveredArtworks.delete(artwork);if(activeHoveredArtwork === artwork)activeHoveredArtwork = null;}
     for (const control of artwork.querySelectorAll('.dsCardQuickActions .dsMiniBtn')) {
       const entry = entries.get(control);
       if (!entry) continue;
@@ -260,7 +261,8 @@
   }
   function onCardScrollStart() {
     if (!cardScrollBusy()) return;
-    const artwork = document.querySelector('.dsCardArtwork:hover');
+    // Avoid a document-wide :hover selector during a hot wheel gesture.
+    const artwork = activeHoveredArtwork;
     if (artwork && !artwork.matches(':focus-within')) syncCardActions(artwork, false);
   }
   function onCardScrollEnd() {
