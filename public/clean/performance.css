@@ -25,6 +25,11 @@ body.svCleanShell .dsHeroActions > .dsPrimaryBtn {animation:none !important}
 body.svCleanShell :is(.movieCard,.dsThumb,.dsRow,.movieRail,.dsRail,.nfTopTenRail,.dsWelcomeRailTrack) {will-change:auto !important}
 body.svCleanShell :is(.movieRail,.dsRail) {transform:none !important}
 
+/* Installing the native glass coating must not start five color/border
+   transitions for each invisible poster action. The pane owns the material;
+   keep its refraction and the visible card's opacity transition intact. */
+body.svCleanShell :is(.dsCardQuickActions .dsMiniBtn,.dsRowBtn) {transition:none !important}
+
 /* Shade a hovered poster with one opacity layer. Filtering the full image
    creates a new raster/compositing job whenever a parked cursor crosses it. */
 body.svCleanShell .movieCard :is(.posterWrap,.dsThumb,.nfTopTenPoster):hover {

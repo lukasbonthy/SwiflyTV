@@ -31,7 +31,7 @@
   // Prepare a row shortly before it reaches the screen on every device.
   // Building hundreds of offscreen panes up front delays the first interaction.
   let nearObserver = null;
-  const nearPending = new Set(), nearReady = new WeakSet();
+  const nearPending = new Set(), nearReady = new WeakSet(), nearWaiting = new Set();
   const rendererProperties = ['--sv-glass-default-tint', '--sv-glass-saturation', '--sv-glass-filter'];
   let intersection, mutations, frame = 0, stopped = false, removed = false;
   // A catalog row has 18 posters and three action lenses per poster.
@@ -41,6 +41,7 @@
   const hoveredArtworks = new WeakSet();
   const cardScrollBusy = () => document.documentElement.dataset.svCardScrolling === 'true' &&
     window.innerWidth > 860;
+  const pageScrollBusy = () => cardScrollBusy() || document.documentElement.dataset.svScrollGlass === 'soft';
   const hoverCapable = window.matchMedia('(hover: hover)');
   const liquidPreference = () => !['off', 'subtle'].includes(document.body.dataset.stGlass);
   const filter = host => host.querySelector(':scope > svg.svLiquidPane__filters');
@@ -101,6 +102,11 @@
   function activate(entry) {
     ensureOpticPane(entry);
     if (!entry.visible || !entry.host.isConnected || document.hidden || !liquidPreference() || !window.SwiflyLiquidGlass) return;
+    // Soft glass already paints the moving scene. Preparing a new SVG graph
+    // now invalidates the page's relational styles and stalls the next frame.
+    // Keep mounted lenses cached; explicit keyboard focus stays immediate.
+    if (pageScrollBusy() && !entry.host.matches(':focus-within') &&
+        !entry.quickArtwork?.matches(':focus-within') && !activeDetailAction(entry.host)) return;
     // Moving cards use the CSS soft-glass tier. Preserve an existing graph
     // and avoid allocating a new one until the glide settles or focus enters.
     if (entry.quickArtwork && hoverCapable.matches && cardScrollBusy() &&
@@ -219,7 +225,7 @@
     frame = 0; if (stopped || document.hidden) return;
     if (removed) {
       for (const entry of entries.values()) if (!entry.host.isConnected) release(entry);
-      for (const row of nearPending) if(!row.isConnected){nearObserver?.unobserve(row);nearPending.delete(row);}
+      for (const row of nearPending) if(!row.isConnected){nearObserver?.unobserve(row);nearPending.delete(row);nearWaiting.delete(row);}
       removed = false;
     }
     const roots = [...pending].filter(root => {
@@ -244,8 +250,9 @@
   function onCardEnter(event) {
     if (!hoverCapable.matches) return;
     const artwork = event.target instanceof Element ? event.target.closest('.dsCardArtwork') : null;
-    if (artwork && !(event.relatedTarget instanceof Node && artwork.contains(event.relatedTarget)) &&
-        (!cardScrollBusy() || artwork.matches(':focus-within'))) {
+    if (artwork && !(event.relatedTarget instanceof Node && artwork.contains(event.relatedTarget))) {
+      // Prepare only this card's three native faces if the pointer enters a
+      // row whose bulk work is waiting. activate() defers new SVGs in motion.
       syncCardActions(artwork, true);
     }
   }
@@ -259,7 +266,10 @@
   }
   function onCardFocus(event) {
     const host=event.target instanceof Element ? event.target.closest(selector) : null;
-    if(host&&!entries.has(host)){ensure(host,true);const entry=entries.get(host);if(entry){entry.visible=true;activate(entry);}}
+    if(host){
+      if(!entries.has(host))ensure(host,true);
+      const entry=entries.get(host);if(entry){entry.visible=true;activate(entry);}
+    }
     const artwork = event.target instanceof Element ? event.target.closest('.dsCardArtwork') : null;
     if (artwork) syncCardActions(artwork, true);
   }
@@ -275,11 +285,24 @@
     // hovered card. Keyboard focus is never throttled.
     if (artwork) syncCardActions(artwork, true);
   }
+  function prepareNear(row) {
+    nearObserver?.unobserve(row);nearPending.delete(row);nearWaiting.delete(row);
+    if (!row.isConnected) return;
+    nearReady.add(row);scan(row,true);
+  }
+  function onScrollRest() {
+    if (stopped || document.hidden || pageScrollBusy()) return;
+    for (const row of [...nearWaiting]) prepareNear(row);
+    // Intersection notifications received during movement still record true
+    // visibility, so only currently visible controls resume their real optics.
+    for (const entry of entries.values()) if (entry.visible) activate(entry);
+  }
   function onVisibility() {
     if (document.hidden) {cancelAnimationFrame(frame); frame = 0;}
     for (const entry of entries.values()) if (entry.complex || entry.optic) {
       if (document.hidden || !liquidPreference()) deactivate(entry); else activate(entry);
     }
+    onScrollRest();
     schedule();
   }
   let tvModeObserver = null;
@@ -300,11 +323,12 @@
     if (typeof IntersectionObserver === 'function') {
       nearObserver = new IntersectionObserver(changes => {
         for (const change of changes) {
-          if (!change.isIntersecting) continue;
-          nearObserver.unobserve(change.target);
-          nearPending.delete(change.target);
-          nearReady.add(change.target);
-          if (change.target.isConnected) scan(change.target, true);
+          if (!change.isIntersecting) {nearWaiting.delete(change.target);continue;}
+          // Each row can contain 54 invisible action faces. Keep these DOM
+          // writes off active scrolling frames, and discard rows passed in a
+          // fling. Hover/focus can still prepare a single card immediately.
+          if (pageScrollBusy()) nearWaiting.add(change.target);
+          else prepareNear(change.target);
         }
       }, {rootMargin:'320px 120px', threshold:0});
     }
@@ -364,6 +388,8 @@
     mutations.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['data-st-glass','data-sv-detail-state']});
     document.addEventListener('visibilitychange', onVisibility);
     document.addEventListener('swifly:card-scroll-end', onCardScrollEnd);
+    document.addEventListener('swifly:card-scroll-end', onScrollRest);
+    document.addEventListener('swifly:scroll-glass-end', onScrollRest);
     document.addEventListener('pointerover', onCardEnter, {passive:true});
     document.addEventListener('pointerout', onCardLeave, {passive:true});
     document.addEventListener('focusin', onCardFocus);
@@ -371,10 +397,12 @@
   }
   window.SwiflyGlassSurfaces = Object.freeze({refresh(root = document) {scan(root);}, destroy() {
     if (stopped) return; stopped = true;
-    nearObserver?.disconnect(); nearObserver = null;nearPending.clear();
+    nearObserver?.disconnect(); nearObserver = null;nearPending.clear();nearWaiting.clear();
     tvModeObserver?.disconnect(); tvModeObserver = null;
     document.removeEventListener('DOMContentLoaded', boot); document.removeEventListener('visibilitychange', onVisibility);
     document.removeEventListener('swifly:card-scroll-end', onCardScrollEnd);
+    document.removeEventListener('swifly:card-scroll-end', onScrollRest);
+    document.removeEventListener('swifly:scroll-glass-end', onScrollRest);
     document.removeEventListener('pointerover', onCardEnter); document.removeEventListener('pointerout', onCardLeave);
     document.removeEventListener('focusin', onCardFocus); document.removeEventListener('focusout', onCardBlur);
     mutations?.disconnect(); intersection?.disconnect(); cancelAnimationFrame(frame); frame = 0; pending.clear();
