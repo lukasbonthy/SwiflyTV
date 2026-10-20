@@ -98,7 +98,7 @@ test('Explicit MP4 download uses the same temporary proxy source but streams an 
   const downloading = await request(url + '?download=1');
   assert.equal(downloading.status, 200);
   assert.deepEqual(downloading.body, movie, 'The complete video is streamed from the existing verified MP4');
-  assert.match(downloading.headers['content-disposition'] || '', /^attachment; filename="swiflytv-opaque-id\\.mp4"$/);
+  assert.match(downloading.headers['content-disposition'] || '', /^attachment; filename="swiflytv-opaque-id\.mp4"$/);
   const head = await request(url + '?download=1', {method:'HEAD'});
   assert.equal(head.status, 200);
   assert.match(head.headers['content-disposition'] || '', /^attachment/);
