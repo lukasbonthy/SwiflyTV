@@ -45,6 +45,20 @@ test('The normal watch route renders one native movie player with shared assets 
  assert.equal(d.querySelector('.dsProxyVideoWaitingShell'),null);assert.equal(d.querySelector('.svPartyHub'),null);
  assert.equal(d.querySelector('[data-sv-player-back]').getAttribute('href'),'/movie/101');
 });
+test('Movie and episode interfaces expose independent playable and downloadable actions',async()=>{
+ const movie=parse(await(await fetch(base+'/watch/movie/101?mode=movie')).text()).window.document;
+ assert(movie.querySelector('a.svPlayerDownload[data-sv-download][href="/api/download/movie/101"]'));
+ const tv=parse(await(await fetch(base+'/watch/tv/101?mode=movie&s=1&e=3')).text()).window.document;
+ assert(tv.querySelector('a.svPlayerDownload[href="/api/download/tv/101?s=1&e=3"]'));
+ const choices=[...tv.querySelectorAll('.svPlayerEpisodeChoice')];
+ assert(choices.length>=3,'Every episode in the player gets an individual download action');
+ assert(choices.every(choice=>choice.querySelector('a[data-player-episode-link]')&&choice.querySelector('a[data-sv-download]')));
+ assert(choices.every(choice=>!choice.querySelector('a a')),'Never nest one link inside another');
+ const detail=parse(await(await fetch(base+'/movie/101')).text()).window.document;
+ assert(detail.querySelector('.svDetailActions a[data-sv-download][href="/api/download/movie/101"]'));
+ const seasonDetail=parse(await(await fetch(base+'/tv/101')).text()).window.document;
+ assert(seasonDetail.querySelectorAll('.svDetailEpisodeChoice a[data-sv-download]').length>=2);
+});
 test('A room invite enters managed movie playback and a create link waits for explicit submission',async()=>{
  for(const [query,managed]of[['roomId=room-one','true'],['party=create','false']]){
   const env=parse(await(await fetch(base+'/watch/movie/101?mode=movie&'+query)).text());assert.equal(env.window.document.querySelector('.svPlayerPage').dataset.playerManaged,managed);
