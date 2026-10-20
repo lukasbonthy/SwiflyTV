@@ -113,3 +113,21 @@ test('already prepared controls defer new SVG graphs during motion and resume at
   assert(mounts.has(pane),'movement preserves an existing cached optical graph');
   w.SwiflyGlassSurfaces.destroy();env.finish();
 });
+
+test('focusing an existing deferred row control prepares its lens during motion',()=>{
+  const env=browser('<button class="dsRowBtn">Next</button>'),w=env.window,d=w.document;
+  const observers=[],mounts=new Set();
+  w.IntersectionObserver=class {
+    constructor(callback,options){this.callback=callback;this.options=options;observers.push(this);}
+    observe(){} unobserve(){} disconnect(){}
+  };
+  w.SwiflyLiquidGlass={mount(node){mounts.add(node);return {enabled:true,supported:true,destroy(){mounts.delete(node);}};}};
+  w.boot('liquid-glass/surfaces.js');
+  const host=d.querySelector('button'),pane=host.querySelector('.svNavMatchedLens');
+  d.documentElement.dataset.svScrollGlass='soft';
+  observers.find(observer=>observer.options.rootMargin==='80px').callback([{target:host,isIntersecting:true}]);
+  assert.equal(mounts.size,0);
+  host.focus();
+  assert(mounts.has(pane),'focus must immediately mount the existing deferred lens');
+  w.SwiflyGlassSurfaces.destroy();env.finish();
+});

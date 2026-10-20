@@ -266,7 +266,10 @@
   }
   function onCardFocus(event) {
     const host=event.target instanceof Element ? event.target.closest(selector) : null;
-    if(host&&!entries.has(host)){ensure(host,true);const entry=entries.get(host);if(entry){entry.visible=true;activate(entry);}}
+    if(host){
+      if(!entries.has(host))ensure(host,true);
+      const entry=entries.get(host);if(entry){entry.visible=true;activate(entry);}
+    }
     const artwork = event.target instanceof Element ? event.target.closest('.dsCardArtwork') : null;
     if (artwork) syncCardActions(artwork, true);
   }

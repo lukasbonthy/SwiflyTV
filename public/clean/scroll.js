@@ -216,12 +216,14 @@
     }
     // The pinned engine rounds each destination to an integer. Carry the
     // fractional part across pulses so precision wheels/trackpads and line
-    // deltas retain their distance instead of stalling or drifting. Own even
-    // a zero-pixel pulse: handing it to native scroll would mix two engines.
+    // deltas retain their distance instead of stalling or drifting.
     const distance = deltaY + wheelRemainder;
-    input.deltaY = Math.round(distance);
-    wheelRemainder = distance - input.deltaY;
-    if (!input.deltaY) {event.preventDefault(); return false;}
+    const pixels = Math.round(distance);
+    wheelRemainder = distance - pixels;
+    // A nonzero subpixel sentinel keeps zero-pixel pulses in Lenis's input
+    // routing without changing its rounded destination. Let the engine check
+    // nested overflow and data-lenis-prevent before it consumes page input.
+    input.deltaY = pixels || Math.sign(deltaY) * Number.EPSILON;
     return true;
   }
   function sync() {

@@ -104,7 +104,12 @@ test('distant catalog controls defer their panes and prime immediately for keybo
   await last.locator('.dsMiniBtn').first().focus();
   await page.waitForFunction(()=>document.activeElement?.querySelector('.svNavMatchedLens')?.dataset.swiflyRenderer==='svg');
   assert.equal(await last.locator('.dsCardQuickActions').first().evaluate(n=>getComputedStyle(n).opacity),'1');
-  await page.waitForFunction(()=>!document.documentElement.dataset.svScrollGlass);
+  // Focus primes the lens synchronously, before the browser starts its native
+  // scroll into view. Wait for that scroll as well as the glass to settle.
+  await page.waitForFunction(()=>{
+   const box=document.activeElement.getBoundingClientRect();
+   return box.top>=0&&box.bottom<=innerHeight&&!document.documentElement.dataset.svScrollGlass&&!document.documentElement.dataset.svCardScrolling;
+  });
   assert.match(await last.locator('.dsMiniBtn').first().evaluate(n=>getComputedStyle(n.querySelector('.svNavMatchedLens')).backdropFilter),/url\(/);
  }finally{await browser.close();}
 });

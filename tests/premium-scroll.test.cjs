@@ -176,6 +176,21 @@ test('subpixel wheel pulses keep one glass tier throughout the gesture', () => {
   env.finish();
 });
 
+test('fractional pulses retain native ownership in nested panels and Lenis opt-outs', () => {
+  for (const attribute of ['style="overflow-y:auto"', 'data-lenis-prevent', 'data-lenis-prevent-wheel']) {
+    const env = setup('<main><div ' + attribute + '><p>Panel</p></div></main>'), w = env.window;
+    const panel = w.document.querySelector('div');
+    Object.defineProperties(panel, {scrollHeight:{value:1800}, clientHeight:{value:300}, scrollWidth:{value:300}, clientWidth:{value:300}});
+    panel.scrollTop = 200;
+    for (const delta of [.25, .25, .8, -.25, -.8]) {
+      assert.equal(env.wheel(delta, panel.querySelector('p')).defaultPrevented, false, attribute + ': ' + delta + 'px must remain native');
+    }
+    assert.equal(env.page.scrollTop, 0);
+    assert.equal(w.frameCount(), 0, 'native input must not leave a background animation');
+    env.finish();
+  }
+});
+
 test('keyboard, pointer and programmatic navigation interrupt pending wheel inertia', () => {
   for (const action of ['keyboard', 'pointer', 'programmatic']) {
     const env = setup(), w = env.window, d = w.document;
