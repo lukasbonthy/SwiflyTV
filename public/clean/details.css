@@ -18,8 +18,8 @@ html[data-sv-detail-scene] body.svCleanShell > .mobileNav { transform-origin:0% 
 html[data-sv-detail-scene] body.svCleanShell > [data-sv-browse-scene] { clip-path:var(--sv-detail-scene-clip); }
 html:is([data-sv-detail-scene="opening"],[data-sv-detail-scene="open"]) body.svCleanShell > :is([data-sv-browse-scene],.topbar,.mobileNav) {
   scale:var(--sv-detail-scene-scale,1); translate:0px 14px;
-  transition-duration:900ms;
-  transition-timing-function:cubic-bezier(.32,.08,.2,1);
+  transition-duration:460ms;
+  transition-timing-function:cubic-bezier(.22,.74,.22,1);
 }
 html:is([data-sv-detail-scene="opening"],[data-sv-detail-scene="closing"]) body.svCleanShell > :is([data-sv-browse-scene],.topbar,.mobileNav) { will-change:scale,translate; }
 html[data-sv-detail-scene] body.svCleanShell.reduceMotion > :is([data-sv-browse-scene],.topbar,.mobileNav) { scale:none !important; translate:none !important; clip-path:none !important; transition:none !important; will-change:auto !important; }
@@ -94,10 +94,10 @@ body.svCleanShell .svDetailScrim[hidden] { display:none !important; }
    Bottom-position motion keeps an active, paintable backdrop during entry. */
 body.svCleanShell .svDetailDialog:is([data-sv-detail-state="opening"],[data-sv-detail-state="closing"]) { will-change:auto; transform:none; }
 body.svCleanShell .svDetailScrim:is([data-sv-detail-state="opening"],[data-sv-detail-state="closing"]) { will-change:opacity; }
-body.svCleanShell .svDetailDialog[data-sv-detail-motion="css"][data-sv-detail-state="opening"] { animation-name:svDetailsEnter; animation-duration:900ms; animation-timing-function:cubic-bezier(.32,.08,.2,1); animation-fill-mode:both; }
-body.svCleanShell .svDetailDialog[data-sv-detail-motion="css"][data-sv-detail-state="closing"] { animation-name:svDetailsExit; animation-duration:560ms; animation-timing-function:cubic-bezier(.4,0,.2,1); animation-fill-mode:both; }
-body.svCleanShell .svDetailScrim[data-sv-detail-motion="css"][data-sv-detail-state="opening"] { animation:svDetailsDimIn 620ms ease-out both; }
-body.svCleanShell .svDetailScrim[data-sv-detail-motion="css"][data-sv-detail-state="closing"] { animation:svDetailsDimOut 560ms ease-in both; }
+body.svCleanShell .svDetailDialog[data-sv-detail-motion="css"][data-sv-detail-state="opening"] { animation-name:svDetailsEnter; animation-duration:460ms; animation-timing-function:cubic-bezier(.22,.74,.22,1); animation-fill-mode:both; }
+body.svCleanShell .svDetailDialog[data-sv-detail-motion="css"][data-sv-detail-state="closing"] { animation-name:svDetailsExit; animation-duration:300ms; animation-timing-function:cubic-bezier(.4,0,.2,1); animation-fill-mode:both; }
+body.svCleanShell .svDetailScrim[data-sv-detail-motion="css"][data-sv-detail-state="opening"] { animation:svDetailsDimIn 330ms ease-out both; }
+body.svCleanShell .svDetailScrim[data-sv-detail-motion="css"][data-sv-detail-state="closing"] { animation:svDetailsDimOut 300ms ease-in both; }
 body.svCleanShell .svDetailViewport { height: 100%; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-gutter:stable; scrollbar-width: thin; scrollbar-color: #ffffff26 transparent; -webkit-overflow-scrolling:touch; }
 body.svCleanShell .svDetailDialog .svTitleDetails.svTitleDetails { width: 100% !important; max-width: none !important; margin: 0 !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; animation:none !important; filter:none !important; }
 body.svCleanShell .svDetailDialog .svDetailHero { min-height: 520px; height: min(55vw,590px); }
@@ -154,3 +154,10 @@ body.svCleanShell.reduceMotion :is(.svDetailDialog,.svDetailScrim), body.svClean
   body.svCleanShell :is(.svDetailDialog,.svDetailScrim), body.svCleanShell .svDetailLoadingArt::after { animation:none !important; }
   body.svCleanShell .svDetailBackdrop { transform:none; }
 }
+
+/* Movie and episode downloads have distinct focus targets, not nested anchors. */
+.svDetailEpisodeChoice{display:inline-flex;align-items:stretch;gap:4px;min-width:0}
+body.svCleanShell .svDetailEpisodeChoice > .svDetailEpisodeTile{flex:1 1 auto}
+body.svCleanShell .svDetailEpisodeDownload{display:grid;place-items:center;min-width:36px;padding:0 9px;border:1px solid #ffffff25;border-radius:10px;background:#ffffff0d;color:#f0f4ff;text-decoration:none;font-size:18px}
+body.svCleanShell .svDetailEpisodeDownload:is(:hover,:focus-visible){background:#ffffff26;outline:2px solid #dcefff;outline-offset:2px}
+body.svCleanShell .svDownloadAction{white-space:nowrap}
