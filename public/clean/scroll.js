@@ -11,7 +11,7 @@
   // animation frames repeatedly miss the budget, stop scripting page scroll
   // for this document and let the browser's compositor handle it natively.
   // One delayed frame (tab suspension/GC) must not disable the experience.
-  let performanceFallback = false;
+  let performanceFallback = false, pendingFallback = false;
   const recentFrames = [];
   let activeMotionMs = 0;
   const available = () => !destroyed && !performanceFallback && !document.hidden && fine.matches && !reduced.matches &&
@@ -51,12 +51,20 @@
         if (recentFrames.length > 10) recentFrames.shift();
       }
       if (activeMotionMs >= 3200 && recentFrames.length === 10 && recentFrames.filter(Boolean).length >= 4) {
-        performanceFallback = true;
+        // Abruptly tearing down Lenis during a wheel gesture itself looks like
+        // dropped frames. Wait until the current glide finishes, then let the
+        // browser handle subsequent gestures natively on slow hardware.
+        pendingFallback = true;
+      }
+      frame = requestAnimationFrame(step);
+    } else {
+      if (pendingFallback) {
+        performanceFallback = true; pendingFallback = false;
         dispose();
         return;
       }
-      frame = requestAnimationFrame(step);
-    } else {lastFrame = null;recentFrames.length = 0;activeMotionMs = 0;}
+      lastFrame = null; recentFrames.length = 0; activeMotionMs = 0;
+    }
   }
   function wake() {
     if (!frame && available()) {
