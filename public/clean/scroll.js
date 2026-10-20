@@ -43,6 +43,85 @@
     cardIdleTimer = setTimeout(clearCardScroll, 170);
   }
   let engine, frame = 0, lastFrame = null, clock = 1, preferences, started = false, destroyed = false;
+  // Refraction is costly while the backdrop is moving. Switch only the CSS
+  // paint tier (not the SVG graph/controller lifecycle) during fast scroll.
+  // That keeps the existing real lens cached and avoids rebuilding it at rest.
+  const glassSpeedThreshold = .115; // CSS pixels / millisecond (~1.8px at 60Hz).
+  let glassSoft = false, glassIdleTimer = 0, glassLastInput = 0;
+  let glassLastY = 0, glassLastTime = 0, glassSlowSamples = 0;
+  const pageY = () => window.scrollY || document.scrollingElement?.scrollTop || 0;
+  const glassAllowed = () => !destroyed && !document.hidden &&
+    document.documentElement.dataset.svTv !== 'true' &&
+    document.documentElement.dataset.svXbox !== 'true' &&
+    !/^\/(?:watch|embed)(?:\/|$)/.test(location.pathname) &&
+    !['off','subtle'].includes(document.body.dataset.stGlass);
+  function glassTier(soft) {
+    const next = Boolean(soft && glassAllowed());
+    if (next === glassSoft) return;
+    glassSoft = next;
+    if (next) document.documentElement.dataset.svScrollGlass = 'soft';
+    else delete document.documentElement.dataset.svScrollGlass;
+  }
+  function resetGlass() {
+    clearTimeout(glassIdleTimer); glassIdleTimer = 0;
+    glassSlowSamples = 0; glassLastTime = 0;
+    glassTier(false);
+  }
+  function glassIdleCheck() {
+    glassIdleTimer = 0;
+    // Don't return the heavy optical shader while Lenis is still in its
+    // high-velocity phase; the already-scheduled Lenis RAF samples it.
+    if (engine?.isScrolling === 'smooth') return;
+    if (performance.now() - glassLastInput < 145) {
+      scheduleGlassIdle(145); return;
+    }
+    glassTier(false);
+  }
+  function scheduleGlassIdle(delay = 175) {
+    clearTimeout(glassIdleTimer);
+    glassIdleTimer = setTimeout(glassIdleCheck, delay);
+  }
+  function onGlassWheel(event) {
+    if (!glassAllowed() || event.ctrlKey || event.metaKey || event.altKey ||
+        event.shiftKey || !event.deltaY ||
+        Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+    const target = event.target instanceof Element ? event.target : null;
+    if (target?.closest('dialog[open],[data-player-root],.vds-controls')) return;
+    glassLastInput = performance.now();glassSlowSamples=0;
+    glassLastY = pageY();glassLastTime = glassLastInput;
+    glassTier(true); scheduleGlassIdle();
+  }
+  function onGlassScroll(event) {
+    if (!glassAllowed() || engine?.isScrolling === 'smooth') return;
+    if (event.target !== document && event.target !== document.scrollingElement &&
+        event.target !== document.documentElement && event.target !== document.body) return;
+    const now = performance.now(), y = pageY();
+    const delta = Math.abs(y - glassLastY);
+    const duration = glassLastTime ? Math.max(1, now - glassLastTime) : 16;
+    glassLastY = y;glassLastTime = now;
+    if (delta > .8 && delta / duration > glassSpeedThreshold) {
+      glassLastInput = now; glassSlowSamples = 0;
+      glassTier(true);scheduleGlassIdle();
+    } else if (glassSoft && delta > .1 && ++glassSlowSamples >= 2 &&
+        now - glassLastInput > 100) {
+      // Native touch and trackpad scroll events naturally supply momentum
+      // samples. Allow the refraction to return just before motion ceases.
+      glassTier(false);
+    }
+  }
+  function sampleLenisGlass(elapsed) {
+    const now = performance.now(), y = pageY();
+    const speed = Math.abs(y - glassLastY) / Math.max(1, elapsed || 16);
+    glassLastY = y;glassLastTime = now;
+    if (speed > glassSpeedThreshold) {
+      glassSlowSamples = 0; glassTier(true);
+    } else if (glassSoft && ++glassSlowSamples >= 3 &&
+        now - glassLastInput > 105) {
+      // Two to three genuinely slow rendered frames, not an arbitrary
+      // full-stop timeout. Rapid successive wheel gestures reset this.
+      glassTier(false);
+    }
+  }
   // Preserve premium Lenis easing on machines that can paint it. If actual
   // animation frames repeatedly miss the budget, stop scripting page scroll
   // for this document and let the browser's compositor handle it natively.
@@ -78,6 +157,7 @@
     clock += elapsed;
     lastFrame = time;
     engine.raf(clock);
+    sampleLenisGlass(elapsed);
     if (engine.isScrolling === 'smooth') {
       activeMotionMs += elapsed;
       // 4+ slow frames of the last 10 is sustained jank, not occasional work.
@@ -99,11 +179,13 @@
         dispose();
         return;
       }
+      glassTier(false);
       lastFrame = null; recentFrames.length = 0; activeMotionMs = 0;
     }
   }
   function wake() {
     if (!frame && available()) {
+      glassLastY = pageY();
       // Start at the gesture's actual time. Assuming a 60 Hz first frame
       // produces a visible kick on 144/240 Hz displays after every idle.
       lastFrame = performance.now();
@@ -142,23 +224,28 @@
     // preferences recreate it, so this observes the final input decision.
     window.addEventListener('wheel', keepNative, {passive:true});
   }
-  function onPageHide() {clearCardScroll(); dispose();}
+  function onPageHide() {clearCardScroll(); resetGlass(); dispose();}
   function boot() {
     if (started || destroyed) return; started = true;
     sync();
     preferences = new MutationObserver(sync);
     preferences.observe(document.body, {attributes:true, attributeFilter:['class','data-sv-scroll']});
     document.addEventListener('wheel', markCardScroll, {capture:true, passive:true});
+    document.addEventListener('wheel', onGlassWheel, {capture:true, passive:true});
+    document.addEventListener('scroll', onGlassScroll, {capture:true, passive:true});
     document.addEventListener('scroll', markCardScroll, {capture:true, passive:true});
     hoverDesktop.addEventListener?.('change', clearCardScroll);
     reduced.addEventListener('change', sync); fine.addEventListener('change', sync);
     document.addEventListener('visibilitychange', sync);
+    document.addEventListener('visibilitychange', () => {if(document.hidden) resetGlass();});
     window.addEventListener('pagehide', onPageHide); window.addEventListener('pageshow', sync);
   }
   window.SwiflyPremiumScroll = Object.freeze({cancel, refresh() {engine?.resize();}, destroy() {
     if (destroyed) return; destroyed = true; dispose();
     preferences?.disconnect();
-    clearCardScroll();
+    clearCardScroll(); resetGlass();
+    document.removeEventListener('wheel', onGlassWheel, true);
+    document.removeEventListener('scroll', onGlassScroll, true);
     document.removeEventListener('wheel', markCardScroll, true);
     document.removeEventListener('scroll', markCardScroll, true);
     hoverDesktop.removeEventListener?.('change', clearCardScroll);
