@@ -380,7 +380,7 @@ test('Studio glass uses one material on every browsing route and native transiti
  const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=231')).text();
  const finish=await(await fetch(base+'/assets/clean/finish.css?v=176')).text();
  const navigation=await(await fetch(base+'/assets/clean/navigation.css?v=2')).text();
- const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=238')).text();
+ const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=239')).text();
  assert.match(css,/data-st-glass="liquid"/);
  assert.match(css,/data-st-glass="subtle"/);
  assert.match(css,/data-st-glass="off"/);
@@ -393,7 +393,7 @@ test('Studio glass uses one material on every browsing route and native transiti
    assert.equal(response.status,200,route);
    const doc=parse(await response.text()).window.document;
    assert(doc.querySelector('link[href="/assets/liquid-glass/controls.css?v=231"]'),route+' lacks unified glass');
-   assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=238"]'),route+' uses stale glass renderer');
+   assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=239"]'),route+' uses stale glass renderer');
  }
  const watch=await(await fetch(base+'/watch/movie/101')).text();
  assert(!watch.includes('controls.css?v=189'),'watch page must be left alone');
@@ -416,7 +416,7 @@ test('v176 supplies a real, masked details backdrop with no hard border at the o
  assert.match(css,/\.svDetailShade \{/);
  assert.match(css,/\.svDetailBody \{/);
  assert(d.querySelector('link[href="/assets/clean/polish.css?v=176"]'));
- assert(d.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=238"]'));
+ assert(d.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=239"]'));
 });
 test('v176 adds subtle Liquid Glass to both compact auth pages without resizing',async()=>{
  const css=await(await fetch(base+'/assets/clean/polish.css?v=176')).text();
