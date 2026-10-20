@@ -198,7 +198,7 @@ test('A normal standalone party click remembers its title page and preserves pla
   const action = d.querySelector('[data-sv-party-movie-id]');
   assert(action);
   const click = new w.MouseEvent('click', {bubbles:true, cancelable:true});
-  action.querySelector('svg').dispatchEvent(click);
+  action.querySelector('i.svIcon.fa-user-group').dispatchEvent(click);
   assert.equal(click.defaultPrevented, false, 'The party link should navigate normally');
   assert.equal(w.sessionStorage.getItem('swiflytv.partyReturn'), '/movie/101?source=search#overview');
   assert.equal(w.sessionStorage.getItem('swiflytv.playReturn'), '/search?q=previous&media=movie-99');
