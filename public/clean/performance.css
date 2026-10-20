@@ -120,3 +120,29 @@ body.svCleanShell .dsContent > .dsRow.svCatalogRow > .movieRail {contain:layout 
     backdrop-filter: none !important;
   }
 }
+
+
+/* Performance-aware soft glass. A single root-state switch bypasses every
+   SVG backdrop-refraction shader while the scene moves, without destroying
+   any renderer, lens geometry, or cached texture. Once measured motion is
+   under ~0.115 CSS px/ms the *original* liquid refraction returns intact.
+   The face keeps a frosted-glass tint instead of abruptly turning opaque. */
+@media (prefers-reduced-transparency: no-preference) {
+  html[data-sv-scroll-glass="soft"] body.svCleanShell:not([data-st-glass="off"]):not([data-st-glass="subtle"]) .svLiquidPane.svLiquidPane {
+    -webkit-backdrop-filter: blur(4px) saturate(1.10) !important;
+    backdrop-filter: blur(4px) saturate(1.10) !important;
+    background: rgb(var(--sv-glass-color, 255 255 255) / .33) !important;
+    /* No filter transition: interpolating between SVG and blur can force
+       repeated offscreen paints during an otherwise compositor-only scroll. */
+    transition-property: none !important;
+  }
+  html[data-sv-scroll-glass="soft"] body.svCleanShell:not([data-st-glass="off"]):not([data-st-glass="subtle"]) .svGlassSurface.svGlassSurface:not(.svNavMatchedOptic) {
+    -webkit-backdrop-filter: blur(4px) saturate(1.08) !important;
+    backdrop-filter: blur(4px) saturate(1.08) !important;
+  }
+  /* Don't stack a second blur behind the already-soft child pane. */
+  html[data-sv-scroll-glass="soft"] body.svCleanShell .svGlassControl.svNavMatchedOptic.svGlassControl {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
