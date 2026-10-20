@@ -37,7 +37,7 @@ test('Background recession reverses with the weighted exit, then releases all te
  const start=env.animations.length;w.history.back=()=>{};w.SwiflyDetails.close();
  assert.equal(d.documentElement.dataset.svDetailScene,'closing');assert(d.querySelector('dialog').open);
  assert(env.scene.style.getPropertyValue('--sv-detail-scene-clip'),'The visible catalog remains clipped through the exit');
- assert.equal(env.animations[start].settings.duration,560);
+ assert.equal(env.animations[start].settings.duration,300);
  await finish(env.animations.slice(start));
  assert.equal(d.documentElement.dataset.svDetailScene,undefined);
  assert.equal(d.documentElement.style.getPropertyValue('--sv-detail-scene-scale'),'');
