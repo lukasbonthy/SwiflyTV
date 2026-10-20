@@ -13,6 +13,7 @@
   // One delayed frame (tab suspension/GC) must not disable the experience.
   let performanceFallback = false;
   const recentFrames = [];
+  let activeMotionMs = 0;
   const available = () => !destroyed && !performanceFallback && !document.hidden && fine.matches && !reduced.matches &&
     !document.body.classList.contains('reduceMotion') && document.body.dataset.svScroll !== 'native' &&
     !/^\/(?:watch|embed)(?:\/|$)/.test(location.pathname) && document.documentElement.dataset.svTv !== 'true' &&
@@ -20,7 +21,7 @@
 
   function cancel() {
     cancelAnimationFrame(frame); frame = 0; lastFrame = null;
-    recentFrames.length = 0;
+    recentFrames.length = 0; activeMotionMs = 0;
     if (engine?.isScrolling === 'smooth') {
       // Reset to the actual position without finishing an obsolete target.
       // start() immediately restores ordinary native input and the next glide.
@@ -42,19 +43,20 @@
     lastFrame = time;
     engine.raf(clock);
     if (engine.isScrolling === 'smooth') {
+      activeMotionMs += elapsed;
       // 4+ slow frames of the last 10 is sustained jank, not occasional work.
       // No extra RAF/polling/observer: sample the frames Lenis already owns.
       if (elapsed > 0 && elapsed < 250) {
         recentFrames.push(elapsed > 36);
         if (recentFrames.length > 10) recentFrames.shift();
       }
-      if (recentFrames.length === 10 && recentFrames.filter(Boolean).length >= 4) {
+      if (activeMotionMs >= 3200 && recentFrames.length === 10 && recentFrames.filter(Boolean).length >= 4) {
         performanceFallback = true;
         dispose();
         return;
       }
       frame = requestAnimationFrame(step);
-    } else {lastFrame = null;recentFrames.length = 0;}
+    } else {lastFrame = null;recentFrames.length = 0;activeMotionMs = 0;}
   }
   function wake() {
     if (!frame && available()) {
