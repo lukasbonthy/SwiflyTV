@@ -6515,7 +6515,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/vendor/lenis/lenis.css?v=1.3.16-r1" />
     <script defer src="/assets/vendor/lenis/lenis.min.js?v=1.3.16-r1"></script>
     <script defer src="/assets/clean/motion.js?v=238"></script>
-    <script defer src="/assets/clean/scroll.js?v=244"></script>
+    <script defer src="/assets/clean/scroll.js?v=245"></script>
     <script defer src="/assets/clean/details.js?v=236"></script>
     <script defer src="/assets/clean/download.js?v=2"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=222" />
@@ -6542,7 +6542,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=206" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=205" />' : ""}
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=200" />' : ""}
     ${player || active === "social" ? '<link rel="stylesheet" href="/assets/party/watchroom-call.css?v=1" />' : ""}
-    <link rel="stylesheet" href="/assets/clean/performance.css?v=215" />
+    <link rel="stylesheet" href="/assets/clean/performance.css?v=216" />
     <link rel="stylesheet" href="/assets/clean/tv.css?v=5" />
     <link rel="stylesheet" href="/assets/clean/details-premium.css?v=1" />
     <link rel="stylesheet" href="/assets/clean/details-clarity.css?v=2" />
