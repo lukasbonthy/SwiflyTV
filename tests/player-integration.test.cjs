@@ -47,17 +47,38 @@ test('The normal watch route renders one native movie player with shared assets 
 });
 test('Movie and episode interfaces expose independent playable and downloadable actions',async()=>{
  const movie=parse(await(await fetch(base+'/watch/movie/101?mode=movie')).text()).window.document;
- assert(movie.querySelector('a.svPlayerDownload[data-sv-download][href="/api/download/movie/101"]'));
+ assert(movie.querySelector('a.svPlayerDownload[data-sv-download][href="/download/movie/101"]'));
  const tv=parse(await(await fetch(base+'/watch/tv/101?mode=movie&s=1&e=3')).text()).window.document;
- assert(tv.querySelector('a.svPlayerDownload[href="/api/download/tv/101?s=1&e=3"]'));
+ assert(tv.querySelector('a.svPlayerDownload[href="/download/tv/101?s=1&e=3"]'));
  const choices=[...tv.querySelectorAll('.svPlayerEpisodeChoice')];
  assert(choices.length>=3,'Every episode in the player gets an individual download action');
  assert(choices.every(choice=>choice.querySelector('a[data-player-episode-link]')&&choice.querySelector('a[data-sv-download]')));
  assert(choices.every(choice=>!choice.querySelector('a a')),'Never nest one link inside another');
  const detail=parse(await(await fetch(base+'/movie/101')).text()).window.document;
- assert(detail.querySelector('.svDetailActions a[data-sv-download][href="/api/download/movie/101"]'));
+ assert(detail.querySelector('.svDetailActions a[data-sv-download][href="/download/movie/101"]'));
  const seasonDetail=parse(await(await fetch(base+'/tv/101')).text()).window.document;
  assert(seasonDetail.querySelectorAll('.svDetailEpisodeChoice a[data-sv-download]').length>=2);
+});
+test('Download Options opens a cinematic movie and episode page with live option placeholders',async()=>{
+ const movie=await(await fetch(base+'/download/movie/101')).text(),d=parse(movie).window.document;
+ const root=d.querySelector('[data-sv-download-options]');
+ assert(root,'Dedicated download route should render');
+ assert.equal(root.dataset.downloadType,'movie');
+ assert.equal(root.dataset.downloadId,'101');
+ assert.equal(d.querySelector('.svDownloadInfo h1')?.textContent,'Arrival');
+ assert.match(d.querySelector('.svDownloadPoster img')?.getAttribute('src')||'',/arrival\.jpg/);
+ assert.match(d.querySelector('.svDownloadBackdrop')?.getAttribute('style')||'',/arrival-wide\.jpg/);
+ assert(d.querySelector('[data-sv-download-count]'),'Availability count appears in heading');
+ assert(d.querySelector('[data-sv-download-choices]'),'Available files render beneath the title');
+ assert(d.querySelector('script[src="/assets/clean/download-page.js?v=1"]'));
+ assert(d.querySelector('link[href="/assets/clean/download-page.css?v=1"]'));
+ const tv=parse(await(await fetch(base+'/download/tv/101?s=2&e=8')).text()).window.document;
+ const episode=tv.querySelector('[data-sv-download-options]');
+ assert.equal(episode.dataset.downloadType,'tv');
+ assert.equal(episode.dataset.downloadSeason,'2');
+ assert.equal(episode.dataset.downloadEpisode,'8');
+ assert.match(tv.querySelector('.svDownloadEpisodeLabel')?.textContent||'',/Season 2.*Episode 8/);
+ assert.match(tv.querySelector('.svDownloadWatchLink')?.getAttribute('href')||'',/s=2&e=8/);
 });
 test('A room invite enters managed movie playback and a create link waits for explicit submission',async()=>{
  for(const [query,managed]of[['roomId=room-one','true'],['party=create','false']]){
