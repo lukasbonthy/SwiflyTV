@@ -70,6 +70,7 @@ const { navigationHead } = require("./ui/navigation");
 const { tvHead, tvScript } = require("./ui/tv");
 const { partyMarkup } = require("./ui/party");
 const { playerMarkup, episodePickerMarkup, episodeNavigationMarkup } = require("./ui/player");
+const { downloadOptionsMarkup } = require("./ui/download-page");
 const { watchPartyMarkup, partyBrowseMarkup } = require("./ui/watch-party");
 const { createSourceJobs } = require("./lib/source-jobs");
 const { createWatchroomCalls } = require("./lib/watchroom-calls");
@@ -8798,6 +8799,36 @@ async function watchPage(req, res, type) {
   res.send(pageShell({title:`${SITE_NAME} — ${title}`,active:type === "tv" ? "tv" : "movies",body,player:true}));
 }
 
+
+async function downloadOptionsPage(req, res, type) {
+  const id=String(req.params.id||'');
+  if(!/^[1-9]\d{0,11}$/.test(id))return res.status(404).send('Title not found');
+  const endpoint='/'+type+'/'+id;
+  const details=await tmdb(endpoint,{},CACHE_TTL.long);
+  if(details.__error)return res.send(setupNeededPage(details.message));
+  const seasons=(Array.isArray(details.seasons)?details.seasons:[]).filter(row=>Number.isSafeInteger(row.season_number)&&row.season_number>0);
+  const parsedS=Number(req.query.s||req.query.season);
+  const parsedE=Number(req.query.e||req.query.episode);
+  const season=type==='tv'&&Number.isSafeInteger(parsedS)&&parsedS>0&&parsedS<=9999?parsedS:seasons[0]?.season_number||1;
+  const episode=type==='tv'&&Number.isSafeInteger(parsedE)&&parsedE>0&&parsedE<=9999?parsedE:1;
+  const episodeDetails=type==='tv'
+    ?await tmdb(endpoint+'/season/'+season,{},CACHE_TTL.long).catch(()=>({episodes:[]})):{episodes:[]};
+  const selectedEpisode=(Array.isArray(episodeDetails.episodes)?episodeDetails.episodes:[]).find(row=>row.episode_number===episode);
+  const title=getTitle(details);
+  const year=getYear(type==='tv'?details.first_air_date:details.release_date);
+  const runtime=type==='tv'
+    ?(Number(selectedEpisode?.runtime)>0?formatRuntime(selectedEpisode.runtime):Number(details.episode_run_time?.[0])>0?formatRuntime(details.episode_run_time[0]):'')
+    :(Number(details.runtime)>0?formatRuntime(details.runtime):'');
+  const bg=img(details.backdrop_path||details.poster_path,/Xbox|XboxOne|Xbox Series/i.test(req.get('user-agent')||'')?'w780':'w1280');
+  const body=downloadOptionsMarkup({type,id,title,year,runtime,
+    rating:Number(details.vote_average)>0?formatRating(details.vote_average):'',
+    overview:selectedEpisode?.overview||details.overview||'',
+    poster:img(details.poster_path,'w342'),backdrop:bg,genres:details.genres||[],
+    season,episode,episodeTitle:selectedEpisode?.name||''});
+  res.send(pageShell({title:SITE_NAME+' — '+title+' downloads',description:'Available download options for '+title,active:type==='tv'?'tv':'movies',body,
+    extraHead:'<link rel="stylesheet" href="/assets/clean/download-page.css?v=1" /><script defer src="/assets/clean/download-page.js?v=1"></script>'}));
+}
+
 async function detailPage(req, res, type) {
   const id = req.params.id;
   const partyId = partyMovieId(id);
@@ -8852,7 +8883,7 @@ async function detailPage(req, res, type) {
     const number = Number(season.season_number);
     const total = Math.max(0, Number(season.episode_count || 0));
     const shown = Math.min(total, 24);
-    const episodeLinks = Array.from({ length: shown }, (_, i) => `<span class="svDetailEpisodeChoice"><a class="svDetailEpisodeTile" href="/watch/tv/${encodeURIComponent(id)}?mode=movie&s=${number}&e=${i + 1}" aria-label="Watch season ${number} episode ${i + 1}"><span class="svEpisodeOrdinal">${String(i + 1).padStart(2, "0")}</span><span>Episode ${i + 1}</span>${cleanIcon("play")}</a><a class="svDetailEpisodeDownload" href="/api/download/tv/${encodeURIComponent(id)}?s=${number}&e=${i + 1}" data-sv-download data-sv-download-type="episode" aria-label="Download season ${number} episode ${i + 1}" title="Download episode">↓</a></span>`).join("");
+    const episodeLinks = Array.from({ length: shown }, (_, i) => `<span class="svDetailEpisodeChoice"><a class="svDetailEpisodeTile" href="/watch/tv/${encodeURIComponent(id)}?mode=movie&s=${number}&e=${i + 1}" aria-label="Watch season ${number} episode ${i + 1}"><span class="svEpisodeOrdinal">${String(i + 1).padStart(2, "0")}</span><span>Episode ${i + 1}</span>${cleanIcon("play")}</a><a class="svDetailEpisodeDownload" href="/download/tv/${encodeURIComponent(id)}?s=${number}&e=${i + 1}" data-sv-download data-sv-download-type="episode" aria-label="Download season ${number} episode ${i + 1}" title="Download episode">↓</a></span>`).join("");
     return `<details class="svSeason"${index === 0 ? " open" : ""}><summary><span class="svSeasonIdentity"><b class="svSeasonNumber">${String(number).padStart(2, "0")}</b><strong>${escapeHtml(season.name || `Season ${number}`)}</strong></span><span>${total} episodes</span></summary>
       ${season.overview ? `<p>${escapeHtml(season.overview)}</p>` : ""}<div class="dsEpisodeChips">${episodeLinks}${total > shown ? `<a href="/watch/tv/${encodeURIComponent(id)}?mode=movie&s=${number}&e=${shown + 1}">Continue with episode ${shown + 1}</a>` : ""}</div></details>`;
   }).join("");
@@ -8880,7 +8911,7 @@ async function detailPage(req, res, type) {
           <div class="svDetailActions">
             <a class="dsPrimaryBtn" href="${watchHref}" ${mediaDataAttributes("play", details, type)}>${cleanIcon("play")}${escapeHtml(playLabel)}</a>
             ${trailers.length ? `<a class="dsSecondaryBtn" href="/watch/${type}/${encodeURIComponent(id)}?mode=trailer">${cleanIcon("play")}Trailer</a>` : ""}
-            <a class="dsSecondaryBtn svDownloadAction" href="/api/download/${type}/${encodeURIComponent(id)}${type==="tv"?`?s=${startSeason}&e=1`:""}" data-sv-download data-sv-download-type="${type==="tv"?"episode":"movie"}" aria-label="Download ${type==="tv"?"first episode of "+escapeHtml(title):escapeHtml(title)}">↓ Download</a>
+            <a class="dsSecondaryBtn svDownloadAction" href="/download/${type}/${encodeURIComponent(id)}${type==="tv"?`?s=${startSeason}&e=1`:""}" data-sv-download data-sv-download-type="${type==="tv"?"episode":"movie"}" aria-label="Download ${type==="tv"?"first episode of "+escapeHtml(title):escapeHtml(title)}">↓ Download</a>
             ${partyId ? `<a class="dsSecondaryBtn" href="${escapeHtml(partyMediaWatchUrl({movieId:partyId,type,season:String((details.seasons||[]).filter(row=>Number.isSafeInteger(row.season_number)&&row.season_number>0).sort((a,b)=>a.season_number-b.season_number)[0]?.season_number||1),episode:"1"},"",true))}" data-sv-party-movie-id="${partyId}" data-sv-party-type="${type}" aria-label="Start a watch party for ${escapeHtml(title)}">${cleanIcon("user")}Start a watch party</a>` : ""}
             <button class="dsIconBtn" type="button" aria-label="Add ${escapeHtml(title)} to My List" ${mediaDataAttributes("watch", details, type)}>＋</button>
             <button class="dsIconBtn dsHeartBtn" type="button" aria-label="Like ${escapeHtml(title)}" ${mediaDataAttributes("like", details, type)}>♡</button>
@@ -14284,6 +14315,8 @@ app.get("/api/movie-placeholder/:type/:id", async (req, res) => {
   res.json(result);
 });
 
+app.get("/download/movie/:id", (req, res) => downloadOptionsPage(req, res, "movie"));
+app.get("/download/tv/:id", (req, res) => downloadOptionsPage(req, res, "tv"));
 app.get("/watch/movie/:id", (req, res) => watchPage(req, res, "movie"));
 app.get("/watch/tv/:id", (req, res) => watchPage(req, res, "tv"));
 app.get("/movie/:id", (req, res) => detailPage(req, res, "movie"));
