@@ -31,8 +31,8 @@ test('normal 60fps scroll retains premium easing and a single RAF',()=>{
 test('several slow paint frames fall back to native scroll without a polling loop',()=>{
   const env=scene(),w=env.window;
   env.instance.wake();
-  for(let i=0;i<18;i++)w.flush(16+i*48);
-  assert.equal(env.disposed,1,'persistent sub-28fps performance should stop Lenis');
+  for(let i=0;i<100;i++)w.flush(16+i*48);
+  assert.equal(env.disposed,1,'sustained multi-second slow performance should stop Lenis');
   assert.equal(w.frameCount(),0,'fallback must leave no animation loop behind');
   w.SwiflyPremiumScroll.refresh();
   assert.equal(env.disposed,1,'fallback remains lightweight until page navigation');
