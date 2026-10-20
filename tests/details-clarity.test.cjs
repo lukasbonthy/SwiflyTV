@@ -32,8 +32,10 @@ test('story artwork uses the proven hero art, not an arbitrary cropped second st
   ]);
   const env=browser(html);
   const section=env.window.document.querySelector('#overview');
-  assert.match(section.getAttribute('style'),/\/w780\/alternate\.jpg/);
+  assert.match(section.getAttribute('style'),/\/w1280\/hero\.jpg/);
   assert(!section.getAttribute('style').includes('lettered.jpg'));
+  assert(!section.getAttribute('style').includes('alternate.jpg'));
+  assert.match(env.window.document.querySelector('.svDetailBackdrop').getAttribute('style'), /w1280/);
   assert(env.window.document.querySelector('.svDetailActions .svDownloadAction svg.svIcon'));
   assert(env.window.document.querySelector('.svDetailActions a[data-sv-party-movie-id] svg.svIcon'));
   env.finish();
@@ -41,7 +43,7 @@ test('story artwork uses the proven hero art, not an arbitrary cropped second st
 
 test('story keeps one shared hero image even when no other film still exists',async()=>{
   const env=browser(await detailsFixture([]));
-  assert.match(env.window.document.querySelector('#overview').getAttribute('style'),/\/w780\/hero\.jpg/);
+  assert.match(env.window.document.querySelector('#overview').getAttribute('style'),/\/w1280\/hero\.jpg/);
   env.finish();
 });
 
