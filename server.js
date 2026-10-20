@@ -6533,7 +6533,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/experience.css?v=202" />'}
     <link rel="stylesheet" href="/assets/clean/cinema.css?v=207" />
     <link rel="stylesheet" href="/assets/clean/profiles.css?v=209" />
-    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=213" />' : ""}
+    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=214" />' : ""}
     ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=206" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=205" />' : ""}
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=200" />' : ""}
     ${player || active === "social" ? '<link rel="stylesheet" href="/assets/party/watchroom-call.css?v=1" />' : ""}
