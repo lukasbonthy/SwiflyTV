@@ -133,3 +133,255 @@ body.svCleanShell .svMobileStudioLink { display:none !important; }
  body.svCleanShell .footer .footerGrid>div{width:auto;max-width:100%;min-width:0;font-size:10px;line-height:1.8}
  body.svCleanShell .footer .footerLinks{display:flex;flex-wrap:wrap;justify-content:flex-start;align-items:center;gap:16px}
 }
+
+
+/* Mobile account sheet: compact matte surface over the existing liquid navbar.
+   Retain native panel scrolling instead of adding expensive backdrop layers. */
+body.svCleanShell .svAccountMenuSection,
+body.svCleanShell .svAccountMenuClose {display:none;}
+
+@media (max-width:860px) {
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .dsProfileMenu[open] > summary {
+    background:rgba(255,255,255,.14) !important;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.13) !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown {
+    inset:calc(100% + 12px) auto auto 50% !important;
+    transform:translateX(-50%) !important;
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    grid-auto-rows:min-content !important;
+    align-content:start !important;
+    align-items:stretch !important;
+    justify-content:stretch !important;
+    gap:5px 8px !important;
+    box-sizing:border-box !important;
+    width:min(368px,calc(100vw - 28px)) !important;
+    max-width:calc(100vw - 28px) !important;
+    max-height:min(640px,calc(100svh - 132px - env(safe-area-inset-bottom))) !important;
+    max-height:min(640px,calc(100dvh - 132px - env(safe-area-inset-bottom))) !important;
+    margin:0 !important;
+    padding:14px !important;
+    border:1px solid rgba(225,238,255,.18) !important;
+    border-radius:24px !important;
+    background:linear-gradient(160deg,#131924 0%,#0b0e16 48%,#080b12 100%) !important;
+    box-shadow:0 30px 80px rgba(0,0,0,.76),inset 0 1px rgba(255,255,255,.08) !important;
+    -webkit-backdrop-filter:none !important;
+    backdrop-filter:none !important;
+    overflow-x:hidden !important;
+    overflow-y:auto !important;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:thin;
+    scrollbar-color:rgba(215,228,255,.25) transparent;
+    animation:none !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsProfileDropdown.svLiquidDropdown > .svLiquidPane {
+    display:none !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsProfileDropdown > :is(.dsDropdownUser,.svAccountMenuSection,a,.dsDropdownLogout) {
+    grid-column:1 / -1;
+    min-width:0;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsProfileDropdown > .dsDropdownUser {
+    display:grid !important;
+    position:sticky !important;
+    z-index:4 !important;
+    top:-14px;
+    grid-template-columns:48px minmax(0,1fr);
+    grid-template-rows:minmax(22px,auto) 18px;
+    align-items:center;
+    gap:0 10px;
+    width:calc(100% + 28px);
+    min-height:78px;
+    margin:-14px -14px 6px !important;
+    padding:14px 48px 12px 16px !important;
+    border:0 !important;
+    border-bottom:1px solid rgba(226,239,255,.12) !important;
+    border-radius:23px 23px 0 0;
+    background:#111721 !important;
+    box-shadow:0 6px 12px rgba(0,0,0,.2);
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsProfileDropdown > .dsDropdownUser > span {
+    grid-column:1;
+    grid-row:1 / 3;
+    width:44px !important;
+    height:44px !important;
+    border-radius:15px !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsProfileDropdown > .dsDropdownUser > b {
+    grid-column:2;
+    grid-row:1;
+    min-width:0;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+    color:#f7f8ff;
+    font-size:15px !important;
+    font-weight:700 !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsProfileDropdown > .dsDropdownUser > small {
+    grid-column:2;
+    grid-row:2;
+    min-width:0;
+    color:#aebacb !important;
+    font-size:11px !important;
+    font-weight:500 !important;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsProfileDropdown > .svAccountMenuClose {
+    display:grid !important;
+    position:absolute !important;
+    grid-column:2;
+    z-index:6 !important;
+    place-items:center;
+    top:19px;
+    right:18px;
+    width:32px;
+    height:32px;
+    margin:0 !important;
+    padding:0;
+    border:1px solid rgba(230,241,255,.14);
+    border-radius:12px;
+    background:#222b38;
+    color:#e9f1fc;
+    font:normal 22px/1 system-ui;
+    cursor:pointer;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsProfileDropdown > .svAccountMenuSection {
+    display:block !important;
+    position:relative;
+    z-index:1;
+    padding:14px 10px 6px;
+    color:#97a6bf;
+    font-size:10px;
+    font-weight:750;
+    letter-spacing:.15em;
+    line-height:1.2;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsProfileDropdown > a {
+    display:grid !important;
+    grid-template-columns:34px minmax(0,1fr) !important;
+    grid-column:1 / -1;
+    align-items:center;
+    gap:11px !important;
+    min-height:46px !important;
+    width:100%;
+    margin:0 !important;
+    padding:6px 12px !important;
+    border:1px solid transparent !important;
+    border-radius:13px !important;
+    background:transparent !important;
+    box-shadow:none !important;
+    color:#e3e9f2 !important;
+    font-size:13px !important;
+    font-weight:550 !important;
+    text-align:left !important;
+    transform:none !important;
+    transition:background .15s,border-color .15s,color .15s !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsProfileDropdown > a > span {
+    display:grid !important;
+    place-items:center;
+    width:32px !important;
+    height:32px !important;
+    border:1px solid rgba(220,235,255,.1) !important;
+    border-radius:11px !important;
+    background:rgba(219,233,255,.055) !important;
+    box-shadow:none !important;
+    color:#b9c8da !important;
+    font-size:18px !important;
+    line-height:1 !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsProfileDropdown > a > b {
+    font-size:13px !important;
+    font-weight:600 !important;
+    line-height:1.3;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsProfileDropdown > a:is(:focus-visible,:hover) {
+    background:rgba(206,224,255,.1) !important;
+    border-color:rgba(206,224,255,.12) !important;
+    color:#fff !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsProfileDropdown > :is(.svTvMenuToggle,.svMobileStudioLink) {
+    display:grid !important;
+    grid-template-columns:27px minmax(0,1fr);
+    align-items:center;
+    gap:3px 8px;
+    min-width:0;
+    min-height:61px !important;
+    margin:0 !important;
+    padding:9px 10px !important;
+    border:1px solid rgba(228,240,255,.13) !important;
+    border-radius:15px !important;
+    background:rgba(226,240,255,.06) !important;
+    box-shadow:none !important;
+    color:#eff4fc !important;
+    font-size:12px !important;
+    text-align:left !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsProfileDropdown > .svTvMenuToggle {grid-column:1 !important;}
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsProfileDropdown > .svMobileStudioLink {grid-column:2 !important;}
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsProfileDropdown > :is(.svTvMenuToggle,.svMobileStudioLink) > span {
+    grid-row:1 / 3;
+    width:27px !important;
+    height:27px !important;
+    border:0 !important;
+    border-radius:9px;
+    background:rgba(220,238,255,.1) !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsProfileDropdown > :is(.svTvMenuToggle,.svMobileStudioLink) > b {
+    min-width:0;
+    font-size:12px !important;
+    font-weight:650 !important;
+    line-height:1.2;
+    white-space:normal;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsProfileDropdown > .svTvMenuToggle > small {
+    grid-column:2;
+    margin:0 !important;
+    padding:0 !important;
+    border:0 !important;
+    font-size:10px !important;
+    color:#98afc8 !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsProfileDropdown > .dsDropdownLogout {
+    display:flex !important;
+    grid-column:1 / -1;
+    justify-content:center;
+    align-items:center;
+    width:100% !important;
+    min-width:0 !important;
+    min-height:46px !important;
+    margin:16px 0 2px !important;
+    padding:10px 14px !important;
+    border:1px solid rgba(255,133,153,.2) !important;
+    border-radius:14px !important;
+    background:rgba(255,96,125,.07) !important;
+    color:#ffb8c6 !important;
+    font-size:13px !important;
+    font-weight:650 !important;
+    line-height:1.3 !important;
+    white-space:nowrap !important;
+    text-align:center !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsProfileDropdown > :is(.svTvMenuToggle,.svMobileStudioLink,.dsDropdownLogout):focus-visible,
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsProfileDropdown > .svAccountMenuClose:focus-visible {
+    outline:2px solid #adcfff !important;
+    outline-offset:2px;
+  }
+}
+@media (max-width:359px) {
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown {
+    padding:11px !important;
+    gap:4px 6px !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsProfileDropdown > :is(.svTvMenuToggle,.svMobileStudioLink) {
+    padding:8px 7px !important;
+  }
+}
