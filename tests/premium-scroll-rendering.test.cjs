@@ -176,7 +176,14 @@ test('the first real catalog scroll frame follows the display clock after idle',
         if(input-display>2&&input-display<40)break;
       }
       const wheel=new WheelEvent('wheel',{deltaY:360,bubbles:true,cancelable:true});
-      document.querySelector('.dsHeroContent').dispatchEvent(wheel);
+      // Keep this synthetic gesture in the fresh input phase selected above.
+      // CPU contention can otherwise age the clock during synchronous wheel
+      // listeners, legitimately selecting the separately unit-tested stale
+      // clock fallback rather than the display-clock path under test here.
+      const ownNow=Object.getOwnPropertyDescriptor(performance,'now');
+      Object.defineProperty(performance,'now',{configurable:true,value:()=>input});
+      try{document.querySelector('.dsHeroContent').dispatchEvent(wheel);}
+      finally{if(ownNow)Object.defineProperty(performance,'now',ownNow);else delete performance.now;}
       return new Promise(resolve=>requestAnimationFrame(time=>resolve({display,input,time,y:scrollY,consumed:wheel.defaultPrevented})));
     });
     assert(first.consumed,'the real catalog wheel controller owns the gesture');
