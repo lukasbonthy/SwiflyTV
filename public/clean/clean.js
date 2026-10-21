@@ -34,3 +34,45 @@
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
+
+
+/* One lightweight mobile account sheet; desktop and TV menus retain their layout. */
+(() => {
+ 'use strict';
+ function bootProfileSheet(){
+  const menu=document.querySelector('.dsProfileMenu');
+  const panel=menu?.querySelector('.dsProfileDropdown');
+  if(!panel||panel.dataset.svMobileSheetReady)return;
+  panel.dataset.svMobileSheetReady='true';
+
+  // Preserve the real links, their destinations and existing TV/Studio handlers.
+  // Section labels are presentation only and are hidden outside compact layouts.
+  for(const [href,title] of [
+   ['/profiles','PROFILE'],
+   ['/continue-watching','YOUR LIBRARY'],
+   ['/friends','WATCH TOGETHER'],
+   ['/recommendations','DISCOVER MORE']
+  ]){
+   const link=[...panel.querySelectorAll('a[href]')].find(a=>a.getAttribute('href')===href);
+   if(!link)continue;
+   const label=document.createElement('div');
+   label.className='svAccountMenuSection';
+   label.textContent=title;
+   label.setAttribute('aria-hidden','true');
+   panel.insertBefore(label,link);
+  }
+  const close=document.createElement('button');
+  close.type='button';
+  close.className='svAccountMenuClose';
+  close.setAttribute('aria-label','Close account menu');
+  close.textContent='×';
+  close.addEventListener('click',()=>{
+   menu.removeAttribute('open');
+   menu.querySelector('summary')?.focus();
+  });
+  panel.append(close);
+  menu.addEventListener('toggle',()=>{if(menu.open)panel.scrollTop=0;});
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bootProfileSheet,{once:true});
+ else bootProfileSheet();
+})();
