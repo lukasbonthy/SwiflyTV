@@ -76,6 +76,34 @@ test('wheel onset and deceleration match the reference at 60, 144 and 240 Hz', (
   }
 });
 
+test('a wheel gesture between display frames matches the reference after idle', () => {
+  for (const hz of [60,144,240]) for (const phase of [.25,.8]) {
+    const env=setup(),reference=setup('<main>Catalog</main>',{reference:true});
+    const interval=1000/hz,lastDisplay=10000,eventTime=lastDisplay+interval*phase;
+    Object.defineProperty(env.window.document,'timeline',{value:{currentTime:lastDisplay}});
+    reference.window.flush(lastDisplay);
+    env.at(eventTime);reference.at(eventTime);
+    env.wheel(360);reference.wheel(360);
+    for(let time=lastDisplay+interval;time<lastDisplay+1400;time+=interval){
+      env.window.flush(time);reference.window.flush(time);
+      assert(Math.abs(env.page.scrollTop-reference.page.scrollTop)<=1,
+        `${hz} Hz, phase ${phase}: first input after idle must follow the display-aligned reference (${env.page.scrollTop} vs ${reference.page.scrollTop})`);
+    }
+    assert.equal(env.window.frameCount(),0,'matching the display clock must not add an idle animation loop');
+    env.finish();reference.finish();
+  }
+});
+
+test('an unavailable or stale display timeline cannot jump a new scroll gesture', () => {
+  for(const value of [undefined,null,0,NaN,Infinity,10050]){
+    const env=setup();
+    Object.defineProperty(env.window.document,'timeline',{value:{currentTime:value}});
+    env.at(9999);env.wheel(360);env.window.flush(10000);
+    assert(env.page.scrollTop>0&&env.page.scrollTop<10,'invalid display time must fall back to the input clock');
+    env.finish();
+  }
+});
+
 test('a new gesture after a long idle starts smoothly instead of jumping to its target', () => {
   const env = setup(), w = env.window;
   env.wheel(); env.settle();
