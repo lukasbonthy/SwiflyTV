@@ -13,6 +13,7 @@
     const scrim = document.createElement('div');
     scrim.className = 'svMobileAccountScrim';
     scrim.setAttribute('aria-hidden', 'true');
+    const glassPane = panel.querySelector(':scope > .svLiquidPane');
     const originalRole = panel.getAttribute('role');
     const originalLabel = panel.getAttribute('aria-label');
     let portaled = false;
@@ -34,6 +35,7 @@
       document.body.classList.remove('svMobileAccountOpen');
       panel.classList.remove('svAccountSheetPortaled');
       panel.classList.add('svLiquidDropdown');
+      if (glassPane) panel.prepend(glassPane);
       panel.style.removeProperty('--sv-account-sheet-top');
       if (originalRole === null) panel.removeAttribute('role'); else panel.setAttribute('role', originalRole);
       if (originalLabel === null) panel.removeAttribute('aria-label'); else panel.setAttribute('aria-label', originalLabel);
@@ -49,6 +51,7 @@
       if (portaled || !compact()) return;
       portaled = true;
       panel.classList.remove('svLiquidDropdown');
+      glassPane?.remove();
       panel.classList.add('svAccountSheetPortaled');
       panel.setAttribute('role', 'dialog');
       panel.setAttribute('aria-label', 'Account menu');
@@ -72,7 +75,7 @@
     };
     const sync = () => {
       if (menu.open && compact()) mount();
-      else {
+      else if (portaled) {
         if (!compact() && menu.open) menu.removeAttribute('open');
         restore();
       }
