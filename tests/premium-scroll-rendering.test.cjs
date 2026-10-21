@@ -618,7 +618,13 @@ test('mobile header and dock keep navigation, search and account controls reacha
           labels:[...panel.querySelectorAll('.svAccountMenuSection')].filter(n=>getComputedStyle(n).display!=='none').map(n=>n.textContent),
           smallestLink:Math.min(...links.map(n=>n.getBoundingClientRect().height)),
           logoutWrap:logout?getComputedStyle(logout).whiteSpace:null,
-          closeVisible:!!close&&getComputedStyle(close).display!=='none'
+          closeVisible:!!close&&getComputedStyle(close).display!=='none',
+          outsideNavbar:panel.parentElement===document.body,
+          fullyOpaque:getComputedStyle(panel).backgroundColor==='rgb(12, 16, 24)',
+          noGlass:getComputedStyle(panel).backdropFilter==='none'&&!panel.querySelector(':scope > .svLiquidPane'),
+          scrimVisible:!!document.querySelector('body > .svMobileAccountScrim')&&getComputedStyle(document.querySelector('body > .svMobileAccountScrim')).display!=='none',
+          horizontalFit:r.left>=8&&r.right<=innerWidth-8,
+          cssPosition:getComputedStyle(panel).position
         };
       });
       assert(audit.bottom<=audit.viewport-8,'account sheet must not fall below the phone viewport');
@@ -627,6 +633,12 @@ test('mobile header and dock keep navigation, search and account controls reacha
       assert(audit.smallestLink>=44,'every account link must be touch-friendly');
       if(audit.logoutWrap)assert.equal(audit.logoutWrap,'nowrap','log out must stay on one line');
       assert(audit.closeVisible,'account menu must have an explicit close control');
+      assert(audit.outsideNavbar,'mobile menu must escape liquid nav containing/stacking contexts');
+      assert(audit.fullyOpaque,'menu must have solid matte color independent of backdrop artwork');
+      assert(audit.noGlass,'menu must not retain a live optical pane or blur');
+      assert(audit.scrimVisible,'screen-level menu must dim the artwork underneath');
+      assert(audit.horizontalFit,'account overlay must fit the phone viewport');
+      assert.equal(audit.cssPosition,'fixed','account overlay must attach to viewport');
       await page.locator('.svAccountMenuClose').tap();
       assert.equal(await page.locator('.dsProfileMenu').getAttribute('open'),null,'close should restore the browse page');
       await page.locator('.dsProfileMenu > summary').tap();
