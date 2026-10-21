@@ -490,32 +490,35 @@ for (const width of [390, 1440, 1920]) test(`catalog dates fit completely inside
 
 
 for(const layout of [{name:'Desktop',width:1280},{name:'Mobile',width:800},{name:'Welcome',width:1280,welcome:true}])
-test(layout.name+' navigation keeps its liquid glass throughout wheel motion', {skip:!available && 'Chromium is not installed'}, async () => {
+test(layout.name+' navigation and featured actions keep their liquid glass throughout wheel motion', {skip:!available && 'Chromium is not installed'}, async () => {
   const browser = await chromium.launch({headless:true});
   try {
     const page = await catalog(browser,{viewport:{width:layout.width,height:900},welcome:layout.welcome});
-    await page.waitForFunction(() => [...document.querySelectorAll('.netflixNav > .svLiquidPane,.mobileNav > .svLiquidPane,.dsWelcomeNav > .svLiquidPane')]
+    await page.waitForFunction(() => [...document.querySelectorAll('.netflixNav > .svLiquidPane,.mobileNav > .svLiquidPane,.dsWelcomeNav > .svLiquidPane,.dsHeroActions .svNavMatchedLens,.dsWelcomeActions .svNavMatchedLens,.dsHeroMuteToggle .svNavMatchedLens')]
       .filter(node=>node.getClientRects().length).every(node=>node.dataset.swiflyRenderer==='svg'));
     const result = await page.evaluate(welcome => {
       const panes=[...document.querySelectorAll('.netflixNav > .svLiquidPane,.mobileNav > .svLiquidPane,.dsWelcomeNav > .svLiquidPane')].filter(node=>node.getClientRects().length);
       const original=panes.map(node=>({filter:getComputedStyle(node).backdropFilter,fill:getComputedStyle(node).backgroundColor,graph:node.querySelector('svg')}));
-      const action=document.querySelector(welcome?'.dsWelcomeActions .svNavMatchedLens':'.dsHeroActions .svNavMatchedLens');
+      const actions=[...document.querySelectorAll(welcome?'.dsWelcomeActions .svNavMatchedLens':'.dsHeroActions .svNavMatchedLens,.dsHeroMuteToggle .svNavMatchedLens')];
+      const actionOriginal=actions.map(node=>({filter:getComputedStyle(node).backdropFilter,fill:getComputedStyle(node).backgroundColor,graph:node.querySelector('svg')}));
       const wheel = new WheelEvent('wheel', {deltaY:260,bubbles:true,cancelable:true});
       document.querySelector(welcome?'.dsWelcomeHeroCopy':'.dsHeroContent').dispatchEvent(wheel);
       return {consumed:wheel.defaultPrevented,soft:document.documentElement.dataset.svScrollGlass,
         navs:panes.map((node,index)=>({full:original[index].filter,moving:getComputedStyle(node).backdropFilter,fill:original[index].fill,movingFill:getComputedStyle(node).backgroundColor,sameGraph:node.querySelector('svg')===original[index].graph})),
-        actionMoving:getComputedStyle(action).backdropFilter};
+        actions:actions.map((node,index)=>({full:actionOriginal[index].filter,moving:getComputedStyle(node).backdropFilter,fill:actionOriginal[index].fill,movingFill:getComputedStyle(node).backgroundColor,sameGraph:node.querySelector('svg')===actionOriginal[index].graph}))};
     },Boolean(layout.welcome));
     assert(result.consumed,'exercise the real weighted wheel handler');
     assert.equal(result.soft,'soft','content controls retain their scroll optimization');
     assert(result.navs.length>0,'exercise a visible navigation surface');
-    for(const nav of result.navs){
-      assert.match(nav.full,/url\(/,'initial navigation uses real liquid refraction');
-      assert.equal(nav.moving,nav.full,'scrolling must not replace the navigation filter');
-      assert.equal(nav.movingFill,nav.fill,'scrolling must not change the navigation tint');
-      assert(nav.sameGraph,'the original lens remains mounted throughout the gesture');
+    assert(result.actions.length>=2,'exercise all featured actions');
+    for(const surface of [...result.navs,...result.actions]){
+      assert.match(surface.full,/url\(/,'initial glass uses real liquid refraction');
+      assert.equal(surface.moving,surface.full,'scrolling must not replace the navigation or featured filter');
+      assert.equal(surface.movingFill,surface.fill,'scrolling must not change the navigation or featured tint');
+      assert(surface.sameGraph,'the original lens remains mounted throughout the gesture');
     }
-    assert.match(result.actionMoving,/blur\(4px\)/,'content controls keep the inexpensive scroll tier');
     await page.waitForFunction(() => !document.documentElement.dataset.svScrollGlass, null,{timeout:4500});
+    const settled=await page.locator(layout.welcome?'.dsWelcomeActions .svNavMatchedLens':'.dsHeroActions .svNavMatchedLens,.dsHeroMuteToggle .svNavMatchedLens').evaluateAll(nodes=>nodes.map(node=>({filter:getComputedStyle(node).backdropFilter,fill:getComputedStyle(node).backgroundColor})));
+    assert.deepEqual(settled,result.actions.map(action=>({filter:action.full,fill:action.fill})),'settling must not switch the featured material back on');
   } finally {await browser.close();}
 });

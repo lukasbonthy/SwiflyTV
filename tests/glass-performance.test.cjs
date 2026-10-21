@@ -641,6 +641,30 @@ test('First-screen hero actions turn refractive before any intersection callback
   assert.equal(w.frameCount(), 0); env.finish();
 });
 
+for (const featured of [
+  {name:'Featured movie',markup:'<div class="dsHeroActions"><a class="dsPrimaryBtn">Play</a><button class="dsSecondaryBtn">Details</button></div>'},
+  {name:'Welcome hero',markup:'<div class="dsWelcomeActions"><a class="dsPrimaryBtn">Get started</a><a class="dsSecondaryBtn">Log in</a></div>'},
+  {name:'Featured trailer mute',markup:'<button class="dsHeroMuteToggle">Mute</button>'}
+]) test(featured.name+' restores its liquid glass on re-entry before scrolling stops', () => {
+  const env=glass(featured.markup+'<button class="dsRowBtn">Next row</button>'),w=env.window,d=w.document;
+  d.body.dataset.stGlass='liquid';
+  w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');
+  env.intersect(true);w.flush(16);
+  const hosts=[...d.querySelectorAll('button,a')],actions=hosts.filter(host=>!host.matches('.dsRowBtn'));
+  const panes=actions.map(host=>host.querySelector('.svNavMatchedLens'));
+  assert(panes.every(pane=>pane.dataset.swiflyRenderer==='svg'));
+  for(const host of hosts)host.getBoundingClientRect=()=>({width:200,height:40,top:2400,bottom:2440,left:0,right:200});
+  env.intersect(false);w.flush(32);
+  assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length,0,'offscreen controls release their expensive graphs');
+  d.documentElement.dataset.svScrollGlass='soft';d.documentElement.dataset.svCardScrolling='true';
+  for(const host of hosts)host.getBoundingClientRect=()=>({width:200,height:40,top:200,bottom:240,left:0,right:200});
+  env.intersect(true);w.flush(48);
+  assert(panes.every(pane=>pane.dataset.swiflyRenderer==='svg'),'returning to the featured film must not wait for scroll idle');
+  assert.equal(d.querySelector('.dsRowBtn .svNavMatchedLens').dataset.swiflyRenderer,'blur','ordinary row controls still defer SVG preparation during motion');
+  assert.equal(env.textures.length,1,'returning controls reuse their cached optical geometry');
+  assert.equal(w.frameCount(),0,'visible hero glass adds no idle rendering loop');env.finish();
+});
+
 test('Detail glass enables itself when the entrance state settles without manual refresh', async () => {
   const env = glass('<dialog open class="svDetailDialog" data-sv-detail-state="opening"><div class="svDetailActions"><button class="dsPrimaryBtn">Play</button><button class="dsSecondaryBtn">Watch party</button></div></dialog>'), w = env.window, d = w.document;
   d.body.dataset.stGlass = 'liquid';
