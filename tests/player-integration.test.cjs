@@ -467,7 +467,7 @@ test('Cinema keeps natural featured color alongside the shared glass assets',asy
  const nav=d.querySelector('.netflixNav > .svLiquidPane');
  assert(hero && nav);
  assert(d.querySelector('script[src="/assets/liquid-glass/liquid-glass.js?v=227"]'));
- assert(d.querySelector('link[href="/assets/liquid-glass/liquid-glass.css?v=222"]'),'new material tokens must bypass the previous cached base stylesheet');
+ assert(d.querySelector('link[href="/assets/liquid-glass/liquid-glass.css?v=223"]'),'new material tokens must bypass the previous cached base stylesheet');
  const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=206')).text();
  assert.match(css,/filter:none !important/);
  assert.match(css,/overflow:hidden !important/,'movie picture remains clipped');
