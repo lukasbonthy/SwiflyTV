@@ -9,7 +9,7 @@ const available = fs.existsSync(chromium.executablePath()) ||
   fs.existsSync(chromium.executablePath().replace(/chromium-(\d+)\/chrome-linux\/chrome$/, 'chromium_headless_shell-$1/chrome-linux/headless_shell'));
 
 async function catalog(browser, options = {}) {
-  const {detailHTML,welcome=false,...pageOptions}=options;
+  const {detailHTML,welcome=false,grid='',...pageOptions}=options;
   const api = loadServer();
   let ready = false;
   try {
@@ -21,6 +21,12 @@ async function catalog(browser, options = {}) {
       credits:{cast:[],crew:[]},videos:{results:[]},recommendations:{results:items},similar:{results:[]},images:{logos:[]}} : ({results:items}));
     let html;
     if(welcome)html=api.pageShell({active:'welcome',body:welcomeMarkup({hero:items[0]})});
+    else if(grid){
+      const cards=items.map(item=>api.movieCard(item,'movie')).join('');
+      html=api.pageShell({active:grid==='movieGrid'?'movies':'search',body:grid==='movieGrid'
+        ? '<main><div class="container netflixCatalog"><div class="movieGrid">'+cards+'</div></div></main>'
+        : '<main class="dsPlainPage"><section class="dsContent noHero"><div class="dsGrid">'+cards+'</div></section></main>'});
+    }
     else await api.homePage({}, {send(value) {html = value;}});
     let detail; await api.detailPage({params:{id:'100'},query:{view:'modal'},headers:{},protocol:'http',get:()=> 'localhost:3000'},
       {send(value) {detail=value;}}, 'movie');
@@ -662,6 +668,34 @@ test('mobile poster actions stay visible while the rail swipes independently of 
       assert(actions.buttons.every(button=>button.width>=44&&button.height>=44),'save and like actions need usable touch targets');
       assert(actions.buttons.every(button=>button.renderer!=='svg'),'poster actions retain the permanent dark frosted material');
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),width,'rail overflow must stay inside the rail');
+      await page.close();
+    }
+  }finally{await browser.close();}
+});
+
+
+test('mobile search and genre grids keep every quick action inside its own poster', {skip:!available&&'Chromium is not installed'}, async()=>{
+  const browser=await chromium.launch({headless:true});
+  try{
+    for(const grid of ['dsGrid','movieGrid']){
+      const page=await catalog(browser,{grid,viewport:{width:461,height:844},isMobile:true,hasTouch:true});
+      await page.emulateMedia({reducedMotion:'reduce'});
+      for(const width of [320,461,500,640,820]){
+        await page.setViewportSize({width,height:844});
+        // Mobile media queries settle on the rendering frame after a resize.
+        await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+        const cards=await page.locator('.'+grid+' .dsCardArtwork').evaluateAll(nodes=>nodes.slice(0,6).map(node=>{
+          const art=node.getBoundingClientRect(),actions=node.querySelector('.dsCardQuickActions').getBoundingClientRect();
+          return {left:art.left,right:art.right,actionsLeft:actions.left,actionsRight:actions.right,
+            buttons:[...node.querySelectorAll('.dsMiniBtn')].map(button=>{const r=button.getBoundingClientRect();return {width:r.width,height:r.height};})};
+        }));
+        assert.equal(cards.length,6);
+        for(const card of cards){
+          assert(card.actionsLeft>=card.left&&card.actionsRight<=card.right,grid+' at '+width+'px must not clip actions or spill onto a neighboring movie: '+JSON.stringify(card));
+          assert(card.buttons.every(button=>button.width>=44&&button.height>=44),'grid actions retain usable touch targets');
+        }
+        assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),width,'the grid must not create horizontal page overflow');
+      }
       await page.close();
     }
   }finally{await browser.close();}

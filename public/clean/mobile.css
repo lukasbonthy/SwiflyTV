@@ -111,12 +111,17 @@ body.svCleanShell .svMobileStudioLink { display:none !important; }
     scroll-padding-inline:16px; scrollbar-width:none;
   }
   html:not([data-sv-tv="true"]) body.svCleanShell :is(.svRowArrows,.svSectionActions > .dsRowControls) { display:none !important; }
+  /* Legacy hover-paint gutters must not widen a phone's layout viewport. */
+  html:not([data-sv-tv="true"]) body.svCleanShell .container:is(.netflixCatalog,.netflixPeopleCatalog) { margin-inline:16px !important; }
+  html:not([data-sv-tv="true"]) body.svCleanShell .movieGrid { margin-inline:0 !important; padding-inline:0 !important; }
+  html:not([data-sv-tv="true"]) body.svCleanShell :is(.dsGrid,.movieGrid,.dsMoreGridV121) { grid-template-columns:repeat(2,minmax(0,1fr)) !important; }
   html:not([data-sv-tv="true"]) body.svCleanShell .dsCardQuickActions { inset:auto 6px 6px auto !important; gap:6px !important; }
   html:not([data-sv-tv="true"]) body.svCleanShell .dsCardQuickActions .dsMiniBtn { width:44px !important; min-width:44px !important; height:44px !important; }
   html:not([data-sv-tv="true"]) body.svCleanShell .dsCardInfo { padding-top:9px !important; }
 }
 @media (min-width:600px) and (max-width:860px) {
   html:not([data-sv-tv="true"]) body.svCleanShell .dsContent > .dsRow.svCatalogRow { --sv-poster-width:calc((100vw - 56px) / 3); }
+  html:not([data-sv-tv="true"]) body.svCleanShell :is(.dsGrid,.movieGrid,.dsMoreGridV121) { grid-template-columns:repeat(3,minmax(0,1fr)) !important; }
 }
 
 @media (max-width:359px) {
