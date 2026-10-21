@@ -734,3 +734,53 @@ test('mobile search and genre grids keep every quick action inside its own poste
     }
   }finally{await browser.close();}
 });
+
+
+test('desktop account dropdown remains opaque over movie artwork without changing navbar glass', {skip:!available&&'Chromium is not installed'}, async()=>{
+  const browser=await chromium.launch({headless:true});
+  try {
+    for(const width of [894,1280]){
+      const height=width===894?690:720;
+      const page=await catalog(browser,{viewport:{width,height}});
+      await page.locator('.dsProfileMenu > summary').click();
+      const state=await page.evaluate(()=>{
+        const menu=document.querySelector('.dsProfileDropdown');
+        const pane=menu.querySelector(':scope > .svLiquidPane');
+        const navPane=document.querySelector('.netflixNav > .svLiquidPane');
+        const rect=menu.getBoundingClientRect();
+        const css=getComputedStyle(menu);
+        return {
+          background:css.backgroundColor,
+          opacity:css.opacity,
+          backdrop:css.backdropFilter,
+          bounds:{left:rect.left,right:rect.right,top:rect.top,bottom:rect.bottom},
+          viewport:{width:innerWidth,height:innerHeight},
+          lensHidden:!pane||getComputedStyle(pane).display==='none',
+          navbarStillGlass:!!navPane&&getComputedStyle(navPane).display!=='none',
+          groups:[...menu.querySelectorAll('.svAccountMenuSection')].filter(node=>getComputedStyle(node).display!=='none').length,
+          canScroll:menu.scrollHeight>menu.clientHeight,
+          firstLink:menu.querySelector('a[href]')?.getAttribute('href'),
+          logoutWhiteSpace:getComputedStyle(menu.querySelector('.dsDropdownLogout')).whiteSpace,
+          visibleControls:[...menu.querySelectorAll('a[href]')].filter(node=>node.getBoundingClientRect().height>=44).length,
+          links:menu.querySelectorAll('a[href]').length,
+          parentIsBody:menu.parentElement===document.body
+        };
+      });
+      assert.equal(state.background,'rgb(13, 19, 30)','desktop account surface must be physically opaque: '+JSON.stringify(state));
+      assert.equal(state.opacity,'1','account menu should never be faded into hero artwork');
+      assert.equal(state.backdrop,'none','account text must not use a backdrop refractive filter');
+      assert(state.lensHidden,'account dropdown must not render its own transparent liquid layer');
+      assert(state.navbarStillGlass,'top navbar retains its separate liquid glass effect');
+      assert(state.bounds.left>=8&&state.bounds.right<=width-8&&state.bounds.top>=0&&state.bounds.bottom<=height-8,
+        'desktop account menu must fit visible browser viewport: '+JSON.stringify(state));
+      assert.equal(state.groups,4,'profile, library, friends, discovery remain scannable sections');
+      assert(state.canScroll,'long menu stays internally scrollable on small laptops');
+      assert(state.visibleControls===state.links,'all menu links need full-size clickable targets');
+      assert.equal(state.logoutWhiteSpace,'nowrap','log out should never wrap on desktop');
+      assert.equal(state.parentIsBody,false,'the desktop dropdown should stay attached to its details menu');
+      await page.locator('.dsProfileMenu > summary').click();
+      assert.equal(await page.locator('.dsProfileMenu').getAttribute('open'),null);
+      await page.close();
+    }
+  } finally {await browser.close();}
+});
