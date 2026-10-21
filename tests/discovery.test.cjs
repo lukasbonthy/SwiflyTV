@@ -33,6 +33,74 @@ test('a direct title is found even when it is absent from popular and trending l
  const call=await fixture(t,{tmdb:async path=>({results:path==='/search/multi'?[{...barbie,media_type:'movie'}]:[movie(44,'Unrelated trending title',[28])]})});
  const r=await call('/candidates?type=movie&q=Barbie');assert.equal(r.status,200);assert.equal(r.data.candidates[0].title,'Barbie');assert.equal(r.data.candidates[0].match,'title');
 });
+test('a named movie returns the title without padding it with unrelated catalog rows',async t=>{
+ const calls=[],barbie=movie(346698,'Barbie',[35,14],2023);
+ const call=await fixture(t,{tmdb:async path=>{calls.push(path);return {results:path==='/search/multi'?[{...barbie,media_type:'movie'}]:[movie(44,'Unrelated trending title',[28])]};}});
+ const r=await call('/candidates?q=Barbie&plan=1');assert.equal(r.status,200);assert.deepEqual(r.data.candidates.map(m=>m.title),['Barbie']);assert.equal(r.data.mode,'title');assert(!calls.some(p=>p.startsWith('/discover/')));
+});
+test('similar movies inherit the reference medium and do not mix in unrelated popular sources',async t=>{
+ const calls=[],anchor=movie(157336,'Interstellar',[878,12]),arrival=movie(329865,'Arrival',[878,18]);
+ const call=await fixture(t,{tmdb:async path=>{calls.push(path);return {results:path==='/search/multi'?[{...anchor,media_type:'movie'}]:path.startsWith('/movie/157336/')?[arrival]:[movie(9,'Unrelated television',[35])]};}});
+ const r=await call('/candidates?q='+encodeURIComponent('something like Interstellar'));
+ assert.equal(r.status,200);assert.deepEqual(r.data.candidates.map(m=>m.title),['Arrival']);assert.equal(r.data.mode,'similar');assert(r.data.candidates.every(m=>m.type==='movie'&&m.source==='reference'));assert(!calls.some(p=>p.startsWith('/discover/')||p.startsWith('/trending/')));
+});
+test('later recommendation pages retain their catalog order for hybrid ranking',async t=>{
+ const call=await fixture(t,{tmdb:async(path,params)=>({results:path==='/search/multi'?[{...movie(1,'Interstellar',[878]),media_type:'movie'}]:path.endsWith('/recommendations')?[movie(params.page==='2'?3:2,'Related story',[878])]:path.endsWith('/similar')?[movie(4,'Another related story',[878])]:[]})});
+ const r=await call('/candidates?q='+encodeURIComponent('something like Interstellar'));assert.equal(r.status,200);assert.deepEqual(r.data.candidates.map(m=>[m.id,m.catalogRank]),[['2',1],['3',21],['4',41]]);
+});
+test('an overlapping similar result keeps its stronger recommendation rank',async t=>{
+ const call=await fixture(t,{tmdb:async(path,params)=>({results:path==='/search/multi'?[{...movie(1,'Interstellar',[878]),media_type:'movie'}]:path.endsWith('/recommendations')&&params.page==='1'?[movie(2,'First neighbor',[878]),movie(3,'Second neighbor',[878])]:path.endsWith('/similar')?[movie(3,'Second neighbor',[878])]:[]})});
+ const r=await call('/candidates?q='+encodeURIComponent('something like Interstellar'));assert.deepEqual(r.data.candidates.map(m=>[m.id,m.catalogRank]),[['2',1],['3',2]]);
+});
+test('free-form requests are interpreted before an unrelated popular pool is fetched',async t=>{
+ const calls=[];const call=await fixture(t,{tmdb:async path=>{calls.push(path);return {results:[]};}});
+ const r=await call('/candidates?plan=1&q='+encodeURIComponent('rival magicians trying to outsmart each other, no horror'));
+ assert.equal(r.status,200);assert.equal(r.data.mode,'plan');assert.equal(r.data.candidates.length,0);assert.match(r.data.semanticQuery,/rival magicians/);assert(!r.data.semanticQuery.includes('horror'));assert(!calls.some(p=>p.startsWith('/discover/')));
+});
+test('release dates stay as catalog filters rather than changing the semantic mood',async t=>{
+ const call=await fixture(t);const r=await call('/candidates?plan=1&q='+encodeURIComponent('a funny movie from the 1990s, no horror'));
+ assert.equal(r.data.semanticQuery.replace(/[,.]/g,'').trim(),'a funny movie');
+});
+test('semantic topics retrieve a grounded story pool and still respect explicit exclusions',async t=>{
+ const calls=[];const call=await fixture(t,{tmdb:async(path,params)=>{calls.push({path,params});return {results:path==='/search/keyword'?[{id:44,name:'magic'}]:path==='/search/multi'?[]:path==='/discover/movie'&&params.with_keywords==='44'?[movie(8,'A rivalry of illusionists',[18,9648]),movie(9,'A haunted magician',[27])]:[movie(10,'Unrelated popular title',[28])]};}});
+ const r=await call('/candidates?planned=1&topics=magic&type=movie&q='+encodeURIComponent('rival magicians trying to outsmart each other, no horror'));
+ assert.equal(r.status,200);assert.deepEqual(r.data.candidates.map(m=>m.id),['8']);assert.equal(r.data.candidates[0].source,'topic');assert(calls.some(c=>c.path==='/search/keyword'&&c.params.query==='magic'));assert(calls.length<=16);
+});
+test('a low-confidence interpretation returns an honest empty state instead of random titles',async t=>{
+ const call=await fixture(t,{tmdb:async path=>({results:path==='/search/multi'?[]:[movie(4,'Random popular movie',[28])]})});
+ const r=await call('/candidates?planned=1&topics=not-a-topic&q='+encodeURIComponent('purple crunchy yesterday'));
+ assert.equal(r.status,200);assert.deepEqual(r.data.candidates,[]);assert.match(r.data.message,/specific|title|genre/i);
+});
+test('direct title matching accepts punctuation differences and preserves non-Latin titles',async t=>{
+ for(const [prompt,title,other]of [['spiderman','Spider-Man','Unrelated title'],['君の名は','君の名は','千と千尋の神隠し']]){
+  const call=await fixture(t,{tmdb:async path=>({results:path==='/search/multi'?[{...movie(1,other,[16]),media_type:'movie'},{...movie(2,title,[16]),media_type:'movie'}]:[]})});
+  const r=await call('/candidates?plan=1&q='+encodeURIComponent(prompt));assert.equal(r.data.mode,'title');assert.equal(r.data.candidates[0].title,title);
+ }
+});
+test('a literal catalog name is protected from format and date words inside that name',async t=>{
+ for(const [title,year]of [['The TV Set',2006],['The 1980s',2018]]){
+  const call=await fixture(t,{tmdb:async()=>({results:[{...movie(1,title,[18],year),media_type:'movie'}]})});const r=await call('/candidates?plan=1&q='+encodeURIComponent(title));assert.equal(r.data.mode,'title');assert.equal(r.data.candidates[0]?.title,title);
+ }
+});
+test('a missing topic keyword and missing exemplar is an empty match, not a catalog outage',async t=>{
+ const call=await fixture(t);const r=await call('/candidates?planned=1&topics=magic&q='+encodeURIComponent('rival magicians'));
+ assert.equal(r.status,200);assert.deepEqual(r.data.candidates,[]);assert.match(r.data.message,/matches|specific/i);
+});
+test('exact TV titles still honor explicit suffix exclusions and retry unavailable metadata',async t=>{
+ for(const unavailable of [false,true]){
+  const call=await fixture(t,{tmdb:async path=>path==='/search/multi'?{results:[{...movie(66732,'Stranger Things',[10765,18]),media_type:'tv'}]}:unavailable?{__error:true}:{results:[{name:'supernatural horror'}]}});
+  const r=await call('/candidates?plan=1&q='+encodeURIComponent('"Stranger Things", no horror'));
+  assert.equal(r.status,unavailable?503:200);if(!unavailable)assert.deepEqual(r.data.candidates,[]);
+ }
+});
+test('exact remakes are filtered before a title version is selected',async t=>{
+ const call=await fixture(t,{tmdb:async()=>({results:[{...movie(1,'Dune',[878],2021),media_type:'movie'},{...movie(2,'Dune',[878],1984),media_type:'movie'}]})});
+ for(const suffix of ['&q='+encodeURIComponent('"Dune" from the 1980s'),'&exclude=movie:1&q=Dune']){const r=await call('/candidates?plan=1&type=movie'+suffix);assert.equal(r.status,200);assert.deepEqual(r.data.candidates.map(m=>m.id),['2']);}
+});
+test('an explicit different format finds genre-grounded neighbors in the requested medium',async t=>{
+ const call=await fixture(t,{tmdb:async path=>({results:path==='/search/multi'?[{...movie(157336,'Interstellar',[878,12]),media_type:'movie'}]:path==='/discover/tv'?[{...movie(20,'A space series',[10765]),media_type:'tv'}]:[]})});
+ const r=await call('/candidates?plan=1&q='+encodeURIComponent('TV shows like Interstellar'));assert.equal(r.status,200);assert.deepEqual(r.data.candidates.map(m=>m.type+':'+m.id),['tv:20']);
+});
 test('a decade is respected across discovery and personal recommendation sources',async t=>{
  const calls=[];const call=await fixture(t,{tmdb:async(path,params)=>{calls.push({path,params});return {results:[movie(1,'Nineties comedy',[35],1995),movie(2,'Modern comedy',[35],2024)]};}});
  const r=await call('/candidates?type=movie&seeds=movie:8&q='+encodeURIComponent('a funny movie from the 1990s'));

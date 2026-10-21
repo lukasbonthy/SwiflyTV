@@ -27,6 +27,14 @@ test('the shared top navigation opens Party Hub directly and marks its active pa
     env.finish();
   }
 });
+test('the compact profile menu keeps every destination behind clearly named groups',()=>{
+ const env=browser(api.pageShell({active:'home'})),w=env.window,d=w.document;
+ const before=[...d.querySelectorAll('.dsProfileDropdown a[href]')].map(a=>a.getAttribute('href')).sort();w.boot('clean.js');
+ const groups=[...d.querySelectorAll('.svAccountGroup')];assert.equal(groups.length,3);assert.deepEqual(groups.map(g=>g.querySelector('summary').textContent.trim()),['Your library','Watch together','Discover more']);
+ assert(groups.every(g=>!g.open),'the initial menu remains compact');assert.deepEqual([...d.querySelectorAll('.dsProfileDropdown a[href]')].map(a=>a.getAttribute('href')).sort(),before);
+ const library=groups[0];library.open=true;assert(library.querySelector('a[href="/continue-watching"]'));assert(library.querySelector('a[href="/my-list"]'));assert(library.querySelector('a[href="/liked"]'));
+ d.documentElement.dataset.svTv='true';return new Promise(resolve=>setImmediate(()=>{assert(groups.every(g=>g.open),'TV mode exposes the original full destination list');env.finish();resolve();}));
+});
 
 test('the profile chooser keeps the selected identity and saves the chosen viewer', () => {
   const env = browser(page('/profiles'));

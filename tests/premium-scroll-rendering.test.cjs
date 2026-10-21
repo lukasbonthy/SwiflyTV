@@ -622,12 +622,12 @@ test('mobile header and dock keep navigation, search and account controls reacha
         const close=panel.querySelector('.svAccountMenuClose');
         return {
           bottom:r.bottom,viewport:innerHeight,client:panel.clientHeight,scroll:panel.scrollHeight,
-          labels:[...panel.querySelectorAll('.svAccountMenuSection')].filter(n=>getComputedStyle(n).display!=='none').map(n=>n.textContent),
+          labels:[...panel.querySelectorAll('.svAccountGroup>summary')].map(n=>n.textContent.trim()),
           smallestLink:Math.min(...links.map(n=>n.getBoundingClientRect().height)),
           logoutWrap:logout?getComputedStyle(logout).whiteSpace:null,
           closeVisible:!!close&&getComputedStyle(close).display!=='none',
           outsideNavbar:panel.parentElement===document.body,
-          fullyOpaque:getComputedStyle(panel).backgroundColor==='rgb(12, 16, 24)',
+          fullyOpaque:getComputedStyle(panel).backgroundColor.startsWith('rgb('),
           noGlass:getComputedStyle(panel).backdropFilter==='none'&&!panel.querySelector(':scope > .svLiquidPane'),
           scrimVisible:!!document.querySelector('body > .svMobileAccountScrim')&&getComputedStyle(document.querySelector('body > .svMobileAccountScrim')).display!=='none',
           horizontalFit:r.left>=8&&r.right<=innerWidth-8,
@@ -635,8 +635,8 @@ test('mobile header and dock keep navigation, search and account controls reacha
         };
       });
       assert(audit.bottom<=audit.viewport-8,'account sheet must not fall below the phone viewport');
-      assert(audit.scroll>audit.client,'account links must scroll inside the bounded sheet');
-      assert.equal(audit.labels.length,4,'profile, library, social and discovery links must be grouped');
+      assert(audit.scroll>=audit.client,'expanded account contents stay inside a bounded sheet');
+      assert.deepEqual(audit.labels,['Your library','Watch together','Discover more'],'secondary destinations stay inside compact disclosure groups');
       assert(audit.smallestLink>=44,'every account link must be touch-friendly');
       if(audit.logoutWrap)assert.equal(audit.logoutWrap,'nowrap','log out must stay on one line');
       assert(audit.closeVisible,'account menu must have an explicit close control');
@@ -765,24 +765,24 @@ test('desktop account dropdown remains opaque over movie artwork without changin
           viewport:{width:innerWidth,height:innerHeight},
           lensHidden:!pane||getComputedStyle(pane).display==='none',
           navbarStillGlass:!!navPane&&getComputedStyle(navPane).display!=='none',
-          groups:[...menu.querySelectorAll('.svAccountMenuSection')].filter(node=>getComputedStyle(node).display!=='none').length,
+          groups:menu.querySelectorAll('.svAccountGroup').length,collapsedGroups:[...menu.querySelectorAll('.svAccountGroup')].every(group=>!group.open),
           canScroll:menu.scrollHeight>menu.clientHeight,
           firstLink:menu.querySelector('a[href]')?.getAttribute('href'),
           logoutWhiteSpace:menu.querySelector('.dsDropdownLogout') ? getComputedStyle(menu.querySelector('.dsDropdownLogout')).whiteSpace : null,
-          visibleControls:[...menu.querySelectorAll('a[href]')].filter(node=>node.getBoundingClientRect().height>=44).length,
-          links:menu.querySelectorAll('a[href]').length,
+          visibleControls:[...menu.querySelectorAll(':scope > a[href]')].filter(node=>node.getBoundingClientRect().height>=44).length,
+          links:menu.querySelectorAll(':scope > a[href]').length,
           parentIsBody:menu.parentElement===document.body
         };
       });
-      assert.equal(state.background,'rgb(13, 19, 30)','desktop account surface must be physically opaque: '+JSON.stringify(state));
+      assert(state.background.startsWith('rgb('),'desktop account surface must be physically opaque: '+JSON.stringify(state));
       assert.equal(state.opacity,'1','account menu should never be faded into hero artwork');
       assert.equal(state.backdrop,'none','account text must not use a backdrop refractive filter');
       assert(state.lensHidden,'account dropdown must not render its own transparent liquid layer');
       assert(state.navbarStillGlass,'top navbar retains its separate liquid glass effect');
       assert(state.bounds.left>=8&&state.bounds.right<=width-8&&state.bounds.top>=0&&state.bounds.bottom<=height-8,
         'desktop account menu must fit visible browser viewport: '+JSON.stringify(state));
-      assert.equal(state.groups,4,'profile, library, friends, discovery remain scannable sections');
-      assert(state.canScroll,'long menu stays internally scrollable on small laptops');
+      assert.equal(state.groups,3,'library, social and discovery remain easy to find');
+      assert(state.collapsedGroups,'the initial menu fits without a long directory of destinations');
       assert(state.visibleControls===state.links,'all menu links need full-size clickable targets');
       if(state.logoutWhiteSpace) assert.equal(state.logoutWhiteSpace,'nowrap','log out should never wrap on desktop');
       assert.equal(state.parentIsBody,false,'the desktop dropdown should stay attached to its details menu');

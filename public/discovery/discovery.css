@@ -213,3 +213,92 @@ html[data-sv-tv=true] :is(.svConnectButton,.svFeatureNav a,.svConnectTabs a,.svB
 
 .svRecommendationsPage:has(.svRecommendationResults:not([hidden])) .svMoodIdeas{display:none}
 .svBookCard .svDiscoveryCardCopy h3{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+
+/* One quiet workspace for choosing a film, with room for a real description. */
+body.svCleanShell .svRecommendationsPage{padding-top:118px!important}
+.svRecommendationsPage:before{display:none}
+.svRecommendationsPage>.svFeatureNav{margin-bottom:32px}
+.svRecommendationsPage .svDiscoveryHero{margin:0 auto 30px;max-width:740px}
+.svDiscoveryEyebrow{display:block;margin-bottom:14px;color:#a5a5ad;font-size:13px;font-weight:500;letter-spacing:.025em}
+.svRecommendationsPage .svDiscoveryHero h1{font-size:clamp(36px,4.2vw,56px);font-weight:650;line-height:1.08;letter-spacing:-.045em}
+.svRecommendationsPage .svDiscoveryHero p{font-size:16px;line-height:1.6;color:#a3a3ad;margin-top:18px;max-width:none}
+.svRecommendationsPage .svRecommendationForm{max-width:720px;position:relative}
+.svRecommendationsPage .svMoodInput{display:flex;flex-direction:column;align-items:stretch;gap:0;min-height:0;padding:20px 20px 15px;border:1px solid #ffffff24;border-radius:22px;background:linear-gradient(145deg,#19191d,#111114);box-shadow:0 16px 45px #0005,inset 0 1px #ffffff05}
+.svRecommendationsPage .svMoodInput:focus-within{border-color:#ffffff55;box-shadow:0 16px 45px #0005,0 0 0 3px #ffffff04}
+.svPromptEntry{display:flex;align-items:flex-start;gap:14px}
+.svPromptEntry>span{padding-top:5px;color:#c3c0ce;flex:none}
+.svPromptEntry>span svg{width:21px;height:21px}
+.svRecommendationsPage #svRecommendationPrompt{display:block;box-sizing:border-box;flex:1;min-width:0;width:100%;height:76px;min-height:76px;max-height:140px;margin:0;padding:2px 0 10px!important;border:0!important;border-radius:0!important;background:transparent!important;color:#fafafa!important;font-family:inherit!important;font-size:17px!important;font-weight:400;line-height:1.6;box-shadow:none!important;outline:none!important;resize:none;scrollbar-width:thin}
+.svRecommendationsPage #svRecommendationPrompt::placeholder{color:#92929e;font-size:17px;opacity:1}
+.svPromptActions{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:8px}
+.svPromptType{display:flex;align-items:center;gap:8px;min-width:0;color:#b8b8c2}
+.svPromptType>.svFeatureIcon{flex:none;width:16px;height:16px}
+.svPromptType select{box-sizing:border-box;max-width:200px;min-width:0;min-height:42px;padding:8px 17px 8px 0;border:0;border-radius:0;background:transparent;color:#bdbdc7;font:inherit;font-size:13px;cursor:pointer;color-scheme:dark}
+.svRecommendationsPage .svMoodInput .svFindPicks{display:flex;align-items:center;justify-content:center;gap:12px;flex:0 0 auto;width:auto;min-width:0;height:44px;min-height:44px;padding:11px 16px;border-radius:12px;background:#f5f5f5!important;color:#151518!important;font-family:inherit;font-size:13px;font-weight:600;line-height:1.3;white-space:nowrap}
+.svFindPicks span{display:block}
+.svPromptMeta{position:relative;min-height:42px;padding-top:4px}
+.svRecommendationsPage .svRecommendationPreferences{margin:0;font-size:12px;color:#9999a5}
+.svRecommendationsPage .svRecommendationPreferences summary{min-height:42px;gap:8px}
+.svRecommendationsPage .svModelNote{position:absolute;top:17px;right:0;margin:0;padding:0;font-size:11px;line-height:1.5;color:#7f7f8b;text-align:right}
+.svRecommendationsPage .svAiFilters{grid-template-columns:1fr 1fr;align-items:center;margin:5px 0 4px;padding:16px 18px;background:#111114;border-radius:16px}
+.svRecommendationsPage .svAiFilters .svRecommendationExclude{grid-column:auto;font-size:12px;color:#b6b6c0}
+.svRecommendationsPage .svAiStatus{margin:14px 0 0;color:#b4b4c1;font-size:13px}
+.svRecommendationsPage .svMoodIdeas{max-width:720px;margin:44px auto 0}
+.svRecommendationsPage .svMoodIdeas h2{font-size:13px;line-height:1.6;font-weight:400;color:#93939f;margin:0 0 14px}
+.svRecommendationsPage .svMoodChips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.svRecommendationsPage .svMoodChips button{display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:18px;min-height:150px;padding:20px 17px;border:1px solid #ffffff15;border-radius:16px;background:#0d0d10;position:relative;white-space:normal;transition:border-color .15s,background .15s}
+.svRecommendationsPage .svMoodChips button>span{display:flex;flex-direction:column;flex:0 1 auto;gap:6px;width:100%;min-width:0}
+.svRecommendationsPage .svMoodChips strong{display:block;font-size:14px;line-height:1.45;font-weight:550;color:#e4e4eb}
+.svRecommendationsPage .svMoodChips small{display:block;font-size:12px;line-height:1.6;color:#8e8e9d}
+.svRecommendationsPage .svMoodChips button>.svFeatureIcon:first-child{width:21px;height:21px;color:#b4adca}
+.svRecommendationsPage .svMoodChips button:nth-child(2)>.svFeatureIcon:first-child{color:#c1abad}
+.svRecommendationsPage .svMoodChips button:nth-child(3)>.svFeatureIcon:first-child{color:#a6b6c8}
+.svRecommendationsPage .svMoodChips button>.svFeatureIcon:last-child{position:absolute;right:16px;top:22px;width:15px;height:15px;color:#747480}
+.svRecommendationsPage .svMoodChips button:hover{border-color:#ffffff38;background:#151518}
+.svRecommendationsPage[data-search-state=loading] .svMoodIdeas{display:none}
+.svRecommendationsPage .svRecommendationResults{max-width:1120px;margin:48px auto 0}
+.svRecommendationsPage .svDiscoveryGrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:30px 20px}
+.svRecommendationsPage .svDiscoveryCardCopy{padding:15px 2px 0}
+.svRecommendationsPage .svDiscoveryCardCopy h3{font-size:16px;line-height:1.45;margin-top:6px}
+.svRecommendationsPage .svDiscoveryCardCopy small{font-size:12px;color:#9595a1}
+.svRecommendationsPage .svPickOverview{color:#9696a3;font-size:13px;line-height:1.65}
+.svRecommendationsPage .svDiscoveryGrid:has(>.svDiscoveryCard:only-child){display:block;max-width:720px;margin:0 auto}
+.svRecommendationsPage .svDiscoveryCard:only-child{display:grid;grid-template-columns:180px minmax(0,1fr);gap:28px;align-items:center;background:#111114;border:1px solid #ffffff16;border-radius:20px;padding:20px}
+.svRecommendationsPage .svDiscoveryCard:only-child .svDiscoveryCardCopy{padding:0 24px 0 0}
+.svRecommendationsPage .svDiscoveryCard:only-child h3{font-size:25px;line-height:1.2;margin:10px 0 14px}
+.svRecommendationsPage .svDiscoveryCard:only-child .svPickOverview{-webkit-line-clamp:5;font-size:14px}
+@media(max-width:760px){
+ body.svCleanShell .svRecommendationsPage{padding-top:101px!important}
+ .svRecommendationsPage>.svFeatureNav{margin-bottom:30px}
+ .svRecommendationsPage .svDiscoveryHero{margin-bottom:26px}
+ .svDiscoveryEyebrow{font-size:12px;margin-bottom:12px}
+ .svRecommendationsPage .svDiscoveryHero h1{font-size:36px}
+ .svRecommendationsPage .svDiscoveryHero p{font-size:14px;max-width:290px;margin-top:14px}
+ .svRecommendationsPage .svMoodInput{padding:17px 15px 13px;border-radius:18px}
+ .svPromptEntry{gap:10px}
+ .svRecommendationsPage #svRecommendationPrompt{font-size:16px!important;line-height:1.6;height:82px;min-height:82px}
+ .svRecommendationsPage #svRecommendationPrompt::placeholder{font-size:16px}
+ .svPromptActions{gap:8px}
+ .svPromptType{gap:5px}
+ .svPromptType select{font-size:12px;max-width:140px;padding-right:8px}
+ .svRecommendationsPage .svMoodInput .svFindPicks{gap:8px;padding:11px 12px;font-size:12px}
+ .svFindPicks svg{width:16px;height:16px}
+ .svRecommendationsPage .svModelNote{font-size:10px;top:18px}
+ .svRecommendationsPage .svAiFilters{grid-template-columns:1fr;gap:15px}
+ .svRecommendationsPage .svMoodIdeas{margin-top:29px}
+ .svRecommendationsPage .svMoodChips{grid-template-columns:1fr;gap:9px}
+ .svRecommendationsPage .svMoodChips button{flex-direction:row;align-items:center;gap:14px;min-height:82px;padding:15px 17px;flex-wrap:nowrap}
+ .svRecommendationsPage .svMoodChips button>span{flex:1;gap:4px;padding-right:15px}
+ .svRecommendationsPage .svMoodChips button>.svFeatureIcon:last-child{display:block;top:33px}
+ .svRecommendationsPage .svMoodChips strong{font-size:14px}
+ .svRecommendationsPage .svMoodChips small{font-size:12px}
+ .svRecommendationsPage .svDiscoveryGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:25px 14px}
+ .svRecommendationsPage .svDiscoveryCardCopy h3{font-size:14px}
+ .svRecommendationsPage .svDiscoveryCard:only-child{grid-template-columns:100px minmax(0,1fr);gap:16px;padding:14px}
+ .svRecommendationsPage .svDiscoveryCard:only-child .svDiscoveryCardCopy{padding-right:0}
+ .svRecommendationsPage .svDiscoveryCard:only-child h3{font-size:19px;margin:7px 0 8px}
+ .svRecommendationsPage .svDiscoveryCard:only-child .svPickOverview{-webkit-line-clamp:3;font-size:12px}
+ .svRecommendationsPage .svDiscoveryCard:only-child .svDiscoveryShare{top:auto;bottom:12px;left:70px}
+}
+@media(max-width:359px){.svRecommendationsPage .svDiscoveryHero h1{font-size:31px}.svPromptType>.svFeatureIcon{display:none}.svPromptType select{max-width:117px}.svRecommendationsPage .svMoodInput .svFindPicks{padding:11px 10px;font-size:11px}}
+@media(prefers-reduced-motion:reduce){.svRecommendationsPage .svMoodChips button{transition:none}}

@@ -5651,7 +5651,7 @@ const discovery = createDiscovery({tmdb:(...args) => tmdb(...args)});
 app.use("/api/discovery", discovery.router);
 const playerAssist = createPlayerAssist({tmdb:(...args) => tmdb(...args)});
 app.use("/api/player-assist",playerAssist.router);
-app.get("/recommendations", (req,res) => res.send(pageShell({title:`${SITE_NAME} — AI picks`,active:"recommendations",body:recommendationsMarkup(),extraHead:'<script defer src="/assets/discovery/recommendations.js?v=3"></script>'})));
+app.get("/recommendations", (req,res) => res.send(pageShell({title:`${SITE_NAME} — AI picks`,active:"recommendations",body:recommendationsMarkup(),extraHead:'<script defer src="/assets/discovery/recommendations.js?v=4"></script>'})));
 app.get("/audiobooks", (req,res) => res.send(pageShell({title:`${SITE_NAME} — Audiobooks`,active:"audiobooks",body:audiobooksMarkup(),extraHead:'<script defer src="/assets/discovery/audiobooks.js?v=2"></script>'})));
 // Same friends-only protection applies to authorized movie/episode file downloads.
 app.use("/api/download", createDownloadRouter());
@@ -6549,7 +6549,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/liquid-glass/liquid-glass.css?v=223" />
     <script defer src="/assets/liquid-glass/liquid-glass.js?v=227"></script>
     <link rel="stylesheet" href="/assets/clean/clean.css?v=154" />
-    <script defer src="/assets/clean/clean.js?v=4"></script>
+    <script defer src="/assets/clean/clean.js?v=5"></script>
     <script defer src="/assets/clean/account-sheet.js?v=1"></script>
     <script defer src="/assets/clean/account.js?v=1"></script>
     <link rel="stylesheet" href="/assets/connect/connect.css?v=4" />
@@ -6566,7 +6566,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/details.js?v=255"></script>
     <script defer src="/assets/clean/download.js?v=2"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=222" />
-    <script defer src="/assets/liquid-glass/surfaces.js?v=258"></script>
+    <script defer src="/assets/liquid-glass/surfaces.js?v=259"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=233" />
     <script defer src="/assets/studio/studio.js?v=164"></script>
     <link rel="stylesheet" href="/assets/clean/aurora.css?v=209" />
@@ -6595,8 +6595,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/clean/tv.css?v=255" />
     <link rel="stylesheet" href="/assets/clean/details-premium.css?v=255" />
     <link rel="stylesheet" href="/assets/clean/details-clarity.css?v=2" />
-    <link rel="stylesheet" href="/assets/discovery/discovery.css?v=4" />
-    <link rel="stylesheet" href="/assets/clean/account-sheet.css?v=2" />
+    <link rel="stylesheet" href="/assets/discovery/discovery.css?v=5" />
+    <link rel="stylesheet" href="/assets/clean/account-sheet.css?v=3" />
 </head>
 <body class="svCleanShell">
 
@@ -6650,19 +6650,19 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
             <div class="svLiquidPane" data-swifly-glass data-glass-tint="0.2" data-glass-saturation="1" data-glass-radius="22" aria-hidden="true"></div>
             <button class="svTvMenuToggle" type="button" data-sv-tv-toggle aria-pressed="false"><span>${cleanIcon("tv")}</span><b>TV mode</b><small data-sv-tv-state>Off</small></button>
             <button class="svMobileStudioLink" type="button" data-st-open aria-haspopup="dialog" aria-controls="controlPanel" aria-expanded="false"><span>${cleanIcon("settings")}</span><b>Swifly Studio</b></button>
-            <a href="/profiles"><span>☺</span><b>Switch profile</b></a>
-            <a href="/profiles/manage"><span>✎</span><b>Manage profiles</b></a>
-            <a href="/account"><span>⚙</span><b>Account</b></a>
-            <a href="/continue-watching"><span>▶</span><b>Continue watching</b></a>
-            <a href="/my-list"><span>＋</span><b>My List</b></a>
-            <a href="/liked"><span>♡</span><b>Liked titles</b></a>
-            <a href="/friends"><span>◉</span><b>Friends & messages</b></a>
-            <a href="/friends?tab=home"><span>⌂</span><b>Our shared home</b></a>
-            <a href="/recommendations"><span>✦</span><b>AI picks</b></a>
-            <a href="/audiobooks"><span>♫</span><b>Audiobooks</b></a>
-            <a href="/social?tab=watchrooms"><span>◎</span><b>Watch parties</b></a>
-            <a href="/browse-by-languages"><span>文</span><b>Languages & genres</b></a>
-            <a href="/kids"><span>★</span><b>Kids</b></a>
+            <a href="/profiles"><span>${cleanIcon("user")}</span><b>Switch profile</b></a>
+            <a href="/profiles/manage"><span>${cleanIcon("user")}</span><b>Manage profiles</b></a>
+            <a href="/account"><span>${cleanIcon("settings")}</span><b>Account</b></a>
+            <a href="/continue-watching"><span>${cleanIcon("play-circle")}</span><b>Continue watching</b></a>
+            <a href="/my-list"><span>${cleanIcon("bookmark")}</span><b>My List</b></a>
+            <a href="/liked"><span>${cleanIcon("heart")}</span><b>Liked titles</b></a>
+            <a href="/friends"><span>${cleanIcon("people")}</span><b>Friends & messages</b></a>
+            <a href="/friends?tab=home"><span>${cleanIcon("home")}</span><b>Our shared home</b></a>
+            <a href="/recommendations"><span>${cleanIcon("compass")}</span><b>AI picks</b></a>
+            <a href="/audiobooks"><span>${cleanIcon("film")}</span><b>Audiobooks</b></a>
+            <a href="/social?tab=watchrooms"><span>${cleanIcon("tv")}</span><b>Watch parties</b></a>
+            <a href="/browse-by-languages"><span>${cleanIcon("compass")}</span><b>Languages & genres</b></a>
+            <a href="/kids"><span>${cleanIcon("user")}</span><b>Kids</b></a>
           </div>
         </details>
       </div>

@@ -404,13 +404,13 @@ test('Auth card, tabs, modal chrome and details buttons use real panes without b
 
 
 
-test('Logout in the nav dropdown uses real navbar optics without boxing nav icons',()=>{
+test('account logout retains its own matte surface without boxing navigation icons',()=>{
  const env=glass('<nav class="netflixNav"><button class="svNavButton">Search</button><div class="dsProfileDropdown"><button class="dsDropdownLogout">Log out</button></div></nav>');
  const w=env.window,d=w.document;d.body.dataset.stGlass='liquid';
  w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');env.intersect(true);w.flush(16);
  const logout=d.querySelector('.dsDropdownLogout');
- assert(logout.classList.contains('svNavMatchedOptic'));
- assert(logout.querySelector('.svLiquidPane[data-swifly-renderer="svg"]'));
+ assert(!logout.classList.contains('svNavMatchedOptic'));
+ assert(!logout.querySelector('.svLiquidPane'));
  assert(!d.querySelector('.svNavButton').classList.contains('svGlassSurface'));
  env.finish();
 });

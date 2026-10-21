@@ -3,6 +3,11 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const {browser,source,cleanup} = require('./ui-helpers.cjs');
 test.afterEach(cleanup);
+test('account controls keep their own layout while hero controls retain liquid glass',()=>{
+ const env=browser('<div class="netflixNav"><details class="dsProfileMenu" open><summary>Profile</summary><div class="dsProfileDropdown"><details open><summary>Your library</summary><a href="/my-list">My List</a></details><button>TV mode</button><button>Log out</button></div></details></div><div class="dsHeroActions"><button>Watch</button></div>'),w=env.window,d=w.document;
+ w.SwiflyLiquidGlass={mount(){return {enabled:true,supported:true,destroy(){}};}};w.boot('liquid-glass/surfaces.js');
+ assert.equal(d.querySelectorAll('.dsProfileDropdown .svNavMatchedLens').length,0,'account summaries and buttons must not receive layout-altering optical panes');assert(d.querySelector('.dsHeroActions .svNavMatchedLens'),'hero refraction stays available');w.SwiflyGlassSurfaces.destroy();env.finish();
+});
 
 test('movie-card actions keep native glass through hover and focus without allocating SVG lenses',()=>{
   const markup = Array.from({length:20},(_,i)=>

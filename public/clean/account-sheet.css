@@ -247,6 +247,51 @@ body.svCleanShell > .svMobileAccountScrim { display:none; }
     outline-offset:2px !important;
   }
 }
+
+/* Neutral compact menu. Native disclosure groups keep every destination close
+   without making the closed menu a scrolling directory. */
+html:not([data-sv-tv="true"]) body.svCleanShell :is(.netflixNav .dsProfileDropdown.svLiquidDropdown.svAccountCompact,.dsProfileDropdown.svAccountSheetPortaled.svAccountCompact){
+ width:min(var(--sv-account-width,304px),calc(100vw - 24px))!important;padding:10px!important;border:1px solid #ffffff24!important;border-radius:18px!important;background:#151518!important;color:#ededf2!important;box-shadow:0 24px 70px #000a!important;scrollbar-width:thin;
+}
+html:not([data-sv-tv="true"]) body.svCleanShell :is(.netflixNav .dsProfileDropdown.svLiquidDropdown.svAccountCompact,.dsProfileDropdown.svAccountSheetPortaled.svAccountCompact)>.dsDropdownUser{
+ position:relative!important;top:auto!important;grid-template-columns:40px minmax(0,1fr);grid-template-rows:23px 18px;gap:0 10px;width:calc(100% + 20px)!important;min-height:74px!important;margin:-10px -10px 8px!important;padding:16px!important;border-bottom:1px solid #ffffff13!important;border-radius:17px 17px 0 0!important;background:#1b1b1f!important;
+}
+html:not([data-sv-tv="true"]) body.svCleanShell :is(.netflixNav .dsProfileDropdown.svLiquidDropdown.svAccountCompact,.dsProfileDropdown.svAccountSheetPortaled.svAccountCompact)>.dsDropdownUser>b{font-family:inherit!important;font-weight:550!important;font-size:14px!important;color:#f2f2f6!important}
+html:not([data-sv-tv="true"]) body.svCleanShell :is(.netflixNav .dsProfileDropdown.svLiquidDropdown.svAccountCompact,.dsProfileDropdown.svAccountSheetPortaled.svAccountCompact)>.dsDropdownUser>small{font-family:inherit!important;font-weight:400!important;font-size:11px!important;color:#9797a5!important}
+html:not([data-sv-tv="true"]) body.svCleanShell :is(.netflixNav .dsProfileDropdown.svLiquidDropdown.svAccountCompact,.dsProfileDropdown.svAccountSheetPortaled.svAccountCompact)>.dsDropdownUser>span{width:38px!important;height:38px!important;border-radius:11px!important}
+html:not([data-sv-tv="true"]) body.svCleanShell :is(.netflixNav .dsProfileDropdown.svLiquidDropdown.svAccountCompact,.dsProfileDropdown.svAccountSheetPortaled.svAccountCompact) :is(a,.svAccountGroup>summary){
+ display:grid!important;box-sizing:border-box!important;grid-template-columns:21px minmax(0,1fr)!important;align-items:center!important;gap:11px!important;width:100%!important;min-width:0!important;min-height:44px!important;margin:0!important;padding:10px!important;border:1px solid transparent!important;border-radius:10px!important;background:transparent!important;box-shadow:none!important;color:#cdcdd6!important;font-family:inherit!important;font-size:13px!important;font-weight:450!important;line-height:1.5!important;text-decoration:none!important;white-space:normal!important;transform:none!important;cursor:pointer;
+}
+html:not([data-sv-tv="true"]) body.svCleanShell :is(.netflixNav .dsProfileDropdown.svLiquidDropdown.svAccountCompact,.dsProfileDropdown.svAccountSheetPortaled.svAccountCompact) :is(a,.svAccountGroup>summary)>span{
+ display:grid!important;place-items:center!important;width:20px!important;height:20px!important;border:0!important;border-radius:0!important;background:transparent!important;color:#9696a5!important;
+}
+html:not([data-sv-tv="true"]) body.svCleanShell :is(.netflixNav .dsProfileDropdown.svLiquidDropdown.svAccountCompact,.dsProfileDropdown.svAccountSheetPortaled.svAccountCompact) :is(a,.svAccountGroup>summary) svg{width:18px!important;height:18px!important}
+html:not([data-sv-tv="true"]) body.svCleanShell :is(.netflixNav .dsProfileDropdown.svLiquidDropdown.svAccountCompact,.dsProfileDropdown.svAccountSheetPortaled.svAccountCompact) a>b{font-family:inherit!important;font-size:13px!important;font-weight:450!important;color:inherit!important}
+html:not([data-sv-tv="true"]) body.svCleanShell :is(.netflixNav .dsProfileDropdown.svLiquidDropdown.svAccountCompact,.dsProfileDropdown.svAccountSheetPortaled.svAccountCompact) :is(a,.svAccountGroup>summary):is(:hover,:focus-visible){background:#ffffff09!important;color:#fff!important;border-color:transparent!important}
+.svAccountGroup{margin:4px 0 0!important;padding:3px 0 0!important;border:0!important;border-top:1px solid #ffffff0e!important;border-radius:0!important;background:transparent!important}
+.svAccountGroup>summary{list-style:none!important;position:relative;padding-right:30px!important}
+.svAccountGroup>summary::-webkit-details-marker{display:none}
+.svAccountGroup>summary::marker{content:''}
+.svAccountGroup>summary::after{content:'';position:absolute;right:15px;top:19px;width:5px;height:5px;border-right:1px solid #858594;border-bottom:1px solid #858594;transform:rotate(-45deg)}
+.svAccountGroup[open]>summary::after{transform:rotate(45deg);top:17px}
+.svAccountGroupLinks{padding:4px;margin:0 1px 6px;border:0;border-radius:11px;background:#ffffff04}
+html:not([data-sv-tv="true"]) body.svCleanShell :is(.netflixNav .dsProfileDropdown.svLiquidDropdown.svAccountCompact,.dsProfileDropdown.svAccountSheetPortaled.svAccountCompact)>:is(.svTvMenuToggle,.svMobileStudioLink){
+ float:none!important;clear:both!important;display:grid!important;grid-template-columns:21px minmax(0,1fr) auto!important;grid-template-rows:auto!important;align-items:center!important;gap:11px!important;width:100%!important;min-height:44px!important;margin:8px 0 0!important;padding:10px!important;border:1px solid #ffffff12!important;border-radius:10px!important;background:#ffffff04!important;color:#b8b8c5!important;
+}
+html:not([data-sv-tv="true"]) body.svCleanShell :is(.netflixNav .dsProfileDropdown.svLiquidDropdown.svAccountCompact,.dsProfileDropdown.svAccountSheetPortaled.svAccountCompact)>:is(.svTvMenuToggle,.svMobileStudioLink)>span{grid-row:auto!important;width:20px!important;height:20px!important;background:none!important;color:#9696a5!important}
+html:not([data-sv-tv="true"]) body.svCleanShell :is(.netflixNav .dsProfileDropdown.svLiquidDropdown.svAccountCompact,.dsProfileDropdown.svAccountSheetPortaled.svAccountCompact)>:is(.svTvMenuToggle,.svMobileStudioLink)>b{font-family:inherit!important;font-size:12px!important;font-weight:450!important;line-height:1.4!important}
+html:not([data-sv-tv="true"]) body.svCleanShell :is(.netflixNav .dsProfileDropdown.svLiquidDropdown.svAccountCompact,.dsProfileDropdown.svAccountSheetPortaled.svAccountCompact)>.svTvMenuToggle>small{grid-column:3!important;margin:0!important;padding:2px 7px!important;border:1px solid #ffffff1b!important;border-radius:6px!important;font-family:inherit!important;font-size:10px!important;color:#a2a2b0!important;background:transparent!important}
+html:not([data-sv-tv="true"]) body.svCleanShell :is(.netflixNav .dsProfileDropdown.svLiquidDropdown.svAccountCompact,.dsProfileDropdown.svAccountSheetPortaled.svAccountCompact)>.dsDropdownLogout{margin:8px 0 0!important;border:0!important;border-top:1px solid #ffffff12!important;border-radius:0!important;background:transparent!important;color:#9e9eae!important;font-family:inherit!important;font-weight:450!important;font-size:12px!important;min-height:44px!important;box-shadow:none!important}
+@media(min-width:861px){html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown.svAccountCompact>.svMobileStudioLink{display:none!important}}
+@media(max-width:860px){
+ html:not([data-sv-tv="true"]) body.svCleanShell>.dsProfileDropdown.svAccountSheetPortaled.svAccountCompact{--sv-account-width:380px;left:50vw!important}
+ html:not([data-sv-tv="true"]) body.svCleanShell>.dsProfileDropdown.svAccountSheetPortaled.svAccountCompact>.dsDropdownUser{padding-right:52px!important}
+ html:not([data-sv-tv="true"]) body.svCleanShell>.dsProfileDropdown.svAccountSheetPortaled.svAccountCompact .svAccountMenuClose{background:#ffffff0a!important;border-color:#ffffff14!important;color:#bbb!important;box-shadow:none!important}
+ html:not([data-sv-tv="true"]) body.svCleanShell>.dsProfileDropdown.svAccountSheetPortaled.svAccountCompact>.svAccountSheetGuestHeader{margin:-10px -10px 8px!important;width:calc(100% + 20px)!important;background:#1b1b1f!important;color:#eee!important;font-family:inherit!important;font-size:16px!important;font-weight:550!important}
+}
+html[data-sv-tv=true] .svAccountGroup>summary{display:none!important}
+html[data-sv-tv=true] .svAccountGroupLinks{padding:0;background:none}
+html[data-sv-tv=true] .svAccountGroupLinks a{min-height:56px!important;font-size:18px!important}
 @media (prefers-reduced-motion:reduce) {
   body.svCleanShell > .dsProfileDropdown.svAccountSheetPortaled {
     animation:none !important;
