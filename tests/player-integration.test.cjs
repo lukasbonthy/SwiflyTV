@@ -40,7 +40,7 @@ test('The normal watch route renders one native movie player with shared assets 
  assert.equal(d.querySelectorAll('.svPlayerPage [data-player-video]').length,1);
  const preview=d.querySelector('[data-call-local] video');assert(preview?.hasAttribute('muted'));assert(preview?.closest('[hidden]'),'The optional camera preview starts hidden');
  assert.equal(d.querySelector('.svPlayerPage').dataset.playerId,'101');assert.equal(d.querySelector('h1').textContent.trim(),'Arrival');
- assert(d.querySelector('script[src="/assets/player/player.js?v=234"]'));assert(d.querySelector('script[src="/assets/player/watch-party.js?v=163"]'));
+ assert(d.querySelector('script[src="/assets/player/player.js?v=234"]'));assert(d.querySelector('script[src="/assets/player/watch-party.js?v=2"]'));
  assert(d.querySelector('link[href="/assets/player/player.css?v=214"]'));assert(d.querySelector('dialog.svWatchPartyDialog'));
  assert.equal(d.querySelector('.dsProxyVideoWaitingShell'),null);assert.equal(d.querySelector('.svPartyHub'),null);
  assert.equal(d.querySelector('[data-sv-player-back]').getAttribute('href'),'/movie/101');
@@ -140,7 +140,7 @@ test('Social navigation opens the integrated Party Hub while movie catalog party
  const env=parse(await(await fetch(base+'/movies?party=1')).text()),d=env.window.document;
  assert.equal(d.querySelector('.dsBrowseTop h1').textContent.trim(),'Movies');assert(d.querySelector('.genreDropdown'));assert(d.querySelector('.dsHero'));
  assert(d.querySelector('[data-party-browse]'));assert(d.querySelector('.dsContent'));assert.equal(d.querySelector('.svPartyHub'),null);
- assert(d.querySelector('script[src="/assets/player/watch-party.js?v=163"]'));assert.equal(d.querySelector('script[src*="player/player.js"]'),null);
+ assert(d.querySelector('script[src="/assets/player/watch-party.js?v=2"]'));assert.equal(d.querySelector('script[src*="player/player.js"]'),null);
 });
 test('Old movie party setup links redirect to the regular movie player',async()=>{
  const response=await fetch(base+'/social?tab=watchrooms&movieId=101',{redirect:'manual'});assert.equal(response.status,302);assert.equal(response.headers.get('location'),'/watch/movie/101?mode=movie&party=create');
@@ -187,7 +187,7 @@ test('main catalog, signup and login all have the ambient scene without compromi
    const aurora=d.querySelector('.svAuroraBackground');
    assert(aurora,route+' should mount shared aurora');
    assert.equal(d.querySelector('script[src*="/assets/clean/aurora-shader.js"]'),null,route+' should not load WebGL aurora');
-   assert(d.querySelector('link[href="/assets/clean/aurora.css?v=208"]'),route+' should load original animated SVG');
+   assert(d.querySelector('link[href="/assets/clean/aurora.css?v=209"]'),route+' should load original animated SVG');
    assert.equal(aurora.querySelectorAll('.svAuroraRibbon').length,3,route+' should mount moving curtains');
    if(route==='/signup'||route==='/login'){
      assert(d.querySelector('.dsAuthBrand'),route+' account branding missing');
@@ -232,7 +232,7 @@ test('the cinema image fade loads after Aurora and Welcome styles',async()=>{
    assert.equal(response.status,200,route+' should load');
    const d=parse(await response.text()).window.document;
    const styles=[...d.querySelectorAll('link[rel="stylesheet"]')].map(link=>link.getAttribute('href'));
-   const aurora=styles.findIndex(v=>v.includes('/assets/clean/aurora.css?v=208'));
+   const aurora=styles.findIndex(v=>v.includes('/assets/clean/aurora.css?v=209'));
    const fade=styles.findIndex(v=>v.includes('/assets/clean/hero-fade.css?v=206'));
    assert(aurora>=0 && fade>aurora,route+' fade must follow aurora');
    if(route==='/welcome'){
@@ -255,7 +255,7 @@ test('signup is a single refined form with preserved fields and a usable passwor
  assert(d.querySelector('#safeAuthForm input[name="email"][type="email"]'));
  assert(d.querySelector('#safeAuthForm input[name="password"][type="password"]'));
  assert.equal(d.querySelectorAll('[data-auth-toggle-password]').length,1);
- assert.match(html,/passwordToggle\?\.addEventListener\("click"/);
+ assert.match(html,/assets\/clean\/account\.js\?v=1/,'the shared server auth module owns password reveal and sign-in');
  assert.match(html,/aria-pressed/);
  const css=await (await fetch(base+'/assets/clean/auth.css')).text();
  assert.match(css,/:is\(\.svAuthLoginPage,\.svAuthSignupPage\) \.dsAuthCard/);
@@ -380,7 +380,7 @@ test('Studio glass uses one material on every browsing route and native transiti
  const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=255')).text();
  const finish=await(await fetch(base+'/assets/clean/finish.css?v=176')).text();
  const navigation=await(await fetch(base+'/assets/clean/navigation.css?v=2')).text();
- const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=257')).text();
+ const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=258')).text();
  assert.match(css,/data-st-glass="liquid"/);
  assert.match(css,/data-st-glass="subtle"/);
  assert.match(css,/data-st-glass="off"/);
@@ -393,7 +393,7 @@ test('Studio glass uses one material on every browsing route and native transiti
    assert.equal(response.status,200,route);
    const doc=parse(await response.text()).window.document;
    assert(doc.querySelector('link[href="/assets/liquid-glass/controls.css?v=255"]'),route+' lacks unified glass');
-   assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=257"]'),route+' uses stale glass renderer');
+   assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=258"]'),route+' uses stale glass renderer');
  }
  const watch=await(await fetch(base+'/watch/movie/101')).text();
  assert(!watch.includes('controls.css?v=189'),'watch page must be left alone');
@@ -416,7 +416,7 @@ test('v176 supplies a real, masked details backdrop with no hard border at the o
  assert.match(css,/\.svDetailShade \{/);
  assert.match(css,/\.svDetailBody \{/);
  assert(d.querySelector('link[href="/assets/clean/polish.css?v=176"]'));
- assert(d.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=257"]'));
+ assert(d.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=258"]'));
 });
 test('v176 adds subtle Liquid Glass to both compact auth pages without resizing',async()=>{
  const css=await(await fetch(base+'/assets/clean/polish.css?v=176')).text();

@@ -128,7 +128,7 @@
  function attach(next,created=false) {
   if(!next||!validRoom(next.id))throw Error('This invite is unavailable. Check the room code.');
   const film=selection(next.syncedMovie);if(browse||film&&(film.movieId!==movieId||film.type!==pageType)||!film&&!created){navigateRoom(next);return;}
-  ensureSocket();if(roomId!==next.id)call?.setRoom('');if(roomId&&roomId!==next.id)socket.emit('watchroom:leave');if(roomId!==next.id)clearConversation();roomId=next.id;room=next;pendingSelect=created;sourceKey='';readyMovie=null;sync=null;joined=false;isHost=false;player()?.pause({remote:true});update();player()?.loadSource({status:'loading',message:'Joining your watch party…'});
+  ensureSocket();if(roomId!==next.id)call?.setRoom('');if(roomId&&roomId!==next.id)socket.emit('watchroom:leave');if(roomId!==next.id)clearConversation();roomId=next.id;room=next;pendingSelect=created||next.syncedMovie?.socialInvite===true;sourceKey='';readyMovie=null;sync=null;joined=false;isHost=false;player()?.pause({remote:true});update();player()?.loadSource({status:'loading',message:'Joining your watch party…'});
   if(socket.connected)emitJoin();else socket.connect?.();
  }
  async function join(value) {

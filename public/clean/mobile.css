@@ -127,3 +127,9 @@ body.svCleanShell .svMobileStudioLink { display:none !important; }
 @media (max-width:359px) {
   html:not([data-sv-tv="true"]) body.svCleanShell .dsCardQuickActions { inset:auto 1px 6px auto !important; gap:1px !important; }
 }
+
+@media(max-width:760px){
+ body.svCleanShell .footer .footerGrid{display:flex!important;flex-direction:column;align-items:stretch;gap:18px;width:calc(100% - 32px);padding-inline:0;box-sizing:border-box}
+ body.svCleanShell .footer .footerGrid>div{width:auto;max-width:100%;min-width:0;font-size:10px;line-height:1.8}
+ body.svCleanShell .footer .footerLinks{display:flex;flex-wrap:wrap;justify-content:flex-start;align-items:center;gap:16px}
+}

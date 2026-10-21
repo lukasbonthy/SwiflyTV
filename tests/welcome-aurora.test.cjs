@@ -269,7 +269,7 @@ test('Aurora Lab hides its extra controls for a non-Aurora backdrop', () => {
 });
 
 
-test('Original v163 Aurora artwork stays cached while catalog interaction receives the motion budget',()=>{
+test('Original Aurora artwork moves with a bounded transform instead of a WebGL loop',()=>{
  const env=studio(),d=env.window.document;
  const scene=d.querySelector('.svAuroraBackground');
  assert(scene);
@@ -280,6 +280,7 @@ test('Original v163 Aurora artwork stays cached while catalog interaction receiv
  assert.match(svg,/id="arc"/,'original curved light art should be unchanged');
  assert.match(css,/aurora-ribbon\.svg\?v=170/);
  assert.match(css,/animation:none;animation-name:none;will-change:auto/,'Large ribbon layers must settle rather than invalidate the live glass continuously');
+ assert.match(css,/animation-name:svAuroraDrift/,'live motion restores the existing Drift and Slow controls');
  assert.doesNotMatch(css,/animation-name:sv(?:Original|Touch)Aurora|animation:svOriginalAurora/);
  assert.match(css,/prefers-reduced-motion/);
  assert.doesNotMatch(css,/\.svAuroraCanvas|mix-blend-mode:screen|\[data-sv-renderer="webgl"\]/);

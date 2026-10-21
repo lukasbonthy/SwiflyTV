@@ -28,7 +28,7 @@
       viewport.observe(background);
     }
     observer = new MutationObserver(refresh);
-    observer.observe(document.body, {attributes:true,attributeFilter:['class','data-st-backdrop']});
+    observer.observe(document.body, {attributes:true,attributeFilter:['class','data-st-backdrop','data-st-aurora-motion']});
   }
   function destroy() {
     stopped = true;
