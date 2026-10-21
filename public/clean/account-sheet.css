@@ -1,0 +1,255 @@
+/* Mobile account overlay, intentionally OUTSIDE liquid navigation optics.
+   A solid matte surface: the film never shows through the account controls. */
+body.svCleanShell > .svMobileAccountScrim { display:none; }
+
+@media (max-width:860px) {
+  html:not([data-sv-tv="true"]) body.svCleanShell.svMobileAccountOpen > .svMobileAccountScrim {
+    display:block !important;
+    position:fixed !important;
+    inset:0 !important;
+    z-index:2147483644 !important;
+    background:rgba(2,5,11,.7) !important;
+    -webkit-backdrop-filter:none !important;
+    backdrop-filter:none !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell > .dsProfileDropdown.svAccountSheetPortaled {
+    position:fixed !important;
+    top:var(--sv-account-sheet-top,80px) !important;
+    left:50% !important;
+    right:auto !important;
+    bottom:auto !important;
+    inset-block-end:auto !important;
+    transform:translateX(-50%) !important;
+    width:min(408px,calc(100vw - 24px)) !important;
+    min-width:0 !important;
+    max-width:calc(100vw - 24px) !important;
+    height:auto !important;
+    min-height:0 !important;
+    max-height:calc(100svh - var(--sv-account-sheet-top,80px) - 12px - env(safe-area-inset-bottom)) !important;
+    max-height:calc(100dvh - var(--sv-account-sheet-top,80px) - 12px - env(safe-area-inset-bottom)) !important;
+    box-sizing:border-box !important;
+    display:block !important;
+    margin:0 !important;
+    padding:0 12px 14px !important;
+    z-index:2147483645 !important;
+    border:1px solid #354050 !important;
+    border-radius:22px !important;
+    background:#0c1018 !important;
+    background-image:none !important;
+    color:#f0f5fe !important;
+    opacity:1 !important;
+    filter:none !important;
+    mix-blend-mode:normal !important;
+    box-shadow:0 26px 78px #000b,inset 0 1px #ffffff12 !important;
+    -webkit-backdrop-filter:none !important;
+    backdrop-filter:none !important;
+    isolation:isolate !important;
+    overflow-x:hidden !important;
+    overflow-y:auto !important;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;
+    scrollbar-width:none;
+    animation:none !important;
+    contain:none !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell > .dsProfileDropdown.svAccountSheetPortaled::-webkit-scrollbar {
+    display:none;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell > .dsProfileDropdown.svAccountSheetPortaled::before,
+  html:not([data-sv-tv="true"]) body.svCleanShell > .dsProfileDropdown.svAccountSheetPortaled::after,
+  html:not([data-sv-tv="true"]) body.svCleanShell > .dsProfileDropdown.svAccountSheetPortaled > .svLiquidPane {
+    display:none !important;
+    content:none !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell > .dsProfileDropdown.svAccountSheetPortaled > :not(.svLiquidPane) {
+    position:relative;
+    z-index:1;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell > .dsProfileDropdown.svAccountSheetPortaled > :is(.dsDropdownUser,.svAccountSheetGuestHeader) {
+    position:sticky !important;
+    top:0;
+    z-index:4 !important;
+    display:grid !important;
+    grid-template-columns:46px minmax(0,1fr);
+    grid-template-rows:25px 18px;
+    gap:0 10px;
+    align-items:center;
+    box-sizing:border-box;
+    width:calc(100% + 24px) !important;
+    min-height:76px !important;
+    margin:0 -12px 8px !important;
+    padding:15px 52px 12px 17px !important;
+    background:#151c28 !important;
+    border:0 !important;
+    border-bottom:1px solid #ffffff1e !important;
+    border-radius:21px 21px 0 0 !important;
+    box-shadow:none !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell > .dsProfileDropdown.svAccountSheetPortaled > .dsDropdownUser > span {
+    grid-column:1;
+    grid-row:1 / 3;
+    width:42px !important;
+    height:42px !important;
+    border-radius:13px !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell > .dsProfileDropdown.svAccountSheetPortaled > .dsDropdownUser > b {
+    grid-column:2;
+    grid-row:1;
+    font-size:15px !important;
+    font-weight:700 !important;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell > .dsProfileDropdown.svAccountSheetPortaled > .dsDropdownUser > small {
+    grid-column:2;
+    grid-row:2;
+    color:#abb8c9 !important;
+    font-size:11px !important;
+    font-weight:500 !important;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell > .dsProfileDropdown.svAccountSheetPortaled > .svAccountSheetGuestHeader {
+    display:flex !important;
+    font-size:17px;
+    font-weight:750;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell > .dsProfileDropdown.svAccountSheetPortaled .svAccountMenuClose {
+    display:grid !important;
+    position:absolute !important;
+    top:18px !important;
+    right:14px !important;
+    z-index:5 !important;
+    place-items:center;
+    width:35px !important;
+    height:35px !important;
+    margin:0 !important;
+    padding:0 !important;
+    border:1px solid #ffffff24 !important;
+    border-radius:12px !important;
+    color:#e6eefb !important;
+    background:#303b4a !important;
+    font:normal 22px/1 system-ui !important;
+    cursor:pointer;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell > .dsProfileDropdown.svAccountSheetPortaled > .svAccountMenuSection {
+    display:block !important;
+    padding:16px 10px 7px !important;
+    margin:0 !important;
+    border:0 !important;
+    color:#9baec7 !important;
+    font:700 10px/1.2 system-ui,sans-serif !important;
+    letter-spacing:.14em !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell > .dsProfileDropdown.svAccountSheetPortaled > a {
+    display:grid !important;
+    grid-template-columns:32px minmax(0,1fr) !important;
+    align-items:center !important;
+    column-gap:11px !important;
+    width:100% !important;
+    box-sizing:border-box !important;
+    min-height:48px !important;
+    padding:7px 11px !important;
+    margin:0 !important;
+    border:1px solid transparent !important;
+    border-radius:13px !important;
+    color:#e6edf7 !important;
+    background:transparent !important;
+    box-shadow:none !important;
+    transform:none !important;
+    text-decoration:none !important;
+    white-space:normal !important;
+    text-shadow:none !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell > .dsProfileDropdown.svAccountSheetPortaled > a > span {
+    display:grid !important;
+    place-items:center;
+    width:30px !important;
+    height:30px !important;
+    border:0 !important;
+    border-radius:10px !important;
+    color:#c0d0e3 !important;
+    background:#ffffff0d !important;
+    font:500 17px/1 system-ui !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell > .dsProfileDropdown.svAccountSheetPortaled > a > b {
+    font:600 14px/1.35 system-ui,sans-serif !important;
+    white-space:normal !important;
+    word-break:normal !important;
+    color:inherit !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell > .dsProfileDropdown.svAccountSheetPortaled > :is(.svTvMenuToggle,.svMobileStudioLink) {
+    display:grid !important;
+    box-sizing:border-box !important;
+    grid-template-columns:30px minmax(0,1fr) !important;
+    grid-template-rows:19px 17px !important;
+    align-items:center !important;
+    gap:0 8px !important;
+    width:calc(50% - 4px) !important;
+    min-height:62px !important;
+    margin:0 !important;
+    padding:10px 8px !important;
+    border:1px solid #ffffff22 !important;
+    border-radius:14px !important;
+    color:#f0f4fa !important;
+    background:#202938 !important;
+    box-shadow:none !important;
+    text-align:left !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell > .dsProfileDropdown.svAccountSheetPortaled > .svTvMenuToggle {
+    float:left !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell > .dsProfileDropdown.svAccountSheetPortaled > .svMobileStudioLink {
+    float:right !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell > .dsProfileDropdown.svAccountSheetPortaled > :is(.svTvMenuToggle,.svMobileStudioLink) > span {
+    grid-column:1 !important;
+    grid-row:1 / 3 !important;
+    width:28px !important;
+    height:28px !important;
+    border:0 !important;
+    background:#ffffff12 !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell > .dsProfileDropdown.svAccountSheetPortaled > :is(.svTvMenuToggle,.svMobileStudioLink) > b {
+    grid-column:2 !important;
+    font:650 12px/1.2 system-ui,sans-serif !important;
+    min-width:0;
+    white-space:normal !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell > .dsProfileDropdown.svAccountSheetPortaled > .svTvMenuToggle > small {
+    grid-column:2 !important;
+    font:500 10px/1.3 system-ui,sans-serif !important;
+    margin:0 !important;
+    padding:0 !important;
+    border:0 !important;
+    color:#b0c3d9 !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell > .dsProfileDropdown.svAccountSheetPortaled > .svAccountMenuSection {
+    clear:both;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell > .dsProfileDropdown.svAccountSheetPortaled > .dsDropdownLogout {
+    display:block !important;
+    width:100% !important;
+    box-sizing:border-box !important;
+    min-height:48px !important;
+    margin:16px 0 2px !important;
+    border:1px solid #ad526345 !important;
+    border-radius:13px !important;
+    background:#35212a !important;
+    color:#ffd1da !important;
+    font:650 14px/1.3 system-ui,sans-serif !important;
+    white-space:nowrap !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell > .dsProfileDropdown.svAccountSheetPortaled :is(a,button):focus-visible {
+    outline:2px solid #bcd8ff !important;
+    outline-offset:2px !important;
+  }
+}
+@media (prefers-reduced-motion:reduce) {
+  body.svCleanShell > .dsProfileDropdown.svAccountSheetPortaled {
+    animation:none !important;
+    transition:none !important;
+  }
+}
