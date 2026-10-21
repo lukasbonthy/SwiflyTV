@@ -218,10 +218,9 @@ html[data-sv-tv="true"] body.svCleanShell #swiflyTvSpotlight[hidden] {display:no
 }
 
 /* Bounded dialogs keep primary actions visible even on a 720p television. */
-html[data-sv-tv="true"] body.svCleanShell .svDetailDialog {
-  width:calc(100vw - 2 * var(--sv-tv-safe)); height:90svh; max-height:90svh; border-radius:28px 28px 0 0;
-}
-html[data-sv-tv="true"] body.svCleanShell .svDetailDialog .svDetailViewport {scroll-padding-block:96px 24px;}
+html[data-sv-tv="true"] body.svCleanShell .svDetailDialog { --sv-detail-top-gap:10svh; }
+html[data-sv-tv="true"] body.svCleanShell .svDetailPanel { width:calc(100% - 2 * var(--sv-tv-safe)); border-radius:28px 28px 0 0; }
+html[data-sv-tv="true"] body.svCleanShell .svDetailDialog .svDetailViewport {scroll-padding-block:calc(var(--sv-detail-top-gap) + 96px) 24px;}
 html[data-sv-tv="true"] body.svCleanShell .svCinemaPage .svTitleDetails.svTitleDetails {width:calc(100% - 2 * var(--sv-tv-safe)) !important; max-width:1700px !important;}
 html[data-sv-tv="true"] body.svCleanShell .svDetailDialog .svDetailViewport.svCinemaPage .svTitleDetails.svTitleDetails {width:100% !important; max-width:none !important;}
 html[data-sv-tv="true"] body.svCleanShell .dsDetailPage.svDetailPage.svCinemaPage {padding-top:150px !important;}
@@ -243,7 +242,7 @@ html[data-sv-tv="true"] body.svCleanShell .svCinemaPage :is(.svSeasonIdentity st
 html[data-sv-tv="true"] body.svCleanShell .svSeason > summary {min-height:70px;}
 html[data-sv-tv="true"] body.svCleanShell .svDetailChrome :is(.svDetailBack,.svDetailDismiss).dsIconBtn {width:56px !important; height:56px !important; min-height:56px !important;}
 html[data-sv-tv="true"] body.svCleanShell .svDetailChromeTitle {font-size:20px;}
-html[data-sv-tv="true"] body.svCleanShell .svDetailChrome {inset:16px 20px auto; padding:8px;}
+html[data-sv-tv="true"] body.svCleanShell .svDetailChrome {top:16px; margin:0 20px -73px; height:73px; padding:8px;}
 html[data-sv-tv="true"] body.svCleanShell .svDetailSection {scroll-margin-top:110px;}
 
 html[data-sv-tv="true"] body.svCleanShell #controlPanel.svStudioDialog {
@@ -453,7 +452,7 @@ html[data-sv-tv="true"] body.svCleanShell #swiflyTvHint kbd {display:inline-bloc
   html[data-sv-tv="true"] body.svCleanShell .dsContent {padding-bottom:calc(var(--sv-tv-bottom-safe) + 52px) !important;}
   html[data-sv-tv="true"] body.svCleanShell :is(.dsPlainPage,.dsSearchPage,.dsWatchlistPage) {padding-top:116px !important;}
   html[data-sv-tv="true"] body.svCleanShell .dsDetailPage.svDetailPage.svCinemaPage {padding-top:114px !important;}
-  html[data-sv-tv="true"] body.svCleanShell .svDetailDialog {height:calc(100svh - 40px);max-height:calc(100svh - 40px);}
+  html[data-sv-tv="true"] body.svCleanShell .svDetailDialog {--sv-detail-top-gap:40px;}
   html[data-sv-tv="true"] body.svCleanShell .svPlayerPage {padding-top:112px;}
   html[data-sv-tv="true"] body.svCleanShell .svPlayerDock {bottom:16px;}
   html[data-sv-tv="true"] body.svCleanShell #swiflyTvGuide {bottom:24px;min-height:64px;padding:10px 18px;}

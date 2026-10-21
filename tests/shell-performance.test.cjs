@@ -50,7 +50,7 @@ test('versioned glass assets are browser-cacheable without changing their materi
   await new Promise(resolve => api.httpServer.listen(0, '127.0.0.1', resolve));
   try {
     const origin = 'http://127.0.0.1:' + api.httpServer.address().port;
-    for (const file of ['liquid-glass.js?v=227', 'surfaces.js?v=254']) {
+    for (const file of ['liquid-glass.js?v=227', 'surfaces.js?v=255']) {
       const response = await fetch(origin + '/assets/liquid-glass/' + file);
       assert.equal(response.status, 200);
       assert.match(response.headers.get('cache-control'), /max-age=86400/);
@@ -58,7 +58,7 @@ test('versioned glass assets are browser-cacheable without changing their materi
     }
     const html = api.pageShell({ active: 'home' });
     assert(html.includes('/assets/liquid-glass/liquid-glass.js?v=227'));
-    assert(html.includes('/assets/liquid-glass/surfaces.js?v=254'));
+    assert(html.includes('/assets/liquid-glass/surfaces.js?v=255'));
   } finally { await new Promise(resolve => api.io.close(resolve)); }
 });
 

@@ -6518,16 +6518,16 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/avatars.js?v=209"></script>
     ${active === "profiles" ? '<script defer src="/assets/clean/profiles.js?v=209"></script>' : ""}
     <script defer src="/assets/clean/continue.js?v=155"></script>
-    <link rel="stylesheet" href="/assets/clean/details.css?v=252" />
+    <link rel="stylesheet" href="/assets/clean/details.css?v=255" />
     <link rel="stylesheet" href="/assets/clean/motion.css?v=252" />
     <link rel="stylesheet" href="/assets/vendor/lenis/lenis.css?v=1.3.16-r1" />
     <script defer src="/assets/vendor/lenis/lenis.min.js?v=1.3.16-r1"></script>
     <script defer src="/assets/clean/motion.js?v=252"></script>
     <script defer src="/assets/clean/scroll.js?v=254"></script>
-    <script defer src="/assets/clean/details.js?v=252"></script>
+    <script defer src="/assets/clean/details.js?v=255"></script>
     <script defer src="/assets/clean/download.js?v=2"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=222" />
-    <script defer src="/assets/liquid-glass/surfaces.js?v=254"></script>
+    <script defer src="/assets/liquid-glass/surfaces.js?v=255"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=233" />
     <script defer src="/assets/studio/studio.js?v=164"></script>
     <link rel="stylesheet" href="/assets/clean/aurora.css?v=208" />
@@ -6542,7 +6542,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/finish.css?v=176" />'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/polish.css?v=176" />'}
     <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=206" />
-    <link rel="stylesheet" href="/assets/liquid-glass/controls.css?v=231" />
+    <link rel="stylesheet" href="/assets/liquid-glass/controls.css?v=255" />
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/experience.css?v=202" />'}
     <link rel="stylesheet" href="/assets/clean/cinema.css?v=207" />
     <link rel="stylesheet" href="/assets/clean/profiles.css?v=209" />
@@ -6550,9 +6550,9 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=206" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=205" />' : ""}
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=200" />' : ""}
     ${player || active === "social" ? '<link rel="stylesheet" href="/assets/party/watchroom-call.css?v=1" />' : ""}
-    <link rel="stylesheet" href="/assets/clean/performance.css?v=254" />
-    <link rel="stylesheet" href="/assets/clean/tv.css?v=5" />
-    <link rel="stylesheet" href="/assets/clean/details-premium.css?v=1" />
+    <link rel="stylesheet" href="/assets/clean/performance.css?v=255" />
+    <link rel="stylesheet" href="/assets/clean/tv.css?v=255" />
+    <link rel="stylesheet" href="/assets/clean/details-premium.css?v=255" />
     <link rel="stylesheet" href="/assets/clean/details-clarity.css?v=2" />
 </head>
 <body class="svCleanShell">
@@ -6760,6 +6760,11 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       return true;
     }
 
+    function setLibraryButtonLabel(button, text) {
+      const label = button.querySelector(":scope > .svNavMatchedLabel") || button;
+      if (label.textContent !== text) label.textContent = text;
+    }
+
     function syncLibraryButtons(root = document) {
       const watchlist = readWatchlist();
       const liked = readLiked();
@@ -6771,7 +6776,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
         const isSaved = savedWatch.has(key);
         button.classList.toggle("saved", isSaved);
         button.setAttribute("aria-pressed", isSaved ? "true" : "false");
-        if (!decorateDetailGlyph(button, isSaved ? "check" : "plus")) button.textContent = isSaved ? "✓" : (button.dataset.long === "true" ? "Save to My List" : "+");
+        if (!decorateDetailGlyph(button, isSaved ? "check" : "plus")) setLibraryButtonLabel(button, isSaved ? "✓" : (button.dataset.long === "true" ? "Save to My List" : "+"));
         button.title = isSaved ? "Remove from My List" : "Add to My List";
         button.setAttribute("aria-label", (isSaved ? "Remove " : "Add ") + (button.dataset.watchTitle || "title") + (isSaved ? " from My List" : " to My List"));
       });
@@ -6781,7 +6786,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
         const isLiked = savedLiked.has(key);
         button.classList.toggle("liked", isLiked);
         button.setAttribute("aria-pressed", isLiked ? "true" : "false");
-        if (!decorateDetailGlyph(button, isLiked ? "heartFilled" : "heart")) button.textContent = isLiked ? "♥" : "♡";
+        if (!decorateDetailGlyph(button, isLiked ? "heartFilled" : "heart")) setLibraryButtonLabel(button, isLiked ? "♥" : "♡");
         button.title = isLiked ? "Remove from Liked" : "Like this";
         button.setAttribute("aria-label", (isLiked ? "Unlike " : "Like ") + (button.dataset.likeTitle || "title"));
       });

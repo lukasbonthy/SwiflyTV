@@ -143,7 +143,7 @@ body.svCleanShell .dsContent > .dsRow.svCatalogRow > .movieRail {contain:layout 
    under ~0.115 CSS px/ms the *original* liquid refraction returns intact.
    The face keeps a frosted-glass tint instead of abruptly turning opaque. */
 @media (prefers-reduced-transparency: no-preference) {
-  html[data-sv-scroll-glass="soft"] body.svCleanShell:not([data-st-glass="off"]):not([data-st-glass="subtle"]) .svLiquidPane.svLiquidPane {
+  html[data-sv-scroll-glass="soft"] body.svCleanShell:not([data-st-glass="off"]):not([data-st-glass="subtle"]) .svLiquidPane.svLiquidPane:not(.svCardActionLens) {
     -webkit-backdrop-filter: blur(4px) saturate(1.10) !important;
     backdrop-filter: blur(4px) saturate(1.10) !important;
     background: rgb(var(--sv-glass-color, 255 255 255) / .33) !important;

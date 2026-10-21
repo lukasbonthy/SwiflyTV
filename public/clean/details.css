@@ -1,30 +1,20 @@
 /* v154: a cinematic detail panel, shared by routes and catalog overlays. */
 html { scrollbar-gutter: stable; }
-html.svDetailsOpen { overflow: hidden !important; }
-/* Local geometry must not cascade into every poster and title on the page. */
-@property --sv-detail-scene-scale { syntax:"<number>"; inherits:false; initial-value:1; }
-@property --sv-detail-scene-origin-y { syntax:"<length>"; inherits:false; initial-value:0px; }
-@property --sv-detail-scene-clip { syntax:"*"; inherits:false; initial-value:inset(0px); }
+/* Retain the page gutter while the full-window modal owns scrolling. */
+html.svDetailsOpen { overflow:hidden !important; scrollbar-gutter:auto; }
+html.svDetailsOpen body.svCleanShell { width:var(--sv-detail-page-width); }
 @property --sv-detail-start { syntax:"*"; inherits:false; initial-value:translateY(0px); }
 @property --sv-detail-dim-start { syntax:"<number>"; inherits:false; initial-value:1; }
-/* The catalog and fixed navigation recede together; the native dialog stays
-   outside the scene. Individual transforms preserve the mobile nav's centering. */
+@property --sv-detail-scroll { syntax:"<length>"; inherits:false; initial-value:0px; }
+/* Keep the masked artwork, fade and fixed navigation at their exact resting
+   coordinates. Only the detail panel moves; the scrim supplies the depth. */
 body.svCleanShell > [data-sv-browse-scene] { display:flow-root; }
-html[data-sv-detail-scene] body.svCleanShell > :is([data-sv-browse-scene],.topbar,.mobileNav) {
-  transform-origin:50% var(--sv-detail-scene-origin-y,0px);
-  scale:1; translate:0px 0px;
-  transition:scale 360ms cubic-bezier(.4,0,.2,1),translate 360ms cubic-bezier(.4,0,.2,1);
+/* Some browsers retain the wider fixed-position viewport after unlocking.
+   Keep fixed navigation aligned to the unchanged page content width. */
+html.svDetailsFramed body.svCleanShell > .topbar { width:var(--sv-detail-page-width); }
+@media (max-width:860px) {
+  html.svDetailsFramed body.svCleanShell > .mobileNav { left:calc(var(--sv-detail-page-width) / 2) !important; width:min(380px,calc(var(--sv-detail-page-width) - 32px)) !important; }
 }
-/* left:50% plus translateX(-50%) already anchors this nav at its center. */
-html[data-sv-detail-scene] body.svCleanShell > .mobileNav { transform-origin:0% var(--sv-detail-scene-origin-y,0px); }
-html[data-sv-detail-scene] body.svCleanShell > [data-sv-browse-scene] { clip-path:var(--sv-detail-scene-clip); }
-html:is([data-sv-detail-scene="opening"],[data-sv-detail-scene="open"]) body.svCleanShell > :is([data-sv-browse-scene],.topbar,.mobileNav) {
-  scale:var(--sv-detail-scene-scale,1); translate:0px 14px;
-  transition-duration:640ms;
-  transition-timing-function:cubic-bezier(.32,0,.15,1);
-}
-html:is([data-sv-detail-scene="opening"],[data-sv-detail-scene="closing"]) body.svCleanShell > :is([data-sv-browse-scene],.topbar,.mobileNav) { will-change:scale,translate; }
-html[data-sv-detail-scene] body.svCleanShell.reduceMotion > :is([data-sv-browse-scene],.topbar,.mobileNav) { scale:none !important; translate:none !important; clip-path:none !important; transition:none !important; will-change:auto !important; }
 body.svCleanShell .dsDetailPage.svDetailPage { padding: 94px 0 36px !important; background: #000 !important; }
 body.svCleanShell .svTitleDetails.svTitleDetails {
   position: relative !important; width: min(1100px, calc(100% - 48px)) !important; max-width: 1100px !important;
@@ -83,29 +73,40 @@ body.svCleanShell .svDetailAbout dt { margin-bottom: 6px; color: #6f6f6f; font-s
 body.svCleanShell .svDetailAbout dd { margin: 0; color: #bdbdbd; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
 body.svCleanShell .svDetailClose { position: absolute !important; top: 20px !important; right: 20px !important; z-index: 4; width: 34px !important; height: 34px !important; padding: 0 !important; display: grid !important; place-items: center; border-radius: 50% !important; }
 body.svCleanShell .svDetailDialog {
-  --sv-detail-rise: calc(100% + 1px);
-  position: fixed; inset: auto 0 0; width: min(1100px,calc(100vw - 48px)); max-width: none;
-  height: min(90svh,1100px); max-height: 90svh; margin: 0 auto; padding: 0;
-  overflow: hidden; border: 1px solid #ffffff1a; border-bottom:0; border-radius: 22px 22px 0 0; color: #f5f5f5; background: #050505;
-  box-shadow: 0 30px 120px #0009; -webkit-backdrop-filter: none; backdrop-filter: none;
+  --sv-detail-top-gap:max(7svh,calc(100svh - 1100px));
+  --sv-detail-rise:calc(100svh - var(--sv-detail-top-gap) + 1px);
+  position:fixed; inset:0; width:100vw; max-width:none;
+  height:100%; max-height:none; margin:0; padding:0;
+  overflow:hidden; border:0; border-radius:0; color:#f5f5f5; background:transparent;
+  box-shadow:none; -webkit-backdrop-filter:none; backdrop-filter:none;
 }
+body.svCleanShell .svDetailPanel {
+  position:relative; width:min(1100px,calc(100% - 48px)); margin:0 auto;
+  min-height:calc(100svh - var(--sv-detail-top-gap)); overflow:clip;
+  border:1px solid #ffffff1a; border-bottom:0; border-radius:22px 22px 0 0;
+  background:#050505; box-shadow:0 30px 120px #0009;
+}
+/* Clipping the travel prevents transforms from enlarging scroll overflow and
+   resizing the scrollbar thumb during the entrance. clip adds no scroller. */
+body.svCleanShell .svDetailStage { display:flow-root; overflow:clip; min-height:100%; }
 body.svCleanShell .svDetailDialog::backdrop { background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
 body.svCleanShell .svDetailScrim { position:fixed; inset:0; z-index:2147483646; background:#000b; opacity:1; pointer-events:none; }
 body.svCleanShell .svDetailScrim[hidden] { display:none !important; }
 /* One moving layer; bottom/height stay fixed throughout the slide. */
-body.svCleanShell .svDetailDialog:is([data-sv-detail-state="opening"],[data-sv-detail-state="closing"]) { will-change:transform; }
+body.svCleanShell .svDetailDialog:is([data-sv-detail-state="opening"],[data-sv-detail-state="closing"]) .svDetailPanel { will-change:transform; }
 body.svCleanShell .svDetailScrim:is([data-sv-detail-state="opening"],[data-sv-detail-state="closing"]) { will-change:opacity; }
-body.svCleanShell .svDetailDialog[data-sv-detail-motion="css"][data-sv-detail-state="opening"] { animation-name:svDetailsEnter; animation-duration:640ms; animation-timing-function:cubic-bezier(.32,0,.15,1); animation-fill-mode:both; }
-body.svCleanShell .svDetailDialog[data-sv-detail-motion="css"][data-sv-detail-state="closing"] { animation-name:svDetailsExit; animation-duration:360ms; animation-timing-function:cubic-bezier(.4,0,.2,1); animation-fill-mode:both; }
-body.svCleanShell .svDetailScrim[data-sv-detail-motion="css"][data-sv-detail-state="opening"] { animation:svDetailsDimIn 640ms cubic-bezier(.32,0,.15,1) both; }
-body.svCleanShell .svDetailScrim[data-sv-detail-motion="css"][data-sv-detail-state="closing"] { animation:svDetailsDimOut 360ms cubic-bezier(.4,0,.2,1) both; }
-body.svCleanShell :is(.svDetailDialog,.svDetailScrim)[data-sv-detail-motion="css"]:is([data-sv-detail-state="opening"],[data-sv-detail-state="closing"]) { animation-play-state:paused; }
-body.svCleanShell .svDetailViewport { height: 100%; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-gutter:stable; scrollbar-width: thin; scrollbar-color: #ffffff26 transparent; -webkit-overflow-scrolling:touch; }
+body.svCleanShell .svDetailDialog[data-sv-detail-motion="css"][data-sv-detail-state="opening"] .svDetailPanel { animation:svDetailsEnter 560ms cubic-bezier(.28,.06,.2,1) both; }
+body.svCleanShell .svDetailDialog[data-sv-detail-motion="css"][data-sv-detail-state="closing"] .svDetailPanel { animation:svDetailsExit 320ms cubic-bezier(.4,0,.2,1) both; }
+body.svCleanShell .svDetailScrim[data-sv-detail-motion="css"][data-sv-detail-state="opening"] { animation:svDetailsDimIn 560ms cubic-bezier(.28,.06,.2,1) both; }
+body.svCleanShell .svDetailScrim[data-sv-detail-motion="css"][data-sv-detail-state="closing"] { animation:svDetailsDimOut 320ms cubic-bezier(.4,0,.2,1) both; }
+body.svCleanShell .svDetailDialog[data-sv-detail-motion="css"]:is([data-sv-detail-state="opening"],[data-sv-detail-state="closing"]) .svDetailPanel,
+body.svCleanShell .svDetailScrim[data-sv-detail-motion="css"]:is([data-sv-detail-state="opening"],[data-sv-detail-state="closing"]) { animation-play-state:paused; }
+body.svCleanShell .svDetailDialog .svDetailViewport.svCinemaPage { height:100%; padding:var(--sv-detail-top-gap) 0 0 !important; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; scrollbar-gutter:stable; scrollbar-width:thin; scrollbar-color:#ffffff40 transparent; -webkit-overflow-scrolling:touch; }
 body.svCleanShell .svDetailDialog .svTitleDetails.svTitleDetails { width: 100% !important; max-width: none !important; margin: 0 !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; animation:none !important; filter:none !important; }
 body.svCleanShell .svDetailDialog .svDetailHero { min-height: 520px; height: min(55vw,590px); }
 body.svCleanShell .svDetailDismiss.dsIconBtn { position: absolute !important; top: 16px; right: 16px; z-index: 5; width: 34px !important; height: 34px !important; min-height: 34px !important; padding: 0 !important; }
 body.svCleanShell .svDetailDismiss > svg:not(.svLiquidPane__filters) { width: 15px; height: 15px; }
-body.svCleanShell .svDetailChrome { position:absolute; inset:12px 12px auto; z-index:5; display:flex; align-items:center; gap:12px; padding:4px; border:1px solid transparent; border-radius:20px; pointer-events:none; }
+body.svCleanShell .svDetailChrome { position:sticky; top:16px; z-index:5; display:flex; align-items:center; gap:12px; height:45px; margin:0 18px -45px; padding:0; border:1px solid transparent; border-radius:20px; pointer-events:none; }
 body.svCleanShell .svDetailChrome > button { pointer-events:auto; }
 body.svCleanShell .svDetailChrome :is(.svDetailBack,.svDetailDismiss).dsIconBtn { position:relative !important; inset:auto !important; width:44px !important; height:44px !important; min-height:44px !important; padding:0 !important; }
 body.svCleanShell .svDetailChromeTitle { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px; font-weight:500; color:#eee; opacity:0; }
@@ -127,8 +128,8 @@ body.svCleanShell .svDetailLoading > p { padding: 0 32px; color: #888; font-size
 body.svCleanShell .svDetailError { padding: 90px 32px; }
 body.svCleanShell .svDetailError h2 { font-size: 24px; font-weight: 500; }
 body.svCleanShell .svDetailError p { margin: 14px 0 24px; color: #999; font-size: 14px; line-height: 1.6; }
-@keyframes svDetailsEnter { from {transform:var(--sv-detail-start,translateY(var(--sv-detail-rise)));} to {transform:translateY(0px);} }
-@keyframes svDetailsExit { from {transform:var(--sv-detail-start,translateY(0px));} to {transform:translateY(var(--sv-detail-rise));} }
+@keyframes svDetailsEnter { from {transform:var(--sv-detail-start,translateY(calc(var(--sv-detail-rise) + var(--sv-detail-scroll))));} to {transform:translateY(0px);} }
+@keyframes svDetailsExit { from {transform:var(--sv-detail-start,translateY(0px));} to {transform:translateY(calc(var(--sv-detail-rise) + var(--sv-detail-scroll)));} }
 @keyframes svDetailsDimIn { from {opacity:var(--sv-detail-dim-start,0);} to {opacity:1;} }
 @keyframes svDetailsDimOut { from {opacity:var(--sv-detail-dim-start,1);} to {opacity:0;} }
 @keyframes svDetailsLoading { from {transform:translate3d(-100%,0,0);} to {transform:translate3d(100%,0,0);} }
@@ -146,14 +147,13 @@ body.svCleanShell .svDetailError p { margin: 14px 0 24px; color: #999; font-size
   body.svCleanShell .svDetailCastRail { grid-auto-columns: 88px; gap: 12px; }
   body.svCleanShell .svDetailRecommendations { grid-template-columns: repeat(auto-fill,minmax(126px,1fr)); gap: 22px 12px; }
   body.svCleanShell .svDetailAbout { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px; }
-  body.svCleanShell .svDetailDialog { width: calc(100vw - 12px); height: 90svh; max-height: 90svh; border-radius: 18px 18px 0 0; }
+  body.svCleanShell .svDetailPanel { width:calc(100% - 12px); border-radius:18px 18px 0 0; }
   body.svCleanShell .svDetailCollectionRail { grid-auto-columns:120px; gap:12px; }
   body.svCleanShell .svDetailDismiss.dsIconBtn { top: 12px; right: 12px; }
 }
-body.svCleanShell.reduceMotion :is(.svDetailDialog,.svDetailScrim), body.svCleanShell.reduceMotion .svDetailLoadingArt::after { animation:none !important; }
+body.svCleanShell.reduceMotion :is(.svDetailPanel,.svDetailScrim), body.svCleanShell.reduceMotion .svDetailLoadingArt::after { animation:none !important; }
 @media (prefers-reduced-motion:reduce) {
-  html[data-sv-detail-scene] body.svCleanShell > :is([data-sv-browse-scene],.topbar,.mobileNav) { scale:none !important; translate:none !important; clip-path:none !important; transition:none !important; will-change:auto !important; }
-  body.svCleanShell :is(.svDetailDialog,.svDetailScrim), body.svCleanShell .svDetailLoadingArt::after { animation:none !important; }
+  body.svCleanShell :is(.svDetailPanel,.svDetailScrim), body.svCleanShell .svDetailLoadingArt::after { animation:none !important; }
   body.svCleanShell .svDetailBackdrop { transform:none; }
 }
 

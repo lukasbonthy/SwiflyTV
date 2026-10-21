@@ -46,7 +46,7 @@ function glass(markup = '') {
   return env;
 }
 
-test('Every visible action family uses the navigation lens and releases offscreen graphs',()=>{
+test('Navigation-style controls release offscreen graphs while poster actions keep native panes',()=>{
  const env=glass('<div class="dsCardQuickActions"><button class="dsMiniBtn">Save</button></div><a class="dsRowBtn">View all</a><button class="dsRowArrow">Next</button><nav class="pagination"><a>2</a></nav><div class="dsEpisodeChips"><a>Episode 1</a></div><div id="controlPanel"><button class="stChoice">Appearance</button></div><main class="svPartyHub"><button class="sv100Channel">General</button><div class="sv100RoomItem"><button class="partySecondaryBtn">Join</button></div><div class="partyMovieResults"><button>Pick film</button></div></main>'),w=env.window,d=w.document;
  d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');
  const controls=[...d.querySelectorAll('button,a')];assert.equal(controls.length,9);
@@ -54,10 +54,10 @@ test('Every visible action family uses the navigation lens and releases offscree
   assert(!d.querySelector('#controlPanel .svLiquidPane'),'Studio owns the appearance of its settings buttons');
  assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length,0,'offscreen controls must not allocate graphs');
  env.intersect(true);w.flush(16);
- for(const host of controls.filter(host=>!host.closest('#controlPanel'))){const pane=host.querySelector(':scope>.svLiquidPane');assert.equal(pane.dataset.swiflyRenderer,'svg');assert.equal(pane.style.getPropertyValue('--sv-glass-default-tint'),'0.2','the face must match navigation');}
+ for(const host of controls.filter(host=>!host.closest('#controlPanel'))){const pane=host.querySelector(':scope>.svLiquidPane');if(host.matches('.dsMiniBtn')){assert(pane.classList.contains('svCardActionLens'));assert.equal(pane.dataset.swiflyRenderer,'blur');}else{assert.equal(pane.dataset.swiflyRenderer,'svg');assert.equal(pane.style.getPropertyValue('--sv-glass-default-tint'),'0.2','the face must match navigation');}}
  const generated=env.textures.length;assert.equal(generated,1,'same geometry shares a cached field');
  env.intersect(false);w.flush(32);assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length,0,'leaving the viewport releases the graphs');
- env.intersect(true);w.flush(48);assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length,8);assert.equal(env.textures.length,generated);
+ env.intersect(true);w.flush(48);assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length,7);assert.equal(env.textures.length,generated);
  assert.equal(w.frameCount(),0,'coverage must not add an idle render loop');env.finish();
 });
 
@@ -190,14 +190,14 @@ test('Destroying motion leaves pending reveal sections visible', () => {
   assert.equal(w.frameCount(), 0); env.finish();
 });
 
-test('Repeated catalog controls share cached nav geometry and release offscreen filters', () => {
+test('Repeated poster controls stay native without allocating optical fields', () => {
   const env = glass('<div class="svLiquidPane" data-swifly-glass></div><div class="dsCardQuickActions">' + '<button class="dsMiniBtn">Save</button>'.repeat(60) + '</div><div class="dsAccountCard">Account</div>'), w = env.window, d = w.document;
   w.boot('liquid-glass/liquid-glass.js'); w.flush(16);
   let reads = 0; const computed = w.getComputedStyle;
   w.getComputedStyle = (...args) => {reads++; return computed(...args);};
   w.boot('liquid-glass/surfaces.js'); env.intersect(true); w.flush(32);
-  assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length,61,'visible catalog controls must use the actual nav renderer');
-  assert([...d.querySelectorAll('.dsMiniBtn')].every(node=>node.querySelector('.svLiquidPane[data-swifly-renderer=svg]')));assert.equal(env.textures.length,1,'repeated controls share the cached field');
+  assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length,1,'only navigation allocates an optical graph');
+  assert([...d.querySelectorAll('.dsMiniBtn')].every(node=>node.querySelector('.svCardActionLens[data-swifly-renderer=blur]')));assert.equal(env.textures.length,1,'poster controls allocate no additional fields');
   assert(reads<250,'one batch shares ancestor style reads');env.intersect(false);w.flush(48);assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length,1,'only persistent navigation remains when controls leave view');
   assert.equal(w.frameCount(), 0); env.finish();
 });

@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const {browser,source,cleanup} = require('./ui-helpers.cjs');
 test.afterEach(cleanup);
 
-test('hidden movie-card quick actions avoid allocating dozens of invisible SVG lenses',()=>{
+test('movie-card actions keep native glass through hover and focus without allocating SVG lenses',()=>{
   const markup = Array.from({length:20},(_,i)=>
     '<article class="movieCard dsCard"><div class="dsCardArtwork" data-card="'+i+'">'+
     '<div class="dsCardQuickActions"><a class="dsMiniBtn">Play</a><button class="dsMiniBtn">Save</button><button class="dsMiniBtn">Like</button></div>'+
@@ -34,7 +34,9 @@ test('hidden movie-card quick actions avoid allocating dozens of invisible SVG l
   assert(quick.every(node=>!mounts.has(node.querySelector('.svNavMatchedLens'))),'invisible catalog actions must not allocate SVG');
   const firstCard=d.querySelector('[data-card="0"]');
   firstCard.dispatchEvent(new w.MouseEvent('pointerover',{bubbles:true}));
-  assert.equal(quick.filter(node=>mounts.has(node.querySelector('.svNavMatchedLens'))).length,3,'the three hovered controls use the real optical graph');
+  assert.equal(quick.filter(node=>mounts.has(node.querySelector('.svNavMatchedLens'))).length,0,'poster controls always retain native dark frost');
+  quick[1].focus();
+  assert(quick.every(node=>!mounts.has(node.querySelector('.svNavMatchedLens'))),'keyboard focus must not switch the poster controls to liquid glass');
   firstCard.dispatchEvent(new w.MouseEvent('pointerout',{bubbles:true,relatedTarget:d.body}));
   assert.equal(quick.filter(node=>mounts.has(node.querySelector('.svNavMatchedLens'))).length,0,'moving away frees card optics');
   assert(mounts.has(hero.querySelector('.svNavMatchedLens')),'navigation and hero optics remain untouched');

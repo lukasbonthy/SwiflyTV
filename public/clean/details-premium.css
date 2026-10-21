@@ -4,9 +4,8 @@ body.svCleanShell .svCinemaPage .svTitleDetails.svTitleDetails {
   --sv-cinema-line: rgba(228,236,248,.15);
   background:#080b10 !important;
 }
-body.svCleanShell .svDetailDialog {
-  width:min(1250px,calc(100vw - 36px));
-  height:min(93svh,1100px); max-height:93svh;
+body.svCleanShell .svDetailPanel {
+  width:min(1250px,calc(100% - 36px));
   border-radius:28px 28px 0 0;
   border-color:rgba(231,242,255,.19);
   background:#080b10;
@@ -128,13 +127,13 @@ body.svCleanShell .svDetailPosterCard > span {
 }
 /* A narrow, lightweight top chrome gives Back/Close a clear hit target
    without introducing a giant backdrop-filter surface over the artwork. */
-body.svCleanShell .svDetailChrome {inset:16px 18px auto; padding:0; gap:10px;}
+body.svCleanShell .svDetailChrome {padding:0; gap:10px;}
 body.svCleanShell .svDetailChrome :is(.svDetailBack,.svDetailDismiss).dsIconBtn {
   width:45px !important; height:45px !important;
   min-width:45px !important; min-height:45px !important;
 }
 body.svCleanShell .svDetailScrolled .svDetailChrome {
-  padding:5px; margin:-5px; border-radius:19px;
+  padding:0; border-radius:19px;
   border-color:rgba(229,241,255,.14); background:rgba(12,16,22,.84);
 }
 body.svCleanShell .svDetailChromeTitle {font-weight:650; letter-spacing:-.01em;}
@@ -282,7 +281,8 @@ body.svCleanShell[data-st-glass="off"] .svCinemaPage .svDetailAbout > div {
   body.svCleanShell .svCinemaPage .svDetailBody {padding-left:32px; padding-right:32px;}
 }
 @media(max-width:680px) {
-  body.svCleanShell .svDetailDialog {width:calc(100vw - 12px);height:94svh;max-height:94svh;border-radius:21px 21px 0 0;}
+  body.svCleanShell .svDetailDialog {--sv-detail-top-gap:6svh;}
+  body.svCleanShell .svDetailPanel {width:calc(100% - 12px);border-radius:21px 21px 0 0;}
   body.svCleanShell .svCinemaPage .svDetailHero,
   body.svCleanShell .svDetailDialog .svCinemaPage .svDetailHero {height:auto;min-height:610px;}
   body.svCleanShell .svCinemaPage .svDetailBackdrop {background-position:58% 22%;}

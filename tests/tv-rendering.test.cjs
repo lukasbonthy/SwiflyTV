@@ -153,6 +153,8 @@ test('TV movie detail entry focuses Play and Back restores the exact card withou
     await page.keyboard.press('Enter');
     await page.waitForFunction(()=>document.activeElement.matches('.svDetailDialog .svDetailActions .dsPrimaryBtn')&&!document.querySelector('.svDetailDialog').hasAttribute('aria-busy'));
     await page.waitForFunction(()=>document.querySelector('.svDetailDialog').dataset.svDetailState==='open');
+    const frame=await page.locator('.svDetailViewport').boundingBox();
+    assert.deepEqual(frame,{x:0,y:0,width:1363,height:936},'TV details keep their scroll area at the window edge');
     const opened=await page.evaluate(()=>({top:scrollY,detailTop:document.querySelector('.svDetailViewport').scrollTop,guide:document.getElementById('swiflyTvGuide').hidden,ring:document.activeElement.classList.contains('swifly-tv-focus-target')}));
     assert.equal(opened.detailTop,0,'Default Play focus never scrolls the cinematic detail sheet');assert.equal(opened.top,before.top,'Opening details preserves the catalog anchor');assert(opened.guide&&opened.ring,'The movie action owns focus while catalog controls stay hidden');
     await page.keyboard.press('Escape');await page.waitForFunction(()=>!document.querySelector('.svDetailDialog').open);
@@ -185,6 +187,7 @@ test('Moving upward in TV movie details keeps the focused action below fixed dia
   try {
     await page.locator('.movieRail .posterWrap').first().click();
     await page.waitForFunction(()=>document.activeElement.matches('.svDetailDialog .svDetailActions .dsPrimaryBtn'));
+    assert.deepEqual(await page.locator('.svDetailViewport').boundingBox(),{x:0,y:0,width:1280,height:720},'720p framing sizes the inner panel, not the scroll area');
     await page.locator('.svDetailChapterNav a').first().focus();
     await page.locator('.svDetailViewport').evaluate(node=>node.scrollTo({top:node.scrollHeight,behavior:'instant'}));
     await page.keyboard.press('ArrowUp');
