@@ -608,6 +608,28 @@ test('mobile header and dock keep navigation, search and account controls reacha
       await page.locator('.dsProfileMenu > summary').tap();
       const account=await page.locator('.dsProfileDropdown').boundingBox();
       assert(account.x>=8&&account.x+account.width<=width-8,'the account menu must remain visible beside the compact header');
+      const audit=await page.evaluate(()=>{
+        const panel=document.querySelector('.dsProfileDropdown'),r=panel.getBoundingClientRect();
+        const links=[...panel.querySelectorAll(':scope > a[href]')];
+        const logout=panel.querySelector('.dsDropdownLogout');
+        const close=panel.querySelector('.svAccountMenuClose');
+        return {
+          bottom:r.bottom,viewport:innerHeight,client:panel.clientHeight,scroll:panel.scrollHeight,
+          labels:[...panel.querySelectorAll('.svAccountMenuSection')].filter(n=>getComputedStyle(n).display!=='none').map(n=>n.textContent),
+          smallestLink:Math.min(...links.map(n=>n.getBoundingClientRect().height)),
+          logoutWrap:logout?getComputedStyle(logout).whiteSpace:null,
+          closeVisible:!!close&&getComputedStyle(close).display!=='none'
+        };
+      });
+      assert(audit.bottom<=audit.viewport-8,'account sheet must not fall below the phone viewport');
+      assert(audit.scroll>audit.client,'account links must scroll inside the bounded sheet');
+      assert.equal(audit.labels.length,4,'profile, library, social and discovery links must be grouped');
+      assert(audit.smallestLink>=44,'every account link must be touch-friendly');
+      if(audit.logoutWrap)assert.equal(audit.logoutWrap,'nowrap','log out must stay on one line');
+      assert(audit.closeVisible,'account menu must have an explicit close control');
+      await page.locator('.svAccountMenuClose').tap();
+      assert.equal(await page.locator('.dsProfileMenu').getAttribute('open'),null,'close should restore the browse page');
+      await page.locator('.dsProfileMenu > summary').tap();
       const studio=page.locator('.dsProfileDropdown [data-st-open]');
       assert(await studio.isVisible(),'Studio must remain reachable when the mobile header is simplified');
       await studio.tap();
