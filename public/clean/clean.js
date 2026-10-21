@@ -9,7 +9,7 @@
   const node=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n;};
   function recent(){try{return JSON.parse(localStorage.getItem('swiflytv.searchRecents')||'[]').filter(q=>typeof q==='string').slice(0,6);}catch{return [];}}
   function remember(q){if(!q)return;try{localStorage.setItem('swiflytv.searchRecents',JSON.stringify([q,...recent().filter(v=>v!==q)].slice(0,6)));}catch{}}
-  function paintRecent(){if(!recents)return;recents.replaceChildren();if(input.value.trim())return;const values=recent();recents.append(node('span','svSearchLabel',values.length?'PICK UP THE SEARCH':'START SOMEWHERE GOOD'));const list=node('div','svSearchRecentList');for(const q of values.length?values:['Barbie','Spider-Man','Project Hail Mary']){const b=node('button','',q);b.type='button';b.addEventListener('click',()=>{input.value=q;search(true);input.focus();});list.append(b);}if(values.length){const clear=node('button','svSearchClear','Clear history');clear.type='button';clear.addEventListener('click',()=>{try{localStorage.removeItem('swiflytv.searchRecents');}catch{}paintRecent();});list.append(clear);}recents.append(list);}
+  function paintRecent(){if(!recents)return;recents.replaceChildren();if(input.value.trim())return;const values=recent();recents.append(node('span','svSearchLabel',values.length?'Recent searches':'Try a title'));const list=node('div','svSearchRecentList');for(const q of values.length?values:['Barbie','Spider-Man','Project Hail Mary']){const b=node('button','',q);b.type='button';b.addEventListener('click',()=>{input.value=q;search(true);input.focus();});list.append(b);}if(values.length){const clear=node('button','svSearchClear','Clear history');clear.type='button';clear.addEventListener('click',()=>{try{localStorage.removeItem('swiflytv.searchRecents');}catch{}paintRecent();input.focus();});list.append(clear);}recents.append(list);}
   function cancel(){clearTimeout(timer);controller?.abort();controller=null;++epoch;}
   function close(restore=true){cancel();popup.hidden=true;toggle.setAttribute('aria-expanded','false');selection=-1;if(restore)toggle.focus();}
   function open(){popup.hidden=false;toggle.setAttribute('aria-expanded','true');paintRecent();input.focus();if(input.value.trim().length>=2)search(true);}
@@ -22,7 +22,8 @@
   toggle.addEventListener('click',()=>popup.hidden?open():close());input.addEventListener('input',()=>search());popup.querySelector('[data-search-close]')?.addEventListener('click',()=>close());
   for(const b of popup.querySelectorAll('[data-search-type]'))b.addEventListener('click',()=>{type=b.dataset.searchType;for(const c of popup.querySelectorAll('[data-search-type]'))c.setAttribute('aria-pressed',String(c===b));search(true);input.focus();});
   popup.addEventListener('submit',e=>{remember(input.value.trim());if(type==='book'){e.preventDefault();location.assign('/audiobooks?q='+encodeURIComponent(input.value.trim()));}});
-  document.addEventListener('click',e=>{if(!popup.hidden&&!popup.contains(e.target)&&!toggle.contains(e.target))close(false);});
+  // Suggestions can replace their own target before this click reaches document.
+  document.addEventListener('click',e=>{if(!popup.hidden&&!e.composedPath().includes(popup)&&!toggle.contains(e.target))close(false);});
   document.addEventListener('keydown',e=>{
    if(e.key==='Escape'&&!popup.hidden){e.preventDefault();close();return;}
    if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();popup.hidden?open():close();return;}

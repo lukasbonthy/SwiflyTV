@@ -1,5 +1,7 @@
 'use strict';
 const {icon}=require('../public/connect/icons');
-function featureNav(active){return '<nav class="svFeatureNav" aria-label="Explore more of SwiflyTV">'+[['friends','Friends','people'],['recommendations','For you','spark'],['audiobooks','Audiobooks','headphones']].map(([key,label,glyph])=>`<a href="/${key}"${active===key?' aria-current="page"':''}>${icon(glyph)}<span>${label}</span></a>`).join('')+'</nav>';}
-function movieArtwork(){return `<div class="svMoodArtwork" aria-hidden="true"><div class="svMoodPosters"><img src="https://image.tmdb.org/t/p/w342/bjiS5ipwxb9JFy3XRRN4OAilSeX.jpg" alt="" width="342" height="513" loading="lazy" decoding="async"><img src="https://image.tmdb.org/t/p/w342/iuFNMS8U5cb6xfzi51Dbkovj7vM.jpg" alt="" width="342" height="513" loading="lazy" decoding="async"><img src="https://image.tmdb.org/t/p/w342/iOb2fjXLbpJgyQXe46n1WtGCnaa.jpg" alt="" width="342" height="513" loading="lazy" decoding="async"></div><span class="svMoodArtworkLabel">${icon('spark')}A whole world of possibilities.</span></div>`;}
-module.exports={icon,featureNav,movieArtwork};
+function featureNav(active,{discovery=false}={}){
+ const items=discovery?[['search','Titles','search'],['recommendations','AI Search','spark'],['audiobooks','Audiobooks','headphones']]:[['friends','Friends','people'],['recommendations','AI Search','spark'],['audiobooks','Audiobooks','headphones']];
+ return '<nav class="svFeatureNav" aria-label="'+(discovery?'Discovery categories':'Explore more of SwiflyTV')+'">'+items.map(([key,label,glyph])=>`<a href="/${key}"${active===key?' aria-current="page"':''}>${icon(glyph)}<span>${label}</span></a>`).join('')+'</nav>';
+}
+module.exports={icon,featureNav};
