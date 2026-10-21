@@ -227,3 +227,33 @@ body.svCleanShell .svDetailDialog .svCinemaPage .svDetailIdentity[data-cinema-re
   opacity: 1 !important;
   transform: none !important;
 }
+
+/* Play, saved/checkmark and heart keep the same charcoal frost as the info
+   control. This native material never upgrades to SVG refraction, including
+   hover, keyboard focus, selected states, and the scrolling glass tier. */
+body.svCleanShell .dsCardQuickActions .dsMiniBtn > .svCardActionLens.svLiquidPane {
+  background:rgb(10 13 17 / .82) !important;
+  -webkit-backdrop-filter:blur(10px) saturate(1.08) !important;
+  backdrop-filter:blur(10px) saturate(1.08) !important;
+  box-shadow:inset 0 0 0 1px rgb(255 255 255 / .27),0 2px 8px rgb(0 0 0 / .16) !important;
+  transition:none !important;
+}
+body.svCleanShell[data-st-glass="subtle"] .dsCardQuickActions .dsMiniBtn.svGlassSurface {
+  background:transparent !important;-webkit-backdrop-filter:none !important;backdrop-filter:none !important;
+}
+body.svCleanShell[data-st-glass="subtle"] .dsCardQuickActions .dsMiniBtn > .svCardActionLens.svLiquidPane { display:block !important; }
+@media (hover:hover) and (pointer:fine) and (min-width:861px) {
+  body.svCleanShell .dsCardArtwork:not(:hover):not(:focus-within) .dsCardQuickActions .svCardActionLens.svLiquidPane {
+    -webkit-backdrop-filter:none !important;backdrop-filter:none !important;
+  }
+}
+body.svCleanShell[data-st-glass="off"] .dsCardQuickActions .dsMiniBtn > .svCardActionLens.svLiquidPane {
+  background:#101318 !important;-webkit-backdrop-filter:none !important;backdrop-filter:none !important;
+}
+body.svCleanShell[data-st-glass="off"] .dsCardQuickActions .dsMiniBtn.svGlassSurface { background:#101318 !important; }
+@media (prefers-reduced-transparency:reduce) {
+  body.svCleanShell .dsCardQuickActions .dsMiniBtn.svGlassSurface { background:#101318 !important; }
+  body.svCleanShell .dsCardQuickActions .dsMiniBtn > .svCardActionLens.svLiquidPane {
+    background:#101318 !important;-webkit-backdrop-filter:none !important;backdrop-filter:none !important;
+  }
+}

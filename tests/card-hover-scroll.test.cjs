@@ -38,7 +38,7 @@ test('nested rail movement and focused controls do not interrupt normal UI', asy
   env.finish();
 });
 
-test('scrolling caches the hovered lens, defers new hover optics and keeps focus responsive', async () => {
+test('movie actions keep the same native dark panes through hover, scrolling and focus', async () => {
   const markup='<div class="dsHeroActions"><button class="dsPrimaryBtn">Play featured</button></div>'+
     '<article class="movieCard"><div class="dsCardArtwork"><a class="dsThumb">Poster</a>'+
     '<div class="dsCardQuickActions"><a class="dsMiniBtn">Play</a><button class="dsMiniBtn">Save</button><button class="dsMiniBtn">Like</button></div></div></article>';
@@ -60,25 +60,27 @@ test('scrolling caches the hovered lens, defers new hover optics and keeps focus
   const quickCount=()=>controls.filter(host=>mounts.has(host.querySelector('.svNavMatchedLens'))).length;
   assert(mounts.has(hero.querySelector('.svNavMatchedLens')));
   artwork.dispatchEvent(new w.MouseEvent('pointerover',{bubbles:true}));
-  assert.equal(quickCount(),3,'stationary hover retains the original glass refraction');
+  const panes=controls.map(host=>host.querySelector('.svCardActionLens'));
+  assert(panes.every(Boolean));assert.equal(quickCount(),0,'poster controls never allocate refractive filters');
   const oldMatches=artwork.matches.bind(artwork);
   artwork.matches=selector=>selector===':hover'?true:oldMatches(selector);
   artwork.dispatchEvent(new w.WheelEvent('wheel',{deltaY:130,bubbles:true,cancelable:true}));
-  assert.equal(quickCount(),3,'wheel input preserves the existing lens while CSS switches it to soft glass');
+  assert.equal(quickCount(),0,'wheel input keeps the same native material');
   artwork.matches=selector=>selector===':hover'?false:oldMatches(selector);
   artwork.dispatchEvent(new w.MouseEvent('pointerout',{bubbles:true,relatedTarget:d.body}));
   assert.equal(quickCount(),0,'a departing card releases its lens');
   artwork.dispatchEvent(new w.MouseEvent('pointerover',{bubbles:true}));
   assert.equal(quickCount(),0,'new passing hover must not mount optics while moving');
   controls[1].focus();
-  assert.equal(quickCount(),3,'focus keeps glass reachable even while scrolling');
+  assert.equal(d.activeElement,controls[1]);assert.equal(quickCount(),0,'focus keeps the native dark material');
   controls[1].blur();
   artwork.matches=selector=>selector===':hover'?false:oldMatches(selector);
   // Reset currently hovered optics with a real pointer departure.
   artwork.dispatchEvent(new w.MouseEvent('pointerout',{bubbles:true,relatedTarget:d.body}));
   await new Promise(resolve=>setTimeout(resolve,200));
   artwork.dispatchEvent(new w.MouseEvent('pointerover',{bubbles:true}));
-  assert.equal(quickCount(),3,'normal hover comes back once the page stops');
+  assert.equal(quickCount(),0,'resting hover also keeps native dark glass');
+  assert.deepEqual(controls.map(host=>host.querySelector('.svCardActionLens')),panes,'the same panes survive the whole gesture');
   assert(mounts.has(hero.querySelector('.svNavMatchedLens')),'main hero lens never changes');
   w.SwiflyGlassSurfaces.destroy();w.SwiflyPremiumScroll.destroy();env.finish();
 });

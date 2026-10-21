@@ -183,6 +183,7 @@ test('Native control material has one clear rim and preserves functional generat
   const samples=await page.locator('.ordinary,.dsAccountActions a,.dsMiniBtn,#sv103RoomCode,.sv100Channel,.sv100RoomItem button,.stChoice').evaluateAll(nodes=>nodes.map(node=>{const s=getComputedStyle(node),face=getComputedStyle(node.querySelector(':scope>.svLiquidPane')||node);return {class:node.className,fill:face.backgroundColor,image:face.backgroundImage,shadow:face.boxShadow,border:s.borderWidth,filter:face.backdropFilter,optic:!!node.querySelector(':scope>.svLiquidPane')};}));
   for(const sample of samples){
    if(sample.class.includes('stChoice')){assert.equal(sample.optic,false,'Studio keeps its own original controls');continue;}
+   if(sample.class.includes('dsMiniBtn')){assert.equal(sample.fill,'rgba(10, 13, 17, 0.82)');assert.match(sample.filter,/blur\(10px\)/);assert.equal(sample.border,'0px');continue;}
    const rgba=sample.fill.match(/[\d.]+/g).map(Number);
    assert.deepEqual(rgba.slice(0,3),[255,255,255],sample.class+' must share the clear white material');
    assert(rgba[3]>=.2&&rgba[3]<=.24,'every control family keeps the shared navigation fill');
@@ -196,11 +197,11 @@ test('Native control material has one clear rim and preserves functional generat
   assert.equal(await page.locator('.sv100RoomItem .svLiquidPane').count(),1,'Party keeps the full nav lens');
   assert.equal(await page.locator('#controlPanel .svLiquidPane').count(),0,'Studio stays free of extra optical panes');
   await page.evaluate(()=>document.body.dataset.stGlass='off');
-  const off=await page.locator('.ordinary,.sv100Channel').evaluateAll(nodes=>nodes.map(node=>({fill:getComputedStyle(node).backgroundColor,filter:getComputedStyle(node).backdropFilter})));
+  const off=await page.locator('.ordinary,.sv100Channel,.dsMiniBtn').evaluateAll(nodes=>nodes.map(node=>({fill:getComputedStyle(node).backgroundColor,filter:getComputedStyle(node).backdropFilter})));
   assert(off.every(style=>style.filter==='none'&&!style.fill.startsWith('rgba(')),'selected native controls must also obey solid mode: '+JSON.stringify(off));
   await page.evaluate(()=>document.body.dataset.stGlass='liquid');
   const session=await page.context().newCDPSession(page);await session.send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-transparency',value:'reduce'}]});
-  const reduced=await page.locator('.ordinary,.sv100Channel').evaluateAll(nodes=>nodes.map(node=>({fill:getComputedStyle(node).backgroundColor,filter:getComputedStyle(node).backdropFilter})));
+  const reduced=await page.locator('.ordinary,.sv100Channel,.dsMiniBtn').evaluateAll(nodes=>nodes.map(node=>({fill:getComputedStyle(node).backgroundColor,filter:getComputedStyle(node).backdropFilter})));
   assert(reduced.every(style=>style.filter==='none'&&!style.fill.startsWith('rgba(')),'selected native controls must also obey reduced transparency: '+JSON.stringify(reduced));
  }finally{await browser.close();}
 });

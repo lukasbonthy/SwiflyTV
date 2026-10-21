@@ -2,18 +2,18 @@
 (() => {
   'use strict';
   if (window.SwiflyDetails) return;
-  let dialog,viewport,scrim,trigger,lastTrigger,request,currentHref='',generation=0,started=false,closingHistory=false,closingDialog=false;
+  let dialog,viewport,sheetPanel,contentHost,scrim,trigger,lastTrigger,request,currentHref='',generation=0,started=false,closingHistory=false,closingDialog=false;
   let trail=[],pendingOpen=[],currentURL='';
   let sheetTransition=null,transitionEpoch=0,closeWantsHistory=false;
-  let sceneRecords=[],entryFocus=null;
+  let entryFocus=null;
   const motionPreference=window.matchMedia('(prefers-reduced-motion: reduce)');
   // Xbox Edge needs the dialog to appear at the button press.
   const xboxInstant = /Xbox|XboxOne|Xbox Series/i.test(navigator.userAgent) || document.documentElement.dataset.svXbox === 'true';
   const reducedMotion=()=>xboxInstant||motionPreference.matches||document.body.classList.contains('reduceMotion');
-  // A full-height sheet needs a gentle takeoff and a long deceleration.
-  // Share its clock with the scrim and catalog, including the final frame.
-  const enterDuration=640,exitDuration=360;
-  const enterEase='cubic-bezier(.32,0,.15,1)',exitEase='cubic-bezier(.4,0,.2,1)';
+  // Only the inner panel travels. Its native scroll area and the catalog
+  // remain stationary, with one slightly quicker glide and a soft landing.
+  const enterDuration=560,exitDuration=320;
+  const enterEase='cubic-bezier(.28,.06,.2,1)',exitEase='cubic-bezier(.4,0,.2,1)';
   const fragments=new Map(),fragmentTTL=90000,fragmentLimit=8,fragmentByteLimit=2*1024*1024,fragmentSizeLimit=192*1024;
   let fragmentScope=null,fragmentBytes=0;
   // Intent prefetches are scoped to the current profile and share the actual
@@ -139,43 +139,18 @@
   function rememberDetailScroll() {
     const entry=ownEntry();if(entry){const scroll=dialog?.hasAttribute('aria-busy')?scrollPositions.get(currentURL)||0:viewport?.scrollTop||0;scrollPositions.set(currentURL,scroll);writeHistory('replaceState',{...history.state,svDetails:{...entry,scroll}},route(new URL(location.href)));}
   }
-  function updateSceneGeometry() {
-    if(!sceneRecords.length)return;
-    const width=Math.max(1,window.innerWidth),height=window.innerHeight;
-    const scroll=window.scrollY||document.scrollingElement?.scrollTop||0;
-    // Fixed navigation keeps its own containing block. The flowing scene is
-    // clipped to the current viewport before scaling, rather than promoting a
-    // long catalog bitmap or changing the document's scroll position.
-    const geometry=sceneRecords.map(record=>{
-      const {element,scene}=record,origin=scene?Math.max(0,scroll-element.offsetTop):-element.offsetTop;
-      const bottom=scene?Math.max(0,element.offsetHeight-origin-height):0;
-      return {element,scene,origin,bottom};
-    });
-    for(const {element,scene,origin,bottom} of geometry){
-      element.style.setProperty('--sv-detail-scene-scale',String(Math.max(.85,1-26/width)));
-      element.style.setProperty('--sv-detail-scene-origin-y',origin+'px');
-      if(scene)element.style.setProperty('--sv-detail-scene-clip','inset('+origin+'px 0px '+bottom+'px round 8px)');
-    }
+  function alignPageFrame() {
+    // clientWidth can include a stable gutter when scrollbar painting is
+    // suppressed. The root's laid-out box preserves the real content edge.
+    const width=document.documentElement.getBoundingClientRect().width||document.documentElement.clientWidth;
+    const gutter=Math.max(0,window.innerWidth-width);
+    // Keep this responsive without reading/writing geometry during a resize.
+    document.documentElement.style.setProperty('--sv-detail-page-width','calc(100vw - '+gutter+'px)');
+    document.documentElement.classList.add('svDetailsFramed');
   }
-  function prepareScene() {
-    if(reducedMotion()||sceneRecords.length)return;
-    const scene=document.querySelector('body > [data-sv-browse-scene]');
-    if(!scene)return;
-    const targets=[scene,...document.querySelectorAll('body > .topbar,body > .mobileNav')];
-    sceneRecords=targets.map(element=>({element,scene:element===scene,previous:['--sv-detail-scene-scale','--sv-detail-scene-origin-y','--sv-detail-scene-clip'].map(name=>[name,element.style.getPropertyValue(name)])}));
-    updateSceneGeometry();
-    sceneState('closed');
-    // Establish the resting style once, before the shared first render frame.
-    // Without this, the catalog can appear directly at its scaled endpoint.
-    getComputedStyle(scene).scale;
+  function syncSheetScroll() {
+    if(sheetTransition)sheetPanel.style.setProperty('--sv-detail-scroll',(viewport.scrollTop||0)+'px');
   }
-  function clearScene() {
-    delete document.documentElement.dataset.svDetailScene;
-    if(!sceneRecords.length)return;
-    for(const {element,previous} of sceneRecords)for(const [name,value] of previous){if(value)element.style.setProperty(name,value);else element.style.removeProperty(name);}
-    sceneRecords=[];
-  }
-  function sceneState(state) {if(sceneRecords.length&&!reducedMotion())document.documentElement.dataset.svDetailScene=state;}
   function cancelSheetTransition() {
     transitionEpoch++;
     const active=sheetTransition;sheetTransition=null;if(!active)return;
@@ -187,21 +162,21 @@
     const entering=state==='opening',reversing=Boolean(sheetTransition);
     // Keep the sheet's layout stationary. The shared glass renderer measures
     // layout dimensions, so its prepared lenses can travel with this layer.
-    const offscreen='translateY(var(--sv-detail-rise))';
-    const start=reversing?getComputedStyle(dialog).transform:(entering?offscreen:'translateY(0px)');
+    const offscreen='translateY(calc(var(--sv-detail-rise) + var(--sv-detail-scroll)))';
+    const start=reversing?getComputedStyle(sheetPanel).transform:(entering?offscreen:'translateY(0px)');
     const opacity=reversing?getComputedStyle(scrim).opacity:(entering?'0':'1');
     cancelSheetTransition();
     const epoch=transitionEpoch,duration=entering?enterDuration:exitDuration;
-    const active={epoch,animations:[],frame:0,timer:null,complete:null};sheetTransition=active;
-    dialog.style.removeProperty('animation-play-state');scrim.style.removeProperty('animation-play-state');
+    const active={epoch,animations:[],frame:0,timer:null,complete:null};sheetTransition=active;syncSheetScroll();
+    sheetPanel.style.removeProperty('animation-play-state');scrim.style.removeProperty('animation-play-state');
     dialog.dataset.svDetailState=state;scrim.dataset.svDetailState=state;
     const settle=()=>{
       if(sheetTransition!==active||epoch!==transitionEpoch)return;
       sheetTransition=null;clearTimeout(active.timer);cancelAnimationFrame(active.frame);
       dialog.dataset.svDetailState=entering?'open':'closed';scrim.dataset.svDetailState=entering?'open':'closed';
-      sceneState(entering?'open':'closed');
-      dialog.style.removeProperty('--sv-detail-start');scrim.style.removeProperty('--sv-detail-dim-start');
-      dialog.style.removeProperty('animation-play-state');scrim.style.removeProperty('animation-play-state');
+      sheetPanel.style.removeProperty('--sv-detail-start');scrim.style.removeProperty('--sv-detail-dim-start');
+      sheetPanel.style.removeProperty('--sv-detail-scroll');
+      sheetPanel.style.removeProperty('animation-play-state');scrim.style.removeProperty('animation-play-state');
       for(const animation of active.animations)animation.cancel();
       complete?.();
     };
@@ -212,12 +187,12 @@
     const begin=(play,timeout)=>{
       active.frame=requestAnimationFrame(()=>{
         active.frame=0;if(sheetTransition!==active)return;
-        sceneState(state);play();active.timer=setTimeout(settle,timeout);
+        play();active.timer=setTimeout(settle,timeout);
       });
     };
-    dialog.style.setProperty('--sv-detail-start',start||'translateY(0px)');
+    sheetPanel.style.setProperty('--sv-detail-start',start||'translateY(0px)');
     scrim.style.setProperty('--sv-detail-dim-start',opacity||'0');
-    if(typeof dialog.animate==='function'){
+    if(typeof sheetPanel.animate==='function'){
       dialog.dataset.svDetailMotion='waapi';scrim.dataset.svDetailMotion='waapi';
       try {
         const animate=(target,frames,options)=>{
@@ -226,7 +201,7 @@
           animation.finished.catch(()=>{});return animation.finished;
         };
         const easing=entering?enterEase:exitEase;
-        const sheet=animate(dialog,[{transform:start||'translateY(0px)'},{transform:entering?'translateY(0px)':offscreen}],{duration,easing});
+        const sheet=animate(sheetPanel,[{transform:start||'translateY(0px)'},{transform:entering?'translateY(0px)':offscreen}],{duration,easing});
         const dim=animate(scrim,[{opacity:opacity||'0'},{opacity:entering?'1':'0'}],{duration,easing});
         Promise.all([sheet,dim]).then(settle,()=>{});
         begin(()=>{for(const animation of active.animations)animation.play?.();},duration+100);return;
@@ -236,12 +211,12 @@
     }
     dialog.dataset.svDetailMotion='css';scrim.dataset.svDetailMotion='css';
     const name=entering?'svDetailsEnter':'svDetailsExit';
-    if(getComputedStyle(dialog).animationName!==name){settle();return;}
+    if(getComputedStyle(sheetPanel).animationName!==name){settle();return;}
     // CSS events from a cancelled animation can arrive after a new transition begins.
     // A bounded timer also completes when a background tab drops animationend entirely.
-    begin(()=>{dialog.style.animationPlayState='running';scrim.style.animationPlayState='running';},duration+34);
+    begin(()=>{sheetPanel.style.animationPlayState='running';scrim.style.animationPlayState='running';},duration+34);
   }
-  function settleReducedMotion() {if(reducedMotion()){sheetTransition?.complete();clearScene();}}
+  function settleReducedMotion() {if(reducedMotion())sheetTransition?.complete();}
   function focusReadyEntry(current) {
     const entry=entryFocus;if(!entry||entry.current!==current)return;entryFocus=null;
     if(entry.cancelled||current!==generation||!dialog.open||dialog.dataset.svDetailState==='closing'||document.documentElement.dataset.svTv!=='true')return;
@@ -260,9 +235,8 @@
     if(scrim){scrim.hidden=true;scrim.dataset.svDetailState='closed';}
     if(dialog){dialog.dataset.svDetailState='closed';dialog.removeAttribute('aria-busy');}
     document.documentElement.classList.remove('svDetailsOpen');
-    clearScene();
     if(trigger?.isConnected)trigger.focus({preventScroll:true});lastTrigger=trigger||lastTrigger;trigger=null;
-    viewport?.replaceChildren();currentHref='';currentURL='';trail=[];
+    contentHost?.replaceChildren();currentHref='';currentURL='';trail=[];
   }
   function leaveHistory() {
     if(closingHistory||!mediaRoute())return;
@@ -290,29 +264,33 @@
     const back=document.createElement('button');back.type='button';back.className='svDetailBack dsIconBtn';back.dataset.svDialogBack='';back.setAttribute('aria-label','Back to browsing');back.innerHTML=backIcon;
     const title=document.createElement('span');title.className='svDetailChromeTitle';title.textContent='Movie details';
     const dismiss=document.createElement('button');dismiss.type='button';dismiss.className='svDetailDismiss dsIconBtn';dismiss.dataset.svDetailClose='';dismiss.setAttribute('aria-label','Close movie details');dismiss.innerHTML=closeIcon;
-    chrome.append(back,title,dismiss);viewport=document.createElement('div');viewport.className='svDetailViewport svCinemaPage';viewport.dataset.cinemaPage='details';dialog.append(chrome,viewport);document.body.append(dialog);
+    chrome.append(back,title,dismiss);viewport=document.createElement('div');viewport.className='svDetailViewport svCinemaPage';viewport.dataset.cinemaPage='details';
+    const stage=document.createElement('div');stage.className='svDetailStage';
+    sheetPanel=document.createElement('div');sheetPanel.className='svDetailPanel';
+    contentHost=document.createElement('div');contentHost.className='svDetailContent';
+    sheetPanel.append(chrome,contentHost);stage.append(sheetPanel);viewport.append(stage);dialog.append(viewport);document.body.append(dialog);
     back.addEventListener('click',goBack);dismiss.addEventListener('click',close);
     const cancelEntryFocus=event=>{if(entryFocus&&dialog.contains(event.target))entryFocus.cancelled=true;};
     // Capture before the TV controller handles activation: the key that opens
     // another title must not count as navigation within the new request.
     window.addEventListener('keydown',cancelEntryFocus,true);dialog.addEventListener('pointerdown',cancelEntryFocus,true);
     dialog.addEventListener('focusin',event=>{if(entryFocus&&event.target!==entryFocus.initial&&event.target!==back)entryFocus.cancelled=true;});
-    viewport.addEventListener('scroll',()=>dialog.classList.toggle('svDetailScrolled',viewport.scrollTop>180),{passive:true});
+    viewport.addEventListener('scroll',()=>{syncSheetScroll();dialog.classList.toggle('svDetailScrolled',viewport.scrollTop>180);},{passive:true});
     dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
     dialog.addEventListener('close',()=>{
-      if(dialog.open||closingDialog||!viewport.firstChild)return;
+      if(dialog.open||closingDialog||!contentHost.firstChild)return;
       rememberDetailScroll();reset();leaveHistory();
     });
-    dialog.addEventListener('click',event=>{if(event.target!==dialog)return;const r=dialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)close();});
+    dialog.addEventListener('click',event=>{if(event.target instanceof Element&&!event.target.closest('.svDetailPanel'))close();});
   }
   async function render(href,from,scroll=0) {
     ensureDialog();entryFocus=null;request?.abort();window.SwiflyMotion?.stop(viewport);window.SwiflyMotion?.release(viewport);
     request=new AbortController();const current=++generation;currentHref=href;currentURL=route(new URL(location.href));scrollPositions.set(currentURL,scroll);
     const entering=!dialog.open||dialog.dataset.svDetailState==='closing';
-    if(!dialog.open){trigger=from||lastTrigger||document.activeElement;window.SwiflyMotion?.stop();prepareScene();document.documentElement.classList.add('svDetailsOpen');scrim.hidden=false;dialog.showModal();}
+    if(!dialog.open){trigger=from||lastTrigger||document.activeElement;window.SwiflyMotion?.stop();alignPageFrame();document.documentElement.classList.add('svDetailsOpen');scrim.hidden=false;dialog.showModal();}
     viewport.scrollTop=0;dialog.classList.remove('svDetailScrolled');dialog.setAttribute('aria-busy','true');
     dialog.setAttribute('aria-label','Movie details');dialog.querySelector('.svDetailChromeTitle').textContent='Movie details';
-    viewport.innerHTML='<div class="svDetailLoading" role="status"><div class="svDetailLoadingArt"></div><div class="svDetailLoadingCopy"><span></span><span></span><span></span></div><p>Loading details…</p></div>';
+    contentHost.innerHTML='<div class="svDetailLoading" role="status"><div class="svDetailLoadingArt"></div><div class="svDetailLoadingCopy"><span></span><span></span><span></span></div><p>Loading details…</p></div>';
     entryFocus={current,initial:document.activeElement,cancelled:false};
     dialog.querySelector('[data-sv-dialog-back]').setAttribute('aria-label',trail.length?'Back to previous title':'Back to browsing');
     if(entering){closeWantsHistory=false;moveSheet('opening',()=>{window.SwiflyGlassSurfaces?.refresh(dialog);window.SwiflyMotion?.refresh(viewport);});}
@@ -334,15 +312,15 @@
       if(current!==generation||!dialog.open)return;
       const parsed=new DOMParser().parseFromString(html,'text/html');
       const content=parsed.querySelector('.svTitleDetails');if(!content)throw new Error('Details unavailable');
-      content.querySelectorAll('script,[data-sv-details-back]').forEach(node=>node.remove());if(!cached)rememberFragment(href,content.outerHTML,scope);viewport.replaceChildren(content);
+      content.querySelectorAll('script,[data-sv-details-back]').forEach(node=>node.remove());if(!cached)rememberFragment(href,content.outerHTML,scope);contentHost.replaceChildren(content);
       const name=content.querySelector('h1')?.textContent.trim()||'Movie';dialog.setAttribute('aria-label',name+' details');dialog.querySelector('.svDetailChromeTitle').textContent=name;
-      initialize(content);viewport.scrollTop=scroll;dialog.classList.toggle('svDetailScrolled',scroll>180);
+      initialize(content);viewport.scrollTop=scroll;syncSheetScroll();dialog.classList.toggle('svDetailScrolled',scroll>180);
     }catch(error){
       if(error.name==='AbortError'||current!==generation||!dialog.open)return;
       const panel=document.createElement('div');panel.className='svDetailError';
       const heading=document.createElement('h2');heading.textContent='Details are taking a moment';
       const copy=document.createElement('p');copy.textContent='Open the full title page or return to browsing.';
-      const link=document.createElement('a');link.href=href;link.className='dsSecondaryBtn';link.dataset.svDetailFallback='';link.textContent='Open full details';panel.append(heading,copy,link);viewport.replaceChildren(panel);
+      const link=document.createElement('a');link.href=href;link.className='dsSecondaryBtn';link.dataset.svDetailFallback='';link.textContent='Open full details';panel.append(heading,copy,link);contentHost.replaceChildren(panel);
     }finally{if(current===generation){dialog.removeAttribute('aria-busy');focusReadyEntry(current);}}
   }
   async function open(value,from) {
@@ -405,7 +383,6 @@
     if(started)return;started=true;rememberCatalog();initialize(document);
     motionPreference.addEventListener?.('change',settleReducedMotion);
     document.addEventListener('visibilitychange',()=>{if(document.hidden)sheetTransition?.complete();});
-    window.addEventListener('resize',()=>{if(dialog?.open)updateSceneGeometry();},{passive:true});
     new MutationObserver(settleReducedMotion).observe(document.body,{attributes:true,attributeFilter:['class']});
     // Passing over movie cards during a wheel glide is not a real intent to
     // open them. Avoid parsing/fetching metadata for titles under the pointer.

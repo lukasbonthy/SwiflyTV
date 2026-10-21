@@ -23,8 +23,8 @@ for(const cssFallback of [false,true])test((cssFallback?'CSS fallback':'Native a
   await cdp.send('Performance.enable');
   await page.evaluate(async()=>{
    const opening=window.SwiflyDetails.open('/movie/101',document.getElementById('open'));
-   const dialog=document.querySelector('dialog');
-   const animation=dialog.getAnimations().find(item=>item.effect.target===dialog);
+   const panel=document.querySelector('.svDetailPanel');
+   const animation=panel.getAnimations().find(item=>item.effect.target===panel);
    window.entryFrames=animation.effect.getKeyframes();window.entryTiming=animation.effect.getTiming();
    animation.finish();
    await opening;
@@ -36,11 +36,11 @@ for(const cssFallback of [false,true])test((cssFallback?'CSS fallback':'Native a
   await page.evaluate(()=>{
    const dialog=document.querySelector('dialog'),animate=window.nativeAnimate||Element.prototype.animate;
    dialog.dataset.svDetailState='opening';
-   window.probeAnimation=animate.call(dialog,entryFrames,{...entryTiming,duration:1000,fill:'both'});
+   window.probeAnimation=animate.call(document.querySelector('.svDetailPanel'),entryFrames,{...entryTiming,duration:1000,fill:'both'});
    probeAnimation.pause();probeAnimation.currentTime=0;dialog.getBoundingClientRect();
   });
   const start=await page.evaluate(()=>{
-   const sheet=document.querySelector('dialog'),duration=entryTiming.duration;
+   const sheet=document.querySelector('.svDetailPanel'),duration=entryTiming.duration;
    probeAnimation.effect.updateTiming({duration});probeAnimation.currentTime=0;const from=sheet.getBoundingClientRect().top;
    probeAnimation.currentTime=duration;const to=sheet.getBoundingClientRect().top;
    probeAnimation.currentTime=16;const first=sheet.getBoundingClientRect().top;
@@ -50,9 +50,9 @@ for(const cssFallback of [false,true])test((cssFallback?'CSS fallback':'Native a
   assert(start.firstStep<start.distance*.025,'The first frame must ease into the rise instead of jumping a large part of the screen: '+JSON.stringify(start));
   const before=(await cdp.send('Performance.getMetrics')).metrics.find(m=>m.name==='LayoutCount').value;
   const positions=await page.evaluate(()=>{
-   const dialog=document.querySelector('dialog'),positions=[];
-   for(const time of [100,200,300,400,500,600,700,800,900]){probeAnimation.currentTime=time;positions.push(dialog.getBoundingClientRect().top);}
-   probeAnimation.currentTime=650;dialog.getBoundingClientRect();return positions;
+   const panel=document.querySelector('.svDetailPanel'),positions=[];
+   for(const time of [100,200,300,400,500,600,700,800,900]){probeAnimation.currentTime=time;positions.push(panel.getBoundingClientRect().top);}
+   probeAnimation.currentTime=650;panel.getBoundingClientRect();return positions;
   });
   const after=(await cdp.send('Performance.getMetrics')).metrics.find(m=>m.name==='LayoutCount').value;
   assert(positions[0]>positions.at(-1)+10,'The sheet must actually rise, rather than disabling its animation');
@@ -75,35 +75,31 @@ for(const cssFallback of [false,true])test((cssFallback?'CSS fallback':'Native a
  }finally{await browser.close();}
 });
 
-test('Closing the sheet returns the catalog to rest before releasing its scene geometry',{skip:!available&&'Chromium is not installed'},async()=>{
+test('Closing retains native modality until the panel exits without moving the catalog',{skip:!available&&'Chromium is not installed'},async()=>{
  const browser=await chromium.launch({headless:true});
  try{
   const page=await fixture(browser);
   await page.evaluate(async()=>{
    const opening=SwiflyDetails.open('/movie/101',document.getElementById('open'));
-   document.querySelector('dialog').getAnimations().forEach(a=>a.finish());await opening;
+   document.querySelector('.svDetailPanel').getAnimations().forEach(a=>a.finish());await opening;
   });
   await page.waitForFunction(()=>document.querySelector('dialog')?.dataset.svDetailState==='open');
-  await page.evaluate(()=>{
-   const scene=document.querySelector('[data-sv-browse-scene]');
-   scene.getAnimations().forEach(a=>a.finish());scene.getBoundingClientRect();
-   SwiflyDetails.close();
-  });
-  await page.waitForFunction(()=>document.querySelector('dialog').getAnimations().some(a=>a.playState==='running'));
   const result=await page.evaluate(async()=>{
    const sheet=document.querySelector('dialog'),scene=document.querySelector('[data-sv-browse-scene]');
-   const sheetAnimations=sheet.getAnimations(),duration=sheetAnimations[0].effect.getTiming().duration;
-   const sceneAnimations=scene.getAnimations();
-   for(const a of sceneAnimations){a.pause();a.currentTime=duration;}
-   const before=scene.getBoundingClientRect();
-   for(const a of [...sheetAnimations,...document.querySelector('.svDetailScrim').getAnimations()])a.finish();
+   const before=scene.getBoundingClientRect();SwiflyDetails.close();
+   const panel=document.querySelector('.svDetailPanel'),animations=panel.getAnimations();
+   const duration=animations[0].effect.getTiming().duration;
+   for(const animation of animations){animation.pause();animation.currentTime=duration/2;}
+   const during=scene.getBoundingClientRect(),midwayOpen=sheet.open;
+   for(const a of [...animations,...document.querySelector('.svDetailScrim').getAnimations()])a.finish();
    await Promise.resolve();await Promise.resolve();await Promise.resolve();
    const after=scene.getBoundingClientRect();
-   return {transitions:sceneAnimations.length,open:sheet.open,shift:Math.max(Math.abs(after.top-before.top),Math.abs(after.width-before.width))};
+   return {transitions:scene.getAnimations().length,midwayOpen,open:sheet.open,duration,
+    shift:Math.max(Math.abs(during.top-before.top),Math.abs(during.width-before.width),Math.abs(after.top-before.top),Math.abs(after.width-before.width))};
   });
-  assert(result.transitions>0,'The background still has its depth transition');
-  assert.equal(result.open,false);
-  assert(result.shift<.5,'Closing must not snap an unfinished background zoom back into place: '+JSON.stringify(result));
+  assert.equal(result.transitions,0,'catalog artwork and its fade never receive a scale transition');
+  assert(result.midwayOpen,'focus stays trapped until the exit finishes');assert.equal(result.open,false);
+  assert.equal(result.duration,320);assert(result.shift<.5,'the catalog must remain at its resting geometry: '+JSON.stringify(result));
  }finally{await browser.close();}
 });
 

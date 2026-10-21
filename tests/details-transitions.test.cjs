@@ -13,6 +13,16 @@ function setup(options={}){
 }
 function finish(animations){for(const animation of animations)animation.finish();return tick();}
 function traversal(w,action){return new Promise(resolve=>{w.addEventListener('popstate',async()=>{await tick();resolve();},{once:true});action();});}
+function fallbackStyle(w){
+ const computed=w.getComputedStyle;
+ w.getComputedStyle=node=>{
+  const style=computed(node);
+  if(!node.matches('.svDetailPanel'))return style;
+  // JSDOM caches this child's style across its parent's dataset changes.
+  // Browser tests exercise the actual CSS; these tests exercise watchdogs.
+  return new Proxy(style,{get(target,key){if(key==='animationName')return node.closest('dialog').dataset.svDetailState==='opening'?'svDetailsEnter':'svDetailsExit';return Reflect.get(target,key,target);}});
+ };
+}
 test('Entrance time starts with the first render frame, after fragment initialization',async()=>{
  const env=setup(),w=env.window,d=w.document,timers=[];
  w.setTimeout=(callback,delay)=>{timers.push({callback,delay});return timers.length;};w.clearTimeout=()=>{};
@@ -21,7 +31,7 @@ test('Entrance time starts with the first render frame, after fragment initializ
  assert(env.animations.every(animation=>animation.paused),'Both sheet and scrim must stay at their first keyframe until rendering can begin');
  w.flush(16);
  assert(env.animations.every(animation=>!animation.paused),'The first render frame starts the sheet and scrim together');
- assert.equal(timers.length,1);assert.equal(timers[0].delay,740);
+ assert.equal(timers.length,1);assert.equal(timers[0].delay,660);
  await finish(env.animations);assert.equal(d.querySelector('dialog').dataset.svDetailState,'open');env.finish();
 });
 test('Hiding the tab settles a pending entrance or exit even before its first render frame',async()=>{
@@ -131,7 +141,7 @@ test('Changing either motion preference settles an active entrance or exit immed
 test('The real CSS fallback retains modal semantics until its bounded exit completes',async()=>{
  const env=browser('<style>'+source('details.css')+'</style><a id="open" href="/movie/101">Movie 101</a>'),w=env.window,d=w.document,timers=new Map();let timerID=0;
  w.setTimeout=callback=>{timers.set(++timerID,callback);return timerID;};w.clearTimeout=id=>timers.delete(id);
- w.fetch=async()=>({ok:true,text:async()=>fragment(101)});w.boot('details.js');await w.SwiflyDetails.open('/movie/101',d.getElementById('open'));
+ fallbackStyle(w);w.fetch=async()=>({ok:true,text:async()=>fragment(101)});w.boot('details.js');await w.SwiflyDetails.open('/movie/101',d.getElementById('open'));
  const dialog=d.querySelector('dialog');assert.equal(dialog.dataset.svDetailMotion,'css');assert.equal(dialog.dataset.svDetailState,'opening');
  const settle=()=>{w.flush(16);const batch=[...timers.values()];timers.clear();batch.forEach(callback=>callback());};
  settle();assert.equal(dialog.dataset.svDetailState,'open');w.SwiflyDetails.close();assert(dialog.open);assert.equal(dialog.dataset.svDetailState,'closing');
@@ -140,7 +150,7 @@ test('The real CSS fallback retains modal semantics until its bounded exit compl
 test('CSS fallback ignores an old exit event and finishes even when the browser sends no events',async()=>{
  const env=browser('<style>'+source('details.css')+'</style><a id="open" href="/movie/101">Movie 101</a>'),w=env.window,d=w.document,timers=new Map();let timerID=0,back=0;
  w.setTimeout=callback=>{timers.set(++timerID,callback);return timerID;};w.clearTimeout=id=>timers.delete(id);w.history.back=()=>back++;
- w.fetch=async()=>({ok:true,text:async()=>fragment(101)});w.boot('details.js');await w.SwiflyDetails.open('/movie/101',d.getElementById('open'));
+ fallbackStyle(w);w.fetch=async()=>({ok:true,text:async()=>fragment(101)});w.boot('details.js');await w.SwiflyDetails.open('/movie/101',d.getElementById('open'));
  const dialog=d.querySelector('dialog'),settle=()=>{w.flush(16);const batch=[...timers.values()];timers.clear();batch.forEach(callback=>callback());};settle();
  w.SwiflyDetails.close();await w.SwiflyDetails.open('/movie/202');settle();w.SwiflyDetails.close();
  const event=new w.Event('animationend');Object.defineProperty(event,'animationName',{value:'svDetailsExit'});dialog.dispatchEvent(event);
@@ -149,7 +159,7 @@ test('CSS fallback ignores an old exit event and finishes even when the browser 
 });
 test('The real sheet styles give Back and Close comfortable touch targets',async()=>{
  const env=browser('<style>'+source('details.css')+'</style><a id="open" href="/movie/101">Movie 101</a>',{reduced:true}),w=env.window,d=w.document;
- w.fetch=async()=>({ok:true,text:async()=>fragment(101)});w.boot('details.js');await w.SwiflyDetails.open('/movie/101',d.getElementById('open'));
+ fallbackStyle(w);w.fetch=async()=>({ok:true,text:async()=>fragment(101)});w.boot('details.js');await w.SwiflyDetails.open('/movie/101',d.getElementById('open'));
  for(const button of d.querySelectorAll('.svDetailChrome button')){
   const style=w.getComputedStyle(button);assert(parseFloat(style.width)>=44&&parseFloat(style.height)>=44,'Back and Close each need a 44px touch target');
  }
