@@ -1,5 +1,5 @@
 /* Cinematic discovery with stable layouts, no scroll-driven rendering. */
-body.svCleanShell #svNavSearchPopup.svDiscoverySearch{box-sizing:border-box;position:fixed!important;inset:98px auto auto 50%!important;transform:translateX(-50%)!important;display:flex!important;flex-direction:column;width:min(640px,calc(100vw - 32px))!important;max-width:none!important;max-height:calc(100svh - 140px)!important;height:auto!important;margin:0!important;padding:0!important;gap:0!important;overflow:hidden!important;z-index:1305;background:#171717!important;color:#f1f1f1!important;border:1px solid #ffffff25!important;border-radius:16px!important;box-shadow:0 30px 100px #000000aa!important;backdrop-filter:none!important}
+body.svCleanShell #svNavSearchPopup.svDiscoverySearch{box-sizing:border-box;position:fixed!important;inset:98px auto auto 50%!important;transform:translateX(-50%)!important;display:flex!important;flex-direction:column;width:min(640px,calc(100vw - 32px))!important;max-width:none!important;max-height:calc(100svh - 140px)!important;height:auto!important;margin:0!important;padding:0!important;gap:0!important;overflow:hidden!important;z-index:1305;background:#151518!important;color:#f1f1f1!important;border:1px solid #ffffff25!important;border-radius:16px!important;box-shadow:0 30px 100px #000000aa!important;backdrop-filter:none!important}
 body.svCleanShell #svNavSearchPopup.svDiscoverySearch[hidden]{display:none!important}
 .svSearchTop{display:flex;align-items:center;gap:14px;padding:10px 16px;border-bottom:1px solid #ffffff0c}
 .svSearchTop>span{color:#adadad}
@@ -11,11 +11,11 @@ body.svCleanShell #svNavSearchPopup.svDiscoverySearch[hidden]{display:none!impor
 .svSearchTop .svSearchSubmit{background:#c4c4c414!important;color:#cfcfcf!important}
 .svSearchFilters{display:flex;gap:5px;flex-shrink:0;padding:10px 14px 8px;overflow-x:auto;scrollbar-width:none}
 .svSearchFilters button{min-height:40px!important;padding:9px 15px!important;border:1px solid transparent!important;border-radius:999px!important;white-space:nowrap!important}
-.svSearchFilters button[aria-pressed=true]{background:#2d2d2d!important;color:#eaeaea!important;border-color:#bbbbbb1a!important}
+.svSearchFilters button[aria-pressed=true]{background:#eeedf2!important;color:#151518!important;border-color:#bbbbbb1a!important}
 .svSearchBody{min-height:92px;padding:0 17px 17px;overflow-y:auto;scrollbar-width:thin;overscroll-behavior:contain}
-.svSearchLabel{display:block;margin:14px 9px 13px;color:#919191;font-size:11px;letter-spacing:0}
+.svSearchLabel{display:block;margin:14px 9px 13px;color:#b3b0be;font-size:13px;letter-spacing:0}
 .svSearchRecentList{display:flex;flex-wrap:wrap;gap:8px;padding:0 8px 14px}
-.svSearchRecentList button{min-height:40px!important;padding:10px 13px!important;border:1px solid #ffffff13!important;background:#ffffff03!important;border-radius:10px!important;color:#c2c2c2!important;font-size:11px!important}
+.svSearchRecentList button{min-height:40px!important;padding:10px 13px!important;border:1px solid #ffffff13!important;background:#ffffff03!important;border-radius:10px!important;color:#d0ccd9!important;font-size:13px!important}
 .svSearchRecentList .svSearchClear{border-color:transparent!important;color:#9b9b9b!important;background:transparent!important}
 .svSearchBody [data-search-status]{font-size:12px;line-height:1.8;color:#aaaaaa;margin:12px 9px}
 .svSearchBody [data-search-status]:empty{display:none}
@@ -24,8 +24,8 @@ body.svCleanShell #svNavSearchPopup.svDiscoverySearch[hidden]{display:none!impor
 .svSearchResult img,.svSearchPosterFallback{display:block;flex:0 0 43px;width:43px;height:64px;object-fit:cover;border-radius:7px}
 .svSearchPosterFallback{display:grid;place-items:center;background:#2b2b2b;color:#b6b6b6;font-size:17px}
 .svSearchResultCopy{display:flex;flex-direction:column;gap:8px;min-width:0}
-.svSearchResultCopy strong{font-size:14px;font-weight:550;line-height:1.5}
-.svSearchResultCopy small{color:#9a9a9a;font-size:11px}
+.svSearchResultCopy strong{font-size:15px;font-weight:550;line-height:1.5}
+.svSearchResultCopy small{color:#aaa7b6;font-size:12px}
 .svSearchResultArrow{margin-left:auto;color:#9d9d9d;font-size:19px;padding:0 5px}
 .svSearchFoot{display:flex;align-items:center;flex-wrap:wrap;gap:23px;flex-shrink:0;padding:10px 18px;background:#131313;border-top:1px solid #ffffff0d}
 .svSearchFoot a{display:flex;align-items:center;gap:8px;color:#b6b6b6;font-size:11px;text-decoration:none;min-height:30px}
@@ -36,22 +36,25 @@ body.svCleanShell #svNavSearchPopup.svDiscoverySearch[hidden]{display:none!impor
 body.svCleanShell:has(.svDiscoveryPage,.svConnectPage){background:#000!important}
 body.svCleanShell:has(.svDiscoveryPage,.svConnectPage) .svAuroraBackground{display:none!important}
 body.svCleanShell .svDiscoveryPage{box-sizing:border-box;max-width:1312px;min-height:calc(100svh - 180px);margin:0 auto;padding:112px 36px 100px!important;background:transparent!important;color:#fafafa}
-.svDiscoveryHero{text-align:center;margin:0 0 16px}
-.svDiscoveryHero h1{font-family:inherit;font-size:36px;font-weight:700;line-height:1.15;letter-spacing:-.035em;margin:0;color:#fafafa}
-.svDiscoveryPage>.svFeatureNav{margin:0 auto 24px}
-.svRecommendationForm{box-sizing:border-box;display:block;max-width:576px;width:100%;margin:0 auto;padding:0;border:0;background:transparent}
-.svMoodInput,.svBookSearch{box-sizing:border-box;display:flex;align-items:center;gap:11px;width:100%;padding:4px 5px 4px 16px;border:1px solid #ffffff1c;border-radius:16px;background:#ffffff0d}
-.svMoodInput{border-color:#a88bd64a}
-.svMoodInput>span{color:#b194df}
+.svDiscoveryHero{text-align:center;margin:0 0 24px}
+.svDiscoveryHero p{max-width:520px;margin:15px auto 0;color:#a8a8b2;font-size:15px;line-height:1.65}
+.svRecommendationsPage{position:relative;isolation:isolate}
+.svRecommendationsPage:before{content:"";position:absolute;inset:80px 5% auto;height:440px;pointer-events:none;z-index:-1;background:radial-gradient(ellipse at 50% 18%,#8b75c610,transparent 70%)}
+.svDiscoveryHero h1{font-family:inherit;font-size:44px;font-weight:700;line-height:1.15;letter-spacing:-.035em;margin:0;color:#fafafa}
+.svDiscoveryPage>.svFeatureNav{margin:0 auto 32px}
+.svRecommendationForm{box-sizing:border-box;display:block;max-width:640px;width:100%;margin:0 auto;padding:0;border:0;background:transparent}
+.svMoodInput,.svBookSearch{box-sizing:border-box;display:flex;align-items:center;gap:11px;width:100%;padding:4px 5px 4px 16px;border:1px solid #ffffff26;border-radius:18px;background:#141416;box-shadow:0 8px 30px #0003,inset 0 1px #ffffff05}
+.svMoodInput{border-color:#c3abe24d;min-height:64px;padding:7px 8px 7px 19px}
+.svMoodInput>span{color:#c4adf4}
 .svMoodInput>span svg,.svBookSearch>span svg{width:19px;height:19px;flex-basis:19px}
 .svMoodInput input,.svBookSearch input{box-sizing:border-box;flex:1;min-width:0;min-height:44px;padding:8px 0!important;border:0!important;border-radius:0!important;outline:none!important;background:transparent!important;box-shadow:none!important;color:#f5f5f5!important;font-family:inherit!important;font-size:16px!important;font-weight:400}
-.svMoodInput input::placeholder,.svBookSearch input::placeholder{color:#666}
+.svMoodInput input::placeholder,.svBookSearch input::placeholder{color:#a0a0aa}
 .svMoodInput:focus-within{border-color:#ad96d899}
 .svMoodInput [type=submit],.svBookSearch button{box-sizing:border-box;display:grid;place-items:center;flex:0 0 44px;width:44px;min-width:44px;min-height:44px;padding:11px;margin:0;border:0;border-radius:12px;background:#f5f5f5!important;color:#111!important;box-shadow:none!important;font:inherit;cursor:pointer}
 .svMoodInput [type=submit] svg,.svBookSearch button svg{width:18px;height:18px;flex-basis:18px}
 .svMoodInput [type=submit]:disabled{opacity:.45;cursor:default}
-.svRecommendationPreferences{color:#777;font-size:12px;margin-top:8px}
-.svRecommendationPreferences summary{display:flex;align-items:center;gap:7px;min-height:36px;width:max-content;margin:0 auto;cursor:pointer;list-style:none}
+.svRecommendationPreferences{color:#b6b6c0;font-size:13px;margin-top:12px}
+.svRecommendationPreferences summary{display:flex;align-items:center;gap:7px;min-height:36px;width:max-content;margin:0;cursor:pointer;list-style:none}
 .svRecommendationPreferences summary::-webkit-details-marker{display:none}
 .svRecommendationPreferences summary::after{content:'⌄';font-size:14px}
 .svRecommendationPreferences[open] summary::after{content:'⌃'}
@@ -60,47 +63,59 @@ body.svCleanShell .svDiscoveryPage{box-sizing:border-box;max-width:1312px;min-he
 .svAiFilters select,.svBookPlayerOptions select{box-sizing:border-box;width:100%;min-height:44px;padding:10px 12px;border:1px solid #ffffff1a;border-radius:12px;background:#141414;color:#eee;font-family:inherit;font-size:13px;outline:none}
 .svAiFilters .svRecommendationExclude{grid-column:1/-1;display:flex;flex-direction:row;align-items:center;gap:8px;line-height:1.5}
 .svRecommendationExclude input{width:15px;height:15px;margin:0;accent-color:#ddd}
-.svMoodChips{display:flex;flex-wrap:wrap;justify-content:center;gap:7px;margin:0 0 18px}
-.svMoodChips button{min-height:36px;padding:7px 12px;border:1px solid #ffffff14;border-radius:999px;background:#ffffff08;color:#999;font-family:inherit;font-size:12px;cursor:pointer}
-.svMoodChips button:hover{background:#ffffff14;color:#eee}
-.svModelNote{text-align:center;color:#666;font-size:11px;line-height:1.6;margin:4px 0 0}
+.svMoodIdeas{max-width:640px;margin:48px auto 0}
+.svMoodIdeas h2{color:#b8b8c1;font-size:13px;font-weight:500;margin:0 0 15px}
+.svMoodChips{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0}
+.svMoodChips button{display:flex;align-items:center;gap:13px;min-width:0;min-height:86px;padding:17px 18px;border:1px solid #ffffff16;border-radius:16px;background:#101012;color:#c8c4d2;font-family:inherit;text-align:left;cursor:pointer;transition:background .15s,border-color .15s}
+.svMoodChips button>span{display:flex;flex:1;flex-direction:column;gap:7px;min-width:0}
+.svMoodChips strong{color:#eeeef1;font-weight:600;font-size:14px;line-height:1.3}
+.svMoodChips small{color:#aaa8b4;font-size:12px;line-height:1.5}
+.svMoodChips button>.svFeatureIcon:first-child{width:20px;height:20px;flex-basis:20px;color:#beb0de}
+.svMoodChips button>.svFeatureIcon:last-child{width:15px;height:15px;flex-basis:15px;color:#898792}
+.svMoodChips button:hover{background:#1b1921;border-color:#c1a5ff42}
+.svModelNote{text-align:right;color:#9a9aa6;font-size:12px;line-height:1.6;margin:-30px 0 0;padding:8px 0;pointer-events:none}
+.svRecommendationPreferences[open]+.svModelNote{margin:8px 0 0;text-align:left}
 .svAiStatus{text-align:center;color:#aaa;font-size:13px;line-height:1.7;margin:18px 0 0}
 .svAiStatus:empty{display:none}
 .svAiCancel{display:flex;margin:12px auto 0}
 .svRecommendationResults{margin-top:44px}
 .svDiscoverySectionHead{margin-bottom:18px}
-.svDiscoverySectionHead h2,.svBookBrowseHeading h2{font-size:16px;line-height:1.5;font-weight:600;letter-spacing:0;color:#ccc;margin:0}
+.svDiscoverySectionHead h2,.svBookBrowseHeading h2{font-size:21px;line-height:1.5;font-weight:600;letter-spacing:-.02em;color:#eeeef1;margin:0}
 .svDiscoveryGrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:16px}
-.svDiscoveryCard{position:relative;min-width:0;border-radius:14px;overflow:hidden}
+.svDiscoveryCard{position:relative;min-width:0;border-radius:14px;overflow:visible}
 .svDiscoveryPoster{box-sizing:border-box;position:relative;display:block;width:100%;aspect-ratio:2/3;padding:0;overflow:hidden;border:0;border-radius:14px;background:#151515;color:#ccc;text-decoration:none;cursor:pointer}
 .svDiscoveryPoster img{display:block;width:100%;height:100%;object-fit:cover;transition:opacity .15s}
 .svDiscoveryPoster:hover img{opacity:.9}
 .svDiscoveryFallback{display:grid;place-items:center;width:100%;height:100%;background:#181818;font-size:42px}
-.svDiscoveryCardCopy{box-sizing:border-box;position:absolute;inset:auto 0 0;padding:40px 12px 14px;background:linear-gradient(transparent,#000e);pointer-events:none;opacity:0;transition:opacity .15s}
+.svDiscoveryCardCopy{box-sizing:border-box;position:static;padding:13px 2px 0;background:none;pointer-events:none;opacity:1}
+.svPickOverview{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;color:#a3a3ad;font-size:13px;line-height:1.6;margin:8px 0 0}
 .svDiscoveryCard:hover .svDiscoveryCardCopy,.svDiscoveryCard:focus-within .svDiscoveryCardCopy{opacity:1}
 .svDiscoveryCardCopy small{color:#aaa;font-size:10px;letter-spacing:0}
 .svDiscoveryCardCopy h3{font-size:14px;line-height:1.4;font-weight:600;color:#f5f5f5;margin:5px 0 0}
-.svDiscoveryShare{position:absolute;right:8px;top:8px;display:grid;place-items:center;width:32px;height:32px;padding:6px;border:1px solid #ffffff26;border-radius:50%;background:#000000b3;color:#ddd;cursor:pointer}
+.svDiscoveryShare{position:absolute;right:8px;top:8px;display:grid;place-items:center;width:40px;height:40px;padding:10px;border:1px solid #ffffff26;border-radius:50%;background:#121216ed;color:#eee;cursor:pointer}
 .svDiscoveryShare svg{width:15px;height:15px}
 .svDiscoveryShare:hover{background:#222}
 .svBookSearch{max-width:576px;margin:0 auto 40px}
 .svBookSearch>span{color:#888}
 .svBookSearch button{background:#ffffff0f!important;color:#ddd!important}
 .svBookBrowseHeading{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px}
-.svBookBrowseHeading>span{font-size:12px;color:#666}
+.svBookBrowseHeading>span{font-size:13px;color:#a4a4af}
 .svBookStatus{font-size:13px;line-height:1.7;color:#888;margin:16px 0 22px}
 .svBookStatus:empty{display:none}
 .svBookGrid{gap:24px 16px}
 .svBookCard{border-radius:0;overflow:visible}
 .svBookCover{aspect-ratio:2/3;border-radius:14px;background:#151515}
 .svBookCover img{object-fit:contain;background:#111}
-.svBookCoverFallback{box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:16px;width:100%;height:100%;padding:25px 16px;background:#141414;color:#ddd;text-align:center;border:1px solid #ffffff12;border-radius:14px}
-.svBookCoverFallback small{font-size:9px;letter-spacing:.08em;color:#666}
-.svBookCoverFallback strong{font-family:inherit;font-size:20px;font-weight:600;line-height:1.35}
-.svBookCoverFallback>span{font-size:11px;line-height:1.5;color:#888}
+.svBookCoverFallback{box-sizing:border-box;position:relative;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:16px;width:100%;height:100%;padding:24px 20px;background:linear-gradient(135deg,#27313b,#151b23);color:#e4e5ea;text-align:left;border:1px solid #ffffff14;border-radius:14px}
+.svBookCard:nth-child(4n+2) .svBookCoverFallback{background:linear-gradient(135deg,#3a2b33,#211b23)}
+.svBookCard:nth-child(4n+3) .svBookCoverFallback{background:linear-gradient(135deg,#34382b,#1b211c)}
+.svBookCard:nth-child(4n+4) .svBookCoverFallback{background:linear-gradient(135deg,#302d40,#1d1d29)}
+.svBookCoverFallback small{font-size:10px;letter-spacing:.12em;color:#c0c2ca;border-bottom:1px solid #ffffff24;width:100%;padding-bottom:14px}
+.svBookCoverFallback strong{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:5;overflow:hidden;font-family:Georgia,serif;font-size:23px;font-weight:500;line-height:1.25;letter-spacing:-.015em}
+.svBookCoverFallback>span{font-size:12px;line-height:1.5;color:#c0c2ca}
 .svBookCard .svDiscoveryCardCopy{position:static;padding:12px 1px 0;background:none;opacity:1}
 .svBookCard .svDiscoveryCardCopy h3{font-family:inherit;font-size:14px;font-weight:500;line-height:1.5;margin:0;color:#ddd}
-.svBookCard .svDiscoveryCardCopy p{color:#777;font-size:12px;line-height:1.6;margin:5px 0 0}
+.svBookCard .svDiscoveryCardCopy p{color:#a5a5b0;font-size:13px;line-height:1.6;margin:5px 0 0}
 .svBookMore{display:flex;margin:32px auto 0}
 .svBookCredit{font-size:11px;color:#666;line-height:1.7;text-align:center;margin:44px 0 0}
 .svBookDialog{box-sizing:border-box;position:fixed;width:min(800px,calc(100vw - 32px));max-height:88svh;overflow-y:auto;padding:26px;border:1px solid #ffffff21;border-radius:18px;background:#171717;color:#e8e8e8;box-shadow:0 30px 100px #00000099;scrollbar-width:thin}
@@ -147,7 +162,8 @@ body.svCleanShell .svDiscoveryPage [hidden],.svBookDialog [hidden]{display:none!
  .svSearchFoot kbd{display:none}
  body.svCleanShell .svDiscoveryPage{padding:110px 16px 110px!important}
  .svDiscoveryHero{margin-bottom:17px}
- .svDiscoveryHero h1{font-size:30px;line-height:1.2}
+ .svDiscoveryHero h1{font-size:34px;line-height:1.15}
+ .svDiscoveryHero p{font-size:14px;line-height:1.6;max-width:310px;margin-top:13px}
  .svDiscoveryPage>.svFeatureNav{margin:0 auto 24px;max-width:360px}
  .svDiscoveryPage>.svFeatureNav a{min-height:40px;font-size:11px}
  .svMoodInput,.svBookSearch{gap:8px;padding-left:12px;border-radius:14px}
@@ -156,19 +172,27 @@ body.svCleanShell .svDiscoveryPage [hidden],.svBookDialog [hidden]{display:none!
  .svAiFilters select{padding:10px;font-size:12px}
  .svAiFilters .svRecommendationExclude{font-size:12px}
  .svRecommendationPreferences summary{min-height:40px}
- .svModelNote{font-size:10px}
+ .svModelNote{font-size:11px}
+ .svMoodIdeas{margin-top:32px}
+ .svMoodChips{gap:10px}
+ .svMoodChips button{min-height:104px;padding:15px 13px;gap:9px;flex-wrap:wrap;align-content:center}
+ .svMoodChips button>span{flex-basis:calc(100% - 30px);gap:5px}
+ .svMoodChips button>.svFeatureIcon:last-child{display:none}
+ .svMoodChips strong{font-size:13px}
+ .svMoodChips small{font-size:12px}
+ .svMoodChips button>.svFeatureIcon:first-child{width:18px;height:18px;flex-basis:18px}
  .svRecommendationResults{margin-top:36px}
  .svDiscoveryGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 13px}
- .svDiscoveryCardCopy{opacity:1;padding:34px 10px 12px}
+ .svDiscoveryCardCopy{opacity:1;padding:12px 1px 0}
  .svDiscoveryCardCopy h3{font-size:13px}
  .svDiscoveryShare{width:40px;height:40px;top:7px;right:7px;padding:10px}
  .svBookSearch{margin-bottom:30px}
  .svBookBrowseHeading{align-items:flex-start}
- .svBookBrowseHeading h2{font-size:15px}
+ .svBookBrowseHeading h2{font-size:19px}
  .svBookBrowseHeading>span{max-width:110px;text-align:right;font-size:11px;line-height:1.5}
  .svBookGrid{gap:24px 13px}
- .svBookCoverFallback{padding:22px 13px}
- .svBookCoverFallback strong{font-size:18px}
+ .svBookCoverFallback{padding:20px 15px}
+ .svBookCoverFallback strong{font-size:20px}
  .svBookCard .svDiscoveryCardCopy h3{font-size:14px}
  .svBookDialog{padding:24px 20px;border-radius:18px}
  .svBookDetailHead{display:block;padding-right:6px}
@@ -186,3 +210,6 @@ body.svCleanShell .svDiscoveryPage [hidden],.svBookDialog [hidden]{display:none!
 @media(hover:none){.svDiscoveryCardCopy{opacity:1}}
 @media(prefers-reduced-motion:reduce){.svDiscoveryPoster img,.svDiscoveryCardCopy{transition:none}}
 html[data-sv-tv=true] :is(.svConnectButton,.svFeatureNav a,.svConnectTabs a,.svBookSearch button,.svMoodChips button){min-height:56px;font-size:16px}
+
+.svRecommendationsPage:has(.svRecommendationResults:not([hidden])) .svMoodIdeas{display:none}
+.svBookCard .svDiscoveryCardCopy h3{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
