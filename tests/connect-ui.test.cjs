@@ -62,6 +62,19 @@ test('shared-home invitations stay visible through their own live refresh and un
  assert.match(b.w.document.querySelector('.svHomeInvite input')?.value||'',/invite=a{32}/);changed();await tick();await tick();assert.match(b.w.document.querySelector('.svHomeInvite input')?.value||'',/invite=a{32}/);
  home.members.push(bob);changed();await tick();await tick();assert.equal(b.w.document.querySelector('.svHomeInvite'),null,'consumed invitations must disappear');
 });
+test('social navigation shows one workspace at a time without losing a message draft',async()=>{
+ const b=setup();b.w.boot('connect/connect.js');await tick();await tick();const d=b.w.document,home=d.querySelector('[data-shared-home]'),layout=d.querySelector('.svConnectLayout');
+ assert.equal(d.querySelector('.svConnectTabs [data-connect-view="inbox"]').getAttribute('aria-current'),'page');assert(home.hidden);d.querySelector('[data-connect-friend="bob"]').click();await tick();d.querySelector('[data-message-text]').value='Our next film?';
+ d.querySelector('.svConnectTabs [data-connect-view="home"]').click();assert.equal(layout.hidden,true);assert.equal(home.hidden,false);assert.equal(d.querySelector('.svConnectTabs [data-connect-view="home"]').getAttribute('aria-current'),'page');
+ d.querySelector('.svConnectTabs [data-connect-view="inbox"]').click();assert.equal(layout.hidden,false);assert.equal(d.querySelector('[data-message-text]').value,'Our next film?');
+ d.querySelector('[data-conversation-back]').click();assert.equal(d.querySelector('[data-connect-page]').dataset.chatOpen,'false');d.querySelector('[data-connect-friend="bob"]').click();await tick();assert.equal(d.querySelector('[data-message-text]').value,'Our next film?');
+});
+test('a shared-home deep link opens its workspace after authentication',async()=>{
+ const b=setup({home:{id:'ours',members:[alice,bob],titles:[]}});b.w.history.replaceState(null,'','/friends?tab=home');b.w.boot('connect/connect.js');await tick();await tick();assert.equal(b.w.document.querySelector('[data-connect-page]').dataset.connectView,'home');assert.equal(b.w.document.querySelector('[data-shared-home]').hidden,false);assert.equal(b.w.document.querySelector('.svConnectLayout').hidden,true);
+});
+test('messages are not marked read while the shared-home workspace is open',async()=>{
+ const b=setup();b.w.boot('connect/connect.js');await tick();await tick();b.w.document.querySelector('[data-connect-friend="bob"]').click();await tick();b.w.document.querySelector('.svConnectTabs [data-connect-view="home"]').click();const before=b.calls.filter(c=>c.route==='/messages/bob/read').length;await b.w.SwiflyConnect.refresh();assert.equal(b.calls.filter(c=>c.route==='/messages/bob/read').length,before);b.w.document.querySelector('.svConnectTabs [data-connect-view="inbox"]').click();await tick();assert(b.calls.filter(c=>c.route==='/messages/bob/read').length>before);
+});
 function libraryBrowser(){
  const b=browser('<div id="watchlistGrid"></div><div id="likedGrid"></div>',{path:'/my-list'}),source=fs.readFileSync(require.resolve('../server.js'),'utf8');
  b.window.structuredClone=structuredClone;b.window.eval(source.slice(source.indexOf('    function readLibrary(key)'),source.indexOf('    (function enablePremiumPosterTilt(){')));return b;

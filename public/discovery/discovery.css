@@ -1,7 +1,237 @@
-/* Search and discovery: quiet surfaces, generous type, no scroll-bound effects. */
-body.svCleanShell #svNavSearchPopup.svDiscoverySearch{position:fixed!important;inset:104px auto auto 50%!important;transform:translateX(-50%)!important;display:flex!important;flex-direction:column;width:min(680px,calc(100vw - 32px))!important;max-width:none!important;max-height:calc(100svh - 140px)!important;height:auto!important;padding:0!important;margin:0!important;gap:0!important;background:#111218!important;border:1px solid #ffffff25!important;border-radius:24px!important;box-shadow:0 30px 100px #0009!important;overflow:hidden!important;z-index:1305;backdrop-filter:none!important;color:#eee}body.svCleanShell #svNavSearchPopup.svDiscoverySearch[hidden]{display:none!important}.svSearchTop{display:flex;align-items:center;gap:14px;padding:18px 22px;border-bottom:1px solid #ffffff0f}.svSearchTop>span{font-size:30px;color:#9393a5}.svDiscoverySearch #svNavSearchInput{width:100%!important;max-width:none!important;min-width:0!important;flex:1!important;padding:8px 0!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;font-size:16px!important;color:#eeecf5!important;outline:none!important;height:auto!important;min-height:36px!important}.svDiscoverySearch button{position:static!important;width:auto!important;min-width:0!important;height:auto!important;border:0!important;background:transparent!important;box-shadow:none!important;border-radius:8px!important;color:#aaa6bd!important;font:inherit!important;font-size:11px!important;cursor:pointer}.svSearchTop [data-search-close]{padding:7px 9px!important;border:1px solid #ffffff14!important}.svSearchTop .svSearchSubmit{padding:9px!important;font-size:22px!important;color:#ded5f2!important}.svSearchFilters{display:flex;gap:6px;padding:15px 20px 12px;overflow:auto;flex-shrink:0;scrollbar-width:none}.svSearchFilters button{min-height:35px!important;padding:8px 12px!important;white-space:nowrap!important;border:1px solid transparent!important;border-radius:20px!important}.svSearchFilters button[aria-pressed=true]{background:#ffffff0d!important;color:#eee8fb!important;border-color:#ffffff10!important}.svSearchBody{padding:0 18px 16px;overflow:auto;overscroll-behavior:contain;min-height:80px;scrollbar-width:thin}.svSearchLabel{font-size:9px;letter-spacing:.14em;color:#727383;display:block;margin:18px 8px 12px}.svSearchRecentList{display:flex;gap:8px;flex-wrap:wrap;padding:0 8px 12px}.svSearchRecentList button{padding:9px 12px!important;border:1px solid #ffffff0e!important;border-radius:18px!important;color:#aaa7b9!important}.svSearchRecentList .svSearchClear{border:0!important;color:#737383!important}.svSearchBody [data-search-status]{font-size:12px;color:#858694;margin:12px 8px;line-height:1.6}.svSearchResult{display:flex;gap:15px;padding:10px;align-items:center;text-decoration:none;color:#e9e6f3;border:1px solid transparent;border-radius:14px;min-height:78px}.svSearchResult:hover,.svSearchResult:focus-visible{background:#ffffff08;border-color:#ffffff14;outline:none}.svSearchResult img,.svSearchPosterFallback{display:block;flex:0 0 40px;width:40px;height:58px;object-fit:cover;border-radius:6px}.svSearchPosterFallback{display:grid;place-items:center;background:#24232e;color:#9b91b9}.svSearchResultCopy{min-width:0;display:flex;flex-direction:column;gap:7px}.svSearchResultCopy strong{font-size:14px;font-weight:500;line-height:1.4}.svSearchResultCopy small{font-size:11px;color:#818292}.svSearchResultArrow{margin-left:auto;color:#7b748c;font-size:18px}.svSearchFoot{display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding:18px 24px;border-top:1px solid #ffffff0c;background:#0e0f14;flex-shrink:0}.svSearchFoot a{color:#aaa0c2;font-size:11px;text-decoration:none}.svSearchFoot kbd{font:10px inherit;color:#57596a;margin-left:auto}.svDiscoveryPage{max-width:1320px;margin:auto;padding:142px 36px 100px!important;color:#f4f2f8}.svDiscoveryHero{margin-bottom:40px;max-width:700px}.svDiscoveryHero h1{font-size:clamp(44px,5.5vw,74px);line-height:1.03;letter-spacing:-.055em;font-weight:500;margin:20px 0}.svDiscoveryHero>p{max-width:470px;font-size:14px;line-height:1.8;color:#9393a1}.svRecommendationForm{border:1px solid #ffffff17;background:#121319;padding:30px;border-radius:25px}.svRecommendationForm>label{display:block;font-size:12px;color:#a8a3b9;margin-bottom:14px}.svRecommendationForm textarea{box-sizing:border-box;display:block;width:100%;resize:vertical;min-height:110px;max-height:240px;background:none;color:#ece6f5;outline:none;border:0;font:inherit;font-size:clamp(20px,2.2vw,30px);font-weight:400;line-height:1.5;letter-spacing:-.025em;padding:0 0 16px}.svRecommendationForm textarea::placeholder{color:#575361}.svMoodChips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 28px}.svMoodChips button{border:1px solid #ffffff12;border-radius:22px;background:#ffffff04;color:#92909f;padding:10px 16px;font-size:11px;cursor:pointer}.svMoodChips button:hover{border-color:#bbb0d340;color:#d5cbe5}.svRecommendationOptions{display:flex;align-items:end;gap:18px;flex-wrap:wrap;padding-top:22px;border-top:1px solid #ffffff0c}.svRecommendationOptions label{display:flex;flex-direction:column;gap:9px;color:#7f7b8e;font-size:10px}.svRecommendationOptions select,.svBookPlayerOptions select{background:#1b1b25;border:1px solid #ffffff10;color:#ccc6dc;padding:10px 13px;border-radius:10px;font:inherit;font-size:12px;min-height:42px}.svRecommendationOptions .svRecommendationExclude{display:flex;flex-direction:row;align-items:center;margin:auto 0;font-size:11px;gap:7px}.svRecommendationExclude input{accent-color:#c6b4e4;width:15px;height:15px}.svRecommendationOptions [type=submit]{margin-left:auto!important;background:#d8c8ee!important;color:#24202e!important;box-shadow:none!important;border:0!important;font-size:12px!important;min-height:44px!important}.svRecommendationOptions [type=submit]:disabled{opacity:.45}.svModelNote{color:#666474;font-size:10px;line-height:1.7;margin:24px 0 0}.svRecommendationResults{margin-top:50px}.svDiscoverySectionHead{display:flex;align-items:start;justify-content:space-between;gap:30px;margin-bottom:24px}.svDiscoverySectionHead h2{font-weight:500;font-size:26px;letter-spacing:-.04em;margin:0}.svDiscoverySectionHead p{font-size:12px;line-height:1.8;color:#a49ab7;max-width:480px;margin:0}.svDiscoveryGrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:28px 18px}.svDiscoveryCard{min-width:0;overflow:hidden}.svDiscoveryPoster{display:block;aspect-ratio:2/3;border:1px solid #ffffff12;overflow:hidden;background:#191822;border-radius:13px;position:relative;text-decoration:none;color:#e2d9ee;box-sizing:border-box;padding:0;width:100%;cursor:pointer}.svDiscoveryPoster img{width:100%;height:100%;object-fit:cover;display:block;transition:opacity .2s}.svDiscoveryPoster:hover img{opacity:.84}.svDiscoveryFallback{display:grid;place-items:center;width:100%;height:100%;font-size:50px}.svDiscoveryCardCopy{padding:14px 2px;position:relative}.svDiscoveryCardCopy small{font-size:8px;letter-spacing:.13em;color:#777381}.svDiscoveryCardCopy h3{font-size:13px;font-weight:500;line-height:1.5;margin:7px 20px 0 0;color:#d5cfdf}.svDiscoveryShare{position:absolute;right:0;top:30px;border:0;border-radius:50%;background:#14131b;color:#a89cbd;width:32px;height:32px;font-size:19px;cursor:pointer}.svBookSearch{display:flex;align-items:center;border:1px solid #ffffff16;background:#141319;padding:8px;border-radius:18px;max-width:700px;margin-bottom:24px}.svBookSearch input{flex:1;min-width:0;min-height:44px;background:none!important;border:0!important;box-shadow:none!important;color:#e5deed!important;font:inherit!important;font-size:13px!important;outline:none!important;padding:10px 16px!important}.svBookSearch button{border:0;background:#ded0c2;color:#30251e;min-height:44px;border-radius:12px;padding:10px 22px;font-size:12px;cursor:pointer}.svBookStatus{font-size:12px;color:#aca196;line-height:1.8;margin:26px 0 32px}.svBookGrid{grid-template-columns:repeat(5,minmax(0,1fr));gap:34px 24px}.svBookCover{aspect-ratio:3/4;background:#302c28;border-radius:3px 12px 12px 3px}.svBookCover img{object-fit:contain;background:#17151a}.svBookCoverFallback{box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:space-between;text-align:center;gap:15px;width:100%;height:100%;padding:24px 17px;background:linear-gradient(120deg,#383339,#26242b);border-left:8px solid #0002}.svBookCard:nth-child(3n+2) .svBookCoverFallback{background:linear-gradient(120deg,#3e433c,#252e2d)}.svBookCard:nth-child(3n+3) .svBookCoverFallback{background:linear-gradient(120deg,#4c3834,#2b252c)}.svBookCoverFallback small{font-size:7px;letter-spacing:.2em;color:#c8bfa8}.svBookCoverFallback strong{font-family:Georgia,serif;font-size:clamp(16px,1.5vw,23px);line-height:1.4;font-weight:400}.svBookCoverFallback>span{font-size:9px;line-height:1.5;color:#b4a89e}.svBookCard .svDiscoveryCardCopy h3{font-family:Georgia,serif;font-weight:400;font-size:17px;line-height:1.4;margin-right:0}.svBookCard .svDiscoveryCardCopy p{font-size:10px;color:#8b8287;line-height:1.7;margin:9px 0}.svBookMore{display:block!important;margin:28px auto 0!important;font-size:12px!important}.svBookCredit{font-size:10px;color:#5f5c63;text-align:center;margin:60px 0 0}.svBookDialog{position:fixed;background:#131216;color:#eee8e4;border:1px solid #ffffff20;border-radius:24px;padding:36px;width:min(880px,calc(100vw - 32px));max-height:86svh;box-sizing:border-box;box-shadow:0 30px 100px #000b;overflow:auto;scrollbar-width:thin}.svBookDialog::backdrop{background:#000a}.svBookClose{position:absolute;right:18px;top:18px;z-index:1;border:1px solid #ffffff17;background:#27232b;color:#cac0c3;border-radius:50%;font-size:25px;width:36px;height:36px;cursor:pointer}.svBookDetailHead{display:flex;gap:32px;padding-right:20px}.svBookDetailHead>img{width:150px;max-height:220px;object-fit:contain;align-self:start;border-radius:6px}.svBookDetailHead h2{font:400 36px/1.15 Georgia,serif;margin:14px 0}.svBookAuthor{font-size:12px;color:#bdada0}.svBookDescription{font-size:12px;line-height:1.8;color:#8e858e;max-height:140px;overflow:auto;scrollbar-width:thin;white-space:normal}.svBookDialog [data-book-detail-status]{font-size:12px;color:#bbaba5;line-height:1.7}.svBookPlayback{border-top:1px solid #ffffff10;margin-top:26px;padding-top:22px}.svBookPlayback audio{display:block;width:100%;height:45px;color-scheme:dark}.svBookPlayerOptions{display:flex;flex-wrap:wrap;align-items:end;gap:18px;margin:22px 0}.svBookPlayerOptions label{display:flex;flex-direction:column;gap:9px;font-size:10px;color:#92828b}.svBookPlayerOptions [data-book-sleep-status]{font-size:11px;color:#b7a495;padding-bottom:12px}.svBookChapters{display:flex;flex-direction:column;max-height:280px;overflow:auto;scrollbar-width:thin;overscroll-behavior:contain}.svBookChapter{display:flex;align-items:center;gap:15px;border:0;border-bottom:1px solid #ffffff08;background:none;color:#a99ba4;text-align:left;padding:14px 10px;min-height:46px;cursor:pointer}.svBookChapter[aria-current=true]{background:#ffffff08;color:#e8d6ce;border-radius:9px}.svBookChapter>span{font-size:10px;color:#655d66}.svBookChapter strong{font-size:12px;font-weight:400;flex:1;line-height:1.5}.svBookChapter small{font-size:10px;color:#6d626c}.svDiscoveryPage [hidden]{display:none!important}.svBookDialog [hidden]{display:none!important}
-@media(max-width:1100px){.svDiscoveryGrid{grid-template-columns:repeat(4,minmax(0,1fr))}.svBookGrid{grid-template-columns:repeat(4,minmax(0,1fr))}}
-@media(max-width:760px){body.svCleanShell #svNavSearchPopup.svDiscoverySearch{inset:90px auto auto 50%!important;max-height:calc(100svh - 190px)!important;border-radius:20px!important}.svSearchTop{gap:8px;padding:14px 16px}.svDiscoverySearch #svNavSearchInput{font-size:13px!important}.svSearchTop [data-search-close]{font-size:9px!important}.svSearchFilters{padding:10px 12px;gap:0}.svSearchFilters button{font-size:10px!important;padding:8px 11px!important}.svSearchFoot{gap:12px;padding:16px}.svSearchFoot a{font-size:10px}.svSearchFoot kbd{display:none}.svDiscoveryPage{padding:116px 16px 110px!important}.svDiscoveryHero{margin-bottom:28px}.svDiscoveryHero h1{font-size:48px}.svDiscoveryHero>p{font-size:13px}.svRecommendationForm{padding:22px 18px;border-radius:20px}.svRecommendationForm textarea{font-size:23px;min-height:135px}.svMoodChips{gap:6px;margin-bottom:20px}.svMoodChips button{padding:9px 12px;font-size:10px}.svRecommendationOptions{gap:12px}.svRecommendationOptions label{flex:1}.svRecommendationOptions select{width:100%;font-size:11px}.svRecommendationOptions .svRecommendationExclude{flex:1 1 100%;margin:6px 0 10px}.svRecommendationOptions [type=submit]{margin:0!important;flex:1}.svModelNote{font-size:9px}.svDiscoverySectionHead{display:block}.svDiscoverySectionHead h2{font-size:24px;margin-bottom:12px}.svDiscoverySectionHead p{font-size:11px}.svDiscoveryGrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:18px 11px}.svDiscoveryCardCopy{padding-top:10px}.svDiscoveryCardCopy h3{font-size:11px;line-height:1.4;margin-right:0}.svDiscoveryCardCopy small{font-size:7px}.svDiscoveryShare{position:static;margin-top:9px;width:32px;height:32px;font-size:17px}.svDiscoveryPoster{border-radius:9px}.svBookGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 18px}.svBookCard .svDiscoveryCardCopy h3{font-size:16px}.svBookCoverFallback{padding:20px 14px}.svBookCoverFallback strong{font-size:20px}.svBookSearch{padding:6px;border-radius:14px}.svBookSearch input{font-size:11px!important;padding:9px!important}.svBookSearch button{font-size:10px;padding:9px 14px}.svBookDialog{padding:26px 20px;border-radius:20px}.svBookDetailHead{display:block;padding-right:6px}.svBookDetailHead>img{width:110px;height:150px;margin:0 auto 24px;display:block}.svBookDetailHead h2{font-size:30px}.svBookDescription{max-height:110px}.svBookPlayerOptions{gap:12px}.svBookPlayerOptions [data-book-sleep-status]{width:100%}.svBookChapters{max-height:230px}.svBookChapter{gap:10px;padding:12px 6px}.svBookChapter strong{font-size:11px}}
-@media(max-width:359px){.svDiscoveryGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.svSearchTop>span{display:none}.svSearchFilters button{padding:8px 9px!important}.svDiscoveryHero h1{font-size:40px}}
-
-body.svCleanShell .svDiscoveryPage [hidden]{display:none!important}
+/* Cinematic discovery with stable layouts, no scroll-driven rendering. */
+body.svCleanShell #svNavSearchPopup.svDiscoverySearch{box-sizing:border-box;position:fixed!important;inset:98px auto auto 50%!important;transform:translateX(-50%)!important;display:flex!important;flex-direction:column;width:min(680px,calc(100vw - 32px))!important;max-width:none!important;max-height:calc(100svh - 140px)!important;height:auto!important;margin:0!important;padding:0!important;gap:0!important;overflow:hidden!important;z-index:1305;background:#121720!important;color:#eef1f8!important;border:1px solid #ffffff25!important;border-radius:22px!important;box-shadow:0 30px 100px #000a!important;backdrop-filter:none!important}
+body.svCleanShell #svNavSearchPopup.svDiscoverySearch[hidden]{display:none!important}
+.svSearchTop{display:flex;align-items:center;gap:14px;padding:19px 22px;border-bottom:1px solid #ffffff0c}
+.svSearchTop>span{color:#a5adc3}
+.svSearchTop>span svg{width:21px;height:21px}
+.svDiscoverySearch #svNavSearchInput{flex:1!important;min-width:0!important;width:100%!important;max-width:none!important;min-height:40px!important;height:auto!important;padding:8px 0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;outline:none!important;color:#eef1f8!important;font-size:17px!important}
+.svDiscoverySearch #svNavSearchInput::placeholder{color:#8591a7}
+.svDiscoverySearch button{position:static!important;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;width:auto!important;min-width:0!important;height:auto!important;margin:0;box-shadow:none!important;transform:none!important;border:0!important;border-radius:9px!important;background:transparent!important;color:#a1aec2!important;font-family:inherit!important;font-size:12px!important;cursor:pointer}
+.svSearchTop [data-search-close],.svSearchTop .svSearchSubmit{flex:0 0 36px;min-width:36px!important;min-height:40px!important;padding:8px!important}
+.svSearchTop .svSearchSubmit{background:#c5c0eb14!important;color:#d4caef!important}
+.svSearchFilters{display:flex;gap:5px;flex-shrink:0;padding:14px 20px 12px;overflow-x:auto;scrollbar-width:none}
+.svSearchFilters button{min-height:40px!important;padding:9px 15px!important;border:1px solid transparent!important;border-radius:11px!important;white-space:nowrap!important}
+.svSearchFilters button[aria-pressed=true]{background:#2b2c40!important;color:#ece7ff!important;border-color:#c1b5e81a!important}
+.svSearchBody{min-height:92px;padding:0 17px 17px;overflow-y:auto;scrollbar-width:thin;overscroll-behavior:contain}
+.svSearchLabel{display:block;margin:14px 9px 13px;color:#8692a9;font-size:9px;letter-spacing:.12em}
+.svSearchRecentList{display:flex;flex-wrap:wrap;gap:8px;padding:0 8px 14px}
+.svSearchRecentList button{min-height:40px!important;padding:10px 13px!important;border:1px solid #ffffff13!important;background:#ffffff03!important;border-radius:10px!important;color:#bac3d6!important;font-size:11px!important}
+.svSearchRecentList .svSearchClear{border-color:transparent!important;color:#919cb2!important;background:transparent!important}
+.svSearchBody [data-search-status]{font-size:12px;line-height:1.8;color:#a0abc0;margin:12px 9px}
+.svSearchBody [data-search-status]:empty{display:none}
+.svSearchResult{display:flex;align-items:center;gap:16px;min-height:86px;box-sizing:border-box;padding:10px;border:1px solid transparent;border-radius:13px;text-decoration:none;color:#e7ebf5}
+.svSearchResult:hover,.svSearchResult:focus-visible{border-color:#ffffff10;background:#ffffff06;outline:none}
+.svSearchResult img,.svSearchPosterFallback{display:block;flex:0 0 43px;width:43px;height:64px;object-fit:cover;border-radius:7px}
+.svSearchPosterFallback{display:grid;place-items:center;background:#242b3b;color:#b9b2d6;font-size:17px}
+.svSearchResultCopy{display:flex;flex-direction:column;gap:8px;min-width:0}
+.svSearchResultCopy strong{font-size:14px;font-weight:550;line-height:1.5}
+.svSearchResultCopy small{color:#8f9bb1;font-size:11px}
+.svSearchResultArrow{margin-left:auto;color:#a09ab6;font-size:19px;padding:0 5px}
+.svSearchFoot{display:flex;align-items:center;flex-wrap:wrap;gap:23px;flex-shrink:0;padding:17px 24px;background:#0e131c;border-top:1px solid #ffffff0d}
+.svSearchFoot a{display:flex;align-items:center;gap:8px;color:#bbb1d7;font-size:11px;text-decoration:none;min-height:30px}
+.svSearchFoot .svFeatureIcon{width:15px;height:15px;flex-basis:15px}
+.svSearchFoot kbd{font-family:inherit;font-size:9px;color:#8894aa;margin-left:auto}
+body.svCleanShell .svDiscoveryPage{box-sizing:border-box;max-width:1312px;margin:0 auto;padding:112px 36px 100px!important;background:transparent!important}
+.svDiscoveryHero{display:flex;justify-content:space-between;align-items:center;gap:24px;margin-bottom:30px}
+.svDiscoveryHero h1{font-family:Manrope,system-ui,sans-serif;font-size:42px;font-weight:600;line-height:1.15;letter-spacing:-.05em;margin:10px 0 13px;color:#f1f0f7}
+.svDiscoveryHero p{font-size:13px;line-height:1.8;color:#9faabd;max-width:500px;margin:0}
+.svFeatureBadge{display:inline-flex;align-items:center;gap:8px;flex-shrink:0;padding:10px 13px;border:1px solid #ffffff12;border-radius:10px;background:#141822ad;color:#b7b1d1;font-size:10px;line-height:1.5}
+.svFeatureBadge .svFeatureIcon{width:15px;height:15px;flex-basis:15px}
+.svRecommendationStudio{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:22px;align-items:stretch}
+.svRecommendationForm{box-sizing:border-box;padding:30px;border:1px solid #c3b6e51e;border-radius:22px;background:linear-gradient(145deg,#191b29,#11151e 70%);min-width:0}
+.svPromptHeading{display:flex;align-items:center;gap:13px;margin-bottom:25px}
+.svPromptMark{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;border:1px solid #c4b4e622;background:#afa0da13;border-radius:13px;color:#c4b1e1}
+.svPromptMark svg{width:20px;height:20px}
+.svPromptHeading label{color:#e9e6f2;font-size:16px;font-weight:550;letter-spacing:-.015em}
+.svPromptHeading small{display:block;color:#939cb2;font-size:10px;font-weight:400;letter-spacing:0;margin-top:7px}
+.svRecommendationForm textarea{box-sizing:border-box;display:block;width:100%;min-height:128px;max-height:240px;padding:18px 20px;resize:vertical;border:1px solid #ffffff13;border-radius:14px;outline:none;background:#0b0e16;color:#e3deee;font-family:inherit;font-size:21px;font-weight:400;line-height:1.6;letter-spacing:-.025em}
+.svRecommendationForm textarea::placeholder{color:#7d8299}
+.svRecommendationForm textarea:focus-visible{border-color:#b1a3d35e;box-shadow:0 0 0 3px #b0a0d509}
+.svMoodChips{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0 25px}
+.svMoodChips button{min-height:37px;padding:9px 12px;background:#ffffff03;color:#aba8bf;border:1px solid #ffffff11;border-radius:10px;font-family:inherit;font-size:10px;cursor:pointer}
+.svMoodChips button:hover{background:#bdb2e20c;border-color:#c3b5df35;color:#dfd6ed}
+.svRecommendationOptions{display:grid;grid-template-columns:1fr 1fr;gap:16px 14px;padding-top:23px;border-top:1px solid #ffffff0b}
+.svRecommendationOptions label{display:flex;flex-direction:column;gap:10px;color:#a0a5ba;font-size:10px}
+.svRecommendationOptions select,.svBookPlayerOptions select{box-sizing:border-box;width:100%;min-height:44px;padding:11px 13px;border:1px solid #ffffff17;border-radius:11px;background:#1b2030;color:#d5d8e6;font-family:inherit;font-size:12px;outline:none}
+.svRecommendationOptions .svRecommendationExclude{grid-column:1/-1;display:flex;flex-direction:row;gap:8px;align-items:center;min-height:28px;font-size:11px;color:#a4abc0}
+.svRecommendationExclude input{width:15px;height:15px;accent-color:#c7b5e6;margin:0}
+.svRecommendationOptions [type=submit]{grid-column:1/-1;min-height:46px!important;margin:0!important;background:#d8c8ee!important;color:#24202e!important;border:0!important;border-radius:12px;font-size:12px!important;box-shadow:none!important}
+.svRecommendationOptions [type=submit]>span{display:inline-flex}
+.svRecommendationOptions [type=submit]:disabled{opacity:.5}
+.svRecommendationOptions [data-ai-cancel]{grid-column:1/-1}
+.svModelNote{display:flex;align-items:flex-start;gap:8px;color:#8c94a9;font-size:10px;line-height:1.8;margin:18px 0 0}
+.svModelNote svg{width:14px;height:14px;flex-basis:14px;margin-top:2px}
+.svAiStatus{font-size:12px;line-height:1.8;color:#d0bfed;margin:18px 0 0}
+.svAiStatus:empty{display:none}
+.svMoodArtwork{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;min-height:430px;border:1px solid #ffffff11;border-radius:22px;background:radial-gradient(ellipse at 50% 80%,#71618b38,transparent 70%),linear-gradient(155deg,#181c2a,#0c1018 75%)}
+.svMoodPosters{position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:330px;margin-top:10px;padding:0 24px;box-sizing:border-box}
+.svMoodPosters img{position:relative;width:40%;max-width:176px;height:auto;aspect-ratio:2/3;object-fit:cover;border:1px solid #ffffff1f;border-radius:11px;box-shadow:0 24px 48px #0007}
+.svMoodPosters img:first-child{transform:rotate(-9deg) translateX(25px) translateY(13px);z-index:1}
+.svMoodPosters img:nth-child(2){z-index:3;transform:translateY(-10px)}
+.svMoodPosters img:last-child{transform:rotate(9deg) translateX(-25px) translateY(13px);z-index:2}
+.svMoodArtworkLabel{display:flex;align-items:center;gap:9px;font-size:11px;color:#c9c0da;margin:25px 0 20px}
+.svMoodArtworkLabel svg{width:15px;height:15px;flex-basis:15px}
+.svRecommendationResults{margin-top:40px}
+.svDiscoverySectionHead{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:25px}
+.svDiscoverySectionHead h2{margin:9px 0 0;color:#e9e7f2;font-size:26px;font-weight:500;line-height:1.25;letter-spacing:-.04em}
+.svDiscoverySectionHead>p{max-width:450px;margin:0;color:#9aA5b9;font-size:12px;line-height:1.8}
+.svDiscoveryGrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:26px 18px}
+.svDiscoveryCard{min-width:0}
+.svDiscoveryPoster{box-sizing:border-box;display:block;position:relative;overflow:hidden;width:100%;aspect-ratio:2/3;padding:0;border:1px solid #ffffff12;border-radius:12px;background:#1b2030;color:#d6cce8;text-decoration:none;cursor:pointer}
+.svDiscoveryPoster img{display:block;width:100%;height:100%;object-fit:cover;transition:opacity .16s}
+.svDiscoveryPoster:hover img{opacity:.85}
+.svDiscoveryFallback{display:grid;place-items:center;width:100%;height:100%;background:linear-gradient(145deg,#3b3851,#1a2131);font-size:42px}
+.svDiscoveryCardCopy{position:relative;min-width:0;padding:14px 2px 0}
+.svDiscoveryCardCopy small{color:#9aa4b6;font-size:8px;letter-spacing:.09em}
+.svDiscoveryCardCopy h3{margin:8px 24px 0 0;color:#dee2ed;font-size:12px;font-weight:500;line-height:1.6}
+.svDiscoveryShare{display:grid;place-items:center;position:absolute;right:0;top:25px;width:30px;height:32px;border:1px solid #ffffff0e;border-radius:10px;background:#151b27;color:#aaa3c4;font-size:16px;cursor:pointer}
+.svAudiobooksPage{--sf-accent:#d7c3a8}
+.svListeningHero{min-height:240px;overflow:hidden;padding:8px 0 30px;margin-bottom:24px;border-bottom:1px solid #ffffff10}
+.svListeningHero>.svFeatureBadge{background:#a88c6c0a}
+.svListeningHero .svFeatureBadge{margin-top:22px;color:#c9b79f;border-color:#d2bd9a17}
+.svListeningHero h1{font-size:48px}
+.svBookShelf{display:flex;align-items:center;justify-content:center;min-width:46%;height:240px;gap:12px;padding:15px 8px 0 28px;box-sizing:border-box}
+.svBookShelf>div{display:flex;flex-direction:column;justify-content:space-between;box-sizing:border-box;width:135px;height:192px;padding:18px 13px;border:1px solid #ffffff21;border-left:6px solid #0002;border-radius:3px 9px 9px 3px;box-shadow:7px 14px 25px #0006;background:linear-gradient(130deg,#526056,#343c35);color:#f1e3cc;transform:rotate(-9deg)}
+.svBookShelf>div:nth-child(2){height:210px;transform:translateY(-4px) rotate(2deg);background:linear-gradient(130deg,#7a5254,#46343c)}
+.svBookShelf>div:nth-child(3){background:linear-gradient(130deg,#4c536c,#303748);transform:rotate(11deg) translateY(10px)}
+.svBookShelf small{font-size:6px;letter-spacing:.15em}
+.svBookShelf strong{font-family:Georgia,serif;font-size:20px;font-weight:400;line-height:1.35}
+.svBookShelf span{font-family:Georgia,serif;font-style:italic;font-size:8px;color:#e3d1b9af}
+.svBookSearch{box-sizing:border-box;display:flex;align-items:center;gap:10px;width:100%;padding:8px 8px 8px 20px;margin-bottom:35px;border:1px solid #ffffff1a;border-radius:15px;background:#141923}
+.svBookSearch>span{color:#b7a896}
+.svBookSearch input{flex:1;box-sizing:border-box;min-width:0;min-height:44px;padding:10px 6px!important;outline:none!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:#e5e3e4!important;font-family:inherit!important;font-size:13px!important}
+.svBookSearch input::placeholder{color:#9695a1}
+.svBookSearch button{display:flex;align-items:center;justify-content:center;gap:10px;flex-shrink:0;min-height:44px;padding:11px 19px;border:1px solid #dac3a640;border-radius:10px;background:#d8c3a8;color:#2f2923;font-family:inherit;font-weight:550;font-size:12px;cursor:pointer}
+.svBookSearch button .svFeatureIcon{width:16px;height:16px;flex-basis:16px}
+.svBookBrowseHeading{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:24px}
+.svBookBrowseHeading h2{font-size:24px;font-weight:500;letter-spacing:-.04em;margin:0}
+.svBookBrowseHeading>span{display:flex;align-items:center;gap:8px;color:#a49b97;font-size:10px}
+.svBookBrowseHeading svg{width:14px;height:14px;flex-basis:14px}
+.svBookStatus{font-size:12px;line-height:1.8;color:#b4a9a4;margin:20px 0 24px}
+.svBookStatus:empty{display:none}
+.svBookGrid{grid-template-columns:repeat(5,minmax(0,1fr));gap:34px 24px}
+.svBookCover{aspect-ratio:3/4;border-radius:3px 11px 11px 3px;background:#29252a;border-left:4px solid #0002;box-shadow:5px 10px 20px #0003}
+.svBookCover img{object-fit:contain;background:#191a23}
+.svBookCoverFallback{box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:16px;width:100%;height:100%;padding:25px 17px;border-left:5px solid #0002;background:linear-gradient(130deg,#4e444b,#272c38);text-align:center;color:#e7d7c4}
+.svBookCard:nth-child(3n+2) .svBookCoverFallback{background:linear-gradient(130deg,#505d53,#283536)}
+.svBookCard:nth-child(3n+3) .svBookCoverFallback{background:linear-gradient(130deg,#735453,#3b303b)}
+.svBookCoverFallback small{font-size:7px;letter-spacing:.17em;color:#e0cdb7}
+.svBookCoverFallback strong{font-family:Georgia,serif;font-size:22px;font-weight:400;line-height:1.4}
+.svBookCoverFallback>span{font-size:9px;line-height:1.6;color:#cbbaa9}
+.svBookCard .svDiscoveryCardCopy h3{margin-right:0;font-family:Georgia,serif;font-size:17px;line-height:1.5;font-weight:400;color:#e1d5d0}
+.svBookCard .svDiscoveryCardCopy p{color:#a79b9b;font-size:10px;line-height:1.7;margin:7px 0 0}
+.svBookMore{display:flex;margin:35px auto 0;font-size:12px}
+.svBookCredit{margin:60px 0 0;text-align:center;color:#8f8a96;font-size:10px;line-height:1.8}
+.svBookDialog{box-sizing:border-box;position:fixed;width:min(800px,calc(100vw - 32px));max-height:88svh;overflow-y:auto;padding:35px;border:1px solid #ffffff21;border-radius:23px;background:#151720;color:#eee7e1;box-shadow:0 30px 100px #0009;scrollbar-width:thin}
+.svBookDialog::backdrop{background:#03060bd6}
+.svBookClose{display:grid;place-items:center;position:absolute;right:17px;top:17px;width:38px;height:38px;border:1px solid #ffffff18;border-radius:12px;background:#ffffff06;color:#c5bec4;cursor:pointer;z-index:1}
+.svBookClose:hover{background:#ffffff0e}
+.svBookDetailHead{display:flex;gap:29px;padding-right:20px}
+.svBookDetailHead>img{flex-shrink:0;align-self:flex-start;width:145px;max-height:210px;object-fit:contain;border-radius:5px}
+.svBookDetailHead .svConnectEyebrow{font-size:8px;color:#bca99b}
+.svBookDetailHead h2{margin:13px 0 14px;font-family:Georgia,serif;font-size:34px;line-height:1.2;font-weight:400}
+.svBookAuthor{font-size:12px;color:#c1ada2}
+.svBookDescription{max-height:130px;overflow-y:auto;color:#aca1a5;font-size:12px;line-height:1.9;scrollbar-width:thin;white-space:normal}
+.svBookDialog [data-book-detail-status]{font-size:11px;line-height:1.8;color:#b8aca9;margin:22px 0 0}
+.svBookPlayback{border-top:1px solid #ffffff10;margin-top:22px;padding-top:22px}
+.svBookPlayback audio{display:block;width:100%;height:45px;color-scheme:dark}
+.svBookPlayerOptions{display:flex;align-items:flex-end;flex-wrap:wrap;gap:16px;margin:22px 0 27px}
+.svBookPlayerOptions label{display:flex;flex-direction:column;gap:9px;color:#b0a0a0;font-size:10px;min-width:120px}
+.svBookPlayerOptions select{background:#242533;border-color:#ffffff15;color:#dfd4d2;font-size:12px}
+.svBookPlayerOptions [data-book-sleep-status]{font-size:11px;line-height:1.7;color:#cfb5a9;padding-bottom:10px;flex:1}
+.svBookChapterHeading{font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#b6a5a3;margin:0 0 10px}
+.svBookChapters{display:flex;flex-direction:column;max-height:230px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.svBookChapter{display:flex;align-items:center;gap:15px;text-align:left;min-height:49px;padding:13px 12px;border:0;border-bottom:1px solid #ffffff08;background:transparent;color:#c3b6bc;font-family:inherit;cursor:pointer}
+.svBookChapter[aria-current=true]{background:#ccb7a50d;color:#efe1d8;border-radius:10px}
+.svBookChapter>span{color:#9690a1;font-size:10px}
+.svBookChapter strong{flex:1;font-size:12px;font-weight:400;line-height:1.6}
+.svBookChapter small{color:#9e919b;font-size:10px}
+body.svCleanShell .svDiscoveryPage [hidden],.svBookDialog [hidden]{display:none!important}
+.svDiscoveryPage :focus-visible,.svBookDialog :focus-visible,.svDiscoverySearch :focus-visible{outline:2px solid #baace2;outline-offset:4px}
+@media(max-width:1100px){.svDiscoveryGrid{grid-template-columns:repeat(4,minmax(0,1fr))}.svBookGrid{grid-template-columns:repeat(4,minmax(0,1fr))}.svMoodPosters{padding:0 12px;height:280px}.svMoodPosters img{max-width:150px}.svBookShelf{min-width:44%;gap:8px}.svBookShelf>div{width:115px;height:178px}.svBookShelf>div:nth-child(2){height:193px}.svBookShelf strong{font-size:18px}}
+@media(max-width:900px){.svRecommendationStudio{grid-template-columns:minmax(0,1fr) minmax(0,.75fr);gap:16px}.svRecommendationForm{padding:25px}.svMoodPosters img{max-width:128px}.svMoodArtworkLabel{max-width:180px;line-height:1.7;text-align:center}.svListeningHero h1{font-size:38px}.svBookShelf>div{width:91px;height:154px;padding:14px 10px}.svBookShelf>div:nth-child(2){height:170px}.svBookShelf strong{font-size:16px}.svBookShelf span{font-size:7px}}
+@media(max-width:760px){
+ body.svCleanShell #svNavSearchPopup.svDiscoverySearch{inset:88px auto auto 50%!important;max-height:calc(100svh - 175px)!important;border-radius:18px!important}
+ .svSearchTop{gap:7px;padding:13px 15px}
+ .svSearchTop>span svg{width:18px;height:18px}
+ .svDiscoverySearch #svNavSearchInput{font-size:16px!important;min-height:42px!important}
+ .svSearchTop [data-search-close],.svSearchTop .svSearchSubmit{flex-basis:30px;min-width:30px!important;padding:6px!important}
+ .svSearchFilters{gap:1px;padding:10px 11px 9px}
+ .svSearchFilters button{padding:9px 11px!important;font-size:11px!important;min-height:40px!important}
+ .svSearchBody{padding:0 10px 12px}
+ .svSearchResult{gap:13px;min-height:82px;padding:9px}
+ .svSearchResultCopy strong{font-size:13px}
+ .svSearchResultCopy small{font-size:10px}
+ .svSearchFoot{padding:13px 18px;gap:19px}
+ .svSearchFoot a{min-height:31px;font-size:10px}
+ .svSearchFoot kbd{display:none}
+ body.svCleanShell .svDiscoveryPage{padding:99px 16px 110px!important}
+ .svDiscoveryHero{display:block;margin-bottom:23px}
+ .svDiscoveryHero h1{font-size:34px;margin:10px 0 13px}
+ .svDiscoveryHero p{font-size:12px;max-width:320px}
+ .svDiscoveryHero>.svFeatureBadge{margin-top:17px;font-size:9px}
+ .svRecommendationStudio{display:flex;flex-direction:column;gap:16px}
+ .svRecommendationForm{padding:23px 19px;border-radius:18px;order:1}
+ .svPromptHeading{margin-bottom:22px;gap:11px}
+ .svPromptHeading label{font-size:16px}
+ .svPromptHeading small{font-size:9px;line-height:1.7}
+ .svRecommendationForm textarea{font-size:19px;padding:16px;min-height:132px}
+ .svMoodChips{gap:6px;margin-top:12px;margin-bottom:23px}
+ .svMoodChips button{min-height:37px;padding:9px 10px;font-size:10px}
+ .svRecommendationOptions{gap:15px 11px;padding-top:22px}
+ .svRecommendationOptions select{font-size:11px;padding:11px 10px}
+ .svRecommendationOptions .svRecommendationExclude{font-size:10px}
+ .svRecommendationOptions [type=submit]{font-size:12px!important}
+ .svModelNote{font-size:9px}
+ .svMoodArtwork{display:none}
+ .svRecommendationResults{margin-top:33px}
+ .svDiscoverySectionHead{display:block;margin-bottom:20px}
+ .svDiscoverySectionHead h2{font-size:24px}
+ .svDiscoverySectionHead>p{font-size:11px;margin-top:12px}
+ .svDiscoveryGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 13px}
+ .svDiscoveryCardCopy h3{font-size:12px;margin-right:22px}
+ .svDiscoveryShare{width:28px;height:30px;font-size:16px}
+ .svListeningHero{position:relative;padding:4px 0 19px;min-height:0}
+ .svListeningHero h1{font-size:36px;max-width:260px}
+ .svListeningHero p{font-size:12px;max-width:265px}
+ .svListeningHero .svFeatureBadge{font-size:9px;margin-top:18px}
+ .svBookShelf{height:180px;min-width:0;width:100%;padding:20px 13px 3px;margin-top:8px;gap:12px;justify-content:flex-end;overflow:hidden}
+ .svBookShelf>div{width:100px;height:150px;padding:14px 10px}
+ .svBookShelf>div:nth-child(2){height:167px}
+ .svBookShelf strong{font-size:17px}
+ .svBookSearch{gap:8px;margin-bottom:28px;padding:6px 6px 6px 13px;border-radius:13px}
+ .svBookSearch>span svg{width:16px;height:16px}
+ .svBookSearch input{font-size:12px!important;padding:9px 2px!important}
+ .svBookSearch button{padding:10px 12px;font-size:10px;gap:6px}
+ .svBookSearch button svg{width:14px;height:14px}
+ .svBookBrowseHeading h2{font-size:22px}
+ .svBookBrowseHeading>span{font-size:9px;gap:6px;max-width:97px;line-height:1.6}
+ .svBookGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:25px 17px}
+ .svBookCoverFallback{padding:21px 14px}
+ .svBookCoverFallback strong{font-size:20px}
+ .svBookCard .svDiscoveryCardCopy h3{font-size:17px}
+ .svBookCredit{font-size:9px;margin-top:40px}
+ .svBookDialog{padding:26px 21px;border-radius:19px}
+ .svBookDetailHead{display:block;padding-right:6px}
+ .svBookDetailHead>img{display:block;width:107px;height:150px;margin:0 auto 24px}
+ .svBookDetailHead h2{font-size:29px;padding-right:16px}
+ .svBookDescription{max-height:110px;font-size:11px}
+ .svBookPlayerOptions{gap:13px}
+ .svBookPlayerOptions label{flex:1;min-width:106px}
+ .svBookPlayerOptions [data-book-sleep-status]{flex:1 1 100%;font-size:10px;padding:0}
+ .svBookChapters{max-height:215px}
+ .svBookChapter{gap:11px;padding:12px 9px}
+ .svBookChapter strong{font-size:11px}
+}
+@media(max-width:359px){.svDiscoveryHero h1{font-size:30px}.svSearchTop>span{display:none}.svSearchFilters button{padding:9px 10px!important}.svBookSearch>span{display:none}.svBookSearch input{font-size:11px!important}.svBookSearch button{padding:10px;font-size:9px}.svBookShelf{gap:7px;justify-content:center}.svBookShelf>div{width:86px;height:142px}.svBookShelf>div:nth-child(2){height:157px}.svBookShelf strong{font-size:16px}}
+@media(prefers-reduced-motion:reduce){.svDiscoveryPoster img{transition:none}}
+html[data-sv-tv=true] :is(.svConnectButton,.svFeatureNav a,.svConnectTabs a,.svBookSearch button,.svMoodChips button){min-height:56px;font-size:16px}
+@media(max-width:760px){
+ .svListeningHero h1{max-width:none;font-size:34px}
+ .svBookShelf{height:155px;padding-top:14px;margin-top:9px}
+ .svBookShelf>div{width:92px;height:130px;padding:12px 10px}
+ .svBookShelf>div:nth-child(2){height:145px}
+ .svBookShelf strong{font-size:15px}
+ .svBookShelf span{font-size:7px}
+}
+@media(max-width:359px){.svListeningHero h1{font-size:30px}}
