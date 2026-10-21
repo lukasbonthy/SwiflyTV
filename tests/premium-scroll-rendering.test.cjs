@@ -621,7 +621,7 @@ test('mobile header and dock keep navigation, search and account controls reacha
           closeVisible:!!close&&getComputedStyle(close).display!=='none',
           outsideNavbar:panel.parentElement===document.body,
           fullyOpaque:getComputedStyle(panel).backgroundColor==='rgb(12, 16, 24)',
-          noGlass:getComputedStyle(panel).backdropFilter==='none'&&getComputedStyle(panel.querySelector('.svLiquidPane')).display==='none',
+          noGlass:getComputedStyle(panel).backdropFilter==='none'&&!panel.querySelector(':scope > .svLiquidPane'),
           scrimVisible:!!document.querySelector('body > .svMobileAccountScrim')&&getComputedStyle(document.querySelector('body > .svMobileAccountScrim')).display!=='none',
           horizontalFit:r.left>=8&&r.right<=innerWidth-8,
           cssPosition:getComputedStyle(panel).position
