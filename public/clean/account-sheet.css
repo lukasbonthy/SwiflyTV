@@ -258,7 +258,7 @@ body.svCleanShell > .svMobileAccountScrim { display:none; }
 /* Desktop and laptop account menu. The top navigation is still liquid glass,
    but a text-heavy dropdown must be a stable, fully opaque reading surface. */
 @media (min-width:861px) {
-  body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown {
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown {
     display:block !important;
     box-sizing:border-box !important;
     width:min(322px,calc(100vw - 24px)) !important;
@@ -283,13 +283,13 @@ body.svCleanShell > .svMobileAccountScrim { display:none; }
     overscroll-behavior:contain;
     scrollbar-width:none;
   }
-  body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown::-webkit-scrollbar {display:none;}
-  body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown > .svLiquidPane,
-  body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown::before {
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown::-webkit-scrollbar {display:none;}
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown > .svLiquidPane,
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown::before {
     display:none !important;
     content:none !important;
   }
-  body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown > .dsDropdownUser {
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown > .dsDropdownUser {
     position:sticky !important;
     top:-11px;
     z-index:3 !important;
@@ -304,13 +304,13 @@ body.svCleanShell > .svMobileAccountScrim { display:none; }
     background:#17202c !important;
     box-shadow:none !important;
   }
-  body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown > .dsDropdownUser > span {
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown > .dsDropdownUser > span {
     grid-column:1;
     grid-row:1 / 3;
     width:40px !important;
     height:40px !important;
   }
-  body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown > .dsDropdownUser > b {
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown > .dsDropdownUser > b {
     grid-column:2;
     grid-row:1;
     min-width:0;
@@ -320,7 +320,7 @@ body.svCleanShell > .svMobileAccountScrim { display:none; }
     font-size:14px !important;
     font-weight:700 !important;
   }
-  body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown > .dsDropdownUser > small {
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown > .dsDropdownUser > small {
     grid-column:2;
     grid-row:2;
     min-width:0;
@@ -330,7 +330,7 @@ body.svCleanShell > .svMobileAccountScrim { display:none; }
     white-space:nowrap;
     text-overflow:ellipsis;
   }
-  body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown > .svAccountMenuSection {
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown > .svAccountMenuSection {
     display:block !important;
     padding:13px 12px 5px !important;
     color:#a6b7d0 !important;
@@ -338,7 +338,7 @@ body.svCleanShell > .svMobileAccountScrim { display:none; }
     letter-spacing:.13em !important;
     text-transform:uppercase;
   }
-  body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown > a {
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown > a {
     display:grid !important;
     grid-template-columns:31px minmax(0,1fr) !important;
     gap:10px !important;
@@ -358,7 +358,7 @@ body.svCleanShell > .svMobileAccountScrim { display:none; }
     text-shadow:none !important;
     transform:none !important;
   }
-  body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown > a > span {
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown > a > span {
     display:grid !important;
     place-items:center;
     width:29px !important;
@@ -369,19 +369,19 @@ body.svCleanShell > .svMobileAccountScrim { display:none; }
     color:#b9c9de !important;
     font-size:17px !important;
   }
-  body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown > a > b {
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown > a > b {
     font-size:13px !important;
     font-weight:600 !important;
     overflow:hidden;
     white-space:nowrap;
     text-overflow:ellipsis;
   }
-  body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown > a:is(:hover,:focus-visible) {
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown > a:is(:hover,:focus-visible) {
     background:#232e40 !important;
     border-color:#ffffff16 !important;
     color:#fff !important;
   }
-  body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown > .svTvMenuToggle {
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown > .svTvMenuToggle {
     display:grid !important;
     grid-template-columns:30px minmax(0,1fr) auto;
     align-items:center;
@@ -393,11 +393,11 @@ body.svCleanShell > .svMobileAccountScrim { display:none; }
     border:1px solid #ffffff1e !important;
     border-radius:12px !important;
   }
-  body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown > .svTvMenuToggle > b {
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown > .svTvMenuToggle > b {
     font-size:13px !important;
     font-weight:650 !important;
   }
-  body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown > .dsDropdownLogout {
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown > .dsDropdownLogout {
     display:block !important;
     width:100% !important;
     min-height:44px !important;
@@ -410,7 +410,7 @@ body.svCleanShell > .svMobileAccountScrim { display:none; }
     white-space:nowrap !important;
     font-size:13px !important;
   }
-  body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown > :is(a,button):focus-visible {
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown > :is(a,button):focus-visible {
     outline:2px solid #b4d7ff !important;
     outline-offset:2px;
   }
