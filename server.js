@@ -6550,6 +6550,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/liquid-glass/liquid-glass.js?v=227"></script>
     <link rel="stylesheet" href="/assets/clean/clean.css?v=154" />
     <script defer src="/assets/clean/clean.js?v=3"></script>
+    <script defer src="/assets/clean/account-sheet.js?v=1"></script>
     <script defer src="/assets/clean/account.js?v=1"></script>
     <link rel="stylesheet" href="/assets/connect/connect.css?v=1" />
     <script defer src="/assets/connect/connect.js?v=1"></script>
@@ -6595,6 +6596,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/clean/details-premium.css?v=255" />
     <link rel="stylesheet" href="/assets/clean/details-clarity.css?v=2" />
     <link rel="stylesheet" href="/assets/discovery/discovery.css?v=1" />
+    <link rel="stylesheet" href="/assets/clean/account-sheet.css?v=1" />
 </head>
 <body class="svCleanShell">
 
@@ -7091,7 +7093,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     (function swiflytvEveryCranny(){
       document.querySelectorAll('.dsProfileMenu').forEach(function(menu){
         document.addEventListener('click', function(event){
-          if (!menu.contains(event.target)) menu.removeAttribute('open');
+          if (!menu.contains(event.target) && !event.target.closest('.svAccountSheetPortaled')) menu.removeAttribute('open');
         });
 
         document.addEventListener('keydown', function(event){
