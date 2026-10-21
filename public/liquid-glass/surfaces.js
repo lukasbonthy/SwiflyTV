@@ -77,7 +77,8 @@
   // The main hero AND the full movie/TV detail page show action buttons
   // immediately. An asynchronous intersection callback must never be the
   // first thing that gives these prominent buttons their real refraction.
-  const firstScreenActions='.dsHeroActions > :is(button,a),.svDetailActions > :is(button,a),.dsWelcomeActions > :is(button,a),.dsAuthPageSafe .dsPrimaryBtn';
+  const featuredActions='.dsHeroActions > :is(button,a),.dsWelcomeActions > :is(button,a),.dsHeroMuteToggle';
+  const firstScreenActions=featuredActions+',.svDetailActions > :is(button,a),.dsAuthPageSafe .dsPrimaryBtn';
   function inFirstScreen(host) {
     const box = host.getBoundingClientRect();
     return box.width > 0 && box.height > 0 && box.bottom > 0 && box.right > 0 &&
@@ -103,8 +104,9 @@
     if (!entry.visible || !entry.host.isConnected || document.hidden || !liquidPreference() || !window.SwiflyLiquidGlass) return;
     // Soft glass already paints the moving scene. Preparing a new SVG graph
     // now invalidates the page's relational styles and stalls the next frame.
-    // Keep mounted lenses cached; explicit keyboard focus stays immediate.
-    if (pageScrollBusy() && !entry.host.matches(':focus-within') && !activeDetailAction(entry.host)) return;
+    // Keep mounted lenses cached; visible featured actions prepare on re-entry
+    // so returning to the top never changes their material after scroll idle.
+    if (pageScrollBusy() && !entry.host.matches(':focus-within,'+featuredActions) && !activeDetailAction(entry.host)) return;
     // The dialog moves as one sheet. Its action lenses can prepare cached
     // geometry while it rises; delaying them until the end makes the row
     // visibly change from frost to refraction after the animation.
