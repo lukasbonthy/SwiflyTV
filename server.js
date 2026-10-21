@@ -32,6 +32,11 @@ const { createVerifiedMediaEntryResolver } = require("./lib/native-source-entry"
 const { createSubtitleProxy } = require("./lib/subtitle-proxy");
 const { createSiteGate } = require("./lib/site-gate");
 const { createDownloadRouter } = require("./lib/downloads");
+const { createAccountStore } = require("./lib/account-store");
+const { createConnect } = require("./lib/connect");
+const { createDiscovery } = require("./lib/discovery");
+const { createPlayerAssist } = require("./lib/player-assist");
+const { searchMarkup, recommendationsMarkup, audiobooksMarkup } = require("./ui/discovery");
 const { cleanHeaders: cleanNuvioHeaders } = require("./lib/nuvio-http");
 
 // ===== SwiflyTV no-env mode =====
@@ -69,6 +74,7 @@ const { welcomeMarkup } = require("./ui/welcome");
 const { navigationHead } = require("./ui/navigation");
 const { tvHead, tvScript } = require("./ui/tv");
 const { partyMarkup } = require("./ui/party");
+const { connectMarkup, connectDialogs, notificationButton } = require("./ui/connect");
 const { playerMarkup, episodePickerMarkup, episodeNavigationMarkup } = require("./ui/player");
 const { downloadOptionsMarkup } = require("./ui/download-page");
 const { watchPartyMarkup, partyBrowseMarkup } = require("./ui/watch-party");
@@ -5625,6 +5631,28 @@ app.use((req, res, next) => {
 const siteGate = createSiteGate();
 app.use(siteGate.router);
 app.use(siteGate.protect);
+const accountStore = createAccountStore();
+const connect = createConnect({
+  store: accountStore,
+  resolveMedia: async (type, id) => {
+    const value = await tmdb(`/${type}/${id}`, {}, CACHE_TTL.long);
+    if (value.__error || value.adult) return null;
+    return { title: getTitle(value), poster: img(value.poster_path, "w342"), year: getYear(value.release_date || value.first_air_date) };
+  },
+  createParty: (media, user) => {
+    if (process.env.SOCIAL_LOCK_WATCHROOM_CREATION === "true" && !socialPermissionsForName(user.name).canCreateWatchRooms) return "";
+    const room = getOrCreateWatchRoom(createRoomId(), { name: `${user.name}'s ${media.title} night`, host: user.name, mediaKind: "blank" });
+    room.syncedMovie = { ...room.syncedMovie, movieId: media.id, type: media.type, ...(media.type === "tv" ? {season:"1",episode:"1"} : {}), socialInvite: true };
+    return partyMediaWatchUrl(room.syncedMovie, room.id);
+  }
+});
+app.use("/api/connect", connect.router);
+const discovery = createDiscovery({tmdb:(...args) => tmdb(...args)});
+app.use("/api/discovery", discovery.router);
+const playerAssist = createPlayerAssist({tmdb:(...args) => tmdb(...args)});
+app.use("/api/player-assist",playerAssist.router);
+app.get("/recommendations", (req,res) => res.send(pageShell({title:`${SITE_NAME} — AI picks`,active:"recommendations",body:recommendationsMarkup(),extraHead:'<script defer src="/assets/discovery/recommendations.js?v=1"></script>'})));
+app.get("/audiobooks", (req,res) => res.send(pageShell({title:`${SITE_NAME} — Audiobooks`,active:"audiobooks",body:audiobooksMarkup(),extraHead:'<script defer src="/assets/discovery/audiobooks.js?v=1"></script>'})));
 // Same friends-only protection applies to authorized movie/episode file downloads.
 app.use("/api/download", createDownloadRouter());
 
@@ -5636,6 +5664,11 @@ app.use("/assets/clean", express.static(path.join(__dirname, "public", "clean"),
 app.use("/assets/vendor/lenis", express.static(path.join(__dirname, "public", "vendor", "lenis"), { maxAge: "1d", dotfiles: "deny" }));
 app.use("/assets/studio", express.static(path.join(__dirname, "public", "studio"), { maxAge: "1d", dotfiles: "deny" }));
 app.use("/assets/party", express.static(path.join(__dirname, "public", "party"), { maxAge: "1d", dotfiles: "deny" }));
+app.get("/assets/vendor/transformers-3.8.1/transformers.min.js", (req,res) => res.sendFile(path.join(path.dirname(require.resolve("@huggingface/transformers")), "transformers.min.js"), {maxAge:"7d"}));
+app.use("/assets/vendor/transformers-3.8.1/wasm", express.static(path.dirname(require.resolve("onnxruntime-web")), {maxAge:"7d",dotfiles:"deny",index:false}));
+app.use("/assets/ai-models/v1", express.static(path.join(__dirname,".swifly-models"), {maxAge:"7d",dotfiles:"deny",index:false}));
+app.use("/assets/discovery", express.static(path.join(__dirname, "public", "discovery"), { maxAge: "1d", dotfiles: "deny" }));
+app.use("/assets/connect", express.static(path.join(__dirname, "public", "connect"), { maxAge: "1d", dotfiles: "deny" }));
 app.use("/assets/player", express.static(path.join(__dirname, "public", "player"), { maxAge: "1d", dotfiles: "deny" }));
 
 app.use(
@@ -6516,7 +6549,10 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/liquid-glass/liquid-glass.css?v=222" />
     <script defer src="/assets/liquid-glass/liquid-glass.js?v=227"></script>
     <link rel="stylesheet" href="/assets/clean/clean.css?v=154" />
-    <script defer src="/assets/clean/clean.js?v=151"></script>
+    <script defer src="/assets/clean/clean.js?v=2"></script>
+    <script defer src="/assets/clean/account.js?v=1"></script>
+    <link rel="stylesheet" href="/assets/connect/connect.css?v=1" />
+    <script defer src="/assets/connect/connect.js?v=1"></script>
     <script defer src="/assets/clean/avatars.js?v=209"></script>
     ${active === "profiles" ? '<script defer src="/assets/clean/profiles.js?v=209"></script>' : ""}
     <script defer src="/assets/clean/continue.js?v=155"></script>
@@ -6529,18 +6565,19 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/details.js?v=255"></script>
     <script defer src="/assets/clean/download.js?v=2"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=222" />
-    <script defer src="/assets/liquid-glass/surfaces.js?v=257"></script>
+    <script defer src="/assets/liquid-glass/surfaces.js?v=258"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=233" />
     <script defer src="/assets/studio/studio.js?v=164"></script>
-    <link rel="stylesheet" href="/assets/clean/aurora.css?v=208" />
-    <script defer src="/assets/clean/aurora.js?v=203"></script>
+    <link rel="stylesheet" href="/assets/clean/aurora.css?v=209" />
+    <script defer src="/assets/clean/aurora.js?v=204"></script>
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=205" />' : ""}
     ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=173" />' : ""}
     
     ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=234"></script>' : ""}
+    ${player ? '<script defer src="/assets/player/audio-sample.js?v=1"></script><script defer src="/assets/player/assist.js?v=1"></script><link rel="stylesheet" href="/assets/player/assist.css?v=1" />' : ""}
     ${player || active === "social" ? '<script defer src="/assets/party/watchroom-call.js?v=1"></script>' : ""}
     ${active === "social" ? '<script defer src="/assets/party/party.js?v=207"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}
-    ${player || partyBrowse ? '<script defer src="/assets/player/watch-party.js?v=163"></script>' : ""}
+    ${player || partyBrowse ? '<script defer src="/assets/player/watch-party.js?v=2"></script>' : ""}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/finish.css?v=176" />'}
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/polish.css?v=176" />'}
     <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=206" />
@@ -6553,19 +6590,19 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=200" />' : ""}
     ${player || active === "social" ? '<link rel="stylesheet" href="/assets/party/watchroom-call.css?v=1" />' : ""}
     <link rel="stylesheet" href="/assets/clean/performance.css?v=258" />
-    <link rel="stylesheet" href="/assets/clean/mobile.css?v=1" />
+    <link rel="stylesheet" href="/assets/clean/mobile.css?v=2" />
     <link rel="stylesheet" href="/assets/clean/tv.css?v=255" />
     <link rel="stylesheet" href="/assets/clean/details-premium.css?v=255" />
     <link rel="stylesheet" href="/assets/clean/details-clarity.css?v=2" />
+    <link rel="stylesheet" href="/assets/discovery/discovery.css?v=1" />
 </head>
 <body class="svCleanShell">
 
   <script>
-    (function swiflytvAuthRequired(){
+    (function swiflytvLegacyLibraryMigration(){
       try {
         [
           "session",
-          "accounts",
           "profiles",
           "activeProfile",
           "continueWatching",
@@ -6580,21 +6617,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
         });
       } catch {}
 
-      const freePaths = new Set(["/welcome", "/login", "/signup"]);
-      const path = window.location.pathname;
-      const isFree = freePaths.has(path);
-      const session = localStorage.getItem("swiflytv.session");
-
-      if (!session && !isFree) {
-        const redirect = encodeURIComponent(window.location.pathname + window.location.search + window.location.hash);
-        window.location.replace("/welcome?redirect=" + redirect);
-        return;
-      }
-
-      if (session && (path === "/welcome" || path === "/login" || path === "/signup")) {
-        const redirect = new URLSearchParams(window.location.search).get("redirect");
-        window.location.replace(redirect || "/profiles");
-      }
+      // The server access-code gate protects browsing; private APIs require a real session.
     })();
   </script>
 
@@ -6615,6 +6638,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       </div>
       <div class="navRightCluster dsNavActions">
         <button id="svNavSearchToggle" class="svNavButton" type="button" aria-label="Search movies and series" aria-controls="svNavSearchPopup" aria-expanded="false">${cleanIcon("search")}</button>
+        ${notificationButton()}
         <a class="svNavButton svNavPartyLink${active === "social" ? " active" : ""}" href="/social?tab=watchrooms" aria-label="Party Hub" title="Party Hub"${active === "social" ? ' aria-current="page"' : ""}>${cleanIcon("people")}</a>
         <button id="controlToggleTop" class="svNavButton" type="button" aria-label="Open Swifly Studio" aria-haspopup="dialog" aria-controls="controlPanel" aria-expanded="false">${cleanIcon("settings")}</button>
         <button class="svNavButton svTvModePill" type="button" data-sv-tv-toggle data-sv-tv-active-only aria-pressed="false" aria-label="Exit TV mode">${cleanIcon("tv")}<span>TV mode</span></button>
@@ -6630,17 +6654,17 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
             <a href="/continue-watching"><span>▶</span><b>Continue watching</b></a>
             <a href="/my-list"><span>＋</span><b>My List</b></a>
             <a href="/liked"><span>♡</span><b>Liked titles</b></a>
-            <a href="/social"><span>◉</span><b>Social</b></a>
+            <a href="/friends"><span>◉</span><b>Friends & messages</b></a>
+            <a href="/friends?tab=home"><span>⌂</span><b>Our shared home</b></a>
+            <a href="/recommendations"><span>✦</span><b>AI picks</b></a>
+            <a href="/audiobooks"><span>♫</span><b>Audiobooks</b></a>
             <a href="/social?tab=watchrooms"><span>◎</span><b>Watch parties</b></a>
             <a href="/browse-by-languages"><span>文</span><b>Languages & genres</b></a>
             <a href="/kids"><span>★</span><b>Kids</b></a>
           </div>
         </details>
       </div>
-      <form id="svNavSearchPopup" class="dsNavSearch svSearchPopup" action="/search" method="get" role="search" hidden>
-        <input id="svNavSearchInput" type="search" name="q" placeholder="Search movies, series, people…" aria-label="Search movies, series, and people" autocomplete="off" />
-        <button type="submit" aria-label="Submit search">${cleanIcon("search")}</button>
-      </form>
+      ${searchMarkup()}
     </div>
   </header>
 
@@ -6672,6 +6696,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
   </nav>
 
   ${studioMarkup()}
+  ${connectDialogs()}
 
   <div id="toast" class="toast"></div>
 
@@ -6697,6 +6722,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
     function saveLibrary(key, list) {
       localStorage.setItem(key, JSON.stringify(list.slice(0, 300)));
+      window.dispatchEvent(new Event("swifly:library-change"));
       syncLibraryButtons();
       renderSavedGrid("watchlistGrid", "movieverse.watchlist", "watchlist");
       renderSavedGrid("likedGrid", "movieverse.liked", "liked");
@@ -6896,6 +6922,14 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
     renderSavedGrid("watchlistGrid", "movieverse.watchlist", "watchlist");
     renderSavedGrid("likedGrid", "movieverse.liked", "liked");
+
+    document.addEventListener("swifly:account-hydrated", () => {
+      renderSavedGrid("watchlistGrid", "movieverse.watchlist", "watchlist");
+      renderSavedGrid("likedGrid", "movieverse.liked", "liked");
+    });
+    document.addEventListener("swifly:account-suspended", () => {
+      for (const id of ["watchlistGrid", "likedGrid"]) document.getElementById(id)?.replaceChildren();
+    });
 
     (function enablePremiumPosterTilt(){
       if (document.body.classList.contains("svCleanShell")) return;
@@ -7183,52 +7217,6 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
         }
       }
 
-      function setupAuthForm() {
-        const page = document.querySelector(".dsAuthPage");
-        const form = document.getElementById("dsAuthForm");
-        if (!page || !form) return;
-
-        form.addEventListener("submit", (event) => {
-          event.preventDefault();
-          const formData = new FormData(form);
-          const mode = page.dataset.authMode || "login";
-          const email = String(formData.get("email") || "").trim().toLowerCase();
-          const password = String(formData.get("password") || "");
-          const name = String(formData.get("name") || email.split("@")[0] || "User").trim();
-          const accounts = getAccounts();
-
-          if (!email || password.length < 4) {
-            showToast("Use an email and at least 4 characters");
-            return;
-          }
-
-          if (mode === "signup") {
-            if (accounts.some((account) => account.email === email)) {
-              showToast("Account already exists");
-              return;
-            }
-
-            const account = { email, password, name, createdAt: new Date().toISOString() };
-            accounts.unshift(account);
-            writeJson(ACCOUNT_KEY, accounts);
-            writeJson(SESSION_KEY, { email, name });
-            showToast("Account created");
-            setTimeout(() => location.href = new URLSearchParams(location.search).get("redirect") || "/profiles", 600);
-            return;
-          }
-
-          const found = accounts.find((account) => account.email === email && account.password === password);
-          if (!found) {
-            showToast("Wrong email or password");
-            return;
-          }
-
-          writeJson(SESSION_KEY, { email: found.email, name: found.name || found.email });
-          showToast("Logged in");
-          setTimeout(() => location.href = new URLSearchParams(location.search).get("redirect") || "/profiles", 500);
-        });
-      }
-
       function openProfileDialog(index = -1) {
         const dialog = document.getElementById("profileEditor");
         if (!dialog) return;
@@ -7357,18 +7345,6 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
           identity.innerHTML = '<div class="dsAccountAvatar">?</div><div><strong>Not logged in</strong><span>Create an account to organize this browser.</span><small><a href="/login">Log in</a> or <a href="/signup">sign up</a></small></div>';
         }
 
-        document.getElementById("accountNameForm")?.addEventListener("submit", (event) => {
-          event.preventDefault();
-          const session = getSession();
-          if (!session) return;
-          const nextName = document.getElementById("accountDisplayName").value.trim().slice(0, 40) || session.name || "User";
-          const accounts = getAccounts().map((account) => account.email === session.email ? { ...account, name: nextName } : account);
-          writeJson(ACCOUNT_KEY, accounts);
-          writeJson(SESSION_KEY, { ...session, name: nextName });
-          showToast("Account name saved");
-          setupAccountPage();
-        });
-
         document.getElementById("logoutBtn")?.addEventListener("click", () => {
           localStorage.removeItem(SESSION_KEY);
           showToast("Logged out");
@@ -7403,7 +7379,6 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
         showToast("Profiles reset");
       });
 
-      setupAuthForm();
       renderDynamicProfiles();
       setupProfileEditor();
       setupAccountPage();
@@ -9022,6 +8997,7 @@ async function detailPage(req, res, type) {
           </div>
           <div class="svDetailActions">
             <a class="dsPrimaryBtn" href="${watchHref}" ${mediaDataAttributes("play", details, type)}>${cleanIcon("play")}${escapeHtml(playLabel)}</a>
+            <button type="button" class="dsSecondaryBtn" data-share-title data-share-id="${escapeHtml(id)}" data-share-type="${type}" aria-label="Send ${escapeHtml(title)} to a friend">${cleanIcon("people")}Share</button>
             ${trailers.length ? `<a class="dsSecondaryBtn" href="/watch/${type}/${encodeURIComponent(id)}?mode=trailer">${cleanIcon("play-circle")}Trailer</a>` : ""}
             <a class="dsSecondaryBtn svDownloadAction" href="/download/${type}/${encodeURIComponent(id)}${type==="tv"?`?s=${startSeason}&e=1`:""}" data-sv-download data-sv-download-type="${type==="tv"?"episode":"movie"}" aria-label="Download ${type==="tv"?"first episode of "+escapeHtml(title):escapeHtml(title)}">${cleanIcon("download")}Download</a>
             ${partyId ? `<a class="dsSecondaryBtn" href="${escapeHtml(partyMediaWatchUrl({movieId:partyId,type,season:String((details.seasons||[]).filter(row=>Number.isSafeInteger(row.season_number)&&row.season_number>0).sort((a,b)=>a.season_number-b.season_number)[0]?.season_number||1),episode:"1"},"",true))}" data-sv-party-movie-id="${partyId}" data-sv-party-type="${type}" aria-label="Start a watch party for ${escapeHtml(title)}">${cleanIcon("people")}Start a watch party</a>` : ""}
@@ -9112,7 +9088,7 @@ async function personDetailPage(req, res) {
 
 function watchlistPage(req, res) {
   const body = `<main class="dsPlainPage">
-    ${dsPageHeader("My List", "Everything you save appears here in this browser.", "Saved locally")}
+    ${dsPageHeader("My List", "Your saved films and series, ready for your next movie night.", "Your library")}
     <section class="dsMyListControls">
       <a href="/movies">Movies</a>
       <a href="/tv">TV Shows</a>
@@ -14443,10 +14419,10 @@ function authPage(res, mode = "login") {
   const isSignup = String(mode || "login") === "signup";
   const title = isSignup ? "Create your account" : "Welcome back";
   const subtitle = isSignup
-    ? "Make a local SwiflyTV account for profiles, watchlists, continue watching, and watch room features on this device."
-    : "Log in to your SwiflyTV profile on this device.";
+    ? "Create your SwiflyTV account for friends, movie nights and a library across your devices."
+    : "Log in to your SwiflyTV account.";
 
-  const body = `<main class="dsAuthPage dsAuthPageSafe ${isSignup ? "svAuthSignupPage" : "svAuthLoginPage"}">
+  const body = `<main data-auth-mode="${isSignup ? "signup" : "login"}" class="dsAuthPage dsAuthPageSafe ${isSignup ? "svAuthSignupPage" : "svAuthLoginPage"}">
     <div class="dsAuthTopActions">
       <a href="/welcome">Explore Swifly</a>
       <button type="button" data-st-open aria-label="Customize appearance" title="Swifly Studio">
@@ -14463,121 +14439,18 @@ function authPage(res, mode = "login") {
         <h1>${isSignup ? "Create account" : "Welcome back"}</h1>
         <p class="svAuthIntro">${isSignup ? "Save your favorites. Make movie night your own." : "Log in to continue watching."}</p>
         <form id="safeAuthForm" class="dsSafeAuthForm">
-          ${isSignup ? `<label><span>Name</span><input name="name" type="text" placeholder="Your name" autocomplete="name" required /></label>` : ""}
+          ${isSignup ? `<label><span>Name</span><input name="name" type="text" placeholder="Your name" autocomplete="name" maxlength="40" required /></label>` : ""}
           <label><span>Email</span><input name="email" type="email" placeholder="you@example.com" autocomplete="email" required /></label>
-          <label><span>Password</span><span class="svAuthPasswordField"><input name="password" type="password" placeholder="Your password" autocomplete="${isSignup ? "new-password" : "current-password"}" required /><button type="button" class="svAuthPasswordToggle" data-auth-toggle-password aria-label="Show password" aria-pressed="false">Show</button></span></label>
+          <label><span>Password</span><span class="svAuthPasswordField"><input name="password" type="password" placeholder="${isSignup ? "At least 8 characters" : "Your password"}" minlength="${isSignup ? 8 : 1}" maxlength="128" autocomplete="${isSignup ? "new-password" : "current-password"}" required /><button type="button" class="svAuthPasswordToggle" data-auth-toggle-password aria-label="Show password" aria-pressed="false">Show</button></span></label>
           <button class="dsPrimaryBtn" type="submit"><span>${isSignup ? "Create account" : "Log in"}</span><span aria-hidden="true">↗</span></button>
+          <p data-auth-error role="alert" hidden></p>
         </form>
         <p class="dsAuthFinePrint">${isSignup ? `Already have an account? <a href="/login">Log in</a>` : `New to Swifly? <a href="/signup">Sign up</a>`}</p>
-        <p class="svAuthPrivacy">Your profile is stored on this device.</p>
+        <p class="svAuthPrivacy">Your own profile. Your friends. Your movies, together.</p>
       </section>
     </section>
 
-    <script>
-      (function safeAuth(){
-        const form = document.getElementById("safeAuthForm");
-        if (!form) return;
 
-        const mode = "${isSignup ? "signup" : "login"}";
-        const passwordToggle = form.querySelector("[data-auth-toggle-password]");
-        passwordToggle?.addEventListener("click", function() {
-          const input = form.elements.namedItem("password");
-          if (!input) return;
-          const showing = input.type === "password";
-          input.type = showing ? "text" : "password";
-          passwordToggle.textContent = showing ? "Hide" : "Show";
-          passwordToggle.setAttribute("aria-label", showing ? "Hide password" : "Show password");
-          passwordToggle.setAttribute("aria-pressed", String(showing));
-        });
-        const params = new URLSearchParams(location.search);
-        const requestedRedirect=params.get("redirect") || "/profiles";
-        const redirect=requestedRedirect.startsWith("/")&&!requestedRedirect.startsWith("//")?requestedRedirect:"/profiles";
-
-        function toast(msg) {
-          if (window.showToast) showToast(msg);
-          else alert(msg);
-        }
-
-        function readAccounts() {
-          try {
-            return JSON.parse(localStorage.getItem("swiflytv.accounts") || "[]");
-          } catch {
-            return [];
-          }
-        }
-
-        function writeAccounts(accounts) {
-          localStorage.setItem("swiflytv.accounts", JSON.stringify(accounts));
-        }
-
-        form.addEventListener("submit", function(event) {
-          event.preventDefault();
-
-          const fd = new FormData(form);
-          const name = String(fd.get("name") || "").trim();
-          const email = String(fd.get("email") || "").trim().toLowerCase();
-          const password = String(fd.get("password") || "");
-
-          if (!email || !password) {
-            toast("Email and password required");
-            return;
-          }
-
-          let accounts = readAccounts();
-          let account = accounts.find((item) => String(item.email || "").toLowerCase() === email);
-
-          if (mode === "signup") {
-            if (account) {
-              toast("That account already exists on this device");
-              return;
-            }
-
-            account = {
-              id: Date.now().toString(36),
-              name: name || email.split("@")[0] || "User",
-              email,
-              password,
-              createdAt: Date.now()
-            };
-
-            accounts.push(account);
-            writeAccounts(accounts);
-          } else {
-            if (!account) {
-              account = {
-                id: Date.now().toString(36),
-                name: name || email.split("@")[0] || "User",
-                email,
-                password,
-                createdAt: Date.now()
-              };
-              accounts.push(account);
-              writeAccounts(accounts);
-            } else if (String(account.password || "") !== password) {
-              toast("Wrong password for this local account");
-              return;
-            }
-          }
-
-          localStorage.setItem("swiflytv.session", JSON.stringify({
-            id: account.id,
-            name: account.name,
-            email: account.email,
-            loggedInAt: Date.now()
-          }));
-
-          if (!localStorage.getItem("swiflytv.profiles")) {
-            localStorage.setItem("swiflytv.profiles", JSON.stringify([
-              { id: "main", name: account.name || "Main", mode: "standard" },
-              { id: "kids", name: "Kids", mode: "kids" }
-            ]));
-          }
-
-          toast(mode === "signup" ? "Account created" : "Logged in");
-          location.href = redirect;
-        });
-      })();
-    </script>
   </main>`;
 
   res.send(pageShell({ title: `${SITE_NAME} — ${isSignup ? "Signup" : "Login"}`, active: isSignup ? "signup" : "login", body }));
@@ -14771,6 +14644,7 @@ function profilesManagePage(req, res) {
 
 
 app.get("/account", accountPage);
+app.get("/friends", (req,res) => res.send(pageShell({title: `${SITE_NAME} — Friends`, active:"friends", body:connectMarkup()})));
 
 
 const socialRooms = new Map();

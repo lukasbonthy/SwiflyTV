@@ -13,7 +13,7 @@ function partyMarkup(options={}){
        <a href="/movies" class="partyBrowseLink" data-party-return>${icon('back')}Back to browsing</a>
        <span id="sv100Kind" class="partySrOnly">${rooms?'Watch together':'Community'}</span>
        <h1 id="sv100Title">${rooms?'Party Hub':'Community'}</h1>
-       <p class="partyPageLead">${rooms?'Good films. Better company.':'For the love of a good film.'}</p>
+       <p class="partyPageLead">${rooms?'Good films. Better company.':'For the love of a good film.'}<a class="partyFriendsLink" href="/friends">Friends & messages ↗</a></p>
      </div>
      <nav class="sv100ModeTabs partyNavigation partyModeNav" aria-label="Party Hub navigation">
        <button type="button" class="partySecondaryBtn ${rooms?'active':''}" data-tab="rooms">${icon('people')}Watch parties</button>

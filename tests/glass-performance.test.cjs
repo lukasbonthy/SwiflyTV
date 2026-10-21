@@ -9,6 +9,7 @@ function wheel(w, target, options = {}) {
   return event;
 }
 function settle(w, start = 16) {for (let time = start; time < 2000; time += 16) w.flush(time);}
+test('social, discovery and player-helper surfaces stay matte without allocating navigation lenses',async()=>{const env=glass('<main class="svConnectPage"><button>Send message</button></main><form class="svDiscoverySearch svSearchPopup"><button>Search</button></form><div class="svPlayerAssist"><button>Skip intro</button></div>');env.window.boot('liquid-glass/surfaces.js');await tick();settle(env.window);env.intersect(true);settle(env.window);assert.equal(env.window.document.querySelectorAll('.svNavMatchedLens').length,0);env.finish();});
 function glass(markup = '') {
   const env = browser(markup), w = env.window, intersections = [], sizes = [];
   Object.defineProperty(w.navigator, 'userAgent', {value:'Chrome/130.0.0.0', configurable:true});

@@ -1,5 +1,4 @@
-/* Original Swifly Aurora artwork, cached without a continuous compositing loop.
-   Large animated ribbons repeatedly invalidate the live glass above them. */
+/* Original artwork with one bounded compositor drift; no JS frame loop. */
 body.svCleanShell {position:relative;isolation:isolate}
 body.svCleanShell .svAuroraBackground {
   display:none;
@@ -27,6 +26,16 @@ body.svCleanShell .svAuroraBackground > .svAuroraRibbon {
   animation:none;animation-name:none;will-change:auto;
 }
 body.svCleanShell .svAuroraBackground > .svAuroraRibbon--first {opacity:.85}
+body.svCleanShell[data-sv-aurora-state="live"] .svAuroraBackground > .svAuroraRibbon--first {
+  animation-name:svAuroraDrift;animation-duration:var(--sv-aurora-speed,32s);
+  animation-delay:-8s;
+  animation-timing-function:ease-in-out;animation-iteration-count:infinite;
+  animation-direction:alternate;animation-fill-mode:both;
+}
+@keyframes svAuroraDrift {
+  from {transform:translate3d(-2.5%,-1%,0) scale(1.025)}
+  to {transform:translate3d(2.5%,2%,0) scale(1.065)}
+}
 body.svCleanShell[data-st-aurora-color="glacier"] .svAuroraRibbon {filter:none}
 /* Extremely faint phase-shifted echoes add depth without changing the artwork. */
 body.svCleanShell .svAuroraBackground > .svAuroraRibbon--second {
@@ -66,11 +75,14 @@ body.svCleanShell .stPreviewAurora > .svAuroraRibbon {
   filter:hue-rotate(var(--sv-aurora-hue,0deg));animation:none;transform:none;
 }
 body.svCleanShell .stPreviewAurora > :is(.svAuroraRibbon--second,.svAuroraRibbon--third,.svAuroraGlow) {display:none}
+body.svCleanShell[data-sv-aurora-state="live"] #controlPanel.open .stPreviewAurora > .svAuroraRibbon--first {
+  animation:svAuroraDrift var(--sv-aurora-speed,32s) ease-in-out infinite alternate;
+}
 .stPreviewScene > :is(.stPreviewNav,.stPreviewCopy) {position:relative;z-index:1}
 .stPreviewScene > .stPreviewCopy {position:absolute}
 body.reduceMotion .svAuroraRibbon,
 body.svCleanShell[data-sv-aurora-state="still"] .svAuroraRibbon,
-body.svCleanShell[data-st-aurora-motion="still"] .svAuroraRibbon {animation:none !important}
+body.svCleanShell[data-st-aurora-motion="still"] .svAuroraRibbon {animation-play-state:paused !important}
 @media(prefers-reduced-motion:reduce) {
   body.svCleanShell .svAuroraRibbon {animation:none !important}
 }

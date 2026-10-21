@@ -1,4 +1,5 @@
 'use strict';
+const {playerAssistMarkup}=require('./player-assist');
 
 const escape = value => String(value ?? '').replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]));
 function mediaUrl(value) {
@@ -87,6 +88,7 @@ function playerMarkup(options = {}) {
       <h2 data-player-status-title>${statusTitle}</h2><p data-player-status-copy>${statusCopy}</p>
       <button type="button" class="svPlayerAction svPlayerRetry" data-player-retry hidden>${icon('retry')}Retry playback</button>
     </div>
+    ${options.embedded ? "" : playerAssistMarkup()}
     <div class="svPlayerDock" data-player-controls hidden>
       <div class="svPlayerDockGlass svLiquidPane" data-player-glass aria-hidden="true"></div>
       <div class="svPlayerTimelineRow"><span class="svPlayerTime svPlayerTimeCurrent" data-player-current>0:00</span><div class="svPlayerTimeline"><div class="svPlayerTimelineTrack" aria-hidden="true"><i data-player-buffered></i><b data-player-progress></b></div><input data-player-seek type="range" min="0" max="0" step="0.1" value="0" aria-label="Seek through ${mediaNoun}" aria-valuetext="0:00" disabled/></div><span class="svPlayerTime svPlayerTimeDuration" data-player-duration>—</span></div>
@@ -100,6 +102,7 @@ function playerMarkup(options = {}) {
           <label for="${escape(controlPrefix)}Audio">Audio language<select id="${escape(controlPrefix)}Audio" data-player-audio disabled><option value="-1">Language unavailable</option></select></label>
           <label for="${escape(controlPrefix)}Speed">Playback speed<select id="${escape(controlPrefix)}Speed" data-player-speed><option value="0.5">0.5×</option><option value="0.75">0.75×</option><option value="1" selected>Normal</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option></select></label>
           <label for="${escape(controlPrefix)}Captions">Captions<select id="${escape(controlPrefix)}Captions" data-player-captions disabled><option value="-1">Unavailable</option></select></label>
+          ${!options.embedded&&type==='tv'?`<label class="svPlayerMenuAutoplay" for="${escape(controlPrefix)}Autoplay">Play next episode automatically<input id="${escape(controlPrefix)}Autoplay" type="checkbox" data-assist-autoplay checked></label>`:''}
           <button type="button" class="svPlayerMenuAction" data-player-pip aria-label="Picture in picture" hidden>${icon('pip')}<span>Picture in picture</span></button>
           ${options.embedded ? `<button type="button" class="svPlayerMenuAction" data-player-sync>${icon('retry')}Sync playback</button>` : ''}
         </div></details>
@@ -119,7 +122,7 @@ function playerMarkup(options = {}) {
     <div class="svPlayerLayout"><section class="svPlayerMain" aria-labelledby="svPlayerTitle"><div class="svPlayerTheater" data-cinema-reveal>${mode==='trailer'?trailerSurface:movieSurface}</div>
       ${type==='tv'&&mode==='movie'&&options.episodeNavigationHtml?`<div class="svPlayerEpisodeNavigation" data-player-episode-navigation>${options.episodeNavigationHtml}</div>`:''}
       <div class="svPlayerBelow svGlassSurface svGlassPanel" data-cinema-reveal><div class="svPlayerFilm">${poster ? `<a class="svPlayerPoster" href="${escape(detailUrl)}" tabindex="-1" aria-hidden="true"><img src="${escape(poster)}" alt="" decoding="async"/></a>`:''}<div class="svPlayerIdentity"><div class="svPlayerIdentityHead"><span class="svPlayerChapter">${chapter}</span><div class="svPlayerMetadata">${meta}</div></div><h1 id="svPlayerTitle">${escape(title)}</h1>${type==='tv'&&options.episodeTitle&&mode==='movie'?`<p class="svPlayerEpisodeName">${escape(options.episodeTitle)}</p>`:''}<p class="svPlayerTransportNote" id="${escape(noteId)}" data-player-transport-note>${mode==='trailer'?'A first look at the story.':'Settle in. The rest can wait.'}</p></div></div>
-      ${mode==='movie' ? `<div class="svPlayerTogether"><span>Better with company</span><button type="button" class="dsSecondaryBtn svPlayerPartyButton" data-player-party-open>${icon('people')}<span>Watch together</span></button></div>`:''}</div>
+      ${mode==='movie' ? `<div class="svPlayerTogether"><span>Better with company</span><button type="button" class="dsSecondaryBtn" data-share-title data-share-id="${escape(id)}" data-share-type="${type}">Send to a friend</button><button type="button" class="dsSecondaryBtn svPlayerPartyButton" data-player-party-open>${icon('people')}<span>Watch together</span></button></div>`:''}</div>
       ${type==='tv'&&options.episodePickerHtml ? `<div class="svPlayerEpisodePicker">${options.episodePickerHtml}</div>` : ''}
       <noscript><p class="svPlayerNoScript">Enable JavaScript to prepare ${mediaNoun} playback.</p></noscript>
     </section><aside class="svPlayerPartySlot" data-player-party-slot aria-label="Watch party">${options.partyPanelHtml || ''}</aside></div>
