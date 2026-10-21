@@ -6546,7 +6546,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${body.includes("fa-solid") ? '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />' : ""}
     ${player || partyBrowse || active === "social" ? '<script defer src="/socket.io/socket.io.js"></script>' : ""}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/modern-normalize@2.0.0/modern-normalize.min.css" />
-    <link rel="stylesheet" href="/assets/liquid-glass/liquid-glass.css?v=222" />
+    <link rel="stylesheet" href="/assets/liquid-glass/liquid-glass.css?v=223" />
     <script defer src="/assets/liquid-glass/liquid-glass.js?v=227"></script>
     <link rel="stylesheet" href="/assets/clean/clean.css?v=154" />
     <script defer src="/assets/clean/clean.js?v=3"></script>
@@ -6596,7 +6596,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/clean/details-premium.css?v=255" />
     <link rel="stylesheet" href="/assets/clean/details-clarity.css?v=2" />
     <link rel="stylesheet" href="/assets/discovery/discovery.css?v=1" />
-    <link rel="stylesheet" href="/assets/clean/account-sheet.css?v=1" />
+    <link rel="stylesheet" href="/assets/clean/account-sheet.css?v=2" />
 </head>
 <body class="svCleanShell">
 

@@ -103,18 +103,20 @@ body.svCleanShell [data-sv-liquid-nav].topbar .netflixNav .navLinks > a:is(.acti
   box-shadow: inset 0 0 0 .5px rgb(255 255 255 / .12) !important;
   color: #fff !important;
 }
+/* Account menus are intentionally opaque and readable over vivid hero art.
+   Keep the liquid refraction on the navbar itself, NOT on account content. */
 body .dsProfileDropdown.svLiquidDropdown {
   isolation: isolate;
   z-index: 5;
-  background: transparent !important;
-  border: 0 !important;
-  box-shadow: none;
+  background: #0d131e !important;
+  border: 1px solid rgb(223 237 255 / .18) !important;
+  box-shadow: 0 24px 70px rgb(0 0 0 / .7);
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
-  overflow: visible;
+  overflow-y: auto;
 }
 body .dsProfileDropdown.svLiquidDropdown::before { display: none !important; }
-body .dsProfileDropdown.svLiquidDropdown > .svLiquidPane { --sv-glass-radius: 22px; }
+body .dsProfileDropdown.svLiquidDropdown > .svLiquidPane { display: none !important; }
 body .dsProfileDropdown.svLiquidDropdown > :not(.svLiquidPane) { position: relative; z-index: 1; }
 body .mobileNav[data-sv-liquid-nav] {
   position: fixed !important;
