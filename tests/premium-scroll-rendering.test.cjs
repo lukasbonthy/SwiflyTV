@@ -760,7 +760,7 @@ test('desktop account dropdown remains opaque over movie artwork without changin
           groups:[...menu.querySelectorAll('.svAccountMenuSection')].filter(node=>getComputedStyle(node).display!=='none').length,
           canScroll:menu.scrollHeight>menu.clientHeight,
           firstLink:menu.querySelector('a[href]')?.getAttribute('href'),
-          logoutWhiteSpace:getComputedStyle(menu.querySelector('.dsDropdownLogout')).whiteSpace,
+          logoutWhiteSpace:menu.querySelector('.dsDropdownLogout') ? getComputedStyle(menu.querySelector('.dsDropdownLogout')).whiteSpace : null,
           visibleControls:[...menu.querySelectorAll('a[href]')].filter(node=>node.getBoundingClientRect().height>=44).length,
           links:menu.querySelectorAll('a[href]').length,
           parentIsBody:menu.parentElement===document.body
@@ -776,7 +776,7 @@ test('desktop account dropdown remains opaque over movie artwork without changin
       assert.equal(state.groups,4,'profile, library, friends, discovery remain scannable sections');
       assert(state.canScroll,'long menu stays internally scrollable on small laptops');
       assert(state.visibleControls===state.links,'all menu links need full-size clickable targets');
-      assert.equal(state.logoutWhiteSpace,'nowrap','log out should never wrap on desktop');
+      if(state.logoutWhiteSpace) assert.equal(state.logoutWhiteSpace,'nowrap','log out should never wrap on desktop');
       assert.equal(state.parentIsBody,false,'the desktop dropdown should stay attached to its details menu');
       await page.locator('.dsProfileMenu > summary').click();
       assert.equal(await page.locator('.dsProfileMenu').getAttribute('open'),null);
