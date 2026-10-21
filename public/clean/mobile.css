@@ -1,0 +1,129 @@
+/* Touch browsing: compact glass navigation, centered features and native rails. */
+body.svCleanShell .svMobileStudioLink { display:none !important; }
+
+@media (max-width:860px) {
+  html:not([data-sv-tv="true"]) body.svCleanShell {
+    --sv-page-gutter:16px;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell [data-sv-liquid-nav].topbar {
+    padding:calc(16px + env(safe-area-inset-top)) 16px 0 !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell [data-sv-liquid-nav].topbar > .container.nav.netflixNav {
+    display:flex !important;
+    width:max-content !important;
+    min-width:0 !important;
+    max-width:calc(100vw - 32px) !important;
+    height:56px !important;
+    min-height:56px !important;
+    padding:6px 8px 6px 16px !important;
+    gap:16px !important;
+    border-radius:50px !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav > .svLiquidPane { --sv-glass-radius:50px; }
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .navLeftCluster { flex:0 0 auto !important; gap:0 !important; }
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .dsNavActions { gap:0 !important; }
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .brand.netflixBrand { display:flex !important; align-items:center; min-height:44px !important; }
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav :is(.svNavPartyLink,#controlToggleTop) { display:none !important; }
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav :is(.svNavButton,.dsProfileMenu > summary) {
+    width:44px !important; min-width:44px !important;
+    height:44px !important; min-height:44px !important;
+    border-radius:50% !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .svIcon { width:20px; height:20px; }
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .dsProfileMenu { position:static !important; }
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .dsProfileDropdown.svLiquidDropdown {
+    inset:calc(100% + 10px) auto auto 50% !important;
+    transform:translateX(-50%) !important;
+    width:min(320px,calc(100vw - 32px)) !important;
+    background:rgb(8 10 14 / .94) !important;
+    max-height:calc(100svh - 190px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsProfileDropdown > :is(a,.svMobileStudioLink) {
+    display:grid !important; grid-template-columns:24px 1fr; align-items:center; gap:6px;
+    min-height:44px !important; padding:8px 12px !important;
+    font-size:14px !important; font-weight:500 !important; text-align:left;
+    border:0; border-radius:10px !important; background:transparent; color:#eee;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell .svMobileStudioLink:hover { background:#ffffff12; }
+  html:not([data-sv-tv="true"]) body.svCleanShell .svMobileStudioLink > b { font-weight:500; }
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .dsNavSearch.svSearchPopup {
+    inset:calc(100% + 10px) auto auto 50% !important;
+    transform:translateX(-50%) !important;
+    width:min(420px,calc(100vw - 32px)) !important;
+    height:60px !important;
+    padding:8px 8px 8px 16px !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .svSearchPopup input { font-size:16px !important; min-height:44px !important; }
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .svSearchPopup button { flex:0 0 44px; width:44px !important; height:44px !important; }
+
+  html:not([data-sv-tv="true"]) body.svCleanShell .mobileNav[data-sv-liquid-nav] {
+    /* Details reserve the pre-lock page width so the dock never recenters. */
+    width:min(380px,calc(var(--sv-detail-page-width,100%) - 32px)) !important;
+    padding:5px !important; gap:2px !important;
+    border-radius:50px !important;
+    bottom:calc(16px + env(safe-area-inset-bottom)) !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell .mobileNav > .svLiquidPane { --sv-glass-radius:50px; }
+  html:not([data-sv-tv="true"]) body.svCleanShell .mobileNav > a {
+    display:flex !important; flex-direction:column; justify-content:center; align-items:center;
+    gap:3px; padding:6px 2px !important;
+    min-width:44px !important; min-height:48px !important;
+    border-radius:50px !important; font-size:10px !important; line-height:1.2;
+    color:#ffffffb3 !important; -webkit-tap-highlight-color:transparent;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell .mobileNav > a.active { color:#fff !important; background:#ffffff1a !important; }
+  html:not([data-sv-tv="true"]) body.svCleanShell .mobileNav .svIcon { width:20px; height:20px; flex:0 0 20px; }
+
+  html:not([data-sv-tv="true"]) body.svCleanShell main > .dsHero {
+    min-height:clamp(500px,80svh,760px) !important;
+    padding:120px 0 88px !important;
+    flex-direction:column !important; justify-content:flex-end !important; align-items:center !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell main > .dsHero > .dsHeroArt > .dsHeroBg { background-position:center 30% !important; }
+  html:not([data-sv-tv="true"]) body.svCleanShell main > .dsHero > .dsHeroGlass {
+    background:linear-gradient(180deg,#0002,transparent 25%,#0007 70%,#000c) !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsHeroContent {
+    width:min(520px,calc(100% - 32px)) !important; max-width:520px !important;
+    margin:0 16px !important; align-self:center !important; text-align:center;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsHeroContent h1 { font-size:clamp(38px,10vw,56px) !important; line-height:1.06 !important; margin:0 !important; }
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsHeroContent .dsEyebrow { font-size:10px !important; min-height:0; margin:0 auto 10px !important; }
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsHeroMeta { justify-content:center; gap:8px !important; margin:14px 0 12px !important; }
+  html:not([data-sv-tv="true"]) body.svCleanShell main > .dsHero .dsHeroMeta > :is(b,span) { background:transparent !important; min-height:20px; padding:0 4px !important; }
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsHeroContent > p { margin:0 auto 20px !important; font-size:14px !important; line-height:20px !important; }
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsHeroActions { justify-content:center !important; flex-wrap:nowrap !important; gap:8px !important; }
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsHeroActions > :is(a,button) { min-width:48px !important; min-height:48px !important; padding:12px 18px !important; }
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsHeroActions > .dsPrimaryBtn { min-width:108px !important; }
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsHeroActions > .dsIconBtn { width:48px !important; padding:0 !important; }
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsHeroRating { bottom:24px !important; }
+
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsContent > .dsRow.svCatalogRow {
+    --sv-poster-width:calc((100vw - 44px) / 2);
+    width:calc(100% + 32px); margin:0 -16px 28px !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell .svCatalogRow > .svSectionHead { margin-inline:16px; margin-bottom:12px; }
+  html:not([data-sv-tv="true"]) body.svCleanShell .svSectionHead > h2 { font-size:19px !important; line-height:1.25 !important; }
+  html:not([data-sv-tv="true"]) body.svCleanShell .svSectionActions { flex:0 0 auto; }
+  html:not([data-sv-tv="true"]) body.svCleanShell .svRowMore { display:flex; align-items:center; min-height:44px; }
+  html:not([data-sv-tv="true"]) body.svCleanShell .svCatalogRow > .movieRail {
+    gap:12px !important; padding:4px 16px 12px !important;
+    scroll-padding-inline:16px; scrollbar-width:none;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell :is(.svRowArrows,.svSectionActions > .dsRowControls) { display:none !important; }
+  /* Legacy hover-paint gutters must not widen a phone's layout viewport. */
+  html:not([data-sv-tv="true"]) body.svCleanShell .container:is(.netflixCatalog,.netflixPeopleCatalog) { margin-inline:16px !important; }
+  html:not([data-sv-tv="true"]) body.svCleanShell .movieGrid { margin-inline:0 !important; padding-inline:0 !important; }
+  html:not([data-sv-tv="true"]) body.svCleanShell :is(.dsGrid,.movieGrid,.dsMoreGridV121) { grid-template-columns:repeat(2,minmax(0,1fr)) !important; }
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsCardQuickActions { inset:auto 6px 6px auto !important; gap:6px !important; }
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsCardQuickActions .dsMiniBtn { width:44px !important; min-width:44px !important; height:44px !important; }
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsCardInfo { padding-top:9px !important; }
+}
+@media (min-width:600px) and (max-width:860px) {
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsContent > .dsRow.svCatalogRow { --sv-poster-width:calc((100vw - 56px) / 3); }
+  html:not([data-sv-tv="true"]) body.svCleanShell :is(.dsGrid,.movieGrid,.dsMoreGridV121) { grid-template-columns:repeat(3,minmax(0,1fr)) !important; }
+}
+
+@media (max-width:359px) {
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsCardQuickActions { inset:auto 1px 6px auto !important; gap:1px !important; }
+}

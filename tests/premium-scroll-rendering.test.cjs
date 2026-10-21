@@ -9,7 +9,7 @@ const available = fs.existsSync(chromium.executablePath()) ||
   fs.existsSync(chromium.executablePath().replace(/chromium-(\d+)\/chrome-linux\/chrome$/, 'chromium_headless_shell-$1/chrome-linux/headless_shell'));
 
 async function catalog(browser, options = {}) {
-  const {detailHTML,welcome=false,...pageOptions}=options;
+  const {detailHTML,welcome=false,grid='',...pageOptions}=options;
   const api = loadServer();
   let ready = false;
   try {
@@ -21,6 +21,12 @@ async function catalog(browser, options = {}) {
       credits:{cast:[],crew:[]},videos:{results:[]},recommendations:{results:items},similar:{results:[]},images:{logos:[]}} : ({results:items}));
     let html;
     if(welcome)html=api.pageShell({active:'welcome',body:welcomeMarkup({hero:items[0]})});
+    else if(grid){
+      const cards=items.map(item=>api.movieCard(item,'movie')).join('');
+      html=api.pageShell({active:grid==='movieGrid'?'movies':'search',body:grid==='movieGrid'
+        ? '<main><div class="container netflixCatalog"><div class="movieGrid">'+cards+'</div></div></main>'
+        : '<main class="dsPlainPage"><section class="dsContent noHero"><div class="dsGrid">'+cards+'</div></section></main>'});
+    }
     else await api.homePage({}, {send(value) {html = value;}});
     let detail; await api.detailPage({params:{id:'100'},query:{view:'modal'},headers:{},protocol:'http',get:()=> 'localhost:3000'},
       {send(value) {detail=value;}}, 'movie');
@@ -571,4 +577,126 @@ test(layout.name+' navigation and featured actions keep their liquid glass throu
     const settled=await page.locator(layout.welcome?'.dsWelcomeActions .svNavMatchedLens':'.dsHeroActions .svNavMatchedLens,.dsHeroMuteToggle .svNavMatchedLens').evaluateAll(nodes=>nodes.map(node=>({filter:getComputedStyle(node).backdropFilter,fill:getComputedStyle(node).backgroundColor})));
     assert.deepEqual(settled,result.actions.map(action=>({filter:action.full,fill:action.fill})),'settling must not switch the featured material back on');
   } finally {await browser.close();}
+});
+
+test('mobile header and dock keep navigation, search and account controls reachable by touch', {skip:!available&&'Chromium is not installed'}, async()=>{
+  const browser=await chromium.launch({headless:true});
+  try{
+    for(const width of [320,390,820]){
+      const page=await catalog(browser,{viewport:{width,height:844},isMobile:true,hasTouch:true});
+      await page.emulateMedia({reducedMotion:'reduce'});
+      const geometry=await page.evaluate(()=>{
+        const box=node=>{const r=node.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height};};
+        return {width:innerWidth,overflow:document.documentElement.scrollWidth,header:box(document.querySelector('.netflixNav')),
+          tabs:[...document.querySelectorAll('.mobileNav > a')].map(node=>({...box(node),href:node.getAttribute('href'),icon:!!node.querySelector('svg'),current:node.getAttribute('aria-current')})),
+          search:box(document.querySelector('#svNavSearchToggle')),account:box(document.querySelector('.dsProfileMenu > summary'))};
+      });
+      assert.equal(geometry.overflow,width,'the shell must fit the phone without sideways page scroll');
+      assert(geometry.header.left>=12&&geometry.header.right<=width-12,'the floating header needs breathing room at both edges');
+      assert.deepEqual(geometry.tabs.map(tab=>tab.href),['/','/movies','/tv','/trending','/my-list']);
+      assert.equal(geometry.tabs[0].current,'page');
+      for(const target of [...geometry.tabs,geometry.search,geometry.account]){
+        assert(target.width>=44&&target.height>=44,'mobile controls must offer a full 44px touch target: '+JSON.stringify(target));
+      }
+      assert(geometry.tabs.every(tab=>tab.icon),'each bottom destination must be recognizable by its icon and label');
+      await page.locator('#svNavSearchToggle').tap();
+      await page.waitForFunction(()=>document.activeElement?.id==='svNavSearchInput');
+      const search=await page.locator('#svNavSearchPopup').boundingBox();
+      assert(search.x>=8&&search.x+search.width<=width-8,'expanded search must stay inside the screen');
+      await page.keyboard.press('Escape');
+      assert.equal(await page.locator('#svNavSearchToggle').getAttribute('aria-expanded'),'false');
+      await page.locator('.dsProfileMenu > summary').tap();
+      const account=await page.locator('.dsProfileDropdown').boundingBox();
+      assert(account.x>=8&&account.x+account.width<=width-8,'the account menu must remain visible beside the compact header');
+      const studio=page.locator('.dsProfileDropdown [data-st-open]');
+      assert(await studio.isVisible(),'Studio must remain reachable when the mobile header is simplified');
+      await studio.tap();
+      await page.waitForFunction(()=>document.querySelector('#controlPanel')?.open);
+      await page.close();
+    }
+  }finally{await browser.close();}
+});
+
+test('mobile featured copy stays centered with play, details and save on one touch-friendly row', {skip:!available&&'Chromium is not installed'}, async()=>{
+  const browser=await chromium.launch({headless:true});
+  try{
+    for(const [width,height] of [[320,568],[390,844],[430,932],[820,1180]]){
+      const page=await catalog(browser,{viewport:{width,height},isMobile:true,hasTouch:true});
+      await page.emulateMedia({reducedMotion:'reduce'});
+      const layout=await page.evaluate(()=>{
+        const box=node=>{const r=node.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height};};
+        return {width:innerWidth,hero:box(document.querySelector('.dsHero')),copy:box(document.querySelector('.dsHeroContent')),
+          align:getComputedStyle(document.querySelector('.dsHeroContent')).textAlign,
+          controls:[...document.querySelectorAll('.dsHeroActions > a,.dsHeroActions > button')].map(box)};
+      });
+      assert.equal(layout.align,'center','featured metadata and title should share a centered mobile composition');
+      assert(Math.abs((layout.copy.left+layout.copy.right)/2-width/2)<1,'copy should be centered inside the artwork');
+      assert(layout.controls.every(control=>control.width>=44&&control.height>=44),'featured actions need usable touch targets');
+      assert(layout.controls.every(control=>Math.abs(control.top-layout.controls[0].top)<1),'featured actions must fit on one row');
+      assert(layout.controls.every(control=>control.left>=16&&control.right<=width-16&&control.bottom<=layout.hero.bottom),'no action can escape the featured artwork');
+      await page.close();
+    }
+  }finally{await browser.close();}
+});
+
+test('mobile poster actions stay visible while the rail swipes independently of the page', {skip:!available&&'Chromium is not installed'}, async()=>{
+  const browser=await chromium.launch({headless:true});
+  try{
+    for(const width of [320,390]){
+      const page=await catalog(browser,{viewport:{width,height:844},isMobile:true,hasTouch:true});
+      await page.emulateMedia({reducedMotion:'reduce'});
+      const rail=page.locator('.svCatalogRow .movieRail').first();
+      await rail.scrollIntoViewIfNeeded();
+      const before=await page.evaluate(()=>scrollY),bounds=await rail.boundingBox();
+      const client=await page.context().newCDPSession(page);
+      await client.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:bounds.x+width-40,y:bounds.y+90}]});
+      for(let step=1;step<=12;step++){
+        await client.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:bounds.x+width-40-step*15,y:bounds.y+90}]});
+        await page.waitForTimeout(20); // Deliver the gesture across real compositor frames.
+      }
+      await client.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+      assert(await rail.evaluate(node=>node.scrollLeft>100),'a horizontal touch gesture must advance the movie rail');
+      assert(Math.abs(await page.evaluate(()=>scrollY)-before)<2,'a horizontal swipe must not drag the page diagonally');
+      const actions=await rail.locator('.movieCard').nth(2).locator('.dsCardQuickActions').evaluate(node=>({opacity:getComputedStyle(node).opacity,
+        buttons:[...node.querySelectorAll('button')].map(button=>{const r=button.getBoundingClientRect();return {width:r.width,height:r.height,renderer:button.querySelector('.svLiquidPane')?.dataset.swiflyRenderer};})}));
+      const fitting=await rail.locator('.movieCard').nth(2).locator('.dsCardArtwork').evaluate(node=>{
+        const poster=node.getBoundingClientRect(),actions=node.querySelector('.dsCardQuickActions').getBoundingClientRect();
+        return actions.left>=poster.left&&actions.right<=poster.right;
+      });
+      assert(fitting,'all quick actions must fit inside a narrow poster without crossing into the next title');
+      assert.equal(actions.opacity,'1','touch controls cannot depend on hover');
+      assert(actions.buttons.every(button=>button.width>=44&&button.height>=44),'save and like actions need usable touch targets');
+      assert(actions.buttons.every(button=>button.renderer!=='svg'),'poster actions retain the permanent dark frosted material');
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),width,'rail overflow must stay inside the rail');
+      await page.close();
+    }
+  }finally{await browser.close();}
+});
+
+
+test('mobile search and genre grids keep every quick action inside its own poster', {skip:!available&&'Chromium is not installed'}, async()=>{
+  const browser=await chromium.launch({headless:true});
+  try{
+    for(const grid of ['dsGrid','movieGrid']){
+      const page=await catalog(browser,{grid,viewport:{width:461,height:844},isMobile:true,hasTouch:true});
+      await page.emulateMedia({reducedMotion:'reduce'});
+      for(const width of [320,461,500,640,820]){
+        await page.setViewportSize({width,height:844});
+        // Mobile media queries settle on the rendering frame after a resize.
+        await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+        const cards=await page.locator('.'+grid+' .dsCardArtwork').evaluateAll(nodes=>nodes.slice(0,6).map(node=>{
+          const art=node.getBoundingClientRect(),actions=node.querySelector('.dsCardQuickActions').getBoundingClientRect();
+          return {left:art.left,right:art.right,actionsLeft:actions.left,actionsRight:actions.right,
+            buttons:[...node.querySelectorAll('.dsMiniBtn')].map(button=>{const r=button.getBoundingClientRect();return {width:r.width,height:r.height};})};
+        }));
+        assert.equal(cards.length,6);
+        for(const card of cards){
+          assert(card.actionsLeft>=card.left&&card.actionsRight<=card.right,grid+' at '+width+'px must not clip actions or spill onto a neighboring movie: '+JSON.stringify(card));
+          assert(card.buttons.every(button=>button.width>=44&&button.height>=44),'grid actions retain usable touch targets');
+        }
+        assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),width,'the grid must not create horizontal page overflow');
+      }
+      await page.close();
+    }
+  }finally{await browser.close();}
 });

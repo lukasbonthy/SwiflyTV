@@ -6410,12 +6410,14 @@ function setupNeededPage(error = "") {
   });
 }
 
-function navLink(href, label, key, active) {
-  return `<a class="${active === key ? "active" : ""}" href="${href}"${active === key ? ' aria-current="page"' : ""}>${label}</a>`;
+function navLink(href, label, key, active, icon = "") {
+  return `<a class="${active === key ? "active" : ""}" href="${href}"${active === key ? ' aria-current="page"' : ""}>${icon ? cleanIcon(icon) + `<span>${label}</span>` : label}</a>`;
 }
 
 function cleanIcon(name) {
   const paths = {
+    home: '<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/>',
+    compass: '<circle cx="12" cy="12" r="9"/><path d="m16 8-2.5 5.5L8 16l2.5-5.5Z"/>',
     search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/>',
     settings: '<path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="currentColor"/><circle cx="15" cy="17" r="3" fill="currentColor"/>',
     user: '<circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>',
@@ -6551,6 +6553,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=200" />' : ""}
     ${player || active === "social" ? '<link rel="stylesheet" href="/assets/party/watchroom-call.css?v=1" />' : ""}
     <link rel="stylesheet" href="/assets/clean/performance.css?v=258" />
+    <link rel="stylesheet" href="/assets/clean/mobile.css?v=1" />
     <link rel="stylesheet" href="/assets/clean/tv.css?v=255" />
     <link rel="stylesheet" href="/assets/clean/details-premium.css?v=255" />
     <link rel="stylesheet" href="/assets/clean/details-clarity.css?v=2" />
@@ -6620,6 +6623,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
           <div class="dsProfileDropdown svLiquidDropdown">
             <div class="svLiquidPane" data-swifly-glass data-glass-tint="0.2" data-glass-saturation="1" data-glass-radius="22" aria-hidden="true"></div>
             <button class="svTvMenuToggle" type="button" data-sv-tv-toggle aria-pressed="false"><span>${cleanIcon("tv")}</span><b>TV mode</b><small data-sv-tv-state>Off</small></button>
+            <button class="svMobileStudioLink" type="button" data-st-open aria-haspopup="dialog" aria-controls="controlPanel" aria-expanded="false"><span>${cleanIcon("settings")}</span><b>Swifly Studio</b></button>
             <a href="/profiles"><span>☺</span><b>Switch profile</b></a>
             <a href="/profiles/manage"><span>✎</span><b>Manage profiles</b></a>
             <a href="/account"><span>⚙</span><b>Account</b></a>
@@ -6660,11 +6664,11 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
   <nav class="mobileNav" data-sv-liquid-nav aria-label="Mobile navigation">
     <div class="svLiquidPane" data-swifly-glass data-glass-tint="0.2" data-glass-saturation="1" aria-hidden="true"></div>
-    ${navLink("/", "Home", "home", active)}
-    ${navLink("/movies", "Movies", "movies", active)}
-    ${navLink("/tv", "Series", "tv", active)}
-    ${navLink("/trending", "Discover", "trending", active)}
-    ${navLink("/my-list", "List", "watchlist", active)}
+    ${navLink("/", "Home", "home", active, "home")}
+    ${navLink("/movies", "Movies", "movies", active, "film")}
+    ${navLink("/tv", "Series", "tv", active, "tv")}
+    ${navLink("/trending", "Discover", "trending", active, "compass")}
+    ${navLink("/my-list", "List", "watchlist", active, "bookmark")}
   </nav>
 
   ${studioMarkup()}
