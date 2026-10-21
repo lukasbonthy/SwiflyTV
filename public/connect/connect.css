@@ -1,9 +1,244 @@
-/* Matte social surfaces keep live glass confined to navigation. */
-.svConnectPage{max-width:1320px;margin:auto;padding:136px 32px 90px!important;color:#f4f4f7}.svConnectHero{display:flex;align-items:end;justify-content:space-between;gap:32px;margin-bottom:34px}.svConnectEyebrow{font-size:10px;letter-spacing:.18em;color:#a1a3b3;font-weight:650}.svConnectHero h1{font-size:clamp(36px,4.5vw,62px);line-height:1.04;letter-spacing:-.055em;font-weight:550;margin:16px 0}.svConnectHero p,.svHomeIntro p{color:#a1a2ad;line-height:1.7;max-width:470px}.svConnectHeroActions{display:flex;flex-wrap:wrap;gap:8px}.svConnectTabs{display:flex;gap:8px;padding:6px 0 24px}.svConnectTabs a{padding:12px 20px;border:1px solid #ffffff12;border-radius:24px;background:#ffffff06;color:#ddd;font-size:13px;text-decoration:none}.svConnectLayout{display:grid;grid-template-columns:310px minmax(0,1fr);background:#101116;border:1px solid #ffffff12;border-radius:26px;overflow:hidden;min-height:600px}.svConnectSidebar{padding:28px 20px;border-right:1px solid #ffffff0e}.svConnectSidebar h2{margin:10px 0 24px;font-size:25px;letter-spacing:-.04em}.svFindFriend{margin-bottom:16px}.svFindFriend label,.svHomeJoin label,.svAttachmentPicker label{display:block;font-size:11px;color:#a1a3b1;margin-bottom:10px}.svConnectPage input:not([type=checkbox]),.svConnectDialog input,.svMessageForm textarea{box-sizing:border-box;width:100%;min-height:46px;padding:12px 14px;border-radius:13px;background:#08090d;border:1px solid #ffffff18;color:#eee;font:inherit;outline:none}.svConnectPage input:focus,.svMessageForm textarea:focus{border-color:#b8addb80;box-shadow:0 0 0 3px #b5a7e610}.svFriend{width:100%;display:flex;align-items:center;gap:12px;text-align:left;border:1px solid transparent;border-radius:15px;padding:13px 10px;background:none;color:inherit;margin:4px 0;cursor:pointer}.svFriend:hover,.svFriend.isSelected{background:#ffffff08;border-color:#ffffff0b}.svConnectAvatar{flex:0 0 40px;width:40px;height:40px;display:grid;place-items:center;border-radius:14px;background:linear-gradient(145deg,#3f4260,#282935);font-size:15px;font-weight:600;color:#e5e2fa}.svFriendCopy{min-width:0;display:flex;flex-direction:column;gap:5px}.svFriendCopy strong{font-size:13px;font-weight:550;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.svFriendCopy small{font-size:10px;color:#818491;line-height:1.5}.svFriend.isWatching .svFriendCopy small{color:#a5c6b7}.svUnread{margin-left:auto;min-width:20px;padding:3px 6px;border-radius:12px;background:#c7bbf0;color:#191620;font-size:10px;text-align:center}.svWatchingPrivacy{margin-top:24px;padding-top:20px;border-top:1px solid #ffffff0c;display:flex;align-items:start;gap:10px;color:#acaebc;font-size:11px;line-height:1.6}.svWatchingPrivacy input{accent-color:#c6b8eb;width:16px;height:16px;flex-shrink:0;margin-top:2px}.svWatchingPrivacy small{display:block;font-size:10px;color:#727482;margin-top:4px}.svConversation{min-width:0;display:flex;flex-direction:column;max-height:760px}.svConversationHead{min-height:90px;border-bottom:1px solid #ffffff0a;padding:24px;display:flex;justify-content:space-between;gap:12px;align-items:center}.svConversationHead h2{font-size:19px;font-weight:500;letter-spacing:-.025em;margin:0}.svConversationWho{display:grid;grid-template-columns:40px minmax(0,1fr);column-gap:12px;min-width:0}.svConversationWho .svConnectAvatar{grid-row:1/3}.svConversationWho h2{overflow-wrap:anywhere}.svConversationWho small{font-size:10px;color:#858794;margin-top:5px}.svFriendActions{display:flex;gap:8px}.svFriendActions button,.svQuietButton{border:0;background:none;color:#888b9c;font-size:10px;padding:9px;cursor:pointer}.svMessageLog{padding:28px;overflow:auto;overscroll-behavior:contain;flex:1;min-height:320px;display:flex;flex-direction:column;gap:12px;scrollbar-width:thin}.svConversationEmpty{margin:auto;max-width:280px;text-align:center;color:#6f7281;font-size:16px;line-height:1.8;letter-spacing:-.02em}.svMessage{max-width:82%;align-self:flex-start;padding:14px 17px;background:#1b1d26;border:1px solid #ffffff06;border-radius:18px 18px 18px 5px;overflow-wrap:anywhere}.svMessage.isMine{align-self:flex-end;background:#292636;border-color:#afa0d714;border-radius:18px 18px 5px 18px}.svMessage p{font-size:13px;line-height:1.65;margin:0;white-space:pre-wrap}.svMessage time{display:block;margin-top:6px;font-size:9px;color:#8a8798;text-align:right}.svMessageTitle{display:flex;gap:14px;align-items:center;color:#eceaf7;text-decoration:none;min-width:180px}.svMessageTitle img{width:64px;height:92px;object-fit:cover;border-radius:8px}.svMessageTitle span{display:flex;flex-direction:column;gap:10px}.svMessageTitle small{font-size:8px;letter-spacing:.12em;color:#a8a2bd}.svMessageTitle strong{font-size:14px;font-weight:550}.svMessageTitle b{font-size:11px;font-weight:500;color:#c3b7e3}.svMessageTools{display:flex;gap:10px;padding:10px 22px}.svMessageTools button{font-size:11px;padding:8px 12px;min-height:36px}.svMessageForm{padding:8px 22px 22px;display:grid;grid-template-columns:1fr auto;gap:10px}.svMessageForm textarea{resize:vertical;max-height:150px;font-size:13px;min-height:46px}.svMessageForm p{grid-column:1/-1;color:#e4a2b4;font-size:12px}.svSendMessage,.svConnectButton{border:1px solid #ffffff18;background:#ffffff09;border-radius:11px;min-height:42px;padding:10px 16px;color:#e9e6f3;font:inherit;font-size:12px;cursor:pointer}.svSendMessage{background:#d1c6ed;color:#221e2d;font-weight:600}.svConnectButton:hover{background:#ffffff12}.svConnectButton:disabled{opacity:.45;cursor:default}.svConnectEmpty{color:#7f8291;font-size:12px;line-height:1.7}.svConnectError,.svConnectStatus{font-size:13px;color:#e9a9b6}.svPersonResult,.svFriendRequest{padding:12px 0;display:flex;flex-wrap:wrap;gap:8px;align-items:center;border-bottom:1px solid #ffffff08;font-size:12px}.svPersonResult span,.svFriendRequest strong{flex:1;min-width:100px;overflow-wrap:anywhere}.svFriendRequest button{font-size:10px;padding:7px;min-height:36px}.svFriendRequests h3{font-size:12px;margin:20px 0 8px}.svAttachmentPicker{padding:18px 24px;background:#15161e;border-block:1px solid #ffffff0a}.svAttachmentPicker [data-attachment-results]{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.svAttachmentPicker [data-attachment-status]{font-size:12px;color:#bbaecf}.svSharedHome{scroll-margin-top:100px;display:grid;grid-template-columns:.8fr 1.2fr;gap:56px;margin-top:70px;padding:44px;border:1px solid #ffffff0f;border-radius:26px;background:#0d0e13}.svHomeIntro h2{font-size:36px;letter-spacing:-.05em;font-weight:500;margin:16px 0}.svHomeCard{display:flex;flex-wrap:wrap;align-content:start;align-items:start;gap:12px}.svHomeMembers{width:100%;display:flex;gap:24px;margin-bottom:18px}.svHomeMembers>div{display:flex;gap:10px;align-items:center;font-size:13px}.svHomeJoin,.svHomeInvite{width:100%;display:grid;gap:10px;margin-top:14px}.svHomeInvite label{font-size:11px;color:#9293a5}.svHomeInvite input{margin-top:8px;font-size:11px!important}.svHomeTitles{width:100%;margin-top:12px}.svHomeTitles h3{font-size:14px;font-weight:500}.svHomeTitle{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #ffffff0a}.svHomeTitle a{color:#c4bfda;text-decoration:none;font-size:13px}.svHomeTitle button{min-height:36px;font-size:10px}.svConnectSignin{padding:50px;max-width:700px;border-radius:22px;background:#13141a;border:1px solid #ffffff14}.svConnectSignin h2{font-size:26px;letter-spacing:-.03em}.svConnectSignin p{line-height:1.7;color:#9698a7}.svConnectSignin>a{margin:12px 12px 0 0}.svVisuallyHidden{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}.svConnectDialog{background:#111218;color:#f0eef7;border:1px solid #ffffff20;border-radius:25px;width:min(480px,calc(100vw - 32px));max-height:80svh;overflow:auto;padding:26px;box-sizing:border-box;box-shadow:0 30px 100px #0009}.svConnectDialog::backdrop{background:#0008}.svConnectDialog>header{display:flex;align-items:start;justify-content:space-between;gap:20px}.svConnectDialog h2{font-size:26px;letter-spacing:-.04em;font-weight:500;margin:12px 0 20px}.svConnectDialog [data-connect-close]{border:1px solid #ffffff13;border-radius:50%;width:36px;height:36px;background:#ffffff06;color:#ccc;font-size:24px;cursor:pointer}.svNotificationActions{display:flex;justify-content:space-between;margin-bottom:16px;font-size:11px}.svNotificationActions button{border:0;background:none;color:#a99dc7;cursor:pointer}.svNotificationActions a{color:#a99dc7}.svNotification{display:grid;grid-template-columns:26px 1fr;gap:8px;padding:16px 10px;border-radius:12px;color:#a4a3b1;text-decoration:none;font-size:12px;line-height:1.6}.svNotification.isUnread{background:#ffffff06;color:#ece8f7}.svNotification time{grid-column:2;font-size:9px;color:#767786}.svNotificationDot{color:#b9a8d9}.svShareList{display:flex;flex-direction:column;gap:8px;margin:20px 0}.svShareList button{display:flex;align-items:center;gap:12px;text-align:left}.svConnectDialog>p{font-size:12px;color:#9998a9;line-height:1.7}.svConnectDialog a{color:#c4b5e3}.svNotificationButton{position:relative}.svNotificationButton>b{position:absolute;top:2px;right:2px;min-width:15px;height:15px;display:grid;place-items:center;border-radius:10px;background:#c6b4e5;color:#18141f;font-size:8px}.svNotificationButton>b[hidden],.svNotificationButton[hidden]{display:none!important}.svConnectPage [hidden],.svConnectDialog [hidden]{display:none!important}#safeAuthForm [data-auth-error]{color:#f0a6b8;font-size:12px;line-height:1.5;margin:0}
-@media(max-width:760px){.svConnectPage{padding:112px 16px 110px!important}.svConnectHero{display:block}.svConnectHero h1{font-size:42px}.svConnectHero p{font-size:13px}.svConnectHeroActions{margin-top:24px}.svConnectHeroActions a{font-size:11px!important}.svConnectLayout{grid-template-columns:1fr}.svConnectSidebar{border-right:0;border-bottom:1px solid #ffffff10;padding:24px 18px}.svFriendList{display:flex;overflow-x:auto;gap:8px;scrollbar-width:none;max-height:170px}.svFriend{flex:0 0 180px;margin:4px 0}.svConversation{min-height:470px;max-height:680px}.svMessageLog{min-height:240px;padding:18px}.svConversationHead{padding:18px}.svConversationHead h2{font-size:16px}.svFriendActions{gap:0}.svMessageForm{padding:8px 16px 18px}.svMessageTools{padding:12px 16px 4px;gap:6px}.svMessageTools button{font-size:10px;padding:8px}.svSharedHome{grid-template-columns:1fr;gap:24px;margin-top:30px;padding:26px 22px}.svHomeIntro h2{font-size:32px}.svHomeIntro p{font-size:13px}.svMessageTitle{min-width:0}.svMessageTitle img{width:48px;height:70px}.svMessageTitle strong{font-size:12px}.svHomeMembers{gap:16px;flex-wrap:wrap}.svConnectSignin{padding:26px}.svConnectDialog{padding:22px}.svWatchingPrivacy{margin-top:18px}.svConnectTabs{position:sticky;top:88px;z-index:3;padding:8px 0 16px;background:linear-gradient(#090a0e,#090a0ef0);gap:6px}.svConnectTabs a{font-size:12px;padding:11px 16px}}
+/* Feature workspaces share quiet, opaque surfaces; navigation owns the liquid glass. */
+.svFeatureIcon{display:block;width:18px;height:18px;flex:0 0 18px;pointer-events:none}
+:where(.svConnectPage,.svConnectDialog,.svDiscoveryPage,.svDiscoverySearch){--sf-text:#eff1f8;--sf-muted:#9aA4b5;--sf-dim:#727e91;--sf-border:#ffffff12;--sf-panel:#10131b;--sf-accent:#c6c5f4;color:var(--sf-text)}
+body.svCleanShell .svConnectPage{box-sizing:border-box;max-width:1312px;margin:0 auto;padding:112px 36px 100px!important;background:transparent!important}
+.svFeatureNav{display:flex;align-items:center;gap:6px;margin-bottom:30px;width:max-content;max-width:100%;padding:5px;border:1px solid var(--sf-border);border-radius:16px;background:#11141bcc}
+.svFeatureNav a{display:flex;align-items:center;justify-content:center;gap:9px;min-height:42px;padding:0 18px;border-radius:11px;color:#9ba6b9;font-size:12px;font-weight:550;text-decoration:none;white-space:nowrap;transition:background .16s,color .16s}
+.svFeatureNav a:hover{color:#f4f2ff;background:#ffffff08}
+.svFeatureNav [aria-current=page]{color:#f0ecff;background:#292938;box-shadow:inset 0 1px #ffffff0a}
+.svFeatureNav .svFeatureIcon{width:16px;height:16px;flex-basis:16px}
+.svConnectHero{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:30px}
+.svConnectEyebrow{font-size:9px;font-weight:650;letter-spacing:.15em;color:#9d9bb9}
+.svConnectHero h1{font-family:Manrope,system-ui,sans-serif;font-size:42px;font-weight:650;line-height:1.15;letter-spacing:-.055em;margin:10px 0 12px}
+.svConnectHero p{color:var(--sf-muted);font-size:13px;line-height:1.7;margin:0}
+.svConnectHeroActions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.svConnectButton,.svSendMessage{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:44px;max-width:100%;padding:11px 17px;border:1px solid #ffffff19;border-radius:12px;background:#ffffff07;color:#d8ddea;font-size:12px;font-weight:500;line-height:1.4;font-family:inherit;cursor:pointer;text-decoration:none;transition:background .16s,border-color .16s}
+.svConnectButton:hover{background:#ffffff0e;border-color:#ffffff29}
+.svConnectButton:disabled,.svSendMessage:disabled{opacity:.5;cursor:default}
+.svConnectPrimary,.svSendMessage{background:#cecbf3;color:#222332;border-color:transparent;font-weight:650}
+.svConnectPrimary:hover,.svSendMessage:hover{background:#dddaf9}
+.svConnectButton .svFeatureIcon{width:16px;height:16px;flex-basis:16px}
+.svConnectTabs{display:flex;align-items:center;gap:24px;border-bottom:1px solid #ffffff14;margin-bottom:16px}
+.svConnectTabs a{position:relative;display:flex;align-items:center;gap:8px;min-height:49px;padding:0 4px;color:#8d98ac;font-size:12px;text-decoration:none;border-bottom:2px solid transparent}
+.svConnectTabs a[aria-current=page]{color:#e1dcff;border-color:#bcb4ed}
+.svConnectTabs a:hover{color:#f4f0ff}
+.svConnectTabs .svFeatureIcon{width:16px;height:16px;flex-basis:16px}
+.svConnectOwnHandle{color:#8c98ab;text-align:right;font-size:10px;margin:0 2px 12px}
+.svConnectLayout{display:grid;grid-template-columns:288px minmax(0,1fr);height:620px;min-height:480px;background:#0d1017;border:1px solid #ffffff14;border-radius:22px;overflow:hidden;box-shadow:0 16px 60px #0002}
+.svConnectSidebar{box-sizing:border-box;padding:25px 16px 20px;background:#12151e;border-right:1px solid #ffffff0c;display:flex;flex-direction:column;overflow-y:auto;scrollbar-width:thin}
+.svConnectSidebar>.svConnectEyebrow{padding:0 10px;font-size:8px;color:#838b9e}
+.svConnectSidebar h2{padding:0 10px;margin:8px 0 23px;font-size:21px;font-weight:600;letter-spacing:-.035em}
+.svFindFriend{margin:0 0 18px}
+.svFindFriend label,.svHomeJoin label,.svAttachmentPicker label{display:block;margin:0 0 9px;color:#929eb1;font-size:10px}
+.svFindFriend label{padding:0 4px}
+.svConnectPage input:not([type=checkbox]),.svConnectDialog input,.svMessageForm textarea{box-sizing:border-box;width:100%;min-height:44px;padding:12px 13px;border:1px solid #ffffff14;border-radius:11px;background:#0a0d14;color:#e3e7f0;font:inherit;font-size:12px;outline:none}
+.svConnectPage input:focus-visible,.svMessageForm textarea:focus-visible{border-color:#aaa1d775;box-shadow:0 0 0 3px #9b8ad411}
+.svFriendList{flex:1;min-height:76px}
+.svFriend{position:relative;box-sizing:border-box;display:flex;align-items:center;gap:12px;width:100%;min-height:74px;padding:13px 11px;margin:3px 0;border:1px solid transparent;border-radius:13px;background:transparent;color:inherit;text-align:left;cursor:pointer}
+.svFriend:hover{background:#ffffff05}
+.svFriend.isSelected{background:#242435;border-color:#ffffff08}
+.svConnectAvatar{position:relative;display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;border:1px solid #ffffff10;border-radius:14px;background:linear-gradient(140deg,#3d4157,#272b3d);color:#e1e4ff;font-size:15px;font-weight:600}
+.svFriend:nth-child(3n+2) .svConnectAvatar{background:linear-gradient(140deg,#4c3d4d,#2e293b)}
+.svFriend.isWatching .svConnectAvatar:after{content:"";position:absolute;right:-2px;bottom:-2px;width:10px;height:10px;background:#9fc8b8;border:3px solid #151923;border-radius:50%}
+.svFriendCopy{display:flex;flex-direction:column;gap:7px;min-width:0}
+.svFriendCopy strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:550}
+.svFriendCopy small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;line-height:1.5;color:#929db0}
+.svFriend.isWatching .svFriendCopy small{color:#b1cfc0}
+.svUnread{margin-left:auto;min-width:17px;padding:4px 5px;background:#c8c4ef;color:#282436;border-radius:10px;font-size:9px;text-align:center}
+.svWatchingPrivacy{display:flex;align-items:flex-start;gap:9px;margin-top:20px;padding:19px 3px 0;border-top:1px solid #ffffff0c;color:#b0b7c8;font-size:10px;line-height:1.7}
+.svWatchingPrivacy input{flex:0 0 16px;width:16px;height:16px;margin:1px 0 0;accent-color:#c4b9ec}
+.svWatchingPrivacy small{display:block;font-size:9px;color:#7f8a9e;margin-top:3px}
+.svConversation{min-width:0;min-height:0;display:flex;flex-direction:column;background:radial-gradient(ellipse at 55% 45%,#a49bc106,transparent 60%),#0d1017}
+.svConversationHead{box-sizing:border-box;display:flex;align-items:center;gap:12px;min-height:80px;padding:17px 24px;border-bottom:1px solid #ffffff0c;background:#10131c}
+.svConversationHead h2{font-size:16px;letter-spacing:-.025em;font-weight:550;margin:0}
+.svConversationPrivate{margin-left:auto;color:#808da3;font-size:10px}
+.svConversationWho{display:grid;grid-template-columns:40px minmax(0,1fr);column-gap:12px;min-width:0}
+.svConversationWho .svConnectAvatar{grid-row:1/3}
+.svConversationWho h2{overflow-wrap:anywhere;align-self:end}
+.svConversationWho small{font-size:10px;color:#8f9aaf;margin-top:5px}
+.svConversationBack{display:none;flex:none;align-items:center;justify-content:center;width:36px;height:40px;border:0;background:none;color:#c0c8d7;cursor:pointer;padding:0}
+.svFriendActions{position:relative;margin-left:auto}
+.svFriendActions summary{display:grid;place-items:center;width:36px;height:36px;border:1px solid #ffffff15;border-radius:10px;background:#ffffff05;color:#aab4c5;font-size:20px;list-style:none;cursor:pointer}
+.svFriendActions summary::-webkit-details-marker{display:none}
+.svFriendActions button{display:block;width:100%;min-width:130px;min-height:40px;padding:10px 17px;border:0;background:#1b202d;color:#c4cbd8;text-align:left;font-size:11px;cursor:pointer}
+.svFriendActions button:hover{background:#282c3c}
+.svFriendActions[open]{z-index:4}
+.svFriendActions[open] button{position:absolute;right:0;top:42px;border:1px solid #ffffff14;border-radius:8px 8px 0 0}
+.svFriendActions[open] button:last-child{top:81px;border-radius:0 0 8px 8px;color:#e7b8bd}
+.svMessageLog{flex:1;min-height:0;display:flex;flex-direction:column;gap:12px;padding:27px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.svConversationEmpty{display:flex;flex-direction:column;align-items:center;max-width:300px;margin:auto;text-align:center}
+.svConversationEmpty>.svConnectGraphic{display:grid;place-items:center;width:74px;height:74px;border:1px solid #ffffff12;border-radius:24px;background:linear-gradient(145deg,#27283c,#171c27);color:#b6aed9;margin-bottom:22px}
+.svConversationEmpty>.svConnectGraphic svg{width:30px;height:30px}
+.svConversationEmpty h3{margin:0;font-size:24px;font-weight:500;letter-spacing:-.045em;color:#e2e2ed}
+.svConversationEmpty p{font-size:12px;line-height:1.9;color:#8b97ab;margin:12px 0 24px}
+.svMessage{box-sizing:border-box;max-width:78%;align-self:flex-start;overflow-wrap:anywhere;padding:13px 16px;border:1px solid #ffffff08;border-radius:16px 16px 16px 4px;background:#1b202c;color:#e2e4ee}
+.svMessage.isMine{align-self:flex-end;border-color:#c4b5f115;background:#353149;border-radius:16px 16px 4px 16px}
+.svMessage p{margin:0;white-space:pre-wrap;font-size:12px;line-height:1.8}
+.svMessage time{display:block;text-align:right;color:#9896ae;font-size:8px;margin-top:6px}
+.svMessageTitle{display:flex;align-items:center;gap:14px;min-width:220px;text-decoration:none;color:#eae7f6}
+.svMessageTitle img{width:64px;height:92px;object-fit:cover;border-radius:9px}
+.svMessageTitle span{display:flex;flex-direction:column;gap:9px;min-width:0}
+.svMessageTitle small{font-size:8px;font-weight:500;letter-spacing:.12em;color:#b2a9d1}
+.svMessageTitle strong{font-size:13px;line-height:1.5;font-weight:600}
+.svMessageTitle b{font-size:10px;font-weight:400;color:#c7bde9}
+.svMessageTools{display:flex;gap:8px;padding:12px 22px 3px;border-top:1px solid #ffffff0a}
+.svMessageTools button{min-height:37px;padding:8px 11px;font-size:10px;background:transparent;border-color:transparent;color:#a4aec1}
+.svMessageTools button:hover{background:#ffffff07}
+.svMessageTools svg{width:14px;height:14px;flex-basis:14px}
+.svMessageForm{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:8px 22px 19px}
+.svMessageForm textarea{resize:vertical;max-height:130px;min-height:44px;font-size:12px}
+.svMessageForm p{grid-column:1/-1;margin:0;color:#edb3c0;font-size:11px;line-height:1.6}
+.svSendMessage{min-width:76px;font-size:11px}
+.svQuietButton{padding:10px 5px;border:0;background:none;color:#929db2;font-size:10px;min-height:40px;cursor:pointer}
+.svConnectEmpty{color:#8e9bb0;font-size:11px;line-height:1.9}
+.svConnectError,.svConnectStatus{color:#e5b3c4;font-size:12px;line-height:1.7}
+.svPersonResult,.svFriendRequest{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:12px 3px;border-bottom:1px solid #ffffff08;font-size:11px}
+.svPersonResult span,.svFriendRequest strong{flex:1;min-width:90px;overflow-wrap:anywhere;font-weight:500}
+.svPersonResult button,.svFriendRequest button{padding:8px 11px;min-height:38px;font-size:10px}
+.svFriendRequests h3{font-size:11px;font-weight:500;color:#b6bdd0;margin:18px 4px 8px}
+.svAttachmentPicker{padding:17px 24px;background:#171b26;border-block:1px solid #ffffff0d}
+.svAttachmentPicker [data-attachment-results]{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.svAttachmentPicker [data-attachment-results] button{font-size:10px}
+.svAttachmentPicker [data-attachment-status]{font-size:11px;color:#c2b4df;line-height:1.6}
+.svSharedHome{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:24px;margin-top:4px}
+.svHomeIntro{box-sizing:border-box;padding:40px 34px;border:1px solid #ffffff12;border-radius:22px;background:radial-gradient(ellipse at 0% 100%,#8375b024,transparent 70%),#11141d;min-height:370px}
+.svHomeIntro>.svConnectGraphic{display:grid;place-items:center;width:54px;height:54px;background:#b1a6dc12;border:1px solid #c7b4f025;border-radius:17px;color:#c7b8e4;margin-bottom:34px}
+.svHomeIntro>.svConnectGraphic svg{width:23px;height:23px}
+.svHomeIntro>.svConnectEyebrow{display:block}
+.svHomeIntro h2{font-size:32px;line-height:1.2;font-weight:500;letter-spacing:-.045em;margin:12px 0 16px}
+.svHomeIntro p{max-width:340px;font-size:12px;line-height:1.9;color:#a1abc0;margin:0 0 28px}
+.svHomeCard{box-sizing:border-box;display:flex;flex-wrap:wrap;align-items:flex-start;align-content:flex-start;gap:12px;padding:31px;border:1px solid #ffffff12;border-radius:22px;background:#10141d}
+.svHomeMembers{display:flex;flex-wrap:wrap;align-items:center;gap:24px;width:100%;margin-bottom:10px}
+.svHomeMembers>div{display:flex;align-items:center;gap:10px;font-size:13px}
+.svHomeMembers strong{font-weight:550}
+.svHomeJoin,.svHomeInvite{width:100%;display:grid;gap:12px;padding-top:14px}
+.svHomeInvite label{color:#a1acc0;font-size:10px;line-height:1.6}
+.svHomeInvite input{margin-top:9px;font-size:11px!important}
+.svHomeTitles{width:100%;margin-top:12px}
+.svHomeTitles h3{font-size:15px;font-weight:550;letter-spacing:-.02em;margin:8px 0 18px}
+.svHomeTitle{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid #ffffff0b}
+.svHomeTitle img{width:40px;height:59px;object-fit:cover;border-radius:7px}
+.svHomeTitle a{flex:1;color:#d4cee8;text-decoration:none;font-size:12px;line-height:1.6}
+.svHomeTitle button{font-size:10px;padding:8px 10px}
+.svConnectSignin{box-sizing:border-box;display:flex;gap:38px;align-items:center;max-width:100%;padding:48px;border:1px solid #ffffff16;border-radius:22px;background:radial-gradient(ellipse at 0 100%,#6663941c,transparent 65%),#11151e}
+.svConnectSignin>.svConnectGraphic{display:grid;place-items:center;flex:0 0 110px;width:110px;height:110px;border:1px solid #ffffff12;border-radius:35px;color:#bdb5e0;background:linear-gradient(145deg,#37344c,#202434)}
+.svConnectSignin>.svConnectGraphic svg{width:45px;height:45px}
+.svConnectSignin h2{font-size:29px;font-weight:550;letter-spacing:-.04em;line-height:1.3;margin:10px 0 15px}
+.svConnectSignin p{font-size:12px;line-height:1.9;color:#a1acc0;max-width:480px;margin:0 0 22px}
+.svConnectSigninActions{display:flex;gap:10px}
+.svVisuallyHidden{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.svConnectPage[data-connect-view=friends] .svConnectLayout{display:block;height:auto;min-height:400px}
+.svConnectPage[data-connect-view=friends] .svConnectSidebar{border:0;padding:30px;background:#10141d}
+.svConnectPage[data-connect-view=friends] .svFindFriend{max-width:520px}
+.svConnectPage[data-connect-view=friends] .svFriendList{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:16px}
+.svConnectPage[data-connect-view=friends] .svFriend{background:#171d29;border-color:#ffffff0b}
+.svConnectPage[data-connect-view=friends] .svWatchingPrivacy{max-width:520px}
+.svConnectDialog{box-sizing:border-box;position:fixed;width:min(450px,calc(100vw - 32px));max-height:82svh;overflow-y:auto;padding:26px;background:#121720;color:#e8ecf5;border:1px solid #ffffff24;border-radius:22px;box-shadow:0 30px 100px #0009;scrollbar-width:thin}
+.svConnectDialog::backdrop{background:#02050bc9}
+.svConnectDialog>header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.svDialogHeading{display:flex;align-items:center;gap:12px;min-width:0}
+.svDialogMark{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;background:#262a3b;border:1px solid #ffffff10;border-radius:13px;color:#bfc2ec}
+.svConnectDialog h2{font-size:24px;font-weight:550;letter-spacing:-.04em;line-height:1.25;margin:7px 0 0}
+.svConnectDialog [data-connect-close]{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;padding:0;border:1px solid #ffffff10;border-radius:11px;background:#ffffff05;color:#9fa9bb;cursor:pointer}
+.svConnectDialog [data-connect-close]:hover{background:#ffffff10;color:#eee}
+.svNotificationActions{display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid #ffffff0d;padding:26px 0 16px;margin:0 0 10px;font-size:10px;color:#8e9bb0}
+.svNotificationActions button{min-height:34px;border:0;border-radius:8px;background:transparent;color:#c3b8e7;font:inherit;cursor:pointer;padding:8px 0}
+.svNotification{display:grid;grid-template-columns:36px minmax(0,1fr);gap:5px 12px;padding:15px 11px;border:1px solid transparent;border-radius:13px;text-decoration:none;font-size:12px;line-height:1.8;color:#9eabc1;margin:4px 0}
+.svNotification.isUnread{background:#222737;border-color:#ffffff08;color:#e4e7f3}
+.svNotificationDot{display:grid;place-items:center;width:34px;height:34px;grid-row:1/3;background:#b6a4de12;border-radius:11px;color:#bfb1dd}
+.svNotification time{grid-column:2;font-size:9px;color:#8e99b0}
+.svNotificationEmpty{padding:42px 18px 38px;text-align:center}
+.svNotificationEmpty>.svConnectGraphic{display:grid;place-items:center;width:60px;height:60px;margin:0 auto 21px;color:#9fa5c1;background:#1c2231;border:1px solid #ffffff0b;border-radius:20px}
+.svNotificationEmpty svg{width:24px;height:24px}
+.svNotificationEmpty h3{font-size:20px;font-weight:500;letter-spacing:-.035em;margin:0 0 12px}
+.svNotificationEmpty p{font-size:12px;line-height:1.9;max-width:260px;margin:0 auto;color:#8c9ab0}
+.svConnectDialog>p{font-size:12px;line-height:1.9;color:#a3afc3;margin:20px 0 0}
+.svDialogFoot{border-top:1px solid #ffffff0e;padding-top:19px;margin-top:19px}
+.svDialogFoot a{display:flex;align-items:center;justify-content:space-between;text-decoration:none;color:#bcb3de;font-size:11px;min-height:30px}
+.svShareList{display:flex;flex-direction:column;gap:8px;margin:22px 0}
+.svShareList button{display:flex;justify-content:flex-start;gap:13px;min-height:67px;text-align:left;padding:12px 14px;background:#1a202d;border-color:#ffffff0d}
+.svShareList button:hover{background:#262a3c}
+.svShareList button>.svConnectAvatar{width:36px;height:36px;flex-basis:36px;border-radius:12px}
+.svShareList button>span:not(.svConnectAvatar){font-size:12px}
+.svNotificationButton{position:relative}
+.svNotificationButton>b{position:absolute;top:2px;right:2px;display:grid;place-items:center;min-width:15px;height:15px;border-radius:10px;background:#c6b4e5;color:#18141f;font-size:8px}
+.svNotificationButton>b[hidden],.svNotificationButton[hidden],body.svCleanShell .svConnectPage [hidden],body.svCleanShell .svConnectDialog [hidden]{display:none!important}
+.svConnectPage :focus-visible,.svConnectDialog :focus-visible,.svFeatureNav a:focus-visible{outline:2px solid #bfb0e7;outline-offset:4px}
+.partyPageLead .partyFriendsLink{display:inline-block;font-size:11px;color:#b5aac9;margin-left:14px;text-decoration:none}
+#safeAuthForm [data-auth-error]{color:#f0a6b8;font-size:12px;line-height:1.5;margin:0}
+@media(max-width:900px){.svConnectHero{align-items:flex-start}.svConnectHeroActions{max-width:200px;justify-content:flex-end}.svConnectLayout{grid-template-columns:250px minmax(0,1fr)}.svConnectPage[data-connect-view=friends] .svFriendList{grid-template-columns:repeat(2,minmax(0,1fr))}.svSharedHome{grid-template-columns:1fr 1fr;gap:16px}.svHomeIntro,.svHomeCard{padding:28px}}
+@media(max-width:760px){
+ body.svCleanShell .svConnectPage{padding:99px 16px 110px!important}
+ .svFeatureNav{width:100%;box-sizing:border-box;margin-bottom:24px;border-radius:14px}
+ .svFeatureNav a{flex:1;gap:7px;min-height:40px;padding:0 9px;font-size:11px}
+ .svFeatureNav .svFeatureIcon{width:15px;height:15px;flex-basis:15px}
+ .svConnectHero{display:block;margin-bottom:20px}
+ .svConnectHero h1{font-size:33px;margin:9px 0 10px}
+ .svConnectHero p{font-size:11px;max-width:300px}
+ .svConnectHeroActions{max-width:none;justify-content:flex-start;margin-top:18px;gap:8px}
+ .svConnectHeroActions a{min-height:40px;font-size:10px;padding:10px 12px}
+ .svConnectTabs{gap:24px;margin-bottom:12px}
+ .svConnectTabs a{min-height:48px;font-size:11px}
+ .svConnectOwnHandle{text-align:left;font-size:9px;margin-bottom:12px}
+ .svConnectLayout{display:block;height:auto;min-height:410px;border-radius:18px}
+ .svConnectSidebar{border:0;padding:23px 15px;min-height:430px}
+ .svConnectSidebar h2{font-size:21px;margin-bottom:20px}
+ .svFriend{min-height:74px}
+ .svFriendCopy strong{font-size:13px}
+ .svFriendCopy small{font-size:11px}
+ .svConnectPage[data-connect-view=inbox][data-chat-open=false] .svConversation{display:none}
+ .svConnectPage[data-connect-view=inbox][data-chat-open=true] .svConnectSidebar{display:none}
+ .svConversation{min-height:420px;height:calc(100svh - 170px);max-height:700px}
+ .svConversationBack{display:flex}
+ .svConversationHead{padding:16px 13px;gap:8px;min-height:75px}
+ .svConversationWho{column-gap:9px}
+ .svConversationWho h2{font-size:14px}
+ .svMessageLog{padding:20px 15px;gap:12px}
+ .svMessage{max-width:88%;padding:12px 14px}
+ .svMessageTitle{min-width:0;gap:12px}
+ .svMessageTitle img{width:50px;height:73px}
+ .svMessageTitle strong{font-size:12px}
+ .svMessageTools{padding:11px 13px 2px;gap:3px}
+ .svMessageTools button{font-size:10px;padding:8px;min-height:40px}
+ .svMessageForm{padding:8px 13px 14px;gap:8px}
+ .svSendMessage{padding:10px;min-width:64px}
+ .svConnectPage[data-connect-view=friends] .svConnectSidebar{padding:23px 16px}
+ .svConnectPage[data-connect-view=friends] .svFriendList{grid-template-columns:1fr;gap:5px}
+ .svSharedHome{grid-template-columns:1fr;gap:16px}
+ .svHomeIntro{min-height:0;padding:27px}
+ .svHomeIntro>.svConnectGraphic{margin-bottom:24px}
+ .svHomeIntro h2{font-size:30px}
+ .svHomeIntro p{font-size:12px;margin-bottom:23px}
+ .svHomeCard{padding:25px}
+ .svConnectSignin{display:block;padding:28px}
+ .svConnectSignin>.svConnectGraphic{width:64px;height:64px;margin-bottom:27px;border-radius:21px}
+ .svConnectSignin>.svConnectGraphic svg{width:27px;height:27px}
+ .svConnectSignin h2{font-size:25px}
+ .svConnectSignin p{font-size:12px}
+ .svConnectDialog{padding:23px;max-height:82svh}
+ .svConnectDialog h2{font-size:21px}
+ .svConnectDialog .svDialogMark{width:38px;height:38px;flex-basis:38px;border-radius:12px}
+}
+@media(prefers-reduced-motion:reduce){.svFeatureNav a,.svConnectButton,.svSendMessage{transition:none}}
 
-.svConnectOwnHandle{font-size:12px;color:#b3a6cf;margin:0 0 18px}
-
-.svConnectButton{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;gap:7px;text-decoration:none;font-family:inherit;line-height:1.4;max-width:100%}.svConnectPrimary{background:#d1c6ed;color:#221e2d;font-weight:600}.svConnectPrimary:hover{background:#e1d7f4}.svConnectHeroActions .svConnectButton{border-radius:999px}
-
-body.svCleanShell .svConnectPage [hidden],body.svCleanShell .svConnectDialog [hidden]{display:none!important}.partyPageLead .partyFriendsLink{display:inline-block;font-size:11px;color:#b5aac9;margin-left:14px;text-decoration:none}
+body.svCleanShell .topbar .netflixNav .dsNavActions .svNotificationButton[hidden]{display:none!important}
+@media(max-width:760px){
+ body.svCleanShell .svConnectPage[data-connect-view=inbox][data-chat-open=true]{padding-bottom:100px!important}
+ .svConnectPage[data-connect-view=inbox][data-chat-open=true]>.svFeatureNav,
+ .svConnectPage[data-connect-view=inbox][data-chat-open=true]>.svConnectHero,
+ .svConnectPage[data-connect-view=inbox][data-chat-open=true]>.svConnectTabs,
+ .svConnectPage[data-connect-view=inbox][data-chat-open=true] .svConnectOwnHandle{display:none}
+ .svConnectPage[data-connect-view=inbox][data-chat-open=true] .svConnectLayout{height:calc(100svh - 200px);height:calc(100dvh - 200px);min-height:260px}
+ .svConnectPage[data-connect-view=inbox][data-chat-open=true] .svConversation{height:100%;min-height:0;max-height:none}
+ body.svCleanShell:has(.svConnectPage[data-connect-view=inbox][data-chat-open=true]) .footer{display:none}
+}
+@media(max-width:760px){
+ .svFeatureNav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px}
+ .svFeatureNav a{min-width:0;padding:0 7px;gap:6px}
+}
+@media(max-width:359px){
+ .svFeatureNav a{font-size:10px;gap:5px;padding:0 4px}
+ .svFeatureNav a .svFeatureIcon{width:14px;height:14px;flex-basis:14px}
+}
+.svHomeCard>.svWatchingPrivacy{width:100%;margin-top:4px}
+.svHomeCard>.svQuietButton{order:9;margin-top:8px}

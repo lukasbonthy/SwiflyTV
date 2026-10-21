@@ -6552,8 +6552,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/clean.js?v=3"></script>
     <script defer src="/assets/clean/account-sheet.js?v=1"></script>
     <script defer src="/assets/clean/account.js?v=1"></script>
-    <link rel="stylesheet" href="/assets/connect/connect.css?v=1" />
-    <script defer src="/assets/connect/connect.js?v=1"></script>
+    <link rel="stylesheet" href="/assets/connect/connect.css?v=2" />
+    <script defer src="/assets/connect/icons.js?v=1"></script><script defer src="/assets/connect/connect.js?v=2"></script>
     <script defer src="/assets/clean/avatars.js?v=209"></script>
     ${active === "profiles" ? '<script defer src="/assets/clean/profiles.js?v=209"></script>' : ""}
     <script defer src="/assets/clean/continue.js?v=155"></script>
@@ -6575,7 +6575,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=173" />' : ""}
     
     ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=234"></script>' : ""}
-    ${player ? '<script defer src="/assets/player/audio-sample.js?v=1"></script><script defer src="/assets/player/assist.js?v=1"></script><link rel="stylesheet" href="/assets/player/assist.css?v=1" />' : ""}
+    ${player ? '<script defer src="/assets/player/audio-sample.js?v=1"></script><script defer src="/assets/player/assist.js?v=2"></script><link rel="stylesheet" href="/assets/player/assist.css?v=2" />' : ""}
     ${player || active === "social" ? '<script defer src="/assets/party/watchroom-call.js?v=1"></script>' : ""}
     ${active === "social" ? '<script defer src="/assets/party/party.js?v=207"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}
     ${player || partyBrowse ? '<script defer src="/assets/player/watch-party.js?v=2"></script>' : ""}
@@ -6595,7 +6595,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/clean/tv.css?v=255" />
     <link rel="stylesheet" href="/assets/clean/details-premium.css?v=255" />
     <link rel="stylesheet" href="/assets/clean/details-clarity.css?v=2" />
-    <link rel="stylesheet" href="/assets/discovery/discovery.css?v=1" />
+    <link rel="stylesheet" href="/assets/discovery/discovery.css?v=2" />
     <link rel="stylesheet" href="/assets/clean/account-sheet.css?v=2" />
 </head>
 <body class="svCleanShell">
