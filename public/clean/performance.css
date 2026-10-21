@@ -5,6 +5,14 @@ body.svCleanShell .netflixWordmark,
 body.svCleanShell .dsHeroBg,
 body.svCleanShell .dsHeroActions > .dsPrimaryBtn {animation:none !important}
 
+/* Finished copy entrances must release their blur(0) and transform surfaces.
+   Backwards fill keeps the original delayed entrance, then returns the text
+   to normal paint while the live hero and navigation glass keep moving. */
+body.svCleanShell .dsHeroContent > :is(.dsEyebrow,h1,.dsHeroMeta,p) {
+  animation-fill-mode:backwards !important;
+  filter:none;
+}
+
 /* Opacity alone leaves backdrop filters in the compositor's scroll work.
    Keep idle, hidden controls free of lenses without removing focus targets.
    Narrow layouts always show quick actions, so keep their glass active. */

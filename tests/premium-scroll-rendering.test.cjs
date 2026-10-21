@@ -130,6 +130,56 @@ test('detail motion keeps the scrollbar at the window edge and the catalog fade 
  }finally{await browser.close();}
 });
 
+test('finished hero copy releases its filter and transform layers before browsing', {skip:!available&&'Chromium is not installed'}, async()=>{
+  const browser=await chromium.launch({headless:true});
+  try{
+    const page=await catalog(browser);
+    await page.evaluate(async()=>{
+      const nodes=[...document.querySelectorAll('.dsHeroContent > :is(.dsEyebrow,h1,.dsHeroMeta,p)')];
+      for(const node of nodes)for(const animation of node.getAnimations())animation.finish();
+      await new Promise(requestAnimationFrame);
+    });
+    const copy=await page.locator('.dsHeroContent > :is(.dsEyebrow,h1,.dsHeroMeta,p)').evaluateAll(nodes=>nodes.map(node=>{
+      const style=getComputedStyle(node);return {text:node.textContent,filter:style.filter,transform:style.transform,opacity:style.opacity,entrance:style.animationName,duration:parseFloat(style.animationDuration)};
+    }));
+    assert.equal(copy.length,4);
+    for(const node of copy){
+      assert.equal(node.filter,'none',node.text+' must not retain an offscreen blur surface after its entrance');
+      assert.equal(node.transform,'none',node.text+' must release the finished transform');
+      assert.equal(node.opacity,'1');
+      assert.notEqual(node.entrance,'none','keep the existing text entrance');
+      assert(node.duration>0,'keep the existing text entrance timing');
+    }
+  }finally{await browser.close();}
+});
+
+test('the first real catalog scroll frame follows the display clock after idle', {skip:!available&&'Chromium is not installed'}, async()=>{
+  const browser=await chromium.launch({headless:true});
+  try{
+    const page=await catalog(browser);
+    await page.waitForFunction(()=>[...document.querySelectorAll('.dsHeroContent > :is(.dsEyebrow,h1,.dsHeroMeta,p)')]
+      .every(node=>getComputedStyle(node).filter==='none'));
+    const first=await page.evaluate(async()=>{
+      let display,input;
+      // Select a fresh inter-frame phase after startup/GC work. A stale
+      // timeline correctly takes the fallback, covered in the unit suite.
+      for(let attempt=0;attempt<20;attempt++){
+        await new Promise(requestAnimationFrame);
+        await new Promise(resolve=>setTimeout(resolve,8));
+        display=document.timeline.currentTime;input=performance.now();
+        if(input-display>2&&input-display<40)break;
+      }
+      const wheel=new WheelEvent('wheel',{deltaY:360,bubbles:true,cancelable:true});
+      document.querySelector('.dsHeroContent').dispatchEvent(wheel);
+      return new Promise(resolve=>requestAnimationFrame(time=>resolve({display,input,time,y:scrollY,consumed:wheel.defaultPrevented})));
+    });
+    assert(first.consumed,'the real catalog wheel controller owns the gesture');
+    assert(first.input-first.display>2&&first.input-first.display<40,'exercise a fresh inter-frame input phase');
+    const reference=360*(1-Math.exp(-6*(first.time-first.display)/1000));
+    assert(Math.abs(first.y-reference)<=1,'first visible movement must match the reference display-frame damping instead of waiting from the later wheel event');
+  }finally{await browser.close();}
+});
+
 for(const width of [1280,390])test(width+'px short details keep keyboard scrolling off the catalog',{skip:!available&&'Chromium is not installed'},async()=>{
  const browser=await chromium.launch({headless:true,ignoreDefaultArgs:['--hide-scrollbars']});
  try{

@@ -193,9 +193,13 @@
   function wake() {
     if (!frame && available()) {
       glassLastY = pageY();
-      // Start at the gesture's actual time. Assuming a 60 Hz first frame
-      // produces a visible kick on 144/240 Hz displays after every idle.
-      lastFrame = performance.now();
+      // ShuttleTV advances Lenis on display timestamps, including the first
+      // frame after idle. Starting at the intervening wheel event instead
+      // shortens that first step and adds a small input delay. The document
+      // timeline shares RAF's clock without keeping an idle RAF loop alive.
+      const now=performance.now(),displayTime=document.timeline?.currentTime;
+      lastFrame=typeof displayTime==='number'&&Number.isFinite(displayTime)&&
+        displayTime<=now&&now-displayTime<50?displayTime:now;
       frame = requestAnimationFrame(step);
     }
   }
