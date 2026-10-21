@@ -19,13 +19,13 @@
  function error(output,e){if(output){output.textContent=e.message||'Please try again.';output.hidden=false;}}
  async function act(route,body={},output=status){try{await api(route,{body});await refresh();return true;}catch(e){error(output,e);return false;}}
  function dialog(id){const node=document.getElementById(id);if(node&&!node.open){node.showModal();node.querySelector('[data-connect-close]')?.focus();}return node;}
- function openNotifications(){paintNotifications();dialog('svNotificationDialog');}
+ function openNotifications(){paintNotifications();const panel=document.getElementById('svNotificationDialog'),trigger=Array.from(document.querySelectorAll('[data-connect-notifications]')).find(n=>n.getBoundingClientRect().width>0);if(panel&&trigger)panel.style.setProperty('--sv-notification-offset',Math.max(16,innerWidth-trigger.getBoundingClientRect().right)+'px');dialog('svNotificationDialog');}
  function paintNotifications(){
   const notes=data?.notifications||[],unread=notes.filter(n=>!n.readAt).length;
   document.querySelectorAll('[data-connect-notifications]').forEach(b=>{b.hidden=!data?.user;b.setAttribute('aria-label',unread?`Notifications, ${unread} unread`:'Notifications');});
   document.querySelectorAll('[data-notification-count]').forEach(b=>{b.textContent=unread>99?'99+':String(unread);b.hidden=!unread;});
   const list=document.querySelector('[data-notification-list]');if(!list)return;list.replaceChildren();
-  if(!notes.length){const empty=el('div','svNotificationEmpty');empty.append(graphic('bell'),el('h3','','All caught up.'),el('p','','Good things will find their way here. Your messages and invitations stay in one place.'));list.append(empty);}
+  if(!notes.length){const empty=el('div','svNotificationEmpty');empty.append(graphic('bell'),el('h3','','No notifications yet'),el('p','','Messages and invitations appear here.'));list.append(empty);}
   for(const n of notes){const a=link('',/^\/(?!\/)/.test(n.href||'')?n.href:'/friends','svNotification'+(!n.readAt?' isUnread':'')),mark=graphic(n.kind==='party_invite'?'play':n.kind.startsWith('friend')?'people':'message');mark.classList.add('svNotificationDot');a.append(mark,el('span','',n.text),el('time','',new Date(n.createdAt).toLocaleDateString(undefined,{month:'short',day:'numeric'})));list.append(a);}
  }
  async function refresh(){
@@ -50,7 +50,7 @@
   if(!selected)emptyConversation();
   page.dataset.chatOpen=String(!!selected);showView(view);
  }
- function emptyConversation(){const head=content.querySelector('[data-conversation-head]'),log=content.querySelector('[data-message-log]');head.replaceChildren(el('h2','','Messages'),el('span','svConversationPrivate','Just between friends'));const empty=el('div','svConversationEmpty');empty.append(graphic('message'),el('h3','','Make a night of it.'),el('p','','A hello. A great film. Someone to share it with.'),button('Find your people',()=>{showView('friends',true);content.querySelector('#svFriendSearch')?.focus();},'svConnectButton svConnectPrimary'));log.replaceChildren(empty);content.querySelector('[data-conversation-compose]').replaceChildren();page.dataset.chatOpen='false';}
+ function emptyConversation(){const head=content.querySelector('[data-conversation-head]'),log=content.querySelector('[data-message-log]');head.replaceChildren(el('h2','','Messages'),el('span','svConversationPrivate','Just between friends'));const empty=el('div','svConversationEmpty');empty.append(graphic('message'),el('h3','','Your conversations'),el('p','','Choose a friend to start a conversation.'),button('Find your people',()=>{showView('friends',true);content.querySelector('#svFriendSearch')?.focus();},'svConnectButton svConnectPrimary'));log.replaceChildren(empty);content.querySelector('[data-conversation-compose]').replaceChildren();page.dataset.chatOpen='false';}
  function paintFriends(){
   const list=content.querySelector('[data-friend-list]');if(!list)return;list.replaceChildren();
   if(!data.friends.length)list.append(el('p','svConnectEmpty','Find your first friend above. Your conversations stay between the two of you.'));
@@ -100,7 +100,7 @@
   const region=content.querySelector('[data-shared-home]'),pendingToken=region.querySelector('[data-home-token]')?.value||new URLSearchParams(location.search).get('invite')||'';region.replaceChildren();
   if(homeInvite&&(homeInvite.owner!==data.user.id||homeInvite.expiresAt<=Date.now()||homeInvite.homeId&&homeInvite.homeId!==data.home?.id||data.home?.members.length>=2))homeInvite=null;
   if(homeInvite&&data.home&&!homeInvite.homeId)homeInvite.homeId=data.home.id;
-  const intro=el('div','svHomeIntro');intro.append(graphic('home'),el('span','svConnectEyebrow','JUST THE TWO OF YOU'),el('h2','','Your shared home.'),el('p','','One place for your movie nights. Your own profiles and progress, a watchlist to build together.'));if(data.home)intro.append(link('Find a film for both of us','/recommendations?for=home','svConnectButton svConnectPrimary'));region.append(intro);
+  const intro=el('div','svHomeIntro');intro.append(el('h2','','Our home'),el('p','','Share a watchlist and recommendations with one other person. Your profiles and progress stay personal.'));if(data.home)intro.append(link('Find a film for both of us','/recommendations?for=home','svConnectButton svConnectPrimary'));region.append(intro);
   const card=el('div','svHomeCard');
   if(data.home){const members=el('div','svHomeMembers');for(const u of data.home.members){const p=el('div');p.append(avatar(u),el('strong','',u.name));members.append(p);}card.append(members);
    if(data.home.members.length<2){const invite=button(homeInviting?'Creating invitation…':'Invite your person',inviteHome);invite.disabled=homeInviting;card.append(invite);if(homeInvite){const url=location.origin+'/friends?tab=home&invite='+homeInvite.token,output=el('div','svHomeInvite'),label=el('label','','Invitation link · expires in 24 hours'),input=el('input');input.readOnly=true;input.value=url;input.setAttribute('aria-label','Shared home invitation link');input.addEventListener('focus',()=>input.select());label.append(input);output.append(label,button('Copy link',async e=>{try{await navigator.clipboard.writeText(url);e.target.textContent='Copied';}catch{input.select();}}));card.append(output);}}
@@ -113,7 +113,7 @@
  }
  async function share(media,{party=false}={}){
   const epoch=++shareEpoch;if(!['movie','tv'].includes(media?.type)||!/^\d+$/.test(String(media?.id)))return;
-  const d=dialog('svShareDialog'),list=d.querySelector('[data-share-list]'),output=d.querySelector('[data-share-status]');output.textContent='';list.replaceChildren();d.querySelector('#svShareTitle').textContent=party?'Save them a seat.':'Share a good story.';
+  const d=dialog('svShareDialog'),list=d.querySelector('[data-share-list]'),output=d.querySelector('[data-share-status]');output.textContent='';list.replaceChildren();d.querySelector('#svShareTitle').textContent=party?'Invite to a watch party':'Send a title';
   if(!data){try{await refresh();}catch{}}
   if(epoch!==shareEpoch||!d.open)return;
   if(!data?.user){list.append(link('Sign in to send to a friend','/login?redirect='+encodeURIComponent(location.pathname+location.search),'svConnectButton'));return;}
@@ -133,7 +133,7 @@
   document.querySelectorAll('[data-connect-notifications]').forEach(b=>b.addEventListener('click',openNotifications));document.querySelector('[data-notifications-read]')?.addEventListener('click',()=>act('/notifications/read',{all:true},document.querySelector('[data-notification-error]')));
   document.addEventListener('click',e=>{const b=e.target.closest('[data-share-title]');if(!b)return;e.preventDefault();share({id:b.dataset.shareId,type:b.dataset.shareType},{party:b.dataset.shareParty==='true'});});
   const session=await window.SwiflyAccount?.ready;if(disposed)return;
-  if(!session?.user){if(content){content.replaceChildren();const box=el('section','svConnectSignin');box.dataset.connectSignin='';const mark=graphic('people'),copy=el('div','svConnectSigninCopy'),actions=el('div','svConnectSigninActions');copy.append(el('span','svConnectEyebrow','MOVIE NIGHTS, TOGETHER'),el('h2','',session?.available===false?'Your social home is getting ready.':'Good stories deserve good company.'),el('p','',session?.available===false?'Account sync is being set up. Please try again soon.':'Send a favorite. Start a watch party. Make a shared watchlist with your person. Your people are one sign-in away.'));actions.append(link('Log in','/login?redirect='+encodeURIComponent(location.pathname+location.search),'svConnectButton svConnectPrimary'),link('Create account','/signup?redirect='+encodeURIComponent(location.pathname+location.search),'svConnectButton'));copy.append(actions);box.append(mark,copy);content.append(box);status.hidden=true;}return;}
+  if(!session?.user){if(content){content.replaceChildren();const box=el('section','svConnectSignin');box.dataset.connectSignin='';const mark=graphic('people'),copy=el('div','svConnectSigninCopy'),actions=el('div','svConnectSigninActions');copy.append(el('span','svConnectEyebrow','FRIENDS'),el('h2','',session?.available===false?'Your social home is getting ready.':'Sign in to connect'),el('p','',session?.available===false?'Account sync is being set up. Please try again soon.':'Add friends, send titles, and watch together.'));actions.append(link('Log in','/login?redirect='+encodeURIComponent(location.pathname+location.search),'svConnectButton svConnectPrimary'),link('Create account','/signup?redirect='+encodeURIComponent(location.pathname+location.search),'svConnectButton'));copy.append(actions);box.append(mark,copy);content.append(box);status.hidden=true;}return;}
   try{await refresh();subscribe();activityUpdate();}catch(e){error(status,e);}
  }
  document.addEventListener('play',activityUpdate,true);document.addEventListener('pause',activityUpdate,true);document.addEventListener('ended',activityUpdate,true);document.addEventListener('visibilitychange',()=>{activityUpdate();if(!document.hidden&&selected)loadThread(false);});
