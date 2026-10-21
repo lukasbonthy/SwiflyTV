@@ -4,11 +4,12 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const {chromium} = require('playwright-core');
 const {loadServer} = require('./ui-helpers.cjs');
+const {welcomeMarkup} = require('../ui/welcome');
 const available = fs.existsSync(chromium.executablePath()) ||
   fs.existsSync(chromium.executablePath().replace(/chromium-(\d+)\/chrome-linux\/chrome$/, 'chromium_headless_shell-$1/chrome-linux/headless_shell'));
 
 async function catalog(browser, options = {}) {
-  const {detailHTML,...pageOptions}=options;
+  const {detailHTML,welcome=false,...pageOptions}=options;
   const api = loadServer();
   let ready = false;
   try {
@@ -18,7 +19,9 @@ async function catalog(browser, options = {}) {
       backdrop_path:'/scene.jpg', poster_path:'/poster.jpg', release_date:'2026-01-01', vote_average:7.2, overview:'A featured film.'}));
     api.setTmdb(async endpoint => /^\/movie\/\d+$/.test(endpoint) ? {...items[0],runtime:118,genres:[],
       credits:{cast:[],crew:[]},videos:{results:[]},recommendations:{results:items},similar:{results:[]},images:{logos:[]}} : ({results:items}));
-    let html; await api.homePage({}, {send(value) {html = value;}});
+    let html;
+    if(welcome)html=api.pageShell({active:'welcome',body:welcomeMarkup({hero:items[0]})});
+    else await api.homePage({}, {send(value) {html = value;}});
     let detail; await api.detailPage({params:{id:'100'},query:{view:'modal'},headers:{},protocol:'http',get:()=> 'localhost:3000'},
       {send(value) {detail=value;}}, 'movie');
     // Registering gamepad listeners initializes physical device discovery in
@@ -486,27 +489,33 @@ for (const width of [390, 1440, 1920]) test(`catalog dates fit completely inside
 });
 
 
-test('movie catalog uses soft-glass optics during wheel motion and restores the original SVG lens near rest', {skip:!available && 'Chromium is not installed'}, async () => {
+for(const layout of [{name:'Desktop',width:1280},{name:'Mobile',width:800},{name:'Welcome',width:1280,welcome:true}])
+test(layout.name+' navigation keeps its liquid glass throughout wheel motion', {skip:!available && 'Chromium is not installed'}, async () => {
   const browser = await chromium.launch({headless:true});
   try {
-    const page = await catalog(browser);
-    await page.waitForFunction(() => document.querySelector('.netflixNav > .svLiquidPane')?.dataset.swiflyRenderer === 'svg');
-    const result = await page.evaluate(() => {
-      const nav = document.querySelector('.netflixNav > .svLiquidPane');
-      const full = getComputedStyle(nav).backdropFilter;
+    const page = await catalog(browser,{viewport:{width:layout.width,height:900},welcome:layout.welcome});
+    await page.waitForFunction(() => [...document.querySelectorAll('.netflixNav > .svLiquidPane,.mobileNav > .svLiquidPane,.dsWelcomeNav > .svLiquidPane')]
+      .filter(node=>node.getClientRects().length).every(node=>node.dataset.swiflyRenderer==='svg'));
+    const result = await page.evaluate(welcome => {
+      const panes=[...document.querySelectorAll('.netflixNav > .svLiquidPane,.mobileNav > .svLiquidPane,.dsWelcomeNav > .svLiquidPane')].filter(node=>node.getClientRects().length);
+      const original=panes.map(node=>({filter:getComputedStyle(node).backdropFilter,fill:getComputedStyle(node).backgroundColor,graph:node.querySelector('svg')}));
+      const action=document.querySelector(welcome?'.dsWelcomeActions .svNavMatchedLens':'.dsHeroActions .svNavMatchedLens');
       const wheel = new WheelEvent('wheel', {deltaY:260,bubbles:true,cancelable:true});
-      document.querySelector('.dsHeroContent').dispatchEvent(wheel);
-      return {consumed:wheel.defaultPrevented, soft:document.documentElement.dataset.svScrollGlass,
-        full, moving:getComputedStyle(nav).backdropFilter};
-    });
-    assert(result.consumed);
-    assert.match(result.full,/url\(/,'initial navigation must have the real liquid refraction');
-    assert.equal(result.soft,'soft');
-    assert.match(result.moving,/blur\(4px\)/,'movement should use inexpensive frosted glass rather than the SVG filter');
+      document.querySelector(welcome?'.dsWelcomeHeroCopy':'.dsHeroContent').dispatchEvent(wheel);
+      return {consumed:wheel.defaultPrevented,soft:document.documentElement.dataset.svScrollGlass,
+        navs:panes.map((node,index)=>({full:original[index].filter,moving:getComputedStyle(node).backdropFilter,fill:original[index].fill,movingFill:getComputedStyle(node).backgroundColor,sameGraph:node.querySelector('svg')===original[index].graph})),
+        actionMoving:getComputedStyle(action).backdropFilter};
+    },Boolean(layout.welcome));
+    assert(result.consumed,'exercise the real weighted wheel handler');
+    assert.equal(result.soft,'soft','content controls retain their scroll optimization');
+    assert(result.navs.length>0,'exercise a visible navigation surface');
+    for(const nav of result.navs){
+      assert.match(nav.full,/url\(/,'initial navigation uses real liquid refraction');
+      assert.equal(nav.moving,nav.full,'scrolling must not replace the navigation filter');
+      assert.equal(nav.movingFill,nav.fill,'scrolling must not change the navigation tint');
+      assert(nav.sameGraph,'the original lens remains mounted throughout the gesture');
+    }
+    assert.match(result.actionMoving,/blur\(4px\)/,'content controls keep the inexpensive scroll tier');
     await page.waitForFunction(() => !document.documentElement.dataset.svScrollGlass, null,{timeout:4500});
-    const restored=await page.locator('.netflixNav > .svLiquidPane').evaluate(node=>getComputedStyle(node).backdropFilter);
-    assert.match(restored,/url\(/,'the original full lens returns after deceleration');
-    // The separate poster-hover cooldown may still be active when the much
-    // earlier near-rest glass transition completes; it is intentionally independent.
   } finally {await browser.close();}
 });

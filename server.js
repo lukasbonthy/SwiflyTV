@@ -6550,7 +6550,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=206" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=205" />' : ""}
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=200" />' : ""}
     ${player || active === "social" ? '<link rel="stylesheet" href="/assets/party/watchroom-call.css?v=1" />' : ""}
-    <link rel="stylesheet" href="/assets/clean/performance.css?v=255" />
+    <link rel="stylesheet" href="/assets/clean/performance.css?v=256" />
     <link rel="stylesheet" href="/assets/clean/tv.css?v=255" />
     <link rel="stylesheet" href="/assets/clean/details-premium.css?v=255" />
     <link rel="stylesheet" href="/assets/clean/details-clarity.css?v=2" />

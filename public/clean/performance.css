@@ -137,13 +137,11 @@ body.svCleanShell .dsContent > .dsRow.svCatalogRow > .movieRail {contain:layout 
 }
 
 
-/* Performance-aware soft glass. A single root-state switch bypasses every
-   SVG backdrop-refraction shader while the scene moves, without destroying
-   any renderer, lens geometry, or cached texture. Once measured motion is
-   under ~0.115 CSS px/ms the *original* liquid refraction returns intact.
-   The face keeps a frosted-glass tint instead of abruptly turning opaque. */
+/* Content controls use soft glass while the scene moves, without destroying
+   their renderer, lens geometry, or cached texture. Navigation keeps its full
+   liquid lens throughout scrolling. Content refraction returns near rest. */
 @media (prefers-reduced-transparency: no-preference) {
-  html[data-sv-scroll-glass="soft"] body.svCleanShell:not([data-st-glass="off"]):not([data-st-glass="subtle"]) .svLiquidPane.svLiquidPane:not(.svCardActionLens) {
+  html[data-sv-scroll-glass="soft"] body.svCleanShell:not([data-st-glass="off"]):not([data-st-glass="subtle"]) .svLiquidPane.svLiquidPane:not(.svCardActionLens):not(.netflixNav > .svLiquidPane,.mobileNav > .svLiquidPane,.dsWelcomeNav > .svLiquidPane) {
     -webkit-backdrop-filter: blur(4px) saturate(1.10) !important;
     backdrop-filter: blur(4px) saturate(1.10) !important;
     background: rgb(var(--sv-glass-color, 255 255 255) / .33) !important;
