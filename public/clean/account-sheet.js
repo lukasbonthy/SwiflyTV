@@ -83,6 +83,16 @@
       restore();
       trigger.focus({ preventScroll: true });
     };
+    trigger.addEventListener('click', event => {
+      if (!compact()) return;
+      // Mount synchronously: do not paint one frame of the old glass dropdown.
+      event.preventDefault();
+      if (menu.open) dismiss();
+      else {
+        menu.setAttribute('open', '');
+        sync();
+      }
+    });
     scrim.addEventListener('click', dismiss);
     menu.addEventListener('toggle', sync);
     narrow.addEventListener('change', sync);
