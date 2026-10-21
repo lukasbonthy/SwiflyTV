@@ -743,6 +743,7 @@ test('desktop account dropdown remains opaque over movie artwork without changin
       const height=width===894?690:720;
       const page=await catalog(browser,{viewport:{width,height}});
       await page.locator('.dsProfileMenu > summary').click();
+      await page.waitForFunction(()=>getComputedStyle(document.querySelector('.dsProfileDropdown')).opacity==='1');
       const state=await page.evaluate(()=>{
         const menu=document.querySelector('.dsProfileDropdown');
         const pane=menu.querySelector(':scope > .svLiquidPane');
