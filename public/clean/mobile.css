@@ -233,15 +233,15 @@ body.svCleanShell .svAccountMenuClose {display:none;}
   }
   html:not([data-sv-tv="true"]) body.svCleanShell .dsProfileDropdown > .svAccountMenuClose {
     display:grid !important;
-    position:sticky !important;
+    position:absolute !important;
     grid-column:2;
     z-index:6 !important;
     place-items:center;
-    justify-self:end;
-    top:0;
+    top:19px;
+    right:18px;
     width:32px;
     height:32px;
-    margin:-51px 0 19px !important;
+    margin:0 !important;
     padding:0;
     border:1px solid rgba(230,241,255,.14);
     border-radius:12px;
