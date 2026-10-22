@@ -406,3 +406,14 @@ body.svCleanShell .svPlayer .svPlayerServerTry:disabled { opacity:.4; cursor:def
   }
   .svPlayerTools .svPlayerIcon { width:19px; height:19px; flex-basis:19px; }
 }
+
+@container sv-stage (max-width:360px) {
+  /* Two compact, centered lines avoid horizontal page overflow without
+     hiding server selection on 320px mobile layouts. */
+  .svPlayerDockRow { flex-wrap:wrap; justify-content:center; row-gap:0; }
+  .svPlayerTransport { justify-content:center; width:100%; }
+  .svPlayerTools { flex:0 0 100%; justify-content:center; padding-left:0; border-left:0; }
+  .svPlayerDock { bottom:4px; padding-top:3px; padding-bottom:4px; }
+  .svPlayerTimeline { height:32px; }
+  .svPlayerTimelineRow { min-height:32px; }
+}
