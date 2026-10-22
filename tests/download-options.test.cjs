@@ -75,3 +75,22 @@ test('TV options look up the exact season and episode and escape source labels',
  assert.equal(d.querySelectorAll('.svDownloadOptionBody img').length,0);
  assert.match(d.querySelector('.svDownloadOptionMeta').textContent,/<img onerror=bad>/);
 });
+
+test('Download choices use a bounded range probe after a HEAD failure and display total file size',async t=>{
+ const requests=[];
+ const d=await fixture(t,{type:'movie'},async (url,options={})=>{
+  const u=new URL(url,'https://swiflytv-1.onrender.com'),method=options.method||'GET';
+  requests.push({path:u.pathname,method,range:options.headers?.Range});
+  if(u.pathname==='/api/download/movie/101')return {ok:false,status:404,headers:{get:()=>null}};
+  if(u.pathname==='/api/proxy-video-wait/movie/101')return {ok:true,json:async()=>({status:'ready',playbackUrl:media})};
+  if(u.pathname===media&&method==='HEAD')return {ok:false,status:405,headers:{get:()=>null}};
+  if(u.pathname===media&&method==='GET')return {ok:true,status:206,headers:{get:key=>({
+   'content-disposition':'attachment; filename="sample.mp4"','content-type':'video/mp4',
+   'content-length':'1','content-range':'bytes 0-0/3670016'
+  })[key?.toLowerCase()]||null}};
+  throw Error('Unexpected '+url);
+ });
+ assert.equal(d.querySelectorAll('.svDownloadOption').length,1);
+ assert.match(d.querySelector('.svDownloadOptionMeta').textContent,/3\.5 MB/);
+ assert(requests.some(r=>r.path===media&&r.method==='GET'&&r.range==='bytes=0-0'));
+});

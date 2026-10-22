@@ -70,7 +70,7 @@ test('Download Options opens a cinematic movie and episode page with live option
  assert.match(d.querySelector('.svDownloadBackdrop')?.getAttribute('style')||'',/arrival-wide\.jpg/);
  assert(d.querySelector('[data-sv-download-count]'),'Availability count appears in heading');
  assert(d.querySelector('[data-sv-download-choices]'),'Available files render beneath the title');
- assert(d.querySelector('script[src="/assets/clean/download-page.js?v=1"]'));
+ assert(d.querySelector('script[src="/assets/clean/download-page.js?v=2"]'));
  assert(d.querySelector('link[href="/assets/clean/download-page.css?v=1"]'));
  const tv=parse(await(await fetch(base+'/download/tv/101?s=2&e=8')).text()).window.document;
  const episode=tv.querySelector('[data-sv-download-options]');

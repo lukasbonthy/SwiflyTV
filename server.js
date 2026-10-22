@@ -5651,7 +5651,7 @@ const discovery = createDiscovery({tmdb:(...args) => tmdb(...args)});
 app.use("/api/discovery", discovery.router);
 const playerAssist = createPlayerAssist({tmdb:(...args) => tmdb(...args)});
 app.use("/api/player-assist",playerAssist.router);
-app.get("/recommendations", (req,res) => res.send(pageShell({title:`${SITE_NAME} — AI picks`,active:"recommendations",body:recommendationsMarkup(),extraHead:'<script defer src="/assets/discovery/recommendations.js?v=4"></script>'})));
+app.get("/recommendations", (req,res) => res.send(pageShell({title:`${SITE_NAME} — AI picks`,active:"recommendations",body:recommendationsMarkup(),extraHead:'<script defer src="/assets/discovery/recommendations.js?v=5"></script>'})));
 app.get("/audiobooks", (req,res) => res.send(pageShell({title:`${SITE_NAME} — Audiobooks`,active:"audiobooks",body:audiobooksMarkup(),extraHead:'<script defer src="/assets/discovery/audiobooks.js?v=2"></script>'})));
 // Same friends-only protection applies to authorized movie/episode file downloads.
 app.use("/api/download", createDownloadRouter());
@@ -6564,7 +6564,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/motion.js?v=252"></script>
     <script defer src="/assets/clean/scroll.js?v=258"></script>
     <script defer src="/assets/clean/details.js?v=255"></script>
-    <script defer src="/assets/clean/download.js?v=2"></script>
+    <script defer src="/assets/clean/download.js?v=3"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=222" />
     <script defer src="/assets/liquid-glass/surfaces.js?v=259"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=233" />
@@ -8911,7 +8911,7 @@ async function downloadOptionsPage(req, res, type) {
     poster:img(details.poster_path,'w342'),backdrop:bg,genres:details.genres||[],
     season,episode,episodeTitle:selectedEpisode?.name||''});
   res.send(pageShell({title:SITE_NAME+' — '+title+' downloads',description:'Available download options for '+title,active:type==='tv'?'tv':'movies',body,
-    extraHead:'<link rel="stylesheet" href="/assets/clean/download-page.css?v=1" /><script defer src="/assets/clean/download-page.js?v=1"></script>'}));
+    extraHead:'<link rel="stylesheet" href="/assets/clean/download-page.css?v=1" /><script defer src="/assets/clean/download-page.js?v=2"></script>'}));
 }
 
 async function detailPage(req, res, type) {

@@ -10,9 +10,9 @@
  function paint(rows,ai,mode='mood'){results.replaceChildren();for(const m of rows){const card=node('article','svDiscoveryCard'),a=node('a','svDiscoveryPoster');a.href=m.href;a.setAttribute('aria-label',m.title);if(m.poster){const image=node('img');image.src=m.poster;image.alt='';image.loading='lazy';image.decoding='async';a.append(image);}else a.append(node('span','svDiscoveryFallback',m.title.slice(0,1)));const copy=node('div','svDiscoveryCardCopy');copy.append(node('small','',`${m.type==='tv'?'Series':'Movie'}${m.year?' · '+m.year:''}`),node('h3','',m.title));if(m.overview)copy.append(node('p','svPickOverview',m.overview));const share=node('button','svDiscoveryShare');share.innerHTML=window.SwiflyFeatureIcon?.('send')||'↗';share.type='button';share.dataset.shareTitle='';share.dataset.shareId=m.id;share.dataset.shareType=m.type;share.setAttribute('aria-label','Send '+m.title+' to a friend');card.append(a,copy,share);results.append(card);}root.querySelector('.svRecommendationResults').hidden=!rows.length;root.dataset.picksSource=mode==='title'?'title':ai?'ai':'catalog';root.dataset.searchState=rows.length?'results':'empty';}
  function infer(payload,token){return new Promise((resolve,reject)=>{
   if(!window.Worker){reject(Error('This browser cannot run the recommendation model. Try a newer browser.'));return;}
-  if(!worker)worker=new Worker('/assets/discovery/model-worker.js?v=3',{type:'module'});
+  if(!worker)worker=new Worker('/assets/discovery/model-worker.js?v=4',{type:'module'});
   rejectWorker=reject;const current=worker;
-  const onMessage=event=>{if(token!==epoch||current!==worker)return;const data=event.data;if(data.kind==='progress')output.textContent=data.message;else if(data.kind===(payload.kind==='plan'?'planned':'done')){finish();resolve(payload.kind==='plan'?data.topics:data.results);}else if(data.kind==='error'){finish();reject(Error(data.message||'The model could not finish.'));}};
+  const onMessage=event=>{if(token!==epoch||current!==worker)return;const data=event.data;if(data.kind==='progress')output.textContent=data.message;else if(data.kind===(payload.kind==='plan'?'planned':'done')){finish();resolve(payload.kind==='plan'?data.topics:data.results);}else if(data.kind==='error'){finish();current.terminate();if(worker===current)worker=null;reject(Error(data.message||'The model could not finish.'));}};
   const onError=()=>{finish();worker?.terminate();worker=null;reject(Error('The AI model could not load. Check your connection and try again.'));};
   function finish(){clearTimeout(deadline);current.removeEventListener?.('message',onMessage);current.removeEventListener?.('error',onError);rejectWorker=null;}
   current.addEventListener('message',onMessage);current.addEventListener('error',onError);deadline=setTimeout(()=>{finish();current.terminate();if(worker===current)worker=null;reject(Error('The model download took too long. Try again on a faster connection.'));},180000);current.postMessage(payload);
@@ -27,7 +27,12 @@
    const retrieve=async()=>{const response=await fetch('/api/discovery/candidates?'+params,{signal:controller.signal}),data=await response.json();if(!response.ok)throw Error(data.message||'The movie catalog is unavailable.');return data;};
    let body=await retrieve();if(token!==epoch||disposed)return;
    if(body.mode==='plan'){
-    const topics=await infer({kind:'plan',query:body.semanticQuery||prompt},token);if(token!==epoch||disposed)return;
+    // A failed topic planner should not make catalog recommendations disappear.
+    // Ranking can be retried independently after the catalog responds.
+    let topics=[];
+    try {topics=await infer({kind:'plan',query:body.semanticQuery||prompt},token);}
+    catch(error){if(token!==epoch||disposed||controller.signal.aborted)return;output.textContent='Searching the catalog without topic hints…';}
+    if(token!==epoch||disposed)return;
     params.delete('plan');params.set('planned','1');params.set('topics',Array.isArray(topics)?topics.slice(0,2).join(','):'');output.textContent='Finding stories that fit…';body=await retrieve();if(token!==epoch||disposed)return;
    }
    candidates=Array.isArray(body.candidates)?body.candidates:[];
@@ -36,7 +41,7 @@
    if(body.mode==='title'){paint(candidates,false,'title');if(heading)heading.textContent=candidates.length===1?'Found your title':'Choose a version';output.textContent=candidates.length===1?'Found '+candidates[0].title+(candidates[0].year?' ('+candidates[0].year+')':'')+'.':'Found '+candidates.length+' titles named '+candidates[0].title+'.';return;}
    output.textContent='Choosing the closest matches…';const references=Array.isArray(body.references)?body.references.slice(0,2):[];const query=body.semanticQuery||prompt+(references.length?' Similar stories to '+references.map(m=>m.title+': '+String(m.overview||'').slice(0,700)).join(' '):'');
    const picks=await infer({kind:'rank',query,candidates},token);if(token!==epoch||disposed)return;paint(picks,true);if(heading)heading.textContent=references.length?'If you liked '+references[0].title:'Picked for your mood';output.textContent=picks.length?`${picks.length} AI ${picks.length===1?'match':'matches'} for “${prompt}”.`:'We could not find a close enough match. Try a title you love or one more story detail.';
-  }catch(e){if(token!==epoch||disposed||e.name==='AbortError')return;if(candidates.length){paint(candidates.slice(0,8),false);const heading=root.querySelector('#svPicksHeading');if(heading)heading.textContent='Catalog suggestions';output.textContent=e.message+' These are catalog suggestions; AI ranking is unavailable. Try again to retry the model.';}else output.textContent=e.message||'Could not find picks. Please try again.';}
+  }catch(e){if(token!==epoch||disposed||e.name==='AbortError')return;if(candidates.length){paint(candidates.filter(m=>m.source==='reference'||m.match==='title').slice(0,8),false);const heading=root.querySelector('#svPicksHeading');if(heading)heading.textContent='Catalog suggestions';output.textContent=e.message+' AI ranking is unavailable. Showing only verified related titles (if any), not unrelated filler.';}else output.textContent=e.message||'Could not find picks. Please try again.';}
   finally{if(token===epoch&&!disposed){setBusy(false);if(root.dataset.searchState==='loading')root.dataset.searchState='empty';}}
  });
  for(const b of root.querySelectorAll('[data-mood]'))b.addEventListener('click',()=>{form.elements.prompt.value=b.dataset.mood;form.elements.prompt.focus();form.requestSubmit();});

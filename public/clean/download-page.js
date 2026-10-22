@@ -38,14 +38,32 @@
     empty.append(art,heading,message);choices.append(empty);
   }
   async function probe(url,signal) {
-    try{
-      const response=await fetch(url,{method:'HEAD',credentials:'same-origin',cache:'no-store',signal});
-      const headers=response.headers;
-      if(!response.ok||!/^attachment\b/i.test(headers.get('Content-Disposition')||''))return null;
-      const size=Number(headers.get('Content-Length'));
-      const contentType=(headers.get('Content-Type')||'').split(';')[0].trim().toLowerCase();
-      return {url,size:Number.isFinite(size)&&size>0?size:0,contentType};
-    }catch(error){if(error.name==='AbortError')throw error;return null;}
+    const inspect=async method=>{
+      const rangeProbe=method==='GET',controller=rangeProbe?new AbortController():null;
+      const abort=()=>controller?.abort();
+      if(rangeProbe) {
+        if(signal?.aborted)throw new DOMException('Aborted','AbortError');
+        signal?.addEventListener('abort',abort,{once:true});
+      }
+      try {
+        const response=await fetch(url,{method,credentials:'same-origin',cache:'no-store',
+          ...(rangeProbe?{headers:{Range:'bytes=0-0'},signal:controller.signal}:{signal})});
+        const headers=response.headers;
+        if(!response.ok||!/^attachment\b/i.test(headers.get('Content-Disposition')||''))return null;
+        const contentType=(headers.get('Content-Type')||'').split(';')[0].trim().toLowerCase();
+        if(contentType&&!contentType.startsWith('video/')&&contentType!=='application/octet-stream')return null;
+        // A fallback byte-range response has Content-Length: 1; show the
+        // complete size when upstream provides Content-Range instead.
+        const total=rangeProbe?/\/([1-9]\d*)$/.exec(headers.get('Content-Range')||''):null;
+        const bytes=Number(total?.[1]||headers.get('Content-Length'));
+        return {url,size:Number.isFinite(bytes)&&bytes>0?bytes:0,contentType};
+      }finally{
+        controller?.abort();
+        if(rangeProbe)signal?.removeEventListener('abort',abort);
+      }
+    };
+    try {const head=await inspect('HEAD');if(head)return head;return await inspect('GET');}
+    catch(error){if(error?.name==='AbortError'&&signal?.aborted)throw error;return null;}
   }
   function addCard(option,index) {
     const card=document.createElement('article');card.className='svDownloadOption';

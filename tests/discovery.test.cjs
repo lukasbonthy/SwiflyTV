@@ -153,3 +153,26 @@ test('a stalled series metadata check aborts within budget and a subsequent requ
  const result=await Promise.race([call('/candidates?q='+encodeURIComponent('a funny TV show, no horror')),new Promise(resolve=>setTimeout(()=>resolve({status:'stalled'}),250))]);
  assert.equal(result.status,503);assert(signal?.aborted);stalled=false;const retry=await call('/candidates?q='+encodeURIComponent('a funny TV show, no horror'));assert.equal(retry.status,200);assert.equal(retry.data.candidates[0].id,'11');
 });
+
+test('Explicit genre queries skip speculative topic planning and immediately search matching catalog genres',async t=>{
+ const calls=[];
+ const call=await fixture(t,{tmdb:async(path,params)=>{calls.push({path,params});return {results:path==='/discover/movie'?[movie(10,'A genuinely funny film',[35])]:[]};}});
+ const result=await call('/candidates?plan=1&type=movie&q='+encodeURIComponent('a funny comedy movie'));
+ assert.equal(result.status,200);
+ assert.equal(result.data.mode,'mood');
+ assert.deepEqual(result.data.candidates.map(x=>x.id),['10']);
+ assert(calls.some(x=>x.path==='/discover/movie'&&x.params.with_genres==='35'));
+});
+
+test('An obscure keyword does not erase clearly requested genre matches',async t=>{
+ const calls=[];
+ const call=await fixture(t,{tmdb:async(path,params)=>{
+  calls.push({path,params});
+  if(path==='/discover/movie'&&!params.with_keywords)return {results:[movie(501,'Thoughtful alien science fiction',[878])]};
+  return {results:[]};
+ }});
+ const r=await call('/candidates?type=movie&q='+encodeURIComponent('science fiction about an alien'));
+ assert.equal(r.status,200);
+ assert.deepEqual(r.data.candidates.map(m=>m.id),['501']);
+ assert(calls.some(x=>x.path==='/discover/movie'&&x.params.with_genres==='878'));
+});

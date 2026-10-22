@@ -31,10 +31,13 @@ self.addEventListener('message',async event=>{
    const score=embeddings.get(texts[i]).reduce((sum,v,j)=>sum+v*target[j],0);
    // Catalog neighbors supply useful evidence for "like this film" requests;
    // semantic similarity alone can favor an obscure film sharing a few nouns.
-   const affinity=m.source==='reference'?.14/(1+Math.max(0,Number(m.catalogRank||1)-1)*.12):0;
+   // Recommendations from the catalog are a tiebreaker, never permission
+   // for an unrelated plot to outrank a genuinely close semantic match.
+   const affinity=m.source==='reference'?.07/(1+Math.max(0,Number(m.catalogRank||1)-1)*.12):0;
    return {...m,score,rank:score+affinity+Math.max(0,Math.min(10,Number(m.rating)||0))*.003};
   });
-  const best=Math.max(0,...scored.map(m=>m.score)),floor=Math.max(.26,best-.16);
+  // Never fill the grid just because everything in a weak pool is equally bad.
+  const best=Math.max(0,...scored.map(m=>m.score)),floor=Math.max(.34,best-.13);
   const results=scored.filter(m=>m.match==='title'||m.score>=floor).sort((a,b)=>(Number(b.match==='title')-Number(a.match==='title'))||b.rank-a.rank).slice(0,8);
   while(embeddings.size>240)embeddings.delete(embeddings.keys().next().value);
   self.postMessage({kind:'done',results});
