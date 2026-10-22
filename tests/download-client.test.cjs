@@ -59,3 +59,32 @@ test('HLS streams are not falsely advertised as downloadable MP4 files',async t=
  assert.equal(downloads.length,0,'The button cannot download an HLS master as a fake MP4');
  assert.match(window.document.querySelector('.svDownloadToast')?.textContent||'',/not currently available/);
 });
+
+test('A verified MP4 remains downloadable when its origin rejects HEAD but supports a one-byte GET',async t=>{
+ const requests=[];
+ const {window,downloads}=fixture(t,'<a href="/api/download/movie/101" data-sv-download>Download</a>',async (url,options={})=>{
+  const u=new URL(url,window.location.href),method=options.method||'GET';
+  requests.push({path:u.pathname,method,range:options.headers?.Range});
+  if(u.pathname==='/api/download/movie/101')return {ok:false,status:404,headers:{get:()=>null}};
+  if(u.pathname==='/api/proxy-video-wait/movie/101')return {ok:true,json:async()=>({status:'ready',playbackUrl:proxy})};
+  if(u.pathname===proxy&&method==='HEAD')return {ok:false,status:405,headers:{get:()=>null}};
+  if(u.pathname===proxy&&method==='GET')return {ok:true,status:206,headers:attachment};
+  throw Error('Unexpected request '+url);
+ });
+ await clickAndDrain(window,'a[data-sv-download]');
+ assert.deepEqual(downloads,['https://swiflytv-1.onrender.com'+proxy+'?download=1']);
+ assert(requests.some(r=>r.path===proxy&&r.method==='GET'&&r.range==='bytes=0-0'));
+});
+test('Download lookup tries another MP4 when the first verified source denies attachments',async t=>{
+ const backup='/api/media-file-proxy/ab84d5b43df663cd74a870bb/video.mp4';
+ const {window,downloads}=fixture(t,'<a href="/api/download/movie/101" data-sv-download>Download</a>',async(url,options={})=>{
+  const u=new URL(url,window.location.href),method=options.method||'GET';
+  if(u.pathname==='/api/download/movie/101')return {ok:false,status:404,headers:{get:()=>null}};
+  if(u.pathname==='/api/proxy-video-wait/movie/101')return {ok:true,json:async()=>({status:'ready',playbackUrl:proxy,playbackSources:[{playbackUrl:backup}]})};
+  if(u.pathname===proxy)return {ok:false,status:403,headers:{get:()=>null}};
+  if(u.pathname===backup&&method==='HEAD')return {ok:true,status:200,headers:attachment};
+  throw Error('Unexpected '+url);
+ });
+ await clickAndDrain(window,'a[data-sv-download]');
+ assert.deepEqual(downloads,['https://swiflytv-1.onrender.com'+backup+'?download=1']);
+});
