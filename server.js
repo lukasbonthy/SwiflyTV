@@ -24,7 +24,7 @@ const { configureBrowserEnvironment, createBrowserRuntime } = require("./lib/bro
 const { captureProviderMedia } = require("./lib/provider-capture");
 const { runProviderRace } = require("./lib/provider-race");
 const { classifyMediaCandidate } = require("./lib/media-discovery");
-const { resolveNuvioProvider, PROVIDERS: NUVIO_ALLOWED_PROVIDERS } = require("./lib/nuvio-provider");
+const { resolveNuvioProvider, PROVIDERS: NUVIO_ALLOWED_PROVIDERS, NUVIO_CATALOG, listNuvioProviders } = require("./lib/nuvio-provider");
 const { createMediaFileProxy } = require("./lib/media-file-proxy");
 const { normalizeAudioLanguage, normalizeSubtitles } = require("./lib/playback-options");
 const { createPlaybackHandoff } = require("./lib/playback-handoff");
@@ -99,9 +99,13 @@ const TMDB_API_KEY = process.env.TMDB_API_KEY || "";
 const TMDB_BASE = "https://api.themoviedb.org/3";
 const TMDB_IMG = "https://image.tmdb.org/t/p";
 const NUVIO_ENABLED = process.env.NUVIO_ENABLED !== "false";
-const NUVIO_PROVIDER_ORDER = String(process.env.NUVIO_PROVIDER_ORDER || "vidlink,vidsrc,videasy").split(",").map(value => value.trim().toLowerCase()).filter(value => NUVIO_ALLOWED_PROVIDERS.includes(value));
+const NUVIO_PROVIDER_SETTING = String(process.env.NUVIO_PROVIDER_ORDER || "vidlink,vidsrc,videasy,vidfast,vidrock,cineby,vidlove,goated,netmirror,nakios").trim().toLowerCase();
+const NUVIO_PROVIDER_ORDER = Object.freeze(Array.from(new Set(
+  (NUVIO_PROVIDER_SETTING === "all" ? NUVIO_ALLOWED_PROVIDERS : NUVIO_PROVIDER_SETTING.split(","))
+    .map(value=>value.trim().toLowerCase()).filter(value=>NUVIO_ALLOWED_PROVIDERS.includes(value))
+)));
 const NUVIO_PROVIDER_TIMEOUT_MS = Math.max(1000, Math.min(12000, Number(process.env.NUVIO_PROVIDER_TIMEOUT_MS) || 9000));
-const NUVIO_TIMEOUT_MS = Math.max(1000, Math.min(15000, Number(process.env.NUVIO_TIMEOUT_MS) || 12000));
+const NUVIO_TIMEOUT_MS = Math.max(1000, Math.min(26000, Number(process.env.NUVIO_TIMEOUT_MS) || 20000));
 const BRAND_WORDMARK = process.env.BRAND_WORDMARK || "SWIFLYTV";
 const BRAND_SUBMARK = process.env.BRAND_SUBMARK || "SWIFLYTV";
 
@@ -4624,7 +4628,7 @@ async function localNuvioGetStreams({ tmdbId, mediaType, season, episode, signal
   if (!NUVIO_ENABLED) return { results: [], winner: null };
   return runProviderRace({
     jobs: Array.from(new Set(NUVIO_PROVIDER_ORDER)).map(id => ({ provider: `nuvio-${id}`, id, timeoutMs: NUVIO_PROVIDER_TIMEOUT_MS })),
-    signal, timeoutMs: NUVIO_TIMEOUT_MS, hedgeDelayMs: 300, maxConcurrent: 2,
+    signal, timeoutMs: NUVIO_TIMEOUT_MS, hedgeDelayMs: 250, maxConcurrent: 3,
     now: () => Date.now(), setTimeout, clearTimeout,
     isPlayable: result => result?.ok && result.source?.mediaVerified === true && apiHasEmbeddableFileExtensionOrHlsProxy(result.source.url, result.source),
     run: (job, { signal: providerSignal, timeoutMs }) => resolveNuvioProvider({
@@ -13594,6 +13598,22 @@ app.get("/api/local/streamprovider-urls", async (req, res) => {
   });
 });
 
+// Metadata only. Catalog inclusion does not mean an adapter has been installed,
+ // tested on Render, or licensed to supply a particular title.
+app.get("/api/nuvio/providers", (req, res) => {
+  res.set("Cache-Control", "no-store");
+  res.json({
+    upstream: NUVIO_CATALOG.upstream, revision: NUVIO_CATALOG.revision,
+    totalListed: NUVIO_CATALOG.providers.length,
+    installedCount: NUVIO_ALLOWED_PROVIDERS.length,
+    enabled: NUVIO_ENABLED, attemptedOrder: NUVIO_PROVIDER_ORDER,
+    providers: listNuvioProviders().map(item=>({
+      id:item.id,name:item.name,formats:item.formats,languages:item.languages,
+      mediaTypes:item.mediaTypes,requiresSettings:item.requiresSettings,
+      installed:item.installed,selected:NUVIO_ENABLED&&NUVIO_PROVIDER_ORDER.includes(item.id)
+    }))
+  });
+});
 app.get("/api/playback/health", (req, res) => {
   res.set("Cache-Control", "no-store");
   res.json({

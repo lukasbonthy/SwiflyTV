@@ -28,3 +28,20 @@ media classifier and an HTTP verification before entering the HLS proxy.
 Some upstream scripts are obfuscated and depend on external helper APIs.
 Updating a pinned file requires inspecting its changes and checking real
 playlist and segment delivery. Unit tests do not establish provider availability.
+
+## Expanded pinned providers (2026-10-22)
+
+The local bundle also contains `vidfast`, `vidrock`, `cineby`, `vidlove`,
+`goated`, `netmirror`, and `nakios` from the same upstream revision.
+These are checked-in scripts, never downloaded or executed from GitHub during a user request.
+
+`lib/nuvio-catalog.json` records **all 66** upstream manifest entries. An entry
+in that catalog does **not** imply the corresponding executable adapter has been
+installed, passed real-media verification, or may lawfully supply a particular
+movie. `/api/nuvio/providers` distinguishes installed and selected adapters.
+
+The scripts are redistributed under the original project's GPL-3.0 license;
+review the bundled `vendor/nuvio/LICENSE` and the upstream project's notices.
+Some compiled providers use external helper APIs, require settings, or only
+support formats unsupported by the browser. Run verified live playback and
+rights checks before enabling additional providers.
