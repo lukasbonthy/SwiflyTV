@@ -37,7 +37,7 @@
 })();
 
 
-/* One lightweight mobile account sheet; desktop and TV menus retain their layout. */
+/* Compact account navigation. Keep the original destinations and handlers. */
 (() => {
  'use strict';
  function bootProfileSheet(){
@@ -46,22 +46,20 @@
   if(!panel||panel.dataset.svMobileSheetReady)return;
   panel.dataset.svMobileSheetReady='true';
 
-  // Preserve the real links, their destinations and existing TV/Studio handlers.
-  // Section labels are presentation only and are hidden outside compact layouts.
-  for(const [href,title] of [
-   ['/profiles','PROFILE'],
-   ['/continue-watching','YOUR LIBRARY'],
-   ['/friends','WATCH TOGETHER'],
-   ['/recommendations','DISCOVER MORE']
+  panel.classList.add('svAccountCompact');
+  const groups=[];
+  for(const [title,hrefs]of [
+   ['Your library',['/continue-watching','/my-list','/liked']],
+   ['Watch together',['/friends','/friends?tab=home','/social?tab=watchrooms']],
+   ['Discover more',['/recommendations','/audiobooks','/browse-by-languages','/kids']]
   ]){
-   const link=[...panel.querySelectorAll('a[href]')].find(a=>a.getAttribute('href')===href);
-   if(!link)continue;
-   const label=document.createElement('div');
-   label.className='svAccountMenuSection';
-   label.textContent=title;
-   label.setAttribute('aria-hidden','true');
-   panel.insertBefore(label,link);
+   const links=hrefs.map(href=>[...panel.querySelectorAll('a[href]')].find(a=>a.getAttribute('href')===href)).filter(Boolean);if(!links.length)continue;
+   const group=document.createElement('details'),summary=document.createElement('summary'),contents=document.createElement('div');group.className='svAccountGroup';contents.className='svAccountGroupLinks';
+   const glyphBox=document.createElement('span');glyphBox.setAttribute('aria-hidden','true');glyphBox.innerHTML=links[0].querySelector(':scope > span')?.innerHTML||'';summary.append(glyphBox,document.createTextNode(title));group.append(summary,contents);panel.insertBefore(group,links[0]);contents.append(...links);groups.push(group);
   }
+  const syncTv=()=>{for(const group of groups)group.open=document.documentElement.dataset.svTv==='true';};syncTv();
+  new MutationObserver(syncTv).observe(document.documentElement,{attributes:true,attributeFilter:['data-sv-tv']});
+  for(const utility of panel.querySelectorAll(':scope > .svTvMenuToggle,:scope > .svMobileStudioLink'))panel.insertBefore(utility,panel.querySelector('.dsDropdownLogout'));
   const close=document.createElement('button');
   close.type='button';
   close.className='svAccountMenuClose';
@@ -72,7 +70,7 @@
    menu.querySelector('summary')?.focus();
   });
   panel.append(close);
-  menu.addEventListener('toggle',()=>{if(menu.open)panel.scrollTop=0;});
+  menu.addEventListener('toggle',()=>{if(menu.open)panel.scrollTop=0;else if(document.documentElement.dataset.svTv!=='true')for(const group of groups)group.open=false;});
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bootProfileSheet,{once:true});
  else bootProfileSheet();

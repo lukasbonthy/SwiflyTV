@@ -1,6 +1,19 @@
 'use strict';
 const {test,afterEach}=require('node:test');const assert=require('node:assert/strict');const {browser,tick,cleanup}=require('./ui-helpers.cjs');const {searchMarkup,recommendationsMarkup,audiobooksMarkup}=require('../ui/discovery');afterEach(cleanup);
 const delay=ms=>new Promise(r=>setTimeout(r,ms));
+test('an exact movie opens immediately without downloading an AI model',async()=>{
+ const b=browser(recommendationsMarkup(),{path:'/recommendations'}),w=b.window;let workers=0;
+ w.fetch=async()=>({ok:true,json:async()=>({mode:'title',candidates:[{id:'346698',type:'movie',title:'Barbie',year:'2023',match:'title',href:'/movie/346698'}]})});w.Worker=class{constructor(){workers++;}};w.boot('discovery/recommendations.js');
+ const form=w.document.querySelector('form');form.elements.prompt.value='Barbie';form.dispatchEvent(new w.Event('submit',{cancelable:true,bubbles:true}));await tick();
+ assert.equal(workers,0);assert.equal(w.document.querySelector('.svDiscoveryCard h3')?.textContent,'Barbie');assert.match(w.document.querySelector('[data-ai-status]').textContent,/title|found/i);assert.equal(form.getAttribute('aria-busy'),'false');
+});
+test('semantic planning fetches a relevant catalog before the model ranks any movies',async()=>{
+ const b=browser(recommendationsMarkup(),{path:'/recommendations'}),w=b.window,requests=[],inputs=[],workers=[];
+ w.fetch=async url=>{const u=new URL(url,w.location.href);requests.push(u);return {ok:true,json:async()=>u.searchParams.has('planned')?{candidates:[{id:'8',type:'movie',title:'The Prestige',overview:'Two rival magicians.',href:'/movie/8'}]}:{mode:'plan',semanticQuery:'rival magicians',candidates:[]}};};
+ w.Worker=class{constructor(){workers.push(this);}addEventListener(name,fn){this[name]=fn;}removeEventListener(){}postMessage(value){inputs.push(value);}terminate(){}};w.boot('discovery/recommendations.js');
+ const form=w.document.querySelector('form');form.elements.prompt.value='rival magicians';form.dispatchEvent(new w.Event('submit',{cancelable:true,bubbles:true}));await tick();assert.equal(inputs[0]?.kind,'plan');
+ workers[0].message({data:{kind:'planned',topics:['magic']}});await tick();assert.equal(requests[1]?.searchParams.get('topics'),'magic');assert.equal(inputs[1]?.candidates[0]?.title,'The Prestige');workers[0].message({data:{kind:'done',results:inputs[1].candidates}});await tick();assert.equal(w.document.querySelector('.svDiscoveryCard h3')?.textContent,'The Prestige');
+});
 test('search requests run only while open and old responses cannot replace a newer query',async()=>{
  const b=browser('<button id="svNavSearchToggle"></button>'+searchMarkup()),w=b.window,requests=[];w.fetch=(url,options)=>new Promise(resolve=>requests.push({url,options,resolve}));w.boot('clean.js');assert.equal(requests.length,0);
  w.document.getElementById('svNavSearchToggle').click();const input=w.document.getElementById('svNavSearchInput');input.value='first';input.dispatchEvent(new w.Event('input'));await delay(260);input.value='second';input.dispatchEvent(new w.Event('input'));await delay(260);assert.equal(requests.length,2);assert(requests[0].options.signal.aborted);
