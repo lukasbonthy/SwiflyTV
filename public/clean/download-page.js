@@ -127,7 +127,7 @@
         }
         if(!options.length){
           const playback=[result.playbackUrl,...sourceRows.map(row=>row.playbackUrl)].filter(Boolean);
-          availabilityReason=playback.some(value=>/\\.(?:m3u8|mpd)(?:[?#]|$)/i.test(String(value)))?'stream_only':'unavailable';
+          availabilityReason=playback.some(value=>/\.(?:m3u8|mpd)(?:[?#]|$)/i.test(String(value)))?'stream_only':'unavailable';
         }
         break;
       }
