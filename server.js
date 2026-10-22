@@ -8911,7 +8911,7 @@ async function downloadOptionsPage(req, res, type) {
     poster:img(details.poster_path,'w342'),backdrop:bg,genres:details.genres||[],
     season,episode,episodeTitle:selectedEpisode?.name||''});
   res.send(pageShell({title:SITE_NAME+' — '+title+' downloads',description:'Available download options for '+title,active:type==='tv'?'tv':'movies',body,
-    extraHead:'<link rel="stylesheet" href="/assets/clean/download-page.css?v=1" /><script defer src="/assets/clean/download-page.js?v=2"></script>'}));
+    extraHead:'<link rel="stylesheet" href="/assets/clean/download-page.css?v=1" /><script defer src="/assets/clean/download-page.js?v=3"></script>'}));
 }
 
 async function detailPage(req, res, type) {
