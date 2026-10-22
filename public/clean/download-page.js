@@ -133,6 +133,28 @@
       }
       if(result.status!=='loading'){availabilityReason='lookup_error';break;}
     }
+    // If the current playback winner is HLS-only, search the installed
+    // Nuvio providers for a separately verified complete MP4 attachment.
+    // Never mislabel an HLS master playlist as a movie download.
+    if(!options.length&&!signal.aborted&&availabilityReason!=='access') {
+      const query=new URLSearchParams({season,episode,wait:'6000'});
+      state('loading','Checking alternate file servers…','Looking for a verified MP4 instead of a stream-only playlist.');
+      for(let attempt=0;attempt<5&&!signal.aborted;attempt++) {
+        try {
+          const response=await fetch('/api/download-source/'+type+'/'+id+'?'+query,{
+            credentials:'same-origin',cache:'no-store',signal
+          });
+          if(!response.ok){if(response.status===401)availabilityReason='access';break;}
+          const data=await response.json();
+          if(data.status==='ready') {
+            const url=proxyLink(data.downloadUrl);
+            if(url)await add(url,{streamName:data.streamName,streamQuality:data.streamQuality});
+            break;
+          }
+          if(data.status!=='loading')break;
+        }catch(error){if(error.name==='AbortError')throw error;break;}
+      }
+    }
     return options;
   }
   async function load() {
