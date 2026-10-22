@@ -125,3 +125,24 @@ test('stream-only playback reports an accurate reason instead of appearing stuck
  assert.match(d.querySelector('.svDownloadEmpty').textContent,/HLS\/DASH/);
  assert.equal(d.querySelectorAll('.svDownloadOption').length,0);
 });
+
+test('An HLS-only playback winner can find a separately verified MP4 without fabricating a playlist download',async t=>{
+ const requests=[];
+ const file='/api/media-file-proxy/0123456789abcdef01234567/video.mp4';
+ const d=await fixture(t,{type:'movie'},async(url,options={})=>{
+   const u=new URL(url,'https://swiflytv-1.onrender.com');requests.push(u.pathname);
+   if(u.pathname==='/api/download/movie/101')return {ok:false,status:404,headers:{get:()=>null}};
+   if(u.pathname==='/api/proxy-video-wait/movie/101')return {ok:true,json:async()=>({
+     status:'ready',playbackUrl:'/api/hls-proxy/01234567/master.m3u8'
+   })};
+   if(u.pathname==='/api/download-source/movie/101')return {ok:true,json:async()=>({
+     status:'ready',downloadUrl:file,streamName:'Verified alternate',streamQuality:'720p'
+   })};
+   if(u.pathname===file&&options.method==='HEAD')return head(true,10485760);
+   throw Error('Unexpected '+url);
+ });
+ assert.equal(d.querySelectorAll('.svDownloadOption').length,1);
+ assert.match(d.querySelector('.svDownloadOption').textContent,/Verified alternate/);
+ assert.equal(d.querySelector('.svDownloadOptionAction').href,'https://swiflytv-1.onrender.com'+file+'?download=1');
+ assert(requests.includes('/api/download-source/movie/101'));
+});

@@ -575,3 +575,49 @@ test('Throttled timeupdate events cannot restart a healthy advancing film',async
  e.state(original).currentTime=12;await e.advance(210);
  assert.equal(e.video(),original,'subsequent throttled events remain harmless when time advances');
 });
+
+test('Server picker shows only resolved video sources and switches while preserving position',async()=>{
+  const e=setup({},env=>env.w.fetch=async()=>{throw Error('Direct source switching must not search again');});
+  const server=e.d.querySelector('[data-player-servers]');
+  assert(server,'Movie player exposes a dedicated server menu');
+  await e.api.loadSource({status:'ok',movieId:'42',playbackUrl:'/server-a.mp4',playbackSources:[
+    {playbackUrl:'/server-a.mp4',streamName:'Primary',streamQuality:'1080p'},
+    {playbackUrl:'/server-b.mp4',streamName:'Backup server',streamQuality:'720p'}
+  ]});
+  e.ready();e.state(e.video()).currentTime=52;
+  const buttons=[...e.d.querySelectorAll('[data-player-server-index]')];
+  assert.equal(buttons.length,2);
+  assert.match(buttons[1].textContent,/Backup server/);
+  assert.equal(buttons[0].getAttribute('aria-pressed'),'true');
+  buttons[1].click();await flush();
+  assert.equal(e.api.getState().source,'/server-b.mp4');
+  assert.equal(e.d.querySelector('[data-player-server-index="1"]').getAttribute('aria-pressed'),'true');
+  e.ready();
+  assert.equal(e.video().currentTime,52);
+});
+test('Alternate provider selection waits for a real server response instead of exposing fake options',async()=>{
+  const seen=[];
+  const e=setup({},env=>env.w.fetch=async url=>{
+    seen.push(String(url));
+    if(String(url)==='/api/nuvio/providers')return {ok:true,json:async()=>({providers:[
+      {id:'vidrock',name:'VidRock',installed:true,selected:true},
+      {id:'fake',name:'Catalog only',installed:false,selected:false}
+    ]})};
+    if(String(url).startsWith('/api/player/server/movie/42?'))return {ok:true,json:async()=>({
+      status:'ok',movieId:'42',type:'movie',playbackUrl:'/vidrock.mp4',
+      streamName:'VidRock',playbackSources:[{playbackUrl:'/vidrock.mp4',streamName:'VidRock',selected:true}]
+    })};
+    throw Error('Unexpected '+url);
+  });
+  await e.api.loadSource({status:'ok',playbackUrl:'/before.mp4'});e.ready();
+  e.state(e.video()).currentTime=38;
+  const menu=e.d.querySelector('[data-player-servers]');menu.open=true;
+  menu.dispatchEvent(new e.w.Event('toggle'));await flush();
+  const select=e.d.querySelector('[data-player-server-provider]');
+  assert.equal(select.disabled,false);assert.deepEqual([...select.options].map(x=>x.value),['','vidrock']);
+  select.value='vidrock';select.dispatchEvent(new e.w.Event('change'));
+  e.d.querySelector('[data-player-server-try]').click();await flush();
+  assert(seen.some(url=>url.startsWith('/api/player/server/movie/42?provider=vidrock')));
+  assert.equal(e.api.getState().source,'/vidrock.mp4');
+  e.ready();assert.equal(e.video().currentTime,38);
+});

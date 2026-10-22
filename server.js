@@ -6578,7 +6578,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=205" />' : ""}
     ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=173" />' : ""}
     
-    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=234"></script>' : ""}
+    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=235"></script>' : ""}
     ${player ? '<script defer src="/assets/player/audio-sample.js?v=1"></script><script defer src="/assets/player/assist.js?v=2"></script><link rel="stylesheet" href="/assets/player/assist.css?v=3" />' : ""}
     ${player || active === "social" ? '<script defer src="/assets/party/watchroom-call.js?v=1"></script>' : ""}
     ${active === "social" ? '<script defer src="/assets/party/party.js?v=207"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}
@@ -6590,7 +6590,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/experience.css?v=202" />'}
     <link rel="stylesheet" href="/assets/clean/cinema.css?v=207" />
     <link rel="stylesheet" href="/assets/clean/profiles.css?v=209" />
-    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=214" />' : ""}
+    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=215" />' : ""}
     ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=206" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=205" />' : ""}
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=200" />' : ""}
     ${player || active === "social" ? '<link rel="stylesheet" href="/assets/party/watchroom-call.css?v=1" />' : ""}
@@ -8915,7 +8915,7 @@ async function downloadOptionsPage(req, res, type) {
     poster:img(details.poster_path,'w342'),backdrop:bg,genres:details.genres||[],
     season,episode,episodeTitle:selectedEpisode?.name||''});
   res.send(pageShell({title:SITE_NAME+' — '+title+' downloads',description:'Available download options for '+title,active:type==='tv'?'tv':'movies',body,
-    extraHead:'<link rel="stylesheet" href="/assets/clean/download-page.css?v=1" /><script defer src="/assets/clean/download-page.js?v=3"></script>'}));
+    extraHead:'<link rel="stylesheet" href="/assets/clean/download-page.css?v=1" /><script defer src="/assets/clean/download-page.js?v=4"></script>'}));
 }
 
 async function detailPage(req, res, type) {
@@ -14333,6 +14333,82 @@ app.get("/api/provider/embed", async (req, res) => {
 
 app.get("/favicon.ico", (req, res) => {
   res.status(204).end();
+});
+
+// Manual server changes do not replace the shared cached default source job.
+app.get("/api/player/server/:type/:id", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const type=req.params.type, id=String(req.params.id||""), provider=String(req.query.provider||"").toLowerCase();
+  const season=String(req.query.season||req.query.s||"1"), episode=String(req.query.episode||req.query.e||"1");
+  if(!["movie","tv"].includes(type)||!/^\\d{1,10}$/.test(id)||
+     (type==="tv"&&(!/^[1-9]\\d{0,3}$/.test(season)||!/^[1-9]\\d{0,3}$/.test(episode)))||
+     !NUVIO_ENABLED||!NUVIO_PROVIDER_ORDER.includes(provider)) {
+    return res.status(400).json({status:"error",code:"invalid_request"});
+  }
+  const scope=new AbortController(),timer=setTimeout(()=>scope.abort(),11000);
+  const disconnected=()=>{if(!res.writableEnded)scope.abort();};
+  res.on("close",disconnected);
+  try {
+    const found=await resolveNuvioProvider({provider,tmdbId:id,mediaType:type,season,episode,
+      timeoutMs:10000,signal:scope.signal,
+      isNonMediaUrl:value=>apiLooksDefinitelyNonMediaUrl(value,{allowManifestEndpoint:true})});
+    if(!found.ok||!found.source?.mediaVerified)return res.status(404).json({status:"unavailable"});
+    const ready=apiSourceToProxyResult({source:found.source,raw:{},provider:"nuvio-"+provider,
+      type,id,season,episode,playbackCandidates:found.sources,subtitles:found.subtitles});
+    if(!ready?.playbackUrl)return res.status(404).json({status:"unavailable"});
+    return res.json({...ready,type,server:provider});
+  } catch {
+    if(!res.headersSent&&!res.writableEnded&&!scope.signal.aborted)res.status(503).json({status:"unavailable"});
+  } finally {clearTimeout(timer);res.off("close",disconnected);}
+});
+
+// Download discovery deliberately searches for a verified complete file. An
+// HLS/DASH playlist is playable but not itself a saved MP4.
+const downloadSourceJobs=createSourceJobs({
+  deadlineMs:30000,maxConcurrentResolvers:2,maxEntries:60,
+  successTtlMs:3*60*1000,errorTtlMs:2000,staleSuccessTtlMs:0,
+  resolve:async(params,{signal})=>{
+    if(!NUVIO_ENABLED||!NUVIO_PROVIDER_ORDER.length)return {status:"error",code:"no_source"};
+    const {winner}=await runProviderRace({
+      jobs:NUVIO_PROVIDER_ORDER.map(provider=>({provider:"nuvio-"+provider,id:provider,timeoutMs:9000})),
+      signal,timeoutMs:25000,hedgeDelayMs:250,maxConcurrent:3,
+      now:()=>Date.now(),setTimeout,clearTimeout,
+      isPlayable:result=>result?.ok&&result.source?.mediaVerified===true&&result.source?.format==="mp4",
+      run:(job,{signal:providerSignal,timeoutMs})=>resolveNuvioProvider({
+        provider:job.id,tmdbId:params.id,mediaType:params.type,season:params.season,episode:params.episode,
+        timeoutMs,signal:providerSignal,
+        isNonMediaUrl:value=>apiLooksDefinitelyNonMediaUrl(value,{allowManifestEndpoint:true})
+      })
+    });
+    if(!winner?.source||winner.source.format!=="mp4")return {status:"error",code:"no_source"};
+    const registered=registerHlsProxySource(winner.source.url,winner.source.headers||{},{
+      sourceFormat:"mp4",sourceCodec:winner.source.codecName||"",
+      movieId:params.id,type:params.type,season:params.season,episode:params.episode,
+      streamName:winner.source.name||winner.provider,streamQuality:winner.source.quality||""
+    });
+    if(!registered?.id)return {status:"error",code:"no_source"};
+    return {status:"ok",playbackUrl:"/api/media-file-proxy/"+registered.id+"/video.mp4",
+      streamName:winner.source.name||winner.provider,streamQuality:winner.source.quality||""};
+  }
+});
+app.get("/api/download-source/:type/:id",async(req,res,next)=>{
+  res.set("Cache-Control","no-store");
+  const params={type:req.params.type,id:req.params.id,season:req.query.season||req.query.s||"1",
+    episode:req.query.episode||req.query.e||"1"};
+  const wait=Math.max(0,Math.min(7000,Number(req.query.wait)||0));
+  const controller=new AbortController();
+  const closed=()=>{if(!res.writableEnded)controller.abort();};
+  if(wait)res.on("close",closed);
+  try {
+    const result=wait?await downloadSourceJobs.wait(params,{timeoutMs:wait,signal:controller.signal}):
+      downloadSourceJobs.poll(params);
+    if(controller.signal.aborted)return;
+    if(result.code==="invalid_request")res.status(400);
+    res.json({status:result.status==="ok"?"ready":result.status==="loading"?"loading":"unavailable",
+      ...(result.status==="ok"?{downloadUrl:result.playbackUrl,streamName:result.streamName,
+        streamQuality:result.streamQuality}:{})});
+  }catch(error){if(!controller.signal.aborted)next(error);}
+  finally {res.off("close",closed);}
 });
 
 app.get("/api/proxy-video-wait/:type/:id", async (req, res, next) => {

@@ -37,6 +37,7 @@
     let audioOptions=[],applyingAudio=false,observedAudio=null,observedText=null;
     let captionOptions=[],captionPreference=null,captionActive='-1',applyingCaptions=false;
     let sourceOptions=[],sourceSnapshotKey='',activeSourceData=null,failedPreferenceMedia='';
+    let providersLoaded=false,serverChanging=false;
     const history=window.SwiflyContinue,historyOwner=history?.profileId?.();
     const entryQuery=new URLSearchParams(location.search);
     let soloTracking=app.classList.contains('svPlayerPage')&&!managed&&!entryQuery.has('roomId')&&!entryQuery.has('party');
@@ -290,11 +291,81 @@
       select.disabled=levels.length<2&&alternatives.length<2;
       const current=sourceOptions.findIndex(item=>item.playbackUrl===source);
       select.value=levels.length&&[...select.options].some(item=>item.value===selected)&&!selected.startsWith('source:')?selected:alternatives.length?'source:'+current:'-1';
+      updateServers();
     }
     function sourceLabel(item,index) {
       const quality=String(item.streamQuality||'').trim();let label=quality||String(item.streamName||'').trim()||'Original';
       if(sourceOptions.some(other=>other!==item&&(other.streamQuality||'')===(item.streamQuality||''))){const language=languageOf({language:item.audioLanguage});label+=' · '+(language?trackLabel({language},index,'Audio'):'language unavailable');}
       return label;
+    }
+    // File qualities and alternate verified streams are presented separately
+    // from adaptive HLS picture quality. No server is advertised as available
+    // until the backend has provided a usable playback URL.
+    function updateServers() {
+      const list=find('server-list');if(!list)return;
+      list.replaceChildren();
+      if(!sourceOptions.length) {
+        const note=document.createElement('span');note.className='svPlayerMenuHint';
+        note.textContent='No servers discovered yet.';list.append(note);return;
+      }
+      for(const [index,item] of sourceOptions.entries()) {
+        const active=item.playbackUrl===source;
+        const button=document.createElement('button');
+        button.type='button';button.className='svPlayerServerChoice';
+        button.dataset.playerServerIndex=String(index);button.dataset.active=String(active);
+        button.setAttribute('aria-pressed',String(active));
+        button.disabled=active||serverChanging;
+        const label=document.createElement('span');label.className='svPlayerServerName';
+        label.textContent=String(item.streamName||'Server '+(index+1)).slice(0,65);
+        const meta=document.createElement('small');
+        meta.textContent=[item.streamQuality,item.audioLanguage,active?'Playing':'Switch'].filter(Boolean).join(' · ')||'Available';
+        button.append(label,meta);list.append(button);
+      }
+    }
+    async function loadProviders() {
+      const select=find('server-provider'),message=find('server-message');if(!select||providersLoaded)return;
+      providersLoaded=true;
+      try {
+        const data=await requestJson('/api/nuvio/providers',7000);
+        const rows=Array.isArray(data.providers)?data.providers.filter(item=>item.installed&&item.selected):[];
+        select.replaceChildren();
+        const placeholder=document.createElement('option');placeholder.value='';placeholder.textContent='Select another provider';select.append(placeholder);
+        for(const row of rows) {
+          if(!/^[a-z0-9-]{2,35}$/.test(row.id))continue;
+          const item=document.createElement('option');item.value=row.id;item.textContent=String(row.name||row.id).slice(0,65);select.append(item);
+        }
+        select.disabled=rows.length===0;
+        if(message)message.textContent=rows.length?'Try an alternate source; only a verified match will replace your movie.':'No additional providers configured.';
+      }catch {
+        providersLoaded=false;
+        if(message)message.textContent='Could not load providers. Reopen this menu to retry.';
+      }
+    }
+    async function changeProvider(provider) {
+      if(serverChanging||destroyed||suspended||!provider||!sourceData)return;
+      if(!/^[a-z0-9-]{2,35}$/.test(provider))return;
+      const status=find('server-message'),button=find('server-try');
+      const position=Math.max(0,number(video.currentTime,0)),shouldPlay=pendingPlay||!video.paused;
+      serverChanging=true;if(button)button.disabled=true;
+      if(status)status.textContent='Checking '+provider+'…';
+      updateServers();
+      try {
+        const query=new URLSearchParams({provider});
+        if(mediaType==='tv') {query.set('season',app.dataset.playerSeason||'1');query.set('episode',app.dataset.playerEpisode||'1');}
+        const payload=await requestJson('/api/player/server/'+encodeURIComponent(mediaType)+'/'+encodeURIComponent(mediaId)+'?'+query,15000);
+        const next=chooseSource(payload);
+        if(payload.status!=='ok'||!next)throw new Error('unavailable');
+        sourceData={...payload};sourceOptions=prepareSources(payload,next);
+        sourceSnapshotKey=snapshotKey(payload,next,mediaId,mediaType);
+        const choice=sourceOptions.find(item=>item.playbackUrl===next);
+        const applied=await attachSource(next,dataForSource(choice||{playbackUrl:next}),{position,shouldPlay});
+        if(!applied)throw new Error('unavailable');
+        if(status)status.textContent='Connected to '+provider+'.';
+        closeMenu(find('servers'));
+      }catch {
+        if(status)status.textContent='That server is unavailable. Try another.';
+        showToast('That server could not be reached.');
+      }finally{serverChanging=false;if(button)button.disabled=!find('server-provider')?.value;updateServers();}
     }
     function prepareSources(data,next) {
       const seen=new Set(),sources=[];
@@ -303,7 +374,7 @@
       return sources;
     }
     function resetSourceOptions() {
-      sourceOptions=[];sourceSnapshotKey='';activeSourceData=null;audioOptions=[];captionOptions=[];captionActive='-1';
+      sourceOptions=[];sourceSnapshotKey='';activeSourceData=null;audioOptions=[];captionOptions=[];captionActive='-1';updateServers();
       for(const [name,label] of [['quality','Original'],['audio','Language unavailable'],['captions','Unavailable']]){const select=find(name);if(!select)continue;const option=document.createElement('option');option.value='-1';option.textContent=label;select.replaceChildren(option);select.disabled=true;}
     }
     function dataForSource(item) {
@@ -647,6 +718,16 @@
     listen(find('seek'),'pointercancel',()=>{scrubbing=false;updateTime();updateVisibility({reveal:true});});
     listen(find('retry'),'click',()=>{if(!locked())resolve({retry:true});});
     listen(find('settings-close'),'click',()=>{closeMenu(find('settings'));find('settings').querySelector('summary').focus();});
+    listen(find('servers-close'),'click',()=>{closeMenu(find('servers'));find('servers').querySelector('summary').focus();});
+    listen(find('servers'),'toggle',()=>{if(find('servers')?.open)loadProviders();});
+    listen(find('server-list'),'click',event=>{
+      const option=event.target.closest?.('[data-player-server-index]');if(!option||serverChanging)return;
+      const index=Number(option.dataset.playerServerIndex);
+      if(!Number.isSafeInteger(index)||index<0)return;
+      switchSource(index).then(ok=>{if(ok)closeMenu(find('servers'));else showToast('That stream is not available.');});
+    });
+    listen(find('server-provider'),'change',event=>{const b=find('server-try');if(b)b.disabled=!event.target.value||serverChanging;});
+    listen(find('server-try'),'click',()=>changeProvider(find('server-provider')?.value));
     listen(find('volume-close'),'click',()=>{closeMenu(find('volume-menu'));find('volume-menu').querySelector('summary').focus();});
     listen(find('sync'),'click',()=>{dispatch('sync',getState());closeMenu(find('settings'));find('settings').querySelector('summary').focus();});
     listen(find('unlock'),'click',()=>play({remote:unlockRemote}));
