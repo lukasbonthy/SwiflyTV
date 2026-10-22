@@ -45,8 +45,22 @@
     return mp4Proxy(playing.source);
   }
   async function readyAttachment(url) {
-    const response=await fetch(url,{method:'HEAD',credentials:'same-origin',cache:'no-store'});
-    return response.ok&&/^attachment\b/i.test(response.headers.get('Content-Disposition')||'');
+    const probe=async method=>{
+      // Some verified file hosts reject HEAD even when GET succeeds.
+      // A one-byte range request checks headers without buffering a movie.
+      const rangeProbe=method==='GET',controller=rangeProbe?new AbortController():null;
+      try {
+        const response=await fetch(url,{method,credentials:'same-origin',cache:'no-store',
+          ...(rangeProbe?{headers:{Range:'bytes=0-0'},signal:controller.signal}:{})});
+        const disposition=response.headers?.get('Content-Disposition')||'';
+        const type=String(response.headers?.get('Content-Type')||'').split(';')[0].trim().toLowerCase();
+        return response.ok&&/^attachment\b/i.test(disposition)&&(!type||type.startsWith('video/')||type==='application/octet-stream');
+      } finally {
+        controller?.abort();
+      }
+    };
+    try {if(await probe('HEAD'))return true;}catch{}
+    try {return await probe('GET');}catch{return false;}
   }
   async function resolveProxy(target) {
     const query=new URLSearchParams({season:target.season,episode:target.episode,wait:'3500'});
@@ -58,7 +72,9 @@
       if(data.status==='ok'||data.status==='ready') {
         const sources=[data.playbackUrl,data.proxyVideo,...(Array.isArray(data.playbackSources)
           ?data.playbackSources.map(item=>item.playbackUrl):[])];
-        for(const source of sources){const proxy=mp4Proxy(source);if(proxy)return proxy;}
+        // Test each verified MP4: the first playback source can reject
+        // downloads while a secondary source still supplies a real file.
+        for(const source of sources){const proxy=mp4Proxy(source);if(proxy&&await readyAttachment(proxy))return proxy;}
         return null;
       }
       if(data.status!=='loading')return null;
@@ -91,7 +107,7 @@
         announce('Starting your download…');beginDownload(target.fallback);return;
       }
       proxy=await resolveProxy(target);
-      if(proxy&&await readyAttachment(proxy)){
+      if(proxy){
         announce('Starting your MP4 download…');beginDownload(proxy);return;
       }
       announce('A downloadable MP4 is not currently available for this '+(link.dataset.svDownloadType||'title')+'.');
