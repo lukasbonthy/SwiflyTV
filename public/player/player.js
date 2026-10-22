@@ -362,9 +362,13 @@
         if(!applied)throw new Error('unavailable');
         if(status)status.textContent='Connected to '+provider+'.';
         closeMenu(find('servers'));
-      }catch {
-        if(status)status.textContent='That server is unavailable. Try another.';
-        showToast('That server could not be reached.');
+      }catch(error) {
+        const message=error?.httpStatus===400?'The server request was rejected. Please reload the player.':
+          error?.httpStatus===404?'No verified stream was found on this server for this title.':
+          error?.httpStatus===504||error?.message==='timeout'?'The server took too long to respond.':
+          'This provider could not return a playable stream.';
+        if(status)status.textContent=message;
+        showToast(message);
       }finally{serverChanging=false;if(button)button.disabled=!find('server-provider')?.value;updateServers();}
     }
     function prepareSources(data,next) {
@@ -610,7 +614,7 @@
         const task={category:'resolver',cancel:()=>{controller.abort();finish(new Error('cancelled'));}};tasks.add(task);
         timer=setTimeout(()=>{controller.abort();finish(new Error('timeout'));},Math.max(1,timeout));
         Promise.resolve().then(()=>fetch(url,{signal:controller.signal,cache:'no-store',headers:{Accept:'application/json'}})).then(async response=>{
-          if(!response.ok)throw new Error('response');const data=await response.json();finish(null,data);
+          if(!response.ok){const error=new Error('response');error.httpStatus=response.status;throw error;}const data=await response.json();finish(null,data);
         }).catch(error=>finish(error));
       });
     }

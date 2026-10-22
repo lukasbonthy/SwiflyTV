@@ -79,6 +79,7 @@ const { playerMarkup, episodePickerMarkup, episodeNavigationMarkup } = require("
 const { downloadOptionsMarkup } = require("./ui/download-page");
 const { watchPartyMarkup, partyBrowseMarkup } = require("./ui/watch-party");
 const { createSourceJobs } = require("./lib/source-jobs");
+const { serverSelection } = require("./lib/server-selection");
 const { createWatchroomCalls } = require("./lib/watchroom-calls");
 const helmet = require("helmet");
 const compression = require("compression");
@@ -6578,7 +6579,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=205" />' : ""}
     ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=173" />' : ""}
     
-    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=235"></script>' : ""}
+    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=236"></script>' : ""}
     ${player ? '<script defer src="/assets/player/audio-sample.js?v=1"></script><script defer src="/assets/player/assist.js?v=2"></script><link rel="stylesheet" href="/assets/player/assist.css?v=3" />' : ""}
     ${player || active === "social" ? '<script defer src="/assets/party/watchroom-call.js?v=1"></script>' : ""}
     ${active === "social" ? '<script defer src="/assets/party/party.js?v=207"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}
@@ -14340,11 +14341,8 @@ app.get("/api/player/server/:type/:id", async (req, res) => {
   res.set("Cache-Control", "no-store");
   const type=req.params.type, id=String(req.params.id||""), provider=String(req.query.provider||"").toLowerCase();
   const season=String(req.query.season||req.query.s||"1"), episode=String(req.query.episode||req.query.e||"1");
-  if(!["movie","tv"].includes(type)||!/^\\d{1,10}$/.test(id)||
-     (type==="tv"&&(!/^[1-9]\\d{0,3}$/.test(season)||!/^[1-9]\\d{0,3}$/.test(episode)))||
-     !NUVIO_ENABLED||!NUVIO_PROVIDER_ORDER.includes(provider)) {
-    return res.status(400).json({status:"error",code:"invalid_request"});
-  }
+  const selection=serverSelection({type,id,season,episode,provider},NUVIO_ENABLED?NUVIO_PROVIDER_ORDER:[]);
+  if(!selection)return res.status(400).json({status:"error",code:"invalid_request"});
   const scope=new AbortController(),timer=setTimeout(()=>scope.abort(),11000);
   const disconnected=()=>{if(!res.writableEnded)scope.abort();};
   res.on("close",disconnected);
@@ -14358,7 +14356,8 @@ app.get("/api/player/server/:type/:id", async (req, res) => {
     if(!ready?.playbackUrl)return res.status(404).json({status:"unavailable"});
     return res.json({...ready,type,server:provider});
   } catch {
-    if(!res.headersSent&&!res.writableEnded&&!scope.signal.aborted)res.status(503).json({status:"unavailable"});
+    if(!res.headersSent&&!res.writableEnded&&!res.destroyed)
+      res.status(scope.signal.aborted?504:503).json({status:"unavailable",code:scope.signal.aborted?"timeout":"provider_failed"});
   } finally {clearTimeout(timer);res.off("close",disconnected);}
 });
 
