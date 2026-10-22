@@ -390,3 +390,19 @@ body.svCleanShell .svPlayer .svPlayerServerTry:disabled { opacity:.4; cursor:def
   body.svCleanShell .svPlayer .svPlayerServerPopover > .svPlayerControl { width:40px; min-width:40px; padding:8px; }
   .svPlayerServerBody { max-width:calc(100vw - 24px); }
 }
+
+/* Keep the new server control from overflowing 320px theaters. The movie
+   picture keeps its aspect ratio, and every transport remains on-screen. */
+@container sv-stage (max-width:440px) {
+  .svPlayerDockRow { min-width:0; max-width:100%; gap:0; }
+  .svPlayerTransport { flex:0 0 auto; gap:0; }
+  .svPlayerTools { flex:0 1 auto; min-width:0; gap:0; padding-left:4px; }
+  body.svCleanShell .svPlayer .svPlayerTransport .svPlayerControl:not(.svPlayerPlay) {
+    width:36px; min-width:36px; padding:6px;
+  }
+  body.svCleanShell .svPlayer .svPlayerPlay { width:40px; min-width:40px; margin:0; }
+  body.svCleanShell .svPlayer .svPlayerTools .svPlayerControl {
+    width:34px; min-width:34px; padding:5px;
+  }
+  .svPlayerTools .svPlayerIcon { width:19px; height:19px; flex-basis:19px; }
+}
