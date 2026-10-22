@@ -163,3 +163,16 @@ test('Explicit genre queries skip speculative topic planning and immediately sea
  assert.deepEqual(result.data.candidates.map(x=>x.id),['10']);
  assert(calls.some(x=>x.path==='/discover/movie'&&x.params.with_genres==='35'));
 });
+
+test('An obscure keyword does not erase clearly requested genre matches',async t=>{
+ const calls=[];
+ const call=await fixture(t,{tmdb:async(path,params)=>{
+  calls.push({path,params});
+  if(path==='/discover/movie'&&!params.with_keywords)return {results:[movie(501,'Thoughtful alien science fiction',[878])]};
+  return {results:[]};
+ }});
+ const r=await call('/candidates?type=movie&q='+encodeURIComponent('science fiction about an alien'));
+ assert.equal(r.status,200);
+ assert.deepEqual(r.data.candidates.map(m=>m.id),['501']);
+ assert(calls.some(x=>x.path==='/discover/movie'&&x.params.with_genres==='878'));
+});
