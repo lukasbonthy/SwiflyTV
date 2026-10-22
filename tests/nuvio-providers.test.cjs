@@ -523,3 +523,15 @@ test('verified direct MP4 does not make a redundant GET',async()=>{
   assert.equal(source?.format,'mp4');
   assert.equal(calls,1);
 });
+
+test('a known provider warning clip is not reclassified using a partial Range reply',async()=>{
+  const warning=require('./fixtures/provider-warning-response.json');
+  let calls=0;
+  const source=await verifyNuvioSource({url:'https://media.example/protected-content.mp4'},{fetchResource:async(_url,options)=>{
+    calls++;
+    assert.equal(options.method,'HEAD');
+    return new Response(null,{headers:warning});
+  }});
+  assert.equal(source,null);
+  assert.equal(calls,1);
+});
