@@ -475,3 +475,63 @@ test('relative current VidLink caption URLs stay scoped to the observed source A
   assert.equal(result.subtitles[0].label,'English - English [CC]');
   assert.equal(result.subtitles[0].headers.cookie,undefined);
 });
+
+
+test('Nuvio verifies a real MP4 using bounded Range GET when HEAD is blocked',async()=>{
+  const requests=[];
+  const fetchResource=async (_url,options)=>{
+    requests.push({method:options.method,range:options.headers?.range,maxBytes:options.maxBytes});
+    if(options.method==='HEAD')return new Response(null,{status:405,headers:{'content-type':'text/plain'}});
+    return new Response(Buffer.from([0]),{status:206,headers:{
+      'content-type':'video/mp4','content-range':'bytes 0-0/1200000','content-length':'1'
+    }});
+  };
+  const source=await verifyNuvioSource({
+    url:'https://media.example/licensed-video.mp4',quality:'1080p',headers:{Referer:'https://provider.example/'}
+  },{fetchResource});
+  assert.equal(source?.format,'mp4');
+  assert.equal(source?.mediaVerified,true);
+  assert.equal(source?.quality,'1080p');
+  assert.equal(source?.headers?.referer,'https://provider.example/');
+  assert.deepEqual(requests,[
+    {method:'HEAD',range:undefined,maxBytes:1024*1024},
+    {method:'GET',range:'bytes=0-0',maxBytes:4096}
+  ]);
+});
+
+test('Nuvio never treats a blocked file or HTML fallback as playable media',async()=>{
+  const requested=[];
+  const blocked=await verifyNuvioSource({url:'https://media.example/private.mp4'},{fetchResource:async(_url,options)=>{
+    requested.push(options.method);
+    return new Response(options.method==='GET'?'Access denied':null,{status:403,headers:{'content-type':'text/plain'}});
+  }});
+  assert.equal(blocked,null);
+  assert.deepEqual(requested,['HEAD','GET']);
+  const html=await verifyNuvioSource({url:'https://media.example/fake.mp4'},{fetchResource:async(_url,options)=>
+    new Response(options.method==='GET'?'<html>not a movie</html>':null,{headers:{'content-type':'text/html'}})
+  });
+  assert.equal(html,null);
+});
+
+test('verified direct MP4 does not make a redundant GET',async()=>{
+  let calls=0;
+  const source=await verifyNuvioSource({url:'https://media.example/legitimate.mp4'},{fetchResource:async(_url,options)=>{
+    calls++;
+    assert.equal(options.method,'HEAD');
+    return new Response(null,{headers:{'content-type':'video/mp4'}});
+  }});
+  assert.equal(source?.format,'mp4');
+  assert.equal(calls,1);
+});
+
+test('a known provider warning clip is not reclassified using a partial Range reply',async()=>{
+  const warning=require('./fixtures/provider-warning-response.json');
+  let calls=0;
+  const source=await verifyNuvioSource({url:'https://media.example/protected-content.mp4'},{fetchResource:async(_url,options)=>{
+    calls++;
+    assert.equal(options.method,'HEAD');
+    return new Response(null,{headers:warning});
+  }});
+  assert.equal(source,null);
+  assert.equal(calls,1);
+});
