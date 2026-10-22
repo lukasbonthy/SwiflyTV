@@ -10,7 +10,7 @@
   const count=root.querySelector('[data-sv-download-count]');
   const refresh=root.querySelector('[data-sv-download-refresh]');
   const icon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v4h16v-4"/></svg>';
-  let current=null;
+  let current=null,availabilityReason='unknown';
   function proxyLink(value) {
     try {
       const url=new URL(String(value||''),location.href);
@@ -85,7 +85,13 @@
     count.textContent=String(options.length);
     refresh.hidden=false;
     if(!options.length){
-      state('empty','No downloads available','We couldn’t find a compatible downloadable file for this title right now. You can retry or watch it online.');
+      const messages={
+        stream_only:'This source can play online, but only provides an HLS/DASH stream, not a downloadable file.',
+        lookup_error:'SwiflyTV could not finish checking the video source. Try again, or check whether the movie plays.',
+        access:'Your access session expired. Sign in again to check available downloads.',
+        unavailable:'No downloadable MP4 or hosted file is available for this title. You can still try watching online.'
+      };
+      state('empty','No downloads available',messages[availabilityReason]||messages.unavailable);
       return;
     }
     options.forEach(addCard);
@@ -104,30 +110,34 @@
     };
     const fallback='/api/download/'+type+'/'+id+(type==='tv'?'?s='+season+'&e='+episode:'');
     await add(fallback,{streamName:'SwiflyTV file'});
-    const query=new URLSearchParams({season,episode,wait:'2600'});
-    for(let attempt=0;attempt<9&&!signal.aborted;attempt++){
+    const query=new URLSearchParams({season,episode,wait:'4500'});
+    for(let attempt=0;attempt<16&&!signal.aborted;attempt++){
       let result;
       try{
         const response=await fetch('/api/proxy-video-wait/'+type+'/'+id+'?'+query,{credentials:'same-origin',cache:'no-store',signal});
-        if(!response.ok)break;
+        if(!response.ok){availabilityReason=response.status===401?'access':'lookup_error';break;}
         result=await response.json();
-      }catch(error){if(error.name==='AbortError')throw error;break;}
+      }catch(error){if(error.name==='AbortError')throw error;availabilityReason='lookup_error';break;}
       if(result.status==='ready'||result.status==='ok'){
         const sourceRows=Array.isArray(result.playbackSources)?result.playbackSources:[];
-        const list=[{playbackUrl:result.playbackUrl,streamQuality:result.streamQuality,streamName:result.streamName},...sourceRows];
+        const list=[{playbackUrl:result.downloadUrl||result.playbackUrl,streamQuality:result.streamQuality,streamName:result.streamName},...sourceRows.map(row=>({...row,playbackUrl:row.downloadUrl||row.playbackUrl}))];
         for(const source of list){
           const url=proxyLink(source.playbackUrl);
           if(url)await add(url,source);
         }
+        if(!options.length){
+          const playback=[result.playbackUrl,...sourceRows.map(row=>row.playbackUrl)].filter(Boolean);
+          availabilityReason=playback.some(value=>/\\.(?:m3u8|mpd)(?:[?#]|$)/i.test(String(value)))?'stream_only':'unavailable';
+        }
         break;
       }
-      if(result.status!=='loading')break;
+      if(result.status!=='loading'){availabilityReason='lookup_error';break;}
     }
     return options;
   }
   async function load() {
     current?.abort();
-    const task=new AbortController();current=task;
+    const task=new AbortController();current=task;availabilityReason='unknown';
     choices.setAttribute('aria-busy','true');
     count.textContent='—';refresh.hidden=true;
     state('loading','Checking available downloads…','Finding available files for this '+(type==='tv'?'episode':'movie')+'.');
