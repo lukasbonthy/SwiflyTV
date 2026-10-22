@@ -110,6 +110,7 @@
     };
     const fallback='/api/download/'+type+'/'+id+(type==='tv'?'?s='+season+'&e='+episode:'');
     await add(fallback,{streamName:'SwiflyTV file'});
+    if(options.length)return options; // Licensed local files do not need scraper discovery.
     const query=new URLSearchParams({season,episode,wait:'4500'});
     for(let attempt=0;attempt<16&&!signal.aborted;attempt++){
       let result;
