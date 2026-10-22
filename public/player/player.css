@@ -372,3 +372,21 @@ body.svCleanShell .svPlayer [hidden] { display:none !important; }
 body.svCleanShell .svPlayerEpisodeDownload{display:block;align-self:stretch;margin:5px 1px 0;padding:8px 12px;border:1px solid #ffffff22;border-radius:11px;background:#ffffff0d;color:#e6f1ff;text-align:center;font-size:12px;text-decoration:none}
 body.svCleanShell .svPlayerEpisodeDownload:is(:focus-visible,:hover){border-color:#ffffff60;background:#ffffff22}
 body.svCleanShell .svPlayer .svPlayerDownload{font-size:24px;text-decoration:none}
+
+/* Separate, lightweight server choices. Matches the player's soft glass menu. */
+.svPlayerServerBody { gap:12px; width:min(340px,calc(100vw - 28px)); }
+.svPlayerServerList { display:grid; gap:7px; max-height:215px; overflow-y:auto; scrollbar-width:thin; }
+.svPlayerServerChoice { display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%; min-height:48px; padding:10px 12px; border:1px solid #ffffff16; border-radius:13px; background:#ffffff08; color:#eceaf1; font:inherit; cursor:pointer; text-align:left; }
+.svPlayerServerChoice:hover:not(:disabled),.svPlayerServerChoice:focus-visible { border-color:#ffffff5a; background:#ffffff18; outline-offset:2px; }
+.svPlayerServerChoice[data-active="true"] { border-color:#dbcaff70; background:#d5bbff18; }
+.svPlayerServerChoice:disabled { cursor:default; }
+.svPlayerServerName { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; font-weight:600; }
+.svPlayerServerChoice small { flex:0 0 auto; color:#b9b2c7; font-size:10px; }
+.svPlayerServerProviderLabel { display:grid; gap:9px; color:#c9c3d3; font-size:11px; }
+body.svCleanShell .svPlayer .svPlayerServerProviderLabel select { min-height:44px; padding:9px 12px; width:100%; border:1px solid #ffffff2b; border-radius:12px; background:#27242e; color:#fff; font:500 12px system-ui,sans-serif; }
+body.svCleanShell .svPlayer .svPlayerServerTry { min-height:44px; padding:10px 14px; border:1px solid #ffffff40; border-radius:13px; background:#ffffff18; color:white; font:600 12px system-ui,sans-serif; cursor:pointer; }
+body.svCleanShell .svPlayer .svPlayerServerTry:disabled { opacity:.4; cursor:default; }
+@container sv-stage (max-width:420px) {
+  body.svCleanShell .svPlayer .svPlayerServerPopover > .svPlayerControl { width:40px; min-width:40px; padding:8px; }
+  .svPlayerServerBody { max-width:calc(100vw - 24px); }
+}
