@@ -14335,6 +14335,82 @@ app.get("/favicon.ico", (req, res) => {
   res.status(204).end();
 });
 
+// Manual server changes do not replace the shared cached default source job.
+app.get("/api/player/server/:type/:id", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const type=req.params.type, id=String(req.params.id||""), provider=String(req.query.provider||"").toLowerCase();
+  const season=String(req.query.season||req.query.s||"1"), episode=String(req.query.episode||req.query.e||"1");
+  if(!["movie","tv"].includes(type)||!/^\\d{1,10}$/.test(id)||
+     (type==="tv"&&(!/^[1-9]\\d{0,3}$/.test(season)||!/^[1-9]\\d{0,3}$/.test(episode)))||
+     !NUVIO_ENABLED||!NUVIO_PROVIDER_ORDER.includes(provider)) {
+    return res.status(400).json({status:"error",code:"invalid_request"});
+  }
+  const scope=new AbortController(),timer=setTimeout(()=>scope.abort(),11000);
+  const disconnected=()=>{if(!res.writableEnded)scope.abort();};
+  res.on("close",disconnected);
+  try {
+    const found=await resolveNuvioProvider({provider,tmdbId:id,mediaType:type,season,episode,
+      timeoutMs:10000,signal:scope.signal,
+      isNonMediaUrl:value=>apiLooksDefinitelyNonMediaUrl(value,{allowManifestEndpoint:true})});
+    if(!found.ok||!found.source?.mediaVerified)return res.status(404).json({status:"unavailable"});
+    const ready=apiSourceToProxyResult({source:found.source,raw:{},provider:"nuvio-"+provider,
+      type,id,season,episode,playbackCandidates:found.sources,subtitles:found.subtitles});
+    if(!ready?.playbackUrl)return res.status(404).json({status:"unavailable"});
+    return res.json({...ready,type,server:provider});
+  } catch {
+    if(!res.headersSent&&!res.writableEnded&&!scope.signal.aborted)res.status(503).json({status:"unavailable"});
+  } finally {clearTimeout(timer);res.off("close",disconnected);}
+});
+
+// Download discovery deliberately searches for a verified complete file. An
+// HLS/DASH playlist is playable but not itself a saved MP4.
+const downloadSourceJobs=createSourceJobs({
+  deadlineMs:30000,maxConcurrentResolvers:2,maxEntries:60,
+  successTtlMs:3*60*1000,errorTtlMs:2000,staleSuccessTtlMs:0,
+  resolve:async(params,{signal})=>{
+    if(!NUVIO_ENABLED||!NUVIO_PROVIDER_ORDER.length)return {status:"error",code:"no_source"};
+    const {winner}=await runProviderRace({
+      jobs:NUVIO_PROVIDER_ORDER.map(provider=>({provider:"nuvio-"+provider,id:provider,timeoutMs:9000})),
+      signal,timeoutMs:25000,hedgeDelayMs:250,maxConcurrent:3,
+      now:()=>Date.now(),setTimeout,clearTimeout,
+      isPlayable:result=>result?.ok&&result.source?.mediaVerified===true&&result.source?.format==="mp4",
+      run:(job,{signal:providerSignal,timeoutMs})=>resolveNuvioProvider({
+        provider:job.id,tmdbId:params.id,mediaType:params.type,season:params.season,episode:params.episode,
+        timeoutMs,signal:providerSignal,
+        isNonMediaUrl:value=>apiLooksDefinitelyNonMediaUrl(value,{allowManifestEndpoint:true})
+      })
+    });
+    if(!winner?.source||winner.source.format!=="mp4")return {status:"error",code:"no_source"};
+    const registered=registerHlsProxySource(winner.source.url,winner.source.headers||{},{
+      sourceFormat:"mp4",sourceCodec:winner.source.codecName||"",
+      movieId:params.id,type:params.type,season:params.season,episode:params.episode,
+      streamName:winner.source.name||winner.provider,streamQuality:winner.source.quality||""
+    });
+    if(!registered?.id)return {status:"error",code:"no_source"};
+    return {status:"ok",playbackUrl:"/api/media-file-proxy/"+registered.id+"/video.mp4",
+      streamName:winner.source.name||winner.provider,streamQuality:winner.source.quality||""};
+  }
+});
+app.get("/api/download-source/:type/:id",async(req,res,next)=>{
+  res.set("Cache-Control","no-store");
+  const params={type:req.params.type,id:req.params.id,season:req.query.season||req.query.s||"1",
+    episode:req.query.episode||req.query.e||"1"};
+  const wait=Math.max(0,Math.min(7000,Number(req.query.wait)||0));
+  const controller=new AbortController();
+  const closed=()=>{if(!res.writableEnded)controller.abort();};
+  if(wait)res.on("close",closed);
+  try {
+    const result=wait?await downloadSourceJobs.wait(params,{timeoutMs:wait,signal:controller.signal}):
+      downloadSourceJobs.poll(params);
+    if(controller.signal.aborted)return;
+    if(result.code==="invalid_request")res.status(400);
+    res.json({status:result.status==="ok"?"ready":result.status==="loading"?"loading":"unavailable",
+      ...(result.status==="ok"?{downloadUrl:result.playbackUrl,streamName:result.streamName,
+        streamQuality:result.streamQuality}:{})});
+  }catch(error){if(!controller.signal.aborted)next(error);}
+  finally {res.off("close",closed);}
+});
+
 app.get("/api/proxy-video-wait/:type/:id", async (req, res, next) => {
   res.set("Cache-Control", "no-store");
   const params = {
