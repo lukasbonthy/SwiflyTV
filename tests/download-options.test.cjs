@@ -94,3 +94,34 @@ test('Download choices use a bounded range probe after a HEAD failure and displa
  assert.match(d.querySelector('.svDownloadOptionMeta').textContent,/3\.5 MB/);
  assert(requests.some(r=>r.path===media&&r.method==='GET'&&r.range==='bytes=0-0'));
 });
+
+test('the download page discovers verified MP4 downloadUrl even when primary playback is a direct URL',async t=>{
+ const actual='/api/media-file-proxy/1234567890abcdef12345678/video.mp4';
+ const requests=[];
+ const d=await fixture(t,{type:'movie'},async (url,options={})=>{
+  const u=new URL(url,'https://swiflytv-1.onrender.com');requests.push(u.pathname);
+  if(u.pathname==='/api/download/movie/101')return {ok:false,headers:{get:()=>null}};
+  if(u.pathname==='/api/proxy-video-wait/movie/101')return {ok:true,json:async()=>({
+   status:'ready',playbackUrl:'https://media.example/movie.mp4',downloadUrl:actual,playbackSources:[
+    {playbackUrl:'https://media.example/movie.mp4',downloadUrl:actual,streamQuality:'1080p'}
+   ]
+  })};
+  if(u.pathname===actual)return head(true);
+  throw Error('Unexpected request: '+u.href);
+ });
+ assert.equal(d.querySelectorAll('.svDownloadOption').length,1,'do not duplicate the primary entry');
+ assert(d.querySelector('.svDownloadOptionAction').href.endsWith(actual+'?download=1'));
+ assert(requests.includes(actual));
+});
+test('stream-only playback reports an accurate reason instead of appearing stuck or broken',async t=>{
+ const d=await fixture(t,{type:'movie'},async url=>{
+  const u=new URL(url,'https://swiflytv-1.onrender.com');
+  if(u.pathname==='/api/download/movie/101')return {ok:false,headers:{get:()=>null}};
+  if(u.pathname==='/api/proxy-video-wait/movie/101')return {ok:true,json:async()=>({
+    status:'ready',playbackUrl:'/api/hls-proxy/12345678/master.m3u8'
+  })};
+  throw Error('Unexpected request '+u.href);
+ });
+ assert.match(d.querySelector('.svDownloadEmpty').textContent,/HLS\/DASH/);
+ assert.equal(d.querySelectorAll('.svDownloadOption').length,0);
+});
