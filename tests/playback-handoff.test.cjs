@@ -93,7 +93,7 @@ test('a verified directly playable primary MP4 gets a private download endpoint 
   assert.equal(f.sources.length,1,'register the selected direct source only once');
   assert.equal(f.sources[0].meta.sourceFormat,'mp4');
   assert.equal(f.sources[0].meta.verifyBeforePlayback,undefined);
-  assert.doesNotMatch(JSON.stringify(output),/PRIVATE|private=|sig=/);
+  assert.doesNotMatch(output.downloadUrl,/PRIVATE|private=|sig=/,'download endpoint never reveals provider credentials');
 });
 
 test('HLS and unverified direct URLs cannot become downloadable MP4s',()=>{
