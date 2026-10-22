@@ -79,3 +79,31 @@ test('failed, mismatched-format and expired lazy entries cannot reach the file p
   const get = createVerifiedMediaEntryResolver({ getEntry: () => ({ ...primary, expiresAt: Date.now() - 1 }), verifySource: () => { calls++; } });
   assert.equal(await get('expired'), null); assert.equal(calls, 0);
 });
+
+test('a verified directly playable primary MP4 gets a private download endpoint without changing playback', () => {
+  const f = fixture();
+  const direct={...primary,requiresProxy:false,mediaVerified:true};
+  const original='https://media.example/high.mp4?sig=PRIVATE';
+  const output=f.prepare({status:'ok',playbackUrl:original,streamType:'mp4'}, {
+    source:direct,sources:[direct],metadata:{movieId:'101',type:'movie'}
+  });
+  assert.equal(output.playbackUrl,original,'direct playback is unchanged');
+  assert.equal(output.downloadUrl,'/api/media-file-proxy/1/video.mp4');
+  assert.equal(output.playbackSources[0].downloadUrl,output.downloadUrl);
+  assert.equal(f.sources.length,1,'register the selected direct source only once');
+  assert.equal(f.sources[0].meta.sourceFormat,'mp4');
+  assert.equal(f.sources[0].meta.verifyBeforePlayback,undefined);
+  assert.doesNotMatch(JSON.stringify(output),/PRIVATE|private=|sig=/);
+});
+
+test('HLS and unverified direct URLs cannot become downloadable MP4s',()=>{
+  for (const candidate of [
+    {url:'https://media.example/master.m3u8',format:'m3u8',mediaVerified:true},
+    {url:'https://media.example/unverified.mp4',format:'mp4',mediaVerified:false}
+  ]) {
+    const f=fixture();
+    const output=f.prepare({status:'ok',playbackUrl:candidate.url}, {source:candidate,sources:[]});
+    assert.equal(output.downloadUrl,'');
+    assert.equal(f.sources.length,0);
+  }
+});
