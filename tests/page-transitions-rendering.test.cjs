@@ -89,6 +89,31 @@ async function navigate(page, selector, pathname) {
   assert.equal(animation.transform, 'none');
 }
 
+test('slow native navigation shows a destination skeleton and releases it when the page is ready', requiresBrowser, async()=>{
+ const page=await entry();let release,click;
+ try{
+  assert.equal(await page.locator('.svLoadProgress i').evaluate(n=>getComputedStyle(n).animationName),'none','progress does no work while the page is ready');
+  await page.emulateMedia({reducedMotion:'reduce'});
+  const gate=new Promise(resolve=>release=resolve);
+  await page.route(origin+'/movies',async route=>{await gate;await route.continue();});
+  // Start observing before navigation; new Playwright evaluations otherwise wait
+  // for the deliberately held document to commit.
+  const observed=page.evaluate(()=>new Promise(resolve=>{const observer=new MutationObserver(()=>{if(document.documentElement.dataset.svLoading!=='navigate')return;observer.disconnect();const n=document.querySelector('#svSiteLoading');resolve({layout:n.dataset.layout,rect:n.getBoundingClientRect().toJSON(),opacity:getComputedStyle(n).opacity,nav:getComputedStyle(document.querySelector('.topbar')).zIndex,layer:getComputedStyle(n).zIndex,animation:getComputedStyle(document.querySelector('.svLoadCanvas')).animationName});});observer.observe(document.documentElement,{attributes:true,attributeFilter:['data-sv-loading']});}));
+  click=page.locator('.netflixLinks a[href="/movies"]').click({noWaitAfter:true});click.catch(()=>{});
+  const loading=await observed;
+  assert.equal(loading.layout,'catalog');assert.equal(loading.opacity,'1');assert(loading.rect.width<=1440);assert(Number(loading.nav)>Number(loading.layer),'the existing glass navigation remains above the skeleton');
+  assert.equal(loading.animation,'none');
+  release();await page.waitForURL(origin+'/movies');await page.waitForFunction(()=>!document.documentElement.hasAttribute('data-sv-loading'));assert.equal(await page.locator('body').getAttribute('inert'),null);
+ }finally{release?.();await click?.catch(()=>{});await page.context().close();}
+});
+
+test('a trusted click canceled by a later details handler never opens a loading overlay', requiresBrowser, async()=>{
+ const page=await entry();try{
+  await page.evaluate(()=>{const a=document.createElement('a');a.href='/movie/100';a.id='cancelled-loading-probe';a.textContent='Open test details';a.style.cssText='position:fixed;top:120px;left:30px;z-index:1600';document.body.append(a);document.addEventListener('click',event=>{if(event.target.id==='cancelled-loading-probe')event.preventDefault();});});
+  await page.locator('#cancelled-loading-probe').click();await page.waitForTimeout(220);assert.equal(await page.locator('html').getAttribute('data-sv-loading'),null);assert.equal(new URL(page.url()).pathname,'/','details can update their query without loading a new document');
+ }finally{await page.context().close();}
+});
+
 test('Home, Movies and Series use one finite native dissolve and keep their live glass', requiresBrowser, async () => {
   const page = await entry();
   try {

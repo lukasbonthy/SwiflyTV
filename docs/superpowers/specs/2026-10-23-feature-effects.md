@@ -1,0 +1,13 @@
+# SwiflyTV feature surfaces
+
+Refresh notifications, title sharing, Friends/DMs, Our home, AI Search and audiobooks within the existing Express application. The user requests a much stronger visual finish and cool effects; their established direction is compact, cinematic, ShuttleTV-inspired dark glass with violet/cyan accents.
+
+Use layered navy glass, subtle illuminated edges, distinct icon treatments, deliberate spacing, readable text, and short transform/opacity entrances. Add interaction glints, lifted cards, a one-shot unread bell response, and an illuminated AI composer. Keep motion out of idle scrolling. Honor reduced motion and existing TV/performance modes. Preserve the site's navigation, source selection, downloads, account isolation and all existing social actions.
+
+Notifications stay anchored below the bell. Provide All/Unread filters with a real unread count, descriptive notification types, readable timestamps, an empty unread state, and Mark all read. Live refresh must preserve filter selection and keyboard focus. Reuse authenticated APIs; render user content as text and keep local-link validation.
+
+Approaches considered: a recolor alone would retain the weak hierarchy; a full shell replacement would disrupt established navigation. Chosen implementation: revise the feature CSS and semantic markup, add scoped shared CSS motion, and make the small notification UI improvement in the existing client. This is an implementation choice made for the user's requested redesign.
+
+Verify the real screens at 320, 390, 820 and 1280px; test notification state changes, existing social integration, mobile composers, reduced motion and TV rendering. No new runtime dependencies.
+
+The user also requests site-wide loading almost exactly like ShuttleTV. Inspected its live Movies navigation: subdued pulsing hero/title/metadata/actions and poster skeletons, a 2px top progress bar, and a soft content reveal. Implement this visual behavior in the shared server shell with destination-aware skeletons for catalog, workspace, and playback pages. Show progress immediately on real internal navigation and skeletons only after 160ms; dismiss as soon as the next document is ready. Initial loading uses a 120ms threshold. Keep native navigation, canceled modal actions, downloads, external/new-tab links, reduced motion, and browser history working. A 10-second failsafe and Escape release the overlay; there is no forced minimum loading time or document inertness.

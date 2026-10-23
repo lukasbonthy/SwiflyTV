@@ -1,4 +1,4 @@
-/* Feature workspaces share quiet, opaque surfaces; navigation owns the liquid glass. */
+/* Feature workspace layout. Shared materials and motion live in feature-effects.css. */
 .svFeatureIcon{display:block;width:18px;height:18px;flex:0 0 18px;pointer-events:none}
 :where(.svConnectPage,.svConnectDialog,.svDiscoveryPage,.svDiscoverySearch){--sf-text:#f1f1f1;--sf-muted:#a3a3a3;--sf-dim:#7d7d7d;--sf-border:#ffffff12;--sf-panel:#131313;--sf-accent:#c9c9c9;color:var(--sf-text)}
 body.svCleanShell .svConnectPage{box-sizing:border-box;max-width:1312px;margin:0 auto;padding:112px 36px 100px!important;background:transparent!important}
