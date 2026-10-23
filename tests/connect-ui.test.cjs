@@ -14,6 +14,25 @@ function setup(data={}){
  w.EventSource=class {addEventListener(){}close(){this.closed=true;}};
  return {...b,w,calls,payload};
 }
+test('notification filters retain their selection on live refresh and mark-read updates every count',async()=>{
+ const b=setup({notifications:[
+  {id:'new',kind:'message',text:'Bob: <img src=x onerror=alert(1)>',href:'/friends?friend=bob',createdAt:Date.now(),readAt:null},
+  {id:'old',kind:'friend_accepted',text:'You are now friends',href:'/friends',createdAt:Date.now()-86400000,readAt:1}
+ ]});
+ const original=b.w.SwiflyAccount.request;
+ b.w.SwiflyAccount.request=async(route,options)=>{if(route==='/notifications/read')b.payload.notifications.forEach(n=>n.readAt=Date.now());return original(route,options);};
+ b.w.boot('connect/connect.js');await tick();await tick();const d=b.w.document;
+ assert.equal(d.querySelectorAll('.svNotification').length,2);
+ const filter=d.querySelector('[data-notification-filter="unread"]');assert(filter,'the notification inbox offers an unread view');
+ filter.focus();filter.click();assert.equal(d.querySelectorAll('.svNotification').length,1);assert.equal(filter.getAttribute('aria-pressed'),'true');
+ assert.match(d.querySelector('.svNotification').textContent,/<img src=x/);assert.equal(d.querySelector('.svNotification img'),null);
+ b.payload.notifications.push({id:'invite',kind:'party_invite',text:'Join tonight',href:'//untrusted.test',createdAt:Date.now(),readAt:null});
+ await b.w.SwiflyConnect.refresh();assert.equal(d.querySelectorAll('.svNotification').length,2);assert.equal(d.activeElement,filter);assert.equal(filter.getAttribute('aria-pressed'),'true');
+ assert.equal(d.querySelector('[data-notification-unread]').textContent,'2');assert.equal(d.querySelectorAll('.svNotification')[1].getAttribute('href'),'/friends');
+ const focused=d.querySelector('.svNotification');focused.focus();await b.w.SwiflyConnect.refresh();assert.equal(d.activeElement?.getAttribute('data-notification-id'),'new','a live refresh keeps focus on the same notification');
+ d.querySelector('[data-notifications-read]').click();await tick();await tick();assert.equal(d.querySelectorAll('.svNotification').length,0);assert.match(d.querySelector('.svNotificationEmpty').textContent,/caught up/i);assert.equal(d.querySelector('[data-notification-unread]').textContent,'0');assert.equal(d.querySelector('[data-notifications-read]').disabled,true);
+ d.querySelector('[data-notification-filter="all"]').click();assert.equal(d.querySelectorAll('.svNotification').length,3);
+});
 test('private inbox renders untrusted names and messages as text, then sends through the authenticated API',async()=>{
  const b=setup();b.w.boot('connect/connect.js');await tick();await tick();
  b.w.document.querySelector('[data-connect-friend="bob"]').click();await tick();

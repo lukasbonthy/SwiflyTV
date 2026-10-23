@@ -33,7 +33,7 @@ body.svCleanShell #svNavSearchPopup.svDiscoverySearch[hidden]{display:none!impor
 .svSearchFoot kbd{font-family:inherit;font-size:11px;color:#939393;margin-left:auto}
 
 /* Reference-led discovery: one prompt, neutral pills, content-first grids. */
-body.svCleanShell:has(.svDiscoveryPage,.svConnectPage){background:#000!important}
+body.svCleanShell:has(.svDiscoveryPage,.svConnectPage){background:#080910!important}
 body.svCleanShell:has(.svDiscoveryPage,.svConnectPage) .svAuroraBackground{display:none!important}
 body.svCleanShell .svDiscoveryPage{box-sizing:border-box;max-width:1312px;min-height:calc(100svh - 180px);margin:0 auto;padding:112px 36px 100px!important;background:transparent!important;color:#fafafa}
 .svDiscoveryHero{text-align:center;margin:0 0 24px}
@@ -216,7 +216,7 @@ html[data-sv-tv=true] :is(.svConnectButton,.svFeatureNav a,.svConnectTabs a,.svB
 
 /* One quiet workspace for choosing a film, with room for a real description. */
 body.svCleanShell .svRecommendationsPage{padding-top:118px!important}
-.svRecommendationsPage:before{display:none}
+.svRecommendationsPage:before{display:block}
 .svRecommendationsPage>.svFeatureNav{margin-bottom:32px}
 .svRecommendationsPage .svDiscoveryHero{margin:0 auto 30px;max-width:740px}
 .svDiscoveryEyebrow{display:block;margin-bottom:14px;color:#a5a5ad;font-size:13px;font-weight:500;letter-spacing:.025em}

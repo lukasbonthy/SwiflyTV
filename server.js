@@ -72,6 +72,7 @@ const express = require("express");
 const { studioMarkup } = require("./ui/studio");
 const { welcomeMarkup } = require("./ui/welcome");
 const { navigationHead } = require("./ui/navigation");
+const { loadingHead, loadingMarkup } = require("./ui/loading");
 const { tvHead, tvScript } = require("./ui/tv");
 const { partyMarkup } = require("./ui/party");
 const { connectMarkup, connectDialogs, notificationButton } = require("./ui/connect");
@@ -5657,7 +5658,7 @@ app.use("/api/discovery", discovery.router);
 const playerAssist = createPlayerAssist({tmdb:(...args) => tmdb(...args)});
 app.use("/api/player-assist",playerAssist.router);
 app.get("/recommendations", (req,res) => res.send(pageShell({title:`${SITE_NAME} — AI picks`,active:"recommendations",body:recommendationsMarkup(),extraHead:'<script defer src="/assets/discovery/recommendations.js?v=5"></script>'})));
-app.get("/audiobooks", (req,res) => res.send(pageShell({title:`${SITE_NAME} — Audiobooks`,active:"audiobooks",body:audiobooksMarkup(),extraHead:'<script defer src="/assets/discovery/audiobooks.js?v=2"></script>'})));
+app.get("/audiobooks", (req,res) => res.send(pageShell({title:`${SITE_NAME} — Audiobooks`,active:"audiobooks",body:audiobooksMarkup(),extraHead:'<script defer src="/assets/discovery/audiobooks.js?v=3"></script>'})));
 // Same friends-only protection applies to authorized movie/episode file downloads.
 app.use("/api/download", createDownloadRouter());
 
@@ -6492,6 +6493,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta name="theme-color" content="#000000" />
   ${tvHead()}
+  ${loadingHead()}
   ${showNavigation ? navigationHead() : ""}
   ${showNavigation ? '<link rel="stylesheet" href="/assets/clean/navigation.css?v=2" />' : ""}
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -6557,8 +6559,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/clean.js?v=5"></script>
     <script defer src="/assets/clean/account-sheet.js?v=1"></script>
     <script defer src="/assets/clean/account.js?v=1"></script>
-    <link rel="stylesheet" href="/assets/connect/connect.css?v=4" />
-    <script defer src="/assets/connect/icons.js?v=1"></script><script defer src="/assets/connect/connect.js?v=3"></script>
+    <link rel="stylesheet" href="/assets/connect/connect.css?v=5" />
+    <script defer src="/assets/connect/icons.js?v=1"></script><script defer src="/assets/connect/connect.js?v=4"></script>
     <script defer src="/assets/clean/avatars.js?v=209"></script>
     ${active === "profiles" ? '<script defer src="/assets/clean/profiles.js?v=209"></script>' : ""}
     <script defer src="/assets/clean/continue.js?v=155"></script>
@@ -6600,10 +6602,12 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/clean/tv.css?v=255" />
     <link rel="stylesheet" href="/assets/clean/details-premium.css?v=255" />
     <link rel="stylesheet" href="/assets/clean/details-clarity.css?v=2" />
-    <link rel="stylesheet" href="/assets/discovery/discovery.css?v=5" />
+    <link rel="stylesheet" href="/assets/discovery/discovery.css?v=6" />
+    <link rel="stylesheet" href="/assets/connect/feature-effects.css?v=1" />
     <link rel="stylesheet" href="/assets/clean/account-sheet.css?v=3" />
 </head>
 <body class="svCleanShell">
+  ${loadingMarkup()}
 
   <script>
     (function swiflytvLegacyLibraryMigration(){

@@ -1,0 +1,225 @@
+/* Shared finish for feature surfaces. Layout stays in connect/discovery.css.
+   Motion is interaction-driven or one-shot; no scroll listeners or paint loops. */
+:where(.svConnectPage,.svConnectDialog,.svDiscoveryPage,.svDiscoverySearch,.svBookDialog){
+ --sf-text:#f4f2fb;--sf-muted:#aaa8bd;--sf-dim:#7f829c;--sf-border:#d6cfff1c;
+ --sf-panel:#12131e;--sf-accent:#c3afff;--sf-cyan:#9cdded;--sf-ease:cubic-bezier(.22,1,.36,1);
+ color:var(--sf-text);color-scheme:dark;
+}
+:where(.svConnectPage,.svDiscoveryPage){position:relative;isolation:isolate}
+:where(.svConnectPage,.svDiscoveryPage)::before{content:"";position:absolute;inset:60px 0 auto;height:670px;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 20% 14%,#8e6cf41c,transparent 56%),radial-gradient(ellipse at 90% 38%,#4bb7cb0d,transparent 53%)}
+.svConnectHero{margin-bottom:30px}
+.svConnectHero>.svConnectEyebrow,.svConnectHero>div>.svConnectEyebrow{display:block;margin-bottom:14px;color:#bba6eb;font-size:10px;font-weight:600;letter-spacing:.18em}
+.svConnectHero h1{font-size:clamp(35px,4vw,48px);font-weight:650;letter-spacing:-.045em}
+.svConnectHero p{color:var(--sf-muted)}
+.svFeatureNav{gap:4px;padding:5px;border:1px solid #dad4ff17;border-radius:16px;background:linear-gradient(140deg,#d1c4ff0c,#98b4f605);box-shadow:inset 0 1px #ffffff05}
+.svFeatureNav a{border:1px solid transparent;border-radius:11px;min-height:35px;background:transparent;color:#aaa8bd;transition:background .18s,color .18s,transform .22s var(--sf-ease)}
+.svFeatureNav a:hover{color:#f5f2ff;background:#e2d9ff0a}
+.svFeatureNav [aria-current=page]{color:#e9ddff;border-color:#ccb4ff30;background:linear-gradient(135deg,#a180eb36,#7c93d815);box-shadow:inset 0 1px #ffffff0a}
+.svFeatureNav [aria-current=page] .svFeatureIcon{color:#cfb9ff}
+.svConnectToolbar{gap:14px;margin-bottom:18px}
+.svConnectTabs{padding:4px;border-color:#e0d6ff1a;border-radius:15px;background:#0f101abd}
+.svConnectTabs a{min-height:38px;color:#a9a5bb;transition:background .18s,color .18s}
+.svConnectTabs a[aria-current=page]{background:linear-gradient(135deg,#8d6cc04a,#8670b72b);box-shadow:inset 0 1px #e5d4ff17;color:#eee5ff}
+.svConnectOwnHandle{color:#9891ac;font-size:11px}
+.svConnectButton,.svSendMessage{position:relative;isolation:isolate;overflow:hidden;border-color:#d8ceff26;background:linear-gradient(140deg,#d3bdff12,#a6beff07);border-radius:12px;box-shadow:inset 0 1px #ffffff09;color:#e7e2f6;transition:transform .22s var(--sf-ease),background .18s,border-color .18s}
+.svConnectButton:hover{background:#bda4ef1d;border-color:#c9b0ff50}
+.svConnectPrimary,.svSendMessage{background:linear-gradient(120deg,#eadfff,#c4b4f3);color:#211830;border-color:#e4d4ff9c;box-shadow:inset 0 1px #ffffff80,0 3px 16px #9271cb14}
+.svConnectPrimary:hover,.svSendMessage:hover{background:#ede4ff}
+.svConnectHeroActions a:first-child .svFeatureIcon{color:#addef2}
+.svConnectHeroActions a:last-child .svFeatureIcon{color:#c9afff}
+.svConnectLayout{border-color:#dcd0ff20;border-radius:24px;background:#10111a;box-shadow:0 28px 70px #0005,inset 0 1px #ffffff08}
+.svConnectSidebar{background:linear-gradient(155deg,#22203294,#14151f 55%);border-color:#cbb9ff13}
+.svConnectSidebar h2{font-size:22px;letter-spacing:-.035em;color:#f0ebfa}
+.svFindFriend label{color:#b1abc2;font-size:11px}
+.svConnectPage input:not([type=checkbox]),.svConnectDialog input,.svMessageForm textarea{background:#080b149e;border-color:#cdbdff24;border-radius:12px;color:#f2ecff;box-shadow:inset 0 2px 5px #0002;transition:border-color .18s,box-shadow .18s}
+.svConnectPage input:focus-visible,.svMessageForm textarea:focus-visible{border-color:#b59ae899;box-shadow:0 0 0 3px #b492ff10}
+.svConnectPage input::placeholder,.svMessageForm textarea::placeholder{color:#8d89a3}
+.svFriend{border-radius:15px;transition:background .18s,border-color .18s,transform .22s var(--sf-ease)}
+.svFriend:hover{background:#beabff0b}
+.svFriend.isSelected{border-color:#c3a0ff33;background:linear-gradient(110deg,#9670cf30,#9c8bdc0d);box-shadow:inset 3px 0 #c9a8ff}
+.svConnectAvatar{background:linear-gradient(145deg,#514270,#242d45);border-color:#dfd1ff30;box-shadow:inset 0 1px #ffffff17;color:#ede0ff;font-weight:600}
+.svFriend:nth-child(3n+2) .svConnectAvatar,.svHomeMembers>div:nth-child(2) .svConnectAvatar{background:linear-gradient(145deg,#2f555f,#253349);color:#c7eff1}
+.svFriend:nth-child(3n) .svConnectAvatar{background:linear-gradient(145deg,#654658,#302a43);color:#f5d2e5}
+.svFriend.isWatching .svConnectAvatar:after{background:#8ce0c7;border-color:#191b29}
+.svFriend.isWatching .svFriendCopy small{color:#9fdbc9}
+.svUnread{background:#d0bbff;color:#302244;font-size:10px;box-shadow:0 0 12px #ba8fff1c}
+.svWatchingPrivacy{border-color:#cdbdff13;color:#c7bfd9}
+.svWatchingPrivacy input{accent-color:#bc9beb}
+.svConversation{background:radial-gradient(ellipse at 85% 10%,#46406b16,transparent 70%),#0e1019}
+.svConversationHead{background:#d7c9ff04;border-color:#d0c0ff13}
+.svConversationPrivate{display:flex;align-items:center;gap:7px;color:#9892aa;font-size:11px}
+.svConversationPrivate::before{content:"";width:5px;height:5px;flex:none;border-radius:50%;background:#9bc5be}
+.svMessage{border-color:#cec8ff10;background:linear-gradient(145deg,#272a3b,#202231);box-shadow:0 4px 14px #0000000d}
+.svMessage.isMine{background:linear-gradient(135deg,#554173bd,#39334e);border-color:#d4b7ff20}
+.svMessage time{color:#aaa5bd}
+.svMessageTitle img{box-shadow:0 3px 12px #0003}
+.svMessageTitle small{color:#bcacd8}
+.svMessageTitle b{color:#d5bfef}
+.svMessageTools{background:#d1bcff03;border-color:#cbb6ff13}
+.svMessageTools button{color:#bdb5d1}
+.svMessageTools button .svConnectGraphic{color:#bfa6ef}
+.svMessageForm{background:#d1bcff03}
+.svSendMessage{min-width:76px}
+.svConversationEmpty{max-width:330px}
+:is(.svConversationEmpty,.svNotificationEmpty)>.svConnectGraphic{position:relative;isolation:isolate;display:grid;place-items:center;width:64px;height:64px;margin:12px auto 28px;background:linear-gradient(145deg,#b99af022,#a0b8e60a);border:1px solid #d2b4ff30;border-radius:21px;color:#cfb5fb;box-shadow:inset 0 1px #f8e8ff13,0 12px 35px #9e70e40e}
+:is(.svConversationEmpty,.svNotificationEmpty)>.svConnectGraphic::before{content:"";position:absolute;inset:-14px;border:1px solid #c6a7ff0a;border-radius:30px;z-index:-1}
+:is(.svConversationEmpty,.svNotificationEmpty)>.svConnectGraphic::after{content:"";position:absolute;right:-11px;top:8px;width:6px;height:6px;border-radius:50%;background:#b5d8e6;box-shadow:-76px 48px #bca2e585}
+.svConversationEmpty p{color:#aaa2bf}
+.svConnectPage[data-connect-view=friends] .svConnectSidebar{background:linear-gradient(135deg,#26233766,#12131e)}
+.svConnectPage[data-connect-view=friends] .svFriend{background:#d3bdff05;border-color:#ceb7ff16}
+.svHomeIntro{padding:36px 28px}
+.svHomeIntro>.svConnectGraphic{width:60px;height:60px;margin-bottom:30px;background:linear-gradient(140deg,#c090bc25,#a7a0ed0d);border-color:#ddb8f029;color:#ebbfdf;border-radius:20px}
+.svHomeIntro h2{font-size:34px;font-weight:600;letter-spacing:-.04em}
+.svHomeIntro p{color:#b1a7c1}
+.svHomeCard{border-radius:22px;border-color:#cbb0fa26;background:radial-gradient(ellipse at 100% 0,#ad79cb12,transparent 75%),linear-gradient(145deg,#1a1825,#11131e);box-shadow:inset 0 1px #f3dfff0a,0 20px 50px #0002;padding:30px}
+.svHomeMembers{padding-bottom:22px;border-bottom:1px solid #d8bbff16;gap:20px}
+.svHomeMembers>div{gap:11px;color:#ded5ec}
+.svHomeTitle{border-color:#d1baff13}
+.svHomeTitle a{color:#d9d0e8}
+.svHomeTitle img{box-shadow:0 3px 12px #0004}
+.svConnectSignin{background:radial-gradient(ellipse at 50% 0,#9e7cdb1a,transparent 75%),linear-gradient(150deg,#1b1928,#11131c);border-color:#cfb8ff26;box-shadow:inset 0 1px #f2e3ff0c,0 24px 70px #0003}
+.svConnectSignin>.svConnectGraphic{color:#d6baff;background:linear-gradient(140deg,#b591f326,#a3c4e60b);border-color:#d5b7ff2c}
+
+/* Notification center: a compact, illuminated inbox anchored to the bell. */
+.svConnectDialog{background:radial-gradient(ellipse at 0 0,#9575cd18,transparent 65%),linear-gradient(145deg,#191824f5,#11141ff7);border:1px solid #ddcfff2d;border-radius:23px;box-shadow:0 28px 85px #0009,inset 0 1px #f8e9ff14;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.svConnectDialog::backdrop{background:#04060eac}
+.svConnectDialog>header{align-items:center;gap:10px}
+.svDialogHeading{gap:12px}
+.svDialogMark{width:42px;height:42px;flex-basis:42px;background:linear-gradient(145deg,#b18adf29,#93b8e311);color:#cbb2f5;border-color:#c7a9f633;border-radius:14px;box-shadow:inset 0 1px #ffffff10}
+.svDialogEyebrow{display:block;font-size:9px;font-weight:600;letter-spacing:.15em;color:#b2a1cd;margin:0 0 6px}
+.svConnectDialog h2{font-size:21px;font-weight:600;letter-spacing:-.035em;color:#f1eafa}
+.svConnectDialog [data-connect-close]{background:#d5c3f909;border:1px solid #d8c5ff1a;border-radius:10px;color:#b7abc9}
+.svNotificationDialog{width:min(350px,calc(100vw - 32px));padding:18px;max-height:calc(100svh - 165px);overflow-x:hidden}
+.svNotificationDialog .svDialogMark{width:38px;height:38px;flex-basis:38px;border-radius:12px}
+.svNotificationDialog h2{font-size:20px}
+.svNotificationDialog [data-connect-close]{width:30px;height:30px;flex-basis:30px}
+.svNotificationActions{gap:8px;padding:18px 0 13px;margin-bottom:5px;border-color:#d4c0ff15}
+.svNotificationFilters{display:flex;align-items:center;gap:3px;padding:3px;border:1px solid #d8c3ff15;border-radius:10px;background:#070a133d}
+.svNotificationActions button{display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 9px;min-height:30px;font-size:11px;color:#ada3bf;border-radius:7px;transition:background .18s,color .18s}
+.svNotificationFilters button[aria-pressed=true]{background:#b195df2c;color:#eee0ff;box-shadow:inset 0 1px #e3cfff12}
+[data-notification-unread]{display:grid;place-items:center;min-width:15px;min-height:15px;padding:0 3px;box-sizing:border-box;border-radius:5px;background:#c2a4ef20;color:#d3b8f4;font-size:9px}
+.svNotificationActions [data-notifications-read]{padding:6px 0 6px 5px;font-size:10px;color:#c4b0e5;white-space:nowrap}
+[data-notifications-read] .svFeatureIcon{width:13px;height:13px;flex-basis:13px}
+[data-notifications-read]:disabled{color:#8b829b;opacity:.6;cursor:default}
+.svNotification{position:relative;display:flex;align-items:flex-start;gap:11px;padding:13px 10px;margin:6px 0;border:1px solid transparent;border-radius:14px;color:#bdb3cd;transition:background .18s,border-color .18s,transform .22s var(--sf-ease)}
+.svNotification.isUnread{background:linear-gradient(110deg,#b591ed13,#a9b5e305);border-color:#c4a1fc1d;color:#ece4f7}
+.svNotification.isUnread::after{content:"";position:absolute;right:9px;top:16px;width:4px;height:4px;background:#caaff8;border-radius:50%}
+.svNotification:hover{background:#cab2f719;border-color:#c9a7ff3b}
+.svNotificationDot{flex:none;width:34px;height:34px;border-radius:11px;background:linear-gradient(140deg,#b28ee225,#9ca8d409);color:#c7acee;border:1px solid #c8a2fa1e}
+.svNotificationDot svg{width:16px;height:16px}
+.svNotification[data-notification-kind=party] .svNotificationDot{color:#a8deee;background:linear-gradient(140deg,#79b7cd29,#819ae40a);border-color:#a2d4ed22}
+.svNotification[data-notification-kind=friend] .svNotificationDot{color:#edbdcd;background:linear-gradient(140deg,#d48ba62b,#b5a2e20a);border-color:#e2a0bd22}
+.svNotificationCopy{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.svNotificationMeta{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-right:7px}
+.svNotificationMeta strong{font-size:10px;line-height:1.4;font-weight:500;letter-spacing:.015em;color:#c6b3e1}
+.svNotification time{font-size:9px;line-height:1.4;color:#9990ad;white-space:nowrap}
+.svNotificationText{font-size:12px;line-height:1.6;overflow-wrap:anywhere}
+.svNotificationEmpty{padding:29px 6px 28px}
+.svNotificationEmpty>.svConnectGraphic{width:54px;height:54px;border-radius:18px;margin-bottom:27px}
+.svNotificationEmpty h3{font-size:17px;font-weight:500;color:#e5dcef;letter-spacing:-.025em;margin-bottom:10px}
+.svNotificationEmpty p{color:#a49ab6;font-size:12px;line-height:1.7;max-width:240px}
+.svDialogFoot{border-color:#ceb5ff17}
+.svNotificationDialog .svDialogFoot{padding-top:10px;margin-top:12px}
+.svDialogFoot a,.svNotificationDialog .svDialogFoot a{justify-content:flex-start;gap:9px;color:#c6b5e0;font-size:12px;min-height:34px}
+.svDialogFoot a>.svFeatureIcon:last-child{margin-left:auto;width:15px;height:15px;flex-basis:15px}
+.svDialogFoot a>.svFeatureIcon:first-child:not(:last-child){width:15px;height:15px;flex-basis:15px;color:#a995c4}
+.svShareDialog>p{color:#aaa0bd;font-size:13px;line-height:1.7}
+.svShareList button{position:relative;background:linear-gradient(110deg,#b396da0e,#adc0ef04);border-color:#c7b2ed1e;border-radius:14px;padding-right:35px}
+.svShareList button::after{content:'↗';position:absolute;right:17px;color:#b9a3d9;font-size:18px}
+.svShareList button:hover{background:#b39adf18}
+.svNotificationButton>b{background:#d1baff;color:#282039;border:2px solid #211b30;font-size:8px;min-width:17px;height:17px;box-sizing:border-box}
+
+/* Discovery shares the same material, with a brighter prompt as its focal point. */
+.svDiscoveryHero .svDiscoveryEmblem{position:relative;display:grid;place-items:center;width:54px;height:54px;margin:0 auto 23px;border:1px solid #d1b6ff35;border-radius:19px;background:linear-gradient(140deg,#c5a5ff24,#94bfd70b);color:#d6baff;box-shadow:inset 0 1px #ffffff1a,0 10px 45px #9e7cf218}
+.svDiscoveryEmblem::before{content:"";position:absolute;inset:-8px;border:1px solid #c3a7ff0a;border-radius:25px}
+.svDiscoveryEmblem .svFeatureIcon{width:25px;height:25px}
+.svDiscoveryEyebrow{color:#b2a1cc;letter-spacing:.09em;font-size:10px;text-transform:uppercase}
+.svRecommendationsPage .svDiscoveryHero h1{background:linear-gradient(115deg,#fff 22%,#e4d5ff 65%,#b4daee);background-clip:text;-webkit-background-clip:text;color:transparent}
+.svRecommendationsPage .svMoodInput{position:relative;isolation:isolate;overflow:hidden;background:linear-gradient(125deg,#30283e99,#1c203190 60%,#1b253a66);border-color:#d4b8ff3b;box-shadow:inset 0 1px #ffeaff19,0 16px 60px #0005,0 0 60px #9676da07;transition:border-color .2s,box-shadow .2s}
+.svRecommendationsPage .svMoodInput:focus-within{border-color:#c7a8fa87;box-shadow:inset 0 1px #ffeaff26,0 0 0 3px #b28aeb0a,0 20px 65px #0005}
+.svPromptEntry>span{color:#cdb1f2}
+.svRecommendationsPage #svRecommendationPrompt::placeholder{color:#aaa1bb}
+.svRecommendationsPage .svMoodInput .svFindPicks{position:relative;overflow:hidden;isolation:isolate;background-color:#f5f5f5!important;background-image:linear-gradient(115deg,#f0e5ff,#d1c4f0)!important;color:#29203a!important;box-shadow:inset 0 1px #fff9,0 3px 14px #b991ef14!important}
+.svRecommendationsPage .svMoodChips button{isolation:isolate;overflow:hidden;min-height:154px;border-color:#cbb5f81f;background:radial-gradient(ellipse at 5% 0,#9771df13,transparent 90%),linear-gradient(145deg,#191724,#11151e);transition:transform .25s var(--sf-ease),border-color .18s,background .18s;box-shadow:inset 0 1px #f8e5ff06}
+.svRecommendationsPage .svMoodChips button:nth-child(2){background:radial-gradient(ellipse at 0 0,#d97baf11,transparent 90%),linear-gradient(145deg,#1d1724,#15131d)}
+.svRecommendationsPage .svMoodChips button:nth-child(3){background:radial-gradient(ellipse at 0 0,#72a7da16,transparent 90%),linear-gradient(145deg,#16202b,#11151e)}
+.svRecommendationsPage .svMoodChips button>.svFeatureIcon:first-child{box-sizing:content-box;padding:8px;background:#b48ee315;border:1px solid #cdb2ff1c;border-radius:12px;color:#d1b6ff}
+.svRecommendationsPage .svMoodChips button:nth-child(2)>.svFeatureIcon:first-child{color:#edbacf;background:#d48aab15;border-color:#e6aac719}
+.svRecommendationsPage .svMoodChips button:nth-child(3)>.svFeatureIcon:first-child{color:#acdaed;background:#8ab8dc16;border-color:#a1caeb1c}
+.svRecommendationsPage .svMoodChips button>.svFeatureIcon:last-child{top:25px;color:#a395b8}
+.svRecommendationsPage .svMoodChips strong{font-weight:550;color:#e9e1f4}
+.svRecommendationsPage .svMoodChips small{color:#a89bb9}
+.svRecommendationsPage .svMoodChips button:hover{border-color:#c5a2f451;background-color:#211b2e}
+.svRecommendationsPage .svAiFilters{border-color:#c1a1ef24;background:#151521}
+.svRecommendationsPage .svAiStatus{color:#c2b3da}
+.svRecommendationsPage[data-search-state=loading] .svAiStatus::before{content:"";display:inline-block;vertical-align:middle;width:6px;height:6px;border-radius:50%;margin-right:9px;background:#c0a0f2;box-shadow:0 0 14px #c0a0f259}
+.svAudiobooksPage .svDiscoveryEmblem{color:#a9deeb;background:linear-gradient(140deg,#8dc2dc24,#b1a4ed0b);border-color:#aacfe32e}
+.svBookSearch{background:linear-gradient(130deg,#252537a6,#18233180);border-color:#c8c5ed30;border-radius:17px;box-shadow:inset 0 1px #f4ecff0e,0 10px 35px #0003}
+.svBookSearch:focus-within{border-color:#b3c9ec75}
+.svBookSearch>span{color:#b9c3dc}
+.svDiscoveryPoster{box-shadow:0 8px 22px #0004,inset 0 1px #ffffff0d;border:1px solid #c8bdff18}
+.svDiscoveryCard{transition:transform .28s var(--sf-ease)}
+.svBookCoverFallback{background:linear-gradient(120deg,#3b4857,#232c3a 40%,#1a2131);border-color:#cbd9eb26;box-shadow:inset 5px 0 #ffffff05,inset 7px 0 #0003;position:relative}
+.svBookCoverFallback::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(110deg,#fff1,transparent 35%,transparent 80%,#0002);border-radius:inherit}
+.svBookDialog{background:radial-gradient(ellipse at 0 0,#af8ad51a,transparent 75%),linear-gradient(140deg,#1c1d2b,#121722);border-color:#cfc0ec30;border-radius:24px;box-shadow:inset 0 1px #ffffff0f,0 30px 100px #0009}
+.svBookClose{border-color:#d0c3ed26;color:#c4b7d8;background:#e7d4ff08}
+.svBookChapter[aria-current=true]{background:linear-gradient(100deg,#b597dc22,#8fb3d510);border-radius:11px;color:#eee0ff;box-shadow:inset 2px 0 #c6a4f2}
+.svBookChapter:hover{background:#d1bbff0a}
+body.svCleanShell #svNavSearchPopup.svDiscoverySearch{background:linear-gradient(130deg,#1e1c2cf7,#131a27fa)!important;border-color:#d5c0ff33!important;border-radius:22px!important;box-shadow:0 30px 100px #000b,inset 0 1px #f0e1ff12!important;backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)}
+.svSearchTop{border-color:#d4b8ff15}
+.svSearchTop>span{color:#c7b0e6}
+.svSearchFilters button[aria-pressed=true]{background:#b598da2e!important;color:#ebdcff!important;border-color:#d7b7ff29!important}
+.svSearchFoot{background:#0b101957;border-color:#cdb5fa18}
+.svSearchFoot a{color:#c6b5de}
+.svSearchResult:hover,.svSearchResult:focus-visible{background:#b79bdf12;border-color:#c8a9f32b}
+:where(.svConnectPage,.svConnectDialog,.svDiscoveryPage,.svBookDialog,.svDiscoverySearch) :focus-visible,.svFeatureNav a:focus-visible{outline:2px solid #c7a8f2;outline-offset:4px}
+
+/* Short arrivals and light passing over controls. Content is visible by default. */
+@keyframes sf-arrive{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes sf-dialog{from{opacity:0;transform:translateY(-7px) scale(.975)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes sf-glint{from{transform:translateX(-150%) skewX(-18deg)}to{transform:translateX(250%) skewX(-18deg)}}
+@keyframes sf-bell{0%,100%{transform:rotate(0)}25%{transform:rotate(-13deg)}50%{transform:rotate(10deg)}75%{transform:rotate(-5deg)}}
+@media(prefers-reduced-motion:no-preference){
+ :is(.svConnectHero,.svDiscoveryHero){animation:sf-arrive .55s var(--sf-ease) backwards}
+ :is(.svConnectLayout,.svSharedHome,.svConnectSignin,.svRecommendationForm,.svBookSearch){animation:sf-arrive .6s var(--sf-ease) backwards}
+ :is(.svConnectDialog,.svBookDialog)[open]{animation:sf-dialog .28s var(--sf-ease) backwards;transform-origin:top right}
+ .svShareDialog[open],.svBookDialog[open]{transform-origin:center}
+ .svMessage{animation:sf-arrive .25s var(--sf-ease)}
+ .svNotificationButton.hasUnread>.svFeatureIcon{animation:sf-bell .65s var(--sf-ease);transform-origin:50% 15%}
+ .svConnectButton::before,.svSendMessage::before,.svFindPicks::before{content:"";position:absolute;inset:-20% auto -20% 0;width:45%;pointer-events:none;background:linear-gradient(90deg,transparent,#ffffff18,transparent);transform:translateX(-150%) skewX(-18deg);z-index:-1}
+ .svConnectButton:hover::before,.svSendMessage:hover::before,.svFindPicks:hover::before{animation:sf-glint .65s var(--sf-ease)}
+ .svRecommendationForm:focus-within .svPromptEntry>span{transform:rotate(-12deg);transition:transform .3s var(--sf-ease)}
+}
+@media(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference){
+ .svConnectButton:not(:disabled):hover,.svSendMessage:not(:disabled):hover{transform:translateY(-2px)}
+ .svConnectButton:not(:disabled):active,.svSendMessage:not(:disabled):active{transform:translateY(0) scale(.98)}
+ .svRecommendationsPage .svMoodChips button:hover{transform:translateY(-5px)}
+ .svDiscoveryCard:hover{transform:translateY(-4px)}
+ .svNotification:hover{transform:translateX(2px)}
+ .svFeatureNav a:hover{transform:translateY(-1px)}
+}
+@media(max-width:760px){
+ .svConnectHero h1{font-size:36px}.svConnectHero>div>.svConnectEyebrow{font-size:9px;margin-bottom:12px}
+ .svFeatureNav{padding:4px;gap:2px;width:100%}.svFeatureNav a{padding:0 8px;min-width:0;font-size:11px}
+ .svConnectToolbar{gap:13px}.svConnectTabs a{min-height:40px}
+ .svConversationHead{background:#171825}.svConversationPrivate{font-size:10px}
+ .svConnectLayout{border-radius:20px}.svConnectSidebar{background:#161622}
+ .svHomeIntro{padding:22px 12px}.svHomeIntro h2{font-size:29px}.svHomeCard{padding:23px}
+ .svNotificationDialog{padding:16px;max-height:calc(100svh - 165px)}
+ .svNotificationActions button{min-height:35px}.svNotificationActions [data-notifications-read]{font-size:10px}
+ .svConnectDialog [data-connect-close]{min-width:36px;min-height:36px}
+ .svDiscoveryHero .svDiscoveryEmblem{width:46px;height:46px;border-radius:16px;margin-bottom:20px}
+ .svRecommendationsPage .svMoodChips button{min-height:86px;gap:13px}
+ .svRecommendationsPage .svMoodChips button>.svFeatureIcon:first-child{padding:8px;flex:none;width:18px;height:18px}
+ .svRecommendationsPage .svMoodChips button>.svFeatureIcon:last-child{top:34px}
+}
+@media(max-width:359px){.svFeatureNav a{padding:0 4px;font-size:10px}.svNotification{padding-inline:8px;gap:9px}.svNotificationMeta{gap:5px}}
+/* TV/performance modes use the same finished surfaces without spatial effects. */
+:is(html[data-sv-tv=true],html[data-sv-xbox=true],body[data-sv-performance=low],body.reduceMotion) :is(.svConnectPage,.svConnectDialog,.svDiscoveryPage,.svBookDialog,.svDiscoverySearch,.svFeatureNav,.svNotificationButton),
+:is(html[data-sv-tv=true],html[data-sv-xbox=true],body[data-sv-performance=low],body.reduceMotion) :is(.svConnectPage,.svConnectDialog,.svDiscoveryPage,.svBookDialog,.svDiscoverySearch,.svFeatureNav,.svNotificationButton) *{animation:none!important;transition:none!important}
+:is(html[data-sv-tv=true],html[data-sv-xbox=true],body[data-sv-performance=low]) :is(.svConnectDialog,.svDiscoverySearch){backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+:is(html[data-sv-tv=true],html[data-sv-xbox=true],body[data-sv-performance=low],body.reduceMotion) :is(.svConnectButton,.svSendMessage,.svMoodChips button,.svDiscoveryCard,.svNotification,.svFeatureNav a,.svPromptEntry>span){transform:none!important}
+@media(prefers-reduced-motion:reduce){
+ :is(.svConnectPage,.svConnectDialog,.svDiscoveryPage,.svBookDialog,.svDiscoverySearch,.svFeatureNav,.svNotificationButton),
+ :is(.svConnectPage,.svConnectDialog,.svDiscoveryPage,.svBookDialog,.svDiscoverySearch,.svFeatureNav,.svNotificationButton) *{animation:none!important;transition:none!important}
+}
