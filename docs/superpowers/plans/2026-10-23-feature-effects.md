@@ -56,4 +56,8 @@
 
 ## Verification record
 
+Follow-up: reproduce feature-page aurora suppression and unchanged hover shadows in Chromium; remove the conflicting display rule; strengthen shared CSS illumination, sweeps, depth and icon reactions; verify feature aurora, hover/focus, reduced motion, layouts and existing loading behavior; review and publish through the existing PR workflow.
+
+Follow-up verification: both new browser regressions failed before the fix and pass afterward. The selected aurora is visible and moves on all three feature pages, while TV/low modes remain still and backdrop off remains hidden. Real desktop hover changes lighting and geometry; keyboard focus matches it; both operating-system and saved reduced motion stop spatial effects. Review caught and fixed the navigation bell's missing easing variable. Syntax checks pass. Desktop and mobile screenshots were inspected.
+
 Notification and loading lifecycle tests pass. Real Chromium navigation, feature layouts, native-history behavior and Xbox checks pass (20 passed, 3 model-dependent skips). Review findings fixed: trusted click cancellation uses a new task; live notification links retain keyboard focus; progress does no idle animation; TV, Xbox, saved reduced motion and low-performance modes suppress loader animation. Full-suite results are recorded in the PR; the two existing player-layout failures reproduce on pristine origin/main.

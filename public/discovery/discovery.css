@@ -34,7 +34,6 @@ body.svCleanShell #svNavSearchPopup.svDiscoverySearch[hidden]{display:none!impor
 
 /* Reference-led discovery: one prompt, neutral pills, content-first grids. */
 body.svCleanShell:has(.svDiscoveryPage,.svConnectPage){background:#080910!important}
-body.svCleanShell:has(.svDiscoveryPage,.svConnectPage) .svAuroraBackground{display:none!important}
 body.svCleanShell .svDiscoveryPage{box-sizing:border-box;max-width:1312px;min-height:calc(100svh - 180px);margin:0 auto;padding:112px 36px 100px!important;background:transparent!important;color:#fafafa}
 .svDiscoveryHero{text-align:center;margin:0 0 24px}
 .svDiscoveryHero p{max-width:520px;margin:15px auto 0;color:#a8a8b2;font-size:15px;line-height:1.65}

@@ -1,5 +1,5 @@
-/* Shared finish for feature surfaces. Layout stays in connect/discovery.css.
-   Motion is interaction-driven or one-shot; no scroll listeners or paint loops. */
+/* Feature materials and interaction effects. Layout stays in connect/discovery.css.
+   The shared aurora is the only idle motion; no JS frame or pointer loops. */
 :where(.svConnectPage,.svConnectDialog,.svDiscoveryPage,.svDiscoverySearch,.svBookDialog){
  --sf-text:#f4f2fb;--sf-muted:#aaa8bd;--sf-dim:#7f829c;--sf-border:#d6cfff1c;
  --sf-panel:#12131e;--sf-accent:#c3afff;--sf-cyan:#9cdded;--sf-ease:cubic-bezier(.22,1,.36,1);
@@ -7,6 +7,12 @@
 }
 :where(.svConnectPage,.svDiscoveryPage){position:relative;isolation:isolate}
 :where(.svConnectPage,.svDiscoveryPage)::before{content:"";position:absolute;inset:60px 0 auto;height:670px;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 20% 14%,#8e6cf41c,transparent 56%),radial-gradient(ellipse at 90% 38%,#4bb7cb0d,transparent 53%)}
+/* Keep the real aurora visible behind feature canvases. Its existing controller
+   still owns visibility, saved strength/color, offscreen pause and reduced motion. */
+body.svCleanShell:has(.svConnectPage,.svDiscoveryPage) .svAuroraBackground{height:min(115svh,1150px);mask-image:linear-gradient(#000 0%,#000 48%,transparent 100%);-webkit-mask-image:linear-gradient(#000 0%,#000 48%,transparent 100%)}
+body.svCleanShell:has(.svConnectPage,.svDiscoveryPage) .svAuroraBackground>.svAuroraRibbon--first{opacity:1;background-image:url('../clean/aurora-ribbon.svg?v=170'),radial-gradient(ellipse at 16% 20%,#46d9cf38,transparent 46%),radial-gradient(ellipse at 78% 30%,#8960ec57,transparent 53%)}
+body.svCleanShell:has(.svConnectPage,.svDiscoveryPage)[data-sv-aurora-state=live] .svAuroraBackground>.svAuroraRibbon--first{animation-name:sf-aurora}
+@keyframes sf-aurora{from{transform:translate3d(-4%,-3%,0) scale(1.04) rotate(-2deg)}to{transform:translate3d(4%,4%,0) scale(1.12) rotate(2deg)}}
 .svConnectHero{margin-bottom:30px}
 .svConnectHero>.svConnectEyebrow,.svConnectHero>div>.svConnectEyebrow{display:block;margin-bottom:14px;color:#bba6eb;font-size:10px;font-weight:600;letter-spacing:.18em}
 .svConnectHero h1{font-size:clamp(35px,4vw,48px);font-weight:650;letter-spacing:-.045em}
@@ -27,7 +33,7 @@
 .svConnectPrimary:hover,.svSendMessage:hover{background:#ede4ff}
 .svConnectHeroActions a:first-child .svFeatureIcon{color:#addef2}
 .svConnectHeroActions a:last-child .svFeatureIcon{color:#c9afff}
-.svConnectLayout{border-color:#dcd0ff20;border-radius:24px;background:#10111a;box-shadow:0 28px 70px #0005,inset 0 1px #ffffff08}
+.svConnectLayout{border-color:#dcd0ff30;border-radius:24px;background:#10111ad9;box-shadow:0 28px 70px #0005,inset 0 1px #ffffff12}
 .svConnectSidebar{background:linear-gradient(155deg,#22203294,#14151f 55%);border-color:#cbb9ff13}
 .svConnectSidebar h2{font-size:22px;letter-spacing:-.035em;color:#f0ebfa}
 .svFindFriend label{color:#b1abc2;font-size:11px}
@@ -45,7 +51,7 @@
 .svUnread{background:#d0bbff;color:#302244;font-size:10px;box-shadow:0 0 12px #ba8fff1c}
 .svWatchingPrivacy{border-color:#cdbdff13;color:#c7bfd9}
 .svWatchingPrivacy input{accent-color:#bc9beb}
-.svConversation{background:radial-gradient(ellipse at 85% 10%,#46406b16,transparent 70%),#0e1019}
+.svConversation{background:radial-gradient(ellipse at 85% 10%,#46406b26,transparent 70%),#0e1019b8}
 .svConversationHead{background:#d7c9ff04;border-color:#d0c0ff13}
 .svConversationPrivate{display:flex;align-items:center;gap:7px;color:#9892aa;font-size:11px}
 .svConversationPrivate::before{content:"";width:5px;height:5px;flex:none;border-radius:50%;background:#9bc5be}
@@ -128,6 +134,7 @@
 .svShareList button::after{content:'↗';position:absolute;right:17px;color:#b9a3d9;font-size:18px}
 .svShareList button:hover{background:#b39adf18}
 .svNotificationButton>b{background:#d1baff;color:#282039;border:2px solid #211b30;font-size:8px;min-width:17px;height:17px;box-sizing:border-box}
+.svNotificationButton{--sf-ease:cubic-bezier(.22,1,.36,1)}
 
 /* Discovery shares the same material, with a brighter prompt as its focal point. */
 .svDiscoveryHero .svDiscoveryEmblem{position:relative;display:grid;place-items:center;width:54px;height:54px;margin:0 auto 23px;border:1px solid #d1b6ff35;border-radius:19px;background:linear-gradient(140deg,#c5a5ff24,#94bfd70b);color:#d6baff;box-shadow:inset 0 1px #ffffff1a,0 10px 45px #9e7cf218}
@@ -174,11 +181,43 @@ body.svCleanShell #svNavSearchPopup.svDiscoverySearch{background:linear-gradient
 .svSearchResult:hover,.svSearchResult:focus-visible{background:#b79bdf12;border-color:#c8a9f32b}
 :where(.svConnectPage,.svConnectDialog,.svDiscoveryPage,.svBookDialog,.svDiscoverySearch) :focus-visible,.svFeatureNav a:focus-visible{outline:2px solid #c7a8f2;outline-offset:4px}
 
-/* Short arrivals and light passing over controls. Content is visible by default. */
+/* Obvious light, depth and color on interaction, including keyboard focus. */
+.svConnectButton,.svSendMessage,.svFeatureNav a,.svConnectTabs a,.svFriend,.svNotification,.svHomeCard,.svConnectSignin,.svBookSearch,.svDiscoveryPoster,.svNotificationDot,.svConnectAvatar,.svDiscoveryEmblem{transition:transform .3s var(--sf-ease),box-shadow .25s,border-color .2s,background-color .2s,color .2s}
+.svConnectButton:not(:disabled):is(:hover,:focus-visible),.svSendMessage:not(:disabled):is(:hover,:focus-visible){border-color:#cdafffad;background-color:#9971d93d;box-shadow:inset 0 1px #fff3,0 0 0 1px #c7a3ff30,0 7px 28px #9760ed45;color:#fff}
+.svConnectPrimary:not(:disabled):is(:hover,:focus-visible),.svSendMessage:not(:disabled):is(:hover,:focus-visible){color:#211830;background:#f1e5ff;box-shadow:inset 0 1px #fff9,0 0 0 1px #e4cfff66,0 6px 32px #ae7df778}
+.svFeatureNav a:is(:hover,:focus-visible),.svConnectTabs a:is(:hover,:focus-visible){color:#fff;background-color:#c4a0ff26;border-color:#d2b3ff70;box-shadow:inset 0 1px #fff2,0 0 22px #a77be035}
+.svFriend:is(:hover,:focus-visible){border-color:#d1b3ff70;background:linear-gradient(105deg,#a277ec32,#7ed9e50d);box-shadow:inset 3px 0 #cba9ff,0 5px 22px #0002}
+.svFriend:is(:hover,:focus-visible) .svConnectAvatar{border-color:#d5b7ffb3;box-shadow:0 0 20px #b187f459,inset 0 1px #fff3}
+.svNotification:is(:hover,:focus-visible){border-color:#cdaaff80;background:linear-gradient(110deg,#a977f02e,#78cbd21a);box-shadow:inset 3px 0 #cba9ff,0 6px 22px #0002}
+.svNotification:is(:hover,:focus-visible) .svNotificationDot{border-color:#dcc2ff85;box-shadow:0 0 20px #b68aef4d}
+.svHomeCard:hover,.svHomeCard:focus-within,.svConnectSignin:hover,.svConnectSignin:focus-within{border-color:#cdb0ff70;box-shadow:inset 0 1px #ffeaff30,0 16px 60px #8c59df26,0 0 35px #8c59df12}
+.svMoodInput:hover,.svRecommendationsPage .svMoodInput:focus-within,.svBookSearch:hover,.svBookSearch:focus-within{border-color:#c9adffb3;box-shadow:inset 0 1px #fff3,0 0 0 1px #be94ff20,0 0 42px #9266e838,0 16px 50px #0004}
+.svRecommendationsPage .svMoodInput .svFindPicks:not(:disabled):is(:hover,:focus-visible){box-shadow:inset 0 1px #fff9,0 0 0 1px #e4cfff66,0 5px 28px #ae7df778!important}
+.svRecommendationsPage .svMoodChips button{position:relative;--sf-glow:178 130 255;transition:transform .3s var(--sf-ease),border-color .2s,box-shadow .25s;}
+.svRecommendationsPage .svMoodChips button:nth-child(2){--sf-glow:255 137 195}
+.svRecommendationsPage .svMoodChips button:nth-child(3){--sf-glow:106 213 255}
+.svRecommendationsPage .svMoodChips button::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 15% 5%,rgb(var(--sf-glow)/.32),transparent 75%);opacity:0;transition:opacity .25s}
+.svRecommendationsPage .svMoodChips button:is(:hover,:focus-visible){border-color:rgb(var(--sf-glow)/.8);box-shadow:inset 0 1px #fff3,0 0 0 1px rgb(var(--sf-glow)/.15),0 16px 36px rgb(var(--sf-glow)/.2),0 5px 18px #0005}
+.svRecommendationsPage .svMoodChips button:is(:hover,:focus-visible)::before{opacity:1}
+.svRecommendationsPage .svMoodChips button>.svFeatureIcon{transition:transform .35s var(--sf-ease),box-shadow .25s,background-color .25s}
+.svRecommendationsPage .svMoodChips button:is(:hover,:focus-visible)>.svFeatureIcon:first-child{background-color:rgb(var(--sf-glow)/.22);box-shadow:0 0 24px rgb(var(--sf-glow)/.35);color:#fff}
+.svRecommendationsPage .svMoodChips button:is(:hover,:focus-visible)>.svFeatureIcon:last-child{color:#fff}
+.svDiscoveryPoster{isolation:isolate;transition:box-shadow .25s,border-color .25s;}
+.svDiscoveryPoster img{transition:transform .5s var(--sf-ease),opacity .2s}
+.svDiscoveryCard:is(:hover,:focus-within) .svDiscoveryPoster{border-color:#c5a4ffb3;box-shadow:0 0 0 1px #c5a4ff70,0 16px 38px #9a6ae847,0 9px 20px #0008}
+.svDiscoveryCard:is(:hover,:focus-within) h3{color:#e2cfff;text-shadow:0 0 18px #b08aff3b}
+body.svCleanShell .topbar .netflixNav .svNotificationButton:is(:hover,:focus-visible){background:#b88aef30!important;box-shadow:inset 0 0 0 1px #d2afff70,0 0 22px #b280f040!important;color:#f2e5ff!important}
+.svDiscoveryEmblem::before{inset:-11px;border-radius:50%;border-color:#a58ae127;border-top-color:#ccadffb3;border-right-color:#8cdeef80;transform:rotate(-25deg)}
+.svDiscoveryEmblem::after{content:"";position:absolute;right:-10px;top:23px;width:4px;height:4px;border-radius:50%;background:#b7f2ff;box-shadow:0 0 11px #92dfff,-64px -15px #d9b8ff}
+.svDiscoveryHero:hover .svDiscoveryEmblem{border-color:#ddbdff99;box-shadow:inset 0 1px #fff3,0 0 42px #ad75ef52}
+
+/* Short arrivals and reflective sweeps. Effects sit ABOVE the material so
+   opaque button backgrounds cannot hide them. They never intercept input. */
 @keyframes sf-arrive{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 @keyframes sf-dialog{from{opacity:0;transform:translateY(-7px) scale(.975)}to{opacity:1;transform:translateY(0) scale(1)}}
-@keyframes sf-glint{from{transform:translateX(-150%) skewX(-18deg)}to{transform:translateX(250%) skewX(-18deg)}}
+@keyframes sf-glint{from{transform:translateX(-180%) skewX(-22deg)}to{transform:translateX(320%) skewX(-22deg)}}
 @keyframes sf-bell{0%,100%{transform:rotate(0)}25%{transform:rotate(-13deg)}50%{transform:rotate(10deg)}75%{transform:rotate(-5deg)}}
+@keyframes sf-orbit{from{opacity:0;transform:rotate(-160deg) scale(.7)}to{opacity:1;transform:rotate(-25deg) scale(1)}}
 @media(prefers-reduced-motion:no-preference){
  :is(.svConnectHero,.svDiscoveryHero){animation:sf-arrive .55s var(--sf-ease) backwards}
  :is(.svConnectLayout,.svSharedHome,.svConnectSignin,.svRecommendationForm,.svBookSearch){animation:sf-arrive .6s var(--sf-ease) backwards}
@@ -186,17 +225,26 @@ body.svCleanShell #svNavSearchPopup.svDiscoverySearch{background:linear-gradient
  .svShareDialog[open],.svBookDialog[open]{transform-origin:center}
  .svMessage{animation:sf-arrive .25s var(--sf-ease)}
  .svNotificationButton.hasUnread>.svFeatureIcon{animation:sf-bell .65s var(--sf-ease);transform-origin:50% 15%}
- .svConnectButton::before,.svSendMessage::before,.svFindPicks::before{content:"";position:absolute;inset:-20% auto -20% 0;width:45%;pointer-events:none;background:linear-gradient(90deg,transparent,#ffffff18,transparent);transform:translateX(-150%) skewX(-18deg);z-index:-1}
- .svConnectButton:hover::before,.svSendMessage:hover::before,.svFindPicks:hover::before{animation:sf-glint .65s var(--sf-ease)}
+ .svDiscoveryEmblem::before{animation:sf-orbit 1.2s var(--sf-ease) backwards}
+ .svConnectButton::before,.svSendMessage::before,.svFindPicks::before,.svMoodChips button::after,.svDiscoveryPoster::after{content:"";position:absolute;inset:-30% auto -30% 0;width:65%;pointer-events:none;background:linear-gradient(90deg,transparent,#ffffff30,transparent);transform:translateX(-180%) skewX(-22deg);z-index:1}
+ .svConnectButton:not(:disabled):is(:hover,:focus-visible)::before,.svSendMessage:not(:disabled):is(:hover,:focus-visible)::before,.svFindPicks:not(:disabled):is(:hover,:focus-visible)::before,.svMoodChips button:is(:hover,:focus-visible)::after,.svDiscoveryCard:is(:hover,:focus-within) .svDiscoveryPoster::after{animation:sf-glint .9s var(--sf-ease)}
+ .svNotificationButton:is(:hover,:focus-visible)>.svFeatureIcon{animation:sf-bell .7s var(--sf-ease);transform-origin:50% 15%}
+ .svMoodChips button,.svDiscoveryCard{animation:sf-arrive .65s var(--sf-ease) backwards}
+ :is(.svMoodChips button,.svDiscoveryCard):nth-child(2){animation-delay:.07s}
+ :is(.svMoodChips button,.svDiscoveryCard):nth-child(3){animation-delay:.14s}
+ .svDiscoveryCard:nth-child(n+4){animation-delay:.21s}
  .svRecommendationForm:focus-within .svPromptEntry>span{transform:rotate(-12deg);transition:transform .3s var(--sf-ease)}
 }
 @media(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference){
- .svConnectButton:not(:disabled):hover,.svSendMessage:not(:disabled):hover{transform:translateY(-2px)}
+ .svConnectButton:not(:disabled):is(:hover,:focus-visible),.svSendMessage:not(:disabled):is(:hover,:focus-visible){transform:translateY(-3px)}
  .svConnectButton:not(:disabled):active,.svSendMessage:not(:disabled):active{transform:translateY(0) scale(.98)}
- .svRecommendationsPage .svMoodChips button:hover{transform:translateY(-5px)}
- .svDiscoveryCard:hover{transform:translateY(-4px)}
- .svNotification:hover{transform:translateX(2px)}
- .svFeatureNav a:hover{transform:translateY(-1px)}
+ .svRecommendationsPage .svMoodChips button:is(:hover,:focus-visible){transform:translateY(-8px) perspective(800px) rotateX(3deg)}
+ .svRecommendationsPage .svMoodChips button:is(:hover,:focus-visible)>.svFeatureIcon:first-child{transform:rotate(-10deg) scale(1.1)}
+ .svRecommendationsPage .svMoodChips button:is(:hover,:focus-visible)>.svFeatureIcon:last-child{transform:translateX(4px)}
+ .svDiscoveryCard:is(:hover,:focus-within){transform:translateY(-8px)}
+ .svDiscoveryCard:is(:hover,:focus-within) .svDiscoveryPoster img{transform:scale(1.06)}
+ .svFriend:is(:hover,:focus-visible),.svNotification:is(:hover,:focus-visible){transform:translateX(3px)}
+ .svFeatureNav a:is(:hover,:focus-visible){transform:translateY(-2px)}
 }
 @media(max-width:760px){
  .svConnectHero h1{font-size:36px}.svConnectHero>div>.svConnectEyebrow{font-size:9px;margin-bottom:12px}
@@ -219,7 +267,14 @@ body.svCleanShell #svNavSearchPopup.svDiscoverySearch{background:linear-gradient
 :is(html[data-sv-tv=true],html[data-sv-xbox=true],body[data-sv-performance=low],body.reduceMotion) :is(.svConnectPage,.svConnectDialog,.svDiscoveryPage,.svBookDialog,.svDiscoverySearch,.svFeatureNav,.svNotificationButton) *{animation:none!important;transition:none!important}
 :is(html[data-sv-tv=true],html[data-sv-xbox=true],body[data-sv-performance=low]) :is(.svConnectDialog,.svDiscoverySearch){backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 :is(html[data-sv-tv=true],html[data-sv-xbox=true],body[data-sv-performance=low],body.reduceMotion) :is(.svConnectButton,.svSendMessage,.svMoodChips button,.svDiscoveryCard,.svNotification,.svFeatureNav a,.svPromptEntry>span){transform:none!important}
+:is(html[data-sv-tv=true],html[data-sv-xbox=true],body[data-sv-performance=low],body.reduceMotion) :is(.svFriend,.svMoodChips .svFeatureIcon,.svDiscoveryPoster img){transform:none!important}
+html:is([data-sv-tv=true],[data-sv-xbox=true]) body.svCleanShell:has(.svConnectPage,.svDiscoveryPage) .svAuroraRibbon,
+body.svCleanShell[data-sv-performance=low]:has(.svConnectPage,.svDiscoveryPage) .svAuroraRibbon{animation:none!important}
+:is(html[data-sv-tv=true],html[data-sv-xbox=true],body[data-sv-performance=low],body.reduceMotion) :is(.svConnectButton,.svSendMessage,.svFindPicks,.svMoodChips button,.svDiscoveryPoster,.svDiscoveryEmblem)::before,
+:is(html[data-sv-tv=true],html[data-sv-xbox=true],body[data-sv-performance=low],body.reduceMotion) :is(.svMoodChips button,.svDiscoveryPoster)::after{animation:none!important;transition:none!important}
 @media(prefers-reduced-motion:reduce){
  :is(.svConnectPage,.svConnectDialog,.svDiscoveryPage,.svBookDialog,.svDiscoverySearch,.svFeatureNav,.svNotificationButton),
  :is(.svConnectPage,.svConnectDialog,.svDiscoveryPage,.svBookDialog,.svDiscoverySearch,.svFeatureNav,.svNotificationButton) *{animation:none!important;transition:none!important}
+ :is(.svConnectButton,.svSendMessage,.svFindPicks,.svMoodChips button,.svDiscoveryPoster,.svDiscoveryEmblem)::before,
+ :is(.svMoodChips button,.svDiscoveryPoster)::after{animation:none!important;transition:none!important}
 }

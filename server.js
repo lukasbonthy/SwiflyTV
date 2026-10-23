@@ -6602,8 +6602,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/clean/tv.css?v=255" />
     <link rel="stylesheet" href="/assets/clean/details-premium.css?v=255" />
     <link rel="stylesheet" href="/assets/clean/details-clarity.css?v=2" />
-    <link rel="stylesheet" href="/assets/discovery/discovery.css?v=6" />
-    <link rel="stylesheet" href="/assets/connect/feature-effects.css?v=1" />
+    <link rel="stylesheet" href="/assets/discovery/discovery.css?v=7" />
+    <link rel="stylesheet" href="/assets/connect/feature-effects.css?v=2" />
     <link rel="stylesheet" href="/assets/clean/account-sheet.css?v=3" />
 </head>
 <body class="svCleanShell">
