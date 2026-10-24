@@ -36,7 +36,7 @@ const { createAccountStore } = require("./lib/account-store");
 const { createConnect } = require("./lib/connect");
 const { createDiscovery } = require("./lib/discovery");
 const { createPlayerAssist } = require("./lib/player-assist");
-const { searchMarkup, recommendationsMarkup, audiobooksMarkup } = require("./ui/discovery");
+const { searchMarkup, searchPageMarkup, recommendationsMarkup, audiobooksMarkup } = require("./ui/discovery");
 const { cleanHeaders: cleanNuvioHeaders } = require("./lib/nuvio-http");
 
 // ===== SwiflyTV no-env mode =====
@@ -5657,7 +5657,7 @@ const discovery = createDiscovery({tmdb:(...args) => tmdb(...args)});
 app.use("/api/discovery", discovery.router);
 const playerAssist = createPlayerAssist({tmdb:(...args) => tmdb(...args)});
 app.use("/api/player-assist",playerAssist.router);
-app.get("/recommendations", (req,res) => res.send(pageShell({title:`${SITE_NAME} — AI picks`,active:"recommendations",body:recommendationsMarkup(),extraHead:'<script defer src="/assets/discovery/recommendations.js?v=7"></script>'})));
+app.get("/recommendations", (req,res) => res.send(pageShell({title:`${SITE_NAME} — AI picks`,active:"recommendations",body:recommendationsMarkup(String(req.query.q||'')),extraHead:'<link rel="stylesheet" href="/assets/discovery/search.css?v=1"><script defer src="/assets/discovery/recommendations.js?v=8"></script>'})));
 app.get("/audiobooks", (req,res) => res.send(pageShell({title:`${SITE_NAME} — Audiobooks`,active:"audiobooks",body:audiobooksMarkup(),extraHead:'<script defer src="/assets/discovery/audiobooks.js?v=4"></script>'})));
 // Same friends-only protection applies to authorized movie/episode file downloads.
 app.use("/api/download", createDownloadRouter());
@@ -5672,6 +5672,7 @@ app.use("/assets/studio", express.static(path.join(__dirname, "public", "studio"
 app.use("/assets/party", express.static(path.join(__dirname, "public", "party"), { maxAge: "1d", dotfiles: "deny" }));
 app.get("/assets/vendor/transformers-3.8.1/transformers.min.js", (req,res) => res.sendFile(path.join(path.dirname(require.resolve("@huggingface/transformers")), "transformers.min.js"), {maxAge:"7d"}));
 app.use("/assets/vendor/transformers-3.8.1/wasm", express.static(path.dirname(require.resolve("onnxruntime-web")), {maxAge:"7d",dotfiles:"deny",index:false}));
+app.use("/assets/ai-models/v2", express.static(path.join(__dirname,".swifly-models"), {maxAge:"7d",dotfiles:"deny",index:false}));
 app.use("/assets/ai-models/v1", express.static(path.join(__dirname,".swifly-models"), {maxAge:"7d",dotfiles:"deny",index:false}));
 app.use("/assets/discovery", express.static(path.join(__dirname, "public", "discovery"), { maxAge: "1d", dotfiles: "deny" }));
 app.use("/assets/connect", express.static(path.join(__dirname, "public", "connect"), { maxAge: "1d", dotfiles: "deny" }));
@@ -6832,6 +6833,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
         button.setAttribute("aria-label", (isLiked ? "Unlike " : "Like ") + (button.dataset.likeTitle || "title"));
       });
     }
+
+    window.syncLibraryButtons = syncLibraryButtons;
 
     function toggleLibraryItem(keyName, item, addedMessage, removedMessage) {
       const list = readLibrary(keyName);
@@ -8300,55 +8303,15 @@ async function trendingPage(req, res) {
 }
 
 async function searchPage(req, res) {
-  const q = String(req.query.q || "").trim();
-  const page = pageNumber(req.query.page);
-
-  if (!q) {
-    const trending = await tmdb("/trending/all/week", {}, CACHE_TTL.short);
-    if (trending.__error) return res.send(setupNeededPage(trending.message));
-
-    return res.send(pageShell({
-      title: `${SITE_NAME} — Search`,
-      active: "search",
-      body: `<main class="dsPlainPage">
-        ${dsPageHeader("Search", "Find movies, shows, actors, and creators.", "Discovery")}
-        <section class="dsSearchBox">
-          <form action="/search" method="get">
-            <input name="q" placeholder="Search movies, shows, actors..." autocomplete="off" autofocus />
-            <button type="submit">Search</button>
-          </form>
-        </section>
-        <section class="dsContent noHero">
-          ${dsRail("Popular Searches", (trending.results || []).filter((item) => ["movie", "tv"].includes(getType(item))))}
-        </section>
-      </main>`,
-    }));
-  }
-
-  const data = await tmdb("/search/multi", { query: q, page, include_adult: "false" }, CACHE_TTL.short);
-  if (data.__error) return res.send(setupNeededPage(data.message));
-
-  const results = (data.results || []).filter((item) => ["movie", "tv", "person"].includes(getType(item) || item.media_type));
-  const cards = results.map((item) => {
-    if (item.media_type === "person") return personCard(item);
-    return movieCard(item);
-  }).join("");
-
-  const body = `<main class="dsPlainPage">
-    ${dsPageHeader(`Results for “${q}”`, "Search movies, TV, people, and creators.", "Search")}
-    <section class="dsSearchBox">
-      <form action="/search" method="get">
-        <input name="q" value="${escapeHtml(q)}" placeholder="Search movies, shows, actors..." autocomplete="off" />
-        <button type="submit">Search</button>
-      </form>
-    </section>
-    <section class="dsContent noHero">
-      ${cards ? `<div class="dsGrid">${cards}</div>` : `<div class="emptyState">No results found.</div>`}
-      ${pagination(`/search?q=${encodeURIComponent(q)}`, page, data.total_pages)}
-    </section>
-  </main>`;
-
-  res.send(pageShell({ title: `${SITE_NAME} — Search ${q}`, active: "search", body }));
+ const q=String(req.query.q||'').trim().slice(0,120),page=Math.max(1,Math.min(500,pageNumber(req.query.page))),people=req.query.type==='person',mode=people?'person':'titles';
+ const route=q?'/search/'+(people?'person':'multi'):people?'/person/popular':'/trending/all/week';
+ const data=await tmdb(route,{...(q?{query:q}:{}),page,include_adult:'false'},CACHE_TTL.short);
+ if(data.__error)return res.send(setupNeededPage(data.message));
+ const results=(data.results||[]).filter(item=>!item.adult&&(people?(!item.media_type||item.media_type==='person'):['movie','tv'].includes(getType(item)||item.media_type)));
+ const cards=results.map(item=>people?personCard(item):movieCard(item)).join('');
+ const base='/search?'+new URLSearchParams({...(q?{q}:{}),...(people?{type:'person'}:{})});
+ const body=searchPageMarkup({mode,query:q,cards,heading:q?'Results for “'+q+'”':people?'Popular people':'Trending this week',pagination:pagination(base,page,Math.min(500,data.total_pages||1))});
+ res.send(pageShell({title:`${SITE_NAME} — Search${q?' '+q:''}`,active:'search',body,extraHead:'<link rel="stylesheet" href="/assets/discovery/search.css?v=1"><script defer src="/assets/discovery/search.js?v=1"></script>'}));
 }
 
 async function genrePage(req, res, type) {

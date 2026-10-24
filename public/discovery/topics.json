@@ -1,56 +1,905 @@
 [
- {"id":"comedy","genre":"comedy","description":"A funny comedy movie, hilarious jokes and light-hearted humor. Something entertaining that will make me laugh."},
- {"id":"action","genre":"action","description":"An exciting action movie with chases, fights, stunts and an intense fast-paced story."},
- {"id":"drama","genre":"drama","description":"A compelling character drama with great acting, human relationships and emotionally complex characters."},
- {"id":"animation","genre":"animation","description":"A beautifully animated movie or cartoon with imaginative characters and expressive visual storytelling."},
- {"id":"horror","genre":"horror","description":"A frightening horror movie that is scary, unsettling and full of dread. Something that will terrify me."},
- {"id":"adventure","genre":"adventure","description":"An exciting adventure exploring somewhere new, embarking on an epic journey and discovering unknown places."},
- {"id":"space","keyword":"outer space","seed":"The Martian","description":"Astronauts exploring outer space, travelling to distant planets and trying to save humanity on a scientific space mission."},
- {"id":"time-travel","keyword":"time travel","seed":"Back to the Future","description":"Travelling backwards or forwards through time, changing history and dealing with paradoxes and alternate timelines."},
- {"id":"time-loop","keyword":"time loop","seed":"Groundhog Day","description":"Someone keeps waking up on the same day and reliving yesterday over and over, trapped in a repeating time loop."},
- {"id":"dreams","keyword":"dream","seed":"Inception","description":"Dreams inside other dreams, entering someone's subconscious, dreams becoming real and being unable to tell reality from a dream."},
- {"id":"robots","keyword":"artificial intelligence","seed":"Ex Machina","description":"Artificial intelligence and intelligent robots becoming conscious, questioning what it means to be human."},
- {"id":"aliens","keyword":"alien","seed":"Arrival","description":"Humanity makes first contact with extraterrestrial visitors, trying to communicate with aliens and understand an alien language."},
- {"id":"superheroes","keyword":"superhero","seed":"Spider-Man","description":"An ordinary person gets superpowers and becomes a superhero, protecting a city from powerful villains."},
- {"id":"heist","keyword":"heist","seed":"Ocean's Eleven","description":"A clever team of expert thieves plans an elaborate robbery, stealing from a casino, bank or museum without getting caught."},
- {"id":"detective","keyword":"detective","seed":"Knives Out","description":"A detective solves a murder mystery with a house full of suspects, secret motives and unexpected clues. A whodunit."},
- {"id":"serial-killer","keyword":"serial killer","seed":"Zodiac","description":"Investigators hunt a serial killer, following disturbing clues in a tense crime investigation."},
- {"id":"psychological","keyword":"psychological thriller","seed":"Shutter Island","description":"A mind-bending psychological thriller with an unreliable narrator, a shocking twist, manipulation and uncertainty about what is real."},
- {"id":"dystopia","keyword":"dystopia","seed":"Children of Men","description":"An oppressive dystopian future with a totalitarian government, social inequality and people rebelling against the system."},
- {"id":"survival","keyword":"survival","seed":"Cast Away","description":"Someone is stranded alone in the wilderness or on a deserted island and must struggle to survive with limited supplies."},
- {"id":"coming-of-age","keyword":"coming of age","seed":"Lady Bird","description":"Teenagers growing up, finding their identity, leaving school and navigating friendship and first love. A coming-of-age story."},
- {"id":"romance","keyword":"love","seed":"Before Sunrise","description":"An intimate romantic love story about two people making a deep connection, falling in love and navigating a relationship."},
- {"id":"romcom","keyword":"romantic comedy","seed":"Notting Hill","description":"A light-hearted funny romantic comedy with an unlikely couple, charming misunderstandings and a happy ending. A date-night movie."},
- {"id":"dark-comedy","keyword":"dark comedy","seed":"In Bruges","description":"A darkly funny black comedy with dry deadpan humor, morally questionable characters and absurd situations. Funny but a little twisted."},
- {"id":"feel-good","keyword":"feel good","seed":"The Intouchables","description":"An uplifting comforting feel-good story that restores faith in people. Warm, funny, hopeful and easy to watch after a stressful day."},
- {"id":"musical","keyword":"musical","seed":"La La Land","description":"Characters express themselves through singing and dancing. A musical story filled with songs, romance and spectacular performances."},
- {"id":"family","keyword":"family","seed":"Paddington 2","description":"A wholesome family-friendly adventure that parents and young children can enjoy together. Gentle humor, imagination and heart."},
- {"id":"friendship","keyword":"friendship","seed":"Stand by Me","description":"An unlikely friendship or a close group of friends supporting each other, going on an adventure and sharing life's ups and downs."},
- {"id":"sports","keyword":"sport","seed":"Moneyball","description":"An inspiring underdog sports story about a struggling team, an athlete or a coach overcoming the odds to compete and win."},
- {"id":"courtroom","keyword":"courtroom","seed":"12 Angry Men","description":"A tense courtroom drama about a trial, lawyers arguing a case, a jury deliberating and the search for justice."},
- {"id":"magic","keyword":"magic","seed":"The Prestige","description":"Rival magicians, stage illusions and dangerous tricks. A story about magic, illusionists trying to outsmart one another and secrets behind their performances."},
- {"id":"fantasy","keyword":"fantasy world","seed":"The Lord of the Rings: The Fellowship of the Ring","description":"An epic fantasy adventure in an imaginary world with wizards, dragons, magical creatures and a heroic quest."},
- {"id":"vampires","keyword":"vampire","seed":"Interview with the Vampire","description":"Immortal vampires, blood, gothic atmosphere and the loneliness of living forever."},
- {"id":"zombies","keyword":"zombie","seed":"Train to Busan","description":"People struggle to survive an outbreak of zombies and infected people, barricading themselves against the living dead."},
- {"id":"christmas","keyword":"christmas","seed":"Home Alone","description":"A cozy festive Christmas movie with family, holiday mishaps, snow and the magic of the holiday season."},
- {"id":"revenge","keyword":"revenge","seed":"John Wick","description":"A wronged person sets out on a relentless revenge mission, taking down the people who hurt them."},
- {"id":"spy","keyword":"spy","seed":"Mission: Impossible","description":"A secret agent on an espionage mission with undercover identities, international intrigue and double-crossing spies."},
- {"id":"martial-arts","keyword":"martial arts","seed":"The Raid","description":"Martial artists fighting their way through dangerous opponents with expertly choreographed hand-to-hand combat."},
- {"id":"war","keyword":"world war ii","seed":"Saving Private Ryan","description":"Soldiers on a dangerous wartime mission, the bonds between comrades and the human cost of war on the battlefield."},
- {"id":"history","keyword":"historical event","seed":"The King's Speech","description":"A historical period drama about real events, royalty, political intrigue and life in an earlier era."},
- {"id":"true-crime","keyword":"true crime","seed":"Memories of Murder","description":"A true crime story based on a real unsolved murder, a criminal investigation and the people affected."},
- {"id":"monsters","keyword":"monster","seed":"Cloverfield","description":"A huge monster or dangerous creature threatens a city and ordinary people struggle to escape."},
- {"id":"apocalypse","keyword":"post-apocalyptic future","seed":"Mad Max: Fury Road","description":"Survivors navigate a ruined post-apocalyptic world after civilization collapses, searching for safety and hope."},
- {"id":"disaster","keyword":"disaster","seed":"The Impossible","description":"Ordinary people caught in a devastating natural disaster, earthquake, tsunami or storm fight to reunite with their family."},
- {"id":"road-trip","keyword":"road trip","seed":"Little Miss Sunshine","description":"A group of people on an eventful road trip, driving across the country and discovering themselves along the way."},
- {"id":"biography","keyword":"biography","seed":"The Social Network","description":"The true life story of an influential person, their rise to success, ambition, relationships and personal struggles. A biopic."},
- {"id":"grief","keyword":"grief","seed":"Manchester by the Sea","description":"An emotionally moving story about grief, loss, healing and complicated family relationships. Something heartfelt that makes you cry."},
- {"id":"western","keyword":"western","seed":"True Grit","description":"Cowboys and outlaws on the American frontier, dusty towns, gunslingers and a quest for justice in the old west."},
- {"id":"nature","keyword":"nature documentary","seed":"March of the Penguins","description":"A beautiful nature documentary exploring wildlife, animals, oceans, forests and the natural world."},
- {"id":"ghosts","keyword":"haunted house","seed":"The Others","description":"An eerie supernatural ghost story about a haunted house, mysterious sounds and spirits from the past."},
- {"id":"cult","keyword":"cult","seed":"Midsommar","description":"An unsettling story about a mysterious religious cult, secret rituals and sinister people hiding behind a welcoming community."},
- {"id":"prison","keyword":"prison","seed":"The Shawshank Redemption","description":"Life behind bars, a prison escape, injustice and the hope of freedom against impossible odds."},
- {"id":"gangsters","keyword":"mafia","seed":"GoodFellas","description":"Organized crime, the mafia, gangsters rising to power and the violent consequences of loyalty and betrayal."},
- {"id":"identity","keyword":"amnesia","seed":"Memento","description":"A person has lost their memory and must piece together clues to discover who they are and what happened to them."},
- {"id":"multiverse","keyword":"parallel universe","seed":"Everything Everywhere All at Once","description":"Characters travel between parallel universes and alternate realities, meeting different versions of themselves across the multiverse."}
+  {
+    "id": "comedy",
+    "genre": "comedy",
+    "description": "A funny comedy movie, hilarious jokes and light-hearted humor. Something entertaining that will make me laugh.",
+    "examples": [
+      "A funny comedy movie, hilarious jokes and light-hearted humor.",
+      "I am looking for a funny comedy movie, hilarious jokes and light-hearted humor. Something entertaining that will make me laugh."
+    ]
+  },
+  {
+    "id": "action",
+    "genre": "action",
+    "description": "An exciting action movie with chases, fights, stunts and an intense fast-paced story.",
+    "examples": [
+      "An exciting action movie with chases, fights, stunts and an intense fast-paced story..",
+      "I am looking for an exciting action movie with chases, fights, stunts and an intense fast-paced story."
+    ]
+  },
+  {
+    "id": "drama",
+    "genre": "drama",
+    "description": "A compelling character drama with great acting, human relationships and emotionally complex characters.",
+    "examples": [
+      "A compelling character drama with great acting, human relationships and emotionally complex characters..",
+      "I am looking for a compelling character drama with great acting, human relationships and emotionally complex characters."
+    ]
+  },
+  {
+    "id": "animation",
+    "genre": "animation",
+    "description": "A beautifully animated movie or cartoon with imaginative characters and expressive visual storytelling.",
+    "examples": [
+      "A beautifully animated movie or cartoon with imaginative characters and expressive visual storytelling..",
+      "I am looking for a beautifully animated movie or cartoon with imaginative characters and expressive visual storytelling."
+    ]
+  },
+  {
+    "id": "horror",
+    "genre": "horror",
+    "description": "A frightening horror movie that is scary, unsettling and full of dread. Something that will terrify me.",
+    "examples": [
+      "A frightening horror movie that is scary, unsettling and full of dread.",
+      "I am looking for a frightening horror movie that is scary, unsettling and full of dread. Something that will terrify me."
+    ]
+  },
+  {
+    "id": "adventure",
+    "genre": "adventure",
+    "description": "An exciting adventure exploring somewhere new, embarking on an epic journey and discovering unknown places.",
+    "examples": [
+      "An exciting adventure exploring somewhere new, embarking on an epic journey and discovering unknown places..",
+      "I am looking for an exciting adventure exploring somewhere new, embarking on an epic journey and discovering unknown places."
+    ]
+  },
+  {
+    "id": "space",
+    "keyword": "outer space",
+    "seed": "The Martian",
+    "description": "Astronauts exploring outer space, travelling to distant planets and trying to save humanity on a scientific space mission.",
+    "examples": [
+      "Astronauts exploring outer space, travelling to distant planets and trying to save humanity on a scientific space mission..",
+      "I am looking for astronauts exploring outer space, travelling to distant planets and trying to save humanity on a scientific space mission."
+    ]
+  },
+  {
+    "id": "time-travel",
+    "keyword": "time travel",
+    "seed": "Back to the Future",
+    "description": "Travelling backwards or forwards through time, changing history and dealing with paradoxes and alternate timelines.",
+    "examples": [
+      "Travelling backwards or forwards through time, changing history and dealing with paradoxes and alternate timelines..",
+      "I am looking for travelling backwards or forwards through time, changing history and dealing with paradoxes and alternate timelines."
+    ]
+  },
+  {
+    "id": "time-loop",
+    "keyword": "time loop",
+    "seed": "Groundhog Day",
+    "description": "Someone keeps waking up on the same day and reliving yesterday over and over, trapped in a repeating time loop.",
+    "examples": [
+      "Someone keeps waking up on the same day and reliving yesterday over and over, trapped in a repeating time loop..",
+      "I am looking for someone keeps waking up on the same day and reliving yesterday over and over, trapped in a repeating time loop."
+    ]
+  },
+  {
+    "id": "dreams",
+    "keyword": "dream",
+    "seed": "Inception",
+    "description": "Dreams inside other dreams, entering someone's subconscious, dreams becoming real and being unable to tell reality from a dream.",
+    "examples": [
+      "Dreams inside other dreams, entering someone's subconscious, dreams becoming real and being unable to tell reality from a dream..",
+      "I am looking for dreams inside other dreams, entering someone's subconscious, dreams becoming real and being unable to tell reality from a dream."
+    ]
+  },
+  {
+    "id": "robots",
+    "keyword": "artificial intelligence",
+    "seed": "Ex Machina",
+    "description": "Artificial intelligence and intelligent robots becoming conscious, questioning what it means to be human.",
+    "examples": [
+      "Artificial intelligence and intelligent robots becoming conscious, questioning what it means to be human..",
+      "I am looking for artificial intelligence and intelligent robots becoming conscious, questioning what it means to be human."
+    ]
+  },
+  {
+    "id": "aliens",
+    "keyword": "alien",
+    "seed": "Arrival",
+    "description": "Humanity makes first contact with extraterrestrial visitors, trying to communicate with aliens and understand an alien language.",
+    "examples": [
+      "Humanity makes first contact with extraterrestrial visitors, trying to communicate with aliens and understand an alien language..",
+      "I am looking for humanity makes first contact with extraterrestrial visitors, trying to communicate with aliens and understand an alien language."
+    ]
+  },
+  {
+    "id": "superheroes",
+    "keyword": "superhero",
+    "seed": "Spider-Man",
+    "description": "An ordinary person gets superpowers and becomes a superhero, protecting a city from powerful villains.",
+    "examples": [
+      "An ordinary person gets superpowers and becomes a superhero, protecting a city from powerful villains..",
+      "I am looking for an ordinary person gets superpowers and becomes a superhero, protecting a city from powerful villains."
+    ]
+  },
+  {
+    "id": "heist",
+    "keyword": "heist",
+    "seed": "Ocean's Eleven",
+    "description": "A clever team of expert thieves plans an elaborate robbery, stealing from a casino, bank or museum without getting caught.",
+    "examples": [
+      "A clever team of expert thieves plans an elaborate robbery, stealing from a casino, bank or museum without getting caught..",
+      "I am looking for a clever team of expert thieves plans an elaborate robbery, stealing from a casino, bank or museum without getting caught."
+    ]
+  },
+  {
+    "id": "detective",
+    "keyword": "detective",
+    "seed": "Knives Out",
+    "description": "A detective solves a murder mystery with a house full of suspects, secret motives and unexpected clues. A whodunit.",
+    "examples": [
+      "A detective solves a murder mystery with a house full of suspects, secret motives and unexpected clues.",
+      "I am looking for a detective solves a murder mystery with a house full of suspects, secret motives and unexpected clues. A whodunit."
+    ]
+  },
+  {
+    "id": "serial-killer",
+    "keyword": "serial killer",
+    "seed": "Zodiac",
+    "description": "Investigators hunt a serial killer, following disturbing clues in a tense crime investigation.",
+    "examples": [
+      "Investigators hunt a serial killer, following disturbing clues in a tense crime investigation..",
+      "I am looking for investigators hunt a serial killer, following disturbing clues in a tense crime investigation."
+    ]
+  },
+  {
+    "id": "psychological",
+    "keyword": "psychological thriller",
+    "seed": "Shutter Island",
+    "description": "A mind-bending psychological thriller with an unreliable narrator, a shocking twist, manipulation and uncertainty about what is real.",
+    "examples": [
+      "A mind-bending psychological thriller with an unreliable narrator, a shocking twist, manipulation and uncertainty about what is real..",
+      "I am looking for a mind-bending psychological thriller with an unreliable narrator, a shocking twist, manipulation and uncertainty about what is real."
+    ]
+  },
+  {
+    "id": "dystopia",
+    "keyword": "dystopia",
+    "seed": "Children of Men",
+    "description": "An oppressive dystopian future with a totalitarian government, social inequality and people rebelling against the system.",
+    "examples": [
+      "An oppressive dystopian future with a totalitarian government, social inequality and people rebelling against the system..",
+      "I am looking for an oppressive dystopian future with a totalitarian government, social inequality and people rebelling against the system."
+    ]
+  },
+  {
+    "id": "survival",
+    "keyword": "survival",
+    "seed": "Cast Away",
+    "description": "Someone is stranded alone in the wilderness or on a deserted island and must struggle to survive with limited supplies.",
+    "examples": [
+      "Someone is stranded alone in the wilderness or on a deserted island and must struggle to survive with limited supplies..",
+      "I am looking for someone is stranded alone in the wilderness or on a deserted island and must struggle to survive with limited supplies."
+    ]
+  },
+  {
+    "id": "coming-of-age",
+    "keyword": "coming of age",
+    "seed": "Lady Bird",
+    "description": "Teenagers growing up, finding their identity, leaving school and navigating friendship and first love. A coming-of-age story.",
+    "examples": [
+      "Teenagers growing up, finding their identity, leaving school and navigating friendship and first love.",
+      "I am looking for teenagers growing up, finding their identity, leaving school and navigating friendship and first love. A coming-of-age story."
+    ]
+  },
+  {
+    "id": "romance",
+    "keyword": "love",
+    "seed": "Before Sunrise",
+    "description": "An intimate romantic love story about two people making a deep connection, falling in love and navigating a relationship.",
+    "examples": [
+      "An intimate romantic love story about two people making a deep connection, falling in love and navigating a relationship..",
+      "I am looking for an intimate romantic love story about two people making a deep connection, falling in love and navigating a relationship."
+    ]
+  },
+  {
+    "id": "romcom",
+    "keyword": "romantic comedy",
+    "seed": "Notting Hill",
+    "description": "A light-hearted funny romantic comedy with an unlikely couple, charming misunderstandings and a happy ending. A date-night movie.",
+    "examples": [
+      "A light-hearted funny romantic comedy with an unlikely couple, charming misunderstandings and a happy ending.",
+      "I am looking for a light-hearted funny romantic comedy with an unlikely couple, charming misunderstandings and a happy ending. A date-night movie."
+    ]
+  },
+  {
+    "id": "dark-comedy",
+    "keyword": "dark comedy",
+    "seed": "In Bruges",
+    "description": "A darkly funny black comedy with dry deadpan humor, morally questionable characters and absurd situations. Funny but a little twisted.",
+    "examples": [
+      "A darkly funny black comedy with dry deadpan humor, morally questionable characters and absurd situations.",
+      "I am looking for a darkly funny black comedy with dry deadpan humor, morally questionable characters and absurd situations. Funny but a little twisted."
+    ]
+  },
+  {
+    "id": "feel-good",
+    "keyword": "feel good",
+    "seed": "The Intouchables",
+    "description": "An uplifting comforting feel-good story that restores faith in people. Warm, funny, hopeful and easy to watch after a stressful day.",
+    "examples": [
+      "An uplifting comforting feel-good story that restores faith in people.",
+      "I am looking for an uplifting comforting feel-good story that restores faith in people. Warm, funny, hopeful and easy to watch after a stressful day."
+    ]
+  },
+  {
+    "id": "musical",
+    "keyword": "musical",
+    "seed": "La La Land",
+    "description": "Characters express themselves through singing and dancing. A musical story filled with songs, romance and spectacular performances.",
+    "examples": [
+      "Characters express themselves through singing and dancing.",
+      "I am looking for characters express themselves through singing and dancing. A musical story filled with songs, romance and spectacular performances."
+    ]
+  },
+  {
+    "id": "family",
+    "keyword": "family",
+    "seed": "Paddington 2",
+    "description": "A wholesome family-friendly adventure that parents and young children can enjoy together. Gentle humor, imagination and heart.",
+    "examples": [
+      "A wholesome family-friendly adventure that parents and young children can enjoy together.",
+      "I am looking for a wholesome family-friendly adventure that parents and young children can enjoy together. Gentle humor, imagination and heart."
+    ]
+  },
+  {
+    "id": "friendship",
+    "keyword": "friendship",
+    "seed": "Stand by Me",
+    "description": "An unlikely friendship or a close group of friends supporting each other, going on an adventure and sharing life's ups and downs.",
+    "examples": [
+      "An unlikely friendship or a close group of friends supporting each other, going on an adventure and sharing life's ups and downs..",
+      "I am looking for an unlikely friendship or a close group of friends supporting each other, going on an adventure and sharing life's ups and downs."
+    ]
+  },
+  {
+    "id": "sports",
+    "keyword": "sport",
+    "seed": "Moneyball",
+    "description": "An inspiring underdog sports story about a struggling team, an athlete or a coach overcoming the odds to compete and win.",
+    "examples": [
+      "An inspiring underdog sports story about a struggling team, an athlete or a coach overcoming the odds to compete and win..",
+      "I am looking for an inspiring underdog sports story about a struggling team, an athlete or a coach overcoming the odds to compete and win."
+    ]
+  },
+  {
+    "id": "courtroom",
+    "keyword": "courtroom",
+    "seed": "12 Angry Men",
+    "description": "A tense courtroom drama about a trial, lawyers arguing a case, a jury deliberating and the search for justice.",
+    "examples": [
+      "A tense courtroom drama about a trial, lawyers arguing a case, a jury deliberating and the search for justice..",
+      "I am looking for a tense courtroom drama about a trial, lawyers arguing a case, a jury deliberating and the search for justice."
+    ]
+  },
+  {
+    "id": "magic",
+    "keyword": "magic",
+    "seed": "The Prestige",
+    "description": "Rival magicians, stage illusions and dangerous tricks. A story about magic, illusionists trying to outsmart one another and secrets behind their performances.",
+    "examples": [
+      "Rival magicians, stage illusions and dangerous tricks.",
+      "I am looking for rival magicians, stage illusions and dangerous tricks. A story about magic, illusionists trying to outsmart one another and secrets behind their performances."
+    ]
+  },
+  {
+    "id": "fantasy",
+    "keyword": "fantasy world",
+    "seed": "The Lord of the Rings: The Fellowship of the Ring",
+    "description": "An epic fantasy adventure in an imaginary world with wizards, dragons, magical creatures and a heroic quest.",
+    "examples": [
+      "An epic fantasy adventure in an imaginary world with wizards, dragons, magical creatures and a heroic quest..",
+      "I am looking for an epic fantasy adventure in an imaginary world with wizards, dragons, magical creatures and a heroic quest."
+    ]
+  },
+  {
+    "id": "vampires",
+    "keyword": "vampire",
+    "seed": "Interview with the Vampire",
+    "description": "Immortal vampires, blood, gothic atmosphere and the loneliness of living forever.",
+    "examples": [
+      "Immortal vampires, blood, gothic atmosphere and the loneliness of living forever..",
+      "I am looking for immortal vampires, blood, gothic atmosphere and the loneliness of living forever."
+    ]
+  },
+  {
+    "id": "zombies",
+    "keyword": "zombie",
+    "seed": "Train to Busan",
+    "description": "People struggle to survive an outbreak of zombies and infected people, barricading themselves against the living dead.",
+    "examples": [
+      "People struggle to survive an outbreak of zombies and infected people, barricading themselves against the living dead..",
+      "I am looking for people struggle to survive an outbreak of zombies and infected people, barricading themselves against the living dead."
+    ]
+  },
+  {
+    "id": "christmas",
+    "keyword": "christmas",
+    "seed": "Home Alone",
+    "description": "A cozy festive Christmas movie with family, holiday mishaps, snow and the magic of the holiday season.",
+    "examples": [
+      "A cozy festive Christmas movie with family, holiday mishaps, snow and the magic of the holiday season..",
+      "I am looking for a cozy festive Christmas movie with family, holiday mishaps, snow and the magic of the holiday season."
+    ]
+  },
+  {
+    "id": "revenge",
+    "keyword": "revenge",
+    "seed": "John Wick",
+    "description": "A wronged person sets out on a relentless revenge mission, taking down the people who hurt them.",
+    "examples": [
+      "A wronged person sets out on a relentless revenge mission, taking down the people who hurt them..",
+      "I am looking for a wronged person sets out on a relentless revenge mission, taking down the people who hurt them."
+    ]
+  },
+  {
+    "id": "spy",
+    "keyword": "spy",
+    "seed": "Mission: Impossible",
+    "description": "A secret agent on an espionage mission with undercover identities, international intrigue and double-crossing spies.",
+    "examples": [
+      "A secret agent on an espionage mission with undercover identities, international intrigue and double-crossing spies..",
+      "I am looking for a secret agent on an espionage mission with undercover identities, international intrigue and double-crossing spies."
+    ]
+  },
+  {
+    "id": "martial-arts",
+    "keyword": "martial arts",
+    "seed": "The Raid",
+    "description": "Martial artists fighting their way through dangerous opponents with expertly choreographed hand-to-hand combat.",
+    "examples": [
+      "Martial artists fighting their way through dangerous opponents with expertly choreographed hand-to-hand combat..",
+      "I am looking for martial artists fighting their way through dangerous opponents with expertly choreographed hand-to-hand combat."
+    ]
+  },
+  {
+    "id": "war",
+    "keyword": "world war ii",
+    "seed": "Saving Private Ryan",
+    "description": "Soldiers on a dangerous wartime mission, the bonds between comrades and the human cost of war on the battlefield.",
+    "examples": [
+      "Soldiers on a dangerous wartime mission, the bonds between comrades and the human cost of war on the battlefield..",
+      "I am looking for soldiers on a dangerous wartime mission, the bonds between comrades and the human cost of war on the battlefield."
+    ]
+  },
+  {
+    "id": "history",
+    "keyword": "historical event",
+    "seed": "The King's Speech",
+    "description": "A historical period drama about real events, royalty, political intrigue and life in an earlier era.",
+    "examples": [
+      "A historical period drama about real events, royalty, political intrigue and life in an earlier era..",
+      "I am looking for a historical period drama about real events, royalty, political intrigue and life in an earlier era."
+    ]
+  },
+  {
+    "id": "true-crime",
+    "keyword": "true crime",
+    "seed": "Memories of Murder",
+    "description": "A true crime story based on a real unsolved murder, a criminal investigation and the people affected.",
+    "examples": [
+      "A true crime story based on a real unsolved murder, a criminal investigation and the people affected..",
+      "I am looking for a true crime story based on a real unsolved murder, a criminal investigation and the people affected."
+    ]
+  },
+  {
+    "id": "monsters",
+    "keyword": "monster",
+    "seed": "Cloverfield",
+    "description": "A huge monster or dangerous creature threatens a city and ordinary people struggle to escape.",
+    "examples": [
+      "A huge monster or dangerous creature threatens a city and ordinary people struggle to escape..",
+      "I am looking for a huge monster or dangerous creature threatens a city and ordinary people struggle to escape."
+    ]
+  },
+  {
+    "id": "apocalypse",
+    "keyword": "post-apocalyptic future",
+    "seed": "Mad Max: Fury Road",
+    "description": "Survivors navigate a ruined post-apocalyptic world after civilization collapses, searching for safety and hope.",
+    "examples": [
+      "Survivors navigate a ruined post-apocalyptic world after civilization collapses, searching for safety and hope..",
+      "I am looking for survivors navigate a ruined post-apocalyptic world after civilization collapses, searching for safety and hope."
+    ]
+  },
+  {
+    "id": "disaster",
+    "keyword": "disaster",
+    "seed": "The Impossible",
+    "description": "Ordinary people caught in a devastating natural disaster, earthquake, tsunami or storm fight to reunite with their family.",
+    "examples": [
+      "Ordinary people caught in a devastating natural disaster, earthquake, tsunami or storm fight to reunite with their family..",
+      "I am looking for ordinary people caught in a devastating natural disaster, earthquake, tsunami or storm fight to reunite with their family."
+    ]
+  },
+  {
+    "id": "road-trip",
+    "keyword": "road trip",
+    "seed": "Little Miss Sunshine",
+    "description": "A group of people on an eventful road trip, driving across the country and discovering themselves along the way.",
+    "examples": [
+      "A group of people on an eventful road trip, driving across the country and discovering themselves along the way..",
+      "I am looking for a group of people on an eventful road trip, driving across the country and discovering themselves along the way."
+    ]
+  },
+  {
+    "id": "biography",
+    "keyword": "biography",
+    "seed": "The Social Network",
+    "description": "The true life story of an influential person, their rise to success, ambition, relationships and personal struggles. A biopic.",
+    "examples": [
+      "The true life story of an influential person, their rise to success, ambition, relationships and personal struggles.",
+      "I am looking for the true life story of an influential person, their rise to success, ambition, relationships and personal struggles. A biopic."
+    ]
+  },
+  {
+    "id": "grief",
+    "keyword": "grief",
+    "seed": "Manchester by the Sea",
+    "description": "An emotionally moving story about grief, loss, healing and complicated family relationships. Something heartfelt that makes you cry.",
+    "examples": [
+      "An emotionally moving story about grief, loss, healing and complicated family relationships.",
+      "I am looking for an emotionally moving story about grief, loss, healing and complicated family relationships. Something heartfelt that makes you cry."
+    ]
+  },
+  {
+    "id": "western",
+    "keyword": "western",
+    "seed": "True Grit",
+    "description": "Cowboys and outlaws on the American frontier, dusty towns, gunslingers and a quest for justice in the old west.",
+    "examples": [
+      "Cowboys and outlaws on the American frontier, dusty towns, gunslingers and a quest for justice in the old west..",
+      "I am looking for cowboys and outlaws on the American frontier, dusty towns, gunslingers and a quest for justice in the old west."
+    ]
+  },
+  {
+    "id": "nature",
+    "keyword": "nature documentary",
+    "seed": "March of the Penguins",
+    "description": "A beautiful nature documentary exploring wildlife, animals, oceans, forests and the natural world.",
+    "examples": [
+      "A beautiful nature documentary exploring wildlife, animals, oceans, forests and the natural world..",
+      "I am looking for a beautiful nature documentary exploring wildlife, animals, oceans, forests and the natural world."
+    ]
+  },
+  {
+    "id": "ghosts",
+    "keyword": "haunted house",
+    "seed": "The Others",
+    "description": "An eerie supernatural ghost story about a haunted house, mysterious sounds and spirits from the past.",
+    "examples": [
+      "An eerie supernatural ghost story about a haunted house, mysterious sounds and spirits from the past..",
+      "I am looking for an eerie supernatural ghost story about a haunted house, mysterious sounds and spirits from the past."
+    ]
+  },
+  {
+    "id": "cult",
+    "keyword": "cult",
+    "seed": "Midsommar",
+    "description": "An unsettling story about a mysterious religious cult, secret rituals and sinister people hiding behind a welcoming community.",
+    "examples": [
+      "An unsettling story about a mysterious religious cult, secret rituals and sinister people hiding behind a welcoming community..",
+      "I am looking for an unsettling story about a mysterious religious cult, secret rituals and sinister people hiding behind a welcoming community."
+    ]
+  },
+  {
+    "id": "prison",
+    "keyword": "prison",
+    "seed": "The Shawshank Redemption",
+    "description": "Life behind bars, a prison escape, injustice and the hope of freedom against impossible odds.",
+    "examples": [
+      "Life behind bars, a prison escape, injustice and the hope of freedom against impossible odds..",
+      "I am looking for life behind bars, a prison escape, injustice and the hope of freedom against impossible odds."
+    ]
+  },
+  {
+    "id": "gangsters",
+    "keyword": "mafia",
+    "seed": "GoodFellas",
+    "description": "Organized crime, the mafia, gangsters rising to power and the violent consequences of loyalty and betrayal.",
+    "examples": [
+      "Organized crime, the mafia, gangsters rising to power and the violent consequences of loyalty and betrayal..",
+      "I am looking for organized crime, the mafia, gangsters rising to power and the violent consequences of loyalty and betrayal."
+    ]
+  },
+  {
+    "id": "identity",
+    "keyword": "amnesia",
+    "seed": "Memento",
+    "description": "A person has lost their memory and must piece together clues to discover who they are and what happened to them.",
+    "examples": [
+      "A person has lost their memory and must piece together clues to discover who they are and what happened to them..",
+      "I am looking for a person has lost their memory and must piece together clues to discover who they are and what happened to them."
+    ]
+  },
+  {
+    "id": "multiverse",
+    "keyword": "parallel universe",
+    "seed": "Everything Everywhere All at Once",
+    "description": "Characters travel between parallel universes and alternate realities, meeting different versions of themselves across the multiverse.",
+    "examples": [
+      "Characters travel between parallel universes and alternate realities, meeting different versions of themselves across the multiverse..",
+      "I am looking for characters travel between parallel universes and alternate realities, meeting different versions of themselves across the multiverse."
+    ]
+  },
+  {
+    "id": "workplace-memory",
+    "seed": "Severance",
+    "description": "Office workers undergo a procedure that separates memories at work from memories at home. They investigate the hidden purpose of their employer.",
+    "examples": [
+      "A corporation splits employees into two selves who cannot remember what happens outside the office.",
+      "A company divides workers memories between their jobs and their private lives."
+    ]
+  },
+  {
+    "id": "constructed-reality",
+    "seed": "The Truman Show",
+    "description": "A man discovers his ordinary life is a television show and the people around him are actors. He tries to escape his manufactured world.",
+    "examples": [
+      "A whole town and its inhabitants are secretly a set built around one unsuspecting person.",
+      "Someone realizes their entire life has been staged for an audience."
+    ]
+  },
+  {
+    "id": "crime-teacher",
+    "seed": "Breaking Bad",
+    "description": "A chemistry teacher diagnosed with cancer starts manufacturing illegal drugs with a former student. He builds a criminal empire.",
+    "examples": [
+      "A sick schoolteacher turns to selling methamphetamine to provide money for his family.",
+      "A teacher starts making drugs after a cancer diagnosis and becomes a dangerous criminal."
+    ]
+  },
+  {
+    "id": "body-swap",
+    "seed": "Freaky Friday",
+    "description": "A mother and teenage daughter wake up in each other’s bodies. Experiencing the other person’s life teaches them empathy.",
+    "examples": [
+      "Two people switch bodies and must impersonate one another while figuring out how to change back.",
+      "A funny story about a parent and child swapping bodies and learning to understand each other."
+    ]
+  },
+  {
+    "id": "hidden-genius",
+    "seed": "Good Will Hunting",
+    "description": "A gifted young janitor has extraordinary mathematical ability but struggles with trauma. A therapist helps him consider his future.",
+    "examples": [
+      "A university cleaner secretly solves difficult mathematics and forms a bond with a counselor.",
+      "A working class mathematical genius resists opportunities while facing painful memories."
+    ]
+  },
+  {
+    "id": "anonymous-penpals",
+    "seed": "You've Got Mail",
+    "description": "Rival bookstore owners unknowingly exchange affectionate anonymous messages online. Their real world competition complicates their growing love.",
+    "examples": [
+      "Two business enemies fall for each other through email without knowing who is writing.",
+      "A romantic comedy about secret online pen pals who dislike each other in person."
+    ]
+  },
+  {
+    "id": "afterlife-ethics",
+    "seed": "The Good Place",
+    "description": "A woman arrives in an apparently perfect afterlife by mistake. Her companions try to become better people while unraveling its rules.",
+    "examples": [
+      "A funny series about philosophy, moral choices and an unusual group in the afterlife.",
+      "Someone who does not belong in heaven learns ethics with eccentric friends."
+    ]
+  },
+  {
+    "id": "kind-football-coach",
+    "seed": "Ted Lasso",
+    "description": "An optimistic American coach leads an English football club despite knowing little about the sport. Kindness helps his team through difficulties.",
+    "examples": [
+      "An inexperienced soccer manager wins people over with empathy, friendship and encouragement.",
+      "A warm comedy series about a compassionate coach helping a British football team."
+    ]
+  },
+  {
+    "id": "silent-creatures",
+    "seed": "A Quiet Place",
+    "description": "A family must stay silent because deadly creatures hunt by sound. Parents protect their children in a terrifying world.",
+    "examples": [
+      "People use sign language and avoid making noise to survive monsters with extremely sensitive hearing.",
+      "A survival horror story where one loud sound can attract a lethal creature."
+    ]
+  },
+  {
+    "id": "alien-impostor",
+    "seed": "The Thing",
+    "description": "An isolated Antarctic research team faces an alien that imitates living organisms. The researchers cannot tell which of them is still human.",
+    "examples": [
+      "Scientists trapped in snow distrust each other because a creature can copy anyone.",
+      "A shapeshifting extraterrestrial secretly impersonates members of a polar expedition."
+    ]
+  },
+  {
+    "id": "bookshop-celebrity",
+    "seed": "Notting Hill",
+    "description": "A quiet London bookseller falls in love with a world famous actress. Their different public and private lives cause comic misunderstandings.",
+    "examples": [
+      "A shy bookshop owner unexpectedly dates a celebrity and struggles with the attention.",
+      "A funny romance between an ordinary bookstore worker and a famous movie star."
+    ]
+  },
+  {
+    "id": "food-truck",
+    "seed": "Chef",
+    "description": "A chef leaves a prestigious restaurant and starts a food truck. A journey with his son helps him reconnect with family and rediscover cooking.",
+    "examples": [
+      "An unhappy cook builds a new life selling food from a truck on a road trip.",
+      "A father and son travel together while running a mobile kitchen."
+    ]
+  },
+  {
+    "id": "beauty-pageant-road",
+    "seed": "Little Miss Sunshine",
+    "description": "An eccentric family drives across the country so a young girl can enter a beauty contest. Their mishaps draw them together.",
+    "examples": [
+      "A dysfunctional family squeezes into a van for a chaotic trip to a child’s pageant.",
+      "A bittersweet comedy about relatives taking a little girl to a beauty competition."
+    ]
+  },
+  {
+    "id": "romantic-memory",
+    "seed": "Eternal Sunshine of the Spotless Mind",
+    "description": "After a breakup, a man undergoes a procedure to erase memories of his relationship. Reliving those moments makes him question the decision.",
+    "examples": [
+      "Two former lovers try to remove each other from their memories but their connection persists.",
+      "A science fiction romance about forgetting a painful relationship and wanting to keep its beautiful moments."
+    ]
+  },
+  {
+    "id": "ai-romance",
+    "seed": "Her",
+    "description": "A lonely man develops a romantic relationship with an intelligent operating system. Their connection changes how he understands love.",
+    "examples": [
+      "Someone falls in love with the voice of a computer assistant.",
+      "A reflective romance between a human and an artificial intelligence without a physical body."
+    ]
+  },
+  {
+    "id": "space-politics",
+    "seed": "The Expanse",
+    "description": "A crew uncovers a conspiracy across a colonized solar system. Rivalries between Earth, Mars and asteroid settlements threaten war.",
+    "examples": [
+      "Political tensions divide humans living on different planets and in the asteroid belt.",
+      "A science fiction series about a spaceship crew caught between competing human factions in space."
+    ]
+  },
+  {
+    "id": "aging-memory",
+    "seed": "The Father",
+    "description": "An older man’s failing memory makes his surroundings and family seem unfamiliar. His daughter struggles to care for him.",
+    "examples": [
+      "A drama experienced through the confused perspective of someone with dementia.",
+      "An elderly parent loses track of reality as people and rooms appear to change."
+    ]
+  },
+  {
+    "id": "inheritance-family",
+    "seed": "Knives Out",
+    "description": "A wealthy writer dies and a detective examines his family’s competing claims to the inheritance. Lies and hidden motives complicate the case.",
+    "examples": [
+      "A rich family argues over a will while an investigator solves a suspicious death.",
+      "A witty mystery about a fortune, a dead patriarch and relatives hiding secrets."
+    ]
+  },
+  {
+    "id": "school-music",
+    "seed": "School of Rock",
+    "description": "An unemployed musician pretends to be a substitute teacher and turns a class into a rock band. The students discover their talents.",
+    "examples": [
+      "A fake teacher secretly coaches schoolchildren for a battle of the bands.",
+      "A funny story about a musician teaching a classroom of kids to play rock music."
+    ]
+  },
+  {
+    "id": "underwater-thriller",
+    "seed": "Underwater",
+    "description": "An accident damages a deep sea facility. Workers must cross the ocean floor while unknown creatures threaten them.",
+    "examples": [
+      "A crew trapped in a broken underwater station faces pressure, darkness and dangerous life forms.",
+      "A survival thriller beneath the ocean where a research base begins collapsing."
+    ]
+  },
+  {
+    "id": "ocean-contact",
+    "seed": "The Abyss",
+    "description": "An underwater crew investigates a sunken submarine and encounters an unknown intelligence in the depths. Pressure and mistrust endanger the mission.",
+    "examples": [
+      "Divers find mysterious intelligent beings deep beneath the ocean.",
+      "A tense deep sea expedition discovers a hidden form of life."
+    ]
+  },
+  {
+    "id": "plane-mystery",
+    "seed": "Manifest",
+    "description": "An airliner lands years after it vanished although the passengers experienced an ordinary flight. They struggle with changed lives and strange connections.",
+    "examples": [
+      "People return from a flight to find years have passed for everyone else.",
+      "A mystery series about an airplane disappearing and its passengers returning without aging."
+    ]
+  },
+  {
+    "id": "child-abduction",
+    "seed": "Prisoners",
+    "description": "A father becomes desperate after his daughter disappears. A detective follows difficult clues while the search pushes people toward terrible choices.",
+    "examples": [
+      "A parent takes an investigation into his own hands when two young girls go missing.",
+      "A dark thriller about an abducted child and the limits of a father’s desperation."
+    ]
+  },
+  {
+    "id": "jury-debate",
+    "seed": "12 Angry Men",
+    "description": "A jury debates whether a young man is guilty of murder. One juror challenges the evidence and the prejudices in the room.",
+    "examples": [
+      "Twelve people deliberate a death penalty case while one person argues for reasonable doubt.",
+      "A tense drama set mostly in a room where jurors reconsider a murder verdict."
+    ]
+  },
+  {
+    "id": "whistleblower",
+    "seed": "The Insider",
+    "description": "A tobacco industry scientist considers exposing dangerous practices. A journalist faces pressure while helping bring the testimony to the public.",
+    "examples": [
+      "A company employee risks his career and family’s security to reveal wrongdoing.",
+      "A serious drama about a corporate whistleblower and a journalist investigating powerful interests."
+    ]
+  },
+  {
+    "id": "finance-collapse",
+    "seed": "The Big Short",
+    "description": "Investors discover deep flaws in the housing market and bet against it. Their investigation exposes the forces behind a financial collapse.",
+    "examples": [
+      "A group notices the mortgage bubble before the crash and tries to profit from its failure.",
+      "A darkly funny explanation of bankers, risky loans and a looming economic crisis."
+    ]
+  },
+  {
+    "id": "small-town-coverup",
+    "seed": "Broadchurch",
+    "description": "A child’s death fractures a coastal community as detectives investigate. Neighbors and relatives hide secrets that complicate the case.",
+    "examples": [
+      "A murder investigation in a seaside town exposes private lives and mistrust.",
+      "A British crime series about detectives investigating a boy’s death in a small community."
+    ]
+  },
+  {
+    "id": "competitive-obsession",
+    "seed": "Whiplash",
+    "description": "An ambitious young drummer studies under a ruthless music teacher. Their relationship explores the cost of perfection and success.",
+    "examples": [
+      "A jazz student endures a demanding instructor’s abuse while chasing greatness.",
+      "An intense drama about a drummer and a cruel mentor pushing performance too far."
+    ]
+  },
+  {
+    "id": "found-family-space",
+    "seed": "Guardians of the Galaxy",
+    "description": "Misfit criminals form an unlikely team to protect the galaxy. Their shared danger turns them into a found family.",
+    "examples": [
+      "A funny space adventure about outcasts, a talking animal and an alien tree saving the universe.",
+      "A band of eccentric interstellar fugitives becomes friends while opposing a powerful enemy."
+    ]
+  },
+  {
+    "id": "grief-robot",
+    "seed": "Big Hero 6",
+    "description": "A young inventor grieving his brother forms a bond with a gentle healthcare robot. They join friends to uncover a dangerous plot.",
+    "examples": [
+      "An inflatable medical robot comforts a teenager after a family tragedy.",
+      "An animated adventure about a boy and his late brother’s caring robot."
+    ]
+  },
+  {
+    "id": "historical-codebreaking",
+    "seed": "The Imitation Game",
+    "description": "A mathematician leads a secret wartime effort to break encrypted enemy messages. The work is complicated by prejudice and personal struggles.",
+    "examples": [
+      "A team builds a machine to decipher military codes during the Second World War.",
+      "A historical drama about Alan Turing and cracking the Enigma code."
+    ]
+  },
+  {
+    "id": "submarine-war",
+    "seed": "Das Boot",
+    "description": "A submarine crew endures long stretches of tension and sudden attacks during wartime. Claustrophobic conditions expose fear and camaraderie.",
+    "examples": [
+      "Sailors trapped aboard a wartime submarine struggle to survive depth charges.",
+      "A tense naval war story experienced inside a cramped U-boat."
+    ]
+  },
+  {
+    "id": "female-scientists",
+    "seed": "Hidden Figures",
+    "description": "Black women mathematicians make essential contributions to the American space program while confronting racism and sexism.",
+    "examples": [
+      "Women calculate spacecraft trajectories at NASA and fight to have their work recognized.",
+      "An inspiring historical drama about overlooked female mathematicians helping send astronauts into orbit."
+    ]
+  },
+  {
+    "id": "orphan-chess",
+    "seed": "The Queen's Gambit",
+    "description": "An orphaned girl discovers a gift for chess and rises through competitive tournaments. Addiction and loneliness complicate her success.",
+    "examples": [
+      "A young woman becomes a brilliant chess player while battling personal demons.",
+      "A period drama series about a female chess prodigy competing in a male dominated world."
+    ]
+  },
+  {
+    "id": "wall-street-fraud",
+    "seed": "The Wolf of Wall Street",
+    "description": "A stockbroker builds a fortune through fraud and reckless excess. His associates share the wealth while investigators close in.",
+    "examples": [
+      "An ambitious salesman creates a corrupt brokerage and indulges in an extravagant lifestyle.",
+      "A dark comedy about financial scams, greed and a stockbroker’s rise and downfall."
+    ]
+  },
+  {
+    "id": "medical-pandemic",
+    "seed": "Contagion",
+    "description": "A new virus spreads across the world as scientists race to understand it. Public fear, misinformation and strained health systems shape the response.",
+    "examples": [
+      "A realistic epidemic thriller following doctors, researchers and families during a global outbreak.",
+      "An infectious disease spreads rapidly while experts develop a vaccine."
+    ]
+  },
+  {
+    "id": "racing-rivalry",
+    "seed": "Rush",
+    "description": "Two Formula One drivers with contrasting personalities compete for the championship. Their rivalry is tested by danger and recovery.",
+    "examples": [
+      "A historical sports drama about rival racing drivers and a devastating crash.",
+      "An intense competition between an impulsive driver and a disciplined champion."
+    ]
+  },
+  {
+    "id": "trapped-climbers",
+    "seed": "127 Hours",
+    "description": "A climber is trapped alone when a boulder pins his arm in a remote canyon. Limited water and isolation force a desperate choice.",
+    "examples": [
+      "A lone adventurer cannot escape a rock accident and must fight to stay alive.",
+      "A survival story about a hiker stuck in a canyon with no one nearby."
+    ]
+  },
+  {
+    "id": "media-manipulation",
+    "seed": "Nightcrawler",
+    "description": "A man begins filming violent incidents for local television news. His ambition and lack of empathy push him toward creating the stories he sells.",
+    "examples": [
+      "A freelance cameraman chases crime scenes at night and manipulates events for better footage.",
+      "A disturbing thriller about sensational news and a morally empty videographer."
+    ]
+  },
+  {
+    "id": "workplace-satire",
+    "seed": "Office Space",
+    "description": "Frustrated office employees rebel against pointless corporate rules and tedious work. Their scheme threatens to spiral out of control.",
+    "examples": [
+      "A comedy about cubicles, incompetent bosses and workers who have had enough.",
+      "A bored programmer changes his attitude toward his soul crushing job and plans a petty corporate fraud."
+    ]
+  },
+  {
+    "id": "romantic-time",
+    "seed": "About Time",
+    "description": "A young man discovers he can revisit moments in his own life. He uses time travel to navigate love, family and appreciating ordinary days.",
+    "examples": [
+      "A warm romance about a man who rewinds time and learns to value everyday life.",
+      "Someone inherits the ability to travel into his past and tries to improve his relationships."
+    ]
+  }
 ]

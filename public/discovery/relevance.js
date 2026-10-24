@@ -34,12 +34,18 @@
    const warmth=intent.comfort?(genres.includes(35)?.055:0)+(/\b(?:warm|uplifting|kindness|joy|gentle|hopeful|friendship|reconnect\w*|support\w*|optimis\w*)\b/i.test(row.overview)? .065:0)-(/\b(?:terror|murder|kill|disturb|dread|violent)\w*\b/i.test(row.overview)? .09:0)-(genres.some(g=>g===28||g===53)? .12:0):0;
    return {...row,score,rank:score*.7+lexical*.26+coverage*.1+affinity+Math.max(0,Math.min(10,Number(row.rating)||0))*.003+warmth,lexical,coverage,matchedTerms:found};
   }).filter(Boolean);
-  const best=Math.max(0,...eligible.map(r=>r.score)),floor=Math.max(.24,best-.15);
-  const ordered=eligible.filter(r=>r.match==='title'||context.broad||r.score>=floor||(r.score>=.16&&r.matchedTerms.length>=2&&r.coverage>=.35)).sort((a,b)=>Number(b.match==='title')-Number(a.match==='title')||b.rank-a.rank);
+  const calibration=context.calibration||{},minimum=Number.isFinite(calibration.minimum)?calibration.minimum:.24,lexicalMinimum=Number.isFinite(calibration.lexicalMinimum)?calibration.lexicalMinimum:.16,window=Number.isFinite(calibration.window)?calibration.window:.15;
+  const best=Math.max(0,...eligible.map(r=>r.score)),floor=Math.max(minimum,best-window);
+  const ordered=eligible.filter(r=>r.match==='title'||context.broad||r.score>=floor||(r.score>=lexicalMinimum&&r.matchedTerms.length>=2&&r.coverage>=.35)).sort((a,b)=>Number(b.match==='title')-Number(a.match==='title')||b.rank-a.rank);
   const top=ordered[0]?.rank||0;
   return ordered.filter(r=>r.match==='title'||context.broad||r.rank>=top-.2).slice(0,8).map(({lexical,coverage,matchedTerms,...row})=>({...row,reason:row.source==='reference'?'Related to your reference':matchedTerms.length>=2?'Matches your story details':context.broad?'Matches your filters':'A close story match'}));
  }
- const api=Object.freeze({rankCandidates,expandQuery,tokens});
+ function selectStoryTopics(topics,target,config={}){
+  const minimum=Number.isFinite(config.minimum)?config.minimum:.54,window=Number.isFinite(config.window)?config.window:.075,limit=Math.max(1,Math.min(2,config.limit||2));
+  const ordered=topics.map(t=>({id:t.id,score:Math.max(...(t.vectors||[t.vector]).map(v=>v.reduce((s,n,i)=>s+n*target[i],0)))})).filter(t=>Number.isFinite(t.score)).sort((a,b)=>b.score-a.score);
+  return ordered.filter(t=>t.score>=minimum&&t.score>=ordered[0].score-window).slice(0,limit).map(t=>t.id);
+ }
+ const api=Object.freeze({rankCandidates,expandQuery,tokens,selectStoryTopics});
  if(typeof module!=='undefined'&&module.exports)module.exports=api;
  else globalThis.SwiflyRelevance=api;
 })();

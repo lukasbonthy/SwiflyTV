@@ -1,0 +1,2060 @@
+{
+  "baseline": "63cc2a102f2c70763e82f9c20dcc92b954eda297",
+  "scope": "Same 60 authored title descriptions, 80 labeled queries and eight absent-target probes. Ranking only; no live catalog claim.",
+  "before": {
+    "model": "Xenova/all-MiniLM-L6-v2 q8 (real CPU inference)",
+    "scope": "Ranking only, 60 authored title descriptions; no live catalog claim",
+    "queries": 80,
+    "top1Hits": 76,
+    "top3Hits": 79,
+    "negativeQueries": 8,
+    "correctAbstentions": 1,
+    "seconds": 1.3,
+    "results": [
+      {
+        "query": "rival magicians trying to outsmart each other",
+        "expected": [
+          "The Prestige",
+          "The Illusionist"
+        ],
+        "top3": [
+          "The Prestige"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "understanding a language from an alien spacecraft",
+        "expected": [
+          "Arrival"
+        ],
+        "top3": [
+          "Arrival"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "an astronaut who is stranded alone on Mars",
+        "expected": [
+          "The Martian"
+        ],
+        "top3": [
+          "The Martian"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "people trapped repeating yesterday",
+        "expected": [
+          "Groundhog Day",
+          "Palm Springs",
+          "Edge of Tomorrow"
+        ],
+        "top3": [
+          "Palm Springs",
+          "Groundhog Day",
+          "Edge of Tomorrow"
+        ],
+        "returned": 3,
+        "hit": true
+      },
+      {
+        "query": "a clever robbery of a casino by a group of thieves",
+        "expected": [
+          "Ocean's Eleven"
+        ],
+        "top3": [
+          "Ocean's Eleven",
+          "Inside Man",
+          "Now You See Me"
+        ],
+        "returned": 5,
+        "hit": true
+      },
+      {
+        "query": "a detective solving a murder with a house full of suspects",
+        "expected": [
+          "Knives Out",
+          "Clue"
+        ],
+        "top3": [
+          "Clue",
+          "Only Murders in the Building",
+          "Knives Out"
+        ],
+        "returned": 5,
+        "hit": true
+      },
+      {
+        "query": "a comforting movie after a really exhausting day",
+        "expected": [
+          "Chef",
+          "Paddington 2",
+          "The Intouchables"
+        ],
+        "top3": [
+          "Amelie",
+          "The Intouchables",
+          "Little Miss Sunshine"
+        ],
+        "returned": 8,
+        "hit": true
+      },
+      {
+        "query": "a funny romantic story about falling in love",
+        "expected": [
+          "Notting Hill",
+          "When Harry Met Sally",
+          "You've Got Mail",
+          "10 Things I Hate About You",
+          "Palm Springs"
+        ],
+        "top3": [
+          "Notting Hill",
+          "Groundhog Day"
+        ],
+        "returned": 2,
+        "hit": true
+      },
+      {
+        "query": "someone with memory loss investigating a murder",
+        "expected": [
+          "Memento"
+        ],
+        "top3": [
+          "Memento"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a programmer testing whether a robot is conscious",
+        "expected": [
+          "Ex Machina"
+        ],
+        "top3": [
+          "Ex Machina"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a family caught in a time travel mystery in a small German town",
+        "expected": [
+          "Dark"
+        ],
+        "top3": [
+          "Dark",
+          "About Time"
+        ],
+        "returned": 2,
+        "hit": true
+      },
+      {
+        "query": "an optimistic football coach who helps people through kindness",
+        "expected": [
+          "Ted Lasso"
+        ],
+        "top3": [
+          "Ted Lasso"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a poor family pretending to be qualified to work for rich people",
+        "expected": [
+          "Parasite"
+        ],
+        "top3": [
+          "Parasite"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a musical about an actress and a jazz musician falling in love",
+        "expected": [
+          "La La Land"
+        ],
+        "top3": [
+          "La La Land"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a gentle adventure to watch with my children",
+        "expected": [
+          "Paddington 2"
+        ],
+        "top3": [
+          "Paddington 2"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a scientist who hears a radio signal from another civilization",
+        "expected": [
+          "Contact"
+        ],
+        "top3": [
+          "Contact",
+          "The Thing"
+        ],
+        "returned": 2,
+        "hit": true
+      },
+      {
+        "query": "a man discovering that his whole life is a television show",
+        "expected": [
+          "The Truman Show"
+        ],
+        "top3": [
+          "The Truman Show"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "an office where employees have separate memories at work",
+        "expected": [
+          "Severance"
+        ],
+        "top3": [
+          "Severance"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a family driving across the country for a beauty contest",
+        "expected": [
+          "Little Miss Sunshine"
+        ],
+        "top3": [
+          "Little Miss Sunshine"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a robot from the future protecting a child",
+        "expected": [
+          "Terminator 2: Judgment Day"
+        ],
+        "top3": [
+          "Terminator 2: Judgment Day",
+          "Back to the Future",
+          "A Quiet Place"
+        ],
+        "returned": 3,
+        "hit": true
+      },
+      {
+        "query": "people isolated with a monster that can imitate them",
+        "expected": [
+          "The Thing"
+        ],
+        "top3": [
+          "The Thing",
+          "The Conjuring",
+          "Stranger Things"
+        ],
+        "returned": 8,
+        "hit": true
+      },
+      {
+        "query": "an uplifting story about an unlikely caregiver and friendship",
+        "expected": [
+          "The Intouchables"
+        ],
+        "top3": [
+          "The Intouchables"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "parents trying to keep their children quiet to avoid creatures",
+        "expected": [
+          "A Quiet Place"
+        ],
+        "top3": [
+          "A Quiet Place"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a thief who enters dreams to steal ideas",
+        "expected": [
+          "Inception"
+        ],
+        "top3": [
+          "Inception"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a teenager going back in time and changing how his parents met",
+        "expected": [
+          "Back to the Future"
+        ],
+        "top3": [
+          "Back to the Future",
+          "About Time"
+        ],
+        "returned": 2,
+        "hit": true
+      },
+      {
+        "query": "a funny afterlife show about learning to be a better person",
+        "expected": [
+          "The Good Place"
+        ],
+        "top3": [
+          "The Good Place"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a space crew investigating political conflict between Earth and Mars",
+        "expected": [
+          "The Expanse"
+        ],
+        "top3": [
+          "The Expanse",
+          "The Martian"
+        ],
+        "returned": 2,
+        "hit": true
+      },
+      {
+        "query": "two bookstore owners falling in love through anonymous emails",
+        "expected": [
+          "You've Got Mail"
+        ],
+        "top3": [
+          "You've Got Mail"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "an emotional multiverse adventure about a mother and daughter",
+        "expected": [
+          "Everything Everywhere All at Once"
+        ],
+        "top3": [
+          "Everything Everywhere All at Once"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "older neighbors investigating a murder and recording a podcast",
+        "expected": [
+          "Only Murders in the Building"
+        ],
+        "top3": [
+          "Only Murders in the Building"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a teenager and an eccentric scientist must fix a damaged timeline",
+        "expected": [
+          "Back to the Future"
+        ],
+        "top3": [
+          "Back to the Future"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a quiet romance that is mostly two strangers talking through the night",
+        "expected": [
+          "Before Sunrise"
+        ],
+        "top3": [
+          "Before Sunrise",
+          "Notting Hill",
+          "You've Got Mail"
+        ],
+        "returned": 6,
+        "hit": true
+      },
+      {
+        "query": "a retired assassin seeks revenge after criminals attack his home",
+        "expected": [
+          "John Wick"
+        ],
+        "top3": [
+          "John Wick",
+          "Die Hard",
+          "Knives Out"
+        ],
+        "returned": 3,
+        "hit": true
+      },
+      {
+        "query": "an investigation on an island makes a man question his own memories",
+        "expected": [
+          "Shutter Island"
+        ],
+        "top3": [
+          "Shutter Island",
+          "Memento",
+          "The Truman Show"
+        ],
+        "returned": 3,
+        "hit": true
+      },
+      {
+        "query": "an artificial woman in a remote inventor’s house outsmarts her evaluators",
+        "expected": [
+          "Ex Machina"
+        ],
+        "top3": [
+          "Ex Machina",
+          "Blade Runner 2049",
+          "The Thing"
+        ],
+        "returned": 3,
+        "hit": true
+      },
+      {
+        "query": "a cook starts over in a truck and reconnects with his son",
+        "expected": [
+          "Chef"
+        ],
+        "top3": [
+          "Chef"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a reserved bookshop owner starts dating a celebrity",
+        "expected": [
+          "Notting Hill"
+        ],
+        "top3": [
+          "You've Got Mail",
+          "Notting Hill",
+          "Knives Out"
+        ],
+        "returned": 5,
+        "hit": true
+      },
+      {
+        "query": "a kind bear gets framed for stealing a present",
+        "expected": [
+          "Paddington 2"
+        ],
+        "top3": [
+          "Paddington 2"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a space mission separates a father and daughter through time dilation",
+        "expected": [
+          "Interstellar"
+        ],
+        "top3": [
+          "Interstellar"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a crew aboard a commercial spaceship is hunted by a creature",
+        "expected": [
+          "Alien"
+        ],
+        "top3": [
+          "Alien"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "jazz, Hollywood ambitions and the sacrifices a romance demands",
+        "expected": [
+          "La La Land"
+        ],
+        "top3": [
+          "La La Land"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "performers use illusions to stage bank robberies",
+        "expected": [
+          "Now You See Me"
+        ],
+        "top3": [
+          "Now You See Me",
+          "The Illusionist",
+          "Heat"
+        ],
+        "returned": 3,
+        "hit": true
+      },
+      {
+        "query": "a lone officer in a skyscraper during a criminal takeover",
+        "expected": [
+          "Die Hard"
+        ],
+        "top3": [
+          "Die Hard"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a janitor with a gift for mathematics works through trauma with a therapist",
+        "expected": [
+          "Good Will Hunting"
+        ],
+        "top3": [
+          "Good Will Hunting"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "amateur sleuths record a podcast about a murder in their apartment building",
+        "expected": [
+          "Only Murders in the Building"
+        ],
+        "top3": [
+          "Only Murders in the Building"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "workers cannot remember their outside lives when they enter the office",
+        "expected": [
+          "Severance"
+        ],
+        "top3": [
+          "Severance",
+          "Memento"
+        ],
+        "returned": 2,
+        "hit": true
+      },
+      {
+        "query": "someone tries to escape a manufactured reality built around his life",
+        "expected": [
+          "The Truman Show"
+        ],
+        "top3": [
+          "The Truman Show",
+          "Inception"
+        ],
+        "returned": 2,
+        "hit": true
+      },
+      {
+        "query": "a compassionate American coach manages an English football club",
+        "expected": [
+          "Ted Lasso"
+        ],
+        "top3": [
+          "Ted Lasso"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "an alien hides by impersonating researchers in Antarctica",
+        "expected": [
+          "The Thing"
+        ],
+        "top3": [
+          "The Thing"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a romance between wedding guests who cannot escape the same day",
+        "expected": [
+          "Palm Springs"
+        ],
+        "top3": [
+          "Palm Springs"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "A company divides workers memories between their job and their life at home",
+        "expected": [
+          "Severance"
+        ],
+        "top3": [
+          "Severance",
+          "Memento",
+          "Good Will Hunting"
+        ],
+        "returned": 3,
+        "hit": true
+      },
+      {
+        "query": "A man loses his ability to form new memories and leaves himself clues",
+        "expected": [
+          "Memento"
+        ],
+        "top3": [
+          "Memento"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "A father and daughter age at different rates during an interstellar rescue mission",
+        "expected": [
+          "Interstellar"
+        ],
+        "top3": [
+          "Interstellar"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "An expert in linguistics must decode messages from visitors to Earth",
+        "expected": [
+          "Arrival"
+        ],
+        "top3": [
+          "Arrival"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "Someone survives on a barren planet by farming and solving engineering problems",
+        "expected": [
+          "The Martian"
+        ],
+        "top3": [
+          "The Martian",
+          "Dune",
+          "Everything Everywhere All at Once"
+        ],
+        "returned": 4,
+        "hit": true
+      },
+      {
+        "query": "Two performers destroy their personal lives trying to perfect a stage illusion",
+        "expected": [
+          "The Prestige"
+        ],
+        "top3": [
+          "The Prestige",
+          "The Illusionist"
+        ],
+        "returned": 2,
+        "hit": true
+      },
+      {
+        "query": "People at a wedding discover they are stuck living that day repeatedly",
+        "expected": [
+          "Palm Springs"
+        ],
+        "top3": [
+          "Palm Springs"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "A reluctant weatherman has endless chances to improve one day",
+        "expected": [
+          "Groundhog Day"
+        ],
+        "top3": [
+          "Groundhog Day"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "A soldier repeats a deadly battle and learns from each failed attempt",
+        "expected": [
+          "Edge of Tomorrow"
+        ],
+        "top3": [
+          "Edge of Tomorrow"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "A man notices his friends and neighbors may all be actors playing a part",
+        "expected": [
+          "The Truman Show"
+        ],
+        "top3": [
+          "The Truman Show",
+          "Only Murders in the Building",
+          "The Intouchables"
+        ],
+        "returned": 8,
+        "hit": true
+      },
+      {
+        "query": "A schoolteacher with cancer starts a dangerous business making drugs",
+        "expected": [
+          "Breaking Bad"
+        ],
+        "top3": [
+          "Breaking Bad"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "Three true crime fans become amateur investigators after a neighbor dies",
+        "expected": [
+          "Only Murders in the Building"
+        ],
+        "top3": [
+          "Only Murders in the Building"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "A person who has lived selfishly gets a chance to study ethics after death",
+        "expected": [
+          "The Good Place"
+        ],
+        "top3": [
+          "Good Will Hunting",
+          "The Good Place"
+        ],
+        "returned": 2,
+        "hit": true
+      },
+      {
+        "query": "A gentle American sports coach helps a struggling British club",
+        "expected": [
+          "Ted Lasso"
+        ],
+        "top3": [
+          "Ted Lasso"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "Teenagers in a small town uncover experiments and a frightening alternate dimension",
+        "expected": [
+          "Stranger Things"
+        ],
+        "top3": [
+          "Stranger Things"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "Rival factions on Earth Mars and the asteroid belt face a mysterious conspiracy",
+        "expected": [
+          "The Expanse"
+        ],
+        "top3": [
+          "The Expanse"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "A child goes missing and families find their histories are connected across time",
+        "expected": [
+          "Dark"
+        ],
+        "top3": [
+          "Dark"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "A restaurant worker leaves his job and takes his son on a food truck adventure",
+        "expected": [
+          "Chef"
+        ],
+        "top3": [
+          "Chef"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "A girl’s relatives drive a battered van to get her to a pageant",
+        "expected": [
+          "Little Miss Sunshine"
+        ],
+        "top3": [],
+        "returned": 0,
+        "hit": false
+      },
+      {
+        "query": "A robot must protect a boy from a more advanced assassin sent from the future",
+        "expected": [
+          "Terminator 2: Judgment Day"
+        ],
+        "top3": [
+          "Terminator 2: Judgment Day",
+          "Ex Machina",
+          "Back to the Future"
+        ],
+        "returned": 3,
+        "hit": true
+      },
+      {
+        "query": "A group cannot tell which colleague has been replaced by an alien in a frozen research base",
+        "expected": [
+          "The Thing"
+        ],
+        "top3": [
+          "The Thing",
+          "Alien",
+          "Contact"
+        ],
+        "returned": 4,
+        "hit": true
+      },
+      {
+        "query": "A family’s survival depends on not making any sound",
+        "expected": [
+          "A Quiet Place"
+        ],
+        "top3": [
+          "A Quiet Place"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "A human evaluator is manipulated by an artificial woman during a private experiment",
+        "expected": [
+          "Ex Machina"
+        ],
+        "top3": [
+          "Ex Machina",
+          "The Thing",
+          "Blade Runner 2049"
+        ],
+        "returned": 3,
+        "hit": true
+      },
+      {
+        "query": "A janitor’s remarkable mathematical gift clashes with his emotional wounds",
+        "expected": [
+          "Good Will Hunting"
+        ],
+        "top3": [
+          "Good Will Hunting"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "Two competitors who own bookstores secretly write loving messages to each other",
+        "expected": [
+          "You've Got Mail"
+        ],
+        "top3": [
+          "You've Got Mail"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "A glamorous actress dates an unassuming London shopkeeper",
+        "expected": [
+          "Notting Hill"
+        ],
+        "top3": [
+          "Notting Hill",
+          "Amelie"
+        ],
+        "returned": 2,
+        "hit": true
+      },
+      {
+        "query": "A wealthy disabled man and an unconventional carer form a warm friendship",
+        "expected": [
+          "The Intouchables"
+        ],
+        "top3": [
+          "The Intouchables"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "A detective’s investigation inside a mental hospital unravels his own reality",
+        "expected": [
+          "Shutter Island"
+        ],
+        "top3": [
+          "Shutter Island",
+          "Inside Man",
+          "Knives Out"
+        ],
+        "returned": 8,
+        "hit": true
+      },
+      {
+        "query": "A group of thieves wants to empty the vaults of several Las Vegas casinos",
+        "expected": [
+          "Ocean's Eleven"
+        ],
+        "top3": [
+          "Ocean's Eleven",
+          "Inception"
+        ],
+        "returned": 2,
+        "hit": true
+      },
+      {
+        "query": "A mother’s difficult relationship with her daughter unfolds across alternate universes",
+        "expected": [
+          "Everything Everywhere All at Once"
+        ],
+        "top3": [
+          "Everything Everywhere All at Once",
+          "Interstellar",
+          "Dark"
+        ],
+        "returned": 4,
+        "hit": true
+      },
+      {
+        "query": "A nature documentary about coral bleaching and reef restoration",
+        "expected": [],
+        "top3": [
+          "Ocean's Eleven"
+        ],
+        "returned": 1,
+        "hit": false
+      },
+      {
+        "query": "An animated rat dreams of becoming a chef in a Paris restaurant",
+        "expected": [],
+        "top3": [
+          "Chef"
+        ],
+        "returned": 1,
+        "hit": false
+      },
+      {
+        "query": "A lawyer investigates a town’s drinking water being poisoned by a corporation",
+        "expected": [],
+        "top3": [
+          "Breaking Bad",
+          "Heat",
+          "Inside Man"
+        ],
+        "returned": 3,
+        "hit": false
+      },
+      {
+        "query": "An archaeologist races Nazis to recover the Ark of the Covenant",
+        "expected": [],
+        "top3": [],
+        "returned": 0,
+        "hit": true
+      },
+      {
+        "query": "A drummer is pushed to breaking point by a ruthless jazz teacher",
+        "expected": [],
+        "top3": [
+          "Breaking Bad"
+        ],
+        "returned": 1,
+        "hit": false
+      },
+      {
+        "query": "An orphaned girl becomes a competitive chess prodigy while battling addiction",
+        "expected": [],
+        "top3": [
+          "Inception",
+          "Breaking Bad",
+          "Amelie"
+        ],
+        "returned": 4,
+        "hit": false
+      },
+      {
+        "query": "A silent comedy where a tramp befriends a blind flower seller",
+        "expected": [],
+        "top3": [
+          "A Quiet Place",
+          "Notting Hill",
+          "You've Got Mail"
+        ],
+        "returned": 8,
+        "hit": false
+      },
+      {
+        "query": "An animated boy befriends a dragon instead of hunting it",
+        "expected": [],
+        "top3": [
+          "Paddington 2",
+          "Star Wars",
+          "A Quiet Place"
+        ],
+        "returned": 3,
+        "hit": false
+      }
+    ]
+  },
+  "after": {
+    "model": "Xenova/bge-small-en-v1.5 q8 (real CPU inference)",
+    "scope": "Ranking only, 60 authored title descriptions; no live catalog claim",
+    "queries": 80,
+    "top1Hits": 78,
+    "top3Hits": 80,
+    "negativeQueries": 8,
+    "correctAbstentions": 6,
+    "seconds": 1.6,
+    "results": [
+      {
+        "query": "rival magicians trying to outsmart each other",
+        "expected": [
+          "The Prestige",
+          "The Illusionist"
+        ],
+        "top3": [
+          "The Prestige",
+          "Now You See Me"
+        ],
+        "returned": 2,
+        "hit": true
+      },
+      {
+        "query": "understanding a language from an alien spacecraft",
+        "expected": [
+          "Arrival"
+        ],
+        "top3": [
+          "Arrival"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "an astronaut who is stranded alone on Mars",
+        "expected": [
+          "The Martian"
+        ],
+        "top3": [
+          "The Martian",
+          "Gravity"
+        ],
+        "returned": 2,
+        "hit": true
+      },
+      {
+        "query": "people trapped repeating yesterday",
+        "expected": [
+          "Groundhog Day",
+          "Palm Springs",
+          "Edge of Tomorrow"
+        ],
+        "top3": [
+          "Palm Springs",
+          "Groundhog Day",
+          "Edge of Tomorrow"
+        ],
+        "returned": 3,
+        "hit": true
+      },
+      {
+        "query": "a clever robbery of a casino by a group of thieves",
+        "expected": [
+          "Ocean's Eleven"
+        ],
+        "top3": [
+          "Ocean's Eleven",
+          "Inception",
+          "Now You See Me"
+        ],
+        "returned": 3,
+        "hit": true
+      },
+      {
+        "query": "a detective solving a murder with a house full of suspects",
+        "expected": [
+          "Knives Out",
+          "Clue"
+        ],
+        "top3": [
+          "Clue",
+          "Knives Out",
+          "Only Murders in the Building"
+        ],
+        "returned": 8,
+        "hit": true
+      },
+      {
+        "query": "a comforting movie after a really exhausting day",
+        "expected": [
+          "Chef",
+          "Paddington 2",
+          "The Intouchables"
+        ],
+        "top3": [
+          "The Intouchables",
+          "Amelie",
+          "Paddington 2"
+        ],
+        "returned": 8,
+        "hit": true
+      },
+      {
+        "query": "a funny romantic story about falling in love",
+        "expected": [
+          "Notting Hill",
+          "When Harry Met Sally",
+          "You've Got Mail",
+          "10 Things I Hate About You",
+          "Palm Springs"
+        ],
+        "top3": [
+          "Notting Hill"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "someone with memory loss investigating a murder",
+        "expected": [
+          "Memento"
+        ],
+        "top3": [
+          "Memento"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a programmer testing whether a robot is conscious",
+        "expected": [
+          "Ex Machina"
+        ],
+        "top3": [
+          "Ex Machina"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a family caught in a time travel mystery in a small German town",
+        "expected": [
+          "Dark"
+        ],
+        "top3": [
+          "Dark"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "an optimistic football coach who helps people through kindness",
+        "expected": [
+          "Ted Lasso"
+        ],
+        "top3": [
+          "Ted Lasso"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a poor family pretending to be qualified to work for rich people",
+        "expected": [
+          "Parasite"
+        ],
+        "top3": [
+          "Parasite",
+          "Severance"
+        ],
+        "returned": 2,
+        "hit": true
+      },
+      {
+        "query": "a musical about an actress and a jazz musician falling in love",
+        "expected": [
+          "La La Land"
+        ],
+        "top3": [
+          "La La Land"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a gentle adventure to watch with my children",
+        "expected": [
+          "Paddington 2"
+        ],
+        "top3": [
+          "Paddington 2"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a scientist who hears a radio signal from another civilization",
+        "expected": [
+          "Contact"
+        ],
+        "top3": [
+          "Contact",
+          "The Thing"
+        ],
+        "returned": 2,
+        "hit": true
+      },
+      {
+        "query": "a man discovering that his whole life is a television show",
+        "expected": [
+          "The Truman Show"
+        ],
+        "top3": [
+          "The Truman Show"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "an office where employees have separate memories at work",
+        "expected": [
+          "Severance"
+        ],
+        "top3": [
+          "Severance"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a family driving across the country for a beauty contest",
+        "expected": [
+          "Little Miss Sunshine"
+        ],
+        "top3": [
+          "Little Miss Sunshine"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a robot from the future protecting a child",
+        "expected": [
+          "Terminator 2: Judgment Day"
+        ],
+        "top3": [
+          "Terminator 2: Judgment Day",
+          "Back to the Future",
+          "A Quiet Place"
+        ],
+        "returned": 4,
+        "hit": true
+      },
+      {
+        "query": "people isolated with a monster that can imitate them",
+        "expected": [
+          "The Thing"
+        ],
+        "top3": [
+          "The Thing",
+          "The Conjuring",
+          "Parasite"
+        ],
+        "returned": 5,
+        "hit": true
+      },
+      {
+        "query": "an uplifting story about an unlikely caregiver and friendship",
+        "expected": [
+          "The Intouchables"
+        ],
+        "top3": [
+          "The Intouchables"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "parents trying to keep their children quiet to avoid creatures",
+        "expected": [
+          "A Quiet Place"
+        ],
+        "top3": [
+          "A Quiet Place"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a thief who enters dreams to steal ideas",
+        "expected": [
+          "Inception"
+        ],
+        "top3": [
+          "Inception"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a teenager going back in time and changing how his parents met",
+        "expected": [
+          "Back to the Future"
+        ],
+        "top3": [
+          "Back to the Future",
+          "About Time"
+        ],
+        "returned": 2,
+        "hit": true
+      },
+      {
+        "query": "a funny afterlife show about learning to be a better person",
+        "expected": [
+          "The Good Place"
+        ],
+        "top3": [
+          "The Good Place"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a space crew investigating political conflict between Earth and Mars",
+        "expected": [
+          "The Expanse"
+        ],
+        "top3": [
+          "The Expanse",
+          "Alien",
+          "Gravity"
+        ],
+        "returned": 7,
+        "hit": true
+      },
+      {
+        "query": "two bookstore owners falling in love through anonymous emails",
+        "expected": [
+          "You've Got Mail"
+        ],
+        "top3": [
+          "You've Got Mail"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "an emotional multiverse adventure about a mother and daughter",
+        "expected": [
+          "Everything Everywhere All at Once"
+        ],
+        "top3": [
+          "Everything Everywhere All at Once"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "older neighbors investigating a murder and recording a podcast",
+        "expected": [
+          "Only Murders in the Building"
+        ],
+        "top3": [
+          "Only Murders in the Building"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a teenager and an eccentric scientist must fix a damaged timeline",
+        "expected": [
+          "Back to the Future"
+        ],
+        "top3": [
+          "Back to the Future",
+          "The Thing"
+        ],
+        "returned": 2,
+        "hit": true
+      },
+      {
+        "query": "a quiet romance that is mostly two strangers talking through the night",
+        "expected": [
+          "Before Sunrise"
+        ],
+        "top3": [
+          "Before Sunrise",
+          "Notting Hill"
+        ],
+        "returned": 2,
+        "hit": true
+      },
+      {
+        "query": "a retired assassin seeks revenge after criminals attack his home",
+        "expected": [
+          "John Wick"
+        ],
+        "top3": [
+          "John Wick",
+          "Die Hard",
+          "Knives Out"
+        ],
+        "returned": 3,
+        "hit": true
+      },
+      {
+        "query": "an investigation on an island makes a man question his own memories",
+        "expected": [
+          "Shutter Island"
+        ],
+        "top3": [
+          "Shutter Island",
+          "Memento",
+          "About Time"
+        ],
+        "returned": 4,
+        "hit": true
+      },
+      {
+        "query": "an artificial woman in a remote inventor’s house outsmarts her evaluators",
+        "expected": [
+          "Ex Machina"
+        ],
+        "top3": [
+          "Ex Machina",
+          "The Illusionist",
+          "The Truman Show"
+        ],
+        "returned": 6,
+        "hit": true
+      },
+      {
+        "query": "a cook starts over in a truck and reconnects with his son",
+        "expected": [
+          "Chef"
+        ],
+        "top3": [
+          "Chef"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a reserved bookshop owner starts dating a celebrity",
+        "expected": [
+          "Notting Hill"
+        ],
+        "top3": [
+          "You've Got Mail",
+          "Notting Hill"
+        ],
+        "returned": 2,
+        "hit": true
+      },
+      {
+        "query": "a kind bear gets framed for stealing a present",
+        "expected": [
+          "Paddington 2"
+        ],
+        "top3": [
+          "Paddington 2"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a space mission separates a father and daughter through time dilation",
+        "expected": [
+          "Interstellar"
+        ],
+        "top3": [
+          "Interstellar"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a crew aboard a commercial spaceship is hunted by a creature",
+        "expected": [
+          "Alien"
+        ],
+        "top3": [
+          "Alien"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "jazz, Hollywood ambitions and the sacrifices a romance demands",
+        "expected": [
+          "La La Land"
+        ],
+        "top3": [
+          "La La Land",
+          "Amelie"
+        ],
+        "returned": 2,
+        "hit": true
+      },
+      {
+        "query": "performers use illusions to stage bank robberies",
+        "expected": [
+          "Now You See Me"
+        ],
+        "top3": [
+          "Now You See Me"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a lone officer in a skyscraper during a criminal takeover",
+        "expected": [
+          "Die Hard"
+        ],
+        "top3": [
+          "Die Hard"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a janitor with a gift for mathematics works through trauma with a therapist",
+        "expected": [
+          "Good Will Hunting"
+        ],
+        "top3": [
+          "Good Will Hunting"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "amateur sleuths record a podcast about a murder in their apartment building",
+        "expected": [
+          "Only Murders in the Building"
+        ],
+        "top3": [
+          "Only Murders in the Building"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "workers cannot remember their outside lives when they enter the office",
+        "expected": [
+          "Severance"
+        ],
+        "top3": [
+          "Severance"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "someone tries to escape a manufactured reality built around his life",
+        "expected": [
+          "The Truman Show"
+        ],
+        "top3": [
+          "The Truman Show"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "a compassionate American coach manages an English football club",
+        "expected": [
+          "Ted Lasso"
+        ],
+        "top3": [
+          "Ted Lasso"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "an alien hides by impersonating researchers in Antarctica",
+        "expected": [
+          "The Thing"
+        ],
+        "top3": [
+          "The Thing",
+          "Alien",
+          "Arrival"
+        ],
+        "returned": 3,
+        "hit": true
+      },
+      {
+        "query": "a romance between wedding guests who cannot escape the same day",
+        "expected": [
+          "Palm Springs"
+        ],
+        "top3": [
+          "Palm Springs",
+          "Groundhog Day"
+        ],
+        "returned": 2,
+        "hit": true
+      },
+      {
+        "query": "A company divides workers memories between their job and their life at home",
+        "expected": [
+          "Severance"
+        ],
+        "top3": [
+          "Severance",
+          "Parasite",
+          "Chef"
+        ],
+        "returned": 6,
+        "hit": true
+      },
+      {
+        "query": "A man loses his ability to form new memories and leaves himself clues",
+        "expected": [
+          "Memento"
+        ],
+        "top3": [
+          "Memento",
+          "About Time"
+        ],
+        "returned": 2,
+        "hit": true
+      },
+      {
+        "query": "A father and daughter age at different rates during an interstellar rescue mission",
+        "expected": [
+          "Interstellar"
+        ],
+        "top3": [
+          "Interstellar"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "An expert in linguistics must decode messages from visitors to Earth",
+        "expected": [
+          "Arrival"
+        ],
+        "top3": [
+          "Arrival",
+          "A Quiet Place",
+          "Contact"
+        ],
+        "returned": 4,
+        "hit": true
+      },
+      {
+        "query": "Someone survives on a barren planet by farming and solving engineering problems",
+        "expected": [
+          "The Martian"
+        ],
+        "top3": [
+          "The Martian",
+          "Star Wars",
+          "Interstellar"
+        ],
+        "returned": 5,
+        "hit": true
+      },
+      {
+        "query": "Two performers destroy their personal lives trying to perfect a stage illusion",
+        "expected": [
+          "The Prestige"
+        ],
+        "top3": [
+          "The Prestige",
+          "The Illusionist"
+        ],
+        "returned": 2,
+        "hit": true
+      },
+      {
+        "query": "People at a wedding discover they are stuck living that day repeatedly",
+        "expected": [
+          "Palm Springs"
+        ],
+        "top3": [
+          "Palm Springs",
+          "Groundhog Day",
+          "About Time"
+        ],
+        "returned": 4,
+        "hit": true
+      },
+      {
+        "query": "A reluctant weatherman has endless chances to improve one day",
+        "expected": [
+          "Groundhog Day"
+        ],
+        "top3": [
+          "Groundhog Day"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "A soldier repeats a deadly battle and learns from each failed attempt",
+        "expected": [
+          "Edge of Tomorrow"
+        ],
+        "top3": [
+          "Edge of Tomorrow"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "A man notices his friends and neighbors may all be actors playing a part",
+        "expected": [
+          "The Truman Show"
+        ],
+        "top3": [
+          "The Truman Show",
+          "The Nice Guys",
+          "Now You See Me"
+        ],
+        "returned": 3,
+        "hit": true
+      },
+      {
+        "query": "A schoolteacher with cancer starts a dangerous business making drugs",
+        "expected": [
+          "Breaking Bad"
+        ],
+        "top3": [
+          "Breaking Bad"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "Three true crime fans become amateur investigators after a neighbor dies",
+        "expected": [
+          "Only Murders in the Building"
+        ],
+        "top3": [
+          "Only Murders in the Building"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "A person who has lived selfishly gets a chance to study ethics after death",
+        "expected": [
+          "The Good Place"
+        ],
+        "top3": [
+          "Good Will Hunting",
+          "About Time",
+          "The Good Place"
+        ],
+        "returned": 5,
+        "hit": true
+      },
+      {
+        "query": "A gentle American sports coach helps a struggling British club",
+        "expected": [
+          "Ted Lasso"
+        ],
+        "top3": [
+          "Ted Lasso"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "Teenagers in a small town uncover experiments and a frightening alternate dimension",
+        "expected": [
+          "Stranger Things"
+        ],
+        "top3": [
+          "Stranger Things"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "Rival factions on Earth Mars and the asteroid belt face a mysterious conspiracy",
+        "expected": [
+          "The Expanse"
+        ],
+        "top3": [
+          "The Expanse",
+          "Interstellar",
+          "Contact"
+        ],
+        "returned": 6,
+        "hit": true
+      },
+      {
+        "query": "A child goes missing and families find their histories are connected across time",
+        "expected": [
+          "Dark"
+        ],
+        "top3": [
+          "Dark"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "A restaurant worker leaves his job and takes his son on a food truck adventure",
+        "expected": [
+          "Chef"
+        ],
+        "top3": [
+          "Chef"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "A girl’s relatives drive a battered van to get her to a pageant",
+        "expected": [
+          "Little Miss Sunshine"
+        ],
+        "top3": [
+          "Little Miss Sunshine"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "A robot must protect a boy from a more advanced assassin sent from the future",
+        "expected": [
+          "Terminator 2: Judgment Day"
+        ],
+        "top3": [
+          "Terminator 2: Judgment Day",
+          "Back to the Future",
+          "Ex Machina"
+        ],
+        "returned": 4,
+        "hit": true
+      },
+      {
+        "query": "A group cannot tell which colleague has been replaced by an alien in a frozen research base",
+        "expected": [
+          "The Thing"
+        ],
+        "top3": [
+          "The Thing",
+          "Alien",
+          "Arrival"
+        ],
+        "returned": 7,
+        "hit": true
+      },
+      {
+        "query": "A family’s survival depends on not making any sound",
+        "expected": [
+          "A Quiet Place"
+        ],
+        "top3": [
+          "A Quiet Place",
+          "Parasite"
+        ],
+        "returned": 2,
+        "hit": true
+      },
+      {
+        "query": "A human evaluator is manipulated by an artificial woman during a private experiment",
+        "expected": [
+          "Ex Machina"
+        ],
+        "top3": [
+          "Ex Machina",
+          "Blade Runner 2049",
+          "The Illusionist"
+        ],
+        "returned": 5,
+        "hit": true
+      },
+      {
+        "query": "A janitor’s remarkable mathematical gift clashes with his emotional wounds",
+        "expected": [
+          "Good Will Hunting"
+        ],
+        "top3": [
+          "Good Will Hunting"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "Two competitors who own bookstores secretly write loving messages to each other",
+        "expected": [
+          "You've Got Mail"
+        ],
+        "top3": [
+          "You've Got Mail",
+          "Notting Hill"
+        ],
+        "returned": 2,
+        "hit": true
+      },
+      {
+        "query": "A glamorous actress dates an unassuming London shopkeeper",
+        "expected": [
+          "Notting Hill"
+        ],
+        "top3": [
+          "Notting Hill",
+          "Amelie"
+        ],
+        "returned": 2,
+        "hit": true
+      },
+      {
+        "query": "A wealthy disabled man and an unconventional carer form a warm friendship",
+        "expected": [
+          "The Intouchables"
+        ],
+        "top3": [
+          "The Intouchables"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "A detective’s investigation inside a mental hospital unravels his own reality",
+        "expected": [
+          "Shutter Island"
+        ],
+        "top3": [
+          "Shutter Island",
+          "Blade Runner 2049",
+          "Inside Man"
+        ],
+        "returned": 8,
+        "hit": true
+      },
+      {
+        "query": "A group of thieves wants to empty the vaults of several Las Vegas casinos",
+        "expected": [
+          "Ocean's Eleven"
+        ],
+        "top3": [
+          "Ocean's Eleven"
+        ],
+        "returned": 1,
+        "hit": true
+      },
+      {
+        "query": "A mother’s difficult relationship with her daughter unfolds across alternate universes",
+        "expected": [
+          "Everything Everywhere All at Once"
+        ],
+        "top3": [
+          "Everything Everywhere All at Once",
+          "Interstellar",
+          "Dark"
+        ],
+        "returned": 8,
+        "hit": true
+      },
+      {
+        "query": "A nature documentary about coral bleaching and reef restoration",
+        "expected": [],
+        "top3": [],
+        "returned": 0,
+        "hit": true
+      },
+      {
+        "query": "An animated rat dreams of becoming a chef in a Paris restaurant",
+        "expected": [],
+        "top3": [
+          "Chef",
+          "Inception",
+          "Ex Machina"
+        ],
+        "returned": 5,
+        "hit": false
+      },
+      {
+        "query": "A lawyer investigates a town’s drinking water being poisoned by a corporation",
+        "expected": [],
+        "top3": [],
+        "returned": 0,
+        "hit": true
+      },
+      {
+        "query": "An archaeologist races Nazis to recover the Ark of the Covenant",
+        "expected": [],
+        "top3": [],
+        "returned": 0,
+        "hit": true
+      },
+      {
+        "query": "A drummer is pushed to breaking point by a ruthless jazz teacher",
+        "expected": [],
+        "top3": [],
+        "returned": 0,
+        "hit": true
+      },
+      {
+        "query": "An orphaned girl becomes a competitive chess prodigy while battling addiction",
+        "expected": [],
+        "top3": [],
+        "returned": 0,
+        "hit": true
+      },
+      {
+        "query": "A silent comedy where a tramp befriends a blind flower seller",
+        "expected": [],
+        "top3": [
+          "You've Got Mail",
+          "The Intouchables",
+          "Amelie"
+        ],
+        "returned": 7,
+        "hit": false
+      },
+      {
+        "query": "An animated boy befriends a dragon instead of hunting it",
+        "expected": [],
+        "top3": [],
+        "returned": 0,
+        "hit": true
+      }
+    ]
+  }
+}
