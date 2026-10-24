@@ -45,3 +45,15 @@ test('full search supports one character titles, pagination and popular people b
  const r=await call({q:'X',type:'screen',page:2},'search');assert.equal(r.results?.[0]?.title,'X');assert.equal(r.totalPages,9);assert.equal(calls[0][1].page,'2');
  await call({browse:1,type:'person'},'search');assert(calls.some(([path])=>path==='/person/popular'));
 });
+
+
+test('a well-established exact person is usable when sparse same-name entries exist',async t=>{
+ const calls=[];const call=await catalog(t,async(path,p)=>{calls.push(path);
+  if(path==='/search/person')return{results:[{id:6279344,name:'Christopher Nolan',known_for_department:'Directing',known_for:[]},{id:525,name:'Christopher Nolan',known_for_department:'Directing',known_for:[{...film(1,'Inception'),vote_count:37000}]}]};
+  if(path==='/person/525/combined_credits')return{crew:[{...film(1,'Inception',[878]),job:'Director'}]};return{results:[],crew:[]};
+ });
+ const r=await call({q:'movies directed by Christopher Nolan'});assert.deepEqual(r.candidates?.map(m=>m.title),['Inception']);assert(r.filters.includes('Directed by Christopher Nolan'));assert(!calls.includes('/person/6279344/combined_credits'));
+});
+test('genuinely ambiguous established names still require a choice',async t=>{
+ for(const votes of [0,500]){const call=await catalog(t,async(path,p)=>({results:path==='/search/person'?[{id:1,name:'Alex Smith',known_for:[{...film(10,'First film'),vote_count:votes}]},{id:2,name:'Alex Smith',known_for:[{...film(11,'Second film'),vote_count:votes}]}]:[]}));const r=await call({q:'movies starring Alex Smith'});assert.deepEqual(r.candidates,[]);assert.match(r.message,/more than one|multiple|ambiguous/i);}
+});
