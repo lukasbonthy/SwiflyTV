@@ -32,6 +32,24 @@ test('AI retrieval receives the current prompt and the model gets the resolved r
  const form=w.document.querySelector('form');form.elements.prompt.value='something like Interstellar';form.dispatchEvent(new w.Event('submit',{cancelable:true,bubbles:true}));await tick();
  assert.equal(requests[0].searchParams.get('q'),'something like Interstellar');assert.match(inputs[0].query,/wormhole/);w.document.querySelector('[data-ai-cancel]').click();
 });
+test('AI sends the separate reference and extra preference to ranking and displays real filters',async()=>{
+ const b=browser(recommendationsMarkup(),{path:'/recommendations'}),w=b.window,inputs=[];
+ const context={preferenceQuery:'more mystery',referenceQueries:['Interstellar. A space mission.'],type:'movie'};
+ w.fetch=async()=>({ok:true,json:async()=>({semanticQuery:'A space mission with more mystery',ranking:context,filters:['Movies','mystery','No horror'],candidates:[{id:'1',type:'movie',title:'Arrival',href:'/movie/1'}]})});
+ w.Worker=class{addEventListener(){}postMessage(m){inputs.push(m);}terminate(){}};w.boot('discovery/recommendations.js');
+ const form=w.document.querySelector('form');form.elements.prompt.value='like Interstellar but with more mystery, no horror';form.dispatchEvent(new w.Event('submit',{cancelable:true,bubbles:true}));await tick();
+ assert.equal(inputs[0].context?.preferenceQuery,'more mystery');assert.equal(inputs[0].context?.referenceQueries[0],context.referenceQueries[0]);assert.match(w.document.querySelector('[data-query-filters]')?.textContent||'',/No horror/);w.document.querySelector('[data-ai-cancel]').click();
+});
+test('a verified broad genre search shows useful matches without downloading a model',async()=>{
+ const b=browser(recommendationsMarkup(),{path:'/recommendations'}),w=b.window;let workers=0;
+ w.fetch=async()=>({ok:true,json:async()=>({ranking:{broad:true},filters:['comedy'],candidates:[{id:'1',type:'movie',title:'A comedy',href:'/movie/1',genres:[35],rating:7.5}]})});w.Worker=class{constructor(){workers++;}};w.boot('discovery/recommendations.js');
+ const form=w.document.querySelector('form');form.elements.prompt.value='a funny movie';form.dispatchEvent(new w.Event('submit',{cancelable:true,bubbles:true}));await tick();assert.equal(workers,0);assert.equal(w.document.querySelector('.svDiscoveryCard h3')?.textContent,'A comedy');assert.equal(form.getAttribute('aria-busy'),'false');
+});
+test('a corrected title is presented as a suggestion rather than an exact hit',async()=>{
+ const b=browser(recommendationsMarkup(),{path:'/recommendations'}),w=b.window;
+ w.fetch=async()=>({ok:true,json:async()=>({mode:'title',correction:{query:'Intersteler',title:'Interstellar'},candidates:[{id:'1',type:'movie',title:'Interstellar',href:'/movie/1'}]})});w.boot('discovery/recommendations.js');
+ const form=w.document.querySelector('form');form.elements.prompt.value='Intersteler';form.dispatchEvent(new w.Event('submit',{cancelable:true,bubbles:true}));await tick();assert.match(w.document.querySelector('[data-ai-status]').textContent,/did you mean|closest/i);assert.equal(w.document.querySelector('.svDiscoveryPoster').getAttribute('href'),'/movie/1');
+});
 test('a request with no matching candidates clears old picks and does not start a model',async()=>{
  const b=browser(recommendationsMarkup(),{path:'/recommendations'}),w=b.window;let workers=0;w.fetch=async()=>({ok:true,json:async()=>({candidates:[],message:'No close matches found. Try fewer filters.'})});w.Worker=class{constructor(){workers++;}};w.boot('discovery/recommendations.js');
  w.document.querySelector('[data-ai-results]').innerHTML='<article>Old result</article>';w.document.querySelector('.svRecommendationResults').hidden=false;

@@ -25,14 +25,14 @@
   document.querySelectorAll('[data-connect-notifications]').forEach(b=>{b.hidden=!data?.user;b.classList.toggle('hasUnread',unread>0);b.setAttribute('aria-label',unread?`Notifications, ${unread} unread`:'Notifications');});
   document.querySelectorAll('[data-notification-count]').forEach(b=>{b.textContent=unread>99?'99+':String(unread);b.hidden=!unread;});
   document.querySelectorAll('[data-notification-filter]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.notificationFilter===notificationFilter)));
-  const count=document.querySelector('[data-notification-unread]');if(count)count.textContent=unread>99?'99+':String(unread);
+  const count=document.querySelector('[data-notification-unread]');if(count)count.textContent=String(unread);
   const read=document.querySelector('[data-notifications-read]');if(read){if(!unread&&document.activeElement===read)document.querySelector('[data-notification-filter][aria-pressed=true]')?.focus();read.disabled=!unread;}
   const list=document.querySelector('[data-notification-list]');if(!list)return;
   const focused=document.activeElement?.closest('.svNotification'),restoreFocus=!!focused&&list.contains(focused),focusedId=focused?.dataset.notificationId,scroll=list.scrollTop;let nextFocus=null;list.replaceChildren();
   const visible=notificationFilter==='unread'?notes.filter(n=>!n.readAt):notes;
   if(!visible.length){const empty=el('div','svNotificationEmpty');empty.append(graphic(notificationFilter==='unread'?'check':'bell'),el('h3','',notificationFilter==='unread'?'You’re all caught up':'A little quiet, for now.'),el('p','',notificationFilter==='unread'?'Every message, every invitation. You’re up to date.':'Movie nights, messages, and new friends will find you here.'));list.append(empty);}
   for(const n of visible){
-   const kind=String(n.kind||''),party=kind==='party_invite',friend=kind.startsWith('friend'),a=link('',/^\/(?!\/)/.test(n.href||'')?n.href:'/friends','svNotification'+(!n.readAt?' isUnread':'')),mark=graphic(party?'play':friend?'people':'message'),copy=el('span','svNotificationCopy'),meta=el('span','svNotificationMeta'),date=new Date(n.createdAt),valid=Number.isFinite(date.getTime()),age=valid?Math.max(0,Date.now()-date.getTime()):0,time=el('time','',age<60000?'Just now':age<3600000?Math.floor(age/60000)+'m ago':age<86400000?Math.floor(age/3600000)+'h ago':date.toLocaleDateString(undefined,{month:'short',day:'numeric'}));
+   const kind=String(n.kind||''),party=kind==='party_invite',friend=kind.startsWith('friend'),a=link('',/^\/(?![\/\\])[^\\\u0000-\u001f]*$/.test(n.href||'')?n.href:'/friends','svNotification'+(!n.readAt?' isUnread':'')),mark=graphic(party?'play':friend?'people':'message'),copy=el('span','svNotificationCopy'),meta=el('span','svNotificationMeta'),date=new Date(n.createdAt),valid=Number.isFinite(date.getTime()),age=valid?Math.max(0,Date.now()-date.getTime()):0,time=el('time','',age<60000?'Just now':age<3600000?Math.floor(age/60000)+'m ago':age<86400000?Math.floor(age/3600000)+'h ago':date.toLocaleDateString(undefined,{month:'short',day:'numeric'}));
    if(valid){time.dateTime=date.toISOString();time.title=date.toLocaleString();}a.dataset.notificationId=String(n.id??'');if(restoreFocus&&a.dataset.notificationId===focusedId)nextFocus=a;a.dataset.notificationKind=party?'party':friend?'friend':'message';mark.classList.add('svNotificationDot');meta.append(el('strong','',party?'Watch party':friend?'Your friends':'Message'),time);copy.append(meta,el('span','svNotificationText',n.text));a.append(mark,copy);list.append(a);
   }
   if(restoreFocus)(nextFocus||document.querySelector('[data-notification-filter][aria-pressed=true]'))?.focus({preventScroll:true});list.scrollTop=scroll;
@@ -138,7 +138,7 @@
  }
  function subscribe(){if(stream||disposed||!window.EventSource)return;stream=new EventSource('/api/connect/events');stream.addEventListener('change',()=>refresh().catch(()=>{}));stream.addEventListener('error',()=>{});}
  async function boot(){
-  const release=page?window.SwiflySiteLoading?.hold():null;try{
+  const release=page?window.SwiflySiteLoading?.hold('Loading your messages…'):null;try{
   for(const d of document.querySelectorAll('.svConnectDialog')){d.querySelectorAll('[data-connect-close]').forEach(b=>b.addEventListener('click',()=>d.close()));d.addEventListener('click',e=>{if(e.target===d)d.close();});d.addEventListener('close',()=>{if(d.id==='svShareDialog')shareEpoch++;if(d.id==='svNotificationDialog')document.querySelectorAll('[data-connect-notifications]').forEach(b=>b.setAttribute('aria-expanded','false'));});}
   document.querySelectorAll('[data-notification-filter]').forEach(b=>b.addEventListener('click',()=>{notificationFilter=b.dataset.notificationFilter;paintNotifications();}));
   document.querySelectorAll('[data-connect-notifications]').forEach(b=>b.addEventListener('click',openNotifications));document.querySelector('[data-notifications-read]')?.addEventListener('click',()=>act('/notifications/read',{all:true},document.querySelector('[data-notification-error]')));

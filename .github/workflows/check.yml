@@ -19,6 +19,7 @@ jobs:
       - run: npm run check
       - run: npm run test:ui
       - run: npm run prepare:ai
+      - run: npm run test:recommendations
       - run: node node_modules/playwright-core/cli.js install chromium
       # Bound Chromium concurrency so display-clock checks do not compete with every suite at once.
       - run: node --test --test-concurrency=2 tests/access-screen.test.cjs tests/details-fluidity-rendering.test.cjs tests/glass-rendering.test.cjs tests/glass-reference.test.cjs tests/glass-integrity.test.cjs tests/scroll-rendering.test.cjs tests/premium-scroll-rendering.test.cjs tests/resume-browser.test.cjs tests/page-transitions-rendering.test.cjs tests/tv-player-rendering.test.cjs tests/tv-rendering.test.cjs tests/tv-xbox-rendering.test.cjs tests/watchroom-call-rendering.test.cjs tests/party-calls-layout.test.cjs tests/connected-cinema-rendering.test.cjs

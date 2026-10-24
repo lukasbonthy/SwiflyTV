@@ -3,7 +3,7 @@ const {icon,featureNav}=require('./feature-kit');
 function notificationButton(){return `<button class="svNavButton svNotificationButton" data-connect-notifications type="button" aria-label="Notifications" aria-haspopup="dialog" aria-expanded="false" aria-controls="svNotificationDialog" hidden>${icon('bell')}<b data-notification-count hidden></b></button>`;}
 function connectDialogs(){return `
  <dialog id="svNotificationDialog" class="svConnectDialog svNotificationDialog" aria-labelledby="svNotificationTitle">
-  <header><div class="svDialogHeading"><span class="svDialogMark">${icon('bell')}</span><div><span class="svDialogEyebrow">YOUR CIRCLE</span><h2 id="svNotificationTitle">Notifications</h2></div></div><button type="button" data-connect-close aria-label="Close notifications">${icon('close')}</button></header>
+  <header><h2 id="svNotificationTitle">Notifications</h2><button type="button" data-connect-close aria-label="Close notifications">${icon('close')}</button></header>
   <div class="svNotificationActions"><div class="svNotificationFilters" role="group" aria-label="Filter notifications"><button type="button" data-notification-filter="all" aria-pressed="true">All</button><button type="button" data-notification-filter="unread" aria-pressed="false">Unread <span data-notification-unread>0</span></button></div><button type="button" data-notifications-read>${icon('check')}<span>Mark all read</span></button></div>
   <div data-notification-list class="svNotificationList"></div><p data-notification-error role="alert" hidden></p>
   <footer class="svDialogFoot"><a href="/friends">${icon('message')}<span>Open messages</span>${icon('arrow')}</a></footer>
