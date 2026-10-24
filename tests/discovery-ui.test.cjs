@@ -50,6 +50,11 @@ test('a corrected title is presented as a suggestion rather than an exact hit',a
  w.fetch=async()=>({ok:true,json:async()=>({mode:'title',correction:{query:'Intersteler',title:'Interstellar'},candidates:[{id:'1',type:'movie',title:'Interstellar',href:'/movie/1'}]})});w.boot('discovery/recommendations.js');
  const form=w.document.querySelector('form');form.elements.prompt.value='Intersteler';form.dispatchEvent(new w.Event('submit',{cancelable:true,bubbles:true}));await tick();assert.match(w.document.querySelector('[data-ai-status]').textContent,/did you mean|closest/i);assert.equal(w.document.querySelector('.svDiscoveryPoster').getAttribute('href'),'/movie/1');
 });
+test('ambiguous corrected titles are shown as choices rather than one definite correction',async()=>{
+ const b=browser(recommendationsMarkup(),{path:'/recommendations'}),w=b.window;
+ w.fetch=async()=>({ok:true,json:async()=>({mode:'title',correction:{query:'Intersteler',title:'Interstellar'},candidates:[{id:'1',type:'movie',title:'Interstellar',href:'/movie/1'},{id:'2',type:'movie',title:'Interstelar',href:'/movie/2'}]})});w.boot('discovery/recommendations.js');
+ const form=w.document.querySelector('form');form.elements.prompt.value='Intersteler';form.dispatchEvent(new w.Event('submit',{cancelable:true,bubbles:true}));await tick();assert.match(w.document.querySelector('#svPicksHeading').textContent,/matches|choose/i);assert.match(w.document.querySelector('[data-ai-status]').textContent,/one of these|choose/i);assert.equal(w.document.querySelectorAll('.svDiscoveryCard').length,2);
+});
 test('a request with no matching candidates clears old picks and does not start a model',async()=>{
  const b=browser(recommendationsMarkup(),{path:'/recommendations'}),w=b.window;let workers=0;w.fetch=async()=>({ok:true,json:async()=>({candidates:[],message:'No close matches found. Try fewer filters.'})});w.Worker=class{constructor(){workers++;}};w.boot('discovery/recommendations.js');
  w.document.querySelector('[data-ai-results]').innerHTML='<article>Old result</article>';w.document.querySelector('.svRecommendationResults').hidden=false;

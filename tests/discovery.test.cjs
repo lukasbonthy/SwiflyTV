@@ -22,6 +22,16 @@ test('an empty misspelled title search gets one bounded prefix retry before offe
  const calls=[];const call=await fixture(t,{tmdb:async(path,p)=>{calls.push([path,p.query]);return {results:path==='/search/multi'&&p.query==='Interst'?[{...movie(157336,'Interstellar',[878]),media_type:'movie'}]:[]};}});
  const r=await call('/candidates?plan=1&q=Intersteler');assert.equal(r.data.mode,'title');assert.equal(r.data.correction?.title,'Interstellar');assert(calls.filter(([p])=>p==='/search/multi').length<=3);
 });
+test('a sparse near-spelling result does not hide a stronger known title from the bounded retry',async t=>{
+ const calls=[],minor={...movie(90,'Interstelar',[18]),media_type:'movie',vote_count:2},familiar={...movie(157336,'Interstellar',[878]),media_type:'movie',vote_count:40000};
+ const call=await fixture(t,{tmdb:async(path,p)=>{calls.push([path,p.query]);return {results:path==='/search/multi'?(p.query==='Intersteler'?[minor]:p.query==='Interst'?[familiar,minor]:[]):[]};}});
+ const r=await call('/candidates?plan=1&q=Intersteler');assert.equal(r.data.mode,'title');assert.equal(r.data.candidates[0]?.title,'Interstellar');assert(r.data.candidates.some(m=>m.title==='Interstelar'),'a plausible alternative remains selectable');assert(calls.length<=3,'the correction adds at most one bounded retry');
+});
+test('a correction label names the surviving title after watched exclusions remove an alternative',async t=>{
+ const minor={...movie(90,'Interstelar',[18]),media_type:'movie',vote_count:2},familiar={...movie(157336,'Interstellar',[878]),media_type:'movie',vote_count:40000};
+ const call=await fixture(t,{tmdb:async(path,p)=>({results:path==='/search/multi'?(p.query==='Intersteler'?[minor]:p.query==='Interst'?[familiar,minor]:[]):[]})});
+ const r=await call('/candidates?plan=1&q=Intersteler&exclude=movie:157336');assert.deepEqual(r.data.candidates.map(m=>m.title),['Interstelar']);assert.equal(r.data.correction.title,'Interstelar');
+});
 test('language and runtime constraints apply to related and discovered titles with verified running times',async t=>{
  const calls=[];const call=await fixture(t,{tmdb:async(path,p)=>{calls.push({path,p});return path==='/discover/movie'?{results:[{...movie(1,'Short Korean thriller',[53],2019),original_language:'ko'},{...movie(2,'Long Korean thriller',[53],2019),original_language:'ko'},{...movie(3,'English thriller',[53],2019),original_language:'en'}]}:path==='/movie/1'?{runtime:110}:path==='/movie/2'?{runtime:150}:{results:[]};}});
  const r=await call('/candidates?type=movie&q='+encodeURIComponent('Korean thrillers after 2015 under two hours'));assert.equal(r.status,200);assert.deepEqual(r.data.candidates.map(m=>m.id),['1']);assert.equal(r.data.candidates[0].runtime,110);assert(calls.some(c=>c.path==='/discover/movie'&&c.p.with_original_language==='ko'&&c.p['with_runtime.lte']==='120'));

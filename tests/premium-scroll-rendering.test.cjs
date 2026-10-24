@@ -751,6 +751,11 @@ test('desktop account dropdown remains opaque over movie artwork without changin
       const page=await catalog(browser,{viewport:{width,height}});
       await page.locator('.dsProfileMenu > summary').click();
       await page.waitForFunction(()=>getComputedStyle(document.querySelector('.dsProfileDropdown')).opacity==='1');
+      // The opaque desktop surface forces opacity to 1 during its pop animation.
+      // Measure settled targets rather than the animation's temporary scale.
+      await page.locator('.dsProfileDropdown').evaluate(async menu=>{
+        await Promise.allSettled(menu.getAnimations().map(animation=>animation.finished));
+      });
       const state=await page.evaluate(()=>{
         const menu=document.querySelector('.dsProfileDropdown');
         const pane=menu.querySelector(':scope > .svLiquidPane');
