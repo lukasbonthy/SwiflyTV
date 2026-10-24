@@ -2,18 +2,45 @@
 const {test,afterEach}=require('node:test');
 const assert=require('node:assert/strict');
 const {browser,tick,cleanup}=require('./ui-helpers.cjs');
-const {connectMarkup,connectDialogs}=require('../ui/connect');
+const {connectMarkup,connectDialogs,notificationButton}=require('../ui/connect');
 const fs=require('node:fs');
 afterEach(cleanup);
 const alice={id:'alice',name:'Alice',handle:'alice',settings:{shareWatching:false,shareTaste:true}};
 const bob={id:'bob',name:'Bob <img src=x onerror=alert(1)>',handle:'bob',activity:null,unread:1};
 function setup(data={}){
- const b=browser(connectMarkup()+connectDialogs(),{path:'/friends'}),w=b.window,calls=[];
+ const b=browser(notificationButton()+connectMarkup()+connectDialogs(),{path:'/friends'}),w=b.window,calls=[];
  const payload={user:alice,friends:[bob],requests:{incoming:[],outgoing:[]},notifications:[],home:null,blocked:[],stateRevision:0,...data};
  w.SwiflyAccount={ready:Promise.resolve({user:alice,available:true}),request:async(route,options={})=>{calls.push({route,...options});if(route==='/bootstrap')return payload;if(route.startsWith('/messages/')&&!options.body)return {messages:[{id:'1',from:'bob',to:'alice',text:'<script>hello</script>',kind:'text',createdAt:1}]};if(route.startsWith('/people'))return {people:[]};return {ok:true};}};
  w.EventSource=class {addEventListener(){}close(){this.closed=true;}};
  return {...b,w,calls,payload};
 }
+test('initial messages loading waits for session and bootstrap, then releases with a useful message',async()=>{
+ const b=setup(),events=[];let session,bootstrap;
+ b.w.SwiflyAccount.ready=new Promise(resolve=>session=resolve);
+ const request=b.w.SwiflyAccount.request;b.w.SwiflyAccount.request=(route,options)=>route==='/bootstrap'?new Promise(resolve=>bootstrap=resolve):request(route,options);
+ b.w.SwiflySiteLoading={hold(message){events.push(message);return()=>events.push('released');}};
+ b.w.boot('connect/connect.js');await tick();assert.deepEqual(events,['Loading your messages…']);
+ session({user:alice,available:true});await tick();assert.deepEqual(events,['Loading your messages…'],'session readiness does not release messages that are still loading');
+ bootstrap(b.payload);await tick();await tick();assert.deepEqual(events,['Loading your messages…','released']);assert(b.w.document.querySelector('.svConnectLayout'));
+});
+test('initial messages loading releases for signed-out and failed bootstrap states',async()=>{
+ for(const signedOut of [true,false]){
+  const b=setup(),events=[];b.w.SwiflySiteLoading={hold(message){events.push(message);return()=>events.push('released');}};
+  if(signedOut)b.w.SwiflyAccount.ready=Promise.resolve({user:null,available:true});
+  else b.w.SwiflyAccount.request=async()=>{throw Error('Messages are unavailable.');};
+  b.w.boot('connect/connect.js');await tick();await tick();assert.deepEqual(events,['Loading your messages…','released']);
+  if(signedOut)assert(b.w.document.querySelector('[data-connect-signin]'));else assert.match(b.w.document.querySelector('[data-connect-status]').textContent,/Messages are unavailable/);
+ }
+});
+test('notification destinations stay on this site even when a path contains a backslash',async()=>{
+ const b=setup({notifications:[{id:'bad',kind:'message',text:'A message',href:'/\\untrusted.test',createdAt:Date.now(),readAt:null}]});
+ b.w.boot('connect/connect.js');await tick();await tick();assert.equal(b.w.document.querySelector('.svNotification').getAttribute('href'),'/friends');
+});
+test('notification counts expose the full unread total while the small badge stays compact',async()=>{
+ const b=setup({notifications:Array.from({length:120},(_,i)=>({id:String(i),kind:'message',text:'Message '+i,href:'/friends',createdAt:Date.now(),readAt:null}))});
+ b.w.boot('connect/connect.js');await tick();await tick();const d=b.w.document;
+ assert.equal(d.querySelector('[data-notification-unread]').textContent,'120');assert.equal(d.querySelector('[data-notification-count]').textContent,'99+');assert.equal(d.querySelector('[data-connect-notifications]').getAttribute('aria-label'),'Notifications, 120 unread');
+});
 test('notification filters retain their selection on live refresh and mark-read updates every count',async()=>{
  const b=setup({notifications:[
   {id:'new',kind:'message',text:'Bob: <img src=x onerror=alert(1)>',href:'/friends?friend=bob',createdAt:Date.now(),readAt:null},

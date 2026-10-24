@@ -98,13 +98,45 @@ test('slow native navigation shows a destination skeleton and releases it when t
   await page.route(origin+'/movies',async route=>{await gate;await route.continue();});
   // Start observing before navigation; new Playwright evaluations otherwise wait
   // for the deliberately held document to commit.
-  const observed=page.evaluate(()=>new Promise(resolve=>{const observer=new MutationObserver(()=>{if(document.documentElement.dataset.svLoading!=='navigate')return;observer.disconnect();const n=document.querySelector('#svSiteLoading');resolve({layout:n.dataset.layout,rect:n.getBoundingClientRect().toJSON(),opacity:getComputedStyle(n).opacity,nav:getComputedStyle(document.querySelector('.topbar')).zIndex,layer:getComputedStyle(n).zIndex,animation:getComputedStyle(document.querySelector('.svLoadCanvas')).animationName});});observer.observe(document.documentElement,{attributes:true,attributeFilter:['data-sv-loading']});}));
+  const observed=page.evaluate(()=>new Promise(resolve=>{const observer=new MutationObserver(()=>{if(document.documentElement.dataset.svLoading!=='navigate')return;observer.disconnect();const n=document.querySelector('#svSiteLoading'),nav=document.querySelector('.topbar'),link=nav.querySelector('a'),rect=link.getBoundingClientRect();resolve({layout:n.dataset.layout,rect:n.getBoundingClientRect().toJSON(),opacity:getComputedStyle(n).opacity,transition:getComputedStyle(n).transition,nav:getComputedStyle(nav).zIndex,layer:getComputedStyle(n).zIndex,navReachable:!!document.elementFromPoint(rect.x+rect.width/2,rect.y+rect.height/2)?.closest('.topbar'),status:document.querySelector('#svLoadingStatus').textContent,statusVisible:getComputedStyle(document.querySelector('#svLoadingStatus')).clipPath,animation:getComputedStyle(document.querySelector('.svLoadCanvas')).animationName});});observer.observe(document.documentElement,{attributes:true,attributeFilter:['data-sv-loading']});}));
   click=page.locator('.netflixLinks a[href="/movies"]').click({noWaitAfter:true});click.catch(()=>{});
   const loading=await observed;
-  assert.equal(loading.layout,'catalog');assert.equal(loading.opacity,'1');assert(loading.rect.width<=1440);assert(Number(loading.nav)>Number(loading.layer),'the existing glass navigation remains above the skeleton');
+  assert.equal(loading.layout,'catalog');assert.equal(loading.opacity,'1',JSON.stringify(loading));assert(loading.rect.width<=1440);assert(Number(loading.nav)>Number(loading.layer),'the existing glass navigation remains above the skeleton');
+  assert.equal(loading.navReachable,true,'navigation links remain reachable through the loading state');assert.equal(loading.status,'Opening Movies');assert.equal(loading.statusVisible,'none','the status is visible on screen');
   assert.equal(loading.animation,'none');
   release();await page.waitForURL(origin+'/movies');await page.waitForFunction(()=>!document.documentElement.hasAttribute('data-sv-loading'));assert.equal(await page.locator('body').getAttribute('inert'),null);
  }finally{release?.();await click?.catch(()=>{});await page.context().close();}
+});
+
+test('critical content readiness clears loading before optional images finish',requiresBrowser,async()=>{
+ const {loadingHead,loadingMarkup}=require('../ui/loading');
+ const context=await browser.newContext({viewport:{width:320,height:740}});let releaseCritical,releaseImage;
+ const critical=new Promise(resolve=>releaseCritical=resolve),image=new Promise(resolve=>releaseImage=resolve);
+ try{
+  await context.route(origin+'/api/loading-fixture',async route=>{await critical;await route.fulfill({contentType:'application/json',body:'{}'});});
+  await context.route(origin+'/optional-loading-image.svg',async route=>{await image;await route.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg"/>'});});
+  await context.route(origin+'/audiobooks',route=>route.fulfill({contentType:'text/html; charset=utf-8',body:'<!doctype html><html><head>'+loadingHead()+'</head><body>'+loadingMarkup()+'<main><img src="/optional-loading-image.svg" alt=""><p id="fixture-content">Waiting for books</p></main><script>const release=window.SwiflySiteLoading.hold("Loading the audiobook library…");fetch("/api/loading-fixture").then(()=>{document.querySelector("#fixture-content").textContent="Books ready";}).finally(release);</script></body></html>'}));
+  const page=await context.newPage();await page.goto(origin+'/audiobooks',{waitUntil:'domcontentloaded'});
+  await page.waitForSelector('html[data-sv-loading=initial]');
+  const state=await page.evaluate(()=>{const root=document.querySelector('#svSiteLoading'),status=document.querySelector('#svLoadingStatus'),bar=document.querySelector('.svLoadProgress i');return {layout:root.dataset.layout,status:status.textContent,statusRect:status.getBoundingClientRect().toJSON(),statusClip:getComputedStyle(status).clipPath,width:document.documentElement.scrollWidth,animation:getComputedStyle(bar).animationIterationCount,progress:document.querySelector('[role=progressbar]')?.getAttribute('aria-valuenow'),books:document.querySelector('.svLoadBooks')?getComputedStyle(document.querySelector('.svLoadBooks')).display:'none',ai:getComputedStyle(document.querySelector('.svLoadDiscovery')).display};});
+  assert.equal(state.layout,'books');assert.equal(state.status,'Loading the audiobook library…');assert(state.statusRect.height>10);assert.equal(state.statusClip,'none');assert.equal(state.width,320);assert.equal(state.animation,'infinite','loading reports indeterminate activity');assert.equal(state.progress,null,'no completion percentage is invented');assert.notEqual(state.books,'none');assert.equal(state.ai,'none');
+  releaseCritical();await page.waitForFunction(()=>!document.documentElement.hasAttribute('data-sv-loading'));
+  assert.equal(await page.locator('#fixture-content').textContent(),'Books ready');assert.equal(await page.evaluate(()=>document.readyState),'interactive','optional images must not hold up critical content');
+ }finally{releaseCritical?.();releaseImage?.();await context.close();}
+});
+
+test('reduced motion, TV and Xbox keep destination status and use a static activity indicator',requiresBrowser,async()=>{
+ const {loadingHead,loadingMarkup}=require('../ui/loading');
+ for(const options of [{reducedMotion:'reduce'}, {tv:true}, {xbox:true}, {savedReduced:true}]){
+  const {tv,xbox,savedReduced,...contextOptions}=options,context=await browser.newContext({viewport:{width:320,height:740},...contextOptions});
+  try{
+   await context.route(origin+'/recommendations',route=>route.fulfill({contentType:'text/html',body:'<!doctype html><html'+(tv?' data-sv-tv="true"':xbox?' data-sv-xbox="true"':'')+'><head>'+loadingHead()+'</head><body'+(savedReduced?' class="reduceMotion"':'')+'>'+loadingMarkup()+'<script>window.SwiflySiteLoading.hold();</script></body></html>'}));
+   const page=await context.newPage();await page.goto(origin+'/recommendations',{waitUntil:'domcontentloaded'});await page.waitForSelector('html[data-sv-loading=initial]');
+   const state=await page.evaluate(()=>({layout:document.querySelector('#svSiteLoading').dataset.layout,status:document.querySelector('#svLoadingStatus').textContent,animation:getComputedStyle(document.querySelector('.svLoadProgress i')).animationName,ai:getComputedStyle(document.querySelector('.svLoadDiscovery')).display,books:document.querySelector('.svLoadBooks')?getComputedStyle(document.querySelector('.svLoadBooks')).display:'none',width:document.documentElement.scrollWidth}));
+   assert.equal(state.layout,'ai');assert.equal(state.status,'Opening AI Search');assert.equal(state.animation,'none');assert.notEqual(state.ai,'none');assert.equal(state.books,'none');assert.equal(state.width,320);
+   await page.keyboard.press('Escape');assert.equal(await page.locator('html').getAttribute('data-sv-loading'),null);
+  }finally{await context.close();}
+ }
 });
 
 test('a trusted click canceled by a later details handler never opens a loading overlay', requiresBrowser, async()=>{
@@ -187,18 +219,20 @@ test('JavaScript-disabled and modified-click navigation retain normal links', re
     assert.equal(frameTree.frame.url, origin + '/movies');
     await session.detach();
     assert.equal(new URL(page.url()).pathname, '/');
+    assert.equal(await page.locator('html').getAttribute('data-sv-loading'),null,'a modified click does not put the original tab into loading');
     await tab.close();
   } finally {await page.context().close();}
 });
 
 test('native back/forward restores scroll positions without navigation state or scroll writes', requiresBrowser, async () => {
   const {navigationHead} = require('../ui/navigation');
+  const {loadingHead,loadingMarkup} = require('../ui/loading');
   const css = fs.readFileSync(path.join(__dirname, '../public/clean/navigation.css'), 'utf8');
   const fixture = http.createServer((request, response) => {
     const next = request.url === '/one' ? '/two' : '/one';
     response.setHeader('content-type', 'text/html');
-    response.end('<!doctype html><html><head>' + navigationHead() + '<style>' + css +
-      'html{scroll-behavior:auto}body{margin:0;min-height:4000px;background:#17212e}a{position:fixed;top:20px;color:white}</style></head><body><a href="' + next + '">Next page</a></body></html>');
+    response.end('<!doctype html><html><head><script>new MutationObserver(()=>{if(["initial","navigate"].includes(document.documentElement.dataset.svLoading))sessionStorage.setItem("loading-revealed","yes");}).observe(document.documentElement,{attributes:true,attributeFilter:["data-sv-loading"]});</script>'+ loadingHead() + navigationHead() + '<style>' + css +
+      'html{scroll-behavior:auto}body{margin:0;min-height:4000px;background:#17212e}a{position:fixed;top:20px;color:white}</style></head><body>'+loadingMarkup()+'<a href="' + next + '">Next page</a></body></html>');
   });
   await new Promise(resolve => fixture.listen(0, '127.0.0.1', resolve));
   const context = await browser.newContext();
@@ -212,6 +246,7 @@ test('native back/forward restores scroll positions without navigation state or 
     await page.locator('a').click();
     await page.waitForURL(base + '/two');
     await settled(page);
+    assert.equal(await page.evaluate(()=>sessionStorage.getItem('loading-revealed')),null,'fast document readiness never flashes the loading surface');
     await page.evaluate(() => window.scrollTo(0, 350));
     await page.goBack();
     await page.waitForFunction(() => scrollY === 700);

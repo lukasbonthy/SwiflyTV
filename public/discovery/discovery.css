@@ -1,54 +1,56 @@
-/* Cinematic discovery with stable layouts, no scroll-driven rendering. */
-body.svCleanShell #svNavSearchPopup.svDiscoverySearch{box-sizing:border-box;position:fixed!important;inset:98px auto auto 50%!important;transform:translateX(-50%)!important;display:flex!important;flex-direction:column;width:min(640px,calc(100vw - 32px))!important;max-width:none!important;max-height:calc(100svh - 140px)!important;height:auto!important;margin:0!important;padding:0!important;gap:0!important;overflow:hidden!important;z-index:1305;background:#151518!important;color:#f1f1f1!important;border:1px solid #ffffff25!important;border-radius:16px!important;box-shadow:0 30px 100px #000000aa!important;backdrop-filter:none!important}
+/* Compact search under the shared navigation, with a single soft glass panel. */
+body.svCleanShell #svNavSearchPopup.svDiscoverySearch{box-sizing:border-box;position:fixed!important;inset:80px auto auto 50%!important;transform:translateX(-50%)!important;display:flex!important;flex-direction:column;width:min(600px,calc(100vw - 32px))!important;max-width:none!important;max-height:calc(100svh - 140px)!important;height:auto!important;margin:0!important;padding:0!important;gap:0!important;overflow:hidden!important;z-index:1305;background:rgb(12 15 20 / .94)!important;color:#f5f6f8!important;border:1px solid #ffffff26!important;border-radius:16px!important;box-shadow:0 12px 40px #00000080!important;backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)}
 body.svCleanShell #svNavSearchPopup.svDiscoverySearch[hidden]{display:none!important}
-.svSearchTop{display:flex;align-items:center;gap:14px;padding:10px 16px;border-bottom:1px solid #ffffff0c}
+body.svCleanShell #svNavSearchPopup.svDiscoverySearch:focus-within{border-color:#ffffff40!important}
+.svSearchTop{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid #ffffff12}
 .svSearchTop>span{color:#adadad}
-.svSearchTop>span svg{width:21px;height:21px}
-.svDiscoverySearch #svNavSearchInput{flex:1!important;min-width:0!important;width:100%!important;max-width:none!important;min-height:40px!important;height:auto!important;padding:8px 0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;outline:none!important;color:#f1f1f1!important;font-size:16px!important}
+.svSearchTop>span svg{width:18px;height:18px}
+.svDiscoverySearch #svNavSearchInput{flex:1!important;min-width:0!important;width:100%!important;max-width:none!important;min-height:40px!important;height:auto!important;padding:8px 0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;outline:none!important;color:#f5f6f8!important;font-size:14px!important}
 .svDiscoverySearch #svNavSearchInput::placeholder{color:#909090}
 .svDiscoverySearch button{position:static!important;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;width:auto!important;min-width:0!important;height:auto!important;margin:0;box-shadow:none!important;transform:none!important;border:0!important;border-radius:9px!important;background:transparent!important;color:#adadad!important;font-family:inherit!important;font-size:12px!important;cursor:pointer}
 .svSearchTop [data-search-close],.svSearchTop .svSearchSubmit{flex:0 0 36px;min-width:36px!important;min-height:40px!important;padding:8px!important}
-.svSearchTop .svSearchSubmit{background:#c4c4c414!important;color:#cfcfcf!important}
-.svSearchFilters{display:flex;gap:5px;flex-shrink:0;padding:10px 14px 8px;overflow-x:auto;scrollbar-width:none}
-.svSearchFilters button{min-height:40px!important;padding:9px 15px!important;border:1px solid transparent!important;border-radius:999px!important;white-space:nowrap!important}
-.svSearchFilters button[aria-pressed=true]{background:#eeedf2!important;color:#151518!important;border-color:#bbbbbb1a!important}
-.svSearchBody{min-height:92px;padding:0 17px 17px;overflow-y:auto;scrollbar-width:thin;overscroll-behavior:contain}
-.svSearchLabel{display:block;margin:14px 9px 13px;color:#b3b0be;font-size:13px;letter-spacing:0}
-.svSearchRecentList{display:flex;flex-wrap:wrap;gap:8px;padding:0 8px 14px}
-.svSearchRecentList button{min-height:40px!important;padding:10px 13px!important;border:1px solid #ffffff13!important;background:#ffffff03!important;border-radius:10px!important;color:#d0ccd9!important;font-size:13px!important}
+.svSearchTop .svSearchSubmit{background:#ffffff0c!important;color:#d5d8df!important}
+.svSearchTop button:hover{background:#ffffff14!important;color:#fff!important}
+.svSearchFilters{display:flex;gap:3px;flex-shrink:0;padding:8px 12px 3px;overflow-x:auto;scrollbar-width:none}
+.svSearchFilters button{min-height:36px!important;padding:8px 12px!important;border:1px solid transparent!important;border-radius:9px!important;white-space:nowrap!important}
+.svSearchFilters button[aria-pressed=true]{background:#ffffff12!important;color:#f5f6f8!important;border-color:#ffffff0b!important}
+.svSearchFilters button:hover{background:#ffffff0a!important;color:#f5f6f8!important}
+.svSearchBody{min-height:92px;padding:0 12px 12px;overflow-y:auto;scrollbar-width:thin;overscroll-behavior:contain}
+.svSearchLabel{display:block;margin:13px 5px 10px;color:#a8abb2;font-size:12px;letter-spacing:0}
+.svSearchRecentList{display:flex;flex-wrap:wrap;gap:6px;padding:0 4px 10px}
+.svSearchRecentList button{min-height:36px!important;padding:8px 11px!important;border:1px solid #ffffff16!important;background:#ffffff04!important;border-radius:9px!important;color:#c5c9d1!important;font-size:12px!important}
+.svSearchRecentList button:hover{background:#ffffff0c!important;border-color:#ffffff2b!important}
 .svSearchRecentList .svSearchClear{border-color:transparent!important;color:#9b9b9b!important;background:transparent!important}
 .svSearchBody [data-search-status]{font-size:12px;line-height:1.8;color:#aaaaaa;margin:12px 9px}
 .svSearchBody [data-search-status]:empty{display:none}
-.svSearchResult{display:flex;align-items:center;gap:16px;min-height:86px;box-sizing:border-box;padding:10px;border:1px solid transparent;border-radius:13px;text-decoration:none;color:#ebebeb}
+.svSearchResult{display:flex;align-items:center;gap:12px;min-height:78px;box-sizing:border-box;padding:8px;border:1px solid transparent;border-radius:10px;text-decoration:none;color:#f5f6f8}
 .svSearchResult:hover,.svSearchResult:focus-visible{border-color:#ffffff10;background:#ffffff06;outline:none}
 .svSearchResult img,.svSearchPosterFallback{display:block;flex:0 0 43px;width:43px;height:64px;object-fit:cover;border-radius:7px}
 .svSearchPosterFallback{display:grid;place-items:center;background:#2b2b2b;color:#b6b6b6;font-size:17px}
-.svSearchResultCopy{display:flex;flex-direction:column;gap:8px;min-width:0}
-.svSearchResultCopy strong{font-size:15px;font-weight:550;line-height:1.5}
-.svSearchResultCopy small{color:#aaa7b6;font-size:12px}
+.svSearchResultCopy{display:flex;flex-direction:column;gap:5px;min-width:0}
+.svSearchResultCopy strong{font-size:14px;font-weight:550;line-height:1.5}
+.svSearchResultCopy small{color:#a8abb2;font-size:12px}
 .svSearchResultArrow{margin-left:auto;color:#9d9d9d;font-size:19px;padding:0 5px}
-.svSearchFoot{display:flex;align-items:center;flex-wrap:wrap;gap:23px;flex-shrink:0;padding:10px 18px;background:#131313;border-top:1px solid #ffffff0d}
+.svSearchFoot{display:flex;align-items:center;flex-wrap:wrap;gap:18px;flex-shrink:0;padding:8px 16px;background:#ffffff02;border-top:1px solid #ffffff12}
 .svSearchFoot a{display:flex;align-items:center;gap:8px;color:#b6b6b6;font-size:11px;text-decoration:none;min-height:30px}
 .svSearchFoot .svFeatureIcon{width:15px;height:15px;flex-basis:15px}
 .svSearchFoot kbd{font-family:inherit;font-size:11px;color:#939393;margin-left:auto}
 
 /* Reference-led discovery: one prompt, neutral pills, content-first grids. */
-body.svCleanShell:has(.svDiscoveryPage,.svConnectPage){background:#080910!important}
 body.svCleanShell .svDiscoveryPage{box-sizing:border-box;max-width:1312px;min-height:calc(100svh - 180px);margin:0 auto;padding:112px 36px 100px!important;background:transparent!important;color:#fafafa}
 .svDiscoveryHero{text-align:center;margin:0 0 24px}
 .svDiscoveryHero p{max-width:520px;margin:15px auto 0;color:#a8a8b2;font-size:15px;line-height:1.65}
 .svRecommendationsPage{position:relative;isolation:isolate}
-.svRecommendationsPage:before{content:"";position:absolute;inset:80px 5% auto;height:440px;pointer-events:none;z-index:-1;background:radial-gradient(ellipse at 50% 18%,#8b75c610,transparent 70%)}
 .svDiscoveryHero h1{font-family:inherit;font-size:44px;font-weight:700;line-height:1.15;letter-spacing:-.035em;margin:0;color:#fafafa}
 .svDiscoveryPage>.svFeatureNav{margin:0 auto 32px}
 .svRecommendationForm{box-sizing:border-box;display:block;max-width:640px;width:100%;margin:0 auto;padding:0;border:0;background:transparent}
 .svMoodInput,.svBookSearch{box-sizing:border-box;display:flex;align-items:center;gap:11px;width:100%;padding:4px 5px 4px 16px;border:1px solid #ffffff26;border-radius:18px;background:#141416;box-shadow:0 8px 30px #0003,inset 0 1px #ffffff05}
-.svMoodInput{border-color:#c3abe24d;min-height:64px;padding:7px 8px 7px 19px}
-.svMoodInput>span{color:#c4adf4}
+.svMoodInput{border-color:#ffffff26;min-height:64px;padding:7px 8px 7px 19px}
+.svMoodInput>span{color:#a8abb2}
 .svMoodInput>span svg,.svBookSearch>span svg{width:19px;height:19px;flex-basis:19px}
 .svMoodInput input,.svBookSearch input{box-sizing:border-box;flex:1;min-width:0;min-height:44px;padding:8px 0!important;border:0!important;border-radius:0!important;outline:none!important;background:transparent!important;box-shadow:none!important;color:#f5f5f5!important;font-family:inherit!important;font-size:16px!important;font-weight:400}
 .svMoodInput input::placeholder,.svBookSearch input::placeholder{color:#a0a0aa}
-.svMoodInput:focus-within{border-color:#ad96d899}
+.svMoodInput:focus-within{border-color:#ffffff59}
 .svMoodInput [type=submit],.svBookSearch button{box-sizing:border-box;display:grid;place-items:center;flex:0 0 44px;width:44px;min-width:44px;min-height:44px;padding:11px;margin:0;border:0;border-radius:12px;background:#f5f5f5!important;color:#111!important;box-shadow:none!important;font:inherit;cursor:pointer}
 .svMoodInput [type=submit] svg,.svBookSearch button svg{width:18px;height:18px;flex-basis:18px}
 .svMoodInput [type=submit]:disabled{opacity:.45;cursor:default}
@@ -69,9 +71,9 @@ body.svCleanShell .svDiscoveryPage{box-sizing:border-box;max-width:1312px;min-he
 .svMoodChips button>span{display:flex;flex:1;flex-direction:column;gap:7px;min-width:0}
 .svMoodChips strong{color:#eeeef1;font-weight:600;font-size:14px;line-height:1.3}
 .svMoodChips small{color:#aaa8b4;font-size:12px;line-height:1.5}
-.svMoodChips button>.svFeatureIcon:first-child{width:20px;height:20px;flex-basis:20px;color:#beb0de}
+.svMoodChips button>.svFeatureIcon:first-child{width:20px;height:20px;flex-basis:20px;color:#b9bec7}
 .svMoodChips button>.svFeatureIcon:last-child{width:15px;height:15px;flex-basis:15px;color:#898792}
-.svMoodChips button:hover{background:#1b1921;border-color:#c1a5ff42}
+.svMoodChips button:hover{background:#191d23;border-color:#ffffff40}
 .svModelNote{text-align:right;color:#9a9aa6;font-size:12px;line-height:1.6;margin:-30px 0 0;padding:8px 0;pointer-events:none}
 .svRecommendationPreferences[open]+.svModelNote{margin:8px 0 0;text-align:left}
 .svAiStatus{text-align:center;color:#aaa;font-size:13px;line-height:1.7;margin:18px 0 0}
@@ -215,11 +217,10 @@ html[data-sv-tv=true] :is(.svConnectButton,.svFeatureNav a,.svConnectTabs a,.svB
 
 /* One quiet workspace for choosing a film, with room for a real description. */
 body.svCleanShell .svRecommendationsPage{padding-top:118px!important}
-.svRecommendationsPage:before{display:block}
 .svRecommendationsPage>.svFeatureNav{margin-bottom:32px}
 .svRecommendationsPage .svDiscoveryHero{margin:0 auto 30px;max-width:740px}
 .svDiscoveryEyebrow{display:block;margin-bottom:14px;color:#a5a5ad;font-size:13px;font-weight:500;letter-spacing:.025em}
-.svRecommendationsPage .svDiscoveryHero h1{font-size:clamp(36px,4.2vw,56px);font-weight:650;line-height:1.08;letter-spacing:-.045em}
+.svRecommendationsPage .svDiscoveryHero h1{font-size:clamp(36px,4.2vw,44px);font-weight:650;line-height:1.12;letter-spacing:-.04em}
 .svRecommendationsPage .svDiscoveryHero p{font-size:16px;line-height:1.6;color:#a3a3ad;margin-top:18px;max-width:none}
 .svRecommendationsPage .svRecommendationForm{max-width:720px;position:relative}
 .svRecommendationsPage .svMoodInput{display:flex;flex-direction:column;align-items:stretch;gap:0;min-height:0;padding:20px 20px 15px;border:1px solid #ffffff24;border-radius:22px;background:linear-gradient(145deg,#19191d,#111114);box-shadow:0 16px 45px #0005,inset 0 1px #ffffff05}
@@ -242,16 +243,19 @@ body.svCleanShell .svRecommendationsPage{padding-top:118px!important}
 .svRecommendationsPage .svAiFilters{grid-template-columns:1fr 1fr;align-items:center;margin:5px 0 4px;padding:16px 18px;background:#111114;border-radius:16px}
 .svRecommendationsPage .svAiFilters .svRecommendationExclude{grid-column:auto;font-size:12px;color:#b6b6c0}
 .svRecommendationsPage .svAiStatus{margin:14px 0 0;color:#b4b4c1;font-size:13px}
+.svQueryFilters{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0;padding:0;list-style:none}
+.svQueryFilters[hidden]{display:none}
+.svQueryFilters li{padding:5px 9px;border:1px solid #ffffff1a;border-radius:7px;background:#ffffff04;color:#b8bdc6;font-size:11px;line-height:1.5}
+.svPickReason{margin:7px 0 0;color:#a0a8b4;font-size:11px;line-height:1.5}
+.svSearchTop [data-search-close]{flex:0 0 auto;min-width:44px!important;font-size:11px!important}
 .svRecommendationsPage .svMoodIdeas{max-width:720px;margin:44px auto 0}
 .svRecommendationsPage .svMoodIdeas h2{font-size:13px;line-height:1.6;font-weight:400;color:#93939f;margin:0 0 14px}
 .svRecommendationsPage .svMoodChips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.svRecommendationsPage .svMoodChips button{display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:18px;min-height:150px;padding:20px 17px;border:1px solid #ffffff15;border-radius:16px;background:#0d0d10;position:relative;white-space:normal;transition:border-color .15s,background .15s}
+.svRecommendationsPage .svMoodChips button{display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:14px;min-height:128px;padding:17px;border:1px solid #ffffff15;border-radius:14px;background:#111419;position:relative;white-space:normal;transition:border-color .15s,background .15s}
 .svRecommendationsPage .svMoodChips button>span{display:flex;flex-direction:column;flex:0 1 auto;gap:6px;width:100%;min-width:0}
 .svRecommendationsPage .svMoodChips strong{display:block;font-size:14px;line-height:1.45;font-weight:550;color:#e4e4eb}
 .svRecommendationsPage .svMoodChips small{display:block;font-size:12px;line-height:1.6;color:#8e8e9d}
-.svRecommendationsPage .svMoodChips button>.svFeatureIcon:first-child{width:21px;height:21px;color:#b4adca}
-.svRecommendationsPage .svMoodChips button:nth-child(2)>.svFeatureIcon:first-child{color:#c1abad}
-.svRecommendationsPage .svMoodChips button:nth-child(3)>.svFeatureIcon:first-child{color:#a6b6c8}
+.svRecommendationsPage .svMoodChips button>.svFeatureIcon:first-child{width:21px;height:21px;color:#b9bec7}
 .svRecommendationsPage .svMoodChips button>.svFeatureIcon:last-child{position:absolute;right:16px;top:22px;width:15px;height:15px;color:#747480}
 .svRecommendationsPage .svMoodChips button:hover{border-color:#ffffff38;background:#151518}
 .svRecommendationsPage[data-search-state=loading] .svMoodIdeas{display:none}
@@ -301,3 +305,7 @@ body.svCleanShell .svRecommendationsPage{padding-top:118px!important}
 }
 @media(max-width:359px){.svRecommendationsPage .svDiscoveryHero h1{font-size:31px}.svPromptType>.svFeatureIcon{display:none}.svPromptType select{max-width:117px}.svRecommendationsPage .svMoodInput .svFindPicks{padding:11px 10px;font-size:11px}}
 @media(prefers-reduced-motion:reduce){.svRecommendationsPage .svMoodChips button{transition:none}}
+body.svCleanShell[data-st-glass=off] #svNavSearchPopup.svDiscoverySearch,
+html:is([data-sv-tv=true],[data-sv-xbox=true]) body.svCleanShell #svNavSearchPopup.svDiscoverySearch,
+body.svCleanShell[data-sv-performance=low] #svNavSearchPopup.svDiscoverySearch{background:#111419!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+@media(prefers-reduced-transparency:reduce){body.svCleanShell #svNavSearchPopup.svDiscoverySearch{background:#111419!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}}

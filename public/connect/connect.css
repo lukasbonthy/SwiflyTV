@@ -20,7 +20,7 @@ body.svCleanShell .svConnectPage{box-sizing:border-box;max-width:1312px;margin:0
 .svConnectButton .svFeatureIcon{width:16px;height:16px;flex-basis:16px}
 .svConnectTabs{display:inline-flex;align-items:center;gap:0;padding:2px;border:1px solid #ffffff1a;border-radius:14px;margin:0;background:#ffffff05}
 .svConnectTabs a{display:flex;align-items:center;justify-content:center;gap:7px;min-height:36px;padding:0 13px;color:#888;font-size:13px;text-decoration:none;border:0;border-radius:11px}
-.svConnectTabs a[aria-current=page]{color:#f1eef9;background:#302b3a}
+.svConnectTabs a[aria-current=page]{color:#f1f1f3;background:#ffffff13}
 .svConnectTabs a:hover{color:#f2f2f2}
 .svConnectTabs .svFeatureIcon{width:16px;height:16px;flex-basis:16px}
 .svConnectOwnHandle{color:#979797;text-align:right;font-size:10px;margin:0 2px 12px}
@@ -36,7 +36,7 @@ body.svCleanShell .svConnectPage{box-sizing:border-box;max-width:1312px;margin:0
 .svFriendList{flex:1;min-height:76px}
 .svFriend{position:relative;box-sizing:border-box;display:flex;align-items:center;gap:12px;width:100%;min-height:74px;padding:13px 11px;margin:3px 0;border:1px solid transparent;border-radius:13px;background:transparent;color:inherit;text-align:left;cursor:pointer}
 .svFriend:hover{background:#ffffff05}
-.svFriend.isSelected{background:#302b3a;border-color:#d1b8ff1c}
+.svFriend.isSelected{background:#ffffff0d;border-color:#ffffff1c}
 .svConnectAvatar{position:relative;display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;border:1px solid #ffffff14;border-radius:50%;background:#202020;color:#e7e7e7;font-size:15px;font-weight:600}
 .svFriend:nth-child(3n+2) .svConnectAvatar{background:#252525}
 .svFriend.isWatching .svConnectAvatar:after{content:"";position:absolute;right:-2px;bottom:-2px;width:10px;height:10px;background:#9fc8b8;border:3px solid #191919;border-radius:50%}
@@ -72,7 +72,7 @@ body.svCleanShell .svConnectPage{box-sizing:border-box;max-width:1312px;margin:0
 .svConversationEmpty h3{margin:0;font-size:20px;font-weight:600;letter-spacing:-.025em;color:#e5e5e5}
 .svConversationEmpty p{font-size:14px;line-height:1.7;color:#aaa8b5;margin:12px 0 24px}
 .svMessage{box-sizing:border-box;max-width:78%;align-self:flex-start;overflow-wrap:anywhere;padding:13px 16px;border:1px solid #ffffff08;border-radius:16px 16px 16px 4px;background:#202020;color:#e4e4e4}
-.svMessage.isMine{align-self:flex-end;border-color:#cfb9ff1a;background:#302b3a;border-radius:16px 16px 4px 16px}
+.svMessage.isMine{align-self:flex-end;border-color:#ffffff15;background:#30343c;border-radius:16px 16px 4px 16px}
 .svMessage p{margin:0;white-space:pre-wrap;font-size:15px;line-height:1.65}
 .svMessage time{display:block;text-align:right;color:#aaa8b5;font-size:11px;margin-top:7px}
 .svMessageTitle{display:flex;align-items:center;gap:14px;min-width:220px;text-decoration:none;color:#e9e9e9}
@@ -120,8 +120,8 @@ body.svCleanShell .svConnectPage{box-sizing:border-box;max-width:1312px;margin:0
 .svHomeTitle img{width:40px;height:59px;object-fit:cover;border-radius:7px}
 .svHomeTitle a{flex:1;color:#d1d1d1;text-decoration:none;font-size:12px;line-height:1.6}
 .svHomeTitle button{font-size:10px;padding:8px 10px}
-.svConnectSignin{box-sizing:border-box;display:block;max-width:520px;margin:40px auto;padding:38px 32px;background:linear-gradient(140deg,#1a1720,#101013 65%);border:1px solid #ffffff1a;border-radius:24px;text-align:center}
-.svConnectSignin>.svConnectGraphic{display:grid;place-items:center;width:58px;height:58px;margin:0 auto 24px;color:#d0c2e9;background:#c6a9ff12;border:1px solid #d2bcff18;border-radius:18px}
+.svConnectSignin{box-sizing:border-box;display:block;max-width:520px;margin:40px auto;padding:38px 32px;background:#111419;border:1px solid #ffffff1a;border-radius:20px;text-align:center}
+.svConnectSignin>.svConnectGraphic{display:grid;place-items:center;width:48px;height:48px;margin:0 auto 24px;color:#c5c9d1;background:#ffffff07;border:1px solid #ffffff1a;border-radius:14px}
 .svConnectSignin>.svConnectGraphic svg{width:30px;height:30px}
 .svConnectSignin h2{font-size:28px;font-weight:650;letter-spacing:-.025em;line-height:1.3;margin:0 0 14px}
 .svConnectSignin p{font-size:15px;line-height:1.7;color:#b0adbb;max-width:380px;margin:0 auto 24px}
@@ -141,17 +141,31 @@ body.svCleanShell .svConnectPage{box-sizing:border-box;max-width:1312px;margin:0
 .svConnectDialog h2{font-size:20px;font-weight:600;letter-spacing:-.02em;line-height:1.3;margin:0}
 .svConnectDialog [data-connect-close]{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;padding:0;border:1px solid #ffffff10;border-radius:11px;background:#ffffff05;color:#a8a8a8;cursor:pointer}
 .svConnectDialog [data-connect-close]:hover{background:#ffffff10;color:#eeeeee}
-.svNotificationActions{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #ffffff14;padding:10px 0 13px;margin:0 0 5px;font-size:12px;color:#a6a3b2}
-.svNotificationActions button{min-height:34px;border:0;border-radius:8px;background:transparent;color:#bebebe;font:inherit;cursor:pointer;padding:8px 0}
-.svNotification{display:grid;grid-template-columns:26px minmax(0,1fr);gap:4px 10px;padding:12px 8px;border:1px solid transparent;border-radius:10px;text-decoration:none;font-size:13px;line-height:1.5;color:#aaa;margin:3px 0}
-.svNotification.isUnread{background:#272727;border-color:#ffffff08;color:#e7e7e7}
-.svNotificationDot{display:grid;place-items:center;width:24px;height:24px;grid-row:1/3;background:transparent;color:#aaa}
-.svNotification time{grid-column:2;font-size:11px;color:#a6a3b2}
-.svNotificationEmpty{padding:28px 8px;text-align:center}
+.svNotificationActions{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:none;border-bottom:1px solid #ffffff14;padding:10px 0 12px;margin:0 0 6px;font-size:12px;color:#a8abb2}
+.svNotificationActions button{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:34px;padding:7px 9px;border:0;border-radius:8px;background:transparent;color:#a8abb2;font:inherit;font-size:11px;cursor:pointer;transition:background-color .15s,color .15s}
+.svNotificationActions button:hover{background:#ffffff0c;color:#f5f6f8}
+.svNotificationFilters{display:flex;align-items:center;gap:2px;padding:2px;border:1px solid #ffffff12;border-radius:10px;background:#ffffff03}
+.svNotificationFilters button[aria-pressed=true]{background:#ffffff12;color:#f5f6f8}
+[data-notification-unread]{display:grid;place-items:center;min-width:17px;min-height:17px;padding:0 4px;border-radius:5px;background:#ffffff0d;color:#c5c9d1;font-size:10px}
+.svNotificationActions [data-notifications-read]{padding-inline:3px;font-size:11px;white-space:nowrap}
+[data-notifications-read] .svFeatureIcon{width:13px;height:13px;flex-basis:13px}
+.svNotificationActions [data-notifications-read]:disabled{background:transparent;color:#858a94;opacity:.65;cursor:default}
+.svNotificationList{min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-gutter:stable}
+.svNotification{position:relative;display:flex;align-items:flex-start;gap:10px;padding:12px 9px;border:1px solid transparent;border-radius:10px;text-decoration:none;font-size:13px;line-height:1.5;color:#a8abb2;margin:3px 0;transition:background-color .15s,border-color .15s}
+.svNotification.isUnread{background:#ffffff06;border-color:#ffffff0b;color:#f5f6f8}
+.svNotification.isUnread::after{content:"";position:absolute;right:8px;top:13px;width:4px;height:4px;border-radius:50%;background:#d5d8df}
+.svNotification:is(:hover,:focus-visible){background:#ffffff0c;border-color:#ffffff20}
+.svNotificationDot{display:grid;place-items:center;flex:none;width:26px;height:28px;background:transparent;color:#a8abb2}
+.svNotificationDot svg{width:17px;height:17px}
+.svNotificationCopy{display:flex;flex-direction:column;gap:5px;flex:1;min-width:0}
+.svNotificationMeta{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-right:7px}
+.svNotificationMeta strong{font-size:11px;line-height:1.4;font-weight:500;color:#a8abb2}
+.svNotification time{font-size:10px;line-height:1.4;color:#858a94;white-space:nowrap}
+.svNotificationText{font-size:12px;line-height:1.6;overflow-wrap:anywhere}
+.svNotificationEmpty{padding:30px 8px;text-align:center}
 .svNotificationEmpty>.svConnectGraphic{display:none}
-.svNotificationEmpty svg{width:24px;height:24px}
-.svNotificationEmpty h3{font-size:13px;font-weight:500;margin:0 0 8px;color:#aaa}
-.svNotificationEmpty p{font-size:12px;line-height:1.6;max-width:240px;margin:0 auto;color:#666}
+.svNotificationEmpty h3{font-size:14px;font-weight:500;margin:0 0 8px;color:#c5c9d1}
+.svNotificationEmpty p{font-size:12px;line-height:1.6;max-width:240px;margin:0 auto;color:#858a94}
 .svConnectDialog>p{font-size:12px;line-height:1.9;color:#aeaeae;margin:20px 0 0}
 .svDialogFoot{border-top:1px solid #ffffff0e;padding-top:19px;margin-top:19px}
 .svDialogFoot a{display:flex;align-items:center;justify-content:space-between;text-decoration:none;color:#b8b8b8;font-size:11px;min-height:30px}
@@ -248,12 +262,16 @@ body.svCleanShell .topbar .netflixNav .dsNavActions .svNotificationButton[hidden
 .svConnectToolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:0 0 16px}
 .svConnectSidebar>.svConnectEyebrow{display:none}
 .svConnectHero .svFeatureNav{flex-shrink:0}
-.svNotificationDialog{inset:80px auto auto auto;right:clamp(16px,var(--sv-notification-offset,16px),max(16px,calc(100vw - 346px)));margin:0;width:min(330px,calc(100vw - 32px));max-height:calc(100svh - 175px);padding:16px;border-radius:18px;background:#141416}
+.svNotificationDialog{inset:80px auto auto auto;right:clamp(16px,var(--sv-notification-offset,16px),max(16px,calc(100vw - 356px)));margin:0;width:min(340px,calc(100vw - 32px));max-height:calc(100svh - 172px);padding:14px;border-radius:16px;background:#111419;overflow:hidden}
+.svNotificationDialog[open]{display:flex;flex-direction:column}
+.svNotificationDialog>header{align-items:center;flex:none}
 body.svCleanShell dialog.svNotificationDialog::backdrop{background:transparent!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 .svNotificationDialog h2{font-size:17px}
-.svNotificationDialog [data-connect-close]{width:30px;height:30px;flex-basis:30px;border:0;background:none}
-.svNotificationDialog .svDialogFoot{padding-top:12px;margin-top:12px}
-.svNotificationDialog .svDialogFoot a{font-size:12px;color:#999}
+.svNotificationDialog [data-connect-close]{width:36px;height:36px;flex-basis:36px;border:0;background:none}
+.svNotificationDialog .svDialogFoot{flex:none;padding-top:8px;margin-top:8px}
+.svNotificationDialog .svDialogFoot a{justify-content:flex-start;gap:9px;min-height:34px;font-size:12px;color:#a8abb2}
+.svNotificationDialog .svDialogFoot a>.svFeatureIcon{width:15px;height:15px;flex-basis:15px}
+.svNotificationDialog .svDialogFoot a>.svFeatureIcon:last-child{margin-left:auto}
 .svConnectPage input:not([type=checkbox]),.svMessageForm textarea{font-size:14px;background:#0b0b0b}
 .svConnectPage .svConnectButton:focus-visible,.svConnectPage .svSendMessage:focus-visible{outline-color:#aaa}
-@media(max-width:760px){.svConnectHero .svFeatureNav{margin-top:18px}.svConnectToolbar{gap:12px}.svConnectPage input:not([type=checkbox]),.svMessageForm textarea{font-size:16px}.svConnectButton,.svSendMessage{min-height:44px}.svNotificationDialog{top:82px;padding:16px}.svNotificationDialog h2{font-size:17px}.svConnectTabs .svFeatureIcon{width:14px;height:14px;flex-basis:14px}}
+@media(max-width:760px){.svConnectHero .svFeatureNav{margin-top:18px}.svConnectToolbar{gap:12px}.svConnectPage input:not([type=checkbox]),.svMessageForm textarea{font-size:16px}.svConnectButton,.svSendMessage{min-height:44px}.svNotificationDialog{top:82px;padding:14px}.svNotificationDialog h2{font-size:17px}.svNotificationActions button{min-height:40px}.svConnectTabs .svFeatureIcon{width:14px;height:14px;flex-basis:14px}}

@@ -14,6 +14,44 @@ test('candidate pool deduplicates real titles, limits seed work and excludes wat
 test('malformed catalog data and unknown identifiers do not create broken chapters',async t=>{const call=await fixture(t,{fetch:async()=>({ok:true,json:async()=>({books:[{...book,sections:'bad',authors:null}]})})});assert.equal((await call('/books/52')).data.book.chapters.length,0);assert.equal((await call('/books/invalid')).status,400);const empty=await fixture(t);assert.equal((await empty('/books/52')).status,404);});
 
 const movie=(id,title,genres,year=2000)=>({id,title,overview:title+' is a story about its characters.',genre_ids:genres,release_date:year+'-01-01',vote_count:500,vote_average:7.5});
+test('a misspelled title is offered as a named correction rather than a mood search',async t=>{
+ const call=await fixture(t,{tmdb:async path=>({results:path==='/search/multi'?[{...movie(157336,'Interstellar',[878]),media_type:'movie'}]:[]})});
+ const r=await call('/candidates?plan=1&q=Intersteler');assert.equal(r.data.mode,'title');assert.equal(r.data.correction?.title,'Interstellar');assert.equal(r.data.candidates[0]?.title,'Interstellar');
+});
+test('an empty misspelled title search gets one bounded prefix retry before offering a correction',async t=>{
+ const calls=[];const call=await fixture(t,{tmdb:async(path,p)=>{calls.push([path,p.query]);return {results:path==='/search/multi'&&p.query==='Interst'?[{...movie(157336,'Interstellar',[878]),media_type:'movie'}]:[]};}});
+ const r=await call('/candidates?plan=1&q=Intersteler');assert.equal(r.data.mode,'title');assert.equal(r.data.correction?.title,'Interstellar');assert(calls.filter(([p])=>p==='/search/multi').length<=3);
+});
+test('language and runtime constraints apply to related and discovered titles with verified running times',async t=>{
+ const calls=[];const call=await fixture(t,{tmdb:async(path,p)=>{calls.push({path,p});return path==='/discover/movie'?{results:[{...movie(1,'Short Korean thriller',[53],2019),original_language:'ko'},{...movie(2,'Long Korean thriller',[53],2019),original_language:'ko'},{...movie(3,'English thriller',[53],2019),original_language:'en'}]}:path==='/movie/1'?{runtime:110}:path==='/movie/2'?{runtime:150}:{results:[]};}});
+ const r=await call('/candidates?type=movie&q='+encodeURIComponent('Korean thrillers after 2015 under two hours'));assert.equal(r.status,200);assert.deepEqual(r.data.candidates.map(m=>m.id),['1']);assert.equal(r.data.candidates[0].runtime,110);assert(calls.some(c=>c.path==='/discover/movie'&&c.p.with_original_language==='ko'&&c.p['with_runtime.lte']==='120'));
+});
+test('TV genres without native catalog genre IDs use keywords and verify positive preferences',async t=>{
+ const calls=[];const call=await fixture(t,{tmdb:async(path,p)=>{calls.push({path,p});return {results:path==='/search/keyword'?[{id:90,name:'horror'}]:path==='/discover/tv'?[{id:1,name:'An eerie series',genre_ids:[10765],overview:'A mysterious house.'},{id:2,name:'A space adventure',genre_ids:[10765],overview:'A crew explores the stars.'}]:path==='/tv/1/keywords'?[{name:'supernatural horror'}]:path==='/tv/2/keywords'?[{name:'space travel'}]:[]};}});
+ const r=await call('/candidates?plan=1&q='+encodeURIComponent('a horror TV show'));assert.equal(r.status,200);assert.deepEqual(r.data.candidates.map(m=>m.id),['1']);assert(calls.some(c=>c.path==='/discover/tv'&&c.p.with_keywords==='90'));
+});
+test('unresolved quoted titles remain title searches and never request mood planning',async t=>{
+ const calls=[];const call=await fixture(t,{tmdb:async(path,p)=>{calls.push(path);return {results:[]};}});
+ const r=await call('/candidates?plan=1&q='+encodeURIComponent('"Interstalarzz"'));assert.equal(r.status,200);assert.equal(r.data.mode,'title');assert.deepEqual(r.data.candidates,[]);assert.match(r.data.message,/title|name|spelling/i);assert(!calls.some(p=>p.startsWith('/discover/')));
+});
+test('TV OR preferences retain a known comedy and a keyword-verified horror without requiring both',async t=>{
+ const calls=[];const call=await fixture(t,{tmdb:async(path,p)=>{calls.push({path,p});return path==='/search/keyword'?{results:[{id:90,name:'horror'}]}:path==='/discover/tv'?{results:[{id:1,name:'A comic series',genre_ids:[35],overview:'Friends having adventures.'},{id:2,name:'An eerie series',genre_ids:[10765],overview:'A mysterious house.'}]}:path==='/tv/1/keywords'?{__error:true}:path==='/tv/2/keywords'?{results:[{name:'supernatural horror'}]}:{results:[]};}});
+ const r=await call('/candidates?plan=1&q='+encodeURIComponent('a comedy or horror series'));assert.equal(r.status,200);assert.deepEqual(r.data.candidates.map(m=>m.id),['1','2']);assert(calls.some(c=>c.path==='/discover/tv'&&!c.p.with_genres),'the keyword-only alternative is not forced into comedy');
+});
+test('original titles can resolve to a translated catalog title without starting AI',async t=>{
+ const call=await fixture(t,{tmdb:async path=>({results:path==='/search/multi'?[{...movie(372058,'Your Name.',[16]),original_title:'君の名は。',media_type:'movie'}]:[]})});
+ const r=await call('/candidates?plan=1&q='+encodeURIComponent('君の名は'));assert.equal(r.data.mode,'title');assert.equal(r.data.candidates[0]?.title,'Your Name.');
+});
+test('inferred genre hints do not become mandatory catalog exclusions',async t=>{
+ const call=await fixture(t,{tmdb:async path=>({results:path==='/discover/movie'?[movie(10,'An unusual funny adventure',[12])]:[]})});
+ const r=await call('/candidates?planned=1&topics=comedy&type=movie&q='+encodeURIComponent('something playful and entertaining'));
+ assert.equal(r.status,200);assert(r.data.candidates.some(m=>m.id==='10'),'a broad inferred genre must not erase otherwise valid candidates');
+});
+test('similarity ranking keeps the user preference as well as the reference story',async t=>{
+ const call=await fixture(t,{tmdb:async path=>({results:path==='/search/multi'?[{...movie(1,'Interstellar',[878]),media_type:'movie'}]:path.endsWith('/recommendations')?[movie(2,'A space mystery',[878,9648])]:[]})});
+ const r=await call('/candidates?type=movie&q='+encodeURIComponent('Something like Interstellar but with more mystery'));
+ assert.equal(r.data.references[0]?.title,'Interstellar');assert.match(r.data.ranking?.preferenceQuery||'',/mystery/);assert.match(r.data.ranking?.referenceQueries?.[0]||'',/Interstellar/);
+});
 test('a mood searches the relevant catalog and keeps an excluded genre out of every source',async t=>{
  const calls=[],romance=movie(11,'A gentle romance',[35,10749]),horror=movie(12,'A romantic nightmare',[35,10749,27]);
  const call=await fixture(t,{tmdb:async(path,params)=>{calls.push({path,params});return {results:path==='/discover/movie'?[romance,horror]:[horror]};}});
