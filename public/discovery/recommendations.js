@@ -11,14 +11,16 @@
  function paint(rows,ai,mode='mood'){results.replaceChildren();for(const m of rows){const card=node('article','svDiscoveryCard'),a=node('a','svDiscoveryPoster');a.href=m.href;a.setAttribute('aria-label',m.title);if(m.poster){const image=node('img');image.src=m.poster;image.alt='';image.loading='lazy';image.decoding='async';a.append(image);}else a.append(node('span','svDiscoveryFallback',m.title.slice(0,1)));const copy=node('div','svDiscoveryCardCopy');copy.append(node('small','',`${m.type==='tv'?'Series':'Movie'}${m.year?' · '+m.year:''}${m.runtime?' · '+m.runtime+' min':''}`),node('h3','',m.title));if(m.reason)copy.append(node('p','svPickReason',m.reason));if(m.overview)copy.append(node('p','svPickOverview',m.overview));const share=node('button','svDiscoveryShare');share.innerHTML=window.SwiflyFeatureIcon?.('send')||'↗';share.type='button';share.dataset.shareTitle='';share.dataset.shareId=m.id;share.dataset.shareType=m.type;share.setAttribute('aria-label','Send '+m.title+' to a friend');card.append(a,copy,share);results.append(card);}root.querySelector('.svRecommendationResults').hidden=!rows.length;root.dataset.picksSource=mode==='title'?'title':ai?'ai':'catalog';root.dataset.searchState=rows.length?'results':'empty';}
  function infer(payload,token){return new Promise((resolve,reject)=>{
   if(!window.Worker){reject(Error('This browser cannot run the recommendation model. Try a newer browser.'));return;}
-  if(!worker)worker=new Worker('/assets/discovery/model-worker.js?v=5',{type:'module'});
+  if(!worker)worker=new Worker('/assets/discovery/model-worker.js?v=6',{type:'module'});
   rejectWorker=reject;const current=worker;
   const onMessage=event=>{if(token!==epoch||current!==worker)return;const data=event.data;if(data.kind==='progress')output.textContent=data.message;else if(data.kind===(payload.kind==='plan'?'planned':'done')){finish();resolve(payload.kind==='plan'?data.topics:data.results);}else if(data.kind==='error'){finish();current.terminate();if(worker===current)worker=null;reject(Error(data.message||'The model could not finish.'));}};
   const onError=()=>{if(token!==epoch||current!==worker)return;finish();current.terminate();worker=null;reject(Error('Matching could not finish. Check your connection and try again.'));};
   function finish(){clearTimeout(deadline);current.removeEventListener?.('message',onMessage);current.removeEventListener?.('error',onError);rejectWorker=null;}
   current.addEventListener('message',onMessage);current.addEventListener('error',onError);deadline=setTimeout(()=>{finish();current.terminate();if(worker===current)worker=null;reject(Error('Matching is taking too long. Try again or search for a title.'));},90000);current.postMessage(payload);
  });}
- form.elements.prompt.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();form.requestSubmit();}});
+ function updateModes(){const q=form.elements.prompt.value.trim().slice(0,120);for(const link of root.querySelectorAll('[data-search-mode]')){const u=new URL(link.href,location.href);if(q)u.searchParams.set('q',q);else u.searchParams.delete('q');link.href=u.pathname+u.search;}}
+ form.elements.prompt.addEventListener('input',updateModes);
+ form.elements.prompt.addEventListener('keydown' ,event=>{if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();form.requestSubmit();}});
  form.addEventListener('submit',async event=>{
   event.preventDefault();if(busy||disposed)return;const prompt=form.elements.prompt.value.trim();if(!prompt)return;const token=++epoch;controller=new AbortController();setBusy(true);paint([],false);showFilters();root.dataset.searchState='loading';output.textContent='Searching the catalog…';let candidates=[];
   try{
@@ -46,7 +48,7 @@
   }catch(e){if(token!==epoch||disposed||e.name==='AbortError')return;if(candidates.length){const related=candidates.filter(m=>m.source==='reference'||m.match==='title').slice(0,8);paint(related,false);const heading=root.querySelector('#svPicksHeading');if(heading)heading.textContent='Related titles';output.textContent=related.length?'AI matching is unavailable. Here are related titles from the catalog.':'Matching could not finish. Try again, or search for a title.';}else output.textContent=e.message||'Could not find picks. Please try again.';}
   finally{if(token===epoch&&!disposed){setBusy(false);if(root.dataset.searchState==='loading')root.dataset.searchState='empty';}}
  });
- for(const b of root.querySelectorAll('[data-mood]'))b.addEventListener('click',()=>{form.elements.prompt.value=b.dataset.mood;form.elements.prompt.focus();form.requestSubmit();});
+ for(const b of root.querySelectorAll('[data-mood]'))b.addEventListener('click',()=>{form.elements.prompt.value=b.dataset.mood;form.elements.prompt.focus();updateModes();form.requestSubmit();});
  cancel.addEventListener('click',()=>stop());if(new URLSearchParams(location.search).get('for')==='home'){form.elements.audience.value='home';root.querySelector('.svRecommendationPreferences').open=true;}
  window.addEventListener('pagehide',()=>{disposed=true;stop('');});window.addEventListener('pageshow',e=>{if(e.persisted){disposed=false;output.textContent='Your next favorite is out there.';}});
 })();

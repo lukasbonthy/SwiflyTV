@@ -1,43 +1,39 @@
 # Recommendation quality verification
 
-This pass addresses incorrect intent handling, candidate retrieval and ranking. It keeps the existing free MiniLM q8 model and its isolated browser worker; it does not introduce a paid model service or a generative-model download.
+AI search now uses pinned BGE Small English v1.5 q8 with normalized CLS pooling and the upstream query instruction. It runs in an isolated, single-threaded browser worker. No provider account, API key or per-request model service is required. The first semantic request downloads about 35 MB, then the browser can reuse its cached assets. Exact titles and filter-only requests remain immediate catalog operations.
 
-## Fixed-corpus measurement
+## Measured ranking
 
-The fixture contains 60 real title names with short, authored plot descriptions and deterministic metadata. There are 30 development queries and 20 additional paraphrases. Expected answers are manually labeled; broad moods can have other reasonable answers. This measures ranking among known candidates, not live TMDB coverage or general recommendation accuracy.
+Both workers were run with actual CPU inference against the same 60 real title names, authored descriptions and metadata. There are 50 existing queries, 30 additional paraphrases and eight separate probes whose intended title is absent. Expected labels are manually authored. This is development evidence, not general accuracy or live catalog recall.
 
-| Real q8 CPU inference over the same 50 queries | Before (`cc2f679`) | After |
+| Same fixed corpus | MiniLM at `63cc2a1` | BGE |
 | --- | ---: | ---: |
-| Expected answer ranked first | 39 | 48 |
-| Expected answer in the first three | 46 | 50 |
+| Expected title first | 76/80 | 78/80 |
+| Expected title in first three | 79/80 | 80/80 |
+| Correctly empty on absent-target probes | 1/8 | 6/8 |
 
-The old fixed cosine cutoff discarded the correct repeating-day and beauty-pageant road-trip matches. Its comforting query also ranked a horror film. The new ranker combines semantic similarity, weighted plot-word evidence and catalog affinity, handles comforting/family intent, and preserves additional preferences when comparing similar titles.
+The rat-chef and silent-tramp probes still return false matches. The first-choice misses and all outputs are recorded in `ai-model-comparison.json`. Similarity thresholds are calibrated for BGE rather than copied from MiniLM. CPU timings in that report do not measure phone, Xbox or browser responsiveness.
 
-Two strict first-choice misses remain in this fixture: a comforting request puts *Amelie* before the labeled *The Intouchables*, and a bookshop/celebrity description puts *You've Got Mail* before *Notting Hill*. Both labeled answers are within the first three. This small result is not a claim of perfect AI search. Timing from this script is not a site performance benchmark.
+The retrieval planner expands from 54 to 95 grounded story routes, with three independently encoded descriptions per route. Its separate 20 development coverage checks pass; these checks exercise routes introduced for those concepts and are not a held-out benchmark. Model identity, pooling, instruction and vector dimensions are versioned together. The old MiniLM assets and old topic index remain available to already-open pages.
 
-Reproduce with the pinned model assets:
+## Retrieval behavior
+
+Descriptive genre prompts such as a comedy about switching bodies now reach semantic planning. Simple genre, release-date, exclusion, language and runtime filters continue to bypass model loading. Inferred genres guide retrieval; only explicit user constraints are mandatory.
+
+Up to two actor/director constraints use intersected, verified TMDB combined credits. Director requests require the actual Director job. Ambiguous “movies with …” requests retain their story meaning unless a person is verified; known genre and story terms bypass person lookup. Following about/like clauses remain part of the story or reference request. Lookup timeouts are bounded and failures can be retried.
+
+Exact titles, cautious typo corrections, similar-title requests, watched exclusions, shared-home preferences, cancellation and actual progress remain. The entire original AI form is preserved: textarea, submit button, format, audience, watched checkbox, More options, all three mood suggestions, progress and Cancel.
+
+## Reproduce
 
 ```sh
 npm run prepare:ai
-node scripts/evaluate-recommendations.cjs /tmp/before.json --challenge --ref cc2f679
-node scripts/evaluate-recommendations.cjs /tmp/after.json --challenge
+npm run build:search-topics
+node scripts/evaluate-recommendations.cjs --ref 63cc2a102f2c70763e82f9c20dcc92b954eda297 --challenge --hard --negative /tmp/before.json
+node scripts/evaluate-recommendations.cjs --challenge --hard --negative /tmp/after.json
 npm run test:recommendations
 ```
 
-CI runs the real model evaluation after preparing assets. Its regression floor is at least 90% first-choice and 96% top-three matches on this fixed set. Behavioral unit and real Chromium tests separately cover intent parsing, actual candidate API calls, model loading and form-to-worker results.
+CI requires at least 90% first-choice and 96% top-three matches on the fixed labeled set, at least half of the absent-target probes to abstain, and every development route to remain reachable. Behavioral and Chromium tests separately exercise actual form, API, worker and search history paths.
 
-## Product behavior
-
-- Exact/translated title matches and cautious typo suggestions bypass the model. A typo retry is bounded and a correction is labeled as a suggestion.
-- Broad genre, exclusion, date, language and running-time requests use verified catalog filters without downloading the model.
-- Descriptive requests still run actual semantic inference. Plot words can rescue a short but meaningful match below the previous fixed threshold; weak unrelated results are not padded into a full grid.
-- Similar-title requests keep the reference story and the extra positive preferences separate during ranking.
-- Inferred topics guide retrieval rather than becoming mandatory genre exclusions. Explicit constraints remain mandatory across sources.
-- TV genres missing from TMDB's TV genre list use keyword metadata for positive and negative preferences. Runtime checks use bounded metadata requests and fail honestly if they cannot be verified.
-- The interface shows only interpreted filters, real download/matching progress, concise result reasons and a working cancellation action. First semantic use still needs the existing roughly 23 MB model download.
-
-Catalog tags and synopses cannot verify every subjective preference. The small topic planner and the upstream catalog can still miss unusual descriptions. The test set is deliberately separate from live catalog coverage.
-
-Live verification after deployment confirmed that the repeating-day request changed from no matches to *Groundhog Day* first. It also exposed a title-retrieval case outside the authored corpus: `Intersteler` found the different real film *Interstelar* (zero catalog votes), hiding *Interstellar* because the first search was nonempty. The follow-up retries once when no exact title exists, orders close spellings with a bounded vote-count prior, and presents plausible alternatives as choices. Exclusions still apply, and correction copy is derived from the surviving candidates.
-
-Implementation references: [TMDB discover filters](https://developer.themoviedb.org/reference/discover-movie), [TMDB title search](https://developer.themoviedb.org/reference/search-movie), [Sentence Transformers semantic search](https://www.sbert.net/examples/sentence_transformer/applications/semantic-search/README.html).
+Sources: [BAAI model card and license](https://huggingface.co/BAAI/bge-small-en-v1.5), [pinned Transformers.js model export](https://huggingface.co/Xenova/bge-small-en-v1.5/tree/ea104dacec62c0de699686887e3f920caeb4f3e3), [TMDB combined credits](https://developer.themoviedb.org/reference/person-combined-credits), [TMDB person search](https://developer.themoviedb.org/reference/search-person).
