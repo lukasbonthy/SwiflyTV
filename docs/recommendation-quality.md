@@ -38,4 +38,6 @@ CI runs the real model evaluation after preparing assets. Its regression floor i
 
 Catalog tags and synopses cannot verify every subjective preference. The small topic planner and the upstream catalog can still miss unusual descriptions. The test set is deliberately separate from live catalog coverage.
 
+Live verification after deployment confirmed that the repeating-day request changed from no matches to *Groundhog Day* first. It also exposed a title-retrieval case outside the authored corpus: `Intersteler` found the different real film *Interstelar* (zero catalog votes), hiding *Interstellar* because the first search was nonempty. The follow-up retries once when no exact title exists, orders close spellings with a bounded vote-count prior, and presents plausible alternatives as choices. Exclusions still apply, and correction copy is derived from the surviving candidates.
+
 Implementation references: [TMDB discover filters](https://developer.themoviedb.org/reference/discover-movie), [TMDB title search](https://developer.themoviedb.org/reference/search-movie), [Sentence Transformers semantic search](https://www.sbert.net/examples/sentence_transformer/applications/semantic-search/README.html).
