@@ -7,7 +7,7 @@ body.svCleanShell :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) {
 :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) *, :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) *::before {box-sizing:border-box;}
 :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) svg {width:19px;height:19px;flex:0 0 19px;}
 body.svCleanShell :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) :is(button,a,summary) {font-family:inherit;transition:background .22s,border-color .22s,color .22s,transform .3s var(--party-ease);-webkit-tap-highlight-color:transparent;}
-body.svCleanShell :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) :is(.dsPrimaryBtn,.dsSecondaryBtn) {display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:44px;padding:11px 17px !important;border-radius:999px !important;font-size:12px !important;font-weight:500 !important;white-space:nowrap;}
+body.svCleanShell :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) :is(.dsPrimaryBtn,.dsSecondaryBtn) {display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:44px;padding:11px 17px !important;border-radius:999px !important;font-size:calc(12px * var(--st-ui-scale, 1)) !important;font-weight:500 !important;white-space:nowrap;}
 body.svCleanShell :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) .dsPrimaryBtn {color:#181821 !important;background:linear-gradient(150deg,#fff,#d7d5ee) !important;border:1px solid #ffffffb0 !important;box-shadow:inset 0 1px #fff,0 5px 22px #0003 !important;}
 body.svCleanShell :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) .dsSecondaryBtn {color:#e5e4ed !important;background:#ffffff08 !important;border:1px solid var(--party-line) !important;box-shadow:inset 0 1px #ffffff08 !important;}
 body.svCleanShell :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) .dsIconBtn {display:grid;place-items:center;flex:0 0 38px;width:38px !important;height:38px !important;min-height:38px !important;padding:9px !important;border:1px solid #ffffff12 !important;border-radius:50% !important;background:#ffffff06 !important;color:#c9c8d5 !important;box-shadow:none !important;}
@@ -15,18 +15,18 @@ body.svCleanShell :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) :is(but
 body.svCleanShell :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) button:active:not(:disabled) {transform:scale(.97);}
 body.svCleanShell :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) :is(button,input,a,summary):focus-visible {outline:2px solid #c3bcf6 !important;outline-offset:4px !important;}
 body.svCleanShell :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) button:disabled {opacity:.4;cursor:default;}
-body.svCleanShell :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) input {width:100%;min-width:0;height:46px;padding:0 15px !important;border:1px solid var(--party-line) !important;border-radius:12px !important;background:#08090e9e !important;color:#eeeef4 !important;font:inherit !important;font-size:13px !important;box-shadow:inset 0 1px #0002 !important;transition:border-color .2s,box-shadow .2s;}
+body.svCleanShell :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) input {width:100%;min-width:0;height:46px;padding:0 15px !important;border:1px solid var(--party-line) !important;border-radius:12px !important;background:#08090e9e !important;color:#eeeef4 !important;font:inherit !important;font-size:calc(13px * var(--st-ui-scale, 1)) !important;box-shadow:inset 0 1px #0002 !important;transition:border-color .2s,box-shadow .2s;}
 body.svCleanShell :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) input::placeholder {color:#757684;}
 body.svCleanShell :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) input:focus {border-color:#b3abdf85 !important;box-shadow:0 0 0 3px #b3abdf0b !important;}
-.svPartyJoinForm>label,.svPartyCreateForm>label {display:block;margin:0 0 9px;font-size:12px;font-weight:500;color:#b9b8c6;}
+.svPartyJoinForm>label,.svPartyCreateForm>label {display:block;margin:0 0 9px;font-size:calc(12px * var(--st-ui-scale, 1));font-weight:500;color:#b9b8c6;}
 .svPartyJoinForm>div {display:flex;gap:9px;align-items:center;}
 .svPartySrOnly {position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;}
 /* Catalog entry stays part of its existing content gutter. */
 body.svCleanShell .svPartyBrowse {position:relative;display:flex;align-items:center;flex-wrap:wrap;gap:22px;margin:0 0 32px;padding:7px 0 26px;border:0;border-bottom:1px solid var(--party-line);border-radius:0;background:none;box-shadow:none;scroll-margin-top:112px;}
 .svPartyBrowseIntro {display:flex;align-items:center;gap:14px;flex:1;min-width:220px;}
 .svPartyBrowseIntro>svg {color:#b6afda;width:24px;height:24px;flex:0 0 24px;}
-body.svCleanShell .svPartyBrowse h2 {margin:0 !important;font:500 23px/1.2 var(--st-font,"Host Grotesk",sans-serif) !important;letter-spacing:-.04em !important;}
-body.svCleanShell .svPartyBrowse p {margin:6px 0 0 !important;color:var(--party-muted) !important;font-size:12px !important;font-weight:400 !important;line-height:1.6 !important;}
+body.svCleanShell .svPartyBrowse h2 {margin:0 !important;font:500 calc(23px * var(--st-ui-scale, 1))/1.2 var(--st-font,"Host Grotesk",sans-serif) !important;letter-spacing:-.04em !important;}
+body.svCleanShell .svPartyBrowse p {margin:6px 0 0 !important;color:var(--party-muted) !important;font-size:calc(12px * var(--st-ui-scale, 1)) !important;font-weight:400 !important;line-height:1.6 !important;}
 .svPartyBrowse .svPartyJoinForm {flex:0 1 330px;margin:0;}
 .svPartyBrowse .svPartyJoinForm>label {position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);}
 body.svCleanShell .svPartyBrowse input {border-radius:999px !important;}
@@ -37,75 +37,75 @@ body.svCleanShell .svPartyBrowse input {border-radius:999px !important;}
 .svPartyDirectory summary::-webkit-details-marker {display:none;}
 .svPartyDirectory>section {position:absolute;z-index:30;right:0;top:calc(100% + 12px);width:min(355px,calc(100vw - 40px));padding:22px;border:1px solid #ffffff24;border-radius:20px;background:#15151ef5;backdrop-filter:blur(24px);box-shadow:0 25px 70px #0009,inset 0 1px #ffffff08;}
 .svPartyDirectory header {display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
-body.svCleanShell .svPartyDirectory h3 {margin:0 !important;font-size:16px !important;font-weight:500 !important;}
+body.svCleanShell .svPartyDirectory h3 {margin:0 !important;font-size:calc(16px * var(--st-ui-scale, 1)) !important;font-weight:500 !important;}
 .svPartyDirectory [data-party-rooms] {max-height:300px;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;}
 .svPartyRoomLink {display:flex;flex-direction:column;gap:5px;padding:16px 0;border-bottom:1px solid #ffffff0c;color:#ebebf3;text-decoration:none;}
-.svPartyRoomLink b {font-size:13px;font-weight:500;overflow-wrap:anywhere;}
-.svPartyRoomLink small {font-size:11px;color:#9b98aa;}
-.svPartyCommunityLink {display:block;margin-top:17px;color:#b2aaca;text-decoration:none;font-size:12px;}
+.svPartyRoomLink b {font-size:calc(13px * var(--st-ui-scale, 1));font-weight:500;overflow-wrap:anywhere;}
+.svPartyRoomLink small {font-size:calc(11px * var(--st-ui-scale, 1));color:#9b98aa;}
+.svPartyCommunityLink {display:block;margin-top:17px;color:#b2aaca;text-decoration:none;font-size:calc(12px * var(--st-ui-scale, 1));}
 /* A chat sidebar, without a second layer of nested cards. */
 body.svCleanShell .svInlineParty {display:flex;flex-direction:column;min-width:0;min-height:520px;height:clamp(540px,calc(100svh - 180px),740px);border:1px solid var(--party-line);border-radius:23px;background:linear-gradient(145deg,#ffffff08,transparent 45%),#101116de;box-shadow:inset 0 1px #ffffff0b,0 15px 55px #0003;backdrop-filter:blur(20px);overflow:hidden;}
 .svInlineParty[hidden] {display:none !important;}
 .svInlinePartyHead {display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:23px 22px 12px;}
 .svInlinePartyHead>div {min-width:0;}
-.svInlinePartyHead .dsEyebrow {display:block;margin-bottom:9px;color:#a5a0bd;font-size:11px;letter-spacing:.01em;text-transform:none;}
-body.svCleanShell .svInlineParty h2 {margin:0 !important;font-size:23px !important;font-weight:500 !important;line-height:1.1 !important;letter-spacing:-.045em !important;overflow-wrap:anywhere;}
-.svInlinePartyConnection {display:flex;flex-wrap:wrap;gap:8px 12px;padding:0 22px;color:#858392;font-size:10px;}
+.svInlinePartyHead .dsEyebrow {display:block;margin-bottom:9px;color:#a5a0bd;font-size:calc(11px * var(--st-ui-scale, 1));letter-spacing:.01em;text-transform:none;}
+body.svCleanShell .svInlineParty h2 {margin:0 !important;font-size:calc(23px * var(--st-ui-scale, 1)) !important;font-weight:500 !important;line-height:1.1 !important;letter-spacing:-.045em !important;overflow-wrap:anywhere;}
+.svInlinePartyConnection {display:flex;flex-wrap:wrap;gap:8px 12px;padding:0 22px;color:#858392;font-size:calc(10px * var(--st-ui-scale, 1));}
 .svInlinePartyConnection [data-party-connection] {display:flex;align-items:center;gap:6px;color:#b9bfbc;}
 .svInlinePartyConnection [data-party-connection]::before {content:"";width:5px;height:5px;border-radius:50%;background:#a8c5b9;}
 .svInlinePartyFilm {display:flex;gap:10px;align-items:center;margin:20px 22px 0;padding-bottom:18px;border-bottom:1px solid #ffffff0b;}
 .svInlinePartyFilm>svg {color:#8f889f;}
 .svInlinePartyFilm>div {min-width:0;}
-.svInlinePartyFilm span {display:block;margin-bottom:4px;color:#7f7c8d;font-size:10px;}
-.svInlinePartyFilm b {display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:400;color:#cac7d6;}
+.svInlinePartyFilm span {display:block;margin-bottom:4px;color:#7f7c8d;font-size:calc(10px * var(--st-ui-scale, 1));}
+.svInlinePartyFilm b {display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:calc(12px * var(--st-ui-scale, 1));font-weight:400;color:#cac7d6;}
 .svInlinePartyActions {display:flex;align-items:center;gap:8px;padding:17px 22px 10px;}
 .svInlinePartyActions .dsSecondaryBtn {flex:1;}
 .svInlinePartyPeople {margin:0 22px;padding:0;border:0;}
-.svInlinePartyPeople summary {display:flex;align-items:center;gap:8px;min-height:38px;list-style:none;cursor:pointer;color:#9f9aaa;font-size:11px;}
+.svInlinePartyPeople summary {display:flex;align-items:center;gap:8px;min-height:38px;list-style:none;cursor:pointer;color:#9f9aaa;font-size:calc(11px * var(--st-ui-scale, 1));}
 .svInlinePartyPeople summary::after {content:'+';margin-left:auto;color:#8b849e;}
 .svInlinePartyPeople[open] summary::after {content:'−';}
 .svInlinePartyPeople ul {list-style:none;margin:0;padding:0 0 12px;max-height:110px;overflow:auto;scrollbar-width:thin;}
-.svInlinePartyPeople li {padding-top:8px;color:#bcb7cb;font-size:12px;overflow-wrap:anywhere;}
-.svInlinePartyChatLabel {display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:16px 22px 0;padding-top:18px;border-top:1px solid #ffffff0b;color:#d7d3e3;font-size:13px;}
-.svInlinePartyChatLabel>span:last-child {color:#716d80;font-size:10px;}
+.svInlinePartyPeople li {padding-top:8px;color:#bcb7cb;font-size:calc(12px * var(--st-ui-scale, 1));overflow-wrap:anywhere;}
+.svInlinePartyChatLabel {display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:16px 22px 0;padding-top:18px;border-top:1px solid #ffffff0b;color:#d7d3e3;font-size:calc(13px * var(--st-ui-scale, 1));}
+.svInlinePartyChatLabel>span:last-child {color:#716d80;font-size:calc(10px * var(--st-ui-scale, 1));}
 .svInlinePartyMessages {flex:1;min-height:110px;overflow-y:auto;overscroll-behavior:contain;padding:21px 22px 8px;scrollbar-width:thin;scrollbar-color:#ffffff26 transparent;}
 .svInlinePartyMessage {margin-bottom:19px;animation:svPartyMessageIn .25s ease-out both;overflow-wrap:anywhere;}
-.svInlinePartyMessage b {display:block;font-size:11px;font-weight:500;color:#b8aaca;}
-body.svCleanShell .svInlinePartyMessage p {margin:5px 0 0 !important;font-size:13px !important;font-weight:400 !important;line-height:1.65 !important;color:#dfdce7 !important;white-space:pre-wrap;}
+.svInlinePartyMessage b {display:block;font-size:calc(11px * var(--st-ui-scale, 1));font-weight:500;color:#b8aaca;}
+body.svCleanShell .svInlinePartyMessage p {margin:5px 0 0 !important;font-size:calc(13px * var(--st-ui-scale, 1)) !important;font-weight:400 !important;line-height:1.65 !important;color:#dfdce7 !important;white-space:pre-wrap;}
 .svInlinePartyMessage.isSystem b {display:none;}
-body.svCleanShell .svInlinePartyMessage.isSystem p {font-size:11px !important;color:#8d879d !important;}
-body.svCleanShell .svPartyEmpty {color:#8e899d !important;font-size:12px !important;font-weight:400 !important;line-height:1.7 !important;margin:0 !important;}
+body.svCleanShell .svInlinePartyMessage.isSystem p {font-size:calc(11px * var(--st-ui-scale, 1)) !important;color:#8d879d !important;}
+body.svCleanShell .svPartyEmpty {color:#8e899d !important;font-size:calc(12px * var(--st-ui-scale, 1)) !important;font-weight:400 !important;line-height:1.7 !important;margin:0 !important;}
 .svInlinePartyComposer {display:flex;align-items:center;gap:6px;margin:8px 14px 14px;padding:5px 6px 5px 13px;border:1px solid #ffffff1c;border-radius:16px;background:#07080ca6;}
-body.svCleanShell .svInlinePartyComposer input {flex:1;height:36px;padding:0 0 0 2px !important;border:0 !important;background:transparent !important;box-shadow:none !important;font-size:12px !important;}
+body.svCleanShell .svInlinePartyComposer input {flex:1;height:36px;padding:0 0 0 2px !important;border:0 !important;background:transparent !important;box-shadow:none !important;font-size:calc(12px * var(--st-ui-scale, 1)) !important;}
 body.svCleanShell .svInlinePartyComposer input:focus {box-shadow:none !important;}
 body.svCleanShell .svInlinePartyComposer .dsIconBtn {width:34px !important;height:34px !important;min-height:34px !important;flex-basis:34px;padding:8px !important;color:#16121d !important;background:#cbc3e4 !important;}
-body.svCleanShell .svInlinePartyStatus {margin:0 22px 15px !important;font-size:11px !important;font-weight:400 !important;line-height:1.6 !important;color:#aaa1bd !important;overflow-wrap:anywhere;}
+body.svCleanShell .svInlinePartyStatus {margin:0 22px 15px !important;font-size:calc(11px * var(--st-ui-scale, 1)) !important;font-weight:400 !important;line-height:1.6 !important;color:#aaa1bd !important;overflow-wrap:anywhere;}
 /* Party setup is a focused invitation, with film identity and a single main action. */
 body.svCleanShell .svWatchPartyDialog {width:min(480px,calc(100vw - 28px));max-height:calc(100dvh - 36px);margin:auto;padding:32px;border:1px solid #ffffff28;border-radius:26px;background:radial-gradient(ellipse at 0 0,#a38bc616,transparent 70%),#15151bf7;color:#eeeaf5;box-shadow:inset 0 1px #ffffff0c,0 35px 130px #000a;backdrop-filter:blur(28px);overflow:auto;overscroll-behavior:contain;}
 .svWatchPartyDialog::backdrop {background:#030309a6;backdrop-filter:blur(9px);}
 .svWatchPartyDialog>header {display:flex;align-items:flex-start;justify-content:space-between;gap:15px;}
-.svWatchPartyDialog .dsEyebrow {display:block;margin:0 0 12px;color:#aba0c2;font-size:12px;font-weight:400;text-transform:none;letter-spacing:0;}
-body.svCleanShell .svWatchPartyDialog h2 {margin:0 !important;font-size:35px !important;font-weight:500 !important;line-height:1.05 !important;letter-spacing:-.055em !important;}
-body.svCleanShell .svWatchPartyDialog>p {margin:16px 0 25px !important;color:#9e98ad !important;font-size:13px !important;font-weight:400 !important;line-height:1.7 !important;}
+.svWatchPartyDialog .dsEyebrow {display:block;margin:0 0 12px;color:#aba0c2;font-size:calc(12px * var(--st-ui-scale, 1));font-weight:400;text-transform:none;letter-spacing:0;}
+body.svCleanShell .svWatchPartyDialog h2 {margin:0 !important;font-size:calc(35px * var(--st-ui-scale, 1)) !important;font-weight:500 !important;line-height:1.05 !important;letter-spacing:-.055em !important;}
+body.svCleanShell .svWatchPartyDialog>p {margin:16px 0 25px !important;color:#9e98ad !important;font-size:calc(13px * var(--st-ui-scale, 1)) !important;font-weight:400 !important;line-height:1.7 !important;}
 .svPartySelectedTitle {display:flex;align-items:center;gap:15px;margin:0 0 25px;padding:17px 0;border-block:1px solid #ffffff0d;}
 .svPartySetupPoster {width:48px;height:68px;object-fit:cover;border-radius:7px;box-shadow:0 5px 15px #0005;}
 .svPartySelectedTitle>svg {width:30px;height:30px;flex-basis:30px;color:#b7a9cb;}
-.svPartySelectedTitle small {display:block;margin-bottom:6px;color:#7f778f;font-size:11px;}
-.svPartySelectedTitle strong {display:block;color:#d6cfe2;font-size:16px;font-weight:500;line-height:1.4;overflow-wrap:anywhere;}
+.svPartySelectedTitle small {display:block;margin-bottom:6px;color:#7f778f;font-size:calc(11px * var(--st-ui-scale, 1));}
+.svPartySelectedTitle strong {display:block;color:#d6cfe2;font-size:calc(16px * var(--st-ui-scale, 1));font-weight:500;line-height:1.4;overflow-wrap:anywhere;}
 .svPartyCreateForm .dsPrimaryBtn {width:100%;margin-top:15px;}
 .svPartyEpisodeChoices {display:grid;grid-template-columns:minmax(100px,.65fr) minmax(0,1.35fr);gap:12px;margin:0 0 18px;}
-.svPartyEpisodeChoices label {display:flex;flex-direction:column;gap:8px;min-width:0;color:#b9b8c6;font-size:12px;}
-body.svCleanShell .svPartyEpisodeChoices select {width:100%;min-width:0;min-height:44px;padding:10px 12px;border:1px solid var(--party-line);border-radius:12px;background:#101118;color:#eeeef4;font:inherit;font-size:13px;color-scheme:dark;}
+.svPartyEpisodeChoices label {display:flex;flex-direction:column;gap:8px;min-width:0;color:#b9b8c6;font-size:calc(12px * var(--st-ui-scale, 1));}
+body.svCleanShell .svPartyEpisodeChoices select {width:100%;min-width:0;min-height:44px;padding:10px 12px;border:1px solid var(--party-line);border-radius:12px;background:#101118;color:#eeeef4;font:inherit;font-size:calc(13px * var(--st-ui-scale, 1));color-scheme:dark;}
 body.svCleanShell .svPartyEpisodeChoices select:focus-visible {outline:2px solid #c3bcf6;outline-offset:3px;}
 .svPlayerPage[data-party-active="true"] .svPlayerEpisodes a[aria-disabled="true"] {opacity:.65;cursor:default;}
-.svPlayerPartyEpisodeNote {margin:0 0 14px;color:#a2a4b0;font-size:12px;}
+.svPlayerPartyEpisodeNote {margin:0 0 14px;color:#a2a4b0;font-size:calc(12px * var(--st-ui-scale, 1));}
 @media(max-width:480px){.svPartyEpisodeChoices{grid-template-columns:minmax(0,1fr);}}
-.svPartyFormDivider {display:flex;align-items:center;gap:14px;margin:25px 0 22px;color:#787080;font-size:11px;}
+.svPartyFormDivider {display:flex;align-items:center;gap:14px;margin:25px 0 22px;color:#787080;font-size:calc(11px * var(--st-ui-scale, 1));}
 .svPartyFormDivider::before,.svPartyFormDivider::after {content:"";height:1px;background:#ffffff0d;flex:1;}
-body.svCleanShell .svWatchPartyDialog .svPartySetupStatus {margin:17px 0 0 !important;color:#b9aec9 !important;font-size:12px !important;font-weight:400 !important;line-height:1.7 !important;}
+body.svCleanShell .svWatchPartyDialog .svPartySetupStatus {margin:17px 0 0 !important;color:#b9aec9 !important;font-size:calc(12px * var(--st-ui-scale, 1)) !important;font-weight:400 !important;line-height:1.7 !important;}
 @keyframes svPartyMessageIn {from {opacity:0;transform:translateY(5px);}to {opacity:1;transform:none;}}
 @media(max-width:1100px) {.svPartyBrowseIntro {flex-basis:100%;}.svPartyBrowse .svPartyJoinForm {flex:1;}.svInlineParty {height:520px;}}
-@media(max-width:700px) {body.svCleanShell .svPartyBrowse {gap:16px;}.svPartyBrowseIntro {min-width:0;}.svPartyBrowse .svPartyJoinForm {flex-basis:100%;}.svPartyDirectory>section {left:0;right:auto;}.svInlinePartyChatLabel>span:last-child {display:none;}body.svCleanShell .svWatchPartyDialog {padding:26px 22px;border-radius:23px;}body.svCleanShell .svWatchPartyDialog h2 {font-size:32px !important;}.svInlineParty {height:500px;}}
+@media(max-width:700px) {body.svCleanShell .svPartyBrowse {gap:16px;}.svPartyBrowseIntro {min-width:0;}.svPartyBrowse .svPartyJoinForm {flex-basis:100%;}.svPartyDirectory>section {left:0;right:auto;}.svInlinePartyChatLabel>span:last-child {display:none;}body.svCleanShell .svWatchPartyDialog {padding:26px 22px;border-radius:23px;}body.svCleanShell .svWatchPartyDialog h2 {font-size:calc(32px * var(--st-ui-scale, 1)) !important;}.svInlineParty {height:500px;}}
 body.svCleanShell[data-st-glass="off"] :is(.svInlineParty,.svWatchPartyDialog,.svPartyDirectory>section) {background:#15151d !important;backdrop-filter:none !important;}
 body.reduceMotion :is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) * {animation:none !important;transition:none !important;}
 @media(prefers-reduced-motion:reduce) {:is(.svPartyBrowse,.svInlineParty,.svWatchPartyDialog) * {animation:none !important;transition:none !important;scroll-behavior:auto !important;}}

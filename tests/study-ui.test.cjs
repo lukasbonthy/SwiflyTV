@@ -24,7 +24,7 @@ async function page(options = {}) {
   if(options.socket)w.io=()=>options.socket;
   w.fetch=async route=>({ok:true,json:async()=>route.endsWith('/catalog')?require('../public/study/catalog.json'):({board:[],communityMinutes:0,scope:'this-server-session'})});
   w.HTMLMediaElement.prototype.play=function(){return Promise.resolve();};w.HTMLMediaElement.prototype.pause=function(){};w.HTMLMediaElement.prototype.load=function(){};
-  w.Audio=class extends w.EventTarget{constructor(){super();this.currentTime=0;this.duration=120;this.volume=.65;this.muted=false;this.src='';this.paused=true;}play(){this.paused=false;return Promise.resolve();}pause(){this.paused=true;}load(){}removeAttribute(){this.src='';}};
+  w.Audio=class extends w.EventTarget{constructor(){super();this.currentTime=0;this.duration=120;this.volume=.65;this.muted=false;this.src='';this.paused=true;}play(){this.paused=false;return Promise.resolve();}pause(){this.paused=true;}load(){}getAttribute(name){return name==='src'?this.src:null;}removeAttribute(){this.src='';}};
   Object.defineProperty(w.navigator,'mediaDevices',{value:{getUserMedia:async()=>{captureCount++;throw Error('denied');},getDisplayMedia:async()=>{captureCount++;throw Error('denied');}}});
   w.boot('study/study.js');await new Promise(resolve=>setTimeout(resolve,20));
   return {...fixture,ownerUsers,advance(ms){clock+=ms;intervalTick();},setHidden(value){Object.defineProperty(w.document,'hidden',{value,configurable:true});w.document.dispatchEvent(new w.Event('visibilitychange'));},setOwner(value){owner=value;w.document.dispatchEvent(new w.Event('swifly:profile-changed'));},captureCount:()=>captureCount,async settle(){await new Promise(resolve=>setTimeout(resolve,10));}};

@@ -14,7 +14,7 @@ body.svCleanShell .dsAuthShellSafe {
 body.svCleanShell .dsAuthBrand {
   display:inline-flex !important;align-items:center;gap:10px;width:max-content;min-height:32px;
   align-self:center;color:#f0f4f4;text-decoration:none !important;
-  font:650 19px/1 "Host Grotesk",system-ui,sans-serif !important;letter-spacing:-.055em;
+  font:650 calc(19px * var(--st-ui-scale, 1))/1 "Host Grotesk",system-ui,sans-serif !important;letter-spacing:-.055em;
 }
 body.svCleanShell .dsAuthBrand > span {
   display:grid;place-items:center;width:30px;height:30px;border-radius:9px 9px 9px 4px;
@@ -46,7 +46,7 @@ body.svCleanShell .dsAuthSwitch a {
   position:relative;width:auto !important;min-height:30px !important;height:auto !important;
   padding:0 0 5px !important;border:0 !important;border-radius:0 !important;
   background:transparent !important;box-shadow:none !important;
-  color:#829297 !important;font:500 13px/1.4 "Host Grotesk",sans-serif !important;
+  color:#829297 !important;font:500 calc(13px * var(--st-ui-scale, 1))/1.4 "Host Grotesk",sans-serif !important;
   text-decoration:none !important;
 }
 body.svCleanShell .dsAuthSwitch a.active {
@@ -58,19 +58,19 @@ body.svCleanShell .dsAuthSwitch a.active::after {
 }
 body.svCleanShell .dsAuthCard h1 {
   margin:0 0 9px !important;padding:0 !important;
-  font:550 clamp(30px,4vw,38px)/1.12 "Host Grotesk",system-ui,sans-serif !important;
+  font:550 calc(clamp(30px,4vw,38px) * var(--st-ui-scale, 1))/1.12 "Host Grotesk",system-ui,sans-serif !important;
   letter-spacing:-.055em !important;color:#f5f7f5 !important;text-transform:none !important;
 }
 body.svCleanShell .dsAuthCard .svAuthIntro {
   margin:0 !important;max-width:none;color:#a3b0b2 !important;
-  font:400 13px/1.6 "Host Grotesk",sans-serif !important;
+  font:400 calc(13px * var(--st-ui-scale, 1))/1.6 "Host Grotesk",sans-serif !important;
 }
 body.svCleanShell .dsSafeAuthForm {
   display:grid;gap:17px;align-items:stretch;margin:28px 0 0 !important;
 }
 body.svCleanShell .dsSafeAuthForm label {
   display:grid;gap:8px;margin:0 !important;padding:0 !important;
-  color:#c8d5d4 !important;font:550 12px/1.4 "Host Grotesk",sans-serif !important;
+  color:#c8d5d4 !important;font:550 calc(12px * var(--st-ui-scale, 1))/1.4 "Host Grotesk",sans-serif !important;
   letter-spacing:0 !important;text-transform:none !important;
 }
 body.svCleanShell .dsSafeAuthForm input {
@@ -78,7 +78,7 @@ body.svCleanShell .dsSafeAuthForm input {
   border:1px solid rgba(226,239,234,.17) !important;border-radius:11px !important;
   padding:0 15px !important;background:rgba(5,8,10,.56) !important;
   box-shadow:none !important;color:#f6faf8 !important;
-  font:400 14px/1.4 "Host Grotesk",sans-serif !important;
+  font:400 calc(14px * var(--st-ui-scale, 1))/1.4 "Host Grotesk",sans-serif !important;
 }
 body.svCleanShell .dsSafeAuthForm input::placeholder {color:#738389 !important;}
 body.svCleanShell .dsSafeAuthForm input:focus-visible {
@@ -90,13 +90,13 @@ body.svCleanShell .dsSafeAuthForm .dsPrimaryBtn {
   width:100%;height:51px;min-height:51px;margin:6px 0 0 !important;
   padding:0 17px !important;border:1px solid #e2eee8 !important;border-radius:11px !important;
   background:#e7f0eb !important;color:#15221e !important;
-  font:650 13px/1 "Host Grotesk",sans-serif !important;
+  font:650 calc(13px * var(--st-ui-scale, 1))/1 "Host Grotesk",sans-serif !important;
   box-shadow:none !important;cursor:pointer;transition:background .2s,transform .2s;
 }
 body.svCleanShell .dsSafeAuthForm .dsPrimaryBtn > span:last-child {
   display:inline-grid;place-items:center;width:28px;height:28px;
   border:1px solid rgba(19,39,32,.17);border-radius:8px;background:none;
-  color:#15221e;font-size:16px;
+  color:#15221e;font-size:calc(16px * var(--st-ui-scale, 1));
 }
 body.svCleanShell .dsSafeAuthForm .dsPrimaryBtn:hover {
   background:#fff !important;transform:translateY(-1px);
@@ -104,19 +104,19 @@ body.svCleanShell .dsSafeAuthForm .dsPrimaryBtn:hover {
 body.svCleanShell .dsAuthFinePrint {
   margin:24px 0 0 !important;padding:19px 0 0 !important;
   border-top:1px solid rgba(255,255,255,.12);
-  text-align:center;font:400 12px/1.5 "Host Grotesk",sans-serif !important;color:#8fa0a4;
+  text-align:center;font:400 calc(12px * var(--st-ui-scale, 1))/1.5 "Host Grotesk",sans-serif !important;color:#8fa0a4;
 }
 body.svCleanShell .dsAuthFinePrint a {color:#e6efeb !important;font-weight:600;text-decoration:none;}
 body.svCleanShell .dsAuthFinePrint a:hover {text-decoration:underline;}
 body.svCleanShell .svAuthPrivacy {
   margin:13px 0 0;color:#687a7e;text-align:center;
-  font:400 10px/1.5 "Host Grotesk",sans-serif;
+  font:400 calc(10px * var(--st-ui-scale, 1))/1.5 "Host Grotesk",sans-serif;
 }
 body.svCleanShell .dsAuthTopActions {
   position:absolute;top:clamp(23px,4vw,42px);right:clamp(20px,5vw,70px);
   display:flex;align-items:center;gap:16px;z-index:10;
 }
-body.svCleanShell .dsAuthTopActions a {font:500 11px "Host Grotesk",sans-serif;color:#a4b4b3;text-decoration:none;}
+body.svCleanShell .dsAuthTopActions a {font:500 calc(11px * var(--st-ui-scale, 1)) "Host Grotesk",sans-serif;color:#a4b4b3;text-decoration:none;}
 body.svCleanShell .dsAuthTopActions button[data-st-open] {
   display:grid;place-items:center;width:38px;height:38px;padding:0;
   border:1px solid #ffffff2a;border-radius:12px;background:#ffffff09;color:#d7e7e1;cursor:pointer;
@@ -171,7 +171,7 @@ body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .dsAuthSwitch a {
   border-radius:8px !important;
   color:#9aabad !important;
   background:transparent !important;
-  font-size:12px !important;
+  font-size:calc(12px * var(--st-ui-scale, 1)) !important;
   font-weight:550 !important;
   transition:background-color .18s,color .18s;
 }
@@ -189,14 +189,14 @@ body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .dsAuthSwitch a:hover:
 }
 /* Hierarchy improvements without changing headline sizes or spacing. */
 body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .dsAuthCard h1 {
-  font-size:clamp(30px,4vw,38px) !important;
+  font-size:calc(clamp(30px,4vw,38px) * var(--st-ui-scale, 1)) !important;
   line-height:1.12 !important;
   letter-spacing:-.058em !important;
   margin:0 0 9px !important;
 }
 body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .svAuthIntro {
   color:#a8b9b8 !important;
-  font-size:13px !important;
+  font-size:calc(13px * var(--st-ui-scale, 1)) !important;
   line-height:1.6 !important;
 }
 body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .dsSafeAuthForm {
@@ -205,7 +205,7 @@ body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .dsSafeAuthForm {
 }
 body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .dsSafeAuthForm label {
   gap:8px !important;
-  font-size:12px !important;
+  font-size:calc(12px * var(--st-ui-scale, 1)) !important;
   color:#d1ddda !important;
 }
 body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .dsSafeAuthForm input {
@@ -246,7 +246,7 @@ body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .svAuthPasswordToggle 
   border:0;border-radius:8px;
   background:transparent;
   color:#b8c8c4;
-  font:550 11px/1 "Host Grotesk",system-ui,sans-serif;
+  font:550 calc(11px * var(--st-ui-scale, 1))/1 "Host Grotesk",system-ui,sans-serif;
   cursor:pointer;
   transition:color .18s,background-color .18s;
 }

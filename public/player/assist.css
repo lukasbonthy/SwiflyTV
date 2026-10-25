@@ -2,52 +2,52 @@
 .svPlayerAssist{position:absolute;inset:0;z-index:5;pointer-events:none}
 .svPlayerAssist>button,.svPlayerAssist>section{pointer-events:auto}
 .svPlayerAssist [hidden],.svPlayerAssist>[hidden]{display:none!important}
-.svAssistSkip,.svSongButton{position:absolute;display:flex;align-items:center;justify-content:center;gap:10px;bottom:112px;min-height:44px;padding:11px 17px;border:1px solid #ffffff33;border-radius:999px;background:#080808ed;color:#f1f1f1;font-family:inherit;font-size:12px;line-height:1.4;box-shadow:0 8px 28px #00000044;cursor:pointer}
-.svAssistSkip{right:24px}.svSongButton{left:24px;color:#d5d5d5;font-size:11px;border-color:#ffffff20}
+.svAssistSkip,.svSongButton{position:absolute;display:flex;align-items:center;justify-content:center;gap:10px;bottom:112px;min-height:44px;padding:11px 17px;border:1px solid #ffffff33;border-radius:999px;background:#080808ed;color:#f1f1f1;font-family:inherit;font-size:calc(12px * var(--st-ui-scale, 1));line-height:1.4;box-shadow:0 8px 28px #00000044;cursor:pointer}
+.svAssistSkip{right:24px}.svSongButton{left:24px;color:#d5d5d5;font-size:calc(11px * var(--st-ui-scale, 1));border-color:#ffffff20}
 .svSongButton svg,.svAssistSkip svg{width:16px;height:16px;flex-basis:16px}
 .svPlayer[data-player-controls-visibility=hidden] .svSongButton{opacity:0;visibility:hidden;pointer-events:none}
 .svSongButton{transition:opacity .16s,visibility .16s}
 .svAssistNext{position:absolute;right:24px;bottom:112px;box-sizing:border-box;width:304px;max-height:calc(100% - 128px);overflow-y:auto;border:1px solid #ffffff2c;border-radius:19px;background:#080808fa;color:#efefef;box-shadow:0 16px 46px #00000077}
 .svAssistNextArt{display:block;width:100%;height:130px;object-fit:cover;border-bottom:1px solid #ffffff0a}
 .svAssistNextBody{padding:21px}.svAssistNextHeading{display:flex;align-items:center;justify-content:space-between;gap:14px}
-.svAssistEyebrow{color:#aaaaaa;font-size:8px;font-weight:550;letter-spacing:.15em;white-space:nowrap}
-.svAssistNextHeading>[data-assist-next-show]{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#b0b0b0;font-size:9px}
-.svAssistNext h3{margin:12px 0 8px;font-size:20px;font-weight:550;letter-spacing:-.035em;line-height:1.4}
-.svAssistNext p{margin:0 0 20px;color:#afafaf;font-size:11px;line-height:1.6;font-variant-numeric:tabular-nums}
+.svAssistEyebrow{color:#aaaaaa;font-size:calc(8px * var(--st-ui-scale, 1));font-weight:550;letter-spacing:.15em;white-space:nowrap}
+.svAssistNextHeading>[data-assist-next-show]{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#b0b0b0;font-size:calc(9px * var(--st-ui-scale, 1))}
+.svAssistNext h3{margin:12px 0 8px;font-size:calc(20px * var(--st-ui-scale, 1));font-weight:550;letter-spacing:-.035em;line-height:1.4}
+.svAssistNext p{margin:0 0 20px;color:#afafaf;font-size:calc(11px * var(--st-ui-scale, 1));line-height:1.6;font-variant-numeric:tabular-nums}
 .svAssistNextActions{display:flex;gap:8px}
-.svAssistNextActions button{display:flex;align-items:center;justify-content:center;gap:7px;min-height:42px;flex:1;padding:10px 9px;border:1px solid #ffffff1c;border-radius:10px;background:#ffffff05;color:#c2c2c2;font-family:inherit;font-size:10px;font-weight:500;cursor:pointer;white-space:nowrap}
+.svAssistNextActions button{display:flex;align-items:center;justify-content:center;gap:7px;min-height:42px;flex:1;padding:10px 9px;border:1px solid #ffffff1c;border-radius:10px;background:#ffffff05;color:#c2c2c2;font-family:inherit;font-size:calc(10px * var(--st-ui-scale, 1));font-weight:500;cursor:pointer;white-space:nowrap}
 .svAssistNextActions button svg{width:13px;height:13px;flex-basis:13px}
 .svAssistNextActions [data-assist-next-play]{background:#d2d2d2;color:#282828;border-color:transparent}
-.svAssistAutoplay{display:flex;align-items:flex-start;gap:8px;margin-top:17px;color:#a9a9a9;font-size:9px;line-height:1.7}
+.svAssistAutoplay{display:flex;align-items:flex-start;gap:8px;margin-top:17px;color:#a9a9a9;font-size:calc(9px * var(--st-ui-scale, 1));line-height:1.7}
 .svAssistAutoplay input{flex:0 0 14px;width:14px;height:14px;margin:0;accent-color:#bcbcbc}
 .svSongResult{position:absolute;left:24px;top:24px;box-sizing:border-box;width:min(340px,calc(100% - 48px));padding:22px;border:1px solid #ffffff28;border-radius:18px;background:#1a1a1afa;box-shadow:0 12px 40px #00000066;color:#e3e3e3}
 .svSongResultHeading{display:flex;align-items:center;gap:12px;padding-right:17px}
 .svSongMark{display:grid;place-items:center;flex:0 0 39px;width:39px;height:39px;border:1px solid #ffffff10;border-radius:999px;background:#333333;color:#c4c4c4}
-.svSongResultHeading strong{display:block;margin-top:5px;font-size:13px;font-weight:500;letter-spacing:-.015em}
+.svSongResultHeading strong{display:block;margin-top:5px;font-size:calc(13px * var(--st-ui-scale, 1));font-weight:500;letter-spacing:-.015em}
 .svSongResult>[data-assist-song-close]{position:absolute;right:9px;top:9px;display:grid;place-items:center;width:29px;height:29px;padding:0;border:0;border-radius:9px;background:#ffffff05;color:#adadad;cursor:pointer}
 .svSongResult>[data-assist-song-close] svg{width:15px;height:15px}
-.svSongResult p{font-size:12px;line-height:1.9;color:#c7c7c7;margin:18px 0 0}
-.svSongResult a,.svSongResult>[data-assist-song-cancel]{display:inline-flex;align-items:center;gap:8px;min-height:37px;margin:14px 8px 0 0;padding:8px 12px;border:1px solid #ffffff19;border-radius:9px;background:#ffffff04;color:#c2c2c2;font-family:inherit;font-size:10px;text-decoration:none;cursor:pointer}
+.svSongResult p{font-size:calc(12px * var(--st-ui-scale, 1));line-height:1.9;color:#c7c7c7;margin:18px 0 0}
+.svSongResult a,.svSongResult>[data-assist-song-cancel]{display:inline-flex;align-items:center;gap:8px;min-height:37px;margin:14px 8px 0 0;padding:8px 12px;border:1px solid #ffffff19;border-radius:9px;background:#ffffff04;color:#c2c2c2;font-family:inherit;font-size:calc(10px * var(--st-ui-scale, 1));text-decoration:none;cursor:pointer}
 .svSongResult a svg{width:14px;height:14px;flex-basis:14px}
 .svPlayerAssist:has(.svAssistNext:not([hidden])) .svAssistSkip{display:none}
-.svPlayerMenuAutoplay{display:flex!important;align-items:center;justify-content:space-between;gap:18px;font-size:11px!important;line-height:1.6}
+.svPlayerMenuAutoplay{display:flex!important;align-items:center;justify-content:space-between;gap:18px;font-size:calc(11px * var(--st-ui-scale, 1))!important;line-height:1.6}
 .svPlayerMenuAutoplay input{flex:0 0 16px!important;width:16px!important;height:16px!important;min-width:16px!important;margin:0;accent-color:#b1b1b1}
 .svPlayerAssist :focus-visible{outline:2px solid #bbbbbb;outline-offset:4px}
 @media(max-width:600px){
- .svSongButton{left:14px;bottom:102px;min-height:44px;font-size:10px;padding:10px 12px;border-radius:10px}
- .svAssistSkip{right:14px;bottom:102px;min-height:44px;font-size:11px;padding:10px 13px}
+ .svSongButton{left:14px;bottom:102px;min-height:44px;font-size:calc(10px * var(--st-ui-scale, 1));padding:10px 12px;border-radius:10px}
+ .svAssistSkip{right:14px;bottom:102px;min-height:44px;font-size:calc(11px * var(--st-ui-scale, 1));padding:10px 13px}
  .svAssistNext{right:14px;bottom:96px;width:min(390px,calc(100% - 28px));max-height:calc(100% - 110px);border-radius:13px}
  .svAssistNextArt{display:none}
  .svAssistNextBody{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:10px;align-items:center;padding:11px 12px}
  .svAssistNextHeading,.svAssistAutoplay{display:none}
- .svAssistNext h3{grid-column:1;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;line-height:1.5}
- .svAssistNext p{grid-column:1;margin:3px 0 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px;line-height:1.5}
+ .svAssistNext h3{grid-column:1;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:calc(11px * var(--st-ui-scale, 1));line-height:1.5}
+ .svAssistNext p{grid-column:1;margin:3px 0 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:calc(9px * var(--st-ui-scale, 1));line-height:1.5}
  .svAssistNextActions{grid-column:2;grid-row:1/3;gap:5px}
- .svAssistNextActions button{min-height:44px;padding:9px 8px;font-size:9px}
+ .svAssistNextActions button{min-height:44px;padding:9px 8px;font-size:calc(9px * var(--st-ui-scale, 1))}
  .svAssistNextActions button svg{display:none}
  .svSongResult{left:14px;top:14px;width:min(304px,calc(100% - 28px));max-height:calc(100% - 28px);overflow-y:auto;padding:17px}
- .svSongResultHeading strong{font-size:12px}
- .svSongResult p{font-size:11px;margin-top:14px}
+ .svSongResultHeading strong{font-size:calc(12px * var(--st-ui-scale, 1))}
+ .svSongResult p{font-size:calc(11px * var(--st-ui-scale, 1));margin-top:14px}
  .svPlayerAssist:has(.svAssistNext:not([hidden])) .svSongButton{display:none}
 }
 @container sv-stage (max-width:860px){
@@ -55,12 +55,12 @@
  .svAssistNextArt{display:none}
  .svAssistNextBody{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:10px;align-items:center;padding:11px 12px}
  .svAssistNextHeading,.svAssistAutoplay{display:none}
- .svAssistNext h3{grid-column:1;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;line-height:1.5}
- .svAssistNext p{grid-column:1;margin:3px 0 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px;line-height:1.5}
+ .svAssistNext h3{grid-column:1;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:calc(11px * var(--st-ui-scale, 1));line-height:1.5}
+ .svAssistNext p{grid-column:1;margin:3px 0 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:calc(9px * var(--st-ui-scale, 1));line-height:1.5}
  .svAssistNextActions{grid-column:2;grid-row:1/3;gap:5px}
- .svAssistNextActions button{min-height:44px;padding:9px 8px;font-size:9px}
+ .svAssistNextActions button{min-height:44px;padding:9px 8px;font-size:calc(9px * var(--st-ui-scale, 1))}
  .svAssistNextActions button svg{display:none}
  .svPlayerAssist:has(.svAssistNext:not([hidden])) .svSongButton{display:none}
 }
-@media(max-height:540px) and (min-width:601px){.svAssistNextArt{display:none}.svAssistNextBody{padding:15px}.svAssistNext h3{font-size:16px}.svAssistAutoplay{display:none}.svSongResult{top:10px}.svSongResult p{margin-top:12px}}
+@media(max-height:540px) and (min-width:601px){.svAssistNextArt{display:none}.svAssistNextBody{padding:15px}.svAssistNext h3{font-size:calc(16px * var(--st-ui-scale, 1))}.svAssistAutoplay{display:none}.svSongResult{top:10px}.svSongResult p{margin-top:12px}}
 @media(prefers-reduced-motion:reduce){.svSongButton{transition:none}}

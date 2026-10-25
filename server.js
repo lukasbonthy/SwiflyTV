@@ -5659,7 +5659,7 @@ app.get(['/study','/study/room/:room'], (req,res) => {
   const rooms=require('./public/study/catalog.json').rooms;
   const room=req.params.room||'';
   if(room&&!rooms.some(entry=>entry.id===room))return res.status(404).send(pageShell({title:SITE_NAME+' — Study room unavailable',active:'study',body:'<main class="dsPlainPage"><h1>Room unavailable</h1><a href="/study">Choose a study room</a></main>'}));
-  res.send(pageShell({title:SITE_NAME+' — Swifly Study',description:'Your space to focus. Music, scenes, timers, tasks and live study rooms.',active:'study',body:studyMarkup({room}),extraHead:'<link rel="stylesheet" href="/assets/study/study.css?v=1"><script defer src="/assets/study/study.js?v=1"></script>'}));
+  res.send(pageShell({title:SITE_NAME+' — Swifly Study',description:'Your space to focus. Music, scenes, timers, tasks and live study rooms.',active:'study',body:studyMarkup({room}),extraHead:'<link rel="stylesheet" href="/assets/study/study.css?v=262"><script defer src="/assets/study/study.js?v=261"></script>'}));
 });
 const accountStore = createAccountStore();
 const connect = createConnect({
@@ -5681,13 +5681,13 @@ app.use('/api/feed',createFeed({tmdb:(...args)=>tmdb(...args)}).router);
 app.use('/api/library',createCatalogRouter({tmdb:(...args)=>tmdb(...args)}));
 const trakt=createTrakt({store:accountStore,authenticate:connect.identity,tmdb:(...args)=>tmdb(...args)});
 app.use('/api/trakt',trakt.router);
-app.get('/settings',(req,res)=>res.send(pageShell({title:SITE_NAME+' — Settings',active:'settings',body:settingsMarkup(),extraHead:'<link rel="stylesheet" href="/assets/clean/settings.css?v=1">'})));
+app.get('/settings',(req,res)=>res.send(pageShell({title:SITE_NAME+' — Settings',active:'settings',body:settingsMarkup(),extraHead:'<link rel="stylesheet" href="/assets/clean/settings.css?v=262">'})));
 httpServer.once('close',()=>{study.close();trakt.close?.();});
 const discovery = createDiscovery({tmdb:(...args) => tmdb(...args)});
 app.use("/api/discovery", discovery.router);
 const playerAssist = createPlayerAssist({tmdb:(...args) => tmdb(...args)});
 app.use("/api/player-assist",playerAssist.router);
-app.get("/recommendations", (req,res) => res.send(pageShell({title:`${SITE_NAME} — AI picks`,active:"recommendations",body:recommendationsMarkup(String(req.query.q||'')),extraHead:'<link rel="stylesheet" href="/assets/discovery/search.css?v=1"><script defer src="/assets/discovery/recommendations.js?v=8"></script>'})));
+app.get("/recommendations", (req,res) => res.send(pageShell({title:`${SITE_NAME} — AI picks`,active:"recommendations",body:recommendationsMarkup(String(req.query.q||'')),extraHead:'<link rel="stylesheet" href="/assets/discovery/search.css?v=262"><script defer src="/assets/discovery/recommendations.js?v=8"></script>'})));
 app.get("/audiobooks", (req,res) => res.send(pageShell({title:`${SITE_NAME} — Audiobooks`,active:"audiobooks",body:audiobooksMarkup(),extraHead:'<script defer src="/assets/discovery/audiobooks.js?v=4"></script>'})));
 // Same friends-only protection applies to authorized movie/episode file downloads.
 app.use("/api/download", createDownloadRouter());
@@ -6537,7 +6537,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700;800&family=Unbounded:wght@500;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/assets/clean/base.css?v=163" />
+  <link rel="stylesheet" href="/assets/clean/base.css?v=262" />
 
     <script>
       window.syncWatchButtons = window.syncWatchButtons || function syncWatchButtons() {
@@ -6586,26 +6586,26 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${body.includes("fa-solid") ? '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />' : ""}
     ${player || partyBrowse || active === "social" || active === "study" ? '<script defer src="/socket.io/socket.io.js"></script>' : ""}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/modern-normalize@2.0.0/modern-normalize.min.css" />
-    <link rel="stylesheet" href="/assets/liquid-glass/liquid-glass.css?v=223" />
+    <link rel="stylesheet" href="/assets/liquid-glass/liquid-glass.css?v=262" />
     <script defer src="/assets/liquid-glass/liquid-glass.js?v=227"></script>
-    <link rel="stylesheet" href="/assets/clean/clean.css?v=154" />
+    <link rel="stylesheet" href="/assets/clean/clean.css?v=262" />
     <script defer src="/assets/clean/clean.js?v=5"></script>
     <script defer src="/assets/clean/account-sheet.js?v=1"></script>
-    <script defer src="/assets/clean/account.js?v=1"></script>
-    <script defer src="/assets/clean/library-state.js?v=1"></script>
-    <script defer src="/assets/clean/settings.js?v=1"></script>
-    <link rel="stylesheet" href="/assets/clean/library.css?v=1" />
-    <link rel="stylesheet" href="/assets/connect/connect.css?v=6" />
+    <script defer src="/assets/clean/account.js?v=262"></script>
+    <script defer src="/assets/clean/library-state.js?v=262"></script>
+    <script defer src="/assets/clean/settings.js?v=262"></script>
+    <link rel="stylesheet" href="/assets/clean/library.css?v=262" />
+    <link rel="stylesheet" href="/assets/connect/connect.css?v=262" />
     <script defer src="/assets/connect/icons.js?v=1"></script><script defer src="/assets/connect/connect.js?v=5"></script>
     <script defer src="/assets/clean/avatars.js?v=209"></script>
     ${active === "profiles" ? '<script defer src="/assets/clean/profiles.js?v=209"></script>' : ""}
-    <script defer src="/assets/clean/continue.js?v=260"></script>
+    <script defer src="/assets/clean/continue.js?v=262"></script>
     <script defer src="/assets/clean/library-page.js?v=1"></script>
     <script defer src="/assets/clean/episode-browser.js?v=1"></script>
-    <script defer src="/assets/clean/feed.js?v=1"></script>
-    <link rel="stylesheet" href="/assets/clean/feed.css?v=1" />
-    <link rel="stylesheet" href="/assets/clean/catalog-updates.css?v=1" />
-    <link rel="stylesheet" href="/assets/clean/details.css?v=255" />
+    <script defer src="/assets/clean/feed.js?v=261"></script>
+    <link rel="stylesheet" href="/assets/clean/feed.css?v=262" />
+    <link rel="stylesheet" href="/assets/clean/catalog-updates.css?v=262" />
+    <link rel="stylesheet" href="/assets/clean/details.css?v=262" />
     <link rel="stylesheet" href="/assets/clean/motion.css?v=252" />
     <link rel="stylesheet" href="/assets/vendor/lenis/lenis.css?v=1.3.16-r1" />
     <script defer src="/assets/vendor/lenis/lenis.min.js?v=1.3.16-r1"></script>
@@ -6613,17 +6613,17 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/scroll.js?v=258"></script>
     <script defer src="/assets/clean/details.js?v=255"></script>
     <script defer src="/assets/clean/download.js?v=3"></script>
-    <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=222" />
+    <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=262" />
     <script defer src="/assets/liquid-glass/surfaces.js?v=259"></script>
-    <link rel="stylesheet" href="/assets/studio/studio.css?v=260" />
+    <link rel="stylesheet" href="/assets/studio/studio.css?v=262" />
     <script defer src="/assets/studio/studio.js?v=260"></script>
     <link rel="stylesheet" href="/assets/clean/aurora.css?v=260" />
     <script defer src="/assets/clean/aurora.js?v=204"></script>
-    ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=205" />' : ""}
-    ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=173" />' : ""}
+    ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=262" />' : ""}
+    ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=262" />' : ""}
     
-    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=260"></script>' : ""}
-    ${player ? '<script defer src="/assets/player/audio-sample.js?v=1"></script><script defer src="/assets/player/assist.js?v=2"></script><link rel="stylesheet" href="/assets/player/assist.css?v=3" />' : ""}
+    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=261"></script>' : ""}
+    ${player ? '<script defer src="/assets/player/audio-sample.js?v=1"></script><script defer src="/assets/player/assist.js?v=2"></script><link rel="stylesheet" href="/assets/player/assist.css?v=262" />' : ""}
     ${player || active === "social" ? '<script defer src="/assets/party/watchroom-call.js?v=1"></script>' : ""}
     ${active === "social" ? '<script defer src="/assets/party/party.js?v=207"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}
     ${player || partyBrowse ? '<script defer src="/assets/player/watch-party.js?v=2"></script>' : ""}
@@ -6631,24 +6631,24 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/polish.css?v=176" />'}
     <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=206" />
     <link rel="stylesheet" href="/assets/liquid-glass/controls.css?v=255" />
-    ${player ? "" : '<link rel="stylesheet" href="/assets/clean/experience.css?v=202" />'}
-    <link rel="stylesheet" href="/assets/clean/cinema.css?v=207" />
-    <link rel="stylesheet" href="/assets/clean/profiles.css?v=209" />
-    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=260" />' : ""}
-    ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=206" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=205" />' : ""}
-    ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=200" />' : ""}
-    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/party/watchroom-call.css?v=1" />' : ""}
+    ${player ? "" : '<link rel="stylesheet" href="/assets/clean/experience.css?v=262" />'}
+    <link rel="stylesheet" href="/assets/clean/cinema.css?v=262" />
+    <link rel="stylesheet" href="/assets/clean/profiles.css?v=262" />
+    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=262" />' : ""}
+    ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=262" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=262" />' : ""}
+    ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=262" />' : ""}
+    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/party/watchroom-call.css?v=262" />' : ""}
     <link rel="stylesheet" href="/assets/clean/performance.css?v=258" />
-    <link rel="stylesheet" href="/assets/clean/mobile.css?v=3" />
-    <link rel="stylesheet" href="/assets/clean/tv.css?v=255" />
-    <link rel="stylesheet" href="/assets/clean/details-premium.css?v=255" />
-    <link rel="stylesheet" href="/assets/clean/details-clarity.css?v=2" />
-    <link rel="stylesheet" href="/assets/discovery/discovery.css?v=8" />
-    <link rel="stylesheet" href="/assets/connect/feature-effects.css?v=3" />
-    <link rel="stylesheet" href="/assets/clean/account-sheet.css?v=3" />
-    <link rel="stylesheet" href="/assets/studio/experience.css?v=1" />
+    <link rel="stylesheet" href="/assets/clean/mobile.css?v=262" />
+    <link rel="stylesheet" href="/assets/clean/tv.css?v=262" />
+    <link rel="stylesheet" href="/assets/clean/details-premium.css?v=262" />
+    <link rel="stylesheet" href="/assets/clean/details-clarity.css?v=262" />
+    <link rel="stylesheet" href="/assets/discovery/discovery.css?v=262" />
+    <link rel="stylesheet" href="/assets/connect/feature-effects.css?v=262" />
+    <link rel="stylesheet" href="/assets/clean/account-sheet.css?v=262" />
+    <link rel="stylesheet" href="/assets/studio/experience.css?v=262" />
     <script defer src="/assets/clean/hero-palette.js?v=260"></script>
-    <script defer src="/assets/studio/experience.js?v=1"></script>
+    <script defer src="/assets/studio/experience.js?v=261"></script>
     ${extraHead}
 </head>
 <body class="svCleanShell">
@@ -8365,7 +8365,7 @@ async function searchPage(req, res) {
  const cards=results.map(item=>people?personCard(item):movieCard(item)).join('');
  const params={...(q?{q}:{}),...(people?{type:'person'}:{}),...Object.fromEntries(Object.entries(filters).filter(([k,v])=>v&&v!=='all'&&v!=='relevance'))},base='/search?'+new URLSearchParams(params);
  const body=searchPageMarkup({mode,query:q,cards,filters,heading:q?'Results for “'+q+'”':people?'Popular people':'Trending this week',pagination:pagination(base,page,Math.min(500,data.total_pages||1))});
- res.send(pageShell({title:`${SITE_NAME} — Search${q?' '+q:''}`,active:'search',body,extraHead:'<link rel="stylesheet" href="/assets/discovery/search.css?v=2"><script defer src="/assets/discovery/search.js?v=2"></script>'}));
+ res.send(pageShell({title:`${SITE_NAME} — Search${q?' '+q:''}`,active:'search',body,extraHead:'<link rel="stylesheet" href="/assets/discovery/search.css?v=262"><script defer src="/assets/discovery/search.js?v=2"></script>'}));
 }
 
 async function genrePage(req, res, type) {
@@ -8937,7 +8937,7 @@ async function downloadOptionsPage(req, res, type) {
     poster:img(details.poster_path,'w342'),backdrop:bg,genres:details.genres||[],
     season,episode,episodeTitle:selectedEpisode?.name||''});
   res.send(pageShell({title:SITE_NAME+' — '+title+' downloads',description:'Available download options for '+title,active:type==='tv'?'tv':'movies',body,
-    extraHead:'<link rel="stylesheet" href="/assets/clean/download-page.css?v=1" /><script defer src="/assets/clean/download-page.js?v=4"></script>'}));
+    extraHead:'<link rel="stylesheet" href="/assets/clean/download-page.css?v=262" /><script defer src="/assets/clean/download-page.js?v=4"></script>'}));
 }
 
 async function detailPage(req, res, type) {

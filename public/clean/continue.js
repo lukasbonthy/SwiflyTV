@@ -107,18 +107,27 @@
     if (nextRequests.size > 80) nextRequests.delete(nextRequests.keys().next().value);
   }
   function saveProgress(progress, owner = profileId()) {
+    const library = window.SwiflyLibrary;
+    if (library?.active === false) return false;
     const next = normalize(progress);
     if (!next || !Number.isFinite(numeric(progress.currentTime)) || numeric(progress.currentTime) < 0 || !next.duration
         || next.type === "tv" && (!positiveInteger(progress.season) || !positiveInteger(progress.episode))) return false;
     const items = all(), previous = items.find(item => item?.profileId === owner && normalize(item)?.key === next.key) || {};
     const remaining = items.filter(item => item?.profileId !== owner || normalize(item)?.key !== next.key);
-    const episodeKey = [owner,next.key,next.type === 'tv' ? next.season : '',next.type === 'tv' ? next.episode : ''].join(':'), changeKey = owner + ':' + next.key;
+    const account = library?.ownerId?.() || window.SwiflyAccount?.user?.id || 'guest';
+    const episodeKey = [account,owner,next.key,next.type === 'tv' ? next.season : '',next.type === 'tv' ? next.episode : ''].join(':'), changeKey = owner + ':' + next.key;
     if (next.completed) {
       if (completedSaves.has(episodeKey)) return true;
       const differentEpisode = next.type === 'tv' && previous.type === 'tv' && (Number(previous.season) !== next.season || Number(previous.episode) !== next.episode);
+      // Keep resume until watched history is durable. If only the subsequent
+      // Continue write fails, retry its removal without announcing completion
+      // a second time (and therefore sending a duplicate Trakt watched event).
+      const exactKey = next.type === 'tv' ? next.key + ':' + next.season + ':' + next.episode : next.key;
+      const state = library?.read?.(owner);
+      const recorded = state?.watched?.some(item => item.key === exactKey) && state?.history?.some(item => item.key === exactKey && item.completed);
+      if (!recorded && library?.remember?.({...next,completed:true},{owner}) === false) return false;
       if (!write(differentEpisode ? items : remaining)) return false;
       completedSaves.add(episodeKey);
-      window.SwiflyLibrary?.remember?.({...next,completed:true},{owner});
       if (!differentEpisode && next.type === 'tv') {
         const revision = (revisions.get(changeKey) || 0) + 1;revisions.set(changeKey,revision);
         nextEpisode(next,owner,episodeKey,revision);
@@ -202,6 +211,7 @@
   }
   function boot() {
     if (started) return; started = true; render();
+    if (window.SwiflyLibrary?.active === false) window.SwiflyLibrary.ready?.then?.(render);
     window.addEventListener("swifly:continue-change", () => { if (renderFrame) return; renderFrame = requestAnimationFrame(() => { renderFrame = 0; render(); }); });
     window.addEventListener("storage", event => { if (!event.key || [key, legacyKey, "swiflytv.activeProfile", "swiflytv.profiles"].includes(event.key)) render(); });
     document.addEventListener("swifly:profile-changed", render);

@@ -84,6 +84,37 @@
     }
     return result;
   }
+  // Replay local changes since the last account revision onto a newer record.
+  // A union cannot represent removals, and replacing the record loses imports.
+  function reconcile(baseline, local, remote) {
+    const before = normalize(baseline), after = normalize(local), result = normalize(remote);
+    const equal = (a,b) => JSON.stringify(a) === JSON.stringify(b);
+    const members = (base, next, current) => [...new Set([...current.filter(value => !base.includes(value) || next.includes(value)),...next.filter(value => !base.includes(value))])];
+    function fields(base, next, current) {
+      const value = {...current};
+      for (const [key,item] of Object.entries(next)) if (!equal(item,base?.[key])) value[key] = clone(item);
+      return value;
+    }
+    function rows(name,key,merge = fields) {
+      const base = new Map(before[name].map(item => [key(item),item])), next = new Map(after[name].map(item => [key(item),item])), current = new Map(result[name].map(item => [key(item),item])), changed = [];
+      for (const id of base.keys()) if (!next.has(id)) current.delete(id);
+      for (const [id,item] of next) {
+        if (equal(item,base.get(id))) continue;
+        current.set(id,merge(base.get(id),item,current.get(id) || item));changed.push(id);
+      }
+      result[name] = [...new Set([...changed,...current.keys()])].filter(id => current.has(id)).map(id => current.get(id));
+    }
+    rows('watchlist',item => item.key);rows('liked',item => item.key);
+    for (const name of ['watched','history']) rows(name,item => item.key,(base,next,current) => {
+      const value = fields(base,next,current);
+      if (Date.parse(current.watchedAt) > Date.parse(value.watchedAt)) value.watchedAt = current.watchedAt;
+      return value;
+    });
+    rows('folders',item => item.id,(base,next,current) => ({...fields(base,next,current),members:members(base?.members || [],next.members,current.members || [])}));
+    result.episodeRead = members(before.episodeRead,after.episodeRead,result.episodeRead);
+    result.preferences = fields(before.preferences,after.preferences,result.preferences);
+    return normalize(result);
+  }
   function ensure(owner = profileId()) {
     const raw = json(storageKey(owner),null);
     const state = raw ? normalize(raw) : empty(), compatibility = json(compatibilityKey,null);
@@ -316,7 +347,7 @@
       }).catch(() => resolveReady({active:false}));
     } else hydrate('ready');
   }
-  const api = {read,profileId,ownerId,contextId,storageKey,list,remember,markWatched,removeWatched,isWatched,setWatchlist,setLiked,preferences,savePreferences,createFolder,renameFolder,deleteFolder,setFolderMember,acknowledgeEpisodes,episodeIsRead,syncLegacy,renderDecorations,resumeHref,importState,get active() {return !suspended;},ready};
+  const api = {read,profileId,ownerId,contextId,storageKey,list,remember,markWatched,removeWatched,isWatched,setWatchlist,setLiked,preferences,savePreferences,createFolder,renameFolder,deleteFolder,setFolderMember,acknowledgeEpisodes,episodeIsRead,syncLegacy,renderDecorations,resumeHref,importState,reconcile,get active() {return !suspended;},ready};
   window.SwiflyLibrary = Object.freeze(api);
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();

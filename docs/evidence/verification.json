@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "testedLocalHead": "e89e37f4a4e13d7ae3f065612d92d2197d1a4323",
+  "baseMain": "8d3cf95e8c65e659281fe9f460cdbf4f36f66330",
+  "node": "v24.22.1",
+  "chromium": "131.0.6778.33 (Playwright 1148 headless shell)",
+  "syntax": {
+    "command": "npm run check",
+    "exitCode": 0
+  },
+  "fullSuite": {
+    "command": "npm run test:ui",
+    "tests": 1548,
+    "passed": 1548,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "durationMs": 352323.934987
+  },
+  "recommendations": {
+    "command": "npm run prepare:ai && npm run test:recommendations",
+    "positivePrompts": 80,
+    "top1Hits": 78,
+    "top3Hits": 80,
+    "unsupportedPrompts": 8,
+    "correctAbstentions": 6,
+    "storyRoutesPassed": 20,
+    "storyRoutes": 20,
+    "scope": "Actual local BGE inference against fixed development catalog; two unsupported false matches remain."
+  },
+  "integratedAcceptance": {
+    "command": "npm run test:acceptance",
+    "passed": 33,
+    "failed": 0,
+    "assertions": 326,
+    "screenshots": 6,
+    "report": "acceptance-integrated.json",
+    "viewports": [
+      {
+        "name": "mobile320",
+        "width": 320,
+        "height": 740
+      },
+      {
+        "name": "desktop1440",
+        "width": 1440,
+        "height": 1000
+      },
+      {
+        "name": "tv1920",
+        "width": 1920,
+        "height": 1080
+      }
+    ]
+  },
+  "review": {
+    "independentWholeBranchReviews": 1,
+    "critical": 0,
+    "important": 4,
+    "importantFixed": 4,
+    "minor": 1,
+    "minorDeferred": 1,
+    "deferred": "External rotating token refresh holds the shared account-store transaction (default timeout eight seconds)."
+  },
+  "publication": "The GitHub commit, exact-tree comparison and Actions status are recorded in the PR and final delivery. No merge or deployment.",
+  "performance": {
+    "method": "Same fixed 36-card catalog and device profiles, warmup then five samples; headless software rendering, no hardware-FPS claim.",
+    "reports": [
+      "performance-main.json",
+      "performance-branch.json",
+      "shell-bytes.json"
+    ]
+  }
+}

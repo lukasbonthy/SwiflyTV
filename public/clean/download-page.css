@@ -2,65 +2,65 @@
 body.svCleanShell .svDownloadPage{position:relative;isolation:isolate;min-height:calc(100svh - 80px);color:#f5f6f9;background:#07080b}
 body.svCleanShell .svDownloadBackdrop{position:absolute;z-index:-1;top:0;left:0;right:0;height:min(920px,100svh);pointer-events:none;background-image:linear-gradient(90deg,rgba(6,7,11,.42) 0%,rgba(6,7,11,.14) 55%,rgba(6,7,11,.15)),linear-gradient(0deg,#07080b 0%,rgba(7,8,11,.94) 15%,rgba(7,8,11,.52) 55%,rgba(7,8,11,.28) 100%),var(--sv-download-backdrop);background-size:cover;background-position:center 25%;background-repeat:no-repeat}
 body.svCleanShell .svDownloadContainer{width:min(100% - 56px,950px);margin:0 auto;padding:126px 0 60px}
-body.svCleanShell .svDownloadBreadcrumb{display:flex;align-items:center;gap:14px;margin-bottom:32px;color:#afafbb;font-size:12px}
+body.svCleanShell .svDownloadBreadcrumb{display:flex;align-items:center;gap:14px;margin-bottom:32px;color:#afafbb;font-size:calc(12px * var(--st-ui-scale, 1))}
 body.svCleanShell .svDownloadBreadcrumb a{color:#e0e2eb;text-decoration:none}
 body.svCleanShell .svDownloadBreadcrumb a:hover{text-decoration:underline}
 body.svCleanShell .svDownloadHero{display:grid;grid-template-columns:174px minmax(0,1fr);align-items:start;gap:30px;min-height:254px;margin-bottom:53px}
 body.svCleanShell .svDownloadPoster{width:174px;aspect-ratio:2/3;overflow:hidden;display:flex;align-items:center;justify-content:center;border-radius:14px;border:1px solid #ffffff2f;background:linear-gradient(145deg,#333b50,#0b0e15);box-shadow:0 20px 58px #0008}
 body.svCleanShell .svDownloadPoster img{width:100%;height:100%;object-fit:cover;display:block}
-body.svCleanShell .svDownloadPosterFallback{font-size:16px;font-weight:800;letter-spacing:.16em;color:#c2c8d7}
+body.svCleanShell .svDownloadPosterFallback{font-size:calc(16px * var(--st-ui-scale, 1));font-weight:800;letter-spacing:.16em;color:#c2c8d7}
 body.svCleanShell .svDownloadInfo{min-width:0}
-body.svCleanShell .svDownloadEyebrow{font-size:10px;font-weight:800;letter-spacing:.2em;color:#b4c8df;margin:4px 0 12px}
-body.svCleanShell .svDownloadInfo h1{font-size:clamp(32px,5vw,50px);font-weight:800;letter-spacing:-.055em;line-height:1.08;margin:0 0 14px;text-shadow:0 2px 24px #0006}
-body.svCleanShell .svDownloadMetadata{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;color:#d9dce3;font-size:12px;font-weight:600}
+body.svCleanShell .svDownloadEyebrow{font-size:calc(10px * var(--st-ui-scale, 1));font-weight:800;letter-spacing:.2em;color:#b4c8df;margin:4px 0 12px}
+body.svCleanShell .svDownloadInfo h1{font-size:calc(clamp(32px,5vw,50px) * var(--st-ui-scale, 1));font-weight:800;letter-spacing:-.055em;line-height:1.08;margin:0 0 14px;text-shadow:0 2px 24px #0006}
+body.svCleanShell .svDownloadMetadata{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;color:#d9dce3;font-size:calc(12px * var(--st-ui-scale, 1));font-weight:600}
 body.svCleanShell .svDownloadRating{color:#ffcf5b}
 body.svCleanShell .svDownloadGenres{display:flex;flex-wrap:wrap;gap:7px;margin-top:17px}
-body.svCleanShell .svDownloadGenres span{border:1px solid #ffffff1f;border-radius:8px;background:#151921b8;padding:5px 9px;font-size:11px;font-weight:650;color:#e4e7f1}
-body.svCleanShell .svDownloadEpisodeLabel{margin:14px 0 0;font-size:12px;color:#d5def5;font-weight:650}
-body.svCleanShell .svDownloadSynopsis{max-width:710px;margin:14px 0 0;color:#b7b9c3;font-size:13px;line-height:1.7;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden}
+body.svCleanShell .svDownloadGenres span{border:1px solid #ffffff1f;border-radius:8px;background:#151921b8;padding:5px 9px;font-size:calc(11px * var(--st-ui-scale, 1));font-weight:650;color:#e4e7f1}
+body.svCleanShell .svDownloadEpisodeLabel{margin:14px 0 0;font-size:calc(12px * var(--st-ui-scale, 1));color:#d5def5;font-weight:650}
+body.svCleanShell .svDownloadSynopsis{max-width:710px;margin:14px 0 0;color:#b7b9c3;font-size:calc(13px * var(--st-ui-scale, 1));line-height:1.7;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden}
 body.svCleanShell .svDownloadHeroActions{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:19px}
-body.svCleanShell .svDownloadWatchLink{color:#090b0f;background:#f3f5f9;text-decoration:none;font-weight:750;font-size:12px;border-radius:12px;padding:10px 17px}
+body.svCleanShell .svDownloadWatchLink{color:#090b0f;background:#f3f5f9;text-decoration:none;font-weight:750;font-size:calc(12px * var(--st-ui-scale, 1));border-radius:12px;padding:10px 17px}
 body.svCleanShell .svDownloadWatchLink:hover{background:#fff}
-body.svCleanShell .svDownloadBackLink{font-size:12px;color:#d4d8e4;text-decoration:none}
+body.svCleanShell .svDownloadBackLink{font-size:calc(12px * var(--st-ui-scale, 1));color:#d4d8e4;text-decoration:none}
 body.svCleanShell .svDownloadBackLink:hover{text-decoration:underline}
 body.svCleanShell .svDownloadOptionsSection{margin-top:12px}
 body.svCleanShell .svDownloadSectionHeader{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:21px}
 body.svCleanShell .svDownloadHeading{display:flex;align-items:center;gap:12px;min-width:0}
 body.svCleanShell .svDownloadHeadingIcon{display:inline-flex;width:25px;height:25px;align-items:center;color:#f2f3fa}
 body.svCleanShell .svDownloadHeadingIcon svg{width:24px;height:24px}
-body.svCleanShell .svDownloadHeading h2{font-size:clamp(21px,3vw,27px);font-weight:750;letter-spacing:-.04em;line-height:1.2;margin:0;white-space:nowrap}
-body.svCleanShell .svDownloadCount{border-radius:8px;background:#ffffff1b;padding:3px 8px;font-size:11px;color:#e1e2ea;font-variant-numeric:tabular-nums;font-weight:700}
-body.svCleanShell .svDownloadRefresh{border:1px solid #ffffff26;border-radius:11px;background:#ffffff0e;color:#eaeef8;font-weight:650;font-size:12px;padding:9px 12px;cursor:pointer}
+body.svCleanShell .svDownloadHeading h2{font-size:calc(clamp(21px,3vw,27px) * var(--st-ui-scale, 1));font-weight:750;letter-spacing:-.04em;line-height:1.2;margin:0;white-space:nowrap}
+body.svCleanShell .svDownloadCount{border-radius:8px;background:#ffffff1b;padding:3px 8px;font-size:calc(11px * var(--st-ui-scale, 1));color:#e1e2ea;font-variant-numeric:tabular-nums;font-weight:700}
+body.svCleanShell .svDownloadRefresh{border:1px solid #ffffff26;border-radius:11px;background:#ffffff0e;color:#eaeef8;font-weight:650;font-size:calc(12px * var(--st-ui-scale, 1));padding:9px 12px;cursor:pointer}
 body.svCleanShell .svDownloadRefresh:hover{background:#ffffff20}
 body.svCleanShell .svDownloadChoices{display:grid;gap:11px;min-height:202px}
 body.svCleanShell .svDownloadEmpty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:206px;text-align:center;padding:28px;border:1px solid #ffffff12;border-radius:17px;background:linear-gradient(145deg,#14171bc9,#0e1013b8);box-shadow:inset 0 1px #ffffff0b}
 body.svCleanShell .svDownloadProgressIcon{width:42px;height:42px;margin-bottom:16px;color:#ffffff7e}
 body.svCleanShell .svDownloadProgressIcon svg{width:100%;height:100%;stroke-width:1.5}
-body.svCleanShell .svDownloadEmpty strong{font-size:16px;letter-spacing:-.015em;font-weight:700}
-body.svCleanShell .svDownloadEmpty p{font-size:12px;line-height:1.6;color:#a6a9b4;margin:8px 0 0;max-width:390px}
+body.svCleanShell .svDownloadEmpty strong{font-size:calc(16px * var(--st-ui-scale, 1));letter-spacing:-.015em;font-weight:700}
+body.svCleanShell .svDownloadEmpty p{font-size:calc(12px * var(--st-ui-scale, 1));line-height:1.6;color:#a6a9b4;margin:8px 0 0;max-width:390px}
 body.svCleanShell .svDownloadEmpty[data-sv-download-state="loading"] .svDownloadProgressIcon{animation:svDownloadPulse 1.6s ease-in-out infinite}
 @keyframes svDownloadPulse{50%{opacity:.38;transform:translateY(4px)}}
 body.svCleanShell .svDownloadOption{display:flex;align-items:center;gap:18px;padding:16px 18px;border:1px solid #ffffff25;border-radius:17px;background:linear-gradient(125deg,#ffffff1e,#ffffff0b 65%),rgba(18,20,26,.89);box-shadow:inset 0 1px #ffffff18,0 12px 30px #0002}
-body.svCleanShell .svDownloadOptionBadge{display:grid;place-items:center;flex:0 0 auto;width:50px;height:50px;border:1px solid #ffffff28;border-radius:14px;background:#ffffff10;color:#f0f3fc;font-weight:750;font-size:11px}
+body.svCleanShell .svDownloadOptionBadge{display:grid;place-items:center;flex:0 0 auto;width:50px;height:50px;border:1px solid #ffffff28;border-radius:14px;background:#ffffff10;color:#f0f3fc;font-weight:750;font-size:calc(11px * var(--st-ui-scale, 1))}
 body.svCleanShell .svDownloadOptionBody{flex:1 1 auto;min-width:0}
-body.svCleanShell .svDownloadOptionTitle{font-size:15px;font-weight:720;color:#f4f5fa;margin:0 0 4px}
-body.svCleanShell .svDownloadOptionMeta{font-size:12px;color:#aeb2c0;margin:0;line-height:1.5}
-body.svCleanShell .svDownloadOptionAction{flex:0 0 auto;border:1px solid #ffffff4b;border-radius:12px;padding:11px 16px;background:#ffffffec;color:#10131a;text-decoration:none;font-size:12px;font-weight:800;white-space:nowrap;transition:background .18s ease,transform .18s ease}
+body.svCleanShell .svDownloadOptionTitle{font-size:calc(15px * var(--st-ui-scale, 1));font-weight:720;color:#f4f5fa;margin:0 0 4px}
+body.svCleanShell .svDownloadOptionMeta{font-size:calc(12px * var(--st-ui-scale, 1));color:#aeb2c0;margin:0;line-height:1.5}
+body.svCleanShell .svDownloadOptionAction{flex:0 0 auto;border:1px solid #ffffff4b;border-radius:12px;padding:11px 16px;background:#ffffffec;color:#10131a;text-decoration:none;font-size:calc(12px * var(--st-ui-scale, 1));font-weight:800;white-space:nowrap;transition:background .18s ease,transform .18s ease}
 body.svCleanShell .svDownloadOptionAction:hover{background:white;transform:translateY(-2px)}
-body.svCleanShell .svDownloadNotice{font-size:11px;color:#8b929e;line-height:1.55;margin:14px 3px 0}
-body.svCleanShell .svDownloadFooter{display:flex;justify-content:space-between;gap:20px;border-top:1px solid #ffffff17;margin-top:53px;padding-top:23px;font-size:10px;color:#7f8390}
+body.svCleanShell .svDownloadNotice{font-size:calc(11px * var(--st-ui-scale, 1));color:#8b929e;line-height:1.55;margin:14px 3px 0}
+body.svCleanShell .svDownloadFooter{display:flex;justify-content:space-between;gap:20px;border-top:1px solid #ffffff17;margin-top:53px;padding-top:23px;font-size:calc(10px * var(--st-ui-scale, 1));color:#7f8390}
 body.svCleanShell .svDownloadFooter span:first-child{font-weight:800;letter-spacing:.13em}
 @media(max-width:680px){
 body.svCleanShell .svDownloadContainer{width:min(100% - 30px,950px);padding-top:104px}
 body.svCleanShell .svDownloadHero{grid-template-columns:111px minmax(0,1fr);gap:17px;margin-bottom:36px;min-height:0}
 body.svCleanShell .svDownloadPoster{width:111px;border-radius:11px}
-body.svCleanShell .svDownloadInfo h1{font-size:clamp(26px,6vw,37px)}
-body.svCleanShell .svDownloadEyebrow{font-size:9px}
-body.svCleanShell .svDownloadSynopsis{font-size:12px;-webkit-line-clamp:3}
+body.svCleanShell .svDownloadInfo h1{font-size:calc(clamp(26px,6vw,37px) * var(--st-ui-scale, 1))}
+body.svCleanShell .svDownloadEyebrow{font-size:calc(9px * var(--st-ui-scale, 1))}
+body.svCleanShell .svDownloadSynopsis{font-size:calc(12px * var(--st-ui-scale, 1));-webkit-line-clamp:3}
 body.svCleanShell .svDownloadGenres{gap:5px}
-body.svCleanShell .svDownloadMetadata{gap:5px 10px;font-size:10px}
+body.svCleanShell .svDownloadMetadata{gap:5px 10px;font-size:calc(10px * var(--st-ui-scale, 1))}
 body.svCleanShell .svDownloadHeroActions{gap:9px}
-body.svCleanShell .svDownloadHeading h2{font-size:20px}
+body.svCleanShell .svDownloadHeading h2{font-size:calc(20px * var(--st-ui-scale, 1))}
 body.svCleanShell .svDownloadOption{flex-wrap:wrap;gap:10px}
 body.svCleanShell .svDownloadOptionAction{margin-left:auto}
 }

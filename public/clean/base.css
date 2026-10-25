@@ -146,7 +146,7 @@
       gap: 12px;
       color: #fff;
       font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: 22px;
+      font-size: calc(22px * var(--st-ui-scale, 1));
       letter-spacing: -.05em;
       font-weight: 800;
     }
@@ -162,7 +162,7 @@
         linear-gradient(135deg, var(--purple), var(--cyan));
       color: white;
       box-shadow: 0 16px 54px rgba(124,92,255,.33);
-      font-size: 18px;
+      font-size: calc(18px * var(--st-ui-scale, 1));
     }
 
     .searchForm {
@@ -214,7 +214,7 @@
       padding: 9px 12px;
       border-radius: 999px;
       color: rgba(255,255,255,.62);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 850;
       border: 1px solid transparent;
     }
@@ -249,7 +249,7 @@
       place-items: center;
       border-radius: 16px;
       color: rgba(255,255,255,.68);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 900;
     }
 
@@ -269,7 +269,7 @@
       color: rgba(255,255,255,.72);
       background: rgba(255,255,255,.075);
       border: 1px solid rgba(255,255,255,.10);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 900;
       letter-spacing: .08em;
       text-transform: uppercase;
@@ -326,7 +326,7 @@
       margin: 18px 0 0;
       max-width: 910px;
       font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: clamp(56px, 9vw, 118px);
+      font-size: calc(clamp(56px, 9vw, 118px) * var(--st-ui-scale, 1));
       line-height: .86;
       letter-spacing: -.095em;
     }
@@ -341,7 +341,7 @@
       max-width: 720px;
       margin: 22px 0 0;
       color: rgba(255,255,255,.68);
-      font-size: 17px;
+      font-size: calc(17px * var(--st-ui-scale, 1));
       line-height: 1.78;
       font-weight: 650;
     }
@@ -365,7 +365,7 @@
       background: rgba(255,255,255,.075);
       border: 1px solid rgba(255,255,255,.12);
       font-weight: 900;
-      font-size: 14px;
+      font-size: calc(14px * var(--st-ui-scale, 1));
       cursor: pointer;
     }
 
@@ -423,7 +423,7 @@
     .heroPosterBadge strong {
       display: block;
       font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: 22px;
+      font-size: calc(22px * var(--st-ui-scale, 1));
       line-height: .98;
       letter-spacing: -.05em;
     }
@@ -432,7 +432,7 @@
       display: block;
       margin-top: 6px;
       color: rgba(255,255,255,.62);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 800;
     }
 
@@ -454,7 +454,7 @@
     .statCard b {
       display: block;
       font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: 29px;
+      font-size: calc(29px * var(--st-ui-scale, 1));
       letter-spacing: -.06em;
       line-height: .9;
     }
@@ -463,7 +463,7 @@
       display: block;
       margin-top: 7px;
       color: rgba(255,255,255,.46);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 900;
       text-transform: uppercase;
       letter-spacing: .08em;
@@ -484,7 +484,7 @@
     .sectionHead span {
       display: block;
       color: rgba(255,255,255,.42);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 900;
       text-transform: uppercase;
       letter-spacing: .08em;
@@ -494,7 +494,7 @@
     .sectionHead h2 {
       margin: 0;
       font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: clamp(32px, 4.5vw, 58px);
+      font-size: calc(clamp(32px, 4.5vw, 58px) * var(--st-ui-scale, 1));
       line-height: .92;
       letter-spacing: -.07em;
     }
@@ -508,7 +508,7 @@
       background: rgba(255,255,255,.075);
       border: 1px solid rgba(255,255,255,.10);
       color: rgba(255,255,255,.72);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 900;
       cursor: pointer;
     }
@@ -570,7 +570,7 @@
         radial-gradient(circle at 20% 0%, rgba(255,255,255,.14), transparent 36%),
         linear-gradient(135deg, rgba(124,92,255,.36), rgba(53,215,255,.14));
       font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: 48px;
+      font-size: calc(48px * var(--st-ui-scale, 1));
       font-weight: 900;
     }
 
@@ -593,7 +593,7 @@
       background: rgba(0,0,0,.62);
       border: 1px solid rgba(255,255,255,.14);
       color: white;
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 900;
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
@@ -608,7 +608,7 @@
       left: 10px;
       top: 10px;
       color: rgba(255,255,255,.78);
-      font-size: 10px;
+      font-size: calc(10px * var(--st-ui-scale, 1));
       text-transform: uppercase;
       letter-spacing: .08em;
     }
@@ -626,7 +626,7 @@
       border: 1px solid rgba(255,255,255,.18);
       background: rgba(0,0,0,.58);
       color: white;
-      font-size: 18px;
+      font-size: calc(18px * var(--st-ui-scale, 1));
       font-weight: 950;
       cursor: pointer;
       backdrop-filter: blur(12px);
@@ -643,7 +643,7 @@
 
     .movieInfo h3 {
       margin: 0;
-      font-size: 14px;
+      font-size: calc(14px * var(--st-ui-scale, 1));
       line-height: 1.25;
       font-weight: 900;
     }
@@ -656,7 +656,7 @@
     .movieInfo p {
       margin: 5px 0 0;
       color: rgba(255,255,255,.45);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 780;
     }
 
@@ -679,7 +679,7 @@
       color: rgba(255,255,255,.75);
       background: rgba(255,255,255,.065);
       border: 1px solid rgba(255,255,255,.10);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 850;
       cursor: pointer;
     }
@@ -697,7 +697,7 @@
     .pageHero h1 {
       margin: 16px 0 0;
       font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: clamp(46px, 8vw, 92px);
+      font-size: calc(clamp(46px, 8vw, 92px) * var(--st-ui-scale, 1));
       line-height: .88;
       letter-spacing: -.085em;
     }
@@ -706,7 +706,7 @@
       max-width: 720px;
       color: rgba(255,255,255,.62);
       line-height: 1.75;
-      font-size: 16px;
+      font-size: calc(16px * var(--st-ui-scale, 1));
       font-weight: 650;
     }
 
@@ -785,7 +785,7 @@
       margin: 16px 0 0;
       max-width: 1020px;
       font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: clamp(48px, 8vw, 108px);
+      font-size: calc(clamp(48px, 8vw, 108px) * var(--st-ui-scale, 1));
       line-height: .86;
       letter-spacing: -.095em;
     }
@@ -793,7 +793,7 @@
     .tagline {
       margin-top: 12px;
       color: rgba(255,255,255,.58);
-      font-size: 18px;
+      font-size: calc(18px * var(--st-ui-scale, 1));
       line-height: 1.5;
       font-style: italic;
     }
@@ -812,14 +812,14 @@
       background: rgba(255,255,255,.075);
       border: 1px solid rgba(255,255,255,.10);
       color: rgba(255,255,255,.74);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 850;
     }
 
     .overview {
       max-width: 880px;
       color: rgba(255,255,255,.72);
-      font-size: 16px;
+      font-size: calc(16px * var(--st-ui-scale, 1));
       line-height: 1.78;
       font-weight: 620;
     }
@@ -842,14 +842,14 @@
     .detailStat b {
       display: block;
       color: #fff;
-      font-size: 18px;
+      font-size: calc(18px * var(--st-ui-scale, 1));
       font-weight: 950;
     }
 
     .detailStat span {
       display: block;
       color: rgba(255,255,255,.45);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       text-transform: uppercase;
       letter-spacing: .08em;
       font-weight: 900;
@@ -874,7 +874,7 @@
     .infoPanel h2 {
       margin: 0;
       font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: 34px;
+      font-size: calc(34px * var(--st-ui-scale, 1));
       letter-spacing: -.06em;
       line-height: .95;
     }
@@ -898,7 +898,7 @@
       padding: 12px 0;
       border-bottom: 1px solid rgba(255,255,255,.08);
       color: rgba(255,255,255,.62);
-      font-size: 14px;
+      font-size: calc(14px * var(--st-ui-scale, 1));
     }
 
     .factRow strong {
@@ -954,7 +954,7 @@
     .personContent h1 {
       margin: 16px 0 0;
       font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: clamp(52px, 9vw, 104px);
+      font-size: calc(clamp(52px, 9vw, 104px) * var(--st-ui-scale, 1));
       line-height: .86;
       letter-spacing: -.09em;
     }
@@ -962,7 +962,7 @@
     .personContent p {
       color: rgba(255,255,255,.65);
       line-height: 1.75;
-      font-size: 16px;
+      font-size: calc(16px * var(--st-ui-scale, 1));
     }
 
     .emptyState,
@@ -989,7 +989,7 @@
     .errorState h1 {
       margin: 16px 0 0;
       font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: clamp(42px, 8vw, 84px);
+      font-size: calc(clamp(42px, 8vw, 84px) * var(--st-ui-scale, 1));
       line-height: .9;
       letter-spacing: -.08em;
       color: white;
@@ -1023,7 +1023,7 @@
       padding: 30px 0 110px;
       border-top: 1px solid rgba(255,255,255,.08);
       color: rgba(255,255,255,.44);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       line-height: 1.6;
     }
 
@@ -1047,7 +1047,7 @@
       border: 1px solid rgba(255,255,255,.08);
       border-radius: 999px;
       padding: 8px 10px;
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 800;
       cursor: pointer;
     }
@@ -1099,13 +1099,13 @@
     .controlPanel h3 {
       margin: 0;
       font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: 28px;
+      font-size: calc(28px * var(--st-ui-scale, 1));
       letter-spacing: -.06em;
     }
 
     .controlPanel p {
       color: rgba(255,255,255,.55);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       line-height: 1.5;
     }
 
@@ -1140,7 +1140,7 @@
       border: 1px solid rgba(255,255,255,.14);
       box-shadow: 0 18px 60px rgba(0,0,0,.38);
       backdrop-filter: blur(18px);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 860;
       transition: opacity .18s ease, transform .18s ease;
     }
@@ -1198,7 +1198,7 @@
       }
 
       .brand {
-        font-size: 20px;
+        font-size: calc(20px * var(--st-ui-scale, 1));
       }
 
       .brandIcon {
@@ -1215,7 +1215,7 @@
       }
 
       .heroCopy h1 {
-        font-size: 58px;
+        font-size: calc(58px * var(--st-ui-scale, 1));
       }
 
       .movieRail {
@@ -1237,13 +1237,13 @@
       }
 
       .sectionHead h2 {
-        font-size: 36px;
+        font-size: calc(36px * var(--st-ui-scale, 1));
       }
 
       .pageHero h1,
       .detailContent h1,
       .personContent h1 {
-        font-size: 54px;
+        font-size: calc(54px * var(--st-ui-scale, 1));
       }
 
       .detailHero {
@@ -1290,7 +1290,7 @@
     .brandIcon {
       font-family: "Space Grotesk", Inter, sans-serif;
       font-weight: 900;
-      font-size: 20px;
+      font-size: calc(20px * var(--st-ui-scale, 1));
       letter-spacing: -.08em;
     }
 
@@ -1332,7 +1332,7 @@
       border-radius: 999px;
       background: linear-gradient(135deg, rgba(229,9,20,.92), rgba(255,110,169,.92));
       color: white;
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 900;
       letter-spacing: .08em;
       text-transform: uppercase;
@@ -1358,7 +1358,7 @@
 
     .netflixMiniCard b {
       display: block;
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 900;
       color: #fff;
     }
@@ -1367,7 +1367,7 @@
       display: block;
       margin-top: 6px;
       color: rgba(255,255,255,.62);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       line-height: 1.55;
       font-weight: 760;
     }
@@ -1412,7 +1412,7 @@
       z-index: 1;
       display: block;
       color: rgba(255,255,255,.62);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 900;
       text-transform: uppercase;
       letter-spacing: .08em;
@@ -1424,7 +1424,7 @@
       display: block;
       margin-top: 18px;
       font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: 28px;
+      font-size: calc(28px * var(--st-ui-scale, 1));
       line-height: .95;
       letter-spacing: -.06em;
       color: #fff;
@@ -1436,7 +1436,7 @@
       margin: 10px 0 0;
       color: rgba(255,255,255,.70);
       line-height: 1.5;
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 700;
       max-width: 240px;
     }
@@ -1459,7 +1459,7 @@
     .cuteNote {
       margin-top: 16px;
       color: rgba(255,220,229,.86);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 800;
       letter-spacing: -.02em;
     }
@@ -1525,7 +1525,7 @@
       box-shadow: none;
       color: #e50914;
       font-family: Inter, system-ui, sans-serif;
-      font-size: 44px;
+      font-size: calc(44px * var(--st-ui-scale, 1));
       line-height: 1;
       font-weight: 900;
       letter-spacing: -.08em;
@@ -1544,7 +1544,7 @@
       border-radius: 6px;
       background: transparent !important;
       color: rgba(255,255,255,.88);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 700;
     }
 
@@ -1559,7 +1559,7 @@
       align-items: center;
       gap: 14px;
       color: white;
-      font-size: 14px;
+      font-size: calc(14px * var(--st-ui-scale, 1));
       font-weight: 700;
     }
 
@@ -1567,12 +1567,12 @@
     .textLink,
     .caretTiny {
       color: rgba(255,255,255,.94);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 700;
     }
 
     .iconLink {
-      font-size: 24px;
+      font-size: calc(24px * var(--st-ui-scale, 1));
       line-height: 1;
     }
 
@@ -1584,7 +1584,7 @@
       place-items: center;
       background: #1f80ff;
       color: white;
-      font-size: 17px;
+      font-size: calc(17px * var(--st-ui-scale, 1));
       font-weight: 900;
       box-shadow: 0 8px 20px rgba(0,0,0,.25);
     }
@@ -1637,7 +1637,7 @@
     .showcaseKicker {
       margin-bottom: 14px;
       color: rgba(255,255,255,.86);
-      font-size: 19px;
+      font-size: calc(19px * var(--st-ui-scale, 1));
       font-weight: 700;
       text-shadow: 0 2px 16px rgba(0,0,0,.28);
     }
@@ -1645,7 +1645,7 @@
     .showcaseTitle {
       margin: 0;
       color: white;
-      font-size: clamp(68px, 10vw, 118px);
+      font-size: calc(clamp(68px, 10vw, 118px) * var(--st-ui-scale, 1));
       line-height: .9;
       letter-spacing: -.08em;
       font-family: "Space Grotesk", Inter, sans-serif;
@@ -1662,7 +1662,7 @@
       margin-top: 18px;
       max-width: 620px;
       color: rgba(255,255,255,.90);
-      font-size: 21px;
+      font-size: calc(21px * var(--st-ui-scale, 1));
       line-height: 1.48;
       font-weight: 540;
       text-shadow: 0 2px 20px rgba(0,0,0,.28);
@@ -1680,7 +1680,7 @@
       min-height: 56px;
       padding: 14px 26px;
       border-radius: 4px;
-      font-size: 16px;
+      font-size: calc(16px * var(--st-ui-scale, 1));
       font-weight: 800;
       display: inline-flex;
       align-items: center;
@@ -1703,7 +1703,7 @@
 
     .showcasePlay,
     .showcaseInfo {
-      font-size: 24px;
+      font-size: calc(24px * var(--st-ui-scale, 1));
       line-height: 1;
       font-weight: 900;
     }
@@ -1719,7 +1719,7 @@
       background: rgba(51,51,51,.56);
       border-left: 4px solid rgba(255,255,255,.76);
       color: white;
-      font-size: 18px;
+      font-size: calc(18px * var(--st-ui-scale, 1));
       font-weight: 800;
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
@@ -1732,7 +1732,7 @@
       display: grid;
       place-items: center;
       border: 2px solid rgba(255,255,255,.76);
-      font-size: 18px;
+      font-size: calc(18px * var(--st-ui-scale, 1));
       font-weight: 900;
     }
 
@@ -1745,7 +1745,7 @@
     .showcaseRowTitle {
       margin: 0 0 12px;
       color: white;
-      font-size: 38px;
+      font-size: calc(38px * var(--st-ui-scale, 1));
       font-weight: 800;
       line-height: 1;
       letter-spacing: -.04em;
@@ -1764,7 +1764,7 @@
       .netflixNav { grid-template-columns: 1fr; gap: 10px; }
       .navRightCluster { justify-content: flex-end; }
       .showcaseHero { min-height: 88vh; }
-      .showcaseDesc { font-size: 18px; }
+      .showcaseDesc { font-size: calc(18px * var(--st-ui-scale, 1)); }
       .showcaseMaturity { bottom: 120px; }
     }
 
@@ -1776,15 +1776,15 @@
       .showcaseHero { min-height: 82vh; padding-bottom: 24px; }
       .showcaseInner { width: min(100vw - 24px, 680px); }
       .showcaseCopy { max-width: 100%; padding-top: 96px; }
-      .showcaseKicker { font-size: 14px; }
-      .showcaseTitle { font-size: 58px; }
-      .showcaseDesc { font-size: 15px; max-width: 100%; }
+      .showcaseKicker { font-size: calc(14px * var(--st-ui-scale, 1)); }
+      .showcaseTitle { font-size: calc(58px * var(--st-ui-scale, 1)); }
+      .showcaseDesc { font-size: calc(15px * var(--st-ui-scale, 1)); max-width: 100%; }
       .showcaseButtons { gap: 10px; }
-      .showcaseBtn, .showcaseBtnSecondary { min-height: 46px; padding: 10px 18px; font-size: 14px; }
-      .showcaseMaturity { position: static; margin-top: 18px; width: fit-content; padding: 10px 14px; gap: 10px; font-size: 14px; }
-      .showcaseMute { width: 38px; height: 38px; font-size: 15px; }
+      .showcaseBtn, .showcaseBtnSecondary { min-height: 46px; padding: 10px 18px; font-size: calc(14px * var(--st-ui-scale, 1)); }
+      .showcaseMaturity { position: static; margin-top: 18px; width: fit-content; padding: 10px 14px; gap: 10px; font-size: calc(14px * var(--st-ui-scale, 1)); }
+      .showcaseMute { width: 38px; height: 38px; font-size: calc(15px * var(--st-ui-scale, 1)); }
       .showcaseRowWrap { margin-top: 0; }
-      .showcaseRowTitle { font-size: 24px; }
+      .showcaseRowTitle { font-size: calc(24px * var(--st-ui-scale, 1)); }
       .showcaseRail { grid-auto-columns: minmax(170px, 210px); }
     }
 
@@ -1831,7 +1831,7 @@
     .netflixPageHero h1 {
       margin: 16px 0 0;
       font-family: Inter, system-ui, sans-serif;
-      font-size: clamp(44px, 6.2vw, 82px);
+      font-size: calc(clamp(44px, 6.2vw, 82px) * var(--st-ui-scale, 1));
       line-height: .95;
       letter-spacing: -.055em;
       color: #fff;
@@ -1842,7 +1842,7 @@
       max-width: 740px;
       margin: 14px 0 0;
       color: rgba(255,255,255,.70);
-      font-size: 17px;
+      font-size: calc(17px * var(--st-ui-scale, 1));
       line-height: 1.6;
       font-weight: 520;
     }
@@ -1897,7 +1897,7 @@
     }
 
     .netflixCatalog .movieInfo h3 {
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 800;
     }
 
@@ -1931,7 +1931,7 @@
       background: rgba(255,255,255,.075);
       border: 1px solid rgba(255,255,255,.16);
       color: rgba(255,255,255,.82);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 700;
     }
 
@@ -1998,14 +1998,14 @@
 
     .detailContent h1 {
       font-family: Inter, system-ui, sans-serif;
-      font-size: clamp(58px, 8.4vw, 112px);
+      font-size: calc(clamp(58px, 8.4vw, 112px) * var(--st-ui-scale, 1));
       line-height: .88;
       letter-spacing: -.07em;
       max-width: 920px;
     }
 
     .tagline {
-      font-size: 20px;
+      font-size: calc(20px * var(--st-ui-scale, 1));
       color: rgba(255,255,255,.84);
       text-shadow: 0 2px 18px rgba(0,0,0,.4);
     }
@@ -2013,7 +2013,7 @@
     .overview {
       max-width: 760px;
       color: rgba(255,255,255,.88);
-      font-size: 18px;
+      font-size: calc(18px * var(--st-ui-scale, 1));
       line-height: 1.55;
       font-weight: 520;
       text-shadow: 0 2px 24px rgba(0,0,0,.40);
@@ -2038,7 +2038,7 @@
     }
 
     .detailStat b {
-      font-size: 20px;
+      font-size: calc(20px * var(--st-ui-scale, 1));
     }
 
     .detailContent .btn {
@@ -2048,7 +2048,7 @@
       background: rgba(109,109,110,.68);
       border: 0;
       color: #fff;
-      font-size: 16px;
+      font-size: calc(16px * var(--st-ui-scale, 1));
     }
 
     .detailContent .btn.primary {
@@ -2161,11 +2161,11 @@
       }
 
       .netflixPageHero h1 {
-        font-size: 42px;
+        font-size: calc(42px * var(--st-ui-scale, 1));
       }
 
       .netflixPageHero p {
-        font-size: 14px;
+        font-size: calc(14px * var(--st-ui-scale, 1));
       }
 
       .netflixCatalog .movieGrid {
@@ -2174,7 +2174,7 @@
       }
 
       .netflixCatalog .movieInfo h3 {
-        font-size: 12px;
+        font-size: calc(12px * var(--st-ui-scale, 1));
       }
 
       .detailHero {
@@ -2184,11 +2184,11 @@
       }
 
       .detailContent h1 {
-        font-size: 48px;
+        font-size: calc(48px * var(--st-ui-scale, 1));
       }
 
       .overview {
-        font-size: 15px;
+        font-size: calc(15px * var(--st-ui-scale, 1));
       }
 
       .detailStats {
@@ -2257,7 +2257,7 @@
       margin: 0;
       color: #fff;
       font-family: Inter, system-ui, sans-serif;
-      font-size: clamp(30px, 3.6vw, 48px);
+      font-size: calc(clamp(30px, 3.6vw, 48px) * var(--st-ui-scale, 1));
       line-height: 1;
       letter-spacing: -.04em;
       font-weight: 760;
@@ -2278,7 +2278,7 @@
       border: 1px solid rgba(255,255,255,.86);
       background: rgba(0,0,0,.70);
       color: #fff;
-      font-size: 15px;
+      font-size: calc(15px * var(--st-ui-scale, 1));
       font-weight: 760;
       cursor: pointer;
       user-select: none;
@@ -2309,7 +2309,7 @@
       display: block;
       padding: 8px 10px;
       color: rgba(255,255,255,.82);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 640;
     }
 
@@ -2330,7 +2330,7 @@
       max-width: 760px;
       color: white;
       font-family: Impact, Haettenschweiler, "Arial Black", Inter, sans-serif;
-      font-size: clamp(72px, 12vw, 190px);
+      font-size: calc(clamp(72px, 12vw, 190px) * var(--st-ui-scale, 1));
       line-height: .82;
       letter-spacing: -.06em;
       text-transform: uppercase;
@@ -2354,7 +2354,7 @@
       border-radius: 4px;
       background: #e50914;
       color: white;
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       line-height: .9;
       font-weight: 950;
       text-align: center;
@@ -2363,7 +2363,7 @@
     }
 
     .browseTopRank strong {
-      font-size: clamp(20px, 2.2vw, 30px);
+      font-size: calc(clamp(20px, 2.2vw, 30px) * var(--st-ui-scale, 1));
       letter-spacing: -.03em;
       font-weight: 850;
     }
@@ -2372,7 +2372,7 @@
       max-width: 620px;
       margin: 16px 0 0;
       color: rgba(255,255,255,.92);
-      font-size: clamp(16px, 1.5vw, 22px);
+      font-size: calc(clamp(16px, 1.5vw, 22px) * var(--st-ui-scale, 1));
       line-height: 1.42;
       font-weight: 560;
       text-shadow: 0 3px 24px rgba(0,0,0,.52);
@@ -2395,7 +2395,7 @@
       padding: 0 28px;
       border-radius: 4px;
       border: 0;
-      font-size: 18px;
+      font-size: calc(18px * var(--st-ui-scale, 1));
       font-weight: 850;
       box-shadow: 0 12px 26px rgba(0,0,0,.18);
     }
@@ -2412,7 +2412,7 @@
 
     .browsePlayIcon,
     .browseInfoIcon {
-      font-size: 28px;
+      font-size: calc(28px * var(--st-ui-scale, 1));
       line-height: 1;
       font-weight: 950;
     }
@@ -2436,7 +2436,7 @@
       border-radius: 999px;
       border: 2px solid rgba(255,255,255,.76);
       background: rgba(0,0,0,.10);
-      font-size: 19px;
+      font-size: calc(19px * var(--st-ui-scale, 1));
       backdrop-filter: blur(4px);
     }
 
@@ -2448,7 +2448,7 @@
       padding-left: 18px;
       border-left: 4px solid rgba(255,255,255,.78);
       background: rgba(51,51,51,.58);
-      font-size: 18px;
+      font-size: calc(18px * var(--st-ui-scale, 1));
       font-weight: 760;
     }
 
@@ -2464,7 +2464,7 @@
     }
 
     .browseRows .showcaseRowTitle {
-      font-size: clamp(22px, 2vw, 32px);
+      font-size: calc(clamp(22px, 2vw, 32px) * var(--st-ui-scale, 1));
       margin: 0 0 12px;
     }
 
@@ -2505,11 +2505,11 @@
       }
 
       .browseLogoTitle {
-        font-size: clamp(54px, 16vw, 102px);
+        font-size: calc(clamp(54px, 16vw, 102px) * var(--st-ui-scale, 1));
       }
 
       .browseDesc {
-        font-size: 15px;
+        font-size: calc(15px * var(--st-ui-scale, 1));
         max-width: 94%;
       }
 
@@ -2517,7 +2517,7 @@
       .browseInfo {
         min-height: 46px;
         padding: 0 17px;
-        font-size: 15px;
+        font-size: calc(15px * var(--st-ui-scale, 1));
       }
 
       .browseMaturity {
@@ -2529,7 +2529,7 @@
       .browseRating {
         min-width: 78px;
         min-height: 38px;
-        font-size: 14px;
+        font-size: calc(14px * var(--st-ui-scale, 1));
       }
 
       .browseMute {
@@ -2560,7 +2560,7 @@
     .netflixWordmark {
       color: #e50914;
       font-family: Inter, system-ui, sans-serif;
-      font-size: 31px;
+      font-size: calc(31px * var(--st-ui-scale, 1));
       line-height: 1;
       font-weight: 950;
       letter-spacing: -.06em;
@@ -2597,7 +2597,7 @@
     .netflixCatalogHeader h2 {
       margin: 0;
       color: white;
-      font-size: clamp(24px, 2.7vw, 42px);
+      font-size: calc(clamp(24px, 2.7vw, 42px) * var(--st-ui-scale, 1));
       line-height: 1;
       letter-spacing: -.045em;
       font-weight: 780;
@@ -2618,7 +2618,7 @@
       color: rgba(255,255,255,.70);
       background: rgba(255,255,255,.05);
       border: 1px solid rgba(255,255,255,.10);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 750;
     }
 
@@ -2643,7 +2643,7 @@
       display: block;
       margin-bottom: 12px;
       color: rgba(255,255,255,.70);
-      font-size: 14px;
+      font-size: calc(14px * var(--st-ui-scale, 1));
       font-weight: 800;
       letter-spacing: .02em;
     }
@@ -2661,7 +2661,7 @@
       border: 1px solid rgba(255,255,255,.28);
       background: rgba(0,0,0,.62);
       outline: 0;
-      font-size: 17px;
+      font-size: calc(17px * var(--st-ui-scale, 1));
     }
 
     .netflixSearchBox button {
@@ -2674,14 +2674,14 @@
       border-radius: 3px;
       color: white;
       background: #e50914;
-      font-size: 20px;
+      font-size: calc(20px * var(--st-ui-scale, 1));
       cursor: pointer;
     }
 
     .netflixSearchTitle {
       margin: 0 0 18px;
       color: white;
-      font-size: clamp(26px, 3.2vw, 44px);
+      font-size: calc(clamp(26px, 3.2vw, 44px) * var(--st-ui-scale, 1));
       line-height: 1;
       letter-spacing: -.045em;
       font-weight: 760;
@@ -2698,7 +2698,7 @@
     .netflixGenreGroup h2 {
       margin: 0 0 14px;
       color: white;
-      font-size: clamp(24px, 3vw, 38px);
+      font-size: calc(clamp(24px, 3vw, 38px) * var(--st-ui-scale, 1));
       letter-spacing: -.04em;
     }
 
@@ -2719,7 +2719,7 @@
         linear-gradient(to top, rgba(0,0,0,.42), transparent),
         linear-gradient(135deg, rgba(229,9,20,.48), rgba(70,0,0,.68));
       border: 1px solid rgba(255,255,255,.08);
-      font-size: 15px;
+      font-size: calc(15px * var(--st-ui-scale, 1));
       font-weight: 850;
       transition: transform .16s ease, filter .16s ease;
     }
@@ -2751,7 +2751,7 @@
     .netflixDetailTabs a {
       padding: 0 0 12px;
       color: rgba(255,255,255,.64);
-      font-size: 15px;
+      font-size: calc(15px * var(--st-ui-scale, 1));
       font-weight: 850;
     }
 
@@ -2780,7 +2780,7 @@
     .netflixDetailSectionTitle {
       margin: 42px 0 14px;
       color: white;
-      font-size: clamp(25px, 2.8vw, 38px);
+      font-size: calc(clamp(25px, 2.8vw, 38px) * var(--st-ui-scale, 1));
       letter-spacing: -.045em;
       font-weight: 780;
     }
@@ -2810,7 +2810,7 @@
     .netflixEpisodeNumber {
       text-align: center;
       color: rgba(255,255,255,.56);
-      font-size: 24px;
+      font-size: calc(24px * var(--st-ui-scale, 1));
       font-weight: 650;
     }
 
@@ -2830,7 +2830,7 @@
     .netflixEpisodeInfo strong {
       display: block;
       color: white;
-      font-size: 15px;
+      font-size: calc(15px * var(--st-ui-scale, 1));
       margin-bottom: 5px;
     }
 
@@ -2838,13 +2838,13 @@
       margin: 0;
       color: rgba(255,255,255,.58);
       line-height: 1.45;
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
     }
 
     .netflixWatchlistHelp {
       color: rgba(255,255,255,.58);
       margin: -8px 0 18px;
-      font-size: 14px;
+      font-size: calc(14px * var(--st-ui-scale, 1));
       line-height: 1.55;
     }
 
@@ -2863,7 +2863,7 @@
     .watchlistEmptyNetflix strong {
       display: block;
       color: white;
-      font-size: 24px;
+      font-size: calc(24px * var(--st-ui-scale, 1));
       margin-bottom: 8px;
     }
 
@@ -2885,7 +2885,7 @@
 
     @media(max-width: 720px) {
       .netflixWordmark {
-        font-size: 25px;
+        font-size: calc(25px * var(--st-ui-scale, 1));
       }
 
       .netflixNav {
@@ -2912,7 +2912,7 @@
 
       .netflixGenreCard {
         min-height: 74px;
-        font-size: 13px;
+        font-size: calc(13px * var(--st-ui-scale, 1));
       }
 
       .netflixEpisodeRow {
@@ -3000,7 +3000,7 @@
       display: inline-block;
       color: var(--nf-red);
       font-family: Arial Black, Inter, system-ui, sans-serif;
-      font-size: 30px;
+      font-size: calc(30px * var(--st-ui-scale, 1));
       line-height: 1;
       font-weight: 950;
       letter-spacing: -.075em;
@@ -3015,7 +3015,7 @@
     .netflixLinks a {
       padding: 5px 8px;
       color: #e5e5e5;
-      font-size: 14px;
+      font-size: calc(14px * var(--st-ui-scale, 1));
       font-weight: 550;
       transition: color .16s ease;
     }
@@ -3034,12 +3034,12 @@
     }
 
     .iconLink {
-      font-size: 28px;
+      font-size: calc(28px * var(--st-ui-scale, 1));
       font-weight: 400;
     }
 
     .textLink {
-      font-size: 14px;
+      font-size: calc(14px * var(--st-ui-scale, 1));
       font-weight: 650;
     }
 
@@ -3066,7 +3066,7 @@
 
     .caretTiny {
       margin-left: -10px;
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
     }
 
     .showcaseHero,
@@ -3115,7 +3115,7 @@
     .browseDesc {
       max-width: 640px;
       color: rgba(255,255,255,.92);
-      font-size: clamp(18px, 1.45vw, 24px);
+      font-size: calc(clamp(18px, 1.45vw, 24px) * var(--st-ui-scale, 1));
       line-height: 1.34;
       font-weight: 500;
     }
@@ -3127,7 +3127,7 @@
       border-radius: 4px !important;
       min-height: 56px !important;
       padding: 0 28px !important;
-      font-size: 18px !important;
+      font-size: calc(18px * var(--st-ui-scale, 1)) !important;
       font-weight: 750 !important;
     }
 
@@ -3175,7 +3175,7 @@
     .nfRowTitle {
       margin: 0 0 .65vw;
       color: #e5e5e5;
-      font-size: clamp(20px, 1.55vw, 30px);
+      font-size: calc(clamp(20px, 1.55vw, 30px) * var(--st-ui-scale, 1));
       font-weight: 760;
       letter-spacing: -.025em;
       line-height: 1.15;
@@ -3285,7 +3285,7 @@
       border: 1.5px solid rgba(255,255,255,.68);
       color: white;
       background: rgba(42,42,42,.78);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 900;
     }
 
@@ -3305,7 +3305,7 @@
       flex-wrap: wrap;
       gap: 7px;
       color: #b3b3b3;
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 650;
     }
 
@@ -3322,7 +3322,7 @@
     .nfHoverTitle {
       margin-top: 6px;
       color: #fff;
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 800;
       line-height: 1.2;
       overflow: hidden;
@@ -3349,7 +3349,7 @@
 
     .topTenNumber {
       font-family: Impact, Haettenschweiler, "Arial Black", Inter, sans-serif;
-      font-size: clamp(120px, 11vw, 210px);
+      font-size: calc(clamp(120px, 11vw, 210px) * var(--st-ui-scale, 1));
       line-height: .77;
       color: #000;
       -webkit-text-stroke: 4px #595959;
@@ -3392,7 +3392,7 @@
     }
 
     .browseHeroTop h1 {
-      font-size: clamp(30px, 2.9vw, 46px);
+      font-size: calc(clamp(30px, 2.9vw, 46px) * var(--st-ui-scale, 1));
       font-weight: 620;
       letter-spacing: -.03em;
     }
@@ -3403,7 +3403,7 @@
       border: 1px solid rgba(255,255,255,.85);
       background: rgba(0,0,0,.65);
       border-radius: 0;
-      font-size: 14px;
+      font-size: calc(14px * var(--st-ui-scale, 1));
       font-weight: 650;
       padding: 0 11px;
     }
@@ -3415,11 +3415,11 @@
     }
 
     .browseLogoTitle {
-      font-size: clamp(70px, 11vw, 180px);
+      font-size: calc(clamp(70px, 11vw, 180px) * var(--st-ui-scale, 1));
     }
 
     .browseTopRank strong {
-      font-size: clamp(19px, 1.7vw, 28px);
+      font-size: calc(clamp(19px, 1.7vw, 28px) * var(--st-ui-scale, 1));
       font-weight: 760;
     }
 
@@ -3440,7 +3440,7 @@
     }
 
     .netflixPageHero h1 {
-      font-size: clamp(34px, 3.5vw, 56px);
+      font-size: calc(clamp(34px, 3.5vw, 56px) * var(--st-ui-scale, 1));
       font-weight: 620;
       letter-spacing: -.035em;
     }
@@ -3476,7 +3476,7 @@
 
     .detailContent h1 {
       font-family: Impact, Haettenschweiler, "Arial Black", Inter, sans-serif;
-      font-size: clamp(64px, 9vw, 132px);
+      font-size: calc(clamp(64px, 9vw, 132px) * var(--st-ui-scale, 1));
       text-transform: uppercase;
       letter-spacing: -.075em;
     }
@@ -3565,7 +3565,7 @@
     .profileGate h1 {
       margin: 0 0 28px;
       color: white;
-      font-size: clamp(34px, 4vw, 58px);
+      font-size: calc(clamp(34px, 4vw, 58px) * var(--st-ui-scale, 1));
       font-weight: 420;
       letter-spacing: -.04em;
     }
@@ -3581,7 +3581,7 @@
       gap: 12px;
       justify-items: center;
       color: #808080;
-      font-size: 18px;
+      font-size: calc(18px * var(--st-ui-scale, 1));
       font-weight: 500;
       transition: color .12s ease;
     }
@@ -3595,7 +3595,7 @@
       display: grid;
       place-items: center;
       color: white;
-      font-size: clamp(40px, 5vw, 74px);
+      font-size: calc(clamp(40px, 5vw, 74px) * var(--st-ui-scale, 1));
     }
 
     .profileCard:nth-child(2) .profileAvatar { background: linear-gradient(135deg, #ef4444, #f97316); }
@@ -3621,7 +3621,7 @@
       border: 1px solid #808080;
       color: #808080;
       letter-spacing: .08em;
-      font-size: 14px;
+      font-size: calc(14px * var(--st-ui-scale, 1));
       font-weight: 650;
       text-transform: uppercase;
     }
@@ -3661,7 +3661,7 @@
       }
 
       .netflixWordmark {
-        font-size: 24px;
+        font-size: calc(24px * var(--st-ui-scale, 1));
       }
 
       .movieRail,
@@ -3698,12 +3698,12 @@
       .showcaseTitle,
       .browseLogoTitle,
       .detailContent h1 {
-        font-size: clamp(46px, 16vw, 76px);
+        font-size: calc(clamp(46px, 16vw, 76px) * var(--st-ui-scale, 1));
       }
 
       .showcaseDesc,
       .browseDesc {
-        font-size: 14px;
+        font-size: calc(14px * var(--st-ui-scale, 1));
         max-width: 96%;
       }
 
@@ -3726,7 +3726,7 @@
       }
 
       .topTenNumber {
-        font-size: 120px;
+        font-size: calc(120px * var(--st-ui-scale, 1));
         -webkit-text-stroke-width: 3px;
       }
 
@@ -3769,7 +3769,7 @@
       border-radius: 999px;
       color: white;
       background: rgba(0,0,0,.72);
-      font-size: 30px;
+      font-size: calc(30px * var(--st-ui-scale, 1));
       line-height: 1;
       font-weight: 300;
     }
@@ -3814,7 +3814,7 @@
       align-items: center;
       gap: 8px;
       color: rgba(255,255,255,.88);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 760;
       letter-spacing: .04em;
       text-transform: uppercase;
@@ -3825,7 +3825,7 @@
       margin: 10px 0 0;
       color: white;
       font-family: Impact, Haettenschweiler, "Arial Black", Inter, sans-serif;
-      font-size: clamp(52px, 8vw, 104px);
+      font-size: calc(clamp(52px, 8vw, 104px) * var(--st-ui-scale, 1));
       line-height: .88;
       letter-spacing: -.065em;
       text-transform: uppercase;
@@ -3851,7 +3851,7 @@
       border-radius: 4px;
       border: 0;
       padding: 0 24px;
-      font-size: 16px;
+      font-size: calc(16px * var(--st-ui-scale, 1));
       font-weight: 750;
       cursor: pointer;
     }
@@ -3875,7 +3875,7 @@
       border: 2px solid rgba(255,255,255,.58);
       background: rgba(42,42,42,.66);
       color: white;
-      font-size: 20px;
+      font-size: calc(20px * var(--st-ui-scale, 1));
       font-weight: 850;
       cursor: pointer;
     }
@@ -3891,7 +3891,7 @@
       gap: 9px;
       margin-bottom: 18px;
       color: rgba(255,255,255,.74);
-      font-size: 15px;
+      font-size: calc(15px * var(--st-ui-scale, 1));
       font-weight: 560;
     }
 
@@ -3910,7 +3910,7 @@
       padding: 1px 6px;
       border: 1px solid rgba(255,255,255,.44);
       color: rgba(255,255,255,.82);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
     }
 
     .nfModalInfoGrid {
@@ -3923,7 +3923,7 @@
     .nfModalOverview {
       margin: 0;
       color: rgba(255,255,255,.88);
-      font-size: 17px;
+      font-size: calc(17px * var(--st-ui-scale, 1));
       line-height: 1.55;
       font-weight: 450;
     }
@@ -3932,7 +3932,7 @@
       display: grid;
       gap: 8px;
       color: rgba(255,255,255,.54);
-      font-size: 14px;
+      font-size: calc(14px * var(--st-ui-scale, 1));
       line-height: 1.45;
     }
 
@@ -3951,7 +3951,7 @@
     .nfDetailNav a {
       padding-bottom: 13px;
       color: rgba(255,255,255,.62);
-      font-size: 14px;
+      font-size: calc(14px * var(--st-ui-scale, 1));
       font-weight: 760;
     }
 
@@ -3963,7 +3963,7 @@
     .nfDetailHeading {
       margin: 34px 0 14px;
       color: white;
-      font-size: 25px;
+      font-size: calc(25px * var(--st-ui-scale, 1));
       letter-spacing: -.03em;
       font-weight: 760;
     }
@@ -4003,7 +4003,7 @@
     .nfCastCard strong {
       display: block;
       margin-top: 8px;
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       line-height: 1.2;
     }
 
@@ -4011,7 +4011,7 @@
       display: block;
       margin-top: 3px;
       color: rgba(255,255,255,.50);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       line-height: 1.25;
     }
 
@@ -4066,25 +4066,25 @@
 
     .nfSeasonNum {
       color: rgba(255,255,255,.50);
-      font-size: 22px;
+      font-size: calc(22px * var(--st-ui-scale, 1));
       text-align: center;
     }
 
     .nfSeasonRow strong {
       color: white;
-      font-size: 14px;
+      font-size: calc(14px * var(--st-ui-scale, 1));
     }
 
     .nfSeasonRow p {
       margin: 4px 0 0;
       color: rgba(255,255,255,.52);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       line-height: 1.35;
     }
 
     .nfSeasonMeta {
       color: rgba(255,255,255,.58);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       white-space: nowrap;
     }
 
@@ -4096,7 +4096,7 @@
     .nfMyListHeader h1 {
       margin: 0;
       color: white;
-      font-size: clamp(30px, 3vw, 46px);
+      font-size: calc(clamp(30px, 3vw, 46px) * var(--st-ui-scale, 1));
       font-weight: 620;
       letter-spacing: -.03em;
     }
@@ -4104,7 +4104,7 @@
     .nfMyListHeader p {
       max-width: 680px;
       color: rgba(255,255,255,.58);
-      font-size: 14px;
+      font-size: calc(14px * var(--st-ui-scale, 1));
       line-height: 1.55;
     }
 
@@ -4123,7 +4123,7 @@
       border: 1px solid rgba(255,255,255,.20);
       background: rgba(255,255,255,.06);
       color: rgba(255,255,255,.82);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 700;
       cursor: pointer;
     }
@@ -4154,28 +4154,28 @@
       padding: 0 16px;
       background: transparent;
       color: white;
-      font-size: 17px;
+      font-size: calc(17px * var(--st-ui-scale, 1));
     }
 
     .nfSearchLarge button {
       border: 0;
       background: #e50914;
       color: white;
-      font-size: 22px;
+      font-size: calc(22px * var(--st-ui-scale, 1));
       cursor: pointer;
     }
 
     .nfSearchLabel {
       color: rgba(255,255,255,.62);
       margin-bottom: 12px;
-      font-size: 14px;
+      font-size: calc(14px * var(--st-ui-scale, 1));
       font-weight: 700;
     }
 
     .nfSearchTitle {
       margin: 0 0 14px;
       color: white;
-      font-size: clamp(24px, 2.5vw, 36px);
+      font-size: calc(clamp(24px, 2.5vw, 36px) * var(--st-ui-scale, 1));
       font-weight: 620;
     }
 
@@ -4196,7 +4196,7 @@
     .nfLanguageHeader h1 {
       margin: 0;
       color: white;
-      font-size: clamp(30px, 3vw, 46px);
+      font-size: calc(clamp(30px, 3vw, 46px) * var(--st-ui-scale, 1));
       font-weight: 620;
       letter-spacing: -.03em;
     }
@@ -4214,7 +4214,7 @@
       color: white;
       background: #000;
       border: 1px solid rgba(255,255,255,.72);
-      font-size: 14px;
+      font-size: calc(14px * var(--st-ui-scale, 1));
       font-weight: 650;
     }
 
@@ -4226,7 +4226,7 @@
     .nfGenreGroup h2 {
       margin: 0 0 12px;
       color: white;
-      font-size: 24px;
+      font-size: calc(24px * var(--st-ui-scale, 1));
       font-weight: 660;
     }
 
@@ -4245,7 +4245,7 @@
       color: white;
       background: linear-gradient(135deg, #3b0b0b, #141414);
       border: 1px solid rgba(255,255,255,.08);
-      font-size: 15px;
+      font-size: calc(15px * var(--st-ui-scale, 1));
       font-weight: 800;
       transition: transform .12s ease, filter .12s ease;
     }
@@ -4271,7 +4271,7 @@
 
     .profileCard span:last-child {
       color: #808080;
-      font-size: 18px;
+      font-size: calc(18px * var(--st-ui-scale, 1));
       font-weight: 500;
     }
 
@@ -4334,7 +4334,7 @@
 
       .nfGenreTile {
         min-height: 76px;
-        font-size: 13px;
+        font-size: calc(13px * var(--st-ui-scale, 1));
       }
 
       .nfMyListHeader {
@@ -4417,7 +4417,7 @@
     .netflixWordmark {
       color: var(--nf-red) !important;
       font-family: Arial Black, Arial, Helvetica, sans-serif !important;
-      font-size: 31px !important;
+      font-size: calc(31px * var(--st-ui-scale, 1)) !important;
       font-weight: 950 !important;
       line-height: 1 !important;
       letter-spacing: -.07em !important;
@@ -4440,7 +4440,7 @@
       border: 0 !important;
       background: transparent !important;
       color: #e5e5e5 !important;
-      font-size: 14px !important;
+      font-size: calc(14px * var(--st-ui-scale, 1)) !important;
       font-weight: 500 !important;
       line-height: 1 !important;
       transition: color .18s ease !important;
@@ -4464,14 +4464,14 @@
 
     .iconLink {
       color: white !important;
-      font-size: 27px !important;
+      font-size: calc(27px * var(--st-ui-scale, 1)) !important;
       line-height: 1 !important;
       transform: translateY(-1px) !important;
     }
 
     .textLink {
       color: white !important;
-      font-size: 14px !important;
+      font-size: calc(14px * var(--st-ui-scale, 1)) !important;
       font-weight: 700 !important;
     }
 
@@ -4511,7 +4511,7 @@
     .caretTiny {
       color: white !important;
       margin-left: -12px !important;
-      font-size: 11px !important;
+      font-size: calc(11px * var(--st-ui-scale, 1)) !important;
     }
 
     .mobileSearchForm {
@@ -4560,7 +4560,7 @@
 
     .showcaseKicker {
       color: white !important;
-      font-size: 17px !important;
+      font-size: calc(17px * var(--st-ui-scale, 1)) !important;
       font-weight: 700 !important;
       margin: 0 0 10px !important;
       text-shadow: 0 2px 14px rgba(0,0,0,.45) !important;
@@ -4571,7 +4571,7 @@
       margin: 0 !important;
       color: white !important;
       font-family: Impact, Haettenschweiler, "Arial Black", Arial, sans-serif !important;
-      font-size: clamp(70px, 9vw, 148px) !important;
+      font-size: calc(clamp(70px, 9vw, 148px) * var(--st-ui-scale, 1)) !important;
       line-height: .78 !important;
       letter-spacing: -.065em !important;
       text-transform: uppercase !important;
@@ -4591,7 +4591,7 @@
     .browseDesc {
       margin: 16px 0 0 !important;
       color: white !important;
-      font-size: clamp(17px, 1.35vw, 23px) !important;
+      font-size: calc(clamp(17px, 1.35vw, 23px) * var(--st-ui-scale, 1)) !important;
       line-height: 1.35 !important;
       font-weight: 500 !important;
       max-width: 640px !important;
@@ -4614,7 +4614,7 @@
       padding: 0 26px !important;
       border-radius: 4px !important;
       border: 0 !important;
-      font-size: 18px !important;
+      font-size: calc(18px * var(--st-ui-scale, 1)) !important;
       font-weight: 700 !important;
       line-height: 1 !important;
       box-shadow: none !important;
@@ -4634,13 +4634,13 @@
 
     .showcasePlay,
     .browsePlayIcon {
-      font-size: 27px !important;
+      font-size: calc(27px * var(--st-ui-scale, 1)) !important;
       transform: translateY(1px) !important;
     }
 
     .showcaseInfo,
     .browseInfoIcon {
-      font-size: 27px !important;
+      font-size: calc(27px * var(--st-ui-scale, 1)) !important;
     }
 
     .showcaseMaturity,
@@ -4664,7 +4664,7 @@
       display: grid !important;
       place-items: center !important;
       background: rgba(0,0,0,.12) !important;
-      font-size: 19px !important;
+      font-size: calc(19px * var(--st-ui-scale, 1)) !important;
     }
 
     .browseRating {
@@ -4675,7 +4675,7 @@
       padding-left: 16px !important;
       background: rgba(51,51,51,.60) !important;
       border-left: 4px solid #dcdcdc !important;
-      font-size: 18px !important;
+      font-size: calc(18px * var(--st-ui-scale, 1)) !important;
       font-weight: 600 !important;
     }
 
@@ -4696,7 +4696,7 @@
     .nfRowTitle {
       margin: 0 0 .56vw !important;
       color: #e5e5e5 !important;
-      font-size: clamp(20px, 1.45vw, 28px) !important;
+      font-size: calc(clamp(20px, 1.45vw, 28px) * var(--st-ui-scale, 1)) !important;
       font-weight: 700 !important;
       letter-spacing: -.01em !important;
       line-height: 1.1 !important;
@@ -4804,7 +4804,7 @@
       color: #000 !important;
       -webkit-text-stroke: 4px #595959 !important;
       text-shadow: 0 0 3px #000 !important;
-      font-size: clamp(112px, 11vw, 206px) !important;
+      font-size: calc(clamp(112px, 11vw, 206px) * var(--st-ui-scale, 1)) !important;
       line-height: .77 !important;
       letter-spacing: -.14em !important;
       z-index: 1 !important;
@@ -4836,7 +4836,7 @@
     }
 
     .browseHeroTop h1 {
-      font-size: clamp(31px, 3.1vw, 50px) !important;
+      font-size: calc(clamp(31px, 3.1vw, 50px) * var(--st-ui-scale, 1)) !important;
       font-weight: 500 !important;
       letter-spacing: -.035em !important;
       line-height: 1 !important;
@@ -4850,7 +4850,7 @@
       background: rgba(0,0,0,.78) !important;
       padding: 0 10px !important;
       gap: 26px !important;
-      font-size: 14px !important;
+      font-size: calc(14px * var(--st-ui-scale, 1)) !important;
       font-weight: 600 !important;
     }
 
@@ -4868,12 +4868,12 @@
       width: 38px !important;
       height: 48px !important;
       border-radius: 2px !important;
-      font-size: 10px !important;
+      font-size: calc(10px * var(--st-ui-scale, 1)) !important;
       line-height: .92 !important;
     }
 
     .browseTopRank strong {
-      font-size: clamp(20px, 1.7vw, 29px) !important;
+      font-size: calc(clamp(20px, 1.7vw, 29px) * var(--st-ui-scale, 1)) !important;
       font-weight: 700 !important;
     }
 
@@ -4902,7 +4902,7 @@
 
     .nfModalHeroContent h1 {
       font-family: Impact, Haettenschweiler, "Arial Black", Arial, sans-serif !important;
-      font-size: clamp(52px, 8vw, 106px) !important;
+      font-size: calc(clamp(52px, 8vw, 106px) * var(--st-ui-scale, 1)) !important;
       line-height: .82 !important;
       letter-spacing: -.06em !important;
       text-transform: uppercase !important;
@@ -4913,7 +4913,7 @@
       border-radius: 4px !important;
       min-height: 48px !important;
       padding: 0 24px !important;
-      font-size: 16px !important;
+      font-size: calc(16px * var(--st-ui-scale, 1)) !important;
       font-weight: 700 !important;
     }
 
@@ -4930,7 +4930,7 @@
     }
 
     .nfMetaBand {
-      font-size: 15px !important;
+      font-size: calc(15px * var(--st-ui-scale, 1)) !important;
       gap: 9px !important;
     }
 
@@ -4940,7 +4940,7 @@
     }
 
     .nfModalOverview {
-      font-size: 17px !important;
+      font-size: calc(17px * var(--st-ui-scale, 1)) !important;
       line-height: 1.55 !important;
     }
 
@@ -4970,7 +4970,7 @@
     }
 
     .nfSearchLarge input {
-      font-size: 17px !important;
+      font-size: calc(17px * var(--st-ui-scale, 1)) !important;
     }
 
     .nfMyListHeader {
@@ -5001,7 +5001,7 @@
       }
 
       .netflixLinks a {
-        font-size: 12px !important;
+        font-size: calc(12px * var(--st-ui-scale, 1)) !important;
       }
 
       .movieRail,
@@ -5029,7 +5029,7 @@
       }
 
       .netflixWordmark {
-        font-size: 24px !important;
+        font-size: calc(24px * var(--st-ui-scale, 1)) !important;
       }
 
       .navRightCluster {
@@ -5054,12 +5054,12 @@
 
       .showcaseTitle,
       .browseLogoTitle {
-        font-size: clamp(46px, 18vw, 76px) !important;
+        font-size: calc(clamp(46px, 18vw, 76px) * var(--st-ui-scale, 1)) !important;
       }
 
       .showcaseDesc,
       .browseDesc {
-        font-size: 14px !important;
+        font-size: calc(14px * var(--st-ui-scale, 1)) !important;
         max-width: 95% !important;
       }
 
@@ -5069,7 +5069,7 @@
       .browseInfo {
         min-height: 44px !important;
         padding: 0 16px !important;
-        font-size: 14px !important;
+        font-size: calc(14px * var(--st-ui-scale, 1)) !important;
       }
 
       .showcaseMaturity,
@@ -5110,7 +5110,7 @@
       }
 
       .topTenNumber {
-        font-size: 118px !important;
+        font-size: calc(118px * var(--st-ui-scale, 1)) !important;
         -webkit-text-stroke-width: 3px !important;
       }
 
@@ -5272,7 +5272,7 @@
       background: rgba(255,255,255,.075);
       border: 1px solid rgba(255,255,255,.12);
       color: rgba(224,242,254,.92) !important;
-      font-size: 12px !important;
+      font-size: calc(12px * var(--st-ui-scale, 1)) !important;
       letter-spacing: .09em;
       text-transform: uppercase;
       backdrop-filter: blur(14px);
@@ -5617,7 +5617,7 @@
     }
 
     .browseHeroTop h1 {
-      font-size: clamp(34px, 3vw, 46px) !important;
+      font-size: calc(clamp(34px, 3vw, 46px) * var(--st-ui-scale, 1)) !important;
       line-height: 1 !important;
       font-weight: 680 !important;
       letter-spacing: -.04em !important;
@@ -5658,7 +5658,7 @@
       width: 100% !important;
       margin: 0 !important;
       padding: 0 !important;
-      font-size: clamp(50px, 7vw, 104px) !important;
+      font-size: calc(clamp(50px, 7vw, 104px) * var(--st-ui-scale, 1)) !important;
       line-height: .86 !important;
       letter-spacing: -.075em !important;
       overflow: visible !important;
@@ -5674,21 +5674,21 @@
     }
 
     .browseTopRank strong {
-      font-size: clamp(18px, 1.55vw, 26px) !important;
+      font-size: calc(clamp(18px, 1.55vw, 26px) * var(--st-ui-scale, 1)) !important;
       line-height: 1.1 !important;
     }
 
     .top10Badge {
       width: 36px !important;
       height: 44px !important;
-      font-size: 9px !important;
+      font-size: calc(9px * var(--st-ui-scale, 1)) !important;
       flex: 0 0 auto !important;
     }
 
     .browseDesc {
       max-width: min(600px, 46vw) !important;
       margin-top: 14px !important;
-      font-size: clamp(15px, 1.23vw, 19px) !important;
+      font-size: calc(clamp(15px, 1.23vw, 19px) * var(--st-ui-scale, 1)) !important;
       line-height: 1.38 !important;
       font-weight: 520 !important;
       color: rgba(239,246,255,.88) !important;
@@ -5702,13 +5702,13 @@
     .browseInfo {
       min-height: 50px !important;
       padding: 0 21px !important;
-      font-size: 16px !important;
+      font-size: calc(16px * var(--st-ui-scale, 1)) !important;
       border-radius: 10px !important;
     }
 
     .browsePlayIcon,
     .browseInfoIcon {
-      font-size: 24px !important;
+      font-size: calc(24px * var(--st-ui-scale, 1)) !important;
     }
 
     .browseMaturity {
@@ -5723,13 +5723,13 @@
     .browseMute {
       width: 44px !important;
       height: 44px !important;
-      font-size: 17px !important;
+      font-size: calc(17px * var(--st-ui-scale, 1)) !important;
     }
 
     .browseRating {
       min-width: 96px !important;
       height: 42px !important;
-      font-size: 16px !important;
+      font-size: calc(16px * var(--st-ui-scale, 1)) !important;
     }
 
     .browseRows {
@@ -5746,7 +5746,7 @@
 
     .nfRowTitle,
     .showcaseRowTitle {
-      font-size: clamp(20px, 1.55vw, 28px) !important;
+      font-size: calc(clamp(20px, 1.55vw, 28px) * var(--st-ui-scale, 1)) !important;
       margin-bottom: 10px !important;
     }
 
@@ -5790,7 +5790,7 @@
     }
 
     .netflixWordmark {
-      font-size: 27px !important;
+      font-size: calc(27px * var(--st-ui-scale, 1)) !important;
       letter-spacing: -.07em !important;
     }
 
@@ -5799,7 +5799,7 @@
     }
 
     .netflixLinks a {
-      font-size: 13px !important;
+      font-size: calc(13px * var(--st-ui-scale, 1)) !important;
     }
 
     .navRightCluster {
@@ -5823,7 +5823,7 @@
       }
 
       .browseLogoTitle {
-        font-size: clamp(48px, 8vw, 92px) !important;
+        font-size: calc(clamp(48px, 8vw, 92px) * var(--st-ui-scale, 1)) !important;
       }
 
       .movieRail,
@@ -5850,7 +5850,7 @@
       }
 
       .browseHeroTop h1 {
-        font-size: 32px !important;
+        font-size: calc(32px * var(--st-ui-scale, 1)) !important;
       }
 
       .browseHeroContent {
@@ -5861,13 +5861,13 @@
       }
 
       .browseLogoTitle {
-        font-size: clamp(42px, 14vw, 68px) !important;
+        font-size: calc(clamp(42px, 14vw, 68px) * var(--st-ui-scale, 1)) !important;
         line-height: .9 !important;
       }
 
       .browseDesc {
         max-width: 94vw !important;
-        font-size: 14px !important;
+        font-size: calc(14px * var(--st-ui-scale, 1)) !important;
         display: -webkit-box;
         -webkit-line-clamp: 4;
         -webkit-box-orient: vertical;
@@ -5890,7 +5890,7 @@
       }
 
       .netflixWordmark {
-        font-size: 22px !important;
+        font-size: calc(22px * var(--st-ui-scale, 1)) !important;
       }
 
       .netflixBrand::before {
@@ -6003,7 +6003,7 @@
       -webkit-background-clip: text;
       background-clip: text;
       font-family: Inter, Arial, sans-serif !important;
-      font-size: 25px !important;
+      font-size: calc(25px * var(--st-ui-scale, 1)) !important;
       font-weight: 900 !important;
       letter-spacing: -.065em !important;
       transform: none !important;
@@ -6022,7 +6022,7 @@
 
     .netflixLinks a {
       color: rgba(248,251,255,.68) !important;
-      font-size: 13px !important;
+      font-size: calc(13px * var(--st-ui-scale, 1)) !important;
       font-weight: 750 !important;
       padding: 0 !important;
       background: transparent !important;
@@ -6128,7 +6128,7 @@
     .browseHeroTop h1 {
       color: var(--ds-text) !important;
       font-family: Inter, Arial, sans-serif !important;
-      font-size: clamp(30px, 3vw, 44px) !important;
+      font-size: calc(clamp(30px, 3vw, 44px) * var(--st-ui-scale, 1)) !important;
       line-height: 1 !important;
       font-weight: 800 !important;
       letter-spacing: -.055em !important;
@@ -6146,7 +6146,7 @@
       background: rgba(255,255,255,.075) !important;
       border: 1px solid rgba(255,255,255,.12) !important;
       color: rgba(248,251,255,.76) !important;
-      font-size: 11px !important;
+      font-size: calc(11px * var(--st-ui-scale, 1)) !important;
       letter-spacing: .08em !important;
       text-transform: uppercase !important;
       backdrop-filter: blur(14px) !important;
@@ -6160,7 +6160,7 @@
       margin: 0 !important;
       color: var(--ds-text) !important;
       font-family: "Space Grotesk", Inter, Arial, sans-serif !important;
-      font-size: clamp(48px, 6.4vw, 94px) !important;
+      font-size: calc(clamp(48px, 6.4vw, 94px) * var(--st-ui-scale, 1)) !important;
       line-height: .86 !important;
       letter-spacing: -.085em !important;
       text-transform: uppercase !important;
@@ -6184,7 +6184,7 @@
       max-width: 570px !important;
       margin: 16px 0 0 !important;
       color: rgba(248,251,255,.78) !important;
-      font-size: clamp(14px, 1.22vw, 18px) !important;
+      font-size: calc(clamp(14px, 1.22vw, 18px) * var(--st-ui-scale, 1)) !important;
       line-height: 1.48 !important;
       font-weight: 560 !important;
       text-shadow: 0 2px 18px rgba(0,0,0,.46) !important;
@@ -6205,13 +6205,13 @@
       height: 40px !important;
       border-radius: 8px !important;
       background: linear-gradient(135deg, var(--ds-purple), var(--ds-blue)) !important;
-      font-size: 8px !important;
+      font-size: calc(8px * var(--st-ui-scale, 1)) !important;
       box-shadow: none !important;
     }
 
     .browseTopRank strong {
       color: var(--ds-text) !important;
-      font-size: clamp(16px, 1.45vw, 22px) !important;
+      font-size: calc(clamp(16px, 1.45vw, 22px) * var(--st-ui-scale, 1)) !important;
       line-height: 1.15 !important;
       font-weight: 760 !important;
     }
@@ -6235,7 +6235,7 @@
       color: #050711 !important;
       background: linear-gradient(135deg, #ffffff, #e6f9ff) !important;
       box-shadow: 0 16px 34px rgba(255,255,255,.08) !important;
-      font-size: 15px !important;
+      font-size: calc(15px * var(--st-ui-scale, 1)) !important;
       font-weight: 850 !important;
     }
 
@@ -6251,7 +6251,7 @@
       backdrop-filter: blur(14px) !important;
       -webkit-backdrop-filter: blur(14px) !important;
       box-shadow: none !important;
-      font-size: 15px !important;
+      font-size: calc(15px * var(--st-ui-scale, 1)) !important;
       font-weight: 800 !important;
     }
 
@@ -6259,7 +6259,7 @@
     .browsePlayIcon,
     .showcaseInfo,
     .browseInfoIcon {
-      font-size: 22px !important;
+      font-size: calc(22px * var(--st-ui-scale, 1)) !important;
     }
 
     .showcaseMaturity,
@@ -6282,7 +6282,7 @@
       border-radius: 999px !important;
       background: rgba(255,255,255,.08) !important;
       border: 1px solid rgba(255,255,255,.24) !important;
-      font-size: 16px !important;
+      font-size: calc(16px * var(--st-ui-scale, 1)) !important;
       backdrop-filter: blur(12px) !important;
       -webkit-backdrop-filter: blur(12px) !important;
       box-shadow: none !important;
@@ -6297,7 +6297,7 @@
       color: white !important;
       background: rgba(255,255,255,.09) !important;
       border-left: 3px solid var(--ds-blue) !important;
-      font-size: 15px !important;
+      font-size: calc(15px * var(--st-ui-scale, 1)) !important;
       font-weight: 760 !important;
       backdrop-filter: blur(12px) !important;
       -webkit-backdrop-filter: blur(12px) !important;
@@ -6323,7 +6323,7 @@
       margin: 0 0 10px !important;
       color: var(--ds-text) !important;
       font-family: Inter, Arial, sans-serif !important;
-      font-size: clamp(18px, 1.45vw, 25px) !important;
+      font-size: calc(clamp(18px, 1.45vw, 25px) * var(--st-ui-scale, 1)) !important;
       line-height: 1.15 !important;
       letter-spacing: -.035em !important;
       font-weight: 850 !important;
@@ -6425,7 +6425,7 @@
       color: rgba(0,0,0,.25) !important;
       -webkit-text-stroke: 3px rgba(224,232,255,.46) !important;
       font-family: Impact, Arial Black, Arial, sans-serif !important;
-      font-size: clamp(96px, 8.5vw, 168px) !important;
+      font-size: calc(clamp(96px, 8.5vw, 168px) * var(--st-ui-scale, 1)) !important;
       line-height: .76 !important;
       letter-spacing: -.12em !important;
       text-shadow: none !important;
@@ -6552,7 +6552,7 @@
       }
 
       .netflixLinks a {
-        font-size: 12px !important;
+        font-size: calc(12px * var(--st-ui-scale, 1)) !important;
       }
     }
 
@@ -6591,7 +6591,7 @@
       }
 
       .netflixWordmark {
-        font-size: 21px !important;
+        font-size: calc(21px * var(--st-ui-scale, 1)) !important;
       }
 
       .netflixBrand::before {
@@ -6620,18 +6620,18 @@
       }
 
       .browseHeroTop h1 {
-        font-size: 30px !important;
+        font-size: calc(30px * var(--st-ui-scale, 1)) !important;
       }
 
       .showcaseTitle,
       .browseLogoTitle {
-        font-size: clamp(40px, 13vw, 64px) !important;
+        font-size: calc(clamp(40px, 13vw, 64px) * var(--st-ui-scale, 1)) !important;
         line-height: .91 !important;
       }
 
       .showcaseDesc,
       .browseDesc {
-        font-size: 13px !important;
+        font-size: calc(13px * var(--st-ui-scale, 1)) !important;
         line-height: 1.45 !important;
         -webkit-line-clamp: 4 !important;
       }
@@ -6647,7 +6647,7 @@
       .browseInfo {
         min-height: 42px !important;
         padding: 0 14px !important;
-        font-size: 13px !important;
+        font-size: calc(13px * var(--st-ui-scale, 1)) !important;
         border-radius: 11px !important;
       }
 
@@ -6812,7 +6812,7 @@
       -webkit-background-clip: text !important;
       background-clip: text !important;
       font-family: Inter, Arial, sans-serif !important;
-      font-size: 25px !important;
+      font-size: calc(25px * var(--st-ui-scale, 1)) !important;
       font-weight: 950 !important;
       letter-spacing: -.065em !important;
       line-height: 1 !important;
@@ -6839,7 +6839,7 @@
       border-radius: 0 !important;
       background: transparent !important;
       color: rgba(248,251,255,.68) !important;
-      font-size: 13px !important;
+      font-size: calc(13px * var(--st-ui-scale, 1)) !important;
       font-weight: 760 !important;
       letter-spacing: -.01em !important;
       transition: color .16s ease, opacity .16s ease !important;
@@ -6859,7 +6859,7 @@
 
     .iconLink {
       color: rgba(248,251,255,.84) !important;
-      font-size: 24px !important;
+      font-size: calc(24px * var(--st-ui-scale, 1)) !important;
       font-weight: 500 !important;
       line-height: 1 !important;
       transform: none !important;
@@ -6867,7 +6867,7 @@
 
     .textLink {
       color: rgba(248,251,255,.84) !important;
-      font-size: 13px !important;
+      font-size: calc(13px * var(--st-ui-scale, 1)) !important;
       font-weight: 820 !important;
     }
 
@@ -6891,7 +6891,7 @@
     .caretTiny {
       color: rgba(248,251,255,.62) !important;
       margin-left: -10px !important;
-      font-size: 10px !important;
+      font-size: calc(10px * var(--st-ui-scale, 1)) !important;
     }
 
     .mobileSearchForm {
@@ -6974,7 +6974,7 @@
       margin: 0 !important;
       color: var(--x-text) !important;
       font-family: Inter, Arial, sans-serif !important;
-      font-size: clamp(30px, 3vw, 44px) !important;
+      font-size: calc(clamp(30px, 3vw, 44px) * var(--st-ui-scale, 1)) !important;
       line-height: 1 !important;
       font-weight: 850 !important;
       letter-spacing: -.06em !important;
@@ -6998,7 +6998,7 @@
       color: rgba(248,251,255,.88) !important;
       background: rgba(255,255,255,.078) !important;
       border: 1px solid rgba(255,255,255,.16) !important;
-      font-size: 13px !important;
+      font-size: calc(13px * var(--st-ui-scale, 1)) !important;
       font-weight: 850 !important;
       cursor: pointer !important;
       backdrop-filter: blur(14px) !important;
@@ -7034,7 +7034,7 @@
       padding: 9px 10px !important;
       border-radius: 10px !important;
       color: rgba(248,251,255,.70) !important;
-      font-size: 13px !important;
+      font-size: calc(13px * var(--st-ui-scale, 1)) !important;
       font-weight: 720 !important;
     }
 
@@ -7055,7 +7055,7 @@
       background: rgba(255,255,255,.078) !important;
       border: 1px solid rgba(255,255,255,.13) !important;
       color: rgba(248,251,255,.76) !important;
-      font-size: 11px !important;
+      font-size: calc(11px * var(--st-ui-scale, 1)) !important;
       font-weight: 900 !important;
       letter-spacing: .08em !important;
       text-transform: uppercase !important;
@@ -7073,7 +7073,7 @@
       padding: 0 !important;
       color: var(--x-text) !important;
       font-family: "Space Grotesk", Inter, Arial, sans-serif !important;
-      font-size: clamp(48px, 6.25vw, 92px) !important;
+      font-size: calc(clamp(48px, 6.25vw, 92px) * var(--st-ui-scale, 1)) !important;
       line-height: .88 !important;
       letter-spacing: -.087em !important;
       text-transform: uppercase !important;
@@ -7101,7 +7101,7 @@
       max-width: 570px !important;
       margin: 16px 0 0 !important;
       color: rgba(248,251,255,.78) !important;
-      font-size: clamp(14px, 1.18vw, 18px) !important;
+      font-size: calc(clamp(14px, 1.18vw, 18px) * var(--st-ui-scale, 1)) !important;
       line-height: 1.5 !important;
       font-weight: 580 !important;
       text-shadow: 0 2px 18px rgba(0,0,0,.46) !important;
@@ -7127,7 +7127,7 @@
       place-items: center !important;
       background: linear-gradient(135deg, var(--x-purple), var(--x-blue)) !important;
       color: #fff !important;
-      font-size: 8px !important;
+      font-size: calc(8px * var(--st-ui-scale, 1)) !important;
       line-height: .9 !important;
       font-weight: 950 !important;
       text-transform: uppercase !important;
@@ -7137,7 +7137,7 @@
 
     .browseTopRank strong {
       color: var(--x-text) !important;
-      font-size: clamp(16px, 1.42vw, 22px) !important;
+      font-size: calc(clamp(16px, 1.42vw, 22px) * var(--st-ui-scale, 1)) !important;
       line-height: 1.15 !important;
       font-weight: 800 !important;
       letter-spacing: -.035em !important;
@@ -7168,7 +7168,7 @@
       color: #050711 !important;
       background: linear-gradient(135deg, #fff, #e8faff) !important;
       box-shadow: 0 16px 34px rgba(255,255,255,.08) !important;
-      font-size: 15px !important;
+      font-size: calc(15px * var(--st-ui-scale, 1)) !important;
       font-weight: 900 !important;
       cursor: pointer !important;
     }
@@ -7189,7 +7189,7 @@
       backdrop-filter: blur(14px) !important;
       -webkit-backdrop-filter: blur(14px) !important;
       box-shadow: none !important;
-      font-size: 15px !important;
+      font-size: calc(15px * var(--st-ui-scale, 1)) !important;
       font-weight: 860 !important;
       cursor: pointer !important;
     }
@@ -7211,7 +7211,7 @@
     .browsePlayIcon,
     .showcaseInfo,
     .browseInfoIcon {
-      font-size: 22px !important;
+      font-size: calc(22px * var(--st-ui-scale, 1)) !important;
       line-height: 1 !important;
       transform: none !important;
     }
@@ -7240,7 +7240,7 @@
       background: rgba(255,255,255,.08) !important;
       border: 1px solid rgba(255,255,255,.24) !important;
       color: white !important;
-      font-size: 16px !important;
+      font-size: calc(16px * var(--st-ui-scale, 1)) !important;
       backdrop-filter: blur(12px) !important;
       -webkit-backdrop-filter: blur(12px) !important;
       box-shadow: none !important;
@@ -7255,7 +7255,7 @@
       color: white !important;
       background: rgba(255,255,255,.09) !important;
       border-left: 3px solid var(--x-blue) !important;
-      font-size: 15px !important;
+      font-size: calc(15px * var(--st-ui-scale, 1)) !important;
       font-weight: 820 !important;
       backdrop-filter: blur(12px) !important;
       -webkit-backdrop-filter: blur(12px) !important;
@@ -7282,7 +7282,7 @@
       margin: 0 0 10px !important;
       color: var(--x-text) !important;
       font-family: Inter, Arial, sans-serif !important;
-      font-size: clamp(18px, 1.42vw, 25px) !important;
+      font-size: calc(clamp(18px, 1.42vw, 25px) * var(--st-ui-scale, 1)) !important;
       line-height: 1.15 !important;
       letter-spacing: -.035em !important;
       font-weight: 900 !important;
@@ -7451,7 +7451,7 @@
       color: rgba(0,0,0,.20) !important;
       -webkit-text-stroke: 3px rgba(224,232,255,.48) !important;
       font-family: Impact, Arial Black, Arial, sans-serif !important;
-      font-size: clamp(96px, 8.4vw, 166px) !important;
+      font-size: calc(clamp(96px, 8.4vw, 166px) * var(--st-ui-scale, 1)) !important;
       line-height: .76 !important;
       letter-spacing: -.12em !important;
       text-shadow: none !important;
@@ -7691,7 +7691,7 @@
       }
 
       .netflixLinks a {
-        font-size: 12px !important;
+        font-size: calc(12px * var(--st-ui-scale, 1)) !important;
       }
     }
 
@@ -7736,7 +7736,7 @@
       }
 
       .netflixWordmark {
-        font-size: 21px !important;
+        font-size: calc(21px * var(--st-ui-scale, 1)) !important;
       }
 
       .netflixBrand::before {
@@ -7766,18 +7766,18 @@
       }
 
       .browseHeroTop h1 {
-        font-size: 30px !important;
+        font-size: calc(30px * var(--st-ui-scale, 1)) !important;
       }
 
       .showcaseTitle,
       .browseLogoTitle {
-        font-size: clamp(40px, 13vw, 64px) !important;
+        font-size: calc(clamp(40px, 13vw, 64px) * var(--st-ui-scale, 1)) !important;
         line-height: .91 !important;
       }
 
       .showcaseDesc,
       .browseDesc {
-        font-size: 13px !important;
+        font-size: calc(13px * var(--st-ui-scale, 1)) !important;
         line-height: 1.45 !important;
         -webkit-line-clamp: 4 !important;
         max-width: calc(100vw - 32px) !important;
@@ -7794,7 +7794,7 @@
       .browseInfo {
         min-height: 42px !important;
         padding: 0 14px !important;
-        font-size: 13px !important;
+        font-size: calc(13px * var(--st-ui-scale, 1)) !important;
         border-radius: 12px !important;
       }
 
@@ -8026,7 +8026,7 @@
       -webkit-background-clip: text !important;
       background-clip: text !important;
       font-family: Inter, Arial, sans-serif !important;
-      font-size: 25px !important;
+      font-size: calc(25px * var(--st-ui-scale, 1)) !important;
       font-weight: 950 !important;
       letter-spacing: -.065em !important;
       line-height: 1 !important;
@@ -8053,7 +8053,7 @@
       border-radius: 0 !important;
       background: transparent !important;
       color: rgba(248,251,255,.68) !important;
-      font-size: 13px !important;
+      font-size: calc(13px * var(--st-ui-scale, 1)) !important;
       font-weight: 760 !important;
       letter-spacing: -.01em !important;
       transition: color .16s ease, opacity .16s ease !important;
@@ -8153,7 +8153,7 @@
       background: rgba(255,255,255,.078);
       border: 1px solid rgba(255,255,255,.13);
       color: rgba(248,251,255,.76);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 900;
       letter-spacing: .08em;
       text-transform: uppercase;
@@ -8171,7 +8171,7 @@
       padding: 0 !important;
       color: var(--v-text) !important;
       font-family: "Space Grotesk", Inter, Arial, sans-serif !important;
-      font-size: clamp(48px, 6.25vw, 92px) !important;
+      font-size: calc(clamp(48px, 6.25vw, 92px) * var(--st-ui-scale, 1)) !important;
       line-height: .88 !important;
       letter-spacing: -.087em !important;
       text-transform: uppercase !important;
@@ -8191,7 +8191,7 @@
       gap: 9px;
       margin-top: 15px;
       color: rgba(248,251,255,.66);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 760;
     }
 
@@ -8215,7 +8215,7 @@
       max-width: 570px;
       margin: 16px 0 0;
       color: rgba(248,251,255,.78);
-      font-size: clamp(14px, 1.18vw, 18px);
+      font-size: calc(clamp(14px, 1.18vw, 18px) * var(--st-ui-scale, 1));
       line-height: 1.5;
       font-weight: 580;
       text-shadow: 0 2px 18px rgba(0,0,0,.46);
@@ -8245,7 +8245,7 @@
       border-radius: 14px;
       border: 0;
       box-shadow: 0 16px 34px rgba(255,255,255,.08);
-      font-size: 15px;
+      font-size: calc(15px * var(--st-ui-scale, 1));
       font-weight: 900;
       cursor: pointer;
     }
@@ -8300,7 +8300,7 @@
       padding-left: 14px;
       background: rgba(255,255,255,.09);
       border-left: 3px solid var(--v-blue);
-      font-size: 15px;
+      font-size: calc(15px * var(--st-ui-scale, 1));
       font-weight: 820;
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
@@ -8319,7 +8319,7 @@
 
     .dsBrowseTop h1 {
       margin: 0;
-      font-size: clamp(30px, 3vw, 44px);
+      font-size: calc(clamp(30px, 3vw, 44px) * var(--st-ui-scale, 1));
       line-height: 1;
       font-weight: 900;
       letter-spacing: -.06em;
@@ -8337,7 +8337,7 @@
       color: rgba(248,251,255,.88);
       background: rgba(255,255,255,.078);
       border: 1px solid rgba(255,255,255,.16);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 850;
       cursor: pointer;
       backdrop-filter: blur(14px);
@@ -8371,7 +8371,7 @@
       padding: 9px 10px;
       border-radius: 10px;
       color: rgba(248,251,255,.70);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 720;
     }
 
@@ -8410,7 +8410,7 @@
     .dsRowHead h2 {
       margin: 0;
       color: var(--v-text);
-      font-size: clamp(18px, 1.42vw, 25px);
+      font-size: calc(clamp(18px, 1.42vw, 25px) * var(--st-ui-scale, 1));
       line-height: 1.15;
       letter-spacing: -.035em;
       font-weight: 900;
@@ -8425,7 +8425,7 @@
       background: rgba(255,255,255,.075);
       border: 1px solid rgba(255,255,255,.10);
       color: rgba(248,251,255,.62);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 900;
       letter-spacing: .06em;
       text-transform: uppercase;
@@ -8521,7 +8521,7 @@
       border: 1px solid rgba(255,255,255,.18);
       background: rgba(255,255,255,.11);
       color: white;
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 900;
       cursor: pointer;
     }
@@ -8533,7 +8533,7 @@
 
     .dsCardTitle {
       color: white;
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       line-height: 1.2;
       font-weight: 900;
       overflow: hidden;
@@ -8548,7 +8548,7 @@
       gap: 6px;
       margin-top: 5px;
       color: rgba(248,251,255,.58);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 760;
     }
 
@@ -8647,7 +8647,7 @@
       color: rgba(0,0,0,.20) !important;
       -webkit-text-stroke: 3px rgba(224,232,255,.48) !important;
       font-family: Impact, Arial Black, Arial, sans-serif !important;
-      font-size: clamp(96px, 8.4vw, 166px) !important;
+      font-size: calc(clamp(96px, 8.4vw, 166px) * var(--st-ui-scale, 1)) !important;
       line-height: .76 !important;
       letter-spacing: -.12em !important;
       text-shadow: none !important;
@@ -8691,7 +8691,7 @@
     .dsPageHeader h1 {
       margin: 0;
       color: var(--v-text);
-      font-size: clamp(42px, 6.4vw, 86px);
+      font-size: calc(clamp(42px, 6.4vw, 86px) * var(--st-ui-scale, 1));
       line-height: .92;
       letter-spacing: -.075em;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
@@ -8703,7 +8703,7 @@
       margin: 14px 0 0;
       color: var(--v-muted);
       line-height: 1.6;
-      font-size: 16px;
+      font-size: calc(16px * var(--st-ui-scale, 1));
       font-weight: 580;
     }
 
@@ -8761,7 +8761,7 @@
       color: rgba(248,251,255,.78);
       background: rgba(255,255,255,.075);
       border: 1px solid rgba(255,255,255,.14);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 850;
       cursor: pointer;
       backdrop-filter: blur(12px);
@@ -8788,7 +8788,7 @@
     .dsGenreGroup h2 {
       margin: 0 0 12px;
       color: var(--v-text);
-      font-size: clamp(24px, 3vw, 38px);
+      font-size: calc(clamp(24px, 3vw, 38px) * var(--st-ui-scale, 1));
       letter-spacing: -.055em;
       font-weight: 900;
     }
@@ -8853,7 +8853,7 @@
       background: rgba(7,10,22,.72);
       border: 1px solid rgba(255,255,255,.14);
       color: white;
-      font-size: 28px;
+      font-size: calc(28px * var(--st-ui-scale, 1));
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
     }
@@ -8909,7 +8909,7 @@
     .dsDetailGrid p {
       margin: 0;
       color: rgba(248,251,255,.84);
-      font-size: 16px;
+      font-size: calc(16px * var(--st-ui-scale, 1));
       line-height: 1.6;
       font-weight: 560;
     }
@@ -8919,7 +8919,7 @@
       display: grid;
       gap: 9px;
       color: var(--v-muted2);
-      font-size: 14px;
+      font-size: calc(14px * var(--st-ui-scale, 1));
     }
 
     .dsDetailGrid aside div,
@@ -8935,7 +8935,7 @@
     .dsDetailGrid span,
     .dsAboutGrid span {
       color: var(--v-muted2);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 900;
       letter-spacing: .06em;
       text-transform: uppercase;
@@ -8959,7 +8959,7 @@
     .dsDetailTabs a {
       padding: 0 0 13px;
       color: rgba(248,251,255,.55);
-      font-size: 14px;
+      font-size: calc(14px * var(--st-ui-scale, 1));
       font-weight: 900;
       white-space: nowrap;
     }
@@ -8976,7 +8976,7 @@
     .dsDetailSection h2 {
       margin: 0 0 14px;
       color: var(--v-text);
-      font-size: clamp(23px, 2.6vw, 34px);
+      font-size: calc(clamp(23px, 2.6vw, 34px) * var(--st-ui-scale, 1));
       letter-spacing: -.055em;
       font-weight: 900;
     }
@@ -9015,7 +9015,7 @@
     .dsCastCard strong {
       display: block;
       margin-top: 8px;
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       line-height: 1.2;
     }
 
@@ -9024,7 +9024,7 @@
       margin-top: 3px;
       color: var(--v-muted2);
       font-style: normal;
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       line-height: 1.25;
     }
 
@@ -9071,26 +9071,26 @@
 
     .dsEpisodeRow > span {
       color: var(--v-muted2);
-      font-size: 22px;
+      font-size: calc(22px * var(--st-ui-scale, 1));
       text-align: center;
       font-weight: 800;
     }
 
     .dsEpisodeRow strong {
       color: var(--v-text);
-      font-size: 14px;
+      font-size: calc(14px * var(--st-ui-scale, 1));
     }
 
     .dsEpisodeRow p {
       margin: 4px 0 0;
       color: var(--v-muted2);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       line-height: 1.35;
     }
 
     .dsEpisodeRow b {
       color: var(--v-muted2);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       white-space: nowrap;
     }
 
@@ -9125,7 +9125,7 @@
 
     .profileGate h1 {
       color: white;
-      font-size: clamp(34px, 5vw, 62px);
+      font-size: calc(clamp(34px, 5vw, 62px) * var(--st-ui-scale, 1));
       font-weight: 600;
       letter-spacing: -.055em;
     }
@@ -9180,7 +9180,7 @@
       }
 
       .netflixLinks a {
-        font-size: 12px !important;
+        font-size: calc(12px * var(--st-ui-scale, 1)) !important;
       }
     }
 
@@ -9227,7 +9227,7 @@
       }
 
       .netflixWordmark {
-        font-size: 21px !important;
+        font-size: calc(21px * var(--st-ui-scale, 1)) !important;
       }
 
       .netflixBrand::before {
@@ -9257,17 +9257,17 @@
       }
 
       .dsBrowseTop h1 {
-        font-size: 30px;
+        font-size: calc(30px * var(--st-ui-scale, 1));
       }
 
       .dsHeroContent h1,
       .dsDetailHeroContent h1 {
-        font-size: clamp(40px, 13vw, 64px) !important;
+        font-size: calc(clamp(40px, 13vw, 64px) * var(--st-ui-scale, 1)) !important;
         line-height: .91 !important;
       }
 
       .dsHeroContent p {
-        font-size: 13px;
+        font-size: calc(13px * var(--st-ui-scale, 1));
         line-height: 1.45;
         -webkit-line-clamp: 4;
         max-width: calc(100vw - 32px);
@@ -9281,7 +9281,7 @@
       .dsSecondaryBtn {
         min-height: 42px;
         padding: 0 14px;
-        font-size: 13px;
+        font-size: calc(13px * var(--st-ui-scale, 1));
         border-radius: 12px;
       }
 
@@ -9818,7 +9818,7 @@
       height: 42px;
       display: grid;
       place-items: center;
-      font-size: 21px;
+      font-size: calc(21px * var(--st-ui-scale, 1));
       color: rgba(248,251,255,.86);
       line-height: 1;
     }
@@ -9834,7 +9834,7 @@
       opacity: 0;
       transform: translateX(-6px);
       transition: opacity .18s ease, transform .18s ease;
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 720;
     }
 
@@ -9858,7 +9858,7 @@
       transform: scale(.92);
       color: #050711;
       background: linear-gradient(135deg, #fff, #dff8ff);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 950;
       cursor: pointer;
       transition: opacity .18s ease, transform .18s ease;
@@ -9892,7 +9892,7 @@
 
     .dsNavChip {
       padding: 0 13px;
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 900;
       letter-spacing: -.01em;
     }
@@ -9927,7 +9927,7 @@
     .dsNavIcon {
       width: 42px;
       position: relative;
-      font-size: 20px;
+      font-size: calc(20px * var(--st-ui-scale, 1));
       line-height: 1;
     }
 
@@ -10042,11 +10042,11 @@
       border-radius: 12px;
       background: rgba(255,255,255,.08);
       border: 1px solid rgba(255,255,255,.10);
-      font-size: 14px;
+      font-size: calc(14px * var(--st-ui-scale, 1));
     }
 
     .dsProfileDropdown b {
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       letter-spacing: -.01em;
     }
 
@@ -10378,7 +10378,7 @@
       background: rgba(7,10,22,.94);
       border: 1px solid rgba(255,255,255,.14);
       color: rgba(255,255,255,.86);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       line-height: 1;
       opacity: 0;
       pointer-events: none;
@@ -10399,7 +10399,7 @@
       border-radius: 999px;
       color: #06110d;
       background: linear-gradient(135deg, #dfffea, #8affc6);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .06em;
       text-transform: uppercase;
@@ -10435,7 +10435,7 @@
     .kidsLockBanner h1 {
       margin: 0;
       color: white;
-      font-size: clamp(22px, 2.7vw, 36px);
+      font-size: calc(clamp(22px, 2.7vw, 36px) * var(--st-ui-scale, 1));
       line-height: 1;
       letter-spacing: -.055em;
       font-weight: 950;
@@ -10445,7 +10445,7 @@
       max-width: 760px;
       margin: 7px 0 0;
       color: rgba(248,251,255,.66);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       line-height: 1.45;
       font-weight: 650;
     }
@@ -10471,14 +10471,14 @@
     .watchlistEmptyNetflix strong {
       display: block;
       color: white;
-      font-size: clamp(22px, 3vw, 34px);
+      font-size: calc(clamp(22px, 3vw, 34px) * var(--st-ui-scale, 1));
       margin-bottom: 8px;
       letter-spacing: -.04em;
     }
 
     .watchlistEmptyNetflix span {
       color: rgba(248,251,255,.62);
-      font-size: 14px;
+      font-size: calc(14px * var(--st-ui-scale, 1));
       line-height: 1.5;
     }
 
@@ -10539,7 +10539,7 @@
       color: white;
       font-weight: 950;
       letter-spacing: -.06em;
-      font-size: 24px;
+      font-size: calc(24px * var(--st-ui-scale, 1));
     }
 
     .dsAuthBrand span {
@@ -10580,7 +10580,7 @@
     }
 
     .dsAuthCard h1 {
-      font-size: clamp(42px, 6vw, 76px);
+      font-size: calc(clamp(42px, 6vw, 76px) * var(--st-ui-scale, 1));
       line-height: .92;
     }
 
@@ -10602,7 +10602,7 @@
       display: grid;
       gap: 7px;
       color: rgba(248,251,255,.66);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 900;
       letter-spacing: .06em;
       text-transform: uppercase;
@@ -10618,7 +10618,7 @@
       outline: 0;
       text-transform: none;
       letter-spacing: 0;
-      font-size: 15px;
+      font-size: calc(15px * var(--st-ui-scale, 1));
       font-weight: 650;
     }
 
@@ -10674,7 +10674,7 @@
       border-radius: 999px;
       color: #06110d;
       background: linear-gradient(135deg, #dfffea, #8affc6);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 950;
     }
 
@@ -10710,7 +10710,7 @@
       display: grid !important;
       place-items: center;
       color: white;
-      font-size: 13px !important;
+      font-size: calc(13px * var(--st-ui-scale, 1)) !important;
       font-weight: 950;
     }
 
@@ -10738,14 +10738,14 @@
 
     .dsDropdownUser b {
       color: white;
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
     .dsDropdownUser small {
       color: rgba(248,251,255,.48);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 700;
     }
 
@@ -10796,7 +10796,7 @@
       width: 54px;
       height: 54px;
       border-radius: 18px;
-      font-size: 22px;
+      font-size: calc(22px * var(--st-ui-scale, 1));
     }
 
     .dsAccountIdentity strong,
@@ -10807,7 +10807,7 @@
 
     .dsAccountIdentity strong {
       color: white;
-      font-size: 18px;
+      font-size: calc(18px * var(--st-ui-scale, 1));
     }
 
     .dsAccountIdentity span,
@@ -10873,7 +10873,7 @@
       position: absolute;
       bottom: 24px;
       color: white;
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       letter-spacing: .08em;
       text-transform: uppercase;
     }
@@ -10930,7 +10930,7 @@
       border-radius: 999px;
       color: #06110d;
       background: linear-gradient(135deg, #dfffea, #8affc6);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .08em;
       text-transform: uppercase;
@@ -10944,7 +10944,7 @@
       color: rgba(248,251,255,.72);
       background: rgba(255,255,255,.065);
       border: 1px solid rgba(255,255,255,.10);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       line-height: 1.45;
       font-weight: 650;
     }
@@ -11000,7 +11000,7 @@
     .dsWatchroomPanel h2 {
       margin: 0;
       color: white;
-      font-size: clamp(24px, 3vw, 38px);
+      font-size: calc(clamp(24px, 3vw, 38px) * var(--st-ui-scale, 1));
       letter-spacing: -.06em;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
       font-weight: 950;
@@ -11024,7 +11024,7 @@
       display: grid;
       gap: 7px;
       color: rgba(248,251,255,.66);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 900;
       letter-spacing: .06em;
       text-transform: uppercase;
@@ -11084,7 +11084,7 @@
       border-radius: 999px;
       color: #06110d;
       background: linear-gradient(135deg, #dfffea, #8affc6);
-      font-size: 10px;
+      font-size: calc(10px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .08em;
       text-transform: uppercase;
@@ -11093,7 +11093,7 @@
 
     .dsRoomCard h3 {
       margin: 0;
-      font-size: 22px;
+      font-size: calc(22px * var(--st-ui-scale, 1));
       letter-spacing: -.05em;
       line-height: 1.05;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
@@ -11102,7 +11102,7 @@
     .dsRoomCard p {
       margin: 0;
       color: rgba(248,251,255,.58);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 650;
     }
 
@@ -11112,7 +11112,7 @@
       justify-content: space-between;
       gap: 12px;
       color: rgba(248,251,255,.68);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 800;
     }
 
@@ -11149,7 +11149,7 @@
     .dsTrailerInput h2 {
       margin: 0 0 6px;
       color: white;
-      font-size: 24px;
+      font-size: calc(24px * var(--st-ui-scale, 1));
       letter-spacing: -.05em;
     }
 
@@ -11202,7 +11202,7 @@
     .dsSyncControls .dsSecondaryBtn {
       min-height: 42px;
       padding: 0 14px;
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
     }
 
     .dsRoomSidebar {
@@ -11248,13 +11248,13 @@
     .dsRoomMessage b {
       display: block;
       color: white;
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       margin-bottom: 3px;
     }
 
     .dsRoomMessage span {
       color: rgba(248,251,255,.74);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       line-height: 1.35;
       overflow-wrap: anywhere;
     }
@@ -11333,7 +11333,7 @@
       margin: 0;
       color: white;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: clamp(52px, 8vw, 112px);
+      font-size: calc(clamp(52px, 8vw, 112px) * var(--st-ui-scale, 1));
       line-height: .84;
       letter-spacing: -.075em;
       text-shadow: 0 18px 60px rgba(0,0,0,.42), 0 0 42px rgba(53,216,255,.14);
@@ -11342,7 +11342,7 @@
     .dsMovieClockHero p {
       margin: 12px 0 0;
       color: rgba(248,251,255,.68);
-      font-size: clamp(14px, 1.4vw, 18px);
+      font-size: calc(clamp(14px, 1.4vw, 18px) * var(--st-ui-scale, 1));
       font-weight: 700;
       line-height: 1.45;
     }
@@ -11373,7 +11373,7 @@
       background: rgba(255,255,255,.07);
       border: 1px solid rgba(255,255,255,.12);
       cursor: pointer;
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 900;
     }
 
@@ -11433,7 +11433,7 @@
     .dsManualTimeBox h2 {
       margin: 0;
       color: white;
-      font-size: clamp(26px, 4vw, 44px);
+      font-size: calc(clamp(26px, 4vw, 44px) * var(--st-ui-scale, 1));
       letter-spacing: -.06em;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
     }
@@ -11448,7 +11448,7 @@
 
     .dsBigTime {
       color: white;
-      font-size: clamp(58px, 10vw, 132px);
+      font-size: calc(clamp(58px, 10vw, 132px) * var(--st-ui-scale, 1));
       line-height: .82;
       letter-spacing: -.07em;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
@@ -11464,14 +11464,14 @@
       content: "Auto sync works best with YouTube. For other embeds, use the room movie clock above.";
       flex: 1 0 100%;
       color: rgba(248,251,255,.56);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 750;
       padding: 4px 0;
     }
 
     .dsRoomHint {
       color: rgba(248,251,255,.52) !important;
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       line-height: 1.45;
     }
 
@@ -11592,7 +11592,7 @@
 
     .dsProfilesHeader h1 {
       margin: 0;
-      font-size: clamp(46px, 7vw, 92px);
+      font-size: calc(clamp(46px, 7vw, 92px) * var(--st-ui-scale, 1));
       line-height: .88;
       letter-spacing: -.075em;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
@@ -11652,7 +11652,7 @@
     .dsProfileLaunch small,
     .dsAddProfileCard small {
       color: rgba(248,251,255,.48);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 800;
     }
 
@@ -11724,7 +11724,7 @@
     .dsProfileManager h2 {
       margin: 0;
       color: white;
-      font-size: 24px;
+      font-size: calc(24px * var(--st-ui-scale, 1));
       letter-spacing: -.05em;
     }
 
@@ -11767,7 +11767,7 @@
 
     .dsDialogHead h2 {
       margin: 0;
-      font-size: 34px;
+      font-size: calc(34px * var(--st-ui-scale, 1));
       letter-spacing: -.06em;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
     }
@@ -11780,7 +11780,7 @@
       color: white;
       background: rgba(255,255,255,.08);
       cursor: pointer;
-      font-size: 24px;
+      font-size: calc(24px * var(--st-ui-scale, 1));
     }
 
     .dsProfileDialog label,
@@ -11788,7 +11788,7 @@
       display: grid;
       gap: 7px;
       color: rgba(248,251,255,.66);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 900;
       letter-spacing: .06em;
       text-transform: uppercase;
@@ -11873,14 +11873,14 @@
 
     .dsAccountQuickStats b {
       color: white;
-      font-size: clamp(26px, 4vw, 44px);
+      font-size: calc(clamp(26px, 4vw, 44px) * var(--st-ui-scale, 1));
       letter-spacing: -.06em;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
     }
 
     .dsAccountQuickStats span {
       color: rgba(248,251,255,.55);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 900;
       letter-spacing: .06em;
       text-transform: uppercase;
@@ -11912,7 +11912,7 @@
       justify-content: center;
       padding: 0 12px;
       border-radius: 15px;
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 900;
       text-align: center;
     }
@@ -11953,7 +11953,7 @@
       margin: 0;
       color: white;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: clamp(34px, 5vw, 68px);
+      font-size: calc(clamp(34px, 5vw, 68px) * var(--st-ui-scale, 1));
       line-height: .92;
       letter-spacing: -.075em;
     }
@@ -12080,7 +12080,7 @@
       border: 1px solid rgba(255,255,255,.10);
       background: rgba(255,255,255,.05);
       color: rgba(244,248,255,.88);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 900;
       letter-spacing: .02em;
       cursor: pointer;
@@ -12166,7 +12166,7 @@
       border: 1px solid rgba(255,255,255,.08);
       background: rgba(255,255,255,.04);
       color: rgba(238,243,255,.82);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 900;
       letter-spacing: .04em;
     }
@@ -12184,7 +12184,7 @@
 
     .dsTrailerInputClean h2 {
       margin: 0 0 6px;
-      font-size: 22px;
+      font-size: calc(22px * var(--st-ui-scale, 1));
       letter-spacing: -.05em;
     }
 
@@ -12280,7 +12280,7 @@
     .dsRoomChatClean h2 {
       margin-top: 4px;
       margin-bottom: 10px;
-      font-size: 28px;
+      font-size: calc(28px * var(--st-ui-scale, 1));
     }
 
     .dsRoomInfoGrid {
@@ -12293,7 +12293,7 @@
     .dsRoomHintMini {
       display: inline-block;
       color: rgba(215,225,242,.52);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 900;
       letter-spacing: .07em;
       text-transform: uppercase;
@@ -12439,7 +12439,7 @@
       align-items: center;
       gap: 11px;
       color: white;
-      font-size: 24px;
+      font-size: calc(24px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: -.06em;
     }
@@ -12469,7 +12469,7 @@
       color: rgba(248,251,255,.82);
       background: rgba(255,255,255,.06);
       border: 1px solid rgba(255,255,255,.10);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 900;
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
@@ -12521,7 +12521,7 @@
       margin: 0;
       max-width: 920px;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: clamp(58px, 9vw, 132px);
+      font-size: calc(clamp(58px, 9vw, 132px) * var(--st-ui-scale, 1));
       line-height: .86;
       letter-spacing: -.085em;
       text-wrap: balance;
@@ -12532,7 +12532,7 @@
       max-width: 660px;
       margin: 22px 0 0;
       color: rgba(248,251,255,.75);
-      font-size: clamp(15px, 1.5vw, 20px);
+      font-size: calc(clamp(15px, 1.5vw, 20px) * var(--st-ui-scale, 1));
       line-height: 1.55;
       font-weight: 650;
     }
@@ -12562,7 +12562,7 @@
 
     .dsWelcomeHeroCard span {
       color: rgba(248,251,255,.55);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .08em;
       text-transform: uppercase;
@@ -12571,7 +12571,7 @@
     .dsWelcomeHeroCard h2 {
       margin: 10px 0 8px;
       color: white;
-      font-size: clamp(28px, 4vw, 48px);
+      font-size: calc(clamp(28px, 4vw, 48px) * var(--st-ui-scale, 1));
       line-height: .96;
       letter-spacing: -.065em;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
@@ -12600,7 +12600,7 @@
       margin: 0;
       color: white;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: clamp(38px, 6vw, 82px);
+      font-size: calc(clamp(38px, 6vw, 82px) * var(--st-ui-scale, 1));
       line-height: .92;
       letter-spacing: -.075em;
     }
@@ -12628,14 +12628,14 @@
     .dsWelcomeRailHead h2 {
       margin: 0;
       color: white;
-      font-size: clamp(21px, 2vw, 30px);
+      font-size: calc(clamp(21px, 2vw, 30px) * var(--st-ui-scale, 1));
       letter-spacing: -.05em;
       font-weight: 950;
     }
 
     .dsWelcomeRailHead a {
       color: rgba(248,251,255,.62);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 900;
     }
 
@@ -12688,7 +12688,7 @@
     .dsWelcomeCard strong {
       display: block;
       color: white;
-      font-size: 15px;
+      font-size: calc(15px * var(--st-ui-scale, 1));
       font-weight: 950;
       line-height: 1.15;
     }
@@ -12697,7 +12697,7 @@
       display: block;
       margin-top: 4px;
       color: rgba(248,251,255,.62);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 760;
     }
 
@@ -12724,7 +12724,7 @@
 
     .dsWelcomeFeatures span {
       color: var(--v-blue, #35d8ff);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .08em;
     }
@@ -12732,7 +12732,7 @@
     .dsWelcomeFeatures h3 {
       margin: 14px 0 8px;
       color: white;
-      font-size: 28px;
+      font-size: calc(28px * var(--st-ui-scale, 1));
       letter-spacing: -.06em;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
     }
@@ -12789,7 +12789,7 @@
       }
 
       .dsWelcomeHeroCopy h1 {
-        font-size: clamp(48px, 15vw, 78px);
+        font-size: calc(clamp(48px, 15vw, 78px) * var(--st-ui-scale, 1));
       }
 
       .dsWelcomeDiscovery,
@@ -12837,7 +12837,7 @@
       margin: 0;
       color: white;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: clamp(26px, 4vw, 46px);
+      font-size: calc(clamp(26px, 4vw, 46px) * var(--st-ui-scale, 1));
       line-height: .95;
       letter-spacing: -.06em;
     }
@@ -12882,7 +12882,7 @@
       color: rgba(248,251,255,.70);
       background: rgba(255,255,255,.075);
       border: 1px solid rgba(255,255,255,.10);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 900;
       letter-spacing: .04em;
       text-transform: uppercase;
@@ -12952,7 +12952,7 @@
       padding: 0 14px;
       border-radius: 999px;
       color: rgba(248,251,255,.68);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 950;
     }
 
@@ -12998,7 +12998,7 @@
       max-width: 760px;
       color: white;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: clamp(34px, 5vw, 78px);
+      font-size: calc(clamp(34px, 5vw, 78px) * var(--st-ui-scale, 1));
       line-height: .9;
       letter-spacing: -.075em;
     }
@@ -13020,7 +13020,7 @@
       border-radius: 999px;
       color: #170810;
       background: linear-gradient(135deg, #ffd8ef, #ff8bd8);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .06em;
       text-transform: uppercase;
@@ -13058,7 +13058,7 @@
     .dsNoTrailer h2 {
       margin: 0 0 8px;
       color: white;
-      font-size: clamp(28px, 4vw, 48px);
+      font-size: calc(clamp(28px, 4vw, 48px) * var(--st-ui-scale, 1));
       letter-spacing: -.06em;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
     }
@@ -13084,7 +13084,7 @@
     .dsWatchSidePanel h2 {
       margin: 0;
       color: white;
-      font-size: clamp(28px, 3.6vw, 44px);
+      font-size: calc(clamp(28px, 3.6vw, 44px) * var(--st-ui-scale, 1));
       line-height: .95;
       letter-spacing: -.06em;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
@@ -13107,7 +13107,7 @@
 
     .dsWatchMeta small {
       color: rgba(248,251,255,.48);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .07em;
       text-transform: uppercase;
@@ -13115,7 +13115,7 @@
 
     .dsWatchMeta b {
       color: white;
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
     }
 
     @media(max-width: 980px) {
@@ -13258,7 +13258,7 @@
 
     .dsWatchFullscreenMovie .dsWatchPlayerTop h1 {
       max-width: min(760px, 70vw);
-      font-size: clamp(30px, 5vw, 72px);
+      font-size: calc(clamp(30px, 5vw, 72px) * var(--st-ui-scale, 1));
       text-shadow: 0 18px 70px rgba(0,0,0,.76);
     }
 
@@ -13315,7 +13315,7 @@
       min-height: 42px;
       border-radius: 999px;
       padding-inline: 14px;
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       white-space: nowrap;
     }
 
@@ -13343,11 +13343,11 @@
     }
 
     .dsWatchFullscreenMovie .dsWatchSidePanel h2 {
-      font-size: 28px;
+      font-size: calc(28px * var(--st-ui-scale, 1));
     }
 
     .dsWatchFullscreenMovie .dsWatchSidePanel p {
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       line-height: 1.45;
       display: -webkit-box;
       -webkit-line-clamp: 5;
@@ -13401,7 +13401,7 @@
 
       .dsWatchFullscreenMovie .dsWatchPlayerTop h1 {
         max-width: 100%;
-        font-size: clamp(28px, 11vw, 48px);
+        font-size: calc(clamp(28px, 11vw, 48px) * var(--st-ui-scale, 1));
       }
 
       .dsWatchFullscreenMovie .dsWatchSidePanel {
@@ -13466,7 +13466,7 @@
       margin: 0;
       color: white;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: clamp(28px, 4vw, 54px);
+      font-size: calc(clamp(28px, 4vw, 54px) * var(--st-ui-scale, 1));
       line-height: .95;
       letter-spacing: -.06em;
     }
@@ -13500,7 +13500,7 @@
 
     .dsMovieProviderBanner span {
       color: #ffd7ef;
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .08em;
       text-transform: uppercase;
@@ -13511,13 +13511,13 @@
     }
 
     .dsMovieProviderBanner strong {
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 950;
     }
 
     .dsMovieProviderBanner small {
       color: rgba(248,251,255,.62);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       line-height: 1.35;
       font-weight: 650;
     }
@@ -13583,13 +13583,13 @@
 
     .dsVideoLoading strong {
       color: white;
-      font-size: 18px;
+      font-size: calc(18px * var(--st-ui-scale, 1));
       font-weight: 950;
     }
 
     .dsVideoLoading span {
       color: rgba(248,251,255,.62);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 750;
     }
 
@@ -13618,7 +13618,7 @@
       margin: 0;
       color: white;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: clamp(28px, 4vw, 52px);
+      font-size: calc(clamp(28px, 4vw, 52px) * var(--st-ui-scale, 1));
       line-height: .95;
       letter-spacing: -.06em;
     }
@@ -13737,7 +13737,7 @@
     .dsNativeFallbackDock .dsSecondaryBtn {
       min-height: 38px;
       border-radius: 999px;
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       padding-inline: 12px;
       white-space: nowrap;
     }
@@ -13830,20 +13830,20 @@
 
     .dsMovieEmbedNotice span {
       color: #ffe08a;
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .08em;
       text-transform: uppercase;
     }
 
     .dsMovieEmbedNotice strong {
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 950;
     }
 
     .dsMovieEmbedNotice small {
       color: rgba(248,251,255,.62);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       line-height: 1.35;
       font-weight: 650;
     }
@@ -13881,7 +13881,7 @@
       color: rgba(248,251,255,.72);
       background: rgba(2,3,10,.58);
       border: 1px solid rgba(255,255,255,.10);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 850;
       letter-spacing: .03em;
       pointer-events: none;
@@ -14028,7 +14028,7 @@
       background: rgba(2,3,10,.58);
       border: 1px solid rgba(255,255,255,.12);
       box-shadow: 0 14px 44px rgba(0,0,0,.30);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 900;
       cursor: pointer;
       backdrop-filter: blur(14px);
@@ -14077,7 +14077,7 @@
     @media(max-width: 720px) {
       .dsEmbedFullscreenBtn {
         padding: 0 10px;
-        font-size: 11px;
+        font-size: calc(11px * var(--st-ui-scale, 1));
       }
 
       .dsWatchEmbedMode .dsWatchHeader {
@@ -14171,7 +14171,7 @@
     .dsSectionTitleRow p {
       margin: 6px 0 0;
       color: rgba(248,251,255,.58);
-      font-size: 14px;
+      font-size: calc(14px * var(--st-ui-scale, 1));
       font-weight: 650;
       line-height: 1.45;
     }
@@ -14185,7 +14185,7 @@
       border-radius: 999px;
       color: #050711;
       background: linear-gradient(135deg, #fff, #dff8ff);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 950;
       white-space: nowrap;
     }
@@ -14233,7 +14233,7 @@
     .dsSeasonBlockHead strong {
       display: block;
       color: white;
-      font-size: 18px;
+      font-size: calc(18px * var(--st-ui-scale, 1));
       letter-spacing: -.03em;
     }
 
@@ -14241,7 +14241,7 @@
       margin: 6px 0 0;
       color: rgba(248,251,255,.58);
       line-height: 1.45;
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
@@ -14250,7 +14250,7 @@
 
     .dsSeasonBlockHead b {
       color: rgba(248,251,255,.72);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 950;
       white-space: nowrap;
     }
@@ -14282,7 +14282,7 @@
       color: rgba(248,251,255,.82);
       background: rgba(255,255,255,.075);
       border: 1px solid rgba(255,255,255,.10);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 900;
       white-space: nowrap;
     }
@@ -14333,7 +14333,7 @@
 
     .dsWatchEpisodePicker span {
       color: rgba(248,251,255,.50);
-      font-size: 10px;
+      font-size: calc(10px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .08em;
       text-transform: uppercase;
@@ -14341,7 +14341,7 @@
 
     .dsWatchEpisodePicker strong {
       color: white;
-      font-size: 18px;
+      font-size: calc(18px * var(--st-ui-scale, 1));
       letter-spacing: -.04em;
     }
 
@@ -14388,7 +14388,7 @@
       .dsHeroContent h1,
       .heroCopy h1,
       .dsDetailHeroContent h1 {
-        font-size: clamp(42px, 14vw, 72px) !important;
+        font-size: calc(clamp(42px, 14vw, 72px) * var(--st-ui-scale, 1)) !important;
         line-height: .9 !important;
         letter-spacing: -.075em !important;
       }
@@ -14396,7 +14396,7 @@
       .dsHeroContent p,
       .heroCopy p,
       .dsDetailGrid > p {
-        font-size: 14px !important;
+        font-size: calc(14px * var(--st-ui-scale, 1)) !important;
         line-height: 1.48 !important;
         -webkit-line-clamp: 4;
       }
@@ -14657,7 +14657,7 @@
 
     .dsWelcomeHeroPro .dsWelcomeHeroCopy h1 {
       max-width: 1000px;
-      font-size: clamp(56px, 8.5vw, 126px);
+      font-size: calc(clamp(56px, 8.5vw, 126px) * var(--st-ui-scale, 1));
       letter-spacing: -.09em;
     }
 
@@ -14690,13 +14690,13 @@
 
     .dsWelcomeStats b {
       color: white;
-      font-size: 15px;
+      font-size: calc(15px * var(--st-ui-scale, 1));
       font-weight: 950;
     }
 
     .dsWelcomeStats span {
       color: rgba(248,251,255,.58);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 720;
       line-height: 1.35;
     }
@@ -14735,7 +14735,7 @@
 
     .dsWelcomeSpotlightCard span {
       color: rgba(248,251,255,.56);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .08em;
       text-transform: uppercase;
@@ -14745,7 +14745,7 @@
       margin: 8px 0 6px;
       color: white;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: clamp(26px, 3.6vw, 46px);
+      font-size: calc(clamp(26px, 3.6vw, 46px) * var(--st-ui-scale, 1));
       line-height: .94;
       letter-spacing: -.07em;
     }
@@ -14764,7 +14764,7 @@
       border-radius: 999px;
       color: #050711;
       background: linear-gradient(135deg, #fff, #dff8ff);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 950;
     }
 
@@ -14818,7 +14818,7 @@
       border-radius: 999px;
       color: #050711;
       background: linear-gradient(135deg, #fff, #dff8ff);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 950;
     }
 
@@ -14826,7 +14826,7 @@
       display: block;
       margin-top: 16px;
       color: white;
-      font-size: 21px;
+      font-size: calc(21px * var(--st-ui-scale, 1));
       letter-spacing: -.05em;
       font-weight: 950;
     }
@@ -14864,7 +14864,7 @@
 
     .dsWelcomeFeaturesPro article span {
       color: var(--v-blue, #35d8ff);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
     }
 
     .dsWelcomeDevice {
@@ -14888,7 +14888,7 @@
       margin: 0;
       color: white;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: clamp(40px, 6vw, 82px);
+      font-size: calc(clamp(40px, 6vw, 82px) * var(--st-ui-scale, 1));
       line-height: .92;
       letter-spacing: -.075em;
     }
@@ -14985,7 +14985,7 @@
       .dsWelcomeNav a:not(.dsWelcomeBrand) {
         min-height: 36px;
         padding: 0 10px;
-        font-size: 12px;
+        font-size: calc(12px * var(--st-ui-scale, 1));
       }
 
       .dsWelcomeHeroPro {
@@ -14994,11 +14994,11 @@
       }
 
       .dsWelcomeHeroPro .dsWelcomeHeroCopy h1 {
-        font-size: clamp(46px, 15vw, 76px);
+        font-size: calc(clamp(46px, 15vw, 76px) * var(--st-ui-scale, 1));
       }
 
       .dsWelcomeHeroPro .dsWelcomeHeroCopy p {
-        font-size: 14px;
+        font-size: calc(14px * var(--st-ui-scale, 1));
       }
 
       .dsWelcomeActions {
@@ -15026,7 +15026,7 @@
       }
 
       .dsWelcomeSpotlightCard h2 {
-        font-size: 25px;
+        font-size: calc(25px * var(--st-ui-scale, 1));
       }
 
       .dsWelcomeMiniMosaic {
@@ -15054,7 +15054,7 @@
       .dsWelcomeIntro h2,
       .dsWelcomeDevice h2,
       .dsWelcomeFinalCta h2 {
-        font-size: clamp(36px, 12vw, 58px);
+        font-size: calc(clamp(36px, 12vw, 58px) * var(--st-ui-scale, 1));
       }
 
       .dsWelcomeRailTrack {
@@ -15106,7 +15106,7 @@
       margin: 4px 0 6px;
       color: white;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: clamp(28px, 4vw, 50px);
+      font-size: calc(clamp(28px, 4vw, 50px) * var(--st-ui-scale, 1));
       line-height: .95;
       letter-spacing: -.06em;
     }
@@ -15127,7 +15127,7 @@
       border-radius: 999px;
       color: #050711;
       background: linear-gradient(135deg, #fff, #dff8ff);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 950;
       white-space: nowrap;
     }
@@ -15197,7 +15197,7 @@
       margin: 0;
       color: white;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: clamp(26px, 4vw, 48px);
+      font-size: calc(clamp(26px, 4vw, 48px) * var(--st-ui-scale, 1));
       line-height: .95;
       letter-spacing: -.06em;
     }
@@ -15356,7 +15356,7 @@
     .dsSyncControls.isBrowserView .dsSyncPrimaryRow::before {
       content: "Sync buttons only control YouTube player mode";
       color: rgba(248,251,255,.54);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 800;
       align-self: center;
     }
@@ -15458,7 +15458,7 @@
       margin: 4px 0 6px;
       color: white;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: clamp(30px, 4vw, 54px);
+      font-size: calc(clamp(30px, 4vw, 54px) * var(--st-ui-scale, 1));
       line-height: .92;
       letter-spacing: -.07em;
     }
@@ -15602,7 +15602,7 @@
 
     .dsOpenTogetherCard span {
       color: rgba(248,251,255,.54);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .08em;
       text-transform: uppercase;
@@ -15612,7 +15612,7 @@
       margin: 6px 0;
       color: white;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: clamp(26px, 4vw, 44px);
+      font-size: calc(clamp(26px, 4vw, 44px) * var(--st-ui-scale, 1));
       line-height: .95;
       letter-spacing: -.06em;
     }
@@ -15651,7 +15651,7 @@
 
     .dsOpenTogetherSync small {
       color: rgba(248,251,255,.55);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .08em;
       text-transform: uppercase;
@@ -15660,7 +15660,7 @@
     .dsOpenTogetherSync strong {
       color: white;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: clamp(42px, 7vw, 84px);
+      font-size: calc(clamp(42px, 7vw, 84px) * var(--st-ui-scale, 1));
       line-height: .9;
       letter-spacing: -.08em;
     }
@@ -15726,7 +15726,7 @@
       margin: 14px 0 10px;
       color: white;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: clamp(46px, 7vw, 104px);
+      font-size: calc(clamp(46px, 7vw, 104px) * var(--st-ui-scale, 1));
       line-height: .88;
       letter-spacing: -.085em;
     }
@@ -15764,7 +15764,7 @@
 
     .dsStableRoomMeta small {
       color: rgba(248,251,255,.52);
-      font-size: 10px;
+      font-size: calc(10px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .08em;
       text-transform: uppercase;
@@ -15818,7 +15818,7 @@
       border-radius: 999px;
       color: rgba(248,251,255,.72);
       background: transparent;
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 950;
       cursor: pointer;
     }
@@ -15862,7 +15862,7 @@
       margin: 4px 0 6px;
       color: white;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: clamp(30px, 4vw, 56px);
+      font-size: calc(clamp(30px, 4vw, 56px) * var(--st-ui-scale, 1));
       line-height: .92;
       letter-spacing: -.07em;
     }
@@ -15915,7 +15915,7 @@
     .dsStableWatchCard small,
     .dsStableSyncBoard small {
       color: rgba(248,251,255,.55);
-      font-size: 10px;
+      font-size: calc(10px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .08em;
       text-transform: uppercase;
@@ -15925,7 +15925,7 @@
       margin: 7px 0;
       color: white;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: clamp(26px, 4vw, 44px);
+      font-size: calc(clamp(26px, 4vw, 44px) * var(--st-ui-scale, 1));
       line-height: .94;
       letter-spacing: -.065em;
     }
@@ -15966,7 +15966,7 @@
     .dsStableBigClock {
       color: white;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: clamp(44px, 8vw, 92px);
+      font-size: calc(clamp(44px, 8vw, 92px) * var(--st-ui-scale, 1));
       line-height: .88;
       letter-spacing: -.085em;
     }
@@ -16031,7 +16031,7 @@
       margin: 0;
       color: white;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: clamp(28px, 5vw, 58px);
+      font-size: calc(clamp(28px, 5vw, 58px) * var(--st-ui-scale, 1));
       line-height: .92;
       letter-spacing: -.07em;
     }
@@ -16084,14 +16084,14 @@
 
     .dsStableMessage b {
       color: white;
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 950;
     }
 
     .dsStableMessage span {
       color: rgba(248,251,255,.72);
       line-height: 1.4;
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       overflow-wrap: anywhere;
     }
 
@@ -16172,7 +16172,7 @@
       margin: 8px 0 10px;
       color: white;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: clamp(46px, 8vw, 112px);
+      font-size: calc(clamp(46px, 8vw, 112px) * var(--st-ui-scale, 1));
       line-height: .88;
       letter-spacing: -.085em;
     }
@@ -16226,7 +16226,7 @@
 
     .dsAccountCard span {
       color: rgba(248,251,255,.48);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .08em;
     }
@@ -16234,7 +16234,7 @@
     .dsAccountCard h2 {
       margin: 0;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: 30px;
+      font-size: calc(30px * var(--st-ui-scale, 1));
       line-height: .96;
       letter-spacing: -.06em;
     }
@@ -16301,7 +16301,7 @@
       margin: 8px 0 10px;
       color: white;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: clamp(46px, 8vw, 112px);
+      font-size: calc(clamp(46px, 8vw, 112px) * var(--st-ui-scale, 1));
       line-height: .88;
       letter-spacing: -.085em;
     }
@@ -16366,7 +16366,7 @@
     .dsContinueCard span,
     .dsProfileCard small {
       color: rgba(248,251,255,.56);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 750;
     }
 
@@ -16379,7 +16379,7 @@
       margin: 0 0 8px;
       color: white;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: 34px;
+      font-size: calc(34px * var(--st-ui-scale, 1));
       letter-spacing: -.06em;
     }
 
@@ -16406,7 +16406,7 @@
       border-radius: 26px;
       color: #050711;
       background: linear-gradient(135deg, #fff, #dff8ff);
-      font-size: 30px;
+      font-size: calc(30px * var(--st-ui-scale, 1));
       font-weight: 950;
     }
 
@@ -16500,7 +16500,7 @@
       margin: 0;
       color: white;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: clamp(48px, 7vw, 92px);
+      font-size: calc(clamp(48px, 7vw, 92px) * var(--st-ui-scale, 1));
       line-height: .88;
       letter-spacing: -.085em;
     }
@@ -16537,7 +16537,7 @@
 
     .dsAuthFeatureList span {
       color: rgba(248,251,255,.58);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       line-height: 1.38;
       font-weight: 700;
     }
@@ -16566,7 +16566,7 @@
       justify-content: center;
       border-radius: 999px;
       color: rgba(248,251,255,.72);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 950;
     }
 
@@ -16579,7 +16579,7 @@
       margin: 0 0 8px;
       color: white;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: 42px;
+      font-size: calc(42px * var(--st-ui-scale, 1));
       line-height: .95;
       letter-spacing: -.065em;
     }
@@ -16594,7 +16594,7 @@
       display: grid;
       gap: 7px;
       color: rgba(248,251,255,.76);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .04em;
       text-transform: uppercase;
@@ -16608,7 +16608,7 @@
       background: rgba(255,255,255,.075);
       border: 1px solid rgba(255,255,255,.12);
       outline: 0;
-      font-size: 15px;
+      font-size: calc(15px * var(--st-ui-scale, 1));
       font-weight: 700;
       text-transform: none;
       letter-spacing: normal;
@@ -16616,7 +16616,7 @@
 
     .dsAuthFinePrint {
       margin: 16px 0 0 !important;
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
     }
 
     .dsAuthFinePrint a {
@@ -16708,7 +16708,7 @@
 
     .dsCouplePromiseStrip b {
       color: white;
-      font-size: 20px;
+      font-size: calc(20px * var(--st-ui-scale, 1));
       letter-spacing: -.04em;
     }
 
@@ -16739,7 +16739,7 @@
 
     .dsCoupleHomeBoard h2 {
       margin: 6px 0 8px;
-      font-size: clamp(34px, 5vw, 68px);
+      font-size: calc(clamp(34px, 5vw, 68px) * var(--st-ui-scale, 1));
       line-height: .92;
     }
 
@@ -16778,7 +16778,7 @@
 
     .dsCoupleHomeCards b {
       color: rgba(255,255,255,.42);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       letter-spacing: .08em;
     }
 
@@ -16807,7 +16807,7 @@
 
     .dsCouplesHero h1 {
       margin: 8px 0 10px;
-      font-size: clamp(54px, 9vw, 126px);
+      font-size: calc(clamp(54px, 9vw, 126px) * var(--st-ui-scale, 1));
       line-height: .86;
     }
 
@@ -16843,7 +16843,7 @@
 
     .dsCoupleCard > span {
       color: var(--couple-peach);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .10em;
       text-transform: uppercase;
@@ -16851,7 +16851,7 @@
 
     .dsCoupleCard h2 {
       margin: 0;
-      font-size: clamp(30px, 5vw, 58px);
+      font-size: calc(clamp(30px, 5vw, 58px) * var(--st-ui-scale, 1));
       line-height: .92;
     }
 
@@ -16981,7 +16981,7 @@
 
     .dsCouplesPlusTool > span {
       color: var(--couple-peach, #ffc2a1);
-      font-size: 10px;
+      font-size: calc(10px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .10em;
       text-transform: uppercase;
@@ -16991,7 +16991,7 @@
       margin: 0;
       color: white;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: clamp(26px, 4vw, 42px);
+      font-size: calc(clamp(26px, 4vw, 42px) * var(--st-ui-scale, 1));
       line-height: .94;
       letter-spacing: -.065em;
     }
@@ -17013,7 +17013,7 @@
       color: rgba(248,251,255,.78);
       background: rgba(2,3,10,.30);
       border: 1px solid rgba(255,255,255,.08);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       line-height: 1.35;
       font-weight: 750;
     }
@@ -17044,7 +17044,7 @@
     .dsReactionButtons button {
       width: 46px;
       padding: 0;
-      font-size: 20px;
+      font-size: calc(20px * var(--st-ui-scale, 1));
     }
 
     .dsMoodButtons button:hover,
@@ -17096,7 +17096,7 @@
     }
 
     .dsFloatReaction b {
-      font-size: clamp(38px, 7vw, 76px);
+      font-size: calc(clamp(38px, 7vw, 76px) * var(--st-ui-scale, 1));
       line-height: 1;
     }
 
@@ -17106,7 +17106,7 @@
       color: white;
       background: rgba(2,3,10,.54);
       border: 1px solid rgba(255,255,255,.10);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 900;
     }
 
@@ -17133,7 +17133,7 @@
 
     .dsCouplePopup span {
       color: var(--couple-peach, #ffc2a1);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .10em;
       text-transform: uppercase;
@@ -17141,7 +17141,7 @@
 
     .dsCouplePopup b {
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: clamp(24px, 4vw, 40px);
+      font-size: calc(clamp(24px, 4vw, 40px) * var(--st-ui-scale, 1));
       line-height: 1.04;
       letter-spacing: -.05em;
     }
@@ -17227,7 +17227,7 @@
       top: 16vh;
       z-index: 0;
       color: rgba(255,110,169,.13);
-      font-size: min(26vw, 280px);
+      font-size: calc(min(26vw, 280px) * var(--st-ui-scale, 1));
       pointer-events: none;
       animation: dsMissingPulse 4s ease-in-out infinite;
     }
@@ -17249,7 +17249,7 @@
       z-index: 80;
       text-align: center;
       color: rgba(255,194,161,.62);
-      font-size: 30px;
+      font-size: calc(30px * var(--st-ui-scale, 1));
       letter-spacing: 20px;
       pointer-events: none;
       animation: dsAmbientFloat 10s ease-in-out infinite;
@@ -17281,7 +17281,7 @@
 
     .dsPauseForUsBanner b {
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: 22px;
+      font-size: calc(22px * var(--st-ui-scale, 1));
       letter-spacing: -.05em;
     }
 
@@ -17327,7 +17327,7 @@
       border-radius: 999px;
       color: #050711;
       background: linear-gradient(135deg, #fff, #ffe1ec);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 950;
     }
 
@@ -17411,7 +17411,7 @@
       border-radius: 999px;
       color: #050711;
       background: linear-gradient(135deg, #fff, #dff8ff);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .06em;
     }
@@ -17489,7 +17489,7 @@
       margin: 0;
       color: white;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: clamp(34px, 6vw, 76px);
+      font-size: calc(clamp(34px, 6vw, 76px) * var(--st-ui-scale, 1));
       line-height: .9;
       letter-spacing: -.08em;
     }
@@ -17505,7 +17505,7 @@
     .dsProxyVideoFail small {
       max-width: 100%;
       color: rgba(248,251,255,.48);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       line-height: 1.45;
       overflow-wrap: anywhere;
     }
@@ -17560,7 +17560,7 @@
 
     .dsProxyVideoWaitingCard span {
       color: var(--couple-peach, #ffc2a1);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .12em;
       text-transform: uppercase;
@@ -17571,7 +17571,7 @@
       margin: 0;
       color: white;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: clamp(38px, 7vw, 88px);
+      font-size: calc(clamp(38px, 7vw, 88px) * var(--st-ui-scale, 1));
       line-height: .88;
       letter-spacing: -.085em;
     }
@@ -17594,7 +17594,7 @@
       color: rgba(248,251,255,.78);
       background: rgba(255,255,255,.075);
       border: 1px solid rgba(255,255,255,.10);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 800;
       overflow-wrap: anywhere;
     }
@@ -17666,7 +17666,7 @@
       display: block;
       margin-bottom: 7px;
       color: rgba(248,251,255,.55);
-      font-size: 10px;
+      font-size: calc(10px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .08em;
       text-transform: uppercase;
@@ -17676,7 +17676,7 @@
       margin: 0 0 7px;
       color: white;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: clamp(28px, 4vw, 48px);
+      font-size: calc(clamp(28px, 4vw, 48px) * var(--st-ui-scale, 1));
       line-height: .94;
       letter-spacing: -.065em;
     }
@@ -17699,7 +17699,7 @@
     .dsRoomMovieCountdown strong {
       color: white;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: clamp(30px, 5vw, 58px);
+      font-size: calc(clamp(30px, 5vw, 58px) * var(--st-ui-scale, 1));
       line-height: .9;
       letter-spacing: -.075em;
     }
@@ -17748,7 +17748,7 @@
       margin: 0;
       color: white;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: clamp(28px, 5vw, 58px);
+      font-size: calc(clamp(28px, 5vw, 58px) * var(--st-ui-scale, 1));
       line-height: .92;
       letter-spacing: -.07em;
     }
@@ -17800,7 +17800,7 @@
 
     .dsRoomSyncControls small {
       color: var(--couple-peach, #ffc2a1);
-      font-size: 10px;
+      font-size: calc(10px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .10em;
       text-transform: uppercase;
@@ -17888,7 +17888,7 @@
 
     .dsIframeSyncOverlay span {
       color: rgba(248,251,255,.55);
-      font-size: 10px;
+      font-size: calc(10px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .10em;
       text-transform: uppercase;
@@ -17896,14 +17896,14 @@
 
     .dsIframeSyncOverlay b {
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: 30px;
+      font-size: calc(30px * var(--st-ui-scale, 1));
       line-height: .95;
       letter-spacing: -.06em;
     }
 
     .dsIframeSyncOverlay small {
       color: rgba(248,251,255,.62);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       line-height: 1.35;
       font-weight: 650;
     }
@@ -17984,7 +17984,7 @@
 
     .dsCustomPlayerTop span {
       color: rgba(255,255,255,.58);
-      font-size: 10px;
+      font-size: calc(10px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .13em;
       text-transform: uppercase;
@@ -17996,7 +17996,7 @@
       text-overflow: ellipsis;
       white-space: nowrap;
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: clamp(18px, 3vw, 28px);
+      font-size: calc(clamp(18px, 3vw, 28px) * var(--st-ui-scale, 1));
       letter-spacing: -.055em;
     }
 
@@ -18033,7 +18033,7 @@
       box-shadow: 0 22px 80px rgba(0,0,0,.48);
       backdrop-filter: blur(18px);
       -webkit-backdrop-filter: blur(18px);
-      font-size: clamp(26px, 4vw, 42px);
+      font-size: calc(clamp(26px, 4vw, 42px) * var(--st-ui-scale, 1));
       cursor: pointer;
       pointer-events: auto;
       transition: transform .18s ease, opacity .18s ease;
@@ -18090,7 +18090,7 @@
       justify-content: space-between;
       gap: 10px;
       color: rgba(255,255,255,.72);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 850;
       font-variant-numeric: tabular-nums;
     }
@@ -18103,7 +18103,7 @@
       border-radius: 999px;
       color: #08101a;
       background: linear-gradient(135deg, #fff, #dff8ff);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 950;
     }
 
@@ -18159,7 +18159,7 @@
         min-width: 36px;
         height: 36px;
         border-radius: 12px;
-        font-size: 12px;
+        font-size: calc(12px * var(--st-ui-scale, 1));
       }
 
       .dsCustomVolume {
@@ -18167,7 +18167,7 @@
       }
 
       .dsCustomTimeRow {
-        font-size: 11px;
+        font-size: calc(11px * var(--st-ui-scale, 1));
       }
     }
 
@@ -18184,7 +18184,7 @@
       border-radius: 999px;
       color: #07101a;
       background: linear-gradient(135deg, #dff8ff, #fff);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-style: normal;
       font-weight: 950;
       letter-spacing: .03em;
@@ -18259,13 +18259,13 @@
 
     .dsHlsStatus b {
       font-family: "Space Grotesk", Inter, Arial, sans-serif;
-      font-size: 18px;
+      font-size: calc(18px * var(--st-ui-scale, 1));
       letter-spacing: -.035em;
     }
 
     .dsHlsStatus span {
       color: rgba(248,251,255,.68);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 700;
       overflow-wrap: anywhere;
     }
@@ -18396,7 +18396,7 @@
     .dsMovieHomeBoard h2 {
       margin: 0 0 6px;
       font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: clamp(28px, 4vw, 48px);
+      font-size: calc(clamp(28px, 4vw, 48px) * var(--st-ui-scale, 1));
       letter-spacing: -.07em;
     }
 
@@ -18475,7 +18475,7 @@
     .dsCleanHero h1 {
       margin: 6px 0 8px;
       font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: clamp(38px, 6vw, 76px);
+      font-size: calc(clamp(38px, 6vw, 76px) * var(--st-ui-scale, 1));
       letter-spacing: -.08em;
       line-height: .9;
     }
@@ -18550,13 +18550,13 @@
         radial-gradient(circle at 30% 20%, rgba(255,255,255,.30), transparent 42%),
         linear-gradient(135deg, rgba(229,9,20,.92), rgba(91,34,255,.82));
       box-shadow: 0 20px 70px rgba(229,9,20,.25);
-      font-size: 38px;
+      font-size: calc(38px * var(--st-ui-scale, 1));
       font-weight: 950;
       color: white;
     }
 
     .dsProfileSelectCard strong {
-      font-size: 22px;
+      font-size: calc(22px * var(--st-ui-scale, 1));
       letter-spacing: -.035em;
     }
 
@@ -18594,7 +18594,7 @@
 
     .dsPanelLabel {
       color: rgba(255,255,255,.52);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .14em;
       text-transform: uppercase;
@@ -18611,7 +18611,7 @@
       gap: 7px;
       color: rgba(255,255,255,.62);
       font-weight: 850;
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
     }
 
     .dsStackedForm input,
@@ -18635,7 +18635,7 @@
 
     .dsSectionHeaderSplit h2 {
       margin: 3px 0 0;
-      font-size: 30px;
+      font-size: calc(30px * var(--st-ui-scale, 1));
       letter-spacing: -.055em;
     }
 
@@ -18657,7 +18657,7 @@
       width: 62px;
       height: 62px;
       border-radius: 20px;
-      font-size: 24px;
+      font-size: calc(24px * var(--st-ui-scale, 1));
     }
 
     .dsManageProfileMain {
@@ -18666,7 +18666,7 @@
     }
 
     .dsManageProfileMain strong {
-      font-size: 18px;
+      font-size: calc(18px * var(--st-ui-scale, 1));
     }
 
     .dsManageProfileMain small {
@@ -18752,7 +18752,7 @@
 
     .dsSocialBrand strong {
       display: block;
-      font-size: 18px;
+      font-size: calc(18px * var(--st-ui-scale, 1));
     }
 
     .dsSocialBrand small,
@@ -18780,7 +18780,7 @@
 
     .dsSocialSection > span {
       color: rgba(255,255,255,.48);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .14em;
       text-transform: uppercase;
@@ -18845,7 +18845,7 @@
 
     .dsSocialHeader span {
       color: rgba(255,255,255,.52);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .14em;
       text-transform: uppercase;
@@ -18853,7 +18853,7 @@
 
     .dsSocialHeader h1 {
       margin: 2px 0 0;
-      font-size: clamp(24px, 3vw, 36px);
+      font-size: calc(clamp(24px, 3vw, 36px) * var(--st-ui-scale, 1));
       letter-spacing: -.06em;
     }
 
@@ -18923,7 +18923,7 @@
 
     .dsSocialMessage header small {
       color: rgba(255,255,255,.45);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
     }
 
     .dsSocialMessage p {
@@ -18936,7 +18936,7 @@
     .dsSocialTyping {
       padding: 0 20px 10px;
       color: rgba(255,255,255,.54);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 700;
     }
 
@@ -19050,7 +19050,7 @@
 
     .dsCallTop span {
       color: rgba(255,255,255,.55);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .14em;
       text-transform: uppercase;
@@ -19233,7 +19233,7 @@
     .dsWatchStudioHero h2 {
       margin: 4px 0 6px;
       font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: clamp(26px, 3vw, 42px);
+      font-size: calc(clamp(26px, 3vw, 42px) * var(--st-ui-scale, 1));
       letter-spacing: -.07em;
       line-height: .95;
     }
@@ -19285,7 +19285,7 @@
 
     .dsWatchStudioCard h3 {
       margin: 0;
-      font-size: 24px;
+      font-size: calc(24px * var(--st-ui-scale, 1));
       letter-spacing: -.045em;
     }
 
@@ -19293,7 +19293,7 @@
       display: grid;
       gap: 7px;
       color: rgba(255,255,255,.62);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 850;
     }
 
@@ -19311,7 +19311,7 @@
       margin: 0;
       color: rgba(248,251,255,.58);
       line-height: 1.45;
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
     }
 
     .dsWatchStudioButtons {
@@ -19512,7 +19512,7 @@
       padding: 10px 18px;
       border-bottom: 1px solid rgba(255,255,255,.08);
       color: rgba(248,251,255,.66);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 800;
       background: rgba(0,0,0,.12);
     }
@@ -19759,7 +19759,7 @@
     .sw99Top h1 {
       margin: 6px 0 8px;
       font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: clamp(38px, 6vw, 78px);
+      font-size: calc(clamp(38px, 6vw, 78px) * var(--st-ui-scale, 1));
       letter-spacing: -.08em;
       line-height: .9;
     }
@@ -19864,12 +19864,12 @@
       border-radius: 18px;
       background: linear-gradient(135deg, #e50914, #7c3aed);
       box-shadow: 0 16px 50px rgba(229,9,20,.24);
-      font-size: 23px;
+      font-size: calc(23px * var(--st-ui-scale, 1));
     }
 
     .sw99Brand strong {
       display: block;
-      font-size: 20px;
+      font-size: calc(20px * var(--st-ui-scale, 1));
       letter-spacing: -.035em;
     }
 
@@ -19913,7 +19913,7 @@
 
     .sw99Section > span {
       color: rgba(255,255,255,.48);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .14em;
       text-transform: uppercase;
@@ -19989,7 +19989,7 @@
     .sw99Card > span,
     .sw99CardHead span {
       color: rgba(255,255,255,.50);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .14em;
       text-transform: uppercase;
@@ -19997,7 +19997,7 @@
 
     .sw99Header h2 {
       margin: 2px 0 0;
-      font-size: clamp(26px, 3vw, 42px);
+      font-size: calc(clamp(26px, 3vw, 42px) * var(--st-ui-scale, 1));
       letter-spacing: -.065em;
     }
 
@@ -20095,7 +20095,7 @@
 
     .sw99Msg small {
       color: rgba(255,255,255,.46);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
     }
 
     .sw99Msg p {
@@ -20160,7 +20160,7 @@
 
     .sw99RoomsHero h2 {
       margin: 4px 0 6px;
-      font-size: clamp(26px, 3vw, 46px);
+      font-size: calc(clamp(26px, 3vw, 46px) * var(--st-ui-scale, 1));
       letter-spacing: -.07em;
       line-height: .95;
     }
@@ -20191,7 +20191,7 @@
     .sw99Card h3,
     .sw99InfoCard h3 {
       margin: 0;
-      font-size: 24px;
+      font-size: calc(24px * var(--st-ui-scale, 1));
       letter-spacing: -.045em;
     }
 
@@ -20199,7 +20199,7 @@
       display: grid;
       gap: 7px;
       color: rgba(248,251,255,.70);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 850;
     }
 
@@ -20208,7 +20208,7 @@
       margin: 0;
       color: rgba(248,251,255,.58);
       line-height: 1.45;
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
     }
 
     .sw99CardHead {
@@ -20530,7 +20530,7 @@
       text-decoration: none;
       background: var(--bg2);
       transition: border-radius .18s ease, background .18s ease, transform .18s ease;
-      font-size: 23px;
+      font-size: calc(23px * var(--st-ui-scale, 1));
       position: relative;
     }
 
@@ -20571,7 +20571,7 @@
 
     .sv100ServerHead strong {
       display: block;
-      font-size: 16px;
+      font-size: calc(16px * var(--st-ui-scale, 1));
       letter-spacing: -.02em;
     }
 
@@ -20648,7 +20648,7 @@
       justify-content: space-between;
       padding: 0 8px 6px;
       text-transform: uppercase;
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       letter-spacing: .06em;
       font-weight: 850;
     }
@@ -20691,7 +20691,7 @@
     }
 
     .sv100Channel i {
-      font-size: 18px;
+      font-size: calc(18px * var(--st-ui-scale, 1));
       opacity: .9;
     }
 
@@ -20731,7 +20731,7 @@
 
     .sv100Topbar span {
       color: var(--muted);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 850;
       display: inline-flex;
       align-items: center;
@@ -20740,7 +20740,7 @@
 
     .sv100Topbar h1 {
       margin: 1px 0 0;
-      font-size: 23px;
+      font-size: calc(23px * var(--st-ui-scale, 1));
       letter-spacing: -.035em;
     }
 
@@ -20793,7 +20793,7 @@
       color: #d7d9ff;
       background: rgba(88,101,242,.13);
       border: 1px solid rgba(88,101,242,.20);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 750;
     }
 
@@ -20836,7 +20836,7 @@
 
     .sv100Msg small {
       color: var(--muted);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
     }
 
     .sv100Msg p {
@@ -20867,7 +20867,7 @@
       outline: none;
       color: white;
       background: transparent;
-      font-size: 15px;
+      font-size: calc(15px * var(--st-ui-scale, 1));
     }
 
     .sv100Composer button {
@@ -20876,7 +20876,7 @@
       color: var(--muted);
       background: transparent;
       cursor: pointer;
-      font-size: 20px;
+      font-size: calc(20px * var(--st-ui-scale, 1));
     }
 
     .sv100Composer button:hover {
@@ -20907,7 +20907,7 @@
 
     .sv100RoomsIntro h2 {
       margin: 4px 0 8px;
-      font-size: clamp(34px, 5vw, 64px);
+      font-size: calc(clamp(34px, 5vw, 64px) * var(--st-ui-scale, 1));
       letter-spacing: -.08em;
       line-height: .9;
       font-family: "Space Grotesk", Inter, sans-serif;
@@ -20967,14 +20967,14 @@
     .sv100Perms span {
       color: var(--muted);
       text-transform: uppercase;
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .08em;
     }
 
     .sv100Card h3 {
       margin: 0;
-      font-size: 24px;
+      font-size: calc(24px * var(--st-ui-scale, 1));
       letter-spacing: -.045em;
     }
 
@@ -20989,7 +20989,7 @@
       display: grid;
       gap: 7px;
       color: #b5bac1;
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 850;
     }
 
@@ -21115,7 +21115,7 @@
     .sv100MembersHead span,
     .sv100MembersHead small {
       color: var(--muted);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 900;
       text-transform: uppercase;
       letter-spacing: .06em;
@@ -21151,7 +21151,7 @@
       align-items: flex-start;
       color: #b5bac1;
       line-height: 1.45;
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
     }
 
     .creatorOnly[hidden],
@@ -21369,7 +21369,7 @@
 
     .sv103RoomHeader h2 {
       margin: 4px 0 5px;
-      font-size: clamp(30px, 4vw, 54px);
+      font-size: calc(clamp(30px, 4vw, 54px) * var(--st-ui-scale, 1));
       line-height: .95;
       letter-spacing: -.075em;
       font-family: "Space Grotesk", Inter, sans-serif;
@@ -21459,13 +21459,13 @@
     }
 
     .sv103EmptyPlayer i {
-      font-size: 54px;
+      font-size: calc(54px * var(--st-ui-scale, 1));
       color: #5865f2;
     }
 
     .sv103EmptyPlayer b {
       color: white;
-      font-size: 24px;
+      font-size: calc(24px * var(--st-ui-scale, 1));
       letter-spacing: -.04em;
     }
 
@@ -21492,7 +21492,7 @@
     .sv103RoomMeta span,
     .sv103ToolCard > span {
       color: #949ba4;
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       text-transform: uppercase;
       letter-spacing: .08em;
       font-weight: 950;
@@ -21541,7 +21541,7 @@
     .sv103ToolCard h3 {
       margin: 0;
       letter-spacing: -.04em;
-      font-size: 21px;
+      font-size: calc(21px * var(--st-ui-scale, 1));
     }
 
     .sv103ToolCard input {
@@ -21666,7 +21666,7 @@
 
     .sv104 .sv100ServerHead strong {
       font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: 22px;
+      font-size: calc(22px * var(--st-ui-scale, 1));
       letter-spacing: -.055em;
     }
 
@@ -21747,7 +21747,7 @@
 
     .sv104 .sv100Topbar h1 {
       font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: 30px;
+      font-size: calc(30px * var(--st-ui-scale, 1));
       letter-spacing: -.065em;
     }
 
@@ -21791,7 +21791,7 @@
 
     .sv104 .sv100RoomsIntro h2,
     .sv104 .sv103RoomHeader h2 {
-      font-size: clamp(38px, 5.5vw, 72px);
+      font-size: calc(clamp(38px, 5.5vw, 72px) * var(--st-ui-scale, 1));
       letter-spacing: -.085em;
     }
 
@@ -22368,14 +22368,14 @@
     }
 
     .sv106HlsStatus b {
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: -.015em;
     }
 
     .sv106HlsStatus span {
       color: rgba(230, 234, 255, .72);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       line-height: 1.35;
       font-weight: 700;
     }
@@ -22441,7 +22441,7 @@
       box-shadow: 0 22px 80px rgba(0,0,0,.44);
       backdrop-filter: blur(18px);
       -webkit-backdrop-filter: blur(18px);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 850;
       letter-spacing: -.01em;
       text-align: center;
@@ -22497,7 +22497,7 @@
       }
 
       #swiflyTvHint {
-        font-size: 11px;
+        font-size: calc(11px * var(--st-ui-scale, 1));
         border-radius: 18px;
       }
     }
@@ -22620,7 +22620,7 @@
 
     .sv110 .sv100ServerHead strong {
       font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: 23px;
+      font-size: calc(23px * var(--st-ui-scale, 1));
       letter-spacing: -.065em;
       line-height: .95;
     }
@@ -22729,12 +22729,12 @@
       color: rgba(216,222,255,.62);
       letter-spacing: .08em;
       text-transform: uppercase;
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
     }
 
     .sv110 .sv100Topbar h1 {
       font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: clamp(28px, 3.1vw, 45px);
+      font-size: calc(clamp(28px, 3.1vw, 45px) * var(--st-ui-scale, 1));
       letter-spacing: -.075em;
       line-height: .92;
       text-shadow: 0 0 32px rgba(124,92,255,.20);
@@ -22845,7 +22845,7 @@
 
     .sv110 .sv100MembersHead b {
       font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: 20px;
+      font-size: calc(20px * var(--st-ui-scale, 1));
       letter-spacing: -.055em;
     }
 
@@ -23325,7 +23325,7 @@
       align-items: center;
       gap: 7px;
       color: rgba(248,251,255,.54);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .12em;
       text-transform: uppercase;
@@ -23333,7 +23333,7 @@
 
     .styleStudioHead h3 {
       margin: 2px 0 0;
-      font-size: 34px;
+      font-size: calc(34px * var(--st-ui-scale, 1));
       line-height: .9;
     }
 
@@ -23345,7 +23345,7 @@
       color: white;
       background: rgba(255,255,255,.075);
       cursor: pointer;
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 900;
     }
 
@@ -23357,7 +23357,7 @@
 
     .styleGroup > b {
       color: rgba(248,251,255,.70);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       letter-spacing: .08em;
       text-transform: uppercase;
     }
@@ -23378,7 +23378,7 @@
       background:
         linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.055));
       cursor: pointer;
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 920;
       box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
       transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease;
@@ -23505,7 +23505,7 @@
 
     .controlButton.studioButton b {
       display: inline !important;
-      font-size: 14px !important;
+      font-size: calc(14px * var(--st-ui-scale, 1)) !important;
       font-weight: 950 !important;
     }
 
@@ -23550,7 +23550,7 @@
       background: rgba(5,7,18,.78);
       border: 1px solid rgba(255,255,255,.14);
       box-shadow: 0 14px 38px rgba(0,0,0,.28);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .01em;
     }
@@ -23677,7 +23677,7 @@
       box-shadow:
         0 12px 34px rgba(0,0,0,.28),
         0 0 30px rgba(85,215,255,.22);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: -.02em;
       cursor: pointer;
@@ -23718,14 +23718,14 @@
     }
 
     .controlDock .controlButton.studioButton b {
-      font-size: 15px !important;
+      font-size: calc(15px * var(--st-ui-scale, 1)) !important;
     }
 
     .controlDock .controlButton.studioButton::after {
       content: "Effects";
       margin-left: 2px;
       opacity: .65;
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 950;
     }
 
@@ -23786,7 +23786,7 @@
       .navStudioButton {
         min-height: 34px;
         padding: 0 11px;
-        font-size: 12px;
+        font-size: calc(12px * var(--st-ui-scale, 1));
       }
 
       .controlDock {
@@ -23835,7 +23835,7 @@
         radial-gradient(120px circle at 20% 0%, rgba(85,215,255,.18), transparent 60%),
         rgba(255,255,255,.065) !important;
       box-shadow: inset 0 1px 0 rgba(255,255,255,.055) !important;
-      font-size: 12px !important;
+      font-size: calc(12px * var(--st-ui-scale, 1)) !important;
       font-weight: 900 !important;
       letter-spacing: -.01em !important;
     }
@@ -23848,7 +23848,7 @@
       border-radius: 999px;
       color: #06101d;
       background: linear-gradient(135deg, #dff8ff, #c7bbff);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
     }
 
     .navStudioButton:hover {
@@ -23911,7 +23911,7 @@
 
     .controlDock .controlButton.studioButton b {
       display: block !important;
-      font-size: 14px !important;
+      font-size: calc(14px * var(--st-ui-scale, 1)) !important;
       line-height: .95 !important;
       font-weight: 950 !important;
       color: white !important;
@@ -23921,7 +23921,7 @@
       display: block !important;
       margin-top: 2px !important;
       color: rgba(255,255,255,.48) !important;
-      font-size: 10px !important;
+      font-size: calc(10px * var(--st-ui-scale, 1)) !important;
       line-height: .95 !important;
       font-weight: 850 !important;
     }
@@ -24013,13 +24013,13 @@
         radial-gradient(circle at 30% 20%, rgba(255,255,255,.94), transparent 38%),
         linear-gradient(135deg, #dff8ff, #8b5cf6);
       box-shadow: 0 18px 46px rgba(85,215,255,.22);
-      font-size: 19px;
+      font-size: calc(19px * var(--st-ui-scale, 1));
       font-weight: 950;
     }
 
     .studioHero span {
       color: rgba(223,248,255,.72);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .12em;
       text-transform: uppercase;
@@ -24028,7 +24028,7 @@
     .studioHero h3 {
       margin: 2px 0 5px !important;
       font-family: var(--font-display, "Space Grotesk", Inter, sans-serif) !important;
-      font-size: 28px !important;
+      font-size: calc(28px * var(--st-ui-scale, 1)) !important;
       line-height: .94 !important;
       letter-spacing: -.07em !important;
       color: white !important;
@@ -24038,7 +24038,7 @@
       margin: 0 !important;
       max-width: 255px;
       color: rgba(255,255,255,.54) !important;
-      font-size: 12px !important;
+      font-size: calc(12px * var(--st-ui-scale, 1)) !important;
       line-height: 1.35 !important;
     }
 
@@ -24049,7 +24049,7 @@
       border: 1px solid rgba(255,255,255,.12) !important;
       color: rgba(255,255,255,.82) !important;
       background: rgba(255,255,255,.075) !important;
-      font-size: 12px !important;
+      font-size: calc(12px * var(--st-ui-scale, 1)) !important;
     }
 
     .studioPreview {
@@ -24095,14 +24095,14 @@
 
     .previewText b {
       color: white;
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: -.02em;
     }
 
     .previewText span {
       color: rgba(255,255,255,.50);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       line-height: 1.32;
       font-weight: 720;
     }
@@ -24125,7 +24125,7 @@
 
     .styleGroupTitle b {
       color: rgba(255,255,255,.88);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .08em;
       text-transform: uppercase;
@@ -24133,7 +24133,7 @@
 
     .styleGroupTitle span {
       color: rgba(255,255,255,.38);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 850;
       text-transform: uppercase;
       letter-spacing: .08em;
@@ -24161,7 +24161,7 @@
       background:
         linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.04)) !important;
       box-shadow: inset 0 1px 0 rgba(255,255,255,.045) !important;
-      font-size: 12px !important;
+      font-size: calc(12px * var(--st-ui-scale, 1)) !important;
       font-weight: 900 !important;
       letter-spacing: -.01em !important;
     }
@@ -24594,7 +24594,7 @@
 
     body.layout-spotlight .sectionHead h2,
     body.layout-spotlight .showcaseRowTitle {
-      font-size: clamp(30px, 3.3vw, 56px) !important;
+      font-size: calc(clamp(30px, 3.3vw, 56px) * var(--st-ui-scale, 1)) !important;
       letter-spacing: -.085em !important;
     }
 
@@ -24715,14 +24715,14 @@
 
     .studioMetric b {
       color: white;
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: -.02em;
     }
 
     .studioMetric span {
       color: rgba(255,255,255,.44);
-      font-size: 10px;
+      font-size: calc(10px * var(--st-ui-scale, 1));
       font-weight: 850;
       letter-spacing: .06em;
       text-transform: uppercase;
@@ -24781,7 +24781,7 @@
     }
 
     .dsContinueSection .dsRowHead h2 {
-      font-size: clamp(22px, 2vw, 30px) !important;
+      font-size: calc(clamp(22px, 2vw, 30px) * var(--st-ui-scale, 1)) !important;
       letter-spacing: -.055em !important;
       line-height: .98 !important;
     }
@@ -24892,7 +24892,7 @@
     .dsContinueSection .dsCardTitle {
       max-width: calc(100% - 84px);
       color: rgba(255,255,255,.96) !important;
-      font-size: 13px !important;
+      font-size: calc(13px * var(--st-ui-scale, 1)) !important;
       font-weight: 950 !important;
       line-height: 1.05 !important;
       letter-spacing: -.025em !important;
@@ -24903,7 +24903,7 @@
       gap: 7px !important;
       margin-top: 7px !important;
       color: rgba(255,255,255,.55) !important;
-      font-size: 10px !important;
+      font-size: calc(10px * var(--st-ui-scale, 1)) !important;
       font-weight: 850 !important;
     }
 
@@ -24958,7 +24958,7 @@
       background:
         radial-gradient(circle at 28% 20%, rgba(255,255,255,.96), transparent 42%),
         linear-gradient(135deg, #dff8ff, #8b5cf6) !important;
-      font-size: 10px !important;
+      font-size: calc(10px * var(--st-ui-scale, 1)) !important;
       font-weight: 950 !important;
       box-shadow: none !important;
     }
@@ -24967,7 +24967,7 @@
       position: static !important;
       bottom: auto !important;
       color: rgba(255,255,255,.88) !important;
-      font-size: 10px !important;
+      font-size: calc(10px * var(--st-ui-scale, 1)) !important;
       line-height: 1 !important;
       font-weight: 950 !important;
       letter-spacing: .08em !important;
@@ -25098,7 +25098,7 @@
     .sectionHead h2,
     .nfRowTitle {
       font-family: var(--font-display, "Space Grotesk", Inter, sans-serif) !important;
-      font-size: clamp(22px, 2.1vw, 32px) !important;
+      font-size: calc(clamp(22px, 2.1vw, 32px) * var(--st-ui-scale, 1)) !important;
       line-height: .98 !important;
       letter-spacing: -.065em !important;
       color: var(--clean-title) !important;
@@ -25192,7 +25192,7 @@
     }
 
     .dsCardTitle {
-      font-size: 13px !important;
+      font-size: calc(13px * var(--st-ui-scale, 1)) !important;
       line-height: 1.05 !important;
       letter-spacing: -.025em !important;
     }
@@ -25279,7 +25279,7 @@
       color: rgba(223,248,255,.82);
       background: rgba(255,255,255,.08);
       border: 1px solid rgba(255,255,255,.12);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .12em;
       text-transform: uppercase;
@@ -25289,7 +25289,7 @@
       margin: 13px 0 10px;
       max-width: 750px;
       font-family: var(--font-display, "Space Grotesk", Inter, sans-serif);
-      font-size: clamp(42px, 7vw, 92px);
+      font-size: calc(clamp(42px, 7vw, 92px) * var(--st-ui-scale, 1));
       line-height: .88;
       letter-spacing: -.095em;
       color: white;
@@ -25314,7 +25314,7 @@
       color: rgba(255,255,255,.76);
       background: rgba(255,255,255,.07);
       border: 1px solid rgba(255,255,255,.09);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 900;
     }
 
@@ -25456,7 +25456,7 @@
       }
 
       .dsCleanSpotlightContent h3 {
-        font-size: clamp(38px, 13vw, 66px);
+        font-size: calc(clamp(38px, 13vw, 66px) * var(--st-ui-scale, 1));
       }
     }
 
@@ -25504,7 +25504,7 @@
         inset 0 1px 0 rgba(255,255,255,.72) !important;
       backdrop-filter: blur(14px) saturate(1.08) !important;
       -webkit-backdrop-filter: blur(14px) saturate(1.08) !important;
-      font-size: 15px !important;
+      font-size: calc(15px * var(--st-ui-scale, 1)) !important;
       line-height: 1 !important;
       text-shadow: none !important;
       transform: translateZ(0);
@@ -25620,7 +25620,7 @@
       .dsPlayDot {
         width: 38px !important;
         height: 38px !important;
-        font-size: 16px !important;
+        font-size: calc(16px * var(--st-ui-scale, 1)) !important;
       }
     }
 
@@ -25723,7 +25723,7 @@
       gap: 10px !important;
       max-width: min(760px, 74vw);
       color: rgba(255,255,255,.94) !important;
-      font-size: clamp(22px, 2vw, 31px) !important;
+      font-size: calc(clamp(22px, 2vw, 31px) * var(--st-ui-scale, 1)) !important;
       line-height: .98 !important;
       letter-spacing: -.066em !important;
       text-wrap: balance;
@@ -25750,7 +25750,7 @@
       color: rgba(238,242,255,.66) !important;
       background: rgba(255,255,255,.055) !important;
       border: 1px solid rgba(255,255,255,.095) !important;
-      font-size: 11px !important;
+      font-size: calc(11px * var(--st-ui-scale, 1)) !important;
       font-weight: 900 !important;
       letter-spacing: .02em !important;
       box-shadow: inset 0 1px 0 rgba(255,255,255,.045) !important;
@@ -25856,7 +25856,7 @@
     }
 
     .dsCardTitle {
-      font-size: 13px !important;
+      font-size: calc(13px * var(--st-ui-scale, 1)) !important;
       font-weight: 920 !important;
       line-height: 1.08 !important;
       letter-spacing: -.028em !important;
@@ -25864,7 +25864,7 @@
 
     .dsCardMeta {
       color: var(--vh-soft-text) !important;
-      font-size: 10.5px !important;
+      font-size: calc(10.5px * var(--st-ui-scale, 1)) !important;
       gap: 6px !important;
     }
 
@@ -25913,7 +25913,7 @@
     }
 
     .studioHero h3 {
-      font-size: 25px !important;
+      font-size: calc(25px * var(--st-ui-scale, 1)) !important;
       letter-spacing: -.065em !important;
     }
 
@@ -25928,12 +25928,12 @@
 
     .styleGroupTitle b {
       color: rgba(255,255,255,.84) !important;
-      font-size: 11px !important;
+      font-size: calc(11px * var(--st-ui-scale, 1)) !important;
     }
 
     .styleGroupTitle span {
       color: rgba(238,242,255,.34) !important;
-      font-size: 10px !important;
+      font-size: calc(10px * var(--st-ui-scale, 1)) !important;
     }
 
     .compactStudioGrid {
@@ -25944,7 +25944,7 @@
       min-height: 32px !important;
       min-width: 92px !important;
       border-radius: 13px !important;
-      font-size: 11.5px !important;
+      font-size: calc(11.5px * var(--st-ui-scale, 1)) !important;
       color: rgba(238,242,255,.70) !important;
       background: rgba(255,255,255,.050) !important;
     }
@@ -25979,8 +25979,8 @@
       background: rgba(255,255,255,.035) !important;
     }
 
-    .studioMetric b { font-size: 12px !important; }
-    .studioMetric span { font-size: 9px !important; }
+    .studioMetric b { font-size: calc(12px * var(--st-ui-scale, 1)) !important; }
+    .studioMetric span { font-size: calc(9px * var(--st-ui-scale, 1)) !important; }
 
     body.effect-clean {
       --v111-glow: .035;
@@ -26022,7 +26022,7 @@
 
     body.layout-dense .dsRowHead h2,
     body.layout-dense .sectionHead h2 {
-      font-size: clamp(20px, 1.65vw, 26px) !important;
+      font-size: calc(clamp(20px, 1.65vw, 26px) * var(--st-ui-scale, 1)) !important;
     }
 
     body.layout-spotlight .dsRow:not(.dsCleanSpotlightSection) {
@@ -26050,7 +26050,7 @@
 
       .dsRowHead h2,
       .sectionHead h2 {
-        font-size: clamp(21px, 6vw, 28px) !important;
+        font-size: calc(clamp(21px, 6vw, 28px) * var(--st-ui-scale, 1)) !important;
         max-width: 100%;
       }
 
@@ -26169,7 +26169,7 @@
       border-radius: 999px;
       color: rgba(238,242,255,.62);
       background: transparent;
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       font-weight: 900;
       letter-spacing: -.01em;
       cursor: pointer;
@@ -26226,7 +26226,7 @@
 
     .dsDetailPanelHead span {
       color: rgba(223,248,255,.62);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .12em;
       text-transform: uppercase;
@@ -26236,7 +26236,7 @@
       margin: 3px 0 0;
       color: white;
       font-family: var(--font-display, "Space Grotesk", Inter, sans-serif);
-      font-size: clamp(30px, 4vw, 52px);
+      font-size: calc(clamp(30px, 4vw, 52px) * var(--st-ui-scale, 1));
       line-height: .92;
       letter-spacing: -.08em;
     }
@@ -26251,7 +26251,7 @@
       margin: 0;
       max-width: 820px;
       color: rgba(248,251,255,.80);
-      font-size: clamp(16px, 1.35vw, 20px);
+      font-size: calc(clamp(16px, 1.35vw, 20px) * var(--st-ui-scale, 1));
       line-height: 1.65;
       font-weight: 640;
     }
@@ -26334,7 +26334,7 @@
       display: block;
       margin-bottom: 5px;
       color: rgba(238,242,255,.42);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .08em;
       text-transform: uppercase;
@@ -26343,7 +26343,7 @@
     .dsAboutGridV121 strong,
     .dsDetailGridV121 aside strong {
       color: rgba(255,255,255,.86);
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       line-height: 1.35;
     }
 
@@ -26419,7 +26419,7 @@
 
     .dsCinemaHlsTop span {
       color: #a7f3d0;
-      font-size: 10px;
+      font-size: calc(10px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .14em;
       text-transform: uppercase;
@@ -26427,14 +26427,14 @@
 
     .dsCinemaHlsTop b {
       font-family: var(--font-display, "Space Grotesk", Inter, sans-serif);
-      font-size: clamp(18px, 2.6vw, 30px);
+      font-size: calc(clamp(18px, 2.6vw, 30px) * var(--st-ui-scale, 1));
       line-height: .94;
       letter-spacing: -.06em;
     }
 
     .dsCinemaHlsTop small {
       color: rgba(238,242,255,.62);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 700;
     }
 
@@ -26473,12 +26473,12 @@
       border-radius: 8px;
       color: #06101d;
       background: linear-gradient(135deg, #ffffff, #dff8ff);
-      font-size: 10px;
+      font-size: calc(10px * var(--st-ui-scale, 1));
       font-weight: 950;
     }
 
     .dsCinemaHlsHint b {
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 850;
     }
 
@@ -26659,13 +26659,13 @@
       justify-content: space-between;
       gap: 12px;
       color: rgba(238,242,255,.72);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 850;
     }
 
     .dsCinemaSeekTimes b {
       color: rgba(255,255,255,.92);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: .02em;
       text-transform: uppercase;
@@ -26673,7 +26673,7 @@
 
     .dsCinemaSeekMeta {
       color: rgba(238,242,255,.46);
-      font-size: 10px;
+      font-size: calc(10px * var(--st-ui-scale, 1));
       letter-spacing: .06em;
       text-transform: uppercase;
     }
@@ -26926,7 +26926,7 @@
 
     .dsCinemaHlsShell.usesPlyr .plyr__time {
       color: rgba(255,255,255,.82);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 850;
       letter-spacing: -.01em;
     }
@@ -27213,7 +27213,7 @@
     .dsCinemaHlsShell.usesPlyr .plyr__time {
       min-width: auto !important;
       padding-inline: 4px !important;
-      font-size: 11px !important;
+      font-size: calc(11px * var(--st-ui-scale, 1)) !important;
       color: rgba(255,255,255,.78) !important;
     }
 
@@ -27336,7 +27336,7 @@
     }
 
     .dsInfoBtn {
-      font-size: 13px !important;
+      font-size: calc(13px * var(--st-ui-scale, 1)) !important;
     }
 
     @media(max-width: 900px) {
@@ -27625,7 +27625,7 @@
     .dsMediaChromeControls media-time-display {
       min-width: 48px;
       color: rgba(255,255,255,.75);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 850;
       letter-spacing: -.01em;
       align-self: center;
@@ -27661,7 +27661,7 @@
       backdrop-filter: blur(18px) saturate(1.14);
       -webkit-backdrop-filter: blur(18px) saturate(1.14);
       cursor: pointer;
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 950;
     }
 
@@ -27699,7 +27699,7 @@
       background: transparent;
       text-align: left;
       cursor: pointer;
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 900;
     }
 
@@ -27765,7 +27765,7 @@
       }
 
       .dsMediaChromeControls media-time-display {
-        font-size: 11px;
+        font-size: calc(11px * var(--st-ui-scale, 1));
         min-width: 42px;
       }
 
@@ -27911,7 +27911,7 @@
     #movieButtonBigPlay {
       width: clamp(78px, 8vw, 112px);
       height: clamp(78px, 8vw, 112px);
-      font-size: clamp(28px, 3vw, 42px);
+      font-size: calc(clamp(28px, 3vw, 42px) * var(--st-ui-scale, 1));
       padding-left: .08em;
     }
 
@@ -27919,13 +27919,13 @@
     #movieButtonForward10 {
       width: clamp(54px, 5.2vw, 72px);
       height: clamp(54px, 5.2vw, 72px);
-      font-size: 24px;
+      font-size: calc(24px * var(--st-ui-scale, 1));
       gap: 0;
     }
 
     #movieButtonBack10 small,
     #movieButtonForward10 small {
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: -.04em;
     }
@@ -27960,7 +27960,7 @@
       backdrop-filter: blur(18px) saturate(1.14);
       -webkit-backdrop-filter: blur(18px) saturate(1.14);
       cursor: pointer;
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 950;
     }
 
@@ -27998,7 +27998,7 @@
       background: transparent;
       text-align: left;
       cursor: pointer;
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 900;
     }
 
@@ -28116,7 +28116,7 @@
 
     .vjs-theme-swifly .vjs-button > .vjs-icon-placeholder::before {
       line-height: 38px !important;
-      font-size: 18px !important;
+      font-size: calc(18px * var(--st-ui-scale, 1)) !important;
     }
 
     .vjs-theme-swifly .vjs-time-control {
@@ -28125,7 +28125,7 @@
       min-width: 46px !important;
       padding: 0 4px !important;
       color: rgba(255,255,255,.74) !important;
-      font-size: 12px !important;
+      font-size: calc(12px * var(--st-ui-scale, 1)) !important;
       font-weight: 850 !important;
       line-height: 38px !important;
     }
@@ -28145,7 +28145,7 @@
 
     .vjs-theme-swifly .vjs-playback-rate .vjs-playback-rate-value {
       line-height: 38px !important;
-      font-size: 12px !important;
+      font-size: calc(12px * var(--st-ui-scale, 1)) !important;
       font-weight: 950 !important;
     }
 
@@ -28156,7 +28156,7 @@
     .vjs-swifly-skip-button .vjs-icon-placeholder::before {
       content: "10" !important;
       font-family: var(--font-ui, Inter, system-ui) !important;
-      font-size: 11px !important;
+      font-size: calc(11px * var(--st-ui-scale, 1)) !important;
       font-weight: 950 !important;
       border: 1px solid rgba(255,255,255,.16);
       border-radius: 999px;
@@ -28174,7 +28174,7 @@
       inset: 0;
       display: grid;
       place-items: center;
-      font-size: 15px;
+      font-size: calc(15px * var(--st-ui-scale, 1));
       pointer-events: none;
     }
 
@@ -28312,7 +28312,7 @@
     }
 
     .dsVideoJsCinemaShell.usesVideoJs .dsHlsStatus b {
-      font-size: 14px !important;
+      font-size: calc(14px * var(--st-ui-scale, 1)) !important;
       line-height: 1.05 !important;
       letter-spacing: -.035em !important;
       color: white !important;
@@ -28320,7 +28320,7 @@
 
     .dsVideoJsCinemaShell.usesVideoJs .dsHlsStatus span {
       margin-top: 3px !important;
-      font-size: 11px !important;
+      font-size: calc(11px * var(--st-ui-scale, 1)) !important;
       color: rgba(238,242,255,.58) !important;
     }
 
@@ -28347,19 +28347,19 @@
     }
 
     .dsVideoJsTop span {
-      font-size: 9px !important;
+      font-size: calc(9px * var(--st-ui-scale, 1)) !important;
       letter-spacing: .12em !important;
       color: #a7f3d0 !important;
     }
 
     .dsVideoJsTop b {
-      font-size: 15px !important;
+      font-size: calc(15px * var(--st-ui-scale, 1)) !important;
       line-height: 1 !important;
       letter-spacing: -.04em !important;
     }
 
     .dsVideoJsTop small {
-      font-size: 10px !important;
+      font-size: calc(10px * var(--st-ui-scale, 1)) !important;
       color: rgba(238,242,255,.54) !important;
     }
 
@@ -28404,14 +28404,14 @@
     #movieButtonBigPlay {
       width: clamp(64px, 6.8vw, 92px) !important;
       height: clamp(64px, 6.8vw, 92px) !important;
-      font-size: clamp(24px, 2.6vw, 34px) !important;
+      font-size: calc(clamp(24px, 2.6vw, 34px) * var(--st-ui-scale, 1)) !important;
     }
 
     #movieButtonBack10,
     #movieButtonForward10 {
       width: clamp(46px, 4.6vw, 62px) !important;
       height: clamp(46px, 4.6vw, 62px) !important;
-      font-size: 18px !important;
+      font-size: calc(18px * var(--st-ui-scale, 1)) !important;
     }
 
     .dsVideoJsHint {
@@ -28437,7 +28437,7 @@
       min-height: 30px !important;
       min-width: 58px !important;
       padding: 0 10px !important;
-      font-size: 11px !important;
+      font-size: calc(11px * var(--st-ui-scale, 1)) !important;
       background: rgba(4,7,18,.58) !important;
       border-color: rgba(255,255,255,.10) !important;
       box-shadow: 0 10px 28px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.05) !important;
@@ -28511,19 +28511,19 @@
 
     .vjs-theme-swifly .vjs-button > .vjs-icon-placeholder::before {
       line-height: 34px !important;
-      font-size: 16px !important;
+      font-size: calc(16px * var(--st-ui-scale, 1)) !important;
     }
 
     .vjs-theme-swifly .vjs-time-control {
       min-width: 42px !important;
-      font-size: 11px !important;
+      font-size: calc(11px * var(--st-ui-scale, 1)) !important;
       line-height: 34px !important;
       color: rgba(255,255,255,.68) !important;
     }
 
     .vjs-theme-swifly .vjs-playback-rate .vjs-playback-rate-value {
       line-height: 34px !important;
-      font-size: 11px !important;
+      font-size: calc(11px * var(--st-ui-scale, 1)) !important;
     }
 
     .vjs-swifly-skip-button .vjs-icon-placeholder::before {
@@ -28532,14 +28532,14 @@
       line-height: 20px !important;
       left: 6px !important;
       top: 6px !important;
-      font-size: 10px !important;
+      font-size: calc(10px * var(--st-ui-scale, 1)) !important;
       border-color: rgba(255,255,255,.12) !important;
     }
 
     .vjs-swifly-back-button::after,
     .vjs-swifly-forward-button::after {
       opacity: .72;
-      font-size: 12px !important;
+      font-size: calc(12px * var(--st-ui-scale, 1)) !important;
     }
 
     @media(max-width: 900px) {
@@ -28656,7 +28656,7 @@
     }
 
     .dsVideoJsTop b {
-      font-size: 16px !important;
+      font-size: calc(16px * var(--st-ui-scale, 1)) !important;
       letter-spacing: -.045em !important;
     }
 
@@ -28755,7 +28755,7 @@
 
     .vjs-theme-swifly .vjs-play-progress::before {
       color: #dff8ff !important;
-      font-size: 14px !important;
+      font-size: calc(14px * var(--st-ui-scale, 1)) !important;
       text-shadow: 0 0 18px rgba(85,215,255,.42);
       top: -3px !important;
     }
@@ -28779,7 +28779,7 @@
 
     .vjs-theme-swifly .vjs-button > .vjs-icon-placeholder::before {
       line-height: 36px !important;
-      font-size: 16px !important;
+      font-size: calc(16px * var(--st-ui-scale, 1)) !important;
     }
 
     .vjs-theme-swifly .vjs-time-control {
@@ -28788,7 +28788,7 @@
       padding: 0 5px !important;
       line-height: 36px !important;
       color: rgba(255,255,255,.70) !important;
-      font-size: 11px !important;
+      font-size: calc(11px * var(--st-ui-scale, 1)) !important;
       font-weight: 850 !important;
       letter-spacing: -.01em;
     }
@@ -28819,7 +28819,7 @@
 
     .vjs-theme-swifly .vjs-playback-rate .vjs-playback-rate-value {
       line-height: 36px !important;
-      font-size: 11px !important;
+      font-size: calc(11px * var(--st-ui-scale, 1)) !important;
       font-weight: 950 !important;
       color: rgba(255,255,255,.78) !important;
     }
@@ -28855,7 +28855,7 @@
       line-height: 20px !important;
       left: 7px !important;
       top: 7px !important;
-      font-size: 10px !important;
+      font-size: calc(10px * var(--st-ui-scale, 1)) !important;
       border: 1px solid rgba(255,255,255,.13) !important;
       background: rgba(255,255,255,.04);
     }
@@ -28885,7 +28885,7 @@
 
     .dsVideoJsQualityToggle span {
       color: rgba(238,242,255,.46);
-      font-size: 10px;
+      font-size: calc(10px * var(--st-ui-scale, 1));
       letter-spacing: .08em;
       text-transform: uppercase;
       font-weight: 950;
@@ -28893,7 +28893,7 @@
 
     .dsVideoJsQualityToggle b {
       color: white;
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 950;
     }
 
@@ -28921,11 +28921,11 @@
     }
 
     .dsVideoJsCinemaShell.usesVideoJs .dsHlsStatus b {
-      font-size: 13px !important;
+      font-size: calc(13px * var(--st-ui-scale, 1)) !important;
     }
 
     .dsVideoJsCinemaShell.usesVideoJs .dsHlsStatus span {
-      font-size: 10px !important;
+      font-size: calc(10px * var(--st-ui-scale, 1)) !important;
     }
 
     .dsVideoJsCinemaShell.v128VideoReady .dsHlsStatus:not(.isError) {
@@ -29040,17 +29040,17 @@
     }
 
     .dsVideoJsCinemaShell.v129MinimalPlayer .dsVideoJsTop span {
-      font-size: 8px !important;
+      font-size: calc(8px * var(--st-ui-scale, 1)) !important;
       color: rgba(167,243,208,.82) !important;
     }
 
     .dsVideoJsCinemaShell.v129MinimalPlayer .dsVideoJsTop b {
-      font-size: 13px !important;
+      font-size: calc(13px * var(--st-ui-scale, 1)) !important;
       letter-spacing: -.03em !important;
     }
 
     .dsVideoJsCinemaShell.v129MinimalPlayer .dsVideoJsTop small {
-      font-size: 9px !important;
+      font-size: calc(9px * var(--st-ui-scale, 1)) !important;
       opacity: .7;
     }
 
@@ -29069,12 +29069,12 @@
     }
 
     .dsVideoJsCinemaShell.v129MinimalPlayer .dsHlsStatus b {
-      font-size: 13px !important;
+      font-size: calc(13px * var(--st-ui-scale, 1)) !important;
       line-height: 1.05 !important;
     }
 
     .dsVideoJsCinemaShell.v129MinimalPlayer .dsHlsStatus span {
-      font-size: 10px !important;
+      font-size: calc(10px * var(--st-ui-scale, 1)) !important;
       margin-top: 2px !important;
     }
 
@@ -29131,7 +29131,7 @@
     }
 
     .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-big-play-button .vjs-icon-placeholder::before {
-      font-size: clamp(28px, 3vw, 42px) !important;
+      font-size: calc(clamp(28px, 3vw, 42px) * var(--st-ui-scale, 1)) !important;
       line-height: clamp(66px, 7vw, 96px) !important;
       text-shadow: none !important;
     }
@@ -29194,7 +29194,7 @@
 
     .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-play-progress::before {
       top: -4px !important;
-      font-size: 13px !important;
+      font-size: calc(13px * var(--st-ui-scale, 1)) !important;
       color: #dff8ff !important;
       text-shadow: 0 0 14px rgba(85,215,255,.35) !important;
     }
@@ -29217,11 +29217,11 @@
 
     .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-button > .vjs-icon-placeholder::before {
       line-height: 34px !important;
-      font-size: 16px !important;
+      font-size: calc(16px * var(--st-ui-scale, 1)) !important;
     }
 
     .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-time-control {
-      font-size: 11px !important;
+      font-size: calc(11px * var(--st-ui-scale, 1)) !important;
       line-height: 34px !important;
       color: rgba(255,255,255,.62) !important;
       padding-inline: 4px !important;
@@ -29233,7 +29233,7 @@
 
     .dsVideoJsCinemaShell.v129MinimalPlayer .vjs-playback-rate .vjs-playback-rate-value {
       line-height: 34px !important;
-      font-size: 11px !important;
+      font-size: calc(11px * var(--st-ui-scale, 1)) !important;
       font-weight: 950 !important;
     }
 
@@ -29271,12 +29271,12 @@
     }
 
     .dsVideoJsCinemaShell.v129MinimalPlayer .dsVideoJsQualityToggle span {
-      font-size: 9px !important;
+      font-size: calc(9px * var(--st-ui-scale, 1)) !important;
       color: rgba(238,242,255,.42) !important;
     }
 
     .dsVideoJsCinemaShell.v129MinimalPlayer .dsVideoJsQualityToggle b {
-      font-size: 10px !important;
+      font-size: calc(10px * var(--st-ui-scale, 1)) !important;
     }
 
     .dsVideoJsCinemaShell.v129MinimalPlayer .dsVideoJsQualityMenu {
@@ -29410,14 +29410,14 @@
     }
 
     .dsVideoJsCinemaShell.v130SimpleModern .dsHlsStatus b {
-      font-size: 12px !important;
+      font-size: calc(12px * var(--st-ui-scale, 1)) !important;
       line-height: 1.05 !important;
       letter-spacing: -.025em !important;
     }
 
     .dsVideoJsCinemaShell.v130SimpleModern .dsHlsStatus span {
       margin-top: 2px !important;
-      font-size: 9px !important;
+      font-size: calc(9px * var(--st-ui-scale, 1)) !important;
       color: rgba(238,242,255,.54) !important;
     }
 
@@ -29462,7 +29462,7 @@
     }
 
     .dsVideoJsCinemaShell.v130SimpleModern .vjs-big-play-button .vjs-icon-placeholder::before {
-      font-size: clamp(23px, 2.5vw, 32px) !important;
+      font-size: calc(clamp(23px, 2.5vw, 32px) * var(--st-ui-scale, 1)) !important;
       line-height: clamp(56px, 5.8vw, 78px) !important;
     }
 
@@ -29526,7 +29526,7 @@
 
     .dsVideoJsCinemaShell.v130SimpleModern .vjs-play-progress::before {
       top: -5px !important;
-      font-size: 12px !important;
+      font-size: calc(12px * var(--st-ui-scale, 1)) !important;
       color: #dff8ff !important;
       text-shadow: 0 0 10px rgba(85,215,255,.28) !important;
     }
@@ -29549,7 +29549,7 @@
 
     .dsVideoJsCinemaShell.v130SimpleModern .vjs-button > .vjs-icon-placeholder::before {
       line-height: 30px !important;
-      font-size: 14px !important;
+      font-size: calc(14px * var(--st-ui-scale, 1)) !important;
     }
 
     .dsVideoJsCinemaShell.v130SimpleModern .vjs-time-control {
@@ -29558,7 +29558,7 @@
       width: auto !important;
       padding: 0 3px !important;
       line-height: 30px !important;
-      font-size: 10px !important;
+      font-size: calc(10px * var(--st-ui-scale, 1)) !important;
       font-weight: 800 !important;
       color: rgba(255,255,255,.56) !important;
     }
@@ -29589,7 +29589,7 @@
 
     .dsVideoJsCinemaShell.v130SimpleModern .vjs-playback-rate .vjs-playback-rate-value {
       line-height: 30px !important;
-      font-size: 10px !important;
+      font-size: calc(10px * var(--st-ui-scale, 1)) !important;
       font-weight: 900 !important;
       color: rgba(255,255,255,.66) !important;
     }
@@ -29606,7 +29606,7 @@
     .dsVideoJsCinemaShell.v130SimpleModern .vjs-menu li {
       border-radius: 9px !important;
       color: rgba(255,255,255,.68) !important;
-      font-size: 11px !important;
+      font-size: calc(11px * var(--st-ui-scale, 1)) !important;
       font-weight: 800 !important;
     }
 
@@ -29650,7 +29650,7 @@
     }
 
     .dsVideoJsCinemaShell.v130SimpleModern .dsVideoJsQualityToggle b {
-      font-size: 10px !important;
+      font-size: calc(10px * var(--st-ui-scale, 1)) !important;
       color: rgba(255,255,255,.78) !important;
     }
 
@@ -29667,7 +29667,7 @@
       min-height: 28px !important;
       padding: 0 9px !important;
       border-radius: 9px !important;
-      font-size: 11px !important;
+      font-size: calc(11px * var(--st-ui-scale, 1)) !important;
     }
 
     @media(max-width: 900px) {
@@ -29728,7 +29728,7 @@
 
       .dsVideoJsCinemaShell.v130SimpleModern .vjs-big-play-button .vjs-icon-placeholder::before {
         line-height: 58px !important;
-        font-size: 24px !important;
+        font-size: calc(24px * var(--st-ui-scale, 1)) !important;
       }
     }
 
@@ -29810,14 +29810,14 @@
     }
 
     .dsVideoJsCinemaShell.v131TimelineFixed .dsHlsStatus b {
-      font-size: 12px !important;
+      font-size: calc(12px * var(--st-ui-scale, 1)) !important;
       line-height: 1.05 !important;
       letter-spacing: -.025em !important;
     }
 
     .dsVideoJsCinemaShell.v131TimelineFixed .dsHlsStatus span {
       margin-top: 2px !important;
-      font-size: 9px !important;
+      font-size: calc(9px * var(--st-ui-scale, 1)) !important;
       color: rgba(238,242,255,.52) !important;
     }
 
@@ -29862,7 +29862,7 @@
     }
 
     .dsVideoJsCinemaShell.v131TimelineFixed .vjs-big-play-button .vjs-icon-placeholder::before {
-      font-size: clamp(22px, 2.3vw, 30px) !important;
+      font-size: calc(clamp(22px, 2.3vw, 30px) * var(--st-ui-scale, 1)) !important;
       line-height: clamp(54px, 5.4vw, 72px) !important;
     }
 
@@ -29950,7 +29950,7 @@
     .dsVideoJsCinemaShell.v131TimelineFixed .vjs-play-progress::before {
       top: -5px !important;
       right: -0.45em !important;
-      font-size: 12px !important;
+      font-size: calc(12px * var(--st-ui-scale, 1)) !important;
       color: #dff8ff !important;
       text-shadow: 0 0 10px rgba(85,215,255,.28) !important;
     }
@@ -29974,7 +29974,7 @@
 
     .dsVideoJsCinemaShell.v131TimelineFixed .vjs-button > .vjs-icon-placeholder::before {
       line-height: 30px !important;
-      font-size: 14px !important;
+      font-size: calc(14px * var(--st-ui-scale, 1)) !important;
     }
 
     .dsVideoJsCinemaShell.v131TimelineFixed .vjs-time-control {
@@ -29984,7 +29984,7 @@
       height: 30px !important;
       padding: 0 3px !important;
       line-height: 30px !important;
-      font-size: 10px !important;
+      font-size: calc(10px * var(--st-ui-scale, 1)) !important;
       font-weight: 800 !important;
       color: rgba(255,255,255,.56) !important;
       white-space: nowrap !important;
@@ -30018,7 +30018,7 @@
 
     .dsVideoJsCinemaShell.v131TimelineFixed .vjs-playback-rate .vjs-playback-rate-value {
       line-height: 30px !important;
-      font-size: 10px !important;
+      font-size: calc(10px * var(--st-ui-scale, 1)) !important;
       font-weight: 900 !important;
       color: rgba(255,255,255,.66) !important;
     }
@@ -30035,7 +30035,7 @@
     .dsVideoJsCinemaShell.v131TimelineFixed .vjs-menu li {
       border-radius: 9px !important;
       color: rgba(255,255,255,.68) !important;
-      font-size: 11px !important;
+      font-size: calc(11px * var(--st-ui-scale, 1)) !important;
       font-weight: 800 !important;
     }
 
@@ -30079,7 +30079,7 @@
     }
 
     .dsVideoJsCinemaShell.v131TimelineFixed .dsVideoJsQualityToggle b {
-      font-size: 10px !important;
+      font-size: calc(10px * var(--st-ui-scale, 1)) !important;
       color: rgba(255,255,255,.78) !important;
     }
 
@@ -30096,7 +30096,7 @@
       min-height: 28px !important;
       padding: 0 9px !important;
       border-radius: 9px !important;
-      font-size: 11px !important;
+      font-size: calc(11px * var(--st-ui-scale, 1)) !important;
     }
 
     @media(max-width: 900px) {
@@ -30157,7 +30157,7 @@
 
       .dsVideoJsCinemaShell.v131TimelineFixed .vjs-big-play-button .vjs-icon-placeholder::before {
         line-height: 56px !important;
-        font-size: 23px !important;
+        font-size: calc(23px * var(--st-ui-scale, 1)) !important;
       }
     }
 
@@ -30221,7 +30221,7 @@
       left: 0 !important;
       top: 0 !important;
       line-height: clamp(46px, 4.2vw, 56px) !important;
-      font-size: clamp(20px, 2vw, 26px) !important;
+      font-size: calc(clamp(20px, 2vw, 26px) * var(--st-ui-scale, 1)) !important;
       text-align: center !important;
       transform: translateX(2px);
       text-shadow: none !important;
@@ -30261,7 +30261,7 @@
 
     .dsVideoJsCinemaShell.v132SoftRectPlay .vjs-button > .vjs-icon-placeholder::before {
       line-height: 29px !important;
-      font-size: 13.5px !important;
+      font-size: calc(13.5px * var(--st-ui-scale, 1)) !important;
     }
 
     @media(max-width: 520px) {
@@ -30276,7 +30276,7 @@
 
       .dsVideoJsCinemaShell.v132SoftRectPlay .vjs-big-play-button .vjs-icon-placeholder::before {
         line-height: 44px !important;
-        font-size: 21px !important;
+        font-size: calc(21px * var(--st-ui-scale, 1)) !important;
       }
     }
 
@@ -30315,7 +30315,7 @@
       margin: 0 !important;
       transform: translateX(1.5px) translateY(0) !important;
       text-align: center !important;
-      font-size: clamp(20px, 2vw, 25px) !important;
+      font-size: calc(clamp(20px, 2vw, 25px) * var(--st-ui-scale, 1)) !important;
     }
 
     .dsVideoJsCinemaShell.v133HoverPreview .vjs-control-bar {
@@ -30380,7 +30380,7 @@
       align-items: center !important;
       justify-content: center !important;
       border-radius: 9px !important;
-      font-size: 11px !important;
+      font-size: calc(11px * var(--st-ui-scale, 1)) !important;
       font-weight: 850 !important;
       line-height: 1 !important;
       color: rgba(255,255,255,.74) !important;
@@ -30439,7 +30439,7 @@
         0 12px 28px rgba(0,0,0,.30),
         0 0 18px rgba(85,215,255,.14) !important;
       font-family: var(--font-ui, "Host Grotesk", Inter, system-ui, sans-serif) !important;
-      font-size: 11px !important;
+      font-size: calc(11px * var(--st-ui-scale, 1)) !important;
       font-weight: 900 !important;
       line-height: 1 !important;
       text-shadow: none !important;
@@ -30536,7 +30536,7 @@
     }
 
     .dsVideoJsSpeedToggle b {
-      font-size: 10px;
+      font-size: calc(10px * var(--st-ui-scale, 1));
       font-weight: 950;
       color: rgba(255,255,255,.80);
     }
@@ -30580,7 +30580,7 @@
       color: rgba(255,255,255,.72);
       background: transparent;
       cursor: pointer;
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 900;
       text-align: center;
       font-family: var(--font-ui, "Host Grotesk", Inter, system-ui, sans-serif);
@@ -30625,7 +30625,7 @@
       color: #06101d;
       background: linear-gradient(135deg, #ffffff, #dff8ff);
       box-shadow: 0 12px 28px rgba(0,0,0,.32), 0 0 18px rgba(85,215,255,.12);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 950;
       line-height: 1;
       text-align: center;
@@ -30741,7 +30741,7 @@
     }
 
     .dsVideoJsVolumeToggle b {
-      font-size: 10px;
+      font-size: calc(10px * var(--st-ui-scale, 1));
       font-weight: 950;
       color: rgba(255,255,255,.80);
     }
@@ -30901,7 +30901,7 @@
       border-radius: 999px;
       color: #06101d;
       background: linear-gradient(135deg, #ffffff, #dff8ff);
-      font-size: 10px;
+      font-size: calc(10px * var(--st-ui-scale, 1));
       font-weight: 950;
       line-height: 1;
       box-shadow: 0 8px 18px rgba(0,0,0,.24);
@@ -30917,7 +30917,7 @@
       text-overflow: ellipsis;
       white-space: nowrap;
       color: rgba(255,255,255,.70);
-      font-size: 9px;
+      font-size: calc(9px * var(--st-ui-scale, 1));
       font-style: normal;
       font-weight: 850;
       text-shadow: 0 1px 8px rgba(0,0,0,.75);
@@ -31034,7 +31034,7 @@
       height: auto !important;
       line-height: 1 !important;
       margin: 0 !important;
-      font-size: 22px !important;
+      font-size: calc(22px * var(--st-ui-scale, 1)) !important;
       transform: translateX(1.5px) !important;
       text-shadow: none !important;
     }
@@ -31102,7 +31102,7 @@
 
     .dsVideoJsCinemaShell.v136PillDockSkin .vjs-button > .vjs-icon-placeholder::before {
       line-height: 28px !important;
-      font-size: 14px !important;
+      font-size: calc(14px * var(--st-ui-scale, 1)) !important;
     }
 
     .dsVideoJsCinemaShell.v136PillDockSkin .vjs-time-control {
@@ -31114,7 +31114,7 @@
       padding: 0 3px !important;
       line-height: 28px !important;
       color: rgba(255,255,255,.85) !important;
-      font-size: 12px !important;
+      font-size: calc(12px * var(--st-ui-scale, 1)) !important;
       font-weight: 850 !important;
       white-space: nowrap !important;
     }
@@ -31171,7 +31171,7 @@
     .dsVideoJsCinemaShell.v136PillDockSkin .vjs-play-progress::before {
       top: -5px !important;
       right: -0.45em !important;
-      font-size: 12px !important;
+      font-size: calc(12px * var(--st-ui-scale, 1)) !important;
       color: #dff8ff !important;
       text-shadow: 0 0 10px rgba(223,248,255,.24) !important;
     }
@@ -31227,7 +31227,7 @@
       box-shadow: none !important;
       backdrop-filter: none !important;
       -webkit-backdrop-filter: none !important;
-      font-size: 12px !important;
+      font-size: calc(12px * var(--st-ui-scale, 1)) !important;
     }
 
     .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsQualityToggle:hover,
@@ -31247,13 +31247,13 @@
     .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsSpeedToggle b,
     .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsVolumeToggle b {
       color: rgba(255,255,255,.88) !important;
-      font-size: 12px !important;
+      font-size: calc(12px * var(--st-ui-scale, 1)) !important;
       font-weight: 850 !important;
     }
 
     .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsVolumeToggle::before {
       content: "🔊";
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       line-height: 1;
     }
 
@@ -31272,7 +31272,7 @@
 
     .dsVideoJsCinemaShell.v136PillDockSkin .dsVideoJsQualityToggle::after {
       content: "Auto";
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 850;
       color: rgba(255,255,255,.88);
     }
@@ -31316,11 +31316,11 @@
     }
 
     .dsVideoJsCinemaShell.v136PillDockSkin .dsHlsStatus b {
-      font-size: 12px !important;
+      font-size: calc(12px * var(--st-ui-scale, 1)) !important;
     }
 
     .dsVideoJsCinemaShell.v136PillDockSkin .dsHlsStatus span {
-      font-size: 9px !important;
+      font-size: calc(9px * var(--st-ui-scale, 1)) !important;
     }
 
     .dsVideoJsCinemaShell.v136PillDockSkin.v128VideoReady .dsHlsStatus:not(.isError),
@@ -31445,7 +31445,7 @@
       position: static !important;
       line-height: 1 !important;
       margin: 0 !important;
-      font-size: 22px !important;
+      font-size: calc(22px * var(--st-ui-scale, 1)) !important;
       transform: translateX(1.5px) !important;
     }
 
@@ -31501,7 +31501,7 @@
       place-items: center;
       padding: 0 7px;
       cursor: pointer;
-      font: 850 12px/1 var(--font-ui, "Host Grotesk", Inter, system-ui, sans-serif);
+      font: 850 calc(12px * var(--st-ui-scale, 1))/1 var(--font-ui, "Host Grotesk", Inter, system-ui, sans-serif);
       transition: background .14s ease, color .14s ease, transform .14s ease;
     }
 
@@ -31516,21 +31516,21 @@
     }
 
     .swiflyDockPlay {
-      font-size: 13px;
+      font-size: calc(13px * var(--st-ui-scale, 1));
       width: 28px;
     }
 
     .swiflyDockSkip {
       position: relative;
       width: 32px;
-      font-size: 15px;
+      font-size: calc(15px * var(--st-ui-scale, 1));
     }
 
     .swiflyDockSkip small {
       position: absolute;
       right: 4px;
       bottom: 4px;
-      font-size: 8px;
+      font-size: calc(8px * var(--st-ui-scale, 1));
       font-weight: 950;
       letter-spacing: -.05em;
     }
@@ -31538,7 +31538,7 @@
     .swiflyDockTime {
       flex: 0 0 auto;
       color: rgba(255,255,255,.88);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 850;
       letter-spacing: -.01em;
       white-space: nowrap;
@@ -31635,7 +31635,7 @@
       background: transparent;
       color: rgba(255,255,255,.74);
       cursor: pointer;
-      font: 900 11px/1 var(--font-ui, "Host Grotesk", Inter, system-ui, sans-serif);
+      font: 900 calc(11px * var(--st-ui-scale, 1))/1 var(--font-ui, "Host Grotesk", Inter, system-ui, sans-serif);
     }
 
     .swiflyDockMenu button:hover,
@@ -31880,7 +31880,7 @@
     .dsVideoJsCinemaShell.v139CleanIconDock .swiflyDockSvgText {
       fill: currentColor;
       stroke: none;
-      font-size: 6.2px;
+      font-size: calc(6.2px * var(--st-ui-scale, 1));
       font-weight: 900;
       font-family: var(--font-ui, "Host Grotesk", Inter, system-ui, sans-serif);
       letter-spacing: -.04em;
@@ -31895,7 +31895,7 @@
     .dsVideoJsCinemaShell.v139CleanIconDock .swiflyDockTime {
       min-width: 38px;
       color: rgba(255,255,255,.90);
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 850;
     }
 
@@ -31960,7 +31960,7 @@
       width: auto;
       min-width: 28px;
       padding: 0 5px;
-      font-size: 12px;
+      font-size: calc(12px * var(--st-ui-scale, 1));
       font-weight: 850;
       color: rgba(255,255,255,.90);
     }
@@ -31997,7 +31997,7 @@
     }
 
     .dsVideoJsCinemaShell.v139CleanIconDock .vjs-big-play-button .vjs-icon-placeholder::before {
-      font-size: 21px !important;
+      font-size: calc(21px * var(--st-ui-scale, 1)) !important;
       transform: translateX(1.5px) !important;
     }
 
@@ -32080,7 +32080,7 @@
       box-shadow: 0 14px 38px rgba(0,0,0,.26);
       backdrop-filter: blur(14px) saturate(1.08);
       -webkit-backdrop-filter: blur(14px) saturate(1.08);
-      font-size: 11px;
+      font-size: calc(11px * var(--st-ui-scale, 1));
       font-weight: 900;
       letter-spacing: .06em;
       text-transform: uppercase;
@@ -32353,7 +32353,7 @@
       background: transparent;
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
-      font-size: 17px;
+      font-size: calc(17px * var(--st-ui-scale, 1));
       line-height: 1;
     }
 

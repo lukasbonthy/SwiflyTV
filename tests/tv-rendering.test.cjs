@@ -56,6 +56,22 @@ async function settleScroll(page) {
   }));
 }
 
+test('Populated personal feeds join TV rows, keep readable cards and open the selected details', {skip:!available&&'Chromium is not installed'}, async()=>{
+ const {context,page}=await open({width:1280,height:720},true,true,'no-preference');try{
+  await context.route('**/api/feed/episodes?*',route=>route.fulfill({json:{shows:[],episodes:[],upcoming:[1,2].map((episode,index)=>({id:'tv:900:1:'+episode,showId:'900',showTitle:'Saved series '+(index+1),season:1,episode,name:'A chapter ahead',airDate:'2099-01-01'}))}}));
+  await context.route('**/api/feed/recommendations?*',route=>route.fulfill({json:{results:Array.from({length:8},(_,index)=>({id:String(601+index),type:'movie',title:'Personal pick '+(index+1),year:'2026',rating:8.4,votes:200,poster:'https://image.tmdb.org/t/p/w342/pick.jpg',overview:'An actual catalog recommendation from your saved series.',because:{key:'tv:900',title:'Saved series'}}))}}));
+  await page.evaluate(()=>SwiflyLibrary.setWatchlist({id:'900',type:'tv',title:'Saved series'}));await page.locator('[data-feed-upcoming] .svFeedEpisodeLink').first().waitFor();await page.locator('[data-feed-recommended] .svFeedCard').first().waitFor();
+  await page.locator('.dsHeroActions .dsPrimaryBtn').focus();await page.keyboard.press('ArrowDown');await settleScroll(page);
+  assert.equal(await page.evaluate(()=>document.activeElement.matches('[data-feed-upcoming] .svFeedEpisodeLink')),true,'Down enters populated upcoming episodes before recommendations');assert.match(await page.evaluate(()=>document.activeElement.href),/s=1&e=1/);
+  await page.keyboard.press('ArrowDown');await settleScroll(page);assert.equal(await page.evaluate(()=>document.activeElement.matches('[data-feed-recommended] .svFeedPoster')),true,'Each recommendation has one controller poster target');
+  for(let index=0;index<6;index++)await page.keyboard.press('ArrowRight');await settleScroll(page);
+  const selected=await page.evaluate(()=>{const focus=document.activeElement,card=focus.closest('.svFeedCard'),rail=card.closest('.svFeedCards'),heading=card.closest('.svFeedSection').querySelector('h2');return {href:focus.getAttribute('href'),title:document.querySelector('.svTvSpotlightTitle').textContent,caption:card.querySelector('.svFeedCardBody').getBoundingClientRect().bottom,heading:heading.getBoundingClientRect().top,preview:document.getElementById('swiflyTvSpotlight').getBoundingClientRect().bottom,guide:document.getElementById('swiflyTvGuide').getBoundingClientRect().top,horizontal:rail.scrollLeft,vertical:rail.scrollTop,width:document.documentElement.scrollWidth,scroll:scrollY};});
+  assert.equal(selected.href,'/movie/607');assert.equal(selected.title,'Personal pick 7');assert(selected.horizontal>0&&selected.vertical===0,'Controller movement scrolls the populated row horizontally');assert(selected.heading>=selected.preview+16&&selected.heading<=selected.preview+44,'Feed headings use the same safe row anchor');assert(selected.caption<=selected.guide-16,'Title, rating and recommendation reason clear the guide');assert(selected.width<=1280);
+  await page.keyboard.press('ArrowDown');await settleScroll(page);assert.equal(await page.evaluate(()=>document.activeElement.matches('.dsRow .posterWrap')),true,'The standard catalog remains after personal rows');await page.keyboard.press('ArrowUp');await settleScroll(page);assert.equal(await page.evaluate(()=>document.activeElement.getAttribute('href')),selected.href,'Returning to recommendations restores the selected poster');
+  await page.keyboard.press('Enter');await page.waitForFunction(()=>document.activeElement.matches('.svDetailDialog .svDetailActions .dsPrimaryBtn')&&!document.querySelector('.svDetailDialog').hasAttribute('aria-busy'));assert.equal(new URL(page.url()).pathname,'/','A recommendation opens details before playback');await page.keyboard.press('Escape');await page.waitForFunction(()=>!document.querySelector('.svDetailDialog').open);assert.equal(await page.evaluate(()=>document.activeElement.getAttribute('href')),selected.href);assert(Math.abs(await page.evaluate(()=>scrollY)-selected.scroll)<=1);
+ }finally{await context.close();}
+});
+
 for (const viewport of [{width:1101,height:700},{width:1280,height:720},{width:1363,height:936},{width:1920,height:1080}]) test('TV selection has a cinematic artwork preview without covering its gallery at '+viewport.width+'px', {skip:!available&&'Chromium is not installed'}, async () => {
   const {context,page}=await open(viewport,true,true,'no-preference');
   try {

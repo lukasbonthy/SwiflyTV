@@ -260,7 +260,7 @@
     const formatTime = seconds => {const value = Math.max(0, Math.ceil(Number(seconds) || 0));return Math.floor(value / 60) + ':' + String(value % 60).padStart(2, '0');};
     const status = (message, error = false) => {const output = $('[data-study-status]');output.textContent = message;output.dataset.error = String(error);};
     let state = defaultState(), store = null, owner = '', verified = false, accountReady = false, suspended = false, destroyed = false, catalog = null, scenes = [], localScene = null, socket = null, rooms = null, roomRows = [], interval = 0, saveTimeout = 0, focusGeneration = 0, focusQueue = Promise.resolve(), focusTracked = false, hasStartedTimer = false, playbackGeneration = 0, ownerGeneration = 0, ambientPlaying = false;
-    const audio = new win.Audio();audio.preload = 'metadata';
+    const audio = new win.Audio();audio.preload = 'none';
     const ambient = createAmbientMixer(win), video = $('[data-study-video]'), poster = $('[data-study-poster]');
     const activity = createActivityTracker({now: () => win.performance.now(), wallNow: () => win.Date.now(), onElapsed: (_seconds, bounds) => {if (verified && !suspended) creditStudy(state.stats, bounds.startAt, bounds.endAt);}});
     const timer = createTimer({now: () => win.performance.now(), wallNow: () => win.Date.now(), onComplete: () => {
@@ -319,10 +319,10 @@
       const duration = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : currentTrack()?.duration || 0;
       $('[data-study-seek]').value = duration ? Math.min(1000, audio.currentTime / duration * 1000) : 0;$('[data-study-time]').textContent = formatTime(audio.currentTime);$('[data-study-track-duration]').textContent = formatTime(duration);
     }
-    async function playMusic() {if (!canUse()) return;const generation = ++playbackGeneration;status('Loading ' + currentTrack().title + '…');try {await audio.play();if (generation !== playbackGeneration) return;if (!canUse()) audio.pause();else {renderPlayback();status('Playing ' + currentTrack().title + '.');}} catch {if (generation === playbackGeneration) status('Playback could not start. Select Play to try again.', true);}}
+    async function playMusic() {if (!canUse()) return;const generation = ++playbackGeneration;status('Loading ' + currentTrack().title + '…');try {if(audio.getAttribute('src')!==currentTrack().url){audio.src=currentTrack().url;audio.load();}await audio.play();if (generation !== playbackGeneration) return;if (!canUse()) audio.pause();else {renderPlayback();status('Playing ' + currentTrack().title + '.');}} catch {if (generation === playbackGeneration) status('Playback could not start. Select Play to try again.', true);}}
     function selectTrack(id, play = false) {
       const track = catalog?.tracks.find(item => item.id === id);if (!track) return;
-      playbackGeneration++;audio.pause();state.track = id;audio.src = track.url;audio.currentTime = 0;audio.volume = state.volume;audio.muted = state.muted;audio.load();$('[data-study-track-title]').textContent = track.title;$('[data-study-track-artist]').textContent = track.artist + ' · Lofi collection';renderPlayback();renderTracks();updateShare();if (play) playMusic();
+      playbackGeneration++;audio.pause();audio.removeAttribute('src');audio.load();state.track = id;audio.currentTime = 0;audio.volume = state.volume;audio.muted = state.muted;$('[data-study-track-title]').textContent = track.title;$('[data-study-track-artist]').textContent = track.artist + ' · Lofi collection';renderPlayback();renderTracks();updateShare();if (play) playMusic();
     }
     function stepTrack(direction) {const tracks = filteredTracks(false);if (!tracks.length) {status('This station has no tracks yet. Choose another station.');return;}const index = tracks.findIndex(track => track.id === state.track);let next = (index + direction + tracks.length) % tracks.length;if (state.shuffle && tracks.length > 1) {do {next = Math.floor(Math.random() * tracks.length);} while (tracks[next].id === state.track);}selectTrack(tracks[next].id, true);persist();}
     function effective() {return win.SwiflyAppearance?.effective || win.SwiflyAppearance || {};}

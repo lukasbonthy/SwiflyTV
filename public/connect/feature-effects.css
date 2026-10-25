@@ -6,7 +6,7 @@
  font-family:"Host Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
 }
 .svFeatureNav{gap:3px;padding:4px;border:1px solid var(--sf-border,#ffffff1f);border-radius:14px;background:rgb(12 15 20 / .66)}
-.svFeatureNav a{min-height:34px;border:0;border-radius:10px;background:transparent;color:#afb2ba;font-size:12px;font-weight:500;transition:background-color .15s,color .15s}
+.svFeatureNav a{min-height:34px;border:0;border-radius:10px;background:transparent;color:#afb2ba;font-size:calc(12px * var(--st-ui-scale, 1));font-weight:500;transition:background-color .15s,color .15s}
 .svFeatureNav a:hover{background:#ffffff0e;color:#f5f6f8}
 .svFeatureNav [aria-current=page]{background:#ffffff15;color:#f5f6f8;font-weight:600}
 .svConnectTabs a[aria-current=page]{background:#ffffff13;color:#f5f6f8}
@@ -28,7 +28,7 @@
 .svDialogMark{background:#ffffff07;border-color:#ffffff14;color:#c5c9d1}
 .svNotificationDialog [data-connect-close]{background:transparent;border-color:transparent;color:#a8abb2}
 .svNotificationDialog [data-connect-close]:hover{background:#ffffff0e;color:#f5f6f8}
-.svNotificationButton>b{background:#e0e2e7;color:#111419;border:2px solid #24272d;box-sizing:border-box;min-width:17px;height:17px;font-size:8px}
+.svNotificationButton>b{background:#e0e2e7;color:#111419;border:2px solid #24272d;box-sizing:border-box;min-width:17px;height:17px;font-size:calc(8px * var(--st-ui-scale, 1))}
 .svDiscoveryEmblem{display:none}
 .svDiscoveryEyebrow{color:#a8abb2}
 .svRecommendationsPage .svMoodInput,.svBookSearch{background:rgb(17 20 25 / .92);border-color:#ffffff26;box-shadow:0 8px 28px #0003}
@@ -46,7 +46,7 @@
 :where(.svConnectPage,.svConnectDialog,.svDiscoveryPage,.svBookDialog,.svDiscoverySearch) :focus-visible,.svFeatureNav a:focus-visible{outline:2px solid #d5d8df!important;outline-offset:3px!important}
 
 @media(max-width:760px){
- .svFeatureNav{gap:2px;padding:3px}.svFeatureNav a{min-height:38px;font-size:11px}
+ .svFeatureNav{gap:2px;padding:3px}.svFeatureNav a{min-height:38px;font-size:calc(11px * var(--st-ui-scale, 1))}
 }
 /* Saved appearance and performance preferences also cover the feature HUD. */
 body.svCleanShell[data-st-glass=off] :is(.svConnectDialog,.svBookDialog),

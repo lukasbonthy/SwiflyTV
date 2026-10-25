@@ -5,9 +5,9 @@ body.svCleanShell #svNavSearchPopup.svDiscoverySearch:focus-within{border-color:
 .svSearchTop{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid #ffffff12}
 .svSearchTop>span{color:#adadad}
 .svSearchTop>span svg{width:18px;height:18px}
-.svDiscoverySearch #svNavSearchInput{flex:1!important;min-width:0!important;width:100%!important;max-width:none!important;min-height:40px!important;height:auto!important;padding:8px 0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;outline:none!important;color:#f5f6f8!important;font-size:14px!important}
+.svDiscoverySearch #svNavSearchInput{flex:1!important;min-width:0!important;width:100%!important;max-width:none!important;min-height:40px!important;height:auto!important;padding:8px 0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;outline:none!important;color:#f5f6f8!important;font-size:calc(14px * var(--st-ui-scale, 1))!important}
 .svDiscoverySearch #svNavSearchInput::placeholder{color:#909090}
-.svDiscoverySearch button{position:static!important;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;width:auto!important;min-width:0!important;height:auto!important;margin:0;box-shadow:none!important;transform:none!important;border:0!important;border-radius:9px!important;background:transparent!important;color:#adadad!important;font-family:inherit!important;font-size:12px!important;cursor:pointer}
+.svDiscoverySearch button{position:static!important;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;width:auto!important;min-width:0!important;height:auto!important;margin:0;box-shadow:none!important;transform:none!important;border:0!important;border-radius:9px!important;background:transparent!important;color:#adadad!important;font-family:inherit!important;font-size:calc(12px * var(--st-ui-scale, 1))!important;cursor:pointer}
 .svSearchTop [data-search-close],.svSearchTop .svSearchSubmit{flex:0 0 36px;min-width:36px!important;min-height:40px!important;padding:8px!important}
 .svSearchTop .svSearchSubmit{background:#ffffff0c!important;color:#d5d8df!important}
 .svSearchTop button:hover{background:#ffffff14!important;color:#fff!important}
@@ -16,83 +16,83 @@ body.svCleanShell #svNavSearchPopup.svDiscoverySearch:focus-within{border-color:
 .svSearchFilters button[aria-pressed=true]{background:#ffffff12!important;color:#f5f6f8!important;border-color:#ffffff0b!important}
 .svSearchFilters button:hover{background:#ffffff0a!important;color:#f5f6f8!important}
 .svSearchBody{min-height:92px;padding:0 12px 12px;overflow-y:auto;scrollbar-width:thin;overscroll-behavior:contain}
-.svSearchLabel{display:block;margin:13px 5px 10px;color:#a8abb2;font-size:12px;letter-spacing:0}
+.svSearchLabel{display:block;margin:13px 5px 10px;color:#a8abb2;font-size:calc(12px * var(--st-ui-scale, 1));letter-spacing:0}
 .svSearchRecentList{display:flex;flex-wrap:wrap;gap:6px;padding:0 4px 10px}
-.svSearchRecentList button{min-height:36px!important;padding:8px 11px!important;border:1px solid #ffffff16!important;background:#ffffff04!important;border-radius:9px!important;color:#c5c9d1!important;font-size:12px!important}
+.svSearchRecentList button{min-height:36px!important;padding:8px 11px!important;border:1px solid #ffffff16!important;background:#ffffff04!important;border-radius:9px!important;color:#c5c9d1!important;font-size:calc(12px * var(--st-ui-scale, 1))!important}
 .svSearchRecentList button:hover{background:#ffffff0c!important;border-color:#ffffff2b!important}
 .svSearchRecentList .svSearchClear{border-color:transparent!important;color:#9b9b9b!important;background:transparent!important}
-.svSearchBody [data-search-status]{font-size:12px;line-height:1.8;color:#aaaaaa;margin:12px 9px}
+.svSearchBody [data-search-status]{font-size:calc(12px * var(--st-ui-scale, 1));line-height:1.8;color:#aaaaaa;margin:12px 9px}
 .svSearchBody [data-search-status]:empty{display:none}
 .svSearchResult{display:flex;align-items:center;gap:12px;min-height:78px;box-sizing:border-box;padding:8px;border:1px solid transparent;border-radius:10px;text-decoration:none;color:#f5f6f8}
 .svSearchResult:hover,.svSearchResult:focus-visible{border-color:#ffffff10;background:#ffffff06;outline:none}
 .svSearchResult img,.svSearchPosterFallback{display:block;flex:0 0 43px;width:43px;height:64px;object-fit:cover;border-radius:7px}
-.svSearchPosterFallback{display:grid;place-items:center;background:#2b2b2b;color:#b6b6b6;font-size:17px}
+.svSearchPosterFallback{display:grid;place-items:center;background:#2b2b2b;color:#b6b6b6;font-size:calc(17px * var(--st-ui-scale, 1))}
 .svSearchResultCopy{display:flex;flex-direction:column;gap:5px;min-width:0}
-.svSearchResultCopy strong{font-size:14px;font-weight:550;line-height:1.5}
-.svSearchResultCopy small{color:#a8abb2;font-size:12px}
-.svSearchResultArrow{margin-left:auto;color:#9d9d9d;font-size:19px;padding:0 5px}
+.svSearchResultCopy strong{font-size:calc(14px * var(--st-ui-scale, 1));font-weight:550;line-height:1.5}
+.svSearchResultCopy small{color:#a8abb2;font-size:calc(12px * var(--st-ui-scale, 1))}
+.svSearchResultArrow{margin-left:auto;color:#9d9d9d;font-size:calc(19px * var(--st-ui-scale, 1));padding:0 5px}
 .svSearchFoot{display:flex;align-items:center;flex-wrap:wrap;gap:18px;flex-shrink:0;padding:8px 16px;background:#ffffff02;border-top:1px solid #ffffff12}
-.svSearchFoot a{display:flex;align-items:center;gap:8px;color:#b6b6b6;font-size:11px;text-decoration:none;min-height:30px}
+.svSearchFoot a{display:flex;align-items:center;gap:8px;color:#b6b6b6;font-size:calc(11px * var(--st-ui-scale, 1));text-decoration:none;min-height:30px}
 .svSearchFoot .svFeatureIcon{width:15px;height:15px;flex-basis:15px}
-.svSearchFoot kbd{font-family:inherit;font-size:11px;color:#939393;margin-left:auto}
+.svSearchFoot kbd{font-family:inherit;font-size:calc(11px * var(--st-ui-scale, 1));color:#939393;margin-left:auto}
 
 /* Reference-led discovery: one prompt, neutral pills, content-first grids. */
 body.svCleanShell .svDiscoveryPage{box-sizing:border-box;max-width:1312px;min-height:calc(100svh - 180px);margin:0 auto;padding:112px 36px 100px!important;background:transparent!important;color:#fafafa}
 .svDiscoveryHero{text-align:center;margin:0 0 24px}
-.svDiscoveryHero p{max-width:520px;margin:15px auto 0;color:#a8a8b2;font-size:15px;line-height:1.65}
+.svDiscoveryHero p{max-width:520px;margin:15px auto 0;color:#a8a8b2;font-size:calc(15px * var(--st-ui-scale, 1));line-height:1.65}
 .svRecommendationsPage{position:relative;isolation:isolate}
-.svDiscoveryHero h1{font-family:inherit;font-size:44px;font-weight:700;line-height:1.15;letter-spacing:-.035em;margin:0;color:#fafafa}
+.svDiscoveryHero h1{font-family:inherit;font-size:calc(44px * var(--st-ui-scale, 1));font-weight:700;line-height:1.15;letter-spacing:-.035em;margin:0;color:#fafafa}
 .svDiscoveryPage>.svFeatureNav{margin:0 auto 32px}
 .svRecommendationForm{box-sizing:border-box;display:block;max-width:640px;width:100%;margin:0 auto;padding:0;border:0;background:transparent}
 .svMoodInput,.svBookSearch{box-sizing:border-box;display:flex;align-items:center;gap:11px;width:100%;padding:4px 5px 4px 16px;border:1px solid #ffffff26;border-radius:18px;background:#141416;box-shadow:0 8px 30px #0003,inset 0 1px #ffffff05}
 .svMoodInput{border-color:#ffffff26;min-height:64px;padding:7px 8px 7px 19px}
 .svMoodInput>span{color:#a8abb2}
 .svMoodInput>span svg,.svBookSearch>span svg{width:19px;height:19px;flex-basis:19px}
-.svMoodInput input,.svBookSearch input{box-sizing:border-box;flex:1;min-width:0;min-height:44px;padding:8px 0!important;border:0!important;border-radius:0!important;outline:none!important;background:transparent!important;box-shadow:none!important;color:#f5f5f5!important;font-family:inherit!important;font-size:16px!important;font-weight:400}
+.svMoodInput input,.svBookSearch input{box-sizing:border-box;flex:1;min-width:0;min-height:44px;padding:8px 0!important;border:0!important;border-radius:0!important;outline:none!important;background:transparent!important;box-shadow:none!important;color:#f5f5f5!important;font-family:inherit!important;font-size:calc(16px * var(--st-ui-scale, 1))!important;font-weight:400}
 .svMoodInput input::placeholder,.svBookSearch input::placeholder{color:#a0a0aa}
 .svMoodInput:focus-within{border-color:#ffffff59}
 .svMoodInput [type=submit],.svBookSearch button{box-sizing:border-box;display:grid;place-items:center;flex:0 0 44px;width:44px;min-width:44px;min-height:44px;padding:11px;margin:0;border:0;border-radius:12px;background:#f5f5f5!important;color:#111!important;box-shadow:none!important;font:inherit;cursor:pointer}
 .svMoodInput [type=submit] svg,.svBookSearch button svg{width:18px;height:18px;flex-basis:18px}
 .svMoodInput [type=submit]:disabled{opacity:.45;cursor:default}
-.svRecommendationPreferences{color:#b6b6c0;font-size:13px;margin-top:12px}
+.svRecommendationPreferences{color:#b6b6c0;font-size:calc(13px * var(--st-ui-scale, 1));margin-top:12px}
 .svRecommendationPreferences summary{display:flex;align-items:center;gap:7px;min-height:36px;width:max-content;margin:0;cursor:pointer;list-style:none}
 .svRecommendationPreferences summary::-webkit-details-marker{display:none}
-.svRecommendationPreferences summary::after{content:'⌄';font-size:14px}
+.svRecommendationPreferences summary::after{content:'⌄';font-size:calc(14px * var(--st-ui-scale, 1))}
 .svRecommendationPreferences[open] summary::after{content:'⌃'}
 .svAiFilters{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:10px 0 15px;padding:18px;border:1px solid #ffffff17;border-radius:14px;background:#0a0a0a}
-.svAiFilters label{display:flex;flex-direction:column;gap:9px;color:#999;font-size:12px}
-.svAiFilters select,.svBookPlayerOptions select{box-sizing:border-box;width:100%;min-height:44px;padding:10px 12px;border:1px solid #ffffff1a;border-radius:12px;background:#141414;color:#eee;font-family:inherit;font-size:13px;outline:none}
+.svAiFilters label{display:flex;flex-direction:column;gap:9px;color:#999;font-size:calc(12px * var(--st-ui-scale, 1))}
+.svAiFilters select,.svBookPlayerOptions select{box-sizing:border-box;width:100%;min-height:44px;padding:10px 12px;border:1px solid #ffffff1a;border-radius:12px;background:#141414;color:#eee;font-family:inherit;font-size:calc(13px * var(--st-ui-scale, 1));outline:none}
 .svAiFilters .svRecommendationExclude{grid-column:1/-1;display:flex;flex-direction:row;align-items:center;gap:8px;line-height:1.5}
 .svRecommendationExclude input{width:15px;height:15px;margin:0;accent-color:#ddd}
 .svMoodIdeas{max-width:640px;margin:48px auto 0}
-.svMoodIdeas h2{color:#b8b8c1;font-size:13px;font-weight:500;margin:0 0 15px}
+.svMoodIdeas h2{color:#b8b8c1;font-size:calc(13px * var(--st-ui-scale, 1));font-weight:500;margin:0 0 15px}
 .svMoodChips{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0}
 .svMoodChips button{display:flex;align-items:center;gap:13px;min-width:0;min-height:86px;padding:17px 18px;border:1px solid #ffffff16;border-radius:16px;background:#101012;color:#c8c4d2;font-family:inherit;text-align:left;cursor:pointer;transition:background .15s,border-color .15s}
 .svMoodChips button>span{display:flex;flex:1;flex-direction:column;gap:7px;min-width:0}
-.svMoodChips strong{color:#eeeef1;font-weight:600;font-size:14px;line-height:1.3}
-.svMoodChips small{color:#aaa8b4;font-size:12px;line-height:1.5}
+.svMoodChips strong{color:#eeeef1;font-weight:600;font-size:calc(14px * var(--st-ui-scale, 1));line-height:1.3}
+.svMoodChips small{color:#aaa8b4;font-size:calc(12px * var(--st-ui-scale, 1));line-height:1.5}
 .svMoodChips button>.svFeatureIcon:first-child{width:20px;height:20px;flex-basis:20px;color:#b9bec7}
 .svMoodChips button>.svFeatureIcon:last-child{width:15px;height:15px;flex-basis:15px;color:#898792}
 .svMoodChips button:hover{background:#191d23;border-color:#ffffff40}
-.svModelNote{text-align:right;color:#9a9aa6;font-size:12px;line-height:1.6;margin:-30px 0 0;padding:8px 0;pointer-events:none}
+.svModelNote{text-align:right;color:#9a9aa6;font-size:calc(12px * var(--st-ui-scale, 1));line-height:1.6;margin:-30px 0 0;padding:8px 0;pointer-events:none}
 .svRecommendationPreferences[open]+.svModelNote{margin:8px 0 0;text-align:left}
-.svAiStatus{text-align:center;color:#aaa;font-size:13px;line-height:1.7;margin:18px 0 0}
+.svAiStatus{text-align:center;color:#aaa;font-size:calc(13px * var(--st-ui-scale, 1));line-height:1.7;margin:18px 0 0}
 .svAiStatus:empty{display:none}
 .svAiCancel{display:flex;margin:12px auto 0}
 .svRecommendationResults{margin-top:44px}
 .svDiscoverySectionHead{margin-bottom:18px}
-.svDiscoverySectionHead h2,.svBookBrowseHeading h2{font-size:21px;line-height:1.5;font-weight:600;letter-spacing:-.02em;color:#eeeef1;margin:0}
+.svDiscoverySectionHead h2,.svBookBrowseHeading h2{font-size:calc(21px * var(--st-ui-scale, 1));line-height:1.5;font-weight:600;letter-spacing:-.02em;color:#eeeef1;margin:0}
 .svDiscoveryGrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:16px}
 .svDiscoveryCard{position:relative;min-width:0;border-radius:14px;overflow:visible}
 .svDiscoveryPoster{box-sizing:border-box;position:relative;display:block;width:100%;aspect-ratio:2/3;padding:0;overflow:hidden;border:0;border-radius:14px;background:#151515;color:#ccc;text-decoration:none;cursor:pointer}
 .svDiscoveryPoster img{display:block;width:100%;height:100%;object-fit:cover;transition:opacity .15s}
 .svDiscoveryPoster:hover img{opacity:.9}
-.svDiscoveryFallback{display:grid;place-items:center;width:100%;height:100%;background:#181818;font-size:42px}
+.svDiscoveryFallback{display:grid;place-items:center;width:100%;height:100%;background:#181818;font-size:calc(42px * var(--st-ui-scale, 1))}
 .svDiscoveryCardCopy{box-sizing:border-box;position:static;padding:13px 2px 0;background:none;pointer-events:none;opacity:1}
-.svPickOverview{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;color:#a3a3ad;font-size:13px;line-height:1.6;margin:8px 0 0}
+.svPickOverview{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;color:#a3a3ad;font-size:calc(13px * var(--st-ui-scale, 1));line-height:1.6;margin:8px 0 0}
 .svDiscoveryCard:hover .svDiscoveryCardCopy,.svDiscoveryCard:focus-within .svDiscoveryCardCopy{opacity:1}
-.svDiscoveryCardCopy small{color:#aaa;font-size:10px;letter-spacing:0}
-.svDiscoveryCardCopy h3{font-size:14px;line-height:1.4;font-weight:600;color:#f5f5f5;margin:5px 0 0}
+.svDiscoveryCardCopy small{color:#aaa;font-size:calc(10px * var(--st-ui-scale, 1));letter-spacing:0}
+.svDiscoveryCardCopy h3{font-size:calc(14px * var(--st-ui-scale, 1));line-height:1.4;font-weight:600;color:#f5f5f5;margin:5px 0 0}
 .svDiscoveryShare{position:absolute;right:8px;top:8px;display:grid;place-items:center;width:40px;height:40px;padding:10px;border:1px solid #ffffff26;border-radius:50%;background:#121216ed;color:#eee;cursor:pointer}
 .svDiscoveryShare svg{width:15px;height:15px}
 .svDiscoveryShare:hover{background:#222}
@@ -100,8 +100,8 @@ body.svCleanShell .svDiscoveryPage{box-sizing:border-box;max-width:1312px;min-he
 .svBookSearch>span{color:#888}
 .svBookSearch button{background:#ffffff0f!important;color:#ddd!important}
 .svBookBrowseHeading{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px}
-.svBookBrowseHeading>span{font-size:13px;color:#a4a4af}
-.svBookStatus{font-size:13px;line-height:1.7;color:#888;margin:16px 0 22px}
+.svBookBrowseHeading>span{font-size:calc(13px * var(--st-ui-scale, 1));color:#a4a4af}
+.svBookStatus{font-size:calc(13px * var(--st-ui-scale, 1));line-height:1.7;color:#888;margin:16px 0 22px}
 .svBookStatus:empty{display:none}
 .svBookGrid{gap:24px 16px}
 .svBookCard{border-radius:0;overflow:visible}
@@ -111,38 +111,38 @@ body.svCleanShell .svDiscoveryPage{box-sizing:border-box;max-width:1312px;min-he
 .svBookCard:nth-child(4n+2) .svBookCoverFallback{background:linear-gradient(135deg,#3a2b33,#211b23)}
 .svBookCard:nth-child(4n+3) .svBookCoverFallback{background:linear-gradient(135deg,#34382b,#1b211c)}
 .svBookCard:nth-child(4n+4) .svBookCoverFallback{background:linear-gradient(135deg,#302d40,#1d1d29)}
-.svBookCoverFallback small{font-size:10px;letter-spacing:.12em;color:#c0c2ca;border-bottom:1px solid #ffffff24;width:100%;padding-bottom:14px}
-.svBookCoverFallback strong{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:5;overflow:hidden;font-family:Georgia,serif;font-size:23px;font-weight:500;line-height:1.25;letter-spacing:-.015em}
-.svBookCoverFallback>span{font-size:12px;line-height:1.5;color:#c0c2ca}
+.svBookCoverFallback small{font-size:calc(10px * var(--st-ui-scale, 1));letter-spacing:.12em;color:#c0c2ca;border-bottom:1px solid #ffffff24;width:100%;padding-bottom:14px}
+.svBookCoverFallback strong{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:5;overflow:hidden;font-family:Georgia,serif;font-size:calc(23px * var(--st-ui-scale, 1));font-weight:500;line-height:1.25;letter-spacing:-.015em}
+.svBookCoverFallback>span{font-size:calc(12px * var(--st-ui-scale, 1));line-height:1.5;color:#c0c2ca}
 .svBookCard .svDiscoveryCardCopy{position:static;padding:12px 1px 0;background:none;opacity:1}
-.svBookCard .svDiscoveryCardCopy h3{font-family:inherit;font-size:14px;font-weight:500;line-height:1.5;margin:0;color:#ddd}
-.svBookCard .svDiscoveryCardCopy p{color:#a5a5b0;font-size:13px;line-height:1.6;margin:5px 0 0}
+.svBookCard .svDiscoveryCardCopy h3{font-family:inherit;font-size:calc(14px * var(--st-ui-scale, 1));font-weight:500;line-height:1.5;margin:0;color:#ddd}
+.svBookCard .svDiscoveryCardCopy p{color:#a5a5b0;font-size:calc(13px * var(--st-ui-scale, 1));line-height:1.6;margin:5px 0 0}
 .svBookMore{display:flex;margin:32px auto 0}
-.svBookCredit{font-size:11px;color:#666;line-height:1.7;text-align:center;margin:44px 0 0}
+.svBookCredit{font-size:calc(11px * var(--st-ui-scale, 1));color:#666;line-height:1.7;text-align:center;margin:44px 0 0}
 .svBookDialog{box-sizing:border-box;position:fixed;width:min(800px,calc(100vw - 32px));max-height:88svh;overflow-y:auto;padding:26px;border:1px solid #ffffff21;border-radius:18px;background:#171717;color:#e8e8e8;box-shadow:0 30px 100px #00000099;scrollbar-width:thin}
 .svBookDialog::backdrop{background:#060606d6}
 .svBookClose{display:grid;place-items:center;position:absolute;right:17px;top:17px;width:38px;height:38px;border:1px solid #ffffff18;border-radius:12px;background:#ffffff06;color:#c0c0c0;cursor:pointer;z-index:1}
 .svBookClose:hover{background:#ffffff0e}
 .svBookDetailHead{display:flex;gap:29px;padding-right:20px}
 .svBookDetailHead>img{flex-shrink:0;align-self:flex-start;width:145px;max-height:210px;object-fit:contain;border-radius:5px}
-.svBookDetailHead .svConnectEyebrow{font-size:8px;color:#acacac}
-.svBookDetailHead h2{margin:13px 0 14px;font-family:inherit;font-size:28px;line-height:1.2;font-weight:400}
-.svBookAuthor{font-size:12px;color:#b0b0b0}
-.svBookDescription{max-height:130px;overflow-y:auto;color:#a4a4a4;font-size:12px;line-height:1.9;scrollbar-width:thin;white-space:normal}
-.svBookDialog [data-book-detail-status]{font-size:11px;line-height:1.8;color:#aeaeae;margin:22px 0 0}
+.svBookDetailHead .svConnectEyebrow{font-size:calc(8px * var(--st-ui-scale, 1));color:#acacac}
+.svBookDetailHead h2{margin:13px 0 14px;font-family:inherit;font-size:calc(28px * var(--st-ui-scale, 1));line-height:1.2;font-weight:400}
+.svBookAuthor{font-size:calc(12px * var(--st-ui-scale, 1));color:#b0b0b0}
+.svBookDescription{max-height:130px;overflow-y:auto;color:#a4a4a4;font-size:calc(12px * var(--st-ui-scale, 1));line-height:1.9;scrollbar-width:thin;white-space:normal}
+.svBookDialog [data-book-detail-status]{font-size:calc(11px * var(--st-ui-scale, 1));line-height:1.8;color:#aeaeae;margin:22px 0 0}
 .svBookPlayback{border-top:1px solid #ffffff10;margin-top:22px;padding-top:22px}
 .svBookPlayback audio{display:block;width:100%;height:45px;color-scheme:dark}
 .svBookPlayerOptions{display:flex;align-items:flex-end;flex-wrap:wrap;gap:16px;margin:22px 0 27px}
-.svBookPlayerOptions label{display:flex;flex-direction:column;gap:9px;color:#a3a3a3;font-size:10px;min-width:120px}
-.svBookPlayerOptions select{background:#262626;border-color:#ffffff15;color:#d6d6d6;font-size:12px}
-.svBookPlayerOptions [data-book-sleep-status]{font-size:11px;line-height:1.7;color:#bababa;padding-bottom:10px;flex:1}
-.svBookChapterHeading{font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#a8a8a8;margin:0 0 10px}
+.svBookPlayerOptions label{display:flex;flex-direction:column;gap:9px;color:#a3a3a3;font-size:calc(10px * var(--st-ui-scale, 1));min-width:120px}
+.svBookPlayerOptions select{background:#262626;border-color:#ffffff15;color:#d6d6d6;font-size:calc(12px * var(--st-ui-scale, 1))}
+.svBookPlayerOptions [data-book-sleep-status]{font-size:calc(11px * var(--st-ui-scale, 1));line-height:1.7;color:#bababa;padding-bottom:10px;flex:1}
+.svBookChapterHeading{font-size:calc(11px * var(--st-ui-scale, 1));font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#a8a8a8;margin:0 0 10px}
 .svBookChapters{display:flex;flex-direction:column;max-height:230px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
 .svBookChapter{display:flex;align-items:center;gap:15px;text-align:left;min-height:49px;padding:13px 12px;border:0;border-bottom:1px solid #ffffff08;background:transparent;color:#b9b9b9;font-family:inherit;cursor:pointer}
 .svBookChapter[aria-current=true]{background:#bababa0d;color:#e3e3e3;border-radius:10px}
-.svBookChapter>span{color:#939393;font-size:10px}
-.svBookChapter strong{flex:1;font-size:12px;font-weight:400;line-height:1.6}
-.svBookChapter small{color:#949494;font-size:10px}
+.svBookChapter>span{color:#939393;font-size:calc(10px * var(--st-ui-scale, 1))}
+.svBookChapter strong{flex:1;font-size:calc(12px * var(--st-ui-scale, 1));font-weight:400;line-height:1.6}
+.svBookChapter small{color:#949494;font-size:calc(10px * var(--st-ui-scale, 1))}
 
 body.svCleanShell .svDiscoveryPage [hidden],.svBookDialog [hidden]{display:none!important}
 .svDiscoveryPage :focus-visible,.svBookDialog :focus-visible,.svDiscoverySearch :focus-visible{outline:2px solid #aaa;outline-offset:4px}
@@ -151,66 +151,66 @@ body.svCleanShell .svDiscoveryPage [hidden],.svBookDialog [hidden]{display:none!
  body.svCleanShell #svNavSearchPopup.svDiscoverySearch{inset:88px auto auto 50%!important;max-height:calc(100svh - 175px)!important;border-radius:16px!important}
  .svSearchTop{gap:7px;padding:8px 12px}
  .svSearchTop>span svg{width:18px;height:18px}
- .svDiscoverySearch #svNavSearchInput{font-size:16px!important;min-height:44px!important}
+ .svDiscoverySearch #svNavSearchInput{font-size:calc(16px * var(--st-ui-scale, 1))!important;min-height:44px!important}
  .svSearchTop [data-search-close],.svSearchTop .svSearchSubmit{flex-basis:30px;min-width:30px!important;padding:6px!important;min-height:44px!important}
  .svSearchFilters{gap:3px;padding:8px 10px}
- .svSearchFilters button{padding:8px 11px!important;font-size:12px!important;min-height:44px!important}
+ .svSearchFilters button{padding:8px 11px!important;font-size:calc(12px * var(--st-ui-scale, 1))!important;min-height:44px!important}
  .svSearchBody{padding:0 8px 10px}
  .svSearchResult{gap:12px;min-height:80px;padding:8px}
- .svSearchResultCopy strong{font-size:14px}
+ .svSearchResultCopy strong{font-size:calc(14px * var(--st-ui-scale, 1))}
  .svSearchFoot{padding:10px 15px;gap:20px}
- .svSearchFoot a{min-height:35px;font-size:12px}
+ .svSearchFoot a{min-height:35px;font-size:calc(12px * var(--st-ui-scale, 1))}
  .svSearchFoot kbd{display:none}
  body.svCleanShell .svDiscoveryPage{padding:110px 16px 110px!important}
  .svDiscoveryHero{margin-bottom:17px}
- .svDiscoveryHero h1{font-size:34px;line-height:1.15}
- .svDiscoveryHero p{font-size:14px;line-height:1.6;max-width:310px;margin-top:13px}
+ .svDiscoveryHero h1{font-size:calc(34px * var(--st-ui-scale, 1));line-height:1.15}
+ .svDiscoveryHero p{font-size:calc(14px * var(--st-ui-scale, 1));line-height:1.6;max-width:310px;margin-top:13px}
  .svDiscoveryPage>.svFeatureNav{margin:0 auto 24px;max-width:360px}
- .svDiscoveryPage>.svFeatureNav a{min-height:40px;font-size:11px}
+ .svDiscoveryPage>.svFeatureNav a{min-height:40px;font-size:calc(11px * var(--st-ui-scale, 1))}
  .svMoodInput,.svBookSearch{gap:8px;padding-left:12px;border-radius:14px}
  .svMoodInput>span svg,.svBookSearch>span svg{width:17px;height:17px}
  .svAiFilters{gap:15px 11px;padding:15px}
- .svAiFilters select{padding:10px;font-size:12px}
- .svAiFilters .svRecommendationExclude{font-size:12px}
+ .svAiFilters select{padding:10px;font-size:calc(12px * var(--st-ui-scale, 1))}
+ .svAiFilters .svRecommendationExclude{font-size:calc(12px * var(--st-ui-scale, 1))}
  .svRecommendationPreferences summary{min-height:40px}
- .svModelNote{font-size:11px}
+ .svModelNote{font-size:calc(11px * var(--st-ui-scale, 1))}
  .svMoodIdeas{margin-top:32px}
  .svMoodChips{gap:10px}
  .svMoodChips button{min-height:104px;padding:15px 13px;gap:9px;flex-wrap:wrap;align-content:center}
  .svMoodChips button>span{flex-basis:calc(100% - 30px);gap:5px}
  .svMoodChips button>.svFeatureIcon:last-child{display:none}
- .svMoodChips strong{font-size:13px}
- .svMoodChips small{font-size:12px}
+ .svMoodChips strong{font-size:calc(13px * var(--st-ui-scale, 1))}
+ .svMoodChips small{font-size:calc(12px * var(--st-ui-scale, 1))}
  .svMoodChips button>.svFeatureIcon:first-child{width:18px;height:18px;flex-basis:18px}
  .svRecommendationResults{margin-top:36px}
  .svDiscoveryGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 13px}
  .svDiscoveryCardCopy{opacity:1;padding:12px 1px 0}
- .svDiscoveryCardCopy h3{font-size:13px}
+ .svDiscoveryCardCopy h3{font-size:calc(13px * var(--st-ui-scale, 1))}
  .svDiscoveryShare{width:40px;height:40px;top:7px;right:7px;padding:10px}
  .svBookSearch{margin-bottom:30px}
  .svBookBrowseHeading{align-items:flex-start}
- .svBookBrowseHeading h2{font-size:19px}
- .svBookBrowseHeading>span{max-width:110px;text-align:right;font-size:11px;line-height:1.5}
+ .svBookBrowseHeading h2{font-size:calc(19px * var(--st-ui-scale, 1))}
+ .svBookBrowseHeading>span{max-width:110px;text-align:right;font-size:calc(11px * var(--st-ui-scale, 1));line-height:1.5}
  .svBookGrid{gap:24px 13px}
  .svBookCoverFallback{padding:20px 15px}
- .svBookCoverFallback strong{font-size:20px}
- .svBookCard .svDiscoveryCardCopy h3{font-size:14px}
+ .svBookCoverFallback strong{font-size:calc(20px * var(--st-ui-scale, 1))}
+ .svBookCard .svDiscoveryCardCopy h3{font-size:calc(14px * var(--st-ui-scale, 1))}
  .svBookDialog{padding:24px 20px;border-radius:18px}
  .svBookDetailHead{display:block;padding-right:6px}
  .svBookDetailHead>img{display:block;width:100px;height:145px;margin:0 auto 22px}
- .svBookDetailHead h2{font-size:25px;padding-right:16px}
- .svBookDescription{max-height:110px;font-size:12px}
+ .svBookDetailHead h2{font-size:calc(25px * var(--st-ui-scale, 1));padding-right:16px}
+ .svBookDescription{max-height:110px;font-size:calc(12px * var(--st-ui-scale, 1))}
  .svBookPlayerOptions{gap:13px}
  .svBookPlayerOptions label{flex:1;min-width:106px}
- .svBookPlayerOptions [data-book-sleep-status]{flex:1 1 100%;font-size:11px;padding:0}
+ .svBookPlayerOptions [data-book-sleep-status]{flex:1 1 100%;font-size:calc(11px * var(--st-ui-scale, 1));padding:0}
  .svBookChapters{max-height:215px}
  .svBookChapter{gap:11px;padding:12px 9px}
- .svBookChapter strong{font-size:12px}
+ .svBookChapter strong{font-size:calc(12px * var(--st-ui-scale, 1))}
 }
-@media(max-width:359px){.svDiscoveryHero h1{font-size:28px}.svSearchTop>span{display:none}.svSearchFilters button{padding:8px 10px!important}.svAiFilters{grid-template-columns:1fr}.svMoodInput input::placeholder{font-size:14px}}
+@media(max-width:359px){.svDiscoveryHero h1{font-size:calc(28px * var(--st-ui-scale, 1))}.svSearchTop>span{display:none}.svSearchFilters button{padding:8px 10px!important}.svAiFilters{grid-template-columns:1fr}.svMoodInput input::placeholder{font-size:calc(14px * var(--st-ui-scale, 1))}}
 @media(hover:none){.svDiscoveryCardCopy{opacity:1}}
 @media(prefers-reduced-motion:reduce){.svDiscoveryPoster img,.svDiscoveryCardCopy{transition:none}}
-html[data-sv-tv=true] :is(.svConnectButton,.svFeatureNav a,.svConnectTabs a,.svBookSearch button,.svMoodChips button){min-height:56px;font-size:16px}
+html[data-sv-tv=true] :is(.svConnectButton,.svFeatureNav a,.svConnectTabs a,.svBookSearch button,.svMoodChips button){min-height:56px;font-size:calc(16px * var(--st-ui-scale, 1))}
 
 .svRecommendationsPage:has(.svRecommendationResults:not([hidden])) .svMoodIdeas{display:none}
 .svBookCard .svDiscoveryCardCopy h3{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
@@ -219,42 +219,42 @@ html[data-sv-tv=true] :is(.svConnectButton,.svFeatureNav a,.svConnectTabs a,.svB
 body.svCleanShell .svRecommendationsPage{padding-top:118px!important}
 .svRecommendationsPage>.svFeatureNav{margin-bottom:32px}
 .svRecommendationsPage .svDiscoveryHero{margin:0 auto 30px;max-width:740px}
-.svDiscoveryEyebrow{display:block;margin-bottom:14px;color:#a5a5ad;font-size:13px;font-weight:500;letter-spacing:.025em}
-.svRecommendationsPage .svDiscoveryHero h1{font-size:clamp(36px,4.2vw,44px);font-weight:650;line-height:1.12;letter-spacing:-.04em}
-.svRecommendationsPage .svDiscoveryHero p{font-size:16px;line-height:1.6;color:#a3a3ad;margin-top:18px;max-width:none}
+.svDiscoveryEyebrow{display:block;margin-bottom:14px;color:#a5a5ad;font-size:calc(13px * var(--st-ui-scale, 1));font-weight:500;letter-spacing:.025em}
+.svRecommendationsPage .svDiscoveryHero h1{font-size:calc(clamp(36px,4.2vw,44px) * var(--st-ui-scale, 1));font-weight:650;line-height:1.12;letter-spacing:-.04em}
+.svRecommendationsPage .svDiscoveryHero p{font-size:calc(16px * var(--st-ui-scale, 1));line-height:1.6;color:#a3a3ad;margin-top:18px;max-width:none}
 .svRecommendationsPage .svRecommendationForm{max-width:720px;position:relative}
 .svRecommendationsPage .svMoodInput{display:flex;flex-direction:column;align-items:stretch;gap:0;min-height:0;padding:20px 20px 15px;border:1px solid #ffffff24;border-radius:22px;background:linear-gradient(145deg,#19191d,#111114);box-shadow:0 16px 45px #0005,inset 0 1px #ffffff05}
 .svRecommendationsPage .svMoodInput:focus-within{border-color:#ffffff55;box-shadow:0 16px 45px #0005,0 0 0 3px #ffffff04}
 .svPromptEntry{display:flex;align-items:flex-start;gap:14px}
 .svPromptEntry>span{padding-top:5px;color:#c3c0ce;flex:none}
 .svPromptEntry>span svg{width:21px;height:21px}
-.svRecommendationsPage #svRecommendationPrompt{display:block;box-sizing:border-box;flex:1;min-width:0;width:100%;height:76px;min-height:76px;max-height:140px;margin:0;padding:2px 0 10px!important;border:0!important;border-radius:0!important;background:transparent!important;color:#fafafa!important;font-family:inherit!important;font-size:17px!important;font-weight:400;line-height:1.6;box-shadow:none!important;outline:none!important;resize:none;scrollbar-width:thin}
-.svRecommendationsPage #svRecommendationPrompt::placeholder{color:#92929e;font-size:17px;opacity:1}
+.svRecommendationsPage #svRecommendationPrompt{display:block;box-sizing:border-box;flex:1;min-width:0;width:100%;height:76px;min-height:76px;max-height:140px;margin:0;padding:2px 0 10px!important;border:0!important;border-radius:0!important;background:transparent!important;color:#fafafa!important;font-family:inherit!important;font-size:calc(17px * var(--st-ui-scale, 1))!important;font-weight:400;line-height:1.6;box-shadow:none!important;outline:none!important;resize:none;scrollbar-width:thin}
+.svRecommendationsPage #svRecommendationPrompt::placeholder{color:#92929e;font-size:calc(17px * var(--st-ui-scale, 1));opacity:1}
 .svPromptActions{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:8px}
 .svPromptType{display:flex;align-items:center;gap:8px;min-width:0;color:#b8b8c2}
 .svPromptType>.svFeatureIcon{flex:none;width:16px;height:16px}
-.svPromptType select{box-sizing:border-box;max-width:200px;min-width:0;min-height:42px;padding:8px 17px 8px 0;border:0;border-radius:0;background:transparent;color:#bdbdc7;font:inherit;font-size:13px;cursor:pointer;color-scheme:dark}
-.svRecommendationsPage .svMoodInput .svFindPicks{display:flex;align-items:center;justify-content:center;gap:12px;flex:0 0 auto;width:auto;min-width:0;height:44px;min-height:44px;padding:11px 16px;border-radius:12px;background:#f5f5f5!important;color:#151518!important;font-family:inherit;font-size:13px;font-weight:600;line-height:1.3;white-space:nowrap}
+.svPromptType select{box-sizing:border-box;max-width:200px;min-width:0;min-height:42px;padding:8px 17px 8px 0;border:0;border-radius:0;background:transparent;color:#bdbdc7;font:inherit;font-size:calc(13px * var(--st-ui-scale, 1));cursor:pointer;color-scheme:dark}
+.svRecommendationsPage .svMoodInput .svFindPicks{display:flex;align-items:center;justify-content:center;gap:12px;flex:0 0 auto;width:auto;min-width:0;height:44px;min-height:44px;padding:11px 16px;border-radius:12px;background:#f5f5f5!important;color:#151518!important;font-family:inherit;font-size:calc(13px * var(--st-ui-scale, 1));font-weight:600;line-height:1.3;white-space:nowrap}
 .svFindPicks span{display:block}
 .svPromptMeta{position:relative;min-height:42px;padding-top:4px}
-.svRecommendationsPage .svRecommendationPreferences{margin:0;font-size:12px;color:#9999a5}
+.svRecommendationsPage .svRecommendationPreferences{margin:0;font-size:calc(12px * var(--st-ui-scale, 1));color:#9999a5}
 .svRecommendationsPage .svRecommendationPreferences summary{min-height:42px;gap:8px}
-.svRecommendationsPage .svModelNote{position:absolute;top:17px;right:0;margin:0;padding:0;font-size:11px;line-height:1.5;color:#7f7f8b;text-align:right}
+.svRecommendationsPage .svModelNote{position:absolute;top:17px;right:0;margin:0;padding:0;font-size:calc(11px * var(--st-ui-scale, 1));line-height:1.5;color:#7f7f8b;text-align:right}
 .svRecommendationsPage .svAiFilters{grid-template-columns:1fr 1fr;align-items:center;margin:5px 0 4px;padding:16px 18px;background:#111114;border-radius:16px}
-.svRecommendationsPage .svAiFilters .svRecommendationExclude{grid-column:auto;font-size:12px;color:#b6b6c0}
-.svRecommendationsPage .svAiStatus{margin:14px 0 0;color:#b4b4c1;font-size:13px}
+.svRecommendationsPage .svAiFilters .svRecommendationExclude{grid-column:auto;font-size:calc(12px * var(--st-ui-scale, 1));color:#b6b6c0}
+.svRecommendationsPage .svAiStatus{margin:14px 0 0;color:#b4b4c1;font-size:calc(13px * var(--st-ui-scale, 1))}
 .svQueryFilters{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0;padding:0;list-style:none}
 .svQueryFilters[hidden]{display:none}
-.svQueryFilters li{padding:5px 9px;border:1px solid #ffffff1a;border-radius:7px;background:#ffffff04;color:#b8bdc6;font-size:11px;line-height:1.5}
-.svPickReason{margin:7px 0 0;color:#a0a8b4;font-size:11px;line-height:1.5}
-.svSearchTop [data-search-close]{flex:0 0 auto;min-width:44px!important;font-size:11px!important}
+.svQueryFilters li{padding:5px 9px;border:1px solid #ffffff1a;border-radius:7px;background:#ffffff04;color:#b8bdc6;font-size:calc(11px * var(--st-ui-scale, 1));line-height:1.5}
+.svPickReason{margin:7px 0 0;color:#a0a8b4;font-size:calc(11px * var(--st-ui-scale, 1));line-height:1.5}
+.svSearchTop [data-search-close]{flex:0 0 auto;min-width:44px!important;font-size:calc(11px * var(--st-ui-scale, 1))!important}
 .svRecommendationsPage .svMoodIdeas{max-width:720px;margin:44px auto 0}
-.svRecommendationsPage .svMoodIdeas h2{font-size:13px;line-height:1.6;font-weight:400;color:#93939f;margin:0 0 14px}
+.svRecommendationsPage .svMoodIdeas h2{font-size:calc(13px * var(--st-ui-scale, 1));line-height:1.6;font-weight:400;color:#93939f;margin:0 0 14px}
 .svRecommendationsPage .svMoodChips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 .svRecommendationsPage .svMoodChips button{display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:14px;min-height:128px;padding:17px;border:1px solid #ffffff15;border-radius:14px;background:#111419;position:relative;white-space:normal;transition:border-color .15s,background .15s}
 .svRecommendationsPage .svMoodChips button>span{display:flex;flex-direction:column;flex:0 1 auto;gap:6px;width:100%;min-width:0}
-.svRecommendationsPage .svMoodChips strong{display:block;font-size:14px;line-height:1.45;font-weight:550;color:#e4e4eb}
-.svRecommendationsPage .svMoodChips small{display:block;font-size:12px;line-height:1.6;color:#8e8e9d}
+.svRecommendationsPage .svMoodChips strong{display:block;font-size:calc(14px * var(--st-ui-scale, 1));line-height:1.45;font-weight:550;color:#e4e4eb}
+.svRecommendationsPage .svMoodChips small{display:block;font-size:calc(12px * var(--st-ui-scale, 1));line-height:1.6;color:#8e8e9d}
 .svRecommendationsPage .svMoodChips button>.svFeatureIcon:first-child{width:21px;height:21px;color:#b9bec7}
 .svRecommendationsPage .svMoodChips button>.svFeatureIcon:last-child{position:absolute;right:16px;top:22px;width:15px;height:15px;color:#747480}
 .svRecommendationsPage .svMoodChips button:hover{border-color:#ffffff38;background:#151518}
@@ -262,48 +262,48 @@ body.svCleanShell .svRecommendationsPage{padding-top:118px!important}
 .svRecommendationsPage .svRecommendationResults{max-width:1120px;margin:48px auto 0}
 .svRecommendationsPage .svDiscoveryGrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:30px 20px}
 .svRecommendationsPage .svDiscoveryCardCopy{padding:15px 2px 0}
-.svRecommendationsPage .svDiscoveryCardCopy h3{font-size:16px;line-height:1.45;margin-top:6px}
-.svRecommendationsPage .svDiscoveryCardCopy small{font-size:12px;color:#9595a1}
-.svRecommendationsPage .svPickOverview{color:#9696a3;font-size:13px;line-height:1.65}
+.svRecommendationsPage .svDiscoveryCardCopy h3{font-size:calc(16px * var(--st-ui-scale, 1));line-height:1.45;margin-top:6px}
+.svRecommendationsPage .svDiscoveryCardCopy small{font-size:calc(12px * var(--st-ui-scale, 1));color:#9595a1}
+.svRecommendationsPage .svPickOverview{color:#9696a3;font-size:calc(13px * var(--st-ui-scale, 1));line-height:1.65}
 .svRecommendationsPage .svDiscoveryGrid:has(>.svDiscoveryCard:only-child){display:block;max-width:720px;margin:0 auto}
 .svRecommendationsPage .svDiscoveryCard:only-child{display:grid;grid-template-columns:180px minmax(0,1fr);gap:28px;align-items:center;background:#111114;border:1px solid #ffffff16;border-radius:20px;padding:20px}
 .svRecommendationsPage .svDiscoveryCard:only-child .svDiscoveryCardCopy{padding:0 24px 0 0}
-.svRecommendationsPage .svDiscoveryCard:only-child h3{font-size:25px;line-height:1.2;margin:10px 0 14px}
-.svRecommendationsPage .svDiscoveryCard:only-child .svPickOverview{-webkit-line-clamp:5;font-size:14px}
+.svRecommendationsPage .svDiscoveryCard:only-child h3{font-size:calc(25px * var(--st-ui-scale, 1));line-height:1.2;margin:10px 0 14px}
+.svRecommendationsPage .svDiscoveryCard:only-child .svPickOverview{-webkit-line-clamp:5;font-size:calc(14px * var(--st-ui-scale, 1))}
 @media(max-width:760px){
  body.svCleanShell .svRecommendationsPage{padding-top:101px!important}
  .svRecommendationsPage>.svFeatureNav{margin-bottom:30px}
  .svRecommendationsPage .svDiscoveryHero{margin-bottom:26px}
- .svDiscoveryEyebrow{font-size:12px;margin-bottom:12px}
- .svRecommendationsPage .svDiscoveryHero h1{font-size:36px}
- .svRecommendationsPage .svDiscoveryHero p{font-size:14px;max-width:290px;margin-top:14px}
+ .svDiscoveryEyebrow{font-size:calc(12px * var(--st-ui-scale, 1));margin-bottom:12px}
+ .svRecommendationsPage .svDiscoveryHero h1{font-size:calc(36px * var(--st-ui-scale, 1))}
+ .svRecommendationsPage .svDiscoveryHero p{font-size:calc(14px * var(--st-ui-scale, 1));max-width:290px;margin-top:14px}
  .svRecommendationsPage .svMoodInput{padding:17px 15px 13px;border-radius:18px}
  .svPromptEntry{gap:10px}
- .svRecommendationsPage #svRecommendationPrompt{font-size:16px!important;line-height:1.6;height:82px;min-height:82px}
- .svRecommendationsPage #svRecommendationPrompt::placeholder{font-size:16px}
+ .svRecommendationsPage #svRecommendationPrompt{font-size:calc(16px * var(--st-ui-scale, 1))!important;line-height:1.6;height:82px;min-height:82px}
+ .svRecommendationsPage #svRecommendationPrompt::placeholder{font-size:calc(16px * var(--st-ui-scale, 1))}
  .svPromptActions{gap:8px}
  .svPromptType{gap:5px}
- .svPromptType select{font-size:12px;max-width:140px;padding-right:8px}
- .svRecommendationsPage .svMoodInput .svFindPicks{gap:8px;padding:11px 12px;font-size:12px}
+ .svPromptType select{font-size:calc(12px * var(--st-ui-scale, 1));max-width:140px;padding-right:8px}
+ .svRecommendationsPage .svMoodInput .svFindPicks{gap:8px;padding:11px 12px;font-size:calc(12px * var(--st-ui-scale, 1))}
  .svFindPicks svg{width:16px;height:16px}
- .svRecommendationsPage .svModelNote{font-size:10px;top:18px}
+ .svRecommendationsPage .svModelNote{font-size:calc(10px * var(--st-ui-scale, 1));top:18px}
  .svRecommendationsPage .svAiFilters{grid-template-columns:1fr;gap:15px}
  .svRecommendationsPage .svMoodIdeas{margin-top:29px}
  .svRecommendationsPage .svMoodChips{grid-template-columns:1fr;gap:9px}
  .svRecommendationsPage .svMoodChips button{flex-direction:row;align-items:center;gap:14px;min-height:82px;padding:15px 17px;flex-wrap:nowrap}
  .svRecommendationsPage .svMoodChips button>span{flex:1;gap:4px;padding-right:15px}
  .svRecommendationsPage .svMoodChips button>.svFeatureIcon:last-child{display:block;top:33px}
- .svRecommendationsPage .svMoodChips strong{font-size:14px}
- .svRecommendationsPage .svMoodChips small{font-size:12px}
+ .svRecommendationsPage .svMoodChips strong{font-size:calc(14px * var(--st-ui-scale, 1))}
+ .svRecommendationsPage .svMoodChips small{font-size:calc(12px * var(--st-ui-scale, 1))}
  .svRecommendationsPage .svDiscoveryGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:25px 14px}
- .svRecommendationsPage .svDiscoveryCardCopy h3{font-size:14px}
+ .svRecommendationsPage .svDiscoveryCardCopy h3{font-size:calc(14px * var(--st-ui-scale, 1))}
  .svRecommendationsPage .svDiscoveryCard:only-child{grid-template-columns:100px minmax(0,1fr);gap:16px;padding:14px}
  .svRecommendationsPage .svDiscoveryCard:only-child .svDiscoveryCardCopy{padding-right:0}
- .svRecommendationsPage .svDiscoveryCard:only-child h3{font-size:19px;margin:7px 0 8px}
- .svRecommendationsPage .svDiscoveryCard:only-child .svPickOverview{-webkit-line-clamp:3;font-size:12px}
+ .svRecommendationsPage .svDiscoveryCard:only-child h3{font-size:calc(19px * var(--st-ui-scale, 1));margin:7px 0 8px}
+ .svRecommendationsPage .svDiscoveryCard:only-child .svPickOverview{-webkit-line-clamp:3;font-size:calc(12px * var(--st-ui-scale, 1))}
  .svRecommendationsPage .svDiscoveryCard:only-child .svDiscoveryShare{top:auto;bottom:12px;left:70px}
 }
-@media(max-width:359px){.svRecommendationsPage .svDiscoveryHero h1{font-size:31px}.svPromptType>.svFeatureIcon{display:none}.svPromptType select{max-width:117px}.svRecommendationsPage .svMoodInput .svFindPicks{padding:11px 10px;font-size:11px}}
+@media(max-width:359px){.svRecommendationsPage .svDiscoveryHero h1{font-size:calc(31px * var(--st-ui-scale, 1))}.svPromptType>.svFeatureIcon{display:none}.svPromptType select{max-width:117px}.svRecommendationsPage .svMoodInput .svFindPicks{padding:11px 10px;font-size:calc(11px * var(--st-ui-scale, 1))}}
 @media(prefers-reduced-motion:reduce){.svRecommendationsPage .svMoodChips button{transition:none}}
 body.svCleanShell[data-st-glass=off] #svNavSearchPopup.svDiscoverySearch,
 html:is([data-sv-tv=true],[data-sv-xbox=true]) body.svCleanShell #svNavSearchPopup.svDiscoverySearch,

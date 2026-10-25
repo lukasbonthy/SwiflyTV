@@ -1,3 +1,4 @@
+const {tvControllerSource}=require('./ui-helpers.cjs');
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const {browser,loadServer,tick,cleanup}=require('./ui-helpers.cjs');
@@ -86,8 +87,8 @@ test('Controller navigation and Back target Studio when it opens above movie det
   const details=d.createElement('dialog');details.className='svDetailDialog';details.open=true;details.innerHTML='<button id="moviePlay">Play movie</button>';d.body.append(details);
   for(const button of d.querySelectorAll('button'))button.getBoundingClientRect=()=>({width:80,height:40,top:100,left:100,bottom:140,right:180});
   w.localStorage.setItem('swiflytv.tvFocusMode','true');
-  const controller=[...browser(shell).window.document.querySelectorAll('script:not([src])')].find(script=>script.textContent.includes('var FOCUSABLE_SELECTOR'));
-  assert(controller);w.eval(controller.textContent);d.dispatchEvent(new w.Event('DOMContentLoaded'));
+  const controller=tvControllerSource(browser(shell).window.document);
+  assert(controller);w.eval(controller);d.dispatchEvent(new w.Event('DOMContentLoaded'));
   click(env,'#controlToggleTop');const connected=new w.Event('gamepadconnected');connected.gamepad={id:'Studio controller'};w.dispatchEvent(connected);
   assert(d.getElementById('controlPanel').contains(d.activeElement),'The active Studio must retain controller focus');
   w.navigator.getGamepads=()=>[{id:'Studio controller',axes:[0,0,0,0],buttons:Array.from({length:17},(_,index)=>({pressed:index===1,value:index===1?1:0}))}];
@@ -100,8 +101,8 @@ test('TV navigation can reach and toggle both Motion switches',()=>{
   const nav=d.querySelector('[data-st-tab="motion"]'),smooth=d.querySelector('[data-st-setting="smooth"]'),reduce=d.querySelector('[data-st-setting="reduceMotion"]');
   for(const [node,top] of [[nav,100],[smooth,200],[reduce,300]])node.getBoundingClientRect=()=>({width:40,height:24,top,left:100,bottom:top+24,right:140});
   w.localStorage.setItem('swiflytv.tvFocusMode','true');
-  const controller=[...browser(shell).window.document.querySelectorAll('script:not([src])')].find(script=>script.textContent.includes('var FOCUSABLE_SELECTOR'));
-  w.eval(controller.textContent);d.dispatchEvent(new w.Event('DOMContentLoaded'));nav.focus();
+  const controller=tvControllerSource(browser(shell).window.document);
+  w.eval(controller);d.dispatchEvent(new w.Event('DOMContentLoaded'));nav.focus();
   nav.dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true,cancelable:true}));assert.equal(d.activeElement,smooth,'The smooth-scrolling switch must be reachable by D-pad');
   smooth.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));assert.equal(smooth.checked,false,'TV Select should toggle the switch');
   smooth.dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true,cancelable:true}));assert.equal(d.activeElement,reduce);

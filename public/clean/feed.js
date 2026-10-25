@@ -43,6 +43,7 @@
  function episodeCard(episode,{notification=false}={}){
   const card=node('article','svFeedEpisode');card.dataset.feedEpisodeId=episode.id;
   const link=node('a','svFeedEpisodeLink');link.href=episode.href;
+  Object.assign(link.dataset,{tvTitle:episode.showTitle,tvType:'tv',tvYear:episode.airDate.slice(0,4),tvFacts:'Season '+episode.season+' · Episode '+episode.episode+' · '+dateLabel(episode.airDate)});
   link.append(node('strong','',episode.showTitle),node('span','svFeedEpisodeNumber','Season '+episode.season+' · Episode '+episode.episode));
   if(episode.name&&!prefs().spoilerMode)link.append(node('span','svFeedEpisodeName',episode.name));
   const when=node('time','',dateLabel(episode.airDate));when.dateTime=episode.airDate;link.append(when);card.append(link);
@@ -52,7 +53,7 @@
  function mediaCard(raw,{surprise=false}={}){
   const media=safeMedia(raw);if(!media)return null;
   const card=node('article','svFeedCard');card.dataset.mediaId=media.id;card.dataset.mediaType=media.type;
-  const poster=node('a','svFeedPoster');poster.href=media.href;poster.tabIndex=-1;poster.setAttribute('aria-hidden','true');
+  const poster=node('a','svFeedPoster');poster.href=media.href;poster.setAttribute('aria-label','Details for '+media.title);Object.assign(poster.dataset,{tvTitle:media.title,tvType:media.type,tvYear:media.year||'',tvRating:media.rating||''});card.dataset.tvOverview=clean(media.overview);
   if(media.poster){const image=node('img');image.src=media.poster;image.alt='';image.loading='lazy';image.decoding='async';poster.append(image);}else poster.append(node('span','','Artwork unavailable'));
   const body=node('div','svFeedCardBody'),heading=node('h3'),title=node('a','',media.title);title.href=media.href;heading.append(title);body.append(heading);
   const facts=[media.type==='tv'?'Series':'Movie',/^\d{4}$/.test(media.year||'')?media.year:'',Number.isFinite(media.rating)&&media.rating>0&&media.rating<=10&&media.votes>0?'TMDB '+media.rating.toFixed(1):''].filter(Boolean);body.append(node('p','svFeedFacts',facts.join(' · ')));
@@ -61,7 +62,7 @@
   card.append(poster,body);return card;
  }
  function section(target,heading,message,items,kind){
-  if(!target)return;target.classList.add('svFeedSection');target.setAttribute('aria-busy',String(loading));
+  if(!target)return;target.classList.add('svFeedSection');target.dataset.feedEmpty=String(items.length===0);target.setAttribute('aria-busy',String(loading));
   const signature=JSON.stringify([heading,message,items,prefs().spoilerMode,selections().seeds]);if(rendered.get(target)===signature)return;rendered.set(target,signature);
   const head=node('div','svFeedSectionHead'),retry=node('button','svFeedRefresh','Refresh feed');retry.type='button';retry.dataset.feedRetry='';retry.disabled=loading;head.append(node('h2','',heading),retry);
   const status=node('p','svFeedHint',message);status.setAttribute('role','status');

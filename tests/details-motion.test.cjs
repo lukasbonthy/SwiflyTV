@@ -1,3 +1,4 @@
+const {tvControllerSource}=require('./ui-helpers.cjs');
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const {browser, loadServer, source, tick, cleanup} = require('./ui-helpers.cjs');
@@ -95,8 +96,8 @@ test('Opening details preserves the existing catalog button lenses and labels', 
 test('Legacy TV keyboard controls leave Escape available to the native details dialog', () => {
   const html=api.pageShell({title:'Catalog',body:'<dialog open class="svDetailDialog"><button id="close">Close</button></dialog>'}).replace(/<style\b[^>]*>[\s\S]*?<\/style>/g,'');
   const env=browser(html),w=env.window,d=w.document;
-  const controller=[...d.querySelectorAll('script:not([src])')].find(script=>script.textContent.includes('var FOCUSABLE_SELECTOR'));
-  assert(controller,'The actual TV keyboard controller is required');w.eval(controller.textContent);
+  const controller=tvControllerSource(d);
+  assert(controller,'The actual TV keyboard controller is required');w.eval(controller);
   const key=new w.KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true});d.getElementById('close').dispatchEvent(key);
   assert.equal(key.defaultPrevented,false,'Escape must reach the native dialog');
   assert.equal(w.localStorage.getItem('swiflytv.tvFocusMode'),null);env.finish();
@@ -105,8 +106,8 @@ test('Gamepad focus and Back stay within the open details overlay', () => {
   const html=api.pageShell({title:'Catalog',body:'<a id="outside" href="/movies">Movies</a><dialog open class="svDetailDialog"><button id="inside">Play</button></dialog>'}).replace(/<style\b[^>]*>[\s\S]*?<\/style>/g,'');
   const env=browser(html),w=env.window,d=w.document;
   for(const id of ['outside','inside'])d.getElementById(id).getBoundingClientRect=()=>({width:40,height:40,top:100,left:100,bottom:140,right:140});
-  const controller=[...d.querySelectorAll('script:not([src])')].find(script=>script.textContent.includes('var FOCUSABLE_SELECTOR'));
-  w.eval(controller.textContent);d.dispatchEvent(new w.Event('DOMContentLoaded'));
+  const controller=tvControllerSource(d);
+  w.eval(controller);d.dispatchEvent(new w.Event('DOMContentLoaded'));
   const connected=new w.Event('gamepadconnected');connected.gamepad={id:'Test controller'};w.dispatchEvent(connected);
   assert.equal(d.activeElement.id,'inside','Gamepad focus must exclude the catalog behind the dialog');
   w.navigator.getGamepads=()=>[{id:'Test controller',axes:[0,0,0,0],buttons:Array.from({length:17},(_,index)=>({pressed:index===1,value:index===1?1:0}))}];
@@ -118,8 +119,8 @@ test('Enabled TV keyboard navigation can reach and activate Play inside the over
   d.getElementById('dismiss').getBoundingClientRect=()=>({width:40,height:40,top:80,left:100,bottom:120,right:140});
   d.getElementById('play').getBoundingClientRect=()=>({width:40,height:40,top:160,left:100,bottom:200,right:140});
   d.getElementById('play').addEventListener('click',()=>clicks++);w.localStorage.setItem('swiflytv.tvFocusMode','true');
-  const controller=[...d.querySelectorAll('script:not([src])')].find(script=>script.textContent.includes('var FOCUSABLE_SELECTOR'));
-  w.eval(controller.textContent);d.dispatchEvent(new w.Event('DOMContentLoaded'));
+  const controller=tvControllerSource(d);
+  w.eval(controller);d.dispatchEvent(new w.Event('DOMContentLoaded'));
   d.getElementById('dismiss').dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true,cancelable:true}));
   assert.equal(d.activeElement.id,'play','TV Arrow navigation should remain available inside details');
   d.getElementById('play').dispatchEvent(new w.KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));assert.equal(clicks,1);
@@ -208,7 +209,7 @@ test('TV navigation can expand native season accordions inside details', () => {
   d.getElementById('dismiss').getBoundingClientRect=()=>({width:40,height:40,top:80,left:100,bottom:120,right:140});
   d.getElementById('seasonSummary').getBoundingClientRect=()=>({width:200,height:40,top:160,left:100,bottom:200,right:300});
   w.localStorage.setItem('swiflytv.tvFocusMode','true');
-  const controller=[...d.querySelectorAll('script:not([src])')].find(script=>script.textContent.includes('var FOCUSABLE_SELECTOR'));w.eval(controller.textContent);d.dispatchEvent(new w.Event('DOMContentLoaded'));
+  const controller=tvControllerSource(d);w.eval(controller);d.dispatchEvent(new w.Event('DOMContentLoaded'));
   d.getElementById('dismiss').dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true,cancelable:true}));assert.equal(d.activeElement.id,'seasonSummary');
   d.activeElement.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));assert.equal(d.getElementById('season').open,true,'TV Enter should expand the selected season');env.finish();
 });

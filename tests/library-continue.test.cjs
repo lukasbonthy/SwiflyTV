@@ -21,6 +21,29 @@ test('normal player completion creates durable watched history after Continue Wa
  const {w,api}=start();w.SwiflyContinue.saveProgress(film);assert.equal(w.SwiflyContinue.read().length,0);assert.equal(api.isWatched(film),true);assert.equal(api.list('history')[0].completed,true);
  const stored=JSON.parse(w.localStorage.getItem('swiflytv.library.main'));assert.equal(stored.watched[0].id,'42');assert.equal(stored.history[0].duration,600);
 });
+test('completion preserves resume and remains retryable when watched-history storage fails',()=>{
+ const {w,api}=start();assert.equal(w.SwiflyContinue.saveProgress({...film,currentTime:40,completed:false}),true);
+ const set=w.Storage.prototype.setItem;w.Storage.prototype.setItem=function(key,value){if(key==='swiflytv.library.main')throw new w.DOMException('Quota exceeded','QuotaExceededError');return set.call(this,key,value);};
+ assert.equal(w.SwiflyContinue.saveProgress(film),false,'A failed durable watched write must not report completion.');
+ assert.equal(w.SwiflyContinue.find('movie','42').currentTime,40,'Keep the last usable resume until completion is durable.');assert.equal(api.isWatched(film),false);assert.equal(api.list('history')[0].completed,false);
+ w.Storage.prototype.setItem=set;assert.equal(w.SwiflyContinue.saveProgress(film),true);assert.equal(api.isWatched(film),true);assert.equal(api.list('history')[0].completed,true);assert.equal(w.SwiflyContinue.read().length,0);
+});
+test('a retry after the Continue write fails does not announce a durable completion twice',()=>{
+ const {w,api}=start();w.SwiflyContinue.saveProgress({...film,currentTime:40,completed:false});let completed=0;w.addEventListener('swifly:library-change',event=>{if(event.detail?.action==='watched')completed++;});
+ const set=w.Storage.prototype.setItem;w.Storage.prototype.setItem=function(key,value){if(key==='movieverse.continue')throw new w.DOMException('Quota exceeded','QuotaExceededError');return set.call(this,key,value);};
+ assert.equal(w.SwiflyContinue.saveProgress(film),false);assert.equal(api.isWatched(film),true,'The durable Library result remains the source of truth.');assert.equal(w.SwiflyContinue.find('movie','42').currentTime,40);
+ w.Storage.prototype.setItem=set;assert.equal(w.SwiflyContinue.saveProgress(film),true);assert.equal(completed,1,'Retry removal without sending another watched delta.');assert.equal(w.SwiflyContinue.read().length,0);
+});
+test('completion cache cannot suppress persistence for a different account with the same profile id',()=>{
+ const {w,api}=start();w.localStorage.setItem('swiflytv.accountOwner','alice');assert.equal(w.SwiflyContinue.saveProgress(film),true);
+ w.localStorage.setItem('swiflytv.accountOwner','bob');w.localStorage.removeItem('swiflytv.library.main');w.document.dispatchEvent(new w.Event('swifly:account-hydrated'));assert.equal(api.isWatched(film),false);
+ assert.equal(w.SwiflyContinue.saveProgress(film),true);assert.equal(api.isWatched(film),true,'Record Bob’s completion independently of Alice’s cache.');
+});
+test('verified guest readiness reveals stored Continue Watching without requiring an account hydration event',async()=>{
+ const first=start();first.w.SwiflyContinue.saveProgress({...film,completed:false,currentTime:60,duration:600});const data=Object.fromEntries(Object.keys(first.w.localStorage).map(k=>[k,first.w.localStorage.getItem(k)]));first.finish();
+ const b=browser('<section id="continueWatchingSection" hidden><div id="continueWatchingRail"></div></section>'),w=b.window;for(const [k,v]of Object.entries(data))w.localStorage.setItem(k,v);let verify;w.SwiflyAccount={user:null,ready:new Promise(r=>verify=r)};w.eval(source('library-state.js'));w.eval(source('continue.js'));w.document.dispatchEvent(new w.Event('DOMContentLoaded'));
+ assert.equal(w.document.getElementById('continueWatchingSection').hidden,true);verify({user:null,available:true});await w.SwiflyLibrary.ready;await new Promise(r=>setImmediate(r));w.flush(16);assert.equal(w.document.getElementById('continueWatchingSection').hidden,false);assert.equal(w.document.querySelectorAll('.svResumeCard').length,1);
+});
 test('a completed episode advances Continue Watching only to the real next episode returned by the server',async t=>{
  let path='';const base=await upstream(t,(req,res)=>{path=req.url;res.setHeader('content-type','application/json');res.end(JSON.stringify({next:{season:2,episode:9,title:'Next story',airDate:'2026-10-20'}}));});
  const {w,api}=start();w.fetch=(url,options)=>fetch(base+url,options);w.SwiflyContinue.saveProgress(episode);

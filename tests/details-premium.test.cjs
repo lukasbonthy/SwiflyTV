@@ -11,7 +11,7 @@ const server = fs.readFileSync(path.join(root, 'server.js'), 'utf8');
 test('premium details stylesheet is loaded after cinema and TV styles', () => {
   const cinema = server.indexOf('/assets/clean/cinema.css?v=');
   const television = server.indexOf('/assets/clean/tv.css?v=');
-  const premium = server.indexOf('/assets/clean/details-premium.css?v=255');
+  const premium = server.indexOf('/assets/clean/details-premium.css?v=262');
   assert(cinema >= 0 && television > cinema && premium > television,
     'new rules must override the old detail layout without changing the global player');
 });

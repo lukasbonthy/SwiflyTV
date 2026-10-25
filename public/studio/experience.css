@@ -3,7 +3,7 @@ body.svCleanShell [data-st-home-hidden="true"] {display:none !important}
 body.svCleanShell main[data-st-home] {--st-home-visible-columns:var(--st-home-columns,6);min-width:0}
 body.svCleanShell main[data-st-home] [data-st-home-rows],
 body.svCleanShell main[data-st-home] [data-st-home-lead] {min-width:0}
-body.svCleanShell main[data-st-home] .movieRail {
+html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] .movieRail {
   grid-auto-columns:min(var(--st-home-poster-width,180px),calc((100% - (var(--st-home-visible-columns) - 1) * var(--st-gap,16px)) / var(--st-home-visible-columns))) !important;
   padding-block:8px 14px !important;
 }
@@ -23,10 +23,10 @@ body.svCleanShell[data-st-hero-position="after-first"] main[data-st-home] > .dsH
 body.svCleanShell[data-st-hero-position="after-first"] main[data-st-home] > [data-st-home-rows] {margin-top:0 !important}
 body.svCleanShell[data-st-hero-mode="compact"] main[data-st-home] > .dsHero {min-height:430px !important;padding:120px 0 80px !important}
 body.svCleanShell[data-st-hero-mode="compact"] main[data-st-home] > .dsHero .dsHeroContent > p {max-width:520px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
-body.svCleanShell[data-st-hero-mode="compact"] main[data-st-home] > .dsHero .dsHeroContent h1 {font-size:clamp(34px,4vw,56px) !important}
+body.svCleanShell[data-st-hero-mode="compact"] main[data-st-home] > .dsHero .dsHeroContent h1 {font-size:calc(clamp(34px,4vw,56px) * var(--st-ui-scale, 1)) !important}
 body.svCleanShell[data-st-hero-mode="banner"] main[data-st-home] > .dsHero {min-height:340px !important;padding:115px 0 65px !important}
 body.svCleanShell[data-st-hero-mode="banner"] main[data-st-home] > .dsHero .dsHeroContent {max-width:100%;width:100%}
-body.svCleanShell[data-st-hero-mode="banner"] main[data-st-home] > .dsHero .dsHeroContent h1 {font-size:clamp(30px,3.5vw,46px) !important}
+body.svCleanShell[data-st-hero-mode="banner"] main[data-st-home] > .dsHero .dsHeroContent h1 {font-size:calc(clamp(30px,3.5vw,46px) * var(--st-ui-scale, 1)) !important}
 body.svCleanShell[data-st-hero-mode="banner"] main[data-st-home] > .dsHero .dsHeroContent > p {max-width:640px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 body.svCleanShell[data-st-hero-position="after-first"] main[data-st-home] > .dsHero:is(.dsHero) {padding-top:70px !important}
 
@@ -38,7 +38,7 @@ body.svCleanShell[data-st-nav-icons="minimal"][data-st-nav-labels="true"] .navLi
 body.svCleanShell[data-st-nav-labels="false"] a[data-st-nav] > [data-st-nav-label] {position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 body.svCleanShell[data-st-nav-labels="false"] .navLinks > a[data-st-nav] {min-width:40px}
 body.svCleanShell[data-st-nav-density="compact"] .netflixNav .navLinks {gap:7px !important}
-body.svCleanShell[data-st-nav-density="compact"] .navLinks > a[data-st-nav] {min-height:36px;font-size:12px !important}
+body.svCleanShell[data-st-nav-density="compact"] .navLinks > a[data-st-nav] {min-height:36px;font-size:calc(12px * var(--st-ui-scale, 1)) !important}
 body.svCleanShell[data-st-nav-active="pill"] :is(.navLinks,.mobileNav) > a[data-st-nav][aria-current="page"] {background:#ffffff0d !important;box-shadow:inset 0 0 0 1px #ffffff13 !important}
 body.svCleanShell[data-st-nav-active="underline"] :is(.navLinks,.mobileNav) > a[data-st-nav][aria-current="page"] {border-radius:0;background:transparent !important;box-shadow:inset 0 -2px var(--st-accent,#d5d8df) !important}
 body.svCleanShell[data-st-nav-active="accent"] :is(.navLinks,.mobileNav) > a[data-st-nav][aria-current="page"] {color:var(--st-accent,#d5d8df) !important;background:transparent !important;box-shadow:inset 3px 0 var(--st-accent,#d5d8df) !important}
@@ -86,7 +86,7 @@ body.svCleanShell[data-st-ai-glass="soft"] .svRecommendationsPage .svMoodInput {
 body.svCleanShell[data-st-ai-cards="list"] .svRecommendationsPage .svDiscoveryGrid {display:grid;grid-template-columns:1fr !important;gap:16px;max-width:var(--st-ai-width,720px);margin-inline:auto}
 body.svCleanShell[data-st-ai-cards="list"] .svRecommendationsPage .svDiscoveryCard {display:grid;grid-template-columns:110px minmax(0,1fr);gap:20px;align-items:center;padding:14px;border:1px solid #ffffff18;border-radius:16px;background:#ffffff03}
 body.svCleanShell[data-st-ai-cards="list"] .svRecommendationsPage .svDiscoveryCardCopy {padding:0 24px 0 0}
-body.svCleanShell[data-st-ai-cards="list"] .svRecommendationsPage .svDiscoveryCard h3 {font-size:19px;line-height:1.3;margin:7px 0}
+body.svCleanShell[data-st-ai-cards="list"] .svRecommendationsPage .svDiscoveryCard h3 {font-size:calc(19px * var(--st-ui-scale, 1));line-height:1.3;margin:7px 0}
 body.svCleanShell[data-st-ai-cards="list"] .svRecommendationsPage .svDiscoveryCard .svPickOverview {-webkit-line-clamp:3}
 
 /* Restrained pointer/focus parity; the existing TV details route owns actions. */
@@ -110,7 +110,7 @@ html:has(body[data-st-page-motion="false"])::view-transition-new(root) {animatio
 
 /* Loader lifecycle remains entirely owned by SwiflySiteLoading. */
 body.svCleanShell #svSiteLoading {background:rgb(8 9 13 / var(--st-loader-alpha,.9))}
-.stLoadingBrand {position:relative;z-index:1;display:block;flex:none;margin:115px auto 0;font-size:17px;letter-spacing:.22em;font-weight:650;color:#ececf0}
+.stLoadingBrand {position:relative;z-index:1;display:block;flex:none;margin:115px auto 0;font-size:calc(17px * var(--st-ui-scale, 1));letter-spacing:.22em;font-weight:650;color:#ececf0}
 body.svCleanShell[data-st-loader-style="cinematic"] .stLoadingBrand,
 body.svCleanShell[data-st-loader-style="basic"] .stLoadingBrand {display:none}
 body.svCleanShell[data-st-loader-style="minimal"] #svSiteLoading .svLoadCanvas,
@@ -122,7 +122,7 @@ body.svCleanShell[data-st-loader-style="basic"] #svSiteLoading *,
 body.svCleanShell[data-st-experience-light="true"] #svSiteLoading *,
 body.svCleanShell[data-st-page-motion="false"] #svSiteLoading * {animation:none !important;transition:none !important}
 body.svCleanShell[data-st-loader-style="minimal"] #svSiteLoading .svLoadFeedback {padding-top:30px;text-align:center}
-body.svCleanShell[data-st-loader-style="minimal"] #svSiteLoading .svLoadingStatus {font-size:16px;font-weight:400;color:#bfc1ca}
+body.svCleanShell[data-st-loader-style="minimal"] #svSiteLoading .svLoadingStatus {font-size:calc(16px * var(--st-ui-scale, 1));font-weight:400;color:#bfc1ca}
 body.svCleanShell[data-st-loader-style="artwork"] #svSiteLoading::before,
 body.svCleanShell[data-st-loader-style="aurora"] #svSiteLoading::before {content:"";position:absolute;inset:0;pointer-events:none;opacity:.4;background:linear-gradient(#08090d66,#08090def),var(--st-loader-art,none) center/cover no-repeat}
 body.svCleanShell[data-st-loader-style="aurora"] #svSiteLoading::before {background:linear-gradient(#08090d33,#08090ddd),url('/assets/clean/aurora-ribbon.svg?v=170') center/cover no-repeat;opacity:var(--sv-aurora-strength,.8)}
@@ -142,11 +142,24 @@ body.svCleanShell[data-st-adaptive-active="true"] .netflixNav > .svLiquidPane {b
 body.svCleanShell[data-st-experience-opaque="true"] :is(.svNotificationDialog,.svRecommendationsPage .svMoodInput) {background:#111419 !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important}
 body.svCleanShell[data-st-experience-light="true"] :is(.dsCardArtwork,.dsCardInfo,.dsThumb > img,.svNotificationDialog,.svNotification,.svMoodChips button) {animation:none !important;transition:none !important;filter:none !important;box-shadow:none !important}
 body.svCleanShell[data-st-experience-light="true"] #svSiteLoading::before {display:none !important}
-html[data-sv-tv="true"] body.svCleanShell .navLinks > a[data-st-nav] {font-size:calc(15px * var(--st-tv-scale,1.1)) !important;min-height:44px}
+html[data-sv-tv="true"] body.svCleanShell .navLinks > a[data-st-nav] {font-size:calc(15px * var(--st-tv-scale,1.1) * var(--st-ui-scale,1)) !important;min-height:44px}
 html[data-sv-tv="true"] body.svCleanShell[data-st-tv-controls="large"] :is(.svNavButton,.dsProfileMenu > summary) {min-width:52px !important;min-height:52px !important}
 @media(min-width:651px) and (max-width:1100px) {
-  html[data-sv-tv="true"] body.svCleanShell [data-sv-liquid-nav].topbar > .container.nav.netflixNav {flex-wrap:wrap;height:auto !important;padding:10px 14px !important}
-  html[data-sv-tv="true"] body.svCleanShell .netflixNav .navLeftCluster {flex:1 0 100% !important;justify-content:space-between}
+  html[data-sv-tv="true"] body.svCleanShell [data-sv-liquid-nav].topbar > .container.nav.netflixNav {display:grid !important;grid-template-columns:minmax(0,1fr) auto;row-gap:4px !important;height:auto !important;padding:10px 14px !important}
+  html[data-sv-tv="true"] body.svCleanShell .netflixNav .navLeftCluster {display:contents !important}
+  html[data-sv-tv="true"] body.svCleanShell .netflixNav .netflixBrand {grid-column:1;grid-row:1}
+  html[data-sv-tv="true"] body.svCleanShell .netflixNav .dsNavActions {grid-column:2;grid-row:1;margin:0 !important}
+  html[data-sv-tv="true"] body.svCleanShell .netflixNav .navLinks {display:flex !important;grid-column:1/-1;grid-row:2;width:100%;justify-content:space-between;gap:4px !important}
+}
+@media(min-width:651px) and (max-width:1100px) and (hover:hover) and (pointer:fine) {
+  html:not([data-sv-tv="true"]) body.svCleanShell [data-sv-liquid-nav].topbar > .container.nav.netflixNav {display:grid !important;grid-template-columns:minmax(0,1fr) auto;width:calc(100vw - 32px) !important;row-gap:4px !important;height:auto !important;padding:10px 14px !important}
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .navLeftCluster {display:contents !important}
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .netflixBrand {grid-column:1;grid-row:1}
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .dsNavActions {grid-column:2;grid-row:1;margin:0 !important}
+  html:not([data-sv-tv="true"]) body.svCleanShell .netflixNav .navLinks {display:flex !important;grid-column:1/-1;grid-row:2;width:100%;justify-content:space-between;gap:4px !important}
+}
+@media(min-width:1101px) and (min-height:700px) and (max-height:800px) {
+  html[data-sv-tv="true"] body.svCleanShell .svResumeRail {grid-auto-columns:min(29vw,calc((100svh - 540px) * 16 / 9)) !important}
 }
 @media(max-width:1100px) {body.svCleanShell main[data-st-home] {--st-home-visible-columns:min(var(--st-home-columns,6),4)}}
 @media(max-width:860px) {
@@ -157,11 +170,11 @@ html[data-sv-tv="true"] body.svCleanShell[data-st-tv-controls="large"] :is(.svNa
   body.svCleanShell main[data-st-home] > [data-st-home-lead] {padding-top:105px !important}
   body.svCleanShell[data-st-hero-mode="compact"] main[data-st-home] > .dsHero {min-height:410px !important;padding:115px 0 65px !important}
   body.svCleanShell[data-st-hero-mode="banner"] main[data-st-home] > .dsHero {min-height:330px !important;padding:110px 0 55px !important}
-  body.svCleanShell .mobileNav > a[data-st-nav] {min-width:0;flex:1;gap:4px;font-size:9px !important;flex-direction:column}
+  body.svCleanShell .mobileNav > a[data-st-nav] {min-width:0;flex:1;gap:4px;font-size:calc(9px * var(--st-ui-scale, 1)) !important;flex-direction:column}
   body.svCleanShell .mobileNav > a[data-st-nav] > svg {width:18px;height:18px;flex-basis:18px}
   body.svCleanShell[data-st-ai-cards="list"] .svRecommendationsPage .svDiscoveryCard {grid-template-columns:85px minmax(0,1fr);gap:14px;padding:12px}
   body.svCleanShell[data-st-ai-cards="list"] .svRecommendationsPage .svDiscoveryCardCopy {padding-right:6px}
-  body.svCleanShell[data-st-ai-cards="list"] .svRecommendationsPage .svDiscoveryCard h3 {font-size:16px}
+  body.svCleanShell[data-st-ai-cards="list"] .svRecommendationsPage .svDiscoveryCard h3 {font-size:calc(16px * var(--st-ui-scale, 1))}
   body.svCleanShell[data-st-toast-position="bottom"] #toast {bottom:max(88px,calc(env(safe-area-inset-bottom) + 74px))}
   body.svCleanShell[data-st-hud-density="compact"] .svNotification {padding:11px 7px;min-height:44px}
 }

@@ -33,7 +33,7 @@ body.svCleanShell .svCinemaPage .svDetailIdentity {
 }
 body.svCleanShell .svDetailEdition {
   gap:11px; margin-bottom:17px;
-  font-size:10px; letter-spacing:.24em; font-weight:750;
+  font-size:calc(10px * var(--st-ui-scale, 1)); letter-spacing:.24em; font-weight:750;
   color:rgba(243,248,255,.89);
 }
 body.svCleanShell .svDetailEdition::before {
@@ -43,7 +43,7 @@ body.svCleanShell .svDetailEdition::before {
 }
 body.svCleanShell .svCinemaPage .svDetailTitle {
   margin:0 0 17px !important;
-  font-size:clamp(52px,6.5vw,88px) !important;
+  font-size:calc(clamp(52px,6.5vw,88px) * var(--st-ui-scale, 1)) !important;
   font-weight:770 !important;
   line-height:.98 !important;
   letter-spacing:-.065em !important;
@@ -56,7 +56,7 @@ body.svCleanShell .svCinemaPage .svDetailLogo {
 }
 body.svCleanShell .svCinemaPage .svDetailGenres {
   gap:9px; margin-bottom:13px;
-  font-size:12px; font-weight:530;
+  font-size:calc(12px * var(--st-ui-scale, 1)); font-weight:530;
   color:rgba(233,239,249,.80);
 }
 body.svCleanShell .svCinemaPage .svDetailGenres a {
@@ -67,7 +67,7 @@ body.svCleanShell .svCinemaPage .svDetailGenres a:is(:hover,:focus-visible) {
   color:white; text-decoration:underline;
 }
 body.svCleanShell .svCinemaPage .svDetailFacts {
-  margin-bottom:21px; gap:10px; font-size:12px;
+  margin-bottom:21px; gap:10px; font-size:calc(12px * var(--st-ui-scale, 1));
   font-weight:570; color:rgba(243,247,254,.90);
 }
 body.svCleanShell .svCinemaPage .svDetailFacts > span + span::before {
@@ -96,7 +96,7 @@ body.svCleanShell .svCinemaPage .svDetailActions :is(.dsPrimaryBtn,.dsSecondaryB
   gap:9px; min-height:49px !important;
   padding:11px 18px !important;
   border-radius:999px !important;
-  font-size:12px !important; font-weight:650 !important;
+  font-size:calc(12px * var(--st-ui-scale, 1)) !important; font-weight:650 !important;
   letter-spacing:.005em; white-space:nowrap;
 }
 body.svCleanShell .svCinemaPage .svDetailActions .dsPrimaryBtn {
@@ -106,7 +106,7 @@ body.svCleanShell .svCinemaPage .svDetailActions .dsIconBtn {
   width:49px !important; height:49px !important;
   min-width:49px !important; min-height:49px !important;
   border-radius:50% !important; padding:0 !important;
-  font-size:19px !important;
+  font-size:calc(19px * var(--st-ui-scale, 1)) !important;
 }
 body.svCleanShell .svCinemaPage .svDetailActions :is(a,button):focus-visible,
 body.svCleanShell .svDetailChapterNav a:focus-visible {
@@ -122,7 +122,7 @@ body.svCleanShell .svDetailPosterCard {
 }
 body.svCleanShell .svDetailPosterCard img {border-radius:17px; aspect-ratio:2/3;}
 body.svCleanShell .svDetailPosterCard > span {
-  padding:11px 4px 6px; font-size:9px; font-weight:720;
+  padding:11px 4px 6px; font-size:calc(9px * var(--st-ui-scale, 1)); font-weight:720;
   color:rgba(232,241,255,.89); letter-spacing:.2em;
 }
 /* A narrow, lightweight top chrome gives Back/Close a clear hit target
@@ -153,7 +153,7 @@ body.svCleanShell .svDetailChapterNav {
 body.svCleanShell .svDetailChapterNav a {
   min-height:37px; display:inline-flex; align-items:center; justify-content:center;
   padding:10px 17px; border-radius:999px;
-  color:#aebbcf; font-weight:570; font-size:12px;
+  color:#aebbcf; font-weight:570; font-size:calc(12px * var(--st-ui-scale, 1));
   white-space:nowrap;
   transition:color .16s ease,background-color .16s ease;
 }
@@ -185,23 +185,23 @@ body.svCleanShell .svCinemaPage .svDetailOverview::before {
   pointer-events:none;
 }
 body.svCleanShell .svCinemaPage .svDetailOverview .svCinemaEyebrow {
-  font-size:10px; letter-spacing:.22em; color:#aabed9;
+  font-size:calc(10px * var(--st-ui-scale, 1)); letter-spacing:.22em; color:#aabed9;
 }
 body.svCleanShell .svCinemaPage .svDetailOverview h2 {
   margin:11px 0 0 !important; max-width:270px;
-  font-size:clamp(25px,2.6vw,32px) !important;
+  font-size:calc(clamp(25px,2.6vw,32px) * var(--st-ui-scale, 1)) !important;
   font-weight:640 !important; line-height:1.13;
   letter-spacing:-.045em; color:#fafcff;
 }
 body.svCleanShell .svCinemaPage .svDetailOverview > p {
   max-width:790px; margin:1px 0 0;
-  font-size:14px; font-weight:440; line-height:1.85;
+  font-size:calc(14px * var(--st-ui-scale, 1)); font-weight:440; line-height:1.85;
   color:#cad3e0;
 }
 body.svCleanShell .svCinemaPage .svDetailSection {margin-bottom:44px;}
 body.svCleanShell .svCinemaPage .svDetailSection > h2 {
   display:flex; align-items:center; gap:13px;
-  margin-bottom:20px !important; font-size:25px !important;
+  margin-bottom:20px !important; font-size:calc(25px * var(--st-ui-scale, 1)) !important;
   color:#f4f8fe; font-weight:635 !important;
 }
 body.svCleanShell .svCinemaPage .svDetailSection:not(.svDetailOverview) > h2::before {
@@ -239,7 +239,7 @@ body.svCleanShell .svCinemaPage .dsEpisodeChips a.svDetailEpisodeTile:is(:hover,
   transform:none !important; background:rgba(230,240,255,.105) !important;
 }
 body.svCleanShell .svDetailEpisodeChoice > .svDetailEpisodeDownload {
-  min-width:44px; border-radius:13px; font-size:18px;
+  min-width:44px; border-radius:13px; font-size:calc(18px * var(--st-ui-scale, 1));
 }
 body.svCleanShell .svCinemaPage .svDetailAbout > div {
   min-height:93px; padding:22px;
@@ -248,10 +248,10 @@ body.svCleanShell .svCinemaPage .svDetailAbout > div {
 }
 body.svCleanShell .svCinemaPage .svDetailAbout dt {
   margin-bottom:10px; color:#8da2be;
-  font-size:10px; font-weight:700; letter-spacing:.11em;
+  font-size:calc(10px * var(--st-ui-scale, 1)); font-weight:700; letter-spacing:.11em;
   text-transform:uppercase;
 }
-body.svCleanShell .svCinemaPage .svDetailAbout dd {font-size:13px; color:#e1e8f2;}
+body.svCleanShell .svCinemaPage .svDetailAbout dd {font-size:calc(13px * var(--st-ui-scale, 1)); color:#e1e8f2;}
 /* Wide-screen focus and performance budgets: avoid expensive sheet-sized
    transparency or extra poster effects on Xbox. Keep action lenses intact. */
 html[data-sv-xbox="true"] body.svCleanShell .svDetailChapterNav,
@@ -259,7 +259,7 @@ html[data-sv-tv="true"] body.svCleanShell .svDetailChapterNav {
   -webkit-backdrop-filter:none !important; backdrop-filter:none !important;
 }
 html[data-sv-tv="true"] body.svCleanShell .svCinemaPage .svDetailActions :is(a,button) {
-  min-height:54px !important; font-size:14px !important;
+  min-height:54px !important; font-size:calc(14px * var(--st-ui-scale, 1)) !important;
 }
 html[data-sv-tv="true"] body.svCleanShell .svCinemaPage .svDetailActions .dsIconBtn {
   min-width:54px !important; width:54px !important; height:54px !important;
@@ -290,19 +290,19 @@ body.svCleanShell[data-st-glass="off"] .svCinemaPage .svDetailAbout > div {
     background:linear-gradient(0deg,#080b10 0%,rgba(8,11,16,.9) 23%,rgba(8,11,16,.12) 78%,rgba(8,11,16,.1));
   }
   body.svCleanShell .svCinemaPage .svDetailIdentity {left:23px;right:23px;bottom:29px;}
-  body.svCleanShell .svCinemaPage .svDetailTitle {font-size:clamp(42px,10vw,60px) !important;line-height:1 !important;}
+  body.svCleanShell .svCinemaPage .svDetailTitle {font-size:calc(clamp(42px,10vw,60px) * var(--st-ui-scale, 1)) !important;line-height:1 !important;}
   body.svCleanShell .svCinemaPage .svDetailLogo {max-width:min(290px,80vw);max-height:133px;}
-  body.svCleanShell .svDetailEdition {font-size:9px;letter-spacing:.18em;}
+  body.svCleanShell .svDetailEdition {font-size:calc(9px * var(--st-ui-scale, 1));letter-spacing:.18em;}
   body.svCleanShell .svCinemaPage .svDetailActions {gap:8px;}
-  body.svCleanShell .svCinemaPage .svDetailActions :is(.dsPrimaryBtn,.dsSecondaryBtn) {min-height:45px !important;padding:10px 14px !important;font-size:11px !important;}
+  body.svCleanShell .svCinemaPage .svDetailActions :is(.dsPrimaryBtn,.dsSecondaryBtn) {min-height:45px !important;padding:10px 14px !important;font-size:calc(11px * var(--st-ui-scale, 1)) !important;}
   body.svCleanShell .svCinemaPage .svDetailActions .dsPrimaryBtn {min-width:101px !important;}
   body.svCleanShell .svCinemaPage .svDetailActions .dsIconBtn {width:45px !important;height:45px !important;min-width:45px !important;min-height:45px !important;}
   body.svCleanShell .svCinemaPage .svDetailBody {padding:5px 20px 35px;}
   body.svCleanShell .svDetailChapterNav {max-width:100%;margin-bottom:24px;}
-  body.svCleanShell .svDetailChapterNav a {min-height:34px;padding:9px 13px;font-size:11px;}
+  body.svCleanShell .svDetailChapterNav a {min-height:34px;padding:9px 13px;font-size:calc(11px * var(--st-ui-scale, 1));}
   body.svCleanShell .svCinemaPage .svDetailOverview {grid-template-columns:1fr;gap:13px;padding:25px 23px 28px !important;margin-bottom:38px;border-radius:22px;}
-  body.svCleanShell .svCinemaPage .svDetailOverview h2 {margin-top:9px !important;max-width:none;font-size:27px !important;}
-  body.svCleanShell .svCinemaPage .svDetailOverview > p {font-size:13px;line-height:1.8;}
+  body.svCleanShell .svCinemaPage .svDetailOverview h2 {margin-top:9px !important;max-width:none;font-size:calc(27px * var(--st-ui-scale, 1)) !important;}
+  body.svCleanShell .svCinemaPage .svDetailOverview > p {font-size:calc(13px * var(--st-ui-scale, 1));line-height:1.8;}
   body.svCleanShell .svCinemaPage .svDetailSection {margin-bottom:33px;}
   body.svCleanShell .svCinemaPage .svDetailAbout {grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
   body.svCleanShell .svCinemaPage .svDetailAbout > div {padding:16px;min-height:88px;}

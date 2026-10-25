@@ -54,5 +54,14 @@ function loadServer() {
   return m.exports;
 }
 const tick = () => new Promise(resolve => setImmediate(resolve));
+// Execute the same controller served by Express after the shell moves it to
+// a cacheable asset. Unit fixtures do not make network requests themselves.
+function tvControllerSource(document) {
+  const script=document.querySelector('script[data-sv-tv-navigation]');
+  if(!script)throw new Error('The shell must mount its actual TV controller.');
+  const src=script.getAttribute('src');
+  if(src){if(!/^\/assets\/clean\/tv\.js(?:\?|$)/.test(src))throw new Error('Unknown TV controller asset: '+src);return require('../ui/tv').tvSource();}
+  return script.textContent;
+}
 function cleanup() {for (const window of openWindows) window.close(); openWindows.clear();}
-module.exports = {source, browser, loadServer, tick, cleanup};
+module.exports = {source, browser, loadServer, tick, cleanup, tvControllerSource};

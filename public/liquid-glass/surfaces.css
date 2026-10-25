@@ -75,7 +75,7 @@ body.svCleanShell .dsDetailTabsV121 > button.active { color: #fff !important; ba
 body.svCleanShell .dsAboutGridV121.svGlassPanel { padding: 16px !important; gap: 16px !important; }
 body.svCleanShell .dsAboutGridV121 > div { border: 0 !important; background: none !important; }
 body.svCleanShell .dsSeasonBlock.svGlassPanel { overflow: hidden; }
-body.svCleanShell .dsEpisodeChips a { font-size: 12px; font-weight: 400; }
+body.svCleanShell .dsEpisodeChips a { font-size: calc(12px * var(--st-ui-scale, 1)); font-weight: 400; }
 body.svCleanShell .genreDropdownMenu.svGlassPanel { padding: 8px !important; }
 body.svCleanShell .genreDropdownMenu a { background: transparent !important; border-radius: 10px !important; }
 body.svCleanShell .genreDropdownMenu a:hover { background: rgb(255 255 255 / .05) !important; }

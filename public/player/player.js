@@ -41,6 +41,29 @@
     const history=window.SwiflyContinue,historyOwner=history?.profileId?.();
     const entryQuery=new URLSearchParams(location.search);
     let soloTracking=app.classList.contains('svPlayerPage')&&!managed&&!entryQuery.has('roomId')&&!entryQuery.has('party');
+    // Device-local continuity uses the real library owner, never shared jobs.
+    // Keep this allowlist aligned with lib/nuvio-provider.js's installed adapters.
+    const rememberedProviders=new Set(['vidlink','vidsrc','videasy','vidfast','vidrock','cineby','vidlove','goated','netmirror','nakios']),continuityTried=new Set();
+    function continuityContext(){try{const library=window.SwiflyLibrary;if(typeof library?.profileId!=='function')return '';return 'swiflytv.player.lastServer.'+encodeURIComponent(JSON.stringify([String(library.ownerId?.()||'guest'),String(library.profileId())]));}catch{return '';}}
+    const continuityOwner=continuityContext();
+    function continuityEnabled(){try{return !!continuityOwner&&continuityContext()===continuityOwner&&window.SwiflyLibrary?.active!==false&&window.SwiflyLibrary?.preferences?.().rememberLastServer!==false;}catch{return false;}}
+    function rememberedProvider(value){const id=typeof value==='string'?value.trim().toLowerCase().replace(/^api_/,'').replace(/^nuvio[-_]/,'').replace(/_(?:hls_proxy|direct_hls|non_download)$/,''):'';return rememberedProviders.has(id)?id:'';}
+    function readRememberedServer(){
+      if(!continuityOwner||continuityContext()!==continuityOwner)return '';
+      try{if(!continuityEnabled()){if(window.SwiflyLibrary?.preferences?.().rememberLastServer===false)localStorage.removeItem(continuityOwner);return '';}return rememberedProvider(localStorage.getItem(continuityOwner));}catch{return '';}
+    }
+    function localContinuity(){return soloTracking&&!managed&&!remoteMode.enabled&&!remoteMode.manual&&mediaType==='tv'&&!app.dataset.playerProvider&&!entryQuery.has('provider');}
+    function matchesEpisode(data){
+      if(data?.type&&data.type!==mediaType)return false;
+      if(data?.movieId!=null&&String(data.movieId)!==String(mediaId)||data?.mediaId!=null&&String(data.mediaId)!==String(mediaId))return false;
+      return mediaType!=='tv'||(data?.season==null||Number(data.season)===Number(app.dataset.playerSeason))&&(data?.episode==null||Number(data.episode)===Number(app.dataset.playerEpisode));
+    }
+    function rememberServer(){
+      readRememberedServer();
+      if(!localContinuity()||!continuityEnabled()||!sourceData||!matchesEpisode(sourceData)||String(mediaId)!==app.dataset.playerId||mediaType!==app.dataset.playerType)return;
+      const provider=[sourceData.server,activeSourceData?.server,activeSourceData?.apiProvider,sourceData.apiProvider,activeSourceData?.providerKind,sourceData.providerKind].map(rememberedProvider).find(Boolean);
+      if(provider)try{localStorage.setItem(continuityOwner,provider);}catch{}
+    }
     let personalResume=0,hasPlayed=false,lastProgressWrite=0,lastSavedProgress='';
     if(soloTracking&&entryQuery.get('resume')==='1'){
       const saved=history?.find?.(mediaType,mediaId,historyOwner);
@@ -542,7 +565,7 @@
       listen(current,'durationchange',guard(()=>{applyResume();updateTime();}),mediaListeners);
       const canPlay=guard(()=>{
         if(current.readyState<2)return;const first=!playable;playable=true;applyResume();if(first||current.paused)stopWatchdog();
-        setStatus('ready');if(first)dispatch('ready',getState());
+        setStatus('ready');rememberServer();if(first)dispatch('ready',getState());
         if(pendingPlay){pendingPlay=false;play({remote:true});}else if(!current.paused)watchProgress();
       });
       listen(current,'canplay',canPlay,mediaListeners);listen(current,'playing',canPlay,mediaListeners);
@@ -665,6 +688,16 @@
       const token=resolverGeneration;lookupDeadline=Date.now()+config.resolve;let first=true,transportFailures=0,busyCount=0,providerRetries=0;
       const query=new URLSearchParams();if(mediaType==='tv'){query.set('season',app.dataset.playerSeason||'1');query.set('episode',app.dataset.playerEpisode||'1');}if(app.dataset.playerProvider)query.set('provider',app.dataset.playerProvider);
       const endpoint='/api/proxy-video-wait/'+encodeURIComponent(mediaType)+'/'+encodeURIComponent(mediaId);
+      const preferred=readRememberedServer(),entry=mediaKey({});
+      if(preferred&&localContinuity()&&!continuityTried.has(entry)){
+        continuityTried.add(entry);
+        try{
+          const requestQuery=new URLSearchParams(query);requestQuery.set('provider',preferred);
+          const data=await requestJson('/api/player/server/'+encodeURIComponent(mediaType)+'/'+encodeURIComponent(mediaId)+'?'+requestQuery,Math.min(10000,config.request,Math.max(1,lookupDeadline-Date.now())));
+          if(destroyed||suspended||token!==resolverGeneration||!app.isConnected||entry!==mediaKey({}))return false;
+          if(localContinuity()&&continuityEnabled()&&['ok','ready'].includes(data?.status)&&matchesEpisode(data)&&chooseSource(data))return loadSource(data,{resumeAt:retry?Math.max(retryResume,personalResume):personalResume});
+        }catch{if(destroyed||suspended||token!==resolverGeneration||!app.isConnected)return false;}
+      }
       while(!destroyed&&!suspended&&app.isConnected&&token===resolverGeneration){
         if(Date.now()>=lookupDeadline){fail('The '+mediaName()+' took too long to become available. Try again in a moment.');return false;}
         const requestQuery=new URLSearchParams(query);if(retry&&first)requestQuery.set('retry','1');first=false;
@@ -752,6 +785,7 @@
     const api=Object.freeze({loadSource,resolve,retry:()=>resolve({retry:true}),getState,play,pause,seek,setRemoteMode,destroy});
     instances.set(app,api);
     listen(document,'swifly:studio-change',event=>{if(event.detail?.effective)applyAppearance(event.detail.effective);});
+    listen(window,'swifly:library-change',readRememberedServer);
     for(const query of [transparencyQuery,motionQuery]){
       const changed=()=>applyAppearance(appearance);
       if(query?.addEventListener)listen(query,'change',changed);
