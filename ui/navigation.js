@@ -21,13 +21,17 @@ function navigationGate() {
     if (!event.viewTransition) return;
     let savedReduced = false;
     try {
-      const appearance = JSON.parse(localStorage.getItem('swiflytv.appearance') || 'null');
-      savedReduced = appearance?.version === 1 && appearance.values?.reduceMotion === true ||
-        (!appearance && localStorage.getItem('movieverse.reduceMotion') === 'on');
+      const C=window.SwiflyStudioConfig;
+      if(C){const values=C.effective(C.read(localStorage).values,C.context());savedReduced=values.reduceMotion||!values.pageMotion;}
+      else{
+        const appearance = JSON.parse(localStorage.getItem('swiflytv.appearance') || 'null');
+        savedReduced = [1,2].includes(appearance?.version) && (appearance.values?.reduceMotion === true||appearance.values?.pageMotion===false) ||
+          (!appearance && localStorage.getItem('movieverse.reduceMotion') === 'on');
+      }
     } catch (_) { /* Storage restrictions must not interfere with navigation. */ }
     const activation = event.activation || window.navigation?.activation;
     if (xboxInstant || reduced.matches || savedReduced ||
-        document.body?.classList.contains('reduceMotion') ||
+        document.body?.classList.contains('reduceMotion') || document.body?.dataset.stPageMotion==='false' ||
         [location.href, activation?.from?.url, activation?.entry?.url].some(excluded)) {
       event.viewTransition.skipTransition();
     }

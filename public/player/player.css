@@ -345,9 +345,10 @@ html:has(.svPlayerStage:fullscreen) { scrollbar-gutter:auto; }
   .svPlayerStage:fullscreen .svPlayerStatus { padding:16px 24px 120px; }
 }
 @media (max-height:360px) and (orientation:landscape) {
-  /* There is nothing to seek before a source is ready. Keep the tools visible
-     and let a short error message scroll instead of covering the return link. */
-  .svPlayer:is([data-player-state="loading"],[data-player-state="waiting"],[data-player-state="error"]) .svPlayerTimelineRow { display:none; }
+  /* Before a source is ready the disabled playback row has no action. Keep
+     source/settings/fullscreen tools on one row so the error scroller's 64px
+     clearance stays accurate, including a height-limited 320px theater. */
+  .svPlayer:is([data-player-state="loading"],[data-player-state="waiting"],[data-player-state="error"]) :is(.svPlayerTimelineRow,.svPlayerTransport) { display:none; }
   .svPlayer:is([data-player-state="loading"],[data-player-state="waiting"],[data-player-state="error"]) .svPlayerStatus { inset:0 0 calc(64px + env(safe-area-inset-bottom,0px)); justify-content:flex-start; padding:12px 16px; overflow-y:auto; overscroll-behavior:contain; scroll-padding-block:12px; scrollbar-width:thin; pointer-events:auto; }
   .svPlayer:is([data-player-state="loading"],[data-player-state="waiting"],[data-player-state="error"]) .svPlayerStatus > * { flex-shrink:0; }
 }
@@ -387,33 +388,94 @@ body.svCleanShell .svPlayer .svPlayerServerProviderLabel select { min-height:44p
 body.svCleanShell .svPlayer .svPlayerServerTry { min-height:44px; padding:10px 14px; border:1px solid #ffffff40; border-radius:13px; background:#ffffff18; color:white; font:600 12px system-ui,sans-serif; cursor:pointer; }
 body.svCleanShell .svPlayer .svPlayerServerTry:disabled { opacity:.4; cursor:default; }
 @container sv-stage (max-width:420px) {
-  body.svCleanShell .svPlayer .svPlayerServerPopover > .svPlayerControl { width:40px; min-width:40px; padding:8px; }
+  body.svCleanShell .svPlayer .svPlayerServerPopover > .svPlayerControl { width:44px; min-width:44px; padding:10px; }
   .svPlayerServerBody { max-width:calc(100vw - 24px); }
 }
 
 /* Keep the new server control from overflowing 320px theaters. The movie
    picture keeps its aspect ratio, and every transport remains on-screen. */
 @container sv-stage (max-width:440px) {
-  .svPlayerDockRow { min-width:0; max-width:100%; gap:0; }
-  .svPlayerTransport { flex:0 0 auto; gap:0; }
-  .svPlayerTools { flex:0 1 auto; min-width:0; gap:0; padding-left:4px; }
+  .svPlayerDockRow { min-width:0; max-width:100%; flex-wrap:wrap; justify-content:center; gap:0; }
+  .svPlayerTransport { flex:0 0 100%; justify-content:center; gap:0; }
+  .svPlayerTools { flex:0 0 100%; justify-content:center; min-width:0; gap:0; padding-left:0; border-left:0; }
   body.svCleanShell .svPlayer .svPlayerTransport .svPlayerControl:not(.svPlayerPlay) {
-    width:36px; min-width:36px; padding:6px;
+    width:44px; min-width:44px; padding:10px;
   }
-  body.svCleanShell .svPlayer .svPlayerPlay { width:40px; min-width:40px; margin:0; }
+  body.svCleanShell .svPlayer .svPlayerPlay { width:44px; min-width:44px; margin:0; }
   body.svCleanShell .svPlayer .svPlayerTools .svPlayerControl {
-    width:34px; min-width:34px; padding:5px;
+    width:44px; min-width:44px; padding:10px;
   }
   .svPlayerTools .svPlayerIcon { width:19px; height:19px; flex-basis:19px; }
 }
 
 @container sv-stage (max-width:360px) {
-  /* Two compact, centered lines avoid horizontal page overflow without
-     hiding server selection on 320px mobile layouts. */
+  /* Keep the seek area separate from both rows of full-size touch targets. */
   .svPlayerDockRow { flex-wrap:wrap; justify-content:center; row-gap:0; }
   .svPlayerTransport { justify-content:center; width:100%; }
   .svPlayerTools { flex:0 0 100%; justify-content:center; padding-left:0; border-left:0; }
   .svPlayerDock { bottom:4px; padding-top:3px; padding-bottom:4px; }
-  .svPlayerTimeline { height:32px; }
-  .svPlayerTimelineRow { min-height:32px; }
+  .svPlayerTimeline { height:44px; }
+  .svPlayerTimelineRow { min-height:44px; }
+}
+
+/* Studio changes the existing transport's surfaces, never the playing frame.
+   Opacity belongs to the chrome background so labels and menus stay readable. */
+.svPlayer[data-player-studio-id] {
+  --player-progress-size:3px; --player-icon-scale:1; --player-chrome-opacity:.85;
+  --player-accent:var(--st-accent,#f2f1f6);
+}
+.svPlayer[data-player-studio-id] .svPlayerTimelineTrack {
+  inset:50% 0 auto; height:var(--player-progress-size); transform:translateY(-50%);
+}
+.svPlayer[data-player-studio-id] .svPlayerTimelineTrack b { background:var(--player-accent); }
+.svPlayer[data-player-studio-id] .svPlayerTimeline input::-webkit-slider-runnable-track { height:var(--player-progress-size); }
+.svPlayer[data-player-studio-id] .svPlayerTimeline input::-moz-range-track { height:var(--player-progress-size); }
+.svPlayer[data-player-studio-id] .svPlayerTimeline input::-webkit-slider-thumb { margin-top:calc((var(--player-progress-size) - 12px) / 2); }
+.svPlayer[data-player-studio-id] .svPlayerControl .svPlayerIcon {
+  width:calc(22px * var(--player-icon-scale)); height:calc(22px * var(--player-icon-scale)); flex-basis:calc(22px * var(--player-icon-scale));
+}
+.svPlayer[data-player-style="cinema"] .svPlayerDockGlass.svLiquidPane {
+  background:rgb(var(--sv-glass-color,255 255 255) / calc(var(--player-chrome-opacity) * .2353));
+}
+.svPlayer[data-player-style="classic"] .svPlayerDock { border-radius:12px; box-shadow:0 3px 16px #0004; }
+.svPlayer[data-player-style="classic"] .svPlayerDockGlass.svLiquidPane {
+  background:rgb(18 20 24 / var(--player-chrome-opacity)); backdrop-filter:none; -webkit-backdrop-filter:none;
+}
+body.svCleanShell .svPlayer[data-player-style="classic"] .svPlayerPlay { border-radius:9px; background:#ffffff15; box-shadow:none; }
+.svPlayer[data-player-style="minimal"] .svPlayerDock { border-radius:10px; box-shadow:none; }
+.svPlayer[data-player-style="minimal"] .svPlayerDockGlass.svLiquidPane {
+  background:linear-gradient(180deg,rgb(0 0 0 / calc(var(--player-chrome-opacity) * .35)),rgb(0 0 0 / var(--player-chrome-opacity)));
+  backdrop-filter:none; -webkit-backdrop-filter:none;
+}
+body.svCleanShell .svPlayer[data-player-style="minimal"] .svPlayerPlay { background:transparent; box-shadow:none; border-color:#ffffff70; }
+.svPlayer[data-player-position="bottom"] .svPlayerDock {
+  left:0; right:0; bottom:0; width:100%; transform:none; border-radius:0 0 19px 19px;
+}
+.svPlayer[data-player-position="bottom"] .svPlayerStage:fullscreen .svPlayerDock { bottom:env(safe-area-inset-bottom,0px); border-radius:0; }
+.svPlayer[data-player-loading-backdrop] .svPlayerScene { opacity:0; filter:none; }
+.svPlayer[data-player-loading-backdrop="artwork"]:is([data-player-state="loading"],[data-player-state="waiting"],[data-player-state="error"]) .svPlayerScene {
+  opacity:.42; filter:blur(12px); clip-path:inset(0 round 20px);
+}
+.svPlayer[data-player-loading-backdrop="ambient"]:is([data-player-state="loading"],[data-player-state="waiting"],[data-player-state="error"]) .svPlayerShade {
+  background:radial-gradient(ellipse at 18% 20%,#a4b6e12b,transparent 60%),radial-gradient(ellipse at 85% 85%,#b5a4d02b,transparent 60%),#101014;
+}
+.svPlayer[data-player-effects="flat"] :is(.svPlayerAmbient,.svPlayerScene) { display:none; }
+body.svCleanShell .svPlayer[data-player-effects="flat"] :is(.svPlayerModes,.svPlayerBelow,.svPlayerEpisodes,.svPlayerAction,.svPlayerBack,.svPlayerPartyButton,.svPlayerPopoverBody,.svPlayerDockGlass.svLiquidPane) {
+  background:#191b20 !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; box-shadow:none !important;
+}
+.svPlayer[data-player-contrast="high"] .svPlayerStage { border-color:#fff; }
+.svPlayer[data-player-contrast="high"] :is(.svPlayerTime,.svPlayerTransportNote,.svPlayerMenuHint) { color:#fff !important; }
+.svPlayer[data-player-contrast="high"] .svPlayerTimelineTrack { background:#aaa; }
+.svPlayer[data-player-contrast="high"] .svPlayerTimelineTrack b { background:#fff; }
+body.svCleanShell .svPlayer[data-player-targets="large"] .svPlayerControl,
+body.svCleanShell .svPlayer[data-player-targets="large"] :is(.svPlayerTransport,.svPlayerTools) .svPlayerControl {
+  width:48px; min-width:48px; height:48px; min-height:48px;
+}
+.svPlayer[data-player-motion="reduce"] *, .svPlayer[data-player-motion="reduce"] *::before, .svPlayer[data-player-motion="reduce"] *::after {
+  animation:none !important; transition:none !important;
+}
+@container sv-stage (max-width:620px) {
+  .svPlayer[data-player-targets="large"] .svPlayerDockRow { flex-wrap:wrap; justify-content:center; gap:0; }
+  .svPlayer[data-player-targets="large"] .svPlayerTransport { width:100%; justify-content:center; }
+  .svPlayer[data-player-targets="large"] .svPlayerTools { flex:0 0 100%; justify-content:center; border-left:0; padding-left:0; }
 }

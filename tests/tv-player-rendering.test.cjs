@@ -44,7 +44,7 @@ for(const viewport of [{width:1440,height:960},{width:390,height:844},{width:320
       return {box:{top:box.top,left:box.left,right:box.right},theaterBottom:document.querySelector('.svPlayerTheater').getBoundingClientRect().bottom,
         viewport:innerWidth,scrollWidth:document.documentElement.scrollWidth,
         buttons:[...element.querySelectorAll('.svPlayerEpisodeStep')].map(button=>{
-          const rect=button.getBoundingClientRect(),label=button.querySelector('.svNavMatchedLabel')||button.querySelector('span');
+          const rect=button.getBoundingClientRect(),label=button.querySelector('.svNavMatchedLabel')||button.querySelector(':scope > span:not(.svLiquidPane)');
           return {height:rect.height,left:rect.left,right:rect.right,client:button.clientWidth,scroll:button.scrollWidth,label:getComputedStyle(label).display,text:button.textContent.trim()};
         })};
     });

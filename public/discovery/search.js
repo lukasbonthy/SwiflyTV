@@ -7,10 +7,13 @@
  let timer=0,controller=null,epoch=0,disposed=false,resumePending=false,resumeEdit=false;
  const node=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n;};
  const query=()=>input.value.trim().slice(0,120);
+ const refinements=[...root.querySelectorAll('[data-search-filter]')];
+ function filterParams(){const p=new URLSearchParams();for(const n of refinements)if(n.value&&n.value!=='all'&&n.value!=='0'&&n.value!=='relevance')p.set(n.name,n.value);return p;}
+ function restoreFilters(){const p=new URLSearchParams(location.search);for(const n of refinements)n.value=p.get(n.name)||({media:'all',minRating:'0',sort:'relevance'}[n.name]||'');}
  function updateModes(){const q=query();clear.hidden=!q;for(const a of root.querySelectorAll('[data-search-mode]')){const u=new URL(a.href,location.href);q?u.searchParams.set('q',q):u.searchParams.delete('q');a.href=u.pathname+u.search;}}
  function cancel(){clearTimeout(timer);timer=0;controller?.abort();controller=null;epoch++;}
  function busy(value){form.setAttribute('aria-busy',String(value));grid.setAttribute('aria-busy',String(value));}
- function pageUrl(page=1){const p=new URLSearchParams();if(query())p.set('q',query());if(mode==='person')p.set('type','person');if(Number(page)>1)p.set('page',String(page));const suffix=p.toString();return '/search'+(suffix?'?'+suffix:'');}
+ function pageUrl(page=1){const p=filterParams();if(query())p.set('q',query());if(mode==='person')p.set('type','person');if(Number(page)>1)p.set('page',String(page));const suffix=p.toString();return '/search'+(suffix?'?'+suffix:'');}
  function metadata(button,prefix,row){for(const [key,value]of Object.entries({id:row.id,type:row.type,title:row.title,poster:row.poster||'',year:row.year||'',rating:row.rating||''}))button.setAttribute('data-'+prefix+'-'+key,String(value));}
  function paint(rows){
   grid.replaceChildren();
@@ -29,21 +32,22 @@
   cancel();const token=epoch,q=query(),n=Math.max(1,Math.min(500,Number(page)||1));updateModes();
   if(update)history[push?'pushState':'replaceState']({},'',pageUrl(n));
   heading.textContent=q?'Results for “'+q+'”':mode==='person'?'Popular people':'Trending this week';
-  if(!q&&initialBrowse){grid.innerHTML=initialBrowse.cards;pages.innerHTML=initialBrowse.pages;heading.textContent=initialBrowse.heading;empty.hidden=!!grid.children.length;status.textContent='';busy(false);window.syncLibraryButtons?.(grid);return;}
+  if(!q&&initialBrowse&&!filterParams().toString()){grid.innerHTML=initialBrowse.cards;pages.innerHTML=initialBrowse.pages;heading.textContent=initialBrowse.heading;empty.hidden=!!grid.children.length;status.textContent='';busy(false);window.syncLibraryButtons?.(grid);return;}
   controller=new AbortController();busy(true);status.textContent='Searching…';
   try{
-   const params=new URLSearchParams({q,type:mode,page:String(n),...(!q?{browse:'1'}:{})}),response=await fetch('/api/discovery/search?'+params,{signal:controller.signal}),data=await response.json();
+   const params=new URLSearchParams({q,type:mode,page:String(n),...Object.fromEntries(filterParams()),...(!q?{browse:'1'}:{})}),response=await fetch('/api/discovery/search?'+params,{signal:controller.signal}),data=await response.json();
    if(token!==epoch||disposed)return;if(!response.ok)throw Error(data.message||'Search is unavailable. Please try again.');
    const rows=Array.isArray(data.results)?data.results:[];paint(rows);pagination(n,Math.min(500,Number(data.totalPages)||1));
-   empty.textContent=q?'No matches found. Try another title or name.':'No titles available right now. Please try again.';status.textContent=rows.length?(data.totalResults?Number(data.totalResults).toLocaleString()+' results':''):'No matches';
+   empty.textContent=q?'No matches found. Try another title or name.':'No titles available right now. Please try again.';status.textContent=rows.length?(data.totalResults?Number(data.totalResults).toLocaleString()+(data.filtered?' matches on this page':' results'):''):'No matches';
   }catch(error){if(token!==epoch||disposed||error.name==='AbortError')return;grid.replaceChildren();pages.replaceChildren();empty.hidden=true;status.textContent=error.message||'Search is unavailable. Please try again.';}
   finally{if(token===epoch&&!disposed)busy(false);}
  }
+ for(const control of refinements)control.addEventListener('change',()=>{if(!disposed)search({push:true});});
  input.addEventListener('input',()=>{cancel();updateModes();timer=setTimeout(()=>{timer=0;search();},220);});
  form.addEventListener('submit',event=>{event.preventDefault();if(!disposed)search({push:true});});
  clear.addEventListener('click',()=>{input.value='';input.focus();search();});
  pages.addEventListener('click',event=>{const a=event.target.closest('a[href]');if(!a||event.button!==0||event.metaKey||event.ctrlKey||event.altKey||event.shiftKey)return;event.preventDefault();search({page:new URL(a.href).searchParams.get('page'),push:true});});
- window.addEventListener('popstate',()=>{input.value=new URLSearchParams(location.search).get('q')||'';search({update:false,page:new URLSearchParams(location.search).get('page')});});
+ window.addEventListener('popstate',()=>{restoreFilters();input.value=new URLSearchParams(location.search).get('q')||'';search({update:false,page:new URLSearchParams(location.search).get('page')});});
  window.addEventListener('pagehide',()=>{resumeEdit=!!timer;resumePending=resumeEdit||form.getAttribute('aria-busy')==='true';disposed=true;cancel();});
  window.addEventListener('pageshow',event=>{if(!event.persisted)return;disposed=false;if(resumePending){resumePending=false;search({update:resumeEdit,page:resumeEdit?1:new URLSearchParams(location.search).get('page')});resumeEdit=false;}else busy(false);});
  updateModes();

@@ -76,6 +76,15 @@ test('missing transitions and restricted storage leave navigation usable', () =>
   env.finish();
 });
 
+test('version two profile preferences and device policies apply before navigation',()=>{
+ for(const values of [{reduceMotion:true},{pageMotion:false},{performancePreset:'minimal'}]){
+  const env=setup(),w=env.window;w.eval(require('./ui-helpers.cjs').source('studio/config.js'));
+  w.localStorage.setItem('swiflytv.accountOwner','viewer');w.localStorage.setItem('swiflytv.activeProfile',JSON.stringify({id:'a'}));
+  const record=w.SwiflyStudioConfig.read(w.localStorage);record.values={...record.values,...values};w.SwiflyStudioConfig.write(w.localStorage,record);
+  assert.equal(env.transition().skipped,1,JSON.stringify(values));env.finish();
+ }
+});
+
 test('playback and party URLs are excluded on departure and arrival', () => {
   const urls = ['/watch/movie/1', '/watch/m3u8', '/embed/1', '/social?tab=watchrooms',
     '/watchrooms/room', '/movies?party=1', '/movies?party=create', '/movies?roomId=room'];

@@ -1,25 +1,17 @@
-/* SwiflyTV v186 — sample a tiny image for COLOR, never render it.
-   Movie imagery itself stays fully clipped to .dsHero. Any sampling / CORS
-   failure simply leaves the quiet neutral CSS fallback glow in place. */
+/* Opt-in artwork colors. One tiny readback per cached image; never sample video. */
 (() => {
   'use strict';
-  // Console paints the same artwork without an extra canvas readback and
-  // backdrop-image download solely for a decorative gradient tint.
-  if (document.documentElement.dataset.svXbox === 'true') return;
-  const hero=document.querySelector('main > .dsHero[data-sv-palette-src]');
-  if(!hero || !hero.parentElement) return;
-  const src=hero.getAttribute('data-sv-palette-src');
-  if(!src || !/^https:\/\//i.test(src)) return;
-  if(typeof HTMLCanvasElement==='undefined') return;
-  const image=new Image();
-  image.crossOrigin='anonymous';
-  image.decoding='async';
-  const pick=()=>{
-    try {
+  if (window.SwiflyHeroPalette) return;
+  const cache=new Map(),maximum=96;
+  function address(value) {
+    if(typeof value!=='string'||value.length>2048)return '';
+    try{const url=new URL(value,location.href);if(url.username||url.password||!(url.protocol==='https:'||url.protocol==='http:'&&url.origin===location.origin))return '';url.hash='';return url.href;}catch(_){return '';}
+  }
+  function colors(image) {
       const canvas=document.createElement('canvas');
       canvas.width=36;canvas.height=24;
       const context=canvas.getContext('2d',{willReadFrequently:true});
-      if(!context) return;
+      if(!context) return null;
       context.drawImage(image,0,0,canvas.width,canvas.height);
       const data=context.getImageData(0,0,canvas.width,canvas.height).data;
       const groups=Array.from({length:12},()=>({weight:0,r:0,g:0,b:0}));
@@ -40,12 +32,12 @@
       }
       const ranked=groups.map((g,i)=>({...g,index:i})).filter(g=>g.weight>1.4)
         .sort((a,b)=>b.weight-a.weight);
-      if(!ranked.length)return;
+      if(!ranked.length)return null;
       const primary=ranked[0];
       const secondary=ranked.find(g=>{
         const separation=Math.abs(g.index-primary.index);
         return Math.min(separation,12-separation)>=2;
-      })||ranked[1];
+      })||ranked[1]||primary;
       // Retain chroma, rather than washing every sampled hue into a gray/
       // brown average. Only these three channel values reach CSS gradients;
       // the movie bitmap is never copied beneath the catalog.
@@ -56,14 +48,22 @@
           Math.max(26,Math.min(225,Math.round(average*.94+(value-average)*1.22+9)))
         ).join(' ');
       };
-      const main=hero.parentElement;
-      main.style.setProperty('--sv-art-glow-1',soften(primary));
-      if(secondary)main.style.setProperty('--sv-art-glow-2',soften(secondary));
-    } catch(_) {
-      // TMDB/CDN may refuse cross-origin canvas pixels: never block the page.
-    }
-  };
-  image.onload=pick;
-  image.onerror=()=>{};
-  image.src=src;
+      return Object.freeze({primary:soften(primary),secondary:soften(secondary)});
+  }
+  function sample(value) {
+    const src=address(value);
+    if(!src||typeof Image!=='function'||typeof HTMLCanvasElement==='undefined')return Promise.resolve(null);
+    if(cache.has(src)){const result=cache.get(src);cache.delete(src);cache.set(src,result);return result;}
+    const result=new Promise(resolve=>{
+      const image=new Image();let settled=false,timer;
+      function finish(palette){if(settled)return;settled=true;clearTimeout(timer);image.onload=null;image.onerror=null;resolve(palette);}
+      image.crossOrigin='anonymous';image.decoding='async';
+      image.onload=()=>{try{finish(colors(image));}catch(_){finish(null);}};
+      image.onerror=()=>finish(null);timer=setTimeout(()=>finish(null),6000);
+      try{image.src=src;}catch(_){finish(null);}
+    });
+    cache.set(src,result);if(cache.size>maximum)cache.delete(cache.keys().next().value);
+    return result;
+  }
+  window.SwiflyHeroPalette=Object.freeze({sample});
 })();

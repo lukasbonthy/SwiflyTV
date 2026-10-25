@@ -51,7 +51,7 @@ test('Xbox uses lightweight hero imagery and avoids decorative full-screen compo
     canvas:document.documentElement.dataset.svXbox};
   });
   assert.match(sampled.art,/\/w780\/backdrop\.jpg/,'Xbox must not paint the full-size original hero image');
-  assert.equal(sampled.nav,true,'The original navbar glass must stay visible');
+  assert.equal(sampled.nav,false,'the Xbox policy avoids a decorative blur pane');assert.equal(await page.locator('.netflixNav').isVisible(),true,'the solid navigation remains available');assert.equal(await page.evaluate(()=>window.SwiflyStudio.getRawSettings().glass),'liquid','device safeguards retain the original appearance choice');
   assert.equal(sampled.spill,'none','Decorative full-screen artwork is removed from Xbox compositor');
   assert.equal(sampled.canvas,'true');
  }finally{await context.close();}

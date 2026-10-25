@@ -15,7 +15,7 @@ function click(env,selector){const element=env.window.document.querySelector(sel
 test('Studio is an accessible workspace with preview, grouped controls and explicit save actions',()=>{
   const env=browser(shell),d=env.window.document;
   assert(d.querySelector('dialog#controlPanel[aria-labelledby]'),'Studio should use a dialog');
-  assert.equal(d.querySelectorAll('#controlPanel [role="tab"]').length,3);
+  assert.equal(d.querySelectorAll('#controlPanel [role="tab"]').length,10);
   assert(d.querySelector('#controlPanel [data-st-preview]'));assert(d.querySelector('[data-st-save]'));assert(d.querySelector('[data-st-cancel]'));
   assert(!shell.includes('function applyTheme(theme)'), 'The obsolete inline Studio controller must be replaced');env.finish();
 });

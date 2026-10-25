@@ -3,7 +3,7 @@
   'use strict';
   if (window.SwiflyPlayer) return;
   const instances=new WeakMap();
-  let defaultPlayer=null;
+  let defaultPlayer=null,studioId=0;
   function mount(app,options={}) {
     if (!app?.isConnected || app.dataset.playerMode === 'trailer') return null;
     if(instances.has(app))return instances.get(app);
@@ -52,6 +52,43 @@
     const locked = () => remoteMode.enabled && !remoteMode.isHost;
     const listen = (node,name,fn,bucket=listeners) => {node?.addEventListener(name,fn);bucket.push(()=>node?.removeEventListener(name,fn));};
     const clearListeners = bucket => {for(const remove of bucket.splice(0))remove();};
+    const transparencyQuery=window.matchMedia?.('(prefers-reduced-transparency: reduce)');
+    const motionQuery=window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    const cueStyle=document.createElement('style'),appearanceId=String(++studioId);
+    cueStyle.dataset.playerCueStyle=appearanceId;app.dataset.playerStudioId=appearanceId;
+    document.head.append(cueStyle);listeners.push(()=>cueStyle.remove());
+    let appearance={},glassAllowed=true,controlsHovered=false;
+    function applyAppearance(settings={}) {
+      if(destroyed)return;
+      appearance=settings&&typeof settings==='object'&&!Array.isArray(settings)?{...settings}:{};
+      const bounded=(name,fallback,min,max)=>Math.max(min,Math.min(max,Number.isFinite(appearance[name])?appearance[name]:fallback));
+      const choice=(name,allowed,fallback=allowed[0])=>allowed.includes(appearance[name])?appearance[name]:fallback;
+      const style=choice('playerStyle',['cinema','minimal','classic']);
+      const lowPower=['mobile','xbox','minimal'].includes(appearance.performancePreset);
+      const flat=lowPower||appearance.reduceTransparency===true||appearance.highContrast===true||!!transparencyQuery?.matches||appearance.glass==='off';
+      glassAllowed=!flat&&style==='cinema';
+      app.dataset.playerStyle=style;
+      app.dataset.playerEffects=flat?'flat':'full';
+      app.dataset.playerMotion=appearance.reduceMotion===true||motionQuery?.matches?'reduce':'full';
+      app.dataset.playerContrast=appearance.highContrast===true?'high':'normal';
+      app.dataset.playerTargets=appearance.largeTargets===true||appearance.tvControls==='large'?'large':'standard';
+      app.dataset.playerPosition=choice('playerPosition',['floating','bottom']);
+      app.dataset.playerLoadingBackdrop=flat?'dark':choice('playerBackdrop',['dark','artwork','ambient']);
+      app.style.setProperty('--player-progress-size',bounded('playerProgress',3,2,7)+'px');
+      app.style.setProperty('--player-icon-scale',String(bounded('playerIconScale',100,85,125)/100));
+      app.style.setProperty('--player-chrome-opacity',String(appearance.highContrast===true?1:bounded('playerOpacity',85,60,100)/100));
+      for(const name of ['current','duration'])find(name).hidden=appearance.playerTime===false;
+      const captionColor=/^#[\da-f]{6}$/i.test(appearance.captionColor||'')?appearance.captionColor:'#ffffff';
+      const captionShadow={shadow:'0 2px 3px #000,0 0 2px #000',outline:'-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000',none:'none'}[choice('captionEdge',['shadow','outline','none'])];
+      // Literal, validated ::cue values work without relying on custom-property
+      // inheritance inside browser-owned caption renderers. The root selector
+      // also covers video elements replaced by normal source recovery.
+      cueStyle.textContent='[data-player-studio-id="'+appearanceId+'"] video::cue {font-size:'+bounded('captionSize',100,75,200)+'%;color:'+captionColor+';background-color:rgba(0,0,0,'+(bounded('captionBg',65,0,100)/100)+');text-shadow:'+captionShadow+';}';
+      if([1800,2600,4000,6000].includes(appearance.playerAutoHide))config.controls=appearance.playerAutoHide;
+      clearTimeout(controlsTimer);controlsTimer=0;
+      updateVisibility({reveal:true});
+      for(const menu of stage.querySelectorAll('details[open]'))positionMenu(menu);
+    }
     function savePlayback(force=false,completed=false) {
       if(!soloTracking||managed||remoteMode.enabled||remoteMode.manual||destroyed||suspended||!playable||!hasPlayed||!history?.saveProgress)return;
       if(mediaId!==app.dataset.playerId||mediaType!==app.dataset.playerType)return;
@@ -92,16 +129,16 @@
     }
     const emitState = () => dispatch('state',getState());
     function controlsPinned() {
-      return phase!=='ready'||!playable||video.paused||video.seeking||scrubbing||!find('unlock').hidden||controls.contains(document.activeElement)||!!stage.querySelector('details[open]');
+      return phase!=='ready'||!playable||video.paused||video.seeking||scrubbing||controlsHovered||!find('unlock').hidden||controls.contains(document.activeElement)||!!stage.querySelector('details[open]');
     }
     function syncGlass() {
       // One static geometry lens belongs to the transport. Its backdrop is
       // composed by the browser; playback never samples or redraws the film.
-      if(!glass&&!glassUnavailable&&!destroyed&&find('glass')&&window.SwiflyLiquidGlass?.mount){
+      if(glassAllowed&&!glass&&!glassUnavailable&&!destroyed&&find('glass')&&window.SwiflyLiquidGlass?.mount){
         try{glass=window.SwiflyLiquidGlass.mount(find('glass'),{tint:.2,saturation:1,distortionScale:-180,displace:.5});}
         catch{glassUnavailable=true;}
       }
-      const enabled=!destroyed&&!suspended&&app.isConnected&&!document.hidden&&!controls.hidden&&app.dataset.playerControlsVisibility!=='hidden';
+      const enabled=glassAllowed&&!destroyed&&!suspended&&app.isConnected&&!document.hidden&&!controls.hidden&&app.dataset.playerControlsVisibility!=='hidden';
       if(glass&&glassEnabled!==enabled){glassEnabled=enabled;glass.setEnabled(enabled);}
     }
     function updateVisibility({reveal=false}={}) {
@@ -115,7 +152,7 @@
     function tvControls(event) {
       if(destroyed||suspended||!app.isConnected||document.documentElement.dataset.svTv!=='true'||!document.body.classList.contains('swifly-tv-focus-mode'))return;
       if(event.detail?.action==='show'){updateVisibility({reveal:true});return;}
-      if(event.detail?.action!=='hide'||phase!=='ready'||!playable||video.paused||video.ended||video.seeking||scrubbing||!find('unlock').hidden||stage.querySelector('details[open]'))return;
+      if(event.detail?.action!=='hide'||phase!=='ready'||!playable||video.paused||video.ended||video.seeking||scrubbing||controlsHovered||!find('unlock').hidden||stage.querySelector('details[open]'))return;
       if(controls.contains(document.activeElement))stage.focus({preventScroll:true});
       clearTimeout(controlsTimer);controlsTimer=0;app.dataset.playerControlsVisibility='hidden';syncGlass();
     }
@@ -714,6 +751,12 @@
     }
     const api=Object.freeze({loadSource,resolve,retry:()=>resolve({retry:true}),getState,play,pause,seek,setRemoteMode,destroy});
     instances.set(app,api);
+    listen(document,'swifly:studio-change',event=>{if(event.detail?.effective)applyAppearance(event.detail.effective);});
+    for(const query of [transparencyQuery,motionQuery]){
+      const changed=()=>applyAppearance(appearance);
+      if(query?.addEventListener)listen(query,'change',changed);
+      else if(query?.addListener){query.addListener(changed);listeners.push(()=>query.removeListener(changed));}
+    }
     listen(app,'swiflyplayer:tv-controls',tvControls);
     listen(find('play'),'click',()=>getState().paused?play():pause());
     listen(find('backward'),'click',()=>seek(number(video.currentTime,0)-10));listen(find('forward'),'click',()=>seek(number(video.currentTime,0)+10));
@@ -743,6 +786,9 @@
     listen(find('captions'),'change',event=>{const selected=String(event.target.value),choice=captionOptions.find(item=>item.value===selected);try{applyCaption(selected);captionPreference=choice?{key:choice.key,language:choice.language,label:choice.label}:null;updateCaptions();}catch{showToast('These captions are unavailable.');}});
     listen(find('fullscreen'),'click',fullscreen);listen(find('pip'),'click',()=>{pictureInPicture();closeMenu(find('settings'));find('settings').querySelector('summary').focus();});listen(app,'keydown',event=>{if(!event.defaultPrevented)updateVisibility({reveal:true});keyboard(event);});
     listen(stage,'pointermove',()=>updateVisibility({reveal:true}));listen(stage,'pointerdown',()=>updateVisibility({reveal:true}));
+    listen(controls,'pointerenter',event=>{if(event.pointerType==='touch')return;controlsHovered=true;updateVisibility({reveal:true});});
+    const leaveControls=()=>{controlsHovered=false;updateVisibility();};
+    listen(controls,'pointerleave',leaveControls);listen(controls,'pointercancel',leaveControls);
     listen(stage,'focusin',()=>updateVisibility({reveal:true}));listen(stage,'focusout',()=>{const token=generation;queueMicrotask(()=>{if(alive(token))updateVisibility();});});
     listen(stage,'click',event=>{if(event.target===video||event.target===stage){stage.focus({preventScroll:true});if(playable&&!locked())getState().paused?play():pause();}});
     function closeMenu(node) {
@@ -791,6 +837,7 @@
       if(cached?.data){const loading=loadSource(cached.data,{resumeAt:cached.snapshot.currentTime,restoreSource:cached.snapshot.source}),token=generation;loading.then(ok=>{if(ok&&alive(token)&&!cached.snapshot.paused)play({remote:true});});if(managed)dispatch('resume',getState());}
       else if(!managed)resolve();else {setStatus('waiting');dispatch('resume',getState());}
     });
+    applyAppearance(window.SwiflyAppearance);
     video.controls=false;controls.hidden=false;find('fullscreen').hidden=!(stage.requestFullscreen||video.webkitEnterFullscreen);
     find('pip').hidden=!(document.pictureInPictureEnabled&&video.requestPictureInPicture);updateControls();
     revealSelectedEpisode();listen(window,'resize',revealSelectedEpisode);

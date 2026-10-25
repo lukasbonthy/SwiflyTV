@@ -1,0 +1,214 @@
+{
+  "sourceRepository": "lukasbonthy/lofistudy.to",
+  "sourceCommit": "46ecda8c69f2818978bfd9e94fc48e164e7b0bf4",
+  "music": {
+    "artist": "HoliznaCC0",
+    "artistUrl": "https://holiznacc0.bandcamp.com/",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
+  "scenes": {
+    "attribution": "Scene loops and posters supplied in the owner\u2019s LofiStudy repository.",
+    "license": null
+  },
+  "assets": [
+    {
+      "path": "media/audio/HoliznaCC0 - A Little Shade.mp3",
+      "sourcePath": "public/audio/HoliznaCC0 - A Little Shade.mp3",
+      "gitBlobSha": "085acc0b45029d333d5d6cd582c1f8e7feeb8caa",
+      "bytes": 7143565
+    },
+    {
+      "path": "media/audio/HoliznaCC0 - All The Way Sad.mp3",
+      "sourcePath": "public/audio/HoliznaCC0 - All The Way Sad.mp3",
+      "gitBlobSha": "672a314d650af93ac02d1bc802b79c5888d66c8d",
+      "bytes": 7453645
+    },
+    {
+      "path": "media/audio/HoliznaCC0 - Cellar Door.mp3",
+      "sourcePath": "public/audio/HoliznaCC0 - Cellar Door.mp3",
+      "gitBlobSha": "b68260d923bdb5ce096246737919ef969abd9e96",
+      "bytes": 5296525
+    },
+    {
+      "path": "media/audio/HoliznaCC0 - Everything You Ever Dreamed..mp3",
+      "sourcePath": "public/audio/HoliznaCC0 - Everything You Ever Dreamed..mp3",
+      "gitBlobSha": "7f41f6a846098ad6e170778c2df2e6d503d2da79",
+      "bytes": 8801280
+    },
+    {
+      "path": "media/audio/HoliznaCC0 - Ghosts.mp3",
+      "sourcePath": "public/audio/HoliznaCC0 - Ghosts.mp3",
+      "gitBlobSha": "78f636ca1ad68440ab090e0607bec54fcee66ba6",
+      "bytes": 3613645
+    },
+    {
+      "path": "media/audio/HoliznaCC0 - Glad To Be Stuck Inside.mp3.mp3",
+      "sourcePath": "public/audio/HoliznaCC0 - Glad To Be Stuck Inside.mp3.mp3",
+      "gitBlobSha": "49f5d0323dfa70a13266b17ed276deff95689db8",
+      "bytes": 6437965
+    },
+    {
+      "path": "media/audio/HoliznaCC0 - Happy, but a little off.mp3",
+      "sourcePath": "public/audio/HoliznaCC0 - Happy, but a little off.mp3",
+      "gitBlobSha": "6952cb0e1247598926d3ff27fe7a02a6b4094c2e",
+      "bytes": 4693625
+    },
+    {
+      "path": "media/audio/HoliznaCC0 - Letting Go Of The Past.mp3",
+      "sourcePath": "public/audio/HoliznaCC0 - Letting Go Of The Past.mp3",
+      "gitBlobSha": "f67b43bdeb499be5b22ae8a13e16c0b5099b0618",
+      "bytes": 7184845
+    },
+    {
+      "path": "media/audio/HoliznaCC0 - Morning Coffee.mp3",
+      "sourcePath": "public/audio/HoliznaCC0 - Morning Coffee.mp3",
+      "gitBlobSha": "b6197cb0bd61ee256883a28e09b53b6fbf03a20f",
+      "bytes": 7680205
+    },
+    {
+      "path": "media/audio/HoliznaCC0 - Mundane.mp3",
+      "sourcePath": "public/audio/HoliznaCC0 - Mundane.mp3",
+      "gitBlobSha": "2548de86f184447a79b119b5803f00d42cedfa38",
+      "bytes": 6324685
+    },
+    {
+      "path": "media/audio/HoliznaCC0 - Pretty Little Lies.mp3",
+      "sourcePath": "public/audio/HoliznaCC0 - Pretty Little Lies.mp3",
+      "gitBlobSha": "1b90d3c53df289c528e769d057d19a3963ed35a9",
+      "bytes": 8400205
+    },
+    {
+      "path": "media/audio/HoliznaCC0 - Puppy Love.mp3",
+      "sourcePath": "public/audio/HoliznaCC0 - Puppy Love.mp3",
+      "gitBlobSha": "93adac599467f5ff5f047a08abb0a6817ebfa0ed",
+      "bytes": 6000205
+    },
+    {
+      "path": "media/audio/HoliznaCC0 - Shut up, or shut in.mp3",
+      "sourcePath": "public/audio/HoliznaCC0 - Shut up, or shut in.mp3",
+      "gitBlobSha": "db26fc3dd098137a24126548ffbbd1b014aa0d46",
+      "bytes": 4800205
+    },
+    {
+      "path": "media/audio/HoliznaCC0 - Small Towns Smaller Lives.mp3",
+      "sourcePath": "public/audio/HoliznaCC0 - Small Towns Smaller Lives.mp3",
+      "gitBlobSha": "88ae92b8d616c4371282118b5f1e471fd3d416aa",
+      "bytes": 5841600
+    },
+    {
+      "path": "media/audio/HoliznaCC0 - Something In the Air.mp3",
+      "sourcePath": "public/audio/HoliznaCC0 - Something In the Air.mp3",
+      "gitBlobSha": "080c00ef1a4ca4fcc3ea7ff3da6cddded7fe45d7",
+      "bytes": 5280205
+    },
+    {
+      "path": "media/audio/HoliznaCC0 - Vintage.mp3.mp3",
+      "sourcePath": "public/audio/HoliznaCC0 - Vintage.mp3.mp3",
+      "gitBlobSha": "8f44bb9d3f180a6dd813ffc35af1627e9c3fcee8",
+      "bytes": 6960205
+    },
+    {
+      "path": "media/audio/HoliznaCC0 - Whatever.mp3",
+      "sourcePath": "public/audio/HoliznaCC0 - Whatever.mp3",
+      "gitBlobSha": "d35c09e5f08c3d121d296406655675e7d8d0dd42",
+      "bytes": 9480205
+    },
+    {
+      "path": "media/audio/HoliznaCC0 - Yesterday.mp3",
+      "sourcePath": "public/audio/HoliznaCC0 - Yesterday.mp3",
+      "gitBlobSha": "7e8aa428589e3d59efde7158e6330d5df34de16c",
+      "bytes": 6033805
+    },
+    {
+      "path": "media/audio/HoliznaCC0 - You Loved Me Once.mp3",
+      "sourcePath": "public/audio/HoliznaCC0 - You Loved Me Once.mp3",
+      "gitBlobSha": "42ac5ad135cc72764ce50d7ec3df764d0279130a",
+      "bytes": 7296205
+    },
+    {
+      "path": "media/posters/cozy-hobbit-study.webp",
+      "sourcePath": "public/posters/cozy-hobbit-study.webp",
+      "gitBlobSha": "ebe2411ca6799752e44d3f9d20342479b6846d5e",
+      "bytes": 31574
+    },
+    {
+      "path": "media/posters/forest-tape-radio.webp",
+      "sourcePath": "public/posters/forest-tape-radio.webp",
+      "gitBlobSha": "1a8c4e090863e04911b5d237e511d1a9a46df967",
+      "bytes": 10418
+    },
+    {
+      "path": "media/posters/frog-pond-rain.webp",
+      "sourcePath": "public/posters/frog-pond-rain.webp",
+      "gitBlobSha": "405ebd6b46cee6eebbe60a3bef7c0d7f80affe77",
+      "bytes": 22898
+    },
+    {
+      "path": "media/posters/garden-cat-study.webp",
+      "sourcePath": "public/posters/garden-cat-study.webp",
+      "gitBlobSha": "aa203abab00256f8b231d8348494670721f3ab51",
+      "bytes": 46668
+    },
+    {
+      "path": "media/posters/moon-cat-window.webp",
+      "sourcePath": "public/posters/moon-cat-window.webp",
+      "gitBlobSha": "15b3d37e255fb50fd8f1d45e143f6e1f906b5bf6",
+      "bytes": 7200
+    },
+    {
+      "path": "media/posters/raccoon-bedroom-loop.webp",
+      "sourcePath": "public/posters/raccoon-bedroom-loop.webp",
+      "gitBlobSha": "475f7b3add68cd0b1c4e1dc96ff344d4a5d1e818",
+      "bytes": 23398
+    },
+    {
+      "path": "media/posters/sunset-train.webp",
+      "sourcePath": "public/posters/sunset-train.webp",
+      "gitBlobSha": "b18f15fcea6da5be730d89ca7a72debbb82fa0e2",
+      "bytes": 17154
+    },
+    {
+      "path": "media/scenes-video/cozy-hobbit-study.mp4",
+      "sourcePath": "public/scenes-video/cozy-hobbit-study.mp4",
+      "gitBlobSha": "1602689573a049f93c7b78e59304dd5dc866c294",
+      "bytes": 49902
+    },
+    {
+      "path": "media/scenes-video/forest-tape-radio.mp4",
+      "sourcePath": "public/scenes-video/forest-tape-radio.mp4",
+      "gitBlobSha": "1d0ff786d1462aecf3c663f2772d1665a04bfdf9",
+      "bytes": 96375
+    },
+    {
+      "path": "media/scenes-video/frog-pond-rain.mp4",
+      "sourcePath": "public/scenes-video/frog-pond-rain.mp4",
+      "gitBlobSha": "73d890e4be122eac8bfbd46554f153d6c65f2f6d",
+      "bytes": 80033
+    },
+    {
+      "path": "media/scenes-video/garden-cat-study.mp4",
+      "sourcePath": "public/scenes-video/garden-cat-study.mp4",
+      "gitBlobSha": "689b16bd312822271ae9e7ffb120b6e56c5f44e4",
+      "bytes": 178226
+    },
+    {
+      "path": "media/scenes-video/moon-cat-window.mp4",
+      "sourcePath": "public/scenes-video/moon-cat-window.mp4",
+      "gitBlobSha": "6b6d990f26170a678e887ba77a598620f0f38913",
+      "bytes": 11904
+    },
+    {
+      "path": "media/scenes-video/raccoon-bedroom-loop.mp4",
+      "sourcePath": "public/scenes-video/raccoon-bedroom-loop.mp4",
+      "gitBlobSha": "8bd1f98c26b3a5238c220c09228313a09d9fc5af",
+      "bytes": 58326
+    },
+    {
+      "path": "media/scenes-video/sunset-train.mp4",
+      "sourcePath": "public/scenes-video/sunset-train.mp4",
+      "gitBlobSha": "e7805c5adf364b2eb26b3753cc758a6e5a0a5e65",
+      "bytes": 21196
+    }
+  ]
+}

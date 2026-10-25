@@ -121,6 +121,9 @@ test('The complete theater and transport fit the page viewport without cropping 
       assert(geometry.seek.height >= 44, `${label}: seeking needs a 44px touch area`);
       for (const [index, target] of geometry.targets.entries()) {
         assert(target.width >= 44 && target.height >= 44, `${label}: transport targets must be at least 44px`);
+        assert(Math.min(target.right, geometry.seek.right) - Math.max(target.left, geometry.seek.left) <= .5 ||
+          Math.min(target.bottom, geometry.seek.bottom) - Math.max(target.top, geometry.seek.top) <= .5,
+          `${label}: the seek hit area must not overlap transport targets`);
         for (const other of geometry.targets.slice(index + 1)) {
           assert(Math.min(target.right, other.right) - Math.max(target.left, other.left) <= .5 ||
             Math.min(target.bottom, other.bottom) - Math.max(target.top, other.top) <= .5, `${label}: transport targets must not overlap`);
@@ -265,9 +268,12 @@ test('A playback error remains readable and Retry reachable in very short landsc
       });
       const initial = await page.evaluate(() => ({
         titleTop:document.querySelector('[data-player-status-title]').getBoundingClientRect().top,
-        stageTop:document.querySelector('[data-player-stage]').getBoundingClientRect().top
+        stageTop:document.querySelector('[data-player-stage]').getBoundingClientRect().top,
+        statusBottom:document.querySelector('[data-player-status]').getBoundingClientRect().bottom,
+        dockTop:document.querySelector('.svPlayerDock').getBoundingClientRect().top
       }));
       assert(initial.titleTop >= initial.stageTop, 'the initial error message must not rise above the theater or cover the return link');
+      if(viewport.height <= 360 && viewport.width > viewport.height) assert(initial.statusBottom <= initial.dockTop, 'the scrollable error panel must clear the actual tool dock');
       for (const selector of ['[data-player-status-title]', '[data-player-status-copy]', '[data-player-retry]']) {
         const node = page.locator(selector);
         await node.scrollIntoViewIfNeeded();

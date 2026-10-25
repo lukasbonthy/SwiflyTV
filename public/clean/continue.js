@@ -5,6 +5,7 @@
   const key = "movieverse.continue";
   const legacyKey = "swiflytv.continueWatching";
   const actionStates = new WeakMap();
+  const nextRequests = new Map(), completedSaves = new Set(), revisions = new Map();
   let started = false, renderFrame = 0;
   const text = value => typeof value === "string" || typeof value === "number" ? String(value) : "";
   const numeric = value => typeof value === "number" || typeof value === "string" ? Number(value) : NaN;
@@ -67,6 +68,7 @@
       resumable: !completed && currentTime >= 1 && duration > currentTime && (type !== "tv" || Boolean(season && episode)) };
   }
   function read(owner = profileId()) {
+    if (window.SwiflyLibrary?.active === false) return [];
     const seen = new Set();
     return all().filter(item => item?.profileId === owner).map(normalize).filter(item => {
       if (!item || item.completed || seen.has(item.key)) return false;
@@ -77,7 +79,32 @@
     return read(owner).find(item => item.type === type && item.id === String(id) && item.resumable) || null;
   }
   function remove(itemKey, owner = profileId()) {
+    const changeKey = owner + ':' + itemKey;
+    revisions.set(changeKey, (revisions.get(changeKey) || 0) + 1);
     return write(all().filter(item => item?.profileId !== owner || normalize(item)?.key !== itemKey));
+  }
+  function nextEpisode(progress, owner, requestKey, revision) {
+    const library = window.SwiflyLibrary;
+    if (!library || typeof window.fetch !== 'function' || nextRequests.has(requestKey)) return;
+    const context = library.contextId(), controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    const query = new URLSearchParams({s:String(progress.season),e:String(progress.episode)});
+    const task = (async () => {
+      try {
+        const response = await fetch('/api/library/next/tv/' + progress.id + '?' + query, {signal:controller.signal,headers:{Accept:'application/json'}});
+        if (!response.ok) return;
+        const data = await response.json(), next = data?.next;
+        if (!library.active || context !== library.contextId() || owner !== profileId() || revision !== revisions.get(owner + ':' + progress.key)) return;
+        const season = positiveInteger(next?.season), episode = positiveInteger(next?.episode);
+        if (!season || !episode || season < progress.season || season === progress.season && episode <= progress.episode) return;
+        if (next.airDate && (!/^\d{4}-\d{2}-\d{2}$/.test(next.airDate) || next.airDate > new Date().toISOString().slice(0,10))) return;
+        const items = all();
+        if (items.some(item => item?.profileId === owner && normalize(item)?.key === progress.key)) return;
+        write([{...progress,profileId:owner,season,episode,currentTime:0,duration:0,completed:false,ended:false,nextEpisode:true,watchedAt:new Date().toISOString()},...items]);
+      } catch {} finally {clearTimeout(timeout);}
+    })();
+    nextRequests.set(requestKey,task);
+    if (nextRequests.size > 80) nextRequests.delete(nextRequests.keys().next().value);
   }
   function saveProgress(progress, owner = profileId()) {
     const next = normalize(progress);
@@ -85,13 +112,29 @@
         || next.type === "tv" && (!positiveInteger(progress.season) || !positiveInteger(progress.episode))) return false;
     const items = all(), previous = items.find(item => item?.profileId === owner && normalize(item)?.key === next.key) || {};
     const remaining = items.filter(item => item?.profileId !== owner || normalize(item)?.key !== next.key);
-    if (next.completed) return write(remaining);
+    const episodeKey = [owner,next.key,next.type === 'tv' ? next.season : '',next.type === 'tv' ? next.episode : ''].join(':'), changeKey = owner + ':' + next.key;
+    if (next.completed) {
+      if (completedSaves.has(episodeKey)) return true;
+      const differentEpisode = next.type === 'tv' && previous.type === 'tv' && (Number(previous.season) !== next.season || Number(previous.episode) !== next.episode);
+      if (!write(differentEpisode ? items : remaining)) return false;
+      completedSaves.add(episodeKey);
+      window.SwiflyLibrary?.remember?.({...next,completed:true},{owner});
+      if (!differentEpisode && next.type === 'tv') {
+        const revision = (revisions.get(changeKey) || 0) + 1;revisions.set(changeKey,revision);
+        nextEpisode(next,owner,episodeKey,revision);
+      }
+      return true;
+    }
+    completedSaves.delete(episodeKey);nextRequests.delete(episodeKey);
+    revisions.set(changeKey,(revisions.get(changeKey) || 0) + 1);
     const saved = { ...previous, profileId: owner, key: next.key, id: next.id, type: next.type,
       title: next.title, poster: next.poster, backdrop: next.backdrop, year: progress.year || previous.year || "",
-      rating: progress.rating || previous.rating || "", currentTime: next.currentTime, duration: next.duration, completed: false, ended: false,
+      rating: progress.rating || previous.rating || "", currentTime: next.currentTime, duration: next.duration, completed: false, ended: false, nextEpisode:false,
       ...(next.type === "tv" ? { season: next.season, episode: next.episode } : {}), watchedAt: new Date().toISOString() };
     let count = 0;
-    return write([saved, ...remaining].filter(item => item?.profileId !== owner || ++count <= 80));
+    const success = write([saved, ...remaining].filter(item => item?.profileId !== owner || ++count <= 80));
+    if (success) window.SwiflyLibrary?.remember?.(saved,{owner});
+    return success;
   }
   function watchHref(item) {
     const params = new URLSearchParams({ mode: "movie" });
@@ -135,13 +178,17 @@
     const elapsed = Number(item.currentTime ?? item.positionSeconds ?? item.position), duration = Number(item.duration ?? item.durationSeconds);
     const percent = Number.isFinite(elapsed) && Number.isFinite(duration) && elapsed > 0 && duration > 0 ? Math.round(Math.max(0, Math.min(100, elapsed / duration * 100))) : null;
     const progress = percent === null ? "" : '<div class="svResumeProgress" role="progressbar" aria-label="Playback progress for ' + title + '" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + percent + '"><span style="width:' + percent + '%"></span></div>';
-    return '<article class="svResumeCard"><div class="svResumeArtwork">' +
+    const timestamp = Date.parse(item.watchedAt || ''), age = Number.isFinite(timestamp) ? Math.max(0,Date.now()-timestamp) : null;
+    const days = age === null ? 0 : Math.floor(age/86400000), stale = age !== null && age >= 14*86400000;
+    const ageText = age === null ? '' : age < 60000 ? 'Just now' : age < 3600000 ? Math.floor(age/60000)+'m ago' : age < 86400000 ? Math.floor(age/3600000)+'h ago' : days+'d ago';
+    const ageBadge = ageText ? '<time class="svResumeAge" datetime="' + escape(new Date(timestamp).toISOString()) + '" title="Last watched ' + escape(new Date(timestamp).toLocaleDateString()) + '">' + ageText + '</time>' : '';
+    return '<article class="svResumeCard" data-continue-stale="' + stale + '"><div class="svResumeArtwork">' +
       '<a class="svResumeLink" href="' + escape(href) + '" aria-label="Continue watching ' + title + '"' + attrs + '>' +
       (image ? '<img src="' + escape(image) + '" alt="' + title + '" loading="lazy" decoding="async" />' : '<div class="svResumeFallback">' + escape(item.title.slice(0, 1)) + '</div>') +
       '<span class="svResumePlay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m9 5 11 7-11 7Z"/></svg></span></a>' +
       '<button class="svResumeRemove" type="button" data-continue-remove="' + escape(item.key) + '" aria-label="Remove ' + title + ' from Continue Watching"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>' +
       progress + '</div><div class="svResumeCaption"><a class="svResumeTitle" href="' + escape(details) + '" title="' + title + '">' + title + '</a>' +
-      '<div class="svResumeMeta">' + (item.year ? '<span>' + escape(item.year) + '</span><span aria-hidden="true">·</span>' : '') + '<span>' + (item.type === "tv" ? "S" + item.season + " · E" + item.episode : "Movie") + '</span>' + (item.resumable ? '<span aria-hidden="true">·</span><span>' + formatTime(item.currentTime) + '</span>' : '') + '</div></div></article>';
+      '<div class="svResumeMeta">' + (item.nextEpisode ? '<span class="svResumeUpNext">Up next</span><span aria-hidden="true">·</span>' : '') + (item.year ? '<span>' + escape(item.year) + '</span><span aria-hidden="true">·</span>' : '') + '<span>' + (item.type === "tv" ? "S" + item.season + " · E" + item.episode : "Movie") + '</span>' + (item.resumable ? '<span aria-hidden="true">·</span><span>' + formatTime(item.currentTime) + '</span>' : '') + '</div>' + ageBadge + '</div></article>';
   }
   function render() {
     const items = read(), section = document.getElementById("continueWatchingSection"), rail = document.getElementById("continueWatchingRail");
@@ -151,12 +198,15 @@
     document.querySelectorAll("[data-continue-count]").forEach(node => { node.textContent = items.length + (items.length === 1 ? " title" : " titles"); });
     const accountCount = document.getElementById("statContinue"); if (accountCount) accountCount.textContent = String(items.length);
     decorate();
+    window.SwiflyLibrary?.renderDecorations?.();
   }
   function boot() {
     if (started) return; started = true; render();
     window.addEventListener("swifly:continue-change", () => { if (renderFrame) return; renderFrame = requestAnimationFrame(() => { renderFrame = 0; render(); }); });
     window.addEventListener("storage", event => { if (!event.key || [key, legacyKey, "swiflytv.activeProfile", "swiflytv.profiles"].includes(event.key)) render(); });
     document.addEventListener("swifly:profile-changed", render);
+    document.addEventListener('swifly:account-hydrated',render);
+    document.addEventListener('swifly:account-suspended',render);
     document.addEventListener("click", event => {
       const remove = event.target.closest("[data-continue-remove]");
       if (remove) { if (window.SwiflyContinue.remove(remove.dataset.continueRemove)) { render(); if (typeof window.showToast === "function") window.showToast("Removed from Continue Watching"); } return; }

@@ -600,7 +600,7 @@ test('mobile header and dock keep navigation, search and account controls reacha
       });
       assert.equal(geometry.overflow,width,'the shell must fit the phone without sideways page scroll');
       assert(geometry.header.left>=12&&geometry.header.right<=width-12,'the floating header needs breathing room at both edges');
-      assert.deepEqual(geometry.tabs.map(tab=>tab.href),['/','/movies','/tv','/trending','/my-list']);
+      assert.deepEqual(geometry.tabs.map(tab=>tab.href),['/','/movies','/tv','/trending','/my-list','/study']);
       assert.equal(geometry.tabs[0].current,'page');
       for(const target of [...geometry.tabs,geometry.search,geometry.account]){
         assert(target.width>=44&&target.height>=44,'mobile controls must offer a full 44px touch target: '+JSON.stringify(target));
