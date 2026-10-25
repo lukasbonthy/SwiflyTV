@@ -75,7 +75,7 @@ test('detail save and heart state never destroy existing liquid-glass panes',()=
 
 test('detail visual polish preserves user opacity controls and minimizes compositing',()=>{
   const server=fs.readFileSync(path.join(__dirname,'../server.js'),'utf8');
-  assert(server.includes('/assets/clean/details-clarity.css?v=2'));
+  assert(server.includes('/assets/clean/details-clarity.css?v=262'));
   assert(server.includes('family=Manrope:wght@400;500;600;700;800'));
   assert(!/--sv-glass-default-tint\\s*:\\s*\\./.test(css),'no gray tint overrides allowed');
   assert(!/--sv-glass-color\\s*:/.test(css),'no opaque white glass face overrides allowed');

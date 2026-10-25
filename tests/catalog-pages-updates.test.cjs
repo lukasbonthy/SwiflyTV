@@ -1,0 +1,12 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict'),{loadServer,browser,cleanup}=require('./ui-helpers.cjs');
+test.afterEach(cleanup);
+test('details show an actual certification and expose real episode browsing controls',async()=>{
+ const api=loadServer();try{const details={id:5,name:'Series',content_ratings:{results:[{iso_3166_1:'US',rating:'TV-MA'}]},seasons:[{season_number:1,episode_count:30}]};api.setTmdb(async p=>p==='/tv/5'?details:{results:[],cast:[],crew:[]});let html;await api.detailPage({params:{id:'5'},query:{},protocol:'http',get:()=>''},{send:v=>html=v},'tv');const b=browser(html),d=b.window.document;assert.equal(d.querySelector('[data-content-rating]').textContent,'TV-MA');assert.equal(d.querySelector('[data-content-rating]').dataset.ratingSeverity,'mature');assert(d.querySelector('[data-episode-view]'));assert(d.querySelector('[data-episode-sort]'));assert(d.querySelector('[data-episode-season="1"]'));}finally{api.io.close();}
+});
+test('person filmography exposes credits beyond the former first twenty',async()=>{
+ const api=loadServer();try{api.setTmdb(async p=>p.endsWith('/combined_credits')?{cast:Array.from({length:55},(_,i)=>({id:i+1,title:'Film '+(i+1),media_type:'movie'})),crew:[]}:{id:1,name:'Performer'});let html;await api.personDetailPage({params:{id:'1'},query:{creditsPage:'2'}},{send:v=>html=v});const b=browser(html),d=b.window.document;assert.match(d.querySelector('[data-person-filmography]').textContent,/Film 55/);assert.equal(d.querySelector('[data-person-credits-count]').textContent,'55 titles');assert(d.querySelector('a[href*="creditsPage=1"]'));}finally{api.io.close();}
+});
+test('server-rendered search honors type, rating and date controls with native GET fallback',async()=>{
+ const api=loadServer(),calls=[];try{api.setTmdb(async(p,q)=>{calls.push([p,q]);return{results:[{id:1,title:'Bad',vote_average:3,release_date:'2000-01-01'},{id:2,title:'Good',vote_average:9,release_date:'2024-01-01'}],total_pages:1};});let html;await api.searchPage({query:{q:'film',media:'movie',minRating:'8',sort:'rating'}},{send:v=>html=v});const b=browser(html),d=b.window.document;assert.equal(calls[0][0],'/search/movie');assert.equal(d.querySelectorAll('[data-studio-results] .movieCard').length,1);assert.equal(d.querySelector('[name=media]').value,'movie');assert.equal(d.querySelector('[name=minRating]').value,'8');}finally{api.io.close();}
+});

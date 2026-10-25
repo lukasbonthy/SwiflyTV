@@ -84,7 +84,7 @@ async function navigate(page, selector, pathname) {
   assert(records.some(record => record.ready), pathname + ' should run a native document transition: ' + JSON.stringify(records));
   const animation = records.find(record => record.ready);
   assert.equal(animation.name, 'svNavigationIn');
-  assert.equal(animation.duration, '0.32s');
+  assert.equal(animation.duration, (await page.evaluate(()=>window.SwiflyStudio.getSettings().transitionSpeed))/1000+'s', 'native navigation follows the configured Studio duration');
   assert.equal(animation.filter, 'none');
   assert.equal(animation.transform, 'none');
 }

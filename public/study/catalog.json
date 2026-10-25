@@ -1,0 +1,291 @@
+{
+  "tracks": [
+    {
+      "id": "track-1",
+      "title": "A Little Shade",
+      "artist": "HoliznaCC0",
+      "station": "study",
+      "url": "/assets/study/media/audio/HoliznaCC0%20-%20A%20Little%20Shade.mp3",
+      "duration": 178.56
+    },
+    {
+      "id": "track-2",
+      "title": "All The Way Sad",
+      "artist": "HoliznaCC0",
+      "station": "night",
+      "url": "/assets/study/media/audio/HoliznaCC0%20-%20All%20The%20Way%20Sad.mp3",
+      "duration": 186.312
+    },
+    {
+      "id": "track-3",
+      "title": "Cellar Door",
+      "artist": "HoliznaCC0",
+      "station": "rain",
+      "url": "/assets/study/media/audio/HoliznaCC0%20-%20Cellar%20Door.mp3",
+      "duration": 132.384
+    },
+    {
+      "id": "track-4",
+      "title": "Everything You Ever Dreamed.",
+      "artist": "HoliznaCC0",
+      "station": "study",
+      "url": "/assets/study/media/audio/HoliznaCC0%20-%20Everything%20You%20Ever%20Dreamed..mp3",
+      "duration": 220.032
+    },
+    {
+      "id": "track-5",
+      "title": "Ghosts",
+      "artist": "HoliznaCC0",
+      "station": "night",
+      "url": "/assets/study/media/audio/HoliznaCC0%20-%20Ghosts.mp3",
+      "duration": 90.312
+    },
+    {
+      "id": "track-6",
+      "title": "Glad To Be Stuck Inside",
+      "artist": "HoliznaCC0",
+      "station": "rain",
+      "url": "/assets/study/media/audio/HoliznaCC0%20-%20Glad%20To%20Be%20Stuck%20Inside.mp3.mp3",
+      "duration": 160.92
+    },
+    {
+      "id": "track-7",
+      "title": "Happy, but a little off",
+      "artist": "HoliznaCC0",
+      "station": "study",
+      "url": "/assets/study/media/audio/HoliznaCC0%20-%20Happy%2C%20but%20a%20little%20off.mp3",
+      "duration": 117.312
+    },
+    {
+      "id": "track-8",
+      "title": "Letting Go Of The Past",
+      "artist": "HoliznaCC0",
+      "station": "night",
+      "url": "/assets/study/media/audio/HoliznaCC0%20-%20Letting%20Go%20Of%20The%20Past.mp3",
+      "duration": 179.592
+    },
+    {
+      "id": "track-9",
+      "title": "Morning Coffee",
+      "artist": "HoliznaCC0",
+      "station": "study",
+      "url": "/assets/study/media/audio/HoliznaCC0%20-%20Morning%20Coffee.mp3",
+      "duration": 191.976
+    },
+    {
+      "id": "track-10",
+      "title": "Mundane",
+      "artist": "HoliznaCC0",
+      "station": "rain",
+      "url": "/assets/study/media/audio/HoliznaCC0%20-%20Mundane.mp3",
+      "duration": 158.088
+    },
+    {
+      "id": "track-11",
+      "title": "Pretty Little Lies",
+      "artist": "HoliznaCC0",
+      "station": "night",
+      "url": "/assets/study/media/audio/HoliznaCC0%20-%20Pretty%20Little%20Lies.mp3",
+      "duration": 209.976
+    },
+    {
+      "id": "track-12",
+      "title": "Puppy Love",
+      "artist": "HoliznaCC0",
+      "station": "study",
+      "url": "/assets/study/media/audio/HoliznaCC0%20-%20Puppy%20Love.mp3",
+      "duration": 149.976
+    },
+    {
+      "id": "track-13",
+      "title": "Shut up, or shut in",
+      "artist": "HoliznaCC0",
+      "station": "cram",
+      "url": "/assets/study/media/audio/HoliznaCC0%20-%20Shut%20up%2C%20or%20shut%20in.mp3",
+      "duration": 119.976
+    },
+    {
+      "id": "track-14",
+      "title": "Small Towns Smaller Lives",
+      "artist": "HoliznaCC0",
+      "station": "rain",
+      "url": "/assets/study/media/audio/HoliznaCC0%20-%20Small%20Towns%20Smaller%20Lives.mp3",
+      "duration": 146.04
+    },
+    {
+      "id": "track-15",
+      "title": "Something In the Air",
+      "artist": "HoliznaCC0",
+      "station": "rain",
+      "url": "/assets/study/media/audio/HoliznaCC0%20-%20Something%20In%20the%20Air.mp3",
+      "duration": 131.976
+    },
+    {
+      "id": "track-16",
+      "title": "Vintage",
+      "artist": "HoliznaCC0",
+      "station": "study",
+      "url": "/assets/study/media/audio/HoliznaCC0%20-%20Vintage.mp3.mp3",
+      "duration": 173.976
+    },
+    {
+      "id": "track-17",
+      "title": "Whatever",
+      "artist": "HoliznaCC0",
+      "station": "rain",
+      "url": "/assets/study/media/audio/HoliznaCC0%20-%20Whatever.mp3",
+      "duration": 236.976
+    },
+    {
+      "id": "track-18",
+      "title": "Yesterday",
+      "artist": "HoliznaCC0",
+      "station": "night",
+      "url": "/assets/study/media/audio/HoliznaCC0%20-%20Yesterday.mp3",
+      "duration": 150.816
+    },
+    {
+      "id": "track-19",
+      "title": "You Loved Me Once",
+      "artist": "HoliznaCC0",
+      "station": "night",
+      "url": "/assets/study/media/audio/HoliznaCC0%20-%20You%20Loved%20Me%20Once.mp3",
+      "duration": 182.376
+    }
+  ],
+  "scenes": [
+    {
+      "id": "moon-cat",
+      "mood": "Moon Window",
+      "title": "pink city cat",
+      "station": "night",
+      "rain": 14,
+      "dim": 20,
+      "blur": 0,
+      "video": "/assets/study/media/scenes-video/moon-cat-window.mp4",
+      "poster": "/assets/study/media/posters/moon-cat-window.webp"
+    },
+    {
+      "id": "garden-cat",
+      "mood": "Soft Flow",
+      "title": "soft flow study",
+      "station": "study",
+      "rain": 8,
+      "dim": 14,
+      "blur": 0,
+      "video": "/assets/study/media/scenes-video/garden-cat-study.mp4",
+      "poster": "/assets/study/media/posters/garden-cat-study.webp"
+    },
+    {
+      "id": "sunset-train",
+      "mood": "Sunset Loop",
+      "title": "orange train nap",
+      "station": "study",
+      "rain": 6,
+      "dim": 14,
+      "blur": 0,
+      "video": "/assets/study/media/scenes-video/sunset-train.mp4",
+      "poster": "/assets/study/media/posters/sunset-train.webp"
+    },
+    {
+      "id": "cozy-hobbit",
+      "mood": "Cozy Study",
+      "title": "warm hobbit desk",
+      "station": "study",
+      "rain": 0,
+      "dim": 13,
+      "blur": 0,
+      "video": "/assets/study/media/scenes-video/cozy-hobbit-study.mp4",
+      "poster": "/assets/study/media/posters/cozy-hobbit-study.webp"
+    },
+    {
+      "id": "frog-rain",
+      "mood": "Rain Break",
+      "title": "frog pond radio",
+      "station": "rain",
+      "rain": 72,
+      "dim": 22,
+      "blur": 0,
+      "video": "/assets/study/media/scenes-video/frog-pond-rain.mp4",
+      "poster": "/assets/study/media/posters/frog-pond-rain.webp"
+    },
+    {
+      "id": "raccoon-room",
+      "mood": "Bedroom Night",
+      "title": "blanket room loop",
+      "station": "night",
+      "rain": 18,
+      "dim": 32,
+      "blur": 0,
+      "video": "/assets/study/media/scenes-video/raccoon-bedroom-loop.mp4",
+      "poster": "/assets/study/media/posters/raccoon-bedroom-loop.webp"
+    },
+    {
+      "id": "forest-tape",
+      "mood": "Forest Tape",
+      "title": "headphone forest",
+      "station": "cram",
+      "rain": 10,
+      "dim": 28,
+      "blur": 0,
+      "video": "/assets/study/media/scenes-video/forest-tape-radio.mp4",
+      "poster": "/assets/study/media/posters/forest-tape-radio.webp"
+    }
+  ],
+  "rooms": [
+    {
+      "id": "focus-1",
+      "title": "Focus Room 1",
+      "label": "silent cameras",
+      "mood": "Deep work with quiet accountability."
+    },
+    {
+      "id": "focus-2",
+      "title": "Focus Room 2",
+      "label": "pomodoro",
+      "mood": "Structured blocks, quick breaks."
+    },
+    {
+      "id": "cram",
+      "title": "Cram Room",
+      "label": "exam mode",
+      "mood": "Fast sessions for assignments and tests."
+    },
+    {
+      "id": "late-night",
+      "title": "Late Night Room",
+      "label": "night grind",
+      "mood": "Low light room for after-hours focus."
+    },
+    {
+      "id": "do-anything",
+      "title": "Do Anything Room",
+      "label": "flexible",
+      "mood": "Study, code, clean, read, finish anything."
+    },
+    {
+      "id": "homework",
+      "title": "Homework Room",
+      "label": "school work",
+      "mood": "Quiet room for homework, notes, and missing work."
+    },
+    {
+      "id": "coding",
+      "title": "Coding Room",
+      "label": "dev focus",
+      "mood": "Calm keyboard energy for projects and programming."
+    },
+    {
+      "id": "finals-week",
+      "title": "Finals Week Cafe",
+      "label": "seasonal",
+      "mood": "Limited-time cram room for tests and finals."
+    },
+    {
+      "id": "summer-night",
+      "title": "Summer Night Study",
+      "label": "seasonal",
+      "mood": "Warm late-night focus with soft rain and music."
+    }
+  ]
+}

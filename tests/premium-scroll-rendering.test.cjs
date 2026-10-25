@@ -34,7 +34,7 @@ async function catalog(browser, options = {}) {
     // Chromium 131, which is unavailable in the Linux test container. Retain
     // every other real shell script, asset, catalog row, and optical surface.
     html = html.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/g,
-      (tag, code) => code.includes('function swiflyTvFocusNavigation') ? '' : tag);
+      (tag, code) => /^<script\b[^>]*\bdata-sv-tv-navigation\b/i.test(tag) || code.includes('function swiflyTvFocusNavigation') ? '' : tag);
     const page = await browser.newPage({viewport:{width:1280, height:900}, colorScheme:'dark', ...pageOptions});
     await page.addInitScript(() => {
       localStorage.setItem('swiflytv.session', JSON.stringify({email:'scroll@example.test'}));
@@ -261,7 +261,13 @@ for (const width of [1280,390]) test(width+'px catalog keeps its scroll geometry
  const browser=await chromium.launch({headless:true});
  try{
   const page=await catalog(browser,{viewport:{width,height:900},hasTouch:width<500,isMobile:width<500});
-  await page.waitForFunction(()=>document.querySelector('.netflixNav > .svLiquidPane')?.dataset.swiflyRenderer==='svg');
+  await page.waitForFunction(renderer=>document.querySelector('.netflixNav > .svLiquidPane')?.dataset.swiflyRenderer===renderer,width<500?'blur':'svg');
+  if(width<500){
+   const material=await page.evaluate(()=>({raw:SwiflyStudio.getRawSettings().glass,effective:SwiflyStudio.getSettings().glass,blur:SwiflyStudio.getSettings().glassBlur,filter:getComputedStyle(document.querySelector('.netflixNav > .svLiquidPane')).backdropFilter}));
+   assert.equal(material.raw,'liquid','mobile balancing must preserve the saved glass choice');
+   assert.equal(material.effective,'subtle','Auto uses the balanced mobile material');
+   assert(material.blur<=12,'mobile glass keeps its bounded blur');assert.match(material.filter,/blur\(/);
+  }
   const heights=await page.evaluate(async()=>{
    await document.fonts.ready;
    const heights=[document.documentElement.scrollHeight];
@@ -600,7 +606,7 @@ test('mobile header and dock keep navigation, search and account controls reacha
       });
       assert.equal(geometry.overflow,width,'the shell must fit the phone without sideways page scroll');
       assert(geometry.header.left>=12&&geometry.header.right<=width-12,'the floating header needs breathing room at both edges');
-      assert.deepEqual(geometry.tabs.map(tab=>tab.href),['/','/movies','/tv','/trending','/my-list']);
+      assert.deepEqual(geometry.tabs.map(tab=>tab.href),['/','/movies','/tv','/trending','/my-list','/study']);
       assert.equal(geometry.tabs[0].current,'page');
       for(const target of [...geometry.tabs,geometry.search,geometry.account]){
         assert(target.width>=44&&target.height>=44,'mobile controls must offer a full 44px touch target: '+JSON.stringify(target));

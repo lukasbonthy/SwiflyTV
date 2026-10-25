@@ -37,7 +37,7 @@ function browser(markup = '', options = {}) {
   w.HTMLElement.prototype.scrollTo = function (arg) {this.scrollTop = arg.top ?? this.scrollTop; this.scrollLeft = arg.left ?? this.scrollLeft;};
   w.HTMLDialogElement.prototype.showModal = function () {this.open = true;};
   w.HTMLDialogElement.prototype.close = function () {this.open = false; this.dispatchEvent(new w.Event('close'));};
-  w.boot = name => {w.eval(source(name)); w.document.dispatchEvent(new w.Event('DOMContentLoaded'));};
+  w.boot = name => {if(name==='studio/studio.js'&&!w.SwiflyStudioConfig)w.eval(source('studio/config.js'));w.eval(source(name)); w.document.dispatchEvent(new w.Event('DOMContentLoaded'));};
   return {dom, window: w, page, finish() {w.SwiflyMotion?.destroy?.(); openWindows.delete(w); dom.window.close();}};
 }
 function loadServer() {
@@ -49,10 +49,19 @@ function loadServer() {
   const listen = http.Server.prototype.listen, interval = global.setInterval;
   http.Server.prototype.listen = function () {return this;};
   global.setInterval = (...args) => interval(...args).unref();
-  try {m._compile(fs.readFileSync(filename, 'utf8') + '\nmodule.exports = {detailPage, watchPage, listingPage, homePage, movieCard, pageShell, socialPage, app, httpServer, io, tmdb, setTmdb(fn) {tmdb = fn;}, setSourceJobs(jobs) {movieSourceJobs.destroy(); movieSourceJobs = jobs;}};\n', filename);}
+  try {m._compile(fs.readFileSync(filename, 'utf8') + '\nmodule.exports = {detailPage, watchPage, listingPage, homePage, movieCard, pageShell, socialPage, searchPage, personDetailPage, trendingPage, watchlistPage, app, httpServer, io, tmdb, setTmdb(fn) {tmdb = fn;}, setSourceJobs(jobs) {movieSourceJobs.destroy(); movieSourceJobs = jobs;}};\n', filename);}
   finally {http.Server.prototype.listen = listen; global.setInterval = interval;}
   return m.exports;
 }
 const tick = () => new Promise(resolve => setImmediate(resolve));
+// Execute the same controller served by Express after the shell moves it to
+// a cacheable asset. Unit fixtures do not make network requests themselves.
+function tvControllerSource(document) {
+  const script=document.querySelector('script[data-sv-tv-navigation]');
+  if(!script)throw new Error('The shell must mount its actual TV controller.');
+  const src=script.getAttribute('src');
+  if(src){if(!/^\/assets\/clean\/tv\.js(?:\?|$)/.test(src))throw new Error('Unknown TV controller asset: '+src);return require('../ui/tv').tvSource();}
+  return script.textContent;
+}
 function cleanup() {for (const window of openWindows) window.close(); openWindows.clear();}
-module.exports = {source, browser, loadServer, tick, cleanup};
+module.exports = {source, browser, loadServer, tick, cleanup, tvControllerSource};

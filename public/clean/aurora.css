@@ -99,3 +99,6 @@ body.svCleanShell[data-st-aurora-motion="still"] .svAuroraRibbon {animation-play
   body.svCleanShell .svAuroraBackground > .svAuroraRibbon--second {width:195%;left:-48%;top:-2%;height:106%}
 }
 @media print {body.svCleanShell .svAuroraBackground {display:none !important}}
+
+/* Accent rotation composes with Aurora Lab; neutral defaults keep the original no-filter path. */
+body.svCleanShell[data-st-backdrop="aurora"][data-st-accent-aurora="true"] .svAuroraRibbon,body.svCleanShell[data-st-accent-aurora="true"] .stPreviewAurora>.svAuroraRibbon {filter:hue-rotate(calc(var(--sv-aurora-hue,0deg) + var(--st-accent-hue,0deg)))}

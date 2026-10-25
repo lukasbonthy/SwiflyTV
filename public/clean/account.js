@@ -1,7 +1,7 @@
 /* Server identity; browser storage is only a partitioned library cache. */
 (() => {
  'use strict';if(window.SwiflyAccount)return;
- const ownerKey='swiflytv.accountOwner',prefix='swiflytv.deviceState.';
+ const ownerKey='swiflytv.accountOwner',prefix='swiflytv.deviceState.',libraryBasePrefix='swiflytv.pendingLibraryBase.';
  const allowed=k=>['swiflytv.profiles','movieverse.watchlist','movieverse.liked','movieverse.continue'].includes(k)||/^swiflytv\.(?:resume|continue|library)\.[A-Za-z0-9_.:-]{1,100}$/.test(k);
  const keys=()=>Object.keys(localStorage).filter(allowed);
  const read=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key)||'null')??fallback;}catch{return fallback;}};
@@ -40,6 +40,11 @@
   finally{applying=false;}
   publishState();
  }
+ function rebase(remote,local,base,pending={}){
+  const dirty={...pending,...Object.fromEntries(Object.entries(local).filter(([k,v])=>Object.prototype.hasOwnProperty.call(base,k)&&JSON.stringify(v)!==JSON.stringify(base[k])))};
+  for(const[key,value]of Object.entries(dirty))if(/^swiflytv\.library\./.test(key)&&key!=='swiflytv.library.__compat__'&&value?.version===1&&remote[key]?.version===1&&window.SwiflyLibrary?.reconcile)dirty[key]=window.SwiflyLibrary.reconcile(base[key],value,remote[key]);
+  return {...remote,...dirty};
+ }
  function publishState(){const previous=applying;applying=true;try{document.dispatchEvent(new Event('swifly:account-hydrated'));window.dispatchEvent(new Event('swifly:continue-change'));window.SwiflyProfiles?.mount?.();window.syncLibraryButtons?.();}finally{applying=previous;}}
  function suspend(){stopped=true;lifecycleEpoch++;validating=null;clearTimeout(timer);document.dispatchEvent(new Event('swifly:account-suspended'));document.querySelectorAll('.dsDropdownUser').forEach(n=>n.remove());}
  async function revalidate(){
@@ -48,17 +53,24 @@
   try{return await job;}finally{if(validating===job)validating=null;}
  }
  async function refreshState(){
-  if(!user||writing||stopped||authenticating)return;const token=accountEpoch;
-  const remote=await request('/state');if(token!==accountEpoch||stopped)return;if(remote.revision===revision&&Object.keys(baseline).length)return;
-  const local=snapshot(),pending=read('swiflytv.pendingState.'+user.id,{}),dirty={...pending,...Object.fromEntries(Object.entries(local).filter(([k,v])=>Object.prototype.hasOwnProperty.call(baseline,k)&&JSON.stringify(v)!==JSON.stringify(baseline[k])))};
-  revision=remote.revision;applyRemote({...remote.state,...dirty});baseline=structuredClone(remote.state);schedule();
+  if(!user||writing||stopped||authenticating)return;const token=accountEpoch,lifecycle=lifecycleEpoch;
+  const remote=await request('/state');if(token!==accountEpoch||lifecycle!==lifecycleEpoch||stopped)return;if(remote.revision===revision&&Object.keys(baseline).length)return;
+  const local=snapshot(),pending=read('swiflytv.pendingState.'+user.id,{}),base={...read(libraryBasePrefix+user.id,{}),...baseline};
+  revision=remote.revision;const merged=rebase(remote.state,local,base,pending);applyRemote(merged);baseline=structuredClone(remote.state);schedule();
  }
- function schedule(){if(applying||!user||stopped||authenticating)return;try{localStorage.setItem('swiflytv.pendingState.'+user.id,JSON.stringify(Object.fromEntries(Object.entries(snapshot()).filter(([k,v])=>JSON.stringify(v)!==JSON.stringify(baseline[k])))));}catch{}clearTimeout(timer);timer=setTimeout(()=>sync().catch(()=>{}),1800);}
+ function cachePending(){
+  try{
+   const pending=Object.fromEntries(Object.entries(snapshot()).filter(([k,v])=>JSON.stringify(v)!==JSON.stringify(baseline[k]))),bases=Object.fromEntries(Object.entries(pending).filter(([k,v])=>/^swiflytv\.library\./.test(k)&&k!=='swiflytv.library.__compat__'&&v?.version===1).map(([k])=>[k,baseline[k]||null]));
+   if(Object.keys(pending).length)localStorage.setItem('swiflytv.pendingState.'+user.id,JSON.stringify(pending));else localStorage.removeItem('swiflytv.pendingState.'+user.id);
+   if(Object.keys(bases).length)localStorage.setItem(libraryBasePrefix+user.id,JSON.stringify(bases));else localStorage.removeItem(libraryBasePrefix+user.id);
+  }catch{}
+ }
+ function schedule(){if(applying||!user||stopped||authenticating)return;cachePending();clearTimeout(timer);timer=setTimeout(()=>sync().catch(()=>{}),1800);}
  async function sync({keepalive=false}={}){
-  if(!user||writing||applying||stopped||authenticating)return;const token=accountEpoch,owner=user.id;const local=snapshot(),patch=Object.fromEntries(Object.entries(local).filter(([k,v])=>JSON.stringify(v)!==JSON.stringify(baseline[k])));if(!Object.keys(patch).length)return;
+  if(!user||writing||applying||stopped||authenticating)return;const token=accountEpoch,lifecycle=lifecycleEpoch,base=structuredClone(baseline);const local=snapshot(),patch=Object.fromEntries(Object.entries(local).filter(([k,v])=>JSON.stringify(v)!==JSON.stringify(baseline[k])));if(!Object.keys(patch).length)return;
   writing=true;
-  try{const response=await request('/state',{method:'PATCH',body:{revision,patch},keepalive:keepalive&&JSON.stringify(patch).length<60000});if(token!==accountEpoch)return;revision=response.revision;for(const[k,v]of Object.entries(patch))baseline[k]=v;try{localStorage.removeItem('swiflytv.pendingState.'+owner);}catch{}}
-  catch(e){if(token!==accountEpoch)return;if(e.status===409&&e.current){revision=e.current.revision;applyRemote({...e.current.state,...patch});for(const k of Object.keys(patch))baseline[k]=e.current.state[k];schedule();}throw e;}
+  try{const response=await request('/state',{method:'PATCH',body:{revision,patch},keepalive:keepalive&&JSON.stringify(patch).length<60000});if(token!==accountEpoch||lifecycle!==lifecycleEpoch)return;revision=response.revision;for(const[k,v]of Object.entries(patch))baseline[k]=v;cachePending();}
+  catch(e){if(token!==accountEpoch||lifecycle!==lifecycleEpoch)return;if(e.status===409&&e.current){revision=e.current.revision;const latest=snapshot();applyRemote(rebase(e.current.state,latest,base,Object.fromEntries(Object.keys(patch).map(key=>[key,latest[key]]))));baseline=structuredClone(e.current.state);schedule();}throw e;}
   finally{if(token===accountEpoch)writing=false;}
  }
  async function importLegacy(){const data=read(prefix+'legacy',null);if(!data)throw Error('There is no earlier library on this browser.');applyRemote({...snapshot(),...Object.fromEntries(Object.entries(data).filter(([k])=>allowed(k)))});baseline={};await sync();localStorage.removeItem(prefix+'legacy');}

@@ -1,0 +1,59 @@
+.svLibraryPage { width:min(1440px,calc(100% - 64px)); margin-inline:auto; padding-top:140px; padding-bottom:110px; }
+.svLibraryHeader { max-width:720px; margin-bottom:30px; }
+.svLibraryEyebrow { color:var(--st-accent,#c8c3ef); font-size:calc(10px * var(--st-ui-scale, 1)); font-weight:600; letter-spacing:.17em; }
+.svLibraryHeader h1 { margin:12px 0; font-size:calc(clamp(36px,5vw,58px) * var(--st-ui-scale, 1)); font-weight:500; letter-spacing:-.055em; line-height:1.1; }
+.svLibraryHeader p { margin:0; color:#a5a8b1; font-size:calc(14px * var(--st-ui-scale, 1)); line-height:1.6; }
+.svLibraryTabs { display:flex; flex-wrap:wrap; gap:6px; margin:26px 0; padding:5px; width:fit-content; max-width:100%; border:1px solid #ffffff14; border-radius:16px; background:#ffffff04; }
+body.svCleanShell .svLibraryTab { min-height:44px; padding:10px 16px; border:0; border-radius:11px; background:transparent; color:#a9acb5; font:500 calc(12px * var(--st-ui-scale, 1)) var(--st-font,system-ui); cursor:pointer; }
+body.svCleanShell .svLibraryTab[aria-pressed="true"] { color:var(--st-accent,#e0daf8); background:#ffffff0d; box-shadow:inset 0 0 0 1px #ffffff0b; }
+.svLibraryToolbar { display:grid; grid-template-columns:140px minmax(140px,200px) 170px minmax(180px,1fr); gap:12px; align-items:end; }
+.svLibraryField { display:grid; gap:7px; color:#a8abb5; font-size:calc(10px * var(--st-ui-scale, 1)); }
+body.svCleanShell .svLibraryField :is(select,input),body.svCleanShell .svLibraryFolderForm input { width:100%; min-height:44px; padding:10px 12px; border:1px solid #ffffff1c; border-radius:10px; background:#12141a; color:#e9eaf0; font:400 calc(12px * var(--st-ui-scale, 1)) var(--st-font,system-ui); }
+.svLibraryFolderControls { display:flex; gap:8px; flex-wrap:wrap; margin:16px 0 8px; }
+body.svCleanShell .svLibraryButton { min-height:40px; padding:9px 12px; border:1px solid #ffffff1a; border-radius:10px; background:#ffffff05; color:#c9cbd4; font:500 calc(11px * var(--st-ui-scale, 1)) var(--st-font,system-ui); cursor:pointer; }
+body.svCleanShell .svLibraryDanger { color:#e7b6b6; }
+body.svCleanShell .svLibraryButton:hover { background:#ffffff0d; color:#fff; }
+.svLibraryFolderEditor { margin:12px 0; padding:18px; border:1px solid #ffffff1a; border-radius:14px; background:#ffffff04; }
+.svLibraryFolderForm { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.svLibraryFolderForm label { width:100%; color:#b8bbc6; font-size:calc(11px * var(--st-ui-scale, 1)); }
+body.svCleanShell .svLibraryFolderForm input { max-width:360px; flex:1 1 200px; }
+.svLibraryStatus { min-height:18px; margin:12px 0; color:var(--st-accent,#c8c3ef); font-size:calc(12px * var(--st-ui-scale, 1)); }
+.svLibraryCount { margin:22px 0 16px; color:#969ba8; font-size:calc(11px * var(--st-ui-scale, 1)); }
+body.svCleanShell .svLibraryGrid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)) !important; gap:28px 20px !important; }
+.svLibraryCard { position:relative; min-width:0; }
+.svLibraryCard .dsCardArtwork { position:relative; }
+.svLibraryCardCopy { padding:12px 2px 0; }
+body.svCleanShell .svLibraryCardCopy .dsCardTitle { display:block; overflow:hidden; color:#e2e4ed; font-size:calc(13px * var(--st-ui-scale, 1)); font-weight:500; text-overflow:ellipsis; white-space:nowrap; text-decoration:none; }
+.svLibraryCardMeta { margin:6px 0 9px; color:#858b9a; font-size:calc(10px * var(--st-ui-scale, 1)); }
+.svLibraryDate { display:block; margin:8px 0; color:#9399a7; font-size:calc(10px * var(--st-ui-scale, 1)); }
+.svLibraryProgress { display:block; width:100%; height:3px; margin-top:12px; border:0; border-radius:3px; overflow:hidden; background:#ffffff16; accent-color:var(--st-accent,#c8c3ef); }
+.svLibraryProgress::-webkit-progress-bar { background:#ffffff16; }
+.svLibraryProgress::-webkit-progress-value { background:var(--st-accent,#c8c3ef); }
+.svLibraryProgress::-moz-progress-bar { background:var(--st-accent,#c8c3ef); }
+.svLibraryProgressLabel { margin:6px 0 10px; color:#949baa; font-size:calc(10px * var(--st-ui-scale, 1)); }
+.svLibraryCardActions { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+body.svCleanShell .svLibraryPlay { display:inline-flex; align-items:center; justify-content:center; min-height:40px; padding:9px 12px; border-radius:9px; background:var(--st-accent,#c8c3ef); color:#12121a; font-size:calc(11px * var(--st-ui-scale, 1)); font-weight:600; text-decoration:none; }
+body.svCleanShell .svLibraryCardActions .svLibraryButton { padding-inline:9px; font-size:calc(10px * var(--st-ui-scale, 1)); }
+.svLibraryFolderMenu { margin-top:10px; padding:10px; border:1px solid #ffffff12; border-radius:10px; color:#a4aabb; font-size:calc(11px * var(--st-ui-scale, 1)); }
+.svLibraryFolderMenu summary { cursor:pointer; min-height:22px; }
+.svLibraryFolderMenu label { display:flex; gap:8px; align-items:center; min-height:36px; overflow-wrap:anywhere; }
+.svLibraryFolderMenu input { width:16px; height:16px; accent-color:var(--st-accent,#c8c3ef); }
+.svLibraryEmpty { margin:42px 0; padding:36px 20px; border:1px dashed #ffffff1c; border-radius:16px; color:#9399a9; text-align:center; font-size:calc(14px * var(--st-ui-scale, 1)); line-height:1.6; }
+.svLibraryWatchedBadge { position:absolute; z-index:2; top:9px; left:9px; padding:5px 7px; border:1px solid #ffffff2a; border-radius:6px; background:#14161de8; color:#d5d8e2; font-size:calc(9px * var(--st-ui-scale, 1)); font-weight:600; letter-spacing:.03em; pointer-events:none; }
+body[data-library-hide-watched="true"] [data-library-watched="true"] > :is(.dsCardArtwork,.svResumeArtwork),body[data-library-hide-watched="true"] .svPlayerEpisodeChoice[data-library-watched="true"] .svPlayerEpisodeThumb { opacity:.42; filter:saturate(.4); }
+body[data-library-hide-watched="true"] [data-library-watched="true"]:is(:hover,:focus-within) > :is(.dsCardArtwork,.svResumeArtwork) { opacity:.85; filter:none; }
+body[data-library-spoilers="hide"] [data-library-spoiler] { visibility:hidden !important; }
+body[data-library-episode-view="rows"] .svPlayerEpisodeGrid { grid-template-columns:1fr !important; }
+body[data-library-episode-view="rows"] .svPlayerEpisodeChoice { display:flex; align-items:stretch; gap:8px; }
+body[data-library-episode-view="rows"] .svPlayerEpisodeChoice .svPlayerEpisode { display:flex; flex:1; gap:16px; min-width:0; }
+body[data-library-episode-view="rows"] .svPlayerEpisodeThumb { width:180px; max-width:32%; flex-shrink:0; }
+body[data-library-episode-view="rows"] .svPlayerEpisodeText { padding:10px 0; }
+.svResumeCard[data-continue-stale="true"] .svResumeArtwork { opacity:.45; filter:saturate(.45); }
+.svResumeCard[data-continue-stale="true"]:is(:hover,:focus-within) .svResumeArtwork { opacity:.85; filter:none; }
+.svResumeAge { display:inline-block; margin-top:7px; padding:3px 6px; border-radius:5px; background:#ffffff08; color:#818999; font-size:calc(9px * var(--st-ui-scale, 1)); }
+.svResumeUpNext { color:var(--st-accent,#c8c3ef); }
+.svLibraryPage :is(a,button,input,select,summary):focus-visible { outline:2px solid var(--st-accent,#c8c3ef); outline-offset:3px; }
+.svLibraryPage [hidden] { display:none !important; }
+@media (max-width:1100px) { body.svCleanShell .svLibraryGrid { grid-template-columns:repeat(4,minmax(0,1fr)) !important; } }
+@media (max-width:860px) { .svLibraryPage { width:calc(100% - 32px); padding-top:115px; }.svLibraryToolbar { grid-template-columns:1fr 1fr; }.svLibraryTabs { gap:3px; }body.svCleanShell .svLibraryTab { padding:9px 11px; font-size:calc(11px * var(--st-ui-scale, 1)); }body.svCleanShell .svLibraryGrid { grid-template-columns:repeat(3,minmax(0,1fr)) !important; gap:24px 14px !important; } }
+@media (max-width:560px) { body.svCleanShell .svLibraryGrid { grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:24px 12px !important; }.svLibraryCardActions { align-items:stretch; flex-direction:column; }.svLibraryCardActions > * { width:100%; }.svLibraryTabs { width:100%; }.svLibraryTab { flex:1 1 30%; }.svLibraryHeader h1 { font-size:calc(40px * var(--st-ui-scale, 1)); } }

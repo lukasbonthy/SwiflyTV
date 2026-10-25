@@ -1,0 +1,7 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict'),{browser,source,cleanup}=require('./ui-helpers.cjs');
+test.afterEach(cleanup);
+test('default homepage prioritizes the format actually watched while a Studio order stays authoritative',()=>{
+ const b=browser('<main data-st-home><div data-st-home-rows><section data-st-home-section="trending-movies"><a href="/movie/1">Movie</a></section><section data-st-home-section="trending-tv"><a href="/tv/2">Series</a></section><section data-st-home-section="popular-movies"><a href="/movie/3">Movie</a></section></div></main>'),w=b.window;w.eval(source('studio/config.js'));w.SwiflyAppearance=w.SwiflyStudioConfig.clone(w.SwiflyStudioConfig.defaults);w.SwiflyLibrary={active:true,read:()=>({history:[{type:'tv',id:'1'},{type:'tv',id:'2'},{type:'movie',id:'3'}]})};w.boot('studio/experience.js');assert.equal(w.document.querySelector('[data-st-home-rows]').firstElementChild.dataset.stHomeSection,'trending-tv');assert.equal(w.document.querySelector('main').dataset.stPersonalized,'tv');
+ w.document.dispatchEvent(new w.CustomEvent('swifly:studio-change',{detail:{effective:{...w.SwiflyAppearance,homeOrder:['popular-movies',...w.SwiflyAppearance.homeOrder.filter(x=>x!=='popular-movies')]}}}));assert.equal(w.document.querySelector('[data-st-home-rows]').firstElementChild.dataset.stHomeSection,'popular-movies');w.dispatchEvent(new w.Event('pagehide'));
+});

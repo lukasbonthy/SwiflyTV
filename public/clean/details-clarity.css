@@ -11,7 +11,7 @@ body.svCleanShell .svCinemaPage .svDetailTitle {
   letter-spacing:-.062em !important;
 }
 body.svCleanShell .svCinemaPage .svDetailIdentity :is(.svDetailGenres,.svDetailFacts) {
-  font-size:13px;
+  font-size:calc(13px * var(--st-ui-scale, 1));
   letter-spacing:-.005em;
 }
 body.svCleanShell .svCinemaPage .svDetailEdition,
@@ -22,7 +22,7 @@ body.svCleanShell .svDetailOverview .svCinemaEyebrow {
 }
 body.svCleanShell .svDetailChapterNav a {
   font-family:inherit;
-  font-size:13px;
+  font-size:calc(13px * var(--st-ui-scale, 1));
   font-weight:650;
 }
 body.svCleanShell .svCinemaPage .svDetailSection > h2 {
@@ -35,19 +35,19 @@ body.svCleanShell .svCinemaPage .svDetailOverview h2 {
 }
 body.svCleanShell .svCinemaPage .svDetailOverview > p {
   color:#e5eaf3;
-  font-size:14.5px;
+  font-size:calc(14.5px * var(--st-ui-scale, 1));
   font-weight:500;
   line-height:1.92;
   letter-spacing:.002em;
   text-wrap:pretty;
 }
 body.svCleanShell .svCinemaPage .svDetailCastRail .dsCastCard strong {
-  font-size:13px !important;
+  font-size:calc(13px * var(--st-ui-scale, 1)) !important;
   font-weight:680 !important;
   color:#f1f5fc !important;
 }
-body.svCleanShell .svCinemaPage .svDetailCastRail .dsCastCard em {font-size:12px !important;color:#b0bfce !important;}
-body.svCleanShell .svCinemaPage .svDetailAbout dd {font-size:13.5px; font-weight:560;}
+body.svCleanShell .svCinemaPage .svDetailCastRail .dsCastCard em {font-size:calc(12px * var(--st-ui-scale, 1)) !important;color:#b0bfce !important;}
+body.svCleanShell .svCinemaPage .svDetailAbout dd {font-size:calc(13.5px * var(--st-ui-scale, 1)); font-weight:560;}
 
 /* Preserve the exact navbar glass face, displacement and tint.
    The previous iteration forced .29-.50 white tint and therefore looked
@@ -55,7 +55,7 @@ body.svCleanShell .svCinemaPage .svDetailAbout dd {font-size:13.5px; font-weight
    This host-only hairline improves definition without changing the optics. */
 body.svCleanShell .svCinemaPage .svDetailActions > :is(a,button) {
   font-family:"Manrope","Host Grotesk",system-ui,sans-serif !important;
-  font-size:13px !important;
+  font-size:calc(13px * var(--st-ui-scale, 1)) !important;
   font-weight:750 !important;
   color:#fff !important;
   text-shadow:0 1px 3px rgba(0,0,0,.72) !important;
@@ -162,12 +162,12 @@ html[data-sv-xbox="true"] body.svCleanShell .svCinemaPage .svDetailOverview::bef
   body.svCleanShell .svCinemaPage .svDetailOverview::before {background-position:45% 40%;}
 }
 @media(max-width:680px) {
-  body.svCleanShell .svCinemaPage .svDetailIdentity :is(.svDetailGenres,.svDetailFacts) {font-size:12px;}
-  body.svCleanShell .svCinemaPage .svDetailActions > :is(a,button) {font-size:12px !important;}
-  body.svCleanShell .svDetailChapterNav a {font-size:12px;}
+  body.svCleanShell .svCinemaPage .svDetailIdentity :is(.svDetailGenres,.svDetailFacts) {font-size:calc(12px * var(--st-ui-scale, 1));}
+  body.svCleanShell .svCinemaPage .svDetailActions > :is(a,button) {font-size:calc(12px * var(--st-ui-scale, 1)) !important;}
+  body.svCleanShell .svDetailChapterNav a {font-size:calc(12px * var(--st-ui-scale, 1));}
   body.svCleanShell .svCinemaPage .svDetailOverview::before {background-position:47% 36%;opacity:.74;}
   body.svCleanShell .svCinemaPage .svDetailOverview::after {
     background:linear-gradient(180deg,rgba(9,14,21,.48),rgba(9,14,21,.75) 40%,#101721 94%);
   }
-  body.svCleanShell .svCinemaPage .svDetailOverview > p {font-size:13.5px;}
+  body.svCleanShell .svCinemaPage .svDetailOverview > p {font-size:calc(13.5px * var(--st-ui-scale, 1));}
 }

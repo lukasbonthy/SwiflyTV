@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-25T03:45:12.402Z",
+  "commit": "97ba12e03e1ed39017c688189ac79b2254c31ebe",
+  "preFix": {
+    "stage": "audio.preload=metadata; before any user interaction",
+    "guestSession": {
+      "user": null,
+      "available": true
+    },
+    "page": "/study",
+    "status": "Your study space is ready. Press Play when you are.",
+    "requestedMp3": "/assets/study/media/audio/HoliznaCC0%20-%20Something%20In%20the%20Air.mp3"
+  },
+  "redAfterPreloadNone": {
+    "stage": "audio.preload=none; selectTrack still assigns src, currentTime and load before Play",
+    "contexts": [
+      {
+        "name": "mobile320",
+        "viewport": {
+          "width": 320,
+          "height": 740
+        },
+        "mp3BeforePlay": [
+          "/assets/study/media/audio/HoliznaCC0%20-%20Something%20In%20the%20Air.mp3"
+        ]
+      },
+      {
+        "name": "desktop1440",
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "mp3BeforePlay": [
+          "/assets/study/media/audio/HoliznaCC0%20-%20Something%20In%20the%20Air.mp3"
+        ]
+      },
+      {
+        "name": "tv1920",
+        "viewport": {
+          "width": 1920,
+          "height": 1080
+        },
+        "mp3BeforePlay": [
+          "/assets/study/media/audio/HoliznaCC0%20-%20Something%20In%20the%20Air.mp3"
+        ]
+      }
+    ],
+    "checks": [
+      {
+        "viewport": "mobile320",
+        "name": "Study never requests MP3 before explicit Play",
+        "status": "failed",
+        "error": "Error: MP3 requested before explicit Play: /assets/study/media/audio/HoliznaCC0%20-%20Something%20In%20the%20Air.mp3\n    at verify (/workspace/scratch/09b482b900cd/SwiflyTV-studio-study/scripts/accept-studio-study.cjs:15:76)\n    at /workspace/scratch/09b482b900cd/SwiflyTV-studio-study/scripts/accept-studio-study.cjs:76:188\n    at async check (/workspace/scratch/09b482b900cd/SwiflyTV-studio-study/scripts/accept-studio-study.cjs:16:127)\n    at async scenario (/workspace/scratch/09b482b900cd/SwiflyTV-studio-study/scripts/accept-studio-study.cjs:76:3)\n    at async /workspace/scratch/09b482b900cd/SwiflyTV-studio-study/scripts/accept-studio-study.cjs:100:154"
+      },
+      {
+        "viewport": "desktop1440",
+        "name": "Study never requests MP3 before explicit Play",
+        "status": "failed",
+        "error": "Error: MP3 requested before explicit Play: /assets/study/media/audio/HoliznaCC0%20-%20Something%20In%20the%20Air.mp3\n    at verify (/workspace/scratch/09b482b900cd/SwiflyTV-studio-study/scripts/accept-studio-study.cjs:15:76)\n    at /workspace/scratch/09b482b900cd/SwiflyTV-studio-study/scripts/accept-studio-study.cjs:76:188\n    at async check (/workspace/scratch/09b482b900cd/SwiflyTV-studio-study/scripts/accept-studio-study.cjs:16:127)\n    at async scenario (/workspace/scratch/09b482b900cd/SwiflyTV-studio-study/scripts/accept-studio-study.cjs:76:3)\n    at async /workspace/scratch/09b482b900cd/SwiflyTV-studio-study/scripts/accept-studio-study.cjs:100:154"
+      },
+      {
+        "viewport": "tv1920",
+        "name": "Study never requests MP3 before explicit Play",
+        "status": "failed",
+        "error": "Error: MP3 requested before explicit Play: /assets/study/media/audio/HoliznaCC0%20-%20Something%20In%20the%20Air.mp3\n    at verify (/workspace/scratch/09b482b900cd/SwiflyTV-studio-study/scripts/accept-studio-study.cjs:15:76)\n    at /workspace/scratch/09b482b900cd/SwiflyTV-studio-study/scripts/accept-studio-study.cjs:76:188\n    at async check (/workspace/scratch/09b482b900cd/SwiflyTV-studio-study/scripts/accept-studio-study.cjs:16:127)\n    at async scenario (/workspace/scratch/09b482b900cd/SwiflyTV-studio-study/scripts/accept-studio-study.cjs:76:3)\n    at async /workspace/scratch/09b482b900cd/SwiflyTV-studio-study/scripts/accept-studio-study.cjs:100:154"
+      }
+    ]
+  },
+  "greenEvidence": "acceptance-integrated.json contains the final repeatable full application run."
+}

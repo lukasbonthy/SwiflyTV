@@ -1,0 +1,4 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict');
+const {JSDOM}=require('jsdom');
+test('Study markup provides native accessible tabs, an explicit media opt-in and ordinary share routes',()=>{const {studyMarkup}=require('../ui/study');const dom=new JSDOM(studyMarkup({room:'coding'})),d=dom.window.document;try{assert.equal(d.querySelectorAll('iframe').length,0);assert.equal(d.querySelector('[data-study-root]').dataset.studyRoom,'coding');const tabs=[...d.querySelectorAll('[role=tab]')];assert.equal(tabs.length,6);for(const tab of tabs){assert(d.getElementById(tab.getAttribute('aria-controls')));assert(tab.getAttribute('aria-selected'));}for(const type of ['camera','microphone','screen'])assert(d.querySelector('[data-study-device="'+type+'"]'));assert.match(d.querySelector('[data-study-room-privacy]').textContent,/off/i);assert(d.querySelector('[data-study-status][role=status]'));}finally{dom.window.close();}});

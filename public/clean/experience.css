@@ -17,7 +17,7 @@ body.svCleanShell .genreDropdown > summary {
 }
 body.svCleanShell .genreDropdown > summary::-webkit-details-marker {display:none;}
 body.svCleanShell .genreDropdown > summary > span:not(.svLiquidPane) {
-  font-size:12px;transition:transform .2s ease;
+  font-size:calc(12px * var(--st-ui-scale, 1));transition:transform .2s ease;
 }
 body.svCleanShell .genreDropdown[open] > summary > span:not(.svLiquidPane) {transform:rotate(180deg);}
 body.svCleanShell[data-st-glass="liquid"] .genreDropdown > summary.svNavMatchedOptic {

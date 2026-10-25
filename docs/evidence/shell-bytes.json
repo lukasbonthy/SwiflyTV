@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "measuredAt": "2026-10-25T13:03:01.025Z",
+  "method": "Identical pageShell title/body/active fixture in independent Node processes; bytes and gzip only, no network/latency/FPS claim.",
+  "fixtureBody": "<main data-st-home><div data-st-home-rows><section data-st-home-section=\"trending-movies\"><h1>Fixture</h1></section></div></main>",
+  "measurements": [
+    {
+      "revision": "8d3cf95e8c65e659281fe9f460cdbf4f36f66330",
+      "label": "main baseline",
+      "htmlBytes": 141594,
+      "gzipBytes": 33918,
+      "inlineScripts": 91107
+    },
+    {
+      "revision": "e89e37f4a4e13d7ae3f065612d92d2197d1a4323",
+      "label": "Studio/Study branch",
+      "htmlBytes": 146491,
+      "gzipBytes": 33457,
+      "inlineScripts": 62928
+    }
+  ],
+  "cachedTv": {
+    "asset": "/assets/clean/tv.js?v=261",
+    "sourceBytes": 45235,
+    "gzipBytes": 13069,
+    "policy": "One day max-age, same controller removed from repeated HTML responses."
+  }
+}

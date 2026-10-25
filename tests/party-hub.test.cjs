@@ -1,3 +1,4 @@
+const {tvControllerSource}=require('./ui-helpers.cjs');
 const test=require('node:test'),assert=require('node:assert/strict');
 const {browser,loadServer,source,tick,cleanup}=require('./ui-helpers.cjs');
 test.afterEach(async()=>{await tick();await tick();cleanup();});const api=loadServer();
@@ -170,7 +171,7 @@ test('Device preview retains TV focus and Back closes it without navigating away
  const env=await ready(setup()),w=env.window,d=w.document;let stopped=0,backCalls=0;
  w.navigator.mediaDevices={getUserMedia:async()=>({getTracks:()=>[{stop(){stopped++;}}]})};w.history.pushState({},'','/social?tab=watchrooms#device-test');w.history.back=()=>backCalls++;
  w.localStorage.setItem('swiflytv.tvFocusMode','true');for(const button of d.querySelectorAll('button'))button.getBoundingClientRect=()=>({width:80,height:40,top:100,left:100,bottom:140,right:180});
- const shell=browser(api.pageShell({title:'Party Hub',body:''})),controller=[...shell.window.document.querySelectorAll('script:not([src])')].find(script=>script.textContent.includes('var FOCUSABLE_SELECTOR'));assert(controller);w.eval(controller.textContent);shell.finish();d.dispatchEvent(new w.Event('DOMContentLoaded'));
+ const shell=browser(api.pageShell({title:'Party Hub',body:''})),controller=tvControllerSource(shell.window.document);assert(controller);w.eval(controller);shell.finish();d.dispatchEvent(new w.Event('DOMContentLoaded'));
  const mic=d.querySelector('[data-action="voice"]'),modal=d.getElementById('sv100CallModal');mic.focus();mic.click();await ready(env);
  modal.querySelector('[data-action="close-call"]').dispatchEvent(new w.KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));assert.equal(backCalls,0,'Escape must not invoke browser history from the device check');assert.equal(stopped,1);assert.equal(d.activeElement,mic);
  mic.click();await ready(env);const connected=new w.Event('gamepadconnected');connected.gamepad={id:'Party controller'};w.dispatchEvent(connected);assert.equal(modal.tagName,'DIALOG');assert(modal.open);assert(modal.contains(d.activeElement),'TV focus must stay inside the native modal');

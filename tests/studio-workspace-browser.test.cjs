@@ -1,0 +1,35 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict');
+const fs=require('node:fs'),path=require('node:path');
+const {chromium}=require('playwright-core'),{loadServer}=require('./ui-helpers.cjs');
+const root=path.join(__dirname,'../public'),asset=name=>fs.readFileSync(path.join(root,name),'utf8');
+const executablePath=process.env.SWIFLY_TEST_BROWSER_EXECUTABLE_PATH,available=fs.existsSync(executablePath||chromium.executablePath()),skip=!available&&'Chromium is not installed';
+let browser,api;test.before(async()=>{if(available){api=loadServer();browser=await chromium.launch({headless:true,executablePath,args:['--no-sandbox']});}});test.after(async()=>{await browser?.close();if(api)await new Promise(resolve=>api.io.close(resolve));});
+async function open(viewport={width:1440,height:900},tv=false,context){
+ context=context||await browser.newContext({viewport});const page=await context.newPage();let html=api.pageShell({title:'Studio fixture',body:'<main data-st-home><section class="dsHero"><div class="dsHeroContent"><h1>Movie night, your way.</h1></div></section><section class="dsContent" data-st-home-rows><section data-st-home-section="continue"><h2>Continue watching</h2></section><section data-st-home-section="trending-movies"><h2>Trending movies</h2></section></section></main>'}).replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'');
+ await page.route('**/*',route=>{const url=new URL(route.request().url()),type=route.request().resourceType();if(type==='document')return route.fulfill({contentType:'text/html',body:html});if(url.pathname.startsWith('/assets/')&&url.pathname.endsWith('.css')){const file=path.join(root,url.pathname.slice(8));if(fs.existsSync(file))return route.fulfill({contentType:'text/css',body:fs.readFileSync(file)});}return route.fulfill({contentType:type==='stylesheet'?'text/css':'image/svg+xml',body:''});});
+ await page.goto('https://swifly.test/');if(tv)await page.evaluate(()=>{document.documentElement.dataset.svTv='true';document.body.classList.add('swifly-tv-focus-mode');});await page.addScriptTag({content:asset('studio/config.js')});await page.addScriptTag({content:asset('studio/studio.js')});await page.evaluate(()=>window.SwiflyStudio.open());return {context,page};
+}
+test('all ten sections fit the real desktop and 320px mobile shell without horizontal overflow',{skip},async()=>{
+ for(const viewport of [{width:1440,height:900},{width:320,height:568}]){const {context,page}=await open(viewport);try{
+  for(const tab of await page.locator('[data-st-tab]').all()){
+   const key=await tab.getAttribute('data-st-tab');await tab.click();const panel=page.locator('#stPanel-'+key);assert(await panel.isVisible(),key+' panel visible');
+   const bounds=await panel.evaluate(n=>{const r=n.getBoundingClientRect();return {width:n.clientWidth,scroll:n.scrollWidth,left:r.left,right:r.right};});assert(bounds.scroll<=bounds.width+1,key+' has no horizontal content overflow');assert(bounds.left>=0&&bounds.right<=viewport.width,key+' inside screen');
+   const footer=await page.locator('.stFooter').boundingBox();assert(footer.y>=0&&footer.y+footer.height<=viewport.height+1,'footer stays on screen');
+   if(key==='player'){await page.locator('[data-st-input="captionSize"]').fill('150');assert.equal(await page.locator('[data-st-caption-preview]').evaluate(n=>n.style.fontSize),'1.5em');}
+  }
+  assert.equal(await page.locator('[role="tablist"]').getAttribute('aria-orientation'),viewport.width===320?'horizontal':'vertical');
+  if(viewport.width===320)await page.screenshot({path:'/tmp/swifly-studio-320.png'});else await page.screenshot({path:'/tmp/swifly-studio-desktop.png'});
+ }finally{await context.close();}}
+});
+test('TV Studio keeps native controls readable, focusable and inside the workspace',{skip},async()=>{
+ const {context,page}=await open({width:1920,height:1080},true);try{for(const name of ['layout','player','devices','themes']){await page.locator('[data-st-tab="'+name+'"]').click();const panel=page.locator('#stPanel-'+name);assert(await panel.isVisible());assert.equal(await panel.evaluate(n=>n.scrollWidth<=n.clientWidth+1),true);const input=panel.locator('select,input:not([type="hidden"]),textarea').first();await input.focus();assert.equal(await input.evaluate(n=>document.activeElement===n),true);}assert.equal(await page.evaluate(()=>window.SwiflyStudio.getSettings().glass),'off');await page.screenshot({path:'/tmp/swifly-studio-tv.png'});}finally{await context.close();}
+});
+test('portable file export imports into another browser only after review and Preview then persists on Save',{skip},async()=>{
+ const first=await open();let second;try{
+  await first.page.locator('[data-st-field="theme"][data-st-value="purple"]').click();await first.page.locator('[data-st-tab="devices"]').click();await first.page.locator('[data-st-input="performancePreset"]').selectOption('xbox');await first.page.locator('[data-st-tab="themes"]').click();await first.page.locator('[data-st-look-name]').fill('Portable purple');
+  const downloadPromise=first.page.waitForEvent('download');await first.page.locator('[data-st-export-download]').click();const download=await downloadPromise,file=await download.path(),json=fs.readFileSync(file,'utf8'),parsed=JSON.parse(json);assert.equal(parsed.name,'Portable purple');assert.equal(parsed.values.theme,'purple');assert(!('performancePreset' in parsed.values));
+  second=await open();await second.page.locator('[data-st-tab="themes"]').click();await second.page.locator('[data-st-import-file]').setInputFiles({name:'portable.json',mimeType:'application/json',buffer:Buffer.from(json)});await second.page.locator('[data-st-import-summary]').filter({hasText:'Portable purple'}).waitFor();assert.equal(await second.page.evaluate(()=>window.SwiflyStudio.getSettings().theme),'default');await second.page.locator('[data-st-import-preview]').click();assert.equal(await second.page.evaluate(()=>window.SwiflyStudio.getSettings().theme),'purple');assert.equal(await second.page.evaluate(()=>window.SwiflyStudio.getRawSettings().performancePreset),'auto');await second.page.locator('[data-st-save]').click();
+  const saved=await second.page.evaluate(()=>JSON.parse(localStorage.getItem('swiflytv.appearance')));assert.equal(saved.values.theme,'purple');const again=await open(undefined,false,second.context);assert.equal(await again.page.evaluate(()=>window.SwiflyStudio.getSettings().theme),'purple');
+ }finally{await first.context.close();await second?.context.close();}
+});

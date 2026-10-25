@@ -20,6 +20,9 @@ body.svCleanShell {
   color: #f5f5f5 !important;
   font-family: "Host Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif !important;
   font-weight: 400;
+  /* Fixed component sizes consume the same factor in their own declarations.
+     Relative/inherited text grows from this base once; artwork stays unscaled. */
+  font-size: calc(1rem * var(--st-ui-scale, 1));
   overflow-x: clip;
   -webkit-font-smoothing: antialiased;
 }
@@ -50,13 +53,13 @@ body.svCleanShell .netflixNav .brand.netflixBrand {
 body.svCleanShell .netflixNav .brand::before, body.svCleanShell .netflixNav .brand::after { display: none !important; }
 body.svCleanShell .netflixNav .netflixWordmark {
   color: #fff !important; -webkit-text-fill-color: #fff !important; background: none !important;
-  font-family: inherit !important; font-size: 14px !important; font-weight: 700 !important;
+  font-family: inherit !important; font-size: calc(14px * var(--st-ui-scale, 1)) !important; font-weight: 700 !important;
   letter-spacing: -.04em !important; text-shadow: none !important; filter: none !important;
 }
 body.svCleanShell .netflixNav .navLinks { flex: 0 0 auto !important; flex-wrap: nowrap !important; gap: 14px !important; overflow: visible !important; }
 body.svCleanShell .netflixNav .navLinks > a {
   display: inline-flex !important; align-items: center; min-height: 34px !important;
-  padding: 0 !important; color: #bbb !important; font-size: 13px !important; font-weight: 500 !important;
+  padding: 0 !important; color: #bbb !important; font-size: calc(13px * var(--st-ui-scale, 1)) !important; font-weight: 500 !important;
   background: none !important; box-shadow: none !important; text-shadow: none !important;
   transform: none !important; border: 0 !important; border-radius: 6px !important;
 }
@@ -72,7 +75,7 @@ body.svCleanShell .netflixNav :is(.svNavButton, .dsProfileMenu > summary) {
 body.svCleanShell .netflixNav :is(.svNavButton:hover, .dsProfileMenu > summary:hover) { background: #ffffff14 !important; }
 body.svCleanShell .netflixNav .profilePill {
   display: grid !important; place-items: center; width: 22px !important; height: 22px !important;
-  min-width: 22px !important; padding: 0 !important; color: #ddd !important; font-size: 15px !important;
+  min-width: 22px !important; padding: 0 !important; color: #ddd !important; font-size: calc(15px * var(--st-ui-scale, 1)) !important;
   background: none !important; border: 0 !important; box-shadow: none !important;
 }
 body.svCleanShell .netflixNav .profilePill::before, body.svCleanShell .netflixNav .profilePill::after { display: none !important; }
@@ -82,7 +85,7 @@ body.svCleanShell .dsProfileDropdown.svLiquidDropdown {
 }
 body.svCleanShell .dsProfileDropdown > a {
   display: grid !important; grid-template-columns: 24px 1fr; align-items: center; gap: 6px;
-  min-height: 36px !important; border-radius: 10px !important; font-size: 13px !important; font-weight: 500 !important;
+  min-height: 36px !important; border-radius: 10px !important; font-size: calc(13px * var(--st-ui-scale, 1)) !important; font-weight: 500 !important;
 }
 body.svCleanShell .dsProfileDropdown > a > span { width: 24px !important; background: none !important; border: 0 !important; color: #aaa !important; }
 body.svCleanShell .dsProfileDropdown > a > b { font-weight: 500 !important; }
@@ -100,7 +103,7 @@ body.svCleanShell .netflixNav .svSearchPopup[hidden] { display: none !important;
 body.svCleanShell .netflixNav .svSearchPopup input {
   position: static !important; flex: 1; min-width: 0 !important; width: 100% !important; height: 34px !important;
   opacity: 1 !important; transform: none !important; padding: 0 !important; border: 0 !important;
-  background: none !important; color: #fff !important; font-size: 14px !important; box-shadow: none !important;
+  background: none !important; color: #fff !important; font-size: calc(14px * var(--st-ui-scale, 1)) !important; box-shadow: none !important;
 }
 body.svCleanShell .netflixNav .svSearchPopup button {
   position: static !important; display: grid !important; place-items: center; width: 32px !important; height: 32px !important;
@@ -127,22 +130,22 @@ body.svCleanShell .dsHeroContent {
   opacity: 1 !important; animation: none !important; transform: none !important;
 }
 body.svCleanShell :is(.dsHeroContent, .dsDetailHeroContent) h1 {
-  font-size: clamp(36px, 4.4vw, 64px) !important; font-weight: 700 !important; line-height: 1.04 !important;
+  font-size: calc(clamp(36px, 4.4vw, 64px) * var(--st-ui-scale, 1)) !important; font-weight: 700 !important; line-height: 1.04 !important;
   letter-spacing: -.045em !important; text-transform: none !important; text-shadow: 0 2px 18px #00000040 !important;
   text-wrap: balance; overflow-wrap: anywhere;
 }
 body.svCleanShell .dsEyebrow {
   display: block !important; padding: 0 !important; margin-bottom: 12px !important; background: none !important;
-  border: 0 !important; border-radius: 0 !important; color: #aaa !important; font-size: 11px !important;
+  border: 0 !important; border-radius: 0 !important; color: #aaa !important; font-size: calc(11px * var(--st-ui-scale, 1)) !important;
   font-weight: 500 !important; letter-spacing: .09em !important; text-transform: uppercase !important;
   box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
 }
 body.svCleanShell .dsHeroMeta { display: flex !important; flex-wrap: wrap; gap: 8px !important; margin: 18px 0 12px !important; }
-body.svCleanShell .dsHeroMeta > :is(b, span) { font-size: 12px !important; font-weight: 400 !important; min-height: 24px; padding: 3px 7px !important; background: #ffffff12 !important; border: 0 !important; border-radius: 5px; color: #ddd !important; }
-body.svCleanShell .dsHeroMeta small { font-size: 10px; margin-left: 2px; opacity: .6; }
+body.svCleanShell .dsHeroMeta > :is(b, span) { font-size: calc(12px * var(--st-ui-scale, 1)) !important; font-weight: 400 !important; min-height: 24px; padding: 3px 7px !important; background: #ffffff12 !important; border: 0 !important; border-radius: 5px; color: #ddd !important; }
+body.svCleanShell .dsHeroMeta small { font-size: calc(10px * var(--st-ui-scale, 1)); margin-left: 2px; opacity: .6; }
 body.svCleanShell .dsHeroContent > p {
   display: -webkit-box !important; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;
-  max-width: 500px !important; color: #c2c2c2 !important; font-size: 14px !important; font-weight: 400 !important;
+  max-width: 500px !important; color: #c2c2c2 !important; font-size: calc(14px * var(--st-ui-scale, 1)) !important; font-weight: 400 !important;
   line-height: 1.6 !important; margin: 0 0 20px !important;
 }
 body.svCleanShell :is(.dsHeroActions, .dsWelcomeActions, .dsDetailActionsV121) { gap: 8px !important; flex-wrap: wrap !important; }
@@ -150,13 +153,13 @@ body.svCleanShell :is(.dsPrimaryBtn, .dsSecondaryBtn, .dsIconBtn) {
   display: inline-flex !important; align-items: center; justify-content: center; gap: 7px !important;
   min-height: 40px !important; min-width: 0 !important; height: auto !important; line-height: 1.2 !important;
   padding: 9px 16px !important; border: 1px solid #ffffff38 !important; border-radius: 999px !important;
-  background: #00000054 !important; color: #eee !important; font-size: 13px !important; font-weight: 500 !important;
+  background: #00000054 !important; color: #eee !important; font-size: calc(13px * var(--st-ui-scale, 1)) !important; font-weight: 500 !important;
   box-shadow: none !important; transform: none !important; text-shadow: none !important; cursor: pointer;
 }
 body.svCleanShell :is(.dsPrimaryBtn, .dsSecondaryBtn, .dsIconBtn):hover { background: #ffffff17 !important; border-color: #ffffff70 !important; }
 body.svCleanShell :is(.dsPrimaryBtn, .dsSecondaryBtn, .dsIconBtn)::before,
 body.svCleanShell :is(.dsPrimaryBtn, .dsSecondaryBtn, .dsIconBtn)::after { display: none !important; }
-body.svCleanShell :is(.dsPrimaryBtn, .dsSecondaryBtn) > span { font-size: 12px !important; background: none !important; }
+body.svCleanShell :is(.dsPrimaryBtn, .dsSecondaryBtn) > span { font-size: calc(12px * var(--st-ui-scale, 1)) !important; background: none !important; }
 body.svCleanShell .dsIconBtn { width: 40px !important; padding: 0 !important; }
 body.svCleanShell .dsHeroRating { background: none !important; border: 0 !important; right: var(--sv-page-gutter) !important; bottom: 85px !important; }
 
@@ -166,7 +169,7 @@ body.svCleanShell .dsContent.noHero { margin-top: 0 !important; padding-top: 18p
 body.svCleanShell .dsRow { margin: 0 0 36px !important; padding: 0 !important; opacity: 1 !important; transform: none !important; filter: none !important; }
 body.svCleanShell .dsRow::before, body.svCleanShell .dsRow::after { display: none !important; }
 body.svCleanShell .dsRowHead { min-height: 30px !important; margin-bottom: 14px !important; padding-right: 72px !important; }
-body.svCleanShell .dsRowHead h2 { font-size: clamp(19px, 1.7vw, 24px) !important; font-weight: 600 !important; line-height: 1.3 !important; letter-spacing: -.025em !important; }
+body.svCleanShell .dsRowHead h2 { font-size: calc(clamp(19px, 1.7vw, 24px) * var(--st-ui-scale, 1)) !important; font-weight: 600 !important; line-height: 1.3 !important; letter-spacing: -.025em !important; }
 body.svCleanShell .dsRowHead h2::before, body.svCleanShell .dsRowHead h2::after { display: none !important; }
 /* The legacy progress meter has a -24px top margin. In a paint-contained
    catalog row it shortens the row and clips the year below the posters. */
@@ -207,17 +210,17 @@ body.svCleanShell .dsCardArtwork:is(:hover, :focus-within) .dsCardQuickActions {
 body.svCleanShell .dsCardQuickActions .dsMiniBtn {
   display: grid !important; place-items: center; width: 30px !important; height: 30px !important;
   min-width: 30px !important; padding: 0 !important; border: 1px solid #ffffff40 !important; border-radius: 50% !important;
-  background: #0a0a0ad9 !important; color: #fff !important; font-size: 16px !important; font-weight: 400 !important;
+  background: #0a0a0ad9 !important; color: #fff !important; font-size: calc(16px * var(--st-ui-scale, 1)) !important; font-weight: 400 !important;
   box-shadow: none !important; transform: none !important; cursor: pointer;
 }
 body.svCleanShell .dsCardQuickActions .dsMiniBtn:is(:hover, .saved, .liked) { background: #f0f0f0 !important; color: #111 !important; }
 body.svCleanShell .dsCardInfo { padding: 10px 0 0 !important; background: none !important; }
 body.svCleanShell .dsCardInfo .dsCardTitle {
   display: block !important; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  font-size: 14px !important; font-weight: 500 !important; line-height: 1.4 !important; color: #e5e5e5 !important; text-shadow: none !important;
+  font-size: calc(14px * var(--st-ui-scale, 1)) !important; font-weight: 500 !important; line-height: 1.4 !important; color: #e5e5e5 !important; text-shadow: none !important;
 }
-body.svCleanShell .dsCardMeta { display: flex !important; gap: 8px !important; margin-top: 4px !important; font-size: 11px !important; color: #888 !important; }
-body.svCleanShell .dsCardMeta > * { padding: 0 !important; border: 0 !important; background: none !important; color: #888 !important; font-size: 11px !important; font-weight: 400 !important; }
+body.svCleanShell .dsCardMeta { display: flex !important; gap: 8px !important; margin-top: 4px !important; font-size: calc(11px * var(--st-ui-scale, 1)) !important; color: #888 !important; }
+body.svCleanShell .dsCardMeta > * { padding: 0 !important; border: 0 !important; background: none !important; color: #888 !important; font-size: calc(11px * var(--st-ui-scale, 1)) !important; font-weight: 400 !important; }
 body.svCleanShell .dsRowControls { position: absolute !important; inset: 0 0 auto auto !important; display: flex !important; gap: 5px !important; opacity: 1 !important; }
 body.svCleanShell .dsRowBtn { width: 28px !important; height: 28px !important; padding: 0 !important; background: none !important; border: 1px solid #ffffff1f !important; color: #999 !important; }
 body.svCleanShell .dsRowBtn:hover { background: #ffffff0f !important; }
@@ -228,14 +231,14 @@ body.svCleanShell .v111Reveal { opacity: 1 !important; transform: none !importan
 
 /* Browse, detail, account and settings surfaces share the same neutral palette. */
 body.svCleanShell .dsBrowseTop { top: 92px !important; padding-inline: var(--sv-page-gutter) !important; background: none !important; }
-body.svCleanShell .dsBrowseTop h1 { font-size: 19px !important; font-weight: 500 !important; }
+body.svCleanShell .dsBrowseTop h1 { font-size: calc(19px * var(--st-ui-scale, 1)) !important; font-weight: 500 !important; }
 body.svCleanShell :is(.dsPlainPage, .dsPageHero, .dsSearchPage, .dsWatchlistPage) { background: #000 !important; }
 body.svCleanShell .dsPlainPage { padding-top: 120px !important; }
-body.svCleanShell :is(.dsPageHeader, .dsPageHero) h1 { font-size: clamp(30px, 3.4vw, 44px) !important; line-height: 1.15 !important; font-weight: 600 !important; letter-spacing: -.04em !important; text-transform: none !important; }
-body.svCleanShell :is(.dsPageHeader, .dsPageHero) p { max-width: 620px !important; color: #888 !important; font-size: 14px !important; }
+body.svCleanShell :is(.dsPageHeader, .dsPageHero) h1 { font-size: calc(clamp(30px, 3.4vw, 44px) * var(--st-ui-scale, 1)) !important; line-height: 1.15 !important; font-weight: 600 !important; letter-spacing: -.04em !important; text-transform: none !important; }
+body.svCleanShell :is(.dsPageHeader, .dsPageHero) p { max-width: 620px !important; color: #888 !important; font-size: calc(14px * var(--st-ui-scale, 1)) !important; }
 body.svCleanShell :is(.dsSearchBox form, .genreDropdown summary, .genreDropdownMenu, .dsTabs a, .pagination a) { border-radius: 10px !important; border: 1px solid #ffffff1f !important; background: #141414 !important; color: #bbb !important; box-shadow: none !important; transform: none !important; font-weight: 400 !important; }
-body.svCleanShell .dsSearchBox input { font-size: 15px !important; font-weight: 400 !important; }
-body.svCleanShell .dsSearchBox button { background: #eee !important; color: #111 !important; border-radius: 7px !important; font-size: 13px !important; }
+body.svCleanShell .dsSearchBox input { font-size: calc(15px * var(--st-ui-scale, 1)) !important; font-weight: 400 !important; }
+body.svCleanShell .dsSearchBox button { background: #eee !important; color: #111 !important; border-radius: 7px !important; font-size: calc(13px * var(--st-ui-scale, 1)) !important; }
 body.svCleanShell .dsTabs a.active { color: #fff !important; }
 body.svCleanShell :is(.watchlistEmptyNetflix, .dsEmptyState) { grid-column: 1 / -1; background: #111 !important; border: 1px solid #ffffff12 !important; border-radius: 12px !important; }
 body.svCleanShell .dsDetailPage { padding-top: 88px !important; background: #000 !important; }
@@ -247,13 +250,13 @@ body.svCleanShell .dsDetailHero::after { background: linear-gradient(0deg, #000,
 body.svCleanShell .dsDetailHeroContent { left: 32px !important; right: 32px !important; bottom: 45px !important; max-width: 700px !important; }
 body.svCleanShell .dsDetailBody { padding: 24px 32px 64px !important; background: #000 !important; }
 body.svCleanShell .dsMoviePlaceholderNote { display: none !important; }
-body.svCleanShell .dsMetaBand { gap: 12px !important; margin-bottom: 22px !important; background: none !important; color: #aaa !important; font-size: 13px !important; }
+body.svCleanShell .dsMetaBand { gap: 12px !important; margin-bottom: 22px !important; background: none !important; color: #aaa !important; font-size: calc(13px * var(--st-ui-scale, 1)) !important; }
 body.svCleanShell .dsDetailTabsV121 { background: none !important; border: 0 !important; border-bottom: 1px solid #ffffff1f !important; box-shadow: none !important; padding: 0 !important; border-radius: 0 !important; }
-body.svCleanShell .dsDetailTabsV121 > button { font-size: 13px !important; font-weight: 500 !important; color: #999 !important; border-bottom: 2px solid transparent !important; }
+body.svCleanShell .dsDetailTabsV121 > button { font-size: calc(13px * var(--st-ui-scale, 1)) !important; font-weight: 500 !important; color: #999 !important; border-bottom: 2px solid transparent !important; }
 body.svCleanShell .dsDetailTabsV121 > button.active { color: #fff !important; border-bottom-color: #fff !important; }
 body.svCleanShell .dsDetailTabPanel { background: none !important; border: 0 !important; box-shadow: none !important; padding: 24px 0 !important; }
-body.svCleanShell .dsDetailTabPanel h2 { font-size: 22px !important; font-weight: 500 !important; }
-body.svCleanShell .dsDetailTabPanel p { font-size: 15px !important; font-weight: 400 !important; line-height: 1.7 !important; color: #aaa !important; }
+body.svCleanShell .dsDetailTabPanel h2 { font-size: calc(22px * var(--st-ui-scale, 1)) !important; font-weight: 500 !important; }
+body.svCleanShell .dsDetailTabPanel p { font-size: calc(15px * var(--st-ui-scale, 1)) !important; font-weight: 400 !important; line-height: 1.7 !important; color: #aaa !important; }
 body.svCleanShell :is(.dsDetailGridV121 aside, .dsAboutGridV121 > div, .dsSeasonBlock) { background: #111 !important; border: 1px solid #ffffff12 !important; border-radius: 10px !important; }
 
 /* A shorter welcome page introduces the same catalog without duplicate features. */
@@ -267,10 +270,10 @@ body.svCleanShell .dsWelcomeNav {
 }
 body.svCleanShell .dsWelcomeNav > .svLiquidPane { --sv-glass-radius: 20px; }
 body.svCleanShell .dsWelcomeNav > :not(.svLiquidPane) { position: relative; z-index: 1; }
-body.svCleanShell .dsWelcomeBrand { font-size: 14px !important; font-weight: 700 !important; color: #fff !important; letter-spacing: -.04em !important; background: none !important; -webkit-text-fill-color: #fff !important; }
+body.svCleanShell .dsWelcomeBrand { font-size: calc(14px * var(--st-ui-scale, 1)) !important; font-weight: 700 !important; color: #fff !important; letter-spacing: -.04em !important; background: none !important; -webkit-text-fill-color: #fff !important; }
 body.svCleanShell .dsWelcomeBrand::before, body.svCleanShell .dsWelcomeBrand::after { display: none !important; }
 body.svCleanShell .dsWelcomeNavLinks { display: flex; gap: 18px !important; }
-body.svCleanShell .dsWelcomeNavLinks > a { font-size: 13px !important; font-weight: 400 !important; padding: 0 !important; color: #ccc !important; background: none !important; border: 0 !important; }
+body.svCleanShell .dsWelcomeNavLinks > a { font-size: calc(13px * var(--st-ui-scale, 1)) !important; font-weight: 400 !important; padding: 0 !important; color: #ccc !important; background: none !important; border: 0 !important; }
 body.svCleanShell .dsWelcomeHero {
   display: flex !important; align-items: center; min-height: clamp(580px, 85svh, 850px) !important;
   padding: 130px clamp(24px, 5.5vw, 88px) 100px !important; width: 100% !important;
@@ -280,55 +283,55 @@ body.svCleanShell .dsWelcomeHeroBg { inset: 0 !important; opacity: 1 !important;
 body.svCleanShell .dsWelcomeHero::before { background: linear-gradient(90deg, #000d 0%, #0000 80%), linear-gradient(0deg, #000 0%, #0000 50%) !important; z-index: -1 !important; }
 body.svCleanShell .dsWelcomeHero::after { display: none !important; }
 body.svCleanShell .dsWelcomeHeroCopy { max-width: 530px !important; width: 100% !important; padding: 0 !important; }
-body.svCleanShell .dsWelcomeHeroCopy h1 { font-size: clamp(36px, 4.4vw, 64px) !important; line-height: 1.06 !important; font-weight: 600 !important; color: #fff !important; -webkit-text-fill-color: #fff !important; background: none !important; letter-spacing: -.045em !important; }
-body.svCleanShell .dsWelcomeHeroCopy p { color: #aaa !important; font-size: 15px !important; line-height: 1.65 !important; max-width: 420px !important; margin: 18px 0 24px !important; }
+body.svCleanShell .dsWelcomeHeroCopy h1 { font-size: calc(clamp(36px, 4.4vw, 64px) * var(--st-ui-scale, 1)) !important; line-height: 1.06 !important; font-weight: 600 !important; color: #fff !important; -webkit-text-fill-color: #fff !important; background: none !important; letter-spacing: -.045em !important; }
+body.svCleanShell .dsWelcomeHeroCopy p { color: #aaa !important; font-size: calc(15px * var(--st-ui-scale, 1)) !important; line-height: 1.65 !important; max-width: 420px !important; margin: 18px 0 24px !important; }
 body.svCleanShell .dsWelcomeDiscovery { padding: 0 var(--sv-page-gutter) 48px !important; margin: -22px 0 0 !important; width: auto !important; max-width: none !important; }
 body.svCleanShell .dsWelcomeRail { margin-bottom: 36px !important; }
 body.svCleanShell .dsWelcomeRailHead { margin-bottom: 14px !important; }
-body.svCleanShell .dsWelcomeRailHead h2 { font-size: clamp(19px, 1.7vw, 24px) !important; font-weight: 600 !important; }
-body.svCleanShell .dsWelcomeRailHead > a { font-size: 12px !important; font-weight: 400 !important; color: #999 !important; background: none !important; border: 0 !important; }
+body.svCleanShell .dsWelcomeRailHead h2 { font-size: calc(clamp(19px, 1.7vw, 24px) * var(--st-ui-scale, 1)) !important; font-weight: 600 !important; }
+body.svCleanShell .dsWelcomeRailHead > a { font-size: calc(12px * var(--st-ui-scale, 1)) !important; font-weight: 400 !important; color: #999 !important; background: none !important; border: 0 !important; }
 body.svCleanShell .dsWelcomeRailTrack { display: grid !important; grid-auto-flow: column !important; grid-auto-columns: var(--sv-poster-width) !important; gap: 16px !important; overflow-x: auto; padding: 4px 0 12px !important; }
 body.svCleanShell .dsWelcomeCard { background: none !important; border: 0 !important; box-shadow: none !important; }
 body.svCleanShell .dsWelcomeCard > a { display: block !important; aspect-ratio: auto !important; background: none !important; }
 body.svCleanShell .dsWelcomeCard img { position: static !important; display: block; width: 100% !important; height: auto !important; aspect-ratio: 2 / 3 !important; border-radius: 10px !important; object-fit: cover !important; filter: none !important; transform: none !important; }
 body.svCleanShell .dsWelcomeCard > a > div:not(.posterFallback) { position: static !important; padding: 10px 0 0 !important; background: none !important; }
-body.svCleanShell .dsWelcomeCard strong { display: block; font-size: 14px !important; font-weight: 500 !important; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-body.svCleanShell .dsWelcomeCard span { display: block; font-size: 11px !important; color: #888 !important; margin-top: 4px !important; }
+body.svCleanShell .dsWelcomeCard strong { display: block; font-size: calc(14px * var(--st-ui-scale, 1)) !important; font-weight: 500 !important; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.svCleanShell .dsWelcomeCard span { display: block; font-size: calc(11px * var(--st-ui-scale, 1)) !important; color: #888 !important; margin-top: 4px !important; }
 body.svCleanShell .dsWelcomeFallback { max-width: 600px !important; padding: 24px !important; background: #111 !important; border: 1px solid #ffffff14 !important; border-radius: 12px !important; }
 body.svCleanShell .dsAuthPage { background: #000 !important; }
 body.svCleanShell :is(.dsAuthCard, .dsAuthInfo) { background: #111 !important; border: 1px solid #ffffff14 !important; border-radius: 16px !important; box-shadow: none !important; }
 body.svCleanShell .dsAuthCard::before { display: none !important; }
-body.svCleanShell .dsAuthCard h1 { font-size: 34px !important; font-weight: 600 !important; letter-spacing: -.04em !important; }
+body.svCleanShell .dsAuthCard h1 { font-size: calc(34px * var(--st-ui-scale, 1)) !important; font-weight: 600 !important; letter-spacing: -.04em !important; }
 body.svCleanShell :is(.dsAccountHero, .dsProfilesHero, .dsCleanHero) { background: none !important; border: 0 !important; box-shadow: none !important; padding-block: 0 32px !important; }
-body.svCleanShell :is(.dsAccountHero, .dsProfilesHero, .dsCleanHero) h1 { font-size: clamp(30px, 3.4vw, 44px) !important; font-weight: 600 !important; line-height: 1.15 !important; }
-body.svCleanShell :is(.dsAccountHero, .dsProfilesHero, .dsCleanHero) p { color: #999 !important; font-size: 14px !important; font-weight: 400 !important; }
+body.svCleanShell :is(.dsAccountHero, .dsProfilesHero, .dsCleanHero) h1 { font-size: calc(clamp(30px, 3.4vw, 44px) * var(--st-ui-scale, 1)) !important; font-weight: 600 !important; line-height: 1.15 !important; }
+body.svCleanShell :is(.dsAccountHero, .dsProfilesHero, .dsCleanHero) p { color: #999 !important; font-size: calc(14px * var(--st-ui-scale, 1)) !important; font-weight: 400 !important; }
 body.svCleanShell :is(.dsAccountCard, .dsProfileManagerPanel, .dsProfileManagerCard, .dsProfileSelectCard, .dsProfileCard) { background: #111 !important; border: 1px solid #ffffff17 !important; border-radius: 12px !important; box-shadow: none !important; transform: none !important; }
-body.svCleanShell :is(.dsAccountCard, .dsProfileManagerPanel, .dsProfileManagerCard, .dsProfileSelectCard, .dsProfileCard) h2 { font-size: 20px !important; font-weight: 500 !important; }
+body.svCleanShell :is(.dsAccountCard, .dsProfileManagerPanel, .dsProfileManagerCard, .dsProfileSelectCard, .dsProfileCard) h2 { font-size: calc(20px * var(--st-ui-scale, 1)) !important; font-weight: 500 !important; }
 body.svCleanShell .dsProfileOrdinal { color: #777 !important; font-weight: 400 !important; }
 body.svCleanShell .dsAvatarBig { background: #262626 !important; border-radius: 18px !important; box-shadow: none !important; color: #ddd !important; }
-body.svCleanShell .dsGhostPill { color: #bbb !important; font-size: 13px !important; border: 1px solid #ffffff24 !important; border-radius: 999px !important; background: none !important; box-shadow: none !important; }
+body.svCleanShell .dsGhostPill { color: #bbb !important; font-size: calc(13px * var(--st-ui-scale, 1)) !important; border: 1px solid #ffffff24 !important; border-radius: 999px !important; background: none !important; box-shadow: none !important; }
 body.svCleanShell #controlPanel { background: #101010 !important; border: 1px solid #ffffff1f !important; border-radius: 20px !important; box-shadow: 0 16px 64px #0008 !important; }
 body.svCleanShell #controlPanel::before, body.svCleanShell #controlPanel::after, body.svCleanShell #controlPanel .controlHeroOrb { display: none !important; }
 body.svCleanShell #controlPanel .controlHero { background: none !important; border: 0 !important; padding: 16px 8px !important; }
-body.svCleanShell #controlPanel h2 { font-size: 22px !important; font-weight: 500 !important; }
+body.svCleanShell #controlPanel h2 { font-size: calc(22px * var(--st-ui-scale, 1)) !important; font-weight: 500 !important; }
 body.svCleanShell #controlPanel .styleGroup { background: #161616 !important; border: 1px solid #ffffff0f !important; border-radius: 12px !important; box-shadow: none !important; }
 body.svCleanShell #controlPanel .styleBtn { background: #222 !important; border: 1px solid #ffffff14 !important; color: #aaa !important; font-weight: 500 !important; border-radius: 8px !important; }
 body.svCleanShell #controlPanel .styleBtn.active { background: #e5e5e5 !important; color: #111 !important; }
-body.svCleanShell .footer { width: 100% !important; padding: 32px var(--sv-page-gutter) !important; margin: 0 !important; background: #000 !important; border-top: 1px solid #ffffff0f !important; color: #666 !important; font-size: 12px !important; }
+body.svCleanShell .footer { width: 100% !important; padding: 32px var(--sv-page-gutter) !important; margin: 0 !important; background: #000 !important; border-top: 1px solid #ffffff0f !important; color: #666 !important; font-size: calc(12px * var(--st-ui-scale, 1)) !important; }
 body.svCleanShell .footerGrid { padding: 0 !important; margin: 0 !important; }
-body.svCleanShell .footer .brand { color: #999 !important; font-size: 13px !important; font-weight: 500 !important; }
-body.svCleanShell .footer a { color: #777 !important; font-size: 12px !important; background: none !important; border: 0 !important; }
+body.svCleanShell .footer .brand { color: #999 !important; font-size: calc(13px * var(--st-ui-scale, 1)) !important; font-weight: 500 !important; }
+body.svCleanShell .footer a { color: #777 !important; font-size: calc(12px * var(--st-ui-scale, 1)) !important; background: none !important; border: 0 !important; }
 
 /* v153: row headings and history are isolated from legacy card styles. */
 body.svCleanShell .svSectionHead { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 32px; margin: 0 0 16px; padding: 0; }
-body.svCleanShell .svSectionHead > h2 { margin: 0 !important; font-size: clamp(19px, 1.65vw, 24px) !important; font-weight: 600 !important; line-height: 1.3 !important; letter-spacing: -.025em !important; color: #eee !important; }
+body.svCleanShell .svSectionHead > h2 { margin: 0 !important; font-size: calc(clamp(19px, 1.65vw, 24px) * var(--st-ui-scale, 1)) !important; font-weight: 600 !important; line-height: 1.3 !important; letter-spacing: -.025em !important; color: #eee !important; }
 body.svCleanShell .svSectionHead > h2::before, body.svCleanShell .svSectionHead > h2::after { display: none !important; }
 body.svCleanShell .svSectionActions { display: flex; align-items: center; gap: 14px; }
 body.svCleanShell .svSectionActions > .dsRowControls { position: static !important; display: flex !important; opacity: 1 !important; transform: none !important; }
-body.svCleanShell .svRowMore { display: inline-flex !important; align-items: center; min-height: 24px; width: auto !important; padding: 0 !important; margin: 0 !important; border: 0 !important; background: none !important; box-shadow: none !important; transform: none !important; border-radius: 0 !important; font-size: 12px !important; font-weight: 400 !important; color: #929292 !important; white-space: nowrap; }
+body.svCleanShell .svRowMore { display: inline-flex !important; align-items: center; min-height: 24px; width: auto !important; padding: 0 !important; margin: 0 !important; border: 0 !important; background: none !important; box-shadow: none !important; transform: none !important; border-radius: 0 !important; font-size: calc(12px * var(--st-ui-scale, 1)) !important; font-weight: 400 !important; color: #929292 !important; white-space: nowrap; }
 body.svCleanShell .svRowMore:hover { color: #ddd !important; }
 body.svCleanShell .svRowArrows { display: flex; gap: 6px; }
-body.svCleanShell .svRowArrow { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 1px solid #ffffff1f; border-radius: 50%; background: none; color: #999; font-size: 20px; cursor: pointer; }
+body.svCleanShell .svRowArrow { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 1px solid #ffffff1f; border-radius: 50%; background: none; color: #999; font-size: calc(20px * var(--st-ui-scale, 1)); cursor: pointer; }
 body.svCleanShell .svResumeSection { position: relative; margin: 0 0 42px; }
 body.svCleanShell .svResumeRail { display: grid; grid-auto-flow: column; grid-auto-columns: clamp(240px, 22vw, 310px); gap: 16px; overflow-x: auto; overflow-y: hidden; padding: 4px 0 12px; scroll-snap-type: x proximity; scrollbar-width: none; }
 body.svCleanShell .svResumeRail::-webkit-scrollbar { display: none; }
@@ -337,7 +340,7 @@ body.svCleanShell .svResumeArtwork { position: relative; padding: 0; border-radi
 body.svCleanShell .svResumeLink { position: relative; display: block; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border: 0; border-radius: 10px; background: #141414; }
 body.svCleanShell .svResumeLink > img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; filter: none; transform: none; transition: filter .18s ease; }
 body.svCleanShell .svResumeLink:hover > img { filter: brightness(.85); }
-body.svCleanShell .svResumeFallback { display: grid; place-items: center; height: 100%; color: #999; font-size: 40px; }
+body.svCleanShell .svResumeFallback { display: grid; place-items: center; height: 100%; color: #999; font-size: calc(40px * var(--st-ui-scale, 1)); }
 body.svCleanShell .svResumePlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: grid; place-items: center; width: 42px; height: 42px; padding: 0; border: 1px solid #ffffff40; border-radius: 50%; background: #00000054; color: #fff; opacity: 0; pointer-events: none; }
 body.svCleanShell .svResumePlay > svg:not(.svLiquidPane__filters) { width: 19px; height: 19px; }
 body.svCleanShell .svResumeLink:is(:hover, :focus-visible) .svResumePlay { opacity: 1; }
@@ -345,17 +348,17 @@ body.svCleanShell .svResumeRemove { position: absolute; top: 8px; right: 8px; z-
 body.svCleanShell .svResumeRemove > svg:not(.svLiquidPane__filters) { width: 13px; height: 13px; }
 body.svCleanShell .svResumeArtwork:is(:hover, :focus-within) .svResumeRemove { opacity: 1; }
 body.svCleanShell .svResumeCaption { padding: 11px 0 0; }
-body.svCleanShell .svResumeTitle { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #e5e5e5; font-size: 14px; font-weight: 500; line-height: 1.45; }
+body.svCleanShell .svResumeTitle { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #e5e5e5; font-size: calc(14px * var(--st-ui-scale, 1)); font-weight: 500; line-height: 1.45; }
 body.svCleanShell .svResumeTitle:hover { color: #fff; }
-body.svCleanShell .svResumeMeta { display: flex; align-items: center; gap: 6px; margin-top: 4px; color: #888; font-size: 12px; line-height: 1.4; }
+body.svCleanShell .svResumeMeta { display: flex; align-items: center; gap: 6px; margin-top: 4px; color: #888; font-size: calc(12px * var(--st-ui-scale, 1)); line-height: 1.4; }
 body.svCleanShell .svResumeProgress { position: absolute; bottom: 0; left: 0; right: 0; z-index: 2; height: 3px; padding: 0; overflow: hidden; border-radius: 0 0 10px 10px; background: #ffffff26; }
 body.svCleanShell .svResumeProgress > span { display: block; height: 100%; padding: 0; background: #ededed; }
 body.svCleanShell .svHistoryPanel { margin: 30px var(--sv-page-gutter) 0; padding: 0; }
 body.svCleanShell .svResumeGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 30px 18px; }
-body.svCleanShell .svHistoryCount { color: #888; font-size: 12px; }
+body.svCleanShell .svHistoryCount { color: #888; font-size: calc(12px * var(--st-ui-scale, 1)); }
 body.svCleanShell .svHistoryEmpty { padding: 48px 24px; text-align: center; border: 1px solid #ffffff0f; border-radius: 16px; background: #ffffff03; }
-body.svCleanShell .svHistoryEmpty h2 { margin: 0 0 10px; font-size: 22px; font-weight: 500; }
-body.svCleanShell .svHistoryEmpty p { margin: 0 0 20px; color: #888; font-size: 14px; }
+body.svCleanShell .svHistoryEmpty h2 { margin: 0 0 10px; font-size: calc(22px * var(--st-ui-scale, 1)); font-weight: 500; }
+body.svCleanShell .svHistoryEmpty p { margin: 0 0 20px; color: #888; font-size: calc(14px * var(--st-ui-scale, 1)); }
 
 @media (max-width: 860px) {
   body.svCleanShell { --sv-poster-width: 150px; --sv-page-gutter: 20px; }
@@ -364,13 +367,13 @@ body.svCleanShell .svHistoryEmpty p { margin: 0 0 20px; color: #888; font-size: 
   body.svCleanShell .netflixNav .navLeftCluster { flex: 1 !important; }
   body.svCleanShell .mobileNav[data-sv-liquid-nav] { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); width: min(380px, calc(100% - 32px)) !important; border-radius: 22px !important; padding: 6px 8px !important; }
   body.svCleanShell .mobileNav > .svLiquidPane { --sv-glass-radius: 22px; }
-  body.svCleanShell .mobileNav > a { min-height: 42px !important; font-size: 11px !important; font-weight: 500 !important; color: #aaa !important; }
+  body.svCleanShell .mobileNav > a { min-height: 42px !important; font-size: calc(11px * var(--st-ui-scale, 1)) !important; font-weight: 500 !important; color: #aaa !important; }
   body.svCleanShell .mobileNav > a.active { color: #fff !important; background: #ffffff12 !important; }
   body.svCleanShell :is(.dsHero, .dsWelcomeHero) { min-height: 650px !important; padding-top: 150px !important; padding-bottom: 110px !important; }
   body.svCleanShell .dsHeroBg { background-position: 60% top !important; }
   body.svCleanShell .dsHeroGlass { background: linear-gradient(0deg, #000 0%, #000a 35%, #0000 75%), linear-gradient(90deg, #0007, #0000) !important; }
   body.svCleanShell .dsHeroContent { width: calc(100% - 48px) !important; margin-left: 24px !important; align-self: flex-end; }
-  body.svCleanShell :is(.dsHeroContent, .dsWelcomeHeroCopy, .dsDetailHeroContent) h1 { font-size: clamp(34px, 7.5vw, 52px) !important; }
+  body.svCleanShell :is(.dsHeroContent, .dsWelcomeHeroCopy, .dsDetailHeroContent) h1 { font-size: calc(clamp(34px, 7.5vw, 52px) * var(--st-ui-scale, 1)) !important; }
   body.svCleanShell .dsRow { margin-bottom: 28px !important; }
   body.svCleanShell .dsRowHead { padding-right: 0 !important; }
   body.svCleanShell .dsRowControls { display: none !important; }
@@ -387,7 +390,7 @@ body.svCleanShell .svHistoryEmpty p { margin: 0 0 20px; color: #888; font-size: 
   body.svCleanShell .dsWelcomeNavLinks { gap: 14px !important; }
   body.svCleanShell .footer { padding-bottom: calc(104px + env(safe-area-inset-bottom)) !important; }
   body.svCleanShell .svSectionHead { gap: 12px; margin-bottom: 12px; }
-  body.svCleanShell .svSectionHead > h2 { font-size: 19px !important; }
+  body.svCleanShell .svSectionHead > h2 { font-size: calc(19px * var(--st-ui-scale, 1)) !important; }
   body.svCleanShell .svRowArrows { display: none; }
   body.svCleanShell .svResumeRail { grid-auto-columns: min(270px, 76vw); gap: 12px; }
   body.svCleanShell .svResumeSection { margin-bottom: 32px; }

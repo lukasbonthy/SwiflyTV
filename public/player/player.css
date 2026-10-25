@@ -13,15 +13,15 @@ body.svCleanShell .svPlayerPage[data-party-active="true"] { max-width:1640px; }
 .svPlayerAmbient img { width:100%; height:100%; object-fit:cover; }
 .svPlayerPageHead { display:flex; align-items:center; justify-content:space-between; gap:20px; margin-bottom:20px; }
 .svPlayerPageReturn { display:flex; align-items:center; gap:18px; min-width:0; }
-body.svCleanShell .svPlayerBack { display:inline-flex; align-items:center; flex:0 0 auto; gap:7px; min-height:44px !important; padding:9px 15px !important; border-radius:14px !important; font-size:12px !important; color:#e4e3e9 !important; text-decoration:none; }
+body.svCleanShell .svPlayerBack { display:inline-flex; align-items:center; flex:0 0 auto; gap:7px; min-height:44px !important; padding:9px 15px !important; border-radius:14px !important; font-size:calc(12px * var(--st-ui-scale, 1)) !important; color:#e4e3e9 !important; text-decoration:none; }
 body.svCleanShell .svPlayer :is(.svPlayerBack,.svPlayerPartyButton):where(:not(.svNavMatchedOptic)) { border:1px solid #ffffff40 !important; background:rgb(var(--sv-glass-color, 255 255 255) / .2) !important; -webkit-backdrop-filter:blur(12px) saturate(1.8) brightness(1.05); backdrop-filter:blur(12px) saturate(1.8) brightness(1.05); box-shadow:inset 0 .5px #ffffff30,0 4px 12px #0002 !important; }
 body.svCleanShell .svPlayer :is(.svPlayerBack,.svPlayerPartyButton):where(:not(.svNavMatchedOptic)):hover { background:rgb(var(--sv-glass-color, 255 255 255) / .2) !important; }
-.svPlayerHeadNote { color:#a5a4af; font-size:12px; }
+.svPlayerHeadNote { color:#a5a4af; font-size:calc(12px * var(--st-ui-scale, 1)); }
 .svPlayerIcon { display:block; width:21px; height:21px; flex:0 0 21px; }
-.svPlayerIcon text { font:600 8px var(--st-font,system-ui,sans-serif); letter-spacing:-.4px; }
+.svPlayerIcon text { font:600 calc(8px * var(--st-ui-scale, 1)) var(--st-font,system-ui,sans-serif); letter-spacing:-.4px; }
 body.svCleanShell .svPlayerPage .svPlayerModes.svGlassPanel { display:flex; align-items:center; gap:4px; padding:5px; border-radius:16px !important; background:#15141799 !important; border:1px solid #ffffff1a !important; box-shadow:inset 0 1px #ffffff12 !important; }
 body.svCleanShell .svPlayer .svPlayerModes.svNavMatchedOptic { background:transparent !important; border:0 !important; box-shadow:none !important; }
-.svPlayerModes a { display:flex; align-items:center; justify-content:center; min-height:44px; padding:6px 20px; border:1px solid transparent; border-radius:11px; font-size:12px; font-weight:500; text-decoration:none; color:#aeacb6; transition:background .18s ease,color .18s ease; }
+.svPlayerModes a { display:flex; align-items:center; justify-content:center; min-height:44px; padding:6px 20px; border:1px solid transparent; border-radius:11px; font-size:calc(12px * var(--st-ui-scale, 1)); font-weight:500; text-decoration:none; color:#aeacb6; transition:background .18s ease,color .18s ease; }
 .svPlayerModes a:hover { color:#fff; background:#ffffff0b; }
 .svPlayerModes a.active { background:#ffffff12; color:#fff; border-color:#ffffff14; }
 .svPlayerLayout { display:grid; grid-template-columns:minmax(0,1fr); gap:24px; align-items:start; }
@@ -48,22 +48,22 @@ body.svCleanShell .svPlayer:is([data-player-state="ready"],[data-player-state="b
 .svPlayer:is([data-player-state="ready"],[data-player-state="buffering"],[data-player-state="ended"]) .svPlayerScene { opacity:0; }
 .svPlayerShade { position:absolute; inset:0; border-radius:inherit; pointer-events:none; background:linear-gradient(180deg,#0002,transparent 25%); }
 .svPlayer:is([data-player-state="loading"],[data-player-state="waiting"],[data-player-state="error"]) .svPlayerShade { background:linear-gradient(180deg,#10101466,#101014aa 60%,#101014ef); }
-.svPlayerStageChrome { position:absolute; z-index:1; inset:24px 26px auto; display:flex; align-items:center; justify-content:space-between; gap:16px; color:#ddd9e7bb; font-size:9px; letter-spacing:.14em; pointer-events:none; }
+.svPlayerStageChrome { position:absolute; z-index:1; inset:24px 26px auto; display:flex; align-items:center; justify-content:space-between; gap:16px; color:#ddd9e7bb; font-size:calc(9px * var(--st-ui-scale, 1)); letter-spacing:.14em; pointer-events:none; }
 .svPlayerStageBrand { display:flex; align-items:center; gap:8px; }
 .svPlayerStageBrand i { width:5px; height:5px; border-radius:50%; background:#cec0e9; }
 .svPlayer:is([data-player-state="ready"],[data-player-state="buffering"],[data-player-state="ended"]) .svPlayerStageChrome { display:none; }
 .svPlayerStatus { position:absolute; z-index:2; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:44px 24px 136px; border-radius:inherit; text-align:center; pointer-events:none; }
 .svPlayerStatusMark { display:grid; place-items:center; width:56px; height:56px; margin-bottom:20px; border:1px solid #ffffff24; border-radius:17px; background:#ffffff08; color:#e2ddec; }
 .svPlayerStatusMark .svPlayerIcon { width:26px; height:26px; }
-.svPlayerEyebrow { display:block; font-size:9px; letter-spacing:.16em; color:#bcb7c9; font-weight:600; }
-body.svCleanShell .svPlayerStatus h2 { max-width:580px; margin:12px 0 0 !important; color:#f7f5fa !important; font-size:clamp(22px,2.4vw,34px) !important; line-height:1.16 !important; letter-spacing:-.04em !important; font-weight:500 !important; text-wrap:balance; }
-body.svCleanShell .svPlayerStatus p { max-width:365px; margin:12px 0 0 !important; color:#c1bdca !important; font-size:13px !important; line-height:1.6 !important; text-wrap:balance; }
+.svPlayerEyebrow { display:block; font-size:calc(9px * var(--st-ui-scale, 1)); letter-spacing:.16em; color:#bcb7c9; font-weight:600; }
+body.svCleanShell .svPlayerStatus h2 { max-width:580px; margin:12px 0 0 !important; color:#f7f5fa !important; font-size:calc(clamp(22px,2.4vw,34px) * var(--st-ui-scale, 1)) !important; line-height:1.16 !important; letter-spacing:-.04em !important; font-weight:500 !important; text-wrap:balance; }
+body.svCleanShell .svPlayerStatus p { max-width:365px; margin:12px 0 0 !important; color:#c1bdca !important; font-size:calc(13px * var(--st-ui-scale, 1)) !important; line-height:1.6 !important; text-wrap:balance; }
 .svPlayer[data-player-state="loading"] .svPlayerStatusMark { border-color:#cfc2e640; background:#cec1e90b; }
 .svPlayer[data-player-state="buffering"] .svPlayerStatus { inset:20px auto auto 50%; transform:translateX(-50%); flex-direction:row; gap:10px; width:max-content; max-width:calc(100% - 28px); padding:10px 15px; border:1px solid #ffffff24; border-radius:12px; background:#18171def; box-shadow:0 8px 24px #0004; }
 .svPlayer[data-player-state="buffering"] .svPlayerStatus::before { content:""; width:13px; height:13px; flex:0 0 auto; border:1.5px solid #ffffff38; border-top-color:#eee7f8; border-radius:50%; animation:svPlayerSpin .9s linear infinite; }
 .svPlayer[data-player-state="buffering"] .svPlayerStatus :is(.svPlayerStatusMark,.svPlayerEyebrow,p) { display:none; }
-body.svCleanShell .svPlayer[data-player-state="buffering"] .svPlayerStatus h2 { margin:0 !important; font-size:12px !important; line-height:1.4 !important; letter-spacing:0 !important; }
-.svPlayerAction { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:11px 18px; border:1px solid #ffffff40; border-radius:14px; background:rgb(var(--sv-glass-color, 255 255 255) / .2); color:#fff; -webkit-backdrop-filter:blur(12px) saturate(1.8) brightness(1.05); backdrop-filter:blur(12px) saturate(1.8) brightness(1.05); box-shadow:inset 0 .5px #ffffff30,0 4px 12px #0002; font:500 13px var(--st-font,system-ui,sans-serif); cursor:pointer; pointer-events:auto; transition:background .18s ease,box-shadow .18s ease; }
+body.svCleanShell .svPlayer[data-player-state="buffering"] .svPlayerStatus h2 { margin:0 !important; font-size:calc(12px * var(--st-ui-scale, 1)) !important; line-height:1.4 !important; letter-spacing:0 !important; }
+.svPlayerAction { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:11px 18px; border:1px solid #ffffff40; border-radius:14px; background:rgb(var(--sv-glass-color, 255 255 255) / .2); color:#fff; -webkit-backdrop-filter:blur(12px) saturate(1.8) brightness(1.05); backdrop-filter:blur(12px) saturate(1.8) brightness(1.05); box-shadow:inset 0 .5px #ffffff30,0 4px 12px #0002; font:500 calc(13px * var(--st-ui-scale, 1)) var(--st-font,system-ui,sans-serif); cursor:pointer; pointer-events:auto; transition:background .18s ease,box-shadow .18s ease; }
 .svPlayerAction:hover { background:rgb(var(--sv-glass-color, 255 255 255) / .2); box-shadow:inset 0 .5px #ffffff40,0 4px 16px #0003; }
 .svPlayerAction:active { background:rgb(var(--sv-glass-color, 255 255 255) / .26); }
 .svPlayerAction:disabled { opacity:.45; cursor:default; }
@@ -114,7 +114,7 @@ body.svCleanShell .svPlayer .svPlayerPlay:active { background:#ffffff2b; }
 .svPlayerPlay[data-paused="true"] .svPlayerIcon { translate:1px 0; }
 .svPlayerTimeCurrent,.svPlayerTimeDuration { flex:0 0 auto; min-width:30px; }
 .svPlayerTimeDuration { text-align:right; }
-.svPlayerTime { color:#fff; font-size:11px; font-weight:500; font-variant-numeric:tabular-nums; letter-spacing:.015em; line-height:1.4; white-space:nowrap; text-shadow:0 1px 5px #000b; }
+.svPlayerTime { color:#fff; font-size:calc(11px * var(--st-ui-scale, 1)); font-weight:500; font-variant-numeric:tabular-nums; letter-spacing:.015em; line-height:1.4; white-space:nowrap; text-shadow:0 1px 5px #000b; }
 .svPlayerTimeDuration { color:#ffffffbd; }
 .svPlayerPopover { position:relative; }
 body.svCleanShell .svPlayer .svPlayerPopover[open] > .svPlayerControl { background:#ffffff18; border-color:#ffffff27; color:#fff; box-shadow:inset 0 1px #ffffff12; }
@@ -124,24 +124,25 @@ body.svCleanShell .svPlayer .svPlayerPopover[open] > .svPlayerControl { backgrou
 @supports selector(:popover-open) {
   .svPlayerPopoverBody[popover] { position:fixed; inset:var(--player-menu-top,12px) auto auto var(--player-menu-left,12px); margin:0; }
   .svPlayerPopoverBody[popover]:not(:popover-open) { display:none; }
+  html[data-sv-tv="true"] body.svCleanShell .svPlayerPopoverBody[popover] { inset:max(16px,var(--player-menu-top,16px)) auto auto max(16px,var(--player-menu-left,16px)); max-width:calc(100vw - 32px); max-height:calc(100svh - 32px); }
 }
 .svPlayerPopover[open] .svPlayerPopoverBody { transform-origin:bottom right; animation:svPlayerMenuIn .18s var(--player-ease); }
-.svPlayerPopoverHeading { display:flex; align-items:center; justify-content:space-between; gap:12px; padding-bottom:13px; border-bottom:1px solid #ffffff16; color:#f5f5f5; font-size:14px; font-weight:600; letter-spacing:-.015em; }
+.svPlayerPopoverHeading { display:flex; align-items:center; justify-content:space-between; gap:12px; padding-bottom:13px; border-bottom:1px solid #ffffff16; color:#f5f5f5; font-size:calc(14px * var(--st-ui-scale, 1)); font-weight:600; letter-spacing:-.015em; }
 .svPlayerMenuClose { display:grid; place-items:center; flex:0 0 auto; width:44px; min-width:44px; height:44px; min-height:44px; padding:12px; margin:-6px -8px -6px 0; border:1px solid transparent; border-radius:50%; background:transparent; color:#aaa; cursor:pointer; }
 .svPlayerMenuClose:hover { background:#ffffff12; border-color:#ffffff18; color:#fff; }
 .svPlayerMenuClose .svPlayerIcon { width:18px; height:18px; }
-.svPlayerSettingsBody label { display:flex; flex-direction:column; align-items:stretch; gap:8px; color:#b7b7b7; font-size:11px; font-weight:500; }
-body.svCleanShell .svPlayerSettingsBody select { width:100%; min-height:44px; padding:9px 12px !important; border:1px solid #ffffff1f !important; border-radius:10px !important; background:#ffffff07 !important; color:#f2f2f2 !important; font:inherit; font-size:13px !important; box-shadow:inset 0 1px #ffffff05; cursor:pointer; color-scheme:dark; }
+.svPlayerSettingsBody label { display:flex; flex-direction:column; align-items:stretch; gap:8px; color:#b7b7b7; font-size:calc(11px * var(--st-ui-scale, 1)); font-weight:500; }
+body.svCleanShell .svPlayerSettingsBody select { width:100%; min-height:44px; padding:9px 12px !important; border:1px solid #ffffff1f !important; border-radius:10px !important; background:#ffffff07 !important; color:#f2f2f2 !important; font:inherit; font-size:calc(13px * var(--st-ui-scale, 1)) !important; box-shadow:inset 0 1px #ffffff05; cursor:pointer; color-scheme:dark; }
 .svPlayerSettingsBody select option { background:#242424; color:#f4f4f4; }
 .svPlayerSettingsBody select:disabled { color:#aaa !important; cursor:default; opacity:.65; }
-.svPlayerMenuAction { display:flex; align-items:center; justify-content:flex-start; gap:11px; min-height:44px; padding:11px 12px; border:1px solid #ffffff1b; border-radius:11px; background:#ffffff06; color:#e8e8e8; font:500 12px var(--st-font,system-ui,sans-serif); text-align:left; cursor:pointer; transition:background .16s ease,border-color .16s ease; }
+.svPlayerMenuAction { display:flex; align-items:center; justify-content:flex-start; gap:11px; min-height:44px; padding:11px 12px; border:1px solid #ffffff1b; border-radius:11px; background:#ffffff06; color:#e8e8e8; font:500 calc(12px * var(--st-ui-scale, 1)) var(--st-font,system-ui,sans-serif); text-align:left; cursor:pointer; transition:background .16s ease,border-color .16s ease; }
 .svPlayerMenuAction:hover { background:#ffffff12; border-color:#ffffff30; }
 .svPlayerMenuAction .svPlayerIcon { width:19px; height:19px; flex-basis:19px; color:#ccc; }
 .svPlayerVolumeBody { width:270px; }
 .svPlayerVolumeRow { display:flex; align-items:center; gap:12px; }
 body.svCleanShell .svPlayer .svPlayerVolumeRow .svPlayerControl { background:#ffffff08; border-color:#ffffff14; }
 body.svCleanShell .svPlayer .svPlayerVolumeBody input[type="range"] { flex:1 1 auto; width:140px; min-width:70px; height:44px; min-height:44px; margin:0 !important; padding:0 !important; border:0 !important; background:transparent !important; accent-color:#fff; cursor:pointer; }
-.svPlayerMenuHint { color:#999; font-size:10px; line-height:1.5; }
+.svPlayerMenuHint { color:#999; font-size:calc(10px * var(--st-ui-scale, 1)); line-height:1.5; }
 /* Container widths keep room embeds responsive even on wide desktop pages. */
 @container sv-stage (max-width:620px) {
   .svPlayerDock { width:calc(100% - 24px); bottom:10px; display:flex; flex-direction:column; align-items:stretch; gap:0; padding:0 10px 6px; border-radius:25px; }
@@ -149,7 +150,7 @@ body.svCleanShell .svPlayer .svPlayerVolumeBody input[type="range"] { flex:1 1 a
   .svPlayerTransport,.svPlayerTools { gap:2px; }
   .svPlayerDockRow { position:relative; display:flex; align-items:center; justify-content:space-between; min-height:44px; gap:10px; width:100%; }
   .svPlayerTools { padding-left:10px; }
-  .svPlayerTime { font-size:10px; }
+  .svPlayerTime { font-size:calc(10px * var(--st-ui-scale, 1)); }
   body.svCleanShell .svPlayer .svPlayerPlay { width:44px; min-width:44px; height:44px; min-height:44px; margin-inline:0; }
 }
 @container sv-stage (max-width:560px) {
@@ -174,16 +175,16 @@ body.svCleanShell .svPlayer .svPlayerVolumeBody input[type="range"] { flex:1 1 a
 }
 @container sv-player (max-width:560px) {
   .svPlayerStage { border-radius:17px; }
-  .svPlayerStageChrome { inset:16px 18px auto; font-size:7px; }
+  .svPlayerStageChrome { inset:16px 18px auto; font-size:calc(7px * var(--st-ui-scale, 1)); }
   .svPlayerStatus { padding:20px 20px 124px; }
   .svPlayerStatusMark,.svPlayerStatus > .svPlayerEyebrow { display:none; }
   .svPlayer:is([data-player-state="loading"],[data-player-state="waiting"],[data-player-state="error"]) .svPlayerStage { min-height:min(300px,var(--player-theater-height,300px)); }
-  body.svCleanShell .svPlayerStatus h2 { margin-top:0 !important; font-size:22px !important; }
-  body.svCleanShell .svPlayerStatus p { max-width:300px; margin:9px 0 0 !important; font-size:12px !important; line-height:1.5 !important; }
+  body.svCleanShell .svPlayerStatus h2 { margin-top:0 !important; font-size:calc(22px * var(--st-ui-scale, 1)) !important; }
+  body.svCleanShell .svPlayerStatus p { max-width:300px; margin:9px 0 0 !important; font-size:calc(12px * var(--st-ui-scale, 1)) !important; line-height:1.5 !important; }
 }
 .svPlayerUnlock { position:absolute; z-index:5; left:50%; top:44%; transform:translate(-50%,-50%); min-height:48px; padding:12px 20px; border-color:#ffffff52; background:#ffffff29; color:#fff; -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px); box-shadow:inset 0 1px #ffffff29,0 12px 40px #0004; white-space:nowrap; }
-.svPlayerToast { position:absolute; z-index:6; left:50%; bottom:130px; transform:translateX(-50%); max-width:85%; padding:11px 16px; border:1px solid #ffffff25; border-radius:11px; background:#1a191ff5; color:#f0ebf7; font-size:12px; line-height:1.5; text-align:center; box-shadow:0 8px 28px #0006; }
-body.svCleanShell .svPlayerEmbeddedNote { margin:11px 2px 0 !important; color:#a9a3b4 !important; font-size:11px !important; line-height:1.5 !important; }
+.svPlayerToast { position:absolute; z-index:6; left:50%; bottom:130px; transform:translateX(-50%); max-width:85%; padding:11px 16px; border:1px solid #ffffff25; border-radius:11px; background:#1a191ff5; color:#f0ebf7; font-size:calc(12px * var(--st-ui-scale, 1)); line-height:1.5; text-align:center; box-shadow:0 8px 28px #0006; }
+body.svCleanShell .svPlayerEmbeddedNote { margin:11px 2px 0 !important; color:#a9a3b4 !important; font-size:calc(11px * var(--st-ui-scale, 1)) !important; line-height:1.5 !important; }
 .svPlayerBelow { display:flex; align-items:center; justify-content:space-between; gap:28px; margin-top:20px; padding:24px 27px; }
 body.svCleanShell .svPlayerPage .svPlayerBelow.svGlassPanel { --sv-surface-blur:12px; --sv-glass-tint:.22; border-radius:24px !important; background:linear-gradient(140deg,#ffffff08,transparent 65%),#080d1733 !important; border-color:#ffffff16 !important; box-shadow:inset 0 1px #ffffff15,0 10px 30px #0002 !important; }
 .svPlayerFilm { display:flex; align-items:center; gap:22px; min-width:0; }
@@ -191,25 +192,25 @@ body.svCleanShell .svPlayerPage .svPlayerBelow.svGlassPanel { --sv-surface-blur:
 .svPlayerPoster img { display:block; width:100%; height:100%; object-fit:cover; }
 .svPlayerIdentity { min-width:0; }
 .svPlayerIdentityHead { display:flex; align-items:center; flex-wrap:wrap; gap:12px; }
-.svPlayerChapter { color:#d1e8ed; font-size:9px; letter-spacing:.12em; font-weight:600; }
-.svPlayerMetadata { display:flex; align-items:center; flex-wrap:wrap; gap:7px; color:#9ca9b9; font-size:10px; line-height:1.5; }
+.svPlayerChapter { color:#d1e8ed; font-size:calc(9px * var(--st-ui-scale, 1)); letter-spacing:.12em; font-weight:600; }
+.svPlayerMetadata { display:flex; align-items:center; flex-wrap:wrap; gap:7px; color:#9ca9b9; font-size:calc(10px * var(--st-ui-scale, 1)); line-height:1.5; }
 .svPlayerMetadata > span[aria-hidden="true"] { color:#687486; }
-body.svCleanShell .svPlayerPage h1 { margin:8px 0 0 !important; font-family:var(--st-display-font,var(--st-font,"Host Grotesk",system-ui,sans-serif)) !important; font-size:clamp(26px,2.3vw,35px) !important; line-height:1.1 !important; letter-spacing:-.045em !important; font-weight:600 !important; color:#f5f8fc !important; overflow-wrap:anywhere; }
-body.svCleanShell .svPlayerTransportNote { margin:11px 0 0 !important; font-size:12px !important; line-height:1.5 !important; color:#98a5b6 !important; }
+body.svCleanShell .svPlayerPage h1 { margin:8px 0 0 !important; font-family:var(--st-display-font,var(--st-font,"Host Grotesk",system-ui,sans-serif)) !important; font-size:calc(clamp(26px,2.3vw,35px) * var(--st-ui-scale, 1)) !important; line-height:1.1 !important; letter-spacing:-.045em !important; font-weight:600 !important; color:#f5f8fc !important; overflow-wrap:anywhere; }
+body.svCleanShell .svPlayerTransportNote { margin:11px 0 0 !important; font-size:calc(12px * var(--st-ui-scale, 1)) !important; line-height:1.5 !important; color:#98a5b6 !important; }
 .svPlayerTogether { display:flex; flex-direction:column; align-items:flex-end; gap:11px; flex:0 0 auto; }
-.svPlayerTogether > span { color:#929fae; font-size:10px; }
-body.svCleanShell .svPlayerPartyButton { display:flex; align-items:center; justify-content:center; gap:9px; min-height:44px; padding:11px 17px !important; border-radius:17px !important; font-size:12px !important; white-space:nowrap; }
+.svPlayerTogether > span { color:#929fae; font-size:calc(10px * var(--st-ui-scale, 1)); }
+body.svCleanShell .svPlayerPartyButton { display:flex; align-items:center; justify-content:center; gap:9px; min-height:44px; padding:11px 17px !important; border-radius:17px !important; font-size:calc(12px * var(--st-ui-scale, 1)) !important; white-space:nowrap; }
 .svPlayerEpisodePicker { margin-top:28px; }
 .svPlayerEpisodePicker :is(select,a,button) { max-width:100%; }
-body.svCleanShell .svPlayerEpisodeName { margin:8px 0 0 !important; font-size:14px !important; color:#d7e1ee !important; line-height:1.5 !important; overflow-wrap:anywhere; }
+body.svCleanShell .svPlayerEpisodeName { margin:8px 0 0 !important; font-size:calc(14px * var(--st-ui-scale, 1)) !important; color:#d7e1ee !important; line-height:1.5 !important; overflow-wrap:anywhere; }
 body.svCleanShell .svPlayerPage .svPlayerEpisodes.svGlassPanel { --sv-surface-blur:12px; --sv-glass-tint:.24; padding:30px; border-radius:28px !important; background:linear-gradient(135deg,#ffffff08,transparent 55%),#080c143d !important; border-color:#ffffff1a !important; box-shadow:inset 0 1px #ffffff1c,0 15px 50px #0003 !important; }
 .svPlayerEpisodesHead { display:flex; justify-content:space-between; align-items:center; gap:24px; }
 .svPlayerEpisodesHead > div { min-width:0; }
-body.svCleanShell .svPlayerEpisodes h2 { display:flex; align-items:center; flex-wrap:wrap; gap:13px; margin:9px 0 0 !important; color:#f4f8fc !important; font-size:29px !important; line-height:1.2 !important; letter-spacing:-.04em !important; font-weight:500 !important; }
-.svPlayerEpisodeSeason { display:inline-flex; padding:5px 9px; border:1px solid #ffffff16; border-radius:8px; color:#bac7d6; font-size:10px; letter-spacing:0; line-height:1.4; }
-body.svCleanShell .svPlayerEpisodesHead p { margin:10px 0 0 !important; color:#98a7ba !important; font-size:12px !important; line-height:1.6 !important; overflow-wrap:anywhere; }
+body.svCleanShell .svPlayerEpisodes h2 { display:flex; align-items:center; flex-wrap:wrap; gap:13px; margin:9px 0 0 !important; color:#f4f8fc !important; font-size:calc(29px * var(--st-ui-scale, 1)) !important; line-height:1.2 !important; letter-spacing:-.04em !important; font-weight:500 !important; }
+.svPlayerEpisodeSeason { display:inline-flex; padding:5px 9px; border:1px solid #ffffff16; border-radius:8px; color:#bac7d6; font-size:calc(10px * var(--st-ui-scale, 1)); letter-spacing:0; line-height:1.4; }
+body.svCleanShell .svPlayerEpisodesHead p { margin:10px 0 0 !important; color:#98a7ba !important; font-size:calc(12px * var(--st-ui-scale, 1)) !important; line-height:1.6 !important; overflow-wrap:anywhere; }
 .svPlayerEpisodeSteps { display:flex; align-items:center; gap:8px; flex:0 0 auto; }
-body.svCleanShell .svPlayerEpisodeStep { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:10px 14px !important; color:#e2ebf5 !important; font-size:12px !important; border-radius:16px !important; text-decoration:none; white-space:nowrap; }
+body.svCleanShell .svPlayerEpisodeStep { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:10px 14px !important; color:#e2ebf5 !important; font-size:calc(12px * var(--st-ui-scale, 1)) !important; border-radius:16px !important; text-decoration:none; white-space:nowrap; }
 .svPlayerEpisodeStep .svPlayerIcon { width:16px; height:16px; flex-basis:16px; }
 body.svCleanShell .svPlayerEpisodeStep:disabled { opacity:.35; cursor:default; }
 .svPlayerEpisodeNavigation { margin:16px 0 0; }
@@ -219,8 +220,8 @@ body.svCleanShell .svPlayerEpisodeNavigation .svPlayerEpisodeStep { flex:1; widt
 .svPlayerEpisodeNavigation [data-player-episode-next] > .svPlayerIcon { order:1; }
 .svPlayerEpisodeNavigation [aria-disabled="true"] { opacity:.45; cursor:default; }
 .svPlayerSeasons { display:flex; gap:8px; margin-top:26px; padding:3px 3px 17px; overflow-x:auto; scrollbar-width:thin; scrollbar-color:#ffffff38 transparent; scroll-padding:4px; }
-body.svCleanShell .svPlayerSeason { display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto; gap:12px; min-height:44px; padding:10px 14px !important; border-radius:14px !important; font-size:12px !important; text-decoration:none; white-space:nowrap; }
-.svPlayerSeasonCount { padding-left:11px; border-left:1px solid #ffffff24; color:#98a6b8; font-size:10px; font-weight:400; }
+body.svCleanShell .svPlayerSeason { display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto; gap:12px; min-height:44px; padding:10px 14px !important; border-radius:14px !important; font-size:calc(12px * var(--st-ui-scale, 1)) !important; text-decoration:none; white-space:nowrap; }
+.svPlayerSeasonCount { padding-left:11px; border-left:1px solid #ffffff24; color:#98a6b8; font-size:calc(10px * var(--st-ui-scale, 1)); font-weight:400; }
 .svPlayerSeason[aria-current="true"] .svPlayerSeasonCount { color:#c8d7e6; }
 .svPlayerEpisodeGrid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin-top:6px; max-height:580px; overflow-y:auto; padding:5px 5px 8px; scrollbar-width:thin; scrollbar-color:#ffffff38 transparent; overscroll-behavior:contain; }
 body.svCleanShell .svPlayerEpisode { position:relative; display:flex; flex-direction:column; align-items:stretch; min-width:0; gap:0; padding:0; border:1px solid #ffffff16; border-radius:19px; text-decoration:none; background:linear-gradient(150deg,#ffffff07,#ffffff02); color:#e8edf5; transition:background .22s ease,border-color .22s ease,box-shadow .22s ease,transform .25s var(--player-ease); }
@@ -232,17 +233,17 @@ body.svCleanShell .svPlayerEpisode[aria-current="page"] { border-color:#cceaf477
 .svPlayerEpisodeThumb > .svPlayerIcon { width:31px; height:31px; opacity:.65; }
 .svPlayerEpisodeThumb > img { width:100%; height:100%; position:absolute; inset:0; object-fit:cover; transition:transform .45s var(--player-ease); }
 .svPlayerEpisode:hover .svPlayerEpisodeThumb > img { transform:scale(1.04); }
-.svPlayerEpisodeThumb > b { position:absolute; z-index:1; left:14px; bottom:12px; color:#f1f6fc; font-size:22px; font-weight:500; letter-spacing:-.05em; line-height:1; font-variant-numeric:tabular-nums; text-shadow:0 2px 10px #0008; }
-.svPlayerEpisodeSelected { position:absolute; z-index:1; top:10px; left:10px; display:inline-flex; align-items:center; gap:6px; padding:5px 9px; border:1px solid #d0f2f447; border-radius:9px; background:#0a1427b3; color:#dfedf7; font-size:9px; line-height:1.4; box-shadow:inset 0 1px #ffffff13; }
+.svPlayerEpisodeThumb > b { position:absolute; z-index:1; left:14px; bottom:12px; color:#f1f6fc; font-size:calc(22px * var(--st-ui-scale, 1)); font-weight:500; letter-spacing:-.05em; line-height:1; font-variant-numeric:tabular-nums; text-shadow:0 2px 10px #0008; }
+.svPlayerEpisodeSelected { position:absolute; z-index:1; top:10px; left:10px; display:inline-flex; align-items:center; gap:6px; padding:5px 9px; border:1px solid #d0f2f447; border-radius:9px; background:#0a1427b3; color:#dfedf7; font-size:calc(9px * var(--st-ui-scale, 1)); line-height:1.4; box-shadow:inset 0 1px #ffffff13; }
 .svPlayerEpisodeSelected::before { content:""; width:4px; height:4px; border-radius:50%; background:#ccecf3; }
 .svPlayerEpisodeText { display:flex; flex-direction:column; gap:7px; min-width:0; flex:1; padding:15px 16px 18px; }
-.svPlayerEpisodeKicker { color:#92a3ba; font-size:10px; line-height:1.4; }
-body.svCleanShell .svPlayerEpisodeText strong { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; font-size:15px; letter-spacing:-.018em; line-height:1.35; font-weight:500; color:#eff4fc; }
-.svPlayerEpisodeOverview { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; color:#8d9db2; font-size:11px; line-height:1.6; }
+.svPlayerEpisodeKicker { color:#92a3ba; font-size:calc(10px * var(--st-ui-scale, 1)); line-height:1.4; }
+body.svCleanShell .svPlayerEpisodeText strong { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; font-size:calc(15px * var(--st-ui-scale, 1)); letter-spacing:-.018em; line-height:1.35; font-weight:500; color:#eff4fc; }
+.svPlayerEpisodeOverview { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; color:#8d9db2; font-size:calc(11px * var(--st-ui-scale, 1)); line-height:1.6; }
 .svPlayerEpisodePlay { position:absolute; z-index:1; right:12px; bottom:12px; display:grid; place-items:center; width:32px; height:32px; border-radius:50%; border:1px solid #ffffff44; background:#0c122b66; color:#f3f7ff; opacity:.8; transform:translateY(2px); transition:opacity .2s ease,transform .25s var(--player-ease),background .2s ease; }
 .svPlayerEpisodePlay .svPlayerIcon { width:14px; height:14px; flex-basis:14px; }
 .svPlayerEpisode:is(:hover,[aria-current="page"]) .svPlayerEpisodePlay { opacity:1; transform:translateY(0); background:#182137b3; }
-body.svCleanShell .svPlayerNoScript { padding:16px; border:1px solid #ffffff15; border-radius:14px; color:#adb8c7; font-size:13px; }
+body.svCleanShell .svPlayerNoScript { padding:16px; border:1px solid #ffffff15; border-radius:14px; color:#adb8c7; font-size:calc(13px * var(--st-ui-scale, 1)); }
 
 .svPlayerStage--trailer { overflow:hidden; }
 .svPlayerStage--trailer .svPlayerStatus { padding:30px; }
@@ -271,9 +272,9 @@ html:has(.svPlayerStage:fullscreen) { scrollbar-gutter:auto; }
   body.svCleanShell .svPlayerPage { --player-theater-height:calc(100svh - 257px); padding:94px 16px 108px; }
   .svPlayerAmbient { inset:10px 0 auto; height:610px; opacity:.24; filter:blur(34px) saturate(1.2); }
   .svPlayerPageHead { margin-bottom:17px; gap:10px; }
-  body.svCleanShell .svPlayerBack { min-height:44px; padding:8px 10px !important; border-radius:12px !important; font-size:11px !important; }
+  body.svCleanShell .svPlayerBack { min-height:44px; padding:8px 10px !important; border-radius:12px !important; font-size:calc(11px * var(--st-ui-scale, 1)) !important; }
   body.svCleanShell .svPlayerPage .svPlayerModes.svGlassPanel { padding:4px; border-radius:13px !important; }
-  .svPlayerModes a { min-height:44px; padding:5px 12px; border-radius:9px; font-size:11px; }
+  .svPlayerModes a { min-height:44px; padding:5px 12px; border-radius:9px; font-size:calc(11px * var(--st-ui-scale, 1)); }
   .svPlayerStage,.svPlayerTheater { border-radius:17px; }
   /* Give a phone's picture its full width; surrounding details keep gutters. */
   .svPlayerPage .svPlayerTheater { width:calc(100% + 32px); margin-inline:-16px; border-radius:0; }
@@ -283,12 +284,12 @@ html:has(.svPlayerStage:fullscreen) { scrollbar-gutter:auto; }
   .svPlayerFilm { align-items:flex-start; gap:15px; }
   .svPlayerPoster { width:53px; height:80px; border-radius:9px; }
   .svPlayerIdentityHead { gap:5px 10px; }
-  .svPlayerChapter { font-size:8px; }
-  .svPlayerMetadata { font-size:9px; gap:5px; }
-  body.svCleanShell .svPlayerPage h1 { font-size:27px !important; }
-  body.svCleanShell .svPlayerTransportNote { margin-top:9px !important; font-size:11px !important; }
+  .svPlayerChapter { font-size:calc(8px * var(--st-ui-scale, 1)); }
+  .svPlayerMetadata { font-size:calc(9px * var(--st-ui-scale, 1)); gap:5px; }
+  body.svCleanShell .svPlayerPage h1 { font-size:calc(27px * var(--st-ui-scale, 1)) !important; }
+  body.svCleanShell .svPlayerTransportNote { margin-top:9px !important; font-size:calc(11px * var(--st-ui-scale, 1)) !important; }
   .svPlayerTogether { flex-direction:row; justify-content:space-between; align-items:center; gap:12px; padding-top:16px; border-top:1px solid #ffffff13; }
-  .svPlayerTogether > span { font-size:10px; }
+  .svPlayerTogether > span { font-size:calc(10px * var(--st-ui-scale, 1)); }
   body.svCleanShell .svPlayerPartyButton { min-height:44px; padding:10px 12px !important; border-radius:14px !important; }
   .svPlayerEpisodePicker { margin-top:20px; }
   body.svCleanShell .svPlayerPage .svPlayerEpisodes.svGlassPanel { padding:22px 14px 16px; border-radius:22px !important; }
@@ -296,39 +297,39 @@ html:has(.svPlayerStage:fullscreen) { scrollbar-gutter:auto; }
   .svPlayerEpisodeSteps { gap:6px; }
   body.svCleanShell .svPlayerEpisodeStep { width:44px; min-width:44px; min-height:44px; padding:10px !important; border-radius:13px !important; }
   .svPlayerEpisodeStep > span:not(.svLiquidPane) { display:none; }
-  body.svCleanShell .svPlayerEpisodes h2 { gap:9px; font-size:25px !important; }
-  .svPlayerEpisodeSeason { padding:4px 7px; font-size:9px; }
+  body.svCleanShell .svPlayerEpisodes h2 { gap:9px; font-size:calc(25px * var(--st-ui-scale, 1)) !important; }
+  .svPlayerEpisodeSeason { padding:4px 7px; font-size:calc(9px * var(--st-ui-scale, 1)); }
   .svPlayerSeasons { margin-top:20px; padding-bottom:14px; }
-  body.svCleanShell .svPlayerSeason { gap:10px; min-height:44px; font-size:11px !important; }
+  body.svCleanShell .svPlayerSeason { gap:10px; min-height:44px; font-size:calc(11px * var(--st-ui-scale, 1)) !important; }
   .svPlayerEpisodeGrid { grid-template-columns:minmax(0,1fr); gap:11px; max-height:520px; }
   body.svCleanShell .svPlayerEpisode { flex-direction:row; align-items:stretch; border-radius:15px; }
   .svPlayerEpisodeThumb { align-self:stretch; flex:0 0 36%; width:36%; min-height:100px; aspect-ratio:auto; border-radius:14px 0 0 14px; }
-  .svPlayerEpisodeThumb > b { left:10px; bottom:10px; font-size:18px; }
-  .svPlayerEpisodeSelected { top:8px; left:8px; padding:4px 6px; border-radius:7px; font-size:8px; }
+  .svPlayerEpisodeThumb > b { left:10px; bottom:10px; font-size:calc(18px * var(--st-ui-scale, 1)); }
+  .svPlayerEpisodeSelected { top:8px; left:8px; padding:4px 6px; border-radius:7px; font-size:calc(8px * var(--st-ui-scale, 1)); }
   .svPlayerEpisodePlay { right:8px; bottom:8px; width:25px; height:25px; }
   .svPlayerEpisodePlay .svPlayerIcon { width:12px; height:12px; }
   .svPlayerEpisodeText { justify-content:center; gap:6px; padding:13px; }
-  body.svCleanShell .svPlayerEpisodeText strong { font-size:14px; }
-  .svPlayerEpisodeOverview { font-size:10px; }
+  body.svCleanShell .svPlayerEpisodeText strong { font-size:calc(14px * var(--st-ui-scale, 1)); }
+  .svPlayerEpisodeOverview { font-size:calc(10px * var(--st-ui-scale, 1)); }
 }
 @media (max-width:420px) {
   .svPlayerStageChrome { display:none; }
   .svPlayerPageHead { gap:5px; }
   .svPlayerBack span { max-width:85px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .svPlayerModes a { padding:5px 10px; }
-  body.svCleanShell .svPlayerStatus h2 { font-size:20px !important; }
-  body.svCleanShell .svPlayerStatus p { max-width:250px; font-size:11px !important; }
+  body.svCleanShell .svPlayerStatus h2 { font-size:calc(20px * var(--st-ui-scale, 1)) !important; }
+  body.svCleanShell .svPlayerStatus p { max-width:250px; font-size:calc(11px * var(--st-ui-scale, 1)) !important; }
   .svPlayerTogether > span { display:none; }
   .svPlayerTogether { justify-content:flex-start; }
   .svPlayerBelow { padding:18px 16px; }
   .svPlayerFilm { gap:13px; }
   .svPlayerPoster { width:47px; height:71px; }
-  body.svCleanShell .svPlayerPage h1 { font-size:24px !important; }
-  body.svCleanShell .svPlayerEpisodeName { font-size:12px !important; }
+  body.svCleanShell .svPlayerPage h1 { font-size:calc(24px * var(--st-ui-scale, 1)) !important; }
+  body.svCleanShell .svPlayerEpisodeName { font-size:calc(12px * var(--st-ui-scale, 1)) !important; }
   .svPlayerIdentityHead { flex-direction:column; align-items:flex-start; gap:5px; }
   .svPlayerEpisodeSeason { display:none; }
   .svPlayerEpisodeText { padding:12px 10px; }
-  body.svCleanShell .svPlayerEpisodeText strong { font-size:13px; }
+  body.svCleanShell .svPlayerEpisodeText strong { font-size:calc(13px * var(--st-ui-scale, 1)); }
 }
 @media (max-height:600px) and (orientation:landscape) {
   /* A landscape phone needs the picture more than a second navigation bar.
@@ -339,15 +340,16 @@ html:has(.svPlayerStage:fullscreen) { scrollbar-gutter:auto; }
   .svPlayerStageChrome { display:none; }
   .svPlayerStatusMark,.svPlayerStatus > .svPlayerEyebrow { display:none; }
   .svPlayerStatus { padding:12px 24px 108px; }
-  body.svCleanShell .svPlayerStatus h2 { margin-top:0 !important; font-size:20px !important; }
-  body.svCleanShell .svPlayerStatus p { margin-top:6px !important; font-size:11px !important; line-height:1.4 !important; }
+  body.svCleanShell .svPlayerStatus h2 { margin-top:0 !important; font-size:calc(20px * var(--st-ui-scale, 1)) !important; }
+  body.svCleanShell .svPlayerStatus p { margin-top:6px !important; font-size:calc(11px * var(--st-ui-scale, 1)) !important; line-height:1.4 !important; }
   .svPlayerRetry { margin-top:10px; }
   .svPlayerStage:fullscreen .svPlayerStatus { padding:16px 24px 120px; }
 }
 @media (max-height:360px) and (orientation:landscape) {
-  /* There is nothing to seek before a source is ready. Keep the tools visible
-     and let a short error message scroll instead of covering the return link. */
-  .svPlayer:is([data-player-state="loading"],[data-player-state="waiting"],[data-player-state="error"]) .svPlayerTimelineRow { display:none; }
+  /* Before a source is ready the disabled playback row has no action. Keep
+     source/settings/fullscreen tools on one row so the error scroller's 64px
+     clearance stays accurate, including a height-limited 320px theater. */
+  .svPlayer:is([data-player-state="loading"],[data-player-state="waiting"],[data-player-state="error"]) :is(.svPlayerTimelineRow,.svPlayerTransport) { display:none; }
   .svPlayer:is([data-player-state="loading"],[data-player-state="waiting"],[data-player-state="error"]) .svPlayerStatus { inset:0 0 calc(64px + env(safe-area-inset-bottom,0px)); justify-content:flex-start; padding:12px 16px; overflow-y:auto; overscroll-behavior:contain; scroll-padding-block:12px; scrollbar-width:thin; pointer-events:auto; }
   .svPlayer:is([data-player-state="loading"],[data-player-state="waiting"],[data-player-state="error"]) .svPlayerStatus > * { flex-shrink:0; }
 }
@@ -369,9 +371,9 @@ body.svCleanShell .svPlayer [hidden] { display:none !important; }
 /* Independent download target under every selectable episode; never nest links. */
 .svPlayerEpisodeChoice{display:flex;flex-direction:column;min-width:0}
 .svPlayerEpisodeChoice > .svPlayerEpisode{flex:1 1 auto}
-body.svCleanShell .svPlayerEpisodeDownload{display:block;align-self:stretch;margin:5px 1px 0;padding:8px 12px;border:1px solid #ffffff22;border-radius:11px;background:#ffffff0d;color:#e6f1ff;text-align:center;font-size:12px;text-decoration:none}
+body.svCleanShell .svPlayerEpisodeDownload{display:block;align-self:stretch;margin:5px 1px 0;padding:8px 12px;border:1px solid #ffffff22;border-radius:11px;background:#ffffff0d;color:#e6f1ff;text-align:center;font-size:calc(12px * var(--st-ui-scale, 1));text-decoration:none}
 body.svCleanShell .svPlayerEpisodeDownload:is(:focus-visible,:hover){border-color:#ffffff60;background:#ffffff22}
-body.svCleanShell .svPlayer .svPlayerDownload{font-size:24px;text-decoration:none}
+body.svCleanShell .svPlayer .svPlayerDownload{font-size:calc(24px * var(--st-ui-scale, 1));text-decoration:none}
 
 /* Separate, lightweight server choices. Matches the player's soft glass menu. */
 .svPlayerServerBody { gap:12px; width:min(340px,calc(100vw - 28px)); }
@@ -380,40 +382,101 @@ body.svCleanShell .svPlayer .svPlayerDownload{font-size:24px;text-decoration:non
 .svPlayerServerChoice:hover:not(:disabled),.svPlayerServerChoice:focus-visible { border-color:#ffffff5a; background:#ffffff18; outline-offset:2px; }
 .svPlayerServerChoice[data-active="true"] { border-color:#dbcaff70; background:#d5bbff18; }
 .svPlayerServerChoice:disabled { cursor:default; }
-.svPlayerServerName { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; font-weight:600; }
-.svPlayerServerChoice small { flex:0 0 auto; color:#b9b2c7; font-size:10px; }
-.svPlayerServerProviderLabel { display:grid; gap:9px; color:#c9c3d3; font-size:11px; }
-body.svCleanShell .svPlayer .svPlayerServerProviderLabel select { min-height:44px; padding:9px 12px; width:100%; border:1px solid #ffffff2b; border-radius:12px; background:#27242e; color:#fff; font:500 12px system-ui,sans-serif; }
-body.svCleanShell .svPlayer .svPlayerServerTry { min-height:44px; padding:10px 14px; border:1px solid #ffffff40; border-radius:13px; background:#ffffff18; color:white; font:600 12px system-ui,sans-serif; cursor:pointer; }
+.svPlayerServerName { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:calc(12px * var(--st-ui-scale, 1)); font-weight:600; }
+.svPlayerServerChoice small { flex:0 0 auto; color:#b9b2c7; font-size:calc(10px * var(--st-ui-scale, 1)); }
+.svPlayerServerProviderLabel { display:grid; gap:9px; color:#c9c3d3; font-size:calc(11px * var(--st-ui-scale, 1)); }
+body.svCleanShell .svPlayer .svPlayerServerProviderLabel select { min-height:44px; padding:9px 12px; width:100%; border:1px solid #ffffff2b; border-radius:12px; background:#27242e; color:#fff; font:500 calc(12px * var(--st-ui-scale, 1)) system-ui,sans-serif; }
+body.svCleanShell .svPlayer .svPlayerServerTry { min-height:44px; padding:10px 14px; border:1px solid #ffffff40; border-radius:13px; background:#ffffff18; color:white; font:600 calc(12px * var(--st-ui-scale, 1)) system-ui,sans-serif; cursor:pointer; }
 body.svCleanShell .svPlayer .svPlayerServerTry:disabled { opacity:.4; cursor:default; }
 @container sv-stage (max-width:420px) {
-  body.svCleanShell .svPlayer .svPlayerServerPopover > .svPlayerControl { width:40px; min-width:40px; padding:8px; }
+  body.svCleanShell .svPlayer .svPlayerServerPopover > .svPlayerControl { width:44px; min-width:44px; padding:10px; }
   .svPlayerServerBody { max-width:calc(100vw - 24px); }
 }
 
 /* Keep the new server control from overflowing 320px theaters. The movie
    picture keeps its aspect ratio, and every transport remains on-screen. */
 @container sv-stage (max-width:440px) {
-  .svPlayerDockRow { min-width:0; max-width:100%; gap:0; }
-  .svPlayerTransport { flex:0 0 auto; gap:0; }
-  .svPlayerTools { flex:0 1 auto; min-width:0; gap:0; padding-left:4px; }
+  .svPlayerDockRow { min-width:0; max-width:100%; flex-wrap:wrap; justify-content:center; gap:0; }
+  .svPlayerTransport { flex:0 0 100%; justify-content:center; gap:0; }
+  .svPlayerTools { flex:0 0 100%; justify-content:center; min-width:0; gap:0; padding-left:0; border-left:0; }
   body.svCleanShell .svPlayer .svPlayerTransport .svPlayerControl:not(.svPlayerPlay) {
-    width:36px; min-width:36px; padding:6px;
+    width:44px; min-width:44px; padding:10px;
   }
-  body.svCleanShell .svPlayer .svPlayerPlay { width:40px; min-width:40px; margin:0; }
+  body.svCleanShell .svPlayer .svPlayerPlay { width:44px; min-width:44px; margin:0; }
   body.svCleanShell .svPlayer .svPlayerTools .svPlayerControl {
-    width:34px; min-width:34px; padding:5px;
+    width:44px; min-width:44px; padding:10px;
   }
   .svPlayerTools .svPlayerIcon { width:19px; height:19px; flex-basis:19px; }
 }
 
 @container sv-stage (max-width:360px) {
-  /* Two compact, centered lines avoid horizontal page overflow without
-     hiding server selection on 320px mobile layouts. */
+  /* Keep the seek area separate from both rows of full-size touch targets. */
   .svPlayerDockRow { flex-wrap:wrap; justify-content:center; row-gap:0; }
   .svPlayerTransport { justify-content:center; width:100%; }
   .svPlayerTools { flex:0 0 100%; justify-content:center; padding-left:0; border-left:0; }
   .svPlayerDock { bottom:4px; padding-top:3px; padding-bottom:4px; }
-  .svPlayerTimeline { height:32px; }
-  .svPlayerTimelineRow { min-height:32px; }
+  .svPlayerTimeline { height:44px; }
+  .svPlayerTimelineRow { min-height:44px; }
+}
+
+/* Studio changes the existing transport's surfaces, never the playing frame.
+   Opacity belongs to the chrome background so labels and menus stay readable. */
+.svPlayer[data-player-studio-id] {
+  --player-progress-size:3px; --player-icon-scale:1; --player-chrome-opacity:.85;
+  --player-accent:var(--st-accent,#f2f1f6);
+}
+.svPlayer[data-player-studio-id] .svPlayerTimelineTrack {
+  inset:50% 0 auto; height:var(--player-progress-size); transform:translateY(-50%);
+}
+.svPlayer[data-player-studio-id] .svPlayerTimelineTrack b { background:var(--player-accent); }
+.svPlayer[data-player-studio-id] .svPlayerTimeline input::-webkit-slider-runnable-track { height:var(--player-progress-size); }
+.svPlayer[data-player-studio-id] .svPlayerTimeline input::-moz-range-track { height:var(--player-progress-size); }
+.svPlayer[data-player-studio-id] .svPlayerTimeline input::-webkit-slider-thumb { margin-top:calc((var(--player-progress-size) - 12px) / 2); }
+.svPlayer[data-player-studio-id] .svPlayerControl .svPlayerIcon {
+  width:calc(22px * var(--player-icon-scale)); height:calc(22px * var(--player-icon-scale)); flex-basis:calc(22px * var(--player-icon-scale));
+}
+.svPlayer[data-player-style="cinema"] .svPlayerDockGlass.svLiquidPane {
+  background:rgb(var(--sv-glass-color,255 255 255) / calc(var(--player-chrome-opacity) * .2353));
+}
+.svPlayer[data-player-style="classic"] .svPlayerDock { border-radius:12px; box-shadow:0 3px 16px #0004; }
+.svPlayer[data-player-style="classic"] .svPlayerDockGlass.svLiquidPane {
+  background:rgb(18 20 24 / var(--player-chrome-opacity)); backdrop-filter:none; -webkit-backdrop-filter:none;
+}
+body.svCleanShell .svPlayer[data-player-style="classic"] .svPlayerPlay { border-radius:9px; background:#ffffff15; box-shadow:none; }
+.svPlayer[data-player-style="minimal"] .svPlayerDock { border-radius:10px; box-shadow:none; }
+.svPlayer[data-player-style="minimal"] .svPlayerDockGlass.svLiquidPane {
+  background:linear-gradient(180deg,rgb(0 0 0 / calc(var(--player-chrome-opacity) * .35)),rgb(0 0 0 / var(--player-chrome-opacity)));
+  backdrop-filter:none; -webkit-backdrop-filter:none;
+}
+body.svCleanShell .svPlayer[data-player-style="minimal"] .svPlayerPlay { background:transparent; box-shadow:none; border-color:#ffffff70; }
+.svPlayer[data-player-position="bottom"] .svPlayerDock {
+  left:0; right:0; bottom:0; width:100%; transform:none; border-radius:0 0 19px 19px;
+}
+.svPlayer[data-player-position="bottom"] .svPlayerStage:fullscreen .svPlayerDock { bottom:env(safe-area-inset-bottom,0px); border-radius:0; }
+.svPlayer[data-player-loading-backdrop] .svPlayerScene { opacity:0; filter:none; }
+.svPlayer[data-player-loading-backdrop="artwork"]:is([data-player-state="loading"],[data-player-state="waiting"],[data-player-state="error"]) .svPlayerScene {
+  opacity:.42; filter:blur(12px); clip-path:inset(0 round 20px);
+}
+.svPlayer[data-player-loading-backdrop="ambient"]:is([data-player-state="loading"],[data-player-state="waiting"],[data-player-state="error"]) .svPlayerShade {
+  background:radial-gradient(ellipse at 18% 20%,#a4b6e12b,transparent 60%),radial-gradient(ellipse at 85% 85%,#b5a4d02b,transparent 60%),#101014;
+}
+.svPlayer[data-player-effects="flat"] :is(.svPlayerAmbient,.svPlayerScene) { display:none; }
+body.svCleanShell .svPlayer[data-player-effects="flat"] :is(.svPlayerModes,.svPlayerBelow,.svPlayerEpisodes,.svPlayerAction,.svPlayerBack,.svPlayerPartyButton,.svPlayerPopoverBody,.svPlayerDockGlass.svLiquidPane) {
+  background:#191b20 !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; box-shadow:none !important;
+}
+.svPlayer[data-player-contrast="high"] .svPlayerStage { border-color:#fff; }
+.svPlayer[data-player-contrast="high"] :is(.svPlayerTime,.svPlayerTransportNote,.svPlayerMenuHint) { color:#fff !important; }
+.svPlayer[data-player-contrast="high"] .svPlayerTimelineTrack { background:#aaa; }
+.svPlayer[data-player-contrast="high"] .svPlayerTimelineTrack b { background:#fff; }
+body.svCleanShell .svPlayer[data-player-targets="large"] .svPlayerControl,
+body.svCleanShell .svPlayer[data-player-targets="large"] :is(.svPlayerTransport,.svPlayerTools) .svPlayerControl {
+  width:48px; min-width:48px; height:48px; min-height:48px;
+}
+.svPlayer[data-player-motion="reduce"] *, .svPlayer[data-player-motion="reduce"] *::before, .svPlayer[data-player-motion="reduce"] *::after {
+  animation:none !important; transition:none !important;
+}
+@container sv-stage (max-width:620px) {
+  .svPlayer[data-player-targets="large"] .svPlayerDockRow { flex-wrap:wrap; justify-content:center; gap:0; }
+  .svPlayer[data-player-targets="large"] .svPlayerTransport { width:100%; justify-content:center; }
+  .svPlayer[data-player-targets="large"] .svPlayerTools { flex:0 0 100%; justify-content:center; border-left:0; padding-left:0; }
 }

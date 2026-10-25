@@ -1,9 +1,10 @@
 'use strict';
+const {tvControllerSource}=require('./ui-helpers.cjs');
 const test=require('node:test'),assert=require('node:assert/strict');
 const {loadServer,browser,cleanup,tick}=require('./ui-helpers.cjs');
 const api=loadServer(),shell=api.pageShell({active:'home',body:'<main>Catalog</main>'});
 const source=browser(shell).window.document;
-const code=[...source.querySelectorAll('script:not([src])')].find(node=>node.textContent.includes('var FOCUSABLE_SELECTOR')).textContent;
+const code=tvControllerSource(source);
 test.afterEach(cleanup);test.after(()=>api.io.close());
 function setup(markup,rects={},options={}){
  const env=browser(markup,options),w=env.window,d=w.document,scrolled=[];let pads=[];

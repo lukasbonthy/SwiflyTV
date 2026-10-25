@@ -211,7 +211,7 @@ test('Automatic touch rendering uses pointer capability without replacing saved 
  w.matchMedia('(pointer: coarse)').matches=true;
  w.boot('studio/studio.js');w.boot('clean/aurora.js');
  assert.equal(d.body.dataset.svPerformance,'touch');
- assert.equal(d.body.dataset.stBackdrop,'aurora');assert.equal(d.body.dataset.stGlass,'liquid');
+ assert.equal(d.body.dataset.stBackdrop,'aurora');assert.equal(d.body.dataset.stGlass,'subtle');assert.equal(w.SwiflyStudio.getRawSettings().glass,'liquid','the mobile override does not overwrite the saved material');
  assert.equal(d.body.dataset.stAuroraMotion,'drift');
  assert.equal(w.localStorage.getItem(appearanceKey),null);
  const pointer=w.matchMedia('(pointer: coarse)');pointer.matches=false;for(const fn of pointer.listeners)fn({matches:false});

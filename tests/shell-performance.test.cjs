@@ -8,7 +8,7 @@ const { loadServer } = require('./ui-helpers.cjs');
 test('catalog pages reuse cached styles instead of repeating the entire theme', () => {
   const api = loadServer();
   const html = api.pageShell({ title: 'Catalog', active: 'home', body: '<main>Catalog</main>' });
-  assert.match(html, /href="\/assets\/clean\/base\.css\?v=163"/);
+  assert.match(html, /href="\/assets\/clean\/base\.css\?v=262"/);
   assert(Buffer.byteLength(html) < 160000, 'The shared shell should stay below 160 KB');
   assert.doesNotMatch(html, /<style>\s*:root/);
   api.io.close(); api.httpServer.close();

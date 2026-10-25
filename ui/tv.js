@@ -20,10 +20,12 @@ function swiflyTvFocusNavigation() {
   let spotlight=null,spotlightCard=null,artTimer=0,artRequest=null,artGeneration=0,shownArt='';
   const padStates=new Map(),railMemory=new WeakMap();
   var FOCUSABLE_SELECTOR='a[href],summary,button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),[role="button"],[role="link"],[tabindex]:not([tabindex="-1"]),video';
-  const rails='.movieRail,.dsRail,.nfRail,.nfTopTenRail,.svResumeRail,.dsWelcomeRailTrack,.svDetailCastRail,.svDetailCollectionRail';
-  const railItems='.dsThumb,.posterWrap,.svResumeLink,[data-resume-action],.dsCastCard';
-  const cardSelector='.movieCard,.svResumeCard';
-  const rowSelector='.dsRow,.svResumeSection,.svDetailSection,section';
+  const rails='.movieRail,.dsRail,.nfRail,.nfTopTenRail,.svResumeRail,.svFeedCards,.svFeedUpcoming,.dsWelcomeRailTrack,.svDetailCastRail,.svDetailCollectionRail';
+  const railItems='.dsThumb,.posterWrap,.svResumeLink,.svFeedPoster,.svFeedEpisodeLink,[data-resume-action],.dsCastCard';
+  const cardSelector='.movieCard,.svResumeCard,.svFeedCard,.svFeedEpisode';
+  const catalogRows='.dsRow,.svResumeSection,.svFeedSection';
+  const rowSelector=catalogRows+',.svDetailSection,section';
+  const cardTitle=card=>card?.querySelector('.dsCardTitle,.svResumeTitle,.svFeedCardBody h3 a,.svFeedEpisodeLink strong')?.textContent.trim()||'';
   const directions={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'};
   const codes={13:'Enter',19:'MediaPause',27:'Escape',37:'ArrowLeft',38:'ArrowUp',39:'ArrowRight',40:'ArrowDown',412:'MediaRewind',413:'MediaStop',415:'MediaPlay',417:'MediaFastForward',461:'BrowserBack',10009:'BrowserBack',10252:'MediaPlayPause',10232:'MediaTrackPrevious',10233:'MediaTrackNext'};
   const escape=value=>String(value||'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -44,6 +46,7 @@ function swiflyTvFocusNavigation() {
     if(el.matches('video')&&(el.closest('[data-player-root],[data-watchroom-call]')||!el.hasAttribute('controls')&&!el.hasAttribute('tabindex')))return false;
     if(el.closest('.dsCardQuickActions')||el.matches('.dsCardTitle')&&el.closest('.movieCard')?.querySelector('.dsThumb'))return false;
     if(el.matches('.svResumeTitle')&&el.closest('.svResumeCard')?.querySelector('.svResumeLink'))return false;
+    if(el.matches('.svFeedCardBody h3 a')&&el.closest('.svFeedCard')?.querySelector('.svFeedPoster'))return false;
     const closed=el.closest('details:not([open])');if(closed&&!closed.querySelector('summary')?.contains(el))return false;
     if(root!==document&&!root.contains(el))return false;
     const dock=el.closest('[data-player-controls]');if(dock&&dock.closest('[data-player-root]')?.dataset.playerControlsVisibility==='hidden')return false;
@@ -65,7 +68,7 @@ function swiflyTvFocusNavigation() {
   }
   function revealFocus(el){
     const behavior=reduced()||document.documentElement.dataset.svXbox==='true'?'instant':'smooth',root=scope(),rail=el.closest(rails),card=el.closest(cardSelector)||el;
-    if(root===document&&rail&&rail.closest('.dsRow,.svResumeSection')&&!rail.closest('.svCinemaPage')&&el.matches(railItems)){
+    if(root===document&&rail&&rail.closest(catalogRows)&&!rail.closest('.svCinemaPage')&&el.matches(railItems)){
       const box=card.getBoundingClientRect(),frame=rail.getBoundingClientRect();
       let left=rail.scrollLeft;
       if(box.left<frame.left+10)left+=box.left-frame.left-10;
@@ -152,7 +155,7 @@ function swiflyTvFocusNavigation() {
   }
   function syncSpotlight(){
     const card=focused?.closest(cardSelector),rail=focused?.closest(rails);
-    if(!enabled||innerWidth<1101||innerHeight<700||scope()!==document||document.fullscreenElement||!rail?.closest('.dsRow,.svResumeSection')||rail.closest('.svCinemaPage')||!card||!focused.matches(railItems)){hideSpotlight();return;}
+    if(!enabled||innerWidth<1101||innerHeight<700||scope()!==document||document.fullscreenElement||!rail?.closest(catalogRows)||rail.closest('.svCinemaPage')||!card||!focused.matches(railItems)){hideSpotlight();return;}
     if(!spotlight){
       spotlight=document.createElement('section');spotlight.id='swiflyTvSpotlight';spotlight.hidden=true;spotlight.setAttribute('aria-label','Selected title');
       spotlight.innerHTML='<div class="svTvSpotlightVisual" aria-hidden="true"><img class="svTvSpotlightArt" alt="" decoding="async"><img class="svTvSpotlightArt" alt="" decoding="async"></div><div class="svTvSpotlightCopy"><div class="svTvSpotlightEyebrow"></div><h2 class="svTvSpotlightTitle"></h2><div class="svTvSpotlightFacts"></div><p class="svTvSpotlightOverview"></p><div class="svTvSpotlightHint"></div></div>';
@@ -160,16 +163,16 @@ function swiflyTvFocusNavigation() {
     }
     if(spotlight.hidden)spotlight.hidden=false;
     document.documentElement.dataset.svTvBrowse='true';
-    const source=card.querySelector('[data-play-id]'),data=source?.dataset||{},resume=card.matches('.svResumeCard'),items=Array.from(rail.querySelectorAll(railItems)),position=items.indexOf(focused);
-    const title=card.querySelector('.dsCardTitle,.svResumeTitle')?.textContent.trim()||data.playTitle||focused.getAttribute('aria-label')||'';
+    const source=card.querySelector('[data-play-id],.svFeedPoster,.svFeedEpisodeLink'),raw=source?.dataset||{},data=raw.tvTitle?{playTitle:raw.tvTitle,playType:raw.tvType,playYear:raw.tvYear,playRating:raw.tvRating}:raw,resume=card.matches('.svResumeCard'),episode=card.matches('.svFeedEpisode'),items=Array.from(rail.querySelectorAll(railItems)),position=items.indexOf(focused);
+    const title=cardTitle(card)||data.playTitle||focused.getAttribute('aria-label')||'';
     const category=rail.closest(rowSelector)?.querySelector('h2')?.textContent.trim()||'Explore';
     const setText=(selector,value)=>{const node=spotlight.querySelector(selector);if(node.textContent!==value)node.textContent=value;};
     setText('.svTvSpotlightTitle',title);
     setText('.svTvSpotlightEyebrow',category+(position>=0?' · '+(position+1)+' / '+items.length:''));
     setText('.svTvSpotlightOverview',card.dataset.tvOverview||'');
-    setText('.svTvSpotlightHint',(connected?'A':'OK')+(resume?' Resume':' Details'));
+    setText('.svTvSpotlightHint',(connected?'A':'OK')+(resume?' Resume':episode?' Open episode':' Details'));
     const savedFacts=resume?Array.from(card.querySelectorAll('.svResumeMeta > span:not([aria-hidden="true"])')).map(node=>node.textContent.trim()).filter(value=>value!==data.playYear&&value!=='Movie').join(' · '):'';
-    const facts=[data.playYear,data.playType==='tv'?'Series':data.playType==='movie'?'Movie':'',Number(data.playRating)>0?'★ '+data.playRating+' / 10':'',savedFacts].filter(Boolean);
+    const facts=[data.playYear,data.playType==='tv'?'Series':data.playType==='movie'?'Movie':'',Number(data.playRating)>0?'★ '+data.playRating+' / 10':'',savedFacts,raw.tvFacts].filter(Boolean);
     const factsHtml=facts.map(value=>'<span>'+escape(value)+'</span>').join(''),host=spotlight.querySelector('.svTvSpotlightFacts');if(host.innerHTML!==factsHtml)host.innerHTML=factsHtml;
     if(spotlightCard!==card){
       spotlightCard=card;
@@ -181,7 +184,7 @@ function swiflyTvFocusNavigation() {
     syncSpotlight();
     if(!enabled){if(guide)guide.hidden=true;return;}
     if(!guide){guide=document.createElement('aside');guide.id='swiflyTvGuide';guide.setAttribute('aria-label','TV controls');guide.innerHTML='<div class="svTvGuideContext"><span class="svTvGuideEyebrow"></span><strong class="svTvGuideTitle"></strong></div><div class="svTvGuideCommands"></div>';document.body.append(guide);}
-    const root=playerRoot(),card=focused?.closest(cardSelector),row=focused?.closest(rowSelector),title=card?.querySelector('.dsCardTitle,.svResumeTitle')?.textContent.trim()||focused?.getAttribute('aria-label')||focused?.textContent.trim()||'Find your next story';
+    const root=playerRoot(),card=focused?.closest(cardSelector),row=focused?.closest(rowSelector),title=cardTitle(card)||focused?.getAttribute('aria-label')||focused?.textContent.trim()||'Find your next story';
     guide.dataset.input=connected?'gamepad':'remote';
     const hidden=Boolean(activeModal()||document.fullscreenElement||focused?.closest('[data-player-stage],[data-player-controls]'));if(guide.hidden!==hidden)guide.hidden=hidden;
     const rail=focused?.closest(rails),items=rail&&Array.from(rail.querySelectorAll(railItems)),position=items?.indexOf(focused);
@@ -239,7 +242,7 @@ function swiflyTvFocusNavigation() {
   }
   function moveCatalogEdge(direction){
     if(!['up','down'].includes(direction)||scope()!==document||!focused||focused.closest('.svCinemaPage'))return false;
-    const first=Array.from(document.querySelectorAll(rails)).find(rail=>rail.closest('.dsRow,.svResumeSection')&&!rail.closest('.svCinemaPage')&&itemsIn(rail).length);
+    const first=Array.from(document.querySelectorAll(rails)).find(rail=>rail.closest(catalogRows)&&!rail.closest('.svCinemaPage')&&itemsIn(rail).length);
     if(!first)return false;
     const hero=document.querySelector('.dsHeroActions .dsPrimaryBtn'),feature=hero&&eligible(hero)?hero:null;
     const nav=document.querySelector('.netflixNav .navLinks .active,.netflixNav [aria-current="page"]')||document.querySelector('.netflixNav a');
@@ -314,6 +317,7 @@ function swiflyTvFocusNavigation() {
     const video=root?.querySelector('[data-player-video]');if(root&&video&&!video.paused&&root.dataset.playerState==='ready'&&root.dataset.playerControlsVisibility!=='hidden'&&root.querySelector('[data-player-controls]')?.contains(document.activeElement)){root.dispatchEvent(new CustomEvent('swiflyplayer:tv-controls',{detail:{action:'hide'}}));return;}
     if(document.fullscreenElement){document.exitFullscreen()?.catch(()=>{});return;}
     const back=document.querySelector('[data-sv-player-back],.svDetailPage [data-sv-details-back]');if(back){back.click();return;}
+    if(window.SwiflyStudy?.controller?.back?.())return;
     if(history.length>1)history.back();else location.href='/';
   }
   function focusSearch(){
@@ -452,4 +456,4 @@ function swiflyTvFocusNavigation() {
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 }
 
-module.exports={tvHead:()=>`<script data-sv-tv-gate>(${tvGate.toString()})();</script>`,tvScript:()=>`<script data-sv-tv-navigation>(${swiflyTvFocusNavigation.toString()})();</script>`};
+module.exports={tvSource:()=>`(${swiflyTvFocusNavigation.toString()})();`,tvAssetScript:()=>'<script defer data-sv-tv-navigation src="/assets/clean/tv.js?v=261"></script>',tvHead:()=>`<script data-sv-tv-gate>(${tvGate.toString()})();</script>`,tvScript:()=>`<script data-sv-tv-navigation>(${swiflyTvFocusNavigation.toString()})();</script>`};

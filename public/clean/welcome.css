@@ -14,9 +14,9 @@ body.svCleanShell .svWelcomeClean .dsWelcomeNav {
   max-width:calc(100% - 40px) !important; justify-content:space-between;
 }
 body.svCleanShell .svWelcomeClean .dsWelcomeNav > .svLiquidPane { --sv-glass-default-tint:.18; --sv-glass-radius:20px; }
-body.svCleanShell .svWelcomeClean .dsWelcomeBrand { font-size:15px !important; line-height:1; white-space:nowrap; }
+body.svCleanShell .svWelcomeClean .dsWelcomeBrand { font-size:calc(15px * var(--st-ui-scale, 1)) !important; line-height:1; white-space:nowrap; }
 body.svCleanShell .svWelcomeClean .dsWelcomeNavLinks { align-items:center; gap:24px !important; }
-body.svCleanShell .svWelcomeClean .dsWelcomeNavLinks > a { min-height:36px; font-size:12px !important; color:#c0c8cd !important; -webkit-backdrop-filter:none; backdrop-filter:none; }
+body.svCleanShell .svWelcomeClean .dsWelcomeNavLinks > a { min-height:36px; font-size:calc(12px * var(--st-ui-scale, 1)) !important; color:#c0c8cd !important; -webkit-backdrop-filter:none; backdrop-filter:none; }
 body.svCleanShell .svWelcomeClean .dsWelcomeNavLinks > a:hover { color:#fff !important; }
 .svWelcomeStudio {
   display:grid; place-items:center; width:36px; height:36px; padding:8px; border:1px solid #ffffff0b;
@@ -46,24 +46,24 @@ body.svCleanShell .svWelcomeClean .dsWelcomeHero::before {
 body.svCleanShell .svWelcomeClean .dsWelcomeHeroCopy { max-width:610px !important; width:100% !important; padding:0 !important; animation:none !important; transform:none !important; }
 body.svCleanShell .svWelcomeClean .dsWelcomeHeroCopy .dsEyebrow {
   display:flex !important; align-items:center; gap:10px; margin:0 0 23px !important;
-  color:#9faeb5 !important; font-size:10px !important; font-weight:500 !important; letter-spacing:.12em !important;
+  color:#9faeb5 !important; font-size:calc(10px * var(--st-ui-scale, 1)) !important; font-weight:500 !important; letter-spacing:.12em !important;
 }
 .svWelcomeClean .dsEyebrow > i { width:5px; height:5px; flex:0 0 5px; border-radius:50%; background:#a2d6d0; box-shadow:0 0 12px #6acbc34a; }
 body.svCleanShell .svWelcomeClean .dsWelcomeHeroCopy h1 {
-  font-size:clamp(62px,6.7vw,96px) !important; font-weight:500 !important; line-height:1.01 !important;
+  font-size:calc(clamp(62px,6.7vw,96px) * var(--st-ui-scale, 1)) !important; font-weight:500 !important; line-height:1.01 !important;
   letter-spacing:-.064em !important; color:#f5f6f7 !important; -webkit-text-fill-color:currentColor !important;
   text-shadow:none !important; text-transform:none !important; text-wrap:balance;
 }
 .svWelcomeClean .dsWelcomeHeroCopy h1 > span { color:#aebcc4; }
 body.svCleanShell .svWelcomeClean .dsWelcomeHeroCopy > p {
   max-width:450px !important; margin:25px 0 28px !important; color:#a6afb7 !important;
-  font-size:15px !important; font-weight:400 !important; line-height:1.8 !important;
+  font-size:calc(15px * var(--st-ui-scale, 1)) !important; font-weight:400 !important; line-height:1.8 !important;
 }
 body.svCleanShell .svWelcomeClean .dsWelcomeActions { display:flex; align-items:center; flex-wrap:wrap; gap:11px !important; }
 body.svCleanShell .svWelcomeClean .dsWelcomeActions > a {
   display:inline-flex !important; align-items:center; justify-content:center; gap:26px;
   min-height:48px; padding:12px 21px !important; border:1px solid #ffffff17 !important;
-  border-radius:14px !important; font-size:13px !important; font-weight:500 !important;
+  border-radius:14px !important; font-size:calc(13px * var(--st-ui-scale, 1)) !important; font-weight:500 !important;
   line-height:1.4; text-transform:none; letter-spacing:0; transform:none !important;
   box-shadow:none !important; transition:background-color .18s ease,border-color .18s ease,color .18s ease;
 }
@@ -72,7 +72,7 @@ body.svCleanShell .svWelcomeClean .dsWelcomeActions > a.dsPrimaryBtn:hover { bac
 body.svCleanShell .svWelcomeClean .dsWelcomeActions > a.dsSecondaryBtn { color:#c9d0d6 !important; background:#ffffff03 !important; -webkit-backdrop-filter:none !important; backdrop-filter:none !important; }
 body.svCleanShell .svWelcomeClean .dsWelcomeActions > a.dsSecondaryBtn:hover { background:#ffffff0a !important; border-color:#ffffff30 !important; }
 .svWelcomeClean .dsWelcomeActions svg,.svWelcomeClean .dsWelcomeFallback svg { width:18px; height:18px; }
-.svWelcomePersonalNote { display:flex; align-items:center; gap:7px; margin-top:23px; color:#7b8b93; font-size:11px; line-height:1.6; }
+.svWelcomePersonalNote { display:flex; align-items:center; gap:7px; margin-top:23px; color:#7b8b93; font-size:calc(11px * var(--st-ui-scale, 1)); line-height:1.6; }
 .svWelcomePersonalNote > span:first-child { display:grid; place-items:center; color:#8dabb2; }
 .svWelcomePersonalNote svg { width:14px; height:14px; }
 .svWelcomeShowcase { position:relative; width:100%; max-width:560px; height:470px; margin:0 auto; }
@@ -89,15 +89,15 @@ body.svCleanShell .svWelcomeClean .dsWelcomeActions > a.dsSecondaryBtn:hover { b
 .svWelcomeShowcase .svWelcomeSpotlight:only-child { left:28%; width:45%; }
 .svWelcomePosterArt { display:block; position:relative; overflow:hidden; aspect-ratio:2/3; background:#111820; }
 .svWelcomePosterArt > img { display:block; width:100%; height:100%; object-fit:cover; }
-.svWelcomePosterFallback { display:grid; place-items:center; position:absolute; inset:0; color:#abbfc9; font-size:80px; font-weight:400; background:radial-gradient(ellipse at 30% 25%,#54757530,transparent 60%),#111820; }
+.svWelcomePosterFallback { display:grid; place-items:center; position:absolute; inset:0; color:#abbfc9; font-size:calc(80px * var(--st-ui-scale, 1)); font-weight:400; background:radial-gradient(ellipse at 30% 25%,#54757530,transparent 60%),#111820; }
 .svWelcomePosterCaption { padding:12px 14px 14px; }
-.svWelcomePosterCaption > small { display:block; margin-bottom:5px; color:#8babb8; font-size:8px; line-height:1.4; font-weight:500; letter-spacing:.09em; text-transform:uppercase; }
-.svWelcomePosterCaption > strong { display:block; font-size:13px; line-height:1.3; font-weight:500; letter-spacing:-.01em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.svWelcomePosterCaption > span { display:block; margin-top:4px; color:#82909b; font-size:9px; line-height:1.4; }
+.svWelcomePosterCaption > small { display:block; margin-bottom:5px; color:#8babb8; font-size:calc(8px * var(--st-ui-scale, 1)); line-height:1.4; font-weight:500; letter-spacing:.09em; text-transform:uppercase; }
+.svWelcomePosterCaption > strong { display:block; font-size:calc(13px * var(--st-ui-scale, 1)); line-height:1.3; font-weight:500; letter-spacing:-.01em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.svWelcomePosterCaption > span { display:block; margin-top:4px; color:#82909b; font-size:calc(9px * var(--st-ui-scale, 1)); line-height:1.4; }
 .svWelcomeSupportingPoster .svWelcomePosterCaption { padding:9px 11px 10px; }
-.svWelcomeSupportingPoster .svWelcomePosterCaption > strong { font-size:10px; }
-.svWelcomeSupportingPoster .svWelcomePosterCaption > span { font-size:8px; }
-.svWelcomeDiscoverLink { position:absolute; left:var(--sv-welcome-gutter); bottom:37px; display:inline-flex; align-items:center; gap:13px; color:#7f939f; font-size:10px; line-height:1.6; letter-spacing:.025em; }
+.svWelcomeSupportingPoster .svWelcomePosterCaption > strong { font-size:calc(10px * var(--st-ui-scale, 1)); }
+.svWelcomeSupportingPoster .svWelcomePosterCaption > span { font-size:calc(8px * var(--st-ui-scale, 1)); }
+.svWelcomeDiscoverLink { position:absolute; left:var(--sv-welcome-gutter); bottom:37px; display:inline-flex; align-items:center; gap:13px; color:#7f939f; font-size:calc(10px * var(--st-ui-scale, 1)); line-height:1.6; letter-spacing:.025em; }
 .svWelcomeDiscoverLink:hover { color:#c7d9e2; }
 .svWelcomeDiscoverLink > svg { width:15px; height:15px; }
 body.svCleanShell .svWelcomeClean .dsWelcomeDiscovery {
@@ -105,33 +105,33 @@ body.svCleanShell .svWelcomeClean .dsWelcomeDiscovery {
   padding:0 var(--sv-welcome-gutter) 62px !important; scroll-margin-top:28px;
 }
 .svWelcomeDiscoveryIntro { display:flex; align-items:end; justify-content:space-between; gap:30px; padding:34px 0 38px; border-top:1px solid #ffffff0d; }
-.svWelcomeDiscoveryIntro > div > span { display:block; color:#758c98; font-size:9px; letter-spacing:.12em; line-height:1.5; font-weight:500; margin-bottom:10px; }
-body.svCleanShell .svWelcomeClean .svWelcomeDiscoveryIntro h2 { color:#e0e6e9; font-size:clamp(26px,3vw,37px); font-weight:500; line-height:1.18; letter-spacing:-.045em; text-wrap:balance; }
-body.svCleanShell .svWelcomeClean .svWelcomeDiscoveryIntro > p { flex-shrink:0; padding-bottom:3px; font-size:11px; color:#78868e; line-height:1.7; }
+.svWelcomeDiscoveryIntro > div > span { display:block; color:#758c98; font-size:calc(9px * var(--st-ui-scale, 1)); letter-spacing:.12em; line-height:1.5; font-weight:500; margin-bottom:10px; }
+body.svCleanShell .svWelcomeClean .svWelcomeDiscoveryIntro h2 { color:#e0e6e9; font-size:calc(clamp(26px,3vw,37px) * var(--st-ui-scale, 1)); font-weight:500; line-height:1.18; letter-spacing:-.045em; text-wrap:balance; }
+body.svCleanShell .svWelcomeClean .svWelcomeDiscoveryIntro > p { flex-shrink:0; padding-bottom:3px; font-size:calc(11px * var(--st-ui-scale, 1)); color:#78868e; line-height:1.7; }
 body.svCleanShell .svWelcomeClean .dsWelcomeRail { margin-bottom:38px !important; }
 body.svCleanShell .svWelcomeClean .dsWelcomeRailHead { align-items:center; margin-bottom:15px !important; }
-body.svCleanShell .svWelcomeClean .dsWelcomeRailHead > h2 { color:#d6dde2; font-size:19px !important; font-weight:500 !important; line-height:1.3; letter-spacing:-.025em; }
-body.svCleanShell .svWelcomeClean .dsWelcomeRailHead > a { color:#81929e !important; font-size:11px !important; }
+body.svCleanShell .svWelcomeClean .dsWelcomeRailHead > h2 { color:#d6dde2; font-size:calc(19px * var(--st-ui-scale, 1)) !important; font-weight:500 !important; line-height:1.3; letter-spacing:-.025em; }
+body.svCleanShell .svWelcomeClean .dsWelcomeRailHead > a { color:#81929e !important; font-size:calc(11px * var(--st-ui-scale, 1)) !important; }
 .svWelcomeClean .dsWelcomeRailHead > a::after { content:" ↗"; padding-left:4px; }
 body.svCleanShell .svWelcomeClean .dsWelcomeRailTrack { gap:18px !important; padding:2px 0 15px !important; scroll-snap-type:x proximity; scrollbar-width:thin; scrollbar-color:#ffffff1a transparent; }
 .svWelcomeClean .dsWelcomeCard { scroll-snap-align:start; }
 body.svCleanShell .svWelcomeClean .dsWelcomeCard > a { transform:none !important; transition:none !important; box-shadow:none !important; border:0 !important; overflow:visible !important; }
 body.svCleanShell .svWelcomeClean .dsWelcomeCard img { border:1px solid #ffffff0e; border-radius:12px !important; transition:opacity .18s ease; }
 body.svCleanShell .svWelcomeClean .dsWelcomeCard a:hover img { opacity:.86; }
-body.svCleanShell .svWelcomeClean .dsWelcomeCard strong { color:#bdc8ce; font-size:12px !important; font-weight:400 !important; letter-spacing:0; }
-body.svCleanShell .svWelcomeClean .dsWelcomeCard span { color:#6b7c87 !important; font-size:10px !important; }
+body.svCleanShell .svWelcomeClean .dsWelcomeCard strong { color:#bdc8ce; font-size:calc(12px * var(--st-ui-scale, 1)) !important; font-weight:400 !important; letter-spacing:0; }
+body.svCleanShell .svWelcomeClean .dsWelcomeCard span { color:#6b7c87 !important; font-size:calc(10px * var(--st-ui-scale, 1)) !important; }
 body.svCleanShell .svWelcomeClean .dsWelcomeFallback { max-width:660px !important; padding:30px !important; border-radius:16px !important; border-color:#ffffff12 !important; background:#0b1013 !important; }
-.svWelcomeClean .dsWelcomeFallback > h3 { font-size:21px; font-weight:500; color:#d9e4e8; letter-spacing:-.03em; }
-body.svCleanShell .svWelcomeClean .dsWelcomeFallback > p { color:#8b9ca5; font-size:13px; line-height:1.8; margin:12px 0 20px; }
-.svWelcomeClean .dsWelcomeFallback > a { display:inline-flex; align-items:center; gap:12px; font-size:12px; }
-.svWelcomeFooter { display:flex; align-items:center; gap:28px; max-width:1300px; margin:0 auto; padding:28px var(--sv-welcome-gutter) 36px; border-top:1px solid #ffffff09; font-size:10px; line-height:1.6; color:#617581; }
-.svWelcomeFooter > a:first-child { color:#b4c2ca; font-size:13px; font-weight:600; letter-spacing:-.025em; }
+.svWelcomeClean .dsWelcomeFallback > h3 { font-size:calc(21px * var(--st-ui-scale, 1)); font-weight:500; color:#d9e4e8; letter-spacing:-.03em; }
+body.svCleanShell .svWelcomeClean .dsWelcomeFallback > p { color:#8b9ca5; font-size:calc(13px * var(--st-ui-scale, 1)); line-height:1.8; margin:12px 0 20px; }
+.svWelcomeClean .dsWelcomeFallback > a { display:inline-flex; align-items:center; gap:12px; font-size:calc(12px * var(--st-ui-scale, 1)); }
+.svWelcomeFooter { display:flex; align-items:center; gap:28px; max-width:1300px; margin:0 auto; padding:28px var(--sv-welcome-gutter) 36px; border-top:1px solid #ffffff09; font-size:calc(10px * var(--st-ui-scale, 1)); line-height:1.6; color:#617581; }
+.svWelcomeFooter > a:first-child { color:#b4c2ca; font-size:calc(13px * var(--st-ui-scale, 1)); font-weight:600; letter-spacing:-.025em; }
 .svWelcomeFooter > a:last-child { display:inline-flex; align-items:center; gap:9px; margin-left:auto; color:#8b9ca7; }
 .svWelcomeFooter svg { width:14px; height:14px; }
 @media (max-width:1100px) {
   .svWelcomeHeroGrid { gap:26px; grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
   .svWelcomeShowcase { height:390px; }
-  body.svCleanShell .svWelcomeClean .dsWelcomeHeroCopy h1 { font-size:clamp(58px,6.6vw,78px) !important; }
+  body.svCleanShell .svWelcomeClean .dsWelcomeHeroCopy h1 { font-size:calc(clamp(58px,6.6vw,78px) * var(--st-ui-scale, 1)) !important; }
   .svWelcomePosterCaption { padding:10px 12px 12px; }
 }
 @media (max-width:850px) {
@@ -139,7 +139,7 @@ body.svCleanShell .svWelcomeClean .dsWelcomeFallback > p { color:#8b9ca5; font-s
   .svWelcomeHeroGrid { grid-template-columns:minmax(0,1fr); gap:42px; }
   body.svCleanShell .svWelcomeClean .dsWelcomeHeroCopy { max-width:600px !important; margin:auto; text-align:center; }
   body.svCleanShell .svWelcomeClean .dsWelcomeHeroCopy .dsEyebrow { justify-content:center; }
-  body.svCleanShell .svWelcomeClean .dsWelcomeHeroCopy h1 { font-size:clamp(60px,10vw,84px) !important; }
+  body.svCleanShell .svWelcomeClean .dsWelcomeHeroCopy h1 { font-size:calc(clamp(60px,10vw,84px) * var(--st-ui-scale, 1)) !important; }
   body.svCleanShell .svWelcomeClean .dsWelcomeHeroCopy > p { margin-inline:auto !important; }
   .svWelcomeClean .dsWelcomeActions,.svWelcomePersonalNote { justify-content:center; }
   .svWelcomeShowcase { max-width:420px; height:380px; }
@@ -154,27 +154,27 @@ body.svCleanShell .svWelcomeClean .dsWelcomeFallback > p { color:#8b9ca5; font-s
 @media (max-width:500px) {
   body.svCleanShell .svWelcomeClean .dsWelcomeNav { top:16px !important; gap:27px !important; padding-left:15px !important; max-width:calc(100% - 28px) !important; }
   body.svCleanShell .svWelcomeClean .dsWelcomeNavLinks { gap:16px !important; }
-  body.svCleanShell .svWelcomeClean .dsWelcomeBrand { font-size:14px !important; }
-  body.svCleanShell .svWelcomeClean .dsWelcomeNavLinks > a { font-size:11px !important; }
+  body.svCleanShell .svWelcomeClean .dsWelcomeBrand { font-size:calc(14px * var(--st-ui-scale, 1)) !important; }
+  body.svCleanShell .svWelcomeClean .dsWelcomeNavLinks > a { font-size:calc(11px * var(--st-ui-scale, 1)) !important; }
   .svWelcomeStudio { width:32px; height:32px; padding:7px; }
   body.svCleanShell .svWelcomeClean .dsWelcomeHero { padding-top:120px !important; }
-  body.svCleanShell .svWelcomeClean .dsWelcomeHeroCopy h1 { font-size:clamp(50px,12vw,62px) !important; letter-spacing:-.06em !important; }
-  body.svCleanShell .svWelcomeClean .dsWelcomeHeroCopy .dsEyebrow { font-size:9px !important; margin-bottom:21px !important; gap:8px; letter-spacing:.09em !important; }
-  body.svCleanShell .svWelcomeClean .dsWelcomeHeroCopy > p { font-size:14px !important; line-height:1.75 !important; margin-top:22px !important; }
+  body.svCleanShell .svWelcomeClean .dsWelcomeHeroCopy h1 { font-size:calc(clamp(50px,12vw,62px) * var(--st-ui-scale, 1)) !important; letter-spacing:-.06em !important; }
+  body.svCleanShell .svWelcomeClean .dsWelcomeHeroCopy .dsEyebrow { font-size:calc(9px * var(--st-ui-scale, 1)) !important; margin-bottom:21px !important; gap:8px; letter-spacing:.09em !important; }
+  body.svCleanShell .svWelcomeClean .dsWelcomeHeroCopy > p { font-size:calc(14px * var(--st-ui-scale, 1)) !important; line-height:1.75 !important; margin-top:22px !important; }
   .svWelcomeDesktopBreak { display:none; }
-  .svWelcomePersonalNote { font-size:10px; }
+  .svWelcomePersonalNote { font-size:calc(10px * var(--st-ui-scale, 1)); }
   .svWelcomeShowcase { height:clamp(300px,91vw,380px); }
   .svWelcomePoster { border-radius:13px; }
-  .svWelcomePosterCaption > strong { font-size:11px; }
-  .svWelcomePosterCaption > small { font-size:7px; }
+  .svWelcomePosterCaption > strong { font-size:calc(11px * var(--st-ui-scale, 1)); }
+  .svWelcomePosterCaption > small { font-size:calc(7px * var(--st-ui-scale, 1)); }
   .svWelcomeSupportingPoster .svWelcomePosterCaption { padding:8px; }
-  .svWelcomeSupportingPoster .svWelcomePosterCaption > strong { font-size:9px; }
-  .svWelcomeSupportingPoster .svWelcomePosterCaption > span { font-size:7px; }
+  .svWelcomeSupportingPoster .svWelcomePosterCaption > strong { font-size:calc(9px * var(--st-ui-scale, 1)); }
+  .svWelcomeSupportingPoster .svWelcomePosterCaption > span { font-size:calc(7px * var(--st-ui-scale, 1)); }
   body.svCleanShell .svWelcomeClean .dsWelcomeDiscovery { padding-bottom:32px !important; }
   .svWelcomeDiscoveryIntro { padding-top:28px; padding-bottom:30px; }
-  body.svCleanShell .svWelcomeClean .svWelcomeDiscoveryIntro h2 { font-size:28px; max-width:280px; }
+  body.svCleanShell .svWelcomeClean .svWelcomeDiscoveryIntro h2 { font-size:calc(28px * var(--st-ui-scale, 1)); max-width:280px; }
   body.svCleanShell .svWelcomeClean .dsWelcomeRailTrack { gap:12px !important; grid-auto-columns:clamp(138px,39vw,170px) !important; }
-  body.svCleanShell .svWelcomeClean .dsWelcomeRailHead > h2 { font-size:17px !important; }
+  body.svCleanShell .svWelcomeClean .dsWelcomeRailHead > h2 { font-size:calc(17px * var(--st-ui-scale, 1)) !important; }
   .svWelcomeFooter { flex-wrap:wrap; gap:13px 22px; padding-top:24px; }
   .svWelcomeFooter > a:last-child { width:100%; margin-left:0; }
 }

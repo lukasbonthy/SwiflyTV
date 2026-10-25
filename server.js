@@ -36,6 +36,11 @@ const { createAccountStore } = require("./lib/account-store");
 const { createConnect } = require("./lib/connect");
 const { createDiscovery } = require("./lib/discovery");
 const { createPlayerAssist } = require("./lib/player-assist");
+const {searchOptions,filterSearch,certification,createCatalogRouter}=require("./lib/catalog-tools");
+const {createTrakt}=require("./lib/trakt");
+const {settingsMarkup}=require("./ui/settings");
+const {createFeed}=require("./lib/feed");
+const {feedBell,feedDialogs,feedHome,feedDiscover}=require("./ui/feed");
 const { searchMarkup, searchPageMarkup, recommendationsMarkup, audiobooksMarkup } = require("./ui/discovery");
 const { cleanHeaders: cleanNuvioHeaders } = require("./lib/nuvio-http");
 
@@ -70,10 +75,13 @@ configureBrowserEnvironment();
 
 const express = require("express");
 const { studioMarkup } = require("./ui/studio");
+const { studioHead, studioPrime } = require("./ui/studio-head");
+const { studyMarkup } = require("./ui/study");
+const { createStudy } = require("./lib/study");
 const { welcomeMarkup } = require("./ui/welcome");
 const { navigationHead } = require("./ui/navigation");
 const { loadingHead, loadingMarkup } = require("./ui/loading");
-const { tvHead, tvScript } = require("./ui/tv");
+const { tvHead, tvAssetScript, tvSource } = require("./ui/tv");
 const { partyMarkup } = require("./ui/party");
 const { connectMarkup, connectDialogs, notificationButton } = require("./ui/connect");
 const { playerMarkup, episodePickerMarkup, episodeNavigationMarkup } = require("./ui/player");
@@ -81,7 +89,7 @@ const { downloadOptionsMarkup } = require("./ui/download-page");
 const { watchPartyMarkup, partyBrowseMarkup } = require("./ui/watch-party");
 const { createSourceJobs } = require("./lib/source-jobs");
 const { serverSelection } = require("./lib/server-selection");
-const { createWatchroomCalls } = require("./lib/watchroom-calls");
+const { createWatchroomCalls, iceConfiguration } = require("./lib/watchroom-calls");
 const helmet = require("helmet");
 const compression = require("compression");
 const rateLimit = require("express-rate-limit");
@@ -94,6 +102,13 @@ const crypto = require("crypto");
 const { Server } = require("socket.io");
 
 const app = express();
+const httpServer = http.createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: true,
+    credentials: true,
+  },
+});
 
 const PORT = process.env.PORT || 3000;
 const SITE_NAME = process.env.SITE_NAME || "SwiflyTV";
@@ -5637,6 +5652,15 @@ app.use((req, res, next) => {
 const siteGate = createSiteGate();
 app.use(siteGate.router);
 app.use(siteGate.protect);
+const study = createStudy({io, authorizeSocket: socket => siteGate.validCookie(socket.handshake.headers.cookie), iceServers: iceConfiguration(process.env)});
+app.use('/api/study', study.router);
+app.use('/assets/study', express.static(path.join(__dirname,'public','study'), {maxAge:'1d',dotfiles:'deny'}));
+app.get(['/study','/study/room/:room'], (req,res) => {
+  const rooms=require('./public/study/catalog.json').rooms;
+  const room=req.params.room||'';
+  if(room&&!rooms.some(entry=>entry.id===room))return res.status(404).send(pageShell({title:SITE_NAME+' — Study room unavailable',active:'study',body:'<main class="dsPlainPage"><h1>Room unavailable</h1><a href="/study">Choose a study room</a></main>'}));
+  res.send(pageShell({title:SITE_NAME+' — Swifly Study',description:'Your space to focus. Music, scenes, timers, tasks and live study rooms.',active:'study',body:studyMarkup({room}),extraHead:'<link rel="stylesheet" href="/assets/study/study.css?v=262"><script defer src="/assets/study/study.js?v=261"></script>'}));
+});
 const accountStore = createAccountStore();
 const connect = createConnect({
   store: accountStore,
@@ -5653,11 +5677,17 @@ const connect = createConnect({
   }
 });
 app.use("/api/connect", connect.router);
+app.use('/api/feed',createFeed({tmdb:(...args)=>tmdb(...args)}).router);
+app.use('/api/library',createCatalogRouter({tmdb:(...args)=>tmdb(...args)}));
+const trakt=createTrakt({store:accountStore,authenticate:connect.identity,tmdb:(...args)=>tmdb(...args)});
+app.use('/api/trakt',trakt.router);
+app.get('/settings',(req,res)=>res.send(pageShell({title:SITE_NAME+' — Settings',active:'settings',body:settingsMarkup(),extraHead:'<link rel="stylesheet" href="/assets/clean/settings.css?v=262">'})));
+httpServer.once('close',()=>{study.close();trakt.close?.();});
 const discovery = createDiscovery({tmdb:(...args) => tmdb(...args)});
 app.use("/api/discovery", discovery.router);
 const playerAssist = createPlayerAssist({tmdb:(...args) => tmdb(...args)});
 app.use("/api/player-assist",playerAssist.router);
-app.get("/recommendations", (req,res) => res.send(pageShell({title:`${SITE_NAME} — AI picks`,active:"recommendations",body:recommendationsMarkup(String(req.query.q||'')),extraHead:'<link rel="stylesheet" href="/assets/discovery/search.css?v=1"><script defer src="/assets/discovery/recommendations.js?v=8"></script>'})));
+app.get("/recommendations", (req,res) => res.send(pageShell({title:`${SITE_NAME} — AI picks`,active:"recommendations",body:recommendationsMarkup(String(req.query.q||'')),extraHead:'<link rel="stylesheet" href="/assets/discovery/search.css?v=262"><script defer src="/assets/discovery/recommendations.js?v=8"></script>'})));
 app.get("/audiobooks", (req,res) => res.send(pageShell({title:`${SITE_NAME} — Audiobooks`,active:"audiobooks",body:audiobooksMarkup(),extraHead:'<script defer src="/assets/discovery/audiobooks.js?v=4"></script>'})));
 // Same friends-only protection applies to authorized movie/episode file downloads.
 app.use("/api/download", createDownloadRouter());
@@ -5666,6 +5696,7 @@ app.use("/api/download", createDownloadRouter());
 // Versioned glass URLs can be cached across navigation; v= tags change with edits.
 app.use("/assets/liquid-glass", express.static(path.join(__dirname, "public", "liquid-glass"), { maxAge: "1d", dotfiles: "deny" }));
 // v151: shared clean catalog styles and compact navigation behavior.
+app.get("/assets/clean/tv.js",(req,res)=>res.type("application/javascript").set("Cache-Control","public, max-age=86400").send(tvSource()));
 app.use("/assets/clean", express.static(path.join(__dirname, "public", "clean"), { maxAge: "1d", dotfiles: "deny" }));
 app.use("/assets/vendor/lenis", express.static(path.join(__dirname, "public", "vendor", "lenis"), { maxAge: "1d", dotfiles: "deny" }));
 app.use("/assets/studio", express.static(path.join(__dirname, "public", "studio"), { maxAge: "1d", dotfiles: "deny" }));
@@ -6451,11 +6482,12 @@ function setupNeededPage(error = "") {
 }
 
 function navLink(href, label, key, active, icon = "") {
-  return `<a class="${active === key ? "active" : ""}" href="${href}"${active === key ? ' aria-current="page"' : ""}>${icon ? cleanIcon(icon) + `<span>${label}</span>` : label}</a>`;
+  return `<a data-st-nav="${({trending:"discover",watchlist:"list"})[key]||key}" class="${active === key ? "active" : ""}" href="${href}"${active === key ? ' aria-current="page"' : ""}>${icon ? cleanIcon(icon) + `<span>${label}</span>` : label}</a>`;
 }
 
 function cleanIcon(name) {
   const paths = {
+    study: '<path d="M4 4h6a3 3 0 0 1 2 1 3 3 0 0 1 2-1h6v15h-6a3 3 0 0 0-2 1 3 3 0 0 0-2-1H4Z"/><path d="M12 5v15"/>',
     home: '<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/>',
     compass: '<circle cx="12" cy="12" r="9"/><path d="m16 8-2.5 5.5L8 16l2.5-5.5Z"/>',
     search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/>',
@@ -6495,6 +6527,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
   <meta name="theme-color" content="#000000" />
   ${tvHead()}
   ${loadingHead()}
+  ${studioHead()}
   ${showNavigation ? navigationHead() : ""}
   ${showNavigation ? '<link rel="stylesheet" href="/assets/clean/navigation.css?v=2" />' : ""}
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -6504,8 +6537,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700;800&family=Unbounded:wght@500;700;800&display=swap" rel="stylesheet" />
-  ${extraHead}
-  <link rel="stylesheet" href="/assets/clean/base.css?v=163" />
+  <link rel="stylesheet" href="/assets/clean/base.css?v=262" />
 
     <script>
       window.syncWatchButtons = window.syncWatchButtons || function syncWatchButtons() {
@@ -6552,20 +6584,28 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player || active === "watch" || active === "social" ? '<script defer src="https://cdn.jsdelivr.net/npm/hls.js@1.7.3/dist/hls.min.js"></script>' : ""}
 
     ${body.includes("fa-solid") ? '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />' : ""}
-    ${player || partyBrowse || active === "social" ? '<script defer src="/socket.io/socket.io.js"></script>' : ""}
+    ${player || partyBrowse || active === "social" || active === "study" ? '<script defer src="/socket.io/socket.io.js"></script>' : ""}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/modern-normalize@2.0.0/modern-normalize.min.css" />
-    <link rel="stylesheet" href="/assets/liquid-glass/liquid-glass.css?v=223" />
+    <link rel="stylesheet" href="/assets/liquid-glass/liquid-glass.css?v=262" />
     <script defer src="/assets/liquid-glass/liquid-glass.js?v=227"></script>
-    <link rel="stylesheet" href="/assets/clean/clean.css?v=154" />
+    <link rel="stylesheet" href="/assets/clean/clean.css?v=262" />
     <script defer src="/assets/clean/clean.js?v=5"></script>
     <script defer src="/assets/clean/account-sheet.js?v=1"></script>
-    <script defer src="/assets/clean/account.js?v=1"></script>
-    <link rel="stylesheet" href="/assets/connect/connect.css?v=6" />
+    <script defer src="/assets/clean/account.js?v=262"></script>
+    <script defer src="/assets/clean/library-state.js?v=262"></script>
+    <script defer src="/assets/clean/settings.js?v=262"></script>
+    <link rel="stylesheet" href="/assets/clean/library.css?v=262" />
+    <link rel="stylesheet" href="/assets/connect/connect.css?v=262" />
     <script defer src="/assets/connect/icons.js?v=1"></script><script defer src="/assets/connect/connect.js?v=5"></script>
     <script defer src="/assets/clean/avatars.js?v=209"></script>
     ${active === "profiles" ? '<script defer src="/assets/clean/profiles.js?v=209"></script>' : ""}
-    <script defer src="/assets/clean/continue.js?v=155"></script>
-    <link rel="stylesheet" href="/assets/clean/details.css?v=255" />
+    <script defer src="/assets/clean/continue.js?v=262"></script>
+    <script defer src="/assets/clean/library-page.js?v=1"></script>
+    <script defer src="/assets/clean/episode-browser.js?v=1"></script>
+    <script defer src="/assets/clean/feed.js?v=261"></script>
+    <link rel="stylesheet" href="/assets/clean/feed.css?v=262" />
+    <link rel="stylesheet" href="/assets/clean/catalog-updates.css?v=262" />
+    <link rel="stylesheet" href="/assets/clean/details.css?v=262" />
     <link rel="stylesheet" href="/assets/clean/motion.css?v=252" />
     <link rel="stylesheet" href="/assets/vendor/lenis/lenis.css?v=1.3.16-r1" />
     <script defer src="/assets/vendor/lenis/lenis.min.js?v=1.3.16-r1"></script>
@@ -6573,17 +6613,17 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/scroll.js?v=258"></script>
     <script defer src="/assets/clean/details.js?v=255"></script>
     <script defer src="/assets/clean/download.js?v=3"></script>
-    <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=222" />
+    <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=262" />
     <script defer src="/assets/liquid-glass/surfaces.js?v=259"></script>
-    <link rel="stylesheet" href="/assets/studio/studio.css?v=233" />
-    <script defer src="/assets/studio/studio.js?v=164"></script>
-    <link rel="stylesheet" href="/assets/clean/aurora.css?v=209" />
+    <link rel="stylesheet" href="/assets/studio/studio.css?v=262" />
+    <script defer src="/assets/studio/studio.js?v=260"></script>
+    <link rel="stylesheet" href="/assets/clean/aurora.css?v=260" />
     <script defer src="/assets/clean/aurora.js?v=204"></script>
-    ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=205" />' : ""}
-    ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=173" />' : ""}
+    ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=262" />' : ""}
+    ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=262" />' : ""}
     
-    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=236"></script>' : ""}
-    ${player ? '<script defer src="/assets/player/audio-sample.js?v=1"></script><script defer src="/assets/player/assist.js?v=2"></script><link rel="stylesheet" href="/assets/player/assist.css?v=3" />' : ""}
+    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=261"></script>' : ""}
+    ${player ? '<script defer src="/assets/player/audio-sample.js?v=1"></script><script defer src="/assets/player/assist.js?v=2"></script><link rel="stylesheet" href="/assets/player/assist.css?v=262" />' : ""}
     ${player || active === "social" ? '<script defer src="/assets/party/watchroom-call.js?v=1"></script>' : ""}
     ${active === "social" ? '<script defer src="/assets/party/party.js?v=207"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}
     ${player || partyBrowse ? '<script defer src="/assets/player/watch-party.js?v=2"></script>' : ""}
@@ -6591,23 +6631,28 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/polish.css?v=176" />'}
     <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=206" />
     <link rel="stylesheet" href="/assets/liquid-glass/controls.css?v=255" />
-    ${player ? "" : '<link rel="stylesheet" href="/assets/clean/experience.css?v=202" />'}
-    <link rel="stylesheet" href="/assets/clean/cinema.css?v=207" />
-    <link rel="stylesheet" href="/assets/clean/profiles.css?v=209" />
-    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=215" />' : ""}
-    ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=206" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=205" />' : ""}
-    ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=200" />' : ""}
-    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/party/watchroom-call.css?v=1" />' : ""}
+    ${player ? "" : '<link rel="stylesheet" href="/assets/clean/experience.css?v=262" />'}
+    <link rel="stylesheet" href="/assets/clean/cinema.css?v=262" />
+    <link rel="stylesheet" href="/assets/clean/profiles.css?v=262" />
+    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=262" />' : ""}
+    ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=262" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=262" />' : ""}
+    ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=262" />' : ""}
+    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/party/watchroom-call.css?v=262" />' : ""}
     <link rel="stylesheet" href="/assets/clean/performance.css?v=258" />
-    <link rel="stylesheet" href="/assets/clean/mobile.css?v=3" />
-    <link rel="stylesheet" href="/assets/clean/tv.css?v=255" />
-    <link rel="stylesheet" href="/assets/clean/details-premium.css?v=255" />
-    <link rel="stylesheet" href="/assets/clean/details-clarity.css?v=2" />
-    <link rel="stylesheet" href="/assets/discovery/discovery.css?v=8" />
-    <link rel="stylesheet" href="/assets/connect/feature-effects.css?v=3" />
-    <link rel="stylesheet" href="/assets/clean/account-sheet.css?v=3" />
+    <link rel="stylesheet" href="/assets/clean/mobile.css?v=262" />
+    <link rel="stylesheet" href="/assets/clean/tv.css?v=262" />
+    <link rel="stylesheet" href="/assets/clean/details-premium.css?v=262" />
+    <link rel="stylesheet" href="/assets/clean/details-clarity.css?v=262" />
+    <link rel="stylesheet" href="/assets/discovery/discovery.css?v=262" />
+    <link rel="stylesheet" href="/assets/connect/feature-effects.css?v=262" />
+    <link rel="stylesheet" href="/assets/clean/account-sheet.css?v=262" />
+    <link rel="stylesheet" href="/assets/studio/experience.css?v=262" />
+    <script defer src="/assets/clean/hero-palette.js?v=260"></script>
+    <script defer src="/assets/studio/experience.js?v=261"></script>
+    ${extraHead}
 </head>
 <body class="svCleanShell">
+  ${studioPrime()}
   ${loadingMarkup()}
 
   <script>
@@ -6641,15 +6686,17 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
           <span class="netflixWordmark">${escapeHtml(BRAND_WORDMARK)}</span>
         </a>
         <nav class="navLinks netflixLinks" aria-label="Main navigation">
-          ${navLink("/", "Home", "home", active)}
-          ${navLink("/movies", "Movies", "movies", active)}
-          ${navLink("/tv", "Series", "tv", active)}
-          ${navLink("/trending", "Discover", "trending", active)}
-          ${navLink("/my-list", "List", "watchlist", active)}
+          ${navLink("/", "Home", "home", active, "home")}
+          ${navLink("/movies", "Movies", "movies", active, "film")}
+          ${navLink("/tv", "Series", "tv", active, "tv")}
+          ${navLink("/trending", "Discover", "trending", active, "compass")}
+          ${navLink("/my-list", "List", "watchlist", active, "bookmark")}
+    ${navLink("/study", "Study", "study", active, "study")}
         </nav>
       </div>
       <div class="navRightCluster dsNavActions">
         <button id="svNavSearchToggle" class="svNavButton" type="button" aria-label="Search movies and series" aria-controls="svNavSearchPopup" aria-expanded="false">${cleanIcon("search")}</button>
+        ${feedBell()}
         ${notificationButton()}
         <a class="svNavButton svNavPartyLink${active === "social" ? " active" : ""}" href="/social?tab=watchrooms" aria-label="Party Hub" title="Party Hub"${active === "social" ? ' aria-current="page"' : ""}>${cleanIcon("people")}</a>
         <button id="controlToggleTop" class="svNavButton" type="button" aria-label="Open Swifly Studio" aria-haspopup="dialog" aria-controls="controlPanel" aria-expanded="false">${cleanIcon("settings")}</button>
@@ -6662,7 +6709,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
             <button class="svMobileStudioLink" type="button" data-st-open aria-haspopup="dialog" aria-controls="controlPanel" aria-expanded="false"><span>${cleanIcon("settings")}</span><b>Swifly Studio</b></button>
             <a href="/profiles"><span>${cleanIcon("user")}</span><b>Switch profile</b></a>
             <a href="/profiles/manage"><span>${cleanIcon("user")}</span><b>Manage profiles</b></a>
-            <a href="/account"><span>${cleanIcon("settings")}</span><b>Account</b></a>
+            <a href="/account"><span>${cleanIcon("user")}</span><b>Account</b></a>
+            <a href="/settings"><span>${cleanIcon("settings")}</span><b>Settings & Trakt</b></a>
             <a href="/continue-watching"><span>${cleanIcon("play-circle")}</span><b>Continue watching</b></a>
             <a href="/my-list"><span>${cleanIcon("bookmark")}</span><b>My List</b></a>
             <a href="/liked"><span>${cleanIcon("heart")}</span><b>Liked titles</b></a>
@@ -6705,10 +6753,12 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${navLink("/tv", "Series", "tv", active, "tv")}
     ${navLink("/trending", "Discover", "trending", active, "compass")}
     ${navLink("/my-list", "List", "watchlist", active, "bookmark")}
+    ${navLink("/study", "Study", "study", active, "study")}
   </nav>
 
   ${studioMarkup()}
   ${connectDialogs()}
+  ${feedDialogs()}
 
   <div id="toast" class="toast"></div>
 
@@ -6734,6 +6784,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
     function saveLibrary(key, list) {
       localStorage.setItem(key, JSON.stringify(list.slice(0, 300)));
+      window.SwiflyLibrary?.syncLegacy();
       window.dispatchEvent(new Event("swifly:library-change"));
       syncLibraryButtons();
       renderSavedGrid("watchlistGrid", "movieverse.watchlist", "watchlist");
@@ -7541,7 +7592,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     }, true);
   </script>
 
-  ${tvScript()}
+  ${tvAssetScript()}
 
 
 </body>
@@ -7734,20 +7785,21 @@ async function homePage(req, res) {
   const sources = [trendingMovies, trendingTv, popularMovies, popularTv, topMovies, topTv, nowPlaying];
   if (sources.every(data => data.__error)) return res.send(setupNeededPage(sources[0].message));
   const hero = featured || pickHero([...(trendingMovies.results || []), ...(popularMovies.results || []), ...(trendingTv.results || []).map(item => ({ ...item, media_type: "tv" }))]);
-  const body = `<main>
+  const body = `<main data-st-home>
     ${hero.id ? dsHero({ hero, context: "Featured" }) : dsPageHeader("Discover", "Explore movies and series.")}
-    <section class="dsContent ${hero.id ? "" : "noHero"}">
-      <section id="continueWatchingSection" class="svResumeSection" hidden>
+    <section class="dsContent ${hero.id ? "" : "noHero"}" data-st-home-rows>
+      <section id="continueWatchingSection" class="svResumeSection" data-st-home-section="continue" hidden>
         <div class="svSectionHead"><h2>Continue watching</h2><div class="svSectionActions"><a class="svRowMore" href="/continue-watching">View all</a><div class="svRowArrows"><button class="svRowArrow" type="button" data-continue-scroll="-1" aria-label="Scroll Continue Watching left">‹</button><button class="svRowArrow" type="button" data-continue-scroll="1" aria-label="Scroll Continue Watching right">›</button></div></div></div>
         <div id="continueWatchingRail" class="svResumeRail" aria-label="Continue Watching titles"></div>
       </section>
-      ${dsRail("Trending movies", trendingMovies.results || [], "movie", { viewHref: "/trending?type=movie" })}
-      ${dsRail("Trending series", trendingTv.results || [], "tv", { viewHref: "/trending?type=tv" })}
-      ${dsRail("Popular movies", popularMovies.results || [], "movie", { viewHref: "/movies" })}
-      ${dsRail("Popular series", popularTv.results || [], "tv", { viewHref: "/tv" })}
-      ${dsRail("Top rated movies", topMovies.results || [], "movie", { viewHref: "/movies?sort=top_rated" })}
-      ${dsRail("Top rated series", topTv.results || [], "tv", { viewHref: "/tv?sort=top_rated" })}
-      ${dsRail("New releases", nowPlaying.results || [], "movie", { viewHref: "/movies?sort=now_playing" })}
+      ${feedHome()}
+      ${dsRail("Trending movies", trendingMovies.results || [], "movie", { viewHref: "/trending?type=movie", studioKey: "trending-movies" })}
+      ${dsRail("Trending series", trendingTv.results || [], "tv", { viewHref: "/trending?type=tv", studioKey: "trending-tv" })}
+      ${dsRail("Popular movies", popularMovies.results || [], "movie", { viewHref: "/movies", studioKey: "popular-movies" })}
+      ${dsRail("Popular series", popularTv.results || [], "tv", { viewHref: "/tv", studioKey: "popular-tv" })}
+      ${dsRail("Top rated movies", topMovies.results || [], "movie", { viewHref: "/movies?sort=top_rated", studioKey: "top-movies" })}
+      ${dsRail("Top rated series", topTv.results || [], "tv", { viewHref: "/tv?sort=top_rated", studioKey: "top-tv" })}
+      ${dsRail("New releases", nowPlaying.results || [], "movie", { viewHref: "/movies?sort=now_playing", studioKey: "new-releases" })}
     </section>
   </main>`;
   res.send(pageShell({ title: SITE_NAME, active: "home", body }));
@@ -7826,7 +7878,7 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = nu
   const maturity = mediaType === "tv" ? "TV-14" : "PG-13";
   const trailerKey = trailer && trailer.key ? String(trailer.key) : "";
   const trailerSrc = trailerKey ? youtubeHeroAutoplaySrc(trailerKey, embedOrigin) : "";
-  return `<section class="dsHero ${trailerSrc ? "dsHeroHasTrailer" : ""}">
+  return `<section class="dsHero ${trailerSrc ? "dsHeroHasTrailer" : ""}" data-sv-palette-src="${escapeHtml(spillSrc)}">
     <div class="dsHeroArt" aria-hidden="true"><div class="dsHeroBg" style="${responsiveBackdropStyle(hero.backdrop_path || hero.poster_path)}"></div></div>
     ${trailerSrc ? `<div class="dsHeroTrailerLayer" aria-hidden="true">
       <iframe id="dsHeroTrailerFrame" class="dsHeroTrailerFrame" data-src="${escapeHtml(trailerSrc)}" title="${escapeHtml(title)} muted trailer preview" loading="eager" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
@@ -8082,7 +8134,7 @@ function dsRail(title, items = [], type = "", options = {}) {
   const cards = (items || []).slice(0, options.limit || 18).map((item) => movieCard(item, type)).join("");
   if (!cards) return "";
   const more = options.viewHref ? `<a class="svRowMore" href="${escapeHtml(options.viewHref)}">View all</a>` : "";
-  return `<section class="dsRow svCatalogRow">
+  return `<section class="dsRow svCatalogRow"${options.studioKey ? ` data-st-home-section="${escapeHtml(options.studioKey)}"` : ""}>
     <div class="svSectionHead"><h2>${escapeHtml(title)}</h2><div class="svSectionActions">${more}</div></div>
     <div class="movieRail dsRail">${cards}</div>
   </section>`;
@@ -8284,6 +8336,7 @@ async function trendingPage(req, res) {
   const body = `<main>
     ${dsHero({ hero, context: "New & Popular", eyebrow: "Fresh on SwiflyTV" })}
     <section class="dsContent">
+      ${feedDiscover()}
       <div class="dsTabs">
         <a class="${type === "all" ? "active" : ""}" href="/trending?type=all">All</a>
         <a class="${type === "movie" ? "active" : ""}" href="/trending?type=movie">Movies</a>
@@ -8303,15 +8356,16 @@ async function trendingPage(req, res) {
 }
 
 async function searchPage(req, res) {
- const q=String(req.query.q||'').trim().slice(0,120),page=Math.max(1,Math.min(500,pageNumber(req.query.page))),people=req.query.type==='person',mode=people?'person':'titles';
- const route=q?'/search/'+(people?'person':'multi'):people?'/person/popular':'/trending/all/week';
+ const q=String(req.query.q||'').trim().slice(0,120),page=Math.max(1,Math.min(500,pageNumber(req.query.page))),people=req.query.type==='person',mode=people?'person':'titles',filters=searchOptions(req.query),endpoint=people?'person':filters.media==='all'?'multi':filters.media;
+ const route=q?'/search/'+endpoint:people?'/person/popular':'/trending/'+(filters.media==='all'?'all':filters.media)+'/week';
  const data=await tmdb(route,{...(q?{query:q}:{}),page,include_adult:'false'},CACHE_TTL.short);
  if(data.__error)return res.send(setupNeededPage(data.message));
- const results=(data.results||[]).filter(item=>!item.adult&&(people?(!item.media_type||item.media_type==='person'):['movie','tv'].includes(getType(item)||item.media_type)));
+ const raw=(data.results||[]).map(item=>({...item,media_type:item.media_type||(people?'person':filters.media==='tv'?'tv':getType(item))}));
+ const results=(people?raw:filterSearch(raw,filters)).filter(item=>!item.adult&&(people?item.media_type==='person':['movie','tv'].includes(item.media_type)));
  const cards=results.map(item=>people?personCard(item):movieCard(item)).join('');
- const base='/search?'+new URLSearchParams({...(q?{q}:{}),...(people?{type:'person'}:{})});
- const body=searchPageMarkup({mode,query:q,cards,heading:q?'Results for “'+q+'”':people?'Popular people':'Trending this week',pagination:pagination(base,page,Math.min(500,data.total_pages||1))});
- res.send(pageShell({title:`${SITE_NAME} — Search${q?' '+q:''}`,active:'search',body,extraHead:'<link rel="stylesheet" href="/assets/discovery/search.css?v=1"><script defer src="/assets/discovery/search.js?v=1"></script>'}));
+ const params={...(q?{q}:{}),...(people?{type:'person'}:{}),...Object.fromEntries(Object.entries(filters).filter(([k,v])=>v&&v!=='all'&&v!=='relevance'))},base='/search?'+new URLSearchParams(params);
+ const body=searchPageMarkup({mode,query:q,cards,filters,heading:q?'Results for “'+q+'”':people?'Popular people':'Trending this week',pagination:pagination(base,page,Math.min(500,data.total_pages||1))});
+ res.send(pageShell({title:`${SITE_NAME} — Search${q?' '+q:''}`,active:'search',body,extraHead:'<link rel="stylesheet" href="/assets/discovery/search.css?v=262"><script defer src="/assets/discovery/search.js?v=2"></script>'}));
 }
 
 async function genrePage(req, res, type) {
@@ -8883,7 +8937,7 @@ async function downloadOptionsPage(req, res, type) {
     poster:img(details.poster_path,'w342'),backdrop:bg,genres:details.genres||[],
     season,episode,episodeTitle:selectedEpisode?.name||''});
   res.send(pageShell({title:SITE_NAME+' — '+title+' downloads',description:'Available download options for '+title,active:type==='tv'?'tv':'movies',body,
-    extraHead:'<link rel="stylesheet" href="/assets/clean/download-page.css?v=1" /><script defer src="/assets/clean/download-page.js?v=4"></script>'}));
+    extraHead:'<link rel="stylesheet" href="/assets/clean/download-page.css?v=262" /><script defer src="/assets/clean/download-page.js?v=4"></script>'}));
 }
 
 async function detailPage(req, res, type) {
@@ -8891,7 +8945,7 @@ async function detailPage(req, res, type) {
   const partyId = partyMovieId(id);
   const endpoint = type === "tv" ? `/tv/${id}` : `/movie/${id}`;
   const [details, videos, credits, similar, recommendations, externalIds, providers] = await Promise.all([
-    tmdb(endpoint, { append_to_response: "images", include_image_language: "en,null" }, CACHE_TTL.long),
+    tmdb(endpoint, { append_to_response: "images,release_dates,content_ratings", include_image_language: "en,null" }, CACHE_TTL.long),
     tmdb(`${endpoint}/videos`, {}, CACHE_TTL.long),
     tmdb(`${endpoint}/credits`, {}, CACHE_TTL.long),
     tmdb(`${endpoint}/similar`, {}, CACHE_TTL.medium),
@@ -8902,6 +8956,7 @@ async function detailPage(req, res, type) {
   if (details.__error) return res.send(setupNeededPage(details.message));
 
   const title = getTitle(details);
+  const contentRating=certification(details,type);
   const detailsDate = type === "tv" ? details.first_air_date : details.release_date;
   const year = getYear(detailsDate);
   // Keep the hero and story on ONE browser-cached image; original-sized
@@ -8936,6 +8991,7 @@ async function detailPage(req, res, type) {
   const watchHref = `/watch/${type}/${encodeURIComponent(id)}?mode=movie${type === "tv" ? `&s=${startSeason}&e=1` : ""}`;
   const playLabel = type === "tv" ? `Play S${startSeason} E1` : "Play";
   const genreHtml = (details.genres || []).map(genre => `<a href="/${type === "tv" ? "tv" : "movies"}?genre=${encodeURIComponent(genre.id)}">${escapeHtml(genre.name)}</a>`).join('<span class="svDetailDot" aria-hidden="true">·</span>');
+  const certificationHtml=contentRating?`<span class="svContentRating" data-content-rating data-rating-severity="${contentRating.severity}" title="US content rating">${escapeHtml(contentRating.label)}</span>`:'<span class="svContentRating" data-rating-severity="unrated">Not rated</span>';
   const castHtml = cast.map(person => `<a class="dsCastCard" href="/person/${encodeURIComponent(person.id)}">
     <div>${person.profile_path ? `<img src="${escapeHtml(img(person.profile_path, "w342"))}" alt="${escapeHtml(person.name)}" loading="lazy" decoding="async" />` : `<span>${escapeHtml(String(person.name || "?").slice(0, 1))}</span>`}</div>
     <strong>${escapeHtml(person.name)}</strong><em>${escapeHtml(person.character || "Cast")}</em>
@@ -8945,7 +9001,7 @@ async function detailPage(req, res, type) {
     const total = Math.max(0, Number(season.episode_count || 0));
     const shown = Math.min(total, 24);
     const episodeLinks = Array.from({ length: shown }, (_, i) => `<span class="svDetailEpisodeChoice"><a class="svDetailEpisodeTile" href="/watch/tv/${encodeURIComponent(id)}?mode=movie&s=${number}&e=${i + 1}" aria-label="Watch season ${number} episode ${i + 1}"><span class="svEpisodeOrdinal">${String(i + 1).padStart(2, "0")}</span><span>Episode ${i + 1}</span>${cleanIcon("play")}</a><a class="svDetailEpisodeDownload" href="/download/tv/${encodeURIComponent(id)}?s=${number}&e=${i + 1}" data-sv-download data-sv-download-type="episode" aria-label="Download season ${number} episode ${i + 1}" title="Download episode">${cleanIcon("download")}</a></span>`).join("");
-    return `<details class="svSeason"${index === 0 ? " open" : ""}><summary><span class="svSeasonIdentity"><b class="svSeasonNumber">${String(number).padStart(2, "0")}</b><strong>${escapeHtml(season.name || `Season ${number}`)}</strong></span><span>${total} episodes</span></summary>
+    return `<details class="svSeason" data-episode-show="${escapeHtml(id)}" data-episode-season="${number}"${index === 0 ? " open" : ""}><summary><span class="svSeasonIdentity"><b class="svSeasonNumber">${String(number).padStart(2, "0")}</b><strong>${escapeHtml(season.name || `Season ${number}`)}</strong></span><span>${total} episodes</span></summary>
       ${season.overview ? `<p>${escapeHtml(season.overview)}</p>` : ""}<div class="dsEpisodeChips">${episodeLinks}${total > shown ? `<a href="/watch/tv/${encodeURIComponent(id)}?mode=movie&s=${number}&e=${shown + 1}">Continue with episode ${shown + 1}</a>` : ""}</div></details>`;
   }).join("");
   const about = [
@@ -8957,14 +9013,14 @@ async function detailPage(req, res, type) {
   ].map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("");
 
   const body = `<main class="dsDetailPage svDetailPage svCinemaPage" data-cinema-page="details">
-    <article class="dsDetailShell svTitleDetails" aria-labelledby="svDetailTitle" data-detail-id="${escapeHtml(id)}" data-detail-type="${type}" style="--sv-detail-art:url(\'${escapeHtml(heroBg)}\');--sv-xbox-detail-art:url(\'${escapeHtml(img(details.backdrop_path || details.poster_path, "w780"))}\')">
+    <article class="dsDetailShell svTitleDetails" data-sv-palette-src="${escapeHtml(img(details.backdrop_path || details.poster_path, "w300"))}" aria-labelledby="svDetailTitle" data-detail-id="${escapeHtml(id)}" data-detail-type="${type}" style="--sv-detail-art:url(\'${escapeHtml(heroBg)}\');--sv-xbox-detail-art:url(\'${escapeHtml(img(details.backdrop_path || details.poster_path, "w780"))}\')">
       <a class="dsSecondaryBtn svDetailReturn" href="/" data-sv-details-back aria-label="Back to browsing"><svg class="svIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>Back to browsing</a>
       <section class="svDetailHero">
         <div class="svDetailBackdrop" style="background-image:url('${escapeHtml(heroBg)}');--sv-xbox-art:url('${escapeHtml(img(details.backdrop_path || details.poster_path, "w780"))}')"></div><div class="svDetailShade"></div>
         <div class="svDetailIdentity" data-cinema-reveal>
           <span class="svDetailEdition">SwiflyTV <span aria-hidden="true">/</span> ${type === "tv" ? "Series" : "Cinema"}</span>
           <h1 id="svDetailTitle" class="svDetailTitle"><span class="svDetailTitleText">${escapeHtml(title)}</span>${titleLogo ? `<img class="svDetailLogo" src="${escapeHtml(titleLogo)}" alt="" aria-hidden="true" decoding="async" />` : ""}</h1>
-          ${genreHtml ? `<div class="svDetailGenres">${genreHtml}</div>` : ""}
+          <div class="svDetailGenres">${genreHtml}${certificationHtml}</div>
           <div class="svDetailFacts">
             ${Number(details.vote_average) > 0 ? `<span class="svDetailScore"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.9-6.2-3.3-6.2 3.3 1.2-6.9-5-4.9 6.9-1Z"/></svg>${escapeHtml(formatRating(details.vote_average))}/10<small>TMDB</small></span>` : ""}
             <span>${escapeHtml(year)}</span>${runtime ? `<span>${escapeHtml(runtime)}</span>` : ""}<span>${type === "tv" ? "Series" : "Movie"}</span>
@@ -8985,7 +9041,7 @@ async function detailPage(req, res, type) {
         <nav class="svDetailChapterNav" aria-label="Title sections"><a href="#overview">The story</a>${castHtml ? '<a href="#cast">Cast</a>' : ""}${seasonHtml ? '<a href="#episodes">Episodes</a>' : ""}${collectionHtml ? '<a href="#collection">Collection</a>' : ""}<a href="#details">Film notes</a></nav>
         <section id="overview" class="svDetailSection svDetailOverview" style="--sv-story-art:url('${escapeHtml(storyArt)}')"><div><span class="svCinemaEyebrow">THE STORY</span><h2>A closer look</h2></div><p>${escapeHtml(details.overview || "No overview available yet.")}</p></section>
         ${castHtml ? `<section id="cast" class="svDetailSection"><h2>Cast</h2><div class="svDetailCastRail" aria-label="Cast">${castHtml}</div></section>` : ""}
-        ${seasonHtml ? `<section id="episodes" class="svDetailSection"><h2>Episodes</h2>${seasonHtml}</section>` : ""}
+        ${seasonHtml ? `<section id="episodes" class="svDetailSection"><div class="svEpisodeBrowserHead"><h2>Episodes</h2><div class="svEpisodeBrowserControls"><label>View<select data-episode-view><option value="grid">Grid</option><option value="rows">Row</option></select></label><label>Order<select data-episode-sort><option value="oldest">Oldest first</option><option value="newest">Newest first</option></select></label></div></div>${seasonHtml}</section>` : ""}
         ${collectionHtml}
         ${more.length ? `<section id="more-like-this" class="svDetailSection"><h2>More like this</h2><div class="svDetailRecommendations">${more.map(item => movieCard(item, type)).join("")}</div></section>` : ""}
         ${trailers.length ? `<section id="trailers" class="svDetailSection"><h2>Trailers</h2><div class="svDetailTrailers">${trailers.map(video => `<iframe src="https://www.youtube-nocookie.com/embed/${escapeHtml(video.key)}" title="${escapeHtml(video.name || title + " trailer")}" loading="lazy" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`).join("")}</div></section>` : ""}
@@ -9030,6 +9086,9 @@ async function personDetailPage(req, res) {
     .sort((a, b) => Number(b.popularity || 0) - Number(a.popularity || 0));
 
   const profile = img(person.profile_path, "w500");
+  const allCredits=[...new Map(known.filter(row=>!row.adult).map(row=>[getType(row)+':'+row.id,row])).values()];
+  const creditsPage=Math.max(1,Math.min(Math.max(1,Math.ceil(allCredits.length/36)),Number.parseInt(req.query?.creditsPage,10)||1));
+  const filmography=allCredits.slice((creditsPage-1)*36,creditsPage*36);
 
   const body = `<main>
     <section class="container personHero netflixPersonHero">
@@ -9052,8 +9111,7 @@ async function personDetailPage(req, res) {
 
     <div class="container">
       ${rail("Known for", known, "", "Credits")}
-      ${rail("Acting credits", credits.slice(0, 30), "", "Cast")}
-      ${rail("Crew credits", crew.slice(0, 30), "", "Crew")}
+      <section class="svPersonFilmography"><h2>Full filmography <small data-person-credits-count>${allCredits.length} titles</small></h2><div class="dsGrid" data-person-filmography>${filmography.map(item=>movieCard(item,getType(item))).join('')}</div><nav class="pagination" aria-label="Filmography pages">${creditsPage>1?`<a href="/person/${encodeURIComponent(id)}?creditsPage=${creditsPage-1}">← Previous</a>`:''}<span>Page ${creditsPage} of ${Math.max(1,Math.ceil(allCredits.length/36))}</span>${creditsPage*36<allCredits.length?`<a href="/person/${encodeURIComponent(id)}?creditsPage=${creditsPage+1}">Next →</a>`:''}</nav></section>
     </div>
   </main>`;
 
@@ -9061,27 +9119,8 @@ async function personDetailPage(req, res) {
 }
 
 function watchlistPage(req, res) {
-  const body = `<main class="dsPlainPage">
-    ${dsPageHeader("My List", "Your saved films and series, ready for your next movie night.", "Your library")}
-    <section class="dsMyListControls">
-      <a href="/movies">Movies</a>
-      <a href="/tv">TV Shows</a>
-      <a href="/trending">New & Popular</a>
-      <button type="button" id="clearWatchlistInline">Clear My List</button>
-    </section>
-    <section class="dsContent noHero">
-      <div id="watchlistGrid" class="dsGrid"></div>
-    </section>
-    <script>
-      document.getElementById('clearWatchlistInline')?.addEventListener('click', () => {
-        if (!confirm('Clear your saved titles?')) return;
-        localStorage.setItem('movieverse.watchlist', '[]');
-        location.reload();
-      });
-    </script>
-  </main>`;
-
-  res.send(pageShell({ title: `${SITE_NAME} — My List`, active: "watchlist", body }));
+  const body='<main class="dsPlainPage" data-library-page><h1>My List</h1><p>Loading your profile library…</p><noscript>Enable JavaScript to load your saved titles and local watch history.</noscript></main>';
+  res.send(pageShell({title:SITE_NAME+' — My List',active:'watchlist',body}));
 }
 
 function likedPage(req, res) {
@@ -15527,13 +15566,7 @@ app.use((req, res) => {
 });
 
 
-const httpServer = http.createServer(app);
-const io = new Server(httpServer, {
-  cors: {
-    origin: true,
-    credentials: true,
-  },
-});
+
 
 // Engine.IO handles sockets outside Express: require the same access cookie.
 io.use((socket, next) => siteGate.validCookie(socket.handshake.headers.cookie)

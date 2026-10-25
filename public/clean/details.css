@@ -26,51 +26,51 @@ body.svCleanShell .svDetailHero { position: relative; min-height: 530px; height:
 body.svCleanShell .svDetailBackdrop { position: absolute; inset: -24px 0; background-size: cover; background-position: center 28%; transform: translate3d(0, var(--sv-hero-offset, 0px), 0) scale(1.025); z-index: -2; }
 body.svCleanShell .svDetailShade { position: absolute; inset: 0; z-index: -1; background: linear-gradient(0deg, #050505 0%, #05050512 60%, #05050505 100%), linear-gradient(90deg, #0005, #0000 70%); }
 body.svCleanShell .svDetailIdentity { position: absolute; left: 32px; right: 32px; bottom: 18px; max-width: 760px; }
-body.svCleanShell .svDetailTitle { margin: 0 0 16px !important; color: #fff !important; font-size: clamp(32px, 4vw, 56px) !important; font-weight: 650 !important; line-height: 1.03 !important; letter-spacing: -.045em !important; text-wrap: balance; text-transform: none !important; background: none !important; text-shadow: 0 2px 24px #0004 !important; }
+body.svCleanShell .svDetailTitle { margin: 0 0 16px !important; color: #fff !important; font-size: calc(clamp(32px, 4vw, 56px) * var(--st-ui-scale, 1)) !important; font-weight: 650 !important; line-height: 1.03 !important; letter-spacing: -.045em !important; text-wrap: balance; text-transform: none !important; background: none !important; text-shadow: 0 2px 24px #0004 !important; }
 body.svCleanShell .svDetailLogo { display: none; width: auto; max-width: min(380px, 72vw); max-height: 150px; object-fit: contain; object-position: left center; filter: drop-shadow(0 3px 18px #0005); }
 body.svCleanShell .svDetailTitle.hasLogo .svDetailLogo { display: block; }
 body.svCleanShell .svDetailTitle.hasLogo .svDetailTitleText { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-body.svCleanShell .svDetailGenres { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 12px; color: #b1b1b1; font-size: 12px; }
+body.svCleanShell .svDetailGenres { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 12px; color: #b1b1b1; font-size: calc(12px * var(--st-ui-scale, 1)); }
 body.svCleanShell .svDetailGenres a { color: inherit; }
 body.svCleanShell .svDetailGenres a:hover { color: #fff; }
 body.svCleanShell .svDetailGenres .svDetailDot { color: #666; }
-body.svCleanShell .svDetailFacts { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 18px; color: #d0d0d0; font-size: 13px; font-weight: 400; }
+body.svCleanShell .svDetailFacts { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 18px; color: #d0d0d0; font-size: calc(13px * var(--st-ui-scale, 1)); font-weight: 400; }
 body.svCleanShell .svDetailFacts > span + span::before { content: '·'; padding-right: 10px; color: #777; }
 body.svCleanShell .svDetailScore { display: inline-flex; align-items: center; gap: 5px; }
 body.svCleanShell .svDetailScore svg { width: 13px; height: 13px; color: #ebc86c; }
-body.svCleanShell .svDetailScore small { color: #999; font-size: 10px; margin-left: 2px; }
+body.svCleanShell .svDetailScore small { color: #999; font-size: calc(10px * var(--st-ui-scale, 1)); margin-left: 2px; }
 body.svCleanShell .svDetailActions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-body.svCleanShell .svDetailActions :is(.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn) { min-height: 38px !important; padding: 9px 16px !important; font-size: 13px !important; }
+body.svCleanShell .svDetailActions :is(.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn) { min-height: 38px !important; padding: 9px 16px !important; font-size: calc(13px * var(--st-ui-scale, 1)) !important; }
 body.svCleanShell .svDetailActions .dsIconBtn { width: 38px !important; height: 38px !important; padding: 0 !important; }
 body.svCleanShell .svDetailBody { padding: 0 32px 32px; }
 body.svCleanShell .svDetailSection { margin: 0 0 32px; padding: 0; scroll-margin-top: 90px; }
 body.svCleanShell .svDetailSection:last-child { margin-bottom: 0; }
-body.svCleanShell .svDetailSection > h2 { margin: 0 0 16px !important; color: #f0f0f0; font-size: 20px !important; font-weight: 550 !important; letter-spacing: -.025em; line-height: 1.3; }
+body.svCleanShell .svDetailSection > h2 { margin: 0 0 16px !important; color: #f0f0f0; font-size: calc(20px * var(--st-ui-scale, 1)) !important; font-weight: 550 !important; letter-spacing: -.025em; line-height: 1.3; }
 body.svCleanShell .svDetailOverview { padding-top: 4px; }
-body.svCleanShell .svDetailOverview > p { margin: 0; max-width: 780px; color: #a2a2a2; font-size: 14px; line-height: 1.75; font-weight: 400; }
+body.svCleanShell .svDetailOverview > p { margin: 0; max-width: 780px; color: #a2a2a2; font-size: calc(14px * var(--st-ui-scale, 1)); line-height: 1.75; font-weight: 400; }
 body.svCleanShell .svDetailSrOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; padding: 0; clip-path: inset(50%); white-space: nowrap; }
 body.svCleanShell .svDetailCastRail { display: grid; grid-auto-flow: column; grid-auto-columns: 100px; gap: 14px; overflow-x: auto; overflow-y: hidden; padding: 0 0 12px; scroll-snap-type: x proximity; scrollbar-width: thin; scrollbar-color: #ffffff1f transparent; }
 body.svCleanShell .svDetailCastRail .dsCastCard { display: block !important; padding: 0 !important; margin: 0 !important; width: 100% !important; border: 0 !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; transform: none !important; scroll-snap-align: start; }
 body.svCleanShell .svDetailCastRail .dsCastCard > div { display: grid; place-items: center; width: 100% !important; height: auto !important; aspect-ratio: 2 / 3; margin-bottom: 9px; border-radius: 14px !important; overflow: hidden; background: #161616; color: #777; }
 body.svCleanShell .svDetailCastRail .dsCastCard img { display: block; width: 100%; height: 100%; object-fit: cover; }
-body.svCleanShell .svDetailCastRail .dsCastCard strong { display: block; color: #ccc !important; font-size: 12px !important; font-weight: 500 !important; line-height: 1.4; }
-body.svCleanShell .svDetailCastRail .dsCastCard em { display: block; margin-top: 3px; color: #777 !important; font-size: 11px !important; font-weight: 400 !important; line-height: 1.4; font-style: normal; }
+body.svCleanShell .svDetailCastRail .dsCastCard strong { display: block; color: #ccc !important; font-size: calc(12px * var(--st-ui-scale, 1)) !important; font-weight: 500 !important; line-height: 1.4; }
+body.svCleanShell .svDetailCastRail .dsCastCard em { display: block; margin-top: 3px; color: #777 !important; font-size: calc(11px * var(--st-ui-scale, 1)) !important; font-weight: 400 !important; line-height: 1.4; font-style: normal; }
 body.svCleanShell .svDetailRecommendations { display: grid; grid-template-columns: repeat(auto-fill,minmax(150px,1fr)); gap: 24px 14px; }
 body.svCleanShell .svSeason { border-top: 1px solid #ffffff12; }
 body.svCleanShell .svSeason:last-child { border-bottom: 1px solid #ffffff12; }
-body.svCleanShell .svSeason > summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 17px 0; list-style: none; cursor: pointer; color: #ddd; font-size: 14px; }
+body.svCleanShell .svSeason > summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 17px 0; list-style: none; cursor: pointer; color: #ddd; font-size: calc(14px * var(--st-ui-scale, 1)); }
 body.svCleanShell .svSeason > summary::-webkit-details-marker { display: none; }
-body.svCleanShell .svSeason > summary > span { color: #888; font-size: 12px; }
-body.svCleanShell .svSeason > summary > span::after { content: '+'; display: inline-block; width: 16px; margin-left: 12px; color: #aaa; font-size: 16px; }
+body.svCleanShell .svSeason > summary > span { color: #888; font-size: calc(12px * var(--st-ui-scale, 1)); }
+body.svCleanShell .svSeason > summary > span::after { content: '+'; display: inline-block; width: 16px; margin-left: 12px; color: #aaa; font-size: calc(16px * var(--st-ui-scale, 1)); }
 body.svCleanShell .svSeason[open] > summary > span::after { content: '−'; }
-body.svCleanShell .svSeason > p { max-width: 760px; margin: 0 0 16px; color: #888; font-size: 13px; line-height: 1.65; }
+body.svCleanShell .svSeason > p { max-width: 760px; margin: 0 0 16px; color: #888; font-size: calc(13px * var(--st-ui-scale, 1)); line-height: 1.65; }
 body.svCleanShell .svSeason .dsEpisodeChips { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 0 20px; }
-body.svCleanShell .svSeason .dsEpisodeChips a { padding: 8px 12px !important; font-size: 12px !important; }
+body.svCleanShell .svSeason .dsEpisodeChips a { padding: 8px 12px !important; font-size: calc(12px * var(--st-ui-scale, 1)) !important; }
 body.svCleanShell .svDetailTrailers { display: grid; grid-template-columns: repeat(auto-fit,minmax(260px,1fr)); gap: 16px; }
 body.svCleanShell .svDetailTrailers iframe { display: block; width: 100%; aspect-ratio: 16 / 9; height: auto; border: 0; border-radius: 12px; background: #111; }
 body.svCleanShell .svDetailAbout { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 20px 24px; margin: 0; padding: 22px 0 0; border-top: 1px solid #ffffff12; }
-body.svCleanShell .svDetailAbout dt { margin-bottom: 6px; color: #6f6f6f; font-size: 11px; }
-body.svCleanShell .svDetailAbout dd { margin: 0; color: #bdbdbd; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+body.svCleanShell .svDetailAbout dt { margin-bottom: 6px; color: #6f6f6f; font-size: calc(11px * var(--st-ui-scale, 1)); }
+body.svCleanShell .svDetailAbout dd { margin: 0; color: #bdbdbd; font-size: calc(13px * var(--st-ui-scale, 1)); line-height: 1.5; overflow-wrap: anywhere; }
 body.svCleanShell .svDetailClose { position: absolute !important; top: 20px !important; right: 20px !important; z-index: 4; width: 34px !important; height: 34px !important; padding: 0 !important; display: grid !important; place-items: center; border-radius: 50% !important; }
 body.svCleanShell .svDetailDialog {
   --sv-detail-top-gap:max(7svh,calc(100svh - 1100px));
@@ -109,25 +109,25 @@ body.svCleanShell .svDetailDismiss > svg:not(.svLiquidPane__filters) { width: 15
 body.svCleanShell .svDetailChrome { position:sticky; top:16px; z-index:5; display:flex; align-items:center; gap:12px; height:45px; margin:0 18px -45px; padding:0; border:1px solid transparent; border-radius:20px; pointer-events:none; }
 body.svCleanShell .svDetailChrome > button { pointer-events:auto; }
 body.svCleanShell .svDetailChrome :is(.svDetailBack,.svDetailDismiss).dsIconBtn { position:relative !important; inset:auto !important; width:44px !important; height:44px !important; min-height:44px !important; padding:0 !important; }
-body.svCleanShell .svDetailChromeTitle { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px; font-weight:500; color:#eee; opacity:0; }
+body.svCleanShell .svDetailChromeTitle { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:calc(13px * var(--st-ui-scale, 1)); font-weight:500; color:#eee; opacity:0; }
 body.svCleanShell .svDetailScrolled .svDetailChrome { background:#090909b8; border-color:#ffffff15; -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px); }
 body.svCleanShell .svDetailScrolled .svDetailChromeTitle { opacity:1; }
 body.svCleanShell[data-st-glass="off"] .svDetailScrolled .svDetailChrome { background:#151619; -webkit-backdrop-filter:none; backdrop-filter:none; }
-body.svCleanShell .svDetailReturn { position:absolute; top:18px; left:22px; z-index:4; padding:9px 13px !important; min-height:36px !important; font-size:12px !important; }
+body.svCleanShell .svDetailReturn { position:absolute; top:18px; left:22px; z-index:4; padding:9px 13px !important; min-height:36px !important; font-size:calc(12px * var(--st-ui-scale, 1)) !important; }
 body.svCleanShell .svDetailReturn > svg:not(.svLiquidPane__filters) { width:14px; height:14px; }
 body.svCleanShell .svDetailCollectionRail { display:grid; grid-auto-flow:column; grid-auto-columns:150px; gap:14px; overflow-x:auto; overflow-y:hidden; padding:3px 0 12px; scrollbar-width:thin; scrollbar-color:#ffffff20 transparent; }
 body.svCleanShell .svCollectionItem { position:relative; min-width:0; }
-body.svCleanShell .svCollectionViewing { position:absolute; top:10px; left:10px; z-index:2; padding:4px 8px; background:#080808b3; border:1px solid #ffffff2b; border-radius:8px; color:#eee; font-size:9px; letter-spacing:.08em; text-transform:uppercase; pointer-events:none; }
+body.svCleanShell .svCollectionViewing { position:absolute; top:10px; left:10px; z-index:2; padding:4px 8px; background:#080808b3; border:1px solid #ffffff2b; border-radius:8px; color:#eee; font-size:calc(9px * var(--st-ui-scale, 1)); letter-spacing:.08em; text-transform:uppercase; pointer-events:none; }
 body.svCleanShell .svCollectionItem[aria-current="true"] .movieCard .posterWrap { box-shadow:inset 0 0 0 1px #ffffff60 !important; }
 body.svCleanShell .svDetailLoadingArt { position:relative; height:430px; overflow:hidden; background:#111; }
 body.svCleanShell .svDetailLoadingArt::after { content:""; position:absolute; inset:0; background:linear-gradient(110deg,transparent,#ffffff06,transparent); animation:svDetailsLoading 1.8s ease-in-out infinite; }
 body.svCleanShell .svDetailLoadingCopy { display: grid; gap: 12px; padding: 28px 32px; }
 body.svCleanShell .svDetailLoadingCopy > span { height: 12px; width: 85%; border-radius: 6px; background: #151515; }
 body.svCleanShell .svDetailLoadingCopy > span:last-child { width: 55%; }
-body.svCleanShell .svDetailLoading > p { padding: 0 32px; color: #888; font-size: 13px; }
+body.svCleanShell .svDetailLoading > p { padding: 0 32px; color: #888; font-size: calc(13px * var(--st-ui-scale, 1)); }
 body.svCleanShell .svDetailError { padding: 90px 32px; }
-body.svCleanShell .svDetailError h2 { font-size: 24px; font-weight: 500; }
-body.svCleanShell .svDetailError p { margin: 14px 0 24px; color: #999; font-size: 14px; line-height: 1.6; }
+body.svCleanShell .svDetailError h2 { font-size: calc(24px * var(--st-ui-scale, 1)); font-weight: 500; }
+body.svCleanShell .svDetailError p { margin: 14px 0 24px; color: #999; font-size: calc(14px * var(--st-ui-scale, 1)); line-height: 1.6; }
 @keyframes svDetailsEnter { from {transform:var(--sv-detail-start,translateY(calc(var(--sv-detail-rise) + var(--sv-detail-scroll))));} to {transform:translateY(0px);} }
 @keyframes svDetailsExit { from {transform:var(--sv-detail-start,translateY(0px));} to {transform:translateY(calc(var(--sv-detail-rise) + var(--sv-detail-scroll)));} }
 @keyframes svDetailsDimIn { from {opacity:var(--sv-detail-dim-start,0);} to {opacity:1;} }
@@ -138,11 +138,11 @@ body.svCleanShell .svDetailError p { margin: 14px 0 24px; color: #999; font-size
   body.svCleanShell .svTitleDetails.svTitleDetails { width: calc(100% - 24px) !important; border-radius: 18px !important; }
   body.svCleanShell .svDetailHero, body.svCleanShell .svDetailDialog .svDetailHero { height: 480px; min-height: 440px; }
   body.svCleanShell .svDetailIdentity { left: 20px; right: 20px; bottom: 18px; }
-  body.svCleanShell .svDetailTitle { font-size: 36px !important; }
+  body.svCleanShell .svDetailTitle { font-size: calc(36px * var(--st-ui-scale, 1)) !important; }
   body.svCleanShell .svDetailLogo { max-width: min(280px,70vw); max-height: 120px; }
   body.svCleanShell .svDetailBackdrop { background-position: 60% 20%; }
   body.svCleanShell .svDetailBody { padding: 0 20px 28px; }
-  body.svCleanShell .svDetailFacts { gap: 8px; font-size: 12px; }
+  body.svCleanShell .svDetailFacts { gap: 8px; font-size: calc(12px * var(--st-ui-scale, 1)); }
   body.svCleanShell .svDetailFacts > span + span::before { padding-right: 8px; }
   body.svCleanShell .svDetailCastRail { grid-auto-columns: 88px; gap: 12px; }
   body.svCleanShell .svDetailRecommendations { grid-template-columns: repeat(auto-fill,minmax(126px,1fr)); gap: 22px 12px; }
@@ -160,6 +160,6 @@ body.svCleanShell.reduceMotion :is(.svDetailPanel,.svDetailScrim), body.svCleanS
 /* Movie and episode downloads have distinct focus targets, not nested anchors. */
 .svDetailEpisodeChoice{display:inline-flex;align-items:stretch;gap:4px;min-width:0}
 body.svCleanShell .svDetailEpisodeChoice > .svDetailEpisodeTile{flex:1 1 auto}
-body.svCleanShell .svDetailEpisodeDownload{display:grid;place-items:center;min-width:36px;padding:0 9px;border:1px solid #ffffff25;border-radius:10px;background:#ffffff0d;color:#f0f4ff;text-decoration:none;font-size:18px}
+body.svCleanShell .svDetailEpisodeDownload{display:grid;place-items:center;min-width:36px;padding:0 9px;border:1px solid #ffffff25;border-radius:10px;background:#ffffff0d;color:#f0f4ff;text-decoration:none;font-size:calc(18px * var(--st-ui-scale, 1))}
 body.svCleanShell .svDetailEpisodeDownload:is(:hover,:focus-visible){background:#ffffff26;outline:2px solid #dcefff;outline-offset:2px}
 body.svCleanShell .svDownloadAction{white-space:nowrap}
