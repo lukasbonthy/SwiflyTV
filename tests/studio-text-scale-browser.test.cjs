@@ -116,6 +116,8 @@ test('maximum text size keeps all Studio panels inside 320px, desktop and TV scr
     scaled(await shellFonts(page),shellBaseline,Number(uiScale)/100,screen.viewport.width+'px page');
     scaled(await workspaceFonts(page),workspaceBaseline,Number(uiScale)/100,screen.viewport.width+'px Studio');
    }
+   await page.locator('[data-st-advanced-toggle]').check();
+   const header=await page.locator('.stHeader').evaluate(n=>({width:n.clientWidth,scroll:n.scrollWidth}));assert(header.scroll<=header.width+1,screen.viewport.width+'px header fits at maximum text size');
    for(const tab of await page.locator('[data-st-tab]').all()){
     const key=await tab.getAttribute('data-st-tab');await tab.click();
     const geometry=await page.locator('#stPanel-'+key).evaluate(node=>{

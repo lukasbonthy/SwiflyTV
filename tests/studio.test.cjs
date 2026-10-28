@@ -33,9 +33,9 @@ test('Studio opens from the header, retains background scroll and restores opene
 });
 test('A visual preset previews live but only Save persists it',()=>{
   const env=setup(),w=env.window,d=w.document;click(env,'#controlToggleTop');click(env,'[data-st-preset="cinema"]');
-  assert.equal(d.body.dataset.stTheme,'red');assert.equal(d.body.dataset.stLayout,'cinema');assert.equal(w.localStorage.getItem(key),null);
+  assert.equal(d.body.dataset.stTheme,'red');assert.equal(d.body.dataset.stLayout,'default');assert.equal(w.localStorage.getItem(key),null);
   assert.equal(d.querySelector('[data-st-save]').disabled,false);click(env,'[data-st-save]');
-  assert.equal(d.querySelector('#controlPanel').open,false);const saved=JSON.parse(w.localStorage.getItem(key));assert.equal(saved.values.theme,'red');assert.equal(saved.values.layout,'cinema');env.finish();
+  assert.equal(d.querySelector('#controlPanel').open,false);const saved=JSON.parse(w.localStorage.getItem(key));assert.equal(saved.values.theme,'red');assert.equal(saved.values.layout,'default');env.finish();
 });
 test('Cancel restores every draft change and leaves saved settings untouched',()=>{
   const stored=JSON.stringify({version:1,values:{theme:'blue',layout:'posterwall',reduceMotion:true}});

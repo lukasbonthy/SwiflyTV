@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "testedCommit": "aa6298d3f40be0740b1ea1290d035234ca864569",
+  "sourceHashes": {
+    "server.js": "1c9cf974c4c91287ccac49c56364537f17b44d8d7fb47f892cb6452bbe373f3d",
+    "public/clean/account.js": "32f2287ccc046f2452ecf2c83491b9d8f4bea8ea754b0f06de8952878f3db850",
+    "public/clean/account-data.js": "8a999f07d339a2bccf5eec1f2fed7617c782d1a553eacac5e6169a60d3ae0ab7",
+    "public/clean/account-backup.js": "7eeb18d289c9229e205a305833e80d9576a2c97ba9d7d5370a75814f11b15445",
+    "public/clean/library-state.js": "5480dad46db4ab0bf44b68a17a296a09b9294d0af105a227f055a336ce0d91e5",
+    "public/clean/library-page.js": "e0fb2a9d998df02d700917df543dac35d0f64b6b58a6d8df6c90a66c9ee130fd",
+    "public/studio/config.js": "8b78fd21b367ce8e81208d850f16649fa843b81fbfa2d7862bd394e4fa067197",
+    "public/studio/studio.js": "5cf7870e5e1ac06ca5a6b637e56eb8a38a9619b8396514401a9208459b1a2214",
+    "ui/studio.js": "cc5cbc18cb28a37aee551c8405ac8f20c10eeee63ceeffe1f5f1a50469916831"
+  },
+  "unitAndApi": {
+    "tests": 1405,
+    "pass": 1405,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "duration_ms": 75607.092343
+  },
+  "browser": {
+    "tests": 190,
+    "pass": 190,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "duration_ms": 223812.81972
+  },
+  "total": 1595,
+  "files": {
+    "unitAndApi": 112,
+    "browser": 27,
+    "all": 139
+  },
+  "integratedAcceptance": {
+    "passed": 33,
+    "failed": 0,
+    "assertions": 326,
+    "screenshots": 6
+  },
+  "aiQuality": {
+    "positiveQueries": 80,
+    "top1Hits": 78,
+    "top3Hits": 80,
+    "negativeQueries": 8,
+    "correctAbstentions": 6,
+    "developmentStoryRoutesPassed": 20,
+    "developmentStoryRoutesTotal": 20,
+    "modelChange": false
+  },
+  "review": {
+    "critical": 0,
+    "important": 3,
+    "minor": 1,
+    "allAddressed": true,
+    "reviewedHead": "db3a15de0bbebf4281e50eac6a5c89a6922a4109",
+    "fixCommit": "aa6298d3f40be0740b1ea1290d035234ca864569"
+  },
+  "limitations": [
+    "Local deterministic external catalog/artwork; actual app scripts, storage, session/state endpoints and assets.",
+    "No production account/database or deployment recovery claim.",
+    "Two initial broad-run background logs were incomplete; the complete 139-file suite was verified as explicit 112-file and 27-file groups.",
+    "Physical Xbox, live provider streaming and cross-network camera/TURN are not established here."
+  ]
+}

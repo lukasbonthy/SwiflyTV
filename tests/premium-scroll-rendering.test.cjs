@@ -47,11 +47,17 @@ async function catalog(browser, options = {}) {
       // Assets must traverse Express. Serving files directly here masked the
       // missing production route and let the engine silently fail to load.
       if (url.origin === origin && url.pathname.startsWith('/assets/')) return route.continue();
+      // Saving must wait for the actual guest identity check. An empty text
+      // response here used to leave Library suspended while legacy writes
+      // falsely appeared successful.
+      if (url.origin === origin && url.pathname === '/api/connect/session') return route.continue();
       if (url.hostname === 'image.tmdb.org') return route.fulfill({contentType:'image/svg+xml', body:
         '<svg xmlns="http://www.w3.org/2000/svg" width="900" height="600"><rect width="900" height="600" fill="#325776"/><circle cx="280" cy="240" r="180" fill="#afc3d7"/></svg>'});
       return route.fulfill({body:'', contentType:route.request().resourceType() === 'stylesheet' ? 'text/css' : 'text/plain'});
     });
     await page.goto(origin);
+    await page.evaluate(() => SwiflyAccount.ready);
+    await page.evaluate(() => SwiflyLibrary.ready);
     page.once('close', () => api.io.close());
     ready = true;
     return page;

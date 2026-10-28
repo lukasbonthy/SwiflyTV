@@ -17,7 +17,7 @@ before(async()=>{
 after(async()=>{await browser?.close();if(server)await new Promise(resolve=>server.close(resolve));});
 for(const viewport of [{width:1440,height:1100},{width:390,height:844}])test('Settings fits '+viewport.width+'px and exposes usable preference controls',{skip},async()=>{
  const page=await browser.newPage({viewport}),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto(base+'/settings');await page.waitForFunction(()=>document.querySelector('[data-trakt-status]').textContent.includes('not configured'));
- assert.equal(await page.locator('h1').innerText(),'Your settings.');assert.equal(await page.getByRole('checkbox').count(),5);assert.equal(await page.locator('[data-trakt-link]').isDisabled(),true);
+ assert.equal(await page.locator('h1').innerText(),'Settings');assert.equal(await page.getByRole('checkbox').count(),5);assert.equal(await page.locator('[data-trakt-link]').isDisabled(),true);
  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'settings must not scroll horizontally');
  const checkbox=page.locator('[data-preference="spoilerMode"]');await checkbox.focus();assert.equal(await checkbox.evaluate(e=>document.activeElement===e),true);await page.keyboard.press('Space');assert.equal(await checkbox.isChecked(),true);assert.match(await page.locator('[data-preference-status]').innerText(),/saved/i);assert.deepEqual(errors,[]);
  await page.screenshot({path:'/tmp/swifly-settings-'+viewport.width+'.png',fullPage:true});await page.close();

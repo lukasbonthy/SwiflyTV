@@ -3,7 +3,7 @@
  'use strict';
  const home=['continue','upcoming','recommended','trending-movies','trending-tv','popular-movies','popular-tv','top-movies','top-tv','new-releases'];
  const nav=['home','movies','tv','discover','list','study'];
- const defaults={theme:'default',font:'default',layout:'default',cardstyle:'rounded',density:'comfy',backdrop:'aurora',auroraColor:'glacier',auroraStrength:80,auroraMotion:'drift',glass:'liquid',smooth:true,reduceMotion:false,
+ const defaults={themeId:'pure',theme:'default',font:'default',layout:'default',cardstyle:'rounded',density:'comfy',backdrop:'aurora',auroraColor:'glacier',auroraStrength:80,auroraMotion:'drift',glass:'liquid',smooth:true,reduceMotion:false,
   customColors:false,accentColor:'#c8c3ef',accentSecondary:'#84bdb4',canvasColor:'#090b0f',gradientAngle:135,gradientStrength:8,glassOpacity:55,glassBlur:18,glassEdge:40,glassGlow:10,
   homeOrder:home,homeHidden:[],heroMode:'cinematic',heroPosition:'first',posterWidth:180,homeColumns:6,rowShape:'rail',navOrder:nav,navLayout:'top',navLabels:true,navIcons:'line',navDensity:'comfortable',navActive:'pill',
   playerStyle:'cinema',playerProgress:3,playerTime:true,playerIconScale:100,playerOpacity:85,playerPosition:'floating',playerAutoHide:2600,captionSize:100,captionColor:'#ffffff',captionBg:65,captionEdge:'shadow',playerBackdrop:'dark',adaptiveCinema:false,adaptiveStrength:35,
@@ -13,6 +13,21 @@
  const enums={theme:['default','red','blue','green','mono'],font:['default','cinema','soft','wide'],layout:['default','cinema','posterwall'],cardstyle:['rounded','sharp','softglass'],density:['comfy','compact'],backdrop:['aurora','smooth','grain'],auroraColor:['glacier','violet','rose','mint'],auroraMotion:['drift','slow','still'],glass:['off','subtle','liquid'],heroMode:['cinematic','compact','banner'],heroPosition:['first','after-first'],rowShape:['rail','grid'],navLayout:['top','sidebar'],navIcons:['line','filled','minimal'],navDensity:['comfortable','compact'],navActive:['pill','underline','accent'],playerStyle:['cinema','minimal','classic'],playerPosition:['floating','bottom'],playerAutoHide:[1800,2600,4000,6000],captionEdge:['shadow','outline','none'],playerBackdrop:['dark','artwork','ambient'],hudPosition:['right','left'],hudDensity:['comfortable','compact'],hudIcons:['line','solid'],hudMotion:['subtle','none'],notificationPreview:['expanded','compact'],toastPosition:['bottom','top'],aiSpacing:['comfortable','compact'],aiCards:['list','grid'],aiGlass:['inherit','solid','soft'],loaderStyle:['cinematic','minimal','artwork','aurora','basic'],posterHover:['lift','zoom','reveal','flat'],posterActions:['auto','always'],focusStyle:['ring','frame'],performancePreset:['auto','desktop','mobile','xbox','minimal'],tvControls:['standard','large']};
  const ranges={auroraStrength:[0,100],gradientAngle:[0,360],gradientStrength:[0,30],glassOpacity:[15,95],glassBlur:[0,28],glassEdge:[0,100],glassGlow:[0,30],posterWidth:[120,260],homeColumns:[3,8],playerProgress:[2,7],playerIconScale:[85,125],playerOpacity:[60,100],captionSize:[75,200],captionBg:[0,100],adaptiveStrength:[0,65],hudWidth:[280,480],hudTransparency:[65,100],aiWidth:[560,880],transitionSpeed:[100,400],loaderDim:[70,98],uiScale:[90,120],tvScale:[100,130]};
  const colors=['accentColor','accentSecondary','canvasColor','captionColor'],deviceFields=['performancePreset','tvScale','tvControls'];
+ // Curated themes are deliberately narrower than portable named looks. A new
+ // theme cannot reorder a library, change controls or relax a comfort preference.
+ const appearanceFields=['themeId','theme','font','cardstyle','backdrop','auroraColor','auroraStrength','auroraMotion','glass','customColors','accentColor','accentSecondary','canvasColor','gradientAngle','gradientStrength','glassOpacity','glassBlur','glassEdge','glassGlow'];
+ const appearanceBase=Object.fromEntries(appearanceFields.map(key=>[key,defaults[key]]));
+ const curated=(id,name,description,values)=>({name,description,values:{...appearanceBase,...values,themeId:id}});
+ const curatedThemes={
+  pure:curated('pure','Swifly Original','Pearl, clear glass & northern light',{}),
+  halloween:curated('halloween','Halloween','Pumpkin light & a velvet night',{theme:'orange',customColors:true,accentColor:'#ffb36b',accentSecondary:'#ac8de3',canvasColor:'#140d1b',gradientAngle:145,gradientStrength:18,glass:'subtle',glassOpacity:74,glassBlur:14,glassEdge:38,glassGlow:8,backdrop:'aurora',auroraColor:'violet',auroraStrength:45,auroraMotion:'slow'}),
+  winter:curated('winter','Winter Lights','Evergreen, champagne & frosted glass',{theme:'green',customColors:true,accentColor:'#dfd3ab',accentSecondary:'#84beb3',canvasColor:'#091815',gradientAngle:150,gradientStrength:13,glass:'subtle',glassOpacity:78,glassBlur:14,glassEdge:48,glassGlow:8,backdrop:'aurora',auroraColor:'mint',auroraStrength:40,auroraMotion:'slow'}),
+  cinema:curated('cinema','Cinema','Warm copper & quiet film grain',{theme:'red',font:'cinema',customColors:true,accentColor:'#edba99',accentSecondary:'#a88673',canvasColor:'#140e0d',gradientStrength:8,backdrop:'grain',glass:'subtle',glassOpacity:80,glassBlur:12,glassGlow:6}),
+  midnight:curated('midnight','Midnight','Ink blue & a soft silver glow',{theme:'blue',customColors:true,accentColor:'#b5cdff',accentSecondary:'#9292d2',canvasColor:'#080f20',gradientAngle:135,gradientStrength:16,cardstyle:'softglass',backdrop:'aurora',auroraColor:'violet',auroraStrength:35,auroraMotion:'slow',glassOpacity:62,glassBlur:20}),
+  forest:curated('forest','Forest','Sage, moss & a grounded canvas',{theme:'green',customColors:true,accentColor:'#c1d8b5',accentSecondary:'#779c8b',canvasColor:'#101711',gradientStrength:12,backdrop:'smooth',glass:'subtle',glassOpacity:85,glassBlur:10,glassGlow:4}),
+  focus:curated('focus','Focus','Graphite, silver & solid surfaces',{theme:'mono',customColors:true,accentColor:'#dedfe3',accentSecondary:'#9da4b0',canvasColor:'#101114',gradientStrength:0,backdrop:'smooth',glass:'off',glassOpacity:95,glassBlur:0,glassGlow:0,cardstyle:'sharp'})
+ };
+ enums.themeId=['custom',...Object.keys(curatedThemes)];
  const clone=v=>JSON.parse(JSON.stringify(v));
  const plain=v=>!!v&&typeof v==='object'&&!Array.isArray(v);
  const hex=v=>typeof v==='string'&&/^#[\da-f]{6}$/i.test(v)?v.toLowerCase():typeof v==='string'&&/^#[\da-f]{3}$/i.test(v)?'#'+[...v.slice(1)].map(c=>c+c).join('').toLowerCase():null;
@@ -30,6 +45,7 @@
   if(home.filter(k=>k!=='continue').every(k=>result.homeHidden.includes(k)))result.homeHidden=result.homeHidden.filter(k=>k!=='trending-movies');
   return result;
  }
+ function applyTheme(values,id){return validate({...validate(values),...(curatedThemes[id]?.values||{})});}
  const get=(s,key)=>{try{return s.getItem(key);}catch{return null;}};
  const json=(s,key)=>{try{return JSON.parse(get(s,key)||'null');}catch{return null;}};
  function ownerKey(storage,user){
@@ -85,7 +101,7 @@
   if(v.reduceTransparency)v.glass='off';else if(preset==='mobile'&&v.glass==='liquid')v.glass='subtle';
   if(preset==='mobile')v.glassBlur=Math.min(12,v.glassBlur);
   if(v.reduceMotion){v.auroraMotion='still';v.posterHover='flat';v.hudMotion='none';v.pageMotion=false;}
-  if(preset==='minimal'){v.backdrop='smooth';v.glassGlow=0;}if(v.highContrast){v.customColors=true;v.canvasColor='#000000';v.accentColor='#ffffff';v.accentSecondary='#ffffff';}
+  if(preset==='minimal'){v.backdrop='smooth';v.glassGlow=0;}if(v.highContrast){v.customColors=true;v.canvasColor='#000000';v.accentColor='#ffffff';v.accentSecondary='#ffffff';v.gradientStrength=0;v.glass='off';v.backdrop='smooth';v.glassGlow=0;}
   return v;
  }
  const accents={default:'#ece9e2',red:'#e7baa3',blue:'#a9c7ed',green:'#b4cbb8',mono:'#c1c1c7',purple:'#c8b1ff',orange:'#ffc18c',pink:'#f5b5d1',cyan:'#9ae1e9'};
@@ -116,6 +132,6 @@
   if(typeof window!=='undefined'){window.SwiflyAppearance=clone(v);if(!v.smooth||v.reduceMotion)window.SwiflyMotion?.stop?.();window.SwiflyAurora?.refresh?.();}
   return v;
  }
- const api={defaults,enums,ranges,colors,deviceFields,clone,validate,ownerKey,storageKey,read,write,portable,exportTheme,parseImport,contrast,effective,context,apply,accents};
+ const api={defaults,enums,ranges,colors,deviceFields,appearanceFields,curatedThemes,applyTheme,clone,validate,ownerKey,storageKey,read,write,portable,exportTheme,parseImport,contrast,effective,context,apply,accents};
  if(typeof module!=='undefined'&&module.exports)module.exports=api;else globalThis.SwiflyStudioConfig=Object.freeze(api);
 })();

@@ -39,6 +39,7 @@ const { createPlayerAssist } = require("./lib/player-assist");
 const {searchOptions,filterSearch,certification,createCatalogRouter}=require("./lib/catalog-tools");
 const {createTrakt}=require("./lib/trakt");
 const {settingsMarkup}=require("./ui/settings");
+const {accountBackupMarkup}=require("./ui/account-backup");
 const {createFeed}=require("./lib/feed");
 const {feedBell,feedDialogs,feedHome,feedDiscover}=require("./ui/feed");
 const { searchMarkup, searchPageMarkup, recommendationsMarkup, audiobooksMarkup } = require("./ui/discovery");
@@ -6459,22 +6460,15 @@ async function tmdb(endpoint, params = {}, ttl = CACHE_TTL.medium, signal) {
 
 function setupNeededPage(error = "") {
   return pageShell({
-    title: `${SITE_NAME} Setup`,
+    title: `${SITE_NAME} — Catalog unavailable`,
     active: "",
     body: `
       <main class="setupPage">
         <section class="setupCard">
-          <span class="eyebrow">Setup needed</span>
-          <h1>Connect your TMDB API key.</h1>
-          <p>${escapeHtml(error || "This site needs a TMDB_API_KEY environment variable before it can show movie data.")}</p>
-          <div class="codePanel">
-            <strong>Render environment variable</strong>
-            <code>TMDB_API_KEY=your_tmdb_api_key_here</code>
-          </div>
-          <div class="setupGrid">
-            <div><b>Build command</b><code>npm install</code></div>
-            <div><b>Start command</b><code>npm start</code></div>
-          </div>
+          <span class="eyebrow">Try again shortly</span>
+          <h1>We couldn’t load the catalog.</h1>
+          <p>The movie catalog is unavailable right now. Your saved lists and account data are kept separately.</p>
+          <div class="heroActions"><a class="dsPrimaryBtn" href="">Try again</a><a class="dsSecondaryBtn" href="/my-list">Open My List</a></div>
         </section>
       </main>
     `,
@@ -6591,8 +6585,9 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/clean/clean.css?v=262" />
     <script defer src="/assets/clean/clean.js?v=5"></script>
     <script defer src="/assets/clean/account-sheet.js?v=1"></script>
-    <script defer src="/assets/clean/account.js?v=262"></script>
-    <script defer src="/assets/clean/library-state.js?v=262"></script>
+    <script defer src="/assets/clean/account-data.js?v=1"></script>
+    <script defer src="/assets/clean/account.js?v=263"></script>
+    <script defer src="/assets/clean/library-state.js?v=263"></script>
     <script defer src="/assets/clean/settings.js?v=262"></script>
     <link rel="stylesheet" href="/assets/clean/library.css?v=262" />
     <link rel="stylesheet" href="/assets/connect/connect.css?v=262" />
@@ -6600,7 +6595,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/avatars.js?v=209"></script>
     ${active === "profiles" ? '<script defer src="/assets/clean/profiles.js?v=209"></script>' : ""}
     <script defer src="/assets/clean/continue.js?v=262"></script>
-    <script defer src="/assets/clean/library-page.js?v=1"></script>
+    <script defer src="/assets/clean/library-page.js?v=2"></script>
     <script defer src="/assets/clean/episode-browser.js?v=1"></script>
     <script defer src="/assets/clean/feed.js?v=261"></script>
     <link rel="stylesheet" href="/assets/clean/feed.css?v=262" />
@@ -6615,8 +6610,9 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/download.js?v=3"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=262" />
     <script defer src="/assets/liquid-glass/surfaces.js?v=259"></script>
-    <link rel="stylesheet" href="/assets/studio/studio.css?v=262" />
-    <script defer src="/assets/studio/studio.js?v=260"></script>
+    <link rel="stylesheet" href="/assets/studio/studio.css?v=263" />
+    <link rel="stylesheet" href="/assets/clean/usability.css?v=1" />
+    <script defer src="/assets/studio/studio.js?v=263"></script>
     <link rel="stylesheet" href="/assets/clean/aurora.css?v=260" />
     <script defer src="/assets/clean/aurora.js?v=204"></script>
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=262" />' : ""}
@@ -6710,10 +6706,11 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
             <a href="/profiles"><span>${cleanIcon("user")}</span><b>Switch profile</b></a>
             <a href="/profiles/manage"><span>${cleanIcon("user")}</span><b>Manage profiles</b></a>
             <a href="/account"><span>${cleanIcon("user")}</span><b>Account</b></a>
-            <a href="/settings"><span>${cleanIcon("settings")}</span><b>Settings & Trakt</b></a>
+            <a href="/settings"><span>${cleanIcon("settings")}</span><b>Settings</b></a>
+            <a href="/account#account-data"><span>${cleanIcon("bookmark")}</span><b>Import & back up data</b></a>
             <a href="/continue-watching"><span>${cleanIcon("play-circle")}</span><b>Continue watching</b></a>
             <a href="/my-list"><span>${cleanIcon("bookmark")}</span><b>My List</b></a>
-            <a href="/liked"><span>${cleanIcon("heart")}</span><b>Liked titles</b></a>
+            <a href="/liked"><span>${cleanIcon("heart")}</span><b>Favorites</b></a>
             <a href="/friends"><span>${cleanIcon("people")}</span><b>Friends & messages</b></a>
             <a href="/friends?tab=home"><span>${cleanIcon("home")}</span><b>Our shared home</b></a>
             <a href="/recommendations"><span>${cleanIcon("compass")}</span><b>AI picks</b></a>
@@ -6783,12 +6780,21 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     }
 
     function saveLibrary(key, list) {
-      localStorage.setItem(key, JSON.stringify(list.slice(0, 300)));
-      window.SwiflyLibrary?.syncLegacy();
+      var previous;
+      try {
+        previous = localStorage.getItem(key);
+        localStorage.setItem(key, JSON.stringify(list.slice(0, 300)));
+        if (window.SwiflyLibrary?.syncLegacy() === false) throw Error("The profile library could not be saved.");
+      } catch {
+        try { if (previous === null) localStorage.removeItem(key); else if (previous !== undefined) localStorage.setItem(key, previous); } catch {}
+        showToast("Could not save this change. Check browser storage and try again.");
+        return false;
+      }
       window.dispatchEvent(new Event("swifly:library-change"));
       syncLibraryButtons();
       renderSavedGrid("watchlistGrid", "movieverse.watchlist", "watchlist");
       renderSavedGrid("likedGrid", "movieverse.liked", "liked");
+      return true;
     }
 
     function readWatchlist() {
@@ -6796,7 +6802,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     }
 
     function saveWatchlist(list) {
-      saveLibrary("movieverse.watchlist", list);
+      return saveLibrary("movieverse.watchlist", list);
     }
 
     function readLiked() {
@@ -6804,7 +6810,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     }
 
     function saveLiked(list) {
-      saveLibrary("movieverse.liked", list);
+      return saveLibrary("movieverse.liked", list);
     }
 
     function watchKey(type, id) {
@@ -6893,13 +6899,13 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
 
       if (existing >= 0) {
         list.splice(existing, 1);
-        saveLibrary(keyName, list);
+        if (!saveLibrary(keyName, list)) return null;
         showToast(removedMessage);
         return false;
       }
 
       list.unshift(item);
-      saveLibrary(keyName, list);
+      if (!saveLibrary(keyName, list)) return null;
       showToast(addedMessage);
       return true;
     }
@@ -6979,10 +6985,11 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       }).join("");
     }
 
-    document.getElementById("clearWatchlist")?.addEventListener("click", () => {
-      if (!confirm("Clear your saved watchlist in this browser?")) return;
-      saveWatchlist([]);
-      showToast("My List cleared");
+    document.getElementById("clearWatchlist")?.addEventListener("click", async () => {
+      if (!confirm("Clear all Saved titles for this profile? Favorites and watch history will stay.")) return;
+      if (!saveWatchlist([])) return;
+      try { if (window.SwiflyAccount?.user) await (window.SwiflyAccount.flush?.() || window.SwiflyAccount.sync()); showToast(window.SwiflyAccount?.user ? "Saved titles cleared and synced" : "Saved titles cleared on this browser"); }
+      catch { showToast("Saved titles cleared on this browser. Account sync is waiting; keep this page open and retry."); }
     });
 
     renderSavedGrid("watchlistGrid", "movieverse.watchlist", "watchlist");
@@ -8308,11 +8315,11 @@ async function listingPage(req, res, type = "movie", options = {}) {
     <section class="dsContent">
       ${partyBrowse ? partyBrowseMarkup() : ""}
       ${dsRail(categoryOne, rowOne.results || [], type)}
-      ${dsTopRail(type === "tv" ? "Top 10 TV Shows Today" : "Top Movies Today", data.results || [], type)}
+      ${dsTopRail(({popular:"Popular", top_rated:"Top rated", upcoming:"Upcoming", now_playing:"Now playing", airing_today:"Airing today", on_the_air:"On air", discover:"Discover"}[sort] || "Popular") + (type === "tv" ? " series" : " movies"), data.results || [], type)}
       ${dsRail(categoryTwo, rowTwo.results || [], type)}
       ${dsRail(categoryThree, rowThree.results || [], type)}
       ${dsRail(categoryFour, rowFour.results || [], type)}
-      ${dsRail(`${label} A-Z`, data.results || [], type)}
+      ${dsRail(`Browse ${label}`, data.results || [], type)}
     </section>
   </main>`;
 
@@ -8342,8 +8349,8 @@ async function trendingPage(req, res) {
         <a class="${type === "movie" ? "active" : ""}" href="/trending?type=movie">Movies</a>
         <a class="${type === "tv" ? "active" : ""}" href="/trending?type=tv">TV Shows</a>
       </div>
-      ${dsRail("Trending Now", (data.results || []).filter((item) => ["movie", "tv"].includes(getType(item))), type === "all" ? "" : type, { tag: "Live" })}
-      ${dsTopRail("Top Movies Today", popularMovies.results || [], "movie")}
+      ${dsRail("Trending this week", (data.results || []).filter((item) => ["movie", "tv"].includes(getType(item))), type === "all" ? "" : type, { tag: "This week" })}
+      ${dsTopRail("Popular movies", popularMovies.results || [], "movie")}
       ${dsRail("Popular TV Shows", popularTv.results || [], "tv")}
       ${dsRail("Coming Soon", upcomingMovies.results || [], "movie")}
       ${dsRail("Now Playing", nowPlaying.results || [], "movie")}
@@ -8393,26 +8400,36 @@ async function genrePage(req, res, type) {
 
 async function genresPage(req, res) {
   const [movieGenres, tvGenres] = await Promise.all([getGenres("movie"), getGenres("tv")]);
-
-  const genreGroup = (title, type, genres) => `<section class="dsGenreGroup">
-    <h2>${escapeHtml(title)}</h2>
-    <div class="dsGenreGrid">${genres.map((g) => `<a class="dsGenreTile" href="/genre/${type}/${encodeURIComponent(g.id)}?name=${encodeURIComponent(g.name)}">${escapeHtml(g.name)}</a>`).join("")}</div>
-  </section>`;
-
+  const type = req.query.media === "tv" ? "tv" : "movie";
+  const languages = [["", "Any language"], ["en", "English"], ["es", "Spanish"], ["ko", "Korean"], ["ja", "Japanese"], ["fr", "French"]];
+  const language = languages.some(([code]) => code === req.query.language) ? req.query.language : "";
+  const genres = type === "tv" ? tvGenres : movieGenres;
+  const genre = genres.some(item => String(item.id) === String(req.query.genre || "")) ? String(req.query.genre) : "";
+  const sort = ["popular", "rating", "newest", "title"].includes(req.query.sort) ? req.query.sort : "popular";
+  const sortBy = {popular:"popularity.desc", rating:"vote_average.desc", newest:type === "tv" ? "first_air_date.desc" : "primary_release_date.desc", title:type === "tv" ? "original_name.asc" : "original_title.asc"}[sort];
+  const page = pageNumber(req.query.page);
+  const browsing = ["media", "language", "genre", "sort"].some(key => Object.hasOwn(req.query, key));
+  const params = {media:type, ...(language ? {language} : {}), ...(genre ? {genre} : {}), sort};
+  const browseUrl = "/browse-by-languages?" + new URLSearchParams(params);
+  const data = browsing ? await tmdb("/discover/" + type, {page, sort_by:sortBy, include_adult:"false", ...(language ? {with_original_language:language} : {}), ...(genre ? {with_genres:genre} : {})}, CACHE_TTL.medium) : null;
+  const rows = (Array.isArray(data?.results) ? data.results : []).filter(item => !item.adult);
+  const options = (items, selected) => items.map(([value, label]) => `<option value="${escapeHtml(value)}"${value === selected ? " selected" : ""}>${escapeHtml(label)}</option>`).join("");
+  const genreGroup = (title, kind, items) => `<section class="dsGenreGroup"><h2>${escapeHtml(title)}</h2><div class="dsGenreGrid">${items.map(item => `<a class="dsGenreTile" href="/genre/${kind}/${encodeURIComponent(item.id)}?name=${encodeURIComponent(item.name)}">${escapeHtml(item.name)}</a>`).join("")}</div></section>`;
+  const results = !data ? "" : data.__error
+    ? `<section class="emptyState" role="status"><h2>The catalog could not load</h2><p>Please try again in a moment.</p><a class="dsSecondaryBtn" href="${escapeHtml(browseUrl)}">Try again</a></section>`
+    : `<section aria-labelledby="browseResultsTitle"><h2 id="browseResultsTitle">${language ? escapeHtml(languages.find(([code]) => code === language)[1]) + " · " : ""}${type === "tv" ? "Series" : "Movies"}</h2>${rows.length ? `<div class="dsGrid">${rows.map(item => movieCard(item, type)).join("")}</div>${pagination(browseUrl, page, data.total_pages)}` : '<div class="emptyState"><p>No titles match these choices. Try another language or genre.</p><a class="dsSecondaryBtn" href="/browse-by-languages">Clear filters</a></div>'}</section>`;
   const body = `<main class="dsPlainPage">
-    ${dsPageHeader("Browse by Languages & Genres", "Choose a mood, genre, or category and jump straight into curated rows.", "Browse")}
-    <section class="dsLanguageFilters">
-      <select><option>Original Language</option><option>Genres</option><option>Suggestions For You</option></select>
-      <select><option>English</option><option>Spanish</option><option>Korean</option><option>Japanese</option><option>French</option></select>
-      <select><option>Suggestions For You</option><option>A-Z</option><option>Year Released</option></select>
-    </section>
-    <section class="dsContent noHero">
-      ${genreGroup("Movie Genres", "movie", movieGenres)}
-      ${genreGroup("TV Genres", "tv", tvGenres)}
-    </section>
+    ${dsPageHeader("Browse by language & genre", "Choose an original language and format, or open a genre below.", "Browse")}
+    <form class="dsLanguageFilters" action="/browse-by-languages" method="get" aria-label="Browse filters">
+      <label>Format<select name="media">${options([["movie", "Movies"], ["tv", "Series"]], type)}</select></label>
+      <label>Original language<select name="language">${options(languages, language)}</select></label>
+      <label>Genre<select name="genre">${options([["", "Any genre"], ...genres.map(item => [String(item.id), item.name])], genre)}</select></label>
+      <label>Sort<select name="sort">${options([["popular", "Popular"], ["rating", "Highest rated"], ["newest", "Newest release"], ["title", "Original title A–Z"]], sort)}</select></label>
+      <button class="dsSecondaryBtn" type="submit">Browse titles</button>
+    </form>
+    <section class="dsContent noHero">${results}${genreGroup("Movie genres", "movie", movieGenres)}${genreGroup("Series genres", "tv", tvGenres)}</section>
   </main>`;
-
-  res.send(pageShell({ title: `${SITE_NAME} — Browse`, active: "genres", body }));
+  res.send(pageShell({title:`${SITE_NAME} — Browse`, active:"genres", body}));
 }
 
 
@@ -9104,7 +9121,7 @@ async function personDetailPage(req, res) {
         <p>${escapeHtml(person.biography || "No biography available.")}</p>
         <div class="heroActions">
           <a class="btn primary" target="_blank" rel="noreferrer" href="https://www.themoviedb.org/person/${encodeURIComponent(id)}">View on TMDB</a>
-          <a class="btn" href="/search?q=${encodeURIComponent(person.name || "")}">Search name</a>
+          <a class="btn" href="/search?type=person&q=${encodeURIComponent(person.name || "")}">Find more people</a>
         </div>
       </div>
     </section>
@@ -9124,30 +9141,9 @@ function watchlistPage(req, res) {
 }
 
 function likedPage(req, res) {
-  const body = `<main class="dsPlainPage">
-    ${dsPageHeader("Liked Movies & Shows", "Hearted titles appear here. Use this for favorites, not just stuff you plan to watch later.", "Favorites")}
-    <section class="dsMyListControls">
-      <a href="/my-list">My List</a>
-      <a href="/movies">Movies</a>
-      <a href="/tv">TV Shows</a>
-      <a href="/kids">Kids Safe</a>
-      <button type="button" id="clearLikedInline">Clear Liked</button>
-    </section>
-    <section class="dsContent noHero">
-      <div id="likedGrid" class="dsGrid"></div>
-    </section>
-    <script>
-      document.getElementById('clearLikedInline')?.addEventListener('click', () => {
-        if (!confirm('Clear your liked titles?')) return;
-        localStorage.setItem('movieverse.liked', '[]');
-        location.reload();
-      });
-    </script>
-  </main>`;
-
-  res.send(pageShell({ title: `${SITE_NAME} — Liked`, active: "liked", body }));
+  const body = '<main class="dsPlainPage" data-library-page data-library-default-tab="liked"><h1>Favorites</h1><p>Loading your profile favorites…</p><noscript>Enable JavaScript to load your saved titles and local watch history.</noscript></main>';
+  res.send(pageShell({title:SITE_NAME + ' — Favorites', active:'liked', body}));
 }
-
 
 
 
@@ -9356,7 +9352,7 @@ function watchroomPage(req, res) {
           </div>
 
           <form id="stableOpenForm" class="dsStableUrlForm">
-            <input id="stableOpenInput" name="url" placeholder="Paste the movie/site link for both of you" value="${safeInitialUrl}" />
+            <input id="stableOpenInput" aria-label="Link to open together" name="url" placeholder="Paste the movie/site link for both of you" value="${safeInitialUrl}" />
             <button class="dsPrimaryBtn" type="submit">Share Link</button>
           </form>
 
@@ -9398,7 +9394,7 @@ function watchroomPage(req, res) {
           </div>
 
           <form id="roomMovieForm" class="dsRoomMovieForm">
-            <input id="roomMovieInput" name="movieId" placeholder="TMDB ID or /watch/movie/1007757" />
+            <input id="roomMovieInput" aria-label="Movie page URL or catalog ID" name="movieId" placeholder="TMDB ID or /watch/movie/1007757" />
             <button class="dsPrimaryBtn" id="roomMovieSelectBtn" type="submit">Select Movie</button>
           </form>
 
@@ -9568,8 +9564,8 @@ function watchroomPage(req, res) {
               <h3>Make the movie personal</h3>
               <p>Schedule a sweet message to pop up during the room clock.</p>
               <form id="coupleNoteForm" class="dsCoupleInlineForm">
-                <input name="note" placeholder="Example: this scene reminds me of you" maxlength="160" />
-                <select name="delay">
+                <input name="note" aria-label="Time capsule note" placeholder="Example: this scene reminds me of you" maxlength="160" />
+                <select name="delay" aria-label="Send note after">
                   <option value="15">Pop in 15 sec</option>
                   <option value="60">Pop in 1 min</option>
                   <option value="300">Pop in 5 min</option>
@@ -9598,7 +9594,7 @@ function watchroomPage(req, res) {
               <h3>Never lose ideas again</h3>
               <p>Add movie-night ideas during the call. The list stays in the room for whoever joins.</p>
               <form id="coupleJarForm" class="dsCoupleInlineForm">
-                <input name="idea" placeholder="Add a future date idea..." maxlength="120" />
+                <input name="idea" aria-label="Movie night idea" placeholder="Add a future date idea..." maxlength="120" />
                 <button class="dsPrimaryBtn" type="submit">Add</button>
               </form>
               <div id="coupleJarList" class="dsMiniState">No date ideas yet.</div>
@@ -9698,7 +9694,7 @@ function watchroomPage(req, res) {
           </div>
           <div id="stableMessages" class="dsStableMessages" role="log" aria-label="Room messages" aria-live="polite"><div class="dsStableChatEmpty"><span>Room chat</span><h3>Make yourself comfortable.</h3><p>Say hello while everyone gets ready.</p></div></div>
           <form id="stableChatForm">
-            <input name="message" placeholder="Add to the conversation…" maxlength="220" />
+            <input name="message" aria-label="Message to this room" placeholder="Add to the conversation…" maxlength="220" />
             <button class="dsPrimaryBtn" type="submit">Send</button>
           </form>
         </section>
@@ -12699,7 +12695,7 @@ function watchroomPage(req, res) {
           }
         }, 3500);
       })();
-
+    </script>
   </main>`;
 
   res.send(pageShell({
@@ -13019,15 +13015,20 @@ app.get("/m3u8-player", (req, res) => {
   const body = `<main class="dsWatchPage dsM3u8Standalone">
     <section class="dsWatchHero">
       <div>
-        <span class="dsEyebrow">Video.js / M3U8 Player</span>
-        <h1>SwiflyTV M3U8 Player</h1>
-        <p>Paste a licensed m3u8 URL as <code>?url=</code>. This uses Video.js/VHS first, with HLS.js fallback.</p>
+        <span class="dsEyebrow">Stream player</span>
+        <h1>Open an HLS stream</h1>
+        <p>Enter a stream URL, then use the video controls to start playback.</p>
+        <form class="dsStackedForm" action="/m3u8-player" method="get">
+          <label for="standaloneStreamUrl">Stream URL (.m3u8)</label><input id="standaloneStreamUrl" name="url" type="url" value="${escapeHtml(rawSrc)}" placeholder="https://example.com/master.m3u8" required />
+          ${useProxy ? '<input type="hidden" name="proxy" value="true" />' : ""}${srcHeaders.referer ? `<input type="hidden" name="referer" value="${escapeHtml(srcHeaders.referer)}" />` : ""}${srcHeaders.origin ? `<input type="hidden" name="origin" value="${escapeHtml(srcHeaders.origin)}" />` : ""}
+          <button class="dsPrimaryBtn" type="submit">Open stream</button>
+        </form>
       </div>
     </section>
 
     <section class="dsWatchShell dsStandaloneHlsShell">
       ${src ? `<video id="standaloneM3u8Video" class="dsDirectMovieVideo video-js vjs-big-play-centered vjs-theme-swifly" controls playsinline crossorigin="anonymous" preload="auto"></video>
-      <div id="standaloneHlsStatus" class="dsHlsStatus"><b>Loading m3u8...</b><span>Preparing Video.js player</span></div>` : `<div class="dsNoTrailer"><h2>No m3u8 URL</h2><p>Add <code>?url=https://example.com/master.m3u8</code></p></div>`}
+      <div id="standaloneHlsStatus" class="dsHlsStatus"><b>Loading m3u8...</b><span>Preparing Video.js player</span></div>` : `<div class="dsNoTrailer"><h2>Ready for a stream</h2><p>Paste a .m3u8 URL above to begin.</p></div>`}
     </section>
 
     <script>
@@ -14549,6 +14550,7 @@ function authPage(res, mode = "login") {
           <p data-auth-error role="alert" hidden></p>
         </form>
         <p class="dsAuthFinePrint">${isSignup ? `Already have an account? <a href="/login">Log in</a>` : `New to Swifly? <a href="/signup">Sign up</a>`}</p>
+        <p class="svAuthRecovery">Missing saved data? <a href="/account#account-data">Recover or import your library</a></p>
         <p class="svAuthPrivacy">Your own profile. Your friends. Your movies, together.</p>
       </section>
     </section>
@@ -14571,8 +14573,8 @@ function accountPage(req, res) {
           <span class="svAccountAvatar" data-account-avatar aria-hidden="true">S</span>
           <span class="dsEyebrow">Your SwiflyTV<span class="svAccountIdentityCaption">A space that feels like you.</span></span>
         </div>
-        <h1>Your world of stories.</h1>
-        <p>Your favorites, your next watch, your people. All in one place.</p>
+        <h1>Your account.</h1>
+        <p>Manage your profiles, recover saved data and keep a backup.</p>
       </div>
       <div class="dsAccountActions">
         <span class="svCinemaEyebrow">YOUR NEXT GOOD EVENING</span>
@@ -14582,7 +14584,8 @@ function accountPage(req, res) {
       </div>
     </section>
 
-    <div class="svAccountSectionHead" data-cinema-reveal><span class="svCinemaEyebrow">YOUR SPACE</span><h2>A little more you.</h2><p>Keep the stories you love close.</p></div>
+    ${accountBackupMarkup()}
+    <div class="svAccountSectionHead" data-cinema-reveal><span class="svCinemaEyebrow">YOUR SPACE</span><h2>Find what you need.</h2><p>Your library, profiles and movie nights.</p></div>
     <section class="dsAccountGrid" aria-label="Account shortcuts" data-cinema-reveal>
       <a class="dsAccountCard" href="/profiles">
         <span class="svAccountTileIcon">${cleanIcon("user")}</span><span class="svAccountTileArrow">${cleanIcon("arrow")}</span>
@@ -14628,7 +14631,7 @@ function accountPage(req, res) {
     </script>
   </main>`;
 
-  res.send(pageShell({ title: `${SITE_NAME} — Account`, active: "account", body }));
+  res.send(pageShell({ title: `${SITE_NAME} — Account`, active: "account", body, extraHead:'<link rel="stylesheet" href="/assets/clean/account-backup.css?v=1"><script defer src="/assets/clean/account-backup.js?v=1"></script>' }));
 }
 
 
@@ -14665,8 +14668,8 @@ function profilesManagePage(req, res) {
     <section class="dsCleanHero dsProfilesManageHero" data-cinema-reveal>
       <div class="svProfileManageIntro">
         <span class="dsEyebrow">Your home cinema</span>
-        <h1>A space for everyone.</h1>
-        <p>Personal lists. Familiar favorites. A seat of their own.</p>
+        <h1>Manage profiles</h1>
+        <p>Create, rename or remove profiles. Each profile keeps its own list and watching progress.</p>
       </div>
       <div class="dsHeroMiniActions">
         <a class="dsPrimaryBtn" href="/profiles">${cleanIcon("people")}Choose a profile</a>
@@ -14707,7 +14710,7 @@ function profilesManagePage(req, res) {
             <span class="dsEyebrow">Your profiles</span>
             <h2>Everyone at home.</h2>
           </div>
-          <button id="resetProfilesBtn" class="dsGhostPill" type="button">Reset</button>
+          <button id="resetProfilesBtn" class="dsGhostPill" type="button">Reset profiles</button>
         </div>
         <div id="profilesManageList" class="dsManageProfileList"></div>
       </section>
@@ -15006,7 +15009,7 @@ app.get("/kids", async (req, res) => {
       <div>
         <span class="dsEyebrow">Kids Safe Mode</span>
         <h1>Kids</h1>
-        <p>Adult titles are blocked here using TMDB adult flags, family genres, US PG-and-under movie certification filters, and extra keyword filtering.</p>
+        <p>Family titles filtered by catalog ratings and genres. Check a title’s rating before watching.</p>
       </div>
       <a class="dsSecondaryBtn" href="/profiles">Switch Profile</a>
     </section>

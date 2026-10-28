@@ -14,37 +14,40 @@ const choices = (name, values, variant='') => '<div class="stChoices '+variant+'
 const reset = name => '<button type="button" class="stSectionReset" data-st-reset-section="'+name+'">Reset this section</button>';
 const toggle = (name,label,copy='') => '<label class="stToggleRow"><span><b>'+label+'</b><small>'+copy+'</small></span><input type="checkbox" data-st-input="'+name+'" role="switch"></label>';
 const select = (name,label,values,copy='') => '<label class="stInputRow"><span><b>'+label+'</b>'+(copy?'<small>'+copy+'</small>':'')+'</span><select data-st-input="'+name+'">'+values.map(v=>'<option value="'+v[0]+'">'+v[1]+'</option>').join('')+'</select></label>';
-const range = (name,label,min,max,unit='%',step=1) => '<label class="stRangeRow"><span><b>'+label+'</b><output data-st-output="'+name+'"></output></span><input type="range" data-st-input="'+name+'" min="'+min+'" max="'+max+'" step="'+step+'" data-st-unit="'+unit+'"></label>';
-const color = (name,label) => '<label class="stInputRow stColorRow"><span><b>'+label+'</b><small>HEX color · #RGB or #RRGGBB</small></span><span><i data-st-color-swatch="'+name+'" aria-hidden="true"></i><input type="text" maxlength="7" spellcheck="false" autocomplete="off" inputmode="text" data-st-input="'+name+'" aria-label="'+label+' HEX color" aria-describedby="stColorError"></span></label>';
+const advanced = content => '<div data-st-advanced hidden>'+content+'</div>';
+const range = (name,label,min,max,unit='%',step=1) => {const markup='<label class="stRangeRow"><span><b>'+label+'</b><output data-st-output="'+name+'"></output></span><input type="range" data-st-input="'+name+'" min="'+min+'" max="'+max+'" step="'+step+'" data-st-unit="'+unit+'"></label>';return ['uiScale','captionSize','tvScale'].includes(name)?markup:advanced(markup);};
+const color = (name,label) => advanced('<label class="stInputRow stColorRow"><span><b>'+label+'</b><small>HEX color · #RGB or #RRGGBB</small></span><span><i data-st-color-swatch="'+name+'" aria-hidden="true"></i><input type="text" maxlength="7" spellcheck="false" autocomplete="off" inputmode="text" data-st-input="'+name+'" aria-label="'+label+' HEX color" aria-describedby="stColorError"></span></label>');
 const title = (number,name,heading,copy) => '<div class="stPanelTitle"><span>'+number+' / '+name+'</span><h2>'+heading+'</h2><p>'+copy+'</p></div>';
-const group = (label,description,content) => '<section class="stGroup"><div class="stGroupHead"><h3>'+label+'</h3><p>'+description+'</p></div>'+content+'</section>';
+const group = (label,description,content,advancedOnly=false) => '<section class="stGroup"'+(advancedOnly?' data-st-advanced hidden':'')+'><div class="stGroupHead"><h3>'+label+'</h3><p>'+description+'</p></div>'+content+'</section>';
 const layoutDemo = value => '<span class="stLayoutDemo stLayoutDemo--'+value+'" aria-hidden="true"><i></i><i></i><i></i><i></i></span>';
-const preset = (value,title,copy) => '<button type="button" class="stPreset stPreset--'+value+'" data-st-preset="'+value+'" aria-pressed="false"><span class="stPresetArt" aria-hidden="true"><i class="stPresetNav"></i><i class="stPresetTitle"></i><i class="stPresetPoster"></i><i class="stPresetPoster"></i><i class="stPresetPoster"></i><b>'+icon('check')+'</b></span><strong>'+title+'</strong><small>'+copy+'</small></button>';
+const preset = (value,title,copy,season='') => '<button type="button" class="stPreset stPreset--'+value+'" data-st-preset="'+value+'" data-st-field="themeId" data-st-value="'+value+'" aria-pressed="false"><span class="stPresetArt" aria-hidden="true"><span class="stThemeScene"><i class="stThemeOrb"></i><i class="stThemeLand"></i><i class="stThemeLine"></i></span><i class="stPresetNav"></i><i class="stPresetTitle"></i><i class="stPresetPoster"></i><i class="stPresetPoster"></i><i class="stPresetPoster"></i><b>'+icon('check')+'</b>'+(season?'<em>'+season+'</em>':'')+'</span><strong>'+title+'</strong><small>'+copy+'</small></button>';
 function studioMarkup() {
   return `<div class="svAuroraBackground" aria-hidden="true"><i class="svAuroraGlow"></i><i class="svAuroraRibbon svAuroraRibbon--first"></i><i class="svAuroraRibbon svAuroraRibbon--second"></i><i class="svAuroraRibbon svAuroraRibbon--third"></i></div>
   <div class="svAppearanceTexture" aria-hidden="true"></div>
-  <dialog id="controlPanel" class="svStudioDialog" aria-labelledby="stTitle" aria-describedby="stDescription">
+  <dialog id="controlPanel" class="svStudioDialog" data-st-editor-mode="simple" aria-labelledby="stTitle" aria-describedby="stDescription">
     <div class="stWorkspace">
       <header class="stHeader">
         <div class="stBrand"><span class="stMark">${icon('studio')}</span><div><h2 id="stTitle">Swifly Studio</h2><p id="stDescription">Your screen. Your style.</p></div></div>
-        <span class="stHeaderHint"><kbd>Ctrl / ⌘ E</kbd></span>
+        <label class="stModeToggle"><input type="checkbox" data-st-advanced-toggle aria-describedby="stModeNote"><span>Advanced controls</span><i aria-hidden="true"></i></label>
         <button type="button" class="stIconButton" data-st-cancel aria-label="Close Studio">${icon('close')}</button>
       </header>
       <div class="stWorkspaceBody">
         <aside class="stSidebar">
           <span class="stSidebarLabel">PERSONALIZE</span>
           <div class="stNavigation" role="tablist" aria-label="Studio sections" aria-orientation="vertical">
-            ${[['looks','Appearance','look'],['layout','Homepage','layout'],['navigation','Navigation','navigation'],['player','Player','player'],['atmosphere','Atmosphere','atmosphere'],['hud','Social & AI','hud'],['motion','Motion & loading','motion'],['devices','TV & devices','devices'],['access','Accessibility','access'],['themes','Themes & profiles','themes']].map(([value,label,glyph],index)=>`<button type="button" id="stTab-${value}" role="tab" data-st-tab="${value}" data-st-tab-link="${value}" aria-controls="stPanel-${value}" aria-selected="${index===0}" tabindex="${index===0?0:-1}">${icon(glyph)}<span>${label}</span></button>`).join('')}
+            ${[['looks','Themes','look'],['layout','Homepage','layout'],['navigation','Navigation','navigation'],['player','Player','player'],['atmosphere','Atmosphere','atmosphere'],['hud','Social & AI','hud'],['motion','Motion & loading','motion'],['devices','This screen','devices'],['access','Comfort','access'],['themes','Saved looks','themes']].map(([value,label,glyph],index)=>`<button type="button" id="stTab-${value}" role="tab" data-st-tab="${value}" data-st-tab-link="${value}"${['navigation','atmosphere','hud','motion'].includes(value)?' data-st-advanced-tab hidden':''} aria-controls="stPanel-${value}" aria-selected="${index===0}" tabindex="${index===0?0:-1}">${icon(glyph)}<span>${label}</span></button>`).join('')}
           </div>
           <div class="stSidebarNote"><span data-st-owner-label>This browser · Guest</span><p>Preview a change.<br>Save when it feels right.</p></div>
           <button type="button" class="stReset" data-st-reset>Restore defaults</button>
         </aside>
         <div class="stContent" data-native-scroll>
+          <p id="stModeNote" class="stModeNote" data-st-mode-note role="status">Simple view · Pick a theme, adjust what matters, then Save.</p>
           <section id="stPanel-looks" class="stPanel" role="tabpanel" aria-labelledby="stTab-looks">
-            <div class="stPanelTitle"><span>01 / APPEARANCE</span><h2>Set the atmosphere.</h2><p>Start with a look, then make it your own.</p></div>
-            <div class="stPresets" role="group" aria-label="Curated looks">
-              ${preset('pure','Pure','Quiet & minimal')}${preset('cinema','Cinema','Warm & cinematic')}${preset('midnight','Midnight','Cool & glassy')}${preset('focus','Focus','Sharp & simple')}
+            <div class="stPanelTitle"><span>YOUR SCREEN, YOUR SEASON</span><h2>Find your atmosphere.</h2><p>A complete look in one click. Preview it here; Save to keep it.</p></div>
+            <div class="stPresets" role="group" aria-label="Curated themes">
+              ${preset('pure','Swifly Original','Pearl & northern light')}${preset('halloween','Halloween','Pumpkin & velvet night','SEASONAL')}${preset('winter','Winter Lights','Evergreen & champagne','SEASONAL')}${preset('cinema','Cinema','Warm copper & film grain')}${preset('midnight','Midnight','Ink blue & silver')}${preset('forest','Forest','Sage & a grounded canvas')}${preset('focus','Focus','Graphite & solid surfaces')}
             </div>
+            <p class="stThemePromise">Themes keep your library, navigation and comfort settings.</p>
             ${group('Accent','A little color, exactly where it belongs.', choices('theme',[
               ['default','Pearl','<i class="stSwatch" style="--swatch:#ece9e2" aria-hidden="true"></i>'],
               ['red','Red','<i class="stSwatch" style="--swatch:#e7baa3" aria-hidden="true"></i>'],
@@ -58,14 +61,14 @@ function studioMarkup() {
               ['soft','Soft','<b class="stFontSample stFontSample--soft">Aa</b>'],['wide','Wide','<b class="stFontSample stFontSample--wide">Aa</b>']
             ],'stFonts'))}
             ${group('Glass','Choose how much of the scene shines through.', choices('glass',[['off','Solid'],['subtle','Soft glass'],['liquid','Liquid glass']],'stSegments'))}
-            ${group('Custom palette','A coordinated accent and dark canvas across your screen.',toggle('customColors','Use custom colors','Turn on to apply your HEX colors instead of the curated accent.')+color('accentColor','Primary accent')+color('accentSecondary','Second accent')+color('canvasColor','Canvas tint')+range('gradientAngle','Gradient direction',0,360,'°')+range('gradientStrength','Gradient intensity',0,30)+reset('theme'))}
+            ${group('Custom palette','A coordinated accent and dark canvas across your screen.',toggle('customColors','Use custom colors','Turn on to apply your HEX colors instead of the curated accent.')+color('accentColor','Primary accent')+color('accentSecondary','Second accent')+color('canvasColor','Canvas tint')+range('gradientAngle','Gradient direction',0,360,'°')+range('gradientStrength','Gradient intensity',0,30)+reset('theme'),true)}
             <p id="stColorError" class="stInlineMessage" data-st-color-error role="status" aria-live="polite"></p>
             <p class="stInlineMessage" data-st-contrast-warning role="status" aria-live="polite" hidden></p>
-            ${group('Glass detail','One material, with safe limits for the whole interface.',range('glassOpacity','Surface opacity',15,95)+range('glassBlur','Blur',0,28,'px')+range('glassEdge','Edge strength',0,100)+range('glassGlow','Highlight intensity',0,30)+reset('glass'))}
+            ${group('Glass detail','One material, with safe limits for the whole interface.',range('glassOpacity','Surface opacity',15,95)+range('glassBlur','Blur',0,28,'px')+range('glassEdge','Edge strength',0,100)+range('glassGlow','Highlight intensity',0,30)+reset('glass'),true)}
           </section>
           <section id="stPanel-layout" class="stPanel" role="tabpanel" aria-labelledby="stTab-layout" hidden>
             <div class="stPanelTitle"><span>02 / LAYOUT</span><h2>Room for your favorites.</h2><p>Change the gallery without changing what you watch.</p></div>
-            ${group('Homepage builder','Reorder existing rows. Hide a row without losing its titles. Use Up / Down or drag.', '<ol class="stOrderList" data-st-order-list="home" aria-label="Homepage row order"></ol><p class="stHelp" data-st-home-help>Rows with no titles return when content becomes available.</p>'+reset('home'))}
+            <details class="stSimpleDetails"><summary>Choose and arrange homepage rows</summary>${group('Homepage rows','Hide a row without losing its titles. Use Up / Down or drag.', '<ol class="stOrderList" data-st-order-list="home" aria-label="Homepage row order"></ol><p class="stHelp" data-st-home-help>Rows with no titles return when content becomes available.</p>'+reset('home'))}</details>
             ${select('heroMode','Featured artwork',[['cinematic','Cinematic hero'],['compact','Compact hero'],['banner','Wide banner']],'Uses actual artwork from the catalog.')}
             ${select('heroPosition','Hero placement',[['first','Before content rows'],['after-first','After the first row']])}
             ${range('posterWidth','Poster width',120,260,'px')}${range('homeColumns','Grid columns',3,8,' columns')}
@@ -139,7 +142,8 @@ function studioMarkup() {
             <div class="stMotionNote"><span>${icon('check')}</span><p>Auto uses the screen and TV mode. Lightweight presets flatten glass and keep Aurora still; video quality is unchanged.</p></div>${reset('devices')}
           </section>
           <section id="stPanel-access" class="stPanel" role="tabpanel" aria-labelledby="stTab-access" hidden>
-            ${title('09','ACCESSIBILITY','Comfort comes first.','Keep every surface readable and every control in reach.')}
+            ${title('09','COMFORT','Comfort comes first.','Keep every surface readable and every control in reach.')}
+            <label class="stToggleRow"><span><b>Reduce decorative motion</b><small>Keep scrolling native and turn off decorative movement. Your device preference always takes priority.</small></span><input type="checkbox" data-st-comfort-motion role="switch"></label>
             ${range('uiScale','Interface text size',90,120)}${toggle('highContrast','High contrast','Use a black canvas and bright accents for stronger separation.')}
             ${toggle('reduceTransparency','Reduce transparency','Use opaque surfaces. Your device preference always takes priority.')}
             ${toggle('largeTargets','Larger hit targets','Increase interactive targets to at least 44 pixels where layout permits.')}
@@ -151,8 +155,8 @@ function studioMarkup() {
             ${title('10','THEMES & PROFILES','Keep your favorite looks.','Named looks, portable files and preferences for each real profile.')}
             <p class="stProfileNotice" data-st-profile-notice>Cross-device sync is unavailable. Looks are saved for this profile in this browser. Export or import to move them to another device.</p>
             ${group('Save a named look','Keep up to 12 looks. Library edits are staged until Save changes.','<label class="stTextLabel">Look name<input type="text" data-st-look-name maxlength="64" placeholder="Late-night cinema" autocomplete="off"></label><label class="stTextLabel">Description<textarea data-st-look-description maxlength="160" rows="2" placeholder="A little warmer, a little quieter."></textarea></label><button type="button" class="stTextAction" data-st-look-add>Save draft as a named look</button><div class="stSavedLooks" data-st-looks aria-label="Named looks"></div>')}
-            ${group('Export this look','Only validated appearance settings are shared. Device options and private data are excluded.','<div class="stActionRow"><button type="button" class="stTextAction" data-st-export-download>Download theme JSON</button><button type="button" class="stTextAction" data-st-export-copy>Copy theme JSON</button></div><details class="stJSONDetails"><summary>View portable JSON</summary><textarea data-st-export-output readonly rows="6" aria-label="Portable theme JSON"></textarea></details>')}
-            ${group('Import a theme','Choose a JSON file or paste up to 32 KB. Review it before previewing.','<label class="stTextLabel">Theme JSON file<input type="file" data-st-import-file accept="application/json,.json"></label><label class="stTextLabel">Or paste theme JSON<textarea data-st-import-text rows="5" spellcheck="false" placeholder="Paste exported theme JSON"></textarea></label><button type="button" class="stTextAction" data-st-import-read>Review import</button><div class="stImportConfirmation" data-st-import-confirm hidden><p data-st-import-summary role="status"></p><div class="stActionRow"><button type="button" class="stTextAction" data-st-import-preview disabled>Preview imported look</button><button type="button" class="stTextAction" data-st-import-dismiss>Dismiss import</button></div><p class="stHelp">Preview is reversible. Use Save changes to keep it.</p></div>')}
+            ${group('Export this look','Move this look to another browser. Device options and private data are excluded.','<div class="stActionRow"><button type="button" class="stTextAction" data-st-export-download>Download theme file</button><button type="button" class="stTextAction" data-st-export-copy>Copy theme JSON</button></div>'+advanced('<details class="stJSONDetails"><summary>View portable JSON</summary><textarea data-st-export-output readonly rows="6" aria-label="Portable theme JSON"></textarea></details>'))}
+            ${group('Import a theme','Choose a Swifly Studio theme file, then review it before previewing.','<label class="stTextLabel">Theme file<input type="file" data-st-import-file accept="application/json,.json"></label>'+advanced('<label class="stTextLabel">Or paste theme JSON<textarea data-st-import-text rows="5" spellcheck="false" placeholder="Paste exported theme JSON"></textarea></label><button type="button" class="stTextAction" data-st-import-read>Review pasted JSON</button>')+'<div class="stImportConfirmation" data-st-import-confirm hidden><p data-st-import-summary role="status"></p><div class="stActionRow"><button type="button" class="stTextAction" data-st-import-preview disabled>Preview imported look</button><button type="button" class="stTextAction" data-st-import-dismiss>Dismiss import</button></div><p class="stHelp">Preview is reversible. Use Save changes to keep it.</p></div>')}
           </section>
         </div>
         <aside class="stPreviewColumn">
