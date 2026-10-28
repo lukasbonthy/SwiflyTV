@@ -7,6 +7,12 @@ function setup(before,options){const b=browser('<button id="controlToggleTop">St
 const click=(w,s)=>{const n=w.document.querySelector(s);assert(n,'Missing '+s);n.click();return n;};
 function edit(w,key,value){const n=w.document.querySelector('[data-st-input="'+key+'"]');assert(n);if(n.type==='checkbox')n.checked=value;else n.value=String(value);n.dispatchEvent(new w.Event(n.type==='range'?'input':'change',{bubbles:true}));return n;}
 const mode=w=>w.document.querySelector('[data-st-advanced-toggle]');
+test('utility-page headings do not masquerade as film titles in the live preview',()=>{
+ const utility=setup(w=>w.document.body.insertAdjacentHTML('afterbegin','<main><h1>Account settings</h1></main>'));
+ assert.equal(utility.document.querySelector('[data-st-preview-title]').textContent,'Movie night, your way.');
+ const film=setup(w=>w.document.body.insertAdjacentHTML('afterbegin','<main><div class="dsHeroContent"><h1>Interstellar</h1></div></main>'));
+ assert.equal(film.document.querySelector('[data-st-preview-title]').textContent,'Interstellar');
+});
 test('Simple starts with themes and hides technical controls and tabs with native hidden state',()=>{
  const w=setup(),d=w.document;assert.equal(mode(w)?.checked,false);assert.equal(d.querySelector('[data-st-tab][aria-selected="true"]').dataset.stTab,'looks');
  for(const key of ['accentColor','glassBlur','posterWidth','playerProgress','hudWidth','aiWidth','transitionSpeed'])assert(d.querySelector('[data-st-input="'+key+'"]').closest('[hidden]'),key+' is advanced');
@@ -30,8 +36,8 @@ test('all curated themes preserve every nonappearance setting including accessib
  assert.deepEqual(C.applyTheme(original,'missing'),original);assert.equal(C.validate({themeId:'<script>'}).themeId,C.defaults.themeId);
 });
 test('Halloween preview cancels, Save persists its identity, and the prepaint runtime restores it',()=>{
- const w=setup(),d=w.document;click(w,'[data-st-preset="halloween"]');assert.equal(d.body.dataset.stThemeId,'halloween');assert.equal(d.body.style.getPropertyValue('--st-canvas'),'#140d1b');assert.equal(w.localStorage.getItem('swiflytv.appearance'),null);click(w,'[data-st-cancel]');assert.equal(d.body.dataset.stThemeId,'pure');
- w.SwiflyStudio.open();click(w,'[data-st-preset="halloween"]');click(w,'[data-st-save]');const record=w.localStorage.getItem('swiflytv.appearance');const next=browser(),n=next.window;n.localStorage.setItem('swiflytv.appearance',record);n.eval(source('studio/config.js'));n.SwiflyStudioConfig.apply(n.SwiflyStudioConfig.read(n.localStorage).values);assert.equal(n.document.body.dataset.stThemeId,'halloween');assert.equal(n.document.body.style.getPropertyValue('--st-accent'),'#ffb36b');
+ const w=setup(),d=w.document;click(w,'[data-st-preset="halloween"]');assert.equal(d.body.dataset.stThemeId,'halloween');assert.equal(d.body.style.getPropertyValue('--st-canvas'),'#0d0a10');assert.equal(w.localStorage.getItem('swiflytv.appearance'),null);click(w,'[data-st-cancel]');assert.equal(d.body.dataset.stThemeId,'pure');
+ w.SwiflyStudio.open();click(w,'[data-st-preset="halloween"]');click(w,'[data-st-save]');const record=w.localStorage.getItem('swiflytv.appearance');const next=browser(),n=next.window;n.localStorage.setItem('swiflytv.appearance',record);n.eval(source('studio/config.js'));n.SwiflyStudioConfig.apply(n.SwiflyStudioConfig.read(n.localStorage).values);assert.equal(n.document.body.dataset.stThemeId,'halloween');assert.equal(n.document.body.style.getPropertyValue('--st-accent'),'#ffa05c');
 });
 test('theme policies preserve raw choices and override decoration for high contrast, TV and reduced transparency',()=>{
  assert.equal(typeof C.applyTheme,'function');const raw=C.applyTheme({...C.defaults,highContrast:true,reduceMotion:true,reduceTransparency:true},'halloween');const effective=C.effective(raw,{tv:true});assert.equal(raw.themeId,'halloween');assert.equal(effective.themeId,'halloween');assert.equal(effective.canvasColor,'#000000');assert.equal(effective.glass,'off');assert.equal(effective.auroraMotion,'still');

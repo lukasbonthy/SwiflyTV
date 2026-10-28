@@ -125,7 +125,7 @@
   q('[data-st-export-output]').value=portableJSON();renderOrders();renderLooks();contextualPreview();
  }
  function previewArtwork(){
-  const titleSource=document.querySelector('.dsHeroContent h1,.svDetailTitleText,.svWelcomeSpotlight strong')||document.querySelector('main h1');q('[data-st-preview-title]').textContent=titleSource?.textContent.trim()||'Movie night, your way.';
+  const titleSource=document.querySelector('.dsHeroContent h1,.svDetailTitleText,.svWelcomeSpotlight strong');q('[data-st-preview-title]').textContent=titleSource?.textContent.trim()||'Movie night, your way.';
   const source=document.querySelector('.dsHeroBg,.dsWelcomeHeroBg,.svDetailBackdrop');const background=source?getComputedStyle(source).backgroundImage:'';q('[data-st-preview-scene]').style.backgroundImage=background&&background!=='none'?background:'';
   const sceneImage=source?.querySelector('img');if((!background||background==='none')&&sceneImage?.getAttribute('src'))q('[data-st-preview-scene]').style.backgroundImage='url('+JSON.stringify(sceneImage.src)+')';
   const images=[...document.querySelectorAll('.movieCard .posterWrap > img,.movieCard .dsThumb > img,.svResumeLink > img,.svWelcomePosterArt > img,.dsWelcomeCard img')].filter(n=>n.getAttribute('src'));

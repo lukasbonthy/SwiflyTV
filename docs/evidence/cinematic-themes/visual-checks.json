@@ -1,0 +1,434 @@
+{
+  "checks": [
+    {
+      "label": "pure saved identity at 1440",
+      "pass": true
+    },
+    {
+      "label": "pure search 1440 fits",
+      "pass": true
+    },
+    {
+      "label": "pure /settings fits",
+      "pass": true
+    },
+    {
+      "label": "pure persisted /settings",
+      "pass": true
+    },
+    {
+      "label": "pure /account fits",
+      "pass": true
+    },
+    {
+      "label": "pure persisted /account",
+      "pass": true
+    },
+    {
+      "label": "pure /my-list fits",
+      "pass": true
+    },
+    {
+      "label": "pure persisted /my-list",
+      "pass": true
+    },
+    {
+      "label": "halloween card uses real image at 1440",
+      "pass": true
+    },
+    {
+      "label": "halloween saved identity at 1440",
+      "pass": true
+    },
+    {
+      "label": "halloween search 1440 fits",
+      "pass": true
+    },
+    {
+      "label": "halloween /settings fits",
+      "pass": true
+    },
+    {
+      "label": "halloween persisted /settings",
+      "pass": true
+    },
+    {
+      "label": "halloween /account fits",
+      "pass": true
+    },
+    {
+      "label": "halloween persisted /account",
+      "pass": true
+    },
+    {
+      "label": "halloween /my-list fits",
+      "pass": true
+    },
+    {
+      "label": "halloween persisted /my-list",
+      "pass": true
+    },
+    {
+      "label": "winter card uses real image at 1440",
+      "pass": true
+    },
+    {
+      "label": "winter saved identity at 1440",
+      "pass": true
+    },
+    {
+      "label": "winter search 1440 fits",
+      "pass": true
+    },
+    {
+      "label": "winter /settings fits",
+      "pass": true
+    },
+    {
+      "label": "winter persisted /settings",
+      "pass": true
+    },
+    {
+      "label": "winter /account fits",
+      "pass": true
+    },
+    {
+      "label": "winter persisted /account",
+      "pass": true
+    },
+    {
+      "label": "winter /my-list fits",
+      "pass": true
+    },
+    {
+      "label": "winter persisted /my-list",
+      "pass": true
+    },
+    {
+      "label": "cinema saved identity at 1440",
+      "pass": true
+    },
+    {
+      "label": "cinema search 1440 fits",
+      "pass": true
+    },
+    {
+      "label": "cinema /settings fits",
+      "pass": true
+    },
+    {
+      "label": "cinema persisted /settings",
+      "pass": true
+    },
+    {
+      "label": "cinema /account fits",
+      "pass": true
+    },
+    {
+      "label": "cinema persisted /account",
+      "pass": true
+    },
+    {
+      "label": "cinema /my-list fits",
+      "pass": true
+    },
+    {
+      "label": "cinema persisted /my-list",
+      "pass": true
+    },
+    {
+      "label": "midnight saved identity at 1440",
+      "pass": true
+    },
+    {
+      "label": "midnight search 1440 fits",
+      "pass": true
+    },
+    {
+      "label": "midnight /settings fits",
+      "pass": true
+    },
+    {
+      "label": "midnight persisted /settings",
+      "pass": true
+    },
+    {
+      "label": "midnight /account fits",
+      "pass": true
+    },
+    {
+      "label": "midnight persisted /account",
+      "pass": true
+    },
+    {
+      "label": "midnight /my-list fits",
+      "pass": true
+    },
+    {
+      "label": "midnight persisted /my-list",
+      "pass": true
+    },
+    {
+      "label": "forest saved identity at 1440",
+      "pass": true
+    },
+    {
+      "label": "forest search 1440 fits",
+      "pass": true
+    },
+    {
+      "label": "forest /settings fits",
+      "pass": true
+    },
+    {
+      "label": "forest persisted /settings",
+      "pass": true
+    },
+    {
+      "label": "forest /account fits",
+      "pass": true
+    },
+    {
+      "label": "forest persisted /account",
+      "pass": true
+    },
+    {
+      "label": "forest /my-list fits",
+      "pass": true
+    },
+    {
+      "label": "forest persisted /my-list",
+      "pass": true
+    },
+    {
+      "label": "focus saved identity at 1440",
+      "pass": true
+    },
+    {
+      "label": "focus search 1440 fits",
+      "pass": true
+    },
+    {
+      "label": "focus /settings fits",
+      "pass": true
+    },
+    {
+      "label": "focus persisted /settings",
+      "pass": true
+    },
+    {
+      "label": "focus /account fits",
+      "pass": true
+    },
+    {
+      "label": "focus persisted /account",
+      "pass": true
+    },
+    {
+      "label": "focus /my-list fits",
+      "pass": true
+    },
+    {
+      "label": "focus persisted /my-list",
+      "pass": true
+    },
+    {
+      "label": "custom edit removes seasonal scene 1440",
+      "pass": true
+    },
+    {
+      "label": "pure saved identity at 390",
+      "pass": true
+    },
+    {
+      "label": "pure search 390 fits",
+      "pass": true
+    },
+    {
+      "label": "halloween card uses real image at 390",
+      "pass": true
+    },
+    {
+      "label": "halloween saved identity at 390",
+      "pass": true
+    },
+    {
+      "label": "halloween search 390 fits",
+      "pass": true
+    },
+    {
+      "label": "winter card uses real image at 390",
+      "pass": true
+    },
+    {
+      "label": "winter saved identity at 390",
+      "pass": true
+    },
+    {
+      "label": "winter search 390 fits",
+      "pass": true
+    },
+    {
+      "label": "cinema saved identity at 390",
+      "pass": true
+    },
+    {
+      "label": "cinema search 390 fits",
+      "pass": true
+    },
+    {
+      "label": "midnight saved identity at 390",
+      "pass": true
+    },
+    {
+      "label": "midnight search 390 fits",
+      "pass": true
+    },
+    {
+      "label": "forest saved identity at 390",
+      "pass": true
+    },
+    {
+      "label": "forest search 390 fits",
+      "pass": true
+    },
+    {
+      "label": "focus saved identity at 390",
+      "pass": true
+    },
+    {
+      "label": "focus search 390 fits",
+      "pass": true
+    },
+    {
+      "label": "custom edit removes seasonal scene 390",
+      "pass": true
+    },
+    {
+      "label": "pure saved identity at 320",
+      "pass": true
+    },
+    {
+      "label": "pure search 320 fits",
+      "pass": true
+    },
+    {
+      "label": "halloween card uses real image at 320",
+      "pass": true
+    },
+    {
+      "label": "halloween saved identity at 320",
+      "pass": true
+    },
+    {
+      "label": "halloween search 320 fits",
+      "pass": true
+    },
+    {
+      "label": "winter card uses real image at 320",
+      "pass": true
+    },
+    {
+      "label": "winter saved identity at 320",
+      "pass": true
+    },
+    {
+      "label": "winter search 320 fits",
+      "pass": true
+    },
+    {
+      "label": "cinema saved identity at 320",
+      "pass": true
+    },
+    {
+      "label": "cinema search 320 fits",
+      "pass": true
+    },
+    {
+      "label": "midnight saved identity at 320",
+      "pass": true
+    },
+    {
+      "label": "midnight search 320 fits",
+      "pass": true
+    },
+    {
+      "label": "forest saved identity at 320",
+      "pass": true
+    },
+    {
+      "label": "forest search 320 fits",
+      "pass": true
+    },
+    {
+      "label": "focus saved identity at 320",
+      "pass": true
+    },
+    {
+      "label": "focus search 320 fits",
+      "pass": true
+    },
+    {
+      "label": "custom edit removes seasonal scene 320",
+      "pass": true
+    },
+    {
+      "label": "TV keeps seasonal background off",
+      "pass": true
+    },
+    {
+      "label": "TV Studio fits",
+      "pass": true
+    },
+    {
+      "label": "policy disables decoration {\"highContrast\":true}",
+      "pass": true
+    },
+    {
+      "label": "policy disables decoration {\"reduceTransparency\":true}",
+      "pass": true
+    },
+    {
+      "label": "policy disables decoration {\"performancePreset\":\"minimal\"}",
+      "pass": true
+    },
+    {
+      "label": "Missing artwork leaves search usable",
+      "pass": true
+    },
+    {
+      "label": "Scene cannot intercept pointer input",
+      "pass": true
+    },
+    {
+      "label": "Missing artwork phone fits",
+      "pass": true
+    },
+    {
+      "label": "Preview retains a dark fallback",
+      "pass": true
+    },
+    {
+      "label": "Theme switch works without image loads",
+      "pass": true
+    },
+    {
+      "label": "No fatal errors or failed local assets",
+      "pass": true
+    },
+    {
+      "label": "Both original background assets loaded",
+      "pass": true
+    }
+  ],
+  "screenshots": [
+    "docs/evidence/cinematic-themes/studio-halloween-1440.png",
+    "docs/evidence/cinematic-themes/studio-halloween-390.png",
+    "docs/evidence/cinematic-themes/search-halloween-1440.png",
+    "docs/evidence/cinematic-themes/search-winter-390.png",
+    "docs/evidence/cinematic-themes/settings-winter-1440.png"
+  ],
+  "failures": [],
+  "fixture": "Actual Express pages/scripts/styles and guest account endpoint. Fixed catalog metadata and external artwork; no production or streaming claim.",
+  "screenshotsProduced": 35
+}
