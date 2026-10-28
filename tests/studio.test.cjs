@@ -8,7 +8,7 @@ const shell=api.pageShell({title:'Catalog',body:'<main>Catalog</main>'});
 const markup=shell.match(/<dialog\b[^>]*id="controlPanel"[\s\S]*?<\/dialog>/)?.[0]||'';
 const key='swiflytv.appearance';
 function setup(values={}) {
-  const env=browser('<button id="controlToggleTop">Studio</button><main><h1>A complete movie title</h1><div class="dsHeroBg" style="background-image:url(https://image.tmdb.org/t/p/w1280/scene.jpg)"></div><div class="movieCard"><a class="posterWrap"><img src="https://image.tmdb.org/t/p/w342/poster.jpg" alt="Movie poster"></a></div></main>'+markup),w=env.window;
+  const env=browser('<button id="controlToggleTop">Studio</button><main><div class="dsHeroContent"><h1>A complete movie title</h1></div><div class="dsHeroBg" style="background-image:url(https://image.tmdb.org/t/p/w1280/scene.jpg)"></div><div class="movieCard"><a class="posterWrap"><img src="https://image.tmdb.org/t/p/w342/poster.jpg" alt="Movie poster"></a></div></main>'+markup),w=env.window;
   for(const [name,value] of Object.entries(values))w.localStorage.setItem(name,value);
   w.boot('studio/studio.js');assert(w.SwiflyStudio,'The rebuilt Studio must initialize');return env;
 }

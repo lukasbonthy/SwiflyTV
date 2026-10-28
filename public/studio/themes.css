@@ -1,0 +1,177 @@
+/* One scene and one material palette, shared by Studio and the real site. */
+body.svCleanShell[data-sv-appearance] {
+  --st-surface:#13151b;
+  --st-surface-raised:#1b1e25;
+  --st-surface-input:#101219;
+  --st-line:#ffffff20;
+  --st-accent-wash:#ffffff0c;
+  --theme-image:none;
+  --theme-light:radial-gradient(ellipse at 80% 0,#466b7a55,transparent 65%);
+  --theme-card-accent:#e8e4da;
+  --theme-card-secondary:#8ebbb7;
+  --theme-card-canvas:#0b1219;
+}
+@supports (color:color-mix(in srgb,white,black)) {
+  body.svCleanShell[data-sv-appearance] {
+    --st-surface:color-mix(in srgb,#0b0d11 91%,var(--st-accent));
+    --st-surface-raised:color-mix(in srgb,#0b0d11 85%,var(--st-accent));
+    --st-surface-input:color-mix(in srgb,#090b0f 95%,var(--st-accent));
+    --st-line:color-mix(in srgb,var(--st-accent) 19%,transparent);
+    --st-accent-wash:color-mix(in srgb,var(--st-accent) 10%,transparent);
+  }
+}
+.stPreset {
+  --theme-image:none;
+  --theme-light:radial-gradient(ellipse at 80% 0,#466b7a55,transparent 65%);
+  --theme-card-accent:#e8e4da;--theme-card-secondary:#8ebbb7;--theme-card-canvas:#0b1219;
+}
+
+/* The scene is local and static. Real film artwork always stays above it. */
+body.svCleanShell .svThemeBackdrop {
+  display:none;position:absolute;inset:0 0 auto;height:min(105svh,1000px);
+  z-index:0;pointer-events:none;overflow:hidden;contain:layout paint;
+  background-image:linear-gradient(90deg,var(--st-canvas) 0%,transparent 65%),var(--theme-image),var(--theme-light);
+  background-size:cover;background-position:top right;background-repeat:no-repeat;
+  -webkit-mask-image:linear-gradient(#000 0%,#000 38%,transparent 100%);
+  mask-image:linear-gradient(#000 0%,#000 38%,transparent 100%);
+  opacity:.76;
+}
+body.svCleanShell:is([data-st-theme-id="halloween"],[data-st-theme-id="winter"],[data-st-theme-id="cinema"],[data-st-theme-id="midnight"],[data-st-theme-id="forest"]) .svThemeBackdrop {display:block}
+body.svCleanShell:is([data-st-theme-id="halloween"],[data-st-theme-id="winter"]) :is(.svAuroraBackground,.stPreviewAurora) {display:none}
+body.svCleanShell[data-st-custom-colors="true"] :is(.dsPlainPage,.dsPageHero,.dsSearchPage,.dsWatchlistPage,.dsAccountPage,.dsProfilesPage,.dsContent) {background:transparent !important}
+body.svCleanShell[data-st-custom-colors="true"] .footer {background:var(--st-canvas) !important}
+
+body.svCleanShell[data-st-theme-id="halloween"],.stPreset--halloween {
+  --theme-image:url("./themes/halloween-night.webp");
+  --theme-light:radial-gradient(ellipse at 85% 15%,#7f529e66,transparent 65%);
+  --theme-card-accent:#ffa05c;--theme-card-secondary:#a997db;--theme-card-canvas:#0d0a10;
+}
+body.svCleanShell[data-st-theme-id="winter"],.stPreset--winter {
+  --theme-image:url("./themes/winter-lights.webp");
+  --theme-light:radial-gradient(ellipse at 80% 10%,#2b789f66,transparent 65%);
+  --theme-card-accent:#9cdef0;--theme-card-secondary:#e0c18c;--theme-card-canvas:#080f18;
+}
+body.svCleanShell[data-st-theme-id="cinema"],.stPreset--cinema {
+  --theme-light:linear-gradient(125deg,transparent 25%,#d4a56425 45%,transparent 64%),radial-gradient(ellipse at 95% 10%,#895b3b80,transparent 65%);
+  --theme-card-accent:#e9c18d;--theme-card-secondary:#a97c65;--theme-card-canvas:#100d0b;
+}
+body.svCleanShell[data-st-theme-id="midnight"],.stPreset--midnight {
+  --theme-light:radial-gradient(ellipse at 88% 10%,#6a64ed80,transparent 55%),radial-gradient(ellipse at 50% 100%,#3264a333,transparent 65%);
+  --theme-card-accent:#b8c4ff;--theme-card-secondary:#6c9cde;--theme-card-canvas:#090b17;
+}
+body.svCleanShell[data-st-theme-id="forest"],.stPreset--forest {
+  --theme-light:linear-gradient(130deg,transparent 35%,#79b78913 38%,transparent 55%),radial-gradient(ellipse at 95% 0%,#45795a99,transparent 65%);
+  --theme-card-accent:#aad4b4;--theme-card-secondary:#72aea4;--theme-card-canvas:#0a110e;
+}
+.stPreset--pure {--theme-image:none;--theme-light:radial-gradient(ellipse at 90% 5%,#71a9b580,transparent 65%),radial-gradient(ellipse at 30% 90%,#847fc833,transparent 65%)}
+.stPreset--focus {--theme-image:none;--theme-light:linear-gradient(135deg,#252a35,transparent 75%);--theme-card-accent:#e3e6ee;--theme-card-secondary:#a1a9b9;--theme-card-canvas:#0b0d11}
+
+/* Theme materials reach the surfaces people actually use. */
+body.svCleanShell[data-st-custom-colors="true"] :is(.svSettingsCard,.svAccountData,.svLibraryFolderEditor,.svAiFilters,.svConnectDialog,.svNotificationDialog,.svFeedNotifications,.svBackupDialog) {
+  background:linear-gradient(130deg,var(--st-accent-wash),transparent 60%),var(--st-surface) !important;
+  border-color:var(--st-line) !important;
+}
+body.svCleanShell[data-st-custom-colors="true"] :is(.svStudioSearchForm,.svMoodInput,.svBookSearch,.svConnectToolbar) {
+  background:var(--st-surface) !important;border-color:var(--st-line) !important;
+  box-shadow:inset 0 1px 0 #ffffff05,0 10px 32px #0002 !important;
+}
+body.svCleanShell[data-st-custom-colors="true"] :is(.svStudioSearchForm,.svMoodInput,.svBookSearch):focus-within {
+  border-color:var(--st-accent) !important;box-shadow:0 0 0 3px var(--st-accent-wash),0 10px 32px #0002 !important;
+}
+body.svCleanShell[data-st-custom-colors="true"] #svNavSearchPopup.svDiscoverySearch {
+  background:var(--st-surface) !important;border-color:var(--st-line) !important;
+}
+body.svCleanShell[data-st-custom-colors="true"] :is(.svSettingsCard select,.svLibraryField select,.svLibraryField input,.svLibraryFolderForm input,.svSearchRefinements select,.svSearchRefinements input,.svAiFilters select) {
+  background:var(--st-surface-input) !important;border-color:var(--st-line) !important;
+}
+body.svCleanShell[data-st-custom-colors="true"] :is(.netflixNav,.mobileNav,.svLiquidDropdown) {
+  background-color:var(--st-surface) !important;border-color:var(--st-line) !important;
+}
+body.svCleanShell[data-st-custom-colors="true"] :is(.svSettingsPrimary,.svConnectPrimary,.svLibraryPlay,.svMoodInput [type="submit"],.svBookSearch button,.dsPrimaryBtn) {
+  background:var(--st-accent) !important;color:var(--st-accent-ink,#111217) !important;border-color:transparent !important;
+}
+body.svCleanShell[data-st-custom-colors="true"] :is(.svSettingsNav a[aria-current="page"],.svLibraryTabs button[aria-pressed="true"],.svSearchModes a[aria-current="page"],.navLinks a[aria-current="page"],.mobileNav a[aria-current="page"]) {
+  color:var(--st-accent) !important;background:var(--st-accent-wash) !important;border-color:var(--st-line) !important;
+}
+body.svCleanShell[data-st-custom-colors="true"] :is(.svSettingsSectionIcon,.svAccountDataMark,.svConnectEyebrow,.svSettingsEyebrow) {color:var(--st-accent)}
+
+/* Scene cards use the same images, light and palette as the applied theme. */
+.stPresets {gap:21px 16px}
+.stPreset {min-width:0}
+.stPresetArt {
+  display:block;height:auto;aspect-ratio:1.78;padding:0;isolation:isolate;
+  border-radius:13px;border:1px solid #ffffff20;background:var(--theme-card-canvas);
+  box-shadow:inset 0 1px #ffffff0a,0 6px 20px #0002;
+  transition:border-color .18s ease,box-shadow .18s ease,translate .18s ease;
+}
+.stThemeScene {
+  position:absolute;inset:0;overflow:hidden;
+  background-color:var(--theme-card-canvas);
+  background-image:linear-gradient(90deg,#0003,transparent 65%),var(--theme-image),var(--theme-light);
+  background-size:cover;background-position:center;
+}
+.stThemeScene::after {content:"";position:absolute;inset:0;background:linear-gradient(0deg,#000a,transparent 65%)}
+.stThemeSignature {position:absolute;left:16px;bottom:16px;z-index:1;color:var(--theme-card-accent);font-size:8px;letter-spacing:.23em;font-weight:600}
+.stThemeSignature > span {display:block;margin-top:7px;color:#f6f5f7;font-size:clamp(14px,1.4vw,22px);font-weight:500;letter-spacing:-.035em;line-height:1.15}
+.stThemePalette {position:absolute;right:14px;bottom:17px;z-index:1;display:flex;gap:4px}
+.stThemePalette > i {display:block;width:9px;height:9px;border-radius:50%;background:var(--theme-card-accent);border:1px solid #ffffff35}
+.stThemePalette > i:nth-child(2) {background:var(--theme-card-secondary)}
+.stThemePalette > i:nth-child(3) {background:var(--theme-card-canvas)}
+body.svCleanShell #controlPanel .stPresetArt > b {top:10px;right:10px;width:24px;height:24px;background:var(--theme-card-accent);color:#121217;box-shadow:0 2px 10px #0005}
+body.svCleanShell #controlPanel .stPresetArt > b svg {width:14px;height:14px;stroke-width:2}
+.stPresetArt > em {position:absolute;top:11px;left:12px;padding:5px 7px;border:1px solid #ffffff24;border-radius:5px;background:#090b12a3;color:#e8e5ed;font-style:normal;font-size:7px;font-weight:500;letter-spacing:.12em}
+.stPreset[aria-pressed="true"] .stPresetArt {border-color:var(--theme-card-accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--theme-card-accent) 22%,transparent),0 6px 20px #0003}
+.stPreset > strong {color:#f0f0f4;font-size:calc(13px * var(--st-ui-scale,1));margin:11px 0 4px;font-weight:550}
+.stPreset > small {display:block;color:#a4a9b5;font-size:calc(11px * var(--st-ui-scale,1));line-height:1.55}
+.stPreset--cinema .stThemeScene::before {content:"";position:absolute;inset:0;background:repeating-linear-gradient(110deg,transparent 0 34px,#d9b99008 35px,transparent 37px)}
+.stPreset--midnight .stThemeScene::before {content:"";position:absolute;width:110%;height:70%;right:-35%;top:-20%;border:1px solid #a1adff44;border-radius:50%;rotate:-30deg;box-shadow:0 0 45px #847fff30,inset 0 0 40px #847fff20}
+.stPreset--forest .stThemeScene::before {content:"";position:absolute;inset:0;background:repeating-linear-gradient(120deg,transparent 0 54px,#badfc408 55px,transparent 90px)}
+@media (hover:hover) and (pointer:fine) {
+  .stPreset:hover .stPresetArt {translate:0 -3px;border-color:var(--theme-card-accent);box-shadow:0 10px 28px #0005}
+}
+
+/* Live preview shares page materials; a real film backdrop still takes priority. */
+body.svCleanShell #controlPanel.svStudioDialog {background:var(--st-surface-input) !important;border-color:var(--st-line) !important}
+.stHeader {background:linear-gradient(105deg,var(--st-accent-wash),transparent 70%)}
+.stPreviewColumn {background:var(--st-surface-input);border-left-color:var(--st-line)}
+.stPreviewScene {background-image:var(--theme-image),var(--theme-light);background-color:var(--st-canvas);background-position:center;background-size:cover}
+.stPreviewScene::before {background:linear-gradient(0deg,var(--st-canvas) 0%,transparent 90%),linear-gradient(90deg,#0004,transparent 75%)}
+.stPreviewGallery {background:var(--st-canvas)}
+body.svCleanShell #controlPanel .stPreviewNav {background:var(--st-surface);border-color:var(--st-line) !important}
+body.svCleanShell #controlPanel .stPreviewPlay {background:var(--st-accent);color:var(--st-accent-ink,#111217);border-color:transparent !important}
+body.svCleanShell #controlPanel [data-st-save]:not(:disabled) {background:var(--st-accent);color:var(--st-accent-ink,#111217)}
+.stNavigation > button[aria-selected="true"] {background:var(--st-accent-wash);border-color:var(--st-line);color:var(--st-accent)}
+
+/* Keep comfort controls authoritative and decorative layers out of playback. */
+body.svCleanShell:is([data-st-high-contrast="true"],[data-st-reduce-transparency="true"],[data-st-performance-preset="xbox"],[data-st-performance-preset="minimal"]) .svThemeBackdrop,
+body.svCleanShell:has(.svPlayerPage,.dsWatchPage) .svThemeBackdrop {display:none !important}
+body.svCleanShell:is([data-st-high-contrast="true"],[data-st-reduce-transparency="true"],[data-st-performance-preset="xbox"],[data-st-performance-preset="minimal"]) {--theme-image:none}
+body.svCleanShell[data-st-high-contrast="true"] {--st-surface:#000;--st-surface-raised:#000;--st-surface-input:#000;--st-line:#fff;--st-accent-wash:#000}
+body.svCleanShell[data-st-high-contrast="true"] .stThemeSignature {color:#fff}
+body.svCleanShell[data-st-high-contrast="true"] .stThemePalette {display:none}
+body.svCleanShell[data-st-high-contrast="true"] :is(.svSettingsNav a[aria-current="page"],.svLibraryTabs button[aria-pressed="true"],.stNavigation > button[aria-selected="true"]) {outline:1px solid #fff}
+body.reduceMotion .stPresetArt {transition:none;translate:none !important}
+@media (prefers-reduced-motion:reduce) {.stPresetArt {transition:none;translate:none !important}}
+@media (prefers-reduced-transparency:reduce) {body.svCleanShell .svThemeBackdrop {display:none !important}}
+@media (max-width:800px) {
+  .stPresets {gap:18px 12px}
+  .stThemeSignature {left:12px;bottom:12px}
+  .stThemeSignature > span {font-size:18px}
+  body.svCleanShell .svThemeBackdrop {height:min(90svh,760px);background-position:65% top;opacity:.54}
+}
+@media (max-width:480px) {
+  .stPresets {grid-template-columns:minmax(0,1fr);gap:23px}
+  .stPresetArt {aspect-ratio:1.9}
+  .stThemeSignature {left:17px;bottom:16px}
+  .stThemeSignature > span {font-size:22px}
+  .stThemePalette {right:17px}
+  .stPreset > strong {font-size:calc(14px * var(--st-ui-scale,1))}
+  .stPreset > small {font-size:calc(11px * var(--st-ui-scale,1))}
+}
+html[data-sv-tv="true"] body.svCleanShell #controlPanel .stPreset > small {font-size:calc(13px * var(--st-ui-scale,1))}
+@media (forced-colors:active) {
+  body.svCleanShell .svThemeBackdrop,.stThemeScene,.stThemePalette {display:none !important}
+  .stPresetArt {border-color:CanvasText;background:Canvas}
+  .stThemeSignature,.stThemeSignature > span {color:CanvasText}
+}
+@media print {body.svCleanShell .svThemeBackdrop {display:none !important}}

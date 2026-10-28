@@ -20,9 +20,10 @@ const color = (name,label) => advanced('<label class="stInputRow stColorRow"><sp
 const title = (number,name,heading,copy) => '<div class="stPanelTitle"><span>'+number+' / '+name+'</span><h2>'+heading+'</h2><p>'+copy+'</p></div>';
 const group = (label,description,content,advancedOnly=false) => '<section class="stGroup"'+(advancedOnly?' data-st-advanced hidden':'')+'><div class="stGroupHead"><h3>'+label+'</h3><p>'+description+'</p></div>'+content+'</section>';
 const layoutDemo = value => '<span class="stLayoutDemo stLayoutDemo--'+value+'" aria-hidden="true"><i></i><i></i><i></i><i></i></span>';
-const preset = (value,title,copy,season='') => '<button type="button" class="stPreset stPreset--'+value+'" data-st-preset="'+value+'" data-st-field="themeId" data-st-value="'+value+'" aria-pressed="false"><span class="stPresetArt" aria-hidden="true"><span class="stThemeScene"><i class="stThemeOrb"></i><i class="stThemeLand"></i><i class="stThemeLine"></i></span><i class="stPresetNav"></i><i class="stPresetTitle"></i><i class="stPresetPoster"></i><i class="stPresetPoster"></i><i class="stPresetPoster"></i><b>'+icon('check')+'</b>'+(season?'<em>'+season+'</em>':'')+'</span><strong>'+title+'</strong><small>'+copy+'</small></button>';
+const preset = (value,title,copy,season='') => '<button type="button" class="stPreset stPreset--'+value+'" data-st-preset="'+value+'" data-st-field="themeId" data-st-value="'+value+'" aria-pressed="false"><span class="stPresetArt" aria-hidden="true"><span class="stThemeScene"></span><span class="stThemeSignature">SWIFLY<span>'+title+'</span></span><span class="stThemePalette"><i></i><i></i><i></i></span><b>'+icon('check')+'</b>'+(season?'<em>'+season+'</em>':'')+'</span><strong>'+title+'</strong><small>'+copy+'</small></button>';
 function studioMarkup() {
   return `<div class="svAuroraBackground" aria-hidden="true"><i class="svAuroraGlow"></i><i class="svAuroraRibbon svAuroraRibbon--first"></i><i class="svAuroraRibbon svAuroraRibbon--second"></i><i class="svAuroraRibbon svAuroraRibbon--third"></i></div>
+  <div class="svThemeBackdrop" aria-hidden="true"></div>
   <div class="svAppearanceTexture" aria-hidden="true"></div>
   <dialog id="controlPanel" class="svStudioDialog" data-st-editor-mode="simple" aria-labelledby="stTitle" aria-describedby="stDescription">
     <div class="stWorkspace">
@@ -43,9 +44,9 @@ function studioMarkup() {
         <div class="stContent" data-native-scroll>
           <p id="stModeNote" class="stModeNote" data-st-mode-note role="status">Simple view · Pick a theme, adjust what matters, then Save.</p>
           <section id="stPanel-looks" class="stPanel" role="tabpanel" aria-labelledby="stTab-looks">
-            <div class="stPanelTitle"><span>YOUR SCREEN, YOUR SEASON</span><h2>Find your atmosphere.</h2><p>A complete look in one click. Preview it here; Save to keep it.</p></div>
+            <div class="stPanelTitle"><span>MAKE IT YOURS</span><h2>A different kind of movie night.</h2><p>Choose a scene. Your whole screen changes with it.</p></div>
             <div class="stPresets" role="group" aria-label="Curated themes">
-              ${preset('pure','Swifly Original','Pearl & northern light')}${preset('halloween','Halloween','Pumpkin & velvet night','SEASONAL')}${preset('winter','Winter Lights','Evergreen & champagne','SEASONAL')}${preset('cinema','Cinema','Warm copper & film grain')}${preset('midnight','Midnight','Ink blue & silver')}${preset('forest','Forest','Sage & a grounded canvas')}${preset('focus','Focus','Graphite & solid surfaces')}
+              ${preset('pure','Swifly Original','Pearl accents. Northern light.')}${preset('halloween','Halloween','Moonlit woods. A little mischief.','SEASONAL')}${preset('winter','Winter Lights','Snowy nights. A warmer glow.','SEASONAL')}${preset('cinema','Cinema','The lights down. The film first.')}${preset('midnight','Midnight','Deep indigo. Electric blue.')}${preset('forest','Forest','Evergreen calm. Soft jade.')}${preset('focus','Focus','Pure graphite. Nothing in the way.')}
             </div>
             <p class="stThemePromise">Themes keep your library, navigation and comfort settings.</p>
             ${group('Accent','A little color, exactly where it belongs.', choices('theme',[

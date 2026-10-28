@@ -47,6 +47,23 @@ test('seasonal themes persist through the prepaint path and decorative light obe
   await page.emulateMedia({reducedMotion:'reduce'});await page.evaluate(value=>SwiflyStudioConfig.apply(value),values);assert.equal(await page.evaluate(()=>SwiflyAppearance.auroraMotion),'still');
  }finally{await context.close();}
 });
+test('supported light canvases and dark accents keep the editor readable through Save and Cancel',{skip},async()=>{
+ const {context,page}=await open();try{
+  await page.locator('[data-st-advanced-toggle]').check();await page.locator('[data-st-input="customColors"]').check();
+  await page.locator('[data-st-input="canvasColor"]').fill('#ffffff');await page.locator('[data-st-input="accentColor"]').fill('#223344');await page.locator('[data-st-input="accentColor"]').press('Tab');
+  const contrast=()=>page.evaluate(async()=>{
+   await Promise.all(document.querySelector('#controlPanel').getAnimations({subtree:true}).filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished.catch(()=>{})));
+   const canvas=document.createElement('canvas');canvas.width=canvas.height=1;const ctx=canvas.getContext('2d');
+   const hex=color=>{ctx.clearRect(0,0,1,1);ctx.fillStyle=color;ctx.fillRect(0,0,1,1);return '#'+[...ctx.getImageData(0,0,1,1).data].slice(0,3).map(n=>n.toString(16).padStart(2,'0')).join('');};
+   const panel=getComputedStyle(document.querySelector('#controlPanel')),heading=getComputedStyle(document.querySelector('#stTitle')),save=getComputedStyle(document.querySelector('[data-st-save]'));
+   return {heading:SwiflyStudioConfig.contrast(hex(heading.color),hex(panel.backgroundColor)),button:SwiflyStudioConfig.contrast(hex(save.color),hex(save.backgroundColor))};
+  });
+  let ratios=await contrast();assert(ratios.heading>=4.5,'Editor heading remains readable on a supported light canvas: '+JSON.stringify(ratios));assert(ratios.button>=4.5,'Save text remains readable on a dark accent: '+JSON.stringify(ratios));
+  await page.locator('[data-st-save]').click();await page.evaluate(()=>SwiflyStudio.open());assert.equal(await page.locator('[data-st-input="canvasColor"]').inputValue(),'#ffffff');assert.equal(await page.locator('[data-st-input="accentColor"]').inputValue(),'#223344');
+  for(const accent of ['#000000','#ffffff','#777777']){await page.locator('[data-st-input="accentColor"]').fill(accent);await page.locator('[data-st-input="accentColor"]').press('Tab');ratios=await contrast();assert(ratios.heading>=4.5&&ratios.button>=4.5,accent+' keeps readable editor and Save text: '+JSON.stringify(ratios));}
+  await page.locator('.stFooter [data-st-cancel]').click();assert.equal(await page.evaluate(()=>SwiflyStudio.getRawSettings().accentColor),'#223344');assert.equal(await page.evaluate(()=>SwiflyStudio.getRawSettings().canvasColor),'#ffffff');
+ }finally{await context.close();}
+});
 test('portable file export imports into another browser only after review and Preview then persists on Save',{skip},async()=>{
  const first=await open();let second;try{
   await first.page.locator('[data-st-field="theme"][data-st-value="purple"]').click();await first.page.locator('[data-st-tab="devices"]').click();await first.page.locator('[data-st-input="performancePreset"]').selectOption('xbox');await first.page.locator('[data-st-tab="themes"]').click();await first.page.locator('[data-st-look-name]').fill('Portable purple');
