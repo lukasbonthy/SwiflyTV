@@ -12,8 +12,9 @@
     if (root.dataset.libraryMounted || !window.SwiflyLibrary) return;
     root.dataset.libraryMounted = 'true';root.classList.add('svLibraryPage','dsPlainPage');
     const api = window.SwiflyLibrary, query = new URLSearchParams(location.search);
-    let tab = tabs.some(([id]) => id === query.get('tab')) ? query.get('tab') : 'watchlist', editorMode = 'create', selected = new Map();
-    const header = node('header','svLibraryHeader');header.append(node('span','svLibraryEyebrow','YOUR LIBRARY'),node('h1','','My List'),node('p','','The stories you saved, started, and finished.'));
+    const defaultTab = tabs.some(([id]) => id === root.dataset.libraryDefaultTab) ? root.dataset.libraryDefaultTab : 'watchlist';
+    let tab = tabs.some(([id]) => id === query.get('tab')) ? query.get('tab') : defaultTab, editorMode = 'create', selected = new Map(),clearingFavorites = false;
+    const header = node('header','svLibraryHeader'),heading = node('h1','','My List');header.append(node('span','svLibraryEyebrow','YOUR LIBRARY'),heading,node('p','','The stories you saved, started, and finished.'));
     const navigation = node('nav','svLibraryTabs');navigation.setAttribute('aria-label','Library sections');
     for (const [id,label] of tabs) {const control = button(label,'data-library-tab','svLibraryTab');control.dataset.libraryTab = id;navigation.append(control);}
     const type = select('data-library-type',[['all','All formats'],['movie','Movies'],['tv','Series']]);if (['movie','tv'].includes(query.get('type'))) type.value = query.get('type');
@@ -21,18 +22,22 @@
     const sort = select('data-library-sort',[['recent','Recently added'],['title','Title A–Z'],['rating','Highest rated'],['release','Newest release']]);if (['title','rating','release'].includes(query.get('sort'))) sort.value = query.get('sort');
     const search = node('input');search.type = 'search';search.setAttribute('data-library-search','');search.placeholder = 'Find in your library';search.maxLength = 120;search.setAttribute('aria-label','Find a title in your library');
     const toolbar = node('div','svLibraryToolbar');toolbar.append(field('Format',type),field('Folder',folder),field('Sort',sort),field('Search',search));
-    const folderControls = node('div','svLibraryFolderControls'),create = button('New folder','data-library-folder-open'),rename = button('Rename folder','data-library-folder-rename'),remove = button('Delete folder','data-library-folder-delete','svLibraryButton svLibraryDanger');folderControls.append(create,rename,remove);
+    const folderControls = node('div','svLibraryFolderControls'),create = button('New folder','data-library-folder-open'),rename = button('Rename folder','data-library-folder-rename'),remove = button('Delete folder','data-library-folder-delete','svLibraryButton svLibraryDanger'),clearFavorites = button('Clear favorites','data-library-clear-liked','svLibraryButton svLibraryDanger');folderControls.append(create,rename,remove,clearFavorites);
     const editor = node('section','svLibraryFolderEditor');editor.hidden = true;editor.setAttribute('data-library-folder-editor','');
     const form = node('form','svLibraryFolderForm');form.setAttribute('data-library-folder-form','');const folderInput = node('input');folderInput.type = 'text';folderInput.name = 'folderName';folderInput.maxLength = 60;folderInput.required = true;folderInput.id = 'svLibraryFolderName';const folderLabel = node('label','','Folder name');folderLabel.htmlFor = folderInput.id;
     const submit = node('button','svLibraryButton','Create folder');submit.type = 'submit';const cancel = button('Cancel','data-library-folder-cancel');form.append(folderLabel,folderInput,submit,cancel);editor.append(form);
     const status = node('p','svLibraryStatus');status.setAttribute('data-library-status','');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
     const summary = node('p','svLibraryCount');summary.setAttribute('data-library-count','');
     const grid = node('div','dsGrid svLibraryGrid');grid.setAttribute('data-library-grid','');
-    const empty = node('p','svLibraryEmpty');empty.setAttribute('data-library-empty','');
-    root.replaceChildren(header,navigation,toolbar,folderControls,editor,status,summary,grid,empty);
+    const empty = node('div','svLibraryEmpty');empty.setAttribute('data-library-empty','');
+    const emptyText = node('p'),emptyActions = node('p');emptyActions.setAttribute('data-library-empty-actions','');
+    const resetFilters = button('Clear filters','data-library-reset-filters'),browse = node('a','dsSecondaryBtn','Find something to watch'),recover = node('a','dsSecondaryBtn','Import or recover saved data');
+    browse.href = '/search';browse.setAttribute('data-library-browse','');recover.href = '/account#account-data';recover.setAttribute('data-library-recover','');
+    emptyActions.append(resetFilters,document.createTextNode(' '),browse,document.createTextNode(' '),recover);empty.append(emptyText,emptyActions);
+    root.replaceChildren(header,navigation,toolbar,folderControls,editor,status,summary,empty,grid);
     function updateUrl() {
       const params = new URLSearchParams(location.search);
-      for (const [name,value] of [['tab',tab === 'watchlist' ? '' : tab],['type',type.value === 'all' ? '' : type.value],['folder',folder.value],['sort',sort.value === 'recent' ? '' : sort.value]]) value ? params.set(name,value) : params.delete(name);
+      for (const [name,value] of [['tab',tab === defaultTab ? '' : tab],['type',type.value === 'all' ? '' : type.value],['folder',folder.value],['sort',sort.value === 'recent' ? '' : sort.value]]) value ? params.set(name,value) : params.delete(name);
       const suffix = params.toString();history.replaceState(history.state,'',location.pathname + (suffix ? '?' + suffix : '') + location.hash);
     }
     function openEditor(mode) {
@@ -77,16 +82,34 @@
       folder.replaceChildren();for (const [value,label] of [['','All folders'],...state.folders.map(value => [value.id,value.name])]) {const option = node('option','',label);option.value = value;folder.append(option);}
       folder.value = state.folders.some(value => value.id === chosen) ? chosen : '';query.delete('folder');
       rename.hidden = remove.hidden = !folder.value;
+      clearFavorites.hidden = tab !== 'liked' || !api.active || !state.liked.length;clearFavorites.disabled = clearingFavorites;
+      heading.textContent = tab === 'watchlist' ? 'My List' : tabs.find(([id]) => id === tab)[1];
       for (const control of navigation.querySelectorAll('[data-library-tab]')) control.setAttribute('aria-pressed',String(control.dataset.libraryTab === tab));
       const rows = api.list(tab,{type:type.value,folder:folder.value,sort:sort.value,search:search.value}),progress = new Map(api.list('continue').map(value => [value.type + ':' + value.id,value]));
       selected = new Map();grid.replaceChildren(...rows.map(item => card(item,state,progress)));summary.textContent = rows.length + (['history','completed'].includes(tab) ? rows.length === 1 ? ' entry' : ' entries' : rows.length === 1 ? ' title' : ' titles');
-      empty.hidden = !!rows.length;empty.textContent = !api.active ? 'Your library is refreshing…' : search.value || folder.value || type.value !== 'all' ? 'No titles match these filters.' : tab === 'completed' ? 'The stories you finish will appear here.' : tab === 'history' ? 'Start watching a title to build your history.' : tab === 'continue' ? 'You’re all caught up. Start a film or episode to pick it up here.' : tab === 'liked' ? 'Tap the heart on a title to keep it here.' : 'Save a film or series and it will be waiting here.';
+      const filtered = !!(search.value || folder.value || type.value !== 'all'),hasRows = !!rows.length;
+      empty.hidden = hasRows;emptyText.textContent = !api.active ? 'Your library is refreshing…' : filtered ? 'No titles match these filters.' : tab === 'completed' ? 'Movies and episodes you finish or mark watched will appear here.' : tab === 'history' ? 'Start watching a title to build your history.' : tab === 'continue' ? 'Start a film or episode to pick it up here later.' : tab === 'liked' ? 'Choose the heart on a title to add it to Favorites.' : 'Choose Save on a film or series to keep it here. Missing an earlier list? You can import a backup or check this browser for saved data.';
+      emptyActions.hidden = hasRows || !api.active;resetFilters.hidden = hasRows || !api.active || !filtered;browse.hidden = hasRows || !api.active || filtered;recover.hidden = hasRows || !api.active || filtered || tab !== 'watchlist';
       api.renderDecorations(root);
       if (focused) [...root.querySelectorAll('[data-library-focus]')].find(value => value.dataset.libraryFocus === focused)?.focus();
     }
     navigation.addEventListener('click',event => {const control = event.target.closest('[data-library-tab]');if (!control) return;tab = control.dataset.libraryTab;status.textContent = '';updateUrl();render();});
     for (const input of [type,folder,sort]) input.addEventListener('change',() => {updateUrl();render();});
     search.addEventListener('input',render);
+    resetFilters.addEventListener('click',() => {type.value = 'all';folder.value = '';query.delete('folder');search.value = '';status.textContent = '';updateUrl();render();search.focus();});
+    clearFavorites.addEventListener('click',async() => {
+      if (clearingFavorites || !api.active) return;
+      const items = api.list('liked'),owner = api.contextId();
+      if (!items.length || !window.confirm('Remove all favorites from this profile? Saved titles and watching history will stay.')) return;
+      clearingFavorites = true;render();let removed = false;
+      try {
+        for (const item of items) if (api.contextId() !== owner || !api.setLiked(item,false)) throw Error('Some favorites could not be cleared. Check browser storage and try again.');
+        removed = true;status.textContent = 'Favorites cleared in this browser.';
+        if (window.SwiflyAccount?.user) await window.SwiflyAccount.sync?.();
+      } catch (error) {
+        if (api.contextId() === owner) status.textContent = removed ? 'Favorites cleared in this browser, but account sync failed. Open Account to retry syncing.' : error.message;
+      } finally {clearingFavorites = false;render();}
+    });
     create.addEventListener('click',() => openEditor('create'));rename.addEventListener('click',() => openEditor('rename'));cancel.addEventListener('click',() => {editor.hidden = true;create.focus();});
     remove.addEventListener('click',() => {if (api.deleteFolder(folder.value)) {folder.value = '';status.textContent = 'Folder deleted. Your titles are still saved.';updateUrl();render();}});
     form.addEventListener('submit',event => {

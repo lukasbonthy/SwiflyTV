@@ -107,7 +107,12 @@
     rows('watchlist',item => item.key);rows('liked',item => item.key);
     for (const name of ['watched','history']) rows(name,item => item.key,(base,next,current) => {
       const value = fields(base,next,current);
-      if (Date.parse(current.watchedAt) > Date.parse(value.watchedAt)) value.watchedAt = current.watchedAt;
+      if (Date.parse(current.watchedAt) > Date.parse(next.watchedAt)) {
+        value.watchedAt = current.watchedAt;
+        // Position and completion belong to that viewing timestamp. Keeping
+        // an older imported position with a newer remote date loses progress.
+        for (const field of ['currentTime','duration','completed']) if (Object.prototype.hasOwnProperty.call(current,field)) value[field] = current[field];
+      }
       return value;
     });
     rows('folders',item => item.id,(base,next,current) => ({...fields(base,next,current),members:members(base?.members || [],next.members,current.members || [])}));
