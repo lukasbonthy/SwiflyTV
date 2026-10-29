@@ -1,4 +1,5 @@
 /* One theater and transport for solo and shared playback. */
+.svPlayerTvLabel,.svPlayerTvHint,.svPlayerFrameControls {display:none}
 .svPlayer {
   --player-canvas:#101012; --player-accent:#f2f1f6; --player-line:#ffffff24;
   --player-muted:#afb0ba; --player-control-size:44px; --player-aspect:1.7777778; --player-ease:cubic-bezier(.2,.75,.25,1);

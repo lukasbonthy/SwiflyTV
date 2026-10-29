@@ -48,9 +48,9 @@ test('all six mobile routes share one visible row at 320px',{skip},async()=>{
 
 test('six-link TV navigation keeps search, Studio, TV exit and account within a compact screen',{skip},async()=>{
  const {context,page}=await open({viewport:{width:960,height:540},tv:true,values:{navLayout:'sidebar',tvControls:'large'}});try {
-  const geometry=await page.evaluate(()=>{const bounds=node=>{const r=node.getBoundingClientRect();return {left:r.left,right:r.right,width:r.width,height:r.height};};return {nav:bounds(document.querySelector('.netflixNav')),controls:['#svNavSearchToggle','#controlToggleTop','.svTvModePill','.dsProfileMenu > summary'].map(selector=>bounds(document.querySelector(selector))),links:[...document.querySelectorAll('.navLinks > a')].map(bounds)};});
+  const geometry=await page.evaluate(()=>{const bounds=node=>{const r=node.getBoundingClientRect();return {left:r.left,right:r.right,width:r.width,height:r.height};};return {group:(()=>{const n=document.querySelector('.navLinks'),s=getComputedStyle(n),p=getComputedStyle(n.parentElement);return{box:bounds(n),display:s.display,position:s.position,transform:s.transform,translate:s.translate,left:s.left,margin:s.margin,grid:s.gridArea,parent:p.display,parentTransform:p.transform,container:getComputedStyle(document.querySelector('.netflixNav')).gridTemplateColumns};})(),nav:bounds(document.querySelector('.netflixNav')),controls:['#svNavSearchToggle','#controlToggleTop','.svTvModePill','.dsProfileMenu > summary'].map(selector=>bounds(document.querySelector(selector))),links:[...document.querySelectorAll('.navLinks > a')].map(bounds)};});
   assert(geometry.nav.left>=0&&geometry.nav.right<=960);assert.equal(geometry.links.length,6);
-  for(const box of [...geometry.controls,...geometry.links])assert(box.left>=0&&box.right<=960&&box.width>=40&&box.height>=40,'visible routes and critical controls stay inside the screen');
+  for(const box of [...geometry.controls,...geometry.links])assert(box.left>=0&&box.right<=960&&box.width>=40&&box.height>=40,'visible routes and critical controls stay inside the screen: '+JSON.stringify(geometry));
  }finally{await context.close();}
 });
 

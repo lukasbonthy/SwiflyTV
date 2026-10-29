@@ -33,6 +33,34 @@ function setup(){
   };environments.add(e);return e;
 }
 test.afterEach(()=>{for(const e of environments)e.close();});
+function controller(e){
+ e.w.localStorage.setItem('swiflytv.tvFocusMode','true');e.w.navigator.getGamepads=()=>[];
+ for(const n of e.app.querySelectorAll('button,summary,input,video,[tabindex]'))n.getBoundingClientRect=()=>({left:100,top:200,width:120,height:50,right:220,bottom:250});
+ e.w.eval(tvScript().replace(/^<script[^>]*>/,'').replace(/<\/script>$/,''));e.d.dispatchEvent(new e.w.Event('DOMContentLoaded'));
+ let clock=1000;e.w.Date.now=()=>clock;
+ e.key=(key,{repeat=false,up=false}={})=>{clock+=180;const event=new e.w.KeyboardEvent(up?'keyup':'keydown',{key,repeat,bubbles:true,cancelable:true});e.d.activeElement.dispatchEvent(event);return event;};
+}
+test('stage directions seek immediately and vertical input reveals controls without pausing',async()=>{
+ const e=setup();controller(e);await e.playing();e.find('stage').focus();e.key('ArrowRight');assert.equal(e.api.getState().currentTime,47);assert.equal(e.d.activeElement,e.find('stage'));e.key('ArrowLeft');assert.equal(e.api.getState().currentTime,37);e.key('ArrowUp');assert.equal(e.d.activeElement,e.find('seek'));assert.equal(e.api.getState().paused,false);
+});
+test('timeline repeats preview and commit a single party seek on release',async()=>{
+ const e=setup();controller(e);await e.playing();const actions=[];e.app.addEventListener('swiflyplayer:action',v=>actions.push(v.detail));e.find('seek').focus();e.key('ArrowRight');e.key('ArrowRight',{repeat:true});e.key('ArrowRight',{repeat:true});assert.equal(e.api.getState().currentTime,37);assert.equal(Number(e.find('seek').value),67);assert.equal(actions.length,0);e.key('ArrowRight',{up:true});assert.equal(e.api.getState().currentTime,67);assert.equal(actions.filter(v=>v.action==='set').length,1);
+});
+test('Back cancels a timeline preview while Enter commits without a second playback action',async()=>{
+ const e=setup();controller(e);await e.playing();e.find('seek').focus();e.key('ArrowRight');e.key('BrowserBack');assert.equal(e.api.getState().currentTime,37);assert.equal(Number(e.find('seek').value),37);assert.equal(e.app.dataset.playerControlsVisibility,'visible');e.key('ArrowRight');e.key('Enter');assert.equal(e.api.getState().currentTime,47);assert.equal(e.api.getState().paused,false);
+});
+test('TV inactivity parks dock focus and vertical reveal restores the last control',async()=>{
+ const e=setup();controller(e);await e.playing();e.find('forward').focus();e.idle();assert.equal(e.app.dataset.playerControlsVisibility,'hidden');assert.equal(e.d.activeElement,e.find('stage'));e.key('ArrowDown');assert.equal(e.app.dataset.playerControlsVisibility,'visible');assert.equal(e.d.activeElement,e.find('forward'));
+});
+test('controller Back takes over from a parked mouse hover before leaving fullscreen',async()=>{
+ const e=setup();controller(e);await e.playing();e.find('play').focus();e.find('controls').dispatchEvent(new e.w.Event('pointerenter'));e.key('BrowserBack');assert.equal(e.app.dataset.playerControlsVisibility,'hidden');assert.equal(e.d.activeElement,e.find('stage'));
+});
+test('focused assist and active calls keep their controls visible during playback',async()=>{
+ const e=setup();await e.playing();e.app.querySelector('[data-assist-song]').focus();e.idle();assert.equal(e.app.dataset.playerControlsVisibility,'visible');e.find('stage').focus();const call=e.d.createElement('section');call.dataset.watchroomCall='';call.innerHTML='<button data-call-leave>Leave call</button>';e.find('stage').append(call);e.find('stage').dispatchEvent(new e.w.Event('pointermove'));e.idle();assert.equal(e.app.dataset.playerControlsVisibility,'visible');
+});
+test('TV capture does not steal media keys or fullscreen from call, chat or open menus',async()=>{
+ const e=setup();controller(e);await e.playing();let fullscreen=0;e.find('stage').requestFullscreen=()=>{fullscreen++;return Promise.resolve();};const call=e.d.createElement('section');call.dataset.watchroomCall='';call.innerHTML='<button>Mute</button>';e.find('stage').append(call);call.querySelector('button').getBoundingClientRect=()=>({left:0,top:0,width:80,height:50});call.querySelector('button').focus();for(const key of ['MediaPlayPause','f']){const event=e.key(key);assert.equal(event.defaultPrevented,false);}assert.equal(e.api.getState().paused,false);assert.equal(fullscreen,0);const settings=e.find('settings');settings.open=true;settings.querySelector('summary').focus();assert.equal(e.key('MediaPlayPause').defaultPrevented,false);assert.equal(e.api.getState().paused,false);
+});
 
 test('TV reveal synchronously exposes hidden playing controls and their glass',async()=>{
   const e=setup();await e.playing();e.idle();assert.equal(e.app.dataset.playerControlsVisibility,'hidden');assert.equal(e.lens.enabled,false);

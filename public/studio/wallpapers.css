@@ -1,0 +1,49 @@
+/* One still canvas, integrated with the same readable materials as the theme. */
+.svWallpaperBackdrop {display:none;position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;contain:layout paint}
+body[data-st-wallpaper-visible="true"] .svWallpaperBackdrop {display:block}
+.svWallpaperBackdrop::before,.stWallpaperPreview::before,.stStudioAtmosphere::before {content:"";position:absolute;inset:-16px;background:var(--st-wallpaper-image) var(--st-wallpaper-position,center) / cover no-repeat;filter:blur(var(--st-wallpaper-blur,0px));pointer-events:none}
+.svWallpaperBackdrop::after {content:"";position:absolute;inset:0;background:linear-gradient(90deg,#07090f33,transparent 75%),linear-gradient(0deg,#07090f99,transparent 70%),rgba(5,7,12,var(--st-wallpaper-dim,.62))}
+body[data-st-wallpaper-visible="true"] .svThemeBackdrop {display:none !important}
+body[data-st-wallpaper-visible="true"] :is(main,.dsPlainPage,.dsSearchPage,.dsWatchlistPage,.dsProfilesPage,.dsAccountPage,.dsContent,.dsPageHero) {background-color:transparent !important;background-image:none !important}
+body[data-st-wallpaper-visible="true"] :is(.stPreviewScene,.stThemeMobilePreview) {background-image:linear-gradient(90deg,#05070cb0,#05070c30),var(--st-wallpaper-image) !important;background-position:var(--st-wallpaper-position);background-size:cover}
+body[data-st-wallpaper-visible="true"] .stStudioAtmosphere::before {opacity:.32;filter:none}
+body:not([data-st-wallpaper-visible="true"]) .stStudioAtmosphere::before {display:none}
+body:has(.svPlayerPage,.dsWatchPage) .svWallpaperBackdrop,body[data-st-high-contrast="true"] .svWallpaperBackdrop,body[data-st-performance-preset="minimal"] .svWallpaperBackdrop {display:none !important}
+.stWallpaperPreview {position:relative;isolation:isolate;overflow:hidden;min-height:210px;border:1px solid var(--st-line,#ffffff20);border-radius:16px;padding:24px;margin-bottom:24px;background:var(--theme-light),var(--st-canvas,#0c111a)}
+.stWallpaperPreview::before {z-index:-2}
+.stWallpaperPreview::after {content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,#07090f66,transparent),rgba(5,7,12,var(--st-wallpaper-dim,.62))}
+.stWallpaperPreview>small {font-size:9px;letter-spacing:.16em;color:var(--st-accent)}
+.stWallpaperPreview>strong {display:block;font-size:clamp(24px,2.4vw,34px);line-height:1.1;letter-spacing:-.045em;color:#f6f6fa;margin-top:36px}
+.stWallpaperPreview>span {display:block;max-width:260px;margin:10px 0 18px;color:#d4d7df;font-size:12px;line-height:1.6}
+.stWallpaperPreview>i {display:inline-block;border:1px solid #ffffff24;border-radius:6px;padding:8px 14px;background:#ffffff16;font-size:10px;font-style:normal;color:#fff}
+.stWallpapers {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 14px;margin-bottom:28px}
+.stWallpaperChoice {display:block;min-width:0;border:0;padding:0;background:none;text-align:left;color:#eee;cursor:pointer;border-radius:10px}
+.stWallpaperSwatch {display:block;height:102px;position:relative;border:1px solid #ffffff24;border-radius:10px;overflow:hidden;background:var(--wallpaper-swatch,radial-gradient(ellipse at 70% 0,#5a7c8a,#111823 80%)) center / cover}
+.stWallpaperSwatch::after {content:"";position:absolute;inset:0;background:linear-gradient(0deg,#0006,transparent 65%)}
+.stWallpaperChoice--theme {--wallpaper-swatch:var(--theme-image),var(--theme-light)}
+.stWallpaperChoice--aurora {--wallpaper-swatch:url('../clean/aurora-ribbon.svg')}
+.stWallpaperChoice--moonlit {--wallpaper-swatch:url('./themes/halloween-night.webp')}
+.stWallpaperChoice--winter {--wallpaper-swatch:url('./themes/winter-lights.webp')}
+.stWallpaperChoice--velvet {--wallpaper-swatch:radial-gradient(ellipse at 80% 20%,#7b749e,transparent 70%),linear-gradient(145deg,#202f40,#36283d)}
+.stWallpaperChoice--upload {--wallpaper-swatch:var(--st-upload-image,linear-gradient(140deg,#23303a,#1b1929))}
+.stWallpaperSwatch>i {display:none;position:absolute;right:8px;bottom:8px;z-index:1;width:22px;height:22px;padding:4px;background:var(--st-accent);color:var(--st-accent-ink);border-radius:50%}
+.stWallpaperSwatch svg {display:block;width:100%;height:100%}
+.stWallpaperChoice[aria-pressed="true"] .stWallpaperSwatch {border-color:var(--st-accent);box-shadow:0 0 0 2px var(--st-accent-wash)}
+.stWallpaperChoice[aria-pressed="true"] .stWallpaperSwatch>i {display:block}
+.stWallpaperChoice>b {display:block;font-size:12px;margin:10px 0 4px;font-weight:600}
+.stWallpaperChoice>small {display:block;font-size:10px;color:#b9bdcb;line-height:1.5}
+.stWallpaperUpload {padding:20px;margin-bottom:28px;border:1px dashed var(--st-line);border-radius:12px;background:var(--st-accent-wash)}
+.stWallpaperUpload h3 {font-size:15px;letter-spacing:-.02em;margin:0 0 6px}
+.stWallpaperUpload p {color:#b9bdcb;font-size:11px;line-height:1.7;margin:0 0 14px}
+.stWallpaperUploadButton {display:inline-flex;position:relative;align-items:center;min-height:40px;padding:9px 16px;border:1px solid var(--st-line);border-radius:7px;background:var(--st-surface-raised);color:#f4f4fa;font-size:12px;cursor:pointer;overflow:hidden}
+.stWallpaperUploadButton input {position:absolute;inset:0;width:100%;opacity:0;cursor:pointer}
+.stWallpaperUploadButton:focus-within {outline:2px solid var(--st-accent);outline-offset:4px}
+.stWallpaperUpload [data-st-wallpaper-status] {margin:14px 0 0;overflow-wrap:anywhere}
+.stWallpaperUpload [data-st-wallpaper-status][data-error="true"] {color:#f6b7b7}
+.stWallpaperTreatments {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stWallpaperTreatments button {background:var(--st-surface-input,#11151c);color:#e5e7ef;border:1px solid var(--st-line);border-radius:8px;padding:14px 8px;text-align:left;font-size:12px;cursor:pointer}
+.stWallpaperTreatments small {display:block;font-size:9px;color:#aeb4c4;margin-top:5px}
+.stWallpaperTreatments [aria-pressed="true"] {border-color:var(--st-accent);background:var(--st-accent-wash)}
+body.swifly-tv-focus-mode :is(.stWallpaperChoice,.stWallpaperTreatments button,.stWallpaperUploadButton) {min-height:56px}
+@media(max-width:800px) {.stWallpaperPreview {min-height:190px;padding:20px}.stWallpaperPreview>strong {margin-top:28px}.stWallpaperSwatch {height:94px}.stWallpaperUpload {padding:16px}}
+@media print {.svWallpaperBackdrop {display:none !important}}

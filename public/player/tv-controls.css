@@ -1,0 +1,53 @@
+/* Controller playback: a complete timeline above a labeled transport row. */
+.svPlayerTvLabel,.svPlayerTvHint {display:none}
+html[data-sv-tv="true"] .svPlayerFrameControls {display:flex;position:absolute;z-index:4;left:20px;right:20px;bottom:16px;gap:16px;align-items:center;padding:14px 18px;background:#12151cf5;border:1px solid #ffffff24;border-radius:14px;color:#d4d9e5;font-size:15px}
+html[data-sv-tv="true"] .svPlayerFrameControls button {flex:none;min-height:52px;padding:10px 20px;border:1px solid #ffffff30;border-radius:9px;background:#e5e8ef;color:#101318;font:inherit}
+html[data-sv-tv="true"] .svPlayerFrameControls p {margin:0;line-height:1.6}
+html[data-sv-tv="true"] body.svCleanShell .netflixNav .brand {display:flex;align-items:center;min-height:48px}
+html[data-sv-tv="true"] body.svCleanShell .svPlayer .svPlayerDock {display:flex;flex-direction:column;align-items:stretch;gap:0;width:min(1120px,calc(100% - 64px));padding:10px 20px 12px;border:1px solid #ffffff24;border-radius:20px;background:#12151c !important;box-shadow:0 10px 44px #0006}
+html[data-sv-tv="true"] body.svCleanShell .svPlayer .svPlayerDockGlass {background:#12151c !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important}
+html[data-sv-tv="true"] body.svCleanShell .svPlayer .svPlayerTimelineRow {display:flex;width:100%;min-height:54px;gap:18px;flex:none}
+html[data-sv-tv="true"] body.svCleanShell .svPlayer .svPlayerTimeline {height:54px;flex:1;min-width:100px}
+html[data-sv-tv="true"] body.svCleanShell .svPlayer .svPlayerTimelineTrack {inset:24px 0 auto;height:5px;border-radius:5px}
+html[data-sv-tv="true"] body.svCleanShell .svPlayer .svPlayerTimeline input {height:54px}
+html[data-sv-tv="true"] body.svCleanShell .svPlayer .svPlayerDockRow {display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center}
+html[data-sv-tv="true"] body.svCleanShell .svPlayer .svPlayerTransport {display:flex;flex:none;gap:12px}
+html[data-sv-tv="true"] body.svCleanShell .svPlayer .svPlayerTools {display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;margin-left:auto}
+html[data-sv-tv="true"] body.svCleanShell .svPlayer :is(.svPlayerTransport,.svPlayerTools)>.svPlayerControl,
+html[data-sv-tv="true"] body.svCleanShell .svPlayer .svPlayerTools>details>summary {display:flex;flex-direction:column;justify-content:center;gap:7px;min-width:76px;width:auto;height:68px;min-height:68px;padding:8px;border-radius:12px;line-height:1;text-decoration:none}
+html[data-sv-tv="true"] body.svCleanShell .svPlayer .svPlayerTransport>.svPlayerPlay {min-width:104px;background:var(--st-accent,#e6e8ef);color:var(--st-accent-ink,#111217)}
+html[data-sv-tv="true"] body.svCleanShell .svPlayer .svPlayerTvLabel {display:block;font-size:clamp(13px,1vw,16px);font-weight:500;letter-spacing:0;white-space:nowrap;color:inherit}
+html[data-sv-tv="true"] body.svCleanShell .svPlayer .svPlayerTvHint {display:flex;position:relative;z-index:1;justify-content:center;flex-wrap:wrap;gap:8px 24px;margin:11px 0 0;padding:9px 0 0;border-top:1px solid #ffffff14;font-size:13px;color:#b8c0d1;line-height:1.4;pointer-events:none}
+html[data-sv-tv="true"] body.svCleanShell .svPlayerStage:fullscreen .svPlayerDock {width:min(1200px,calc(100% - 8vw));bottom:4vh}
+html[data-sv-tv="true"] body.svCleanShell .svPlayer :is(.svAssistSkip,.svSongButton,.svAssistNext button,.svSongResult button,.svSongResult a) {min-height:50px;font-size:16px}
+html[data-sv-tv="true"] body.svCleanShell .svPlayer .svSongButton {bottom:230px}
+html[data-sv-tv="true"] body.svCleanShell .svPlayer .svAssistSkip {bottom:230px}
+html[data-sv-tv="true"] body.svCleanShell .svPlayer :is(.svSongResult,.svAssistNext) {bottom:230px;max-width:min(420px,calc(100% - 40px))}
+@media(max-height:760px) {
+ html[data-sv-tv="true"] body.svCleanShell .svPlayer .svPlayerDock {width:calc(100% - 48px);bottom:16px;padding:5px 15px 8px}
+ html[data-sv-tv="true"] body.svCleanShell .svPlayer .svPlayerTvHint {margin-top:6px;padding-top:6px;gap:6px 18px}
+ html[data-sv-tv="true"] body.svCleanShell .svPlayer :is(.svPlayerTransport,.svPlayerTools)>.svPlayerControl,
+ html[data-sv-tv="true"] body.svCleanShell .svPlayer .svPlayerTools>details>summary {min-width:68px;height:60px;min-height:60px}
+ html[data-sv-tv="true"] body.svCleanShell .svPlayer .svPlayerTransport>.svPlayerPlay {min-width:90px}
+}
+/* A second route row gives utilities their own space at console resolutions. */
+@media(min-width:801px) and (max-width:1100px) {
+ html[data-sv-tv="true"] body.svCleanShell [data-sv-liquid-nav].topbar > .container.nav.netflixNav {display:grid !important;grid-template-columns:auto minmax(0,1fr);height:auto !important;min-height:132px !important;padding:14px 24px 10px !important;row-gap:10px !important;column-gap:20px !important}
+ html[data-sv-tv="true"] body.svCleanShell .netflixNav .navLeftCluster {display:contents !important}
+ html[data-sv-tv="true"] body.svCleanShell .netflixNav .netflixBrand {grid-column:1;grid-row:1}
+ html[data-sv-tv="true"] body.svCleanShell .netflixNav .dsNavActions {grid-column:2;grid-row:1;justify-content:flex-end;width:100%;min-width:0;gap:12px !important}
+ html[data-sv-tv="true"] body.svCleanShell .netflixNav .navLinks {grid-column:1/-1;grid-row:2;position:static !important;transform:none !important;translate:none !important;display:flex !important;justify-content:center;gap:8px !important;width:calc(100vw - 2 * var(--sv-tv-safe) - 48px) !important;max-width:none !important;overflow:visible}
+ html[data-sv-tv="true"] body.svCleanShell .netflixNav .navLinks>a {font-size:calc(17px * var(--st-ui-scale,1) * var(--st-tv-scale,1)) !important;min-height:44px !important}
+ html[data-sv-tv="true"] body.svCleanShell .svPlayerPage {padding-top:185px;--player-theater-height:calc(100svh - 330px)}
+ html[data-sv-tv="true"] body.svCleanShell main>.dsHero {padding-top:190px !important}
+ html[data-sv-tv="true"] {scroll-padding-top:185px}
+ html[data-sv-tv="true"] body.svCleanShell #swiflyTvSpotlight {top:calc(clamp(24px,3.4vh,38px) + 148px)}
+}
+@media(min-width:1101px) and (max-width:1500px) {
+ html[data-sv-tv="true"] body.svCleanShell .netflixNav .navLeftCluster {gap:18px !important;flex:0 1 auto !important}
+ html[data-sv-tv="true"] body.svCleanShell .netflixNav .navLinks {position:static !important;transform:none !important;translate:none !important;width:auto !important;gap:6px !important}
+ html[data-sv-tv="true"] body.svCleanShell .netflixNav .navLinks>a {font-size:calc(18px * var(--st-ui-scale,1)) !important;padding:0 7px !important;min-height:48px !important}
+ html[data-sv-tv="true"] body.svCleanShell .netflixNav .navLinks .svIcon {display:none !important}
+ html[data-sv-tv="true"] body.svCleanShell .netflixNav .dsNavActions {gap:8px !important;flex:none !important}
+ html[data-sv-tv="true"] body.svCleanShell .svPlayerPage {--player-theater-height:calc(100svh - 280px)}
+}

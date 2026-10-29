@@ -32,6 +32,7 @@
     const mediaName = () => mediaType==='tv'?'episode':'movie';
     let hls=null,dash=null,pendingPlay=false,unlockRemote=true,resumeAt=0,retryResume=0,stallTimer=0,toastTimer=0,lookupDeadline=0,loadingKey='';
     let lastTime=0,lastBuffer=0,hlsRecovery={network:0,media:0},controlsTimer=0,scrubbing=false,scrubTime=0;
+    let tvLastFocus=null;
     let stallRepairs=0,repairPosition=0;
     let glass=null,glassEnabled=null,glassUnavailable=false;
     let audioOptions=[],applyingAudio=false,observedAudio=null,observedText=null;
@@ -151,8 +152,14 @@
       return {currentTime:number(video?.currentTime,0),paused:phase==='ended'||phase==='error'||!video||video.paused,duration:video?.duration===Infinity?Infinity:number(video?.duration,0),ready:playable&&!destroyed&&!suspended,source,mediaId,type:mediaType,status:phase};
     }
     const emitState = () => dispatch('state',getState());
+    const television=()=>document.documentElement.dataset.svTv==='true'&&document.body.classList.contains('swifly-tv-focus-mode');
+    function interactionPinned(){return !!document.activeElement?.closest('[data-assist-root],[data-watchroom-call],.svInlineParty')||!!stage.querySelector('[data-watchroom-call]:not([hidden]) [data-call-leave]:not([hidden])');}
     function controlsPinned() {
-      return phase!=='ready'||!playable||video.paused||video.seeking||scrubbing||controlsHovered||!find('unlock').hidden||controls.contains(document.activeElement)||!!stage.querySelector('details[open]');
+      return phase!=='ready'||!playable||video.paused||video.seeking||scrubbing||controlsHovered||!find('unlock').hidden||!television()&&controls.contains(document.activeElement)||interactionPinned()||!!stage.querySelector('details[open]');
+    }
+    function hideTransport(){
+      if(controls.contains(document.activeElement)){tvLastFocus=document.activeElement;stage.focus({preventScroll:true});}
+      clearTimeout(controlsTimer);controlsTimer=0;app.dataset.playerControlsVisibility='hidden';syncGlass();
     }
     function syncGlass() {
       // One static geometry lens belongs to the transport. Its backdrop is
@@ -168,16 +175,17 @@
       if(destroyed||suspended){syncGlass();return;}
       if(reveal||controlsPinned()){clearTimeout(controlsTimer);controlsTimer=0;app.dataset.playerControlsVisibility='visible';}
       if(!controlsPinned()&&app.dataset.playerControlsVisibility!=='hidden'&&!controlsTimer){
-        const token=generation;controlsTimer=setTimeout(()=>{controlsTimer=0;if(!alive(token))return;if(controlsPinned())updateVisibility();else {app.dataset.playerControlsVisibility='hidden';syncGlass();}},config.controls);
+        const token=generation;controlsTimer=setTimeout(()=>{controlsTimer=0;if(!alive(token))return;if(controlsPinned())updateVisibility();else hideTransport();},config.controls);
       }
       syncGlass();
     }
     function tvControls(event) {
       if(destroyed||suspended||!app.isConnected||document.documentElement.dataset.svTv!=='true'||!document.body.classList.contains('swifly-tv-focus-mode'))return;
-      if(event.detail?.action==='show'){updateVisibility({reveal:true});return;}
-      if(event.detail?.action!=='hide'||phase!=='ready'||!playable||video.paused||video.ended||video.seeking||scrubbing||controlsHovered||!find('unlock').hidden||stage.querySelector('details[open]'))return;
-      if(controls.contains(document.activeElement))stage.focus({preventScroll:true});
-      clearTimeout(controlsTimer);controlsTimer=0;app.dataset.playerControlsVisibility='hidden';syncGlass();
+      // A controller/remote action takes ownership from the last mouse position.
+      controlsHovered=false;
+      if(event.detail?.action==='show'){updateVisibility({reveal:true});if(event.detail.focus&&document.activeElement===stage&&tvLastFocus?.isConnected&&!tvLastFocus.disabled&&!tvLastFocus.closest('[hidden],[inert],[aria-disabled="true"],details:not([open]) :not(summary)'))tvLastFocus.focus({preventScroll:true});return;}
+      if(event.detail?.action!=='hide'||phase!=='ready'||!playable||video.paused||video.ended||video.seeking||scrubbing||controlsHovered||interactionPinned()||!find('unlock').hidden||stage.querySelector('details[open]'))return;
+      hideTransport();
     }
     function showToast(message) {
       const node=find('toast');clearTimeout(toastTimer);node.textContent=message;node.hidden=false;
@@ -797,6 +805,7 @@
     listen(find('seek'),'input',event=>{if(locked())return;scrubbing=true;scrubTime=Number(event.target.value);updateTime();updateVisibility({reveal:true});});
     listen(find('seek'),'change',event=>{const value=Number(event.target.value);scrubbing=false;seek(value);updateTime();updateVisibility({reveal:true});});
     listen(find('seek'),'pointercancel',()=>{scrubbing=false;updateTime();updateVisibility({reveal:true});});
+    listen(find('seek'),'blur',()=>{if(!scrubbing)return;scrubbing=false;seek(Number(find('seek').value));updateTime();updateVisibility({reveal:true});});
     listen(find('retry'),'click',()=>{if(!locked())resolve({retry:true});});
     listen(find('settings-close'),'click',()=>{closeMenu(find('settings'));find('settings').querySelector('summary').focus();});
     listen(find('servers-close'),'click',()=>{closeMenu(find('servers'));find('servers').querySelector('summary').focus();});
@@ -823,7 +832,7 @@
     listen(controls,'pointerenter',event=>{if(event.pointerType==='touch')return;controlsHovered=true;updateVisibility({reveal:true});});
     const leaveControls=()=>{controlsHovered=false;updateVisibility();};
     listen(controls,'pointerleave',leaveControls);listen(controls,'pointercancel',leaveControls);
-    listen(stage,'focusin',()=>updateVisibility({reveal:true}));listen(stage,'focusout',()=>{const token=generation;queueMicrotask(()=>{if(alive(token))updateVisibility();});});
+    listen(stage,'focusin',event=>{if(controls.contains(event.target))tvLastFocus=event.target;updateVisibility({reveal:true});});listen(stage,'focusout',()=>{const token=generation;queueMicrotask(()=>{if(alive(token))updateVisibility();});});
     listen(stage,'click',event=>{if(event.target===video||event.target===stage){stage.focus({preventScroll:true});if(playable&&!locked())getState().paused?play():pause();}});
     function closeMenu(node) {
       node.open=false;try{node.querySelector('[popover]')?.hidePopover?.();}catch{}

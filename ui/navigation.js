@@ -41,8 +41,9 @@ function navigationGate() {
   window.addEventListener('pagereveal', guard);
 }
 
+const navigationSource=require('terser').minify_sync('('+navigationGate.toString()+')();',{ecma:2020}).code;
 function navigationHead() {
-  return `<script data-sv-navigation-gate>(${navigationGate.toString()})();</script>`;
+  return `<script data-sv-navigation-gate>${navigationSource}</script>`;
 }
 
 module.exports = {navigationHead};

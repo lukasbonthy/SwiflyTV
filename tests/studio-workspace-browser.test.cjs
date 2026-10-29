@@ -60,7 +60,7 @@ test('Forest, Midnight and Cinema switch actual motifs without leaking nodes; Fo
   await page.locator('[data-st-preset="focus"]').click();assert.equal(await page.locator('[data-theme-owned]').count(),0);
  }finally{await context.close();}
 });
-test('all ten sections fit the real desktop and 320px mobile shell without horizontal overflow',{skip},async()=>{
+test('all Studio sections fit the real desktop and 320px mobile shell without horizontal overflow',{skip},async()=>{
  for(const viewport of [{width:1440,height:900},{width:320,height:568}]){const {context,page}=await open(viewport);try{
   await page.locator('[data-st-advanced-toggle]').check();
   for(const tab of await page.locator('[data-st-tab]').all()){
@@ -78,7 +78,7 @@ test('TV Studio keeps native controls readable, focusable and inside the workspa
 });
 test('Simple and Advanced keep keyboard focus safe and retain a cancellable draft on phone and desktop',{skip},async()=>{
  for(const viewport of [{width:1440,height:900},{width:320,height:568}]){const {context,page}=await open(viewport);try{
-  assert.equal(await page.locator('[data-st-tab]:visible').count(),6);assert(await page.locator('[data-st-input="accentColor"]').isHidden());
+  assert.equal(await page.locator('[data-st-tab]:visible').count(),7);assert(await page.locator('[data-st-input="accentColor"]').isHidden());
   await page.locator('[data-st-tab="player"]').focus();await page.keyboard.press('ArrowDown');assert.equal(await page.evaluate(()=>document.activeElement.dataset.stTab),'devices');
   await page.locator('[data-st-advanced-toggle]').check();await page.locator('[data-st-tab="looks"]').click();await page.locator('[data-st-input="glassBlur"]').fill('25');
   await page.locator('[data-st-tab="hud"]').click();await page.locator('[data-st-input="aiWidth"]').fill('800');await page.locator('[data-st-advanced-toggle]').uncheck();

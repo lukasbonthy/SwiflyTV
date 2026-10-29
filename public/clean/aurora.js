@@ -7,11 +7,11 @@
   let started = false, stopped = false, observer, dialogs, viewport, background, inView = true, pageHidden = false;
   function refresh() {
     if (!document.body || stopped) return;
-    const policy = document.documentElement.dataset.svXbox === 'true' ? 'console' : touch.matches ? 'touch' : 'full';
+    const policy = document.body.dataset.svPerformance === 'low' ? 'low' : document.documentElement.dataset.svXbox === 'true' || document.documentElement.dataset.svTv === 'true' ? 'console' : touch.matches ? 'touch' : 'full';
     if (document.body.dataset.svPerformance !== policy) document.body.dataset.svPerformance = policy;
     const watch = /^\/(?:watch|embed)(?:\/|$)/.test(location.pathname) || Boolean(document.querySelector('.svPlayerPage,.dsWatchPage'));
     const off = watch || document.body.dataset.stBackdrop !== 'aurora' || document.body.dataset.stHighContrast === 'true';
-    const still = pageHidden || document.hidden || reduced.matches || policy === 'console' || document.body.classList.contains('reduceMotion') || document.body.dataset.stAuroraMotion === 'still';
+    const still = pageHidden || document.hidden || reduced.matches || policy === 'console' || policy === 'low' || document.body.classList.contains('reduceMotion') || document.body.dataset.stAuroraMotion === 'still';
     const state = off ? 'off' : still || !inView || document.querySelector('dialog[open]') ? 'still' : 'live';
     const preview = off || !document.querySelector('#controlPanel[open]') ? 'off' : still ? 'still' : 'live';
     if (document.body.dataset.svAuroraState !== state) document.body.dataset.svAuroraState = state;

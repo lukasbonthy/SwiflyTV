@@ -84,7 +84,7 @@
   const profiles=raw.map((profile,index)=>{
    const library=state['swiflytv.library.'+profile.id]||{version:1,watchlist:index===0?state['movieverse.watchlist']||[]:[],liked:index===0?state['movieverse.liked']||[]:[]};
    const result={profile,library:cleanLibrary(library),continue:progress(entries.filter(v=>v?.profileId===profile.id||!v?.profileId&&index===0))};
-   if(storage){const namespace=owner==='guest'?'guest'+(profile.id==='main'?'':':profile:'+encodeURIComponent(profile.id)):'account:'+encodeURIComponent(owner)+':profile:'+encodeURIComponent(profile.id);const a=read(storage,config?.storageKey(namespace))||read(storage,'swiflytv.appearance');if(a?.version===1||a?.version===2)result.appearance=appearance(a);const s=read(storage,'swifly.study.v1.'+namespace);if(s)result.study=study(s);}
+   if(storage){const namespace=owner==='guest'?'guest'+(profile.id==='main'?'':':profile:'+encodeURIComponent(profile.id)):'account:'+encodeURIComponent(owner)+':profile:'+encodeURIComponent(profile.id);const own=read(storage,config?.storageKey(namespace));let a=own||read(storage,'swiflytv.appearance');if(a&&!own&&owner!=='guest'){a=config.unpackRecord(a,{strict:true});for(const v of [a.values,...a.looks.map(v=>v.values)]){v.wallpaperData='';v.wallpaperName='';if(v.wallpaper==='upload')v.wallpaper='theme';}}if(a?.version===1||a?.version===2)result.appearance=appearance(a);const s=read(storage,'swifly.study.v1.'+namespace);if(s)result.study=study(s);}
    return result;
   });return validate({app:'SwiflyTV',kind:'account-backup',version:1,createdAt,profiles});
  }

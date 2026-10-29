@@ -34,6 +34,9 @@ test('self-contained themes carry optimized wallpapers larger than the old 32 KB
 test('guest fallback never shares a private uploaded wallpaper with a newly signed-in profile',()=>{
  const s=storage();C.write(s,{...C.read(s),values,looks:[{id:'private',name:'Private',values}]});s.setItem('swiflytv.accountOwner','new-account');const r=C.read(s);assert.equal(r.values.wallpaperData,'');assert.notEqual(r.values.wallpaper,'upload');assert.equal(r.looks[0].values.wallpaperData,'');
 });
+test('an account backup does not inherit a private guest upload through a global fallback',()=>{
+ const s=storage();C.write(s,{...C.read(s),values});s.setItem('swiflytv.profiles',JSON.stringify([{id:'main',name:'Account'}]));const backup=A.capture(s,{owner:'different-account'});assert(!JSON.stringify(backup).includes(png));
+});
 test('account backup restores deduplicated wallpaper looks alongside the real watchlist',()=>{
  const s=storage();s.setItem('swiflytv.profiles',JSON.stringify([{id:'main',name:'Me'}]));s.setItem('movieverse.watchlist',JSON.stringify([{id:'42',type:'movie',title:'Arrival'}]));C.write(s,{...C.read(s),values,looks:[{id:'night',name:'Night',values}]});
  const backup=A.parse(JSON.stringify(A.capture(s))),patch=A.statePatch(backup),target=storage();for(const [k,v]of Object.entries(patch.local))target.setItem(k,v);assert.equal(C.read(target).values.wallpaperData,png);assert.equal(C.read(target).looks[0].values.wallpaperData,png);assert.equal(backup.profiles[0].library.watchlist[0].id,'42');assert.equal(JSON.stringify(backup).split(png).length-1,1);

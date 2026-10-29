@@ -6583,9 +6583,9 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/liquid-glass/liquid-glass.css?v=262" />
     <script defer src="/assets/liquid-glass/liquid-glass.js?v=227"></script>
     <link rel="stylesheet" href="/assets/clean/clean.css?v=262" />
-    <script defer src="/assets/clean/clean.js?v=5"></script>
+    <script defer src="/assets/clean/clean.js?v=267"></script>
     <script defer src="/assets/clean/account-sheet.js?v=1"></script>
-    <script defer src="/assets/clean/account-data.js?v=1"></script>
+    <script defer src="/assets/clean/account-data.js?v=2"></script>
     <script defer src="/assets/clean/account.js?v=263"></script>
     <script defer src="/assets/clean/library-state.js?v=263"></script>
     <script defer src="/assets/clean/settings.js?v=262"></script>
@@ -6612,13 +6612,14 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/liquid-glass/surfaces.js?v=259"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=264" />
     <link rel="stylesheet" href="/assets/clean/usability.css?v=1" />
-    <script defer src="/assets/studio/studio.js?v=265"></script>
-    <link rel="stylesheet" href="/assets/clean/aurora.css?v=260" />
-    <script defer src="/assets/clean/aurora.js?v=204"></script>
+    <script defer src="/assets/studio/wallpapers.js?v=1"></script>
+    <script defer src="/assets/studio/studio.js?v=266"></script>
+    <link rel="stylesheet" href="/assets/clean/aurora.css?v=267" />
+    <script defer src="/assets/clean/aurora.js?v=267"></script>
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=262" />' : ""}
     ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=262" />' : ""}
     
-    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=261"></script>' : ""}
+    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=267"></script>' : ""}
     ${player ? '<script defer src="/assets/player/audio-sample.js?v=1"></script><script defer src="/assets/player/assist.js?v=2"></script><link rel="stylesheet" href="/assets/player/assist.css?v=262" />' : ""}
     ${player || active === "social" ? '<script defer src="/assets/party/watchroom-call.js?v=1"></script>' : ""}
     ${active === "social" ? '<script defer src="/assets/party/party.js?v=207"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}
@@ -6630,7 +6631,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player ? "" : '<link rel="stylesheet" href="/assets/clean/experience.css?v=262" />'}
     <link rel="stylesheet" href="/assets/clean/cinema.css?v=262" />
     <link rel="stylesheet" href="/assets/clean/profiles.css?v=262" />
-    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=262" />' : ""}
+    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=267" />' : ""}
     ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=262" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=262" />' : ""}
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=262" />' : ""}
     ${player || active === "social" ? '<link rel="stylesheet" href="/assets/party/watchroom-call.css?v=262" />' : ""}
@@ -6643,8 +6644,10 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/connect/feature-effects.css?v=262" />
     <link rel="stylesheet" href="/assets/clean/account-sheet.css?v=262" />
     <link rel="stylesheet" href="/assets/studio/experience.css?v=262" />
-    <link rel="stylesheet" href="/assets/studio/themes.css?v=2" />
-    <link rel="stylesheet" href="/assets/studio/theme-details.css?v=1" />
+    <link rel="stylesheet" href="/assets/studio/themes.css?v=3" />
+    <link rel="stylesheet" href="/assets/studio/theme-details.css?v=2" />
+    <link rel="stylesheet" href="/assets/studio/wallpapers.css?v=1" />
+    <link rel="stylesheet" href="/assets/player/tv-controls.css?v=1" />
     <script defer src="/assets/studio/theme-details.js?v=1"></script>
     <script defer src="/assets/clean/hero-palette.js?v=260"></script>
     <script defer src="/assets/studio/experience.js?v=261"></script>
