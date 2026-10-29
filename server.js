@@ -6612,7 +6612,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/liquid-glass/surfaces.js?v=259"></script>
     <link rel="stylesheet" href="/assets/studio/studio.css?v=264" />
     <link rel="stylesheet" href="/assets/clean/usability.css?v=1" />
-    <script defer src="/assets/studio/studio.js?v=264"></script>
+    <script defer src="/assets/studio/studio.js?v=265"></script>
     <link rel="stylesheet" href="/assets/clean/aurora.css?v=260" />
     <script defer src="/assets/clean/aurora.js?v=204"></script>
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=262" />' : ""}
@@ -6643,7 +6643,9 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="/assets/connect/feature-effects.css?v=262" />
     <link rel="stylesheet" href="/assets/clean/account-sheet.css?v=262" />
     <link rel="stylesheet" href="/assets/studio/experience.css?v=262" />
-    <link rel="stylesheet" href="/assets/studio/themes.css?v=1" />
+    <link rel="stylesheet" href="/assets/studio/themes.css?v=2" />
+    <link rel="stylesheet" href="/assets/studio/theme-details.css?v=1" />
+    <script defer src="/assets/studio/theme-details.js?v=1"></script>
     <script defer src="/assets/clean/hero-palette.js?v=260"></script>
     <script defer src="/assets/studio/experience.js?v=261"></script>
     ${extraHead}

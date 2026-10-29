@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const {chromium} = require('playwright-core');
 const {loadServer} = require('./ui-helpers.cjs');
+const {appReady,menuTargetsReady} = require('./browser-conditions.cjs');
 const {welcomeMarkup} = require('../ui/welcome');
 const available = fs.existsSync(chromium.executablePath()) ||
   fs.existsSync(chromium.executablePath().replace(/chromium-(\d+)\/chrome-linux\/chrome$/, 'chromium_headless_shell-$1/chrome-linux/headless_shell'));
@@ -56,8 +57,7 @@ async function catalog(browser, options = {}) {
       return route.fulfill({body:'', contentType:route.request().resourceType() === 'stylesheet' ? 'text/css' : 'text/plain'});
     });
     await page.goto(origin);
-    await page.evaluate(() => SwiflyAccount.ready);
-    await page.evaluate(() => SwiflyLibrary.ready);
+    await appReady(page,'/');
     page.once('close', () => api.io.close());
     ready = true;
     return page;
@@ -765,9 +765,7 @@ test('desktop account dropdown remains opaque over movie artwork without changin
       await page.waitForFunction(()=>getComputedStyle(document.querySelector('.dsProfileDropdown')).opacity==='1');
       // The opaque desktop surface forces opacity to 1 during its pop animation.
       // Measure settled targets rather than the animation's temporary scale.
-      await page.locator('.dsProfileDropdown').evaluate(async menu=>{
-        await Promise.allSettled(menu.getAnimations().map(animation=>animation.finished));
-      });
+      await menuTargetsReady(page,'.dsProfileDropdown');
       const state=await page.evaluate(()=>{
         const menu=document.querySelector('.dsProfileDropdown');
         const pane=menu.querySelector(':scope > .svLiquidPane');
@@ -800,7 +798,7 @@ test('desktop account dropdown remains opaque over movie artwork without changin
         'desktop account menu must fit visible browser viewport: '+JSON.stringify(state));
       assert.equal(state.groups,3,'library, social and discovery remain easy to find');
       assert(state.collapsedGroups,'the initial menu fits without a long directory of destinations');
-      assert(state.visibleControls===state.links,'all menu links need full-size clickable targets');
+      assert(state.visibleControls===state.links,'all menu links need full-size clickable targets: '+JSON.stringify(state));
       if(state.logoutWhiteSpace) assert.equal(state.logoutWhiteSpace,'nowrap','log out should never wrap on desktop');
       assert.equal(state.parentIsBody,false,'the desktop dropdown should stay attached to its details menu');
       await page.locator('.dsProfileMenu > summary').click();

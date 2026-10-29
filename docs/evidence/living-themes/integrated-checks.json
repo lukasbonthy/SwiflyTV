@@ -1,0 +1,898 @@
+{
+  "schemaVersion": 1,
+  "sourceHashes": {
+    "server.js": "10422ed15e9af3e2364e5c6133f2bc17da7331221ad91d7474f8cb8a9e90a72e",
+    "ui/tv.js": "db1692598fcf1d52a6ed550264c6dbb0537b8198fc6bf50a7c49e8487a1a9177",
+    "public/study/study.js": "acadf35c80250768d9b6225160c22b6583122db8e4c5517e0b2a6854386c668a",
+    "public/clean/library-state.js": "5480dad46db4ab0bf44b68a17a296a09b9294d0af105a227f055a336ce0d91e5",
+    "public/clean/continue.js": "615214cb339ecb52b60396891e6772f6889ae81bf363aa9c24af6f052ca3f45f",
+    "public/clean/feed.js": "51809b0ac6fac61cf023a4fc70cc419928af97dea09e5620a399126f242f3a74",
+    "public/studio/config.js": "b973f35f98dc3cb4c6d739fb148d7b0f1c3b80a87d8f0da10ea1a6f8699b94f2",
+    "public/studio/studio.js": "c31bf5e56b6f342116674d675b979da818a7fe796f0cc3d3ce86449b60f45801",
+    "public/studio/experience.js": "d30d65beea458f146504d513b2ddee8b65ab5c74cb4ff0019084607cb0507af6",
+    "public/studio/theme-details.js": "937c638e193fd468e00b0ac4120705d7e69e67ef494d6d5da1275ecfd084ee7a",
+    "public/studio/theme-details.css": "9f5afad87ebc816e9e0bde2e8a1426960c40b5343e843b434bc3f908d56d6b45",
+    "ui/studio.js": "9263e52a83633accb7c67c208f32f6b420222d466ba04769a023d17b7713c9ed",
+    "tests/theme-details.test.cjs": "af3657b4acb10f55bf3d433be875ea3837889fa87fd2b332eaa290f58f1a5df7",
+    "tests/studio-workspace-browser.test.cjs": "f295ef46a37ee14ae671d24285bafc3701b07059e7eb1652c4c2ce16938074bf",
+    "tests/browser-conditions.cjs": "4da603702cf755a99934a4154973b9c8ec83b4e9ddf0a8f5452ff213a9f44ff4",
+    "tests/browser-conditions.test.cjs": "a93f93bea37c4076f0a404f36656a5445d2c9de508e5b873bdc18b41d9086b8e",
+    "scripts/accept-studio-study.cjs": "7e1bd218702f2b5c8c6628b6b9247c2a9517501df37e9b7065d880b452852b77"
+  },
+  "startedAt": "2026-10-29T06:11:55.060Z",
+  "commit": "84e0b1b9f6a7196e21bb99525b9c411213498517",
+  "command": "node scripts/accept-studio-study.cjs",
+  "browser": {
+    "executable": "/root/.cache/ms-playwright/chromium_headless_shell-1148/chrome-linux/headless_shell",
+    "osGamepadServiceStub": true,
+    "controllerCoverage": "Keyboard focus and TV presentation here; dedicated controller suites cover controller input."
+  },
+  "fixture": {
+    "catalog": "Local, fixed, typed TMDB-shaped metadata. No live external catalog or ratings verification is claimed.",
+    "artwork": "External TMDB artwork is replaced with labeled fixture images. Study posters, music and scene files are the actual local assets.",
+    "externalAssets": "External fonts/styles/CDN responses are empty fixtures; all same-origin application assets and handlers execute unchanged.",
+    "account": "Fresh guest session from the actual /api/connect/session handler and SwiflyAccount.ready; no account object is replaced.",
+    "tvDetailRoute": "/tv/95396",
+    "episodeSample": "The first three aired episodes of Severance season 1 are provided; fixed past air dates intentionally leave the recent-episode bell empty.",
+    "studyAudioRegression": {
+      "beforeFix": "A real /study visit requested Something In the Air.mp3 before any user action while the UI said Press Play. Captured before preload was changed from metadata to none."
+    }
+  },
+  "checks": [
+    {
+      "viewport": "mobile320",
+      "name": "Study catalog, real guest verification and fresh profile",
+      "status": "passed",
+      "details": {
+        "viewport": 320,
+        "document": 310,
+        "body": 310,
+        "clippedNavigation": [],
+        "tracks": 19,
+        "scenes": 7,
+        "rooms": 9
+      }
+    },
+    {
+      "viewport": "mobile320",
+      "name": "Study never requests MP3 before explicit Play",
+      "status": "passed",
+      "details": {
+        "requestsBeforePlay": 0
+      }
+    },
+    {
+      "viewport": "mobile320",
+      "name": "Study music search, explicit playback and pause",
+      "status": "passed",
+      "details": {
+        "requestsAfterExplicitPlay": 1
+      }
+    },
+    {
+      "viewport": "mobile320",
+      "name": "Study tasks, timer and presence-only room lifecycle",
+      "status": "passed",
+      "details": {
+        "viewport": 320,
+        "document": 310,
+        "body": 310,
+        "clippedNavigation": []
+      }
+    },
+    {
+      "viewport": "mobile320",
+      "name": "All ten Studio tabs through actual navigation, Save and Cancel",
+      "status": "passed",
+      "details": {
+        "sections": [
+          "looks",
+          "layout",
+          "navigation",
+          "player",
+          "atmosphere",
+          "hud",
+          "motion",
+          "devices",
+          "access",
+          "themes"
+        ],
+        "viewport": 320,
+        "document": 310,
+        "body": 310,
+        "clippedNavigation": []
+      }
+    },
+    {
+      "viewport": "mobile320",
+      "name": "Settings preferences use the actual controls and persist",
+      "status": "passed",
+      "details": {
+        "viewport": 320,
+        "document": 310,
+        "body": 310,
+        "clippedNavigation": []
+      }
+    },
+    {
+      "viewport": "mobile320",
+      "name": "List folder controls and exact episode History filters",
+      "status": "passed",
+      "details": {
+        "viewport": 320,
+        "document": 310,
+        "body": 310,
+        "clippedNavigation": []
+      }
+    },
+    {
+      "viewport": "mobile320",
+      "name": "Full search rating, date, relevance filters and shared live search",
+      "status": "passed",
+      "details": {
+        "viewport": 320,
+        "document": 310,
+        "body": 310,
+        "clippedNavigation": [],
+        "refinements": 5,
+        "forms": 2
+      }
+    },
+    {
+      "viewport": "mobile320",
+      "name": "TV details actual episode metadata, rating and saved presentation",
+      "status": "passed",
+      "details": {
+        "viewport": 320,
+        "document": 310,
+        "body": 310,
+        "clippedNavigation": [],
+        "episodes": [
+          3,
+          2,
+          1
+        ]
+      }
+    },
+    {
+      "viewport": "mobile320",
+      "name": "Home feed, independent episode bell and navigation",
+      "status": "passed",
+      "details": {
+        "viewport": 320,
+        "document": 310,
+        "body": 310,
+        "clippedNavigation": []
+      }
+    },
+    {
+      "viewport": "mobile320",
+      "name": "All visited routes keep real assets, forms and handlers without fatal errors",
+      "status": "passed",
+      "details": {
+        "pages": [
+          "/study",
+          "/settings",
+          "/my-list",
+          "/search",
+          "/tv/95396",
+          "/"
+        ],
+        "errors": 0,
+        "failedAssets": 0
+      }
+    },
+    {
+      "viewport": "desktop1440",
+      "name": "Study catalog, real guest verification and fresh profile",
+      "status": "passed",
+      "details": {
+        "viewport": 1440,
+        "document": 1430,
+        "body": 1430,
+        "clippedNavigation": [],
+        "tracks": 19,
+        "scenes": 7,
+        "rooms": 9
+      }
+    },
+    {
+      "viewport": "desktop1440",
+      "name": "Study never requests MP3 before explicit Play",
+      "status": "passed",
+      "details": {
+        "requestsBeforePlay": 0
+      }
+    },
+    {
+      "viewport": "desktop1440",
+      "name": "Study music search, explicit playback and pause",
+      "status": "passed",
+      "details": {
+        "requestsAfterExplicitPlay": 1
+      }
+    },
+    {
+      "viewport": "desktop1440",
+      "name": "Study tasks, timer and presence-only room lifecycle",
+      "status": "passed",
+      "details": {
+        "viewport": 1440,
+        "document": 1430,
+        "body": 1430,
+        "clippedNavigation": []
+      }
+    },
+    {
+      "viewport": "desktop1440",
+      "name": "All ten Studio tabs through actual navigation, Save and Cancel",
+      "status": "passed",
+      "details": {
+        "sections": [
+          "looks",
+          "layout",
+          "navigation",
+          "player",
+          "atmosphere",
+          "hud",
+          "motion",
+          "devices",
+          "access",
+          "themes"
+        ],
+        "viewport": 1440,
+        "document": 1430,
+        "body": 1430,
+        "clippedNavigation": []
+      }
+    },
+    {
+      "viewport": "desktop1440",
+      "name": "Settings preferences use the actual controls and persist",
+      "status": "passed",
+      "details": {
+        "viewport": 1440,
+        "document": 1430,
+        "body": 1430,
+        "clippedNavigation": []
+      }
+    },
+    {
+      "viewport": "desktop1440",
+      "name": "List folder controls and exact episode History filters",
+      "status": "passed",
+      "details": {
+        "viewport": 1440,
+        "document": 1430,
+        "body": 1430,
+        "clippedNavigation": []
+      }
+    },
+    {
+      "viewport": "desktop1440",
+      "name": "Full search rating, date, relevance filters and shared live search",
+      "status": "passed",
+      "details": {
+        "viewport": 1440,
+        "document": 1430,
+        "body": 1430,
+        "clippedNavigation": [],
+        "refinements": 5,
+        "forms": 2
+      }
+    },
+    {
+      "viewport": "desktop1440",
+      "name": "TV details actual episode metadata, rating and saved presentation",
+      "status": "passed",
+      "details": {
+        "viewport": 1440,
+        "document": 1430,
+        "body": 1430,
+        "clippedNavigation": [],
+        "episodes": [
+          3,
+          2,
+          1
+        ]
+      }
+    },
+    {
+      "viewport": "desktop1440",
+      "name": "Home feed, independent episode bell and navigation",
+      "status": "passed",
+      "details": {
+        "viewport": 1440,
+        "document": 1430,
+        "body": 1430,
+        "clippedNavigation": []
+      }
+    },
+    {
+      "viewport": "desktop1440",
+      "name": "All visited routes keep real assets, forms and handlers without fatal errors",
+      "status": "passed",
+      "details": {
+        "pages": [
+          "/study",
+          "/settings",
+          "/my-list",
+          "/search",
+          "/tv/95396",
+          "/"
+        ],
+        "errors": 0,
+        "failedAssets": 0
+      }
+    },
+    {
+      "viewport": "tv1920",
+      "name": "Study catalog, real guest verification and fresh profile",
+      "status": "passed",
+      "details": {
+        "viewport": 1920,
+        "document": 1910,
+        "body": 1910,
+        "clippedNavigation": [],
+        "tracks": 19,
+        "scenes": 7,
+        "rooms": 9
+      }
+    },
+    {
+      "viewport": "tv1920",
+      "name": "Study never requests MP3 before explicit Play",
+      "status": "passed",
+      "details": {
+        "requestsBeforePlay": 0
+      }
+    },
+    {
+      "viewport": "tv1920",
+      "name": "Study music search, explicit playback and pause",
+      "status": "passed",
+      "details": {
+        "requestsAfterExplicitPlay": 1
+      }
+    },
+    {
+      "viewport": "tv1920",
+      "name": "Study tasks, timer and presence-only room lifecycle",
+      "status": "passed",
+      "details": {
+        "viewport": 1920,
+        "document": 1910,
+        "body": 1910,
+        "clippedNavigation": []
+      }
+    },
+    {
+      "viewport": "tv1920",
+      "name": "All ten Studio tabs through actual navigation, Save and Cancel",
+      "status": "passed",
+      "details": {
+        "sections": [
+          "looks",
+          "layout",
+          "navigation",
+          "player",
+          "atmosphere",
+          "hud",
+          "motion",
+          "devices",
+          "access",
+          "themes"
+        ],
+        "viewport": 1920,
+        "document": 1910,
+        "body": 1910,
+        "clippedNavigation": []
+      }
+    },
+    {
+      "viewport": "tv1920",
+      "name": "Settings preferences use the actual controls and persist",
+      "status": "passed",
+      "details": {
+        "viewport": 1920,
+        "document": 1910,
+        "body": 1910,
+        "clippedNavigation": []
+      }
+    },
+    {
+      "viewport": "tv1920",
+      "name": "List folder controls and exact episode History filters",
+      "status": "passed",
+      "details": {
+        "viewport": 1920,
+        "document": 1910,
+        "body": 1910,
+        "clippedNavigation": []
+      }
+    },
+    {
+      "viewport": "tv1920",
+      "name": "Full search rating, date, relevance filters and shared live search",
+      "status": "passed",
+      "details": {
+        "viewport": 1920,
+        "document": 1910,
+        "body": 1910,
+        "clippedNavigation": [],
+        "refinements": 5,
+        "forms": 2
+      }
+    },
+    {
+      "viewport": "tv1920",
+      "name": "TV details actual episode metadata, rating and saved presentation",
+      "status": "passed",
+      "details": {
+        "viewport": 1920,
+        "document": 1910,
+        "body": 1910,
+        "clippedNavigation": [],
+        "episodes": [
+          3,
+          2,
+          1
+        ]
+      }
+    },
+    {
+      "viewport": "tv1920",
+      "name": "Home feed, independent episode bell and navigation",
+      "status": "passed",
+      "details": {
+        "viewport": 1920,
+        "document": 1910,
+        "body": 1910,
+        "clippedNavigation": []
+      }
+    },
+    {
+      "viewport": "tv1920",
+      "name": "All visited routes keep real assets, forms and handlers without fatal errors",
+      "status": "passed",
+      "details": {
+        "pages": [
+          "/study",
+          "/settings",
+          "/my-list",
+          "/search",
+          "/tv/95396",
+          "/"
+        ],
+        "errors": 0,
+        "failedAssets": 0
+      }
+    }
+  ],
+  "contexts": [
+    {
+      "name": "mobile320",
+      "viewport": {
+        "width": 320,
+        "height": 740
+      },
+      "tv": false,
+      "errors": [],
+      "failedAssets": [],
+      "mp3BeforePlay": [],
+      "pages": [
+        "/study",
+        "/settings",
+        "/my-list",
+        "/search",
+        "/tv/95396",
+        "/"
+      ],
+      "localAssets": [
+        "/assets/clean/navigation.css",
+        "/assets/clean/base.css",
+        "/assets/liquid-glass/liquid-glass.css",
+        "/assets/clean/clean.css",
+        "/assets/clean/library.css",
+        "/assets/connect/connect.css",
+        "/assets/clean/feed.css",
+        "/assets/clean/catalog-updates.css",
+        "/assets/clean/details.css",
+        "/assets/clean/motion.css",
+        "/assets/vendor/lenis/lenis.css",
+        "/assets/liquid-glass/surfaces.css",
+        "/assets/studio/studio.css",
+        "/assets/clean/usability.css",
+        "/assets/clean/aurora.css",
+        "/assets/clean/finish.css",
+        "/assets/clean/polish.css",
+        "/assets/clean/hero-fade.css",
+        "/assets/liquid-glass/controls.css",
+        "/assets/clean/experience.css",
+        "/assets/clean/cinema.css",
+        "/assets/clean/profiles.css",
+        "/assets/clean/performance.css",
+        "/assets/clean/mobile.css",
+        "/assets/clean/tv.css",
+        "/assets/clean/details-premium.css",
+        "/assets/clean/details-clarity.css",
+        "/assets/discovery/discovery.css",
+        "/assets/connect/feature-effects.css",
+        "/assets/clean/account-sheet.css",
+        "/assets/studio/experience.css",
+        "/assets/studio/themes.css",
+        "/assets/studio/theme-details.css",
+        "/assets/study/study.css",
+        "/assets/study/media/posters/garden-cat-study.webp",
+        "/assets/liquid-glass/liquid-glass.js",
+        "/assets/clean/clean.js",
+        "/assets/clean/account-sheet.js",
+        "/assets/clean/account-data.js",
+        "/assets/clean/account.js",
+        "/assets/clean/library-state.js",
+        "/assets/clean/settings.js",
+        "/assets/connect/icons.js",
+        "/assets/connect/connect.js",
+        "/assets/clean/avatars.js",
+        "/assets/clean/continue.js",
+        "/assets/clean/library-page.js",
+        "/assets/clean/episode-browser.js",
+        "/assets/clean/feed.js",
+        "/assets/vendor/lenis/lenis.min.js",
+        "/assets/clean/motion.js",
+        "/assets/clean/scroll.js",
+        "/assets/clean/details.js",
+        "/assets/clean/download.js",
+        "/assets/liquid-glass/surfaces.js",
+        "/assets/studio/studio.js",
+        "/assets/clean/aurora.js",
+        "/assets/studio/theme-details.js",
+        "/assets/clean/hero-palette.js",
+        "/assets/studio/experience.js",
+        "/assets/study/study.js",
+        "/assets/clean/tv.js",
+        "/assets/clean/aurora-ribbon.svg",
+        "/assets/study/media/posters/moon-cat-window.webp",
+        "/assets/study/media/posters/sunset-train.webp",
+        "/assets/study/media/posters/cozy-hobbit-study.webp",
+        "/assets/study/media/posters/frog-pond-rain.webp",
+        "/assets/study/media/posters/raccoon-bedroom-loop.webp",
+        "/assets/study/media/posters/forest-tape-radio.webp",
+        "/assets/study/media/scenes-video/garden-cat-study.mp4",
+        "/assets/study/media/audio/HoliznaCC0%20-%20Something%20In%20the%20Air.mp3",
+        "/assets/studio/themes/blossom-branch.svg",
+        "/assets/studio/themes/halloween-night.webp",
+        "/assets/studio/themes/web-corner.svg",
+        "/assets/studio/themes/winter-lights.webp",
+        "/assets/studio/themes/winter-lights.svg",
+        "/assets/studio/themes/film-frame.svg",
+        "/assets/studio/themes/fern-corner.svg",
+        "/assets/clean/settings.css",
+        "/assets/discovery/search.css",
+        "/assets/discovery/search.js"
+      ],
+      "library": {
+        "profileId": "main",
+        "watchlist": 2,
+        "history": 4,
+        "watched": 2
+      },
+      "home": {
+        "progress": [
+          {
+            "id": "95396",
+            "type": "tv",
+            "resumable": true
+          },
+          {
+            "id": "157336",
+            "type": "movie",
+            "resumable": true
+          }
+        ],
+        "hidden": false,
+        "display": "block"
+      }
+    },
+    {
+      "name": "desktop1440",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "tv": false,
+      "errors": [],
+      "failedAssets": [],
+      "mp3BeforePlay": [],
+      "pages": [
+        "/study",
+        "/settings",
+        "/my-list",
+        "/search",
+        "/tv/95396",
+        "/"
+      ],
+      "localAssets": [
+        "/assets/clean/navigation.css",
+        "/assets/clean/base.css",
+        "/assets/liquid-glass/liquid-glass.css",
+        "/assets/clean/clean.css",
+        "/assets/clean/library.css",
+        "/assets/connect/connect.css",
+        "/assets/clean/feed.css",
+        "/assets/clean/catalog-updates.css",
+        "/assets/clean/details.css",
+        "/assets/clean/motion.css",
+        "/assets/vendor/lenis/lenis.css",
+        "/assets/liquid-glass/surfaces.css",
+        "/assets/studio/studio.css",
+        "/assets/clean/usability.css",
+        "/assets/clean/aurora.css",
+        "/assets/clean/finish.css",
+        "/assets/clean/polish.css",
+        "/assets/clean/hero-fade.css",
+        "/assets/liquid-glass/controls.css",
+        "/assets/clean/experience.css",
+        "/assets/clean/cinema.css",
+        "/assets/clean/profiles.css",
+        "/assets/clean/performance.css",
+        "/assets/clean/mobile.css",
+        "/assets/clean/tv.css",
+        "/assets/clean/details-premium.css",
+        "/assets/clean/details-clarity.css",
+        "/assets/discovery/discovery.css",
+        "/assets/connect/feature-effects.css",
+        "/assets/clean/account-sheet.css",
+        "/assets/studio/experience.css",
+        "/assets/studio/themes.css",
+        "/assets/studio/theme-details.css",
+        "/assets/study/study.css",
+        "/assets/study/media/posters/garden-cat-study.webp",
+        "/assets/liquid-glass/liquid-glass.js",
+        "/assets/clean/clean.js",
+        "/assets/clean/account-sheet.js",
+        "/assets/clean/account-data.js",
+        "/assets/clean/account.js",
+        "/assets/clean/library-state.js",
+        "/assets/clean/settings.js",
+        "/assets/connect/icons.js",
+        "/assets/connect/connect.js",
+        "/assets/clean/avatars.js",
+        "/assets/clean/continue.js",
+        "/assets/clean/library-page.js",
+        "/assets/clean/episode-browser.js",
+        "/assets/clean/feed.js",
+        "/assets/vendor/lenis/lenis.min.js",
+        "/assets/clean/motion.js",
+        "/assets/clean/scroll.js",
+        "/assets/clean/details.js",
+        "/assets/clean/download.js",
+        "/assets/liquid-glass/surfaces.js",
+        "/assets/studio/studio.js",
+        "/assets/clean/aurora.js",
+        "/assets/studio/theme-details.js",
+        "/assets/clean/hero-palette.js",
+        "/assets/studio/experience.js",
+        "/assets/study/study.js",
+        "/assets/clean/tv.js",
+        "/assets/clean/aurora-ribbon.svg",
+        "/assets/study/media/scenes-video/garden-cat-study.mp4",
+        "/assets/study/media/posters/moon-cat-window.webp",
+        "/assets/study/media/posters/sunset-train.webp",
+        "/assets/study/media/posters/cozy-hobbit-study.webp",
+        "/assets/study/media/posters/frog-pond-rain.webp",
+        "/assets/study/media/posters/raccoon-bedroom-loop.webp",
+        "/assets/study/media/posters/forest-tape-radio.webp",
+        "/assets/study/media/audio/HoliznaCC0%20-%20Something%20In%20the%20Air.mp3",
+        "/assets/studio/themes/blossom-branch.svg",
+        "/assets/studio/themes/halloween-night.webp",
+        "/assets/studio/themes/web-corner.svg",
+        "/assets/studio/themes/winter-lights.webp",
+        "/assets/studio/themes/winter-lights.svg",
+        "/assets/studio/themes/film-frame.svg",
+        "/assets/studio/themes/fern-corner.svg",
+        "/assets/clean/settings.css",
+        "/assets/discovery/search.css",
+        "/assets/discovery/search.js"
+      ],
+      "library": {
+        "profileId": "main",
+        "watchlist": 2,
+        "history": 4,
+        "watched": 2
+      },
+      "home": {
+        "progress": [
+          {
+            "id": "95396",
+            "type": "tv",
+            "resumable": true
+          },
+          {
+            "id": "157336",
+            "type": "movie",
+            "resumable": true
+          }
+        ],
+        "hidden": false,
+        "display": "block"
+      }
+    },
+    {
+      "name": "tv1920",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "tv": true,
+      "errors": [],
+      "failedAssets": [],
+      "mp3BeforePlay": [],
+      "pages": [
+        "/study",
+        "/settings",
+        "/my-list",
+        "/search",
+        "/tv/95396",
+        "/"
+      ],
+      "localAssets": [
+        "/assets/clean/navigation.css",
+        "/assets/clean/base.css",
+        "/assets/liquid-glass/liquid-glass.css",
+        "/assets/clean/clean.css",
+        "/assets/clean/library.css",
+        "/assets/connect/connect.css",
+        "/assets/clean/feed.css",
+        "/assets/clean/catalog-updates.css",
+        "/assets/clean/details.css",
+        "/assets/clean/motion.css",
+        "/assets/vendor/lenis/lenis.css",
+        "/assets/liquid-glass/surfaces.css",
+        "/assets/studio/studio.css",
+        "/assets/clean/usability.css",
+        "/assets/clean/aurora.css",
+        "/assets/clean/finish.css",
+        "/assets/clean/polish.css",
+        "/assets/clean/hero-fade.css",
+        "/assets/liquid-glass/controls.css",
+        "/assets/clean/experience.css",
+        "/assets/clean/cinema.css",
+        "/assets/clean/profiles.css",
+        "/assets/clean/performance.css",
+        "/assets/clean/mobile.css",
+        "/assets/clean/tv.css",
+        "/assets/clean/details-premium.css",
+        "/assets/clean/details-clarity.css",
+        "/assets/discovery/discovery.css",
+        "/assets/connect/feature-effects.css",
+        "/assets/clean/account-sheet.css",
+        "/assets/studio/experience.css",
+        "/assets/studio/themes.css",
+        "/assets/studio/theme-details.css",
+        "/assets/study/study.css",
+        "/assets/study/media/posters/garden-cat-study.webp",
+        "/assets/liquid-glass/liquid-glass.js",
+        "/assets/clean/clean.js",
+        "/assets/clean/account-sheet.js",
+        "/assets/clean/account-data.js",
+        "/assets/clean/account.js",
+        "/assets/clean/library-state.js",
+        "/assets/clean/settings.js",
+        "/assets/connect/icons.js",
+        "/assets/connect/connect.js",
+        "/assets/clean/avatars.js",
+        "/assets/clean/continue.js",
+        "/assets/clean/library-page.js",
+        "/assets/clean/episode-browser.js",
+        "/assets/clean/feed.js",
+        "/assets/vendor/lenis/lenis.min.js",
+        "/assets/clean/motion.js",
+        "/assets/clean/scroll.js",
+        "/assets/clean/details.js",
+        "/assets/clean/download.js",
+        "/assets/liquid-glass/surfaces.js",
+        "/assets/studio/studio.js",
+        "/assets/clean/aurora.js",
+        "/assets/studio/theme-details.js",
+        "/assets/clean/hero-palette.js",
+        "/assets/studio/experience.js",
+        "/assets/study/study.js",
+        "/assets/clean/tv.js",
+        "/assets/clean/aurora-ribbon.svg",
+        "/assets/study/media/scenes-video/garden-cat-study.mp4",
+        "/assets/study/media/posters/moon-cat-window.webp",
+        "/assets/study/media/posters/sunset-train.webp",
+        "/assets/study/media/posters/cozy-hobbit-study.webp",
+        "/assets/study/media/posters/frog-pond-rain.webp",
+        "/assets/study/media/posters/raccoon-bedroom-loop.webp",
+        "/assets/study/media/posters/forest-tape-radio.webp",
+        "/assets/study/media/audio/HoliznaCC0%20-%20Something%20In%20the%20Air.mp3",
+        "/assets/studio/themes/blossom-branch.svg",
+        "/assets/studio/themes/halloween-night.webp",
+        "/assets/studio/themes/web-corner.svg",
+        "/assets/studio/themes/winter-lights.webp",
+        "/assets/studio/themes/winter-lights.svg",
+        "/assets/studio/themes/film-frame.svg",
+        "/assets/studio/themes/fern-corner.svg",
+        "/assets/clean/settings.css",
+        "/assets/discovery/search.css",
+        "/assets/discovery/search.js"
+      ],
+      "library": {
+        "profileId": "main",
+        "watchlist": 2,
+        "history": 4,
+        "watched": 2
+      },
+      "home": {
+        "progress": [
+          {
+            "id": "95396",
+            "type": "tv",
+            "resumable": true
+          },
+          {
+            "id": "157336",
+            "type": "movie",
+            "resumable": true
+          }
+        ],
+        "hidden": false,
+        "display": "block"
+      }
+    }
+  ],
+  "metadataRequests": {
+    "/tv/95396": 4,
+    "/search/multi": 4,
+    "/search/movie": 1,
+    "/tv/95396/videos": 3,
+    "/tv/95396/credits": 3,
+    "/tv/95396/similar": 3,
+    "/tv/95396/recommendations": 4,
+    "/tv/95396/external_ids": 3,
+    "/tv/95396/watch/providers": 3,
+    "/tv/95396/season/1": 1,
+    "/trending/movie/week": 3,
+    "/trending/tv/week": 3,
+    "/movie/popular": 3,
+    "/tv/popular": 3,
+    "/movie/top_rated": 3,
+    "/tv/top_rated": 3,
+    "/movie/now_playing": 3,
+    "/movie/346698": 3,
+    "/movie/634649": 3,
+    "/movie/687163": 3,
+    "/movie/329865": 1,
+    "/movie/329865/recommendations": 1,
+    "/movie/157336": 1,
+    "/movie/157336/recommendations": 1
+  },
+  "assertions": 326,
+  "limitations": [
+    "This is a local full-server fixture run, not production or a live external catalog/account validation.",
+    "Studio player-style persistence is checked; provider streaming, live caption tracks and renderer-owned caption output are not exercised here.",
+    "Study joins are presence-only with camera/microphone/screen off; a two-peer call, permissions and TURN connectivity are not claimed.",
+    "TV mode uses the real saved TV setting and keyboard focus; physical Xbox hardware and real controller input are not exercised here.",
+    "No latency, frame-rate or continuous monitoring result is claimed.",
+    "The six acceptance screenshots were generated but are not duplicated in this focused evidence set; selected theme captures and motion are listed in visual-checks.json."
+  ],
+  "finishedAt": "2026-10-29T06:12:55.412Z",
+  "summary": {
+    "passed": 33,
+    "failed": 0,
+    "assertions": 326,
+    "screenshots": 6
+  },
+  "workingTreeNote": "Executed with the final condition-based browser readiness helpers applied over the recorded HEAD; sourceHashes identify the tested files.",
+  "screenshotsProduced": [
+    "study-mobile320-integrated.png",
+    "library-mobile320-integrated.png",
+    "study-desktop1440-integrated.png",
+    "studio-desktop1440-integrated.png",
+    "settings-desktop1440-integrated.png",
+    "tv-details-1920-integrated.png"
+  ],
+  "screenshots": []
+}

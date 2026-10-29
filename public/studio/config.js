@@ -3,7 +3,7 @@
  'use strict';
  const home=['continue','upcoming','recommended','trending-movies','trending-tv','popular-movies','popular-tv','top-movies','top-tv','new-releases'];
  const nav=['home','movies','tv','discover','list','study'];
- const defaults={themeId:'pure',theme:'default',font:'default',layout:'default',cardstyle:'rounded',density:'comfy',backdrop:'aurora',auroraColor:'glacier',auroraStrength:80,auroraMotion:'drift',glass:'liquid',smooth:true,reduceMotion:false,
+ const defaults={themeId:'pure',themeDetails:true,theme:'default',font:'default',layout:'default',cardstyle:'rounded',density:'comfy',backdrop:'aurora',auroraColor:'glacier',auroraStrength:80,auroraMotion:'drift',glass:'liquid',smooth:true,reduceMotion:false,
   customColors:false,accentColor:'#c8c3ef',accentSecondary:'#84bdb4',canvasColor:'#090b0f',gradientAngle:135,gradientStrength:8,glassOpacity:55,glassBlur:18,glassEdge:40,glassGlow:10,
   homeOrder:home,homeHidden:[],heroMode:'cinematic',heroPosition:'first',posterWidth:180,homeColumns:6,rowShape:'rail',navOrder:nav,navLayout:'top',navLabels:true,navIcons:'line',navDensity:'comfortable',navActive:'pill',
   playerStyle:'cinema',playerProgress:3,playerTime:true,playerIconScale:100,playerOpacity:85,playerPosition:'floating',playerAutoHide:2600,captionSize:100,captionColor:'#ffffff',captionBg:65,captionEdge:'shadow',playerBackdrop:'dark',adaptiveCinema:false,adaptiveStrength:35,
@@ -20,6 +20,7 @@
  const curated=(id,name,description,values)=>({name,description,values:{...appearanceBase,...values,themeId:id}});
  const curatedThemes={
   pure:curated('pure','Swifly Original','Pearl, clear glass & northern light',{}),
+  blossom:curated('blossom','Blossom','Falling petals & flowering branches',{theme:'pink',customColors:true,accentColor:'#f1b8d4',accentSecondary:'#c8b6ed',canvasColor:'#100c14',gradientAngle:145,gradientStrength:12,glass:'subtle',glassOpacity:82,glassBlur:14,glassEdge:40,glassGlow:6,backdrop:'smooth'}),
   halloween:curated('halloween','Halloween','Moonlit woods, ember orange & violet',{theme:'orange',customColors:true,accentColor:'#ffa05c',accentSecondary:'#a997db',canvasColor:'#0d0a10',gradientAngle:145,gradientStrength:12,glass:'subtle',glassOpacity:82,glassBlur:14,glassEdge:32,glassGlow:6,backdrop:'aurora',auroraColor:'violet',auroraStrength:45,auroraMotion:'slow'}),
   winter:curated('winter','Winter Lights','Snowy nights, ice blue & champagne',{theme:'cyan',customColors:true,accentColor:'#9cdef0',accentSecondary:'#e0c18c',canvasColor:'#080f18',gradientAngle:150,gradientStrength:10,glass:'subtle',glassOpacity:82,glassBlur:14,glassEdge:38,glassGlow:6,backdrop:'aurora',auroraColor:'mint',auroraStrength:40,auroraMotion:'slow'}),
   cinema:curated('cinema','Cinema','Golden hour, warm charcoal & film grain',{theme:'red',font:'cinema',customColors:true,accentColor:'#e9c18d',accentSecondary:'#a97c65',canvasColor:'#100d0b',gradientStrength:8,backdrop:'grain',glass:'subtle',glassOpacity:85,glassBlur:12,glassGlow:4}),
@@ -100,6 +101,7 @@
   v.performancePreset=preset;v.reduceMotion=v.reduceMotion||!!context.reducedMotion||preset==='xbox'||preset==='minimal';v.reduceTransparency=v.reduceTransparency||!!context.reducedTransparency||preset==='xbox'||preset==='minimal';
   if(v.reduceTransparency)v.glass='off';else if(preset==='mobile'&&v.glass==='liquid')v.glass='subtle';
   if(preset==='mobile')v.glassBlur=Math.min(12,v.glassBlur);
+  if(v.reduceTransparency||v.highContrast||preset==='xbox'||preset==='minimal')v.themeDetails=false;
   if(v.reduceMotion){v.auroraMotion='still';v.posterHover='flat';v.hudMotion='none';v.pageMotion=false;}
   if(preset==='minimal'){v.backdrop='smooth';v.glassGlow=0;}if(v.highContrast){v.customColors=true;v.canvasColor='#000000';v.accentColor='#ffffff';v.accentSecondary='#ffffff';v.gradientStrength=0;v.glass='off';v.backdrop='smooth';v.glassGlow=0;}
   return v;

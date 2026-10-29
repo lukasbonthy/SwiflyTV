@@ -45,8 +45,10 @@ function studioMarkup() {
           <p id="stModeNote" class="stModeNote" data-st-mode-note role="status">Simple view · Pick a theme, adjust what matters, then Save.</p>
           <section id="stPanel-looks" class="stPanel" role="tabpanel" aria-labelledby="stTab-looks">
             <div class="stPanelTitle"><span>MAKE IT YOURS</span><h2>A different kind of movie night.</h2><p>Choose a scene. Your whole screen changes with it.</p></div>
+            ${toggle('themeDetails','Theme details','Petals, webs, snow and the finishing touches that make each theme its own.')}
+            <div class="stThemeMobilePreview" data-st-theme-mobile-preview aria-hidden="true"><b>SWIFLYTV</b><span>Your theme, brought to life.</span><small>LIVE PREVIEW</small></div>
             <div class="stPresets" role="group" aria-label="Curated themes">
-              ${preset('pure','Swifly Original','Pearl accents. Northern light.')}${preset('halloween','Halloween','Moonlit woods. A little mischief.','SEASONAL')}${preset('winter','Winter Lights','Snowy nights. A warmer glow.','SEASONAL')}${preset('cinema','Cinema','The lights down. The film first.')}${preset('midnight','Midnight','Deep indigo. Electric blue.')}${preset('forest','Forest','Evergreen calm. Soft jade.')}${preset('focus','Focus','Pure graphite. Nothing in the way.')}
+              ${preset('pure','Swifly Original','Pearl accents. Northern light.')}${preset('blossom','Blossom','Falling petals. Flowering branches.')}${preset('halloween','Halloween','Corner webs. Hanging spiders.','SEASONAL')}${preset('winter','Winter Lights','Falling snow. Warm string lights.','SEASONAL')}${preset('cinema','Cinema','Projector dust. Film-frame details.')}${preset('midnight','Midnight','Starlight. A passing meteor.')}${preset('forest','Forest','Drifting leaves. Woodland ferns.')}${preset('focus','Focus','Pure graphite. Nothing in the way.')}
             </div>
             <p class="stThemePromise">Themes keep your library, navigation and comfort settings.</p>
             ${group('Accent','A little color, exactly where it belongs.', choices('theme',[

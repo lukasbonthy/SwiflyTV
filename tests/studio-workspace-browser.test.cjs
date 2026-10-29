@@ -7,9 +7,59 @@ const executablePath=process.env.SWIFLY_TEST_BROWSER_EXECUTABLE_PATH,available=f
 let browser,api;test.before(async()=>{if(available){api=loadServer();browser=await chromium.launch({headless:true,executablePath,args:['--no-sandbox']});}});test.after(async()=>{await browser?.close();if(api)await new Promise(resolve=>api.io.close(resolve));});
 async function open(viewport={width:1440,height:900},tv=false,context,primeOnly=false){
  context=context||await browser.newContext({viewport});const page=await context.newPage();let html=api.pageShell({title:'Studio fixture',body:'<main data-st-home><section class="dsHero"><div class="dsHeroContent"><h1>Movie night, your way.</h1></div></section><section class="dsContent" data-st-home-rows><section data-st-home-section="continue"><h2>Continue watching</h2></section><section data-st-home-section="trending-movies"><h2>Trending movies</h2></section></section></main>'}).replace(/<script\b([^>]*)>[\s\S]*?<\/script>/g,(script,attributes)=>/data-sv-studio-(?:config|prime)/.test(attributes)?script:'');
- await page.route('**/*',route=>{const url=new URL(route.request().url()),type=route.request().resourceType();if(type==='document')return route.fulfill({contentType:'text/html',body:html});if(url.pathname.startsWith('/assets/')&&url.pathname.endsWith('.css')){const file=path.join(root,url.pathname.slice(8));if(fs.existsSync(file))return route.fulfill({contentType:'text/css',body:fs.readFileSync(file)});}return route.fulfill({contentType:type==='stylesheet'?'text/css':'image/svg+xml',body:''});});
- await page.goto('https://swifly.test/');if(primeOnly)return {context,page};if(tv)await page.evaluate(()=>{document.documentElement.dataset.svTv='true';document.body.classList.add('swifly-tv-focus-mode');});await page.addScriptTag({content:asset('studio/config.js')});await page.addScriptTag({content:asset('studio/studio.js')});await page.evaluate(()=>window.SwiflyStudio.open());return {context,page};
+ await page.route('**/*',route=>{const url=new URL(route.request().url()),type=route.request().resourceType();if(type==='document')return route.fulfill({contentType:'text/html',body:html});if(url.pathname.startsWith('/assets/')&&/\.(?:css|svg|webp)$/.test(url.pathname)){const file=path.join(root,url.pathname.slice(8));if(fs.existsSync(file))return route.fulfill({contentType:url.pathname.endsWith('.css')?'text/css':url.pathname.endsWith('.svg')?'image/svg+xml':'image/webp',body:fs.readFileSync(file)});}return route.fulfill({contentType:type==='stylesheet'?'text/css':'image/svg+xml',body:''});});
+ await page.goto('https://swifly.test/');if(primeOnly)return {context,page};if(tv)await page.evaluate(()=>{document.documentElement.dataset.svTv='true';document.body.classList.add('swifly-tv-focus-mode');});await page.addScriptTag({content:asset('studio/config.js')});await page.addScriptTag({content:asset('studio/theme-details.js')});await page.addScriptTag({content:asset('studio/studio.js')});await page.evaluate(()=>window.SwiflyStudio.open());return {context,page};
 }
+test('Blossom visibly animates petals in the real preview and Halloween attaches webs at desktop and phone sizes',{skip},async()=>{
+ for(const viewport of [{width:1440,height:900},{width:320,height:740}]){
+  const {context,page}=await open(viewport);try{
+   await page.locator('[data-st-preset="blossom"]').click();assert.equal(await page.locator('[data-theme-particles] [data-theme-particle="petal"]').count(),viewport.width===320?8:14);
+   const petal=page.locator('[data-theme-preview] [data-theme-particle="petal"]').first();assert(await petal.isVisible());
+   assert.equal(await petal.evaluate(n=>getComputedStyle(n).animationName),'svThemePreviewFall');assert.equal(await petal.evaluate(n=>getComputedStyle(n).animationPlayState),'running');
+   const before=await petal.evaluate(n=>getComputedStyle(n).transform);await page.waitForFunction(previous=>{const n=document.querySelector('[data-theme-preview] [data-theme-particle="petal"]');return n&&getComputedStyle(n).transform!==previous;},before);
+   assert.equal(await page.locator('[data-theme-preview]').evaluate(n=>!!n.closest('[data-st-theme-mobile-preview]')),viewport.width===320,'Phone has an actual inline animated preview');
+   assert.equal(await page.locator('.svThemeDetails').evaluate(n=>getComputedStyle(n).pointerEvents),'none');
+   await page.locator('[data-st-preset="halloween"]').click();assert.equal(await page.locator('[data-theme-particle="petal"]').count(),0);assert(await page.locator('.netflixNav [data-theme-ornament="web"]').count());
+   const web=page.locator('[data-theme-ornament="web"]').first();assert.match(await web.evaluate(n=>getComputedStyle(n).backgroundImage),/web-corner\.svg/);
+   assert.match(await web.evaluate(n=>getComputedStyle(n,'::after').backgroundImage),/spider\.svg/);assert.equal(await web.evaluate(n=>getComputedStyle(n).pointerEvents),'none');
+   await page.locator('[data-st-save]').click();await page.waitForFunction(()=>document.body.dataset.svThemePaused==='false');assert.equal(await page.locator('[data-theme-particles] [data-theme-particle]').first().evaluate(n=>getComputedStyle(n).animationPlayState),'running');
+   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true);
+  }finally{await context.close();}
+ }
+});
+test('Theme details and real comfort controls remove or stop every themed animation',{skip},async()=>{
+ const {context,page}=await open();try{
+  await page.locator('[data-st-preset="halloween"]').click();await page.locator('[data-st-tab="access"]').click();await page.locator('[data-st-comfort-motion]').check();
+  assert.equal(await page.locator('[data-theme-particle]').count(),0);assert(await page.locator('[data-theme-ornament="web"]').count());assert.equal(await page.locator('[data-theme-ornament="web"]').first().evaluate(n=>getComputedStyle(n,'::after').animationName),'none');
+  await page.locator('[data-st-input="highContrast"]').check();assert.equal(await page.locator('[data-theme-owned]').count(),0);await page.locator('[data-st-input="highContrast"]').uncheck();assert(await page.locator('[data-theme-ornament="web"]').count());
+  await page.locator('[data-st-tab="looks"]').click();await page.locator('[data-st-input="themeDetails"]').uncheck();assert.equal(await page.locator('[data-theme-owned]').count(),0);await page.locator('[data-st-save]').click();
+  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('swiflytv.appearance')).values.themeDetails),false);
+ }finally{await context.close();}
+});
+test('theme artwork leaves the Studio heading and Advanced controls unobscured',{skip},async()=>{
+ for(const viewport of [{width:1440,height:900},{width:320,height:740}]){const {context,page}=await open(viewport);try{
+  await page.locator('[data-st-preset="blossom"]').click();
+  const overlaps=await page.locator('.stHeader').evaluate(header=>{const ornaments=[...header.querySelectorAll('[data-theme-ornament]')].map(n=>n.getBoundingClientRect());return [...header.querySelectorAll('.stBrand,.stModeToggle,[data-st-cancel]')].some(n=>{const r=n.getBoundingClientRect();return ornaments.some(o=>o.left<r.right&&o.right>r.left&&o.top<r.bottom&&o.bottom>r.top);});});
+  assert.equal(overlaps,false,'Art must leave headings, switches and the close button readable at '+viewport.width);
+ }finally{await context.close();}}
+});
+test('phone effects fill the whole preview and follow both responsive breakpoint directions',{skip},async()=>{
+ const {context,page}=await open({width:390,height:844});try{
+  await page.locator('[data-st-preset="cinema"]').click();
+  const coverage=await page.locator('[data-theme-preview]').evaluate(n=>({width:n.getBoundingClientRect().width,height:n.getBoundingClientRect().height,stageWidth:n.parentElement.clientWidth,stageHeight:n.parentElement.clientHeight}));
+  assert(coverage.width>=coverage.stageWidth-1&&coverage.height>=coverage.stageHeight-1,'The animation area fills the preview, without inheriting copy width/margins: '+JSON.stringify(coverage));
+  for(const width of [1440,390]){await page.setViewportSize({width,height:width===1440?900:844});await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));assert.equal(await page.locator('[data-theme-preview]').count(),1);assert.equal(await page.locator('[data-theme-preview]').evaluate((n,compact)=>!!n.closest(compact?'[data-st-theme-mobile-preview]':'[data-st-preview]'),width===390),true,'Preview follows the '+width+'px layout');assert(await page.locator('[data-theme-preview]').evaluate(n=>n.getBoundingClientRect().width>0));}
+ }finally{await context.close();}
+});
+test('Forest, Midnight and Cinema switch actual motifs without leaking nodes; Focus removes decoration',{skip},async()=>{
+ const {context,page}=await open();try{
+  for(const [theme,particle,motif]of [['forest','leaf','fern'],['midnight','star','orbit'],['cinema','dust','film'],['winter','snow','lights']]){
+   await page.locator('[data-st-preset="'+theme+'"]').click();assert(await page.locator('[data-theme-particle="'+particle+'"]').count());assert(await page.locator('[data-theme-ornament="'+motif+'"]').count());assert(await page.locator('[data-theme-ornament]').count()<=6);assert(await page.locator('[data-theme-particles] [data-theme-particle]').count()<=14);assert.equal(await page.locator('[data-theme-particles]').count(),1);
+   assert.equal(await page.locator('[data-theme-particles] [data-theme-particle]').evaluateAll(nodes=>nodes.every(n=>getComputedStyle(n).animationPlayState==='paused')),true,theme+' background pauses under the native dialog');
+  }
+  await page.locator('[data-st-preset="focus"]').click();assert.equal(await page.locator('[data-theme-owned]').count(),0);
+ }finally{await context.close();}
+});
 test('all ten sections fit the real desktop and 320px mobile shell without horizontal overflow',{skip},async()=>{
  for(const viewport of [{width:1440,height:900},{width:320,height:568}]){const {context,page}=await open(viewport);try{
   await page.locator('[data-st-advanced-toggle]').check();
