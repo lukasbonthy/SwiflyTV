@@ -54,8 +54,9 @@
  function progress(rows){return unique(rows,v=>{const item=media(v,true);if(!item)return null;item.key=item.titleKey;return {...item,...(item.type==='tv'?{season:item.season??1,episode:item.episode??1}:{}),currentTime:number(v.currentTime??v.positionSeconds??v.position,0,43200),duration:number(v.duration??v.durationSeconds,0,43200),completed:v.completed===true||v.ended===true,nextEpisode:v.nextEpisode===true,watchedAt:iso(v.watchedAt)};},80,'Continue watching');}
  function appearance(value){
   if(!value)return null;if(!config)throw Error('Studio is still loading. Try again in a moment.');
+  value=config.unpackRecord(value,{strict:true});
   const theme=config.parseImport(JSON.stringify({app:'SwiflyTV Studio',schemaVersion:2,name:'Account look',values:value.values}));
-  const looks=array(value.looks||[],12,'Saved looks').map((v,index)=>{const parsed=config.parseImport(JSON.stringify({app:'SwiflyTV Studio',schemaVersion:2,name:text(v.name,64),description:text(v.description,160),values:v.values}));return{id:profileId(v.id)||'look-'+index,name:parsed.name,description:parsed.description,values:config.portable(parsed.values)};});return{version:2,values:config.portable(theme.values),looks};
+  const looks=array(value.looks||[],12,'Saved looks').map((v,index)=>{const parsed=config.parseImport(JSON.stringify({app:'SwiflyTV Studio',schemaVersion:2,name:text(v.name,64),description:text(v.description,160),values:v.values}));return{id:profileId(v.id)||'look-'+index,name:parsed.name,description:parsed.description,values:config.portable(parsed.values)};});return config.packRecord({values:theme.values,looks});
  }
  function study(value){
   if(!value)return null;if(!plain(value)||value.version!==1)throw Error('This Study data version is unsupported.');

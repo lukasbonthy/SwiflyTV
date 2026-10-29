@@ -75,13 +75,20 @@ body.svCleanShell .stPreviewAurora > .svAuroraRibbon {
   filter:hue-rotate(var(--sv-aurora-hue,0deg));animation:none;transform:none;
 }
 body.svCleanShell .stPreviewAurora > :is(.svAuroraRibbon--second,.svAuroraRibbon--third,.svAuroraGlow) {display:none}
-body.svCleanShell[data-sv-aurora-state="live"] #controlPanel.open .stPreviewAurora > .svAuroraRibbon--first {
+body.svCleanShell[data-sv-aurora-preview-state="live"] #controlPanel[open] :is(.stPreviewAurora,.stStudioAtmosphere) > .svAuroraRibbon--first {
   animation:svAuroraDrift var(--sv-aurora-speed,32s) ease-in-out infinite alternate;
+  animation-delay:-8s;
 }
+.stWorkspace {position:relative;isolation:isolate}
+.stStudioAtmosphere {position:absolute;inset:0;z-index:-1;overflow:hidden;pointer-events:none;opacity:.32;mask-image:linear-gradient(#000,transparent 82%)}
+.stStudioAtmosphere>.svAuroraRibbon {position:absolute;inset:-5%;background:url('./aurora-ribbon.svg?v=170') center / cover no-repeat;animation:none;filter:hue-rotate(var(--sv-aurora-hue,0deg))}
+body[data-sv-aurora-preview-state="off"] #controlPanel[open] :is(.stPreviewAurora,.stStudioAtmosphere>.svAuroraRibbon) {display:none}
+.stThemeMobilePreview>:is(b,span,small) {position:relative;z-index:1}
 .stPreviewScene > :is(.stPreviewNav,.stPreviewCopy) {position:relative;z-index:1}
 .stPreviewScene > .stPreviewCopy {position:absolute}
 body.reduceMotion .svAuroraRibbon,
-body.svCleanShell[data-sv-aurora-state="still"] .svAuroraRibbon,
+body.svCleanShell[data-sv-aurora-state="still"] .svAuroraBackground>.svAuroraRibbon,
+body[data-sv-aurora-preview-state="still"] #controlPanel[open] :is(.stPreviewAurora,.stStudioAtmosphere)>.svAuroraRibbon,
 body.svCleanShell[data-st-aurora-motion="still"] .svAuroraRibbon {animation-play-state:paused !important}
 @media(prefers-reduced-motion:reduce) {
   body.svCleanShell .svAuroraRibbon {animation:none !important}

@@ -22,11 +22,12 @@ const group = (label,description,content,advancedOnly=false) => '<section class=
 const layoutDemo = value => '<span class="stLayoutDemo stLayoutDemo--'+value+'" aria-hidden="true"><i></i><i></i><i></i><i></i></span>';
 const preset = (value,title,copy,season='') => '<button type="button" class="stPreset stPreset--'+value+'" data-st-preset="'+value+'" data-st-field="themeId" data-st-value="'+value+'" aria-pressed="false"><span class="stPresetArt" aria-hidden="true"><span class="stThemeScene"></span><span class="stThemeSignature">SWIFLY<span>'+title+'</span></span><span class="stThemePalette"><i></i><i></i><i></i></span><b>'+icon('check')+'</b>'+(season?'<em>'+season+'</em>':'')+'</span><strong>'+title+'</strong><small>'+copy+'</small></button>';
 function studioMarkup() {
-  return `<div class="svAuroraBackground" aria-hidden="true"><i class="svAuroraGlow"></i><i class="svAuroraRibbon svAuroraRibbon--first"></i><i class="svAuroraRibbon svAuroraRibbon--second"></i><i class="svAuroraRibbon svAuroraRibbon--third"></i></div>
-  <div class="svThemeBackdrop" aria-hidden="true"></div>
+  return `<div class="svThemeBackdrop" aria-hidden="true"></div>
+  <div class="svAuroraBackground" aria-hidden="true"><i class="svAuroraGlow"></i><i class="svAuroraRibbon svAuroraRibbon--first"></i><i class="svAuroraRibbon svAuroraRibbon--second"></i><i class="svAuroraRibbon svAuroraRibbon--third"></i></div>
   <div class="svAppearanceTexture" aria-hidden="true"></div>
   <dialog id="controlPanel" class="svStudioDialog" data-st-editor-mode="simple" aria-labelledby="stTitle" aria-describedby="stDescription">
     <div class="stWorkspace">
+      <div class="stStudioAtmosphere" aria-hidden="true"><i class="svAuroraRibbon svAuroraRibbon--first"></i></div>
       <header class="stHeader">
         <div class="stBrand"><span class="stMark">${icon('studio')}</span><div><h2 id="stTitle">Swifly Studio</h2><p id="stDescription">Your screen. Your style.</p></div></div>
         <label class="stModeToggle"><input type="checkbox" data-st-advanced-toggle aria-describedby="stModeNote"><span>Advanced controls</span><i aria-hidden="true"></i></label>
@@ -46,7 +47,7 @@ function studioMarkup() {
           <section id="stPanel-looks" class="stPanel" role="tabpanel" aria-labelledby="stTab-looks">
             <div class="stPanelTitle"><span>MAKE IT YOURS</span><h2>A different kind of movie night.</h2><p>Choose a scene. Your whole screen changes with it.</p></div>
             ${toggle('themeDetails','Theme details','Petals, webs, snow and the finishing touches that make each theme its own.')}
-            <div class="stThemeMobilePreview" data-st-theme-mobile-preview aria-hidden="true"><b>SWIFLYTV</b><span>Your theme, brought to life.</span><small>LIVE PREVIEW</small></div>
+            <div class="stThemeMobilePreview" data-st-theme-mobile-preview aria-hidden="true"><i class="stPreviewAurora"><i class="svAuroraRibbon svAuroraRibbon--first"></i></i><b>SWIFLYTV</b><span>Your theme, brought to life.</span><small>LIVE PREVIEW</small></div>
             <div class="stPresets" role="group" aria-label="Curated themes">
               ${preset('pure','Swifly Original','Pearl accents. Northern light.')}${preset('blossom','Blossom','Falling petals. Flowering branches.')}${preset('halloween','Halloween','Corner webs. Hanging spiders.','SEASONAL')}${preset('winter','Winter Lights','Falling snow. Warm string lights.','SEASONAL')}${preset('cinema','Cinema','Projector dust. Film-frame details.')}${preset('midnight','Midnight','Starlight. A passing meteor.')}${preset('forest','Forest','Drifting leaves. Woodland ferns.')}${preset('focus','Focus','Pure graphite. Nothing in the way.')}
             </div>

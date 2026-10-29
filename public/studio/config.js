@@ -4,6 +4,7 @@
  const home=['continue','upcoming','recommended','trending-movies','trending-tv','popular-movies','popular-tv','top-movies','top-tv','new-releases'];
  const nav=['home','movies','tv','discover','list','study'];
  const defaults={themeId:'pure',themeDetails:true,theme:'default',font:'default',layout:'default',cardstyle:'rounded',density:'comfy',backdrop:'aurora',auroraColor:'glacier',auroraStrength:80,auroraMotion:'drift',glass:'liquid',smooth:true,reduceMotion:false,
+  wallpaper:'theme',wallpaperData:'',wallpaperName:'',wallpaperColor:'#a9c7ed',wallpaperDim:62,wallpaperBlur:0,wallpaperX:50,wallpaperY:50,wallpaperTint:false,wallpaperAurora:false,
   customColors:false,accentColor:'#c8c3ef',accentSecondary:'#84bdb4',canvasColor:'#090b0f',gradientAngle:135,gradientStrength:8,glassOpacity:55,glassBlur:18,glassEdge:40,glassGlow:10,
   homeOrder:home,homeHidden:[],heroMode:'cinematic',heroPosition:'first',posterWidth:180,homeColumns:6,rowShape:'rail',navOrder:nav,navLayout:'top',navLabels:true,navIcons:'line',navDensity:'comfortable',navActive:'pill',
   playerStyle:'cinema',playerProgress:3,playerTime:true,playerIconScale:100,playerOpacity:85,playerPosition:'floating',playerAutoHide:2600,captionSize:100,captionColor:'#ffffff',captionBg:65,captionEdge:'shadow',playerBackdrop:'dark',adaptiveCinema:false,adaptiveStrength:35,
@@ -12,7 +13,18 @@
   performancePreset:'auto',tvScale:110,tvControls:'standard'};
  const enums={theme:['default','red','blue','green','mono'],font:['default','cinema','soft','wide'],layout:['default','cinema','posterwall'],cardstyle:['rounded','sharp','softglass'],density:['comfy','compact'],backdrop:['aurora','smooth','grain'],auroraColor:['glacier','violet','rose','mint'],auroraMotion:['drift','slow','still'],glass:['off','subtle','liquid'],heroMode:['cinematic','compact','banner'],heroPosition:['first','after-first'],rowShape:['rail','grid'],navLayout:['top','sidebar'],navIcons:['line','filled','minimal'],navDensity:['comfortable','compact'],navActive:['pill','underline','accent'],playerStyle:['cinema','minimal','classic'],playerPosition:['floating','bottom'],playerAutoHide:[1800,2600,4000,6000],captionEdge:['shadow','outline','none'],playerBackdrop:['dark','artwork','ambient'],hudPosition:['right','left'],hudDensity:['comfortable','compact'],hudIcons:['line','solid'],hudMotion:['subtle','none'],notificationPreview:['expanded','compact'],toastPosition:['bottom','top'],aiSpacing:['comfortable','compact'],aiCards:['list','grid'],aiGlass:['inherit','solid','soft'],loaderStyle:['cinematic','minimal','artwork','aurora','basic'],posterHover:['lift','zoom','reveal','flat'],posterActions:['auto','always'],focusStyle:['ring','frame'],performancePreset:['auto','desktop','mobile','xbox','minimal'],tvControls:['standard','large']};
  const ranges={auroraStrength:[0,100],gradientAngle:[0,360],gradientStrength:[0,30],glassOpacity:[15,95],glassBlur:[0,28],glassEdge:[0,100],glassGlow:[0,30],posterWidth:[120,260],homeColumns:[3,8],playerProgress:[2,7],playerIconScale:[85,125],playerOpacity:[60,100],captionSize:[75,200],captionBg:[0,100],adaptiveStrength:[0,65],hudWidth:[280,480],hudTransparency:[65,100],aiWidth:[560,880],transitionSpeed:[100,400],loaderDim:[70,98],uiScale:[90,120],tvScale:[100,130]};
- const colors=['accentColor','accentSecondary','canvasColor','captionColor'],deviceFields=['performancePreset','tvScale','tvControls'];
+ const colors=['accentColor','accentSecondary','canvasColor','captionColor','wallpaperColor'],deviceFields=['performancePreset','tvScale','tvControls'];
+ enums.wallpaper=['theme','aurora','moonlit','winter','velvet','upload'];
+ Object.assign(ranges,{wallpaperDim:[40,85],wallpaperBlur:[0,12],wallpaperX:[0,100],wallpaperY:[0,100]});
+ const MAX_THEME_BYTES=196608,MAX_WALLPAPER_CHARS=160000,knownImages=new Set();
+ function validWallpaperData(value){
+  if(typeof value!=='string'||value.length>MAX_WALLPAPER_CHARS||value.length<40)return false;
+  if(knownImages.has(value))return true;
+  const match=value.match(/^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/]+={0,2})$/);if(!match||match[2].length%4)return false;
+  let b;try{b=atob(match[2].slice(0,48));}catch{return false;}
+  const valid=match[1]==='png'?b.startsWith('\x89PNG\r\n\x1a\n')&&b.slice(12,16)==='IHDR':match[1]==='jpeg'?b.charCodeAt(0)===255&&b.charCodeAt(1)===216&&b.charCodeAt(2)===255:b.startsWith('RIFF')&&b.slice(8,12)==='WEBP';
+  if(valid){if(knownImages.size>=16)knownImages.clear();knownImages.add(value);}return valid;
+ }
  // Curated themes are deliberately narrower than portable named looks. A new
  // theme cannot reorder a library, change controls or relax a comfort preference.
  const appearanceFields=['themeId','theme','font','cardstyle','backdrop','auroraColor','auroraStrength','auroraMotion','glass','customColors','accentColor','accentSecondary','canvasColor','gradientAngle','gradientStrength','glassOpacity','glassBlur','glassEdge','glassGlow'];
@@ -40,6 +52,8 @@
    else if(ranges[name]&&typeof value==='number'&&Number.isFinite(value))result[name]=Math.round(Math.max(ranges[name][0],Math.min(ranges[name][1],value)));
    else if(typeof defaults[name]==='boolean'&&typeof value==='boolean')result[name]=value;
    else if(colors.includes(name)&&hex(value))result[name]=hex(value);
+   else if(name==='wallpaperData'&&validWallpaperData(value))result[name]=value;
+   else if(name==='wallpaperName'&&typeof value==='string')result[name]=value.replace(/[\u0000-\u001f]/g,'').slice(0,120);
   }
   for(const [name,keys]of [['homeOrder',home],['navOrder',nav]])if(Array.isArray(input[name]))result[name]=[...new Set([...input[name].filter(v=>keys.includes(v)),...keys])];
   if(Array.isArray(input.homeHidden))result.homeHidden=[...new Set(input.homeHidden.filter(v=>home.includes(v)))];
@@ -63,25 +77,38 @@
   return validate(v);
  }
  function looks(values){return(Array.isArray(values)?values:[]).slice(0,12).filter(v=>plain(v)&&typeof v.id==='string'&&/^[a-zA-Z0-9_-]{1,64}$/.test(v.id)&&typeof v.name==='string').map(v=>({id:v.id,name:v.name.trim().slice(0,64)||'Untitled look',description:typeof v.description==='string'?v.description.slice(0,160):'',values:portable(validate(v.values))}));}
+ function unpackRecord(record,{strict=false}={}){
+  if(!plain(record))throw Error('The saved wallpaper record could not be read.');
+  const assets=record.wallpaperAssets??{};if(!plain(assets)||Object.keys(assets).length>13||Object.entries(assets).some(([id,data])=>!/^a\d{1,2}$/.test(id)||!validWallpaperData(data)))throw Error('Invalid wallpaper assets.');
+  const hydrate=value=>{const v={...(plain(value)?value:{})},data=v.wallpaperData;if(typeof data==='string'&&data.startsWith('asset:')){const id=data.slice(6);if(!Object.prototype.hasOwnProperty.call(assets,id))throw Error('A wallpaper asset is missing.');v.wallpaperData=assets[id];}else if(data&& !validWallpaperData(data)){if(strict)throw Error('Invalid wallpaper image.');v.wallpaperData='';}return v;};
+  return{version:record.version??record.schemaVersion,values:hydrate(record.values),looks:(Array.isArray(record.looks)?record.looks:[]).map(v=>({...v,values:hydrate(v.values)}))};
+ }
+ function packRecord(record){
+  const assets={},ids=new Map(),pack=value=>{const v=portable(validate(value));if(v.wallpaperData){let id=ids.get(v.wallpaperData);if(!id){id='a'+ids.size;ids.set(v.wallpaperData,id);assets[id]=v.wallpaperData;}v.wallpaperData='asset:'+id;}return v;};
+  const values=pack(record.values),savedLooks=looks(record.looks).map(v=>({...v,values:pack(v.values)}));return{version:2,values,looks:savedLooks,...(ids.size?{wallpaperAssets:assets}:{})};
+ }
  function read(storage,user){
   const owner=ownerKey(storage,user),key=storageKey(owner),own=json(storage,key),global=json(storage,'swiflytv.appearance'),record=own||(key!=='swiflytv.appearance'?global:null),device=json(storage,'swiflytv.studio.device');
-  const valid=record&&(record.version===1||record.version===2||record.schemaVersion===2);
-  let values=valid?validate(record.values):record?clone(defaults):legacy(storage);
+  let valid=record&&(record.version===1||record.version===2||record.schemaVersion===2),unpacked;
+  try{if(valid)unpacked=unpackRecord(record,{strict:true});}catch{valid=false;}
+  // Legacy global style fallback is useful; a guest's private image is not a shared default.
+  if(valid&&!own&&key!=='swiflytv.appearance')for(const value of [unpacked.values,...unpacked.looks.map(v=>v.values)]){value.wallpaperData='';value.wallpaperName='';if(value.wallpaper==='upload')value.wallpaper='theme';}
+  let values=valid?validate(unpacked.values):record?clone(defaults):legacy(storage);
   const d=validate(device?.values);for(const k of deviceFields)values[k]=d[k];
-  return{owner,key,values,looks:valid?looks(record.looks):[],warning:record&&!valid?'The saved theme could not be read. Defaults are previewed until you save.':''};
+  return{owner,key,values,looks:valid?looks(unpacked.looks):[],warning:record&&!valid?'The saved theme could not be read. Defaults are previewed until you save.':''};
  }
  function portable(value){const result={};for(const key of Object.keys(defaults))if(!deviceFields.includes(key))result[key]=clone(value[key]);return result;}
  function write(storage,record){
   const values=validate(record.values),keys=[record.key,'swiflytv.studio.device'],previous=keys.map(k=>get(storage,k));
   try{
-   storage.setItem(keys[0],JSON.stringify({version:2,values:portable(values),looks:looks(record.looks)}));
+   storage.setItem(keys[0],JSON.stringify(packRecord({values,looks:record.looks})));
    storage.setItem(keys[1],JSON.stringify({version:1,values:Object.fromEntries(deviceFields.map(k=>[k,values[k]]))}));
   }catch(error){for(let i=0;i<keys.length;i++){try{if(previous[i]===null)storage.removeItem(keys[i]);else storage.setItem(keys[i],previous[i]);}catch{}}throw error;}
  }
  function bytes(text){let n=0;for(const c of text){const v=c.codePointAt(0);n+=v<=127?1:v<=2047?2:v<=65535?3:4;}return n;}
  function exportTheme(values,name='My Swifly look',description=''){return{app:'SwiflyTV Studio',schemaVersion:2,name:String(name).trim().slice(0,64)||'My Swifly look',description:String(description).slice(0,160),values:portable(validate(values))};}
  function parseImport(text){
-  if(typeof text!=='string'||bytes(text)>32768)throw Error('Theme files must be smaller than 32 KB.');
+  if(typeof text!=='string'||bytes(text)>MAX_THEME_BYTES)throw Error('Theme files must be smaller than 192 KB.');
   let data;try{data=JSON.parse(text);}catch{throw Error('This is not valid theme JSON.');}
   if(!plain(data)||!plain(data.values))throw Error('Choose a Swifly Studio theme with a values object.');
   const version=data.schemaVersion??data.version;if(version!==1&&version!==2)throw Error('This theme version is unsupported. Update SwiflyTV or export a version 2 theme.');
@@ -90,6 +117,7 @@
   for(const [key,value]of Object.entries(data.values)){
    if(!Object.prototype.hasOwnProperty.call(defaults,key)||deviceFields.includes(key))throw Error('Unsupported theme setting: '+key);
    if(enums[key]&&!enums[key].includes(value)||ranges[key]&&(!Number.isInteger(value)||value<ranges[key][0]||value>ranges[key][1])||colors.includes(key)&&!hex(value)||typeof defaults[key]==='boolean'&&typeof value!=='boolean')throw Error('Invalid value for '+key+'.');
+   if(key==='wallpaperData'&&value!==''&&!validWallpaperData(value)||key==='wallpaperName'&&(typeof value!=='string'||value.length>120||/[\u0000-\u001f]/.test(value)))throw Error('Invalid wallpaper setting: '+key);
    const allowedArray=key==='homeOrder'||key==='homeHidden'?home:key==='navOrder'?nav:null;
    if(allowedArray&&(!Array.isArray(value)||value.some(v=>!allowedArray.includes(v))||new Set(value).size!==value.length))throw Error('Invalid order or visibility list.');
   }
@@ -103,8 +131,19 @@
   if(preset==='mobile')v.glassBlur=Math.min(12,v.glassBlur);
   if(v.reduceTransparency||v.highContrast||preset==='xbox'||preset==='minimal')v.themeDetails=false;
   if(v.reduceMotion){v.auroraMotion='still';v.posterHover='flat';v.hudMotion='none';v.pageMotion=false;}
+  if(v.wallpaper==='aurora')v.backdrop='aurora';else if(v.wallpaper!=='theme'&&(v.wallpaper!=='upload'||v.wallpaperData))v.backdrop=v.wallpaperAurora?'aurora':'smooth';
+  if(v.wallpaper!=='theme'&&v.wallpaper!=='aurora'){
+   v.glassOpacity=Math.max(82,v.glassOpacity);
+   if(v.wallpaperTint){const rgb=[1,3,5].map(i=>parseInt(v.wallpaperColor.slice(i,i+2),16)),mix=(white,amount)=>'#'+rgb.map(n=>Math.round(n*(1-amount)+(white?255:0)*amount).toString(16).padStart(2,'0')).join('');v.customColors=true;v.accentColor=mix(true,.62);v.accentSecondary=mix(true,.4);v.canvasColor=mix(false,.92);}
+  }
+  if(preset==='xbox'||preset==='minimal')v.wallpaperBlur=0;
   if(preset==='minimal'){v.backdrop='smooth';v.glassGlow=0;}if(v.highContrast){v.customColors=true;v.canvasColor='#000000';v.accentColor='#ffffff';v.accentSecondary='#ffffff';v.gradientStrength=0;v.glass='off';v.backdrop='smooth';v.glassGlow=0;}
   return v;
+ }
+ function wallpaperImage(values){
+  if(values.highContrast||values.performancePreset==='minimal')return 'none';
+  if(values.wallpaper==='upload')return validWallpaperData(values.wallpaperData)?'url("'+values.wallpaperData+'")':'none';
+  return{moonlit:'url("/assets/studio/themes/halloween-night.webp")',winter:'url("/assets/studio/themes/winter-lights.webp")',velvet:'radial-gradient(ellipse at 75% 18%,#67658d 0%,transparent 58%),radial-gradient(ellipse at 14% 85%,#38666b 0%,transparent 65%),linear-gradient(145deg,#131a29,#292031)'}[values.wallpaper]||'none';
  }
  const accents={default:'#ece9e2',red:'#e7baa3',blue:'#a9c7ed',green:'#b4cbb8',mono:'#c1c1c7',purple:'#c8b1ff',orange:'#ffc18c',pink:'#f5b5d1',cyan:'#9ae1e9'};
  for(const color of ['purple','orange','pink','cyan'])if(!enums.theme.includes(color))enums.theme.push(color);
@@ -118,7 +157,7 @@
  function hue(color){const [r,g,b]=[1,3,5].map(i=>parseInt(color.slice(i,i+2),16)/255),max=Math.max(r,g,b),min=Math.min(r,g,b),d=max-min;if(!d)return 0;const n=max===r?((g-b)/d)%6:max===g?(b-r)/d+2:(r-g)/d+4;return(n*60+360)%360;}
  function apply(values,environment=context(),root=typeof document!=='undefined'?document.body:null){
   const v=effective(values,environment);if(!root)return v;
-  for(const [name,value]of Object.entries(v))if(!Array.isArray(value)&&name!=='auroraStrength')root.dataset['st'+name[0].toUpperCase()+name.slice(1)]=String(value);
+  for(const [name,value]of Object.entries(v))if(!Array.isArray(value)&&!['auroraStrength','wallpaperData','wallpaperName'].includes(name))root.dataset['st'+name[0].toUpperCase()+name.slice(1)]=String(value);
   root.dataset.svAppearance='v155';root.dataset.svScroll=v.smooth?'smooth':'native';
   root.classList.toggle('reduceMotion',v.reduceMotion);
   const old=['effect-clean','effect-cinematic','effect-dropcart','effect-neon','effect-glow','effect-glass','effect-calm','effect-ultra','effect-off','detail-clean','detail-balanced','detail-max','layout-dense','layout-spotlight','cardstyle-float','backdrop-grid'];
@@ -131,9 +170,10 @@
    '--st-radius':{sharp:'3px',rounded:'10px',softglass:'20px'}[v.cardstyle],'--st-gap':v.density==='compact'?'10px':'16px','--sv-poster-width':v.posterWidth!==defaults.posterWidth?v.posterWidth+'px':v.layout==='cinema'?'clamp(168px,18vw,250px)':v.density==='compact'?'clamp(126px,12vw,174px)':'clamp(150px,14vw,210px)',
    '--st-gradient-angle':v.gradientAngle+'deg','--st-gradient-strength':v.gradientStrength/100,'--st-glass-opacity':v.glassOpacity/100,'--st-glass-blur':v.glassBlur+'px','--st-glass-edge':v.glassEdge/100,'--st-glass-glow':v.glassGlow/100,'--st-ui-scale':v.uiScale/100,'--st-focus-width':v.focusStyle==='frame'?'4px':'2px','--st-hit-target':v.largeTargets?'44px':'36px'};
   for(const [key,value]of Object.entries(tokens))root.style.setProperty(key,String(value));
+  root.style.setProperty('--st-wallpaper-image',wallpaperImage(v));root.style.setProperty('--st-wallpaper-dim',String(v.wallpaperDim/100));root.style.setProperty('--st-wallpaper-blur',v.wallpaperBlur+'px');root.style.setProperty('--st-wallpaper-position',v.wallpaperX+'% '+v.wallpaperY+'%');root.dataset.stWallpaperVisible=String(wallpaperImage(v)!=='none');
   if(typeof window!=='undefined'){window.SwiflyAppearance=clone(v);if(!v.smooth||v.reduceMotion)window.SwiflyMotion?.stop?.();window.SwiflyAurora?.refresh?.();}
   return v;
  }
- const api={defaults,enums,ranges,colors,deviceFields,appearanceFields,curatedThemes,applyTheme,clone,validate,ownerKey,storageKey,read,write,portable,exportTheme,parseImport,contrast,effective,context,apply,accents};
+ const api={defaults,enums,ranges,colors,deviceFields,appearanceFields,curatedThemes,applyTheme,clone,validate,ownerKey,storageKey,read,write,portable,exportTheme,parseImport,contrast,effective,context,apply,accents,MAX_THEME_BYTES,MAX_WALLPAPER_CHARS,validWallpaperData,packRecord,unpackRecord,wallpaperImage};
  if(typeof module!=='undefined'&&module.exports)module.exports=api;else globalThis.SwiflyStudioConfig=Object.freeze(api);
 })();
