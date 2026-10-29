@@ -45,4 +45,5 @@
 - [x] Add real-browser regressions for falling petals, attached webs, native preview and accessibility/playback policies.
 - [x] Run appropriate regression suites, syntax and whitespace checks; fix observed failures.
 - [x] Commit intended files and get one fresh read-only whole-branch review; fix Important/Critical findings with regressions.
+- [x] Reproduce CI fixture races and replace captured startup/animation waits with bounded conditions, preserving route, identity and 44px target assertions.
 - [x] Publish the tested exact tree as a reviewable GitHub PR with screenshots and current check status.

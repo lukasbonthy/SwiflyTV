@@ -3,6 +3,7 @@ const {test,before,after}=require('node:test'),assert=require('node:assert/stric
 const fs=require('node:fs'),fsp=require('node:fs/promises'),path=require('node:path'),os=require('node:os');
 const {chromium}=require('playwright-core');
 const {loadServer}=require('./ui-helpers.cjs');
+const {appReady}=require('./browser-conditions.cjs');
 const executablePath=process.env.SWIFLY_TEST_BROWSER_EXECUTABLE_PATH||chromium.executablePath(),skip=!fs.existsSync(executablePath)&&'Chromium is not installed';
 const out=path.join(__dirname,'../docs/evidence');let api,browser,origin,directory;
 before(async()=>{if(skip)return;directory=await fsp.mkdtemp(path.join(os.tmpdir(),'swifly-backup-browser-'));const previous=process.env.SWIFLY_DATA_DIR;process.env.SWIFLY_DATA_DIR=directory;api=loadServer();previous===undefined?delete process.env.SWIFLY_DATA_DIR:process.env.SWIFLY_DATA_DIR=previous;api.setTmdb(async endpoint=>({id:42,title:'A saved story',name:'A saved story',results:[],genres:[],credits:{cast:[]},release_date:'2025-01-01',first_air_date:'2025-01-01'}));await new Promise(done=>api.httpServer.listen(0,'127.0.0.1',done));origin='http://127.0.0.1:'+api.httpServer.address().port;browser=await chromium.launch({headless:true,executablePath,args:['--no-sandbox','--disable-dev-shm-usage']});await fsp.mkdir(out,{recursive:true});});
@@ -14,7 +15,7 @@ async function open(t,width=1440){
  await context.addInitScript(()=>{Object.defineProperty(navigator,'getGamepads',{value:()=>[]});const add=EventTarget.prototype.addEventListener;EventTarget.prototype.addEventListener=function(type,...rest){if(type==='gamepadconnected'||type==='gamepaddisconnected')return;return add.call(this,type,...rest);};});
  await context.route('**/*',route=>{const u=new URL(route.request().url());if(u.origin===origin)return route.continue();if(u.hostname==='image.tmdb.org')return route.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="100" height="150"><rect width="100" height="150" fill="#292534"/></svg>'});return route.fulfill({body:'',contentType:route.request().resourceType()==='stylesheet'?'text/css':'text/plain'});});
  page.on('pageerror',e=>errors.push(e.message));page.on('response',r=>{if(r.url().startsWith(origin+'/assets/')&&r.status()>=400)failed.push(r.url());});
- await page.goto(origin+'/account',{waitUntil:'domcontentloaded'});await page.evaluate(()=>SwiflyAccount.ready);await page.evaluate(()=>SwiflyLibrary.ready);await page.waitForFunction(()=>!document.querySelector('[data-backup-open]').disabled&&!document.documentElement.hasAttribute('data-sv-loading'));t.after(()=>context.close());return{context,page,user,errors,failed};
+ await page.goto(origin+'/account',{waitUntil:'domcontentloaded'});await appReady(page,'/account');await page.waitForFunction(()=>!document.querySelector('[data-backup-open]').disabled&&!document.documentElement.hasAttribute('data-sv-loading'));t.after(()=>context.close());return{context,page,user,errors,failed};
 }
 test('real account recovery, file export and repeated file import preserve data at phone and desktop widths',{skip},async t=>{
  for(const width of[1440,320]){const f=await open(t,width),p=f.page;
