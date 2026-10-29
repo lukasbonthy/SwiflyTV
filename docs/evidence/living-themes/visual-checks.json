@@ -1,0 +1,665 @@
+{
+  "checks": [
+    {
+      "label": "blossom live preview 1440",
+      "passed": true
+    },
+    {
+      "label": "blossom ornament on real navigation 1440",
+      "passed": true
+    },
+    {
+      "label": "blossom background paused under Studio 1440",
+      "passed": true
+    },
+    {
+      "label": "blossom particles run on actual page 1440",
+      "passed": true
+    },
+    {
+      "label": "blossom particle budget 1440",
+      "passed": true
+    },
+    {
+      "label": "blossom ornament budget 1440",
+      "passed": true
+    },
+    {
+      "label": "blossom no overflow 1440",
+      "passed": true
+    },
+    {
+      "label": "blossom real navigation accepts pointer 1440",
+      "passed": true
+    },
+    {
+      "label": "Petals actually move",
+      "passed": true
+    },
+    {
+      "label": "halloween live preview 1440",
+      "passed": true
+    },
+    {
+      "label": "halloween ornament on real navigation 1440",
+      "passed": true
+    },
+    {
+      "label": "halloween background paused under Studio 1440",
+      "passed": true
+    },
+    {
+      "label": "halloween particles run on actual page 1440",
+      "passed": true
+    },
+    {
+      "label": "halloween particle budget 1440",
+      "passed": true
+    },
+    {
+      "label": "halloween ornament budget 1440",
+      "passed": true
+    },
+    {
+      "label": "halloween no overflow 1440",
+      "passed": true
+    },
+    {
+      "label": "halloween real navigation accepts pointer 1440",
+      "passed": true
+    },
+    {
+      "label": "winter live preview 1440",
+      "passed": true
+    },
+    {
+      "label": "winter ornament on real navigation 1440",
+      "passed": true
+    },
+    {
+      "label": "winter background paused under Studio 1440",
+      "passed": true
+    },
+    {
+      "label": "winter particles run on actual page 1440",
+      "passed": true
+    },
+    {
+      "label": "winter particle budget 1440",
+      "passed": true
+    },
+    {
+      "label": "winter ornament budget 1440",
+      "passed": true
+    },
+    {
+      "label": "winter no overflow 1440",
+      "passed": true
+    },
+    {
+      "label": "winter real navigation accepts pointer 1440",
+      "passed": true
+    },
+    {
+      "label": "forest live preview 1440",
+      "passed": true
+    },
+    {
+      "label": "forest ornament on real navigation 1440",
+      "passed": true
+    },
+    {
+      "label": "forest background paused under Studio 1440",
+      "passed": true
+    },
+    {
+      "label": "forest particles run on actual page 1440",
+      "passed": true
+    },
+    {
+      "label": "forest particle budget 1440",
+      "passed": true
+    },
+    {
+      "label": "forest ornament budget 1440",
+      "passed": true
+    },
+    {
+      "label": "forest no overflow 1440",
+      "passed": true
+    },
+    {
+      "label": "forest real navigation accepts pointer 1440",
+      "passed": true
+    },
+    {
+      "label": "midnight live preview 1440",
+      "passed": true
+    },
+    {
+      "label": "midnight ornament on real navigation 1440",
+      "passed": true
+    },
+    {
+      "label": "midnight background paused under Studio 1440",
+      "passed": true
+    },
+    {
+      "label": "midnight particles run on actual page 1440",
+      "passed": true
+    },
+    {
+      "label": "midnight particle budget 1440",
+      "passed": true
+    },
+    {
+      "label": "midnight ornament budget 1440",
+      "passed": true
+    },
+    {
+      "label": "midnight no overflow 1440",
+      "passed": true
+    },
+    {
+      "label": "midnight real navigation accepts pointer 1440",
+      "passed": true
+    },
+    {
+      "label": "cinema live preview 1440",
+      "passed": true
+    },
+    {
+      "label": "cinema ornament on real navigation 1440",
+      "passed": true
+    },
+    {
+      "label": "cinema background paused under Studio 1440",
+      "passed": true
+    },
+    {
+      "label": "cinema particles run on actual page 1440",
+      "passed": true
+    },
+    {
+      "label": "cinema particle budget 1440",
+      "passed": true
+    },
+    {
+      "label": "cinema ornament budget 1440",
+      "passed": true
+    },
+    {
+      "label": "cinema no overflow 1440",
+      "passed": true
+    },
+    {
+      "label": "cinema real navigation accepts pointer 1440",
+      "passed": true
+    },
+    {
+      "label": "Reduced motion retains static web 1440",
+      "passed": true
+    },
+    {
+      "label": "Reduced motion stops spider 1440",
+      "passed": true
+    },
+    {
+      "label": "Reduced motion removes movers 1440",
+      "passed": true
+    },
+    {
+      "label": "Petals do not intercept search input 1440",
+      "passed": true
+    },
+    {
+      "label": "blossom live preview 390",
+      "passed": true
+    },
+    {
+      "label": "blossom ornament on real navigation 390",
+      "passed": true
+    },
+    {
+      "label": "blossom background paused under Studio 390",
+      "passed": true
+    },
+    {
+      "label": "blossom particles run on actual page 390",
+      "passed": true
+    },
+    {
+      "label": "blossom particle budget 390",
+      "passed": true
+    },
+    {
+      "label": "blossom ornament budget 390",
+      "passed": true
+    },
+    {
+      "label": "blossom no overflow 390",
+      "passed": true
+    },
+    {
+      "label": "blossom real navigation accepts pointer 390",
+      "passed": true
+    },
+    {
+      "label": "halloween live preview 390",
+      "passed": true
+    },
+    {
+      "label": "halloween ornament on real navigation 390",
+      "passed": true
+    },
+    {
+      "label": "halloween background paused under Studio 390",
+      "passed": true
+    },
+    {
+      "label": "halloween particles run on actual page 390",
+      "passed": true
+    },
+    {
+      "label": "halloween particle budget 390",
+      "passed": true
+    },
+    {
+      "label": "halloween ornament budget 390",
+      "passed": true
+    },
+    {
+      "label": "halloween no overflow 390",
+      "passed": true
+    },
+    {
+      "label": "halloween real navigation accepts pointer 390",
+      "passed": true
+    },
+    {
+      "label": "winter live preview 390",
+      "passed": true
+    },
+    {
+      "label": "winter ornament on real navigation 390",
+      "passed": true
+    },
+    {
+      "label": "winter background paused under Studio 390",
+      "passed": true
+    },
+    {
+      "label": "winter particles run on actual page 390",
+      "passed": true
+    },
+    {
+      "label": "winter particle budget 390",
+      "passed": true
+    },
+    {
+      "label": "winter ornament budget 390",
+      "passed": true
+    },
+    {
+      "label": "winter no overflow 390",
+      "passed": true
+    },
+    {
+      "label": "winter real navigation accepts pointer 390",
+      "passed": true
+    },
+    {
+      "label": "forest live preview 390",
+      "passed": true
+    },
+    {
+      "label": "forest ornament on real navigation 390",
+      "passed": true
+    },
+    {
+      "label": "forest background paused under Studio 390",
+      "passed": true
+    },
+    {
+      "label": "forest particles run on actual page 390",
+      "passed": true
+    },
+    {
+      "label": "forest particle budget 390",
+      "passed": true
+    },
+    {
+      "label": "forest ornament budget 390",
+      "passed": true
+    },
+    {
+      "label": "forest no overflow 390",
+      "passed": true
+    },
+    {
+      "label": "forest real navigation accepts pointer 390",
+      "passed": true
+    },
+    {
+      "label": "midnight live preview 390",
+      "passed": true
+    },
+    {
+      "label": "midnight ornament on real navigation 390",
+      "passed": true
+    },
+    {
+      "label": "midnight background paused under Studio 390",
+      "passed": true
+    },
+    {
+      "label": "midnight particles run on actual page 390",
+      "passed": true
+    },
+    {
+      "label": "midnight particle budget 390",
+      "passed": true
+    },
+    {
+      "label": "midnight ornament budget 390",
+      "passed": true
+    },
+    {
+      "label": "midnight no overflow 390",
+      "passed": true
+    },
+    {
+      "label": "midnight real navigation accepts pointer 390",
+      "passed": true
+    },
+    {
+      "label": "cinema live preview 390",
+      "passed": true
+    },
+    {
+      "label": "cinema ornament on real navigation 390",
+      "passed": true
+    },
+    {
+      "label": "cinema background paused under Studio 390",
+      "passed": true
+    },
+    {
+      "label": "cinema particles run on actual page 390",
+      "passed": true
+    },
+    {
+      "label": "cinema particle budget 390",
+      "passed": true
+    },
+    {
+      "label": "cinema ornament budget 390",
+      "passed": true
+    },
+    {
+      "label": "cinema no overflow 390",
+      "passed": true
+    },
+    {
+      "label": "cinema real navigation accepts pointer 390",
+      "passed": true
+    },
+    {
+      "label": "Reduced motion retains static web 390",
+      "passed": true
+    },
+    {
+      "label": "Reduced motion stops spider 390",
+      "passed": true
+    },
+    {
+      "label": "Reduced motion removes movers 390",
+      "passed": true
+    },
+    {
+      "label": "Petals do not intercept search input 390",
+      "passed": true
+    },
+    {
+      "label": "blossom live preview 320",
+      "passed": true
+    },
+    {
+      "label": "blossom ornament on real navigation 320",
+      "passed": true
+    },
+    {
+      "label": "blossom background paused under Studio 320",
+      "passed": true
+    },
+    {
+      "label": "blossom particles run on actual page 320",
+      "passed": true
+    },
+    {
+      "label": "blossom particle budget 320",
+      "passed": true
+    },
+    {
+      "label": "blossom ornament budget 320",
+      "passed": true
+    },
+    {
+      "label": "blossom no overflow 320",
+      "passed": true
+    },
+    {
+      "label": "blossom real navigation accepts pointer 320",
+      "passed": true
+    },
+    {
+      "label": "halloween live preview 320",
+      "passed": true
+    },
+    {
+      "label": "halloween ornament on real navigation 320",
+      "passed": true
+    },
+    {
+      "label": "halloween background paused under Studio 320",
+      "passed": true
+    },
+    {
+      "label": "halloween particles run on actual page 320",
+      "passed": true
+    },
+    {
+      "label": "halloween particle budget 320",
+      "passed": true
+    },
+    {
+      "label": "halloween ornament budget 320",
+      "passed": true
+    },
+    {
+      "label": "halloween no overflow 320",
+      "passed": true
+    },
+    {
+      "label": "halloween real navigation accepts pointer 320",
+      "passed": true
+    },
+    {
+      "label": "winter live preview 320",
+      "passed": true
+    },
+    {
+      "label": "winter ornament on real navigation 320",
+      "passed": true
+    },
+    {
+      "label": "winter background paused under Studio 320",
+      "passed": true
+    },
+    {
+      "label": "winter particles run on actual page 320",
+      "passed": true
+    },
+    {
+      "label": "winter particle budget 320",
+      "passed": true
+    },
+    {
+      "label": "winter ornament budget 320",
+      "passed": true
+    },
+    {
+      "label": "winter no overflow 320",
+      "passed": true
+    },
+    {
+      "label": "winter real navigation accepts pointer 320",
+      "passed": true
+    },
+    {
+      "label": "forest live preview 320",
+      "passed": true
+    },
+    {
+      "label": "forest ornament on real navigation 320",
+      "passed": true
+    },
+    {
+      "label": "forest background paused under Studio 320",
+      "passed": true
+    },
+    {
+      "label": "forest particles run on actual page 320",
+      "passed": true
+    },
+    {
+      "label": "forest particle budget 320",
+      "passed": true
+    },
+    {
+      "label": "forest ornament budget 320",
+      "passed": true
+    },
+    {
+      "label": "forest no overflow 320",
+      "passed": true
+    },
+    {
+      "label": "forest real navigation accepts pointer 320",
+      "passed": true
+    },
+    {
+      "label": "midnight live preview 320",
+      "passed": true
+    },
+    {
+      "label": "midnight ornament on real navigation 320",
+      "passed": true
+    },
+    {
+      "label": "midnight background paused under Studio 320",
+      "passed": true
+    },
+    {
+      "label": "midnight particles run on actual page 320",
+      "passed": true
+    },
+    {
+      "label": "midnight particle budget 320",
+      "passed": true
+    },
+    {
+      "label": "midnight ornament budget 320",
+      "passed": true
+    },
+    {
+      "label": "midnight no overflow 320",
+      "passed": true
+    },
+    {
+      "label": "midnight real navigation accepts pointer 320",
+      "passed": true
+    },
+    {
+      "label": "cinema live preview 320",
+      "passed": true
+    },
+    {
+      "label": "cinema ornament on real navigation 320",
+      "passed": true
+    },
+    {
+      "label": "cinema background paused under Studio 320",
+      "passed": true
+    },
+    {
+      "label": "cinema particles run on actual page 320",
+      "passed": true
+    },
+    {
+      "label": "cinema particle budget 320",
+      "passed": true
+    },
+    {
+      "label": "cinema ornament budget 320",
+      "passed": true
+    },
+    {
+      "label": "cinema no overflow 320",
+      "passed": true
+    },
+    {
+      "label": "cinema real navigation accepts pointer 320",
+      "passed": true
+    },
+    {
+      "label": "Reduced motion retains static web 320",
+      "passed": true
+    },
+    {
+      "label": "Reduced motion stops spider 320",
+      "passed": true
+    },
+    {
+      "label": "Reduced motion removes movers 320",
+      "passed": true
+    },
+    {
+      "label": "Petals do not intercept search input 320",
+      "passed": true
+    },
+    {
+      "label": "No fatal errors or failed local assets",
+      "passed": true
+    },
+    {
+      "label": "All seven original SVG details loaded",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "assets": {
+    "/assets/studio/theme-details.css": 200,
+    "/assets/studio/theme-details.js": 200,
+    "/assets/studio/themes/winter-lights.webp": 200,
+    "/assets/studio/themes/halloween-night.webp": 200,
+    "/assets/studio/themes/blossom-branch.svg": 200,
+    "/assets/studio/themes/winter-lights.svg": 200,
+    "/assets/studio/themes/web-corner.svg": 200,
+    "/assets/studio/themes/film-frame.svg": 200,
+    "/assets/studio/themes/fern-corner.svg": 200,
+    "/assets/studio/themes/spider.svg": 200,
+    "/assets/studio/themes/orbit-lines.svg": 200
+  },
+  "screenshots": [
+    "docs/evidence/living-themes/settings-blossom-1440.png",
+    "docs/evidence/living-themes/settings-blossom-390.png",
+    "docs/evidence/living-themes/studio-blossom-320.png",
+    "docs/evidence/living-themes/settings-halloween-1440.png",
+    "docs/evidence/living-themes/studio-halloween-390.png",
+    "docs/evidence/living-themes/settings-winter-1440.png"
+  ],
+  "fixture": "Actual Express routes, same-origin assets, guest verification and Studio/library controllers; external catalog empty and external fonts stubbed. No production or provider claim.",
+  "screenshotsProduced": 16,
+  "motionPreview": "docs/evidence/living-themes/blossom-motion.mp4"
+}
