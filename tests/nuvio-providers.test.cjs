@@ -516,6 +516,42 @@ test('Nuvio verifies a real MP4 using bounded Range GET when HEAD is blocked',as
   ]);
 });
 
+test('signed extensionless 4K MP4 uses bounded byte-signature verification when MIME is generic',async()=>{
+  const requests=[];
+  const ftyp=Buffer.concat([Buffer.from([0,0,0,24]),Buffer.from('ftypisom'),Buffer.alloc(12)]);
+  const source=await verifyNuvioSource({url:'https://media.example/signed-file?sig=abc',type:'video/mp4',
+    quality:'2160p',requiresProxy:true},{fetchResource:async(_url,options)=>{
+    requests.push({method:options.method,range:options.headers?.range,maxBytes:options.maxBytes});
+    if(options.method==='HEAD')return new Response(null,{status:200,headers:{'content-type':'application/octet-stream'}});
+    return new Response(ftyp,{status:206,headers:{'content-type':'application/octet-stream','content-range':'bytes 0-23/5500000000'}});
+  }});
+  assert.equal(source?.format,'mp4');
+  assert.equal(source?.mediaVerified,true);
+  assert.equal(source?.quality,'2160p');
+  assert.equal(source?.requiresProxy,true);
+  assert.deepEqual(requests,[
+    {method:'HEAD',range:undefined,maxBytes:1024*1024},
+    {method:'GET',range:'bytes=0-4095',maxBytes:4096}
+  ]);
+});
+
+test('signed generic-content video does not pass without real MP4 bytes',async()=>{
+  const url='https://media.example/signed-file?sig=abc';
+  const cases=[
+    Buffer.from('<!DOCTYPE html><html><body>Sign in</body></html>'),
+    Buffer.alloc(64),
+    Buffer.concat([Buffer.from([0,0,0,24]),Buffer.from('ftypxxxx'),Buffer.alloc(12)]),
+    Buffer.from('ftypisom')
+  ];
+  for(const body of cases){
+    const result=await verifyNuvioSource({url,type:'video/mp4',quality:'2160p'},
+      {fetchResource:async(_url,options)=>options.method==='HEAD'
+        ?new Response(null,{status:405,headers:{'content-type':'application/octet-stream'}})
+        :new Response(body,{status:206,headers:{'content-type':'application/octet-stream'}})});
+    assert.equal(result,null);
+  }
+});
+
 test('Nuvio never treats a blocked file or HTML fallback as playable media',async()=>{
   const requested=[];
   const blocked=await verifyNuvioSource({url:'https://media.example/private.mp4'},{fetchResource:async(_url,options)=>{
