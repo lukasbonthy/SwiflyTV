@@ -113,6 +113,50 @@ test('4K candidate diagnostics separate incompatible containers from failed veri
   assert.equal(result.diagnostics.requestErrors,1);
 });
 
+test('signed 2160p MP4 URLs are considered only with an explicit addon filename',()=>{
+  const streams={streams:[
+    {name:'Interstellar | 2160p',url:'https://cdn.example/get?video=1',
+      behaviorHints:{doomProviderId:'4khdhub',filename:'Interstellar.2160p.mp4'}},
+    {name:'Interstellar | 2160p',url:'https://cdn.example/get?video=2',
+      behaviorHints:{doomProviderId:'4khdhub',filename:'Interstellar.2160p.mkv'}},
+    {name:'Interstellar | 2160p',url:'https://cdn.example/get?video=3',
+      behaviorHints:{doomProviderId:'4khdhub'}}
+  ]};
+  const found=addonCandidates(streams,{provider:'4khdhub',require4k:true});
+  assert.deepEqual(found.map(s=>s.url),['https://cdn.example/get?video=1']);
+  assert.equal(found[0].format,'mp4');
+  assert.equal(found[0].mediaVerified,true===false);
+});
+
+test('slow 4K link does not block a second verified candidate',async()=>{
+  const checked=[];
+  const result=await resolveAddonProvider({
+    provider:'all',tmdbId:'157336',imdbId:'tt0816692',
+    mediaType:'movie',require4k:true,
+    addonUrl:'https://addon.example/addons/quality-4k/manifest.json',
+    fetchResource:async()=>new Response(JSON.stringify({streams:[
+      {name:'Interstellar | 2160p',url:'https://cdn.example/slow.mp4',
+        behaviorHints:{doomProviderId:'4khdhub'}},
+      {name:'Interstellar | 2160p',url:'https://cdn.example/fast.mp4',
+        behaviorHints:{doomProviderId:'uhdmovies'}},
+      {name:'Interstellar | 2160p',url:'https://cdn.example/third.mp4',
+        behaviorHints:{doomProviderId:'moviesdrive'}}
+    ]})),
+    verifySource:async(source,{signal})=>{
+      checked.push(source.url);
+      if(source.url.endsWith('/fast.mp4'))return {...source,mediaVerified:true};
+      return new Promise((resolve,reject)=>{
+        if(signal.aborted)return reject(new Error('cancelled'));
+        signal.addEventListener('abort',()=>reject(new Error('cancelled')),{once:true});
+      });
+    }
+  });
+  assert.equal(result.ok,true);
+  assert.equal(result.source.url,'https://cdn.example/fast.mp4');
+  assert.equal(result.source.quality,'2160p');
+  assert(checked.includes('https://cdn.example/slow.mp4'));
+});
+
 test('only a verified 2160p link becomes a playable bridge source',async()=>{
   const lookups=[];
   const fetchResource=async url=>{
