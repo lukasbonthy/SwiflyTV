@@ -373,7 +373,7 @@
     // from adaptive HLS picture quality. No server is advertised as available
     // until the backend has provided a usable playback URL.
     function updateServers() {
-      const scan=find('find-4k');if(scan)scan.disabled=serverChanging||!mediaId||managed||remoteMode.enabled;
+      const scan=find('find-4k');if(scan)scan.disabled=serverChanging||(!sourceData&&(!mediaId||managed||remoteMode.enabled));
       const list=find('server-list');if(!list)return;
       list.replaceChildren();
       if(!sourceOptions.length) {
@@ -414,7 +414,7 @@
       }
     }
     async function changeProvider(provider) {
-      if(serverChanging||destroyed||suspended||!provider||!mediaId||managed||remoteMode.enabled)return;
+      if(serverChanging||destroyed||suspended||!provider||(!sourceData&&(!mediaId||managed||remoteMode.enabled)))return;
       if(!/^[a-z0-9-]{2,35}$/.test(provider))return;
       const status=find('server-message'),button=find('server-try');
       const position=Math.max(0,number(video.currentTime,0)),shouldPlay=pendingPlay||!video.paused;
@@ -444,7 +444,7 @@
       }finally{serverChanging=false;if(button)button.disabled=!find('server-provider')?.value;updateServers();}
     }
     async function find4k() {
-      if(serverChanging||destroyed||suspended||!mediaId||managed||remoteMode.enabled)return;
+      if(serverChanging||destroyed||suspended||(!sourceData&&(!mediaId||managed||remoteMode.enabled)))return;
       const status=find('server-message'),button=find('find-4k');
       const position=Math.max(0,number(video.currentTime,0)),shouldPlay=pendingPlay||!video.paused;
       serverChanging=true;if(button)button.disabled=true;
