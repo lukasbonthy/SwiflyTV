@@ -49,6 +49,29 @@ test('stream candidates require direct web video and exact provider identificati
   assert.deepEqual(addonCandidates(fixtures,{provider:'uhdmovies',require4k:true}),[]);
 });
 
+test('one addon response can scan all four providers without naming a single winner in advance',async()=>{
+  const sources=addonCandidates({streams:[
+    {name:'4KHDHub - 1080p',url:'https://cdn.example/hd.mp4'},
+    {name:'UHDMovies - 2160p',url:'https://cdn.example/uhd.mp4'},
+    {name:'ShowBox - 2160p',url:'https://cdn.example/showbox.mp4'}
+  ]},{provider:'all',require4k:true});
+  assert.deepEqual(sources.map(row=>row.quality),['2160p','2160p']);
+  assert.equal(sources.some(row=>row.url==='https://cdn.example/hd.mp4'),false);
+  const urls=[];
+  const result=await resolveAddonProvider({
+    provider:'all',tmdbId:'550',mediaType:'movie',require4k:true,
+    addonUrl:'https://addon.example/manifest.json',
+    fetchResource:async url=>{urls.push(url);return new Response(JSON.stringify({streams:[
+      {name:'4KHDHub - 1080p',url:'https://cdn.example/hd.mp4'},
+      {name:'UHDMovies - 2160p',url:'https://cdn.example/uhd.mp4'}
+    ]}));},
+    verifySource:async item=>({...item,mediaVerified:true})
+  });
+  assert.equal(urls.length,1,'one request covers the configured provider set');
+  assert.equal(result.ok,true);
+  assert.equal(result.source.quality,'2160p');
+});
+
 test('only a verified 2160p link becomes a playable bridge source',async()=>{
   const lookups=[];
   const fetchResource=async url=>{
