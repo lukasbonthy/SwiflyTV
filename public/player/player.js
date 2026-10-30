@@ -373,7 +373,7 @@
     // from adaptive HLS picture quality. No server is advertised as available
     // until the backend has provided a usable playback URL.
     function updateServers() {
-      const scan=find('find-4k');if(scan)scan.disabled=serverChanging||!sourceData;
+      const scan=find('find-4k');if(scan)scan.disabled=serverChanging||(!sourceData&&(!mediaId||managed||remoteMode.enabled));
       const list=find('server-list');if(!list)return;
       list.replaceChildren();
       if(!sourceOptions.length) {
@@ -414,7 +414,7 @@
       }
     }
     async function changeProvider(provider) {
-      if(serverChanging||destroyed||suspended||!provider||!sourceData)return;
+      if(serverChanging||destroyed||suspended||!provider||(!sourceData&&(!mediaId||managed||remoteMode.enabled)))return;
       if(!/^[a-z0-9-]{2,35}$/.test(provider))return;
       const status=find('server-message'),button=find('server-try');
       const position=Math.max(0,number(video.currentTime,0)),shouldPlay=pendingPlay||!video.paused;
@@ -424,7 +424,7 @@
       try {
         const query=new URLSearchParams({provider});
         if(mediaType==='tv') {query.set('season',app.dataset.playerSeason||'1');query.set('episode',app.dataset.playerEpisode||'1');}
-        const payload=await requestJson('/api/player/server/'+encodeURIComponent(mediaType)+'/'+encodeURIComponent(mediaId)+'?'+query,15000);
+        const payload=await requestJson('/api/player/server/'+encodeURIComponent(mediaType)+'/'+encodeURIComponent(mediaId)+'?'+query,['4khdhub','uhdmovies','moviesdrive','showbox'].includes(provider)?50000:15000);
         const next=chooseSource(payload);
         if(payload.status!=='ok'||!next)throw new Error('unavailable');
         sourceData={...payload};sourceOptions=prepareSources(payload,next);
@@ -444,7 +444,7 @@
       }finally{serverChanging=false;if(button)button.disabled=!find('server-provider')?.value;updateServers();}
     }
     async function find4k() {
-      if(serverChanging||destroyed||suspended||!sourceData)return;
+      if(serverChanging||destroyed||suspended||(!sourceData&&(!mediaId||managed||remoteMode.enabled)))return;
       const status=find('server-message'),button=find('find-4k');
       const position=Math.max(0,number(video.currentTime,0)),shouldPlay=pendingPlay||!video.paused;
       serverChanging=true;if(button)button.disabled=true;
@@ -454,7 +454,7 @@
         const query=new URLSearchParams();
         if(mediaType==='tv'){query.set('season',app.dataset.playerSeason||'1');query.set('episode',app.dataset.playerEpisode||'1');}
         const suffix=query.size?'?'+query.toString():'';
-        const payload=await requestJson('/api/player/find-4k/'+encodeURIComponent(mediaType)+'/'+encodeURIComponent(mediaId)+suffix,35000);
+        const payload=await requestJson('/api/player/find-4k/'+encodeURIComponent(mediaType)+'/'+encodeURIComponent(mediaId)+suffix,60000);
         const next=chooseSource(payload);
         if(payload.status!=='ok'||payload.fourKMatch!==true||!next)throw new Error('unavailable');
         sourceData={...payload};sourceOptions=prepareSources(payload,next);

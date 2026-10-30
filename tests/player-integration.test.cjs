@@ -61,6 +61,16 @@ test('Movie and episode interfaces expose independent playable and downloadable 
  const seasonDetail=parse(await(await fetch(base+'/tv/101')).text()).window.document;
  assert(seasonDetail.querySelectorAll('.svDetailEpisodeChoice a[data-sv-download]').length>=2);
 });
+test('Find 4K remains usable when the default resolver has not found a source',async()=>{
+ const html=await(await fetch(base+'/watch/movie/101?mode=movie')).text();
+ const doc=parse(html).window.document;
+ assert(doc.querySelector('[data-player-find-4k]'),'Search is present in the source menu');
+ const script=await(await fetch(base+'/assets/player/player.js')).text();
+ assert(script.includes("scan.disabled=serverChanging||(!sourceData&&(!mediaId||managed||remoteMode.enabled))"),
+   '4K availability is based on a movie being selected, not a previously playable server');
+ assert(!script.includes("scan.disabled=serverChanging||!sourceData"));
+});
+
 test('Download Options opens a cinematic movie and episode page with live option placeholders',async()=>{
  const movie=await(await fetch(base+'/download/movie/101')).text(),d=parse(movie).window.document;
  const root=d.querySelector('[data-sv-download-options]');

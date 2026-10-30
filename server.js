@@ -24,7 +24,8 @@ const { configureBrowserEnvironment, createBrowserRuntime } = require("./lib/bro
 const { captureProviderMedia } = require("./lib/provider-capture");
 const { runProviderRace } = require("./lib/provider-race");
 const { classifyMediaCandidate } = require("./lib/media-discovery");
-const { resolveNuvioProvider, PROVIDERS: NUVIO_ALLOWED_PROVIDERS, NUVIO_CATALOG, listNuvioProviders } = require("./lib/nuvio-provider");
+const { resolveNuvioProvider, verifyNuvioSource, PROVIDERS: NUVIO_ALLOWED_PROVIDERS, NUVIO_CATALOG, listNuvioProviders } = require("./lib/nuvio-provider");
+const { resolveAddonProvider } = require("./lib/addon-provider-bridge");
 const { createMediaFileProxy } = require("./lib/media-file-proxy");
 const { normalizeAudioLanguage, normalizeSubtitles, has4kSourceQuality } = require("./lib/playback-options");
 const { createPlaybackHandoff } = require("./lib/playback-handoff");
@@ -117,7 +118,7 @@ const TMDB_API_KEY = process.env.TMDB_API_KEY || "";
 const TMDB_BASE = "https://api.themoviedb.org/3";
 const TMDB_IMG = "https://image.tmdb.org/t/p";
 const NUVIO_ENABLED = process.env.NUVIO_ENABLED !== "false";
-const NUVIO_BRIDGE_ORDER = ["4khdhub","uhdmovies","moviesdrive","showbox"];
+const NUVIO_BRIDGE_ORDER = process.env.SWIFLY_STREMIO_ADDON_ID_FORMAT==="imdb" ? ["4khdhub","uhdmovies","moviesdrive"] : ["4khdhub","uhdmovies","moviesdrive","showbox"];
 const NUVIO_PROVIDER_SETTING = String(process.env.NUVIO_PROVIDER_ORDER || "vidlink,vidsrc,videasy,vidfast,vidrock,cineby,vidlove,goated,netmirror,nakios" + (process.env.SWIFLY_STREMIO_ADDON_URL ? ","+NUVIO_BRIDGE_ORDER.join(",") : "")).trim().toLowerCase();
 const NUVIO_PROVIDER_ORDER = Object.freeze(Array.from(new Set(
   (NUVIO_PROVIDER_SETTING === "all" ? NUVIO_ALLOWED_PROVIDERS : NUVIO_PROVIDER_SETTING.split(","))
@@ -4643,19 +4644,41 @@ async function localStreamProviderSflixWatchUrl({ tmdbId = "", mediaType = "movi
   }
 }
 
-async function localNuvioGetStreams({ tmdbId, mediaType, season, episode, signal, fourKOnly = false }) {
+async function bridgeImdbId({tmdbId,mediaType,signal}) {
+  if(process.env.SWIFLY_STREMIO_ADDON_ID_FORMAT!=="imdb"||!TMDB_API_KEY)return "";
+  const response=await tmdb(`/${mediaType}/${tmdbId}/external_ids`,{},CACHE_TTL.long,signal);
+  const value=String(response?.imdb_id||"");
+  return /^tt\d{5,12}$/.test(value)?value:"";
+}
+
+async function localNuvioGetStreams({ tmdbId, mediaType, season, episode, signal, fourKOnly = false, imdbId = '' }) {
   if (!NUVIO_ENABLED) return { results: [], winner: null };
+  // Keep identifiers inside the function so the isolated provider-race test
+  // harness can execute this resolver without booting the full Express app.
+  const bridgeIds = ['4khdhub','uhdmovies','moviesdrive','showbox'];
+  const isBridge = id => bridgeIds.includes(id);
+  const bridgeEnabled = fourKOnly && NUVIO_PROVIDER_ORDER.some(isBridge);
+  // A Stremio addon searches its upstream sources once per request. Query it
+  // only once for 4K, rather than starting four expensive identical searches.
+  const jobs = bridgeEnabled
+    ? [{provider:'nuvio-4k-bridge',id:'all',timeoutMs:45000},
+      ...NUVIO_PROVIDER_ORDER.filter(id=>!isBridge(id)).map(id=>({provider:`nuvio-${id}`,id,timeoutMs:NUVIO_PROVIDER_TIMEOUT_MS}))]
+    : NUVIO_PROVIDER_ORDER.map(id=>({provider:`nuvio-${id}`,id,timeoutMs:isBridge(id)?45000:NUVIO_PROVIDER_TIMEOUT_MS}));
   return runProviderRace({
-    jobs: Array.from(new Set(fourKOnly ? [...NUVIO_BRIDGE_ORDER.filter(id=>NUVIO_PROVIDER_ORDER.includes(id)),...NUVIO_PROVIDER_ORDER] : NUVIO_PROVIDER_ORDER))
-      .map(id => ({ provider: `nuvio-${id}`, id, timeoutMs: NUVIO_BRIDGE_ORDER.includes(id)?12000:NUVIO_PROVIDER_TIMEOUT_MS })),
-    signal, timeoutMs: NUVIO_TIMEOUT_MS, hedgeDelayMs: 250, maxConcurrent: 3,
-    now: () => Date.now(), setTimeout, clearTimeout,
+    jobs, signal, timeoutMs: fourKOnly ? 50000 : NUVIO_TIMEOUT_MS,
+    hedgeDelayMs: 250, maxConcurrent: 2, now: () => Date.now(), setTimeout, clearTimeout,
     isPlayable: result => result?.ok && result.source?.mediaVerified === true && apiHasEmbeddableFileExtensionOrHlsProxy(result.source.url, result.source)
       && (!fourKOnly || has4kSourceQuality(result.source)),
-    run: (job, { signal: providerSignal, timeoutMs }) => resolveNuvioProvider({
-      provider: job.id, tmdbId, mediaType, season, episode, signal: providerSignal, timeoutMs, require4k: fourKOnly,
-      isNonMediaUrl: value => apiLooksDefinitelyNonMediaUrl(value, { allowManifestEndpoint: true })
-    })
+    run: (job, { signal: providerSignal, timeoutMs }) => job.id === 'all'
+      ? resolveAddonProvider({
+          provider:'all',tmdbId,imdbId,mediaType,season,episode,signal:providerSignal,
+          timeoutMs,require4k:true,verifySource:verifyNuvioSource,
+          isNonMediaUrl:value=>apiLooksDefinitelyNonMediaUrl(value,{allowManifestEndpoint:true})
+        })
+      : resolveNuvioProvider({
+          provider: job.id, tmdbId, imdbId, mediaType, season, episode, signal: providerSignal, timeoutMs, require4k: fourKOnly,
+          isNonMediaUrl: value => apiLooksDefinitelyNonMediaUrl(value, { allowManifestEndpoint: true })
+        })
   });
 }
 
@@ -14360,11 +14383,14 @@ app.get("/api/player/find-4k/:type/:id", async (req, res) => {
   const season=String(req.query.season||req.query.s||"1"), episode=String(req.query.episode||req.query.e||"1");
   const selection=serverSelection({type,id,season,episode,provider:NUVIO_PROVIDER_ORDER[0]},NUVIO_ENABLED?NUVIO_PROVIDER_ORDER:[]);
   if(!selection)return res.status(400).json({status:"error",code:"invalid_request"});
-  const scope=new AbortController(),timer=setTimeout(()=>scope.abort(),30000);
+  const scope=new AbortController(),timer=setTimeout(()=>scope.abort(),55000);
   const disconnected=()=>{if(!res.writableEnded)scope.abort();};
   res.on("close",disconnected);
   try {
-    const search=await localNuvioGetStreams({tmdbId:id,mediaType:type,season,episode,signal:scope.signal,fourKOnly:true});
+    const imdbId=await bridgeImdbId({tmdbId:id,mediaType:type,signal:scope.signal});
+    if(process.env.SWIFLY_STREMIO_ADDON_ID_FORMAT==="imdb"&&!imdbId)
+      return res.status(404).json({status:"unavailable",code:"metadata_unavailable"});
+    const search=await localNuvioGetStreams({tmdbId:id,mediaType:type,season,episode,signal:scope.signal,fourKOnly:true,imdbId});
     const found=search.winner;
     if(!found?.source?.mediaVerified||!has4kSourceQuality(found.source))
       return res.status(404).json({status:"unavailable",code:"no_4k_source"});
@@ -14386,12 +14412,16 @@ app.get("/api/player/server/:type/:id", async (req, res) => {
   const season=String(req.query.season||req.query.s||"1"), episode=String(req.query.episode||req.query.e||"1");
   const selection=serverSelection({type,id,season,episode,provider},NUVIO_ENABLED?NUVIO_PROVIDER_ORDER:[]);
   if(!selection)return res.status(400).json({status:"error",code:"invalid_request"});
-  const scope=new AbortController(),timer=setTimeout(()=>scope.abort(),11000);
+  const bridgeSelection=NUVIO_BRIDGE_ORDER.includes(provider);
+  const scope=new AbortController(),timer=setTimeout(()=>scope.abort(),bridgeSelection?47000:11000);
   const disconnected=()=>{if(!res.writableEnded)scope.abort();};
   res.on("close",disconnected);
   try {
-    const found=await resolveNuvioProvider({provider,tmdbId:id,mediaType:type,season,episode,
-      timeoutMs:10000,signal:scope.signal,
+    const imdbId=bridgeSelection?await bridgeImdbId({tmdbId:id,mediaType:type,signal:scope.signal}):"";
+    if(bridgeSelection&&process.env.SWIFLY_STREMIO_ADDON_ID_FORMAT==="imdb"&&!imdbId)
+      return res.status(404).json({status:"unavailable",code:"metadata_unavailable"});
+    const found=await resolveNuvioProvider({provider,tmdbId:id,imdbId,mediaType:type,season,episode,
+      timeoutMs:bridgeSelection?45000:10000,signal:scope.signal,
       isNonMediaUrl:value=>apiLooksDefinitelyNonMediaUrl(value,{allowManifestEndpoint:true})});
     if(!found.ok||!found.source?.mediaVerified)return res.status(404).json({status:"unavailable"});
     const ready=apiSourceToProxyResult({source:found.source,raw:{},provider:"nuvio-"+provider,
