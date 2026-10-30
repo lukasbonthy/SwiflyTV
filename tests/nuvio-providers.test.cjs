@@ -495,7 +495,7 @@ test('Nuvio verifies a real MP4 using bounded Range GET when HEAD is blocked',as
   assert.equal(source?.headers?.referer,'https://provider.example/');
   assert.deepEqual(requests,[
     {method:'HEAD',range:undefined,maxBytes:1024*1024},
-    {method:'GET',range:'bytes=0-0',maxBytes:4096}
+    {method:'GET',range:'bytes=0-4095',maxBytes:4096}
   ]);
 });
 

@@ -352,7 +352,7 @@
       try {levels=hls?.levels||dash?.getBitrateInfoListFor('video')||[];}catch{}
       select.replaceChildren();
       const option=(value,label)=>{const node=document.createElement('option');node.value=String(value);node.textContent=label;select.append(node);};
-      if(levels.length){option(-1,'Auto');levels.forEach((level,index)=>option(level.qualityIndex??index,level.height?level.height+'p':level.bitrate?Math.round(level.bitrate/1000)+' kbps':'Quality '+(index+1)));}
+      if(levels.length){option(-1,'Auto');levels.forEach((level,index)=>option(level.qualityIndex??index,level.height?pictureQuality(level.height+'p'):level.bitrate?Math.round(level.bitrate/1000)+' kbps':'Quality '+(index+1)));}
       const alternatives=sourceOptions.length>1?sourceOptions:[];
       alternatives.forEach((item,index)=>option('source:'+index,sourceLabel(item,index)));
       if(!levels.length&&!alternatives.length)option(-1,sourceLabel(activeSourceData||{},0));
@@ -361,8 +361,11 @@
       select.value=levels.length&&[...select.options].some(item=>item.value===selected)&&!selected.startsWith('source:')?selected:alternatives.length?'source:'+current:'-1';
       updateServers();
     }
+    function pictureQuality(value) {
+      const quality=String(value||'').trim();return quality==='2160p'?'4K (2160p)':quality;
+    }
     function sourceLabel(item,index) {
-      const quality=String(item.streamQuality||'').trim();let label=quality||String(item.streamName||'').trim()||'Original';
+      const quality=pictureQuality(item.streamQuality);let label=quality||String(item.streamName||'').trim()||'Original';
       if(sourceOptions.some(other=>other!==item&&(other.streamQuality||'')===(item.streamQuality||''))){const language=languageOf({language:item.audioLanguage});label+=' · '+(language?trackLabel({language},index,'Audio'):'language unavailable');}
       return label;
     }
@@ -386,7 +389,7 @@
         const label=document.createElement('span');label.className='svPlayerServerName';
         label.textContent=String(item.streamName||'Server '+(index+1)).slice(0,65);
         const meta=document.createElement('small');
-        meta.textContent=[item.streamQuality,item.audioLanguage,active?'Playing':'Switch'].filter(Boolean).join(' · ')||'Available';
+        meta.textContent=[pictureQuality(item.streamQuality),item.audioLanguage,active?'Playing':'Switch'].filter(Boolean).join(' · ')||'Available';
         button.append(label,meta);list.append(button);
       }
     }

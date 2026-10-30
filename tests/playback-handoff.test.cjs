@@ -107,3 +107,19 @@ test('HLS and unverified direct URLs cannot become downloadable MP4s',()=>{
     assert.equal(f.sources.length,0);
   }
 });
+
+test('a transient alternate verification failure cools down then recovers with one shared retry',async()=>{
+ let now=Date.now(),calls=0,complete;
+ const entry={sourceUrl:'https://media.example/licensed-4k.mp4',headers:{Authorization:'Bearer private'},meta:{sourceFormat:'mp4',verifyBeforePlayback:true},expiresAt:now+60000};
+ const get=createVerifiedMediaEntryResolver({getEntry:()=>entry,now:()=>now,verifySource:async source=>{
+  calls++;if(calls===1)return null;await new Promise(done=>{complete=done;});return{url:source.url,format:'mp4',mediaVerified:true,headers:source.headers};
+ }});
+ assert.equal(await get('opaque'),null);assert.equal(calls,1);now+=999;assert.equal(await get('opaque'),null);assert.equal(calls,1);
+ now++;const first=get('opaque'),second=get('opaque',{method:'HEAD'});for(let i=0;i<5;i++)await Promise.resolve();assert.equal(calls,2);complete();assert.equal(await first,entry);assert.equal(await second,entry);assert.equal(entry.headers.Authorization,'Bearer private');assert.equal(entry.meta.verifyBeforePlayback,false);assert.equal(await get('opaque'),entry);assert.equal(calls,2);
+});
+test('lazy retries keep failed entries unavailable during cooldown and cannot revive an expired source',async()=>{
+ let now=Date.now(),calls=0;
+ const entry={sourceUrl:'https://media.example/licensed.mp4',headers:{},meta:{sourceFormat:'mp4',verifyBeforePlayback:true},expiresAt:now+1500};
+ const get=createVerifiedMediaEntryResolver({getEntry:()=>entry,now:()=>now,verifySource:async()=>{calls++;throw Error('temporary upstream failure');}});
+ assert.equal(await get('opaque'),null);now+=1000;assert.equal(await get('opaque'),null);assert.equal(calls,2);now+=500;assert.equal(await get('opaque'),null);assert.equal(calls,2);
+});
