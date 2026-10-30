@@ -96,6 +96,23 @@ test('modern addon supports IMDb paths and provider IDs even when display names 
   assert.equal(streams[0].headers.referer,'https://origin.example/');
 });
 
+test('4K candidate diagnostics separate incompatible containers from failed verification',async()=>{
+  const result=await resolveAddonProvider({provider:'all',tmdbId:'550',imdbId:'tt0123456',mediaType:'movie',
+    require4k:true,addonUrl:'https://addon.example/manifest.json',
+    fetchResource:async()=>new Response(JSON.stringify({streams:[
+      {name:'Movie | 2160p',url:'https://media.example/uhd.mkv',behaviorHints:{doomProviderId:'4khdhub'}},
+      {name:'Movie | 2160p',url:'https://media.example/uhd.m4v',behaviorHints:{doomProviderId:'uhdmovies'}},
+      {name:'Movie | 1080p',url:'https://media.example/hd.mp4',behaviorHints:{doomProviderId:'moviesdrive'}}
+    ]}),{headers:{'content-type':'application/json'}}),
+    verifySource:async()=>null
+  });
+  assert.equal(result.ok,false);
+  assert.equal(result.diagnostics.responses,1);
+  assert.equal(result.diagnostics.candidates,1);
+  assert.equal(result.diagnostics.rejectedResponses,1);
+  assert.equal(result.diagnostics.requestErrors,1);
+});
+
 test('only a verified 2160p link becomes a playable bridge source',async()=>{
   const lookups=[];
   const fetchResource=async url=>{
