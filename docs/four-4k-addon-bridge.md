@@ -4,7 +4,7 @@ SwiflyTV can use a **separate Stremio-compatible addon service** for 4KHDHub, UH
 
 ## Setup
 
-1. Run or choose a Stremio-protocol addon that you are authorized to use, supports these four providers, and serves an HTTPS `manifest.json`. The upstream [Nuvio Streams](https://github.com/tapframe/NuvioStreamsAddon) project describes a self-hosted addon implementation; it is archived, so assess the maintenance and security risks before using it.
+1. Run or choose a Stremio-protocol addon that you are authorized to use, supports these four providers, and serves an HTTPS `manifest.json`. The upstream [Nuvio Streams](https://github.com/tapframe/NuvioStreamsAddon) project describes a self-hosted addon implementation; it is archived and its former free public instance has been [retired](https://nuviostreams-is-deprecated.elfhosted.com/). **Do not use the retired public URL**. Assess maintenance and security risks before self-hosting any older scripts.
 2. In your **server-side** Render environment set `SWIFLY_STREMIO_ADDON_URL` to the addon's HTTPS origin, or its exact HTTPS `/manifest.json` URL. If the addon uses configuration encoded in its URL path, include that path. Do not put credentials into browser-facing files or share a personalized addon URL.
 3. Redeploy. By default the four new providers are appended to the existing provider order. If `NUVIO_PROVIDER_ORDER` is customized, include `4khdhub,uhdmovies,moviesdrive,showbox` there explicitly.
 4. Open a movie player, select **Servers**, then choose one of the four providers or click **Find 4K (2160p)**. The 4K scan prioritizes the newly configured bridge providers.
