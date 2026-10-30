@@ -106,6 +106,7 @@ function playerMarkup(options = {}) {
               <select id="${escape(controlPrefix)}Provider" data-player-server-provider disabled><option value="">Loading providers…</option></select>
             </label>
             <button type="button" class="svPlayerServerTry" data-player-server-try disabled>Connect to server</button>
+            <button type="button" class="svPlayerServerTry" data-player-find-4k disabled>Find 4K (2160p)</button>
             <span class="svPlayerMenuHint" data-player-server-message role="status">Only verified sources will play.</span>
           </div>
         </details>` : ''}

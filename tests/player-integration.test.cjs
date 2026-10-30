@@ -40,7 +40,7 @@ test('The normal watch route renders one native movie player with shared assets 
  assert.equal(d.querySelectorAll('.svPlayerPage [data-player-video]').length,1);
  const preview=d.querySelector('[data-call-local] video');assert(preview?.hasAttribute('muted'));assert(preview?.closest('[hidden]'),'The optional camera preview starts hidden');
  assert.equal(d.querySelector('.svPlayerPage').dataset.playerId,'101');assert.equal(d.querySelector('h1').textContent.trim(),'Arrival');
- assert(d.querySelector('script[src="/assets/player/player.js?v=268"]'));assert(d.querySelector('script[src="/assets/player/watch-party.js?v=2"]'));
+ assert(d.querySelector('script[src="/assets/player/player.js?v=269"]'));assert(d.querySelector('script[src="/assets/player/watch-party.js?v=2"]'));
  assert(d.querySelector('link[href="/assets/player/player.css?v=267"]'));assert(d.querySelector('dialog.svWatchPartyDialog'));
  assert.equal(d.querySelector('.dsProxyVideoWaitingShell'),null);assert.equal(d.querySelector('.svPartyHub'),null);
  assert.equal(d.querySelector('[data-sv-player-back]').getAttribute('href'),'/movie/101');
@@ -49,6 +49,7 @@ test('Movie and episode interfaces expose independent playable and downloadable 
  const movie=parse(await(await fetch(base+'/watch/movie/101?mode=movie')).text()).window.document;
  assert(movie.querySelector('a.svPlayerDownload[data-sv-download][href="/download/movie/101"]'));
  assert(movie.querySelector('[data-player-servers] [data-player-server-provider]'),'Movie player has real server selection controls');
+ assert(movie.querySelector('[data-player-servers] [data-player-find-4k]'),'Player offers an on-demand verified 4K search');
  const tv=parse(await(await fetch(base+'/watch/tv/101?mode=movie&s=1&e=3')).text()).window.document;
  assert(tv.querySelector('a.svPlayerDownload[href="/download/tv/101?s=1&e=3"]'));
  const choices=[...tv.querySelectorAll('.svPlayerEpisodeChoice')];
@@ -73,6 +74,8 @@ test('Download Options opens a cinematic movie and episode page with live option
  assert(d.querySelector('[data-sv-download-choices]'),'Available files render beneath the title');
  assert(d.querySelector('script[src="/assets/clean/download-page.js?v=4"]'));
  assert(d.querySelector('link[href="/assets/clean/download-page.css?v=262"]'));
+ const invalid4k=await fetch(base+'/api/player/find-4k/movie/not-a-tmdb-id');
+ assert.equal(invalid4k.status,400,'4K lookup rejects invalid movie IDs without making provider requests');
  const invalidProvider=await fetch(base+'/api/player/server/movie/101?provider=not-installed');
  assert.equal(invalidProvider.status,400,'Reject unavailable server selections before provider network work');
  const invalidDownload=await fetch(base+'/api/download-source/movie/not-a-tmdb-id');
@@ -138,7 +141,7 @@ test('Social navigation opens the integrated Party Hub while movie catalog party
  assert(social.querySelector('link[href="/assets/clean/experience.css?v=262"]'));
  assert(social.querySelector('link[href="/assets/player/player.css?v=267"]'));
  const scripts=[...social.querySelectorAll('script[src]')].map(node=>node.getAttribute('src'));
- const player=scripts.indexOf('/assets/player/player.js?v=268'),party=scripts.findIndex(src=>src.startsWith('/assets/party/party.js?'));
+ const player=scripts.indexOf('/assets/player/player.js?v=269'),party=scripts.findIndex(src=>src.startsWith('/assets/party/party.js?'));
  assert(player>=0&&party>player,'Party Hub must load the shared controller before its room bridge');
  const template=social.getElementById('partyPlayerTemplate');assert(template?.content.querySelector('.svPlayerEmbedded [data-player-video]'));
  assert.equal(social.querySelector('script[src*="video.js"]'),null,'Party Hub no longer loads a duplicate playback UI');

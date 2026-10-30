@@ -26,7 +26,7 @@ const { runProviderRace } = require("./lib/provider-race");
 const { classifyMediaCandidate } = require("./lib/media-discovery");
 const { resolveNuvioProvider, PROVIDERS: NUVIO_ALLOWED_PROVIDERS, NUVIO_CATALOG, listNuvioProviders } = require("./lib/nuvio-provider");
 const { createMediaFileProxy } = require("./lib/media-file-proxy");
-const { normalizeAudioLanguage, normalizeSubtitles } = require("./lib/playback-options");
+const { normalizeAudioLanguage, normalizeSubtitles, has4kSourceQuality } = require("./lib/playback-options");
 const { createPlaybackHandoff } = require("./lib/playback-handoff");
 const { createVerifiedMediaEntryResolver } = require("./lib/native-source-entry");
 const { createSubtitleProxy } = require("./lib/subtitle-proxy");
@@ -4642,15 +4642,16 @@ async function localStreamProviderSflixWatchUrl({ tmdbId = "", mediaType = "movi
   }
 }
 
-async function localNuvioGetStreams({ tmdbId, mediaType, season, episode, signal }) {
+async function localNuvioGetStreams({ tmdbId, mediaType, season, episode, signal, fourKOnly = false }) {
   if (!NUVIO_ENABLED) return { results: [], winner: null };
   return runProviderRace({
     jobs: Array.from(new Set(NUVIO_PROVIDER_ORDER)).map(id => ({ provider: `nuvio-${id}`, id, timeoutMs: NUVIO_PROVIDER_TIMEOUT_MS })),
     signal, timeoutMs: NUVIO_TIMEOUT_MS, hedgeDelayMs: 250, maxConcurrent: 3,
     now: () => Date.now(), setTimeout, clearTimeout,
-    isPlayable: result => result?.ok && result.source?.mediaVerified === true && apiHasEmbeddableFileExtensionOrHlsProxy(result.source.url, result.source),
+    isPlayable: result => result?.ok && result.source?.mediaVerified === true && apiHasEmbeddableFileExtensionOrHlsProxy(result.source.url, result.source)
+      && (!fourKOnly || has4kSourceQuality(result.source)),
     run: (job, { signal: providerSignal, timeoutMs }) => resolveNuvioProvider({
-      provider: job.id, tmdbId, mediaType, season, episode, signal: providerSignal, timeoutMs,
+      provider: job.id, tmdbId, mediaType, season, episode, signal: providerSignal, timeoutMs, require4k: fourKOnly,
       isNonMediaUrl: value => apiLooksDefinitelyNonMediaUrl(value, { allowManifestEndpoint: true })
     })
   });
@@ -6619,7 +6620,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=262" />' : ""}
     ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=262" />' : ""}
     
-    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=268"></script>' : ""}
+    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=269"></script>' : ""}
     ${player ? '<script defer src="/assets/player/audio-sample.js?v=1"></script><script defer src="/assets/player/assist.js?v=2"></script><link rel="stylesheet" href="/assets/player/assist.css?v=262" />' : ""}
     ${player || active === "social" ? '<script defer src="/assets/party/watchroom-call.js?v=1"></script>' : ""}
     ${active === "social" ? '<script defer src="/assets/party/party.js?v=207"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}
@@ -14347,6 +14348,33 @@ app.get("/api/provider/embed", async (req, res) => {
 
 app.get("/favicon.ico", (req, res) => {
   res.status(204).end();
+});
+
+// On-demand 4K search: do not delay the normal 720p/1080p playback path.
+// Only return a verified stream whose source metadata reports 2160p or higher.
+app.get("/api/player/find-4k/:type/:id", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const type=req.params.type, id=String(req.params.id||"");
+  const season=String(req.query.season||req.query.s||"1"), episode=String(req.query.episode||req.query.e||"1");
+  const selection=serverSelection({type,id,season,episode,provider:NUVIO_PROVIDER_ORDER[0]},NUVIO_ENABLED?NUVIO_PROVIDER_ORDER:[]);
+  if(!selection)return res.status(400).json({status:"error",code:"invalid_request"});
+  const scope=new AbortController(),timer=setTimeout(()=>scope.abort(),30000);
+  const disconnected=()=>{if(!res.writableEnded)scope.abort();};
+  res.on("close",disconnected);
+  try {
+    const search=await localNuvioGetStreams({tmdbId:id,mediaType:type,season,episode,signal:scope.signal,fourKOnly:true});
+    const found=search.winner;
+    if(!found?.source?.mediaVerified||!has4kSourceQuality(found.source))
+      return res.status(404).json({status:"unavailable",code:"no_4k_source"});
+    const provider=found.provider||"nuvio-unknown";
+    const ready=apiSourceToProxyResult({source:found.source,raw:{},provider,type,id,season,episode,
+      playbackCandidates:found.sources,subtitles:found.subtitles});
+    if(!ready?.playbackUrl)return res.status(404).json({status:"unavailable",code:"no_4k_source"});
+    return res.json({...ready,type,server:provider.replace(/^nuvio-/,""),fourKMatch:true});
+  } catch {
+    if(!res.headersSent&&!res.writableEnded&&!res.destroyed)
+      res.status(scope.signal.aborted?504:503).json({status:"unavailable",code:scope.signal.aborted?"timeout":"provider_failed"});
+  } finally {clearTimeout(timer);res.off("close",disconnected);}
 });
 
 // Manual server changes do not replace the shared cached default source job.

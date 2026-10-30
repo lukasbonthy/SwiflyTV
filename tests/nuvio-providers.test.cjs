@@ -466,6 +466,23 @@ test('worker source metadata survives verification while upstream verification c
   assert.equal(result.sources[1].mediaVerified,false);
 });
 
+test('4K-only lookup skips an earlier verified HD file and checks only 2160p candidates', async () => {
+  const checked=[];
+  const fetchResource=async url=>{
+    if(url.includes('/sources/'))return new Response(JSON.stringify([
+      {url:'https://media.example/hd.mp4',type:'mp4',quality:'1080p',language:'eng'},
+      {url:'https://media.example/uhd.mp4',type:'mp4',quality:'4K HDR',language:'hi'}
+    ]),{headers:{'content-type':'application/json'}});
+    checked.push(url);
+    return new Response(null,{headers:{'content-type':'video/mp4'}});
+  };
+  const result=await resolveNuvioProvider({provider:'vidsrc',tmdbId:'1',mediaType:'movie',
+    createWorker:workerFactory,timeoutMs:2000,fetchResource,require4k:true});
+  assert.equal(result.ok,true);
+  assert.equal(result.source.quality,'2160p');
+  assert.deepEqual(checked,['https://media.example/uhd.mp4']);
+});
+
 test('relative current VidLink caption URLs stay scoped to the observed source API origin', async () => {
   const payload=currentVidlinkPayload({720:currentVidlinkQuality(720,{headers:{Cookie:'media-session=fixture',Referer:'https://vidlink.pro/'}})});
   payload.stream.captions=[{file:'/captions/english.srt',language:'English',label:'English - English [CC]'}];

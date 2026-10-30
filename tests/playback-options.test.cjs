@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { normalizeAudioLanguage, normalizePlaybackSource, normalizeSubtitles, preferPlaybackSources } = require('../lib/playback-options');
+const { normalizeAudioLanguage, normalizePlaybackSource, normalizeSubtitles, preferPlaybackSources, has4kSourceQuality } = require('../lib/playback-options');
 
 test('provider audio language is canonical when explicit and unknown labels stay unknown', () => {
   for (const [input, wanted] of [['English','en'],['eng','en'],['EN-us','en-US'],['Spanish','es'],['pt-br','pt-BR'],['und',''],['Original Audio',''],['Multi-Audio',''],['Unknown',''],['English / Hindi',''],['constructor',''],['__proto__',''],['toString',''],[null,'']]) {
@@ -112,4 +112,17 @@ test('4K metadata ranks above HD without replacing the requested audio language'
   {url:'https://media.example/uhd.mp4',quality:'4K HDR',audioLanguage:'en'},
   {url:'https://media.example/8k.mp4',quality:'8K',audioLanguage:'hi'}
  ]);assert.deepEqual(items.map(v=>v.url),['https://media.example/uhd.mp4','https://media.example/hd.mp4','https://media.example/8k.mp4']);
+});
+
+test('4K-only search accepts reported 2160p while rejecting HD, Auto, invalid dimensions and guessed 4K',()=>{
+  const source=metadata=>normalizePlaybackSource({url:'https://media.example/film.mp4',...metadata});
+  assert.equal(has4kSourceQuality(source({quality:'4K HDR'})),true);
+  assert.equal(has4kSourceQuality(source({resolution:'3840x2160'})),true);
+  assert.equal(has4kSourceQuality(source({height:2160,quality:'1080p'})),true);
+  assert.equal(has4kSourceQuality(source({height:1080,quality:'4K'})),false);
+  assert.equal(has4kSourceQuality(source({quality:'auto'})),false);
+  assert.equal(has4kSourceQuality(source({quality:'1080p'})),false);
+  assert.equal(has4kSourceQuality(source({resolution:'000x2160'})),false);
+  assert.equal(has4kSourceQuality(source({name:'Movie 2026 60fps'})),false);
+  assert.equal(has4kSourceQuality(null),false);
 });
