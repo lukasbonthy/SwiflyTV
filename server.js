@@ -4663,7 +4663,10 @@ async function localNuvioGetStreams({ tmdbId, mediaType, season, episode, signal
   const jobs = bridgeEnabled
     ? [{provider:'nuvio-4k-bridge',id:'all',timeoutMs:45000},
       ...NUVIO_PROVIDER_ORDER.filter(id=>!isBridge(id)).map(id=>({provider:`nuvio-${id}`,id,timeoutMs:NUVIO_PROVIDER_TIMEOUT_MS}))]
-    : NUVIO_PROVIDER_ORDER.map(id=>({provider:`nuvio-${id}`,id,timeoutMs:isBridge(id)?45000:NUVIO_PROVIDER_TIMEOUT_MS}));
+    // Normal playback has no resolved IMDb ID. Do not send invalid tmdb:
+    // identifiers to an IMDb-only addon or clog its expensive scraper queue.
+    : NUVIO_PROVIDER_ORDER.filter(id=>!isBridge(id)||Boolean(imdbId))
+        .map(id=>({provider:`nuvio-${id}`,id,timeoutMs:isBridge(id)?45000:NUVIO_PROVIDER_TIMEOUT_MS}));
   return runProviderRace({
     jobs, signal, timeoutMs: fourKOnly ? 50000 : NUVIO_TIMEOUT_MS,
     hedgeDelayMs: 250, maxConcurrent: 2, now: () => Date.now(), setTimeout, clearTimeout,
@@ -14392,8 +14395,14 @@ app.get("/api/player/find-4k/:type/:id", async (req, res) => {
       return res.status(404).json({status:"unavailable",code:"metadata_unavailable"});
     const search=await localNuvioGetStreams({tmdbId:id,mediaType:type,season,episode,signal:scope.signal,fourKOnly:true,imdbId});
     const found=search.winner;
-    if(!found?.source?.mediaVerified||!has4kSourceQuality(found.source))
-      return res.status(404).json({status:"unavailable",code:"no_4k_source"});
+    if(!found?.source?.mediaVerified||!has4kSourceQuality(found.source)) {
+      // Return generic stage information, never provider URLs or headers.
+      const bridge=search.results?.find(item=>item.provider==="nuvio-4k-bridge");
+      const diag=bridge?.diagnostics||{};
+      const reason=diag.candidates>0?"verification_failed":
+        diag.rejectedResponses>0?"unsupported_format":"no_verified_4k";
+      return res.status(404).json({status:"unavailable",code:"no_4k_source",reason});
+    }
     const provider=found.provider||"nuvio-unknown";
     const ready=apiSourceToProxyResult({source:found.source,raw:{},provider,type,id,season,episode,
       playbackCandidates:found.sources,subtitles:found.subtitles});
