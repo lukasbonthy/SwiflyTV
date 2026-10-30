@@ -14392,8 +14392,14 @@ app.get("/api/player/find-4k/:type/:id", async (req, res) => {
       return res.status(404).json({status:"unavailable",code:"metadata_unavailable"});
     const search=await localNuvioGetStreams({tmdbId:id,mediaType:type,season,episode,signal:scope.signal,fourKOnly:true,imdbId});
     const found=search.winner;
-    if(!found?.source?.mediaVerified||!has4kSourceQuality(found.source))
-      return res.status(404).json({status:"unavailable",code:"no_4k_source"});
+    if(!found?.source?.mediaVerified||!has4kSourceQuality(found.source)) {
+      // Return generic stage information, never provider URLs or headers.
+      const bridge=search.results?.find(item=>item.provider==="nuvio-4k-bridge");
+      const diag=bridge?.diagnostics||{};
+      const reason=diag.candidates>0?"verification_failed":
+        diag.rejectedResponses>0?"unsupported_format":"no_verified_4k";
+      return res.status(404).json({status:"unavailable",code:"no_4k_source",reason});
+    }
     const provider=found.provider||"nuvio-unknown";
     const ready=apiSourceToProxyResult({source:found.source,raw:{},provider,type,id,season,episode,
       playbackCandidates:found.sources,subtitles:found.subtitles});
