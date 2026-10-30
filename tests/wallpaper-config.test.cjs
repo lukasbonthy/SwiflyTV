@@ -27,7 +27,7 @@ test('broken asset references fail strict imports and preserve corrupted storage
  assert.throws(()=>C.unpackRecord(record,{strict:true}),/wallpaper|asset/i);const s=storage();s.setItem('swiflytv.appearance',JSON.stringify(record));const raw=s.getItem('swiflytv.appearance'),r=C.read(s);assert.equal(r.values.wallpaperData,'');assert.match(r.warning,/saved|wallpaper|read/i);assert.equal(s.getItem('swiflytv.appearance'),raw);
 });
 test('self-contained themes carry optimized wallpapers larger than the old 32 KB limit',()=>{
- const large='data:image/png;base64,'+Buffer.concat([Buffer.from(png.split(',')[1],'base64'),Buffer.alloc(40000)]).toString('base64');
+ const base=Buffer.from(png.split(',')[1],'base64'),chunk=Buffer.alloc(40012);chunk.writeUInt32BE(40000);chunk.write('tEXt',4);const large='data:image/png;base64,'+Buffer.concat([base.subarray(0,-12),chunk,base.subarray(-12)]).toString('base64');
  const text=JSON.stringify(C.exportTheme({...values,wallpaperData:large},'My wallpaper'));assert(text.length>32768);assert.equal(C.parseImport(text).values.wallpaperData,large);assert.throws(()=>C.parseImport('x'.repeat(196609)),/192|smaller|large/i);
  assert.throws(()=>C.parseImport(JSON.stringify({schemaVersion:2,values:{wallpaperData:'data:image/svg+xml;base64,AAAA'}})),/Invalid|wallpaper/i);
 });
@@ -43,4 +43,12 @@ test('account backup restores deduplicated wallpaper looks alongside the real wa
 });
 test('a wallpaper quota failure rolls back both previous storage records',()=>{
  const s=storage(),r=C.read(s);C.write(s,r);const prior=s.getItem(r.key),device=s.getItem('swiflytv.studio.device'),set=s.setItem;let fail=true;s.setItem=(k,v)=>{if(k==='swiflytv.studio.device'&&fail){fail=false;throw Error('quota');}set(k,v);};assert.throws(()=>C.write(s,{...r,values}),/quota/);assert.equal(s.getItem(r.key),prior);assert.equal(s.getItem('swiflytv.studio.device'),device);
+});
+
+test('secondary guest backups do not inherit the primary guest wallpaper or named-look images',()=>{
+ const s=storage();C.write(s,{...C.read(s),values,looks:[{id:'private',name:'Private',values}]});s.setItem('swiflytv.profiles',JSON.stringify([{id:'main',name:'Me'},{id:'other',name:'Other'}]));const b=A.capture(s);assert(JSON.stringify(b.profiles[0]).includes(png));assert(!JSON.stringify(b.profiles[1]).includes(png));
+});
+test('imported raster containers reject truncated headers, oversized dimensions and incomplete files',()=>{
+ const bytes=Buffer.from(png.split(',')[1],'base64');const huge=Buffer.from(bytes);huge.writeUInt32BE(100000,16);huge.writeUInt32BE(100000,20);
+ for(const image of [bytes.subarray(0,36),huge,bytes.subarray(0,bytes.length-8)]){const data='data:image/png;base64,'+image.toString('base64');assert.equal(C.validWallpaperData(data),false);assert.throws(()=>C.parseImport(JSON.stringify({schemaVersion:2,values:{wallpaper:'upload',wallpaperData:data}})),/wallpaper|Invalid/i);}
 });

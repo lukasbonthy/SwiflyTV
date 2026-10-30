@@ -33,8 +33,8 @@ function setup(){
   };environments.add(e);return e;
 }
 test.afterEach(()=>{for(const e of environments)e.close();});
-function controller(e){
- e.w.localStorage.setItem('swiflytv.tvFocusMode','true');e.w.navigator.getGamepads=()=>[];
+function controller(e,getPads=()=>[]){
+ e.w.localStorage.setItem('swiflytv.tvFocusMode','true');e.w.navigator.getGamepads=getPads;
  for(const n of e.app.querySelectorAll('button,summary,input,video,[tabindex]'))n.getBoundingClientRect=()=>({left:100,top:200,width:120,height:50,right:220,bottom:250});
  e.w.eval(tvScript().replace(/^<script[^>]*>/,'').replace(/<\/script>$/,''));e.d.dispatchEvent(new e.w.Event('DOMContentLoaded'));
  let clock=1000;e.w.Date.now=()=>clock;
@@ -115,4 +115,18 @@ test('TV visibility commands ignore disabled TV mode, suspension and destroyed p
   e.app.dataset.playerControlsVisibility='hidden';e.tv('show');assert.equal(e.app.dataset.playerControlsVisibility,'hidden');
   e.app.dataset.playerControlsVisibility='visible';e.tv('hide');assert.equal(e.app.dataset.playerControlsVisibility,'visible');
   e.api.destroy();e.app.dataset.playerControlsVisibility='hidden';e.tv('show');assert.equal(e.app.dataset.playerControlsVisibility,'hidden');
+});
+
+test('Back keeps a cancelled keyboard scrub cancelled until a fresh press',async()=>{
+ const e=setup();controller(e);await e.playing();e.find('seek').focus();e.key('ArrowRight');e.key('BrowserBack');e.key('ArrowRight',{repeat:true});e.key('ArrowRight',{up:true});assert.equal(e.api.getState().currentTime,37);assert.equal(Number(e.find('seek').value),37);e.key('ArrowRight');e.key('ArrowRight',{up:true});assert.equal(e.api.getState().currentTime,47);
+});
+function gamepadController(e){
+ const pad={id:'Standard controller',mapping:'standard',index:0,connected:true,axes:[0,0,0,0],buttons:Array.from({length:17},()=>({pressed:false,value:0}))};let pads=[pad],frameId=0,time=1000;const frames=new Map();e.w.requestAnimationFrame=fn=>{frames.set(++frameId,fn);return frameId;};e.w.cancelAnimationFrame=id=>frames.delete(id);controller(e,()=>pads);e.w.Date.now=()=>time;
+ return{pad,button(i,pressed){pad.buttons[i]={pressed,value:pressed?1:0};},step(){time+=180;const batch=[...frames.values()];frames.clear();for(const fn of batch)fn(time);},disconnect(){pads=[];e.w.dispatchEvent(new e.w.Event('gamepaddisconnected'));}};
+}
+for(const index of [15,7])test('Back cancels held gamepad '+(index===15?'D-pad':'trigger')+' scrubbing through release',async()=>{
+ const e=setup(),g=gamepadController(e);await e.playing();e.find('seek').focus();g.step();const actions=[];e.app.addEventListener('swiflyplayer:action',v=>actions.push(v.detail));g.button(index,true);for(let i=0;i<5;i++)g.step();const before=e.api.getState().currentTime;assert(Number(e.find('seek').value)>before);g.button(1,true);g.step();g.button(1,false);for(let i=0;i<5;i++)g.step();g.button(index,false);g.step();assert.equal(e.api.getState().currentTime,before);assert.equal(Number(e.find('seek').value),before);assert.equal(actions.filter(v=>v.action==='set').length,index===7?1:0);g.button(index,true);g.step();g.button(index,false);g.step();assert.equal(e.api.getState().currentTime,before+10);
+});
+test('disconnect cancels a pending gamepad scrub and keyboard release cannot commit it',async()=>{
+ const e=setup(),g=gamepadController(e);await e.playing();e.find('seek').focus();g.step();g.button(15,true);g.step();assert.equal(Number(e.find('seek').value),47);e.key('ArrowRight',{up:true});assert.equal(e.api.getState().currentTime,37);g.disconnect();assert.equal(Number(e.find('seek').value),37);assert.equal(e.api.getState().currentTime,37);
 });

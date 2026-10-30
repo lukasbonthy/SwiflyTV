@@ -32,3 +32,7 @@ test('runtime Xbox, explicit still, high contrast and playback suppress decorati
  body.dataset.stHighContrast='true';await tick();assert.equal(body.dataset.svAuroraPreviewState,'off');
  const player=w.document.createElement('main');player.className='svPlayerPage';body.append(player);w.SwiflyAurora.refresh();assert.equal(body.dataset.svAuroraState,'off');
 });
+
+test('Studio keeps its selected Aurora on the watch page while the page stays quiet',async()=>{
+ const {w,body}=setup({path:'/watch/movie/42'});assert.equal(body.dataset.svAuroraState,'off');w.SwiflyStudio.open();await tick();assert.equal(body.dataset.svAuroraPreviewState,'live');w.document.documentElement.dataset.svTv='true';await tick();assert.equal(body.dataset.svAuroraPreviewState,'still');assert.equal(body.dataset.svAuroraState,'off');
+});

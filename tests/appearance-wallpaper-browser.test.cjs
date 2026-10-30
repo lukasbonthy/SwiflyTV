@@ -44,3 +44,10 @@ test('wallpaper Studio remains readable and within phone and desktop bounds',{sk
   if(process.env.SWIFLY_CAPTURE_EVIDENCE){const dir=path.join(__dirname,'../docs/evidence/wallpapers-tv');fs.mkdirSync(dir,{recursive:true});await page.screenshot({path:path.join(dir,'wallpapers-'+width+'.png')});}
  }finally{await context.close();}}
 });
+
+test('Studio rejects a structurally bounded PNG with undecodable image data before import confirmation',{skip},async()=>{
+ const {context,page}=await fixture();try{
+  const bytes=await picture(page,2,2);bytes[26]=255;const data='data:image/png;base64,'+bytes.toString('base64');
+  await page.evaluate(()=>SwiflyStudio.open());await page.locator('[data-st-advanced-toggle]').check();await page.locator('[data-st-tab="themes"]').click();await page.locator('[data-st-import-text]').fill(JSON.stringify({schemaVersion:2,name:'Broken pixels',values:{wallpaper:'upload',wallpaperData:data}}));await page.locator('[data-st-import-read]').click();await page.waitForFunction(()=>document.querySelector('[data-st-status]').classList.contains('stStatusError'),null,{timeout:2000});assert.equal(await page.locator('[data-st-import-confirm]').isVisible(),false);assert.equal(await page.evaluate(()=>SwiflyStudio.getRawSettings().wallpaperData),'');
+ }finally{await context.close();}
+});

@@ -6610,7 +6610,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/download.js?v=3"></script>
     <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=262" />
     <script defer src="/assets/liquid-glass/surfaces.js?v=259"></script>
-    <link rel="stylesheet" href="/assets/studio/studio.css?v=264" />
+    <link rel="stylesheet" href="/assets/studio/studio.css?v=267" />
     <link rel="stylesheet" href="/assets/clean/usability.css?v=1" />
     <script defer src="/assets/studio/wallpapers.js?v=1"></script>
     <script defer src="/assets/studio/studio.js?v=266"></script>
@@ -14637,7 +14637,7 @@ function accountPage(req, res) {
     </script>
   </main>`;
 
-  res.send(pageShell({ title: `${SITE_NAME} — Account`, active: "account", body, extraHead:'<link rel="stylesheet" href="/assets/clean/account-backup.css?v=1"><script defer src="/assets/clean/account-backup.js?v=1"></script>' }));
+  res.send(pageShell({ title: `${SITE_NAME} — Account`, active: "account", body, extraHead:'<link rel="stylesheet" href="/assets/clean/account-backup.css?v=1"><script defer src="/assets/clean/account-backup.js?v=2"></script>' }));
 }
 
 

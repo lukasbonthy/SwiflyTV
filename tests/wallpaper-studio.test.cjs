@@ -22,3 +22,7 @@ test('switching profile ignores late wallpaper preparation from the previous own
 test('wallpaper framing and removal remain staged and Cancel restores the saved image',async()=>{
  const e=setup(),{w}=e;e.upload();e.finish();await tick();w.document.querySelector('[data-st-save]').click();w.SwiflyStudio.open();w.document.querySelector('[data-st-wallpaper-remove]').click();assert.equal(w.SwiflyStudio.getRawSettings().wallpaperData,'');w.SwiflyStudio.close();assert.equal(w.SwiflyStudio.getRawSettings().wallpaperData,png);
 });
+
+test('opening and cancelling the empty upload picker keeps the previously selected wallpaper',()=>{
+ const {w}=setup();w.document.querySelector('[data-st-field="wallpaper"][data-st-value="winter"]').click();let opened=0;w.document.querySelector('[data-st-wallpaper-file]').click=()=>opened++;w.document.querySelector('[data-st-field="wallpaper"][data-st-value="upload"]').click();assert.equal(opened,1);assert.equal(w.SwiflyStudio.getRawSettings().wallpaper,'winter');assert.equal(w.SwiflyStudio.getRawSettings().wallpaperData,'');
+});

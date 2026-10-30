@@ -475,3 +475,5 @@ html[data-sv-tv="true"] body.svCleanShell #controlPanel :is(.stModeNote,.stTheme
 body.reduceMotion .stModeToggle input::before { transition:none; }
 @media (prefers-reduced-transparency:reduce) { body.svCleanShell .svAppearanceTexture { display:none !important; } }
 @media (forced-colors:active) { .stThemeScene { display:none; } .stPresetArt { border:1px solid CanvasText; } .stModeToggle input { appearance:auto; } }
+
+.stIconGlyph {fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}

@@ -39,8 +39,14 @@
   }catch(error){throw Error(error.message||'This image could not be decoded.');}
   finally {image?.close?.();if(url)URL.revokeObjectURL(url);}
  }
+ async function verifyImages(images){
+  for(const data of new Set(images.filter(Boolean))){
+   if(!C.validWallpaperData(data))throw Error('This wallpaper image is invalid or exceeds the image limits.');
+   const image=new Image();try{image.src=data;if(image.decode)await image.decode();else await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;});checkDimensions(image.naturalWidth||image.width,image.naturalHeight||image.height);}catch{throw Error('This wallpaper image could not be decoded. Choose another image.');}finally{image.removeAttribute('src');}
+  }
+ }
  function apply(values){const raw=C.validate(values);document.body.style.setProperty('--st-upload-image',C.wallpaperImage({...raw,wallpaper:'upload',highContrast:false,performancePreset:'desktop'}));}
- window.SwiflyWallpapers=Object.freeze({prepareUpload,image:C.wallpaperImage,apply});
+ window.SwiflyWallpapers=Object.freeze({prepareUpload,verifyImages,image:C.wallpaperImage,apply});
  document.addEventListener('swifly:studio-change',e=>apply(e.detail.values));
  try{if(document.body)apply(C.read(localStorage).values);}catch{}
 })();

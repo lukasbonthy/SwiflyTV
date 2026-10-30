@@ -17,12 +17,24 @@
  enums.wallpaper=['theme','aurora','moonlit','winter','velvet','upload'];
  Object.assign(ranges,{wallpaperDim:[40,85],wallpaperBlur:[0,12],wallpaperX:[0,100],wallpaperY:[0,100]});
  const MAX_THEME_BYTES=196608,MAX_WALLPAPER_CHARS=160000,knownImages=new Set();
+ function rasterSize(b,type){
+  const be=(i,n)=>{let v=0;for(let k=0;k<n;k++)v=v*256+b.charCodeAt(i+k);return v;},le=(i,n)=>{let v=0;for(let k=n-1;k>=0;k--)v=v*256+b.charCodeAt(i+k);return v;};
+  if(type==='png'){
+   if(!b.startsWith('\x89PNG\r\n\x1a\n'))return;let width,height,data=false;
+   for(let i=8;i+12<=b.length;){const n=be(i,4),tag=b.slice(i+4,i+8);if(i+n+12>b.length)return;if(i===8){if(tag!=='IHDR'||n!==13)return;width=be(i+8,4);height=be(i+12,4);}if(tag==='IDAT'&&n)data=true;if(tag==='IEND')return n===0&&i+12===b.length&&data?[width,height]:undefined;i+=n+12;}
+  }else if(type==='jpeg'){
+   if(be(0,2)!==65496||be(b.length-2,2)!==65497)return;let size;
+   for(let i=2;i+4<b.length;){if(be(i++,1)!==255)return;while(be(i,1)===255)i++;const tag=be(i++,1),n=be(i,2);if(n<2||i+n>b.length)return;if([192,193,194,195,197,198,199,201,202,203,205,206,207].includes(tag)){if(n<8)return;size=[be(i+5,2),be(i+3,2)];}if(tag===218)return size&&i+n<b.length-2?size:undefined;i+=n;}
+  }else if(b.startsWith('RIFF')&&b.slice(8,12)==='WEBP'&&le(4,4)===b.length-8){
+   for(let i=12;i+8<=b.length;){const n=le(i+4,4),tag=b.slice(i,i+4),j=i+8;if(j+n>b.length)return;if(tag==='VP8 '&&n>=10&&b.slice(j+3,j+6)==='\x9d\x01\x2a')return[le(j+6,2)&16383,le(j+8,2)&16383];if(tag==='VP8L'&&n>=5&&be(j,1)===47)return[1+(be(j+1,1)|(be(j+2,1)&63)<<8),1+((be(j+2,1)>>6)|(be(j+3,1)<<2)|(be(j+4,1)&15)<<10)];i=j+n+(n%2);}
+  }
+ }
  function validWallpaperData(value){
   if(typeof value!=='string'||value.length>MAX_WALLPAPER_CHARS||value.length<40)return false;
   if(knownImages.has(value))return true;
   const match=value.match(/^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/]+={0,2})$/);if(!match||match[2].length%4)return false;
-  let b;try{b=atob(match[2].slice(0,48));}catch{return false;}
-  const valid=match[1]==='png'?b.startsWith('\x89PNG\r\n\x1a\n')&&b.slice(12,16)==='IHDR':match[1]==='jpeg'?b.charCodeAt(0)===255&&b.charCodeAt(1)===216&&b.charCodeAt(2)===255:b.startsWith('RIFF')&&b.slice(8,12)==='WEBP';
+  let size;try{size=rasterSize(atob(match[2]),match[1]);}catch{return false;}
+  const valid=!!size&&size.every(n=>n>0&&n<=8192)&&size[0]*size[1]<=32000000;
   if(valid){if(knownImages.size>=16)knownImages.clear();knownImages.add(value);}return valid;
  }
  // Curated themes are deliberately narrower than portable named looks. A new
