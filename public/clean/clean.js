@@ -25,6 +25,7 @@
   // Suggestions can replace their own target before this click reaches document.
   document.addEventListener('click',e=>{if(!popup.hidden&&!e.composedPath().includes(popup)&&!toggle.contains(e.target))close(false);});
   document.addEventListener('keydown',e=>{
+   if(e.defaultPrevented)return;
    if(e.key==='Escape'&&!popup.hidden){e.preventDefault();close();return;}
    if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();popup.hidden?open():close();return;}
    if(popup.hidden||!['ArrowDown','ArrowUp'].includes(e.key)||e.altKey||e.ctrlKey||e.metaKey)return;

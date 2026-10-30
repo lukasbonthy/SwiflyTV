@@ -6,12 +6,15 @@
  const clone=C.clone,defaults=C.defaults;
  const storage=(()=>{try{return window.localStorage;}catch{return {getItem(){return null;},setItem(){throw Error('Browser storage is unavailable');},removeItem(){}};}})();
  const presets=Object.fromEntries(Object.entries(C.curatedThemes).map(([id,theme])=>[id,theme.values]));
+ const wallpaperFields=['wallpaper','wallpaperData','wallpaperName','wallpaperColor','wallpaperDim','wallpaperBlur','wallpaperX','wallpaperY','wallpaperTint','wallpaperAurora'];
  const sections={theme:['themeId','theme','font','customColors','accentColor','accentSecondary','canvasColor','gradientAngle','gradientStrength'],glass:['glass','glassOpacity','glassBlur','glassEdge','glassGlow'],home:['homeOrder','homeHidden','heroMode','heroPosition','posterWidth','homeColumns','rowShape','layout','cardstyle','density'],posters:['posterHover','posterActions'],navigation:['navOrder','navLayout','navLabels','navIcons','navDensity','navActive'],player:['playerStyle','playerProgress','playerTime','playerIconScale','playerOpacity','playerPosition','playerAutoHide','playerBackdrop'],captions:['captionSize','captionColor','captionBg','captionEdge'],atmosphere:['themeDetails','backdrop','auroraColor','auroraStrength','auroraMotion','adaptiveCinema','adaptiveStrength'],hud:['hudPosition','hudWidth','hudDensity','hudTransparency','hudIcons','hudMotion','notificationPreview','toastPosition'],ai:['aiSpacing','aiWidth','aiCards','aiGlass','aiOptions'],motion:['smooth','reduceMotion','pageMotion','loaderStyle','transitionSpeed','loaderDim'],devices:C.deviceFields,access:['uiScale','highContrast','reduceTransparency','largeTargets','focusStyle']};
  const homeNames={'continue':'Continue watching','upcoming':'Upcoming episodes','recommended':'Recommended for you','trending-movies':'Trending movies','trending-tv':'Trending TV','popular-movies':'Popular movies','popular-tv':'Popular TV','top-movies':'Top-rated movies','top-tv':'Top-rated TV','new-releases':'New releases'};
  const navNames={home:'Home',movies:'Movies',tv:'TV shows',discover:'Discover',list:'My list',study:'Study'};
  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)'),transparent=window.matchMedia('(prefers-reduced-transparency: reduce)');
  let dialog,trigger,saved,draft,looks=[],effective,previewAnimation,started=false,editing=false,stale=false,pendingImport=null,verifiedUser=window.SwiflyAccount?null:undefined,accountPending=!!window.SwiflyAccount,accountSuspended=false,importEpoch=0,listSignature='',lookSignature='',dragged=null;
  let baseAppearance=null,baseDevice=null;
+ let wallpaperEpoch=0,wallpaperBusy=false,wallpaperMessage='',wallpaperError=false;
+ sections.wallpaper=wallpaperFields;
  const invalid=new Map(),same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
  const q=s=>dialog.querySelector(s),qa=s=>[...dialog.querySelectorAll(s)];
  const stored=key=>{try{return storage.getItem(key);}catch{return null;}};
@@ -43,9 +46,15 @@
   animation.onfinish=()=>{if(previewAnimation===animation)previewAnimation=null;};
  }
  function status(message,error=false){const node=q('[data-st-status]');node.textContent=message;node.classList.toggle('stStatusError',error);}
- function updateDraft(next){const validated=C.validate(next),didChange=!same(draft,validated);draft=validated;if(didChange)apply(draft);sync();if(didChange)previewChange();}
+ function invalidateWallpaper(){wallpaperEpoch++;wallpaperBusy=false;wallpaperMessage='';wallpaperError=false;}
+ function updateDraft(next){const validated=C.validate(next),didChange=!same(draft,validated);if(draft&&(validated.wallpaper!==draft.wallpaper||validated.wallpaperData!==draft.wallpaperData))invalidateWallpaper();draft=validated;if(didChange)apply(draft);sync();if(didChange)previewChange();}
+ async function prepareWallpaper(file){
+  if(!file)return;const token=++wallpaperEpoch,owner=saved.owner;wallpaperBusy=true;wallpaperError=false;wallpaperMessage='Preparing your wallpaper…';sync();
+  try{if(!window.SwiflyWallpapers)throw Error('Wallpaper tools are still loading. Try again.');const image=await window.SwiflyWallpapers.prepareUpload(file);if(token!==wallpaperEpoch||!dialog.open||saved.owner!==owner||read().owner!==owner)return;wallpaperBusy=false;updateDraft({...draft,wallpaper:'upload',wallpaperData:image.data,wallpaperName:image.name,wallpaperColor:image.color});wallpaperMessage=image.name+' · '+image.width+' × '+image.height+' · Ready to preview. Save changes to keep it.';sync();}
+  catch(error){if(token!==wallpaperEpoch||!dialog.open||saved.owner!==owner)return;wallpaperBusy=false;wallpaperError=true;wallpaperMessage=error.message||'This image could not be prepared.';sync();}
+ }
  function showImport(value){pendingImport=value;q('[data-st-import-preview]').disabled=!value;q('[data-st-import-confirm]').hidden=!value;if(!value)q('[data-st-import-summary]').textContent='';}
- function load(){for(const selector of ['[data-st-look-name]','[data-st-look-description]','[data-st-import-text]','[data-st-import-file]'])q(selector).value='';saved=read();draft=clone(saved.values);looks=clone(saved.looks);stale=false;invalid.clear();showImport(null);capture();listSignature='';lookSignature='';apply(draft);sync();if(saved.warning)status(saved.warning,true);}
+ function load(){invalidateWallpaper();for(const selector of ['[data-st-look-name]','[data-st-look-description]','[data-st-import-text]','[data-st-import-file]','[data-st-wallpaper-file]'])q(selector).value='';saved=read();draft=clone(saved.values);looks=clone(saved.looks);stale=false;invalid.clear();showImport(null);capture();listSignature='';lookSignature='';apply(draft);sync();if(saved.warning)status(saved.warning,true);}
  function availableHome(){return [...document.querySelectorAll('[data-st-home-section]')].filter(n=>!n.hidden).map(n=>n.dataset.stHomeSection).filter(k=>defaults.homeOrder.includes(k));}
  function button(text,attrs={}){const n=document.createElement('button');n.type='button';n.className='stSmallAction';n.textContent=text;for(const [key,value]of Object.entries(attrs))n.setAttribute(key,value);return n;}
  function renderOrders(){
@@ -110,11 +119,12 @@
   qa('[data-st-color-swatch]').forEach(n=>n.style.backgroundColor=draft[n.dataset.stColorSwatch]);
   const strength=q('[data-st-aurora-strength]');strength.value=String(draft.auroraStrength);q('[data-st-aurora-strength-value]').textContent=draft.auroraStrength+'%';q('[data-st-aurora-settings]').hidden=draft.backdrop!=='aurora';
   let look='Custom look';for(const [name,preset]of Object.entries(presets)){const selected=Object.keys(preset).every(k=>draft[k]===preset[k]);q('[data-st-preset="'+name+'"]').setAttribute('aria-pressed',String(selected));if(selected)look=C.curatedThemes[name].name;}
-  const isChanged=changed(),blocked=stale||invalid.size>0||accountPending||accountSuspended;q('[data-st-save]').disabled=!isChanged||blocked;q('[data-st-reload]').hidden=!stale;
+  const isChanged=changed(),blocked=stale||invalid.size>0||accountPending||accountSuspended||wallpaperBusy;q('[data-st-save]').disabled=!isChanged||blocked;q('[data-st-reload]').hidden=!stale;
   if(stale)status('Saved settings changed in another tab. Reload saved settings before saving.',true);
   else if(accountPending)status('Checking your account before saving…');
   else if(accountSuspended)status('Account verification paused. Reopen Studio after your account is available.',true);
   else if(invalid.size)status(dialog.dataset.stEditorMode==='simple'?'A custom color needs attention in Advanced controls before saving.':'Enter a valid HEX color before saving.',true);
+  else if(wallpaperBusy)status('Preparing wallpaper · Save will be available when it is ready.');
   else status(isChanged?'Previewing changes · save to keep them':'No unsaved changes');
   q('[data-st-look-label]').textContent=look;q('[data-st-preview-description]').textContent=({default:'Classic rows',cinema:'Cinema rows',posterwall:'Poster wall'})[draft.layout]+' · '+({off:'Solid surfaces',subtle:'Soft glass',liquid:'Liquid glass'})[effective.glass]+' · '+({aurora:'Aurora',smooth:'Clean atmosphere',grain:'Film grain'})[effective.backdrop];
   const contrast=C.contrast(draft.customColors?draft.accentColor:(C.accents?.[draft.theme]||'#ece9e2'),draft.customColors?draft.canvasColor:'#090b0f');const warning=q('[data-st-contrast-warning]');warning.hidden=contrast>=4.5;warning.textContent='Accent / canvas contrast is '+contrast.toFixed(2)+':1. Use 4.5:1 or higher for readable small text. High contrast can improve this.';
@@ -123,6 +133,8 @@
   q('[data-st-access-summary]').textContent='Effective on this screen: '+(effective.reduceMotion?'reduced motion':'standard motion')+' · '+(effective.reduceTransparency?'opaque surfaces':'theme transparency')+'. Raw choices are kept when the device preference changes.';
   const owner=saved.owner.startsWith('account:')?'Signed-in profile':'Guest profile';q('[data-st-owner-label]').textContent=owner+' · This browser';
   q('[data-st-export-output]').value=portableJSON();renderOrders();renderLooks();contextualPreview();
+  const wp=q('[data-st-wallpaper-status]');wp.textContent=wallpaperMessage||(draft.wallpaperName?draft.wallpaperName+' · Saved for this profile in this browser.':'Saved for this profile on this browser. Included in theme exports and account backups.');wp.dataset.error=String(wallpaperError);q('[data-st-wallpaper-remove]').hidden=!draft.wallpaperData;
+  for(const n of qa('[data-st-wallpaper-treatment]'))n.setAttribute('aria-pressed',String(draft.wallpaperDim===({cinema:78,balanced:62,scenic:45})[n.dataset.stWallpaperTreatment]));
  }
  function previewArtwork(){
   const titleSource=document.querySelector('.dsHeroContent h1,.svDetailTitleText,.svWelcomeSpotlight strong');q('[data-st-preview-title]').textContent=titleSource?.textContent.trim()||'Movie night, your way.';
@@ -138,7 +150,7 @@
   q('.stContent').scrollTop=0;q('.stWorkspaceBody').scrollTop=0;contextualPreview();
  }
  function cleanup(){
-  if(dialog.open||!editing)return;editing=false;stopPreviewMotion();importEpoch++;showImport(null);invalid.clear();apply(saved.values);draft=clone(saved.values);looks=clone(saved.looks);stale=false;
+  if(dialog.open||!editing)return;editing=false;stopPreviewMotion();importEpoch++;invalidateWallpaper();showImport(null);invalid.clear();apply(saved.values);draft=clone(saved.values);looks=clone(saved.looks);stale=false;
   document.documentElement.classList.remove('svStudioOpen');document.querySelectorAll('#controlToggleTop,[data-st-open]').forEach(n=>n.setAttribute('aria-expanded','false'));if(trigger?.isConnected)trigger.focus({preventScroll:true});trigger=null;
  }
  function close(){if(!dialog?.open)return;stopPreviewMotion();if(typeof dialog.close==='function')dialog.close();else dialog.removeAttribute('open');cleanup();}
@@ -146,7 +158,7 @@
   if(!dialog||dialog.open)return;load();editing=true;trigger=from||document.activeElement;previewArtwork();window.SwiflyMotion?.stop();document.documentElement.classList.add('svStudioOpen');if(typeof dialog.showModal==='function')dialog.showModal();else dialog.setAttribute('open','');document.querySelectorAll('#controlToggleTop,[data-st-open]').forEach(n=>n.setAttribute('aria-expanded','true'));q('[data-st-tab][aria-selected="true"]').focus({preventScroll:true});
  }
  function save(){
-  if(accountPending||accountSuspended||invalid.size||stale){sync();return;}
+  if(accountPending||accountSuspended||invalid.size||stale||wallpaperBusy){sync();return;}
   if(C.ownerKey(storage,currentUser())!==saved.owner){ownerChange();return;}
   if(stored(saved.key)!==baseAppearance||stored('swiflytv.studio.device')!==baseDevice){stale=true;sync();return;}
   try{C.write(storage,{...saved,values:draft,looks});}catch{status('Could not save in this browser. Your changes are still previewing. Free storage or allow browser storage, then try Save again.',true);return;}
@@ -175,9 +187,12 @@
   else if(action==='delete')looks=looks.filter(v=>v.id!==id);
   sync();if(dialog.open){const card=q('[data-st-look-card="'+id+'"]');(action==='rename'?card?.querySelector('input'):card?.querySelector('button')||q('[data-st-look-add]')).focus({preventScroll:true});}
  }
- function reviewImport(text){showImport(null);try{const imported=C.parseImport(text);showImport(imported);const changes=Object.keys(C.portable(imported.values)).filter(k=>!same(draft[k],imported.values[k]));q('[data-st-import-summary]').textContent=imported.name+(imported.description?' — '+imported.description:'')+'. '+changes.length+' appearance settings differ. Device preferences stay on this screen.';status('Import reviewed. Preview it before saving.');}catch(error){status(error.message,true);}}
+ async function reviewImport(text){
+  const token=++importEpoch,owner=saved.owner;showImport(null);try{const imported=C.parseImport(text);if(imported.values.wallpaperData){if(!window.SwiflyWallpapers)throw Error('Wallpaper tools are still loading. Try again.');await window.SwiflyWallpapers.verifyImages([imported.values.wallpaperData]);}if(token!==importEpoch||!dialog.open||read().owner!==owner)return;showImport(imported);const changes=Object.keys(C.portable(imported.values)).filter(k=>!same(draft[k],imported.values[k]));q('[data-st-import-summary]').textContent=imported.name+(imported.description?' — '+imported.description:'')+'. '+changes.length+' appearance settings differ. Device preferences stay on this screen.';status('Import reviewed. Preview it before saving.');}catch(error){if(token===importEpoch&&dialog.open)status(error.message,true);}
+ }
+
  async function readFile(file){
-  const token=++importEpoch;showImport(null);if(!file)return;if(file.size>32768){status('Theme files must be smaller than 32 KB.',true);return;}
+  const token=++importEpoch;showImport(null);if(!file)return;if(file.size>C.MAX_THEME_BYTES){status('Theme files must be smaller than 192 KB.',true);return;}
   try{const text=typeof file.text==='function'?await file.text():await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error('Could not read this file.'));reader.readAsText(file);});if(token!==importEpoch||!dialog.open)return;q('[data-st-import-text]').value=text;reviewImport(text);}catch(error){if(token===importEpoch)status('Could not read this theme file. '+error.message,true);}
  }
  async function copyExport(){try{if(!navigator.clipboard?.writeText)throw Error('Clipboard is unavailable');await navigator.clipboard.writeText(portableJSON());if(dialog.open)status('Theme JSON copied.');}catch{if(dialog.open)status('Could not copy automatically. Turn on Advanced controls, open View portable JSON and copy the text.',true);}}
@@ -192,23 +207,25 @@
    const b=event.target.closest('button');if(b?.disabled)return;
    if(b?.hasAttribute('data-st-cancel')){close();return;}if(b?.hasAttribute('data-st-save')){save();return;}
    if(b?.hasAttribute('data-st-reload')){load();return;}
+   if(b?.hasAttribute('data-st-wallpaper-remove')){invalidateWallpaper();updateDraft({...draft,wallpaper:draft.wallpaper==='upload'?'theme':draft.wallpaper,wallpaperData:'',wallpaperName:''});q('[data-st-wallpaper-file]').value='';return;}
+   if(b?.dataset.stWallpaperTreatment){updateDraft({...draft,wallpaperDim:({cinema:78,balanced:62,scenic:45})[b.dataset.stWallpaperTreatment]});return;}
    if(b?.hasAttribute('data-st-reset')){invalid.clear();qa('[aria-invalid]').forEach(n=>n.removeAttribute('aria-invalid'));updateDraft(clone(defaults));return;}
    if(b?.dataset.stResetSection){const next=clone(draft);for(const k of sections[b.dataset.stResetSection]||[]){next[k]=clone(defaults[k]);invalid.delete(k);q('[data-st-input="'+k+'"]')?.removeAttribute('aria-invalid');}updateDraft(next);return;}
    if(b?.dataset.stTab){setTab(b.dataset.stTab);return;}if(b?.dataset.stGo){setTab(b.dataset.stGo,true);return;}
    if(presets[b?.dataset.stPreset]){invalid.clear();qa('[aria-invalid]').forEach(n=>n.removeAttribute('aria-invalid'));updateDraft(C.applyTheme(draft,b.dataset.stPreset));return;}
-   const field=b?.dataset.stField,value=b?.dataset.stValue;if(C.enums[field]?.includes(value)){updateDraft({...draft,[field]:value,...(C.appearanceFields.includes(field)?{themeId:'custom'}:{}),...(field==='theme'?{customColors:false}:{})});return;}
+   const field=b?.dataset.stField,value=b?.dataset.stValue;if(C.enums[field]?.includes(value)){if(field==='wallpaper'&&value==='upload'&&!draft.wallpaperData){q('[data-st-wallpaper-file]').click();return;}if(field==='wallpaper')invalidateWallpaper();updateDraft({...draft,[field]:value,...(C.appearanceFields.includes(field)?{themeId:'custom'}:{}),...(field==='theme'?{customColors:false}:{})});return;}
    if(b?.dataset.stOrder){move(b.dataset.stOrder,b.dataset.stItem,Number(b.dataset.stDirection));return;}
    if(b?.hasAttribute('data-st-look-add')){if(looks.length>=12){status('You can keep up to 12 named looks.',true);return;}const name=q('[data-st-look-name]').value.trim().slice(0,64);if(!name){status('Give your look a name first.',true);q('[data-st-look-name]').focus();return;}looks.push({id:newLookId(),name,description:q('[data-st-look-description]').value.trim().slice(0,160),values:C.portable(draft)});sync();return;}
    for(const action of ['apply','duplicate','rename','delete'])if(b?.hasAttribute('data-st-look-'+action)){lookAction(action,b.getAttribute('data-st-look-'+action));return;}
    if(b?.hasAttribute('data-st-import-read')){reviewImport(q('[data-st-import-text]').value);return;}
-   if(b?.hasAttribute('data-st-import-dismiss')){showImport(null);status('Import dismissed. Your draft is unchanged.');return;}
+   if(b?.hasAttribute('data-st-import-dismiss')){importEpoch++;showImport(null);status('Import dismissed. Your draft is unchanged.');return;}
    if(b?.hasAttribute('data-st-import-preview')){if(!pendingImport)return;const incoming=pendingImport,local=Object.fromEntries(C.deviceFields.map(k=>[k,draft[k]]));q('[data-st-look-name]').value=incoming.name;q('[data-st-look-description]').value=incoming.description;showImport(null);invalid.clear();qa('[aria-invalid]').forEach(n=>n.removeAttribute('aria-invalid'));updateDraft({...incoming.values,...local});status('Imported look is previewing. Save changes to keep it, or Cancel to restore.');return;}
    if(b?.hasAttribute('data-st-export-copy')){copyExport();return;}if(b?.hasAttribute('data-st-export-download')){downloadExport();return;}
    if(event.target===dialog){const r=dialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)close();}
   });
   dialog.addEventListener('input',event=>{const n=event.target;if(n.matches('[data-st-aurora-strength]'))updateDraft({...draft,auroraStrength:Number(n.value)});else if(n.matches('[data-st-input]')&&(n.type==='range'||C.colors.includes(n.dataset.stInput)))edit(n);else if(n.matches('[data-st-look-name],[data-st-look-description]'))q('[data-st-export-output]').value=portableJSON();else if(n.matches('[data-st-import-text]'))showImport(null);});
   dialog.addEventListener('change',event=>{
-   const n=event.target;if(n.matches('[data-st-advanced-toggle]')){setEditorMode(n.checked);return;}if(n.matches('[data-st-comfort-motion]')){updateDraft({...draft,reduceMotion:n.checked});return;}if(n.matches('[data-st-input],[data-st-setting]')){edit(n);return;}if(n.matches('[data-st-import-file]')){readFile(n.files?.[0]);return;}
+   const n=event.target;if(n.matches('[data-st-wallpaper-file]')){prepareWallpaper(n.files?.[0]);n.value='';return;}if(n.matches('[data-st-advanced-toggle]')){setEditorMode(n.checked);return;}if(n.matches('[data-st-comfort-motion]')){updateDraft({...draft,reduceMotion:n.checked});return;}if(n.matches('[data-st-input],[data-st-setting]')){edit(n);return;}if(n.matches('[data-st-import-file]')){readFile(n.files?.[0]);return;}
    if(n.matches('[data-st-home-visible]')){const key=n.dataset.stHomeVisible;let hidden=draft.homeHidden.filter(v=>v!==key);if(!n.checked)hidden.push(key);const available=availableHome();if(available.length&&available.every(v=>hidden.includes(v))){n.checked=true;status('Keep at least one available homepage row visible.',true);return;}updateDraft({...draft,homeHidden:hidden});}
   });
   dialog.addEventListener('dragstart',event=>{const row=event.target.closest('[data-st-order-row]');if(!row||event.target.closest('input,button'))return;dragged={type:row.dataset.stOrderRow,key:row.dataset.stItem};event.dataTransfer?.setData('text/plain',row.dataset.stItem);if(event.dataTransfer)event.dataTransfer.effectAllowed='move';row.classList.add('stDragging');});

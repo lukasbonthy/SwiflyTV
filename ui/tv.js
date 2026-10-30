@@ -19,6 +19,20 @@ function swiflyTvFocusNavigation() {
   let guide=null,help=null,helpReturn=null,engagedSelect=null,inputReturn=null,windowActive=true,activePadKey='',lastButtons=[],stickScrolling=false,scrollDestination=null;
   let spotlight=null,spotlightCard=null,artTimer=0,artRequest=null,artGeneration=0,shownArt='';
   const padStates=new Map(),railMemory=new WeakMap();
+  let timelineScrub=null;
+  const cancelledSeek=new Set();
+  let frameReturn=null;
+  function enterFrame(button){const frame=button.closest('.svPlayerStage--trailer')?.querySelector('iframe');if(!frame)return false;frameReturn=button;frame.focus();return true;}
+  function finishScrub(cancel=false){
+    const gesture=timelineScrub;timelineScrub=null;if(!gesture)return false;
+    const input=gesture.input,root=input.closest('[data-player-root]');
+    if(cancel||!input.isConnected||input.disabled||root?.dataset.playerState!=='ready'){cancelledSeek.add(gesture.source);input.dispatchEvent(new Event('pointercancel',{bubbles:true}));return true;}
+    input.dispatchEvent(new Event('change',{bubbles:true}));return true;
+  }
+  function previewSeek(input,direction,source='keyboard'){
+    if(!input||input.disabled||cancelledSeek.has(source))return false;if(timelineScrub?.input!==input||timelineScrub?.source!==source){finishScrub();timelineScrub={input,source};}
+    input.value=String(Math.max(Number(input.min)||0,Math.min(Number(input.max),Number(input.value)+(direction==='right'?10:-10))));input.dispatchEvent(new Event('input',{bubbles:true}));return true;
+  }
   var FOCUSABLE_SELECTOR='a[href],summary,button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),[role="button"],[role="link"],[tabindex]:not([tabindex="-1"]),video';
   const rails='.movieRail,.dsRail,.nfRail,.nfTopTenRail,.svResumeRail,.svFeedCards,.svFeedUpcoming,.dsWelcomeRailTrack,.svDetailCastRail,.svDetailCollectionRail';
   const railItems='.dsThumb,.posterWrap,.svResumeLink,.svFeedPoster,.svFeedEpisodeLink,[data-resume-action],.dsCastCard';
@@ -99,6 +113,7 @@ function swiflyTvFocusNavigation() {
   }
   function setFocus(el,options={}){
     if(!eligible(el))return false;
+    if(timelineScrub&&timelineScrub.input!==el)finishScrub();
     if(focused!==el){if(el.matches('input,textarea,[contenteditable="true"]')&&!focused?.matches('input,textarea,[contenteditable="true"]'))inputReturn=focused;disengageSelect();clearFocus();focused=el;el.classList.add('swifly-tv-focus-target');el.closest(cardSelector)?.classList.add('svTvFocusedCard');el.closest(rowSelector)?.classList.add('svTvFocusedRow');if(el.closest(rails)&&el.matches(railItems))railMemory.set(el.closest(rails),el);try{el.focus({preventScroll:true});}catch{}}
     if(options.scroll!==false)try{revealFocus(el);}catch{}
     queueGuide();
@@ -220,10 +235,11 @@ function swiflyTvFocusNavigation() {
       if(wasEnabled&&document.documentElement.dataset.svXbox==='true')window.SwiflyGlassSurfaces?.refresh(document);
     }
   }
-  function adjustControl(direction){
+  function adjustControl(direction,source){
     if(!focused||focused.disabled)return false;
     if(focused.matches('input[type="range"]')&&['left','right'].includes(direction)){
       const input=focused,min=Number(input.min)||0,max=input.max===''?100:Number(input.max),step=input.hasAttribute('data-player-seek')?10:input.hasAttribute('data-player-volume') ? .05 : Number(input.step)||1;
+      if(input.hasAttribute('data-player-seek')&&input.closest('[data-player-root]'))return previewSeek(input,direction,source);
       input.value=String(Math.max(min,Math.min(max,Number(input.value)+(direction==='right'?step:-step))));input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));return true;
     }
     if(focused===engagedSelect&&['up','down'].includes(direction)){let next=focused.selectedIndex+(direction==='down'?1:-1);while(next>=0&&next<focused.options.length&&focused.options[next].disabled)next+=direction==='down'?1:-1;if(next>=0&&next<focused.options.length){focused.selectedIndex=next;focused.dispatchEvent(new Event('change',{bubbles:true}));syncGuide();}return true;}
@@ -267,13 +283,24 @@ function swiflyTvFocusNavigation() {
     const items=itemsIn(rail),index=items.indexOf(focused),rect=focused.getBoundingClientRect(),step=Math.max(1,Math.floor(rail.getBoundingClientRect().width/(rect.width+20)));
     setFocus(items[Math.max(0,Math.min(items.length-1,index+(direction==='right'?step:-step)))]);
   }
-  function moveFocus(direction,force=true){
+  function moveFocus(direction,force=true,repeating=false,source='keyboard'){
     if(!enabled)return;if(!focused||!eligible(focused))firstFocus();if(!focused)return;
     const now=Date.now();if(!force&&now-lastMoveAt<135)return;lastMoveAt=now;
-    if(adjustControl(direction))return;
+    if(adjustControl(direction,source))return;
     if(moveCatalogEdge(direction))return;
     if(['up','down'].includes(direction)&&moveRow(direction))return;
-    if(focused.matches('[data-player-stage]')){const root=focused.closest('[data-player-root]'),control=root?.querySelector(direction==='up'?'[data-player-seek]':direction==='left'?'[data-player-backward]':direction==='right'?'[data-player-forward]':'[data-player-play]');if(control&&setFocus(control))return;}
+    if(focused.matches('[data-player-stage]')){
+      const root=focused.closest('[data-player-root]');
+      if(['left','right'].includes(direction)){if(repeating){const input=root?.querySelector('[data-player-seek]');if(input&&setFocus(input))previewSeek(input,direction,source);}else activate(root?.querySelector(direction==='left'?'[data-player-backward]':'[data-player-forward]'));return;}
+      if(direction==='down'){revealPlayer(true);if(!focused.matches('[data-player-stage]'))return;}
+      const control=root?.querySelector(direction==='up'?'[data-player-seek]':'[data-player-play]');if(control&&setFocus(control))return;
+    }
+    const controlRoot=focused.closest('[data-player-controls]');
+    if(controlRoot&&!focused.closest('details[open]')){
+      const root=controlRoot.closest('[data-player-root]');
+      if(['up','down'].includes(direction)){const target=focused.matches('[data-player-seek]')?(direction==='up'?root.querySelector('[data-player-stage]'):root.querySelector('[data-player-play]')):(direction==='up'?root.querySelector('[data-player-seek]'):root.querySelector('[data-player-stage]'));if(target)setFocus(target);return;}
+      const row=Array.from(controlRoot.querySelectorAll('.svPlayerTransport>button,.svPlayerTools>a,.svPlayerTools>button,.svPlayerTools>details>summary')).filter(n=>eligible(n)),index=row.indexOf(focused),next=row[index+(direction==='right'?1:-1)];if(next)setFocus(next);return;
+    }
     const rail=focused.closest(rails);
     if(rail&&['left','right'].includes(direction)&&focused.matches(railItems)){
       const cards=itemsIn(rail),index=cards.indexOf(focused),next=cards[index+(direction==='right'?1:-1)];if(next)setFocus(next);return;
@@ -296,25 +323,32 @@ function swiflyTvFocusNavigation() {
     window.scrollBy({left:dx,top:dy,behavior:'auto'});
   }
   function playerRoot(){return document.activeElement?.closest('[data-player-root]')||document.querySelector('.svPlayerPage[data-player-mode="movie"]')||document.querySelector('.svPlayerEmbedded');}
-  function revealPlayer(){const root=playerRoot();if(root&&!activeModal())root.dispatchEvent(new CustomEvent('swiflyplayer:tv-controls',{detail:{action:'show'}}));}
+  function revealPlayer(focus=false){const root=playerRoot();if(root&&!activeModal())root.dispatchEvent(new CustomEvent('swiflyplayer:tv-controls',{detail:{action:'show',focus}}));}
   function activate(button){if(button&&!button.disabled&&button.getAttribute('aria-disabled')!=='true'){button.click();return true;}return false;}
   function clickFocused(){
+    if(finishScrub())return;
     if(!focused||!eligible(focused))firstFocus();if(!focused)return;
     if(recoverVisibleFocus())return;
     const element=focused;element.classList.add('swifly-tv-focus-pressed');setTimeout(()=>element.classList.remove('swifly-tv-focus-pressed'),140);
+    if(element.matches('[data-player-enter-frame]')){enterFrame(element);return;}
     if(element.matches('select')){if(engagedSelect===element)disengageSelect();else{engagedSelect=element;element.dataset.svTvEngaged='true';}syncGuide();return;}
     const root=element.closest('[data-player-root]');if(root&&element.matches('video,[data-player-stage]')){activate(root.querySelector('[data-player-play]'));return;}
     if(element.tagName==='VIDEO'){if(element.paused)element.play()?.catch(()=>{});else element.pause();return;}
     activate(element);
   }
   function goBack(){
+    if(frameReturn?.isConnected&&document.activeElement?.matches('iframe[data-player-frame]')){setFocus(frameReturn);frameReturn.focus({preventScroll:true});return;}
+    if(finishScrub(true))return;
     if(engagedSelect){disengageSelect();syncGuide();return;}
     const modal=activeModal();if(modal){if(modal.matches('.svDetailDialog')&&window.SwiflyDetails)window.SwiflyDetails.back();else modal.close();return;}
     const popup=document.querySelector('#svNavSearchPopup:not([hidden])');if(popup){popup.hidden=true;const toggle=document.getElementById('svNavSearchToggle');toggle?.setAttribute('aria-expanded','false');if(toggle)setFocus(toggle);return;}
     const menu=document.querySelector('.dsProfileMenu[open]');if(menu){menu.open=false;setFocus(menu.querySelector('summary'));return;}
-    const root=playerRoot(),popover=root?.querySelector('details[open]');if(popover){popover.open=false;try{popover.querySelector('[popover]')?.hidePopover();}catch{}setFocus(popover.querySelector('summary'));return;}
+    const root=playerRoot(),song=root?.querySelector('[data-assist-song-result]:not([hidden])'),next=root?.querySelector('[data-assist-next]:not([hidden])');
+    if(song){song.querySelector('[data-assist-song-close]')?.click();setFocus(root.querySelector('[data-assist-song]')||root.querySelector('[data-player-stage]'));return;}
+    if(next){next.querySelector('[data-assist-dismiss]')?.click();setFocus(root.querySelector('[data-player-stage]'));return;}
+    const popover=root?.querySelector('details[open]');if(popover){popover.open=false;try{popover.querySelector('[popover]')?.hidePopover();}catch{}setFocus(popover.querySelector('summary'));return;}
     if(focused?.matches('input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),textarea,[contenteditable="true"]')){if(!setFocus(inputReturn))setFocus(getFocusable().find(el=>!el.matches('input,textarea')));return;}
-    const video=root?.querySelector('[data-player-video]');if(root&&video&&!video.paused&&root.dataset.playerState==='ready'&&root.dataset.playerControlsVisibility!=='hidden'&&root.querySelector('[data-player-controls]')?.contains(document.activeElement)){root.dispatchEvent(new CustomEvent('swiflyplayer:tv-controls',{detail:{action:'hide'}}));return;}
+    const video=root?.querySelector('[data-player-video]');if(root&&video&&!video.paused&&root.dataset.playerState==='ready'&&root.dataset.playerControlsVisibility!=='hidden'){root.dispatchEvent(new CustomEvent('swiflyplayer:tv-controls',{detail:{action:'hide'}}));if(root.dataset.playerControlsVisibility==='hidden')return;}
     if(document.fullscreenElement){document.exitFullscreen()?.catch(()=>{});return;}
     const back=document.querySelector('[data-sv-player-back],.svDetailPage [data-sv-details-back]');if(back){back.click();return;}
     if(window.SwiflyStudy?.controller?.back?.())return;
@@ -340,10 +374,11 @@ function swiflyTvFocusNavigation() {
     const target=playerRoot()?.querySelector('[data-player-stage]')||document.querySelector('main')||document.documentElement;
     try{const action=document.fullscreenElement?document.exitFullscreen():target.requestFullscreen?.();action?.catch(()=>showHint('Fullscreen is unavailable in this browser'));}catch{showHint('Fullscreen is unavailable in this browser');}
   }
-  function mediaKey(key){
-    if(activeModal())return false;const root=playerRoot();if(!root)return false;
+  function mediaKey(key,repeating=false,source='keyboard'){
+    if(!transportContext())return false;const root=playerRoot();if(!root)return false;
     const video=root.querySelector('[data-player-video],video'),control={MediaPlayPause:'play',MediaPlay:'play',MediaPause:'play',MediaStop:'play',MediaRewind:'backward',MediaFastForward:'forward',MediaTrackPrevious:'episode-previous',MediaTrackNext:'episode-next'}[key];if(!control)return false;
     if(key==='MediaPlay'&&!video?.paused||['MediaPause','MediaStop'].includes(key)&&video?.paused)return true;
+    if(repeating&&['MediaRewind','MediaFastForward'].includes(key)){const input=root.querySelector('[data-player-seek]');revealPlayer();if(input&&setFocus(input)){previewSeek(input,key==='MediaRewind'?'left':'right',source);return true;}}
     revealPlayer();activate(root.querySelector('[data-player-'+control+']'));return true;
   }
   function directionFromAxes(x,y,holding=false){const threshold=holding?.28:.52;if(Math.abs(x)<threshold&&Math.abs(y)<threshold)return '';return Math.abs(x)>Math.abs(y)?x>0?'right':'left':y>0?'down':'up';}
@@ -353,24 +388,25 @@ function swiflyTvFocusNavigation() {
   function snapshot(pad){return Array.from({length:Math.max(17,pad.buttons?.length||0)},(_,index)=>buttonDown(pad,index));}
   function scrollingPad(pad){return Math.abs(pad.axes?.[2]||0)>.25||Math.abs(pad.axes?.[3]||0)>.25;}
   function padState(pad){return {buttons:snapshot(pad),direction:padDirection(pad),scrolling:scrollingPad(pad),triggers:{}};}
-  function primeGamepads(){padStates.clear();pads().forEach((pad,index)=>padStates.set(padKey(pad,index),padState(pad)));lastButtons=[];activePadKey='';lastAxisDirection='';axisRepeatStartedAt=0;stickScrolling=false;}
+  function primeGamepads(){finishScrub(true);padStates.clear();pads().forEach((pad,index)=>padStates.set(padKey(pad,index),padState(pad)));lastButtons=[];activePadKey='';lastAxisDirection='';axisRepeatStartedAt=0;stickScrolling=false;}
   function onButtonEdge(pad,index,action){if(buttonDown(pad,index)&&!lastButtons[index])action();}
-  function transportContext(){const root=playerRoot();return Boolean(root&&!activeModal()&&focused&&root.contains(focused)&&!focused.closest('[data-watchroom-call],.svInlineParty,textarea,input:not([type="range"]),select,details[open]'));}
+  function transportContext(){const root=playerRoot(),target=document.activeElement||focused;return Boolean(root&&!activeModal()&&target&&root.contains(target)&&!target.closest('iframe,.svPlayerStage--trailer,[data-watchroom-call],.svInlineParty,[data-assist-song-result],[data-assist-next],textarea,input:not([type="range"]),select,details[open]'));}
   function recoverVisibleFocus(){
     if(!stickScrolling||!focused)return false;
     const rect=focused.getBoundingClientRect();if(rect.bottom>140&&rect.top<innerHeight-140&&rect.right>0&&rect.left<innerWidth)return false;
     const all=getFocusable().filter(el=>{const r=el.getBoundingClientRect();return r.top>=140&&r.bottom<=innerHeight-140&&r.left>=0&&r.right<=innerWidth;});
     const x=Math.max(0,Math.min(innerWidth,rect.left+rect.width/2)),target=all.reduce((best,el)=>!best||Math.abs(centerOf(el).x-x)<Math.abs(centerOf(best).x-x)?el:best,null);return target?setFocus(target,{scroll:false}):true;
   }
-  function trigger(pad,index,state,action){const now=Date.now();if(!buttonDown(pad,index)){delete state.triggers[index];return;}if(!lastButtons[index]){state.triggers[index]={start:now,last:now};action();}else{const held=state.triggers[index];if(held&&now-held.start>450&&now-held.last>=180){held.last=now;action();}}}
+  function trigger(pad,index,state,action){const now=Date.now();if(!buttonDown(pad,index)){delete state.triggers[index];return;}if(!lastButtons[index]){state.triggers[index]={start:now,last:now};action(false);}else{const held=state.triggers[index];if(held&&now-held.start>450&&now-held.last>=180){held.last=now;action(true);}}}
   function processGamepad(pad,elapsed,state){
-    const direction=padDirection(pad,Boolean(lastAxisDirection)),now=Date.now();
-    if(direction){if(direction!==lastAxisDirection){lastAxisDirection=direction;axisRepeatStartedAt=now;revealPlayer();moveFocus(direction);}else if(now-axisRepeatStartedAt>340&&now-lastMoveAt>=135){revealPlayer();moveFocus(direction,false);}}else{lastAxisDirection='';axisRepeatStartedAt=0;}
+    let direction=padDirection(pad,Boolean(lastAxisDirection));const now=Date.now(),seekHeld=['left','right'].includes(direction)||buttonDown(pad,6)||buttonDown(pad,7);if(!seekHeld)cancelledSeek.delete('gamepad');if(cancelledSeek.has('gamepad')&&['left','right'].includes(direction))direction='';
+    if(direction){if(direction!==lastAxisDirection){lastAxisDirection=direction;axisRepeatStartedAt=now;revealPlayer();moveFocus(direction,true,false,'gamepad');}else if(now-axisRepeatStartedAt>340&&now-lastMoveAt>=135){revealPlayer();moveFocus(direction,false,true,'gamepad');}}else{if(lastAxisDirection)finishScrub();lastAxisDirection='';axisRepeatStartedAt=0;}
     const axis=value=>Math.abs(Number(value||0))>.25?Math.sign(value)*(Math.abs(value)-.25)/.75:0,x=axis(pad.axes?.[2]),y=axis(pad.axes?.[3]);
     if((x||y)&&!activeModal()&&!engagedSelect){stickScrolling=true;scrollByAmount(x*elapsed,y*elapsed);}else if(stickScrolling){recoverVisibleFocus();stickScrolling=false;}
     onButtonEdge(pad,0,clickFocused);onButtonEdge(pad,1,goBack);onButtonEdge(pad,2,()=>{if(transportContext())mediaKey('MediaPlayPause');});onButtonEdge(pad,3,focusSearch);
     onButtonEdge(pad,4,()=>{if(transportContext())mediaKey('MediaTrackPrevious');else pageRow('left');});onButtonEdge(pad,5,()=>{if(transportContext())mediaKey('MediaTrackNext');else pageRow('right');});
-    trigger(pad,6,state,()=>{if(transportContext())mediaKey('MediaRewind');else pageFocus('up');});trigger(pad,7,state,()=>{if(transportContext())mediaKey('MediaFastForward');else pageFocus('down');});
+    if(!cancelledSeek.has('gamepad')){trigger(pad,6,state,repeat=>{if(transportContext())mediaKey('MediaRewind',repeat,'gamepad');else pageFocus('up');});trigger(pad,7,state,repeat=>{if(transportContext())mediaKey('MediaFastForward',repeat,'gamepad');else pageFocus('down');});}else{delete state.triggers[6];delete state.triggers[7];}
+    if(!buttonDown(pad,6)&&!buttonDown(pad,7)&&(lastButtons[6]||lastButtons[7]))finishScrub();
     onButtonEdge(pad,8,showHelp);onButtonEdge(pad,9,tryMenu);onButtonEdge(pad,11,()=>{if(!activeModal()){revealPlayer();setFocus(focused);}});
   }
   // Most Xbox setups have exactly one controller. Poll it without creating a
@@ -394,7 +430,7 @@ function swiflyTvFocusNavigation() {
       const key=padKey(single,single.index||0);
       let state=padStates.get(key);
       if(!state){state=padState(single);padStates.set(key,state);}
-      if(activePadKey!==key){activePadKey=key;lastAxisDirection='';axisRepeatStartedAt=0;}
+      if(activePadKey!==key){finishScrub(true);activePadKey=key;lastAxisDirection='';axisRepeatStartedAt=0;}
       lastButtons=state.buttons;
       const elapsed=lastFrame===null?1000/60:Math.min(32,Math.max(0,time-lastFrame));
       lastFrame=time;
@@ -407,10 +443,10 @@ function swiflyTvFocusNavigation() {
       if(enabled&&!document.hidden&&windowActive)raf=requestAnimationFrame(loop);
       return;
     }
-    const current=pads();if(!current.length){connected=false;padStates.clear();syncGuide();return;}
+    const current=pads();if(!current.length){finishScrub(true);connected=false;padStates.clear();syncGuide();return;}
     const rows=current.map((pad,index)=>{const key=padKey(pad,index);if(!padStates.has(key))padStates.set(key,padState(pad));return {pad,key,state:padStates.get(key)};});
     const input=rows.find(({pad,state})=>snapshot(pad).some((value,index)=>value&&!state.buttons[index]))||rows.find(({pad,state})=>padDirection(pad)&&padDirection(pad)!==state.direction)||rows.find(({pad,state})=>scrollingPad(pad)&&!state.scrolling);
-    const selected=input||rows.find(row=>row.key===activePadKey)||rows[0];if(activePadKey!==selected.key){activePadKey=selected.key;lastAxisDirection='';axisRepeatStartedAt=0;}
+    const selected=input||rows.find(row=>row.key===activePadKey)||rows[0];if(activePadKey!==selected.key){finishScrub(true);activePadKey=selected.key;lastAxisDirection='';axisRepeatStartedAt=0;}
     lastButtons=selected.state.buttons;const elapsed=lastFrame===null?1000/60:Math.min(32,Math.max(0,time-lastFrame));lastFrame=time;processGamepad(selected.pad,elapsed,selected.state);
     for(const row of rows){row.state.buttons=snapshot(row.pad);row.state.direction=padDirection(row.pad,Boolean(row.state.direction));row.state.scrolling=scrollingPad(row.pad);}for(const key of padStates.keys())if(!rows.some(row=>row.key===key))padStates.delete(key);
     if(enabled&&!document.hidden&&windowActive)raf=requestAnimationFrame(loop);
@@ -418,7 +454,7 @@ function swiflyTvFocusNavigation() {
   function startLoop(){if(enabled&&connected&&!document.hidden&&windowActive&&!raf){lastFrame=null;raf=requestAnimationFrame(loop);}}
   window.addEventListener('gamepadconnected',event=>{const received=event.gamepad,valid=received&&received.connected!==false&&(!received.mapping||received.mapping==='standard');connected=pads().length>0||Boolean(valid);if(!connected)return;primeGamepads();setEnabled(true,'Controller connected · View for all controls');if(valid){padStates.set(padKey(received,0),padState(received));connected=true;startLoop();}});
   window.addEventListener('gamepaddisconnected',()=>{connected=pads().length>0;primeGamepads();if(!connected){cancelAnimationFrame(raf);raf=0;}syncGuide();showHint(connected?'Controller ready':'Controller disconnected · arrow keys still work');});
-  function suspendInput(){windowActive=false;cancelAnimationFrame(raf);raf=0;}
+  function suspendInput(){if(frameReturn?.isConnected&&document.hasFocus()&&document.activeElement?.matches('iframe[data-player-frame]'))return;finishScrub(true);windowActive=false;cancelAnimationFrame(raf);raf=0;}
   function resumeInput(){scrollDestination=null;windowActive=true;connected=pads().length>0;primeGamepads();syncGuide();startLoop();}
   window.addEventListener('blur',suspendInput);window.addEventListener('focus',resumeInput);
   document.addEventListener('visibilitychange',()=>{if(document.hidden)suspendInput();else resumeInput();});
@@ -431,17 +467,21 @@ function swiflyTvFocusNavigation() {
     const target=event.target,typing=target.closest?.('input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="button"]):not([type="submit"]),textarea,[contenteditable="true"]');
     if(typing&&key!=='BrowserBack'&&key!=='Escape'&&!(typing.tagName==='INPUT'&&['ArrowUp','ArrowDown'].includes(key)))return;
     if(target.closest?.('select')&&key!=='BrowserBack')return;
+    if(['ArrowLeft','ArrowRight','MediaRewind','MediaFastForward'].includes(key)){if(!event.repeat)cancelledSeek.delete('keyboard');else if(cancelledSeek.has('keyboard')){event.preventDefault();return;}}
     if(key==='Escape'||key==='BrowserBack'||key==='Backspace'){event.preventDefault();goBack();return;}
-    if(mediaKey(key)){event.preventDefault();return;}
-    if(directions[key]){revealPlayer();moveFocus(directions[key],!event.repeat);event.preventDefault();}
+    if(['MediaPlayPause','MediaPlay','MediaPause','MediaStop','MediaTrackPrevious','MediaTrackNext'].includes(key)&&event.repeat&&transportContext()){event.preventDefault();return;}
+    if(mediaKey(key,event.repeat)){event.preventDefault();return;}
+    if(directions[key]){revealPlayer();moveFocus(directions[key],!event.repeat,event.repeat);event.preventDefault();}
     else if(key==='Enter'||key===' '){if(!event.repeat){revealPlayer();clickFocused();}event.preventDefault();}
-    else if(key?.toLowerCase()==='f'){toggleFullscreen();event.preventDefault();}
+    else if(key?.toLowerCase()==='f'&&(!playerRoot()||transportContext())){if(!event.repeat)toggleFullscreen();event.preventDefault();}
     else if(key==='/'){focusSearch();event.preventDefault();}
     else if(key==='ContextMenu'||key==='Menu'){tryMenu();event.preventDefault();}
   },true);
+  document.addEventListener('keyup',event=>{if(enabled&&['ArrowLeft','ArrowRight','MediaRewind','MediaFastForward'].includes(event.key)){cancelledSeek.delete('keyboard');if(timelineScrub?.source==='keyboard'&&finishScrub())event.preventDefault();}},true);
   document.addEventListener('focusin',event=>{if(enabled&&event.target.matches?.(FOCUSABLE_SELECTOR))setFocus(event.target,{scroll:false});});
   for(const type of ['wheel','touchstart','pointerdown','resize'])window.addEventListener(type,()=>{scrollDestination=null;if(type==='resize'){syncSpotlight();if(enabled&&spotlight&&!spotlight.hidden&&focused)revealFocus(focused);}},{passive:true});
   document.addEventListener('click',event=>{
+    const entry=event.target.closest?.('[data-player-enter-frame]');if(entry){enterFrame(entry);return;}
     const toggle=event.target.closest?.('[data-sv-tv-toggle]');if(!toggle)return;event.preventDefault();const menu=toggle.closest('details');if(menu)menu.open=false;setEnabled(!enabled);if(!enabled){const summary=menu?.querySelector('summary')||document.querySelector('.dsProfileMenu > summary');summary?.focus({preventScroll:true});}
   });
   const focusObserver=new MutationObserver(()=>{
@@ -456,4 +496,4 @@ function swiflyTvFocusNavigation() {
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 }
 
-module.exports={tvSource:()=>`(${swiflyTvFocusNavigation.toString()})();`,tvAssetScript:()=>'<script defer data-sv-tv-navigation src="/assets/clean/tv.js?v=261"></script>',tvHead:()=>`<script data-sv-tv-gate>(${tvGate.toString()})();</script>`,tvScript:()=>`<script data-sv-tv-navigation>(${swiflyTvFocusNavigation.toString()})();</script>`};
+module.exports={tvSource:()=>`(${swiflyTvFocusNavigation.toString()})();`,tvAssetScript:()=>'<script defer data-sv-tv-navigation src="/assets/clean/tv.js?v=267"></script>',tvHead:()=>`<script data-sv-tv-gate>(${tvGate.toString()})();</script>`,tvScript:()=>`<script data-sv-tv-navigation>(${swiflyTvFocusNavigation.toString()})();</script>`};

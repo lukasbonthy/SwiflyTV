@@ -35,3 +35,9 @@ test('invalid backup file fails visibly without opening a review or changing the
 test('actual server account change closes a private import review before any imported write',{skip},async t=>{
  const f=await open(t),p=f.page;await p.evaluate(()=>{const incoming=SwiflyAccountData.fromState({'movieverse.watchlist':[{id:'42',type:'movie',title:'Old private title'}]});SwiflyAccountBackup.review(incoming,'Earlier browser library');});assert(await p.locator('[data-backup-dialog]').isVisible());const response=await f.context.request.post(origin+'/api/connect/auth/signup',{data:{name:'Other',email:'other-'+Date.now()+'@example.com',password:'correct-horse-123'}});assert.equal(response.status(),201);await p.evaluate(()=>SwiflyAccount.revalidate());assert(await p.locator('[data-backup-dialog]').isHidden());assert.equal(await p.evaluate(()=>SwiflyLibrary.read().watchlist.length),0);assert.equal(await p.locator('[data-backup-confirm]').isDisabled(),true);
 });
+
+test('account import rejects corrupt wallpaper images before showing a confirmation',{skip},async t=>{
+ const {page:p}=await open(t);const png=await p.evaluate(()=>{const c=document.createElement('canvas');c.width=c.height=2;c.getContext('2d').fillRect(0,0,2,2);return c.toDataURL('image/png');});const bytes=Buffer.from(png.split(',')[1],'base64');bytes[26]=255;
+ await p.evaluate(data=>{const b=SwiflyAccountData.fromState({'movieverse.watchlist':[{id:'42',type:'movie',title:'Incoming'}]});b.profiles[0].appearance={version:2,values:{wallpaper:'upload',wallpaperData:data},looks:[]};return SwiflyAccountBackup.review(b,'Corrupt wallpaper');},'data:image/png;base64,'+bytes.toString('base64'));
+ assert.equal(await p.locator('[data-backup-status]').getAttribute('data-error'),'true');assert(await p.locator('[data-backup-dialog]').isHidden());assert.equal(await p.evaluate(()=>SwiflyLibrary.read().watchlist.length),0);
+});

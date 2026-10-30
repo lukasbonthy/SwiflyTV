@@ -5,12 +5,13 @@ const icons = {
   layout:'M3 4h18v5H3zM3 13h5v7H3zM11 13h5v7h-5zM19 13h2v7h-2z',
   motion:'M3 7h10M3 12h7M3 17h10M15 5l6 7-6 7',
   navigation:'M4 5h16M4 12h16M4 19h16',player:'M4 4h16v16H4zM10 8l6 4-6 4z',atmosphere:'M3 17c3-10 6 8 9-2s6 8 9-2',hud:'M4 4h16v13H8l-4 4z',devices:'M3 4h18v13H3zM8 21h8M12 17v4',access:'M12 3h.01M4 8h16M12 8v6M8 21l4-7 4 7',themes:'M4 4h7v7H4zM14 4h6v7h-6zM4 14h7v6H4zM14 14h6v6h-6z',
-  close:'m6 6 12 12M18 6 6 18',
+  wallpaper:'M3 4h18v16H3zM3 16l5-5 4 4 3-3 6 6M16 8h.01',close:'m6 6 12 12M18 6 6 18',
   check:'m5 12 4 4L19 6',
   arrow:'M7 17 17 7M7 7h10v10'
 };
-const icon = name => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+icons[name]+'"/></svg>';
-const choices = (name, values, variant='') => '<div class="stChoices '+variant+'" role="group" aria-label="'+name+'">'+values.map(([value,label,extra])=>'<button type="button" class="stChoice" data-st-field="'+name+'" data-st-value="'+value+'" aria-pressed="false">'+(extra||'')+'<span>'+label+'</span></button>').join('')+'</div>';
+const icon = name => '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#stIcon-'+name+'"/></svg>';
+const iconDefinitions = () => '<svg width="0" height="0" aria-hidden="true" style="position:absolute;pointer-events:none"><defs>'+Object.entries(icons).map(([name,d])=>'<symbol id="stIcon-'+name+'" viewBox="0 0 24 24" class="stIconGlyph"><path d="'+d+'"/></symbol>').join('')+'</defs></svg>';
+const choices = (name, values, variant='') => '<div class="stChoices '+variant+'" role="group" aria-label="'+name+'">'+values.map(([value,label,extra])=>'<button type="button" class="stChoice" data-st-field="'+name+'" data-st-value="'+value+'">'+(extra||'')+'<span>'+label+'</span></button>').join('')+'</div>';
 const reset = name => '<button type="button" class="stSectionReset" data-st-reset-section="'+name+'">Reset this section</button>';
 const toggle = (name,label,copy='') => '<label class="stToggleRow"><span><b>'+label+'</b><small>'+copy+'</small></span><input type="checkbox" data-st-input="'+name+'" role="switch"></label>';
 const select = (name,label,values,copy='') => '<label class="stInputRow"><span><b>'+label+'</b>'+(copy?'<small>'+copy+'</small>':'')+'</span><select data-st-input="'+name+'">'+values.map(v=>'<option value="'+v[0]+'">'+v[1]+'</option>').join('')+'</select></label>';
@@ -20,13 +21,15 @@ const color = (name,label) => advanced('<label class="stInputRow stColorRow"><sp
 const title = (number,name,heading,copy) => '<div class="stPanelTitle"><span>'+number+' / '+name+'</span><h2>'+heading+'</h2><p>'+copy+'</p></div>';
 const group = (label,description,content,advancedOnly=false) => '<section class="stGroup"'+(advancedOnly?' data-st-advanced hidden':'')+'><div class="stGroupHead"><h3>'+label+'</h3><p>'+description+'</p></div>'+content+'</section>';
 const layoutDemo = value => '<span class="stLayoutDemo stLayoutDemo--'+value+'" aria-hidden="true"><i></i><i></i><i></i><i></i></span>';
-const preset = (value,title,copy,season='') => '<button type="button" class="stPreset stPreset--'+value+'" data-st-preset="'+value+'" data-st-field="themeId" data-st-value="'+value+'" aria-pressed="false"><span class="stPresetArt" aria-hidden="true"><span class="stThemeScene"></span><span class="stThemeSignature">SWIFLY<span>'+title+'</span></span><span class="stThemePalette"><i></i><i></i><i></i></span><b>'+icon('check')+'</b>'+(season?'<em>'+season+'</em>':'')+'</span><strong>'+title+'</strong><small>'+copy+'</small></button>';
+const preset = (value,title,copy,season='') => '<button type="button" class="stPreset stPreset--'+value+'" data-st-preset="'+value+'" data-st-field="themeId" data-st-value="'+value+'"><span class="stPresetArt" aria-hidden="true"><span class="stThemeScene"></span><span class="stThemeSignature">SWIFLY<span>'+title+'</span></span><span class="stThemePalette"><i></i><i></i><i></i></span><b>'+icon('check')+'</b>'+(season?'<em>'+season+'</em>':'')+'</span><strong>'+title+'</strong><small>'+copy+'</small></button>';
+const wallpaper = (value,label,copy) => '<button type="button" class="stWallpaperChoice stWallpaperChoice--'+value+'" data-st-field="wallpaper" data-st-value="'+value+'"><span class="stWallpaperSwatch" aria-hidden="true"><i>'+icon('check')+'</i></span><b>'+label+'</b><small>'+copy+'</small></button>';
 function studioMarkup() {
-  return `<div class="svAuroraBackground" aria-hidden="true"><i class="svAuroraGlow"></i><i class="svAuroraRibbon svAuroraRibbon--first"></i><i class="svAuroraRibbon svAuroraRibbon--second"></i><i class="svAuroraRibbon svAuroraRibbon--third"></i></div>
-  <div class="svThemeBackdrop" aria-hidden="true"></div>
+  return `${iconDefinitions()}<div class="svWallpaperBackdrop" aria-hidden="true"></div><div class="svThemeBackdrop" aria-hidden="true"></div>
+  <div class="svAuroraBackground" aria-hidden="true"><i class="svAuroraGlow"></i><i class="svAuroraRibbon svAuroraRibbon--first"></i><i class="svAuroraRibbon svAuroraRibbon--second"></i><i class="svAuroraRibbon svAuroraRibbon--third"></i></div>
   <div class="svAppearanceTexture" aria-hidden="true"></div>
   <dialog id="controlPanel" class="svStudioDialog" data-st-editor-mode="simple" aria-labelledby="stTitle" aria-describedby="stDescription">
     <div class="stWorkspace">
+      <div class="stStudioAtmosphere" aria-hidden="true"><i class="svAuroraRibbon svAuroraRibbon--first"></i></div>
       <header class="stHeader">
         <div class="stBrand"><span class="stMark">${icon('studio')}</span><div><h2 id="stTitle">Swifly Studio</h2><p id="stDescription">Your screen. Your style.</p></div></div>
         <label class="stModeToggle"><input type="checkbox" data-st-advanced-toggle aria-describedby="stModeNote"><span>Advanced controls</span><i aria-hidden="true"></i></label>
@@ -36,7 +39,7 @@ function studioMarkup() {
         <aside class="stSidebar">
           <span class="stSidebarLabel">PERSONALIZE</span>
           <div class="stNavigation" role="tablist" aria-label="Studio sections" aria-orientation="vertical">
-            ${[['looks','Themes','look'],['layout','Homepage','layout'],['navigation','Navigation','navigation'],['player','Player','player'],['atmosphere','Atmosphere','atmosphere'],['hud','Social & AI','hud'],['motion','Motion & loading','motion'],['devices','This screen','devices'],['access','Comfort','access'],['themes','Saved looks','themes']].map(([value,label,glyph],index)=>`<button type="button" id="stTab-${value}" role="tab" data-st-tab="${value}" data-st-tab-link="${value}"${['navigation','atmosphere','hud','motion'].includes(value)?' data-st-advanced-tab hidden':''} aria-controls="stPanel-${value}" aria-selected="${index===0}" tabindex="${index===0?0:-1}">${icon(glyph)}<span>${label}</span></button>`).join('')}
+            ${[['looks','Themes','look'],['wallpapers','Wallpapers','wallpaper'],['layout','Homepage','layout'],['navigation','Navigation','navigation'],['player','Player','player'],['atmosphere','Atmosphere','atmosphere'],['hud','Social & AI','hud'],['motion','Motion & loading','motion'],['devices','This screen','devices'],['access','Comfort','access'],['themes','Saved looks','themes']].map(([value,label,glyph],index)=>`<button type="button" id="stTab-${value}" role="tab" data-st-tab="${value}" data-st-tab-link="${value}"${['navigation','atmosphere','hud','motion'].includes(value)?' data-st-advanced-tab hidden':''} aria-controls="stPanel-${value}" aria-selected="${index===0}" tabindex="${index===0?0:-1}">${icon(glyph)}<span>${label}</span></button>`).join('')}
           </div>
           <div class="stSidebarNote"><span data-st-owner-label>This browser · Guest</span><p>Preview a change.<br>Save when it feels right.</p></div>
           <button type="button" class="stReset" data-st-reset>Restore defaults</button>
@@ -46,7 +49,7 @@ function studioMarkup() {
           <section id="stPanel-looks" class="stPanel" role="tabpanel" aria-labelledby="stTab-looks">
             <div class="stPanelTitle"><span>MAKE IT YOURS</span><h2>A different kind of movie night.</h2><p>Choose a scene. Your whole screen changes with it.</p></div>
             ${toggle('themeDetails','Theme details','Petals, webs, snow and the finishing touches that make each theme its own.')}
-            <div class="stThemeMobilePreview" data-st-theme-mobile-preview aria-hidden="true"><b>SWIFLYTV</b><span>Your theme, brought to life.</span><small>LIVE PREVIEW</small></div>
+            <div class="stThemeMobilePreview" data-st-theme-mobile-preview aria-hidden="true"><i class="stPreviewAurora"><i class="svAuroraRibbon svAuroraRibbon--first"></i></i><b>SWIFLYTV</b><span>Your theme, brought to life.</span><small>LIVE PREVIEW</small></div>
             <div class="stPresets" role="group" aria-label="Curated themes">
               ${preset('pure','Swifly Original','Pearl accents. Northern light.')}${preset('blossom','Blossom','Falling petals. Flowering branches.')}${preset('halloween','Halloween','Corner webs. Hanging spiders.','SEASONAL')}${preset('winter','Winter Lights','Falling snow. Warm string lights.','SEASONAL')}${preset('cinema','Cinema','Projector dust. Film-frame details.')}${preset('midnight','Midnight','Starlight. A passing meteor.')}${preset('forest','Forest','Drifting leaves. Woodland ferns.')}${preset('focus','Focus','Pure graphite. Nothing in the way.')}
             </div>
@@ -68,6 +71,17 @@ function studioMarkup() {
             <p id="stColorError" class="stInlineMessage" data-st-color-error role="status" aria-live="polite"></p>
             <p class="stInlineMessage" data-st-contrast-warning role="status" aria-live="polite" hidden></p>
             ${group('Glass detail','One material, with safe limits for the whole interface.',range('glassOpacity','Surface opacity',15,95)+range('glassBlur','Blur',0,28,'px')+range('glassEdge','Edge strength',0,100)+range('glassGlow','Highlight intensity',0,30)+reset('glass'),true)}
+          </section>
+          <section id="stPanel-wallpapers" class="stPanel" role="tabpanel" aria-labelledby="stTab-wallpapers" hidden>
+            <div class="stPanelTitle"><span>SET THE SCENE</span><h2>A window into your world.</h2><p>A canvas behind the interface. Your theme adds the finishing touches.</p></div>
+            <div class="stWallpaperPreview" aria-label="Wallpaper preview"><small>YOUR SWIFLY, YOUR SCENE</small><strong>Stay a little longer.</strong><span>Soft surfaces. Clear text. A view that feels like you.</span><i aria-hidden="true">▶ &nbsp; Movie night</i></div>
+            <div class="stWallpapers" role="group" aria-label="Wallpaper collection">${wallpaper('theme','Match my theme','The original theme canvas')}${wallpaper('aurora','Northern light','The original flowing Aurora')}${wallpaper('moonlit','Moonlit woods','Violet mist and a quiet moon')}${wallpaper('winter','Winter evening','Snow, cabins and warm light')}${wallpaper('velvet','Velvet dusk','Soft color, no photograph')}${wallpaper('upload','Your wallpaper','A picture of your own')}</div>
+            <section class="stWallpaperUpload"><div><h3>Bring your own view.</h3><p>PNG, JPG or WebP · up to 8 MB. Optimized on this device.</p></div><label class="stWallpaperUploadButton">Choose image<input type="file" data-st-wallpaper-file accept="image/png,image/jpeg,image/webp" aria-label="Upload a custom wallpaper"></label><p data-st-wallpaper-status role="status" aria-live="polite">Saved for this profile on this browser. Included in theme exports and account backups.</p><button type="button" class="stTextAction" data-st-wallpaper-remove hidden>Remove uploaded image</button></section>
+            ${group('Make room for the story','Keep titles and controls clear.','<div class="stWallpaperTreatments" role="group" aria-label="Wallpaper readability"><button type="button" data-st-wallpaper-treatment="cinema">Cinema <small>Quiet & dark</small></button><button type="button" data-st-wallpaper-treatment="balanced">Balanced <small>A little of both</small></button><button type="button" data-st-wallpaper-treatment="scenic">Scenic <small>More of the view</small></button></div>')}
+            ${toggle('wallpaperAurora','Aurora over the wallpaper','Keep the original ribbons above your image. Still on TV and with Reduce motion.')}
+            ${toggle('wallpaperTint','Use colors from the wallpaper','Coordinate accents and surfaces. Your manual colors are kept underneath.')}
+            ${group('Framing & light','Adjust the picture without moving the interface.',range('wallpaperDim','Wallpaper dimming',40,85)+range('wallpaperBlur','Wallpaper softness',0,12,'px')+range('wallpaperX','Horizontal framing',0,100)+range('wallpaperY','Vertical framing',0,100)+color('wallpaperColor','Wallpaper palette')+reset('wallpaper'),true)}
+            <p class="stHelp">Changing themes keeps your wallpaper. High contrast and Minimal mode use a clean canvas while keeping your choice saved.</p>
           </section>
           <section id="stPanel-layout" class="stPanel" role="tabpanel" aria-labelledby="stTab-layout" hidden>
             <div class="stPanelTitle"><span>02 / LAYOUT</span><h2>Room for your favorites.</h2><p>Change the gallery without changing what you watch.</p></div>
@@ -179,6 +193,6 @@ function studioMarkup() {
       </div>
       <footer class="stFooter"><p role="status" aria-live="polite" data-st-status>No unsaved changes</p><div><button type="button" class="stTextAction" data-st-reload hidden>Reload saved</button><button type="button" class="stCancel" data-st-cancel>Cancel</button><button type="button" class="stSave" data-st-save disabled>Save changes ${icon('arrow')}</button></div></footer>
     </div>
-  </dialog>`;
+  </dialog>`.replace(/>\s+</g,'><').trim();
 }
 module.exports={studioMarkup};

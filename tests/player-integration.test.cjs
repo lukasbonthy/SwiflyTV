@@ -40,8 +40,8 @@ test('The normal watch route renders one native movie player with shared assets 
  assert.equal(d.querySelectorAll('.svPlayerPage [data-player-video]').length,1);
  const preview=d.querySelector('[data-call-local] video');assert(preview?.hasAttribute('muted'));assert(preview?.closest('[hidden]'),'The optional camera preview starts hidden');
  assert.equal(d.querySelector('.svPlayerPage').dataset.playerId,'101');assert.equal(d.querySelector('h1').textContent.trim(),'Arrival');
- assert(d.querySelector('script[src="/assets/player/player.js?v=261"]'));assert(d.querySelector('script[src="/assets/player/watch-party.js?v=2"]'));
- assert(d.querySelector('link[href="/assets/player/player.css?v=262"]'));assert(d.querySelector('dialog.svWatchPartyDialog'));
+ assert(d.querySelector('script[src="/assets/player/player.js?v=267"]'));assert(d.querySelector('script[src="/assets/player/watch-party.js?v=2"]'));
+ assert(d.querySelector('link[href="/assets/player/player.css?v=267"]'));assert(d.querySelector('dialog.svWatchPartyDialog'));
  assert.equal(d.querySelector('.dsProxyVideoWaitingShell'),null);assert.equal(d.querySelector('.svPartyHub'),null);
  assert.equal(d.querySelector('[data-sv-player-back]').getAttribute('href'),'/movie/101');
 });
@@ -136,9 +136,9 @@ test('Social navigation opens the integrated Party Hub while movie catalog party
  assert(social.querySelector('main.svPartyHub .partyHero'),'Social link should show the proper cinematic Party Hub');
  assert(social.querySelector('.partyNavigation [data-tab="rooms"]'));
  assert(social.querySelector('link[href="/assets/clean/experience.css?v=262"]'));
- assert(social.querySelector('link[href="/assets/player/player.css?v=262"]'));
+ assert(social.querySelector('link[href="/assets/player/player.css?v=267"]'));
  const scripts=[...social.querySelectorAll('script[src]')].map(node=>node.getAttribute('src'));
- const player=scripts.indexOf('/assets/player/player.js?v=261'),party=scripts.findIndex(src=>src.startsWith('/assets/party/party.js?'));
+ const player=scripts.indexOf('/assets/player/player.js?v=267'),party=scripts.findIndex(src=>src.startsWith('/assets/party/party.js?'));
  assert(player>=0&&party>player,'Party Hub must load the shared controller before its room bridge');
  const template=social.getElementById('partyPlayerTemplate');assert(template?.content.querySelector('.svPlayerEmbedded [data-player-video]'));
  assert.equal(social.querySelector('script[src*="video.js"]'),null,'Party Hub no longer loads a duplicate playback UI');
@@ -192,7 +192,7 @@ test('main catalog, signup and login all have the ambient scene without compromi
    const aurora=d.querySelector('.svAuroraBackground');
    assert(aurora,route+' should mount shared aurora');
    assert.equal(d.querySelector('script[src*="/assets/clean/aurora-shader.js"]'),null,route+' should not load WebGL aurora');
-   assert(d.querySelector('link[href="/assets/clean/aurora.css?v=260"]'),route+' should load original animated SVG');
+   assert(d.querySelector('link[href^="/assets/clean/aurora.css?"]'),route+' should load original animated SVG');
    assert.equal(aurora.querySelectorAll('.svAuroraRibbon').length,3,route+' should mount moving curtains');
    if(route==='/signup'||route==='/login'){
      assert(d.querySelector('.dsAuthBrand'),route+' account branding missing');
@@ -237,7 +237,7 @@ test('the cinema image fade loads after Aurora and Welcome styles',async()=>{
    assert.equal(response.status,200,route+' should load');
    const d=parse(await response.text()).window.document;
    const styles=[...d.querySelectorAll('link[rel="stylesheet"]')].map(link=>link.getAttribute('href'));
-   const aurora=styles.findIndex(v=>v.includes('/assets/clean/aurora.css?v=260'));
+   const aurora=styles.findIndex(v=>v.includes('/assets/clean/aurora.css?'));
    const fade=styles.findIndex(v=>v.includes('/assets/clean/hero-fade.css?v=206'));
    assert(aurora>=0 && fade>aurora,route+' fade must follow aurora');
    if(route==='/welcome'){

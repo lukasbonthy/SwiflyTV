@@ -16,7 +16,7 @@ function click(env,selector){const element=env.window.document.querySelector(sel
 test('Studio is an accessible workspace with preview, grouped controls and explicit save actions',()=>{
   const env=browser(shell),d=env.window.document;
   assert(d.querySelector('dialog#controlPanel[aria-labelledby]'),'Studio should use a dialog');
-  assert.equal(d.querySelectorAll('#controlPanel [role="tab"]').length,10);
+  assert.equal(d.querySelectorAll('#controlPanel [role="tab"]').length,11);
   assert(d.querySelector('#controlPanel [data-st-preview]'));assert(d.querySelector('[data-st-save]'));assert(d.querySelector('[data-st-cancel]'));
   assert(!shell.includes('function applyTheme(theme)'), 'The obsolete inline Studio controller must be replaced');env.finish();
 });
@@ -50,7 +50,7 @@ test('Preset selection preserves an existing Reduce motion preference',()=>{
 test('Keyboard tabs switch panels and expose the selected tab',()=>{
   const env=setup(),w=env.window,d=w.document;click(env,'#controlToggleTop');const first=d.querySelector('[role="tab"]');first.focus();
   first.dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true,cancelable:true}));
-  const active=d.activeElement;assert.equal(active.dataset.stTab,'layout');assert.equal(active.getAttribute('aria-selected'),'true');
+  const active=d.activeElement;assert.equal(active.dataset.stTab,'wallpapers');assert.equal(active.getAttribute('aria-selected'),'true');
   assert.equal(d.getElementById(active.getAttribute('aria-controls')).hidden,false);assert.equal(first.getAttribute('aria-selected'),'false');env.finish();
 });
 test('Reset only previews defaults and never clears sessions or saved titles',()=>{

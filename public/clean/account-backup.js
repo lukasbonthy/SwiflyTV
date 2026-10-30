@@ -24,7 +24,7 @@
    q('[data-backup-review-status]').textContent='Counts show new entries. Matching records are merged without duplicates.';q('[data-backup-confirm]').disabled=busy;
   }
   function updatePlan(){try{renderCounts(makePlan());}catch(error){q('[data-backup-review-status]').textContent=error.message;q('[data-backup-confirm]').disabled=true;}}
-  function review(backup,label){
+  function renderReview(backup,label){
    if(!identityValid()||!A.user)throw Error('Sign in before importing personal data.');const current=D.capture(localStorage,{owner:owner()}),normalized=D.validate(backup),selected=D.defaultMapping(normalized,current);
    generation++;preview={backup:normalized,owner:owner(),profile:selectedProfile()};opener=document.activeElement;q('[data-backup-review-source]').textContent=label;q('[data-backup-destination]').textContent='Importing into '+A.user.name+'’s account. Choose a destination for each backup profile.';q('[data-backup-personalization]').checked=false;
    const host=q('[data-backup-mapping]');host.replaceChildren();
@@ -32,6 +32,14 @@
     for(const existing of current.profiles){const option=node('option','',existing.profile.name+' · merge');option.value=existing.profile.id;select.append(option);}const fresh=node('option','','Create profile: '+entry.profile.name);fresh.value='new';select.append(fresh);select.value=selected[entry.profile.id];row.append(copy,select);host.append(row);
    }
    updatePlan();if(!dialog.open)dialog.showModal();q('[data-backup-mapping] select')?.focus();
+  }
+  async function review(backup,label){
+   dismiss();const token=++generation,identity=owner(),profile=selectedProfile();try{
+    if(!identityValid()||!A.user)throw Error('Sign in before importing personal data.');const normalized=D.validate(backup),C=window.SwiflyStudioConfig,images=[];
+    for(const entry of normalized.profiles)if(entry.appearance){const record=C.unpackRecord(entry.appearance,{strict:true});for(const v of [record.values,...record.looks.map(v=>v.values)])if(v.wallpaperData)images.push(v.wallpaperData);}
+    if(images.length){if(!window.SwiflyWallpapers)throw Error('Wallpaper tools are still loading. Try again.');await window.SwiflyWallpapers.verifyImages(images);}
+    if(token!==generation||identity!==owner()||profile!==selectedProfile()||!identityValid())return;renderReview(normalized,label);
+   }catch(error){if(token===generation&&identity===owner()&&profile===selectedProfile())status(error.message,true);}
   }
   function showSources(){
    if(!identityValid()||!A.user)return;sourceRows=D.sources(localStorage,A.user);const host=q('[data-backup-source-list]');host.replaceChildren();q('[data-backup-sources]').hidden=false;

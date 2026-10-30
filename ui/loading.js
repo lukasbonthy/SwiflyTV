@@ -68,7 +68,8 @@ function siteLoadingGate(){
  if(!ready)document.addEventListener('DOMContentLoaded',()=>{ready=true;render();settle();},{once:true});else settle();
 }
 
-function loadingHead(){return `<style data-sv-loading-style>${loadingStyles}</style><script data-sv-loading-gate>(${siteLoadingGate.toString()})();</script>`;}
+const loadingSource=require('terser').minify_sync('('+siteLoadingGate.toString()+')();',{ecma:2020}).code;
+function loadingHead(){return `<style data-sv-loading-style>${loadingStyles}</style><script data-sv-loading-gate>${loadingSource}</script>`;}
 function loadingMarkup(){
  const cards=Array.from({length:8},()=>'<div class="svLoadCard"><i class="svLoadBlock svLoadPoster"></i><i class="svLoadBlock svLoadCardTitle"></i><i class="svLoadBlock svLoadCardMeta"></i></div>').join('');
  const rows=Array.from({length:4},()=>'<div class="svLoadPerson"><i class="svLoadBlock svLoadAvatar"></i><span><i class="svLoadBlock svLoadLine"></i><i class="svLoadBlock svLoadLine"></i></span></div>').join('');

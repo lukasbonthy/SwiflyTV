@@ -37,7 +37,6 @@ body.svCleanShell .svThemeBackdrop {
   opacity:.76;
 }
 body.svCleanShell:is([data-st-theme-id="halloween"],[data-st-theme-id="winter"],[data-st-theme-id="cinema"],[data-st-theme-id="midnight"],[data-st-theme-id="forest"]) .svThemeBackdrop {display:block}
-body.svCleanShell:is([data-st-theme-id="halloween"],[data-st-theme-id="winter"]) :is(.svAuroraBackground,.stPreviewAurora) {display:none}
 body.svCleanShell[data-st-custom-colors="true"] :is(.dsPlainPage,.dsPageHero,.dsSearchPage,.dsWatchlistPage,.dsAccountPage,.dsProfilesPage,.dsContent) {background:transparent !important}
 body.svCleanShell[data-st-custom-colors="true"] .footer {background:var(--st-canvas) !important}
 
