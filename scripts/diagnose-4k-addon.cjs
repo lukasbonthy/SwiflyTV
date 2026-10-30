@@ -10,9 +10,9 @@
   for(const row of rows){
     const provider=String(row.behaviorHints?.doomProviderId||'unspecified');
     const title=String(row.name||'');
-    const q=/\\b(?:2160p|4k|uhd)\\b/i.test(title)?'4K':/\\b1080p\\b/i.test(title)?'1080p':'other';
+    const q=/\b(?:2160p|4k|uhd)\b/i.test(title)?'4K':/\b1080p\b/i.test(title)?'1080p':'other';
     let ext='unknown';
-    try{ext=new URL(row.url).pathname.toLowerCase().match(/\\.([a-z0-9]+)$/)?.[1]||'extensionless';}catch{}
+    try{ext=new URL(row.url).pathname.toLowerCase().match(/\.([a-z0-9]+)$/)?.[1]||'extensionless';}catch{}
     byProvider[provider]=(byProvider[provider]||0)+1;
     byExtension[ext]=(byExtension[ext]||0)+1;
     quality[q]=(quality[q]||0)+1;
