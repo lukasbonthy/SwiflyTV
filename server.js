@@ -4663,7 +4663,10 @@ async function localNuvioGetStreams({ tmdbId, mediaType, season, episode, signal
   const jobs = bridgeEnabled
     ? [{provider:'nuvio-4k-bridge',id:'all',timeoutMs:45000},
       ...NUVIO_PROVIDER_ORDER.filter(id=>!isBridge(id)).map(id=>({provider:`nuvio-${id}`,id,timeoutMs:NUVIO_PROVIDER_TIMEOUT_MS}))]
-    : NUVIO_PROVIDER_ORDER.map(id=>({provider:`nuvio-${id}`,id,timeoutMs:isBridge(id)?45000:NUVIO_PROVIDER_TIMEOUT_MS}));
+    // Normal playback has no resolved IMDb ID. Do not send invalid tmdb:
+    // identifiers to an IMDb-only addon or clog its expensive scraper queue.
+    : NUVIO_PROVIDER_ORDER.filter(id=>!isBridge(id)||Boolean(imdbId))
+        .map(id=>({provider:`nuvio-${id}`,id,timeoutMs:isBridge(id)?45000:NUVIO_PROVIDER_TIMEOUT_MS}));
   return runProviderRace({
     jobs, signal, timeoutMs: fourKOnly ? 50000 : NUVIO_TIMEOUT_MS,
     hedgeDelayMs: 250, maxConcurrent: 2, now: () => Date.now(), setTimeout, clearTimeout,
