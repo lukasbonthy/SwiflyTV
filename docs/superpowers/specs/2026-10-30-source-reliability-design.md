@@ -1,0 +1,11 @@
+# Source reliability and 4K evidence
+
+The user wants research into Nuvio-style software with genuine 4K capability and fixes to SwiflyTV's existing sources. Preserve the provider roster, all player/account/Studio features, authorization checks and public-address/credential boundaries. Research and compare authorized-media integrations; do not add piracy indexes, bypass stream protection, scrape premium cookies, or imply a software package supplies a licensed catalog.
+
+Fix shared failures demonstrated in the current implementation: normalize explicit 4K/HDR/numeric-height/dimension metadata without inventing resolution; retain Auto when no concrete resolution is reported; preserve audio preference ordering. Permit bounded prefix verification when a public media host rejects HEAD and ignores Range, while ordinary JSON/manifest fetches keep strict body-size rejection. Reject HTML and fingerprinted protection clips, including partial replies, as unavailable. Failed lazy alternate verification should cool down for 1000ms then permit one shared retry; successful verification stays cached, expiry is enforced, and credentials remain server-side.
+
+Approaches considered: add more provider names immediately (cannot repair shared verification or establish media rights); replace the player/provider architecture (unnecessary scope and regression risk); repair shared source handling and provide a researched comparison (chosen implementation call, directly addresses observed bugs). No new provider service or account is provisioned.
+
+Use regression tests observed failing before implementation; local HTTP/media fixtures use authorized/generated media. Exercise real browser playback and existing source/proxy/player checks. Publish a reviewable branch and merge checked changes under the user's standing release authorization. Report live validation separately from fixtures and do not claim every external host works.
+
+Real-browser validation includes an original generated 3840×2160 VP9/WebM clip served by a HEAD-rejecting, Range-ignoring local fixture. Show explicit 2160p source/manifest metadata as “4K (2160p)” in picture-quality and server controls; keep adaptive Auto and all other controls. This label reports metadata and does not independently certify provider claims or HDR. Bump the player script cache key when shipping this UI change.

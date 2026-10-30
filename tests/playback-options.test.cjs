@@ -83,3 +83,33 @@ test('pinned VidEasy audio labels retain known language while original audio and
   assert.equal(source('VidEasy | 2160p | Original Audio').audioLanguage,'');
   assert.equal(source('Movie title | English').audioLanguage,'');
 });
+
+for(const [label,metadata,wanted] of [
+  ['4K with HDR',{quality:'4K HDR10'},'2160p'],
+  ['UHD with codec',{quality:'UHD HEVC'},'2160p'],
+  ['8K label',{quality:'8K SDR'},'4320p'],
+  ['numeric quality',{quality:2160},'2160p'],
+  ['numeric resolution',{resolution:2160},'2160p'],
+  ['numeric height',{height:2160},'2160p'],
+  ['string height',{height:'2160'},'2160p'],
+  ['pixel dimensions',{resolution:'3840x2160'},'2160p'],
+  ['cropped dimensions',{resolution:'3840 × 1600'},'1600p'],
+  ['height overrides marketing label',{height:720,quality:'4K HDR'},'720p'],
+  ['4K display name',{name:'Personal library | 4K HDR | English'},'2160p'],
+  ['explicit adaptive Auto',{quality:'auto',name:'Library | 2160p available'},'auto'],
+  ['unknown labels',{quality:'Original'},''],
+  ['year and frame rate',{quality:'2026 remaster 60fps'},''],
+  ['zero height',{height:0},''],
+  ['zero-width dimensions',{resolution:'000x2160'},''],
+  ['nonfinite height',{height:Infinity},''],
+  ['giant dimensions',{resolution:'99999x99999'},'']
+])test('source quality preserves '+label,()=>{
+ const item=normalizePlaybackSource({url:'https://media.example/licensed-film.mp4',...metadata});assert.equal(item.quality,wanted);
+});
+test('4K metadata ranks above HD without replacing the requested audio language',()=>{
+ const items=preferPlaybackSources([
+  {url:'https://media.example/hd.mp4',quality:'1080p',audioLanguage:'en'},
+  {url:'https://media.example/uhd.mp4',quality:'4K HDR',audioLanguage:'en'},
+  {url:'https://media.example/8k.mp4',quality:'8K',audioLanguage:'hi'}
+ ]);assert.deepEqual(items.map(v=>v.url),['https://media.example/uhd.mp4','https://media.example/hd.mp4','https://media.example/8k.mp4']);
+});
