@@ -4651,7 +4651,7 @@ async function localNuvioGetStreams({ tmdbId, mediaType, season, episode, signal
     isPlayable: result => result?.ok && result.source?.mediaVerified === true && apiHasEmbeddableFileExtensionOrHlsProxy(result.source.url, result.source)
       && (!fourKOnly || has4kSourceQuality(result.source)),
     run: (job, { signal: providerSignal, timeoutMs }) => resolveNuvioProvider({
-      provider: job.id, tmdbId, mediaType, season, episode, signal: providerSignal, timeoutMs,
+      provider: job.id, tmdbId, mediaType, season, episode, signal: providerSignal, timeoutMs, require4k: fourKOnly,
       isNonMediaUrl: value => apiLooksDefinitelyNonMediaUrl(value, { allowManifestEndpoint: true })
     })
   });
