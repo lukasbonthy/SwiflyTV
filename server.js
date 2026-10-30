@@ -580,6 +580,13 @@ function apiLooksPlayable(url = "", node = {}) {
   // Main target: actual HLS .m3u8 URLs.
   if (apiIsM3u8Url(value) || apiNodeSaysHls(value, node)) return true;
 
+  // A signed download endpoint can itself serve a real video. Only exempt it
+  // from page-name heuristics when its HTTP response was verified as MP4/M4V
+  // and it will be served through our bounded file proxy. Non-media URL and
+  // protection checks above still apply.
+  if (node?.mediaVerified === true && node?.requiresProxy === true
+      && ["mp4","m4v"].includes(apiVerifiedMediaFormat(value, node))) return true;
+
   // Secondary fallback: non-download media URLs only.
   if (apiLooksLikeDownloadUrl(value, node)) return false;
   if (!apiLooksStreamLike(value, node)) return false;
@@ -1432,7 +1439,7 @@ function apiSourceToProxyResult({ source, raw, provider, type, id, season = "", 
   }
 
   const needsFileProxy = !isHls && source.mediaVerified === true && source.requiresProxy === true
-    && apiVerifiedMediaFormat(originalUrl, source) === "mp4";
+    && ["mp4","m4v"].includes(apiVerifiedMediaFormat(originalUrl, source));
   const hlsProxy = (isHls || needsFileProxy) && hlsProxyEnabled()
     ? registerHlsProxySource(originalUrl, source.headers || {}, {
         movieId: String(id || ""),
