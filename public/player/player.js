@@ -373,6 +373,7 @@
     // from adaptive HLS picture quality. No server is advertised as available
     // until the backend has provided a usable playback URL.
     function updateServers() {
+      const scan=find('find-4k');if(scan)scan.disabled=serverChanging||!sourceData;
       const list=find('server-list');if(!list)return;
       list.replaceChildren();
       if(!sourceOptions.length) {
@@ -441,6 +442,35 @@
         if(status)status.textContent=message;
         showToast(message);
       }finally{serverChanging=false;if(button)button.disabled=!find('server-provider')?.value;updateServers();}
+    }
+    async function find4k() {
+      if(serverChanging||destroyed||suspended||!sourceData)return;
+      const status=find('server-message'),button=find('find-4k');
+      const position=Math.max(0,number(video.currentTime,0)),shouldPlay=pendingPlay||!video.paused;
+      serverChanging=true;if(button)button.disabled=true;
+      if(status)status.textContent='Searching other providers for verified 4K (2160p)…';
+      updateServers();
+      try {
+        const query=new URLSearchParams();
+        if(mediaType==='tv'){query.set('season',app.dataset.playerSeason||'1');query.set('episode',app.dataset.playerEpisode||'1');}
+        const suffix=query.size?'?'+query.toString():'';
+        const payload=await requestJson('/api/player/find-4k/'+encodeURIComponent(mediaType)+'/'+encodeURIComponent(mediaId)+suffix,35000);
+        const next=chooseSource(payload);
+        if(payload.status!=='ok'||payload.fourKMatch!==true||!next)throw new Error('unavailable');
+        sourceData={...payload};sourceOptions=prepareSources(payload,next);
+        sourceSnapshotKey=snapshotKey(payload,next,mediaId,mediaType);
+        const choice=sourceOptions.find(item=>item.playbackUrl===next);
+        const applied=await attachSource(next,dataForSource(choice||{playbackUrl:next}),{position,shouldPlay});
+        if(!applied)throw new Error('unavailable');
+        if(status)status.textContent='Connected to a 4K-labeled stream.';
+        closeMenu(find('servers'));
+      } catch(error) {
+        const message=error?.httpStatus===404?'No verified 4K source was found for this title. Your current source is unchanged.':
+          error?.httpStatus===504||error?.message==='timeout'?'The 4K search timed out. Try again later.':
+          'The 4K search could not complete. Try again later.';
+        if(status)status.textContent=message;
+        showToast(message);
+      } finally {serverChanging=false;updateServers();}
     }
     function prepareSources(data,next) {
       const seen=new Set(),sources=[];
@@ -821,6 +851,7 @@
     });
     listen(find('server-provider'),'change',event=>{const b=find('server-try');if(b)b.disabled=!event.target.value||serverChanging;});
     listen(find('server-try'),'click',()=>changeProvider(find('server-provider')?.value));
+    listen(find('find-4k'),'click',find4k);
     listen(find('volume-close'),'click',()=>{closeMenu(find('volume-menu'));find('volume-menu').querySelector('summary').focus();});
     listen(find('sync'),'click',()=>{dispatch('sync',getState());closeMenu(find('settings'));find('settings').querySelector('summary').focus();});
     listen(find('unlock'),'click',()=>play({remote:unlockRemote}));
