@@ -72,6 +72,30 @@ test('one addon response can scan all four providers without naming a single win
   assert.equal(result.source.quality,'2160p');
 });
 
+test('modern addon supports IMDb paths and provider IDs even when display names are movie titles',()=>{
+  assert.equal(streamEndpoint('https://addon.example/addons/quality-4k/manifest.json',
+    {tmdbId:'157336',imdbId:'tt0816692',mediaType:'movie'}),
+    'https://addon.example/addons/quality-4k/stream/movie/tt0816692.json');
+  assert.equal(streamEndpoint('https://addon.example/addons/quality-4k/manifest.json',
+    {tmdbId:'94997',imdbId:'tt0944947',mediaType:'tv',season:'1',episode:'2'}),
+    'https://addon.example/addons/quality-4k/stream/series/tt0944947:1:2.json');
+  assert.equal(entryProvider({name:'Interstellar 2014 | 2160p',
+    behaviorHints:{doomProviderId:'4khdhub'}}),'4khdhub');
+  assert.equal(entryProvider({name:'Interstellar | 2160p',
+    behaviorHints:{doomProviderId:'moviesdrive'}}),'moviesdrive');
+  assert.equal(entryProvider({name:'Interstellar | 2160p',
+    behaviorHints:{doomProviderId:'not-a-provider'}}),'');
+  const streams=addonCandidates({streams:[
+    {name:'Interstellar 2014 | 2160p',url:'https://cdn.example/movie.mp4',
+     behaviorHints:{doomProviderId:'4khdhub',proxyHeaders:{request:{Referer:'https://origin.example/'}}}},
+    {name:'Interstellar 2014 | 1080p',url:'https://cdn.example/other.mp4',
+     behaviorHints:{doomProviderId:'uhdmovies'}}
+  ]},{provider:'all',require4k:true});
+  assert.equal(streams.length,1);
+  assert.equal(streams[0].quality,'2160p');
+  assert.equal(streams[0].headers.referer,'https://origin.example/');
+});
+
 test('only a verified 2160p link becomes a playable bridge source',async()=>{
   const lookups=[];
   const fetchResource=async url=>{
