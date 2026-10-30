@@ -118,7 +118,7 @@ const TMDB_API_KEY = process.env.TMDB_API_KEY || "";
 const TMDB_BASE = "https://api.themoviedb.org/3";
 const TMDB_IMG = "https://image.tmdb.org/t/p";
 const NUVIO_ENABLED = process.env.NUVIO_ENABLED !== "false";
-const NUVIO_BRIDGE_ORDER = ["4khdhub","uhdmovies","moviesdrive","showbox"];
+const NUVIO_BRIDGE_ORDER = process.env.SWIFLY_STREMIO_ADDON_ID_FORMAT==="imdb" ? ["4khdhub","uhdmovies","moviesdrive"] : ["4khdhub","uhdmovies","moviesdrive","showbox"];
 const NUVIO_PROVIDER_SETTING = String(process.env.NUVIO_PROVIDER_ORDER || "vidlink,vidsrc,videasy,vidfast,vidrock,cineby,vidlove,goated,netmirror,nakios" + (process.env.SWIFLY_STREMIO_ADDON_URL ? ","+NUVIO_BRIDGE_ORDER.join(",") : "")).trim().toLowerCase();
 const NUVIO_PROVIDER_ORDER = Object.freeze(Array.from(new Set(
   (NUVIO_PROVIDER_SETTING === "all" ? NUVIO_ALLOWED_PROVIDERS : NUVIO_PROVIDER_SETTING.split(","))
@@ -4644,7 +4644,14 @@ async function localStreamProviderSflixWatchUrl({ tmdbId = "", mediaType = "movi
   }
 }
 
-async function localNuvioGetStreams({ tmdbId, mediaType, season, episode, signal, fourKOnly = false }) {
+async function bridgeImdbId({tmdbId,mediaType,signal}) {
+  if(process.env.SWIFLY_STREMIO_ADDON_ID_FORMAT!=="imdb"||!TMDB_API_KEY)return "";
+  const response=await tmdb(`/${mediaType}/${tmdbId}/external_ids`,{},CACHE_TTL.long,signal);
+  const value=String(response?.imdb_id||"");
+  return /^tt\d{5,12}$/.test(value)?value:"";
+}
+
+async function localNuvioGetStreams({ tmdbId, mediaType, season, episode, signal, fourKOnly = false, imdbId = '' }) {
   if (!NUVIO_ENABLED) return { results: [], winner: null };
   // Keep identifiers inside the function so the isolated provider-race test
   // harness can execute this resolver without booting the full Express app.
@@ -4664,12 +4671,12 @@ async function localNuvioGetStreams({ tmdbId, mediaType, season, episode, signal
       && (!fourKOnly || has4kSourceQuality(result.source)),
     run: (job, { signal: providerSignal, timeoutMs }) => job.id === 'all'
       ? resolveAddonProvider({
-          provider:'all',tmdbId,mediaType,season,episode,signal:providerSignal,
+          provider:'all',tmdbId,imdbId,mediaType,season,episode,signal:providerSignal,
           timeoutMs,require4k:true,verifySource:verifyNuvioSource,
           isNonMediaUrl:value=>apiLooksDefinitelyNonMediaUrl(value,{allowManifestEndpoint:true})
         })
       : resolveNuvioProvider({
-          provider: job.id, tmdbId, mediaType, season, episode, signal: providerSignal, timeoutMs, require4k: fourKOnly,
+          provider: job.id, tmdbId, imdbId, mediaType, season, episode, signal: providerSignal, timeoutMs, require4k: fourKOnly,
           isNonMediaUrl: value => apiLooksDefinitelyNonMediaUrl(value, { allowManifestEndpoint: true })
         })
   });
@@ -14380,7 +14387,10 @@ app.get("/api/player/find-4k/:type/:id", async (req, res) => {
   const disconnected=()=>{if(!res.writableEnded)scope.abort();};
   res.on("close",disconnected);
   try {
-    const search=await localNuvioGetStreams({tmdbId:id,mediaType:type,season,episode,signal:scope.signal,fourKOnly:true});
+    const imdbId=await bridgeImdbId({tmdbId:id,mediaType:type,signal:scope.signal});
+    if(process.env.SWIFLY_STREMIO_ADDON_ID_FORMAT==="imdb"&&!imdbId)
+      return res.status(404).json({status:"unavailable",code:"metadata_unavailable"});
+    const search=await localNuvioGetStreams({tmdbId:id,mediaType:type,season,episode,signal:scope.signal,fourKOnly:true,imdbId});
     const found=search.winner;
     if(!found?.source?.mediaVerified||!has4kSourceQuality(found.source))
       return res.status(404).json({status:"unavailable",code:"no_4k_source"});
@@ -14407,7 +14417,10 @@ app.get("/api/player/server/:type/:id", async (req, res) => {
   const disconnected=()=>{if(!res.writableEnded)scope.abort();};
   res.on("close",disconnected);
   try {
-    const found=await resolveNuvioProvider({provider,tmdbId:id,mediaType:type,season,episode,
+    const imdbId=bridgeSelection?await bridgeImdbId({tmdbId:id,mediaType:type,signal:scope.signal}):"";
+    if(bridgeSelection&&process.env.SWIFLY_STREMIO_ADDON_ID_FORMAT==="imdb"&&!imdbId)
+      return res.status(404).json({status:"unavailable",code:"metadata_unavailable"});
+    const found=await resolveNuvioProvider({provider,tmdbId:id,imdbId,mediaType:type,season,episode,
       timeoutMs:bridgeSelection?45000:10000,signal:scope.signal,
       isNonMediaUrl:value=>apiLooksDefinitelyNonMediaUrl(value,{allowManifestEndpoint:true})});
     if(!found.ok||!found.source?.mediaVerified)return res.status(404).json({status:"unavailable"});
