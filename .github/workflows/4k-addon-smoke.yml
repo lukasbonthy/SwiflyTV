@@ -1,0 +1,15 @@
+name: Diagnostic 4K addon smoke
+on:
+  push:
+    branches: ["fix/4k-bridge-timeouts-and-empty-results-20261030"]
+  workflow_dispatch:
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node scripts/diagnose-4k-addon.cjs
