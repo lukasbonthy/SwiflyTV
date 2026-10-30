@@ -19,6 +19,10 @@ TV navigation keeps every route and utility reachable. The native player has a f
 
 The first unit run exposed obsolete Aurora cache-version assertions; those now locate the actual stylesheet independent of its cache key. The first acceptance run stopped the Studio step at its old ten-tab assertion, which also prevented its later saved-player-style setup; the assertion is updated to eleven and the whole acceptance passes.
 
+## CI timing regression
+
+The pull-request CI run on the application tree passed the complete unit, browser and acceptance stages. A concurrent push run exposed one timing failure in the pre-existing glass-material fixture: it sampled RGB `8 10 14`, the deliberate temporary blur tier, after a fixed 80 ms delay instead of waiting for all seven lenses to finish decoding. Browser inspection and the matching CSS rule identified the cause. A controlled 700 ms delay after genuine image decoding reproduces the exact failure. Waiting for the expected SVG/native renderer on every sampled pane makes that regression pass; the entire glass browser file passes **20/20**. Application material styles are unchanged. The final head includes this deterministic test correction and must pass CI again.
+
 ## Review fixes
 
 A fresh independent whole-branch review found no Critical issues and four Important issues. The single fix pass covers all four with regression tests observed failing before the fix and passing after it:
@@ -40,6 +44,8 @@ The reviewer also flagged Studio Aurora on the watch page. It was regraded Impor
 6. Run the full unit and installed-browser phases separately, matching CI, because a combined local run with every optional browser test enabled did not return a complete aggregate in the earlier host. Cost: the results are reported by phase, not as one combined local command. Final CI must still pass on the exact release head.
 
 Tests use actual Chromium and native video plus controlled standard Gamepad API input. Physical Xbox hardware, third-party embedded player internals, live external media providers and a live catalog are not claimed as tested. Browser fixtures replace external artwork/catalog responses; same-origin application code and routes run normally.
+
+7. Replace the fixed-delay glass test with actual renderer readiness and controlled decode latency. Cost: the fixture adds bounded test time; it now fails on a genuine renderer-readiness regression instead of sampling its valid temporary fallback.
 
 ## Screenshots
 
