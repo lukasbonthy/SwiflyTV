@@ -66,7 +66,7 @@ test('Find 4K remains usable when the default resolver has not found a source',a
  const doc=parse(html).window.document;
  assert(doc.querySelector('[data-player-find-4k]'),'Search is present in the source menu');
  const script=await(await fetch(base+'/assets/player/player.js')).text();
- assert(script.includes("scan.disabled=serverChanging||!mediaId||managed||remoteMode.enabled"),
+ assert(script.includes("scan.disabled=serverChanging||(!sourceData&&(!mediaId||managed||remoteMode.enabled))"),
    '4K availability is based on a movie being selected, not a previously playable server');
  assert(!script.includes("scan.disabled=serverChanging||!sourceData"));
 });
