@@ -125,7 +125,7 @@ test('signed 2160p MP4 URLs are considered only with an explicit addon filename'
   const found=addonCandidates(streams,{provider:'4khdhub',require4k:true});
   assert.deepEqual(found.map(s=>s.url),['https://cdn.example/get?video=1']);
   assert.equal(found[0].format,'mp4');
-  assert.equal(found[0].mediaVerified,true===false);
+  assert.notEqual(found[0].mediaVerified,true);
 });
 
 test('slow 4K link does not block a second verified candidate',async()=>{
