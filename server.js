@@ -117,7 +117,8 @@ const TMDB_API_KEY = process.env.TMDB_API_KEY || "";
 const TMDB_BASE = "https://api.themoviedb.org/3";
 const TMDB_IMG = "https://image.tmdb.org/t/p";
 const NUVIO_ENABLED = process.env.NUVIO_ENABLED !== "false";
-const NUVIO_PROVIDER_SETTING = String(process.env.NUVIO_PROVIDER_ORDER || "vidlink,vidsrc,videasy,vidfast,vidrock,cineby,vidlove,goated,netmirror,nakios").trim().toLowerCase();
+const NUVIO_BRIDGE_ORDER = ["4khdhub","uhdmovies","moviesdrive","showbox"];
+const NUVIO_PROVIDER_SETTING = String(process.env.NUVIO_PROVIDER_ORDER || "vidlink,vidsrc,videasy,vidfast,vidrock,cineby,vidlove,goated,netmirror,nakios" + (process.env.SWIFLY_STREMIO_ADDON_URL ? ","+NUVIO_BRIDGE_ORDER.join(",") : "")).trim().toLowerCase();
 const NUVIO_PROVIDER_ORDER = Object.freeze(Array.from(new Set(
   (NUVIO_PROVIDER_SETTING === "all" ? NUVIO_ALLOWED_PROVIDERS : NUVIO_PROVIDER_SETTING.split(","))
     .map(value=>value.trim().toLowerCase()).filter(value=>NUVIO_ALLOWED_PROVIDERS.includes(value))
@@ -4645,7 +4646,8 @@ async function localStreamProviderSflixWatchUrl({ tmdbId = "", mediaType = "movi
 async function localNuvioGetStreams({ tmdbId, mediaType, season, episode, signal, fourKOnly = false }) {
   if (!NUVIO_ENABLED) return { results: [], winner: null };
   return runProviderRace({
-    jobs: Array.from(new Set(NUVIO_PROVIDER_ORDER)).map(id => ({ provider: `nuvio-${id}`, id, timeoutMs: NUVIO_PROVIDER_TIMEOUT_MS })),
+    jobs: Array.from(new Set(fourKOnly ? [...NUVIO_BRIDGE_ORDER.filter(id=>NUVIO_PROVIDER_ORDER.includes(id)),...NUVIO_PROVIDER_ORDER] : NUVIO_PROVIDER_ORDER))
+      .map(id => ({ provider: `nuvio-${id}`, id, timeoutMs: NUVIO_BRIDGE_ORDER.includes(id)?12000:NUVIO_PROVIDER_TIMEOUT_MS })),
     signal, timeoutMs: NUVIO_TIMEOUT_MS, hedgeDelayMs: 250, maxConcurrent: 3,
     now: () => Date.now(), setTimeout, clearTimeout,
     isPlayable: result => result?.ok && result.source?.mediaVerified === true && apiHasEmbeddableFileExtensionOrHlsProxy(result.source.url, result.source)
