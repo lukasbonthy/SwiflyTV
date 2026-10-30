@@ -465,7 +465,11 @@
         if(status)status.textContent='Connected to a 4K-labeled stream.';
         closeMenu(find('servers'));
       } catch(error) {
-        const message=error?.httpStatus===404?'No verified 4K source was found for this title. Your current source is unchanged.':
+        const message=error?.httpStatus===404&&error?.sourceReason==='unsupported_format'
+          ? '4K listings were returned, but none were in a compatible browser video format. Your current source is unchanged.'
+          :error?.httpStatus===404&&error?.sourceReason==='verification_failed'
+          ? '4K candidates were found, but none passed the media availability checks. Your current source is unchanged.'
+          :error?.httpStatus===404?'No verified 4K source was found for this title. Your current source is unchanged.':
           error?.httpStatus===504||error?.message==='timeout'?'The 4K search timed out. Try again later.':
           'The 4K search could not complete. Try again later.';
         if(status)status.textContent=message;
@@ -715,7 +719,7 @@
         const task={category:'resolver',cancel:()=>{controller.abort();finish(new Error('cancelled'));}};tasks.add(task);
         timer=setTimeout(()=>{controller.abort();finish(new Error('timeout'));},Math.max(1,timeout));
         Promise.resolve().then(()=>fetch(url,{signal:controller.signal,cache:'no-store',headers:{Accept:'application/json'}})).then(async response=>{
-          if(!response.ok){const error=new Error('response');error.httpStatus=response.status;throw error;}const data=await response.json();finish(null,data);
+          if(!response.ok){const error=new Error('response');error.httpStatus=response.status;if(url.startsWith('/api/player/find-4k/')){const details=await response.json().catch(()=>null);error.sourceReason=details?.reason||'';}throw error;}const data=await response.json();finish(null,data);
         }).catch(error=>finish(error));
       });
     }
