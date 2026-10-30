@@ -9,6 +9,17 @@ SwiflyTV can use a **separate Stremio-compatible addon service** for 4KHDHub, UH
 3. Redeploy. By default the four new providers are appended to the existing provider order. If `NUVIO_PROVIDER_ORDER` is customized, include `4khdhub,uhdmovies,moviesdrive,showbox` there explicitly.
 4. Open a movie player, select **Servers**, then choose one of the four providers or click **Find 4K (2160p)**. The 4K scan prioritizes the newly configured bridge providers.
 
+## Maintained addon compatibility
+
+The older `tapframe/NuvioStreamsAddon` instance may return zero streams because its provider URLs have gone stale. SwiflyTV also supports a Stremio-compatible addon that uses IMDb IDs (such as the separately hosted `ummarm/Doom-addon` implementation). To use it, configure:
+
+```env
+SWIFLY_STREMIO_ADDON_URL=https://your-host/addons/quality-4k/manifest.json
+SWIFLY_STREMIO_ADDON_ID_FORMAT=imdb
+```
+
+SwiflyTV then resolves the movie's IMDb ID through its existing server-side TMDB connection and recognizes the newer addon's provider ID metadata. The Find 4K command uses one longer but bounded addon request. Its server may return a mixture of 4K files, unsupported MKV containers, or unavailable links: only verified browser-playable media is offered. This does **not** guarantee a 4K option for every title. The newer project is licensed separately and should be reviewed for dependency vulnerabilities before being used with credentials.
+
 ## Security and compatibility
 
 - The bridge uses SwiflyTV's outbound HTTP fetcher with public-address checks, redirection checks, timeouts and size bounds. It will not accept private-network destinations or unsafe URL schemes.
