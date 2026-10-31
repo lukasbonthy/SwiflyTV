@@ -118,7 +118,7 @@ const TMDB_API_KEY = process.env.TMDB_API_KEY || "";
 const TMDB_BASE = "https://api.themoviedb.org/3";
 const TMDB_IMG = "https://image.tmdb.org/t/p";
 const NUVIO_ENABLED = process.env.NUVIO_ENABLED !== "false";
-const NUVIO_BRIDGE_ORDER = process.env.SWIFLY_STREMIO_ADDON_ID_FORMAT==="imdb" ? ["4khdhub","uhdmovies","moviesdrive"] : ["4khdhub","uhdmovies","moviesdrive","showbox"];
+const NUVIO_BRIDGE_ORDER = process.env.SWIFLY_STREMIO_ADDON_ID_FORMAT==="imdb" ? ["pengu","4khdhub","uhdmovies","moviesdrive"] : ["pengu","4khdhub","uhdmovies","moviesdrive","showbox"];
 const NUVIO_PROVIDER_SETTING = String(process.env.NUVIO_PROVIDER_ORDER || "vidlink,vidsrc,videasy,vidfast,vidrock,cineby,vidlove,goated,netmirror,nakios" + (process.env.SWIFLY_STREMIO_ADDON_URL ? ","+NUVIO_BRIDGE_ORDER.join(",") : "")).trim().toLowerCase();
 const NUVIO_PROVIDER_ORDER = Object.freeze(Array.from(new Set(
   (NUVIO_PROVIDER_SETTING === "all" ? NUVIO_ALLOWED_PROVIDERS : NUVIO_PROVIDER_SETTING.split(","))
@@ -4662,7 +4662,7 @@ async function localNuvioGetStreams({ tmdbId, mediaType, season, episode, signal
   if (!NUVIO_ENABLED) return { results: [], winner: null };
   // Keep identifiers inside the function so the isolated provider-race test
   // harness can execute this resolver without booting the full Express app.
-  const bridgeIds = ['4khdhub','uhdmovies','moviesdrive','showbox'];
+  const bridgeIds = ['4khdhub','uhdmovies','moviesdrive','showbox','pengu'];
   const isBridge = id => bridgeIds.includes(id);
   const bridgeEnabled = fourKOnly && NUVIO_PROVIDER_ORDER.some(isBridge);
   // A Stremio addon searches its upstream sources once per request. Query it
@@ -6655,7 +6655,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=262" />' : ""}
     ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=262" />' : ""}
     
-    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=269"></script>' : ""}
+    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=270"></script>' : ""}
     ${player ? '<script defer src="/assets/player/audio-sample.js?v=1"></script><script defer src="/assets/player/assist.js?v=2"></script><link rel="stylesheet" href="/assets/player/assist.css?v=262" />' : ""}
     ${player || active === "social" ? '<script defer src="/assets/party/watchroom-call.js?v=1"></script>' : ""}
     ${active === "social" ? '<script defer src="/assets/party/party.js?v=207"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}
@@ -13654,7 +13654,7 @@ app.get("/api/nuvio/providers", (req, res) => {
   res.set("Cache-Control", "no-store");
   res.json({
     upstream: NUVIO_CATALOG.upstream, revision: NUVIO_CATALOG.revision,
-    totalListed: NUVIO_CATALOG.providers.length,
+    totalListed: listNuvioProviders().length,
     installedCount: NUVIO_ALLOWED_PROVIDERS.length,
     enabled: NUVIO_ENABLED, attemptedOrder: NUVIO_PROVIDER_ORDER,
     providers: listNuvioProviders().map(item=>({

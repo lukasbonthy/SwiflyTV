@@ -5,8 +5,8 @@ const {
   PROVIDERS,configuredAddonUrl,streamEndpoint,entryProvider,entryQuality,addonCandidates,resolveAddonProvider
 }=require('../lib/addon-provider-bridge');
 
-test('four adapter names are recognized only by their provider heading',()=>{
-  assert.deepEqual(PROVIDERS,['4khdhub','uhdmovies','moviesdrive','showbox']);
+test('adapter names are recognized only by their provider heading',()=>{
+  assert.deepEqual(PROVIDERS,['4khdhub','uhdmovies','moviesdrive','showbox','pengu']);
   for(const [id,name] of [['4khdhub','4KHDHub'],['uhdmovies','UHDMovies'],['moviesdrive','MoviesDrive'],['showbox','ShowBox']]) {
     assert.equal(entryProvider({name:name+' - UHD'}),id);
   }
