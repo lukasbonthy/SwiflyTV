@@ -424,7 +424,7 @@
       try {
         const query=new URLSearchParams({provider});
         if(mediaType==='tv') {query.set('season',app.dataset.playerSeason||'1');query.set('episode',app.dataset.playerEpisode||'1');}
-        const payload=await requestJson('/api/player/server/'+encodeURIComponent(mediaType)+'/'+encodeURIComponent(mediaId)+'?'+query,['4khdhub','uhdmovies','moviesdrive','showbox'].includes(provider)?50000:15000);
+        const payload=await requestJson('/api/player/server/'+encodeURIComponent(mediaType)+'/'+encodeURIComponent(mediaId)+'?'+query,['4khdhub','uhdmovies','moviesdrive','showbox','pengu'].includes(provider)?50000:15000);
         const next=chooseSource(payload);
         if(payload.status!=='ok'||!next)throw new Error('unavailable');
         sourceData={...payload};sourceOptions=prepareSources(payload,next);

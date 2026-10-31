@@ -1,5 +1,11 @@
 # Four-provider Stremio addon bridge
 
+## Pengu direct 4K MP4
+
+The bridge also recognizes **Pengu** results from the configured addon. Pengu is listed as installed only with `SWIFLY_STREMIO_ADDON_URL` configured; include `pengu` if `NUVIO_PROVIDER_ORDER` is customized. No Pengu token or personalized URL is bundled with SwiflyTV. Existing addon authentication remains server-side.
+
+Use **Servers → Find 4K (2160p)**, or select **Pengu** manually. The source still needs an explicit 2160p label, a supported container and successful HTTP verification. A normal browser User-Agent is supplied when absent and retained through playback; explicit addon request headers win. Explicit HEVC codec labels activate the existing structurally validated MP4 compatibility path. MKV is still rejected. HEVC decoding and HDR depend on the device; the header compatibility path does not transcode video or supply a missing decoder.
+
 SwiflyTV can use a **separate Stremio-compatible addon service** for 4KHDHub, UHDMovies, MoviesDrive, and ShowBox. This is a transport integration: the upstream provider scripts run inside the addon service, not inside SwiflyTV's Node process. No obfuscated third-party scripts are downloaded and executed at boot.
 
 ## Setup
