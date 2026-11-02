@@ -178,6 +178,8 @@ body.svCleanShell :is(.movieRail, .dsRail, .nfRail, .nfTopTenRail) {
   display: grid !important; grid-auto-flow: column !important; grid-auto-columns: var(--sv-poster-width) !important;
   gap: 16px !important; overflow-x: auto !important; overflow-y: hidden !important;
   padding: 4px 0 12px !important; margin: 0 !important; scroll-snap-type: x proximity;
+  /* The old full-rail fade hides the first poster and its title. */
+  -webkit-mask-image: none !important; mask-image: none !important;
 }
 body.svCleanShell .movieCard {
   padding: 0 !important; margin: 0 !important; border: 0 !important; background: none !important;

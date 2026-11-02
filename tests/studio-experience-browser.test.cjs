@@ -1,4 +1,5 @@
 'use strict';
+const {readShellStyle}=require('../lib/shell-styles');
 const test=require('node:test'),assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path');
 const {chromium}=require('playwright-core');
@@ -18,7 +19,7 @@ async function open({viewport={width:1440,height:900},body='<main data-st-home><
  let html=api.pageShell({body,active:'home'}).replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'');
  if(loading)html=html.replace('</head>',loadingHead()+'</head>');
  await page.route('**/*',route=>{
-  const url=new URL(route.request().url()),type=route.request().resourceType();if(type==='document')return route.fulfill({contentType:'text/html',body:html});
+  const url=new URL(route.request().url()),type=route.request().resourceType();const bundled=readShellStyle(url.pathname);if(bundled!==undefined)return route.fulfill({contentType:'text/css',body:bundled});if(type==='document')return route.fulfill({contentType:'text/html',body:html});
   if(url.hostname==='art.swifly.test')return route.fulfill({headers:{'access-control-allow-origin':'*'},contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="36" height="24"><rect width="36" height="24" fill="'+(url.pathname.includes('blue')?'#1e50dc':'#dc3723')+'"/></svg>'});
   if(url.pathname.startsWith('/assets/')&&/\.(css|svg)$/.test(url.pathname)){const file=path.join(root,url.pathname.slice(8));if(fs.existsSync(file))return route.fulfill({contentType:url.pathname.endsWith('.css')?'text/css':'image/svg+xml',body:fs.readFileSync(file)});}
   return route.fulfill({contentType:type==='stylesheet'?'text/css':'image/svg+xml',body:''});

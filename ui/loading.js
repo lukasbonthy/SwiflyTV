@@ -33,7 +33,7 @@ function siteLoadingGate(){
  function settle(){if(ready&&!holds.size&&!navigating)hide();}
  function waitForContent(message){
   const owner={};holds.set(owner,typeof message==='string'?message.trim().slice(0,160):'');
-  if(!initial&&!navigating&&!current)initial=setTimeout(()=>{initial=0;if(!ready||holds.size)show(location.href,'initial');},120);
+  if(!initial&&!navigating&&!current)initial=setTimeout(()=>{initial=0;if(holds.size)show(location.href,'initial');},120);
   if(current&&!navigating)render();
   let released=false;return ()=>{if(released)return;released=true;holds.delete(owner);settle();if(current&&!navigating)render();};
  }
@@ -64,7 +64,8 @@ function siteLoadingGate(){
  window.addEventListener('pagehide',hide);
  window.addEventListener('keydown',event=>{if(event.key==='Escape')hide();});
  window.SwiflySiteLoading=Object.freeze({hold:waitForContent});
- initial=setTimeout(()=>{initial=0;if(!ready||holds.size)show(location.href,'initial');},120);
+ // The server already rendered the catalog. Deferred assets are not a reason
+ // to cover it. Only a feature that explicitly owns a hold needs a skeleton.
  if(!ready)document.addEventListener('DOMContentLoaded',()=>{ready=true;render();settle();},{once:true});else settle();
 }
 

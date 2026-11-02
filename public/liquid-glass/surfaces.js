@@ -155,7 +155,7 @@
     if(host.closest('[data-player-root]')&&!host.matches(outerPlayerControls))return;
     // Artwork choices retain the frames around their thumbnails. Navigation
     // icons already sit on one shared pane and must not stack extra surfaces.
-    if (host.matches('.partyFilmChoice,.stPreset,.svAvatarPreset,.svAvatarEditTrigger,.svProfileCreateAvatar') || host.matches('.svNavButton,.svWelcomeStudio,.dsProfileMenu > summary') && host.closest('.netflixNav,.dsWelcomeNav')) return;
+    if (host.matches('.partyFilmChoice,.stPreset,.svAvatarPreset,.svAvatarEditTrigger,.svProfileCreateAvatar') || host.matches('.svNavButton,.svFeedBell,.svWelcomeStudio,.dsProfileMenu > summary') && host.closest('.netflixNav,.dsWelcomeNav')) return;
     if (host.closest('.svPartyHub')) {
       if (host.matches(panels) && !host.matches(partyPanels+',.svPlayerPopoverBody')) return;
       // Tabs share the enclosing pill; filtering their child buttons too

@@ -1,4 +1,5 @@
 'use strict';
+const {readShellStyle}=require('../lib/shell-styles');
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const {chromium}=require('playwright-core'),{loadServer}=require('./ui-helpers.cjs');
 const root=path.join(__dirname,'../public'),executablePath=process.env.SWIFLY_TEST_BROWSER_EXECUTABLE_PATH,available=fs.existsSync(executablePath||chromium.executablePath()),skip=!available&&'Chromium is not installed';
@@ -9,7 +10,7 @@ async function fixture(width=1440,values){
  const context=await browser.newContext({viewport:{width,height:width<801?844:900}}),page=await context.newPage();
  if(values)await context.addInitScript(v=>localStorage.setItem('swiflytv.appearance',JSON.stringify({version:2,values:v})),values);
  const html=api.pageShell({title:'Your screen',body:'<main class="dsProfilesPage"><h1>Who’s watching?</h1><p>Choose your profile. Make yourself comfortable.</p></main>'}).replace(/<script\b([^>]*)>[\s\S]*?<\/script>/g,(s,a)=>/data-sv-studio-(?:config|prime)/.test(a)?s:'');
- await page.route('**/*',route=>{const url=new URL(route.request().url()),type=route.request().resourceType();if(type==='document')return route.fulfill({contentType:'text/html',body:html});const file=path.join(root,url.pathname.replace(/^\/assets\//,''));if(url.pathname.startsWith('/assets/')&&fs.existsSync(file)&&fs.statSync(file).isFile())return route.fulfill({body:fs.readFileSync(file),contentType:file.endsWith('.css')?'text/css':file.endsWith('.svg')?'image/svg+xml':file.endsWith('.webp')?'image/webp':'application/javascript'});return route.fulfill({body:'',contentType:type==='stylesheet'?'text/css':'text/plain'});});
+ await page.route('**/*',route=>{const url=new URL(route.request().url()),type=route.request().resourceType();const bundled=readShellStyle(url.pathname);if(bundled!==undefined)return route.fulfill({contentType:'text/css',body:bundled});if(type==='document')return route.fulfill({contentType:'text/html',body:html});const file=path.join(root,url.pathname.replace(/^\/assets\//,''));if(url.pathname.startsWith('/assets/')&&fs.existsSync(file)&&fs.statSync(file).isFile())return route.fulfill({body:fs.readFileSync(file),contentType:file.endsWith('.css')?'text/css':file.endsWith('.svg')?'image/svg+xml':file.endsWith('.webp')?'image/webp':'application/javascript'});return route.fulfill({body:'',contentType:type==='stylesheet'?'text/css':'text/plain'});});
  const boot=async()=>{for(const name of ['studio/wallpapers.js','clean/aurora.js','studio/theme-details.js','studio/studio.js'])await page.addScriptTag({content:fs.readFileSync(path.join(root,name),'utf8')});};
  await page.goto('https://swifly.test/profiles');await boot();return{context,page,boot};
 }

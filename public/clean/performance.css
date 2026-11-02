@@ -5,12 +5,11 @@ body.svCleanShell .netflixWordmark,
 body.svCleanShell .dsHeroBg,
 body.svCleanShell .dsHeroActions > .dsPrimaryBtn {animation:none !important}
 
-/* Finished copy entrances must release their blur(0) and transform surfaces.
-   Backwards fill keeps the original delayed entrance, then returns the text
-   to normal paint while the live hero and navigation glass keep moving. */
+/* Server-rendered hero copy is ready immediately. Staggered blur entrances
+   make an already-loaded page look unfinished and allocate extra surfaces. */
 body.svCleanShell .dsHeroContent > :is(.dsEyebrow,h1,.dsHeroMeta,p) {
-  animation-fill-mode:backwards !important;
-  filter:none;
+  animation:none !important;
+  opacity:1 !important; transform:none !important; filter:none !important;
 }
 
 /* Opacity alone leaves backdrop filters in the compositor's scroll work.

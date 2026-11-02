@@ -1,3 +1,4 @@
+const {stylesheetLink,stylesheetPaths}=require('./shell-style-helpers.cjs');
 const test=require('node:test');
 const assert=require('node:assert/strict');
 const {loadServer,browser,cleanup,tick}=require('./ui-helpers.cjs');
@@ -148,7 +149,7 @@ test('Social navigation opens the integrated Party Hub while movie catalog party
  const social=parse(await response.text()).window.document;
  assert(social.querySelector('main.svPartyHub .partyHero'),'Social link should show the proper cinematic Party Hub');
  assert(social.querySelector('.partyNavigation [data-tab="rooms"]'));
- assert(social.querySelector('link[href="/assets/clean/experience.css?v=262"]'));
+ assert(stylesheetLink(social,'/assets/clean/experience.css'));
  assert(social.querySelector('link[href="/assets/player/player.css?v=267"]'));
  const scripts=[...social.querySelectorAll('script[src]')].map(node=>node.getAttribute('src'));
  const player=scripts.indexOf('/assets/player/player.js?v=270'),party=scripts.findIndex(src=>src.startsWith('/assets/party/party.js?'));
@@ -205,7 +206,7 @@ test('main catalog, signup and login all have the ambient scene without compromi
    const aurora=d.querySelector('.svAuroraBackground');
    assert(aurora,route+' should mount shared aurora');
    assert.equal(d.querySelector('script[src*="/assets/clean/aurora-shader.js"]'),null,route+' should not load WebGL aurora');
-   assert(d.querySelector('link[href^="/assets/clean/aurora.css?"]'),route+' should load original animated SVG');
+   assert(stylesheetLink(d,'/assets/clean/aurora.css'),route+' should load original animated SVG');
    assert.equal(aurora.querySelectorAll('.svAuroraRibbon').length,3,route+' should mount moving curtains');
    if(route==='/signup'||route==='/login'){
      assert(d.querySelector('.dsAuthBrand'),route+' account branding missing');
@@ -249,9 +250,9 @@ test('the cinema image fade loads after Aurora and Welcome styles',async()=>{
    const response=await fetch(base+route);
    assert.equal(response.status,200,route+' should load');
    const d=parse(await response.text()).window.document;
-   const styles=[...d.querySelectorAll('link[rel="stylesheet"]')].map(link=>link.getAttribute('href'));
-   const aurora=styles.findIndex(v=>v.includes('/assets/clean/aurora.css?'));
-   const fade=styles.findIndex(v=>v.includes('/assets/clean/hero-fade.css?v=206'));
+   const styles=stylesheetPaths(d);
+   const aurora=styles.findIndex(v=>v.includes('/assets/clean/aurora.css'));
+   const fade=styles.findIndex(v=>v.includes('/assets/clean/hero-fade.css'));
    assert(aurora>=0 && fade>aurora,route+' fade must follow aurora');
    if(route==='/welcome'){
      const welcome=styles.findIndex(v=>v.includes('/assets/clean/welcome.css'));
@@ -314,7 +315,7 @@ test('Featured art carries one decorative low-resolution light spill into discov
   assert.equal(bridge.querySelectorAll('img').length,1,'one static ambient layer');
   assert.equal(bridge.getAttribute('style'),null,'no unbounded inline background paint');
   assert.equal(rows.getAttribute('style'),null,'discovery never paints a second artwork');
-  assert(d.querySelector('link[href="/assets/clean/hero-fade.css?v=206"]'));
+  assert(stylesheetLink(d,'/assets/clean/hero-fade.css'));
   assert(d.querySelector('script[src*="/assets/clean/hero-palette.js"]'),'the opt-in sampler API is locally hosted');assert.equal(require('../public/studio/config.js').defaults.adaptiveCinema,false,'default CSS spill never samples a canvas');
  }
  const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=206')).text();
@@ -380,7 +381,7 @@ test('v174 gives the featured movie enough height before fading into the first c
  const hero=doc.querySelector('main > .dsHero');
  assert(hero && hero.querySelector('.dsHeroBg'));
  assert(hero.nextElementSibling?.classList.contains('svHeroLightBridge'));
- assert(doc.querySelector('link[href="/assets/clean/finish.css?v=176"]'));
+ assert(stylesheetLink(doc,'/assets/clean/finish.css'));
 });
 
 test('v174 keeps Welcome soft without muddy light bridge or button clipping',async()=>{
@@ -390,7 +391,7 @@ test('v174 keeps Welcome soft without muddy light bridge or button clipping',asy
  assert.match(css,/opacity:\.21 !important/);
  const doc=parse(await(await fetch(base+'/welcome')).text()).window.document;
  assert(doc.querySelector('.svWelcomeLightBridge'));
- assert(doc.querySelector('link[href="/assets/clean/finish.css?v=176"]'));
+ assert(stylesheetLink(doc,'/assets/clean/finish.css'));
  assert(doc.querySelector('.dsWelcomeActions .dsPrimaryBtn'));
 });
 
@@ -398,7 +399,7 @@ test('Studio glass uses one material on every browsing route and native transiti
  const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=255')).text();
  const finish=await(await fetch(base+'/assets/clean/finish.css?v=176')).text();
  const navigation=await(await fetch(base+'/assets/clean/navigation.css?v=2')).text();
- const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=259')).text();
+ const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=260')).text();
  assert.match(css,/data-st-glass="liquid"/);
  assert.match(css,/data-st-glass="subtle"/);
  assert.match(css,/data-st-glass="off"/);
@@ -410,8 +411,8 @@ test('Studio glass uses one material on every browsing route and native transiti
    const response=await fetch(base+route);
    assert.equal(response.status,200,route);
    const doc=parse(await response.text()).window.document;
-   assert(doc.querySelector('link[href="/assets/liquid-glass/controls.css?v=255"]'),route+' lacks unified glass');
-   assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=259"]'),route+' uses stale glass renderer');
+   assert(stylesheetLink(doc,'/assets/liquid-glass/controls.css'),route+' lacks unified glass');
+   assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=260"]'),route+' uses stale glass renderer');
  }
  const watch=await(await fetch(base+'/watch/movie/101')).text();
  assert(!watch.includes('controls.css?v=189'),'watch page must be left alone');
@@ -433,8 +434,8 @@ test('v176 supplies a real, masked details backdrop with no hard border at the o
  assert.match(css,/rgba\(0,0,0,\.22\) 94%,transparent 100%/);
  assert.match(css,/\.svDetailShade \{/);
  assert.match(css,/\.svDetailBody \{/);
- assert(d.querySelector('link[href="/assets/clean/polish.css?v=176"]'));
- assert(d.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=259"]'));
+ assert(stylesheetLink(d,'/assets/clean/polish.css'));
+ assert(d.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=260"]'));
 });
 test('v176 adds subtle Liquid Glass to both compact auth pages without resizing',async()=>{
  const css=await(await fetch(base+'/assets/clean/polish.css?v=176')).text();
@@ -447,7 +448,7 @@ test('v176 adds subtle Liquid Glass to both compact auth pages without resizing'
  for(const route of ['/login','/signup']){
   const d=parse(await(await fetch(base+route)).text()).window.document;
   assert.equal(d.querySelectorAll('.dsAuthCard').length,1);
-  assert(d.querySelector('link[href="/assets/clean/polish.css?v=176"]'));
+  assert(stylesheetLink(d,'/assets/clean/polish.css'));
  }
 });
 
@@ -463,19 +464,19 @@ test('Catalog and profiles retain their theme while Party Hub owns its component
   const response=await fetch(base+route);
   assert.equal(response.status,200,route+' should render');
   const d=parse(await response.text()).window.document;
-  assert(d.querySelector('link[href="/assets/clean/experience.css?v=262"]'),route+' should load shared experience styles');
+  assert(stylesheetLink(d,'/assets/clean/experience.css'),route+' should load shared experience styles');
   if(route==='/movies'||route==='/tv')assert(d.querySelector('.genreDropdown > summary'));
   const avatarScript=d.querySelector('script[src="/assets/clean/avatars.js?v=209"]');
   assert(avatarScript,route+' should refresh the shared profile identity');
   const profileScript=d.querySelector('script[src="/assets/clean/profiles.js?v=209"]');
   if(route==='/profiles'||route==='/profiles/manage'){
-   assert(d.querySelector('link[href="/assets/clean/profiles.css?v=262"]'));
+   assert(stylesheetLink(d,'/assets/clean/profiles.css'));
    assert(profileScript,route+' should mount the profile editor');
    assert(avatarScript.compareDocumentPosition(profileScript)&d.defaultView.Node.DOCUMENT_POSITION_FOLLOWING,'Avatar renderer must load before the profile editor');
   }else assert.equal(profileScript,null,route+' does not need the profile editor');
   if(route==='/profiles')assert(d.querySelector('.svProfilesCinematic #profilesGrid'));
   if(route==='/profiles/manage')assert(d.querySelector('.svProfilesCinematic #profileCreateForm'));
-  if(route.startsWith('/social')){assert(d.querySelector('main.svPartyHub .partyHero'));const theme=d.querySelector('link[href="/assets/party/party.css?v=262"]');assert(theme);assert(d.querySelector('link[href="/assets/clean/experience.css?v=262"]').compareDocumentPosition(theme)&d.defaultView.Node.DOCUMENT_POSITION_FOLLOWING);}
+  if(route.startsWith('/social')){assert(d.querySelector('main.svPartyHub .partyHero'));const theme=d.querySelector('link[href="/assets/party/party.css?v=262"]');assert(theme);assert(stylesheetLink(d,'/assets/clean/experience.css').compareDocumentPosition(theme)&d.defaultView.Node.DOCUMENT_POSITION_FOLLOWING);}
  }
 });
 
@@ -485,7 +486,7 @@ test('Cinema keeps natural featured color alongside the shared glass assets',asy
  const nav=d.querySelector('.netflixNav > .svLiquidPane');
  assert(hero && nav);
  assert(d.querySelector('script[src="/assets/liquid-glass/liquid-glass.js?v=227"]'));
- assert(d.querySelector('link[href="/assets/liquid-glass/liquid-glass.css?v=262"]'),'new material tokens must bypass the previous cached base stylesheet');
+ assert(stylesheetLink(d,'/assets/liquid-glass/liquid-glass.css'),'new material tokens must bypass the previous cached base stylesheet');
  const css=await(await fetch(base+'/assets/clean/hero-fade.css?v=206')).text();
  assert.match(css,/filter:none !important/);
  assert.match(css,/overflow:hidden !important/,'movie picture remains clipped');

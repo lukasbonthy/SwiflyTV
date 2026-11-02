@@ -61,8 +61,23 @@
   if(surprise){const actions=node('div','svFeedResultActions'),details=node('a','','Details'),play=node('a','','Play');details.href=media.href;play.href='/watch/'+media.type+'/'+media.id;play.dataset.playId=media.id;play.dataset.playType=media.type;actions.append(details,play);body.append(actions);}
   card.append(poster,body);return card;
  }
+ function focusAfterSection(target){
+  const visible=element=>!element.closest('[hidden],[data-st-home-hidden="true"],[aria-disabled="true"]');
+  let next=target?.nextElementSibling,action;
+  while(next&&!action){action=[...next.querySelectorAll('a[href],button:not(:disabled)')].find(visible);next=next.nextElementSibling;}
+  // Studio can move a personal row before the hero or after every other row.
+  // Its bell can also be hidden, so keep a catalog/navigation fallback.
+  action=action||[...document.querySelectorAll('[data-st-home-section] a[href],.dsRow a[href]')].find(visible)||one('[data-feed-bell]:not([hidden]):not(:disabled)')||one('.netflixNav .brand');
+  action?.focus({preventScroll:true});
+ }
  function section(target,heading,message,items,kind){
   if(!target)return;target.classList.add('svFeedSection');target.dataset.feedEmpty=String(items.length===0);target.setAttribute('aria-busy',String(loading));
+  // Personal rows earn their place in the catalog when there is something to
+  // browse. Empty/loading states remain available in the notification dialog.
+  if(target.hasAttribute('data-st-home-section')&&target.hidden!==(items.length===0)){
+   const moveFocus=!items.length&&target.contains(document.activeElement);target.hidden=items.length===0;
+   if(moveFocus)focusAfterSection(target);
+  }
   const signature=JSON.stringify([heading,message,items,prefs().spoilerMode,selections().seeds]);if(rendered.get(target)===signature)return;rendered.set(target,signature);
   const head=node('div','svFeedSectionHead'),retry=node('button','svFeedRefresh','Refresh feed');retry.type='button';retry.dataset.feedRetry='';retry.disabled=loading;head.append(node('h2','',heading),retry);
   const status=node('p','svFeedHint',message);status.setAttribute('role','status');
@@ -144,7 +159,7 @@
  function boot(){
   if(started)return;started=true;currentContext=context();snapshot=read();
   for(const bell of all('[data-feed-bell]'))listen(bell,'click',event=>openNotifications(event.currentTarget));
-  listen(document,'click',event=>{const button=event.target.closest?.('[data-feed-retry]');if(!button)return;const scope=button.closest('[data-feed-upcoming],[data-feed-recommended],[data-feed-notifications]'),restore=document.activeElement===button;refresh({force:true}).finally(()=>{if(restore&&document.activeElement===document.body)scope?.querySelector('[data-feed-retry]')?.focus({preventScroll:true});});});
+  listen(document,'click',event=>{const button=event.target.closest?.('[data-feed-retry]');if(!button)return;const scope=button.closest('[data-feed-upcoming],[data-feed-recommended],[data-feed-notifications]'),restore=document.activeElement===button;refresh({force:true}).finally(()=>{if(restore&&document.activeElement===document.body){if(scope?.hidden)focusAfterSection(scope);else scope?.querySelector('[data-feed-retry]')?.focus({preventScroll:true});}});});
   const dialog=one('[data-feed-notifications]');listen(one('[data-feed-close]'),'click',()=>dialog.close());listen(dialog,'close',()=>{cancelAnimationFrame(ackFrame);ackFrame=0;const trigger=returnFocus;returnFocus=null;if(trigger?.isConnected&&!trigger.hidden)trigger.focus({preventScroll:true});});
   listen(one('[data-feed-episode-list]'),'scroll',queueAcknowledgement);listen(dialog,'scroll',queueAcknowledgement);
   listen(one('[data-feed-hide-bell]'),'change',event=>{if(library()?.savePreferences?.({hideEpisodeBell:event.currentTarget.checked})===false){event.currentTarget.checked=!event.currentTarget.checked;const status=one('[data-feed-notification-status]');if(status)status.textContent='This preference could not be saved. Please try again.';}else{snapshot=read();updateBell();}});

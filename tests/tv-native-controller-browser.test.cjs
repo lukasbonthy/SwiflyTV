@@ -1,11 +1,12 @@
 'use strict';
+const {readShellStyle}=require('../lib/shell-styles');
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),http=require('node:http');
 const {chromium}=require('playwright-core'),{loadServer}=require('./ui-helpers.cjs'),{playerMarkup}=require('../ui/player'),{tvSource}=require('../ui/tv');
 const root=path.join(__dirname,'../public'),videoFile=path.join(__dirname,'fixtures/tv-controller.webm'),executablePath=process.env.SWIFLY_TEST_BROWSER_EXECUTABLE_PATH,available=fs.existsSync(executablePath||chromium.executablePath()),skip=!available&&'Chromium is not installed';
 let browser,api,server,origin,html;
 test.before(async()=>{
  if(!available)return;api=loadServer();html=api.pageShell({title:'Controller playback',active:'movies',extraHead:'<link rel="stylesheet" href="/assets/player/player.css"><link rel="stylesheet" href="/assets/player/assist.css">',body:playerMarkup({id:42,title:'Controller playback',type:'movie',mode:'movie',managed:true})}).replace(/<script\b([^>]*)>[\s\S]*?<\/script>/g,(s,a)=>/data-sv-studio-(?:config|prime)/.test(a)?s:'');
- server=http.createServer((req,res)=>{const pathname=new URL(req.url,'http://localhost').pathname;if(pathname==='/media.webm'){
+ server=http.createServer((req,res)=>{const pathname=new URL(req.url,'http://localhost').pathname;const bundled=readShellStyle(pathname);if(bundled!==undefined){res.setHeader('Content-Type','text/css');res.end(bundled);return;}if(pathname==='/media.webm'){
   const size=fs.statSync(videoFile).size,match=req.headers.range?.match(/^bytes=(\d+)-(\d*)$/),start=match?Number(match[1]):0,end=match&&match[2]?Math.min(size-1,Number(match[2])):size-1;
   res.writeHead(match?206:200,{'Content-Type':'video/webm','Accept-Ranges':'bytes','Content-Length':end-start+1,...(match?{'Content-Range':`bytes ${start}-${end}/${size}`}:{})});fs.createReadStream(videoFile,{start,end}).pipe(res);return;
  }if(pathname.startsWith('/assets/')){const file=path.resolve(root,pathname.slice(8));if(file.startsWith(root+path.sep)&&fs.existsSync(file)&&fs.statSync(file).isFile()){res.setHeader('Content-Type',file.endsWith('.css')?'text/css':file.endsWith('.svg')?'image/svg+xml':file.endsWith('.webp')?'image/webp':'application/javascript');fs.createReadStream(file).pipe(res);return;}}

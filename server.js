@@ -83,6 +83,7 @@ const { createStudy } = require("./lib/study");
 const { welcomeMarkup } = require("./ui/welcome");
 const { navigationHead } = require("./ui/navigation");
 const { loadingHead, loadingMarkup } = require("./ui/loading");
+const { shellStyleLink, serveShellStyle } = require("./lib/shell-styles");
 const { tvHead, tvAssetScript, tvSource } = require("./ui/tv");
 const { partyMarkup } = require("./ui/party");
 const { connectMarkup, connectDialogs, notificationButton } = require("./ui/connect");
@@ -5668,6 +5669,7 @@ app.disable("x-powered-by");
 if (process.env.RENDER || process.env.SWIFLY_TRUST_PROXY === "true") app.set("trust proxy", 1);
 
 app.use(compression());
+app.use(serveShellStyle);
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -6616,74 +6618,43 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${body.includes("fa-solid") ? '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />' : ""}
     ${player || partyBrowse || active === "social" || active === "study" ? '<script defer src="/socket.io/socket.io.js"></script>' : ""}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/modern-normalize@2.0.0/modern-normalize.min.css" />
-    <link rel="stylesheet" href="/assets/liquid-glass/liquid-glass.css?v=262" />
+    ${shellStyleLink("core")}
     <script defer src="/assets/liquid-glass/liquid-glass.js?v=227"></script>
-    <link rel="stylesheet" href="/assets/clean/clean.css?v=262" />
     <script defer src="/assets/clean/clean.js?v=267"></script>
     <script defer src="/assets/clean/account-sheet.js?v=1"></script>
     <script defer src="/assets/clean/account-data.js?v=2"></script>
     <script defer src="/assets/clean/account.js?v=263"></script>
     <script defer src="/assets/clean/library-state.js?v=263"></script>
     <script defer src="/assets/clean/settings.js?v=262"></script>
-    <link rel="stylesheet" href="/assets/clean/library.css?v=262" />
-    <link rel="stylesheet" href="/assets/connect/connect.css?v=262" />
     <script defer src="/assets/connect/icons.js?v=1"></script><script defer src="/assets/connect/connect.js?v=5"></script>
     <script defer src="/assets/clean/avatars.js?v=209"></script>
     ${active === "profiles" ? '<script defer src="/assets/clean/profiles.js?v=209"></script>' : ""}
     <script defer src="/assets/clean/continue.js?v=262"></script>
     <script defer src="/assets/clean/library-page.js?v=2"></script>
     <script defer src="/assets/clean/episode-browser.js?v=1"></script>
-    <script defer src="/assets/clean/feed.js?v=261"></script>
-    <link rel="stylesheet" href="/assets/clean/feed.css?v=262" />
-    <link rel="stylesheet" href="/assets/clean/catalog-updates.css?v=262" />
-    <link rel="stylesheet" href="/assets/clean/details.css?v=262" />
-    <link rel="stylesheet" href="/assets/clean/motion.css?v=252" />
-    <link rel="stylesheet" href="/assets/vendor/lenis/lenis.css?v=1.3.16-r1" />
+    <script defer src="/assets/clean/feed.js?v=262"></script>
     <script defer src="/assets/vendor/lenis/lenis.min.js?v=1.3.16-r1"></script>
     <script defer src="/assets/clean/motion.js?v=252"></script>
-    <script defer src="/assets/clean/scroll.js?v=258"></script>
+    <script defer src="/assets/clean/scroll.js?v=259"></script>
     <script defer src="/assets/clean/details.js?v=255"></script>
     <script defer src="/assets/clean/download.js?v=3"></script>
-    <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=262" />
-    <script defer src="/assets/liquid-glass/surfaces.js?v=259"></script>
-    <link rel="stylesheet" href="/assets/studio/studio.css?v=267" />
-    <link rel="stylesheet" href="/assets/clean/usability.css?v=1" />
+    <script defer src="/assets/liquid-glass/surfaces.js?v=260"></script>
     <script defer src="/assets/studio/wallpapers.js?v=1"></script>
     <script defer src="/assets/studio/studio.js?v=266"></script>
-    <link rel="stylesheet" href="/assets/clean/aurora.css?v=267" />
     <script defer src="/assets/clean/aurora.js?v=267"></script>
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=262" />' : ""}
     ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=262" />' : ""}
-    
     ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=270"></script>' : ""}
     ${player ? '<script defer src="/assets/player/audio-sample.js?v=1"></script><script defer src="/assets/player/assist.js?v=2"></script><link rel="stylesheet" href="/assets/player/assist.css?v=262" />' : ""}
     ${player || active === "social" ? '<script defer src="/assets/party/watchroom-call.js?v=1"></script>' : ""}
     ${active === "social" ? '<script defer src="/assets/party/party.js?v=207"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}
     ${player || partyBrowse ? '<script defer src="/assets/player/watch-party.js?v=2"></script>' : ""}
-    ${player ? "" : '<link rel="stylesheet" href="/assets/clean/finish.css?v=176" />'}
-    ${player ? "" : '<link rel="stylesheet" href="/assets/clean/polish.css?v=176" />'}
-    <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=206" />
-    <link rel="stylesheet" href="/assets/liquid-glass/controls.css?v=255" />
-    ${player ? "" : '<link rel="stylesheet" href="/assets/clean/experience.css?v=262" />'}
-    <link rel="stylesheet" href="/assets/clean/cinema.css?v=262" />
-    <link rel="stylesheet" href="/assets/clean/profiles.css?v=262" />
+    ${shellStyleLink(player ? "player" : "catalog")}
     ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=267" />' : ""}
     ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=262" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=262" />' : ""}
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=262" />' : ""}
     ${player || active === "social" ? '<link rel="stylesheet" href="/assets/party/watchroom-call.css?v=262" />' : ""}
-    <link rel="stylesheet" href="/assets/clean/performance.css?v=258" />
-    <link rel="stylesheet" href="/assets/clean/mobile.css?v=262" />
-    <link rel="stylesheet" href="/assets/clean/tv.css?v=262" />
-    <link rel="stylesheet" href="/assets/clean/details-premium.css?v=262" />
-    <link rel="stylesheet" href="/assets/clean/details-clarity.css?v=262" />
-    <link rel="stylesheet" href="/assets/discovery/discovery.css?v=262" />
-    <link rel="stylesheet" href="/assets/connect/feature-effects.css?v=262" />
-    <link rel="stylesheet" href="/assets/clean/account-sheet.css?v=262" />
-    <link rel="stylesheet" href="/assets/studio/experience.css?v=262" />
-    <link rel="stylesheet" href="/assets/studio/themes.css?v=3" />
-    <link rel="stylesheet" href="/assets/studio/theme-details.css?v=2" />
-    <link rel="stylesheet" href="/assets/studio/wallpapers.css?v=1" />
-    <link rel="stylesheet" href="/assets/player/tv-controls.css?v=1" />
+    ${shellStyleLink("finish")}
     <script defer src="/assets/studio/theme-details.js?v=1"></script>
     <script defer src="/assets/clean/hero-palette.js?v=260"></script>
     <script defer src="/assets/studio/experience.js?v=261"></script>

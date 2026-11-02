@@ -4,7 +4,8 @@ const fs=require('node:fs');
 const path=require('node:path');
 const {chromium}=require('playwright-core');
 const available=fs.existsSync(chromium.executablePath()) || fs.existsSync(chromium.executablePath().replace(/chromium-(\d+)\/chrome-linux\/chrome$/, 'chromium_headless_shell-$1/chrome-linux/headless_shell'));
-const asset=file=>fs.readFileSync(path.join(__dirname,'../public',file),'utf8');
+const {readShellStyle}=require('../lib/shell-styles');
+const asset=file=>readShellStyle('/assets/'+file)??fs.readFileSync(path.join(__dirname,'../public',file),'utf8');
 
 test('Visible optical panes stay inside their Party hosts and leave page content readable',{skip:!available&&'Chromium is not installed'},async()=>{
  const browser=await chromium.launch({headless:true});
@@ -117,7 +118,7 @@ test('Player pages share clear navigation and outer actions while retaining tran
  const {loadServer}=require('./ui-helpers.cjs'),api=loadServer(),browser=await chromium.launch({headless:true});
  try{
   const html=api.pageShell({active:'watch',player:true,body:'<main data-player-root><button class="dsPrimaryBtn">Play video</button></main>'});
-  assert(html.includes('/liquid-glass/controls.css'),'outer player actions share the shell material');
+  assert(readShellStyle(html.match(/href="(\/assets\/shell\/player-[^"]+)"/)[1]).includes('/* liquid-glass/controls.css */'),'outer player actions share the shell material');
   const inline=html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'').replace(/<link\b[^>]*href="([^\"]+)"[^>]*>/g,(tag,url)=>url.startsWith('/assets/')?'<style>'+asset(url.slice(8).split('?')[0])+'</style>':'');
   const page=await browser.newPage({viewport:{width:1440,height:1000}});await page.setContent(inline);
   await page.evaluate(()=>{document.body.dataset.stGlass='liquid';document.body.dataset.svScrolled='true';});

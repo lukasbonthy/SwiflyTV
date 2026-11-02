@@ -10,7 +10,8 @@ const {loadServer} = require('./ui-helpers.cjs');
 
 const executablePath = process.env.SWIFLY_TEST_BROWSER_EXECUTABLE_PATH;
 const available = fs.existsSync(executablePath || chromium.executablePath()) || (!executablePath && fs.existsSync(chromium.executablePath().replace(/chromium-(\d+)\/chrome-linux\/chrome$/, 'chromium_headless_shell-$1/chrome-linux/headless_shell')));
-const asset = file => fs.readFileSync(path.join(__dirname, '../public', file), 'utf8');
+const {readShellStyle}=require('../lib/shell-styles');
+const asset = file => readShellStyle('/assets/'+file)??fs.readFileSync(path.join(__dirname, '../public', file), 'utf8');
 const options = {
   id:'101', type:'tv', title:'A very long series title for a small screen', managed:true,
   season:2, episode:3, episodeCount:8, trailerUrl:'https://example.test/trailer',

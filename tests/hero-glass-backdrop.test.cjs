@@ -4,7 +4,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require('playwright-core');
 const { loadServer } = require('./ui-helpers.cjs');
-const asset = name => fs.readFileSync(path.join(__dirname, '../public', name), 'utf8');
+const {readShellStyle}=require('../lib/shell-styles');
+const asset = name => readShellStyle('/assets/'+name)??fs.readFileSync(path.join(__dirname, '../public', name), 'utf8');
 const available = fs.existsSync(chromium.executablePath()) || fs.existsSync(chromium.executablePath().replace(/chromium-(\d+)\/chrome-linux\/chrome$/, 'chromium_headless_shell-$1/chrome-linux/headless_shell'));
 
 async function pixelDifference(page, first, second) {

@@ -69,12 +69,14 @@ test('pages with only the episode bell never request hidden homepage recommendat
  assert(!calls.some(([route])=>route.endsWith('/recommendations')),'a bell-only page must not fetch recommendation pools');
 });
 
-test('a failed feed offers a working explicit retry instead of keeping the loading state or stale failure',{skip},async t=>{
+test('a failed home feed stays hidden and can retry through the notification dialog',{skip},async t=>{
  const {page}=await fixture(t);let failed=false;
  await page.route('**/api/feed/episodes?*',route=>{failed=true;return route.fulfill({status:503,json:{message:'Catalog is unavailable. Please try again.'}});});
  await page.evaluate(()=>SwiflyFeed.refresh({force:true}));await page.waitForFunction(()=>/unavailable/.test(document.querySelector('[data-feed-upcoming]').textContent));assert(failed);
  assert.equal(await page.locator('[data-feed-upcoming]').getAttribute('aria-busy'),'false');
- await page.unroute('**/api/feed/episodes?*');await page.locator('[data-feed-upcoming]').getByRole('button',{name:'Refresh feed',exact:true}).click();
+ assert(await page.locator('[data-feed-upcoming]').isHidden());await page.locator('[data-feed-bell]').click();
+ assert.match(await page.locator('[data-feed-notification-status]').innerText(),/unavailable/);
+ await page.unroute('**/api/feed/episodes?*');await page.locator('[data-feed-notifications]').getByRole('button',{name:'Refresh feed',exact:true}).click();
  await page.waitForFunction(()=>/Tomorrow is real/.test(document.querySelector('[data-feed-upcoming]').textContent));assert.equal(await page.locator('[data-feed-upcoming]').getAttribute('aria-busy'),'false');
 });
 
@@ -89,7 +91,8 @@ test('a client deadline releases loading controls and leaves a retry action',{sk
  const {page}=await fixture(t);await page.waitForFunction(()=>document.querySelector('[data-feed-unread]')?.textContent==='2');await page.clock.install();
  await page.route('**/api/feed/episodes?*',()=>{});await page.evaluate(()=>{void SwiflyFeed.refresh({force:true});});await page.clock.runFor(12001);
  await page.waitForFunction(()=>document.querySelector('[data-feed-upcoming]').getAttribute('aria-busy')==='false',null,{timeout:3000});
- assert.match(await page.locator('[data-feed-upcoming]').innerText(),/too long|try again/i);assert(await page.locator('[data-feed-upcoming]').getByRole('button',{name:'Refresh feed',exact:true}).isEnabled());
+ assert(await page.locator('[data-feed-upcoming]').isHidden());await page.locator('[data-feed-bell]').click();
+ assert.match(await page.locator('[data-feed-notification-status]').innerText(),/too long|try again/i);assert(await page.locator('[data-feed-notifications]').getByRole('button',{name:'Refresh feed',exact:true}).isEnabled());
 });
 
 test('refreshing the home feed cannot discard a pending shuffle for the same profile',{skip},async t=>{
