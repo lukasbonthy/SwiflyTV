@@ -1,4 +1,5 @@
 'use strict';
+const {stylesheetPaths}=require('./shell-style-helpers.cjs');
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const {browser, loadServer, tick, cleanup} = require('./ui-helpers.cjs');
@@ -315,7 +316,8 @@ test('the shell loads the pinned local engine and adapter in order on catalog pa
     const vendor = html.indexOf('/assets/vendor/lenis/lenis.min.js?v=1.3.16-r1');
     const adapter = html.search(/\/assets\/clean\/scroll\.js\?v=\d+/);
     assert(vendor > 0 && adapter > vendor, 'the controller loads after the locally served Lenis engine');
-    assert(html.includes('/assets/vendor/lenis/lenis.css?v=1.3.16-r1'));
-    assert(html.includes('/assets/clean/clean.css?v=262'));
+    const env=browser(html),styles=stylesheetPaths(env.window.document);
+    assert(styles.includes('/assets/vendor/lenis/lenis.css'));
+    assert(styles.includes('/assets/clean/clean.css'));env.finish();
   } finally {api.io.close(); api.httpServer.close();}
 });

@@ -95,10 +95,10 @@ body.svCleanShell .svDetailScrim[hidden] { display:none !important; }
 /* One moving layer; bottom/height stay fixed throughout the slide. */
 body.svCleanShell .svDetailDialog:is([data-sv-detail-state="opening"],[data-sv-detail-state="closing"]) .svDetailPanel { will-change:transform; }
 body.svCleanShell .svDetailScrim:is([data-sv-detail-state="opening"],[data-sv-detail-state="closing"]) { will-change:opacity; }
-body.svCleanShell .svDetailDialog[data-sv-detail-motion="css"][data-sv-detail-state="opening"] .svDetailPanel { animation:svDetailsEnter 560ms cubic-bezier(.28,.06,.2,1) both; }
-body.svCleanShell .svDetailDialog[data-sv-detail-motion="css"][data-sv-detail-state="closing"] .svDetailPanel { animation:svDetailsExit 320ms cubic-bezier(.4,0,.2,1) both; }
-body.svCleanShell .svDetailScrim[data-sv-detail-motion="css"][data-sv-detail-state="opening"] { animation:svDetailsDimIn 560ms cubic-bezier(.28,.06,.2,1) both; }
-body.svCleanShell .svDetailScrim[data-sv-detail-motion="css"][data-sv-detail-state="closing"] { animation:svDetailsDimOut 320ms cubic-bezier(.4,0,.2,1) both; }
+body.svCleanShell .svDetailDialog[data-sv-detail-motion="css"][data-sv-detail-state="opening"] .svDetailPanel { animation:svDetailsEnter 360ms cubic-bezier(.28,.06,.2,1) both; }
+body.svCleanShell .svDetailDialog[data-sv-detail-motion="css"][data-sv-detail-state="closing"] .svDetailPanel { animation:svDetailsExit 220ms cubic-bezier(.4,0,.2,1) both; }
+body.svCleanShell .svDetailScrim[data-sv-detail-motion="css"][data-sv-detail-state="opening"] { animation:svDetailsDimIn 360ms cubic-bezier(.28,.06,.2,1) both; }
+body.svCleanShell .svDetailScrim[data-sv-detail-motion="css"][data-sv-detail-state="closing"] { animation:svDetailsDimOut 220ms cubic-bezier(.4,0,.2,1) both; }
 body.svCleanShell .svDetailDialog[data-sv-detail-motion="css"]:is([data-sv-detail-state="opening"],[data-sv-detail-state="closing"]) .svDetailPanel,
 body.svCleanShell .svDetailScrim[data-sv-detail-motion="css"]:is([data-sv-detail-state="opening"],[data-sv-detail-state="closing"]) { animation-play-state:paused; }
 body.svCleanShell .svDetailDialog .svDetailViewport.svCinemaPage { height:100%; padding:var(--sv-detail-top-gap) 0 0 !important; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; scrollbar-gutter:stable; scrollbar-width:thin; scrollbar-color:#ffffff40 transparent; -webkit-overflow-scrolling:touch; }

@@ -1,5 +1,7 @@
 'use strict';
-const loadingStyles=require('node:fs').readFileSync(require('node:path').join(__dirname,'../public/clean/loading.css'),'utf8');
+const readStyle=name=>require('node:fs').readFileSync(require('node:path').join(__dirname,'../public/clean',name),'utf8');
+const criticalStyles=readStyle('loading-critical.css');
+const loadingStyles=criticalStyles+'\n'+readStyle('loading.css');
 
 // Runs in the head, independently of third-party assets and application bundles.
 function siteLoadingGate(){
@@ -33,7 +35,7 @@ function siteLoadingGate(){
  function settle(){if(ready&&!holds.size&&!navigating)hide();}
  function waitForContent(message){
   const owner={};holds.set(owner,typeof message==='string'?message.trim().slice(0,160):'');
-  if(!initial&&!navigating&&!current)initial=setTimeout(()=>{initial=0;if(!ready||holds.size)show(location.href,'initial');},120);
+  if(!initial&&!navigating&&!current)initial=setTimeout(()=>{initial=0;if(holds.size)show(location.href,'initial');},120);
   if(current&&!navigating)render();
   let released=false;return ()=>{if(released)return;released=true;holds.delete(owner);settle();if(current&&!navigating)render();};
  }
@@ -64,16 +66,17 @@ function siteLoadingGate(){
  window.addEventListener('pagehide',hide);
  window.addEventListener('keydown',event=>{if(event.key==='Escape')hide();});
  window.SwiflySiteLoading=Object.freeze({hold:waitForContent});
- initial=setTimeout(()=>{initial=0;if(!ready||holds.size)show(location.href,'initial');},120);
+ // The server already rendered the catalog. Deferred assets are not a reason
+ // to cover it. Only a feature that explicitly owns a hold needs a skeleton.
  if(!ready)document.addEventListener('DOMContentLoaded',()=>{ready=true;render();settle();},{once:true});else settle();
 }
 
 const loadingSource=require('terser').minify_sync('('+siteLoadingGate.toString()+')();',{ecma:2020}).code;
-function loadingHead(){return `<style data-sv-loading-style>${loadingStyles}</style><script data-sv-loading-gate>${loadingSource}</script>`;}
+function loadingHead({artwork=false,bundled=false}={}){return `<style data-sv-loading-style>${bundled ? criticalStyles : loadingStyles}</style><script data-sv-loading-gate>${loadingSource}</script>${artwork ? `<script data-sv-artwork-entry>${require('./artwork-entry')}</script>` : ''}`;}
 function loadingMarkup(){
  const cards=Array.from({length:8},()=>'<div class="svLoadCard"><i class="svLoadBlock svLoadPoster"></i><i class="svLoadBlock svLoadCardTitle"></i><i class="svLoadBlock svLoadCardMeta"></i></div>').join('');
  const rows=Array.from({length:4},()=>'<div class="svLoadPerson"><i class="svLoadBlock svLoadAvatar"></i><span><i class="svLoadBlock svLoadLine"></i><i class="svLoadBlock svLoadLine"></i></span></div>').join('');
  const books=Array.from({length:6},()=>'<div class="svLoadCard"><i class="svLoadBlock svLoadBookCover"></i><i class="svLoadBlock svLoadCardTitle"></i><i class="svLoadBlock svLoadCardMeta"></i></div>').join('');
- return `<div id="svSiteLoading" data-layout="catalog"><div class="svLoadProgress" role="progressbar" aria-label="Loading page"><i></i></div><div class="svLoadFeedback"><p id="svLoadingStatus" class="svLoadingStatus" role="status" aria-live="polite" aria-atomic="true"></p><p id="svLoadingDetail" class="svLoadingDetail"></p><p class="svLoadingHelp">You can still use the navigation. Press Esc to dismiss.</p></div><div class="svLoadCanvas" aria-hidden="true"><div class="svLoadHero"><div class="svLoadCopy"><i class="svLoadBlock svLoadLogo"></i><div class="svLoadMetadata"><i class="svLoadBlock"></i><i class="svLoadBlock"></i><i class="svLoadBlock"></i></div><div class="svLoadDescription"><i class="svLoadBlock svLoadLine"></i><i class="svLoadBlock svLoadLine"></i><i class="svLoadBlock svLoadLine"></i></div><div class="svLoadActions"><i class="svLoadBlock"></i><i class="svLoadBlock"></i></div></div></div><div class="svLoadWorkspace"><div class="svLoadColumns"><aside>${rows}</aside><div class="svLoadChat"><i class="svLoadBlock svLoadBubble"></i><i class="svLoadBlock svLoadBubble"></i><i class="svLoadBlock svLoadBubble"></i><i class="svLoadBlock svLoadCompose"></i></div></div></div><div class="svLoadAccount"><i class="svLoadBlock svLoadAvatar"></i><i class="svLoadBlock svLoadPrompt"></i><i class="svLoadBlock svLoadCompose"></i></div><div class="svLoadPlayer"><i class="svLoadBlock"></i></div><div class="svLoadDiscovery"><i class="svLoadBlock svLoadHeading"></i><i class="svLoadBlock svLoadPrompt"></i><div><i class="svLoadBlock"></i><i class="svLoadBlock"></i><i class="svLoadBlock"></i></div></div><div class="svLoadBooks"><i class="svLoadBlock svLoadSearch"></i><i class="svLoadBlock svLoadHeading"></i><div class="svLoadBookCards">${books}</div></div><div class="svLoadShelf"><i class="svLoadBlock svLoadHeading"></i><div class="svLoadCards">${cards}</div></div></div></div>`;
+ return `<div id="svArtworkCurtain" aria-hidden="true"></div><div id="svSiteLoading" data-layout="catalog"><div class="svLoadProgress" role="progressbar" aria-label="Loading page"><i></i></div><div class="svLoadFeedback"><p id="svLoadingStatus" class="svLoadingStatus" role="status" aria-live="polite" aria-atomic="true"></p><p id="svLoadingDetail" class="svLoadingDetail"></p><p class="svLoadingHelp">You can still use the navigation. Press Esc to dismiss.</p></div><div class="svLoadCanvas" aria-hidden="true"><div class="svLoadHero"><div class="svLoadCopy"><i class="svLoadBlock svLoadLogo"></i><div class="svLoadMetadata"><i class="svLoadBlock"></i><i class="svLoadBlock"></i><i class="svLoadBlock"></i></div><div class="svLoadDescription"><i class="svLoadBlock svLoadLine"></i><i class="svLoadBlock svLoadLine"></i><i class="svLoadBlock svLoadLine"></i></div><div class="svLoadActions"><i class="svLoadBlock"></i><i class="svLoadBlock"></i></div></div></div><div class="svLoadWorkspace"><div class="svLoadColumns"><aside>${rows}</aside><div class="svLoadChat"><i class="svLoadBlock svLoadBubble"></i><i class="svLoadBlock svLoadBubble"></i><i class="svLoadBlock svLoadBubble"></i><i class="svLoadBlock svLoadCompose"></i></div></div></div><div class="svLoadAccount"><i class="svLoadBlock svLoadAvatar"></i><i class="svLoadBlock svLoadPrompt"></i><i class="svLoadBlock svLoadCompose"></i></div><div class="svLoadPlayer"><i class="svLoadBlock"></i></div><div class="svLoadDiscovery"><i class="svLoadBlock svLoadHeading"></i><i class="svLoadBlock svLoadPrompt"></i><div><i class="svLoadBlock"></i><i class="svLoadBlock"></i><i class="svLoadBlock"></i></div></div><div class="svLoadBooks"><i class="svLoadBlock svLoadSearch"></i><i class="svLoadBlock svLoadHeading"></i><div class="svLoadBookCards">${books}</div></div><div class="svLoadShelf"><i class="svLoadBlock svLoadHeading"></i><div class="svLoadCards">${cards}</div></div></div></div>`;
 }
 module.exports={loadingHead,loadingMarkup};

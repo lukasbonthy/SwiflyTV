@@ -1,7 +1,14 @@
-/* Embedded in the head: loading never depends on a network asset.
-   The shared navigation sits above this surface and remains usable. */
+/* Reusable loading presentation lives in the cached shared stylesheet.
+   The small entry gate and its safety release remain inline in the head. */
 #svSiteLoading{position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;overflow:hidden;background:#08090d;color:#dfdfdf;opacity:0;visibility:hidden;pointer-events:none;contain:strict;transition:none}
 html:is([data-sv-loading=navigate],[data-sv-loading=initial]) #svSiteLoading{opacity:1;visibility:visible;pointer-events:auto}
+/* Keep the current page usable while the next document arrives. A thin
+   progress bar gives feedback without flashing a replacement page. */
+html[data-sv-loading=navigate] #svSiteLoading{background:transparent !important;pointer-events:none}
+html[data-sv-loading=navigate] #svSiteLoading :is(.svLoadCanvas,.stLoadingBrand),
+html[data-sv-loading=navigate] #svSiteLoading::before{display:none !important}
+/* Keep the destination status available to assistive technology. */
+html[data-sv-loading=navigate] #svSiteLoading .svLoadFeedback{position:absolute !important;width:1px !important;height:1px !important;overflow:hidden !important;clip-path:inset(50%);padding:0 !important;margin:-1px !important;white-space:nowrap}
 .svLoadFeedback{box-sizing:border-box;width:100%;max-width:1600px;margin:0 auto;padding:112px clamp(24px,4vw,74px) 26px}
 .svLoadingStatus{margin:0;font-size:calc(clamp(20px,2vw,26px) * var(--st-ui-scale, 1));line-height:1.3;letter-spacing:-.025em;font-weight:600}
 .svLoadingDetail{max-width:660px;margin:8px 0 0;color:#b5b7be;font-size:calc(14px * var(--st-ui-scale, 1));line-height:1.5}
@@ -42,3 +49,26 @@ html[data-sv-load-layout=player] .svLoadPlayer{display:block;padding:12px 32px 3
 @media(max-width:400px){.svLoadCards,.svLoadBookCards{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.svLoadingHelp{max-width:230px}.svLoadFeedback{padding-bottom:18px}}
 @media(prefers-reduced-motion:reduce){html[data-sv-loading] .svLoadProgress i{animation:none;transform:none;width:100%;background:#a3a8b3}}
 :is(html:has(body.reduceMotion),html[data-sv-xbox=true],html[data-sv-tv=true],body[data-sv-performance=low]) #svSiteLoading .svLoadProgress i{animation:none;transform:none;width:100%;background:#a3a8b3}
+/* Initial catalog entry dissolves from black after visible artwork is ready.
+   This is separate from explicit asynchronous feature holds and navigation. */
+body.svCleanShell:is([data-st-loader-style="artwork"],[data-st-loader-style="aurora"]) #svArtworkCurtain::before {
+ content:"";position:absolute;inset:0;pointer-events:none;opacity:.4;
+ background:linear-gradient(rgb(0 0 0 / var(--st-loader-alpha,.9)),#000),var(--st-loader-art,none) center/cover no-repeat;
+}
+body.svCleanShell[data-st-loader-style="aurora"] #svArtworkCurtain::before {
+ background:linear-gradient(#08090d33,#08090ddd),url('/assets/clean/aurora-ribbon.svg?v=170') center/cover no-repeat;
+ opacity:var(--sv-aurora-strength,.8);
+}
+body.svCleanShell :is(.svArtworkAsset.svArtworkAsset,.svArtworkCopy.svArtworkCopy) {
+ transition:opacity .42s ease !important;
+}
+body.svCleanShell :is(.svArtworkAsset,.svArtworkCopy):not(.svArtworkReady) {opacity:0 !important;}
+/* The image's own hover transform stays independent of its decode fade. */
+body.svCleanShell img.svArtworkAsset.svArtworkAsset {transition:opacity .42s ease,transform .22s ease !important;}
+html[data-sv-artwork-state="loading"] body.svCleanShell :is(.svArtworkAsset.svArtworkAsset,.svArtworkCopy.svArtworkCopy) {transition:none !important;}
+body.svCleanShell:is(.reduceMotion,[data-st-page-motion="false"],[data-st-loader-style="minimal"],[data-st-loader-style="basic"]) :is(.svArtworkAsset.svArtworkAsset,.svArtworkCopy.svArtworkCopy),
+html:is([data-sv-tv="true"],[data-sv-xbox="true"]) body.svCleanShell :is(.svArtworkAsset.svArtworkAsset,.svArtworkCopy.svArtworkCopy) {transition:none !important;opacity:1 !important;}
+@media(prefers-reduced-motion:reduce) {
+ #svArtworkCurtain,body.svCleanShell :is(.svArtworkAsset.svArtworkAsset,.svArtworkCopy.svArtworkCopy) {transition:none !important;}
+ body.svCleanShell :is(.svArtworkAsset.svArtworkAsset,.svArtworkCopy.svArtworkCopy) {opacity:1 !important;}
+}

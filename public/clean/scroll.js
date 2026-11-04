@@ -131,7 +131,7 @@
   // One delayed frame (tab suspension/GC) must not disable the experience.
   let performanceFallback = false, pendingFallback = false;
   const recentFrames = [];
-  let activeMotionMs = 0;
+  let slowMotionMs = 0, lastMotionTime = 0;
   const available = () => !destroyed && !performanceFallback && !document.hidden && fine.matches && !reduced.matches &&
     !document.body.classList.contains('reduceMotion') && document.body.dataset.svScroll !== 'native' &&
     !/^\/(?:watch|embed)(?:\/|$)/.test(location.pathname) && document.documentElement.dataset.svTv !== 'true' &&
@@ -140,7 +140,7 @@
   function cancel() {
     cancelAnimationFrame(frame); frame = 0; lastFrame = null;
     wheelRemainder = 0;
-    recentFrames.length = 0; activeMotionMs = 0;
+    recentFrames.length = 0; slowMotionMs = 0; lastMotionTime = 0; pendingFallback = false;
     if (engine?.isScrolling === 'smooth') {
       // Reset to the actual position without finishing an obsolete target.
       // start() immediately restores ordinary native input and the next glide.
@@ -160,17 +160,20 @@
     const elapsed = Math.max(0, time - (lastFrame ?? time));
     clock += elapsed;
     lastFrame = time;
+    lastMotionTime = time;
     engine.raf(clock);
     sampleLenisGlass(elapsed);
     if (engine.isScrolling === 'smooth') {
-      activeMotionMs += elapsed;
       // 4+ slow frames of the last 10 is sustained jank, not occasional work.
       // No extra RAF/polling/observer: sample the frames Lenis already owns.
       if (elapsed > 0 && elapsed < 250) {
+        // Healthy movement must not build a debt that lets one later stall
+        // disable easing. Recover twice as quickly as poor frames accumulate.
+        slowMotionMs = Math.max(0, Math.min(3200, slowMotionMs + (elapsed > 36 ? elapsed : -2 * elapsed)));
         recentFrames.push(elapsed > 36);
         if (recentFrames.length > 10) recentFrames.shift();
       }
-      if (activeMotionMs >= 3200 && recentFrames.length === 10 && recentFrames.filter(Boolean).length >= 4) {
+      if (slowMotionMs >= 3200 && recentFrames.length === 10 && recentFrames.filter(Boolean).length >= 4) {
         // Abruptly tearing down Lenis during a wheel gesture itself looks like
         // dropped frames. Wait until the current glide finishes, then let the
         // browser handle subsequent gestures natively on slow hardware.
@@ -187,7 +190,9 @@
       // events. Keep one paint tier until the gesture's idle timer expires,
       // rather than switching every backdrop shader twice per rendered frame.
       if (glassSoft) scheduleGlassIdle();
-      lastFrame = null; recentFrames.length = 0; activeMotionMs = 0;
+      // Keep recent evidence across ordinary wheel pauses. Resetting here
+      // meant a series of short, laggy gestures could never reach 3.2s.
+      lastFrame = null;
     }
   }
   function wake() {
@@ -198,6 +203,9 @@
       // shortens that first step and adds a small input delay. The document
       // timeline shares RAF's clock without keeping an idle RAF loop alive.
       const now=performance.now(),displayTime=document.timeline?.currentTime;
+      if (lastMotionTime && now - lastMotionTime > 8000) {
+        recentFrames.length = 0; slowMotionMs = 0; pendingFallback = false;
+      }
       lastFrame=typeof displayTime==='number'&&Number.isFinite(displayTime)&&
         displayTime<=now&&now-displayTime<50?displayTime:now;
       frame = requestAnimationFrame(step);

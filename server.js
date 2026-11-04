@@ -83,6 +83,7 @@ const { createStudy } = require("./lib/study");
 const { welcomeMarkup } = require("./ui/welcome");
 const { navigationHead } = require("./ui/navigation");
 const { loadingHead, loadingMarkup } = require("./ui/loading");
+const { shellStyleLink, serveShellStyle } = require("./lib/shell-styles");
 const { tvHead, tvAssetScript, tvSource } = require("./ui/tv");
 const { partyMarkup } = require("./ui/party");
 const { connectMarkup, connectDialogs, notificationButton } = require("./ui/connect");
@@ -5668,6 +5669,7 @@ app.disable("x-powered-by");
 if (process.env.RENDER || process.env.SWIFLY_TRUST_PROXY === "true") app.set("trust proxy", 1);
 
 app.use(compression());
+app.use(serveShellStyle);
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -6556,7 +6558,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta name="theme-color" content="#000000" />
   ${tvHead()}
-  ${loadingHead()}
+  ${loadingHead({artwork:showNavigation,bundled:true})}
   ${studioHead()}
   ${showNavigation ? navigationHead() : ""}
   ${showNavigation ? '<link rel="stylesheet" href="/assets/clean/navigation.css?v=2" />' : ""}
@@ -6616,77 +6618,47 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${body.includes("fa-solid") ? '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />' : ""}
     ${player || partyBrowse || active === "social" || active === "study" ? '<script defer src="/socket.io/socket.io.js"></script>' : ""}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/modern-normalize@2.0.0/modern-normalize.min.css" />
-    <link rel="stylesheet" href="/assets/liquid-glass/liquid-glass.css?v=262" />
+    ${shellStyleLink("core")}
     <script defer src="/assets/liquid-glass/liquid-glass.js?v=227"></script>
-    <link rel="stylesheet" href="/assets/clean/clean.css?v=262" />
-    <script defer src="/assets/clean/clean.js?v=267"></script>
+    <script defer src="/assets/clean/clean.js?v=268"></script>
+    <script defer src="/assets/clean/catalog.js?v=1"></script>
     <script defer src="/assets/clean/account-sheet.js?v=1"></script>
     <script defer src="/assets/clean/account-data.js?v=2"></script>
     <script defer src="/assets/clean/account.js?v=263"></script>
     <script defer src="/assets/clean/library-state.js?v=263"></script>
     <script defer src="/assets/clean/settings.js?v=262"></script>
-    <link rel="stylesheet" href="/assets/clean/library.css?v=262" />
-    <link rel="stylesheet" href="/assets/connect/connect.css?v=262" />
     <script defer src="/assets/connect/icons.js?v=1"></script><script defer src="/assets/connect/connect.js?v=5"></script>
     <script defer src="/assets/clean/avatars.js?v=209"></script>
     ${active === "profiles" ? '<script defer src="/assets/clean/profiles.js?v=209"></script>' : ""}
     <script defer src="/assets/clean/continue.js?v=262"></script>
-    <script defer src="/assets/clean/library-page.js?v=2"></script>
-    <script defer src="/assets/clean/episode-browser.js?v=1"></script>
-    <script defer src="/assets/clean/feed.js?v=261"></script>
-    <link rel="stylesheet" href="/assets/clean/feed.css?v=262" />
-    <link rel="stylesheet" href="/assets/clean/catalog-updates.css?v=262" />
-    <link rel="stylesheet" href="/assets/clean/details.css?v=262" />
-    <link rel="stylesheet" href="/assets/clean/motion.css?v=252" />
-    <link rel="stylesheet" href="/assets/vendor/lenis/lenis.css?v=1.3.16-r1" />
+    ${body.includes('data-library-page') ? '<script defer src="/assets/clean/library-page.js?v=2"></script>' : ''}
+    <script defer src="/assets/clean/episode-browser.js?v=2"></script>
+    <script defer src="/assets/clean/feed.js?v=262"></script>
     <script defer src="/assets/vendor/lenis/lenis.min.js?v=1.3.16-r1"></script>
-    <script defer src="/assets/clean/motion.js?v=252"></script>
-    <script defer src="/assets/clean/scroll.js?v=258"></script>
-    <script defer src="/assets/clean/details.js?v=255"></script>
+    <script defer src="/assets/clean/motion.js?v=253"></script>
+    <script defer src="/assets/clean/scroll.js?v=259"></script>
+    <script defer src="/assets/clean/details.js?v=256"></script>
     <script defer src="/assets/clean/download.js?v=3"></script>
-    <link rel="stylesheet" href="/assets/liquid-glass/surfaces.css?v=262" />
-    <script defer src="/assets/liquid-glass/surfaces.js?v=259"></script>
-    <link rel="stylesheet" href="/assets/studio/studio.css?v=267" />
-    <link rel="stylesheet" href="/assets/clean/usability.css?v=1" />
+    <script defer src="/assets/liquid-glass/surfaces.js?v=260"></script>
     <script defer src="/assets/studio/wallpapers.js?v=1"></script>
     <script defer src="/assets/studio/studio.js?v=266"></script>
-    <link rel="stylesheet" href="/assets/clean/aurora.css?v=267" />
     <script defer src="/assets/clean/aurora.js?v=267"></script>
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=262" />' : ""}
     ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=262" />' : ""}
-    
     ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=270"></script>' : ""}
     ${player ? '<script defer src="/assets/player/audio-sample.js?v=1"></script><script defer src="/assets/player/assist.js?v=2"></script><link rel="stylesheet" href="/assets/player/assist.css?v=262" />' : ""}
     ${player || active === "social" ? '<script defer src="/assets/party/watchroom-call.js?v=1"></script>' : ""}
     ${active === "social" ? '<script defer src="/assets/party/party.js?v=207"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}
     ${player || partyBrowse ? '<script defer src="/assets/player/watch-party.js?v=2"></script>' : ""}
-    ${player ? "" : '<link rel="stylesheet" href="/assets/clean/finish.css?v=176" />'}
-    ${player ? "" : '<link rel="stylesheet" href="/assets/clean/polish.css?v=176" />'}
-    <link rel="stylesheet" href="/assets/clean/hero-fade.css?v=206" />
-    <link rel="stylesheet" href="/assets/liquid-glass/controls.css?v=255" />
-    ${player ? "" : '<link rel="stylesheet" href="/assets/clean/experience.css?v=262" />'}
-    <link rel="stylesheet" href="/assets/clean/cinema.css?v=262" />
-    <link rel="stylesheet" href="/assets/clean/profiles.css?v=262" />
+    ${shellStyleLink(player ? "player" : "catalog")}
     ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=267" />' : ""}
     ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=262" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=262" />' : ""}
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=262" />' : ""}
     ${player || active === "social" ? '<link rel="stylesheet" href="/assets/party/watchroom-call.css?v=262" />' : ""}
-    <link rel="stylesheet" href="/assets/clean/performance.css?v=258" />
-    <link rel="stylesheet" href="/assets/clean/mobile.css?v=262" />
-    <link rel="stylesheet" href="/assets/clean/tv.css?v=262" />
-    <link rel="stylesheet" href="/assets/clean/details-premium.css?v=262" />
-    <link rel="stylesheet" href="/assets/clean/details-clarity.css?v=262" />
-    <link rel="stylesheet" href="/assets/discovery/discovery.css?v=262" />
-    <link rel="stylesheet" href="/assets/connect/feature-effects.css?v=262" />
-    <link rel="stylesheet" href="/assets/clean/account-sheet.css?v=262" />
-    <link rel="stylesheet" href="/assets/studio/experience.css?v=262" />
-    <link rel="stylesheet" href="/assets/studio/themes.css?v=3" />
-    <link rel="stylesheet" href="/assets/studio/theme-details.css?v=2" />
-    <link rel="stylesheet" href="/assets/studio/wallpapers.css?v=1" />
-    <link rel="stylesheet" href="/assets/player/tv-controls.css?v=1" />
+    ${shellStyleLink("finish")}
     <script defer src="/assets/studio/theme-details.js?v=1"></script>
     <script defer src="/assets/clean/hero-palette.js?v=260"></script>
-    <script defer src="/assets/studio/experience.js?v=261"></script>
+    <script defer src="/assets/studio/experience.js?v=263"></script>
     ${extraHead}
 </head>
 <body class="svCleanShell">
@@ -7885,6 +7857,25 @@ function pickHero(items = []) {
     || {};
 }
 
+async function featuredHero(item = {}, type = "") {
+  const id = Number(item.id), mediaType = type || getType(item);
+  if (!Number.isSafeInteger(id) || id <= 0 || !["movie", "tv"].includes(mediaType)) return item;
+  if (item.images?.logos && item.genres && (item.runtime || item.episode_run_time)) return item;
+  const controller = new AbortController();
+  let timer;
+  const deadline = new Promise(resolve => { timer = setTimeout(() => { controller.abort(); resolve(null); }, 600); });
+  try {
+    const details = await Promise.race([
+      Promise.resolve().then(() => tmdb(`/${mediaType}/${id}`, {append_to_response:"images", include_image_language:"en,null"}, CACHE_TTL.long, controller.signal)).catch(() => null),
+      deadline,
+    ]);
+    if (!details || details.__error || Number(details.id) !== id) return item;
+    // Optional enrichment cannot change the selected film, its overview or its
+    // safety-filtered identity. A failed lookup leaves every action usable.
+    return {...item, ...Object.fromEntries(["images", "genres", "runtime", "episode_run_time"].filter(key => details[key] != null).map(key => [key, details[key]]))};
+  } finally { clearTimeout(timer); }
+}
+
 async function curatedFeaturedMovie() {
   // Barbie first; the other requested films cover temporarily missing artwork
   // or metadata. Optional feature data must not hold up a ready catalog.
@@ -7894,7 +7885,7 @@ async function curatedFeaturedMovie() {
     for (const id of [346698,634649,687163]) {
       if(controller.signal.aborted)return null;
       try {
-        const movie=await tmdb(`/movie/${id}`,{},CACHE_TTL.long,controller.signal);
+        const movie=await tmdb(`/movie/${id}`,{append_to_response:'images',include_image_language:'en,null'},CACHE_TTL.long,controller.signal);
         if(!movie.__error&&Number(movie.id)===id&&movie.title&&movie.backdrop_path)return {...movie,media_type:"movie"};
       } catch {}
     }
@@ -7921,10 +7912,14 @@ function metaMatch(item = {}) {
 function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = null, embedOrigin = "" }) {
   const mediaType = type || getType(hero);
   const title = getTitle(hero);
+  const logo = (hero.images?.logos || []).filter(image => /^\/[A-Za-z0-9_.-]+$/.test(image.file_path || '') && (!image.iso_639_1 || image.iso_639_1 === 'en'))
+    .sort((a,b) => Number(b.iso_639_1 === 'en') - Number(a.iso_639_1 === 'en') || Number(b.vote_average || 0) - Number(a.vote_average || 0))[0];
   const href = `/${mediaType}/${encodeURIComponent(hero.id || "")}`;
   const spillSrc = img(hero.backdrop_path || hero.poster_path, "w300");
   const desc = hero.overview || "Discover this title, explore the cast, and add it to your list.";
-  const maturity = mediaType === "tv" ? "TV-14" : "PG-13";
+  const runtime = Number(hero.runtime || hero.episode_run_time?.[0]);
+  const genres = (hero.genres || []).map(genre => genre?.name).filter(name => typeof name === "string" && name.trim()).slice(0, 2).join(", ");
+  const metadata = [getYear(getDate(hero)), runtime > 0 ? formatRuntime(runtime) : "", genres || (mediaType === "tv" ? "Series" : "Movie")].filter(Boolean);
   const trailerKey = trailer && trailer.key ? String(trailer.key) : "";
   const trailerSrc = trailerKey ? youtubeHeroAutoplaySrc(trailerKey, embedOrigin) : "";
   return `<section class="dsHero ${trailerSrc ? "dsHeroHasTrailer" : ""}" data-sv-palette-src="${escapeHtml(spillSrc)}">
@@ -7936,11 +7931,11 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = nu
     <div class="dsHeroGlass"></div>
     <div class="dsHeroContent">
       <div class="dsEyebrow">${escapeHtml(eyebrow || context || BRAND_SUBMARK)}</div>
-      <h1>${escapeHtml(title)}</h1>
-      <div class="dsHeroMeta">${Number(hero.vote_average) > 0 ? `<b>★ ${escapeHtml(formatRating(hero.vote_average))}<small>/10</small></b>` : ""}<span>${escapeHtml(getYear(getDate(hero)))}</span><span>${mediaType === "tv" ? "Series" : "Movie"}</span>${hero.runtime ? `<span>${escapeHtml(formatRuntime(hero.runtime))}</span>` : ""}</div>
+      <h1${logo ? ' class="dsHeroTitleArt"' : ''}>${logo ? `<span class="dsHeroTitleText">${escapeHtml(title)}</span><img class="dsHeroLogo" src="${escapeHtml(img(logo.file_path,'w500'))}" alt="" width="${Number(logo.width) > 0 ? Math.min(500,Number(logo.width)) : 500}" height="${Number(logo.height) > 0 && Number(logo.width) > 0 ? Math.round(Number(logo.height)*Math.min(500,Number(logo.width))/Number(logo.width)) : 200}" decoding="async" />` : escapeHtml(title)}</h1>
+      <div class="dsHeroMeta">${Number(hero.vote_average) > 0 ? `<b><span aria-hidden="true">★</span> ${escapeHtml(formatRating(hero.vote_average))}<span class="srOnly"> out of 10</span></b>` : ""}${metadata.map(value => `<span>${escapeHtml(value)}</span>`).join("")}</div>
       <p>${escapeHtml(desc)}</p>
       <div class="dsHeroActions">
-        <a class="dsPrimaryBtn" href="/watch/${mediaType}/${encodeURIComponent(hero.id || "")}?mode=movie${mediaType === "tv" ? "&s=1&e=1" : ""}" data-play-id="${escapeHtml(hero.id || "")}" data-play-type="${escapeHtml(mediaType)}" data-play-title="${escapeHtml(title)}" data-play-poster="${escapeHtml(hero.poster_path || "")}" data-play-backdrop="${escapeHtml(hero.backdrop_path || "")}" data-play-rating="${escapeHtml(formatRating(hero.vote_average))}" data-play-year="${escapeHtml(getYear(getDate(hero)))}"><span>▶</span> Play</a>
+        <a class="dsPrimaryBtn" href="/watch/${mediaType}/${encodeURIComponent(hero.id || "")}?mode=movie${mediaType === "tv" ? "&s=1&e=1" : ""}" data-play-id="${escapeHtml(hero.id || "")}" data-play-type="${escapeHtml(mediaType)}" data-play-title="${escapeHtml(title)}" data-play-poster="${escapeHtml(hero.poster_path || "")}" data-play-backdrop="${escapeHtml(hero.backdrop_path || "")}" data-play-rating="${escapeHtml(formatRating(hero.vote_average))}" data-play-year="${escapeHtml(getYear(getDate(hero)))}">${cleanIcon("play")} Play</a>
         <a class="dsSecondaryBtn" href="${href}">Details</a>
         <button class="dsIconBtn" type="button" aria-label="Add ${escapeHtml(title)} to My List" ${mediaDataAttributes("watch", hero, mediaType)}>＋</button>
       </div>
@@ -8337,7 +8332,7 @@ async function listingPage(req, res, type = "movie", options = {}) {
 
   const label = type === "tv" ? "TV Shows" : "Movies";
   const active = type === "tv" ? "tv" : "movies";
-  const hero = pickHero(data.results || rowFive.results || []);
+  const hero = await featuredHero(pickHero(data.results || rowFive.results || []), type);
   const categoryOne = type === "tv" ? "Popular Drama Shows" : "Action Movies";
   const categoryTwo = type === "tv" ? "Comedy TV Shows" : "Comedies";
   const categoryThree = type === "tv" ? "Crime & Suspense Shows" : "Suspense Movies";
@@ -8381,11 +8376,10 @@ async function trendingPage(req, res) {
   ]);
   if (data.__error) return res.send(setupNeededPage(data.message));
 
-  const hero = pickHero((data.results || []).filter((item) => ["movie", "tv"].includes(getType(item))));
+  const hero = await featuredHero(pickHero((data.results || []).filter((item) => ["movie", "tv"].includes(getType(item)))));
   const body = `<main>
     ${dsHero({ hero, context: "New & Popular", eyebrow: "Fresh on SwiflyTV" })}
     <section class="dsContent">
-      ${feedDiscover()}
       <div class="dsTabs">
         <a class="${type === "all" ? "active" : ""}" href="/trending?type=all">All</a>
         <a class="${type === "movie" ? "active" : ""}" href="/trending?type=movie">Movies</a>
@@ -8393,6 +8387,7 @@ async function trendingPage(req, res) {
       </div>
       ${dsRail("Trending this week", (data.results || []).filter((item) => ["movie", "tv"].includes(getType(item))), type === "all" ? "" : type, { tag: "This week" })}
       ${dsTopRail("Popular movies", popularMovies.results || [], "movie")}
+      ${feedDiscover()}
       ${dsRail("Popular TV Shows", popularTv.results || [], "tv")}
       ${dsRail("Coming Soon", upcomingMovies.results || [], "movie")}
       ${dsRail("Now Playing", nowPlaying.results || [], "movie")}
@@ -15084,7 +15079,7 @@ app.get("/kids", async (req, res) => {
   const kidsShows = kidsSafeResults(kidsTv.results || []);
   const familyShows = kidsSafeResults(familyTv.results || []);
   const animatedShows = kidsSafeResults(preschoolTv.results || []);
-  const hero = pickHero([...familyMovies, ...animatedMovies, ...kidsShows, ...familyShows]);
+  const hero = await featuredHero(pickHero([...familyMovies, ...animatedMovies, ...kidsShows, ...familyShows]));
 
   const body = `<main class="kidsModePage">
     <section class="kidsLockBanner">

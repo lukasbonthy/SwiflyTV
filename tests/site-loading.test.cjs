@@ -12,6 +12,11 @@ function setup(options={}){
  b.window.eval(loadingHead().match(/<script[^>]*>([\s\S]*?)<\/script>/)[1]);
  return {...b,w:b.window,tasks,advance(ms){for(const [id,task] of [...tasks])if(task.ms===ms){tasks.delete(id);task.fn();}}};
 }
+test('server-rendered content stays visible while deferred scripts delay DOMContentLoaded',()=>{
+ const b=setup({markup:'<main><h1>Featured movie</h1><a href="/watch/movie/1">Play</a></main>'});
+ b.advance(120);
+ assert.equal(b.w.document.documentElement.hasAttribute('data-sv-loading'),false,'ready server markup must not be covered by a timed initial skeleton');
+});
 test('real navigation gets a destination skeleton and restores immediately from history',async()=>{
  const b=setup();await tick();b.w.document.querySelector('#next').click();await tick();
  b.advance(0);assert.equal(b.w.document.documentElement.dataset.svLoading,'pending');

@@ -1,4 +1,5 @@
 'use strict';
+const {readShellStyle}=require('../lib/shell-styles');
 const test=require('node:test'),assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path');
 const {chromium}=require('playwright-core'),{loadServer}=require('./ui-helpers.cjs');
@@ -26,7 +27,7 @@ async function open({viewport={width:1440,height:900},values={},tv=false,records
   .replace(/<script\b([^>]*)>[\s\S]*?<\/script>/g,(script,attributes)=>/data-sv-studio-(?:config|prime)/.test(attributes)?script:'');
  if(tv)html=html.replace('<html lang="en">','<html lang="en" data-sv-tv="true">');
  await page.route('**/*',route=>{
-  const url=new URL(route.request().url()),type=route.request().resourceType();
+  const url=new URL(route.request().url()),type=route.request().resourceType();const bundled=readShellStyle(url.pathname);if(bundled!==undefined)return route.fulfill({contentType:'text/css',body:bundled});
   if(type==='document')return route.fulfill({contentType:'text/html',body:html});
   if(url.pathname==='/scale-film.webm')return route.fulfill({contentType:'video/webm',body:captionFilm});
   if(url.pathname==='/scale-captions.vtt')return route.fulfill({contentType:'text/vtt',body:'WEBVTT\n\n00:00.000 --> 00:11.500\nText scale caption fixture\n'});

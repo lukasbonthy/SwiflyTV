@@ -4,7 +4,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require('playwright-core');
 const { loadServer } = require('./ui-helpers.cjs');
-const asset = name => fs.readFileSync(path.join(__dirname, '../public', name), 'utf8');
+const {readShellStyle}=require('../lib/shell-styles');
+const asset = name => readShellStyle('/assets/'+name)??fs.readFileSync(path.join(__dirname, '../public', name), 'utf8');
 const available = fs.existsSync(chromium.executablePath()) || fs.existsSync(chromium.executablePath().replace(/chromium-(\d+)\/chrome-linux\/chrome$/, 'chromium_headless_shell-$1/chrome-linux/headless_shell'));
 
 async function pixelDifference(page, first, second) {
@@ -24,7 +25,7 @@ async function pixelDifference(page, first, second) {
 }
 
 for (const width of [360, 1024]) for (const native of [false, true]) {
-  test(`${width}px ${native ? 'native' : 'refractive'} real hero buttons filter artwork after their entrance finishes`, { skip: !available && 'Chromium is not installed' }, async () => {
+  test(`${width}px ${native ? 'native' : 'refractive'} hero keeps a clear Play action and refractive secondary actions`, { skip: !available && 'Chromium is not installed' }, async () => {
     const api = loadServer(), browser = await chromium.launch({ headless: true });
     try {
       const hero = { id: 1236045, title: 'Animals', backdrop_path: '/test.jpg', poster_path: '/poster.jpg', release_date: '2026-01-01', vote_average: 7.2, overview: 'When the son of a mayoral candidate is kidnapped, his parents have a few hours to find the ransom payment.' };
@@ -41,7 +42,9 @@ for (const width of [360, 1024]) for (const native of [false, true]) {
       if (!native) await page.waitForFunction(() => [...document.querySelectorAll('.dsHeroActions .svNavMatchedLens')].every(pane => pane.dataset.swiflyRenderer === 'svg'));
       await page.waitForTimeout(1100);
       const controls = page.locator('.dsHeroActions > :is(a,button)'); assert.equal(await controls.count(), 3);
-      for (let index = 0; index < 3; index++) {
+      const primary=await controls.first().evaluate(node=>({color:getComputedStyle(node).color,fill:getComputedStyle(node.querySelector('.svNavMatchedLens')).backgroundColor}));
+      assert.equal(primary.color,'rgb(16, 17, 21)');assert.equal(primary.fill,'rgba(255, 255, 255, 0.94)','Play has an intentionally bright face');
+      for (let index = 1; index < 3; index++) {
         const control = controls.nth(index), pane = control.locator('.svNavMatchedLens');
         const first = (await control.screenshot()).toString('base64');
         await pane.evaluate((node, native) => {

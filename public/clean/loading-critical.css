@@ -1,0 +1,11 @@
+/* Entry's visibility and safety release work before any shared asset arrives. */
+#svSiteLoading{display:none}
+#svArtworkCurtain {
+ position:fixed;inset:0;z-index:2147480000;background:#000;
+ opacity:0;visibility:hidden;pointer-events:none;
+ transition:opacity .44s cubic-bezier(.2,.65,.3,1),visibility 0s .44s;
+}
+html[data-sv-artwork-state="loading"] #svArtworkCurtain {
+ opacity:1;visibility:visible;pointer-events:auto;transition:none;
+}
+html[data-sv-artwork-state="reveal"] #svArtworkCurtain {visibility:visible;}

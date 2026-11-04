@@ -1,5 +1,6 @@
 /* Small bounded surfaces, shared theme colors, no feed animation loop. */
 .svFeedSection,.svFeedSurprise { min-width:0; margin:30px 0; color:var(--st-text,#f1f1f6); }
+.svFeedSection[hidden] { display:none !important; }
 .svFeedSectionHead { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
 body.svCleanShell .svFeedRefresh { display:inline-flex; align-items:center; justify-content:center; min-width:44px; min-height:44px; padding:9px 12px; border:1px solid #ffffff29; border-radius:11px; background:#1c202c; color:#e6e6ef; font:500 calc(12px * var(--st-ui-scale, 1)) var(--st-font,system-ui,sans-serif); cursor:pointer; }
 .svFeedRefresh:disabled { opacity:.6; cursor:wait; }
@@ -23,6 +24,9 @@ body.svCleanShell .svFeedCard h3 { margin:0 0 9px; font:600 calc(15px * var(--st
 .svFeedEpisodeName { color:#e2e0ed; }
 .svFeedEpisode time { color:var(--st-accent,#c8c3ef); }
 body.svCleanShell .svFeedBell { position:relative; display:inline-flex; align-items:center; justify-content:center; gap:7px; min-width:44px; min-height:44px; padding:10px 12px; border:1px solid #ffffff24; border-radius:13px; background:#171a23; color:#f4f3f8; cursor:pointer; font:500 calc(12px * var(--st-ui-scale, 1)) var(--st-font,system-ui,sans-serif); }
+body.svCleanShell .netflixNav .svFeedBell { padding:10px; border-color:transparent; border-radius:50%; background:transparent; }
+.netflixNav .svFeedBellLabel { display:none; }
+.netflixNav .svFeedUnreadCount { position:absolute; top:0; right:-3px; }
 .svFeedBell svg { width:20px; height:20px; flex:0 0 20px; }
 .svFeedUnreadCount { display:grid; place-items:center; min-width:19px; height:19px; padding:1px 4px; border-radius:10px; background:var(--st-accent,#c8c3ef); color:#101116; font-size:calc(10px * var(--st-ui-scale, 1)); font-weight:700; }
 body.svCleanShell .svFeedNotifications { width:min(540px,calc(100vw - 28px)); max-height:calc(100dvh - 28px); margin:auto; padding:23px; box-sizing:border-box; border:1px solid #ffffff30; border-radius:23px; background:#12151e; color:#f4f3f8; overflow:auto; box-shadow:0 24px 90px #0009; }

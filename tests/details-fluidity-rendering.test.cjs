@@ -99,7 +99,7 @@ test('Closing retains native modality until the panel exits without moving the c
   });
   assert.equal(result.transitions,0,'catalog artwork and its fade never receive a scale transition');
   assert(result.midwayOpen,'focus stays trapped until the exit finishes');assert.equal(result.open,false);
-  assert.equal(result.duration,320);assert(result.shift<.5,'the catalog must remain at its resting geometry: '+JSON.stringify(result));
+  assert.equal(result.duration,220);assert(result.shift<.5,'the catalog must remain at its resting geometry: '+JSON.stringify(result));
  }finally{await browser.close();}
 });
 

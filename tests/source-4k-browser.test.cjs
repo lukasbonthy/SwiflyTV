@@ -1,4 +1,5 @@
 'use strict';
+const {readShellStyle}=require('../lib/shell-styles');
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),http=require('node:http');
 const {chromium}=require('playwright-core'),{loadServer}=require('./ui-helpers.cjs'),{playerMarkup}=require('../ui/player');
 const {createPublicFetcher}=require('../lib/nuvio-http'),{verifyNuvioSource}=require('../lib/nuvio-provider');
@@ -7,7 +8,7 @@ let browser,api,server,origin,html;const requests=[];
 test.before(async()=>{
  if(!available)return;api=loadServer();html=api.pageShell({title:'Original 4K playback',active:'movies',extraHead:'<link rel="stylesheet" href="/assets/player/player.css">',body:playerMarkup({id:42,title:'Original 4K test pattern',type:'movie',mode:'movie',managed:true})}).replace(/<script\b([^>]*)>[\s\S]*?<\/script>/g,(s,a)=>/data-sv-studio-(?:config|prime)/.test(a)?s:'');
  server=http.createServer((req,res)=>{
-  const pathname=new URL(req.url,'http://localhost').pathname;
+  const pathname=new URL(req.url,'http://localhost').pathname;const bundled=readShellStyle(pathname);if(bundled!==undefined){res.setHeader('Content-Type','text/css');res.end(bundled);return;}
   if(pathname==='/licensed.webm'){
    requests.push({method:req.method,range:req.headers.range});
    if(req.method==='HEAD'){res.writeHead(405);return res.end();}

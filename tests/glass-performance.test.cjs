@@ -183,7 +183,7 @@ test('Destroying motion before DOM ready prevents later boot and animation sched
   env.finish();
 });
 test('Destroying motion leaves pending reveal sections visible', () => {
-  const env = browser('<section class="svDetailSection">Details</section>'), w = env.window, section = w.document.querySelector('section');
+  const env = browser('<section class="dsWelcomeRail">Welcome</section>'), w = env.window, section = w.document.querySelector('section');
   section.getBoundingClientRect = () => ({top:1600, height:400}); w.boot('motion.js');
   assert.equal(section.classList.contains('svMotionReveal'), true);
   w.SwiflyMotion.destroy();

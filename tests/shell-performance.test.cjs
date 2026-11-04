@@ -10,6 +10,9 @@ test('catalog pages reuse cached styles instead of repeating the entire theme', 
   const html = api.pageShell({ title: 'Catalog', active: 'home', body: '<main>Catalog</main>' });
   assert.match(html, /href="\/assets\/clean\/base\.css\?v=262"/);
   assert(Buffer.byteLength(html) < 160000, 'The shared shell should stay below 160 KB');
+  const inline=html.match(/<style data-sv-loading-style>([\s\S]*?)<\/style>/)[1];
+  assert(Buffer.byteLength(inline)<1500,'Only the small entry visibility gate belongs in every HTML response');
+  assert.match(inline,/#svArtworkCurtain/);assert.doesNotMatch(inline,/\.svLoadFeedback|\.svArtworkAsset/);
   assert.doesNotMatch(html, /<style>\s*:root/);
   api.io.close(); api.httpServer.close();
 });
@@ -58,7 +61,7 @@ test('versioned glass assets are browser-cacheable without changing their materi
     }
     const html = api.pageShell({ active: 'home' });
     assert(html.includes('/assets/liquid-glass/liquid-glass.js?v=227'));
-    assert(html.includes('/assets/liquid-glass/surfaces.js?v=259'));
+    assert(html.includes('/assets/liquid-glass/surfaces.js?v=260'));
   } finally { await new Promise(resolve => api.io.close(resolve)); }
 });
 
@@ -69,7 +72,7 @@ test('the scroll engine URLs in the actual shell are served by Express', async (
     const origin = 'http://127.0.0.1:' + api.httpServer.address().port;
     const html = api.pageShell({active:'home'});
     const assets = [...html.matchAll(/(?:src|href)="(\/assets\/vendor\/lenis\/([^"?]+)[^"]*)"/g)];
-    assert.equal(assets.length, 2, 'the shell references the pinned engine and its stylesheet');
+    assert.equal(assets.length, 1, 'the shell references one pinned engine script');
     for (const [, url, file] of assets) {
       const response = await fetch(origin + url);
       assert.equal(response.status, 200, `${url} must load through the production asset routes`);
@@ -77,5 +80,10 @@ test('the scroll engine URLs in the actual shell are served by Express', async (
       assert.match(response.headers.get('cache-control'), /max-age=86400/);
       assert.equal(await response.text(), fs.readFileSync(path.join(__dirname, '../public/vendor/lenis', file), 'utf8'));
     }
+    const core=html.match(/href="(\/assets\/shell\/core-[a-f0-9]+\.css)"/)[1];
+    const response=await fetch(origin+core);
+    assert.equal(response.status,200);
+    assert.match(response.headers.get('content-type'),/text\/css/);
+    assert((await response.text()).includes(fs.readFileSync(path.join(__dirname,'../public/vendor/lenis/lenis.css'),'utf8')),'the served core bundle contains the pinned engine stylesheet');
   } finally {await new Promise(resolve => api.io.close(resolve));}
 });

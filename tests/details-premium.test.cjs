@@ -4,14 +4,18 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 
+const {loadServer,browser}=require('./ui-helpers.cjs');
+const {stylesheetPaths}=require('./shell-style-helpers.cjs');
 const root = path.resolve(__dirname, '..');
 const css = fs.readFileSync(path.join(root, 'public/clean/details-premium.css'), 'utf8');
 const server = fs.readFileSync(path.join(root, 'server.js'), 'utf8');
 
 test('premium details stylesheet is loaded after cinema and TV styles', () => {
-  const cinema = server.indexOf('/assets/clean/cinema.css?v=');
-  const television = server.indexOf('/assets/clean/tv.css?v=');
-  const premium = server.indexOf('/assets/clean/details-premium.css?v=262');
+  const api=loadServer(),env=browser(api.pageShell({active:'home'}));
+  const styles=stylesheetPaths(env.window.document);env.finish();api.io.close();api.httpServer.close();
+  const cinema = styles.indexOf('/assets/clean/cinema.css');
+  const television = styles.indexOf('/assets/clean/tv.css');
+  const premium = styles.indexOf('/assets/clean/details-premium.css');
   assert(cinema >= 0 && television > cinema && premium > television,
     'new rules must override the old detail layout without changing the global player');
 });

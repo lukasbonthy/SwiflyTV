@@ -178,6 +178,8 @@ body.svCleanShell :is(.movieRail, .dsRail, .nfRail, .nfTopTenRail) {
   display: grid !important; grid-auto-flow: column !important; grid-auto-columns: var(--sv-poster-width) !important;
   gap: 16px !important; overflow-x: auto !important; overflow-y: hidden !important;
   padding: 4px 0 12px !important; margin: 0 !important; scroll-snap-type: x proximity;
+  /* The old full-rail fade hides the first poster and its title. */
+  -webkit-mask-image: none !important; mask-image: none !important;
 }
 body.svCleanShell .movieCard {
   padding: 0 !important; margin: 0 !important; border: 0 !important; background: none !important;
@@ -223,6 +225,7 @@ body.svCleanShell .dsCardMeta { display: flex !important; gap: 8px !important; m
 body.svCleanShell .dsCardMeta > * { padding: 0 !important; border: 0 !important; background: none !important; color: #888 !important; font-size: calc(11px * var(--st-ui-scale, 1)) !important; font-weight: 400 !important; }
 body.svCleanShell .dsRowControls { position: absolute !important; inset: 0 0 auto auto !important; display: flex !important; gap: 5px !important; opacity: 1 !important; }
 body.svCleanShell .dsRowBtn { width: 28px !important; height: 28px !important; padding: 0 !important; background: none !important; border: 1px solid #ffffff1f !important; color: #999 !important; }
+body.svCleanShell .dsRowBtn:is(:disabled,[aria-disabled="true"]) { opacity:.3 !important; cursor:default; }
 body.svCleanShell .dsRowBtn:hover { background: #ffffff0f !important; }
 body.svCleanShell .nfTopTenNumber { display: none !important; }
 body.svCleanShell .nfTopTenCard { display: block !important; min-height: 0 !important; }
@@ -328,6 +331,7 @@ body.svCleanShell .svSectionHead > h2 { margin: 0 !important; font-size: calc(cl
 body.svCleanShell .svSectionHead > h2::before, body.svCleanShell .svSectionHead > h2::after { display: none !important; }
 body.svCleanShell .svSectionActions { display: flex; align-items: center; gap: 14px; }
 body.svCleanShell .svSectionActions > .dsRowControls { position: static !important; display: flex !important; opacity: 1 !important; transform: none !important; }
+body.svCleanShell .dsRowControls[hidden] { display:none !important; }
 body.svCleanShell .svRowMore { display: inline-flex !important; align-items: center; min-height: 24px; width: auto !important; padding: 0 !important; margin: 0 !important; border: 0 !important; background: none !important; box-shadow: none !important; transform: none !important; border-radius: 0 !important; font-size: calc(12px * var(--st-ui-scale, 1)) !important; font-weight: 400 !important; color: #929292 !important; white-space: nowrap; }
 body.svCleanShell .svRowMore:hover { color: #ddd !important; }
 body.svCleanShell .svRowArrows { display: flex; gap: 6px; }

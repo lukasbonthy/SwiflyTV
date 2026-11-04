@@ -61,8 +61,8 @@ for(const native of [false,true])test((native?'Native':'Refractive')+' button ma
   await boot(page);await page.waitForFunction(()=>document.querySelectorAll('.svNavMatchedLens').length===10);
   assert.equal(await page.locator('#controlPanel .svLiquidPane').count(),0,'Studio keeps its original buttons');
   if(!native)await page.waitForFunction(()=>[...document.querySelectorAll('.svNavMatchedLens:not(.svCardActionLens)')].every(p=>p.dataset.swiflyRenderer==='svg'));
-  const material=await page.locator('.svLiquidPane').evaluateAll(nodes=>nodes.map(n=>{const s=getComputedStyle(n);return {card:n.classList.contains('svCardActionLens'),fill:s.backgroundColor,shadow:s.boxShadow,filter:s.backdropFilter.replace(/url\([^)]+\)/,'url(shared-lens)'),before:getComputedStyle(n,'::before').content,after:getComputedStyle(n,'::after').content};}));
-  const {fill,card,...nav}=material[0];assert.equal(fill,'rgba(255, 255, 255, 0.2)');
-  for(const {fill,card,...button} of material.slice(1)){if(card){assert.equal(fill,'rgba(10, 13, 17, 0.82)');assert.match(button.filter,/blur\(10px\)/);}else{assert.equal(fill,'rgba(255, 255, 255, 0.2)','prominent action families share the navigation face');assert.deepEqual(button,nav,'one shared lens and rim must style nav and prominent buttons');}}
+  const material=await page.locator('.svLiquidPane').evaluateAll(nodes=>nodes.map(n=>{const s=getComputedStyle(n);return {primary:n.parentElement.matches('.dsHeroActions > .dsPrimaryBtn'),card:n.classList.contains('svCardActionLens'),fill:s.backgroundColor,shadow:s.boxShadow,filter:s.backdropFilter.replace(/url\([^)]+\)/,'url(shared-lens)'),before:getComputedStyle(n,'::before').content,after:getComputedStyle(n,'::after').content};}));
+  const {fill,card,primary,...nav}=material[0];assert.equal(fill,'rgba(255, 255, 255, 0.2)');
+  for(const {fill,card,primary,...button} of material.slice(1)){if(card){assert.equal(fill,'rgba(10, 13, 17, 0.82)');assert.match(button.filter,/blur\(10px\)/);}else{assert.equal(fill,primary?'rgba(255, 255, 255, 0.94)':'rgba(255, 255, 255, 0.2)',primary?'featured Play retains its bright face':'other prominent action families share the navigation face');assert.deepEqual(button,nav,'one shared lens and rim must style nav and prominent buttons');}}
  }finally{await browser.close();}
 });
