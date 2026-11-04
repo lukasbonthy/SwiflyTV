@@ -72,3 +72,8 @@ Preserve glass, Aurora, Studio and features. Continue on this PR without merging
 - Verify with behavioral and real Chromium tests, mobile/desktop preview, and independent review.
 
 Independent review found and verified fixes for search focus loss, arrow focus loss and scaled fallback-title overlap. Seven focused regressions passed before the previous workspace cleanup; rerun verification after recovery.
+
+
+Follow-up verification: recovered changes were published to PR #150. Syntax and 30 focused checks passed. GitHub run 1187 passed 1,524 non-browser checks, 211 Chromium cases, recommendations and acceptance. Final header-control computed-display coverage passed after restoring the hidden rule's cascade position. Desktop/mobile evidence and local timeout details are recorded in docs/evidence/catalog-polish/README.md.
+
+The final affected-browser rerun passed 31/31 cases after the cold-start readiness budget adjustment. The final computed-display and focus/layout Chromium regressions passed 2/2.

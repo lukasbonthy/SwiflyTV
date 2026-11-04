@@ -57,7 +57,9 @@ async function catalog(browser, options = {}) {
       return route.fulfill({body:'', contentType:route.request().resourceType() === 'stylesheet' ? 'text/css' : 'text/plain'});
     });
     await page.goto(origin);
-    await appReady(page,'/');
+    // Cold catalog fixtures share CPU with other Chromium files. Readiness
+    // remains condition-based; this is not a startup-speed assertion.
+    await appReady(page,'/',{timeout:30000});
     page.once('close', () => api.io.close());
     ready = true;
     return page;

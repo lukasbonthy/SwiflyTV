@@ -1,29 +1,40 @@
 # Catalog polish verification
 
-The homepage now requests seven stylesheets, down from 37, while preserving the cascade around welcome, auth, party and player styles. The bundles are built at startup and use content hashes. Recognized older hashes receive compatible current CSS without caching, so an HTML response crossing a rolling deployment stays styled.
+This PR repairs specific catalog loading, navigation and rendering defects while retaining glass, Aurora, Studio, profiles and playback features.
 
-## Browser observations
+## Delivered changes
 
-The production Express routes and shared controllers were run in a temporary managed preview. The preview did not have working live TMDB access, so catalog responses used deterministic metadata with public artwork URLs observed on the live homepage. Repeated titles in the desktop capture are fixture data. No fixture server, preview page or dev-command override is included in this change.
+- The homepage requests seven stylesheets instead of 37. Fixed startup bundles retain stylesheet order, rebase relative URLs, use content hashes and keep older recognized bundle hashes usable across rolling deployments.
+- Server-rendered content stays visible during initial loading and navigation. Empty personal rows stay hidden until they have useful content; profile switches clear stale cards.
+- Repeated slow glides contribute to a bounded recovery budget, while healthy scrolling retains the existing curve. Native fallback activates only after a glide settles.
+- Search keeps current results during edits and replaces them atomically, with updating/error feedback and keyboard focus restored to the matching destination or input.
+- Catalog arrows announce their actual boundaries without losing keyboard focus; controls hide when their rail fits. They update from horizontal scroll and resize rather than page scrolling.
+- Episode initialization inspects inserted episode subtrees rather than rescanning the document after unrelated artwork, glass or search changes. Removed panels cancel their request.
+- Featured titles use available English/neutral artwork from the existing bounded metadata lookup. Wrapped fallback text remains in layout, including at larger Studio text sizes, so artwork arrival does not move the metadata.
+- Details use one 360ms entrance and 220ms exit. Detail sections remain immediately readable during scrolling. The library-page controller is only delivered to pages that use it.
 
-- Desktop: the first poster and its title are fully visible; both empty personal rows have `display: none`; the bell has no nested optical pane; hero title animation is `none`; seven stylesheet links are present.
-- Mobile: a 390px iframe (380px content area with the desktop scrollbar) shows the hero, compact header and bottom navigation without horizontal document overflow.
-- Minimal, artwork and aurora navigation loaders: the canvas and brand compute to `display: none`, the overlay background is transparent, pointer events are disabled, and the status remains in a clipped 1px region for accessibility.
+## Preview observations
 
-![Desktop catalog rows](catalog-desktop.jpg)
+The managed preview ran production Express routes, styles and controllers with deterministic catalog metadata because live TMDB access was unavailable in the preview. Repeated titles and shared dates are fixture data. The featured backdrop and poster URLs came from the public catalog; the preview logo uses the Warner Bros./Mattel film logo distributed on [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Barbie_(2023_movie_logo).png). These screenshots demonstrate layout, not current catalog accuracy. No fixture server, responsive test page or dev-command override is included in the change.
 
-![Mobile catalog](catalog-mobile.jpg)
+- Desktop: featured artwork and glass actions are visible; initial row arrows correctly announce the left boundary.
+- Mobile: a 390px iframe has a 380px content area with the desktop scrollbar; content width and scroll width both measure 380px.
+- Automated Chromium checks cover a long featured title at 120% text size at 360px, 768px and 1920px with TV layout, before and after logo loading. The title and metadata retain their positions.
 
-## Automated checks
+![Updated desktop catalog](refinement-desktop.jpg)
 
-Final command: `npm run check && npm run test:ui`.
+![Updated mobile catalog](refinement-mobile.jpg)
 
-`npm run check` passed. The full test run completed with **1,519 passed, 0 failed, 209 skipped** (1,728 total). The skipped cases require an unavailable local Chromium browser. After the full run, three additional browser-fixture asset readers were adapted for virtual bundles; their 31 cases parse successfully and remain skipped for the same reason.
+## Verification
 
-New regressions cover server-rendered content during slow deferred scripts, cold stylesheet requests and relative URL rebasing, stale-hash rollout fallback, profile feed visibility and keyboard focus under custom row placement, short repeated slow gestures, healthy-frame recovery and fallback only after a glide settles. Existing integration assertions and browser fixtures now understand the delivered bundles.
+Syntax checks passed. Focused controller regressions passed 28/28; the new real Chromium regressions passed 2/2. They exercise retained search results and focus, row-boundary focus, wrapped title layout, local episode initialization and conditional asset delivery. Independent review found and verified fixes for search focus loss, row-arrow focus loss and scaled fallback-title overlap.
 
-An independent read-only review found no remaining code issues after the rollout, loader, focus and scrolling fixes. `git diff --check` passed.
+GitHub check run 1187 passed on implementation commit 2138deadfa6919cc56c864ab173a57ff0e6d0d81: **1,524 non-browser checks and 211 Chromium checks passed**, followed by successful recommendation and acceptance checks. The four on-device model cases that lacked local prepared assets were exercised with prepared assets in CI.
+
+The local full run completed 1,735 cases: 1,730 passed, four model cases skipped, and one catalog fixture exceeded its 10-second readiness deadline before reaching the hover assertions. That case passed in isolation. Its fixture now uses the same condition-based readiness check with a 30-second cold-start budget; no hover assertion was relaxed. All 31 cases in the affected browser fixture then passed, including the hover case. A final header-controls regression also verifies computed `display:none` in the actual header layout, and both focused Chromium tests pass.
+
+The older hero-animation expectation was updated to the intended immediately readable behavior; sheet timing and detail reveal expectations now match the new transitions. GitHub runs the new browser cases after installing Chromium.
 
 ## Limits
 
-The local Playwright browser suite could not run because Chromium is not installed in this environment. The separate cloud-browser checks above cover the changed visual surfaces; they are not a Safari, iPad, Xbox or playback certification. No FPS increase or live server latency reduction has been measured. This PR reduces stylesheet requests and fixes specific loading, layout and scroll-recovery defects; it does not claim every existing feature is fully polished.
+The preview uses controlled data and does not certify Safari, physical iPad/Xbox performance, media-source availability or playback. No FPS increase or production latency reduction has been measured. The changes reduce specific loading, layout and rendering work; they do not claim every existing feature is fully polished.
