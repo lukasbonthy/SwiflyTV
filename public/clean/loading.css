@@ -49,3 +49,35 @@ html[data-sv-load-layout=player] .svLoadPlayer{display:block;padding:12px 32px 3
 @media(max-width:400px){.svLoadCards,.svLoadBookCards{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.svLoadingHelp{max-width:230px}.svLoadFeedback{padding-bottom:18px}}
 @media(prefers-reduced-motion:reduce){html[data-sv-loading] .svLoadProgress i{animation:none;transform:none;width:100%;background:#a3a8b3}}
 :is(html:has(body.reduceMotion),html[data-sv-xbox=true],html[data-sv-tv=true],body[data-sv-performance=low]) #svSiteLoading .svLoadProgress i{animation:none;transform:none;width:100%;background:#a3a8b3}
+/* Initial catalog entry dissolves from black after visible artwork is ready.
+   This is separate from explicit asynchronous feature holds and navigation. */
+#svArtworkCurtain {
+ position:fixed;inset:0;z-index:2147480000;background:#000;
+ opacity:0;visibility:hidden;pointer-events:none;
+ transition:opacity .44s cubic-bezier(.2,.65,.3,1),visibility 0s .44s;
+}
+html[data-sv-artwork-state="loading"] #svArtworkCurtain {
+ opacity:1;visibility:visible;pointer-events:auto;transition:none;
+}
+html[data-sv-artwork-state="reveal"] #svArtworkCurtain {visibility:visible;}
+body.svCleanShell:is([data-st-loader-style="artwork"],[data-st-loader-style="aurora"]) #svArtworkCurtain::before {
+ content:"";position:absolute;inset:0;pointer-events:none;opacity:.4;
+ background:linear-gradient(rgb(0 0 0 / var(--st-loader-alpha,.9)),#000),var(--st-loader-art,none) center/cover no-repeat;
+}
+body.svCleanShell[data-st-loader-style="aurora"] #svArtworkCurtain::before {
+ background:linear-gradient(#08090d33,#08090ddd),url('/assets/clean/aurora-ribbon.svg?v=170') center/cover no-repeat;
+ opacity:var(--sv-aurora-strength,.8);
+}
+body.svCleanShell :is(.svArtworkAsset.svArtworkAsset,.svArtworkCopy.svArtworkCopy) {
+ transition:opacity .42s ease !important;
+}
+body.svCleanShell :is(.svArtworkAsset,.svArtworkCopy):not(.svArtworkReady) {opacity:0 !important;}
+/* The image's own hover transform stays independent of its decode fade. */
+body.svCleanShell img.svArtworkAsset.svArtworkAsset {transition:opacity .42s ease,transform .22s ease !important;}
+html[data-sv-artwork-state="loading"] body.svCleanShell :is(.svArtworkAsset.svArtworkAsset,.svArtworkCopy.svArtworkCopy) {transition:none !important;}
+body.svCleanShell:is(.reduceMotion,[data-st-page-motion="false"],[data-st-loader-style="minimal"],[data-st-loader-style="basic"]) :is(.svArtworkAsset.svArtworkAsset,.svArtworkCopy.svArtworkCopy),
+html:is([data-sv-tv="true"],[data-sv-xbox="true"]) body.svCleanShell :is(.svArtworkAsset.svArtworkAsset,.svArtworkCopy.svArtworkCopy) {transition:none !important;opacity:1 !important;}
+@media(prefers-reduced-motion:reduce) {
+ #svArtworkCurtain,body.svCleanShell :is(.svArtworkAsset.svArtworkAsset,.svArtworkCopy.svArtworkCopy) {transition:none !important;}
+ body.svCleanShell :is(.svArtworkAsset.svArtworkAsset,.svArtworkCopy.svArtworkCopy) {opacity:1 !important;}
+}

@@ -10,11 +10,23 @@ body.svCleanShell main > .dsHero {
   z-index:0 !important;
   isolation:isolate !important;
   overflow:hidden !important;
-  min-height:clamp(650px,90svh,940px) !important;
-  padding:125px 0 145px !important;
+  min-height:clamp(640px,87svh,900px) !important;
+  padding:130px 0 92px !important;
+  align-items:flex-end !important;
   height:auto !important;
   background:transparent !important;
 }
+body.svCleanShell main > .dsHero .dsHeroContent {
+  width:min(600px,calc(100% - 64px)) !important;
+  max-width:600px !important;
+  margin-left:max(48px,calc((100% - 1480px) / 2)) !important;
+}
+body.svCleanShell main > .dsHero .dsHeroContent > .dsEyebrow {
+  margin-bottom:16px !important;
+  color:#dedde2 !important;
+  font-size:calc(11px * var(--st-ui-scale,1)) !important;
+}
+body.svCleanShell main > .dsHero .dsHeroContent:has(> .dsHeroTitleArt) > .dsEyebrow {display:none !important;}
 /* Parallax moves inside this stationary alpha boundary. */
 body.svCleanShell main > .dsHero > .dsHeroArt {
   position:absolute !important;
@@ -40,7 +52,8 @@ body.svCleanShell main > .dsHero > .dsHeroArt > .dsHeroBg {
 /* Keep wrapped fallback text in layout while optional title artwork loads. */
 body.svCleanShell main > .dsHero .dsHeroContent > .dsHeroTitleArt {
   position:relative; display:grid !important; align-items:center;
-  width:min(100%,440px); min-height:clamp(90px,12vw,160px);
+  width:min(100%,480px) !important; min-height:clamp(108px,11vw,150px);
+  margin:0 !important;
 }
 body.svCleanShell .dsHeroTitleArt > .dsHeroTitleText { grid-area:1/1; }
 body.svCleanShell .dsHeroTitleArt > .dsHeroLogo {
@@ -50,6 +63,7 @@ body.svCleanShell .dsHeroTitleArt > .dsHeroLogo {
 body.svCleanShell .dsHeroTitleArt.hasLogo > .dsHeroLogo { opacity:1; }
 body.svCleanShell .dsHeroTitleArt.hasLogo > .dsHeroTitleText { opacity:0; }
 @media (max-width:860px) {
+  body.svCleanShell main > .dsHero .dsHeroContent > .dsHeroTitleArt {margin-inline:auto !important;}
   body.svCleanShell .dsHeroTitleArt > .dsHeroLogo { object-position:center; }
 }
 /* Shade the copy, then let the photograph itself dissolve to transparency. */
@@ -59,12 +73,47 @@ body.svCleanShell main > .dsHero > .dsHeroGlass {
   mask-image:linear-gradient(to bottom,#000 0%,#000 48%,rgb(0 0 0 / .45) 74%,transparent 100%) !important;
 }
 body.svCleanShell main > .dsHero .dsHeroContent > p {
+  max-width:580px !important;
+  font-size:calc(16px * var(--st-ui-scale,1)) !important;
+  line-height:1.6 !important;
+  margin:0 0 24px !important;
   color:#f0eff3 !important;
   text-shadow:0 1px 8px #0008;
 }
+body.svCleanShell main > .dsHero .dsHeroMeta {
+  align-items:center;
+  gap:8px 12px !important;
+  margin:20px 0 14px !important;
+}
 body.svCleanShell main > .dsHero .dsHeroMeta > :is(b,span) {
   color:#eeedf1 !important;
-  background:#09080b59 !important;
+  background:transparent !important;
+  font-size:calc(14px * var(--st-ui-scale,1)) !important;
+  padding:0 !important;
+  min-height:0;
+  line-height:1.5;
+  border:0 !important;border-radius:0 !important;box-shadow:none !important;
+  -webkit-backdrop-filter:none !important;backdrop-filter:none !important;
+}
+body.svCleanShell main > .dsHero .dsHeroMeta > :not(:first-child)::before {
+  content:"·";margin-right:12px;color:#bcbcc3;
+}
+body.svCleanShell main > .dsHero .dsHeroMeta > b > [aria-hidden] {
+  color:#f4cc71;display:inline;padding:0;min-height:0;
+  background:none;border:0;border-radius:0;
+  -webkit-backdrop-filter:none !important;backdrop-filter:none !important;
+}
+body.svCleanShell main > .dsHero .dsHeroActions > :is(a,button) {
+  min-height:44px !important;
+  padding:11px 22px !important;
+  font-size:calc(14px * var(--st-ui-scale,1)) !important;
+  font-weight:600 !important;
+}
+body.svCleanShell main > .dsHero .dsHeroActions > .dsPrimaryBtn {min-width:114px !important;}
+body.svCleanShell main > .dsHero .dsHeroActions > .dsIconBtn {width:44px !important;padding:0 !important;}
+body.svCleanShell main > .dsHero .dsHeroActions svg {width:18px;height:18px;flex:0 0 18px;}
+body.svCleanShell main > .dsHero .dsHeroMeta .srOnly {
+  position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;
 }
 body.svCleanShell main > .dsHero::before,
 body.svCleanShell main > .dsHero::after {
@@ -112,8 +161,8 @@ body.svCleanShell .svHeroSpill > img {
   max-width:none;
   object-fit:cover;
   object-position:center;
-  opacity:.28;
-  filter:blur(64px) saturate(1.3);
+  opacity:.14;
+  filter:blur(80px) saturate(1.2);
 }
 body.svCleanShell main > .dsHero + .svHeroLightBridge + .dsContent:not(.noHero) {
   position:relative !important;
@@ -228,10 +277,14 @@ body.svCleanShell .svWelcomeClean .svWelcomeDiscoveryIntro {
     min-height:clamp(560px,82svh,790px) !important;
     padding:112px 0 125px !important;
   }
+  body.svCleanShell main > .dsHero .dsHeroContent {
+    width:calc(100% - 48px) !important;max-width:600px !important;
+    margin-left:24px !important;
+  }
   body.svCleanShell main > .dsHero > .dsHeroArt > .dsHeroBg {
     background-position:center 43% !important;
   }
-  body.svCleanShell .svHeroSpill > img {filter:blur(44px) saturate(1.3);opacity:.24;}
+  body.svCleanShell .svHeroSpill > img {filter:blur(56px) saturate(1.2);opacity:.12;}
   body.svCleanShell :is(.svDetailDialog,.svDetailPage) .svDetailHero {
     min-height:450px !important;
     height:clamp(450px,68svh,555px) !important;

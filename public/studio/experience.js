@@ -134,7 +134,9 @@
     const loader = document.getElementById('svSiteLoading'); if (!loader) return;
     if (!loader.querySelector('.stLoadingBrand')) {const brand = document.createElement('span');brand.className = 'stLoadingBrand';brand.setAttribute('aria-hidden','true');brand.textContent = 'SWIFLYTV';loader.prepend(brand);}
     const src = artworkUrl(artwork() || document.querySelector('[data-player-backdrop]')?.dataset.playerBackdrop || '');
-    if (src) token(loader,'--st-loader-art','url('+JSON.stringify(src)+')');else loader.style.removeProperty('--st-loader-art');
+    for (const layer of [loader,document.getElementById('svArtworkCurtain')].filter(Boolean)) {
+      if (src) token(layer,'--st-loader-art','url('+JSON.stringify(src)+')');else layer.style.removeProperty('--st-loader-art');
+    }
   }
   function refreshAdaptive() {
     const body = document.body, generation = ++adaptiveGeneration;

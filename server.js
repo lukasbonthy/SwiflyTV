@@ -6558,7 +6558,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta name="theme-color" content="#000000" />
   ${tvHead()}
-  ${loadingHead()}
+  ${loadingHead({artwork:showNavigation})}
   ${studioHead()}
   ${showNavigation ? navigationHead() : ""}
   ${showNavigation ? '<link rel="stylesheet" href="/assets/clean/navigation.css?v=2" />' : ""}
@@ -6658,7 +6658,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${shellStyleLink("finish")}
     <script defer src="/assets/studio/theme-details.js?v=1"></script>
     <script defer src="/assets/clean/hero-palette.js?v=260"></script>
-    <script defer src="/assets/studio/experience.js?v=262"></script>
+    <script defer src="/assets/studio/experience.js?v=263"></script>
     ${extraHead}
 </head>
 <body class="svCleanShell">
@@ -7857,6 +7857,25 @@ function pickHero(items = []) {
     || {};
 }
 
+async function featuredHero(item = {}, type = "") {
+  const id = Number(item.id), mediaType = type || getType(item);
+  if (!Number.isSafeInteger(id) || id <= 0 || !["movie", "tv"].includes(mediaType)) return item;
+  if (item.images?.logos && item.genres && (item.runtime || item.episode_run_time)) return item;
+  const controller = new AbortController();
+  let timer;
+  const deadline = new Promise(resolve => { timer = setTimeout(() => { controller.abort(); resolve(null); }, 600); });
+  try {
+    const details = await Promise.race([
+      Promise.resolve().then(() => tmdb(`/${mediaType}/${id}`, {append_to_response:"images", include_image_language:"en,null"}, CACHE_TTL.long, controller.signal)).catch(() => null),
+      deadline,
+    ]);
+    if (!details || details.__error || Number(details.id) !== id) return item;
+    // Optional enrichment cannot change the selected film, its overview or its
+    // safety-filtered identity. A failed lookup leaves every action usable.
+    return {...item, ...Object.fromEntries(["images", "genres", "runtime", "episode_run_time"].filter(key => details[key] != null).map(key => [key, details[key]]))};
+  } finally { clearTimeout(timer); }
+}
+
 async function curatedFeaturedMovie() {
   // Barbie first; the other requested films cover temporarily missing artwork
   // or metadata. Optional feature data must not hold up a ready catalog.
@@ -7898,7 +7917,9 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = nu
   const href = `/${mediaType}/${encodeURIComponent(hero.id || "")}`;
   const spillSrc = img(hero.backdrop_path || hero.poster_path, "w300");
   const desc = hero.overview || "Discover this title, explore the cast, and add it to your list.";
-  const maturity = mediaType === "tv" ? "TV-14" : "PG-13";
+  const runtime = Number(hero.runtime || hero.episode_run_time?.[0]);
+  const genres = (hero.genres || []).map(genre => genre?.name).filter(name => typeof name === "string" && name.trim()).slice(0, 2).join(", ");
+  const metadata = [getYear(getDate(hero)), runtime > 0 ? formatRuntime(runtime) : "", genres || (mediaType === "tv" ? "Series" : "Movie")].filter(Boolean);
   const trailerKey = trailer && trailer.key ? String(trailer.key) : "";
   const trailerSrc = trailerKey ? youtubeHeroAutoplaySrc(trailerKey, embedOrigin) : "";
   return `<section class="dsHero ${trailerSrc ? "dsHeroHasTrailer" : ""}" data-sv-palette-src="${escapeHtml(spillSrc)}">
@@ -7911,10 +7932,10 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = nu
     <div class="dsHeroContent">
       <div class="dsEyebrow">${escapeHtml(eyebrow || context || BRAND_SUBMARK)}</div>
       <h1${logo ? ' class="dsHeroTitleArt"' : ''}>${logo ? `<span class="dsHeroTitleText">${escapeHtml(title)}</span><img class="dsHeroLogo" src="${escapeHtml(img(logo.file_path,'w500'))}" alt="" width="${Number(logo.width) > 0 ? Math.min(500,Number(logo.width)) : 500}" height="${Number(logo.height) > 0 && Number(logo.width) > 0 ? Math.round(Number(logo.height)*Math.min(500,Number(logo.width))/Number(logo.width)) : 200}" decoding="async" />` : escapeHtml(title)}</h1>
-      <div class="dsHeroMeta">${Number(hero.vote_average) > 0 ? `<b>★ ${escapeHtml(formatRating(hero.vote_average))}<small>/10</small></b>` : ""}<span>${escapeHtml(getYear(getDate(hero)))}</span><span>${mediaType === "tv" ? "Series" : "Movie"}</span>${hero.runtime ? `<span>${escapeHtml(formatRuntime(hero.runtime))}</span>` : ""}</div>
+      <div class="dsHeroMeta">${Number(hero.vote_average) > 0 ? `<b><span aria-hidden="true">★</span> ${escapeHtml(formatRating(hero.vote_average))}<span class="srOnly"> out of 10</span></b>` : ""}${metadata.map(value => `<span>${escapeHtml(value)}</span>`).join("")}</div>
       <p>${escapeHtml(desc)}</p>
       <div class="dsHeroActions">
-        <a class="dsPrimaryBtn" href="/watch/${mediaType}/${encodeURIComponent(hero.id || "")}?mode=movie${mediaType === "tv" ? "&s=1&e=1" : ""}" data-play-id="${escapeHtml(hero.id || "")}" data-play-type="${escapeHtml(mediaType)}" data-play-title="${escapeHtml(title)}" data-play-poster="${escapeHtml(hero.poster_path || "")}" data-play-backdrop="${escapeHtml(hero.backdrop_path || "")}" data-play-rating="${escapeHtml(formatRating(hero.vote_average))}" data-play-year="${escapeHtml(getYear(getDate(hero)))}"><span>▶</span> Play</a>
+        <a class="dsPrimaryBtn" href="/watch/${mediaType}/${encodeURIComponent(hero.id || "")}?mode=movie${mediaType === "tv" ? "&s=1&e=1" : ""}" data-play-id="${escapeHtml(hero.id || "")}" data-play-type="${escapeHtml(mediaType)}" data-play-title="${escapeHtml(title)}" data-play-poster="${escapeHtml(hero.poster_path || "")}" data-play-backdrop="${escapeHtml(hero.backdrop_path || "")}" data-play-rating="${escapeHtml(formatRating(hero.vote_average))}" data-play-year="${escapeHtml(getYear(getDate(hero)))}">${cleanIcon("play")} Play</a>
         <a class="dsSecondaryBtn" href="${href}">Details</a>
         <button class="dsIconBtn" type="button" aria-label="Add ${escapeHtml(title)} to My List" ${mediaDataAttributes("watch", hero, mediaType)}>＋</button>
       </div>
@@ -8311,7 +8332,7 @@ async function listingPage(req, res, type = "movie", options = {}) {
 
   const label = type === "tv" ? "TV Shows" : "Movies";
   const active = type === "tv" ? "tv" : "movies";
-  const hero = pickHero(data.results || rowFive.results || []);
+  const hero = await featuredHero(pickHero(data.results || rowFive.results || []), type);
   const categoryOne = type === "tv" ? "Popular Drama Shows" : "Action Movies";
   const categoryTwo = type === "tv" ? "Comedy TV Shows" : "Comedies";
   const categoryThree = type === "tv" ? "Crime & Suspense Shows" : "Suspense Movies";
@@ -8355,11 +8376,10 @@ async function trendingPage(req, res) {
   ]);
   if (data.__error) return res.send(setupNeededPage(data.message));
 
-  const hero = pickHero((data.results || []).filter((item) => ["movie", "tv"].includes(getType(item))));
+  const hero = await featuredHero(pickHero((data.results || []).filter((item) => ["movie", "tv"].includes(getType(item)))));
   const body = `<main>
     ${dsHero({ hero, context: "New & Popular", eyebrow: "Fresh on SwiflyTV" })}
     <section class="dsContent">
-      ${feedDiscover()}
       <div class="dsTabs">
         <a class="${type === "all" ? "active" : ""}" href="/trending?type=all">All</a>
         <a class="${type === "movie" ? "active" : ""}" href="/trending?type=movie">Movies</a>
@@ -8367,6 +8387,7 @@ async function trendingPage(req, res) {
       </div>
       ${dsRail("Trending this week", (data.results || []).filter((item) => ["movie", "tv"].includes(getType(item))), type === "all" ? "" : type, { tag: "This week" })}
       ${dsTopRail("Popular movies", popularMovies.results || [], "movie")}
+      ${feedDiscover()}
       ${dsRail("Popular TV Shows", popularTv.results || [], "tv")}
       ${dsRail("Coming Soon", upcomingMovies.results || [], "movie")}
       ${dsRail("Now Playing", nowPlaying.results || [], "movie")}
@@ -15058,7 +15079,7 @@ app.get("/kids", async (req, res) => {
   const kidsShows = kidsSafeResults(kidsTv.results || []);
   const familyShows = kidsSafeResults(familyTv.results || []);
   const animatedShows = kidsSafeResults(preschoolTv.results || []);
-  const hero = pickHero([...familyMovies, ...animatedMovies, ...kidsShows, ...familyShows]);
+  const hero = await featuredHero(pickHero([...familyMovies, ...animatedMovies, ...kidsShows, ...familyShows]));
 
   const body = `<main class="kidsModePage">
     <section class="kidsLockBanner">

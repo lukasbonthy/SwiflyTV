@@ -1,0 +1,105 @@
+'use strict';
+
+// Independent of the deferred application bundle: a stalled optional script
+// must never leave the black entry surface covering a usable document.
+function artworkEntry() {
+ 'use strict';
+ const root=document.documentElement, motion=matchMedia('(prefers-reduced-motion: reduce)');
+ const images='main img,.svDetailDialog img,[data-search-results] img';
+ const backgrounds='.dsHeroBg,.browseHeroBg,.svDetailBackdrop,.dsWelcomeHeroBg';
+ const copy='.dsHeroContent > :is(.dsEyebrow,h1,.dsHeroMeta,p)';
+ const seen=new WeakMap(),pending=new Map(),held=new Set();
+ let entering=true,observer=null,frame=0,finishTimer=0,suspended=false,bodyObserved=false;
+ function still(){return motion.matches||root.dataset.svTv==='true'||root.dataset.svXbox==='true'||document.body?.classList.contains('reduceMotion')||document.body?.dataset.stPageMotion==='false'||['minimal','basic'].includes(document.body?.dataset.stLoaderStyle);}
+ function reveal(immediate=false){
+  clearTimeout(deadline);cancelAnimationFrame(frame);frame=0;
+  for(const node of held)node.classList.add('svArtworkReady');held.clear();
+  if(!entering){if(immediate||still()){clearTimeout(finishTimer);finishTimer=0;root.dataset.svArtworkState='ready';}return;}
+  entering=false;root.removeAttribute('aria-busy');
+  root.dataset.svArtworkState=immediate||still()?'ready':'reveal';
+  if(root.dataset.svArtworkState==='reveal')finishTimer=setTimeout(()=>{root.dataset.svArtworkState='ready';finishTimer=0;},460);
+ }
+ root.dataset.svArtworkState='loading';root.setAttribute('aria-busy','true');
+ const deadline=setTimeout(()=>reveal(),2200);
+ // Device/OS choices are already known in the head. Saved Studio settings
+ // arrive in the inline body prime, before any deferred script can finish.
+ const settings=new MutationObserver(syncSettings);
+ function syncSettings(){
+  if(document.body&&!bodyObserved){bodyObserved=true;settings.observe(document.body,{attributes:true,attributeFilter:['class','data-st-page-motion','data-st-loader-style']});}
+  if(still())reveal(true);
+ }
+ settings.observe(root,{childList:true,attributes:true,attributeFilter:['data-sv-tv','data-sv-xbox']});syncSettings();
+ function ready(node){if(entering)held.add(node);else node.classList.add('svArtworkReady');}
+ function imageReady(image){
+  let cancel;
+  const promise=new Promise(resolve=>{
+   let done=false;
+   function finish(){if(done)return;done=true;image.removeEventListener('load',loaded);image.removeEventListener('error',finish);pending.delete(image);resolve();}
+   function loaded(){if(done)return;if(image.naturalWidth&&typeof image.decode==='function')image.decode().catch(()=>{}).then(finish);else finish();}
+   cancel=finish;pending.set(image,finish);
+   image.addEventListener('load',loaded,{once:true});image.addEventListener('error',finish,{once:true});
+   if(image.complete)loaded();
+  });
+  return {promise,cancel};
+ }
+ function asset(node){
+  if(seen.has(node)||node.closest('.svHeroSpill,.svWelcomeSpill')||still())return null;
+  let image=node;
+  if(node.tagName!=='IMG'){
+   const url=getComputedStyle(node).backgroundImage.match(/url\(["']?(.*?)["']?\)/)?.[1];
+   if(!url)return null;
+   image=new Image();image.decoding='async';image.src=url;
+  }
+  node.classList.add('svArtworkAsset');
+  const entry=imageReady(image);seen.set(node,entry);
+  entry.promise.then(()=>{if(!suspended&&node.isConnected)ready(node);});
+  return entry.promise;
+ }
+ function candidates(container,selector){
+  const found=[];if(container.nodeType!==1||container.namespaceURI==='http://www.w3.org/2000/svg')return found;
+  if(container.matches(selector))found.push(container);
+  found.push(...container.querySelectorAll(selector));return found;
+ }
+ function scan(container,critical){
+  for(const node of candidates(container,images+','+backgrounds)){
+   const promise=asset(node);
+   if(promise&&critical&&critical.length<8){const box=node.getBoundingClientRect();if(box.width&&box.height&&box.bottom>0&&box.top<innerHeight&&box.right>0&&box.left<innerWidth)critical.push(promise);}
+  }
+  for(const node of candidates(container,copy)){
+   if(still()||node.classList.contains('svArtworkCopy'))continue;
+   node.classList.add('svArtworkCopy');ready(node);
+  }
+ }
+ function observe(){
+  observer.observe(document.body,{childList:true,subtree:true});
+  bodyObserved=false;syncSettings();
+ }
+ function boot(){
+  if(still()){reveal(true);return;}
+  const critical=[];scan(document.body,critical);
+  observer=new MutationObserver(records=>{
+   for(const record of records){
+    for(const node of record.removedNodes)for(const removed of candidates(node,'img,'+backgrounds+',.svArtworkCopy')){seen.get(removed)?.cancel();seen.delete(removed);held.delete(removed);}
+    for(const node of record.addedNodes)scan(node);
+   }
+  });
+  observe();
+  Promise.allSettled([...critical,document.fonts?.ready]).then(()=>{
+   if(!entering||suspended)return;
+   // Give cached artwork a painted black starting frame, without a minimum
+   // loading duration or a per-frame animation loop.
+   frame=requestAnimationFrame(()=>{frame=requestAnimationFrame(()=>reveal());});
+  });
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+ window.addEventListener('keydown',event=>{if(event.key==='Escape')reveal(true);});
+ motion.addEventListener?.('change',()=>{if(motion.matches)reveal(true);});
+ window.addEventListener('pagehide',()=>{
+  suspended=true;reveal(true);clearTimeout(finishTimer);finishTimer=0;root.dataset.svArtworkState='ready';
+  for(const node of document.querySelectorAll('.svArtworkAsset,.svArtworkCopy'))node.classList.add('svArtworkReady');
+  observer?.disconnect();settings?.disconnect();for(const cancel of pending.values())cancel();pending.clear();held.clear();
+ });
+ window.addEventListener('pageshow',event=>{if(event.persisted){suspended=false;if(observer){scan(document.body);observe();}}});
+}
+
+module.exports=require('terser').minify_sync('('+artworkEntry.toString()+')();',{ecma:2020}).code;

@@ -37,6 +37,22 @@ body.svCleanShell .svGlassSurface.svGlassControl.svGlassControl {
   -webkit-text-fill-color: currentColor !important;
   text-shadow: 0 1px 3px rgb(0 0 0 / .7), 0 1px 8px rgb(0 0 0 / .3);
 }
+/* Give the featured film one unmistakable action while retaining the real
+   refractive pane and the Studio glass modes on its neighbouring controls. */
+html:not([data-sv-tv="true"]) body.svCleanShell .dsHeroActions > .dsPrimaryBtn.svGlassControl.svNavMatchedOptic {
+  color:#101115 !important;
+  text-shadow:none !important;
+}
+html:not([data-sv-tv="true"]) body.svCleanShell .dsHeroActions > .dsPrimaryBtn.svGlassControl.svNavMatchedOptic > .svNavMatchedLens.svLiquidPane {
+  background:rgb(255 255 255 / .94) !important;
+}
+html:not([data-sv-tv="true"]) body.svCleanShell .dsHeroActions > .dsPrimaryBtn.svGlassControl.svNavMatchedOptic:hover > .svNavMatchedLens.svLiquidPane {
+  background:#fff !important;
+}
+html:not([data-sv-tv="true"]) body.svCleanShell:is([data-st-glass="off"],[data-st-glass="subtle"]) .dsHeroActions > .dsPrimaryBtn.svGlassControl.svNavMatchedOptic {background:#f5f5f6 !important;}
+@media(prefers-reduced-transparency:reduce) {
+  html:not([data-sv-tv="true"]) body.svCleanShell .dsHeroActions > .dsPrimaryBtn.svGlassControl.svNavMatchedOptic {background:#f5f5f6 !important;}
+}
 /* Remove legacy bevels, preserving functional generated labels on other
    controls, such as mobile Party actions and disclosure affordances. */
 body.svCleanShell .svGlassSurface:is(.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn,.dsGhostPill,.dsMiniBtn,.dsRowBtn,.dsRowArrow,.svRowArrow,.dsAuthCard)::before,
