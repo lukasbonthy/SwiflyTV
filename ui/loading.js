@@ -1,5 +1,7 @@
 'use strict';
-const loadingStyles=require('node:fs').readFileSync(require('node:path').join(__dirname,'../public/clean/loading.css'),'utf8');
+const readStyle=name=>require('node:fs').readFileSync(require('node:path').join(__dirname,'../public/clean',name),'utf8');
+const criticalStyles=readStyle('loading-critical.css');
+const loadingStyles=criticalStyles+'\n'+readStyle('loading.css');
 
 // Runs in the head, independently of third-party assets and application bundles.
 function siteLoadingGate(){
@@ -70,7 +72,7 @@ function siteLoadingGate(){
 }
 
 const loadingSource=require('terser').minify_sync('('+siteLoadingGate.toString()+')();',{ecma:2020}).code;
-function loadingHead({artwork=false}={}){return `<style data-sv-loading-style>${loadingStyles}</style><script data-sv-loading-gate>${loadingSource}</script>${artwork ? `<script data-sv-artwork-entry>${require('./artwork-entry')}</script>` : ''}`;}
+function loadingHead({artwork=false,bundled=false}={}){return `<style data-sv-loading-style>${bundled ? criticalStyles : loadingStyles}</style><script data-sv-loading-gate>${loadingSource}</script>${artwork ? `<script data-sv-artwork-entry>${require('./artwork-entry')}</script>` : ''}`;}
 function loadingMarkup(){
  const cards=Array.from({length:8},()=>'<div class="svLoadCard"><i class="svLoadBlock svLoadPoster"></i><i class="svLoadBlock svLoadCardTitle"></i><i class="svLoadBlock svLoadCardMeta"></i></div>').join('');
  const rows=Array.from({length:4},()=>'<div class="svLoadPerson"><i class="svLoadBlock svLoadAvatar"></i><span><i class="svLoadBlock svLoadLine"></i><i class="svLoadBlock svLoadLine"></i></span></div>').join('');

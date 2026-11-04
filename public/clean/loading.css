@@ -1,5 +1,5 @@
-/* Embedded in the head: loading never depends on a network asset.
-   The shared navigation sits above this surface and remains usable. */
+/* Reusable loading presentation lives in the cached shared stylesheet.
+   The small entry gate and its safety release remain inline in the head. */
 #svSiteLoading{position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;overflow:hidden;background:#08090d;color:#dfdfdf;opacity:0;visibility:hidden;pointer-events:none;contain:strict;transition:none}
 html:is([data-sv-loading=navigate],[data-sv-loading=initial]) #svSiteLoading{opacity:1;visibility:visible;pointer-events:auto}
 /* Keep the current page usable while the next document arrives. A thin
@@ -51,15 +51,6 @@ html[data-sv-load-layout=player] .svLoadPlayer{display:block;padding:12px 32px 3
 :is(html:has(body.reduceMotion),html[data-sv-xbox=true],html[data-sv-tv=true],body[data-sv-performance=low]) #svSiteLoading .svLoadProgress i{animation:none;transform:none;width:100%;background:#a3a8b3}
 /* Initial catalog entry dissolves from black after visible artwork is ready.
    This is separate from explicit asynchronous feature holds and navigation. */
-#svArtworkCurtain {
- position:fixed;inset:0;z-index:2147480000;background:#000;
- opacity:0;visibility:hidden;pointer-events:none;
- transition:opacity .44s cubic-bezier(.2,.65,.3,1),visibility 0s .44s;
-}
-html[data-sv-artwork-state="loading"] #svArtworkCurtain {
- opacity:1;visibility:visible;pointer-events:auto;transition:none;
-}
-html[data-sv-artwork-state="reveal"] #svArtworkCurtain {visibility:visible;}
 body.svCleanShell:is([data-st-loader-style="artwork"],[data-st-loader-style="aurora"]) #svArtworkCurtain::before {
  content:"";position:absolute;inset:0;pointer-events:none;opacity:.4;
  background:linear-gradient(rgb(0 0 0 / var(--st-loader-alpha,.9)),#000),var(--st-loader-art,none) center/cover no-repeat;

@@ -18,6 +18,8 @@ The captures below use the production shell with controlled catalog metadata and
 
 Latest verification: syntax checks passed; **51 unit checks and 34 real Chromium checks passed** with no skips. The browser selection covers artwork readiness/deadline/decode fades, stalled scripts with comfort settings, full-shell poster CSS, 1920/1440/390/320 px layouts, 120% text, refractive/native secondary actions, Studio choices, native navigation and history. The broader scroll fixture passed 30 of 31 cases in a combined run; its wheel-frame-count timing assertion passed unchanged in isolation. The earlier Play refraction expectation was updated to check the intentionally bright primary action while retaining pixel-based refraction checks on secondary actions. Independent review findings about early comfort settings, the nested star badge and tablet logo alignment are fixed and covered.
 
+CI run 1193 exposed the shared HTML size budget: inline loading presentation brought the empty catalog shell to 164,400 bytes. Reusable loading CSS now ships in the existing hashed core bundle, preserving seven stylesheet requests. Only the 518-byte visibility gate stays inline, reducing the shell to 155,131 bytes. The unchanged 160,000-byte budget and 18 loading/style/HTTP regressions pass.
+
 No preview fixture, responsive test page or dev-command override is included in the branch. These changes have not been merged or deployed.
 
 ## Delivered changes

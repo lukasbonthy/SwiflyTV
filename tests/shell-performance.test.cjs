@@ -10,6 +10,9 @@ test('catalog pages reuse cached styles instead of repeating the entire theme', 
   const html = api.pageShell({ title: 'Catalog', active: 'home', body: '<main>Catalog</main>' });
   assert.match(html, /href="\/assets\/clean\/base\.css\?v=262"/);
   assert(Buffer.byteLength(html) < 160000, 'The shared shell should stay below 160 KB');
+  const inline=html.match(/<style data-sv-loading-style>([\s\S]*?)<\/style>/)[1];
+  assert(Buffer.byteLength(inline)<1500,'Only the small entry visibility gate belongs in every HTML response');
+  assert.match(inline,/#svArtworkCurtain/);assert.doesNotMatch(inline,/\.svLoadFeedback|\.svArtworkAsset/);
   assert.doesNotMatch(html, /<style>\s*:root/);
   api.io.close(); api.httpServer.close();
 });

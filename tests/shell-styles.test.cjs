@@ -15,6 +15,7 @@ test('shared styles are available on a cold server, cacheable and preserve their
  const ordered=['liquid-glass/liquid-glass.css','clean/clean.css','clean/library.css','connect/connect.css','clean/feed.css','clean/catalog-updates.css','clean/details.css','clean/motion.css','vendor/lenis/lenis.css','liquid-glass/surfaces.css','studio/studio.css','clean/usability.css','clean/aurora.css'];
  let previous=-1;for(const file of ordered){const index=css.indexOf('/* '+file+' */');assert(index>previous,file+' stays in its original cascade position');previous=index;}
  assert.match(css,/url\(["']?\/assets\/clean\/aurora-ribbon\.svg\?v=170/);
+ assert.match(css,/\.svLoadFeedback/);assert.match(css,/\.svArtworkAsset/,'cached styles include the artwork decode fade');
  assert(css.includes('data:image/svg+xml,'),'embedded textures survive rebasing');
  const late=await (await fetch(origin+styles.shellStyleLink('finish').match(/href="([^"]+)"/)[1])).text();
  assert.match(late,/url\("\/assets\/studio\/themes\/halloween-night\.webp"\)/);

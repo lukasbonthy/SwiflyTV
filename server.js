@@ -6558,7 +6558,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta name="theme-color" content="#000000" />
   ${tvHead()}
-  ${loadingHead({artwork:showNavigation})}
+  ${loadingHead({artwork:showNavigation,bundled:true})}
   ${studioHead()}
   ${showNavigation ? navigationHead() : ""}
   ${showNavigation ? '<link rel="stylesheet" href="/assets/clean/navigation.css?v=2" />' : ""}
