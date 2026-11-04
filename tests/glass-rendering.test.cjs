@@ -63,8 +63,8 @@ for (const scheme of ['light','dark'])for (const native of [false,true]) test(sc
    return panes.length===7&&panes.every(pane=>pane.dataset.swiflyRenderer===(native?'blur':'svg'));
   },native);
   const state=await page.evaluate(()=>{
-   const sample=node=>{const s=getComputedStyle(node),r=node.getBoundingClientRect();return {fill:s.backgroundColor,image:s.backgroundImage,filter:s.backdropFilter,shadow:s.boxShadow,border:s.borderWidth,radius:s.borderRadius,before:getComputedStyle(node,'::before').content,after:getComputedStyle(node,'::after').content,rect:{x:r.x,y:r.y,width:r.width,height:r.height}};};
-   return {nav:sample(document.querySelector('.netflixNav>.svLiquidPane')),actions:[...document.querySelectorAll('.dsHeroActions>button,.svDetailActions>button')].map(host=>({round:host.matches('.svDetailActions .dsIconBtn'),hero:!!host.closest('.dsHeroActions'),host:sample(host),pane:sample(host.querySelector('.svNavMatchedLens')),hit:host.contains(document.elementFromPoint(host.getBoundingClientRect().x+host.offsetWidth/2,host.getBoundingClientRect().y+host.offsetHeight/2))})),repeat:[...document.querySelectorAll('.dsMiniBtn,.dsRowArrow')].map(sample),graphs:document.querySelectorAll('.svSharedGlassDefinitions,.svWebkitGlassOptics').length};
+   const sample=node=>{const s=getComputedStyle(node),r=node.getBoundingClientRect();return {color:s.color,fill:s.backgroundColor,image:s.backgroundImage,filter:s.backdropFilter,shadow:s.boxShadow,border:s.borderWidth,radius:s.borderRadius,before:getComputedStyle(node,'::before').content,after:getComputedStyle(node,'::after').content,rect:{x:r.x,y:r.y,width:r.width,height:r.height}};};
+   return {nav:sample(document.querySelector('.netflixNav>.svLiquidPane')),actions:[...document.querySelectorAll('.dsHeroActions>button,.svDetailActions>button')].map(host=>({primary:host.matches('.dsHeroActions>.dsPrimaryBtn'),round:host.matches('.svDetailActions .dsIconBtn'),hero:!!host.closest('.dsHeroActions'),host:sample(host),pane:sample(host.querySelector('.svNavMatchedLens')),hit:host.contains(document.elementFromPoint(host.getBoundingClientRect().x+host.offsetWidth/2,host.getBoundingClientRect().y+host.offsetHeight/2))})),repeat:[...document.querySelectorAll('.dsMiniBtn,.dsRowArrow')].map(sample),graphs:document.querySelectorAll('.svSharedGlassDefinitions,.svWebkitGlassOptics').length};
   });
   const rgba=state.nav.fill.match(/[\d.]+/g).map(Number),alpha=rgba[3]??1;
   assert.equal(alpha,.2,'navigation keeps the backdrop visible instead of a milky fill');
@@ -72,9 +72,10 @@ for (const scheme of ['light','dark'])for (const native of [false,true]) test(sc
   assert.equal(state.nav.image,'none','the measured material gets its reflection from the backdrop');
   assert.equal(state.nav.before,'none','no milky painted highlight on the glass');assert.equal(state.nav.after,'none','the lens edge is handled by its one quiet shadow');
   assert.notEqual(await page.locator('.netflixNav .navLinks>a').evaluate(node=>getComputedStyle(node).textShadow),'none','labels retain a local shadow over bright art without obscuring the whole pane');
-  for(const {round,hero,host,pane,hit} of state.actions){
+  for(const {primary,round,hero,host,pane,hit} of state.actions){
    const actionColor=pane.fill.match(/[\d.]+/g).map(Number);
-   assert.deepEqual(actionColor.slice(0,3),rgba.slice(0,3),'buttons and navigation share neutral material colors');assert.equal(actionColor[3],.2,'all actions retain the navigation face');
+   assert.deepEqual(actionColor.slice(0,3),primary?[255,255,255]:rgba.slice(0,3),'featured Play stays bright while other actions follow the navigation color');assert.equal(actionColor[3],primary?.94:.2,'only featured Play uses the emphasized face');
+   if(primary)assert.equal(host.color,'rgb(16, 17, 21)','the emphasized action retains readable dark text');
    assert.equal(pane.shadow,state.nav.shadow,'buttons do not add a second brighter rim');
    assert.equal(pane.image,state.nav.image,'buttons use the exact same clear face treatment as navigation');
    assert.equal(pane.filter.replace(/url\([^)]+\)/,'url(shared-lens)'),state.nav.filter.replace(/url\([^)]+\)/,'url(shared-lens)'),'buttons share the navigation filter treatment');
@@ -107,9 +108,9 @@ for (const scheme of ['light','dark'])for (const native of [false,true]) test(sc
   await page.evaluate(()=>document.body.dataset.stGlass='liquid');
   const session=await context.newCDPSession(page);await session.send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-transparency',value:'reduce'}]});
   assert(await page.evaluate(()=>matchMedia('(prefers-reduced-transparency: reduce)').matches));
-  await page.waitForFunction(()=>[...document.querySelectorAll('.netflixNav>.svLiquidPane,.dsHeroActions>button')].every(node=>getComputedStyle(node).backgroundColor==='rgb(21, 25, 30)'));
-  const reduced=await page.locator('.netflixNav>.svLiquidPane,.dsHeroActions>button').evaluateAll(nodes=>nodes.map(node=>({background:getComputedStyle(node).backgroundColor,filter:getComputedStyle(node).backdropFilter})));
-  assert(reduced.every(style=>style.filter==='none'&&style.background==='rgb(21, 25, 30)'),'reduced transparency uses solid readable surfaces: '+JSON.stringify(reduced));
+  await page.waitForFunction(()=>[...document.querySelectorAll('.netflixNav>.svLiquidPane,.dsHeroActions>button')].every(node=>getComputedStyle(node).backgroundColor===(node.matches('.dsHeroActions>.dsPrimaryBtn')?'rgb(245, 245, 246)':'rgb(21, 25, 30)')));
+  const reduced=await page.locator('.netflixNav>.svLiquidPane,.dsHeroActions>button').evaluateAll(nodes=>nodes.map(node=>({primary:node.matches('.dsHeroActions>.dsPrimaryBtn'),background:getComputedStyle(node).backgroundColor,filter:getComputedStyle(node).backdropFilter})));
+  assert(reduced.every(style=>style.filter==='none'&&style.background===(style.primary?'rgb(245, 245, 246)':'rgb(21, 25, 30)')),'reduced transparency uses solid readable surfaces: '+JSON.stringify(reduced));
 
  }finally{await browser.close();}
 });
@@ -230,12 +231,12 @@ test('Navigation keeps a continuous clear coating over a dark page',{skip:!avail
  }finally{await browser.close();await new Promise(resolve=>api.io.close(resolve));}
 });
 
-test('Hero button visibly bends a diagonal backdrop instead of only drawing a translucent pill',{skip:!available&&'Chromium is not installed'},async()=>{
+test('Hero secondary button visibly bends a diagonal backdrop instead of only drawing a translucent pill',{skip:!available&&'Chromium is not installed'},async()=>{
  const browser=await chromium.launch({headless:true});
  try{
   const page=await browser.newPage({viewport:{width:420,height:220}});
   await page.setContent('<!doctype html><style>'+['liquid-glass/liquid-glass.css','clean/clean.css','liquid-glass/surfaces.css','liquid-glass/controls.css'].map(asset).join('\n')+
-   '*{box-sizing:border-box}body.svCleanShell{margin:0;background:repeating-linear-gradient(31deg,#737373 0 10px,#353535 10px 16px)!important;min-height:220px}body::before{display:none}.dsHeroActions{position:absolute;left:120px;top:88px}.dsHeroActions button{width:96px;height:44px}</style><body class="svCleanShell" data-st-glass="liquid"><div class="dsHeroActions"><button class="dsPrimaryBtn">Play</button></div></body>');
+   '*{box-sizing:border-box}body.svCleanShell{margin:0;background:repeating-linear-gradient(31deg,#737373 0 10px,#353535 10px 16px)!important;min-height:220px}body::before{display:none}.dsHeroActions{position:absolute;left:120px;top:88px}.dsHeroActions button{width:96px;height:44px}</style><body class="svCleanShell" data-st-glass="liquid"><div class="dsHeroActions"><button class="dsSecondaryBtn">Details</button></div></body>');
   for(const file of ['liquid-glass/liquid-glass.js','liquid-glass/surfaces.js'])await page.addScriptTag({content:asset(file)});
   await page.waitForFunction(()=>document.querySelector('.dsHeroActions .svNavMatchedLens')?.dataset.swiflyRenderer==='svg');
   const box=await page.locator('.dsHeroActions button').boundingBox();
@@ -289,7 +290,7 @@ test('Hero glass samples artwork after the entrance instead of an isolated blur 
   await page.waitForTimeout(850);
   const styles=await page.locator('.dsHeroContent,.dsHeroActions').evaluateAll(nodes=>nodes.map(node=>({opacity:getComputedStyle(node).opacity,filter:getComputedStyle(node).filter})));
   assert(styles.every(s=>s.opacity==='1'&&s.filter==='none'),'hero ancestors must never trap backdrop sampling: '+JSON.stringify(styles));
-  const lens=page.locator('.dsHeroActions .svNavMatchedLens').first(),box=await lens.boundingBox();
+  const lens=page.locator('.dsHeroActions > .dsSecondaryBtn > .svNavMatchedLens'),box=await lens.boundingBox();
   const full=(await page.screenshot({clip:box})).toString('base64');
   await lens.evaluate(node=>node.querySelectorAll('feDisplacementMap').forEach(map=>map.setAttribute('scale','0')));
   const flat=(await page.screenshot({clip:box})).toString('base64');
@@ -299,7 +300,7 @@ test('Hero glass samples artwork after the entrance instead of an isolated blur 
    for(let i=0;i<a.length;i+=4)for(let c=0;c<3;c++)sum+=Math.abs(a[i+c]-b[i+c]);
    return sum/(a.length*.75);
   },{full,flat});
-  assert(difference>1.2,'homepage Play button must visibly bend underlying artwork, not just expose an SVG flag: '+difference);
+  assert(difference>1.2,'homepage Details button must visibly bend underlying artwork, not just expose an SVG flag: '+difference);
  }finally{await browser.close();}
 });
 test('Movie sheet builds glass during the opening animation rather than after it',{skip:!available&&'Chromium is not installed'},async()=>{
