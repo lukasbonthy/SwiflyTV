@@ -6620,7 +6620,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/modern-normalize@2.0.0/modern-normalize.min.css" />
     ${shellStyleLink("core")}
     <script defer src="/assets/liquid-glass/liquid-glass.js?v=227"></script>
-    <script defer src="/assets/clean/clean.js?v=267"></script>
+    <script defer src="/assets/clean/clean.js?v=268"></script>
+    <script defer src="/assets/clean/catalog.js?v=1"></script>
     <script defer src="/assets/clean/account-sheet.js?v=1"></script>
     <script defer src="/assets/clean/account-data.js?v=2"></script>
     <script defer src="/assets/clean/account.js?v=263"></script>
@@ -6630,13 +6631,13 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/avatars.js?v=209"></script>
     ${active === "profiles" ? '<script defer src="/assets/clean/profiles.js?v=209"></script>' : ""}
     <script defer src="/assets/clean/continue.js?v=262"></script>
-    <script defer src="/assets/clean/library-page.js?v=2"></script>
-    <script defer src="/assets/clean/episode-browser.js?v=1"></script>
+    ${body.includes('data-library-page') ? '<script defer src="/assets/clean/library-page.js?v=2"></script>' : ''}
+    <script defer src="/assets/clean/episode-browser.js?v=2"></script>
     <script defer src="/assets/clean/feed.js?v=262"></script>
     <script defer src="/assets/vendor/lenis/lenis.min.js?v=1.3.16-r1"></script>
-    <script defer src="/assets/clean/motion.js?v=252"></script>
+    <script defer src="/assets/clean/motion.js?v=253"></script>
     <script defer src="/assets/clean/scroll.js?v=259"></script>
-    <script defer src="/assets/clean/details.js?v=255"></script>
+    <script defer src="/assets/clean/details.js?v=256"></script>
     <script defer src="/assets/clean/download.js?v=3"></script>
     <script defer src="/assets/liquid-glass/surfaces.js?v=260"></script>
     <script defer src="/assets/studio/wallpapers.js?v=1"></script>
@@ -7865,7 +7866,7 @@ async function curatedFeaturedMovie() {
     for (const id of [346698,634649,687163]) {
       if(controller.signal.aborted)return null;
       try {
-        const movie=await tmdb(`/movie/${id}`,{},CACHE_TTL.long,controller.signal);
+        const movie=await tmdb(`/movie/${id}`,{append_to_response:'images',include_image_language:'en,null'},CACHE_TTL.long,controller.signal);
         if(!movie.__error&&Number(movie.id)===id&&movie.title&&movie.backdrop_path)return {...movie,media_type:"movie"};
       } catch {}
     }
@@ -7892,6 +7893,8 @@ function metaMatch(item = {}) {
 function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = null, embedOrigin = "" }) {
   const mediaType = type || getType(hero);
   const title = getTitle(hero);
+  const logo = (hero.images?.logos || []).filter(image => /^\/[A-Za-z0-9_.-]+$/.test(image.file_path || '') && (!image.iso_639_1 || image.iso_639_1 === 'en'))
+    .sort((a,b) => Number(b.iso_639_1 === 'en') - Number(a.iso_639_1 === 'en') || Number(b.vote_average || 0) - Number(a.vote_average || 0))[0];
   const href = `/${mediaType}/${encodeURIComponent(hero.id || "")}`;
   const spillSrc = img(hero.backdrop_path || hero.poster_path, "w300");
   const desc = hero.overview || "Discover this title, explore the cast, and add it to your list.";
@@ -7907,7 +7910,7 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = nu
     <div class="dsHeroGlass"></div>
     <div class="dsHeroContent">
       <div class="dsEyebrow">${escapeHtml(eyebrow || context || BRAND_SUBMARK)}</div>
-      <h1>${escapeHtml(title)}</h1>
+      <h1${logo ? ' class="dsHeroTitleArt"' : ''}>${logo ? `<span class="dsHeroTitleText">${escapeHtml(title)}</span><img class="dsHeroLogo" src="${escapeHtml(img(logo.file_path,'w500'))}" alt="" width="${Number(logo.width) > 0 ? Math.min(500,Number(logo.width)) : 500}" height="${Number(logo.height) > 0 && Number(logo.width) > 0 ? Math.round(Number(logo.height)*Math.min(500,Number(logo.width))/Number(logo.width)) : 200}" decoding="async" />` : escapeHtml(title)}</h1>
       <div class="dsHeroMeta">${Number(hero.vote_average) > 0 ? `<b>★ ${escapeHtml(formatRating(hero.vote_average))}<small>/10</small></b>` : ""}<span>${escapeHtml(getYear(getDate(hero)))}</span><span>${mediaType === "tv" ? "Series" : "Movie"}</span>${hero.runtime ? `<span>${escapeHtml(formatRuntime(hero.runtime))}</span>` : ""}</div>
       <p>${escapeHtml(desc)}</p>
       <div class="dsHeroActions">

@@ -137,7 +137,8 @@
     root.querySelectorAll?.(heroSelector).forEach(registerHero);
     if (!canAnimate() || !observer) return;
     const reveal = [];
-    root.querySelectorAll?.('.dsWelcomeRail, .svDetailSection, [data-cinema-reveal]').forEach(section => {
+    root.querySelectorAll?.('.dsWelcomeRail, [data-cinema-reveal]').forEach(section => {
+      if (section.closest('.svTitleDetails')) return;
       if (observed.has(section)) return; observed.add(section);
       if (section.getBoundingClientRect().top < window.innerHeight - 24) return;
       reveal.push(section);

@@ -185,12 +185,12 @@ test('The app Reduce motion setting stops glides and keeps subsequent wheel inpu
   const wheel=new w.WheelEvent('wheel',{deltaY:120,bubbles:true,cancelable:true});d.querySelector('main').dispatchEvent(wheel);assert.equal(wheel.defaultPrevented,false);
   w.SwiflyMotion.scrollBy(env.page,{top:100});assert.equal(env.page.scrollTop,current+100);env.finish();
 });
-test('Closing or replacing details releases observed sections from the old title', async () => {
+test('Detail sections stay immediately readable through title replacement and closing', async () => {
   const fragment=await render(),env=browser('<a id="details" href="/movie/101">Details</a>'),w=env.window,d=w.document,watched=new Set();
   w.IntersectionObserver=class {observe(node){watched.add(node);}unobserve(node){watched.delete(node);}disconnect(){watched.clear();}};
   w.HTMLElement.prototype.getBoundingClientRect=function(){return {top:this.classList.contains('svDetailSection')?1200:0,height:400};};
   w.fetch=async()=>({ok:true,text:async()=>fragment});w.boot('motion.js');w.boot('details.js');
-  await w.SwiflyDetails.open('/movie/101',d.getElementById('details'));assert(watched.size>0);
+  await w.SwiflyDetails.open('/movie/101',d.getElementById('details'));assert.equal(watched.size,0,'detail content needs no scroll-triggered reveal observers');assert.equal(d.querySelector('.svTitleDetails .svMotionReveal'),null);
   await w.SwiflyDetails.open('/movie/202');assert([...watched].every(node=>node.isConnected),'Replacing a title must release the previous sections');
   w.SwiflyDetails.close();assert.equal(watched.size,0,'Closing details must release all hidden sections');env.finish();
 });

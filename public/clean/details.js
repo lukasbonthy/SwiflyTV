@@ -12,7 +12,7 @@
   const reducedMotion=()=>xboxInstant||motionPreference.matches||document.body.classList.contains('reduceMotion');
   // Only the inner panel travels. Its native scroll area and the catalog
   // remain stationary, with one slightly quicker glide and a soft landing.
-  const enterDuration=560,exitDuration=320;
+  const enterDuration=360,exitDuration=220;
   const enterEase='cubic-bezier(.28,.06,.2,1)',exitEase='cubic-bezier(.4,0,.2,1)';
   const fragments=new Map(),fragmentTTL=90000,fragmentLimit=8,fragmentByteLimit=2*1024*1024,fragmentSizeLimit=192*1024;
   let fragmentScope=null,fragmentBytes=0;

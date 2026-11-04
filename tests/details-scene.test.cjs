@@ -23,7 +23,7 @@ test('The inner panel rises while catalog artwork, fixed navigation and the nati
  assert.equal(dialog.parentElement,d.body);assert.equal(panel.parentElement.className,'svDetailStage');
  assert.equal(panel.closest('.svDetailViewport').parentElement,dialog);
  assert.equal(env.animations.length,2,'Only the panel and scrim animate');
- assert.equal(env.animations[0].target,panel);assert.equal(env.animations[0].settings.duration,560);
+ assert.equal(env.animations[0].target,panel);assert.equal(env.animations[0].settings.duration,360);
  assert.equal(env.animations[1].target,d.querySelector('.svDetailScrim'));
  assert.deepEqual([env.scene,env.header,env.mobile].map(node=>node.getAttribute('style')),resting);
  assert.equal(env.page.scrollTop,640);
@@ -36,7 +36,7 @@ test('Closing keeps the native modal and catalog lock through the shorter exit, 
  const start=env.animations.length;w.history.back=()=>{};w.SwiflyDetails.close();w.flush(16);
  assert(d.querySelector('dialog').open);assert(d.documentElement.classList.contains('svDetailsOpen'));
  assert.equal(env.animations[start].target,d.querySelector('.svDetailPanel'));
- assert.equal(env.animations[start].settings.duration,320);
+ assert.equal(env.animations[start].settings.duration,220);
  await finish(env.animations.slice(start));
  assert(!d.querySelector('dialog').open);assert(!d.documentElement.classList.contains('svDetailsOpen'));
  assert.equal(d.activeElement,trigger);assert.equal(env.page.scrollTop,640);env.finish();

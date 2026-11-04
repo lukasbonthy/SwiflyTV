@@ -57,3 +57,18 @@ Interfaces: existing SwiflyPremiumScroll API remains unchanged.
 ## Verification and review
 
 Changes passed an independent read-only review after fixes for stale asset URLs during rolling deploys, Studio loader branding, focus restoration with custom home ordering, and transient slow-frame recovery. Browser QA confirmed desktop rows, a 390px responsive frame, and minimal/artwork/aurora navigation states. See `docs/evidence/catalog-polish/README.md` for evidence and environment limits. The tasks are packaged together because CSS delivery, runtime references and integration assertions form one shared-shell change.
+
+
+## Follow-up: browsing refinement
+
+Preserve glass, Aurora, Studio and features. Continue on this PR without merging or deploying.
+
+- Keep search results during edits, replace atomically, and preserve keyboard focus.
+- Limit episode mutation work to inserted episode subtrees and cancel removed panels.
+- Give row arrows correct bounds without losing focus; hide controls when a rail fits.
+- Use optional featured title logos with a stable wrapped text fallback in the existing metadata request.
+- Shorten detail sheet entrance/exit to360ms/220ms; keep detail sections immediately readable.
+- Scope library-page code to pages using it and update obsolete motion assertions.
+- Verify with behavioral and real Chromium tests, mobile/desktop preview, and independent review.
+
+Independent review found and verified fixes for search focus loss, arrow focus loss and scaled fallback-title overlap. Seven focused regressions passed before the previous workspace cleanup; rerun verification after recovery.

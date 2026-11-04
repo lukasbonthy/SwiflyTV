@@ -225,6 +225,8 @@ body.svCleanShell .dsCardMeta { display: flex !important; gap: 8px !important; m
 body.svCleanShell .dsCardMeta > * { padding: 0 !important; border: 0 !important; background: none !important; color: #888 !important; font-size: calc(11px * var(--st-ui-scale, 1)) !important; font-weight: 400 !important; }
 body.svCleanShell .dsRowControls { position: absolute !important; inset: 0 0 auto auto !important; display: flex !important; gap: 5px !important; opacity: 1 !important; }
 body.svCleanShell .dsRowBtn { width: 28px !important; height: 28px !important; padding: 0 !important; background: none !important; border: 1px solid #ffffff1f !important; color: #999 !important; }
+body.svCleanShell .dsRowControls[hidden] { display:none !important; }
+body.svCleanShell .dsRowBtn:is(:disabled,[aria-disabled="true"]) { opacity:.3 !important; cursor:default; }
 body.svCleanShell .dsRowBtn:hover { background: #ffffff0f !important; }
 body.svCleanShell .nfTopTenNumber { display: none !important; }
 body.svCleanShell .nfTopTenCard { display: block !important; min-height: 0 !important; }

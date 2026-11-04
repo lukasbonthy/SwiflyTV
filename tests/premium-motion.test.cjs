@@ -137,12 +137,12 @@ test('Catalog rails stay visible and do not queue costly opacity/transform revea
   w.boot('motion.js');
   assert.equal(d.querySelector('.svCatalogRow').classList.contains('svMotionReveal'),false);
   assert.equal(d.querySelector('.svResumeSection').classList.contains('svMotionReveal'),false);
-  assert.equal(d.querySelector('.svDetailSection').classList.contains('svMotionReveal'),true,'theater details can keep premium entrance reveals');
+  assert.equal(d.querySelector('.svDetailSection').classList.contains('svMotionReveal'),false,'detail sections should be readable before they enter the viewport');
   env.finish();
 });
 
 test('Section reveals have a measured settle and remain visible without JavaScript or after preference changes', () => {
-  const env = browser('<section class="svDetailSection">Details</section>'), w = env.window, d = w.document, section = d.querySelector('section');
+  const env = browser('<section class="dsWelcomeRail">Welcome</section>'), w = env.window, d = w.document, section = d.querySelector('section');
   const style = d.createElement('style'); style.textContent = source('motion.css'); d.head.append(style);
   assert.notEqual(w.getComputedStyle(section).opacity, '0', 'Content is available before motion initializes');
   section.getBoundingClientRect = () => ({top:1600, height:400});

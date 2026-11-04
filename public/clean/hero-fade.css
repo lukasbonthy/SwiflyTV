@@ -37,6 +37,21 @@ body.svCleanShell main > .dsHero > .dsHeroArt > .dsHeroBg {
   -webkit-mask-image:none !important;
   mask-image:none !important;
 }
+/* Keep wrapped fallback text in layout while optional title artwork loads. */
+body.svCleanShell main > .dsHero .dsHeroContent > .dsHeroTitleArt {
+  position:relative; display:grid !important; align-items:center;
+  width:min(100%,440px); min-height:clamp(90px,12vw,160px);
+}
+body.svCleanShell .dsHeroTitleArt > .dsHeroTitleText { grid-area:1/1; }
+body.svCleanShell .dsHeroTitleArt > .dsHeroLogo {
+  position:absolute; inset:0; width:100%; height:100%; object-fit:contain;
+  object-position:left center; opacity:0; pointer-events:none;
+}
+body.svCleanShell .dsHeroTitleArt.hasLogo > .dsHeroLogo { opacity:1; }
+body.svCleanShell .dsHeroTitleArt.hasLogo > .dsHeroTitleText { opacity:0; }
+@media (max-width:860px) {
+  body.svCleanShell .dsHeroTitleArt > .dsHeroLogo { object-position:center; }
+}
 /* Shade the copy, then let the photograph itself dissolve to transparency. */
 body.svCleanShell main > .dsHero > .dsHeroGlass {
   background:linear-gradient(90deg,rgb(0 0 0 / .64),rgb(0 0 0 / .30) 38%,transparent 78%),linear-gradient(180deg,#0002,transparent 35%) !important;

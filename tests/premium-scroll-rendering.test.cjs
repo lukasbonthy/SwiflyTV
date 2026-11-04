@@ -95,7 +95,7 @@ test('detail motion keeps the scrollbar at the window edge and the catalog fade 
    }
    animation.cancel();return {samples,duration,width:innerWidth,height:innerHeight};
   });
-  assert(result.duration>=500&&result.duration<=580,'the sheet should be slightly quicker while retaining a full glide');
+  assert.equal(result.duration,360,'the sheet should respond in one short glide');
   for(const sample of result.samples){
    assert.equal(sample.left,0,'the scroll area stays at the window edge');
    assert.equal(sample.right,result.width);
@@ -135,14 +135,14 @@ test('detail motion keeps the scrollbar at the window edge and the catalog fade 
   });
   assert(exit.scroll>500,'exercise the exit after scrolling deep into the movie');
   assert(exit.top>=exit.height,'the entire visible panel must leave the window before the dialog closes');
-  assert.equal(exit.duration,320);
+  assert.equal(exit.duration,220);
   await page.waitForFunction(()=>!document.querySelector('.svDetailDialog').open);
   const after=await page.locator('.netflixNav').evaluate(node=>{const r=node.getBoundingClientRect();return {left:r.left,width:r.width,rootWidth:document.documentElement.clientWidth,bodyWidth:document.body.clientWidth,headerWidth:node.parentElement.getBoundingClientRect().width};});
   assert(Math.abs(after.left-before.nav.left)<.5,JSON.stringify({before,after}));assert.equal(after.width,before.nav.width);
  }finally{await browser.close();}
 });
 
-test('finished hero copy releases its filter and transform layers before browsing', {skip:!available&&'Chromium is not installed'}, async()=>{
+test('hero copy is immediately readable without filter or transform layers', {skip:!available&&'Chromium is not installed'}, async()=>{
   const browser=await chromium.launch({headless:true});
   try{
     const page=await catalog(browser);
@@ -159,8 +159,8 @@ test('finished hero copy releases its filter and transform layers before browsin
       assert.equal(node.filter,'none',node.text+' must not retain an offscreen blur surface after its entrance');
       assert.equal(node.transform,'none',node.text+' must release the finished transform');
       assert.equal(node.opacity,'1');
-      assert.notEqual(node.entrance,'none','keep the existing text entrance');
-      assert(node.duration>0,'keep the existing text entrance timing');
+      assert.equal(node.entrance,'none','server-rendered copy should be readable immediately');
+      assert.equal(node.duration,0);
     }
   }finally{await browser.close();}
 });
