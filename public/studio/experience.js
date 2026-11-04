@@ -5,7 +5,7 @@
   const homeKeys = ['continue','upcoming','recommended','trending-movies','trending-tv','popular-movies','popular-tv','top-movies','top-tv','new-releases'];
   const navKeys = ['home','movies','tv','discover','list','study'];
   const defaults = {
-    homeOrder:homeKeys,homeHidden:[],heroMode:'cinematic',heroPosition:'first',posterWidth:180,homeColumns:6,rowShape:'rail',
+    homeOrder:homeKeys,homeHidden:[],heroMode:'cinematic',heroPosition:'first',posterWidth:180,homeColumns:6,rowShape:'rail',layout:'default',
     navOrder:navKeys,navLayout:'top',navLabels:true,navIcons:'line',navDensity:'comfortable',navActive:'pill',
     hudPosition:'right',hudWidth:360,hudDensity:'comfortable',hudTransparency:85,hudIcons:'line',hudMotion:'subtle',notificationPreview:'expanded',toastPosition:'bottom',
     aiSpacing:'comfortable',aiWidth:720,aiCards:'list',aiGlass:'inherit',aiOptions:false,
@@ -13,7 +13,7 @@
     adaptiveCinema:false,adaptiveStrength:35,performancePreset:'auto',reduceMotion:false,reduceTransparency:false,glass:'liquid',tvScale:110,tvControls:'standard'
   };
   const choices = {
-    heroMode:['cinematic','compact','banner'],heroPosition:['first','after-first'],rowShape:['rail','grid'],navLayout:['top','sidebar'],navIcons:['line','filled','minimal'],navDensity:['comfortable','compact'],navActive:['pill','underline','accent'],
+    heroMode:['cinematic','compact','banner'],heroPosition:['first','after-first'],rowShape:['rail','grid'],layout:['default','cinema','posterwall'],navLayout:['top','sidebar'],navIcons:['line','filled','minimal'],navDensity:['comfortable','compact'],navActive:['pill','underline','accent'],
     hudPosition:['right','left'],hudDensity:['comfortable','compact'],hudIcons:['line','solid'],hudMotion:['subtle','none'],notificationPreview:['expanded','compact'],toastPosition:['bottom','top'],aiSpacing:['comfortable','compact'],aiCards:['list','grid'],aiGlass:['inherit','solid','soft'],
     loaderStyle:['cinematic','minimal','artwork','aurora','basic'],posterHover:['lift','zoom','reveal','flat'],posterActions:['auto','always'],focusStyle:['ring','frame'],performancePreset:['auto','desktop','mobile','xbox','minimal'],glass:['off','subtle','liquid'],tvControls:['standard','large']
   };
@@ -74,7 +74,9 @@
       for (const row of rows) if (row.parentElement !== rowsHost) rowsHost.append(row);
       order(rowsHost,rows); lead?.remove();
     }
-    token(main,'--st-home-poster-width',values.posterWidth+'px'); token(main,'--st-home-columns',values.homeColumns);
+    // Cinema has an automatic wider default; an explicit width still wins.
+    // Column count belongs to grid layouts, not the horizontal rail size.
+    token(main,'--st-home-poster-width',values.layout==='cinema' && values.posterWidth===defaults.posterWidth ? 'var(--sv-poster-width)' : values.posterWidth+'px'); token(main,'--st-home-columns',values.homeColumns);
     if (!homeObserver) {
       homeObserver = new MutationObserver(records => {
         if (records.some(record => record.type === 'attributes' && record.target.matches('[data-st-home-section]') || record.type === 'childList' && (record.target.id === 'continueWatchingRail' || [...record.addedNodes,...record.removedNodes].some(node => node.nodeType === 1 && node.matches('[data-st-home-section]'))))) applyHome();
@@ -152,7 +154,7 @@
     if (!document.body) return;
     values = normalize(input);
     const body = document.body, focused = document.activeElement;
-    const fields = ['heroMode','heroPosition','rowShape','navLayout','navLabels','navIcons','navDensity','navActive','hudPosition','hudDensity','hudIcons','notificationPreview','toastPosition','aiSpacing','aiCards','aiGlass','loaderStyle','posterActions','focusStyle','performancePreset','tvControls'];
+    const fields = ['heroMode','heroPosition','rowShape','layout','navLayout','navLabels','navIcons','navDensity','navActive','hudPosition','hudDensity','hudIcons','notificationPreview','toastPosition','aiSpacing','aiCards','aiGlass','loaderStyle','posterActions','focusStyle','performancePreset','tvControls'];
     for (const field of fields) data(body,'st'+field[0].toUpperCase()+field.slice(1),values[field]);
     data(body,'stExperienceLight',light());data(body,'stPosterHover',values.reduceMotion || light() ? 'flat' : values.posterHover);
     data(body,'stPageMotion',values.pageMotion && !values.reduceMotion && !light()); data(body,'stHudMotion',values.reduceMotion || light() ? 'none' : values.hudMotion);

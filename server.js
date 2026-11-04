@@ -6658,7 +6658,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${shellStyleLink("finish")}
     <script defer src="/assets/studio/theme-details.js?v=1"></script>
     <script defer src="/assets/clean/hero-palette.js?v=260"></script>
-    <script defer src="/assets/studio/experience.js?v=261"></script>
+    <script defer src="/assets/studio/experience.js?v=262"></script>
     ${extraHead}
 </head>
 <body class="svCleanShell">

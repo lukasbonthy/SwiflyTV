@@ -4,8 +4,13 @@ body.svCleanShell main[data-st-home] {--st-home-visible-columns:var(--st-home-co
 body.svCleanShell main[data-st-home] [data-st-home-rows],
 body.svCleanShell main[data-st-home] [data-st-home-lead] {min-width:0}
 html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] .movieRail {
-  grid-auto-columns:min(var(--st-home-poster-width,180px),calc((100% - (var(--st-home-visible-columns) - 1) * var(--st-gap,16px)) / var(--st-home-visible-columns))) !important;
+  grid-auto-columns:min(var(--st-home-poster-width,180px),100%) !important;
   padding-block:8px 14px !important;
+}
+/* The current catalog skin resets legacy layout classes. Apply the selected
+   Cinema shape through the same Studio attributes as its other controls. */
+html:not([data-sv-tv="true"]) body.svCleanShell[data-st-layout="cinema"] .svCatalogRow .movieCard :is(.posterWrap,.dsThumb,.nfTopTenPoster) {
+  aspect-ratio:16 / 9 !important;
 }
 html:not([data-sv-tv="true"]) body.svCleanShell[data-st-row-shape="grid"] main[data-st-home] .movieRail {
   grid-auto-flow:row !important;grid-auto-columns:auto !important;
