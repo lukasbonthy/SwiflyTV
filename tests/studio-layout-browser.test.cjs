@@ -26,10 +26,10 @@ async function open(viewport={width:1440,height:900},tv=false,home=true){
 }
 const geometry=page=>page.locator('.movieCard').first().evaluate(card=>{const art=card.querySelector('.dsThumb'),rail=card.parentElement,style=getComputedStyle(rail),box=rail.getBoundingClientRect(),width=art.getBoundingClientRect().width,gap=parseFloat(style.columnGap),available=rail.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight);return {width,height:art.getBoundingClientRect().height,radius:parseFloat(getComputedStyle(art).borderRadius),gap,railWidth:rail.clientWidth,visibleSlots:(available+gap)/(width+gap),visibleCards:[...rail.children].filter(node=>{const r=node.getBoundingClientRect();return r.left>=box.left-.5&&r.right<=box.right+.5;}).length,cardCount:rail.children.length,columns:style.gridTemplateColumns,flow:style.gridAutoFlow,overflow:document.documentElement.scrollWidth>innerWidth+1};});
 
-test('Cinema shows fewer larger titles per row and survives Save, reload and Cancel',{skip:!available},async()=>{
+test('Cinema shows moderately fewer titles per row and survives Save, reload and Cancel',{skip:!available},async()=>{
  const f=await open();try{
   const before=await geometry(f.page);await f.page.locator('[data-st-field="layout"][data-st-value="cinema"]').click();const cinema=await geometry(f.page);
-  assert(Math.abs(cinema.width-340)<1,'Cinema restores the earlier 340px card width: '+JSON.stringify({before,cinema}));assert(cinema.visibleCards<=before.visibleCards-2,'Cinema must show fewer movies across the same row');assert.equal(cinema.cardCount,before.cardCount,'every title remains available by scrolling');
+  assert(Math.abs(cinema.width-240)<1,'Cinema uses moderate 240px cards: '+JSON.stringify({before,cinema}));assert(cinema.visibleCards<before.visibleCards,'Cinema must show fewer movies across the same row');assert(cinema.visibleCards>=before.visibleCards-2,'Cinema must not remove more than two visible titles');assert.equal(cinema.cardCount,before.cardCount,'every title remains available by scrolling');
   await f.page.locator('[data-st-save]').click();await f.reload();const saved=await geometry(f.page);assert.equal(saved.visibleCards,cinema.visibleCards);assert.equal(saved.width,cinema.width);
   await f.studio();await f.page.locator('[data-st-field="layout"][data-st-value="default"]').click();assert.equal((await geometry(f.page)).visibleCards,before.visibleCards);await f.page.locator('[data-st-cancel]').last().click();assert.equal((await geometry(f.page)).visibleCards,cinema.visibleCards);
  }finally{await f.context.close();}
@@ -55,18 +55,18 @@ test('corners, spacing and Poster wall controls change the rendered catalog',{sk
 
 test('mobile Cinema, custom width and grids remain usable without page overflow',{skip:!available},async()=>{
  const f=await open({width:390,height:844});try{
-  const before=await geometry(f.page);await f.page.locator('[data-st-field="layout"][data-st-value="cinema"]').click();let art=await geometry(f.page);assert(art.visibleSlots<before.visibleSlots-.3,'Cinema must reduce the number of titles fitting across the phone');assert(art.width>before.width*1.5);assert.equal(art.overflow,false);
+  const before=await geometry(f.page);await f.page.locator('[data-st-field="layout"][data-st-value="cinema"]').click();let art=await geometry(f.page);assert(art.visibleSlots<before.visibleSlots-.3,'Cinema must reduce the number of titles fitting across the phone');assert(art.width>before.width&&art.width<=before.width*1.5,'phone cards should be only moderately larger');assert.equal(art.overflow,false);
   await f.page.locator('[data-st-advanced-toggle]').check();await f.page.locator('[data-st-input="posterWidth"]').fill('240');art=await geometry(f.page);assert(Math.abs(art.width-240)<1);
   await f.page.locator('[data-st-input="rowShape"]').selectOption('grid');art=await geometry(f.page);assert.equal(art.columns.split(' ').length,2);assert.equal(art.overflow,false);
   await f.page.locator('[data-st-field="cardstyle"][data-st-value="sharp"]').click();assert.equal((await geometry(f.page)).radius,3);
  }finally{await f.context.close();}
 });
 
-test('Cinema restores lower row density across desktop sizes and catalog routes',{skip:!available},async()=>{
+test('Cinema stays close to Classic density across desktop sizes and catalog routes',{skip:!available},async()=>{
  for(const width of [1024,1440,1920])for(const home of [true,false]){
   const f=await open({width,height:900},false,home);try{
    const before=await geometry(f.page);await f.page.locator('[data-st-field="layout"][data-st-value="cinema"]').click();const cinema=await geometry(f.page);
-   assert.equal(Math.round(cinema.width),340,JSON.stringify({width,home,before,cinema}));assert(cinema.visibleCards<before.visibleCards,'fewer titles must fit in Cinema at '+width+'px');assert.equal(cinema.cardCount,12);assert.equal(cinema.overflow,false);
+   assert.equal(Math.round(cinema.width),240,JSON.stringify({width,home,before,cinema}));assert(cinema.visibleSlots<before.visibleSlots-.25,'Cinema should be slightly less dense at '+width+'px');assert(before.visibleSlots-cinema.visibleSlots<=2.5,'Cinema must stay close to Classic density at '+width+'px');if(home){assert(cinema.visibleCards<before.visibleCards);assert(cinema.visibleCards>=before.visibleCards-2);}assert.equal(cinema.cardCount,12);assert.equal(cinema.overflow,false);
   }finally{await f.context.close();}
  }
 });
@@ -74,7 +74,7 @@ test('Cinema restores lower row density across desktop sizes and catalog routes'
 test('phone catalog rows respect Cinema density and explicit poster width',{skip:!available},async()=>{
  const f=await open({width:390,height:844},false,false);try{
   const before=await geometry(f.page);await f.page.locator('[data-st-field="layout"][data-st-value="cinema"]').click();const cinema=await geometry(f.page);
-  assert(cinema.visibleSlots<before.visibleSlots-.3,'mobile row defaults must not override the Cinema choice');assert(cinema.width>before.width*1.5);assert.equal(cinema.overflow,false);
+  assert(cinema.visibleSlots<before.visibleSlots-.3,'mobile row defaults must not override the Cinema choice');assert(cinema.width>before.width&&cinema.width<=before.width*1.5,'phone cards should be only moderately larger');assert.equal(cinema.overflow,false);
   await f.page.locator('[data-st-advanced-toggle]').check();await f.page.locator('[data-st-input="posterWidth"]').fill('260');assert.equal(Math.round((await geometry(f.page)).width),260,'explicit width still wins on other catalog pages');
  }finally{await f.context.close();}
 });
