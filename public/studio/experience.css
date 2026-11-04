@@ -10,7 +10,7 @@ html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] .movieRail {
 /* Cinema restores the larger cards that show fewer titles per row. Its own
    width token also wins over the phone catalog's fixed two/three-card rules. */
 html:not([data-sv-tv="true"]) body.svCleanShell[data-st-layout="cinema"] .svCatalogRow :is(.movieRail,.dsRail,.nfRail,.nfTopTenRail) {
-  grid-auto-columns:min(var(--st-cinema-poster-width,var(--sv-poster-width,340px)),100%) !important;
+  grid-auto-columns:min(var(--st-cinema-poster-width,var(--sv-poster-width,240px)),100%) !important;
 }
 html:not([data-sv-tv="true"]) body.svCleanShell[data-st-layout="cinema"] .svCatalogRow .movieCard :is(.posterWrap,.dsThumb,.nfTopTenPoster) {
   aspect-ratio:16 / 9 !important;

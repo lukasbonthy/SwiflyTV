@@ -177,7 +177,7 @@
   root.classList.remove(...old);root.classList.add('effect-clean','detail-balanced');
   for(const name of ['theme','font','layout','cardstyle','density','backdrop'])root.classList.add(name+'-'+v[name]);
   const accent=v.customColors?v.accentColor:accents[v.theme],linked=v.customColors||!['default','mono'].includes(v.theme);root.dataset.stAccentAurora=String(linked);
-  const cinemaWidth=v.posterWidth!==defaults.posterWidth?v.posterWidth+'px':'min(340px,calc(100vw - 48px))';
+  const cinemaWidth=v.posterWidth!==defaults.posterWidth?v.posterWidth+'px':'min(240px,calc(100vw - 48px))';
   const tokens={'--st-accent-hue':linked?(Math.round(hue(accent))-175)+'deg':'0deg','--sv-aurora-strength':v.auroraStrength/100,'--sv-aurora-hue':hues[v.auroraColor]+'deg','--sv-aurora-wash-a':linked?accent+'1a':washes[v.auroraColor][0],'--sv-aurora-wash-b':linked?(v.customColors?v.accentSecondary:accent)+'1c':washes[v.auroraColor][1],'--sv-aurora-speed':v.auroraMotion==='slow'?'55s':'32s',
    '--st-accent':accent,'--st-accent-ink':contrast(accent,'#111217')>=4.5?'#111217':contrast(accent,'#ffffff')>=4.5?'#ffffff':'#000000','--st-accent-secondary':v.customColors?v.accentSecondary:accents[v.theme],'--st-canvas':v.customColors?v.canvasColor:canvases[v.theme],'--st-font':fonts[v.font],'--st-display-font':v.font==='wide'?'"Unbounded","Host Grotesk",sans-serif':fonts[v.font],
    '--st-radius':{sharp:'3px',rounded:'10px',softglass:'20px'}[v.cardstyle],'--st-gap':v.density==='compact'?'10px':'16px','--st-cinema-poster-width':cinemaWidth,'--sv-poster-width':v.posterWidth!==defaults.posterWidth?v.posterWidth+'px':v.layout==='cinema'?cinemaWidth:v.density==='compact'?'clamp(126px,12vw,174px)':'clamp(150px,14vw,210px)',
