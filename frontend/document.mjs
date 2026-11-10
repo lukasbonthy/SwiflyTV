@@ -110,11 +110,11 @@ export function MovieRailSection({node}) {
   const size=useSyncExternalStore(subscribeToRailSize,responsivePageSize,()=>MAX_VISIBLE_TITLES);
   const native=size<MAX_VISIBLE_TITLES;
   const [offset,setOffset]=useState(0);
-  const railRef=useRef(null),rangeRef=useRef(null),focusAfterPage=useRef(false),scrollFrame=useRef(0),pageMotion=useRef(null),previousStart=useRef(0),columnSize=useRef(0);
+  const railRef=useRef(null),rangeRef=useRef(null),focusAfterPage=useRef(false),scrollTimer=useRef(0),pageMotion=useRef(null),previousStart=useRef(0),columnSize=useRef(0),previousNative=useRef(native),physicalIndex=useRef(null);
   const start=native?Math.min(offset,Math.max(0,cards.length-size)):Math.min(Math.floor(offset/size)*size,Math.max(0,Math.floor((cards.length-1)/size)*size));
   const end=Math.min(cards.length,start+size);
-  const first=native?Math.max(0,start-1):start;
-  const last=native?Math.min(cards.length,first+size+3):end;
+  const first=native?0:start;
+  const last=native?cards.length:end;
   const reduced=()=>window.matchMedia('(prefers-reduced-motion: reduce)').matches||document.body.classList.contains('reduceMotion')||document.documentElement.dataset.svTv==='true'||document.documentElement.dataset.svXbox==='true';
   const measureColumn=()=>{
     const rail=railRef.current;if(!rail?.clientWidth)return 0;
@@ -123,32 +123,41 @@ export function MovieRailSection({node}) {
   };
   useLayoutEffect(()=>{
     const rail=railRef.current;if(!rail)return;
-    window.cancelAnimationFrame(scrollFrame.current);scrollFrame.current=0;
+    window.clearTimeout(scrollTimer.current);scrollTimer.current=0;
+    const physical=previousNative.current?(physicalIndex.current??(columnSize.current>0?Math.round(rail.scrollLeft/columnSize.current):offset)):offset;
+    const aligned=native?Math.max(0,Math.min(cards.length-size,physical)):Math.min(Math.floor(physical/size)*size,Math.max(0,Math.floor((cards.length-1)/size)*size));
     // Only a breakpoint change repositions the native track. Scroll updates
-    // replace a few cards without disturbing momentum or the scroll offset.
+    // leave the stable native track and its poster nodes intact.
     columnSize.current=native?measureColumn():0;
-    rail.scrollLeft=native?start*columnSize.current:0;
+    previousNative.current=native;
+    physicalIndex.current=native?aligned:null;
+    rail.scrollLeft=native?aligned*columnSize.current:0;
+    if(aligned!==start)setOffset(aligned);
   },[size,native]);
-  useEffect(()=>{
+  useLayoutEffect(()=>{
     if(!native||typeof window.ResizeObserver!=='function')return;
+    let active=true;
     const observer=new window.ResizeObserver(entries=>{
+      if(!active)return;
       const entry=entries[0];if(!entry)return;
       const content=entry.contentBoxSize?.[0]?.inlineSize??entry.contentRect.width;
       columnSize.current=(content+16)/size;
-      setOffset(Math.max(0,Math.min(cards.length-size,Math.round(entry.target.scrollLeft/columnSize.current))));
+      const position=Math.max(0,Math.min(cards.length-size,Math.round(entry.target.scrollLeft/columnSize.current)));physicalIndex.current=position;setOffset(position);
     });
-    observer.observe(railRef.current);return()=>observer.disconnect();
+    observer.observe(railRef.current);return()=>{active=false;observer.disconnect();};
   },[native,size,cards.length]);
   useLayoutEffect(()=>{
     const rail=railRef.current,direction=Math.sign(start-previousStart.current);previousStart.current=start;
     pageMotion.current?.cancel();pageMotion.current=null;
     if(!native&&direction&&!reduced()&&typeof rail?.animate==='function')pageMotion.current=rail.animate([{transform:`translate3d(${direction*14}px,0,0)`},{transform:'translate3d(0,0,0)'}],{duration:220,easing:'cubic-bezier(.2,.7,.2,1)'});
   },[start,native]);
-  useEffect(()=>()=>{window.cancelAnimationFrame(scrollFrame.current);pageMotion.current?.cancel();},[]);
+  useEffect(()=>()=>{window.clearTimeout(scrollTimer.current);pageMotion.current?.cancel();},[]);
   useEffect(()=>{
     window.syncLibraryButtons?.(railRef.current);
     window.syncWatchButtons?.(railRef.current);
     document.dispatchEvent(new CustomEvent('swifly:react-rail',{detail:{rail:railRef.current,start,end,total:cards.length}}));
+  },[first,last,size,cards.length]);
+  useEffect(()=>{
     // Keep keyboard/controller focus usable when the last next button disables.
     if(focusAfterPage.current&&focusAfterPage.current.target===start){
       const {direction}=focusAfterPage.current;focusAfterPage.current=false;
@@ -156,20 +165,29 @@ export function MovieRailSection({node}) {
       card?.querySelector('.posterWrap,.dsThumb,a,button')?.focus({preventScroll:true});
     }
   },[start,size,end,cards.length]);
+  const settleRange=()=>{
+    window.clearTimeout(scrollTimer.current);scrollTimer.current=0;
+    const rail=railRef.current;if(!native||!rail)return;
+    const slot=columnSize.current||measureColumn();columnSize.current=slot;
+    if(slot>0){const position=Math.max(0,Math.min(cards.length-size,Math.round(rail.scrollLeft/slot)));physicalIndex.current=position;setOffset(position);}
+  };
   const onScroll=()=>{
-    if(!native||scrollFrame.current)return;
-    scrollFrame.current=window.requestAnimationFrame(()=>{
-      scrollFrame.current=0;const rail=railRef.current;if(!rail)return;
-      const slot=columnSize.current||measureColumn();columnSize.current=slot;
-      if(slot>0)setOffset(Math.max(0,Math.min(cards.length-size,Math.round(rail.scrollLeft/slot))));
-    });
+    if(!native)return;
+    if(!columnSize.current)columnSize.current=measureColumn();
+    if(columnSize.current>0)physicalIndex.current=Math.round(railRef.current.scrollLeft/columnSize.current);
+    window.clearTimeout(scrollTimer.current);
+    // React and glass setup stay out of an active touch gesture. Only the
+    // small range/arrow state changes after native momentum has settled.
+    scrollTimer.current=window.setTimeout(settleRange,160);
   };
   const move=(event,direction)=>{
     event.preventDefault();event.stopPropagation();
-    const target=native?Math.max(0,Math.min(cards.length-size,start+direction*size)):nextOffset(start,direction,cards.length,size);
+    const slot=native?(columnSize.current||measureColumn()):0;
+    if(native)columnSize.current=slot;
+    const current=native&&slot>0?Math.round(railRef.current.scrollLeft/slot):start;
+    const target=native?Math.max(0,Math.min(cards.length-size,current+direction*size)):nextOffset(start,direction,cards.length,size);
     focusAfterPage.current=event.detail===0?{direction,target}:false;
     if(native){
-      const slot=columnSize.current||measureColumn();columnSize.current=slot;
       railRef.current?.scrollTo({left:target*slot,behavior:reduced()?'instant':'smooth'});
     }else setOffset(target);
   };
@@ -180,9 +198,8 @@ export function MovieRailSection({node}) {
   let placed=false;
   function content(child,index){
     if(child===rail){
-      const spacer=(count,key)=>count>0?h('div',{key,'data-sv-rail-spacer':'true','aria-hidden':'true',style:{gridColumn:`span ${count}`}}):null;
-      return h(rail.tag,{...elementProps(rail),key:index,ref:railRef,onScroll,'data-sv-react-rail':'true','data-sv-native-rail':native?'true':undefined,'data-sv-page-size':size,'aria-label':`Titles ${start+1} to ${end} of ${cards.length}`},
-        native?spacer(first,'before'):null,railWindow(cards,first,last-first).map((card,i)=>h(PosterCard,{node:card,position:first+i,key:`${first+i}`})),native?spacer(cards.length-last,'after'):null);
+      return h(rail.tag,{...elementProps(rail),key:index,ref:railRef,onScroll,onScrollEnd:settleRange,'data-sv-react-rail':'true','data-sv-native-rail':native?'true':undefined,'data-sv-page-size':size,'aria-label':`Titles ${start+1} to ${end} of ${cards.length}`},
+        railWindow(cards,first,last-first).map((card,i)=>h(PosterCard,{node:card,position:first+i,key:`${first+i}`})));
     }
     if(typeof child==='string')return child;
     if(['svSectionActions','dsRowHead','dsWelcomeRailHead','sectionHead','nfRowTitle'].some(name=>hasClass(child,name))){

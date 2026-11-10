@@ -8,15 +8,14 @@ html body.svCleanShell section[data-sv-react-row="true"] > :is(.movieRail,.dsRai
   gap:16px !important;
   overflow-x:auto !important;
   scrollbar-width:none;
-  scroll-snap-type:x mandatory;
+  scroll-snap-type:x var(--sv-react-snap,mandatory);
 }
 @media(min-width:1024px){
   html body.svCleanShell :is(.movieGrid,.dsGrid,.dsMoreGridV121):has(> .movieCard){grid-template-columns:repeat(7,minmax(0,1fr)) !important;}
 }
 body.svCleanShell [data-sv-react-rail="true"] {--sv-react-columns:7;overflow-anchor:none;}
 body.svCleanShell [data-sv-react-rail="true"] > * {min-width:0;max-width:none !important;width:auto !important;}
-body.svCleanShell [data-sv-native-rail="true"] {overscroll-behavior-x:contain;}
-body.svCleanShell [data-sv-rail-spacer="true"] {pointer-events:none;scroll-snap-align:none !important;}
+body.svCleanShell [data-sv-native-rail="true"] {overscroll-behavior-x:contain;--sv-react-snap:proximity;}
 body.svCleanShell [data-sv-react-row="true"] {position:relative;}
 body.svCleanShell [data-sv-react-pager="true"] {
   display:inline-flex !important;position:static !important;inset:auto !important;

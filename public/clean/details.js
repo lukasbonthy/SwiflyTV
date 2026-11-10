@@ -14,6 +14,8 @@
   // remain stationary, with one slightly quicker glide and a soft landing.
   const enterDuration=360,exitDuration=220;
   const enterEase='cubic-bezier(.28,.06,.2,1)',exitEase='cubic-bezier(.4,0,.2,1)';
+  const coarseMotion=window.matchMedia('(hover: none) and (pointer: coarse)');
+  const mobileMotion=()=>!xboxInstant&&document.documentElement.dataset.svTv!=='true'&&(window.innerWidth<=860||coarseMotion.matches);
   const fragments=new Map(),fragmentTTL=90000,fragmentLimit=8,fragmentByteLimit=2*1024*1024,fragmentSizeLimit=192*1024;
   let fragmentScope=null,fragmentBytes=0;
   // Intent prefetches are scoped to the current profile and share the actual
@@ -72,7 +74,9 @@
     if(warmups.has(href)||warmups.size>=warmupLimit)return;
     const promise=fetch(href+'?view=modal',{headers:{Accept:'text/html'}})
       .then(response=>{if(!response.ok)throw new Error('Details unavailable');return response.text();})
-      .then(html=>{
+      .then(async html=>{
+        const moving=sheetTransition;
+        if(moving?.mobile&&moving.started)await new Promise(resolve=>moving.waiters.push(resolve));
         const parsed=new DOMParser().parseFromString(html,'text/html');
         const content=parsed.querySelector('.svTitleDetails');
         if(!content||syncFragmentScope()!==scope)return null;
@@ -157,10 +161,12 @@
     transitionEpoch++;
     const active=sheetTransition;sheetTransition=null;if(!active)return;
     clearTimeout(active.timer);
+    clearTimeout(active.warmTimer);
     cancelAnimationFrame(active.frame);
     for(const animation of active.animations)animation.cancel();
+    for(const resolve of active.waiters)resolve();active.waiters=[];
   }
-  function moveSheet(state,complete,knownPosition) {
+  function moveSheet(state,complete,knownPosition,prepare=false) {
     const entering=state==='opening',reversing=Boolean(sheetTransition);
     // Keep the sheet's layout stationary. The shared glass renderer measures
     // layout dimensions, so its prepared lenses can travel with this layer.
@@ -168,29 +174,48 @@
     const start=reversing?getComputedStyle(sheetPanel).transform:(entering?offscreen:'translateY(0px)');
     const opacity=reversing?getComputedStyle(scrim).opacity:(entering?'0':'1');
     cancelSheetTransition();
-    const epoch=transitionEpoch,duration=entering?enterDuration:exitDuration;
-    const active={epoch,animations:[],frame:0,timer:null,complete:null};sheetTransition=active;syncSheetScroll(knownPosition);
+    const mobile=mobileMotion(),epoch=transitionEpoch,duration=mobile?(entering?560:360):(entering?enterDuration:exitDuration);
+    prepare=prepare&&entering&&!reversing;
+    const active={epoch,mobile,entering,started:false,animations:[],frame:0,timer:null,warmTimer:null,complete:null,launch:null,waiters:[]};sheetTransition=active;syncSheetScroll(knownPosition);
     sheetPanel.style.removeProperty('animation-play-state');scrim.style.removeProperty('animation-play-state');
     dialog.dataset.svDetailState=state;scrim.dataset.svDetailState=state;
     const settle=()=>{
       if(sheetTransition!==active||epoch!==transitionEpoch)return;
-      sheetTransition=null;clearTimeout(active.timer);cancelAnimationFrame(active.frame);
+      sheetTransition=null;clearTimeout(active.timer);clearTimeout(active.warmTimer);cancelAnimationFrame(active.frame);
       dialog.dataset.svDetailState=entering?'open':'closed';scrim.dataset.svDetailState=entering?'open':'closed';
       sheetPanel.style.removeProperty('--sv-detail-start');scrim.style.removeProperty('--sv-detail-dim-start');
       sheetPanel.style.removeProperty('--sv-detail-scroll');
       sheetPanel.style.removeProperty('animation-play-state');scrim.style.removeProperty('animation-play-state');
       for(const animation of active.animations)animation.cancel();
-      complete?.();
+      try{complete?.();}finally{for(const resolve of active.waiters)resolve();active.waiters=[];}
     };
     active.complete=settle;
     if(reducedMotion()){settle();return;}
     // Fragment parsing, library state and the first layout must not consume
     // the entrance or its watchdog before the browser can show one frame.
     const begin=(play,timeout)=>{
-      active.frame=requestAnimationFrame(()=>{
-        active.frame=0;if(sheetTransition!==active)return;
-        play();active.timer=setTimeout(settle,timeout);
-      });
+      let queued=false;
+      const arm=()=>{if(sheetTransition!==active)return;clearTimeout(active.timer);active.timer=setTimeout(settle,active.mobile?timeout+400:timeout);};
+      const run=()=>{
+        active.frame=0;if(sheetTransition!==active)return;active.started=true;
+        try{play();}catch{settle();return;}
+        if(active.mobile&&active.animations.length&&active.animations.every(animation=>animation.ready?.then)){
+          // A slow compositor must not spend the glide's watchdog budget
+          // before playback starts. Keep a separate bound for a stuck API.
+          active.timer=setTimeout(settle,5000);
+          Promise.all(active.animations.map(animation=>animation.ready)).then(arm,()=>{});
+        }else arm();
+      };
+      active.launch=()=>{
+        if(queued||sheetTransition!==active)return;queued=true;clearTimeout(active.warmTimer);active.warmTimer=null;
+        active.frame=requestAnimationFrame(()=>{
+          if(sheetTransition!==active)return;
+          // Let prepared metadata, artwork and optics paint before the sheet
+          // starts moving. Desktop keeps its original one-frame start.
+          if(prepare)active.frame=requestAnimationFrame(run);else run();
+        });
+      };
+      if(prepare)active.warmTimer=setTimeout(active.launch,400);else active.launch();
     };
     sheetPanel.style.setProperty('--sv-detail-start',start||'translateY(0px)');
     scrim.style.setProperty('--sv-detail-dim-start',opacity||'0');
@@ -202,7 +227,7 @@
           animation.pause?.();animation.currentTime=0;
           animation.finished.catch(()=>{});return animation.finished;
         };
-        const easing=entering?enterEase:exitEase;
+        const easing=entering?(mobile?'cubic-bezier(.2,.7,.2,1)':enterEase):exitEase;
         const sheet=animate(sheetPanel,[{transform:start||'translateY(0px)'},{transform:entering?'translateY(0px)':offscreen}],{duration,easing});
         const dim=animate(scrim,[{opacity:opacity||'0'},{opacity:entering?'1':'0'}],{duration,easing});
         Promise.all([sheet,dim]).then(settle,()=>{});
@@ -286,8 +311,14 @@
     dialog.addEventListener('click',event=>{if(event.target instanceof Element&&!event.target.closest('.svDetailPanel'))close();});
   }
   async function render(href,from,scroll=0) {
-    ensureDialog();entryFocus=null;request?.abort();window.SwiflyMotion?.stop(viewport);window.SwiflyMotion?.release(viewport);
+    ensureDialog();entryFocus=null;request?.abort();
     request=new AbortController();const current=++generation;currentHref=href;currentURL=route(new URL(location.href));scrollPositions.set(currentURL,scroll);
+    const moving=sheetTransition;
+    if(moving?.mobile&&moving.entering&&moving.started){
+      await new Promise(resolve=>moving.waiters.push(resolve));
+      if(current!==generation||!dialog.open)return;
+    }
+    window.SwiflyMotion?.stop(viewport);window.SwiflyMotion?.release(viewport);
     const entering=!dialog.open||dialog.dataset.svDetailState==='closing';
     if(!dialog.open){trigger=from||lastTrigger||document.activeElement;window.SwiflyMotion?.stop();alignPageFrame();document.documentElement.classList.add('svDetailsOpen');scrim.hidden=false;dialog.showModal();}
     viewport.scrollTop=0;dialog.classList.remove('svDetailScrolled');dialog.setAttribute('aria-busy','true');
@@ -295,7 +326,8 @@
     contentHost.innerHTML='<div class="svDetailLoading" role="status"><div class="svDetailLoadingArt"></div><div class="svDetailLoadingCopy"><span></span><span></span><span></span></div><p>Loading details…</p></div>';
     entryFocus={current,initial:document.activeElement,cancelled:false};
     dialog.querySelector('[data-sv-dialog-back]').setAttribute('aria-label',trail.length?'Back to previous title':'Back to browsing');
-    if(entering){closeWantsHistory=false;moveSheet('opening',()=>{window.SwiflyGlassSurfaces?.refresh(dialog);window.SwiflyMotion?.refresh(viewport);},0);}
+    if(entering){closeWantsHistory=false;moveSheet('opening',()=>{window.SwiflyGlassSurfaces?.refresh(dialog);window.SwiflyMotion?.refresh(viewport);},0,mobileMotion());}
+    const entrance=sheetTransition?.entering?sheetTransition:null;
     try {
       const scope=syncFragmentScope();let html=scope===null?null:recentFragment(href);
       let cached=html!==null;
@@ -313,6 +345,7 @@
           html=await response.text();
         }
       }
+      if(entrance?.mobile&&entrance.started&&sheetTransition===entrance)await new Promise(resolve=>entrance.waiters.push(resolve));
       if(current!==generation||!dialog.open)return;
       if(!content){
         const parsed=new DOMParser().parseFromString(html,'text/html');
@@ -329,11 +362,13 @@
       dialog.classList.toggle('svDetailScrolled',scroll>180);
     }catch(error){
       if(error.name==='AbortError'||current!==generation||!dialog.open)return;
+      if(entrance?.mobile&&entrance.started&&sheetTransition===entrance)await new Promise(resolve=>entrance.waiters.push(resolve));
+      if(current!==generation||!dialog.open)return;
       const panel=document.createElement('div');panel.className='svDetailError';
       const heading=document.createElement('h2');heading.textContent='Details are taking a moment';
       const copy=document.createElement('p');copy.textContent='Open the full title page or return to browsing.';
       const link=document.createElement('a');link.href=href;link.className='dsSecondaryBtn';link.dataset.svDetailFallback='';link.textContent='Open full details';panel.append(heading,copy,link);contentHost.replaceChildren(panel);
-    }finally{if(current===generation){dialog.removeAttribute('aria-busy');focusReadyEntry(current);}}
+    }finally{if(current===generation){dialog.removeAttribute('aria-busy');entrance?.launch?.();focusReadyEntry(current);}}
   }
   async function open(value,from) {
     const href=titleRoute(value);if(!href)return;
@@ -402,6 +437,7 @@
       clearTimeout(hoverTimer);hoverTimer=0;hoverHref=null;
     });
     document.addEventListener('pointerover',event=>{
+      if(event.pointerType==='touch'||!event.pointerType&&coarseMotion.matches){clearTimeout(hoverTimer);hoverTimer=0;hoverHref=null;return;}
       if(document.documentElement.dataset.svCardScrolling==='true'){
         clearTimeout(hoverTimer);hoverTimer=0;hoverHref=null;return;
       }
@@ -421,7 +457,9 @@
       const href=detailIntent(event.target);if(href)prefetchFragment(href);
     },{passive:true});
     document.addEventListener('pointerdown',event=>{
-      if(event.button>0)return;
+      // A finger-down usually begins a native scroll. Wait for its actual
+      // click before fetching/parsing a title; mouse intent can still warm it.
+      if(event.button>0||event.pointerType==='touch'||!event.pointerType&&coarseMotion.matches)return;
       const href=detailIntent(event.target);if(href)prefetchFragment(href);
     },{passive:true});
     document.addEventListener('click',event=>{

@@ -95,10 +95,10 @@ body.svCleanShell .svDetailScrim[hidden] { display:none !important; }
 /* One moving layer; bottom/height stay fixed throughout the slide. */
 body.svCleanShell .svDetailDialog:is([data-sv-detail-state="opening"],[data-sv-detail-state="closing"]) .svDetailPanel { will-change:transform; }
 body.svCleanShell .svDetailScrim:is([data-sv-detail-state="opening"],[data-sv-detail-state="closing"]) { will-change:opacity; }
-body.svCleanShell .svDetailDialog[data-sv-detail-motion="css"][data-sv-detail-state="opening"] .svDetailPanel { animation:svDetailsEnter 360ms cubic-bezier(.28,.06,.2,1) both; }
-body.svCleanShell .svDetailDialog[data-sv-detail-motion="css"][data-sv-detail-state="closing"] .svDetailPanel { animation:svDetailsExit 220ms cubic-bezier(.4,0,.2,1) both; }
-body.svCleanShell .svDetailScrim[data-sv-detail-motion="css"][data-sv-detail-state="opening"] { animation:svDetailsDimIn 360ms cubic-bezier(.28,.06,.2,1) both; }
-body.svCleanShell .svDetailScrim[data-sv-detail-motion="css"][data-sv-detail-state="closing"] { animation:svDetailsDimOut 220ms cubic-bezier(.4,0,.2,1) both; }
+body.svCleanShell .svDetailDialog[data-sv-detail-motion="css"][data-sv-detail-state="opening"] .svDetailPanel { animation:svDetailsEnter var(--sv-detail-enter-time,360ms) var(--sv-detail-enter-ease,cubic-bezier(.28,.06,.2,1)) both; }
+body.svCleanShell .svDetailDialog[data-sv-detail-motion="css"][data-sv-detail-state="closing"] .svDetailPanel { animation:svDetailsExit var(--sv-detail-exit-time,220ms) cubic-bezier(.4,0,.2,1) both; }
+body.svCleanShell .svDetailScrim[data-sv-detail-motion="css"][data-sv-detail-state="opening"] { animation:svDetailsDimIn var(--sv-detail-enter-time,360ms) var(--sv-detail-enter-ease,cubic-bezier(.28,.06,.2,1)) both; }
+body.svCleanShell .svDetailScrim[data-sv-detail-motion="css"][data-sv-detail-state="closing"] { animation:svDetailsDimOut var(--sv-detail-exit-time,220ms) cubic-bezier(.4,0,.2,1) both; }
 body.svCleanShell .svDetailDialog[data-sv-detail-motion="css"]:is([data-sv-detail-state="opening"],[data-sv-detail-state="closing"]) .svDetailPanel,
 body.svCleanShell .svDetailScrim[data-sv-detail-motion="css"]:is([data-sv-detail-state="opening"],[data-sv-detail-state="closing"]) { animation-play-state:paused; }
 body.svCleanShell .svDetailDialog .svDetailViewport.svCinemaPage { height:100%; padding:var(--sv-detail-top-gap) 0 0 !important; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; scrollbar-gutter:stable; scrollbar-width:thin; scrollbar-color:#ffffff40 transparent; -webkit-overflow-scrolling:touch; }
@@ -150,6 +150,9 @@ body.svCleanShell .svDetailError p { margin: 14px 0 24px; color: #999; font-size
   body.svCleanShell .svDetailPanel { width:calc(100% - 12px); border-radius:18px 18px 0 0; }
   body.svCleanShell .svDetailCollectionRail { grid-auto-columns:120px; gap:12px; }
   body.svCleanShell .svDetailDismiss.dsIconBtn { top: 12px; right: 12px; }
+}
+@media (max-width:860px), (hover:none) and (pointer:coarse) {
+  html:not([data-sv-tv="true"]):not([data-sv-xbox="true"]) body.svCleanShell :is(.svDetailDialog,.svDetailScrim) {--sv-detail-enter-time:560ms;--sv-detail-exit-time:360ms;--sv-detail-enter-ease:cubic-bezier(.2,.7,.2,1);}
 }
 body.svCleanShell.reduceMotion :is(.svDetailPanel,.svDetailScrim), body.svCleanShell.reduceMotion .svDetailLoadingArt::after { animation:none !important; }
 @media (prefers-reduced-motion:reduce) {
