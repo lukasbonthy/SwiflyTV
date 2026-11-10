@@ -246,6 +246,13 @@ function swiflyTvFocusNavigation() {
     return false;
   }
   function itemsIn(rail){return Array.from(rail.querySelectorAll(railItems)).filter(el=>eligible(el));}
+  function pageReactRail(rail,direction){
+    if(rail?.dataset.svReactRail!=='true')return false;
+    const label=direction==='right'?'Next titles':'Previous titles';
+    const button=rail.closest('[data-sv-react-row]')?.querySelector('[data-sv-react-pager] button[aria-label="'+label+'"]');
+    if(!button||button.disabled)return false;
+    button.click();return true;
+  }
   function moveRow(direction){
     const rail=focused?.closest(rails);if(!rail||!focused.matches(railItems))return false;
     const rows=Array.from(scope().querySelectorAll(rails)),step=direction==='down'?1:-1;let index=rows.indexOf(rail)+step,items=[];
@@ -280,6 +287,7 @@ function swiflyTvFocusNavigation() {
   function pageRow(direction){
     if(activeModal()||engagedSelect)return;
     const rail=focused?.closest(rails);if(!rail||!focused.matches(railItems)){moveFocus(direction);return;}
+    if(pageReactRail(rail,direction))return;
     const items=itemsIn(rail),index=items.indexOf(focused),rect=focused.getBoundingClientRect(),step=Math.max(1,Math.floor(rail.getBoundingClientRect().width/(rect.width+20)));
     setFocus(items[Math.max(0,Math.min(items.length-1,index+(direction==='right'?step:-step)))]);
   }
@@ -303,7 +311,7 @@ function swiflyTvFocusNavigation() {
     }
     const rail=focused.closest(rails);
     if(rail&&['left','right'].includes(direction)&&focused.matches(railItems)){
-      const cards=itemsIn(rail),index=cards.indexOf(focused),next=cards[index+(direction==='right'?1:-1)];if(next)setFocus(next);return;
+      const cards=itemsIn(rail),index=cards.indexOf(focused),next=cards[index+(direction==='right'?1:-1)];if(next)setFocus(next);else pageReactRail(rail,direction);return;
     }
     const current=centerOf(focused),horizontal=['left','right'].includes(direction);let best=null,bestScore=Infinity;
     for(const element of getFocusable()){

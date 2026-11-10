@@ -8,3 +8,5 @@ npm-debug.log*
 .swifly-data/
 .superpowers/
 .swifly-models/
+dist/
+.qa-data/

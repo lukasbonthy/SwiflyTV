@@ -5669,6 +5669,8 @@ app.disable("x-powered-by");
 if (process.env.RENDER || process.env.SWIFLY_TRUST_PROXY === "true") app.set("trust proxy", 1);
 
 app.use(compression());
+// Local React/Vite migration: all original routes and APIs keep one origin.
+if(process.env.SWIFLY_REACT==='true')require('./lib/react-document.cjs').install(app);
 app.use(serveShellStyle);
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));

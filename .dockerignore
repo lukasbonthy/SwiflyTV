@@ -3,3 +3,10 @@ npm-debug.log
 .git
 .env
 *.zip
+dist
+.qa-data
+.swifly-data
+.swifly-test-data
+.superpowers
+.env.*
+!.env.example

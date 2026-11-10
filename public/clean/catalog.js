@@ -17,7 +17,7 @@
   const resize=typeof ResizeObserver==='function'?new ResizeObserver(entries=>{for(const {target}of entries)queue(target);}):null;
   for(const section of document.querySelectorAll('.dsRow')){
    const rail=section.querySelector('.movieRail,.dsRail,.nfTopTenRail'),controls=section.querySelector('.dsRowControls');
-   const [previous,next]=controls?.querySelectorAll('button')||[];if(!rail||!previous||!next)continue;
+   const [previous,next]=controls?.querySelectorAll('button')||[];if(!rail||rail.dataset.svReactRail==='true'||!previous||!next)continue;
    controls.addEventListener('click',event=>{if(event.target.closest('button')?.getAttribute('aria-disabled')==='true'){event.preventDefault();event.stopImmediatePropagation();}},true);
    rails.set(rail,{controls,previous,next});rail.addEventListener('scroll',()=>queue(rail),{passive:true});resize?.observe(rail);queue(rail);
   }

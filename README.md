@@ -1,38 +1,37 @@
-# SwiflyTV v163
+# SwiflyTV
 
-A dark movie and series catalog with liquid glass navigation, rich detail overlays, watch parties and a customizable atmosphere.
+SwiflyTV now uses React rendering with a Vite production bundle. Desktop catalog rows show seven titles at a time, with arrows and TV navigation for the remaining titles. The existing backend, original styles and feature controllers are retained.
 
-This release keeps the working sources and improves retrieval with staggered fallback, early verified-media completion and ready-response waits. Pages reuse cached styles, ordinary glass surfaces cost less to render, and mouse-wheel scrolling has more weight. The welcome screen has real poster artwork and a new Aurora atmosphere.
+## Run locally
 
-Details: [PERFORMANCE_v163.md](PERFORMANCE_v163.md). Source setup and troubleshooting: [GETTER_FIX.md](GETTER_FIX.md).
+Use Node.js 20.19+ (or 22.12+ for Vite), copy your existing configuration to `.env`, then run:
 
-## Start on Windows
-
-Use Node.js 20 or later. In PowerShell, inside the project folder:
-
-```powershell
-npm install
-if (!(Test-Path .env)) { Copy-Item .env.example .env }
-notepad .env
-npm run install:browser
+```sh
+npm ci
+npm run build
 npm start
 ```
 
-Set your own `TMDB_API_KEY` in `.env` if needed. Open http://localhost:3000 and keep the terminal running. When updating, keep your existing `.env`; the ZIP excludes private keys, dependencies and browser binaries.
+The local URL is http://127.0.0.1:4173 unless `PORT` is set.
 
 ## Render
 
-Deploy the latest `main` commit on the existing Docker web service. The included Dockerfile has the matching Chromium runtime. No additional service or package is required. [GETTER_FIX.md](GETTER_FIX.md) describes the safe playback health endpoint and browser setup.
+The Dockerfile builds the Vite frontend in a Node 22 build stage and copies its compiled assets into the existing Playwright runtime. Production starts the Node server directly on Render's assigned `PORT` and binds `0.0.0.0`. The runtime does not need Vite or development dependencies.
 
-## Appearance
+React is enabled by default. Set `SWIFLY_REACT=false` and redeploy to run the retained original interface. Existing secrets and account/provider configuration remain in Render.
 
-Open Swifly Studio to adjust background, glass, typography and layout. Aurora is the new-user background; saved Clean/Film grain choices are preserved. Preview changes, then Save or Cancel. Smooth scrolling can be disabled, and reduced motion is respected.
+## Original version
+
+The full pre-migration app is preserved on [backup/original-before-react-v173-20261110](https://github.com/lukasbonthy/SwiflyTV/tree/backup/original-before-react-v173-20261110), at commit `70481c2dcc54f14858094dea8c08cee818be8457`. See [rollback and comparison instructions](docs/react-migration/ROLLBACK.md).
+
+`npm run start:original` runs the retained original renderer locally.
 
 ## Checks
 
-```powershell
+```sh
 npm run check
-npm run test:ui
+npm test
+npm run build
 ```
 
-Movie details, navigation, watch-together entry and the current player remain integrated with the catalog. The default sources are still `hexa,cinezo`; other configured adapters remain fallbacks.
+This is a hybrid migration: React owns page rendering and catalog paging; the existing player, Studio, account and other feature controllers are preserved for parity.
