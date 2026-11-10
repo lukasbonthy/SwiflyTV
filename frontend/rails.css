@@ -1,7 +1,6 @@
 /* Keep the source cascade, poster treatment, glass and motion. Only catalog
    row geometry and its existing arrow controls change in this test build. */
 html body.svCleanShell section[data-sv-react-row="true"] > :is(.movieRail,.dsRail,.nfRail,.nfTopTenRail,.dsWelcomeRailTrack)[data-sv-react-rail="true"][data-sv-page-size] {
-  --sv-react-columns:7;
   display:grid !important;
   grid-template-columns:none !important;
   grid-auto-flow:column !important;
@@ -14,7 +13,10 @@ html body.svCleanShell section[data-sv-react-row="true"] > :is(.movieRail,.dsRai
 @media(min-width:1024px){
   html body.svCleanShell :is(.movieGrid,.dsGrid,.dsMoreGridV121):has(> .movieCard){grid-template-columns:repeat(7,minmax(0,1fr)) !important;}
 }
+body.svCleanShell [data-sv-react-rail="true"] {--sv-react-columns:7;overflow-anchor:none;}
 body.svCleanShell [data-sv-react-rail="true"] > * {min-width:0;max-width:none !important;width:auto !important;}
+body.svCleanShell [data-sv-native-rail="true"] {overscroll-behavior-x:contain;}
+body.svCleanShell [data-sv-rail-spacer="true"] {pointer-events:none;scroll-snap-align:none !important;}
 body.svCleanShell [data-sv-react-row="true"] {position:relative;}
 body.svCleanShell [data-sv-react-pager="true"] {
   display:inline-flex !important;position:static !important;inset:auto !important;
@@ -28,9 +30,14 @@ body.svCleanShell [data-sv-react-pager="true"] .dsRowBtn:disabled {opacity:.3;cu
 body.svCleanShell [data-sv-react-pager="true"] .dsRowBtn:focus-visible {outline:2px solid currentColor;outline-offset:3px;}
 .svReactRailRange {font-size:11px;font-weight:500;font-variant-numeric:tabular-nums;color:#aaa;white-space:nowrap;margin-right:5px;}
 body.svCleanShell [data-sv-react-row="true"] > .nfRowTitle {display:flex;align-items:center;justify-content:space-between;}
-@media(max-width:1023px){body.svCleanShell [data-sv-react-rail="true"]{--sv-react-columns:4;}}
+@media(max-width:1023px){
+  body.svCleanShell [data-sv-react-rail="true"]{--sv-react-columns:4;}
+  html:not([data-sv-tv="true"]) body.svCleanShell [data-sv-react-row="true"] .svSectionActions > [data-sv-react-pager="true"]{display:inline-flex !important;}
+  body.svCleanShell [data-sv-react-pager="true"] .dsRowBtn{min-width:44px;width:44px;min-height:44px;height:44px;}
+  body.svCleanShell [data-sv-react-row="true"] :is(.svSectionHead,.dsRowHead,.dsWelcomeRailHead,.sectionHead,.nfRowTitle){flex-wrap:wrap;row-gap:6px;}
+  body.svCleanShell [data-sv-react-row="true"] .svSectionActions{gap:6px;}
+}
 @media(max-width:620px){
   body.svCleanShell [data-sv-react-rail="true"]{--sv-react-columns:2;}
-  body.svCleanShell [data-sv-react-pager="true"] .dsRowBtn{min-width:32px;width:32px;height:32px;}
-  .svReactRailRange{font-size:10px;}
+  .svReactRailRange{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;}
 }

@@ -6574,9 +6574,9 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
   <link rel="stylesheet" href="/assets/clean/base.css?v=262" />
 
     <script>
-      window.syncWatchButtons = window.syncWatchButtons || function syncWatchButtons() {
+      window.syncWatchButtons = window.syncWatchButtons || function syncWatchButtons(root = document) {
         try {
-          document.querySelectorAll("[data-watch-mode]").forEach(function(button) {
+          root.querySelectorAll("[data-watch-mode]").forEach(function(button) {
             if (button.__swiflyWatchModeBound) return;
             button.__swiflyWatchModeBound = true;
             button.addEventListener("click", function() {

@@ -10,6 +10,8 @@ test('party player templates retain their inert content through hydration',async
   const output=await renderDocument(compileDocument(html),{entry:'/test.js'});
   const dom=new JSDOM(output,{url:'http://localhost/',pretendToBeVisual:true});
   global.window=dom.window;global.document=dom.window.document;global.IS_REACT_ACT_ENVIRONMENT=true;
+  const navigatorDescriptor=Object.getOwnPropertyDescriptor(global,'navigator');
+  Object.defineProperty(global,'navigator',{value:dom.window.navigator,configurable:true});
   const model=JSON.parse(document.getElementById('swifly-react-data').textContent),errors=[];
   const {PageContent}=await import('../../frontend/document.mjs');
   const {hydrateRoot}=require('react-dom/client');let root;
@@ -22,5 +24,6 @@ test('party player templates retain their inert content through hydration',async
     assert(template.content.querySelector('video').controls);
   }finally{
     await React.act(async()=>root?.unmount());dom.window.close();delete global.window;delete global.document;delete global.IS_REACT_ACT_ENVIRONMENT;
+    if(navigatorDescriptor)Object.defineProperty(global,'navigator',navigatorDescriptor);else delete global.navigator;
   }
 });

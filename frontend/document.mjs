@@ -1,4 +1,4 @@
-import React, {createElement as h, Fragment, memo, useCallback, useEffect, useRef, useState, useSyncExternalStore} from 'react';
+import React, {createElement as h, Fragment, memo, useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore} from 'react';
 import {createPortal} from 'react-dom';
 import {MAX_VISIBLE_TITLES, nextOffset, railWindow, responsivePageSize, subscribeToRailSize} from './rails.mjs';
 
@@ -84,8 +84,8 @@ function findRail(node){
   return (node.children||[]).find(child=>isRail(child)&&child.children?.filter(x=>typeof x!=='string').every(isCard));
 }
 
-export const PosterCard = memo(function PosterCard({node}) {
-  return h(node.tag,elementProps(node),h(Nodes,{nodes:node.children}));
+export const PosterCard = memo(function PosterCard({node,position}) {
+  return h(node.tag,{...elementProps(node),...(position===undefined?{}:{'data-sv-rail-index':position})},h(Nodes,{nodes:node.children}));
 });
 
 export function NativeElement({node}) {
@@ -108,27 +108,70 @@ export function MovieRailSection({node}) {
   const rail=findRail(node);
   const cards=rail.children.filter(isCard);
   const size=useSyncExternalStore(subscribeToRailSize,responsivePageSize,()=>MAX_VISIBLE_TITLES);
+  const native=size<MAX_VISIBLE_TITLES;
   const [offset,setOffset]=useState(0);
-  const railRef=useRef(null),rangeRef=useRef(null),focusAfterPage=useRef(false);
-  const start=Math.min(Math.floor(offset/size)*size,Math.max(0,Math.floor((cards.length-1)/size)*size));
+  const railRef=useRef(null),rangeRef=useRef(null),focusAfterPage=useRef(false),scrollFrame=useRef(0),pageMotion=useRef(null),previousStart=useRef(0),columnSize=useRef(0);
+  const start=native?Math.min(offset,Math.max(0,cards.length-size)):Math.min(Math.floor(offset/size)*size,Math.max(0,Math.floor((cards.length-1)/size)*size));
   const end=Math.min(cards.length,start+size);
+  const first=native?Math.max(0,start-1):start;
+  const last=native?Math.min(cards.length,first+size+3):end;
+  const reduced=()=>window.matchMedia('(prefers-reduced-motion: reduce)').matches||document.body.classList.contains('reduceMotion')||document.documentElement.dataset.svTv==='true'||document.documentElement.dataset.svXbox==='true';
+  const measureColumn=()=>{
+    const rail=railRef.current;if(!rail?.clientWidth)return 0;
+    const style=window.getComputedStyle(rail);
+    return (rail.clientWidth-(parseFloat(style.paddingLeft)||0)-(parseFloat(style.paddingRight)||0)+16)/size;
+  };
+  useLayoutEffect(()=>{
+    const rail=railRef.current;if(!rail)return;
+    window.cancelAnimationFrame(scrollFrame.current);scrollFrame.current=0;
+    // Only a breakpoint change repositions the native track. Scroll updates
+    // replace a few cards without disturbing momentum or the scroll offset.
+    columnSize.current=native?measureColumn():0;
+    rail.scrollLeft=native?start*columnSize.current:0;
+  },[size,native]);
   useEffect(()=>{
-    if(railRef.current)railRef.current.scrollLeft=0;
+    if(!native||typeof window.ResizeObserver!=='function')return;
+    const observer=new window.ResizeObserver(entries=>{
+      const entry=entries[0];if(!entry)return;
+      const content=entry.contentBoxSize?.[0]?.inlineSize??entry.contentRect.width;
+      columnSize.current=(content+16)/size;
+      setOffset(Math.max(0,Math.min(cards.length-size,Math.round(entry.target.scrollLeft/columnSize.current))));
+    });
+    observer.observe(railRef.current);return()=>observer.disconnect();
+  },[native,size,cards.length]);
+  useLayoutEffect(()=>{
+    const rail=railRef.current,direction=Math.sign(start-previousStart.current);previousStart.current=start;
+    pageMotion.current?.cancel();pageMotion.current=null;
+    if(!native&&direction&&!reduced()&&typeof rail?.animate==='function')pageMotion.current=rail.animate([{transform:`translate3d(${direction*14}px,0,0)`},{transform:'translate3d(0,0,0)'}],{duration:220,easing:'cubic-bezier(.2,.7,.2,1)'});
+  },[start,native]);
+  useEffect(()=>()=>{window.cancelAnimationFrame(scrollFrame.current);pageMotion.current?.cancel();},[]);
+  useEffect(()=>{
     window.syncLibraryButtons?.(railRef.current);
-    window.syncWatchButtons?.();
+    window.syncWatchButtons?.(railRef.current);
     document.dispatchEvent(new CustomEvent('swifly:react-rail',{detail:{rail:railRef.current,start,end,total:cards.length}}));
     // Keep keyboard/controller focus usable when the last next button disables.
-    if(focusAfterPage.current){
-      const direction=focusAfterPage.current;focusAfterPage.current=false;
-      const cards=railRef.current?.querySelectorAll(':scope > *');
-      const card=direction<0?cards?.[cards.length-1]:cards?.[0];
+    if(focusAfterPage.current&&focusAfterPage.current.target===start){
+      const {direction}=focusAfterPage.current;focusAfterPage.current=false;
+      const card=railRef.current?.querySelector(`[data-sv-rail-index="${direction<0?end-1:start}"]`);
       card?.querySelector('.posterWrap,.dsThumb,a,button')?.focus({preventScroll:true});
     }
   },[start,size,end,cards.length]);
+  const onScroll=()=>{
+    if(!native||scrollFrame.current)return;
+    scrollFrame.current=window.requestAnimationFrame(()=>{
+      scrollFrame.current=0;const rail=railRef.current;if(!rail)return;
+      const slot=columnSize.current||measureColumn();columnSize.current=slot;
+      if(slot>0)setOffset(Math.max(0,Math.min(cards.length-size,Math.round(rail.scrollLeft/slot))));
+    });
+  };
   const move=(event,direction)=>{
     event.preventDefault();event.stopPropagation();
-    focusAfterPage.current=event.detail===0?direction:false;
-    setOffset(nextOffset(start,direction,cards.length,size));
+    const target=native?Math.max(0,Math.min(cards.length-size,start+direction*size)):nextOffset(start,direction,cards.length,size);
+    focusAfterPage.current=event.detail===0?{direction,target}:false;
+    if(native){
+      const slot=columnSize.current||measureColumn();columnSize.current=slot;
+      railRef.current?.scrollTo({left:target*slot,behavior:reduced()?'instant':'smooth'});
+    }else setOffset(target);
   };
   const pager=h('div',{className:'dsRowControls svReactRailControls','data-sv-react-pager':'true',key:'pager'},
     h('span',{className:'svReactRailRange','data-sv-react-range':'true','aria-live':'polite',ref:rangeRef},`${start+1}–${end} of ${cards.length}`),
@@ -136,7 +179,11 @@ export function MovieRailSection({node}) {
     h('button',{className:'dsRowBtn',type:'button','aria-label':'Next titles',disabled:end===cards.length,onClick:event=>move(event,1)},'›'));
   let placed=false;
   function content(child,index){
-    if(child===rail)return h(rail.tag,{...elementProps(rail),key:index,ref:railRef,'data-sv-react-rail':'true','data-sv-page-size':size,'aria-label':`Titles ${start+1} to ${end} of ${cards.length}`},railWindow(cards,start,size).map((card,i)=>h(PosterCard,{node:card,key:`${start+i}`})));
+    if(child===rail){
+      const spacer=(count,key)=>count>0?h('div',{key,'data-sv-rail-spacer':'true','aria-hidden':'true',style:{gridColumn:`span ${count}`}}):null;
+      return h(rail.tag,{...elementProps(rail),key:index,ref:railRef,onScroll,'data-sv-react-rail':'true','data-sv-native-rail':native?'true':undefined,'data-sv-page-size':size,'aria-label':`Titles ${start+1} to ${end} of ${cards.length}`},
+        native?spacer(first,'before'):null,railWindow(cards,first,last-first).map((card,i)=>h(PosterCard,{node:card,position:first+i,key:`${first+i}`})),native?spacer(cards.length-last,'after'):null);
+    }
     if(typeof child==='string')return child;
     if(['svSectionActions','dsRowHead','dsWelcomeRailHead','sectionHead','nfRowTitle'].some(name=>hasClass(child,name))){
       placed=true;return h(child.tag,{...elementProps(child),key:index},h(Nodes,{nodes:child.children}),pager);

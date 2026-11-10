@@ -30,7 +30,8 @@ body.svCleanShell .dsHeroContent > :is(.dsEyebrow,h1,.dsHeroMeta,p) {
 /* Legacy card/rail hints reserved a layer for every poster, even while idle.
    Hover and row transitions can acquire a layer only for their active motion. */
 body.svCleanShell :is(.movieCard,.dsThumb,.dsRow,.movieRail,.dsRail,.nfTopTenRail,.dsWelcomeRailTrack) {will-change:auto !important}
-body.svCleanShell :is(.movieRail,.dsRail) {transform:none !important}
+body.svCleanShell :is(.movieRail,.dsRail):not([data-sv-react-rail="true"]) {transform:none !important}
+body.svCleanShell [data-sv-react-rail="true"] {transform:none}
 
 /* Installing the native glass coating must not start five color/border
    transitions for each invisible poster action. The pane owns the material;
