@@ -82,6 +82,11 @@
       for (const change of changes) {
         if (change.target instanceof Element && change.target.closest('.svLiquidPane__filters')) continue;
         if (change.type === 'attributes') {
+          // The sheet owns these inline transition hints. Its transform and
+          // scroll compensation do not change any child lens dimensions.
+          // ResizeObserver still handles genuine geometry changes, while the
+          // existing graph keeps refracting throughout the movement.
+          if(change.attributeName==='style'&&change.target.matches('.svDetailPanel,.svDetailScrim'))continue;
           if (change.target === document.body && change.attributeName === 'data-st-glass') preferenceChanged = true;
           // Pane-owned style writes only configure the filter. A host resize
           // has its own observer; ancestor visibility can change independently.

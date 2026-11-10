@@ -296,28 +296,30 @@
   }
   function renderDecorations(root = document) {
     if (!document.body) return;const state = read(), prefs = state.preferences, watchedKeys = new Set(state.watched.map(item => item.key));
-    document.body.dataset.librarySpoilers = prefs.spoilerMode ? 'hide' : 'show';document.body.dataset.libraryHideWatched = String(prefs.hideWatched);
-    document.body.dataset.libraryEpisodeView = prefs.episodeView;document.body.dataset.libraryEpisodeSort = prefs.episodeSort;
-    for (const card of root.querySelectorAll('.movieCard,.svResumeCard,.svPlayerEpisodeChoice,.svTitleDetails,[data-library-card]')) {
-      const item = itemFromNode(card), watched = !!item && (watchedKeys.has(item.key) || watchedKeys.has(item.titleKey));card.dataset.libraryWatched = String(watched);
+    const bodyValues={librarySpoilers:prefs.spoilerMode?'hide':'show',libraryHideWatched:String(prefs.hideWatched),libraryEpisodeView:prefs.episodeView,libraryEpisodeSort:prefs.episodeSort};
+    for(const [name,value]of Object.entries(bodyValues))if(document.body.dataset[name]!==value)document.body.dataset[name]=value;
+    const within=selector=>root.matches?.(selector)?[root,...root.querySelectorAll(selector)]:root.querySelectorAll(selector);
+    for (const card of within('.movieCard,.svResumeCard,.svPlayerEpisodeChoice,.svTitleDetails,[data-library-card]')) {
+      const item = itemFromNode(card), watched = !!item && (watchedKeys.has(item.key) || watchedKeys.has(item.titleKey));
+      if(card.dataset.libraryWatched!==String(watched))card.dataset.libraryWatched=String(watched);
       const badge = card.querySelector('.svLibraryWatchedBadge');
       if (!watched) {badge?.remove();continue;}
       if (!badge) {const mark = document.createElement('span');mark.className = 'svLibraryWatchedBadge';mark.textContent = 'Watched';(card.querySelector('.dsCardArtwork,.svResumeArtwork,.svPlayerEpisodeThumb') || card).append(mark);}
     }
-    for (const node of root.querySelectorAll('.dsHeroContent > p,.svTvSpotlightOverview,.svDetailOverview p,.svPlayerEpisodeOverview,.svPlayerEpisodeText strong,.svPlayerEpisodeThumb img,.svSeason > p,[data-library-spoiler]')) {
+    for (const node of within('.dsHeroContent > p,.svTvSpotlightOverview,.svDetailOverview p,.svPlayerEpisodeOverview,.svPlayerEpisodeText strong,.svPlayerEpisodeThumb img,.svSeason > p,[data-library-spoiler]')) {
       if (!watchedLabels.has(node)) watchedLabels.set(node,{hidden:node.getAttribute('aria-hidden')});
       node.dataset.librarySpoiler = '';
       if (prefs.spoilerMode) node.setAttribute('aria-hidden','true');
       else {const original = watchedLabels.get(node).hidden;original === null ? node.removeAttribute('aria-hidden') : node.setAttribute('aria-hidden',original);}
     }
-    for (const link of root.querySelectorAll('[data-player-episode-link]')) {
+    for (const link of within('[data-player-episode-link]')) {
       if (!spoilerLabels.has(link)) spoilerLabels.set(link,{label:link.getAttribute('aria-label'),title:link.getAttribute('title')});
       if (prefs.spoilerMode) {
         let season = '', episode = '';try {const url = new URL(link.href,location.href);season = url.searchParams.get('s') || '';episode = url.searchParams.get('e') || '';} catch {}
         link.setAttribute('aria-label','Play season ' + season + ', episode ' + episode);link.removeAttribute('title');
       } else {const saved = spoilerLabels.get(link);for (const [name,value] of [['aria-label',saved.label],['title',saved.title]]) value === null ? link.removeAttribute(name) : link.setAttribute(name,value);}
     }
-    for (const host of root.querySelectorAll('.svPlayerEpisodeGrid,.svPlayerSeasons')) {
+    for (const host of within('.svPlayerEpisodeGrid,.svPlayerSeasons')) {
       const position = child => {const link = child.matches('a[href]') ? child : child.querySelector('a[href]');try {const params = new URL(link.href,location.href).searchParams;return Number(params.get('s') || 0)*10000+Number(params.get('e') || 0);} catch {return 0;}};
       const ordered = [...host.children].filter(child => child.matches('.svPlayerEpisodeChoice,[data-player-season-link]')).sort((a,b) => (position(a)-position(b))*(prefs.episodeSort === 'newest' ? -1 : 1));
       for (let index = 0;index < ordered.length;index++) if (host.children[index] !== ordered[index]) host.insertBefore(ordered[index],host.children[index] || null);
@@ -338,9 +340,22 @@
       if (!event.key || event.key === storageKey() || ['swiflytv.activeProfile','swiflytv.accountOwner'].includes(event.key)) {lifecycle++;hydrate('storage');}
       else if (['movieverse.watchlist','movieverse.liked'].includes(event.key)) {syncLegacy();renderDecorations();announce({action:'storage'});}
     });
+    const decorationRoots=new Set();
+    const mediaCards='.movieCard,.svResumeCard,.svPlayerEpisodeChoice,.svTitleDetails,[data-library-card]';
+    const relevant=mediaCards+',.dsHeroContent > p,.svTvSpotlightOverview,.svDetailOverview p,.svPlayerEpisodeOverview,.svPlayerEpisodeText strong,.svPlayerEpisodeThumb img,.svSeason > p,[data-library-spoiler],[data-player-episode-link],[data-player-season-link],.svPlayerEpisodeGrid,.svPlayerSeasons,[data-watch-id],[data-play-id],[data-library-id]';
     new MutationObserver(records => {
-      if (frame || !records.some(record => [...record.addedNodes].some(node => node.nodeType === 1 && !node.matches('.svLibraryWatchedBadge')))) return;
-      frame = requestAnimationFrame(() => {frame = 0;renderDecorations();});
+      for(const record of records)for(const node of record.addedNodes){
+        if(node.nodeType!==1||node.matches('.svLibraryWatchedBadge,.svLiquidPane,.svNavMatchedLabel')||node.closest('.svLiquidPane'))continue;
+        if(!node.matches(relevant)&&!node.querySelector(relevant))continue;
+        const card=node.closest(mediaCards);
+        decorationRoots.add(card?.parentElement||node.parentElement||node);
+      }
+      if(frame||!decorationRoots.size)return;
+      frame=requestAnimationFrame(()=>{
+        frame=0;
+        const roots=[...decorationRoots].filter(root=>root.isConnected&&!([...decorationRoots].some(parent=>parent!==root&&parent.contains(root))));
+        decorationRoots.clear();for(const root of roots)renderDecorations(root);
+      });
     }).observe(document.body,{childList:true,subtree:true});
     if (verificationRequired) {
       renderDecorations();const token = verificationEpoch;

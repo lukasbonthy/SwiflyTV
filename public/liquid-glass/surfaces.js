@@ -135,11 +135,10 @@
     // Guard BOTH initial scans and later intersection callbacks: the latter
     // pass approached=true and used to recreate every hidden poster lens.
     if (xbox && document.documentElement.dataset.svTv === 'true' && host.closest?.('.dsCardQuickActions')) return;
-    if (!approached && nearObserver && !host.matches?.(firstScreenActions) &&
-        !host.closest?.('.svDetailDialog[open]')) {
+    if (!approached && nearObserver && !host.matches?.(firstScreenActions)) {
       // Catalog rows are the correct unit of visibility: observing each of
       // hundreds of buttons created long queues and defeated lazy startup.
-      const row = host.closest?.('.dsContent .dsRow,.dsContent .dsGrid > .movieCard,.dsContent .movieGrid > .movieCard,.svPlayerEpisodePicker,.svPlayerEpisodeGrid');
+      const row = host.closest?.('.dsContent .dsRow,.dsContent .dsGrid > .movieCard,.dsContent .movieGrid > .movieCard,.svPlayerEpisodePicker,.svPlayerEpisodeGrid,.svTitleDetails .svDetailSection,.svTitleDetails .svSeason');
       if (row && !nearReady.has(row)) {
         if (!nearPending.has(row)) {nearPending.add(row);nearObserver.observe(row);}
         return;
@@ -292,16 +291,22 @@
       }, {rootMargin:'320px 120px', threshold:0});
     }
     if (typeof IntersectionObserver === 'function') intersection = new IntersectionObserver(changes => {
+      // Removing one lens changes relational styles. Decide visibility for
+      // the entire batch before changing any material, so the next control
+      // cannot force a fresh layout after every preceding write.
+      const updates=[];
       for (const change of changes) {
         const entry = entries.get(change.target); if (!entry) continue;
-        // A transient "not intersecting" notification during initial layout
-        // must not blank an already visible hero/detail action. Release the
-        // graph once the control has actually moved away from the viewport.
+        // A transient false notification must not blank an active action.
+        // Active detail actions need no geometry read while the sheet moves.
         if (!change.isIntersecting && entry.pinned &&
-            (inFirstScreen(entry.host) || activeDetailAction(entry.host))) continue;
-        entry.visible = change.isIntersecting;
-        if (!entry.visible) entry.pinned = false;
-        if (entry.visible) activate(entry); else deactivate(entry);
+            (activeDetailAction(entry.host) || inFirstScreen(entry.host))) continue;
+        updates.push({entry,visible:change.isIntersecting});
+      }
+      for (const {entry,visible} of updates) {
+        entry.visible = visible;
+        if (!visible) entry.pinned = false;
+        if (visible) activate(entry); else deactivate(entry);
       }
     }, {rootMargin:'80px', threshold:0});
     scan(document);
@@ -313,7 +318,7 @@
         if (change.type === 'attributes') {
           if (change.target === document.body && change.attributeName === 'data-st-glass') preferenceChanged = true;
           if (change.attributeName === 'data-sv-detail-state' &&
-              change.target.matches?.('.svDetailDialog') && change.target.dataset.svDetailState !== 'opening') {
+              change.target.matches?.('.svDetailDialog') && change.target.dataset.svDetailState === 'open') {
             settledDialogs.add(change.target);
           }
           continue;

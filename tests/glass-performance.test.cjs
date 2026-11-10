@@ -47,6 +47,42 @@ function glass(markup = '') {
   return env;
 }
 
+test('details keep visible action glass while offscreen sections wait for approach',()=>{
+ const cards=Array.from({length:18},()=>'<article class="movieCard"><div class="dsCardQuickActions"><button class="dsMiniBtn">Save</button><button class="dsMiniBtn">Like</button><a class="dsMiniBtn" href="/watch/movie/101">Play</a></div></article>').join('');
+ const env=glass('<dialog class="svDetailDialog" open data-sv-detail-state="opening"><article class="svTitleDetails"><div class="svDetailActions"><a class="dsPrimaryBtn" href="/watch/movie/101">Play</a></div><section class="svDetailSection" id="recommendations">'+cards+'</section></article></dialog>'),w=env.window,d=w.document;
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');w.flush(16);
+ assert(d.querySelector('.svDetailActions .svNavMatchedLens[data-swifly-renderer="svg"]'),'Visible actions keep genuine refraction during the rise');
+ assert.equal(d.querySelectorAll('#recommendations .svNavMatchedLens').length,0,'Offscreen quick controls must not allocate panes during entry');
+ env.intersect(true,d.getElementById('recommendations'));w.flush(32);
+ assert.equal(d.querySelectorAll('#recommendations .svNavMatchedLens').length,54,'Approaching the section prepares all original actions');
+ env.finish();
+});
+
+test('moving the details panel does not remeasure unchanged lens geometry',async()=>{
+ const env=glass('<dialog class="svDetailDialog" open data-sv-detail-state="opening"><div class="svDetailPanel"><div class="svDetailActions"><a class="dsPrimaryBtn" href="/watch/movie/101">Play</a></div></div></dialog>'),w=env.window,d=w.document;
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');
+ for(let i=0;i<4;i++){w.flush(16+i*16);await tick();}
+ assert.equal(w.frameCount(),0,'Initial material setup must be settled');
+ const lens=d.querySelector('.svDetailActions .svNavMatchedLens'),graph=lens.querySelector('svg.svLiquidPane__filters');
+ assert(graph,'The moving action keeps a real lens');
+ d.querySelector('.svDetailPanel').style.setProperty('--sv-detail-start','translateY(400px)');
+ await tick();
+ assert.equal(w.frameCount(),0,'A transform hint does not change the lens field or queue geometry work');
+ assert.equal(lens.querySelector('svg.svLiquidPane__filters'),graph);
+ env.finish();
+});
+
+test('glass visibility batches geometry before disabling any departing action',()=>{
+ const env=glass('<dialog class="svDetailDialog" open data-sv-detail-state="opening"><div class="svDetailActions"><button>Play</button><button>Trailer</button><button>Save</button></div></dialog>'),w=env.window,d=w.document,work=[];
+ w.SwiflyLiquidGlass={mount:()=>({enabled:true,supported:true,setEnabled(){},destroy(){work.push('write');},refresh(){}})};
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/surfaces.js');
+ d.querySelector('dialog').dataset.svDetailState='closing';
+ w.HTMLElement.prototype.getBoundingClientRect=function(){work.push('read');return {width:200,height:40,top:2000,bottom:2040,left:0,right:200};};
+ env.intersect(false);assert.equal(work.filter(x=>x==='read').length,3);assert.equal(work.filter(x=>x==='write').length,3);
+ assert.equal(work.lastIndexOf('read')<work.indexOf('write'),true,'Every visibility measurement must finish before a lens is changed');
+ env.finish();
+});
+
 test('Navigation-style controls release offscreen graphs while poster actions keep native panes',()=>{
  const env=glass('<div class="dsCardQuickActions"><button class="dsMiniBtn">Save</button></div><a class="dsRowBtn">View all</a><button class="dsRowArrow">Next</button><nav class="pagination"><a>2</a></nav><div class="dsEpisodeChips"><a>Episode 1</a></div><div id="controlPanel"><button class="stChoice">Appearance</button></div><main class="svPartyHub"><button class="sv100Channel">General</button><div class="sv100RoomItem"><button class="partySecondaryBtn">Join</button></div><div class="partyMovieResults"><button>Pick film</button></div></main>'),w=env.window,d=w.document;
  d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');

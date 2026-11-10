@@ -42,11 +42,10 @@ function artworkEntry() {
   });
   return {promise,cancel};
  }
- function asset(node){
+ function asset(node,url){
   if(seen.has(node)||node.closest('.svHeroSpill,.svWelcomeSpill')||still())return null;
   let image=node;
   if(node.tagName!=='IMG'){
-   const url=getComputedStyle(node).backgroundImage.match(/url\(["']?(.*?)["']?\)/)?.[1];
    if(!url)return null;
    image=new Image();image.decoding='async';image.src=url;
   }
@@ -61,10 +60,25 @@ function artworkEntry() {
   found.push(...container.querySelectorAll(selector));return found;
  }
  function scan(container,critical){
+  // Keep URL/visibility reads ahead of every fade-class write. Detail
+  // backgrounds already declare their URL inline; resolving their computed
+  // style after a details insertion would flush the entire moving sheet.
+  const artwork=[];let criticalCount=critical?.length||0;
   for(const node of candidates(container,images+','+backgrounds)){
-   const promise=asset(node);
-   if(promise&&critical&&critical.length<8){const box=node.getBoundingClientRect();if(box.width&&box.height&&box.bottom>0&&box.top<innerHeight&&box.right>0&&box.left<innerWidth)critical.push(promise);}
+   if(seen.has(node)||node.closest('.svHeroSpill,.svWelcomeSpill')||still())continue;
+   let url;
+   if(node.tagName!=='IMG'){
+    const match=value=>value.match(/url\(["']?(.*?)["']?\)/)?.[1];
+    // Catalog heroes select responsive sources through CSS. Only the
+    // detail backdrop has an invariant inline source across breakpoints.
+    url=(node.matches('.svDetailBackdrop')?match(node.style.backgroundImage):null)||match(getComputedStyle(node).backgroundImage);
+    if(!url)continue;
+   }
+   let visible=false;
+   if(critical&&criticalCount<8){const box=node.getBoundingClientRect();visible=!!(box.width&&box.height&&box.bottom>0&&box.top<innerHeight&&box.right>0&&box.left<innerWidth);if(visible)criticalCount++;}
+   artwork.push({node,url,visible});
   }
+  for(const {node,url,visible} of artwork){const promise=asset(node,url);if(promise&&critical&&visible&&critical.length<8)critical.push(promise);}
   for(const node of candidates(container,copy)){
    if(still()||node.classList.contains('svArtworkCopy'))continue;
    node.classList.add('svArtworkCopy');ready(node);

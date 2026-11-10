@@ -6621,13 +6621,13 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player || partyBrowse || active === "social" || active === "study" ? '<script defer src="/socket.io/socket.io.js"></script>' : ""}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/modern-normalize@2.0.0/modern-normalize.min.css" />
     ${shellStyleLink("core")}
-    <script defer src="/assets/liquid-glass/liquid-glass.js?v=227"></script>
+    <script defer src="/assets/liquid-glass/liquid-glass.js?v=276"></script>
     <script defer src="/assets/clean/clean.js?v=268"></script>
     <script defer src="/assets/clean/catalog.js?v=1"></script>
     <script defer src="/assets/clean/account-sheet.js?v=1"></script>
     <script defer src="/assets/clean/account-data.js?v=2"></script>
     <script defer src="/assets/clean/account.js?v=263"></script>
-    <script defer src="/assets/clean/library-state.js?v=263"></script>
+    <script defer src="/assets/clean/library-state.js?v=277"></script>
     <script defer src="/assets/clean/settings.js?v=262"></script>
     <script defer src="/assets/connect/icons.js?v=1"></script><script defer src="/assets/connect/connect.js?v=5"></script>
     <script defer src="/assets/clean/avatars.js?v=209"></script>
@@ -6639,9 +6639,9 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/vendor/lenis/lenis.min.js?v=1.3.16-r1"></script>
     <script defer src="/assets/clean/motion.js?v=253"></script>
     <script defer src="/assets/clean/scroll.js?v=259"></script>
-    <script defer src="/assets/clean/details.js?v=256"></script>
+    <script defer src="/assets/clean/details.js?v=276"></script>
     <script defer src="/assets/clean/download.js?v=3"></script>
-    <script defer src="/assets/liquid-glass/surfaces.js?v=260"></script>
+    <script defer src="/assets/liquid-glass/surfaces.js?v=276"></script>
     <script defer src="/assets/studio/wallpapers.js?v=1"></script>
     <script defer src="/assets/studio/studio.js?v=266"></script>
     <script defer src="/assets/clean/aurora.js?v=267"></script>

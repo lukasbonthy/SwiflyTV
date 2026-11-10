@@ -54,12 +54,14 @@
     const entry=fragments.get(href);if(!entry)return null;
     fragments.delete(href);fragments.set(href,entry);return entry.html;
   }
-  function rememberFragment(href,html,scope) {
+  function rememberFragment(href,html,scope,content) {
     if(scope===null||syncFragmentScope()!==scope)return;
     const bytes=new Blob([html]).size;if(bytes>fragmentSizeLimit)return;
     discardFragment(href);
     while(fragments.size>=fragmentLimit||fragmentBytes+bytes>fragmentByteLimit)discardFragment(fragments.keys().next().value);
-    fragments.set(href,{html,bytes,at:Date.now()});fragmentBytes+=bytes;
+    // Keep an inert, uninitialized template. A repeated visit only clones DOM;
+    // profile-specific labels and controls still initialize for each opening.
+    fragments.set(href,{html,bytes,at:Date.now(),template:content?.cloneNode(true)||null});fragmentBytes+=bytes;
   }
   // The movie actions and their SVG optics cannot exist before the fragment.
   // Get that fragment on hover/focus/pointer-down so a later click can insert
@@ -76,7 +78,7 @@
         if(!content||syncFragmentScope()!==scope)return null;
         content.querySelectorAll('script,[data-sv-details-back]').forEach(node=>node.remove());
         const fragment=content.outerHTML;
-        rememberFragment(href,fragment,scope);
+        rememberFragment(href,fragment,scope,content);
         return fragment;
       })
       .catch(()=>null)
@@ -148,8 +150,8 @@
     document.documentElement.style.setProperty('--sv-detail-page-width','calc(100vw - '+gutter+'px)');
     document.documentElement.classList.add('svDetailsFramed');
   }
-  function syncSheetScroll() {
-    if(sheetTransition)sheetPanel.style.setProperty('--sv-detail-scroll',(viewport.scrollTop||0)+'px');
+  function syncSheetScroll(knownPosition) {
+    if(sheetTransition)sheetPanel.style.setProperty('--sv-detail-scroll',(knownPosition??viewport.scrollTop??0)+'px');
   }
   function cancelSheetTransition() {
     transitionEpoch++;
@@ -158,7 +160,7 @@
     cancelAnimationFrame(active.frame);
     for(const animation of active.animations)animation.cancel();
   }
-  function moveSheet(state,complete) {
+  function moveSheet(state,complete,knownPosition) {
     const entering=state==='opening',reversing=Boolean(sheetTransition);
     // Keep the sheet's layout stationary. The shared glass renderer measures
     // layout dimensions, so its prepared lenses can travel with this layer.
@@ -167,7 +169,7 @@
     const opacity=reversing?getComputedStyle(scrim).opacity:(entering?'0':'1');
     cancelSheetTransition();
     const epoch=transitionEpoch,duration=entering?enterDuration:exitDuration;
-    const active={epoch,animations:[],frame:0,timer:null,complete:null};sheetTransition=active;syncSheetScroll();
+    const active={epoch,animations:[],frame:0,timer:null,complete:null};sheetTransition=active;syncSheetScroll(knownPosition);
     sheetPanel.style.removeProperty('animation-play-state');scrim.style.removeProperty('animation-play-state');
     dialog.dataset.svDetailState=state;scrim.dataset.svDetailState=state;
     const settle=()=>{
@@ -293,15 +295,17 @@
     contentHost.innerHTML='<div class="svDetailLoading" role="status"><div class="svDetailLoadingArt"></div><div class="svDetailLoadingCopy"><span></span><span></span><span></span></div><p>Loading details…</p></div>';
     entryFocus={current,initial:document.activeElement,cancelled:false};
     dialog.querySelector('[data-sv-dialog-back]').setAttribute('aria-label',trail.length?'Back to previous title':'Back to browsing');
-    if(entering){closeWantsHistory=false;moveSheet('opening',()=>{window.SwiflyGlassSurfaces?.refresh(dialog);window.SwiflyMotion?.refresh(viewport);});}
+    if(entering){closeWantsHistory=false;moveSheet('opening',()=>{window.SwiflyGlassSurfaces?.refresh(dialog);window.SwiflyMotion?.refresh(viewport);},0);}
     try {
       const scope=syncFragmentScope();let html=scope===null?null:recentFragment(href);
       let cached=html!==null;
+      let content=cached?fragments.get(href)?.template?.cloneNode(true)||null:null;
       if(html===null){
         const warming=warmups.get(href);
         if(scope!==null && warming?.scope===scope) {
           html=await warming.promise;
           cached=html!==null;
+          if(cached)content=fragments.get(href)?.template?.cloneNode(true)||null;
         }
         if(html===null) {
           const response=await fetch(href+'?view=modal',{signal:request.signal,headers:{Accept:'text/html'}});
@@ -310,11 +314,19 @@
         }
       }
       if(current!==generation||!dialog.open)return;
-      const parsed=new DOMParser().parseFromString(html,'text/html');
-      const content=parsed.querySelector('.svTitleDetails');if(!content)throw new Error('Details unavailable');
-      content.querySelectorAll('script,[data-sv-details-back]').forEach(node=>node.remove());if(!cached)rememberFragment(href,content.outerHTML,scope);contentHost.replaceChildren(content);
+      if(!content){
+        const parsed=new DOMParser().parseFromString(html,'text/html');
+        content=parsed.querySelector('.svTitleDetails');if(!content)throw new Error('Details unavailable');
+        content.querySelectorAll('script,[data-sv-details-back]').forEach(node=>node.remove());
+      }
+      if(!cached)rememberFragment(href,content.outerHTML,scope,content);contentHost.replaceChildren(content);
       const name=content.querySelector('h1')?.textContent.trim()||'Movie';dialog.setAttribute('aria-label',name+' details');dialog.querySelector('.svDetailChromeTitle').textContent=name;
-      initialize(content);viewport.scrollTop=scroll;syncSheetScroll();dialog.classList.toggle('svDetailScrolled',scroll>180);
+      initialize(content);
+      // Fresh entries are already at zero. Reassigning/reading scrollTop here
+      // forces a full layout immediately after inserting all metadata and art.
+      // Restored history positions still need their actual scroll geometry.
+      if(scroll>0){viewport.scrollTop=scroll;syncSheetScroll();}
+      dialog.classList.toggle('svDetailScrolled',scroll>180);
     }catch(error){
       if(error.name==='AbortError'||current!==generation||!dialog.open)return;
       const panel=document.createElement('div');panel.className='svDetailError';
