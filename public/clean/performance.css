@@ -149,14 +149,14 @@ body.svCleanShell .dsContent > .dsRow.svCatalogRow > .movieRail {contain:layout 
    glass still refracts the real backdrop, but skips three channel matrices
    and two blend passes. Resting glass retains the original full material. */
 @media (prefers-reduced-transparency: no-preference) {
-  html[data-sv-scroll-glass="soft"] body.svCleanShell:not([data-st-glass="off"]):not([data-st-glass="subtle"]) .svLiquidPane.svLiquidPane[data-swifly-renderer="svg"],
+  html:is([data-sv-scroll-glass="soft"],[data-sv-featured-motion="true"]) body.svCleanShell:not([data-st-glass="off"]):not([data-st-glass="subtle"]) .svLiquidPane.svLiquidPane[data-swifly-renderer="svg"],
   body.svCleanShell:not([data-st-glass="off"]):not([data-st-glass="subtle"]):has(.svDetailDialog:is([data-sv-detail-state="opening"],[data-sv-detail-state="closing"])) .svLiquidPane.svLiquidPane[data-swifly-renderer="svg"],
   body.svCleanShell:not([data-st-glass="off"]):not([data-st-glass="subtle"]):has([data-sv-rail-moving="true"]) .svLiquidPane.svLiquidPane[data-swifly-renderer="svg"] {
     -webkit-backdrop-filter:var(--sv-glass-motion-filter,var(--sv-glass-filter)) saturate(var(--sv-glass-saturation,1)) !important;
     backdrop-filter:var(--sv-glass-motion-filter,var(--sv-glass-filter)) saturate(var(--sv-glass-saturation,1)) !important;
     transition-property:none !important;
   }
-  html[data-sv-scroll-glass="soft"] body.svCleanShell:not([data-st-glass="off"]):not([data-st-glass="subtle"]) .svLiquidPane.svLiquidPane:not(.svCardActionLens):not([data-swifly-renderer="svg"]),
+  html:is([data-sv-scroll-glass="soft"],[data-sv-featured-motion="true"]) body.svCleanShell:not([data-st-glass="off"]):not([data-st-glass="subtle"]) .svLiquidPane.svLiquidPane:not(.svCardActionLens):not([data-swifly-renderer="svg"]),
   body.svCleanShell:not([data-st-glass="off"]):not([data-st-glass="subtle"]):has(.svDetailDialog:is([data-sv-detail-state="opening"],[data-sv-detail-state="closing"]),[data-sv-rail-moving="true"]) .svLiquidPane.svLiquidPane:not(.svCardActionLens):not([data-swifly-renderer="svg"]) {
     -webkit-backdrop-filter: blur(min(4px,var(--st-glass-blur,10px))) saturate(1.10) !important;
     backdrop-filter: blur(min(4px,var(--st-glass-blur,10px))) saturate(1.10) !important;
@@ -164,18 +164,18 @@ body.svCleanShell .dsContent > .dsRow.svCatalogRow > .movieRail {contain:layout 
        repeated offscreen paints during an otherwise compositor-only scroll. */
     transition-property: none !important;
   }
-  html[data-sv-scroll-glass="soft"] body.svCleanShell:not([data-st-glass="off"]):not([data-st-glass="subtle"]) .svGlassSurface.svGlassSurface:not(.svNavMatchedOptic) {
+  html:is([data-sv-scroll-glass="soft"],[data-sv-featured-motion="true"]) body.svCleanShell:not([data-st-glass="off"]):not([data-st-glass="subtle"]) .svGlassSurface.svGlassSurface:not(.svNavMatchedOptic) {
     -webkit-backdrop-filter: blur(min(4px,var(--st-glass-blur,12px))) saturate(1.08) !important;
     backdrop-filter: blur(min(4px,var(--st-glass-blur,12px))) saturate(1.08) !important;
   }
   /* Don't stack a second blur behind the already-soft child pane. */
-  html[data-sv-scroll-glass="soft"] body.svCleanShell:not([data-st-glass="subtle"]) .svGlassControl.svNavMatchedOptic.svGlassControl {
+  html:is([data-sv-scroll-glass="soft"],[data-sv-featured-motion="true"]) body.svCleanShell:not([data-st-glass="subtle"]) .svGlassControl.svNavMatchedOptic.svGlassControl {
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }
   /* Auto mobile uses Studio's native subtle material. Cap its existing blur
      rather than replacing the setting: 0–3px choices must never get heavier. */
-  html[data-sv-scroll-glass="soft"] body.svCleanShell,
+  html:is([data-sv-scroll-glass="soft"],[data-sv-featured-motion="true"]) body.svCleanShell,
   body.svCleanShell:has(.svDetailDialog:is([data-sv-detail-state="opening"],[data-sv-detail-state="closing"]),[data-sv-rail-moving="true"]) {
     --sv-moving-blur-cap:4px;
   }
@@ -183,7 +183,7 @@ body.svCleanShell .dsContent > .dsRow.svCatalogRow > .movieRail {contain:layout 
 
 /* Keep the cached decorative atmosphere still while the user's content moves.
    This changes only playback state, not geometry, visibility or scroll input. */
-html[data-sv-scroll-glass="soft"] body.svCleanShell .svAuroraRibbon,
+html:is([data-sv-scroll-glass="soft"],[data-sv-featured-motion="true"]) body.svCleanShell .svAuroraRibbon,
 body.svCleanShell:has([data-sv-rail-moving="true"]) .svAuroraRibbon {
   animation-play-state:paused !important;
 }
@@ -192,8 +192,19 @@ body.svCleanShell:has([data-sv-rail-moving="true"]) .svAuroraRibbon {
    tier must not accidentally re-enable blur on offscreen/opacity-hidden
    button panes during a wheel glide. */
 @media (hover: hover) and (pointer: fine) and (min-width: 861px) {
-  html[data-sv-scroll-glass="soft"] body.svCleanShell:not([data-st-glass="off"]):not([data-st-glass="subtle"]) .dsCardArtwork:not(:hover):not(:focus-within) .dsCardQuickActions .svLiquidPane.svLiquidPane {
+  html:is([data-sv-scroll-glass="soft"],[data-sv-featured-motion="true"]) body.svCleanShell:not([data-st-glass="off"]):not([data-st-glass="subtle"]) .dsCardArtwork:not(:hover):not(:focus-within) .dsCardQuickActions .svLiquidPane.svLiquidPane {
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
+  }
+}
+
+/* On a phone, every visible poster has three dark action faces. Their .82
+   tint and edge already paint the same readable control during a swipe;
+   keep those pixels and omit the separate backdrop pass until motion rests. */
+@media (max-width:860px), (hover:none) and (pointer:coarse) {
+  html:is([data-sv-scroll-glass="soft"],[data-sv-featured-motion="true"]) body.svCleanShell .dsCardQuickActions .dsMiniBtn > .svCardActionLens.svLiquidPane,
+  body.svCleanShell:has(.svDetailDialog:is([data-sv-detail-state="opening"],[data-sv-detail-state="closing"]),[data-sv-rail-moving="true"]) .dsCardQuickActions .dsMiniBtn > .svCardActionLens.svLiquidPane {
+    -webkit-backdrop-filter:none !important;
+    backdrop-filter:none !important;
   }
 }

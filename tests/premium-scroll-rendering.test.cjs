@@ -603,6 +603,26 @@ test(layout.name+' navigation and featured actions use lighter live refraction d
   } finally {await browser.close();}
 });
 
+test('mobile poster actions stop sampling the backdrop while the scene moves and restore at rest',{skip:!available&&'Chromium is not installed'},async()=>{
+ const browser=await chromium.launch({headless:true});
+ try{
+  const page=await catalog(browser,{viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+  await page.locator('.movieCard').first().scrollIntoViewIfNeeded();
+  await page.locator('.dsCardQuickActions .svCardActionLens').first().waitFor({state:'attached'});
+  await page.waitForFunction(()=>!document.documentElement.dataset.svScrollGlass);
+  const pane=page.locator('.dsCardQuickActions .svCardActionLens').first();
+  const paint=()=>pane.evaluate(node=>{const style=getComputedStyle(node);return {filter:style.backdropFilter,fill:style.backgroundColor,edge:style.boxShadow};});
+  for(const glass of ['subtle','liquid']){
+   await page.evaluate(value=>document.body.dataset.stGlass=value,glass);const resting=await paint();assert.match(resting.filter,/blur\(10px\)/);
+   for(const attribute of ['svScrollGlass','svFeaturedMotion']){
+    await page.evaluate(key=>document.documentElement.dataset[key]=key==='svScrollGlass'?'soft':'true',attribute);
+    assert.deepEqual(await paint(),{...resting,filter:'none'},'Moving controls keep their fill and edge without an extra backdrop pass');
+    await page.evaluate(key=>delete document.documentElement.dataset[key],attribute);assert.deepEqual(await paint(),resting);
+   }
+  }
+ }finally{await browser.close();}
+});
+
 test('mobile header and dock keep navigation, search and account controls reachable by touch', {skip:!available&&'Chromium is not installed'}, async()=>{
   const browser=await chromium.launch({headless:true});
   try{

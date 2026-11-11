@@ -6641,7 +6641,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/scroll.js?v=261"></script>
     <script defer src="/assets/clean/details.js?v=280"></script>
     <script defer src="/assets/clean/download.js?v=3"></script>
-    <script defer src="/assets/liquid-glass/surfaces.js?v=276"></script>
+    <script defer src="/assets/liquid-glass/surfaces.js?v=277"></script>
     <script defer src="/assets/studio/wallpapers.js?v=1"></script>
     <script defer src="/assets/studio/studio.js?v=266"></script>
     <script defer src="/assets/clean/aurora.js?v=267"></script>
@@ -7807,9 +7807,10 @@ async function homePage(req, res) {
   ]);
   const sources = [trendingMovies, trendingTv, popularMovies, popularTv, topMovies, topTv, nowPlaying];
   if (sources.every(data => data.__error)) return res.send(setupNeededPage(sources[0].message));
-  const hero = featured || pickHero([...(trendingMovies.results || []), ...(popularMovies.results || []), ...(trendingTv.results || []).map(item => ({ ...item, media_type: "tv" }))]);
+  const featuredMovies = homeFeaturedMovies([featured, ...(trendingMovies.results || []), ...(popularMovies.results || []), ...(nowPlaying.results || []), ...(topMovies.results || [])]);
+  const hero = featuredMovies[0] || featured || pickHero([...(trendingMovies.results || []), ...(popularMovies.results || []), ...(trendingTv.results || []).map(item => ({ ...item, media_type: "tv" }))]);
   const body = `<main data-st-home>
-    ${hero.id ? dsHero({ hero, context: "Featured" }) : dsPageHeader("Discover", "Explore movies and series.")}
+    ${hero.id ? dsHero({ hero, context: "Featured", featuredSlides: featuredMovies.map(homeFeaturedData) }) : dsPageHeader("Discover", "Explore movies and series.")}
     <section class="dsContent ${hero.id ? "" : "noHero"}" data-st-home-rows>
       <section id="continueWatchingSection" class="svResumeSection" data-st-home-section="continue" hidden>
         <div class="svSectionHead"><h2>Continue watching</h2><div class="svSectionActions"><a class="svRowMore" href="/continue-watching">View all</a><div class="svRowArrows"><button class="svRowArrow" type="button" data-continue-scroll="-1" aria-label="Scroll Continue Watching left">‹</button><button class="svRowArrow" type="button" data-continue-scroll="1" aria-label="Scroll Continue Watching right">›</button></div></div></div>
@@ -7825,7 +7826,29 @@ async function homePage(req, res) {
       ${dsRail("New releases", nowPlaying.results || [], "movie", { viewHref: "/movies?sort=now_playing", studioKey: "new-releases" })}
     </section>
   </main>`;
-  res.send(pageShell({ title: SITE_NAME, active: "home", body }));
+  res.send(pageShell({ title: SITE_NAME, active: "home", body, extraHead:'<script defer src="/assets/clean/featured.js?v=3"></script>' }));
+}
+
+// Home reuses the catalog data it has already fetched. Only these bounded,
+// presentation fields reach the rotating hero; no new metadata fan-out.
+function homeFeaturedMovies(items = []) {
+  const seen = new Set();
+  return items.filter(item => {
+    const id = Number(item?.id);
+    if (!Number.isSafeInteger(id) || id <= 0 || seen.has(id) || item.media_type === 'tv' || !item.title ||
+        !/^\/[A-Za-z0-9_.-]+$/.test(item.backdrop_path || item.poster_path || '')) return false;
+    seen.add(id);return true;
+  }).slice(0,5);
+}
+function homeFeaturedData(item) {
+  const valid = value => /^\/[A-Za-z0-9_.-]+$/.test(value || '') ? value : '';
+  const art = valid(item.backdrop_path) || valid(item.poster_path);
+  const logo = (item.images?.logos || []).filter(image => valid(image.file_path) && (!image.iso_639_1 || image.iso_639_1 === 'en'))
+    .sort((a,b) => Number(b.iso_639_1 === 'en') - Number(a.iso_639_1 === 'en') || Number(b.vote_average || 0) - Number(a.vote_average || 0))[0];
+  return {id:Number(item.id),type:'movie',title:String(getTitle(item)),overview:String(item.overview || 'Discover this title, explore the cast, and add it to your list.').slice(0,1800),
+    poster:valid(item.poster_path),backdrop:valid(item.backdrop_path),art:backdrop(art),mobileArt:backdrop(art,'w780'),largeArt:fullBackdrop(art),palette:img(art,'w300'),logo:logo ? img(logo.file_path,'w500') : '',
+    rating:formatRating(item.vote_average),year:getYear(getDate(item)),
+    metadata:[getYear(getDate(item)),Number(item.runtime) > 0 ? formatRuntime(item.runtime) : '',(item.genres || []).map(g=>g?.name).filter(n=>typeof n==='string' && n.trim()).slice(0,2).join(', ') || 'Movie'].filter(Boolean)};
 }
 
 function collectionHero(title, subtitle, active = "") {
@@ -7911,7 +7934,7 @@ function metaMatch(item = {}) {
   return `${score}% Match`;
 }
 
-function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = null, embedOrigin = "" }) {
+function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = null, embedOrigin = "", featuredSlides = [] }) {
   const mediaType = type || getType(hero);
   const title = getTitle(hero);
   const logo = (hero.images?.logos || []).filter(image => /^\/[A-Za-z0-9_.-]+$/.test(image.file_path || '') && (!image.iso_639_1 || image.iso_639_1 === 'en'))
@@ -7924,7 +7947,9 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = nu
   const metadata = [getYear(getDate(hero)), runtime > 0 ? formatRuntime(runtime) : "", genres || (mediaType === "tv" ? "Series" : "Movie")].filter(Boolean);
   const trailerKey = trailer && trailer.key ? String(trailer.key) : "";
   const trailerSrc = trailerKey ? youtubeHeroAutoplaySrc(trailerKey, embedOrigin) : "";
-  return `<section class="dsHero ${trailerSrc ? "dsHeroHasTrailer" : ""}" data-sv-palette-src="${escapeHtml(spillSrc)}">
+  const rotating = featuredSlides.length > 0;
+  const featureJSON = rotating ? JSON.stringify(featuredSlides).replace(/[<>&\u2028\u2029]/g, character => '\\u'+character.charCodeAt(0).toString(16).padStart(4,'0')) : '';
+  return `<section class="dsHero ${trailerSrc ? "dsHeroHasTrailer" : ""}"${rotating ? ' data-sv-featured' : ''} data-sv-palette-src="${escapeHtml(spillSrc)}">
     <div class="dsHeroArt" aria-hidden="true"><div class="dsHeroBg" style="${responsiveBackdropStyle(hero.backdrop_path || hero.poster_path)}"></div></div>
     ${trailerSrc ? `<div class="dsHeroTrailerLayer" aria-hidden="true">
       <iframe id="dsHeroTrailerFrame" class="dsHeroTrailerFrame" data-src="${escapeHtml(trailerSrc)}" title="${escapeHtml(title)} muted trailer preview" loading="eager" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
@@ -7933,7 +7958,7 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = nu
     <div class="dsHeroGlass"></div>
     <div class="dsHeroContent">
       <div class="dsEyebrow">${escapeHtml(eyebrow || context || BRAND_SUBMARK)}</div>
-      <h1${logo ? ' class="dsHeroTitleArt"' : ''}>${logo ? `<span class="dsHeroTitleText">${escapeHtml(title)}</span><img class="dsHeroLogo" src="${escapeHtml(img(logo.file_path,'w500'))}" alt="" width="${Number(logo.width) > 0 ? Math.min(500,Number(logo.width)) : 500}" height="${Number(logo.height) > 0 && Number(logo.width) > 0 ? Math.round(Number(logo.height)*Math.min(500,Number(logo.width))/Number(logo.width)) : 200}" decoding="async" />` : escapeHtml(title)}</h1>
+      <h1${logo || rotating ? ' class="dsHeroTitleArt"' : ''}>${logo || rotating ? `<span class="dsHeroTitleText">${escapeHtml(title)}</span>${logo ? `<img class="dsHeroLogo" src="${escapeHtml(img(logo.file_path,'w500'))}" alt="" width="${Number(logo.width) > 0 ? Math.min(500,Number(logo.width)) : 500}" height="${Number(logo.height) > 0 && Number(logo.width) > 0 ? Math.round(Number(logo.height)*Math.min(500,Number(logo.width))/Number(logo.width)) : 200}" decoding="async" />` : ''}` : escapeHtml(title)}</h1>
       <div class="dsHeroMeta">${Number(hero.vote_average) > 0 ? `<b><span aria-hidden="true">★</span> ${escapeHtml(formatRating(hero.vote_average))}<span class="srOnly"> out of 10</span></b>` : ""}${metadata.map(value => `<span>${escapeHtml(value)}</span>`).join("")}</div>
       <p>${escapeHtml(desc)}</p>
       <div class="dsHeroActions">
@@ -7942,6 +7967,9 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = nu
         <button class="dsIconBtn" type="button" aria-label="Add ${escapeHtml(title)} to My List" ${mediaDataAttributes("watch", hero, mediaType)}>＋</button>
       </div>
     </div>
+    ${rotating ? `<script type="application/json" data-sv-featured-data>${featureJSON}</script>${featuredSlides.length > 1 ? `<nav class="svFeaturedControls" data-sv-featured-controls aria-label="Featured movies" hidden>
+      <button type="button" data-sv-featured-prev aria-label="Previous featured movie">‹</button><div class="svFeaturedPositions">${featuredSlides.map((slide,index)=>`<button type="button" data-sv-featured-go="${index}" aria-label="Show ${escapeHtml(slide.title)}"${index === 0 ? ' aria-current="true"' : ''}><span></span></button>`).join('')}</div><button type="button" data-sv-featured-next aria-label="Next featured movie">›</button><button type="button" data-sv-featured-pause aria-label="Pause featured movies" aria-pressed="false"><span aria-hidden="true">Ⅱ</span></button>
+    </nav><span class="srOnly" data-sv-featured-status role="status" aria-live="polite"></span>` : ''}` : ''}
     ${trailerSrc ? `<div class="dsHeroRating"><button id="dsHeroMuteToggle" class="dsHeroMuteToggle" type="button" aria-label="Unmute trailer" aria-pressed="true" data-hero-mute-toggle><span aria-hidden="true">🔇</span></button></div>` : ""}
     ${trailerSrc ? `<script>
       (function swiflyHeroTrailerMuteControl(){

@@ -1,0 +1,64 @@
+/* Home-only rotation retains the existing hero, bridge and row geometry. */
+body.svCleanShell [data-sv-featured] {touch-action:pan-y;}
+body.svCleanShell [data-sv-featured] > .dsHeroArt > .dsHeroBg[hidden] {display:none !important;}
+body.svCleanShell [data-sv-featured] > .dsHeroContent > h1 {
+  height:clamp(130px,13vw,184px);overflow:hidden;
+}
+body.svCleanShell [data-sv-featured] > .dsHeroContent > h1 > .dsHeroTitleText {
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;
+  font-size:clamp(36px,4.5vw,64px);line-height:1.02;
+}
+body.svCleanShell [data-sv-featured] > .dsHeroContent > p {
+  height:calc(3 * 1.6 * 16px * var(--st-ui-scale,1));
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+}
+body.svCleanShell [data-sv-featured] .dsHeroMeta {height:42px;overflow:hidden;}
+body.svCleanShell [data-sv-featured] .dsHeroActions {min-height:48px;}
+body.svCleanShell .svFeaturedControls {
+  position:absolute;z-index:4;bottom:20px;right:max(40px,calc((100% - 1480px) / 2));
+  display:flex;align-items:center;gap:2px;color:#fff;
+}
+body.svCleanShell .svFeaturedControls[hidden] {display:none !important;}
+body.svCleanShell .svFeaturedControls button {
+  display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;min-height:44px;
+  padding:0;border:0;border-radius:50%;background:rgb(12 14 19 / .45);color:#fff;
+  box-shadow:none;font:24px/1 system-ui;cursor:pointer;touch-action:pan-y;
+  -webkit-backdrop-filter:none !important;backdrop-filter:none !important;
+}
+body.svCleanShell .svFeaturedPositions {display:flex;align-items:center;}
+body.svCleanShell .svFeaturedPositions button {background:transparent;}
+body.svCleanShell .svFeaturedPositions button > span {display:block;width:20px;height:3px;border-radius:3px;background:rgb(255 255 255 / .35);}
+body.svCleanShell .svFeaturedPositions button[aria-current="true"] > span {background:#fff;}
+body.svCleanShell .svFeaturedControls button:is(:hover,:focus-visible) {background:rgb(255 255 255 / .16);outline:2px solid #fff8;outline-offset:-3px;}
+body.svCleanShell .svFeaturedControls [data-sv-featured-pause] {font-size:13px;}
+body.svCleanShell [data-sv-featured-status] {position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;}
+body.svCleanShell .svHeroSpill > [data-sv-featured-glow] {
+  position:absolute;inset:-9%;background-position:center;background-size:cover;
+  filter:none !important;pointer-events:none;
+}
+/* Prepared textures replace the old large CSS blur; only opacity changes. */
+body.svCleanShell .svHeroSpill:has(> [data-sv-featured-glow][data-sv-featured-active="true"]) > img {display:none;}
+body.svCleanShell .svHeroSpill:has(> [data-sv-featured-glow]) {opacity:.28;}
+body.svCleanShell [data-sv-featured-ghost],
+body.svCleanShell [data-sv-featured-ghost] *,
+body.svCleanShell [data-sv-featured-ghost] *::before,
+body.svCleanShell [data-sv-featured-ghost] *::after {
+  pointer-events:none !important;-webkit-backdrop-filter:none !important;backdrop-filter:none !important;
+  animation:none !important;transition:none !important;
+}
+body.svCleanShell [data-sv-featured-ghost] {z-index:2;filter:none !important;}
+@media (max-width:860px) {
+  body.svCleanShell [data-sv-featured] > .dsHeroContent > h1 {height:150px;min-height:150px;}
+  body.svCleanShell [data-sv-featured] > .dsHeroContent > h1 > .dsHeroTitleText {font-size:calc(clamp(32px,9vw,48px) * var(--st-ui-scale,1));}
+  body.svCleanShell [data-sv-featured] > .dsHeroContent > p {height:60px;}
+  body.svCleanShell .svFeaturedControls {left:0;right:0;bottom:12px;justify-content:center;}
+  body.svCleanShell .svHeroSpill:has(> [data-sv-featured-glow]) {opacity:.24;}
+}
+@media (max-width:380px) {
+  body.svCleanShell .svFeaturedControls {display:grid;grid-template-columns:repeat(3,44px);gap:0;}
+  body.svCleanShell .svFeaturedPositions {grid-column:1/-1;grid-row:1;justify-content:center;width:220px;justify-self:center;}
+  html:not([data-sv-tv="true"]) body.svCleanShell main > [data-sv-featured] {padding-bottom:112px !important;}
+}
+@media (prefers-reduced-transparency:reduce) {
+  body.svCleanShell .svHeroSpill:has(> [data-sv-featured-glow]) {display:none !important;}
+}

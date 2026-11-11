@@ -38,7 +38,7 @@
   // detail actions retain the shared refractive renderer.
   const cardScrollBusy = () => document.documentElement.dataset.svCardScrolling === 'true' &&
     window.innerWidth > 860;
-  const pageScrollBusy = () => cardScrollBusy() || document.documentElement.dataset.svScrollGlass === 'soft';
+  const pageScrollBusy = () => cardScrollBusy() || document.documentElement.dataset.svScrollGlass === 'soft' || document.documentElement.dataset.svFeaturedMotion === 'true';
   const hoverCapable = window.matchMedia('(hover: hover)');
   const liquidPreference = () => !['off', 'subtle'].includes(document.body.dataset.stGlass);
   const filter = host => host.querySelector(':scope > svg.svLiquidPane__filters');
@@ -132,6 +132,9 @@
     entries.delete(entry.host);
   }
   function ensure(host, approached = false) {
+    // Featured snapshots are inert paint; position controls use simple faces.
+    // Neither may allocate optical graphs through later mutation/IO scans.
+    if (host.closest?.('[data-sv-featured-ghost],[data-sv-featured-controls]')) return;
     // Guard BOTH initial scans and later intersection callbacks: the latter
     // pass approached=true and used to recreate every hidden poster lens.
     if (xbox && document.documentElement.dataset.svTv === 'true' && host.closest?.('.dsCardQuickActions')) return;
