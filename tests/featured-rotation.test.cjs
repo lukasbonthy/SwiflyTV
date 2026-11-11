@@ -4,7 +4,7 @@ const {loadServer,browser,cleanup,tick}=require('./ui-helpers.cjs');
 test.afterEach(cleanup);
 const film=(id,title='Film '+id)=>({id,title,media_type:'movie',backdrop_path:'/scene-'+id+'.jpg',poster_path:'/poster.jpg',overview:'A story for tonight.',vote_average:7.8,release_date:'2026-01-01'});
 
-test('Home serializes five unique valid movies from existing requests without changing hero/rows adjacency',async()=>{
+test('Home serializes five unique valid movies and preserves hero/rows adjacency',async()=>{
  const api=loadServer(),calls=[];
  try{
   api.setTmdb(async endpoint=>{calls.push(endpoint);return endpoint==='/movie/346698'?film(346698,'</script><img src=x onerror=alert(1)>'):{results:[film(346698),film(1),film(1),film(2),film(3),film(4),film(5),film(-1),{...film(9),media_type:'tv'}]};});
@@ -16,8 +16,9 @@ test('Home serializes five unique valid movies from existing requests without ch
   assert.equal(slides[0].title,'</script><img src=x onerror=alert(1)>');assert.equal(d.querySelector('img[src="x"]'),null);
   assert(d.querySelector('.dsHero + .svHeroLightBridge + .dsContent'));
   assert.equal(d.querySelectorAll('[data-sv-featured-go]').length,5);
+  const info=d.querySelector('.dsHeroActions .svFeaturedInfo');assert(info,'Home needs the lighter More info action');assert.equal(info.getAttribute('aria-label'),'More info');assert.equal(info.getAttribute('href'),'/movie/346698');assert(info.querySelector('svg[aria-hidden="true"]'));
   assert.match(d.querySelector('script[src*="featured.js"]').getAttribute('src'),/\?v=/);
-  assert.equal(calls.length,8,'Rotation must reuse the seven catalog requests plus the existing curated request');env.finish();
+  assert.equal(calls.length,12,'Only the four missing featured presentations add cached movie-detail requests');env.finish();
   const {compileDocument,renderDocument}=require('../lib/react-document.cjs');
   const react=browser(await renderDocument(compileDocument(html),{entry:'/test.js'})),rd=react.window.document;
   assert.deepEqual(JSON.parse(rd.querySelector('[data-sv-featured-data]').textContent),slides,'Both original and React renderers preserve the same safe slide data');
@@ -163,4 +164,54 @@ test('late events from the initial logo cannot hide the selected title or remove
  await w.SwiflyFeatured.select(1);assert(heading.querySelector('.dsHeroLogo'));assert(heading.classList.contains('hasLogo'));
  old.dispatchEvent(new w.Event('error'));
  assert.equal(heading.classList.contains('hasLogo'),true,'A detached failure must not hide the prepared replacement logo');f.finish();
+});
+
+test('later features receive matching title logos, runtime and genres before serialization',async()=>{
+ const api=loadServer(),details=[];try{
+  api.setTmdb(async endpoint=>{
+   if(endpoint==='/movie/346698')return film(346698);
+   if(/^\/movie\/\d+$/.test(endpoint)){const id=Number(endpoint.split('/').pop());details.push(id);return {...film(id),runtime:114,genres:[{name:'Adventure'},{name:'Comedy'}],images:{logos:[{file_path:'/title-'+id+'.png',iso_639_1:'en'}]}};}
+   return {results:[film(1),film(2),film(3),film(4),film(5)]};
+  });
+  let html;await api.homePage({}, {send:v=>html=v});const f=browser(html),slides=JSON.parse(f.window.document.querySelector('[data-sv-featured-data]').textContent);
+  assert.deepEqual(details.sort((a,b)=>a-b),[1,2,3,4]);
+  assert(slides.slice(1).every(s=>s.logo.endsWith('/title-'+s.id+'.png')&&s.metadata.includes('1h 54m')&&s.metadata.includes('Adventure, Comedy')));f.finish();
+ }finally{await new Promise(resolve=>api.io.close(resolve));}
+});
+
+test('partial featured details preserve populated runtime, genres and title art',async()=>{
+ const api=loadServer();try{
+  const originals=[{...film(1),runtime:95,genres:[{name:'Drama'}]},
+   {...film(2),genres:[{name:'Adventure'}],images:{logos:[{file_path:'/original-2.png',iso_639_1:'en'}]}},
+   {...film(3),genres:[{name:'Comedy'}],images:{logos:[{file_path:'/original-3.png',iso_639_1:'en'}]}},film(4)];
+  api.setTmdb(async endpoint=>{
+   if(endpoint==='/movie/346698')return film(346698);
+   if(endpoint==='/movie/1')return {id:1,images:{logos:[{file_path:'/new-1.png',iso_639_1:'en'}]}};
+   if(endpoint==='/movie/2')return {id:2,runtime:110};
+   if(endpoint==='/movie/3')return {id:3,runtime:124,genres:[],images:{logos:[]}};
+   return {results:originals};
+  });
+  let html;await api.homePage({}, {send:v=>html=v});const f=browser(html),slides=JSON.parse(f.window.document.querySelector('[data-sv-featured-data]').textContent);
+  assert(slides.find(s=>s.id===1).metadata.includes('1h 35m'));
+  assert(slides.find(s=>s.id===1).metadata.includes('Drama'));
+  assert(slides.find(s=>s.id===1).logo.endsWith('/new-1.png'));
+  assert(slides.find(s=>s.id===2).metadata.includes('Adventure'));
+  assert(slides.find(s=>s.id===2).logo.endsWith('/original-2.png'));
+  assert(slides.find(s=>s.id===3).metadata.includes('Comedy'));
+  assert(slides.find(s=>s.id===3).logo.endsWith('/original-3.png'));f.finish();
+ }finally{await new Promise(resolve=>api.io.close(resolve));}
+});
+
+
+test('a slow feature detail cannot strand Home or discard other ready logos',{timeout:4000},async()=>{
+ const api=loadServer();let release,signal;try{
+  api.setTmdb(async(endpoint,_params,_ttl,requestSignal)=>{
+   if(endpoint==='/movie/346698')return film(346698);
+   if(endpoint==='/movie/2'){signal=requestSignal;return new Promise(resolve=>release=resolve);}
+   if(/^\/movie\/\d+$/.test(endpoint)){const id=Number(endpoint.split('/').pop());return {...film(id),runtime:95,genres:[{name:'Drama'}],images:{logos:[{file_path:'/ready-'+id+'.png',iso_639_1:'en'}]}};}
+   return {results:[film(1),film(2),film(3),film(4)]};
+  });
+  let html;await api.homePage({}, {send:v=>html=v});assert.equal(signal?.aborted,true);
+  const f=browser(html),slides=JSON.parse(f.window.document.querySelector('[data-sv-featured-data]').textContent);assert(slides.find(s=>s.id===1).logo.endsWith('/ready-1.png'));assert.equal(slides.find(s=>s.id===2).logo,'');f.finish();release?.({...film(2),images:{logos:[{file_path:'/too-late.png'}]}});await settle();
+ }finally{release?.(film(2));await new Promise(resolve=>api.io.close(resolve));}
 });

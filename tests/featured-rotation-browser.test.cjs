@@ -6,11 +6,12 @@ let browser,api;
 test.before(async()=>{if(available){browser=await chromium.launch({headless:true,executablePath});api=loadServer();}});
 test.after(async()=>{await browser?.close();api?.io.close();});
 const film=id=>({id,title:id===346698?'First movie':'Feature '+id,images:id===2?{logos:[{file_path:'/logo-2.svg',iso_639_1:'en'}]}:undefined,media_type:'movie',backdrop_path:'/scene-'+id+'.svg',poster_path:'/poster.svg',vote_average:7.5,release_date:'2026-01-01',overview:id===2?'A longer second overview to verify anchored actions while the real copy is replaced. '.repeat(4):'A film for tonight.'});
-async function open(width,{subtle=false,reduced=false}={}){
+async function open(width,{subtle=false,reduced=false,resume=false,height=936}={}){
  api.setTmdb(async endpoint=>endpoint==='/movie/346698'?film(346698):{results:[film(1),film(2),film(3),film(4)]});
  let html;await api.homePage({}, {send:value=>html=value});
  html=html.replace(/<script\b([^>]*)>[\s\S]*?<\/script>/g,(script,attrs)=>/data-sv-featured-data/.test(attrs)?script:'');
- const context=await browser.newContext({viewport:{width,height:936},reducedMotion:reduced?'reduce':'no-preference',...(width<861?{isMobile:true,hasTouch:true}:{})}),page=await context.newPage();
+ const context=await browser.newContext({viewport:{width,height},reducedMotion:reduced?'reduce':'no-preference',...(width<861?{isMobile:true,hasTouch:true}:{})}),page=await context.newPage();
+ if(resume)await page.addInitScript(()=>localStorage.setItem('movieverse.continue',JSON.stringify([{profileId:'main',id:346698,type:'movie',title:'First movie',currentTime:3723,duration:7200}])));
  await page.route('**/*',route=>{
   const url=new URL(route.request().url()),css=readShellStyle(url.pathname);
   if(route.request().resourceType()==='document')return route.fulfill({contentType:'text/html',body:html});
@@ -21,7 +22,7 @@ async function open(width,{subtle=false,reduced=false}={}){
  });
  await page.goto('https://swifly.test/');
  await page.evaluate(subtle=>{document.body.dataset.stGlass=subtle?'subtle':'liquid';},subtle);
- for(const name of ['liquid-glass/liquid-glass.js','liquid-glass/surfaces.js','clean/featured.js'])await page.addScriptTag({content:fs.readFileSync(path.join(__dirname,'../public',name),'utf8')});
+ for(const name of ['liquid-glass/liquid-glass.js','liquid-glass/surfaces.js',...(resume?['clean/continue.js']:[]),'clean/featured.js'])await page.addScriptTag({content:fs.readFileSync(path.join(__dirname,'../public',name),'utf8')});
  await page.waitForFunction(()=>document.querySelector('.svHeroSpill').dataset.svFeaturedPrepared==='true');
  return {page,context};
 }
@@ -40,14 +41,15 @@ for(const width of [390,1920])test(width+'px featured slide shares movie identit
    const ghost=hero.querySelector('[data-sv-featured-ghost]');
    return {state:document.documentElement.dataset.svFeaturedMotion,copyTranslate:getComputedStyle(hero.querySelector(':scope>.dsHeroContent')).translate,artTranslate:getComputedStyle(hero.querySelector('.dsHeroBg[data-sv-featured-active="true"]')).translate,
     logoReady:hero.querySelector(':scope>.dsHeroContent h1').classList.contains('hasLogo')&&hero.querySelector(':scope>.dsHeroContent .dsHeroLogo').complete,sameActions:window.__featureActions.every(node=>node.isConnected),play:hero.querySelector('[data-play-id]').dataset.playId,details:hero.querySelector('.dsHeroActions > a:not([data-play-id])').getAttribute('href'),watch:hero.querySelector('[data-watch-id]').dataset.watchId,
-    ghostInert:ghost?.inert,ghostActions:ghost?.querySelectorAll('[href],[data-play-id],[data-watch-id],.svLiquidPane,filter,[data-swifly-renderer]').length,ghostFilters:[...ghost.querySelectorAll('.dsHeroActions > :is(a,button)')].map(n=>getComputedStyle(n).backdropFilter),
+    ghostFaces:[...ghost.querySelectorAll('.dsHeroActions > :is(a,button)')].map(n=>({background:getComputedStyle(n).backgroundColor,face:getComputedStyle(n,'::before').backgroundColor,transform:getComputedStyle(n,'::before').transform,height:n.getBoundingClientRect().height,top:parseFloat(getComputedStyle(n,'::before').top),bottom:parseFloat(getComputedStyle(n,'::before').bottom)})),ghostInert:ghost?.inert,ghostActions:ghost?.querySelectorAll('[href],[data-play-id],[data-watch-id],.svLiquidPane,filter,[data-swifly-renderer]').length,ghostFilters:[...ghost.querySelectorAll('.dsHeroActions > :is(a,button)')].map(n=>getComputedStyle(n).backdropFilter),
     glow:[...hero.nextElementSibling.querySelectorAll('[data-sv-featured-glow]')].map(n=>({id:n.dataset.svFeaturedId,filter:getComputedStyle(n).filter,opacity:Number(getComputedStyle(n).opacity),source:n.style.backgroundImage.slice(0,25)})),controls:[...hero.querySelectorAll('[data-sv-featured-controls] button')].filter(n=>getComputedStyle(n).display!=='none').map(n=>({width:n.getBoundingClientRect().width,height:n.getBoundingClientRect().height})),overflow:document.documentElement.scrollWidth>innerWidth};
   });
   assert.equal(moving.state,'true');assert.equal(moving.logoReady,true);assert.equal(moving.sameActions,true);assert.equal(moving.play,'2');assert.equal(moving.watch,'2');assert.equal(moving.details,'/movie/2');
   assert.notEqual(moving.artTranslate,'none');assert.notEqual(moving.artTranslate,'0px');assert.notEqual(moving.copyTranslate,'none');
+  if(width<=860){assert(moving.ghostFaces.every(f=>f.background==='rgba(0, 0, 0, 0)'&&f.transform==='none'&&Math.abs(f.height-f.top-f.bottom-36)<1),JSON.stringify(moving.ghostFaces));assert.equal(moving.ghostFaces[0].face,'rgb(255, 255, 255)');}
   assert.equal(moving.ghostInert,true);assert.equal(moving.ghostActions,0);assert(moving.ghostFilters.every(v=>v==='none'),JSON.stringify(moving));
   assert(moving.glow.every(g=>g.filter==='none'&&g.source.startsWith('url("data:image/png;')));assert(moving.glow.some(g=>g.id==='2'&&g.opacity>0&&g.opacity<1));
-  assert(moving.controls.every(c=>c.width>=44&&c.height>=44));assert.equal(moving.overflow,false);
+  assert(moving.controls.every(c=>c.width>=(width<=860?40:44)&&c.height>=44));assert.equal(moving.overflow,false);
   await page.evaluate(()=>{for(const a of document.getAnimations())if([700,1000].includes(a.effect.getTiming().duration))a.finish();});
   await page.waitForFunction(()=>document.querySelector('[data-sv-featured]').dataset.svFeaturedState==='idle');
   const after=await page.evaluate(()=>({rows:document.querySelector('[data-st-home-rows]').getBoundingClientRect().top+scrollY,copy:document.querySelector('.dsHero > .dsHeroContent').getBoundingClientRect().toJSON(),ghost:!!document.querySelector('[data-sv-featured-ghost]'),state:document.documentElement.dataset.svFeaturedMotion,slots:document.querySelectorAll('.dsHeroBg').length,glows:document.querySelectorAll('[data-sv-featured-glow]').length}));
@@ -63,7 +65,7 @@ test('320px controls fit and reduced motion keeps manual navigation immediate',{
  const f=await open(320,{subtle:true,reduced:true});try{
   await f.page.locator('[data-sv-featured-go="1"]').click();await f.page.waitForFunction(()=>document.querySelector('[data-sv-featured]').dataset.svFeaturedIndex==='1');
   const state=await f.page.evaluate(()=>({moving:document.documentElement.dataset.svFeaturedMotion,ghost:!!document.querySelector('[data-sv-featured-ghost]'),overflow:document.documentElement.scrollWidth>innerWidth,controls:[...document.querySelectorAll('[data-sv-featured-controls] button')].filter(n=>getComputedStyle(n).display!=='none').map(n=>n.getBoundingClientRect().toJSON()),status:document.querySelector('[data-sv-featured-status]').getBoundingClientRect().toJSON()}));
-  assert.equal(state.moving,undefined);assert.equal(state.ghost,false);assert.equal(state.overflow,false);assert(state.controls.every(b=>b.width>=44&&b.height>=44&&b.left>=0&&b.right<=320),JSON.stringify(state));assert.equal(state.status.width,1);assert.equal(state.status.height,1);
+  assert.equal(state.moving,undefined);assert.equal(state.ghost,false);assert.equal(state.overflow,false);assert(state.controls.every(b=>b.width>=40&&b.height>=44&&b.left>=0&&b.right<=320),JSON.stringify(state));assert.equal(state.status.width,1);assert.equal(state.status.height,1);
  }finally{await f.context.close();}
 });
 
@@ -82,7 +84,7 @@ test('featured controls use edge arrows and thin progress tracks below anchored 
      overflow:document.documentElement.scrollWidth>innerWidth};
    });
    assert.equal(layout.overflow,false,JSON.stringify({width,layout}));
-   assert(layout.controls.every(n=>n.rect.width>=44&&n.rect.height>=44&&n.filter==='none'),JSON.stringify({width,layout}));
+   assert(layout.controls.every(n=>n.rect.width>=(width<=860?40:44)&&n.rect.height>=44&&n.filter==='none'),JSON.stringify({width,layout}));
    assert(layout.footer.top>=layout.actions.bottom+8,JSON.stringify({width,layout}));
    assert(layout.tracks.every(n=>n.height===3&&n.width===(width<=860?32:48)),JSON.stringify({width,layout}));
    if(width<768)assert(layout.arrows.every(n=>n.display==='none'));
@@ -92,7 +94,7 @@ test('featured controls use edge arrows and thin progress tracks below anchored 
     assert(layout.arrows.every(n=>Math.abs((n.rect.top+n.rect.bottom-layout.hero.top-layout.hero.bottom)/2)<1));
    }
    if(width===820)assert(layout.arrows.every(n=>n.opacity===1),'Touch tablets need visible edge arrows without hovering');
-   if(width<=860)assert(Math.abs((layout.positions.left+layout.controls.at(-1).rect.right)/2-layout.hero.width/2)<1);
+   if(width<=860){assert(Math.abs((layout.positions.left+layout.positions.right)/2-layout.hero.width/2)<1);assert(layout.controls.at(-1).rect.left>=layout.positions.right+8,'Pause must not displace or overlap the centered bars');}
    else assert(Math.abs(layout.footer.left-layout.copy.left)<1);
    assert.equal(layout.progress.length,1);assert.equal(layout.progress[0].duration,8000);assert.equal(layout.progress[0].iterations,1);
    await f.page.locator('[data-sv-featured-pause]').click();
@@ -118,7 +120,7 @@ test('Studio compact and banner controls clear the real action hit areas',{skip:
     },mode);
     assert(layout.footer.top>=layout.actions.bottom+8,JSON.stringify({width,mode,layout}));
     assert(layout.footer.bottom<=layout.hero.bottom,JSON.stringify({width,mode,layout}));
-    assert(layout.buttons.every(b=>b.width>=44&&b.height>=44&&b.left>=0&&b.right<=width));assert.equal(layout.overflow,false);
+    assert(layout.buttons.every(b=>b.width>=(width<=860?40:44)&&b.height>=44&&b.left>=0&&b.right<=width));assert.equal(layout.overflow,false);
    }
   }finally{await f.context.close();}
  }
@@ -128,4 +130,69 @@ test('reduced motion disables edge-arrow fades on touch tablets',{skip:!availabl
   const arrows=await f.page.locator('[data-sv-featured-prev],[data-sv-featured-next]').evaluateAll(nodes=>nodes.map(n=>({opacity:getComputedStyle(n).opacity,transition:getComputedStyle(n).transitionDuration})));
   assert(arrows.every(n=>n.opacity==='1'&&n.transition.split(',').every(value=>parseFloat(value)===0)),JSON.stringify(arrows));
  }finally{await f.context.close();}
+});
+
+
+test('phone features use slim visible pills, readable actions and a black tail across glass modes',{skip:!available},async()=>{
+ for(const width of [320,390]){
+  const f=await open(width,{reduced:true});try{
+   for(const glass of ['liquid','subtle','off']){
+    await f.page.evaluate(({glass,scale})=>{document.body.dataset.stGlass=glass;document.body.style.setProperty('--st-ui-scale',scale);},{glass,scale:width===320?'1.2':'1'});
+    const result=await f.page.evaluate(()=>{
+     const hero=document.querySelector('[data-sv-featured]'),r=n=>n.getBoundingClientRect().toJSON(),play=hero.querySelector('[data-play-id]');
+     return {hero:r(hero),nav:r(document.querySelector('.netflixNav')),brand:getComputedStyle(document.querySelector('.svMobileBrandMark')).display,wordmark:getComputedStyle(document.querySelector('.netflixWordmark')).display,
+      actions:[...hero.querySelectorAll('.dsHeroActions > :is(a,button)')].map(n=>{const style=getComputedStyle(n,'::before');return {rect:r(n),top:parseFloat(style.top),bottom:parseFloat(style.bottom),face:style.backgroundColor,transform:style.transform};}),
+      playColor:getComputedStyle(play).color,shade:getComputedStyle(hero.querySelector('.dsHeroGlass')).backgroundImage,mask:getComputedStyle(hero.querySelector('.dsHeroGlass')).maskImage,glow:Number(getComputedStyle(document.querySelector('.svHeroSpill')).opacity),overflow:document.documentElement.scrollWidth>innerWidth};
+    });
+    assert.equal(result.overflow,false,JSON.stringify({width,glass,result}));
+    assert(result.actions.every(a=>a.rect.height>=44&&a.rect.width>=44&&a.rect.left>=0&&a.rect.right<=width),JSON.stringify({width,glass,result}));
+    assert(result.actions.every(a=>Math.abs(a.rect.height-a.top-a.bottom-36)<1),JSON.stringify({width,glass,result}));
+    assert(result.actions.every(a=>a.transform==='none'),'Legacy shine must not displace the visible pill');assert.equal(result.actions[0].face,'rgb(255, 255, 255)');assert.equal(result.playColor,'rgb(16, 17, 21)');
+    assert(result.nav.width<=220);assert.equal(result.wordmark,'none');assert.notEqual(result.brand,'none');
+    assert.equal(result.mask,'none');assert(result.shade.endsWith('rgb(0, 0, 0) 100%)'),result.shade);assert(result.glow<=.12);
+    assert.equal(await f.page.getByRole('link',{name:'More info',exact:true}).getAttribute('href'),'/movie/346698');
+   }
+  }finally{await f.context.close();}
+ }
+});
+
+test('saved movie actions fit small phones and outgoing copies preserve their layout',{skip:!available},async()=>{
+ for(const width of [320,390]){
+  const f=await open(width,{subtle:true,resume:true,height:720});try{
+   await f.page.evaluate(()=>document.body.style.setProperty('--st-ui-scale','1.2'));
+   await f.page.waitForFunction(()=>getComputedStyle(document.querySelector('.dsHeroActions')).transform==='none');
+   const read=()=>f.page.evaluate(()=>{
+    const hero=document.querySelector('[data-sv-featured]'),copy=hero.querySelector(':scope>.dsHeroContent'),r=n=>n.getBoundingClientRect().toJSON();
+    return {hero:r(hero),copy:r(copy),nav:r(document.querySelector('.netflixNav')),footer:r(hero.querySelector('.svFeaturedFooter')),rows:r(document.querySelector('[data-st-home-rows]')).top+scrollY,
+     actions:[...copy.querySelectorAll('.dsHeroActions > :is(a,button)')].map(n=>({rect:r(n),scroll:n.scrollWidth,client:n.clientWidth,text:n.textContent.trim(),href:n.getAttribute('href'),filter:getComputedStyle(n).backdropFilter,faceFilter:getComputedStyle(n,'::before').backdropFilter})),overflow:document.documentElement.scrollWidth>innerWidth};
+   });
+   const before=await read();assert.equal(before.actions.length,4);assert.equal(before.overflow,false);
+   assert(before.copy.top>=before.nav.bottom+8,JSON.stringify({width,before}));
+   assert(before.actions.every(a=>a.rect.left>=0&&a.rect.right<=width&&a.rect.height>=44&&a.scroll<=a.client+1),JSON.stringify({width,before}));
+   assert.match(before.actions[0].text,/Resume.*1:02:03/);assert.match(before.actions[0].href,/resume=1/);assert(!before.actions[1].href.includes('resume='));
+   assert(before.footer.top>=before.actions.at(-1).rect.bottom+8);
+   assert(before.actions.every(a=>a.filter==='none'));assert.match(before.actions[2].faceFilter,/blur\(18px\)/);
+   const moving=await f.page.evaluate(async()=>{
+    await SwiflyFeatured.select(1);
+    for(const a of document.getAnimations())if([700,1000].includes(a.effect.getTiming().duration)){a.pause();a.currentTime=350;}
+    await new Promise(requestAnimationFrame);
+    const ghost=document.querySelector('[data-sv-featured-ghost]');
+    return {marker:ghost.querySelector('.dsHeroActions').classList.contains('svFeaturedResuming'),actions:[...ghost.querySelectorAll('.dsHeroActions > :is(a,button)')].map(n=>({width:n.getBoundingClientRect().width,height:n.getBoundingClientRect().height,filter:getComputedStyle(n,'::before').backdropFilter})),unsafe:ghost.querySelectorAll('[data-resume-action],[href]').length,faceFilter:getComputedStyle(document.querySelector('.dsHero > .dsHeroContent .svFeaturedInfo'),'::before').backdropFilter};
+   });
+   assert.equal(moving.marker,true);assert.equal(moving.unsafe,0);assert(moving.actions.every((a,i)=>Math.abs(a.width-before.actions[i].rect.width)<1&&a.filter==='none'),JSON.stringify({width,before,moving}));assert.match(moving.faceFilter,/blur\(4px\)/);
+   await f.page.evaluate(()=>{for(const a of document.getAnimations())if([700,1000].includes(a.effect.getTiming().duration))a.finish();});
+   await f.page.waitForFunction(()=>document.querySelector('[data-sv-featured]').dataset.svFeaturedState==='idle');
+   const after=await read();assert.equal(after.actions.length,3);assert(Math.abs(after.rows-before.rows)<1);
+   // Narrow decorated/live info widths must equal their inert copies, too.
+   const widths=await f.page.evaluate(async()=>{
+    const live=[...document.querySelectorAll('.dsHero > .dsHeroContent .dsHeroActions > :is(a,button)')].map(n=>n.getBoundingClientRect().width);
+    await SwiflyFeatured.select(0);
+    const ghost=[...document.querySelectorAll('[data-sv-featured-ghost] .dsHeroActions > :is(a,button)')].map(n=>n.getBoundingClientRect().width);return {live,ghost};
+   });
+   assert(widths.live.every((w,i)=>Math.abs(w-widths.ghost[i])<1),JSON.stringify({width,widths}));
+   await f.page.evaluate(()=>{for(const a of document.getAnimations())if([700,1000].includes(a.effect.getTiming().duration))a.finish();});
+   await f.page.waitForFunction(()=>document.querySelector('[data-sv-featured]').dataset.svFeaturedState==='idle');
+   const restored=await read();assert.equal(restored.actions.length,4);assert(restored.actions.every(a=>a.rect.right<=width&&a.scroll<=a.client+1));
+  }finally{await f.context.close();}
+ }
 });

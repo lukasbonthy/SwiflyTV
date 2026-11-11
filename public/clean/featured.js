@@ -153,9 +153,14 @@
   function snapshot() {
     const box=copy.getBoundingClientRect(),heroBox=hero.getBoundingClientRect();
     const faces=[...copy.querySelectorAll('.dsHeroActions > :is(a,button)')].map(button=>{
+      // The phone face is inset inside its larger touch target. Its pseudo
+      // element remains on the inert copy after the optical pane is removed.
+      if(getComputedStyle(button).getPropertyValue('--sv-featured-face').trim()==='slim')return {background:'transparent',shadow:'none',border:'0'};
       const pane=button.querySelector('.svLiquidPane'),style=getComputedStyle(pane && getComputedStyle(pane).display!=='none'?pane:button);return {background:style.backgroundColor,shadow:style.boxShadow,border:style.border};
     });
     const clone=copy.cloneNode(true);clone.dataset.svFeaturedGhost='';clone.setAttribute('aria-hidden','true');clone.setAttribute('inert','');
+    // Retain only the presentation of Resume after removing its live action.
+    if(clone.querySelector('[data-resume-action]'))clone.querySelector('.dsHeroActions')?.classList.add('svFeaturedResuming');
     clone.querySelectorAll('.svLiquidPane,svg.svLiquidPane__filters,filter').forEach(node=>node.remove());
     for(const node of [clone,...clone.querySelectorAll('*')])for(const attribute of [...node.attributes]) {
       if(attribute.name==='id' || /^(?:data-(?:play|watch|resume|library|swifly)-|href$|on)/.test(attribute.name))node.removeAttribute(attribute.name);

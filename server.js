@@ -6695,6 +6695,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       <div class="svLiquidPane" data-swifly-glass data-glass-tint="0.2" data-glass-saturation="1" aria-hidden="true"></div>
       <div class="navLeftCluster">
         <a class="brand netflixBrand" href="/" aria-label="${escapeHtml(SITE_NAME)} home">
+          <span class="svMobileBrandMark" aria-hidden="true">S</span>
           <span class="netflixWordmark">${escapeHtml(BRAND_WORDMARK)}</span>
         </a>
         <nav class="navLinks netflixLinks" aria-label="Main navigation">
@@ -7807,7 +7808,7 @@ async function homePage(req, res) {
   ]);
   const sources = [trendingMovies, trendingTv, popularMovies, popularTv, topMovies, topTv, nowPlaying];
   if (sources.every(data => data.__error)) return res.send(setupNeededPage(sources[0].message));
-  const featuredMovies = homeFeaturedMovies([featured, ...(trendingMovies.results || []), ...(popularMovies.results || []), ...(nowPlaying.results || []), ...(topMovies.results || [])]);
+  const featuredMovies = await homeFeaturedPresentation(homeFeaturedMovies([featured, ...(trendingMovies.results || []), ...(popularMovies.results || []), ...(nowPlaying.results || []), ...(topMovies.results || [])]), featured?.id);
   const hero = featuredMovies[0] || featured || pickHero([...(trendingMovies.results || []), ...(popularMovies.results || []), ...(trendingTv.results || []).map(item => ({ ...item, media_type: "tv" }))]);
   const body = `<main data-st-home>
     ${hero.id ? dsHero({ hero, context: "Featured", featuredSlides: featuredMovies.map(homeFeaturedData) }) : dsPageHeader("Discover", "Explore movies and series.")}
@@ -7826,11 +7827,29 @@ async function homePage(req, res) {
       ${dsRail("New releases", nowPlaying.results || [], "movie", { viewHref: "/movies?sort=now_playing", studioKey: "new-releases" })}
     </section>
   </main>`;
-  res.send(pageShell({ title: SITE_NAME, active: "home", body, extraHead:'<script defer src="/assets/clean/featured.js?v=4"></script>' }));
+  res.send(pageShell({ title: SITE_NAME, active: "home", body, extraHead:'<script defer src="/assets/clean/featured.js?v=5"></script>' }));
 }
 
-// Home reuses the catalog data it has already fetched. Only these bounded,
-// presentation fields reach the rotating hero; no new metadata fan-out.
+// Reuse catalog choices and complete only the at-most-five featured movies.
+// Detail requests use the shared TMDB cache and a single bounded deadline;
+// no metadata work or layout replacement happens during the animation.
+async function homeFeaturedPresentation(items, knownId) {
+  const prepared=[...items],controller=new AbortController();let timer;
+  const complete=Promise.all(items.map(async(item,index)=>{
+    if(item.id===knownId || (Number(item.runtime)>0 && Array.isArray(item.genres) && Array.isArray(item.images?.logos)))return;
+    try {
+      const data=await tmdb(`/movie/${item.id}`,{append_to_response:'images',include_image_language:'en,null'},CACHE_TTL.long,controller.signal);
+      if(controller.signal.aborted || data?.__error || Number(data?.id)!==Number(item.id) || data.media_type==='tv')return;
+      prepared[index]={...item,runtime:Number(data.runtime)>0?Number(data.runtime):item.runtime,
+        genres:Array.isArray(data.genres)&&data.genres.length?data.genres:item.genres,
+        images:{...item.images,logos:Array.isArray(data.images?.logos)&&data.images.logos.length?data.images.logos:item.images?.logos||[]}};
+    }catch(_){}
+  }));
+  try {
+    await Promise.race([complete,new Promise(resolve=>{timer=setTimeout(()=>{controller.abort();resolve();},1200);})]);
+    return prepared;
+  }finally{clearTimeout(timer);controller.abort();}
+}
 function homeFeaturedMovies(items = []) {
   const seen = new Set();
   return items.filter(item => {
@@ -7963,7 +7982,7 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = nu
       <p>${escapeHtml(desc)}</p>
       <div class="dsHeroActions">
         <a class="dsPrimaryBtn" href="/watch/${mediaType}/${encodeURIComponent(hero.id || "")}?mode=movie${mediaType === "tv" ? "&s=1&e=1" : ""}" data-play-id="${escapeHtml(hero.id || "")}" data-play-type="${escapeHtml(mediaType)}" data-play-title="${escapeHtml(title)}" data-play-poster="${escapeHtml(hero.poster_path || "")}" data-play-backdrop="${escapeHtml(hero.backdrop_path || "")}" data-play-rating="${escapeHtml(formatRating(hero.vote_average))}" data-play-year="${escapeHtml(getYear(getDate(hero)))}">${cleanIcon("play")} Play</a>
-        <a class="dsSecondaryBtn" href="${href}">Details</a>
+        <a class="dsSecondaryBtn${rotating ? ' svFeaturedInfo' : ''}" href="${href}"${rotating ? ' aria-label="More info"' : ''}>${rotating ? '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 11v6m0-10h.01" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span class="svHeroInfoLabel"><span class="svHeroInfoPrefix">More </span><span class="svHeroInfoWord">info</span></span>' : 'Details'}</a>
         <button class="dsIconBtn" type="button" aria-label="Add ${escapeHtml(title)} to My List" ${mediaDataAttributes("watch", hero, mediaType)}>＋</button>
       </div>
     </div>

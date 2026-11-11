@@ -1,4 +1,5 @@
-/* Home keeps two prepared photographs/glows; the controls add no live blur. */
+/* Home keeps two prepared photographs/glows and bounded control material. */
+body.svCleanShell .svMobileBrandMark {display:none;}
 body.svCleanShell [data-sv-featured] {touch-action:pan-y;--sv-featured-inset:max(32px,calc((100% - 1280px) / 2 + 32px));}
 body.svCleanShell [data-sv-featured] > .dsHeroArt > .dsHeroBg[hidden] {display:none !important;}
 /* Bottom anchoring lets each title use its natural height without moving rows. */
@@ -81,7 +82,7 @@ body.svCleanShell:is([data-st-hero-mode="compact"],[data-st-hero-mode="banner"])
 @media (max-width:860px) {
   body.svCleanShell [data-sv-featured] {--sv-featured-inset:16px;}
   html:not([data-sv-tv="true"]) body.svCleanShell:not([data-st-hero-mode="compact"]):not([data-st-hero-mode="banner"]) main[data-st-home] > [data-sv-featured] {
-    height:clamp(540px,80svh,790px) !important;padding:104px 0 128px !important;
+    height:clamp(600px,80vh,790px) !important;height:clamp(600px,80lvh,790px) !important;padding:104px 0 128px !important;
   }
   html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] > .dsHeroContent {
     width:min(520px,calc(100% - 32px)) !important;max-width:520px !important;margin:0 16px !important;
@@ -90,12 +91,72 @@ body.svCleanShell:is([data-st-hero-mode="compact"],[data-st-hero-mode="banner"])
   html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] .dsHeroTitleArt.hasLogo > .dsHeroLogo {max-width:80%;max-height:120px;justify-self:center;}
   html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] .dsHeroContent > p {-webkit-line-clamp:2;}
   html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] .dsHeroMeta {margin:14px 0 12px !important;}
-  html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] > .dsHeroGlass {background:linear-gradient(#0002,transparent 30%,#0006 75%,#0008) !important;}
+  html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] > .dsHeroGlass {
+    -webkit-mask-image:none !important;mask-image:none !important;
+    background:linear-gradient(#0003,#0001 30%,#0005 55%,#000b 80%,#000 100%) !important;
+  }
   body.svCleanShell .svFeaturedFooter {left:0;right:0;bottom:64px;justify-content:center;gap:8px;}
   body.svCleanShell:is([data-st-hero-mode="compact"],[data-st-hero-mode="banner"]) .svFeaturedFooter {bottom:0;}
-  body.svCleanShell .svFeaturedPositions button {flex-basis:44px;width:44px;}
+  html:not([data-sv-tv="true"]) body.svCleanShell .svFeaturedPositions button {flex-basis:40px;width:40px;min-width:40px;}
   body.svCleanShell .svFeaturedPositions button > span {width:32px;}
-  body.svCleanShell .svHeroSpill:has(> [data-sv-featured-glow]) {opacity:.24;}
+  html:not([data-sv-tv="true"]) body.svCleanShell .svFeaturedFooter > [data-sv-featured-pause] {position:absolute;right:0;top:0;width:40px;min-width:40px;opacity:.45;}
+  body.svCleanShell .svHeroSpill:has(> [data-sv-featured-glow]) {opacity:.10;}
+  html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > .svHeroLightBridge > .svHeroSpill {
+    top:0;height:160px;
+    -webkit-mask-image:linear-gradient(transparent,#000 30%,transparent 100%);
+    mask-image:linear-gradient(transparent,#000 30%,transparent 100%);
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell:has(main[data-st-home]) .netflixNav {gap:4px !important;padding:6px 8px !important;}
+  html:not([data-sv-tv="true"]) body.svCleanShell:has(main[data-st-home]) .netflixNav .brand.netflixBrand {justify-content:center;width:44px;min-width:44px !important;max-width:44px;}
+  html:not([data-sv-tv="true"]) body.svCleanShell:has(main[data-st-home]) .netflixWordmark {display:none !important;}
+  html:not([data-sv-tv="true"]) body.svCleanShell:has(main[data-st-home]) .svMobileBrandMark {display:block;font:italic 900 25px/1 'Unbounded',sans-serif;letter-spacing:-2px;padding-right:2px;}
+  /* The visible pill is 36px high; its real action keeps a 44px target.
+     Move the existing local blur to that face, with Studio/motion caps. */
+  html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] .dsHeroActions {min-height:44px;gap:8px !important;}
+  html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] .dsHeroActions > :is(.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn) {
+    --sv-featured-face:slim;position:relative !important;isolation:isolate !important;box-sizing:border-box;
+    height:44px !important;min-height:44px !important;min-width:44px !important;padding:0 12px !important;
+    background:transparent !important;border:0 !important;box-shadow:none !important;
+    font-size:calc(16px * var(--st-ui-scale,1)) !important;font-weight:600 !important;gap:8px;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] .dsHeroActions > :is(.dsPrimaryBtn,.dsSecondaryBtn,.dsIconBtn).svGlassControl.svNavMatchedOptic {
+    isolation:isolate !important;background:transparent !important;border:0 !important;box-shadow:none !important;
+    -webkit-backdrop-filter:none !important;backdrop-filter:none !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] .dsHeroActions > .dsPrimaryBtn {width:100px !important;min-width:100px !important;color:#101115 !important;}
+  html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] .dsHeroActions > .svFeaturedInfo {min-width:120px !important;white-space:nowrap;}
+  html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] .dsHeroActions > .dsIconBtn {width:44px !important;padding:0 !important;font-size:24px !important;font-weight:400 !important;}
+  html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] .dsHeroActions > :is(a,button)::before {
+    content:"" !important;display:block !important;position:absolute;inset:4px 0;z-index:-1;pointer-events:none;
+    border-radius:999px;background:rgb(255 255 255 / .10);border:1px solid rgb(255 255 255 / .15);box-sizing:border-box;
+    transform:none !important;translate:none !important;scale:none !important;rotate:none !important;opacity:1 !important;filter:none !important;animation:none !important;transition:none !important;box-shadow:none;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] .dsHeroActions > .dsPrimaryBtn::before {background:#fff;border-color:#fff;}
+  html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] .dsHeroActions > .dsIconBtn::before {inset:4px;}
+  html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] > .dsHeroContent:not([data-sv-featured-ghost]) .dsHeroActions > :is(.dsSecondaryBtn,.dsIconBtn)::before {
+    -webkit-backdrop-filter:var(--sv-featured-backdrop,blur(min(var(--st-glass-blur,18px),var(--sv-moving-blur-cap,28px))) saturate(1.05)) !important;
+    backdrop-filter:var(--sv-featured-backdrop,blur(min(var(--st-glass-blur,18px),var(--sv-moving-blur-cap,28px))) saturate(1.05)) !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] .dsHeroActions > :is(a,button).svNavMatchedOptic > .svNavMatchedLens.svLiquidPane {
+    display:none !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] .dsHeroActions:is(:has(> [data-resume-action]),.svFeaturedResuming) {
+    display:grid !important;grid-template-columns:auto auto 44px;justify-content:center;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] .dsHeroActions:is(:has(> [data-resume-action]),.svFeaturedResuming) > :first-child {
+    grid-column:1/-1;justify-self:center;width:auto !important;min-width:160px !important;max-width:100%;padding:0 18px !important;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] .dsHeroActions:is(:has(> [data-resume-action]),.svFeaturedResuming) > :first-child > span {font:inherit !important;}
+  html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] .dsHeroActions :is(.svHeroInfoLabel,.svHeroInfoPrefix,.svHeroInfoWord,.svNavMatchedLabel) {font:inherit !important;}
+  html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] .dsHeroActions > :is(a,button) > svg:not(.svLiquidPane__filters) {width:20px;height:20px;flex:0 0 20px;}
+  html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] .dsHeroMeta > :is(b,span) {font-weight:500;}
+}
+@media (max-width:340px) {
+  html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] .dsHeroActions {gap:6px !important;}
+  html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] .dsHeroActions > .dsPrimaryBtn {width:96px !important;min-width:96px !important;}
+  html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] .dsHeroActions > .svFeaturedInfo {min-width:96px !important;}
+  body.svCleanShell .svHeroInfoPrefix {display:none;}
+  body.svCleanShell .svHeroInfoWord {text-transform:capitalize;}
 }
 @media (max-width:767px) {
   html:not([data-sv-tv="true"]) body.svCleanShell .svFeaturedControls > :is([data-sv-featured-prev],[data-sv-featured-next]) {display:none;}
@@ -113,3 +174,12 @@ body.svCleanShell:is([data-st-hero-mode="compact"],[data-st-hero-mode="banner"])
 html[data-sv-tv="true"] body.svCleanShell [data-sv-featured] > .dsHeroContent > h1 {height:auto;min-height:0;}
 html[data-sv-tv="true"] body.svCleanShell [data-sv-featured] > .dsHeroContent > h1 > .dsHeroTitleText {font-size:inherit;line-height:inherit;}
 html[data-sv-tv="true"] body.svCleanShell .svFeaturedFooter {left:auto;right:max(40px,calc((100% - 1480px) / 2));bottom:20px;}
+
+@media (max-width:860px) {
+  html:not([data-sv-tv="true"]) body.svCleanShell[data-st-glass="off"] main[data-st-home] {--sv-featured-backdrop:none;}
+  html:not([data-sv-tv="true"]) body.svCleanShell[data-st-glass="off"] main[data-st-home] > [data-sv-featured] .dsHeroActions > :is(.dsSecondaryBtn,.dsIconBtn)::before {background:#181b21;}
+}
+@media (max-width:860px) and (prefers-reduced-transparency:reduce) {
+  html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] {--sv-featured-backdrop:none;}
+  html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] .dsHeroActions > :is(.dsSecondaryBtn,.dsIconBtn)::before {background:#181b21;}
+}
