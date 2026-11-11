@@ -317,7 +317,7 @@ test('featured artwork uses a bounded image on phones and preserves full resolut
   const page=await catalog(browser,{viewport:{width:390,height:900}});
   for(const [width,size] of [[390,'w780'],[1280,'w1280'],[1920,'original']]){
    await page.setViewportSize({width,height:900});
-   const image=await page.locator('.dsHeroBg').evaluate(n=>getComputedStyle(n).backgroundImage);
+   const image=await page.locator('.dsHeroBg[data-sv-featured-active="true"]').evaluate(n=>getComputedStyle(n).backgroundImage);
    assert(image.includes('/'+size+'/'),'Artwork should match the display size: '+width+'px '+image);
   }
  }finally{await browser.close();}

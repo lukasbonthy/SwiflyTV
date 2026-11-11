@@ -40,9 +40,9 @@ async function press(page,index){await page.evaluate(async index=>{const frame=(
 test('Xbox uses lightweight hero imagery and avoids decorative full-screen compositing',{skip:!available&&'Chromium is not installed'},async()=>{
  const {context,page}=await open();
  try{
-  await page.locator('main .dsHeroBg').waitFor();
+  await page.locator('main .dsHeroBg[data-sv-featured-active="true"]').waitFor();
   const sampled=await page.evaluate(()=>{
-   const hero=document.querySelector('main .dsHeroBg');
+   const hero=document.querySelector('main .dsHeroBg[data-sv-featured-active="true"]');
    const nav=document.querySelector('.netflixNav > .svLiquidPane');
    const light=document.querySelector('.svHeroSpill');
    return {art:getComputedStyle(hero).backgroundImage,
