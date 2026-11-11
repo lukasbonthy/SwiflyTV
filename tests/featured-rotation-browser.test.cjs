@@ -24,6 +24,9 @@ async function open(width,{subtle=false,reduced=false,resume=false,height=936}={
  await page.evaluate(subtle=>{document.body.dataset.stGlass=subtle?'subtle':'liquid';},subtle);
  for(const name of ['liquid-glass/liquid-glass.js','liquid-glass/surfaces.js',...(resume?['clean/continue.js']:[]),'clean/featured.js'])await page.addScriptTag({content:fs.readFileSync(path.join(__dirname,'../public',name),'utf8')});
  await page.waitForFunction(()=>document.querySelector('.svHeroSpill').dataset.svFeaturedPrepared==='true');
+ // Initial CSS entry motion can still translate the action row while the
+ // artwork is ready. Measure settled geometry rather than a partial frame.
+ await page.waitForFunction(()=>getComputedStyle(document.querySelector('.dsHeroActions')).transform==='none');
  return {page,context};
 }
 for(const width of [390,1920])test(width+'px featured slide shares movie identity, uses prepared glow and leaves row geometry stable',{skip:!available},async()=>{
@@ -160,7 +163,6 @@ test('saved movie actions fit small phones and outgoing copies preserve their la
  for(const width of [320,390]){
   const f=await open(width,{subtle:true,resume:true,height:720});try{
    await f.page.evaluate(()=>document.body.style.setProperty('--st-ui-scale','1.2'));
-   await f.page.waitForFunction(()=>getComputedStyle(document.querySelector('.dsHeroActions')).transform==='none');
    const read=()=>f.page.evaluate(()=>{
     const hero=document.querySelector('[data-sv-featured]'),copy=hero.querySelector(':scope>.dsHeroContent'),r=n=>n.getBoundingClientRect().toJSON();
     return {hero:r(hero),copy:r(copy),nav:r(document.querySelector('.netflixNav')),footer:r(hero.querySelector('.svFeaturedFooter')),rows:r(document.querySelector('[data-st-home-rows]')).top+scrollY,
