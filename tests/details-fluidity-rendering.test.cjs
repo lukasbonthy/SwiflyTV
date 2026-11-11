@@ -21,6 +21,7 @@ test('moving details use one live optical sample and restore the original three 
  try{
   const page=await fixture(browser);
   await page.evaluate(async()=>{const opening=SwiflyDetails.open('/movie/101',document.getElementById('open'));document.querySelector('.svDetailPanel').getAnimations().forEach(animation=>animation.finish());await opening;});
+  await page.waitForFunction(()=>document.querySelector('dialog')?.dataset.svDetailState==='open');
   await page.waitForFunction(()=>document.querySelector('.svDetailActions .svNavMatchedLens')?.dataset.swiflyRenderer==='svg');
   await page.evaluate(()=>document.querySelector('main').insertAdjacentHTML('beforeend','<article class="movieCard"><div class="dsCardArtwork"><div class="dsCardQuickActions"><button class="dsMiniBtn">Save</button></div></div></article>'));
   await page.locator('main .svCardActionLens').waitFor({state:'attached'});
@@ -42,6 +43,7 @@ test('default native mobile glass caps moving blur without increasing a lower us
  try{
   const page=await fixture(browser);await page.addStyleTag({content:asset('studio/studio.css')});
   await page.evaluate(async()=>{const opening=SwiflyDetails.open('/movie/101',document.getElementById('open'));document.querySelector('.svDetailPanel').getAnimations().forEach(animation=>animation.finish());await opening;});
+  await page.waitForFunction(()=>document.querySelector('dialog')?.dataset.svDetailState==='open');
   await page.waitForFunction(()=>document.querySelector('.svDetailActions .svNavMatchedLens')?.dataset.swiflyRenderer==='svg');
   await page.evaluate(()=>{document.body.dataset.stGlass='subtle';document.body.insertAdjacentHTML('afterbegin','<nav class="netflixNav"><div class="svLiquidPane" data-swifly-renderer="blur"></div></nav>');});
   for(const blur of [12,2,0]){
