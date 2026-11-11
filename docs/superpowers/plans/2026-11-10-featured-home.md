@@ -29,7 +29,7 @@
 
 - [x] Add a browser regression for native poster filters during scroll/details/featured motion and restoration.
 - [x] Suspend only moving touch/narrow poster blur, retaining its current paint and controls.
-- [ ] Verify phone-width rendering and ship this fix with the featured update.
+- [x] Verify phone-width rendering and ship this fix with the featured update.
 
 ### Task 2: Featured data and controller
 
@@ -40,6 +40,16 @@
 
 ### Task 3: Verify and publish
 
-- [ ] Run focused/full tests, syntax and production build.
-- [ ] Review phone/tablet/desktop transitions and obtain independent code review.
-- [ ] Publish to the existing GitHub/Render service; verify live assets, health and CI.
+- [x] Run focused/full tests, syntax and production build.
+- [x] Review phone/desktop transitions, responsive regressions and independent code review.
+- [x] Publish to the existing GitHub/Render service; verify live assets, health and CI.
+
+## Completion evidence — 2026-11-11
+
+- Runtime release: `c36454f974defb8f98fd8bebcb2d3b752b98aae2`.
+- CI: https://github.com/lukasbonthy/SwiflyTV/actions/runs/43031998989 — syntax, 1,588 general tests, all 232 browser tests, recommendation checks and acceptance passed.
+- Render: `dep-dbq771vf3r2c73bcgd8g` is live on SwiflyTV-1; the React entry and all three shell CSS bundles match local SHA-256 values.
+- Live finish CSS: `finish-53a41b415954f01941f1.css`; application error logs after rollout were empty.
+- Original backup remains `backup/original-before-react-v173-20261110` at `70481c2dcc54f14858094dea8c08cee818be8457`.
+- Review addressed image-size compatibility, Xbox sizing, keyboard resume, glow caching, stale completions, inert snapshot filters, failed-art recovery and TV framing. TV spacing assertions compare displayed pixel boundaries to avoid fractional scroll roundoff.
+- No motion blur added. Physical-device FPS was not measured.
