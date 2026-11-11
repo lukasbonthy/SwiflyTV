@@ -145,27 +145,47 @@ body.svCleanShell .dsContent > .dsRow.svCatalogRow > .movieRail {contain:layout 
 }
 
 
-/* Secondary controls use soft glass while the scene moves, without destroying
-   their renderer, lens geometry, or cached texture. Navigation and featured
-   actions keep one liquid material throughout scrolling and settling. */
+/* Select a prepared one-sample optical output while anything travels. The
+   glass still refracts the real backdrop, but skips three channel matrices
+   and two blend passes. Resting glass retains the original full material. */
 @media (prefers-reduced-transparency: no-preference) {
-  html[data-sv-scroll-glass="soft"] body.svCleanShell:not([data-st-glass="off"]):not([data-st-glass="subtle"]) .svLiquidPane.svLiquidPane:not(.svCardActionLens):not(.netflixNav > .svLiquidPane,.mobileNav > .svLiquidPane,.dsWelcomeNav > .svLiquidPane):not(:is(.dsHeroActions,.dsWelcomeActions) > :is(button,a) > .svLiquidPane,.dsHeroMuteToggle > .svLiquidPane) {
-    -webkit-backdrop-filter: blur(4px) saturate(1.10) !important;
-    backdrop-filter: blur(4px) saturate(1.10) !important;
-    background: rgb(var(--sv-glass-color, 255 255 255) / .33) !important;
+  html[data-sv-scroll-glass="soft"] body.svCleanShell:not([data-st-glass="off"]):not([data-st-glass="subtle"]) .svLiquidPane.svLiquidPane[data-swifly-renderer="svg"],
+  body.svCleanShell:not([data-st-glass="off"]):not([data-st-glass="subtle"]):has(.svDetailDialog:is([data-sv-detail-state="opening"],[data-sv-detail-state="closing"])) .svLiquidPane.svLiquidPane[data-swifly-renderer="svg"],
+  body.svCleanShell:not([data-st-glass="off"]):not([data-st-glass="subtle"]):has([data-sv-rail-moving="true"]) .svLiquidPane.svLiquidPane[data-swifly-renderer="svg"] {
+    -webkit-backdrop-filter:var(--sv-glass-motion-filter,var(--sv-glass-filter)) saturate(var(--sv-glass-saturation,1)) !important;
+    backdrop-filter:var(--sv-glass-motion-filter,var(--sv-glass-filter)) saturate(var(--sv-glass-saturation,1)) !important;
+    transition-property:none !important;
+  }
+  html[data-sv-scroll-glass="soft"] body.svCleanShell:not([data-st-glass="off"]):not([data-st-glass="subtle"]) .svLiquidPane.svLiquidPane:not(.svCardActionLens):not([data-swifly-renderer="svg"]),
+  body.svCleanShell:not([data-st-glass="off"]):not([data-st-glass="subtle"]):has(.svDetailDialog:is([data-sv-detail-state="opening"],[data-sv-detail-state="closing"]),[data-sv-rail-moving="true"]) .svLiquidPane.svLiquidPane:not(.svCardActionLens):not([data-swifly-renderer="svg"]) {
+    -webkit-backdrop-filter: blur(min(4px,var(--st-glass-blur,10px))) saturate(1.10) !important;
+    backdrop-filter: blur(min(4px,var(--st-glass-blur,10px))) saturate(1.10) !important;
     /* No filter transition: interpolating between SVG and blur can force
        repeated offscreen paints during an otherwise compositor-only scroll. */
     transition-property: none !important;
   }
   html[data-sv-scroll-glass="soft"] body.svCleanShell:not([data-st-glass="off"]):not([data-st-glass="subtle"]) .svGlassSurface.svGlassSurface:not(.svNavMatchedOptic) {
-    -webkit-backdrop-filter: blur(4px) saturate(1.08) !important;
-    backdrop-filter: blur(4px) saturate(1.08) !important;
+    -webkit-backdrop-filter: blur(min(4px,var(--st-glass-blur,12px))) saturate(1.08) !important;
+    backdrop-filter: blur(min(4px,var(--st-glass-blur,12px))) saturate(1.08) !important;
   }
   /* Don't stack a second blur behind the already-soft child pane. */
-  html[data-sv-scroll-glass="soft"] body.svCleanShell .svGlassControl.svNavMatchedOptic.svGlassControl {
+  html[data-sv-scroll-glass="soft"] body.svCleanShell:not([data-st-glass="subtle"]) .svGlassControl.svNavMatchedOptic.svGlassControl {
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }
+  /* Auto mobile uses Studio's native subtle material. Cap its existing blur
+     rather than replacing the setting: 0–3px choices must never get heavier. */
+  html[data-sv-scroll-glass="soft"] body.svCleanShell,
+  body.svCleanShell:has(.svDetailDialog:is([data-sv-detail-state="opening"],[data-sv-detail-state="closing"]),[data-sv-rail-moving="true"]) {
+    --sv-moving-blur-cap:4px;
+  }
+}
+
+/* Keep the cached decorative atmosphere still while the user's content moves.
+   This changes only playback state, not geometry, visibility or scroll input. */
+html[data-sv-scroll-glass="soft"] body.svCleanShell .svAuroraRibbon,
+body.svCleanShell:has([data-sv-rail-moving="true"]) .svAuroraRibbon {
+  animation-play-state:paused !important;
 }
 
 /* Preserve the zero-paint fast path for invisible poster actions. The soft

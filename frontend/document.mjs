@@ -149,7 +149,13 @@ export function MovieRailSection({node}) {
   useLayoutEffect(()=>{
     const rail=railRef.current,direction=Math.sign(start-previousStart.current);previousStart.current=start;
     pageMotion.current?.cancel();pageMotion.current=null;
-    if(!native&&direction&&!reduced()&&typeof rail?.animate==='function')pageMotion.current=rail.animate([{transform:`translate3d(${direction*14}px,0,0)`},{transform:'translate3d(0,0,0)'}],{duration:220,easing:'cubic-bezier(.2,.7,.2,1)'});
+    if(rail)delete rail.dataset.svRailMoving;
+    if(!native&&direction&&!reduced()&&typeof rail?.animate==='function'){
+      rail.dataset.svRailMoving='true';
+      const animation=rail.animate([{transform:`translate3d(${direction*14}px,0,0)`},{transform:'translate3d(0,0,0)'}],{duration:220,easing:'cubic-bezier(.2,.7,.2,1)'});pageMotion.current=animation;
+      const settle=()=>{if(pageMotion.current!==animation)return;pageMotion.current=null;delete rail.dataset.svRailMoving;};
+      animation.finished?.then(settle,settle);
+    }
   },[start,native]);
   useEffect(()=>()=>{window.clearTimeout(scrollTimer.current);pageMotion.current?.cancel();},[]);
   useEffect(()=>{

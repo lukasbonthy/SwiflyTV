@@ -332,7 +332,7 @@ test('Hero controls mount the SAME size-aware navbar renderer, not only a global
   const pane=control.querySelector(':scope > .svLiquidPane.svNavMatchedLens');
   assert(pane,'button uses an actual child pane exactly like navbar');
   assert.equal(pane.dataset.swiflyRenderer,'svg');
-  assert.equal(pane.querySelectorAll('feDisplacementMap').length,3,'reuse the measured three-channel navigation filter');
+  assert.equal(pane.querySelectorAll('filter:not([data-sv-motion-filter]) feDisplacementMap').length,3,'reuse the measured three-channel navigation filter');
   assert(control.querySelector('.svNavMatchedLabel'),'direct labels remain above the pane');
   assert(!control.classList.contains('svSharedGlass'),'no duplicate CSS filter on button host');
  }
@@ -374,7 +374,7 @@ test('Hero glass shares the reference nav optics and keeps its graph when resize
  w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');env.intersect(true);w.flush(16);
  const nav=d.querySelector('.netflixNav>.svLiquidPane');
  const hero=d.querySelector('.dsHeroActions>.dsPrimaryBtn>.svNavMatchedLens');
- const scales=pane=>[...pane.querySelectorAll('feDisplacementMap')].map(node=>Number(node.getAttribute('scale')));
+ const scales=pane=>[...pane.querySelectorAll('filter:not([data-sv-motion-filter]) feDisplacementMap')].map(node=>Number(node.getAttribute('scale')));
  assert.deepEqual(scales(nav),[-180,-170,-160],'navbar retains the measured channel depth');
  assert.deepEqual(scales(hero),scales(nav),'hero Play must have exactly the same reference refraction as navbar');
  const originalGraph=hero.querySelector('svg.svLiquidPane__filters');
@@ -476,7 +476,7 @@ test('Genres mounts the SAME physical SVG pane as the navbar and stays keyboard 
  const summary=d.querySelector('.genreDropdown > summary'),pane=summary.querySelector(':scope > .svNavMatchedLens.svLiquidPane');
  assert(summary.classList.contains('svNavMatchedOptic'),'Genres should no longer be only frosted');
  assert(pane && pane.dataset.swiflyRenderer==='svg','use the navbar optical renderer');
- assert.equal(pane.querySelectorAll('feDisplacementMap').length,3);
+ assert.equal(pane.querySelectorAll('filter:not([data-sv-motion-filter]) feDisplacementMap').length,3);
  assert.equal(summary.textContent.includes('Genres'),true);
  assert(!pane.hasAttribute('tabindex'),'optical backdrop is not a focus target');
  env.finish();
@@ -527,7 +527,7 @@ test('Mobile and desktop navigation share the reference live optics',()=>{
  d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.flush(16);
  for(const pane of d.querySelectorAll('.svLiquidPane')){
   assert.equal(pane.dataset.swiflyRenderer,'svg');
-  assert.deepEqual([...pane.querySelectorAll('feDisplacementMap')].map(n=>Number(n.getAttribute('scale'))),[-180,-170,-160]);
+  assert.deepEqual([...pane.querySelectorAll('filter:not([data-sv-motion-filter]) feDisplacementMap')].map(n=>Number(n.getAttribute('scale'))),[-180,-170,-160]);
  }
  assert.equal(env.textures.length,2,'the mobile bar has a softer shoulder, cached separately');assert.equal(w.frameCount(),0);env.finish();
 });
@@ -658,7 +658,7 @@ test('Resizing a live pane keeps finite bounded optics and refreshes its geometr
  w.boot('liquid-glass/liquid-glass.js');w.flush(16);const previous=pane.querySelector('feImage').getAttribute('href');
  pane.getBoundingClientRect=()=>({width:340,height:60,left:0,top:0,right:340,bottom:60});env.resize();w.flush(32);
  assert.notEqual(pane.querySelector('feImage').getAttribute('href'),previous);
- assert.deepEqual([...pane.querySelectorAll('feDisplacementMap')].map(n=>Number(n.getAttribute('scale'))),[-180,-170,-160]);
+ assert.deepEqual([...pane.querySelectorAll('filter:not([data-sv-motion-filter]) feDisplacementMap')].map(n=>Number(n.getAttribute('scale'))),[-180,-170,-160]);
  assert.equal(w.frameCount(),0);env.finish();
 });
 

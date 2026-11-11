@@ -16,7 +16,7 @@ test('wheel motion switches full liquid refraction to soft glass and restores at
   w.SwiflyPremiumScroll.destroy();env.finish();
 });
 
-test('native scroll speed restores real glass before movement fully ends', () => {
+test('native glass keeps its moving tier through slow momentum and restores at scrollend', () => {
   const env=browser('<main>Catalog</main>'),w=env.window,d=w.document;
   let clock=100; w.performance.now=()=>clock;
   w.boot('scroll.js');
@@ -27,11 +27,12 @@ test('native scroll speed restores real glass before movement fully ends', () =>
   clock=225;w.scrollTo({top:111});d.dispatchEvent(new w.Event('scroll'));
   assert.equal(d.documentElement.dataset.svScrollGlass,'soft');
   clock=245;w.scrollTo({top:112});d.dispatchEvent(new w.Event('scroll'));
-  assert.equal(d.documentElement.dataset.svScrollGlass,undefined,'tiny positive motion reactivates full refraction');
+  assert.equal(d.documentElement.dataset.svScrollGlass,'soft','The final moving frames retain their lighter material');
+  d.dispatchEvent(new w.Event('scrollend'));assert.equal(d.documentElement.dataset.svScrollGlass,undefined);
   w.SwiflyPremiumScroll.destroy();env.finish();
 });
 
-test('high velocity Lenis frames use soft glass; slow frames restore original lens before glide ends', () => {
+test('Lenis keeps its moving material through the final deceleration frames', () => {
   const env=browser('<main>Films</main>'),w=env.window,d=w.document;
   let clock=100,engine;
   w.performance.now=()=>clock;
@@ -51,8 +52,9 @@ test('high velocity Lenis frames use soft glass; slow frames restore original le
   for(const now of frames){clock=now;w.flush(now);result.push(d.documentElement.dataset.svScrollGlass);}
   assert.equal(result[0],'soft');
   assert.equal(result[1],'soft');
-  assert.equal(result[result.length-1],undefined,'slow frames resume the original glass even during a continued Lenis glide');
+  assert.equal(result[result.length-1],'soft','Full dispersion must wait until motion finishes');
   assert.equal(engine.isScrolling,'smooth');
+  engine.isScrolling=false;w.flush(228);d.dispatchEvent(new w.Event('scrollend'));assert.equal(d.documentElement.dataset.svScrollGlass,undefined);
   w.SwiflyPremiumScroll.destroy();env.finish();
 });
 
@@ -61,11 +63,10 @@ test('adaptive CSS bypasses SVG shaders with frosted blur and respects appearanc
   const js=source('scroll.js');
   assert.match(css,/data-sv-scroll-glass="soft"/);
   assert.match(css,/\.svLiquidPane\.svLiquidPane/);
-  assert.match(css,/backdrop-filter:\s*blur\(4px\) saturate\(1\.10\) !important/);
+  assert.match(css,/backdrop-filter:\s*blur\(min\(4px,var\(--st-glass-blur,10px\)\)\) saturate\(1\.10\) !important/);
   assert.match(css,/data-st-glass="off"/);
   assert.match(css,/data-st-glass="subtle"/);
   assert.match(css,/prefers-reduced-transparency: no-preference/);
-  assert.match(js,/glassSpeedThreshold = \.115/);
   assert.match(js,/sampleLenisGlass\(elapsed\)/);
   assert.doesNotMatch(js,/setInterval\(/);
 });

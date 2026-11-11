@@ -47,7 +47,7 @@ test('Glass keeps the reference filter and field inside each actual control',{sk
   await page.setContent('<!doctype html><style>'+asset('liquid-glass/liquid-glass.css')+'.host{position:relative;width:360px;height:60px}.small{width:44px;height:44px}</style><body class="svCleanShell"><div class="host"><div class="svLiquidPane" data-swifly-glass></div></div><div class="host small"><div class="svLiquidPane" data-swifly-glass></div></div></body>');
   await page.addScriptTag({content:asset('liquid-glass/liquid-glass.js')});
   await page.waitForFunction(()=>document.querySelectorAll('[data-swifly-renderer="svg"]').length===2);
-  const fields=await page.locator('.svLiquidPane').evaluateAll(nodes=>nodes.map(n=>({height:n.getBoundingClientRect().height,width:n.getBoundingClientRect().width,scales:[...n.querySelectorAll('feDisplacementMap')].map(x=>Number(x.getAttribute('scale')))})));
+  const fields=await page.locator('.svLiquidPane').evaluateAll(nodes=>nodes.map(n=>({height:n.getBoundingClientRect().height,width:n.getBoundingClientRect().width,scales:[...n.querySelectorAll('filter:not([data-sv-motion-filter]) feDisplacementMap')].map(x=>Number(x.getAttribute('scale')))})));
   for(const field of fields){assert.deepEqual(field.scales,[-180,-170,-160],'controls retain the measured channel depth');assert(field.width>0&&field.height>0);}
   assert(await page.locator('.svLiquidPane filter').evaluateAll(nodes=>nodes.every(n=>n.getAttribute('x')==='0%'&&n.getAttribute('y')==='0%'&&n.getAttribute('width')==='100%'&&n.getAttribute('height')==='100%')),'filter bounds must match their pane, without an enlarged sampler');
  }finally{await browser.close();}

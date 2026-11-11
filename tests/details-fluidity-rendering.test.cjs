@@ -16,6 +16,45 @@ async function fixture(browser,cssFallback=false){
  return page;
 }
 
+test('moving details use one live optical sample and restore the original three channels at rest',{skip:!available&&'Chromium is not installed'},async()=>{
+ const browser=await chromium.launch({headless:true});
+ try{
+  const page=await fixture(browser);
+  await page.evaluate(async()=>{const opening=SwiflyDetails.open('/movie/101',document.getElementById('open'));document.querySelector('.svDetailPanel').getAnimations().forEach(animation=>animation.finish());await opening;});
+  await page.waitForFunction(()=>document.querySelector('.svDetailActions .svNavMatchedLens')?.dataset.swiflyRenderer==='svg');
+  await page.evaluate(()=>document.querySelector('main').insertAdjacentHTML('beforeend','<article class="movieCard"><div class="dsCardArtwork"><div class="dsCardQuickActions"><button class="dsMiniBtn">Save</button></div></div></article>'));
+  await page.locator('main .svCardActionLens').waitFor({state:'attached'});
+  const selected=()=>page.locator('.svDetailActions .svNavMatchedLens').first().evaluate(pane=>{
+   const filter=getComputedStyle(pane).backdropFilter,id=filter.match(/#([^"\s)]+)/)?.[1],graph=id&&document.getElementById(id);
+   return {filter,samples:graph?.querySelectorAll('feDisplacementMap').length,channels:graph?.querySelectorAll('feColorMatrix').length,blends:graph?.querySelectorAll('feBlend').length};
+  });
+  assert.equal((await selected()).samples,3);
+  await page.evaluate(()=>document.querySelector('dialog').dataset.svDetailState='opening');
+  assert.deepEqual({samples:(await selected()).samples,channels:(await selected()).channels,blends:(await selected()).blends},{samples:1,channels:0,blends:0});
+  assert.equal(await page.locator('main .svCardActionLens').evaluate(pane=>getComputedStyle(pane).backdropFilter),'none','Moving the sheet must not activate hidden background-card filters');
+  await page.evaluate(()=>document.querySelector('dialog').dataset.svDetailState='open');
+  assert.equal((await selected()).samples,3);
+ }finally{await browser.close();}
+});
+
+test('default native mobile glass caps moving blur without increasing a lower user setting',{skip:!available&&'Chromium is not installed'},async()=>{
+ const browser=await chromium.launch({headless:true});
+ try{
+  const page=await fixture(browser);await page.addStyleTag({content:asset('studio/studio.css')});
+  await page.evaluate(async()=>{const opening=SwiflyDetails.open('/movie/101',document.getElementById('open'));document.querySelector('.svDetailPanel').getAnimations().forEach(animation=>animation.finish());await opening;});
+  await page.waitForFunction(()=>document.querySelector('.svDetailActions .svNavMatchedLens')?.dataset.swiflyRenderer==='svg');
+  await page.evaluate(()=>{document.body.dataset.stGlass='subtle';document.body.insertAdjacentHTML('afterbegin','<nav class="netflixNav"><div class="svLiquidPane" data-swifly-renderer="blur"></div></nav>');});
+  for(const blur of [12,2,0]){
+   await page.evaluate(value=>document.documentElement.style.setProperty('--st-glass-blur',value+'px'),blur);
+   const filters=()=>page.locator('.netflixNav>.svLiquidPane,.svDetailActions>.svGlassControl').evaluateAll(nodes=>nodes.map(node=>getComputedStyle(node).backdropFilter));
+   await page.evaluate(()=>document.documentElement.dataset.svScrollGlass='soft');
+   const moving=await filters();assert(moving.length>=3,'Check both navigation and the mounted action hosts');assert(moving.every(value=>value.includes('blur('+Math.min(blur,4)+'px)')),JSON.stringify({blur,moving}));
+   await page.evaluate(()=>delete document.documentElement.dataset.svScrollGlass);
+   assert((await filters()).every(value=>value.includes('blur('+blur+'px)')));
+  }
+ }finally{await browser.close();}
+});
+
 for(const cssFallback of [false,true])test((cssFallback?'CSS fallback':'Native animation')+' detail movement does not relayout the sheet on every frame',{skip:!available&&'Chromium is not installed'},async()=>{
  const browser=await chromium.launch({headless:true});
  try{

@@ -264,8 +264,8 @@ body.svCleanShell[data-sv-appearance] :is(.svLiquidPane,.svGlassSurface[data-swi
   --sv-glass-lens-blur:var(--st-glass-blur,18px) !important;
 }
 body.svCleanShell[data-st-glass="subtle"] :is(.svLiquidPane,.svGlassSurface.svGlassSurface[data-swifly-renderer]) {
-  -webkit-backdrop-filter:blur(var(--st-glass-blur,18px)) saturate(1.05) !important;
-  backdrop-filter:blur(var(--st-glass-blur,18px)) saturate(1.05) !important;
+  -webkit-backdrop-filter:blur(min(var(--st-glass-blur,18px),var(--sv-moving-blur-cap,28px))) saturate(1.05) !important;
+  backdrop-filter:blur(min(var(--st-glass-blur,18px),var(--sv-moving-blur-cap,28px))) saturate(1.05) !important;
 }
 body.svCleanShell[data-st-glass="liquid"] :is(.svLiquidPane[data-swifly-renderer="blur"],.svGlassSurface[data-swifly-renderer="blur"]) {
   -webkit-backdrop-filter:blur(var(--st-glass-blur,18px)) saturate(1.2) !important;

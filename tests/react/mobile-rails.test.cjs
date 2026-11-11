@@ -93,6 +93,17 @@ test('tablet tracks and desktop resize preserve paging',async()=>{
   }finally{await f.close();}
 });
 
+test('desktop poster motion keeps its light optical tier until the current animation settles',async()=>{
+ const f=await fixture(1280);try{
+  const pending=[];f.rail.animate=()=>{let resolve;const finished=new Promise(done=>resolve=done);const animation={finished,cancel(){resolve();}};pending.push({animation,resolve});return animation;};
+  await React.act(async()=>f.w.document.querySelector('[aria-label="Next titles"]').click());
+  assert.equal(f.rail.dataset.svRailMoving,'true');
+  await React.act(async()=>f.w.document.querySelector('[aria-label="Next titles"]').click());
+  await React.act(async()=>pending[0].resolve());assert.equal(f.rail.dataset.svRailMoving,'true','An obsolete completion cannot change the replacement animation');
+  await React.act(async()=>pending[1].resolve());assert.equal(f.rail.dataset.svRailMoving,undefined);
+ }finally{await f.close();}
+});
+
 test('a queued native scroll cannot reset the desktop page after a breakpoint change',async()=>{
   const f=await fixture();try{
     await f.scroll(10);

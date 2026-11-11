@@ -151,7 +151,7 @@
     const previousRenderer = element.dataset.swiflyRenderer;
     const previousSupport = element.dataset.swiflyOpticSupport;
     if (svgCapable) element.dataset.swiflyOpticSupport = 'true';
-    const previousProperties = ['--sv-glass-default-tint', '--sv-glass-saturation', '--sv-glass-radius', '--sv-glass-filter'].map(property => [property, element.style.getPropertyValue(property), element.style.getPropertyPriority(property)]);
+    const previousProperties = ['--sv-glass-default-tint', '--sv-glass-saturation', '--sv-glass-radius', '--sv-glass-filter', '--sv-glass-motion-filter'].map(property => [property, element.style.getPropertyValue(property), element.style.getPropertyPriority(property)]);
     element.style.setProperty('--sv-glass-default-tint', config.tint);
     element.style.setProperty('--sv-glass-saturation', config.saturation);
     if (element.dataset.glassRadius) element.style.setProperty('--sv-glass-radius', numeric(element, 'glassRadius', 20) + 'px');
@@ -161,6 +161,7 @@
     function removeGraph() {
       svg?.remove(); svg = null; map = null; dimensions = '';
       element.style.removeProperty('--sv-glass-filter');
+      element.style.removeProperty('--sv-glass-motion-filter');
     }
     // The measured ShuttleTV material separates and recombines three color
     // samples. Keep its full lens depth, with one cached geometry field and
@@ -184,8 +185,19 @@
         svgElement('feBlend',{in:'rg',in2:'blue',mode:'screen',result:'refracted'}),
         svgElement('feGaussianBlur',{in:'refracted',stdDeviation:config.displace})
       );
-      defs.append(filter); svg.append(defs); element.append(svg);
+      // A moving lens needs its shape, not three separately composited color
+      // channels. Prepare both outputs together so CSS can select the cheaper
+      // live refraction without DOM work on an animation frame.
+      const motionId=filterId+'-motion';
+      const motion=svgElement('filter',{id:motionId,'data-sv-motion-filter':'',x:'0%',y:'0%',width:'100%',height:'100%','color-interpolation-filters':'sRGB'});
+      motion.append(
+        svgElement('feImage',{href:texture.map,x:0,y:0,width:'100%',height:'100%',preserveAspectRatio:'none',result:'map'}),
+        svgElement('feDisplacementMap',{in:'SourceGraphic',in2:'map',scale:scale+10,xChannelSelector:'R',yChannelSelector:'G'}),
+        svgElement('feGaussianBlur',{stdDeviation:config.displace})
+      );
+      defs.append(filter,motion); svg.append(defs); element.append(svg);
       element.style.setProperty('--sv-glass-filter', 'url(#' + filterId + ')');
+      element.style.setProperty('--sv-glass-motion-filter','url(#'+motionId+')');
     }
     function prepareMap() {
       if (!allowed()) return;
@@ -222,8 +234,9 @@
         if (!texture) {removeGraph();renderer('blur');return;}
         if (!svg) createGraph(texture,scale);
         else {
-          map.setAttribute('href',texture.map);
-          svg.querySelectorAll('feDisplacementMap').forEach((field,channel)=>field.setAttribute('scale',scale+channel*10));
+          svg.querySelectorAll('feImage').forEach(image=>image.setAttribute('href',texture.map));
+          svg.querySelectorAll('filter:not([data-sv-motion-filter]) feDisplacementMap').forEach((field,channel)=>field.setAttribute('scale',scale+channel*10));
+          svg.querySelector('[data-sv-motion-filter] feDisplacementMap').setAttribute('scale',scale+10);
         }
         dimensions = key;
         renderer('svg');

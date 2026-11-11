@@ -25,7 +25,7 @@ test('Visible optical panes stay inside their Party hosts and leave page content
    assert(graph,'supported segmented bars share an actual rounded lens');assert.equal(scale,180,'shared bars keep the measured lens depth');
   }
   await page.waitForFunction(()=>document.querySelector('.dsHeroActions .svNavMatchedLens')?.dataset.swiflyRenderer==='svg');
-  const dispersion=await page.locator('.svNavMatchedLens filter').evaluateAll(filters=>filters.map(filter=>({
+  const dispersion=await page.locator('.svNavMatchedLens filter:not([data-sv-motion-filter])').evaluateAll(filters=>filters.map(filter=>({
    scales:[...filter.querySelectorAll('feDisplacementMap')].map(node=>Number(node.getAttribute('scale')))
   })));
   assert(dispersion.length>3,'hero and segmented surfaces retain real refraction');
