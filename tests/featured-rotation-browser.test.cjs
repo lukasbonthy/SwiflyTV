@@ -144,13 +144,14 @@ test('phone features use slim visible pills, readable actions and a black tail a
     const result=await f.page.evaluate(()=>{
      const hero=document.querySelector('[data-sv-featured]'),r=n=>n.getBoundingClientRect().toJSON(),play=hero.querySelector('[data-play-id]');
      return {hero:r(hero),nav:r(document.querySelector('.netflixNav')),brand:getComputedStyle(document.querySelector('.svMobileBrandMark')).display,wordmark:getComputedStyle(document.querySelector('.netflixWordmark')).display,
-      actions:[...hero.querySelectorAll('.dsHeroActions > :is(a,button)')].map(n=>{const style=getComputedStyle(n,'::before');return {rect:r(n),top:parseFloat(style.top),bottom:parseFloat(style.bottom),face:style.backgroundColor,transform:style.transform};}),
+      actions:[...hero.querySelectorAll('.dsHeroActions > :is(a,button)')].map(n=>{const style=getComputedStyle(n,'::before'),pane=n.querySelector('.svNavMatchedLens');return {rect:r(n),top:parseFloat(style.top),bottom:parseFloat(style.bottom),face:style.backgroundColor,transform:style.transform,pane:pane?{height:r(pane).height,display:getComputedStyle(pane).display,filter:getComputedStyle(pane).backdropFilter}:null};}),
       playColor:getComputedStyle(play).color,shade:getComputedStyle(hero.querySelector('.dsHeroGlass')).backgroundImage,mask:getComputedStyle(hero.querySelector('.dsHeroGlass')).maskImage,glow:Number(getComputedStyle(document.querySelector('.svHeroSpill')).opacity),overflow:document.documentElement.scrollWidth>innerWidth};
     });
     assert.equal(result.overflow,false,JSON.stringify({width,glass,result}));
     assert(result.actions.every(a=>a.rect.height>=44&&a.rect.width>=44&&a.rect.left>=0&&a.rect.right<=width),JSON.stringify({width,glass,result}));
     assert(result.actions.every(a=>Math.abs(a.rect.height-a.top-a.bottom-36)<1),JSON.stringify({width,glass,result}));
     assert(result.actions.every(a=>a.transform==='none'),'Legacy shine must not displace the visible pill');assert.equal(result.actions[0].face,'rgb(255, 255, 255)');assert.equal(result.playColor,'rgb(16, 17, 21)');
+    if(glass==='liquid')assert(result.actions.every(a=>a.pane&&a.pane.display!=='none'&&Math.abs(a.pane.height-36)<1&&a.pane.filter!=='none'),'Liquid controls keep a visible, inset live optical pane');
     assert(result.nav.width<=220);assert.equal(result.wordmark,'none');assert.notEqual(result.brand,'none');
     assert.equal(result.mask,'none');assert(result.shade.endsWith('rgb(0, 0, 0) 100%)'),result.shade);assert(result.glow<=.12);
     assert.equal(await f.page.getByRole('link',{name:'More info',exact:true}).getAttribute('href'),'/movie/346698');

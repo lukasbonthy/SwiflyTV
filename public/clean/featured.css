@@ -133,13 +133,15 @@ body.svCleanShell:is([data-st-hero-mode="compact"],[data-st-hero-mode="banner"])
   }
   html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] .dsHeroActions > .dsPrimaryBtn::before {background:#fff;border-color:#fff;}
   html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] .dsHeroActions > .dsIconBtn::before {inset:4px;}
-  html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] > .dsHeroContent:not([data-sv-featured-ghost]) .dsHeroActions > :is(.dsSecondaryBtn,.dsIconBtn)::before {
+  html:not([data-sv-tv="true"]) body.svCleanShell[data-st-glass="subtle"] main[data-st-home] > [data-sv-featured] > .dsHeroContent:not([data-sv-featured-ghost]) .dsHeroActions > :is(.dsSecondaryBtn,.dsIconBtn)::before {
     -webkit-backdrop-filter:var(--sv-featured-backdrop,blur(min(var(--st-glass-blur,18px),var(--sv-moving-blur-cap,28px))) saturate(1.05)) !important;
     backdrop-filter:var(--sv-featured-backdrop,blur(min(var(--st-glass-blur,18px),var(--sv-moving-blur-cap,28px))) saturate(1.05)) !important;
   }
   html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] .dsHeroActions > :is(a,button).svNavMatchedOptic > .svNavMatchedLens.svLiquidPane {
-    display:none !important;
+    inset:4px 0 !important;width:auto !important;height:auto !important;border:0 !important;box-shadow:none !important;
   }
+  html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] .dsHeroActions > :is(.dsSecondaryBtn,.dsIconBtn).svNavMatchedOptic > .svNavMatchedLens.svLiquidPane {background:transparent !important;}
+  html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] .dsHeroActions > .dsIconBtn.svNavMatchedOptic > .svNavMatchedLens.svLiquidPane {inset:4px !important;}
   html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] .dsHeroActions:is(:has(> [data-resume-action]),.svFeaturedResuming) {
     display:grid !important;grid-template-columns:auto auto 44px;justify-content:center;
   }
