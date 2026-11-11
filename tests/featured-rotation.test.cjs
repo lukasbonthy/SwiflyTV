@@ -25,14 +25,14 @@ test('Home serializes five unique valid movies from existing requests without ch
  }finally{await new Promise(resolve=>api.io.close(resolve));}
 });
 
-function fixture({reduced=true,manualImages=false}={}){
- const slides=[1,2,3].map(id=>({id,type:'movie',title:'Film '+id,overview:'Story '+id,poster:'/poster.jpg',backdrop:'/scene-'+id+'.jpg',art:'https://image.tmdb.org/t/p/w1280/scene-'+id+'.jpg',mobileArt:'https://image.tmdb.org/t/p/w780/scene-'+id+'.jpg',largeArt:'https://image.tmdb.org/t/p/w1920/scene-'+id+'.jpg',palette:'https://image.tmdb.org/t/p/w300/scene-'+id+'.jpg',logo:'',rating:'7.8',year:'2026',metadata:['2026','Movie']}));
- const env=browser('<main data-st-home><section class="dsHero" data-sv-featured><div class="dsHeroArt"><div class="dsHeroBg"></div></div><div class="dsHeroContent"><div class="dsEyebrow">Featured</div><h1 class="dsHeroTitleArt"><span class="dsHeroTitleText">Film 1</span></h1><div class="dsHeroMeta"></div><p>Story 1</p><div class="dsHeroActions"><a class="dsPrimaryBtn" data-play-id="1" href="/watch/movie/1?mode=movie">Play</a><a class="dsSecondaryBtn" href="/movie/1">Details</a><button data-watch-id="1">+</button></div></div><nav data-sv-featured-controls><button data-sv-featured-prev>Previous</button>'+slides.map((s,i)=>'<button data-sv-featured-go="'+i+'">'+s.title+'</button>').join('')+'<button data-sv-featured-next>Next</button><button data-sv-featured-pause>Pause</button></nav><span data-sv-featured-status></span><script type="application/json" data-sv-featured-data>'+JSON.stringify(slides)+'</script></section><div class="svHeroLightBridge"><div class="svHeroSpill"><img src="/old.jpg"></div></div><section class="dsContent"></section></main>',{reduced});
+function fixture({reduced=true,manualImages=false,logo=false}={}){
+ const slides=[1,2,3].map(id=>({id,type:'movie',title:'Film '+id,overview:'Story '+id,poster:'/poster.jpg',backdrop:'/scene-'+id+'.jpg',art:'https://image.tmdb.org/t/p/w1280/scene-'+id+'.jpg',mobileArt:'https://image.tmdb.org/t/p/w780/scene-'+id+'.jpg',largeArt:'https://image.tmdb.org/t/p/w1920/scene-'+id+'.jpg',palette:'https://image.tmdb.org/t/p/w300/scene-'+id+'.jpg',logo:logo&&id===2?'https://image.tmdb.org/t/p/w500/logo-2.svg':'',rating:'7.8',year:'2026',metadata:['2026','Movie']}));
+ const env=browser('<main data-st-home><section class="dsHero" data-sv-featured><div class="dsHeroArt"><div class="dsHeroBg"></div></div><div class="dsHeroContent"><div class="dsEyebrow">Featured</div><h1 class="dsHeroTitleArt"><span class="dsHeroTitleText">Film 1</span></h1><div class="dsHeroMeta"></div><p>Story 1</p><div class="dsHeroActions"><a class="dsPrimaryBtn" data-play-id="1" href="/watch/movie/1?mode=movie">Play</a><a class="dsSecondaryBtn" href="/movie/1">Details</a><button data-watch-id="1">+</button></div></div><nav data-sv-featured-controls><button data-sv-featured-prev>Previous</button>'+slides.map((s,i)=>'<button data-sv-featured-go="'+i+'">'+'<span><i data-sv-featured-progress></i></span>'+s.title+'</button>').join('')+'<button data-sv-featured-next>Next</button><button data-sv-featured-pause>Pause</button></nav><span data-sv-featured-status></span><script type="application/json" data-sv-featured-data>'+JSON.stringify(slides)+'</script></section><div class="svHeroLightBridge"><div class="svHeroSpill"><img src="/old.jpg"></div></div><section class="dsContent"></section></main>',{reduced});
  const w=env.window,images=[];w.HTMLCanvasElement.prototype.getContext=()=>null;
- w.Image=class{constructor(){this.naturalWidth=1280;this.naturalHeight=720;images.push(this);}set src(value){this._src=value;if(!manualImages)queueMicrotask(()=>this.onload?.());}get src(){return this._src;}decode(){return Promise.resolve();}};
+ w.Image=class{constructor(){const image=w.document.createElement('img');let src='';Object.defineProperties(image,{naturalWidth:{value:1280},naturalHeight:{value:720},src:{get:()=>src,set:value=>{src=value;if(!manualImages)queueMicrotask(()=>image.onload?.());}}});image.decode=()=>Promise.resolve();images.push(image);return image;}};
  const timers=new Map();let timerId=0;
- w.setTimeout=(fn,delay)=>{timers.set(++timerId,{fn,delay});return timerId;};w.clearTimeout=id=>timers.delete(id);
- const animations=[];w.HTMLElement.prototype.animate=function(frames,options){let resolve;const a={frames,options,node:this,finished:new Promise(r=>resolve=r),cancel(){resolve();},finish(){resolve();}};animations.push(a);return a;};
+ w.setTimeout=(fn,delay)=>{const id=++timerId;timers.set(id,{fn:()=>{timers.delete(id);fn();},delay});return id;};w.clearTimeout=id=>timers.delete(id);
+ const animations=[];w.HTMLElement.prototype.animate=function(frames,options){let resolve;const a={frames,options,node:this,finished:new Promise(r=>resolve=r),canceled:false,cancel(){this.canceled=true;resolve();},finish(){resolve();}};animations.push(a);return a;};
  w.boot('featured.js');
  return {...env,images,timers,animations,slides,finish(){w.SwiflyFeatured?.destroy();env.finish();}};
 }
@@ -108,4 +108,59 @@ test('a canceled transition completion cannot finish a newer transition',async()
  await w.SwiflyFeatured.select(2);await settle();
  assert.equal(d.querySelector('[data-play-id]').dataset.playId,'3');assert.equal(d.documentElement.dataset.svFeaturedMotion,'true');
  for(const a of f.animations)a.finish();await settle();assert.equal(d.documentElement.dataset.svFeaturedMotion,undefined);f.finish();
+});
+
+
+test('finite progress shares one dwell, survives unrelated notifications and stops with every pause',async()=>{
+ const f=fixture({reduced:false}),w=f.window,d=w.document;await settle();
+ const progress=()=>f.animations.filter(a=>a.node.matches('[data-sv-featured-progress]'));
+ const dwell=()=>[...f.timers.values()].filter(t=>t.delay===8000);
+ assert.equal(progress().length,1,'The selected progress fill needs one finite animation');
+ const first=progress()[0],firstTimer=dwell()[0];
+ assert.equal(first.options.duration,8000);assert.equal(first.options.easing,'linear');
+ assert.equal(first.options.iterations??1,1);assert.equal(first.node.closest('[data-sv-featured-go]').dataset.svFeaturedGo,'0');
+ d.dispatchEvent(new w.Event('swifly:studio-change'));await settle();
+ assert.equal(progress().length,1,'Unrelated state notifications must not restart the dwell');assert.equal(dwell()[0],firstTimer);
+ d.dispatchEvent(new w.Event('scroll'));await settle();
+ assert.equal(first.canceled,true);assert.equal(dwell().length,0);
+ const scroll=[...f.timers.values()].find(t=>t.delay===260);assert(scroll);scroll.fn();await settle();
+ assert.equal(progress().length,2);assert.equal(dwell().length,1);
+ const dialog=d.createElement('dialog');d.body.append(dialog);dialog.open=true;await settle();
+ assert.equal(progress().at(-1).canceled,true);assert.equal(dwell().length,0);
+ dialog.remove();await settle();assert.equal(dwell().length,1);
+ await w.SwiflyFeatured.select(1);await settle();assert.equal(dwell().length,0,'No dwell while the artwork moves');
+ for(const a of f.animations.filter(a=>[700,1000].includes(a.options.duration)))a.finish();await settle();
+ assert.equal(progress().at(-1).node.closest('[data-sv-featured-go]').dataset.svFeaturedGo,'1');assert.equal(dwell().length,1);
+ w.dispatchEvent(new w.Event('pagehide'));assert.equal(dwell().length,0);assert.equal(progress().at(-1).canceled,true);
+ w.dispatchEvent(new w.Event('pageshow'));assert.equal(dwell().length,1);
+ w.SwiflyFeatured.destroy();assert.equal(progress().at(-1).canceled,true);assert.equal(f.timers.size,0);assert.equal(w.frameCount(),0);f.finish();
+});
+
+
+test('incoming title logos are decoded before copy changes and missing logos fall back within a bounded wait',async()=>{
+ const f=fixture({manualImages:true,logo:true}),w=f.window,d=w.document;await settle();
+ const pending=w.SwiflyFeatured.select(1);await settle();
+ const art=f.images.find(i=>i.src.includes('w1280/scene-2')),logo=f.images.find(i=>i.src.includes('logo-2'));assert(art);assert(logo);
+ art.onload();await settle();assert.equal(d.querySelector('[data-play-id]').dataset.playId,'1','Copy must not change before its optional logo is ready');
+ logo.onload();await pending;assert.equal(d.querySelector('[data-play-id]').dataset.playId,'2');
+ assert.equal(d.querySelector('h1.hasLogo .dsHeroLogo'),logo);assert.equal(logo.naturalWidth,logo.width);
+ const returning=w.SwiflyFeatured.select(0);await settle();
+ const back=f.images.find(i=>i.src.includes('w1280/scene-1'));back.onload?.();await returning;await settle();
+ f.finish();
+ const fallback=fixture({manualImages:true,logo:true});await settle();
+ const next=fallback.window.SwiflyFeatured.select(1);await settle();
+ fallback.images.find(i=>i.src.includes('w1280/scene-2')).onload();
+ const deadline=[...fallback.timers.values()].find(t=>t.delay===1200);assert(deadline);deadline.fn();await next;
+ assert.equal(fallback.window.document.querySelector('[data-play-id]').dataset.playId,'2');assert.equal(fallback.window.document.querySelector('h1.hasLogo'),null);fallback.finish();
+});
+
+test('late events from the initial logo cannot hide the selected title or remove a replacement logo',async()=>{
+ const f=fixture({logo:true}),w=f.window,d=w.document;await settle();
+ const heading=d.querySelector('h1'),old=d.createElement('img');old.className='dsHeroLogo';Object.defineProperty(old,'naturalWidth',{value:500});heading.append(old);w.boot('catalog.js');
+ await w.SwiflyFeatured.select(2);assert.equal(old.isConnected,false);
+ old.dispatchEvent(new w.Event('load'));
+ assert.equal(heading.classList.contains('hasLogo'),false,'A detached image must not clip the new text-only title');
+ await w.SwiflyFeatured.select(1);assert(heading.querySelector('.dsHeroLogo'));assert(heading.classList.contains('hasLogo'));
+ old.dispatchEvent(new w.Event('error'));
+ assert.equal(heading.classList.contains('hasLogo'),true,'A detached failure must not hide the prepared replacement logo');f.finish();
 });

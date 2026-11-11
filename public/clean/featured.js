@@ -20,14 +20,25 @@
   backgrounds[0].dataset.svFeaturedActive='true';backgrounds[0].dataset.svFeaturedId=String(slides[0].id);
   let index=0,slot=0,desired=0,desiredManual=false,serial=0,motionSerial=0,autoCandidate=1,preparation=null,timer=0,scrollTimer=0;
   let moving=false,visible=true,paused=false,keyboard=false,suspended=false,disposed=false,ghost=null,pointer=null;
-  let initialReady=false;
+  let initialReady=false,progress=null;
   const quiet=()=>reduced.matches || document.body.classList.contains('reduceMotion') || root.dataset.svTv==='true' || root.dataset.svXbox==='true';
   const blocked=()=>disposed || suspended || document.hidden || !visible || paused || keyboard || quiet() || moving || !!preparation ||
     root.dataset.svScrollGlass==='soft' || !!scrollTimer || !!document.querySelector('dialog[open]');
   const listen=(node,event,fn,options)=>{node.addEventListener(event,fn,options);listeners.push(()=>node.removeEventListener(event,fn,options));};
+  function stopDwell() {
+    clearTimeout(timer);timer=0;progress?.cancel();progress=null;
+  }
   function schedule() {
-    clearTimeout(timer);timer=0;
-    if (slides.length>1 && !blocked()) timer=setTimeout(()=>{timer=0;if(!blocked())select(autoCandidate%slides.length,false);},8000);
+    if(slides.length<2 || blocked()){stopDwell();return;}
+    // Observers can notify more than once for a single change. Keep one
+    // clock for both the visible fill and advancement until it is blocked.
+    if(timer)return;
+    const fill=controls?.querySelector('[data-sv-featured-go="'+index+'"] [data-sv-featured-progress]');
+    if(typeof fill?.animate==='function') {
+      progress=fill.animate([{transform:'scaleX(0)'},{transform:'scaleX(1)'}],{duration:8000,easing:'linear',fill:'both'});
+      progress.finished.catch(()=>{});
+    }
+    timer=setTimeout(()=>{stopDwell();if(!blocked())select(autoCandidate%slides.length,false);},8000);
   }
   function motionState(value) {
     if(value)root.dataset.svFeaturedMotion='true';
@@ -86,7 +97,10 @@
     const slide=slides[target],src=root.dataset.svXbox==='true' || innerWidth<=860?slide.mobileArt:innerWidth>=1600?slide.largeArt:slide.art;
     const key=slide.id+':'+src;
     if(!glowOnly && cache.has(key)){const ready=cache.get(key);cache.delete(key);cache.set(key,ready);return ready;}
-    const image=await loadImage(glowOnly?slide.palette:src,signal);if(!image || signal.aborted)return null;
+    const [image,logo]=await Promise.all([
+      loadImage(glowOnly?slide.palette:src,signal),
+      !glowOnly && slide.logo?loadImage(slide.logo,signal,1200):null
+    ]);if(!image || signal.aborted)return null;
     let glow=glowCache.get(slide.palette) || bakeGlow(image);
     if(!glow && window.SwiflyHeroPalette?.sample) {
       // Optional palette preparation is bounded by the same cancelable load;
@@ -101,7 +115,7 @@
     // Keep only two display preparations, but retain the at-most-five tiny
     // textures so wrapping the carousel never repeats synchronous encoding.
     glowCache.set(slide.palette,glow);
-    const ready={src,glow};if(!glowOnly){cache.set(key,ready);while(cache.size>2)cache.delete(cache.keys().next().value);}
+    const ready={src,glow,logo};if(!glowOnly){cache.set(key,ready);while(cache.size>2)cache.delete(cache.keys().next().value);}
     return ready;
   }
   function paint(target,ready,targetSlot) {
@@ -111,14 +125,14 @@
     bg.dataset.svFeaturedId=String(slide.id);glow.dataset.svFeaturedId=String(slide.id);
     glow.style.backgroundImage=ready.glow;
   }
-  function updateCopy(slide) {
+  function updateCopy(slide,ready) {
     const title=copy.querySelector('h1'),text=title.querySelector('.dsHeroTitleText');
     if(text)text.textContent=slide.title;else title.textContent=slide.title;
     title.classList.remove('hasLogo');title.querySelector('.dsHeroLogo')?.remove();
-    if(slide.logo) {
-      const image=document.createElement('img');image.className='dsHeroLogo';image.alt='';image.decoding='async';image.width=500;image.height=200;
-      image.onload=()=>{if(!disposed && index===slides.indexOf(slide) && image.isConnected && image.naturalWidth>0)title.classList.add('hasLogo');};
-      image.onerror=()=>image.remove();image.src=slide.logo;title.append(image);
+    if(ready.logo) {
+      const image=ready.logo;image.className='dsHeroLogo';image.alt='';
+      image.width=image.naturalWidth;image.height=image.naturalHeight;
+      title.append(image);title.classList.add('hasLogo');
     }
     const meta=copy.querySelector('.dsHeroMeta');meta.replaceChildren();
     if(Number(slide.rating)>0){const rating=document.createElement('b');rating.textContent='★ '+slide.rating;meta.append(rating);}
@@ -169,7 +183,7 @@
   async function select(target,manual=true) {
     target=((Number(target)||0)%slides.length+slides.length)%slides.length;
     if(disposed || suspended)return false;
-    desired=target;desiredManual=manual;clearTimeout(timer);timer=0;
+    desired=target;desiredManual=manual;stopDwell();
     if(moving)return false;
     const generation=++serial;preparation?.abort();preparation=null;
     if(target===index){schedule();return true;}
@@ -186,7 +200,7 @@
     const width=hero.getBoundingClientRect().width || innerWidth;
     if(!immediate)ghost=snapshot();
     paint(target,ready,nextSlot);backgrounds[nextSlot].hidden=false;
-    index=target;autoCandidate=(index+1)%slides.length;slot=nextSlot;updateCopy(slides[index]);
+    index=target;autoCandidate=(index+1)%slides.length;slot=nextSlot;updateCopy(slides[index],ready);
     for(let i=0;i<2;i++){backgrounds[i].dataset.svFeaturedActive=String(i===slot);glows[i].dataset.svFeaturedActive=String(i===slot);}
     if(manual){const status=hero.querySelector('[data-sv-featured-status]');if(status)status.textContent=slides[index].title+', '+(index+1)+' of '+slides.length;}
     if(immediate){backgrounds[oldSlot].hidden=true;glows[oldSlot].style.opacity='0';glows[slot].style.opacity='1';schedule();return true;}
@@ -237,12 +251,14 @@
   listen(document,'swifly:studio-change',()=>{if(quiet()){desired=index;finishMotion();}pauseState();schedule();});
   const stateObserver=new MutationObserver(()=>{if(quiet()){desired=index;finishMotion();}pauseState();schedule();});
   stateObserver.observe(root,{attributes:true,attributeFilter:['data-sv-tv','data-sv-scroll-glass']});
-  const dialogObserver=new MutationObserver(changes=>{if(changes.some(c=>c.attributeName==='open' || c.target===document.body)){pauseState();schedule();}});
-  dialogObserver.observe(document.body,{subtree:true,attributes:true,attributeFilter:['open','class']});
+  const dialogObserver=new MutationObserver(changes=>{
+    if(changes.some(c=>c.attributeName==='open' || c.target===document.body || [...c.addedNodes,...c.removedNodes].some(node=>node.nodeType===1 && (node.localName==='dialog' || node.querySelector('dialog'))))){pauseState();schedule();}
+  });
+  dialogObserver.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['open','class']});
   const visibility=typeof IntersectionObserver==='function'?new IntersectionObserver(changes=>{
     visible=changes.some(change=>change.target===hero && change.isIntersecting);schedule();
   },{threshold:0}):null;visibility?.observe(hero);
-  function suspend() {suspended=true;++serial;preparation?.abort();preparation=null;desired=index;finishMotion();clearTimeout(timer);timer=0;clearTimeout(scrollTimer);scrollTimer=0;}
+  function suspend() {suspended=true;++serial;preparation?.abort();preparation=null;desired=index;finishMotion();stopDwell();clearTimeout(scrollTimer);scrollTimer=0;}
   listen(window,'pagehide',suspend);listen(window,'pageshow',()=>{suspended=false;schedule();});
   function destroy() {if(disposed)return;disposed=true;suspend();stateObserver.disconnect();dialogObserver.disconnect();visibility?.disconnect();listeners.forEach(remove=>remove());cache.clear();glowCache.clear();}
   window.SwiflyFeatured=Object.freeze({select,destroy});pauseState();

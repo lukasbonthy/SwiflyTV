@@ -5,7 +5,7 @@ const executablePath=process.env.SWIFLY_TEST_BROWSER_EXECUTABLE_PATH,available=f
 let browser,api;
 test.before(async()=>{if(available){browser=await chromium.launch({headless:true,executablePath});api=loadServer();}});
 test.after(async()=>{await browser?.close();api?.io.close();});
-const film=id=>({id,title:id===346698?'First movie':'Feature '+id,media_type:'movie',backdrop_path:'/scene-'+id+'.svg',poster_path:'/poster.svg',vote_average:7.5,release_date:'2026-01-01',overview:id===2?'A longer second overview to verify stable reserved geometry while the real copy is replaced. '.repeat(4):'A film for tonight.'});
+const film=id=>({id,title:id===346698?'First movie':'Feature '+id,images:id===2?{logos:[{file_path:'/logo-2.svg',iso_639_1:'en'}]}:undefined,media_type:'movie',backdrop_path:'/scene-'+id+'.svg',poster_path:'/poster.svg',vote_average:7.5,release_date:'2026-01-01',overview:id===2?'A longer second overview to verify anchored actions while the real copy is replaced. '.repeat(4):'A film for tonight.'});
 async function open(width,{subtle=false,reduced=false}={}){
  api.setTmdb(async endpoint=>endpoint==='/movie/346698'?film(346698):{results:[film(1),film(2),film(3),film(4)]});
  let html;await api.homePage({}, {send:value=>html=value});
@@ -39,11 +39,11 @@ for(const width of [390,1920])test(width+'px featured slide shares movie identit
    await new Promise(requestAnimationFrame);
    const ghost=hero.querySelector('[data-sv-featured-ghost]');
    return {state:document.documentElement.dataset.svFeaturedMotion,copyTranslate:getComputedStyle(hero.querySelector(':scope>.dsHeroContent')).translate,artTranslate:getComputedStyle(hero.querySelector('.dsHeroBg[data-sv-featured-active="true"]')).translate,
-    sameActions:window.__featureActions.every(node=>node.isConnected),play:hero.querySelector('[data-play-id]').dataset.playId,details:hero.querySelector('.dsHeroActions > a:not([data-play-id])').getAttribute('href'),watch:hero.querySelector('[data-watch-id]').dataset.watchId,
+    logoReady:hero.querySelector(':scope>.dsHeroContent h1').classList.contains('hasLogo')&&hero.querySelector(':scope>.dsHeroContent .dsHeroLogo').complete,sameActions:window.__featureActions.every(node=>node.isConnected),play:hero.querySelector('[data-play-id]').dataset.playId,details:hero.querySelector('.dsHeroActions > a:not([data-play-id])').getAttribute('href'),watch:hero.querySelector('[data-watch-id]').dataset.watchId,
     ghostInert:ghost?.inert,ghostActions:ghost?.querySelectorAll('[href],[data-play-id],[data-watch-id],.svLiquidPane,filter,[data-swifly-renderer]').length,ghostFilters:[...ghost.querySelectorAll('.dsHeroActions > :is(a,button)')].map(n=>getComputedStyle(n).backdropFilter),
-    glow:[...hero.nextElementSibling.querySelectorAll('[data-sv-featured-glow]')].map(n=>({id:n.dataset.svFeaturedId,filter:getComputedStyle(n).filter,opacity:Number(getComputedStyle(n).opacity),source:n.style.backgroundImage.slice(0,25)})),controls:[...hero.querySelectorAll('[data-sv-featured-controls] button')].map(n=>({width:n.getBoundingClientRect().width,height:n.getBoundingClientRect().height})),overflow:document.documentElement.scrollWidth>innerWidth};
+    glow:[...hero.nextElementSibling.querySelectorAll('[data-sv-featured-glow]')].map(n=>({id:n.dataset.svFeaturedId,filter:getComputedStyle(n).filter,opacity:Number(getComputedStyle(n).opacity),source:n.style.backgroundImage.slice(0,25)})),controls:[...hero.querySelectorAll('[data-sv-featured-controls] button')].filter(n=>getComputedStyle(n).display!=='none').map(n=>({width:n.getBoundingClientRect().width,height:n.getBoundingClientRect().height})),overflow:document.documentElement.scrollWidth>innerWidth};
   });
-  assert.equal(moving.state,'true');assert.equal(moving.sameActions,true);assert.equal(moving.play,'2');assert.equal(moving.watch,'2');assert.equal(moving.details,'/movie/2');
+  assert.equal(moving.state,'true');assert.equal(moving.logoReady,true);assert.equal(moving.sameActions,true);assert.equal(moving.play,'2');assert.equal(moving.watch,'2');assert.equal(moving.details,'/movie/2');
   assert.notEqual(moving.artTranslate,'none');assert.notEqual(moving.artTranslate,'0px');assert.notEqual(moving.copyTranslate,'none');
   assert.equal(moving.ghostInert,true);assert.equal(moving.ghostActions,0);assert(moving.ghostFilters.every(v=>v==='none'),JSON.stringify(moving));
   assert(moving.glow.every(g=>g.filter==='none'&&g.source.startsWith('url("data:image/png;')));assert(moving.glow.some(g=>g.id==='2'&&g.opacity>0&&g.opacity<1));
@@ -51,7 +51,7 @@ for(const width of [390,1920])test(width+'px featured slide shares movie identit
   await page.evaluate(()=>{for(const a of document.getAnimations())if([700,1000].includes(a.effect.getTiming().duration))a.finish();});
   await page.waitForFunction(()=>document.querySelector('[data-sv-featured]').dataset.svFeaturedState==='idle');
   const after=await page.evaluate(()=>({rows:document.querySelector('[data-st-home-rows]').getBoundingClientRect().top+scrollY,copy:document.querySelector('.dsHero > .dsHeroContent').getBoundingClientRect().toJSON(),ghost:!!document.querySelector('[data-sv-featured-ghost]'),state:document.documentElement.dataset.svFeaturedMotion,slots:document.querySelectorAll('.dsHeroBg').length,glows:document.querySelectorAll('[data-sv-featured-glow]').length}));
-  assert(Math.abs(before.rows-after.rows)<1,JSON.stringify({before,after}));assert(Math.abs(before.copy.y-after.copy.y)<1);assert.equal(after.ghost,false);assert.equal(after.state,undefined);assert.equal(after.slots,2);assert.equal(after.glows,2);
+  assert(Math.abs(before.rows-after.rows)<1,JSON.stringify({before,after}));assert(Math.abs(before.copy.bottom-after.copy.bottom)<1);assert.equal(after.ghost,false);assert.equal(after.state,undefined);assert.equal(after.slots,2);assert.equal(after.glows,2);
   const color=await page.evaluate(async()=>{
    const glow=document.querySelector('[data-sv-featured-glow][data-sv-featured-active="true"]'),image=new Image();image.src=glow.style.backgroundImage.slice(5,-2);await image.decode();
    const canvas=document.createElement('canvas');canvas.width=image.width;canvas.height=image.height;const context=canvas.getContext('2d');context.drawImage(image,0,0);return {width:image.width,height:image.height,pixel:[...context.getImageData(32,18,1,1).data]};
@@ -61,8 +61,67 @@ for(const width of [390,1920])test(width+'px featured slide shares movie identit
 });
 test('320px controls fit and reduced motion keeps manual navigation immediate',{skip:!available},async()=>{
  const f=await open(320,{subtle:true,reduced:true});try{
-  await f.page.getByRole('button',{name:'Next featured movie',exact:true}).click();await f.page.waitForFunction(()=>document.querySelector('[data-sv-featured]').dataset.svFeaturedIndex==='1');
-  const state=await f.page.evaluate(()=>({moving:document.documentElement.dataset.svFeaturedMotion,ghost:!!document.querySelector('[data-sv-featured-ghost]'),overflow:document.documentElement.scrollWidth>innerWidth,controls:[...document.querySelectorAll('[data-sv-featured-controls] button')].map(n=>n.getBoundingClientRect().toJSON()),status:document.querySelector('[data-sv-featured-status]').getBoundingClientRect().toJSON()}));
+  await f.page.locator('[data-sv-featured-go="1"]').click();await f.page.waitForFunction(()=>document.querySelector('[data-sv-featured]').dataset.svFeaturedIndex==='1');
+  const state=await f.page.evaluate(()=>({moving:document.documentElement.dataset.svFeaturedMotion,ghost:!!document.querySelector('[data-sv-featured-ghost]'),overflow:document.documentElement.scrollWidth>innerWidth,controls:[...document.querySelectorAll('[data-sv-featured-controls] button')].filter(n=>getComputedStyle(n).display!=='none').map(n=>n.getBoundingClientRect().toJSON()),status:document.querySelector('[data-sv-featured-status]').getBoundingClientRect().toJSON()}));
   assert.equal(state.moving,undefined);assert.equal(state.ghost,false);assert.equal(state.overflow,false);assert(state.controls.every(b=>b.width>=44&&b.height>=44&&b.left>=0&&b.right<=320),JSON.stringify(state));assert.equal(state.status.width,1);assert.equal(state.status.height,1);
+ }finally{await f.context.close();}
+});
+
+
+test('featured controls use edge arrows and thin progress tracks below anchored actions',{skip:!available},async()=>{
+ for(const width of [320,390,820,1363,1920]){
+  const f=await open(width);try{
+   const layout=await f.page.evaluate(()=>{
+    const h=document.querySelector('[data-sv-featured]'),rect=n=>n.getBoundingClientRect().toJSON();
+    return {hero:rect(h),copy:rect(h.querySelector(':scope>.dsHeroContent')),actions:rect(h.querySelector('.dsHeroActions')),
+     footer:rect(h.querySelector('.svFeaturedFooter')),positions:rect(h.querySelector('.svFeaturedPositions')),
+     arrows:[...h.querySelectorAll('[data-sv-featured-prev],[data-sv-featured-next]')].map(n=>({rect:rect(n),display:getComputedStyle(n).display,opacity:Number(getComputedStyle(n).opacity)})),
+     tracks:[...h.querySelectorAll('.svFeaturedPositions button > span')].map(rect),
+     controls:[...h.querySelectorAll('[data-sv-featured-controls] button')].filter(n=>getComputedStyle(n).display!=='none').map(n=>({rect:rect(n),filter:getComputedStyle(n).backdropFilter})),
+     progress:h.getAnimations({subtree:true}).filter(a=>a.effect.target.matches('[data-sv-featured-progress]')).map(a=>({duration:a.effect.getTiming().duration,iterations:a.effect.getTiming().iterations})),
+     overflow:document.documentElement.scrollWidth>innerWidth};
+   });
+   assert.equal(layout.overflow,false,JSON.stringify({width,layout}));
+   assert(layout.controls.every(n=>n.rect.width>=44&&n.rect.height>=44&&n.filter==='none'),JSON.stringify({width,layout}));
+   assert(layout.footer.top>=layout.actions.bottom+8,JSON.stringify({width,layout}));
+   assert(layout.tracks.every(n=>n.height===3&&n.width===(width<=860?32:48)),JSON.stringify({width,layout}));
+   if(width<768)assert(layout.arrows.every(n=>n.display==='none'));
+   else{
+    assert(Math.abs(layout.arrows[0].rect.left-layout.hero.left-16)<1);
+    assert(Math.abs(layout.hero.right-layout.arrows[1].rect.right-16)<1);
+    assert(layout.arrows.every(n=>Math.abs((n.rect.top+n.rect.bottom-layout.hero.top-layout.hero.bottom)/2)<1));
+   }
+   if(width===820)assert(layout.arrows.every(n=>n.opacity===1),'Touch tablets need visible edge arrows without hovering');
+   if(width<=860)assert(Math.abs((layout.positions.left+layout.controls.at(-1).rect.right)/2-layout.hero.width/2)<1);
+   else assert(Math.abs(layout.footer.left-layout.copy.left)<1);
+   assert.equal(layout.progress.length,1);assert.equal(layout.progress[0].duration,8000);assert.equal(layout.progress[0].iterations,1);
+   await f.page.locator('[data-sv-featured-pause]').click();
+   assert.equal(await f.page.locator('[data-sv-featured-pause]').getAttribute('aria-label'),'Resume featured movies');
+   assert.equal(await f.page.evaluate(()=>document.querySelector('[data-sv-featured]').getAnimations({subtree:true}).filter(a=>a.effect.target.matches('[data-sv-featured-progress]')).length),0);
+  }finally{await f.context.close();}
+ }
+});
+
+
+test('Studio compact and banner controls clear the real action hit areas',{skip:!available},async()=>{
+ for(const width of [320,390,820,1440]){
+  const f=await open(width,{reduced:true});try{
+   for(const mode of ['compact','banner']){
+    const layout=await f.page.evaluate(mode=>{
+     document.body.dataset.stHeroMode=mode;
+     const h=document.querySelector('[data-sv-featured]'),rect=n=>n.getBoundingClientRect().toJSON();
+     return {hero:rect(h),footer:rect(h.querySelector('.svFeaturedFooter')),actions:rect(h.querySelector('.dsHeroActions')),buttons:[...h.querySelectorAll('.svFeaturedFooter button')].map(rect),overflow:document.documentElement.scrollWidth>innerWidth};
+    },mode);
+    assert(layout.footer.top>=layout.actions.bottom+8,JSON.stringify({width,mode,layout}));
+    assert(layout.footer.bottom<=layout.hero.bottom,JSON.stringify({width,mode,layout}));
+    assert(layout.buttons.every(b=>b.width>=44&&b.height>=44&&b.left>=0&&b.right<=width));assert.equal(layout.overflow,false);
+   }
+  }finally{await f.context.close();}
+ }
+});
+test('reduced motion disables edge-arrow fades on touch tablets',{skip:!available},async()=>{
+ const f=await open(820,{reduced:true});try{
+  const arrows=await f.page.locator('[data-sv-featured-prev],[data-sv-featured-next]').evaluateAll(nodes=>nodes.map(n=>({opacity:getComputedStyle(n).opacity,transition:getComputedStyle(n).transitionDuration})));
+  assert(arrows.every(n=>n.opacity==='1'&&n.transition.split(',').every(value=>parseFloat(value)===0)),JSON.stringify(arrows));
  }finally{await f.context.close();}
 });

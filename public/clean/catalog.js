@@ -22,10 +22,12 @@
    rails.set(rail,{controls,previous,next});rail.addEventListener('scroll',()=>queue(rail),{passive:true});resize?.observe(rail);queue(rail);
   }
   if(!resize)window.addEventListener('resize',()=>{for(const rail of rails.keys())queue(rail);},{passive:true});
-  // Retain the text box when artwork arrives so wrapped titles never jump.
+  // A featured selection reuses the heading. Detached initial artwork no
+  // longer owns its visibility when a newer title or logo replaces it.
   for(const image of document.querySelectorAll('.dsHeroLogo')){
-   const title=image.closest('h1'),loaded=()=>title?.classList.toggle('hasLogo',image.naturalWidth>0);
-   image.addEventListener('load',loaded);image.addEventListener('error',()=>title?.classList.remove('hasLogo'));if(image.complete)loaded();
+   const title=image.closest('h1'),ownsTitle=()=>title && image.parentElement===title;
+   const loaded=()=>{if(ownsTitle())title.classList.toggle('hasLogo',image.naturalWidth>0);};
+   image.addEventListener('load',loaded);image.addEventListener('error',()=>{if(ownsTitle())title.classList.remove('hasLogo');});if(image.complete)loaded();
   }
   window.addEventListener('pagehide',()=>{suspended=true;cancelAnimationFrame(frame);frame=0;dirty.clear();resize?.disconnect();});
   window.addEventListener('pageshow',event=>{if(event.persisted){suspended=false;for(const rail of rails.keys()){resize?.observe(rail);queue(rail);}}});
