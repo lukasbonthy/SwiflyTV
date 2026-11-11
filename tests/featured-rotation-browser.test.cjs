@@ -107,10 +107,14 @@ test('Studio compact and banner controls clear the real action hit areas',{skip:
  for(const width of [320,390,820,1440]){
   const f=await open(width,{reduced:true});try{
    for(const mode of ['compact','banner']){
-    const layout=await f.page.evaluate(mode=>{
-     document.body.dataset.stHeroMode=mode;
+    await f.page.evaluate(mode=>{document.body.dataset.stHeroMode=mode;},mode);
+    // Studio applies a style change between frames. Read the settled hit
+    // areas rather than the preceding layout on the same mutation stack.
+    try{await f.page.waitForFunction(()=>{const h=document.querySelector('[data-sv-featured]');return h.querySelector('.svFeaturedFooter').getBoundingClientRect().top>=h.querySelector('.dsHeroActions').getBoundingClientRect().bottom+8;},null,{timeout:5000});}
+    catch(error){const state=await f.page.evaluate(()=>{const h=document.querySelector('[data-sv-featured]'),f=h.querySelector('.svFeaturedFooter');return {mode:document.body.dataset.stHeroMode,classes:document.body.className,bottom:getComputedStyle(f).bottom,transition:getComputedStyle(f).transition,footer:f.getBoundingClientRect().toJSON(),actions:h.querySelector('.dsHeroActions').getBoundingClientRect().toJSON()};});throw new Error(JSON.stringify({width,mode,state}),{cause:error});}
+    const layout=await f.page.evaluate(()=>{
      const h=document.querySelector('[data-sv-featured]'),rect=n=>n.getBoundingClientRect().toJSON();
-     return {hero:rect(h),footer:rect(h.querySelector('.svFeaturedFooter')),actions:rect(h.querySelector('.dsHeroActions')),buttons:[...h.querySelectorAll('.svFeaturedFooter button')].map(rect),overflow:document.documentElement.scrollWidth>innerWidth};
+     return {mode:document.body.dataset.stHeroMode,footerBottom:getComputedStyle(h.querySelector('.svFeaturedFooter')).bottom,hero:rect(h),footer:rect(h.querySelector('.svFeaturedFooter')),actions:rect(h.querySelector('.dsHeroActions')),buttons:[...h.querySelectorAll('.svFeaturedFooter button')].map(rect),overflow:document.documentElement.scrollWidth>innerWidth};
     },mode);
     assert(layout.footer.top>=layout.actions.bottom+8,JSON.stringify({width,mode,layout}));
     assert(layout.footer.bottom<=layout.hero.bottom,JSON.stringify({width,mode,layout}));

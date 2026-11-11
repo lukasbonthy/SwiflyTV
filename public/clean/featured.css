@@ -107,7 +107,7 @@ body.svCleanShell:is([data-st-hero-mode="compact"],[data-st-hero-mode="banner"])
   body.svCleanShell .svHeroSpill:has(> [data-sv-featured-glow]) {display:none !important;}
 }
 @media (prefers-reduced-motion:reduce) {
-  body.svCleanShell .svFeaturedControls > :is([data-sv-featured-prev],[data-sv-featured-next]) {transition:none;}
+  body.svCleanShell .svFeaturedControls > :is([data-sv-featured-prev],[data-sv-featured-next]) {transition:none !important;}
 }
 /* TV owns its existing screen-height composition and manual focus order. */
 html[data-sv-tv="true"] body.svCleanShell [data-sv-featured] > .dsHeroContent > h1 {height:auto;min-height:0;}
