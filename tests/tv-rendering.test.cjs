@@ -5,6 +5,9 @@ const fs = require('node:fs');
 const {chromium} = require('playwright-core');
 const {loadServer} = require('./ui-helpers.cjs');
 const available = fs.existsSync(chromium.executablePath());
+// Scroll offsets round to CSS pixels while font line boxes retain fractions.
+// Compare the displayed clearance without turning a 0.16px roundoff into overlap.
+const clearsGuide = (caption, guide) => Math.round(caption) <= Math.round(guide - 16);
 let api, browser, origin;
 test.before(async () => {
   if (!available) return;
@@ -66,7 +69,7 @@ test('Populated personal feeds join TV rows, keep readable cards and open the se
   await page.keyboard.press('ArrowDown');await settleScroll(page);assert.equal(await page.evaluate(()=>document.activeElement.matches('[data-feed-recommended] .svFeedPoster')),true,'Each recommendation has one controller poster target');
   for(let index=0;index<6;index++)await page.keyboard.press('ArrowRight');await settleScroll(page);
   const selected=await page.evaluate(()=>{const focus=document.activeElement,card=focus.closest('.svFeedCard'),rail=card.closest('.svFeedCards'),heading=card.closest('.svFeedSection').querySelector('h2');return {href:focus.getAttribute('href'),title:document.querySelector('.svTvSpotlightTitle').textContent,caption:card.querySelector('.svFeedCardBody').getBoundingClientRect().bottom,heading:heading.getBoundingClientRect().top,preview:document.getElementById('swiflyTvSpotlight').getBoundingClientRect().bottom,guide:document.getElementById('swiflyTvGuide').getBoundingClientRect().top,horizontal:rail.scrollLeft,vertical:rail.scrollTop,width:document.documentElement.scrollWidth,scroll:scrollY};});
-  assert.equal(selected.href,'/movie/607');assert.equal(selected.title,'Personal pick 7');assert(selected.horizontal>0&&selected.vertical===0,'Controller movement scrolls the populated row horizontally');assert(selected.heading>=selected.preview+16&&selected.heading<=selected.preview+44,'Feed headings use the same safe row anchor');assert(selected.caption<=selected.guide-16,'Title, rating and recommendation reason clear the guide');assert(selected.width<=1280);
+  assert.equal(selected.href,'/movie/607');assert.equal(selected.title,'Personal pick 7');assert(selected.horizontal>0&&selected.vertical===0,'Controller movement scrolls the populated row horizontally');assert(selected.heading>=selected.preview+16&&selected.heading<=selected.preview+44,'Feed headings use the same safe row anchor');assert(clearsGuide(selected.caption,selected.guide),'Title, rating and recommendation reason clear the guide');assert(selected.width<=1280);
   await page.keyboard.press('ArrowDown');await settleScroll(page);assert.equal(await page.evaluate(()=>document.activeElement.matches('.dsRow .posterWrap')),true,'The standard catalog remains after personal rows');await page.keyboard.press('ArrowUp');await settleScroll(page);assert.equal(await page.evaluate(()=>document.activeElement.getAttribute('href')),selected.href,'Returning to recommendations restores the selected poster');
   await page.keyboard.press('Enter');await page.waitForFunction(()=>document.activeElement.matches('.svDetailDialog .svDetailActions .dsPrimaryBtn')&&!document.querySelector('.svDetailDialog').hasAttribute('aria-busy'));assert.equal(new URL(page.url()).pathname,'/','A recommendation opens details before playback');await page.keyboard.press('Escape');await page.waitForFunction(()=>!document.querySelector('.svDetailDialog').open);assert.equal(await page.evaluate(()=>document.activeElement.getAttribute('href')),selected.href);assert(Math.abs(await page.evaluate(()=>scrollY)-selected.scroll)<=1);
  }finally{await context.close();}
@@ -90,7 +93,7 @@ for (const viewport of [{width:1101,height:700},{width:1280,height:720},{width:1
     });
     assert(geometry.preview.top>=geometry.nav.bottom+12,'The selection preview clears navigation: '+JSON.stringify(geometry));
     assert(geometry.heading.top>=geometry.preview.bottom+16,'The gallery heading clears the selection preview: '+JSON.stringify(geometry));
-    assert(geometry.caption.bottom<=geometry.guide.top-16,'Poster titles and dates fit below the preview and above controller commands: '+JSON.stringify(geometry));
+    assert(clearsGuide(geometry.caption.bottom,geometry.guide.top),'Poster titles and dates fit below the preview and above controller commands: '+JSON.stringify(geometry));
     assert(geometry.titleScroll<=geometry.titleClient+1,'The complete selected title fits its preview');
     assert.equal(geometry.interactive,0,'The preview never introduces a competing focus stop');assert(geometry.pageWidth<=viewport.width);
     const longTitle='Before the Last Sunrise: A Journey Across the Stars and Back Again';
@@ -108,7 +111,7 @@ test('Short TV viewports use a clear catalog fallback with complete dates',{skip
   try{
     await page.locator('.dsHeroActions .dsPrimaryBtn').focus();await page.keyboard.press('ArrowDown');await settleScroll(page);
     const g=await page.evaluate(()=>{const card=document.activeElement.closest('.movieCard'),nav=document.querySelector('.netflixNav').getBoundingClientRect(),guide=document.getElementById('swiflyTvGuide').getBoundingClientRect();return {preview:document.getElementById('swiflyTvSpotlight')?.hidden??true,heading:card.closest('.dsRow').querySelector('h2').getBoundingClientRect().top,caption:card.querySelector('.dsCardInfo').getBoundingClientRect().bottom,nav:nav.bottom,guide:guide.top,width:document.documentElement.scrollWidth};});
-    assert(g.preview);assert(g.heading>=g.nav+16);assert(g.caption<=g.guide-16,'Fallback keeps title and year above the controller strip: '+JSON.stringify(g));assert(g.width<=1101);
+    assert(g.preview);assert(g.heading>=g.nav+16);assert(clearsGuide(g.caption,g.guide),'Fallback keeps title and year above the controller strip: '+JSON.stringify(g));assert(g.width<=1101);
   }finally{await context.close();}
 });
 
@@ -131,7 +134,7 @@ for (const viewport of [{width:1363,height:936},{width:1280,height:720},{width:1
     assert.equal(first.row,0,'Down from the feature enters the first gallery');
     const anchor=(first.preview||first.nav).bottom;
     assert(first.heading.top>=anchor+16&&first.heading.top<=anchor+44,'The row settles immediately below the selected-title preview: '+JSON.stringify(first));
-    assert(first.caption.bottom<=first.guide.top-16,'The complete two-line title and date clear the guide: '+JSON.stringify(first));
+    assert(clearsGuide(first.caption.bottom,first.guide.top),'The complete two-line title and date clear the guide: '+JSON.stringify(first));
     assert.equal(first.railTop,0,'Focus never scrolls the poster rail vertically');
     await page.keyboard.press('ArrowRight');await page.keyboard.press('ArrowRight');await settleScroll(page);
     const across=await read();
@@ -139,7 +142,7 @@ for (const viewport of [{width:1363,height:936},{width:1280,height:720},{width:1
     await page.keyboard.press('ArrowDown');await settleScroll(page);
     const next=await read();
     assert.equal(next.row,1);assert(Math.abs(next.heading.top-first.heading.top)<=2,'The next row uses the same vertical anchor: '+JSON.stringify({first,next}));
-    assert(next.caption.bottom<=next.guide.top-16,'The next row also keeps its metadata above controls');
+    assert(clearsGuide(next.caption.bottom,next.guide.top),'The next row also keeps its metadata above controls');
     await page.keyboard.press('ArrowUp');await settleScroll(page);
     assert.equal((await read()).selected,2,'Returning up remembers the title in that gallery');
     await page.keyboard.press('ArrowUp');await settleScroll(page);
@@ -156,7 +159,7 @@ test('Rapid TV row entry and horizontal taps keep the full long-title caption ab
     await settleScroll(page);
     const geometry=await page.evaluate(()=>{const card=document.activeElement.closest('.movieCard'),heading=card.closest('.dsRow').querySelector('h2');return {title:card.querySelector('.dsCardTitle').textContent,caption:card.querySelector('.dsCardInfo').getBoundingClientRect().bottom,heading:heading.getBoundingClientRect().top,anchor:document.getElementById('swiflyTvSpotlight').getBoundingClientRect().bottom,guide:document.getElementById('swiflyTvGuide').getBoundingClientRect().top};});
     assert.match(geometry.title,/Northern Lights/);
-    assert(geometry.caption<=geometry.guide-16,'Rapid input cannot leave the date under the guide: '+JSON.stringify(geometry));
+    assert(clearsGuide(geometry.caption,geometry.guide),'Rapid input cannot leave the date under the guide: '+JSON.stringify(geometry));
     assert(geometry.heading<=geometry.anchor+44,'Rapid horizontal input must not interrupt row settling: '+JSON.stringify(geometry));
   }finally{await context.close();}
 });
@@ -190,7 +193,7 @@ test('TV navigation includes real Continue Watching cards and remembers their sa
     const savedFacts=await page.locator('.svTvSpotlightFacts').textContent();
     assert.equal((savedFacts.match(/2026/g)||[]).length,1,'The saved title preview shows its year once');assert.match(savedFacts,/S2.*E3/,'The saved title preview identifies the episode to resume');
     const resume=await page.evaluate(()=>({href:document.activeElement.getAttribute('href'),title:document.activeElement.closest('.svResumeCard').querySelector('.svResumeTitle').textContent,caption:document.activeElement.closest('.svResumeCard').querySelector('.svResumeCaption').getBoundingClientRect().bottom,guide:document.getElementById('swiflyTvGuide').getBoundingClientRect().top,context:document.getElementById('swiflyTvGuide').textContent}));
-    assert.match(resume.href,/s=2&e=3&resume=1/);assert(resume.caption<=resume.guide-16,'Saved episode and progress labels clear the guide');assert(resume.context.includes(resume.title),'The guide names the saved title');
+    assert.match(resume.href,/s=2&e=3&resume=1/);assert(clearsGuide(resume.caption,resume.guide),'Saved episode and progress labels clear the guide');assert(resume.context.includes(resume.title),'The guide names the saved title');
     await page.keyboard.press('ArrowDown');await settleScroll(page);assert.equal(await page.evaluate(()=>document.activeElement.matches('.dsRow .posterWrap')),true,'Down continues into the movie gallery');
     await page.keyboard.press('ArrowUp');await settleScroll(page);assert.equal(await page.evaluate(()=>document.activeElement.getAttribute('href')),resume.href,'Up restores the selected saved episode');
     await page.keyboard.press('ArrowUp');await settleScroll(page);assert.equal(await page.locator('.dsHeroActions .dsPrimaryBtn').evaluate(node=>node===document.activeElement),true,'The feature remains above Continue Watching');
