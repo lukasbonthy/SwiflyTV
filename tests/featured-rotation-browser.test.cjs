@@ -97,12 +97,15 @@ test('featured controls use edge arrows and thin progress tracks below anchored 
     assert(layout.arrows.every(n=>Math.abs((n.rect.top+n.rect.bottom-layout.hero.top-layout.hero.bottom)/2)<1));
    }
    if(width===820)assert(layout.arrows.every(n=>n.opacity===1),'Touch tablets need visible edge arrows without hovering');
-   if(width<=860){assert(Math.abs((layout.positions.left+layout.positions.right)/2-layout.hero.width/2)<1);assert(layout.controls.at(-1).rect.left>=layout.positions.right+8,'Pause must not displace or overlap the centered bars');}
+   if(width<=860)assert(Math.abs((layout.positions.left+layout.positions.right)/2-layout.hero.width/2)<1);
    else assert(Math.abs(layout.footer.left-layout.copy.left)<1);
    assert.equal(layout.progress.length,1);assert.equal(layout.progress[0].duration,8000);assert.equal(layout.progress[0].iterations,1);
-   await f.page.locator('[data-sv-featured-pause]').click();
-   assert.equal(await f.page.locator('[data-sv-featured-pause]').getAttribute('aria-label'),'Resume featured movies');
+   assert.equal(await f.page.locator('[data-sv-featured-pause]').count(),0);
+   const active=f.page.locator('[data-sv-featured-go][aria-current="true"]');await active.click();
+   assert.match(await active.getAttribute('aria-label'),/Resume automatic rotation/);
    assert.equal(await f.page.evaluate(()=>document.querySelector('[data-sv-featured]').getAnimations({subtree:true}).filter(a=>a.effect.target.matches('[data-sv-featured-progress]')).length),0);
+   await active.click();assert.match(await active.getAttribute('aria-label'),/Pause automatic rotation/);
+   assert.equal(await f.page.evaluate(()=>document.querySelector('[data-sv-featured]').getAnimations({subtree:true}).filter(a=>a.effect.target.matches('[data-sv-featured-progress]')).length),1);
   }finally{await f.context.close();}
  }
 });

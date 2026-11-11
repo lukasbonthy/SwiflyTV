@@ -16,6 +16,7 @@ test('Home serializes five unique valid movies and preserves hero/rows adjacency
   assert.equal(slides[0].title,'</script><img src=x onerror=alert(1)>');assert.equal(d.querySelector('img[src="x"]'),null);
   assert(d.querySelector('.dsHero + .svHeroLightBridge + .dsContent'));
   assert.equal(d.querySelectorAll('[data-sv-featured-go]').length,5);
+  assert.equal(d.querySelector('[data-sv-featured-pause]'),null,'Home must keep the progress bars without a separate pause/play icon');
   const info=d.querySelector('.dsHeroActions .svFeaturedInfo');assert(info,'Home needs the lighter More info action');assert.equal(info.getAttribute('aria-label'),'More info');assert.equal(info.getAttribute('href'),'/movie/346698');assert(info.querySelector('svg[aria-hidden="true"]'));
   assert.match(d.querySelector('script[src*="featured.js"]').getAttribute('src'),/\?v=/);
   assert.equal(calls.length,12,'Only the four missing featured presentations add cached movie-detail requests');env.finish();
@@ -28,7 +29,7 @@ test('Home serializes five unique valid movies and preserves hero/rows adjacency
 
 function fixture({reduced=true,manualImages=false,logo=false}={}){
  const slides=[1,2,3].map(id=>({id,type:'movie',title:'Film '+id,overview:'Story '+id,poster:'/poster.jpg',backdrop:'/scene-'+id+'.jpg',art:'https://image.tmdb.org/t/p/w1280/scene-'+id+'.jpg',mobileArt:'https://image.tmdb.org/t/p/w780/scene-'+id+'.jpg',largeArt:'https://image.tmdb.org/t/p/w1920/scene-'+id+'.jpg',palette:'https://image.tmdb.org/t/p/w300/scene-'+id+'.jpg',logo:logo&&id===2?'https://image.tmdb.org/t/p/w500/logo-2.svg':'',rating:'7.8',year:'2026',metadata:['2026','Movie']}));
- const env=browser('<main data-st-home><section class="dsHero" data-sv-featured><div class="dsHeroArt"><div class="dsHeroBg"></div></div><div class="dsHeroContent"><div class="dsEyebrow">Featured</div><h1 class="dsHeroTitleArt"><span class="dsHeroTitleText">Film 1</span></h1><div class="dsHeroMeta"></div><p>Story 1</p><div class="dsHeroActions"><a class="dsPrimaryBtn" data-play-id="1" href="/watch/movie/1?mode=movie">Play</a><a class="dsSecondaryBtn" href="/movie/1">Details</a><button data-watch-id="1">+</button></div></div><nav data-sv-featured-controls><button data-sv-featured-prev>Previous</button>'+slides.map((s,i)=>'<button data-sv-featured-go="'+i+'">'+'<span><i data-sv-featured-progress></i></span>'+s.title+'</button>').join('')+'<button data-sv-featured-next>Next</button><button data-sv-featured-pause>Pause</button></nav><span data-sv-featured-status></span><script type="application/json" data-sv-featured-data>'+JSON.stringify(slides)+'</script></section><div class="svHeroLightBridge"><div class="svHeroSpill"><img src="/old.jpg"></div></div><section class="dsContent"></section></main>',{reduced});
+ const env=browser('<main data-st-home><section class="dsHero" data-sv-featured><div class="dsHeroArt"><div class="dsHeroBg"></div></div><div class="dsHeroContent"><div class="dsEyebrow">Featured</div><h1 class="dsHeroTitleArt"><span class="dsHeroTitleText">Film 1</span></h1><div class="dsHeroMeta"></div><p>Story 1</p><div class="dsHeroActions"><a class="dsPrimaryBtn" data-play-id="1" href="/watch/movie/1?mode=movie">Play</a><a class="dsSecondaryBtn" href="/movie/1">Details</a><button data-watch-id="1">+</button></div></div><nav data-sv-featured-controls><button data-sv-featured-prev>Previous</button>'+slides.map((s,i)=>'<button data-sv-featured-go="'+i+'">'+'<span><i data-sv-featured-progress></i></span>'+s.title+'</button>').join('')+'<button data-sv-featured-next>Next</button></nav><span data-sv-featured-status></span><script type="application/json" data-sv-featured-data>'+JSON.stringify(slides)+'</script></section><div class="svHeroLightBridge"><div class="svHeroSpill"><img src="/old.jpg"></div></div><section class="dsContent"></section></main>',{reduced});
  const w=env.window,images=[];w.HTMLCanvasElement.prototype.getContext=()=>null;
  w.Image=class{constructor(){const image=w.document.createElement('img');let src='';Object.defineProperties(image,{naturalWidth:{value:1280},naturalHeight:{value:720},src:{get:()=>src,set:value=>{src=value;if(!manualImages)queueMicrotask(()=>image.onload?.());}}});image.decode=()=>Promise.resolve();images.push(image);return image;}};
  const timers=new Map();let timerId=0;
@@ -84,13 +85,28 @@ test('autoplay pauses for keyboard interaction, reduced motion and lifecycle dis
  w.SwiflyFeatured.destroy();assert.equal(f.timers.size,0);assert.equal(d.documentElement.dataset.svFeaturedMotion,undefined);f.finish();
 });
 
-test('keyboard pause and explicit resume work while the rotation button retains focus',async()=>{
+test('the active progress bar pauses and resumes rotation while retaining keyboard focus',async()=>{
  const f=fixture({reduced:false}),w=f.window,d=w.document;await settle();
- const button=d.querySelector('[data-sv-featured-pause]');button.focus();
+ const button=d.querySelector('[data-sv-featured-go="0"]');button.focus();
  button.dispatchEvent(new w.KeyboardEvent('keydown',{key:' ',bubbles:true}));button.click();
- assert.equal(button.getAttribute('aria-label'),'Resume featured movies');assert(![...f.timers.values()].some(t=>t.delay===8000));
+ assert.match(button.getAttribute('aria-label')||'',/Film 1.*Resume automatic rotation/);assert(![...f.timers.values()].some(t=>t.delay===8000));
  button.dispatchEvent(new w.KeyboardEvent('keydown',{key:' ',bubbles:true}));button.click();
- assert.equal(d.activeElement,button);assert.equal(button.getAttribute('aria-label'),'Pause featured movies');assert([...f.timers.values()].some(t=>t.delay===8000));f.finish();
+ assert.equal(d.activeElement,button);assert.match(button.getAttribute('aria-label')||'',/Film 1.*Pause automatic rotation/);assert([...f.timers.values()].some(t=>t.delay===8000));f.finish();
+});
+
+test('inactive progress bars select movies and the selected bar owns playback controls',async()=>{
+ const f=fixture({reduced:false}),w=f.window,d=w.document;await settle();
+ const next=d.querySelector('[data-sv-featured-go="1"]');next.click();await settle();
+ assert.equal(d.querySelector('[data-play-id]').dataset.playId,'2');assert.equal(next.getAttribute('aria-current'),'true');assert.match(next.getAttribute('aria-label')||'',/Film 2.*Pause automatic rotation/);
+ next.click();assert(![...f.timers.values()].some(t=>t.delay===8000));
+ assert.match(d.querySelector('[data-sv-featured-go="0"]').getAttribute('aria-label'),/Show Film 1/);f.finish();
+});
+
+test('quiet mode keeps progress bars as manual movie selectors',async()=>{
+ const f=fixture(),w=f.window,d=w.document;await settle();
+ d.querySelector('[data-sv-featured-go="1"]').click();await settle();
+ assert.equal(d.querySelector('[data-play-id]').dataset.playId,'2');assert.equal(d.querySelector('[data-sv-featured-go="1"]').getAttribute('aria-label'),'Show Film 2');
+ assert(![...f.timers.values()].some(t=>t.delay===8000));f.finish();
 });
 
 test('autoplay moves past unavailable art and retries at a bounded dwell instead of blocking later films',async()=>{
