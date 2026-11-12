@@ -85,6 +85,7 @@ function artworkEntry() {
  // Never prefetch a full shelf or fetch an alternative image URL.
  const tabletContainers='.dsContent .movieRail,.dsContent .dsRail,.dsContent .nfRail,.dsContent .nfTopTenRail,.dsContent .dsWelcomeRailTrack,.dsContent .dsGrid,.dsContent .movieGrid,.svResumeRail,.svFeedCards,.svFeedUpcoming';
  const tabletTracked=new WeakSet(),tabletWarm=new WeakSet(),tabletScrollFrames=new WeakMap();
+ const tabletRailCache=new WeakMap(),tabletLastLeft=new WeakMap();
  let tabletObserver=null;
  if(appleTablet&&typeof IntersectionObserver==='function'){
   tabletObserver=new IntersectionObserver(entries=>{
@@ -104,7 +105,18 @@ function artworkEntry() {
  }
  function warmTabletRail(rail){
   if(!rail?.isConnected)return;
-  const images=rail.querySelectorAll('img[src]');
+  // Read the poster list only when a controller replaces a rail's children.
+  // An active iPad swipe must not query every poster on every animation frame.
+  const left=rail.scrollLeft;
+  const last=tabletLastLeft.get(rail);
+  if(last!==undefined&&Math.abs(left-last)<90)return;
+  tabletLastLeft.set(rail,left);
+  let record=tabletRailCache.get(rail);
+  if(!record||record.childCount!==rail.children.length){
+   record={childCount:rail.children.length,images:rail.querySelectorAll('img[src]')};
+   tabletRailCache.set(rail,record);
+  }
+  const images=record.images;
   if(!images.length)return;
   const viewport=rail.getBoundingClientRect();
   if(viewport.bottom< -1100||viewport.top>innerHeight+1100)return;
