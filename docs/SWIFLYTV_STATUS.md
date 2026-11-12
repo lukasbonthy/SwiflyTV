@@ -11,27 +11,34 @@ Updated: November 11, 2026 (America/New_York).
 - Render service: `srv-db6fjrp42hec73c2tn30` (SwiflyTV-1)
 - Automatic deployment is enabled on commits to `main`.
 
-## Completed before this continuation
+## Completed application changes
 
-PR #153 was merged at `0dbfe2403421d285228020ad42e50a3abc7a3b69` and Render deployment `dep-dbqghoff3r2c73f55q5g` is confirmed live. This includes the supplied transparent SVG navigation bird, the colored bird favicon, removal of the separate featured pause/play button, and the single initial black dissolve. The artwork gate no longer waits on optional deferred scripts or document-wide font readiness.
+PR #153 was merged at `0dbfe2403421d285228020ad42e50a3abc7a3b69`. It installed the supplied transparent SVG navigation bird and colored bird favicon, removed the separate featured pause/play button, and added the single initial black dissolve. The artwork gate no longer waits on optional deferred scripts or document-wide font readiness.
 
-Do not implement those changes again. Preserve the current mobile composition, native scrolling, seven-title catalog windows, Studio settings, glass effects, progress controls, and late artwork handling.
+PR #154 was merged at `942a85f7b71fbd5038b19db3667ae80be511626e`. It publishes the recovered transparent-corner favicon and adds these continuation instructions. Its exact tested source commit is `d23ed10074ef9e17f88a8fb053be5a7be1f5c1e4`; its source tree is `131b9f8ad640f09db0f831acc0b829bd54b16370`.
 
-## Current continuation: favicon corners
+Do not implement these changes again. Preserve the current mobile composition, native scrolling, seven-title catalog windows, Studio settings, glass effects, progress controls, and late artwork handling.
 
-The last chat stopped while publishing the transparent-corner favicon. The existing local work was recovered on `fix/favicon-transparent-corners-v181`; no new logo was generated in this continuation.
+## Confirmed production state
 
-The prepared change replaces `public/brand/swiflytv-favicon.png` with the recovered RGBA PNG and changes favicon URLs to `?v=181` in the regular page shell, access page, and `/favicon.ico` redirect. The SVG navigation logo stays at `?v=180`.
+- Running application commit: `942a85f7b71fbd5038b19db3667ae80be511626e`.
+- Render deployment: `dep-dbqh959srm7s738i0gu0`, status `live`, finished 2026-11-12T01:21:56.979683Z.
+- Public favicon: `/assets/brand/swiflytv-favicon.png?v=181`.
+- The deployed PNG bytes match the tested local asset: SHA-256 `8b2c80038aa767eb99e15c3db4f8e044e3a64d5bf44ea577aebaa76786634ad8`, 1,819,236 bytes, 1254 x 1254 RGBA. All four corner alpha values are 0.
+- The navigation SVG remains at `?v=180`; its deployed bytes match the existing asset.
+- `/favicon.ico` resolves to the corrected version, and the access page declares `?v=181`. The browsing access gate still works.
+- No new application error logs were returned for the initial post-deployment verification window.
+- This checkpoint update is documentation only, committed with `[skip ci] [skip render]`; it does not change the running application commit.
 
-Verification completed on the prepared patch:
+## Verification
 
-- The PNG is 1254 x 1254, RGBA, with alpha 0 at all four corners.
-- `node --test tests/brand-assets.test.cjs`: 2 passed, 0 failed, 0 skipped. This checks branding declarations, access-page availability, served bytes, the legacy redirect, and the browsing access gate.
-- `npm run build`: passed.
-- `node --check server.js`, `node --check ui/access-page.js`, and `git diff --check`: passed.
+- Both GitHub checks on the tested source commit succeeded: runs `43132436914` and `43132483439`, including browser and acceptance checks.
+- Fresh local verification: both focused brand/HTTP tests passed; Vite production build, syntax checks, and `git diff --check` passed.
+- The merged source tree is identical to the tested source tree.
+- Live HTTP verification passed for the corrected favicon bytes/transparency, existing navigation SVG, legacy favicon redirect, and access-page declaration.
 
-Remaining at this checkpoint: publish the prepared patch, wait for its Render deployment to become live, compare the deployed icon bytes with the tested asset, and replace this paragraph with the final commit/deployment evidence. Do not claim completion based only on an accepted push or deploy trigger.
+Remaining work from the interrupted chats: none.
 
 ## Keeping future chats resumable
 
-Read this checkpoint and current Git/Render state first. Keep large image data and full historical diffs out of conversation output. Transfer local binary assets directly, display compact verification results, and record any unfinished step here before a handoff. The chat length limit itself cannot be changed by repository code.
+Read this checkpoint, inspect the working tree, and verify current GitHub/Render state before resuming. Keep image Base64 and complete binary blobs out of conversation output. Keep full logs in temporary files and display compact results. Record any unfinished step here before a handoff. The chat length limit itself cannot be changed by repository code.
