@@ -6653,14 +6653,14 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/aurora.js?v=267"></script>
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=262" />' : ""}
     ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=262" />' : ""}
-    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=271"></script>' : ""}
+    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=272"></script>' : ""}
     ${player ? '<script defer src="/assets/player/waves.js?v=3"></script>' : ""}
     ${player ? '<script defer src="/assets/player/audio-sample.js?v=1"></script><script defer src="/assets/player/assist.js?v=3"></script><link rel="stylesheet" href="/assets/player/assist.css?v=264" />' : ""}
     ${player || active === "social" ? '<script defer src="/assets/party/watchroom-call.js?v=1"></script>' : ""}
     ${active === "social" ? '<script defer src="/assets/party/party.js?v=207"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}
     ${player || partyBrowse ? '<script defer src="/assets/player/watch-party.js?v=2"></script>' : ""}
     ${shellStyleLink(player ? "player" : "catalog")}
-    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=269" />' : ""}
+    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=270" />' : ""}
     ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=262" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=262" />' : ""}
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=262" />' : ""}
     ${player || active === "social" ? '<link rel="stylesheet" href="/assets/party/watchroom-call.css?v=262" />' : ""}
@@ -14675,7 +14675,7 @@ function authPage(res, mode = "login") {
         <form id="safeAuthForm" class="dsSafeAuthForm">
           ${isSignup ? `<label><span>Name</span><input name="name" type="text" placeholder="Your name" autocomplete="name" maxlength="40" required /></label>` : ""}
           <label><span>Email</span><input name="email" type="email" placeholder="you@example.com" autocomplete="email" required /></label>
-          <label><span>Password</span><span class="svAuthPasswordField"><input name="password" type="password" placeholder="${isSignup ? "At least 8 characters" : "Your password"}" minlength="${isSignup ? 8 : 1}" maxlength="128" autocomplete="${isSignup ? "new-password" : "current-password"}" required /><button type="button" class="svAuthPasswordToggle" data-auth-toggle-password aria-label="Show password" aria-pressed="false">Show</button></span></label>
+          <label><span>Password</span><span class="svAuthPasswordField"><input name="password" type="password" placeholder="${isSignup ? "At least 15 characters" : "Your password"}" minlength="${isSignup ? 15 : 1}" maxlength="128" autocomplete="${isSignup ? "new-password" : "current-password"}" required /><button type="button" class="svAuthPasswordToggle" data-auth-toggle-password aria-label="Show password" aria-pressed="false">Show</button></span></label>
           <button class="dsPrimaryBtn" type="submit"><span>${isSignup ? "Create account" : "Log in"}</span><span aria-hidden="true">↗</span></button>
           <p data-auth-error role="alert" hidden></p>
         </form>

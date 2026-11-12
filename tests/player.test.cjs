@@ -40,6 +40,31 @@ test('a playable user Play attempt emits its burst intent before playback, while
  await e.api.play();assert.deepEqual(intents,[true],'the burst begins at the Play gesture, before the film starts');
  e.api.pause();await e.api.play({remote:true});assert.deepEqual(intents,[true]);
 });
+test('source search holds a blurred artwork fill until the video actually begins playing',async()=>{
+ const e=setup({managed:false});
+ const art=e.d.querySelector('[data-player-source-art]');
+ assert(art,'player needs a source artwork layer');
+ assert.match(art.querySelector('img').getAttribute('src'),/scene.jpg$/);
+ assert.equal(e.app.dataset.playerArtworkPending,'true');
+ await e.api.loadSource({status:'loading',movieId:'42',type:'movie',jobId:'looking'});
+ assert.equal(e.app.dataset.playerArtworkPending,'true');
+ await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});
+ e.ready();
+ assert.equal(e.api.getState().status,'ready');
+ assert.equal(e.app.dataset.playerArtworkPending,'true','finding a source is not playback');
+ await e.api.play();
+ assert.equal(e.app.dataset.playerArtworkPending,'false','only actual playback dismisses art');
+ e.api.pause();
+ assert.equal(e.app.dataset.playerArtworkPending,'false','pause should not bring back the placeholder');
+ await e.api.loadSource({status:'ok',playbackUrl:'/next.mp4'});
+ assert.equal(e.app.dataset.playerArtworkPending,'true','new source load returns to pulsing art');
+});
+
+test('poster artwork is the fallback when a title has no widescreen backdrop',()=>{
+ const e=setup({backdrop:''});
+ assert.match(e.d.querySelector('[data-player-source-art] img').getAttribute('src'),/poster.jpg$/);
+});
+
 function hlsMock(w) {
   class Hls {static Events={MANIFEST_PARSED:'manifest',ERROR:'error',LEVEL_SWITCHED:'level',SUBTITLE_TRACKS_UPDATED:'subtitles',SUBTITLE_TRACK_SWITCH:'subtitle-switch',AUDIO_TRACKS_UPDATED:'audio-tracks',AUDIO_TRACK_SWITCHED:'audio-switch'};static ErrorTypes={NETWORK_ERROR:'network',MEDIA_ERROR:'media'};static isSupported(){return true;}constructor(){this.listeners=new Map();this.levels=[{height:720,bitrate:1800000},{height:1080,bitrate:4000000}];this.subtitleTracks=[];this.audioTracks=[];this.audioTrack=0;Hls.instances.push(this);}on(n,fn){this.listeners.set(n,fn);}off(n){this.listeners.delete(n);}attachMedia(v){this.video=v;}loadSource(url){this.url=url;}emit(n,data={}){this.listeners.get(n)?.(n,data);}recoverMediaError(){this.recoveries=(this.recoveries||0)+1;}startLoad(){this.starts=(this.starts||0)+1;}destroy(){this.destroyed=true;this.listeners.clear();}}Hls.instances=[];w.Hls=Hls;return Hls;
 }

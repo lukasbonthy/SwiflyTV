@@ -1,0 +1,100 @@
+/* v185 — one restrained, GPU-friendly popout rhythm across the site.
+   Individual translate/scale keeps each popup's existing positioning transform intact. */
+@keyframes svPopoutEnter {
+  from { opacity:0; translate:0 9px; scale:1; }
+  to   { opacity:1; translate:0 0; scale:1; }
+}
+@keyframes svPopoutScrim {
+  from { opacity:0; }
+  to   { opacity:1; }
+}
+:root { --sv-pop-curve:cubic-bezier(.18,.83,.22,1); }
+
+/* Native detail menus and the nav search popup. No animated blur or layout changes. */
+body.svCleanShell .genreDropdown[open] > .genreDropdownMenu,
+body.svCleanShell .dsProfileMenu[open] > .dsProfileDropdown.svLiquidDropdown,
+body.svCleanShell .svFriendActions[open] > button,
+body.svCleanShell .svPlayerPopover[open] > .svPlayerPopoverBody,
+body.svCleanShell .svAiFilters:not([hidden]) {
+  animation:svPopoutEnter 300ms var(--sv-pop-curve) both;
+  transform-origin:top center;
+}
+body.svCleanShell .svFriendActions[open] > button { animation-duration:240ms; }
+/* The search surface also glides out without keeping a hidden popup interactive.
+   Modern discrete display transitions preserve the exit; older browsers hide it immediately. */
+body.svCleanShell .svSearchPopup {
+  opacity:0; translate:0 9px; scale:1;
+  transition:opacity 230ms var(--sv-pop-curve),
+             translate 260ms var(--sv-pop-curve),
+             display 260ms allow-discrete;
+}
+body.svCleanShell .svSearchPopup:not([hidden]) { opacity:1; translate:0 0; scale:1; }
+@starting-style {
+  body.svCleanShell .svSearchPopup:not([hidden]) {
+    opacity:0; translate:0 9px; scale:1;
+  }
+}
+
+
+/* Mobile profile menu is portaled to the body; never animate its left:50% layout. */
+@media (max-width:860px) {
+  html:not([data-sv-tv="true"]) body.svCleanShell > .dsProfileDropdown.svAccountSheetPortaled {
+    animation:svPopoutEnter 330ms var(--sv-pop-curve) both !important;
+    transform-origin:top center;
+  }
+  html:not([data-sv-tv="true"]) body.svCleanShell.svMobileAccountOpen > .svMobileAccountScrim {
+    animation:svPopoutScrim 230ms ease-out both !important;
+  }
+}
+
+/* Dialogs support a real exit as well as an entrance where discrete transitions
+   are supported; fallback browsers simply close normally. */
+body.svCleanShell dialog:is(.svConnectDialog,.svBookDialog,.svBackupDialog) {
+  opacity:0;
+  translate:0 8px;
+  scale:.982;
+  transition:
+    opacity 280ms var(--sv-pop-curve),
+    translate 320ms var(--sv-pop-curve),
+    scale 320ms var(--sv-pop-curve),
+    display 320ms allow-discrete,
+    overlay 320ms allow-discrete;
+}
+body.svCleanShell dialog:is(.svConnectDialog,.svBookDialog,.svBackupDialog)[open] {
+  opacity:1;
+  translate:0 0;
+  scale:1;
+}
+@starting-style {
+  body.svCleanShell dialog:is(.svConnectDialog,.svBookDialog,.svBackupDialog)[open] {
+    opacity:0;
+    translate:0 8px;
+    scale:.982;
+  }
+}
+body.svCleanShell dialog:is(.svConnectDialog,.svBookDialog,.svBackupDialog)::backdrop {
+  opacity:0;
+  transition:opacity 280ms ease,display 320ms allow-discrete,overlay 320ms allow-discrete;
+}
+body.svCleanShell dialog:is(.svConnectDialog,.svBookDialog,.svBackupDialog)[open]::backdrop { opacity:1; }
+@starting-style {
+  body.svCleanShell dialog:is(.svConnectDialog,.svBookDialog,.svBackupDialog)[open]::backdrop { opacity:0; }
+}
+
+/* Focus remains clear even after a modal or dropdown reopens. */
+body.svCleanShell :is(.svSearchPopup,.genreDropdownMenu,.dsProfileDropdown,.svConnectDialog,.svBookDialog,.svBackupDialog) :focus-visible {
+  outline-offset:3px;
+}
+
+@media (prefers-reduced-motion:reduce) {
+  body.svCleanShell :is(.svSearchPopup,.genreDropdownMenu,.dsProfileDropdown,.svFriendActions button,.svPlayerPopoverBody,.svAiFilters),
+  body.svCleanShell dialog:is(.svConnectDialog,.svBookDialog,.svBackupDialog),
+  body.svCleanShell dialog:is(.svConnectDialog,.svBookDialog,.svBackupDialog)::backdrop,
+  html:not([data-sv-tv="true"]) body.svCleanShell > .dsProfileDropdown.svAccountSheetPortaled,
+  body.svCleanShell.svMobileAccountOpen > .svMobileAccountScrim { animation:none !important; transition:none !important; }
+}
+body.svCleanShell.reduceMotion :is(.svSearchPopup,.genreDropdownMenu,.dsProfileDropdown,.svFriendActions button,.svPlayerPopoverBody,.svAiFilters),
+body.svCleanShell.reduceMotion dialog:is(.svConnectDialog,.svBookDialog,.svBackupDialog),
+body.svCleanShell.reduceMotion dialog:is(.svConnectDialog,.svBookDialog,.svBackupDialog)::backdrop,
+body.svCleanShell.reduceMotion > .dsProfileDropdown.svAccountSheetPortaled,
+body.svCleanShell.reduceMotion.svMobileAccountOpen > .svMobileAccountScrim { animation:none !important; transition:none !important; }
