@@ -24,12 +24,13 @@ function fixture(appleTablet){
   return dom;
 }
 
-test('iPad posters retain their native lazy/async image and do not acquire an entry fade',()=>{
+test('iPad posters warm early with native decoding and no duplicate fade',()=>{
   const dom=fixture(true);
   try{
     const d=dom.window.document,poster=d.querySelector('#poster'),featured=d.querySelector('#featured');
     assert.equal(d.documentElement.dataset.svAppleTablet,'true');
-    assert.equal(poster.loading||poster.getAttribute('loading'),'lazy');
+    assert.equal(poster.getAttribute('loading'),'eager');
+    assert(['auto','high'].includes(poster.getAttribute('fetchpriority')));
     assert.equal(poster.getAttribute('decoding'),'async');
     assert(!poster.classList.contains('svArtworkAsset'),'visible and revisited catalog posters must not be fade-gated on iPad');
     assert(featured.classList.contains('svArtworkAsset'),'featured hero artwork retains the existing cinematic entry');
