@@ -28,6 +28,14 @@
   const panels = ['.svSearchPopup', '.dsSearchBox form', '.genreDropdownMenu', '.dsDetailTabsV121', '.dsAuthCard', '.dsAuthSwitch', '.dsProfileManagerPanel', '.dsAccountCard', '.dsProfileSelectCard', '.dsDetailGridV121 aside', '.dsAboutGridV121', '.dsSeasonBlock', '#controlPanel', '#toast', 'dialog','.svPlayerModes','.svPlayerPopoverBody',partyPanels].join(',');
   const selector = controls + ',' + panels, entries = new Map(), pending = new Set();
   const xbox = /Xbox|XboxOne|Xbox Series/i.test(navigator.userAgent) || document.documentElement.dataset.svXbox === 'true';
+  // Native iPad posters do not need a per-button glass controller, an
+  // IntersectionObserver entry, or a new pane on every first row approach.
+  // Each catalog card can have three actions; hundreds of idle lenses add
+  // costly subtree writes and re-entry work for WebKit's scrolling tiles.
+  // The visible dark action face is provided by the existing CSS instead.
+  const appleTablet = document.documentElement.dataset.svAppleTablet === 'true' ||
+    /iPad/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   // Prepare a row shortly before it reaches the screen on every device.
   // Building hundreds of offscreen panes up front delays the first interaction.
   let nearObserver = null;
@@ -132,6 +140,7 @@
     entries.delete(entry.host);
   }
   function ensure(host, approached = false) {
+    if (appleTablet && host?.matches?.('.dsCardQuickActions .dsMiniBtn')) return;
     // Featured snapshots are inert paint; position controls use simple faces.
     // Neither may allocate optical graphs through later mutation/IO scans.
     if (host.closest?.('[data-sv-featured-ghost],[data-sv-featured-controls]')) return;
