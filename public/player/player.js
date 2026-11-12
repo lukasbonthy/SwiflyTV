@@ -614,6 +614,8 @@
         if(pendingPlay){pendingPlay=false;play({remote:true});}else if(!current.paused)watchProgress();
       });
       listen(current,'canplay',canPlay,mediaListeners);listen(current,'playing',canPlay,mediaListeners);
+      // Keep the source art until the browser confirms playback, never merely 'canplay'.
+      listen(current,'playing',guard(()=>{app.dataset.playerArtworkPending='false';}),mediaListeners);
       listen(current,'play',guard(()=>{hasPlayed=true;updateControls();if(playable)watchProgress();emitState();}),mediaListeners);
       listen(current,'pause',guard(()=>{savePlayback(true);if(playable)stopWatchdog();if(playable&&phase!=='ended')setStatus('ready');else updateControls();emitState();}),mediaListeners);
       listen(current,'ended',guard(()=>{savePlayback(true,true);stopWatchdog();try{current.pause();}catch{}setStatus('ended');}),mediaListeners);
@@ -653,6 +655,7 @@
     async function loadSource(data,{resumeAt:position=0,restoreSource=''}={}) {
       if(destroyed||suspended)return false;
       if(data?.status==='loading'){
+        app.dataset.playerArtworkPending='true';
         const nextId=String(data.movieId||data.mediaId||mediaId),nextType=data.type==='tv'?'tv':data.type==='movie'?'movie':mediaType;
         const key=String(data.jobId||nextId+':'+nextType);if(phase==='loading'&&loadingKey===key)return false;
         cancelResolver();teardownMedia({replace:true});source='';sourceData=null;resetSourceOptions();loadingKey=key;mediaId=nextId;mediaType=nextType;setStatus('loading');
@@ -672,6 +675,7 @@
       const choice=sourceOptions.find(item=>item.playbackUrl===restoreSource)||preferred||sourceOptions.find(item=>item.playbackUrl===next);return attachSource(choice.playbackUrl,dataForSource(choice),{position});
     }
     async function attachSource(next,data,{position=0,shouldPlay=false}={}) {
+      app.dataset.playerArtworkPending='true';
       cancelResolver();teardownMedia({replace:true});source=next;activeSourceData=data;
       resumeAt=Math.max(0,number(position,0));lastTime=0;lastBuffer=0;hlsRecovery={network:0,media:0};
       pendingPlay=shouldPlay;
@@ -729,6 +733,7 @@
     async function resolve({retry=false}={}) {
       if(destroyed||suspended)return false;
       if(managed||remoteMode.enabled){if(retry&&!locked())dispatch('retry',{mediaId,type:mediaType});return false;}
+      app.dataset.playerArtworkPending='true';
       cancelResolver();teardownMedia({replace:true});source='';sourceData=null;resetSourceOptions();loadingKey='';delete app.dataset.playerFailureCode;setStatus('loading');
       const token=resolverGeneration;lookupDeadline=Date.now()+config.resolve;let first=true,transportFailures=0,busyCount=0,providerRetries=0;
       const query=new URLSearchParams();if(mediaType==='tv'){query.set('season',app.dataset.playerSeason||'1');query.set('episode',app.dataset.playerEpisode||'1');}if(app.dataset.playerProvider)query.set('provider',app.dataset.playerProvider);
