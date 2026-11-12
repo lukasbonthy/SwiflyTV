@@ -9,3 +9,8 @@ html[data-sv-artwork-state="loading"] #svArtworkCurtain {
  opacity:1;visibility:visible;pointer-events:auto;transition:none;
 }
 html[data-sv-artwork-state="reveal"] #svArtworkCurtain {visibility:visible;}
+/* A native link into the theater quietly closes the previous page to black. */
+html[data-sv-loading="player"] #svArtworkCurtain {
+ opacity:1;visibility:visible;pointer-events:none;
+ transition:opacity .18s cubic-bezier(.4,0,1,1),visibility 0s;
+}

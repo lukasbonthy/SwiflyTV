@@ -17,6 +17,18 @@ test('server-rendered content stays visible while deferred scripts delay DOMCont
  b.advance(120);
  assert.equal(b.w.document.documentElement.hasAttribute('data-sv-loading'),false,'ready server markup must not be covered by a timed initial skeleton');
 });
+test('opening the movie player fades through black from every source page without a generic skeleton',async()=>{
+ for(const path of ['/','/movies','/movie/1','/friends','/profiles','/watch/tv/101']){
+  const b=setup({path});await tick();const link=b.w.document.querySelector('#next');link.href='/watch/movie/42';link.click();await tick();
+  b.advance(0);assert.equal(b.w.document.documentElement.dataset.svLoading,'player',path+' must use the theater entry');
+  b.advance(160);assert.equal(b.w.document.documentElement.dataset.svLoading,'player','a late response must not replace the dissolve with the generic skeleton');
+  b.w.dispatchEvent(new b.w.KeyboardEvent('keydown',{key:'Escape'}));assert.equal(b.w.document.documentElement.hasAttribute('data-sv-loading'),false);
+ }
+});
+test('reduced motion leaves the source page visible while opening a movie',async()=>{
+ const b=setup();b.w.document.body.classList.add('reduceMotion');await tick();b.w.document.querySelector('#next').href='/watch/movie/42';b.w.document.querySelector('#next').click();await tick();b.advance(0);b.advance(160);
+ assert.equal(b.w.document.documentElement.hasAttribute('data-sv-loading'),false,'the theater dissolve must respect reduced motion');
+});
 test('real navigation gets a destination skeleton and restores immediately from history',async()=>{
  const b=setup();await tick();b.w.document.querySelector('#next').click();await tick();
  b.advance(0);assert.equal(b.w.document.documentElement.dataset.svLoading,'pending');

@@ -22,7 +22,7 @@ let browser, api;
 
 // Use pageShell's real stylesheet order: component-only CSS misses global nav,
 // containment and legacy rules. No media is loaded; these are layout checks.
-function documentFor(embedded = false, overrides = {}) {
+function documentFor(embedded = false, overrides = {}, entry = false) {
   const markup = playerMarkup({...options, ...overrides, embedded,
     episodePickerHtml:embedded ? '' : episodePickerMarkup(options)});
   const body = embedded
@@ -30,7 +30,7 @@ function documentFor(embedded = false, overrides = {}) {
     : markup;
   const dom = new JSDOM(api.pageShell({body, player:!embedded, active:embedded ? 'social' : 'watch'}), {virtualConsole:new VirtualConsole()});
   const d = dom.window.document;
-  for (const script of d.querySelectorAll('script')) script.remove();
+  for (const script of d.querySelectorAll('script')) if(!entry||!script.hasAttribute('data-sv-artwork-entry'))script.remove();
   for (const link of d.querySelectorAll('link')) {
     const url = new URL(link.href, 'https://swifly.test');
     if (link.rel === 'stylesheet' && url.pathname.startsWith('/assets/')) {
@@ -84,6 +84,117 @@ async function assertMenuReachable(page) {
     assert(hit, 'every settings control must be reachable by scrolling and receive pointer input');
   }
 }
+
+async function wavePixels(page) {
+  return page.locator('[data-player-waves] canvas').evaluate(canvas => {
+    const pixels=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
+    let hash=2166136261,green=0;
+    for(let i=0;i<pixels.length;i+=4){hash=Math.imul(hash^pixels[i+1],16777619);if(pixels[i+1]>40&&pixels[i+1]>pixels[i]*2&&pixels[i+1]>pixels[i+2]*1.4)green++;}
+    return {hash:hash>>>0,green,width:canvas.width,height:canvas.height};
+  });
+}
+
+test('Theater entry dissolves once from black while the live picture keeps its geometry', {skip:!available && 'Chromium is not installed'}, async () => {
+  const context=await browser.newContext({viewport:{width:1440,height:900},reducedMotion:'no-preference'}),page=await context.newPage();
+  try{
+    await page.route('**/*',route=>route.fulfill({status:200,body:''}));
+    await page.setContent(documentFor(false,{type:'movie',poster:'',backdrop:''},true));
+    await page.evaluate(()=>document.querySelector('[data-player-root]').dataset.playerState='ready');
+    const picture=await page.locator('video').boundingBox();
+    await page.waitForFunction(()=>document.documentElement.dataset.svArtworkState==='reveal');
+    await page.waitForTimeout(100);
+    const opacity=await page.locator('#svArtworkCurtain').evaluate(node=>Number(getComputedStyle(node).opacity));
+    assert(opacity>0&&opacity<1,'the new theater must reveal through a visible, continuous black dissolve');
+    await page.waitForFunction(()=>document.documentElement.dataset.svArtworkState==='ready');
+    assert.deepEqual(await page.locator('video').boundingBox(),picture,'the entry must animate the curtain instead of moving or scaling the movie');
+    assert.equal(await page.locator('video').evaluate(node=>getComputedStyle(node).transform),'none');
+    assert.equal(await page.locator('#svArtworkCurtain').evaluate(node=>getComputedStyle(node).pointerEvents),'none');
+    assert.equal(await page.locator('html').getAttribute('aria-busy'),null,'the entry must release its loading state');
+  }finally{await context.close();}
+});
+
+test('Green grid ripples animate behind stable, usable movie frames on desktop and phones', {skip:!available && 'Chromium is not installed'}, async () => {
+  for(const viewport of [{width:1440,height:900},{width:390,height:844}]){
+    const {page,context}=await open(viewport,false,{type:'movie'});
+    try{
+      assert.equal(await page.locator('[data-player-waves] canvas').count(),1,'the player needs its own green ripple backdrop');
+      await page.emulateMedia({reducedMotion:'no-preference'});
+      await page.addScriptTag({content:asset('player/waves.js')});
+      await page.waitForFunction(()=>document.querySelector('[data-player-waves]')?.dataset.waveState==='live');
+      const before=await wavePixels(page),film=await page.locator('video').boundingBox();
+      await page.waitForTimeout(220);
+      const after=await wavePixels(page);
+      assert(before.green>100,'actual green squares must be rendered, including without poster artwork');
+      const shown=await page.screenshot();
+      const visibleGreen=await page.evaluate(async encoded=>{
+        const image=new Image();image.src='data:image/png;base64,'+encoded;await image.decode();
+        const view=document.createElement('canvas');view.width=image.width;view.height=image.height;
+        const context=view.getContext('2d');context.drawImage(image,0,0);
+        const pixels=context.getImageData(0,0,view.width,view.height).data;let green=0;
+        for(let i=0;i<pixels.length;i+=4)if(pixels[i+1]>40&&pixels[i+1]>pixels[i]*2&&pixels[i+1]>pixels[i+2]*1.4)green++;
+        return green;
+      },shown.toString('base64'));
+      assert(visibleGreen>100,'the green pattern must actually be visible around the movie, above the page background');
+      assert.notEqual(after.hash,before.hash,'the ripple field must move');
+      assert(before.width<=1280&&before.height<=900,'the decorative bitmap must have a bounded rendering cost');
+      assert.deepEqual(await page.locator('video').boundingBox(),film,'background motion must not move or resize the picture');
+      assert.equal(await page.locator('[data-player-waves]').evaluate(node=>getComputedStyle(node).pointerEvents),'none');
+      assert(await page.locator('[data-player-play]').evaluate(node=>{const r=node.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return hit===node||node.contains(hit);}), 'the backdrop must not intercept movie controls');
+      assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'the full-width waves must not introduce horizontal scrolling');
+    }finally{await context.close();}
+  }
+});
+
+test('Ripple rendering stops for reduced motion, disabled effects, and a cached page lifecycle', {skip:!available && 'Chromium is not installed'}, async () => {
+  const {page,context}=await open({width:1280,height:800});
+  try{
+    assert.equal(await page.locator('[data-player-waves] canvas').count(),1,'the player needs its own green ripple backdrop');
+    await page.addScriptTag({content:asset('player/waves.js')});
+    await page.waitForFunction(()=>document.querySelector('[data-player-waves]')?.dataset.waveState==='still');
+    let before=await wavePixels(page);await page.waitForTimeout(160);
+    assert.equal((await wavePixels(page)).hash,before.hash,'OS reduced motion must render a still pattern');
+    await page.emulateMedia({reducedMotion:'no-preference'});
+    await page.waitForFunction(()=>document.querySelector('[data-player-waves]')?.dataset.waveState==='live');
+    await page.evaluate(()=>document.dispatchEvent(new CustomEvent('swifly:studio-change',{detail:{effective:{reduceMotion:true}}})));
+    await page.waitForFunction(()=>document.querySelector('[data-player-waves]')?.dataset.waveState==='still');
+    before=await wavePixels(page);await page.waitForTimeout(160);
+    assert.equal((await wavePixels(page)).hash,before.hash,'Studio reduced motion must stop the frame loop');
+    await page.evaluate(()=>document.dispatchEvent(new CustomEvent('swifly:studio-change',{detail:{effective:{highContrast:true}}})));
+    await page.waitForFunction(()=>document.querySelector('[data-player-waves]')?.dataset.waveState==='off');
+    assert.equal(await page.locator('[data-player-waves]').isVisible(),false,'high contrast must keep a plain backdrop');
+    await page.evaluate(()=>document.dispatchEvent(new CustomEvent('swifly:studio-change',{detail:{effective:{}}})));
+    await page.waitForFunction(()=>document.querySelector('[data-player-waves]')?.dataset.waveState==='live');
+    await page.evaluate(()=>dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true})));
+    await page.waitForFunction(()=>document.querySelector('[data-player-waves]')?.dataset.waveState==='still');
+    before=await wavePixels(page);await page.waitForTimeout(160);
+    assert.equal((await wavePixels(page)).hash,before.hash,'a cached page must stop drawing');
+    await page.evaluate(()=>dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true})));
+    await page.waitForFunction(()=>document.querySelector('[data-player-waves]')?.dataset.waveState==='live');
+    before=await wavePixels(page);await page.waitForTimeout(220);
+    assert.notEqual((await wavePixels(page)).hash,before.hash,'returning from the back-forward cache must resume the pattern');
+    await page.locator('video').evaluate(video=>video.dispatchEvent(new Event('webkitbeginfullscreen')));
+    await page.waitForFunction(()=>document.querySelector('[data-player-waves]')?.dataset.waveState==='still');
+    before=await wavePixels(page);await page.waitForTimeout(160);
+    assert.equal((await wavePixels(page)).hash,before.hash,'native iPhone fullscreen must stop background work');
+    await page.locator('video').evaluate(video=>video.dispatchEvent(new Event('webkitendfullscreen')));
+    await page.waitForFunction(()=>document.querySelector('[data-player-waves]')?.dataset.waveState==='live');
+    await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));});
+    await page.waitForFunction(()=>document.querySelector('[data-player-waves]')?.dataset.waveState==='still');
+    before=await wavePixels(page);await page.waitForTimeout(160);
+    assert.equal((await wavePixels(page)).hash,before.hash,'a hidden tab must stop drawing');
+    await page.evaluate(()=>{delete document.hidden;document.dispatchEvent(new Event('visibilitychange'));});
+    await page.waitForFunction(()=>document.querySelector('[data-player-waves]')?.dataset.waveState==='live');
+    await page.evaluate(()=>{const spacer=document.createElement('div');spacer.style.height='1800px';document.body.append(spacer);scrollTo(0,1100);});
+    await page.waitForFunction(()=>document.querySelector('[data-player-waves]')?.dataset.waveState==='still');
+    before=await wavePixels(page);await page.waitForTimeout(160);
+    assert.equal((await wavePixels(page)).hash,before.hash,'scrolling past the theater must stop drawing');
+    await page.evaluate(()=>scrollTo(0,0));
+    await page.waitForFunction(()=>document.querySelector('[data-player-waves]')?.dataset.waveState==='live');
+    await page.emulateMedia({forcedColors:'active'});
+    await page.waitForFunction(()=>document.querySelector('[data-player-waves]')?.dataset.waveState==='off');
+    assert.equal(await page.locator('[data-player-waves]').isVisible(),false,'OS forced colors must keep the movie backdrop plain');
+  }finally{await context.close();}
+});
 
 test('The complete theater and transport fit the page viewport without cropping the film', {skip:!available && 'Chromium is not installed'}, async () => {
   for (const viewport of [

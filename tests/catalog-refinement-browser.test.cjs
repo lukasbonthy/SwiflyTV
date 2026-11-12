@@ -11,6 +11,13 @@ test('featured artwork keeps actions and rows anchored while natural title artwo
    const page=await browser.newPage({viewport:{width,height:900}});let releaseLogo;const pending=new Promise(resolve=>releaseLogo=resolve);
    await page.route('**/*',async route=>{if(route.request().url().endsWith('/logo.png')){await pending;return route.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="500" height="200"><text y="100">Film logo</text></svg>'});}return route.fulfill({body:''});});
    await page.setContent(html,{waitUntil:'domcontentloaded'});await page.evaluate(tv=>{document.body.style.setProperty('--st-ui-scale','1.2');if(tv)document.documentElement.dataset.svTv='true';},tv);await page.addScriptTag({content:asset('catalog.js')});
+   // catalog.js queues initial rail geometry on the next frame. Finish that
+   // setup and the already-requested fonts before isolating the logo swap.
+   await page.evaluate(async()=>{
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    await Promise.allSettled([...document.fonts].filter(font=>font.status==='loading').map(font=>font.loaded));
+    await new Promise(requestAnimationFrame);
+   });
    const boxes=()=>page.evaluate(()=>{const title=document.querySelector('.dsHeroTitleArt'),text=title.querySelector('.dsHeroTitleText'),meta=document.querySelector('.dsHeroMeta'),actions=document.querySelector('.dsHeroActions'),rows=document.querySelector('[data-st-home-rows]');return {actions:actions.getBoundingClientRect().toJSON(),rows:rows?.getBoundingClientRect().toJSON(),title:title.getBoundingClientRect().toJSON(),text:text.getBoundingClientRect().toJSON(),meta:meta.getBoundingClientRect().toJSON(),loaded:title.classList.contains('hasLogo')};});
    const before=await boxes();assert(before.text.bottom<=before.meta.top,width+'px fallback must not overlap metadata');assert.equal(before.loaded,false);releaseLogo();await page.waitForFunction(()=>document.querySelector('.dsHeroTitleArt').classList.contains('hasLogo'));const after=await boxes();if(tv){assert.equal(after.title.height,before.title.height);assert.equal(after.meta.top,before.meta.top);}else{assert(Math.abs(after.actions.bottom-before.actions.bottom)<1,'Home actions must stay anchored');if(before.rows)assert(Math.abs(after.rows.top-before.rows.top)<1,'Loading a natural-height logo must not move the catalog');assert(after.title.bottom<=after.meta.top,'Loaded artwork must clear metadata');}await page.close();
   }
