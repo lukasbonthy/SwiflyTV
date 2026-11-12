@@ -6,11 +6,11 @@ let browser,api;
 test.before(async()=>{if(available){browser=await chromium.launch({headless:true,executablePath});api=loadServer();}});
 test.after(async()=>{await browser?.close();api?.io.close();});
 const film=id=>({id,title:id===346698?'First movie':'Feature '+id,images:id===2?{logos:[{file_path:'/logo-2.svg',iso_639_1:'en'}]}:undefined,media_type:'movie',backdrop_path:'/scene-'+id+'.svg',poster_path:'/poster.svg',vote_average:7.5,release_date:'2026-01-01',overview:id===2?'A longer second overview to verify anchored actions while the real copy is replaced. '.repeat(4):'A film for tonight.'});
-async function open(width,{subtle=false,reduced=false,resume=false,height=936}={}){
+async function open(width,{subtle=false,reduced=false,resume=false,height=936,tablet=false}={}){
  api.setTmdb(async endpoint=>endpoint==='/movie/346698'?film(346698):{results:[film(1),film(2),film(3),film(4)]});
  let html;await api.homePage({}, {send:value=>html=value});
  html=html.replace(/<script\b([^>]*)>[\s\S]*?<\/script>/g,(script,attrs)=>/data-sv-featured-data/.test(attrs)?script:'');
- const context=await browser.newContext({viewport:{width,height},reducedMotion:reduced?'reduce':'no-preference',...(width<861?{isMobile:true,hasTouch:true}:{})}),page=await context.newPage();
+ const context=await browser.newContext({viewport:{width,height},reducedMotion:reduced?'reduce':'no-preference',...(width<861?{isMobile:true,hasTouch:true}:{}),...(tablet?{userAgent:'Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1'}:{})}),page=await context.newPage();
  if(resume)await page.addInitScript(()=>localStorage.setItem('movieverse.continue',JSON.stringify([{profileId:'main',id:346698,type:'movie',title:'First movie',currentTime:3723,duration:7200}])));
  await page.route('**/*',route=>{
   const url=new URL(route.request().url()),css=readShellStyle(url.pathname);
@@ -212,4 +212,57 @@ test('saved movie actions fit small phones and outgoing copies preserve their la
    const restored=await read();assert.equal(restored.actions.length,4);assert(restored.actions.every(a=>a.rect.right<=width&&a.scroll<=a.client+1));
   }finally{await f.context.close();}
  }
+});
+
+test('iPad keeps a decoded featured image mounted after scrolling away and switching titles',{skip:!available},async()=>{
+ const f=await open(820,{tablet:true});const page=f.page;
+ try{
+   await page.waitForFunction(()=>{
+     const hero=document.querySelector('[data-sv-featured]');
+     return document.documentElement.dataset.svAppleTablet==='true' &&
+       hero?.querySelector('.dsHeroBg[data-sv-featured-active="true"] > .svFeaturedNativeArt');
+   });
+   await page.locator('[data-sv-featured-go="0"]').click();
+   const first=await page.evaluate(()=>{
+     const hero=document.querySelector('[data-sv-featured]');
+     const active=hero.querySelector('.dsHeroBg[data-sv-featured-active="true"]');
+     const image=active.querySelector('.svFeaturedNativeArt');
+     window.__ipadFeaturedInitialImage=image;
+     return {
+       complete:image.complete,naturalWidth:image.naturalWidth,
+       activeBackground:getComputedStyle(active).backgroundImage,
+       masked:getComputedStyle(hero.querySelector('.dsHeroArt')).maskImage,
+       rendered:getComputedStyle(image).display,
+       source:image.currentSrc||image.src
+     };
+   });
+   assert(first.complete&&first.naturalWidth>0,JSON.stringify(first));
+   assert.equal(first.activeBackground,'none','decoded img—not a CSS background—owns the iPad art');
+   assert.equal(first.masked,'none','full-hero mask is replaced by a simple fade overlay');
+   assert.equal(first.rendered,'block');
+   await page.evaluate(()=>window.scrollTo({top:document.body.scrollHeight,behavior:'instant'}));
+   await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
+   const after=await page.evaluate(()=>{
+     const active=document.querySelector('[data-sv-featured] .dsHeroBg[data-sv-featured-active="true"]');
+     return {sameImage:active.querySelector('.svFeaturedNativeArt')===window.__ipadFeaturedInitialImage,
+       visible:!active.hidden&&getComputedStyle(active).opacity!=='0',
+       native:active.querySelector('.svFeaturedNativeArt').naturalWidth>0};
+   });
+   assert.deepEqual(after,{sameImage:true,visible:true,native:true},
+     'returning to the featured area must not create another native image');
+   await page.evaluate(()=>window.SwiflyFeatured.select(1));
+   await page.waitForFunction(()=>document.querySelector('[data-sv-featured]').dataset.svFeaturedIndex==='1');
+   const second=await page.evaluate(()=>{
+     const hero=document.querySelector('[data-sv-featured]');
+     const active=hero.querySelector('.dsHeroBg[data-sv-featured-active="true"]');
+     const inactive=hero.querySelector('.dsHeroBg:not([data-sv-featured-active="true"])');
+     return {newArt:active.querySelector('.svFeaturedNativeArt')?.complete,
+       newWidth:active.querySelector('.svFeaturedNativeArt')?.naturalWidth,
+       previousRetained:inactive.querySelector('.svFeaturedNativeArt')===window.__ipadFeaturedInitialImage,
+       prevDisplay:getComputedStyle(inactive).display};
+   });
+   assert(second.newArt&&second.newWidth>0,JSON.stringify(second));
+   assert.equal(second.previousRetained,true,'the previous image remains mounted through the transition');
+   assert.equal(second.prevDisplay,'block','hidden secondary slot stays composed rather than display:none');
+ }finally{await f.context.close();}
 });
