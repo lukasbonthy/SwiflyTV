@@ -32,7 +32,7 @@ Files: `public/player/waves.js`, `public/player/player.js`, `tests/player-waves.
 - [x] Add failing unit coverage for idle-before-Play, Play intent, spatial colors, blocked-frame recovery and lifecycle pauses.
 - [x] Dispatch `swiflyplayer:play-intent` before a valid user playback attempt; remote source resumes do not emit it.
 - [x] Add a rapid impulse to the center-out field and bounded, smoothed frame sampling with a stable green fallback.
-- [ ] Exercise actual canvas/video sampling and Play behavior in the existing hosted player browser group.
+- [x] Exercise actual canvas/video sampling and Play behavior in the existing hosted player browser group.
 
 ## Task 2: Prompts and press feedback
 
@@ -48,5 +48,5 @@ Files: `public/clean/details.js`, `public/clean/details.css`, related details br
 
 - [x] Cover viewport-centered background scale and its restoration on close, reduced motion and interruption, with navigation outside the scaled subtree.
 - [x] Coordinate browse depth with existing sheet state and preserve the native modal viewport.
-- [ ] Update asset versions, run focused/full unit checks, build and hosted Chromium checks, then review the branch.
-- [ ] Merge, verify Render's exact application commit, authenticated live pages/asset bytes, and save the final checkpoint.
+- [x] Update asset versions, run focused/full unit checks, build and hosted Chromium checks, then review the branch.
+- [x] Merge, verify Render's exact application commit, authenticated live pages/asset bytes, and save the final checkpoint.
