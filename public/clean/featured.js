@@ -139,6 +139,7 @@
     const url=value=>'url("'+value+'")';bg.style.backgroundImage=url(slide.art);
     bg.style.setProperty('--sv-art-mobile',url(slide.mobileArt));bg.style.setProperty('--sv-art-large',url(slide.largeArt));bg.style.setProperty('--sv-xbox-art',url(slide.mobileArt));
     bg.dataset.svFeaturedId=String(slide.id);glow.dataset.svFeaturedId=String(slide.id);
+    if(appleTablet)bg.style.setProperty('--sv-featured-fallback-art',ready.glow);
     if(appleTablet){
       // An old DOM image belongs to the outgoing title. Replace it only
       // after the new title has completely loaded and decoded.

@@ -12,8 +12,12 @@ function artworkEntry() {
  const appleTablet=/iPad/.test(navigator.userAgent) ||
    (navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
  if(appleTablet)root.dataset.svAppleTablet='true';
+ // The featured carousel already decodes each image BEFORE inserting it.
+ // Running the generic artwork-entry gate on that decoded image adds a fresh
+ // opacity:0 + 420ms fade every time the carousel swaps its live layer.
+ // iPadOS can show the black hero beneath during that interval.
  const nativeTabletPoster=node=>appleTablet&&node.tagName==='IMG'&&
-   !!node.closest('.dsContent,.movieRail,.dsRail,.nfRail,.nfTopTenRail,.dsWelcomeRailTrack,.svFeedSection,.svResumeSection');
+   !!node.closest('.dsContent,.movieRail,.dsRail,.nfRail,.nfTopTenRail,.dsWelcomeRailTrack,.svFeedSection,.svResumeSection,.svFeaturedNativeArt');
  const backgrounds='.dsHeroBg,.browseHeroBg,.svDetailBackdrop,.dsWelcomeHeroBg';
  const copy='.dsHeroContent > :is(.dsEyebrow,h1,.dsHeroMeta,p)';
  const seen=new WeakMap(),pending=new Map(),held=new Set();
@@ -83,7 +87,7 @@ function artworkEntry() {
  // until the row is almost visible. Warm only the nearby page of a rail, so
  // returning to earlier rows does not wait for another lazy-loading gate.
  // Never prefetch a full shelf or fetch an alternative image URL.
- const tabletContainers='.dsContent .movieRail,.dsContent .dsRail,.dsContent .nfRail,.dsContent .nfTopTenRail,.dsContent .dsWelcomeRailTrack,.dsContent .dsGrid,.dsContent .movieGrid,.svResumeRail,.svFeedCards,.svFeedUpcoming';
+ const tabletContainers='.dsContent :is(.movieRail,.dsRail,.nfRail,.nfTopTenRail,.dsWelcomeRailTrack,.dsGrid,.movieGrid),.svResumeRail,.svFeedCards,.svFeedUpcoming';
  const tabletTracked=new WeakSet(),tabletWarm=new WeakSet(),tabletScrollFrames=new WeakMap();
  const tabletRailCache=new WeakMap(),tabletLastLeft=new WeakMap();
  let tabletObserver=null;

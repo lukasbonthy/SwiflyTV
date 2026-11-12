@@ -52,3 +52,30 @@ test('iPad poster button material is static while navigation and details remain 
   assert(css.includes('-webkit-backdrop-filter:none !important;'));
   assert(!css.includes('content-visibility:auto'));
 });
+
+test('decoded iPad featured images bypass the global 420ms artwork fade',async()=>{
+  const dom=fixture(true);
+  try{
+    const d=dom.window.document,hero=d.querySelector('.dsHero');
+    const slot=d.createElement('div');slot.className='dsHeroBg';
+    hero.append(slot);
+    const alreadyDecoded=d.createElement('img');alreadyDecoded.className='svFeaturedNativeArt';
+    alreadyDecoded.src='/featured-decoded.png';slot.append(alreadyDecoded);
+    await new Promise(resolve=>setImmediate(resolve));
+    assert(!alreadyDecoded.classList.contains('svArtworkAsset'),
+      'the independent image-entry controller must not set opacity:0 on a decoded carousel photo');
+    assert(!alreadyDecoded.classList.contains('svArtworkReady'),
+      'carousel photos should never enter the generic fade pipeline');
+  }finally{dom.window.close();}
+});
+
+test('ordinary newly added images still receive the original entry fade on non-iPad',async()=>{
+  const dom=fixture(false);
+  try{
+    const d=dom.window.document,slot=d.querySelector('.dsHero');
+    const late=d.createElement('img');late.className='svFeaturedNativeArt';late.src='/late-image.png';
+    slot.append(late);
+    await new Promise(resolve=>setImmediate(resolve));
+    assert(late.classList.contains('svArtworkAsset'),'non-iPad artwork entry behavior remains unchanged');
+  }finally{dom.window.close();}
+});
