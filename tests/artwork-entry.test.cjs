@@ -3,10 +3,11 @@ const test=require('node:test'),assert=require('node:assert/strict');
 const {browser,tick,cleanup}=require('./ui-helpers.cjs');
 test.afterEach(cleanup);
 
-function entry(){
+function entry({fonts}={}){
  const f=browser('<div id="svArtworkCurtain"></div><main><section class="dsHero"><div class="dsHeroBg" style="background-image:url(/hero.jpg)"></div><div class="dsHeroContent"><h1 class="dsHeroTitleArt"><span class="dsHeroTitleText">Ready film</span><img class="dsHeroLogo" src="/logo.png" width="250" height="70"></h1><p>A ready page.</p></div></section><div id="dynamic"></div></main>'),w=f.window,d=w.document;
  let state='loading',timerId=0;const tasks=new Map(),assets=[];
  Object.defineProperty(d,'readyState',{get:()=>state});
+ if(fonts)Object.defineProperty(d,'fonts',{value:fonts});
  for(const node of d.querySelectorAll('.dsHeroBg,.dsHeroLogo'))node.getBoundingClientRect=()=>({width:400,height:240,top:0,bottom:240,left:0,right:400});
  d.addEventListener('DOMContentLoaded',event=>{if(state!=='complete')event.stopImmediatePropagation();},true);
  w.setTimeout=(fn,ms)=>{const id=++timerId;tasks.set(id,{fn,ms});return id;};w.clearTimeout=id=>tasks.delete(id);
@@ -19,6 +20,23 @@ test('artwork starts preparing at parsed readiness while deferred scripts still 
  const f=entry(),d=f.window.document;f.parsed();await tick();
  assert(d.querySelector('.dsHeroBg').classList.contains('svArtworkAsset'),'parsed server artwork must prepare before deferred application scripts finish');
  assert(d.querySelector('h1').classList.contains('svArtworkCopy'));assert.equal(d.documentElement.dataset.svArtworkState,'loading');f.finish();
+});
+
+test('decoded initial artwork reveals while deferred work holds document-wide font readiness',async()=>{
+ const fonts=new Set();fonts.ready=new Promise(()=>{});
+ const f=entry({fonts}),w=f.window,d=w.document;
+ f.parsed();f.assets[0].dispatchEvent(new w.Event('load'));d.querySelector('.dsHeroLogo').dispatchEvent(new w.Event('load'));
+ await tick();w.flush();w.flush();
+ assert.equal(d.readyState,'interactive');
+ assert.equal(d.documentElement.dataset.svArtworkState,'reveal','ready artwork must not wait for deferred scripts through document.fonts.ready');f.finish();
+});
+
+test('initial entry still waits for fonts already loading without awaiting the whole document',async()=>{
+ let finishFont;const fonts=new Set([{status:'loading',loaded:new Promise(resolve=>{finishFont=resolve;})}]);fonts.ready=new Promise(()=>{});
+ const f=entry({fonts}),w=f.window,d=w.document;
+ f.parsed();f.assets[0].dispatchEvent(new w.Event('load'));d.querySelector('.dsHeroLogo').dispatchEvent(new w.Event('load'));
+ await tick();w.flush();w.flush();assert.equal(d.documentElement.dataset.svArtworkState,'loading');
+ finishFont();await tick();w.flush();w.flush();assert.equal(d.documentElement.dataset.svArtworkState,'reveal');f.finish();
 });
 
 test('a safety-released page never hides its initial artwork when parsing finally completes',async()=>{

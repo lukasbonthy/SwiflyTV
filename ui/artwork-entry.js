@@ -111,7 +111,10 @@ function artworkEntry() {
    }
   });
   observe();
-  Promise.allSettled([...critical,document.fonts?.ready]).then(()=>{
+  // FontFaceSet.ready also waits for document loading, including deferred
+  // scripts. Wait only for requested font files, independently of that gate.
+  const fonts=Array.from(document.fonts||[]).filter(face=>face.status==='loading').map(face=>face.loaded);
+  Promise.allSettled([...critical,...fonts]).then(()=>{
    if(!entering||suspended)return;
    // Give cached artwork a painted black starting frame, without a minimum
    // loading duration or a per-frame animation loop.
