@@ -23,6 +23,7 @@ async function open(width,{subtle=false,reduced=false,resume=false,height=936,ta
  });
  await page.goto('https://swifly.test/');
  await page.evaluate(subtle=>{document.body.dataset.stGlass=subtle?'subtle':'liquid';},subtle);
+ if(tablet)await page.addScriptTag({content:require('../ui/artwork-entry.js')});
  for(const name of ['liquid-glass/liquid-glass.js','liquid-glass/surfaces.js',...(resume?['clean/continue.js']:[]),'clean/featured.js'])await page.addScriptTag({content:fs.readFileSync(path.join(__dirname,'../public',name),'utf8')});
  await page.waitForFunction(()=>document.querySelector('.svHeroSpill').dataset.svFeaturedPrepared==='true');
  // Initial CSS entry motion can still translate the action row while the
@@ -239,6 +240,8 @@ test('iPad keeps a decoded featured image mounted after scrolling away and switc
    assert(first.complete&&first.naturalWidth>0,JSON.stringify(first));
    assert.equal(first.activeBackground,'none','decoded img—not a CSS background—owns the iPad art');
    assert.equal(first.masked,'none','full-hero mask is replaced by a simple fade overlay');
+   assert.equal(await page.locator('[data-sv-featured] > .dsHeroGlass').evaluate(el=>getComputedStyle(el).maskImage),'none','the additional full-screen glass mask must also be disabled on iPad');
+   assert.equal(await page.locator('[data-sv-featured] > .dsHeroArt').evaluate(el=>getComputedStyle(el).zIndex),'0','the decoded photo is not painted behind a negative stacking layer');
    assert.equal(first.rendered,'block');
    await page.evaluate(()=>window.scrollTo({top:document.body.scrollHeight,behavior:'instant'}));
    await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
@@ -262,6 +265,14 @@ test('iPad keeps a decoded featured image mounted after scrolling away and switc
        prevDisplay:getComputedStyle(inactive).display};
    });
    assert(second.newArt&&second.newWidth>0,JSON.stringify(second));
+   await page.waitForFunction(()=>{const photo=document.querySelector('[data-sv-featured] .dsHeroBg[data-sv-featured-active="true"] > .svFeaturedNativeArt');return photo&&photo.complete;});
+   const entry=await page.evaluate(()=>{
+     const photo=document.querySelector('[data-sv-featured] .dsHeroBg[data-sv-featured-active="true"] > .svFeaturedNativeArt');
+     return {gated:photo.classList.contains('svArtworkAsset'),opacity:getComputedStyle(photo).opacity,transform:getComputedStyle(photo.parentElement).transform};
+   });
+   assert.equal(entry.gated,false,'artwork entry must not hide a previously decoded featured image');
+   assert.equal(entry.opacity,'1','incoming image must be opaque without a delayed 420ms reveal');
+   assert.equal(entry.transform,'none','offscreen hero must not carry a permanent large parallax texture');
    assert.equal(second.previousRetained,true,'the previous image remains mounted through the transition');
    assert.equal(second.prevDisplay,'block','hidden secondary slot stays composed rather than display:none');
  }finally{await f.context.close();}
