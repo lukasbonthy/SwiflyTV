@@ -238,7 +238,7 @@ test('iPad keeps a decoded featured image mounted after scrolling away and switc
      };
    });
    assert(first.complete&&first.naturalWidth>0,JSON.stringify(first));
-   assert.equal(first.activeBackground,'none','decoded img—not a CSS background—owns the iPad art');
+   assert(first.activeBackground.includes('data:image/png')||first.activeBackground.includes('gradient('),'iPad has a lightweight palette fallback under the opaque decoded image');
    assert.equal(first.masked,'none','full-hero mask is replaced by a simple fade overlay');
    assert.equal(await page.locator('[data-sv-featured] > .dsHeroGlass').evaluate(el=>getComputedStyle(el).maskImage),'none','the additional full-screen glass mask must also be disabled on iPad');
    assert.equal(await page.locator('[data-sv-featured] > .dsHeroArt').evaluate(el=>getComputedStyle(el).zIndex),'0','the decoded photo is not painted behind a negative stacking layer');
