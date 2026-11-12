@@ -2,17 +2,7 @@
 
 Updated: November 11, 2026 (America/New_York).
 
-## Active continuation: player motion and settled entry
-
-- Working branch: `fix/player-motion-and-settled-entry-v183`, based on `5e0caf1637fcb1ce14f212b4e916603690a69d30`.
-- Current implementation is not yet published. The running application and deployment below are the previous release.
-- Center-out green pixel ripples now start when the player finishes its reveal and travel faster. Player header and metadata ease into the longer theater dissolve without moving the film.
-- React startup separates visual controllers from optional tools, preloads first-party controller scripts and signals layout readiness after initialization and requested fonts settle. The artwork curtain waits for that readiness instead of exposing late setup.
-- Skip-intro and next-episode prompts gain entrance/exit transitions while hidden actions immediately stop receiving input. Delegated pointer and keyboard press feedback preserves native activation, target size and existing button centering.
-- New coverage reproduces the delayed React initialization bug, exercises the actual production Vite entry and Home composition, and checks center emission, prompt motion and button activation. Production build, syntax checks, all 1,613 local unit cases and 64 focused cases passed. The 246 local browser cases were skipped because Chromium cannot launch in this runtime; hosted-browser checks are pending.
-- An authorized production access session is available privately for post-deployment asset verification. Do not put credentials or cookies in this repository.
-
-## Previous release: source and production
+## Source and production
 
 - Repository: https://github.com/lukasbonthy/SwiflyTV
 - Production branch: `main`
@@ -20,48 +10,53 @@ Updated: November 11, 2026 (America/New_York).
 - Render workspace: `tea-csptd58gph6c73b7sv30`
 - Render service: `srv-db6fjrp42hec73c2tn30` (SwiflyTV-1)
 - Automatic deployment is enabled on commits to `main`.
-- Running application commit: `66349625845c53e16b1ec06d0f3178652fa0e0fb`.
-- Render deployment: `dep-dbqi5659el5s73euhvn0`, confirmed `live`; finished 2026-11-12T02:22:39.196622Z.
-- Tested source commit: `88b2a6a751193dd1b1d6008eac5c149ea18af343`.
-- Tested and merged source tree: `ddc0b422f8d7362c823f3ca903af725386bbafaa` (identical).
-- PR #155: https://github.com/lukasbonthy/SwiflyTV/pull/155, merged.
+- Running application commit: `fd937bbca80453df1352ef01ec877be6eff6a930`.
+- Render deployment: `dep-dbqjd8t9el5s73evsul0`, confirmed `live`; finished `2026-11-12T03:48:41.763033Z`.
+- Tested source commit: `1bbb6d73049921b51fe1afeed0197e778070001e`.
+- Tested and merged source tree: `9e685e8a2952717b933dbf6e60453f62d62f66ac` (identical).
+- PR #156: https://github.com/lukasbonthy/SwiflyTV/pull/156, merged.
 
 ## Completed latest requests
 
-The top navigation is slightly rounder: its desktop radius and matching glass surface increase from 20px to 22px. Existing mobile sizing and pill shape stay intact.
+Green pixel ripples start in the center when the movie player finishes its reveal, then expand faster. The first emission has no old ring at the edges. The native Canvas2D renderer retains its bounded bitmap, mobile frame cap, preferences, fullscreen and lifecycle handling.
 
-The standalone movie/episode player has a bright green pixel-grid ripple field inspired by the user's TheIntroDB video. Native Canvas2D keeps the bitmap bounded to 1280 x 900; the mobile draw rate is capped separately. The backdrop sits behind the opaque film and controls. Embedded players retain their existing appearance.
+The movie-player curtain dissolves over 560ms with a short, coordinated entrance for the heading and metadata. The film stays steady.
 
-The field pauses offscreen, in hidden tabs, during document/native iPhone fullscreen, and in the back-forward cache. Reduced motion shows a still pattern. High contrast, forced colors, reduced transparency, console and minimal presets disable it. The renderer observes Studio and OS preference changes.
+The layout snapping came from the actual React/Vite startup path. It loaded every controller sequentially and delayed their DOMContentLoaded setup until optional tools finished, while the independent artwork curtain could reveal the page earlier. Startup now initializes visual controllers first, preserves their dependency order, preloads first-party assets, waits for requested fonts and initial layout, then signals the curtain to reveal. Optional tools can finish afterward without making the usable document pretend to be parsing.
 
-Entry from another page now closes through a short black dissolve and uses the existing independent artwork curtain for one incoming theater reveal. The live video never moves or scales. The generic loading skeleton does not replace the theater dissolve. Escape, reduced motion, console navigation and history restoration retain their existing behavior. The ripple canvas fades in once when ready.
+Skip-intro/recap and next-episode prompts ease in and out using compositor motion and discrete display transitions. Logical hidden state and pointer exclusion take effect immediately. OS and Studio reduced motion are respected.
+
+Delegated pointer and keyboard press feedback adds a small downward press and quick release to buttons and button-like links, including More details. Native activation, button size and existing centering are preserved. The feedback cancels for drag, page lifecycle and reduced-motion changes.
 
 ## Preserved previous work
 
-PR #153 installed the supplied transparent SVG navigation bird, removed the separate featured pause/play button, and implemented the single initial artwork dissolve. PR #154 published the favicon with transparent corners. The favicon remains `?v=181`, and the navigation SVG remains `?v=180`.
+PR #155 slightly rounded the top navigation to 22px and installed the green pixel-grid field and outgoing player dissolve. PR #153 installed the supplied transparent SVG navigation bird, removed the separate featured pause/play button and added the initial artwork dissolve. PR #154 published the favicon with transparent corners. The favicon remains `?v=181`, and the navigation SVG remains `?v=180`.
 
-Preserve native scrolling, seven-title catalog windows, the current mobile composition, Studio settings, glass effects, progress controls, and late artwork handling. Do not reimplement finished changes.
+Preserve native scrolling, seven-title catalog windows, the mobile composition, Studio settings, glass effects, progress controls and late artwork handling. Do not reimplement finished changes.
 
 ## Verification
 
-- All 1,612 local unit checks passed. The local browser cases were skipped because this runtime cannot launch Chromium.
-- Both final GitHub checks passed on the exact tested commit: runs `43139383539` and `43139377499`.
-- GitHub ran all 242 browser cases successfully, with no browser skips, including visible green pixels on desktop/phones, stable movie geometry, control hit targets, viewport bounds, the incoming dissolve, preferences and lifecycle pause/resume.
-- All 33 acceptance scenarios passed, with 335 assertions.
 - Production Vite build, syntax checks and whitespace checks passed.
-- Independent review identified native iPhone fullscreen and forced-colors gaps; both were addressed and covered by the passing browser checks.
-- One existing Home geometry test raced initial catalog setup. Its fixture now waits for initial rail geometry and already-requested fonts before measuring logo replacement. The geometry assertions and thresholds remain unchanged.
-- Render confirms the intended merged application commit is live. The initial post-deployment application error-log query returned zero errors.
-- Direct live visual/asset-byte verification is limited by the existing six-digit site access gate. No authorized PIN or browser session was available in this continuation. The protected appearance was verified in GitHub's real-browser fixtures; do not claim a protected production screenshot or asset hash comparison was completed.
+- All 1,613 local unit checks passed. The 246 local browser cases were skipped because this runtime cannot launch Chromium.
+- Both final GitHub checks passed on the exact tested commit: runs `43149123452` and `43149117217`.
+- Hosted Chromium passed 27 entry/Home cases and 219 wider browser cases, with zero browser skips, including the actual built production React entry, held optional downloads, stable revealed Home geometry on phone/desktop, button activation/centering/reduced motion, center emission, prompt entry/exit, movie geometry, preferences and lifecycle.
+- All 33 acceptance scenarios passed, with 335 assertions.
+- A new button test initially required exact equality for a 0.000002px browser coordinate difference. It now allows less than 0.01px while preserving the target-size assertion. An existing scroll-style test sampled its manual motion attribute and paint in separate automation commands; the real controller could settle between them. Sampling is now atomic, with the same paint expectations.
+- The production access session was authorized by the user. Authenticated HTTP verified five rendered routes (`/`, `/movies`, `/tv`, `/movie/157336`, `/watch/movie/157336`), the new layout gate, theater marker, script versions and production entry bundle. Seven changed/relevant assets matched the tested local bytes exactly. No protected production screenshot is claimed.
+- Render confirms the merged application commit is live. Its initial application error-log query returned zero errors.
 
 ## Changed asset references
 
-- Core shell: `/assets/shell/core-9833de8ffdc233744c2b.css`.
-- Player CSS: `/assets/player/player.css?v=268`; SHA-256 `45c7a0a7a6d13bbc555b5570f437ff0da5d5a8ef4b24925df964cd62c44f6843`.
-- Ripple script: `/assets/player/waves.js?v=1`; SHA-256 `3a7b7da2f162c9ffd50b2929e225aba94521f0d2fe309ef7b4049a0cbd3254be`.
+- `/assets/player/waves.js?v=2`; SHA-256 `4521b4a3eec7639bb0e18d197f9663f319f0772fd5b8074083da31d231358d95`.
+- `/assets/player/player.css?v=269`; SHA-256 `543af7da666d565fc7974db4e88999848ad78e61a919a8fcc70a23b30a68335f`.
+- `/assets/player/assist.css?v=263`; SHA-256 `054829403898e63ccbe2f852ee1806196e934cdf6eb80312182f6920e977a0ac`.
+- `/assets/clean/press.js?v=1`; SHA-256 `c630fd29e8b18803aa65dd40298cd23622dbb0753d2fe0e7c5446f1bf2157c78`.
+- `/react-assets/main-CfYDFthK.js`; SHA-256 `723011edc2fd09c96079ccb37cfb9ea18074dac19da1e5d45c3be446615a3376`.
+- `/react-assets/main-uW_lRk83.css`; SHA-256 `2c9ed554d153e9122be5dfaa6c7b090b062e44ef56e27867add424e153288e59`.
+- `/assets/shell/core-a4c26d443f54c9c19ea5.css`; SHA-256 `a4c26d443f54c9c19ea5b9a0e09eb93f22c80cec8af9ff2b3a834e1bcfcbd11c`.
 
-Previous release implementation/publication work: complete. Its original protected-live-page review was blocked by the access gate. The active continuation and its remaining verification are recorded above.
+Remaining implementation/publication work: none. This checkpoint update is documentation only and uses `[skip ci] [skip render]`; it does not change the running application commit. Access credentials and cookies are private and must never be committed.
 
 ## Keeping future chats resumable
 
-Read this checkpoint, inspect the working tree, and verify current GitHub/Render state before resuming. Keep image Base64 and complete binary blobs out of conversation output. Keep full logs in temporary files and display compact results. Record any unfinished step here before a handoff. The chat length limit itself cannot be changed by repository code.
+Read this checkpoint, inspect the working tree and verify current GitHub/Render state before resuming. Keep binaries and image Base64 out of conversation output. Keep full logs in temporary files and show compact results. Record any unfinished step here before a handoff. The chat length limit itself cannot be changed by repository code.
