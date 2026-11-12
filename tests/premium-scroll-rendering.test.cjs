@@ -66,7 +66,7 @@ async function catalog(browser, options = {}) {
   } finally {if (!ready) await new Promise(resolve => api.io.close(resolve));}
 }
 
-test('detail motion keeps the scrollbar at the window edge and the catalog fade stationary', {skip:!available&&'Chromium is not installed'}, async()=>{
+test('detail motion keeps the scrollbar and top navigation fixed above the receded catalog', {skip:!available&&'Chromium is not installed'}, async()=>{
  const browser=await chromium.launch({headless:true,ignoreDefaultArgs:['--hide-scrollbars']});
  try{
   const page=await catalog(browser);
@@ -84,6 +84,8 @@ test('detail motion keeps the scrollbar at the window edge and the catalog fade 
    animation.finish();await opening;
   });
   await page.waitForFunction(()=>document.querySelector('.svDetailDialog').dataset.svDetailState==='open');
+  await page.waitForFunction(()=>!document.querySelector('[data-sv-browse-scene]').getAnimations().length);
+  const depthFade=await page.locator('.svHeroLightBridge').evaluate(node=>{const r=node.getBoundingClientRect();return {left:r.left,width:r.width,top:r.top};});
   const result=await page.evaluate(()=>{
    const dialog=document.querySelector('.svDetailDialog'),panel=dialog.querySelector('.svDetailPanel')||dialog;
    const animation=panel.animate(__sheetEntry.frames,__sheetEntry.timing),duration=__sheetEntry.timing.duration;
@@ -108,7 +110,7 @@ test('detail motion keeps the scrollbar at the window edge and the catalog fade 
    assert.equal(sample.y,before.y);
    for(const field of ['left','width','top']){
     assert(Math.abs(sample.nav[field]-before.nav[field])<.5,'fixed navigation must not shift on open');
-    assert(Math.abs(sample.fade[field]-before.fade[field])<.5,'the artwork/fade seam must not be resampled by a background zoom');
+    assert(Math.abs(sample.fade[field]-depthFade[field])<.5,'the artwork and fade keep their shared geometry behind the sheet');
    }
   }
   assert(Math.abs(result.samples.at(-1).panelTop-result.height*.07)<1,'the rounded panel settles with a small view of the catalog above it');

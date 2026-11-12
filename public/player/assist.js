@@ -26,9 +26,9 @@
   if(disposed||!video)return;if(identity!==mediaIdentity()){currentSkip=null;skip.hidden=true;next.hidden=true;return;}const state=player()?.getState?.(),ready=state?.ready&&video.readyState>=2,duration=video.duration;let time=video.currentTime;
   const intro=ready&&state.status==='ready'&&!locked()&&!video.paused&&!video.ended&&!video.seeking&&wantsAutoSkip()?windowAt('intro',time,duration):null;
   if(intro&&!autoSkipped.has(intro.key)){autoSkipped.add(intro.key);player()?.seek?.(intro.end);time=video.currentTime;}
-  currentSkip=null;if(ready&&!locked())for(const kind of Object.keys(skipLabels)){const m=windowAt(kind,time,duration);if(m){currentSkip=m;(find('skip-label')||skip).textContent=skipLabels[kind];break;}}skip.hidden=!currentSkip;
+  currentSkip=null;if(ready&&!locked())for(const kind of Object.keys(skipLabels)){const m=windowAt(kind,time,duration);if(m){currentSkip=m;(find('skip-label')||skip).textContent=skipLabels[kind];break;}}skip.hidden=!currentSkip;if(currentSkip)skip.style.setProperty('--sv-assist-progress',String(Math.max(0,Math.min(1,(time-currentSkip.start)/(currentSkip.end-currentSkip.start)))));
   const link=nextLink(),show=ready&&app.dataset.playerType==='tv'&&!locked()&&!dismissed&&link&&Number.isFinite(duration)&&duration>60&&duration-time<=30&&duration-time>=-.5;
-  next.hidden=!show;if(show){const remaining=Math.max(0,Math.ceil(duration-time));countdown.textContent=video.paused&&!video.ended?'Paused · '+remaining+' seconds left':autoplay.checked?'Next episode in '+remaining+' seconds':'Next episode is ready';try{const u=new URL(link.href,location.href);find('next-title').textContent='Season '+u.searchParams.get('s')+' · Episode '+u.searchParams.get('e');}catch{}}
+  next.hidden=!show;if(show){const remaining=Math.max(0,Math.ceil(duration-time));next.style.setProperty('--sv-assist-countdown',String(remaining/30));countdown.textContent=video.paused&&!video.ended?'Paused · '+remaining+' seconds left':autoplay.checked?'Next episode in '+remaining+' seconds':'Next episode is ready';try{const u=new URL(link.href,location.href);find('next-title').textContent='Season '+u.searchParams.get('s')+' · Episode '+u.searchParams.get('e');}catch{}}
   song.disabled=!ready;song.hidden=!ready;
  }
  function advance(){const link=nextLink();if(disposed||advanced||locked()||!link)return;advanced=true;link.click();}

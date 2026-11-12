@@ -2,6 +2,17 @@
 
 Updated: November 11, 2026 (America/New_York).
 
+## Active continuation: frame colors, Play burst and details depth
+
+- Branch: `design/frame-reactive-player-v184`, based on `bf95880b2a038c028ebd4ff96257b7f302bad713`.
+- This continuation is not yet published. The running application and verification below describe the previous release.
+- Latest user correction: ripple bursts begin on Play; source discovery never starts them. Native frame sampling colors spatial patches while retaining green. Sampling is tiny/throttled and falls back to green for protected frames.
+- Skip/next prompts have refined surfaces, media-clock progress lines and monotonic entry/exit. Button feedback is a small opacity response, with optical labels animated separately from their glass and no positional bounce.
+- The browse scene recedes to 97% around the visible viewport during details entry, synchronized with the mobile preparation launch. Navigation and the native modal viewport retain their coordinates.
+- Review found and fixes covered protected-frame recovery, overlapping Play impulses, keyup after focus transfer, and delayed mobile depth. Reduced-motion progress, prepared-grid reuse and an actual Play-button browser path are also covered. No review items are deferred.
+- Focused checks (132 cases) and review-fix checks (35 cases), production build and syntax checks passed. All 1,625 local unit checks passed; hosted browser verification is pending. There are now 248 browser cases, including the new narrow-phone prompt layout case.
+- One existing account-recovery test searched the entire serialized backup for `99`, accidentally matching its creation timestamp. A deterministic `.999` timestamp reproduced the false failure. It now checks the actual recovered title IDs and account partitions; account-data production behavior is unchanged.
+
 ## Source and production
 
 - Repository: https://github.com/lukasbonthy/SwiflyTV
@@ -55,7 +66,7 @@ Preserve native scrolling, seven-title catalog windows, the mobile composition, 
 - `/react-assets/main-uW_lRk83.css`; SHA-256 `2c9ed554d153e9122be5dfaa6c7b090b062e44ef56e27867add424e153288e59`.
 - `/assets/shell/core-a4c26d443f54c9c19ea5.css`; SHA-256 `a4c26d443f54c9c19ea5b9a0e09eb93f22c80cec8af9ff2b3a834e1bcfcbd11c`.
 
-Remaining implementation/publication work: none. This checkpoint update is documentation only and uses `[skip ci] [skip render]`; it does not change the running application commit. Access credentials and cookies are private and must never be committed.
+Previous release implementation/publication work: complete. The active continuation is recorded above. This checkpoint update is documentation only and uses `[skip ci] [skip render]`; it does not change the running application commit. Access credentials and cookies are private and must never be committed.
 
 ## Keeping future chats resumable
 

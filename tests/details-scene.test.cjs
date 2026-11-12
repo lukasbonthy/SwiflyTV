@@ -15,19 +15,29 @@ function setup(options={}) {
 }
 async function finish(animations){animations.forEach(a=>a.finish());await tick();}
 
-test('The inner panel rises while catalog artwork, fixed navigation and the native scroll area stay stationary',async()=>{
+test('The inner panel rises independently of the fixed navigation and native scroll area',async()=>{
  const env=setup(),w=env.window,d=w.document;
  const resting=[env.scene,env.header,env.mobile].map(node=>node.getAttribute('style'));
  await w.SwiflyDetails.open('/movie/101',d.getElementById('open'));w.flush(16);
  const dialog=d.querySelector('.svDetailDialog'),panel=dialog.querySelector('.svDetailPanel');
  assert.equal(dialog.parentElement,d.body);assert.equal(panel.parentElement.className,'svDetailStage');
  assert.equal(panel.closest('.svDetailViewport').parentElement,dialog);
- assert.equal(env.animations.length,2,'Only the panel and scrim animate');
+ assert.equal(env.animations.length,2,'The panel and scrim own their coordinated sheet animations');
  assert.equal(env.animations[0].target,panel);assert.equal(env.animations[0].settings.duration,360);
  assert.equal(env.animations[1].target,d.querySelector('.svDetailScrim'));
  assert.deepEqual([env.scene,env.header,env.mobile].map(node=>node.getAttribute('style')),resting);
  assert.equal(env.page.scrollTop,640);
  await finish(env.animations);assert.equal(dialog.dataset.svDetailState,'open');env.finish();
+});
+
+test('details ease the browse scene back around the visible viewport and restore it during close',async()=>{
+ const env=setup(),w=env.window,d=w.document,style=d.createElement('style');style.textContent=source('details.css');d.head.append(style);
+ await w.SwiflyDetails.open('/movie/101',d.getElementById('open'));w.flush(16);
+ assert.equal(d.documentElement.dataset.svDetailDepth,'back');assert.equal(w.getComputedStyle(env.scene).scale,'.97');
+ assert.equal(d.documentElement.style.getPropertyValue('--sv-detail-scene-origin'),'1024px','depth is centered on the scrolled viewport rather than the entire document');
+ assert.equal(env.header.getAttribute('style'),null,'the fixed top navigation is outside the scaled subtree');
+ await finish(env.animations);w.SwiflyDetails.close();w.flush(32);assert.equal(d.documentElement.hasAttribute('data-sv-detail-depth'),false,'the background returns while the sheet is leaving');
+ await finish(env.animations);assert.equal(env.page.scrollTop,640);env.finish();
 });
 
 test('Closing keeps the native modal and catalog lock through the shorter exit, then restores focus',async()=>{

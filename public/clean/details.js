@@ -10,8 +10,8 @@
   // Xbox Edge needs the dialog to appear at the button press.
   const xboxInstant = /Xbox|XboxOne|Xbox Series/i.test(navigator.userAgent) || document.documentElement.dataset.svXbox === 'true';
   const reducedMotion=()=>xboxInstant||motionPreference.matches||document.body.classList.contains('reduceMotion');
-  // Only the inner panel travels. Its native scroll area and the catalog
-  // remain stationary, with one slightly quicker glide and a soft landing.
+  // The inner panel travels above a gently receding browse scene. The native
+  // modal viewport and the fixed navigation keep their original coordinates.
   const enterDuration=360,exitDuration=220;
   const enterEase='cubic-bezier(.28,.06,.2,1)',exitEase='cubic-bezier(.4,0,.2,1)';
   const coarseMotion=window.matchMedia('(hover: none) and (pointer: coarse)');
@@ -150,8 +150,11 @@
     // suppressed. The root's laid-out box preserves the real content edge.
     const width=document.documentElement.getBoundingClientRect().width||document.documentElement.clientWidth;
     const gutter=Math.max(0,window.innerWidth-width);
+    const scene=document.querySelector('body > [data-sv-browse-scene]');
+    const origin=window.scrollY+window.innerHeight*.5-(scene?.offsetTop||0);
     // Keep this responsive without reading/writing geometry during a resize.
     document.documentElement.style.setProperty('--sv-detail-page-width','calc(100vw - '+gutter+'px)');
+    document.documentElement.style.setProperty('--sv-detail-scene-origin',Math.max(0,origin)+'px');
     document.documentElement.classList.add('svDetailsFramed');
   }
   function syncSheetScroll(knownPosition) {
@@ -175,12 +178,17 @@
     const opacity=reversing?getComputedStyle(scrim).opacity:(entering?'0':'1');
     cancelSheetTransition();
     const mobile=mobileMotion(),epoch=transitionEpoch,duration=mobile?(entering?560:360):(entering?enterDuration:exitDuration);
+    const pageRoot=document.documentElement;
+    pageRoot.style.setProperty('--sv-detail-depth-time',duration+'ms');
+    pageRoot.style.setProperty('--sv-detail-depth-ease',entering?(mobile?'cubic-bezier(.2,.7,.2,1)':enterEase):exitEase);
+    const depth=()=>{if(entering&&!reducedMotion())pageRoot.dataset.svDetailDepth='back';else delete pageRoot.dataset.svDetailDepth;};
     prepare=prepare&&entering&&!reversing;
     const active={epoch,mobile,entering,started:false,animations:[],frame:0,timer:null,warmTimer:null,complete:null,launch:null,waiters:[]};sheetTransition=active;syncSheetScroll(knownPosition);
     sheetPanel.style.removeProperty('animation-play-state');scrim.style.removeProperty('animation-play-state');
     dialog.dataset.svDetailState=state;scrim.dataset.svDetailState=state;
     const settle=()=>{
       if(sheetTransition!==active||epoch!==transitionEpoch)return;
+      depth();
       sheetTransition=null;clearTimeout(active.timer);clearTimeout(active.warmTimer);cancelAnimationFrame(active.frame);
       dialog.dataset.svDetailState=entering?'open':'closed';scrim.dataset.svDetailState=entering?'open':'closed';
       sheetPanel.style.removeProperty('--sv-detail-start');scrim.style.removeProperty('--sv-detail-dim-start');
@@ -197,7 +205,7 @@
       let queued=false;
       const arm=()=>{if(sheetTransition!==active)return;clearTimeout(active.timer);active.timer=setTimeout(settle,active.mobile?timeout+400:timeout);};
       const run=()=>{
-        active.frame=0;if(sheetTransition!==active)return;active.started=true;
+        active.frame=0;if(sheetTransition!==active)return;active.started=true;depth();
         try{play();}catch{settle();return;}
         if(active.mobile&&active.animations.length&&active.animations.every(animation=>animation.ready?.then)){
           // A slow compositor must not spend the glide's watchdog budget
@@ -243,7 +251,7 @@
     // A bounded timer also completes when a background tab drops animationend entirely.
     begin(()=>{sheetPanel.style.animationPlayState='running';scrim.style.animationPlayState='running';},duration+34);
   }
-  function settleReducedMotion() {if(reducedMotion())sheetTransition?.complete();}
+  function settleReducedMotion() {if(reducedMotion()){document.documentElement.style.setProperty('--sv-detail-depth-time','0ms');delete document.documentElement.dataset.svDetailDepth;sheetTransition?.complete();}}
   function focusReadyEntry(current) {
     const entry=entryFocus;if(!entry||entry.current!==current)return;entryFocus=null;
     if(entry.cancelled||current!==generation||!dialog.open||dialog.dataset.svDetailState==='closing'||document.documentElement.dataset.svTv!=='true')return;
@@ -262,6 +270,7 @@
     if(scrim){scrim.hidden=true;scrim.dataset.svDetailState='closed';}
     if(dialog){dialog.dataset.svDetailState='closed';dialog.removeAttribute('aria-busy');}
     document.documentElement.classList.remove('svDetailsOpen');
+    delete document.documentElement.dataset.svDetailDepth;
     if(trigger?.isConnected)trigger.focus({preventScroll:true});lastTrigger=trigger||lastTrigger;trigger=null;
     contentHost?.replaceChildren();currentHref='';currentURL='';trail=[];
   }

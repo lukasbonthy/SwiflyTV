@@ -3,11 +3,19 @@
 .svPlayerAssist>button,.svPlayerAssist>section{pointer-events:auto}
 .svPlayerAssist [hidden],.svPlayerAssist>[hidden]{display:none!important}
 .svAssistSkip,.svSongButton{position:absolute;display:flex;align-items:center;justify-content:center;gap:10px;bottom:112px;min-height:44px;padding:11px 17px;border:1px solid #ffffff33;border-radius:999px;background:#080808ed;color:#f1f1f1;font-family:inherit;font-size:calc(12px * var(--st-ui-scale, 1));line-height:1.4;box-shadow:0 8px 28px #00000044;cursor:pointer}
-.svAssistSkip{right:24px}.svSongButton{left:24px;color:#d5d5d5;font-size:calc(11px * var(--st-ui-scale, 1));border-color:#ffffff20}
+.svAssistSkip{right:24px;overflow:hidden;gap:20px;min-height:48px;padding:9px 10px 9px 19px;border-radius:16px;border-color:#effff194;background:linear-gradient(135deg,#f1f9f1,#dce9df);color:#122019;font-size:calc(13px * var(--st-ui-scale,1));font-weight:600;letter-spacing:-.01em;box-shadow:inset 0 1px #ffffffb3,0 8px 24px #0005}
+.svAssistSkipArrow{display:grid;place-items:center;width:30px;height:30px;border-radius:10px;background:#1220190c;transition:translate .2s ease}
+.svAssistSkip [data-assist-skip-label]{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.svAssistSkipArrow{flex:0 0 auto}
+.svAssistSkip:hover .svAssistSkipArrow{translate:2px 0}
+.svAssistSkipTrack{position:absolute;inset:auto 12px 0;height:2px;overflow:hidden;pointer-events:none;background:#12201908}
+.svAssistSkipTrack i{display:block;height:100%;background:#3d7051;transform-origin:left;transform:scaleX(var(--sv-assist-progress,0));transition:transform .22s linear}
+.svSongButton{left:24px;color:#d5d5d5;font-size:calc(11px * var(--st-ui-scale, 1));border-color:#ffffff20}
 .svSongButton svg,.svAssistSkip svg{width:16px;height:16px;flex-basis:16px}
 .svPlayer[data-player-controls-visibility=hidden] .svSongButton{opacity:0;visibility:hidden;pointer-events:none}
 .svSongButton{transition:opacity .16s,visibility .16s}
-.svAssistNext{position:absolute;right:24px;bottom:112px;box-sizing:border-box;width:304px;max-height:calc(100% - 128px);overflow-y:auto;border:1px solid #ffffff2c;border-radius:19px;background:#080808fa;color:#efefef;box-shadow:0 16px 46px #00000077}
+.svAssistNext{position:absolute;right:24px;bottom:112px;box-sizing:border-box;width:304px;max-height:calc(100% - 128px);overflow-y:auto;border:1px solid #e0f5e62b;border-radius:21px;background:linear-gradient(145deg,#19231efa,#0e1310fa);color:#efefef;box-shadow:inset 0 1px #ffffff09,0 16px 46px #0007}
+.svAssistNext::after{content:"";display:block;height:2px;background:#c4e7cb;transform-origin:left;transform:scaleX(var(--sv-assist-countdown,1));transition:transform .4s linear;pointer-events:none}
 .svAssistNextArt{display:block;width:100%;height:130px;object-fit:cover;border-bottom:1px solid #ffffff0a}
 .svAssistNextBody{padding:21px}.svAssistNextHeading{display:flex;align-items:center;justify-content:space-between;gap:14px}
 .svAssistEyebrow{color:#aaaaaa;font-size:calc(8px * var(--st-ui-scale, 1));font-weight:550;letter-spacing:.15em;white-space:nowrap}
@@ -17,7 +25,7 @@
 .svAssistNextActions{display:flex;gap:8px}
 .svAssistNextActions button{display:flex;align-items:center;justify-content:center;gap:7px;min-height:42px;flex:1;padding:10px 9px;border:1px solid #ffffff1c;border-radius:10px;background:#ffffff05;color:#c2c2c2;font-family:inherit;font-size:calc(10px * var(--st-ui-scale, 1));font-weight:500;cursor:pointer;white-space:nowrap}
 .svAssistNextActions button svg{width:13px;height:13px;flex-basis:13px}
-.svAssistNextActions [data-assist-next-play]{background:#d2d2d2;color:#282828;border-color:transparent}
+.svAssistNextActions [data-assist-next-play]{background:#e5f1e6;color:#152219;border-color:#effff180;box-shadow:inset 0 1px #ffffff80}
 .svAssistAutoplay{display:flex;align-items:flex-start;gap:8px;margin-top:17px;color:#a9a9a9;font-size:calc(9px * var(--st-ui-scale, 1));line-height:1.7}
 .svAssistAutoplay input{flex:0 0 14px;width:14px;height:14px;margin:0;accent-color:#bcbcbc}
 .svSongResult{position:absolute;left:24px;top:24px;box-sizing:border-box;width:min(340px,calc(100% - 48px));padding:22px;border:1px solid #ffffff28;border-radius:18px;background:#1a1a1afa;box-shadow:0 12px 40px #00000066;color:#e3e3e3}
@@ -34,8 +42,10 @@
 .svPlayerMenuAutoplay input{flex:0 0 16px!important;width:16px!important;height:16px!important;min-width:16px!important;margin:0;accent-color:#b1b1b1}
 .svPlayerAssist :focus-visible{outline:2px solid #bbbbbb;outline-offset:4px}
 @media(max-width:600px){
- .svSongButton{left:14px;bottom:102px;min-height:44px;font-size:calc(10px * var(--st-ui-scale, 1));padding:10px 12px;border-radius:10px}
- .svAssistSkip{right:14px;bottom:102px;min-height:44px;font-size:calc(11px * var(--st-ui-scale, 1));padding:10px 13px}
+ .svSongButton{left:14px;bottom:102px;min-height:44px;min-width:44px;gap:0;font-size:calc(10px * var(--st-ui-scale, 1));padding:10px;border-radius:12px}
+ .svSongButton>span{display:none}
+ .svAssistSkip{right:14px;bottom:102px;min-height:44px;max-width:calc(100% - 80px);gap:12px;font-size:calc(11px * var(--st-ui-scale, 1));padding:8px 8px 8px 12px;border-radius:13px}
+ .svAssistSkipArrow{width:26px;height:26px;border-radius:8px}
  .svAssistNext{right:14px;bottom:96px;width:min(390px,calc(100% - 28px));max-height:calc(100% - 110px);border-radius:13px}
  .svAssistNextArt{display:none}
  .svAssistNextBody{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:10px;align-items:center;padding:11px 12px}
@@ -62,15 +72,22 @@
  .svAssistNextActions button svg{display:none}
  .svPlayerAssist:has(.svAssistNext:not([hidden])) .svSongButton{display:none}
 }
+@container sv-stage (max-width:440px){
+ .svSongButton{min-width:44px;min-height:44px;gap:0;padding:10px}
+ .svSongButton>span{display:none}
+ .svAssistSkip{max-width:calc(100% - 80px);gap:12px;padding:8px 8px 8px 12px}
+ .svAssistSkipArrow{width:26px;height:26px;border-radius:8px}
+}
 @media(max-height:540px) and (min-width:601px){.svAssistNextArt{display:none}.svAssistNextBody{padding:15px}.svAssistNext h3{font-size:calc(16px * var(--st-ui-scale, 1))}.svAssistAutoplay{display:none}.svSongResult{top:10px}.svSongResult p{margin-top:12px}}
 @media(prefers-reduced-motion:reduce){.svSongButton{transition:none}}
 /* Discrete display transitions preserve hidden semantics while the last
    painted frame eases away. Hidden prompts stop accepting input at once. */
 .svPlayerAssist :is(.svAssistSkip,.svAssistNext) {
  opacity:1;translate:0 0;scale:1;transform-origin:bottom right;
- transition:opacity .18s ease,translate .24s cubic-bezier(.16,1,.3,1),scale .24s cubic-bezier(.16,1,.3,1),display .24s allow-discrete;
+ transition:opacity .2s ease,translate .32s cubic-bezier(.16,1,.3,1),scale .32s cubic-bezier(.16,1,.3,1),display .32s allow-discrete;
 }
-.svPlayerAssist :is(.svAssistSkip,.svAssistNext)[hidden] { opacity:0;translate:0 7px;scale:.97;pointer-events:none !important;transition-duration:.14s,.16s,.16s,.16s; }
-@starting-style { .svPlayerAssist :is(.svAssistSkip,.svAssistNext) { opacity:0;translate:0 11px;scale:.95; } }
+.svPlayerAssist :is(.svAssistSkip,.svAssistNext)[hidden] { opacity:0;translate:0 8px;scale:.99;pointer-events:none !important;transition-duration:.14s,.18s,.18s,.18s; }
+@starting-style { .svPlayerAssist :is(.svAssistSkip,.svAssistNext) { opacity:0;translate:0 14px;scale:.985; } }
 .svPlayer[data-player-motion="reduce"] .svPlayerAssist :is(.svAssistSkip,.svAssistNext) { transition:none !important; }
-@media(prefers-reduced-motion:reduce) { .svPlayerAssist :is(.svAssistSkip,.svAssistNext) { transition:none !important; } }
+.svPlayer[data-player-motion="reduce"] :is(.svAssistSkipArrow,.svAssistSkipTrack i),.svPlayer[data-player-motion="reduce"] .svAssistNext::after{transition:none!important}
+@media(prefers-reduced-motion:reduce) { .svPlayerAssist :is(.svAssistSkip,.svAssistNext,.svAssistSkipArrow,.svAssistSkipTrack i),.svPlayerAssist .svAssistNext::after { transition:none !important; } }

@@ -75,13 +75,17 @@ module.exports=({available,getBrowser})=>{
    for(const id of ['details','offset']){
     const button=f.page.locator('#'+id),before=await button.boundingBox();
     await f.page.mouse.move(before.x+before.width/2,before.y+before.height/2);await f.page.mouse.down();
-    await f.page.waitForFunction(({id,y})=>document.getElementById(id).getBoundingClientRect().y>y+.25,{id,y:before.y});
-    const down=await button.boundingBox();assert(Math.abs(down.height-before.height)<.01&&Math.abs(down.width-before.width)<.01,'press feedback must preserve the target size within browser coordinate precision');assert(down.y-before.y<3,'press feedback must add to existing centering instead of replacing it');
+    await f.page.waitForFunction(id=>Number(getComputedStyle(document.getElementById(id)).opacity)<.98,id);
+    const down=await button.boundingBox();assert(Math.abs(down.height-before.height)<.01&&Math.abs(down.width-before.width)<.01,'press feedback must preserve the target size within browser coordinate precision');assert(Math.abs(down.y-before.y)<.01,'press feedback must keep the button and its existing centering steady');
     await f.page.mouse.up();assert.equal(await button.getAttribute('data-clicks'),'1');
     await f.page.waitForFunction(({id,y})=>Math.abs(document.getElementById(id).getBoundingClientRect().y-y)<.1&&!document.getElementById(id).getAnimations().length,{id,y:before.y});
    }
    await f.page.locator('#details').focus();await f.page.keyboard.down(' ');await f.page.waitForTimeout(70);await f.page.keyboard.up(' ');assert.equal(await f.page.locator('#details').getAttribute('data-clicks'),'2');
-   await f.page.emulateMedia({reducedMotion:'reduce'});await f.page.locator('#details').click();assert.equal(await f.page.locator('#details').getAttribute('data-clicks'),'3');
+   await f.page.locator('#details').evaluate(node=>node.addEventListener('click',()=>document.getElementById('offset').focus(),{once:true}));
+   await f.page.locator('#details').focus();await f.page.keyboard.down('Enter');await f.page.keyboard.up('Enter');
+   await f.page.waitForFunction(()=>!document.getElementById('details').getAnimations().length&&Number(getComputedStyle(document.getElementById('details')).opacity)===1);
+   assert.equal(await f.page.locator('#details').getAttribute('data-clicks'),'3','Enter still activates when it transfers focus');
+   await f.page.emulateMedia({reducedMotion:'reduce'});await f.page.locator('#details').click();assert.equal(await f.page.locator('#details').getAttribute('data-clicks'),'4');
    assert.equal(await f.page.locator('#details').evaluate(node=>node.getAnimations().length),0);
    assert.equal(await f.page.locator('#disabled').evaluate(node=>node.getAnimations().length),0);
   }finally{await f.close();}

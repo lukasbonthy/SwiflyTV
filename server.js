@@ -6643,9 +6643,9 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/feed.js?v=262"></script>
     <script defer src="/assets/vendor/lenis/lenis.min.js?v=1.3.16-r1"></script>
     <script defer src="/assets/clean/motion.js?v=253"></script>
-    <script defer src="/assets/clean/press.js?v=1"></script>
+    <script defer src="/assets/clean/press.js?v=2"></script>
     <script defer src="/assets/clean/scroll.js?v=261"></script>
-    <script defer src="/assets/clean/details.js?v=280"></script>
+    <script defer src="/assets/clean/details.js?v=281"></script>
     <script defer src="/assets/clean/download.js?v=3"></script>
     <script defer src="/assets/liquid-glass/surfaces.js?v=277"></script>
     <script defer src="/assets/studio/wallpapers.js?v=1"></script>
@@ -6653,9 +6653,9 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/aurora.js?v=267"></script>
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=262" />' : ""}
     ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=262" />' : ""}
-    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=270"></script>' : ""}
-    ${player ? '<script defer src="/assets/player/waves.js?v=2"></script>' : ""}
-    ${player ? '<script defer src="/assets/player/audio-sample.js?v=1"></script><script defer src="/assets/player/assist.js?v=2"></script><link rel="stylesheet" href="/assets/player/assist.css?v=263" />' : ""}
+    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=271"></script>' : ""}
+    ${player ? '<script defer src="/assets/player/waves.js?v=3"></script>' : ""}
+    ${player ? '<script defer src="/assets/player/audio-sample.js?v=1"></script><script defer src="/assets/player/assist.js?v=3"></script><link rel="stylesheet" href="/assets/player/assist.css?v=264" />' : ""}
     ${player || active === "social" ? '<script defer src="/assets/party/watchroom-call.js?v=1"></script>' : ""}
     ${active === "social" ? '<script defer src="/assets/party/party.js?v=207"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}
     ${player || partyBrowse ? '<script defer src="/assets/player/watch-party.js?v=2"></script>' : ""}

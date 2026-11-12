@@ -30,7 +30,9 @@ test('late mobile metadata waits until the moving sheet settles',async()=>{
   const env=setup(),w=env.window,d=w.document;let respond;
   w.fetch=()=>new Promise(resolve=>respond=resolve);
   const opening=w.SwiflyDetails.open('/movie/101',d.getElementById('open'));
-  env.fire(400);w.flush(16);w.flush(32);
+  assert.equal(d.documentElement.hasAttribute('data-sv-detail-depth'),false,'background depth waits with the prepared sheet');
+  env.fire(400);w.flush(16);assert.equal(d.documentElement.hasAttribute('data-sv-detail-depth'),false,'the preparation paint cannot start the background early');w.flush(32);
+  assert.equal(d.documentElement.dataset.svDetailDepth,'back','background and sheet launch together');
   assert(env.animations.every(animation=>!animation.paused));
   respond({ok:true,text:async()=>fragment});await tick();
   assert.equal(d.querySelector('.svDetailDialog h1'),null,'A network response cannot rebuild a moving sheet');

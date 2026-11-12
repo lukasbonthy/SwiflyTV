@@ -116,31 +116,29 @@ for(const cssFallback of [false,true])test((cssFallback?'CSS fallback':'Native a
  }finally{await browser.close();}
 });
 
-test('Closing retains native modality until the panel exits without moving the catalog',{skip:!available&&'Chromium is not installed'},async()=>{
+test('Closing restores the receded browse scene while native modality and the fixed nav remain steady',{skip:!available&&'Chromium is not installed'},async()=>{
  const browser=await chromium.launch({headless:true});
  try{
   const page=await fixture(browser);
-  await page.evaluate(async()=>{
-   const opening=SwiflyDetails.open('/movie/101',document.getElementById('open'));
-   document.querySelector('.svDetailPanel').getAnimations().forEach(a=>a.finish());await opening;
-  });
+  await page.evaluate(()=>document.body.insertAdjacentHTML('afterbegin','<header id="depth-nav" style="position:fixed;top:12px;left:20px;width:300px;height:44px">Navigation</header>'));
+  const fullWidth=await page.locator('[data-sv-browse-scene]').evaluate(node=>node.getBoundingClientRect().width);
+  const navBefore=await page.locator('#depth-nav').boundingBox();
+  await page.evaluate(async()=>{const opening=SwiflyDetails.open('/movie/101',document.getElementById('open'));document.querySelector('.svDetailPanel').getAnimations().forEach(a=>a.finish());await opening;});
   await page.waitForFunction(()=>document.querySelector('dialog')?.dataset.svDetailState==='open');
-  const result=await page.evaluate(async()=>{
-   const sheet=document.querySelector('dialog'),scene=document.querySelector('[data-sv-browse-scene]');
-   const before=scene.getBoundingClientRect();SwiflyDetails.close();
-   const panel=document.querySelector('.svDetailPanel'),animations=panel.getAnimations();
-   const duration=animations[0].effect.getTiming().duration;
+  await page.waitForFunction(full=>{const scene=document.querySelector('[data-sv-browse-scene]');return !scene.getAnimations().length&&Math.abs(scene.getBoundingClientRect().width/full-.97)<.0002;},fullWidth);
+  const result=await page.evaluate(async fullWidth=>{
+   const sheet=document.querySelector('dialog'),scene=document.querySelector('[data-sv-browse-scene]'),before=scene.getBoundingClientRect();SwiflyDetails.close();await new Promise(requestAnimationFrame);
+   getComputedStyle(scene).scale;
+   const animations=[...document.querySelector('.svDetailPanel').getAnimations(),...document.querySelector('.svDetailScrim').getAnimations(),...scene.getAnimations()],duration=animations[0].effect.getTiming().duration;
    for(const animation of animations){animation.pause();animation.currentTime=duration/2;}
    const during=scene.getBoundingClientRect(),midwayOpen=sheet.open;
-   for(const a of [...animations,...document.querySelector('.svDetailScrim').getAnimations()])a.finish();
+   for(const animation of animations)animation.finish();
    await Promise.resolve();await Promise.resolve();await Promise.resolve();
-   const after=scene.getBoundingClientRect();
-   return {transitions:scene.getAnimations().length,midwayOpen,open:sheet.open,duration,
-    shift:Math.max(Math.abs(during.top-before.top),Math.abs(during.width-before.width),Math.abs(after.top-before.top),Math.abs(after.width-before.width))};
-  });
-  assert.equal(result.transitions,0,'catalog artwork and its fade never receive a scale transition');
-  assert(result.midwayOpen,'focus stays trapped until the exit finishes');assert.equal(result.open,false);
-  assert.equal(result.duration,220);assert(result.shift<.5,'the catalog must remain at its resting geometry: '+JSON.stringify(result));
+   return {before:before.width,during:during.width,after:scene.getBoundingClientRect().width,width:fullWidth,midwayOpen,open:sheet.open,duration};
+  },fullWidth);
+  assert(result.midwayOpen,'focus stays trapped until the sheet exit finishes');assert.equal(result.open,false);assert.equal(result.duration,220);
+  assert(result.before<result.during&&result.during<result.width,'the browse scene eases toward its full size');assert(Math.abs(result.after-result.width)<.1,'the page returns to its original scale');
+  assert.deepEqual(await page.locator('#depth-nav').boundingBox(),navBefore,'the top navigation must remain outside the background zoom');
  }finally{await browser.close();}
 });
 

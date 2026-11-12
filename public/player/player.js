@@ -782,10 +782,11 @@
         }
       }return false;
     }
-    async function play({remote=false}={}) {
+    async function play({remote=false,gesture=false}={}) {
       if(destroyed||suspended||!source||(!remote&&locked()))return false;
       if(!playable){if(remote)pendingPlay=true;return false;}
       const token=generation,current=video,intent=++transportIntent;
+      if(!remote||gesture)dispatch('play-intent',{mediaId,type:mediaType});
       if(phase==='ended'){try{current.currentTime=range()?.start||0;}catch{}}
       try {await current.play();if(!alive(token)||video!==current||intent!==transportIntent||(!remote&&locked()))return false;find('unlock').hidden=true;clearTimeout(toastTimer);toastTimer=0;find('toast').hidden=true;if(!remote)dispatch('action',{action:'play',time:number(current.currentTime,0)});updateControls();return true;}
       catch(error){if(!alive(token)||intent!==transportIntent)return false;if(error?.name==='NotAllowedError'){unlockRemote=remote;find('unlock').querySelector('span').textContent=remoteMode.enabled&&remote?'Join playback':'Play '+mediaName();find('unlock').hidden=false;stopWatchdog();setStatus('ready');}else if(error?.name!=='AbortError')mediaFailure('Playback could not begin. Try again in a moment.');return false;}
@@ -858,7 +859,7 @@
     listen(find('find-4k'),'click',find4k);
     listen(find('volume-close'),'click',()=>{closeMenu(find('volume-menu'));find('volume-menu').querySelector('summary').focus();});
     listen(find('sync'),'click',()=>{dispatch('sync',getState());closeMenu(find('settings'));find('settings').querySelector('summary').focus();});
-    listen(find('unlock'),'click',()=>play({remote:unlockRemote}));
+    listen(find('unlock'),'click',()=>play({remote:unlockRemote,gesture:true}));
     listen(find('volume'),'input',event=>{video.volume=Math.max(0,Math.min(1,Number(event.target.value)));video.muted=video.volume===0;updateControls();});
     listen(find('mute'),'click',()=>{video.muted=!video.muted;updateControls();});
     listen(find('speed'),'change',event=>{if(remoteMode.enabled)return;video.playbackRate=Number(event.target.value);});
