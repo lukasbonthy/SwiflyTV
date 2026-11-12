@@ -14675,7 +14675,7 @@ function authPage(res, mode = "login") {
         <form id="safeAuthForm" class="dsSafeAuthForm">
           ${isSignup ? `<label><span>Name</span><input name="name" type="text" placeholder="Your name" autocomplete="name" maxlength="40" required /></label>` : ""}
           <label><span>Email</span><input name="email" type="email" placeholder="you@example.com" autocomplete="email" required /></label>
-          <label><span>Password</span><span class="svAuthPasswordField"><input name="password" type="password" placeholder="${isSignup ? "At least 8 characters" : "Your password"}" minlength="${isSignup ? 8 : 1}" maxlength="128" autocomplete="${isSignup ? "new-password" : "current-password"}" required /><button type="button" class="svAuthPasswordToggle" data-auth-toggle-password aria-label="Show password" aria-pressed="false">Show</button></span></label>
+          <label><span>Password</span><span class="svAuthPasswordField"><input name="password" type="password" placeholder="${isSignup ? "At least 15 characters" : "Your password"}" minlength="${isSignup ? 15 : 1}" maxlength="128" autocomplete="${isSignup ? "new-password" : "current-password"}" required /><button type="button" class="svAuthPasswordToggle" data-auth-toggle-password aria-label="Show password" aria-pressed="false">Show</button></span></label>
           <button class="dsPrimaryBtn" type="submit"><span>${isSignup ? "Create account" : "Log in"}</span><span aria-hidden="true">↗</span></button>
           <p data-auth-error role="alert" hidden></p>
         </form>
