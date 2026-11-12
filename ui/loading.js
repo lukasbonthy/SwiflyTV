@@ -11,7 +11,7 @@ function siteLoadingGate(){
  const holds=new Map();
  function destinationInfo(value){
   try{const path=new URL(value,location.href).pathname;
-   if(/^\/(?:watch|embed|watchrooms)(?:\/|$)/.test(path))return {layout:'player',title:'Opening the player',detail:'Preparing your viewing page.'};
+   if(/^\/(?:watch|embed|watchrooms)(?:\/|$)/.test(path))return {layout:'player',theater:/^\/watch\/(?:movie|tv)\//.test(path),title:'Opening the player',detail:'Preparing your viewing page.'};
    if(/^\/friends(?:\/|$)/.test(path))return {layout:'friends',title:'Opening Connect',detail:'Loading your conversations and friends.'};
    if(/^\/audiobooks(?:\/|$)/.test(path))return {layout:'books',title:'Opening Audiobooks',detail:'Loading the library of stories and authors.'};
    if(/^\/recommendations(?:\/|$)/.test(path))return {layout:'ai',title:'Opening AI Search',detail:'Preparing your search page. Describe what you want to watch when it opens.'};
@@ -31,7 +31,15 @@ function siteLoadingGate(){
  function hide(){clearTimeout(initial);clearTimeout(skeleton);clearTimeout(safety);clearTimeout(action);initial=skeleton=safety=action=0;navigating=false;current=null;root.removeAttribute('data-sv-loading');render();}
  function setDestination(value){current=destinationInfo(value);root.dataset.svLoadLayout=current.layout;render();}
  function show(value,phase){clearTimeout(safety);setDestination(value);root.dataset.svLoading=phase;safety=setTimeout(hide,10000);}
- function navigate(value){hide();navigating=true;setDestination(value);root.dataset.svLoading='pending';safety=setTimeout(hide,10000);skeleton=setTimeout(()=>{skeleton=0;show(value,'navigate');},160);}
+ function navigate(value){
+  hide();navigating=true;setDestination(value);safety=setTimeout(hide,10000);
+  if(current.theater){
+   const still=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches||root.dataset.svTv==='true'||root.dataset.svXbox==='true'||document.body?.classList.contains('reduceMotion')||document.body?.dataset.stPageMotion==='false'||['minimal','basic'].includes(document.body?.dataset.stLoaderStyle);
+   if(!still)root.dataset.svLoading='player';
+   return;
+  }
+  root.dataset.svLoading='pending';skeleton=setTimeout(()=>{skeleton=0;show(value,'navigate');},160);
+ }
  function settle(){if(ready&&!holds.size&&!navigating)hide();}
  function waitForContent(message){
   const owner={};holds.set(owner,typeof message==='string'?message.trim().slice(0,160):'');

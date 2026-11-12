@@ -39,6 +39,20 @@ Do not implement these changes again. Preserve the current mobile composition, n
 
 Remaining work from the interrupted chats: none.
 
+## Current work: navigation radius and player ripples
+
+The user requested a tiny increase in top-navigation roundness and the green pixel-grid ripple background from https://theintrodb.org/ behind the movie player. Their uploaded video clarified the reference as luminous green squares forming expanding, gently distorted rings on black.
+
+Work is on `design/player-green-wave-v182`, based on `8c332e5d03f9c72e6fde204ab847a87f66eb8fbf`. The desktop nav radius changes from 20px to 22px with the matching glass radius. The standalone player gains a bounded native Canvas2D ripple field; embedded players and playback transport stay intact. The new script is player-only, and the player CSS URL advances to `?v=268`.
+
+The user also requested a more premium transition into the player from any other page. Standalone movie/episode links now use a short black outgoing dissolve, and the player enables the existing independent artwork-entry curtain for one incoming reveal. The live video remains still. The generic loading skeleton does not replace this transition; reduced motion, instant console navigation, Escape, and history restoration retain their existing behavior. The ripple canvas also fades in once when ready.
+
+Local verification: 137 focused player tests passed; the full suite passed 1,610 checks with 241 browser cases skipped because Chromium is unavailable in this runtime. Syntax checks and Vite production build passed. Independent review identified native iPhone fullscreen and forced-colors handling; both were added with browser coverage. Local Chromium cannot start because this execution environment rejects its process-singleton socket, so real browser layout/lifecycle checks must pass in GitHub CI before merge.
+
+The added player-entry regressions failed against the old loader and passed after the change. All 59 focused loading/artwork/player-integration checks passed. A fresh full local suite is in progress after this additional request; final browser verification is still required in CI.
+
+Remaining: complete review and CI, merge the tested commit, confirm its Render deployment and changed assets, then update this checkpoint with the final application commit and deployment evidence. The production state above still describes the previous live release until then.
+
 ## Keeping future chats resumable
 
 Read this checkpoint, inspect the working tree, and verify current GitHub/Render state before resuming. Keep image Base64 and complete binary blobs out of conversation output. Keep full logs in temporary files and display compact results. Record any unfinished step here before a handoff. The chat length limit itself cannot be changed by repository code.

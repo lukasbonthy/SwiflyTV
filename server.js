@@ -6565,7 +6565,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
   <link rel="icon" type="image/png" href="/assets/brand/swiflytv-favicon.png?v=181" />
   <link rel="apple-touch-icon" href="/assets/brand/swiflytv-favicon.png?v=181" />
   ${tvHead()}
-  ${loadingHead({artwork:showNavigation,bundled:true})}
+  ${loadingHead({artwork:showNavigation||player,bundled:true})}
   ${studioHead()}
   ${showNavigation ? navigationHead() : ""}
   ${showNavigation ? '<link rel="stylesheet" href="/assets/clean/navigation.css?v=2" />' : ""}
@@ -6653,12 +6653,13 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=262" />' : ""}
     ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=262" />' : ""}
     ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=270"></script>' : ""}
+    ${player ? '<script defer src="/assets/player/waves.js?v=1"></script>' : ""}
     ${player ? '<script defer src="/assets/player/audio-sample.js?v=1"></script><script defer src="/assets/player/assist.js?v=2"></script><link rel="stylesheet" href="/assets/player/assist.css?v=262" />' : ""}
     ${player || active === "social" ? '<script defer src="/assets/party/watchroom-call.js?v=1"></script>' : ""}
     ${active === "social" ? '<script defer src="/assets/party/party.js?v=207"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}
     ${player || partyBrowse ? '<script defer src="/assets/player/watch-party.js?v=2"></script>' : ""}
     ${shellStyleLink(player ? "player" : "catalog")}
-    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=267" />' : ""}
+    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=268" />' : ""}
     ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=262" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=262" />' : ""}
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=262" />' : ""}
     ${player || active === "social" ? '<link rel="stylesheet" href="/assets/party/watchroom-call.css?v=262" />' : ""}

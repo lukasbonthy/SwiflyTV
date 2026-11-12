@@ -131,6 +131,7 @@ function playerMarkup(options = {}) {
   if (options.embedded) return `<section class="svPlayer svPlayerEmbedded" ${rootAttributes} aria-label="${escape(title)}">${movieSurface}<p class="svPlayerEmbeddedNote" id="${escape(noteId)}" data-player-transport-note>Your host controls playback. Your volume and captions are yours.</p></section>`;
   return `<main class="svPlayer svPlayerPage svCinemaPage" data-cinema-page="player" ${rootAttributes}>
     ${backdrop?`<div class="svPlayerAmbient" aria-hidden="true"><img src="${escape(backdrop)}" alt="" decoding="async"/></div>`:''}
+    <div class="svPlayerWaves" data-player-waves aria-hidden="true"><canvas></canvas></div>
     <header class="svPlayerPageHead" data-cinema-reveal><div class="svPlayerPageReturn"><a class="dsSecondaryBtn svPlayerBack" href="${escape(detailUrl)}" data-sv-player-back>${icon('back')}<span>Back to details</span></a><span class="svPlayerHeadNote">Your theater. Your time.</span></div>
       <nav class="svPlayerModes svGlassSurface svGlassPanel" aria-label="Watch mode"><a data-player-mode-link class="${mode==='movie'?'active':''}" href="${escape(watchUrl+query('movie'))}" ${mode==='movie'?'aria-current="page"':''}>${type==='tv'?'Episode':'Movie'}</a>${trailer ? `<a data-player-mode-link class="${mode==='trailer'?'active':''}" href="${escape(watchUrl+query('trailer'))}" ${mode==='trailer'?'aria-current="page"':''}>Trailer</a>` : ''}</nav>
     </header>
