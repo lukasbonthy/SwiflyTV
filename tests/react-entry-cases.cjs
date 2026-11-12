@@ -76,7 +76,7 @@ module.exports=({available,getBrowser})=>{
     const button=f.page.locator('#'+id),before=await button.boundingBox();
     await f.page.mouse.move(before.x+before.width/2,before.y+before.height/2);await f.page.mouse.down();
     await f.page.waitForFunction(({id,y})=>document.getElementById(id).getBoundingClientRect().y>y+.25,{id,y:before.y});
-    const down=await button.boundingBox();assert.equal(down.height,before.height);assert.equal(down.width,before.width);assert(down.y-before.y<3,'press feedback must add to existing centering instead of replacing it');
+    const down=await button.boundingBox();assert(Math.abs(down.height-before.height)<.01&&Math.abs(down.width-before.width)<.01,'press feedback must preserve the target size within browser coordinate precision');assert(down.y-before.y<3,'press feedback must add to existing centering instead of replacing it');
     await f.page.mouse.up();assert.equal(await button.getAttribute('data-clicks'),'1');
     await f.page.waitForFunction(({id,y})=>Math.abs(document.getElementById(id).getBoundingClientRect().y-y)<.1&&!document.getElementById(id).getAnimations().length,{id,y:before.y});
    }
