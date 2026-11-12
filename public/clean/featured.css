@@ -196,7 +196,9 @@ html[data-sv-apple-tablet="true"] body.svCleanShell [data-sv-featured] > .dsHero
   transform:none;filter:none;animation:none;
 }
 html[data-sv-apple-tablet="true"] body.svCleanShell [data-sv-featured] > .dsHeroArt > .dsHeroBg[data-sv-featured-native-ready="true"] {
-  background-image:none !important;
+  /* A 64x36 baked color field stays behind the decoded image so iPadOS
+     texture eviction has a movie-colored fallback instead of black. */
+  background-image:var(--sv-featured-fallback-art,linear-gradient(#1d2635,#090b10)) !important;
 }
 /* Opacity-zero instead of display:none keeps the inactive decoded slot in
    WebKit's renderer so returning to an earlier featured movie is not cold. */
