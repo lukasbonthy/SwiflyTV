@@ -21,7 +21,8 @@
     if(!appleTablet||!image?.naturalWidth)return;
     image.className='svFeaturedNativeArt';image.alt='';image.draggable=false;
     image.setAttribute('aria-hidden','true');
-    bg.replaceChildren(image);
+    // Reusing the same prepared title must not detach/reinsert its image.
+    if(bg.firstElementChild!==image)bg.replaceChildren(image);
     bg.dataset.svFeaturedNativeReady='true';
   }
   const play=copy.querySelector('[data-play-id]'),details=copy.querySelector('.dsHeroActions > a:not([data-play-id]):not([data-resume-action])'),watch=copy.querySelector('[data-watch-id]');
