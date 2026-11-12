@@ -10,48 +10,47 @@ Updated: November 11, 2026 (America/New_York).
 - Render workspace: `tea-csptd58gph6c73b7sv30`
 - Render service: `srv-db6fjrp42hec73c2tn30` (SwiflyTV-1)
 - Automatic deployment is enabled on commits to `main`.
+- Running application commit: `66349625845c53e16b1ec06d0f3178652fa0e0fb`.
+- Render deployment: `dep-dbqi5659el5s73euhvn0`, confirmed `live`; finished 2026-11-12T02:22:39.196622Z.
+- Tested source commit: `88b2a6a751193dd1b1d6008eac5c149ea18af343`.
+- Tested and merged source tree: `ddc0b422f8d7362c823f3ca903af725386bbafaa` (identical).
+- PR #155: https://github.com/lukasbonthy/SwiflyTV/pull/155, merged.
 
-## Completed application changes
+## Completed latest requests
 
-PR #153 was merged at `0dbfe2403421d285228020ad42e50a3abc7a3b69`. It installed the supplied transparent SVG navigation bird and colored bird favicon, removed the separate featured pause/play button, and added the single initial black dissolve. The artwork gate no longer waits on optional deferred scripts or document-wide font readiness.
+The top navigation is slightly rounder: its desktop radius and matching glass surface increase from 20px to 22px. Existing mobile sizing and pill shape stay intact.
 
-PR #154 was merged at `942a85f7b71fbd5038b19db3667ae80be511626e`. It publishes the recovered transparent-corner favicon and adds these continuation instructions. Its exact tested source commit is `d23ed10074ef9e17f88a8fb053be5a7be1f5c1e4`; its source tree is `131b9f8ad640f09db0f831acc0b829bd54b16370`.
+The standalone movie/episode player has a bright green pixel-grid ripple field inspired by the user's TheIntroDB video. Native Canvas2D keeps the bitmap bounded to 1280 x 900; the mobile draw rate is capped separately. The backdrop sits behind the opaque film and controls. Embedded players retain their existing appearance.
 
-Do not implement these changes again. Preserve the current mobile composition, native scrolling, seven-title catalog windows, Studio settings, glass effects, progress controls, and late artwork handling.
+The field pauses offscreen, in hidden tabs, during document/native iPhone fullscreen, and in the back-forward cache. Reduced motion shows a still pattern. High contrast, forced colors, reduced transparency, console and minimal presets disable it. The renderer observes Studio and OS preference changes.
 
-## Confirmed production state
+Entry from another page now closes through a short black dissolve and uses the existing independent artwork curtain for one incoming theater reveal. The live video never moves or scales. The generic loading skeleton does not replace the theater dissolve. Escape, reduced motion, console navigation and history restoration retain their existing behavior. The ripple canvas fades in once when ready.
 
-- Running application commit: `942a85f7b71fbd5038b19db3667ae80be511626e`.
-- Render deployment: `dep-dbqh959srm7s738i0gu0`, status `live`, finished 2026-11-12T01:21:56.979683Z.
-- Public favicon: `/assets/brand/swiflytv-favicon.png?v=181`.
-- The deployed PNG bytes match the tested local asset: SHA-256 `8b2c80038aa767eb99e15c3db4f8e044e3a64d5bf44ea577aebaa76786634ad8`, 1,819,236 bytes, 1254 x 1254 RGBA. All four corner alpha values are 0.
-- The navigation SVG remains at `?v=180`; its deployed bytes match the existing asset.
-- `/favicon.ico` resolves to the corrected version, and the access page declares `?v=181`. The browsing access gate still works.
-- No new application error logs were returned for the initial post-deployment verification window.
-- This checkpoint update is documentation only, committed with `[skip ci] [skip render]`; it does not change the running application commit.
+## Preserved previous work
+
+PR #153 installed the supplied transparent SVG navigation bird, removed the separate featured pause/play button, and implemented the single initial artwork dissolve. PR #154 published the favicon with transparent corners. The favicon remains `?v=181`, and the navigation SVG remains `?v=180`.
+
+Preserve native scrolling, seven-title catalog windows, the current mobile composition, Studio settings, glass effects, progress controls, and late artwork handling. Do not reimplement finished changes.
 
 ## Verification
 
-- Both GitHub checks on the tested source commit succeeded: runs `43132436914` and `43132483439`, including browser and acceptance checks.
-- Fresh local verification: both focused brand/HTTP tests passed; Vite production build, syntax checks, and `git diff --check` passed.
-- The merged source tree is identical to the tested source tree.
-- Live HTTP verification passed for the corrected favicon bytes/transparency, existing navigation SVG, legacy favicon redirect, and access-page declaration.
+- All 1,612 local unit checks passed. The local browser cases were skipped because this runtime cannot launch Chromium.
+- Both final GitHub checks passed on the exact tested commit: runs `43139383539` and `43139377499`.
+- GitHub ran all 242 browser cases successfully, with no browser skips, including visible green pixels on desktop/phones, stable movie geometry, control hit targets, viewport bounds, the incoming dissolve, preferences and lifecycle pause/resume.
+- All 33 acceptance scenarios passed, with 335 assertions.
+- Production Vite build, syntax checks and whitespace checks passed.
+- Independent review identified native iPhone fullscreen and forced-colors gaps; both were addressed and covered by the passing browser checks.
+- One existing Home geometry test raced initial catalog setup. Its fixture now waits for initial rail geometry and already-requested fonts before measuring logo replacement. The geometry assertions and thresholds remain unchanged.
+- Render confirms the intended merged application commit is live. The initial post-deployment application error-log query returned zero errors.
+- Direct live visual/asset-byte verification is limited by the existing six-digit site access gate. No authorized PIN or browser session was available in this continuation. The protected appearance was verified in GitHub's real-browser fixtures; do not claim a protected production screenshot or asset hash comparison was completed.
 
-Remaining work from the interrupted chats: none.
+## Changed asset references
 
-## Current work: navigation radius and player ripples
+- Core shell: `/assets/shell/core-9833de8ffdc233744c2b.css`.
+- Player CSS: `/assets/player/player.css?v=268`; SHA-256 `45c7a0a7a6d13bbc555b5570f437ff0da5d5a8ef4b24925df964cd62c44f6843`.
+- Ripple script: `/assets/player/waves.js?v=1`; SHA-256 `3a7b7da2f162c9ffd50b2929e225aba94521f0d2fe309ef7b4049a0cbd3254be`.
 
-The user requested a tiny increase in top-navigation roundness and the green pixel-grid ripple background from https://theintrodb.org/ behind the movie player. Their uploaded video clarified the reference as luminous green squares forming expanding, gently distorted rings on black.
-
-Work is on `design/player-green-wave-v182`, based on `8c332e5d03f9c72e6fde204ab847a87f66eb8fbf`. The desktop nav radius changes from 20px to 22px with the matching glass radius. The standalone player gains a bounded native Canvas2D ripple field; embedded players and playback transport stay intact. The new script is player-only, and the player CSS URL advances to `?v=268`.
-
-The user also requested a more premium transition into the player from any other page. Standalone movie/episode links now use a short black outgoing dissolve, and the player enables the existing independent artwork-entry curtain for one incoming reveal. The live video remains still. The generic loading skeleton does not replace this transition; reduced motion, instant console navigation, Escape, and history restoration retain their existing behavior. The ripple canvas also fades in once when ready.
-
-Local verification: 137 focused player tests passed; the full suite passed 1,610 checks with 241 browser cases skipped because Chromium is unavailable in this runtime. Syntax checks and Vite production build passed. Independent review identified native iPhone fullscreen and forced-colors handling; both were added with browser coverage. Local Chromium cannot start because this execution environment rejects its process-singleton socket, so real browser layout/lifecycle checks must pass in GitHub CI before merge.
-
-The added player-entry regressions failed against the old loader and passed after the change. All 59 focused loading/artwork/player-integration checks passed. A fresh full local suite is in progress after this additional request; final browser verification is still required in CI.
-
-Remaining: complete review and CI, merge the tested commit, confirm its Render deployment and changed assets, then update this checkpoint with the final application commit and deployment evidence. The production state above still describes the previous live release until then.
+Remaining implementation/publication work: none. A direct protected-live-page review requires an authorized access session. This checkpoint update is documentation only and uses `[skip ci] [skip render]`; it does not change the running application commit.
 
 ## Keeping future chats resumable
 
