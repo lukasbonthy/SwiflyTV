@@ -6,6 +6,7 @@ let browser;
 test.before(async()=>{if(available)browser=await chromium.launch({headless:true,executablePath});});
 test.after(async()=>{await browser?.close();});
 const svg='<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450"><rect width="800" height="450" fill="#647a92"/></svg>';
+require('./react-entry-cases.cjs')({available,getBrowser:()=>browser});
 async function open({reducedMotion='no-preference',body='',root='',deferred=false}={}){
  const context=await browser.newContext({viewport:{width:1200,height:800},reducedMotion}),page=await context.newPage(),gates=new Map(),released=new Set();
  await page.addInitScript(()=>{window.framesRequested=0;window.domReady=false;document.addEventListener('DOMContentLoaded',()=>window.domReady=true);const request=window.requestAnimationFrame;window.requestAnimationFrame=fn=>{framesRequested++;return request(fn);};});

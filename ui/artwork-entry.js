@@ -9,7 +9,8 @@ function artworkEntry() {
  const backgrounds='.dsHeroBg,.browseHeroBg,.svDetailBackdrop,.dsWelcomeHeroBg';
  const copy='.dsHeroContent > :is(.dsEyebrow,h1,.dsHeroMeta,p)';
  const seen=new WeakMap(),pending=new Map(),held=new Set();
- let entering=true,booted=false,observer=null,frame=0,finishTimer=0,suspended=false,bodyObserved=false;
+ let entering=true,booted=false,observer=null,frame=0,finishTimer=0,suspended=false,bodyObserved=false,releaseLayout;
+ const layout=root.dataset.svLayoutState==='pending'?new Promise(resolve=>{releaseLayout=resolve;}):Promise.resolve();
  function still(){return motion.matches||root.dataset.svTv==='true'||root.dataset.svXbox==='true'||document.body?.classList.contains('reduceMotion')||document.body?.dataset.stPageMotion==='false'||['minimal','basic'].includes(document.body?.dataset.stLoaderStyle);}
  function reveal(immediate=false){
   clearTimeout(deadline);cancelAnimationFrame(frame);frame=0;
@@ -17,18 +18,19 @@ function artworkEntry() {
   if(!entering){if(immediate||still()){clearTimeout(finishTimer);finishTimer=0;root.dataset.svArtworkState='ready';}return;}
   entering=false;root.removeAttribute('aria-busy');
   root.dataset.svArtworkState=immediate||still()?'ready':'reveal';
-  if(root.dataset.svArtworkState==='reveal')finishTimer=setTimeout(()=>{root.dataset.svArtworkState='ready';finishTimer=0;},460);
+  if(root.dataset.svArtworkState==='reveal')finishTimer=setTimeout(()=>{root.dataset.svArtworkState='ready';finishTimer=0;},root.dataset.svEntry==='player'?600:460);
  }
  root.dataset.svArtworkState='loading';root.setAttribute('aria-busy','true');
- const deadline=setTimeout(()=>reveal(),2200);
+ const deadline=setTimeout(()=>reveal(),root.dataset.svLayoutState==='pending'?3200:2200);
  // Device/OS choices are already known in the head. Saved Studio settings
  // arrive in the inline body prime, before any deferred script can finish.
  const settings=new MutationObserver(syncSettings);
  function syncSettings(){
+  if(root.dataset.svLayoutState!=='pending'){releaseLayout?.();releaseLayout=null;}
   if(document.body&&!bodyObserved){bodyObserved=true;settings.observe(document.body,{attributes:true,attributeFilter:['class','data-st-page-motion','data-st-loader-style']});}
   if(still())reveal(true);
  }
- settings.observe(root,{childList:true,attributes:true,attributeFilter:['data-sv-tv','data-sv-xbox']});syncSettings();
+ settings.observe(root,{childList:true,attributes:true,attributeFilter:['data-sv-tv','data-sv-xbox','data-sv-layout-state']});syncSettings();
  function ready(node){if(entering)held.add(node);else node.classList.add('svArtworkReady');}
  function imageReady(image){
   let cancel;
@@ -114,8 +116,19 @@ function artworkEntry() {
   // FontFaceSet.ready also waits for document loading, including deferred
   // scripts. Wait only for requested font files, independently of that gate.
   const fonts=Array.from(document.fonts||[]).filter(face=>face.status==='loading').map(face=>face.loaded);
-  Promise.allSettled([...critical,...fonts]).then(()=>{
-   if(!entering||suspended)return;
+  Promise.allSettled([...critical,...fonts,layout]).then(async()=>{
+   if(!document?.body||!entering||suspended)return;
+   // Hydration and first-paint controllers can add visible artwork or select
+   // another font. Finish those assets behind the same curtain.
+   const settled=[];
+   for(const node of candidates(document.body,images+','+backgrounds)){
+    if(settled.length>=8)break;
+    const entry=seen.get(node);if(!entry)continue;
+    const box=node.getBoundingClientRect();
+    if(box.width&&box.height&&box.bottom>0&&box.top<innerHeight&&box.right>0&&box.left<innerWidth)settled.push(entry.promise);
+   }
+   await Promise.allSettled([...settled,...Array.from(document.fonts||[]).filter(face=>face.status==='loading').map(face=>face.loaded)]);
+   if(!document?.body||!entering||suspended)return;
    // Give cached artwork a painted black starting frame, without a minimum
    // loading duration or a per-frame animation loop.
    frame=requestAnimationFrame(()=>{frame=requestAnimationFrame(()=>reveal());});

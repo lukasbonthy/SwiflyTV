@@ -88,9 +88,9 @@ async function assertMenuReachable(page) {
 async function wavePixels(page) {
   return page.locator('[data-player-waves] canvas').evaluate(canvas => {
     const pixels=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
-    let hash=2166136261,green=0;
-    for(let i=0;i<pixels.length;i+=4){hash=Math.imul(hash^pixels[i+1],16777619);if(pixels[i+1]>40&&pixels[i+1]>pixels[i]*2&&pixels[i+1]>pixels[i+2]*1.4)green++;}
-    return {hash:hash>>>0,green,width:canvas.width,height:canvas.height};
+    let hash=2166136261,green=0,minX=canvas.width,minY=canvas.height,maxX=0,maxY=0;
+    for(let i=0;i<pixels.length;i+=4){hash=Math.imul(hash^pixels[i+1],16777619);if(pixels[i+1]>40&&pixels[i+1]>pixels[i]*2&&pixels[i+1]>pixels[i+2]*1.4){green++;const x=(i/4)%canvas.width,y=Math.floor(i/4/canvas.width);minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);}}
+    return {hash:hash>>>0,green,width:canvas.width,height:canvas.height,bounds:[minX,minY,maxX,maxY]};
   });
 }
 
@@ -122,7 +122,8 @@ test('Green grid ripples animate behind stable, usable movie frames on desktop a
       await page.addScriptTag({content:asset('player/waves.js')});
       await page.waitForFunction(()=>document.querySelector('[data-player-waves]')?.dataset.waveState==='live');
       const before=await wavePixels(page),film=await page.locator('video').boundingBox();
-      await page.waitForTimeout(220);
+      assert(before.bounds[0]>before.width*.35&&before.bounds[2]<before.width*.65&&before.bounds[1]>before.height*.35&&before.bounds[3]<before.height*.65,'the first ripple must originate at the center, with no old ring at the edges');
+      await page.waitForTimeout(3250);
       const after=await wavePixels(page);
       assert(before.green>100,'actual green squares must be rendered, including without poster artwork');
       const shown=await page.screenshot();
@@ -143,6 +144,26 @@ test('Green grid ripples animate behind stable, usable movie frames on desktop a
       assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'the full-width waves must not introduce horizontal scrolling');
     }finally{await context.close();}
   }
+});
+
+test('Skip and next-episode prompts pop in and ease away without leaving clickable hidden controls', {skip:!available && 'Chromium is not installed'}, async()=>{
+  const {page,context}=await open({width:1280,height:800});
+  try{
+    await page.emulateMedia({reducedMotion:'no-preference'});
+    for(const selector of ['[data-assist-skip]','[data-assist-next]']){
+      const prompt=page.locator(selector);
+      const entry=await prompt.evaluate(node=>{node.hidden=false;getComputedStyle(node).opacity;const motions=node.getAnimations();for(const motion of motions){motion.pause();motion.currentTime=100;}return {opacity:Number(getComputedStyle(node).opacity),motions:motions.length};});
+      assert(entry.motions>0&&entry.opacity>0&&entry.opacity<1,'a shown prompt must visibly interpolate into place');
+      const exit=await prompt.evaluate(node=>{for(const motion of node.getAnimations())motion.finish();getComputedStyle(node).opacity;node.hidden=true;getComputedStyle(node).display;const motions=node.getAnimations();for(const motion of motions){motion.pause();motion.currentTime=80;}return {hidden:node.hidden,opacity:Number(getComputedStyle(node).opacity),display:getComputedStyle(node).display,pointer:getComputedStyle(node).pointerEvents};});
+      assert(exit.hidden&&exit.opacity>0&&exit.opacity<1&&exit.display!=='none','the old painted prompt must animate away after its logical action is hidden');
+      assert.equal(exit.pointer,'none','a departing prompt must stop accepting clicks immediately');
+      await prompt.evaluate(node=>{for(const motion of node.getAnimations())motion.finish();});
+      assert.equal(await prompt.evaluate(node=>getComputedStyle(node).display),'none');
+    }
+    await page.emulateMedia({reducedMotion:'reduce'});
+    const instant=await page.locator('[data-assist-skip]').evaluate(node=>{node.hidden=false;getComputedStyle(node).opacity;const count=node.getAnimations().length;node.hidden=true;return {count,display:getComputedStyle(node).display};});
+    assert.equal(instant.count,0);assert.equal(instant.display,'none');
+  }finally{await context.close();}
 });
 
 test('Ripple rendering stops for reduced motion, disabled effects, and a cached page lifecycle', {skip:!available && 'Chromium is not installed'}, async () => {
