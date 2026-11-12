@@ -66,6 +66,7 @@
       const abort=()=>{finish(null);image.src='';};
       const deadline=setTimeout(()=>{finish(null);image.src='';},timeout);
       image.decoding='async';image.crossOrigin='anonymous';
+      if(appleTablet)image.fetchPriority='high';
       image.onload=()=>Promise.resolve(image.decode?.()).catch(()=>{}).then(()=>finish(image.naturalWidth>0?image:null));
       image.onerror=()=>finish(null);signal.addEventListener('abort',abort,{once:true});image.src=src;
     });
