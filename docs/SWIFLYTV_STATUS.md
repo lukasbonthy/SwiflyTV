@@ -9,11 +9,21 @@ Updated: November 12, 2026 (America/New_York).
 - Site: https://swiflytv-1.onrender.com
 - Render workspace: `tea-csptd58gph6c73b7sv30`
 - Render service: `srv-db6fjrp42hec73c2tn30` (SwiflyTV-1); automatic deployment on `main`.
-- Running application commit: `496e4c071c7eebcbf0ee0a3ad03ca9fc65c75c81`.
-- Render deployment: `dep-dbqt72vb9u1s73d0no30`, confirmed `live`; finished `2026-11-12T14:57:16.274794Z`.
-- Prior iPad optimization source: `b0633f90acf95d450ff5bf32f20c355d946d9939` (CI run `43228735178` passed). Latest source: `931871ab7837e163a070be9764b4c7a4eb382048` (unit/UI tests passed; expanded hosted browser suite in progress at publication).
+- Running application commit: `22d7e4105979325ae207c091c17fd8d480a7055d`.
+- Render deployment: `dep-dbqu0ugjo6nc73bb57r0`, confirmed `live`; finished `2026-11-12T15:52:27.202533Z`.
+- Prior iPad optimization source: `b0633f90acf95d450ff5bf32f20c355d946d9939` (CI run `43228735178` passed). Prior source: `931871ab7837e163a070be9764b4c7a4eb382048`. Current source: `a573341ae3c7b3448fafe3e731b9ed190e327f51` (UI and artwork-entry browser checks passed; extended browser checks still running when deployed).
 - Previous player-motion source tree: `a3966af72f9d1aed451a3fef582bf8624a2d55eb` (retained in current release).
-- PRs #157 (player motion), #159 (iPad artwork) and #160 (iPad optics/caching) merged; latest https://github.com/lukasbonthy/SwiflyTV/pull/160.
+- PRs #157 (player motion), #159 (iPad artwork), #160 (iPad optics/caching), and #161 (iPad prefetch) merged; latest https://github.com/lukasbonthy/SwiflyTV/pull/161.
+
+## iPad poster-priority warmup v3 (November 12)
+
+User still reported slow artwork loading on iPad after #159 and #160. Root cause likely includes the server's explicit `loading="lazy" fetchpriority="low"` for every catalog poster, delaying near-visible downloads. #161 targets actual image fetch prioritization rather than more paint effects:
+
+- Early artwork-entry controller now detects iPad (including desktop-class Safari UA), observes catalog rails with **one** IntersectionObserver and a 1100px vertical lead, and promotes **only one visible page plus a small buffer** to `loading="eager"` with `fetchpriority="auto"` or `high`. Distant rails/images remain lazy/low. This covers vertical page scroll.
+- For sideways native rail swipes, a passive scroll handler warms the next few images, coalesces to a frame and caches the poster node list. This does not replace nodes, rewrite TMDB URLs, fetch all posters, or affect desktop/phone behavior.
+- New tests `tests/ipad-poster-priority.test.cjs` verify bounded near/far priorities, horizontal preload, DOM stability and non-iPad isolation. Updated `tests/ipad-catalog-scroll.test.cjs` for the new eager-nearby behavior. Latest GitHub Actions job `43251595030` passed build/UI/recommendations and artwork-entry browser checks; extended browser checks were still in progress at deployment.
+- Latest production: PR https://github.com/lukasbonthy/SwiflyTV/pull/161, merge `22d7e4105979325ae207c091c17fd8d480a7055d`, Render `dep-dbqu0ugjo6nc73bb57r0` confirmed `live` at 2026-11-12T15:52:27.202533Z.
+- Physical iPad test still needed; WebKit can discard decoded image data when memory is pressured. Do not promise perfect zero-latency scrolling. If the user reports persistent slowness, investigate images' response timings/CDN caching and real-device Safari instrumentation rather than stacking more CSS/animations.
 
 ## iPad catalog return-scroll reduction v2 (November 12)
 
