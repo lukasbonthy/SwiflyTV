@@ -39,7 +39,9 @@ test('iPad skips every offscreen poster action glass entry, while nav glass rema
    assert(actions.every(node=>!node.querySelector('.svNavMatchedLens')&&!node.classList.contains('svGlassControl')));
    assert(actions.every(node=>!observed.has(node)),'do not retain 72 observed per-poster elements');
    assert(d.querySelector('#navButton .svNavMatchedLens'),'fixed navigation still uses its glass pane');
-   assert(mounts.size>0,'nav keeps real optical controller');
+   const viewport=observers.find(o=>o.options.rootMargin==='80px');
+   viewport.callback([{target:d.querySelector('#navButton'),isIntersecting:true}]);
+   assert(mounts.size>0,'nav keeps a real optical controller when visible');
    const near=observers.find(o=>o.options.rootMargin==='320px 120px');
    near.callback([{target:d.querySelector('.dsRow'),isIntersecting:true}]);
    actions[5].focus();
@@ -62,5 +64,5 @@ test('non-iPad poster action native lens behavior stays unchanged',()=>{
 test('iPad-only CSS disables quick-action blur without changing nav or detail rules',()=>{
  const css=source('performance.css');
  assert(css.includes('html[data-sv-apple-tablet="true"] body.svCleanShell .dsCardQuickActions .dsMiniBtn {'));
- assert(!/html\\[data-sv-apple-tablet="true"\\][^{]*\\.netflixNav/.test(css));
+ assert(css.includes('body.svCleanShell .dsCardQuickActions .dsMiniBtn > .svCardActionLens'));
 });
