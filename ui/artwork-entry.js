@@ -79,7 +79,78 @@ function artworkEntry() {
   if(container.matches(selector))found.push(container);
   found.push(...container.querySelectorAll(selector));return found;
  }
+ // Native tablet catalog: WebKit often defers low-priority, lazy posters
+ // until the row is almost visible. Warm only the nearby page of a rail, so
+ // returning to earlier rows does not wait for another lazy-loading gate.
+ // Never prefetch a full shelf or fetch an alternative image URL.
+ const tabletContainers='.dsContent .movieRail,.dsContent .dsRail,.dsContent .nfRail,.dsContent .nfTopTenRail,.dsContent .dsWelcomeRailTrack,.dsContent .dsGrid,.dsContent .movieGrid,.svResumeRail,.svFeedCards,.svFeedUpcoming';
+ const tabletTracked=new WeakSet(),tabletWarm=new WeakSet(),tabletScrollFrames=new WeakMap();
+ const tabletRailCache=new WeakMap(),tabletLastLeft=new WeakMap();
+ let tabletObserver=null;
+ if(appleTablet&&typeof IntersectionObserver==='function'){
+  tabletObserver=new IntersectionObserver(entries=>{
+   for(const entry of entries)if(entry.isIntersecting)warmTabletRail(entry.target);
+  },{rootMargin:'1100px 0px',threshold:0});
+ }
+ function promoteTabletPoster(img,high=false){
+  if(!(img instanceof HTMLImageElement))return;
+  if(img.complete&&img.naturalWidth>0)return;
+  if(!tabletWarm.has(img)){
+   tabletWarm.add(img);
+   img.setAttribute('fetchpriority',high?'high':'auto');
+   img.setAttribute('loading','eager');
+  }else if(high&&img.getAttribute('fetchpriority')!=='high'){
+   img.setAttribute('fetchpriority','high');
+  }
+ }
+ function warmTabletRail(rail){
+  if(!rail?.isConnected)return;
+  // Read the poster list only when a controller replaces a rail's children.
+  // An active iPad swipe must not query every poster on every animation frame.
+  const left=rail.scrollLeft;
+  const last=tabletLastLeft.get(rail);
+  if(last!==undefined&&Math.abs(left-last)<90)return;
+  tabletLastLeft.set(rail,left);
+  let record=tabletRailCache.get(rail);
+  if(!record||record.childCount!==rail.children.length){
+   record={childCount:rail.children.length,images:rail.querySelectorAll('img[src]')};
+   tabletRailCache.set(rail,record);
+  }
+  const images=record.images;
+  if(!images.length)return;
+  const viewport=rail.getBoundingClientRect();
+  if(viewport.bottom< -1100||viewport.top>innerHeight+1100)return;
+  const pageSize=Math.max(1,Math.min(7,Number(rail.dataset.svPageSize)||4));
+  const slot=Math.max(80,(rail.clientWidth||720)/pageSize);
+  const start=Math.max(0,Math.floor(rail.scrollLeft/slot));
+  const isVisible=viewport.bottom>0&&viewport.top<innerHeight;
+  // One visible page + a small buffer both ways. No global eager fetch storm.
+  for(let i=Math.max(0,start-2),end=Math.min(images.length,start+pageSize+4);i<end;i++){
+   promoteTabletPoster(images[i],isVisible&&i>=start&&i<start+pageSize);
+  }
+  if(rail.matches('.dsGrid,.movieGrid,.svFeedCards,.svFeedUpcoming'))return;
+  if(rail.dataset.svTabletScrollTracked)return;
+  rail.dataset.svTabletScrollTracked='true';
+  rail.addEventListener('scroll',()=>{
+   if(tabletScrollFrames.has(rail))return;
+   const frame=requestAnimationFrame(()=>{
+    tabletScrollFrames.delete(rail);
+    warmTabletRail(rail);
+   });
+   tabletScrollFrames.set(rail,frame);
+  },{passive:true});
+ }
+ function trackTabletRails(container){
+  if(!appleTablet)return;
+  for(const rail of candidates(container,tabletContainers)){
+   if(tabletTracked.has(rail))continue;
+   tabletTracked.add(rail);
+   if(tabletObserver)tabletObserver.observe(rail);
+   else warmTabletRail(rail);
+  }
+ }
  function scan(container,critical){
+  trackTabletRails(container);
   // Keep URL/visibility reads ahead of every fade-class write. Detail
   // backgrounds already declare their URL inline; resolving their computed
   // style after a details insertion would flush the entire moving sheet.
@@ -154,9 +225,9 @@ function artworkEntry() {
  window.addEventListener('pagehide',()=>{
   suspended=true;reveal(true);clearTimeout(finishTimer);finishTimer=0;root.dataset.svArtworkState='ready';
   for(const node of document.querySelectorAll('.svArtworkAsset,.svArtworkCopy'))node.classList.add('svArtworkReady');
-  observer?.disconnect();settings?.disconnect();for(const cancel of pending.values())cancel();pending.clear();held.clear();
+  observer?.disconnect();settings?.disconnect();tabletObserver?.disconnect();for(const cancel of pending.values())cancel();pending.clear();held.clear();
  });
- window.addEventListener('pageshow',event=>{if(event.persisted){suspended=false;if(observer){scan(document.body);observe();}}});
+ window.addEventListener('pageshow',event=>{if(event.persisted){suspended=false;if(observer){scan(document.body);observe();}if(tabletObserver)for(const rail of document.querySelectorAll(tabletContainers))tabletObserver.observe(rail);}});
 }
 
 module.exports=require('terser').minify_sync('('+artworkEntry.toString()+')();',{ecma:2020}).code;
