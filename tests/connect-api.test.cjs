@@ -4,6 +4,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs/promises');
 const os=require('node:os');
 const path=require('node:path');
+const crypto=require('node:crypto');
 const express=require('express');
 const {createAccountStore}=require('../lib/account-store');
 const {createConnect}=require('../lib/connect');
@@ -12,11 +13,11 @@ async function fixture(t){
  const dir=await fs.mkdtemp(path.join(os.tmpdir(),'swifly-connect-'));
  const store=createAccountStore({directory:dir});
  const service=createConnect({store,resolveMedia:async(type,id)=>({type,id,title:'A <film>',poster:'https://image.tmdb.org/t/p/w342/a.jpg',href:`/${type}/${id}`}),createParty:()=>'/social?tab=watchrooms&roomId=abc-def'});
- const app=express();app.use(express.json());app.use('/api/connect',service.router);
+ const app=express();app.set('trust proxy',1);app.use(express.json());app.use('/api/connect',service.router);
  const server=await new Promise(resolve=>{const s=app.listen(0,'127.0.0.1',()=>resolve(s));});
  const base=`http://127.0.0.1:${server.address().port}`;
- async function call(route,{cookie='',body,method=body?'POST':'GET',origin,account}={}){
-  const response=await fetch(base+'/api/connect'+route,{method,headers:{...(cookie?{Cookie:cookie}:{}),...(body?{'Content-Type':'application/json'}:{}),...(origin?{Origin:origin}:{}),...(account?{'X-Swifly-Account':account}:{})},...(body?{body:JSON.stringify(body)}:{})});
+ async function call(route,{cookie='',body,method=body?'POST':'GET',origin,account,forwardedProto}={}){
+  const response=await fetch(base+'/api/connect'+route,{method,headers:{...(cookie?{Cookie:cookie}:{}),...(body?{'Content-Type':'application/json'}:{}),...(origin?{Origin:origin}:{}),...(forwardedProto?{'X-Forwarded-Proto':forwardedProto}:{}),...(account?{'X-Swifly-Account':account}:{})},...(body?{body:JSON.stringify(body)}:{})});
   return {status:response.status,data:await response.json(),cookie:response.headers.get('set-cookie')?.split(';')[0],headers:response.headers};
  }
  async function signup(handle){const r=await call('/auth/signup',{body:{name:handle,handle,email:handle+'@example.com',password:'correct-horse-123'}});assert.equal(r.status,201,JSON.stringify(r.data));return {...r.data,cookie:r.cookie};}
@@ -28,11 +29,36 @@ async function befriend(f,a,b){assert.equal((await f.call('/friends/request',{co
 test('accounts use hashed passwords, HttpOnly sessions, login validation and revocation',async t=>{
  const f=await fixture(t),a=await f.signup('alice');
  const session=await f.call('/session',{cookie:a.cookie});assert.equal(session.data.user.handle,'alice');assert.match(session.headers.get('cache-control'),/no-store/);
- const disk=await fs.readFile(path.join(f.dir,'accounts.json'),'utf8');assert(!disk.includes('correct-horse-123'));assert(!disk.includes(a.cookie.split('=')[1]));assert(!JSON.stringify(session.data).includes('password'));
+ const disk=await fs.readFile(path.join(f.dir,'accounts.json'),'utf8');assert(!disk.includes('correct-horse-123'));assert(!disk.includes(a.cookie.split('=')[1]));assert(!JSON.stringify(session.data).includes('password'));assert.match(disk,/"password":"s2:[a-f0-9]{32}:[a-f0-9]{128}"/);
  assert.equal((await f.call('/auth/login',{body:{email:'alice@example.com',password:'wrong'}})).status,401);
  const login=await f.call('/auth/login',{body:{email:'alice@example.com',password:'correct-horse-123'}});assert.equal(login.status,200);assert.match(login.headers.get('set-cookie'),/HttpOnly/i);
  assert.equal((await f.call('/auth/logout',{cookie:a.cookie,body:{}})).status,200);assert.equal((await f.call('/bootstrap',{cookie:a.cookie})).status,401);
 });
+test('legacy scrypt hashes migrate on a successful sign-in without changing account identity',async t=>{
+ const f=await fixture(t),a=await f.signup('alice');
+ const salt=crypto.randomBytes(16).toString('hex');
+ const oldHash=crypto.scryptSync('correct-horse-123',salt,64,{maxmem:64*1024*1024}).toString('hex');
+ await f.store.transaction(s=>{s.users[a.user.id].password=salt+':'+oldHash;});
+ const login=await f.call('/auth/login',{body:{email:'alice@example.com',password:'correct-horse-123'}});
+ assert.equal(login.status,200);
+ assert.equal(login.data.user.id,a.user.id);
+ assert.match((await f.store.read()).users[a.user.id].password,/^s2:[a-f0-9]{32}:[a-f0-9]{128}$/);
+});
+
+test('HTTPS sessions are host-prefixed, Secure, HttpOnly and SameSite',async t=>{
+ const f=await fixture(t);await f.signup('alice');
+ const login=await f.call('/auth/login',{forwardedProto:'https',body:{email:'alice@example.com',password:'correct-horse-123'}});
+ assert.equal(login.status,200);
+ const setCookie=login.headers.get('set-cookie');
+ assert.match(setCookie,/^__Host-swifly_session=/);
+ assert.match(setCookie,/; Secure/i);
+ assert.match(setCookie,/; HttpOnly/i);
+ assert.match(setCookie,/; SameSite=Lax/i);
+ assert.match(setCookie,/; Path=\//i);
+ const session=await f.call('/session',{forwardedProto:'https',cookie:login.cookie});
+ assert.equal(session.data.user.handle,'alice');
+});
+
 test('file transactions survive restart and concurrent updates',async t=>{
  const f=await fixture(t);await f.signup('alice');
  await Promise.all(Array.from({length:12},()=>f.store.transaction(s=>{s.testCount=(s.testCount||0)+1;})));
