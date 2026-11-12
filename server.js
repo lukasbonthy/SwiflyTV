@@ -7833,7 +7833,7 @@ async function homePage(req, res) {
       ${dsRail("New releases", nowPlaying.results || [], "movie", { viewHref: "/movies?sort=now_playing", studioKey: "new-releases" })}
     </section>
   </main>`;
-  res.send(pageShell({ title: SITE_NAME, active: "home", body, extraHead:'<script defer src="/assets/clean/featured.js?v=6"></script>' }));
+  res.send(pageShell({ title: SITE_NAME, active: "home", body, extraHead:'<script defer src="/assets/clean/featured.js?v=7"></script>' }));
 }
 
 // Reuse catalog choices and complete only the at-most-five featured movies.
