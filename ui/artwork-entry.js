@@ -17,8 +17,7 @@ function artworkEntry() {
  // opacity:0 + 420ms fade every time the carousel swaps its live layer.
  // iPadOS can show the black hero beneath during that interval.
  const nativeTabletPoster=node=>appleTablet&&node.tagName==='IMG'&&
-   (node.classList.contains('svFeaturedNativeArt') ||
-     !!node.closest('.dsContent,.movieRail,.dsRail,.nfRail,.nfTopTenRail,.dsWelcomeRailTrack,.svFeedSection,.svResumeSection'));
+   !!node.closest('.dsContent,.movieRail,.dsRail,.nfRail,.nfTopTenRail,.dsWelcomeRailTrack,.svFeedSection,.svResumeSection,.svFeaturedNativeArt');
  const backgrounds='.dsHeroBg,.browseHeroBg,.svDetailBackdrop,.dsWelcomeHeroBg';
  const copy='.dsHeroContent > :is(.dsEyebrow,h1,.dsHeroMeta,p)';
  const seen=new WeakMap(),pending=new Map(),held=new Set();
