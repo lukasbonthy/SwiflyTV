@@ -16,7 +16,7 @@ The web service already uses Render's proxy and port settings. No third-party au
 
 ## Security behavior
 
-- New passwords: salted scrypt with N=131072, r=8, p=1, versioned hashes. Legacy scrypt hashes transparently upgrade after a valid login.
+- New passwords: at least 15 characters (NIST SP 800-63B-4, single-factor), salted scrypt with N=131072, r=8, p=1, versioned hashes. Legacy scrypt hashes transparently upgrade after a valid login.
 - Server-side, random, hashed session tokens with logout revocation.
 - HTTPS: `__Host-` prefixed Secure, HttpOnly, SameSite=Lax cookie; HTTP local development uses a non-Secure development cookie.
 - Both IP-based and per-email authentication attempt limits, same-origin write checks and no-store account responses.
