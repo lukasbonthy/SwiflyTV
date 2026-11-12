@@ -6647,7 +6647,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     <script defer src="/assets/clean/scroll.js?v=261"></script>
     <script defer src="/assets/clean/details.js?v=281"></script>
     <script defer src="/assets/clean/download.js?v=3"></script>
-    <script defer src="/assets/liquid-glass/surfaces.js?v=277"></script>
+    <script defer src="/assets/liquid-glass/surfaces.js?v=278"></script>
     <script defer src="/assets/studio/wallpapers.js?v=1"></script>
     <script defer src="/assets/studio/studio.js?v=266"></script>
     <script defer src="/assets/clean/aurora.js?v=267"></script>
