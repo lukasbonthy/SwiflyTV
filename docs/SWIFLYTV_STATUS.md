@@ -2,7 +2,17 @@
 
 Updated: November 11, 2026 (America/New_York).
 
-## Source and production
+## Active continuation: player motion and settled entry
+
+- Working branch: `fix/player-motion-and-settled-entry-v183`, based on `5e0caf1637fcb1ce14f212b4e916603690a69d30`.
+- Current implementation is not yet published. The running application and deployment below are the previous release.
+- Center-out green pixel ripples now start when the player finishes its reveal and travel faster. Player header and metadata ease into the longer theater dissolve without moving the film.
+- React startup separates visual controllers from optional tools, preloads first-party controller scripts and signals layout readiness after initialization and requested fonts settle. The artwork curtain waits for that readiness instead of exposing late setup.
+- Skip-intro and next-episode prompts gain entrance/exit transitions while hidden actions immediately stop receiving input. Delegated pointer and keyboard press feedback preserves native activation, target size and existing button centering.
+- New coverage reproduces the delayed React initialization bug, exercises the actual production Vite entry and Home composition, and checks center emission, prompt motion and button activation. Production build, syntax checks, all 1,613 local unit cases and 64 focused cases passed. The 246 local browser cases were skipped because Chromium cannot launch in this runtime; hosted-browser checks are pending.
+- An authorized production access session is available privately for post-deployment asset verification. Do not put credentials or cookies in this repository.
+
+## Previous release: source and production
 
 - Repository: https://github.com/lukasbonthy/SwiflyTV
 - Production branch: `main`
@@ -50,7 +60,7 @@ Preserve native scrolling, seven-title catalog windows, the current mobile compo
 - Player CSS: `/assets/player/player.css?v=268`; SHA-256 `45c7a0a7a6d13bbc555b5570f437ff0da5d5a8ef4b24925df964cd62c44f6843`.
 - Ripple script: `/assets/player/waves.js?v=1`; SHA-256 `3a7b7da2f162c9ffd50b2929e225aba94521f0d2fe309ef7b4049a0cbd3254be`.
 
-Remaining implementation/publication work: none. A direct protected-live-page review requires an authorized access session. This checkpoint update is documentation only and uses `[skip ci] [skip render]`; it does not change the running application commit.
+Previous release implementation/publication work: complete. Its original protected-live-page review was blocked by the access gate. The active continuation and its remaining verification are recorded above.
 
 ## Keeping future chats resumable
 

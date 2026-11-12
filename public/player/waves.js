@@ -15,11 +15,13 @@
   function listen(target,name,handler,options){target.addEventListener(name,handler,options);cleanups.push(()=>target.removeEventListener(name,handler,options));}
   function draw(){
     context.fillStyle='#000';context.fillRect(0,0,canvas.width,canvas.height);
-    const phase=(.46+clock*.045)%.68,sin=Math.sin(clock*.21),cos=Math.cos(clock*.21);
+    const travel=clock*.15,phase=travel%.68,sin=Math.sin(clock*.21),cos=Math.cos(clock*.21);
     for(let i=0;i<cells.length;i+=6){
       const radius=cells[i+2]+.024*(cells[i+3]*cos+cells[i+4]*sin);
-      const distance=((radius-phase+.68)%.68)-.075;
-      let light=Math.max(0,1-Math.abs(distance)/.075);
+      let distance=Math.abs(radius-phase);
+      // The first emission has no preceding ring at the viewport edges.
+      if(travel>=.68)distance=Math.min(distance,Math.abs(radius-phase-.68));
+      let light=Math.max(0,1-distance/.065);
       light=light*light*cells[i+5];
       if(light<.014)continue;
       const level=Math.min(19,Math.floor(light*20)),size=Math.max(1,step*(.16+.72*Math.sqrt(light)));
@@ -37,7 +39,7 @@
     cells=new Float32Array(columns*rows*6);
     let index=0;
     for(let y=step/2;y<canvas.height+step/2;y+=step)for(let x=step/2;x<canvas.width+step/2;x+=step){
-      const nx=x/canvas.width-.5,ny=y/canvas.height-.48,angle=Math.atan2(ny,nx);
+      const nx=x/canvas.width-.5,ny=y/canvas.height-.5,angle=Math.atan2(ny,nx);
       const texture=Math.sin(nx*23+ny*15)*Math.sin(ny*17-nx*9);
       cells[index++]=x;cells[index++]=y;
       cells[index++]=Math.hypot(nx,ny)+.012*Math.sin(angle*5)+.009*texture;
@@ -60,7 +62,7 @@
     const off=contrast.matches||transparency.matches||appearance.highContrast===true||appearance.reduceTransparency===true||
       ['xbox','minimal'].includes(appearance.performancePreset)||root.dataset.playerContrast==='high'||
       document.body.dataset.stHighContrast==='true'||document.documentElement.dataset.svTv==='true'||document.documentElement.dataset.svXbox==='true';
-    const still=suspended||nativeFullscreen||document.hidden||!!document.fullscreenElement||!inView||reduced.matches||appearance.reduceMotion===true||
+    const still=['loading','reveal'].includes(document.documentElement.dataset.svArtworkState)||suspended||nativeFullscreen||document.hidden||!!document.fullscreenElement||!inView||reduced.matches||appearance.reduceMotion===true||
       appearance.auroraMotion==='still'||root.dataset.playerMotion==='reduce'||document.body.classList.contains('reduceMotion');
     backdrop.hidden=off;
     backdrop.dataset.waveState=off?'off':still?'still':'live';
@@ -79,7 +81,7 @@
   const settings=new MutationObserver(sync),bodySettings=new MutationObserver(sync),documentSettings=new MutationObserver(sync);
   settings.observe(root,{attributes:true,attributeFilter:['data-player-motion','data-player-contrast']});
   bodySettings.observe(document.body,{attributes:true,attributeFilter:['class','data-st-high-contrast']});
-  documentSettings.observe(document.documentElement,{attributes:true,attributeFilter:['data-sv-tv','data-sv-xbox']});
+  documentSettings.observe(document.documentElement,{attributes:true,attributeFilter:['data-sv-tv','data-sv-xbox','data-sv-artwork-state']});
   const viewport=typeof IntersectionObserver==='function'?new IntersectionObserver(entries=>{inView=entries[0].isIntersecting;sync();}):null;
   viewport?.observe(backdrop);
   const size=typeof ResizeObserver==='function'?new ResizeObserver(resize):null;

@@ -611,13 +611,14 @@ test('mobile poster actions stop sampling the backdrop while the scene moves and
   await page.locator('.dsCardQuickActions .svCardActionLens').first().waitFor({state:'attached'});
   await page.waitForFunction(()=>!document.documentElement.dataset.svScrollGlass);
   const pane=page.locator('.dsCardQuickActions .svCardActionLens').first();
-  const paint=()=>pane.evaluate(node=>{const style=getComputedStyle(node);return {filter:style.backdropFilter,fill:style.backgroundColor,edge:style.boxShadow};});
+  // Set the sampled motion state and read its paint in the same task. The
+  // real scroll controller can otherwise settle between automation commands.
+  const paint=change=>pane.evaluate((node,change)=>{if(change){const[key,value]=change;if(value===null)delete document.documentElement.dataset[key];else document.documentElement.dataset[key]=value;}const style=getComputedStyle(node);return {filter:style.backdropFilter,fill:style.backgroundColor,edge:style.boxShadow};},change);
   for(const glass of ['subtle','liquid']){
    await page.evaluate(value=>document.body.dataset.stGlass=value,glass);const resting=await paint();assert.match(resting.filter,/blur\(10px\)/);
    for(const attribute of ['svScrollGlass','svFeaturedMotion']){
-    await page.evaluate(key=>document.documentElement.dataset[key]=key==='svScrollGlass'?'soft':'true',attribute);
-    assert.deepEqual(await paint(),{...resting,filter:'none'},'Moving controls keep their fill and edge without an extra backdrop pass');
-    await page.evaluate(key=>delete document.documentElement.dataset[key],attribute);assert.deepEqual(await paint(),resting);
+    assert.deepEqual(await paint([attribute,attribute==='svScrollGlass'?'soft':'true']),{...resting,filter:'none'},'Moving controls keep their fill and edge without an extra backdrop pass');
+    assert.deepEqual(await paint([attribute,null]),resting);
    }
   }
  }finally{await browser.close();}

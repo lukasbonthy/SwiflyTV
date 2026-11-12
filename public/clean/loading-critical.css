@@ -9,6 +9,10 @@ html[data-sv-artwork-state="loading"] #svArtworkCurtain {
  opacity:1;visibility:visible;pointer-events:auto;transition:none;
 }
 html[data-sv-artwork-state="reveal"] #svArtworkCurtain {visibility:visible;}
+html[data-sv-entry="player"] #svArtworkCurtain {
+ transition:opacity .56s cubic-bezier(.18,.72,.22,1),visibility 0s .56s;
+}
+html[data-sv-entry="player"][data-sv-artwork-state="loading"] #svArtworkCurtain {transition:none;}
 /* A native link into the theater quietly closes the previous page to black. */
 html[data-sv-loading="player"] #svArtworkCurtain {
  opacity:1;visibility:visible;pointer-events:none;
