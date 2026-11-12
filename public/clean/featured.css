@@ -203,3 +203,28 @@ html[data-sv-apple-tablet="true"] body.svCleanShell [data-sv-featured] > .dsHero
 html[data-sv-apple-tablet="true"] body.svCleanShell [data-sv-featured] > .dsHeroArt > .dsHeroBg[hidden] {
   display:block !important;opacity:0 !important;
 }
+
+/* iPad featured repaint containment: do not place the decoded photograph
+   behind a negative stacking layer, re-mask the glass, or keep a parallax
+   transform on the full-screen image while returning from a long scroll.
+   The slide animation uses the independent CSS 'translate' property and
+   continues to work without this permanent transform. */
+html[data-sv-apple-tablet="true"] body.svCleanShell main[data-st-home] > [data-sv-featured] > .dsHeroArt {
+  z-index:0 !important;
+}
+html[data-sv-apple-tablet="true"] body.svCleanShell main[data-st-home] > [data-sv-featured] > .dsHeroGlass {
+  z-index:1 !important;
+  -webkit-mask-image:none !important;
+  mask-image:none !important;
+}
+html[data-sv-apple-tablet="true"] body.svCleanShell main[data-st-home] > [data-sv-featured] > .dsHeroContent {
+  position:relative !important;
+  z-index:2 !important;
+}
+html[data-sv-apple-tablet="true"] body.svCleanShell main[data-st-home] > [data-sv-featured] > .dsHeroArt > .dsHeroBg {
+  transform:none !important;
+}
+html[data-sv-apple-tablet="true"] body.svCleanShell [data-sv-featured] .svFeaturedNativeArt {
+  opacity:1 !important;
+  transition:none !important;
+}
