@@ -6,6 +6,14 @@ function artworkEntry() {
  'use strict';
  const root=document.documentElement, motion=matchMedia('(prefers-reduced-motion: reduce)');
  const images='main img,.svDetailDialog img,[data-search-results] img';
+ // iPadOS uses WebKit in every browser. Keep catalog posters on the browser's
+ // native lazy/async path: the blanket decode/fade gate forces offscreen
+ // poster decoding and makes returning to a row repaint and fade again.
+ const appleTablet=/iPad/.test(navigator.userAgent) ||
+   (navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+ if(appleTablet)root.dataset.svAppleTablet='true';
+ const nativeTabletPoster=node=>appleTablet&&node.tagName==='IMG'&&
+   !!node.closest('.dsContent,.movieRail,.dsRail,.nfRail,.nfTopTenRail,.dsWelcomeRailTrack,.svFeedSection,.svResumeSection');
  const backgrounds='.dsHeroBg,.browseHeroBg,.svDetailBackdrop,.dsWelcomeHeroBg';
  const copy='.dsHeroContent > :is(.dsEyebrow,h1,.dsHeroMeta,p)';
  const seen=new WeakMap(),pending=new Map(),held=new Set();
@@ -77,7 +85,7 @@ function artworkEntry() {
   // style after a details insertion would flush the entire moving sheet.
   const artwork=[];let criticalCount=critical?.length||0;
   for(const node of candidates(container,images+','+backgrounds)){
-   if(seen.has(node)||node.closest('.svHeroSpill,.svWelcomeSpill')||still())continue;
+   if(nativeTabletPoster(node)||seen.has(node)||node.closest('.svHeroSpill,.svWelcomeSpill')||still())continue;
    let url;
    if(node.tagName!=='IMG'){
     const match=value=>value.match(/url\(["']?(.*?)["']?\)/)?.[1];

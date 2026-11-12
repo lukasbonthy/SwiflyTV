@@ -208,3 +208,13 @@ body.svCleanShell:has([data-sv-rail-moving="true"]) .svAuroraRibbon {
     backdrop-filter:none !important;
   }
 }
+
+/* iPadOS Safari keeps every native React poster mounted. Let WebKit own
+   image decoding and scroll tiles, rather than repainting dozens of blurred
+   lenses on top of the posters during each return scroll. These static
+   button faces remain readable; real nav/detail glass is unchanged. */
+html[data-sv-apple-tablet="true"] body.svCleanShell .dsCardQuickActions .dsMiniBtn > .svCardActionLens.svLiquidPane {
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
+  background:rgb(10 13 17 / .88) !important;
+}
