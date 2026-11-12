@@ -5689,7 +5689,10 @@ app.use((req, res, next) => {
   next();
 });
 
-// Check friends-only access before pages, assets and API routes.
+// Public brand artwork is needed by the access page and browser tab, too.
+app.use('/assets/brand',express.static(path.join(__dirname,'public','brand'),{maxAge:'7d',dotfiles:'deny',index:false}));
+app.get('/favicon.ico',(_req,res)=>res.redirect(302,'/assets/brand/swiflytv-favicon.png?v=180'));
+// Check friends-only access before browsing pages, app assets and API routes.
 const siteGate = createSiteGate();
 app.use(siteGate.router);
 app.use(siteGate.protect);
@@ -6559,6 +6562,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
   <meta name="description" content="${escapeHtml(description)}" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta name="theme-color" content="#000000" />
+  <link rel="icon" type="image/png" href="/assets/brand/swiflytv-favicon.png?v=180" />
+  <link rel="apple-touch-icon" href="/assets/brand/swiflytv-favicon.png?v=180" />
   ${tvHead()}
   ${loadingHead({artwork:showNavigation,bundled:true})}
   ${studioHead()}
@@ -6695,8 +6700,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
       <div class="svLiquidPane" data-swifly-glass data-glass-tint="0.2" data-glass-saturation="1" aria-hidden="true"></div>
       <div class="navLeftCluster">
         <a class="brand netflixBrand" href="/" aria-label="${escapeHtml(SITE_NAME)} home">
-          <span class="svMobileBrandMark" aria-hidden="true">S</span>
-          <span class="netflixWordmark">${escapeHtml(BRAND_WORDMARK)}</span>
+          <img class="svBrandLogo" src="/assets/brand/swiflytv-nav-logo.svg?v=180" alt="" width="36" height="36" decoding="async" />
         </a>
         <nav class="navLinks netflixLinks" aria-label="Main navigation">
           ${navLink("/", "Home", "home", active, "home")}
@@ -7827,7 +7831,7 @@ async function homePage(req, res) {
       ${dsRail("New releases", nowPlaying.results || [], "movie", { viewHref: "/movies?sort=now_playing", studioKey: "new-releases" })}
     </section>
   </main>`;
-  res.send(pageShell({ title: SITE_NAME, active: "home", body, extraHead:'<script defer src="/assets/clean/featured.js?v=5"></script>' }));
+  res.send(pageShell({ title: SITE_NAME, active: "home", body, extraHead:'<script defer src="/assets/clean/featured.js?v=6"></script>' }));
 }
 
 // Reuse catalog choices and complete only the at-most-five featured movies.
@@ -7989,7 +7993,7 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = nu
     ${rotating ? `<script type="application/json" data-sv-featured-data>${featureJSON}</script>${featuredSlides.length > 1 ? `<nav class="svFeaturedControls" data-sv-featured-controls aria-label="Featured movies" hidden>
       <button type="button" data-sv-featured-prev aria-label="Previous featured movie"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="m14 6-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       <button type="button" data-sv-featured-next aria-label="Next featured movie"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="m10 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-      <div class="svFeaturedFooter"><div class="svFeaturedPositions">${featuredSlides.map((slide,index)=>`<button type="button" data-sv-featured-go="${index}" aria-label="Show ${escapeHtml(slide.title)}"${index === 0 ? ' aria-current="true"' : ''}><span aria-hidden="true"><i data-sv-featured-progress></i></span></button>`).join('')}</div><button type="button" data-sv-featured-pause aria-label="Pause featured movies" aria-pressed="false"><span aria-hidden="true">Ⅱ</span></button></div>
+      <div class="svFeaturedFooter"><div class="svFeaturedPositions">${featuredSlides.map((slide,index)=>`<button type="button" data-sv-featured-go="${index}" aria-label="Show ${escapeHtml(slide.title)}"${index === 0 ? ' aria-current="true"' : ''}><span aria-hidden="true"><i data-sv-featured-progress></i></span></button>`).join('')}</div></div>
     </nav><span class="srOnly" data-sv-featured-status role="status" aria-live="polite"></span>` : ''}` : ''}
     ${trailerSrc ? `<div class="dsHeroRating"><button id="dsHeroMuteToggle" class="dsHeroMuteToggle" type="button" aria-label="Unmute trailer" aria-pressed="true" data-hero-mute-toggle><span aria-hidden="true">🔇</span></button></div>` : ""}
     ${trailerSrc ? `<script>
@@ -14425,10 +14429,6 @@ app.get("/api/provider/embed", async (req, res) => {
   } catch (error) {
     res.status(500).json({ ok: false, error: error.message, sources: [] });
   }
-});
-
-app.get("/favicon.ico", (req, res) => {
-  res.status(204).end();
 });
 
 // On-demand 4K search: do not delay the normal 720p/1080p playback path.

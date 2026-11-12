@@ -9,11 +9,11 @@ function artworkEntry() {
  const backgrounds='.dsHeroBg,.browseHeroBg,.svDetailBackdrop,.dsWelcomeHeroBg';
  const copy='.dsHeroContent > :is(.dsEyebrow,h1,.dsHeroMeta,p)';
  const seen=new WeakMap(),pending=new Map(),held=new Set();
- let entering=true,observer=null,frame=0,finishTimer=0,suspended=false,bodyObserved=false;
+ let entering=true,booted=false,observer=null,frame=0,finishTimer=0,suspended=false,bodyObserved=false;
  function still(){return motion.matches||root.dataset.svTv==='true'||root.dataset.svXbox==='true'||document.body?.classList.contains('reduceMotion')||document.body?.dataset.stPageMotion==='false'||['minimal','basic'].includes(document.body?.dataset.stLoaderStyle);}
  function reveal(immediate=false){
   clearTimeout(deadline);cancelAnimationFrame(frame);frame=0;
-  for(const node of held)node.classList.add('svArtworkReady');held.clear();
+  for(const node of held)node.classList.add('svArtworkReady','svArtworkInitial');held.clear();
   if(!entering){if(immediate||still()){clearTimeout(finishTimer);finishTimer=0;root.dataset.svArtworkState='ready';}return;}
   entering=false;root.removeAttribute('aria-busy');
   root.dataset.svArtworkState=immediate||still()?'ready':'reveal';
@@ -42,16 +42,26 @@ function artworkEntry() {
   });
   return {promise,cancel};
  }
- function asset(node,url){
+ function asset(node,url,alreadyVisible=false){
   if(seen.has(node)||node.closest('.svHeroSpill,.svWelcomeSpill')||still())return null;
   let image=node;
   if(node.tagName!=='IMG'){
    if(!url)return null;
    image=new Image();image.decoding='async';image.src=url;
   }
+  // A safety/Escape release is final for the initial document. A late
+  // parsing event must not hide content that the user can already see.
+  if(alreadyVisible)node.classList.add('svArtworkReady');
   node.classList.add('svArtworkAsset');
   const entry=imageReady(image);seen.set(node,entry);
-  entry.promise.then(()=>{if(!suspended&&node.isConnected)ready(node);});
+  entry.promise.then(()=>{
+   if(suspended||!node.isConnected)return;
+   // Present decoded title art with the initial scene even if catalog.js is
+   // still downloading. Never let a detached/replaced logo change its title.
+   const title=node.matches('img.dsHeroLogo')?node.closest('.dsHeroTitleArt'):null;
+   if(title?.querySelector('.dsHeroLogo')===node)title.classList.toggle('hasLogo',node.naturalWidth>0);
+   ready(node);
+  });
   return entry.promise;
  }
  function candidates(container,selector){
@@ -75,10 +85,10 @@ function artworkEntry() {
     if(!url)continue;
    }
    let visible=false;
-   if(critical&&criticalCount<8){const box=node.getBoundingClientRect();visible=!!(box.width&&box.height&&box.bottom>0&&box.top<innerHeight&&box.right>0&&box.left<innerWidth);if(visible)criticalCount++;}
+   if(critical&&(criticalCount<8||!entering)){const box=node.getBoundingClientRect();visible=!!(box.width&&box.height&&box.bottom>0&&box.top<innerHeight&&box.right>0&&box.left<innerWidth);if(visible)criticalCount++;}
    artwork.push({node,url,visible});
   }
-  for(const {node,url,visible} of artwork){const promise=asset(node,url);if(promise&&critical&&visible&&critical.length<8)critical.push(promise);}
+  for(const {node,url,visible} of artwork){const promise=asset(node,url,!!critical&&!entering&&visible);if(promise&&critical&&visible&&critical.length<8)critical.push(promise);}
   for(const node of candidates(container,copy)){
    if(still()||node.classList.contains('svArtworkCopy'))continue;
    node.classList.add('svArtworkCopy');ready(node);
@@ -89,6 +99,9 @@ function artworkEntry() {
   bodyObserved=false;syncSettings();
  }
  function boot(){
+  if(booted)return;booted=true;
+  document.removeEventListener('readystatechange',parsed);
+  document.removeEventListener('DOMContentLoaded',boot);
   if(still()){reveal(true);return;}
   const critical=[];scan(document.body,critical);
   observer=new MutationObserver(records=>{
@@ -98,14 +111,23 @@ function artworkEntry() {
    }
   });
   observe();
-  Promise.allSettled([...critical,document.fonts?.ready]).then(()=>{
+  // FontFaceSet.ready also waits for document loading, including deferred
+  // scripts. Wait only for requested font files, independently of that gate.
+  const fonts=Array.from(document.fonts||[]).filter(face=>face.status==='loading').map(face=>face.loaded);
+  Promise.allSettled([...critical,...fonts]).then(()=>{
    if(!entering||suspended)return;
    // Give cached artwork a painted black starting frame, without a minimum
    // loading duration or a per-frame animation loop.
    frame=requestAnimationFrame(()=>{frame=requestAnimationFrame(()=>reveal());});
   });
  }
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+ function parsed(){if(document.readyState!=='loading')boot();}
+ // Interactive means the server document is parsed, before deferred scripts
+ // finish. Optional application downloads do not own the entry curtain.
+ if(document.readyState==='loading'){
+  document.addEventListener('readystatechange',parsed);
+  document.addEventListener('DOMContentLoaded',boot,{once:true});
+ }else boot();
  window.addEventListener('keydown',event=>{if(event.key==='Escape')reveal(true);});
  motion.addEventListener?.('change',()=>{if(motion.matches)reveal(true);});
  window.addEventListener('pagehide',()=>{

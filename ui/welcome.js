@@ -35,7 +35,7 @@ function welcomeMarkup({siteName = 'SwiflyTV', brand = 'SwiflyTV', redirect = '%
     <a class="svWelcomeSkip" href="#discovery">Skip to titles</a>
     <nav class="dsWelcomeNav" aria-label="Welcome navigation">
       <div class="svLiquidPane" data-swifly-glass aria-hidden="true"></div>
-      <a class="dsWelcomeBrand" href="/welcome">${escape(brand)}</a>
+      <a class="dsWelcomeBrand" href="/welcome" aria-label="${escape(siteName)} home"><img class="svBrandLogo" src="/assets/brand/swiflytv-nav-logo.svg?v=180" alt="" width="36" height="36" decoding="async"></a>
       <div class="dsWelcomeNavLinks"><a href="#discovery">Browse</a><a href="${escape(login)}">Log in</a><button class="svWelcomeStudio" type="button" data-st-open aria-label="Open appearance Studio" aria-controls="controlPanel" aria-expanded="false" title="Appearance Studio">${studioIcon}</button></div>
     </nav>
     <section class="dsWelcomeHero" aria-labelledby="svWelcomeTitle" data-has-art="${Boolean(showcase)}">

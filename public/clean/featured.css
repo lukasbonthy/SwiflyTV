@@ -1,5 +1,4 @@
 /* Home keeps two prepared photographs/glows and bounded control material. */
-body.svCleanShell .svMobileBrandMark {display:none;}
 body.svCleanShell [data-sv-featured] {touch-action:pan-y;--sv-featured-inset:max(32px,calc((100% - 1280px) / 2 + 32px));}
 body.svCleanShell [data-sv-featured] > .dsHeroArt > .dsHeroBg[hidden] {display:none !important;}
 /* Bottom anchoring lets each title use its natural height without moving rows. */
@@ -63,10 +62,6 @@ body.svCleanShell .svFeaturedPositions button[aria-current="true"] [data-sv-feat
 body.svCleanShell .svFeaturedControls button:focus-visible {outline:2px solid #fff;outline-offset:-3px;opacity:1;}
 body.svCleanShell .svFeaturedControls button:hover > span {background-color:rgb(255 255 255 / .45);}
 body.svCleanShell .svFeaturedControls > button:hover {background:rgb(0 0 0 / .65);}
-body.svCleanShell .svFeaturedControls [data-sv-featured-pause] {opacity:.65;}
-body.svCleanShell .svFeaturedControls [data-sv-featured-pause]:is(:hover,:focus-visible) {opacity:1;}
-body.svCleanShell .svFeaturedControls [data-sv-featured-pause] > span {display:grid;place-items:center;background:none;}
-body.svCleanShell .svFeaturedControls [data-sv-featured-pause]:disabled {opacity:.4;cursor:default;}
 body.svCleanShell [data-sv-featured-status] {position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;}
 body.svCleanShell .svHeroSpill > [data-sv-featured-glow] {
   position:absolute;inset:-9%;background-position:center;background-size:cover;filter:none !important;pointer-events:none;
@@ -99,7 +94,6 @@ body.svCleanShell:is([data-st-hero-mode="compact"],[data-st-hero-mode="banner"])
   body.svCleanShell:is([data-st-hero-mode="compact"],[data-st-hero-mode="banner"]) .svFeaturedFooter {bottom:0;}
   html:not([data-sv-tv="true"]) body.svCleanShell .svFeaturedPositions button {flex-basis:40px;width:40px;min-width:40px;}
   body.svCleanShell .svFeaturedPositions button > span {width:32px;}
-  html:not([data-sv-tv="true"]) body.svCleanShell .svFeaturedFooter > [data-sv-featured-pause] {position:absolute;right:0;top:0;width:40px;min-width:40px;opacity:.45;}
   body.svCleanShell .svHeroSpill:has(> [data-sv-featured-glow]) {opacity:.10;}
   html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > .svHeroLightBridge > .svHeroSpill {
     top:0;height:160px;
@@ -108,8 +102,6 @@ body.svCleanShell:is([data-st-hero-mode="compact"],[data-st-hero-mode="banner"])
   }
   html:not([data-sv-tv="true"]) body.svCleanShell:has(main[data-st-home]) .netflixNav {gap:4px !important;padding:6px 8px !important;}
   html:not([data-sv-tv="true"]) body.svCleanShell:has(main[data-st-home]) .netflixNav .brand.netflixBrand {justify-content:center;width:44px;min-width:44px !important;max-width:44px;}
-  html:not([data-sv-tv="true"]) body.svCleanShell:has(main[data-st-home]) .netflixWordmark {display:none !important;}
-  html:not([data-sv-tv="true"]) body.svCleanShell:has(main[data-st-home]) .svMobileBrandMark {display:block;font:italic 900 25px/1 'Unbounded',sans-serif;letter-spacing:-2px;padding-right:2px;}
   /* The visible pill is 36px high; its real action keeps a 44px target.
      Move the existing local blur to that face, with Studio/motion caps. */
   html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] .dsHeroActions {min-height:44px;gap:8px !important;}

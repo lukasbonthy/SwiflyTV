@@ -16,6 +16,7 @@ function accessPage(next,invalid=false,limited=false){
   const error=limited?'Too many attempts. Give it a few minutes, then try again.':invalid?'That code doesn’t look right. Check it with your host and try again.':'';
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#080b12"><title>You're invited · SwiflyTV</title>
+<link rel="icon" type="image/png" href="/assets/brand/swiflytv-favicon.png?v=180"><link rel="apple-touch-icon" href="/assets/brand/swiflytv-favicon.png?v=180">
 <style>
 *{box-sizing:border-box}html{color-scheme:dark;background:#080b12}body{margin:0;color:#f4f6fb;font-family:Inter,"SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}button,input,summary{-webkit-tap-highlight-color:transparent}button,input{font:inherit}svg{display:block;width:20px;height:20px;flex:none}button{cursor:pointer}[hidden]{display:none!important}
 .access-shell{position:relative;isolation:isolate;display:flex;flex-direction:column;min-height:100svh;overflow:hidden}
