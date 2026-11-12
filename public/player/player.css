@@ -514,12 +514,20 @@ body.svCleanShell .svPlayer[data-player-targets="large"] :is(.svPlayerTransport,
   animation:svPlayerSourcePulse 2.2s ease-in-out infinite;
 }
 @keyframes svPlayerSourcePulse { 0%,100%{opacity:.35} 50%{opacity:1} }
+@keyframes svPlayerSeekingBeat {
+  0%,100% { scale:1; opacity:.82; }
+  50% { scale:1.07; opacity:1; }
+}
+.svPlayer[data-player-state="loading"] .svPlayerStatusMark {
+  animation:svPlayerSeekingBeat 1.85s ease-in-out infinite;
+}
 .svPlayer[data-player-artwork-pending="false"] .svPlayerSourceArtwork {
   opacity:0; visibility:hidden;
 }
 .svPlayer[data-player-state="error"] .svPlayerSourceArtwork::after { animation:none; opacity:.24; }
 .svPlayer[data-player-motion="reduce"] .svPlayerSourceArtwork,
-.svPlayer[data-player-motion="reduce"] .svPlayerSourceArtwork::after { animation:none; transition:none; }
+.svPlayer[data-player-motion="reduce"] .svPlayerSourceArtwork::after,
+.svPlayer[data-player-motion="reduce"] .svPlayerStatusMark { animation:none; transition:none; }
 @media(prefers-reduced-motion:reduce) {
-  .svPlayerSourceArtwork,.svPlayerSourceArtwork::after { animation:none !important;transition:none !important; }
+  .svPlayerSourceArtwork,.svPlayerSourceArtwork::after,.svPlayer[data-player-state="loading"] .svPlayerStatusMark { animation:none !important;transition:none !important; }
 }
