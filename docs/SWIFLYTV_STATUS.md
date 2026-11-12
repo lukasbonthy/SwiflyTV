@@ -9,11 +9,22 @@ Updated: November 12, 2026 (America/New_York).
 - Site: https://swiflytv-1.onrender.com
 - Render workspace: `tea-csptd58gph6c73b7sv30`
 - Render service: `srv-db6fjrp42hec73c2tn30` (SwiflyTV-1); automatic deployment on `main`.
-- Running application commit: `5d0bc9cb3ad9a01e519f9dde48d16459add74153`.
-- Render deployment: `dep-dbqvgu49v7es7388ut3g`, confirmed `live`; finished `2026-11-12T17:34:42.122037Z`.
-- Prior iPad optimization source: `b0633f90acf95d450ff5bf32f20c355d946d9939` (CI run `43228735178` passed). Prior source: `931871ab7837e163a070be9764b4c7a4eb382048`. Previous source: `a573341ae3c7b3448fafe3e731b9ed190e327f51`. Current source: `24038dd6ebdf31c63ec0f085fcf35bf1aa401873` (build/UI/recommendation and featured browser checks passed; extended browser checks were still running at deploy).
+- Running application commit: `5b5cd54beff34f0ce11d725c64e31177ddc321ad`.
+- Render deployment: `dep-dbr0hfs9v7es738ar1tg`, confirmed `live`; finished `2026-11-12T18:44:13.887186Z`.
+- Prior iPad optimization source: `b0633f90acf95d450ff5bf32f20c355d946d9939` (CI run `43228735178` passed). Prior source: `931871ab7837e163a070be9764b4c7a4eb382048`. Previous source: `a573341ae3c7b3448fafe3e731b9ed190e327f51`. Previous source: `24038dd6ebdf31c63ec0f085fcf35bf1aa401873`. Current source: `7329ea8134853e6b17c287f0a6708cfd08f96700` (build/UI/recommendation and featured/artwork browser checks passed; extended browser checks running at deploy).
 - Previous player-motion source tree: `a3966af72f9d1aed451a3fef582bf8624a2d55eb` (retained in current release).
-- PRs #157 (player motion), #159 (iPad artwork), #160 (iPad optics/caching), #161 (iPad prefetch), and #162 (iPad featured-art pinning) merged; latest https://github.com/lukasbonthy/SwiflyTV/pull/162.
+- PRs #157 (player motion), #159 (iPad artwork), #160 (iPad optics/caching), #161 (iPad prefetch), #162 (iPad featured-art pinning), and #163 (iPad double-fade fix) merged; latest https://github.com/lukasbonthy/SwiflyTV/pull/163.
+
+## iPad featured black-frame fix v5 (November 12)
+
+The user reported #162 did NOT fix iPad featured image flashes. A concrete cross-controller conflict was identified: #162 inserts a previously decoded `<img class="svFeaturedNativeArt">` for each featured film, but the global `ui/artwork-entry.js` observed all `main img` and added `svArtworkAsset`, which explicitly set `opacity:0` before a 420ms fade. The original featured browser fixture did not mount the artwork-entry controller and therefore missed this interaction.
+
+- PR #163 https://github.com/lukasbonthy/SwiflyTV/pull/163: on iPad only, `nativeTabletPoster` now also excludes `.svFeaturedNativeArt` from the generic fade. Ordinary images/non-iPad behavior are unchanged. The selector is compact, as is the tablet rail selector, to satisfy the <160 KB shared HTML shell budget.
+- Simplified the iPad hero's compositing: removed the second full-hero `.dsHeroGlass` mask, permanent parallax backdrop transform and negative z-index; explicit hero art/glass/text stacking preserves visuals and native slide `translate` animations. A previously baked 64×36 movie-palette field is retained behind the decoded photograph as a non-black texture-eviction fallback. No extra network request or per-frame computation.
+- Added JSDOM tests for dynamically inserted decoded featured images bypassing the fade on iPad; extended `tests/featured-rotation-browser.test.cjs` to load the real artwork-entry controller on iPad fixture and assert no double fade, proper image opacity, masks, stacking and scroll return.
+- Tests: GitHub Actions run `43282084170` passed `npm run check`, full `npm run test:ui` (including 160 KB shell budget), recommendations and dedicated featured/artwork browser suite. Extended browser suite was still in progress at release. Earlier intermediate commits failed the HTML size-budget test; those were fixed before merging.
+- Merge commit `5b5cd54beff34f0ce11d725c64e31177ddc321ad`. Render `dep-dbr0hfs9v7es738ar1tg` confirmed `live` on exactly that commit at 2026-11-12T18:44:13.887186Z; startup logs show server listening and Render's health success.
+- Still requires physical iPad test; this fixes an actual code conflict, but WebKit may independently evict GPU textures under memory pressure. If still present, collect an actual screen recording and distinguish black flash during manual/automatic featured switches vs vertical return scroll with rotation paused; inspect Safari remote Web Inspector and WebKit hardware behavior.
 
 ## iPad featured black-frame fix v4 (November 12)
 
