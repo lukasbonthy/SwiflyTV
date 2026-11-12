@@ -9,11 +9,20 @@ Updated: November 12, 2026 (America/New_York).
 - Site: https://swiflytv-1.onrender.com
 - Render workspace: `tea-csptd58gph6c73b7sv30`
 - Render service: `srv-db6fjrp42hec73c2tn30` (SwiflyTV-1); automatic deployment on `main`.
-- Running application commit: `b5099fd9510d614a8dd32c27c7485c3826ac568a`.
-- Render deployment: `dep-dbqsujm1egvs73f02bpg`, confirmed `live`; finished `2026-11-12T14:39:10.348342Z`.
-- Tested iPad optimization branch commit: `b0633f90acf95d450ff5bf32f20c355d946d9939` (CI run `43228735178` passed).
+- Running application commit: `496e4c071c7eebcbf0ee0a3ad03ca9fc65c75c81`.
+- Render deployment: `dep-dbqt72vb9u1s73d0no30`, confirmed `live`; finished `2026-11-12T14:57:16.274794Z`.
+- Prior iPad optimization source: `b0633f90acf95d450ff5bf32f20c355d946d9939` (CI run `43228735178` passed). Latest source: `931871ab7837e163a070be9764b4c7a4eb382048` (unit/UI tests passed; expanded hosted browser suite in progress at publication).
 - Previous player-motion source tree: `a3966af72f9d1aed451a3fef582bf8624a2d55eb` (retained in current release).
-- PR #157 (player motion) and PR #159 (iPad catalog): https://github.com/lukasbonthy/SwiflyTV/pull/159, merged.
+- PRs #157 (player motion), #159 (iPad artwork) and #160 (iPad optics/caching) merged; latest https://github.com/lukasbonthy/SwiflyTV/pull/160.
+
+## iPad catalog return-scroll reduction v2 (November 12)
+
+The user reported that returning to prior rows on iPad still felt like every poster reloaded after #159. Source review found that each card's three native poster-action controls were being registered with the glass intersection/near-row machinery (many hundreds of observed controls across a large catalog). On iPadOS only, #160 skips this optical registration and uses the existing dark button face, adding a scoped rule to keep the buttons free of backdrop-filter passes. Navigation, detail and row-arrow glass remain intact, and non-iPad behavior is unchanged. React's poster nodes remain mounted, not virtualized.
+
+- Asset caching: bumped `/assets/liquid-glass/surfaces.js?v=277` to `v=278` in the shell and corresponding tests. The old script URL was cached for one day; the new URL forces clients to fetch the changed controller. CSS comes from a content-hashed shell bundle.
+- Regression test `tests/ipad-card-glass-reentry.test.cjs` covers 72 catalog mini-actions, iPad re-entry/focus, visible navbar glass, non-iPad behavior and scoped CSS. A first test draft had an invalid regex; it was corrected before merging. The latest source passed the full `npm run test:ui` step; expanded hosted browser validation was still running when the merge occurred.
+- Published PR: https://github.com/lukasbonthy/SwiflyTV/pull/160; merge commit `496e4c071c7eebcbf0ee0a3ad03ca9fc65c75c81`. Render `dep-dbqt72vb9u1s73d0no30` reports `live` at 14:57:16 UTC. Startup logs show React+Vite server running and no application startup error; there is an unrelated existing pg SSL configuration warning.
+- Remaining limitation: real iPad WebKit can still evict decoded artwork/tiled scroll backing stores under pressure. Avoid claiming a zero-repaint guarantee. Ask the user to reopen the site and test; if visual blanking remains, verify network requests, WebKit image decode and whether the issue occurs on vertical page scrolling versus horizontal rail paging.
 
 ## Latest iPad catalog optimization (November 12)
 
@@ -70,7 +79,7 @@ Preserve native scrolling, seven-title catalog windows, mobile composition, Stud
 - `/assets/shell/core-3ef7b560cca07cc5571b.css`; SHA-256 `3ef7b560cca07cc5571bb7648fa30ca834defccd4b9c1c2ed20bc6140b7ebda9`.
 - `/assets/shell/catalog-d6bcae25176b3a7047b6.css`; SHA-256 `d6bcae25176b3a7047b623fb8ecb356f82d4a707f1ba9a851f77fe8e7d1ef7f5`.
 
-Remaining publication work: none. Physical iPad Safari smoothness remains to be verified by the user; there are no reported CI/deploy failures. This checkpoint is a documentation-only commit with `[skip ci] [skip render]` and does not change the running application code. Credentials and cookies remain private and must never enter the repository.
+Remaining publication work: none; latest deployment is live. The extended browser CI suite was still in progress when released; physical iPad Safari smoothness remains unverified. This checkpoint is a documentation-only commit with `[skip ci] [skip render]` and does not change the running application code. Credentials and cookies remain private and must never enter the repository.
 
 ## Continuity
 
