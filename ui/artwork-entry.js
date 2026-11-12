@@ -87,7 +87,7 @@ function artworkEntry() {
  // until the row is almost visible. Warm only the nearby page of a rail, so
  // returning to earlier rows does not wait for another lazy-loading gate.
  // Never prefetch a full shelf or fetch an alternative image URL.
- const tabletContainers='.dsContent .movieRail,.dsContent .dsRail,.dsContent .nfRail,.dsContent .nfTopTenRail,.dsContent .dsWelcomeRailTrack,.dsContent .dsGrid,.dsContent .movieGrid,.svResumeRail,.svFeedCards,.svFeedUpcoming';
+ const tabletContainers='.dsContent :is(.movieRail,.dsRail,.nfRail,.nfTopTenRail,.dsWelcomeRailTrack,.dsGrid,.movieGrid),.svResumeRail,.svFeedCards,.svFeedUpcoming';
  const tabletTracked=new WeakSet(),tabletWarm=new WeakSet(),tabletScrollFrames=new WeakMap();
  const tabletRailCache=new WeakMap(),tabletLastLeft=new WeakMap();
  let tabletObserver=null;
