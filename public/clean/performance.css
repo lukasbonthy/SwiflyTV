@@ -218,3 +218,11 @@ html[data-sv-apple-tablet="true"] body.svCleanShell .dsCardQuickActions .dsMiniB
   backdrop-filter:none !important;
   background:rgb(10 13 17 / .88) !important;
 }
+
+/* On iPad, catalog mini-buttons already have an opaque-enough native dark
+   face; don't allocate a backdrop sampling pass or optical controller for
+   hundreds of quick actions. Focus/selected visuals come from clean.css. */
+html[data-sv-apple-tablet="true"] body.svCleanShell .dsCardQuickActions .dsMiniBtn {
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
+}
