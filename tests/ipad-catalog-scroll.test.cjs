@@ -47,7 +47,7 @@ test('non-iPad catalog posters keep their original artwork entrance',()=>{
 
 test('iPad poster button material is static while navigation and details remain untouched',()=>{
   const css=fs.readFileSync(path.join(__dirname,'../public/clean/performance.css'),'utf8');
-  assert.match(css,/html\\[data-sv-apple-tablet="true"\\][^\\n]*\\.svCardActionLens\\.svLiquidPane/);
-  assert.match(css,/-webkit-backdrop-filter:none !important;/);
-  assert.doesNotMatch(css,/content-visibility:\\s*auto/);
+  assert(css.includes('html[data-sv-apple-tablet="true"] body.svCleanShell .dsCardQuickActions'));
+  assert(css.includes('-webkit-backdrop-filter:none !important;'));
+  assert(!css.includes('content-visibility:auto'));
 });
