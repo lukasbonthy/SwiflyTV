@@ -320,8 +320,10 @@ test('The ambient artwork dissolves into the canvas at every edge of a bounded w
       const img=element.querySelector('img');img.src='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900"><path fill="white" d="M0 0h1600v900H0z"/></svg>');
       await img.decode();const r=element.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};
     });
+    await page.evaluate(()=>new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done))));
     const visible=(await page.screenshot()).toString('base64');
     await page.locator('.svPlayerAmbient').evaluate(element=>element.hidden=true);
+    await page.evaluate(()=>new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done))));
     const baseline=(await page.screenshot()).toString('base64');
     const differences=await page.evaluate(async({visible,baseline,bounds})=>{
       const read=async src=>{const img=new Image();img.src='data:image/png;base64,'+src;await img.decode();const canvas=document.createElement('canvas');canvas.width=img.width;canvas.height=img.height;const c=canvas.getContext('2d');c.drawImage(img,0,0);return c;};
