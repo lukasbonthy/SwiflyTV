@@ -12,8 +12,13 @@ function artworkEntry() {
  const appleTablet=/iPad/.test(navigator.userAgent) ||
    (navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
  if(appleTablet)root.dataset.svAppleTablet='true';
+ // The featured carousel already decodes each image BEFORE inserting it.
+ // Running the generic artwork-entry gate on that decoded image adds a fresh
+ // opacity:0 + 420ms fade every time the carousel swaps its live layer.
+ // iPadOS can show the black hero beneath during that interval.
  const nativeTabletPoster=node=>appleTablet&&node.tagName==='IMG'&&
-   !!node.closest('.dsContent,.movieRail,.dsRail,.nfRail,.nfTopTenRail,.dsWelcomeRailTrack,.svFeedSection,.svResumeSection');
+   (node.classList.contains('svFeaturedNativeArt') ||
+     !!node.closest('.dsContent,.movieRail,.dsRail,.nfRail,.nfTopTenRail,.dsWelcomeRailTrack,.svFeedSection,.svResumeSection'));
  const backgrounds='.dsHeroBg,.browseHeroBg,.svDetailBackdrop,.dsWelcomeHeroBg';
  const copy='.dsHeroContent > :is(.dsEyebrow,h1,.dsHeroMeta,p)';
  const seen=new WeakMap(),pending=new Map(),held=new Set();
