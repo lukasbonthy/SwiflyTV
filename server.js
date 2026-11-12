@@ -5691,7 +5691,7 @@ app.use((req, res, next) => {
 
 // Public brand artwork is needed by the access page and browser tab, too.
 app.use('/assets/brand',express.static(path.join(__dirname,'public','brand'),{maxAge:'7d',dotfiles:'deny',index:false}));
-app.get('/favicon.ico',(_req,res)=>res.redirect(302,'/assets/brand/swiflytv-favicon.png?v=180'));
+app.get('/favicon.ico',(_req,res)=>res.redirect(302,'/assets/brand/swiflytv-favicon.png?v=181'));
 // Check friends-only access before browsing pages, app assets and API routes.
 const siteGate = createSiteGate();
 app.use(siteGate.router);
@@ -6562,8 +6562,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
   <meta name="description" content="${escapeHtml(description)}" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta name="theme-color" content="#000000" />
-  <link rel="icon" type="image/png" href="/assets/brand/swiflytv-favicon.png?v=180" />
-  <link rel="apple-touch-icon" href="/assets/brand/swiflytv-favicon.png?v=180" />
+  <link rel="icon" type="image/png" href="/assets/brand/swiflytv-favicon.png?v=181" />
+  <link rel="apple-touch-icon" href="/assets/brand/swiflytv-favicon.png?v=181" />
   ${tvHead()}
   ${loadingHead({artwork:showNavigation,bundled:true})}
   ${studioHead()}
