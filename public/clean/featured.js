@@ -10,6 +10,21 @@
   const spill=hero.nextElementSibling?.querySelector('.svHeroSpill');
   if (!copy || !art || !spill) return;
   const reduced=matchMedia('(prefers-reduced-motion: reduce)'),controls=hero.querySelector('[data-sv-featured-controls]');
+  // iPadOS (including desktop-class Safari UAs) can discard a masked CSS
+  // backdrop's scroll tile while the page is offscreen. Pin the decoded image
+  // in the actual visible slot rather than relying on a second CSS decode.
+  const appleTablet=/iPad/.test(navigator.userAgent) ||
+    (navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  if(appleTablet)root.dataset.svAppleTablet='true';
+  const artSource=slide=>root.dataset.svXbox==='true'||innerWidth<=860?slide.mobileArt:innerWidth>=1600?slide.largeArt:slide.art;
+  function mountTabletArt(bg,image){
+    if(!appleTablet||!image?.naturalWidth)return;
+    image.className='svFeaturedNativeArt';image.alt='';image.draggable=false;
+    image.setAttribute('aria-hidden','true');
+    // Reusing the same prepared title must not detach/reinsert its image.
+    if(bg.firstElementChild!==image)bg.replaceChildren(image);
+    bg.dataset.svFeaturedNativeReady='true';
+  }
   const play=copy.querySelector('[data-play-id]'),details=copy.querySelector('.dsHeroActions > a:not([data-play-id]):not([data-resume-action])'),watch=copy.querySelector('[data-watch-id]');
   if (!play || !details || !watch) return;
   const cache=new Map(),glowCache=new Map(),listeners=[],running=new Set();
@@ -52,6 +67,7 @@
       const abort=()=>{finish(null);image.src='';};
       const deadline=setTimeout(()=>{finish(null);image.src='';},timeout);
       image.decoding='async';image.crossOrigin='anonymous';
+      if(appleTablet)image.fetchPriority='high';
       image.onload=()=>Promise.resolve(image.decode?.()).catch(()=>{}).then(()=>finish(image.naturalWidth>0?image:null));
       image.onerror=()=>finish(null);signal.addEventListener('abort',abort,{once:true});image.src=src;
     });
@@ -94,7 +110,7 @@
     });
   }
   async function prepare(target,signal,glowOnly=false) {
-    const slide=slides[target],src=root.dataset.svXbox==='true' || innerWidth<=860?slide.mobileArt:innerWidth>=1600?slide.largeArt:slide.art;
+    const slide=slides[target],src=artSource(slide);
     const key=slide.id+':'+src;
     if(!glowOnly && cache.has(key)){const ready=cache.get(key);cache.delete(key);cache.set(key,ready);return ready;}
     const [image,logo]=await Promise.all([
@@ -115,7 +131,7 @@
     // Keep only two display preparations, but retain the at-most-five tiny
     // textures so wrapping the carousel never repeats synchronous encoding.
     glowCache.set(slide.palette,glow);
-    const ready={src,glow,logo};if(!glowOnly){cache.set(key,ready);while(cache.size>2)cache.delete(cache.keys().next().value);}
+    const ready={src,glow,logo,...(!glowOnly && appleTablet?{image}:{})};if(!glowOnly){cache.set(key,ready);while(cache.size>(appleTablet?3:2))cache.delete(cache.keys().next().value);}
     return ready;
   }
   function paint(target,ready,targetSlot) {
@@ -123,6 +139,13 @@
     const url=value=>'url("'+value+'")';bg.style.backgroundImage=url(slide.art);
     bg.style.setProperty('--sv-art-mobile',url(slide.mobileArt));bg.style.setProperty('--sv-art-large',url(slide.largeArt));bg.style.setProperty('--sv-xbox-art',url(slide.mobileArt));
     bg.dataset.svFeaturedId=String(slide.id);glow.dataset.svFeaturedId=String(slide.id);
+    if(appleTablet){
+      // An old DOM image belongs to the outgoing title. Replace it only
+      // after the new title has completely loaded and decoded.
+      if(ready.image)mountTabletArt(bg,ready.image);
+      // The initial palette-only pass must not remove artwork that a fast
+      // image decode has already pinned to the first slot.
+    }
     glow.style.backgroundImage=ready.glow;
   }
   function updateCopy(slide,ready) {
@@ -274,6 +297,15 @@
   function destroy() {if(disposed)return;disposed=true;suspend();stateObserver.disconnect();dialogObserver.disconnect();visibility?.disconnect();listeners.forEach(remove=>remove());cache.clear();glowCache.clear();}
   window.SwiflyFeatured=Object.freeze({select,destroy});pauseState();
   const initialController=new AbortController(),generation=++serial;preparation=initialController;
+  // The server's first backdrop remains visible while this high-priority
+  // decoded <img> arrives. The image is never blanked during that handoff.
+  if(appleTablet){
+    const firstArt=new AbortController();
+    loadImage(artSource(slides[0]),firstArt.signal,9000).then(image=>{
+      if(disposed||suspended||!image||index!==0||slot!==0)return;
+      mountTabletArt(backgrounds[0],image);
+    });
+  }
   prepare(0,initialController.signal,true).then(ready=>{
     if(disposed || serial!==generation || initialController.signal.aborted)return;
     preparation=null;

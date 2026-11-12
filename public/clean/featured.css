@@ -177,3 +177,29 @@ html[data-sv-tv="true"] body.svCleanShell .svFeaturedFooter {left:auto;right:max
   html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] {--sv-featured-backdrop:none;}
   html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] .dsHeroActions > :is(.dsSecondaryBtn,.dsIconBtn)::before {background:#181b21;}
 }
+
+/* iPadOS: keep decoded featured photographs in stable DOM image layers.
+   Re-creating a full-size masked CSS background after the iPad has scrolled
+   away can expose the black canvas for a frame. Preserve the cinematic fade
+   with one fixed gradient overlay instead of masking the entire image layer. */
+html[data-sv-apple-tablet="true"] body.svCleanShell main[data-st-home] > [data-sv-featured] > .dsHeroArt {
+  -webkit-mask-image:none !important;
+  mask-image:none !important;
+}
+html[data-sv-apple-tablet="true"] body.svCleanShell main[data-st-home] > [data-sv-featured] > .dsHeroArt::after {
+  content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:linear-gradient(to bottom,transparent 47%,rgb(0 0 0 / .12) 57%,rgb(0 0 0 / .60) 75%,var(--st-canvas,#090b10) 100%);
+}
+html[data-sv-apple-tablet="true"] body.svCleanShell [data-sv-featured] > .dsHeroArt > .dsHeroBg > .svFeaturedNativeArt {
+  display:block;position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;object-position:center;pointer-events:none;
+  transform:none;filter:none;animation:none;
+}
+html[data-sv-apple-tablet="true"] body.svCleanShell [data-sv-featured] > .dsHeroArt > .dsHeroBg[data-sv-featured-native-ready="true"] {
+  background-image:none !important;
+}
+/* Opacity-zero instead of display:none keeps the inactive decoded slot in
+   WebKit's renderer so returning to an earlier featured movie is not cold. */
+html[data-sv-apple-tablet="true"] body.svCleanShell [data-sv-featured] > .dsHeroArt > .dsHeroBg[hidden] {
+  display:block !important;opacity:0 !important;
+}
