@@ -38,9 +38,10 @@ test('profile mapping is deliberate, repeatable and cannot silently discard a ni
  assert.throws(()=>data.plan(backup([profile('extra','Extra')]),backup(Array.from({length:8},(_,i)=>profile('p'+i,'P'+i)))),/eight|8|profile/i);
 });
 
-test('legacy recovery reads preserved guest sources without exposing another account partition',()=>{
+test('legacy recovery reads preserved guest sources without exposing another account partition',t=>{
+ t.mock.method(Date.prototype,'toISOString',()=> '2026-11-11T20:00:00.999Z');
  assert.equal(typeof data.sources,'function');const s=storage({'swiflytv.deviceState.legacy':{'swiflytv.profiles':[{id:'main',name:'Old guest'}],'movieverse.watchlist':[item(8)]},'swiflytv.deviceState.alice':{'movieverse.watchlist':[item(99)]},'swiflytv.deviceState.bob':{'movieverse.watchlist':[item(2)]}});
- const sources=data.sources(s,{id:'bob',email:'bob@example.com'});assert(sources.some(v=>v.key==='swiflytv.deviceState.legacy'));assert(sources.some(v=>v.key==='swiflytv.deviceState.bob'));assert(!sources.some(v=>v.key.includes('alice')));assert.equal(JSON.stringify(sources).includes('99'),false);assert.notEqual(s.getItem('swiflytv.deviceState.legacy'),null);
+ const sources=data.sources(s,{id:'bob',email:'bob@example.com'});assert(sources.some(v=>v.key==='swiflytv.deviceState.legacy'));assert(sources.some(v=>v.key==='swiflytv.deviceState.bob'));assert(!sources.some(v=>v.key.includes('alice')));assert.deepEqual(sources.flatMap(source=>source.backup.profiles.flatMap(profile=>profile.library.watchlist.map(item=>item.id))).sort(),['2','8']);assert.notEqual(s.getItem('swiflytv.deviceState.legacy'),null);
 });
 
 test('import bounds reject overflowing merged lists and sanitize executable URLs and profile fields',()=>{

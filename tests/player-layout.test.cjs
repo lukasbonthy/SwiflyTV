@@ -85,13 +85,14 @@ async function assertMenuReachable(page) {
   }
 }
 
-async function wavePixels(page) {
-  return page.locator('[data-player-waves] canvas').evaluate(canvas => {
+async function wavePixels(page,burst=false) {
+  return page.locator('[data-player-waves] canvas').evaluate((canvas,burst) => {
+    if(burst)canvas.closest('.svPlayerPage').dispatchEvent(new CustomEvent('swiflyplayer:play-intent'));
     const pixels=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
     let hash=2166136261,green=0,minX=canvas.width,minY=canvas.height,maxX=0,maxY=0;
     for(let i=0;i<pixels.length;i+=4){hash=Math.imul(hash^pixels[i+1],16777619);if(pixels[i+1]>40&&pixels[i+1]>pixels[i]*2&&pixels[i+1]>pixels[i+2]*1.4){green++;const x=(i/4)%canvas.width,y=Math.floor(i/4/canvas.width);minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);}}
     return {hash:hash>>>0,green,width:canvas.width,height:canvas.height,bounds:[minX,minY,maxX,maxY]};
-  });
+  },burst);
 }
 
 test('Theater entry dissolves once from black while the live picture keeps its geometry', {skip:!available && 'Chromium is not installed'}, async () => {
@@ -120,10 +121,10 @@ test('Green grid ripples animate behind stable, usable movie frames on desktop a
       assert.equal(await page.locator('[data-player-waves] canvas').count(),1,'the player needs its own green ripple backdrop');
       await page.emulateMedia({reducedMotion:'no-preference'});
       await page.addScriptTag({content:asset('player/waves.js')});
-      await page.waitForFunction(()=>document.querySelector('[data-player-waves]')?.dataset.waveState==='live');
-      const before=await wavePixels(page),film=await page.locator('video').boundingBox();
+      assert.equal(await page.locator('[data-player-waves]').getAttribute('data-wave-state'),'idle');
+      const before=await wavePixels(page,true),film=await page.locator('video').boundingBox();
       assert(before.bounds[0]>before.width*.35&&before.bounds[2]<before.width*.65&&before.bounds[1]>before.height*.35&&before.bounds[3]<before.height*.65,'the first ripple must originate at the center, with no old ring at the edges');
-      await page.waitForTimeout(3250);
+      await page.waitForFunction(()=>{const c=document.querySelector('[data-player-waves] canvas'),p=c.getContext('2d').getImageData(0,0,12,c.height).data;let green=0;for(let i=0;i<p.length;i+=4)if(p[i+1]>40&&p[i+1]>p[i]*2&&p[i+1]>p[i+2]*1.4)green++;return green>100;},null,{polling:50,timeout:6000});
       const after=await wavePixels(page);
       assert(before.green>100,'actual green squares must be rendered, including without poster artwork');
       const shown=await page.screenshot();
@@ -146,6 +147,35 @@ test('Green grid ripples animate behind stable, usable movie frames on desktop a
   }
 });
 
+test('Real movie frames tint spatial ripple patches after Play without changing playback', {skip:!available && 'Chromium is not installed'}, async()=>{
+  const {page,context}=await open({width:1280,height:800});
+  let release;const stalled=new Promise(resolve=>release=resolve);
+  await page.route('**/color-fixture.webm',async route=>{await stalled;await route.abort().catch(()=>{});});
+  try{
+    await page.emulateMedia({reducedMotion:'no-preference'});
+    await page.evaluate(async()=>{
+      const source=document.createElement('canvas');source.width=160;source.height=90;
+      const ctx=source.getContext('2d'),fixture={swap:false,frame:0};
+      const paint=()=>{ctx.fillStyle=fixture.swap?'#194bf5':'#f52018';ctx.fillRect(0,0,80,90);ctx.fillStyle=fixture.swap?'#f52018':'#194bf5';ctx.fillRect(80,0,80,90);ctx.fillStyle=fixture.frame++%2?'#f02018':'#e02018';ctx.fillRect(0,0,1,1);};
+      paint();fixture.stream=source.captureStream(12);fixture.timer=setInterval(paint,60);
+      await SwiflyPlayer.loadSource({status:'ok',playbackUrl:'https://swifly.test/color-fixture.webm'});
+      const video=document.querySelector('[data-player-video]');video.muted=true;video.srcObject=fixture.stream;await video.play();video.pause();
+      fixture.read=()=>{const c=document.querySelector('[data-player-waves] canvas'),p=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let warmLeft=0,coolLeft=0,warmRight=0,coolRight=0,green=0;for(let i=0;i<p.length;i+=4){const x=(i/4)%c.width,r=p[i],g=p[i+1],b=p[i+2],warm=r>45&&r>g*1.4&&r>b*1.4,cool=b>45&&b>g*1.2&&b>r*1.4;if(x<c.width/3){if(warm)warmLeft++;if(cool)coolLeft++;}if(x>c.width*2/3){if(warm)warmRight++;if(cool)coolRight++;}if(g>40&&g>r*2&&g>b*1.4)green++;}return {warmLeft,coolLeft,warmRight,coolRight,green};};
+      window.__waveFrameFixture=fixture;
+    });
+    await page.addScriptTag({content:asset('player/waves.js')});
+    assert.equal(await page.locator('[data-player-waves]').getAttribute('data-wave-state'),'idle','even ready frames wait for Play intent');
+    await page.waitForFunction(()=>SwiflyPlayer.getState().ready&&!document.querySelector('[data-player-play]').disabled);
+    await page.evaluate(()=>document.querySelector('.svPlayerPage').addEventListener('swiflyplayer:play-intent',()=>{const c=document.querySelector('[data-player-waves] canvas'),p=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let green=0,left=c.width,right=0;for(let i=0;i<p.length;i+=4)if(p[i+1]>40&&p[i+1]>p[i]*2){green++;left=Math.min(left,(i/4)%c.width);right=Math.max(right,(i/4)%c.width);}__waveFrameFixture.firstBurst={green,left,right,width:c.width};},{once:true}));
+    await page.locator('[data-player-play]').click();
+    const first=await page.evaluate(()=>__waveFrameFixture.firstBurst);assert(first?.green>100&&first.left>first.width*.35&&first.right<first.width*.65,'the visible Play button must emit a center burst at its own gesture');
+    await page.waitForFunction(()=>{const c=__waveFrameFixture.read();return c.warmLeft>100&&c.coolRight>100&&c.green>100;},null,{polling:100,timeout:7000});
+    await page.evaluate(()=>{__waveFrameFixture.swap=true;});
+    await page.waitForFunction(()=>{const c=__waveFrameFixture.read();return c.coolLeft>100&&c.warmRight>100&&c.green>100;},null,{polling:100,timeout:7000});
+    assert.equal(await page.locator('[data-player-video]').evaluate(video=>!video.paused&&video.currentTime>0),true,'ambient sampling must leave the actual movie playing');
+  }finally{release();await context.close();}
+});
+
 test('Skip and next-episode prompts pop in and ease away without leaving clickable hidden controls', {skip:!available && 'Chromium is not installed'}, async()=>{
   const {page,context}=await open({width:1280,height:800});
   try{
@@ -162,8 +192,20 @@ test('Skip and next-episode prompts pop in and ease away without leaving clickab
     }
     await page.emulateMedia({reducedMotion:'reduce'});
     const instant=await page.locator('[data-assist-skip]').evaluate(node=>{node.hidden=false;getComputedStyle(node).opacity;const count=node.getAnimations().length;node.hidden=true;return {count,display:getComputedStyle(node).display};});
-    assert.equal(instant.count,0);assert.equal(instant.display,'none');
+    assert.equal(instant.count,0);assert.equal(instant.display,'none');assert.equal(await page.locator('[data-assist-next]').evaluate(node=>getComputedStyle(node,'::after').transitionDuration),'0s','reduced motion also stops the countdown line');
   }finally{await context.close();}
+});
+
+test('Phone skip and song actions stay inside the film and do not overlap', {skip:!available && 'Chromium is not installed'}, async()=>{
+  for(const width of [320,390]){
+    const {page,context}=await open({width,height:844});
+    try{
+      await page.locator('[data-assist-skip]').evaluate(node=>{node.hidden=false;});
+      const geometry=await page.evaluate(()=>{const box=selector=>{const r=document.querySelector(selector).getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height};};return {stage:box('[data-player-stage]'),skip:box('[data-assist-skip]'),song:box('[data-assist-song]')};});
+      assert(geometry.song.right<=geometry.skip.left-4,'compact actions need a clear gap');
+      for(const node of [geometry.skip,geometry.song]){assert(node.width>=44&&node.height>=44);assert(node.left>=geometry.stage.left&&node.right<=geometry.stage.right&&node.top>=geometry.stage.top&&node.bottom<=geometry.stage.bottom,'the action must stay within the film');}
+    }finally{await context.close();}
+  }
 });
 
 test('Ripple rendering stops for reduced motion, disabled effects, and a cached page lifecycle', {skip:!available && 'Chromium is not installed'}, async () => {
@@ -171,6 +213,7 @@ test('Ripple rendering stops for reduced motion, disabled effects, and a cached 
   try{
     assert.equal(await page.locator('[data-player-waves] canvas').count(),1,'the player needs its own green ripple backdrop');
     await page.addScriptTag({content:asset('player/waves.js')});
+    await page.evaluate(()=>document.querySelector('.svPlayerPage').dispatchEvent(new CustomEvent('swiflyplayer:play-intent')));
     await page.waitForFunction(()=>document.querySelector('[data-player-waves]')?.dataset.waveState==='still');
     let before=await wavePixels(page);await page.waitForTimeout(160);
     assert.equal((await wavePixels(page)).hash,before.hash,'OS reduced motion must render a still pattern');

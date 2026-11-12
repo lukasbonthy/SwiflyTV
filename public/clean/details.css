@@ -6,9 +6,12 @@ html.svDetailsOpen body.svCleanShell { width:var(--sv-detail-page-width); }
 @property --sv-detail-start { syntax:"*"; inherits:false; initial-value:translateY(0px); }
 @property --sv-detail-dim-start { syntax:"<number>"; inherits:false; initial-value:1; }
 @property --sv-detail-scroll { syntax:"<length>"; inherits:false; initial-value:0px; }
-/* Keep the masked artwork, fade and fixed navigation at their exact resting
-   coordinates. Only the detail panel moves; the scrim supplies the depth. */
-body.svCleanShell > [data-sv-browse-scene] { display:flow-root; }
+/* Keep the fixed navigation outside the receding page. Idle scale:none avoids
+   creating a containing block during ordinary browsing. */
+body.svCleanShell > [data-sv-browse-scene] { display:flow-root;scale:none;transform-origin:50% var(--sv-detail-scene-origin,50svh);transition:scale var(--sv-detail-depth-time,360ms) var(--sv-detail-depth-ease,cubic-bezier(.28,.06,.2,1)); }
+html[data-sv-detail-depth="back"] body.svCleanShell > [data-sv-browse-scene] { scale:.97; }
+body.svCleanShell.reduceMotion > [data-sv-browse-scene] { scale:none !important;transition:none !important; }
+@media(prefers-reduced-motion:reduce) { body.svCleanShell > [data-sv-browse-scene] { scale:none !important;transition:none !important; } }
 /* Some browsers retain the wider fixed-position viewport after unlocking.
    Keep fixed navigation aligned to the unchanged page content width. */
 html.svDetailsFramed body.svCleanShell > .topbar { width:var(--sv-detail-page-width); }

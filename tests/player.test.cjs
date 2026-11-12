@@ -34,6 +34,12 @@ function setup(options={}, customize=()=>{}) {
   assert(w.SwiflyPlayer,'The movie player controller must initialize');assert(Object.isFrozen(w.SwiflyPlayer),'The public API must be immutable');env.api=w.SwiflyPlayer;return env;
 }
 test.afterEach(()=>{for(const env of environments)env.close();});
+test('a playable user Play attempt emits its burst intent before playback, while discovery and remote resume stay quiet',async()=>{
+ const e=setup(),intents=[];e.app.addEventListener('swiflyplayer:play-intent',()=>intents.push(e.video().paused));
+ await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();assert.deepEqual(intents,[]);
+ await e.api.play();assert.deepEqual(intents,[true],'the burst begins at the Play gesture, before the film starts');
+ e.api.pause();await e.api.play({remote:true});assert.deepEqual(intents,[true]);
+});
 function hlsMock(w) {
   class Hls {static Events={MANIFEST_PARSED:'manifest',ERROR:'error',LEVEL_SWITCHED:'level',SUBTITLE_TRACKS_UPDATED:'subtitles',SUBTITLE_TRACK_SWITCH:'subtitle-switch',AUDIO_TRACKS_UPDATED:'audio-tracks',AUDIO_TRACK_SWITCHED:'audio-switch'};static ErrorTypes={NETWORK_ERROR:'network',MEDIA_ERROR:'media'};static isSupported(){return true;}constructor(){this.listeners=new Map();this.levels=[{height:720,bitrate:1800000},{height:1080,bitrate:4000000}];this.subtitleTracks=[];this.audioTracks=[];this.audioTrack=0;Hls.instances.push(this);}on(n,fn){this.listeners.set(n,fn);}off(n){this.listeners.delete(n);}attachMedia(v){this.video=v;}loadSource(url){this.url=url;}emit(n,data={}){this.listeners.get(n)?.(n,data);}recoverMediaError(){this.recoveries=(this.recoveries||0)+1;}startLoad(){this.starts=(this.starts||0)+1;}destroy(){this.destroyed=true;this.listeners.clear();}}Hls.instances=[];w.Hls=Hls;return Hls;
 }
