@@ -141,7 +141,8 @@
       // An old DOM image belongs to the outgoing title. Replace it only
       // after the new title has completely loaded and decoded.
       if(ready.image)mountTabletArt(bg,ready.image);
-      else if(bg.dataset.svFeaturedNativeReady){bg.replaceChildren();delete bg.dataset.svFeaturedNativeReady;}
+      // The initial palette-only pass must not remove artwork that a fast
+      // image decode has already pinned to the first slot.
     }
     glow.style.backgroundImage=ready.glow;
   }
