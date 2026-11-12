@@ -9,11 +9,20 @@ Updated: November 12, 2026 (America/New_York).
 - Site: https://swiflytv-1.onrender.com
 - Render workspace: `tea-csptd58gph6c73b7sv30`
 - Render service: `srv-db6fjrp42hec73c2tn30` (SwiflyTV-1); automatic deployment on `main`.
-- Running application commit: `22d7e4105979325ae207c091c17fd8d480a7055d`.
-- Render deployment: `dep-dbqu0ugjo6nc73bb57r0`, confirmed `live`; finished `2026-11-12T15:52:27.202533Z`.
-- Prior iPad optimization source: `b0633f90acf95d450ff5bf32f20c355d946d9939` (CI run `43228735178` passed). Prior source: `931871ab7837e163a070be9764b4c7a4eb382048`. Current source: `a573341ae3c7b3448fafe3e731b9ed190e327f51` (UI and artwork-entry browser checks passed; extended browser checks still running when deployed).
+- Running application commit: `5d0bc9cb3ad9a01e519f9dde48d16459add74153`.
+- Render deployment: `dep-dbqvgu49v7es7388ut3g`, confirmed `live`; finished `2026-11-12T17:34:42.122037Z`.
+- Prior iPad optimization source: `b0633f90acf95d450ff5bf32f20c355d946d9939` (CI run `43228735178` passed). Prior source: `931871ab7837e163a070be9764b4c7a4eb382048`. Previous source: `a573341ae3c7b3448fafe3e731b9ed190e327f51`. Current source: `24038dd6ebdf31c63ec0f085fcf35bf1aa401873` (build/UI/recommendation and featured browser checks passed; extended browser checks were still running at deploy).
 - Previous player-motion source tree: `a3966af72f9d1aed451a3fef582bf8624a2d55eb` (retained in current release).
-- PRs #157 (player motion), #159 (iPad artwork), #160 (iPad optics/caching), and #161 (iPad prefetch) merged; latest https://github.com/lukasbonthy/SwiflyTV/pull/161.
+- PRs #157 (player motion), #159 (iPad artwork), #160 (iPad optics/caching), #161 (iPad prefetch), and #162 (iPad featured-art pinning) merged; latest https://github.com/lukasbonthy/SwiflyTV/pull/162.
+
+## iPad featured black-frame fix v4 (November 12)
+
+The user reported that scrolling away from then back to the featured movie still caused a short black frame/re-render even after the catalog poster fixes. The featured carousel used temporary decoded `Image` objects but painted its visible titles as giant CSS backgrounds inside a full-hero WebKit mask; inactive CSS layers were also `display:none`, making texture eviction on iPad return plausible.
+
+- PR #162 (https://github.com/lukasbonthy/SwiflyTV/pull/162): on iPadOS (including desktop-class iPad user agents), pin decoded featured artwork as a real `<img class="svFeaturedNativeArt">` inside existing double-buffer slots. The first server-rendered CSS backdrop stays visible until its decoded DOM image is ready. Incoming titles reuse the prepared decoded image rather than painting a separate CSS background. Reusing an already mounted image does not detach/reinsert it.
+- Keep the inactive image slot connected, use opacity 0 instead of display:none for the hidden iPad layer, and replace the full hero alpha mask with a single static darkening/fade overlay. Auto-rotation timing, colored glows, buttons and all non-iPad paths remain intact. iPad cache retains at most 3 prepared hero images. Bumped `featured.js` asset URL v6 to v7 for the one-day cache.
+- Added an iPad-UA browser regression in `tests/featured-rotation-browser.test.cjs`: image decoded/visible, no CSS image behind the decoded layer, same DOM image after returning from a long scroll, previous DOM image still mounted through a title change. CI `43270159690` passed `npm run check`, `npm run test:ui`, recommendations and featured/artwork browser suite; extended browser suite was still running at release.
+- Merge commit `5d0bc9cb3ad9a01e519f9dde48d16459add74153`; Render deployment `dep-dbqvgu49v7es7388ut3g` confirmed live at 2026-11-12T17:34:42.122037Z; server startup logs successful. Physical iPad Safari must still verify absence of WebKit texture eviction and black frames; do not claim 100% proven.
 
 ## iPad poster-priority warmup v3 (November 12)
 
