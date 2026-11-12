@@ -11,16 +11,31 @@
 :root { --sv-pop-curve:cubic-bezier(.18,.83,.22,1); }
 
 /* Native detail menus and the nav search popup. No animated blur or layout changes. */
-body.svCleanShell .svSearchPopup:not([hidden]),
 body.svCleanShell .genreDropdown[open] > .genreDropdownMenu,
 body.svCleanShell .dsProfileMenu[open] > .dsProfileDropdown.svLiquidDropdown,
 body.svCleanShell .svFriendActions[open] > button,
-body.svCleanShell .svPlayerPopoverBody:not([hidden]),
+body.svCleanShell .svPlayerPopover[open] > .svPlayerPopoverBody,
 body.svCleanShell .svAiFilters:not([hidden]) {
   animation:svPopoutEnter 300ms var(--sv-pop-curve) both;
   transform-origin:top center;
 }
 body.svCleanShell .svFriendActions[open] > button { animation-duration:240ms; }
+/* The search surface also glides out without keeping a hidden popup interactive.
+   Modern discrete display transitions preserve the exit; older browsers hide it immediately. */
+body.svCleanShell .svSearchPopup {
+  opacity:0; translate:0 9px; scale:.978;
+  transition:opacity 230ms var(--sv-pop-curve),
+             translate 260ms var(--sv-pop-curve),
+             scale 260ms var(--sv-pop-curve),
+             display 260ms allow-discrete;
+}
+body.svCleanShell .svSearchPopup:not([hidden]) { opacity:1; translate:0 0; scale:1; }
+@starting-style {
+  body.svCleanShell .svSearchPopup:not([hidden]) {
+    opacity:0; translate:0 9px; scale:.978;
+  }
+}
+
 
 /* Mobile profile menu is portaled to the body; never animate its left:50% layout. */
 @media (max-width:860px) {
