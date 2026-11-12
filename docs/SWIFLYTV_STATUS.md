@@ -1,6 +1,6 @@
 # SwiflyTV working checkpoint
 
-Updated: November 11, 2026 (America/New_York).
+Updated: November 12, 2026 (America/New_York).
 
 ## Source and production
 
@@ -9,11 +9,20 @@ Updated: November 11, 2026 (America/New_York).
 - Site: https://swiflytv-1.onrender.com
 - Render workspace: `tea-csptd58gph6c73b7sv30`
 - Render service: `srv-db6fjrp42hec73c2tn30` (SwiflyTV-1); automatic deployment on `main`.
-- Running application commit: `798eea813e62b701fa4f5d75565be3cadfe64785`.
-- Render deployment: `dep-dbqk93k9v7es73dom0b0`, confirmed `live`; finished `2026-11-12T04:47:16.913291Z`.
-- Tested source commit: `c993c35d1d318f32384b740c76eeae947972f637`.
-- Tested/merged source tree: `a3966af72f9d1aed451a3fef582bf8624a2d55eb` (identical).
-- PR #157: https://github.com/lukasbonthy/SwiflyTV/pull/157, merged.
+- Running application commit: `b5099fd9510d614a8dd32c27c7485c3826ac568a`.
+- Render deployment: `dep-dbqsujm1egvs73f02bpg`, confirmed `live`; finished `2026-11-12T14:39:10.348342Z`.
+- Tested iPad optimization branch commit: `b0633f90acf95d450ff5bf32f20c355d946d9939` (CI run `43228735178` passed).
+- Previous player-motion source tree: `a3966af72f9d1aed451a3fef582bf8624a2d55eb` (retained in current release).
+- PR #157 (player motion) and PR #159 (iPad catalog): https://github.com/lukasbonthy/SwiflyTV/pull/159, merged.
+
+## Latest iPad catalog optimization (November 12)
+
+PR #159 removed global entrance decode/fade processing from catalog poster images specifically on iPadOS, including desktop-class iPad Safari user-agent mode. The images remain mounted in existing native React rails, and WebKit controls lazy loading and image decoding. The featured hero still uses its cinematic entrance. Static dark poster-action lenses on iPad avoid repeated background blur sampling while nav and details retain their glass.
+
+- New tests: `tests/ipad-catalog-scroll.test.cjs` cover iPad native poster behavior, non-iPad unchanged behavior, and scoped CSS.
+- GitHub Actions `43228735178`: node-check `success`, including UI tests and the browser test suite; previous intermediate runs were superseded.
+- Render `dep-dbqsujm1egvs73f02bpg`: `live` on exact application commit `b5099fd9510d614a8dd32c27c7485c3826ac568a`. Startup logs show server listening and the service live. This is not a physical iPad frame-rate verification.
+- Follow-up on-device: scroll down past several catalog rows, flick back up, and check that previously seen posters no longer visibly fade in again; check portrait/landscape and both swipe and arrow interactions. Device/WebKit tile eviction may still repaint when memory is low.
 
 ## Completed latest requests
 
@@ -61,7 +70,7 @@ Preserve native scrolling, seven-title catalog windows, mobile composition, Stud
 - `/assets/shell/core-3ef7b560cca07cc5571b.css`; SHA-256 `3ef7b560cca07cc5571bb7648fa30ca834defccd4b9c1c2ed20bc6140b7ebda9`.
 - `/assets/shell/catalog-d6bcae25176b3a7047b6.css`; SHA-256 `d6bcae25176b3a7047b623fb8ecb356f82d4a707f1ba9a851f77fe8e7d1ef7f5`.
 
-Remaining implementation/publication work: none. This checkpoint and completed plan are documentation only, using `[skip ci] [skip render]`; they do not change the running application commit. Credentials and cookies remain private and must never enter the repository.
+Remaining publication work: none. Physical iPad Safari smoothness remains to be verified by the user; there are no reported CI/deploy failures. This checkpoint is a documentation-only commit with `[skip ci] [skip render]` and does not change the running application code. Credentials and cookies remain private and must never enter the repository.
 
 ## Continuity
 
