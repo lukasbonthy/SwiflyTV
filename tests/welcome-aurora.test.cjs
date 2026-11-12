@@ -95,7 +95,9 @@ test('Welcome escapes catalog text, branding, redirects and artwork attributes i
   const env = browser(welcome({brand:unsafe,siteName:unsafe,redirect:'%2Fprofiles" data-attacker="true',
     hero:{...hero,title:unsafe},trendingMovies:[],popularMovies:[],popularTv:[],
     backdropUrl:() => artwork,posterUrl:() => artwork})), d = env.window.document;
-  assert.equal(d.querySelector('.dsWelcomeBrand').textContent.trim(), unsafe);
+  assert.equal(d.querySelector('.dsWelcomeBrand').textContent.trim(), '');
+  assert.equal(d.querySelector('.dsWelcomeBrand').getAttribute('aria-label'), unsafe+' home');
+  assert.equal(d.querySelector('.svWelcomeFooter a').textContent, unsafe);
   assert.equal(d.querySelector('.svWelcomeSpotlight strong').textContent, unsafe);
   assert.equal(d.querySelector('.dsWelcomeHeroBg img').getAttribute('src'), artwork);
   assert.equal(d.querySelector('.svWelcomeSpill img').getAttribute('src'), artwork);

@@ -234,15 +234,18 @@
     }
   }
   const playbackControl=node=>{const button=node.closest?.('[data-sv-featured-go]');return button&&Number(button.dataset.svFeaturedGo)===index&&!quiet();};
+  function toggleRotation(){paused=!(paused||keyboard);keyboard=false;pauseState();schedule();}
   if(controls)controls.hidden=false;
   hero.dataset.svFeaturedIndex='0';hero.dataset.svFeaturedState='idle';
   listen(hero,'click',event=>{
     const button=event.target.closest('[data-sv-featured-go],[data-sv-featured-next],[data-sv-featured-prev]');if(!button)return;
-    if(playbackControl(button)){paused=!(paused||keyboard);keyboard=false;pauseState();schedule();return;}
+    if(playbackControl(button)){toggleRotation();return;}
     const base=preparation || moving?desired:index;
     select(button.hasAttribute('data-sv-featured-go')?Number(button.dataset.svFeaturedGo):base+(button.hasAttribute('data-sv-featured-next')?1:-1));
   });
-  listen(hero,'keydown',event=>{if(playbackControl(event.target)&&['Enter',' '].includes(event.key))return;
+  listen(hero,'keydown',event=>{if(playbackControl(event.target)&&['Enter',' '].includes(event.key)){
+      event.preventDefault();if(!event.repeat)toggleRotation();return;
+    }
     if(['Tab','ArrowLeft','ArrowRight','Enter',' '].includes(event.key)){keyboard=true;pauseState();schedule();}
     if(event.target.closest('[data-sv-featured-controls]') && ['ArrowLeft','ArrowRight'].includes(event.key)){event.preventDefault();select(desired+(event.key==='ArrowRight'?1:-1));}
   });

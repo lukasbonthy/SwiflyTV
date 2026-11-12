@@ -17,6 +17,7 @@ async function open(width,{subtle=false,reduced=false,resume=false,height=936}={
   if(route.request().resourceType()==='document')return route.fulfill({contentType:'text/html',body:html});
   if(css!==undefined)return route.fulfill({contentType:'text/css',body:css});
   if(url.pathname.startsWith('/assets/')){const file=path.join(__dirname,'../public',url.pathname.slice(8));if(fs.existsSync(file)&&file.endsWith('.css'))return route.fulfill({contentType:'text/css',body:fs.readFileSync(file)});}
+  if(url.pathname==='/assets/brand/swiflytv-nav-logo.svg')return route.fulfill({contentType:'image/svg+xml',body:fs.readFileSync(path.join(__dirname,'../public/brand/swiflytv-nav-logo.svg'))});
   if(url.hostname==='image.tmdb.org')return route.fulfill({headers:{'access-control-allow-origin':'*'},contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720"><rect width="1280" height="720" fill="'+(url.pathname.includes('scene-2.')?'#cf3926':'#2056b1')+'"/><circle cx="300" cy="250" r="180" fill="#ffffff" opacity=".12"/></svg>'});
   return route.fulfill({body:'',contentType:'text/plain'});
  });
@@ -146,7 +147,7 @@ test('phone features use slim visible pills, readable actions and a black tail a
     await f.page.evaluate(({glass,scale})=>{document.body.dataset.stGlass=glass;document.body.style.setProperty('--st-ui-scale',scale);},{glass,scale:width===320?'1.2':'1'});
     const result=await f.page.evaluate(()=>{
      const hero=document.querySelector('[data-sv-featured]'),r=n=>n.getBoundingClientRect().toJSON(),play=hero.querySelector('[data-play-id]');
-     return {hero:r(hero),nav:r(document.querySelector('.netflixNav')),brand:getComputedStyle(document.querySelector('.svMobileBrandMark')).display,wordmark:getComputedStyle(document.querySelector('.netflixWordmark')).display,
+     return {hero:r(hero),nav:r(document.querySelector('.netflixNav')),brand:getComputedStyle(document.querySelector('.svBrandLogo')).display,wordmark:!!document.querySelector('.netflixWordmark'),
       actions:[...hero.querySelectorAll('.dsHeroActions > :is(a,button)')].map(n=>{const style=getComputedStyle(n,'::before'),pane=n.querySelector('.svNavMatchedLens');return {rect:r(n),top:parseFloat(style.top),bottom:parseFloat(style.bottom),face:style.backgroundColor,transform:style.transform,pane:pane?{height:r(pane).height,display:getComputedStyle(pane).display,filter:getComputedStyle(pane).backdropFilter}:null};}),
       playColor:getComputedStyle(play).color,shade:getComputedStyle(hero.querySelector('.dsHeroGlass')).backgroundImage,mask:getComputedStyle(hero.querySelector('.dsHeroGlass')).maskImage,glow:Number(getComputedStyle(document.querySelector('.svHeroSpill')).opacity),overflow:document.documentElement.scrollWidth>innerWidth};
     });
@@ -155,12 +156,22 @@ test('phone features use slim visible pills, readable actions and a black tail a
     assert(result.actions.every(a=>Math.abs(a.rect.height-a.top-a.bottom-36)<1),JSON.stringify({width,glass,result}));
     assert(result.actions.every(a=>a.transform==='none'),'Legacy shine must not displace the visible pill');assert.equal(result.actions[0].face,'rgb(255, 255, 255)');assert.equal(result.playColor,'rgb(16, 17, 21)');
     if(glass==='liquid')assert(result.actions.every(a=>a.pane&&a.pane.display!=='none'&&Math.abs(a.pane.height-36)<1&&a.pane.filter!=='none'),'Liquid controls keep a visible, inset live optical pane');
-    assert(result.nav.width<=220);assert.equal(result.wordmark,'none');assert.notEqual(result.brand,'none');
+    assert(result.nav.width<=220);assert.equal(result.wordmark,false);assert.notEqual(result.brand,'none');
     assert.equal(result.mask,'none');assert(result.shade.endsWith('rgb(0, 0, 0) 100%)'),result.shade);assert(result.glow<=.12);
     assert.equal(await f.page.getByRole('link',{name:'More info',exact:true}).getAttribute('href'),'/movie/346698');
    }
   }finally{await f.context.close();}
  }
+});
+
+test('holding Space on the active progress control pauses immediately and native keyup does not resume it',{skip:!available},async()=>{
+ const f=await open(390);try{
+  const active=f.page.locator('[data-sv-featured-go][aria-current="true"]');await active.focus();
+  await f.page.keyboard.down('Space');assert.match(await active.getAttribute('aria-label'),/Resume automatic rotation/);
+  await f.page.keyboard.up('Space');assert.match(await active.getAttribute('aria-label'),/Resume automatic rotation/);
+  assert.equal(await f.page.evaluate(()=>document.querySelector('[data-sv-featured]').getAnimations({subtree:true}).filter(a=>a.effect.target.matches('[data-sv-featured-progress]')).length),0);
+  await active.press('Enter');assert.match(await active.getAttribute('aria-label'),/Pause automatic rotation/);
+ }finally{await f.context.close();}
 });
 
 test('saved movie actions fit small phones and outgoing copies preserve their layout',{skip:!available},async()=>{

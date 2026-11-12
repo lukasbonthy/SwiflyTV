@@ -47,9 +47,10 @@ body.svCleanShell [data-sv-liquid-nav].topbar > .container.nav.netflixNav {
 body.svCleanShell .netflixNav > .svLiquidPane { --sv-glass-radius: 20px; }
 body.svCleanShell .netflixNav .navLeftCluster { flex: 0 0 auto !important; gap: 18px !important; }
 body.svCleanShell .netflixNav .brand.netflixBrand {
-  width: auto !important; min-width: 0 !important; padding: 0 !important; margin: 0 !important;
+  display:grid !important;place-items:center;width:44px !important;min-width:44px !important;padding:0 !important;margin:0 !important;
   background: none !important; border: 0 !important; box-shadow: none !important; filter: none !important;
 }
+body.svCleanShell .svBrandLogo {display:block;width:36px;height:36px;object-fit:contain;flex-shrink:0;}
 body.svCleanShell .netflixNav .brand::before, body.svCleanShell .netflixNav .brand::after { display: none !important; }
 body.svCleanShell .netflixNav .netflixWordmark {
   color: #fff !important; -webkit-text-fill-color: #fff !important; background: none !important;

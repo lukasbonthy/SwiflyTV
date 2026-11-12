@@ -67,7 +67,8 @@ body.svCleanShell :is(.svArtworkAsset,.svArtworkCopy):not(.svArtworkReady) {opac
 body.svCleanShell img.svArtworkAsset.svArtworkAsset {transition:opacity .42s ease,transform .22s ease !important;}
 /* The initial scene is already opaque behind the dissolving curtain.
    Only artwork arriving after entry needs its own decode fade. */
-html:is([data-sv-artwork-state="loading"],[data-sv-artwork-state="reveal"]) body.svCleanShell :is(.svArtworkAsset.svArtworkAsset,.svArtworkCopy.svArtworkCopy) {transition:none !important;}
+html[data-sv-artwork-state="loading"] body.svCleanShell :is(.svArtworkAsset.svArtworkAsset,.svArtworkCopy.svArtworkCopy),
+html[data-sv-artwork-state="reveal"] body.svCleanShell .svArtworkInitial.svArtworkInitial {transition:none !important;}
 body.svCleanShell:is(.reduceMotion,[data-st-page-motion="false"],[data-st-loader-style="minimal"],[data-st-loader-style="basic"]) :is(.svArtworkAsset.svArtworkAsset,.svArtworkCopy.svArtworkCopy),
 html:is([data-sv-tv="true"],[data-sv-xbox="true"]) body.svCleanShell :is(.svArtworkAsset.svArtworkAsset,.svArtworkCopy.svArtworkCopy) {transition:none !important;opacity:1 !important;}
 @media(prefers-reduced-motion:reduce) {

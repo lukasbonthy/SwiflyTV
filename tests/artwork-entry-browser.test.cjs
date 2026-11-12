@@ -7,17 +7,17 @@ test.before(async()=>{if(available)browser=await chromium.launch({headless:true,
 test.after(async()=>{await browser?.close();});
 const svg='<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450"><rect width="800" height="450" fill="#647a92"/></svg>';
 async function open({reducedMotion='no-preference',body='',root='',deferred=false}={}){
- const context=await browser.newContext({viewport:{width:1200,height:800},reducedMotion}),page=await context.newPage(),gates=new Map();
+ const context=await browser.newContext({viewport:{width:1200,height:800},reducedMotion}),page=await context.newPage(),gates=new Map(),released=new Set();
  await page.addInitScript(()=>{window.framesRequested=0;window.domReady=false;document.addEventListener('DOMContentLoaded',()=>window.domReady=true);const request=window.requestAnimationFrame;window.requestAnimationFrame=fn=>{framesRequested++;return request(fn);};});
  await page.route('**/*',async route=>{
   const url=new URL(route.request().url());
   if(url.pathname==='/')return route.fulfill({contentType:'text/html',body:'<!doctype html><html '+root+'><head>'+loadingHead({artwork:true})+'<style>.dsHero{height:600px}.dsHeroBg{height:600px;position:absolute;inset:0;background-image:url(/hero.svg)}.dsHeroContent{position:relative;padding:200px 50px 0}.dsHeroLogo{width:250px;height:70px}#optional{margin-top:2000px}img{display:block}</style>'+(deferred?'<script defer src="/delayed.js"></script>':'')+'</head><body class="svCleanShell" '+body+'>'+loadingMarkup()+'<main><section class="dsHero"><div class="dsHeroBg"></div><div class="dsHeroContent"><h1 class="dsHeroTitleArt"><span class="dsHeroTitleText">Featured film</span><img class="dsHeroLogo" src="/logo.svg" alt="" width="250" height="70"></h1><p>A ready catalog.</p><div class="dsHeroActions"><a href="/watch/movie/1">Play</a></div></div></section><div id="dynamic"></div><img id="optional" loading="lazy" src="/optional.svg" width="100" height="150" alt="Optional poster"></main></body></html>'});
-  await new Promise(resolve=>gates.set(url.pathname,resolve));
+  if(!released.has(url.pathname))await new Promise(resolve=>gates.set(url.pathname,resolve));
   try{await route.fulfill({contentType:url.pathname.endsWith('.js')?'text/javascript':'image/svg+xml',body:url.pathname.endsWith('.js')?'':svg});}catch{}
  });
  await page.goto('https://swifly.test/',{waitUntil:deferred?'commit':'domcontentloaded'});
  await page.waitForSelector('.dsHeroActions');
- return {page,context,gates,release(path){gates.get(path)?.();},async close(){for(const resolve of gates.values())resolve();await context.close();}};
+ return {page,context,gates,release(path){released.add(path);gates.get(path)?.();},async close(){for(const resolve of gates.values())resolve();await context.close();}};
 }
 
 test('black entry waits for visible artwork, dissolves smoothly and ignores a lazy poster',{skip:!available},async()=>{
@@ -45,6 +45,8 @@ test('decoded artwork reveals before an optional deferred script completes',{ski
   assert.equal(await f.page.locator('.dsHeroBg').evaluate(node=>getComputedStyle(node).opacity),'1');
  }finally{await f.close();}
 });
+
+
 
 test('a stalled deferred script cannot hold the black surface beyond its safety deadline',{skip:!available},async()=>{
  const f=await open({deferred:true});try{

@@ -1,5 +1,4 @@
 /* Home keeps two prepared photographs/glows and bounded control material. */
-body.svCleanShell .svMobileBrandMark {display:none;}
 body.svCleanShell [data-sv-featured] {touch-action:pan-y;--sv-featured-inset:max(32px,calc((100% - 1280px) / 2 + 32px));}
 body.svCleanShell [data-sv-featured] > .dsHeroArt > .dsHeroBg[hidden] {display:none !important;}
 /* Bottom anchoring lets each title use its natural height without moving rows. */
@@ -103,8 +102,6 @@ body.svCleanShell:is([data-st-hero-mode="compact"],[data-st-hero-mode="banner"])
   }
   html:not([data-sv-tv="true"]) body.svCleanShell:has(main[data-st-home]) .netflixNav {gap:4px !important;padding:6px 8px !important;}
   html:not([data-sv-tv="true"]) body.svCleanShell:has(main[data-st-home]) .netflixNav .brand.netflixBrand {justify-content:center;width:44px;min-width:44px !important;max-width:44px;}
-  html:not([data-sv-tv="true"]) body.svCleanShell:has(main[data-st-home]) .netflixWordmark {display:none !important;}
-  html:not([data-sv-tv="true"]) body.svCleanShell:has(main[data-st-home]) .svMobileBrandMark {display:block;font:italic 900 25px/1 'Unbounded',sans-serif;letter-spacing:-2px;padding-right:2px;}
   /* The visible pill is 36px high; its real action keeps a 44px target.
      Move the existing local blur to that face, with Studio/motion caps. */
   html:not([data-sv-tv="true"]) body.svCleanShell main[data-st-home] > [data-sv-featured] .dsHeroActions {min-height:44px;gap:8px !important;}

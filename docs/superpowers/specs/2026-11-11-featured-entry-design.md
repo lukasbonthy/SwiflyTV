@@ -9,3 +9,5 @@ Alternatives considered: restyling the unwanted icon leaves the clutter; removin
 Authorization: prior GitHub/Render publishing and opt-out of repeated approvals persist. Validate delayed scripts, late assets, Escape/history, keyboard controls, reduced motion and mobile layout. Publish the tested commit through main and verify Render files.
 
 The delayed-script preview also demonstrated a decoded logo switching in after the black dissolve because catalog.js alone applied hasLogo. The entry gate now presents its owned decoded title art before revealing the initial scene; failed art retains text and replaced/detached logos cannot alter the title.
+
+User steering: also use the supplied 1254x1254 PNG as the site favicon and the supplied transparent SVG bird from SwiflyTV-navbar-logo-assets.zip in place of the top navigation wordmark. Preserve both files exactly, retain the existing accessible Home link, and use the icon on desktop/mobile. Favicon assets remain public alongside existing public styles/images and appear on the access page too.

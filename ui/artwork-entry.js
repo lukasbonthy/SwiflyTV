@@ -13,7 +13,7 @@ function artworkEntry() {
  function still(){return motion.matches||root.dataset.svTv==='true'||root.dataset.svXbox==='true'||document.body?.classList.contains('reduceMotion')||document.body?.dataset.stPageMotion==='false'||['minimal','basic'].includes(document.body?.dataset.stLoaderStyle);}
  function reveal(immediate=false){
   clearTimeout(deadline);cancelAnimationFrame(frame);frame=0;
-  for(const node of held)node.classList.add('svArtworkReady');held.clear();
+  for(const node of held)node.classList.add('svArtworkReady','svArtworkInitial');held.clear();
   if(!entering){if(immediate||still()){clearTimeout(finishTimer);finishTimer=0;root.dataset.svArtworkState='ready';}return;}
   entering=false;root.removeAttribute('aria-busy');
   root.dataset.svArtworkState=immediate||still()?'ready':'reveal';
@@ -85,10 +85,10 @@ function artworkEntry() {
     if(!url)continue;
    }
    let visible=false;
-   if(critical&&criticalCount<8){const box=node.getBoundingClientRect();visible=!!(box.width&&box.height&&box.bottom>0&&box.top<innerHeight&&box.right>0&&box.left<innerWidth);if(visible)criticalCount++;}
+   if(critical&&(criticalCount<8||!entering)){const box=node.getBoundingClientRect();visible=!!(box.width&&box.height&&box.bottom>0&&box.top<innerHeight&&box.right>0&&box.left<innerWidth);if(visible)criticalCount++;}
    artwork.push({node,url,visible});
   }
-  for(const {node,url,visible} of artwork){const promise=asset(node,url,!!critical&&!entering);if(promise&&critical&&visible&&critical.length<8)critical.push(promise);}
+  for(const {node,url,visible} of artwork){const promise=asset(node,url,!!critical&&!entering&&visible);if(promise&&critical&&visible&&critical.length<8)critical.push(promise);}
   for(const node of candidates(container,copy)){
    if(still()||node.classList.contains('svArtworkCopy'))continue;
    node.classList.add('svArtworkCopy');ready(node);

@@ -88,10 +88,20 @@ test('autoplay pauses for keyboard interaction, reduced motion and lifecycle dis
 test('the active progress bar pauses and resumes rotation while retaining keyboard focus',async()=>{
  const f=fixture({reduced:false}),w=f.window,d=w.document;await settle();
  const button=d.querySelector('[data-sv-featured-go="0"]');button.focus();
- button.dispatchEvent(new w.KeyboardEvent('keydown',{key:' ',bubbles:true}));button.click();
+ button.dispatchEvent(new w.KeyboardEvent('keydown',{key:' ',bubbles:true,cancelable:true}));
  assert.match(button.getAttribute('aria-label')||'',/Film 1.*Resume automatic rotation/);assert(![...f.timers.values()].some(t=>t.delay===8000));
- button.dispatchEvent(new w.KeyboardEvent('keydown',{key:' ',bubbles:true}));button.click();
+ button.dispatchEvent(new w.KeyboardEvent('keydown',{key:' ',bubbles:true,cancelable:true}));
  assert.equal(d.activeElement,button);assert.match(button.getAttribute('aria-label')||'',/Film 1.*Pause automatic rotation/);assert([...f.timers.values()].some(t=>t.delay===8000));f.finish();
+});
+
+test('holding Space pauses before an expiring dwell and repeated keys do not toggle twice',async()=>{
+ const f=fixture({reduced:false}),w=f.window,d=w.document;await settle();const active=d.querySelector('[data-sv-featured-go="0"]'),deadline=[...f.timers.values()].find(t=>t.delay===8000);assert(deadline);active.focus();
+ const press=new w.KeyboardEvent('keydown',{key:' ',bubbles:true,cancelable:true});active.dispatchEvent(press);
+ assert.equal(press.defaultPrevented,true,'keyboard activation must suspend the dwell before native keyup activation');
+ assert.match(active.getAttribute('aria-label'),/Resume automatic rotation/);
+ const repeat=new w.KeyboardEvent('keydown',{key:' ',repeat:true,bubbles:true,cancelable:true});active.dispatchEvent(repeat);assert.equal(repeat.defaultPrevented,true);
+ deadline.fn();await settle();assert.equal(d.querySelector('[data-play-id]').dataset.playId,'1');assert.match(active.getAttribute('aria-label'),/Resume automatic rotation/);
+ active.dispatchEvent(new w.KeyboardEvent('keyup',{key:' ',bubbles:true}));assert(![...f.timers.values()].some(t=>t.delay===8000));f.finish();
 });
 
 test('inactive progress bars select movies and the selected bar owns playback controls',async()=>{
