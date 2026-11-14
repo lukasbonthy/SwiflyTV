@@ -39,11 +39,12 @@ async function layout(page){
  return page.evaluate(()=>{
   const box=node=>node.getBoundingClientRect().toJSON(),shown=node=>{const r=box(node),style=getComputedStyle(node);return r.width>0&&r.height>0&&style.visibility!=='hidden'&&!node.closest('[hidden]');},control=node=>({label:node.getAttribute('aria-label')||node.getAttribute('name')||node.textContent.trim(),box:box(node)});
   const owned='main .svCatalogButton,main :is(.svPersonFilters,.svBrowseFilters,.svLanguageFilters) select,main .svPeriodTabs a,main .svCatalogPager a,main [data-language-search],main [data-person-biography] summary';
+  const destinations=[...document.querySelectorAll('.svLanguageDestinationGrid')].filter(shown).map(grid=>({box:box(grid),cards:[...grid.querySelectorAll('.svLanguageDestination')].filter(shown).map(card=>({label:card.textContent.trim(),box:box(card),aspectRatio:getComputedStyle(card).aspectRatio,minHeight:getComputedStyle(card).minHeight}))}));
   const rails=[...document.querySelectorAll('main .svCatalogRow > .movieRail')].filter(shown).map(rail=>{
    const bounds=box(rail),cards=[...rail.querySelectorAll(':scope > .movieCard')].filter(shown),fullyShown=cards.filter(card=>{const r=box(card);return r.left>=bounds.left-1&&r.right<=bounds.right+1;});
    return{box:bounds,overflowX:getComputedStyle(rail).overflowX,scrollLeft:rail.scrollLeft,scrollWidth:rail.scrollWidth,clientWidth:rail.clientWidth,cards:cards.length,fullyShown:fullyShown.length,clippedCards:cards.filter(card=>{const r=box(card);return r.left<bounds.left-1||r.right>bounds.right+1;}).length,fullyShownControls:fullyShown.flatMap(card=>[...card.querySelectorAll('button')].filter(shown).map(control))};
   });
-  return{url:location.href,readyState:document.readyState,loading:document.documentElement.getAttribute('data-sv-loading'),width:innerWidth,scrollWidth:document.documentElement.scrollWidth,ownedControls:[...document.querySelectorAll(owned)].filter(shown).map(control),otherControls:[...document.querySelectorAll('main select,main button')].filter(node=>!node.closest('.movieRail')&&shown(node)).map(control),rails,results:[...document.querySelectorAll('.svLanguageResults,.svCatalogResults,[data-person-filmography]')].map(node=>{const links=[...node.querySelectorAll('.dsCardTitle')];return{container:node.className,count:links.length,first:links[0]?.href,last:links.at(-1)?.href};}),headings:[...document.querySelectorAll('main h1,main h2')].map(node=>node.textContent.trim()),pagers:[...document.querySelectorAll('main .pagination')].map(node=>({text:node.textContent.trim(),links:[...node.querySelectorAll('a')].map(link=>({rel:link.rel,href:link.href}))})),filters:[...document.querySelectorAll('main form')].map(form=>({action:form.action,values:Object.fromEntries(new FormData(form))}))};
+  return{url:location.href,readyState:document.readyState,loading:document.documentElement.getAttribute('data-sv-loading'),width:innerWidth,scrollWidth:document.documentElement.scrollWidth,ownedControls:[...document.querySelectorAll(owned)].filter(shown).map(control),otherControls:[...document.querySelectorAll('main select,main button')].filter(node=>!node.closest('.movieRail')&&shown(node)).map(control),rails,destinations,results:[...document.querySelectorAll('.svLanguageResults,.svCatalogResults,[data-person-filmography]')].map(node=>{const links=[...node.querySelectorAll('.dsCardTitle')];return{container:node.className,count:links.length,first:links[0]?.href,last:links.at(-1)?.href};}),headings:[...document.querySelectorAll('main h1,main h2')].map(node=>node.textContent.trim()),pagers:[...document.querySelectorAll('main .pagination')].map(node=>({text:node.textContent.trim(),links:[...node.querySelectorAll('a')].map(link=>({rel:link.rel,href:link.href}))})),filters:[...document.querySelectorAll('main form')].map(form=>({action:form.action,values:Object.fromEntries(new FormData(form))}))};
  });
 }
 async function diagnostics(f,name,extra={}){
@@ -54,6 +55,12 @@ async function diagnostics(f,name,extra={}){
 async function fits(f,label){
  // Save evidence before the first assertion, including when a layout fails.
  const state=await diagnostics(f,'catalog-layout-'+label),inside=({box})=>box.left>=-1&&box.right<=state.width+1;
+ for(const grid of state.destinations){
+  assert(inside(grid),label+' language destination grid must fit the page: '+JSON.stringify(grid));
+  assert(grid.cards.length>0,label+' must reveal language destinations');
+  assert(grid.cards.every(({box})=>box.left>=grid.box.left-1&&box.right<=grid.box.right+1),label+' destination art must fit its grid tracks: '+JSON.stringify(grid));
+  assert(grid.cards.every((card,index)=>{const previous=grid.cards[index-1];return !previous||Math.abs(previous.box.top-card.box.top)>1||previous.box.right<=card.box.left+1;}),label+' language destination cards must not overlap their neighbors: '+JSON.stringify(grid));
+ }
  assert(state.scrollWidth<=state.width,label+' must not overflow: '+JSON.stringify({width:state.width,scrollWidth:state.scrollWidth}));
  assert(state.ownedControls.length>0,label+' must expose its catalog controls');
  assert(state.ownedControls.every(inside),label+' catalog controls must fit: '+JSON.stringify(state.ownedControls.filter(control=>!inside(control))));

@@ -8,15 +8,36 @@ const available = fs.existsSync(chromium.executablePath());
 // Scroll offsets round to CSS pixels while font line boxes retain fractions.
 // Compare the displayed clearance without turning a 0.16px roundoff into overlap.
 const clearsGuide = (caption, guide) => Math.round(caption) <= Math.round(guide - 16);
+// Each upstream collection owns a full page of canonical identities. Returning
+// the same titles for every endpoint makes real cross-row deduplication turn
+// a populated layout fixture into a sparse-catalog test.
+function createCatalogFixture(){
+ const sources=new Map([['/trending/movie/week','Cinema'],['/trending/tv/week','Trending series'],['/movie/popular','Popular cinema'],['/tv/popular','Popular series'],['/movie/top_rated','Acclaimed cinema'],['/tv/top_rated','Acclaimed series'],['/movie/now_playing','New cinema']]),titles=new Map();
+ const overview='An extraordinary journey across a changing world, where a small team discovers the meaning of home and the stories that connect us.';
+ function collection(endpoint,params={}){
+  if(!sources.has(endpoint))sources.set(endpoint,endpoint.split('/').filter(Boolean).join(' '));
+  const source=[...sources.keys()].indexOf(endpoint),page=Math.max(1,Number(params.page)||1),type=endpoint.includes('/tv')?'tv':'movie',label=sources.get(endpoint);
+  return Array.from({length:20},(_,index)=>{
+   const id=source*1000000+(page-1)*1000+101+index,name=endpoint==='/trending/movie/week'&&page===1&&index===0?'Beyond the Northern Lights':label+(page>1?' page '+page:'')+' chapter '+(index+1);
+   const item={id,[type==='tv'?'name':'title']:name,poster_path:'/poster.jpg',backdrop_path:'/backdrop.jpg',overview,vote_average:8.2,vote_count:300,popularity:100-index,adult:false,media_type:type,...(type==='tv'?{first_air_date:'2026-06-01'}:{release_date:'2026-06-01'})};
+   titles.set(type+':'+id,item);return item;
+  });
+ }
+ return async(endpoint,params={})=>{
+  if(endpoint.startsWith('/genre/'))return{genres:[{id:12,name:'Adventure'},{id:18,name:'Drama'}]};
+  const detail=/^\/(movie|tv)\/(\d+)$/.exec(endpoint);
+  if(detail){
+   const type=detail[1],id=Number(detail[2]),item=titles.get(type+':'+id)||{id,[type==='tv'?'name':'title']:'A Separate Featured Journey',media_type:type,poster_path:'/poster.jpg',backdrop_path:'/backdrop.jpg',overview,vote_average:8.2,...(type==='tv'?{first_air_date:'2026-06-01'}:{release_date:'2026-06-01'})};
+   return{...item,id,runtime:118,genres:[{id:12,name:'Adventure'}],credits:{cast:[]},videos:{results:[]},recommendations:{results:collection('/'+type+'/'+id+'/recommendations')},similar:{results:[]},images:{logos:[]}};
+  }
+  return{page:Math.max(1,Number(params.page)||1),total_pages:3,total_results:60,results:collection(endpoint,params)};
+ };
+}
 let api, browser, origin;
 test.before(async () => {
   if (!available) return;
   api = loadServer();
-  api.setTmdb(async endpoint => {
-    const titles = Array.from({length:12}, (_, i) => ({id:101+i,title:i === 0 ? 'Beyond the Northern Lights' : 'Cinema chapter '+(i+1),poster_path:'/poster.jpg',backdrop_path:'/backdrop.jpg',overview:'An extraordinary journey across a changing world, where a small team discovers the meaning of home and the stories that connect us.',vote_average:8.2,release_date:'2026-06-01',media_type:'movie'}));
-    if (/^\/movie\/\d+$/.test(endpoint)) return {...titles[0],runtime:118,genres:[{id:1,name:'Adventure'}],credits:{cast:[]},videos:{results:[]},recommendations:{results:titles},similar:{results:[]},images:{logos:[]}};
-    return {results:titles,total_pages:1};
-  });
+  api.setTmdb(createCatalogFixture());
   await new Promise(resolve => api.httpServer.listen(0,'127.0.0.1',resolve));
   origin = 'http://127.0.0.1:'+api.httpServer.address().port;
   browser = await chromium.launch({headless:true});
@@ -45,6 +66,16 @@ async function open(viewport, tv = true, controller = false, reducedMotion = 're
   await page.locator('.movieCard .posterWrap').first().waitFor();
   if (tv) await page.waitForFunction(() => document.documentElement.dataset.svTv==='true' && document.body.classList.contains('swifly-tv-focus-mode'));
   return {context,page};
+}
+
+async function captureCatalog(page,name,geometry={}){
+ const directory=process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR;if(!directory)return;
+ const path=require('node:path');fs.mkdirSync(directory,{recursive:true});
+ const state=await page.evaluate(()=>{
+  const box=node=>node?.getBoundingClientRect().toJSON(),selected=document.activeElement;
+  return{url:location.href,viewport:{width:innerWidth,height:innerHeight},pageWidth:document.documentElement.scrollWidth,scrollY,selected:{href:selected?.getAttribute('href'),text:selected?.closest('.movieCard')?.querySelector('.dsCardTitle')?.textContent,box:box(selected)},preview:box(document.getElementById('swiflyTvSpotlight')),previewTitle:document.querySelector('.svTvSpotlightTitle')?.textContent,guide:box(document.getElementById('swiflyTvGuide')),rows:[...document.querySelectorAll('[data-st-home-rows] > .svCatalogRow')].map(row=>{const rail=row.querySelector('.movieRail'),cards=[...rail.querySelectorAll('.movieCard')];return{heading:row.querySelector('h2')?.textContent,count:cards.length,box:box(rail),scrollLeft:rail.scrollLeft,first:cards.slice(0,4).map(card=>({title:card.querySelector('.dsCardTitle')?.textContent,href:card.querySelector('.posterWrap')?.getAttribute('href'),box:box(card)}))};})};
+ });
+ fs.writeFileSync(path.join(directory,name+'.json'),JSON.stringify({...state,geometry},null,2));await page.screenshot({path:path.join(directory,name+'.png')});
 }
 
 async function settleScroll(page) {
@@ -82,6 +113,7 @@ for (const viewport of [{width:1101,height:700},{width:1280,height:720},{width:1
     const preview=page.locator('#swiflyTvSpotlight');
     assert.equal(await preview.count(),1,'TV browsing creates a dedicated selection preview');
     await preview.waitFor({state:'visible'});await settleScroll(page);
+    await captureCatalog(page,'tv-preview-'+viewport.width+'-selection');
     assert.equal(await preview.locator('.svTvSpotlightTitle').textContent(),'Beyond the Northern Lights');
     assert.match(await preview.locator('.svTvSpotlightFacts').textContent(),/2026/);
     assert.match(await preview.locator('.svTvSpotlightFacts').textContent(),/8\.2/);
@@ -100,6 +132,7 @@ for (const viewport of [{width:1101,height:700},{width:1280,height:720},{width:1
     await page.locator('.dsCardTitle').first().evaluate((node,title)=>{node.textContent=title;},longTitle);
     await page.keyboard.press('ArrowRight');await page.keyboard.press('ArrowLeft');
     const longBounds=await preview.evaluate(node=>{const box=node.getBoundingClientRect(),parts=[...node.querySelector('.svTvSpotlightCopy').children].filter(child=>getComputedStyle(child).display!=='none').map(child=>child.getBoundingClientRect());return {top:box.top,bottom:box.bottom,first:Math.min(...parts.map(r=>r.top)),last:Math.max(...parts.map(r=>r.bottom))};});
+    await captureCatalog(page,'tv-preview-'+viewport.width+'-long-title',longBounds);
     assert(longBounds.first>=longBounds.top-1&&longBounds.last<=longBounds.bottom+1,'A real two-line title, its facts, and overview stay inside the preview: '+JSON.stringify(longBounds));
     await page.keyboard.press('ArrowRight');await settleScroll(page);assert.equal(await preview.locator('.svTvSpotlightTitle').textContent(),'Cinema chapter 2','The large preview follows the actual focused title');
     await page.keyboard.press('F8');assert.equal(await preview.isVisible(),false,'Exiting TV mode removes the cinematic overlay');
@@ -158,6 +191,7 @@ test('Rapid TV row entry and horizontal taps keep the full long-title caption ab
     await page.keyboard.press('ArrowDown');await page.keyboard.press('ArrowRight');await page.keyboard.press('ArrowRight');await page.keyboard.press('ArrowLeft');await page.keyboard.press('ArrowLeft');
     await settleScroll(page);
     const geometry=await page.evaluate(()=>{const card=document.activeElement.closest('.movieCard'),heading=card.closest('.dsRow').querySelector('h2');return {title:card.querySelector('.dsCardTitle').textContent,caption:card.querySelector('.dsCardInfo').getBoundingClientRect().bottom,heading:heading.getBoundingClientRect().top,anchor:document.getElementById('swiflyTvSpotlight').getBoundingClientRect().bottom,guide:document.getElementById('swiflyTvGuide').getBoundingClientRect().top};});
+    await captureCatalog(page,'tv-preview-rapid-title',geometry);
     assert.match(geometry.title,/Northern Lights/);
     assert(clearsGuide(geometry.caption,geometry.guide),'Rapid input cannot leave the date under the guide: '+JSON.stringify(geometry));
     assert(geometry.heading<=geometry.anchor+44,'Rapid horizontal input must not interrupt row settling: '+JSON.stringify(geometry));
@@ -278,6 +312,7 @@ for (const viewport of [{width:1920,height:1080},{width:1280,height:720}]) test(
       const nav=document.querySelector('.netflixNav'),rail=document.querySelector('.svCatalogRow .movieRail,.dsRow .movieRail'),poster=document.querySelector('.movieCard .posterWrap'),title=document.querySelector('.dsCardTitle');
       return {nav:box(nav),row:box(rail.closest('.dsRow')),rail:box(rail),poster:box(poster),title:{font:parseFloat(getComputedStyle(title).fontSize),whiteSpace:getComputedStyle(title).whiteSpace},previewTitle:parseFloat(getComputedStyle(document.querySelector('.svTvSpotlightTitle')).fontSize),meta:parseFloat(getComputedStyle(document.querySelector('.dsCardMeta')).fontSize),outline:getComputedStyle(poster).outlineWidth,outlineStyle:getComputedStyle(poster).outlineStyle,outlineColor:getComputedStyle(poster).outlineColor,quick:getComputedStyle(document.querySelector('.dsCardQuickActions')).display,overflow:document.documentElement.scrollWidth,visible:[...rail.querySelectorAll('.movieCard')].filter(node=>{const b=box(node),r=box(rail);return b.left>=r.left && b.right<=r.right+1;}).length};
     });
+    await captureCatalog(page,'tv-preview-'+viewport.width+'-full-row',geometry);
     assert(geometry.nav.left >= viewport.width*.035 && geometry.nav.right <= viewport.width*.965,'Navigation stays inside TV safe edges');
     assert(geometry.nav.width >= viewport.width*.87,'Navigation fills the TV safe frame');
     assert(geometry.nav.height >= 68,'Navigation controls are readable from a sofa');

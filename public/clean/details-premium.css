@@ -280,6 +280,10 @@ body.svCleanShell .svCinemaPage #episodes .svSeasonIdentity strong {font-size:ca
 body.svCleanShell .svCinemaPage #episodes .svSeason > summary > span:last-child {font-size:calc(11px * var(--st-ui-scale,1));color:#9ba8ba;white-space:nowrap;}
 body.svCleanShell .svCinemaPage #episodes .svSeason > p {margin:0 20px 19px;max-width:780px;color:#a1aebf;font-size:calc(12px * var(--st-ui-scale,1));line-height:1.7;}
 body.svCleanShell .svCinemaPage #episodes .svSeason .dsEpisodeChips {display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,218px),1fr));align-items:stretch;gap:14px;padding:0 16px 16px;overflow:visible;scroll-snap-type:none;}
+/* Server-rendered choices remain usable before metadata arrives, including
+   closed seasons and failed requests. They share the matte download face. */
+body.svCleanShell .svCinemaPage #episodes .svDetailEpisodeDownload {background:#202b3a !important;}
+body.svCleanShell .svCinemaPage #episodes .svDetailEpisodeDownload:is(:hover,:focus-visible) {background:#35465d !important;}
 body.svCleanShell .svCinemaPage #episodes .svEpisodeBrowserCard {position:relative;display:grid;align-items:stretch;min-width:0;overflow:clip;border:1px solid #2b3543;border-radius:13px;background:#131a25;box-shadow:none;transition:border-color .2s ease,background .2s ease;}
 body.svCleanShell .svCinemaPage #episodes .svEpisodeBrowserCard:is(:hover,:focus-within) {border-color:#687a92;background:#182130;}
 body.svCleanShell .svCinemaPage #episodes .svEpisodeBrowserCard .svDetailEpisodeTile {display:flex;flex-direction:column;align-items:stretch;justify-content:start;width:100%;height:100%;min-height:0;min-width:0;gap:0;padding:0 !important;border:0 !important;border-radius:12px !important;background:transparent !important;color:#edf2f8;box-shadow:none !important;transform:none !important;text-decoration:none;transition:none !important;}
@@ -308,7 +312,7 @@ body.svCleanShell .svCinemaPage #episodes .svEpisodeBrowserCard[data-episode-ava
 body.svCleanShell :is(#episodes,.dsEpisodeChips,.svSeason,.svPlayerEpisodes,.svPlayerEpisodePicker) :is(a,button,summary,.svGlassSurface,.svGlassPanel,.svNavMatchedLens),
 body.svCleanShell :is(#episodes,.dsEpisodeChips,.svSeason,.svPlayerEpisodes,.svPlayerEpisodePicker) {backdrop-filter:none !important;-webkit-backdrop-filter:none !important;filter:none !important;}
 body.svCleanShell :is(#episodes,.dsEpisodeChips,.svSeason,.svPlayerEpisodes,.svPlayerEpisodePicker) .svNavMatchedLens {display:none !important;}
-body.svCleanShell .svCinemaPage #episodes :is(a,button,summary,select):focus-visible {outline:2px solid #c6dafa;outline-offset:-3px;}
+body.svCleanShell .svCinemaPage #episodes :is(a,button,summary,select):focus-visible {outline:2px solid #c6dafa !important;outline-offset:-3px;}
 @media(hover:hover) and (pointer:fine) {
  .svEpisodeBrowserCard[data-episode-available="true"]:is(:hover,:focus-within) .svEpisodeBrowserStill {transform:scale(1.035);}
  .svEpisodeBrowserCard[data-episode-available="true"]:is(:hover,:focus-within) .svEpisodePlaybackBadge {opacity:1;transform:scale(1);}

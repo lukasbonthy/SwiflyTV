@@ -51,7 +51,9 @@ test('real audiobook audio preserves speed across chapters and its reading dialo
  await page.locator('audio').evaluate(n=>n.play());await page.locator('[data-book-next]').click();await page.waitForFunction(()=>document.querySelector('audio').src.endsWith('/chapter-2.wav'));assert.equal(await page.locator('audio').evaluate(n=>n.playbackRate),1.5);
  const box=await page.locator('[data-book-dialog]').boundingBox();assert(box.x>=0&&box.x+box.width<=321);assert.equal(await page.locator('[data-book-dialog]').evaluate(n=>n.scrollWidth>n.clientWidth),false);await screenshot(page,'audiobooks-listening-phone');
  await page.locator('[data-book-sleep]').selectOption('chapter');await page.locator('audio').evaluate(n=>n.dispatchEvent(new Event('ended')));assert.match(await page.locator('audio').getAttribute('src'),/chapter-2/);assert(await page.locator('audio').evaluate(n=>n.paused));
- await page.locator('[data-book-close]').click();assert(await page.locator('[data-book-dialog]').isHidden());assert.equal(await page.locator('audio').getAttribute('src'),null);assert.deepEqual(errors,[]);
+ await page.locator('[data-book-close]').click();await page.waitForFunction(()=>!document.querySelector('[data-book-dialog]').open);
+ // Native dialog exits retain their display for the shared discrete animation.
+ await page.locator('[data-book-dialog]').waitFor({state:'hidden'});await page.waitForFunction(()=>!document.querySelector('audio').hasAttribute('src'));assert.deepEqual(errors,[]);
 });
 
 test('audiobook reduced motion removes cover movement without losing keyboard feedback',{skip},async t=>{

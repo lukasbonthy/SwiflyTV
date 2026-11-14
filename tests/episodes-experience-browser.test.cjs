@@ -81,7 +81,12 @@ test('episode hover and reduced motion keep focus visible without moving the car
   await page.locator('.svEpisodeBrowserCard').first().scrollIntoViewIfNeeded();
   const card=page.locator('.svEpisodeBrowserCard').first(),before=await card.boundingBox();await card.hover();
   assert.deepEqual(await card.boundingBox(),before,'hover does not shift episode layout');
-  await card.locator('.svDetailEpisodeTile').focus();assert.equal(await card.locator('.svDetailEpisodeTile').evaluate(node=>getComputedStyle(node).outlineStyle),'solid');
+  // Enter through a real keyboard step so :focus-visible reflects keyboard
+  // use, independently of the preceding pointer hover.
+  await card.locator('.svDetailEpisodeDownload').focus();await page.keyboard.press('Shift+Tab');
+  await screenshot(page,'episodes-keyboard-focus');
+  const focus=await card.locator('.svDetailEpisodeTile').evaluate(node=>({active:document.activeElement===node,visible:node.matches(':focus-visible'),outline:getComputedStyle(node).outlineStyle,width:parseFloat(getComputedStyle(node).outlineWidth)}));
+  assert(focus.active&&focus.visible,'keyboard navigation must reach the episode playback link');assert.equal(focus.outline,'solid');assert(focus.width>=2,'keyboard focus retains a visible frame');
   await page.emulateMedia({reducedMotion:'reduce'});assert.equal(await card.locator('.svEpisodePlaybackBadge').evaluate(node=>getComputedStyle(node).transitionDuration),'0s');
   await screenshot(page,'episodes-focus-reduced-motion');await assertMatte(page);assert.deepEqual(errors,[]);
   }catch(error){await screenshot(page,'episodes-focus-failure');throw error;}finally{await page.close();}

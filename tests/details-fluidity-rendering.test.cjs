@@ -5,7 +5,8 @@ const {chromium}=require('playwright-core');
 const asset=file=>fs.readFileSync(path.join(__dirname,'../public',file),'utf8');
 const available=fs.existsSync(chromium.executablePath())||fs.existsSync(chromium.executablePath().replace(/chromium-(\d+)\/chrome-linux\/chrome$/,'chromium_headless_shell-$1/chrome-linux/headless_shell'));
 const styles=['liquid-glass/liquid-glass.css','clean/clean.css','clean/details.css','clean/cinema.css','clean/details-premium.css','liquid-glass/surfaces.css','liquid-glass/controls.css','clean/performance.css'].map(asset).join('\n');
-const fragment='<article class="svTitleDetails"><div class="svDetailHero" style="background:repeating-linear-gradient(31deg,#b5bed0 0 14px,#17212a 14px 24px)"><div class="svDetailIdentity"><h1>Fluid motion</h1><div class="svDetailActions"><a class="dsPrimaryBtn" href="/watch/movie/101">Play</a><button class="dsIconBtn" aria-label="Save movie">+</button></div></div></div><section class="svDetailSection"><h2>Story</h2><p>Movie details stay readable throughout the entrance.</p></section></article>';
+// Real artwork occupies its own layer above the opaque hero seam color.
+const fragment='<article class="svTitleDetails"><div class="svDetailHero"><div class="svDetailBackdrop" aria-hidden="true" style="background-image:repeating-linear-gradient(31deg,#b5bed0 0 14px,#17212a 14px 24px)"></div><div class="svDetailIdentity"><h1>Fluid motion</h1><div class="svDetailActions"><a class="dsPrimaryBtn" href="/watch/movie/101">Play</a><button class="dsIconBtn" aria-label="Save movie">+</button></div></div></div><section class="svDetailSection"><h2>Story</h2><p>Movie details stay readable throughout the entrance.</p></section></article>';
 
 async function fixture(browser,cssFallback=false){
  const page=await browser.newPage({viewport:{width:1100,height:900}});
@@ -105,12 +106,15 @@ for(const cssFallback of [false,true])test((cssFallback?'CSS fallback':'Native a
   assert.deepEqual(running,{state:'running',pending:false});
   const pane=page.locator('.svDetailActions .svNavMatchedLens').first(),box=await pane.boundingBox();
   const refracted=(await page.screenshot({clip:box})).toString('base64');
+  const evidence=process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR,name='details-motion-'+(cssFallback?'fallback':'native');
+  if(evidence){fs.mkdirSync(evidence,{recursive:true});await page.screenshot({path:path.join(evidence,name+'.png'),fullPage:true});}
   await pane.evaluate(node=>node.querySelectorAll('feDisplacementMap').forEach(map=>map.setAttribute('scale','0')));
   const flat=(await page.screenshot({clip:box})).toString('base64');
   const delta=await page.evaluate(async({refracted,flat})=>{
    const pixels=async data=>{const image=new Image();image.src='data:image/png;base64,'+data;await image.decode();const canvas=document.createElement('canvas');canvas.width=image.width;canvas.height=image.height;const ctx=canvas.getContext('2d');ctx.drawImage(image,0,0);return ctx.getImageData(0,0,image.width,image.height).data;};
    const a=await pixels(refracted),b=await pixels(flat);let sum=0;for(let i=0;i<a.length;i+=4)for(let j=0;j<3;j++)sum+=Math.abs(a[i+j]-b[i+j]);return sum/(a.length*.75);
   },{refracted,flat});
+  if(evidence){fs.writeFileSync(path.join(evidence,name+'-refracted.png'),Buffer.from(refracted,'base64'));fs.writeFileSync(path.join(evidence,name+'-flat.png'),Buffer.from(flat,'base64'));fs.writeFileSync(path.join(evidence,name+'.json'),JSON.stringify({delta,box,running,layoutCount:after-before,start,positions},null,2));}
   await page.evaluate(()=>{probeAnimation.cancel();document.querySelector('dialog').dataset.svDetailState='open';});
   assert(delta>1.2,'The moving Play button must retain real visible refraction: '+delta);
  }finally{await browser.close();}

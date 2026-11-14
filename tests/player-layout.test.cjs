@@ -186,6 +186,45 @@ async function waveScreenshot(page,name) {
   await page.screenshot({path:path.join(directory,'player-waves-'+name+'.png'),fullPage:true});
 }
 
+async function visibleWaveScreenshot(page,name) {
+  // The first center pulse is deliberately behind the opaque film. Wait for
+  // exposed header/title pixels, then freeze only the decoration for comparison.
+  await page.waitForFunction(()=>{
+    const field=document.querySelector('[data-player-waves]'),canvas=field.querySelector('canvas'),box=field.getBoundingClientRect();
+    const film=document.querySelector('[data-player-stage]').getBoundingClientRect(),title=document.querySelector('.svPlayerBelow').getBoundingClientRect();
+    const pixels=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;let header=0,below=0,margins=0;
+    for(let y=0;y<canvas.height;y+=2){const pageY=box.top+y/canvas.height*box.height;if(pageY>=title.bottom)continue;
+      for(let x=0;x<canvas.width;x+=2){const i=(y*canvas.width+x)*4;if(Math.max(pixels[i],pixels[i+1],pixels[i+2])<60)continue;
+        const pageX=box.left+x/canvas.width*box.width;if(pageY<film.top)header++;if(pageY>=title.top)below++;if(pageY>=film.top&&pageY<film.bottom&&(pageX<film.left||pageX>=film.right))margins++;}}
+    if(header<100||below<100||margins<100)return false;
+    const root=document.querySelector('[data-player-root]');window.__waveSnapshotMotion=root.getAttribute('data-player-motion');root.dataset.playerMotion='reduce';return true;
+  },null,{polling:100,timeout:6000});
+  await waitForWaves(page,'still',name+'-composition');
+  const canvas=page.locator('[data-player-waves] canvas'),directory=process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR;
+  try{
+    if(directory)fs.mkdirSync(directory,{recursive:true});
+    const shown=await page.screenshot({...(directory?{path:path.join(directory,'player-waves-'+name+'.png')}:{}),fullPage:true});
+    await canvas.evaluate(node=>node.style.visibility='hidden');const hidden=await page.screenshot({fullPage:true});
+    const evidence=await page.evaluate(async images=>{
+      const read=async encoded=>{const image=new Image();image.src='data:image/png;base64,'+encoded;await image.decode();const canvas=document.createElement('canvas');canvas.width=image.width;canvas.height=image.height;const context=canvas.getContext('2d');context.drawImage(image,0,0);return context.getImageData(0,0,canvas.width,canvas.height).data;};
+      const [a,b]=await Promise.all(images.map(read)),film=document.querySelector('[data-player-stage]').getBoundingClientRect(),title=document.querySelector('.svPlayerBelow').getBoundingClientRect();
+      let header=0,below=0,margins=0;
+      for(let i=0;i<a.length;i+=4){if(Math.abs(a[i]-b[i])+Math.abs(a[i+1]-b[i+1])+Math.abs(a[i+2]-b[i+2])<35)continue;const x=i/4%innerWidth,y=Math.floor(i/4/innerWidth)-scrollY;
+        if(y<film.top)header++;if(y>=title.top&&y<title.bottom)below++;if((x<film.left||x>=film.right)&&y>=film.top&&y<film.bottom)margins++;}
+      return {header,below,margins,playing:!document.querySelector('[data-player-video]').paused};
+    },[shown.toString('base64'),hidden.toString('base64')]);
+    if(directory)fs.writeFileSync(path.join(directory,'player-waves-'+name+'.json'),JSON.stringify(evidence,null,2));
+    assert(evidence.header>100,'composed ripple pixels must be visible above the film: '+JSON.stringify(evidence));
+    assert(evidence.below>100,'composed ripple pixels must continue behind the title panel: '+JSON.stringify(evidence));
+    assert(evidence.margins>100,'composed ripple pixels must reach the exposed movie margins: '+JSON.stringify(evidence));
+    assert(evidence.playing,'composed visibility evidence must retain actual movie playback');
+  }finally{
+    await canvas.evaluate(node=>node.style.removeProperty('visibility'));
+    await page.evaluate(()=>{const root=document.querySelector('[data-player-root]');if(__waveSnapshotMotion===null)root.removeAttribute('data-player-motion');else root.setAttribute('data-player-motion',__waveSnapshotMotion);delete window.__waveSnapshotMotion;});
+    await waitForWaves(page,'live',name+'-motion-restored');
+  }
+}
+
 async function waitForWaves(page,state,label) {
   try {await page.waitForFunction(expected=>document.querySelector('[data-player-waves]')?.dataset.waveState===expected,state,{timeout:6000});}
   catch(error){
@@ -401,7 +440,7 @@ test('cached movie ripples stay suspended through a failed Kids check and resume
     await waitForWaves(page,'live','guarded-initial-play');
     await page.waitForFunction(()=>!document.querySelector('[data-player-video]').paused&&document.querySelector('[data-player-root]').dataset.playerFraming!=='true');
     await page.waitForFunction(()=>document.querySelector('[data-player-video]').currentTime>.15);
-    await waveScreenshot(page,'cinematic-playing');
+    await visibleWaveScreenshot(page,'cinematic-playing');
     const geometry=await page.locator('[data-player-stage]').evaluate(stage=>({width:stage.getBoundingClientRect().width,height:stage.getBoundingClientRect().height,fit:getComputedStyle(stage.querySelector('video')).objectFit}));
     assert(Math.abs(geometry.width/geometry.height-2.4)<.025,'the actually playing movie settles at its real cinematic ratio');assert.equal(geometry.fit,'contain');
     await page.evaluate(()=>{
@@ -429,7 +468,7 @@ test('cached movie ripples stay suspended through a failed Kids check and resume
     await waitForWaves(page,'live','guard-allowed');
     before=await wavePixels(page);await page.waitForTimeout(220);assert.notEqual((await wavePixels(page)).hash,before.hash,'verified return resumes the original ripple field');
     assert.deepEqual(await page.evaluate(()=>({intents:__waveLifecycle.intents,resumes:__waveLifecycle.resumes})),{intents:1,resumes:1},'the player emits one allowed resume and does not invent another user gesture');
-    await waveScreenshot(page,'verified-playing-return');
+    await visibleWaveScreenshot(page,'verified-playing-return');
   }finally{release();await context.close();}
 });
 

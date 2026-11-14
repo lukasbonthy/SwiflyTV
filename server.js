@@ -5746,7 +5746,7 @@ app.use("/api/discovery", discovery.router);
 const playerAssist = createPlayerAssist({tmdb:(...args) => tmdb(...args)});
 app.use("/api/player-assist",playerAssist.router);
 app.get("/recommendations", (req,res) => res.send(pageShell({title:`${SITE_NAME} — AI picks`,active:"recommendations",body:recommendationsMarkup(String(req.query.q||'')),extraHead:'<link rel="stylesheet" href="/assets/discovery/search.css?v=262"><script defer src="/assets/discovery/recommendations.js?v=8"></script>'})));
-app.get("/audiobooks", (req,res) => res.send(pageShell({title:`${SITE_NAME} — Audiobooks`,active:"audiobooks",body:audiobooksMarkup(),extraHead:'<link rel="stylesheet" href="/assets/discovery/audiobooks.css?v=1"><script defer src="/assets/discovery/audiobooks.js?v=5"></script>'})));
+app.get("/audiobooks", (req,res) => res.send(pageShell({title:`${SITE_NAME} — Audiobooks`,active:"audiobooks",body:audiobooksMarkup(),extraHead:'<link rel="stylesheet" href="/assets/discovery/audiobooks.css?v=2"><script defer src="/assets/discovery/audiobooks.js?v=5"></script>'})));
 // Same friends-only protection applies to authorized movie/episode file downloads.
 app.use("/api/download", createDownloadRouter());
 
@@ -6674,7 +6674,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${active === "social" ? '<script defer src="/assets/party/party.js?v=208"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}
     ${player || partyBrowse ? '<script defer src="/assets/player/watch-party.js?v=2"></script>' : ""}
     ${shellStyleLink(player ? "player" : "catalog")}
-    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=271" />' : ""}
+    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=272" />' : ""}
     ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=263" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=262" />' : ""}
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=262" />' : ""}
     ${player || active === "social" ? '<link rel="stylesheet" href="/assets/party/watchroom-call.css?v=262" />' : ""}

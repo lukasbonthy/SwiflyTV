@@ -50,7 +50,7 @@ test('receding full-bleed artwork keeps feathered edges and a continuous fade at
    // Empty image responses plus a late CSS gradient do not represent the
    // decoded scene that the details controller actually recedes.
    await page.route('**/*',route=>new URL(route.request().url()).hostname==='image.tmdb.org'?route.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900"><path fill="#4ca5df" d="M0 0h1600v900H0z"/></svg>'}):route.fulfill({body:''}));await page.setContent(html);
-   await page.addStyleTag({content:'body.svCleanShell{background:#000!important}body::before,body::after{display:none!important}.topbar,.mobileNav,[data-st-home] .dsHeroContent,[data-st-home] .dsContent,[data-st-home] .svHeroLightBridge{visibility:hidden!important}body.svCleanShell main[data-st-home]>.dsHero>.dsHeroGlass{background:none!important}'});
+   await page.addStyleTag({content:'body.svCleanShell{background:#000!important}body::before,body::after{display:none!important}.topbar,.mobileNav,[data-st-home] .dsHeroContent,[data-st-home] .dsContent,[data-st-home] .svHeroLightBridge{visibility:hidden!important}'});
    await page.addScriptTag({content:artworkEntry});
    await page.waitForFunction(()=>document.documentElement.dataset.svArtworkState==='ready'&&document.querySelector('.dsHeroBg').classList.contains('svArtworkReady')&&getComputedStyle(document.querySelector('.dsHeroBg')).opacity==='1'&&getComputedStyle(document.querySelector('#svArtworkCurtain')).visibility==='hidden');
    await artworkEvidence(page,evidence+'-decoded');
@@ -62,12 +62,16 @@ test('receding full-bleed artwork keeps feathered edges and a continuous fade at
     const samples=await page.evaluate(async({encoded,g})=>{
      const image=new Image();image.src='data:image/png;base64,'+encoded;await image.decode();const canvas=document.createElement('canvas');canvas.width=image.width;canvas.height=image.height;const ctx=canvas.getContext('2d');ctx.drawImage(image,0,0);const data=ctx.getImageData(0,0,canvas.width,canvas.height).data;
      const at=(x,y)=>{const i=(Math.max(0,Math.min(canvas.height-1,Math.round(y*g.dpr)))*canvas.width+Math.max(0,Math.min(canvas.width-1,Math.round(x*g.dpr))))*4;return Math.max(data[i],data[i+1],data[i+2]);};
-     const row=[];for(let x=g.left-4;x<g.left+32;x+=1/g.dpr)row.push(at(x,g.top+g.height*.3));const fade=[];for(let y=g.top+g.height*.55;y<g.top+g.height*.98;y+=1/g.dpr)fade.push(at(g.left+g.width*.72,y));
+     // The real featured shade darkens the left side. Probe both exposed
+     // sides, including the luminous right edge, without removing that shade.
+     const left=[],right=[];for(let offset=-4;offset<32;offset+=1/g.dpr){left.push(at(g.left+offset,g.top+g.height*.3));right.push(at(g.left+g.width-offset,g.top+g.height*.3));}
+     const fade=[];for(let y=g.top+g.height*.55;y<g.top+g.height*.98;y+=1/g.dpr)fade.push(at(g.left+g.width*.72,y));
      const jump=values=>Math.max(...values.slice(1).map((value,index)=>Math.abs(value-values[index])));
-     return {edgeJump:jump(row),peak:Math.max(...row),fadeJump:jump(fade),fadeDrop:fade[0]-fade.at(-1)};
+     return {edgeJump:Math.max(jump(left),jump(right)),peak:Math.max(...left,...right),leftPeak:Math.max(...left),rightPeak:Math.max(...right),interiorPeak:at(g.left+g.width*.72,g.top+g.height*.3),fadeJump:jump(fade),fadeDrop:fade[0]-fade.at(-1)};
     },{encoded:screenshot.toString('base64'),g:geometry});
     if(process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR)fs.writeFileSync(path.join(process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR,evidence+'-time-'+time+'-samples.json'),JSON.stringify(samples,null,2));
     assert(samples.peak>140,'the test must actually render the bright artwork: '+JSON.stringify({deviceScaleFactor,time,...samples}));
+    assert(samples.interiorPeak>140,'the interior artwork must remain luminous while its edges recede: '+JSON.stringify({deviceScaleFactor,time,...samples}));
     assert(samples.edgeJump<45,'the shrunken crop must blend into the page instead of exposing a hard line: '+JSON.stringify({deviceScaleFactor,time,...samples}));
     assert(samples.fadeJump<12&&samples.fadeDrop>20,'the artwork fade must remain continuous while receding: '+JSON.stringify({deviceScaleFactor,time,...samples}));
    }
