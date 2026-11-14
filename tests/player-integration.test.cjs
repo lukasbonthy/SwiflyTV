@@ -41,8 +41,8 @@ test('The normal watch route renders one native movie player with shared assets 
  assert.equal(d.querySelectorAll('.svPlayerPage [data-player-video]').length,1);
  const preview=d.querySelector('[data-call-local] video');assert(preview?.hasAttribute('muted'));assert(preview?.closest('[hidden]'),'The optional camera preview starts hidden');
  assert.equal(d.querySelector('.svPlayerPage').dataset.playerId,'101');assert.equal(d.querySelector('h1').textContent.trim(),'Arrival');
- assert(d.querySelector('script[src="/assets/player/player.js?v=272"]'));assert(d.querySelector('script[src="/assets/player/watch-party.js?v=2"]'));
- assert(d.querySelector('link[href="/assets/player/player.css?v=270"]'));assert(d.querySelector('dialog.svWatchPartyDialog'));
+ assert(d.querySelector('script[src="/assets/player/player.js?v=273"]'));assert(d.querySelector('script[src="/assets/player/watch-party.js?v=2"]'));
+ assert(d.querySelector('link[href="/assets/player/player.css?v=271"]'));assert(d.querySelector('dialog.svWatchPartyDialog'));
  assert.equal(d.querySelector('.dsProxyVideoWaitingShell'),null);assert.equal(d.querySelector('.svPartyHub'),null);
  assert.equal(d.querySelector('[data-sv-player-back]').getAttribute('href'),'/movie/101');
 });
@@ -150,14 +150,14 @@ test('Social navigation opens the integrated Party Hub while movie catalog party
  assert(social.querySelector('main.svPartyHub .partyHero'),'Social link should show the proper cinematic Party Hub');
  assert(social.querySelector('.partyNavigation [data-tab="rooms"]'));
  assert(stylesheetLink(social,'/assets/clean/experience.css'));
- assert(social.querySelector('link[href="/assets/player/player.css?v=270"]'));
+ assert(social.querySelector('link[href="/assets/player/player.css?v=271"]'));
  const scripts=[...social.querySelectorAll('script[src]')].map(node=>node.getAttribute('src'));
- const player=scripts.indexOf('/assets/player/player.js?v=272'),party=scripts.findIndex(src=>src.startsWith('/assets/party/party.js?'));
+ const player=scripts.indexOf('/assets/player/player.js?v=273'),party=scripts.findIndex(src=>src.startsWith('/assets/party/party.js?'));
  assert(player>=0&&party>player,'Party Hub must load the shared controller before its room bridge');
  const template=social.getElementById('partyPlayerTemplate');assert(template?.content.querySelector('.svPlayerEmbedded [data-player-video]'));
  assert.equal(social.querySelector('script[src*="video.js"]'),null,'Party Hub no longer loads a duplicate playback UI');
  const env=parse(await(await fetch(base+'/movies?party=1')).text()),d=env.window.document;
- assert.equal(d.querySelector('.dsBrowseTop h1').textContent.trim(),'Movies');assert(d.querySelector('.genreDropdown'));assert(d.querySelector('.dsHero'));
+ assert.equal(d.querySelector('.svBrowseHeading h1').textContent.trim(),'Movies');assert(d.querySelector('[name=genre]'));assert(d.querySelector('.dsHero'));
  assert(d.querySelector('[data-party-browse]'));assert(d.querySelector('.dsContent'));assert.equal(d.querySelector('.svPartyHub'),null);
  assert(d.querySelector('script[src="/assets/player/watch-party.js?v=2"]'));assert.equal(d.querySelector('script[src*="player/player.js"]'),null);
 });
@@ -399,7 +399,7 @@ test('Studio glass uses one material on every browsing route and native transiti
  const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=255')).text();
  const finish=await(await fetch(base+'/assets/clean/finish.css?v=176')).text();
  const navigation=await(await fetch(base+'/assets/clean/navigation.css?v=2')).text();
- const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=278')).text();
+ const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=279')).text();
  assert.match(css,/data-st-glass="liquid"/);
  assert.match(css,/data-st-glass="subtle"/);
  assert.match(css,/data-st-glass="off"/);
@@ -412,7 +412,7 @@ test('Studio glass uses one material on every browsing route and native transiti
    assert.equal(response.status,200,route);
    const doc=parse(await response.text()).window.document;
    assert(stylesheetLink(doc,'/assets/liquid-glass/controls.css'),route+' lacks unified glass');
-   assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=278"]'),route+' uses stale glass renderer');
+   assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=279"]'),route+' uses stale glass renderer');
  }
  const watch=await(await fetch(base+'/watch/movie/101')).text();
  assert(!watch.includes('controls.css?v=189'),'watch page must be left alone');
@@ -435,7 +435,7 @@ test('v176 supplies a real, masked details backdrop with no hard border at the o
  assert.match(css,/\.svDetailShade \{/);
  assert.match(css,/\.svDetailBody \{/);
  assert(stylesheetLink(d,'/assets/clean/polish.css'));
- assert(d.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=278"]'));
+ assert(d.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=279"]'));
 });
 test('v176 adds subtle Liquid Glass to both compact auth pages without resizing',async()=>{
  const css=await(await fetch(base+'/assets/clean/polish.css?v=176')).text();
@@ -465,7 +465,7 @@ test('Catalog and profiles retain their theme while Party Hub owns its component
   assert.equal(response.status,200,route+' should render');
   const d=parse(await response.text()).window.document;
   assert(stylesheetLink(d,'/assets/clean/experience.css'),route+' should load shared experience styles');
-  if(route==='/movies'||route==='/tv')assert(d.querySelector('.genreDropdown > summary'));
+  if(route==='/movies'||route==='/tv')assert(d.querySelector('[name=genre]'));
   const avatarScript=d.querySelector('script[src="/assets/clean/avatars.js?v=209"]');
   assert(avatarScript,route+' should refresh the shared profile identity');
   const profileScript=d.querySelector('script[src="/assets/clean/profiles.js?v=209"]');
@@ -476,7 +476,7 @@ test('Catalog and profiles retain their theme while Party Hub owns its component
   }else assert.equal(profileScript,null,route+' does not need the profile editor');
   if(route==='/profiles')assert(d.querySelector('.svProfilesCinematic #profilesGrid'));
   if(route==='/profiles/manage')assert(d.querySelector('.svProfilesCinematic #profileCreateForm'));
-  if(route.startsWith('/social')){assert(d.querySelector('main.svPartyHub .partyHero'));const theme=d.querySelector('link[href="/assets/party/party.css?v=262"]');assert(theme);assert(stylesheetLink(d,'/assets/clean/experience.css').compareDocumentPosition(theme)&d.defaultView.Node.DOCUMENT_POSITION_FOLLOWING);}
+  if(route.startsWith('/social')){assert(d.querySelector('main.svPartyHub .partyHero'));const theme=d.querySelector('link[href="/assets/party/party.css?v=263"]');assert(theme);assert(stylesheetLink(d,'/assets/clean/experience.css').compareDocumentPosition(theme)&d.defaultView.Node.DOCUMENT_POSITION_FOLLOWING);}
  }
 });
 

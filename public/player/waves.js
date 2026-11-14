@@ -9,14 +9,19 @@
   if(!context)return;
   const reduced=matchMedia('(prefers-reduced-motion: reduce)'),mobile=matchMedia('(max-width: 700px), (pointer: coarse)');
   const contrast=matchMedia('(forced-colors: active)'),transparency=matchMedia('(prefers-reduced-transparency: reduce)');
-  const cleanups=[],palette=Array.from({length:20},(_,i)=>`rgb(0 ${Math.round(28+i*11.8)} ${Math.round(9+i*2.8)})`);
-  const colors=Array.from({length:6},()=>[0,252,65]);
+  const cleanups=[],palette=Array.from({length:20},(_,i)=>{const value=Math.round((28+i*11.8)/252*156);return `rgb(${value} ${value} ${value})`;});
+  const colors=Array.from({length:6},()=>[156,156,156]),targets=Array.from({length:6},()=>[156,156,156]);
   let tint=Array.from({length:6},()=>palette),sampleCanvas=null,sampleContext=null,sampleVideo=null,sampleSource='',blockedSource=false,lastSample=-Infinity,lastVideoTime=-1;
   let appearance=window.SwiflyAppearance||{},cells=new Float32Array(0),step=8,frame=0,clock=0,last=0,painted=0;
   let running=false,inView=true,suspended=false,nativeFullscreen=false,destroyed=false,started=false;
   const bursts=[];
   function listen(target,name,handler,options){target.addEventListener(name,handler,options);cleanups.push(()=>target.removeEventListener(name,handler,options));}
-  function resetColors(){for(const color of colors)color.splice(0,3,0,252,65);tint=Array.from({length:6},()=>palette);}
+  function resetColors(){for(let i=0;i<6;i++){colors[i].fill(156);targets[i].fill(156);}tint=Array.from({length:6},()=>palette);}
+  function blendColors(elapsed){
+    const mix=1-Math.exp(-elapsed/100);let changed=false;
+    for(let i=0;i<6;i++)for(let c=0;c<3;c++){const delta=targets[i][c]-colors[i][c];if(!delta)continue;colors[i][c]=Math.abs(delta)<.1?targets[i][c]:colors[i][c]+delta*mix;changed=true;}
+    if(changed)tint=colors.map(color=>palette.map((_,level)=>{const light=(28+level*11.8)/252;return `rgb(${Math.round(color[0]*light)} ${Math.round(color[1]*light)} ${Math.round(color[2]*light)})`;}));
+  }
   function sample(now){
     const video=root.querySelector('[data-player-video]');
     if(!video)return;
@@ -26,7 +31,7 @@
       if(sampleCanvas)sampleCanvas.width=12;
       resetColors();
     }
-    if(video.readyState<2||!video.videoWidth||!video.videoHeight||now-lastSample<(mobile.matches?500:250)||blockedSource||video.currentTime===lastVideoTime)return;
+    if(video.readyState<2||!video.videoWidth||!video.videoHeight||now-lastSample<(mobile.matches?250:125)||blockedSource||video.currentTime===lastVideoTime)return;
     lastSample=now;lastVideoTime=video.currentTime;
     try{
       if(!sampleCanvas){sampleCanvas=document.createElement('canvas');sampleCanvas.width=12;sampleCanvas.height=8;sampleContext=sampleCanvas.getContext('2d',{willReadFrequently:true});}
@@ -38,14 +43,13 @@
         if(.2126*r+.7152*g+.0722*b<18)continue;
         const region=Math.min(2,Math.floor(x/4))+(y<4?0:3),sum=sums[region];sum[0]+=r;sum[1]+=g;sum[2]+=b;sum[3]++;
       }
-      tint=sums.map((sum,index)=>{
-        const peak=Math.max(sum[0],sum[1],sum[2]),target=sum[3]&&peak?[sum[0]/peak*228,sum[1]/peak*228,sum[2]/peak*228]:[0,252,65];
-        const color=colors[index];for(let c=0;c<3;c++)color[c]+=(target[c]-color[c])*.32;
-        return palette.map((_,level)=>{const light=(28+level*11.8)/252;return `rgb(${Math.round(color[0]*.88*light)} ${Math.round((color[1]*.88+252*.12)*light)} ${Math.round((color[2]*.88+65*.12)*light)})`;});
-      });
+      for(let i=0;i<6;i++){
+        const sum=sums[i],peak=Math.max(sum[0],sum[1],sum[2]),gain=peak?Math.min(1.2,228*sum[3]/peak):0;
+        for(let c=0;c<3;c++)targets[i][c]=sum[3]?sum[c]/sum[3]*gain:0;
+      }
     }catch(error){
       if(error?.name==='SecurityError'){blockedSource=true;resetColors();}
-      // Keep the green field when a frame is unavailable or origin-protected.
+      // A protected source keeps a quiet neutral field without altering playback.
     }
   }
   function burst(){const wasRunning=running;started=true;bursts.push(clock);if(bursts.length>3)bursts.shift();sync();if(wasRunning||!running)draw();}
@@ -66,7 +70,7 @@
       light=light*light*cells[i+5];
       if(light<.014)continue;
       const level=Math.min(19,Math.floor(light*20)),size=Math.max(1,step*(.16+.72*Math.sqrt(light)));
-      context.fillStyle=(cells[i+5]>.83?tint[cells[i+6]]:palette)[level];
+      context.fillStyle=tint[cells[i+6]][level];
       context.fillRect(Math.round(cells[i]-size/2),Math.round(cells[i+1]-size/2),Math.ceil(size),Math.ceil(size));
     }
   }
@@ -77,10 +81,13 @@
     canvas.width=Math.max(1,Math.floor(bounds.width*ratio));canvas.height=Math.max(1,Math.floor(bounds.height*ratio));
     step=Math.max(4,Math.round((mobile.matches?10:9)*ratio));
     const columns=Math.ceil(canvas.width/step),rows=Math.ceil(canvas.height/step);
+    const film=root.querySelector('[data-player-stage]')?.getBoundingClientRect();
+    const originX=film?.width?(film.left+film.width/2-bounds.left)*ratio:canvas.width/2;
+    const originY=film?.height?(film.top+film.height/2-bounds.top)*ratio:canvas.height/2;
     cells=new Float32Array(columns*rows*7);
     let index=0;
     for(let y=step/2;y<canvas.height+step/2;y+=step)for(let x=step/2;x<canvas.width+step/2;x+=step){
-      const nx=x/canvas.width-.5,ny=y/canvas.height-.5,angle=Math.atan2(ny,nx);
+      const nx=(x-originX)/canvas.width,ny=(y-originY)/canvas.height,angle=Math.atan2(ny,nx);
       const texture=Math.sin(nx*23+ny*15)*Math.sin(ny*17-nx*9);
       cells[index++]=x;cells[index++]=y;
       cells[index++]=Math.hypot(nx,ny)+.012*Math.sin(angle*5)+.009*texture;
@@ -96,7 +103,7 @@
     if(!running)return;
     if(last)clock+=Math.min(64,now-last)/1000;
     last=now;
-    if(now-painted>=(mobile.matches?1000/30:1000/60)-1){sample(now);draw();painted=now;}
+    if(now-painted>=(mobile.matches?1000/30:1000/60)-1){sample(now);blendColors(painted?Math.min(100,now-painted):16);draw();painted=now;}
     frame=requestAnimationFrame(tick);
   }
   function sync(){
@@ -128,6 +135,7 @@
   viewport?.observe(backdrop);
   const size=typeof ResizeObserver==='function'?new ResizeObserver(resize):null;
   size?.observe(backdrop);
+  const film=root.querySelector('[data-player-stage]');if(film)size?.observe(film);
   for(const query of [reduced,mobile,contrast,transparency])listen(query,'change',()=>{resize();sync();});
   listen(root,'swiflyplayer:play-intent',burst);
   listen(document,'visibilitychange',sync);

@@ -76,6 +76,7 @@ test('Visible community channels announce the active conversation and send only 
  assert.equal(recommendations.getAttribute('aria-current'),'true');assert.equal(d.querySelector('[data-room="channel-general"]').getAttribute('aria-current'),'false');
  assert.equal(d.querySelector('[data-party-channel-title]').textContent,'Recommendations');assert.match(d.querySelector('[data-party-chat-description]').textContent,/recommend|watch/i);
  assert.match(d.querySelector('.partyChatEmpty').textContent,/recommend|worth watching/i);assert.equal(d.getElementById('sv100Input').placeholder,'Message Recommendations…');
+ env.socket.receive('social:history',{roomId:'channel-recommendations',messages:[],self:{id:'guest:socket-ava',name:'Ava',authenticated:false},scope:'server-session'});
  d.getElementById('sv100Input').value='Try Arrival';submit(w,d.getElementById('sv100Composer'));
  assert(env.sent.some(event=>event.name==='social:message'&&event.data.roomId==='channel-recommendations'&&event.data.text==='Try Arrival'));
  env.finish();

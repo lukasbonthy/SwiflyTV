@@ -24,6 +24,37 @@ async function pixelDifference(page, first, second) {
   }, { first, second });
 }
 
+test('receding full-bleed artwork keeps feathered edges and a continuous fade at fractional pixel scales',{skip:!available&&'Chromium is not installed'},async()=>{
+ const api=loadServer(),browser=await chromium.launch({headless:true});
+ try{
+  const movie={id:346698,title:'Edge study',backdrop_path:'/edge.jpg',images:{logos:[]}};
+  api.setTmdb(async endpoint=>endpoint==='/movie/346698'?movie:{results:[]});let html;await api.homePage({},{send:value=>html=value});
+  html=html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'').replace(/<link\b[^>]*href="([^"]+)"[^>]*>/g,(_tag,url)=>url.startsWith('/assets/')?'<style>'+asset(url.slice(8).split('?')[0])+'</style>':'');
+  for(const deviceScaleFactor of [1,1.25,2]){
+   const page=await browser.newPage({viewport:{width:1280,height:1000},deviceScaleFactor});
+   await page.route('**/*',route=>route.fulfill({body:''}));await page.setContent(html);
+   await page.addStyleTag({content:'body.svCleanShell{background:#000!important}body::before,body::after{display:none!important}.topbar,.mobileNav,[data-st-home] .dsHeroContent,[data-st-home] .dsContent,[data-st-home] .svHeroLightBridge{visibility:hidden!important}body.svCleanShell main[data-st-home]>.dsHero>.dsHeroArt>.dsHeroBg{background-image:linear-gradient(#4ca5df,#4ca5df)!important;background-color:#4ca5df!important}body.svCleanShell main[data-st-home]>.dsHero>.dsHeroGlass{background:none!important}'});
+   const motions=await page.evaluate(()=>{const root=document.documentElement,scene=document.querySelector('[data-sv-browse-scene]');root.style.setProperty('--sv-detail-page-width',root.clientWidth+'px');root.style.setProperty('--sv-detail-depth-time','1000ms');root.style.setProperty('--sv-detail-depth-ease','linear');root.classList.add('svDetailsOpen');getComputedStyle(scene).maskImage;root.dataset.svDetailDepth='back';getComputedStyle(scene).scale;const motions=scene.getAnimations();for(const motion of motions){motion.pause();motion.currentTime=0;}window.__edgeMotions=motions;return motions.map(motion=>motion.transitionProperty);});
+   assert(motions.includes('scale')&&motions.includes('--sv-detail-feather'),'artwork scale and edge softness must animate together');
+   for(const time of [500,1000]){
+    const geometry=await page.evaluate(time=>{for(const motion of __edgeMotions)motion.currentTime=time;const scene=document.querySelector('[data-sv-browse-scene]').getBoundingClientRect(),hero=document.querySelector('.dsHero').getBoundingClientRect();return {left:scene.left,width:scene.width,top:hero.top,height:hero.height,dpr:devicePixelRatio};},time);
+    const screenshot=await page.screenshot();
+    const samples=await page.evaluate(async({encoded,g})=>{
+     const image=new Image();image.src='data:image/png;base64,'+encoded;await image.decode();const canvas=document.createElement('canvas');canvas.width=image.width;canvas.height=image.height;const ctx=canvas.getContext('2d');ctx.drawImage(image,0,0);const data=ctx.getImageData(0,0,canvas.width,canvas.height).data;
+     const at=(x,y)=>{const i=(Math.max(0,Math.min(canvas.height-1,Math.round(y*g.dpr)))*canvas.width+Math.max(0,Math.min(canvas.width-1,Math.round(x*g.dpr))))*4;return Math.max(data[i],data[i+1],data[i+2]);};
+     const row=[];for(let x=g.left-4;x<g.left+32;x+=1/g.dpr)row.push(at(x,g.top+g.height*.3));const fade=[];for(let y=g.top+g.height*.55;y<g.top+g.height*.98;y+=1/g.dpr)fade.push(at(g.left+g.width*.72,y));
+     const jump=values=>Math.max(...values.slice(1).map((value,index)=>Math.abs(value-values[index])));
+     return {edgeJump:jump(row),peak:Math.max(...row),fadeJump:jump(fade),fadeDrop:fade[0]-fade.at(-1)};
+    },{encoded:screenshot.toString('base64'),g:geometry});
+    assert(samples.peak>140,'the test must actually render the bright artwork');
+    assert(samples.edgeJump<45,'the shrunken crop must blend into the page instead of exposing a hard line: '+JSON.stringify({deviceScaleFactor,time,...samples}));
+    assert(samples.fadeJump<12&&samples.fadeDrop>20,'the artwork fade must remain continuous while receding: '+JSON.stringify({deviceScaleFactor,time,...samples}));
+   }
+   await page.close();
+  }
+ }finally{await browser.close();api.io.close();}
+});
+
 for (const width of [360, 1024]) for (const native of [false, true]) {
   test(`${width}px ${native ? 'native' : 'refractive'} hero keeps a clear Play action and refractive secondary actions`, { skip: !available && 'Chromium is not installed' }, async () => {
     const api = loadServer(), browser = await chromium.launch({ headless: true });

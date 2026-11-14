@@ -31,6 +31,7 @@ function glass(markup = '') {
   env.intersect = (value, target) => {for (const observer of intersections) observer.callback([...observer.nodes].filter(node => !target || node === target).map(node => ({target:node, isIntersecting:value})));};
   env.resize = () => {for (const observer of sizes) if (observer.nodes.size) observer.callback([...observer.nodes].map(target => ({target})));};
   env.watched = () => sizes.reduce((count, observer) => count + observer.nodes.size, 0);
+  env.observed = () => intersections.flatMap(observer=>[...observer.nodes]);
   env.textures = [];
   const encode=w.encodeURIComponent;
   w.encodeURIComponent=value=>{if(String(value).startsWith('<svg'))env.textures.push(String(value));return encode(value);};
@@ -46,6 +47,39 @@ function glass(markup = '') {
   env.finish = () => {w.SwiflyGlassSurfaces?.destroy(); for (const node of w.document.querySelectorAll('[data-swifly-glass]')) w.SwiflyLiquidGlass?.mount(node).destroy(); finish();};
   return env;
 }
+
+test('scenic Study and Kids retain their own surfaces without generic optical controllers',async()=>{
+ const env=glass('<div class="svDetailActions"><button>Film action</button></div><main class="svStudy"><button>Music</button><button>Timer</button><dialog open><button>Close tools</button></dialog></main><main class="kidsWorld"><button>Grown-ups</button><dialog open><button>Unlock</button></dialog></main><nav class="kidsModeBar"><button>Return</button></nav>'),w=env.window,d=w.document;
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/surfaces.js');env.intersect(true);settle(w);
+ assert.equal(d.querySelectorAll('.svStudy .svLiquidPane,.kidsWorld .svLiquidPane,.kidsModeBar .svLiquidPane').length,0);
+ assert(d.querySelector('.svDetailActions .svNavMatchedLens'),'the film navigation keeps its optical material');
+ env.finish();
+});
+
+test('episode browsers never register lenses or row observers, including late-loaded seasons',async()=>{
+ const env=glass('<div class="svDetailActions"><button>Play film</button></div><section id="episodes" class="svDetailSection"><div class="svEpisodeBrowserControls"><button>Sort episodes</button></div><details class="svSeason" data-episode-season="1"><summary>Season one</summary><div class="dsEpisodeChips"><a>Episode 1</a><a class="svDetailEpisodeDownload">Download</a></div></details></section><section class="svPlayerEpisodePicker"><a class="svPlayerSeason">Season one</a><button>More episodes</button><div class="svPlayerEpisodeGrid"><a class="svPlayerEpisodeStep">Next episode</a></div></section>'),w=env.window,d=w.document;
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/surfaces.js');
+ env.intersect(true);settle(w);
+ assert.equal(d.querySelectorAll('#episodes .svLiquidPane,.svPlayerEpisodePicker .svLiquidPane').length,0,'episode lists must not allocate any refractive DOM');
+ assert.equal(d.querySelectorAll('#episodes .svGlassSurface,.svPlayerEpisodePicker .svGlassSurface').length,0,'episode controls must stay outside the controller registry');
+ assert(env.observed().every(node=>!node.matches('#episodes,.svPlayerEpisodePicker')&&!node.closest('#episodes,.svPlayerEpisodePicker')),'episode rows and controls must not retain intersection observer entries');
+ assert(d.querySelector('.svDetailActions .svNavMatchedLens'),'the primary film action retains its existing material');
+ d.querySelector('.dsEpisodeChips').insertAdjacentHTML('beforeend','<a>Episode 2</a><button>Retry season</button>');
+ await tick();settle(w);env.intersect(true);settle(w);
+ assert.equal(d.querySelectorAll('#episodes .svLiquidPane,.svPlayerEpisodePicker .svLiquidPane').length,0,'mutation and approach scans must not recreate episode lenses');
+ env.finish();
+});
+
+test('standalone episode navigation and steps stay outside every glass observer through focus and mutation',async()=>{
+ const env=glass('<a class="svPlayerBack">Back to film</a><section class="svPlayerEpisodeNavigation"><nav class="svPlayerEpisodeSteps"><a class="dsSecondaryBtn svPlayerEpisodeStep" href="/watch/tv/5?e=2">Next episode</a><button class="dsSecondaryBtn svPlayerEpisodeStep">Previous episode</button></nav></section><a class="svPlayerEpisodeStep" href="/watch/tv/5?e=3">Standalone step</a>'),w=env.window,d=w.document;
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');env.intersect(true);settle(w);
+ assert.equal(d.querySelectorAll('.svPlayerEpisodeNavigation .svLiquidPane,.svPlayerEpisodeStep .svLiquidPane').length,0,'standalone next/previous controls allocate no panes');
+ assert(env.observed().every(node=>!node.matches('.svPlayerEpisodeNavigation,.svPlayerEpisodeStep')&&!node.closest('.svPlayerEpisodeNavigation')),'excluded controls never enter near-row or per-control observers');
+ d.querySelector('.svPlayerEpisodeStep').focus();d.querySelector('.svPlayerEpisodeSteps').insertAdjacentHTML('beforeend','<a class="dsSecondaryBtn svPlayerEpisodeStep" href="/watch/tv/5?e=4">Another episode</a>');
+ await tick();env.intersect(true);settle(w);
+ assert.equal(d.querySelectorAll('.svPlayerEpisodeStep .svLiquidPane').length,0,'late and focused steps remain matte');
+ assert(d.querySelector('.svPlayerBack .svLiquidPane'),'primary player navigation keeps its glass');env.finish();
+});
 
 test('details keep visible action glass while offscreen sections wait for approach',()=>{
  const cards=Array.from({length:18},()=>'<article class="movieCard"><div class="dsCardQuickActions"><button class="dsMiniBtn">Save</button><button class="dsMiniBtn">Like</button><a class="dsMiniBtn" href="/watch/movie/101">Play</a></div></article>').join('');
@@ -87,14 +121,15 @@ test('Navigation-style controls release offscreen graphs while poster actions ke
  const env=glass('<div class="dsCardQuickActions"><button class="dsMiniBtn">Save</button></div><a class="dsRowBtn">View all</a><button class="dsRowArrow">Next</button><nav class="pagination"><a>2</a></nav><div class="dsEpisodeChips"><a>Episode 1</a></div><div id="controlPanel"><button class="stChoice">Appearance</button></div><main class="svPartyHub"><button class="sv100Channel">General</button><div class="sv100RoomItem"><button class="partySecondaryBtn">Join</button></div><div class="partyMovieResults"><button>Pick film</button></div></main>'),w=env.window,d=w.document;
  d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');
  const controls=[...d.querySelectorAll('button,a')];assert.equal(controls.length,9);
- for(const host of controls.filter(host=>!host.closest('#controlPanel')))assert(host.querySelector(':scope>.svLiquidPane'),'no blur-only exception for '+host.textContent);
+ for(const host of controls.filter(host=>!host.closest('#controlPanel,.dsEpisodeChips')))assert(host.querySelector(':scope>.svLiquidPane'),'no blur-only exception for '+host.textContent);
+ assert.equal(d.querySelectorAll('.dsEpisodeChips .svLiquidPane').length,0,'episode navigation stays matte');
   assert(!d.querySelector('#controlPanel .svLiquidPane'),'Studio owns the appearance of its settings buttons');
  assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length,0,'offscreen controls must not allocate graphs');
  env.intersect(true);w.flush(16);
- for(const host of controls.filter(host=>!host.closest('#controlPanel'))){const pane=host.querySelector(':scope>.svLiquidPane');if(host.matches('.dsMiniBtn')){assert(pane.classList.contains('svCardActionLens'));assert.equal(pane.dataset.swiflyRenderer,'blur');}else{assert.equal(pane.dataset.swiflyRenderer,'svg');assert.equal(pane.style.getPropertyValue('--sv-glass-default-tint'),'0.2','the face must match navigation');}}
+ for(const host of controls.filter(host=>!host.closest('#controlPanel,.dsEpisodeChips'))){const pane=host.querySelector(':scope>.svLiquidPane');if(host.matches('.dsMiniBtn')){assert(pane.classList.contains('svCardActionLens'));assert.equal(pane.dataset.swiflyRenderer,'blur');}else{assert.equal(pane.dataset.swiflyRenderer,'svg');assert.equal(pane.style.getPropertyValue('--sv-glass-default-tint'),'0.2','the face must match navigation');}}
  const generated=env.textures.length;assert.equal(generated,1,'same geometry shares a cached field');
  env.intersect(false);w.flush(32);assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length,0,'leaving the viewport releases the graphs');
- env.intersect(true);w.flush(48);assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length,7);assert.equal(env.textures.length,generated);
+ env.intersect(true);w.flush(48);assert.equal(d.querySelectorAll('svg.svLiquidPane__filters').length,6);assert.equal(env.textures.length,generated);
  assert.equal(w.frameCount(),0,'coverage must not add an idle render loop');env.finish();
 });
 

@@ -32,12 +32,16 @@ const { createPlaybackHandoff } = require("./lib/playback-handoff");
 const { createVerifiedMediaEntryResolver } = require("./lib/native-source-entry");
 const { createSubtitleProxy } = require("./lib/subtitle-proxy");
 const { createSiteGate } = require("./lib/site-gate");
+const { createKids } = require("./lib/kids");
 const { createDownloadRouter } = require("./lib/downloads");
 const { createAccountStore } = require("./lib/account-store");
 const { createConnect } = require("./lib/connect");
+const { createCommunityController } = require("./lib/community");
 const { createDiscovery } = require("./lib/discovery");
 const { createPlayerAssist } = require("./lib/player-assist");
 const {searchOptions,filterSearch,certification,createCatalogRouter}=require("./lib/catalog-tools");
+const {titleKey,uniqueTitles,diverseRows,moviePeriod,periodDefinitions,personCredits}=require("./lib/catalog-experience");
+const {catalogAssets,periodControls,catalogPager,languageDefinitions,languageCard,personMarkup,icon:catalogIcon}=require("./ui/catalog-experience");
 const {createTrakt}=require("./lib/trakt");
 const {settingsMarkup}=require("./ui/settings");
 const {accountBackupMarkup}=require("./ui/account-backup");
@@ -5696,14 +5700,24 @@ app.get('/favicon.ico',(_req,res)=>res.redirect(302,'/assets/brand/swiflytv-favi
 const siteGate = createSiteGate();
 app.use(siteGate.router);
 app.use(siteGate.protect);
-const study = createStudy({io, authorizeSocket: socket => siteGate.validCookie(socket.handshake.headers.cookie), iceServers: iceConfiguration(process.env)});
+const kids = createKids({
+  tmdb:(...args)=>tmdb(...args), secret:process.env.SWIFLY_KIDS_SECRET||process.env.SWIFLY_ACCESS_SECRET,
+  onLock:deviceId=>{
+    for(const namespace of [io.sockets,io.of('/study')])for(const socket of namespace.sockets.values())
+      if(kids.deviceForHeader(socket.handshake.headers.cookie)===deviceId)socket.disconnect(true);
+  }
+});
+app.use(kids.protect);
+app.use('/api/kids',kids.router);
+app.use('/assets/kids',express.static(path.join(__dirname,'public','kids'),{maxAge:'1d',dotfiles:'deny',index:false}));
+const study = createStudy({io, authorizeSocket: socket => siteGate.validCookie(socket.handshake.headers.cookie)&&kids.socketAllowed(socket), iceServers: iceConfiguration(process.env)});
 app.use('/api/study', study.router);
 app.use('/assets/study', express.static(path.join(__dirname,'public','study'), {maxAge:'1d',dotfiles:'deny'}));
 app.get(['/study','/study/room/:room'], (req,res) => {
   const rooms=require('./public/study/catalog.json').rooms;
   const room=req.params.room||'';
   if(room&&!rooms.some(entry=>entry.id===room))return res.status(404).send(pageShell({title:SITE_NAME+' — Study room unavailable',active:'study',body:'<main class="dsPlainPage"><h1>Room unavailable</h1><a href="/study">Choose a study room</a></main>'}));
-  res.send(pageShell({title:SITE_NAME+' — Swifly Study',description:'Your space to focus. Music, scenes, timers, tasks and live study rooms.',active:'study',body:studyMarkup({room}),extraHead:'<link rel="stylesheet" href="/assets/study/study.css?v=262"><script defer src="/assets/study/study.js?v=261"></script>'}));
+  res.send(pageShell({title:SITE_NAME+' — Swifly Study',description:'Your space to focus. Music, scenes, timers, tasks and live study rooms.',active:'study',body:studyMarkup({room}),extraHead:'<link rel="stylesheet" href="/assets/study/study.css?v=263"><script defer src="/assets/study/study.js?v=262"></script>'}));
 });
 const accountStore = createAccountStore();
 const connect = createConnect({
@@ -5714,7 +5728,7 @@ const connect = createConnect({
     return { title: getTitle(value), poster: img(value.poster_path, "w342"), year: getYear(value.release_date || value.first_air_date) };
   },
   createParty: (media, user) => {
-    if (process.env.SOCIAL_LOCK_WATCHROOM_CREATION === "true" && !socialPermissionsForName(user.name).canCreateWatchRooms) return "";
+    if (process.env.SOCIAL_LOCK_WATCHROOM_CREATION === "true" && !socialPermissionsForUser(user).canCreateWatchRooms) return "";
     const room = getOrCreateWatchRoom(createRoomId(), { name: `${user.name}'s ${media.title} night`, host: user.name, mediaKind: "blank" });
     room.syncedMovie = { ...room.syncedMovie, movieId: media.id, type: media.type, ...(media.type === "tv" ? {season:"1",episode:"1"} : {}), socialInvite: true };
     return partyMediaWatchUrl(room.syncedMovie, room.id);
@@ -5732,7 +5746,7 @@ app.use("/api/discovery", discovery.router);
 const playerAssist = createPlayerAssist({tmdb:(...args) => tmdb(...args)});
 app.use("/api/player-assist",playerAssist.router);
 app.get("/recommendations", (req,res) => res.send(pageShell({title:`${SITE_NAME} — AI picks`,active:"recommendations",body:recommendationsMarkup(String(req.query.q||'')),extraHead:'<link rel="stylesheet" href="/assets/discovery/search.css?v=262"><script defer src="/assets/discovery/recommendations.js?v=8"></script>'})));
-app.get("/audiobooks", (req,res) => res.send(pageShell({title:`${SITE_NAME} — Audiobooks`,active:"audiobooks",body:audiobooksMarkup(),extraHead:'<script defer src="/assets/discovery/audiobooks.js?v=4"></script>'})));
+app.get("/audiobooks", (req,res) => res.send(pageShell({title:`${SITE_NAME} — Audiobooks`,active:"audiobooks",body:audiobooksMarkup(),extraHead:'<link rel="stylesheet" href="/assets/discovery/audiobooks.css?v=1"><script defer src="/assets/discovery/audiobooks.js?v=5"></script>'})));
 // Same friends-only protection applies to authorized movie/episode file downloads.
 app.use("/api/download", createDownloadRouter());
 
@@ -5779,6 +5793,10 @@ function hlsProxyBase64UrlEncode(value = "") {
 function hlsProxyBase64UrlDecode(value = "") {
   return Buffer.from(String(value || ""), "base64url").toString("utf8");
 }
+
+// The source registry is process-local; asset capabilities share its lifetime.
+// Keep the signing key outside entries, status responses and persisted state.
+const hlsProxyAssetSigningKey = crypto.randomBytes(32);
 
 function sanitizeHlsProxyHeaders(headers = {}) {
   const clean = {};
@@ -5844,7 +5862,7 @@ function registerHlsProxySource(sourceUrl, headers = {}, meta = {}) {
 function getHlsProxyEntry(id) {
   const entry = hlsProxySources.get(String(id || ""));
   if (!entry) return null;
-  if (Date.now() > Number(entry.expiresAt || 0)) {
+  if (Date.now() >= Number(entry.expiresAt || 0)) {
     hlsProxySources.delete(entry.id);
     return null;
   }
@@ -5901,6 +5919,19 @@ function hlsProxyResponseHeaders(upstream, fallbackType = "application/octet-str
   return headers;
 }
 
+function hlsProxyAssetSignature(entry, absoluteUrl) {
+  return crypto.createHmac("sha256", hlsProxyAssetSigningKey)
+    .update(JSON.stringify(["hls-asset-v1", entry.id, entry.sourceUrl, entry.createdAt, absoluteUrl]))
+    .digest("base64url");
+}
+
+function validHlsProxyAssetSignature(entry, absoluteUrl, signature) {
+  if (typeof signature !== "string" || !/^[A-Za-z0-9_-]{43}$/.test(signature)) return false;
+  const expected = Buffer.from(hlsProxyAssetSignature(entry, absoluteUrl), "base64url");
+  const supplied = Buffer.from(signature, "base64url");
+  return supplied.length === expected.length && crypto.timingSafeEqual(supplied, expected);
+}
+
 function hlsProxyRequestHeaders(entry, req = null, targetUrl = entry.sourceUrl) {
   const headers = { ...(entry.headers || {}) };
   let sameOrigin = false;
@@ -5912,32 +5943,36 @@ function hlsProxyRequestHeaders(entry, req = null, targetUrl = entry.sourceUrl) 
 }
 
 function hlsProxyAssetUrl(id, absoluteUrl) {
-  return `/api/hls-proxy/${encodeURIComponent(id)}/asset?u=${encodeURIComponent(hlsProxyBase64UrlEncode(absoluteUrl))}`;
+  const entry = getHlsProxyEntry(id);
+  if (!entry || String(entry.meta?.sourceFormat || "").toLowerCase() === "mp4") {
+    throw new Error("HLS proxy source expired or missing.");
+  }
+  const parsed = new URL(absoluteUrl);
+  if (!["http:", "https:"].includes(parsed.protocol)) throw new Error("Invalid HLS asset URL.");
+  const canonical = parsed.toString();
+  const signature = hlsProxyAssetSignature(entry, canonical);
+  return `/api/hls-proxy/${encodeURIComponent(entry.id)}/asset?u=${encodeURIComponent(hlsProxyBase64UrlEncode(canonical))}&s=${signature}`;
 }
 
 function hlsProxyRewriteUriValue(uri = "", baseUrl = "", id = "") {
-  try {
-    const value = String(uri || "").trim();
-    if (!value) return uri;
-    if (value.startsWith("/api/hls-proxy/")) return value;
-    if (/^(data|blob|javascript):/i.test(value)) return uri;
-    const absolute = new URL(value, baseUrl).toString();
-    return hlsProxyAssetUrl(id, absolute);
-  } catch {
-    return uri;
-  }
+  const value = String(uri || "").trim();
+  if (!value) return uri;
+  // Inline keys do not make network requests. Every remote URI, including an
+  // upstream path that resembles this proxy, must receive a signed capability.
+  if (/^data:/i.test(value)) return value;
+  return hlsProxyAssetUrl(id, new URL(value, baseUrl).toString());
 }
 
 function rewriteHlsTagUris(line = "", baseUrl = "", id = "") {
   let next = String(line || "");
 
   // Quoted URI attributes: URI="..." or URI='...'
-  next = next.replace(/\bURI=(["'])(.*?)\1/g, (match, quote, uri) => {
+  next = next.replace(/\bURI\s*=\s*(["'])(.*?)\1/gi, (match, quote, uri) => {
     return `URI=${quote}${hlsProxyRewriteUriValue(uri, baseUrl, id)}${quote}`;
   });
 
   // Unquoted URI attributes: URI=https://... or URI=segment.mp4
-  next = next.replace(/\bURI=([^,\s]+)/g, (match, uri) => {
+  next = next.replace(/\bURI\s*=\s*([^,\s]+)/gi, (match, uri) => {
     // Skip if the quoted replacer already handled it.
     if (/^["']/.test(uri)) return match;
     return `URI=${hlsProxyRewriteUriValue(uri, baseUrl, id)}`;
@@ -5945,8 +5980,7 @@ function rewriteHlsTagUris(line = "", baseUrl = "", id = "") {
 
   // Some providers put absolute media URLs in non-standard tag attributes that
   // are not named URI. Rewrite any raw http(s) URL still left in a tag line.
-  next = next.replace(/https?:\/\/[^\s,"')]+/g, (url) => {
-    if (url.includes("/api/hls-proxy/")) return url;
+  next = next.replace(/https?:\/\/[^\s,"')]+/gi, (url) => {
     return hlsProxyRewriteUriValue(url, baseUrl, id);
   });
 
@@ -6363,7 +6397,7 @@ function clamp(num, min, max) {
 }
 
 function pageNumber(value) {
-  return clamp(value || 1, 1, 500);
+  return clamp(Number.parseInt(value, 10) || 1, 1, 500);
 }
 
 function getYear(date = "") {
@@ -6626,48 +6660,26 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player || partyBrowse || active === "social" || active === "study" ? '<script defer src="/socket.io/socket.io.js"></script>' : ""}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/modern-normalize@2.0.0/modern-normalize.min.css" />
     ${shellStyleLink("core")}
-    <script defer src="/assets/liquid-glass/liquid-glass.js?v=277"></script>
-    <script defer src="/assets/clean/clean.js?v=268"></script>
-    <script defer src="/assets/clean/catalog.js?v=2"></script>
-    <script defer src="/assets/clean/account-sheet.js?v=1"></script>
-    <script defer src="/assets/clean/account-data.js?v=2"></script>
-    <script defer src="/assets/clean/account.js?v=263"></script>
-    <script defer src="/assets/clean/library-state.js?v=277"></script>
-    <script defer src="/assets/clean/settings.js?v=262"></script>
-    <script defer src="/assets/connect/icons.js?v=1"></script><script defer src="/assets/connect/connect.js?v=5"></script>
-    <script defer src="/assets/clean/avatars.js?v=209"></script>
+    <script defer src="/assets/liquid-glass/liquid-glass.js?v=277"></script><script defer src="/assets/clean/clean.js?v=268"></script><script defer src="/assets/clean/catalog.js?v=2"></script><script defer src="/assets/clean/account-sheet.js?v=1"></script><script defer src="/assets/clean/account-data.js?v=2"></script><script defer src="/assets/clean/account.js?v=263"></script><script defer src="/assets/clean/library-state.js?v=277"></script><script defer src="/assets/clean/settings.js?v=262"></script><script defer src="/assets/connect/icons.js?v=1"></script><script defer src="/assets/connect/connect.js?v=5"></script><script defer src="/assets/clean/avatars.js?v=209"></script>
     ${active === "profiles" ? '<script defer src="/assets/clean/profiles.js?v=209"></script>' : ""}
     <script defer src="/assets/clean/continue.js?v=262"></script>
     ${body.includes('data-library-page') ? '<script defer src="/assets/clean/library-page.js?v=2"></script>' : ''}
-    <script defer src="/assets/clean/episode-browser.js?v=2"></script>
-    <script defer src="/assets/clean/feed.js?v=262"></script>
-    <script defer src="/assets/vendor/lenis/lenis.min.js?v=1.3.16-r1"></script>
-    <script defer src="/assets/clean/motion.js?v=253"></script>
-    <script defer src="/assets/clean/press.js?v=2"></script>
-    <script defer src="/assets/clean/scroll.js?v=261"></script>
-    <script defer src="/assets/clean/details.js?v=281"></script>
-    <script defer src="/assets/clean/download.js?v=3"></script>
-    <script defer src="/assets/liquid-glass/surfaces.js?v=278"></script>
-    <script defer src="/assets/studio/wallpapers.js?v=1"></script>
-    <script defer src="/assets/studio/studio.js?v=266"></script>
-    <script defer src="/assets/clean/aurora.js?v=267"></script>
+    <script defer src="/assets/kids/guard.js?v=1"></script><script defer src="/assets/clean/episode-browser.js?v=3"></script><script defer src="/assets/clean/feed.js?v=262"></script><script defer src="/assets/vendor/lenis/lenis.min.js?v=1.3.16-r1"></script><script defer src="/assets/clean/motion.js?v=253"></script><script defer src="/assets/clean/press.js?v=2"></script><script defer src="/assets/clean/scroll.js?v=261"></script><script defer src="/assets/clean/details.js?v=281"></script><script defer src="/assets/clean/download.js?v=3"></script><script defer src="/assets/liquid-glass/surfaces.js?v=279"></script><script defer src="/assets/studio/wallpapers.js?v=1"></script><script defer src="/assets/studio/studio.js?v=266"></script><script defer src="/assets/clean/aurora.js?v=267"></script>
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=262" />' : ""}
     ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=262" />' : ""}
-    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=272"></script>' : ""}
-    ${player ? '<script defer src="/assets/player/waves.js?v=3"></script>' : ""}
+    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=273"></script>' : ""}
+    ${player ? '<script defer src="/assets/player/waves.js?v=4"></script>' : ""}
     ${player ? '<script defer src="/assets/player/audio-sample.js?v=1"></script><script defer src="/assets/player/assist.js?v=3"></script><link rel="stylesheet" href="/assets/player/assist.css?v=264" />' : ""}
     ${player || active === "social" ? '<script defer src="/assets/party/watchroom-call.js?v=1"></script>' : ""}
-    ${active === "social" ? '<script defer src="/assets/party/party.js?v=207"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}
+    ${active === "social" ? '<script defer src="/assets/party/party.js?v=208"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}
     ${player || partyBrowse ? '<script defer src="/assets/player/watch-party.js?v=2"></script>' : ""}
     ${shellStyleLink(player ? "player" : "catalog")}
-    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=270" />' : ""}
-    ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=262" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=262" />' : ""}
+    ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=271" />' : ""}
+    ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=263" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=262" />' : ""}
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=262" />' : ""}
     ${player || active === "social" ? '<link rel="stylesheet" href="/assets/party/watchroom-call.css?v=262" />' : ""}
     ${shellStyleLink("finish")}
-    <script defer src="/assets/studio/theme-details.js?v=1"></script>
-    <script defer src="/assets/clean/hero-palette.js?v=260"></script>
-    <script defer src="/assets/studio/experience.js?v=263"></script>
+    <script defer src="/assets/studio/theme-details.js?v=1"></script><script defer src="/assets/clean/hero-palette.js?v=260"></script><script defer src="/assets/studio/experience.js?v=263"></script>
     ${extraHead}
 </head>
 <body class="svCleanShell">
@@ -7802,10 +7814,11 @@ async function welcomePage(req, res) {
 }
 
 async function homePage(req, res) {
+  const period=moviePeriod(req.query?.moviePeriod);
   const [trendingMovies, trendingTv, popularMovies, popularTv, topMovies, topTv, nowPlaying, featured] = await Promise.all([
     tmdb("/trending/movie/week", {}, CACHE_TTL.short),
     tmdb("/trending/tv/week", {}, CACHE_TTL.short),
-    tmdb("/movie/popular", {}, CACHE_TTL.medium),
+    tmdb(periodDefinitions[period].endpoint, {page:1}, CACHE_TTL.medium),
     tmdb("/tv/popular", {}, CACHE_TTL.medium),
     tmdb("/movie/top_rated", {}, CACHE_TTL.medium),
     tmdb("/tv/top_rated", {}, CACHE_TTL.medium),
@@ -7816,6 +7829,15 @@ async function homePage(req, res) {
   if (sources.every(data => data.__error)) return res.send(setupNeededPage(sources[0].message));
   const featuredMovies = await homeFeaturedPresentation(homeFeaturedMovies([featured, ...(trendingMovies.results || []), ...(popularMovies.results || []), ...(nowPlaying.results || []), ...(topMovies.results || [])]), featured?.id);
   const hero = featuredMovies[0] || featured || pickHero([...(trendingMovies.results || []), ...(popularMovies.results || []), ...(trendingTv.results || []).map(item => ({ ...item, media_type: "tv" }))]);
+  const rows=diverseRows([
+    {title:'Trending movies this week',type:'movie',items:trendingMovies.results||[],href:'/trending?type=movie&period=week',key:'trending-movies'},
+    {title:'Trending series this week',type:'tv',items:trendingTv.results||[],href:'/trending?type=tv&period=week',key:'trending-tv'},
+    {title:periodDefinitions[period].title,type:'movie',items:popularMovies.results||[],href:'/movies?period='+period,key:'popular-movies'},
+    {title:'Popular series',type:'tv',items:popularTv.results||[],href:'/tv',key:'popular-tv'},
+    {title:'Top rated movies',type:'movie',items:topMovies.results||[],href:'/movies?sort=top_rated',key:'top-movies'},
+    {title:'Top rated series',type:'tv',items:topTv.results||[],href:'/tv?sort=top_rated',key:'top-tv'},
+    {title:'New releases',type:'movie',items:nowPlaying.results||[],href:'/movies?sort=now_playing',key:'new-releases'},
+  ],{exclude:[titleKey(hero,'movie')]});
   const body = `<main data-st-home>
     ${hero.id ? dsHero({ hero, context: "Featured", featuredSlides: featuredMovies.map(homeFeaturedData) }) : dsPageHeader("Discover", "Explore movies and series.")}
     <section class="dsContent ${hero.id ? "" : "noHero"}" data-st-home-rows>
@@ -7824,16 +7846,10 @@ async function homePage(req, res) {
         <div id="continueWatchingRail" class="svResumeRail" aria-label="Continue Watching titles"></div>
       </section>
       ${feedHome()}
-      ${dsRail("Trending movies", trendingMovies.results || [], "movie", { viewHref: "/trending?type=movie", studioKey: "trending-movies" })}
-      ${dsRail("Trending series", trendingTv.results || [], "tv", { viewHref: "/trending?type=tv", studioKey: "trending-tv" })}
-      ${dsRail("Popular movies", popularMovies.results || [], "movie", { viewHref: "/movies", studioKey: "popular-movies" })}
-      ${dsRail("Popular series", popularTv.results || [], "tv", { viewHref: "/tv", studioKey: "popular-tv" })}
-      ${dsRail("Top rated movies", topMovies.results || [], "movie", { viewHref: "/movies?sort=top_rated", studioKey: "top-movies" })}
-      ${dsRail("Top rated series", topTv.results || [], "tv", { viewHref: "/tv?sort=top_rated", studioKey: "top-tv" })}
-      ${dsRail("New releases", nowPlaying.results || [], "movie", { viewHref: "/movies?sort=now_playing", studioKey: "new-releases" })}
+      ${rows.map(row=>dsRail(row.title,row.items,row.type,{viewHref:row.href,studioKey:row.key,...(row.key==='popular-movies'?{period:{base:'/',parameter:'moviePeriod',selected:period}}:{})})).join('')}
     </section>
   </main>`;
-  res.send(pageShell({ title: SITE_NAME, active: "home", body, extraHead:'<script defer src="/assets/clean/featured.js?v=7"></script>' }));
+  res.send(pageShell({ title: SITE_NAME, active: "home", body, extraHead:catalogAssets+'<script defer src="/assets/clean/featured.js?v=7"></script>' }));
 }
 
 // Reuse catalog choices and complete only the at-most-five featured movies.
@@ -7887,15 +7903,7 @@ function collectionHero(title, subtitle, active = "") {
 }
 
 function pagination(base, page, totalPages = 1) {
-  const prev = Math.max(1, page - 1);
-  const next = Math.min(totalPages || page + 1, page + 1);
-  const prevDisabled = page <= 1;
-  const nextDisabled = totalPages && page >= totalPages;
-  return `<nav class="pagination">
-    ${prevDisabled ? "" : `<a href="${base}${base.includes("?") ? "&" : "?"}page=${prev}">← Previous</a>`}
-    <a href="#">Page ${escapeHtml(String(page))}</a>
-    ${nextDisabled ? "" : `<a href="${base}${base.includes("?") ? "&" : "?"}page=${next}">Next →</a>`}
-  </nav>`;
+  return catalogPager(base,page,totalPages);
 }
 
 
@@ -8232,11 +8240,12 @@ function dsCleanSpotlight(item = {}, forcedType = "movie") {
 
 
 function dsRail(title, items = [], type = "", options = {}) {
-  const cards = (items || []).slice(0, options.limit || 18).map((item) => movieCard(item, type)).join("");
+  const cards = uniqueTitles(items,type).slice(0, options.limit || 18).map((item) => movieCard(item, type)).join("");
   if (!cards) return "";
   const more = options.viewHref ? `<a class="svRowMore" href="${escapeHtml(options.viewHref)}">View all</a>` : "";
+  const header=options.period?periodControls({...options.period,title,inRow:true,viewHref:options.viewHref}):`<div class="svSectionHead"><h2>${escapeHtml(title)}</h2><div class="svSectionActions">${more}</div></div>`;
   return `<section class="dsRow svCatalogRow"${options.studioKey ? ` data-st-home-section="${escapeHtml(options.studioKey)}"` : ""}>
-    <div class="svSectionHead"><h2>${escapeHtml(title)}</h2><div class="svSectionActions">${more}</div></div>
+    ${header}
     <div class="movieRail dsRail">${cards}</div>
   </section>`;
 }
@@ -8343,117 +8352,56 @@ function netflixRailCards(items = [], type = "") {
 }
 
 async function listingPage(req, res, type = "movie", options = {}) {
-  const partyBrowse = type === "movie" && req.query.party === "1";
-  const page = pageNumber(req.query.page);
-  const sort = req.query.sort || options.sort || "popular";
-  const genre = req.query.genre || "";
-
-  const endpointMap = {
-    movie: {
-      popular: "/movie/popular",
-      top_rated: "/movie/top_rated",
-      upcoming: "/movie/upcoming",
-      now_playing: "/movie/now_playing",
-      discover: "/discover/movie",
-    },
-    tv: {
-      popular: "/tv/popular",
-      top_rated: "/tv/top_rated",
-      airing_today: "/tv/airing_today",
-      on_the_air: "/tv/on_the_air",
-      discover: "/discover/tv",
-    },
-  };
-
-  let endpoint = endpointMap[type][sort] || endpointMap[type].popular;
-  const params = { page };
-
-  if (genre || sort === "discover") {
-    endpoint = endpointMap[type].discover;
-    params.sort_by = req.query.sort_by || "popularity.desc";
-    if (genre) params.with_genres = genre;
-    if (type === "movie") params.include_adult = "false";
+  const partyBrowse = type === "movie" && req.query.party === "1",page=pageNumber(req.query.page);
+  const endpointMap={movie:{popular:"/movie/popular",top_rated:"/movie/top_rated",upcoming:"/movie/upcoming",now_playing:"/movie/now_playing",discover:"/discover/movie"},tv:{popular:"/tv/popular",top_rated:"/tv/top_rated",airing_today:"/tv/airing_today",on_the_air:"/tv/on_the_air",discover:"/discover/tv"}};
+  const sort=Object.hasOwn(endpointMap[type],req.query.sort)?req.query.sort:(options.sort||"popular"),genre=/^\d{1,8}$/.test(String(req.query.genre||''))?String(req.query.genre):'',period=moviePeriod(req.query.period);
+  const validOrder=['popularity.desc','vote_average.desc',...(type==='tv'?['first_air_date.desc','original_name.asc']:['primary_release_date.desc','original_title.asc'])],explicitOrder=validOrder.includes(req.query.sort_by),sortBy=explicitOrder?req.query.sort_by:sort==='top_rated'?'vote_average.desc':'popularity.desc';
+  const isPeriod=type==='movie'&&sort==='popular'&&!genre;
+  let endpoint=isPeriod?periodDefinitions[period].endpoint:endpointMap[type][sort];
+  const params={page,include_adult:'false'};
+  if(genre||sort==='discover'){
+    endpoint=endpointMap[type].discover;
+    Object.assign(params,{sort_by:sortBy,...(genre?{with_genres:genre}:{}),...(sort==='top_rated'||sortBy==='vote_average.desc'?{'vote_count.gte':200}:{})});
+    if(type==='movie'&&['upcoming','now_playing'].includes(sort)){
+      // TMDB's collection response supplies its current theatrical window.
+      // Reuse that window for genre discovery rather than a guessed range.
+      const calendar=await tmdb(endpointMap[type][sort],{page,include_adult:'false'},CACHE_TTL.medium),dates=calendar.dates;
+      const validDate=value=>typeof value==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value)&&Number.isFinite(Date.parse(value+'T00:00:00Z'))&&new Date(value+'T00:00:00Z').toISOString().slice(0,10)===value;
+      if(calendar.__error||!validDate(dates?.minimum)||!validDate(dates?.maximum)||dates.minimum>dates.maximum)return res.send(setupNeededPage(calendar.message||'Release dates are temporarily unavailable.'));
+      Object.assign(params,{include_video:'false',with_release_type:'2|3','release_date.gte':dates.minimum,'release_date.lte':dates.maximum});
+    }else if(type==='tv'&&['airing_today','on_the_air'].includes(sort)){
+      // Filter episode air dates, so returning series remain in the results.
+      const today=new Date(),maximum=new Date(today);
+      maximum.setUTCDate(maximum.getUTCDate()+(sort==='on_the_air'?7:0));
+      Object.assign(params,{timezone:'UTC','air_date.gte':today.toISOString().slice(0,10),'air_date.lte':maximum.toISOString().slice(0,10)});
+    }
   }
-
-  const [data, genres, rowOne, rowTwo, rowThree, rowFour, rowFive] = await Promise.all([
-    tmdb(endpoint, params, CACHE_TTL.medium),
-    getGenres(type),
-    tmdb(type === "tv" ? "/discover/tv" : "/discover/movie", { with_genres: type === "tv" ? "18" : "28", sort_by: "popularity.desc", page: 1 }, CACHE_TTL.medium),
-    tmdb(type === "tv" ? "/discover/tv" : "/discover/movie", { with_genres: "35", sort_by: "popularity.desc", page: 1 }, CACHE_TTL.medium),
-    tmdb(type === "tv" ? "/discover/tv" : "/discover/movie", { with_genres: type === "tv" ? "80" : "53", sort_by: "popularity.desc", page: 1 }, CACHE_TTL.medium),
-    tmdb(type === "tv" ? "/discover/tv" : "/discover/movie", { sort_by: "vote_average.desc", vote_count_gte: 200, page: 1 }, CACHE_TTL.medium),
-    tmdb(type === "tv" ? "/trending/tv/week" : "/trending/movie/week", {}, CACHE_TTL.short),
-  ]);
-
-  if (data.__error) return res.send(setupNeededPage(data.message));
-
-  const label = type === "tv" ? "TV Shows" : "Movies";
-  const active = type === "tv" ? "tv" : "movies";
-  const hero = await featuredHero(pickHero(data.results || rowFive.results || []), type);
-  const categoryOne = type === "tv" ? "Popular Drama Shows" : "Action Movies";
-  const categoryTwo = type === "tv" ? "Comedy TV Shows" : "Comedies";
-  const categoryThree = type === "tv" ? "Crime & Suspense Shows" : "Suspense Movies";
-  const categoryFour = type === "tv" ? "Critically Acclaimed TV" : "Critically Acclaimed Movies";
-
-  const genreLinks = genres.slice(0, 16).map((g) => `<a href="/genre/${type}/${encodeURIComponent(g.id)}?name=${encodeURIComponent(g.name)}">${escapeHtml(g.name)}</a>`).join("");
-
-  const body = `<main>
-    <section class="dsBrowseTop">
-      <h1>${escapeHtml(label)}</h1>
-      <details class="genreDropdown">
-        <summary>Genres <span>▾</span></summary>
-        <div class="genreDropdownMenu">${genreLinks}</div>
-      </details>
-    </section>
-    ${dsHero({ hero, type, context: label, eyebrow: `${label} spotlight` })}
-    <section class="dsContent">
-      ${partyBrowse ? partyBrowseMarkup() : ""}
-      ${dsRail(categoryOne, rowOne.results || [], type)}
-      ${dsTopRail(({popular:"Popular", top_rated:"Top rated", upcoming:"Upcoming", now_playing:"Now playing", airing_today:"Airing today", on_the_air:"On air", discover:"Discover"}[sort] || "Popular") + (type === "tv" ? " series" : " movies"), data.results || [], type)}
-      ${dsRail(categoryTwo, rowTwo.results || [], type)}
-      ${dsRail(categoryThree, rowThree.results || [], type)}
-      ${dsRail(categoryFour, rowFour.results || [], type)}
-      ${dsRail(`Browse ${label}`, data.results || [], type)}
-    </section>
-  </main>`;
-
-  res.send(pageShell({ title: `${SITE_NAME} — ${label}`, active, body, partyBrowse }));
+  const curated=page===1&&!genre&&sort==='popular',label=type==='tv'?'Series':'Movies',active=type==='tv'?'tv':'movies';
+  const categories=[{title:type==='tv'?'Drama worth your time':'A little more action',genre:type==='tv'?'18':'28'},{title:'Something to make you laugh',genre:'35'},{title:type==='tv'?'Crime & intrigue':'Keep you guessing',genre:type==='tv'?'80':'53'},{title:'Critics’ favorites',rating:true}];
+  const [data,genres,...secondary]=await Promise.all([tmdb(endpoint,params,CACHE_TTL.medium),getGenres(type),...(curated?categories.map(category=>tmdb('/discover/'+type,{page,include_adult:'false',...(category.rating?{sort_by:'vote_average.desc','vote_count.gte':200}:{with_genres:category.genre,sort_by:'popularity.desc'})},CACHE_TTL.medium)):[])]);
+  if(data.__error)return res.send(setupNeededPage(data.message));
+  const items=uniqueTitles(data.results,type),hero=curated?await featuredHero(pickHero(items),type):null;
+  const sortLabels={popular:isPeriod?periodDefinitions[period].title:'Popular '+label.toLowerCase(),top_rated:'Top rated '+label.toLowerCase(),upcoming:'Coming soon',now_playing:'Now in theaters',airing_today:'Airing today',on_the_air:'On the air',discover:'Discover '+label.toLowerCase()};
+  const query={sort,...(genre?{genre}:{}),...((sort==='discover'||genre)&&explicitOrder?{sort_by:sortBy}:{}),...(isPeriod?{period}:{}),...(partyBrowse?{party:'1'}:{})},base='/'+active+'?'+new URLSearchParams(query);
+  const rows=diverseRows([{title:sortLabels[sort],type,items,href:base},...secondary.map((value,index)=>({title:categories[index].title,type,items:value.results||[],href:'/'+active+'?'+new URLSearchParams(categories[index].rating?{sort:'top_rated'}:{genre:categories[index].genre})}))],{limit:20,exclude:hero?.id?[titleKey(hero,type)]:[]});
+  const option=(value,name,current)=>'<option value="'+escapeHtml(value)+'"'+(value===current?' selected':'')+'>'+escapeHtml(name)+'</option>';
+  const controls=`<form class="svBrowseFilters" method="get" action="/${active}" aria-label="Filter ${label.toLowerCase()}"><label>Collection<select name="sort">${Object.keys(endpointMap[type]).map(value=>option(value,{popular:'Popular',top_rated:'Top rated',upcoming:'Coming soon',now_playing:'In theaters',airing_today:'Airing today',on_the_air:'On the air',discover:'Discover'}[value],sort)).join('')}</select></label><label>Genre<select name="genre">${option('','All genres',genre)}${genres.map(value=>option(String(value.id),value.name,genre)).join('')}</select></label>${isPeriod?'<input type="hidden" name="period" value="'+period+'">':''}${(sort==='discover'||genre)&&explicitOrder?'<input type="hidden" name="sort_by" value="'+escapeHtml(sortBy)+'">':''}${partyBrowse?'<input type="hidden" name="party" value="1">':''}<button class="svCatalogButton" type="submit">Find titles ${catalogIcon('arrow')}</button></form>`;
+  const body=`<main class="svCatalogPage" data-catalog-page="${page}">${curated&&hero?.id?dsHero({hero,type,context:label,eyebrow:label+' spotlight'}):''}<section class="dsContent${curated&&hero?.id?'':' noHero'}"><div class="svBrowseHeading"><div><span class="svCatalogEyebrow">A GOOD STORY STARTS HERE</span><h1>${escapeHtml(label)}</h1><p>${page>1?'A fresh page of stories. Pick up where your curiosity takes you.':'Find something you’ll want to finish.'}</p></div>${controls}</div>${partyBrowse?partyBrowseMarkup():''}${isPeriod&&!curated?periodControls({base:'/'+active+(partyBrowse?'?party=1':''),selected:period}):''}${curated?rows.map((row,index)=>dsRail(row.title,row.items,row.type,{limit:20,viewHref:row.href,...(index===0&&isPeriod?{period:{base:'/'+active+(partyBrowse?'?party=1':''),selected:period}}:{})})).join(''):`<section class="svCatalogResults" aria-labelledby="svCatalogResultsTitle"><div class="svCatalogResultsHead"><h2 id="svCatalogResultsTitle">${escapeHtml(genres.find(value=>String(value.id)===genre)?.name||sortLabels[sort])}</h2><span>Page ${page}${Number(data.total_pages)>1?' of '+Math.min(500,Number(data.total_pages)):''}</span></div>${items.length?'<div class="dsGrid">'+items.map(item=>movieCard(item,type)).join('')+'</div>':'<div class="svCatalogEmpty"><h3>No titles on this page.</h3><p>Try another collection or return to the first page.</p><a class="svCatalogButton" href="'+escapeHtml(base)+'">Back to the beginning</a></div>'}</section>`}${pagination(base,page,data.total_pages)}</section></main>`;
+  res.send(pageShell({title:SITE_NAME+' — '+label,active,body,partyBrowse,extraHead:catalogAssets}));
 }
 
 async function trendingPage(req, res) {
-  const page = pageNumber(req.query.page);
-  const type = ["movie", "tv", "all"].includes(req.query.type) ? req.query.type : "all";
-  const [data, popularMovies, popularTv, upcomingMovies, nowPlaying, topMovies] = await Promise.all([
-    tmdb(`/trending/${type}/week`, { page }, CACHE_TTL.short),
-    tmdb("/movie/popular", {}, CACHE_TTL.medium),
-    tmdb("/tv/popular", {}, CACHE_TTL.medium),
-    tmdb("/movie/upcoming", {}, CACHE_TTL.medium),
-    tmdb("/movie/now_playing", {}, CACHE_TTL.short),
-    tmdb("/movie/top_rated", {}, CACHE_TTL.medium),
+  const page=pageNumber(req.query.page),type=['movie','tv','all'].includes(req.query.type)?req.query.type:'all',period=req.query.period==='today'?'today':'week',window=period==='today'?'day':'week';
+  const [data,popularMovies,popularTv,upcomingMovies,nowPlaying,topMovies]=await Promise.all([
+    tmdb('/trending/'+type+'/'+window,{page},CACHE_TTL.short),
+    ...(page===1?[tmdb('/movie/popular',{page,include_adult:'false'},CACHE_TTL.medium),tmdb('/tv/popular',{page,include_adult:'false'},CACHE_TTL.medium),tmdb('/movie/upcoming',{page,include_adult:'false'},CACHE_TTL.medium),tmdb('/movie/now_playing',{page,include_adult:'false'},CACHE_TTL.short),tmdb('/movie/top_rated',{page,include_adult:'false'},CACHE_TTL.medium)]:[])
   ]);
-  if (data.__error) return res.send(setupNeededPage(data.message));
-
-  const hero = await featuredHero(pickHero((data.results || []).filter((item) => ["movie", "tv"].includes(getType(item)))));
-  const body = `<main>
-    ${dsHero({ hero, context: "New & Popular", eyebrow: "Fresh on SwiflyTV" })}
-    <section class="dsContent">
-      <div class="dsTabs">
-        <a class="${type === "all" ? "active" : ""}" href="/trending?type=all">All</a>
-        <a class="${type === "movie" ? "active" : ""}" href="/trending?type=movie">Movies</a>
-        <a class="${type === "tv" ? "active" : ""}" href="/trending?type=tv">TV Shows</a>
-      </div>
-      ${dsRail("Trending this week", (data.results || []).filter((item) => ["movie", "tv"].includes(getType(item))), type === "all" ? "" : type, { tag: "This week" })}
-      ${dsTopRail("Popular movies", popularMovies.results || [], "movie")}
-      ${feedDiscover()}
-      ${dsRail("Popular TV Shows", popularTv.results || [], "tv")}
-      ${dsRail("Coming Soon", upcomingMovies.results || [], "movie")}
-      ${dsRail("Now Playing", nowPlaying.results || [], "movie")}
-      ${dsRail("Critically Acclaimed", topMovies.results || [], "movie")}
-      ${pagination(`/trending?type=${encodeURIComponent(type)}`, page, data.total_pages)}
-    </section>
-  </main>`;
-
-  res.send(pageShell({ title: `${SITE_NAME} — New & Popular`, active: "trending", body }));
+  if(data.__error)return res.send(setupNeededPage(data.message));
+  const items=uniqueTitles((data.results||[]).filter(item=>['movie','tv'].includes(getType(item))),type==='all'?'':type),hero=page===1?await featuredHero(pickHero(items)):null;
+  const base='/trending?'+new URLSearchParams({type,period}),rowInputs=[{title:'Trending '+(period==='today'?'today':'this week'),items,type:type==='all'?'':type,href:base},...(page===1?[{title:'Popular movies',type:'movie',items:popularMovies.results||[],href:'/movies'},{title:'Series everyone’s talking about',type:'tv',items:popularTv.results||[],href:'/tv'},{title:'On the horizon',type:'movie',items:upcomingMovies.results||[],href:'/movies?sort=upcoming'},{title:'In theaters',type:'movie',items:nowPlaying.results||[],href:'/movies?sort=now_playing'},{title:'All-time favorites',type:'movie',items:topMovies.results||[],href:'/movies?sort=top_rated'}]:[])];
+  const rows=diverseRows(rowInputs,{limit:20,exclude:hero?.id?[titleKey(hero)]:[]});
+  const body=`<main class="svCatalogPage">${hero?.id?dsHero({hero,context:'New & Popular',eyebrow:'Find your next favorite'}):''}<section class="dsContent${hero?.id?'':' noHero'}"><div class="svBrowseHeading"><div><span class="svCatalogEyebrow">WHAT’S GETTING PEOPLE TALKING</span><h1>New & popular</h1><p>Follow your curiosity. There’s always another story.</p></div><nav class="svPeriodTabs" aria-label="Trending time window">${[['today','Today'],['week','This week']].map(([value,label])=>'<a href="/trending?'+new URLSearchParams({type,period:value})+'"'+(period===value?' aria-current="page"':'')+'>'+label+'</a>').join('')}</nav></div><nav class="dsTabs svCatalogTypeTabs" aria-label="Trending formats">${[['all','Everything'],['movie','Movies'],['tv','Series']].map(([value,label])=>'<a class="'+(type===value?'active':'')+'" href="/trending?'+new URLSearchParams({type:value,period})+'"'+(type===value?' aria-current="page"':'')+'>'+label+'</a>').join('')}</nav>${page===1?rows.map((row,index)=>(index===2?feedDiscover():'')+dsRail(row.title,row.items,row.type,{limit:20,viewHref:row.href})).join(''):`<section class="svCatalogResults"><div class="svCatalogResultsHead"><h2>Trending ${period==='today'?'today':'this week'}</h2><span>Page ${page}</span></div><div class="dsGrid">${items.map(item=>movieCard(item)).join('')}</div>${items.length?'':'<div class="svCatalogEmpty"><h3>You’ve reached a quiet page.</h3><p>Try a different format or return to the first page.</p></div>'}</section>`}${pagination(base,page,data.total_pages)}</section></main>`;
+  res.send(pageShell({title:SITE_NAME+' — New & Popular',active:'trending',body,extraHead:catalogAssets}));
 }
 
 async function searchPage(req, res) {
@@ -8493,37 +8441,19 @@ async function genrePage(req, res, type) {
 }
 
 async function genresPage(req, res) {
-  const [movieGenres, tvGenres] = await Promise.all([getGenres("movie"), getGenres("tv")]);
-  const type = req.query.media === "tv" ? "tv" : "movie";
-  const languages = [["", "Any language"], ["en", "English"], ["es", "Spanish"], ["ko", "Korean"], ["ja", "Japanese"], ["fr", "French"]];
-  const language = languages.some(([code]) => code === req.query.language) ? req.query.language : "";
-  const genres = type === "tv" ? tvGenres : movieGenres;
-  const genre = genres.some(item => String(item.id) === String(req.query.genre || "")) ? String(req.query.genre) : "";
-  const sort = ["popular", "rating", "newest", "title"].includes(req.query.sort) ? req.query.sort : "popular";
-  const sortBy = {popular:"popularity.desc", rating:"vote_average.desc", newest:type === "tv" ? "first_air_date.desc" : "primary_release_date.desc", title:type === "tv" ? "original_name.asc" : "original_title.asc"}[sort];
-  const page = pageNumber(req.query.page);
-  const browsing = ["media", "language", "genre", "sort"].some(key => Object.hasOwn(req.query, key));
-  const params = {media:type, ...(language ? {language} : {}), ...(genre ? {genre} : {}), sort};
-  const browseUrl = "/browse-by-languages?" + new URLSearchParams(params);
-  const data = browsing ? await tmdb("/discover/" + type, {page, sort_by:sortBy, include_adult:"false", ...(language ? {with_original_language:language} : {}), ...(genre ? {with_genres:genre} : {})}, CACHE_TTL.medium) : null;
-  const rows = (Array.isArray(data?.results) ? data.results : []).filter(item => !item.adult);
-  const options = (items, selected) => items.map(([value, label]) => `<option value="${escapeHtml(value)}"${value === selected ? " selected" : ""}>${escapeHtml(label)}</option>`).join("");
-  const genreGroup = (title, kind, items) => `<section class="dsGenreGroup"><h2>${escapeHtml(title)}</h2><div class="dsGenreGrid">${items.map(item => `<a class="dsGenreTile" href="/genre/${kind}/${encodeURIComponent(item.id)}?name=${encodeURIComponent(item.name)}">${escapeHtml(item.name)}</a>`).join("")}</div></section>`;
-  const results = !data ? "" : data.__error
-    ? `<section class="emptyState" role="status"><h2>The catalog could not load</h2><p>Please try again in a moment.</p><a class="dsSecondaryBtn" href="${escapeHtml(browseUrl)}">Try again</a></section>`
-    : `<section aria-labelledby="browseResultsTitle"><h2 id="browseResultsTitle">${language ? escapeHtml(languages.find(([code]) => code === language)[1]) + " · " : ""}${type === "tv" ? "Series" : "Movies"}</h2>${rows.length ? `<div class="dsGrid">${rows.map(item => movieCard(item, type)).join("")}</div>${pagination(browseUrl, page, data.total_pages)}` : '<div class="emptyState"><p>No titles match these choices. Try another language or genre.</p><a class="dsSecondaryBtn" href="/browse-by-languages">Clear filters</a></div>'}</section>`;
-  const body = `<main class="dsPlainPage">
-    ${dsPageHeader("Browse by language & genre", "Choose an original language and format, or open a genre below.", "Browse")}
-    <form class="dsLanguageFilters" action="/browse-by-languages" method="get" aria-label="Browse filters">
-      <label>Format<select name="media">${options([["movie", "Movies"], ["tv", "Series"]], type)}</select></label>
-      <label>Original language<select name="language">${options(languages, language)}</select></label>
-      <label>Genre<select name="genre">${options([["", "Any genre"], ...genres.map(item => [String(item.id), item.name])], genre)}</select></label>
-      <label>Sort<select name="sort">${options([["popular", "Popular"], ["rating", "Highest rated"], ["newest", "Newest release"], ["title", "Original title A–Z"]], sort)}</select></label>
-      <button class="dsSecondaryBtn" type="submit">Browse titles</button>
-    </form>
-    <section class="dsContent noHero">${results}${genreGroup("Movie genres", "movie", movieGenres)}${genreGroup("Series genres", "tv", tvGenres)}</section>
-  </main>`;
-  res.send(pageShell({title:`${SITE_NAME} — Browse`, active:"genres", body}));
+  const type=req.query.media==='tv'?'tv':'movie',language=languageDefinitions.some(([code])=>code===req.query.language)?String(req.query.language):'',sort=['popular','rating','newest','title'].includes(req.query.sort)?req.query.sort:'popular',page=pageNumber(req.query.page);
+  const [movieGenres,tvGenres]=await Promise.all([getGenres('movie'),getGenres('tv')]),genres=type==='tv'?tvGenres:movieGenres;
+  const genre=genres.some(row=>String(row.id)===String(req.query.genre||''))?String(req.query.genre):'',sortBy={popular:'popularity.desc',rating:'vote_average.desc',newest:type==='tv'?'first_air_date.desc':'primary_release_date.desc',title:type==='tv'?'original_name.asc':'original_title.asc'}[sort];
+  const browsing=['media','language','genre','sort','page'].some(key=>Object.hasOwn(req.query,key)),params={media:type,...(language?{language}:{}),...(genre?{genre}:{}),sort},browseUrl='/browse-by-languages?'+new URLSearchParams(params);
+  const data=browsing?await tmdb('/discover/'+type,{page,sort_by:sortBy,include_adult:'false',...(language?{with_original_language:language}:{}),...(genre?{with_genres:genre}:{}),...(sort==='rating'?{'vote_count.gte':100}:{})},CACHE_TTL.medium):null;
+  const destinations=!browsing?await Promise.all(languageDefinitions.slice(0,6).map(([code])=>tmdb('/discover/movie',{page:1,sort_by:'popularity.desc',include_adult:'false',with_original_language:code},CACHE_TTL.long))):[];
+  const rows=uniqueTitles(data?.results||[],type),selectedLanguage=languageDefinitions.find(([code])=>code===language),selectedGenre=genres.find(row=>String(row.id)===genre),heroArt=rows.find(row=>row.backdrop_path)?.backdrop_path;
+  const options=(items,value)=>items.map(([key,label])=>'<option value="'+escapeHtml(key)+'"'+(value===key?' selected':'')+'>'+escapeHtml(label)+'</option>').join('');
+  const results=!data?'':data.__error?`<section class="svCatalogEmpty" role="status"><h2>The catalog needs a moment.</h2><p>Your filters are saved. Give it another try.</p><a class="svCatalogButton" href="${escapeHtml(browseUrl)}">Try again ${catalogIcon('arrow')}</a></section>`:`<section class="svLanguageResults" aria-labelledby="browseResultsTitle"><div class="svCatalogResultsHead"><div><span class="svCatalogEyebrow">${selectedLanguage?escapeHtml(selectedLanguage[2]):'ACROSS EVERY LANGUAGE'}</span><h2 id="browseResultsTitle">${selectedLanguage?escapeHtml(selectedLanguage[1])+' ':''}${type==='tv'?'series':'movies'}${selectedGenre?' · '+escapeHtml(selectedGenre.name):''}</h2></div><span>${Number.isFinite(Number(data.total_results))?Number(data.total_results).toLocaleString('en')+' titles · ':''}Page ${page}</span></div>${rows.length?'<div class="dsGrid">'+rows.map(row=>movieCard(row,type)).join('')+'</div>'+pagination(browseUrl,page,data.total_pages):'<div class="svCatalogEmpty"><h3>No stories match this combination yet.</h3><p>Open up a genre or try a different language.</p><a class="svCatalogButton" href="/browse-by-languages">Explore another direction</a></div>'}</section>`;
+  const languageCards=languageDefinitions.slice(0,6).map((def,index)=>{const artItem=(destinations[index]?.results||[]).find(row=>row.backdrop_path);return languageCard(def,index,{media:type,genre,sort,active:language===def[0],art:artItem?backdrop(artItem.backdrop_path,'w780'):language===def[0]&&heroArt?backdrop(heroArt,'w780'):''});}).join('');
+  const languageLinks=languageDefinitions.slice(6).map(([code,name,native],index)=>'<a class="svLanguagePill" data-language-name="'+escapeHtml((name+' '+native+' '+code).toLowerCase())+'" href="/browse-by-languages?'+new URLSearchParams({media:type,language:code,...(genre?{genre}:{}),sort})+'"'+(code===language?' aria-current="page"':'')+'><span lang="'+code+'">'+escapeHtml(native)+'</span><strong>'+escapeHtml(name)+'</strong><span aria-hidden="true">↗</span></a>').join('');
+  const body=`<main class="svLanguagePage dsPlainPage"><header class="svLanguageHero">${heroArt?'<div class="svLanguageHeroArt" aria-hidden="true"><img src="'+escapeHtml(backdrop(heroArt,'w1280'))+'" alt=""></div>':''}<div class="svLanguageHeroCopy"><span class="svCatalogEyebrow">${catalogIcon('globe')} CINEMA HAS NO BORDERS</span><h1>${selectedLanguage?'Stories in <em>'+escapeHtml(selectedLanguage[1])+'.</em>':'A whole world.<br><em>One good story.</em>'}</h1><p>Change the language. Change your perspective.<br>Discover films and series from somewhere new.</p><a class="svCatalogButton" href="#language-destinations">Explore ${languageDefinitions.length} languages ${catalogIcon('arrow')}</a></div><div class="svLanguageHeroMark" aria-hidden="true"><span>世界</span><span>cinéma</span><span>이야기</span><span>stories</span></div></header><div class="svLanguageBody"><form class="dsLanguageFilters svLanguageFilters" action="/browse-by-languages" method="get" aria-label="Browse filters"><label>What are you looking for?<select name="media">${options([['movie','Movies'],['tv','Series']],type)}</select></label><label>Original language<select name="language">${options([['','Any language'],...languageDefinitions.map(([code,name])=>[code,name])],language)}</select></label><label>A little more specific<select name="genre">${options([['','Any genre'],...genres.map(row=>[String(row.id),row.name])],genre)}</select></label><label>Show me<select name="sort">${options([['popular','Popular now'],['rating','Highest rated'],['newest','Newest releases'],['title','Original title A–Z']],sort)}</select></label><button class="svCatalogButton svCatalogButtonPrimary" type="submit">Find a story ${catalogIcon('arrow')}</button></form><section class="dsContent noHero">${results}<section class="svLanguageDestinations" id="language-destinations" aria-labelledby="svLanguageDestinationsTitle"><header class="svLanguageSectionHead"><div><span class="svCatalogEyebrow">LET CURIOSITY LEAD</span><h2 id="svLanguageDestinationsTitle">Where will you go?</h2><p>Original voices. Different worlds. Something that stays with you.</p></div><label class="svLanguageSearch">${catalogIcon('search')}<input type="search" data-language-search placeholder="Find a language…" aria-label="Find a language" autocomplete="off"></label></header><div class="svLanguageDestinationGrid" data-language-destinations>${languageCards}</div><div class="svLanguagePills" data-language-pills>${languageLinks}</div><p class="svLanguageSearchEmpty" data-language-empty hidden>No matching language. Try its English name or native spelling.</p><p class="svLanguageSearchCount" data-language-count role="status" aria-live="polite">${languageDefinitions.length} languages to explore</p></section><section class="svGenreJourney"><header><span class="svCatalogEyebrow">OR FOLLOW A FEELING</span><h2>What are you in the mood for?</h2></header><div class="svGenreJourneyGrid">${genres.map((row,index)=>'<a href="/browse-by-languages?'+new URLSearchParams({media:type,...(language?{language}:{}),genre:String(row.id),sort})+'" style="--genre-index:'+index+'"'+(String(row.id)===genre?' aria-current="page"':'')+'><span class="svGenreNumber" aria-hidden="true">'+String(index+1).padStart(2,'0')+'</span><strong>'+escapeHtml(row.name)+'</strong>'+catalogIcon('arrow')+'</a>').join('')}</div></section></section></div></main>`;
+  res.send(pageShell({title:SITE_NAME+' — A world of stories',active:'genres',body,extraHead:catalogAssets}));
 }
 
 
@@ -9005,6 +8935,7 @@ async function watchPage(req, res, type) {
   const episodePickerHtml = type === "tv" && mode === "movie" ? episodePickerMarkup({...episodeOptions,navigation:false}) : "";
   const body = playerMarkup({
     id, type, title, mode, season, episode,
+    kidsVerified:Boolean(req.kids?.locked && req.kidsTitle?.allowed),
     year: getYear(type === "tv" ? details.first_air_date : details.release_date),
     poster: details.poster_path ? img(details.poster_path, "w342") : "",
     // The player decorates video with a backdrop in two places. Cap Xbox
@@ -9182,51 +9113,16 @@ async function peoplePage(req, res) {
 }
 
 async function personDetailPage(req, res) {
-  const id = req.params.id;
-  const [person, combined] = await Promise.all([
-    tmdb(`/person/${id}`, {}, CACHE_TTL.long),
-    tmdb(`/person/${id}/combined_credits`, {}, CACHE_TTL.long),
-  ]);
-
-  if (person.__error) return res.send(setupNeededPage(person.message));
-
-  const credits = Array.isArray(combined.cast) ? combined.cast : [];
-  const crew = Array.isArray(combined.crew) ? combined.crew : [];
-  const known = [...credits, ...crew]
-    .filter((item) => ["movie", "tv"].includes(getType(item)))
-    .sort((a, b) => Number(b.popularity || 0) - Number(a.popularity || 0));
-
-  const profile = img(person.profile_path, "w500");
-  const allCredits=[...new Map(known.filter(row=>!row.adult).map(row=>[getType(row)+':'+row.id,row])).values()];
-  const creditsPage=Math.max(1,Math.min(Math.max(1,Math.ceil(allCredits.length/36)),Number.parseInt(req.query?.creditsPage,10)||1));
-  const filmography=allCredits.slice((creditsPage-1)*36,creditsPage*36);
-
-  const body = `<main>
-    <section class="container personHero netflixPersonHero">
-      <div class="personPhoto">${profile ? `<img src="${escapeHtml(profile)}" alt="${escapeHtml(person.name)}" />` : `<div class="posterFallback"><span>${escapeHtml(String(person.name || "?").slice(0, 1))}</span></div>`}</div>
-      <div class="personContent">
-        <span class="eyebrow">${escapeHtml(person.known_for_department || "Person")}</span>
-        <h1>${escapeHtml(person.name || "Unknown")}</h1>
-        <div class="metaLine">
-          ${person.birthday ? `<span>Born ${escapeHtml(person.birthday)}</span>` : ""}
-          ${person.place_of_birth ? `<span>${escapeHtml(person.place_of_birth)}</span>` : ""}
-          <span>Popularity ${escapeHtml(String(Math.round(person.popularity || 0)))}</span>
-        </div>
-        <p>${escapeHtml(person.biography || "No biography available.")}</p>
-        <div class="heroActions">
-          <a class="btn primary" target="_blank" rel="noreferrer" href="https://www.themoviedb.org/person/${encodeURIComponent(id)}">View on TMDB</a>
-          <a class="btn" href="/search?type=person&q=${encodeURIComponent(person.name || "")}">Find more people</a>
-        </div>
-      </div>
-    </section>
-
-    <div class="container">
-      ${rail("Known for", known, "", "Credits")}
-      <section class="svPersonFilmography"><h2>Full filmography <small data-person-credits-count>${allCredits.length} titles</small></h2><div class="dsGrid" data-person-filmography>${filmography.map(item=>movieCard(item,getType(item))).join('')}</div><nav class="pagination" aria-label="Filmography pages">${creditsPage>1?`<a href="/person/${encodeURIComponent(id)}?creditsPage=${creditsPage-1}">← Previous</a>`:''}<span>Page ${creditsPage} of ${Math.max(1,Math.ceil(allCredits.length/36))}</span>${creditsPage*36<allCredits.length?`<a href="/person/${encodeURIComponent(id)}?creditsPage=${creditsPage+1}">Next →</a>`:''}</nav></section>
-    </div>
-  </main>`;
-
-  res.send(pageShell({ title: `${SITE_NAME} — ${person.name}`, active: "people", body }));
+  const id=String(req.params.id||'');
+  if(!/^[1-9]\d{0,9}$/.test(id))return res.status(404).send(pageShell({title:SITE_NAME+' — Person not found',active:'people',body:'<main class="dsPlainPage"><div class="svCatalogEmpty"><h1>We couldn’t find this person.</h1><a class="svCatalogButton" href="/people">Discover people</a></div></main>',extraHead:catalogAssets}));
+  const [person,combined]=await Promise.all([tmdb('/person/'+id,{},CACHE_TTL.long),tmdb('/person/'+id+'/combined_credits',{},CACHE_TTL.long)]);
+  if(person.__error)return res.send(setupNeededPage(person.message));
+  const media=['movie','tv'].includes(req.query?.media)?req.query.media:'all',sort=['popular','newest','oldest','title'].includes(req.query?.sort)?req.query.sort:'popular',all=personCredits(combined),role=all.roles.includes(req.query?.role)?req.query.role:'all',credits=personCredits(combined,{media,role,sort}),totalPages=Math.max(1,Math.ceil(credits.items.length/36)),creditsPage=Math.min(totalPages,pageNumber(req.query?.creditsPage)),filmography=credits.items.slice((creditsPage-1)*36,creditsPage*36),known=personCredits(combined,{sort:'popular'}).items.slice(0,10);
+  const base='/person/'+encodeURIComponent(id)+'?'+new URLSearchParams({...(media!=='all'?{media}:{}),...(role!=='all'?{role}:{}),...(sort!=='popular'?{sort}:{})});
+  const creditPageUrl=number=>{const u=new URL(base,'https://swifly.invalid');u.searchParams.set('creditsPage',number);return escapeHtml(u.pathname+'?'+u.searchParams)+'#filmography';};
+  const pager=`<nav class="pagination svCatalogPager" aria-label="Filmography pages">${creditsPage>1?'<a rel="prev" href="'+creditPageUrl(creditsPage-1)+'">← Previous</a>':'<span class="svPagerEdge" aria-hidden="true"></span>'}<span aria-current="page">Page ${creditsPage} of ${totalPages}</span>${creditsPage<totalPages?'<a rel="next" href="'+creditPageUrl(creditsPage+1)+'">Next →</a>':'<span class="svPagerEdge" aria-hidden="true"></span>'}</nav>`;
+  const image=known.find(row=>row.backdrop_path),body=personMarkup({person:{...person,id},credits,filtered:credits.items,known,filmography,page:creditsPage,totalPages,filters:{media,role,sort},profile:img(person.profile_path,'w500'),backdrop:image?backdrop(image.backdrop_path,'w1280'):'',renderCard:movieCard,renderRail:dsRail,pager});
+  res.send(pageShell({title:SITE_NAME+' — '+String(person.name||'Person'),active:'people',body,extraHead:catalogAssets}));
 }
 
 function watchlistPage(req, res) {
@@ -13346,13 +13242,20 @@ async function handleHlsProxyAsset(req, res) {
 
   let targetUrl = "";
   try {
-    targetUrl = hlsProxyBase64UrlDecode(String(req.query.u || ""));
-    const parsed = new URL(targetUrl);
+    if (typeof req.query.u !== "string") throw new Error("Invalid HLS asset URL.");
+    const parsed = new URL(hlsProxyBase64UrlDecode(req.query.u));
     if (!["http:", "https:"].includes(parsed.protocol)) {
       return res.status(400).type("text/plain").send("Invalid HLS asset URL.");
     }
+    targetUrl = parsed.toString();
   } catch {
     return res.status(400).type("text/plain").send("Invalid HLS asset URL.");
+  }
+
+  // Validate before fetch, redirects, body reads or request logging. A source
+  // token alone never grants access to caller-selected upstream destinations.
+  if (!validHlsProxyAssetSignature(entry, targetUrl, req.query.s)) {
+    return res.status(403).type("text/plain").send("Invalid HLS asset signature.");
   }
 
   try {
@@ -14910,21 +14813,21 @@ function socialOpenRoomCreation() {
   return process.env.SOCIAL_OPEN_ROOM_CREATION !== "false";
 }
 
-function socialPermissionsForName(name = "") {
-  const normalized = String(name || "").trim().toLowerCase();
-  const allowed = socialCreatorNames();
-  const isCreator = Boolean(normalized && allowed.includes(normalized));
-  return {
-    isCreator,
-    canCreateGroups: isCreator,
-    canCreateChannels: isCreator,
-    canCreateWatchRooms: socialOpenRoomCreation() || isCreator,
-    canManageSocial: isCreator,
-    allowedCreators: allowed,
-    openRoomCreation: socialOpenRoomCreation(),
-  };
+function socialPermissionsForUser(user = null) {
+  const allowed = String(process.env.SOCIAL_CREATOR_ACCOUNT_IDS || "").split(",").map(value=>value.trim()).filter(Boolean);
+  const isCreator = typeof user?.id === "string" && allowed.includes(user.id);
+  return {isCreator,canCreateGroups:isCreator,canCreateChannels:isCreator,
+    canCreateWatchRooms:socialOpenRoomCreation()||isCreator,canManageSocial:isCreator,
+    allowedCreators:[],openRoomCreation:socialOpenRoomCreation()};
+}
+async function socialUser(req) {
+  try{return (await connect.identity(req)).user;}catch{return null;}
 }
 
+const community = createCommunityController({
+  io, rooms:socialRooms, permissionsForIdentity:socialPermissionsForUser,
+  resolveIdentity:socket => connect.identity({headers:socket.handshake.headers})
+});
 
 function partyMovieId(value) {
   if (typeof value !== "string" && typeof value !== "number") return "";
@@ -15027,9 +14930,10 @@ function removedDateProfilePage(req, res) {
 app.get("/date-profile", removedDateProfilePage);
 app.get("/couples", removedDateProfilePage);
 
-app.get("/watchrooms/new", (req, res) => {
-  const creator = String(req.query.creator || req.query.name || "").slice(0, 80);
-  const perms = socialPermissionsForName(creator);
+app.get("/watchrooms/new", async (req, res) => {
+  const user = await socialUser(req);
+  const creator = user?.name || String(req.query.creator || "").slice(0,80);
+  const perms = socialPermissionsForUser(user);
   if (!perms.canCreateWatchRooms && process.env.SOCIAL_LOCK_WATCHROOM_CREATION === "true") {
     const denied = new URLSearchParams();
     denied.set("tab", "watchrooms");
@@ -15113,48 +15017,9 @@ app.get("/social", (req, res) => {
   return socialPage(req, res);
 });
 
-app.get("/kids", async (req, res) => {
-  const [family, animation, disneyStyle, kidsTv, familyTv, preschoolTv] = await Promise.all([
-    tmdb("/discover/movie", kidsMovieParams({ with_genres: "10751" }), CACHE_TTL.medium),
-    tmdb("/discover/movie", kidsMovieParams({ with_genres: "16" }), CACHE_TTL.medium),
-    tmdb("/discover/movie", kidsMovieParams({ with_keywords: "207317|210024|287501" }), CACHE_TTL.medium),
-    tmdb("/discover/tv", kidsTvParams({ with_genres: "10762" }), CACHE_TTL.medium),
-    tmdb("/discover/tv", kidsTvParams({ with_genres: "10751" }), CACHE_TTL.medium),
-    tmdb("/discover/tv", kidsTvParams({ with_genres: "16" }), CACHE_TTL.medium),
-  ]);
-
-  const firstError = [family, animation, disneyStyle, kidsTv, familyTv, preschoolTv].find((data) => data.__error);
-  if (firstError) return res.send(setupNeededPage(firstError.message));
-
-  const familyMovies = kidsSafeResults(family.results || []);
-  const animatedMovies = kidsSafeResults(animation.results || []);
-  const gentleMovies = kidsSafeResults(disneyStyle.results || []);
-  const kidsShows = kidsSafeResults(kidsTv.results || []);
-  const familyShows = kidsSafeResults(familyTv.results || []);
-  const animatedShows = kidsSafeResults(preschoolTv.results || []);
-  const hero = await featuredHero(pickHero([...familyMovies, ...animatedMovies, ...kidsShows, ...familyShows]));
-
-  const body = `<main class="kidsModePage">
-    <section class="kidsLockBanner">
-      <div>
-        <span class="dsEyebrow">Kids Safe Mode</span>
-        <h1>Kids</h1>
-        <p>Family titles filtered by catalog ratings and genres. Check a title’s rating before watching.</p>
-      </div>
-      <a class="dsSecondaryBtn" href="/profiles">Switch Profile</a>
-    </section>
-    ${dsHero({ hero, context: "Kids", eyebrow: "Family friendly picks" })}
-    <section class="dsContent">
-      ${dsRail("Family Movies", familyMovies, "movie")}
-      ${dsRail("Animated Favorites", animatedMovies, "movie")}
-      ${dsRail("Gentle Picks", gentleMovies, "movie")}
-      ${dsRail("Kids TV", kidsShows, "tv")}
-      ${dsRail("Family Shows", familyShows, "tv")}
-      ${dsRail("Animated Shows", animatedShows, "tv")}
-    </section>
-  </main>`;
-
-  res.send(pageShell({ title: `${SITE_NAME} — Kids`, active: "kids", body }));
+app.get(['/kids','/kids/title/:type/:id'],async(req,res,next)=>{
+  try{const view=await kids.page(req);res.send(pageShell({...view,title:SITE_NAME+' — Kids',active:'kids'}));}
+  catch(error){next(error);}
 });
 
 
@@ -15315,9 +15180,10 @@ app.get("/api/social/movies/:id", async (req, res) => {
   }
 });
 
-app.post("/api/social/watchrooms/create", (req, res) => {
-  const creator = String(req.body?.creator || "").slice(0, 80);
-  const perms = socialPermissionsForName(creator);
+app.post("/api/social/watchrooms/create", async (req, res) => {
+  const user = await socialUser(req);
+  const creator = user?.name || String(req.body?.creator || "").slice(0, 80);
+  const perms = socialPermissionsForUser(user);
   if (!perms.canCreateWatchRooms && process.env.SOCIAL_LOCK_WATCHROOM_CREATION === "true") {
     return res.status(403).json({ ok: false, message: "You do not have permission to create Watch Parties." });
   }
@@ -15348,13 +15214,14 @@ app.get("/api/social/watchrooms", (req, res) => {
 });
 
 
-app.get("/api/social/permissions", (req, res) => {
+app.get("/api/social/permissions", async (req, res) => {
   res.set("Cache-Control", "no-store");
-  const name = String(req.query.name || "").slice(0, 80);
+  const user = await socialUser(req);
+  const name = user?.name || String(req.query.name || "").slice(0, 80);
   res.json({
     ok: true,
     name,
-    permissions: socialPermissionsForName(name),
+    permissions: socialPermissionsForUser(user),
   });
 });
 
@@ -15702,7 +15569,7 @@ app.use((req, res) => {
 
 
 // Engine.IO handles sockets outside Express: require the same access cookie.
-io.use((socket, next) => siteGate.validCookie(socket.handshake.headers.cookie)
+io.use((socket, next) => siteGate.validCookie(socket.handshake.headers.cookie)&&kids.socketAllowed(socket)
   ? next() : next(new Error("Access code required.")));
 const watchroomCalls = createWatchroomCalls({ io, watchRooms, env: process.env });
 
@@ -15749,38 +15616,10 @@ function leaveWatchRoom(socket) {
 }
 
 io.on("connection", (socket) => {
+  socket.use((_packet,next)=>kids.socketAllowed(socket)?next():next(new Error('Parent unlock required.')));
   watchroomCalls.attach(socket);
 
-  socket.on("social:join", (payload = {}) => {
-    const roomId = String(payload.roomId || "general").slice(0, 80);
-    const name = String(payload.name || "Guest").slice(0, 40);
-    const room = getSocialRoom(roomId);
-    socket.join(`social:${roomId}`);
-    room.members.set(socket.id, name);
-    socket.emit("social:members", { roomId, members: Array.from(room.members.values()) });
-    socket.to(`social:${roomId}`).emit("social:members", { roomId, members: Array.from(room.members.values()) });
-  });
-
-  socket.on("social:message", (message = {}) => {
-    const roomId = String(message.roomId || "general").slice(0, 80);
-    const room = getSocialRoom(roomId);
-    const safeMessage = {
-      roomId,
-      author: String(message.author || "Guest").slice(0, 40),
-      text: String(message.text || "").slice(0, 1200),
-      createdAt: Number(message.createdAt || Date.now()),
-    };
-    if (!safeMessage.text.trim()) return;
-    room.messages.push(safeMessage);
-    room.messages = room.messages.slice(-200);
-    io.to(`social:${roomId}`).emit("social:message", safeMessage);
-  });
-
-  socket.on("social:typing", (payload = {}) => {
-    const roomId = String(payload.roomId || "general").slice(0, 80);
-    const name = String(payload.name || "Guest").slice(0, 40);
-    socket.to(`social:${roomId}`).emit("social:typing", { roomId, name });
-  });
+  community.attach(socket);
 
   socket.on("social:call-join", (payload = {}) => {
     const roomId = String(payload.roomId || "general").slice(0, 80);
@@ -16534,17 +16373,6 @@ io.on("connection", (socket) => {
     io.to(room.id).emit("watchroom:message", message);
   });
 
-
-  socket.on("disconnect", () => {
-    socialRooms.forEach((room) => {
-      if (room.members.delete(socket.id)) {
-        io.to(`social:${room.id}`).emit("social:members", {
-          roomId: room.id,
-          members: Array.from(room.members.values()),
-        });
-      }
-    });
-  });
 
   socket.on("disconnect", () => leaveWatchRoom(socket));
 

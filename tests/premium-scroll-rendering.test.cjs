@@ -309,7 +309,7 @@ test('distant catalog controls defer their panes and prime immediately for keybo
    const box=document.activeElement.getBoundingClientRect();
    return box.top>=0&&box.bottom<=innerHeight&&!document.documentElement.dataset.svScrollGlass&&!document.documentElement.dataset.svCardScrolling;
   });
-  assert.match(await last.locator('.dsMiniBtn').first().evaluate(n=>getComputedStyle(n.querySelector('.svNavMatchedLens')).backdropFilter),/blur\(10px\)/);
+  assert.equal(await last.locator('.dsMiniBtn').first().evaluate(n=>getComputedStyle(n.querySelector('.svNavMatchedLens')).backdropFilter),'none');
  }finally{await browser.close();}
 });
 
@@ -420,21 +420,21 @@ test('invisible poster actions skip backdrop work and retain glass on hover and 
     assert.equal(await artwork.locator('.dsPlayDot').evaluate(node => getComputedStyle(node).backdropFilter), 'none');
     await artwork.hover();
     await page.waitForFunction(() => document.querySelector('.dsCardQuickActions .svCardActionLens')?.dataset.swiflyRenderer === 'blur');
-    assert.match(await pane.evaluate(node => getComputedStyle(node).backdropFilter), /blur\(10px\)/, 'hovered actions retain dark native frost');
+    assert.equal(await pane.evaluate(node => getComputedStyle(node).backdropFilter),'none', 'hovered actions keep the clear material');
     await page.mouse.move(1260, 30);
     assert.equal(await pane.evaluate(node => getComputedStyle(node).backdropFilter), 'none');
     await artwork.locator('.dsThumb').focus();
     await page.keyboard.press('Tab');
     assert.equal(await page.evaluate(() => !!document.activeElement.closest('.dsCardQuickActions')), true, 'quick actions stay reachable by keyboard');
     await page.waitForFunction(() => document.querySelector('.dsCardQuickActions .svCardActionLens')?.dataset.swiflyRenderer === 'blur');
-    assert.match(await pane.evaluate(node => getComputedStyle(node).backdropFilter), /blur\(10px\)/, 'focused actions retain the same dark frost');
+    assert.equal(await pane.evaluate(node => getComputedStyle(node).backdropFilter),'none', 'focused actions keep the same clear material');
     const materials=await artwork.evaluate(art=>{
       const controls=[...art.querySelectorAll('.dsMiniBtn')];
       const panes=controls.map(control=>control.querySelector('.svCardActionLens'));
       art.querySelector('[data-watch-id]').click();art.querySelector('[data-like-id]').click();
       return controls.map((control,index)=>{const pane=control.querySelector('.svCardActionLens'),s=getComputedStyle(panes[index]);return {samePane:pane===panes[index],pressed:control.getAttribute('aria-pressed'),fill:s.backgroundColor,filter:s.backdropFilter,graphs:panes[index].querySelectorAll('svg').length};});
     });
-    for(const material of materials){assert(material.samePane,'Save and Like must update their labels without replacing the native glass');assert.equal(material.fill,'rgba(10, 13, 17, 0.82)');assert.match(material.filter,/blur\(10px\)/);assert.equal(material.graphs,0);}
+    for(const material of materials){assert(material.samePane,'Save and Like must update their labels without replacing the native glass');assert.equal(material.fill,'rgba(10, 13, 17, 0.82)');assert.equal(material.filter,'none');assert.equal(material.graphs,0);}
     assert.deepEqual(materials.slice(1).map(material=>material.pressed),['true','true'],'both selected icons reflect their real saved state');
     for(const preference of ['subtle','off','liquid']){
       await page.evaluate(value=>document.body.dataset.stGlass=value,preference);
@@ -491,7 +491,7 @@ test('movie actions stay visible and clickable during a wheel glide without rebu
     assert.equal(result.scrolling, 'true', 'exercise the live scrolling state');
     assert.equal(result.opacity, '1', 'hover controls must not disappear during scrolling');
     assert(result.clickable, 'a visible quick action must receive a real hit-tested click');
-    assert.match(result.backdrop, /blur\(10px\)/, 'moving controls retain the same native material');
+    assert.equal(result.backdrop,'none', 'moving controls retain the same clear material');
     assert(result.samePane, 'the same native pane survives the gesture');assert.equal(result.graphs,0);
     assert.equal(result.fill,'rgba(10, 13, 17, 0.82)');
     await page.waitForFunction(() => !document.documentElement.classList.contains('lenis-smooth'));
@@ -605,7 +605,7 @@ test(layout.name+' navigation and featured actions use lighter live refraction d
   } finally {await browser.close();}
 });
 
-test('mobile poster actions stop sampling the backdrop while the scene moves and restore at rest',{skip:!available&&'Chromium is not installed'},async()=>{
+test('poster actions retain the same clear material throughout motion and rest',{skip:!available&&'Chromium is not installed'},async()=>{
  const browser=await chromium.launch({headless:true});
  try{
   const page=await catalog(browser,{viewport:{width:390,height:844},isMobile:true,hasTouch:true});
@@ -617,7 +617,7 @@ test('mobile poster actions stop sampling the backdrop while the scene moves and
   // real scroll controller can otherwise settle between automation commands.
   const paint=change=>pane.evaluate((node,change)=>{if(change){const[key,value]=change;if(value===null)delete document.documentElement.dataset[key];else document.documentElement.dataset[key]=value;}const style=getComputedStyle(node);return {filter:style.backdropFilter,fill:style.backgroundColor,edge:style.boxShadow};},change);
   for(const glass of ['subtle','liquid']){
-   await page.evaluate(value=>document.body.dataset.stGlass=value,glass);const resting=await paint();assert.match(resting.filter,/blur\(10px\)/);
+   await page.evaluate(value=>document.body.dataset.stGlass=value,glass);const resting=await paint();assert.equal(resting.filter,'none');
    for(const attribute of ['svScrollGlass','svFeaturedMotion']){
     assert.deepEqual(await paint([attribute,attribute==='svScrollGlass'?'soft':'true']),{...resting,filter:'none'},'Moving controls keep their fill and edge without an extra backdrop pass');
     assert.deepEqual(await paint([attribute,null]),resting);

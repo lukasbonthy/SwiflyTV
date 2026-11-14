@@ -5,16 +5,30 @@
  const find=(root,selector)=>[...(root.matches?.(selector)?[root]:[]),...root.querySelectorAll(selector)];
  const prefs=()=>window.SwiflyLibrary?.preferences?.()||{episodeView:'grid',episodeSort:'oldest'};
  const make=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n;};
+ function seasonNavigation(root=document){
+  const sections=new Set(find(root,'#episodes,[data-episode-browser]'));const owner=root.closest?.('#episodes,[data-episode-browser]');if(owner)sections.add(owner);
+  for(const section of sections){
+   const controls=section.querySelector('.svEpisodeBrowserControls'),seasons=[...section.querySelectorAll('[data-episode-season]')];if(!controls||!seasons.length)continue;
+   let select=controls.querySelector('[data-episode-jump]');
+   if(!select){const label=make('label','','Season');select=make('select');select.dataset.episodeJump='';select.setAttribute('aria-label','Choose season');label.className='svEpisodeSeasonSelect';label.replaceChildren(document.createTextNode('Season'),select);controls.prepend(label);}
+   const keys=seasons.map(panel=>panel.dataset.episodeSeason).join(',');
+   if(select.dataset.episodeSeasons!==keys){select.replaceChildren(...seasons.map(panel=>{const option=make('option','',panel.querySelector('.svSeasonIdentity strong,summary strong')?.textContent||'Season '+panel.dataset.episodeSeason);option.value=panel.dataset.episodeSeason;return option;}));select.dataset.episodeSeasons=keys;}
+   const open=root.matches?.('[data-episode-season]')&&root.open?root:seasons.find(panel=>panel.open&&panel.dataset.episodeSeason===select.value)||seasons.find(panel=>panel.open);if(open)select.value=open.dataset.episodeSeason;
+  }
+ }
  function sync(root=document){
   const p=prefs();for(const input of find(root,'[data-episode-view]'))input.value=p.episodeView||'grid';for(const input of find(root,'[data-episode-sort]'))input.value=p.episodeSort||'oldest';
   for(const list of find(root,'[data-episode-season] .dsEpisodeChips')){list.dataset.episodeView=p.episodeView||'grid';const items=[...list.children].filter(n=>n.matches('[data-library-episode]')),ordered=[...items].sort((a,b)=>(Number(a.dataset.libraryEpisode)-Number(b.dataset.libraryEpisode))*(p.episodeSort==='newest'?-1:1));for(let i=0;i<ordered.length;i++)if(list.children[i]!==ordered[i])list.insertBefore(ordered[i],list.children[i]||null);}
  }
  function render(panel,episodes){
-  const list=panel.querySelector('.dsEpisodeChips');if(!list)return;const fragment=document.createDocumentFragment(),show=panel.dataset.episodeShow,season=panel.dataset.episodeSeason,today=new Date().toISOString().slice(0,10);
-  for(const e of episodes){if(!Number.isSafeInteger(e.episode)||e.episode<1)continue;const card=make('div','svDetailEpisodeChoice svEpisodeBrowserCard');Object.assign(card.dataset,{libraryCard:'',libraryId:show,libraryType:'tv',librarySeason:season,libraryEpisode:String(e.episode)});const future=!!e.airDate&&e.airDate>today;
-   const link=make(future?'div':'a','svDetailEpisodeTile');if(!future){link.href='/watch/tv/'+show+'?mode=movie&s='+season+'&e='+e.episode;link.setAttribute('aria-label','Play season '+season+', episode '+e.episode);}else link.setAttribute('aria-label','Season '+season+', episode '+e.episode+' airs '+e.airDate);
-   if(/^https:\/\/image\.tmdb\.org\/t\/p\/w300\/[A-Za-z0-9_.-]+$/.test(e.still||'')){const image=make('img','svEpisodeBrowserStill');image.src=e.still;image.alt='';image.loading='lazy';image.decoding='async';image.dataset.librarySpoiler='';link.append(image);}
-   const copy=make('span','svEpisodeBrowserCopy');copy.append(make('small','','EPISODE '+String(e.episode).padStart(2,'0')));const name=make('strong','',String(e.name||'Episode '+e.episode));name.dataset.librarySpoiler='';copy.append(name);const info=make('span','svEpisodeBrowserMeta',future?'Airs '+e.airDate:[e.airDate,Number(e.runtime)>0?e.runtime+' min':''].filter(Boolean).join(' · '));copy.append(info);if(e.overview){const plot=make('span','svEpisodeBrowserPlot',String(e.overview));plot.dataset.librarySpoiler='';copy.append(plot);}link.append(copy);card.append(link);
+  const list=panel.querySelector('.dsEpisodeChips');if(!list)return;const fragment=document.createDocumentFragment(),show=panel.dataset.episodeShow,season=panel.dataset.episodeSeason,today=new Date().toISOString().slice(0,10),seen=new Set();
+  list.setAttribute('role','list');list.setAttribute('aria-label','Season '+season+' episodes');
+  for(const e of episodes){if(!Number.isSafeInteger(e.episode)||e.episode<1||seen.has(e.episode))continue;seen.add(e.episode);const card=make('div','svDetailEpisodeChoice svEpisodeBrowserCard');card.setAttribute('role','listitem');Object.assign(card.dataset,{libraryCard:'',libraryId:show,libraryType:'tv',librarySeason:season,libraryEpisode:String(e.episode)});const date=/^\d{4}-\d{2}-\d{2}$/.test(e.airDate||'')?e.airDate:'',future=e.aired===false||!!date&&date>today;card.dataset.episodeAvailable=String(!future);
+   const label='season '+season+', episode '+e.episode,link=make(future?'div':'a','svDetailEpisodeTile');if(!future){link.href='/watch/tv/'+show+'?mode=movie&s='+season+'&e='+e.episode;link.setAttribute('aria-label','Play '+label+': '+String(e.name||'Episode '+e.episode));}else link.setAttribute('aria-label','Season '+season+', episode '+e.episode+(date?' airs '+date+': ':': Coming soon. ')+String(e.name||''));
+   const thumbnail=make('span','svEpisodeBrowserThumbnail');const fallback=()=>{const ordinal=make('span','svEpisodeThumbnailFallback',String(e.episode).padStart(2,'0'));ordinal.setAttribute('aria-hidden','true');thumbnail.prepend(ordinal);};
+   if(/^https:\/\/image\.tmdb\.org\/t\/p\/w300\/[A-Za-z0-9_.-]+$/.test(e.still||'')){const image=make('img','svEpisodeBrowserStill');image.src=e.still;image.alt='';image.loading='lazy';image.decoding='async';image.width=300;image.height=169;image.dataset.librarySpoiler='';image.addEventListener('error',()=>{image.remove();fallback();},{once:true});thumbnail.append(image);}else fallback();
+   const badge=make('span','svEpisodePlaybackBadge',future?'Coming soon':'▶');badge.setAttribute('aria-hidden','true');thumbnail.append(badge);if(Number(e.runtime)>0&&Number(e.runtime)<1440){const runtime=make('span','svEpisodeRuntime',Math.round(Number(e.runtime))+' min');runtime.setAttribute('aria-hidden','true');thumbnail.append(runtime);}link.append(thumbnail);
+   const copy=make('span','svEpisodeBrowserCopy');copy.append(make('small','','EPISODE '+String(e.episode).padStart(2,'0')));const name=make('strong','',String(e.name||'Episode '+e.episode));name.dataset.librarySpoiler='';copy.append(name);const info=make('span','svEpisodeBrowserMeta',future?(date?'Airs '+date:'Release date to be announced'):[date,Number(e.runtime)>0?Math.round(Number(e.runtime))+' min':''].filter(Boolean).join(' · '));copy.append(info);if(e.overview){const plot=make('span','svEpisodeBrowserPlot',String(e.overview));plot.dataset.librarySpoiler='';copy.append(plot);}link.append(copy);card.append(link);
    if(!future){const download=make('a','svDetailEpisodeDownload','↓');download.href='/download/tv/'+show+'?s='+season+'&e='+e.episode;download.dataset.svDownload='';download.dataset.svDownloadType='episode';download.setAttribute('aria-label','Download season '+season+' episode '+e.episode);download.title='Download episode';card.append(download);}fragment.append(card);
   }
   list.replaceChildren(fragment);if(!list.children.length)list.append(make('p','','No episode metadata is available yet.'));sync(panel);window.SwiflyLibrary?.renderDecorations?.(panel);
@@ -27,7 +41,7 @@
   catch(error){if(!disposed&&panel.isConnected&&pending.get(panel)===controller){status.textContent='Episode details are unavailable. ';const retry=make('button','dsSecondaryBtn','Retry');retry.type='button';retry.dataset.episodeRetry='';status.append(retry);}}
   finally{clearTimeout(timer);if(pending.get(panel)===controller){pending.delete(panel);panel.removeAttribute('aria-busy');}}
  }
- function init(root=document){if(disposed)return;for(const panel of find(root,'[data-episode-season]'))if(panel.open)load(panel);sync(root);}
+ function init(root=document){if(disposed)return;seasonNavigation(root);for(const panel of find(root,'[data-episode-season]'))if(panel.open)load(panel);sync(root);}
  // Artwork and SVG glass updates do not require a whole-page episode scan.
  const observer=new MutationObserver(records=>{
   if(disposed)return;
@@ -37,8 +51,8 @@
   if(records.some(record=>record.removedNodes.length))for(const [panel,controller]of pending)if(!panel.isConnected){pending.delete(panel);controller.abort();panel.removeAttribute('aria-busy');}
  });
  function boot(){init();observer.observe(document.body,{childList:true,subtree:true});}
- document.addEventListener('toggle',e=>{if(e.target.matches?.('[data-episode-season]')&&e.target.open)load(e.target);},true);
- document.addEventListener('change',e=>{if(e.target.matches?.('[data-episode-view],[data-episode-sort]')){window.SwiflyLibrary?.savePreferences?.({[e.target.matches('[data-episode-view]')?'episodeView':'episodeSort']:e.target.value});sync();}});
+ document.addEventListener('toggle',e=>{if(e.target.matches?.('[data-episode-season]')&&e.target.open){load(e.target);seasonNavigation(e.target);}},true);
+ document.addEventListener('change',e=>{if(e.target.matches?.('[data-episode-jump]')){const section=e.target.closest('#episodes,[data-episode-browser]'),panel=[...(section?.querySelectorAll('[data-episode-season]')||[])].find(node=>node.dataset.episodeSeason===e.target.value);if(panel){panel.open=true;load(panel);const summary=panel.querySelector('summary');if(summary){summary.tabIndex=0;summary.focus({preventScroll:true});summary.scrollIntoView?.({block:'nearest',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches||document.body.classList.contains('reduceMotion')?'auto':'smooth'});}}return;}if(e.target.matches?.('[data-episode-view],[data-episode-sort]')){window.SwiflyLibrary?.savePreferences?.({[e.target.matches('[data-episode-view]')?'episodeView':'episodeSort']:e.target.value});sync();}});
  document.addEventListener('click',e=>{if(e.target.closest?.('[data-episode-retry]'))load(e.target.closest('[data-episode-season]'));});
  window.addEventListener('swifly:library-change',()=>sync());window.addEventListener('pagehide',()=>{disposed=true;observer.disconnect();for(const [panel,controller]of pending){controller.abort();panel.removeAttribute('aria-busy');}pending.clear();});window.addEventListener('pageshow',e=>{if(e.persisted){disposed=false;boot();}});
  window.SwiflyEpisodes=Object.freeze({refresh:init});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();

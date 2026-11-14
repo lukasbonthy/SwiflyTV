@@ -1,6 +1,18 @@
 # SwiflyTV working checkpoint
 
-Updated: November 12, 2026 (America/New_York).
+Updated: November 14, 2026 (America/New_York).
+
+## Active experience overhaul (not yet published)
+
+- Tested application commit: `831773c` on `feat/swifly-experience-overhaul-20261113`, based on main `a6b91632ea39f2b68bc257a05011520fca8542b7`.
+- All requested page/behavior changes and subsequent review fixes are committed locally. Syntax/build pass. The full local suite reports 2,032 cases: 1,756 passed, zero failed, 276 browser cases skipped. Recommendation evaluation and all 20 story-route checks pass.
+- Nothing from this branch is deployed. The public production site remains on `5b5cd54beff34f0ce11d725c64e31177ddc321ad`.
+- The user explicitly authorized pushing to the public GitHub repository, hosted browser checks and deployment after those checks pass. This authorization supersedes the prior publication block.
+- Historical gate: GitHub push was rejected twice by automatic approval review. Read-only GitHub metadata confirmed `lukasbonthy/SwiflyTV` is public and the connected account has push/admin permission; the second review still requires explicit user authorization to publish source to that GitHub destination. Do not try a connector, different remote or indirect upload as a workaround. Obtain explicit push/publication authorization, then use the existing branch.
+- After authorization: push the existing branch, let `check.yml` and `experience-qa.yml` run, download and inspect the screenshot artifact, fix any actual failures or layout problems, then merge/deploy and verify the exact live code/assets. Local Chromium cannot launch because required sockets are blocked; do not claim local or physical-iPad browser verification. Local acceptance could not launch; its temporary failed artifact was restored rather than committed over prior verified evidence.
+- Configure a new dedicated `SWIFLY_KIDS_SECRET` privately in the confirmed Render service before releasing (no secret has been generated or set yet). Merge that key only, preserving all existing environment values. The Kids lock is browser scoped and enforces conservative ratings, route/source restrictions and HLS destination binding. Community creator privileges use immutable `SOCIAL_CREATOR_ACCOUNT_IDS`, never display names.
+- Review summary: `docs/SWIFLYTV_REVIEW.md`; spec and plan: `docs/superpowers/{specs,plans}/2026-11-13-experience-overhaul.md`.
+- Recovered prior v185 edits are incorporated and preserved in the git stash. All current work is in this worktree; do not restart from an older branch.
 
 ## Source and production
 

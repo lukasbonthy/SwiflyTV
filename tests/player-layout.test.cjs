@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const {JSDOM, VirtualConsole} = require('jsdom');
 const {chromium} = require('playwright-core');
-const {playerMarkup, episodePickerMarkup} = require('../ui/player');
+const {playerMarkup, episodePickerMarkup, episodeNavigationMarkup} = require('../ui/player');
 const {loadServer} = require('./ui-helpers.cjs');
 
 const executablePath = process.env.SWIFLY_TEST_BROWSER_EXECUTABLE_PATH;
@@ -24,7 +24,7 @@ let browser, api;
 // containment and legacy rules. No media is loaded; these are layout checks.
 function documentFor(embedded = false, overrides = {}, entry = false) {
   const markup = playerMarkup({...options, ...overrides, embedded,
-    episodePickerHtml:embedded ? '' : episodePickerMarkup(options)});
+    episodePickerHtml:embedded ? '' : episodePickerMarkup(options),episodeNavigationHtml:embedded?'':episodeNavigationMarkup({...options,...overrides})});
   const body = embedded
     ? '<main class="svPartyHub" data-party-media="video"><div class="sv103Player" style="width:min(100%,500px)">' + markup + '</div></main>'
     : markup;
@@ -85,13 +85,97 @@ async function assertMenuReachable(page) {
   }
 }
 
+test('Source metadata reframes the theater through intermediate sizes without stretching the film', {skip:!available && 'Chromium is not installed'}, async () => {
+ const {page,context}=await open({width:1440,height:1000});
+ let release;const stalled=new Promise(resolve=>release=resolve);
+ try{
+  await page.emulateMedia({reducedMotion:'no-preference'});
+  await page.waitForFunction(()=>document.querySelector('[data-player-root]').dataset.playerMotion==='full');
+  await page.route('**/geometry-film.mp4',async route=>{await stalled;await route.abort().catch(()=>{});});
+  const initial=await page.locator('[data-player-stage]').boundingBox();
+  await page.evaluate(async()=>{
+   await SwiflyPlayer.loadSource({status:'ok',playbackUrl:'https://swifly.test/geometry-film.mp4'});
+   const video=document.querySelector('[data-player-video]');
+   Object.defineProperties(video,{videoWidth:{value:1920,configurable:true},videoHeight:{value:800,configurable:true}});
+   video.dispatchEvent(new Event('loadedmetadata'));
+  });
+  await page.waitForTimeout(130);
+  const during=await page.locator('[data-player-stage]').boundingBox();
+  await page.waitForTimeout(730);
+  const final=await page.locator('[data-player-stage]').boundingBox();
+  assert(Math.abs(initial.height-final.height)>25,'the real movie ratio must change theater geometry');
+  assert(Math.abs(during.height-initial.height)>1&&Math.abs(during.height-final.height)>1,'the frame must visibly pass through intermediate geometry');
+  assert.equal(await page.locator('video').evaluate(video=>getComputedStyle(video).objectFit),'contain');
+  assert.equal(await page.locator('video').evaluate(video=>getComputedStyle(video).transform),'none');
+  assert(Math.abs(final.width/final.height-2.4)<.02,'the completed theater matches real metadata');
+  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'reframing cannot make the page overflow');
+  assert.notEqual(await page.locator('[data-player-root]').getAttribute('data-player-framing'),'true');
+  if(process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR){fs.mkdirSync(process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR,{recursive:true});await page.screenshot({path:path.join(process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR,'player-cinematic-wide.png'),fullPage:true});}
+ }finally{release();await context.close();}
+});
+
+test('metadata through canplay preserves continuous used player geometry at 320px, 390px, iPad and desktop widths', {skip:!available && 'Chromium is not installed',timeout:30000},async()=>{
+ for(const [name,viewport]of [['narrow',{width:320,height:800}],['phone',{width:390,height:844}],['ipad',{width:820,height:1180}],['desktop',{width:1440,height:1000}]]){
+  const {page,context}=await open(viewport);let release;const stalled=new Promise(resolve=>release=resolve);
+  try{
+   await page.emulateMedia({reducedMotion:'no-preference'});await page.waitForFunction(()=>document.querySelector('[data-player-root]').dataset.playerMotion==='full');
+   await page.route('**/sequence-film.mp4',async route=>{await stalled;await route.abort().catch(()=>{});});
+   const sequence=await page.evaluate(async()=>{
+    await SwiflyPlayer.loadSource({status:'ok',playbackUrl:'https://swifly.test/sequence-film.mp4'});
+    const stage=document.querySelector('[data-player-stage]'),video=document.querySelector('video');
+    Object.defineProperties(video,{videoWidth:{value:1920,configurable:true},videoHeight:{value:800,configurable:true},readyState:{value:3,configurable:true}});
+    const loading=stage.getBoundingClientRect().height;video.dispatchEvent(new Event('loadedmetadata'));
+    await new Promise(resolve=>setTimeout(resolve,130));
+    const before=stage.getBoundingClientRect().height;video.dispatchEvent(new Event('canplay'));const after=stage.getBoundingClientRect().height;
+    await new Promise(resolve=>setTimeout(resolve,150));const during=stage.getBoundingClientRect().height;
+    await new Promise(resolve=>setTimeout(resolve,700));const final=stage.getBoundingClientRect();
+    return {loading,before,after,during,final:final.toJSON(),objectFit:getComputedStyle(video).objectFit,transform:getComputedStyle(video).transform,temporaryHeight:stage.style.height};
+   });
+   assert(Math.abs(sequence.after-sequence.before)<2,name+': canplay starts at the currently painted loading frame instead of dropping its min-height');
+   if(Math.abs(sequence.before-sequence.final.height)>8)assert(Math.abs(sequence.during-sequence.before)>1&&Math.abs(sequence.during-sequence.final.height)>1,name+': the ready frame passes through intermediate heights');
+   assert(Math.abs(sequence.final.width/sequence.final.height-2.4)<.025,name+': the final used frame follows the actual film');
+   assert.equal(sequence.objectFit,'contain');assert.equal(sequence.transform,'none');assert.equal(sequence.temporaryHeight,'','settling releases temporary pixel geometry');
+   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),name+': reframe keeps the page within its viewport');
+   if(process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR){fs.mkdirSync(process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR,{recursive:true});await page.screenshot({path:path.join(process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR,'player-metadata-canplay-'+name+'.png'),fullPage:true});}
+  }finally{release();await context.close();}
+ }
+});
+
+test('active used-geometry transitions cancel for new sources, window size, fullscreen and reduced motion', {skip:!available && 'Chromium is not installed',timeout:30000},async()=>{
+ for(const reason of ['source','resize','fullscreen','reduced']){
+  const {page,context}=await open({width:390,height:844});let release;const stalled=new Promise(resolve=>release=resolve);
+  try{
+   await page.emulateMedia({reducedMotion:'no-preference'});await page.waitForFunction(()=>document.querySelector('[data-player-root]').dataset.playerMotion==='full');
+   await page.route('**/cancel-*.mp4',async route=>{await stalled;await route.abort().catch(()=>{});});
+   await page.evaluate(async()=>{
+    await SwiflyPlayer.loadSource({status:'ok',playbackUrl:'https://swifly.test/cancel-first.mp4'});const video=document.querySelector('video');window.cancelledGeometryVideo=video;
+    Object.defineProperties(video,{videoWidth:{value:1920,configurable:true},videoHeight:{value:800,configurable:true},readyState:{value:3,configurable:true}});video.dispatchEvent(new Event('loadedmetadata'));video.dispatchEvent(new Event('canplay'));
+   });
+   assert.equal(await page.locator('[data-player-root]').getAttribute('data-player-framing'),'true',reason+': fixture must be actively reframing');
+   if(reason==='source')await page.evaluate(()=>SwiflyPlayer.loadSource({status:'ok',playbackUrl:'https://swifly.test/cancel-next.mp4'}));
+   if(reason==='resize')await page.setViewportSize({width:360,height:844});
+   if(reason==='fullscreen'){await page.locator('[data-player-fullscreen]').click();await page.waitForFunction(()=>!!document.fullscreenElement);}
+   if(reason==='reduced')await page.emulateMedia({reducedMotion:'reduce'});
+   await page.waitForFunction(()=>document.querySelector('[data-player-root]').dataset.playerFraming!=='true');
+   const geometry=await page.locator('[data-player-stage]').evaluate(stage=>({height:stage.style.height,width:stage.style.width,minHeight:stage.style.minHeight,outerWidth:stage.closest('.svPlayerTheater').style.width,fit:getComputedStyle(stage.querySelector('video')).objectFit}));
+   assert.deepEqual(geometry,{height:'',width:'',minHeight:'',outerWidth:'',fit:'contain'},reason+': cancellation releases every temporary dimension');
+   if(reason==='source'){
+    await page.evaluate(()=>{Object.defineProperty(cancelledGeometryVideo,'videoHeight',{value:2560,configurable:true});cancelledGeometryVideo.dispatchEvent(new Event('loadedmetadata'));});
+    assert.equal(await page.locator('[data-player-root]').evaluate(root=>root.style.getPropertyValue('--player-aspect')),'2.4','detached metadata cannot restart old geometry');
+   }
+   if(reason==='fullscreen'){const box=await page.locator('[data-player-stage]').boundingBox();assert.equal(box.width,390);assert.equal(box.height,844);}
+  }finally{release();await context.close();}
+ }
+});
+
 async function wavePixels(page,burst=false) {
-  return page.locator('[data-player-waves] canvas').evaluate((canvas,burst) => {
+  return page.locator('[data-player-waves] canvas').evaluate((canvas,burst)=>{
     if(burst)canvas.closest('.svPlayerPage').dispatchEvent(new CustomEvent('swiflyplayer:play-intent'));
-    const pixels=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
-    let hash=2166136261,green=0,minX=canvas.width,minY=canvas.height,maxX=0,maxY=0;
-    for(let i=0;i<pixels.length;i+=4){hash=Math.imul(hash^pixels[i+1],16777619);if(pixels[i+1]>40&&pixels[i+1]>pixels[i]*2&&pixels[i+1]>pixels[i+2]*1.4){green++;const x=(i/4)%canvas.width,y=Math.floor(i/4/canvas.width);minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);}}
-    return {hash:hash>>>0,green,width:canvas.width,height:canvas.height,bounds:[minX,minY,maxX,maxY]};
+    const p=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
+    let hash=2166136261,lit=0,minX=canvas.width,minY=canvas.height,maxX=0,maxY=0;
+    for(let i=0;i<p.length;i+=4){hash=Math.imul(hash^p[i]^p[i+1]^p[i+2],16777619);if(Math.max(p[i],p[i+1],p[i+2])>40){lit++;const x=(i/4)%canvas.width,y=Math.floor(i/4/canvas.width);minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);}}
+    const field=canvas.parentElement.getBoundingClientRect(),film=canvas.closest('.svPlayerPage').querySelector('[data-player-stage]').getBoundingClientRect();
+    return {hash:hash>>>0,lit,width:canvas.width,height:canvas.height,bounds:[minX,minY,maxX,maxY],origin:[(film.left+film.width/2-field.left)/field.width*canvas.width,(film.top+film.height/2-field.top)/field.height*canvas.height]};
   },burst);
 }
 
@@ -114,29 +198,28 @@ test('Theater entry dissolves once from black while the live picture keeps its g
   }finally{await context.close();}
 });
 
-test('Green grid ripples animate behind stable, usable movie frames on desktop and phones', {skip:!available && 'Chromium is not installed'}, async () => {
+test('Movie-driven grid ripples animate behind stable frames on desktop and phones', {skip:!available && 'Chromium is not installed'}, async () => {
   for(const viewport of [{width:1440,height:900},{width:390,height:844}]){
     const {page,context}=await open(viewport,false,{type:'movie'});
     try{
-      assert.equal(await page.locator('[data-player-waves] canvas').count(),1,'the player needs its own green ripple backdrop');
+      assert.equal(await page.locator('[data-player-waves] canvas').count(),1,'the player needs its own ripple backdrop');
       await page.emulateMedia({reducedMotion:'no-preference'});
       await page.addScriptTag({content:asset('player/waves.js')});
       assert.equal(await page.locator('[data-player-waves]').getAttribute('data-wave-state'),'idle');
       const before=await wavePixels(page,true),film=await page.locator('video').boundingBox();
-      assert(before.bounds[0]>before.width*.35&&before.bounds[2]<before.width*.65&&before.bounds[1]>before.height*.35&&before.bounds[3]<before.height*.65,'the first ripple must originate at the center, with no old ring at the edges');
-      await page.waitForFunction(()=>{const c=document.querySelector('[data-player-waves] canvas'),p=c.getContext('2d').getImageData(0,0,12,c.height).data;let green=0;for(let i=0;i<p.length;i+=4)if(p[i+1]>40&&p[i+1]>p[i]*2&&p[i+1]>p[i+2]*1.4)green++;return green>100;},null,{polling:50,timeout:6000});
+      assert(before.bounds[0]>before.origin[0]-before.width*.15&&before.bounds[2]<before.origin[0]+before.width*.15&&before.bounds[1]>before.origin[1]-before.height*.15&&before.bounds[3]<before.origin[1]+before.height*.15,'the first ripple must originate behind the film, with no old ring at the edges');
+      await page.waitForFunction(()=>{const c=document.querySelector('[data-player-waves] canvas'),p=c.getContext('2d').getImageData(0,0,12,c.height).data;let lit=0;for(let i=0;i<p.length;i+=4)if(Math.max(p[i],p[i+1],p[i+2])>40)lit++;return lit>100;},null,{polling:50,timeout:6000});
       const after=await wavePixels(page);
-      assert(before.green>100,'actual green squares must be rendered, including without poster artwork');
+      assert(before.lit>100,'the center burst must paint visible tiles even without artwork');
+      await page.evaluate(()=>{document.querySelector('.svPlayerPage').dataset.playerMotion='reduce';});
       const shown=await page.screenshot();
-      const visibleGreen=await page.evaluate(async encoded=>{
-        const image=new Image();image.src='data:image/png;base64,'+encoded;await image.decode();
-        const view=document.createElement('canvas');view.width=image.width;view.height=image.height;
-        const context=view.getContext('2d');context.drawImage(image,0,0);
-        const pixels=context.getImageData(0,0,view.width,view.height).data;let green=0;
-        for(let i=0;i<pixels.length;i+=4)if(pixels[i+1]>40&&pixels[i+1]>pixels[i]*2&&pixels[i+1]>pixels[i+2]*1.4)green++;
-        return green;
-      },shown.toString('base64'));
-      assert(visibleGreen>100,'the green pattern must actually be visible around the movie, above the page background');
+      await page.locator('[data-player-waves] canvas').evaluate(canvas=>{canvas.style.transition='none';canvas.style.opacity='0';});
+      const hidden=await page.screenshot();
+      const visible=await page.evaluate(async images=>{
+        const pixels=async encoded=>{const image=new Image();image.src='data:image/png;base64,'+encoded;await image.decode();const view=document.createElement('canvas');view.width=image.width;view.height=image.height;const context=view.getContext('2d');context.drawImage(image,0,0);return context.getImageData(0,0,view.width,view.height).data;};
+        const [a,b]=await Promise.all(images.map(pixels));let changed=0;for(let i=0;i<a.length;i+=4)if(Math.abs(a[i]-b[i])+Math.abs(a[i+1]-b[i+1])+Math.abs(a[i+2]-b[i+2])>35)changed++;return changed;
+      },[shown.toString('base64'),hidden.toString('base64')]);
+      assert(visible>100,'the field must be visibly painted around the opaque film');
       assert.notEqual(after.hash,before.hash,'the ripple field must move');
       assert(before.width<=1280&&before.height<=900,'the decorative bitmap must have a bounded rendering cost');
       assert.deepEqual(await page.locator('video').boundingBox(),film,'background motion must not move or resize the picture');
@@ -166,13 +249,14 @@ test('Real movie frames tint spatial ripple patches after Play without changing 
     await page.addScriptTag({content:asset('player/waves.js')});
     assert.equal(await page.locator('[data-player-waves]').getAttribute('data-wave-state'),'idle','even ready frames wait for Play intent');
     await page.waitForFunction(()=>SwiflyPlayer.getState().ready&&!document.querySelector('[data-player-play]').disabled);
-    await page.evaluate(()=>document.querySelector('.svPlayerPage').addEventListener('swiflyplayer:play-intent',()=>{const c=document.querySelector('[data-player-waves] canvas'),p=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let green=0,left=c.width,right=0;for(let i=0;i<p.length;i+=4)if(p[i+1]>40&&p[i+1]>p[i]*2){green++;left=Math.min(left,(i/4)%c.width);right=Math.max(right,(i/4)%c.width);}__waveFrameFixture.firstBurst={green,left,right,width:c.width};},{once:true}));
+    await page.evaluate(()=>document.querySelector('.svPlayerPage').addEventListener('swiflyplayer:play-intent',()=>{const c=document.querySelector('[data-player-waves] canvas'),p=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let green=0,left=c.width,right=0;for(let i=0;i<p.length;i+=4)if(Math.max(p[i],p[i+1],p[i+2])>40){green++;left=Math.min(left,(i/4)%c.width);right=Math.max(right,(i/4)%c.width);}__waveFrameFixture.firstBurst={green,left,right,width:c.width};},{once:true}));
     await page.locator('[data-player-play]').click();
     const first=await page.evaluate(()=>__waveFrameFixture.firstBurst);assert(first?.green>100&&first.left>first.width*.35&&first.right<first.width*.65,'the visible Play button must emit a center burst at its own gesture');
-    await page.waitForFunction(()=>{const c=__waveFrameFixture.read();return c.warmLeft>100&&c.coolRight>100&&c.green>100;},null,{polling:100,timeout:7000});
+    await page.waitForFunction(()=>{const c=__waveFrameFixture.read();return c.warmLeft>100&&c.coolRight>100&&c.green===0;},null,{polling:100,timeout:7000});
     await page.evaluate(()=>{__waveFrameFixture.swap=true;});
-    await page.waitForFunction(()=>{const c=__waveFrameFixture.read();return c.coolLeft>100&&c.warmRight>100&&c.green>100;},null,{polling:100,timeout:7000});
+    await page.waitForFunction(()=>{const c=__waveFrameFixture.read();return c.coolLeft>100&&c.warmRight>100&&c.green===0;},null,{polling:100,timeout:7000});
     assert.equal(await page.locator('[data-player-video]').evaluate(video=>!video.paused&&video.currentTime>0),true,'ambient sampling must leave the actual movie playing');
+    assert(await page.evaluate(()=>{const field=document.querySelector('[data-player-waves]').getBoundingClientRect(),head=document.querySelector('.svPlayerPageHead').getBoundingClientRect(),below=document.querySelector('.svPlayerBelow').getBoundingClientRect();return field.top<=head.top&&field.bottom>=below.bottom;}),'the ripple layer must continue behind both player header areas');
   }finally{release();await context.close();}
 });
 
@@ -211,7 +295,7 @@ test('Phone skip and song actions stay inside the film and do not overlap', {ski
 test('Ripple rendering stops for reduced motion, disabled effects, and a cached page lifecycle', {skip:!available && 'Chromium is not installed'}, async () => {
   const {page,context}=await open({width:1280,height:800});
   try{
-    assert.equal(await page.locator('[data-player-waves] canvas').count(),1,'the player needs its own green ripple backdrop');
+    assert.equal(await page.locator('[data-player-waves] canvas').count(),1,'the player needs its own ripple backdrop');
     await page.addScriptTag({content:asset('player/waves.js')});
     await page.evaluate(()=>document.querySelector('.svPlayerPage').dispatchEvent(new CustomEvent('swiflyplayer:play-intent')));
     await page.waitForFunction(()=>document.querySelector('[data-player-waves]')?.dataset.waveState==='still');
@@ -476,14 +560,16 @@ test('A playback error remains readable and Retry reachable in very short landsc
   }
 });
 
-test('Mobile episode navigation keeps its glass pane visible while hiding only the text label', {skip:!available && 'Chromium is not installed'}, async () => {
+test('Mobile episode navigation stays opaque and unregistered while primary player navigation keeps glass', {skip:!available && 'Chromium is not installed'}, async () => {
   const {page,context}=await open({width:390,height:844});
   try {
     for(const file of ['liquid-glass/liquid-glass.js','liquid-glass/surfaces.js'])await page.addScriptTag({content:asset(file)});
     const step=page.locator('.svPlayerEpisodeStep').first();await step.scrollIntoViewIfNeeded();
-    await page.waitForFunction(()=>document.querySelector('.svPlayerEpisodeStep>.svLiquidPane'));
-    const pane=await step.locator(':scope>.svLiquidPane').evaluate(node=>{const r=node.getBoundingClientRect();return {display:getComputedStyle(node).display,width:r.width,height:r.height};});
-    assert.notEqual(pane.display,'none','the mobile label rule must not hide the glass pane');
-    assert(pane.width>=44&&pane.height>=44,'episode navigation needs a visible 44px glass surface');
+    await step.focus();
+    assert.equal(await page.locator('.svPlayerEpisodeStep>.svLiquidPane').count(),0,'episode controls never allocate optical panes');
+    const material=await step.evaluate(node=>{const r=node.getBoundingClientRect(),s=getComputedStyle(node);return {background:s.backgroundColor,filter:s.backdropFilter,width:r.width,height:r.height};});
+    assert.equal(material.filter,'none');assert.match(material.background,/^rgb\(/,'matte episode controls use an opaque face');
+    assert(material.width>=44&&material.height>=44,'episode navigation keeps its 44px touch target');
+    assert.equal(await page.locator('.svPlayerBack>.svLiquidPane').count(),1,'the primary back action retains glass');
   }finally{await context.close();}
 });

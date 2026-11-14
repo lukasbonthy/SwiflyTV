@@ -406,8 +406,26 @@
       }
       if (socket && !socket.connected) socket.connect();else if (!socket) {$('[data-study-connection]').textContent = 'Rooms unavailable · music and focus work offline';renderRooms();}
     }
-    function setTab(id, focus = false) {if (!$$('[data-study-tab]').some(tab => tab.dataset.studyTab === id)) return;for (const tab of $$('[data-study-tab]')) {const selected = tab.dataset.studyTab === id;tab.setAttribute('aria-selected', String(selected));tab.tabIndex = selected ? 0 : -1;doc.getElementById(tab.getAttribute('aria-controls')).hidden = !selected;if (focus && selected) tab.focus();}}
-    function back() {if (!root.classList.contains('studyFocusView')) return false;root.classList.remove('studyFocusView');setPressed($('[data-study-immersive]'), false);$('[data-study-immersive]').textContent = 'Focus view';$('[data-study-immersive]').focus();return true;}
+    function closeTools(restoreFocus = true) {
+      const workspace = $('[data-study-workspace]');if (!workspace || workspace.hidden) return false;
+      const selected = $('[data-study-tab][aria-selected="true"]');workspace.hidden = true;root.classList.remove('studyToolsOpen');
+      for (const tab of $$('[data-study-tab]')) tab.setAttribute('aria-selected', 'false');
+      if (restoreFocus) selected?.focus();return true;
+    }
+    function setTab(id, focus = false, toggle = false) {
+      const selected = $$('[data-study-tab]').find(tab => tab.dataset.studyTab === id);if (!selected) return;
+      const workspace = $('[data-study-workspace]');
+      if (toggle && workspace && !workspace.hidden && selected.getAttribute('aria-selected') === 'true') {closeTools();return;}
+      if (root.classList.contains('studyFocusView')) {root.classList.remove('studyFocusView');setPressed($('[data-study-immersive]'), false);$('[data-study-immersive]').textContent = 'Focus view';}
+      if (workspace) workspace.hidden = false;root.classList.add('studyToolsOpen');
+      $('[data-study-tools-title]').textContent = selected.textContent.trim();
+      for (const tab of $$('[data-study-tab]')) {const active = tab === selected;tab.setAttribute('aria-selected', String(active));tab.tabIndex = active ? 0 : -1;doc.getElementById(tab.getAttribute('aria-controls')).hidden = !active;}
+      if (focus) selected.focus();
+    }
+    function back() {
+      if (root.classList.contains('studyFocusView')) {root.classList.remove('studyFocusView');setPressed($('[data-study-immersive]'), false);$('[data-study-immersive]').textContent = 'Focus view';$('[data-study-immersive]').focus();return true;}
+      return closeTools();
+    }
     function renderAll() {selectScene(state.scene);selectTrack(state.track);renderTasks();renderSetups();renderStats();renderTimer();renderClock();applyVisuals();renderRooms();updateShare();}
     function releaseLocalScenes() {for (const url of urls) win.URL.revokeObjectURL(url);urls.clear();localScene = null;scenes = catalog ? [...catalog.scenes] : [];}
     function stopOwner() {
@@ -433,7 +451,8 @@
     }
     on(root, 'click', async event => {
       const button = event.target.closest('button');if (!button || !root.contains(button)) return;
-      if (button.hasAttribute('data-study-tab')) {setTab(button.dataset.studyTab);return;}
+      if (button.hasAttribute('data-study-tab')) {setTab(button.dataset.studyTab, false, true);return;}
+      if (button.hasAttribute('data-study-close-tools')) {closeTools();return;}
       if (!canUse()) {status('Your profile and collection must finish loading before using Study.', true);return;}
       if (button.hasAttribute('data-study-play')) {if (audio.paused) playMusic();else {playbackGeneration++;audio.pause();renderPlayback();}}
       else if (button.hasAttribute('data-study-track')) {selectTrack(button.dataset.studyTrack, true);persist();}
@@ -444,6 +463,7 @@
       else if (button.hasAttribute('data-study-shuffle') || button.hasAttribute('data-study-repeat')) {const key = button.hasAttribute('data-study-shuffle') ? 'shuffle' : 'repeat';state[key] = !state[key];renderPlayback();persist();}
       else if (button.hasAttribute('data-study-scene')) {selectScene(button.dataset.studyScene, true);persist();}
       else if (button.hasAttribute('data-study-night') || button.hasAttribute('data-study-clock-toggle')) {const key = button.hasAttribute('data-study-night') ? 'night' : 'clock';state[key] = !state[key];applyVisuals();updateShare();persist();}
+      else if (button.hasAttribute('data-study-timer-toggle')) {const timerPanel = $('.studyTimer');timerPanel.hidden = !timerPanel.hidden;setPressed(button, !timerPanel.hidden);}
       else if (button.hasAttribute('data-study-immersive')) {root.classList.toggle('studyFocusView');setPressed(button, root.classList.contains('studyFocusView'));button.textContent = root.classList.contains('studyFocusView') ? 'Exit focus view' : 'Focus view';}
       else if (button.hasAttribute('data-study-fullscreen')) {try {if (doc.fullscreenElement) await doc.exitFullscreen();else if (root.requestFullscreen) await root.requestFullscreen();else status('Fullscreen is unavailable in this browser.');} catch {status('Fullscreen could not open in this browser.', true);}}
       else if (button.hasAttribute('data-study-duration')) timerSet(button.dataset.studyDuration);

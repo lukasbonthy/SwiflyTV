@@ -13,7 +13,7 @@ body.svCleanShell .svPlayerPage[data-party-active="true"] { max-width:1640px; }
 .svPlayerAmbient { position:absolute; z-index:-1; inset:24px 0 auto; height:850px; max-height:90vh; overflow:hidden; pointer-events:none; opacity:.28; filter:blur(32px) saturate(1.15); -webkit-mask-image:radial-gradient(ellipse 50% 50% at 50% 50%,#000 8%,#000a 42%,transparent 100%); mask-image:radial-gradient(ellipse 50% 50% at 50% 50%,#000 8%,#000a 42%,transparent 100%); }
 .svPlayerAmbient img { width:100%; height:100%; object-fit:cover; }
 /* Pixel-grid ripples stay behind the opaque film and all of its controls. */
-.svPlayerWaves { position:absolute; z-index:-1; top:0; left:50%; width:100vw; height:min(1100px,100svh); transform:translateX(-50%); overflow:clip; contain:strict; pointer-events:none; background:radial-gradient(ellipse at 20% 25%,#003a1b44,transparent 65%),#000; -webkit-mask-image:linear-gradient(#000 80%,transparent); mask-image:linear-gradient(#000 80%,transparent); }
+.svPlayerWaves { position:absolute; z-index:-1; top:0; left:50%; width:100vw; height:100%; transform:translateX(-50%); overflow:clip; contain:strict; pointer-events:none; background:#000; -webkit-mask-image:linear-gradient(#000 92%,transparent); mask-image:linear-gradient(#000 92%,transparent); }
 .svPlayerWaves[data-wave-state] { background:#000; }
 .svPlayerWaves[hidden] { display:none !important; }
 .svPlayerWaves canvas { display:block; width:100%; height:100%; opacity:0; transition:opacity .6s cubic-bezier(.2,.65,.3,1); }
@@ -54,6 +54,13 @@ body.svCleanShell .svPlayer:is([data-player-state="ready"],[data-player-state="b
 /* Match the canvas to the picture as height becomes the limiting dimension.
    The film retains its complete frame instead of sitting in extra side mattes. */
 .svPlayerPage .svPlayerStage { width:min(100%,calc(var(--player-theater-height) * var(--player-aspect))); margin-inline:auto; }
+/* Source metadata opens the actual cinema frame in one unbroken movement.
+   This is enabled only for a changed movie ratio, never during scrolling or
+   window resizing. The video itself always retains its original proportions. */
+.svPlayer[data-player-framing="true"] .svPlayerTheater { transition:width .7s cubic-bezier(.22,.72,.15,1); }
+.svPlayer[data-player-framing="true"] .svPlayerStage { transition:width .7s cubic-bezier(.22,.72,.15,1),height .7s cubic-bezier(.22,.72,.15,1); }
+.svPlayer[data-player-motion="reduce"] :is(.svPlayerTheater,.svPlayerStage),.svPlayerStage:fullscreen { transition:none !important; }
+@media(prefers-reduced-motion:reduce) { .svPlayer :is(.svPlayerTheater,.svPlayerStage) { transition:none !important; } }
 .svPlayerScene { position:absolute; inset:0; width:100%; height:100%; border-radius:inherit; object-fit:cover; opacity:.58; pointer-events:none; }
 .svPlayerVideo { display:block; position:absolute; inset:0; width:100%; height:100%; max-width:none; max-height:none; border-radius:inherit; background:#000; object-fit:contain; object-position:center; animation:none !important; transition:none !important; transform:none !important; }
 .svPlayer:is([data-player-state="loading"],[data-player-state="waiting"],[data-player-state="error"]) .svPlayerVideo { opacity:.04; }
@@ -215,17 +222,17 @@ body.svCleanShell .svPlayerPartyButton { display:flex; align-items:center; justi
 .svPlayerEpisodePicker { margin-top:28px; }
 .svPlayerEpisodePicker :is(select,a,button) { max-width:100%; }
 body.svCleanShell .svPlayerEpisodeName { margin:8px 0 0 !important; font-size:calc(14px * var(--st-ui-scale, 1)) !important; color:#d7e1ee !important; line-height:1.5 !important; overflow-wrap:anywhere; }
-body.svCleanShell .svPlayerPage .svPlayerEpisodes.svGlassPanel { --sv-surface-blur:12px; --sv-glass-tint:.24; padding:30px; border-radius:28px !important; background:linear-gradient(135deg,#ffffff08,transparent 55%),#080c143d !important; border-color:#ffffff1a !important; box-shadow:inset 0 1px #ffffff1c,0 15px 50px #0003 !important; }
+body.svCleanShell .svPlayerPage .svPlayerEpisodes { padding:30px; border:1px solid #273140; border-radius:22px !important; background:#0d131d !important; box-shadow:none !important; -webkit-backdrop-filter:none !important; backdrop-filter:none !important; }
 .svPlayerEpisodesHead { display:flex; justify-content:space-between; align-items:center; gap:24px; }
 .svPlayerEpisodesHead > div { min-width:0; }
 body.svCleanShell .svPlayerEpisodes h2 { display:flex; align-items:center; flex-wrap:wrap; gap:13px; margin:9px 0 0 !important; color:#f4f8fc !important; font-size:calc(29px * var(--st-ui-scale, 1)) !important; line-height:1.2 !important; letter-spacing:-.04em !important; font-weight:500 !important; }
 .svPlayerEpisodeSeason { display:inline-flex; padding:5px 9px; border:1px solid #ffffff16; border-radius:8px; color:#bac7d6; font-size:calc(10px * var(--st-ui-scale, 1)); letter-spacing:0; line-height:1.4; }
 body.svCleanShell .svPlayerEpisodesHead p { margin:10px 0 0 !important; color:#98a7ba !important; font-size:calc(12px * var(--st-ui-scale, 1)) !important; line-height:1.6 !important; overflow-wrap:anywhere; }
 .svPlayerEpisodeSteps { display:flex; align-items:center; gap:8px; flex:0 0 auto; }
-body.svCleanShell .svPlayerEpisodeStep { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:10px 14px !important; color:#e2ebf5 !important; font-size:calc(12px * var(--st-ui-scale, 1)) !important; border-radius:16px !important; text-decoration:none; white-space:nowrap; }
+body.svCleanShell .svPlayerEpisodeStep { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:10px 14px !important; color:#e2ebf5 !important; font-size:calc(12px * var(--st-ui-scale, 1)) !important; border-radius:16px !important; text-decoration:none; white-space:nowrap; background:#192333 !important; border:1px solid #344255 !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; box-shadow:none !important; }
 .svPlayerEpisodeStep .svPlayerIcon { width:16px; height:16px; flex-basis:16px; }
 body.svCleanShell .svPlayerEpisodeStep:disabled { opacity:.35; cursor:default; }
-.svPlayerEpisodeNavigation { margin:16px 0 0; }
+.svPlayerEpisodeNavigation { margin:16px 0 0; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
 .svPlayerEpisodeNavigation .svPlayerEpisodeSteps { justify-content:space-between; gap:12px; }
 body.svCleanShell .svPlayerEpisodeNavigation .svPlayerEpisodeStep { flex:1; width:auto; min-width:0; max-width:220px; min-height:48px; padding:13px 16px !important; }
 .svPlayerEpisodeNavigation .svPlayerEpisodeStep > span:not(.svLiquidPane) { display:inline-flex; }
@@ -233,6 +240,8 @@ body.svCleanShell .svPlayerEpisodeNavigation .svPlayerEpisodeStep { flex:1; widt
 .svPlayerEpisodeNavigation [aria-disabled="true"] { opacity:.45; cursor:default; }
 .svPlayerSeasons { display:flex; gap:8px; margin-top:26px; padding:3px 3px 17px; overflow-x:auto; scrollbar-width:thin; scrollbar-color:#ffffff38 transparent; scroll-padding:4px; }
 body.svCleanShell .svPlayerSeason { display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto; gap:12px; min-height:44px; padding:10px 14px !important; border-radius:14px !important; font-size:calc(12px * var(--st-ui-scale, 1)) !important; text-decoration:none; white-space:nowrap; }
+body.svCleanShell .svPlayerEpisodes .svPlayerSeason { background:#192333 !important; border:1px solid #344255 !important; color:#dbe5f2 !important; }
+body.svCleanShell .svPlayerEpisodes .svPlayerSeason[aria-current="true"] { background:#293c54 !important; border-color:#98b3d8 !important; }
 .svPlayerSeasonCount { padding-left:11px; border-left:1px solid #ffffff24; color:#98a6b8; font-size:calc(10px * var(--st-ui-scale, 1)); font-weight:400; }
 .svPlayerSeason[aria-current="true"] .svPlayerSeasonCount { color:#c8d7e6; }
 .svPlayerEpisodeGrid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin-top:6px; max-height:580px; overflow-y:auto; padding:5px 5px 8px; scrollbar-width:thin; scrollbar-color:#ffffff38 transparent; overscroll-behavior:contain; }
@@ -304,7 +313,7 @@ html:has(.svPlayerStage:fullscreen) { scrollbar-gutter:auto; }
   .svPlayerTogether > span { font-size:calc(10px * var(--st-ui-scale, 1)); }
   body.svCleanShell .svPlayerPartyButton { min-height:44px; padding:10px 12px !important; border-radius:14px !important; }
   .svPlayerEpisodePicker { margin-top:20px; }
-  body.svCleanShell .svPlayerPage .svPlayerEpisodes.svGlassPanel { padding:22px 14px 16px; border-radius:22px !important; }
+  body.svCleanShell .svPlayerPage .svPlayerEpisodes { padding:22px 14px 16px; border-radius:22px !important; }
   .svPlayerEpisodesHead { align-items:flex-start; gap:13px; padding:0 5px; }
   .svPlayerEpisodeSteps { gap:6px; }
   body.svCleanShell .svPlayerEpisodeStep { width:44px; min-width:44px; min-height:44px; padding:10px !important; border-radius:13px !important; }

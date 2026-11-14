@@ -200,7 +200,7 @@ body.svCleanShell:has([data-sv-rail-moving="true"]) .svAuroraRibbon {
 
 /* On a phone, every visible poster has three dark action faces. Their .82
    tint and edge already paint the same readable control during a swipe;
-   keep those pixels and omit the separate backdrop pass until motion rests. */
+   keep those pixels and the same clear backdrop in every motion state. */
 @media (max-width:860px), (hover:none) and (pointer:coarse) {
   html:is([data-sv-scroll-glass="soft"],[data-sv-featured-motion="true"]) body.svCleanShell .dsCardQuickActions .dsMiniBtn > .svCardActionLens.svLiquidPane,
   body.svCleanShell:has(.svDetailDialog:is([data-sv-detail-state="opening"],[data-sv-detail-state="closing"]),[data-sv-rail-moving="true"]) .dsCardQuickActions .dsMiniBtn > .svCardActionLens.svLiquidPane {
