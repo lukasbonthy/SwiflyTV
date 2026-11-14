@@ -3,7 +3,7 @@ const test=require('node:test'),assert=require('node:assert/strict');
 const {browser,cleanup}=require('./ui-helpers.cjs');
 test.afterEach(cleanup);
 
-function field({height=800,film=null}={}){
+function field({height=800,film=null,kids=false}={}){
  const env=browser('<main class="svPlayerPage"><div data-player-waves><canvas></canvas></div><div data-player-stage><video data-player-video></video></div></main>'),w=env.window,d=w.document;
  const root=d.querySelector('main'),backdrop=d.querySelector('[data-player-waves]'),canvas=d.querySelector('canvas'),video=d.querySelector('video');
  let now=0,blocked=false,reads=0,src='/movie.mp4',paused=false,time=0,ready=true,measures=0,movieColors=[[245,32,24],[25,75,245]];
@@ -13,6 +13,7 @@ function field({height=800,film=null}={}){
  w.HTMLCanvasElement.prototype.getContext=function(){if(this===canvas)return paint;const sample=this;return {drawImage(){},getImageData(){reads++;if(blocked)throw new w.DOMException('Protected frame','SecurityError');const data=new Uint8ClampedArray(sample.width*sample.height*4);for(let y=0;y<sample.height;y++)for(let x=0;x<sample.width;x++){const i=(y*sample.width+x)*4;data.set([...movieColors[x<sample.width/2?0:1],255],i);}return {data};}};};
  Object.defineProperties(video,{readyState:{get:()=>ready?4:0},videoWidth:{get:()=>1280},videoHeight:{get:()=>720},currentSrc:{get:()=>src},paused:{get:()=>paused},currentTime:{get:()=>time}});
  if(film)d.querySelector('[data-player-stage]').getBoundingClientRect=()=>film;
+ if(kids)w.SwiflyKids={revalidatePlayer(){throw new Error('Only the player controller verifies playback access');}};
  w.boot('player/waves.js');
  return {...env,root,backdrop,canvas,pixels,rects,frameColors(left,right=left){movieColors=[left,right];},get reads(){return reads;},get measures(){return measures;},play(){root.dispatchEvent(new w.CustomEvent('swiflyplayer:play-intent',{bubbles:true}));},advance(ms){const end=now+ms;while(now<end){now+=16;if(!paused)time+=.016;w.flush(now);}},block(value){blocked=value;},source(value){src=value;},pause(){paused=true;},ready(value){ready=value;},hide(value){Object.defineProperty(d,'hidden',{configurable:true,value});d.dispatchEvent(new w.Event('visibilitychange'));}};
 }
@@ -41,6 +42,27 @@ test('paused, hidden and reduced-motion playback stop unnecessary frame reads',(
  const f=field();f.play();f.advance(800);f.pause();f.advance(600);const paused=f.reads;f.advance(700);assert.equal(f.reads,paused,'a paused frame must not be read repeatedly');
  f.hide(true);const hidden=f.reads;f.advance(500);assert.equal(f.reads,hidden);assert.equal(f.window.frameCount(),0);
  f.hide(false);f.window.reduceMotion(true);const reduced=f.reads;f.advance(500);assert.equal(f.reads,reduced);assert.equal(f.window.frameCount(),0);f.finish();
+});
+
+test('cached ripple work waits for the guarded player to resume after playback verification',()=>{
+ for(const signal of ['resume','state']){
+  const f=field({kids:true}),w=f.window;f.play();f.advance(800);
+  w.dispatchEvent(new w.PageTransitionEvent('pagehide',{persisted:true}));
+  assert.equal(f.backdrop.dataset.waveState,'still');assert.equal(w.frameCount(),0);
+  w.dispatchEvent(new w.PageTransitionEvent('pageshow',{persisted:true}));f.advance(200);
+  assert.equal(f.backdrop.dataset.waveState,'still','a cached page cannot resume decoration before the player verifies access');
+  f.root.dispatchEvent(new w.CustomEvent('swiflyplayer:state',{detail:{ready:false,status:'error',source:''}}));f.advance(200);
+  assert.equal(f.backdrop.dataset.waveState,'still','a denied or failed check keeps ripple work suspended');assert.equal(w.frameCount(),0);
+  f.root.dispatchEvent(new w.CustomEvent('swiflyplayer:'+signal,{detail:{ready:true,status:'ready',source:'/movie.mp4'}}));
+  assert.equal(f.backdrop.dataset.waveState,'live','the player\'s allowed lifecycle resumes the existing field');
+  const reads=f.reads;f.advance(300);assert(f.reads>reads,'verified return resumes bounded movie-frame sampling');f.finish();
+ }
+});
+
+test('a cached standalone ripple resumes without inventing a second Play intent',()=>{
+ const f=field();f.play();f.advance(400);
+ f.window.dispatchEvent(new f.window.PageTransitionEvent('pagehide',{persisted:true}));assert.equal(f.window.frameCount(),0);
+ f.window.dispatchEvent(new f.window.PageTransitionEvent('pageshow',{persisted:true}));assert.equal(f.backdrop.dataset.waveState,'live');assert.equal(f.window.frameCount(),1);f.finish();
 });
 
 test('replacing a movie drops its old frame colors while the new video is loading',()=>{

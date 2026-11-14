@@ -5,8 +5,20 @@ const path = require('node:path');
 const { chromium } = require('playwright-core');
 const { loadServer } = require('./ui-helpers.cjs');
 const {readShellStyle}=require('../lib/shell-styles');
+const artworkEntry = require('../ui/artwork-entry');
 const asset = name => readShellStyle('/assets/'+name)??fs.readFileSync(path.join(__dirname, '../public', name), 'utf8');
 const available = fs.existsSync(chromium.executablePath()) || fs.existsSync(chromium.executablePath().replace(/chromium-(\d+)\/chrome-linux\/chrome$/, 'chromium_headless_shell-$1/chrome-linux/headless_shell'));
+
+async function artworkEvidence(page,name,details){
+ const dir=process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR;
+ if(dir)fs.mkdirSync(dir,{recursive:true});
+ const screenshot=await page.screenshot({scale:'device',...(dir?{path:path.join(dir,name+'.png')}:{})});
+ if(dir){
+  const state=await page.evaluate(()=>{const style=selector=>{const node=document.querySelector(selector),css=node&&getComputedStyle(node);return node&&{classes:node.className,opacity:css.opacity,visibility:css.visibility,background:css.backgroundImage,mask:css.maskImage,box:node.getBoundingClientRect().toJSON()};};return {artworkState:document.documentElement.dataset.svArtworkState,scene:style('[data-sv-browse-scene]'),hero:style('.dsHero'),art:style('.dsHeroArt'),background:style('.dsHeroBg'),curtain:style('#svArtworkCurtain')};});
+  fs.writeFileSync(path.join(dir,name+'.json'),JSON.stringify({state,...details},null,2));
+ }
+ return screenshot;
+}
 
 async function pixelDifference(page, first, second) {
   return page.evaluate(async ({ first, second }) => {
@@ -32,13 +44,21 @@ test('receding full-bleed artwork keeps feathered edges and a continuous fade at
   html=html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'').replace(/<link\b[^>]*href="([^"]+)"[^>]*>/g,(_tag,url)=>url.startsWith('/assets/')?'<style>'+asset(url.slice(8).split('?')[0])+'</style>':'');
   for(const deviceScaleFactor of [1,1.25,2]){
    const page=await browser.newPage({viewport:{width:1280,height:1000},deviceScaleFactor});
-   await page.route('**/*',route=>route.fulfill({body:''}));await page.setContent(html);
-   await page.addStyleTag({content:'body.svCleanShell{background:#000!important}body::before,body::after{display:none!important}.topbar,.mobileNav,[data-st-home] .dsHeroContent,[data-st-home] .dsContent,[data-st-home] .svHeroLightBridge{visibility:hidden!important}body.svCleanShell main[data-st-home]>.dsHero>.dsHeroArt>.dsHeroBg{background-image:linear-gradient(#4ca5df,#4ca5df)!important;background-color:#4ca5df!important}body.svCleanShell main[data-st-home]>.dsHero>.dsHeroGlass{background:none!important}'});
+   const evidence='details-receding-artwork-dpr-'+String(deviceScaleFactor).replace('.','-');
+   try{
+   // Keep the real responsive URL, decoding and artwork-entry lifecycle.
+   // Empty image responses plus a late CSS gradient do not represent the
+   // decoded scene that the details controller actually recedes.
+   await page.route('**/*',route=>new URL(route.request().url()).hostname==='image.tmdb.org'?route.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900"><path fill="#4ca5df" d="M0 0h1600v900H0z"/></svg>'}):route.fulfill({body:''}));await page.setContent(html);
+   await page.addStyleTag({content:'body.svCleanShell{background:#000!important}body::before,body::after{display:none!important}.topbar,.mobileNav,[data-st-home] .dsHeroContent,[data-st-home] .dsContent,[data-st-home] .svHeroLightBridge{visibility:hidden!important}body.svCleanShell main[data-st-home]>.dsHero>.dsHeroGlass{background:none!important}'});
+   await page.addScriptTag({content:artworkEntry});
+   await page.waitForFunction(()=>document.documentElement.dataset.svArtworkState==='ready'&&document.querySelector('.dsHeroBg').classList.contains('svArtworkReady')&&getComputedStyle(document.querySelector('.dsHeroBg')).opacity==='1'&&getComputedStyle(document.querySelector('#svArtworkCurtain')).visibility==='hidden');
+   await artworkEvidence(page,evidence+'-decoded');
    const motions=await page.evaluate(()=>{const root=document.documentElement,scene=document.querySelector('[data-sv-browse-scene]');root.style.setProperty('--sv-detail-page-width',root.clientWidth+'px');root.style.setProperty('--sv-detail-depth-time','1000ms');root.style.setProperty('--sv-detail-depth-ease','linear');root.classList.add('svDetailsOpen');getComputedStyle(scene).maskImage;root.dataset.svDetailDepth='back';getComputedStyle(scene).scale;const motions=scene.getAnimations();for(const motion of motions){motion.pause();motion.currentTime=0;}window.__edgeMotions=motions;return motions.map(motion=>motion.transitionProperty);});
    assert(motions.includes('scale')&&motions.includes('--sv-detail-feather'),'artwork scale and edge softness must animate together');
    for(const time of [500,1000]){
     const geometry=await page.evaluate(time=>{for(const motion of __edgeMotions)motion.currentTime=time;const scene=document.querySelector('[data-sv-browse-scene]').getBoundingClientRect(),hero=document.querySelector('.dsHero').getBoundingClientRect();return {left:scene.left,width:scene.width,top:hero.top,height:hero.height,dpr:devicePixelRatio};},time);
-    const screenshot=await page.screenshot();
+    const screenshot=await artworkEvidence(page,evidence+'-time-'+time,{geometry});
     const samples=await page.evaluate(async({encoded,g})=>{
      const image=new Image();image.src='data:image/png;base64,'+encoded;await image.decode();const canvas=document.createElement('canvas');canvas.width=image.width;canvas.height=image.height;const ctx=canvas.getContext('2d');ctx.drawImage(image,0,0);const data=ctx.getImageData(0,0,canvas.width,canvas.height).data;
      const at=(x,y)=>{const i=(Math.max(0,Math.min(canvas.height-1,Math.round(y*g.dpr)))*canvas.width+Math.max(0,Math.min(canvas.width-1,Math.round(x*g.dpr))))*4;return Math.max(data[i],data[i+1],data[i+2]);};
@@ -46,11 +66,12 @@ test('receding full-bleed artwork keeps feathered edges and a continuous fade at
      const jump=values=>Math.max(...values.slice(1).map((value,index)=>Math.abs(value-values[index])));
      return {edgeJump:jump(row),peak:Math.max(...row),fadeJump:jump(fade),fadeDrop:fade[0]-fade.at(-1)};
     },{encoded:screenshot.toString('base64'),g:geometry});
-    assert(samples.peak>140,'the test must actually render the bright artwork');
+    if(process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR)fs.writeFileSync(path.join(process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR,evidence+'-time-'+time+'-samples.json'),JSON.stringify(samples,null,2));
+    assert(samples.peak>140,'the test must actually render the bright artwork: '+JSON.stringify({deviceScaleFactor,time,...samples}));
     assert(samples.edgeJump<45,'the shrunken crop must blend into the page instead of exposing a hard line: '+JSON.stringify({deviceScaleFactor,time,...samples}));
     assert(samples.fadeJump<12&&samples.fadeDrop>20,'the artwork fade must remain continuous while receding: '+JSON.stringify({deviceScaleFactor,time,...samples}));
    }
-   await page.close();
+   }catch(error){await artworkEvidence(page,evidence+'-failure',{error:error.message});throw error;}finally{await page.close();}
   }
  }finally{await browser.close();api.io.close();}
 });

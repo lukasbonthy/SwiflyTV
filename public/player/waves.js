@@ -121,6 +121,7 @@
     if(frame){cancelAnimationFrame(frame);frame=0;}
     if(running){if(!cells.length)resize();else draw();frame=requestAnimationFrame(tick);}
   }
+  function resume(){if(suspended){suspended=false;sync();}}
   function destroy(){
     if(destroyed)return;destroyed=true;running=false;
     if(frame)cancelAnimationFrame(frame);
@@ -138,13 +139,20 @@
   const film=root.querySelector('[data-player-stage]');if(film)size?.observe(film);
   for(const query of [reduced,mobile,contrast,transparency])listen(query,'change',()=>{resize();sync();});
   listen(root,'swiflyplayer:play-intent',burst);
+  listen(root,'swiflyplayer:resume',resume);
+  listen(root,'swiflyplayer:state',event=>{if(event.detail?.ready)resume();});
   listen(document,'visibilitychange',sync);
   listen(document,'fullscreenchange',sync);
   listen(root,'webkitbeginfullscreen',()=>{nativeFullscreen=true;sync();},true);
   listen(root,'webkitendfullscreen',()=>{nativeFullscreen=false;sync();},true);
   listen(document,'swifly:studio-change',event=>{if(event.detail?.effective){appearance=event.detail.effective;sync();}});
   listen(window,'pagehide',event=>{suspended=true;sync();if(!event.persisted)destroy();});
-  listen(window,'pageshow',()=>{suspended=false;sync();});
+  listen(window,'pageshow',event=>{
+    // The guarded player restores cached media only after access verification.
+    // Its resume/ready event, rather than pageshow alone, releases this work.
+    if(!event.persisted||typeof window.SwiflyKids?.revalidatePlayer!=='function')suspended=false;
+    sync();
+  });
   if(!size)listen(window,'resize',resize);
   resize();sync();
 })();

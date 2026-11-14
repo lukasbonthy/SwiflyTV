@@ -16,6 +16,8 @@
 .svStudy.studyPaused .studyRain{animation-play-state:paused}.svStudy.studyReduced *,.svStudy.studyReduced *::before,.svStudy.studyReduced *::after{animation:none!important;transition:none!important}
 
 /* Scenic room: the landscape is the page, with tools available on demand. */
+/* The normal browsing gutter leaves an empty strip on this viewport-sized room. */
+html:has(.svStudy[data-study-root]){scrollbar-gutter:auto}
 .svStudy[data-study-root]{
   --study-accent:#ead8a6;--study-ink:#fbf8ef;--study-muted:rgba(247,241,225,.65);--study-line:rgba(247,235,210,.14);
   position:relative;isolation:isolate;max-width:none;width:100%;height:max(780px,100svh);min-height:100svh;margin:0;padding:0;

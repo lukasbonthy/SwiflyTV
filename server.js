@@ -5717,7 +5717,7 @@ app.get(['/study','/study/room/:room'], (req,res) => {
   const rooms=require('./public/study/catalog.json').rooms;
   const room=req.params.room||'';
   if(room&&!rooms.some(entry=>entry.id===room))return res.status(404).send(pageShell({title:SITE_NAME+' — Study room unavailable',active:'study',body:'<main class="dsPlainPage"><h1>Room unavailable</h1><a href="/study">Choose a study room</a></main>'}));
-  res.send(pageShell({title:SITE_NAME+' — Swifly Study',description:'Your space to focus. Music, scenes, timers, tasks and live study rooms.',active:'study',body:studyMarkup({room}),extraHead:'<link rel="stylesheet" href="/assets/study/study.css?v=263"><script defer src="/assets/study/study.js?v=262"></script>'}));
+  res.send(pageShell({title:SITE_NAME+' — Swifly Study',description:'Your space to focus. Music, scenes, timers, tasks and live study rooms.',active:'study',body:studyMarkup({room}),extraHead:'<link rel="stylesheet" href="/assets/study/study.css?v=264"><script defer src="/assets/study/study.js?v=262"></script>'}));
 });
 const accountStore = createAccountStore();
 const connect = createConnect({
@@ -6668,7 +6668,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=262" />' : ""}
     ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=262" />' : ""}
     ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=273"></script>' : ""}
-    ${player ? '<script defer src="/assets/player/waves.js?v=4"></script>' : ""}
+    ${player ? '<script defer src="/assets/player/waves.js?v=5"></script>' : ""}
     ${player ? '<script defer src="/assets/player/audio-sample.js?v=1"></script><script defer src="/assets/player/assist.js?v=3"></script><link rel="stylesheet" href="/assets/player/assist.css?v=264" />' : ""}
     ${player || active === "social" ? '<script defer src="/assets/party/watchroom-call.js?v=1"></script>' : ""}
     ${active === "social" ? '<script defer src="/assets/party/party.js?v=208"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}

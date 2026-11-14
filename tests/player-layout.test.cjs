@@ -179,6 +179,46 @@ async function wavePixels(page,burst=false) {
   },burst);
 }
 
+async function waveScreenshot(page,name) {
+  const directory=process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR;
+  if(!directory)return;
+  fs.mkdirSync(directory,{recursive:true});
+  await page.screenshot({path:path.join(directory,'player-waves-'+name+'.png'),fullPage:true});
+}
+
+async function waitForWaves(page,state,label) {
+  try {await page.waitForFunction(expected=>document.querySelector('[data-player-waves]')?.dataset.waveState===expected,state,{timeout:6000});}
+  catch(error){
+    const diagnostic=await page.evaluate(()=>({waves:document.querySelector('[data-player-waves]')?.dataset.waveState,
+      player:document.querySelector('[data-player-root]')?.dataset.playerState,ready:SwiflyPlayer.getState().ready,
+      hidden:document.hidden,fullscreen:!!document.fullscreenElement,scrollY,viewport:innerHeight,
+      field:document.querySelector('[data-player-waves]')?.getBoundingClientRect().toJSON(),film:document.querySelector('[data-player-stage]')?.getBoundingClientRect().toJSON()}));
+    await waveScreenshot(page,'failure-'+label).catch(()=>{});
+    error.message+='\nRipple '+label+' expected '+state+': '+JSON.stringify(diagnostic);throw error;
+  }
+}
+
+async function prepareWavePlayback(page) {
+  let release;const stalled=new Promise(resolve=>release=resolve);
+  await page.route('**/lifecycle-fixture.webm',async route=>{await stalled;await route.abort().catch(()=>{});});
+  try{
+    await page.evaluate(async()=>{
+      const canvas=document.createElement('canvas');canvas.width=384;canvas.height=160;
+      const context=canvas.getContext('2d'),fixture={intents:0,resumes:0,frame:0,checks:0,gates:[]};
+      const paint=()=>{
+        context.fillStyle='#e03828';context.fillRect(0,0,192,160);context.fillStyle='#245ce5';context.fillRect(192,0,192,160);
+        context.fillStyle='#edbd79';context.fillRect(fixture.frame++%360,60,24,40);
+      };
+      paint();fixture.stream=canvas.captureStream(12);fixture.timer=setInterval(paint,60);window.__waveLifecycle=fixture;
+      await SwiflyPlayer.loadSource({status:'ok',playbackUrl:'https://swifly.test/lifecycle-fixture.webm'});
+      const video=document.querySelector('[data-player-video]');video.muted=true;video.srcObject=fixture.stream;await video.play();video.pause();
+      const root=document.querySelector('[data-player-root]');root.addEventListener('swiflyplayer:play-intent',()=>fixture.intents++);root.addEventListener('swiflyplayer:resume',()=>fixture.resumes++);
+    });
+    await page.waitForFunction(()=>SwiflyPlayer.getState().ready&&!document.querySelector('[data-player-play]').disabled);
+    return release;
+  }catch(error){release();throw error;}
+}
+
 test('Theater entry dissolves once from black while the live picture keeps its geometry', {skip:!available && 'Chromium is not installed'}, async () => {
   const context=await browser.newContext({viewport:{width:1440,height:900},reducedMotion:'no-preference'}),page=await context.newPage();
   try{
@@ -294,54 +334,103 @@ test('Phone skip and song actions stay inside the film and do not overlap', {ski
 
 test('Ripple rendering stops for reduced motion, disabled effects, and a cached page lifecycle', {skip:!available && 'Chromium is not installed'}, async () => {
   const {page,context}=await open({width:1280,height:800});
+  let release=()=>{};
   try{
     assert.equal(await page.locator('[data-player-waves] canvas').count(),1,'the player needs its own ripple backdrop');
+    release=await prepareWavePlayback(page);
     await page.addScriptTag({content:asset('player/waves.js')});
-    await page.evaluate(()=>document.querySelector('.svPlayerPage').dispatchEvent(new CustomEvent('swiflyplayer:play-intent')));
-    await page.waitForFunction(()=>document.querySelector('[data-player-waves]')?.dataset.waveState==='still');
+    await page.locator('[data-player-play]').click();
+    assert.equal(await page.evaluate(()=>__waveLifecycle.intents),1,'the actual Play control emits the ripple intent');
+    await waitForWaves(page,'still','os-reduced');
     let before=await wavePixels(page);await page.waitForTimeout(160);
     assert.equal((await wavePixels(page)).hash,before.hash,'OS reduced motion must render a still pattern');
     await page.emulateMedia({reducedMotion:'no-preference'});
-    await page.waitForFunction(()=>document.querySelector('[data-player-waves]')?.dataset.waveState==='live');
+    await waitForWaves(page,'live','os-motion-restored');
     await page.evaluate(()=>document.dispatchEvent(new CustomEvent('swifly:studio-change',{detail:{effective:{reduceMotion:true}}})));
-    await page.waitForFunction(()=>document.querySelector('[data-player-waves]')?.dataset.waveState==='still');
+    await waitForWaves(page,'still','studio-reduced');
     before=await wavePixels(page);await page.waitForTimeout(160);
     assert.equal((await wavePixels(page)).hash,before.hash,'Studio reduced motion must stop the frame loop');
     await page.evaluate(()=>document.dispatchEvent(new CustomEvent('swifly:studio-change',{detail:{effective:{highContrast:true}}})));
-    await page.waitForFunction(()=>document.querySelector('[data-player-waves]')?.dataset.waveState==='off');
+    await waitForWaves(page,'off','high-contrast');
     assert.equal(await page.locator('[data-player-waves]').isVisible(),false,'high contrast must keep a plain backdrop');
     await page.evaluate(()=>document.dispatchEvent(new CustomEvent('swifly:studio-change',{detail:{effective:{}}})));
-    await page.waitForFunction(()=>document.querySelector('[data-player-waves]')?.dataset.waveState==='live');
+    await waitForWaves(page,'live','effects-restored');
     await page.evaluate(()=>dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true})));
-    await page.waitForFunction(()=>document.querySelector('[data-player-waves]')?.dataset.waveState==='still');
+    await waitForWaves(page,'still','cached');
     before=await wavePixels(page);await page.waitForTimeout(160);
     assert.equal((await wavePixels(page)).hash,before.hash,'a cached page must stop drawing');
     await page.evaluate(()=>dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true})));
-    await page.waitForFunction(()=>document.querySelector('[data-player-waves]')?.dataset.waveState==='live');
+    await waitForWaves(page,'live','standalone-cached-return');
+    assert.deepEqual(await page.evaluate(()=>({intents:__waveLifecycle.intents,resumes:__waveLifecycle.resumes})),{intents:1,resumes:1},'the real cached lifecycle resumes without another Play gesture');
     before=await wavePixels(page);await page.waitForTimeout(220);
     assert.notEqual((await wavePixels(page)).hash,before.hash,'returning from the back-forward cache must resume the pattern');
     await page.locator('video').evaluate(video=>video.dispatchEvent(new Event('webkitbeginfullscreen')));
-    await page.waitForFunction(()=>document.querySelector('[data-player-waves]')?.dataset.waveState==='still');
+    await waitForWaves(page,'still','native-fullscreen');
     before=await wavePixels(page);await page.waitForTimeout(160);
     assert.equal((await wavePixels(page)).hash,before.hash,'native iPhone fullscreen must stop background work');
     await page.locator('video').evaluate(video=>video.dispatchEvent(new Event('webkitendfullscreen')));
-    await page.waitForFunction(()=>document.querySelector('[data-player-waves]')?.dataset.waveState==='live');
+    await waitForWaves(page,'live','native-fullscreen-return');
     await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));});
-    await page.waitForFunction(()=>document.querySelector('[data-player-waves]')?.dataset.waveState==='still');
+    await waitForWaves(page,'still','hidden');
     before=await wavePixels(page);await page.waitForTimeout(160);
     assert.equal((await wavePixels(page)).hash,before.hash,'a hidden tab must stop drawing');
     await page.evaluate(()=>{delete document.hidden;document.dispatchEvent(new Event('visibilitychange'));});
-    await page.waitForFunction(()=>document.querySelector('[data-player-waves]')?.dataset.waveState==='live');
-    await page.evaluate(()=>{const spacer=document.createElement('div');spacer.style.height='1800px';document.body.append(spacer);scrollTo(0,1100);});
-    await page.waitForFunction(()=>document.querySelector('[data-player-waves]')?.dataset.waveState==='still');
+    await waitForWaves(page,'live','visibility-return');
+    await page.evaluate(()=>{
+      const field=document.querySelector('[data-player-waves]'),bottom=field.getBoundingClientRect().bottom+scrollY;
+      const spacer=document.createElement('div');spacer.style.height=innerHeight+32+'px';document.body.append(spacer);scrollTo({top:bottom+16,behavior:'instant'});
+    });
+    assert(await page.locator('[data-player-waves]').evaluate(node=>node.getBoundingClientRect().bottom<0),'the complete extended ripple field must actually leave the viewport');
+    await waitForWaves(page,'still','offscreen');
     before=await wavePixels(page);await page.waitForTimeout(160);
-    assert.equal((await wavePixels(page)).hash,before.hash,'scrolling past the theater must stop drawing');
+    assert.equal((await wavePixels(page)).hash,before.hash,'scrolling past the full ripple field must stop drawing');
     await page.evaluate(()=>scrollTo(0,0));
-    await page.waitForFunction(()=>document.querySelector('[data-player-waves]')?.dataset.waveState==='live');
+    await waitForWaves(page,'live','viewport-return');
     await page.emulateMedia({forcedColors:'active'});
-    await page.waitForFunction(()=>document.querySelector('[data-player-waves]')?.dataset.waveState==='off');
+    await waitForWaves(page,'off','forced-colors');
     assert.equal(await page.locator('[data-player-waves]').isVisible(),false,'OS forced colors must keep the movie backdrop plain');
-  }finally{await context.close();}
+  }finally{release();await context.close();}
+});
+
+test('cached movie ripples stay suspended through a failed Kids check and resume only after verified playback', {skip:!available && 'Chromium is not installed'},async()=>{
+  const {page,context}=await open({width:1280,height:900},false,{type:'movie'});let release=()=>{};
+  try{
+    await page.emulateMedia({reducedMotion:'no-preference'});release=await prepareWavePlayback(page);
+    await page.addScriptTag({content:asset('player/waves.js')});
+    await page.locator('[data-player-play]').click();
+    await waitForWaves(page,'live','guarded-initial-play');
+    await page.waitForFunction(()=>!document.querySelector('[data-player-video]').paused&&document.querySelector('[data-player-root]').dataset.playerFraming!=='true');
+    await page.waitForFunction(()=>document.querySelector('[data-player-video]').currentTime>.15);
+    await waveScreenshot(page,'cinematic-playing');
+    const geometry=await page.locator('[data-player-stage]').evaluate(stage=>({width:stage.getBoundingClientRect().width,height:stage.getBoundingClientRect().height,fit:getComputedStyle(stage.querySelector('video')).objectFit}));
+    assert(Math.abs(geometry.width/geometry.height-2.4)<.025,'the actually playing movie settles at its real cinematic ratio');assert.equal(geometry.fit,'contain');
+    await page.evaluate(()=>{
+      window.SwiflyKids={revalidatePlayer(){__waveLifecycle.checks++;return new Promise(resolve=>__waveLifecycle.gates.push(resolve));}};
+      dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));
+    });
+    assert.equal(await page.evaluate(()=>__waveLifecycle.checks),1,'the real player must verify a cached return');
+    await waitForWaves(page,'still','guard-pending');
+    let before=await wavePixels(page);await page.waitForTimeout(180);
+    assert.equal((await wavePixels(page)).hash,before.hash,'an outstanding access check cannot restart background work');
+    assert.equal(await page.locator('[data-player-video]').getAttribute('src'),null,'cached media stays detached until access is verified');
+    assert.equal(await page.evaluate(()=>SwiflyPlayer.getState().ready),false);
+    await waveScreenshot(page,'verification-pending');
+    await page.evaluate(()=>__waveLifecycle.gates.shift()(false));
+    await page.waitForFunction(()=>document.querySelector('[data-player-root]').dataset.playerState==='error');
+    await waitForWaves(page,'still','guard-denied');
+    await waveScreenshot(page,'verification-denied');
+    assert.equal(await page.evaluate(()=>SwiflyPlayer.play()),false,'denied playback cannot emit another Play intent');
+    before=await wavePixels(page);await page.waitForTimeout(180);assert.equal((await wavePixels(page)).hash,before.hash);
+    await page.evaluate(()=>{window.__waveRetry=SwiflyPlayer.retry();});
+    assert.equal(await page.evaluate(()=>__waveLifecycle.checks),2,'Retry performs its own verification');
+    assert.equal(await page.locator('[data-player-video]').getAttribute('src'),null);
+    await page.evaluate(async()=>{__waveLifecycle.gates.shift()(true);await __waveRetry;const video=document.querySelector('[data-player-video]');video.muted=true;video.srcObject=__waveLifecycle.stream;await video.play();});
+    await page.waitForFunction(()=>SwiflyPlayer.getState().ready&&!document.querySelector('[data-player-video]').paused&&document.querySelector('[data-player-root]').dataset.playerFraming!=='true');
+    await waitForWaves(page,'live','guard-allowed');
+    before=await wavePixels(page);await page.waitForTimeout(220);assert.notEqual((await wavePixels(page)).hash,before.hash,'verified return resumes the original ripple field');
+    assert.deepEqual(await page.evaluate(()=>({intents:__waveLifecycle.intents,resumes:__waveLifecycle.resumes})),{intents:1,resumes:1},'the player emits one allowed resume and does not invent another user gesture');
+    await waveScreenshot(page,'verified-playing-return');
+  }finally{release();await context.close();}
 });
 
 test('The complete theater and transport fit the page viewport without cropping the film', {skip:!available && 'Chromium is not installed'}, async () => {

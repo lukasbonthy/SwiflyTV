@@ -34,10 +34,11 @@ test('Scenic Study fills the actual shell while dock, timer and drawers fit phon
  for(const [name,viewport]of [['desktop',{width:1440,height:900}],['phone',{width:390,height:844}],['small-phone',{width:320,height:800}],['ipad',{width:1024,height:1366}]]){
   const f=await open(viewport);try{
    const root=await f.page.locator('[data-study-root]').boundingBox(),stage=await f.page.locator('[data-study-stage]').boundingBox();
-   assert(stage.width>=viewport.width-2,name+' scene fills the shell');assert(stage.height>=viewport.height-2,name+' scene fills viewport height');assert(root.y<=2,name+' scenery begins behind the existing fixed navigation');
+   await capture(f.page,'study-shell-'+name);
+   assert(stage.width>=viewport.width-2,name+' scene fills the shell: '+JSON.stringify({root,stage,viewport}));assert(stage.height>=viewport.height-2,name+' scene fills viewport height');assert(root.y<=2,name+' scenery begins behind the existing fixed navigation');
    assert(await f.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),name+' has no horizontal overflow');
    for(const selector of ['.studyHeading','.studyPlayer','.studyToolsDock','.studyTimer']){const box=await f.page.locator(selector).boundingBox();assert(box&&box.x>=0&&box.x+box.width<=viewport.width+1&&box.y>=0&&box.y+box.height<=viewport.height+1,name+' '+selector+' fits the viewport');}
-   assert.equal(await f.page.locator('[data-study-workspace]').isVisible(),false);await capture(f.page,'study-shell-'+name);
+   assert.equal(await f.page.locator('[data-study-workspace]').isVisible(),false);
    await f.page.locator('[data-study-tab="scenes"]').click();assert(await f.page.locator('#study-panel-scenes').isVisible());await capture(f.page,'study-shell-'+name+'-scenes');
    await f.page.locator('[data-study-scene="moon-cat"]').click();assert.equal(await f.page.locator('[data-study-scene-name]').textContent(),'pink city cat');
    await f.page.locator('[data-study-close-tools]').click();assert(await f.page.locator('[data-study-tab="scenes"]').evaluate(element=>element===document.activeElement));

@@ -15,7 +15,9 @@ body.svCleanShell .svCinemaPage .svDetailHero,
 body.svCleanShell .svDetailDialog .svCinemaPage .svDetailHero {
   height:clamp(540px,53vw,650px);
   min-height:540px;
-  background:#141920;
+  /* Legacy catalog fades use !important. The artwork's final opaque color
+     must match the reading surface even when both stylesheets are present. */
+  background:#080b10 !important;
 }
 body.svCleanShell .svCinemaPage .svDetailBackdrop {
   background-position:center 30%;
@@ -27,7 +29,7 @@ body.svCleanShell .svCinemaPage .svDetailShade {
   inset:-1px;
   background:
     linear-gradient(0deg,#080b10 0%,rgba(8,11,16,.97) 5%,rgba(8,11,16,.72) 22%,rgba(8,11,16,.12) 62%,rgba(8,11,16,.10) 100%),
-    linear-gradient(90deg,rgba(3,7,12,.63) 0%,rgba(3,7,12,.25) 42%,transparent 80%);
+    linear-gradient(90deg,rgba(3,7,12,.63) 0%,rgba(3,7,12,.25) 42%,transparent 80%) !important;
 }
 
 /* Overscan the artwork and overlap its fully opaque tail with the reading
@@ -149,7 +151,7 @@ body.svCleanShell .svDetailScrolled .svDetailChrome {
 body.svCleanShell .svDetailChromeTitle {font-weight:650; letter-spacing:-.01em;}
 body.svCleanShell .svCinemaPage .svDetailBody {
   padding:7px clamp(24px,4vw,55px) 50px;
-  background:linear-gradient(180deg,#080b10,#07090e 70%);
+  background:linear-gradient(180deg,#080b10,#07090e 70%) !important;
 }
 body.svCleanShell .svDetailChapterNav {
   display:flex; align-items:center; gap:4px; width:max-content; max-width:100%;
@@ -373,7 +375,7 @@ body.svCleanShell[data-st-glass="off"] .svCinemaPage .svDetailAbout > div {
   body.svCleanShell .svDetailDialog .svCinemaPage .svDetailHero {height:auto;min-height:610px;}
   body.svCleanShell .svCinemaPage .svDetailBackdrop {background-position:58% 22%;}
   body.svCleanShell .svCinemaPage .svDetailShade {
-    background:linear-gradient(0deg,#080b10 0%,rgba(8,11,16,.9) 23%,rgba(8,11,16,.12) 78%,rgba(8,11,16,.1));
+    background:linear-gradient(0deg,#080b10 0%,rgba(8,11,16,.9) 23%,rgba(8,11,16,.12) 78%,rgba(8,11,16,.1)) !important;
   }
   body.svCleanShell .svCinemaPage .svDetailIdentity {left:23px;right:23px;bottom:29px;}
   body.svCleanShell .svCinemaPage .svDetailTitle {font-size:calc(clamp(42px,10vw,60px) * var(--st-ui-scale, 1)) !important;line-height:1 !important;}
