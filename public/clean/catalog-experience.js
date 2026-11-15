@@ -22,7 +22,7 @@
    }else{
     picker.dataset.periodState='closed';
     if(focus)trigger.focus({preventScroll:true});
-    if(reduced())finishClose();else timer=setTimeout(finishClose,180);
+    if(reduced())finishClose();else timer=setTimeout(finishClose,150);
    }
   }
   trigger.addEventListener('click',event=>{event.preventDefault();show(!desired);});

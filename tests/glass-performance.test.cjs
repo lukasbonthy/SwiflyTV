@@ -48,11 +48,26 @@ function glass(markup = '') {
   return env;
 }
 
-test('scenic Study and Kids retain their own surfaces without generic optical controllers',async()=>{
- const env=glass('<div class="svDetailActions"><button>Film action</button></div><main class="svStudy"><button>Music</button><button>Timer</button><dialog open><button>Close tools</button></dialog></main><main class="kidsWorld"><button>Grown-ups</button><dialog open><button>Unlock</button></dialog></main><nav class="kidsModeBar"><button>Return</button></nav>'),w=env.window,d=w.document;
+test('period selector stays a plain heading control through glass activation and menu changes',async()=>{
+ const {periodControls}=require('../ui/catalog-experience');
+ const env=glass('<div class="svDetailActions"><button>Play movie</button></div>'+periodControls()),w=env.window,d=w.document;
+ d.body.dataset.stGlass='liquid';w.boot('liquid-glass/liquid-glass.js');w.boot('liquid-glass/surfaces.js');env.intersect(true);settle(w);
+ const picker=d.querySelector('[data-movie-periods]');
+ assert.equal(picker.querySelectorAll('.svLiquidPane,.svGlassControl').length,0,'the underlined period must not gain a glass button face');
+ assert(env.observed().every(node=>!node.closest('[data-movie-periods]')),'period choices do not allocate optical observers');
+ assert(d.querySelector('.svDetailActions .svNavMatchedLens'),'ordinary primary actions retain their material');
+ picker.open=true;picker.querySelector('summary').focus();picker.querySelector('nav').insertAdjacentHTML('beforeend','<button>Late choice</button>');
+ await tick();env.intersect(true);settle(w);
+ assert.equal(picker.querySelectorAll('.svLiquidPane,.svGlassControl').length,0,'opening, focusing and mutation must keep the selector clear');
+ env.finish();
+});
+
+test('Study and parent controls stay matte while native Kids cinema keeps shared material',async()=>{
+ const env=glass('<div class="svDetailActions"><button>Film action</button></div><main class="svStudy"><button>Music</button><button>Timer</button><dialog open><button>Close tools</button></dialog></main><main class="kidsWorld"><button id="kids-native-play">Play movie</button><dialog class="kidsParentDialog" open><button>Unlock</button></dialog></main><nav class="kidsModeBar"><button>Return</button></nav>'),w=env.window,d=w.document;
  d.body.dataset.stGlass='liquid';w.boot('liquid-glass/surfaces.js');env.intersect(true);settle(w);
- assert.equal(d.querySelectorAll('.svStudy .svLiquidPane,.kidsWorld .svLiquidPane,.kidsModeBar .svLiquidPane').length,0);
+ assert.equal(d.querySelectorAll('.svStudy .svLiquidPane,.kidsParentDialog .svLiquidPane,.kidsModeBar .svLiquidPane').length,0);
  assert(d.querySelector('.svDetailActions .svNavMatchedLens'),'the film navigation keeps its optical material');
+ assert(d.querySelector('#kids-native-play .svNavMatchedLens'),'native Kids actions share the ordinary movie material');
  env.finish();
 });
 

@@ -26,7 +26,7 @@
  document.addEventListener('swifly:kids-status',event=>reconcile(event.detail));
  function open(){if(disposed||dialog.open)return;clear();previousFocus=document.activeElement;dialog.showModal();setTimeout(()=>{if(dialog.open&&!input.closest('[hidden]'))input.focus();},40);}
  function close(){if(controller)return;dialog.close();}
- root.querySelector('[data-kids-parent-open]')?.addEventListener('click',open);
+ for(const button of document.querySelectorAll('[data-kids-parent-open]'))button.addEventListener('click',open);
  root.querySelector('[data-kids-parent-close]')?.addEventListener('click',close);
  dialog.addEventListener('cancel',event=>{if(controller)event.preventDefault();});
  dialog.addEventListener('close',()=>{clear();if(previousFocus?.isConnected)previousFocus.focus();});

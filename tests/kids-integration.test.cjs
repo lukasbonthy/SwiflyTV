@@ -33,7 +33,7 @@ test.before(async()=>{
 test.after(async()=>{for(const ws of sockets)ws.close();await new Promise(resolve=>api.io.close(resolve));fs.rmSync(directory,{recursive:true,force:true});});
 
 test('The actual app keeps Kids safe through direct routes, old sockets, stale cookies and parent unlock',async()=>{
- let response=await request('/kids');assert.equal(response.status,200);const page=await response.text();assert.match(page,/data-kids-root/);assert(!page.includes('Adults Only'));assert(page.includes('/assets/kids/guard.js?v=1'));
+ let response=await request('/kids');assert.equal(response.status,200);const page=await response.text();assert.match(page,/data-kids-root/);assert(!page.includes('Adults Only'));assert(page.includes('/assets/kids/guard.js?v=2'));
  const preLock=cookies(),connected=await socket(preLock);
  const closed=new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('Lock left a pre-existing Community socket active')),2000);connected.once('close',()=>{clearTimeout(timer);resolve();});});
  response=await request('/api/kids/setup',{method:'POST',body:{password:'a test parent passphrase',confirm:'a test parent passphrase'}});assert.equal(response.status,201);await closed;

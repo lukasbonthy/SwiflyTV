@@ -86,7 +86,7 @@ test('version two profile preferences and device policies apply before navigatio
 });
 
 test('playback and party URLs are excluded on departure and arrival', () => {
-  const urls = ['/watch/movie/1', '/watch/m3u8', '/embed/1', '/social?tab=watchrooms',
+  const urls = ['/watch/movie/1', '/kids/watch/movie/1', '/watch/m3u8', '/embed/1', '/social?tab=watchrooms',
     '/watchrooms/room', '/movies?party=1', '/movies?party=create', '/movies?roomId=room'];
   for (const path of urls) {
     const current = setup({path});

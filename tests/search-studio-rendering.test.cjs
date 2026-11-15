@@ -14,7 +14,7 @@ async function fixture(t){
 }
 test('search is a centered six-column desktop page and fits narrow phones',{skip},async t=>{
  const {p,origin}=await fixture(t);await p.goto(origin+'/search');await p.waitForFunction(()=>!document.documentElement.hasAttribute('data-sv-loading'));
- assert.equal(await p.locator('[data-search-mode]').count(),3);assert.match(await p.locator('h1').textContent(),/What would you like/);assert.equal(await p.locator('[data-studio-results]').evaluate(n=>getComputedStyle(n).gridTemplateColumns.split(' ').length),6);
+ assert.equal(await p.locator('[data-search-mode]').count(),4);assert.match(await p.locator('h1').textContent(),/What would you like/);assert.equal(await p.locator('[data-studio-results]').evaluate(n=>getComputedStyle(n).gridTemplateColumns.split(' ').length),6);
  await p.screenshot({path:'/tmp/swifly-search-studio-1280.png'});
  for(const width of [320,390,820,1280]){await p.setViewportSize({width,height:900});const bounds=await p.evaluate(()=>({width:innerWidth,overflow:document.documentElement.scrollWidth,form:document.querySelector('[data-studio-search]').getBoundingClientRect().toJSON(),tabs:document.querySelector('.svSearchModes').getBoundingClientRect().toJSON()}));assert(bounds.overflow<=width,JSON.stringify(bounds));assert(bounds.form.left>=12&&bounds.form.right<=width-12);assert(bounds.tabs.left>=8&&bounds.tabs.right<=width-8);}
  await p.setViewportSize({width:320,height:844});await p.screenshot({path:'/tmp/swifly-search-studio-320.png'});

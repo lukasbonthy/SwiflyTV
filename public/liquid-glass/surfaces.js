@@ -143,7 +143,7 @@
     // A season can contain hundreds of links. Skip the entire browser before
     // near-row observation as well as lens allocation, including late metadata
     // and player/party pickers. Their opaque surfaces are owned by episode CSS.
-    if (!(host instanceof HTMLElement) || host.closest('.svStudy,.kidsWorld,.kidsModeBar,#episodes,[data-episode-season],.dsEpisodeChips,.svSeason,.dsSeasonBlock,.svEpisodeBrowserHead,.svPlayerEpisodes,.svPlayerEpisodePicker,.svPlayerEpisodeGrid,.svPlayerSeasons,.svPlayerEpisodeNavigation,.svPlayerEpisodeStep,.partyRoomEpisodes')) return;
+    if (!(host instanceof HTMLElement) || host.closest('[data-movie-periods],.svStudy,.kidsParentDialog,.kidsModeBar,#episodes,[data-episode-season],.dsEpisodeChips,.svSeason,.dsSeasonBlock,.svEpisodeBrowserHead,.svPlayerEpisodes,.svPlayerEpisodePicker,.svPlayerEpisodeGrid,.svPlayerSeasons,.svPlayerEpisodeNavigation,.svPlayerEpisodeStep,.partyRoomEpisodes')) return;
     if (appleTablet && host?.matches?.('.dsCardQuickActions .dsMiniBtn')) return;
     // Featured snapshots are inert paint; position controls use simple faces.
     // Neither may allocate optical graphs through later mutation/IO scans.

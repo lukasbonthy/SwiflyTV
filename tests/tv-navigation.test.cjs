@@ -77,6 +77,29 @@ test('Remote Back closes the profile menu before navigating away',()=>{
  env.d.getElementById('inside').focus();let back=0;env.w.history.back=()=>back++;
  const event=env.key('BrowserBack');assert.equal(event.defaultPrevented,true);assert.equal(env.d.querySelector('details').open,false);assert.equal(env.d.activeElement.id,'profile');assert.equal(back,0);
 });
+test('TV Back keeps explicit Kids pages inside Kids even when history starts in the adult catalog',()=>{
+ for(const page of ['/kids','/kids/movies','/kids/browse']){
+  const env=setup('<nav class="netflixNav" data-kids-shell><a id="home" href="/kids">Home</a></nav><main><a id="safe" href="/kids/title/movie/1">Safe</a></main>',{home:[20,40],safe:[20,180]},{path:'/movies'});
+  env.w.history.pushState({},'',page);env.d.documentElement.dataset.kidsMode='true';let back=0,home=0;
+  env.w.history.back=()=>back++;env.d.getElementById('home').addEventListener('click',event=>{event.preventDefault();home++;});
+  assert.equal(env.key('BrowserBack',env.d.body).defaultPrevented,true);assert.equal(back,0,page+' must not return to adult history');
+  if(page==='/kids')assert.equal(env.d.activeElement.id,'home');else assert.equal(home,1,page+' returns to Kids home');
+ }
+ const env=setup('<nav data-kids-shell><a id="home" href="/kids">Home</a></nav>',{home:[20,40]},{path:'/kids'});let back=0;env.w.history.back=()=>back++;
+ env.key('BrowserBack',env.d.body);assert.equal(back,0);assert.equal(env.d.activeElement.id,'home');
+});
+test('Kids TV Back closes a modal and follows native detail or player return before Kids home',()=>{
+ for(const markup of ['<main class="svDetailPage"><a id="return" href="/kids/movies" data-sv-details-back>Back</a></main>','<main data-player-root><a id="return" href="/kids/title/movie/1" data-sv-player-back>Back</a></main>']){
+  const env=setup('<nav data-kids-shell><a id="home" href="/kids">Home</a></nav>'+markup,{home:[20,40],return:[20,180]},{path:'/kids/title/movie/1'});env.d.documentElement.dataset.kidsMode='true';let returned=0,back=0;
+  env.w.history.back=()=>back++;env.d.getElementById('return').addEventListener('click',event=>{event.preventDefault();returned++;});env.key('BrowserBack',env.d.body);assert.equal(returned,1);assert.equal(back,0);
+ }
+ const env=setup('<nav data-kids-shell><a id="home" href="/kids">Home</a></nav><dialog open><button id="close">Close</button></dialog>',{home:[20,40],close:[20,180]},{path:'/kids'});env.d.documentElement.dataset.kidsMode='true';
+ env.key('BrowserBack');assert.equal(env.d.querySelector('dialog').open,false);
+});
+test('TV search opens the native child search route from a Kids catalog',()=>{
+ const env=setup('<nav data-kids-shell><a id="search" href="/kids/search">Search Kids</a></nav><main><button id="film">Movie</button></main>',{search:[20,40],film:[20,180]},{path:'/kids/movies'});env.d.documentElement.dataset.kidsMode='true';let opened=0;
+ env.d.getElementById('search').addEventListener('click',event=>{event.preventDefault();opened++;});env.key('/',env.d.body);assert.equal(opened,1);
+});
 test('TV remote media keys route through the player controls',()=>{
  const env=setup('<main class="svPlayerPage" data-player-root><div data-player-stage tabindex="0" id="stage"><video id="video"></video><button id="play" data-player-play>Play</button><button id="forward" data-player-forward>Forward</button></div></main>',{stage:[50,100,800,450],video:[50,100,800,450],play:[200,450],forward:[350,450]});
  let played=0,forward=0;env.d.getElementById('play').onclick=()=>played++;env.d.getElementById('forward').onclick=()=>forward++;

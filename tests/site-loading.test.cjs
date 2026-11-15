@@ -25,6 +25,9 @@ test('opening the movie player fades through black from every source page withou
   b.w.dispatchEvent(new b.w.KeyboardEvent('keydown',{key:'Escape'}));assert.equal(b.w.document.documentElement.hasAttribute('data-sv-loading'),false);
  }
 });
+test('Kids movie links use the same cinematic theater entry as ordinary playback',async()=>{
+ const b=setup({path:'/kids/movies'});await tick();b.w.document.querySelector('#next').href='/kids/watch/movie/42';b.w.document.querySelector('#next').click();await tick();b.advance(0);assert.equal(b.w.document.documentElement.dataset.svLoading,'player');b.advance(160);assert.equal(b.w.document.documentElement.dataset.svLoading,'player');
+});
 test('reduced motion leaves the source page visible while opening a movie',async()=>{
  const b=setup();b.w.document.body.classList.add('reduceMotion');await tick();b.w.document.querySelector('#next').href='/watch/movie/42';b.w.document.querySelector('#next').click();await tick();b.advance(0);b.advance(160);
  assert.equal(b.w.document.documentElement.hasAttribute('data-sv-loading'),false,'the theater dissolve must respect reduced motion');

@@ -33,6 +33,7 @@ const { createVerifiedMediaEntryResolver } = require("./lib/native-source-entry"
 const { createSubtitleProxy } = require("./lib/subtitle-proxy");
 const { createSiteGate } = require("./lib/site-gate");
 const { createKids } = require("./lib/kids");
+const {kidsMarkup,kidsUnavailableMarkup,kidsNavigation,kidsAccessibilityPrime}=require("./ui/kids");
 const { createDownloadRouter } = require("./lib/downloads");
 const { createAccountStore } = require("./lib/account-store");
 const { createConnect } = require("./lib/connect");
@@ -5745,8 +5746,8 @@ const discovery = createDiscovery({tmdb:(...args) => tmdb(...args)});
 app.use("/api/discovery", discovery.router);
 const playerAssist = createPlayerAssist({tmdb:(...args) => tmdb(...args)});
 app.use("/api/player-assist",playerAssist.router);
-app.get("/recommendations", (req,res) => res.send(pageShell({title:`${SITE_NAME} — AI picks`,active:"recommendations",body:recommendationsMarkup(String(req.query.q||'')),extraHead:'<link rel="stylesheet" href="/assets/discovery/search.css?v=262"><script defer src="/assets/discovery/recommendations.js?v=8"></script>'})));
-app.get("/audiobooks", (req,res) => res.send(pageShell({title:`${SITE_NAME} — Audiobooks`,active:"audiobooks",body:audiobooksMarkup(),extraHead:'<link rel="stylesheet" href="/assets/discovery/audiobooks.css?v=4"><script defer src="/assets/discovery/audiobooks.js?v=6"></script>'})));
+app.get("/recommendations", (req,res) => res.send(pageShell({title:`${SITE_NAME} — AI picks`,active:"recommendations",body:recommendationsMarkup(String(req.query.q||'')),extraHead:'<link rel="stylesheet" href="/assets/discovery/search.css?v=263"><script defer src="/assets/discovery/recommendations.js?v=8"></script>'})));
+app.get("/audiobooks", (req,res) => res.send(pageShell({title:`${SITE_NAME} — Audiobooks`,active:"audiobooks",body:audiobooksMarkup(String(req.query.q||'')),extraHead:'<link rel="stylesheet" href="/assets/discovery/search.css?v=263"><link rel="stylesheet" href="/assets/discovery/audiobooks.css?v=5"><script defer src="/assets/discovery/audiobooks.js?v=7"></script>'})));
 // Same friends-only protection applies to authorized movie/episode file downloads.
 app.use("/api/download", createDownloadRouter());
 
@@ -6585,7 +6586,21 @@ function mediaDataAttributes(prefix, item = {}, type = "") {
   return Object.entries(fields).map(([key, value]) => `data-${prefix}-${key}="${escapeHtml(value)}"`).join(" ");
 }
 
-function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, trailers, cast pages, watchlists, and synced watch rooms.", body = "", active = "", extraHead = "", player = false, partyBrowse = false }) {
+function kidsPageShell({title,description,body,active,extraHead,player,status}){
+  const navigation=kidsNavigation({active,navLink,cleanIcon,siteName:SITE_NAME});
+  // Use the same document styles, navigation, cinema and React rails. This
+  // explicit shell does not mount adult history, account or social clients.
+  return `<!doctype html><html lang="en" data-kids-mode="true" data-kids-locked="${status.locked===true}"${player?' data-sv-entry="player"':''}><head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>${escapeHtml(title)}</title><meta name="description" content="${escapeHtml(description)}"><meta name="theme-color" content="#000000"><meta name="referrer" content="strict-origin-when-cross-origin">
+    <link rel="icon" type="image/png" href="/assets/brand/swiflytv-favicon.png?v=181"><link rel="preconnect" href="https://image.tmdb.org"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700;800&family=Unbounded:wght@500;700;800&display=swap" rel="stylesheet">
+    ${tvHead()}${studioHead()}${loadingHead({artwork:true,bundled:true})}${navigationHead()}<link rel="stylesheet" href="/assets/clean/base.css?v=262"><link rel="stylesheet" href="/assets/clean/navigation.css?v=2">${shellStyleLink('core')}${shellStyleLink(player?'player':'catalog')}${player?'<link rel="stylesheet" href="/assets/player/player.css?v=272">':''}${shellStyleLink('finish')}
+    <script defer src="/assets/liquid-glass/liquid-glass.js?v=277"></script><script defer src="/assets/clean/catalog.js?v=2"></script><script defer src="/assets/clean/motion.js?v=253"></script><script defer src="/assets/clean/press.js?v=2"></script><script defer src="/assets/liquid-glass/surfaces.js?v=280"></script><script defer src="/assets/clean/hero-palette.js?v=260"></script><script defer src="/assets/kids/guard.js?v=2"></script><script defer src="/assets/kids/kids.js?v=3"></script>
+    ${player?'<script defer src="https://cdn.jsdelivr.net/npm/hls.js@1.7.3/dist/hls.min.js"></script><script defer src="/assets/player/player.js?v=273"></script><script defer src="/assets/player/waves.js?v=6"></script>':''}${extraHead||''}
+    </head><body class="svCleanShell svKidsShell">${kidsAccessibilityPrime()}${loadingMarkup()}${navigation.header}<div class="svBrowseScene" data-sv-browse-scene>${body}<footer class="footer kidsNativeFooter"><div class="container"><strong>SwiflyTV Kids</strong><span>Movies: G & PG · Series: TV-Y, TV-Y7 & TV-G</span><a href="/kids/browse">Browse verified titles</a></div></footer></div>${navigation.mobile}${tvAssetScript()}</body></html>`;
+}
+
+function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, trailers, cast pages, watchlists, and synced watch rooms.", body = "", active = "", extraHead = "", player = false, partyBrowse = false, kidsMode = false, kidsStatus = {} }) {
+  if(kidsMode)return kidsPageShell({title,description,body,active,extraHead,player,status:kidsStatus});
   const showNavigation = !player && !partyBrowse && !["watch", "social", "watchrooms"].includes(active);
   return `<!doctype html>
 <html lang="en"${player?' data-sv-entry="player"':''}>
@@ -6664,7 +6679,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${active === "profiles" ? '<script defer src="/assets/clean/profiles.js?v=209"></script>' : ""}
     <script defer src="/assets/clean/continue.js?v=262"></script>
     ${body.includes('data-library-page') ? '<script defer src="/assets/clean/library-page.js?v=2"></script>' : ''}
-    <script defer src="/assets/kids/guard.js?v=1"></script><script defer src="/assets/clean/episode-browser.js?v=3"></script><script defer src="/assets/clean/feed.js?v=262"></script><script defer src="/assets/vendor/lenis/lenis.min.js?v=1.3.16-r1"></script><script defer src="/assets/clean/motion.js?v=253"></script><script defer src="/assets/clean/press.js?v=2"></script><script defer src="/assets/clean/scroll.js?v=261"></script><script defer src="/assets/clean/details.js?v=281"></script><script defer src="/assets/clean/download.js?v=3"></script><script defer src="/assets/liquid-glass/surfaces.js?v=279"></script><script defer src="/assets/studio/wallpapers.js?v=1"></script><script defer src="/assets/studio/studio.js?v=266"></script><script defer src="/assets/clean/aurora.js?v=267"></script>
+    <script defer src="/assets/kids/guard.js?v=2"></script><script defer src="/assets/clean/episode-browser.js?v=3"></script><script defer src="/assets/clean/feed.js?v=262"></script><script defer src="/assets/vendor/lenis/lenis.min.js?v=1.3.16-r1"></script><script defer src="/assets/clean/motion.js?v=253"></script><script defer src="/assets/clean/press.js?v=2"></script><script defer src="/assets/clean/scroll.js?v=261"></script><script defer src="/assets/clean/details.js?v=281"></script><script defer src="/assets/clean/download.js?v=3"></script><script defer src="/assets/liquid-glass/surfaces.js?v=280"></script><script defer src="/assets/studio/wallpapers.js?v=1"></script><script defer src="/assets/studio/studio.js?v=266"></script><script defer src="/assets/clean/aurora.js?v=267"></script>
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=262" />' : ""}
     ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=262" />' : ""}
     ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=273"></script>' : ""}
@@ -7683,12 +7698,13 @@ function netflixBillboardTitle(title = "") {
   return words.slice(0, 3).join(" ");
 }
 
-function movieCard(item = {}, forcedType = "") {
+function movieCard(item = {}, forcedType = "", options = {}) {
+  const kidsMode=options.kidsMode===true;
   const type = forcedType || getType(item);
   const title = getTitle(item);
   const id = item.id || "";
-  const detailsHref = `/${type}/${encodeURIComponent(id)}`;
-  const watchHref = `/watch/${type}/${encodeURIComponent(id)}?mode=movie${type === "tv" ? "&s=1&e=1" : ""}`;
+  const detailsHref = `${kidsMode?"/kids/title":""}/${type}/${encodeURIComponent(id)}`;
+  const watchHref = `${kidsMode?"/kids":""}/watch/${type}/${encodeURIComponent(id)}?mode=movie${type === "tv" ? "&s=1&e=1" : ""}`;
   const poster = item.poster_path ? img(item.poster_path, "w342") : img(item.backdrop_path, "w500");
   return `<article class="movieCard dsCard" data-title="${escapeHtml(title.toLowerCase())}" data-tv-overview="${escapeHtml(String(item.overview || "").slice(0, 420))}">
     <div class="dsCardArtwork">
@@ -7697,14 +7713,14 @@ function movieCard(item = {}, forcedType = "") {
         <span class="dsPlayDot" aria-hidden="true">${cleanIcon("info")}</span>
       </a>
       <div class="dsCardQuickActions">
-        <a class="dsMiniBtn dsQuickPlay" href="${watchHref}" aria-label="Play ${escapeHtml(title)}" ${mediaDataAttributes("play", item, type)}>${cleanIcon("play")}</a>
-        <button class="dsMiniBtn" type="button" aria-label="Add ${escapeHtml(title)} to My List" ${mediaDataAttributes("watch", item, type)}>＋</button>
-        <button class="dsMiniBtn dsHeartBtn" type="button" aria-label="Like ${escapeHtml(title)}" ${mediaDataAttributes("like", item, type)}>♡</button>
+        <a class="dsMiniBtn dsQuickPlay" href="${watchHref}" aria-label="Play ${escapeHtml(title)}" ${kidsMode?'':mediaDataAttributes("play", item, type)}>${cleanIcon("play")}</a>
+        ${kidsMode?'':`<button class="dsMiniBtn" type="button" aria-label="Add ${escapeHtml(title)} to My List" ${mediaDataAttributes("watch", item, type)}>＋</button>
+        <button class="dsMiniBtn dsHeartBtn" type="button" aria-label="Like ${escapeHtml(title)}" ${mediaDataAttributes("like", item, type)}>♡</button>`}
       </div>
     </div>
     <div class="dsCardInfo">
       <a class="dsCardTitle" href="${detailsHref}" title="${escapeHtml(title)}">${escapeHtml(title)}</a>
-      <div class="dsCardMeta"><span>${escapeHtml(getYear(getDate(item)))}</span><span>${type === "tv" ? "Series" : "Movie"}</span></div>
+      <div class="dsCardMeta"><span>${escapeHtml(getYear(getDate(item)))}</span><span>${type === "tv" ? "Series" : "Movie"}</span>${kidsMode?`<span class="svContentRating" data-content-rating>${escapeHtml(item.kids_rating||'')}</span>`:''}</div>
     </div>
   </article>`;
 }
@@ -7967,20 +7983,20 @@ function metaMatch(item = {}) {
   return `${score}% Match`;
 }
 
-function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = null, embedOrigin = "", featuredSlides = [] }) {
+function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = null, embedOrigin = "", featuredSlides = [], kidsMode = false }) {
   const mediaType = type || getType(hero);
   const title = getTitle(hero);
   const logo = (hero.images?.logos || []).filter(image => /^\/[A-Za-z0-9_.-]+$/.test(image.file_path || '') && (!image.iso_639_1 || image.iso_639_1 === 'en'))
     .sort((a,b) => Number(b.iso_639_1 === 'en') - Number(a.iso_639_1 === 'en') || Number(b.vote_average || 0) - Number(a.vote_average || 0))[0];
-  const href = `/${mediaType}/${encodeURIComponent(hero.id || "")}`;
+  const href = `${kidsMode?"/kids/title":""}/${mediaType}/${encodeURIComponent(hero.id || "")}`;
   const spillSrc = img(hero.backdrop_path || hero.poster_path, "w300");
   const desc = hero.overview || "Discover this title, explore the cast, and add it to your list.";
   const runtime = Number(hero.runtime || hero.episode_run_time?.[0]);
   const genres = (hero.genres || []).map(genre => genre?.name).filter(name => typeof name === "string" && name.trim()).slice(0, 2).join(", ");
   const metadata = [getYear(getDate(hero)), runtime > 0 ? formatRuntime(runtime) : "", genres || (mediaType === "tv" ? "Series" : "Movie")].filter(Boolean);
-  const trailerKey = trailer && trailer.key ? String(trailer.key) : "";
+  const trailerKey = !kidsMode && trailer && trailer.key ? String(trailer.key) : "";
   const trailerSrc = trailerKey ? youtubeHeroAutoplaySrc(trailerKey, embedOrigin) : "";
-  const rotating = featuredSlides.length > 0;
+  const rotating = !kidsMode && featuredSlides.length > 0;
   const featureJSON = rotating ? JSON.stringify(featuredSlides).replace(/[<>&\u2028\u2029]/g, character => '\\u'+character.charCodeAt(0).toString(16).padStart(4,'0')) : '';
   return `<section class="dsHero ${trailerSrc ? "dsHeroHasTrailer" : ""}"${rotating ? ' data-sv-featured' : ''} data-sv-palette-src="${escapeHtml(spillSrc)}">
     <div class="dsHeroArt" aria-hidden="true"><div class="dsHeroBg" style="${responsiveBackdropStyle(hero.backdrop_path || hero.poster_path)}"></div></div>
@@ -7995,9 +8011,9 @@ function dsHero({ hero = {}, type = "", context = "", eyebrow = "", trailer = nu
       <div class="dsHeroMeta">${Number(hero.vote_average) > 0 ? `<b><span aria-hidden="true">★</span> ${escapeHtml(formatRating(hero.vote_average))}<span class="srOnly"> out of 10</span></b>` : ""}${metadata.map(value => `<span>${escapeHtml(value)}</span>`).join("")}</div>
       <p>${escapeHtml(desc)}</p>
       <div class="dsHeroActions">
-        <a class="dsPrimaryBtn" href="/watch/${mediaType}/${encodeURIComponent(hero.id || "")}?mode=movie${mediaType === "tv" ? "&s=1&e=1" : ""}" data-play-id="${escapeHtml(hero.id || "")}" data-play-type="${escapeHtml(mediaType)}" data-play-title="${escapeHtml(title)}" data-play-poster="${escapeHtml(hero.poster_path || "")}" data-play-backdrop="${escapeHtml(hero.backdrop_path || "")}" data-play-rating="${escapeHtml(formatRating(hero.vote_average))}" data-play-year="${escapeHtml(getYear(getDate(hero)))}">${cleanIcon("play")} Play</a>
+        <a class="dsPrimaryBtn" href="${kidsMode?"/kids":""}/watch/${mediaType}/${encodeURIComponent(hero.id || "")}?mode=movie${mediaType === "tv" ? "&s=1&e=1" : ""}"${kidsMode?'':` data-play-id="${escapeHtml(hero.id || "")}" data-play-type="${escapeHtml(mediaType)}" data-play-title="${escapeHtml(title)}" data-play-poster="${escapeHtml(hero.poster_path || "")}" data-play-backdrop="${escapeHtml(hero.backdrop_path || "")}" data-play-rating="${escapeHtml(formatRating(hero.vote_average))}" data-play-year="${escapeHtml(getYear(getDate(hero)))}"`}>${cleanIcon("play")} Play</a>
         <a class="dsSecondaryBtn${rotating ? ' svFeaturedInfo' : ''}" href="${href}"${rotating ? ' aria-label="More info"' : ''}>${rotating ? '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 11v6m0-10h.01" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span class="svHeroInfoLabel"><span class="svHeroInfoPrefix">More </span><span class="svHeroInfoWord">info</span></span>' : 'Details'}</a>
-        <button class="dsIconBtn" type="button" aria-label="Add ${escapeHtml(title)} to My List" ${mediaDataAttributes("watch", hero, mediaType)}>＋</button>
+        ${kidsMode?'':`<button class="dsIconBtn" type="button" aria-label="Add ${escapeHtml(title)} to My List" ${mediaDataAttributes("watch", hero, mediaType)}>＋</button>`}
       </div>
     </div>
     ${rotating ? `<script type="application/json" data-sv-featured-data>${featureJSON}</script>${featuredSlides.length > 1 ? `<nav class="svFeaturedControls" data-sv-featured-controls aria-label="Featured movies" hidden>
@@ -8240,7 +8256,7 @@ function dsCleanSpotlight(item = {}, forcedType = "movie") {
 
 
 function dsRail(title, items = [], type = "", options = {}) {
-  const cards = uniqueTitles(items,type).slice(0, options.limit || 18).map((item) => movieCard(item, type)).join("");
+  const cards = uniqueTitles(items,type).slice(0, options.limit || 18).map((item) => movieCard(item, type, options)).join("");
   if (!cards) return "";
   const more = options.viewHref ? `<a class="svRowMore" href="${escapeHtml(options.viewHref)}">View all</a>` : "";
   const header=options.period?periodControls({...options.period,title,inRow:true,viewHref:options.viewHref}):`<div class="svSectionHead"><h2>${escapeHtml(title)}</h2><div class="svSectionActions">${more}</div></div>`;
@@ -8420,7 +8436,7 @@ async function searchPage(req, res) {
  const cards=results.map(item=>people?personCard(item):movieCard(item)).join('');
  const params={...(q?{q}:{}),...(people?{type:'person'}:{}),...Object.fromEntries(Object.entries(filters).filter(([k,v])=>v&&v!=='all'&&v!=='relevance'))},base='/search?'+new URLSearchParams(params);
  const body=searchPageMarkup({mode,query:q,cards,filters,heading:q?'Results for “'+q+'”':people?'Popular people':'Trending this week',pagination:pagination(base,page,Math.min(500,data.total_pages||1))});
- res.send(pageShell({title:`${SITE_NAME} — Search${q?' '+q:''}`,active:'search',body,extraHead:'<link rel="stylesheet" href="/assets/discovery/search.css?v=262"><script defer src="/assets/discovery/search.js?v=2"></script>'}));
+ res.send(pageShell({title:`${SITE_NAME} — Search${q?' '+q:''}`,active:'search',body,extraHead:'<link rel="stylesheet" href="/assets/discovery/search.css?v=263"><script defer src="/assets/discovery/search.js?v=2"></script>'}));
 }
 
 async function genrePage(req, res, type) {
@@ -8911,35 +8927,38 @@ function buildMovieEmbedProviderUrl({ req, type, id }) {
   return url.toString();
 }
 
-async function watchPage(req, res, type) {
+async function watchPage(req, res, type, options = {}) {
+  const kidsMode=options.kidsMode===true||Boolean(req.kids?.locked&&req.kidsTitle?.allowed);
+  const selection=options.selection||req.kidsTitle;
   const id = partyMovieId(req.params.id);
   if (!id) return res.status(404).send(pageShell({title: `${SITE_NAME} — Title unavailable`, body: '<main class="dsPlainPage"><h1>Title unavailable</h1><a class="dsSecondaryBtn" href="/movies">Browse movies</a></main>'}));
-  const mode = req.query.mode === "trailer" ? "trailer" : "movie";
+  const mode = !kidsMode && req.query.mode === "trailer" ? "trailer" : "movie";
   const endpoint = type === "tv" ? `/tv/${id}` : `/movie/${id}`;
-  const [details, videos] = await Promise.all([
+  const [details, videos] = kidsMode ? [selection.details,{results:[]}] : await Promise.all([
     tmdb(endpoint, {}, CACHE_TTL.long),
     tmdb(`${endpoint}/videos`, {}, CACHE_TTL.long),
   ]);
   if (details.__error) return res.send(setupNeededPage(details.message));
   const title = getTitle(details);
   const trailer = pickBestTrailer(videos.results || []);
-  const roomId = typeof req.query.roomId === "string" && /^[a-z0-9][a-z0-9-]{0,31}$/.test(req.query.roomId) ? req.query.roomId : "";
+  const roomId = !kidsMode && typeof req.query.roomId === "string" && /^[a-z0-9][a-z0-9-]{0,31}$/.test(req.query.roomId) ? req.query.roomId : "";
   const seasons = (details.seasons || []).filter(season => Number.isSafeInteger(season.season_number) && season.season_number > 0);
-  const season = partyMovieId(req.query.s || req.query.season) || String(seasons[0]?.season_number || 1);
+  const requestedSeason=partyMovieId(req.query.s||req.query.season);
+  const season = (!kidsMode||seasons.some(row=>String(row.season_number)===requestedSeason))&&requestedSeason || String(seasons[0]?.season_number || 1);
   const episode = partyMovieId(req.query.e || req.query.episode) || "1";
   const currentSeason = seasons.find(item => String(item.season_number) === season);
-  const provider = typeof req.query.provider === "string" ? req.query.provider : "";
+  const provider = !kidsMode && typeof req.query.provider === "string" ? req.query.provider : "";
   const seasonDetails = type === "tv" && mode === "movie"
     ? await tmdb(`${endpoint}/season/${season}`, {}, CACHE_TTL.long).catch(() => ({ episodes: [] })) : { episodes: [] };
-  const episodes = (Array.isArray(seasonDetails.episodes) ? seasonDetails.episodes : []).map(item => ({ ...item, still: item.still_path ? img(item.still_path, "w342") : "" }));
+  const episodes = (Array.isArray(seasonDetails.episodes) ? seasonDetails.episodes : []).map(item => ({ ...item, still: /^\/[A-Za-z0-9_.-]+$/.test(item.still_path||'') ? img(item.still_path, "w342") : "" }));
   const episodeTitle = episodes.find(item => String(item.episode_number) === episode)?.name || "";
   const episodeOptions = {
-    id, season, episode, seasons, provider, episodes, roomId, episodeCount: currentSeason?.episode_count || 1
+    id, season, episode, seasons, provider, episodes, roomId, kidsMode, episodeCount: currentSeason?.episode_count || 1
   };
   const episodePickerHtml = type === "tv" && mode === "movie" ? episodePickerMarkup({...episodeOptions,navigation:false}) : "";
   const body = playerMarkup({
     id, type, title, mode, season, episode,
-    kidsVerified:Boolean(req.kids?.locked && req.kidsTitle?.allowed),
+    kidsMode,kidsVerified:Boolean(kidsMode&&selection?.allowed),
     year: getYear(type === "tv" ? details.first_air_date : details.release_date),
     poster: details.poster_path ? img(details.poster_path, "w342") : "",
     // The player decorates video with a backdrop in two places. Cap Xbox
@@ -8951,9 +8970,9 @@ async function watchPage(req, res, type) {
     trailerUrl: trailer ? youtubeEmbedSrc(trailer.key, youtubeEmbedOrigin(req)) : "",
     episodePickerHtml, episodeNavigationHtml: episodePickerHtml ? episodeNavigationMarkup(episodeOptions) : "",
     managed: mode === "movie" && Boolean(roomId),
-    partyPanelHtml: mode === "movie" ? watchPartyMarkup({movieId:id,type,season,episode,title,poster:details.poster_path?img(details.poster_path,"w185"):""}) : "",
+    partyPanelHtml: !kidsMode && mode === "movie" ? watchPartyMarkup({movieId:id,type,season,episode,title,poster:details.poster_path?img(details.poster_path,"w185"):""}) : "",
   });
-  res.send(pageShell({title:`${SITE_NAME} — ${title}`,active:type === "tv" ? "tv" : "movies",body,player:true}));
+  res.send(pageShell({kidsMode,kidsStatus:req.kids||{},title:`${SITE_NAME} — ${title}`,active:type === "tv" ? "tv" : "movies",body:kidsMode?kidsMarkup({status:req.kids||{},content:body,parentRequested:req.query.parent==='1'}):body,player:true}));
 }
 
 
@@ -8986,11 +9005,14 @@ async function downloadOptionsPage(req, res, type) {
     extraHead:'<link rel="stylesheet" href="/assets/clean/download-page.css?v=262" /><script defer src="/assets/clean/download-page.js?v=4"></script>'}));
 }
 
-async function detailPage(req, res, type) {
+async function detailPage(req, res, type, options = {}) {
+  const kidsMode=options.kidsMode===true,selection=options.selection;
   const id = req.params.id;
   const partyId = partyMovieId(id);
   const endpoint = type === "tv" ? `/tv/${id}` : `/movie/${id}`;
-  const [details, videos, credits, similar, recommendations, externalIds, providers] = await Promise.all([
+  const [details, videos, credits, similar, recommendations, externalIds, providers] = kidsMode ? await Promise.all([
+    selection.details,{results:[]},{cast:[],crew:[]},tmdb(`${endpoint}/similar`,{},CACHE_TTL.medium),tmdb(`${endpoint}/recommendations`,{},CACHE_TTL.medium),{},{}
+  ]) : await Promise.all([
     tmdb(endpoint, { append_to_response: "images,release_dates,content_ratings", include_image_language: "en,null" }, CACHE_TTL.long),
     tmdb(`${endpoint}/videos`, {}, CACHE_TTL.long),
     tmdb(`${endpoint}/credits`, {}, CACHE_TTL.long),
@@ -9002,7 +9024,7 @@ async function detailPage(req, res, type) {
   if (details.__error) return res.send(setupNeededPage(details.message));
 
   const title = getTitle(details);
-  const contentRating=certification(details,type);
+  const contentRating=kidsMode?{label:selection.rating,severity:'family'}:certification(details,type);
   const detailsDate = type === "tv" ? details.first_air_date : details.release_date;
   const year = getYear(detailsDate);
   // Keep the hero and story on ONE browser-cached image; original-sized
@@ -9014,7 +9036,7 @@ async function detailPage(req, res, type) {
     .sort((a, b) => Number(b.iso_639_1 === "en") - Number(a.iso_639_1 === "en") || Number(b.vote_average || 0) - Number(a.vote_average || 0));
   const titleLogo = logos[0] ? img(logos[0].file_path, "w500") : "";
   const collectionId = Number(details.belongs_to_collection?.id);
-  const collection = type === "movie" && Number.isInteger(collectionId) && collectionId > 0
+  const collection = !kidsMode && type === "movie" && Number.isInteger(collectionId) && collectionId > 0
     ? await tmdb(`/collection/${collectionId}`, {}, CACHE_TTL.long).catch(() => null) : null;
   const collectionParts = (Array.isArray(collection?.parts) ? collection.parts : [])
     .filter(item => item.id).sort((a, b) => String(a.release_date || "9999").localeCompare(String(b.release_date || "9999"))).slice(0, 18);
@@ -9024,32 +9046,49 @@ async function detailPage(req, res, type) {
   const director = crew.find(person => person.job === "Director");
   const writers = crew.filter(person => ["Writer", "Screenplay", "Story"].includes(person.job)).slice(0, 3);
   const trailers = (videos.results || []).filter(video => video.site === "YouTube" && ["Trailer", "Teaser", "Clip"].includes(video.type)).slice(0, 3);
-  const more = [...(recommendations.results || []), ...(similar.results || [])]
+  const moreCandidates = [...(recommendations.results || []), ...(similar.results || [])]
     .filter((item, index, items) => item.id && item.id !== Number(id) && items.findIndex(other => other.id === item.id) === index).slice(0, 18);
+  const more=kidsMode?(await kids.verifyCandidates(moreCandidates,type)).map(kidsNativeItem):moreCandidates;
   const providersUS = providers.results?.US || {};
   const providerList = [...(providersUS.flatrate || []), ...(providersUS.rent || []), ...(providersUS.buy || [])]
     .filter((provider, index, list) => list.findIndex(other => other.provider_id === provider.provider_id) === index).slice(0, 8);
-  const seasons = type === "tv" ? (details.seasons || []).filter(season => season.season_number > 0).slice(0, 20) : [];
-  const startSeason = seasons[0]?.season_number || 1;
+  const allSeasons = type === "tv" ? (kidsMode?(details.seasons || []).filter(season => Number.isSafeInteger(season.season_number)&&season.season_number>0&&season.season_number<=9999).sort((a,b)=>a.season_number-b.season_number):(details.seasons||[]).filter(season=>season.season_number>0)) : [];
+  const selectedSeason=kidsMode&&allSeasons.some(row=>String(row.season_number)===String(req.query.season))?Number(req.query.season):allSeasons[0]?.season_number||1;
+  const seasonOffset=kidsMode?Math.floor(Math.max(0,allSeasons.findIndex(row=>row.season_number===selectedSeason))/40)*40:0;
+  const seasons=allSeasons.slice(seasonOffset,seasonOffset+(kidsMode?40:20));
+  const startSeason = kidsMode?selectedSeason:seasons[0]?.season_number || 1;
+  const seasonHref=number=>'/kids/title/tv/'+encodeURIComponent(id)+'?season='+number+'#episodes';
+  const seasonPager=kidsMode&&allSeasons.length>40?`<nav class="kidsSeasonPages" aria-label="More seasons">${seasonOffset>0?`<a class="dsSecondaryBtn" href="${seasonHref(allSeasons[seasonOffset-40].season_number)}">Earlier seasons</a>`:''}${seasonOffset+40<allSeasons.length?`<a class="dsSecondaryBtn" href="${seasonHref(allSeasons[seasonOffset+40].season_number)}">Later seasons</a>`:''}</nav>`:'';
   const runtime = type === "tv"
     ? `${details.number_of_seasons || seasons.length || 1} Season${Number(details.number_of_seasons || seasons.length || 1) === 1 ? "" : "s"}`
     : Number(details.runtime) > 0 ? formatRuntime(details.runtime) : "";
-  const watchHref = `/watch/${type}/${encodeURIComponent(id)}?mode=movie${type === "tv" ? `&s=${startSeason}&e=1` : ""}`;
+  const watchHref = `${kidsMode?"/kids":""}/watch/${type}/${encodeURIComponent(id)}?mode=movie${type === "tv" ? `&s=${startSeason}&e=1` : ""}`;
   const playLabel = type === "tv" ? `Play S${startSeason} E1` : "Play";
-  const genreHtml = (details.genres || []).map(genre => `<a href="/${type === "tv" ? "tv" : "movies"}?genre=${encodeURIComponent(genre.id)}">${escapeHtml(genre.name)}</a>`).join('<span class="svDetailDot" aria-hidden="true">·</span>');
+  const genreHtml = (details.genres || []).map(genre => {
+    const category=kidsMode?({16:'animation',10751:'family',10762:'tiny'})[genre.id]:'';
+    if(kidsMode&&!category)return `<span>${escapeHtml(genre.name)}</span>`;
+    const href=kidsMode?'/kids/browse?media='+type+'&category='+category:'/'+(type==='tv'?'tv':'movies')+'?genre='+encodeURIComponent(genre.id);
+    return `<a href="${href}">${escapeHtml(genre.name)}</a>`;
+  }).join('<span class="svDetailDot" aria-hidden="true">·</span>');
   const certificationHtml=contentRating?`<span class="svContentRating" data-content-rating data-rating-severity="${contentRating.severity}" title="US content rating">${escapeHtml(contentRating.label)}</span>`:'<span class="svContentRating" data-rating-severity="unrated">Not rated</span>';
   const castHtml = cast.map(person => `<a class="dsCastCard" href="/person/${encodeURIComponent(person.id)}">
     <div>${person.profile_path ? `<img src="${escapeHtml(img(person.profile_path, "w342"))}" alt="${escapeHtml(person.name)}" loading="lazy" decoding="async" />` : `<span>${escapeHtml(String(person.name || "?").slice(0, 1))}</span>`}</div>
     <strong>${escapeHtml(person.name)}</strong><em>${escapeHtml(person.character || "Cast")}</em>
   </a>`).join("");
-  const seasonHtml = seasons.map((season, index) => {
+  const seasonHtml = (await Promise.all(seasons.map(async (season, index) => {
     const number = Number(season.season_number);
     const total = Math.max(0, Number(season.episode_count || 0));
     const shown = Math.min(total, 24);
-    const episodeLinks = Array.from({ length: shown }, (_, i) => `<span class="svDetailEpisodeChoice"><a class="svDetailEpisodeTile" href="/watch/tv/${encodeURIComponent(id)}?mode=movie&s=${number}&e=${i + 1}" aria-label="Watch season ${number} episode ${i + 1}"><span class="svEpisodeOrdinal">${String(i + 1).padStart(2, "0")}</span><span>Episode ${i + 1}</span>${cleanIcon("play")}</a><a class="svDetailEpisodeDownload" href="/download/tv/${encodeURIComponent(id)}?s=${number}&e=${i + 1}" data-sv-download data-sv-download-type="episode" aria-label="Download season ${number} episode ${i + 1}" title="Download episode">${cleanIcon("download")}</a></span>`).join("");
-    return `<details class="svSeason" data-episode-show="${escapeHtml(id)}" data-episode-season="${number}"${index === 0 ? " open" : ""}><summary><span class="svSeasonIdentity"><b class="svSeasonNumber">${String(number).padStart(2, "0")}</b><strong>${escapeHtml(season.name || `Season ${number}`)}</strong></span><span>${total} episodes</span></summary>
-      ${season.overview ? `<p>${escapeHtml(season.overview)}</p>` : ""}<div class="dsEpisodeChips">${episodeLinks}${total > shown ? `<a href="/watch/tv/${encodeURIComponent(id)}?mode=movie&s=${number}&e=${shown + 1}">Continue with episode ${shown + 1}</a>` : ""}</div></details>`;
-  }).join("");
+    const selected=number===selectedSeason;
+    const episodeData=kidsMode&&selected?await tmdb(`${endpoint}/season/${number}`,{},CACHE_TTL.long).catch(()=>({episodes:[]})):null;
+    const episodeRows=new Map((Array.isArray(episodeData?.episodes)?episodeData.episodes:[]).map(row=>[row.episode_number,row]));
+    const episodeLinks = Array.from({ length: kidsMode&&!selected?0:shown }, (_, i) => {
+      const row=episodeRows.get(i+1),still=kidsMode&&/^\/[A-Za-z0-9_.-]+$/.test(row?.still_path||'')?img(row.still_path,'w300'):'';
+      return `<span class="svDetailEpisodeChoice${kidsMode?' svEpisodeBrowserCard':''}"><a class="svDetailEpisodeTile" href="${kidsMode?'/kids':''}/watch/tv/${encodeURIComponent(id)}?mode=movie&s=${number}&e=${i + 1}" aria-label="Watch season ${number} episode ${i + 1}">${kidsMode?`<span class="svEpisodeBrowserThumbnail">${still?`<img class="svEpisodeBrowserStill" src="${escapeHtml(still)}" alt="" loading="lazy" decoding="async">`:`<span class="svEpisodeThumbnailFallback">${String(i+1).padStart(2,'0')}</span>`}<span class="svEpisodePlaybackBadge">▶</span></span><span class="svEpisodeBrowserCopy"><small>EPISODE ${String(i+1).padStart(2,'0')}</small><strong>${escapeHtml(row?.name||'Episode '+(i+1))}</strong>${row?.overview?`<span class="svEpisodeBrowserPlot">${escapeHtml(row.overview)}</span>`:''}</span>`:`<span class="svEpisodeOrdinal">${String(i + 1).padStart(2, "0")}</span><span>Episode ${i + 1}</span>${cleanIcon("play")}`}</a>${kidsMode?'':`<a class="svDetailEpisodeDownload" href="/download/tv/${encodeURIComponent(id)}?s=${number}&e=${i + 1}" data-sv-download data-sv-download-type="episode" aria-label="Download season ${number} episode ${i + 1}" title="Download episode">${cleanIcon("download")}</a>`}</span>`;
+    }).join("");
+    return `<details class="svSeason" data-episode-show="${escapeHtml(id)}" data-episode-season="${number}"${kidsMode?' data-episode-loaded="true"':''}${(kidsMode?selected:index===0) ? " open" : ""}><summary><span class="svSeasonIdentity"><b class="svSeasonNumber">${String(number).padStart(2, "0")}</b><strong>${escapeHtml(season.name || `Season ${number}`)}</strong></span><span>${total} episodes</span></summary>
+      ${kidsMode&&selected&&(!episodeData||episodeData.__error||!episodeRows.size)?`<p class="svEpisodeBrowserStatus">${total?'Episode details are unavailable. You can still choose an episode below.':'No episodes are available for this season yet.'}</p>`:''}${season.overview ? `<p>${escapeHtml(season.overview)}</p>` : ""}<div class="dsEpisodeChips">${kidsMode&&!selected?`<a class="dsSecondaryBtn" href="${seasonHref(number)}">Browse season ${number}</a>`:episodeLinks}${(!kidsMode||selected)&&total > shown ? `<a href="${kidsMode?"/kids":""}/watch/tv/${encodeURIComponent(id)}?mode=movie&s=${number}&e=${shown + 1}">Continue with episode ${shown + 1}</a>` : ""}</div></details>`;
+  }))).join("");
   const about = [
     ["Release year", year], ["Runtime", runtime || "—"], ["Original language", String(details.original_language || "—").toUpperCase()],
     ["Director", director?.name || "—"], ["Writers", writers.map(person => person.name).join(", ") || "—"], ["Status", details.status || "—"],
@@ -9060,11 +9099,11 @@ async function detailPage(req, res, type) {
 
   const body = `<main class="dsDetailPage svDetailPage svCinemaPage" data-cinema-page="details">
     <article class="dsDetailShell svTitleDetails" data-sv-palette-src="${escapeHtml(img(details.backdrop_path || details.poster_path, "w300"))}" aria-labelledby="svDetailTitle" data-detail-id="${escapeHtml(id)}" data-detail-type="${type}" style="--sv-detail-art:url(\'${escapeHtml(heroBg)}\');--sv-xbox-detail-art:url(\'${escapeHtml(img(details.backdrop_path || details.poster_path, "w780"))}\')">
-      <a class="dsSecondaryBtn svDetailReturn" href="/" data-sv-details-back aria-label="Back to browsing"><svg class="svIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>Back to browsing</a>
+      <a class="dsSecondaryBtn svDetailReturn" href="${kidsMode?'/kids':'/'}" data-sv-details-back aria-label="Back to browsing"><svg class="svIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>Back to browsing</a>
       <section class="svDetailHero">
         <div class="svDetailBackdrop" style="background-image:url('${escapeHtml(heroBg)}');--sv-xbox-art:url('${escapeHtml(img(details.backdrop_path || details.poster_path, "w780"))}')"></div><div class="svDetailShade"></div>
         <div class="svDetailIdentity" data-cinema-reveal>
-          <span class="svDetailEdition">SwiflyTV <span aria-hidden="true">/</span> ${type === "tv" ? "Series" : "Cinema"}</span>
+          <span class="svDetailEdition">SwiflyTV${kidsMode?' Kids':''} <span aria-hidden="true">/</span> ${type === "tv" ? "Series" : "Cinema"}</span>
           <h1 id="svDetailTitle" class="svDetailTitle"><span class="svDetailTitleText">${escapeHtml(title)}</span>${titleLogo ? `<img class="svDetailLogo" src="${escapeHtml(titleLogo)}" alt="" aria-hidden="true" decoding="async" />` : ""}</h1>
           <div class="svDetailGenres">${genreHtml}${certificationHtml}</div>
           <div class="svDetailFacts">
@@ -9072,13 +9111,14 @@ async function detailPage(req, res, type) {
             <span>${escapeHtml(year)}</span>${runtime ? `<span>${escapeHtml(runtime)}</span>` : ""}<span>${type === "tv" ? "Series" : "Movie"}</span>
           </div>
           <div class="svDetailActions">
-            <a class="dsPrimaryBtn" href="${watchHref}" ${mediaDataAttributes("play", details, type)}>${cleanIcon("play")}${escapeHtml(playLabel)}</a>
-            <button type="button" class="dsSecondaryBtn" data-share-title data-share-id="${escapeHtml(id)}" data-share-type="${type}" aria-label="Send ${escapeHtml(title)} to a friend">${cleanIcon("people")}Share</button>
+            <a class="dsPrimaryBtn" href="${watchHref}" ${kidsMode?'':mediaDataAttributes("play", details, type)}>${cleanIcon("play")}${escapeHtml(playLabel)}</a>
+            ${kidsMode?'':`            <button type="button" class="dsSecondaryBtn" data-share-title data-share-id="${escapeHtml(id)}" data-share-type="${type}" aria-label="Send ${escapeHtml(title)} to a friend">${cleanIcon("people")}Share</button>
             ${trailers.length ? `<a class="dsSecondaryBtn" href="/watch/${type}/${encodeURIComponent(id)}?mode=trailer">${cleanIcon("play-circle")}Trailer</a>` : ""}
             <a class="dsSecondaryBtn svDownloadAction" href="/download/${type}/${encodeURIComponent(id)}${type==="tv"?`?s=${startSeason}&e=1`:""}" data-sv-download data-sv-download-type="${type==="tv"?"episode":"movie"}" aria-label="Download ${type==="tv"?"first episode of "+escapeHtml(title):escapeHtml(title)}">${cleanIcon("download")}Download</a>
             ${partyId ? `<a class="dsSecondaryBtn" href="${escapeHtml(partyMediaWatchUrl({movieId:partyId,type,season:String((details.seasons||[]).filter(row=>Number.isSafeInteger(row.season_number)&&row.season_number>0).sort((a,b)=>a.season_number-b.season_number)[0]?.season_number||1),episode:"1"},"",true))}" data-sv-party-movie-id="${partyId}" data-sv-party-type="${type}" aria-label="Start a watch party for ${escapeHtml(title)}">${cleanIcon("people")}Start a watch party</a>` : ""}
             <button class="dsIconBtn" type="button" aria-label="Add ${escapeHtml(title)} to My List" ${mediaDataAttributes("watch", details, type)}>${cleanIcon("plus")}</button>
-            <button class="dsIconBtn dsHeartBtn" type="button" aria-label="Like ${escapeHtml(title)}" ${mediaDataAttributes("like", details, type)}>${cleanIcon("heart")}</button>
+            <button class="dsIconBtn dsHeartBtn" type="button" aria-label="Like ${escapeHtml(title)}" ${mediaDataAttributes("like", details, type)}>${cleanIcon("heart")}</button>`}
+
           </div>
         </div>
         ${details.poster_path ? `<div class="svDetailPosterCard" aria-hidden="true"><img src="${escapeHtml(img(details.poster_path, "w342"))}" alt="" decoding="async"/><span>${type === "tv" ? "The series" : "The film"}</span></div>` : ""}
@@ -9087,16 +9127,16 @@ async function detailPage(req, res, type) {
         <nav class="svDetailChapterNav" aria-label="Title sections"><a href="#overview">The story</a>${castHtml ? '<a href="#cast">Cast</a>' : ""}${seasonHtml ? '<a href="#episodes">Episodes</a>' : ""}${collectionHtml ? '<a href="#collection">Collection</a>' : ""}<a href="#details">Film notes</a></nav>
         <section id="overview" class="svDetailSection svDetailOverview" style="--sv-story-art:url('${escapeHtml(storyArt)}')"><div><span class="svCinemaEyebrow">THE STORY</span><h2>A closer look</h2></div><p>${escapeHtml(details.overview || "No overview available yet.")}</p></section>
         ${castHtml ? `<section id="cast" class="svDetailSection"><h2>Cast</h2><div class="svDetailCastRail" aria-label="Cast">${castHtml}</div></section>` : ""}
-        ${seasonHtml ? `<section id="episodes" class="svDetailSection"><div class="svEpisodeBrowserHead"><h2>Episodes</h2><div class="svEpisodeBrowserControls"><label>View<select data-episode-view><option value="grid">Grid</option><option value="rows">Row</option></select></label><label>Order<select data-episode-sort><option value="oldest">Oldest first</option><option value="newest">Newest first</option></select></label></div></div>${seasonHtml}</section>` : ""}
+        ${seasonHtml ? `<section id="episodes" class="svDetailSection"><div class="svEpisodeBrowserHead"><h2>Episodes</h2>${kidsMode?'':`<div class="svEpisodeBrowserControls"><label>View<select data-episode-view><option value="grid">Grid</option><option value="rows">Row</option></select></label><label>Order<select data-episode-sort><option value="oldest">Oldest first</option><option value="newest">Newest first</option></select></label></div>`}</div>${seasonHtml}${seasonPager}</section>` : ""}
         ${collectionHtml}
-        ${more.length ? `<section id="more-like-this" class="svDetailSection"><h2>More like this</h2><div class="svDetailRecommendations">${more.map(item => movieCard(item, type)).join("")}</div></section>` : ""}
+        ${more.length ? `<section id="more-like-this" class="svDetailSection"><h2>More like this</h2><div class="svDetailRecommendations">${more.map(item => movieCard(item, type, {kidsMode})).join("")}</div></section>` : ""}
         ${trailers.length ? `<section id="trailers" class="svDetailSection"><h2>Trailers</h2><div class="svDetailTrailers">${trailers.map(video => `<iframe src="https://www.youtube-nocookie.com/embed/${escapeHtml(video.key)}" title="${escapeHtml(video.name || title + " trailer")}" loading="lazy" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`).join("")}</div></section>` : ""}
         <section id="details" class="svDetailSection"><h2>Details</h2><dl class="svDetailAbout">${about}</dl></section>
       </div>
     </article>
   </main>`;
-  if (req.query.view === "modal") return res.send(body);
-  res.send(pageShell({ title: `${SITE_NAME} — ${title}`, description: details.overview || title, body }));
+  if (!kidsMode && req.query.view === "modal") return res.send(body);
+  res.send(pageShell({kidsMode,kidsStatus:req.kids||{},active:kidsMode?(type==='tv'?'tv':'movies'):'',title:`${SITE_NAME} — ${title}`,description:details.overview||title,body:kidsMode?kidsMarkup({status:req.kids||{},content:body,parentRequested:req.query.parent==='1'}):body}));
 }
 
 
@@ -15021,10 +15061,53 @@ app.get("/social", (req, res) => {
   return socialPage(req, res);
 });
 
-app.get(['/kids','/kids/title/:type/:id'],async(req,res,next)=>{
-  try{const view=await kids.page(req);res.send(pageShell({...view,title:SITE_NAME+' — Kids',active:'kids'}));}
-  catch(error){next(error);}
+function kidsNativeItem(value){
+  return {...value.details,id:Number(value.id),media_type:value.type,...(value.type==='tv'?{name:value.title}:{title:value.title}),overview:value.overview,poster_path:value.poster,backdrop_path:value.backdrop,kids_rating:value.rating};
+}
+function kidsPage(req,res,content,{active='home',title='Kids',extraHead='',status=200}={}){
+  return res.status(status).send(pageShell({title:SITE_NAME+' — '+title,description:'Movies and series with verified Kids ratings.',active,kidsMode:true,kidsStatus:req.kids||{},body:kidsMarkup({status:req.kids||{},content,parentRequested:req.query.parent==='1'}),extraHead}));
+}
+function kidsBrowseFilters(data){
+  const options=(rows,value)=>rows.map(([key,label])=>`<option value="${key}"${key===value?' selected':''}>${label}</option>`).join('');
+  return `<form class="svSearchRefinements kidsBrowseFilters" action="/kids/browse" method="get" aria-label="Browse Kids filters"><label>Format<select name="media">${options([['all','All titles'],['movie','Movies'],['tv','Series']],data.media)}</select></label><label>Category<select name="category">${options([['all','All stories'],['animation','Animation'],['family','Family'],['tiny','For little ones']],data.category)}</select></label><label>Sort<select name="sort">${options([['popular','Popular'],['rating','Top rated'],['date','Newest']],data.sort)}</select></label><button class="dsSecondaryBtn" type="submit">Show titles</button></form>`;
+}
+async function kidsCatalogPage(req,res){
+  const section=req.path.split('/')[2]||'home',search=section==='search',browse=section==='browse';
+  const media=section==='movies'?'movie':section==='tv'?'tv':req.query.media;
+  const data=await kids.catalog({...req.query,media}),items=data.items.map(kidsNativeItem),label=section==='movies'?'Movies':section==='tv'?'Series':'Kids';
+  const base=(search?'/kids/search':'/kids/browse')+'?'+new URLSearchParams({...(data.q?{q:data.q}:{}),media:data.media,category:data.category,sort:data.sort});
+  const pager=pagination(base,data.page,data.totalPages);
+  const empty=`<div class="svCatalogEmpty kidsEmpty"><h2>${data.unavailable?'The Kids catalog is taking a break.':'No matching Kids titles yet.'}</h2><p>${data.unavailable?'Ratings could not be verified. Please try again.':'Try another title or category. Only verified Kids titles appear here.'}</p><a class="dsSecondaryBtn" href="/kids/browse">Browse verified titles</a></div>`;
+  if(search){
+    const cards=items.map(item=>movieCard(item,'',{kidsMode:true})).join('');
+    const content=searchPageMarkup({kidsMode:true,query:data.q,cards,filters:{media:data.media},heading:data.q?'Kids results for “'+data.q+'”':'Explore Kids titles',pagination:pager});
+    return kidsPage(req,res,content,{active:'search',title:'Search Kids',extraHead:'<link rel="stylesheet" href="/assets/discovery/search.css?v=263">'});
+  }
+  if(browse){
+    const content=`<main class="dsPlainPage kidsBrowsePage"><header class="svSectionHeader"><div><h1 class="svSectionTitle">Browse Kids</h1><p class="svSectionDescription">Find your next movie or series.</p></div><a class="dsSecondaryBtn" href="/kids/search">${cleanIcon('search')}Search Kids</a></header>${kidsBrowseFilters(data)}<div class="dsGrid">${items.length?items.map(item=>movieCard(item,'',{kidsMode:true})).join(''):empty}</div>${pager}</main>`;
+    return kidsPage(req,res,content,{active:'browse',title:'Browse Kids',extraHead:'<link rel="stylesheet" href="/assets/discovery/search.css?v=263">'});
+  }
+  const hero=items[0],others=items.slice(1),movies=others.filter(item=>item.media_type==='movie'),shows=others.filter(item=>item.media_type==='tv');
+  const rail=(title,rows,viewHref)=>dsRail(title,rows,'',{kidsMode:true,viewHref});
+  const rows=section==='home'?
+    rail('Movies for you',movies,'/kids/movies')+rail('Series for you',shows,'/kids/tv'):
+    rail('Popular '+label.toLowerCase(),others.slice(0,10),'/kids/browse?media='+data.media)+rail('More to explore',others.slice(10),'/kids/browse?media='+data.media);
+  const categories=`<nav class="kidsBrowseLinks" aria-label="Kids categories"><a class="dsSecondaryBtn" href="/kids/browse?media=${data.media}&category=animation">Animation</a><a class="dsSecondaryBtn" href="/kids/browse?media=${data.media}&category=family">Family</a><a class="dsSecondaryBtn" href="/kids/browse?media=tv&category=tiny">For little ones</a><a class="dsSecondaryBtn" href="/kids/browse?media=${data.media}">Browse all ${label==='Kids'?'titles':label.toLowerCase()}</a></nav>`;
+  return kidsPage(req,res,`<main class="kidsNativeCatalog">${hero?dsHero({hero,kidsMode:true,eyebrow:section==='home'?'Featured in Kids':'Kids · '+label}):dsPageHeader(label,'Movies and series with verified Kids ratings.')}<section class="dsContent${hero?'':' noHero'}">${categories}${rows||empty}</section></main>`,{active:section,title:label});
+}
+app.use('/kids',(req,res,next)=>{res.set('Cache-Control','private, no-store');next();});
+app.get(['/kids','/kids/movies','/kids/tv','/kids/browse','/kids/search'],async(req,res,next)=>{
+  try{return await kidsCatalogPage(req,res);}catch(error){next(error);}
 });
+app.get(['/kids/title/:type/:id','/kids/watch/:type/:id'],async(req,res,next)=>{
+  try{
+    const selection=await kids.verifyTitle(req.params.type,req.params.id);
+    if(!selection.allowed)return kidsPage(req,res,kidsUnavailableMarkup(),{status:404,title:'Title unavailable'});
+    const options={kidsMode:true,selection};
+    return await (req.path.startsWith('/kids/watch/')?watchPage(req,res,selection.type,options):detailPage(req,res,selection.type,options));
+  }catch(error){next(error);}
+});
+app.use('/kids',(req,res)=>kidsPage(req,res,kidsUnavailableMarkup(),{status:404,title:'Page unavailable'}));
 
 
 app.get("/api/movie-source/:type/:id", async (req, res) => {

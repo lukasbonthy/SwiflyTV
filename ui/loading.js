@@ -11,7 +11,7 @@ function siteLoadingGate(){
  const holds=new Map();
  function destinationInfo(value){
   try{const path=new URL(value,location.href).pathname;
-   if(/^\/(?:watch|embed|watchrooms)(?:\/|$)/.test(path))return {layout:'player',theater:/^\/watch\/(?:movie|tv)\//.test(path),title:'Opening the player',detail:'Preparing your viewing page.'};
+   if(/^\/(?:(?:kids\/)?watch|embed|watchrooms)(?:\/|$)/.test(path))return {layout:'player',theater:/^\/(?:kids\/)?watch\/(?:movie|tv)\//.test(path),title:'Opening the player',detail:'Preparing your viewing page.'};
    if(/^\/friends(?:\/|$)/.test(path))return {layout:'friends',title:'Opening Connect',detail:'Loading your conversations and friends.'};
    if(/^\/audiobooks(?:\/|$)/.test(path))return {layout:'books',title:'Opening Audiobooks',detail:'Loading the library of stories and authors.'};
    if(/^\/recommendations(?:\/|$)/.test(path))return {layout:'ai',title:'Opening AI Search',detail:'Preparing your search page. Describe what you want to watch when it opens.'};

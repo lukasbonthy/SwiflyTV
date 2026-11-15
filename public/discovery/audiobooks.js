@@ -29,6 +29,16 @@
   let bookProfile = profile(), bookAccount = owner(), skipNextCloseHistory = false;
   const seen = new Set();
   form.elements.q.value = query;
+  function updateModes() {
+    const q = form.elements.q.value.trim().slice(0, 120);
+    for (const link of root.querySelectorAll('[data-search-mode]')) {
+      const u = new URL(link.href, location.href);
+      if (q) u.searchParams.set('q', q); else u.searchParams.delete('q');
+      link.href = u.pathname + u.search;
+    }
+    find('[data-book-clear]').hidden = !q;
+  }
+  updateModes();
 
   function saved(id = bookProfile) {
     try {const data = JSON.parse(getStorage(progressKey(id)) || '{}'); return data && typeof data === 'object' && !Array.isArray(data) ? data : {}; } catch { return {}; }
@@ -186,7 +196,7 @@
   function search(value, push = true) {
     if (dialog.open) {skipNextCloseHistory = true; dialog.close();}
     query = String(value || '').trim().slice(0, 120); form.elements.q.value = query;
-    updateUrl({q:query || null, page:null, book:null}, push); load(1);
+    updateModes(); updateUrl({q:query || null, page:null, book:null}, push); load(1);
   }
   audio.addEventListener('loadedmetadata', () => {if (resumeTime > 0 && Number.isFinite(audio.duration) && resumeTime < audio.duration - 2) audio.currentTime = resumeTime; resumeTime = 0;});
   audio.addEventListener('timeupdate', () => {save(); if (sleepAt && Date.now() >= sleepAt) finishSleep();});
@@ -196,6 +206,7 @@
   speed.addEventListener('change', () => {audio.defaultPlaybackRate = audio.playbackRate = Number(speed.value); save(true);});
   sleep.addEventListener('change', () => {clearTimeout(sleepTimer); sleepAt = 0; sleepStatus.textContent = sleep.value === 'chapter' ? 'We’ll pause when this chapter ends.' : ''; const minutes = Number(sleep.value); if (minutes > 0) {sleepAt = Date.now() + minutes * 60000; sleepTimer = setTimeout(finishSleep, minutes * 60000); sleepStatus.textContent = 'Pausing in ' + minutes + ' minutes.';}});
   previous.addEventListener('click', () => select(index - 1, {play:!audio.paused})); next.addEventListener('click', () => select(index + 1, {play:!audio.paused}));
+  form.elements.q.addEventListener('input', updateModes);
   form.addEventListener('submit', event => {event.preventDefault(); search(form.elements.q.value);});
   more.addEventListener('click', () => {if (nextPage && !more.disabled) load(nextPage, true);});
   for (const button of root.querySelectorAll('[data-book-query]')) button.addEventListener('click', () => search(button.dataset.bookQuery));
@@ -210,7 +221,9 @@
   window.addEventListener('storage', event => {if (!event.key || ['swiflytv.activeProfile', 'swiflytv.accountOwner'].includes(event.key)) identityChanged();});
   window.addEventListener('popstate', () => {
     const p = params(), nextQuery = (p.get('q') || '').trim().slice(0, 120), nextListPage = boundedPage(p.get('page'));
-    if (nextQuery !== query || nextListPage !== page) {query = nextQuery; form.elements.q.value = query; load(nextListPage);}
+    const reload = nextQuery !== query || nextListPage !== page;
+    query = nextQuery; form.elements.q.value = query; updateModes();
+    if (reload) load(nextListPage);
     const id = p.get('book');
     if (id && id !== requestedBook) openBook(id, false);
     else if (!id && dialog.open) {skipNextCloseHistory = true; dialog.close();}
