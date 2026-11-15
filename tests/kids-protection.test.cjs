@@ -171,3 +171,11 @@ test('Locked source API grants never accept an absolute third-party URL disguise
   assert.equal((await f.request('/api/hls-proxy/external-token/master.m3u8')).status,423);
  }finally{await f.close();}
 });
+test('Verified Kids identity rejects mismatched IDs, media types and conflicting detail shapes',async()=>{
+ for(const override of [{id:99},{media_type:'tv'},{title:undefined,name:'A TV response on a movie endpoint'}]){
+  const kids=createKids({secret,tmdb:async route=>route.endsWith('/release_dates')?tmdb(route):({...titles.movie[1],...override})});
+  assert.equal((await kids.verifyTitle('movie','1')).allowed,false);
+ }
+ const kids=createKids({secret,tmdb:async route=>route.endsWith('/release_dates')?tmdb(route):({...titles.movie[1],poster_path:'https://untrusted.invalid/adult.jpg',backdrop_path:'//untrusted.invalid/background.jpg'})});
+ const verified=await kids.verifyTitle('movie','1');assert.equal(verified.allowed,true);assert.equal(verified.poster,'');assert.equal(verified.details.poster_path,'');assert.equal(verified.details.backdrop_path,'');
+});

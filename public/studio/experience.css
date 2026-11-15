@@ -83,19 +83,24 @@ body.svCleanShell[data-st-hud-motion="none"] #toast {animation:none !important;t
 body.svCleanShell[data-st-toast-position="top"] #toast {top:90px;bottom:auto !important;max-width:calc(100vw - 32px)}
 body.svCleanShell[data-st-toast-position="bottom"] #toast {top:auto;bottom:max(24px,env(safe-area-inset-bottom));max-width:calc(100vw - 32px)}
 
-/* The live AI form is never rebuilt or visually stripped of controls. */
-body.svCleanShell .svRecommendationsPage :is(.svRecommendationForm,.svMoodIdeas) {max-width:var(--st-ai-width,720px)}
-body.svCleanShell[data-st-ai-spacing="compact"] .svRecommendationsPage .svMoodInput {padding:14px 16px 10px;gap:0}
-body.svCleanShell[data-st-ai-spacing="compact"] .svRecommendationsPage #svRecommendationPrompt {height:64px;min-height:64px}
-body.svCleanShell[data-st-ai-spacing="compact"] .svRecommendationsPage .svMoodIdeas {margin-top:28px}
-body.svCleanShell[data-st-ai-spacing="compact"] .svRecommendationsPage .svMoodChips button {padding:12px 14px;min-height:108px;gap:8px}
-body.svCleanShell[data-st-ai-glass="solid"] .svRecommendationsPage .svMoodInput {background:#111419 !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important}
-body.svCleanShell[data-st-ai-glass="soft"] .svRecommendationsPage .svMoodInput {background:rgb(17 20 25 / .82) !important;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
-body.svCleanShell[data-st-ai-cards="list"] .svRecommendationsPage .svDiscoveryGrid {display:grid;grid-template-columns:1fr !important;gap:16px;max-width:var(--st-ai-width,720px);margin-inline:auto}
-body.svCleanShell[data-st-ai-cards="list"] .svRecommendationsPage .svDiscoveryCard {display:grid;grid-template-columns:110px minmax(0,1fr);gap:20px;align-items:center;padding:14px;border:1px solid #ffffff18;border-radius:16px;background:#ffffff03}
-body.svCleanShell[data-st-ai-cards="list"] .svRecommendationsPage .svDiscoveryCardCopy {padding:0 24px 0 0}
-body.svCleanShell[data-st-ai-cards="list"] .svRecommendationsPage .svDiscoveryCard h3 {font-size:calc(19px * var(--st-ui-scale, 1));line-height:1.3;margin:7px 0}
-body.svCleanShell[data-st-ai-cards="list"] .svRecommendationsPage .svDiscoveryCard .svPickOverview {-webkit-line-clamp:3}
+/* Discovery workspaces share presentation while their live forms keep their own controls. */
+body.svCleanShell .svDiscoveryWorkspace :is(.svRecommendationForm,.svMoodIdeas,.svBookContinue) {max-width:var(--st-ai-width,720px)}
+body.svCleanShell[data-st-ai-spacing="compact"] .svDiscoveryWorkspace .svMoodInput {padding:14px 16px 10px;gap:0}
+body.svCleanShell[data-st-ai-spacing="compact"] .svDiscoveryWorkspace #svRecommendationPrompt,
+body.svCleanShell[data-st-ai-spacing="compact"] .svDiscoveryWorkspace .svDiscoveryQuery {height:64px;min-height:64px}
+body.svCleanShell[data-st-ai-spacing="compact"] .svDiscoveryWorkspace .svMoodIdeas {margin-top:28px}
+body.svCleanShell[data-st-ai-spacing="compact"] .svDiscoveryWorkspace .svMoodChips button {padding:12px 14px;min-height:108px;gap:8px}
+body.svCleanShell[data-st-ai-glass="solid"] .svDiscoveryWorkspace .svMoodInput {background:#111419 !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important}
+body.svCleanShell[data-st-ai-glass="soft"] .svDiscoveryWorkspace .svMoodInput {background:rgb(17 20 25 / .82) !important;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+body.svCleanShell[data-st-ai-cards="list"] .svDiscoveryWorkspace .svDiscoveryGrid {display:grid;grid-template-columns:1fr !important;gap:16px;max-width:var(--st-ai-width,720px);margin-inline:auto}
+body.svCleanShell[data-st-ai-cards="list"] .svDiscoveryWorkspace .svDiscoveryCard {display:grid;grid-template-columns:110px minmax(0,1fr);gap:20px;align-items:center;padding:14px;border:1px solid #ffffff18;border-radius:16px;background:#ffffff03}
+body.svCleanShell[data-st-ai-cards="list"] .svDiscoveryWorkspace .svDiscoveryCardCopy {padding:0 24px 0 0}
+body.svCleanShell[data-st-ai-cards="list"] .svDiscoveryWorkspace .svDiscoveryCard h3 {font-size:calc(19px * var(--st-ui-scale, 1));line-height:1.3;margin:7px 0}
+body.svCleanShell[data-st-ai-cards="list"] .svDiscoveryWorkspace .svDiscoveryCard .svPickOverview {-webkit-line-clamp:3}
+body.svCleanShell[data-st-ai-cards="list"] .svDiscoveryWorkspace .svBookCard .svBookCoverFallback {padding:12px 10px;gap:8px}
+body.svCleanShell[data-st-ai-cards="list"] .svDiscoveryWorkspace .svBookCard .svBookCoverFallback strong {font-size:calc(13px * var(--st-ui-scale, 1))}
+body.svCleanShell[data-st-ai-cards="list"] .svDiscoveryWorkspace .svBookCard .svBookCoverFallback > span {font-size:calc(9px * var(--st-ui-scale, 1));line-height:1.4}
+body.svCleanShell[data-st-ai-cards="list"] .svDiscoveryWorkspace .svBookSkeleton > span {aspect-ratio:auto;height:193px}
 
 /* Restrained pointer/focus parity; the existing TV details route owns actions. */
 body.svCleanShell[data-st-poster-hover] .movieCard .dsCardArtwork {transition:transform var(--st-experience-speed,220ms) ease}
@@ -147,7 +152,7 @@ body.svCleanShell[data-st-adaptive-active="true"] > .stAdaptiveGlow {display:blo
 body.svCleanShell[data-st-adaptive-active="true"] .netflixNav > .svLiquidPane {box-shadow:inset 0 0 0 1px rgb(var(--st-adaptive-primary) / .15)}
 
 /* Effective accessibility/device settings always win over decorative choices. */
-body.svCleanShell[data-st-experience-opaque="true"] :is(.svNotificationDialog,.svRecommendationsPage .svMoodInput) {background:#111419 !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important}
+body.svCleanShell[data-st-experience-opaque="true"] :is(.svNotificationDialog,.svDiscoveryWorkspace .svMoodInput) {background:#111419 !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important}
 body.svCleanShell[data-st-experience-light="true"] :is(.dsCardArtwork,.dsCardInfo,.dsThumb > img,.svNotificationDialog,.svNotification,.svMoodChips button) {animation:none !important;transition:none !important;filter:none !important;box-shadow:none !important}
 body.svCleanShell[data-st-experience-light="true"] #svSiteLoading::before {display:none !important}
 html[data-sv-tv="true"] body.svCleanShell .navLinks > a[data-st-nav] {font-size:calc(15px * var(--st-tv-scale,1.1) * var(--st-ui-scale,1)) !important;min-height:44px}
@@ -180,9 +185,12 @@ html[data-sv-tv="true"] body.svCleanShell[data-st-tv-controls="large"] :is(.svNa
   body.svCleanShell[data-st-hero-mode="banner"] main[data-st-home] > .dsHero {min-height:330px !important;padding:110px 0 55px !important}
   body.svCleanShell .mobileNav > a[data-st-nav] {min-width:0;flex:1;gap:4px;font-size:calc(9px * var(--st-ui-scale, 1)) !important;flex-direction:column}
   body.svCleanShell .mobileNav > a[data-st-nav] > svg {width:18px;height:18px;flex-basis:18px}
-  body.svCleanShell[data-st-ai-cards="list"] .svRecommendationsPage .svDiscoveryCard {grid-template-columns:85px minmax(0,1fr);gap:14px;padding:12px}
-  body.svCleanShell[data-st-ai-cards="list"] .svRecommendationsPage .svDiscoveryCardCopy {padding-right:6px}
-  body.svCleanShell[data-st-ai-cards="list"] .svRecommendationsPage .svDiscoveryCard h3 {font-size:calc(16px * var(--st-ui-scale, 1))}
+  body.svCleanShell[data-st-ai-cards="list"] .svDiscoveryWorkspace .svDiscoveryCard {grid-template-columns:85px minmax(0,1fr);gap:14px;padding:12px}
+  body.svCleanShell[data-st-ai-cards="list"] .svDiscoveryWorkspace .svDiscoveryCardCopy {padding-right:6px}
+  body.svCleanShell[data-st-ai-cards="list"] .svDiscoveryWorkspace .svDiscoveryCard h3 {font-size:calc(16px * var(--st-ui-scale, 1))}
+  body.svCleanShell[data-st-ai-cards="list"] .svDiscoveryWorkspace .svBookCard .svBookCoverFallback {padding:8px;gap:6px}
+  body.svCleanShell[data-st-ai-cards="list"] .svDiscoveryWorkspace .svBookCard .svBookCoverFallback strong {font-size:calc(11px * var(--st-ui-scale, 1))}
+  body.svCleanShell[data-st-ai-cards="list"] .svDiscoveryWorkspace .svBookSkeleton > span {height:152px}
   body.svCleanShell[data-st-toast-position="bottom"] #toast {bottom:max(88px,calc(env(safe-area-inset-bottom) + 74px))}
   body.svCleanShell[data-st-hud-density="compact"] .svNotification {padding:11px 7px;min-height:44px}
 }
@@ -193,5 +201,5 @@ html[data-sv-tv="true"] body.svCleanShell[data-st-tv-controls="large"] :is(.svNa
   body.svCleanShell > .stAdaptiveGlow {display:none !important}
 }
 @media(prefers-reduced-transparency:reduce) {
-  body.svCleanShell :is(.svNotificationDialog,.svRecommendationsPage .svMoodInput) {background:#111419 !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important}
+  body.svCleanShell :is(.svNotificationDialog,.svDiscoveryWorkspace .svMoodInput) {background:#111419 !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important}
 }

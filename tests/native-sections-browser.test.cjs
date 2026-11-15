@@ -25,8 +25,8 @@ for(const [label,width,height]of [['desktop',1440,1000],['ipad',834,1112],['phon
  try{
   await page.route('https://image.tmdb.org/**',route=>{const index=Number(/native-(\d)/.exec(route.request().url())?.[1]||0);return route.fulfill({contentType:'image/jpeg',body:fs.readFileSync(path.join(fixtureRoot,'poster-'+index+'.jpg'))});});
   await page.route('**/api/discovery/books**',route=>route.fulfill({json:{books:[['Pride and Prejudice','Jane Austen'],['The Adventures of Sherlock Holmes','Arthur Conan Doyle'],['Alice’s Adventures in Wonderland','Lewis Carroll'],['The Secret Garden','Frances Hodgson Burnett'],['Little Women','Louisa May Alcott'],['Treasure Island','Robert Louis Stevenson']].map(([title,author],i)=>({id:String(i+52),title,author,language:'English',duration:'07:30:00',seconds:27000,chapterCount:3,playable:true,poster:''})),page:1,hasMore:false}}));
-  let referenceFont;
-  for(const [slug,url,ready]of [['movies','/movies','.svCatalogPage'],['kids','/kids','.kidsCard'],['audiobooks','/audiobooks','.svBookCard'],['languages','/browse-by-languages','.svLanguageDestination'],['study','/study','[data-study-track]']]){
+  let referenceFont,discoveryReference;
+  for(const [slug,url,ready]of [['movies','/movies','.svCatalogPage'],['kids','/kids','.kidsWorld .movieCard'],['recommendations','/recommendations','.svRecommendationsPage'],['audiobooks','/audiobooks','.svBookCard'],['languages','/browse-by-languages','.svLanguageDestination'],['study','/study','[data-study-track]']]){
    await page.goto(origin+url);await page.waitForSelector(ready,{state:'attached'});await page.waitForFunction(()=>!document.documentElement.hasAttribute('data-sv-loading'));
    if(slug==='study')await page.locator('[data-study-poster]').evaluate(image=>image.decode());
    const layout=await page.evaluate(()=>{const main=document.querySelector('main'),header=main.querySelector('h1');return{font:getComputedStyle(main).fontFamily,bodyFont:getComputedStyle(document.body).fontFamily,headerFont:getComputedStyle(header).fontFamily,header:header.getBoundingClientRect().toJSON(),width:innerWidth,scrollWidth:document.documentElement.scrollWidth};});
@@ -35,6 +35,14 @@ for(const [label,width,height]of [['desktop',1440,1000],['ipad',834,1112],['phon
    assert.equal(layout.headerFont,referenceFont,slug+' uses the same heading family');
    assert(layout.scrollWidth<=width,slug+' fits the full shell');
    assert(layout.header.y>=80&&layout.header.right<=width+1,slug+' heading clears navigation');
+   if(slug==='recommendations'||slug==='audiobooks'){
+    const discovery=await page.evaluate(()=>{const main=document.querySelector('main'),hero=main.querySelector('.svDiscoveryHero'),h=hero.querySelector('h1'),surface=main.querySelector('.svMoodInput'),nav=main.querySelector('.svSearchModes');const style=(node,keys)=>Object.fromEntries(keys.map(key=>[key,getComputedStyle(node)[key]]));return{heading:style(h,['fontFamily','fontSize','fontWeight','lineHeight','letterSpacing','textAlign']),hero:style(hero,['textAlign','maxWidth','marginLeft','marginRight']),surface:style(surface,['backgroundColor','borderTopColor','borderTopWidth','borderRadius','boxShadow']),modes:nav.querySelectorAll('a').length,mainWidth:main.getBoundingClientRect().width,heroWidth:hero.getBoundingClientRect().width};});
+    if(slug==='recommendations')discoveryReference=discovery;
+    else{assert.deepEqual(discovery.heading,discoveryReference.heading,'Audiobooks uses AI Picks actual final heading typography');assert.deepEqual(discovery.hero,discoveryReference.hero,'Audiobooks uses the same centered discovery header');assert.deepEqual(discovery.surface,discoveryReference.surface,'Audiobooks uses AI Picks actual form material');assert.equal(discovery.mainWidth,discoveryReference.mainWidth);assert.equal(discovery.heroWidth,discoveryReference.heroWidth);}
+    assert.equal(discovery.modes,4);assert.equal(discovery.heading.textAlign,'center');
+    const dir=process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR;if(dir)fs.writeFileSync(path.join(dir,'reference-'+label+'-'+slug+'.json'),JSON.stringify(discovery,null,2));
+   }
+
    const dir=process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR;
    if(dir){fs.mkdirSync(dir,{recursive:true});await page.screenshot({path:path.join(dir,'native-'+label+'-'+slug+'.png')});}
   }

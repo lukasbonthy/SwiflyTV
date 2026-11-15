@@ -12,7 +12,7 @@ const film=(id,title,genres=[35])=>({id,title,media_type:'movie',genre_ids:genre
 test('the entire AI form is preserved while sharing search modes',()=>{
  const {window:w}=browser(ui.recommendationsMarkup());const d=w.document,f=d.querySelector('[data-recommendation-form]');
  assert.equal(f.elements.prompt.tagName,'TEXTAREA');assert(f.querySelector('[type=submit]'));assert.equal(f.elements.type.options.length,3);assert.equal(f.elements.audience.options.length,2);assert(f.elements.unseen.checked);assert.match(f.querySelector('summary').textContent,/More options/);assert.equal(d.querySelectorAll('[data-mood]').length,3);assert(d.querySelector('[data-ai-status]'));assert(d.querySelector('[data-ai-cancel]'));
- assert.equal(d.querySelectorAll('[data-search-mode]').length,3);
+ assert.equal(d.querySelectorAll('[data-search-mode]').length,4);
 });
 test('people parsing retains story clauses, co-stars and two different roles',()=>{
  for(const tail of ['like Cast Away','about a long and surprising journey around the world']){const q=parse('comedy movies starring Tom Hanks '+tail);assert.equal(q.person?.name,'Tom Hanks');assert(q.semanticQuery.includes(tail.startsWith('like')?'comedy':'journey'));assert(q.wanted.some(g=>g[0]==='comedy'));}

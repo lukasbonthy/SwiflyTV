@@ -39,3 +39,14 @@ test('A fresh player gate cannot reuse an unlocked response from an older visibi
  pending[1]({locked:false,configured:true,available:true});assert.equal(await first,false,'an old unlocked response is not permission for a later gate');
  pending[2]({locked:true,configured:true,available:true});assert.equal(await second,false);
 });
+test('Kids carries validated comfort preferences without applying adult themes, layouts or wallpaper',()=>{
+ const {kidsAccessibilityPrime}=require('../ui/kids'),b=browser(kidsAccessibilityPrime(),{path:'/kids'}),w=b.window,d=w.document;
+ w.localStorage.setItem('swiflytv.appearance',JSON.stringify({version:2,values:{themeId:'halloween',theme:'red',wallpaper:'winter',wallpaperName:'ADULT CUSTOM WALLPAPER',navLayout:'sidebar',homeHidden:['popular-movies'],font:'soft',reduceMotion:true,reduceTransparency:true,highContrast:true,largeTargets:true,uiScale:120,focusStyle:'frame',captionSize:150}}));
+ w.eval(source('studio/config.js'));w.eval(d.querySelector('[data-kids-accessibility]').textContent);
+ assert.equal(d.body.dataset.stFont,'soft');assert.equal(d.body.dataset.stUiScale,'120');assert.equal(d.body.dataset.stHighContrast,'true');assert.equal(d.body.dataset.stLargeTargets,'true');assert.equal(d.body.dataset.stCaptionSize,'150');assert(d.body.classList.contains('reduceMotion'));
+ assert.equal(d.body.dataset.stThemeId,'pure');assert.equal(d.body.dataset.stTheme,'default');assert.equal(d.body.dataset.stNavLayout,'top');assert.equal(d.body.dataset.stWallpaperVisible,'false');assert.equal(w.SwiflyAppearance.wallpaperName,'');assert(!d.body.textContent.includes('ADULT CUSTOM WALLPAPER'));
+});
+test('A verified native child player revalidates its path without injecting adult navigation',async()=>{
+ const b=browser('<main data-player-root data-player-kids-verified="true" data-player-type="tv" data-player-id="1"></main>',{path:'/kids/watch/tv/1'}),w=b.window;
+ w.fetch=async()=>({ok:true,json:async()=>({locked:true,configured:true,available:true,recoveryRequired:false})});w.eval(source('kids/guard.js'));assert.equal(await w.SwiflyKids.revalidatePlayer(),true);assert.equal(w.document.documentElement.dataset.kidsLocked,'true');assert(!w.document.querySelector('[data-kids-mode-bar]'));
+});

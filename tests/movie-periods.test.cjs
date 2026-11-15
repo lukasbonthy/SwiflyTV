@@ -26,7 +26,7 @@ test('Movies restores its familiar first-page hierarchy with only the inline per
   assert.equal(d.querySelector('.svBrowseHeading'),null);assert.equal(d.querySelector('.svBrowseFilters'),null);
   const popular=[...d.querySelectorAll('.svCatalogRow')].find(row=>row.querySelector('h2').textContent==='Popular movies');
   assert(popular.querySelector('[data-movie-periods]'));assert.equal(popular.querySelectorAll('.movieCard').length,10);
-  assert.equal(popular.querySelector('summary').textContent.trim(),'This week');
+  assert.equal(popular.querySelector('summary').textContent.trim(),'This Week');
   const titles=[...d.querySelectorAll('.svCatalogRow .dsCardTitle')].map(a=>a.getAttribute('href'));
   assert.equal(new Set(titles).size,titles.length,'Restoring Browse Movies must retain cross-row deduplication');
   assert(f.calls.some(call=>call.path==='/trending/movie/week'));
@@ -81,7 +81,7 @@ test('This month requests a supported popularity-sorted calendar-month release p
   assert.equal(f.calls.some(call=>call.path.includes('/trending/movie/month')),false);
   assert.equal(f.calls.some(call=>call.path==='/movie/popular'),false,'Page two must not repeat the curated baseline request');
   assert.equal(d.querySelector('.dsHero'),null);assert(d.querySelector('.svCatalogResults .dsCardTitle'));
-  assert.equal(d.querySelector('[data-movie-periods] summary').textContent.trim(),'This month');
+  assert.equal(d.querySelector('[data-movie-periods] summary').textContent.trim(),'This Month');
   assert.equal(d.querySelector('[data-movie-periods] summary').title,'Popular releases this month');
   const next=new URL(d.querySelector('.pagination a[rel=next]').href);
   assert.equal(next.searchParams.get('page'),'3');assert.equal(next.searchParams.get('period'),'month');assert.equal(next.searchParams.get('party'),'1');
@@ -95,7 +95,7 @@ test('period popout preserves native links and supports keyboard, Escape, outsid
  try{
   const picker=d.querySelector('[data-movie-periods]');assert.equal(picker.tagName,'DETAILS');assert.equal(picker.open,false);
   const trigger=picker.querySelector('summary'),links=[...picker.querySelectorAll('a')];
-  assert.deepEqual(links.map(link=>link.textContent.trim()),['Today','This week','This month']);
+  assert.deepEqual(links.map(link=>link.textContent.trim()),['Today','This Week','This Month']);
   w.boot('catalog-experience.js');trigger.focus();trigger.dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true,cancelable:true}));
   assert.equal(picker.open,true);assert.equal(trigger.getAttribute('aria-expanded'),'true');assert.equal(d.activeElement,links[1]);
   links[1].dispatchEvent(new w.KeyboardEvent('keydown',{key:'End',bubbles:true,cancelable:true}));assert.equal(d.activeElement,links[2]);

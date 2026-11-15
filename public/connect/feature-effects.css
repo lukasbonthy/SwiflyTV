@@ -31,13 +31,13 @@
 .svNotificationButton>b{background:#e0e2e7;color:#111419;border:2px solid #24272d;box-sizing:border-box;min-width:17px;height:17px;font-size:calc(8px * var(--st-ui-scale, 1))}
 .svDiscoveryEmblem{display:none}
 .svDiscoveryEyebrow{color:#a8abb2}
-.svRecommendationsPage .svMoodInput,.svBookSearch{background:rgb(17 20 25 / .92);border-color:#ffffff26;box-shadow:0 8px 28px #0003}
-.svRecommendationsPage .svMoodInput:focus-within,.svBookSearch:focus-within{border-color:#ffffff59;box-shadow:0 0 0 3px #ffffff06}
+.svDiscoveryWorkspace .svMoodInput,.svBookSearch{background:rgb(17 20 25 / .92);border-color:#ffffff26;box-shadow:0 8px 28px #0003}
+.svDiscoveryWorkspace .svMoodInput:focus-within,.svBookSearch:focus-within{border-color:#ffffff59;box-shadow:0 0 0 3px #ffffff06}
 .svPromptEntry>span,.svMoodInput>span,.svBookSearch>span{color:#a8abb2}
-.svRecommendationsPage .svMoodInput .svFindPicks{background:#f5f5f5!important;color:#151518!important}
-.svRecommendationsPage .svMoodChips button{background:#111419;border-color:#ffffff1a;color:#c5c9d1;transition:border-color .15s,background-color .15s}
-.svRecommendationsPage .svMoodChips button>.svFeatureIcon:first-child{color:#b9bec7}
-.svRecommendationsPage .svMoodChips button:is(:hover,:focus-visible){background:#191d23;border-color:#ffffff40}
+.svDiscoveryWorkspace .svMoodInput .svFindPicks{background:#f5f5f5!important;color:#151518!important}
+.svDiscoveryWorkspace .svMoodChips button{background:#111419;border-color:#ffffff1a;color:#c5c9d1;transition:border-color .15s,background-color .15s}
+.svDiscoveryWorkspace .svMoodChips button>.svFeatureIcon:first-child{color:#b9bec7}
+.svDiscoveryWorkspace .svMoodChips button:is(:hover,:focus-visible){background:#191d23;border-color:#ffffff40}
 .svRecommendationsPage .svAiFilters{background:#111419;border-color:#ffffff1a}
 .svDiscoveryPoster{border:1px solid #ffffff12}
 .svDiscoveryCard:is(:hover,:focus-within) .svDiscoveryPoster{border-color:#ffffff40}

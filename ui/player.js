@@ -22,7 +22,7 @@ function episodeState(options) {
   for(const number of rows.keys())count=Math.max(count,number);
   count=Math.floor(Math.min(Number.MAX_SAFE_INTEGER,count));
   const seasons=(Array.isArray(options.seasons)?options.seasons:[]).filter(row=>Number.isSafeInteger(row.season_number)&&row.season_number>0).sort((a,b)=>a.season_number-b.season_number);
-  const link=(s,e)=>`/watch/tv/${encodeURIComponent(String(options.id||''))}?`+new URLSearchParams({mode:'movie',s:String(s),e:String(e),...(options.provider?{provider:String(options.provider)}:{}),...(options.roomId?{roomId:String(options.roomId)}:{})});
+  const link=(s,e)=>`${options.kidsMode?'/kids':''}/watch/tv/${encodeURIComponent(String(options.id||''))}?`+new URLSearchParams({mode:'movie',s:String(s),e:String(e),...(!options.kidsMode&&options.provider?{provider:String(options.provider)}:{}),...(!options.kidsMode&&options.roomId?{roomId:String(options.roomId)}:{})});
   return {season,episode,rows,count,seasons,link};
 }
 
@@ -40,6 +40,7 @@ function episodeNavigationMarkup(options={}) {
 
 function episodePickerMarkup(options={}) {
   const {season,episode,rows,count,seasons,link}=episodeState(options);
+  const seasonOffset=options.kidsMode?Math.floor(Math.max(0,seasons.findIndex(row=>row.season_number===season))/40)*40:0;
   const selected=rows.get(episode),first=Math.max(1,Math.min(episode-20,count-199)),shown=Math.min(200,count);
   const episodes=Array.from({length:shown},(_,index)=>{
     const number=first+index,row=rows.get(number),name=String(row?.name||`Episode ${number}`),still=mediaUrl(row?.still);
@@ -47,26 +48,26 @@ function episodePickerMarkup(options={}) {
     const overview=String(row?.overview||'').trim();
     return `<div class="svPlayerEpisodeChoice"><a class="svPlayerEpisode${number===episode?' active':''}" data-player-episode-link href="${escape(link(season,number))}" ${number===episode?'aria-current="page"':''} aria-label="${escape(`Play season ${season}, episode ${number}: ${name}`)}">
       <span class="svPlayerEpisodeThumb">${still?`<img src="${escape(still)}" loading="lazy" decoding="async" alt=""/>`:icon('film')}<b aria-hidden="true">${String(number).padStart(2,'0')}</b>${number===episode?'<span class="svPlayerEpisodeSelected">Selected</span>':''}<span class="svPlayerEpisodePlay" aria-hidden="true">${icon('play')}</span></span>
-      <span class="svPlayerEpisodeText"><span class="svPlayerEpisodeKicker">Episode ${number}${runtime?`<span aria-hidden="true"> · </span>${runtime}`:''}</span><strong>${escape(name)}</strong>${overview?`<span class="svPlayerEpisodeOverview">${escape(overview)}</span>`:''}</span></a><a class="svPlayerEpisodeDownload" href="/download/tv/${encodeURIComponent(String(options.id||''))}?s=${season}&e=${number}" data-sv-download data-sv-download-type="episode" aria-label="Download season ${season} episode ${number}">↓ Download episode</a></div>`;
+      <span class="svPlayerEpisodeText"><span class="svPlayerEpisodeKicker">Episode ${number}${runtime?`<span aria-hidden="true"> · </span>${runtime}`:''}</span><strong>${escape(name)}</strong>${overview?`<span class="svPlayerEpisodeOverview">${escape(overview)}</span>`:''}</span></a>${options.kidsMode?'':`<a class="svPlayerEpisodeDownload" href="/download/tv/${encodeURIComponent(String(options.id||''))}?s=${season}&e=${number}" data-sv-download data-sv-download-type="episode" aria-label="Download season ${season} episode ${number}">↓ Download episode</a>`}</div>`;
   }).join('');
   return `<section class="svPlayerEpisodes" data-cinema-reveal aria-labelledby="svPlayerEpisodesTitle">
     <div class="svPlayerEpisodesHead"><div><span class="svPlayerEyebrow">KEEP THE STORY GOING</span><h2 id="svPlayerEpisodesTitle">Episodes<span class="svPlayerEpisodeSeason">Season ${season}</span></h2><p>Season ${season} · Episode ${episode}${selected?.name?` — ${escape(selected.name)}`:''}</p></div>
       ${options.navigation===false?'':episodeNavigationMarkup(options)}</div>
-    ${seasons.length?`<nav class="svPlayerSeasons" aria-label="Seasons">${seasons.slice(0,40).map(row=>`<a class="dsSecondaryBtn svPlayerSeason${row.season_number===season?' active':''}" data-player-season-link href="${escape(link(row.season_number,1))}" ${row.season_number===season?'aria-current="true"':''}><span>Season ${row.season_number}</span>${Number.isSafeInteger(row.episode_count)&&row.episode_count>0?`<small class="svPlayerSeasonCount">${row.episode_count} episodes</small>`:''}</a>`).join('')}</nav>`:''}
+    ${seasons.length?`<nav class="svPlayerSeasons" aria-label="Seasons">${seasons.slice(seasonOffset,seasonOffset+40).map(row=>`<a class="dsSecondaryBtn svPlayerSeason${row.season_number===season?' active':''}" data-player-season-link href="${escape(link(row.season_number,1))}" ${row.season_number===season?'aria-current="true"':''}><span>Season ${row.season_number}</span>${Number.isSafeInteger(row.episode_count)&&row.episode_count>0?`<small class="svPlayerSeasonCount">${row.episode_count} episodes</small>`:''}</a>`).join('')}</nav>`:''}
     <nav class="svPlayerEpisodeGrid" aria-label="Season ${season} episodes">${episodes}</nav>
   </section>`;
 }
 
 function playerMarkup(options = {}) {
   const type = options.type === 'tv' ? 'tv' : 'movie';
-  const mode = !options.embedded && options.mode === 'trailer' ? 'trailer' : 'movie';
+  const mode = !options.kidsMode && !options.embedded && options.mode === 'trailer' ? 'trailer' : 'movie';
   const id = String(options.id || '');
   const title = String(options.title || (type === 'tv' ? 'TV series' : 'Movie'));
   const season = Math.max(1, parseInt(options.season,10) || 1);
   const episode = Math.max(1, parseInt(options.episode,10) || 1);
-  const poster = mediaUrl(options.poster), backdrop = mediaUrl(options.backdrop), trailer = mediaUrl(options.trailerUrl);
-  const detailUrl = `/${type}/${encodeURIComponent(id)}`;
-  const watchUrl = `/watch/${type}/${encodeURIComponent(id)}`;
+  const poster = mediaUrl(options.poster), backdrop = mediaUrl(options.backdrop), trailer = options.kidsMode?'':mediaUrl(options.trailerUrl);
+  const detailUrl = `${options.kidsMode?'/kids/title':''}/${type}/${encodeURIComponent(id)}`;
+  const watchUrl = `${options.kidsMode?'/kids':''}/watch/${type}/${encodeURIComponent(id)}`;
   const query = (choice) => '?' + new URLSearchParams({mode:choice,... (type==='tv' ? {s:String(season),e:String(episode)} : {}), ...(options.provider ? {provider:String(options.provider)} : {})}).toString();
   const episodeCopy = type === 'tv' ? `Season ${season} · Episode ${episode}` : 'Movie';
   const chapter = type === 'tv' ? `S${String(season).padStart(2,'0')} · E${String(episode).padStart(2,'0')}` : mode==='trailer'?'OFFICIAL TRAILER':'FEATURE FILM';
@@ -89,14 +90,14 @@ function playerMarkup(options = {}) {
       <h2 data-player-status-title>${statusTitle}</h2><p data-player-status-copy>${statusCopy}</p>
       <button type="button" class="svPlayerAction svPlayerRetry" data-player-retry hidden>${icon('retry')}Retry playback</button>
     </div>
-    ${options.embedded ? "" : playerAssistMarkup()}
+    ${options.embedded||options.kidsMode ? "" : playerAssistMarkup()}
     <div class="svPlayerDock" data-player-controls hidden>
       <div class="svPlayerDockGlass svLiquidPane" data-player-glass aria-hidden="true"></div>
       <div class="svPlayerTimelineRow"><span class="svPlayerTime svPlayerTimeCurrent" data-player-current>0:00</span><div class="svPlayerTimeline"><div class="svPlayerTimelineTrack" aria-hidden="true"><i data-player-buffered></i><b data-player-progress></b></div><input data-player-seek type="range" min="0" max="0" step="0.1" value="0" aria-label="Seek through ${mediaNoun}" aria-valuetext="0:00" disabled/></div><span class="svPlayerTime svPlayerTimeDuration" data-player-duration>—</span></div>
       <div class="svPlayerDockRow"><div class="svPlayerTransport">
         ${button('data-player-backward','Back 10 seconds','rewind','disabled')}${button('data-player-play',`Play ${mediaNoun}`,'play','disabled')}${button('data-player-forward','Forward 10 seconds','forward','disabled')}
       </div><div class="svPlayerTools">
-        ${!options.embedded?`<a class="svPlayerControl svPlayerDownload" href="/download/${type}/${encodeURIComponent(id)}${type==='tv'?`?s=${season}&e=${episode}`:''}" data-sv-download data-sv-download-type="${mediaNoun}" aria-label="Download ${mediaNoun}" title="Download ${mediaNoun}">↓<span class="svPlayerTvLabel">Download</span></a>`:''}
+        ${!options.embedded&&!options.kidsMode?`<a class="svPlayerControl svPlayerDownload" href="/download/${type}/${encodeURIComponent(id)}${type==='tv'?`?s=${season}&e=${episode}`:''}" data-sv-download data-sv-download-type="${mediaNoun}" aria-label="Download ${mediaNoun}" title="Download ${mediaNoun}">↓<span class="svPlayerTvLabel">Download</span></a>`:''}
         ${!options.embedded?`<details class="svPlayerPopover svPlayerServerPopover" data-player-servers>
           <summary class="svPlayerControl" aria-label="Choose streaming server" title="Streaming servers">${icon('server')}<span class="svPlayerTvLabel">Servers</span></summary>
           <div class="svPlayerPopoverBody svPlayerServerBody" popover="manual">
@@ -117,7 +118,7 @@ function playerMarkup(options = {}) {
           <label for="${escape(controlPrefix)}Audio">Audio language<select id="${escape(controlPrefix)}Audio" data-player-audio disabled><option value="-1">Language unavailable</option></select></label>
           <label for="${escape(controlPrefix)}Speed">Playback speed<select id="${escape(controlPrefix)}Speed" data-player-speed><option value="0.5">0.5×</option><option value="0.75">0.75×</option><option value="1" selected>Normal</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option></select></label>
           <label for="${escape(controlPrefix)}Captions">Captions<select id="${escape(controlPrefix)}Captions" data-player-captions disabled><option value="-1">Unavailable</option></select></label>
-          ${!options.embedded&&type==='tv'?`<label class="svPlayerMenuAutoplay" for="${escape(controlPrefix)}Autoplay">Play next episode automatically<input id="${escape(controlPrefix)}Autoplay" type="checkbox" data-assist-autoplay checked></label>`:''}
+          ${!options.embedded&&!options.kidsMode&&type==='tv'?`<label class="svPlayerMenuAutoplay" for="${escape(controlPrefix)}Autoplay">Play next episode automatically<input id="${escape(controlPrefix)}Autoplay" type="checkbox" data-assist-autoplay checked></label>`:''}
           <button type="button" class="svPlayerMenuAction" data-player-pip aria-label="Picture in picture" hidden>${icon('pip')}<span>Picture in picture</span></button>
           ${options.embedded ? `<button type="button" class="svPlayerMenuAction" data-player-sync>${icon('retry')}Sync playback</button>` : ''}
         </div></details>
@@ -139,10 +140,10 @@ function playerMarkup(options = {}) {
     <div class="svPlayerLayout"><section class="svPlayerMain" aria-labelledby="svPlayerTitle"><div class="svPlayerTheater" data-cinema-reveal>${mode==='trailer'?trailerSurface:movieSurface}</div>
       ${type==='tv'&&mode==='movie'&&options.episodeNavigationHtml?`<div class="svPlayerEpisodeNavigation" data-player-episode-navigation>${options.episodeNavigationHtml}</div>`:''}
       <div class="svPlayerBelow svGlassSurface svGlassPanel" data-cinema-reveal><div class="svPlayerFilm">${poster ? `<a class="svPlayerPoster" href="${escape(detailUrl)}" tabindex="-1" aria-hidden="true"><img src="${escape(poster)}" alt="" decoding="async"/></a>`:''}<div class="svPlayerIdentity"><div class="svPlayerIdentityHead"><span class="svPlayerChapter">${chapter}</span><div class="svPlayerMetadata">${meta}</div></div><h1 id="svPlayerTitle">${escape(title)}</h1>${type==='tv'&&options.episodeTitle&&mode==='movie'?`<p class="svPlayerEpisodeName">${escape(options.episodeTitle)}</p>`:''}<p class="svPlayerTransportNote" id="${escape(noteId)}" data-player-transport-note>${mode==='trailer'?'A first look at the story.':'Settle in. The rest can wait.'}</p></div></div>
-      ${mode==='movie' ? `<div class="svPlayerTogether"><span>Better with company</span><button type="button" class="dsSecondaryBtn" data-share-title data-share-id="${escape(id)}" data-share-type="${type}">Send to a friend</button><button type="button" class="dsSecondaryBtn svPlayerPartyButton" data-player-party-open>${icon('people')}<span>Watch together</span></button></div>`:''}</div>
+      ${mode==='movie'&&!options.kidsMode ? `<div class="svPlayerTogether"><span>Better with company</span><button type="button" class="dsSecondaryBtn" data-share-title data-share-id="${escape(id)}" data-share-type="${type}">Send to a friend</button><button type="button" class="dsSecondaryBtn svPlayerPartyButton" data-player-party-open>${icon('people')}<span>Watch together</span></button></div>`:''}</div>
       ${type==='tv'&&options.episodePickerHtml ? `<div class="svPlayerEpisodePicker">${options.episodePickerHtml}</div>` : ''}
       <noscript><p class="svPlayerNoScript">Enable JavaScript to prepare ${mediaNoun} playback.</p></noscript>
-    </section><aside class="svPlayerPartySlot" data-player-party-slot aria-label="Watch party">${options.partyPanelHtml || ''}</aside></div>
+    </section>${options.kidsMode?'':`<aside class="svPlayerPartySlot" data-player-party-slot aria-label="Watch party">${options.partyPanelHtml || ''}</aside>`}</div>
   </main>`;
 }
 

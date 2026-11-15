@@ -24,16 +24,11 @@ app.use('/api/kids',kids.router);
 app.use('/assets/kids',express.static(path.join(__dirname,'public','kids'),{maxAge:'1d',dotfiles:'deny'}));
 ```
 
-Replace the old `/kids` handler with:
+The server registers explicit native routes: `/kids`, `/kids/movies`, `/kids/tv`, `/kids/browse`, `/kids/search`, `/kids/title/:type/:id` and `/kids/watch/:type/:id`. `kidsCatalogPage`, `detailPage` and `watchPage` reuse the real catalog/cinema components with an explicit `kidsMode` option. The default adult renderer behavior is preserved. Every discovery/search/recommendation candidate is reduced to an ID and independently verified; conflicting IDs/types, adult flags, missing/conflicting certificates and failed metadata are rejected before rendering. Child pages are private and not cached.
 
-```js
-app.get(['/kids','/kids/title/:type/:id'],async(req,res,next)=>{
-  try{res.send(pageShell({title:SITE_NAME+' — Kids',active:'kids',...await kids.page(req)}));}
-  catch(error){next(error);}
-});
-```
+The native child shell uses the shared CSS, navigation renderer, hero, React rails, cards, title and player. It omits adult resume/history, account/profile, feed/notification, social, download and Studio containers/controllers. Search is server rendered through `/kids/search`; no adult recent-search storage or async search controller is mounted. The shell applies only validated comfort preferences (font, motion, contrast, target/scale/focus and caption settings), plus device performance/TV settings, from existing preferences. Saved adult themes, wallpapers, row layouts and navigation changes are not applied.
 
-Add `/assets/kids/guard.js?v=1` and `/assets/kids/kids.css?v=1` to the global shell. `page(req).extraHead` includes Kids page CSS and `/assets/kids/kids.js?v=1`; the stylesheet can be deduplicated by the integrator. The guard provides a minimal locked-player return/parent header, coordinates lock changes across tabs, and rechecks back-cache/pageshow/focus. Its selectors only style `.kidsWorld` or `html[data-kids-locked="true"]`; Study/open browsing retain their own layout.
+`/assets/kids/guard.js?v=2` coordinates parent locking across tabs and rechecks restored players. `/assets/kids/kids.js?v=3` owns the password dialog. Kids CSS is part of the content-hashed shared finish bundle. Locked CSS preserves `[data-kids-shell]` navigation. Child details fetch at most one selected season's metadata and render at most24 initial episode tiles; other season summaries select their own safe SSR route. Season groups and the player's bounded episode window keep later seasons/episodes reachable. Child players always use movie playback and retain `/kids` return, season and episode paths.
 
 Study's `authorizeSocket` should require both site-gate authorization and `kids.socketAllowed(socket)`. Default Socket.IO auth and every live packet should check the same method. On lock, the callback disconnects all existing namespaces for that browser. The guard seeds a stable encrypted browser ID on normal first-party page/API visits, so a pre-lock socket can be matched. Current-process records also invalidate a stale open/unconfigured credential after locking.
 
@@ -49,4 +44,6 @@ Study's `authorizeSocket` should require both site-gate authorization and `kids.
 
 `node --test tests/kids-protection.test.cjs` covers certification, direct route/API protection, correct/wrong passwords, overwrite rejection, restart and corrupt/missing cookie failure, proxy grants, source origin handling, CSRF, socket stale-credential protection and guess limits.
 
-`SWIFLY_TEST_BROWSER_EXECUTABLE_PATH=/usr/bin/chromium SWIFLY_KIDS_SCREENSHOT_DIR=<dir> node --test tests/kids-browser.test.cjs` checks desktop, iPad, 390px and 320px layouts, parent form flow, checked title navigation, locked-player return, reduced motion and empty search. In hosted CI, omit the executable override to use its installed Chromium. Local Chromium launch is denied by this runtime's socket policy; do not mark these browser scenarios passed until hosted output confirms them.
+`node --test tests/kids-native.test.cjs tests/kids-ui.test.cjs tests/kids-integration.test.cjs` checks real application-shell rendering, adversarial metadata, safe pagination/filters/search/recommendations, bounded seasons, safe player routes, preference isolation, cross-tab restoration and parent controls.
+
+`SWIFLY_TEST_BROWSER_EXECUTABLE_PATH=/usr/bin/chromium SWIFLY_KIDS_SCREENSHOT_DIR=<dir> node --test tests/kids-native-browser.test.cjs` checks the real application after React hydration at desktop, iPad, 390px, 320px and TV sizes, with distinct checked artwork fixtures, native navigation/rails, real second pages, SSR search/details/episodes, child player return, parent flow and cross-tab restoration. In hosted CI, omit the executable override to use its installed Chromium. Local Chromium launch is denied by this runtime's socket policy; do not mark these browser scenarios passed until hosted output confirms them.

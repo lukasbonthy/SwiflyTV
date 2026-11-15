@@ -20,8 +20,10 @@ Inspect actual appearance beside ordinary movie pages. Check narrow dialogs and 
 - [x] Remove audiobook scenery/quiet-mode code; rebuild native library and listening dialog. Verify search, chapters, speed, sleep and identity/history behavior.
 - [x] Replace Study warm/editorial presentation with neutral scene controls and readable functional layout. Preserve saved settings and all tools.
 - [x] Replace language marketing hero/postcards with native filters, language grid and genre controls. Verify exact navigation/query results.
-- [ ] Update targeted browser scenarios for the changed design, run syntax/build/relevant/full checks, inspect combined screenshots and obtain a fresh review.
-- [ ] Address meaningful findings, publish review branch, run hosted checks, deploy the passing source and verify live assets/behavior. Update the checkpoint.
+- [x] Update targeted browser scenarios for the changed design, run syntax/build/relevant/full checks, inspect combined screenshots and obtain a fresh review.
+- [x] Address meaningful findings, publish review branch, run hosted checks, deploy the passing source and verify live assets/behavior. Update the checkpoint.
 
 
 User follow-up: restore Movies page-one layout, add the compact underlined period picker and keep the normal hero/Browse data independent. Correct full-frame ripple color propagation and black-frame fallback. Add focused regressions plus real captured-video and dropdown screenshots, then verify and release these with the four-page native correction.
+
+Completed: PR165, live app `791a850c457b0d37517a5b8c372f72d7b89335d7`, Render `dep-dbsso4u8bjmc73etrgbg`. Exact tested tree, final review and 39 live checks are recorded in `docs/SWIFLYTV_STATUS.md` and `docs/SWIFLYTV_NATIVE_REVIEW.md`.

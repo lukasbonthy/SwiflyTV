@@ -38,14 +38,14 @@ async function shot(page,name){
 }
 async function layout(page){
  return page.evaluate(()=>{
-  const box=node=>node.getBoundingClientRect().toJSON(),shown=node=>{const r=box(node),style=getComputedStyle(node),disclosure=node.closest('details');return r.width>0&&r.height>0&&style.visibility!=='hidden'&&!node.closest('[hidden],[inert]')&&(!disclosure||disclosure.open||node.closest('summary'));},control=node=>({label:node.getAttribute('aria-label')||node.getAttribute('name')||node.textContent.trim(),box:box(node)});
+  const box=node=>node.getBoundingClientRect().toJSON(),shown=node=>{const r=box(node),style=getComputedStyle(node),disclosure=node.closest('details');return r.width>0&&r.height>0&&style.visibility!=='hidden'&&!node.closest('[hidden],[inert]')&&(!disclosure||disclosure.open||node.closest('summary'));},control=node=>({label:node.getAttribute('aria-label')||node.getAttribute('name')||node.textContent.trim(),box:box(node),periodChoice:node.matches('.svPeriodMenu a'),periodTrigger:node.matches('.svPeriodTrigger')});
   const owned='main .svCatalogButton,main :is(.svPersonFilters,.svBrowseFilters,.svLanguageFilters) select,main .svPeriodTabs a,main .svPeriodTrigger,main .svPeriodMenu a,main .svCatalogPager a,main [data-language-search],main [data-person-biography] summary';
   const destinations=[...document.querySelectorAll('.svLanguageDestinationGrid')].filter(shown).map(grid=>({box:box(grid),cards:[...grid.querySelectorAll('.svLanguageDestination')].filter(shown).map(card=>({label:card.textContent.trim(),box:box(card),aspectRatio:getComputedStyle(card).aspectRatio,minHeight:getComputedStyle(card).minHeight}))}));
   const rails=[...document.querySelectorAll('main .svCatalogRow > .movieRail')].filter(shown).map(rail=>{
    const bounds=box(rail),cards=[...rail.querySelectorAll(':scope > .movieCard')].filter(shown),fullyShown=cards.filter(card=>{const r=box(card);return r.left>=bounds.left-1&&r.right<=bounds.right+1;});
    return{box:bounds,overflowX:getComputedStyle(rail).overflowX,scrollLeft:rail.scrollLeft,scrollWidth:rail.scrollWidth,clientWidth:rail.clientWidth,cards:cards.length,fullyShown:fullyShown.length,clippedCards:cards.filter(card=>{const r=box(card);return r.left<bounds.left-1||r.right>bounds.right+1;}).length,fullyShownControls:fullyShown.flatMap(card=>[...card.querySelectorAll('button')].filter(shown).map(control))};
   });
-  return{url:location.href,readyState:document.readyState,loading:document.documentElement.getAttribute('data-sv-loading'),width:innerWidth,scrollWidth:document.documentElement.scrollWidth,ownedControls:[...document.querySelectorAll(owned)].filter(shown).map(control),otherControls:[...document.querySelectorAll('main select,main button')].filter(node=>!node.closest('.movieRail')&&shown(node)).map(control),rails,destinations,results:[...document.querySelectorAll('.svLanguageResults,.svCatalogResults,[data-person-filmography]')].map(node=>{const links=[...node.querySelectorAll('.dsCardTitle')];return{container:node.className,count:links.length,first:links[0]?.href,last:links.at(-1)?.href};}),headings:[...document.querySelectorAll('main h1,main h2')].map(node=>node.textContent.trim()),pagers:[...document.querySelectorAll('main .pagination')].map(node=>({text:node.textContent.trim(),links:[...node.querySelectorAll('a')].map(link=>({rel:link.rel,href:link.href}))})),filters:[...document.querySelectorAll('main form')].map(form=>({action:form.action,values:Object.fromEntries(new FormData(form))}))};
+  return{compactPeriod:matchMedia('(min-width:701px) and (hover:hover) and (pointer:fine)').matches,url:location.href,readyState:document.readyState,loading:document.documentElement.getAttribute('data-sv-loading'),width:innerWidth,scrollWidth:document.documentElement.scrollWidth,ownedControls:[...document.querySelectorAll(owned)].filter(shown).map(control),otherControls:[...document.querySelectorAll('main select,main button')].filter(node=>!node.closest('.movieRail')&&shown(node)).map(control),rails,destinations,results:[...document.querySelectorAll('.svLanguageResults,.svCatalogResults,[data-person-filmography]')].map(node=>{const links=[...node.querySelectorAll('.dsCardTitle')];return{container:node.className,count:links.length,first:links[0]?.href,last:links.at(-1)?.href};}),headings:[...document.querySelectorAll('main h1,main h2')].map(node=>node.textContent.trim()),pagers:[...document.querySelectorAll('main .pagination')].map(node=>({text:node.textContent.trim(),links:[...node.querySelectorAll('a')].map(link=>({rel:link.rel,href:link.href}))})),filters:[...document.querySelectorAll('main form')].map(form=>({action:form.action,values:Object.fromEntries(new FormData(form))}))};
  });
 }
 async function diagnostics(f,name,extra={}){
@@ -66,7 +66,7 @@ async function fits(f,label){
  assert(state.ownedControls.length>0,label+' must expose its catalog controls');
  assert(state.ownedControls.every(inside),label+' catalog controls must fit: '+JSON.stringify(state.ownedControls.filter(control=>!inside(control))));
  // A translated 44px box can report 43.99994px in Chromium's float geometry.
- const fullTarget=({box})=>box.width>=44-.01&&box.height>=44-.01;
+ const fullTarget=({box,periodChoice,periodTrigger})=>box.width>=44-.01&&box.height>=(state.compactPeriod&&periodChoice?32:state.compactPeriod&&periodTrigger?36:44)-.01;
  assert(state.ownedControls.every(fullTarget),label+' catalog controls must have 44px targets: '+JSON.stringify(state.ownedControls.filter(control=>!fullTarget(control))));
  assert(state.otherControls.every(inside),label+' controls outside native rails must fit: '+JSON.stringify(state.otherControls.filter(control=>!inside(control))));
  // Native rails intentionally keep later cards outside their horizontal clip.
@@ -163,10 +163,15 @@ test('Movies keeps its original hierarchy and the underlined period popout suppo
    assert.equal(await f.page.locator('.svBrowseHeading,.svBrowseFilters').count(),0);
    assert.deepEqual(await f.page.locator('main .svCatalogRow h2').allTextContents(),['Action Movies','Popular movies','Comedies','Suspense Movies','Critically Acclaimed Movies','Browse Movies']);
    assert.equal(await picker.getAttribute('open'),null);assert.equal(await menu.isVisible(),false);
-   assert(await trigger.locator('span').evaluate(node=>getComputedStyle(node).textDecorationLine.includes('underline')));
+   const appearance=await trigger.evaluate(node=>{const heading=node.closest('.svPeriodHeading').querySelector('h2'),label=node.querySelector('span'),s=getComputedStyle(node),h=getComputedStyle(heading),u=getComputedStyle(label);return{font:s.fontSize,headingFont:h.fontSize,weight:s.fontWeight,headingWeight:h.fontWeight,family:s.fontFamily,headingFamily:h.fontFamily,background:s.backgroundColor,border:s.borderWidth,shadow:s.boxShadow,underline:u.textDecorationLine,underlineColor:u.textDecorationColor,underlineOffset:u.textUnderlineOffset,underlineThickness:u.textDecorationThickness,hasOptics:!!node.querySelector('.svLiquidPane')};});
+   assert.equal(appearance.font,appearance.headingFont,'Period and heading share their actual final size');assert.equal(appearance.font,width<768?'20px':'24px');assert.equal(appearance.weight,'600');assert.equal(appearance.headingWeight,'600');assert.equal(appearance.family,appearance.headingFamily);
+   assert.equal(appearance.hasOptics,false);assert.equal(appearance.background,'rgba(0, 0, 0, 0)');assert.equal(appearance.border,'0px');assert.equal(appearance.shadow,'none');
+   assert(appearance.underline.includes('underline'));assert.equal(appearance.underlineColor,'rgb(167, 139, 250)');assert.equal(appearance.underlineOffset,'4px');assert.equal(appearance.underlineThickness,'2px');
    await trigger.scrollIntoViewIfNeeded();await diagnostics(f,'catalog-period-closed-'+label);
    await trigger.click();await f.page.waitForFunction(()=>{const menu=document.querySelector('.svPeriodMenu');return document.querySelector('[data-movie-periods]').dataset.periodState==='open'&&getComputedStyle(menu).opacity==='1';});
    assert.equal(await trigger.getAttribute('aria-expanded'),'true');
+   const menuStyle=await menu.evaluate(node=>{const s=getComputedStyle(node);return{radius:s.borderRadius,duration:s.transitionDuration,optionFont:getComputedStyle(node.querySelector('a')).fontSize};});
+   assert.equal(menuStyle.radius,'14px');assert.equal(menuStyle.optionFont,'14px');assert(menuStyle.duration.split(',').every(value=>value.trim()==='0.15s'));
    const bounds=await menu.boundingBox();assert(bounds.x>=17&&bounds.x+bounds.width<=width-17,'The small period popout must fit the viewport');
    assert.equal(await menu.locator('a').count(),3);await fits(f,'period-open-'+label);await diagnostics(f,'catalog-period-open-'+label);
    await trigger.press('ArrowDown');assert(await menu.locator('a[aria-current=page]').evaluate(node=>node===document.activeElement));
@@ -175,7 +180,7 @@ test('Movies keeps its original hierarchy and the underlined period popout suppo
    assert(await trigger.evaluate(node=>node===document.activeElement));
    await trigger.click();await f.page.locator('.dsBrowseTop h1').click();await f.page.waitForFunction(()=>!document.querySelector('[data-movie-periods]').open);
    await trigger.click();await clickThrough(f,menu.locator('a[href*="period=month"]'),'period-month-'+label,'/movies',{period:'month',party:'1'});
-   assert.equal(new URL(f.page.url()).searchParams.has('page'),false);assert.equal(await f.page.locator('.svPeriodTrigger').textContent(),'This month');
+   assert.equal(new URL(f.page.url()).searchParams.has('page'),false);assert.equal(await f.page.locator('.svPeriodTrigger').textContent(),'This Month');
    assert.equal(await f.page.locator('.svPeriodTrigger').getAttribute('title'),'Popular releases this month');
    const first=await f.page.locator('.svCatalogRow:has([data-movie-periods]) .dsCardTitle').first().getAttribute('href');
    await clickThrough(f,f.page.locator('.pagination a[rel=next]'),'period-month-next-'+label,'/movies',{period:'month',page:'2',party:'1'});

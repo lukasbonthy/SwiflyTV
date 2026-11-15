@@ -360,6 +360,12 @@ function swiflyTvFocusNavigation() {
     if(document.fullscreenElement){document.exitFullscreen()?.catch(()=>{});return;}
     const back=document.querySelector('[data-sv-player-back],.svDetailPage [data-sv-details-back]');if(back){back.click();return;}
     if(window.SwiflyStudy?.controller?.back?.())return;
+    if(document.documentElement.dataset.kidsMode==='true'||/^\/kids(?:\/|$)/.test(location.pathname)){
+      const home=Array.from(document.querySelectorAll('[data-kids-shell] a[href="/kids"]')).find(el=>eligible(el));
+      if(home){if(location.pathname==='/kids')setFocus(home);else home.click();}
+      else location.href='/kids';
+      return;
+    }
     if(history.length>1)history.back();else location.href='/';
   }
   function focusSearch(){
@@ -368,7 +374,7 @@ function swiflyTvFocusNavigation() {
     const menu=document.querySelector('.dsProfileMenu[open]');if(menu)menu.open=false;
     const popover=playerRoot()?.querySelector('details[open]');if(popover){popover.open=false;try{popover.querySelector('[popover]')?.hidePopover();}catch{}}
     const search=document.querySelector('input[type="search"],input[name="q"]');if(search&&eligible(search)){setFocus(search);return;}
-    const toggle=document.getElementById('svNavSearchToggle');if(toggle)activate(toggle);else showHint('Search is available from the navigation');
+    const toggle=document.getElementById('svNavSearchToggle');if(toggle)activate(toggle);else if(document.documentElement.dataset.kidsMode==='true'||/^\/kids(?:\/|$)/.test(location.pathname))activate(document.querySelector('[data-kids-shell] a[href="/kids/search"]'));else showHint('Search is available from the navigation');
   }
   function tryMenu(){
     if(activeModal())return;
@@ -504,4 +510,4 @@ function swiflyTvFocusNavigation() {
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 }
 
-module.exports={tvSource:()=>`(${swiflyTvFocusNavigation.toString()})();`,tvAssetScript:()=>'<script defer data-sv-tv-navigation src="/assets/clean/tv.js?v=267"></script>',tvHead:()=>`<script data-sv-tv-gate>(${tvGate.toString()})();</script>`,tvScript:()=>`<script data-sv-tv-navigation>(${swiflyTvFocusNavigation.toString()})();</script>`};
+module.exports={tvSource:()=>`(${swiflyTvFocusNavigation.toString()})();`,tvAssetScript:()=>'<script defer data-sv-tv-navigation src="/assets/clean/tv.js?v=268"></script>',tvHead:()=>`<script data-sv-tv-gate>(${tvGate.toString()})();</script>`,tvScript:()=>`<script data-sv-tv-navigation>(${swiflyTvFocusNavigation.toString()})();</script>`};

@@ -4,7 +4,7 @@
  let disposed=false,channel=null,request=null,inflight=null,generation=0;
  const key='swiflytv.kids.mode-change';
  const kidPage=()=>location.pathname==='/kids'||location.pathname.startsWith('/kids/');
- const playerPage=()=>/^\/watch\/(movie|tv)\/[1-9]\d*$/.test(location.pathname);
+ const playerPage=()=>/^\/(?:kids\/)?watch\/(movie|tv)\/[1-9]\d*$/.test(location.pathname);
  const verifiedPlayer=()=>document.querySelector('[data-player-root]')?.dataset.playerKidsVerified==='true';
  function pauseMedia(){for(const media of document.querySelectorAll('video,audio'))try{media.pause();}catch{}}
  function publish(locked){
@@ -15,11 +15,11 @@
   if(disposed)return false;document.documentElement.dataset.kidsLocked=value.locked?'true':'false';
   if(value.locked&&!kidPage()&&(!playerPage()||!verifiedPlayer())){pauseMedia();location.replace('/kids');return false;}
   const existing=document.querySelector('[data-kids-mode-bar]');
-  if(value.locked&&playerPage()&&!existing){
+  if(value.locked&&playerPage()&&!kidPage()&&!existing){
    const bar=safeText('nav','');bar.className='kidsModeBar';bar.dataset.kidsModeBar='';bar.setAttribute('aria-label','Kids navigation');
    const home=safeText('a','← Back to Kids');home.href='/kids';const parent=safeText('a','Grown-ups · unlock');parent.href='/kids?parent=1';bar.append(home,parent);document.body.prepend(bar);
    // The parent return route does not reuse the general-catalog details sheet.
-   for(const link of document.querySelectorAll('[data-sv-player-back]'))link.setAttribute('href','/kids');
+   for(const link of document.querySelectorAll('[data-sv-player-back]')){const root=document.querySelector('[data-player-root]');link.setAttribute('href','/kids/title/'+root.dataset.playerType+'/'+root.dataset.playerId);}
   }else if(!value.locked)existing?.remove();
   document.dispatchEvent(new CustomEvent('swifly:kids-status',{detail:value}));
   return true;

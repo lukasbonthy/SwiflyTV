@@ -12,7 +12,7 @@ function navigationGate() {
     if (!value) return false;
     try {
       const url = new URL(value, location.href);
-      return /^\/(?:watch|embed|social|watchrooms)(?:\/|$)/.test(url.pathname) ||
+      return /^\/(?:(?:kids\/)?watch|embed|social|watchrooms)(?:\/|$)/.test(url.pathname) ||
         ['1', 'create'].includes(url.searchParams.get('party')) || url.searchParams.has('roomId');
     } catch (_) {return false;}
   }
