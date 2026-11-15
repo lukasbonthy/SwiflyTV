@@ -26,14 +26,14 @@ async function open(t,width=1440,{reduced=false,progress=false}={}){
  return {page,errors,context};
 }
 async function screenshot(page,name){const target=process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR;if(!target)return;await fsp.mkdir(target,{recursive:true});await page.screenshot({path:path.join(target,name+'.png'),fullPage:true});}
-for(const [name,width]of [['desktop',1440],['ipad',834],['phone',390],['small-phone',320]])test('the complete scenic audiobook shell fits '+name+' and keeps its real controls reachable',{skip},async t=>{
+for(const [name,width]of [['desktop',1440],['ipad',834],['phone',390],['small-phone',320]])test('the native audiobook library fits '+name+' and keeps its real controls reachable',{skip},async t=>{
  const {page,errors}=await open(t,width);assert.equal(await page.locator('.svBookCard').count(),12);
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'the full shell must not overflow at '+width);
- const hero=await page.locator('.svBookLandscape').boundingBox(),heading=await page.locator('.svBookHeroCopy h1').boundingBox(),scenes=await page.locator('.svBookSceneBar').boundingBox();assert(heading.x>=hero.x&&heading.x+heading.width<=hero.x+hero.width+1);assert(heading.y+heading.height<scenes.y,'scene controls must clear the headline');
- for(const selector of ['[data-book-focus]','button[data-book-scene=lake]','.svBookStart'])assert(await page.locator(selector).isVisible());
+ const heading=await page.locator('.svBookHeader').boundingBox(),search=await page.locator('[data-book-search]').boundingBox();assert(heading.x>=0&&heading.x+heading.width<=width+1);assert(search.y>=heading.y+heading.height,'search follows the compact page heading');
+ assert.equal(await page.locator('.svBookLandscape,[data-book-scene],[data-book-focus]').count(),0,'the library has no unrelated scenery controls');
+ assert(await page.locator('[data-book-search] input').isVisible());assert(await page.locator('.svBookLibrary').isVisible());
+ const submit=await page.locator('[data-book-search] button').boundingBox();assert(submit.width>=44&&submit.height>=44,'search remains a full touch target');
  await screenshot(page,'audiobooks-'+name);
- await page.locator('button[data-book-scene=night]').click();assert.equal(await page.locator('[data-audiobooks]').getAttribute('data-book-scene'),'night');
- await page.locator('[data-book-focus]').click();assert(await page.locator('.svBookLibrary').isHidden());await page.keyboard.press('Escape');assert(await page.locator('.svBookLibrary').isVisible());
  await page.locator('.svBookCover').first().focus();assert.notEqual(await page.locator('.svBookCover').first().evaluate(n=>getComputedStyle(n).outlineStyle),'none');assert.deepEqual(errors,[]);
 });
 
@@ -57,5 +57,5 @@ test('real audiobook audio preserves speed across chapters and its reading dialo
 });
 
 test('audiobook reduced motion removes cover movement without losing keyboard feedback',{skip},async t=>{
- const {page,errors}=await open(t,834,{reduced:true});const cover=page.locator('.svBookCover').first();await cover.hover();assert.equal(await cover.evaluate(n=>getComputedStyle(n).transform),'none');await cover.focus();assert.notEqual(await cover.evaluate(n=>getComputedStyle(n).outlineStyle),'none');assert.equal(await page.locator('.svBookLandscapeArt img').evaluate(n=>getComputedStyle(n).transitionDuration),'0s');assert.deepEqual(errors,[]);
+ const {page,errors}=await open(t,834,{reduced:true});const cover=page.locator('.svBookCover').first();await cover.hover();assert.equal(await cover.evaluate(n=>getComputedStyle(n).transform),'none');await cover.focus();assert.notEqual(await cover.evaluate(n=>getComputedStyle(n).outlineStyle),'none');assert.equal(await page.locator('.svBookLandscapeArt').count(),0);assert.deepEqual(errors,[]);
 });

@@ -13,7 +13,7 @@
   generation++;controller?.abort();controller=null;status={...status,...value};clear();
   Object.assign(root.dataset,{kidsConfigured:String(status.configured),kidsLocked:String(status.locked),kidsAvailable:String(status.available),kidsRecovery:String(status.recoveryRequired)});
   const setup=!status.configured,unlock=status.configured&&status.locked;
-  root.querySelector('[data-kids-parent-title]').textContent=setup?'A little peace of mind.':unlock?'A grown-up can unlock.':'Ready for little explorers?';
+  root.querySelector('[data-kids-parent-title]').textContent=setup?'Set up parent controls':unlock?'Unlock Kids':'Lock Kids';
   root.querySelector('[data-kids-parent-copy]').textContent=status.recoveryRequired?'The parent lock cannot be verified. This browser stays in Kids until it can be restored.':!status.available?'Parent controls are temporarily unavailable.':setup?'Set a parent password to keep this browser in Kids. You’ll need it to leave, even after refreshing or switching profiles.':unlock?'Enter your parent password to leave Kids and return to SwiflyTV.':'Lock this browser in Kids with your existing parent password.';
   root.querySelector('[data-kids-password-fields]').hidden=!setup&&!unlock||status.recoveryRequired||!status.available;
   root.querySelector('[data-kids-confirm-wrap]').hidden=!setup;
@@ -21,7 +21,7 @@
   root.querySelector('label[for="kids-parent-password"]').textContent=setup?'Choose a parent password':'Parent password';
   submit.querySelector('span').textContent=setup?'Set password & enter Kids':unlock?'Unlock SwiflyTV':'Lock Kids';
   submit.disabled=!status.available||status.recoveryRequired;form.removeAttribute('aria-busy');
-  const label=root.querySelector('.kidsLockStatus > span');if(label)label.textContent=status.locked?'Kids is locked':'A world for little explorers';
+  const label=root.querySelector('.kidsLockStatus > span');if(label)label.textContent=status.locked?'Kids is locked':'Verified age ratings';
  }
  document.addEventListener('swifly:kids-status',event=>reconcile(event.detail));
  function open(){if(disposed||dialog.open)return;clear();previousFocus=document.activeElement;dialog.showModal();setTimeout(()=>{if(dialog.open&&!input.closest('[hidden]'))input.focus();},40);}

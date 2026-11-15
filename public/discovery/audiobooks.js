@@ -9,7 +9,7 @@
   const detail = find('[data-book-detail]'), detailStatus = find('[data-book-detail-status]'), title = find('[data-book-title]');
   const playback = find('[data-book-playback]'), chapters = find('[data-book-chapters]'), audio = find('[data-book-audio]');
   const speed = find('[data-book-speed]'), sleep = find('[data-book-sleep]'), sleepStatus = find('[data-book-sleep-status]');
-  const previous = find('[data-book-previous]'), next = find('[data-book-next]'), quiet = find('[data-book-focus]');
+  const previous = find('[data-book-previous]'), next = find('[data-book-next]');
   const releaseInitial = window.SwiflySiteLoading?.hold('Opening the listening room…');
   const params = () => new URLSearchParams(location.search);
   const boundedPage = value => Math.max(1, Math.min(200, parseInt(value, 10) || 1));
@@ -41,7 +41,7 @@
   }
   function coverFallback(b) {
     const art = node('span', 'svBookCoverFallback');
-    art.append(node('small', '', 'THE QUIET COLLECTION'), node('strong', '', b.title), node('span', '', b.author));
+    art.append(node('strong', '', b.title), node('span', '', b.author));
     return art;
   }
   function renderContinue() {
@@ -60,16 +60,6 @@
     const limited = Object.fromEntries(Object.entries(rows).sort((a, b) => (Number(b[1]?.at) || 0) - (Number(a[1]?.at) || 0)).slice(0, 60));
     putStorage(progressKey(bookProfile), JSON.stringify(limited)); lastSave = Date.now();
     renderContinue(); window.dispatchEvent(new Event('swifly:library-change'));
-  }
-  function setScene(value, persist = false) {
-    const scene = ['lake', 'forest', 'night'].includes(value) ? value : 'lake';
-    root.dataset.bookScene = scene;
-    for (const button of root.querySelectorAll('button[data-book-scene]')) button.setAttribute('aria-pressed', String(button.dataset.bookScene === scene));
-    if (persist) putStorage('swiflytv.audiobooks.scene.' + cleanProfile(profile()), scene);
-  }
-  function focus(value) {
-    root.dataset.bookQuiet = String(value); quiet.setAttribute('aria-pressed', String(value));
-    quiet.querySelector('span').textContent = value ? 'Back to library' : 'Quiet view';
   }
   async function get(path, signal) {
     const response = await fetch('/api/discovery' + path, {signal, headers:{Accept:'application/json'}});
@@ -94,8 +84,8 @@
     listController?.abort(); const token = ++listEpoch; listController = new AbortController();
     requestedPage = boundedPage(requestedPage); root.dataset.bookState = 'loading';
     form.setAttribute('aria-busy', 'true'); grid.setAttribute('aria-busy', 'true'); more.disabled = true;
-    status.textContent = append ? 'Finding a few more stories…' : 'Opening the library…'; skeleton.hidden = append;
-    find('[data-book-results-title]').textContent = query ? 'Stories matching “' + query + '”' : 'New to the quiet collection';
+    status.textContent = append ? 'Loading more recordings…' : 'Loading audiobooks…'; skeleton.hidden = append;
+    find('[data-book-results-title]').textContent = query ? 'Results for “' + query + '”' : 'Latest recordings';
     find('[data-book-clear]').hidden = !query;
     if (!append) {seen.clear(); grid.replaceChildren();}
     try {
@@ -112,8 +102,8 @@
       if (nextPage <= page || nextPage > 200) nextPage = null;
       more.hidden = nextPage === null;
       const count = grid.children.length;
-      find('[data-book-results-count]').textContent = count ? count + (count === 1 ? ' recording' : ' recordings') + (query ? ' to explore' : ' · ready to listen') : 'A different story is out there.';
-      status.textContent = data.message || (count ? '' : query ? 'No playable recordings match this search. Try a shorter title or the author’s surname.' : 'The library is quiet right now. Try a title or author, or check back in a moment.');
+      find('[data-book-results-count]').textContent = count ? count + (count === 1 ? ' recording' : ' recordings') + (query ? ' to explore' : ' · ready to listen') : 'No recordings found';
+      status.textContent = data.message || (count ? '' : query ? 'No playable recordings match this search. Try a shorter title or the author’s surname.' : 'No recordings are available. Search by title or author, or try again later.');
       root.dataset.bookState = count ? 'ready' : 'empty';
       if (append) updateUrl({page:page > 1 ? page : null});
     } catch (error) {
@@ -151,7 +141,7 @@
     if (!/^\d{1,10}$/.test(String(id)) || disposed) return;
     save(true); stopAudio(); detailController?.abort(); const token = ++detailEpoch; requestedBook = String(id); book = null;
     bookProfile = profile(); bookAccount = owner(); detail.replaceChildren(); chapters.replaceChildren(); playback.hidden = true;
-    title.textContent = 'Opening your story…'; detailStatus.textContent = 'Making a little room for a good story.';
+    title.textContent = 'Loading recording…'; detailStatus.textContent = 'Loading chapters…';
     if (!dialog.open) dialog.showModal(); find('[data-book-close]').focus();
     if (updateHistory) updateUrl({book:String(id)}, true);
     try {
@@ -177,8 +167,8 @@
       chapters.replaceChildren(fragment); select(index, {resume:resumeTime});
     } catch (error) {
       if (token === detailEpoch && !disposed && error.name !== 'AbortError') {
-        title.textContent = 'This story is taking a moment'; detailStatus.textContent = error.message;
-        const retry = node('button', '', 'Try this story again'); retry.type = 'button'; retry.addEventListener('click', () => openBook(id, false)); detailStatus.append(' ', retry);
+        title.textContent = 'Recording unavailable'; detailStatus.textContent = error.message;
+        const retry = node('button', '', 'Try again'); retry.type = 'button'; retry.addEventListener('click', () => openBook(id, false)); detailStatus.append(' ', retry);
       }
     }
   }
@@ -188,7 +178,7 @@
     audio.defaultPlaybackRate = Number(speed.value) || 1; audio.src = book.chapters[index].url; audio.load(); audio.playbackRate = audio.defaultPlaybackRate;
     for (const button of chapters.children) button.setAttribute('aria-current', String(Number(button.dataset.bookChapter) === index));
     find('[data-book-current]').textContent = book.chapters[index].title || 'Chapter ' + (index + 1);
-    detailStatus.textContent = resume > 5 ? 'Your place is saved. Resume from ' + time(resume) + '.' : 'Press play, and let the rest of the day wait.';
+    detailStatus.textContent = resume > 5 ? 'Your place is saved. Resume from ' + time(resume) + '.' : 'Choose a chapter and press play.';
     previous.disabled = index === 0; next.disabled = index === book.chapters.length - 1;
     if (play) audio.play().catch(() => {detailStatus.textContent = 'Tap the audio play button when you’re ready.';});
   }
@@ -202,7 +192,7 @@
   audio.addEventListener('timeupdate', () => {save(); if (sleepAt && Date.now() >= sleepAt) finishSleep();});
   audio.addEventListener('pause', () => save(true));
   audio.addEventListener('error', () => {if (book) detailStatus.textContent = 'This chapter could not load. Try another chapter or another recording.';});
-  audio.addEventListener('ended', () => {save(true); if (sleep.value === 'chapter') {finishSleep(); return;} if (book && index + 1 < book.chapters.length) select(index + 1, {play:true}); else detailStatus.textContent = 'The end. We hope the story stays with you.';});
+  audio.addEventListener('ended', () => {save(true); if (sleep.value === 'chapter') {finishSleep(); return;} if (book && index + 1 < book.chapters.length) select(index + 1, {play:true}); else detailStatus.textContent = 'Recording finished.';});
   speed.addEventListener('change', () => {audio.defaultPlaybackRate = audio.playbackRate = Number(speed.value); save(true);});
   sleep.addEventListener('change', () => {clearTimeout(sleepTimer); sleepAt = 0; sleepStatus.textContent = sleep.value === 'chapter' ? 'We’ll pause when this chapter ends.' : ''; const minutes = Number(sleep.value); if (minutes > 0) {sleepAt = Date.now() + minutes * 60000; sleepTimer = setTimeout(finishSleep, minutes * 60000); sleepStatus.textContent = 'Pausing in ' + minutes + ' minutes.';}});
   previous.addEventListener('click', () => select(index - 1, {play:!audio.paused})); next.addEventListener('click', () => select(index + 1, {play:!audio.paused}));
@@ -210,15 +200,12 @@
   more.addEventListener('click', () => {if (nextPage && !more.disabled) load(nextPage, true);});
   for (const button of root.querySelectorAll('[data-book-query]')) button.addEventListener('click', () => search(button.dataset.bookQuery));
   find('[data-book-clear]').addEventListener('click', () => {search(''); form.elements.q.focus();});
-  for (const button of root.querySelectorAll('button[data-book-scene]')) button.addEventListener('click', () => setScene(button.dataset.bookScene, true));
-  quiet.addEventListener('click', () => focus(quiet.getAttribute('aria-pressed') !== 'true'));
   find('[data-book-resume]').addEventListener('click', event => {if (event.currentTarget.dataset.bookResume) openBook(event.currentTarget.dataset.bookResume);});
-  document.addEventListener('keydown', event => {if (event.key === 'Escape' && !dialog.open && root.dataset.bookQuiet === 'true') {focus(false); quiet.focus();}});
   find('[data-book-close]').addEventListener('click', () => dialog.close());
   dialog.addEventListener('close', () => {const update = !skipNextCloseHistory; skipNextCloseHistory = false; closeBook(update);});
   dialog.addEventListener('click', event => {if (event.target !== dialog) return; const b = dialog.getBoundingClientRect(); if (event.clientX < b.left || event.clientX > b.right || event.clientY < b.top || event.clientY > b.bottom) dialog.close();});
   document.addEventListener('visibilitychange', () => {if (document.hidden) save(true); if (sleepAt && Date.now() >= sleepAt) finishSleep();});
-  function identityChanged() {if (dialog.open) dialog.close(); else closeBook(); setScene(getStorage('swiflytv.audiobooks.scene.' + cleanProfile(profile()))); renderContinue();}
+  function identityChanged() {if (dialog.open) dialog.close(); else closeBook(); renderContinue();}
   document.addEventListener('swifly:account-suspended', identityChanged); document.addEventListener('swifly:profile-changed', identityChanged);
   window.addEventListener('storage', event => {if (!event.key || ['swiflytv.activeProfile', 'swiflytv.accountOwner'].includes(event.key)) identityChanged();});
   window.addEventListener('popstate', () => {
@@ -230,7 +217,7 @@
   });
   window.addEventListener('pagehide', () => {save(true); disposed = true; audio.pause(); clearTimeout(sleepTimer); listController?.abort(); detailController?.abort(); ++listEpoch; ++detailEpoch;});
   window.addEventListener('pageshow', event => {if (!event.persisted) return; disposed = false; load(boundedPage(params().get('page'))); if (params().get('book')) openBook(params().get('book'), false); if (sleepAt && Date.now() >= sleepAt) finishSleep();});
-  setScene(getStorage('swiflytv.audiobooks.scene.' + cleanProfile(profile()))); renderContinue(); load(page);
+  renderContinue(); load(page);
   const openInitial = () => {const initial = params().get('book'); if (initial) openBook(initial, false);};
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', openInitial, {once:true}); else openInitial();
 })();
