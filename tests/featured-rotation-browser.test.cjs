@@ -146,6 +146,7 @@ test('phone features use slim visible pills, readable actions and a black tail a
   const f=await open(width,{reduced:true});try{
    for(const glass of ['liquid','subtle','off']){
     await f.page.evaluate(({glass,scale})=>{document.body.dataset.stGlass=glass;document.body.style.setProperty('--st-ui-scale',scale);},{glass,scale:width===320?'1.2':'1'});
+    await f.page.waitForFunction(()=>Number(getComputedStyle(document.querySelector('.svHeroSpill')).opacity)<=.12,null,{timeout:5000});
     const result=await f.page.evaluate(()=>{
      const hero=document.querySelector('[data-sv-featured]'),r=n=>n.getBoundingClientRect().toJSON(),play=hero.querySelector('[data-play-id]');
      return {hero:r(hero),nav:r(document.querySelector('.netflixNav')),brand:getComputedStyle(document.querySelector('.svBrandLogo')).display,wordmark:!!document.querySelector('.netflixWordmark'),

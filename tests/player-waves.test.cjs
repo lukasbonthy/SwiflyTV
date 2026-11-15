@@ -16,8 +16,9 @@ function field({height=800,film=null,kids=false,movieId='',artColor=null}={}){
  if(artColor){const ambient=d.createElement('div');ambient.className='svPlayerAmbient';const art=d.createElement('img');art.crossOrigin='anonymous';art.src='https://image.tmdb.org/movie-art.jpg';Object.defineProperties(art,{complete:{get:()=>true},naturalWidth:{get:()=>120}});ambient.append(art);root.append(ambient);}
  if(film)d.querySelector('[data-player-stage]').getBoundingClientRect=()=>film;
  if(kids)w.SwiflyKids={revalidatePlayer(){throw new Error('Only the player controller verifies playback access');}};
+ const observed=new Set();let viewportCallback;w.IntersectionObserver=class{constructor(callback){viewportCallback=callback;}observe(node){observed.add(node);}unobserve(node){observed.delete(node);}disconnect(){observed.clear();}};
  w.boot('player/waves.js');
- return {...env,root,backdrop,canvas,pixels,rects,frameColors(left,right=left){pattern=null;movieColors=[left,right];},framePattern(fn){pattern=fn;},get reads(){return reads;},get measures(){return measures;},play(){root.dispatchEvent(new w.CustomEvent('swiflyplayer:play-intent',{bubbles:true}));},advance(ms){const end=now+ms;while(now<end){now+=16;if(!paused)time+=.016;w.flush(now);}},block(value){blocked=value;},source(value){src=value;},pause(){paused=true;},ready(value){ready=value;},hide(value){Object.defineProperty(d,'hidden',{configurable:true,value});d.dispatchEvent(new w.Event('visibilitychange'));}};
+ return {...env,root,backdrop,canvas,pixels,rects,frameColors(left,right=left){pattern=null;movieColors=[left,right];},framePattern(fn){pattern=fn;},notifyVisibility(){for(const node of observed)viewportCallback([{target:node,isIntersecting:!node.hidden}]);},viewport(value){for(const node of observed)viewportCallback([{target:node,isIntersecting:value}]);},get reads(){return reads;},get measures(){return measures;},play(){root.dispatchEvent(new w.CustomEvent('swiflyplayer:play-intent',{bubbles:true}));},advance(ms){const end=now+ms;while(now<end){now+=16;if(!paused)time+=.016;w.flush(now);}},block(value){blocked=value;},source(value){src=value;},pause(){paused=true;},ready(value){ready=value;},hide(value){Object.defineProperty(d,'hidden',{configurable:true,value});d.dispatchEvent(new w.Event('visibilitychange'));}};
 }
 
 test('the ripple field waits for Play rather than source discovery',()=>{
@@ -124,4 +125,14 @@ test('a protected movie uses its artwork color without retrying blocked frame re
  const f=field({movieId:'157336',artColor:[20,210,210]});f.block(true);f.play();f.advance(900);
  assert(f.pixels.length>100&&f.pixels.every(([r,g,b])=>g>r*2&&b>r*2),'protected playback can still use its public movie artwork');
  const sampled=f.reads;f.advance(800);assert.equal(f.reads,sampled,'the unreadable movie is sampled only once');f.finish();
+});
+
+
+test('disabling the decorative layer cannot mark the visible movie itself offscreen',()=>{
+ const f=field();f.play();f.advance(300);
+ f.window.document.dispatchEvent(new f.window.CustomEvent('swifly:studio-change',{detail:{effective:{highContrast:true}}}));f.notifyVisibility();
+ assert.equal(f.backdrop.dataset.waveState,'off');
+ f.window.document.dispatchEvent(new f.window.CustomEvent('swifly:studio-change',{detail:{effective:{}}}));
+ assert.equal(f.backdrop.dataset.waveState,'live','restoring effects resumes the visible movie without a stale hidden-layer intersection');
+ f.viewport(false);assert.equal(f.backdrop.dataset.waveState,'still','a genuinely offscreen movie still suspends decoration');f.finish();
 });

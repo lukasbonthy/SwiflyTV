@@ -89,17 +89,21 @@ body.svCleanShell:has(.svStudy[data-study-root]){padding-bottom:0!important}.svS
 .svStudy.studyLargeTargets .studyTimerPresets button,.svStudy.studyLargeTargets .studyTimerActions button{min-height:44px}
 @media(max-width:700px){.svStudy.studyLargeTargets .studyTimer{padding:16px 18px 14px}.svStudy.studyLargeTargets:not([data-study-layout=focus]) .studyTimer{top:196px}.svStudy.studyLargeTargets .studyTimerDigits{font-size:54px;margin:10px 0 12px}.svStudy.studyLargeTargets .studyTimerPresets{margin-bottom:12px}.svStudy.studyLargeTargets .studyCustomTimer{margin-top:10px}.svStudy.studyLargeTargets .studySceneCaption{display:none}.svStudy.studyLargeTargets .studyPlayer{min-height:128px}.svStudy.studyLargeTargets .studyToolsDock{bottom:242px}}
 
-/* Reserve the site's compact navigation on medium-size screens. */
-@media(min-width:701px) and (max-width:860px){
+/* Wrapped navigation needs the same clear heading space on wider tablets. */
+@media(min-width:701px) and (max-width:1100px){
  .svStudy:not(:fullscreen) .studyHeading{top:130px}
  .svStudy:not(:fullscreen) .studyStageTop{top:210px}
+ .svStudy:not(:fullscreen) .studyWorkspace{top:210px}
+}
+/* Reserve the site's compact navigation on medium-size screens. */
+@media(min-width:701px) and (max-width:860px){
  .svStudy:not(:fullscreen) .studyPlayer{bottom:calc(104px + env(safe-area-inset-bottom,0px))}
  .svStudy:not(:fullscreen) .studyToolsDock{bottom:calc(214px + env(safe-area-inset-bottom,0px))}
  .svStudy:not(:fullscreen) .studyWorkspace{bottom:calc(298px + env(safe-area-inset-bottom,0px))}
  .svStudy:not(:fullscreen) .studyStatusRow{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
  .svStudy:not(:fullscreen) .studySceneCaption{display:none}
 }
-@media(min-width:701px) and (max-width:860px) and (max-height:800px){
+@media(min-width:701px) and (max-width:1100px) and (max-height:800px){
  .svStudy:not(:fullscreen) .studyIntro{display:none}
  .svStudy:not(:fullscreen) .studyStageTop{top:190px}
  .svStudy:not(:fullscreen):not([data-study-layout=focus]) .studyTimer{top:220px}

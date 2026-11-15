@@ -154,7 +154,8 @@
   bodySettings.observe(document.body,{attributes:true,attributeFilter:['class','data-st-high-contrast']});
   documentSettings.observe(document.documentElement,{attributes:true,attributeFilter:['data-sv-tv','data-sv-xbox','data-sv-artwork-state']});
   const viewport=typeof IntersectionObserver==='function'?new IntersectionObserver(entries=>{inView=entries[0].isIntersecting;sync();}):null;
-  viewport?.observe(backdrop);
+  // Observe the movie page, which stays visible when its decorative layer is disabled.
+  viewport?.observe(root);
   const size=typeof ResizeObserver==='function'?new ResizeObserver(resize):null;
   size?.observe(backdrop);
   const film=root.querySelector('[data-player-stage]');if(film)size?.observe(film);

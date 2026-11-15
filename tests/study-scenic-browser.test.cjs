@@ -15,7 +15,7 @@ async function assertPanels(page,name){
  const fullscreen=await page.evaluate(()=>Boolean(document.fullscreenElement)),nav=page.locator('.mobileNav').first();
  if(!fullscreen&&await nav.isVisible()){const box=await nav.boundingBox();assert(player.y+player.height<=box.y-10,name+' player must clear site navigation: '+JSON.stringify({player,nav:box}));}
  const topNav=page.locator('.netflixNav').first();if(!fullscreen&&await topNav.isVisible()){const bar=await topNav.boundingBox(),heading=await page.locator('.studyHeading').boundingBox();assert(heading.y>=bar.y+bar.height+10,name+' heading must clear site navigation: '+JSON.stringify({heading,nav:bar}));}
- const workspace=page.locator('[data-study-workspace]');if(await workspace.isVisible()){const box=await workspace.boundingBox();assert(box.y+box.height<=dock.y-10,name+' drawer must clear tools');}
+ const workspace=page.locator('[data-study-workspace]');if(await workspace.isVisible()){const box=await workspace.boundingBox(),heading=await page.locator('.studyHeading').boundingBox();assert(box.y>=heading.y+heading.height+10,name+' drawer must clear heading controls');assert(box.y+box.height<=dock.y-10,name+' drawer must clear tools');}
  const timer=page.locator('.studyTimer');if(await timer.isVisible()){const box=await timer.boundingBox();assert(box.y+box.height<=dock.y-10||box.x+box.width<=dock.x-10||box.x>=dock.x+dock.width+10,name+' timer must clear tools');}
  const caption=page.locator('.studySceneCaption');if(await caption.isVisible()){const box=await caption.boundingBox();assert(box.y+box.height<=dock.y-4,name+' scene caption must clear the tools');}
 }
@@ -41,7 +41,7 @@ async function open(viewport){
 }
 
 test('Scenic Study fills the actual shell while dock, timer and drawers fit phone, iPad and desktop',{skip:!available},async()=>{
- for(const [name,viewport]of [['desktop',{width:1440,height:900}],['small-tablet',{width:720,height:1000}],['short-tablet',{width:720,height:800}],['phone',{width:390,height:844}],['small-phone',{width:320,height:800}],['ipad',{width:1024,height:1366}]]){
+ for(const [name,viewport]of [['desktop',{width:1440,height:900}],['small-tablet',{width:720,height:1000}],['short-tablet',{width:720,height:800}],['wide-tablet',{width:1100,height:800}],['phone',{width:390,height:844}],['small-phone',{width:320,height:800}],['ipad',{width:1024,height:1366}]]){
   const f=await open(viewport);try{
    const root=await f.page.locator('[data-study-root]').boundingBox(),stage=await f.page.locator('[data-study-stage]').boundingBox();
    await capture(f.page,'study-shell-'+name);await assertPanels(f.page,name);
@@ -62,7 +62,7 @@ test('Scenic Study fills the actual shell while dock, timer and drawers fit phon
 
 
 test('Saved Scenic layout keeps every timer control within its panel at wide and narrow widths',{skip:!available},async()=>{
- for(const [name,viewport]of [['desktop',{width:1440,height:1000}],['ipad',{width:834,height:1112}],['small-tablet',{width:720,height:1000}],['short-tablet',{width:720,height:800}],['phone',{width:390,height:844}],['small-phone',{width:320,height:800}]]){
+ for(const [name,viewport]of [['desktop',{width:1440,height:1000}],['ipad',{width:834,height:1112}],['small-tablet',{width:720,height:1000}],['short-tablet',{width:720,height:800}],['wide-tablet',{width:1100,height:800}],['phone',{width:390,height:844}],['small-phone',{width:320,height:800}]]){
   const f=await open(viewport);try{
    await f.page.locator('[data-study-tab="sound"]').click();
    await f.page.locator('select[data-study-layout]').selectOption('scenic');
