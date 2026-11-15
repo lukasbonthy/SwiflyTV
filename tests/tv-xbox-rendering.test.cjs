@@ -4,10 +4,34 @@ const {chromium}=require('playwright-core');
 const {loadServer}=require('./ui-helpers.cjs');
 const {createSourceJobs}=require('../lib/source-jobs');
 const available=fs.existsSync(chromium.executablePath());let api,browser,origin,jobs;
+// Each upstream collection owns a full page of canonical identities. Returning
+// the same titles for every endpoint makes real cross-row deduplication turn
+// a populated layout fixture into a sparse-catalog test.
+function createCatalogFixture(){
+ const sources=new Map([['/trending/movie/week','Cinema'],['/trending/tv/week','Trending series'],['/movie/popular','Popular cinema'],['/tv/popular','Popular series'],['/movie/top_rated','Acclaimed cinema'],['/tv/top_rated','Acclaimed series'],['/movie/now_playing','New cinema']]),titles=new Map();
+ const overview='An extraordinary journey across a changing world, where a small team discovers the meaning of home and the stories that connect us.';
+ function collection(endpoint,params={}){
+  if(!sources.has(endpoint))sources.set(endpoint,endpoint.split('/').filter(Boolean).join(' '));
+  const source=[...sources.keys()].indexOf(endpoint),page=Math.max(1,Number(params.page)||1),type=endpoint.includes('/tv')?'tv':'movie',label=sources.get(endpoint);
+  return Array.from({length:20},(_,index)=>{
+   const id=source*1000000+(page-1)*1000+101+index,name=endpoint==='/trending/movie/week'&&page===1&&index===0?'Beyond the Northern Lights':label+(page>1?' page '+page:'')+' chapter '+(index+1);
+   const item={id,[type==='tv'?'name':'title']:name,poster_path:'/poster.jpg',backdrop_path:'/backdrop.jpg',overview,vote_average:8.2,vote_count:300,popularity:100-index,adult:false,media_type:type,...(type==='tv'?{first_air_date:'2026-06-01'}:{release_date:'2026-06-01'})};
+   titles.set(type+':'+id,item);return item;
+  });
+ }
+ return async(endpoint,params={})=>{
+  if(endpoint.startsWith('/genre/'))return{genres:[{id:12,name:'Adventure'},{id:18,name:'Drama'}]};
+  const detail=/^\/(movie|tv)\/(\d+)$/.exec(endpoint);
+  if(detail){
+   const type=detail[1],id=Number(detail[2]),item=titles.get(type+':'+id)||{id,[type==='tv'?'name':'title']:'A Separate Featured Journey',media_type:type,poster_path:'/poster.jpg',backdrop_path:'/backdrop.jpg',overview,vote_average:8.2,...(type==='tv'?{first_air_date:'2026-06-01'}:{release_date:'2026-06-01'})};
+   return{...item,id,runtime:118,genres:[{id:12,name:'Adventure'}],credits:{cast:[]},videos:{results:[]},recommendations:{results:collection('/'+type+'/'+id+'/recommendations')},similar:{results:[]},images:{logos:[]}};
+  }
+  return{page:Math.max(1,Number(params.page)||1),total_pages:3,total_results:60,results:collection(endpoint,params)};
+ };
+}
 test.before(async()=>{
  if(!available)return;api=loadServer();
- const titles=Array.from({length:12},(_,i)=>({id:101+i,title:'Cinema chapter '+(i+1),poster_path:'/poster.jpg',backdrop_path:'/backdrop.jpg',overview:'A story for the big screen.',vote_average:8.2,release_date:'2026-06-01',media_type:'movie'}));
- api.setTmdb(async endpoint=>/^\/movie\/\d+$/.test(endpoint)?{...titles[0],runtime:118,genres:[],credits:{cast:[]},videos:{results:[]},recommendations:{results:titles},similar:{results:[]},images:{logos:[]}}:{results:titles,total_pages:1});
+ api.setTmdb(createCatalogFixture());
  jobs=createSourceJobs({resolve:async()=>({status:'error',message:'Local controller fixture: playback unavailable.'}),deadlineMs:1000});api.setSourceJobs(jobs);
  await new Promise(resolve=>api.httpServer.listen(0,'127.0.0.1',resolve));origin='http://127.0.0.1:'+api.httpServer.address().port;browser=await chromium.launch({headless:true});
 });
@@ -33,6 +57,16 @@ async function open(motion='reduce'){
  await context.route('**/*',route=>{const url=new URL(route.request().url());if(url.origin===origin)return route.continue();const image=route.request().resourceType()==='image';return route.fulfill({contentType:image?'image/svg+xml':route.request().resourceType()==='stylesheet'?'text/css':'text/plain',body:image?'<svg xmlns="http://www.w3.org/2000/svg" width="640" height="960"><rect width="640" height="960" fill="#203347"/></svg>':''});});
  const page=await context.newPage();await page.goto(origin+'/');await page.locator('#swiflyTvGuide[data-input="gamepad"]').waitFor();return {context,page};
 }
+async function captureCatalog(page,name,geometry={}){
+ const directory=process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR;if(!directory)return;
+ const path=require('node:path');fs.mkdirSync(directory,{recursive:true});
+ const state=await page.evaluate(()=>{
+  const box=node=>node?.getBoundingClientRect().toJSON(),selected=document.activeElement;
+  return{url:location.href,viewport:{width:innerWidth,height:innerHeight},pageWidth:document.documentElement.scrollWidth,scrollY,selected:{href:selected?.getAttribute('href'),text:selected?.closest('.movieCard')?.querySelector('.dsCardTitle')?.textContent,box:box(selected)},preview:box(document.getElementById('swiflyTvSpotlight')),previewTitle:document.querySelector('.svTvSpotlightTitle')?.textContent,guide:box(document.getElementById('swiflyTvGuide')),rows:[...document.querySelectorAll('[data-st-home-rows] > .svCatalogRow')].map(row=>{const rail=row.querySelector('.movieRail'),cards=[...rail.querySelectorAll('.movieCard')];return{heading:row.querySelector('h2')?.textContent,count:cards.length,box:box(rail),scrollLeft:rail.scrollLeft,first:cards.slice(0,4).map(card=>({title:card.querySelector('.dsCardTitle')?.textContent,href:card.querySelector('.posterWrap')?.getAttribute('href'),box:box(card)}))};})};
+ });
+ fs.writeFileSync(path.join(directory,name+'.json'),JSON.stringify({...state,geometry},null,2));await page.screenshot({path:path.join(directory,name+'.png')});
+}
+
 // One polling frame represents a tap; keeping the button down over several
 // slow CI frames would correctly start the player's held-trigger repeat.
 async function press(page,index){await page.evaluate(async index=>{const frame=()=>new Promise(requestAnimationFrame);xbox.set(index,true);await frame();xbox.set(index,false);await frame();},index);}
@@ -61,7 +95,7 @@ test('An Xbox controller browses real catalog rows, opens help, searches, and re
  const {context,page}=await open();try{
   assert.equal(await page.evaluate(()=>document.documentElement.dataset.svXbox),'true','The real Xbox browser profile activates the graphics fast path');
   const rail=page.locator('.movieRail').first();await rail.locator('.posterWrap').first().focus();
-  await press(page,5);let selected=await page.evaluate(()=>document.activeElement.closest('.movieRail')&&[...document.activeElement.closest('.movieRail').querySelectorAll('.posterWrap')].indexOf(document.activeElement));assert(selected>=3,'RB advances a visible page of titles');
+  await press(page,5);let selected=await page.evaluate(()=>document.activeElement.closest('.movieRail')&&[...document.activeElement.closest('.movieRail').querySelectorAll('.posterWrap')].indexOf(document.activeElement));await captureCatalog(page,'tv-xbox-rb-gallery',{selected});assert(selected>=3,'RB advances a visible page of titles');
   const previous=await page.evaluate(()=>document.activeElement.getAttribute('href'));await press(page,7);assert.equal(await page.evaluate(()=>document.activeElement.closest('.movieRail')===document.querySelectorAll('.movieRail')[1]),true,'RT moves to the next actual row');await press(page,6);assert.equal(await page.evaluate(()=>document.activeElement.getAttribute('href')),previous);
   const geometry=await page.evaluate(()=>({caption:document.activeElement.closest('.movieCard').querySelector('.dsCardMeta').getBoundingClientRect().bottom,guide:document.getElementById('swiflyTvGuide').getBoundingClientRect().top}));assert(geometry.caption<geometry.guide,'Selected movie date stays above the control guide');
   await press(page,8);await page.locator('#swiflyTvHelp[open]').waitFor();assert.equal(await page.locator('#swiflyTvHelp [data-sv-tv-help-close]').evaluate(node=>node===document.activeElement),true);await press(page,1);await page.locator('#swiflyTvHelp').waitFor({state:'hidden'});assert.equal(await page.evaluate(()=>document.activeElement.getAttribute('href')),previous);
@@ -108,6 +142,7 @@ test('Xbox catalog defers hidden optic allocation while preserving visible nav g
     nearTargets:window.__svXboxNearObservers?.targets?.slice(0,15),
     catalogRows:document.querySelectorAll('.dsContent .dsRow,.dsContent .dsGrid,.svPlayerEpisodePicker').length};
   });
+  await captureCatalog(page,'tv-xbox-optics-gallery',stats);
   assert(stats.quick>0,'Catalog includes poster quick actions');
   assert.equal(stats.hiddenOptics,0,'Invisible Xbox poster actions never allocate backdrop panes: '+JSON.stringify(stats));
   assert(stats.navPane,'The visible shared navigation material remains present');

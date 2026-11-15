@@ -40,6 +40,16 @@ test('details ease the browse scene back around the visible viewport and restore
  await finish(env.animations);assert.equal(env.page.scrollTop,640);env.finish();
 });
 
+test('receding artwork has a soft outer mask that is removed when details close',async()=>{
+ const env=setup(),w=env.window,d=w.document,style=d.createElement('style');style.textContent=source('details.css');d.head.append(style);
+ const resting=w.getComputedStyle(env.scene).maskImage,nav=w.getComputedStyle(env.header).maskImage;
+ await w.SwiflyDetails.open('/movie/101',d.getElementById('open'));w.flush(16);
+ assert.match(w.getComputedStyle(env.scene).maskImage,/linear-gradient/,'shrinking full-bleed artwork must feather its exposed crop edges');
+ assert.equal(w.getComputedStyle(env.header).maskImage,nav,'fixed navigation cannot inherit the page mask');
+ await finish(env.animations);w.SwiflyDetails.close();w.flush(32);await finish(env.animations);
+ assert.equal(w.getComputedStyle(env.scene).maskImage,resting,'ordinary browsing must restore the original backdrop boundary');env.finish();
+});
+
 test('Closing keeps the native modal and catalog lock through the shorter exit, then restores focus',async()=>{
  const env=setup(),w=env.window,d=w.document,trigger=d.getElementById('open');trigger.focus();
  await w.SwiflyDetails.open('/movie/101',trigger);await finish(env.animations);

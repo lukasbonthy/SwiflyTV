@@ -40,7 +40,7 @@ test('glass remains shared, immediate and user-configurable', () => {
   assert.match(css, /data-sv-xbox="true"/);
   assert.match(css, /data-sv-tv="true"/);
   // This design doesn't replace or recolor the existing refraction face.
-  assert.doesNotMatch(css, /\.svNavMatchedLens\s*\{/);
+  assert.doesNotMatch(css, /^\s*\.svNavMatchedLens\s*\{/m,'the shared lens must never be restyled globally; episode-only exclusions may hide it');
   assert.match(server, /data-sv-download-type=/);
   assert.match(server, /data-sv-party-movie-id=/);
 });

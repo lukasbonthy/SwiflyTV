@@ -67,7 +67,7 @@ test('initial asynchronous feature data can hold the skeleton without imposing a
  assert.equal(b.w.document.documentElement.dataset.svLoading,'initial');release();release();assert.equal(b.w.document.documentElement.hasAttribute('data-sv-loading'),false);assert.equal(b.w.document.querySelector('#svLoadingStatus').textContent,'');
 });
 test('named critical holds remain visible until every owner releases and release is idempotent',async()=>{
- const b=setup({path:'/audiobooks'}),first=b.w.SwiflySiteLoading.hold('Loading the audiobook library…'),second=b.w.SwiflySiteLoading.hold('Restoring your library…');await tick();b.advance(120);
+ const b=setup({path:'/audiobooks'}),first=b.w.SwiflySiteLoading.hold('Opening the listening room…'),second=b.w.SwiflySiteLoading.hold('Restoring your library…');await tick();b.advance(120);
  assert.equal(b.w.document.querySelector('#svLoadingStatus').textContent,'Restoring your library…');
  first();first();assert.equal(b.w.document.documentElement.dataset.svLoading,'initial');
  second();assert.equal(b.w.document.documentElement.hasAttribute('data-sv-loading'),false);assert.equal(b.tasks.size,0,'readiness clears reveal and safety timers immediately');
@@ -82,7 +82,7 @@ test('audiobook first fetch owns a named hold and releases on success or failure
   const b=setup({path:'/audiobooks',markup:audiobooksMarkup()}),w=b.w;let finish;
   w.fetch=()=>new Promise((resolve,reject)=>{finish=()=>fails?reject(Error('Library unavailable')):resolve({ok:true,json:async()=>({books:[{id:'52',title:'A story',author:'An author'}]})});});
   w.boot('discovery/audiobooks.js');await tick();b.advance(120);
-  assert.equal(w.document.querySelector('#svLoadingStatus').textContent,'Loading the audiobook library…');
+  assert.equal(w.document.querySelector('#svLoadingStatus').textContent,'Opening the listening room…');
   finish();await tick();assert.equal(w.document.documentElement.hasAttribute('data-sv-loading'),false);
   w.document.querySelector('[data-book-search]').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await tick();b.advance(120);
   assert.equal(w.document.documentElement.hasAttribute('data-sv-loading'),false,'subsequent book searches use their inline status');

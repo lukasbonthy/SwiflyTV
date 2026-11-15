@@ -244,13 +244,12 @@ body.svCleanShell .svDetailDialog .svCinemaPage .svDetailIdentity[data-cinema-re
   transform: none !important;
 }
 
-/* Play, saved/checkmark and heart keep the same charcoal frost as the info
-   control. This native material never upgrades to SVG refraction, including
-   hover, keyboard focus, selected states, and the scrolling glass tier. */
+/* Poster actions retain their clear moving-state material at rest as well.
+   Scrolling, hovering and selection never swap their backdrop treatment. */
 body.svCleanShell .dsCardQuickActions .dsMiniBtn > .svCardActionLens.svLiquidPane {
   background:rgb(10 13 17 / .82) !important;
-  -webkit-backdrop-filter:blur(10px) saturate(1.08) !important;
-  backdrop-filter:blur(10px) saturate(1.08) !important;
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
   box-shadow:inset 0 0 0 1px rgb(255 255 255 / .27),0 2px 8px rgb(0 0 0 / .16) !important;
   transition:none !important;
 }

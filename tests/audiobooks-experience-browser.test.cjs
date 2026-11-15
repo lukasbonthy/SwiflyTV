@@ -1,0 +1,61 @@
+'use strict';
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),fsp=require('node:fs/promises'),os=require('node:os'),path=require('node:path');
+const {chromium}=require('playwright-core'),{loadServer}=require('./ui-helpers.cjs');
+const executablePath=process.env.SWIFLY_TEST_BROWSER_EXECUTABLE_PATH,available=fs.existsSync(executablePath||chromium.executablePath());
+const skip=!available&&'Chromium is not installed';
+// Catalog and audio fixtures stay inside the test. Production only uses verified upstream recordings.
+const titles=[['Pride and Prejudice','Jane Austen'],['The Adventures of Sherlock Holmes','Arthur Conan Doyle'],['Alice’s Adventures in Wonderland','Lewis Carroll'],['The Secret Garden','Frances Hodgson Burnett'],['Little Women','Louisa May Alcott'],['The Wind in the Willows','Kenneth Grahame'],['Anne of Green Gables','Lucy Maud Montgomery'],['The Wonderful Wizard of Oz','L. Frank Baum'],['A Room with a View','E. M. Forster'],['A Midsummer Night’s Dream','William Shakespeare'],['Treasure Island','Robert Louis Stevenson'],['The Time Machine','H. G. Wells']];
+const rows=titles.map(([title,author],i)=>({id:String(i+52),title,author,language:'English',duration:'07:30:00',seconds:27000,chapterCount:3,playable:true,poster:''}));
+const detail={...rows[0],description:'A thoughtful story, read at an unhurried pace by LibriVox volunteers. Choose a chapter, keep your place, or open the original public-domain text while you listen.',textUrl:'https://www.gutenberg.org/ebooks/1342',chapters:[1,2,3].map(i=>({id:String(i),number:i,title:'Chapter '+i+' — A new beginning',url:'https://archive.org/download/swifly-audio-fixture/chapter-'+i+'.wav',duration:600}))};
+let api,browser,origin,dir;
+test.before(async()=>{
+ if(!available)return;dir=await fsp.mkdtemp(path.join(os.tmpdir(),'swifly-books-'));const old=process.env.SWIFLY_DATA_DIR;process.env.SWIFLY_DATA_DIR=dir;api=loadServer();old===undefined?delete process.env.SWIFLY_DATA_DIR:process.env.SWIFLY_DATA_DIR=old;api.setTmdb(async()=>({results:[]}));await new Promise(resolve=>api.httpServer.listen(0,'127.0.0.1',resolve));origin='http://127.0.0.1:'+api.httpServer.address().port;
+ browser=await chromium.launch({headless:true,executablePath,args:['--no-sandbox','--autoplay-policy=no-user-gesture-required']});
+});
+test.after(async()=>{await browser?.close();if(api)await new Promise(resolve=>api.io.close(resolve));if(dir)await fsp.rm(dir,{recursive:true,force:true});});
+function wav(){const data=Buffer.alloc(320044);data.write('RIFF');data.writeUInt32LE(data.length-8,4);data.write('WAVEfmt ',8);data.writeUInt32LE(16,16);data.writeUInt16LE(1,20);data.writeUInt16LE(1,22);data.writeUInt32LE(16000,24);data.writeUInt32LE(32000,28);data.writeUInt16LE(2,32);data.writeUInt16LE(16,34);data.write('data',36);data.writeUInt32LE(data.length-44,40);return data;}
+async function open(t,width=1440,{reduced=false,progress=false}={}){
+ const context=await browser.newContext({viewport:{width,height:width<700?900:1000},reducedMotion:reduced?'reduce':'no-preference'});t.after(()=>context.close());
+ await context.addInitScript(progress=>{localStorage.setItem('swiflytv.activeProfile',JSON.stringify({id:'main',name:'Viewer'}));if(progress)localStorage.setItem('swiflytv.library.audio.main',JSON.stringify({'52':{chapter:0,time:2,speed:1.5,title:'Pride and Prejudice',author:'Jane Austen',at:Date.now()}}));},progress);
+ const page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
+ // A trailing books** glob does not cross the slash before a detail ID.
+ // Intercept both endpoint shapes so playback never depends on a live recording.
+ await page.route(url=>/^\/api\/discovery\/books(?:\/\d+)?$/.test(url.pathname),route=>{const u=new URL(route.request().url());if(/\/books\/\d+$/.test(u.pathname))return route.fulfill({json:{book:detail}});const q=u.searchParams.get('q')||'',n=Number(u.searchParams.get('page'))||1;const result=q?rows.filter(b=>(b.title+' '+b.author).toLowerCase().includes(q.toLowerCase())):n===1?rows:[rows[0],{...rows[1],id:'90',title:'A few more quiet stories'}];return route.fulfill({json:{books:result,page:n,hasMore:!q&&n===1,nextPage:!q&&n===1?2:null}});});
+ await page.route('https://archive.org/download/swifly-audio-fixture/*',route=>route.fulfill({contentType:'audio/wav',body:wav()}));
+ await page.goto(origin+'/audiobooks');await page.waitForFunction(()=>document.querySelector('[data-audiobooks]')?.dataset.bookState==='ready');await page.waitForFunction(()=>!document.documentElement.hasAttribute('data-sv-loading'));
+ return {page,errors,context};
+}
+async function screenshot(page,name){const target=process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR;if(!target)return;await fsp.mkdir(target,{recursive:true});await page.screenshot({path:path.join(target,name+'.png'),fullPage:true});}
+for(const [name,width]of [['desktop',1440],['ipad',834],['phone',390],['small-phone',320]])test('the complete scenic audiobook shell fits '+name+' and keeps its real controls reachable',{skip},async t=>{
+ const {page,errors}=await open(t,width);assert.equal(await page.locator('.svBookCard').count(),12);
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'the full shell must not overflow at '+width);
+ const hero=await page.locator('.svBookLandscape').boundingBox(),heading=await page.locator('.svBookHeroCopy h1').boundingBox(),scenes=await page.locator('.svBookSceneBar').boundingBox();assert(heading.x>=hero.x&&heading.x+heading.width<=hero.x+hero.width+1);assert(heading.y+heading.height<scenes.y,'scene controls must clear the headline');
+ for(const selector of ['[data-book-focus]','button[data-book-scene=lake]','.svBookStart'])assert(await page.locator(selector).isVisible());
+ await screenshot(page,'audiobooks-'+name);
+ await page.locator('button[data-book-scene=night]').click();assert.equal(await page.locator('[data-audiobooks]').getAttribute('data-book-scene'),'night');
+ await page.locator('[data-book-focus]').click();assert(await page.locator('.svBookLibrary').isHidden());await page.keyboard.press('Escape');assert(await page.locator('.svBookLibrary').isVisible());
+ await page.locator('.svBookCover').first().focus();assert.notEqual(await page.locator('.svBookCover').first().evaluate(n=>getComputedStyle(n).outlineStyle),'none');assert.deepEqual(errors,[]);
+});
+
+test('audiobook search, navigation, deduplicated loading and empty state work in the real shell',{skip},async t=>{
+ const {page,errors}=await open(t,390);await page.locator('[data-book-more]').click();await page.waitForFunction(()=>document.querySelectorAll('.svBookCard').length===13);assert.equal(await page.locator('.svBookCard[data-book-card="52"]').count(),1);
+ await page.locator('[data-book-search] input').fill('Jane Austen');await page.locator('[data-book-search] input').press('Enter');await page.waitForFunction(()=>document.querySelectorAll('.svBookCard').length===1);assert.match(page.url(),/q=Jane/);assert.match(await page.locator('[data-book-results]').textContent(),/Pride and Prejudice/);
+ await page.locator('[data-book-search] input').fill('No matching recording');await page.locator('[data-book-search] input').press('Enter');await page.waitForFunction(()=>document.querySelector('[data-audiobooks]').dataset.bookState==='empty');assert(await page.locator('[data-book-more]').isHidden());await screenshot(page,'audiobooks-empty-phone');
+ await page.goBack();await page.waitForFunction(()=>document.querySelectorAll('.svBookCard').length===1);assert.equal(await page.locator('[data-book-search] input').inputValue(),'Jane Austen');assert.deepEqual(errors,[]);
+});
+
+test('real audiobook audio preserves speed across chapters and its reading dialog fits a narrow phone',{skip},async t=>{
+ const {page,errors}=await open(t,320,{progress:true});await page.locator('.svBookCover').first().click();await page.locator('[data-book-playback]').waitFor({state:'visible'});
+ assert.equal(await page.locator('[data-book-speed]').inputValue(),'1.5');assert.equal(await page.locator('audio').evaluate(n=>n.playbackRate),1.5);
+ assert.equal(await page.locator('.svBookTextLink').getAttribute('href'),'https://www.gutenberg.org/ebooks/1342');
+ await page.locator('audio').evaluate(n=>n.play());await page.locator('[data-book-next]').click();await page.waitForFunction(()=>document.querySelector('audio').src.endsWith('/chapter-2.wav'));assert.equal(await page.locator('audio').evaluate(n=>n.playbackRate),1.5);
+ const box=await page.locator('[data-book-dialog]').boundingBox();assert(box.x>=0&&box.x+box.width<=321);assert.equal(await page.locator('[data-book-dialog]').evaluate(n=>n.scrollWidth>n.clientWidth),false);await screenshot(page,'audiobooks-listening-phone');
+ await page.locator('[data-book-sleep]').selectOption('chapter');await page.locator('audio').evaluate(n=>n.dispatchEvent(new Event('ended')));assert.match(await page.locator('audio').getAttribute('src'),/chapter-2/);assert(await page.locator('audio').evaluate(n=>n.paused));
+ await page.locator('[data-book-close]').click();await page.waitForFunction(()=>!document.querySelector('[data-book-dialog]').open);
+ // Native dialog exits retain their display for the shared discrete animation.
+ await page.locator('[data-book-dialog]').waitFor({state:'hidden'});await page.waitForFunction(()=>!document.querySelector('audio').hasAttribute('src'));assert.deepEqual(errors,[]);
+});
+
+test('audiobook reduced motion removes cover movement without losing keyboard feedback',{skip},async t=>{
+ const {page,errors}=await open(t,834,{reduced:true});const cover=page.locator('.svBookCover').first();await cover.hover();assert.equal(await cover.evaluate(n=>getComputedStyle(n).transform),'none');await cover.focus();assert.notEqual(await cover.evaluate(n=>getComputedStyle(n).outlineStyle),'none');assert.equal(await page.locator('.svBookLandscapeArt img').evaluate(n=>getComputedStyle(n).transitionDuration),'0s');assert.deepEqual(errors,[]);
+});

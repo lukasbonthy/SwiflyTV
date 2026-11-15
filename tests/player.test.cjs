@@ -87,6 +87,71 @@ test('The theater follows real video dimensions and ignores detached source even
   assert.notEqual(Number(e.app.style.getPropertyValue('--player-aspect')),width/height,'discarded video elements cannot resize a new source');
 });
 
+test('real source dimensions start one cinematic reframe and cancel it when a source is replaced',async()=>{
+ const e=setup(),frames=[];e.app.addEventListener('swiflyplayer:frame',event=>frames.push(event.detail));
+ const stage=e.d.querySelector('[data-player-stage]');e.d.querySelector('.svPlayerTheater').getBoundingClientRect=()=>({width:500,height:300});stage.getBoundingClientRect=()=>({width:500,height:stage.style.height?Number.parseFloat(stage.style.height):500/(Number(e.app.style.getPropertyValue('--player-aspect'))||16/9)});
+ await e.api.loadSource({status:'ok',playbackUrl:'/cinema.mp4'});
+ const video=e.video();Object.defineProperties(video,{videoWidth:{value:1920},videoHeight:{value:800}});
+ e.event('loadedmetadata');
+ assert.equal(e.app.dataset.playerFraming,'true','metadata should opt into the cinematic container transition');
+ assert.equal(frames.length,1);assert.equal(frames[0].aspect,2.4);assert.equal(frames[0].animated,true);
+ e.event('resize');assert.equal(frames.length,1,'the same frame size should not restart the animation');
+ await e.advance(800);assert.notEqual(e.app.dataset.playerFraming,'true','the reframe work ends after settling');
+ await e.api.loadSource({status:'ok',playbackUrl:'/another.mp4'});
+ assert.notEqual(e.app.dataset.playerFraming,'true','a new source must cancel the previous transition');
+ e.event('loadedmetadata',video);assert.equal(frames.length,1,'an old source cannot reframe a new film');
+});
+
+test('source reframing honors reduced motion and fullscreen while preserving the actual aspect',async()=>{
+ for(const mode of ['reduced','fullscreen']){
+  const e=setup({},e=>{if(mode==='reduced')e.w.matchMedia=query=>({matches:query.includes('reduced-motion'),addEventListener(){},removeEventListener(){}});});
+  if(mode==='fullscreen')Object.defineProperty(e.d,'fullscreenElement',{value:e.d.querySelector('[data-player-stage]'),configurable:true});
+  await e.api.loadSource({status:'ok',playbackUrl:'/portrait.mp4'});
+  Object.defineProperties(e.video(),{videoWidth:{value:1080},videoHeight:{value:1440}});
+  let frame;e.app.addEventListener('swiflyplayer:frame',event=>frame=event.detail);
+  e.event('loadedmetadata');assert.equal(Number(e.app.style.getPropertyValue('--player-aspect')),.75);
+  assert.notEqual(e.app.dataset.playerFraming,'true',mode+' must apply geometry without motion');assert.equal(frame?.animated,false);
+  e.close();
+ }
+});
+
+test('metadata and canplay animate the used mobile height and an interrupted reframe starts at its painted size',async()=>{
+ const e=setup(),stage=e.d.querySelector('[data-player-stage]'),theater=e.d.querySelector('.svPlayerTheater'),starts=[];
+ let paintedHeight=null;
+ theater.getBoundingClientRect=()=>({width:390,height:300});
+ stage.getBoundingClientRect=()=>{
+  const height=stage.style.height?(paintedHeight??Number.parseFloat(stage.style.height)):e.app.dataset.playerState==='ready'?390/(Number(e.app.style.getPropertyValue('--player-aspect'))||16/9):300;
+  if(stage.style.height)starts.push(height);
+  return {width:390,height};
+ };
+ await e.api.loadSource({status:'ok',playbackUrl:'/mobile-cinema.mp4'});
+ let height=800;Object.defineProperties(e.video(),{videoWidth:{value:1920},videoHeight:{get:()=>height}});
+ e.event('loadedmetadata');Object.assign(e.state(e.video()),{duration:120,readyState:3});e.event('canplay');
+ assert.equal(stage.style.height,'162.5px','ready must target the true wide height instead of snapping away its 300px loading minimum');
+ assert.equal(stage.style.minHeight,'0px','the loading clamp cannot override intermediate used heights');
+ assert(starts.includes(300),'the transition starts with the actual loading height');
+ paintedHeight=244;height=1440;e.event('resize');
+ assert.equal(stage.style.height,'292.5px');assert(starts.includes(244),'replacing an active reframe must preserve its painted height');
+ paintedHeight=null;await e.advance(800);
+ assert.equal(stage.style.height,'');assert.equal(stage.style.minHeight,'');assert.equal(theater.style.width,'');
+});
+
+test('source replacement, resize, fullscreen and reduced motion release temporary player geometry',async()=>{
+ for(const reason of ['source','resize','fullscreen','reduced']){
+  const e=setup(),stage=e.d.querySelector('[data-player-stage]'),theater=e.d.querySelector('.svPlayerTheater');
+  theater.getBoundingClientRect=()=>({width:390,height:300});
+  stage.getBoundingClientRect=()=>({width:390,height:stage.style.height?Number.parseFloat(stage.style.height):e.app.dataset.playerState==='ready'?162.5:300});
+  await e.api.loadSource({status:'ok',playbackUrl:'/wide.mp4'});Object.defineProperties(e.video(),{videoWidth:{value:1920},videoHeight:{value:800}});e.ready();
+  assert.equal(stage.style.height,'162.5px',reason+' fixture needs an active used-height animation');
+  if(reason==='source')await e.api.loadSource({status:'ok',playbackUrl:'/replacement.mp4'});
+  if(reason==='resize')e.w.dispatchEvent(new e.w.Event('resize'));
+  if(reason==='fullscreen')e.d.dispatchEvent(new e.w.Event('fullscreenchange'));
+  if(reason==='reduced')e.d.dispatchEvent(new e.w.CustomEvent('swifly:studio-change',{detail:{effective:{reduceMotion:true}}}));
+  assert.equal(stage.style.height,'',reason);assert.equal(stage.style.minHeight,'',reason);assert.equal(theater.style.width,'',reason);assert.notEqual(e.app.dataset.playerFraming,'true',reason);
+  e.close();
+ }
+});
+
 test('Native audio prefers a known English track and keeps a chosen language across source changes',async()=>{
   const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/multilingual.mp4'});
   const tracks=observableTracks(e.w,[{language:'fr',label:'Français',enabled:true},{language:'en',label:'English',enabled:false}]);e.state(e.video()).audioTracks=tracks;e.ready();
@@ -408,6 +473,66 @@ test('A room preparing its next movie stops the previous film and cannot use sta
 });
 test('Cached ready media attaches again and restores its position after BFCache return',async()=>{
   const e=setup();await e.api.loadSource({status:'ok',playbackUrl:'/cached.mp4'});e.ready();e.api.seek(45,{remote:true});const old=e.video();const hide=new e.w.Event('pagehide');Object.defineProperty(hide,'persisted',{value:true});e.w.dispatchEvent(hide);const show=new e.w.Event('pageshow');Object.defineProperty(show,'persisted',{value:true});e.w.dispatchEvent(show);await flush();assert.notEqual(e.video(),old);assert.equal(e.video().getAttribute('src'),'/cached.mp4');e.ready();assert.equal(e.api.getState().currentTime,45);assert.equal(e.api.getState().paused,true);
+});
+
+function persisted(e,name){const event=new e.w.Event(name);Object.defineProperty(event,'persisted',{value:true});e.w.dispatchEvent(event);}
+function pendingGate(){let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};}
+
+test('player markup marks Kids verification only for an explicit server-verified boolean',()=>{
+ for(const [value,expected]of [[true,'true'],[false,'false'],[undefined,'false'],['true','false']]){
+  const dom=new JSDOM(markup({...base,kidsVerified:value}));assert.equal(dom.window.document.querySelector('[data-player-root]').dataset.playerKidsVerified,expected);dom.window.close();
+ }
+});
+
+test('BFCache waits for the Kids gate before attaching cached media or accepting local play, then restores verified playback',async()=>{
+ const gate=pendingGate();let checks=0;const e=setup({kidsVerified:true},e=>e.w.SwiflyKids={revalidatePlayer(){checks++;return gate.promise;}});
+ await e.api.loadSource({status:'ok',playbackUrl:'https://external.example/cached.mp4'});e.ready();e.api.seek(45,{remote:true});await e.api.play({remote:true});
+ persisted(e,'pagehide');persisted(e,'pageshow');await flush();
+ assert.equal(checks,1);assert.equal(e.video().getAttribute('src'),null,'cached external media stays detached while access is pending');assert.equal(e.api.getState().ready,false);assert.equal(await e.api.play(),false);assert.equal(e.video().paused,true);assert.equal(e.d.querySelector('[data-player-play]').disabled,true);
+ gate.resolve(true);await flush();assert.equal(e.video().getAttribute('src'),'https://external.example/cached.mp4');e.ready();await flush();assert.equal(e.api.getState().currentTime,45);assert.equal(e.api.getState().paused,false);
+});
+
+test('false and rejected Kids gates keep cached sources suspended and Retry must verify again',async()=>{
+ for(const outcome of ['false','reject']){
+  const gates=[pendingGate(),pendingGate()];let checks=0;const e=setup({},e=>e.w.SwiflyKids={revalidatePlayer(){return gates[checks++].promise;}});
+  await e.api.loadSource({status:'ok',playbackUrl:'https://external.example/adult.mp4'});e.ready();persisted(e,'pagehide');persisted(e,'pageshow');
+  if(outcome==='false')gates[0].resolve(false);else gates[0].reject(new Error('network unavailable'));await flush();
+  assert.equal(e.video().getAttribute('src'),null,outcome+' cannot reattach external media');assert.equal(e.api.getState().source,'');assert.equal(await e.api.play(),false);assert.equal(e.api.getState().ready,false);assert.match(e.d.querySelector('[data-player-status-copy]').textContent,/retry|reload/i,'a failed check gives safe recovery guidance');
+  const retried=e.api.retry();await flush();assert.equal(checks,2,'Retry requests fresh verification');assert.equal(e.video().getAttribute('src'),null,'Retry does not attach before its own gate');
+  gates[1].resolve(true);await retried;await flush();assert.equal(e.video().getAttribute('src'),'https://external.example/adult.mp4','a fresh successful check can restore the cached film');e.close();
+ }
+});
+
+test('a late Kids gate cannot restore a destroyed player or overwrite a newer source',async()=>{
+ for(const action of ['destroy','source']){
+  const gates=[pendingGate(),pendingGate()];let checks=0;const e=setup({},e=>e.w.SwiflyKids={revalidatePlayer(){return gates[checks++].promise;}});
+  await e.api.loadSource({status:'ok',playbackUrl:'/cached.mp4'});e.ready();persisted(e,'pagehide');persisted(e,'pageshow');await flush();
+  let next;if(action==='destroy')e.api.destroy();else next=e.api.loadSource({status:'ok',playbackUrl:'/new-source.mp4'});
+  gates[0].resolve(true);await flush();assert.equal(e.video().getAttribute('src'),null,action+' invalidates the previous restore result');
+  if(action==='source'){assert.equal(checks,2,'new media gets its own access check');gates[1].resolve(true);await next;assert.equal(e.video().getAttribute('src'),'/new-source.mp4');assert.equal(e.api.getState().paused,true,'new media does not inherit cached autoplay');}
+  e.close();
+ }
+});
+
+test('an invalid or terminal source received during Kids verification supersedes the cached film safely',async()=>{
+ for(const next of [undefined,{status:'error',playbackUrl:'/cached.mp4',code:'no_source'}]){
+  const gates=[pendingGate(),pendingGate()];let checks=0;const e=setup({},e=>e.w.SwiflyKids={revalidatePlayer(){return gates[checks++].promise;}});
+  await e.api.loadSource({status:'ok',playbackUrl:'/cached.mp4'});e.ready();persisted(e,'pagehide');persisted(e,'pageshow');const replacement=e.api.loadSource(next);
+  gates[0].resolve(true);await flush();assert.equal(e.video().getAttribute('src'),null,'the stale check never restores the original film');
+  gates[1].resolve(true);await replacement;await flush();assert.equal(e.video().getAttribute('src'),null);assert.equal(e.api.getState().status,'error','terminal updates remain terminal after verification');e.close();
+ }
+});
+
+test('Kids restoration rechecks on visibility return and rejects changed title or profile identity',async()=>{
+ for(const action of ['hidden','title','profile']){
+  const gates=[pendingGate(),pendingGate()];let checks=0,profile='one',hidden=false;const e=setup({},e=>{e.w.SwiflyKids={revalidatePlayer(){return gates[checks++].promise;}};e.w.SwiflyLibrary={ownerId:()=> 'account',profileId:()=>profile};Object.defineProperty(e.d,'hidden',{get:()=>hidden,configurable:true});});
+  await e.api.loadSource({status:'ok',playbackUrl:'/cached.mp4'});e.ready();persisted(e,'pagehide');persisted(e,'pageshow');await flush();
+  if(action==='hidden'){hidden=true;e.d.dispatchEvent(new e.w.Event('visibilitychange'));}else if(action==='title')e.app.dataset.playerId='99';else profile='two';
+  gates[0].resolve(true);await flush();assert.equal(e.video().getAttribute('src'),null,action+' prevents cached restoration');
+  if(action==='hidden'){hidden=false;e.d.dispatchEvent(new e.w.Event('visibilitychange'));await flush();assert.equal(checks,2,'becoming visible verifies the latest lock again');assert.equal(e.video().getAttribute('src'),null);gates[1].resolve(true);await flush();assert.equal(e.video().getAttribute('src'),'/cached.mp4');}
+  else {await e.api.retry();assert.equal(e.video().getAttribute('src'),null,'Retry never reuses a cache belonging to a different title or profile');}
+  e.close();
+ }
 });
 test('Autoplay blocking offers a local join action for guests without emitting shared commands',async()=>{
   const e=setup(),actions=[];await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4'});e.ready();e.api.setRemoteMode({enabled:true,isHost:false});e.app.addEventListener('swiflyplayer:action',ev=>actions.push(ev.detail));e.video().play=()=>Promise.reject(Object.assign(new Error('Gesture required'),{name:'NotAllowedError'}));await e.api.play({remote:true});const join=e.d.querySelector('[data-player-unlock]');assert(join&&!join.hidden,'A blocked guest needs a local playback gesture');e.video().play=e.w.HTMLMediaElement.prototype.play;join.click();await flush();assert.equal(e.api.getState().paused,false);assert.equal(join.hidden,true);assert.equal(actions.length,0);

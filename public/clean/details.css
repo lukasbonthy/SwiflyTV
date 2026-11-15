@@ -6,12 +6,18 @@ html.svDetailsOpen body.svCleanShell { width:var(--sv-detail-page-width); }
 @property --sv-detail-start { syntax:"*"; inherits:false; initial-value:translateY(0px); }
 @property --sv-detail-dim-start { syntax:"<number>"; inherits:false; initial-value:1; }
 @property --sv-detail-scroll { syntax:"<length>"; inherits:false; initial-value:0px; }
+@property --sv-detail-feather { syntax:"<length>"; inherits:false; initial-value:0px; }
 /* Keep the fixed navigation outside the receding page. Idle scale:none avoids
    creating a containing block during ordinary browsing. */
-body.svCleanShell > [data-sv-browse-scene] { display:flow-root;scale:none;transform-origin:50% var(--sv-detail-scene-origin,50svh);transition:scale var(--sv-detail-depth-time,360ms) var(--sv-detail-depth-ease,cubic-bezier(.28,.06,.2,1)); }
-html[data-sv-detail-depth="back"] body.svCleanShell > [data-sv-browse-scene] { scale:.97; }
-body.svCleanShell.reduceMotion > [data-sv-browse-scene] { scale:none !important;transition:none !important; }
-@media(prefers-reduced-motion:reduce) { body.svCleanShell > [data-sv-browse-scene] { scale:none !important;transition:none !important; } }
+body.svCleanShell > [data-sv-browse-scene] { display:flow-root;scale:none;--sv-detail-feather:0px;transform-origin:50% var(--sv-detail-scene-origin,50svh);transition:scale var(--sv-detail-depth-time,360ms) var(--sv-detail-depth-ease,cubic-bezier(.28,.06,.2,1)),--sv-detail-feather var(--sv-detail-depth-time,360ms) var(--sv-detail-depth-ease,cubic-bezier(.28,.06,.2,1)); }
+html.svDetailsOpen body.svCleanShell > [data-sv-browse-scene] {
+ -webkit-mask-image:linear-gradient(90deg,transparent,#000 var(--sv-detail-feather),#000 calc(100% - var(--sv-detail-feather)),transparent),linear-gradient(180deg,transparent,#000 var(--sv-detail-feather),#000 calc(100% - var(--sv-detail-feather)),transparent);
+ mask-image:linear-gradient(90deg,transparent,#000 var(--sv-detail-feather),#000 calc(100% - var(--sv-detail-feather)),transparent),linear-gradient(180deg,transparent,#000 var(--sv-detail-feather),#000 calc(100% - var(--sv-detail-feather)),transparent);
+ -webkit-mask-composite:source-in;mask-composite:intersect;
+}
+html[data-sv-detail-depth="back"] body.svCleanShell > [data-sv-browse-scene] { scale:.97;--sv-detail-feather:18px; }
+body.svCleanShell.reduceMotion > [data-sv-browse-scene] { scale:none !important;transition:none !important;-webkit-mask-image:none !important;mask-image:none !important; }
+@media(prefers-reduced-motion:reduce) { body.svCleanShell > [data-sv-browse-scene] { scale:none !important;transition:none !important;-webkit-mask-image:none !important;mask-image:none !important; } }
 /* Some browsers retain the wider fixed-position viewport after unlocking.
    Keep fixed navigation aligned to the unchanged page content width. */
 html.svDetailsFramed body.svCleanShell > .topbar { width:var(--sv-detail-page-width); }

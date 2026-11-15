@@ -18,8 +18,16 @@ async function catalog(browser, options = {}) {
     const origin = 'http://127.0.0.1:' + api.httpServer.address().port;
     const items = Array.from({length:18}, (_, index) => ({id:100 + index, title:'Film ' + index,
       backdrop_path:'/scene.jpg', poster_path:'/poster.jpg', release_date:'2026-01-01', vote_average:7.2, overview:'A featured film.'}));
-    api.setTmdb(async endpoint => /^\/movie\/\d+$/.test(endpoint) ? {...items[0],runtime:118,genres:[],
-      credits:{cast:[],crew:[]},videos:{results:[]},recommendations:{results:items},similar:{results:[]},images:{logos:[]}} : ({results:items}));
+    const collections=new Map();
+    api.setTmdb(async (endpoint,params={}) => {
+      if(/^\/movie\/\d+$/.test(endpoint))return {...items[0],runtime:118,genres:[],
+        credits:{cast:[],crew:[]},videos:{results:[]},recommendations:{results:items},similar:{results:[]},images:{logos:[]}};
+      // Upstream collections need distinct titles: honest cross-row deduplication
+      // otherwise leaves five cards and removes the overflow these tests use.
+      const key=endpoint+'?'+new URLSearchParams(Object.entries(params).sort());
+      if(!collections.has(key))collections.set(key,Array.from({length:20},(_,index)=>({...items[index%items.length],id:1000+collections.size*100+index})));
+      return {results:collections.get(key)};
+    });
     let html;
     if(welcome)html=api.pageShell({active:'welcome',body:welcomeMarkup({hero:items[0]})});
     else if(grid){
@@ -309,7 +317,7 @@ test('distant catalog controls defer their panes and prime immediately for keybo
    const box=document.activeElement.getBoundingClientRect();
    return box.top>=0&&box.bottom<=innerHeight&&!document.documentElement.dataset.svScrollGlass&&!document.documentElement.dataset.svCardScrolling;
   });
-  assert.match(await last.locator('.dsMiniBtn').first().evaluate(n=>getComputedStyle(n.querySelector('.svNavMatchedLens')).backdropFilter),/blur\(10px\)/);
+  assert.equal(await last.locator('.dsMiniBtn').first().evaluate(n=>getComputedStyle(n.querySelector('.svNavMatchedLens')).backdropFilter),'none');
  }finally{await browser.close();}
 });
 
@@ -401,13 +409,19 @@ test('mixed-axis horizontal rail input reaches the movie row', {skip:!available 
     const page = await catalog(browser);
     const rail = page.locator('.movieRail').first();
     await rail.scrollIntoViewIfNeeded();
+    const geometry=await rail.evaluate(node=>({cards:node.querySelectorAll('.movieCard').length,clientWidth:node.clientWidth,scrollWidth:node.scrollWidth}));
+    assert(geometry.scrollWidth-geometry.clientWidth>=160,'exercise a genuinely overflowing rail: '+JSON.stringify(geometry));
+    await page.evaluate(()=>{window.__railWheel=[];window.addEventListener('wheel',event=>__railWheel.push({x:event.deltaX,y:event.deltaY,consumed:event.defaultPrevented}),{passive:true,once:true});});
     await rail.hover({position:{x:300, y:100}});
     await page.mouse.wheel(160, 20);
-    await page.waitForFunction(() => document.querySelector('.movieRail').scrollLeft >= 150, null, {timeout:1500});
+    try{await page.waitForFunction(() => document.querySelector('.movieRail').scrollLeft >= 150, null, {timeout:1500});}
+    catch(error){error.message+='\nHorizontal input diagnostics: '+JSON.stringify(await rail.evaluate(node=>({left:node.scrollLeft,clientWidth:node.clientWidth,scrollWidth:node.scrollWidth,wheels:__railWheel})));throw error;}
+    const events=await page.evaluate(()=>__railWheel);assert.equal(events.length,1,'the actual wheel gesture reaches the overflowing rail');
+    assert(events.every(event=>!event.consumed),'horizontal wheel input must keep native ownership');
   } finally {await browser.close();}
 });
 
-test('invisible poster actions skip backdrop work and retain glass on hover and keyboard focus', {skip:!available && 'Chromium is not installed'}, async () => {
+test('poster actions keep their clear material on hover, keyboard focus and saved states', {skip:!available && 'Chromium is not installed'}, async () => {
   const browser = await chromium.launch({headless:true});
   try {
     const page = await catalog(browser);
@@ -420,21 +434,21 @@ test('invisible poster actions skip backdrop work and retain glass on hover and 
     assert.equal(await artwork.locator('.dsPlayDot').evaluate(node => getComputedStyle(node).backdropFilter), 'none');
     await artwork.hover();
     await page.waitForFunction(() => document.querySelector('.dsCardQuickActions .svCardActionLens')?.dataset.swiflyRenderer === 'blur');
-    assert.match(await pane.evaluate(node => getComputedStyle(node).backdropFilter), /blur\(10px\)/, 'hovered actions retain dark native frost');
+    assert.equal(await pane.evaluate(node => getComputedStyle(node).backdropFilter),'none', 'hovered actions keep the clear material');
     await page.mouse.move(1260, 30);
     assert.equal(await pane.evaluate(node => getComputedStyle(node).backdropFilter), 'none');
     await artwork.locator('.dsThumb').focus();
     await page.keyboard.press('Tab');
     assert.equal(await page.evaluate(() => !!document.activeElement.closest('.dsCardQuickActions')), true, 'quick actions stay reachable by keyboard');
     await page.waitForFunction(() => document.querySelector('.dsCardQuickActions .svCardActionLens')?.dataset.swiflyRenderer === 'blur');
-    assert.match(await pane.evaluate(node => getComputedStyle(node).backdropFilter), /blur\(10px\)/, 'focused actions retain the same dark frost');
+    assert.equal(await pane.evaluate(node => getComputedStyle(node).backdropFilter),'none', 'focused actions keep the same clear material');
     const materials=await artwork.evaluate(art=>{
       const controls=[...art.querySelectorAll('.dsMiniBtn')];
       const panes=controls.map(control=>control.querySelector('.svCardActionLens'));
       art.querySelector('[data-watch-id]').click();art.querySelector('[data-like-id]').click();
       return controls.map((control,index)=>{const pane=control.querySelector('.svCardActionLens'),s=getComputedStyle(panes[index]);return {samePane:pane===panes[index],pressed:control.getAttribute('aria-pressed'),fill:s.backgroundColor,filter:s.backdropFilter,graphs:panes[index].querySelectorAll('svg').length};});
     });
-    for(const material of materials){assert(material.samePane,'Save and Like must update their labels without replacing the native glass');assert.equal(material.fill,'rgba(10, 13, 17, 0.82)');assert.match(material.filter,/blur\(10px\)/);assert.equal(material.graphs,0);}
+    for(const material of materials){assert(material.samePane,'Save and Like must update their labels without replacing the native glass');assert.equal(material.fill,'rgba(10, 13, 17, 0.82)');assert.equal(material.filter,'none');assert.equal(material.graphs,0);}
     assert.deepEqual(materials.slice(1).map(material=>material.pressed),['true','true'],'both selected icons reflect their real saved state');
     for(const preference of ['subtle','off','liquid']){
       await page.evaluate(value=>document.body.dataset.stGlass=value,preference);
@@ -448,7 +462,7 @@ test('invisible poster actions skip backdrop work and retain glass on hover and 
   } finally {await browser.close();}
 });
 
-test('visible quick actions retain glass in a narrow desktop catalog', {skip:!available && 'Chromium is not installed'}, async () => {
+test('visible quick actions stay clear while idle, scrolling and settled in a narrow desktop catalog', {skip:!available && 'Chromium is not installed'}, async () => {
   const browser = await chromium.launch({headless:true});
   try {
     const page = await catalog(browser, {viewport:{width:800, height:900}});
@@ -460,7 +474,15 @@ test('visible quick actions retain glass in a narrow desktop catalog', {skip:!av
     await pane.waitFor({state:'attached'});
     assert.equal(await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches), true);
     assert.equal(await actions.evaluate(node => getComputedStyle(node).opacity), '1', 'narrow desktop controls are visible without hover');
-    assert.notEqual(await pane.evaluate(node => getComputedStyle(node).backdropFilter), 'none', 'visible quick actions keep their glass while idle');
+    const material=()=>pane.evaluate(node=>{const style=getComputedStyle(node);return {backdrop:style.backdropFilter,fill:style.backgroundColor,graphs:node.querySelectorAll('svg').length};});
+    const clear={backdrop:'none',fill:'rgba(10, 13, 17, 0.82)',graphs:0};
+    assert.deepEqual(await material(),clear,'idle poster actions use the permanent clear material');
+    await artwork.evaluate(node=>{window.__narrowActionPane=node.querySelector('.dsCardQuickActions .svLiquidPane');node.dispatchEvent(new WheelEvent('wheel',{deltaY:80,bubbles:true,cancelable:true}));});
+    assert.equal(await page.evaluate(()=>document.documentElement.dataset.svCardScrolling),'true','exercise the moving catalog');
+    assert.deepEqual(await material(),clear,'scrolling cannot add a refractive backdrop');
+    await page.waitForFunction(()=>!document.documentElement.dataset.svCardScrolling&&!document.documentElement.classList.contains('lenis-smooth'));
+    assert.deepEqual(await material(),clear,'the same clear material remains after scrolling settles');
+    assert(await pane.evaluate(node=>node===__narrowActionPane),'scrolling preserves the existing poster-action pane');
     assert.equal(await artwork.locator('.dsPlayDot').evaluate(node => getComputedStyle(node).backdropFilter), 'none', 'the hidden play overlay still skips its filter');
   } finally {await browser.close();}
 });
@@ -491,7 +513,7 @@ test('movie actions stay visible and clickable during a wheel glide without rebu
     assert.equal(result.scrolling, 'true', 'exercise the live scrolling state');
     assert.equal(result.opacity, '1', 'hover controls must not disappear during scrolling');
     assert(result.clickable, 'a visible quick action must receive a real hit-tested click');
-    assert.match(result.backdrop, /blur\(10px\)/, 'moving controls retain the same native material');
+    assert.equal(result.backdrop,'none', 'moving controls retain the same clear material');
     assert(result.samePane, 'the same native pane survives the gesture');assert.equal(result.graphs,0);
     assert.equal(result.fill,'rgba(10, 13, 17, 0.82)');
     await page.waitForFunction(() => !document.documentElement.classList.contains('lenis-smooth'));
@@ -553,12 +575,14 @@ for (const width of [390, 1440, 1920]) test(`catalog dates fit completely inside
       const result = await row.evaluate(node => {
         const bounds = node.getBoundingClientRect();
         return {top:bounds.top, bottom:bounds.bottom, containment:getComputedStyle(node).contain,
+          keys:[...node.querySelectorAll('.dsThumb')].map(card=>card.getAttribute('href')),
           dates:[...node.querySelectorAll('.dsCardMeta')].map(meta => {
             const rect = meta.getBoundingClientRect(); return {text:meta.textContent, top:rect.top, bottom:rect.bottom, height:rect.height};
           })};
       });
       assert.match(result.containment,/paint|content/,'each row keeps its paint boundary');
       assert.equal(result.dates.length, 18);
+      assert.equal(new Set(result.keys).size,18,'geometry coverage uses eighteen distinct titles rather than duplicate filler');
       for (const date of result.dates) {
         assert(date.height >= 12, 'date glyphs retain their full line height');
         assert(date.top >= result.top && date.bottom <= result.bottom + .5,
@@ -605,7 +629,7 @@ test(layout.name+' navigation and featured actions use lighter live refraction d
   } finally {await browser.close();}
 });
 
-test('mobile poster actions stop sampling the backdrop while the scene moves and restore at rest',{skip:!available&&'Chromium is not installed'},async()=>{
+test('poster actions retain the same clear material throughout motion and rest',{skip:!available&&'Chromium is not installed'},async()=>{
  const browser=await chromium.launch({headless:true});
  try{
   const page=await catalog(browser,{viewport:{width:390,height:844},isMobile:true,hasTouch:true});
@@ -617,7 +641,7 @@ test('mobile poster actions stop sampling the backdrop while the scene moves and
   // real scroll controller can otherwise settle between automation commands.
   const paint=change=>pane.evaluate((node,change)=>{if(change){const[key,value]=change;if(value===null)delete document.documentElement.dataset[key];else document.documentElement.dataset[key]=value;}const style=getComputedStyle(node);return {filter:style.backdropFilter,fill:style.backgroundColor,edge:style.boxShadow};},change);
   for(const glass of ['subtle','liquid']){
-   await page.evaluate(value=>document.body.dataset.stGlass=value,glass);const resting=await paint();assert.match(resting.filter,/blur\(10px\)/);
+   await page.evaluate(value=>document.body.dataset.stGlass=value,glass);const resting=await paint();assert.equal(resting.filter,'none');
    for(const attribute of ['svScrollGlass','svFeaturedMotion']){
     assert.deepEqual(await paint([attribute,attribute==='svScrollGlass'?'soft':'true']),{...resting,filter:'none'},'Moving controls keep their fill and edge without an extra backdrop pass');
     assert.deepEqual(await paint([attribute,null]),resting);

@@ -1,0 +1,38 @@
+name: Experience browser and visual checks
+
+on:
+  push:
+    branches: ["feat/swifly-experience-overhaul-20261113"]
+  workflow_dispatch:
+
+concurrency:
+  group: experience-qa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  experience:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      ONNXRUNTIME_NODE_INSTALL_CUDA: skip
+      SWIFLY_EXPERIENCE_SCREENSHOT_DIR: qa-artifacts
+      SWIFLY_STUDY_SCREENSHOT_DIR: qa-artifacts/study
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: node node_modules/playwright-core/cli.js install --with-deps chromium
+      - name: Verify changed experiences in a real browser
+        run: node scripts/experience-qa.cjs
+      - name: Preserve screenshots and browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: swifly-experience-qa-${{ github.sha }}
+          path: qa-artifacts
+          if-no-files-found: warn
+          retention-days: 7

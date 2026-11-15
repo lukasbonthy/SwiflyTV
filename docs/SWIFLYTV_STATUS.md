@@ -1,6 +1,18 @@
 # SwiflyTV working checkpoint
 
-Updated: November 12, 2026 (America/New_York).
+Updated: November 14, 2026 (America/New_York).
+
+## Active experience overhaul (published for QA, not yet deployed)
+
+- Feature branch: `feat/swifly-experience-overhaul-20261113`; draft PR https://github.com/lukasbonthy/SwiflyTV/pull/164. Latest completed hosted source: `eab9fa633cb743bf47fd24f73094338fec7e7b81`, based on main `a6b91632ea39f2b68bc257a05011520fca8542b7`. Current local worktree is `work/swifly-experience-qa3`; earlier local histories remain preserved.
+- All requested page and behavior changes are implemented. Hosted source passed 1,760 unit/service checks (2,037 total with 277 browser cases deferred), recommendation evaluation and all 20 story-route checks. All 29 featured/artwork browser checks passed. The wider browser group passed 223/225 with zero skips; integrated acceptance passed **33/33 scenarios and 335 assertions**, including Study tasks, timers, rooms, Studio and real application navigation.
+- Visual run `43635553173` passed 135/142 cases: three failures and four on-device model checks skipped because that workflow does not prepare the model. The full Check workflow prepared and tested those models without skips. Screenshots prove actual cinematic playback, continuously movie-colored ripples above/below the film, full-screen Study, matte episode cards, keyboard focus and useful Community interactions.
+- Three remaining QA refinements are prepared: make the audiobook search action 44px at tablet/desktop as well as phone; allow only 0.01px rounding tolerance for a native 44px control reported as 43.99994px; let the Continue Watching test enter the next actual discovery row, which can now contain personalized titles, while retaining exact saved-episode and return-focus assertions. These require hosted confirmation on the next exact source. Focused local verification: 86 passed, zero failures/skips.
+- Local Chromium is blocked by runtime socket restrictions. Use the existing hosted workflows; do not retry launch flags or sandbox escalation. Artifact folders and logs are in `/workspace/scratch/7372448636fd`. The production verifier is `verify-experience-live.py` there; it reuses the known private LWP gate cookie file without exposing it.
+- The user explicitly authorized publication to the public GitHub repository, hosted checks and deployment after those checks pass. The CLI has no write credential; use the connected GitHub app, verify each blob and exact source-tree parity, and update the existing feature branch with an expected-SHA lease. Do not request authorization again for this release.
+- The dedicated **SWIFLY_KIDS_SECRET is already configured privately** in Render through a merge-only environment update. Do not regenerate or rotate it. Existing account/access variables were preserved; no secret value was printed or saved locally. This triggered deployment `dep-dbsc0e6k1f9s738rva0g`, now live on the existing main documentation revision `a6b9163` (same old application code). The feature source is not merged or deployed.
+- After all final checks pass, inspect the new screenshots, merge PR #164 and verify exact live pages/assets plus real audiobook search and an isolated parent-lock cycle. Kids controls are browser scoped with conservative verified ratings, protected routes/media and HLS destination binding. Community creator permissions use immutable account IDs. Physical iPad Safari performance remains unverified.
+- Review summary: `docs/SWIFLYTV_REVIEW.md`; spec and plan: `docs/superpowers/{specs,plans}/2026-11-13-experience-overhaul.md`. Preserve the integrated prior edits and iPad safeguards; do not restart from an older branch.
 
 ## Source and production
 
@@ -9,8 +21,8 @@ Updated: November 12, 2026 (America/New_York).
 - Site: https://swiflytv-1.onrender.com
 - Render workspace: `tea-csptd58gph6c73b7sv30`
 - Render service: `srv-db6fjrp42hec73c2tn30` (SwiflyTV-1); automatic deployment on `main`.
-- Running application commit: `5b5cd54beff34f0ce11d725c64e31177ddc321ad`.
-- Render deployment: `dep-dbr0hfs9v7es738ar1tg`, confirmed `live`; finished `2026-11-12T18:44:13.887186Z`.
+- Current live revision: `a6b91632ea39f2b68bc257a05011520fca8542b7` (documentation-only revision; application code remains from `5b5cd54beff34f0ce11d725c64e31177ddc321ad`).
+- Render deployment: `dep-dbsc0e6k1f9s738rva0g`, confirmed `live` after the parent-key configuration update.
 - Prior iPad optimization source: `b0633f90acf95d450ff5bf32f20c355d946d9939` (CI run `43228735178` passed). Prior source: `931871ab7837e163a070be9764b4c7a4eb382048`. Previous source: `a573341ae3c7b3448fafe3e731b9ed190e327f51`. Previous source: `24038dd6ebdf31c63ec0f085fcf35bf1aa401873`. Current source: `7329ea8134853e6b17c287f0a6708cfd08f96700` (build/UI/recommendation and featured/artwork browser checks passed; extended browser checks running at deploy).
 - Previous player-motion source tree: `a3966af72f9d1aed451a3fef582bf8624a2d55eb` (retained in current release).
 - PRs #157 (player motion), #159 (iPad artwork), #160 (iPad optics/caching), #161 (iPad prefetch), #162 (iPad featured-art pinning), and #163 (iPad double-fade fix) merged; latest https://github.com/lukasbonthy/SwiflyTV/pull/163.

@@ -15,7 +15,7 @@
     '.svDetailClose','.dsAuthTopActions button[data-st-open]',
     '.svAuthPasswordToggle','.dsAuthSwitch > a','.genreDropdown summary',
     '.dsTabs a','.dsDetailTabsV121 > button','.pagination a',
-    '.dsEpisodeChips a','.dsSearchBox button','.svSearchPopup button',
+    '.dsSearchBox button','.svSearchPopup button',
     '.dsDropdownLogout','.dsEditProfileBtn',
     // Action links and standalone player chrome must be captured even without
     // a generic button class. The transport buttons keep their owned dock.
@@ -51,7 +51,7 @@
   const liquidPreference = () => !['off', 'subtle'].includes(document.body.dataset.stGlass);
   const filter = host => host.querySelector(':scope > svg.svLiquidPane__filters');
   const opticalPanels=['.dsAuthCard','.svPlayerModes',partyPanels].join(',');
-  const compactControls='.dsCardQuickActions .dsMiniBtn,.dsRowBtn,.dsRowArrow,.svRowArrow,.svResumeRemove,.pagination a,.dsEpisodeChips a,.sv100RoomItem button,.sv100RoomItem a,.partyMovieResults button,.partyMovieResults a,.sv100Channel';
+  const compactControls='.dsCardQuickActions .dsMiniBtn,.dsRowBtn,.dsRowArrow,.svRowArrow,.svResumeRemove,.pagination a,.sv100RoomItem button,.sv100RoomItem a,.partyMovieResults button,.partyMovieResults a,.sv100Channel';
   const outerPlayerControls='.svPlayerPopoverBody,.svPlayerBack,.svPlayerPartyButton,.svPlayerEpisodeStep,.svPlayerSeason,.svPlayerModes,.svPlayerAction';
   function deactivate(entry) {
     entry.opticController?.destroy();entry.opticController=null;
@@ -140,6 +140,10 @@
     entries.delete(entry.host);
   }
   function ensure(host, approached = false) {
+    // A season can contain hundreds of links. Skip the entire browser before
+    // near-row observation as well as lens allocation, including late metadata
+    // and player/party pickers. Their opaque surfaces are owned by episode CSS.
+    if (!(host instanceof HTMLElement) || host.closest('.svStudy,.kidsWorld,.kidsModeBar,#episodes,[data-episode-season],.dsEpisodeChips,.svSeason,.dsSeasonBlock,.svEpisodeBrowserHead,.svPlayerEpisodes,.svPlayerEpisodePicker,.svPlayerEpisodeGrid,.svPlayerSeasons,.svPlayerEpisodeNavigation,.svPlayerEpisodeStep,.partyRoomEpisodes')) return;
     if (appleTablet && host?.matches?.('.dsCardQuickActions .dsMiniBtn')) return;
     // Featured snapshots are inert paint; position controls use simple faces.
     // Neither may allocate optical graphs through later mutation/IO scans.

@@ -1,5 +1,5 @@
 'use strict';
-const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const {chromium}=require('playwright-core');
 const {loadServer}=require('./ui-helpers.cjs');
 const available=fs.existsSync(chromium.executablePath());
@@ -44,14 +44,27 @@ for(const viewport of [{width:1440,height:960},{width:390,height:844},{width:320
       return {box:{top:box.top,left:box.left,right:box.right},theaterBottom:document.querySelector('.svPlayerTheater').getBoundingClientRect().bottom,
         viewport:innerWidth,scrollWidth:document.documentElement.scrollWidth,
         buttons:[...element.querySelectorAll('.svPlayerEpisodeStep')].map(button=>{
-          const rect=button.getBoundingClientRect(),label=button.querySelector('.svNavMatchedLabel')||button.querySelector(':scope > span:not(.svLiquidPane)');
-          return {height:rect.height,left:rect.left,right:rect.right,client:button.clientWidth,scroll:button.scrollWidth,label:getComputedStyle(label).display,text:button.textContent.trim()};
+          const rect=button.getBoundingClientRect(),label=button.querySelector('.svNavMatchedLabel')||button.querySelector(':scope > span:not(.svLiquidPane)'),range=document.createRange();
+          range.selectNodeContents(label);const hit=document.elementFromPoint(rect.x+rect.width/2,rect.y+rect.height/2);
+          return {height:rect.height,left:rect.left,right:rect.right,top:rect.top,bottom:rect.bottom,client:button.clientWidth,scroll:button.scrollWidth,label:getComputedStyle(label).display,text:button.textContent.trim(),
+            lines:[...range.getClientRects()].map(line=>({left:line.left,right:line.right,top:line.top,bottom:line.bottom})),
+            clickable:hit===button||button.contains(hit),backdrop:getComputedStyle(button).backdropFilter,glass:button.querySelectorAll('.svLiquidPane').length};
         })};
     });
+    if(process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR){
+      const directory=process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR;fs.mkdirSync(directory,{recursive:true});
+      const name=path.join(directory,'player-episode-navigation-'+viewport.width);
+      fs.writeFileSync(name+'.json',JSON.stringify(geometry,null,2));await page.screenshot({path:name+'.png',fullPage:true});
+    }
     assert(geometry.box.top>=geometry.theaterBottom&&geometry.box.top-geometry.theaterBottom<=20,'Controls sit immediately under the video');
     assert(geometry.scrollWidth<=geometry.viewport,'The player must not overflow horizontally');
     assert.deepEqual(geometry.buttons.map(button=>button.text),['Previous episode','Next episode']);
-    for(const button of geometry.buttons){assert.notEqual(button.label,'none');assert(button.height>=44);assert(button.left>=0&&button.right<=geometry.viewport);assert(button.scroll<=button.client+1,'Button labels must fit without clipping');}
+    for(const button of geometry.buttons){
+      const diagnostic=JSON.stringify(button);assert.notEqual(button.label,'none');assert(button.height>=44);assert(button.left>=0&&button.right<=geometry.viewport);
+      assert(button.scroll<=button.client+1,'Button labels must fit without clipping: '+diagnostic);
+      assert(button.lines.length&&button.lines.every(line=>line.left>=button.left&&line.right<=button.right+.5&&line.top>=button.top&&line.bottom<=button.bottom+.5),'Every label line stays inside its action: '+diagnostic);
+      assert(button.clickable,'The full-size episode action must receive input: '+diagnostic);assert.equal(button.backdrop,'none','Episode navigation keeps its matte surface');assert.equal(button.glass,0);
+    }
     assert.equal(await page.locator('[data-player-episode-next]').count(),1);
     await page.getByRole('link',{name:'Next episode',exact:true}).click();
     await page.waitForURL(url=>url.pathname==='/watch/tv/101'&&url.searchParams.get('s')==='2'&&url.searchParams.get('e')==='1');

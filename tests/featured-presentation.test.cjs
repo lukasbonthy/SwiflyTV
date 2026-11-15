@@ -5,7 +5,7 @@ test.afterEach(cleanup);
 const item={id:100,title:'Resident Evil',media_type:'movie',backdrop_path:'/forest.jpg',poster_path:'/poster.jpg',overview:'A medical courier is caught in a horrifying night.',vote_average:7.5,release_date:'2026-09-01'};
 test('Discover features the selected film with its real logo, runtime and genres',async()=>{
  const api=loadServer(),calls=[];try{
-  api.setTmdb(async(endpoint,params)=>{calls.push([endpoint,params]);return endpoint==='/movie/100'?{...item,runtime:95,genres:[{name:'Horror'},{name:'Science Fiction'}],images:{logos:[{file_path:'/resident-logo.png',iso_639_1:'en',width:900,height:210}]}}:{results:[item]};});
+  api.setTmdb(async(endpoint,params)=>{calls.push([endpoint,params]);return endpoint==='/movie/100'?{...item,runtime:95,genres:[{name:'Horror'},{name:'Science Fiction'}],images:{logos:[{file_path:'/resident-logo.png',iso_639_1:'en',width:900,height:210}]}}:{results:[endpoint==='/movie/popular'?{...item,id:101,title:'A different discovery'}:item]};});
   let html;await api.trendingPage({query:{}},{send:value=>html=value});const {window:w}=browser(html),hero=w.document.querySelector('.dsHero');
   assert(hero.querySelector('.dsHeroLogo'));assert.match(hero.querySelector('.dsHeroMeta').textContent,/1h 35m/);assert.match(hero.querySelector('.dsHeroMeta').textContent,/Horror, Science Fiction/);
   assert.equal(calls.filter(([endpoint])=>endpoint==='/movie/100').length,1);assert.equal(calls.find(([endpoint])=>endpoint==='/movie/100')[1].append_to_response,'images');

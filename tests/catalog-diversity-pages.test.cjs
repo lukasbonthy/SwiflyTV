@@ -1,0 +1,20 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict'),{loadServer,browser,cleanup}=require('./ui-helpers.cjs');
+test.afterEach(cleanup);
+function fixture(){const calls=[];return {calls,tmdb:async(path,params={})=>{calls.push({path,params});if(path.includes('/genre/'))return{genres:[{id:28,name:'Action'},{id:35,name:'Comedy'}]};if(/^\/movie\/\d+$/.test(path))return{id:Number(path.split('/').pop()),title:'Feature',backdrop_path:'/a.jpg'};const type=path.includes('/tv')?'tv':'movie',page=Number(params.page)||1,tag=params.with_genres||path;let code=[...tag].reduce((n,c)=>n+c.charCodeAt(0),0);return{page,total_pages:4,total_results:80,results:Array.from({length:20},(_,i)=>({id:page*1000+code*20+i+1,[type==='tv'?'name':'title']:tag+' '+(i+1),media_type:type,poster_path:'/p.jpg',backdrop_path:'/a.jpg',overview:'A new story about people finding their way through a changing world. '.repeat(3),vote_average:7,release_date:'2024-01-01'}))};}};}
+test('movie page two advances every catalog query and renders a real filter-preserving pager',async()=>{
+ const api=loadServer(),f=fixture();try{api.setTmdb(f.tmdb);let html;await api.listingPage({query:{page:'2',sort:'discover',genre:'28',sort_by:'vote_average.desc'}},{send:value=>html=value},'movie');const d=browser(html).window.document;
+ const rows=f.calls.filter(call=>/discover|popular|trending/.test(call.path));assert(rows.length>=1);for(const call of rows)assert.equal(Number(call.params.page),2,call.path+' must advance beyond its first page');
+ const next=[...d.querySelectorAll('nav.pagination a')].find(a=>a.textContent.includes('Next'));assert(next,'Movies needs usable page navigation');const u=new URL(next.href);assert.equal(u.searchParams.get('page'),'3');assert.equal(u.searchParams.get('genre'),'28');assert.equal(u.searchParams.get('sort_by'),'vote_average.desc');
+ assert.equal(d.querySelector('.dsHero'),null,'Page two should lead with the next results rather than repeat a hero');
+}finally{api.io.close();}});
+test('popular movie period controls use day/week sources and do not duplicate titles across rows',async()=>{
+ const api=loadServer(),f=fixture();try{api.setTmdb(f.tmdb);let html;await api.listingPage({query:{period:'today'}},{send:value=>html=value},'movie');const d=browser(html).window.document;
+ assert(f.calls.some(call=>call.path==='/trending/movie/day'));assert(d.querySelector('[data-movie-periods] a[aria-current="page"]'));const keys=[...d.querySelectorAll('.svCatalogRow .movieCard .dsCardTitle')].map(card=>new URL(card.href).pathname);assert(keys.length>20);assert.equal(new Set(keys).size,keys.length);
+}finally{api.io.close();}});
+test('trending page two advances supplemental rows and retains the selected daily window',async()=>{
+ const api=loadServer(),f=fixture();try{api.setTmdb(f.tmdb);let html;await api.trendingPage({query:{page:'2',type:'tv',period:'today'}},{send:value=>html=value});const d=browser(html).window.document;
+ const rows=f.calls.filter(call=>/trending|popular|upcoming|now_playing|top_rated/.test(call.path));assert(rows.some(call=>call.path==='/trending/tv/day'));for(const call of rows)assert.equal(Number(call.params.page),2,call.path);assert.match(d.querySelector('.pagination').textContent,/Page 2/);const next=[...d.querySelectorAll('.pagination a')].find(a=>a.textContent.includes('Next'));assert.equal(new URL(next.href).searchParams.get('period'),'today');
+}finally{api.io.close();}});
+test('home popularity controls live inside their Studio row and share its single heading',async()=>{
+ const api=loadServer(),f=fixture();try{api.setTmdb(f.tmdb);let html;await api.homePage({query:{moviePeriod:'today'}},{send:value=>html=value});const d=browser(html).window.document,row=d.querySelector('[data-st-home-section="popular-movies"]');assert(row);assert(row.querySelector('[data-movie-periods]'),'Studio must move or hide popularity controls together with their row');assert.equal(row.querySelectorAll('h2').length,1);assert(row.querySelector(':scope > .movieRail'),'React must retain the direct native rail');}finally{api.io.close();}});

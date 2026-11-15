@@ -189,7 +189,7 @@ test('Native control material has one clear rim and preserves functional generat
   const samples=await page.locator('.ordinary,.dsAccountActions a,.dsMiniBtn,#sv103RoomCode,.sv100Channel,.sv100RoomItem button,.stChoice').evaluateAll(nodes=>nodes.map(node=>{const s=getComputedStyle(node),face=getComputedStyle(node.querySelector(':scope>.svLiquidPane')||node);return {class:node.className,fill:face.backgroundColor,image:face.backgroundImage,shadow:face.boxShadow,border:s.borderWidth,filter:face.backdropFilter,optic:!!node.querySelector(':scope>.svLiquidPane')};}));
   for(const sample of samples){
    if(sample.class.includes('stChoice')){assert.equal(sample.optic,false,'Studio keeps its own original controls');continue;}
-   if(sample.class.includes('dsMiniBtn')){assert.equal(sample.fill,'rgba(10, 13, 17, 0.82)');assert.match(sample.filter,/blur\(10px\)/);assert.equal(sample.border,'0px');continue;}
+   if(sample.class.includes('dsMiniBtn')){assert.equal(sample.fill,'rgba(10, 13, 17, 0.82)');assert.equal(sample.filter,'none');assert.equal(sample.border,'0px');continue;}
    const rgba=sample.fill.match(/[\d.]+/g).map(Number);
    assert.deepEqual(rgba.slice(0,3),[255,255,255],sample.class+' must share the clear white material');
    assert(rgba[3]>=.2&&rgba[3]<=.24,'every control family keeps the shared navigation fill');

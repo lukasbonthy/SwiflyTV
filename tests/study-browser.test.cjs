@@ -43,21 +43,30 @@ async function page(viewport = {width: 1440, height: 1080}) {
   await page.waitForFunction(() => document.querySelector('[data-study-connection]').dataset.connected === 'true');
   return {page, context, errors};
 }
-async function screenshot(page, name) {if (!process.env.SWIFLY_STUDY_SCREENSHOT_DIR) return;fs.mkdirSync(process.env.SWIFLY_STUDY_SCREENSHOT_DIR, {recursive: true});await page.screenshot({path: path.join(process.env.SWIFLY_STUDY_SCREENSHOT_DIR, name + '.png'), fullPage: true});}
+async function screenshot(page, name) {const directory=process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR||process.env.SWIFLY_STUDY_SCREENSHOT_DIR;if(!directory)return;fs.mkdirSync(directory,{recursive:true});await page.screenshot({path:path.join(directory,name+'.png'),fullPage:true});}
 
 test('Native Study fits desktop, 320px and TV, and keyboard tabs keep the panel focus order', {skip: !available}, async () => {
-  for (const [name, viewport] of [['desktop', {width: 1440, height: 1080}], ['mobile', {width: 320, height: 800}], ['tv', {width: 1920, height: 1080}]]) {
+  for (const [name, viewport] of [['desktop', {width: 1440, height: 1080}], ['phone', {width: 390, height: 844}], ['mobile', {width: 320, height: 800}], ['ipad', {width: 1024, height: 1366}], ['tv', {width: 1920, height: 1080}]]) {
     const f = await page(viewport);
     try {
       assert(await f.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), name + ' has horizontal overflow');
       assert.equal(await f.page.evaluate(() => window.__captures), 0);
+      assert.equal(await f.page.locator('[data-study-workspace]').isVisible(), false, name + ' opens with unobscured scenery');
+      const stage = await f.page.locator('[data-study-stage]').boundingBox();assert(stage.width >= viewport.width - 2, name + ' scenery fills the page');
+      assert(stage.height >= viewport.height - 2, name + ' scenery fills the viewport height');
+      const checkBounds = async selector => {const box = await f.page.locator(selector).boundingBox();assert(box && box.x >= 0 && box.x + box.width <= viewport.width + 1, name + ' ' + selector + ' stays reachable');};
+      for (const selector of ['.studyHeading', '.studyPlayer', '.studyToolsDock', '.studyTimer']) await checkBounds(selector);
+      const timerBox = await f.page.locator('.studyTimer').boundingBox(), captionBox = await f.page.locator('.studySceneCaption').boundingBox();
+      assert(timerBox.y + timerBox.height <= captionBox.y + 2 || timerBox.x + timerBox.width <= captionBox.x, name + ' timer does not collide with the scene caption');
       await screenshot(f.page, 'study-' + name);
       await f.page.locator('[data-study-tab="scenes"]').focus();await f.page.keyboard.press('ArrowRight');
       assert.equal(await f.page.locator('[data-study-tab="music"]').getAttribute('aria-selected'), 'true');
-      assert(await f.page.locator('#study-panel-music').isVisible());
+      assert(await f.page.locator('#study-panel-music').isVisible());await checkBounds('[data-study-workspace]');
+      await screenshot(f.page, 'study-' + name + '-music');
       await f.page.locator('[data-study-search]').fill('Morning Coffee');assert.equal(await f.page.locator('[data-study-track]').count(), 1);
       await f.page.locator('[data-study-search]').fill('');await f.page.locator('[data-study-play]').click();await f.page.waitForFunction(() => document.querySelector('[data-study-play]').getAttribute('aria-pressed') === 'true');
       await f.page.locator('[data-study-favorite]').click();await f.page.locator('[data-study-station]').selectOption('favorites');assert.equal(await f.page.locator('[data-study-track]').count(), 1);
+      await f.page.locator('[data-study-close-tools]').click();assert.equal(await f.page.locator('[data-study-workspace]').isVisible(), false);assert(await f.page.locator('[data-study-tab="music"]').evaluate(element => element === document.activeElement));
       await f.page.locator('[data-study-tab="focus"]').click();await f.page.locator('[data-study-task-input]').fill('Read one chapter');await f.page.locator('[data-study-task-input]').press('Enter');assert.match(await f.page.locator('[data-study-tasks]').textContent(), /Read one chapter/);
       await f.page.reload();await f.page.waitForFunction(() => document.querySelectorAll('[data-study-track]').length > 0);await f.page.locator('[data-study-tab="focus"]').click();assert.match(await f.page.locator('[data-study-tasks]').textContent(), /Read one chapter/);
       assert.deepEqual(f.errors, []);

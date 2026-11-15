@@ -12,6 +12,7 @@
  let partyPlayer=null,partyPlayerRoot=null,partySourceData=null,mediaEpoch=0;
  const partyMediaListeners=[];
  const messageKeys=new Set(),movies=new Map();
+ const communityTitles=new Map(),pendingMessages=new Map(),failedMessages=new Map(),chatDrafts=new Map(),communityHistory=new Map();let communityIdentity=null,communityJoinedRoom='',verifiedCommunityRoom='',communityRoom='channel-general',communityTitle='General';let communitySearchEpoch=0,communityDirectoryEpoch=0,communityTypingTimer=0,lastTyped=0,communityUnread=0,draftSequence=0;
  const featuredMovies=new Map(),featuredShows=new Map(),lobbyMovies=new Map();
  let selectedMovie=null,roomFilm=null,wantedMovieId='',wantedMovieType='movie',wantedSeason='1',wantedEpisode='1',selectionPending=false,selectionError='',selectionEpoch=0,featuredEpoch=0,featuredShowsEpoch=0,lobbySearchEpoch=0,pendingRoomMovie=null,roomChoice=null,roomChoiceEpoch=0,roomPickerEpoch=0,roomPickerKey='';
  const connected=()=>Boolean(socket?.connected)&&!disposed;
@@ -35,12 +36,12 @@
   $$('[data-requires="rooms"]').forEach(n=>n.disabled=!connected()||!permissions.canCreateWatchRooms);
   $('#sv100CreateRoomForm button[type="submit"]').disabled=!connected()||!permissions.canCreateWatchRooms||selectionPending||Boolean(selectionError)||$('#sv100CreateRoomForm').getAttribute('aria-busy')==='true';
   $('#partyJoinForm button[type="submit"]').disabled=!connected()||$('#partyJoinForm').getAttribute('aria-busy')==='true';
-  $('#sv100Input').disabled=!connected();$('#sv100Composer button').disabled=!connected();
+  const chatUnavailable=!connected()||(app.dataset.partyView==='chat'&&(verifiedCommunityRoom!==currentRoom||!communityScope()));$('#sv100Input').disabled=chatUnavailable;$('#sv100Composer button').disabled=chatUnavailable;
   updateHostUi();
  }
  async function loadPermissions(){
-  try{permissions=(await request('/api/social/permissions?name='+encodeURIComponent(username))).permissions||{};}
-  catch{const names=(app.dataset.allowedCreators||'').split(',').map(s=>s.trim().toLowerCase()),creator=names.includes(username.toLowerCase());permissions={canCreateWatchRooms:app.dataset.openRoomCreation==='true'||creator,canCreateGroups:creator,canCreateChannels:creator,canManageSocial:creator};}
+  try{permissions=(await request('/api/social/permissions')).permissions||{};}
+  catch{permissions={canCreateWatchRooms:app.dataset.openRoomCreation==='true',canCreateGroups:false,canCreateChannels:false,canManageSocial:false};}
   $('.creatorOnly').hidden=!permissions.canCreateWatchRooms;$('.lockedOnly').hidden=Boolean(permissions.canCreateWatchRooms);
   $$('[data-requires="groups"]').forEach(n=>n.disabled=!permissions.canCreateGroups);$$('[data-requires="channels"]').forEach(n=>n.disabled=!permissions.canCreateChannels);
   $('#sv100RoleText').textContent=permissions.canManageSocial?'Creator access':'Member access';
@@ -49,39 +50,103 @@
  const roomKey=room=>'swiflytv.social.v103.'+room;
  function readMessages(room){try{const a=JSON.parse(localStorage.getItem(roomKey(room))||'[]');return Array.isArray(a)?a:[];}catch{return [];}}
  function saveMessage(room,message){try{const a=readMessages(room);a.push(message);localStorage.setItem(roomKey(room),JSON.stringify(a.slice(-160)));}catch{}}
+ const identityKey=identity=>identity?.id?(identity.authenticated?'account:':'guest:')+identity.id:'';
+ const communityScope=()=>identityKey(communityIdentity);
+ const communityKey=room=>communityScope()+'|'+room;
+ const currentDraft=draft=>Boolean(draft?.identity)&&draft.identity===communityScope()&&draft.room===currentRoom&&verifiedCommunityRoom===currentRoom&&app.dataset.partyView==='chat';
+ function rememberChatDraft(){if(currentRoom.startsWith('watchroom-')||verifiedCommunityRoom!==currentRoom||!communityScope())return;chatDrafts.set(communityKey(currentRoom),$('#sv100Input').value);}
+ function restoreChatDraft(){if(verifiedCommunityRoom!==currentRoom||!communityScope())return;const input=$('#sv100Input');if(!input.value)input.value=chatDrafts.get(communityKey(currentRoom))||'';renderDeliveryStatus();}
+ function setCommunityIdentity(value){
+  if(!value||typeof value.id!=='string'||!value.id||typeof value.authenticated!=='boolean')return;
+  const next={id:value.id,name:String(value.name||'Guest').slice(0,40),authenticated:value.authenticated};
+  if(identityKey(next)!==communityScope()){
+   for(const draft of pendingMessages.values())clearTimeout(draft.timer);pendingMessages.clear();failedMessages.clear();chatDrafts.clear();communityHistory.clear();
+   if(communityIdentity)$('#sv100Input').value='';delete $('#sv100Input').dataset.communityRetryId;$('[data-community-compose-status]').textContent='';
+  }
+  communityIdentity=next;username=next.name;$('#sv100Name').textContent=username;$('#sv100Avatar').textContent=username.slice(0,1).toUpperCase();
+ }
+ function messageKey(message,room){return room+'|'+(message.id||[message.createdAt,message.authorId||message.author,message.text].join('|'));}
+ function updateMessageSearch(){const input=$('[data-community-message-search]'),query=String(input?.value||'').toLowerCase().trim();let visible=0,total=0;for(const node of $$('.sv100Msg')){total++;node.hidden=!!query&&!node.dataset.searchText.includes(query);if(!node.hidden)visible++;}const count=$('[data-community-search-count]');if(count)count.textContent=query?visible+' of '+total:'';}
+ function scrollToLatest(){const list=$('#sv100Messages');list.scrollTop=list.scrollHeight;communityUnread=0;const button=$('[data-community-jump]');if(button)button.hidden=true;}
+ function renderDeliveryStatus(){
+  const status=$('[data-community-compose-status]'),input=$('#sv100Input');if(!status)return;status.replaceChildren();
+  if([...pendingMessages.values()].some(currentDraft)){status.textContent='Sending…';return;}
+  const entry=[...failedMessages.entries()].findLast(([,draft])=>currentDraft(draft));if(!entry)return;const [id,draft]=entry;
+  status.textContent=draft.error;if(!input.value){input.value=draft.text;input.dataset.communityRetryId=id;}
+  if(input.value!==draft.text){const retry=document.createElement('button');retry.type='button';retry.textContent='Restore message';retry.addEventListener('click',()=>{if(!currentDraft(draft))return;input.value=draft.text;input.dataset.communityRetryId=id;input.focus();renderDeliveryStatus();});status.append(' ',retry);}
+ }
+ function deliveryStatus(id,error='',room,identity){
+  const draft=pendingMessages.get(id)||failedMessages.get(id);if(!draft||(room!==undefined&&draft.room!==room)||(identity!==undefined&&draft.identity!==identity))return;
+  clearTimeout(draft.timer);pendingMessages.delete(id);const input=$('#sv100Input');
+  if(error){draft.error=error;failedMessages.set(id,draft);if(failedMessages.size>20)failedMessages.delete(failedMessages.keys().next().value);}
+  else{failedMessages.delete(id);if(draft.identity===communityScope()&&chatDrafts.get(communityKey(draft.room))===draft.text)chatDrafts.delete(communityKey(draft.room));if(currentDraft(draft)&&input.dataset.communityRetryId===id&&input.value===draft.text){input.value='';delete input.dataset.communityRetryId;chatDrafts.delete(communityKey(draft.room));}}
+  renderDeliveryStatus();
+ }
+ function confirmCommunityDelivery(message,room){
+  const draft=pendingMessages.get(message?.clientId)||failedMessages.get(message?.clientId);if(!draft||draft.room!==room||draft.identity!==communityScope())return;
+  if(message.authorId&&identityKey({id:message.authorId,authenticated:message.authenticated===true})!==draft.identity)return;
+  deliveryStatus(message.clientId,'',room,draft.identity);
+ }
  function addMessage(message,persist=true,room=currentRoom){
-  const normalized={author:String(message.author||message.name||'Guest'),text:String(message.text||'').slice(0,1200),createdAt:Number(message.createdAt||message.at||Date.now())};
-  if(!normalized.text)return;const key=room+'|'+normalized.createdAt+'|'+normalized.author+'|'+normalized.text;if(messageKeys.has(key))return;messageKeys.add(key);
-  if(persist)saveMessage(room,normalized);if(room!==currentRoom)return;
-  const list=$('#sv100Messages');list.querySelector('.partyChatEmpty')?.remove();const node=document.createElement('article');node.className='sv100Msg'+(normalized.author===username?' mine':'');
-  node.innerHTML='<span>'+esc(normalized.author.slice(0,1).toUpperCase())+'</span><div><header><b>'+esc(normalized.author)+'</b><small>'+new Date(normalized.createdAt).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+'</small></header><p>'+esc(normalized.text)+'</p></div>';
-  const atBottom=list.scrollHeight-list.scrollTop-list.clientHeight<100;list.append(node);if(atBottom||normalized.author===username)list.scrollTop=list.scrollHeight;
+  if(!message||typeof message!=='object'||Array.isArray(message))return;const watching=room.startsWith('watchroom-');
+  if(!watching&&message.roomId&&message.roomId!==room)return;
+  const at=Number(message.createdAt||message.at),normalized={id:String(message.id||'').slice(0,80),clientId:String(message.clientId||'').slice(0,80),roomId:room,author:String(message.author||message.name||'Guest').slice(0,40),authorId:String(message.authorId||'').slice(0,160),authenticated:message.authenticated===true,text:String(message.text||'').slice(0,1200),createdAt:Number.isFinite(at)&&at>0&&at<=8640000000000000?at:Date.now()};
+  if(!normalized.text)return;const key=messageKey(normalized,room);if(messageKeys.has(key))return;if(watching)messageKeys.add(key);
+  if(persist){if(watching)saveMessage(room,normalized);else{const history=communityHistory.get(communityKey(room))||[];if(!history.some(row=>messageKey(row,room)===key)){history.push(normalized);communityHistory.set(communityKey(room),history.slice(-160));}}}
+  if(room!==currentRoom||(!watching&&(app.dataset.partyView!=='chat'||verifiedCommunityRoom!==room)))return;messageKeys.add(key);
+  const mine=watching?normalized.author===username:Boolean(normalized.authorId)&&identityKey({id:normalized.authorId,authenticated:normalized.authenticated})===communityScope();
+  const list=$('#sv100Messages');list.querySelector('.partyChatEmpty')?.remove();const node=document.createElement('article');node.className='sv100Msg'+(mine?' mine':'');node.dataset.searchText=(normalized.author+' '+normalized.text).toLowerCase();
+  node.innerHTML='<span>'+esc(normalized.author.slice(0,1).toUpperCase())+'</span><div><header><b>'+esc(normalized.author)+'</b>'+(!watching?'<small data-community-identity>'+esc(normalized.authenticated?'Signed in':'Guest')+'</small>':'')+'<time datetime="'+new Date(normalized.createdAt).toISOString()+'">'+new Date(normalized.createdAt).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+'</time></header><p>'+esc(normalized.text)+'</p></div>';
+  const shared=/(?:^|\s)\/(movie|tv)\/([1-9]\d{0,9})(?=$|[\s?#.,;)])/.exec(normalized.text);
+  if(shared){const links=document.createElement('div');links.className='communitySharedActions';const details=document.createElement('a');details.href='/'+shared[1]+'/'+shared[2];details.dataset.communityTitleLink='';details.textContent=shared[1]==='tv'?'View series':'View movie';const watch=document.createElement('a');watch.href='/social?tab=watchrooms&type='+shared[1]+'&movieId='+shared[2];watch.dataset.communityWatchLink='';watch.textContent='Watch together ↗';links.append(details,watch);node.lastElementChild.append(links);}
+  const atBottom=list.scrollHeight-list.scrollTop-list.clientHeight<100;list.append(node);if(atBottom||mine)scrollToLatest();else{const button=$('[data-community-jump]');if(button){button.hidden=false;button.textContent=++communityUnread+' new '+(communityUnread===1?'message':'messages')+' ↓';}}updateMessageSearch();
  }
- function renderMessages(seed=[]){
-  $('#sv100Messages').replaceChildren();messageKeys.clear();const messages=[...readMessages(currentRoom),...(Array.isArray(seed)?seed:[])];
-  if(!messages.length){const watching=app.dataset.partyView==='rooms',recommendations=currentRoom==='channel-recommendations';$('#sv100Messages').innerHTML='<div class="partyChatEmpty"><span aria-hidden="true">'+glyph+'</span><small>'+esc(watching?'ROOM CHAT':currentTitle)+'</small><h3>'+esc(watching?'Everyone settled in?':recommendations?'What’s worth watching?':'The conversation starts here.')+'</h3><p>'+esc(watching?'Say hello while the host gets playback ready.':recommendations?'Share a recommendation. A hidden gem, an old favourite, or your latest great watch.':'Seen something good lately? Share a thought and start the conversation.')+'</p></div>';return;}
-  messages.slice(-160).forEach(m=>addMessage(m,false));
+ function renderMessages(seed){
+  const watching=currentRoom.startsWith('watchroom-'),snapshot=Array.isArray(seed)?seed:[];
+  $('#sv100Messages').replaceChildren();messageKeys.clear();const messages=(watching?[...readMessages(currentRoom),...snapshot]:seed===undefined?communityHistory.get(communityKey(currentRoom))||[]:snapshot).filter(message=>message&&typeof message==='object'&&!Array.isArray(message)&&typeof message.text==='string'&&message.text.trim()).sort((a,b)=>Number(a.createdAt||a.at||0)-Number(b.createdAt||b.at||0));
+  if(!messages.length){const recommendations=currentRoom==='channel-recommendations';$('#sv100Messages').innerHTML='<div class="partyChatEmpty"><span class="communityEmptyOrbits" aria-hidden="true"><i></i>'+glyph+'<i></i></span><small>'+esc(watching?'ROOM CHAT':currentTitle)+'</small><h3>'+esc(watching?'Everyone settled in?':recommendations?'The best picks come from people.':'Pull up a seat.')+'</h3><p>'+esc(watching?'Say hello while the host gets playback ready.':recommendations?'Share a recommendation. An old favourite, a hidden gem, or the film you cannot stop thinking about.':'A little film talk, a great recommendation, or plans for your next movie night. Make yourself at home.')+'</p>'+(!watching?'<button type="button" class="communityEmptyPrompt" data-community-prompt="'+esc(recommendations?"What is one movie you would recommend to everyone?":"What has everyone been watching lately?")+'">'+esc(recommendations?'Ask for a recommendation':'Start the conversation')+' <span aria-hidden="true">↗</span></button>':'')+'</div>';updateMessageSearch();return;}
+  messages.slice(-160).forEach(m=>addMessage(m,false));scrollToLatest();
  }
+ function renderCommunityMembers(members=[]){
+  const list=$('[data-community-members]'),count=$('[data-community-member-count]');if(!list||!count)return;
+  const people=Array.isArray(members)?members.slice(0,100).map(member=>({id:typeof member?.id==='string'?member.id:'',name:String(typeof member==='string'?member:member?.name||'Guest').slice(0,40),authenticated:member?.authenticated===true})):[];
+  count.textContent=String(people.length);list.replaceChildren();for(const person of people){const row=document.createElement('div');row.className='communityPerson';const avatar=document.createElement('span');avatar.textContent=person.name.slice(0,1).toUpperCase();const text=document.createElement('strong');text.textContent=person.name;const state=document.createElement('small');state.textContent=(identityKey(person)&&identityKey(person)===communityScope()?'You · ':'')+(person.authenticated?'Signed in':'Guest');row.append(avatar,text,state);list.append(row);}
+  if(!people.length){const note=document.createElement('p');note.className='communitySmallNote';note.textContent=connected()?'You can be the first to say hello.':'Reconnect to see who is here.';list.append(note);}
+ }
+ function joinCommunityRoom(){
+  if(!connected()||app.dataset.partyView!=='chat'||currentRoom.startsWith('watchroom-'))return;
+  communityJoinedRoom=currentRoom;verifiedCommunityRoom='';communityHistory.delete(communityKey(currentRoom));renderMessages();renderCommunityMembers([]);renderDeliveryStatus();updateConnection();socket.emit('social:join',{roomId:currentRoom,name:username});
+ }
+ function leaveCommunityRoom(){if(communityJoinedRoom)socket?.emit('social:leave');communityJoinedRoom='';verifiedCommunityRoom='';renderCommunityMembers([]);renderDeliveryStatus();}
+ async function loadCommunityDirectory(){const generation=++communityDirectoryEpoch;try{const data=await request('/api/social/rooms');if(disposed||generation!==communityDirectoryEpoch)return;const target=$('[data-community-custom-list]');if(!target)return;const rows=(Array.isArray(data.rooms)?data.rooms:[]).filter(room=>/^(?:channel|group)-[a-z0-9][a-z0-9-]{0,63}$/.test(room.id||'')&&!['channel-general','channel-recommendations','channel-movie-night'].includes(room.id)).slice(0,40);if(!rows.length)return;target.replaceChildren();for(const room of rows){const button=document.createElement('button');button.type='button';button.className='sv100Channel';button.dataset.room=room.id;button.dataset.title=room.id.replace(/^(?:channel|group)-/,'').replaceAll('-',' ').replace(/\b\w/g,value=>value.toUpperCase());const mark=document.createElement('span');mark.className='partyChannelGlyph';mark.textContent='#';const copy=document.createElement('span');copy.textContent=button.dataset.title;button.append(mark,copy);target.append(button);}}catch{/* Built-in lounges remain usable when the directory is unavailable. */}}
+ function toggleTitlePicker(open){const picker=$('[data-community-title-picker]'),button=$('[data-community-share-toggle]');if(!picker||!button)return;picker.hidden=!open;button.setAttribute('aria-expanded',String(open));if(open)$('[data-community-title-query]').focus();else button.focus({preventScroll:true});}
+ async function searchCommunityTitles(){const generation=++communitySearchEpoch,query=$('[data-community-title-query]').value.trim(),target=$('[data-community-title-results]');communityTitles.clear();if(query.length<2){target.textContent='Type at least two letters to find a title.';return;}target.textContent='Finding a good story…';target.setAttribute('aria-busy','true');try{const data=await request('/api/social/media/search?q='+encodeURIComponent(query));if(disposed||generation!==communitySearchEpoch)return;const rows=(data.results||[]).map(movieValue).filter(Boolean).slice(0,8);rows.forEach(movie=>communityTitles.set(choiceKey(movie),movie));target.innerHTML=rows.length?rows.map(movie=>'<button type="button" data-community-title-pick="'+esc(choiceKey(movie))+'">'+(movie.poster?'<img src="'+esc(movie.poster)+'" alt="" loading="lazy">':'<span aria-hidden="true">'+glyph+'</span>')+'<span><b>'+esc(movie.title)+'</b><small>'+esc([movie.year,movie.type==='tv'?'Series':'Movie'].filter(Boolean).join(' · '))+'</small></span><i aria-hidden="true">+</i></button>').join(''):'No titles found. Try the original title or another spelling.';}catch(error){if(generation===communitySearchEpoch)target.textContent=error.message;}finally{if(generation===communitySearchEpoch)target.removeAttribute('aria-busy');}}
  function updateChatDock(){
   const roomView=app.dataset.partyView==='rooms'&&activeWatchRoom.joined;
   const panel=$('#sv100ChatPanel');(roomView?$('[data-party-chat-dock]'):$('[data-party-main-chat-slot]')).append(panel);
   $('[data-party-conversation]').hidden=!roomView;panel.hidden=app.dataset.partyView==='rooms'&&!activeWatchRoom.joined;panel.classList.toggle('active',!panel.hidden);
   $('[data-party-channel-title]').textContent=roomView?'Room chat':currentTitle;
-  $('[data-party-channel-kind]').textContent=currentRoom.startsWith('group-')?'Private conversation':'Community channel';
-  $('[data-party-chat-description]').textContent=roomView?'Your people, right beside the screen.':currentRoom==='channel-recommendations'?'Find your next great watch. Leave a recommendation.':currentRoom.startsWith('group-')?'A space for your movie night.':'Good films, hot takes, and everything in between.';
+  $('[data-party-channel-kind]').textContent=roomView?'Watching together':currentRoom.startsWith('group-')?'Member lounge':'Community channel';
+  $('[data-party-chat-description]').textContent=roomView?'Your people, right beside the screen.':currentRoom==='channel-recommendations'?'Find your next great watch. Leave a recommendation.':currentRoom.startsWith('group-')?'A member-created place to talk films.':'Good films, hot takes, and everything in between.';
   $$('.sv100Channel').forEach(button=>{const active=button.dataset.room===currentRoom;button.classList.toggle('active',active);button.setAttribute('aria-current',String(active));});
  }
- function switchTab(tab){
-  const rooms=tab==='rooms';app.dataset.partyView=rooms?'rooms':'chat';$('#sv100RoomsPanel').classList.toggle('active',rooms);$('#sv100RoomsPanel').hidden=!rooms;
+ function switchTab(tab,refreshCommunity=false){
+  const previousView=app.dataset.partyView;rememberChatDraft();const rooms=tab==='rooms';app.dataset.partyView=rooms?'rooms':'chat';$('#sv100RoomsPanel').classList.toggle('active',rooms);$('#sv100RoomsPanel').hidden=!rooms;
   $$('[data-tab]').forEach(b=>{const active=b.dataset.tab===(rooms?'rooms':'chat');b.classList.toggle('active',active);b.setAttribute('aria-current',active?'page':'false');});
   if(!rooms&&activeWatchRoom.joined)roomCall?.leave();
-  if(rooms&&activeWatchRoom.joined){currentRoom='watchroom-'+activeWatchRoom.id;currentTitle=activeWatchRoom.name;}
-  else if(!rooms&&currentRoom.startsWith('watchroom-')){currentRoom='channel-general';currentTitle='General';socket?.emit('social:join',{roomId:currentRoom,name:username});}
+  if(rooms){leaveCommunityRoom();if(previousView==='chat'){$('#sv100Input').value='';delete $('#sv100Input').dataset.communityRetryId;}if(activeWatchRoom.joined){currentRoom='watchroom-'+activeWatchRoom.id;currentTitle=activeWatchRoom.name;}}
+  else if(currentRoom.startsWith('watchroom-')){currentRoom=communityRoom;currentTitle=communityTitle;$('#sv100Input').value='';delete $('#sv100Input').dataset.communityRetryId;}
   $('#sv100Kind').textContent=rooms?'WATCH TOGETHER':'COMMUNITY';$('#sv100Title').textContent=rooms?(activeWatchRoom.joined?activeWatchRoom.name:'Party Hub'):'Community';
-  $('.partyPageLead').textContent=rooms?'Good films. Better company.':'For the love of a good film.';
+  const lead=$('.partyPageLead');lead.replaceChildren(document.createTextNode(rooms?'Good films. Better company.':'Good stories. Good company.'));const friends=document.createElement('a');friends.className='partyFriendsLink';friends.href='/friends';friends.textContent='Friends & messages ↗';lead.append(friends);
   $('#sv100Input').placeholder=rooms?'Say hello to the room…':'Message '+currentTitle+'…';updateChatDock();renderMessages();
+  if(!rooms&&(refreshCommunity||previousView!=='chat'||communityJoinedRoom!==currentRoom))joinCommunityRoom();updateConnection();
  }
- function joinRoom(room,title){currentRoom=String(room||'channel-general').slice(0,80);currentTitle=title||$$('.sv100Channel').find(button=>button.dataset.room===currentRoom)?.dataset.title||'Conversation';switchTab('chat');socket?.emit('social:join',{roomId:currentRoom,name:username});}
+ function joinRoom(room,title){
+  rememberChatDraft();communityRoom=String(room||'channel-general').slice(0,80);communityTitle=title||$$('.sv100Channel').find(button=>button.dataset.room===communityRoom)?.dataset.title||'Conversation';
+  currentRoom=communityRoom;currentTitle=communityTitle;verifiedCommunityRoom='';$('#sv100Input').value='';delete $('#sv100Input').dataset.communityRetryId;switchTab('chat',true);
+  $('[data-community-typing]').textContent='';const search=$('[data-community-message-search]');if(search)search.value='';
+  try{const url=new URL(location.href);url.searchParams.set('tab','chat');url.searchParams.set('room',currentRoom);url.searchParams.delete('roomId');history.replaceState(history.state,'',url.pathname+url.search);}catch{}
+ }
  function roomUrl(room){const url=new URL('/social',origin);url.searchParams.set('tab','watchrooms');url.searchParams.set('roomId',room.id);return url.pathname+url.search;}
  function setupReturnLink(){
   const valid=value=>{if(!value)return null;try{const url=new URL(value,origin);return url.origin===origin&&/^\/(?:$|movies\/?$|tv\/?$|search\/?$|trending\/?$|discover\/?$|genres\/?$|my-list\/?$|liked\/?$|continue-watching\/?$|kids\/?$|(?:movie|tv|genre|person)\/\d+\/?$)/.test(url.pathname)?url:null;}catch{return null;}};
@@ -177,6 +242,7 @@
   $('#sv103HostStatus').textContent=!activeWatchRoom.joined?'Joining…':!connected()?'Reconnecting…':host?'You’re hosting':'Watching with the host';
   $$('[data-action="invite"],[data-action="copy-room-link"],[data-action="copy-room-code"]').forEach(n=>n.disabled=!activeWatchRoom.joined);
  }
+ function subscribeWatchRoom(){socket.emit('watchroom:join',{roomId:activeWatchRoom.id,name:activeWatchRoom.name,videoId:activeWatchRoom.videoId||'',embedUrl:activeWatchRoom.embedUrl||'',mediaKind:activeWatchRoom.kind,user:username});}
  function openNativeWatchRoom(room,movieToStart=null){
   if(!room?.id||!connected()){toast('Connect to the party service before joining.',true);return;}
   if(activeWatchRoom.joined&&activeWatchRoom.id!==room.id)leaveNativeWatchRoom(false);
@@ -185,13 +251,13 @@
   if(movieToStart)pendingRoomMovie={roomId:activeWatchRoom.id,movie:movieToStart};
   app.dataset.partyRoom='active';$('#sv103NativeRoom').hidden=false;$('#sv103RoomLobby').hidden=true;$('#sv103RoomTitle').textContent=activeWatchRoom.name;$('#sv103RoomSub').textContent='Your room is ready. Share the invite and get comfortable.';$('#sv103RoomCode').textContent=activeWatchRoom.id;
   showMedia({videoId:room.videoId,embedUrl:room.embedUrl,mediaKind:activeWatchRoom.kind});$('#sv103ViewerCount').textContent='…';$('#sv100MembersList').innerHTML='<p>Connecting your people…</p>';$('#sv100MemberCount').textContent='Connecting…';
-  socket.emit('watchroom:join',{roomId:activeWatchRoom.id,name:activeWatchRoom.name,videoId:room.videoId||'',embedUrl:room.embedUrl||'',mediaKind:activeWatchRoom.kind,user:username});
+  subscribeWatchRoom();
   switchTab('rooms');updateHostUi();try{history.replaceState(history.state,'',roomUrl(activeWatchRoom));}catch{}
  }
  function leaveNativeWatchRoom(refresh=true){
   roomCall?.setRoom('');
   joinEpoch++;movieEpoch++;roomChoiceEpoch++;roomChoice=null;$('#partyRoomEpisodeForm').hidden=true;pendingRoomMovie=null;movies.clear();const id=activeWatchRoom.id;if(id)socket?.emit('watchroom:leave',{roomId:id});destroyMedia();closeCall();activeWatchRoom={id:'',name:'Movie night',joined:false,isHost:false,sync:null};renderRoomEpisodes(null);
-  renderRoomFilm(null);app.dataset.partyRoom='lobby';$('#sv103NativeRoom').hidden=true;$('#sv103RoomLobby').hidden=false;$('#sv103Player').innerHTML='<div class="sv103EmptyPlayer"><b>Your movie night starts here.</b><span>The host can choose a movie, TV show or video link.</span></div>';$('#sv103RoomTitle').textContent='Party Hub';$('#sv103RoomSub').textContent='Make yourself comfortable.';$('#partyMovieResults').replaceChildren();currentRoom='channel-general';currentTitle='General';updateHostUi();switchTab('rooms');try{history.replaceState(history.state,'','/social?tab=watchrooms');}catch{}if(refresh)renderRooms();
+  renderRoomFilm(null);app.dataset.partyRoom='lobby';$('#sv103NativeRoom').hidden=true;$('#sv103RoomLobby').hidden=false;$('#sv103Player').innerHTML='<div class="sv103EmptyPlayer"><b>Your movie night starts here.</b><span>The host can choose a movie, TV show or video link.</span></div>';$('#sv103RoomTitle').textContent='Party Hub';$('#sv103RoomSub').textContent='Make yourself comfortable.';$('#partyMovieResults').replaceChildren();currentRoom=communityRoom;currentTitle=communityTitle;updateHostUi();switchTab('rooms');try{history.replaceState(history.state,'','/social?tab=watchrooms');}catch{}if(refresh)renderRooms();
  }
  async function createParty(form){
   if(form.getAttribute('aria-busy')==='true')return;
@@ -234,7 +300,7 @@
  }
  function releaseCall(){callEpoch++;localStream?.getTracks().forEach(t=>t.stop());localStream=null;$('#sv100LocalVideo').srcObject=null;if(callTrigger?.isConnected)callTrigger.focus({preventScroll:true});callTrigger=null;}
  function closeCall(){const modal=$('#sv100CallModal');if(modal.open)modal.close();if(localStream||callTrigger)releaseCall();}
- function createVirtual(type){if(!(type==='channel'?permissions.canCreateChannels:permissions.canCreateGroups))return;const name=prompt(type==='channel'?'Channel name':'Group name');if(!name?.trim())return;const id=(type==='channel'?'channel-':'group-')+name.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,40);const section=$$('.sv100ChannelGroup').find(s=>s.querySelector('header span')?.textContent===(type==='channel'?'Social Lounges':'Private Rooms'));const button=document.createElement('button');button.type='button';button.className='sv100Channel';button.dataset.room=id;button.dataset.title=name.trim();button.textContent=name.trim();section?.append(button);joinRoom(id,name.trim());}
+ function createVirtual(type){if(!(type==='channel'?permissions.canCreateChannels:permissions.canCreateGroups))return;const name=prompt(type==='channel'?'Channel name':'Member lounge name');if(!name?.trim())return;const slug=name.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40);if(!slug)return toast('Use at least one letter or number for the lounge name.',true);const id=(type==='channel'?'channel-':'group-')+slug,existing=$$('.sv100Channel').find(button=>button.dataset.room===id);if(existing){joinRoom(id,existing.dataset.title);return;}const section=$('[data-community-custom-list]');section.querySelector('.communitySmallNote')?.remove();const button=document.createElement('button');button.type='button';button.className='sv100Channel';button.dataset.room=id;button.dataset.title=name.trim().slice(0,60);button.textContent=button.dataset.title;section.append(button);joinRoom(id,button.dataset.title);}
 
  function directMediaUrl(value){
   try{const url=new URL(String(value||''),location.href);return ['http:','https:'].includes(url.protocol)&&/\.(?:m3u8|mpd|mp4|webm|mov|m4v|ogv|ogg|mkv|avi|mp3|m4a|wav|flac)$/i.test(url.pathname)?String(value):'';}catch{return '';}
@@ -282,6 +348,9 @@
  app.addEventListener('click',event=>{
   const returnLink=event.target.closest('[data-party-return]');if(returnLink&&!event.defaultPrevented&&!(event.button>0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)&&(!returnLink.target||returnLink.target==='_self')&&history.length>1){try{const target=new URL(returnLink.href),referrer=new URL(document.referrer);if(target.origin===origin&&referrer.origin===origin&&target.pathname+target.search===referrer.pathname+referrer.search){event.preventDefault();history.back();return;}}catch{}}
   const button=event.target.closest('button');if(button?.disabled)return;
+  const prompt=event.target.closest('[data-community-prompt]');if(prompt){$('#sv100Input').value=prompt.dataset.communityPrompt;$('#sv100Input').focus();return;}
+  const titlePick=event.target.closest('[data-community-title-pick]');if(titlePick){const movie=communityTitles.get(titlePick.dataset.communityTitlePick);if(movie){$('#sv100Input').value=movie.title+(movie.year?' ('+movie.year+')':'')+' · /'+movie.type+'/'+movie.id;toggleTitlePicker(false);$('#sv100Input').focus();}return;}
+  if(event.target.closest('[data-community-share-toggle]')){toggleTitlePicker($('[data-community-title-picker]').hidden);return;}if(event.target.closest('[data-community-share-close]')){toggleTitlePicker(false);return;}if(event.target.closest('[data-community-jump]')){scrollToLatest();return;}
   const tab=event.target.closest('[data-tab]');if(tab){switchTab(tab.dataset.tab);return;}
   const channel=event.target.closest('.sv100Channel[data-room]');if(channel){joinRoom(channel.dataset.room,channel.dataset.title);return;}
   const featured=event.target.closest('[data-party-featured-id]');if(featured){const movie=featuredMovies.get(featured.dataset.partyFeaturedId);if(movie){chooseMovie(movie);focusEntry('create');}return;}
@@ -306,15 +375,39 @@
  $('#partyRoomEpisodeForm').addEventListener('submit',event=>{event.preventDefault();if(!roomChoice||!activeWatchRoom.isHost||!connected())return;socket.emit('watchroom:movie-select',{roomId:activeWatchRoom.id,...selection(roomChoice),name:username});$('.partyMediaTools').open=false;toast('Getting the episode ready…');});
  app.addEventListener('change',event=>{const target=event.target;if(target.matches('[data-party-lobby-season]')&&selectedMovie?.type==='tv')loadLobbyMovie(selectedMovie.id,'tv',target.value,'1');else if(target.matches('[data-party-lobby-episode]')&&selectedMovie?.type==='tv'){selectedMovie.episode=target.value;wantedEpisode=target.value;updateSelectedUrl();}else if(target.matches('[data-party-room-season]')&&roomChoice)loadRoomSeries(roomChoice.id,target.value,'1');else if(target.matches('[data-party-room-episode]')&&roomChoice)roomChoice.episode=target.value;else if(target.matches('[data-party-room-media-type]')){movieEpoch++;movies.clear();$('#partyMovieResults').replaceChildren();roomChoiceEpoch++;roomChoice=null;$('#partyRoomEpisodeForm').hidden=true;}else if(target.matches('[data-party-lobby-media-type]')){lobbySearchEpoch++;lobbyMovies.clear();$('#partyLobbyMovieResults').replaceChildren();}});
  $('#sv103SetMediaForm').addEventListener('submit',event=>{event.preventDefault();setMediaFromUrl(event.currentTarget.elements.namedItem('mediaUrl').value);});
- $('#sv100Composer').addEventListener('submit',event=>{event.preventDefault();if(!connected())return toast('Reconnect to send a message.',true);const input=$('#sv100Input'),text=input.value.trim();if(!text)return;input.value='';if(activeWatchRoom.joined&&currentRoom==='watchroom-'+activeWatchRoom.id)socket.emit('watchroom:message',{roomId:activeWatchRoom.id,name:username,text});else socket.emit('social:message',{roomId:currentRoom,author:username,text,createdAt:Date.now()});});
+ $('[data-community-title-form]')?.addEventListener('submit',event=>{event.preventDefault();searchCommunityTitles();});
+ $('[data-community-message-search]')?.addEventListener('input',updateMessageSearch);
+ $('#sv100Messages').addEventListener('scroll',()=>{const list=$('#sv100Messages');if(list.scrollHeight-list.scrollTop-list.clientHeight<80)scrollToLatest();},{passive:true});
+ $('#sv100Input').addEventListener('input',()=>{delete $('#sv100Input').dataset.communityRetryId;if(!connected()||currentRoom.startsWith('watchroom-')||Date.now()-lastTyped<1800)return;lastTyped=Date.now();socket.emit('social:typing',{roomId:currentRoom});});
+ app.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('[data-community-title-picker]').hidden){event.preventDefault();toggleTitlePicker(false);}});
+ $('#sv100Composer').addEventListener('submit',event=>{
+  event.preventDefault();if(!connected())return toast('Reconnect to send a message.',true);const input=$('#sv100Input'),text=input.value.trim().slice(0,1200);if(!text)return;
+  if(app.dataset.partyView==='chat'&&(verifiedCommunityRoom!==currentRoom||!communityScope())){$('[data-community-compose-status]').textContent='Joining the conversation. Your draft is ready when you connect.';return;}
+  input.value='';if(activeWatchRoom.joined&&currentRoom==='watchroom-'+activeWatchRoom.id){socket.emit('watchroom:message',{roomId:activeWatchRoom.id,name:username,text});return;}
+  const room=currentRoom,identity=communityScope();if(identity)chatDrafts.set(communityKey(room),'');
+  const retry=[...failedMessages.entries()].find(([,draft])=>draft.identity===identity&&draft.room===room&&draft.text===text),clientId=retry?.[0]||socket.id+'-'+Date.now()+'-'+(++draftSequence),draft={room,identity,title:currentTitle,text,timer:0};
+  draft.timer=setTimeout(()=>deliveryStatus(clientId,'That message has not been confirmed. Please try again.',room,identity),9000);failedMessages.delete(clientId);delete input.dataset.communityRetryId;pendingMessages.set(clientId,draft);$('[data-community-compose-status]').textContent='Sending…';
+  socket.emit('social:message',{roomId:room,author:username,text,clientId},data=>{
+   if(identity!==communityScope()||(data?.roomId&&data.roomId!==room))return;
+   if(data?.ok===false)deliveryStatus(clientId,data.code==='rate-limit'?'Please wait a moment, then send again.':'That message could not be sent. Please try again.',room,identity);
+   else if(data?.message?.roomId===room&&data.message.clientId===clientId){confirmCommunityDelivery(data.message,room);addMessage(data.message,true,room);}
+  });
+ });
  const deviceDialog=$('#sv100CallModal');deviceDialog.addEventListener('cancel',event=>{event.preventDefault();closeCall();});deviceDialog.addEventListener('close',()=>{if(!deviceDialog.open&&(localStream||callTrigger))releaseCall();});
  app.addEventListener('keydown',event=>{const modal=$('#sv100CallModal');if(!modal.open)return;if(event.key==='Escape'){event.preventDefault();closeCall();}if(event.key==='Tab'){const a=[...modal.querySelectorAll('button:not(:disabled),video[controls]')],first=a[0],last=a.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}}});
- socket?.on('connect',()=>{updateConnection();if(pendingInvite){const code=pendingInvite;pendingInvite='';joinInvite(code);}else if(activeWatchRoom.joined)openNativeWatchRoom(activeWatchRoom);else socket.emit('social:join',{roomId:currentRoom,name:username});});
- socket?.on('disconnect',()=>{roomCall?.setRoom('');updateConnection();});
+ socket?.on('connect',()=>{updateConnection();if(pendingInvite){const code=pendingInvite;pendingInvite='';joinInvite(code);}else if(activeWatchRoom.joined&&app.dataset.partyView==='rooms')openNativeWatchRoom(activeWatchRoom);else if(app.dataset.partyView==='chat'){if(activeWatchRoom.joined)subscribeWatchRoom();joinCommunityRoom();}});
+ socket?.on('disconnect',()=>{roomCall?.setRoom('');communityJoinedRoom='';verifiedCommunityRoom='';communityHistory.clear();updateConnection();renderCommunityMembers([]);if(app.dataset.partyView==='chat')renderMessages();for(const id of [...pendingMessages.keys()])deliveryStatus(id,'Connection lost. Your message was not confirmed; try again.');});
  socket?.on('connect_error',()=>{updateConnection();$('#sv100Status').textContent='Connection unavailable';});
- socket?.on('social:message',message=>{if(message?.roomId===currentRoom)addMessage(message);});
- socket?.on('social:members',data=>{if(!data||data.roomId!==currentRoom||currentRoom.startsWith('watchroom-'))return;});
- socket?.on('watchroom:joined',data=>{if(!activeWatchRoom.joined||data?.room?.id!==activeWatchRoom.id)return;activeWatchRoom={...activeWatchRoom,...data.room,name:data.room.name||activeWatchRoom.name,isHost:Boolean(data.isHost),joined:true};roomCall?.setRoom(activeWatchRoom.id);$('#sv103RoomTitle').textContent=activeWatchRoom.name;$('#sv100Title').textContent=activeWatchRoom.name;const movie=data.room.syncedMovie;if(selectedMovieState(movie))showMedia({movie});else showMedia(data.room);updateHostUi();renderMessages((data.messages||[]).map(m=>({author:m.name,text:m.text,createdAt:m.at})));startQueuedMovie();});
+ socket?.on('social:message',message=>{if(app.dataset.partyView==='chat'&&message?.roomId===currentRoom&&verifiedCommunityRoom===currentRoom){confirmCommunityDelivery(message,currentRoom);addMessage(message,true,message.roomId);}});
+ socket?.on('social:members',data=>{if(!data||data.roomId!==currentRoom||app.dataset.partyView!=='chat'||currentRoom.startsWith('watchroom-'))return;renderCommunityMembers(data.people||data.members);});
+ socket?.on('social:history',data=>{
+  if(data?.roomId!==currentRoom||app.dataset.partyView!=='chat'||currentRoom.startsWith('watchroom-'))return;
+  if(data.self)setCommunityIdentity(data.self);else if(data.selfName){username=String(data.selfName).slice(0,40);$('#sv100Name').textContent=username;$('#sv100Avatar').textContent=username.slice(0,1).toUpperCase();}
+  verifiedCommunityRoom=currentRoom;const messages=(Array.isArray(data.messages)?data.messages:[]).filter(message=>message&&typeof message==='object'&&!Array.isArray(message)&&typeof message.text==='string'&&message.text.trim());communityHistory.set(communityKey(currentRoom),messages);for(const message of messages)if(message&&typeof message==='object')confirmCommunityDelivery(message,currentRoom);renderMessages(messages);restoreChatDraft();updateConnection();
+ });
+ socket?.on('social:typing',data=>{if(data?.roomId!==currentRoom||app.dataset.partyView!=='chat'||(data.id&&identityKey(data)===communityScope()))return;const status=$('[data-community-typing]');status.textContent=String(data.name||'Someone').slice(0,40)+' · '+(data.authenticated===true?'Signed in':'Guest')+' is typing…';clearTimeout(communityTypingTimer);communityTypingTimer=setTimeout(()=>{status.textContent='';},2800);});
+ socket?.on('social:error',data=>{if(data?.roomId&&data.roomId!==currentRoom)return;$('[data-community-compose-status]').textContent=data?.code==='rate-limit'?'Please wait a moment, then try again.':data?.code==='creation-disabled'?'Creating lounges is disabled for this profile. Choose an existing lounge.':'The conversation could not update. Please reconnect or choose another lounge.';});
+ socket?.on('watchroom:joined',data=>{if(!activeWatchRoom.joined||data?.room?.id!==activeWatchRoom.id)return;activeWatchRoom={...activeWatchRoom,...data.room,name:data.room.name||activeWatchRoom.name,isHost:Boolean(data.isHost),joined:true};roomCall?.setRoom(activeWatchRoom.id);$('#sv103RoomTitle').textContent=activeWatchRoom.name;if(app.dataset.partyView==='rooms')$('#sv100Title').textContent=activeWatchRoom.name;const movie=data.room.syncedMovie;if(selectedMovieState(movie))showMedia({movie});else showMedia(data.room);updateHostUi();if(app.dataset.partyView==='rooms'&&currentRoom==='watchroom-'+activeWatchRoom.id)renderMessages((data.messages||[]).map(m=>({author:m.name,text:m.text,createdAt:m.at})));startQueuedMovie();});
  socket?.on('watchroom:host',data=>{if(!activeWatchRoom.joined||(data.roomId&&data.roomId!==activeWatchRoom.id))return;activeWatchRoom.isHost=Boolean(data.isHost);updateHostUi();});
  socket?.on('watchroom:viewers',data=>{if(data?.roomId!==activeWatchRoom.id||!activeWatchRoom.joined)return;const people=Math.max(0,Number(data.viewers)||0);$('#sv103ViewerCount').textContent=people;$('#sv100MemberCount').textContent=people+(people===1?' person':' people');});
  socket?.on('watchroom:members',data=>{if(data?.roomId!==activeWatchRoom.id||!activeWatchRoom.joined)return;$('#sv100MembersList').innerHTML=(data.members||[]).map(m=>'<p><span>'+esc(String(m.name||'Guest').slice(0,1).toUpperCase())+'</span><b>'+esc(m.name||'Guest')+'</b>'+(m.isHost?'<small>Host</small>':'')+'</p>').join('');});
@@ -323,8 +416,8 @@
  socket?.on('watchroom:movie-sync',data=>{if(!connected()||data?.roomId!==activeWatchRoom.id||!activeWatchRoom.joined||!data.movie)return;activeWatchRoom.syncedMovie=data.movie;showMedia({movie:data.movie});});
  socket?.on('watchroom:movie-sync-state',data=>{if(!connected()||data?.roomId!==activeWatchRoom.id||!activeWatchRoom.joined||!syncedTransport()||(data.movieId&&String(data.movieId)!==String(activeWatchRoom.syncedMovie.movieId)))return;const movie=activeWatchRoom.syncedMovie;if(movie.type==='tv'&&(mediaKey(data)!==mediaKey(movie)||data.requestId!==movie.requestId))return;if(data.requestId&&movie.requestId&&data.requestId!==movie.requestId)return;activeWatchRoom.sync=data.sync;applyNativeSync(false);});
  let clock;function startClock(){clearInterval(clock);clock=setInterval(()=>{if(activeWatchRoom.joined&&activeWatchRoom.sync&&connected()){$('#sv103Timer').textContent=formatTime(targetSeconds(activeWatchRoom.sync));applyNativeSync(false);}},1000);}startClock();
- window.addEventListener('pagehide',()=>{roomCall?.setRoom('');disposed=true;joinEpoch++;listEpoch++;movieEpoch++;selectionEpoch++;featuredEpoch++;featuredShowsEpoch++;lobbySearchEpoch++;roomChoiceEpoch++;roomPickerEpoch++;destroyMedia();closeCall();socket?.disconnect?.();clearInterval(clock);});
+ window.addEventListener('pagehide',()=>{clearTimeout(communityTypingTimer);for(const pending of pendingMessages.values())clearTimeout(pending.timer);pendingMessages.clear();communitySearchEpoch++;communityDirectoryEpoch++;roomCall?.setRoom('');disposed=true;joinEpoch++;listEpoch++;movieEpoch++;selectionEpoch++;featuredEpoch++;featuredShowsEpoch++;lobbySearchEpoch++;roomChoiceEpoch++;roomPickerEpoch++;destroyMedia();closeCall();socket?.disconnect?.();clearInterval(clock);});
  window.addEventListener('pageshow',event=>{if(event.persisted){disposed=false;startClock();socket?.connect?.();if(selectionPending&&wantedMovieId)loadLobbyMovie(wantedMovieId,wantedMovieType,wantedSeason,wantedEpisode);loadFeaturedMovies();loadFeaturedShows();}});
- profile();setupReturnLink();updateConnection();restoreLobbySelection();loadFeaturedMovies();loadFeaturedShows();loadPermissions().then(()=>{switchTab(app.dataset.initialTab==='rooms'?'rooms':'chat');const id=app.dataset.roomId;if(id){if(connected())joinInvite(id);else pendingInvite=id;}else if(app.dataset.initialTab!=='rooms')joinRoom(new URLSearchParams(location.search).get('room')||'channel-general');if(app.dataset.denied)toast('Hosting is unavailable here. You can still join a party.',true);});renderRooms();
+ profile();setupReturnLink();updateConnection();loadCommunityDirectory();restoreLobbySelection();loadFeaturedMovies();loadFeaturedShows();loadPermissions().then(()=>{const id=app.dataset.roomId;if(id){switchTab('rooms');if(connected())joinInvite(id);else pendingInvite=id;}else if(app.dataset.initialTab==='rooms')switchTab('rooms');else joinRoom(new URLSearchParams(location.search).get('room')||'channel-general');if(app.dataset.denied)toast('Hosting is unavailable here. You can still join a party.',true);});renderRooms();
  window.SwiflySocial=Object.freeze({switchTab,joinRoom,renderRooms,openNativeWatchRoom,permissions:()=>({...permissions})});
 })();
