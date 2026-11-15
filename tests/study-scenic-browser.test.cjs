@@ -14,6 +14,7 @@ async function assertPanels(page,name){
  assert(dock.y+dock.height<=player.y-10,name+' tools must clear the player by at least10px: '+JSON.stringify({dock,player}));
  const fullscreen=await page.evaluate(()=>Boolean(document.fullscreenElement)),nav=page.locator('.mobileNav').first();
  if(!fullscreen&&await nav.isVisible()){const box=await nav.boundingBox();assert(player.y+player.height<=box.y-10,name+' player must clear site navigation: '+JSON.stringify({player,nav:box}));}
+ const topNav=page.locator('.netflixNav').first();if(!fullscreen&&await topNav.isVisible()){const bar=await topNav.boundingBox(),heading=await page.locator('.studyHeading').boundingBox();assert(heading.y>=bar.y+bar.height+10,name+' heading must clear site navigation: '+JSON.stringify({heading,nav:bar}));}
  const workspace=page.locator('[data-study-workspace]');if(await workspace.isVisible()){const box=await workspace.boundingBox();assert(box.y+box.height<=dock.y-10,name+' drawer must clear tools');}
  const timer=page.locator('.studyTimer');if(await timer.isVisible()){const box=await timer.boundingBox();assert(box.y+box.height<=dock.y-10||box.x+box.width<=dock.x-10||box.x>=dock.x+dock.width+10,name+' timer must clear tools');}
  const caption=page.locator('.studySceneCaption');if(await caption.isVisible()){const box=await caption.boundingBox();assert(box.y+box.height<=dock.y-4,name+' scene caption must clear the tools');}

@@ -134,7 +134,7 @@ for (const viewport of [{width:1101,height:700},{width:1280,height:720},{width:1
     const longBounds=await preview.evaluate(node=>{const box=node.getBoundingClientRect(),parts=[...node.querySelector('.svTvSpotlightCopy').children].filter(child=>getComputedStyle(child).display!=='none').map(child=>child.getBoundingClientRect());return {top:box.top,bottom:box.bottom,first:Math.min(...parts.map(r=>r.top)),last:Math.max(...parts.map(r=>r.bottom))};});
     await captureCatalog(page,'tv-preview-'+viewport.width+'-long-title',longBounds);
     assert(longBounds.first>=longBounds.top-1&&longBounds.last<=longBounds.bottom+1,'A real two-line title, its facts, and overview stay inside the preview: '+JSON.stringify(longBounds));
-    await page.keyboard.press('ArrowRight');await settleScroll(page);assert.equal(await preview.locator('.svTvSpotlightTitle').textContent(),'Cinema chapter 2','The large preview follows the actual focused title');
+    await page.keyboard.press('ArrowRight');await settleScroll(page);const focusedTitle=await page.evaluate(()=>document.activeElement.closest('.movieCard')?.querySelector('.dsCardTitle')?.textContent);assert(focusedTitle&&focusedTitle!==longTitle,'D-pad navigation moves to the next real title');assert.equal(await preview.locator('.svTvSpotlightTitle').textContent(),focusedTitle,'The large preview follows the actual focused title');
     await page.keyboard.press('F8');assert.equal(await preview.isVisible(),false,'Exiting TV mode removes the cinematic overlay');
   }finally{await context.close();}
 });

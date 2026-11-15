@@ -38,7 +38,7 @@ async function shot(page,name){
 }
 async function layout(page){
  return page.evaluate(()=>{
-  const box=node=>node.getBoundingClientRect().toJSON(),shown=node=>{const r=box(node),style=getComputedStyle(node);return r.width>0&&r.height>0&&style.visibility!=='hidden'&&!node.closest('[hidden]');},control=node=>({label:node.getAttribute('aria-label')||node.getAttribute('name')||node.textContent.trim(),box:box(node)});
+  const box=node=>node.getBoundingClientRect().toJSON(),shown=node=>{const r=box(node),style=getComputedStyle(node),disclosure=node.closest('details');return r.width>0&&r.height>0&&style.visibility!=='hidden'&&!node.closest('[hidden],[inert]')&&(!disclosure||disclosure.open||node.closest('summary'));},control=node=>({label:node.getAttribute('aria-label')||node.getAttribute('name')||node.textContent.trim(),box:box(node)});
   const owned='main .svCatalogButton,main :is(.svPersonFilters,.svBrowseFilters,.svLanguageFilters) select,main .svPeriodTabs a,main .svPeriodTrigger,main .svPeriodMenu a,main .svCatalogPager a,main [data-language-search],main [data-person-biography] summary';
   const destinations=[...document.querySelectorAll('.svLanguageDestinationGrid')].filter(shown).map(grid=>({box:box(grid),cards:[...grid.querySelectorAll('.svLanguageDestination')].filter(shown).map(card=>({label:card.textContent.trim(),box:box(card),aspectRatio:getComputedStyle(card).aspectRatio,minHeight:getComputedStyle(card).minHeight}))}));
   const rails=[...document.querySelectorAll('main .svCatalogRow > .movieRail')].filter(shown).map(rail=>{
