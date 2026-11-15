@@ -50,3 +50,20 @@ test('A verified native child player revalidates its path without injecting adul
  const b=browser('<main data-player-root data-player-kids-verified="true" data-player-type="tv" data-player-id="1"></main>',{path:'/kids/watch/tv/1'}),w=b.window;
  w.fetch=async()=>({ok:true,json:async()=>({locked:true,configured:true,available:true,recoveryRequired:false})});w.eval(source('kids/guard.js'));assert.equal(await w.SwiflyKids.revalidatePlayer(),true);assert.equal(w.document.documentElement.dataset.kidsLocked,'true');assert(!w.document.querySelector('[data-kids-mode-bar]'));
 });
+
+
+test('parent controls remain legible on phones and announce state changes in the dialog',()=>{
+ const {kidsNavigation}=require('../ui/kids');
+ const nav=kidsNavigation({navLink:(_href,label)=>'<a>'+label+'</a>',cleanIcon:()=>'<span></span>'});
+ assert.match(nav.header,/class="kidsParentShort" aria-hidden="true">Parents<\/span>/);
+ assert.match(nav.header,/aria-label="Open parent controls"/);
+ const markup=kidsMarkup({status:{configured:false,locked:false,available:true,recoveryRequired:false}});
+ assert.match(markup,/aria-describedby="kids-parent-copy kids-parent-scope"/);
+ const b=browser(markup,{path:'/kids'}),w=b.window,d=w.document;
+ w.eval(source('kids/kids.js'));
+ d.dispatchEvent(new w.CustomEvent('swifly:kids-status',{detail:{configured:true,locked:true,available:false,recoveryRequired:true}}));
+ assert.equal(d.querySelector('[data-kids-parent-title]').textContent,'Parent lock needs attention');
+ assert.equal(d.querySelector('[data-kids-parent-submit]').disabled,true);
+ const css=require('node:fs').readFileSync(require('node:path').join(__dirname,'../public/kids/kids.css'),'utf8');
+ assert.match(css,/\.kidsParentButton>\.kidsParentShort\{display:inline/);
+});
