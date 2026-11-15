@@ -9,6 +9,11 @@ let browser,api;
 test.before(async()=>{if(!available)return;api=loadServer();browser=await chromium.launch({headless:true,executablePath,args:['--no-sandbox']});});
 test.after(async()=>{await browser?.close();api?.io.close();});
 async function capture(page,name){const directory=process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR||process.env.SWIFLY_STUDY_SCREENSHOT_DIR;if(!directory)return;fs.mkdirSync(directory,{recursive:true});await page.screenshot({path:path.join(directory,name+'.png'),fullPage:true});}
+async function assertPanels(page,name){
+ const dock=await page.locator('.studyToolsDock').boundingBox(),player=await page.locator('.studyPlayer').boundingBox();
+ assert(dock.y+dock.height<=player.y-10,name+' tools must clear the player by at least10px: '+JSON.stringify({dock,player}));
+ const caption=page.locator('.studySceneCaption');if(await caption.isVisible()){const box=await caption.boundingBox();assert(box.y+box.height<=dock.y-4,name+' scene caption must clear the tools');}
+}
 async function open(viewport){
  const context=await browser.newContext({viewport,reducedMotion:'reduce'}),page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
  const html=api.pageShell({active:'study',title:'SwiflyTV — Study',body:studyMarkup(),extraHead:'<link rel="stylesheet" href="/assets/study/study.css">'}).replace(/<script\b([^>]*)>[\s\S]*?<\/script>/g,(script,attributes)=>/data-sv-studio-(?:config|prime)/.test(attributes)?script:'');
@@ -34,7 +39,7 @@ test('Scenic Study fills the actual shell while dock, timer and drawers fit phon
  for(const [name,viewport]of [['desktop',{width:1440,height:900}],['small-tablet',{width:720,height:1000}],['phone',{width:390,height:844}],['small-phone',{width:320,height:800}],['ipad',{width:1024,height:1366}]]){
   const f=await open(viewport);try{
    const root=await f.page.locator('[data-study-root]').boundingBox(),stage=await f.page.locator('[data-study-stage]').boundingBox();
-   await capture(f.page,'study-shell-'+name);
+   await capture(f.page,'study-shell-'+name);await assertPanels(f.page,name);
    assert(stage.width>=viewport.width-2,name+' scene fills the shell: '+JSON.stringify({root,stage,viewport}));assert(stage.height>=viewport.height-2,name+' scene fills viewport height');assert(root.y<=2,name+' scenery begins behind the existing fixed navigation');
    assert(await f.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),name+' has no horizontal overflow');
    for(const selector of ['.studyHeading','.studyPlayer','.studyToolsDock','.studyTimer']){const box=await f.page.locator(selector).boundingBox();assert(box&&box.x>=0&&box.x+box.width<=viewport.width+1&&box.y>=0&&box.y+box.height<=viewport.height+1,name+' '+selector+' fits the viewport');}
@@ -62,10 +67,10 @@ test('Saved Scenic layout keeps every timer control within its panel at wide and
    assert(geometry.scrollWidth<=geometry.clientWidth,name+' Scenic timer must not overflow');
    assert(geometry.children.every(box=>box.left>=geometry.box.left&&box.right<=geometry.box.right+1),name+' Scenic timer controls must fit their panel');
    const timer=await f.page.locator('.studyTimer').boundingBox(),caption=await f.page.locator('.studySceneCaption').boundingBox();assert(timer.y+timer.height<=caption.y-4||timer.x+timer.width<=caption.x,name+' Scenic timer must clear its scene caption');
-   await capture(f.page,'study-shell-'+name+'-scenic');
+   await capture(f.page,'study-shell-'+name+'-scenic');await assertPanels(f.page,name+' Scenic');
    await f.page.evaluate(()=>{window.SwiflyAppearance={largeTargets:true};document.dispatchEvent(new CustomEvent('swifly:studio-change',{detail:{effective:window.SwiflyAppearance}}));});
    const accessible=await f.page.locator('.studyTimer').evaluate(timer=>{const box=timer.getBoundingClientRect();return[...timer.querySelectorAll('button,output,input')].every(child=>{const r=child.getBoundingClientRect();return r.left>=box.left&&r.right<=box.right+1;});});assert(accessible,name+' Scenic large targets must fit the timer');
-   await capture(f.page,'study-shell-'+name+'-scenic-large');assert.deepEqual(f.errors,[]);
+   await capture(f.page,'study-shell-'+name+'-scenic-large');await assertPanels(f.page,name+' Scenic large');assert.deepEqual(f.errors,[]);
   }finally{await f.context.close();}
  }
 });
