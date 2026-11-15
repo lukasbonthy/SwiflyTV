@@ -6,7 +6,9 @@ Updated: November 14, 2026 (America/New_York).
 
 The user rejected the shipped Kids, Audiobooks, Study and Languages appearance. The current visual correction is in `feat/swifly-native-sections-20261115`, based on main `b78f09813379401dd75353ff79cdbde5e46fa56e`. It removes the audiobook landscape and unrelated mood controls, pastel Kids branding, serif/oversized headings and language postcards. It uses native dark catalog components and original Study room scenes with neutral controls. Existing APIs, parental safeguards, playback and prior iPad fixes remain in place.
 
-Local full suite: 1,760 passed, zero failures; 277 browser cases deferred to hosted Chromium. Focused checks: 54 passed. Browser screenshot review, hosted checks, fresh review and publication remain. Production is still the previous release below. Spec/plan: `docs/superpowers/{specs,plans}/2026-11-14-native-sections*`.
+Saved review source `ed4b818041d761fafbd7b6bafd40c9f92bcccc7c` is intact in draft PR165. Its source check `43681839629` passed all unit, recommendation, featured/wider browser and acceptance checks. Visual run `43681839571` passed142/146 (four model-dependent skips covered by wider checks); artifact14149146160 has301 screenshots/diagnostics. Fresh code/visual review found and corrected Study mobile headings, Scenic/Focus/fullscreen positioning, audiobook metadata/contrast and retained cover gradients, language touch targets, and medium player grid positioning.
+
+The remaining medium bottom-navigation reservation is now implemented locally with safe-area-aware player/dock/drawer/status offsets and geometry coverage at720×800 as well as the standard widths. The only previous PR-check failure was a170ms scrolling-state sampling race; its assertion now samples gesture/material atomically without changing application scrolling. Run hosted verification on this final source, inspect the resulting screenshots, merge PR165, deploy and verify live assets/flows. Production is still the completed release below. Do not rotate the configured Kids secret.
 
 ## Completed experience overhaul
 

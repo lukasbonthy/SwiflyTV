@@ -12,6 +12,10 @@ async function capture(page,name){const directory=process.env.SWIFLY_EXPERIENCE_
 async function assertPanels(page,name){
  const dock=await page.locator('.studyToolsDock').boundingBox(),player=await page.locator('.studyPlayer').boundingBox();
  assert(dock.y+dock.height<=player.y-10,name+' tools must clear the player by at least10px: '+JSON.stringify({dock,player}));
+ const fullscreen=await page.evaluate(()=>Boolean(document.fullscreenElement)),nav=page.locator('.mobileNav').first();
+ if(!fullscreen&&await nav.isVisible()){const box=await nav.boundingBox();assert(player.y+player.height<=box.y-10,name+' player must clear site navigation: '+JSON.stringify({player,nav:box}));}
+ const workspace=page.locator('[data-study-workspace]');if(await workspace.isVisible()){const box=await workspace.boundingBox();assert(box.y+box.height<=dock.y-10,name+' drawer must clear tools');}
+ const timer=page.locator('.studyTimer');if(await timer.isVisible()){const box=await timer.boundingBox();assert(box.y+box.height<=dock.y-10||box.x+box.width<=dock.x-10||box.x>=dock.x+dock.width+10,name+' timer must clear tools');}
  const caption=page.locator('.studySceneCaption');if(await caption.isVisible()){const box=await caption.boundingBox();assert(box.y+box.height<=dock.y-4,name+' scene caption must clear the tools');}
 }
 async function open(viewport){
@@ -36,7 +40,7 @@ async function open(viewport){
 }
 
 test('Scenic Study fills the actual shell while dock, timer and drawers fit phone, iPad and desktop',{skip:!available},async()=>{
- for(const [name,viewport]of [['desktop',{width:1440,height:900}],['small-tablet',{width:720,height:1000}],['phone',{width:390,height:844}],['small-phone',{width:320,height:800}],['ipad',{width:1024,height:1366}]]){
+ for(const [name,viewport]of [['desktop',{width:1440,height:900}],['small-tablet',{width:720,height:1000}],['short-tablet',{width:720,height:800}],['phone',{width:390,height:844}],['small-phone',{width:320,height:800}],['ipad',{width:1024,height:1366}]]){
   const f=await open(viewport);try{
    const root=await f.page.locator('[data-study-root]').boundingBox(),stage=await f.page.locator('[data-study-stage]').boundingBox();
    await capture(f.page,'study-shell-'+name);await assertPanels(f.page,name);
@@ -45,7 +49,7 @@ test('Scenic Study fills the actual shell while dock, timer and drawers fit phon
    for(const selector of ['.studyHeading','.studyPlayer','.studyToolsDock','.studyTimer']){const box=await f.page.locator(selector).boundingBox();assert(box&&box.x>=0&&box.x+box.width<=viewport.width+1&&box.y>=0&&box.y+box.height<=viewport.height+1,name+' '+selector+' fits the viewport');}
    assert.equal(await f.page.locator('[data-study-workspace]').isVisible(),false);
    const heading=await f.page.locator('.studyHeading').boundingBox(),sceneTop=await f.page.locator('.studyStageTop').boundingBox();assert(heading.y+heading.height<=sceneTop.y-4,name+' page controls must not overlap the scene status');
-   await f.page.locator('[data-study-tab="scenes"]').click();assert(await f.page.locator('#study-panel-scenes').isVisible());await capture(f.page,'study-shell-'+name+'-scenes');
+   await f.page.locator('[data-study-tab="scenes"]').click();await assertPanels(f.page,name+' drawer');assert(await f.page.locator('#study-panel-scenes').isVisible());await capture(f.page,'study-shell-'+name+'-scenes');
    await f.page.locator('[data-study-scene="moon-cat"]').click();assert.equal(await f.page.locator('[data-study-scene-name]').textContent(),'pink city cat');
    await f.page.locator('[data-study-close-tools]').click();assert(await f.page.locator('[data-study-tab="scenes"]').evaluate(element=>element===document.activeElement));
    await f.page.locator('[data-study-tab="focus"]').click();await f.page.locator('[data-study-task-input]').fill('Read a little');await f.page.locator('[data-study-task-input]').press('Enter');assert.match(await f.page.locator('[data-study-tasks]').textContent(),/Read a little/);await capture(f.page,'study-shell-'+name+'-tasks');
@@ -57,7 +61,7 @@ test('Scenic Study fills the actual shell while dock, timer and drawers fit phon
 
 
 test('Saved Scenic layout keeps every timer control within its panel at wide and narrow widths',{skip:!available},async()=>{
- for(const [name,viewport]of [['desktop',{width:1440,height:1000}],['ipad',{width:834,height:1112}],['small-tablet',{width:720,height:1000}],['phone',{width:390,height:844}],['small-phone',{width:320,height:800}]]){
+ for(const [name,viewport]of [['desktop',{width:1440,height:1000}],['ipad',{width:834,height:1112}],['small-tablet',{width:720,height:1000}],['short-tablet',{width:720,height:800}],['phone',{width:390,height:844}],['small-phone',{width:320,height:800}]]){
   const f=await open(viewport);try{
    await f.page.locator('[data-study-tab="sound"]').click();
    await f.page.locator('select[data-study-layout]').selectOption('scenic');
@@ -66,7 +70,7 @@ test('Saved Scenic layout keeps every timer control within its panel at wide and
    const geometry=await f.page.locator('.studyTimer').evaluate(timer=>{const box=timer.getBoundingClientRect();return{box:box.toJSON(),scrollWidth:timer.scrollWidth,clientWidth:timer.clientWidth,children:[...timer.querySelectorAll('button,output,input')].map(child=>child.getBoundingClientRect().toJSON())};});
    assert(geometry.scrollWidth<=geometry.clientWidth,name+' Scenic timer must not overflow');
    assert(geometry.children.every(box=>box.left>=geometry.box.left&&box.right<=geometry.box.right+1),name+' Scenic timer controls must fit their panel');
-   const timer=await f.page.locator('.studyTimer').boundingBox(),caption=await f.page.locator('.studySceneCaption').boundingBox();assert(timer.y+timer.height<=caption.y-4||timer.x+timer.width<=caption.x,name+' Scenic timer must clear its scene caption');
+   const timer=await f.page.locator('.studyTimer').boundingBox(),caption=await f.page.locator('.studySceneCaption').boundingBox();assert(!caption||timer.y+timer.height<=caption.y-4||timer.x+timer.width<=caption.x,name+' Scenic timer must clear its scene caption');
    await capture(f.page,'study-shell-'+name+'-scenic');await assertPanels(f.page,name+' Scenic');
    await f.page.evaluate(()=>{window.SwiflyAppearance={largeTargets:true};document.dispatchEvent(new CustomEvent('swifly:studio-change',{detail:{effective:window.SwiflyAppearance}}));});
    const accessible=await f.page.locator('.studyTimer').evaluate(timer=>{const box=timer.getBoundingClientRect();return[...timer.querySelectorAll('button,output,input')].every(child=>{const r=child.getBoundingClientRect();return r.left>=box.left&&r.right<=box.right+1;});});assert(accessible,name+' Scenic large targets must fit the timer');
