@@ -70,7 +70,15 @@ test('Saved Scenic layout keeps every timer control within its panel at wide and
    await capture(f.page,'study-shell-'+name+'-scenic');await assertPanels(f.page,name+' Scenic');
    await f.page.evaluate(()=>{window.SwiflyAppearance={largeTargets:true};document.dispatchEvent(new CustomEvent('swifly:studio-change',{detail:{effective:window.SwiflyAppearance}}));});
    const accessible=await f.page.locator('.studyTimer').evaluate(timer=>{const box=timer.getBoundingClientRect();return[...timer.querySelectorAll('button,output,input')].every(child=>{const r=child.getBoundingClientRect();return r.left>=box.left&&r.right<=box.right+1;});});assert(accessible,name+' Scenic large targets must fit the timer');
-   await capture(f.page,'study-shell-'+name+'-scenic-large');await assertPanels(f.page,name+' Scenic large');assert.deepEqual(f.errors,[]);
+   await capture(f.page,'study-shell-'+name+'-scenic-large');await assertPanels(f.page,name+' Scenic large');
+   await f.page.locator('[data-study-tab="sound"]').click();await f.page.locator('select[data-study-layout]').selectOption('focus');await f.page.locator('[data-study-close-tools]').click();
+   const focus=await f.page.locator('.studyTimer').boundingBox();assert(focus.y>=180,name+' large Focus timer must clear navigation and page controls');
+   await capture(f.page,'study-shell-'+name+'-focus-large');await assertPanels(f.page,name+' Focus large');
+   await f.page.evaluate(()=>{window.SwiflyAppearance={};document.dispatchEvent(new CustomEvent('swifly:studio-change',{detail:{effective:{}}}));});
+   await f.page.locator('[data-study-fullscreen]').click();await f.page.waitForFunction(()=>document.fullscreenElement===document.querySelector('[data-study-root]'));
+   const fullscreen=await f.page.locator('.studyTimer').boundingBox();assert(fullscreen.y>=140,name+' fullscreen Focus timer must clear its room controls');
+   await capture(f.page,'study-shell-'+name+'-focus-fullscreen');await assertPanels(f.page,name+' fullscreen Focus');
+   await f.page.evaluate(()=>document.exitFullscreen());assert.deepEqual(f.errors,[]);
   }finally{await f.context.close();}
  }
 });
