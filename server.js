@@ -5746,7 +5746,7 @@ app.use("/api/discovery", discovery.router);
 const playerAssist = createPlayerAssist({tmdb:(...args) => tmdb(...args)});
 app.use("/api/player-assist",playerAssist.router);
 app.get("/recommendations", (req,res) => res.send(pageShell({title:`${SITE_NAME} — AI picks`,active:"recommendations",body:recommendationsMarkup(String(req.query.q||'')),extraHead:'<link rel="stylesheet" href="/assets/discovery/search.css?v=262"><script defer src="/assets/discovery/recommendations.js?v=8"></script>'})));
-app.get("/audiobooks", (req,res) => res.send(pageShell({title:`${SITE_NAME} — Audiobooks`,active:"audiobooks",body:audiobooksMarkup(),extraHead:'<link rel="stylesheet" href="/assets/discovery/audiobooks.css?v=2"><script defer src="/assets/discovery/audiobooks.js?v=5"></script>'})));
+app.get("/audiobooks", (req,res) => res.send(pageShell({title:`${SITE_NAME} — Audiobooks`,active:"audiobooks",body:audiobooksMarkup(),extraHead:'<link rel="stylesheet" href="/assets/discovery/audiobooks.css?v=3"><script defer src="/assets/discovery/audiobooks.js?v=5"></script>'})));
 // Same friends-only protection applies to authorized movie/episode file downloads.
 app.use("/api/download", createDownloadRouter());
 

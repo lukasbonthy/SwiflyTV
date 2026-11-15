@@ -64,7 +64,9 @@ async function fits(f,label){
  assert(state.scrollWidth<=state.width,label+' must not overflow: '+JSON.stringify({width:state.width,scrollWidth:state.scrollWidth}));
  assert(state.ownedControls.length>0,label+' must expose its catalog controls');
  assert(state.ownedControls.every(inside),label+' catalog controls must fit: '+JSON.stringify(state.ownedControls.filter(control=>!inside(control))));
- assert(state.ownedControls.every(({box})=>box.width>=44&&box.height>=44),label+' catalog controls must have 44px targets: '+JSON.stringify(state.ownedControls.filter(({box})=>box.width<44||box.height<44)));
+ // A translated 44px box can report 43.99994px in Chromium's float geometry.
+ const fullTarget=({box})=>box.width>=44-.01&&box.height>=44-.01;
+ assert(state.ownedControls.every(fullTarget),label+' catalog controls must have 44px targets: '+JSON.stringify(state.ownedControls.filter(control=>!fullTarget(control))));
  assert(state.otherControls.every(inside),label+' controls outside native rails must fit: '+JSON.stringify(state.otherControls.filter(control=>!inside(control))));
  // Native rails intentionally keep later cards outside their horizontal clip.
  // Check the scrollport and fully revealed controls, not offscreen descendants.

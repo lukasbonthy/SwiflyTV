@@ -221,6 +221,8 @@ test('TV navigation includes real Continue Watching cards and remembers their sa
   try {
     await page.evaluate(()=>{for(let id=201;id<=203;id++)SwiflyContinue.saveProgress({id,type:'tv',title:'An unfinished journey '+id,year:'2026',backdrop:'/backdrop.jpg',season:2,episode:3,currentTime:600,duration:2400});});
     await page.locator('#continueWatchingRail .svResumeLink').first().waitFor();
+    await page.evaluate(()=>SwiflyFeed.refresh({force:true}));
+    await page.waitForFunction(()=>document.querySelector('[data-feed-recommended]')?.getAttribute('aria-busy')==='false');
     await page.locator('.dsHeroActions .dsPrimaryBtn').focus();await page.keyboard.press('ArrowDown');await settleScroll(page);
     assert.equal(await page.evaluate(()=>document.activeElement.matches('#continueWatchingRail .svResumeLink')),true,'The first Down enters saved progress before new titles');
     await page.keyboard.press('ArrowRight');await settleScroll(page);
@@ -228,7 +230,10 @@ test('TV navigation includes real Continue Watching cards and remembers their sa
     assert.equal((savedFacts.match(/2026/g)||[]).length,1,'The saved title preview shows its year once');assert.match(savedFacts,/S2.*E3/,'The saved title preview identifies the episode to resume');
     const resume=await page.evaluate(()=>({href:document.activeElement.getAttribute('href'),title:document.activeElement.closest('.svResumeCard').querySelector('.svResumeTitle').textContent,caption:document.activeElement.closest('.svResumeCard').querySelector('.svResumeCaption').getBoundingClientRect().bottom,guide:document.getElementById('swiflyTvGuide').getBoundingClientRect().top,context:document.getElementById('swiflyTvGuide').textContent}));
     assert.match(resume.href,/s=2&e=3&resume=1/);assert(clearsGuide(resume.caption,resume.guide),'Saved episode and progress labels clear the guide');assert(resume.context.includes(resume.title),'The guide names the saved title');
-    await page.keyboard.press('ArrowDown');await settleScroll(page);assert.equal(await page.evaluate(()=>document.activeElement.matches('.dsRow .posterWrap')),true,'Down continues into the movie gallery');
+    await page.keyboard.press('ArrowDown');await settleScroll(page);
+    const discovery=await page.evaluate(()=>{const selected=document.activeElement;return{isCard:selected.matches('.dsRow .posterWrap,.svFeedCards .svFeedPoster,.svFeedUpcoming .svFeedEpisodeLink'),href:selected.getAttribute('href'),rail:selected.closest('.movieRail,.svFeedCards,.svFeedUpcoming')?.className};});
+    await captureCatalog(page,'tv-preview-continue-discovery',{discovery});
+    assert(discovery.isCard,'Down continues into the next discovery row, including personalized titles: '+JSON.stringify(discovery));
     await page.keyboard.press('ArrowUp');await settleScroll(page);assert.equal(await page.evaluate(()=>document.activeElement.getAttribute('href')),resume.href,'Up restores the selected saved episode');
     await page.keyboard.press('ArrowUp');await settleScroll(page);assert.equal(await page.locator('.dsHeroActions .dsPrimaryBtn').evaluate(node=>node===document.activeElement),true,'The feature remains above Continue Watching');
     await page.keyboard.press('ArrowDown');await settleScroll(page);assert.equal(await page.evaluate(()=>document.activeElement.getAttribute('href')),resume.href,'Returning down remembers the saved title');

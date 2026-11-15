@@ -43,7 +43,7 @@ body.svCleanShell .svAudiobooksPage{--book-paper:#f0e6d6;--book-muted:#b3b7bd;--
 .svAudiobooksPage .svBookSearch>span{color:#c7b89f}
 .svAudiobooksPage .svBookSearch input{font-size:13px!important;color:#eee4d6!important;min-height:44px}
 .svAudiobooksPage .svBookSearch input::placeholder{color:#8f99a5}
-.svAudiobooksPage .svBookSearch button{flex-basis:42px;min-width:42px;min-height:42px;padding:10px;border-radius:7px;background:#e6d6bf!important;color:#182533!important}
+.svAudiobooksPage .svBookSearch button{flex-basis:44px;min-width:44px;min-height:44px;padding:10px;border-radius:7px;background:#e6d6bf!important;color:#182533!important}
 .svAudiobooksPage .svBookSearch button:hover{background:#f6e8d5!important}
 .svBookSuggestions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 37px}
 .svBookSuggestions>span{margin-right:4px;color:#7e8a98;font-size:10px}
