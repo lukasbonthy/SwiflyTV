@@ -317,8 +317,8 @@ test('Real movie frames tint spatial ripple patches after Play without changing 
     await page.emulateMedia({reducedMotion:'no-preference'});
     await page.evaluate(async()=>{
       const source=document.createElement('canvas');source.width=160;source.height=90;
-      const ctx=source.getContext('2d'),fixture={swap:false,frame:0};
-      const paint=()=>{ctx.fillStyle=fixture.swap?'#194bf5':'#f52018';ctx.fillRect(0,0,80,90);ctx.fillStyle=fixture.swap?'#f52018':'#194bf5';ctx.fillRect(80,0,80,90);ctx.fillStyle=fixture.frame++%2?'#f02018':'#e02018';ctx.fillRect(0,0,1,1);};
+      const ctx=source.getContext('2d'),fixture={swap:false,frame:0,center:false,black:false};
+      const paint=()=>{if(fixture.black||fixture.center){ctx.fillStyle='#000';ctx.fillRect(0,0,160,90);if(!fixture.black){ctx.fillStyle='#ef5826';ctx.fillRect(60,22,40,46);}return;}ctx.fillStyle=fixture.swap?'#194bf5':'#f52018';ctx.fillRect(0,0,80,90);ctx.fillStyle=fixture.swap?'#f52018':'#194bf5';ctx.fillRect(80,0,80,90);ctx.fillStyle=fixture.frame++%2?'#f02018':'#e02018';ctx.fillRect(0,0,1,1);};
       paint();fixture.stream=source.captureStream(12);fixture.timer=setInterval(paint,60);
       await SwiflyPlayer.loadSource({status:'ok',playbackUrl:'https://swifly.test/color-fixture.webm'});
       const video=document.querySelector('[data-player-video]');video.muted=true;video.srcObject=fixture.stream;await video.play();video.pause();
@@ -334,6 +334,13 @@ test('Real movie frames tint spatial ripple patches after Play without changing 
     await page.waitForFunction(()=>{const c=__waveFrameFixture.read();return c.warmLeft>100&&c.coolRight>100&&c.green===0;},null,{polling:100,timeout:7000});
     await page.evaluate(()=>{__waveFrameFixture.swap=true;});
     await page.waitForFunction(()=>{const c=__waveFrameFixture.read();return c.coolLeft>100&&c.warmRight>100&&c.green===0;},null,{polling:100,timeout:7000});
+    await page.evaluate(()=>{__waveFrameFixture.center=true;});
+    await page.waitForFunction(()=>{const c=__waveFrameFixture.read();return c.warmLeft>100&&c.warmRight>100&&c.coolLeft===0&&c.coolRight===0;},null,{polling:100,timeout:7000});
+    await waveScreenshot(page,'center-color-with-black-edges');
+    const blackAt=await page.evaluate(()=>{__waveFrameFixture.black=true;return document.querySelector('[data-player-video]').currentTime;});
+    await page.waitForFunction(start=>document.querySelector('[data-player-video]').currentTime>=start+.6,blackAt,{polling:100,timeout:7000});
+    assert(await page.evaluate(()=>{const c=__waveFrameFixture.read();return c.warmLeft>100&&c.warmRight>100;}),'a sampled black movie frame keeps its established color');
+    await waveScreenshot(page,'black-frame-retains-movie-color');
     assert.equal(await page.locator('[data-player-video]').evaluate(video=>!video.paused&&video.currentTime>0),true,'ambient sampling must leave the actual movie playing');
     assert(await page.evaluate(()=>{const field=document.querySelector('[data-player-waves]').getBoundingClientRect(),head=document.querySelector('.svPlayerPageHead').getBoundingClientRect(),below=document.querySelector('.svPlayerBelow').getBoundingClientRect();return field.top<=head.top&&field.bottom>=below.bottom;}),'the ripple layer must continue behind both player header areas');
   }finally{release();await context.close();}

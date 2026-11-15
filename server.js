@@ -40,7 +40,7 @@ const { createCommunityController } = require("./lib/community");
 const { createDiscovery } = require("./lib/discovery");
 const { createPlayerAssist } = require("./lib/player-assist");
 const {searchOptions,filterSearch,certification,createCatalogRouter}=require("./lib/catalog-tools");
-const {titleKey,uniqueTitles,diverseRows,moviePeriod,periodDefinitions,personCredits}=require("./lib/catalog-experience");
+const {titleKey,uniqueTitles,diverseRows,moviePeriod,moviePeriodQuery,periodDefinitions,personCredits}=require("./lib/catalog-experience");
 const {catalogAssets,periodControls,catalogPager,languageDefinitions,languageCard,personMarkup,icon:catalogIcon}=require("./ui/catalog-experience");
 const {createTrakt}=require("./lib/trakt");
 const {settingsMarkup}=require("./ui/settings");
@@ -6668,7 +6668,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=262" />' : ""}
     ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=262" />' : ""}
     ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=273"></script>' : ""}
-    ${player ? '<script defer src="/assets/player/waves.js?v=5"></script>' : ""}
+    ${player ? '<script defer src="/assets/player/waves.js?v=6"></script>' : ""}
     ${player ? '<script defer src="/assets/player/audio-sample.js?v=1"></script><script defer src="/assets/player/assist.js?v=3"></script><link rel="stylesheet" href="/assets/player/assist.css?v=264" />' : ""}
     ${player || active === "social" ? '<script defer src="/assets/party/watchroom-call.js?v=1"></script>' : ""}
     ${active === "social" ? '<script defer src="/assets/party/party.js?v=208"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}
@@ -7814,11 +7814,11 @@ async function welcomePage(req, res) {
 }
 
 async function homePage(req, res) {
-  const period=moviePeriod(req.query?.moviePeriod);
+  const period=moviePeriod(req.query?.moviePeriod),popularity=moviePeriodQuery(period);
   const [trendingMovies, trendingTv, popularMovies, popularTv, topMovies, topTv, nowPlaying, featured] = await Promise.all([
     tmdb("/trending/movie/week", {}, CACHE_TTL.short),
     tmdb("/trending/tv/week", {}, CACHE_TTL.short),
-    tmdb(periodDefinitions[period].endpoint, {page:1}, CACHE_TTL.medium),
+    tmdb(popularity.endpoint,popularity.params,CACHE_TTL.medium),
     tmdb("/tv/popular", {}, CACHE_TTL.medium),
     tmdb("/movie/top_rated", {}, CACHE_TTL.medium),
     tmdb("/tv/top_rated", {}, CACHE_TTL.medium),
@@ -8250,8 +8250,8 @@ function dsRail(title, items = [], type = "", options = {}) {
   </section>`;
 }
 
-function dsTopRail(title, items = [], type = "") {
-  return dsRail(title, items, type, { limit: 10 });
+function dsTopRail(title, items = [], type = "", options = {}) {
+  return dsRail(title, items, type, { ...options, limit: 10 });
 }
 
 function isKidsSafeItem(item = {}) {
@@ -8357,8 +8357,9 @@ async function listingPage(req, res, type = "movie", options = {}) {
   const sort=Object.hasOwn(endpointMap[type],req.query.sort)?req.query.sort:(options.sort||"popular"),genre=/^\d{1,8}$/.test(String(req.query.genre||''))?String(req.query.genre):'',period=moviePeriod(req.query.period);
   const validOrder=['popularity.desc','vote_average.desc',...(type==='tv'?['first_air_date.desc','original_name.asc']:['primary_release_date.desc','original_title.asc'])],explicitOrder=validOrder.includes(req.query.sort_by),sortBy=explicitOrder?req.query.sort_by:sort==='top_rated'?'vote_average.desc':'popularity.desc';
   const isPeriod=type==='movie'&&sort==='popular'&&!genre;
-  let endpoint=isPeriod?periodDefinitions[period].endpoint:endpointMap[type][sort];
-  const params={page,include_adult:'false'};
+  const popularity=moviePeriodQuery(period,{page});
+  let endpoint=isPeriod?popularity.endpoint:endpointMap[type][sort];
+  const params=isPeriod?popularity.params:{page,include_adult:'false'};
   if(genre||sort==='discover'){
     endpoint=endpointMap[type].discover;
     Object.assign(params,{sort_by:sortBy,...(genre?{with_genres:genre}:{}),...(sort==='top_rated'||sortBy==='vote_average.desc'?{'vote_count.gte':200}:{})});
@@ -8377,16 +8378,21 @@ async function listingPage(req, res, type = "movie", options = {}) {
     }
   }
   const curated=page===1&&!genre&&sort==='popular',label=type==='tv'?'Series':'Movies',active=type==='tv'?'tv':'movies';
-  const categories=[{title:type==='tv'?'Drama worth your time':'A little more action',genre:type==='tv'?'18':'28'},{title:'Something to make you laugh',genre:'35'},{title:type==='tv'?'Crime & intrigue':'Keep you guessing',genre:type==='tv'?'80':'53'},{title:'Critics’ favorites',rating:true}];
-  const [data,genres,...secondary]=await Promise.all([tmdb(endpoint,params,CACHE_TTL.medium),getGenres(type),...(curated?categories.map(category=>tmdb('/discover/'+type,{page,include_adult:'false',...(category.rating?{sort_by:'vote_average.desc','vote_count.gte':200}:{with_genres:category.genre,sort_by:'popularity.desc'})},CACHE_TTL.medium)):[])]);
+  const categories=[{title:type==='tv'?'Drama worth your time':'Action Movies',genre:type==='tv'?'18':'28'},{title:type==='tv'?'Something to make you laugh':'Comedies',genre:'35'},{title:type==='tv'?'Crime & intrigue':'Suspense Movies',genre:type==='tv'?'80':'53'},{title:type==='tv'?'Critics’ favorites':'Critically Acclaimed Movies',rating:true}];
+  const [data,genres,movieBaseline,...secondary]=await Promise.all([tmdb(endpoint,params,CACHE_TTL.medium),getGenres(type),curated&&type==='movie'?tmdb('/movie/popular',{page:1,include_adult:'false'},CACHE_TTL.medium):null,...(curated?categories.map(category=>tmdb('/discover/'+type,{page,include_adult:'false',...(category.rating?{sort_by:'vote_average.desc','vote_count.gte':200}:{with_genres:category.genre,sort_by:'popularity.desc'})},CACHE_TTL.medium)):[])]);
   if(data.__error)return res.send(setupNeededPage(data.message));
-  const items=uniqueTitles(data.results,type),hero=curated?await featuredHero(pickHero(items),type):null;
+  const items=uniqueTitles(data.results,type),browseItems=movieBaseline?uniqueTitles(movieBaseline.results,type):items,hero=curated?await featuredHero(pickHero(browseItems),type):null;
   const sortLabels={popular:isPeriod?periodDefinitions[period].title:'Popular '+label.toLowerCase(),top_rated:'Top rated '+label.toLowerCase(),upcoming:'Coming soon',now_playing:'Now in theaters',airing_today:'Airing today',on_the_air:'On the air',discover:'Discover '+label.toLowerCase()};
   const query={sort,...(genre?{genre}:{}),...((sort==='discover'||genre)&&explicitOrder?{sort_by:sortBy}:{}),...(isPeriod?{period}:{}),...(partyBrowse?{party:'1'}:{})},base='/'+active+'?'+new URLSearchParams(query);
-  const rows=diverseRows([{title:sortLabels[sort],type,items,href:base},...secondary.map((value,index)=>({title:categories[index].title,type,items:value.results||[],href:'/'+active+'?'+new URLSearchParams(categories[index].rating?{sort:'top_rated'}:{genre:categories[index].genre})}))],{limit:20,exclude:hero?.id?[titleKey(hero,type)]:[]});
+  const categoryRows=secondary.map((value,index)=>({title:categories[index].title,type,items:value.results||[],href:'/'+active+'?'+new URLSearchParams(categories[index].rating?{sort:'top_rated'}:{genre:categories[index].genre})}));
+  const rowInputs=curated&&type==='movie'?[categoryRows[0],{title:'Popular movies',type,items,href:base,popular:true},...categoryRows.slice(1),{title:'Browse Movies',type,items:browseItems,href:base}]:[{title:sortLabels[sort],type,items,href:base},...categoryRows];
+  const rows=diverseRows(rowInputs,{limit:20,exclude:hero?.id?[titleKey(hero,type)]:[]});
   const option=(value,name,current)=>'<option value="'+escapeHtml(value)+'"'+(value===current?' selected':'')+'>'+escapeHtml(name)+'</option>';
   const controls=`<form class="svBrowseFilters" method="get" action="/${active}" aria-label="Filter ${label.toLowerCase()}"><label>Collection<select name="sort">${Object.keys(endpointMap[type]).map(value=>option(value,{popular:'Popular',top_rated:'Top rated',upcoming:'Coming soon',now_playing:'In theaters',airing_today:'Airing today',on_the_air:'On the air',discover:'Discover'}[value],sort)).join('')}</select></label><label>Genre<select name="genre">${option('','All genres',genre)}${genres.map(value=>option(String(value.id),value.name,genre)).join('')}</select></label>${isPeriod?'<input type="hidden" name="period" value="'+period+'">':''}${(sort==='discover'||genre)&&explicitOrder?'<input type="hidden" name="sort_by" value="'+escapeHtml(sortBy)+'">':''}${partyBrowse?'<input type="hidden" name="party" value="1">':''}<button class="svCatalogButton" type="submit">Find titles ${catalogIcon('arrow')}</button></form>`;
-  const body=`<main class="svCatalogPage" data-catalog-page="${page}">${curated&&hero?.id?dsHero({hero,type,context:label,eyebrow:label+' spotlight'}):''}<section class="dsContent${curated&&hero?.id?'':' noHero'}"><div class="svBrowseHeading"><div><span class="svCatalogEyebrow">A GOOD STORY STARTS HERE</span><h1>${escapeHtml(label)}</h1><p>${page>1?'A fresh page of stories. Pick up where your curiosity takes you.':'Find something you’ll want to finish.'}</p></div>${controls}</div>${partyBrowse?partyBrowseMarkup():''}${isPeriod&&!curated?periodControls({base:'/'+active+(partyBrowse?'?party=1':''),selected:period}):''}${curated?rows.map((row,index)=>dsRail(row.title,row.items,row.type,{limit:20,viewHref:row.href,...(index===0&&isPeriod?{period:{base:'/'+active+(partyBrowse?'?party=1':''),selected:period}}:{})})).join(''):`<section class="svCatalogResults" aria-labelledby="svCatalogResultsTitle"><div class="svCatalogResultsHead"><h2 id="svCatalogResultsTitle">${escapeHtml(genres.find(value=>String(value.id)===genre)?.name||sortLabels[sort])}</h2><span>Page ${page}${Number(data.total_pages)>1?' of '+Math.min(500,Number(data.total_pages)):''}</span></div>${items.length?'<div class="dsGrid">'+items.map(item=>movieCard(item,type)).join('')+'</div>':'<div class="svCatalogEmpty"><h3>No titles on this page.</h3><p>Try another collection or return to the first page.</p><a class="svCatalogButton" href="'+escapeHtml(base)+'">Back to the beginning</a></div>'}</section>`}${pagination(base,page,data.total_pages)}</section></main>`;
+  const movieTop=`<section class="dsBrowseTop"><h1>Movies</h1>${netflixGenreDropdown('movie',genres.slice(0,16))}</section>`;
+  const movieResults=type==='movie'&&!curated?`<section class="svCatalogResults" aria-labelledby="svCatalogResultsTitle"><div class="svCatalogResultsHead">${isPeriod?periodControls({base,selected:period,inRow:true,headingId:'svCatalogResultsTitle'}):'<h2 id="svCatalogResultsTitle">'+escapeHtml(genres.find(value=>String(value.id)===genre)?.name||sortLabels[sort])+'</h2>'}<span>Page ${page}${Number(data.total_pages)>1?' of '+Math.min(500,Number(data.total_pages)):''}</span></div>${items.length?'<div class="dsGrid">'+items.map(item=>movieCard(item,type)).join('')+'</div>':'<div class="svCatalogEmpty"><h3>No titles on this page.</h3><p>Try another collection or return to the first page.</p><a class="svCatalogButton" href="'+escapeHtml(base)+'">Back to the beginning</a></div>'}</section>`:'';
+  const movieBody=type==='movie'?`<main class="svCatalogPage svMoviesPage" data-catalog-page="${page}">${movieTop}${curated&&hero?.id?dsHero({hero,type,context:label,eyebrow:label+' spotlight'}):''}<section class="dsContent${curated&&hero?.id?'':' noHero'}">${!curated?controls:''}${partyBrowse?partyBrowseMarkup():''}${curated?rows.map(row=>row.popular?dsTopRail(row.title,row.items,type,{period:{base,selected:period}}):dsRail(row.title,row.items,type)).join(''):movieResults}${pagination(base,page,data.total_pages)}</section></main>`:'';
+  const body=type==='movie'?movieBody:`<main class="svCatalogPage" data-catalog-page="${page}">${curated&&hero?.id?dsHero({hero,type,context:label,eyebrow:label+' spotlight'}):''}<section class="dsContent${curated&&hero?.id?'':' noHero'}"><div class="svBrowseHeading"><div><span class="svCatalogEyebrow">A GOOD STORY STARTS HERE</span><h1>${escapeHtml(label)}</h1><p>${page>1?'A fresh page of stories. Pick up where your curiosity takes you.':'Find something you’ll want to finish.'}</p></div>${controls}</div>${partyBrowse?partyBrowseMarkup():''}${isPeriod&&!curated?periodControls({base:'/'+active+(partyBrowse?'?party=1':''),selected:period}):''}${curated?rows.map((row,index)=>dsRail(row.title,row.items,row.type,{limit:20,viewHref:row.href,...(index===0&&isPeriod?{period:{base:'/'+active+(partyBrowse?'?party=1':''),selected:period}}:{})})).join(''):`<section class="svCatalogResults" aria-labelledby="svCatalogResultsTitle"><div class="svCatalogResultsHead"><h2 id="svCatalogResultsTitle">${escapeHtml(genres.find(value=>String(value.id)===genre)?.name||sortLabels[sort])}</h2><span>Page ${page}${Number(data.total_pages)>1?' of '+Math.min(500,Number(data.total_pages)):''}</span></div>${items.length?'<div class="dsGrid">'+items.map(item=>movieCard(item,type)).join('')+'</div>':'<div class="svCatalogEmpty"><h3>No titles on this page.</h3><p>Try another collection or return to the first page.</p><a class="svCatalogButton" href="'+escapeHtml(base)+'">Back to the beginning</a></div>'}</section>`}${pagination(base,page,data.total_pages)}</section></main>`;
   res.send(pageShell({title:SITE_NAME+' — '+label,active,body,partyBrowse,extraHead:catalogAssets}));
 }
 

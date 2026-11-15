@@ -22,3 +22,6 @@ Inspect actual appearance beside ordinary movie pages. Check narrow dialogs and 
 - [x] Replace language marketing hero/postcards with native filters, language grid and genre controls. Verify exact navigation/query results.
 - [ ] Update targeted browser scenarios for the changed design, run syntax/build/relevant/full checks, inspect combined screenshots and obtain a fresh review.
 - [ ] Address meaningful findings, publish review branch, run hosted checks, deploy the passing source and verify live assets/behavior. Update the checkpoint.
+
+
+User follow-up: restore Movies page-one layout, add the compact underlined period picker and keep the normal hero/Browse data independent. Correct full-frame ripple color propagation and black-frame fallback. Add focused regressions plus real captured-video and dropdown screenshots, then verify and release these with the four-page native correction.

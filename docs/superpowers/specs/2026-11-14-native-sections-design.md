@@ -12,3 +12,8 @@ Use the existing Host Grotesk/inherited Studio font, black canvas, neutral gray 
 Shared CSS defines page/header/control geometry; route styles contain only their required layout. No new dependency, generated artwork or backend/security change. Reuse the existing linked worktree on an isolated branch. Review all four beside ordinary Swifly catalog pages at phone, tablet and desktop widths before publishing. Prior authorization to finish and deploy this work persists.
 
 Alternatives considered: isolated recolors would keep the rejected structure; four independent art directions caused the inconsistency. One native component language is the implementation choice.
+
+
+Latest correction: restore the established Movies hierarchy and original rail labels. The only added UI is an underlined inline Today / This week / This month picker with a smooth compact popout, keyboard dismissal and native links. Popularity selection affects only that row; the normal hero and Browse Movies keep their regular catalog source. Keep real next-page navigation and cross-row deduplication. Month means popular releases from the current calendar month, using supported discovery filters.
+
+Ripple correction: visible colors must include the entire film, including a colorful center surrounded by black borders. Share whole-frame colors into dark regions and retain the movie’s recent colors through black frames. An opening black frame uses movie artwork, with a stable movie-specific color when artwork cannot be sampled. Preserve Play-triggered bursts, bounded sampling, playback and access/visibility guards.

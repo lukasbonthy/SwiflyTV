@@ -157,7 +157,7 @@ test('Social navigation opens the integrated Party Hub while movie catalog party
  const template=social.getElementById('partyPlayerTemplate');assert(template?.content.querySelector('.svPlayerEmbedded [data-player-video]'));
  assert.equal(social.querySelector('script[src*="video.js"]'),null,'Party Hub no longer loads a duplicate playback UI');
  const env=parse(await(await fetch(base+'/movies?party=1')).text()),d=env.window.document;
- assert.equal(d.querySelector('.svBrowseHeading h1').textContent.trim(),'Movies');assert(d.querySelector('[name=genre]'));assert(d.querySelector('.dsHero'));
+ assert.equal(d.querySelector('.dsBrowseTop h1').textContent.trim(),'Movies');assert(d.querySelector('.dsBrowseTop .genreDropdown'));assert(d.querySelector('.dsHero'));
  assert(d.querySelector('[data-party-browse]'));assert(d.querySelector('.dsContent'));assert.equal(d.querySelector('.svPartyHub'),null);
  assert(d.querySelector('script[src="/assets/player/watch-party.js?v=2"]'));assert.equal(d.querySelector('script[src*="player/player.js"]'),null);
 });
@@ -465,7 +465,8 @@ test('Catalog and profiles retain their theme while Party Hub owns its component
   assert.equal(response.status,200,route+' should render');
   const d=parse(await response.text()).window.document;
   assert(stylesheetLink(d,'/assets/clean/experience.css'),route+' should load shared experience styles');
-  if(route==='/movies'||route==='/tv')assert(d.querySelector('[name=genre]'));
+  if(route==='/movies')assert(d.querySelector('.dsBrowseTop .genreDropdown'));
+  else if(route==='/tv')assert(d.querySelector('[name=genre]'));
   const avatarScript=d.querySelector('script[src="/assets/clean/avatars.js?v=209"]');
   assert(avatarScript,route+' should refresh the shared profile identity');
   const profileScript=d.querySelector('script[src="/assets/clean/profiles.js?v=209"]');
