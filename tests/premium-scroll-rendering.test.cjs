@@ -477,9 +477,11 @@ test('visible quick actions stay clear while idle, scrolling and settled in a na
     const material=()=>pane.evaluate(node=>{const style=getComputedStyle(node);return {backdrop:style.backdropFilter,fill:style.backgroundColor,graphs:node.querySelectorAll('svg').length};});
     const clear={backdrop:'none',fill:'rgba(10, 13, 17, 0.82)',graphs:0};
     assert.deepEqual(await material(),clear,'idle poster actions use the permanent clear material');
-    await artwork.evaluate(node=>{window.__narrowActionPane=node.querySelector('.dsCardQuickActions .svLiquidPane');node.dispatchEvent(new WheelEvent('wheel',{deltaY:80,bubbles:true,cancelable:true}));});
-    assert.equal(await page.evaluate(()=>document.documentElement.dataset.svCardScrolling),'true','exercise the moving catalog');
-    assert.deepEqual(await material(),clear,'scrolling cannot add a refractive backdrop');
+    // Sample the gesture and material in the same browser turn. A second
+    // protocol call can arrive after the170ms idle timer on a busy CI runner.
+    const moving=await artwork.evaluate(node=>{const pane=node.querySelector('.dsCardQuickActions .svLiquidPane');window.__narrowActionPane=pane;node.dispatchEvent(new WheelEvent('wheel',{deltaY:80,bubbles:true,cancelable:true}));const style=getComputedStyle(pane);return{scrolling:document.documentElement.dataset.svCardScrolling,material:{backdrop:style.backdropFilter,fill:style.backgroundColor,graphs:pane.querySelectorAll('svg').length}};});
+    assert.equal(moving.scrolling,'true','exercise the moving catalog');
+    assert.deepEqual(moving.material,clear,'scrolling cannot add a refractive backdrop');
     await page.waitForFunction(()=>!document.documentElement.dataset.svCardScrolling&&!document.documentElement.classList.contains('lenis-smooth'));
     assert.deepEqual(await material(),clear,'the same clear material remains after scrolling settles');
     assert(await pane.evaluate(node=>node===__narrowActionPane),'scrolling preserves the existing poster-action pane');

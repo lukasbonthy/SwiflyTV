@@ -3,19 +3,22 @@ const test=require('node:test'),assert=require('node:assert/strict');
 const {browser,cleanup}=require('./ui-helpers.cjs');
 test.afterEach(cleanup);
 
-function field({height=800,film=null,kids=false}={}){
+function field({height=800,film=null,kids=false,movieId='',artColor=null}={}){
  const env=browser('<main class="svPlayerPage"><div data-player-waves><canvas></canvas></div><div data-player-stage><video data-player-video></video></div></main>'),w=env.window,d=w.document;
  const root=d.querySelector('main'),backdrop=d.querySelector('[data-player-waves]'),canvas=d.querySelector('canvas'),video=d.querySelector('video');
- let now=0,blocked=false,reads=0,src='/movie.mp4',paused=false,time=0,ready=true,measures=0,movieColors=[[245,32,24],[25,75,245]];
+ let now=0,blocked=false,reads=0,src='/movie.mp4',paused=false,time=0,ready=true,measures=0,movieColors=[[245,32,24],[25,75,245]],pattern=null;
  const pixels=[],rects=[];
  backdrop.getBoundingClientRect=()=>{measures++;return {left:0,top:0,width:1200,height};};
  const paint={fillStyle:'#000',fillRect(x,y,width,height){if(this.fillStyle==='#000'){pixels.length=0;rects.length=0;}else{pixels.push(this.fillStyle.match(/[\d.]+/g).map(Number));rects.push([x,y,width,height]);}}};
- w.HTMLCanvasElement.prototype.getContext=function(){if(this===canvas)return paint;const sample=this;return {drawImage(){},getImageData(){reads++;if(blocked)throw new w.DOMException('Protected frame','SecurityError');const data=new Uint8ClampedArray(sample.width*sample.height*4);for(let y=0;y<sample.height;y++)for(let x=0;x<sample.width;x++){const i=(y*sample.width+x)*4;data.set([...movieColors[x<sample.width/2?0:1],255],i);}return {data};}};};
+ w.HTMLCanvasElement.prototype.getContext=function(){if(this===canvas)return paint;const sample=this;let drawn=null;return {drawImage(image){drawn=image;},getImageData(){reads++;if(blocked&&drawn?.tagName!=='IMG')throw new w.DOMException('Protected frame','SecurityError');const data=new Uint8ClampedArray(sample.width*sample.height*4);for(let y=0;y<sample.height;y++)for(let x=0;x<sample.width;x++){const i=(y*sample.width+x)*4;data.set([...(drawn?.tagName==='IMG'&&artColor?artColor:pattern?pattern(x,y,sample.width,sample.height):movieColors[x<sample.width/2?0:1]),255],i);}return {data};}};};
  Object.defineProperties(video,{readyState:{get:()=>ready?4:0},videoWidth:{get:()=>1280},videoHeight:{get:()=>720},currentSrc:{get:()=>src},paused:{get:()=>paused},currentTime:{get:()=>time}});
+ if(movieId)root.dataset.playerId=movieId;
+ if(artColor){const ambient=d.createElement('div');ambient.className='svPlayerAmbient';const art=d.createElement('img');art.crossOrigin='anonymous';art.src='https://image.tmdb.org/movie-art.jpg';Object.defineProperties(art,{complete:{get:()=>true},naturalWidth:{get:()=>120}});ambient.append(art);root.append(ambient);}
  if(film)d.querySelector('[data-player-stage]').getBoundingClientRect=()=>film;
  if(kids)w.SwiflyKids={revalidatePlayer(){throw new Error('Only the player controller verifies playback access');}};
+ const observed=new Set();let viewportCallback;w.IntersectionObserver=class{constructor(callback){viewportCallback=callback;}observe(node){observed.add(node);}unobserve(node){observed.delete(node);}disconnect(){observed.clear();}};
  w.boot('player/waves.js');
- return {...env,root,backdrop,canvas,pixels,rects,frameColors(left,right=left){movieColors=[left,right];},get reads(){return reads;},get measures(){return measures;},play(){root.dispatchEvent(new w.CustomEvent('swiflyplayer:play-intent',{bubbles:true}));},advance(ms){const end=now+ms;while(now<end){now+=16;if(!paused)time+=.016;w.flush(now);}},block(value){blocked=value;},source(value){src=value;},pause(){paused=true;},ready(value){ready=value;},hide(value){Object.defineProperty(d,'hidden',{configurable:true,value});d.dispatchEvent(new w.Event('visibilitychange'));}};
+ return {...env,root,backdrop,canvas,pixels,rects,frameColors(left,right=left){pattern=null;movieColors=[left,right];},framePattern(fn){pattern=fn;},notifyVisibility(){for(const node of observed)viewportCallback([{target:node,isIntersecting:!node.hidden}]);},viewport(value){for(const node of observed)viewportCallback([{target:node,isIntersecting:value}]);},get reads(){return reads;},get measures(){return measures;},play(){root.dispatchEvent(new w.CustomEvent('swiflyplayer:play-intent',{bubbles:true}));},advance(ms){const end=now+ms;while(now<end){now+=16;if(!paused)time+=.016;w.flush(now);}},block(value){blocked=value;},source(value){src=value;},pause(){paused=true;},ready(value){ready=value;},hide(value){Object.defineProperty(d,'hidden',{configurable:true,value});d.dispatchEvent(new w.Event('visibilitychange'));}};
 }
 
 test('the ripple field waits for Play rather than source discovery',()=>{
@@ -93,4 +96,43 @@ test('a running ripple responds to new movie colors without a second Play',()=>{
 test('a tall player page keeps the ripple emission centered on its film',()=>{
  const f=field({height:1600,film:{left:100,top:100,width:1000,height:600}});f.play();const ys=f.rects.flatMap(([x,y,w,h])=>[y,y+h]);
  const center=(Math.min(...ys)+Math.max(...ys))/2;assert(Math.abs(center/f.canvas.height-.25)<.025,'the origin stays at the movie center rather than the full page center');assert(f.canvas.height<=900&&f.canvas.width<=1280);f.finish();
+});
+
+
+test('a colorful center lights the whole ripple even when the frame edges are black',()=>{
+ const f=field();f.framePattern((x,y,w,h)=>x>=w/3&&x<w*2/3&&y>=h/4&&y<h*3/4?[245,45,25]:[0,0,0]);f.play();f.advance(1400);
+ assert(f.pixels.length>100&&f.pixels.every(([r,g,b])=>r>g*1.3&&r>b*1.3),'the center of the film must color regions outside its black edges');
+ f.framePattern((x,y,w,h)=>x>=w/3&&x<w*2/3&&y>=h/4&&y<h*3/4?[25,60,245]:[0,0,0]);f.advance(500);
+ assert(f.pixels.every(([r,g,b])=>b>r*1.3&&b>g*1.3),'a live ripple follows new center colors');f.finish();
+});
+test('a black frame keeps the last film colors instead of making the ripple disappear',()=>{
+ const f=field();f.frameColors([230,48,24]);f.play();f.advance(800);f.frameColors([0,0,0]);f.advance(800);
+ assert(f.pixels.length>100&&f.pixels.every(([r,g,b])=>r>g*1.3&&r>b*1.3),'a fade to black retains the last movie-derived color');f.finish();
+});
+test('an opening black frame chooses a stable color for that movie',()=>{
+ const f=field({movieId:'157336'});f.frameColors([0,0,0]);f.play();f.advance(900);
+ assert(f.pixels.some(color=>Math.max(...color)-Math.min(...color)>15),'a black opening gets a color before the first colorful frame');f.finish();
+});
+
+
+test('an opening black frame uses readable movie artwork before its metadata color',()=>{
+ const f=field({movieId:'157336',artColor:[20,210,210]});f.frameColors([0,0,0]);f.play();f.advance(900);
+ assert(f.pixels.length>100&&f.pixels.every(([r,g,b])=>g>r*2&&b>r*2),'the movie artwork supplies the fallback hue');f.finish();
+});
+
+
+test('a protected movie uses its artwork color without retrying blocked frame reads',()=>{
+ const f=field({movieId:'157336',artColor:[20,210,210]});f.block(true);f.play();f.advance(900);
+ assert(f.pixels.length>100&&f.pixels.every(([r,g,b])=>g>r*2&&b>r*2),'protected playback can still use its public movie artwork');
+ const sampled=f.reads;f.advance(800);assert.equal(f.reads,sampled,'the unreadable movie is sampled only once');f.finish();
+});
+
+
+test('disabling the decorative layer cannot mark the visible movie itself offscreen',()=>{
+ const f=field();f.play();f.advance(300);
+ f.window.document.dispatchEvent(new f.window.CustomEvent('swifly:studio-change',{detail:{effective:{highContrast:true}}}));f.notifyVisibility();
+ assert.equal(f.backdrop.dataset.waveState,'off');
+ f.window.document.dispatchEvent(new f.window.CustomEvent('swifly:studio-change',{detail:{effective:{}}}));
+ assert.equal(f.backdrop.dataset.waveState,'live','restoring effects resumes the visible movie without a stale hidden-layer intersection');
+ f.viewport(false);assert.equal(f.backdrop.dataset.waveState,'still','a genuinely offscreen movie still suspends decoration');f.finish();
 });

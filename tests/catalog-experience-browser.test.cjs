@@ -1,10 +1,11 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),{chromium}=require('playwright-core'),{loadServer}=require('./ui-helpers.cjs');
 const executablePath=process.env.SWIFLY_TEST_BROWSER_EXECUTABLE_PATH,available=fs.existsSync(executablePath||chromium.executablePath());
-let browser,api,origin,catalogState='normal';
+let browser,api,origin,catalogState='normal',catalogRequests=[];
 const paragraph='A performer and filmmaker whose work moves between intimate character stories and large cinematic worlds. Over many years, their collaborations have brought a distinct perspective to film and television. ';
 function titles(tag,type='movie',page=1,count=20){let salt=[...tag].reduce((n,c)=>n+c.charCodeAt(0),0);return Array.from({length:count},(_,i)=>({id:page*100000+salt*100+i+1,media_type:type,[type==='tv'?'name':'title']:(['The Quiet Atlas','Across the Blue','A Small Beginning','After the Rain','Northern Lights','Tomorrow, Again'][i%6])+' '+(i+1),poster_path:'/poster-'+i+'.jpg',backdrop_path:'/scene-'+i+'.jpg',overview:paragraph,vote_average:7.8,release_date:'2024-01-01',first_air_date:type==='tv'?'2024-01-01':undefined,popularity:100-i}));}
 test.before(async()=>{if(!available)return;browser=await chromium.launch({headless:true,executablePath});api=loadServer();api.setTmdb(async(endpoint,params={})=>{
+ catalogRequests.push({endpoint,params});
  if(endpoint.startsWith('/genre/'))return{genres:[{id:18,name:'Drama'},{id:35,name:'Comedy'},{id:28,name:'Action'},{id:10765,name:'Sci-Fi & Fantasy'},{id:99,name:'Documentary'},{id:16,name:'Animation'}]};
  if(endpoint==='/person/1')return{id:1,name:'Alex Morgan',known_for_department:'Acting',birthday:'1985-03-14',place_of_birth:'London, England',profile_path:'/person.jpg',biography:paragraph.repeat(5)+'\n\n'+paragraph.repeat(2)};
  if(endpoint==='/person/1/combined_credits')return{cast:titles('person','movie',1,44).map((item,index)=>({...item,character:'Character '+index})).concat(titles('person','tv',1,11)),crew:titles('person','movie',1,4).map(item=>({...item,department:'Directing',job:'Director'}))};
@@ -16,8 +17,8 @@ test.after(async()=>{await browser?.close();if(api)await new Promise(done=>api.i
 const scenery='<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="800"><defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#8ca9ad"/><stop offset=".65" stop-color="#d8c2a8"/><stop offset="1" stop-color="#334439"/></linearGradient></defs><path fill="url(#sky)" d="M0 0h1280v800H0z"/><circle fill="#e4d4b6" cx="960" cy="235" r="78"/><path fill="#435f59" d="m0 650 230-360 270 295 225-200 270 220 285-325v520H0Z"/><path fill="#213e37" d="m0 800 280-265 210 120 290-150 310 180 190-160v275Z"/></svg>';
 const portrait='<svg xmlns="http://www.w3.org/2000/svg" width="500" height="750"><rect width="500" height="750" fill="#55535b"/><ellipse cx="250" cy="760" rx="260" ry="320" fill="#29282e"/><ellipse cx="250" cy="265" rx="115" ry="150" fill="#b3a79d"/><path d="M130 240q-15-180 120-180t120 180q-60-110-120-60t-120 60" fill="#353036"/></svg>';
 const viewports=[[1440,'desktop'],[834,'ipad'],[390,'phone'],[320,'narrow']];
-async function open(url,width=1440,height=1000){
- const context=await browser.newContext({viewport:{width,height},colorScheme:'dark'}),page=await context.newPage(),errors=[],trace=[];
+async function open(url,width=1440,height=1000,options={}){
+ const context=await browser.newContext({viewport:{width,height},colorScheme:'dark',...options}),page=await context.newPage(),errors=[],trace=[];
  page.on('pageerror',error=>errors.push(error.message));
  page.on('framenavigated',frame=>{if(frame===page.mainFrame())trace.push({event:'navigation',url:frame.url()});});
  page.on('requestfailed',request=>{if(request.isNavigationRequest())trace.push({event:'navigation-failed',url:request.url(),error:request.failure()?.errorText});});
@@ -37,8 +38,8 @@ async function shot(page,name){
 }
 async function layout(page){
  return page.evaluate(()=>{
-  const box=node=>node.getBoundingClientRect().toJSON(),shown=node=>{const r=box(node),style=getComputedStyle(node);return r.width>0&&r.height>0&&style.visibility!=='hidden'&&!node.closest('[hidden]');},control=node=>({label:node.getAttribute('aria-label')||node.getAttribute('name')||node.textContent.trim(),box:box(node)});
-  const owned='main .svCatalogButton,main :is(.svPersonFilters,.svBrowseFilters,.svLanguageFilters) select,main .svPeriodTabs a,main .svCatalogPager a,main [data-language-search],main [data-person-biography] summary';
+  const box=node=>node.getBoundingClientRect().toJSON(),shown=node=>{const r=box(node),style=getComputedStyle(node),disclosure=node.closest('details');return r.width>0&&r.height>0&&style.visibility!=='hidden'&&!node.closest('[hidden],[inert]')&&(!disclosure||disclosure.open||node.closest('summary'));},control=node=>({label:node.getAttribute('aria-label')||node.getAttribute('name')||node.textContent.trim(),box:box(node)});
+  const owned='main .svCatalogButton,main :is(.svPersonFilters,.svBrowseFilters,.svLanguageFilters) select,main .svPeriodTabs a,main .svPeriodTrigger,main .svPeriodMenu a,main .svCatalogPager a,main [data-language-search],main [data-person-biography] summary';
   const destinations=[...document.querySelectorAll('.svLanguageDestinationGrid')].filter(shown).map(grid=>({box:box(grid),cards:[...grid.querySelectorAll('.svLanguageDestination')].filter(shown).map(card=>({label:card.textContent.trim(),box:box(card),aspectRatio:getComputedStyle(card).aspectRatio,minHeight:getComputedStyle(card).minHeight}))}));
   const rails=[...document.querySelectorAll('main .svCatalogRow > .movieRail')].filter(shown).map(rail=>{
    const bounds=box(rail),cards=[...rail.querySelectorAll(':scope > .movieCard')].filter(shown),fullyShown=cards.filter(card=>{const r=box(card);return r.left>=bounds.left-1&&r.right<=bounds.right+1;});
@@ -147,8 +148,56 @@ test('catalog periods change the source, subsequent pages advance, and empty/err
   await nativeRail(f,'popular-movies');const first=await f.page.locator('.svCatalogRow .dsCardTitle').first().getAttribute('href');
   await clickThrough(f,f.page.locator('.svCatalogPager a[rel=next]'),'movies-next-phone','/movies',{period:'today',page:'2'});
   assert.equal(await f.page.locator('.dsHero').count(),0);assert.notEqual(await f.page.locator('.svCatalogResults .dsCardTitle').first().getAttribute('href'),first);assert.equal(new URL(f.page.url()).searchParams.get('period'),'today');await fits(f,'movie-page2');
-  assert(await f.page.locator('.svBrowseHeading h1').evaluate(node=>node.getBoundingClientRect().top>=100),'Page two heading must clear fixed navigation');
-  catalogState='empty';await f.page.goto(origin+'/browse-by-languages?language=ko');await diagnostics(f,'catalog-languages-empty-phone');assert(await f.page.getByRole('heading',{name:'No stories match this combination yet.'}).isVisible());
+  assert(await f.page.locator('.dsBrowseTop h1').evaluate(node=>node.getBoundingClientRect().top>=90),'Page two heading must clear fixed navigation');
+  catalogState='empty';await f.page.goto(origin+'/browse-by-languages?language=ko');await diagnostics(f,'catalog-languages-empty-phone');assert(await f.page.getByRole('heading',{name:'No titles match these filters.'}).isVisible());
   catalogState='error';await f.page.goto(origin+'/browse-by-languages?language=ko');await diagnostics(f,'catalog-languages-error-phone');assert(await f.page.getByRole('link',{name:/Try again/}).isVisible());assert.deepEqual(f.errors,[]);
  }catch(error){await failed(f,'catalog-periods-failed-phone',error);}finally{catalogState='normal';await f.context.close();}
+});
+
+test('Movies keeps its original hierarchy and the underlined period popout supports native selection and keyboard closing',{skip:!available,timeout:90000},async()=>{
+ for(const [width,label]of viewports){
+  const f=await open('/movies?period=week&party=1',width);
+  try{
+   const picker=f.page.locator('[data-movie-periods]'),trigger=picker.locator('summary'),menu=picker.locator('.svPeriodMenu');
+   assert.equal(await f.page.locator('.dsBrowseTop h1').textContent(),'Movies');
+   assert.equal(await f.page.locator('.svBrowseHeading,.svBrowseFilters').count(),0);
+   assert.deepEqual(await f.page.locator('main .svCatalogRow h2').allTextContents(),['Action Movies','Popular movies','Comedies','Suspense Movies','Critically Acclaimed Movies','Browse Movies']);
+   assert.equal(await picker.getAttribute('open'),null);assert.equal(await menu.isVisible(),false);
+   assert(await trigger.locator('span').evaluate(node=>getComputedStyle(node).textDecorationLine.includes('underline')));
+   await trigger.scrollIntoViewIfNeeded();await diagnostics(f,'catalog-period-closed-'+label);
+   await trigger.click();await f.page.waitForFunction(()=>{const menu=document.querySelector('.svPeriodMenu');return document.querySelector('[data-movie-periods]').dataset.periodState==='open'&&getComputedStyle(menu).opacity==='1';});
+   assert.equal(await trigger.getAttribute('aria-expanded'),'true');
+   const bounds=await menu.boundingBox();assert(bounds.x>=17&&bounds.x+bounds.width<=width-17,'The small period popout must fit the viewport');
+   assert.equal(await menu.locator('a').count(),3);await fits(f,'period-open-'+label);await diagnostics(f,'catalog-period-open-'+label);
+   await trigger.press('ArrowDown');assert(await menu.locator('a[aria-current=page]').evaluate(node=>node===document.activeElement));
+   await f.page.keyboard.press('End');assert(await menu.locator('a[href*="period=month"]').evaluate(node=>node===document.activeElement));
+   await f.page.keyboard.press('Escape');await f.page.waitForFunction(()=>!document.querySelector('[data-movie-periods]').open);
+   assert(await trigger.evaluate(node=>node===document.activeElement));
+   await trigger.click();await f.page.locator('.dsBrowseTop h1').click();await f.page.waitForFunction(()=>!document.querySelector('[data-movie-periods]').open);
+   await trigger.click();await clickThrough(f,menu.locator('a[href*="period=month"]'),'period-month-'+label,'/movies',{period:'month',party:'1'});
+   assert.equal(new URL(f.page.url()).searchParams.has('page'),false);assert.equal(await f.page.locator('.svPeriodTrigger').textContent(),'This month');
+   assert.equal(await f.page.locator('.svPeriodTrigger').getAttribute('title'),'Popular releases this month');
+   const first=await f.page.locator('.svCatalogRow:has([data-movie-periods]) .dsCardTitle').first().getAttribute('href');
+   await clickThrough(f,f.page.locator('.pagination a[rel=next]'),'period-month-next-'+label,'/movies',{period:'month',page:'2',party:'1'});
+   assert.equal(await f.page.locator('.dsHero').count(),0);assert.notEqual(await f.page.locator('.svCatalogResults .dsCardTitle').first().getAttribute('href'),first);
+   assert(catalogRequests.some(call=>call.endpoint==='/discover/movie'&&call.params.page===2&&call.params.sort_by==='popularity.desc'&&/^\d{4}-\d{2}-01$/.test(call.params['primary_release_date.gte'])&&/^\d{4}-\d{2}-\d{2}$/.test(call.params['primary_release_date.lte'])),'The native month page must request supported, bounded release discovery');
+   assert.equal(catalogRequests.some(call=>call.endpoint==='/trending/movie/month'),false);
+   await fits(f,'period-month-page2-'+label);assert.deepEqual(f.errors,[]);
+  }catch(error){await failed(f,'catalog-popout-failed-'+label,error);}finally{await f.context.close();}
+ }
+});
+
+test('period popout respects reduced motion and closes when keyboard focus leaves',{skip:!available,timeout:45000},async()=>{
+ const f=await open('/movies?period=week',390,1000,{reducedMotion:'reduce'});
+ try{
+  const trigger=f.page.locator('.svPeriodTrigger'),menu=f.page.locator('.svPeriodMenu');
+  await trigger.focus();await trigger.press('ArrowDown');
+  assert.equal(await menu.evaluate(node=>getComputedStyle(node).transitionDuration),'0s');
+  assert.equal(await f.page.locator('[data-movie-periods]').getAttribute('data-period-state'),'open');
+  await f.page.locator('.pagination a[rel=next]').focus();
+  assert.equal(await f.page.locator('[data-movie-periods]').getAttribute('open'),null);
+  await trigger.click();await f.page.keyboard.press('Escape');
+  assert.equal(await f.page.locator('[data-movie-periods]').getAttribute('open'),null);assert(await trigger.evaluate(node=>node===document.activeElement));
+  await diagnostics(f,'catalog-period-reduced-motion');assert.deepEqual(f.errors,[]);
+ }catch(error){await failed(f,'catalog-popout-reduced-motion-failed',error);}finally{await f.context.close();}
 });

@@ -108,9 +108,6 @@ body.svCleanShell .svDiscoveryPage{box-sizing:border-box;max-width:1312px;min-he
 .svBookCover{aspect-ratio:2/3;border-radius:14px;background:#151515}
 .svBookCover img{object-fit:contain;background:#111}
 .svBookCoverFallback{box-sizing:border-box;position:relative;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:16px;width:100%;height:100%;padding:24px 20px;background:linear-gradient(135deg,#27313b,#151b23);color:#e4e5ea;text-align:left;border:1px solid #ffffff14;border-radius:14px}
-.svBookCard:nth-child(4n+2) .svBookCoverFallback{background:linear-gradient(135deg,#3a2b33,#211b23)}
-.svBookCard:nth-child(4n+3) .svBookCoverFallback{background:linear-gradient(135deg,#34382b,#1b211c)}
-.svBookCard:nth-child(4n+4) .svBookCoverFallback{background:linear-gradient(135deg,#302d40,#1d1d29)}
 .svBookCoverFallback small{font-size:calc(10px * var(--st-ui-scale, 1));letter-spacing:.12em;color:#c0c2ca;border-bottom:1px solid #ffffff24;width:100%;padding-bottom:14px}
 .svBookCoverFallback strong{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:5;overflow:hidden;font-family:Georgia,serif;font-size:calc(23px * var(--st-ui-scale, 1));font-weight:500;line-height:1.25;letter-spacing:-.015em}
 .svBookCoverFallback>span{font-size:calc(12px * var(--st-ui-scale, 1));line-height:1.5;color:#c0c2ca}

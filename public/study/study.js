@@ -15,7 +15,7 @@
   const mixValue = value => Object.fromEntries(['rain', 'room', 'vinyl', 'thunder'].map(key => [key, clamp(value?.[key], 0, 1, 0)]));
   const visualValue = value => ({rain: clamp(value?.rain, 0, 100, 8), dim: clamp(value?.dim, 0, 80, 14), blur: clamp(value?.blur, 0, 6, 0), motion: clamp(value?.motion, 0, 100, 50)});
   function defaultState() {
-    return {version: 1, scene: 'garden-cat', track: 'track-15', station: 'all', layout: 'balanced', volume: .65, muted: false, shuffle: false, repeat: false, night: false, clock: true, ambient: false, mix: {rain: .12, room: .08, vinyl: 0, thunder: 0}, visual: {rain: 8, dim: 14, blur: 0, motion: 50}, favorites: [], tasks: [], setups: [], stats: {totalSeconds: 0, days: {}, sessions: 0, tasksDone: 0}};
+    return {version: 1, scene: 'raccoon-room', track: 'track-15', station: 'all', layout: 'balanced', volume: .65, muted: false, shuffle: false, repeat: false, night: false, clock: true, ambient: false, mix: {rain: .12, room: .08, vinyl: 0, thunder: 0}, visual: {rain: 8, dim: 14, blur: 0, motion: 50}, favorites: [], tasks: [], setups: [], stats: {totalSeconds: 0, days: {}, sessions: 0, tasksDone: 0}};
   }
   function normalizeSetup(value) {
     if (!object(value) || !sceneIds.includes(value.scene) || !validTrack(value.track)) return null;
@@ -275,7 +275,7 @@
     function resetActivity() {activity.update({visible: canUse() && !doc.hidden, timerSeconds: canUse() && timer.running ? timer.remaining : 0});}
     function renderTimer() {
       $('[data-study-timer]').textContent = formatTime(timer.remaining);$('[data-study-timer-start]').textContent = timer.running ? 'Pause focus' : timer.remaining === 0 ? 'Start again' : hasStartedTimer ? 'Resume focus' : 'Start focus';
-      $('[data-study-timer-label]').textContent = timer.running ? 'One thing at a time' : timer.remaining === 0 ? 'Session complete' : hasStartedTimer ? 'Paused. Your space is here.' : 'Ready when you are';
+      $('[data-study-timer-label]').textContent = timer.running ? 'Focus session' : timer.remaining === 0 ? 'Session complete' : hasStartedTimer ? 'Paused' : 'Focus timer';
       $$('[data-study-duration]').forEach(button => setPressed(button, Number(button.dataset.studyDuration) * 60 === timer.duration));
     }
     function renderStats() {const values = studyStats(state.stats, win.Date.now());for (const [key, value] of Object.entries({today: values.todayMinutes, total: values.totalMinutes, streak: values.streak, sessions: values.sessions, tasks: values.tasksDone})) $('[data-study-stat="' + key + '"]').textContent = String(value);}

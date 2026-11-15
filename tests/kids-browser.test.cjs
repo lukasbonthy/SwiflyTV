@@ -3,10 +3,11 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 const express=require('express');
 const {chromium}=require('playwright-core');
 const {createKids}=require('../lib/kids');
+const sectionStyles=fs.readFileSync(path.join(__dirname,'../public/clean/section-pages.css'),'utf8');
 const executablePath=process.env.SWIFLY_TEST_BROWSER_EXECUTABLE_PATH,available=fs.existsSync(executablePath||chromium.executablePath());
 const titles=Array.from({length:18},(_,index)=>({id:index+1,title:['Cloud Friends','A Garden Adventure','The Little Voyage','Puddle Jumpers','A Very Good Day','Moonlight Picnic'][index%6]+(index>5?' '+(Math.floor(index/6)+1):''),adult:false,genres:[{id:16},{id:10751}],overview:'A little explorer finds new friends, plenty of laughter and a place to call home.',poster_path:'/kids-'+(index+1)+'.jpg',release_date:'2026-05-03'}));
 let server,browser,origin;
-const documentHtml=(body,head='')=>'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+head+'<link rel="stylesheet" href="/assets/kids/kids.css?v=1"><script defer src="/assets/kids/guard.js?v=1"></script></head><body class="svCleanShell" style="margin:0">'+body+'</body></html>';
+const documentHtml=(body,head='')=>'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+head+'<style>body{font-family:Arial,sans-serif;background:#000;color:#eee}'+sectionStyles+'</style><link rel="stylesheet" href="/assets/kids/kids.css?v=1"><script defer src="/assets/kids/guard.js?v=1"></script></head><body class="svCleanShell" style="margin:0">'+body+'</body></html>';
 async function tmdb(route,params={}){
  const match=/^\/(movie|tv)\/(\d+)(?:\/(release_dates|content_ratings))?$/.exec(route);
  if(match){if(match[3])return {results:match[1]==='movie'?[{iso_3166_1:'US',release_dates:[{certification:'G'}]}]:[{iso_3166_1:'US',rating:'TV-Y'}]};return {...titles[(Number(match[2])-1)%titles.length],...(match[1]==='tv'?{name:titles[(Number(match[2])-1)%titles.length].title,genres:[{id:10762},{id:16}]}:{})};}
@@ -18,7 +19,7 @@ test.before(async()=>{
  app.get(['/kids','/kids/title/:type/:id'],async(req,res)=>{const page=await kids.page(req);res.send(documentHtml(page.body,page.extraHead));});
  app.get('/profiles',(_req,res)=>res.send(documentHtml('<h1>Adult profiles</h1>')));
  app.get('/',(_req,res)=>res.send(documentHtml('<h1>General SwiflyTV</h1>')));
- app.get('/watch/:type/:id',(req,res)=>res.send(documentHtml('<main data-player-root data-player-kids-verified="'+Boolean(req.kids?.locked&&req.kidsTitle?.allowed)+'"><h1>Checked movie player</h1><a data-sv-player-back href="/movie/1">Details</a><div class="svPlayerTogether">Send to friend</div></main>')));
+ app.get('/watch/:type/:id',(req,res)=>res.send(documentHtml('<main data-player-root data-player-kids-verified="'+Boolean(req.kids?.locked&&req.kidsTitle?.allowed)+'"><h1>Checked movie player</h1><a data-sv-player-back href="/movie/1">Details</a><div class="svPlayerTogether">Send to friend</div><button data-player-download>Download</button><a class="topbar" href="/profiles">Profiles</a></main>')));
  server=app.listen(0,'127.0.0.1');await new Promise(resolve=>server.once('listening',resolve));origin='http://127.0.0.1:'+server.address().port;
  browser=await chromium.launch({headless:true,executablePath,args:['--no-sandbox']});
 });
@@ -34,18 +35,18 @@ async function fixture(viewport={width:1440,height:1080}){
 }
 async function screenshot(page,name){const directory=process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR||process.env.SWIFLY_KIDS_SCREENSHOT_DIR;if(!directory)return;fs.mkdirSync(directory,{recursive:true});await page.screenshot({path:path.join(directory,name+'.png'),fullPage:true});}
 
-test('Kids scenery, categories, shelves and parent controls fit desktop, iPad, phone and 320px without glass', {skip:!available},async()=>{
+test('Native Kids catalog, categories, posters and parent controls fit desktop, iPad, phone and 320px without glass', {skip:!available},async()=>{
  for(const [name,viewport]of [['desktop',{width:1440,height:1080}],['ipad',{width:834,height:1112}],['phone',{width:390,height:844}],['small-phone',{width:320,height:800}]]){
   const f=await fixture(viewport);try{
    assert.equal(await f.page.locator('.kidsCard').count(),18);
    assert(await f.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),name+' overflows');
-   assert(await f.page.locator('.kidsWelcome h1').isVisible());
+   assert(await f.page.locator('.kidsHeader .svSectionTitle').isVisible());
    assert.equal(await f.page.locator('.kidsPoster').first().evaluate(node=>getComputedStyle(node).backdropFilter),'none');
    await screenshot(f.page,'kids-'+name);
    await f.page.locator('[data-kids-parent-open]').click();assert(await f.page.locator('[data-kids-parent-dialog]').isVisible());
    const bounds=await f.page.locator('[data-kids-parent-dialog]').boundingBox();assert(bounds.x>=0&&bounds.x+bounds.width<=viewport.width);
    await f.page.keyboard.press('Escape');assert.equal(await f.page.locator('[data-kids-parent-dialog]').isVisible(),false);
-   await f.page.locator('.kidsCategory[href="/kids?category=movies"]').click();assert.equal(await f.page.locator('.kidsCategory[aria-current="page"]').textContent(),'Movie time');
+   await f.page.locator('.kidsCategory[href="/kids?category=movies"]').click();assert.equal(await f.page.locator('.kidsCategory[aria-current="page"]').textContent(),'Movies');
    await f.page.locator('#kids-search').fill('Cloud Friends');await f.page.locator('.kidsSearch button').click();assert.match(await f.page.locator('#kids-stories-title').textContent(),/Cloud Friends/);assert.equal(await f.page.locator('.kidsCard').count(),3);
    assert.deepEqual(f.errors,[]);
   }finally{await f.context.close();}
@@ -70,14 +71,14 @@ test('Dedicated child title view and locked-player return route avoid general de
   await f.page.locator('.kidsCard').first().click();assert(await f.page.locator('.kidsTitleHero h1').isVisible());assert(await f.page.getByText('Checked for Kids').isVisible());await screenshot(f.page,'kids-title-ipad');
   await f.page.evaluate(async()=>{await fetch('/api/kids/setup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:'a careful parent password',confirm:'a careful parent password'})});});
   await f.page.locator('.kidsTitleCopy .kidsButtonPrimary').click();await f.page.waitForFunction(()=>document.querySelector('[data-kids-mode-bar]'));
-  assert.equal(await f.page.locator('[data-sv-player-back]').getAttribute('href'),'/kids');assert.equal(await f.page.locator('.svPlayerTogether').isVisible(),false);assert.deepEqual(f.errors,[]);
+  assert.equal(await f.page.locator('[data-sv-player-back]').getAttribute('href'),'/kids');assert.equal(await f.page.locator('.svPlayerTogether').isVisible(),false);assert.equal(await f.page.locator('[data-player-download]').isVisible(),false);assert.equal(await f.page.locator('.topbar').isVisible(),false);assert.deepEqual(f.errors,[]);
  }finally{await f.context.close();}
 });
 
 test('Kids respects reduced motion and empty search provides a useful checked-catalog return', {skip:!available},async()=>{
  const f=await fixture({width:320,height:800});try{
   await f.page.emulateMedia({reducedMotion:'reduce'});assert.equal(await f.page.locator('.kidsCard').first().evaluate(node=>getComputedStyle(node).transitionDuration),'0s');
-  await f.page.locator('#kids-search').fill('No Such Little Adventure');await f.page.locator('.kidsSearch button').click();assert(await f.page.locator('.kidsEmpty').isVisible());assert(await f.page.getByRole('link',{name:'See all stories'}).isVisible());assert.deepEqual(f.errors,[]);
+  await f.page.locator('#kids-search').fill('No Such Little Adventure');await f.page.locator('.kidsSearch button').click();assert(await f.page.locator('.kidsEmpty').isVisible());assert(await f.page.getByRole('link',{name:'See all titles'}).isVisible());assert.deepEqual(f.errors,[]);
  }finally{await f.context.close();}
 });
 

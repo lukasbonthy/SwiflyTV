@@ -2,7 +2,7 @@ name: Experience browser and visual checks
 
 on:
   push:
-    branches: ["feat/swifly-experience-overhaul-20261113"]
+    branches: ["feat/swifly-experience-overhaul-20261113", "feat/swifly-native-sections-20261115"]
   workflow_dispatch:
 
 concurrency:

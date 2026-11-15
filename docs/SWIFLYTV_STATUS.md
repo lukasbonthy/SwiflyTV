@@ -2,6 +2,18 @@
 
 Updated: November 14, 2026 (America/New_York).
 
+## Active native sections correction
+
+The user rejected the shipped Kids, Audiobooks, Study and Languages appearance. The current visual correction is in `feat/swifly-native-sections-20261115`, based on main `b78f09813379401dd75353ff79cdbde5e46fa56e`. It removes the audiobook landscape and unrelated mood controls, pastel Kids branding, serif/oversized headings and language postcards. It uses native dark catalog components and original Study room scenes with neutral controls. Existing APIs, parental safeguards, playback and prior iPad fixes remain in place.
+
+Saved review source `ed4b818041d761fafbd7b6bafd40c9f92bcccc7c` is intact in draft PR165. Its source check `43681839629` passed all unit, recommendation, featured/wider browser and acceptance checks. Visual run `43681839571` passed142/146 (four model-dependent skips covered by wider checks); artifact14149146160 has301 screenshots/diagnostics. Fresh code/visual review found and corrected Study mobile headings, Scenic/Focus/fullscreen positioning, audiobook metadata/contrast and retained cover gradients, language touch targets, and medium player grid positioning.
+
+The remaining medium bottom-navigation reservation is now implemented locally with safe-area-aware player/dock/drawer/status offsets and geometry coverage at720×800 as well as the standard widths. The only previous PR-check failure was a170ms scrolling-state sampling race; its assertion now samples gesture/material atomically without changing application scrolling. Run hosted verification on this final source, inspect the resulting screenshots, merge PR165, deploy and verify live assets/flows. Production is still the completed release below. Do not rotate the configured Kids secret.
+
+Latest user correction is also implemented: Movies retains its original title/Genres, hero and row hierarchy, with a compact underlined Today / This week / This month popout. Selecting a period changes only Popular movies; the hero and Browse Movies retain the usual catalog. Month is explicitly popular releases in the current month. Ripples now use24×14 full-frame samples with whole-frame colors shared into dark edge regions, retain recent color through black and choose artwork/metadata color for an opening black frame. Playback/source/privacy/throttling guards are preserved.
+
+The integrated local source passes syntax/build and the full suite:1,771 passed, zero failed,283 browser checks deferred to hosted Chromium. Focused movie/catalog tests69/69 and player/ripple integration52/52 pass. New browser evidence covers period opening/closing/selection, real center-only video color and black-frame retention, and the final Study navigation spacing. Publish this exact source, complete hosted checks and inspect screenshots before merging/deployment.
+
 ## Completed experience overhaul
 
 - PR https://github.com/lukasbonthy/SwiflyTV/pull/164 is merged. Live application commit: `3e2c04663ccca9582dd609fca857d902174f3ec1`; its tree exactly matches tested source `608248cd84597ebbe155c0fff76b877beed25074` / tree `da5f95d8a7816ca540a03ce11f4e669f0d2a097c`.
@@ -12,7 +24,7 @@ Updated: November 14, 2026 (America/New_York).
 - Authenticated production verification passed **38 checks**: 13 routes and 20 exact asset/bundle hashes, distinct first/next movie pages, real audiobook title and author searches with playable results and chapters, and an isolated browser parent-lock cycle. An adult title was blocked, a wrong password rejected and the correct password unlocked. Initial application logs contained zero errors. Private evidence is `/workspace/scratch/7372448636fd/live-experience-verification.json`; never expose its associated cookie file.
 - The dedicated `SWIFLY_KIDS_SECRET` is configured privately in Render. **Do not regenerate or rotate it.** Existing account/access variables were preserved. Parent controls are explicitly browser scoped; conservative ratings, route/media guards and destination-bound HLS tokens are enforced. Community creator permissions use immutable account IDs.
 - Physical iPad Safari frame rate remains unmeasured. Hosted browser fixtures exercise real local application handlers and media but do not validate every external movie provider. Protected cross-origin frames use the neutral ripple fallback. The optional separate cloud-browser review stopped at the access gate; its temporary tab was closed, and authenticated HTTP plus hosted browser evidence completed verification without another user login.
-- No implementation, review or publication work remains. Preserve the local histories and prior iPad safeguards. Current worktree is `work/swifly-experience-release`; the completed spec, plan and review are under `docs/superpowers/` and `docs/SWIFLYTV_REVIEW.md`.
+- The prior overhaul is complete; the native sections correction above is now active. Preserve the local histories and prior iPad safeguards. Current worktree is `work/swifly-experience-release`; the completed spec, plan and review are under `docs/superpowers/` and `docs/SWIFLYTV_REVIEW.md`.
 
 ## Source and production
 

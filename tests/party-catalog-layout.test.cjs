@@ -9,9 +9,10 @@ test('Party tools follow the hero in catalog content instead of appearing under 
  const env=await catalog(),d=env.window.document,hero=d.querySelector('.dsHero'),tools=d.querySelector('[data-party-browse]'),content=d.querySelector('.dsContent');
  assert(hero.compareDocumentPosition(tools)&env.window.Node.DOCUMENT_POSITION_FOLLOWING,'Party tools must appear after the hero, outside the navigation area');
  assert(content.contains(tools),'Party tools must share the rows’ content gutter');
- const heading=content.querySelector('.svBrowseHeading');assert(heading,'catalog tools keep their own heading and filters');
- assert(heading.compareDocumentPosition(tools)&env.window.Node.DOCUMENT_POSITION_FOLLOWING,'Party tools follow the catalog heading inside the content gutter');
- assert.equal(d.querySelectorAll('.dsHero').length,1);assert(d.querySelector('.svBrowseFilters select[name="genre"]'));
+ const heading=d.querySelector('.dsBrowseTop');assert(heading,'Party browsing keeps the established Movies and Genres heading');
+ assert(heading.compareDocumentPosition(hero)&env.window.Node.DOCUMENT_POSITION_FOLLOWING,'The original catalog heading precedes the hero');
+ assert.equal(content.querySelector('.svBrowseHeading'),null,'Party browsing must not restore the rejected collection dashboard');
+ assert.equal(d.querySelectorAll('.dsHero').length,1);assert(heading.querySelector('.genreDropdown'));
 });
 test('The party section uses the catalog gutter without an extra boxed banner',async()=>{
  const env=await catalog();styles(env);const css=env.window.getComputedStyle(env.window.document.querySelector('[data-party-browse]'));

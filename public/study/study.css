@@ -15,180 +15,102 @@
 
 .svStudy.studyPaused .studyRain{animation-play-state:paused}.svStudy.studyReduced *,.svStudy.studyReduced *::before,.svStudy.studyReduced *::after{animation:none!important;transition:none!important}
 
-/* Scenic room: the landscape is the page, with tools available on demand. */
-/* The normal browsing gutter leaves an empty strip on this viewport-sized room. */
+
+/* The room is a functional backdrop; the controls use Swifly's neutral chrome. */
 html:has(.svStudy[data-study-root]){scrollbar-gutter:auto}
-.svStudy[data-study-root]{
-  --study-accent:#ead8a6;--study-ink:#fbf8ef;--study-muted:rgba(247,241,225,.65);--study-line:rgba(247,235,210,.14);
-  position:relative;isolation:isolate;max-width:none;width:100%;height:max(780px,100svh);min-height:100svh;margin:0;padding:0;
-  background:#18231c;color:var(--study-ink);overflow:hidden;
-}
-.svStudy .studyStage{position:absolute;inset:0;min-height:0;height:100%;border:0;border-radius:0;box-shadow:none;display:block;background:#18231c;overflow:hidden}
-.svStudy .studyScenery{transform:scale(1.015);filter:brightness(var(--study-brightness,.9)) blur(var(--study-blur,0px))}
-.svStudy .studyScenery>img,.svStudy .studyScenery>video{object-position:60% center}
-.svStudy .studyStageShade{background:linear-gradient(90deg,rgba(3,10,8,.48),rgba(4,12,9,.03) 55%),linear-gradient(0deg,rgba(4,10,8,.8),transparent 52%,rgba(4,10,8,.42))}
-.svStudy .studyHeading{position:absolute;z-index:4;top:112px;left:clamp(28px,4vw,64px);right:clamp(28px,4vw,64px);margin:0;gap:20px;align-items:center;flex-direction:row}
-.studyBrand{display:flex;align-items:center;gap:12px}
-.studyBrandMark{display:grid;place-items:center;width:42px;height:42px;border-radius:15px;border:1px solid #f8eac62c;background:#0a191b66;color:#ead8a6}
-.studyBrandMark .studyIcon{width:22px;height:22px}
-.svStudy .studyHeading h1{font-size:25px;line-height:1.2;letter-spacing:-.055em;font-weight:600;margin:0;color:#fffaf0;text-shadow:0 2px 12px #0005}
-.studyHeading h1 em{font-family:Georgia,serif;font-weight:400;letter-spacing:-.06em}
-.svStudy .studyIntro{font-size:10px;letter-spacing:.035em;line-height:1.4;margin-top:5px;color:#f8f0dcaf}
-.svStudy .studyHeadingActions{padding:5px 7px;background:rgba(8,19,17,.51);border:1px solid #f8eac622;border-radius:18px;gap:3px;flex-wrap:nowrap;width:auto}
-.svStudy .studyHeadingActions .studyIconButton{width:36px;height:36px;border-radius:11px}
-.svStudy .studyHeadingActions .studyIcon{width:17px;height:17px;flex-basis:17px}
-.svStudy .studyWallpaperButton{font-size:10px;min-height:34px;border-radius:11px;background:#f8ebc914;border-color:#f8ebc920;padding:8px 12px;margin-left:4px;white-space:nowrap}
-.svStudy .studyStageTop{position:absolute;top:196px;left:clamp(28px,4vw,64px);right:clamp(28px,4vw,64px);padding:0}
-.svStudy .studySceneTag{color:#fbf2e0ca;font-size:10px;letter-spacing:.12em;text-transform:uppercase}
-.svStudy .studySceneTag .studyIcon{width:14px;height:14px}
-.svStudy .studyClock{font-size:13px;font-weight:500;background:#0a17196b;border:1px solid #f8eac622;border-radius:10px;padding:9px 12px;backdrop-filter:none;font-variant-numeric:tabular-nums}
-.svStudy .studyStageBody{position:absolute;inset:0;min-height:0;display:block;padding:0;pointer-events:none}
-.svStudy .studyTimer{position:absolute;pointer-events:auto;top:270px;left:clamp(28px,4vw,64px);width:242px;min-width:0;padding:22px 23px 17px;border-radius:20px;background:linear-gradient(145deg,rgba(9,20,17,.77),rgba(11,23,20,.46));border:1px solid #f8eac629;box-shadow:0 16px 45px #0002;backdrop-filter:blur(12px);text-align:center}
-.svStudy .studyTimer>p{font-size:8px;letter-spacing:.17em;color:#f3ead4ad;line-height:1.4}
-.svStudy .studyTimerDigits{font-family:var(--st-font,inherit);font-size:60px;line-height:1.05;letter-spacing:-.07em;font-weight:300;margin:10px 0 13px;color:#fff9e9}
-.svStudy .studyTimerPresets{gap:3px;margin-bottom:13px}
-.svStudy .studyTimerPresets button{font-size:10px;padding:7px 7px;color:#f2e8d4a1;border-radius:8px}
-.svStudy .studyTimerPresets button[aria-pressed=true]{background:#f6e6ba22;color:#fff8e6}
-.svStudy .studyTimerPresets button span{font-size:8px}
-.svStudy .studyTimerActions{gap:7px}
-.svStudy .studyTimerActions .studyButton{min-height:36px;border-radius:10px;font-size:10px;padding:9px 14px}
-.svStudy .studyPrimary{background:#ead8a6;border-color:#ead8a6;color:#20291e}
-.svStudy .studyCustomTimer{margin-top:12px;font-size:8px;gap:5px;color:#f2e8d487}
-.svStudy .studyCustomTimer input{font-size:9px}
-.svStudy .studySceneCaption{position:absolute;pointer-events:auto;left:clamp(28px,4vw,64px);bottom:264px;max-width:min(550px,calc(100% - 56px));padding:0;text-shadow:0 2px 24px #0006}
-.svStudy .studySceneCaption .studyEyebrow{color:#fff5dcab;font-size:8px;letter-spacing:.22em}
-.svStudy .studySceneCaption h2{font-family:Georgia,'Times New Roman',serif;font-size:clamp(31px,3.5vw,49px);font-weight:400;font-style:italic;letter-spacing:-.04em;line-height:1.13;margin:9px 0 11px;color:#fff9e9}
-.svStudy .studySceneCaption>p{font-size:11px;line-height:1.5;color:#f3e8d1b3;letter-spacing:.01em}
-.svStudy .studyPlayer{position:absolute;z-index:6;bottom:54px;left:0;right:0;margin:auto;width:min(880px,calc(100% - 64px));min-height:86px;grid-template-columns:minmax(150px,1.1fr) auto minmax(110px,.9fr) minmax(80px,.45fr);gap:19px;padding:16px 20px;border:1px solid #f6e7bd26;border-radius:23px;background:linear-gradient(145deg,rgba(12,25,21,.92),rgba(9,19,17,.83));box-shadow:0 16px 55px #0004;backdrop-filter:blur(16px)}
-.svStudy .studyAlbumMark{width:43px;height:43px;border-radius:14px;flex-basis:43px;background:radial-gradient(circle at 35% 25%,#d6b96b,#716d3a 47%,#203c2d);border-color:#efdfaa40;color:#fff2c6;box-shadow:0 0 24px #c9ab5117}
-.svStudy .studyTrackIdentity strong{font-size:12px;color:#faf4df;font-weight:500}
-.svStudy .studyTrackIdentity div>span{font-size:9px;color:#e1dcc494;margin-top:6px}
-.svStudy .studyTransport [data-study-play]{width:42px;height:42px;background:#ead8a6;color:#233124;border:0}
-.svStudy .studyTransport [data-study-play][aria-pressed=true]{background:#ead8a6;color:#233124}
-.svStudy .studySeek>div{font-size:8px;color:#e1dcc499}
-.svStudy .studyStatusRow{position:absolute;z-index:5;bottom:16px;left:22px;right:22px;padding:0;min-height:20px;justify-content:center;text-align:center;pointer-events:none}
-.svStudy .studyStatusRow>p{font-size:9px;color:#ece7d49c;line-height:1.5;max-width:80ch;text-shadow:0 1px 8px #0008;pointer-events:auto}
-.svStudy .studyStatusRow>p[data-error=true]{color:#ffe0c2;background:#241e18e6;border:1px solid #e5b98966;border-radius:9px;padding:8px 12px}
-.svStudy .studyLocalNote{display:none}
-.studyToolsDock{position:absolute;z-index:7;bottom:160px;left:0;right:0;margin:auto;width:max-content;max-width:calc(100% - 40px);border:1px solid #f6e7bd26;border-radius:19px;background:linear-gradient(135deg,#11261dd9,#0a1a15db);box-shadow:0 10px 34px #0002;backdrop-filter:blur(12px)}
-.svStudy .studyTabs{display:flex;justify-content:center;gap:4px;padding:7px;border:0;overflow:visible;scrollbar-width:none}
-.svStudy .studyTabs [role=tab]{display:flex;flex-direction:column;justify-content:center;gap:6px;min-height:52px;width:67px;flex:0 1 67px;border-radius:12px;padding:6px 9px;font-size:9px;color:#f0e9d4b0;transition:background .18s ease,color .18s ease}
-.svStudy .studyTabs .studyIcon{width:17px;height:17px;flex-basis:17px}
-.svStudy .studyTabs [role=tab]:hover{background:#f7e9bd0d;color:#fff3cc}
-.svStudy .studyTabs [aria-selected=true]{background:#ead8a61a;color:#ead8a6;border-color:#ead8a62e}
-.svStudy .studyWorkspace{position:absolute;z-index:15;top:186px;right:clamp(28px,4vw,64px);bottom:249px;width:min(710px,calc(100% - 70px));border:1px solid #f2e3bd35;border-radius:24px;background:linear-gradient(150deg,rgba(15,25,22,.98),rgba(13,22,20,.97));overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#b5ad8d66 transparent;box-shadow:0 30px 100px #0005;animation:studyToolsIn .23s ease-out;backdrop-filter:none}
-.studyDrawerHead{position:sticky;z-index:2;top:0;display:flex;align-items:center;justify-content:space-between;gap:18px;background:#121f1bfa;border-bottom:1px solid #ead8a61c;padding:18px 24px}
-.studyDrawerHead .studyEyebrow{font-size:8px;letter-spacing:.17em;color:#e3d6b785}
-.studyDrawerHead h2{font-family:Georgia,serif;font-size:25px;font-weight:400;letter-spacing:-.035em;margin:4px 0 0;color:#f8efda}
-.studyDrawerHead .studyIconButton{background:#f0e3bf08;border-color:#f0e3bf18;border-radius:11px;width:34px;height:34px}
-.svStudy .studyPanel{padding:23px}
-.svStudy .studyPanelHead{gap:16px;margin-bottom:21px}
-.svStudy .studyPanelHead h2{font-size:18px;letter-spacing:-.035em;color:#f7f0e0}
-.svStudy .studyPanelHead .studyEyebrow{display:none}
-.svStudy .studyPanelHead .studyButton{padding:9px 11px;font-size:9px;min-height:34px}
-.svStudy .studySceneGrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.svStudy .studySceneChoice{border-radius:13px;aspect-ratio:1.45;border-color:#e6d6b12b}
-.svStudy .studySceneChoice img{filter:saturate(.9);transition:transform .25s ease,filter .25s ease}
-.svStudy .studySceneChoice:hover img{transform:scale(1.055);filter:saturate(1.15)}
-.svStudy .studySceneChoice[aria-pressed=true]{outline:2px solid #ead8a6;outline-offset:2px}
-.svStudy .studySceneChoice span{font-size:10px;left:11px;right:11px;bottom:11px}
-.svStudy .studySceneChoice small{font-size:7px;letter-spacing:.11em;color:#fff4dbb0}
-.svStudy .studySceneChoice[aria-pressed=true] span::after{content:'✓';font-size:13px;top:-2px;right:1px}
-.svStudy .studyFootnote{color:#ded5bd91;font-size:9px;line-height:1.7}
-.svStudy .studyTrackList{grid-template-columns:1fr;max-height:none;gap:4px}
-.svStudy .studyTrackRow{min-height:55px;padding:11px 12px;background:#e4d5b103;border-radius:10px;transition:background .18s ease}
-.svStudy .studyTrackRow:hover{background:#eedfbb0a}
-.svStudy .studyTrackRow[aria-pressed=true]{background:#ead8a610;border-color:#ead8a627}
-.svStudy .studyTrackRow strong{font-size:11px;color:#f6eed8}
-.svStudy .studyTrackRow small{font-size:9px}
-.svStudy .studySmallCard{background:#f0dfb303;border-color:#ead8a61d;border-radius:14px}
-.svStudy .studyStats>div{background:#ead8a607;border-color:#ead8a61d;padding:14px}
-.svStudy .studyStats strong{font-size:25px;color:#ead8a6}
-.svStudy .studyStats span{font-size:8px;line-height:1.5}
-.svStudy .studyRoomCard{background:#ead8a606;border-color:#ead8a61f}
-.svStudy .studyRoomCard[data-joined=true]{border-color:#ead8a677}
-.svStudy .studyPreset:hover,.svStudy .studyRoomCard:hover{background:#ead8a60b;border-color:#ead8a64a}
-.svStudy.studyNight .studyStageShade{background:linear-gradient(90deg,#04091599,#07132618 70%),linear-gradient(0deg,#030b12e3,transparent 70%,#03091666)}
-.svStudy.studyFocusView .studyWorkspace,.svStudy.studyFocusView .studyToolsDock,.svStudy.studyFocusView .studyPlayer,.svStudy.studyFocusView .studyStatusRow,.svStudy.studyFocusView .studySceneCaption,.svStudy.studyFocusView .studyBrand{display:none}
-.svStudy.studyFocusView .studyHeading{justify-content:flex-end}
-.svStudy.studyFocusView .studyStage{min-height:0}
-.svStudy.studyFocusView .studyHeadingActions .studyIconButton:not([data-study-fullscreen]){display:none}
-.svStudy.studySolid .studyWorkspace,.svStudy.studySolid .studyToolsDock,.svStudy.studySolid .studyPlayer,.svStudy.studySolid .studyHeadingActions,.svStudy.studySolid .studyTimer,.svStudy.studySolid .studyClock{background:#14201b;backdrop-filter:none}
-.svStudy.studyHighContrast{--study-muted:#e9e4d6;--study-line:#e0d4b8a0}
-.svStudy.studyHighContrast .studyStatusRow>p,.svStudy.studyHighContrast .studyIntro,.svStudy.studyHighContrast .studySceneCaption>p{color:#fff5d9}
-.svStudy:fullscreen{padding:0!important;max-width:none;height:100svh;min-height:100svh;overflow:hidden}
-.svStudy:fullscreen .studyHeading{top:34px}.svStudy:fullscreen .studyStageTop{top:112px}.svStudy:fullscreen .studyTimer{top:185px}.svStudy:fullscreen .studyWorkspace{top:110px}.svStudy:fullscreen .studyStage{min-height:0}
-@keyframes studyToolsIn{from{opacity:0;transform:translateY(10px) scale(.99)}to{opacity:1;transform:translateY(0) scale(1)}}
-@media(max-width:1050px){
- .svStudy .studyHeading{top:112px}.svStudy .studyHeadingActions{gap:1px;padding:4px}.svStudy .studyHeadingActions .studyIconButton{width:32px;height:34px}
- .svStudy .studyPlayer{width:calc(100% - 56px);grid-template-columns:minmax(125px,1fr) auto minmax(95px,.7fr);padding:13px 18px;gap:8px 15px}
- .svStudy .studyVolume{grid-column:3;grid-row:1;width:95px;max-width:95px;justify-self:end}.svStudy .studySeek{grid-column:1/-1;grid-row:2;display:grid;grid-template-columns:1fr auto;align-items:center;gap:15px}.svStudy .studySeek>div{gap:12px;min-width:66px}
- .svStudy .studyTimer{width:225px}.svStudy .studyWorkspace{width:min(660px,calc(100% - 56px));bottom:250px}.svStudy .studyRoomGrid{grid-template-columns:1fr 1fr}
-}
+.svStudy[data-study-root]{--study-accent:#f1f1f1;--study-ink:#eee;--study-muted:#999;--study-line:#ffffff1c;--study-surface:#111;position:relative;max-width:none;width:100%;height:max(780px,100svh);min-height:100svh;margin:0;padding:0;background:#080808;color:#eee;isolation:isolate;overflow:hidden;font:inherit}
+.svStudy .studyStage{position:absolute;inset:0;height:100%;min-height:0;display:block;border:0;border-radius:0;box-shadow:none;overflow:hidden;background:#080808}
+.svStudy .studyScenery{transform:none;filter:brightness(var(--study-brightness,.86)) blur(var(--study-blur,0px))}.svStudy .studyScenery>img,.svStudy .studyScenery>video{object-position:center center}
+.svStudy .studyStageShade{background:linear-gradient(90deg,#0009,transparent 60%),linear-gradient(0deg,#000b,transparent 45%,#0006)}
+.svStudy .studyHeading{position:absolute;z-index:4;top:112px;left:var(--sv-page-gutter,3vw);right:var(--sv-page-gutter,3vw);display:flex;align-items:center;justify-content:space-between;flex-direction:row;gap:24px;margin:0}
+.studyBrand{display:flex;align-items:center;gap:12px}.studyBrandMark{display:none}
+body.svCleanShell .svStudy .studyHeading h1{font:inherit!important;font-size:32px!important;font-weight:550!important;line-height:1.15!important;letter-spacing:-.03em!important;margin:0;color:#f5f5f5;text-shadow:0 2px 16px #0008}
+.svStudy .studyIntro{margin-top:8px;font-size:12px;line-height:1.5;color:#bbb}
+.svStudy .studyHeadingActions{display:flex;align-items:center;width:auto;gap:3px;padding:4px;background:#111c;border:1px solid #ffffff20;border-radius:12px;flex-wrap:nowrap}
+.svStudy .studyHeadingActions .studyIconButton{width:40px;height:40px;border-radius:8px}.svStudy .studyIconButton{color:#bbb}.svStudy .studyIconButton:hover{background:#ffffff12;color:#fff}.svStudy .studyIconButton[aria-pressed=true]{background:#ffffff15;color:#fff;border-color:#ffffff18}
+.svStudy .studyWallpaperButton{min-height:40px;margin-left:3px;padding:10px 13px;border:0;border-left:1px solid #ffffff18;border-radius:6px;background:transparent;font-size:11px;color:#ccc}
+.svStudy .studyStageTop{position:absolute;top:190px;left:var(--sv-page-gutter,3vw);right:var(--sv-page-gutter,3vw);padding:0;display:flex;align-items:center;justify-content:space-between}
+.svStudy .studySceneTag{font-size:11px;letter-spacing:0;color:#aaa;text-transform:none}.svStudy .studySceneTag .studyIcon{width:15px;height:15px}.svStudy .studyClock{padding:8px 11px;font-size:12px;border:1px solid #ffffff15;border-radius:8px;background:#111a;color:#bbb;backdrop-filter:none}
+.svStudy .studyStageBody{position:absolute;inset:0;display:block;min-height:0;padding:0;pointer-events:none}
+.svStudy .studyTimer{position:absolute;pointer-events:auto;top:245px;left:var(--sv-page-gutter,3vw);width:252px;min-width:0;padding:22px 21px 18px;border:1px solid #ffffff25;border-radius:16px;background:#101010dc;box-shadow:0 12px 35px #0002;backdrop-filter:none;text-align:center}
+.svStudy .studyTimer>p{font-size:11px;letter-spacing:0;text-transform:none;line-height:1.4;color:#999}
+.svStudy .studyTimerDigits{font:inherit;font-size:64px;line-height:1.05;font-weight:300;letter-spacing:-.06em;margin:13px 0 19px;color:#f0f0f0;font-variant-numeric:tabular-nums}
+.svStudy .studyTimerPresets{display:flex;justify-content:center;gap:3px;margin-bottom:15px}.svStudy .studyTimerPresets button{font-size:11px;min-height:35px;min-width:43px;padding:7px 5px;color:#888;border-radius:7px}.svStudy .studyTimerPresets button span{font-size:9px}.svStudy .studyTimerPresets button[aria-pressed=true]{background:#ffffff14;color:#eee}
+.svStudy .studyTimerActions{gap:8px}.svStudy .studyTimerActions .studyButton{min-height:42px;padding:10px 14px;border-radius:9px;font-size:11px}
+.svStudy .studyPrimary{background:#eee;color:#111;border-color:transparent}.svStudy .studyQuiet{background:#ffffff08;color:#bbb;border-color:#ffffff18}.svStudy .studyQuiet:hover{background:#ffffff13;color:#eee}
+.svStudy .studyCustomTimer{margin-top:15px;font-size:9px;color:#777}.svStudy .studyCustomTimer input{font-size:10px;color:#ccc}
+.svStudy .studySceneCaption{position:absolute;left:var(--sv-page-gutter,3vw);bottom:260px;max-width:60%;padding:0;pointer-events:auto;display:flex;align-items:center;gap:9px;text-shadow:0 1px 10px #0008}
+.svStudy .studySceneCaption .studyEyebrow{font-size:10px;letter-spacing:0;font-weight:400;color:#888}
+body.svCleanShell .svStudy .studySceneCaption h2{font-family:inherit!important;font-size:12px!important;line-height:1.4;letter-spacing:0;font-style:normal;font-weight:400;margin:0;text-transform:none;color:#bbb}
+.svStudy .studyPlayer{position:absolute;z-index:6;bottom:52px;left:0;right:0;margin:auto;width:min(880px,calc(100% - 64px));min-height:86px;display:grid;grid-template-columns:minmax(150px,1.1fr) auto minmax(115px,1fr) minmax(90px,.45fr);gap:18px;padding:17px 21px;border:1px solid #ffffff22;border-radius:16px;background:#101010ee;box-shadow:0 12px 40px #0005;backdrop-filter:none}
+.svStudy .studyAlbumMark{width:43px;height:43px;flex-basis:43px;border:1px solid #ffffff15;border-radius:10px;background:#252525;color:#aaa;box-shadow:none}
+.svStudy .studyTrackIdentity strong{font-size:13px;font-weight:500;color:#ddd}.svStudy .studyTrackIdentity div>span{font-size:10px;color:#777;margin-top:5px}
+.svStudy .studyTransport{gap:1px}.svStudy .studyTransport .studyIconButton{width:34px;height:38px}.svStudy .studyTransport [data-study-play],.svStudy .studyTransport [data-study-play][aria-pressed=true]{width:44px;height:44px;margin:0 5px;background:#eee;color:#111;border:0}
+.svStudy .studySeek>div{font-size:9px;color:#777}.svStudy .studyVolume{gap:4px}.svStudy .studyVolume .studyIconButton{width:30px;height:36px}
+.svStudy .studyStatusRow{position:absolute;z-index:5;bottom:16px;left:22px;right:22px;min-height:18px;padding:0;text-align:center;justify-content:center;pointer-events:none}.svStudy .studyStatusRow>p{font-size:10px;line-height:1.5;color:#888;max-width:75ch;pointer-events:auto}.svStudy .studyStatusRow>p[data-error=true]{color:#e5b7b7;background:#231818;border:1px solid #774747;padding:8px 12px;border-radius:8px}.svStudy .studyLocalNote{display:none}
+.studyToolsDock{position:absolute;z-index:7;bottom:162px;left:0;right:0;margin:auto;width:max-content;max-width:calc(100% - 40px);border:1px solid #ffffff20;border-radius:13px;background:#111e;box-shadow:0 10px 30px #0002}
+.svStudy .studyTabs{display:flex;justify-content:center;gap:3px;padding:6px;border:0;overflow:visible}.svStudy .studyTabs [role=tab]{display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 13px;flex:0 1 auto;border-radius:8px;font-size:11px;color:#999}.svStudy .studyTabs .studyIcon{width:16px;height:16px;flex-basis:16px}.svStudy .studyTabs [role=tab]:hover{background:#ffffff0b;color:#eee}.svStudy .studyTabs [aria-selected=true]{background:#ffffff15;color:#fff;border-color:transparent}
+.svStudy .studyWorkspace{position:absolute;z-index:15;top:190px;right:var(--sv-page-gutter,3vw);bottom:246px;width:min(660px,calc(100% - 80px));margin:0;border:1px solid #ffffff25;border-radius:16px;background:#121212fa;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#555 transparent;box-shadow:0 20px 80px #0007;backdrop-filter:none;animation:studyNativeTools .2s ease-out}
+.studyDrawerHead{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:17px 22px;background:#151515;border-bottom:1px solid #ffffff13}.studyDrawerHead .studyEyebrow{display:none}
+body.svCleanShell .svStudy .studyDrawerHead h2{font-family:inherit!important;font-size:20px!important;font-weight:500;letter-spacing:-.02em;margin:0;color:#ddd}.studyDrawerHead .studyIconButton{width:40px;height:40px;border-radius:9px;background:#ffffff08}
+.svStudy .studyPanel{padding:23px}.svStudy .studyPanelHead .studyEyebrow{display:none}.svStudy .studyPanelHead{margin-bottom:19px;gap:15px}.svStudy .studyPanelHead h2{font-size:17px;font-weight:500;letter-spacing:-.02em}.svStudy .studyPanelHead .studyButton{font-size:11px}
+.svStudy .studySceneChoice{border-radius:10px;border-color:#ffffff15}.svStudy .studySceneChoice[aria-pressed=true]{border-color:#eee;box-shadow:none}.svStudy .studySceneChoice small{font-size:9px}.svStudy .studySceneChoice span{font-size:12px}
+.svStudy .studyTrackRow{border-radius:9px}.svStudy .studyTrackRow[aria-current=true]{background:#ffffff0a;border-color:#ffffff25}.svStudy .studyTrackRow strong{font-size:12px}.svStudy .studyTrackRow small{font-size:10px}.svStudy .studySlider>span{font-size:12px}.svStudy .studyButton:hover{transform:none}.svStudy .studyPreset,.svStudy .studyRoomCard,.svStudy .studyStats>div{background:#1a1a1a;border-color:#ffffff16}.svStudy input,.svStudy select{color-scheme:dark}.svStudy input[type=range]{accent-color:#ddd}
+.svStudy.studyNight .studyStageShade{background:linear-gradient(0deg,#000d,transparent 80%),#05051433}
+.svStudy.studyFocusView .studyTimer,.svStudy.studyFocusView .studyToolsDock,.svStudy.studyFocusView .studySceneCaption,.svStudy.studyFocusView .studyStageTop{visibility:hidden;pointer-events:none}.svStudy.studyFocusView .studyHeadingActions>:not([data-study-immersive]){display:none}.svStudy.studyFocusView .studyBrand{visibility:hidden}
+.svStudy:fullscreen .studyHeading{top:28px}.svStudy:fullscreen .studyStageTop{top:100px}.svStudy:fullscreen .studyTimer{top:155px}.svStudy:fullscreen .studyWorkspace{top:110px}.svStudy:fullscreen .studyPlayer{bottom:35px}.svStudy:fullscreen .studyToolsDock{bottom:144px}
+.svStudy[data-study-layout=focus] .studyTimer{left:50%;top:44%;transform:translate(-50%,-50%);width:280px}
+.svStudy[data-study-layout=scenic] .studyTimer{display:block;width:300px;text-align:center}.svStudy[data-study-layout=scenic] .studyTimerDigits{font-size:64px}.svStudy[data-study-layout=scenic] .studyTimerPresets{margin-bottom:15px}.svStudy[data-study-layout=scenic] .studyCustomTimer{justify-content:center;margin-top:16px}
+@keyframes studyNativeTools{from{opacity:0;translate:0 8px}to{opacity:1;translate:0 0}}
+@media(max-width:1050px) and (min-width:701px){.svStudy .studyPlayer{width:min(880px,calc(100% - 52px));gap:12px;padding:17px;grid-template-columns:minmax(120px,1.1fr) auto minmax(100px,.8fr) minmax(86px,.45fr)}.svStudy .studySeek,.svStudy .studyVolume{grid-column:auto;grid-row:auto;margin:0}.svStudy .studyVolume{max-width:none;justify-self:stretch}.svStudy .studyTrackIdentity strong{font-size:12px}.svStudy .studyTransport .studyIconButton{width:30px}.svStudy .studyWorkspace{width:min(570px,calc(100% - 60px));right:30px}}
 @media(max-width:700px){
- .svStudy[data-study-root]{height:max(760px,100svh);min-height:100svh}
- .svStudy .studyScenery>img,.svStudy .studyScenery>video{object-position:61% center}
- .svStudy .studyStageShade{background:linear-gradient(0deg,#07110fe8,transparent 70%),linear-gradient(90deg,#07100e4d,transparent 80%),linear-gradient(180deg,#08151080,transparent 38%)}
- .svStudy .studyHeading{top:102px;left:20px;right:20px;gap:10px;align-items:center}
- .svStudy .studyBrand{gap:8px}.svStudy .studyBrandMark{width:31px;height:34px;border-radius:11px}.svStudy .studyBrandMark .studyIcon{width:17px;height:17px}
- .svStudy .studyHeading h1{font-size:21px;white-space:nowrap}.svStudy .studyIntro{font-size:8px;margin-top:4px}
- .svStudy .studyHeadingActions{gap:1px;padding:3px;border-radius:13px}.svStudy .studyHeadingActions .studyIconButton{width:28px;height:31px}.svStudy .studyHeadingActions .studyIcon{width:15px;height:15px}
- .svStudy .studyHeadingActions [data-study-clock-toggle]{display:none}.svStudy .studyWallpaperButton{font-size:8px;min-height:30px;border-radius:8px;padding:7px 8px;margin-left:1px}
- .svStudy .studyStageTop{top:163px;left:22px;right:22px}.svStudy .studySceneTag{font-size:8px;gap:6px;letter-spacing:.12em}.svStudy .studyClock{font-size:11px;padding:7px 9px;border-radius:8px}
- .svStudy .studyTimer{top:222px;left:22px;width:200px;padding:18px 17px 14px;border-radius:17px;backdrop-filter:blur(8px)}
- .svStudy .studyTimer>p{font-size:7px}.svStudy .studyTimerDigits{font-size:50px;line-height:1.05;margin:9px 0 10px}
- .svStudy .studyTimerPresets{gap:2px;margin-bottom:10px}.svStudy .studyTimerPresets button{font-size:9px;padding:6px}.svStudy .studyTimerPresets button span{font-size:7px}
- .svStudy .studyTimerActions .studyButton{font-size:9px;min-height:33px;padding:8px 10px}.svStudy .studyCustomTimer{margin-top:10px;font-size:7px}
- .svStudy .studySceneCaption{left:22px;bottom:329px;max-width:calc(100% - 44px)}.svStudy .studySceneCaption h2{font-size:30px;line-height:1.12;margin:0}.svStudy .studySceneCaption .studyEyebrow,.svStudy .studySceneCaption>p{display:none}
- .svStudy .studyToolsDock{bottom:242px;max-width:calc(100% - 40px);border-radius:17px}
- .svStudy .studyTabs{gap:2px;padding:6px}.svStudy .studyTabs [role=tab]{min-height:48px;width:48px;flex-basis:48px;font-size:8px;gap:5px;padding:6px 3px;border-radius:10px}.svStudy .studyTabs .studyIcon{width:16px;height:16px;flex-basis:16px}
- .svStudy .studyPlayer{bottom:109px;width:calc(100% - 36px);grid-template-columns:minmax(0,1fr) auto;gap:9px 8px;min-height:105px;padding:14px 14px 12px;border-radius:20px;background:linear-gradient(145deg,#15291fea,#0e1d17ed)}
- .svStudy .studyTrackIdentity{gap:9px}.svStudy .studyAlbumMark{width:35px;height:38px;flex-basis:35px;border-radius:11px}.svStudy .studyAlbumMark .studyIcon{width:18px;height:18px}
- .svStudy .studyTrackIdentity strong{font-size:10px}.svStudy .studyTrackIdentity div>span{font-size:7px;margin-top:5px}
- .svStudy .studyTransport{grid-column:2;grid-row:1;justify-self:end;gap:0}.svStudy .studyTransport .studyIconButton{width:27px;height:30px}.svStudy .studyTransport [data-study-play]{width:35px;height:35px;margin:0 1px}.svStudy .studyTransport [data-study-favorite]{display:inline-grid}
- .svStudy .studySeek{display:block;grid-column:1;grid-row:2;margin:0}.svStudy .studySeek>div{display:flex;gap:5px;font-size:7px}.svStudy .studyVolume{grid-column:2;grid-row:2;max-width:96px;width:96px}.svStudy .studyVolume .studyIconButton{width:25px;flex-basis:25px}.svStudy .studyVolume input{min-width:0}
- .svStudy .studyStatusRow{bottom:82px;left:22px;right:22px;min-height:18px}.svStudy .studyStatusRow>p{font-size:7px;max-width:100%}
- .svStudy .studyWorkspace{top:181px;bottom:322px;right:18px;width:calc(100% - 36px);border-radius:20px}
- .studyDrawerHead{padding:14px 16px;gap:12px}.studyDrawerHead h2{font-size:22px}.studyDrawerHead .studyEyebrow{font-size:7px}.studyDrawerHead .studyIconButton{width:31px;height:31px}
- .svStudy .studyPanel{padding:18px 15px}.svStudy .studyPanelHead{gap:12px;margin-bottom:17px;align-items:flex-start;flex-direction:column}.svStudy .studyPanelHead h2{font-size:17px}.svStudy .studyPanelHead .studyButton{font-size:8px;padding:8px 10px;min-height:31px}
- .svStudy .studySceneGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.svStudy .studySceneChoice{aspect-ratio:1.5;border-radius:11px}.svStudy .studySceneChoice span{left:9px;right:9px;bottom:8px;font-size:9px}.svStudy .studySceneChoice small{font-size:6px}
- .svStudy .studyMusicFilters{gap:8px}.svStudy .studyTrackRow{padding:10px 9px;min-height:52px}.svStudy .studyTrackRow strong{font-size:10px}
- .svStudy .studyStats{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.svStudy .studyStats>div{padding:12px 9px}.svStudy .studyStats strong{font-size:23px}.svStudy .studyStats span{font-size:7px}
- .svStudy .studyRoomGrid{grid-template-columns:1fr}.svStudy .studyRoomIdentity{grid-template-columns:1fr}.svStudy .studyTwoColumns{grid-template-columns:1fr}.svStudy .studyFootnote{font-size:8px}
- .svStudy .studyPresetGrid{grid-template-columns:1fr 1fr;gap:9px}.svStudy .studyPreset{padding:12px}.svStudy .studyPreset strong{font-size:10px}.svStudy .studyPreset span{font-size:8px}
- .svStudy .studyMixGrid{gap:20px 16px}.svStudy .studySlider>span{font-size:9px}.svStudy .studyDeviceState{display:none}.svStudy .studyVideoGrid{grid-template-columns:1fr 1fr}
- .svStudy.studyFocusView .studyHeadingActions [data-study-fullscreen]{display:inline-grid}.svStudy.studyFocusView .studyStage{min-height:0}
- .svStudy:fullscreen .studyHeading{top:25px}.svStudy:fullscreen .studyStageTop{top:88px}.svStudy:fullscreen .studyTimer{top:160px}.svStudy:fullscreen .studyWorkspace{top:108px;bottom:248px}.svStudy:fullscreen .studyPlayer{bottom:43px}.svStudy:fullscreen .studyToolsDock{bottom:173px}.svStudy:fullscreen .studyStatusRow{bottom:16px}.svStudy:fullscreen .studySceneCaption{bottom:261px}
+ .svStudy[data-study-root]{height:max(780px,100svh);min-height:100svh}
+ .svStudy .studyHeading{top:98px;left:18px;right:18px;gap:12px;flex-direction:row}.svStudy .studyHeadingActions{width:auto}body.svCleanShell .svStudy .studyHeading h1{font-size:25px!important}.svStudy .studyIntro{display:none}.svStudy .studyHeadingActions{gap:0;padding:3px;border-radius:10px}.svStudy .studyHeadingActions .studyIconButton{width:36px;height:38px}.svStudy .studyHeadingActions [data-study-clock-toggle]{display:none}.svStudy .studyHeadingActions .studyIcon{width:16px;height:16px}.svStudy .studyWallpaperButton{font-size:10px;min-height:38px;padding:9px}
+ .svStudy .studyStageTop{top:161px;left:20px;right:20px}.svStudy .studySceneTag{font-size:10px}.svStudy .studyClock{font-size:11px;padding:7px 9px}
+ .svStudy .studyTimer{top:200px;left:20px;width:220px;padding:20px 18px 16px;border-radius:14px}.svStudy .studyTimerDigits{font-size:59px;margin:12px 0 16px}.svStudy .studyTimer>p{font-size:10px}.svStudy .studyTimerPresets{margin-bottom:12px;gap:2px}.svStudy .studyTimerPresets button{min-width:40px;font-size:10px;min-height:34px}.svStudy .studyTimerActions .studyButton{min-height:40px;font-size:11px;padding:10px 12px}.svStudy .studyCustomTimer{margin-top:12px;font-size:9px}
+ .svStudy .studySceneCaption{bottom:310px;left:22px;max-width:calc(100% - 44px)}.svStudy .studySceneCaption h2{font-size:11px!important}
+ .svStudy .studyToolsDock{bottom:240px;max-width:calc(100% - 36px);border-radius:12px}.svStudy .studyTabs{gap:0;padding:5px}.svStudy .studyTabs [role=tab]{flex-direction:column;gap:6px;width:49px;flex:0 1 49px;min-height:49px;padding:6px 4px;font-size:9px}.svStudy .studyTabs .studyIcon{width:17px;height:17px}
+ .svStudy .studyPlayer{bottom:102px;width:calc(100% - 36px);min-height:115px;padding:14px;gap:10px 7px;border-radius:14px;grid-template-columns:minmax(0,1fr) auto}.svStudy .studyTrackIdentity{gap:8px}.svStudy .studyAlbumMark{width:34px;height:38px;flex-basis:34px;border-radius:8px}.svStudy .studyAlbumMark .studyIcon{width:19px;height:19px}.svStudy .studyTrackIdentity strong{font-size:11px}.svStudy .studyTrackIdentity div>span{font-size:8px;margin-top:5px}
+ .svStudy .studyTransport{grid-column:2;grid-row:1;justify-self:end;gap:0}.svStudy .studyTransport .studyIconButton{width:28px;height:34px}.svStudy .studyTransport [data-study-play]{width:38px;height:38px;margin:0 2px}.svStudy .studyTransport .studyIcon{width:17px;height:17px}
+ .svStudy .studySeek{display:block;grid-column:1;grid-row:2;margin:0}.svStudy .studySeek>div{display:flex;font-size:8px}.svStudy .studyVolume{grid-column:2;grid-row:2;max-width:102px;width:102px}.svStudy .studyVolume .studyIconButton{width:27px;flex-basis:27px}.svStudy .studyVolume input{min-width:0}
+ .svStudy .studyStatusRow{bottom:80px;min-height:15px;left:20px;right:20px}.svStudy .studyStatusRow>p{font-size:8px}
+ .svStudy .studyWorkspace{top:180px;bottom:316px;right:16px;left:16px;width:auto;border-radius:14px}.studyDrawerHead{padding:13px 16px}.studyDrawerHead h2{font-size:19px!important}.studyDrawerHead .studyIconButton{width:38px;height:38px}.svStudy .studyPanel{padding:18px 15px}.svStudy .studyPanelHead{gap:12px;margin-bottom:17px;flex-direction:column;align-items:flex-start}.svStudy .studyPanelHead h2{font-size:16px}.svStudy .studySceneGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.svStudy .studySceneChoice span{font-size:11px;left:10px;bottom:10px}.svStudy .studySceneChoice small{font-size:8px}.svStudy .studyMusicFilters{gap:8px}.svStudy .studyMusicFilters>label{min-width:0}.svStudy .studyTrackRow strong{font-size:11px}.svStudy .studyTrackRow small{font-size:9px}.svStudy .studyMixGrid{gap:20px 15px}.svStudy .studyStats{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.svStudy .studyStats>div{padding:13px 10px}.svStudy .studyStats strong{font-size:24px}.svStudy .studyStats span{font-size:9px}.svStudy .studyRoomGrid,.svStudy .studyRoomIdentity,.svStudy .studyTwoColumns{grid-template-columns:1fr}.svStudy .studyVideoGrid,.svStudy .studyPresetGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.svStudy .studyDeviceState{display:none}.svStudy .studyFootnote{font-size:9px}
+ .svStudy[data-study-layout=focus] .studyTimer{left:50%;top:42%;width:240px}.svStudy[data-study-layout=scenic] .studyTimer{width:220px}.svStudy[data-study-layout=scenic] .studyTimerDigits{font-size:59px}
+ .svStudy:fullscreen .studyHeading{top:25px}.svStudy:fullscreen .studyStageTop{top:85px}.svStudy:fullscreen .studyTimer{top:138px}.svStudy[data-study-layout=focus]:fullscreen .studyTimer{top:42%}.svStudy:fullscreen .studyPlayer{bottom:35px}.svStudy:fullscreen .studyToolsDock{bottom:173px}.svStudy:fullscreen .studySceneCaption{bottom:244px}.svStudy:fullscreen .studyWorkspace{top:110px;bottom:246px}.svStudy:fullscreen .studyStatusRow{bottom:15px}
 }
-@media(max-width:360px){
- .svStudy .studyHeading{left:17px;right:17px;top:99px}.svStudy .studyBrandMark{display:none}.svStudy .studyHeading h1{font-size:19px}.svStudy .studyIntro{font-size:7px}
- .svStudy .studyHeadingActions .studyIconButton{width:25px}.svStudy .studyHeadingActions .studyIcon{width:14px;height:14px}.svStudy .studyWallpaperButton{font-size:7px;padding:6px}
- .svStudy .studyTimer{top:210px;left:20px;width:191px;padding:16px}.svStudy .studySceneCaption{left:20px;bottom:321px}.svStudy .studySceneCaption h2{font-size:26px}
- .svStudy .studyToolsDock{max-width:calc(100% - 32px);bottom:237px}.svStudy .studyTabs{gap:0;padding:5px}.svStudy .studyTabs [role=tab]{width:44px;flex-basis:44px;font-size:7px;gap:6px}
- .svStudy .studyPlayer{width:calc(100% - 30px);padding:13px 12px;gap:9px 6px}.svStudy .studyTrackIdentity{gap:7px}.svStudy .studyAlbumMark{width:31px;flex-basis:31px;height:34px}.svStudy .studyTrackIdentity strong{font-size:9px}.svStudy .studyTrackIdentity div>span{font-size:6px}
- .svStudy .studyTransport .studyIconButton{width:24px}.svStudy .studyTransport [data-study-play]{width:32px;height:32px}.svStudy .studyTransport .studyIcon{width:15px;height:15px}
- .svStudy .studyWorkspace{left:15px;right:15px;width:auto;top:175px;bottom:316px}.svStudy .studyStatusRow>p{font-size:6px}
+@media(max-width:360px){.svStudy .studyHeadingActions [data-study-night]{display:none}.svStudy .studyHeadingActions .studyIconButton{width:34px}.svStudy .studyToolsDock{max-width:calc(100% - 28px)}.svStudy .studyTabs [role=tab]{width:42px;flex-basis:42px;font-size:8px}.svStudy .studyPlayer{width:calc(100% - 28px);padding:12px;gap:9px 5px}.svStudy .studyTransport .studyIconButton{width:24px}.svStudy .studyTransport [data-study-play]{width:34px;height:36px;margin:0 1px}.svStudy .studyTrackIdentity strong{font-size:10px}.svStudy .studyTrackIdentity div>span{font-size:8px}.svStudy .studyAlbumMark{width:30px;flex-basis:30px}.svStudy .studyVolume{width:92px}}
+@media(max-height:800px) and (min-width:701px){.svStudy .studyHeading{top:104px}.svStudy .studyStageTop{top:175px}.svStudy .studyTimer{top:225px;width:225px;padding:19px}.svStudy .studyTimerDigits{font-size:54px}.svStudy .studySceneCaption{bottom:245px}.svStudy .studyWorkspace{top:175px;bottom:244px}}
+@media(prefers-reduced-motion:reduce){.svStudy .studyWorkspace{animation:none}}
+@media(prefers-reduced-transparency:reduce){.svStudy .studyTimer,.svStudy .studyPlayer,.svStudy .studyToolsDock,.svStudy .studyHeadingActions{background:#111}}
+body.svCleanShell:has(.svStudy[data-study-root]){padding-bottom:0!important}.svStudy[data-study-root]+.footer{display:none}
+
+/* Large targets retain their accessibility behavior in the compact room. */
+.svStudy.studyLargeTargets :is(button,[role=tab]){min-height:44px!important;min-width:44px!important}
+.svStudy.studyLargeTargets .studyTimerPresets button,.svStudy.studyLargeTargets .studyTimerActions button{min-height:44px}
+@media(max-width:700px){.svStudy.studyLargeTargets .studyTimer{padding:16px 18px 14px}.svStudy.studyLargeTargets:not([data-study-layout=focus]) .studyTimer{top:196px}.svStudy.studyLargeTargets .studyTimerDigits{font-size:54px;margin:10px 0 12px}.svStudy.studyLargeTargets .studyTimerPresets{margin-bottom:12px}.svStudy.studyLargeTargets .studyCustomTimer{margin-top:10px}.svStudy.studyLargeTargets .studySceneCaption{display:none}.svStudy.studyLargeTargets .studyPlayer{min-height:128px}.svStudy.studyLargeTargets .studyToolsDock{bottom:242px}}
+
+/* Wrapped navigation needs the same clear heading space on wider tablets. */
+@media(min-width:701px) and (max-width:1100px){
+ .svStudy:not(:fullscreen) .studyHeading{top:130px}
+ .svStudy:not(:fullscreen) .studyStageTop{top:210px}
+ .svStudy:not(:fullscreen) .studyWorkspace{top:210px}
 }
-@media(max-height:800px) and (min-width:701px){.svStudy .studyHeading{top:104px}.svStudy .studyStageTop{top:179px}.svStudy .studyTimer{top:233px;width:215px;padding:18px}.svStudy .studyTimerDigits{font-size:50px}.svStudy .studySceneCaption{bottom:247px}.svStudy .studySceneCaption h2{font-size:34px}.svStudy .studyWorkspace{top:172px;bottom:242px}}
-@media(prefers-reduced-motion:reduce){.svStudy .studyWorkspace{animation:none}.svStudy .studySceneChoice img,.svStudy .studyTabs [role=tab]{transition:none}}
-@media(prefers-reduced-transparency:reduce){.svStudy .studyPlayer,.svStudy .studyTimer,.svStudy .studyToolsDock,.svStudy .studyHeadingActions,.svStudy .studyClock{background:#14201b;backdrop-filter:none}}
-/* Layout presets rearrange the same tools without duplicating their state. */
-.svStudy[data-study-layout=focus] .studyTimer{left:50%;top:45%;transform:translate(-50%,-50%);width:270px}
-.svStudy[data-study-layout=scenic] .studyTimer{display:grid;grid-template-columns:112px 1fr;gap:0 16px;width:360px;padding:16px 18px;text-align:left}
-.svStudy[data-study-layout=scenic] .studyTimer>p{grid-column:1}.svStudy[data-study-layout=scenic] .studyTimerDigits{grid-column:1;grid-row:2;font-size:48px;margin:7px 0}
-.svStudy[data-study-layout=scenic] .studyTimerPresets{grid-column:2;grid-row:1;margin:0;gap:0}.svStudy[data-study-layout=scenic] .studyTimerPresets button{padding:4px}
-.svStudy[data-study-layout=scenic] .studyTimerActions{grid-column:2;grid-row:2;justify-content:flex-start}.svStudy[data-study-layout=scenic] .studyCustomTimer{grid-column:1/-1;justify-content:flex-start;margin-top:5px}
-@media(max-width:700px){
- .svStudy .studyHeadingActions [data-study-clock-toggle]{display:inline-grid}
- .svStudy[data-study-layout=scenic] .studyTimer{display:block;width:200px;padding:18px 17px 14px;text-align:center}
- .svStudy[data-study-layout=scenic] .studyTimerDigits{font-size:50px;margin:9px 0 10px}.svStudy[data-study-layout=scenic] .studyTimerPresets{margin-bottom:10px;gap:2px}
- .svStudy[data-study-layout=scenic] .studyTimerPresets button{padding:6px}.svStudy[data-study-layout=scenic] .studyTimerActions{justify-content:center}.svStudy[data-study-layout=scenic] .studyCustomTimer{justify-content:center;margin-top:10px}
- .svStudy.studyLargeTargets .studyHeading{align-items:flex-start;flex-wrap:wrap}.svStudy.studyLargeTargets .studyHeadingActions{justify-content:space-between;width:100%;gap:2px}
- .svStudy.studyLargeTargets .studyHeadingActions .studyIconButton{width:40px;flex:0 0 40px}.svStudy.studyLargeTargets .studyStageTop{top:218px}.svStudy.studyLargeTargets .studyTimer{top:273px}
- .svStudy.studyLargeTargets .studySceneCaption{display:none}.svStudy.studyLargeTargets .studyWorkspace{top:253px}
+/* Reserve the site's compact navigation on medium-size screens. */
+@media(min-width:701px) and (max-width:860px){
+ .svStudy:not(:fullscreen) .studyPlayer{bottom:calc(104px + env(safe-area-inset-bottom,0px))}
+ .svStudy:not(:fullscreen) .studyToolsDock{bottom:calc(214px + env(safe-area-inset-bottom,0px))}
+ .svStudy:not(:fullscreen) .studyWorkspace{bottom:calc(298px + env(safe-area-inset-bottom,0px))}
+ .svStudy:not(:fullscreen) .studyStatusRow{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+ .svStudy:not(:fullscreen) .studySceneCaption{display:none}
 }
-@media(max-width:360px){.svStudy[data-study-layout=scenic] .studyTimer{width:191px;padding:16px}}
-/* The cinematic shell's global heading reset should not erase the room typography. */
-body.svCleanShell .svStudy .studySceneCaption h2,body.svCleanShell .svStudy .studyDrawerHead h2{font-family:Georgia,'Times New Roman',serif!important}
-body.svCleanShell:has(.svStudy[data-study-root]){padding-bottom:0!important}
-.svStudy[data-study-root]+.footer{display:none}
+@media(min-width:701px) and (max-width:1100px) and (max-height:800px){
+ .svStudy:not(:fullscreen) .studyIntro{display:none}
+ .svStudy:not(:fullscreen) .studyStageTop{top:190px}
+ .svStudy:not(:fullscreen):not([data-study-layout=focus]) .studyTimer{top:220px}
+ .svStudy[data-study-layout=scenic]:not(:fullscreen) .studyTimerDigits{font-size:60px}
+ .svStudy.studyLargeTargets:not(:fullscreen) .studyTimer{padding:16px 18px 14px}
+ .svStudy.studyLargeTargets:not(:fullscreen):not([data-study-layout=focus]) .studyTimer{top:220px}
+ .svStudy.studyLargeTargets:not(:fullscreen) .studyTimerDigits{font-size:50px;margin:8px 0 10px}
+ .svStudy.studyLargeTargets:not(:fullscreen) .studyTimerPresets{margin-bottom:12px}
+ .svStudy.studyLargeTargets:not(:fullscreen) .studyCustomTimer{margin-top:6px}
+}
