@@ -27,7 +27,7 @@ for(const [label,width,height]of [['desktop',1440,1000],['ipad',834,1112],['phon
   await page.route('**/api/discovery/books**',route=>route.fulfill({json:{books:[['Pride and Prejudice','Jane Austen'],['The Adventures of Sherlock Holmes','Arthur Conan Doyle'],['Alice’s Adventures in Wonderland','Lewis Carroll'],['The Secret Garden','Frances Hodgson Burnett'],['Little Women','Louisa May Alcott'],['Treasure Island','Robert Louis Stevenson']].map(([title,author],i)=>({id:String(i+52),title,author,language:'English',duration:'07:30:00',seconds:27000,chapterCount:3,playable:true,poster:''})),page:1,hasMore:false}}));
   let referenceFont;
   for(const [slug,url,ready]of [['movies','/movies','.svCatalogPage'],['kids','/kids','.kidsCard'],['audiobooks','/audiobooks','.svBookCard'],['languages','/browse-by-languages','.svLanguageDestination'],['study','/study','[data-study-track]']]){
-   await page.goto(origin+url);await page.waitForSelector(ready);await page.waitForFunction(()=>!document.documentElement.hasAttribute('data-sv-loading'));
+   await page.goto(origin+url);await page.waitForSelector(ready,{state:'attached'});await page.waitForFunction(()=>!document.documentElement.hasAttribute('data-sv-loading'));
    if(slug==='study')await page.locator('[data-study-poster]').evaluate(image=>image.decode());
    const layout=await page.evaluate(()=>{const main=document.querySelector('main'),header=main.querySelector('h1');return{font:getComputedStyle(main).fontFamily,bodyFont:getComputedStyle(document.body).fontFamily,headerFont:getComputedStyle(header).fontFamily,header:header.getBoundingClientRect().toJSON(),width:innerWidth,scrollWidth:document.documentElement.scrollWidth};});
    if(slug==='movies')referenceFont=layout.bodyFont;

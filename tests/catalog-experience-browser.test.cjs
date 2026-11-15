@@ -148,7 +148,7 @@ test('catalog periods change the source, subsequent pages advance, and empty/err
   await clickThrough(f,f.page.locator('.svCatalogPager a[rel=next]'),'movies-next-phone','/movies',{period:'today',page:'2'});
   assert.equal(await f.page.locator('.dsHero').count(),0);assert.notEqual(await f.page.locator('.svCatalogResults .dsCardTitle').first().getAttribute('href'),first);assert.equal(new URL(f.page.url()).searchParams.get('period'),'today');await fits(f,'movie-page2');
   assert(await f.page.locator('.svBrowseHeading h1').evaluate(node=>node.getBoundingClientRect().top>=100),'Page two heading must clear fixed navigation');
-  catalogState='empty';await f.page.goto(origin+'/browse-by-languages?language=ko');await diagnostics(f,'catalog-languages-empty-phone');assert(await f.page.getByRole('heading',{name:'No stories match this combination yet.'}).isVisible());
+  catalogState='empty';await f.page.goto(origin+'/browse-by-languages?language=ko');await diagnostics(f,'catalog-languages-empty-phone');assert(await f.page.getByRole('heading',{name:'No titles match these filters.'}).isVisible());
   catalogState='error';await f.page.goto(origin+'/browse-by-languages?language=ko');await diagnostics(f,'catalog-languages-error-phone');assert(await f.page.getByRole('link',{name:/Try again/}).isVisible());assert.deepEqual(f.errors,[]);
  }catch(error){await failed(f,'catalog-periods-failed-phone',error);}finally{catalogState='normal';await f.context.close();}
 });

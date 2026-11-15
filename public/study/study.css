@@ -22,11 +22,11 @@ html:has(.svStudy[data-study-root]){scrollbar-gutter:auto}
 .svStudy .studyStage{position:absolute;inset:0;height:100%;min-height:0;display:block;border:0;border-radius:0;box-shadow:none;overflow:hidden;background:#080808}
 .svStudy .studyScenery{transform:none;filter:brightness(var(--study-brightness,.86)) blur(var(--study-blur,0px))}.svStudy .studyScenery>img,.svStudy .studyScenery>video{object-position:center center}
 .svStudy .studyStageShade{background:linear-gradient(90deg,#0009,transparent 60%),linear-gradient(0deg,#000b,transparent 45%,#0006)}
-.svStudy .studyHeading{position:absolute;z-index:4;top:112px;left:var(--sv-page-gutter,3vw);right:var(--sv-page-gutter,3vw);display:flex;align-items:center;justify-content:space-between;gap:24px;margin:0}
+.svStudy .studyHeading{position:absolute;z-index:4;top:112px;left:var(--sv-page-gutter,3vw);right:var(--sv-page-gutter,3vw);display:flex;align-items:center;justify-content:space-between;flex-direction:row;gap:24px;margin:0}
 .studyBrand{display:flex;align-items:center;gap:12px}.studyBrandMark{display:none}
 body.svCleanShell .svStudy .studyHeading h1{font:inherit!important;font-size:32px!important;font-weight:550!important;line-height:1.15!important;letter-spacing:-.03em!important;margin:0;color:#f5f5f5;text-shadow:0 2px 16px #0008}
 .svStudy .studyIntro{margin-top:8px;font-size:12px;line-height:1.5;color:#bbb}
-.svStudy .studyHeadingActions{display:flex;align-items:center;gap:3px;padding:4px;background:#111c;border:1px solid #ffffff20;border-radius:12px;flex-wrap:nowrap}
+.svStudy .studyHeadingActions{display:flex;align-items:center;width:auto;gap:3px;padding:4px;background:#111c;border:1px solid #ffffff20;border-radius:12px;flex-wrap:nowrap}
 .svStudy .studyHeadingActions .studyIconButton{width:40px;height:40px;border-radius:8px}.svStudy .studyIconButton{color:#bbb}.svStudy .studyIconButton:hover{background:#ffffff12;color:#fff}.svStudy .studyIconButton[aria-pressed=true]{background:#ffffff15;color:#fff;border-color:#ffffff18}
 .svStudy .studyWallpaperButton{min-height:40px;margin-left:3px;padding:10px 13px;border:0;border-left:1px solid #ffffff18;border-radius:6px;background:transparent;font-size:11px;color:#ccc}
 .svStudy .studyStageTop{position:absolute;top:190px;left:var(--sv-page-gutter,3vw);right:var(--sv-page-gutter,3vw);padding:0;display:flex;align-items:center;justify-content:space-between}
@@ -60,14 +60,14 @@ body.svCleanShell .svStudy .studyDrawerHead h2{font-family:inherit!important;fon
 .svStudy.studyFocusView .studyTimer,.svStudy.studyFocusView .studyToolsDock,.svStudy.studyFocusView .studySceneCaption,.svStudy.studyFocusView .studyStageTop{visibility:hidden;pointer-events:none}.svStudy.studyFocusView .studyHeadingActions>:not([data-study-immersive]){display:none}.svStudy.studyFocusView .studyBrand{visibility:hidden}
 .svStudy:fullscreen .studyHeading{top:28px}.svStudy:fullscreen .studyStageTop{top:100px}.svStudy:fullscreen .studyTimer{top:155px}.svStudy:fullscreen .studyWorkspace{top:110px}.svStudy:fullscreen .studyPlayer{bottom:35px}.svStudy:fullscreen .studyToolsDock{bottom:144px}
 .svStudy[data-study-layout=focus] .studyTimer{left:50%;top:44%;transform:translate(-50%,-50%);width:280px}
-.svStudy[data-study-layout=scenic] .studyTimer{width:300px}.svStudy[data-study-layout=scenic] .studyTimerDigits{font-size:70px}
+.svStudy[data-study-layout=scenic] .studyTimer{display:block;width:300px;text-align:center}.svStudy[data-study-layout=scenic] .studyTimerDigits{font-size:64px}.svStudy[data-study-layout=scenic] .studyTimerPresets{margin-bottom:15px}.svStudy[data-study-layout=scenic] .studyCustomTimer{justify-content:center;margin-top:16px}
 @keyframes studyNativeTools{from{opacity:0;translate:0 8px}to{opacity:1;translate:0 0}}
 @media(max-width:1050px) and (min-width:701px){.svStudy .studyPlayer{width:calc(100% - 52px);gap:12px;padding:17px}.svStudy .studyTrackIdentity strong{font-size:12px}.svStudy .studyTransport .studyIconButton{width:30px}.svStudy .studyWorkspace{width:min(570px,calc(100% - 60px));right:30px}}
 @media(max-width:700px){
  .svStudy[data-study-root]{height:max(780px,100svh);min-height:100svh}
- .svStudy .studyHeading{top:98px;left:18px;right:18px;gap:12px}.svStudy .studyHeading h1{font-size:25px!important}.svStudy .studyIntro{display:none}.svStudy .studyHeadingActions{gap:0;padding:3px;border-radius:10px}.svStudy .studyHeadingActions .studyIconButton{width:36px;height:38px}.svStudy .studyHeadingActions [data-study-clock-toggle]{display:none}.svStudy .studyHeadingActions .studyIcon{width:16px;height:16px}.svStudy .studyWallpaperButton{font-size:10px;min-height:38px;padding:9px}
+ .svStudy .studyHeading{top:98px;left:18px;right:18px;gap:12px;flex-direction:row}.svStudy .studyHeadingActions{width:auto}body.svCleanShell .svStudy .studyHeading h1{font-size:25px!important}.svStudy .studyIntro{display:none}.svStudy .studyHeadingActions{gap:0;padding:3px;border-radius:10px}.svStudy .studyHeadingActions .studyIconButton{width:36px;height:38px}.svStudy .studyHeadingActions [data-study-clock-toggle]{display:none}.svStudy .studyHeadingActions .studyIcon{width:16px;height:16px}.svStudy .studyWallpaperButton{font-size:10px;min-height:38px;padding:9px}
  .svStudy .studyStageTop{top:161px;left:20px;right:20px}.svStudy .studySceneTag{font-size:10px}.svStudy .studyClock{font-size:11px;padding:7px 9px}
- .svStudy .studyTimer{top:215px;left:20px;width:220px;padding:20px 18px 16px;border-radius:14px}.svStudy .studyTimerDigits{font-size:59px;margin:12px 0 16px}.svStudy .studyTimer>p{font-size:10px}.svStudy .studyTimerPresets{margin-bottom:12px;gap:2px}.svStudy .studyTimerPresets button{min-width:40px;font-size:10px;min-height:34px}.svStudy .studyTimerActions .studyButton{min-height:40px;font-size:11px;padding:10px 12px}.svStudy .studyCustomTimer{margin-top:12px;font-size:9px}
+ .svStudy .studyTimer{top:200px;left:20px;width:220px;padding:20px 18px 16px;border-radius:14px}.svStudy .studyTimerDigits{font-size:59px;margin:12px 0 16px}.svStudy .studyTimer>p{font-size:10px}.svStudy .studyTimerPresets{margin-bottom:12px;gap:2px}.svStudy .studyTimerPresets button{min-width:40px;font-size:10px;min-height:34px}.svStudy .studyTimerActions .studyButton{min-height:40px;font-size:11px;padding:10px 12px}.svStudy .studyCustomTimer{margin-top:12px;font-size:9px}
  .svStudy .studySceneCaption{bottom:310px;left:22px;max-width:calc(100% - 44px)}.svStudy .studySceneCaption h2{font-size:11px!important}
  .svStudy .studyToolsDock{bottom:240px;max-width:calc(100% - 36px);border-radius:12px}.svStudy .studyTabs{gap:0;padding:5px}.svStudy .studyTabs [role=tab]{flex-direction:column;gap:6px;width:49px;flex:0 1 49px;min-height:49px;padding:6px 4px;font-size:9px}.svStudy .studyTabs .studyIcon{width:17px;height:17px}
  .svStudy .studyPlayer{bottom:102px;width:calc(100% - 36px);min-height:115px;padding:14px;gap:10px 7px;border-radius:14px;grid-template-columns:minmax(0,1fr) auto}.svStudy .studyTrackIdentity{gap:8px}.svStudy .studyAlbumMark{width:34px;height:38px;flex-basis:34px;border-radius:8px}.svStudy .studyAlbumMark .studyIcon{width:19px;height:19px}.svStudy .studyTrackIdentity strong{font-size:11px}.svStudy .studyTrackIdentity div>span{font-size:8px;margin-top:5px}
@@ -83,3 +83,8 @@ body.svCleanShell .svStudy .studyDrawerHead h2{font-family:inherit!important;fon
 @media(prefers-reduced-motion:reduce){.svStudy .studyWorkspace{animation:none}}
 @media(prefers-reduced-transparency:reduce){.svStudy .studyTimer,.svStudy .studyPlayer,.svStudy .studyToolsDock,.svStudy .studyHeadingActions{background:#111}}
 body.svCleanShell:has(.svStudy[data-study-root]){padding-bottom:0!important}.svStudy[data-study-root]+.footer{display:none}
+
+/* Large targets retain their accessibility behavior in the compact room. */
+.svStudy.studyLargeTargets :is(button,[role=tab]){min-height:44px!important;min-width:44px!important}
+.svStudy.studyLargeTargets .studyTimerPresets button,.svStudy.studyLargeTargets .studyTimerActions button{min-height:44px}
+@media(max-width:700px){.svStudy.studyLargeTargets .studySceneCaption{display:none}.svStudy.studyLargeTargets .studyToolsDock{bottom:220px}}
