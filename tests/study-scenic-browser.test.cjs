@@ -62,7 +62,10 @@ test('Saved Scenic layout keeps every timer control within its panel at wide and
    assert(geometry.scrollWidth<=geometry.clientWidth,name+' Scenic timer must not overflow');
    assert(geometry.children.every(box=>box.left>=geometry.box.left&&box.right<=geometry.box.right+1),name+' Scenic timer controls must fit their panel');
    const timer=await f.page.locator('.studyTimer').boundingBox(),caption=await f.page.locator('.studySceneCaption').boundingBox();assert(timer.y+timer.height<=caption.y-4||timer.x+timer.width<=caption.x,name+' Scenic timer must clear its scene caption');
-   await capture(f.page,'study-shell-'+name+'-scenic');assert.deepEqual(f.errors,[]);
+   await capture(f.page,'study-shell-'+name+'-scenic');
+   await f.page.evaluate(()=>{window.SwiflyAppearance={largeTargets:true};document.dispatchEvent(new CustomEvent('swifly:studio-change',{detail:{effective:window.SwiflyAppearance}}));});
+   const accessible=await f.page.locator('.studyTimer').evaluate(timer=>{const box=timer.getBoundingClientRect();return[...timer.querySelectorAll('button,output,input')].every(child=>{const r=child.getBoundingClientRect();return r.left>=box.left&&r.right<=box.right+1;});});assert(accessible,name+' Scenic large targets must fit the timer');
+   await capture(f.page,'study-shell-'+name+'-scenic-large');assert.deepEqual(f.errors,[]);
   }finally{await f.context.close();}
  }
 });

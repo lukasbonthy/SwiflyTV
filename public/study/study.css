@@ -87,4 +87,4 @@ body.svCleanShell:has(.svStudy[data-study-root]){padding-bottom:0!important}.svS
 /* Large targets retain their accessibility behavior in the compact room. */
 .svStudy.studyLargeTargets :is(button,[role=tab]){min-height:44px!important;min-width:44px!important}
 .svStudy.studyLargeTargets .studyTimerPresets button,.svStudy.studyLargeTargets .studyTimerActions button{min-height:44px}
-@media(max-width:700px){.svStudy.studyLargeTargets .studySceneCaption{display:none}.svStudy.studyLargeTargets .studyToolsDock{bottom:220px}}
+@media(max-width:700px){.svStudy.studyLargeTargets[data-study-layout=scenic] .studyTimer{padding-left:18px;padding-right:18px}.svStudy.studyLargeTargets .studySceneCaption{display:none}.svStudy.studyLargeTargets .studyToolsDock{bottom:220px}}
