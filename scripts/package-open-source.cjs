@@ -30,7 +30,7 @@ for(const file of tracked){
  const from=path.join(root,file),stat=fs.lstatSync(from);
  if(!stat.isFile())throw Error('Unexpected non-regular file: '+file);
  const data=fs.readFileSync(from);
- if(data.includes(Buffer.from('-----BEGIN PRIVATE KEY-----'))||data.includes(Buffer.from('-----BEGIN OPENSSH PRIVATE KEY-----')))throw Error('Private key material detected in '+file);
+ if(data.includes(Buffer.from(['-----BEGIN','PRIVATE KEY-----'].join(' ')))||data.includes(Buffer.from(['-----BEGIN','OPENSSH PRIVATE KEY-----'].join(' '))))throw Error('Private key material detected in '+file);
  const to=path.join(output,file);fs.mkdirSync(path.dirname(to),{recursive:true});fs.writeFileSync(to,data);
  hashes.push(crypto.createHash('sha256').update(data).digest('hex')+'  '+file);included.push(file);size+=data.length;
 }
