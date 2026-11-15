@@ -1,0 +1,60 @@
+name: Open source source-ZIP preview
+
+on:
+  push:
+    branches: [release/open-source-preview-20261115]
+    paths:
+      - 'scripts/package-open-source.cjs'
+      - 'public/kids/**'
+      - 'ui/kids.js'
+      - 'tests/kids-ui.test.cjs'
+      - 'README.md'
+      - 'CONTRIBUTING.md'
+      - 'SECURITY.md'
+      - 'OPEN_SOURCE_RELEASE.md'
+      - 'THIRD_PARTY_NOTICES.md'
+      - '.github/workflows/open-source-preview.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: open-source-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Validate source and Kids behavior
+        run: |
+          npm run check
+          node --test tests/kids-ui.test.cjs tests/kids-protection.test.cjs tests/kids-native.test.cjs
+      - name: Check production build
+        run: npm run build
+      - name: Package preview source
+        run: |
+          node scripts/package-open-source.cjs "$RUNNER_TEMP/swiflytv-open-source-preview"
+          cd "$RUNNER_TEMP"
+          zip -q -r "$GITHUB_WORKSPACE/SwiflyTV-open-source-preview.zip" swiflytv-open-source-preview
+          unzip -tq "$GITHUB_WORKSPACE/SwiflyTV-open-source-preview.zip"
+          test ! -e "$RUNNER_TEMP/swiflytv-open-source-preview/.env"
+          test ! -e "$RUNNER_TEMP/swiflytv-open-source-preview/node_modules"
+          test -f "$RUNNER_TEMP/swiflytv-open-source-preview/RELEASE_MANIFEST.json"
+      - name: Upload source ZIP and manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: swiflytv-open-source-preview
+          path: |
+            SwiflyTV-open-source-preview.zip
+          retention-days: 14
+          if-no-files-found: error
