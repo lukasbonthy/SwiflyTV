@@ -21,7 +21,6 @@
     errorBox.hidden = !message;
   }
   function updateMode(next) {
-    if (busy) return;
     mode = next === 'login' ? 'login' : 'signup';
     tabs.forEach(tab => {
       const selected = tab.dataset.nightAuthMode === mode;
