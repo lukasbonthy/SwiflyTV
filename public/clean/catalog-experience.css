@@ -184,6 +184,8 @@ body.svCleanShell .svHomeNightCopy h2 {
 .svHomeNightReel a:hover .svHomeNightPickName { color: #fff; }
 
 .svHomeNightProgram:not(.hasBallot) { max-width: 1080px; }
+.svHomeNightProgram:has(.svHomeNightStill.isPortrait) { max-width: 660px; }
+.svHomeNightProgram:has(.svHomeNightStill.isPortrait) .svHomeNightLayout { grid-template-columns: minmax(0, 1fr) auto; }
 .svHomeNightStill {
   justify-self: end;
   width: 100%;
@@ -209,14 +211,17 @@ body.svCleanShell .svHomeNightCopy h2 {
   body.svCleanShell .svHomeNightCopy h2 { font-size: calc(32px * var(--st-ui-scale, 1)); }
   .svHomeNightSummary strong { font-size: clamp(22px, 5vw, 29px); }
   .svHomeNightProgram:not(.hasBallot) .svHomeNightLayout { grid-template-columns: minmax(0, 1fr); gap: 12px; }
-  .svHomeNightProgram:has(.svHomeNightStill.isPortrait) .svHomeNightLayout { grid-template-columns: minmax(0, 1fr) auto; }
   .svHomeNightStill.isPortrait { width: clamp(80px, 24vw, 125px); }
 }
 @media (max-width: 520px) {
+  .svHomeNightActions { column-gap: 10px; }
+  .svHomeNightActions a { gap: 5px; font-size: 12px; }
+  .svMovieNightFeature .svHomeNightSpotlight { padding-inline: 9px; }
+  .svHomeNightActions svg { width: 14px; height: 14px; }
   .svHomeNightReel {
     grid-template-columns: none;
     grid-auto-flow: column;
-    grid-auto-columns: clamp(105px, 36vw, 150px);
+    grid-auto-columns: clamp(96px, 31vw, 144px);
     padding: 5px 4px 9px;
     overflow-x: auto;
     overscroll-behavior-inline: contain;

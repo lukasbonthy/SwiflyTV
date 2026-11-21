@@ -211,6 +211,8 @@ test('Home fits the screening artwork and deep links to real ballot picks on des
   assert(copyBox&&reelBox&&reelBox.x>=-.5&&reelBox.x+reelBox.width<=width+.5,layout);
   if(narrow){
    assert(copyBox.y+copyBox.height<=reelBox.y+.5&&rail.content>rail.available&&/^(auto|scroll)$/.test(rail.overflow),layout);
+   assert(posters[2].frame.left<reelBox.x+reelBox.width&&posters[2].frame.right>reelBox.x+reelBox.width,
+    label+' shows part of the next poster before scrolling');
    await fits(page,'[data-home-movie-night] .svHomeNightCopy');
    for(const locator of [headline,copy.locator('.svHomeNightFacts')]){
     assert(await locator.evaluate(node=>node.scrollHeight<=node.clientHeight+1&&node.scrollWidth<=node.clientWidth+1),label+' text fits in full');
