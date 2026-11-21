@@ -40,7 +40,7 @@ function movieNightsMarkup({snapshot={},playerHtml=''}={}){
    <h2 id="nightAuthTitle" data-night-auth-title>Your ticket to Movie Nights.</h2>
    <p id="nightAuthIntro">No Google or social sign-in needed. Your account stays with SwiflyTV.</p>
    <div class="nightAuthModes" role="tablist" aria-label="Choose account action"><button type="button" role="tab" data-night-auth-mode="signup" aria-selected="true">Create account</button><button type="button" role="tab" data-night-auth-mode="login" aria-selected="false" tabindex="-1">Sign in</button></div>
-   <form class="nightAuthForm" data-night-auth-form autocomplete="on">
+   <form class="nightAuthForm" data-night-auth-form method="post" action="/api/connect/auth/signup" autocomplete="on">
     <div class="nightAuthTwoFields" data-night-signup-field><label>Display name<input type="text" name="name" maxlength="40" autocomplete="nickname" placeholder="How friends see you" required></label><label>Handle<input type="text" name="handle" maxlength="24" minlength="3" pattern="[a-zA-Z0-9_]+" autocomplete="username" placeholder="moviefan" required></label></div>
     <label>Email address<input type="email" name="email" maxlength="254" autocomplete="email" placeholder="you@example.com" required></label>
     <label>Password<input type="password" name="password" autocomplete="new-password" placeholder="A unique, long password" required></label>
