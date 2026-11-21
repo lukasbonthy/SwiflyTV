@@ -33,7 +33,7 @@ RUN node -e "const v=require('playwright-core/package.json').version; if(v!=='1.
 
 COPY . .
 COPY --from=react-build /build/dist ./dist
-RUN node scripts/prepare-ai.cjs
+RUN npm run build:movie-night-art && node scripts/prepare-ai.cjs
 
 EXPOSE 10000
 

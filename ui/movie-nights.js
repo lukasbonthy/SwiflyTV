@@ -1,5 +1,11 @@
 'use strict';
 
+const {existsSync} = require('node:fs');
+const path = require('node:path');
+
+const hasWebpCover = existsSync(path.join(__dirname, '../public/community/movie-nights-cover.webp'));
+const eventCover = '/assets/community/movie-nights-cover.' + (hasWebpCover ? 'webp' : 'png');
+
 const entities = {'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'};
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => entities[char]);
 const paths = {
@@ -52,11 +58,13 @@ function movieNightHomeMarkup(event) {
   const live = event?.phase === 'live';
   const candidates = open ? (event.candidates || []).filter(film => filmId(film.id) && film.id !== leader?.id).slice(0, 3) : [];
   const image = artwork(leader?.backdrop);
+  const filmPoster = artwork(leader?.poster);
+  const state = event?.phase === 'unavailable' && !leader ? 'Voting temporarily unavailable' : phaseLabel(event);
   const date = asTime(event?.startsAt, event?.timeZone);
   const heading = leader?.title || 'The next screening';
   const detail = open
     ? (leader?.votes > 0 ? 'Leading the vote' : 'On the ballot')
-    : live ? `${event.viewers} watching` : leader ? 'Selected by the community' : 'Check the screening page for updates.';
+    : live ? `${event.viewers} watching` : leader ? 'Selected by the community' : '';
   const mainAction = live ? 'Watch live' : open ? 'View ballot' : 'View screening';
   const mainDestination = destination + (open ? '#nightBallotTitle' : '');
   const picks = candidates.map(film => {
@@ -68,11 +76,18 @@ function movieNightHomeMarkup(event) {
   return `<section class="svMovieNightFeature" data-home-movie-night data-home-night-phase="${esc(event?.phase || 'unavailable')}" aria-labelledby="svHomeMovieNightsTitle">
     <div class="svHomeNightHead"><h2 id="svHomeMovieNightsTitle">Movie Nights</h2><a class="svHomeNightMore" href="/movie-nights">All screenings ${icon('arrow')}</a></div>
     <div class="svHomeNightLayout${picks ? ' hasBallot' : ''}">
-      <a class="svHomeNightSpotlight" href="${mainDestination}">
+      <a class="svHomeNightSpotlight${image ? ' hasBackdrop' : ''}" href="${mainDestination}">
         ${image ? `<img class="svHomeNightArt" src="${esc(image)}" width="1280" height="720" alt="" loading="lazy" decoding="async" fetchpriority="low">` : ''}
-        <div class="svHomeNightCopy"><span class="svHomeNightState"><i aria-hidden="true"></i>${esc(phaseLabel(event))}</span>
-          <strong>${esc(heading)}</strong><span class="svHomeNightFacts">${date}${date ? '<span aria-hidden="true">·</span>' : ''}<span>${esc(detail)}</span></span>
-          <span class="svHomeNightAction">${icon(live ? 'play' : 'arrow')}${mainAction}</span></div>
+        <div class="svHomeNightCopy">
+          <span class="svHomeNightState"><i aria-hidden="true"></i>${esc(state)}</span>
+          <strong>${esc(heading)}</strong>
+          ${date || detail ? `<span class="svHomeNightFacts">${date}${date && detail ? '<span aria-hidden="true">·</span>' : ''}${detail ? `<span>${esc(detail)}</span>` : ''}</span>` : ''}
+          <span class="svHomeNightAction">${icon(live ? 'play' : 'arrow')}${mainAction}</span>
+        </div>
+        <figure class="svHomeNightPoster${filmPoster ? '' : ' isEventPoster'}" aria-hidden="true">
+          <img src="${esc(filmPoster || eventCover)}" width="400" height="600" alt="" loading="lazy" decoding="async" fetchpriority="low"${filmPoster ? ` data-night-event-cover="${eventCover}"` : ''}>
+          <span class="svHomeNightPosterTitle">Movie<br>Nights</span>
+        </figure>
       </a>
       ${picks ? `<div class="svHomeNightBallot"><h3>Also on the ballot</h3><ul>${picks}</ul></div>` : ''}
     </div>

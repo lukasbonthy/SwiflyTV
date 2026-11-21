@@ -16,6 +16,7 @@
     "benchmark:studio": "node scripts/benchmark-studio.cjs",
     "start:original": "node scripts/start-original.cjs",
     "build": "vite build --config vite.config.mjs",
+    "build:movie-night-art": "ffmpeg -hide_banner -loglevel error -y -i public/community/movie-nights-cover.png -vf scale=640:-2:flags=lanczos -frames:v 1 -c:v libwebp -quality 86 -compression_level 6 public/community/movie-nights-cover.webp",
     "test": "node --test --test-concurrency=2 tests/*.test.cjs tests/react/*.test.cjs",
     "test:react": "node --test tests/react/*.test.cjs"
   },
