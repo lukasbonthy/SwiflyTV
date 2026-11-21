@@ -104,8 +104,9 @@ body.svCleanShell .svHomeNightHead h2 { margin: 0; font-size: calc(24px * var(--
   content: ''; position: absolute; inset: 45% 0 0;
   background: linear-gradient(transparent, #050a14df);
 }
-.svHomeNightPosterTitle {
-  position: absolute; z-index: 1; inset: auto 10% 10%; color: #f2f4ff;
+.svHomeNightPosterTitle { display: none; }
+.svHomeNightPoster.isEventPoster .svHomeNightPosterTitle {
+  display: block; position: absolute; z-index: 1; inset: auto 10% 10%; color: #f2f4ff;
   font-size: clamp(19px, 3vw, 39px); line-height: .88; letter-spacing: -.055em;
   text-transform: uppercase; font-weight: 850;
 }

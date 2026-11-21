@@ -85,8 +85,8 @@ function movieNightHomeMarkup(event) {
           <span class="svHomeNightAction">${icon(live ? 'play' : 'arrow')}${mainAction}</span>
         </div>
         <figure class="svHomeNightPoster${filmPoster ? '' : ' isEventPoster'}" aria-hidden="true">
-          <img src="${esc(filmPoster || eventCover)}" width="400" height="600" alt="" loading="lazy" decoding="async" fetchpriority="low">
-          ${filmPoster ? '' : '<span class="svHomeNightPosterTitle">Movie<br>Nights</span>'}
+          <img src="${esc(filmPoster || eventCover)}" width="400" height="600" alt="" loading="lazy" decoding="async" fetchpriority="low"${filmPoster ? ` data-night-event-cover="${eventCover}"` : ''}>
+          <span class="svHomeNightPosterTitle">Movie<br>Nights</span>
         </figure>
       </a>
       ${picks ? `<div class="svHomeNightBallot"><h3>Also on the ballot</h3><ul>${picks}</ul></div>` : ''}

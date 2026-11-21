@@ -102,16 +102,19 @@ test('Home fits the screening artwork and deep links to real ballot picks on des
  const firstPick=candidates.find(film=>film.id!==leader.id);
  for(const [label,width,height] of [['desktop',1440,1050],['small-phone',320,800]]){
   const f=await open(t,width,height);
+  if(label==='small-phone')await f.page.route(leader.poster,route=>route.abort());
   await f.page.goto(origin+'/');
   await f.page.waitForFunction(()=>document.documentElement.dataset.swiflyReact==='ready'&&!document.documentElement.hasAttribute('data-sv-loading'));
   const feature=f.page.locator('[data-home-movie-night]');
   const spotlight=feature.locator('.svHomeNightSpotlight');
   assert.equal(await spotlight.getAttribute('href'),'/movie-night/'+voteId+'#nightBallotTitle');
   assert.equal(await spotlight.locator('strong').textContent(),leader.title);
-  assert.equal(await spotlight.locator('.svHomeNightPoster img').getAttribute('src'),leader.poster);
   assert.equal(await feature.locator('.svHomeNightBallot li').count(),3);
   await feature.evaluate(node=>node.scrollIntoView({block:'center',behavior:'instant'}));
   await f.page.waitForFunction(()=>Array.from(document.querySelectorAll('[data-home-movie-night] img')).every(img=>img.complete&&img.naturalWidth>0));
+  const displayedPoster=await spotlight.locator('.svHomeNightPoster img').getAttribute('src');
+  if(label==='small-phone')assert.match(displayedPoster,/^\/assets\/community\/movie-nights-cover\.(?:png|webp)$/);
+  else assert.equal(displayedPoster,leader.poster);
   const box=await spotlight.boundingBox();
   assert(box&&box.width>250&&box.height>=200&&box.x>=0&&box.x+box.width<=width+.5,JSON.stringify({label,box}));
   assert(await f.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
