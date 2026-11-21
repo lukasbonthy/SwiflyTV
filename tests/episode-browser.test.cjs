@@ -169,3 +169,13 @@ test('Kids season panels never request the general library endpoint',async()=>{
  assert(w.document.querySelector('a[href^="/kids/"]'));
  w.dispatchEvent(new w.Event('pagehide'));
 });
+
+test('an entire-series watched mark is explained without offering an episode undo that cannot remove it',async()=>{
+ const {window:w}=browser(markup);w.boot('library-state.js');
+ const series={id:'5',type:'tv',title:'A complete series'};w.SwiflyLibrary.markWatched(series);
+ w.fetch=async()=>({ok:true,json:async()=>({episodes:[{episode:1,name:'First',airDate:'2020-01-01',aired:true}]})});
+ w.boot('episode-browser.js');await tick();await tick();
+ const button=w.document.querySelector('[data-episode-watched]');assert.equal(button.hidden,false);assert.equal(button.disabled,true);assert.match(button.getAttribute('aria-label'),/entire series marked watched/i);assert.match(button.title,/entire series marked watched/i);
+ button.click();assert.deepEqual([...w.SwiflyLibrary.read().watched].map(row=>row.key),['tv:5']);
+ w.SwiflyLibrary.removeWatched(series);await tick();assert.equal(button.disabled,false);assert.match(button.getAttribute('aria-label'),/Mark watched/);button.click();assert(w.SwiflyLibrary.read().watched.some(row=>row.key==='tv:5:1:1'));w.dispatchEvent(new w.Event('pagehide'));
+});

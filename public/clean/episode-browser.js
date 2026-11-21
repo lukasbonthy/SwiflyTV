@@ -66,7 +66,7 @@
      const label='Play season '+season+', episode '+episode,name=tile.querySelector('.svEpisodeBrowserCopy > strong')?.textContent;
      tile.setAttribute('aria-label',preferences.spoilerMode||!name?label:label+': '+name);
     }
-    if(button){button.setAttribute('aria-pressed',String(complete));button.setAttribute('aria-label',(complete?'Mark unwatched':'Mark watched')+', episode '+episode);button.title=complete?'Watched':'Mark watched';button.textContent=complete?'✓':'○';button.hidden=button.disabled=!canMarkWatched;}
+    if(button){button.setAttribute('aria-pressed',String(complete));button.setAttribute('aria-label',(wholeTitleWatched?'Entire series marked watched':complete?'Mark unwatched':'Mark watched')+', episode '+episode);button.title=wholeTitleWatched?'Entire series marked watched':complete?'Watched':'Mark watched';button.textContent=complete?'✓':'○';button.hidden=!canMarkWatched;button.disabled=!canMarkWatched||wholeTitleWatched;}
     let meter=card.querySelector('[data-episode-progress]');if(percent>0){if(!meter){meter=make('span','svEpisodeProgress');meter.dataset.episodeProgress='';meter.setAttribute('role','progressbar');meter.setAttribute('aria-label','Episode '+episode+' progress');meter.setAttribute('aria-valuemin','0');meter.setAttribute('aria-valuemax','100');meter.append(make('i'));card.querySelector('.svEpisodeBrowserThumbnail')?.append(meter);}meter.setAttribute('aria-valuenow',String(percent));meter.firstChild.style.width=percent+'%';}else meter?.remove();
    }
   }
