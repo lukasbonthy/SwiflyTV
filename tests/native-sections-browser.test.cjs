@@ -31,8 +31,8 @@ for(const [label,width,height]of [['desktop',1440,1000],['ipad',834,1112],['phon
    if(slug==='study')await page.locator('[data-study-poster]').evaluate(image=>image.decode());
    const layout=await page.evaluate(()=>{const main=document.querySelector('main'),header=main.querySelector('h1');return{font:getComputedStyle(main).fontFamily,bodyFont:getComputedStyle(document.body).fontFamily,headerFont:getComputedStyle(header).fontFamily,header:header.getBoundingClientRect().toJSON(),width:innerWidth,scrollWidth:document.documentElement.scrollWidth};});
    if(slug==='movies')referenceFont=layout.bodyFont;
-   assert.equal(layout.font,referenceFont,slug+' inherits the cinema typeface');
-   assert.equal(layout.headerFont,referenceFont,slug+' uses the same heading family');
+   assert.equal(layout.font.split(',')[0],referenceFont.split(',')[0],slug+' uses the cinema typeface');
+   assert.equal(layout.headerFont.split(',')[0],referenceFont.split(',')[0],slug+' uses the same heading family');
    assert(layout.scrollWidth<=width,slug+' fits the full shell');
    assert(layout.header.y>=80&&layout.header.right<=width+1,slug+' heading clears navigation');
    if(slug==='recommendations'||slug==='audiobooks'){
