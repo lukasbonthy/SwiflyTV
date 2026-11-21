@@ -36,3 +36,41 @@ test('cached sources cannot resume while disconnected, even after refresh or a n
 test('a pending local source attachment cannot start after its connection is revoked',async()=>{
  const f=fixture();await tick();let release;f.player.loadSource=()=>new Promise(resolve=>{release=resolve;});const joining=f.w.SwiflyMovieNights.join();await tick();f.send('disconnect');release(true);await joining;await tick();assert.equal(f.current.paused,true);f.w.SwiflyMovieNights.destroy();
 });
+
+test('a transient false play result during re-admission retries once media is ready rather than latching autoplay denial',async()=>{
+ const f=fixture();await tick();
+ await f.w.SwiflyMovieNights.join();
+ assert.equal(f.current.paused,false);
+ f.send('disconnect');assert.equal(f.current.paused,true);
+ let attempts=0;
+ f.player.play=async()=>{
+   attempts++;
+   if(attempts===1)return false; // a stale/interrupted play during transport recovery
+   f.current.paused=false;return true;
+ };
+ f.send('connect');await tick();await tick();
+ assert(attempts>=1,'the re-admitted session must try playback');
+ await new Promise(resolve=>setTimeout(resolve,1200));
+ assert(attempts>=2,'a transient failure should not be mistaken for a browser autoplay block');
+ assert.equal(f.current.paused,false,'shared playback resumes automatically when the source is ready');
+ f.w.SwiflyMovieNights.destroy();
+});
+
+test('browser offline detection pauses shared media even before Socket.IO disconnect and readmits on online',async()=>{
+ const f=fixture();await tick();
+ await f.w.SwiflyMovieNights.join();assert.equal(f.current.paused,false);
+ const before=f.sent.filter(x=>x.name==='night:join').length;
+ Object.defineProperty(f.w.navigator,'onLine',{configurable:true,value:false});
+ f.w.dispatchEvent(new f.w.Event('offline'));
+ assert.equal(f.current.paused,true,'an offline browser must not continue cached playback');
+ assert.match(f.w.document.querySelector('[data-night-status]').textContent,/reconnect/i);
+ f.current.paused=false;
+ f.mounted.dispatchEvent(new f.w.CustomEvent('swiflyplayer:action',{bubbles:true,detail:{action:'play'}}));
+ assert.equal(f.current.paused,true,'native playback cannot bypass offline admission');
+ Object.defineProperty(f.w.navigator,'onLine',{configurable:true,value:true});
+ f.w.dispatchEvent(new f.w.Event('online'));
+ await tick();await tick();
+ assert(f.sent.filter(x=>x.name==='night:join').length>before,'online recovery must request new server admission');
+ assert.equal(f.current.paused,false);
+ f.w.SwiflyMovieNights.destroy();
+});

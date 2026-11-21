@@ -12,7 +12,19 @@ test.before(async()=>{
  directory=fs.mkdtempSync(path.join(os.tmpdir(),'swifly-night-browser-'));process.env.SWIFLY_DATA_DIR=directory;process.env.SWIFLY_REACT='true';process.env.SWIFLY_KIDS_SECRET='movie-night-browser-test-secret-'.repeat(2);delete process.env.SWIFLY_ACCESS_PIN;
  const now=Date.now(),state={version:1,users:{},sessions:{},friends:[],requests:[],blocks:[],messages:[],notifications:[],homes:{},invites:{},movieNights:{revision:1,events:{[liveId]:event(liveId,now-20000,{winnerId:1,playbackStartedAt:now-20000}),[voteId]:event(voteId,now+3600000),[errorId]:event(errorId,now-20000,{winnerId:2})}}};fs.writeFileSync(path.join(directory,'accounts.json'),JSON.stringify(state));
  const video=path.join(directory,'shared.webm');execFileSync('ffmpeg',['-hide_banner','-loglevel','error','-f','lavfi','-i','testsrc2=size=640x360:rate=12','-t','180','-c:v','libvpx','-b:v','240k','-an','-y',video],{timeout:90000});
- api=loadServer();api.setTmdb(tmdb);api.setMovieNightSource(async id=>id===2?{status:'error'}:{status:'ok',playbackUrl:'/__qa/night.webm',streamType:'webm'});api.app.get('/__qa/night.webm',(_req,res)=>res.sendFile(video));await new Promise(resolve=>api.httpServer.listen(0,'127.0.0.1',resolve));origin='http://127.0.0.1:'+api.httpServer.address().port;
+ api=loadServer();api.setTmdb(tmdb);api.setMovieNightSource(async id=>id===2?{status:'error'}:{status:'ok',playbackUrl:'/__qa/night.webm',streamType:'webm'});api.app.get('/__qa/night.webm',(_req,res)=>res.sendFile(video));
+ // The server has already installed its catch-all 404 by the time this isolated
+ // browser fixture is registered. Move only this QA route ahead of that handler.
+ const layers=api.app._router?.stack||[],fixtureLayer=layers.pop();
+ const notFound=layers.findIndex(layer=>!layer.route&&String(layer.handle).includes('Page not found.'));
+ assert(notFound>=0&&fixtureLayer?.route?.path==='/__qa/night.webm','Fixture video must be registered before the production 404 handler.');
+ layers.splice(notFound,0,fixtureLayer);
+ await new Promise(resolve=>api.httpServer.listen(0,'127.0.0.1',resolve));origin='http://127.0.0.1:'+api.httpServer.address().port;
+ // Reject HTML/404 fixture responses rather than misdiagnosing them as player codec errors.
+ const probe=await fetch(origin+'/__qa/night.webm',{headers:{Range:'bytes=0-1023'}});
+ assert.equal(probe.status,206,'QA media must support byte-range streaming');
+ assert.match(probe.headers.get('content-type')||'',/^video\/webm/,'QA media must be served as video, not a fallback HTML page');
+ await probe.body?.cancel();
  browser=await chromium.launch({headless:true,executablePath,args:['--no-sandbox']});
 });
 test.after(async()=>{await browser?.close();api?.movieNights.close();if(api)await new Promise(resolve=>api.io.close(resolve));if(directory)fs.rmSync(directory,{recursive:true,force:true});});
@@ -23,12 +35,37 @@ for(const [name,width,height]of [['desktop',1440,1050],['ipad',834,1112],['phone
  const f=await open(t,width,height);await f.page.locator('[data-night-vote]').first().waitFor();assert.equal(await f.page.locator('[data-night-vote]').count(),6);assert.equal(await f.page.locator('[data-night-total-votes]').textContent(),'0');await f.page.locator('[data-night-vote]').first().click();await f.page.locator('[data-night-vote-status]').filter({hasText:'Sign in'}).waitFor();await fits(f.page);await shot(f.page,name+'-voting');
  await f.page.locator('[data-night-chat-toggle]').click();assert.equal(await f.page.locator('[data-night-chat-body]').isVisible(),false);await fits(f.page);await shot(f.page,name+'-chat-collapsed');assert.deepEqual(f.errors,[]);
 });
+async function waitForNightPlayback(page, label){
+ try{
+  await page.waitForFunction(()=>{const video=document.querySelector('[data-night-player] video');return video&&!video.paused&&video.currentTime>5;},null,{timeout:14000});
+ }catch(error){
+  const details=await page.evaluate(()=>{
+   const root=document.querySelector('[data-movie-nights]'),video=document.querySelector('[data-night-player] video'),player=document.querySelector('[data-player-root]'),unlock=document.querySelector('[data-player-unlock]');
+   return {
+    phase:root?.querySelector('[data-night-phase]')?.textContent,
+    broadcastStatus:root?.querySelector('[data-night-status]')?.textContent,
+    button:root?.querySelector('[data-night-join]')?.textContent,
+    playerVisible:root?.querySelector('[data-night-player]')?.hidden,
+    lobbyVisible:root?.querySelector('[data-night-lobby]')?.hidden,
+    playerState:player?.dataset.playerState,
+    playerArtwork:player?.dataset.playerArtworkPending,
+    sourceText:player?.querySelector('[data-player-status]')?.textContent?.slice(0,500),
+    unlockVisible:unlock?!unlock.hidden:null,
+    playerVideo:video?{src:video.currentSrc,paused:video.paused,currentTime:video.currentTime,readyState:video.readyState,networkState:video.networkState,error:video.error?.message,muted:video.muted,ended:video.ended,duration:video.duration}:null,
+    transportStatus:window.SwiflyMovieNights?.active,
+    playerRuntime:typeof window.SwiflyPlayer,
+    recentLogs:window.__nightPlaybackDiagnostics||null
+   };
+  });
+  throw new Error(label+' playback not active: '+JSON.stringify(details)+' | '+error.message);
+ }
+}
 test('two actual native players share one source and recover a personal pause and reconnect',{skip:!available,timeout:120000},async t=>{
- const first=await open(t,1440,1050,'/movie-night/'+liveId);await first.page.locator('[data-night-join]').click();await first.page.waitForFunction(()=>{const v=document.querySelector('[data-night-player] video');return v&&!v.paused&&v.currentTime>5;});
- const second=await open(t,390,844,'/movie-night/'+liveId);await second.page.locator('[data-night-join]').click();await second.page.waitForFunction(()=>{const v=document.querySelector('[data-night-player] video');return v&&!v.paused&&v.currentTime>5;});
+ const first=await open(t,1440,1050,'/movie-night/'+liveId);await first.page.locator('[data-night-join]').click();await waitForNightPlayback(first.page,'first viewer');
+ const second=await open(t,390,844,'/movie-night/'+liveId);await second.page.locator('[data-night-join]').click();await waitForNightPlayback(second.page,'second viewer');
  const clocks=await Promise.all([first.page,second.page].map(page=>page.evaluate(()=>({time:document.querySelector('video').currentTime,source:document.querySelector('video').currentSrc,ready:document.querySelector('video').readyState}))));assert(Math.abs(clocks[0].time-clocks[1].time)<1.5,JSON.stringify(clocks));assert.equal(clocks[0].source,clocks[1].source);await fits(first.page);await fits(second.page);await shot(first.page,'desktop-live');await shot(second.page,'phone-live');
  await second.page.locator('[data-player-stage]').hover();await second.page.locator('[data-player-play]').click();assert(await second.page.locator('[data-night-live]').isVisible());const before=await first.page.locator('video').evaluate(v=>({time:v.currentTime,paused:v.paused}));assert.equal(before.paused,false);await second.page.locator('[data-night-live]').click();await second.page.waitForFunction(()=>!document.querySelector('video').paused);assert(Math.abs((await first.page.locator('video').evaluate(v=>v.currentTime))-(await second.page.locator('video').evaluate(v=>v.currentTime)))<1.5);
- await second.context.setOffline(true);await second.page.locator('[data-night-status]').filter({hasText:/reconnect/i}).waitFor();await second.context.setOffline(false);await second.page.waitForFunction(()=>!document.querySelector('video').paused);assert(Math.abs((await first.page.locator('video').evaluate(v=>v.currentTime))-(await second.page.locator('video').evaluate(v=>v.currentTime)))<2);assert.deepEqual([...first.errors,...second.errors],[]);
+ await second.context.setOffline(true);await second.page.locator('[data-night-status]').filter({hasText:/reconnect/i}).waitFor();await second.context.setOffline(false);await waitForNightPlayback(second.page,'viewer after reconnect');assert(Math.abs((await first.page.locator('video').evaluate(v=>v.currentTime))-(await second.page.locator('video').evaluate(v=>v.currentTime)))<2);assert.deepEqual([...first.errors,...second.errors],[]);
 });
 test('shared source failure keeps its selected movie and a useful retry state',{skip:!available,timeout:90000},async t=>{const f=await open(t,390,844,'/movie-night/'+errorId);await f.page.locator('[data-night-status]').filter({hasText:/source could not load/}).waitFor();assert.equal(await f.page.locator('[data-night-feature-title]').textContent(),films[1].title);assert.equal(await f.page.locator('[data-night-join]').isDisabled(),true);await fits(f.page);await shot(f.page,'phone-source-error');assert.deepEqual(f.errors,[]);});
 test('a real account changes its ballot once and sends safely rendered persistent chat',{skip:!available,timeout:90000},async t=>{
@@ -39,4 +76,26 @@ test('a real account changes its ballot once and sends safely rendered persisten
 test('real Home period menus update only their native React rails and preserve the hero',{skip:!available,timeout:90000},async t=>{
  const f=await open(t);await f.page.goto(origin+'/');await f.page.waitForFunction(()=>document.documentElement.dataset.swiflyReact==='ready'&&!document.documentElement.hasAttribute('data-sv-loading'));
  const row=f.page.locator('[data-st-home-section="trending-movies"]'),other=f.page.locator('[data-st-home-section="trending-tv"]');await row.locator('summary').scrollIntoViewIfNeeded();const before=await f.page.evaluate(()=>{window.__nightHero=document.querySelector('.dsHero');return document.querySelector('.dsHero')?.getAttribute('class');});await row.locator('summary').click();await row.locator('.svPeriodMenu a').filter({hasText:'Today'}).click();await f.page.waitForFunction(()=>document.querySelector('[data-st-home-section="trending-movies"] summary span')?.textContent==='Today');assert(await f.page.evaluate(()=>window.__nightHero===document.querySelector('.dsHero')));assert.equal(await other.locator('summary span').textContent(),'This Week');assert.equal(await row.locator('[data-sv-react-rail]').count(),1);assert.equal(await f.page.evaluate(()=>document.querySelector('[data-st-home-section="trending-movies"] .svPeriodTrigger').classList.contains('svGlassControl')),false);await row.locator('summary').click();await shot(f.page,'home-period-open');await row.locator('summary').press('Escape');assert.deepEqual(f.errors,[]);assert(before);
+});
+
+test('premiere staging and first-party account panel remain usable on desktop and a narrow phone',{skip:!available,timeout:120000},async t=>{
+ for(const [label,width,height] of [['desktop',1440,1050],['small-phone',320,800]]){
+  const f=await open(t,width,height);
+  await f.page.locator('.nightPremiereExperience').waitFor();
+  const marquee=await f.page.locator('.nightPremiereExperience').boundingBox();
+  assert(marquee&&marquee.width>250&&marquee.x>=0&&marquee.x+marquee.width<=width+.5,JSON.stringify({label,marquee}));
+  const heading=await f.page.locator('.nightPremiereTitle').textContent();
+  assert.match(heading,/lights go down/i);
+  await f.page.locator('[data-night-auth-open]').click();
+  await f.page.locator('[data-night-auth-overlay]').waitFor({state:'visible'});
+  const dialog=await f.page.locator('[data-night-auth-overlay] [role="dialog"]').boundingBox();
+  assert(dialog&&dialog.x>=0&&dialog.x+dialog.width<=width+.5,JSON.stringify({label,dialog}));
+  await f.page.locator('[data-night-auth-mode="login"]').click();
+  assert.equal(await f.page.locator('[name="confirmPassword"]').isVisible(),false);
+  assert.equal(await f.page.locator('[name="password"]').getAttribute('autocomplete'),'current-password');
+  await shot(f.page,label+'-firstparty-auth');
+  await f.page.locator('[data-night-auth-close]').click();
+  await fits(f.page);
+  assert.deepEqual(f.errors,[]);
+ }
 });

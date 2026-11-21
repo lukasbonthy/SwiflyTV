@@ -1,0 +1,45 @@
+name: Movie Nights focused QA
+on:
+  push:
+    branches:
+      - main
+      - feat/movie-nights-theater-firstparty-20261121
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  focused:
+    runs-on: ubuntu-latest
+    env:
+      ONNXRUNTIME_NODE_INSTALL_CUDA: skip
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - name: First-party Movie Nights registration and premiere UI
+        run: node --test tests/movie-nights-premiere.test.cjs
+      - name: Existing Movie Nights frontend regression
+        run: node --test tests/movie-nights-ui.test.cjs tests/movie-nights-client.test.cjs
+      - name: Production Vite build
+        run: npm run build
+      - name: Install Chromium
+        run: node node_modules/playwright-core/cli.js install chromium
+      - name: Install FFmpeg for live-screening video fixtures
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+      - name: Real desktop and phone screening regression
+        env:
+          SWIFLY_EXPERIENCE_SCREENSHOT_DIR: docs/evidence/movie-nights-premiere
+        run: node --test --test-concurrency=2 tests/movie-nights-browser.test.cjs
+      - name: Preserve theater and live player screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: movie-nights-premiere-${{ github.sha }}-${{ github.event_name }}
+          path: docs/evidence/movie-nights-premiere/*.png
+          if-no-files-found: warn
+          retention-days: 7
