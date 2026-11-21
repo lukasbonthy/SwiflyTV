@@ -104,7 +104,8 @@ const authOutage=()=>({ok:false,status:503,json:async()=>({message:'Private data
 for(const [mode,fail,description] of [
  ['login',authOutage,'an HTTP 503'],
  ['signup',()=>({ok:true,status:200,json:async()=>({user:null,available:false})}),'unconfigured storage'],
- ['login',()=>{throw new TypeError('Failed to fetch');},'a network failure']
+ ['login',()=>{throw new TypeError('Failed to fetch');},'a network failure'],
+ ['signup',()=>({ok:true,status:200,json:async()=>({user:null,available:true,canAuthenticate:false})}),'account writes being paused']
 ]){
  test(`${mode} explains ${description}, blocks submission, and recovers with one retry request`,async()=>{
   const b=authFixture(mode);
@@ -121,7 +122,7 @@ for(const [mode,fail,description] of [
   };
   b.w.boot('account.js');
   const initial=await b.w.SwiflyAccount.ready;
-  assert.equal(initial.available,false);
+  assert.equal(initial.available && initial.canAuthenticate!==false,false);
   assert.equal(b.availability.hidden,false);
   assert.equal(b.status.textContent,'Accounts are temporarily unavailable. Try again shortly.');
   assert.equal(b.submit.disabled,true);
@@ -176,7 +177,8 @@ test('the credentials page checks the session without depending on a library req
  };
  b.w.boot('account.js');
  assert.equal((await b.w.SwiflyAccount.ready).available,true);
- assert.deepEqual(routes,['/api/connect/session']);
+ assert.deepEqual(routes,['/api/connect/session','/api/connect/state']);
+ assert.equal(b.w.SwiflyAccount.user.id,alice.id);
  assert.equal(b.submit.disabled,false);
  assert.equal(b.availability.hidden,true);
 });

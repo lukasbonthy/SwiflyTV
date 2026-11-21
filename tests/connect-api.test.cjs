@@ -139,6 +139,8 @@ test('the cutover freeze allows source reads and prevents startup and transactio
  assert.deepEqual(await store.read(),{version:1,users:{}});
  await assert.rejects(store.transaction(()=>{throw Error('Must not mutate state');}),{status:503,code:'account_store_read_only'});
  assert.deepEqual(queries,['SELECT 1 FROM swifly_account_state WHERE id=1','SELECT data FROM swifly_account_state WHERE id=1']);
+ const http=await fixture(t,store);
+ assert.deepEqual((await http.call('/session')).data,{user:null,available:true,canAuthenticate:false});
 });
 
 test('Postgres initialization recovers from a temporary startup outage without losing accounts',async t=>{

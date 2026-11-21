@@ -345,6 +345,10 @@ test('Welcome uses the featured backdrop as an ambient discovery transition',asy
 test('account entry keeps the requested destination and form submissions use POST', async () => {
  const target = '/movie-night/2026-11-21?view=ballot#films';
  const search = new URLSearchParams({redirect: target});
+ const malformed = new URLSearchParams({redirect: '/movie-nights/\t'});
+ const clean = parse(await (await fetch(base + '/signup?' + malformed)).text()).window.document;
+ assert.equal(clean.querySelector('.dsAuthSwitch a').getAttribute('href'), '/login');
+
  for (const [mode, expectedFields] of [['login', 2], ['signup', 3]]) {
   const response = await fetch(base + '/' + mode + '?' + search);
   assert.equal(response.status, 200);

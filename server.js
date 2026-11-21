@@ -14647,7 +14647,8 @@ app.get("/liked", likedPage);
 function authPage(req, res, mode) {
   const isSignup = mode === "signup";
   const target = req.query.redirect;
-  const query = typeof target === "string" && /^\/(?!\/)/.test(target) && !/[\\\r\n]/.test(target)
+  const query = typeof target === "string" && /^\/(?!\/)/.test(target) && !/[\\\x00-\x1f\x7f]/.test(target)
+    && new URL(target, "https://swifly.invalid").origin === "https://swifly.invalid"
     ? "?redirect=" + encodeURIComponent(target) : "";
   const login = "/login" + query;
   const signup = "/signup" + query;

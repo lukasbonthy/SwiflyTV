@@ -138,10 +138,10 @@
   const output=form.querySelector('[data-auth-error]');
   const toggle=form.querySelector('[data-auth-toggle-password]');
   const unavailableMessage='Accounts are temporarily unavailable. Try again shortly.';
-  let available=false, submitting=false, probe;
+  let available=false, submitEpoch=null, recheckAfterSubmit=false, probe;
 
   function updateControls(){
-   const busy=submitting||Boolean(probe);
+   const busy=submitEpoch!==null||Boolean(probe);
    submit.disabled=busy||!available;
    if(retry)retry.disabled=busy;
    if(busy)form.setAttribute('aria-busy','true');
@@ -154,7 +154,10 @@
    updateControls();
   }
   function check(){
-   if(submitting)return Promise.resolve();
+   if(submitEpoch!==null){
+    if(submitEpoch!==lifecycleEpoch)recheckAfterSubmit=true;
+    return Promise.resolve();
+   }
    if(probe?.epoch===lifecycleEpoch)return probe.promise;
    const current={epoch:lifecycleEpoch};
    const focusedRetry=Boolean(retry&&document.activeElement===retry);
@@ -170,8 +173,19 @@
      if(probe===current){
       probe=null;
       if(current.epoch===lifecycleEpoch){
-       showAvailability(session?.available!==false);
-       readyResolve(session);
+       if(session?.available===true){
+        try{
+         if((user?.id||null)!==(session.user?.id||null)||(!session.user&&localStorage.getItem(ownerKey))){
+          activate(session.user||null);
+         }
+         stopped=false;
+         if(user)void refreshState().catch(()=>{});
+        }catch{
+         // A local library error does not decide whether the server can accept credentials.
+        }
+       }
+       showAvailability(session?.available===true&&session?.canAuthenticate!==false);
+       readyResolve({...session,user,available:session?.available===true});
        if(focusedRetry)(available?submit:retry).focus();
       }
      }
@@ -192,7 +206,7 @@
    event.preventDefault();
    if(submit.disabled||!available)return;
    const epoch=lifecycleEpoch;
-   submitting=true;
+   submitEpoch=epoch;
    authenticating=true;
    updateControls();
    clearTimeout(timer);
@@ -209,16 +223,18 @@
     await refreshState().catch(()=>{});
     if(epoch!==lifecycleEpoch)return;
     const target=new URLSearchParams(location.search).get('redirect')||'/profiles';
-    location.assign(/^\/(?!\/)/.test(target)&&!/[\\\r\n]/.test(target)?target:'/profiles');
+    const next=/^\/(?!\/)/.test(target)&&!/[\\\x00-\x1f\x7f]/.test(target)?new URL(target,location.origin):null;
+    location.assign(next?.origin===location.origin?next.href:'/profiles');
    }catch(error){
     if(epoch!==lifecycleEpoch)return;
     if(!signedIn&&(!error.status||error.status>=500))showAvailability(false);
     else if(output){output.textContent=error.message;output.hidden=false;}
     else window.showToast?.(error.message);
    }finally{
-    submitting=false;
+    submitEpoch=null;
     authenticating=false;
-    updateControls();
+    if(recheckAfterSubmit){recheckAfterSubmit=false;void check();}
+    else updateControls();
    }
   });
   return check;
