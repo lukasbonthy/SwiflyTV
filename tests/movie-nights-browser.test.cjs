@@ -40,3 +40,25 @@ test('real Home period menus update only their native React rails and preserve t
  const f=await open(t);await f.page.goto(origin+'/');await f.page.waitForFunction(()=>document.documentElement.dataset.swiflyReact==='ready'&&!document.documentElement.hasAttribute('data-sv-loading'));
  const row=f.page.locator('[data-st-home-section="trending-movies"]'),other=f.page.locator('[data-st-home-section="trending-tv"]');await row.locator('summary').scrollIntoViewIfNeeded();const before=await f.page.evaluate(()=>{window.__nightHero=document.querySelector('.dsHero');return document.querySelector('.dsHero')?.getAttribute('class');});await row.locator('summary').click();await row.locator('.svPeriodMenu a').filter({hasText:'Today'}).click();await f.page.waitForFunction(()=>document.querySelector('[data-st-home-section="trending-movies"] summary span')?.textContent==='Today');assert(await f.page.evaluate(()=>window.__nightHero===document.querySelector('.dsHero')));assert.equal(await other.locator('summary span').textContent(),'This Week');assert.equal(await row.locator('[data-sv-react-rail]').count(),1);assert.equal(await f.page.evaluate(()=>document.querySelector('[data-st-home-section="trending-movies"] .svPeriodTrigger').classList.contains('svGlassControl')),false);await row.locator('summary').click();await shot(f.page,'home-period-open');await row.locator('summary').press('Escape');assert.deepEqual(f.errors,[]);assert(before);
 });
+
+test('premiere staging and first-party account panel remain usable on desktop and a narrow phone',{skip:!available,timeout:120000},async t=>{
+ for(const [label,width,height] of [['desktop',1440,1050],['small-phone',320,800]]){
+  const f=await open(t,width,height);
+  await f.page.locator('.nightPremiereExperience').waitFor();
+  const marquee=await f.page.locator('.nightPremiereExperience').boundingBox();
+  assert(marquee&&marquee.width>250&&marquee.x>=0&&marquee.x+marquee.width<=width+.5,JSON.stringify({label,marquee}));
+  const heading=await f.page.locator('.nightPremiereTitle').textContent();
+  assert.match(heading,/lights go down/i);
+  await f.page.locator('[data-night-auth-open]').click();
+  await f.page.locator('[data-night-auth-overlay]').waitFor({state:'visible'});
+  const dialog=await f.page.locator('[data-night-auth-overlay] [role="dialog"]').boundingBox();
+  assert(dialog&&dialog.x>=0&&dialog.x+dialog.width<=width+.5,JSON.stringify({label,dialog}));
+  await f.page.locator('[data-night-auth-mode="login"]').click();
+  assert.equal(await f.page.locator('[name="confirmPassword"]').isVisible(),false);
+  assert.equal(await f.page.locator('[name="password"]').getAttribute('autocomplete'),'current-password');
+  await shot(f.page,label+'-firstparty-auth');
+  await f.page.locator('[data-night-auth-close]').click();
+  await fits(f.page);
+  assert.deepEqual(f.errors,[]);
+ }
+});
