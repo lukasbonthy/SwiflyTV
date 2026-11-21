@@ -9,6 +9,8 @@ permissions:
 jobs:
   focused:
     runs-on: ubuntu-latest
+    env:
+      ONNXRUNTIME_NODE_INSTALL_CUDA: skip
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
