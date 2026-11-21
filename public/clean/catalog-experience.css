@@ -187,6 +187,10 @@ body.svCleanShell .svHomeNightHead h2 {
 @media (max-width: 620px) {
   .svMovieNightFeature { --night-gutter: 12px; margin: 0 4px 32px; }
   .svHomeNightProgram { border-radius: 13px; }
+  .svHomeNightProgram::after {
+    background: linear-gradient(90deg, #0b111fef, #0b111f96 52%, #11182335),
+      linear-gradient(0deg, #0d1422ed, transparent 68%);
+  }
   .svHomeNightHead { min-height: 49px; padding-block: 2px; }
   .svHomeNightMore { gap: 5px; font-size: 12px; }
   .svHomeNightMore svg { width: 14px; height: 14px; }
@@ -203,7 +207,13 @@ body.svCleanShell .svHomeNightHead h2 {
   .svHomeNightPickName { margin-top: 5px; font-size: 12px; }
   .svHomeNightPickName svg { display: none; }
 }
+@media (max-width: 380px) {
+  .svHomeNightHead { column-gap: 8px; }
+  body.svCleanShell .svHomeNightHead h2 { font-size: calc(18px * var(--st-ui-scale, 1)); }
+  .svHomeNightSpotlight { grid-template-columns: minmax(0, 1fr) clamp(84px, 25vw, 96px); gap: 9px; }
+  .svHomeNightCopy > strong { font-size: clamp(20px, 6vw, 24px); }
+}
 @media (prefers-reduced-motion: reduce) {
-  .svHomeNightProgram *, .svHomeNightProgram img { transition: none !important; transform: none !important; }
+  .svHomeNightProgram :is(img, a, figure, span, svg) { transition: none !important; transform: none !important; }
 }
 body.reduceMotion .svHomeNightProgram :is(img, a, figure, span, svg) { transition: none !important; transform: none !important; }

@@ -215,6 +215,13 @@ test('Home fits the screening artwork and deep links to real ballot picks on des
   assert(box&&box.width>250&&box.height>=200&&box.x>=0&&box.x+box.width<=width+.5,JSON.stringify({label,box}));
   await fits(page,'[data-home-movie-night]');
   if(width===320){
+   const [heading,scheduleLink]=await Promise.all([
+    program.getByRole('heading',{name:'Movie Nights',exact:true}).boundingBox(),
+    program.getByRole('link',{name:'All screenings',exact:true}).boundingBox(),
+   ]);
+   assert(heading&&scheduleLink&&heading.x+heading.width<=scheduleLink.x&&
+    Math.abs(heading.y+heading.height/2-scheduleLink.y-scheduleLink.height/2)<=2,
+   JSON.stringify({label,heading,scheduleLink}));
    for(const locator of [headline,spotlight.locator('.svHomeNightFacts')]){
     assert(await locator.evaluate(node=>node.scrollHeight<=node.clientHeight+1&&node.scrollWidth<=node.clientWidth+1),label+' text fits in full');
    }
