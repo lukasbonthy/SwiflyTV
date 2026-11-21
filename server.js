@@ -5725,6 +5725,8 @@ app.get(['/study','/study/room/:room'], (req,res) => {
   res.send(pageShell({title:SITE_NAME+' — Swifly Study',description:'Your space to focus. Music, scenes, timers, tasks and live study rooms.',active:'study',body:studyMarkup({room}),extraHead:'<link rel="stylesheet" href="/assets/study/study.css?v=265"><script defer src="/assets/study/study.js?v=263"></script>'}));
 });
 const accountStore = createAccountStore();
+const temporaryAccountNotice = accountStore.backend === 'temporary'
+  ? 'Accounts, synced lists, votes and chat reset when SwiflyTV restarts or redeploys.' : '';
 const connect = createConnect({
   store: accountStore,
   resolveMedia: async (type, id) => {
@@ -5763,7 +5765,7 @@ app.get('/api/movie-nights/:id/player',async(req,res)=>{
 app.get(['/movie-nights','/movie-night/:id'],async(req,res)=>{
   res.set('Cache-Control','private, no-store');res.vary('Cookie');
   let state;try{state=await movieNights.snapshot(req,req.params.id);if(state.code)res.status(503);}catch(error){res.status(error.status||503);state={event:null,upcoming:[],code:error.code,message:error.message};}
-  res.send(pageShell({title:SITE_NAME+' — Movie Nights',active:'movie-nights',description:'Vote for the community feature, then join one synchronized screening with live chat.',body:movieNightsMarkup({snapshot:state,playerHtml:movieNightPlayer(state.event)}),extraHead:'<link rel="stylesheet" href="/assets/player/player.css?v=272"><link rel="stylesheet" href="/assets/community/movie-nights.css?v=5"><link rel="stylesheet" href="/assets/community/movie-nights-auth.css?v=2"><script defer src="/socket.io/socket.io.js"></script><script defer src="https://cdn.jsdelivr.net/npm/hls.js@1.7.3/dist/hls.min.js"></script><script defer src="/assets/player/player.js?v=274"></script><script defer src="/assets/community/movie-nights.js?v=4"></script><script defer src="/assets/community/movie-nights-auth.js?v=2"></script>'}));
+  res.send(pageShell({title:SITE_NAME+' — Movie Nights',active:'movie-nights',description:'Vote for the community feature, then join one synchronized screening with live chat.',body:movieNightsMarkup({snapshot:state,playerHtml:movieNightPlayer(state.event),accountNotice:temporaryAccountNotice}),extraHead:'<link rel="stylesheet" href="/assets/player/player.css?v=272"><link rel="stylesheet" href="/assets/community/movie-nights.css?v=5"><link rel="stylesheet" href="/assets/community/movie-nights-auth.css?v=2"><script defer src="/socket.io/socket.io.js"></script><script defer src="https://cdn.jsdelivr.net/npm/hls.js@1.7.3/dist/hls.min.js"></script><script defer src="/assets/player/player.js?v=274"></script><script defer src="/assets/community/movie-nights.js?v=4"></script><script defer src="/assets/community/movie-nights-auth.js?v=2"></script>'}));
 });
 app.use('/api/feed',createFeed({tmdb:(...args)=>tmdb(...args)}).router);
 app.use('/api/library',createCatalogRouter({tmdb:(...args)=>tmdb(...args)}));
@@ -14672,6 +14674,7 @@ function authPage(req, res, mode) {
         </nav>
         <h1 id="svAuthTitle">${title}</h1>
         <p class="svAuthIntro">${isSignup ? "Save your watchlist and join Movie Nights." : "Log in to pick up where you left off."}</p>
+        ${temporaryAccountNotice ? `<p class="svAuthNotice" data-account-temporary>${temporaryAccountNotice}</p>` : ""}
         <div class="svAuthAvailability" data-auth-availability hidden>
           <p data-auth-status role="status"></p>
           <button type="button" data-auth-retry>Try again</button>
@@ -16539,4 +16542,5 @@ httpServer.on("error", (error) => {
 });
 httpServer.listen(Number(PORT), HOST, () => {
   console.log(`${SITE_NAME} running on http://${HOST}:${PORT}`);
+  if (temporaryAccountNotice) console.info('[accounts] Temporary account storage active');
 });

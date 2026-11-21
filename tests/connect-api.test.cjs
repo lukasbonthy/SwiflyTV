@@ -64,6 +64,30 @@ test('file transactions survive restart and concurrent updates',async t=>{
  await Promise.all(Array.from({length:12},()=>f.store.transaction(s=>{s.testCount=(s.testCount||0)+1;})));
  const restored=createAccountStore({directory:f.dir});assert.equal((await restored.read()).testCount,12);assert.equal(Object.keys((await restored.read()).users).length,1);await restored.close();
 });
+test('hosted temporary accounts work without Postgres or a file and reset on a fresh store',async t=>{
+ const storeEnv={RENDER:'true',SWIFLY_ACCOUNT_STORE:'temporary',DATABASE_URL:'postgres://unused.test/swifly'};
+ const prior=Object.fromEntries(Object.keys(storeEnv).map(key=>[key,process.env[key]]));
+ Object.assign(process.env,storeEnv);
+ t.after(()=>{for(const [key,value] of Object.entries(prior)){
+  if(value===undefined)delete process.env[key];else process.env[key]=value;
+ }});
+ const dir=await fs.mkdtemp(path.join(os.tmpdir(),'swifly-temporary-'));
+ t.after(()=>fs.rm(dir,{recursive:true,force:true}));
+ const pool=t.mock.method(require('pg'),'Pool',()=>{throw Error('Temporary storage must not open Postgres');});
+ const f=await fixture(t,createAccountStore({directory:dir}));
+ const signedOut={user:null,available:true,temporary:true};
+ assert.deepEqual((await f.call('/session')).data,signedOut);
+ const {user:alice}=await f.signup('temporaryalice');
+ const login=await f.call('/auth/login',{body:{email:alice.email,password:'correct-horse-123'}});
+ assert.equal(login.status,200);
+ assert.match(login.headers.get('set-cookie'),/HttpOnly/);
+ assert.equal((await f.call('/session',{cookie:login.cookie})).data.user.id,alice.id);
+ assert.deepEqual(await fs.readdir(dir),[]);
+ const restarted=await fixture(t,createAccountStore({directory:dir}));
+ assert.deepEqual((await restarted.call('/session',{cookie:login.cookie})).data,signedOut);
+ assert.equal((await restarted.call('/auth/login',{body:{email:alice.email,password:'correct-horse-123'}})).status,401);
+ assert.equal(pool.mock.callCount(),0);
+});
 test('the local import preserves an existing session, votes and chat and never connects to Postgres',async t=>{
  const source=await fixture(t),alice=await source.signup('sourcealice');
  await source.store.transaction(state=>{
