@@ -6704,13 +6704,12 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player || partyBrowse || active === "social" || active === "study" ? '<script defer src="/socket.io/socket.io.js"></script>' : ""}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/modern-normalize@2.0.0/modern-normalize.min.css" />
     ${shellStyleLink("core")}
-    <script defer src="/assets/liquid-glass/liquid-glass.js?v=277"></script><script defer src="/assets/clean/clean.js?v=268"></script><script defer src="/assets/clean/catalog.js?v=2"></script><script defer src="/assets/clean/account-sheet.js?v=1"></script><script defer src="/assets/clean/account-data.js?v=2"></script><script defer src="/assets/clean/account.js?v=263"></script><script defer src="/assets/clean/library-state.js?v=278"></script><script defer src="/assets/clean/settings.js?v=262"></script><script defer src="/assets/connect/icons.js?v=1"></script><script defer src="/assets/connect/connect.js?v=5"></script><script defer src="/assets/clean/avatars.js?v=209"></script>
+    <script defer src="/assets/liquid-glass/liquid-glass.js?v=277"></script><script defer src="/assets/clean/clean.js?v=268"></script><script defer src="/assets/clean/catalog.js?v=2"></script><script defer src="/assets/clean/account-sheet.js?v=1"></script><script defer src="/assets/clean/account-data.js?v=2"></script><script defer src="/assets/clean/account.js?v=264"></script><script defer src="/assets/clean/library-state.js?v=278"></script><script defer src="/assets/clean/settings.js?v=262"></script><script defer src="/assets/connect/icons.js?v=1"></script><script defer src="/assets/connect/connect.js?v=5"></script><script defer src="/assets/clean/avatars.js?v=209"></script>
     ${active === "profiles" ? '<script defer src="/assets/clean/profiles.js?v=209"></script>' : ""}
     <script defer src="/assets/clean/continue.js?v=262"></script>
     ${body.includes('data-library-page') ? '<script defer src="/assets/clean/library-page.js?v=2"></script>' : ''}
     <script defer src="/assets/kids/guard.js?v=2"></script><script defer src="/assets/clean/episode-browser.js?v=5"></script><script defer src="/assets/clean/feed.js?v=262"></script><script defer src="/assets/vendor/lenis/lenis.min.js?v=1.3.16-r1"></script><script defer src="/assets/clean/motion.js?v=253"></script><script defer src="/assets/clean/press.js?v=2"></script><script defer src="/assets/clean/scroll.js?v=261"></script><script defer src="/assets/clean/details.js?v=281"></script><script defer src="/assets/clean/download.js?v=3"></script><script defer src="/assets/liquid-glass/surfaces.js?v=281"></script><script defer src="/assets/studio/wallpapers.js?v=1"></script><script defer src="/assets/studio/studio.js?v=266"></script><script defer src="/assets/clean/aurora.js?v=267"></script>
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=262" />' : ""}
-    ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=262" />' : ""}
     ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=274"></script>' : ""}
     ${player ? '<script defer src="/assets/player/waves.js?v=6"></script>' : ""}
     ${player ? '<script defer src="/assets/player/audio-sample.js?v=1"></script><script defer src="/assets/player/assist.js?v=3"></script><link rel="stylesheet" href="/assets/player/assist.css?v=264" />' : ""}
@@ -6723,10 +6722,11 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player || partyBrowse ? '<link rel="stylesheet" href="/assets/player/watch-party.css?v=262" />' : ""}
     ${player || active === "social" ? '<link rel="stylesheet" href="/assets/party/watchroom-call.css?v=262" />' : ""}
     ${shellStyleLink("finish")}
+    ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=263" />' : ""}
     <script defer src="/assets/studio/theme-details.js?v=1"></script><script defer src="/assets/clean/hero-palette.js?v=260"></script><script defer src="/assets/studio/experience.js?v=263"></script>
     ${extraHead}
 </head>
-<body class="svCleanShell">
+<body class="svCleanShell${active === "login" || active === "signup" ? " svAccountEntry" : ""}">
   ${studioPrime()}
   ${loadingMarkup()}
 
@@ -14644,51 +14644,57 @@ app.get("/watchlist", watchlistPage);
 app.get("/my-list", watchlistPage);
 app.get("/liked", likedPage);
 
-function authPage(res, mode = "login") {
-  const isSignup = String(mode || "login") === "signup";
-  const title = isSignup ? "Create your account" : "Welcome back";
-  const subtitle = isSignup
-    ? "Create your SwiflyTV account for friends, movie nights and a library across your devices."
-    : "Log in to your SwiflyTV account.";
+function authPage(req, res, mode) {
+  const isSignup = mode === "signup";
+  const target = req.query.redirect;
+  const query = typeof target === "string" && /^\/(?!\/)/.test(target) && !/[\\\r\n]/.test(target)
+    ? "?redirect=" + encodeURIComponent(target) : "";
+  const login = "/login" + query;
+  const signup = "/signup" + query;
+  const title = isSignup ? "Create account" : "Welcome back";
 
-  const body = `<main data-auth-mode="${isSignup ? "signup" : "login"}" class="dsAuthPage dsAuthPageSafe ${isSignup ? "svAuthSignupPage" : "svAuthLoginPage"}">
-    <div class="dsAuthTopActions">
-      <a href="/welcome">Explore Swifly</a>
-      <button type="button" data-st-open aria-label="Customize appearance" title="Swifly Studio">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M12 3 14.7 9.3 21 12l-6.3 2.7L12 21l-2.7-6.3L3 12l6.3-2.7L12 3Z"/></svg>
-      </button>
-    </div>
-    <section class="dsAuthShell dsAuthShellSafe">
-      <a class="dsAuthBrand" href="/welcome"><span aria-hidden="true"></span>${escapeHtml(SITE_NAME)}</a>
-      <section class="dsAuthCard">
-        <div class="dsAuthSwitch" aria-label="Account options">
-          <a class="${!isSignup ? "active" : ""}" href="/login"${!isSignup ? ' aria-current="page"' : ""}>Log in</a>
-          <a class="${isSignup ? "active" : ""}" href="/signup"${isSignup ? ' aria-current="page"' : ""}>Sign up</a>
+  const body = `<main data-auth-mode="${mode}" class="dsAuthPage dsAuthPageSafe ${isSignup ? "svAuthSignupPage" : "svAuthLoginPage"}">
+    <header class="dsAuthTopActions">
+      <a class="dsAuthBrand" href="/welcome"><img src="/assets/brand/swiflytv-nav-logo.svg?v=180" alt="" width="36" height="36">${escapeHtml(SITE_NAME)}</a>
+      <div class="svAuthHeaderLinks">
+        <a href="/welcome">Explore Swifly</a>
+        <button type="button" data-st-open aria-label="Customize appearance" title="Swifly Studio">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M12 3 14.7 9.3 21 12l-6.3 2.7L12 21l-2.7-6.3L3 12l6.3-2.7L12 3Z"/></svg>
+        </button>
+      </div>
+    </header>
+    <div class="dsAuthShell dsAuthShellSafe">
+      <section class="dsAuthCard" aria-labelledby="svAuthTitle">
+        <nav class="dsAuthSwitch" aria-label="Account options">
+          <a class="${!isSignup ? "active" : ""}" href="${escapeHtml(login)}"${!isSignup ? ' aria-current="page"' : ""}>Log in</a>
+          <a class="${isSignup ? "active" : ""}" href="${escapeHtml(signup)}"${isSignup ? ' aria-current="page"' : ""}>Sign up</a>
+        </nav>
+        <h1 id="svAuthTitle">${title}</h1>
+        <p class="svAuthIntro">${isSignup ? "Save your watchlist and join Movie Nights." : "Log in to pick up where you left off."}</p>
+        <div class="svAuthAvailability" data-auth-availability hidden>
+          <p data-auth-status role="status"></p>
+          <button type="button" data-auth-retry>Try again</button>
         </div>
-        <h1>${isSignup ? "Create account" : "Welcome back"}</h1>
-        <p class="svAuthIntro">${isSignup ? "Save your favorites. Make movie night your own." : "Log in to continue watching."}</p>
-        <form id="safeAuthForm" class="dsSafeAuthForm">
-          ${isSignup ? `<label><span>Name</span><input name="name" type="text" placeholder="Your name" autocomplete="name" maxlength="40" required /></label>` : ""}
-          <label><span>Email</span><input name="email" type="email" placeholder="you@example.com" autocomplete="email" required /></label>
-          <label><span>Password</span><span class="svAuthPasswordField"><input name="password" type="password" placeholder="${isSignup ? "At least 15 characters" : "Your password"}" minlength="${isSignup ? 15 : 1}" maxlength="128" autocomplete="${isSignup ? "new-password" : "current-password"}" required /><button type="button" class="svAuthPasswordToggle" data-auth-toggle-password aria-label="Show password" aria-pressed="false">Show</button></span></label>
-          <button class="dsPrimaryBtn" type="submit"><span>${isSignup ? "Create account" : "Log in"}</span><span aria-hidden="true">↗</span></button>
+        <noscript><p class="svAuthNotice">Enable JavaScript to use your SwiflyTV account.</p></noscript>
+        <form id="safeAuthForm" class="dsSafeAuthForm" method="post" action="/api/connect/auth/${mode}">
+          ${isSignup ? `<label><span>Name</span><input name="name" type="text" autocomplete="name" maxlength="40" required></label>` : ""}
+          <label><span>Email</span><input name="email" type="email" autocomplete="username" maxlength="254" required></label>
+          <label><span>Password</span><span class="svAuthPasswordField"><input name="password" type="password" minlength="${isSignup ? 15 : 1}" maxlength="128" autocomplete="${isSignup ? "new-password" : "current-password"}"${isSignup ? ' aria-describedby="svAuthPasswordHint"' : ""} required><button type="button" class="svAuthPasswordToggle" data-auth-toggle-password aria-label="Show password" aria-pressed="false">Show</button></span></label>
+          ${isSignup ? '<p id="svAuthPasswordHint" class="svAuthHint">Use at least 15 characters.</p>' : ""}
           <p data-auth-error role="alert" hidden></p>
+          <button class="dsPrimaryBtn" type="submit" data-auth-submit disabled>${isSignup ? "Create account" : "Log in"}</button>
         </form>
-        <p class="dsAuthFinePrint">${isSignup ? `Already have an account? <a href="/login">Log in</a>` : `New to Swifly? <a href="/signup">Sign up</a>`}</p>
-        <p class="svAuthRecovery">Missing saved data? <a href="/account#account-data">Recover or import your library</a></p>
-        <p class="svAuthPrivacy">Your own profile. Your friends. Your movies, together.</p>
       </section>
-    </section>
-
-
+      <p class="svAuthRecovery"><a href="/account#account-data">Recover or import your library</a></p>
+    </div>
   </main>`;
 
-  res.send(pageShell({ title: `${SITE_NAME} — ${isSignup ? "Signup" : "Login"}`, active: isSignup ? "signup" : "login", body }));
+  res.set("Cache-Control", "private, no-store");
+  res.send(pageShell({ title: `${SITE_NAME} — ${isSignup ? "Sign up" : "Log in"}`, active: mode, body }));
 }
 
-
-app.get("/login", (req, res) => authPage(res, "login"));
-app.get("/signup", (req, res) => authPage(res, "signup"));
+app.get("/login", (req, res) => authPage(req, res, "login"));
+app.get("/signup", (req, res) => authPage(req, res, "signup"));
 
 function accountPage(req, res) {
   const body = `<main class="dsPlainPage dsAccountPage svCinemaPage" data-cinema-page="account">

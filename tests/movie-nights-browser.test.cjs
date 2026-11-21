@@ -30,7 +30,7 @@ test.before(async()=>{
 test.after(async()=>{await browser?.close();api?.movieNights.close();if(api)await new Promise(resolve=>api.io.close(resolve));if(directory)fs.rmSync(directory,{recursive:true,force:true});});
 async function open(t,width=1440,height=1050,route='/movie-night/'+voteId){const context=await browser.newContext({viewport:{width,height},reducedMotion:'no-preference',colorScheme:'dark'});t.after(()=>context.close());const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.route('https://image.tmdb.org/**',route=>{const index=Number(/native-(\d)/.exec(route.request().url())?.[1]||0);return route.fulfill({contentType:'image/jpeg',headers:{'Access-Control-Allow-Origin':'*'},body:fs.readFileSync(path.join(fixtureRoot,'poster-'+index+'.jpg'))});});await page.route('https://fonts.googleapis.com/**',route=>route.fulfill({contentType:'text/css',body:''}));await page.route('https://fonts.gstatic.com/**',route=>route.fulfill({body:''}));await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({contentType:'application/javascript',body:''}));await page.goto(origin+route);await page.waitForFunction(()=>document.documentElement.dataset.swiflyReact==='ready'&&!document.documentElement.hasAttribute('data-sv-loading')&&window.SwiflyMovieNights?.active);return{context,page,errors};}
 async function shot(page,name){const dir=process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR;if(dir){fs.mkdirSync(dir,{recursive:true});await page.screenshot({path:path.join(dir,'movie-nights-'+name+'.png'),fullPage:true,animations:'disabled'});}}
-async function fits(page){const issues=await page.evaluate(()=>{const outside=[];for(const n of document.querySelectorAll('.svNightPage :is(button,input,a)')){if(n.closest('[hidden],template')||n.closest('.svPlayerStatus[hidden],.svPlayerPopover:not([open])'))continue;const r=n.getBoundingClientRect(),s=getComputedStyle(n);if(!r.width||!r.height||s.visibility==='hidden')continue;if(r.left<-.5||r.right>innerWidth+.5)outside.push({text:n.textContent,box:r.toJSON()});}return{overflow:document.documentElement.scrollWidth>innerWidth,outside};});assert.equal(issues.overflow,false,JSON.stringify(issues));assert.deepEqual(issues.outside,[]);}
+async function fits(page,scope='.svNightPage'){const issues=await page.evaluate(scope=>{const outside=[];for(const n of document.querySelectorAll(`${scope} :is(button,input,a)`)){if(n.closest('[hidden],template')||n.closest('.svPlayerStatus[hidden],.svPlayerPopover:not([open])'))continue;const r=n.getBoundingClientRect(),s=getComputedStyle(n);if(!r.width||!r.height||s.visibility==='hidden')continue;if(r.left<-.5||r.right>innerWidth+.5)outside.push({text:n.textContent,box:r.toJSON()});}return{overflow:document.documentElement.scrollWidth>innerWidth,outside};},scope);assert.equal(issues.overflow,false,JSON.stringify(issues));assert.deepEqual(issues.outside,[]);}
 for(const [name,width,height]of [['desktop',1440,1050],['ipad',834,1112],['phone',390,844],['small-phone',320,800]])test('real Movie Nights ballot and chat fit '+name,{skip:!available,timeout:90000},async t=>{
  const f=await open(t,width,height);await f.page.locator('[data-night-vote]').first().waitFor();assert.equal(await f.page.locator('[data-night-vote]').count(),6);assert.equal(await f.page.locator('[data-night-total-votes]').textContent(),'0');await shot(f.page,name+'-voting');await f.page.locator('[data-night-vote]').first().click();await f.page.locator('[data-night-vote-status]').filter({hasText:'Sign in'}).waitFor();await fits(f.page);
  if(!await f.page.locator('[data-night-chat-body]').isVisible()){await f.page.locator('[data-night-chat-toggle]').click();assert(await f.page.locator('[data-night-chat-body]').isVisible());}await f.page.locator('[data-night-chat-toggle]').click();assert.equal(await f.page.locator('[data-night-chat-body]').isVisible(),false);await fits(f.page);await shot(f.page,name+'-chat-collapsed');assert.deepEqual(f.errors,[]);
@@ -193,5 +193,83 @@ test('the screening stage and account dialog fit desktop and a narrow phone',{sk
   await f.page.locator('[data-night-auth-close]').click();
   await fits(f.page);
   assert.deepEqual(f.errors,[]);
+ }
+});
+
+test('standalone account pages fit and recover a Movie Nights sign-in on a narrow phone',{skip:!available,timeout:60000},async t=>{
+ const redirect=`/movie-night/${voteId}?from=home#night-film-1`;
+ const target=new URLSearchParams({redirect});
+ const sessionUrl=origin+'/api/connect/session';
+ const originalRenderer=process.env.SWIFLY_REACT;
+ t.after(()=>{process.env.SWIFLY_REACT=originalRenderer;});
+ // Exercise the production renderer and the original renderer with account JavaScript enabled.
+ for(const [label,width,height,react] of [['desktop',1440,1050,true],['small-phone',320,800,true],['small-phone-original',320,800,false]]){
+  process.env.SWIFLY_REACT=String(react);
+  const context=await browser.newContext({viewport:{width,height},colorScheme:'dark',reducedMotion:'reduce'});
+  t.after(()=>context.close());
+  const page=await context.newPage(),errors=[],authWrites=[];
+  page.on('pageerror',error=>errors.push(error.message));
+  page.on('request',request=>{
+   if(request.method()==='POST'&&new URL(request.url()).pathname.startsWith('/api/connect/auth/'))authWrites.push(request.url());
+  });
+  await page.route(/^https:\/\/(?:fonts\.googleapis\.com|fonts\.gstatic\.com|cdn\.jsdelivr\.net)\//,route=>route.fulfill({contentType:'text/css',body:''}));
+  let sessionUnavailable=label==='small-phone';
+  await page.route(sessionUrl,route=>sessionUnavailable
+   ?route.fulfill({status:503,json:{code:'storage_unavailable',message:'Fixture account storage is unavailable.'}})
+   :route.continue());
+  const availability=page.locator('[data-auth-availability]');
+  const submit=page.locator('[data-auth-submit]');
+  const accountOptions=page.getByRole('navigation',{name:'Account options'});
+  const password=page.locator('input[name="password"]');
+  const loading=page.locator('html[data-sv-loading], html[data-sv-artwork-state="loading"]');
+
+  await page.goto(origin+'/login?'+target);
+  await page.getByRole('heading',{name:'Welcome back',level:1}).waitFor();
+  await loading.waitFor({state:'detached'});
+  assert.equal(await password.getAttribute('autocomplete'),'current-password');
+  if(sessionUnavailable){
+   await availability.waitFor({state:'visible'});
+   const status=availability.locator('[data-auth-status]');
+   assert.match(await status.textContent(),/unavailable|try again|check/i);
+   assert(await submit.isDisabled());
+   await fits(page,'[data-auth-mode]');
+   await shot(page,label+'-standalone-login-unavailable');
+   sessionUnavailable=false;
+   await Promise.all([
+    page.waitForResponse(response=>response.url()===sessionUrl&&response.ok()),
+    availability.locator('[data-auth-retry]').click(),
+   ]);
+  }
+  await page.locator('[data-auth-submit]:enabled').waitFor();
+  await availability.waitFor({state:'hidden'});
+  assert.equal(await page.locator('#swifly-react-data').count(),Number(react));
+  assert.equal(await page.locator('.topbar').isVisible(),false);
+  assert.equal(await page.locator('.mobileNav').isVisible(),false);
+  assert.equal(await accountOptions.getByRole('link',{name:'Log in',exact:true}).getAttribute('aria-current'),'page');
+  await fits(page,'[data-auth-mode]');
+  await shot(page,label+'-standalone-login');
+
+  await accountOptions.getByRole('link',{name:'Sign up',exact:true}).click();
+  await page.waitForURL(url=>url.pathname==='/signup'&&url.searchParams.get('redirect')===redirect);
+  await page.getByRole('heading',{name:'Create account',level:1}).waitFor();
+  await page.locator('[data-auth-submit]:enabled').waitFor();
+  assert.equal(await page.locator('#swifly-react-data').count(),Number(react));
+  assert.equal(await accountOptions.getByRole('link',{name:'Sign up',exact:true}).getAttribute('aria-current'),'page');
+  const loginUrl=new URL(await accountOptions.getByRole('link',{name:'Log in',exact:true}).getAttribute('href'),origin);
+  assert.equal(loginUrl.pathname,'/login');
+  assert.equal(loginUrl.searchParams.get('redirect'),redirect);
+  assert.equal(await password.getAttribute('autocomplete'),'new-password');
+  const toggle=page.locator('[data-auth-toggle-password]');
+  await toggle.click();
+  assert.equal(await password.getAttribute('type'),'text');
+  assert.equal(await toggle.getAttribute('aria-pressed'),'true');
+  await toggle.click();
+  assert.equal(await password.getAttribute('type'),'password');
+  assert.equal(await toggle.getAttribute('aria-pressed'),'false');
+  await loading.waitFor({state:'detached'});
+  await fits(page,'[data-auth-mode]');
+  await shot(page,label+'-standalone-signup');
+  assert.deepEqual(authWrites,[]);
+  assert.deepEqual(errors,[]);
  }
 });

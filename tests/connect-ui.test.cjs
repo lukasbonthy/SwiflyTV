@@ -94,6 +94,119 @@ test('sign-in errors remain visible and never create a local account as a fallba
 test('the shared server sign-in script reveals and conceals the password accessibly',async()=>{
  const b=browser('<main data-auth-mode="login"><form id="safeAuthForm"><input name="password" type="password"><button type="button" data-auth-toggle-password aria-pressed="false">Show</button><button type="submit">Log in</button></form></main>',{path:'/login'}),w=b.window;w.fetch=async()=>({ok:true,json:async()=>({user:null,available:true})});w.boot('account.js');const toggle=w.document.querySelector('[data-auth-toggle-password]'),input=w.document.querySelector('input');toggle.click();assert.equal(input.type,'text');assert.equal(toggle.getAttribute('aria-pressed'),'true');toggle.click();assert.equal(input.type,'password');
 });
+function authFixture(mode='login'){
+ const b=browser(`<main data-auth-mode="${mode}"><div data-auth-availability hidden><p data-auth-status role="status"></p><button type="button" data-auth-retry>Try again</button></div><form id="safeAuthForm" method="post" action="/api/connect/auth/${mode}"><input name="email" value="a@example.com"><input name="password" type="password" value="a-synthetic-password"><button type="submit" data-auth-submit disabled>Continue</button><p data-auth-error hidden></p></form></main>`,{path:'/'+mode}),w=b.window,d=w.document;
+ const form=d.querySelector('form');
+ return {...b,w,form,submit:d.querySelector('[data-auth-submit]'),retry:d.querySelector('[data-auth-retry]'),availability:d.querySelector('[data-auth-availability]'),status:d.querySelector('[data-auth-status]'),output:d.querySelector('[data-auth-error]'),send:()=>form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}))};
+}
+const authSession=()=>({ok:true,status:200,json:async()=>({user:null,available:true})});
+const authOutage=()=>({ok:false,status:503,json:async()=>({message:'Private database diagnostic',code:'53000'})});
+for(const [mode,fail,description] of [
+ ['login',authOutage,'an HTTP 503'],
+ ['signup',()=>({ok:true,status:200,json:async()=>({user:null,available:false})}),'unconfigured storage'],
+ ['login',()=>{throw new TypeError('Failed to fetch');},'a network failure']
+]){
+ test(`${mode} explains ${description}, blocks submission, and recovers with one retry request`,async()=>{
+  const b=authFixture(mode);
+  let checks=0,posts=0,finishRetry;
+  b.w.fetch=async(url,options)=>{
+   if(String(url).endsWith('/session')){
+    if(++checks===1)return fail();
+    return new Promise(resolve=>{finishRetry=resolve;});
+   }
+   posts++;
+   assert.equal(options.method,'POST');
+   assert.equal(String(url),'/api/connect/auth/'+mode);
+   return {ok:false,status:401,json:async()=>({message:'Email or password is incorrect.'})};
+  };
+  b.w.boot('account.js');
+  const initial=await b.w.SwiflyAccount.ready;
+  assert.equal(initial.available,false);
+  assert.equal(b.availability.hidden,false);
+  assert.equal(b.status.textContent,'Accounts are temporarily unavailable. Try again shortly.');
+  assert.equal(b.submit.disabled,true);
+  b.send();
+  assert.equal(posts,0);
+  b.retry.focus();
+  b.retry.click();
+  b.retry.dispatchEvent(new b.w.Event('click'));
+  b.w.document.dispatchEvent(new b.w.Event('visibilitychange'));
+  assert.equal(checks,2);
+  assert.equal(b.form.getAttribute('aria-busy'),'true');
+  b.send();
+  assert.equal(posts,0);
+  finishRetry(authSession());
+  await tick();
+  assert.equal(b.submit.disabled,false);
+  assert.equal(b.availability.hidden,true);
+  assert.equal(b.w.document.activeElement,b.submit);
+  b.send();
+  await tick();
+  assert.equal(posts,1);
+  assert.match(b.output.textContent,/incorrect/);
+ });
+}
+test('an old availability response cannot override the restore from browser history',async()=>{
+ const b=authFixture();
+ let firstProbe,checks=0;
+ b.w.fetch=async()=>++checks===1?new Promise(resolve=>{firstProbe=resolve;}):authSession();
+ b.w.boot('account.js');
+ await tick();
+ b.w.dispatchEvent(new b.w.Event('pagehide'));
+ const back=new b.w.Event('pageshow');
+ Object.defineProperty(back,'persisted',{value:true});
+ b.w.dispatchEvent(back);
+ await tick();
+ assert.equal((await b.w.SwiflyAccount.ready).available,true);
+ assert.equal(b.submit.disabled,false);
+ firstProbe(authOutage());
+ await tick();
+ assert.equal(checks,2);
+ assert.equal(b.submit.disabled,false);
+ assert.equal(b.availability.hidden,true);
+});
+test('the credentials page checks the session without depending on a library request',async()=>{
+ const b=authFixture(),routes=[];
+ b.w.fetch=async url=>{
+  const route=String(url);
+  routes.push(route);
+  return route.endsWith('/session')
+   ?{ok:true,status:200,json:async()=>({user:alice,available:true})}
+   :authOutage();
+ };
+ b.w.boot('account.js');
+ assert.equal((await b.w.SwiflyAccount.ready).available,true);
+ assert.deepEqual(routes,['/api/connect/session']);
+ assert.equal(b.submit.disabled,false);
+ assert.equal(b.availability.hidden,true);
+});
+test('a service outage during submission pauses a second POST until the user retries the check',async()=>{
+ const b=authFixture();
+ let checks=0,posts=0,finishPost;
+ b.w.fetch=async url=>{
+  if(String(url).endsWith('/session')){checks++;return authSession();}
+  posts++;
+  return new Promise(resolve=>{finishPost=resolve;});
+ };
+ b.w.boot('account.js');
+ await b.w.SwiflyAccount.ready;
+ b.send();
+ b.send();
+ b.w.document.dispatchEvent(new b.w.Event('visibilitychange'));
+ assert.equal(posts,1);
+ assert.equal(checks,1);
+ finishPost(authOutage());
+ await tick();
+ assert.equal(b.availability.hidden,false);
+ assert.equal(b.submit.disabled,true);
+ assert.equal(b.output.hidden,true);
+ b.send();
+ assert.equal(posts,1);
+ b.retry.click();
+ await tick();
+ assert.equal(checks,2);
+ assert.equal(b.submit.disabled,false);
+});
 test('private conversation content is cleared when a page enters history and is reauthenticated on return',async()=>{
  const b=setup();b.w.boot('connect/connect.js');await tick();await tick();b.w.document.querySelector('[data-connect-friend="bob"]').click();await tick();assert(b.w.document.querySelector('.svMessageLog').textContent.includes('hello'));b.w.dispatchEvent(new b.w.Event('pagehide'));assert.equal(b.w.document.querySelector('.svMessageLog'),null,'a history snapshot must not retain a previous account’s conversation');
 });

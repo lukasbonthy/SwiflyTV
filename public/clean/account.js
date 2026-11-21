@@ -6,6 +6,7 @@
  const keys=()=>Object.keys(localStorage).filter(allowed);
  const read=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key)||'null')??fallback;}catch{return fallback;}};
  let user=null,accountEpoch=0,lifecycleEpoch=0,authenticating=false,revision=0,baseline={},applying=false,writing=false,writeJob=null,timer=0,stopped=false,validating=null,readyResolve;
+ let checkAuthAvailability;
  const ready=new Promise(resolve=>{readyResolve=resolve;});
  async function request(route,{method,body,signal,keepalive=false}={}){
   const controller=signal?null:new AbortController(),timeout=controller?setTimeout(()=>controller.abort(),12000):0;
@@ -80,6 +81,7 @@
  function publishState(){const previous=applying;applying=true;try{document.dispatchEvent(new Event('swifly:account-hydrated'));window.dispatchEvent(new Event('swifly:continue-change'));window.SwiflyProfiles?.mount?.();window.syncLibraryButtons?.();}finally{applying=previous;}}
  function suspend(){stopped=true;lifecycleEpoch++;validating=null;clearTimeout(timer);document.dispatchEvent(new Event('swifly:account-suspended'));document.querySelectorAll('.dsDropdownUser').forEach(n=>n.remove());}
  async function revalidate(){
+  if(checkAuthAvailability)return checkAuthAvailability();
   if(validating)return validating;const token=accountEpoch,lifecycle=lifecycleEpoch;
   const job=(async()=>{const session=await request('/session');if(token!==accountEpoch||lifecycle!==lifecycleEpoch)return session;if((session.user?.id||null)!==(user?.id||null))activate(session.user||null);else{user=session.user||null;paintIdentity();}stopped=false;if(user)await refreshState();if(lifecycle===lifecycleEpoch)publishState();return session;})();validating=job;
   try{return await job;}finally{if(validating===job)validating=null;}
@@ -124,25 +126,117 @@
   if(!user)throw Error('Sign in before recovering browser data.');const api=window.SwiflyAccountData,data=read(prefix+'legacy',null);if(!api)throw Error('Reload Account to review and recover earlier browser data.');if(!data)throw Error('There is no earlier library on this browser.');
   const owner=user.id;return commitImport(()=>{const current=api.capture(localStorage,{owner}),incoming=api.fromState(data),active=read('swiflytv.activeProfile',null)?.id||current.profiles[0].profile.id,mapping=Object.fromEntries(incoming.profiles.map((v,index)=>[v.profile.id,index===0?active:'new'])),plan=api.plan(incoming,current,{mapping});return api.statePatch(plan.backup,{owner,activeProfile:active});},{expectedOwner:owner});
  }
- function authForm(){const form=document.getElementById('safeAuthForm')||document.getElementById('dsAuthForm');if(!form)return;
-  const mode=form.closest('[data-auth-mode]')?.dataset.authMode||document.querySelector('.svAuthSignupPage')&&'signup'||'login';
-  const toggle=form.querySelector('[data-auth-toggle-password]');toggle?.addEventListener('click',()=>{const input=form.elements.namedItem('password'),show=input.type==='password';input.type=show?'text':'password';toggle.textContent=show?'Hide':'Show';toggle.setAttribute('aria-label',show?'Hide password':'Show password');toggle.setAttribute('aria-pressed',String(show));});
-  form.addEventListener('submit',async event=>{event.preventDefault();const submit=form.querySelector('[type=submit]'),output=form.querySelector('[data-auth-error]');if(submit.disabled)return;submit.disabled=true;authenticating=true;clearTimeout(timer);if(output)output.hidden=true;
-   try{const values=Object.fromEntries(new FormData(form)),response=await request('/auth/'+mode,{body:values});activate(response.user);authenticating=false;await refreshState();const target=new URLSearchParams(location.search).get('redirect')||'/profiles';location.assign(/^\/(?!\/)/.test(target)&&!/[\\\r\n]/.test(target)?target:'/profiles');}
-   catch(e){if(output){output.textContent=e.message;output.hidden=false;}else window.showToast?.(e.message);}
-   finally{submit.disabled=false;authenticating=false;}
+ function authForm(){
+  const form=document.getElementById('safeAuthForm')||document.getElementById('dsAuthForm');
+  const submit=form?.querySelector('[data-auth-submit], [type=submit]');
+  if(!submit)return;
+  const page=form.closest('[data-auth-mode]');
+  const mode=page?.dataset.authMode==='signup'||document.querySelector('.svAuthSignupPage')?'signup':'login';
+  const availability=page?.querySelector('[data-auth-availability]');
+  const status=availability?.querySelector('[data-auth-status]');
+  const retry=availability?.querySelector('[data-auth-retry]');
+  const output=form.querySelector('[data-auth-error]');
+  const toggle=form.querySelector('[data-auth-toggle-password]');
+  const unavailableMessage='Accounts are temporarily unavailable. Try again shortly.';
+  let available=false, submitting=false, probe;
+
+  function updateControls(){
+   const busy=submitting||Boolean(probe);
+   submit.disabled=busy||!available;
+   if(retry)retry.disabled=busy;
+   if(busy)form.setAttribute('aria-busy','true');
+   else form.removeAttribute('aria-busy');
+  }
+  function showAvailability(value){
+   available=value;
+   if(availability)availability.hidden=value;
+   if(status)status.textContent=value?'':unavailableMessage;
+   updateControls();
+  }
+  function check(){
+   if(submitting)return Promise.resolve();
+   if(probe?.epoch===lifecycleEpoch)return probe.promise;
+   const current={epoch:lifecycleEpoch};
+   const focusedRetry=Boolean(retry&&document.activeElement===retry);
+   probe=current;
+   if(status&&availability&&!availability.hidden)status.textContent='Checking account service…';
+   updateControls();
+   current.promise=(async()=>{
+    let session;
+    try{session=await request('/session');}
+    catch{
+     session={user:null,available:false,message:unavailableMessage};
+    }finally{
+     if(probe===current){
+      probe=null;
+      if(current.epoch===lifecycleEpoch){
+       showAvailability(session?.available!==false);
+       readyResolve(session);
+       if(focusedRetry)(available?submit:retry).focus();
+      }
+     }
+    }
+    return session;
+   })();
+   return current.promise;
+  }
+  retry?.addEventListener('click',()=>{void check();});
+  toggle?.addEventListener('click',()=>{
+   const input=form.elements.namedItem('password'),show=input.type==='password';
+   input.type=show?'text':'password';
+   toggle.textContent=show?'Hide':'Show';
+   toggle.setAttribute('aria-label',show?'Hide password':'Show password');
+   toggle.setAttribute('aria-pressed',String(show));
   });
+  form.addEventListener('submit',async event=>{
+   event.preventDefault();
+   if(submit.disabled||!available)return;
+   const epoch=lifecycleEpoch;
+   submitting=true;
+   authenticating=true;
+   updateControls();
+   clearTimeout(timer);
+   if(output)output.hidden=true;
+   let signedIn=false;
+   try{
+    const values=Object.fromEntries(new FormData(form));
+    const response=await request('/auth/'+mode,{body:values});
+    if(epoch!==lifecycleEpoch)return;
+    signedIn=true;
+    activate(response.user);
+    stopped=false;
+    authenticating=false;
+    await refreshState().catch(()=>{});
+    if(epoch!==lifecycleEpoch)return;
+    const target=new URLSearchParams(location.search).get('redirect')||'/profiles';
+    location.assign(/^\/(?!\/)/.test(target)&&!/[\\\r\n]/.test(target)?target:'/profiles');
+   }catch(error){
+    if(epoch!==lifecycleEpoch)return;
+    if(!signedIn&&(!error.status||error.status>=500))showAvailability(false);
+    else if(output){output.textContent=error.message;output.hidden=false;}
+    else window.showToast?.(error.message);
+   }finally{
+    submitting=false;
+    authenticating=false;
+    updateControls();
+   }
+  });
+  return check;
  }
  async function boot(){
-  authForm();try{localStorage.removeItem('swiflytv.accounts');localStorage.removeItem('dropstream.accounts');}catch{}
+  checkAuthAvailability=authForm();try{localStorage.removeItem('swiflytv.accounts');localStorage.removeItem('dropstream.accounts');}catch{}
   document.addEventListener('click',async event=>{const b=event.target.closest('[data-account-logout],.dsDropdownLogout,#logoutBtn');if(!b)return;event.preventDefault();event.stopImmediatePropagation();b.disabled=true;try{await request('/auth/logout',{body:{}});activate(null);location.assign('/login');}catch(e){window.showToast?.(e.message);b.disabled=false;}},true);
-  try{const session=await request('/session');if(session.user){activate(session.user);await refreshState();schedule();}else if(localStorage.getItem(ownerKey))activate(null);else{try{localStorage.removeItem('swiflytv.session');}catch{}paintIdentity();}readyResolve(session);}
+  try{
+   if(checkAuthAvailability){await checkAuthAvailability();return;}
+   const session=await request('/session');if(session.user){activate(session.user);await refreshState();schedule();}else if(localStorage.getItem(ownerKey))activate(null);else{try{localStorage.removeItem('swiflytv.session');}catch{}paintIdentity();}readyResolve(session);
+  }
   catch(e){readyResolve({user:null,available:false,message:e.message});}
  }
+ const checkOnReturn=()=>{revalidate().catch(()=>{});};
  for(const name of ['swifly:continue-change','swifly:library-change','storage'])window.addEventListener(name,schedule);
- document.addEventListener('swifly:profile-changed',schedule);document.addEventListener('visibilitychange',()=>{if(document.hidden)sync().catch(()=>{});else revalidate().catch(()=>{});});
+ document.addEventListener('swifly:profile-changed',schedule);document.addEventListener('visibilitychange',()=>{if(document.hidden)sync().catch(()=>{});else checkOnReturn();});
  window.addEventListener('storage',event=>{if(event.key===ownerKey&&user&&event.newValue!==user.id)location.reload();});
- window.addEventListener('pagehide',()=>{schedule();clearTimeout(timer);sync({keepalive:true}).catch(()=>{});suspend();});window.addEventListener('pageshow',e=>{if(e.persisted)revalidate().catch(()=>{});});
+ window.addEventListener('pagehide',()=>{schedule();clearTimeout(timer);sync({keepalive:true}).catch(()=>{});suspend();});window.addEventListener('pageshow',e=>{if(e.persisted)checkOnReturn();});
  window.SwiflyAccount=Object.freeze({ready,request,activate,revalidate,refreshState,sync,flush,commitImport,importLegacy,snapshot,get user(){return user;}});
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();

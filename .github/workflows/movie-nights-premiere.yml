@@ -21,8 +21,8 @@ jobs:
           node-version: '20'
           cache: npm
       - run: npm ci
-      - name: First-party Movie Nights account dialog
-        run: node --test tests/movie-nights-auth.test.cjs
+      - name: First-party account entry and Movie Nights dialog
+        run: node --test tests/movie-nights-auth.test.cjs tests/connect-ui.test.cjs tests/player-integration.test.cjs
       - name: Local account store and existing screening persistence
         run: node --test tests/connect-api.test.cjs tests/movie-nights-service.test.cjs
       - name: Existing Movie Nights frontend regression
