@@ -281,3 +281,34 @@ test('standalone account pages fit and recover a Movie Nights sign-in on a narro
   assert.deepEqual(errors,[]);
  }
 });
+
+test('the real signup form creates a temporary account on a hosted instance',{skip:!available,timeout:45000},async t=>{
+ const hosted={RENDER:'true',SWIFLY_ACCOUNT_STORE:'temporary',DATABASE_URL:'postgres://127.0.0.1:1/unused'};
+ const prior=Object.fromEntries(Object.keys(hosted).map(key=>[key,process.env[key]]));
+ let temporary;
+ try{Object.assign(process.env,hosted);temporary=loadServer();}
+ finally{for(const [key,value] of Object.entries(prior)){
+  if(value===undefined)delete process.env[key];else process.env[key]=value;
+ }}
+ temporary.setTmdb(tmdb);
+ t.after(()=>new Promise(resolve=>temporary.io.close(resolve)));
+ await new Promise(resolve=>temporary.httpServer.listen(0,'127.0.0.1',resolve));
+ const site='http://127.0.0.1:'+temporary.httpServer.address().port;
+ const context=await browser.newContext({viewport:{width:320,height:800},reducedMotion:'reduce'});
+ t.after(()=>context.close());
+ const page=await context.newPage();
+ await page.route(/^https:\/\/(?:fonts\.googleapis\.com|fonts\.gstatic\.com|cdn\.jsdelivr\.net)\//,route=>route.fulfill({contentType:'text/css',body:''}));
+ await page.goto(site+'/signup?redirect='+encodeURIComponent('/login?created=1'));
+ await page.locator('[data-account-temporary]').filter({hasText:'reset when SwiflyTV restarts'}).waitFor();
+ await page.locator('input[name="name"]').fill('Temporary member');
+ await page.locator('input[name="email"]').fill('temporary-member@example.test');
+ await page.locator('input[name="password"]').fill('an isolated browser test password');
+ await page.locator('[data-auth-submit]').click();
+ await page.waitForURL(site+'/login?created=1');
+ const session=await (await context.request.get(site+'/api/connect/session')).json();
+ assert.equal(session.user.name,'Temporary member');
+ assert.equal(session.available,true);
+ assert.equal(session.temporary,true);
+ const night=await context.request.get(site+'/movie-nights');
+ assert.match(await night.text(),/id="nightAuthIntro">Accounts, synced lists, votes and chat reset/);
+});

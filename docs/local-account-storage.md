@@ -2,6 +2,10 @@
 
 SwiflyTV can run its account, session, library and Movie Nights state on its own disk. A self-hosted single-process install can set `SWIFLY_ACCOUNT_STORE=file` and `SWIFLY_DATA_DIR` to an absolute durable directory. Explicit file mode ignores `DATABASE_URL`.
 
+## Temporary accounts
+
+For a single running instance, set `SWIFLY_ACCOUNT_STORE=temporary` to use server memory. No database or account file is opened. Signup starts with an empty account store. Accounts, sessions, synced lists, votes and chat reset whenever the process restarts or redeploys. Keep a single instance while using this mode so all requests share the same state. If configured, `SWIFLY_ACCOUNT_STORE_READ_ONLY` still blocks account writes.
+
 ## Move a running site from PostgreSQL
 
 Use one app instance with a persistent disk. On Render, mount it at `/var/data` and set `SWIFLY_DATA_DIR=/var/data`. Make sure the source database or a complete private export of the `swifly_account_state.data` row is readable. Leave the old database in place for recovery.

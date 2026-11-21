@@ -119,12 +119,12 @@ function ballotCard(film, event) {
   </article>`;
 }
 
-function accountDialog() {
+function accountDialog(accountNotice) {
   return `<div class="nightAuthOverlay" data-night-auth-overlay data-lenis-prevent hidden>
     <section class="nightAuthPanel" role="dialog" aria-modal="true" aria-labelledby="nightAuthTitle" aria-describedby="nightAuthIntro">
       <button type="button" class="nightAuthClose" data-night-auth-close aria-label="Close account setup">×</button>
       <h2 id="nightAuthTitle" data-night-auth-title>Create a SwiflyTV account</h2>
-      <p id="nightAuthIntro">Use your SwiflyTV account to vote and join the chat.</p>
+      <p id="nightAuthIntro">${accountNotice ? esc(accountNotice) : 'Use your SwiflyTV account to vote and join the chat.'}</p>
       <div class="nightAuthModes" role="tablist" aria-label="Choose account action">
         <button type="button" role="tab" data-night-auth-mode="signup" aria-selected="true">Create account</button>
         <button type="button" role="tab" data-night-auth-mode="login" aria-selected="false" tabindex="-1">Sign in</button>
@@ -145,7 +145,7 @@ function accountDialog() {
   </div>`;
 }
 
-function movieNightsMarkup({snapshot = {}, playerHtml = ''} = {}) {
+function movieNightsMarkup({snapshot = {}, playerHtml = '', accountNotice = ''} = {}) {
   const {event, viewer = {}, schedule} = snapshot;
   const zone = schedule?.timeZone;
   const leader = leadingFilm(event);
@@ -238,7 +238,7 @@ function movieNightsMarkup({snapshot = {}, playerHtml = ''} = {}) {
         ${(snapshot.upcoming || []).filter(row => eventId(row.id) && row.id !== event?.id).map(row => `<a class="nightUpcomingCard" href="${roomLink(row.id)}"><span class="nightUpcomingIcon">${icon('clock')}</span><span><strong>${esc(row.title)}</strong>${asTime(row.startsAt, zone)}</span><span class="nightUpcomingAction">${row.phase === 'voting' ? 'Vote now' : 'View screening'} ${icon('arrow')}</span></a>`).join('')}
       </div>
     </section>
-    ${accountDialog()}
+    ${accountDialog(accountNotice)}
     <script type="application/json" data-night-boot>${serialized}</script>
   </main>`;
 }
