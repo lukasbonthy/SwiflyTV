@@ -34,7 +34,9 @@ test.after(async()=>{await browser?.close();if(api)await new Promise(resolve=>ap
 async function settle(page,rail=false){
  await page.waitForFunction(()=>document.documentElement.dataset.swiflyReact==='ready'&&document.querySelector('[data-kids-root]')?.dataset.kidsReady==='true'&&!document.documentElement.hasAttribute('data-sv-loading'));
  if(rail)await page.waitForSelector('.dsRail[data-sv-react-rail="true"]');
- await page.evaluate(async()=>{await Promise.all([...document.querySelectorAll('img')].filter(image=>image.getBoundingClientRect().top<innerHeight).map(image=>image.decode().catch(()=>{})));});
+ // Native tablet rails keep distant horizontal posters mounted and lazy. An
+ // unbounded decode() on those images waits for fetches that should not start.
+ await page.waitForFunction(()=>[...document.images].filter(image=>{const r=image.getBoundingClientRect();return r.width&&r.height&&r.top<innerHeight&&r.bottom>0&&r.left<innerWidth&&r.right>0;}).every(image=>image.complete&&image.naturalWidth>0),null,{timeout:10000});
 }
 async function open(t,{width=1440,height=1000,reduced=false,tv=false}={}){
  const context=await browser.newContext({viewport:{width,height},colorScheme:'dark',reducedMotion:reduced?'reduce':'no-preference'});t.after(()=>context.close());

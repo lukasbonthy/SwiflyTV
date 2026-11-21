@@ -37,9 +37,11 @@ test('Details fragment keeps movie information together without the outer page',
   assert.match(requests[0].params.append_to_response, /images/);
   env.finish();
 });
-test('Series details preserve season and episode playback links', async () => {
-  const env = browser(await render('tv')), d = env.window.document;
+test('Series details preserve playback while closed seasons load their episode links on demand', async () => {
+  const env = browser(await render('tv')), d = env.window.document,w=env.window;
   assert(d.querySelector('.svDetailActions a[href="/watch/tv/101?mode=movie&s=1&e=1"]'));
+  assert.equal(d.querySelector('[data-episode-season="2"] .svDetailEpisodeTile'),null,'closed seasons do not pre-render every episode');
+  w.fetch=async()=>({ok:true,json:async()=>({episodes:Array.from({length:6},(_,i)=>({episode:i+1,name:'Episode '+(i+1),aired:true}))})});w.boot('episode-browser.js');const season=d.querySelector('[data-episode-season="2"]');season.open=true;season.dispatchEvent(new w.Event('toggle'));await tick();await tick();
   assert(d.querySelector('#episodes a[href="/watch/tv/101?mode=movie&s=2&e=6"]'));
   env.finish();
 });

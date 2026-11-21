@@ -46,11 +46,12 @@ function loadServer() {
   process.env.FILMU_ENABLED = 'false';
   const filename = path.join(root, 'server.js');
   const m = new Module(filename, module); m.filename = filename; m.paths = Module._nodeModulePaths(root);
-  const listen = http.Server.prototype.listen, interval = global.setInterval;
+  const listen = http.Server.prototype.listen, interval = global.setInterval,nightAutostart=process.env.SWIFLY_MOVIE_NIGHTS_AUTOSTART;
+  process.env.SWIFLY_MOVIE_NIGHTS_AUTOSTART='false';
   http.Server.prototype.listen = function () {return this;};
   global.setInterval = (...args) => interval(...args).unref();
-  try {m._compile(fs.readFileSync(filename, 'utf8') + '\nmodule.exports = {detailPage, watchPage, listingPage, homePage, movieCard, pageShell, socialPage, searchPage, personDetailPage, trendingPage, watchlistPage, app, httpServer, io, tmdb, setTmdb(fn) {tmdb = fn;}, setSourceJobs(jobs) {movieSourceJobs.destroy(); movieSourceJobs = jobs;}};\n', filename);}
-  finally {http.Server.prototype.listen = listen; global.setInterval = interval;}
+  try {m._compile(fs.readFileSync(filename, 'utf8') + '\nmodule.exports = {detailPage, watchPage, listingPage, homePage, movieCard, pageShell, socialPage, searchPage, personDetailPage, trendingPage, watchlistPage, app, httpServer, io, tmdb, movieNights, setMovieNightSource(fn) {resolveMovieNightSource = fn;}, setTmdb(fn) {tmdb = fn;}, setSourceJobs(jobs) {movieSourceJobs.destroy(); movieSourceJobs = jobs;}};\n', filename);}
+  finally {http.Server.prototype.listen = listen; global.setInterval = interval;if(nightAutostart===undefined)delete process.env.SWIFLY_MOVIE_NIGHTS_AUTOSTART;else process.env.SWIFLY_MOVIE_NIGHTS_AUTOSTART=nightAutostart;}
   return m.exports;
 }
 const tick = () => new Promise(resolve => setImmediate(resolve));

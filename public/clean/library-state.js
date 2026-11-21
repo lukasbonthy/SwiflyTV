@@ -3,7 +3,7 @@
   'use strict';
   if (window.SwiflyLibrary) return;
   const compatibilityKey = 'swiflytv.library.__compat__';
-  const preferencesDefault = Object.freeze({spoilerMode:false,hideWatched:false,hideEpisodeBell:false,autoSkipIntro:false,rememberLastServer:true,episodeView:'grid',episodeSort:'oldest'});
+  const preferencesDefault = Object.freeze({spoilerMode:false,hideWatched:false,hideEpisodeBell:false,autoSkipIntro:false,rememberLastServer:true,episodeView:'rows',episodeSort:'oldest'});
   const booleanPreferences = ['spoilerMode','hideWatched','hideEpisodeBell','autoSkipIntro','rememberLastServer'];
   const watchedLabels = new WeakMap(), spoilerLabels = new WeakMap();
   let verificationRequired = !!window.SwiflyAccount?.ready;

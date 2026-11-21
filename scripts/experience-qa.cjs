@@ -5,7 +5,7 @@ const fs=require('node:fs');
 const {spawnSync}=require('node:child_process');
 const files=fs.readdirSync('tests').filter(file=>/\.test\.cjs$/.test(file)&&(
   /^(native-sections-browser|player-layout|study-browser|details-fluidity-rendering|premium-scroll-rendering|hero-glass-backdrop|tv-player-rendering|tv-rendering|tv-xbox-rendering|connected-cinema-rendering)\.test\.cjs$/.test(file)||
-  /(catalog-experience|community|audiobook|kids|episode|study-scenic).*(browser|rendering)/.test(file)
+  /(movie-nights|catalog-experience|community|audiobook|kids|episode|study-scenic).*(browser|rendering)/.test(file)
 )).map(file=>'tests/'+file);
 if(files.length<5)throw Error('The required experience browser suites were not found.');
 console.log('Experience QA suites: '+files.join(', '));

@@ -12,9 +12,9 @@ body.svCleanShell .svPeriodHeading h2,.svPeriodPicker{margin:0;color:#fafafa;fon
 .svPeriodPicker{position:relative;flex:none}
 .svPeriodPicker>.svPeriodTrigger{display:flex;align-items:center;gap:8px;min-width:44px;min-height:44px;padding:0 2px;border:0;border-radius:5px;background:transparent;box-shadow:none;font:inherit;color:inherit;list-style:none;cursor:pointer;white-space:nowrap;outline:none}
 .svPeriodTrigger::-webkit-details-marker{display:none}
-.svPeriodTrigger>span{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px;text-decoration-color:#a78bfa}
+.svPeriodTrigger>span{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px;text-decoration-color:var(--st-accent-solid,var(--accent-solid,#22d3ee))}
 .svPeriodTrigger svg{flex:none;width:16px;height:16px;opacity:.5}
-.svPeriodPicker :focus-visible{outline:2px solid #a78bfa;outline-offset:3px}
+.svPeriodPicker :focus-visible{outline:2px solid var(--st-accent-solid,var(--accent-solid,#22d3ee));outline-offset:3px}
 .svPeriodMenu{position:absolute;top:calc(100% + 4px);left:var(--sv-period-shift,0px);z-index:150;min-width:max(148px,100%);width:max-content;max-width:calc(100vw - 36px);padding:4px;border:1px solid #ffffff1a;border-radius:14px;background:#181818;box-shadow:0 4px 6px -1px #0003,0 2px 4px -2px #0003;transform-origin:top left}
 .svPeriodMenu a{position:relative;display:flex;align-items:center;min-width:44px;min-height:44px;padding:6px 32px 6px 8px;border-radius:12px;color:#fafafa;font-size:14px;line-height:20px;font-weight:400;letter-spacing:normal;text-decoration:none;white-space:nowrap}
 .svPeriodMenu a:is(:hover,:focus-visible),.svPeriodMenu a[aria-current=page]{background:#282828;color:#fafafa}
@@ -54,3 +54,7 @@ body.svCleanShell .svMoviesPage>.dsContent.noHero{padding-top:160px!important}
 body.reduceMotion .svPeriodMenu,body.reduceMotion .svPeriodTrigger svg{transition:none!important}
 @media(prefers-reduced-motion:reduce){.svPeriodMenu,.svPeriodTrigger svg{transition:none!important}}
 html[data-sv-tv=true] :is(.svPeriodTrigger,.svPeriodMenu a){min-height:52px}
+
+.svPeriodStatus:empty{display:none}.svPeriodStatus{font-size:12px;color:#aaa;margin:12px 0 0}.svCatalogRow[aria-busy=true] .movieRail{opacity:.58;transition:opacity .16s ease}.svPeriodHeading{align-items:baseline}.svPeriodPicker>.svPeriodTrigger{letter-spacing:inherit}
+
+.svMovieNightFeature{display:flex;align-items:center;gap:14px;padding:18px 0;margin:0 0 28px;border-top:1px solid #ffffff12;border-bottom:1px solid #ffffff12;color:#bbb;text-decoration:none}.svMovieNightFeature>svg{width:22px;height:22px;color:#b4b4b4}.svMovieNightFeature>span:nth-child(2){display:flex;align-items:center;gap:18px;min-width:0}.svMovieNightFeature strong{font-size:13px;font-weight:550;color:#ddd}.svMovieNightFeature>span:nth-child(2)>span{font-size:12px;color:#888}.svMovieNightFeatureAction{display:flex;align-items:center;gap:10px;font-size:11px;margin-left:auto;white-space:nowrap}.svMovieNightFeatureAction svg{width:15px;height:15px}.svMovieNightFeature:hover{color:#fff;border-color:#ffffff30}.svMovieNightFeature:focus-visible{outline:2px solid #ddd;outline-offset:5px}@media(max-width:620px){.svMovieNightFeature{padding:16px 0;gap:11px}.svMovieNightFeature>span:nth-child(2){display:grid;gap:5px}.svMovieNightFeature strong{font-size:12px}.svMovieNightFeature>span:nth-child(2)>span{font-size:10px}.svMovieNightFeatureAction{font-size:0;gap:0}}

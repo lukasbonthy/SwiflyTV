@@ -1,4 +1,4 @@
-import React, {createElement as h, Fragment, memo, useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore} from 'react';
+import React, {createElement as h, Fragment, memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore} from 'react';
 import {createPortal} from 'react-dom';
 import {MAX_VISIBLE_TITLES, nextOffset, railWindow, responsivePageSize, subscribeToRailSize} from './rails.mjs';
 
@@ -106,7 +106,9 @@ export function PlayerTemplate({node}) {
 
 export function MovieRailSection({node}) {
   const rail=findRail(node);
-  const cards=rail.children.filter(isCard);
+  const originalCards=useMemo(()=>rail.children.filter(isCard),[rail]);
+  const [replacementCards,setReplacementCards]=useState(null);
+  const cards=replacementCards||originalCards;
   const size=useSyncExternalStore(subscribeToRailSize,responsivePageSize,()=>MAX_VISIBLE_TITLES);
   const native=size<MAX_VISIBLE_TITLES;
   const [offset,setOffset]=useState(0);
@@ -116,6 +118,11 @@ export function MovieRailSection({node}) {
   const first=native?0:start;
   const last=native?cards.length:end;
   const reduced=()=>window.matchMedia('(prefers-reduced-motion: reduce)').matches||document.body.classList.contains('reduceMotion')||document.documentElement.dataset.svTv==='true'||document.documentElement.dataset.svXbox==='true';
+  useLayoutEffect(()=>{
+    const element=railRef.current;if(!element)return;
+    const replace=event=>{if(event.target!==element||!Array.isArray(event.detail?.cards)||!event.detail.cards.every(isCard))return;event.preventDefault();window.clearTimeout(scrollTimer.current);pageMotion.current?.cancel();previousStart.current=0;physicalIndex.current=0;element.scrollLeft=0;setOffset(0);setReplacementCards(event.detail.cards);};
+    element.addEventListener('swifly:rail-replace',replace);return()=>element.removeEventListener('swifly:rail-replace',replace);
+  },[]);
   const measureColumn=()=>{
     const rail=railRef.current;if(!rail?.clientWidth)return 0;
     const style=window.getComputedStyle(rail);
@@ -162,7 +169,7 @@ export function MovieRailSection({node}) {
     window.syncLibraryButtons?.(railRef.current);
     window.syncWatchButtons?.(railRef.current);
     document.dispatchEvent(new CustomEvent('swifly:react-rail',{detail:{rail:railRef.current,start,end,total:cards.length}}));
-  },[first,last,size,cards.length]);
+  },[first,last,size,cards]);
   useEffect(()=>{
     // Keep keyboard/controller focus usable when the last next button disables.
     if(focusAfterPage.current&&focusAfterPage.current.target===start){
@@ -198,7 +205,7 @@ export function MovieRailSection({node}) {
     }else setOffset(target);
   };
   const pager=h('div',{className:'dsRowControls svReactRailControls','data-sv-react-pager':'true',key:'pager'},
-    h('span',{className:'svReactRailRange','data-sv-react-range':'true','aria-live':'polite',ref:rangeRef},`${start+1}–${end} of ${cards.length}`),
+    h('span',{className:'svReactRailRange','data-sv-react-range':'true','aria-live':'polite',ref:rangeRef},cards.length?`${start+1}–${end} of ${cards.length}`:'No titles'),
     h('button',{className:'dsRowBtn',type:'button','aria-label':'Previous titles',disabled:start===0,onClick:event=>move(event,-1)},'‹'),
     h('button',{className:'dsRowBtn',type:'button','aria-label':'Next titles',disabled:end===cards.length,onClick:event=>move(event,1)},'›'));
   let placed=false;
