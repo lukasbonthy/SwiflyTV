@@ -46,7 +46,7 @@
   function close() {
     if (busy) return;
     overlay.hidden = true;
-    root.dataset.nightAuthOpen = 'false';
+    root.dataset.nightAuthVisible = 'false';
     form.reset();
     showError('');
     opener?.focus?.();
@@ -75,7 +75,7 @@
     opener = trigger || document.activeElement;
     updateMode(next);
     overlay.hidden = false;
-    root.dataset.nightAuthOpen = 'true';
+    root.dataset.nightAuthVisible = 'true';
     document.addEventListener('keydown', onKeyDown, true);
     (mode === 'signup' ? form.elements.name : form.elements.email).focus();
     // Surface missing durable storage clearly; never substitute a device-only account.
@@ -96,7 +96,7 @@
   root.addEventListener('click', event => {
     const signin = event.target.closest('[data-night-signin]');
     const trigger = signin || event.target.closest('[data-night-auth-open]');
-    if (trigger && root.contains(trigger)) {
+    if (trigger && root.contains(trigger) && !overlay.contains(event.target)) {
       event.preventDefault();
       void open(trigger.dataset.nightAuthOpen || 'signup', trigger);
       return;
