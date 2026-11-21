@@ -1,0 +1,25 @@
+name: Movie Nights focused QA
+on:
+  push:
+    branches:
+      - feat/movie-nights-theater-firstparty-20261121
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  focused:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: First-party Movie Nights registration and premiere UI
+        run: node --test tests/movie-nights-premiere.test.cjs
+      - name: Existing Movie Nights frontend regression
+        run: node --test tests/movie-nights-ui.test.cjs tests/movie-nights-client.test.cjs
+      - name: Production Vite build
+        run: npm run build
