@@ -11,6 +11,11 @@ concurrency:
 
 jobs:
   experience:
+    name: experience (${{ matrix.group }})
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [screening, native, cinema]
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
@@ -26,13 +31,17 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: node node_modules/playwright-core/cli.js install --with-deps chromium
+      - name: Prepare shared screening media fixture
+        if: matrix.group == 'screening'
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
       - name: Verify changed experiences in a real browser
-        run: node scripts/experience-qa.cjs
+        timeout-minutes: 18
+        run: node scripts/experience-qa.cjs ${{ matrix.group }}
       - name: Preserve screenshots and browser evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: swifly-experience-qa-${{ github.sha }}
+          name: swifly-experience-qa-${{ matrix.group }}-${{ github.sha }}
           path: qa-artifacts
           if-no-files-found: warn
           retention-days: 7

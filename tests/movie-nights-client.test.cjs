@@ -9,8 +9,8 @@ function fixture({signedIn=false,phase='live'}={}){
  const socket={connected:true,on:(name,handler)=>{handlers.set(name,handler);return socket;},off:(name)=>handlers.delete(name),emit:(name,data,ack)=>{sent.push({name,data});if(['night:join','night:sync'].includes(name))ack?.({ok:true,...snapshot});},disconnect(){this.connected=false;}};
  let current={ready:true,status:'ready',paused:true,currentTime:0},mounted;const loads=[];
  const player={mount:root=>{mounted=root;return player;},setRemoteMode(){},getState:()=>({...current}),loadSource:async(data,options)=>{loads.push(data);current.currentTime=options?.resumeAt||0;current.ready=true;return true;},play:async()=>{current.paused=false;return true;},pause:()=>{current.paused=true;},seek:time=>{seeks.push(time);current.currentTime=time;},destroy:()=>{mounted=null;}};
- w.io=()=>socket;w.SwiflyPlayer=player;w.fetch=async()=>({ok:true,json:async()=>snapshot});w.boot('community/movie-nights.js');
- return{...b,w,snapshot,handlers,sent,seeks,loads,player,get current(){return current;},get mounted(){return mounted;},send:(name,data)=>{if(name==='disconnect')socket.connected=false;if(name==='connect')socket.connected=true;return handlers.get(name)?.(data);}};
+ w.io=()=>socket;w.SwiflyPlayer=player;w.SwiflyAccount={user:signedIn?{id:'account-one'}:null,ready:Promise.resolve({user:signedIn?{id:'account-one'}:null})};w.fetch=async()=>({ok:true,json:async()=>snapshot});w.boot('community/movie-nights.js');
+ return{...b,w,snapshot,handlers,sent,seeks,loads,player,socket,get current(){return current;},get mounted(){return mounted;},send:(name,data)=>{if(name==='disconnect')socket.connected=false;if(name==='connect')socket.connected=true;return handlers.get(name)?.(data);}};
 }
 test('late arrival requires a join gesture and catches up to the shared clock',async()=>{
  const f=fixture();await tick();await tick();assert(f.w.SwiflyMovieNights,'screening controller must mount');assert.equal(f.current.paused,true);f.w.document.querySelector('[data-night-join]').click();await tick();await tick();assert.equal(f.current.paused,false);assert(f.current.currentTime>=49&&f.current.currentTime<52);assert.equal(f.w.document.querySelector('[data-night-player]').hidden,false);f.w.SwiflyMovieNights.destroy();
@@ -73,4 +73,48 @@ test('browser offline detection pauses shared media even before Socket.IO discon
  assert(f.sent.filter(x=>x.name==='night:join').length>before,'online recovery must request new server admission');
  assert.equal(f.current.paused,false);
  f.w.SwiflyMovieNights.destroy();
+});
+test('routine public updates leave an aligned playing source alone',async()=>{
+ const f=fixture();await tick();await f.w.SwiflyMovieNights.join();const before=f.seeks.length;f.send('night:update',f.snapshot);await tick();f.send('night:update',f.snapshot);await tick();assert.equal(f.seeks.length,before);assert.equal(f.current.paused,false);f.w.SwiflyMovieNights.destroy();
+});
+test('leaving the live phase pauses and hides the previous source before preparing the next one',async()=>{
+ const f=fixture();await tick();await f.w.SwiflyMovieNights.join();const loading={...f.snapshot,event:{...f.snapshot.event,phase:'countdown',sourceStatus:'loading',source:undefined}};f.send('night:update',loading);await tick();assert.equal(f.current.paused,true);assert.equal(f.w.document.querySelector('[data-night-player]').hidden,true);assert.equal(f.w.document.querySelector('[data-night-lobby]').hidden,false);f.send('night:update',{...f.snapshot,event:{...f.snapshot.event,phase:'ended',source:undefined}});assert.equal(f.current.paused,true);assert.equal(f.w.document.querySelector('[data-night-player]').hidden,true);f.w.SwiflyMovieNights.destroy();
+});
+test('ballot writes carry the verified account and an owner transition clears the previous draft',async()=>{
+ const f=fixture({signedIn:true,phase:'voting'}),requests=[];f.w.fetch=async(url,options)=>{requests.push({url,options});return{ok:true,json:async()=>f.snapshot};};await tick();f.w.document.querySelector('[data-night-vote]').click();await tick();await tick();assert.equal(requests[0].options.headers['X-Swifly-Account'],'account-one');const input=f.w.document.querySelector('[data-night-message]');input.value='a private old draft';f.w.SwiflyAccount.user={id:'account-two'};f.w.document.dispatchEvent(new f.w.Event('swifly:account-hydrated'));await tick();assert.equal(input.value,'');f.w.SwiflyMovieNights.destroy();
+});
+
+test('a late refresh cannot replace a newer confirmed vote',async()=>{
+ const f=fixture({signedIn:true,phase:'voting'});await tick();let release;const pendingResponse=new Promise(resolve=>{release=resolve;});
+ const saved={...f.snapshot,serverTime:f.snapshot.serverTime+10,event:{...f.snapshot.event,totalVotes:4,yourVote:1,candidates:[{...f.snapshot.event.candidates[0],votes:4}]}};
+ f.w.fetch=async(url)=>url.endsWith('/vote')?{ok:true,json:async()=>saved}:pendingResponse;
+ const refreshing=f.w.SwiflyMovieNights.refresh();await tick();f.w.document.querySelector('[data-night-vote]').click();await tick();await tick();
+ release({ok:true,json:async()=>({...f.snapshot,event:{...f.snapshot.event,yourVote:null}})});await refreshing;
+ assert.equal(f.w.document.querySelector('[data-night-total-votes]').textContent,'4');assert.equal(f.w.document.querySelector('[data-night-vote]').getAttribute('aria-pressed'),'true');f.w.SwiflyMovieNights.destroy();
+});
+test('an old account response cannot restore its private vote or draft after switching accounts',async()=>{
+ const f=fixture({signedIn:true,phase:'voting'});await tick();let release;
+ f.w.fetch=async(url)=>url.endsWith('/vote')?new Promise(resolve=>{release=resolve;}):{ok:true,json:async()=>({...f.snapshot,viewer:{signedIn:true,name:'New member'},event:{...f.snapshot.event,yourVote:null}})};
+ f.w.document.querySelector('[data-night-vote]').click();await tick();f.w.SwiflyAccount.user={id:'account-two'};f.snapshot.event.yourVote=null;
+ f.w.document.dispatchEvent(new f.w.Event('swifly:account-hydrated'));await tick();
+ release({ok:true,json:async()=>({...f.snapshot,event:{...f.snapshot.event,yourVote:1}})});await tick();await tick();
+ assert.equal(f.w.document.querySelector('[data-night-vote]').getAttribute('aria-pressed'),'false');assert.equal(f.w.document.querySelector('[data-night-message]').value,'');assert.notEqual(f.w.document.querySelector('[data-night-vote-status]').textContent,'Your vote is saved.');f.w.SwiflyMovieNights.destroy();
+});
+
+test('a native queued play does not block a following viewer from playing again after reconnect',async()=>{
+ const f=fixture();await tick();let attempts=0;
+ f.player.loadSource=async()=>{f.current.ready=false;f.current.paused=true;return true;};
+ f.player.play=async()=>{attempts++;if(!f.current.ready)return false;f.current.paused=false;return true;};
+ await f.w.SwiflyMovieNights.join();assert.equal(attempts,1);f.current.ready=true;f.current.paused=false;f.mounted.dispatchEvent(new f.w.CustomEvent('swiflyplayer:state',{bubbles:true,detail:{...f.current}}));
+ f.send('disconnect');f.send('connect');await tick();await tick();assert.equal(attempts,2,'re-admitted queued source receives a fresh native play request');f.w.SwiflyMovieNights.destroy();
+});
+test('current-owner network timeouts leave actionable errors on vote, refresh and source retry',async()=>{
+ for(const action of ['vote','refresh','retry']){
+  const f=fixture({signedIn:true,phase:'voting'});await tick();
+  if(action==='retry'){f.snapshot.event.sourceStatus='error';f.send('night:update',f.snapshot);}
+  const nativeTimer=f.w.setTimeout;f.w.setTimeout=(fn,delay,...args)=>nativeTimer(fn,delay===12000?1:delay,...args);
+  f.w.fetch=(_url,{signal}={})=>new Promise((_resolve,reject)=>signal.addEventListener('abort',()=>reject(new f.w.DOMException('Aborted','AbortError'))));
+  if(action==='refresh')await f.w.SwiflyMovieNights.refresh();else{f.w.document.querySelector(action==='vote'?'[data-night-vote]':'[data-night-retry]').click();await new Promise(resolve=>setTimeout(resolve,15));}
+  const target=action==='vote'?'[data-night-vote-status]':'[data-night-status]';assert.match(f.w.document.querySelector(target).textContent,/try again/i,action+' timeout is recoverable');f.w.SwiflyMovieNights.destroy();f.finish();
+ }
 });

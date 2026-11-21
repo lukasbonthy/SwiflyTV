@@ -13,6 +13,7 @@ async function tmdb(route,params={}){
   if(suffix==='content_ratings')return {results:[{iso_3166_1:'US',rating:id>=900?'TV-MA':'TV-Y7'}]};
   if(suffix==='recommendations'||suffix==='similar')return {results:[{id:901,title:'ADULT RECOMMENDATION',poster_path:'/adult-rec.jpg'},{id:31,title:'UNTRUSTED CANDIDATE COPY'}]};
   if(suffix==='videos')return {results:[{site:'YouTube',type:'Trailer',key:'unsafeVideo',name:'UNREVIEWED TRAILER'}]};
+  if(suffix?.startsWith('season/')&&id===777)return {episodes:[...Array.from({length:24},(_,i)=>({episode_number:i+1,name:'Real story '+(i+1),air_date:'2025-01-01'})),{episode_number:850,name:'Far away adventure',air_date:'2025-01-01'}]};
   if(suffix?.startsWith('season/'))return {episodes:[{episode_number:1,name:'First adventure',overview:'A garden picnic.',air_date:'2025-01-01',still_path:'/episode.jpg',runtime:22},{episode_number:2,name:'Next adventure',air_date:'2025-01-02',runtime:22}]};
   if(suffix)return {results:[],cast:[],crew:[]};
   if(id===904)throw Error('ratings metadata unavailable');
@@ -64,7 +65,8 @@ test('Native season browsing bounds initial metadata and DOM while later seasons
  assert.equal(calls.slice(before).filter(call=>/^\/tv\/777\/season\//.test(call.route)).length,1,'only selected season metadata is requested');
  assert(first.querySelector('.kidsSeasonPages a[href*="season=41"]'));
  const later=await document('/kids/title/tv/777?season=81');assert(later.querySelector('[data-episode-season="81"][open]'));assert(later.querySelector('.kidsSeasonPages a[href*="season=41"]'));
- assert(later.querySelector('.svDetailEpisodeTile[href*="s=81"]'));assert(later.querySelector('a[href*="s=81"][href*="e=25"]'),'a long season remains reachable through the bounded player');
+ assert(later.querySelector('.svDetailEpisodeTile[href*="s=81"]'));assert(later.querySelector('a[rel=next][href*="episodePage=2"]'),'a long season pages through actual metadata');
+ const last=await document('/kids/title/tv/777?season=81&episodePage=2');assert(last.querySelector('a.svDetailEpisodeTile[href*="s=81"][href*="e=850"]'));assert.equal(last.querySelector('a[href*="e=25"]'),null,'missing ordinals are never invented');
  const p=await document('/kids/watch/tv/777?s=81&e=850');assert(p.querySelectorAll('[data-player-episode-link]').length<=200);assert(p.querySelector('[data-player-season-link][aria-current="true"]'));
  for(const link of p.querySelectorAll('[data-player-episode-link],[data-player-season-link]'))assert(link.getAttribute('href').startsWith('/kids/watch/tv/777'));
 });

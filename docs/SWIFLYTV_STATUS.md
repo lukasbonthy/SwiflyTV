@@ -2,6 +2,16 @@
 
 Updated: November 21, 2026 (UTC).
 
+## Active follow-up — reviewed playback, episodes and browsing
+
+Review fixes are being integrated on `feat/swifly-movie-nights-20261116` over current main `d99219717dd42a3b080b4972ee6dc57c9bd34637`. The other chat merged Movie Nights and the first-party theater premiere while this session was paused. Preserve that newer UI, local account setup, explicit autoplay-unlock behavior, offline/online recovery and the real byte-range QA fixture. Running app remains the released `5faf9fb` below until the follow-up is verified and merged. User authorization to fix playback and merge remains in force.
+
+Source `2013124` includes the rebased independent source, Home, episode and TV corrections. Twelve integration findings plus three reproduced residuals have implementations and regressions: private/no-store personalized HTML; one canonical leased stream; no repeated snapshot seeks; phase/admission playback fencing; ordered account-safe ballot updates and recoverable timeouts; genuine aired/sparse episode SSR, accurate primary actions and 24-row paging; shared strict metadata validation; one bulk library snapshot; full Home row/hero exclusions and filter preservation; spoiler hooks; phone ballot before chat, configured schedule, 500-character and closed chat states. New theme/account behavior is retained. Combined focused premiere/client/UI/cache checks pass 24/24. The previous complete pre-rebase local suite passed 1,887 with 299 browser cases deferred; combined-tree full checks are running.
+
+The first old-tree hosted experience run `44866530151` timed out after preserving artifact `14693055834` (344 files). Its images exposed duplicate season toggle markers and iPad parent-label wrapping; follow-up styling corrects these. Three failures were diagnosed as an obsolete accent-color expectation, flat child rows sharing their opaque parent, and image interception missing the test's second browser tab. Their assertions now exercise the intended visible state. Fresh hosted acceptance is still required. Experience QA is split into screening/native/cinema jobs with per-step deadlines so a stuck test cannot hide every screenshot. Do not retry denied local Chromium launches.
+
+Remaining: complete combined-tree checks, inspect fresh desktop/iPad/phone/320px screenshots and two-client playback/reconnect, resolve material findings, merge the concrete verified follow-up, and verify the exact running revision/assets. Physical iPad Safari and every third-party provider remain outside hosted verification. Keep account/access/parent secrets private and unchanged.
+
 ## Released — Movie Nights theater premiere, first-party accounts and shared playback
 
 - **Merged and live:** PR https://github.com/lukasbonthy/SwiflyTV/pull/168 merged to `main`. Running application commit `5faf9fb86a4f5214b517e6c517add3774c482ff6`, Render deployment `dep-dc0jkptg1s2s73e4o25g`, confirmed `live` at `2026-11-21T06:31:51Z`. Production URL: https://swiflytv-1.onrender.com/movie-nights. Render confirmed successful build/deploy on the **exact** merge commit. Any later documentation-only checkpoint is not the application revision.

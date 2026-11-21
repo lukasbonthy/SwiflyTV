@@ -17,6 +17,7 @@ function detailsMetadata(endpoint) {
     const id = endpoint.split('/').at(-1);
     return {...movie, id:Number(id) || movie.id, title:id === '202' ? 'The Other Film' : movie.title, name:'A series', first_air_date:'2016-11-11', seasons:[{season_number:1, episode_count:2}]};
   }
+  if (/^\/tv\/\d+\/season\/1$/.test(endpoint)) return {episodes:[1,2].map(episode_number=>({episode_number,name:'Episode '+episode_number,air_date:'2016-11-11'}))};
   if (endpoint.endsWith('/credits')) return {cast:[], crew:[]};
   if (endpoint.endsWith('/videos')) return {results:[{site:'YouTube', type:'Trailer', key:'trailerID'}]};
   return {results:[]};

@@ -219,12 +219,12 @@
       stage.setAttribute('aria-label',mediaType==='tv'?'Episode player':'Movie player');find('seek').setAttribute('aria-label','Seek through '+mediaName());
       play.querySelector('.svPlayerIcon path')?.setAttribute('d',paused?'m9 5 11 7-11 7V5Z':'M8 5v14M16 5v14');
       for(const name of ['play','backward','forward'])find(name).disabled=!playable||locked();
-      find('retry').disabled=locked();find('speed').disabled=remoteMode.enabled;
+      find('retry').disabled=locked();find('speed').disabled=remoteMode.enabled||app.dataset.playerScreening==='true';
       find('volume').value=String(video.muted?0:video.volume);
       const mute=find('mute'),muteLabel=(video.muted?'Unmute ':'Mute ')+mediaName();mute.setAttribute('aria-label',muteLabel);mute.title=muteLabel;mute.setAttribute('aria-pressed',String(video.muted));
       const volumeButton=find('volume-menu').querySelector('summary');volumeButton.setAttribute('aria-label',video.muted||video.volume===0?'Volume, muted':'Volume, '+Math.round(video.volume*100)+' percent');volumeButton.querySelector('path').setAttribute('d',video.muted||video.volume===0?'M11 4 6 8H3v8h3l5 4V4Zm5 5 6 6m0-6-6 6':'M11 4 6 8H3v8h3l5 4V4Zm4 4a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14');
-      find('transport-note').textContent=remoteMode.enabled?(locked()?'Your host controls playback. Your volume and captions are yours.':'You control playback for everyone in this party.'):remoteMode.manual?'Link playback is manual. Play and seek locally; this video is not synchronized.':'Settle in. The rest can wait.';
-      const syncButton=find('sync');if(syncButton)syncButton.hidden=!remoteMode.enabled;
+      find('transport-note').textContent=app.dataset.playerScreening==='true'?'This screening follows a shared clock. Pausing only affects you.':remoteMode.enabled?(locked()?'Your host controls playback. Your volume and captions are yours.':'You control playback for everyone in this party.'):remoteMode.manual?'Link playback is manual. Play and seek locally; this video is not synchronized.':'Settle in. The rest can wait.';
+      const syncButton=find('sync');if(syncButton){syncButton.hidden=!remoteMode.enabled&&app.dataset.playerScreening!=='true';syncButton.disabled=app.dataset.playerScreening==='true'&&locked();}
       app.dataset.playerRemote=remoteMode.enabled?'true':'false';app.dataset.playerHost=remoteMode.isHost?'true':'false';updateTime();updateVisibility();
     }
     function setStatus(next,title,copy) {

@@ -155,10 +155,15 @@ for (const viewport of [{width:1363,height:936},{width:1280,height:720},{width:1
       const bounds = node => {const r=node.getBoundingClientRect();return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,height:r.height};};
       const card=document.activeElement.closest('.movieCard'),row=card?.closest('.dsRow'),rail=card?.closest('.movieRail');
       const preview=document.getElementById('swiflyTvSpotlight');
-      return {nav:bounds(document.querySelector('.netflixNav')),preview:preview&&!preview.hidden?bounds(preview):null,guide:bounds(document.getElementById('swiflyTvGuide')),hero:bounds(document.querySelector('.dsHero')),heading:bounds((row||document.querySelector('.dsRow')).querySelector('h2')),card:card&&bounds(card),caption:card&&bounds(card.querySelector('.dsCardInfo')),poster:card&&bounds(card.querySelector('.posterWrap')),railTop:rail?.scrollTop,scrollY,selected:card&&[...rail.querySelectorAll('.movieCard')].indexOf(card),row:row&&[...document.querySelectorAll('.dsRow')].indexOf(row)};
+      const gallery=row||document.querySelector('.dsRow'),period=gallery.querySelector('.svPeriodTrigger'),promo=document.querySelector('.svMovieNightFeature');
+      return {nav:bounds(document.querySelector('.netflixNav')),preview:preview&&!preview.hidden?bounds(preview):null,guide:bounds(document.getElementById('swiflyTvGuide')),hero:bounds(document.querySelector('.dsHero')),heading:bounds(gallery.querySelector('h2')),period:period&&bounds(period),promo:promo&&{...bounds(promo),href:promo.getAttribute('href')},card:card&&bounds(card),caption:card&&bounds(card.querySelector('.dsCardInfo')),poster:card&&bounds(card.querySelector('.posterWrap')),railTop:rail?.scrollTop,scrollY,selected:card&&[...rail.querySelectorAll('.movieCard')].indexOf(card),row:row&&[...document.querySelectorAll('.dsRow')].indexOf(row)};
     });
     await settleScroll(page);
     const initial=await read();
+    if(viewport.height===720){
+      await captureCatalog(page,'tv-home-720p-featured-and-first-gallery',initial);
+      assert(initial.promo.href==='/movie-nights'&&initial.promo.height>0&&initial.promo.top>=initial.guide.bottom,'The Movie Nights link stays available below the initial 720p frame');
+    }
     assert(initial.heading.bottom+64<=initial.guide.top,'The home screen reveals its first gallery below the featured title: '+JSON.stringify(initial));
     await page.locator('.dsHeroActions .dsPrimaryBtn').focus();
     await page.keyboard.press('ArrowDown');
@@ -167,6 +172,7 @@ for (const viewport of [{width:1363,height:936},{width:1280,height:720},{width:1
     assert.equal(first.row,0,'Down from the feature enters the first gallery');
     const anchor=(first.preview||first.nav).bottom;
     assert(first.heading.top>=anchor+16&&first.heading.top<=anchor+44,'The row settles immediately below the selected-title preview: '+JSON.stringify(first));
+    assert(first.period.height>=44,'The Home period control retains a full focus target');
     assert(clearsGuide(first.caption.bottom,first.guide.top),'The complete two-line title and date clear the guide: '+JSON.stringify(first));
     assert.equal(first.railTop,0,'Focus never scrolls the poster rail vertically');
     await page.keyboard.press('ArrowRight');await page.keyboard.press('ArrowRight');await settleScroll(page);

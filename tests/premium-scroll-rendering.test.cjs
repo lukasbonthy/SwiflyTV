@@ -10,7 +10,7 @@ const available = fs.existsSync(chromium.executablePath()) ||
   fs.existsSync(chromium.executablePath().replace(/chromium-(\d+)\/chrome-linux\/chrome$/, 'chromium_headless_shell-$1/chrome-linux/headless_shell'));
 
 async function catalog(browser, options = {}) {
-  const {detailHTML,welcome=false,grid='',...pageOptions}=options;
+  const {detailHTML,welcome=false,grid='',homeQuery={},...pageOptions}=options;
   const api = loadServer();
   let ready = false;
   try {
@@ -36,7 +36,7 @@ async function catalog(browser, options = {}) {
         ? '<main><div class="container netflixCatalog"><div class="movieGrid">'+cards+'</div></div></main>'
         : '<main class="dsPlainPage"><section class="dsContent noHero"><div class="dsGrid">'+cards+'</div></section></main>'});
     }
-    else await api.homePage({}, {send(value) {html = value;}});
+    else await api.homePage({query:homeQuery}, {send(value) {html = value;}});
     let detail; await api.detailPage({params:{id:'100'},query:{view:'modal'},headers:{},protocol:'http',get:()=> 'localhost:3000'},
       {send(value) {detail=value;}}, 'movie');
     // Registering gamepad listeners initializes physical device discovery in
@@ -64,7 +64,8 @@ async function catalog(browser, options = {}) {
         '<svg xmlns="http://www.w3.org/2000/svg" width="900" height="600"><rect width="900" height="600" fill="#325776"/><circle cx="280" cy="240" r="180" fill="#afc3d7"/></svg>'});
       return route.fulfill({body:'', contentType:route.request().resourceType() === 'stylesheet' ? 'text/css' : 'text/plain'});
     });
-    await page.goto(origin);
+    const query=new URLSearchParams(homeQuery);
+    await page.goto(origin+(query.size?'/?'+query:''));
     // Cold catalog fixtures share CPU with other Chromium files. Readiness
     // remains condition-based; this is not a startup-speed assertion.
     await appReady(page,'/',{timeout:30000});
@@ -565,7 +566,9 @@ test('the real touch catalog keeps OS scrolling and all glass surfaces', {skip:!
 for (const width of [390, 1440, 1920]) test(`catalog dates fit completely inside painted rows at ${width}px`, {skip:!available && 'Chromium is not installed'}, async () => {
   const browser = await chromium.launch({headless:true});
   try {
-    const page = await catalog(browser, {viewport:{width, height:960}});
+    // This paint test needs a full row. Trending and popularity otherwise
+    // request the same weekly collection and divide the available titles.
+    const page = await catalog(browser, {viewport:{width, height:960},homeQuery:{moviePeriod:'today'}});
     for (const variant of [{layout:'default', density:'comfy'}, {layout:'default', density:'compact'}, {layout:'posterwall', density:'comfy'}]) {
       await page.evaluate(({layout, density}) => {
         document.body.dataset.stLayout = layout; document.body.dataset.stDensity = density;

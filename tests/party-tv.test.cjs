@@ -7,7 +7,7 @@ const {watchPartyMarkup}=require('../ui/watch-party');
 const {partyMarkup}=require('../ui/party');
 const api=loadServer();let base,port,jobs;const clients=[];
 const series={id:101,name:'The Office',first_air_date:'2005-03-24',seasons:[{season_number:1,episode_count:6},{season_number:2,episode_count:4}]};
-const episodes=[{episode_number:1,name:'The Dundies'},{episode_number:2,name:'Sexual Harassment'},{episode_number:3,name:'Office Olympics'},{episode_number:4,name:'The Fire'}];
+const episodes=[{episode_number:1,name:'The Dundies'},{episode_number:2,name:'Sexual Harassment'},{episode_number:3,name:'Office Olympics'},{episode_number:4,name:'The Fire'}].map(episode=>({...episode,air_date:'2005-03-24'}));
 function metadata(endpoint){if(endpoint==='/tv/101')return series;if(endpoint==='/tv/101/season/2')return {episodes};if(endpoint==='/tv/101/season/1')return {episodes:episodes.slice(0,2)};return {results:[]};}
 function inject(resolve){jobs?.destroy();jobs=createSourceJobs({resolve,deadlineMs:1000});api.setSourceJobs(jobs);}
 function connect(){return new Promise((resolve,reject)=>{

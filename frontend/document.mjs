@@ -107,8 +107,9 @@ export function PlayerTemplate({node}) {
 export function MovieRailSection({node}) {
   const rail=findRail(node);
   const originalCards=useMemo(()=>rail.children.filter(isCard),[rail]);
-  const [replacementCards,setReplacementCards]=useState(null);
-  const cards=replacementCards||originalCards;
+  const [replacement,setReplacement]=useState(null);
+  const cards=replacement?.cards??originalCards;
+  const catalogIds=replacement?.ids??node.attrs?.['data-catalog-ids'];
   const size=useSyncExternalStore(subscribeToRailSize,responsivePageSize,()=>MAX_VISIBLE_TITLES);
   const native=size<MAX_VISIBLE_TITLES;
   const [offset,setOffset]=useState(0);
@@ -120,7 +121,19 @@ export function MovieRailSection({node}) {
   const reduced=()=>window.matchMedia('(prefers-reduced-motion: reduce)').matches||document.body.classList.contains('reduceMotion')||document.documentElement.dataset.svTv==='true'||document.documentElement.dataset.svXbox==='true';
   useLayoutEffect(()=>{
     const element=railRef.current;if(!element)return;
-    const replace=event=>{if(event.target!==element||!Array.isArray(event.detail?.cards)||!event.detail.cards.every(isCard))return;event.preventDefault();window.clearTimeout(scrollTimer.current);pageMotion.current?.cancel();previousStart.current=0;physicalIndex.current=0;element.scrollLeft=0;setOffset(0);setReplacementCards(event.detail.cards);};
+    const replace=event=>{
+      const {cards,ids}=event.detail||{};
+      if(event.target!==element||!Array.isArray(cards)||!cards.every(isCard))return;
+      event.preventDefault();
+      window.clearTimeout(scrollTimer.current);
+      pageMotion.current?.cancel();
+      focusAfterPage.current=false;
+      previousStart.current=0;
+      physicalIndex.current=0;
+      element.scrollLeft=0;
+      setOffset(0);
+      setReplacement({cards,ids:Array.isArray(ids)?ids.join(','):undefined});
+    };
     element.addEventListener('swifly:rail-replace',replace);return()=>element.removeEventListener('swifly:rail-replace',replace);
   },[]);
   const measureColumn=()=>{
@@ -225,7 +238,7 @@ export function MovieRailSection({node}) {
   }
   const children=node.children.map(content);
   if(!placed)children.unshift(pager);
-  return h(node.tag,{...elementProps(node),'data-sv-react-row':'true'},children);
+  return h(node.tag,{...elementProps(node),'data-catalog-ids':catalogIds,'data-sv-react-row':'true'},children);
 }
 
 export const Element = memo(function Element({node}) {

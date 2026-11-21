@@ -6,19 +6,20 @@ test.afterEach(cleanup);
 const api = loadServer();
 const title = 'A Complete Movie Title & Its Subtitle';
 const details = {id: 101, title, name: title, overview: 'The complete story stays visible below the artwork.', release_date: '2024-03-01', first_air_date: '2024-03-01', vote_average: 8.1, runtime: 166, number_of_seasons: 2, poster_path: '/poster.jpg', backdrop_path: '/backdrop.jpg', genres: [{id: 878, name: 'Science Fiction'}, {id: 12, name: 'Adventure'}], images: {logos: [{file_path:'/foreign.png', iso_639_1:'fr', vote_average:9}, {file_path:'/english.png', iso_639_1:'en', vote_average:8}]}, seasons: [{season_number: 1, episode_count: 4}, {season_number: 2, episode_count: 6}]};
-let requests;
+let requests, seasonRows;
 function metadata(endpoint, params) {
   requests.push({endpoint, params});
   if (/^\/(movie|tv)\/101$/.test(endpoint)) return Promise.resolve(details);
+  if (/^\/tv\/101\/season\/[12]$/.test(endpoint)) return Promise.resolve({episodes:seasonRows || Array.from({length:endpoint.endsWith('/2')?6:4},(_,i)=>({episode_number:i+1,name:'Episode '+(i+1),air_date:'2024-03-01'}))});
   if (endpoint.endsWith('/credits')) return Promise.resolve({cast: [{id: 12, name: 'Actor Name', character: 'Character', profile_path: '/actor.jpg'}], crew: [{name:'Director Name',job:'Director'}]});
   if (endpoint.endsWith('/videos')) return Promise.resolve({results: [{site:'YouTube',type:'Trailer',key:'trailerID',name:'Trailer'}]});
   if (endpoint.endsWith('/external_ids')) return Promise.resolve({});
   if (endpoint.endsWith('/watch/providers')) return Promise.resolve({results:{}});
   return Promise.resolve({results:[{...details,id:202}]});
 }
-async function render(type = 'movie', view = 'modal') {
+async function render(type = 'movie', view = 'modal', query = {}) {
   requests = []; api.setTmdb(metadata); let html;
-  await api.detailPage({params:{id:'101'},query:{view},headers:{},protocol:'http',get:()=> 'localhost:3000'}, {send(value) {html=value;}}, type);
+  await api.detailPage({params:{id:'101'},query:{view,...query},headers:{},protocol:'http',get:()=> 'localhost:3000'}, {send(value) {html=value;}}, type);
   return html;
 }
 test('Details fragment keeps movie information together without the outer page', async () => {
@@ -41,9 +42,28 @@ test('Series details preserve playback while closed seasons load their episode l
   const env = browser(await render('tv')), d = env.window.document,w=env.window;
   assert(d.querySelector('.svDetailActions a[href="/watch/tv/101?mode=movie&s=1&e=1"]'));
   assert.equal(d.querySelector('[data-episode-season="2"] .svDetailEpisodeTile'),null,'closed seasons do not pre-render every episode');
-  w.fetch=async()=>({ok:true,json:async()=>({episodes:Array.from({length:6},(_,i)=>({episode:i+1,name:'Episode '+(i+1),aired:true}))})});w.boot('episode-browser.js');const season=d.querySelector('[data-episode-season="2"]');season.open=true;season.dispatchEvent(new w.Event('toggle'));await tick();await tick();
+  w.fetch=async()=>({ok:true,json:async()=>({episodes:Array.from({length:6},(_,i)=>({episode:i+1,name:'Episode '+(i+1),airDate:'2024-03-01',aired:true}))})});w.boot('episode-browser.js');const season=d.querySelector('[data-episode-season="2"]');season.open=true;season.dispatchEvent(new w.Event('toggle'));await tick();await tick();
   assert(d.querySelector('#episodes a[href="/watch/tv/101?mode=movie&s=2&e=6"]'));
   env.finish();
+});
+test('Initial series actions and rows use only verified aired episodes in the requested season', async () => {
+  seasonRows=[{episode_number:4,name:'The real fourth episode',air_date:'2024-03-01'}, {episode_number:8,name:'An undated story'}, {episode_number:11,name:'A future story',air_date:'2099-01-01'}];
+  try {
+    const env=browser(await render('tv','modal',{season:'2'})),d=env.window.document;
+    assert.equal(d.querySelectorAll('.svSeason[open]').length,1);
+    assert.equal(d.querySelector('.svSeason[open]').dataset.episodeSeason,'2');
+    assert.deepEqual([...d.querySelectorAll('#episodes a.svDetailEpisodeTile')].map(link=>link.getAttribute('href')),['/watch/tv/101?mode=movie&s=2&e=4']);
+    assert(d.querySelector('.svDetailActions a[href="/watch/tv/101?mode=movie&s=2&e=4"]'));
+    assert(d.querySelector('.svDetailActions a[href="/download/tv/101?s=2&e=4"]'));
+    assert.equal(d.querySelector('.svDetailActions a[href*="e=1"]'),null);
+    assert.equal(requests.filter(row=>/\/season\//.test(row.endpoint)).length,1);
+    assert.equal(d.querySelectorAll('#episodes [data-episode-available="false"]').length,2);
+    env.finish();
+  } finally {seasonRows=undefined;}
+});
+test('Unreleased series offer episode browsing without fabricated play or download actions',async()=>{
+  seasonRows=[{episode_number:1,name:'Not yet',air_date:'2099-01-01'}];
+  try{const env=browser(await render('tv')),d=env.window.document;assert.equal(d.querySelector('.svDetailActions [data-play-id],.svDetailActions [data-sv-download],.svDetailActions [data-sv-party-movie-id]'),null);assert(d.querySelector('.svDetailActions a[href="#episodes"]'));env.finish();}finally{seasonRows=undefined;}
 });
 test('Details open over the catalog, retain background position and restore focus on close', async () => {
   const fragment = await render();
@@ -273,4 +293,9 @@ test('Xbox opens details synchronously without waiting for the 900ms slide anima
   finishFetch({ok:true,text:async()=>fragment});await tick();
   assert.match(modal.textContent,/A Complete Movie Title/);
   env.finish();
+});
+
+test('Selecting the first aired episode does bounded metadata work in a long season',async()=>{
+ let reads=0;seasonRows=Array.from({length:200},(_,i)=>({get episode_number(){reads++;return i+1;},name:'Episode '+(i+1),air_date:'2024-03-01'}));
+ try{await render('tv');assert(reads<4000,'200 episodes should not require '+reads+' ordinal reads');}finally{seasonRows=undefined;}
 });
