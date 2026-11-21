@@ -60,8 +60,12 @@ test('account setup sends same-origin JSON only after confirmation and can switc
  assert.equal(signup.opts.headers['Content-Type'],'application/json');
  assert.equal(JSON.parse(signup.opts.body).handle,'testviewer');
  assert.match(w.document.querySelector('[data-night-auth-error]').textContent,/already has an account/);
- w.document.querySelector('[data-night-auth-mode="login"]').click();
- assert.equal(w.document.querySelector('[data-night-auth-mode="login"]').getAttribute('aria-selected'),'true','login mode must be selected');
+ const loginTab=w.document.querySelector('[data-night-auth-mode="login"]'),authRoot=w.document.querySelector('[data-movie-nights]');
+ const tabDiagnostics={insideRoot:authRoot.contains(loginTab),connected:loginTab.isConnected,disabled:loginTab.disabled,tabCount:authRoot.querySelectorAll('[data-night-auth-mode]').length};
+ let clicked=false;loginTab.addEventListener('click',()=>{clicked=true;});
+ loginTab.click();
+ assert.equal(clicked,true,'login tab must receive its click event '+JSON.stringify(tabDiagnostics));
+ assert.equal(loginTab.getAttribute('aria-selected'),'true','login mode must be selected '+JSON.stringify(tabDiagnostics));
  assert.equal(form.querySelector('input[name="handle"]').disabled,true);
  assert.equal(form.elements.confirmPassword.disabled,true);
  assert.equal(form.elements.password.autocomplete,'current-password');
