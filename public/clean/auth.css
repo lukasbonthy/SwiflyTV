@@ -74,7 +74,7 @@ body.svCleanShell.svAccountEntry main.dsAuthPageSafe .dsAuthCard {
 }
 body.svAccountEntry .dsAuthCard::before,
 body.svAccountEntry .dsAuthCard::after { display: none !important; }
-body.svCleanShell.svAccountEntry main.dsAuthPageSafe .dsAuthSwitch {
+body.svCleanShell.svAccountEntry main.dsAuthPageSafe .dsAuthCard .dsAuthSwitch {
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 4px;
@@ -87,6 +87,7 @@ body.svCleanShell.svAccountEntry main.dsAuthPageSafe .dsAuthSwitch {
   background: #0c1017 !important;
   box-shadow: none !important;
   backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 body.svAccountEntry .dsAuthSwitch a {
   display: grid !important; place-items: center;
@@ -117,7 +118,8 @@ body.svCleanShell.svAccountEntry main.dsAuthPageSafe .dsSafeAuthForm input {
   color: #f4f7fd !important; background: #0c1018 !important;
   border: 1px solid #ffffff30 !important; border-radius: 10px !important;
   font: inherit; font-size: 16px; font-weight: 400;
-  box-shadow: none !important; backdrop-filter: none !important; transition: border-color .15s;
+  box-shadow: none !important; backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important; transition: border-color .15s;
 }
 body.svAccountEntry .svAuthPasswordField { position: relative; min-width: 0; }
 body.svCleanShell.svAccountEntry main.dsAuthPageSafe .svAuthPasswordField input { padding-right: 66px !important; }
@@ -134,7 +136,8 @@ body.svCleanShell.svAccountEntry main.dsAuthPageSafe .dsSafeAuthForm .dsPrimaryB
   padding: 10px 13px !important; margin: 2px 0 0 !important;
   border: 1px solid transparent !important; border-radius: 10px !important;
   color: #141925 !important; background: #e9eef8 !important; box-shadow: none !important;
-  backdrop-filter: none !important; font-size: 14px; font-weight: 650;
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  font-size: 14px; font-weight: 650;
   cursor: pointer; transition: background-color .15s;
 }
 body.svCleanShell.svAccountEntry main.dsAuthPageSafe .dsSafeAuthForm .dsPrimaryBtn:hover:enabled { background: #fff !important; }

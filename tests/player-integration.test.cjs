@@ -280,7 +280,7 @@ test('signup is a single refined form with preserved fields and a usable passwor
  const css=await (await fetch(base+'/assets/clean/auth.css')).text();
  assert.match(css,/main\.dsAuthPageSafe \.dsAuthCard/);
  assert.match(css,/:is\(a, input, button\):focus-visible/);
- assert.match(html,/assets\/clean\/auth\.css\?v=263/);
+ assert.match(html,/assets\/clean\/auth\.css\?v=264/);
 });
 test('movie discovery artwork fades beyond the hero without a visible seam',async()=>{
  const d=parse(await(await fetch(base+'/welcome')).text()).window.document;

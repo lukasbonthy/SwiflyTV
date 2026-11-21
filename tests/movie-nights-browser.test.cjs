@@ -250,6 +250,8 @@ test('standalone account pages fit and recover a Movie Nights sign-in on a narro
   assert.notEqual(await tabColor(accountOptions.locator('[aria-current]')),await tabColor(accountOptions.locator('a:not([aria-current])')));
   assert.equal(await page.locator('main[data-auth-mode] .svGlassSurface').count(),0);
   assert.equal(await page.locator('.dsAuthCard').evaluate(element=>getComputedStyle(element).backgroundColor),'rgb(19, 24, 32)');
+  const formSurfaces=page.locator('.dsAuthCard, .dsAuthSwitch, #safeAuthForm input, [data-auth-submit]');
+  assert(await formSurfaces.evaluateAll(elements=>elements.every(element=>getComputedStyle(element).backdropFilter==='none')));
   await fits(page,'[data-auth-mode]');
   await shot(page,label+'-standalone-login');
 
