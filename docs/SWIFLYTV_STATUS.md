@@ -2,7 +2,13 @@
 
 Updated: November 21, 2026 (UTC).
 
-## Current release — Login and signup
+## Current release — Temporary accounts on Render
+
+- **Production:** [PR #173](https://github.com/lukasbonthy/SwiflyTV/pull/173) deployed application commit `526244a5c27969d995f6c0f77504ab2f7f719638` and tested tree `85b140bf9936b83b8fbf064004006645b77c1006` as `dep-dc108qh42hec73feepsg`. It went live November 21 at 3:53 p.m. Eastern (`2026-11-21T20:53:12.134704Z`). Startup logs confirmed temporary account storage was active.
+- **Storage:** With the user's approval, the existing single-instance Render service uses `SWIFLY_ACCOUNT_STORE=temporary`. The running app opens neither PostgreSQL nor an account file. The temporary store starts empty and discards accounts, sessions, synced lists, votes and chat on restart or redeploy. The existing database and records were preserved. No disk was added. Standalone auth and the Movie Nights dialog disclose the reset behavior.
+- **Verification:** 131 focused local tests passed. [Hosted QA](https://github.com/lukasbonthy/SwiflyTV/actions/runs/44947972233/attempts/2) passed the build and all 13 Chromium cases, including signup with a deliberately unusable database URL and the two-viewer reconnect case. The API fixture verified login and rejection of old sessions after a restart. The live signup and session routes still enforced the access gate. The documentation checkpoint is separate from the running build.
+
+## Prior release — Login and signup
 
 - **Production:** [PR #172](https://github.com/lukasbonthy/SwiflyTV/pull/172) shipped as `92e8f671de649a6b61ff6c78dab780a19bf4e862`, tree `c757d2e748b15ccac70fc5a91b4a81ec055d2a91`. Render deployment `dep-dc0vohe0tbcc73a6mo2g` was live November 21 at 3:18 p.m. Eastern (`2026-11-21T20:18:09.675637Z`).
 - **Account pages:** Login and signup share a responsive SwiflyTV form, keep validated return links when switching tabs, and check the account service before accepting credentials. The form shows an outage and retry action when sign-in and signup are unavailable. The shared glass renderer no longer overlays controls on these pages.
