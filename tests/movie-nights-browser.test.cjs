@@ -155,35 +155,93 @@ test('Home fits the screening artwork and deep links to real ballot picks on des
  const previewCandidates=candidates.map(film=>film===leader?{...film,title}:film);
  t.mock.method(api.movieNights,'homePreview',()=>({id,startsAt,phase,candidates:previewCandidates,winner,viewers,timeZone:schedule.timeZone}));
  const firstPick=candidates.find(film=>film.id!==leader.id);
- for(const [label,width,height] of [['desktop',1440,1050],['small-phone',320,800]]){
+ const originalRenderer=process.env.SWIFLY_REACT;
+ t.after(()=>{process.env.SWIFLY_REACT=originalRenderer;});
+ for(const [label,width,height,react] of [['desktop',1440,1050,true],['small-phone',320,800,true],['small-phone-original',320,800,false]]){
   const f=await open(t,width,height);
-  if(label==='small-phone')await f.page.route(leader.poster,route=>route.abort());
-  await f.page.goto(origin+'/');
-  await f.page.waitForFunction(()=>document.documentElement.dataset.swiflyReact==='ready'&&!document.documentElement.hasAttribute('data-sv-loading'));
-  const feature=f.page.locator('[data-home-movie-night]');
-  const spotlight=feature.locator('.svHomeNightSpotlight');
+  const {page}=f;
+  const artFailure=label==='small-phone';
+  if(artFailure){
+   for(const url of [leader.poster,leader.backdrop,firstPick.poster])await page.route(url,route=>route.abort());
+  }
+  process.env.SWIFLY_REACT=String(react);
+  await page.goto(origin+'/');
+  await page.waitForFunction(react=>!document.documentElement.hasAttribute('data-sv-loading')&&
+   (document.documentElement.dataset.swiflyReact==='ready')===react,react);
+  assert.equal(await page.locator('#swifly-react-data').count(),Number(react));
+  const feature=page.locator('[data-home-movie-night]');
+  const program=feature.locator('.svHomeNightProgram');
+  assert.equal(await program.count(),1);
+  assert(await program.getByRole('heading',{name:'Movie Nights',exact:true}).isVisible());
+  const spotlight=program.locator('.svHomeNightSpotlight');
+  const ballot=program.locator('.svHomeNightBallot');
+  const backdrop=program.locator('.svHomeNightArt[data-night-backdrop]');
+  const firstPickLink=ballot.getByRole('link',{name:'View '+firstPick.title+' on the ballot',exact:true});
   assert.equal(await spotlight.getAttribute('href'),'/movie-night/'+voteId+'#nightBallotTitle');
   const headline=spotlight.locator('strong');
   assert.equal(await headline.textContent(),title);
-  assert.equal(await feature.locator('.svHomeNightBallot li').count(),3);
+  assert.equal(await ballot.locator('li').count(),3);
+  assert.equal(await backdrop.getAttribute('src'),leader.backdrop);
   await feature.evaluate(node=>node.scrollIntoView({block:'center',behavior:'instant'}));
-  await f.page.waitForFunction(()=>Array.from(document.querySelectorAll('[data-home-movie-night] img')).every(img=>img.complete&&img.naturalWidth>0));
-  const displayedPoster=await spotlight.locator('.svHomeNightPoster img').getAttribute('src');
-  if(label==='small-phone')assert(await headline.evaluate(node=>node.scrollHeight<=node.clientHeight+1),'narrow headlines are visible in full');
-  if(label==='small-phone')assert.match(displayedPoster,/^\/assets\/community\/movie-nights-cover\.(?:png|webp)$/);
-  else assert.equal(displayedPoster,leader.poster);
+  if(artFailure)await backdrop.waitFor({state:'hidden'});
+  else await backdrop.waitFor({state:'visible'});
+  await page.waitForFunction(()=>Array.from(document.querySelectorAll('[data-home-movie-night] img'))
+   .filter(img=>!img.matches('[data-night-backdrop][hidden]'))
+   .every(img=>img.complete&&img.naturalWidth>0));
+
+  const mainPoster=spotlight.locator('.svHomeNightPoster img');
+  const displayedPoster=await mainPoster.getAttribute('src');
+  if(artFailure){
+   const cover=/^\/assets\/community\/movie-nights-cover\.(?:png|webp)$/;
+   assert.match(displayedPoster,cover);
+   assert.match(await firstPickLink.locator('.svHomeNightPickFrame.isEventPoster img').getAttribute('src'),cover);
+  }else{
+   assert.equal(displayedPoster,leader.poster);
+   assert.equal(await firstPickLink.locator('img').getAttribute('src'),firstPick.poster);
+  }
+
+  const posters=await ballot.locator('.svHomeNightPickFrame').evaluateAll(frames=>frames.map(node=>({
+   frame:node.getBoundingClientRect().toJSON(),image:node.querySelector('img')?.getBoundingClientRect().toJSON(),
+  })));
+  assert.equal(posters.length,3);
+  for(const {frame,image} of posters){
+   assert(frame.width>0&&image?.width>0&&Math.abs(frame.height-frame.width*1.5)<=2&&
+    Math.abs(image.height-image.width*1.5)<=2,JSON.stringify({label,frame,image}));
+   assert(Math.abs(frame.width-image.width)<=2&&Math.abs(frame.height-image.height)<=2,JSON.stringify({label,frame,image}));
+   assert(image.x>=-.5&&image.x+image.width<=width+.5,JSON.stringify({label,image}));
+  }
+
   const box=await spotlight.boundingBox();
   assert(box&&box.width>250&&box.height>=200&&box.x>=0&&box.x+box.width<=width+.5,JSON.stringify({label,box}));
-  assert(await f.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  await fits(page,'[data-home-movie-night]');
+  if(width===320){
+   const [heading,scheduleLink]=await Promise.all([
+    program.getByRole('heading',{name:'Movie Nights',exact:true}).boundingBox(),
+    program.getByRole('link',{name:'All screenings',exact:true}).boundingBox(),
+   ]);
+   assert(heading&&scheduleLink&&heading.x+heading.width<=scheduleLink.x&&
+    Math.abs(heading.y+heading.height/2-scheduleLink.y-scheduleLink.height/2)<=2,
+   JSON.stringify({label,heading,scheduleLink}));
+   for(const locator of [headline,spotlight.locator('.svHomeNightFacts')]){
+    assert(await locator.evaluate(node=>node.scrollHeight<=node.clientHeight+1&&node.scrollWidth<=node.clientWidth+1),label+' text fits in full');
+   }
+   const [copy,poster,action]=await Promise.all([
+    spotlight.locator('.svHomeNightCopy').boundingBox(),mainPoster.boundingBox(),spotlight.locator('.svHomeNightAction').boundingBox(),
+   ]);
+   const layout=JSON.stringify({label,box,copy,poster,action});
+   assert(copy&&poster&&action&&Math.max(copy.x+copy.width,action.x+action.width)<=poster.x+.5,layout);
+   assert([copy,poster,action].every(item=>item.x>=box.x-.5&&item.x+item.width<=box.x+box.width+.5&&
+    item.y>=box.y-.5&&item.y+item.height<=box.y+box.height+.5),layout);
+  }
   const dir=process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR;
   if(dir){
    fs.mkdirSync(dir,{recursive:true});
    await feature.screenshot({path:path.join(dir,'movie-nights-'+label+'-home-feature.png')});
   }
-  await feature.getByRole('link',{name:'View '+firstPick.title+' on the ballot',exact:true}).click();
+  await firstPickLink.click();
   const target='night-film-'+firstPick.id;
-  await f.page.waitForURL(url=>url.pathname==='/movie-night/'+voteId&&url.hash==='#'+target);
-  await f.page.waitForFunction(id=>{
+  await page.waitForURL(url=>url.pathname==='/movie-night/'+voteId&&url.hash==='#'+target);
+  await page.waitForFunction(id=>{
    const card=document.getElementById(id);
    if(!card?.matches(':target'))return false;
    const {top,bottom}=card.getBoundingClientRect();
