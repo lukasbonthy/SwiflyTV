@@ -131,9 +131,6 @@
     poster.src=cover;
    });
   }
-  for(const backdrop of feature.querySelectorAll('img[data-night-backdrop]')){
-   onArtworkFailure(backdrop,()=>{backdrop.hidden=true;});
-  }
  }
  const root=document.querySelector('.svLanguagePage'),input=root?.querySelector('[data-language-search]');
  if(!input)return;

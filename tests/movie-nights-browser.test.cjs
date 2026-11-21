@@ -154,16 +154,15 @@ test('Home fits the screening artwork and deep links to real ballot picks on des
  const title='Spider-Man: Across the Spider-Verse';
  const previewCandidates=candidates.map(film=>film===leader?{...film,title}:film);
  t.mock.method(api.movieNights,'homePreview',()=>({id,startsAt,phase,candidates:previewCandidates,winner,viewers,timeZone:schedule.timeZone}));
- const firstPick=candidates.find(film=>film.id!==leader.id);
+ const picks=[{...leader,title},...candidates.filter(film=>film.id!==leader.id).slice(0,3)];
  const originalRenderer=process.env.SWIFLY_REACT;
  t.after(()=>{process.env.SWIFLY_REACT=originalRenderer;});
- for(const [label,width,height,react] of [['desktop',1440,1050,true],['small-phone',320,800,true],['small-phone-original',320,800,false]]){
+ for(const [label,width,height,react] of [['desktop',1760,1050,true],['small-phone',320,800,true],['small-phone-original',320,800,false]]){
   const f=await open(t,width,height);
   const {page}=f;
+  const narrow=width<=520;
   const artFailure=label==='small-phone';
-  if(artFailure){
-   for(const url of [leader.poster,leader.backdrop,firstPick.poster])await page.route(url,route=>route.abort());
-  }
+  if(artFailure)await page.route(leader.poster,route=>route.abort());
   process.env.SWIFLY_REACT=String(react);
   await page.goto(origin+'/');
   await page.waitForFunction(react=>!document.documentElement.hasAttribute('data-sv-loading')&&
@@ -172,75 +171,85 @@ test('Home fits the screening artwork and deep links to real ballot picks on des
   const feature=page.locator('[data-home-movie-night]');
   const program=feature.locator('.svHomeNightProgram');
   assert.equal(await program.count(),1);
-  assert(await program.getByRole('heading',{name:'Movie Nights',exact:true}).isVisible());
-  const spotlight=program.locator('.svHomeNightSpotlight');
-  const ballot=program.locator('.svHomeNightBallot');
-  const backdrop=program.locator('.svHomeNightArt[data-night-backdrop]');
-  const firstPickLink=ballot.getByRole('link',{name:'View '+firstPick.title+' on the ballot',exact:true});
-  assert.equal(await spotlight.getAttribute('href'),'/movie-night/'+voteId+'#nightBallotTitle');
-  const headline=spotlight.locator('strong');
+  const copy=program.locator('.svHomeNightCopy');
+  const headline=copy.locator('strong');
+  const reel=program.locator('.svHomeNightBallot .svHomeNightReel');
+  const links=reel.getByRole('link');
+  const room='/movie-night/'+voteId;
+  assert(await copy.getByRole('heading',{name:'Movie Nights',exact:true}).isVisible());
+  assert.match(await copy.locator('.svHomeNightState').textContent(),/Voting open/);
   assert.equal(await headline.textContent(),title);
-  assert.equal(await ballot.locator('li').count(),3);
-  assert.equal(await backdrop.getAttribute('src'),leader.backdrop);
+  assert.equal(await copy.locator('.svHomeNightSpotlight').getAttribute('href'),room+'#nightBallotTitle');
+  assert.equal(await copy.locator('.svHomeNightMore').getAttribute('href'),'/movie-nights');
+  assert.equal(await program.locator('.svHomeNightStill, [data-night-backdrop]').count(),0);
+  assert.equal(await program.locator('img').count(),4);
+  assert.equal(await links.count(),4);
+  const destinations=picks.map(film=>room+'#night-film-'+film.id);
+  assert.deepEqual(await links.evaluateAll(nodes=>nodes.map(node=>node.getAttribute('href'))),destinations);
   await feature.evaluate(node=>node.scrollIntoView({block:'center',behavior:'instant'}));
-  if(artFailure)await backdrop.waitFor({state:'hidden'});
-  else await backdrop.waitFor({state:'visible'});
-  await page.waitForFunction(()=>Array.from(document.querySelectorAll('[data-home-movie-night] img'))
-   .filter(img=>!img.matches('[data-night-backdrop][hidden]'))
-   .every(img=>img.complete&&img.naturalWidth>0));
+  await page.waitForFunction(()=>document.querySelector('.svHomeNightReel img')?.naturalWidth>0);
+  const firstPoster=links.first().locator('img');
+  if(artFailure)assert.match(await firstPoster.getAttribute('src'),/^\/assets\/community\/movie-nights-cover\.(?:png|webp)$/);
+  else assert.equal(await firstPoster.getAttribute('src'),leader.poster);
 
-  const mainPoster=spotlight.locator('.svHomeNightPoster img');
-  const displayedPoster=await mainPoster.getAttribute('src');
-  if(artFailure){
-   const cover=/^\/assets\/community\/movie-nights-cover\.(?:png|webp)$/;
-   assert.match(displayedPoster,cover);
-   assert.match(await firstPickLink.locator('.svHomeNightPickFrame.isEventPoster img').getAttribute('src'),cover);
-  }else{
-   assert.equal(displayedPoster,leader.poster);
-   assert.equal(await firstPickLink.locator('img').getAttribute('src'),firstPick.poster);
-  }
-
-  const posters=await ballot.locator('.svHomeNightPickFrame').evaluateAll(frames=>frames.map(node=>({
+  const posters=await reel.locator('.svHomeNightPickFrame').evaluateAll(frames=>frames.map(node=>({
    frame:node.getBoundingClientRect().toJSON(),image:node.querySelector('img')?.getBoundingClientRect().toJSON(),
   })));
-  assert.equal(posters.length,3);
-  for(const {frame,image} of posters){
+  assert.equal(posters.length,4);
+  for(const [index,{frame,image}] of posters.entries()){
    assert(frame.width>0&&image?.width>0&&Math.abs(frame.height-frame.width*1.5)<=2&&
     Math.abs(image.height-image.width*1.5)<=2,JSON.stringify({label,frame,image}));
    assert(Math.abs(frame.width-image.width)<=2&&Math.abs(frame.height-image.height)<=2,JSON.stringify({label,frame,image}));
-   assert(image.x>=-.5&&image.x+image.width<=width+.5,JSON.stringify({label,image}));
+   assert(Math.abs(frame.width-posters[0].frame.width)<=1&&Math.abs(frame.y-posters[0].frame.y)<=1,
+    JSON.stringify({label,posters}));
+   if(index>0)assert(frame.left>=posters[index-1].frame.right-.5,JSON.stringify({label,posters}));
   }
-
-  const box=await spotlight.boundingBox();
-  assert(box&&box.width>250&&box.height>=200&&box.x>=0&&box.x+box.width<=width+.5,JSON.stringify({label,box}));
-  await fits(page,'[data-home-movie-night]');
-  if(width===320){
-   const [heading,scheduleLink]=await Promise.all([
-    program.getByRole('heading',{name:'Movie Nights',exact:true}).boundingBox(),
-    program.getByRole('link',{name:'All screenings',exact:true}).boundingBox(),
-   ]);
-   assert(heading&&scheduleLink&&heading.x+heading.width<=scheduleLink.x&&
-    Math.abs(heading.y+heading.height/2-scheduleLink.y-scheduleLink.height/2)<=2,
-   JSON.stringify({label,heading,scheduleLink}));
-   for(const locator of [headline,spotlight.locator('.svHomeNightFacts')]){
+  const [copyBox,reelBox,rail]=await Promise.all([copy.boundingBox(),reel.boundingBox(),reel.evaluate(node=>({
+   available:node.clientWidth,content:node.scrollWidth,overflow:getComputedStyle(node).overflowX,
+  }))]);
+  const layout=JSON.stringify({label,copyBox,reelBox,rail});
+  assert(copyBox&&reelBox&&reelBox.x>=-.5&&reelBox.x+reelBox.width<=width+.5,layout);
+  if(narrow){
+   assert(copyBox.y+copyBox.height<=reelBox.y+.5&&rail.content>rail.available&&/^(auto|scroll)$/.test(rail.overflow),layout);
+   await fits(page,'[data-home-movie-night] .svHomeNightCopy');
+   for(const locator of [headline,copy.locator('.svHomeNightFacts')]){
     assert(await locator.evaluate(node=>node.scrollHeight<=node.clientHeight+1&&node.scrollWidth<=node.clientWidth+1),label+' text fits in full');
    }
-   const [copy,poster,action]=await Promise.all([
-    spotlight.locator('.svHomeNightCopy').boundingBox(),mainPoster.boundingBox(),spotlight.locator('.svHomeNightAction').boundingBox(),
-   ]);
-   const layout=JSON.stringify({label,box,copy,poster,action});
-   assert(copy&&poster&&action&&Math.max(copy.x+copy.width,action.x+action.width)<=poster.x+.5,layout);
-   assert([copy,poster,action].every(item=>item.x>=box.x-.5&&item.x+item.width<=box.x+box.width+.5&&
-    item.y>=box.y-.5&&item.y+item.height<=box.y+box.height+.5),layout);
+  }else{
+   assert(copyBox.x+copyBox.width<=reelBox.x+.5&&rail.content<=rail.available+1,layout);
+   await fits(page,'[data-home-movie-night]');
   }
+  await page.waitForFunction(()=>{
+   const reel=document.querySelector('.svHomeNightReel'),reelBox=reel.getBoundingClientRect();
+   return Array.from(reel.querySelectorAll('img')).every(img=>{
+    const box=img.getBoundingClientRect();
+    return box.right<=reelBox.left||box.left>=reelBox.right||img.naturalWidth>0;
+   });
+  });
   const dir=process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR;
   if(dir){
    fs.mkdirSync(dir,{recursive:true});
    await feature.screenshot({path:path.join(dir,'movie-nights-'+label+'-home-feature.png')});
   }
-  await firstPickLink.click();
-  const target='night-film-'+firstPick.id;
-  await page.waitForURL(url=>url.pathname==='/movie-night/'+voteId&&url.hash==='#'+target);
+  if(narrow){
+   await links.first().focus();
+   for(const [index,film] of picks.entries()){
+    if(index>0)await page.keyboard.press('Tab');
+    await page.waitForFunction(href=>{
+     const active=document.activeElement;
+     const poster=active?.querySelector('.svHomeNightPickFrame img');
+     const rail=active?.closest('.svHomeNightReel');
+     if(active?.getAttribute('href')!==href||!poster?.naturalWidth||!rail)return false;
+     const imageBox=poster.getBoundingClientRect(),railBox=rail.getBoundingClientRect();
+     return imageBox.left>=railBox.left-1&&imageBox.right<=railBox.right+1;
+    },room+'#night-film-'+film.id);
+   }
+   assert(await reel.evaluate(node=>node.scrollLeft>0),label+' keeps horizontal scrolling inside the reel');
+  }
+  const pick=artFailure?picks[0]:picks.at(-1);
+  await reel.getByRole('link',{name:'View '+pick.title+' on the ballot',exact:true}).click();
+  const target='night-film-'+pick.id;
+  await page.waitForURL(url=>url.pathname===room&&url.hash==='#'+target);
   await page.waitForFunction(id=>{
    const card=document.getElementById(id);
    if(!card?.matches(':target'))return false;
@@ -261,20 +270,24 @@ test('Home keeps the original poster visible during a storage outage',{skip:!ava
   await page.goto(origin+'/');
   const feature=page.locator('[data-home-movie-night]');
   await feature.evaluate(node=>node.scrollIntoView({block:'center',behavior:'instant'}));
-  const poster=feature.locator('.svHomeNightPoster img');
-  await page.waitForFunction(()=>document.querySelector('.svHomeNightPoster img')?.naturalWidth>0);
+  const poster=feature.locator('.svHomeNightStill img');
+  await page.waitForFunction(()=>document.querySelector('.svHomeNightStill img')?.naturalWidth>0);
   const cover=new URL(await poster.getAttribute('src'),origin);
   assert.equal(cover.origin,origin);
   assert.match(cover.pathname,/^\/assets\/community\/movie-nights-cover\.(?:png|webp)$/);
-  const [image,copy]=await Promise.all([poster.boundingBox(),feature.locator('.svHomeNightCopy').boundingBox()]);
-  assert(image&&copy&&image.width>=80&&image.height>=image.width*1.45&&copy.x+copy.width<=image.x,JSON.stringify({label,image,copy}));
+  assert(await poster.isVisible());
   assert.equal(await feature.locator('.svHomeNightBallot').count(),0);
   assert.match(await feature.locator('.svHomeNightState').textContent(),/temporarily unavailable/);
+  await fits(page,'[data-home-movie-night]');
+  const scheduleLink=feature.locator('.svHomeNightSpotlight');
+  assert.equal(await scheduleLink.getAttribute('href'),'/movie-nights');
   const directory=process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR;
   if(directory){
    fs.mkdirSync(directory,{recursive:true});
    await feature.screenshot({path:path.join(directory,'movie-nights-'+label+'-event-cover.png'),animations:'disabled'});
   }
+  await scheduleLink.click();
+  await page.waitForURL(url=>url.pathname==='/movie-nights'&&!url.hash);
   assert.deepEqual(errors,[]);
  }
 });

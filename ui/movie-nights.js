@@ -56,40 +56,43 @@ function movieNightHomeMarkup(event) {
   const destination = roomLink(event?.id);
   const open = event?.phase === 'voting';
   const live = event?.phase === 'live';
-  const candidates = open ? (event.candidates || []).filter(film => filmId(film.id) && film.id !== leader?.id).slice(0, 3) : [];
-  const image = artwork(leader?.backdrop);
-  const filmPoster = artwork(leader?.poster);
+  const films = open && leader ? [leader, ...(event.candidates || []).filter(film => film.id !== leader.id)].filter(film => filmId(film.id)).slice(0, 4) : [];
   const state = event?.phase === 'unavailable' && !leader ? 'Voting temporarily unavailable' : live ? 'Live now' : phaseLabel(event);
   const date = asTime(event?.startsAt, event?.timeZone);
   const heading = leader?.title || 'The next screening';
-  const detail = open ? (leader?.votes > 0 ? 'Leading the vote' : '')
-    : live ? `${Number(event.viewers) || 0} watching` : event?.winner ? 'Community pick' : '';
-  const mainAction = live ? 'Watch live' : open ? 'View ballot' : 'View screening';
-  const mainDestination = destination + (open ? '#nightBallotTitle' : '');
-  const picks = candidates.map(film => {
+  const detail = live ? `${Number(event.viewers) || 0} watching` : event?.winner ? 'Community pick' : '';
+  const scheduleOnly = destination === '/movie-nights' || event?.phase === 'unavailable';
+  const mainAction = scheduleOnly ? 'All screenings' : live ? 'Watch live' : open ? 'View ballot' : 'View screening';
+  const mainDestination = scheduleOnly ? '/movie-nights' : destination + (open ? '#nightBallotTitle' : '');
+  const picks = films.map((film, index) => {
     const poster = artwork(film.poster);
-    return `<li><a href="${destination}#night-film-${film.id}" aria-label="View ${esc(film.title)} on the ballot">
+    const votes = Number(film.votes) || 0;
+    const voteText = votes > 0 ? `${votes} ${votes === 1 ? 'vote' : 'votes'}` : '';
+    const voteId = 'svHomeNightVotes-' + film.id;
+    return `<li${index === 0 ? ' class="isFeatured"' : ''}><a href="${destination}#night-film-${film.id}" aria-label="View ${esc(film.title)} on the ballot"${voteText ? ` aria-describedby="${voteId}"` : ''}>
       <span class="svHomeNightPickFrame${poster ? '' : ' isEventPoster'}"><img src="${esc(poster || eventCover)}" width="200" height="300" alt="" loading="lazy" decoding="async"${poster ? ` data-night-event-cover="${eventCover}"` : ''}></span>
-      <span class="svHomeNightPickName"><span>${esc(film.title)}</span>${icon('arrow')}</span></a></li>`;
+      <span class="svHomeNightPickName"><span>${esc(film.title)}</span>${icon('arrow')}</span>
+      ${voteText ? `<span class="svHomeNightVoteCount" id="${voteId}">${voteText}</span>` : ''}</a></li>`;
   }).join('');
+  const backdrop = picks ? '' : artwork(leader?.backdrop);
+  const still = backdrop || (picks ? '' : artwork(leader?.poster));
   return `<section class="svMovieNightFeature" data-home-movie-night data-home-night-phase="${esc(event?.phase || 'unavailable')}" aria-labelledby="svHomeMovieNightsTitle">
     <div class="svHomeNightProgram${picks ? ' hasBallot' : ''}">
-      ${image ? `<img class="svHomeNightArt" data-night-backdrop src="${esc(image)}" width="1280" height="720" alt="" loading="lazy" decoding="async" fetchpriority="low">` : ''}
-      <header class="svHomeNightHead"><h2 id="svHomeMovieNightsTitle">Movie Nights</h2><a class="svHomeNightMore" href="/movie-nights">All screenings ${icon('arrow')}</a></header>
       <div class="svHomeNightLayout">
-        <a class="svHomeNightSpotlight" href="${mainDestination}">
-          <div class="svHomeNightCopy">
+        <div class="svHomeNightCopy">
+          <h2 id="svHomeMovieNightsTitle">Movie Nights</h2>
+          <div class="svHomeNightSummary">
             <span class="svHomeNightState"><i aria-hidden="true"></i>${esc(state)}</span>
             <strong>${esc(heading)}</strong>
             ${date || detail ? `<span class="svHomeNightFacts">${date ? `<span>${icon('clock')}${date}</span>` : ''}${detail ? `<span>${esc(detail)}</span>` : ''}</span>` : ''}
-            <span class="svHomeNightAction">${mainAction}${icon(live ? 'play' : 'arrow')}</span>
           </div>
-          <figure class="svHomeNightPoster${filmPoster ? '' : ' isEventPoster'}" aria-hidden="true">
-            <img src="${esc(filmPoster || eventCover)}" width="400" height="600" alt="" loading="lazy" decoding="async" fetchpriority="low"${filmPoster ? ` data-night-event-cover="${eventCover}"` : ''}>
-            <span class="svHomeNightPosterTitle">Movie<br>Nights</span>
-          </figure>
-        </a>
-        ${picks ? `<section class="svHomeNightBallot" aria-labelledby="svHomeNightBallotTitle"><h3 id="svHomeNightBallotTitle">Also on the ballot</h3><ul>${picks}</ul></section>` : ''}
+          <div class="svHomeNightActions">
+            <a class="svHomeNightSpotlight${scheduleOnly ? ' svHomeNightMore' : ''}" href="${mainDestination}">${mainAction}${icon(live && !scheduleOnly ? 'play' : 'arrow')}</a>
+            ${scheduleOnly ? '' : `<a class="svHomeNightMore" href="/movie-nights">All screenings ${icon('arrow')}</a>`}
+          </div>
+        </div>
+        ${picks ? `<section class="svHomeNightBallot" aria-label="Films on the ballot"><ul class="svHomeNightReel" role="list" style="--night-films:${films.length}">${picks}</ul></section>` :
+          `<div class="svHomeNightStill${backdrop ? '' : ' isPortrait'}${still ? '' : ' isEventPoster'}" aria-hidden="true"><img src="${esc(still || eventCover)}" width="${backdrop ? 1280 : 400}" height="${backdrop ? 720 : 600}" alt="" loading="lazy" decoding="async"${still ? ` data-night-event-cover="${eventCover}"` : ''}></div>`}
       </div>
     </div>
   </section>`;
