@@ -6,7 +6,16 @@
  let state;try{state=JSON.parse($('[data-night-boot]').textContent);}catch{state={};}
  let event=state.event,id=event?.id||'',viewer=state.viewer||{signedIn:false},socket,player,playerRoot,disposed=false,suspended=false,online=false,admitted=false,admissionEpoch=0,pendingJoin=null,joined=false,following=true,sourceKey='',playerId='',mountEpoch=0,epoch=0,serverOffset=Number(state.serverTime)?Number(state.serverTime)-Date.now():0,lastSync=0,refreshController,playerController,loadingSource=false,autoplayBlocked=false,clock,lastDraft=null,owner=window.SwiflyAccount?.user?.id||'',personalSequence=0,appliedPersonalSequence=0,lastServerTime=0,sendTimer;
  const listeners=[],requests=new Set(),messageIds=new Set([...root.querySelectorAll('[data-night-message-id]')].map(node=>node.dataset.nightMessageId));
- const listen=(target,name,fn)=>{target.addEventListener(name,fn);listeners.push(()=>target.removeEventListener(name,fn));};
+ const listen=(target,name,fn,options)=>{target.addEventListener(name,fn,options);listeners.push(()=>target.removeEventListener(name,fn,options));};
+ let chatToggled=false;
+ function collapseChat(collapsed){
+  $('[data-night-chat-body]').hidden=collapsed;
+  $('[data-night-chat]').dataset.collapsed=String(collapsed);
+  const toggle=$('[data-night-chat-toggle]');
+  toggle.setAttribute('aria-expanded',String(!collapsed));
+  toggle.textContent=collapsed?'Show':'Hide';
+ }
+ listen(root,'error',action=>{if(action.target.matches?.('[data-night-art]'))action.target.hidden=true;},true);
  const status=(text,target='[data-night-status]')=>{const node=$(target);if(node)node.textContent=text||'';};
  const validId=value=>/^\d{4}-\d{2}-\d{2}$/.test(value||'');
  const art=value=>typeof value==='string'&&/^https:\/\/image\.tmdb\.org\/t\/p\/(?:w\d+|original)\/[A-Za-z0-9_.-]+$/.test(value)?value:'';
@@ -139,6 +148,7 @@
   });
   $('[data-night-ballot-summary]').hidden=!films.length;
   $('[data-night-total-votes]').textContent=event.totalVotes||0;
+  $('[data-night-total-vote-unit]').textContent=Number(event.totalVotes)===1?' vote':' votes';
   $('#nightBallotTitle').textContent=open?'Vote for the next movie':films.length?'Voting results':'Movie ballot';
   $('[data-night-ballot-copy]').textContent=open?'You can change your vote until five minutes before the screening.'
    :films.length?'The community’s pick is shown above.':'';
@@ -184,12 +194,14 @@
   if(id&&data.event.id!==id)return;
   const storageWasUnavailable=state.code==='storage_unavailable';
   const chatWasClosed=event?.phase==='ended'||storageWasUnavailable;
+  const wasLive=event?.phase==='live';
   const savedVote=event?.yourVote;event={...data.event,...(!personal?{yourVote:savedVote??null}:{})};id=event.id;root.dataset.nightId=id;state={...state,...data,event,code:data.code};
   if(personal&&data.viewer)viewer=data.viewer;
   const leader=event.winner||[...(event.candidates||[])].sort((a,b)=>b.votes-a.votes)[0];
   const open=event.phase==='voting',ended=event.phase==='ended';
   const unavailable=event.phase==='unavailable',storageUnavailable=data.code==='storage_unavailable';
   root.dataset.nightPhaseState=event.phase;
+  if(!wasLive&&event.phase==='live'&&!chatToggled)collapseChat(false);
   $('[data-night-phase]').textContent=({voting:'Voting open',countdown:event.sourceStatus==='loading'?'Preparing the screening':'Starting soon',live:'Live',ended:'Screening ended',unavailable:'Unavailable'}[event.phase]||'Connecting');
   $('[data-night-feature-title]').textContent=leader?.title||'The next screening';
   $('[data-night-feature-label]').textContent=event.winner?'COMMUNITY PICK':leader?(leader.votes>0?'LEADING THE VOTE':'ON THE BALLOT'):'SCHEDULED SCREENING';
@@ -198,7 +210,8 @@
   let image=$('[data-night-art]');
   if(backdrop){
    if(!image){image=make('img','nightFeatureArt');image.dataset.nightArt='';image.alt='';$('[data-night-lobby]').prepend(image);}
-   if(image.src!==backdrop)image.src=backdrop;
+   if(image.src!==backdrop){image.hidden=false;image.src=backdrop;}
+   else if(image.complete&&!image.naturalWidth)image.hidden=true;
   }else image?.remove();
   $('[data-night-event-title]').textContent=atLive()&&event.winner?event.winner.title:event.title;
   $('[data-night-viewers]').textContent=event.viewers+' here';
@@ -292,7 +305,7 @@
   if(action.target.closest('[data-night-join],[data-night-live]'))void joinLive();
   if(action.target.closest('[data-night-refresh]'))void refresh();if(action.target.closest('[data-night-retry]'))void retry();
   if(action.target.closest('[data-night-share]')){const url=new URL('/movie-night/'+id,location.origin).href;try{await navigator.clipboard.writeText(url);status('Screening invite copied.');}catch{status('Invite: '+url);}}
-  const toggle=action.target.closest('[data-night-chat-toggle]');if(toggle){const body=$('[data-night-chat-body]');body.hidden=!body.hidden;toggle.setAttribute('aria-expanded',String(!body.hidden));toggle.textContent=body.hidden?'Show':'Hide';$('[data-night-chat]').dataset.collapsed=String(body.hidden);}
+  if(action.target.closest('[data-night-chat-toggle]')){chatToggled=true;collapseChat(!$('[data-night-chat-body]').hidden);}
  });
  listen($('[data-night-message-form]'),'submit',action=>{
   action.preventDefault();const input=$('[data-night-message]'),text=input.value.trim();if(!text||event?.phase==='ended')return;if(!socket?.connected||!admitted){status('Reconnecting. Your message is still here.','[data-night-compose-status]');return;}
@@ -329,6 +342,6 @@
 
  window.SwiflyMovieNights=Object.freeze({refresh,join:joinLive,destroy,get active(){return !disposed;}});
  apply(state,{personal:true});
- if(event?.phase!=='live'&&window.matchMedia('(max-width:620px)').matches){$('[data-night-chat-body]').hidden=true;$('[data-night-chat-toggle]').setAttribute('aria-expanded','false');$('[data-night-chat-toggle]').textContent='Show';$('[data-night-chat]').dataset.collapsed='true';}
+ if(event?.phase!=='live'&&window.matchMedia('(max-width:620px)').matches)collapseChat(true);
  connect();clock=setInterval(updateClock,1000);dates();
 })();

@@ -242,7 +242,7 @@ function movieNightsMarkup({snapshot = {}, playerHtml = '', accountNotice = ''} 
       <section class="nightBallot" aria-labelledby="nightBallotTitle">
         <header class="nightSectionHead"><div><h2 id="nightBallotTitle">${ballotTitle}</h2><p data-night-ballot-copy>${ballotCopy}</p>
           <a class="nightBallotSignin" href="${profileUrl}" data-night-ballot-signin data-night-auth-open="login"${open && !viewer.signedIn ? '' : ' hidden'}>Sign in to vote ${icon('arrow')}</a></div>
-          <div class="nightBallotSummary" data-night-ballot-summary${hasBallot ? '' : ' hidden'}><span><strong data-night-total-votes>${Number(event?.totalVotes) || 0}</strong> votes</span><span data-night-vote-deadline>${hasBallot ? 'Voting ' + (open ? 'closes ' : 'closed ') + esc(textDay(event.votingClosesAt, zone)) : ''}</span></div>
+          <div class="nightBallotSummary" data-night-ballot-summary${hasBallot ? '' : ' hidden'}><span><strong data-night-total-votes>${Number(event?.totalVotes) || 0}</strong><span data-night-total-vote-unit>${Number(event?.totalVotes) === 1 ? ' vote' : ' votes'}</span></span><span data-night-vote-deadline>${hasBallot ? 'Voting ' + (open ? 'closes ' : 'closed ') + esc(textDay(event.votingClosesAt, zone)) : ''}</span></div>
         </header>
         <div class="nightBallotGrid" data-night-ballot>${hasBallot ? event.candidates.map(film => ballotCard(film, event)).join('') : '<p class="nightEmptyBallot">The ballot is currently unavailable.</p>'}</div>
         <p class="nightVoteStatus" data-night-vote-status role="status" aria-live="polite"></p>
