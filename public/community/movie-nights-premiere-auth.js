@@ -104,9 +104,13 @@
     if (event.target.closest('[data-night-auth-close]') || event.target === overlay) {
       event.preventDefault(); close();
     }
-    const tab = event.target.closest('[data-night-auth-mode]');
-    if (tab && overlay.contains(tab)) updateMode(tab.dataset.nightAuthMode);
   });
+  for (const tab of tabs) {
+    tab.addEventListener('click', event => {
+      event.preventDefault();
+      updateMode(tab.dataset.nightAuthMode);
+    });
+  }
   root.addEventListener('keydown', event => {
     const tab = event.target.closest('[data-night-auth-mode]');
     if (!tab || !['ArrowLeft','ArrowRight'].includes(event.key)) return;
