@@ -2,7 +2,9 @@ name: Movie Nights focused QA
 on:
   push:
     branches:
+      - main
       - feat/movie-nights-theater-firstparty-20261121
+  pull_request:
   workflow_dispatch:
 permissions:
   contents: read
@@ -33,3 +35,11 @@ jobs:
         env:
           SWIFLY_EXPERIENCE_SCREENSHOT_DIR: docs/evidence/movie-nights-premiere
         run: node --test --test-concurrency=2 tests/movie-nights-browser.test.cjs
+      - name: Preserve theater and live player screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: movie-nights-premiere-${{ github.sha }}-${{ github.event_name }}
+          path: docs/evidence/movie-nights-premiere/*.png
+          if-no-files-found: warn
+          retention-days: 7
