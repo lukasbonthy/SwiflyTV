@@ -23,6 +23,8 @@ jobs:
       - run: npm ci
       - name: First-party Movie Nights account dialog
         run: node --test tests/movie-nights-auth.test.cjs
+      - name: Local account store and existing screening persistence
+        run: node --test tests/connect-api.test.cjs tests/movie-nights-service.test.cjs
       - name: Existing Movie Nights frontend regression
         run: node --test tests/movie-nights-ui.test.cjs tests/movie-nights-client.test.cjs
       - name: Production Vite build

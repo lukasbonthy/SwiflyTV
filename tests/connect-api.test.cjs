@@ -6,12 +6,12 @@ const os=require('node:os');
 const path=require('node:path');
 const crypto=require('node:crypto');
 const express=require('express');
-const {createAccountStore}=require('../lib/account-store');
+const {createAccountStore,installAccountSnapshot}=require('../lib/account-store');
 const {createConnect}=require('../lib/connect');
 
-async function fixture(t){
+async function fixture(t,existingStore){
  const dir=await fs.mkdtemp(path.join(os.tmpdir(),'swifly-connect-'));
- const store=createAccountStore({directory:dir});
+ const store=existingStore||createAccountStore({directory:dir});
  const service=createConnect({store,resolveMedia:async(type,id)=>({type,id,title:'A <film>',poster:'https://image.tmdb.org/t/p/w342/a.jpg',href:`/${type}/${id}`}),createParty:()=>'/social?tab=watchrooms&roomId=abc-def'});
  const app=express();app.set('trust proxy',1);app.use(express.json());app.use('/api/connect',service.router);
  const server=await new Promise(resolve=>{const s=app.listen(0,'127.0.0.1',()=>resolve(s));});
@@ -64,6 +64,60 @@ test('file transactions survive restart and concurrent updates',async t=>{
  await Promise.all(Array.from({length:12},()=>f.store.transaction(s=>{s.testCount=(s.testCount||0)+1;})));
  const restored=createAccountStore({directory:f.dir});assert.equal((await restored.read()).testCount,12);assert.equal(Object.keys((await restored.read()).users).length,1);await restored.close();
 });
+test('the local import preserves an existing session, votes and chat and never connects to Postgres',async t=>{
+ const source=await fixture(t),alice=await source.signup('sourcealice');
+ await source.store.transaction(state=>{
+  state.movieNights={revision:4,events:{'2026-11-21':{votes:{[alice.user.id]:42},messages:[{text:'Remember this screening'}]}}};
+ });
+ const snapshot=await source.store.read(),dir=await fs.mkdtemp(path.join(os.tmpdir(),'swifly-import-'));
+ t.after(()=>fs.rm(dir,{recursive:true,force:true}));
+ assert.equal(await installAccountSnapshot(dir,JSON.stringify(snapshot)),1);
+ await assert.rejects(installAccountSnapshot(dir,{version:1,users:{}}),{code:'EEXIST'});
+ if(process.platform!=='win32')assert.equal((await fs.stat(path.join(dir,'accounts.json'))).mode&0o777,0o600);
+ const pool=t.mock.method(require('pg'),'Pool',function(){throw Error('Local storage tried to open Postgres');});
+ const store=createAccountStore({backend:'file',directory:dir,connectionString:'postgres://unused.test/swifly'});
+ const migrated=await fixture(t,store);
+ assert.equal(store.backend,'file');
+ assert.deepEqual(await store.read(),snapshot);
+ const session=await migrated.call('/session',{cookie:alice.cookie});
+ assert.equal(session.data.user.id,alice.user.id);
+ await migrated.signup('newlocaluser');
+ assert.equal(Object.keys((await store.read()).users).length,2);
+ assert.deepEqual((await store.read()).movieNights,snapshot.movieNights);
+ assert.equal(pool.mock.callCount(),0);
+});
+
+test('Render cutover requires a mounted disk and an imported state file',{skip:process.platform!=='linux'},async t=>{
+ const dir=await fs.mkdtemp(path.join(os.tmpdir(),'swifly-hosted-import-'));
+ const previous=process.env.RENDER;
+ t.after(async()=>{
+  if(previous===undefined)delete process.env.RENDER;
+  else process.env.RENDER=previous;
+  await fs.rm(dir,{recursive:true,force:true});
+ });
+ process.env.RENDER='true';
+ const realRead=fs.readFile;
+ let mountInfo='10 1 0:1 / / rw - overlay overlay rw\n';
+ t.mock.method(fs,'readFile',(filename,...options)=>filename==='/proc/self/mountinfo'?Promise.resolve(mountInfo):realRead(filename,...options));
+ const ephemeral=createAccountStore({backend:'file',directory:dir});
+ await assert.rejects(ephemeral.read(),{code:'persistent_disk_required'});
+ await ephemeral.close();
+ await assert.rejects(installAccountSnapshot(dir,{version:1,users:{}}),{code:'persistent_disk_required'});
+ assert.deepEqual(await fs.readdir(dir),[]);
+ const resolved=await fs.realpath(dir);
+ const rootMount=mountInfo;
+ mountInfo+='20 10 0:5 / '+resolved+' rw - tmpfs tmpfs rw\n';
+ await assert.rejects(installAccountSnapshot(dir,{version:1,users:{}}),{code:'persistent_disk_required'});
+ mountInfo=rootMount+'20 10 8:1 / '+resolved+' rw - ext4 /dev/test rw\n';
+ const missing=createAccountStore({backend:'file',directory:dir});
+ await assert.rejects(missing.read(),{code:'account_snapshot_required'});
+ await missing.close();
+ await installAccountSnapshot(dir,{version:1,users:{alice:{id:'alice'}}});
+ const imported=createAccountStore({backend:'file',directory:dir});
+ assert.deepEqual((await imported.read()).users,{alice:{id:'alice'}});
+ await imported.close();
+});
+
 test('Postgres initialization recovers from a temporary startup outage without losing accounts',async t=>{
  let now=Date.now(),offline=true,initializations=0;
  const saved={version:1,users:{alice:{id:'alice'}}};
