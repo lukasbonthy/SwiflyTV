@@ -2,7 +2,14 @@
 
 Updated: November 21, 2026 (UTC).
 
-## Current release — Movie Nights poster and local account backend
+## Current release — Login and signup
+
+- **Production:** [PR #172](https://github.com/lukasbonthy/SwiflyTV/pull/172) shipped as `92e8f671de649a6b61ff6c78dab780a19bf4e862`, tree `c757d2e748b15ccac70fc5a91b4a81ec055d2a91`. Render deployment `dep-dc0vohe0tbcc73a6mo2g` was live November 21 at 3:18 p.m. Eastern (`2026-11-21T20:18:09.675637Z`).
+- **Account pages:** Login and signup share a responsive SwiflyTV form, keep validated return links when switching tabs, and check the account service before accepting credentials. The form shows an outage and retry action when sign-in and signup are unavailable. The shared glass renderer no longer overlays controls on these pages.
+- **Verification:** Final local checks passed 155 tests. [Hosted QA](https://github.com/lukasbonthy/SwiflyTV/actions/runs/44945164764) passed the build and all 12 Chromium cases on the exact application tree, including desktop and 320 px account entry, outage and recovery, and both renderers. Reviewed the final desktop signup and phone outage screenshots. Production HTTP confirmed the unchanged access gate on both pages and the session endpoint. The hosted fixture verified the rendered forms from the deployed code. Live routes require site access.
+- **Remaining:** The configured Neon database rejected a read-only query with HTTP 402 and quota exceeded. Live login and signup remain unavailable. The user declined adding a Render disk. No account data or storage settings were changed. A documentation-only checkpoint is separate from the running application commit.
+
+## Prior release — Movie Nights poster and local account backend
 
 - **Production revision** PR https://github.com/lukasbonthy/SwiflyTV/pull/170 originally shipped the poster in `8aad058c2777e0d81c65e63dc878e3b4b96fe64c`. PR https://github.com/lukasbonthy/SwiflyTV/pull/171 added opt-in local account storage. Render deployed `58afb1aada2e06a19d4e245dffb2b29af11ddae5` as `dep-dc0v9760tbcc73a63ofg` at 2:45 p.m. Eastern (`2026-11-21T19:45:28.684264Z`). The deployed changes match tested branch head `a6d843cc3f68b45d27e35b37e7c428c9ccc9d4f2` and tree `0517f399b03fda04bba59a7dc74d73163ed49330`. A checkpoint-only commit does not change the deployed code.
 - **Poster** Home includes original filmstrip art bundled with SwiflyTV. It uses the film's own poster when available and falls back to the bundled cover for a missing ballot or a failed image request. Render built the optimized WebP for the previously deployed poster revision. [Combined QA](https://github.com/lukasbonthy/SwiflyTV/actions/runs/44942293459) built the WebP and passed all 11 Chromium cases, including the outage cover and a long title at 320 px. The live page could not be opened through public web retrieval in this session.
