@@ -61,7 +61,8 @@ test('account setup sends same-origin JSON only after confirmation and can switc
  assert.equal(JSON.parse(signup.opts.body).handle,'testviewer');
  assert.match(w.document.querySelector('[data-night-auth-error]').textContent,/already has an account/);
  w.document.querySelector('[data-night-auth-mode="login"]').click();
- assert.equal(form.elements.handle.disabled,true);
+ assert.equal(w.document.querySelector('[data-night-auth-mode="login"]').getAttribute('aria-selected'),'true','login mode must be selected');
+ assert.equal(form.querySelector('input[name="handle"]').disabled,true);
  assert.equal(form.elements.confirmPassword.disabled,true);
  assert.equal(form.elements.password.autocomplete,'current-password');
  assert.equal(w.document.querySelector('[data-night-auth-submit]').textContent,'Sign in to SwiflyTV');
