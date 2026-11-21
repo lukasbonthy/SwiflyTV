@@ -11,7 +11,7 @@
  const validId=value=>/^\d{4}-\d{2}-\d{2}$/.test(value||'');
  const art=value=>typeof value==='string'&&/^https:\/\/image\.tmdb\.org\/t\/p\/(?:w\d+|original)\/[A-Za-z0-9_.-]+$/.test(value)?value:'';
  const now=()=>Date.now()+serverOffset;
- const canPlay=()=>!disposed&&!suspended&&online&&admitted&&Boolean(socket?.connected);
+ const canPlay=()=>!disposed&&!suspended&&navigator.onLine!==false&&online&&admitted&&Boolean(socket?.connected);
  function revokeAdmission(){admitted=false;online=false;autoplayBlocked=false;++admissionEpoch;pendingJoin?.finish(false);++mountEpoch;playerController?.abort();loadingSource=false;sourceKey='';player?.setRemoteMode({enabled:true,isHost:false,manual:true});player?.pause({remote:true});}
  const atLive=()=>Boolean(event?.phase==='live'&&event.sourceStatus==='ready'&&Number.isFinite(event.playbackStartedAt));
  const expected=()=>Math.max(0,Math.min(Number(event?.duration)||43200,(now()-Number(event?.playbackStartedAt||now()))/1000));
@@ -19,6 +19,8 @@
  function dates(){for(const node of root.querySelectorAll('[data-night-date]')){const time=Date.parse(node.dateTime);if(Number.isFinite(time))node.textContent=date(time);}if(event){$('[data-night-event-date]').textContent=date(event.startsAt);$('[data-night-vote-deadline]').textContent='Voting '+(event.phase==='voting'?'closes ':'closed ')+date(event.votingClosesAt);}}
  function updateClock(){
   if(disposed||suspended||!event)return;
+  if(joined&&online&&navigator.onLine===false){revokeAdmission();status('Connection lost. Reconnecting to the screening…');}
+  if(joined&&!admitted&&navigator.onLine!==false&&socket?.connected&&!pendingJoin)void enter();
   const count=$('[data-night-countdown]');if(event.phase==='voting'||event.phase==='countdown'){
    const seconds=Math.max(0,Math.ceil((event.startsAt-now())/1000)),days=Math.floor(seconds/86400),hours=Math.floor(seconds%86400/3600),minutes=Math.floor(seconds%3600/60),remaining=seconds%60;
    count.textContent=seconds?'Starts in '+(days?days+'d ':hours?hours+'h ':'')+(days?hours+'h':minutes+'m '+String(remaining).padStart(2,'0')+'s'):event.sourceStatus==='loading'?'Preparing the shared source…':'Waiting for the screening to start…';
@@ -139,6 +141,17 @@
   const draft=lastDraft?.text===text?lastDraft:{text,clientId:window.crypto?.randomUUID?.()||String(Date.now())+'-'+Math.random().toString(36).slice(2)},current=epoch;lastDraft=draft;status('Sending…','[data-night-compose-status]');const button=action.target.querySelector('button');button.disabled=true;
   const timer=setTimeout(()=>{button.disabled=false;status('No confirmation yet. Try sending again.','[data-night-compose-status]');},8000);
   socket.emit('night:message',{id,text,clientId:draft.clientId},reply=>{clearTimeout(timer);if(disposed||suspended||current!==epoch)return;button.disabled=false;if(reply?.ok){appendMessage(reply.message);if(input.value.trim()===text)input.value='';lastDraft=null;status('','[data-night-compose-status]');}else{status(reply?.message||'Your message could not send. Try again.','[data-night-compose-status]');if(['signin_required','account_changed'].includes(reply?.code))void refresh();}});
+ });
+ listen(window,'offline',()=>{
+  if(disposed||suspended||!joined)return;
+  revokeAdmission();
+  status('Connection lost. Reconnecting to the screening…');
+ });
+ listen(window,'online',()=>{
+  if(disposed||suspended||!joined||!socket)return;
+  status('Reconnecting to the screening…');
+  if(socket.connected)void enter();
+  else if(typeof socket.connect==='function')socket.connect();
  });
  listen(document,'visibilitychange',()=>{if(document.hidden){const video=playerRoot?.querySelector('[data-player-video]');if(video)video.playbackRate=1;}else{void refresh();updateClock();}});
  function stop(){++epoch;revokeAdmission();for(const request of requests)request.abort();requests.clear();playerController?.abort();socket?.disconnect();socket=null;player?.pause({remote:true});clearInterval(clock);}
