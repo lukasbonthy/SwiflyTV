@@ -402,7 +402,7 @@ test('Studio glass uses one material on every browsing route and native transiti
  const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=255')).text();
  const finish=await(await fetch(base+'/assets/clean/finish.css?v=176')).text();
  const navigation=await(await fetch(base+'/assets/clean/navigation.css?v=2')).text();
- const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=281')).text();
+ const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=282')).text();
  assert.match(css,/data-st-glass="liquid"/);
  assert.match(css,/data-st-glass="subtle"/);
  assert.match(css,/data-st-glass="off"/);
@@ -415,7 +415,7 @@ test('Studio glass uses one material on every browsing route and native transiti
    assert.equal(response.status,200,route);
    const doc=parse(await response.text()).window.document;
    assert(stylesheetLink(doc,'/assets/liquid-glass/controls.css'),route+' lacks unified glass');
-   assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=281"]'),route+' uses stale glass renderer');
+   assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=282"]'),route+' uses stale glass renderer');
  }
  const watch=await(await fetch(base+'/watch/movie/101')).text();
  assert(!watch.includes('controls.css?v=189'),'watch page must be left alone');
@@ -438,11 +438,11 @@ test('v176 supplies a real, masked details backdrop with no hard border at the o
  assert.match(css,/\.svDetailShade \{/);
  assert.match(css,/\.svDetailBody \{/);
  assert(stylesheetLink(d,'/assets/clean/polish.css'));
- assert(d.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=281"]'));
+ assert(d.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=282"]'));
 });
 test('auth keeps its compact surface when the shared theme stylesheet loads',async()=>{
  const css=await(await fetch(base+'/assets/clean/polish.css?v=176')).text();
- const auth=await(await fetch(base+'/assets/clean/auth.css?v=263')).text();
+ const auth=await(await fetch(base+'/assets/clean/auth.css?v=264')).text();
  assert.match(auth,/max-width:\s*430px !important/);
  assert.doesNotMatch(css,/dsAuthShellSafe\s*\{[^}]*width:/);
  assert.match(css,/main\.dsAuthPageSafe \.dsAuthCard/);

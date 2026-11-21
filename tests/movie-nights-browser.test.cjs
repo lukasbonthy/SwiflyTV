@@ -246,6 +246,10 @@ test('standalone account pages fit and recover a Movie Nights sign-in on a narro
   assert.equal(await page.locator('.topbar').isVisible(),false);
   assert.equal(await page.locator('.mobileNav').isVisible(),false);
   assert.equal(await accountOptions.getByRole('link',{name:'Log in',exact:true}).getAttribute('aria-current'),'page');
+  const tabColor=link=>link.evaluate(element=>getComputedStyle(element).backgroundColor);
+  assert.notEqual(await tabColor(accountOptions.locator('[aria-current]')),await tabColor(accountOptions.locator('a:not([aria-current])')));
+  assert.equal(await page.locator('main[data-auth-mode] .svGlassSurface').count(),0);
+  assert.equal(await page.locator('.dsAuthCard').evaluate(element=>getComputedStyle(element).backgroundColor),'rgb(19, 24, 32)');
   await fits(page,'[data-auth-mode]');
   await shot(page,label+'-standalone-login');
 
@@ -255,6 +259,8 @@ test('standalone account pages fit and recover a Movie Nights sign-in on a narro
   await page.locator('[data-auth-submit]:enabled').waitFor();
   assert.equal(await page.locator('#swifly-react-data').count(),Number(react));
   assert.equal(await accountOptions.getByRole('link',{name:'Sign up',exact:true}).getAttribute('aria-current'),'page');
+  assert.notEqual(await tabColor(accountOptions.locator('[aria-current]')),await tabColor(accountOptions.locator('a:not([aria-current])')));
+  assert.equal(await page.locator('main[data-auth-mode] .svGlassSurface').count(),0);
   const loginUrl=new URL(await accountOptions.getByRole('link',{name:'Log in',exact:true}).getAttribute('href'),origin);
   assert.equal(loginUrl.pathname,'/login');
   assert.equal(loginUrl.searchParams.get('redirect'),redirect);

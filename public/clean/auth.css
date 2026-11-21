@@ -146,6 +146,7 @@ body.svAccountEntry .svAuthAvailability {
   color: #dce4f4; background: #202a3a; border: 1px solid #a8bde32d; border-radius: 10px;
   font-size: 13px; line-height: 1.5;
 }
+body.svAccountEntry .svAuthAvailability[hidden] { display: none; }
 body.svAccountEntry .svAuthAvailability p { flex: 1 1 145px; margin: 0; }
 body.svAccountEntry .svAuthAvailability button {
   min-height: 44px; padding: 0 6px; border: 0; background: none;
