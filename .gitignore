@@ -10,3 +10,4 @@ npm-debug.log*
 .swifly-models/
 dist/
 .qa-data/
+public/community/movie-nights-cover.webp
