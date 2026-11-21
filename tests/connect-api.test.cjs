@@ -71,8 +71,13 @@ test('the local import preserves an existing session, votes and chat and never c
  });
  const snapshot=await source.store.read(),dir=await fs.mkdtemp(path.join(os.tmpdir(),'swifly-import-'));
  t.after(()=>fs.rm(dir,{recursive:true,force:true}));
+ const incomplete={...snapshot,sessions:undefined};
+ await assert.rejects(installAccountSnapshot(dir,incomplete),{code:'invalid_account_state'});
+ const malformedUser={...snapshot,users:{[alice.user.id]:{id:alice.user.id}}};
+ await assert.rejects(installAccountSnapshot(dir,malformedUser),{code:'invalid_account_state'});
+ assert.deepEqual(await fs.readdir(dir),[]);
  assert.equal(await installAccountSnapshot(dir,JSON.stringify(snapshot)),1);
- await assert.rejects(installAccountSnapshot(dir,{version:1,users:{}}),{code:'EEXIST'});
+ await assert.rejects(installAccountSnapshot(dir,snapshot),{code:'EEXIST'});
  if(process.platform!=='win32')assert.equal((await fs.stat(path.join(dir,'accounts.json'))).mode&0o777,0o600);
  const pool=t.mock.method(require('pg'),'Pool',function(){throw Error('Local storage tried to open Postgres');});
  const store=createAccountStore({backend:'file',directory:dir,connectionString:'postgres://unused.test/swifly'});
@@ -89,6 +94,7 @@ test('the local import preserves an existing session, votes and chat and never c
 
 test('Render cutover requires a mounted disk and an imported state file',{skip:process.platform!=='linux'},async t=>{
  const dir=await fs.mkdtemp(path.join(os.tmpdir(),'swifly-hosted-import-'));
+ const seed={version:1,users:{},sessions:{},homes:{},invites:{},friends:[],requests:[],blocks:[],messages:[],notifications:[]};
  const previous=process.env.RENDER;
  t.after(async()=>{
   if(previous===undefined)delete process.env.RENDER;
@@ -102,20 +108,37 @@ test('Render cutover requires a mounted disk and an imported state file',{skip:p
  const ephemeral=createAccountStore({backend:'file',directory:dir});
  await assert.rejects(ephemeral.read(),{code:'persistent_disk_required'});
  await ephemeral.close();
- await assert.rejects(installAccountSnapshot(dir,{version:1,users:{}}),{code:'persistent_disk_required'});
+ await assert.rejects(installAccountSnapshot(dir,seed),{code:'persistent_disk_required'});
  assert.deepEqual(await fs.readdir(dir),[]);
  const resolved=await fs.realpath(dir);
  const rootMount=mountInfo;
  mountInfo+='20 10 0:5 / '+resolved+' rw - tmpfs tmpfs rw\n';
- await assert.rejects(installAccountSnapshot(dir,{version:1,users:{}}),{code:'persistent_disk_required'});
+ await assert.rejects(installAccountSnapshot(dir,seed),{code:'persistent_disk_required'});
  mountInfo=rootMount+'20 10 8:1 / '+resolved+' rw - ext4 /dev/test rw\n';
  const missing=createAccountStore({backend:'file',directory:dir});
  await assert.rejects(missing.read(),{code:'account_snapshot_required'});
  await missing.close();
- await installAccountSnapshot(dir,{version:1,users:{alice:{id:'alice'}}});
+ await installAccountSnapshot(dir,seed);
  const imported=createAccountStore({backend:'file',directory:dir});
- assert.deepEqual((await imported.read()).users,{alice:{id:'alice'}});
+ assert.deepEqual(await imported.read(),seed);
  await imported.close();
+});
+
+test('the cutover freeze allows source reads and prevents startup and transaction writes',async t=>{
+ const queries=[];
+ t.mock.method(require('pg'),'Pool',function(){
+  return {
+   on(){},
+   async query(sql){queries.push(sql);return {rows:[{data:{version:1,users:{}}}]};},
+   async connect(){throw Error('A frozen store must never open a write transaction');},
+   async end(){}
+  };
+ });
+ const store=createAccountStore({connectionString:'postgres://invalid.test/swifly',readOnly:true});
+ t.after(()=>store.close());
+ assert.deepEqual(await store.read(),{version:1,users:{}});
+ await assert.rejects(store.transaction(()=>{throw Error('Must not mutate state');}),{status:503,code:'account_store_read_only'});
+ assert.deepEqual(queries,['SELECT 1 FROM swifly_account_state WHERE id=1','SELECT data FROM swifly_account_state WHERE id=1']);
 });
 
 test('Postgres initialization recovers from a temporary startup outage without losing accounts',async t=>{
