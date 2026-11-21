@@ -12,7 +12,7 @@
  const art=value=>typeof value==='string'&&/^https:\/\/image\.tmdb\.org\/t\/p\/(?:w\d+|original)\/[A-Za-z0-9_.-]+$/.test(value)?value:'';
  const now=()=>Date.now()+serverOffset;
  const canPlay=()=>!disposed&&!suspended&&online&&admitted&&Boolean(socket?.connected);
- function revokeAdmission(){admitted=false;online=false;++admissionEpoch;pendingJoin?.finish(false);++mountEpoch;playerController?.abort();loadingSource=false;sourceKey='';player?.setRemoteMode({enabled:true,isHost:false,manual:true});player?.pause({remote:true});}
+ function revokeAdmission(){admitted=false;online=false;autoplayBlocked=false;++admissionEpoch;pendingJoin?.finish(false);++mountEpoch;playerController?.abort();loadingSource=false;sourceKey='';player?.setRemoteMode({enabled:true,isHost:false,manual:true});player?.pause({remote:true});}
  const atLive=()=>Boolean(event?.phase==='live'&&event.sourceStatus==='ready'&&Number.isFinite(event.playbackStartedAt));
  const expected=()=>Math.max(0,Math.min(Number(event?.duration)||43200,(now()-Number(event?.playbackStartedAt||now()))/1000));
  const date=value=>new Intl.DateTimeFormat(undefined,{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'}).format(new Date(Number(value)));
@@ -27,9 +27,20 @@
    const current=player.getState(),drift=expected()-current.currentTime,video=playerRoot?.querySelector('[data-player-video]');
    if(Math.abs(drift)>2.25){player.seek(expected(),{remote:true});if(video)video.playbackRate=1;}
    else if(video&&!current.paused&&!video.seeking)video.playbackRate=Math.abs(drift)>.35?(drift>0?1.035:.965):1;
-   if(current.paused&&!autoplayBlocked)void player.play({remote:true}).then(ok=>{autoplayBlocked=!ok;});
+   if(current.paused&&!autoplayBlocked)void resumeSharedPlayback();
   }
   if(socket?.connected&&id&&Date.now()-lastSync>15000){lastSync=Date.now();const sentAt=Date.now();socket.emit('night:sync',{id,sentAt},reply=>{if(reply?.ok&&!disposed&&!suspended)apply(reply,{personal:true,sentAt});});}
+ }
+ async function resumeSharedPlayback({gesture=false}={}){
+  if(!canPlay()||!joined||!following||!atLive()||!player)return false;
+  const ok=await player.play({remote:true,...(gesture?{gesture:true}:{})});
+  // A false result also means source not ready, interrupted transport or a
+  // replaced play intent. Only the player's explicit unlock UI means autoplay
+  // was denied by the browser. Do not permanently suppress retries otherwise.
+  const unlock=playerRoot?.querySelector('[data-player-unlock]');
+  if(ok){autoplayBlocked=false;return true;}
+  if(unlock&&!unlock.hidden){autoplayBlocked=true;status('Playback needs one more tap. Press Play on the screening to continue.');}
+  return false;
  }
  function followingUI(){root.dataset.nightFollowing=String(following);$('[data-night-live]').hidden=!(joined&&!following&&atLive());}
  function appendMessage(message){
@@ -80,7 +91,7 @@
   if(sourceKey!==nextSourceKey){sourceKey=nextSourceKey;loadingSource=true;const generation=mountEpoch;try{await player.loadSource({...event.source,status:'ok'},{resumeAt:atLive()?expected():0});}finally{if(generation===mountEpoch)loadingSource=false;}}
   if(!canPlay()||admission!==admissionEpoch||!player)return;
   $('[data-night-player]').hidden=!atLive();$('[data-night-lobby]').hidden=atLive();
-  if(atLive()&&following){player.seek(expected(),{remote:true});if(!autoplayBlocked)autoplayBlocked=!await player.play({remote:true});}else player.pause({remote:true});followingUI();
+  if(atLive()&&following){player.seek(expected(),{remote:true});if(!autoplayBlocked)await resumeSharedPlayback();}else player.pause({remote:true});followingUI();
  }
  function apply(data,{personal=false,sentAt=Date.now()}={}){
   if(disposed||suspended||!data)return;
@@ -94,7 +105,7 @@
   $('[data-night-phase]').textContent=({voting:'Voting open',countdown:event.sourceStatus==='loading'?'Preparing the screening':'Starting soon',live:'Live screening',ended:'Screening ended',unavailable:'Screening unavailable'}[event.phase]||'Connecting');
   $('[data-night-feature-title]').textContent=leader?.title||'The next movie is yours to choose.';$('[data-night-feature-label]').textContent=event.winner?'THE COMMUNITY’S PICK':event.phase==='voting'?'LEADING THE VOTE':'THE NEXT SCREENING';$('[data-night-feature-meta]').textContent=[leader?.year,leader?.runtime?leader.runtime+' min':''].filter(Boolean).join(' · ');
   if(art(leader?.backdrop)){let image=$('[data-night-art]');if(!image){image=make('img','nightFeatureArt');image.dataset.nightArt='';image.alt='';$('[data-night-lobby]').prepend(image);}if(image.src!==art(leader.backdrop))image.src=art(leader.backdrop);}
-  const startTime=$('.nightStart [data-night-date]');if(startTime)startTime.dateTime=new Date(event.startsAt).toISOString();$('.nightBallot .nightEyebrow').textContent=event.phase==='voting'?'YOU CHOOSE THE FEATURE':'THE COMMUNITY BALLOT';$('[data-night-event-title]').textContent=atLive()&&event.winner?event.winner.title:event.title;$('[data-night-event-date]').textContent=date(event.startsAt);$('[data-night-viewers]').textContent=event.viewers+' here';$('[data-night-on-air]').hidden=!atLive();$('[data-night-join]').disabled=event.phase==='ended'||event.sourceStatus==='error';$('[data-night-join] span').textContent=joined&&!atLive()?'You’re in':'Join screening';
+  const startTime=$('.nightStart [data-night-date]');if(startTime)startTime.dateTime=new Date(event.startsAt).toISOString();$('.nightBallot .nightEyebrow').textContent=event.phase==='voting'?'YOU CHOOSE THE FEATURE':'THE COMMUNITY BALLOT';$('[data-night-event-title]').textContent=atLive()&&event.winner?event.winner.title:event.title;$('[data-night-event-date]').textContent=date(event.startsAt);$('[data-night-viewers]').textContent=event.viewers+' here';$('[data-night-on-air]').hidden=!atLive();$('[data-night-join]').disabled=event.phase==='ended'||event.sourceStatus==='error';$('[data-night-join] span').textContent=joined?'You’re in':'Join screening';
   $('[data-night-signin]').hidden=Boolean(viewer.signedIn);$('[data-night-message-form]').hidden=!viewer.signedIn;$('[data-night-signin]').href='/login?redirect='+encodeURIComponent(location.pathname+location.search);$('[data-night-retry]').hidden=event.sourceStatus!=='error'||!viewer.signedIn;$('[data-night-refresh]').hidden=!data.code&&event.phase!=='unavailable';
   if(event.sourceStatus==='error')status('The shared source could not load. The selected film is saved; retry when you’re ready.');
   else if(online&&!data.code)status('');
@@ -115,7 +126,7 @@
  }
 
  function connect(){if(disposed||suspended||!id)return;if(typeof window.io!=='function'){status('The live connection did not load. Reload this page to try again.');return;}socket=window.io('/movie-nights');socket.on('connect',enter);socket.on('disconnect',()=>{if(disposed||suspended)return;revokeAdmission();status('Connection lost. Reconnecting to the screening…');});socket.on('connect_error',error=>{revokeAdmission();status(error?.message||'The screening could not connect. Try again.');});socket.on('night:update',data=>apply(data));socket.on('night:presence',data=>{if(data?.id===id){event.viewers=Number(data.viewers)||0;$('[data-night-viewers]').textContent=event.viewers+' here';}});socket.on('night:message',appendMessage);if(socket.connected)enter();}
- async function joinLive(){joined=true;following=true;autoplayBlocked=false;followingUI();if(!canPlay()&&!await enter()){status('Reconnecting to the screening. Playback will resume after the connection is verified.');return;}await mountPlayer();if(canPlay()&&player&&atLive()){player.seek(expected(),{remote:true});autoplayBlocked=!await player.play({remote:true,gesture:true});}else status(event?.sourceStatus==='error'?'The source needs a retry before the screening can begin.':'You’re in. The screening will start here when the film is ready.');$('[data-night-join] span').textContent='You’re in';}
+ async function joinLive(){joined=true;following=true;autoplayBlocked=false;followingUI();if(!canPlay()&&!await enter()){status('Reconnecting to the screening. Playback will resume after the connection is verified.');return;}await mountPlayer();if(canPlay()&&player&&atLive()){player.seek(expected(),{remote:true});await resumeSharedPlayback({gesture:true});}else status(event?.sourceStatus==='error'?'The source needs a retry before the screening can begin.':'You’re in. The screening will start here when the film is ready.');$('[data-night-join] span').textContent='You’re in';}
  listen(root,'click',async action=>{
   const vote=action.target.closest('[data-night-vote]');if(vote){if(!viewer.signedIn){status('Sign in to cast your vote.','[data-night-vote-status]');$('[data-night-signin]').focus();return;}if(!event||event.phase!=='voting')return;status('Saving your vote…','[data-night-vote-status]');try{apply(await request('/api/movie-nights/'+encodeURIComponent(id)+'/vote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({movieId:Number(vote.dataset.nightVote)})}),{personal:true});status('Your vote is saved.','[data-night-vote-status]');}catch(error){status(error.message,'[data-night-vote-status]');if(error.code==='account_changed'||error.code==='signin_required')void refresh();}return;}
   if(action.target.closest('[data-night-join],[data-night-live]'))void joinLive();
