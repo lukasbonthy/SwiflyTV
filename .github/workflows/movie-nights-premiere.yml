@@ -21,8 +21,8 @@ jobs:
           node-version: '20'
           cache: npm
       - run: npm ci
-      - name: First-party Movie Nights registration and premiere UI
-        run: node --test tests/movie-nights-premiere.test.cjs
+      - name: First-party Movie Nights account dialog
+        run: node --test tests/movie-nights-auth.test.cjs
       - name: Existing Movie Nights frontend regression
         run: node --test tests/movie-nights-ui.test.cjs tests/movie-nights-client.test.cjs
       - name: Production Vite build
@@ -33,13 +33,13 @@ jobs:
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
       - name: Real desktop and phone screening regression
         env:
-          SWIFLY_EXPERIENCE_SCREENSHOT_DIR: docs/evidence/movie-nights-premiere
+          SWIFLY_EXPERIENCE_SCREENSHOT_DIR: docs/evidence/movie-nights
         run: node --test --test-concurrency=2 tests/movie-nights-browser.test.cjs
-      - name: Preserve theater and live player screenshots
+      - name: Preserve Home and live screening screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: movie-nights-premiere-${{ github.sha }}-${{ github.event_name }}
-          path: docs/evidence/movie-nights-premiere/*.png
+          name: movie-nights-${{ github.sha }}-${{ github.event_name }}
+          path: docs/evidence/movie-nights/*.png
           if-no-files-found: warn
           retention-days: 7

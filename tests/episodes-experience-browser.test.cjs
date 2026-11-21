@@ -40,8 +40,13 @@ async function assertMatte(page){
  assert.equal(await page.locator('#episodes .svLiquidPane,#episodes svg.svLiquidPane__filters').count(),0,'late metadata cannot allocate episode filters');
  const surfaces=await page.locator('#episodes,#episodes *').evaluateAll(nodes=>nodes.map(node=>({tag:node.tagName,classes:node.className,filter:getComputedStyle(node).backdropFilter})).filter(node=>node.filter!=='none'));
  assert.deepEqual(surfaces,[],'every element in the real episode library stays matte');
- const backgrounds=await page.locator('#episodes .svSeason,#episodes .svEpisodeBrowserCard,#episodes .svDetailEpisodeDownload').evaluateAll(nodes=>nodes.map(node=>getComputedStyle(node).backgroundColor));
- assert(backgrounds.every(color=>/^rgb\(/.test(color)),'the episode panels, cards and downloads have opaque faces: '+JSON.stringify([...new Set(backgrounds)]));
+ const markers=await page.locator('.svSeason summary').first().evaluate(node=>[...node.children].map(child=>getComputedStyle(child,'::after').content).filter(content=>/[+−]/.test(content)));assert.equal(markers.length,1,'one season toggle marker');
+ const backgrounds=await page.locator('#episodes .svSeason,#episodes .svEpisodeBrowserCard,#episodes .svDetailEpisodeDownload').evaluateAll(nodes=>nodes.map(node=>{
+  // Flat list rows share their opaque season panel, including their subtle hover.
+  for(let parent=node;parent?.closest('#episodes');parent=parent.parentElement){const color=getComputedStyle(parent).backgroundColor;if(/^rgb\(/.test(color))return color;}
+  return 'no opaque season surface';
+ }));
+ assert(backgrounds.every(color=>/^rgb\(/.test(color)),'all rows compose over an opaque episode panel: '+JSON.stringify([...new Set(backgrounds)]));
 }
 
 test('episode library stays matte through metadata, focus, sorting and season changes at phone, iPad and desktop widths',{skip:!available&&'Chromium is not installed',timeout:60000},async()=>{

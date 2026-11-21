@@ -64,6 +64,34 @@ test('file transactions survive restart and concurrent updates',async t=>{
  await Promise.all(Array.from({length:12},()=>f.store.transaction(s=>{s.testCount=(s.testCount||0)+1;})));
  const restored=createAccountStore({directory:f.dir});assert.equal((await restored.read()).testCount,12);assert.equal(Object.keys((await restored.read()).users).length,1);await restored.close();
 });
+test('Postgres initialization recovers from a temporary startup outage without losing accounts',async t=>{
+ let now=Date.now(),offline=true,initializations=0;
+ const saved={version:1,users:{alice:{id:'alice'}}};
+ t.mock.method(Date,'now',()=>now);
+ const pool=t.mock.method(require('pg'),'Pool',function(){
+  return {
+   on(){},
+   async query(sql){
+    if(sql.startsWith('CREATE TABLE')){
+     initializations++;
+     if(offline)throw Object.assign(Error('Database quota exceeded'),{code:'53000'});
+    }
+    if(sql.startsWith('SELECT'))return {rows:[{data:saved}]};
+   },
+   async end(){}
+  };
+ });
+ const store=createAccountStore({connectionString:'postgres://invalid.test/swifly'});
+ t.after(()=>store.close());
+ await assert.rejects(store.ready,{code:'53000'});
+ await assert.rejects(store.read(),{status:503});
+ assert.equal(initializations,1);
+ offline=false;
+ now+=30001;
+ assert.deepEqual(await Promise.all([store.read(),store.read()]),[saved,saved]);
+ assert.equal(initializations,2,'concurrent readers share one recovery attempt');
+ assert.equal(pool.mock.callCount(),1,'recover on the same database pool');
+});
 test('duplicate accounts and malformed credentials are rejected and cross-origin writes fail',async t=>{
  const f=await fixture(t);await f.signup('alice');
  assert.equal((await f.call('/auth/signup',{body:{name:'x',handle:'alice',email:'alice@example.com',password:'correct-horse-123'}})).status,409);

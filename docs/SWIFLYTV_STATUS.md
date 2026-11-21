@@ -2,6 +2,14 @@
 
 Updated: November 21, 2026 (UTC).
 
+## Active follow-up — Movie Nights screening and Home row
+
+The latest request replaces the theater premiere with a dark SwiflyTV screening page and a dedicated Home row. The stage, voting, screening chat and existing first-party account dialog use the normal site palette. Home shows the real scheduled time, artwork and up to three other voting options, or a live screening link. It reads the scheduler's latest public state without querying storage, requesting media or exposing account and chat data. TV mode preserves the first visible catalog row. The branch also carries the previously reviewed source, Home period, Kids navigation and episode fixes.
+
+Base is main `d99219717dd42a3b080b4972ee6dc57c9bd34637`. The follow-up remains on `feat/swifly-movie-nights-20261116`, PR https://github.com/lukasbonthy/SwiflyTV/pull/169. The previous branch tree `63caf9c9539a5dd9a308043faac9aa4567399f6b` passed the three hosted experience groups. The current screening redesign requires fresh hosted screenshots, TV geometry and two-client playback/reconnect checks before merge. The running release remains `5faf9fb` below until Render confirms the new revision. User authorization to fix playback and merge remains in force.
+
+Production DB finding on Nov 21. The gated Movie Nights page showed storage unavailable. The existing Neon project rejected a read-only query with HTTP 402 and a quota exceeded message, and the account endpoint returned database code 53000. No account data or provider settings changed. The new interface displays this state and the existing Postgres pool can retry initialization after capacity returns. Browser verification with durable test accounts and shared video fixtures is independent of the production quota. Physical Safari and provider-wide testing remain pending.
+
 ## Released — Movie Nights theater premiere, first-party accounts and shared playback
 
 - **Merged and live:** PR https://github.com/lukasbonthy/SwiflyTV/pull/168 merged to `main`. Running application commit `5faf9fb86a4f5214b517e6c517add3774c482ff6`, Render deployment `dep-dc0jkptg1s2s73e4o25g`, confirmed `live` at `2026-11-21T06:31:51Z`. Production URL: https://swiflytv-1.onrender.com/movie-nights. Render confirmed successful build/deploy on the **exact** merge commit. Any later documentation-only checkpoint is not the application revision.

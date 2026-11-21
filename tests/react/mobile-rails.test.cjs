@@ -15,7 +15,7 @@ async function fixture(width=390){
   const flush=async()=>React.act(async()=>{const pending=[...frames.values(),...timers.values()];frames.clear();timers.clear();pending.forEach(fn=>fn(16));});
   const {MovieRailSection}=await import('../../frontend/document.mjs');
   const {createRoot}=require('react-dom/client'),root=createRoot(w.document.querySelector('main'));
-  const node={tag:'section',attrs:{class:'dsRow'},children:[{tag:'header',attrs:{class:'dsRowHead'},children:[{tag:'h2',children:['Movies']}]},{tag:'div',attrs:{class:'movieRail'},children:Array.from({length:20},(_,id)=>({tag:'article',attrs:{class:'movieCard'},children:[{tag:'a',attrs:{href:'/movie/'+(id+1),class:'posterWrap'},children:['Movie '+(id+1)]}]}))}]};
+  const node={tag:'section',attrs:{class:'dsRow','data-catalog-type':'movie','data-catalog-ids':Array.from({length:20},(_,id)=>id+1).join(',')},children:[{tag:'header',attrs:{class:'dsRowHead'},children:[{tag:'h2',children:['Movies']}]},{tag:'div',attrs:{class:'movieRail'},children:Array.from({length:20},(_,id)=>({tag:'article',attrs:{class:'movieCard'},children:[{tag:'a',attrs:{href:'/movie/'+(id+1),class:'posterWrap'},children:['Movie '+(id+1)]}]}))}]};
   await React.act(async()=>{root.render(React.createElement(MovieRailSection,{node}));});
   const rail=w.document.querySelector('[data-sv-react-rail]');Object.defineProperty(rail,'clientWidth',{get:()=>screen,configurable:true});
   rail.scrollTo=({left})=>{rail.scrollLeft=left;rail.dispatchEvent(new w.Event('scroll'));};
@@ -36,10 +36,14 @@ test('phone rails keep the same poster nodes throughout native swiping',async()=
 test('a period replacement is owned by React and resets only its rail to the new first page',async()=>{
  const f=await fixture(1280);try{
   const section=f.rail.closest('section'),heading=section.querySelector('h2');await React.act(async()=>f.w.document.querySelector('[aria-label="Next titles"]').click());
-  const cards=Array.from({length:9},(_,i)=>({tag:'article',attrs:{class:'movieCard'},children:[{tag:'a',attrs:{href:'/movie/'+(100+i),class:'posterWrap'},children:['New '+i]}]}));
-  await React.act(async()=>{const event=new f.w.CustomEvent('swifly:rail-replace',{cancelable:true,bubbles:true,detail:{cards}});f.rail.dispatchEvent(event);assert(event.defaultPrevented);});
+  assert.equal(section.dataset.catalogIds.split(',').length,20);
+  const ids=Array.from({length:9},(_,index)=>index+100);
+  const cards=ids.map((id,i)=>({tag:'article',attrs:{class:'movieCard'},children:[{tag:'a',attrs:{href:'/movie/'+id,class:'posterWrap'},children:['New '+i]}]}));
+  await React.act(async()=>{const event=new f.w.CustomEvent('swifly:rail-replace',{cancelable:true,bubbles:true,detail:{cards,ids}});f.rail.dispatchEvent(event);assert(event.defaultPrevented);});
   assert.equal(section.querySelector('h2'),heading);assert.match(f.rail.textContent,/New 0/);assert.equal(f.rail.querySelectorAll('.movieCard').length,7);assert.equal(f.rail.getAttribute('aria-label'),'Titles 1 to 7 of 9');
+  assert.equal(section.dataset.catalogType,'movie');assert.equal(section.dataset.catalogIds,ids.join(','));
   await React.act(async()=>f.w.document.querySelector('[aria-label="Next titles"]').click());assert.match(f.rail.textContent,/New 8/);
+  assert.equal(section.dataset.catalogIds,ids.join(','));
  }finally{await f.close();}
 });
 

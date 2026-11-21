@@ -2,10 +2,12 @@
 (() => {
  'use strict';
  const reduced=()=>window.matchMedia('(prefers-reduced-motion: reduce)').matches||document.body.classList.contains('reduceMotion')||document.body.dataset.stPageMotion==='false';
+ const validId=id=>/^[1-9]\d{0,9}$/.test(id);
+ const relativeUrl=url=>url.pathname+url.search+url.hash;
  const controls=[];
  for(const picker of document.querySelectorAll('details[data-movie-periods]')){
   const trigger=picker.querySelector('summary'),menu=picker.querySelector('.svPeriodMenu'),links=[...menu.querySelectorAll('a')];
-  let desired=picker.open,frame=0,timer=0,request=0,abort;
+  let desired=picker.open,frame=0,timer=0;
   picker.dataset.periodEnhanced='true';picker.dataset.periodState=desired?'open':'closed';trigger.setAttribute('aria-expanded',String(desired));menu.inert=!desired;
   const finishClose=()=>{if(!desired){picker.open=false;picker.dataset.periodState='closed';}};
   function show(open,focus=false){
@@ -37,30 +39,71 @@
   menu.addEventListener('transitionend',event=>{if(event.target===menu&&event.propertyName==='opacity')finishClose();});
   if(picker.dataset.periodRefresh){
    const row=picker.closest('[data-period-row]'),parameter=picker.dataset.periodParameter,kind=picker.dataset.periodRefresh;
+   const home=picker.closest('[data-st-home]')||document;
+   let request=0,timeout=0,abort;
+   function clearPending(){
+    ++request;
+    clearTimeout(timeout);abort?.abort();abort=undefined;
+    row?.removeAttribute('aria-busy');
+    const status=row?.querySelector('[data-period-status]');if(status)status.textContent='';
+   }
    menu.addEventListener('click',async event=>{
     const link=event.target.closest('a');if(!link||!row||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
     const period=new URL(link.href).searchParams.get(parameter);if(!['today','week','month'].includes(period))return;
-    event.preventDefault();const generation=++request;abort?.abort();abort=new AbortController();const controller=abort;show(false,true);row.setAttribute('aria-busy','true');
+    event.preventDefault();const generation=++request;clearTimeout(timeout);abort?.abort();const controller=new AbortController();abort=controller;show(false,true);row.setAttribute('aria-busy','true');
     let status=row.querySelector('[data-period-status]');if(!status){status=document.createElement('p');status.className='svPeriodStatus';status.dataset.periodStatus='';status.setAttribute('role','status');row.append(status);}status.textContent='';
-    const excluded=[...document.querySelectorAll('.svCatalogRow:not([aria-busy]) .movieCard')].filter(card=>!row.contains(card)).map(card=>card.querySelector('[data-play-id]')).filter(control=>control?.dataset.playType===kind).map(control=>control.dataset.playId).filter(id=>/^[1-9]\d*$/.test(id||'')).slice(0,160);
-    const query=new URLSearchParams({type:kind,period,exclude:excluded.join(',')});
-    const timeout=setTimeout(()=>controller.abort(),12000);
+    const excluded=new Set();
+    const hero=home.querySelector(`.dsHero [data-play-id][data-play-type="${kind}"]`);
+    if(hero&&validId(hero.dataset.playId))excluded.add(hero.dataset.playId);
+    for(const neighbor of home.querySelectorAll(`[data-catalog-ids][data-catalog-type="${kind}"]`)){
+     if(neighbor===row)continue;
+     for(const id of neighbor.dataset.catalogIds.split(','))if(validId(id))excluded.add(id);
+    }
+    const query=new URLSearchParams({type:kind,period,exclude:[...excluded].slice(0,160).join(',')});
+    timeout=setTimeout(()=>controller.abort(),12000);
     try{
-     const response=await fetch('/api/catalog/period-row?'+query,{signal:controller.signal});const data=await response.json();
-     if(!response.ok||typeof data.html!=='string'||!Array.isArray(data.cards))throw Error('This row could not refresh. Try again.');
+     const response=await fetch('/api/catalog/period-row?'+query,{signal:controller.signal});
      if(generation!==request||!row.isConnected)return;
-     const rail=row.querySelector('.movieRail'),replace=new CustomEvent('swifly:rail-replace',{bubbles:true,cancelable:true,detail:{cards:data.cards}});
-     rail.dispatchEvent(replace);if(!replace.defaultPrevented){rail.innerHTML=data.html;rail.scrollLeft=0;window.syncLibraryButtons?.(rail);window.syncWatchButtons?.(rail);}
+     const data=await response.json();
+     if(generation!==request||!row.isConnected)return;
+     if(controller.signal.aborted)throw new DOMException('Period refresh aborted','AbortError');
+     if(!response.ok||typeof data.html!=='string'||!Array.isArray(data.cards))throw Error('This row could not refresh. Try again.');
+     let ids=data.ids;
+     if(!Array.isArray(ids)){
+      // Older responses still carry every identity in the full row markup.
+      const fragment=document.createElement('template');fragment.innerHTML=data.html;
+      ids=[...fragment.content.querySelectorAll(`[data-play-id][data-play-type="${kind}"]`)].map(control=>control.dataset.playId);
+     }
+     ids=ids.map(String).filter(validId);
+     const rail=row.querySelector('.movieRail'),replace=new CustomEvent('swifly:rail-replace',{bubbles:true,cancelable:true,detail:{cards:data.cards,ids}});
+     rail.dispatchEvent(replace);
+     if(!replace.defaultPrevented){
+      rail.innerHTML=data.html;rail.scrollLeft=0;
+      row.dataset.catalogIds=ids.join(',');row.dataset.catalogType=kind;
+      window.syncLibraryButtons?.(rail);window.syncWatchButtons?.(rail);
+     }
      trigger.querySelector('span').textContent=link.textContent.trim();trigger.setAttribute('aria-label',row.querySelector('h2').textContent+' period: '+link.textContent.trim());
      for(const choice of links){if(choice===link)choice.setAttribute('aria-current','page');else choice.removeAttribute('aria-current');}
      const more=row.querySelector('.svRowMore');if(more&&data.viewHref)more.href=data.viewHref;
-     const next=new URL(location.href);next.searchParams.set(parameter,period);history.replaceState(history.state,'',next.pathname+next.search+next.hash);
-     for(const other of document.querySelectorAll('[data-period-refresh]'))for(const choice of other.querySelectorAll('.svPeriodMenu a')){const u=new URL(choice.href);u.searchParams.set(parameter,period);if(other===picker)u.searchParams.set(parameter,new URL(choice.href).searchParams.get(parameter));choice.href=u.pathname+u.search;}
+     const next=new URL(location.href);next.searchParams.set(parameter,period);history.replaceState(history.state,'',relativeUrl(next));
+     const homeSelections=new URL(link.href).searchParams;
+     for(const other of home.querySelectorAll('[data-home-period]')){
+      if(other.dataset.periodParameter!==parameter)for(const choice of other.querySelectorAll('.svPeriodMenu a')){
+       const url=new URL(choice.href);url.searchParams.set(parameter,period);choice.href=relativeUrl(url);
+      }
+      const view=other.closest('[data-period-row]')?.querySelector('.svRowMore');
+      if(view){
+       const url=new URL(view.href);
+       for(const [key,value] of homeSelections)url.searchParams.set(key,value);
+       view.href=relativeUrl(url);
+      }
+     }
      status.textContent=data.html?'':'No titles for this period. Try another option.';
     }catch(error){if(generation===request){status.textContent=error.name==='AbortError'?'This row took too long to load. Try again.':error.message||'This row could not refresh. Try again.';}}
-    finally{clearTimeout(timeout);if(generation===request)row.removeAttribute('aria-busy');}
+    finally{if(generation===request){clearTimeout(timeout);abort=undefined;row.removeAttribute('aria-busy');}}
    });
-   window.addEventListener('pagehide',()=>{++request;abort?.abort();});
+   window.addEventListener('pagehide',clearPending);
+   window.addEventListener('pageshow',event=>{if(event.persisted)clearPending();});
   }
   controls.push({picker,close:()=>show(false)});
  }

@@ -3,18 +3,20 @@
 (() => {
   'use strict';
   const root = document.querySelector('[data-movie-nights]');
-  if (!root || root.dataset.premiereAuthReady === 'true') return;
+  if (!root || root.dataset.nightAuthReady === 'true') return;
   const overlay = root.querySelector('[data-night-auth-overlay]');
   const form = root.querySelector('[data-night-auth-form]');
   if (!overlay || !form) return;
-  root.dataset.premiereAuthReady = 'true';
+  root.dataset.nightAuthReady = 'true';
   const signupFields = [...form.querySelectorAll('[data-night-signup-field]')];
   const confirmation = form.querySelector('[data-night-auth-confirm]');
   const errorBox = form.querySelector('[data-night-auth-error]');
   const submit = form.querySelector('[data-night-auth-submit]');
   const tabs = [...root.querySelectorAll('[data-night-auth-mode]')];
   const title = root.querySelector('[data-night-auth-title]');
+  const unavailableMessage = 'SwiflyTV accounts are temporarily unavailable. Please try again shortly.';
   let mode = 'signup', busy = false, opener = null, request = null;
+  let availabilityEpoch = 0, unavailable = false;
 
   function showError(message) {
     errorBox.textContent = message || '';
@@ -39,14 +41,14 @@
     confirmInput.disabled = mode !== 'signup';
     confirmInput.required = mode === 'signup';
     form.elements.password.autocomplete = mode === 'signup' ? 'new-password' : 'current-password';
-    title.textContent = mode === 'signup' ? 'Your ticket to Movie Nights.' : 'Welcome back to the theater.';
+    title.textContent = mode === 'signup' ? 'Create a SwiflyTV account' : 'Sign in to SwiflyTV';
     submit.textContent = mode === 'signup' ? 'Create SwiflyTV account' : 'Sign in to SwiflyTV';
-    showError('');
+    showError(unavailable ? unavailableMessage : '');
   }
   function close() {
     if (busy) return;
+    ++availabilityEpoch;
     overlay.hidden = true;
-    root.dataset.nightAuthVisible = 'false';
     form.reset();
     showError('');
     opener?.focus?.();
@@ -60,7 +62,7 @@
       close();
     } else if (event.key === 'Tab') {
       const focusable = [...overlay.querySelectorAll('button:not([disabled]),input:not([disabled])')]
-        .filter(node => !node.closest('[hidden]'));
+        .filter(node => node.tabIndex >= 0 && !node.closest('[hidden]'));
       if (!focusable.length) return;
       const first = focusable[0], last = focusable[focusable.length - 1];
       if (event.shiftKey && document.activeElement === first) {
@@ -72,25 +74,26 @@
   }
   async function open(next, trigger) {
     if (busy) return;
+    const check = ++availabilityEpoch;
+    unavailable = false;
+    submit.disabled = false;
     opener = trigger || document.activeElement;
     updateMode(next);
     overlay.hidden = false;
-    root.dataset.nightAuthVisible = 'true';
     document.addEventListener('keydown', onKeyDown, true);
     (mode === 'signup' ? form.elements.name : form.elements.email).focus();
     // Surface missing durable storage clearly; never substitute a device-only account.
     try {
       const response = await fetch('/api/connect/session', {credentials:'same-origin',cache:'no-store',headers:{Accept:'application/json'}});
-      if (!response.ok) return;
-      const data = await response.json();
-      if (overlay.hidden) return;
-      if (data.available === false) {
-        showError('SwiflyTV accounts need persistent server storage before registration can open. Please try again after setup.');
+      const data = await response.json().catch(() => ({}));
+      if (check !== availabilityEpoch) return;
+      if (data.available === false || response.status === 503) {
+        unavailable = true;
+        showError(unavailableMessage);
         submit.disabled = true;
-      } else submit.disabled = false;
+      }
     } catch {
       // Submission still reports the actual authentication service failure.
-      if (!overlay.hidden) submit.disabled = false;
     }
   }
   root.addEventListener('click', event => {
@@ -108,6 +111,7 @@
   for (const tab of tabs) {
     tab.addEventListener('click', event => {
       event.preventDefault();
+      if (busy) return;
       updateMode(tab.dataset.nightAuthMode);
     });
   }
@@ -115,6 +119,7 @@
     const tab = event.target.closest('[data-night-auth-mode]');
     if (!tab || !['ArrowLeft','ArrowRight'].includes(event.key)) return;
     event.preventDefault();
+    if (busy) return;
     const idx = tabs.indexOf(tab);
     const next = tabs[(idx + (event.key === 'ArrowLeft' ? -1 : 1) + tabs.length) % tabs.length];
     updateMode(next.dataset.nightAuthMode);
@@ -161,7 +166,7 @@
         signal: controller.signal
       });
       const result = await response.json().catch(() => ({}));
-      if (!response.ok) throw Error(typeof result.message === 'string' ? result.message : 'Account setup was unavailable. Please try again.');
+      if (!response.ok) throw Error(response.status === 503 ? unavailableMessage : (typeof result.message === 'string' ? result.message : 'Account setup was unavailable. Please try again.'));
       form.elements.password.value = '';
       if (form.elements.confirmPassword) form.elements.confirmPassword.value = '';
       // Reload lets Swifly's existing identity controller and Movie Night socket
@@ -173,7 +178,7 @@
       clearTimeout(timeout);
       if (request === controller) request = null;
       busy = false;
-      submit.disabled = false;
+      submit.disabled = unavailable;
     }
   });
   window.addEventListener('pagehide', () => { request?.abort(); });

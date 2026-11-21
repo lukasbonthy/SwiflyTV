@@ -10,3 +10,7 @@ test('storage failure remains a usable page with a retry and no invented movie',
  const {movieNightsMarkup}=require('../ui/movie-nights'),d=new JSDOM(movieNightsMarkup({snapshot:{event:null,upcoming:[],code:'storage_unavailable',message:'Try again shortly.'}})).window.document;
  assert.match(d.querySelector('[data-night-status]').textContent,/Try again shortly/);assert(d.querySelector('[data-night-refresh]'));assert.equal(d.querySelectorAll('[data-night-vote],video').length,0);assert.match(d.querySelector('h1').textContent,/Movie Nights/);
 });
+test('screening reading order puts the ballot before chat and the caption follows configured scheduling',()=>{
+ const {movieNightsMarkup}=require('../ui/movie-nights'),d=new JSDOM(movieNightsMarkup({snapshot:{event:{id:'2030-01-04',startsAt:Date.now(),votingClosesAt:Date.now(),phase:'ended',candidates:[],messages:[]},viewer:{signedIn:true},schedule:{days:[0],hour:9,timeZone:'UTC'}}})).window.document;
+ assert(d.querySelector('.nightBallot').compareDocumentPosition(d.querySelector('.nightChat'))&4);assert.match(d.querySelector('[data-night-schedule]').textContent,/Sunday.*9.*UTC/);assert.equal(d.querySelector('[data-night-message]').maxLength,500);assert.equal(d.querySelector('[data-night-message-form]').hidden,true);assert(d.querySelector('[data-night-ballot-signin]'));
+});

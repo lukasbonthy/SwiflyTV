@@ -29,11 +29,11 @@ test.before(async()=>{
 });
 test.after(async()=>{await browser?.close();api?.movieNights.close();if(api)await new Promise(resolve=>api.io.close(resolve));if(directory)fs.rmSync(directory,{recursive:true,force:true});});
 async function open(t,width=1440,height=1050,route='/movie-night/'+voteId){const context=await browser.newContext({viewport:{width,height},reducedMotion:'no-preference',colorScheme:'dark'});t.after(()=>context.close());const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.route('https://image.tmdb.org/**',route=>{const index=Number(/native-(\d)/.exec(route.request().url())?.[1]||0);return route.fulfill({contentType:'image/jpeg',headers:{'Access-Control-Allow-Origin':'*'},body:fs.readFileSync(path.join(fixtureRoot,'poster-'+index+'.jpg'))});});await page.route('https://fonts.googleapis.com/**',route=>route.fulfill({contentType:'text/css',body:''}));await page.route('https://fonts.gstatic.com/**',route=>route.fulfill({body:''}));await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({contentType:'application/javascript',body:''}));await page.goto(origin+route);await page.waitForFunction(()=>document.documentElement.dataset.swiflyReact==='ready'&&!document.documentElement.hasAttribute('data-sv-loading')&&window.SwiflyMovieNights?.active);return{context,page,errors};}
-async function shot(page,name){const dir=process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR;if(dir){fs.mkdirSync(dir,{recursive:true});await page.screenshot({path:path.join(dir,'movie-nights-'+name+'.png'),fullPage:true});}}
+async function shot(page,name){const dir=process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR;if(dir){fs.mkdirSync(dir,{recursive:true});await page.screenshot({path:path.join(dir,'movie-nights-'+name+'.png'),fullPage:true,animations:'disabled'});}}
 async function fits(page){const issues=await page.evaluate(()=>{const outside=[];for(const n of document.querySelectorAll('.svNightPage :is(button,input,a)')){if(n.closest('[hidden],template')||n.closest('.svPlayerStatus[hidden],.svPlayerPopover:not([open])'))continue;const r=n.getBoundingClientRect(),s=getComputedStyle(n);if(!r.width||!r.height||s.visibility==='hidden')continue;if(r.left<-.5||r.right>innerWidth+.5)outside.push({text:n.textContent,box:r.toJSON()});}return{overflow:document.documentElement.scrollWidth>innerWidth,outside};});assert.equal(issues.overflow,false,JSON.stringify(issues));assert.deepEqual(issues.outside,[]);}
 for(const [name,width,height]of [['desktop',1440,1050],['ipad',834,1112],['phone',390,844],['small-phone',320,800]])test('real Movie Nights ballot and chat fit '+name,{skip:!available,timeout:90000},async t=>{
- const f=await open(t,width,height);await f.page.locator('[data-night-vote]').first().waitFor();assert.equal(await f.page.locator('[data-night-vote]').count(),6);assert.equal(await f.page.locator('[data-night-total-votes]').textContent(),'0');await f.page.locator('[data-night-vote]').first().click();await f.page.locator('[data-night-vote-status]').filter({hasText:'Sign in'}).waitFor();await fits(f.page);await shot(f.page,name+'-voting');
- await f.page.locator('[data-night-chat-toggle]').click();assert.equal(await f.page.locator('[data-night-chat-body]').isVisible(),false);await fits(f.page);await shot(f.page,name+'-chat-collapsed');assert.deepEqual(f.errors,[]);
+ const f=await open(t,width,height);await f.page.locator('[data-night-vote]').first().waitFor();assert.equal(await f.page.locator('[data-night-vote]').count(),6);assert.equal(await f.page.locator('[data-night-total-votes]').textContent(),'0');await shot(f.page,name+'-voting');await f.page.locator('[data-night-vote]').first().click();await f.page.locator('[data-night-vote-status]').filter({hasText:'Sign in'}).waitFor();await fits(f.page);
+ if(!await f.page.locator('[data-night-chat-body]').isVisible()){await f.page.locator('[data-night-chat-toggle]').click();assert(await f.page.locator('[data-night-chat-body]').isVisible());}await f.page.locator('[data-night-chat-toggle]').click();assert.equal(await f.page.locator('[data-night-chat-body]').isVisible(),false);await fits(f.page);await shot(f.page,name+'-chat-collapsed');assert.deepEqual(f.errors,[]);
 });
 async function waitForNightPlayback(page, label){
  try{
@@ -86,25 +86,74 @@ test('a real account changes its ballot once and sends safely rendered persisten
 });
 test('real Home period menus update only their native React rails and preserve the hero',{skip:!available,timeout:90000},async t=>{
  const f=await open(t);await f.page.goto(origin+'/');await f.page.waitForFunction(()=>document.documentElement.dataset.swiflyReact==='ready'&&!document.documentElement.hasAttribute('data-sv-loading'));
- const row=f.page.locator('[data-st-home-section="trending-movies"]'),other=f.page.locator('[data-st-home-section="trending-tv"]');await row.locator('summary').scrollIntoViewIfNeeded();const before=await f.page.evaluate(()=>{window.__nightHero=document.querySelector('.dsHero');return document.querySelector('.dsHero')?.getAttribute('class');});await row.locator('summary').click();await row.locator('.svPeriodMenu a').filter({hasText:'Today'}).click();await f.page.waitForFunction(()=>document.querySelector('[data-st-home-section="trending-movies"] summary span')?.textContent==='Today');assert(await f.page.evaluate(()=>window.__nightHero===document.querySelector('.dsHero')));assert.equal(await other.locator('summary span').textContent(),'This Week');assert.equal(await row.locator('[data-sv-react-rail]').count(),1);assert.equal(await f.page.evaluate(()=>document.querySelector('[data-st-home-section="trending-movies"] .svPeriodTrigger').classList.contains('svGlassControl')),false);await row.locator('summary').click();await shot(f.page,'home-period-open');await row.locator('summary').press('Escape');assert.deepEqual(f.errors,[]);assert(before);
+ const feature=f.page.locator('[data-home-movie-night]');
+ assert.equal(await feature.locator('.svHomeNightMore').getAttribute('href'),'/movie-nights');
+ assert.match(await feature.locator('.svHomeNightSpotlight').getAttribute('href'),/^\/movie-night\//);
+ const row=f.page.locator('[data-st-home-section="trending-movies"]'),other=f.page.locator('[data-st-home-section="trending-tv"]');await row.locator('summary').scrollIntoViewIfNeeded();const before=await f.page.evaluate(()=>{window.__nightHero=document.querySelector('.dsHero');return document.querySelector('.dsHero')?.getAttribute('class');});await row.locator('summary').click();await row.locator('.svPeriodMenu a').filter({hasText:'Today'}).click();await f.page.waitForFunction(()=>document.querySelector('[data-st-home-section="trending-movies"] summary span')?.textContent==='Today');assert(await f.page.evaluate(()=>window.__nightHero===document.querySelector('.dsHero')));assert.equal(await other.locator('summary span').textContent(),'This Week');assert.equal(await row.locator('[data-sv-react-rail]').count(),1);assert.equal(await f.page.evaluate(()=>document.querySelector('[data-st-home-section="trending-movies"] .svPeriodTrigger').classList.contains('svGlassControl')),false);await row.locator('summary').click();await f.page.waitForFunction(()=>{const picker=document.querySelector('[data-st-home-section="trending-movies"] [data-movie-periods]');return picker?.dataset.periodState==='open'&&getComputedStyle(picker.querySelector('.svPeriodMenu')).opacity==='1';});assert.equal(await row.locator('.svPeriodMenu').evaluate(node=>getComputedStyle(node).backgroundColor),'rgb(24, 24, 24)');await shot(f.page,'home-period-open');await row.locator('summary').press('Escape');assert.deepEqual(f.errors,[]);assert(before);
 });
 
-test('premiere staging and first-party account panel remain usable on desktop and a narrow phone',{skip:!available,timeout:120000},async t=>{
+test('Home fits the screening artwork and deep links to real ballot picks on desktop and phone',{skip:!available,timeout:90000},async t=>{
+ const {event,schedule}=await api.movieNights.snapshot({headers:{}},voteId);
+ assert.equal(event.phase,'voting');
+ // Showcase the open ballot independently of the simultaneously live test fixture.
+ const {id,startsAt,phase,candidates,winner,viewers}=event;
+ t.mock.method(api.movieNights,'homePreview',()=>({id,startsAt,phase,candidates,winner,viewers,timeZone:schedule.timeZone}));
+ const leader=candidates.reduce((first,film)=>film.votes>first.votes?film:first);
+ const firstPick=candidates.find(film=>film.id!==leader.id);
  for(const [label,width,height] of [['desktop',1440,1050],['small-phone',320,800]]){
   const f=await open(t,width,height);
-  await f.page.locator('.nightPremiereExperience').waitFor();
-  const marquee=await f.page.locator('.nightPremiereExperience').boundingBox();
-  assert(marquee&&marquee.width>250&&marquee.x>=0&&marquee.x+marquee.width<=width+.5,JSON.stringify({label,marquee}));
-  const heading=await f.page.locator('.nightPremiereTitle').textContent();
-  assert.match(heading,/lights go down/i);
-  await f.page.locator('[data-night-auth-open]').click();
+  await f.page.goto(origin+'/');
+  await f.page.waitForFunction(()=>document.documentElement.dataset.swiflyReact==='ready'&&!document.documentElement.hasAttribute('data-sv-loading'));
+  const feature=f.page.locator('[data-home-movie-night]');
+  const spotlight=feature.locator('.svHomeNightSpotlight');
+  assert.equal(await spotlight.getAttribute('href'),'/movie-night/'+voteId+'#nightBallotTitle');
+  assert.equal(await spotlight.locator('strong').textContent(),leader.title);
+  assert.equal(await feature.locator('.svHomeNightBallot li').count(),3);
+  await feature.evaluate(node=>node.scrollIntoView({block:'center',behavior:'instant'}));
+  await f.page.waitForFunction(()=>Array.from(document.querySelectorAll('[data-home-movie-night] img')).every(img=>img.complete&&img.naturalWidth>0));
+  const box=await spotlight.boundingBox();
+  assert(box&&box.width>250&&box.height>=200&&box.x>=0&&box.x+box.width<=width+.5,JSON.stringify({label,box}));
+  assert(await f.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  const dir=process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR;
+  if(dir){
+   fs.mkdirSync(dir,{recursive:true});
+   await feature.screenshot({path:path.join(dir,'movie-nights-'+label+'-home-feature.png')});
+  }
+  await feature.getByRole('link',{name:'View '+firstPick.title+' on the ballot',exact:true}).click();
+  const target='night-film-'+firstPick.id;
+  await f.page.waitForURL(url=>url.pathname==='/movie-night/'+voteId&&url.hash==='#'+target);
+  await f.page.waitForFunction(id=>{
+   const card=document.getElementById(id);
+   if(!card?.matches(':target'))return false;
+   const {top,bottom}=card.getBoundingClientRect();
+   return top<innerHeight-48&&bottom>104;
+  },target);
+  assert.deepEqual(f.errors,[]);
+ }
+});
+
+test('the screening stage and account dialog fit desktop and a narrow phone',{skip:!available,timeout:120000},async t=>{
+ for(const [label,width,height] of [['desktop',1440,1050],['small-phone',320,800]]){
+  const f=await open(t,width,height);
+  const stage=await f.page.locator('[data-night-stage]').boundingBox();
+  const heading=await f.page.locator('.nightPageTop h1').boundingBox();
+  assert(stage&&heading&&stage.width>250&&stage.x>=0&&stage.x+stage.width<=width+.5&&stage.y>heading.y&&stage.y<height/2,JSON.stringify({label,stage,heading}));
+  const badges=await f.page.locator('.nightStageTop').boundingBox();
+  const feature=await f.page.locator('[data-night-feature-label]').boundingBox();
+  assert(badges&&feature&&feature.y>=badges.y+badges.height+8,JSON.stringify({label,badges,feature}));
+  await f.page.locator('[data-night-auth-open="signup"]').click();
   await f.page.locator('[data-night-auth-overlay]').waitFor({state:'visible'});
+  assert.equal(await f.page.locator('.topbar').isVisible(),false);
   const dialog=await f.page.locator('[data-night-auth-overlay] [role="dialog"]').boundingBox();
   assert(dialog&&dialog.x>=0&&dialog.x+dialog.width<=width+.5,JSON.stringify({label,dialog}));
   await f.page.locator('[data-night-auth-mode="login"]').click();
   assert.equal(await f.page.locator('[name="confirmPassword"]').isVisible(),false);
   assert.equal(await f.page.locator('[name="password"]').getAttribute('autocomplete'),'current-password');
   await shot(f.page,label+'-firstparty-auth');
+  await f.page.locator('[data-night-auth-close]').click();
+  await f.page.locator('[data-night-ballot-signin]').click();
+  await f.page.locator('[data-night-auth-overlay]').waitFor({state:'visible'});
+  assert.equal(await f.page.locator('[data-night-auth-mode="login"]').getAttribute('aria-selected'),'true');
   await f.page.locator('[data-night-auth-close]').click();
   await fits(f.page);
   assert.deepEqual(f.errors,[]);

@@ -5,12 +5,11 @@ const {browser,tick,cleanup}=require('./ui-helpers.cjs');
 const {movieNightsMarkup}=require('../ui/movie-nights');
 test.afterEach(cleanup);
 const sample={event:{id:'2026-11-21',title:'Movie Night',phase:'voting',startsAt:1795309200000,votingClosesAt:1795308900000,candidates:[{id:10,title:'Test Film',votes:2,year:'2024',runtime:95}],totalVotes:2,viewers:1,messages:[]},viewer:{signedIn:false},upcoming:[],serverTime:1795300000000};
-test('premiere presentation preserves the real screening controls and safely escapes data',()=>{
+test('the screening comes first and keeps the signed-out account actions accessible',()=>{
  const html=movieNightsMarkup({snapshot:sample});
  const d=new JSDOM(html).window.document;
- assert(d.querySelector('.nightPremiereBulbs'));
- assert.match(d.querySelector('.nightPremiereTitle').textContent,/lights go down/i);
- assert(d.querySelector('.nightPremierePass'));
+ assert.equal(d.querySelector('.nightPageTop h1').textContent,'Movie Nights');
+ assert(d.querySelector('.nightScreeningGrid').firstElementChild.matches('.nightBroadcast'));
  assert(d.querySelector('[data-night-stage]'));
  assert(d.querySelector('[data-night-vote]'));
  assert(d.querySelector('[data-night-chat]'));
@@ -20,7 +19,7 @@ test('premiere presentation preserves the real screening controls and safely esc
  assert(d.querySelector('[data-night-auth-open]'));
  assert(!html.includes('accounts.google.com'));
  const signed=new JSDOM(movieNightsMarkup({snapshot:{...sample,viewer:{signedIn:true,name:'Viewer'}}})).window.document;
- assert.equal(signed.querySelector('[data-night-auth-open]'),null,'signed-in viewers do not get the sign-up banner');
+ assert.equal(signed.querySelector('[data-night-auth-open="signup"]'),null,'signed-in viewers do not get the sign-up button');
 });
 test('first-party modal has accessible account modes, password confirmation and no third-party action',()=>{
  const d=new JSDOM(movieNightsMarkup({snapshot:sample})).window.document;
@@ -39,7 +38,7 @@ test('account setup sends same-origin JSON only after confirmation and can switc
   if(url==='/api/connect/session')return {ok:true,json:async()=>({available:true,user:null})};
   return {ok:false,status:409,json:async()=>({message:'That email or handle already has an account.'})};
  };
- w.boot('community/movie-nights-premiere-auth.js');
+ w.boot('community/movie-nights-auth.js');
  const open=w.document.querySelector('[data-night-auth-open]');
  open.click();await tick();
  const modal=w.document.querySelector('[data-night-auth-overlay]'),form=w.document.querySelector('[data-night-auth-form]');
@@ -74,11 +73,13 @@ test('account setup sends same-origin JSON only after confirmation and can switc
  assert.equal(modal.hidden,true);
  assert.equal(form.elements.password.value,'','password is cleared on close');
 });
-test('registration clearly fails closed when persistent account storage is unavailable',async()=>{
+test('the account dialog shows persistent storage unavailability in both modes',async()=>{
  const b=browser(movieNightsMarkup({snapshot:sample})),w=b.window;
- w.fetch=async()=>({ok:true,json:async()=>({available:false,user:null})});
- w.boot('community/movie-nights-premiere-auth.js');
+ w.fetch=async()=>({ok:false,status:503,json:async()=>({available:true,user:null})});
+ w.boot('community/movie-nights-auth.js');
  w.document.querySelector('[data-night-auth-open]').click();await tick();
- assert.match(w.document.querySelector('[data-night-auth-error]').textContent,/persistent server storage/);
+ assert.match(w.document.querySelector('[data-night-auth-error]').textContent,/temporarily unavailable/);
+ w.document.querySelector('[data-night-auth-mode="login"]').click();
+ assert.match(w.document.querySelector('[data-night-auth-error]').textContent,/temporarily unavailable/);
  assert.equal(w.document.querySelector('[data-night-auth-submit]').disabled,true);
 });
