@@ -178,8 +178,11 @@
          if((user?.id||null)!==(session.user?.id||null)||(!session.user&&localStorage.getItem(ownerKey))){
           activate(session.user||null);
          }
+         const resuming=stopped;
          stopped=false;
-         if(user)void refreshState().catch(()=>{});
+         if(user)void refreshState().catch(()=>{}).then(()=>{
+          if(resuming&&current.epoch===lifecycleEpoch)publishState();
+         });
         }catch{
          // A local library error does not decide whether the server can accept credentials.
         }
