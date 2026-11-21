@@ -14,7 +14,7 @@ From the new service runtime shell with the disk mounted, run:
 node scripts/import-account-store.cjs
 ```
 
-The command uses the existing `DATABASE_URL`. If using a private complete JSON export of the account state instead, provide its local path as the first argument. Keep the export out of Git, static web directories and logs. The importer reads the entire account state, preserves existing credentials and sessions, and refuses to replace an existing `accounts.json`.
+The command uses the existing `DATABASE_URL`. If using a private complete JSON export of the account state instead, capture it after the source is frozen or reconcile every newer write first. Provide its local path as the first argument. Keep the export out of Git, static web directories and logs. The importer reads the entire account state, preserves existing credentials and sessions, and refuses to replace an existing `accounts.json`.
 
 After a successful import, set `SWIFLY_ACCOUNT_STORE=file` and remove `DATABASE_URL` once you have secured a private copy for rollback. Redeploy with the write freeze still active. Check that the imported file is readable and a previously issued session works. File mode on Render rejects an unmounted path or an incomplete or missing snapshot.
 
