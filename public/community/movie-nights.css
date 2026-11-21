@@ -200,12 +200,16 @@ body.svCleanShell .svNightPage {
   body.svCleanShell .svNightPage { width: calc(100% - 32px); padding: 100px 0 90px; }
   .nightPageTop { display: block; }
   .nightHeaderActions { margin-top: 9px; }
-  .nightStage { aspect-ratio: 4 / 3; min-height: 250px; border-radius: 12px; }
-  .nightStage:has(.nightPlayerMount:not([hidden])) { aspect-ratio: 16 / 9; min-height: 0; }
-  .nightStageTop { inset: 12px 12px auto; }
-  .nightLobbyCopy { inset: auto 14px 14px; }
+  .nightStage { aspect-ratio: auto; border-radius: 12px; }
+  .nightStage:has(.nightPlayerMount:not([hidden])) { aspect-ratio: 16 / 9; }
+  .nightLobby {
+    position: relative; inset: auto; display: flex; flex-direction: column; width: 100%;
+    min-height: 250px; aspect-ratio: 4 / 3;
+  }
+  .nightStageTop { position: relative; inset: auto; padding: 12px 12px 0; }
+  .nightLobbyCopy { position: relative; inset: auto; margin-top: auto; padding: 16px 14px 14px; }
   .nightLobbyCopy h2 { font-size: clamp(26px, 7.7vw, 36px); }
-  .nightLobbyBottom { display: grid; gap: 9px; margin-top: 11px; }
+  .nightLobbyBottom { display: grid; grid-template-columns: minmax(0, 1fr); gap: 9px; margin-top: 11px; }
   .nightStart, .nightStart strong { font-size: 11px; }
   .nightLobbyActions { flex-wrap: wrap; }
   .nightLobbyActions .nightButton { padding-inline: 10px; font-size: 12px; }
@@ -219,7 +223,9 @@ body.svCleanShell .svNightPage {
   .nightComposer input { font-size: 16px; }
 }
 @media (max-width: 360px) {
-  .nightStage { min-height: 270px; }
+  .nightLobby { min-height: 266px; }
+  .nightLobbyActions { gap: 6px; }
+  .nightLobbyActions .nightButton { padding-inline: 8px; gap: 5px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .svNightPage *, .svMovieNightFeature * { transition: none !important; animation: none !important; }
