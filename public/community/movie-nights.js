@@ -25,7 +25,9 @@
    if(Number.isFinite(time))node.textContent=date(time);
   }
   if(event){
-   $('[data-night-event-date]').textContent=date(event.startsAt);
+   const screeningTime=$('[data-night-event-date]');
+   screeningTime.dateTime=new Date(event.startsAt).toISOString();
+   screeningTime.textContent=date(event.startsAt);
    $('[data-night-vote-deadline]').textContent=event.candidates?.length
     ? 'Voting '+(event.phase==='voting'?'closes ':'closed ')+date(event.votingClosesAt) : '';
   }
@@ -81,11 +83,19 @@
    poster.append(image);
   }
   const copy=make('div','nightBallotCopy');
-  copy.append(make('h3','',film.title),make('p','',[film.year,film.runtime?film.runtime+' min':''].filter(Boolean).join(' · ')));
-  const totals=make('div','nightVoteTotals'),votes=make('span'),number=make('b'),percent=make('span');
+  const info=make('div','nightBallotInfo');
+  const meta=make('p','nightBallotMeta',[film.year,film.runtime?film.runtime+' min':''].filter(Boolean).join(' · '));
+  const winner=make('span','nightBallotWinner','Screening pick');
+  meta.hidden=!meta.textContent;
+  winner.hidden=true;
+  winner.dataset.nightFilmWinner='';
+  info.append(make('h3','',film.title),meta,winner);
+  const vote=make('div','nightBallotVote');
+  const totals=make('div','nightVoteTotals'),votes=make('span'),number=make('b'),unit=make('span'),percent=make('span');
   number.dataset.nightFilmVotes='';
+  unit.dataset.nightFilmVoteUnit='';
   percent.dataset.nightFilmPercent='';
-  votes.append(number,document.createTextNode(' votes'));
+  votes.append(number,unit);
   totals.append(votes,percent);
   const bar=make('span','nightVoteBar');
   bar.setAttribute('aria-hidden','true');
@@ -94,7 +104,8 @@
   button.type='button';
   button.dataset.nightVote=String(film.id);
   button.append(make('span'));
-  copy.append(totals,bar,button);
+  vote.append(totals,bar);
+  copy.append(info,vote,button);
   card.append(poster,copy);
   return card;
  }
@@ -111,11 +122,15 @@
    grid.dataset.ballotKeys=keys;
   }
   films.forEach((film,index)=>{
-   const card=grid.children[index],mine=Number(event.yourVote)===film.id;
-   const percent=event.totalVotes?Math.round(100*film.votes/event.totalVotes):0;
+   const card=grid.children[index],mine=Number(event.yourVote)===Number(film.id);
+   const winner=Number(event.winner?.id)===Number(film.id),votes=Number(film.votes)||0;
+   const percent=event.totalVotes?Math.round(100*votes/event.totalVotes):0;
    const button=card.querySelector('[data-night-vote]');
    card.classList.toggle('isSelected',mine);
-   card.querySelector('[data-night-film-votes]').textContent=film.votes;
+   card.classList.toggle('isWinner',winner);
+   card.querySelector('[data-night-film-winner]').hidden=!winner;
+   card.querySelector('[data-night-film-votes]').textContent=votes;
+   card.querySelector('[data-night-film-vote-unit]').textContent=votes===1?' vote':' votes';
    card.querySelector('[data-night-film-percent]').textContent=percent+'%';
    card.querySelector('.nightVoteBar i').style.width=percent+'%';
    button.setAttribute('aria-pressed',String(mine));
@@ -185,11 +200,10 @@
    if(!image){image=make('img','nightFeatureArt');image.dataset.nightArt='';image.alt='';$('[data-night-lobby]').prepend(image);}
    if(image.src!==backdrop)image.src=backdrop;
   }else image?.remove();
-  const startTime=$('.nightStart [data-night-date]');
-  if(startTime)startTime.dateTime=new Date(event.startsAt).toISOString();
   $('[data-night-event-title]').textContent=atLive()&&event.winner?event.winner.title:event.title;
   $('[data-night-viewers]').textContent=event.viewers+' here';
   $('[data-night-presence]').hidden=storageUnavailable;
+  $('[data-night-share]').hidden=false;
   $('[data-night-on-air]').hidden=!atLive();
   $('[data-night-view-ballot]').hidden=!open;
   const join=$('[data-night-join]');
@@ -314,5 +328,7 @@
  listen(window,'storage',action=>{if(action.key==='swiflytv.accountOwner')accountChanged(String(action.newValue||'guest')==='guest'?'':String(action.newValue||''));});
 
  window.SwiflyMovieNights=Object.freeze({refresh,join:joinLive,destroy,get active(){return !disposed;}});
- apply(state,{personal:true});if(window.matchMedia('(max-width:620px)').matches){$('[data-night-chat-body]').hidden=true;$('[data-night-chat-toggle]').setAttribute('aria-expanded','false');$('[data-night-chat-toggle]').textContent='Show';$('[data-night-chat]').dataset.collapsed='true';}connect();clock=setInterval(updateClock,1000);dates();
+ apply(state,{personal:true});
+ if(event?.phase!=='live'&&window.matchMedia('(max-width:620px)').matches){$('[data-night-chat-body]').hidden=true;$('[data-night-chat-toggle]').setAttribute('aria-expanded','false');$('[data-night-chat-toggle]').textContent='Show';$('[data-night-chat]').dataset.collapsed='true';}
+ connect();clock=setInterval(updateClock,1000);dates();
 })();

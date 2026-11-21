@@ -105,15 +105,23 @@ function nightMessage(message, timeZone = 'America/New_York') {
 
 function ballotCard(film, event) {
   const mine = Number(event.yourVote) === Number(film.id);
+  const winner = Number(event.winner?.id) === Number(film.id);
   const votes = Number(film.votes) || 0;
   const percent = event.totalVotes ? Math.round(100 * votes / event.totalVotes) : 0;
   const poster = artwork(film.poster);
   const meta = [film.year, film.runtime ? film.runtime + ' min' : ''].filter(Boolean).join(' · ');
-  return `<article class="nightBallotCard${mine ? ' isSelected' : ''}" id="night-film-${esc(film.id)}" data-night-candidate="${esc(film.id)}">
+  return `<article class="nightBallotCard${mine ? ' isSelected' : ''}${winner ? ' isWinner' : ''}" id="night-film-${esc(film.id)}" data-night-candidate="${esc(film.id)}">
     <div class="nightBallotPoster">${poster ? `<img src="${esc(poster)}" alt="" width="200" height="300" loading="lazy" decoding="async">` : ''}</div>
-    <div class="nightBallotCopy"><h3>${esc(film.title)}</h3><p>${esc(meta)}</p>
-      <div class="nightVoteTotals"><span><b data-night-film-votes>${votes}</b> votes</span><span data-night-film-percent>${percent}%</span></div>
-      <span class="nightVoteBar" aria-hidden="true"><i style="width:${percent}%"></i></span>
+    <div class="nightBallotCopy">
+      <div class="nightBallotInfo">
+        <h3>${esc(film.title)}</h3>
+        <p class="nightBallotMeta"${meta ? '' : ' hidden'}>${esc(meta)}</p>
+        <span class="nightBallotWinner" data-night-film-winner${winner ? '' : ' hidden'}>Screening pick</span>
+      </div>
+      <div class="nightBallotVote">
+        <div class="nightVoteTotals"><span><b data-night-film-votes>${votes}</b><span data-night-film-vote-unit> ${votes === 1 ? 'vote' : 'votes'}</span></span><span data-night-film-percent>${percent}%</span></div>
+        <span class="nightVoteBar" aria-hidden="true"><i style="width:${percent}%"></i></span>
+      </div>
       <button class="nightVoteButton" type="button" data-night-vote="${esc(film.id)}" aria-pressed="${mine}"${event.phase !== 'voting' ? ' disabled' : ''}><span>${mine ? 'Your vote' : event.phase === 'voting' ? 'Vote' : 'Voting closed'}</span></button>
     </div>
   </article>`;
@@ -168,8 +176,8 @@ function movieNightsMarkup({snapshot = {}, playerHtml = '', accountNotice = ''} 
   const serialized = JSON.stringify(snapshot).replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
   return `<main class="svNightPage dsPlainPage" data-movie-nights data-night-phase-state="${esc(phase)}" data-night-id="${esc(event?.id || '')}">
     <div class="nightPageTop">
-      <div><nav class="nightBreadcrumb" aria-label="Community"><a href="/social?tab=chat">Community</a><span aria-hidden="true">/</span><span>Movie Nights</span></nav>
-        <h1>Movie Nights</h1><p>Vote for the next film, then watch it together.</p>
+      <div><nav class="nightBreadcrumb" aria-label="Community"><a href="/social?tab=chat">Community</a></nav>
+        <h1>Movie Nights</h1>
       </div>
       <div class="nightHeaderActions">
         ${viewer.signedIn ? '' : '<button class="nightButton" type="button" data-night-auth-open="signup">Create account</button>'}
@@ -180,41 +188,41 @@ function movieNightsMarkup({snapshot = {}, playerHtml = '', accountNotice = ''} 
       <section class="nightBroadcast" aria-label="Featured screening">
         <div class="nightStage" data-night-stage>
           <div class="nightLobby" data-night-lobby>
+            <img class="nightCoverArt" src="${eventCover}" alt="" width="400" height="600" loading="lazy">
             ${picture ? `<img class="nightFeatureArt" data-night-art src="${esc(picture)}" alt="" width="1280" height="720" fetchpriority="high">` : ''}
             <div class="nightStageShade"></div>
             <div class="nightStageTop">
               <span class="nightPhase" data-night-phase>${esc(phaseLabel(event))}</span>
-              <span class="nightPresence" data-night-presence${snapshot.code === 'storage_unavailable' ? ' hidden' : ''}>${icon('people')}<span data-night-viewers>${Number(event?.viewers) || 0} here</span></span>
             </div>
             <div class="nightLobbyCopy">
               <span class="nightEyebrow" data-night-feature-label>${event?.winner ? 'COMMUNITY PICK' : leader ? 'ON THE BALLOT' : 'SCHEDULED SCREENING'}</span>
               <h2 data-night-feature-title>${esc(leader?.title || 'The next screening')}</h2>
               <p data-night-feature-meta>${esc([leader?.year, leader?.runtime ? leader.runtime + ' min' : ''].filter(Boolean).join(' · '))}</p>
-              <div class="nightLobbyBottom">
-                <div class="nightStart"><span>${icon('clock')}${date || '<time data-night-date>Schedule unavailable</time>'}</span><strong data-night-countdown>${open ? 'Voting is open' : phase === 'live' ? 'The screening is live' : ''}</strong></div>
-                <div class="nightLobbyActions"><a class="nightButton nightButtonPrimary" href="#nightBallotTitle" data-night-view-ballot${open ? '' : ' hidden'}>View ballot ${icon('arrow')}</a>
-                  <button class="nightButton" type="button" data-night-join${joinDisabled ? ' hidden disabled' : ''}>${icon('play')}<span>Join screening</span></button>
-                </div>
-              </div>
             </div>
           </div>
           <div class="nightPlayerMount" data-night-player hidden></div><template data-night-player-template>${playerHtml}</template>
         </div>
-        <div class="nightBroadcastInfo"><div><div class="nightEventLine"><span class="nightOnAir" data-night-on-air${phase === 'live' ? '' : ' hidden'}><i></i>LIVE</span><span data-night-event-date>${date ? esc(textDay(event.startsAt, zone)) : 'Scheduled screening'}</span></div>
-          <h2 data-night-event-title>${esc(eventTitle)}</h2><p data-night-event-copy>${context}</p></div>
-          <div class="nightScreeningActions"><button class="nightButton" type="button" data-night-live hidden>${icon('clock')}Resume live</button><button class="nightButton nightIconButton" type="button" data-night-share aria-label="Copy screening invite" title="Copy invite">${icon('link')}</button></div>
+        <div class="nightBroadcastInfo">
+          <div class="nightScreeningDetails">
+            <div class="nightEventLine">
+              <span class="nightOnAir" data-night-on-air${phase === 'live' ? '' : ' hidden'}><i aria-hidden="true"></i>Live</span>
+              <span class="nightScreeningTime">${icon('clock')}<time data-night-event-date${date ? ` datetime="${new Date(event.startsAt).toISOString()}"` : ''}>${date ? esc(textDay(event.startsAt, zone)) : 'Schedule unavailable'}</time></span>
+              <span class="nightPresence" data-night-presence${!event || snapshot.code === 'storage_unavailable' ? ' hidden' : ''}>${icon('people')}<span data-night-viewers>${Number(event?.viewers) || 0} here</span></span>
+            </div>
+            <h2 data-night-event-title>${esc(eventTitle)}</h2>
+            <strong class="nightCountdown" data-night-countdown>${open ? 'Voting is open' : phase === 'live' ? 'The screening is live' : ''}</strong>
+            <p data-night-event-copy>${context}</p>
+          </div>
+          <div class="nightScreeningActions">
+            <a class="nightButton nightButtonPrimary" href="#nightBallotTitle" data-night-view-ballot${open ? '' : ' hidden'}>View ballot ${icon('arrow')}</a>
+            <button class="nightButton" type="button" data-night-join${joinDisabled ? ' hidden disabled' : ''}>${icon('play')}<span>Join screening</span></button>
+            <button class="nightButton nightButtonPrimary" type="button" data-night-live hidden>${icon('clock')}Resume live</button>
+            <button class="nightButton nightIconButton" type="button" data-night-share aria-label="Copy screening invite" title="Copy invite"${!event ? ' hidden' : ''}>${icon('link')}</button>
+          </div>
         </div>
         <p class="nightStatus" data-night-status role="status" aria-live="polite">${esc(snapshot.message || '')}</p>
         <button class="nightTextButton" type="button" data-night-refresh${snapshot.code ? '' : ' hidden'}>Try again ${icon('arrow')}</button>
         <button class="nightTextButton" type="button" data-night-retry${event?.sourceStatus === 'error' && viewer.signedIn ? '' : ' hidden'}>Retry the shared source ${icon('arrow')}</button>
-      </section>
-      <section class="nightBallot" aria-labelledby="nightBallotTitle">
-        <header class="nightSectionHead"><div><h2 id="nightBallotTitle">${ballotTitle}</h2><p data-night-ballot-copy>${ballotCopy}</p>
-          <a class="nightBallotSignin" href="${profileUrl}" data-night-ballot-signin data-night-auth-open="login"${open && !viewer.signedIn ? '' : ' hidden'}>Sign in to vote ${icon('arrow')}</a></div>
-          <div class="nightBallotSummary" data-night-ballot-summary${hasBallot ? '' : ' hidden'}><span><strong data-night-total-votes>${Number(event?.totalVotes) || 0}</strong> votes</span><span data-night-vote-deadline>${hasBallot ? 'Voting ' + (open ? 'closes ' : 'closed ') + esc(textDay(event.votingClosesAt, zone)) : ''}</span></div>
-        </header>
-        <div class="nightBallotGrid" data-night-ballot>${hasBallot ? event.candidates.map(film => ballotCard(film, event)).join('') : '<p class="nightEmptyBallot">The ballot is currently unavailable.</p>'}</div>
-        <p class="nightVoteStatus" data-night-vote-status role="status" aria-live="polite"></p>
       </section>
       <aside class="nightChat" data-night-chat aria-label="Screening chat">
         <header class="nightChatHeader"><div>${icon('chat')}<h2>Live chat</h2></div><button type="button" class="nightTextButton" data-night-chat-toggle aria-expanded="true" aria-controls="nightChatBody">Hide</button></header>
@@ -231,6 +239,14 @@ function movieNightsMarkup({snapshot = {}, playerHtml = '', accountNotice = ''} 
           </div>
         </div>
       </aside>
+      <section class="nightBallot" aria-labelledby="nightBallotTitle">
+        <header class="nightSectionHead"><div><h2 id="nightBallotTitle">${ballotTitle}</h2><p data-night-ballot-copy>${ballotCopy}</p>
+          <a class="nightBallotSignin" href="${profileUrl}" data-night-ballot-signin data-night-auth-open="login"${open && !viewer.signedIn ? '' : ' hidden'}>Sign in to vote ${icon('arrow')}</a></div>
+          <div class="nightBallotSummary" data-night-ballot-summary${hasBallot ? '' : ' hidden'}><span><strong data-night-total-votes>${Number(event?.totalVotes) || 0}</strong> votes</span><span data-night-vote-deadline>${hasBallot ? 'Voting ' + (open ? 'closes ' : 'closed ') + esc(textDay(event.votingClosesAt, zone)) : ''}</span></div>
+        </header>
+        <div class="nightBallotGrid" data-night-ballot>${hasBallot ? event.candidates.map(film => ballotCard(film, event)).join('') : '<p class="nightEmptyBallot">The ballot is currently unavailable.</p>'}</div>
+        <p class="nightVoteStatus" data-night-vote-status role="status" aria-live="polite"></p>
+      </section>
     </div>
     <section class="nightUpcoming" aria-labelledby="nightUpcomingTitle">
       <header class="nightSectionHead"><h2 id="nightUpcomingTitle">Upcoming screenings</h2><p data-night-schedule>${esc(scheduleLabel(schedule))}</p></header>
