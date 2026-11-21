@@ -2,7 +2,13 @@
 
 Updated: November 21, 2026 (UTC).
 
-## Current release — Movie Nights and Home feature
+## Current release — Movie Nights poster and local account backend
+
+- **Production revision** PR https://github.com/lukasbonthy/SwiflyTV/pull/170 originally shipped the poster in `8aad058c2777e0d81c65e63dc878e3b4b96fe64c`. PR https://github.com/lukasbonthy/SwiflyTV/pull/171 added opt-in local account storage. Render deployed `58afb1aada2e06a19d4e245dffb2b29af11ddae5` as `dep-dc0v9760tbcc73a63ofg` at 2:45 p.m. Eastern (`2026-11-21T19:45:28.684264Z`). The deployed changes match tested branch head `a6d843cc3f68b45d27e35b37e7c428c9ccc9d4f2` and tree `0517f399b03fda04bba59a7dc74d73163ed49330`. A checkpoint-only commit does not change the deployed code.
+- **Poster** Home includes original filmstrip art bundled with SwiflyTV. It uses the film's own poster when available and falls back to the bundled cover for a missing ballot or a failed image request. Render built the optimized WebP for the previously deployed poster revision. [Combined QA](https://github.com/lukasbonthy/SwiflyTV/actions/runs/44942293459) built the WebP and passed all 11 Chromium cases, including the outage cover and a long title at 320 px. The live page could not be opened through public web retrieval in this session.
+- **Local storage** The combined workflow passed all 43 account and screening persistence checks, including preserved account sessions, votes and chat, non-overwriting import, and a write freeze. [Migration runbook](./local-account-storage.md) covers private snapshot import and activation. The existing Neon project returns HTTP 402 for read-only queries and cutover is pending a readable export and a durable data directory. The current Render service has no attached persistent disk. An existing server with its own durable disk can run the file backend without adding a managed database.
+
+## Previous release — Movie Nights and Home feature
 
 - **Merged and live:** PR https://github.com/lukasbonthy/SwiflyTV/pull/169 landed as `bf4c155016ad521efe26a98940315e08bf4a5a1a`. Render deployment `dep-dc0tuh3rjlhs73abri10` went live November 21 at 1:14 p.m. Eastern (`2026-11-21T18:14:43.282691Z`). Its tree `ffc1a8ab2eefd4b7adcbff0c915328d45a9f1124` matches tested remote head `5e7d240dc6eb329c3630e0c06ef100f1ea61e91e` and the GitHub PR merge test tree. A later checkpoint-only commit does not change the deployed application.
 - **Screening and Home:** The site uses a dark screening stage with chat alongside it on desktop and below the ballot on phones. Home gives Movie Nights a full row with the real screening schedule, film artwork, ballot shortcuts and a live entry point. It reads the scheduler's public cache. The release includes the reviewed first-party account, playback, episode, period picker, Kids navigation and TV frame fixes.
