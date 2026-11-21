@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ONNXRUNTIME_NODE_INSTALL_CUDA: skip
-    timeout-minutes: 12
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -25,3 +25,9 @@ jobs:
         run: node --test tests/movie-nights-ui.test.cjs tests/movie-nights-client.test.cjs
       - name: Production Vite build
         run: npm run build
+      - name: Install Chromium
+        run: node node_modules/playwright-core/cli.js install chromium
+      - name: Real desktop and phone screening regression
+        env:
+          SWIFLY_EXPERIENCE_SCREENSHOT_DIR: docs/evidence/movie-nights-premiere
+        run: node --test --test-concurrency=2 tests/movie-nights-browser.test.cjs
