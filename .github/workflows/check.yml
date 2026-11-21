@@ -24,6 +24,8 @@ jobs:
         run: node node_modules/playwright-core/cli.js install chromium
       # Check Home composition and real backdrop optics before the wider suite.
       - run: node --test --test-concurrency=2 tests/catalog-refinement-browser.test.cjs tests/featured-presentation-browser.test.cjs tests/featured-rotation-browser.test.cjs tests/hero-glass-backdrop.test.cjs tests/artwork-entry-browser.test.cjs
+      - name: Install FFmpeg for live-screening video fixtures
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
       - name: Check Movie Nights premiere layouts, account flow and synchronized playback
         if: ${{ !cancelled() && steps.browser-install.outcome == 'success' }}
         env:
