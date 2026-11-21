@@ -2,7 +2,13 @@
 
 Updated: November 21, 2026 (UTC).
 
-## Current release — Temporary accounts on Render
+## Current release — Movie Nights screening room
+
+- **Production:** [PR #174](https://github.com/lukasbonthy/SwiflyTV/pull/174) shipped application commit `c500759c3b9a84e8e50631ac9557ef7bd65f92b3` and tested tree `0d4be94963f8e1a2c6e20e6ac7eae716ec347a9c` as Render deployment `dep-dc10irnlk1mc73fv9i70`. It went live November 21 at 4:14 p.m. Eastern (`2026-11-21T21:14:13.604112Z`). This deployment restarted the temporary account store. The existing site gate passed production HTTP checks.
+- **Screening UI:** Movie Nights keeps the lobby and player in a stable 16:9 frame. Watch controls and viewer presence stay below it, with chat alongside on desktop and directly underneath on phones. Chat opens at showtime on phones unless the viewer has chosen to collapse it. The condensed ballot identifies the winner and retains the reader's own vote when voting closes. The bundled event art covers missing or failed backdrops.
+- **Verification:** 121 focused local checks passed. [Hosted QA](https://github.com/lukasbonthy/SwiflyTV/actions/runs/44950152240) built the exact tree and passed all 13 Chromium cases, including synchronized viewers, reconnect, the 320 px live layout and temporary signup. Reviewed the exact desktop ballot and 320 px live screenshots. Production page rendering requires site access. A later documentation checkpoint does not change the running application.
+
+## Prior release — Temporary accounts on Render
 
 - **Production:** [PR #173](https://github.com/lukasbonthy/SwiflyTV/pull/173) deployed application commit `526244a5c27969d995f6c0f77504ab2f7f719638` and tested tree `85b140bf9936b83b8fbf064004006645b77c1006` as `dep-dc108qh42hec73feepsg`. It went live November 21 at 3:53 p.m. Eastern (`2026-11-21T20:53:12.134704Z`). Startup logs confirmed temporary account storage was active.
 - **Storage:** With the user's approval, the existing single-instance Render service uses `SWIFLY_ACCOUNT_STORE=temporary`. The running app opens neither PostgreSQL nor an account file. The temporary store starts empty and discards accounts, sessions, synced lists, votes and chat on restart or redeploy. The existing database and records were preserved. No disk was added. Standalone auth and the Movie Nights dialog disclose the reset behavior.
