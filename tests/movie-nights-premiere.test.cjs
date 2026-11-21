@@ -61,7 +61,7 @@ test('account setup sends same-origin JSON only after confirmation and can switc
  assert.equal(JSON.parse(signup.opts.body).handle,'testviewer');
  assert.match(w.document.querySelector('[data-night-auth-error]').textContent,/already has an account/);
  const loginTab=w.document.querySelector('[data-night-auth-mode="login"]'),authRoot=w.document.querySelector('[data-movie-nights]');
- const tabDiagnostics={insideRoot:authRoot.contains(loginTab),connected:loginTab.isConnected,disabled:loginTab.disabled,tabCount:authRoot.querySelectorAll('[data-night-auth-mode]').length};
+ const tabDiagnostics={insideRoot:authRoot.contains(loginTab),connected:loginTab.isConnected,disabled:loginTab.disabled,tabCount:authRoot.querySelectorAll('[data-night-auth-mode]').length,insideSignin:!!loginTab.closest('[data-night-signin]'),insideOpen:!!loginTab.closest('[data-night-auth-open]'),parentTag:loginTab.parentElement?.tagName};
  let clicked=false;loginTab.addEventListener('click',()=>{clicked=true;});
  loginTab.click();
  assert.equal(clicked,true,'login tab must receive its click event '+JSON.stringify(tabDiagnostics));
