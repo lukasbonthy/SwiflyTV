@@ -36,3 +36,22 @@ test('cached sources cannot resume while disconnected, even after refresh or a n
 test('a pending local source attachment cannot start after its connection is revoked',async()=>{
  const f=fixture();await tick();let release;f.player.loadSource=()=>new Promise(resolve=>{release=resolve;});const joining=f.w.SwiflyMovieNights.join();await tick();f.send('disconnect');release(true);await joining;await tick();assert.equal(f.current.paused,true);f.w.SwiflyMovieNights.destroy();
 });
+
+test('a transient false play result during re-admission retries once media is ready rather than latching autoplay denial',async()=>{
+ const f=fixture();await tick();
+ await f.w.SwiflyMovieNights.join();
+ assert.equal(f.current.paused,false);
+ f.send('disconnect');assert.equal(f.current.paused,true);
+ let attempts=0;
+ f.player.play=async()=>{
+   attempts++;
+   if(attempts===1)return false; // a stale/interrupted play during transport recovery
+   f.current.paused=false;return true;
+ };
+ f.send('connect');await tick();await tick();
+ assert(attempts>=1,'the re-admitted session must try playback');
+ await new Promise(resolve=>setTimeout(resolve,1200));
+ assert(attempts>=2,'a transient failure should not be mistaken for a browser autoplay block');
+ assert.equal(f.current.paused,false,'shared playback resumes automatically when the source is ready');
+ f.w.SwiflyMovieNights.destroy();
+});
