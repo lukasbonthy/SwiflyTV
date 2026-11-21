@@ -111,6 +111,16 @@
   document.addEventListener('pointerdown',event=>{for(const control of controls)if(!control.picker.contains(event.target))control.close();});
   document.addEventListener('focusin',event=>{for(const control of controls)if(!control.picker.contains(event.target))control.close();});
  }
+ const poster=document.querySelector('.svHomeNightPoster img[data-night-event-cover]');
+ if(poster){
+  const showEventCover=()=>{
+   poster.parentElement.classList.add('isEventPoster');
+   poster.src=poster.dataset.nightEventCover;
+   delete poster.dataset.nightEventCover;
+  };
+  if(poster.complete&&!poster.naturalWidth)showEventCover();
+  else poster.addEventListener('error',showEventCover,{once:true});
+ }
  const root=document.querySelector('.svLanguagePage'),input=root?.querySelector('[data-language-search]');
  if(!input)return;
  const cards=[...root.querySelectorAll('[data-language-name]')],count=root.querySelector('[data-language-count]'),empty=root.querySelector('[data-language-empty]');

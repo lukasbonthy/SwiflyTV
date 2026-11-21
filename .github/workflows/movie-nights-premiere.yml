@@ -31,6 +31,8 @@ jobs:
         run: node node_modules/playwright-core/cli.js install chromium
       - name: Install FFmpeg for live-screening video fixtures
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+      - name: Build the production Movie Nights cover
+        run: npm run build:movie-night-art
       - name: Real desktop and phone screening regression
         env:
           SWIFLY_EXPERIENCE_SCREENSHOT_DIR: docs/evidence/movie-nights

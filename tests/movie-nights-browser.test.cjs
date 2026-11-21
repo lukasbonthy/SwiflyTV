@@ -97,20 +97,28 @@ test('Home fits the screening artwork and deep links to real ballot picks on des
  assert.equal(event.phase,'voting');
  // Showcase the open ballot independently of the simultaneously live test fixture.
  const {id,startsAt,phase,candidates,winner,viewers}=event;
- t.mock.method(api.movieNights,'homePreview',()=>({id,startsAt,phase,candidates,winner,viewers,timeZone:schedule.timeZone}));
  const leader=candidates.reduce((first,film)=>film.votes>first.votes?film:first);
+ const title='Spider-Man: Across the Spider-Verse';
+ const previewCandidates=candidates.map(film=>film===leader?{...film,title}:film);
+ t.mock.method(api.movieNights,'homePreview',()=>({id,startsAt,phase,candidates:previewCandidates,winner,viewers,timeZone:schedule.timeZone}));
  const firstPick=candidates.find(film=>film.id!==leader.id);
  for(const [label,width,height] of [['desktop',1440,1050],['small-phone',320,800]]){
   const f=await open(t,width,height);
+  if(label==='small-phone')await f.page.route(leader.poster,route=>route.abort());
   await f.page.goto(origin+'/');
   await f.page.waitForFunction(()=>document.documentElement.dataset.swiflyReact==='ready'&&!document.documentElement.hasAttribute('data-sv-loading'));
   const feature=f.page.locator('[data-home-movie-night]');
   const spotlight=feature.locator('.svHomeNightSpotlight');
   assert.equal(await spotlight.getAttribute('href'),'/movie-night/'+voteId+'#nightBallotTitle');
-  assert.equal(await spotlight.locator('strong').textContent(),leader.title);
+  const headline=spotlight.locator('strong');
+  assert.equal(await headline.textContent(),title);
   assert.equal(await feature.locator('.svHomeNightBallot li').count(),3);
   await feature.evaluate(node=>node.scrollIntoView({block:'center',behavior:'instant'}));
   await f.page.waitForFunction(()=>Array.from(document.querySelectorAll('[data-home-movie-night] img')).every(img=>img.complete&&img.naturalWidth>0));
+  const displayedPoster=await spotlight.locator('.svHomeNightPoster img').getAttribute('src');
+  if(label==='small-phone')assert(await headline.evaluate(node=>node.scrollHeight<=node.clientHeight+1),'narrow headlines are visible in full');
+  if(label==='small-phone')assert.match(displayedPoster,/^\/assets\/community\/movie-nights-cover\.(?:png|webp)$/);
+  else assert.equal(displayedPoster,leader.poster);
   const box=await spotlight.boundingBox();
   assert(box&&box.width>250&&box.height>=200&&box.x>=0&&box.x+box.width<=width+.5,JSON.stringify({label,box}));
   assert(await f.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
@@ -129,6 +137,34 @@ test('Home fits the screening artwork and deep links to real ballot picks on des
    return top<innerHeight-48&&bottom>104;
   },target);
   assert.deepEqual(f.errors,[]);
+ }
+});
+
+test('Home keeps the original poster visible during a storage outage',{skip:!available,timeout:90000},async t=>{
+ const {event,schedule}=await api.movieNights.snapshot({headers:{}},voteId);
+ t.mock.method(api.movieNights,'homePreview',()=>({
+  id:event.id,startsAt:event.startsAt,phase:'unavailable',candidates:[],winner:null,viewers:0,timeZone:schedule.timeZone
+ }));
+ for(const [label,width,height] of [['desktop',1440,1050],['small-phone',320,800]]){
+  const {page,errors}=await open(t,width,height);
+  await page.goto(origin+'/');
+  const feature=page.locator('[data-home-movie-night]');
+  await feature.evaluate(node=>node.scrollIntoView({block:'center',behavior:'instant'}));
+  const poster=feature.locator('.svHomeNightPoster img');
+  await page.waitForFunction(()=>document.querySelector('.svHomeNightPoster img')?.naturalWidth>0);
+  const cover=new URL(await poster.getAttribute('src'),origin);
+  assert.equal(cover.origin,origin);
+  assert.match(cover.pathname,/^\/assets\/community\/movie-nights-cover\.(?:png|webp)$/);
+  const [image,copy]=await Promise.all([poster.boundingBox(),feature.locator('.svHomeNightCopy').boundingBox()]);
+  assert(image&&copy&&image.width>=80&&image.height>=image.width*1.45&&copy.x+copy.width<=image.x,JSON.stringify({label,image,copy}));
+  assert.equal(await feature.locator('.svHomeNightBallot').count(),0);
+  assert.match(await feature.locator('.svHomeNightState').textContent(),/temporarily unavailable/);
+  const directory=process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR;
+  if(directory){
+   fs.mkdirSync(directory,{recursive:true});
+   await feature.screenshot({path:path.join(directory,'movie-nights-'+label+'-event-cover.png'),animations:'disabled'});
+  }
+  assert.deepEqual(errors,[]);
  }
 });
 
