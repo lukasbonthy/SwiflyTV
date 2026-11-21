@@ -121,6 +121,18 @@
   if(image.complete&&image.naturalWidth===0&&image.getAttribute('src'))fail();
  }
  for(const feature of document.querySelectorAll('.svMovieNightFeature')){
+  const reel=feature.querySelector('.svHomeNightReel');
+  reel?.addEventListener('focusin',event=>{
+   const link=event.target.closest('a');
+   if(!link||reel.scrollWidth<=reel.clientWidth)return;
+   requestAnimationFrame(()=>{
+    if(document.activeElement!==link)return;
+    const card=link.getBoundingClientRect(),rail=reel.getBoundingClientRect();
+    const clippedLeft=rail.left+4-card.left,clippedRight=card.right-rail.right+4;
+    if(clippedLeft>0)reel.scrollBy({left:-clippedLeft,behavior:'instant'});
+    else if(clippedRight>0)reel.scrollBy({left:clippedRight,behavior:'instant'});
+   });
+  });
   for(const poster of feature.querySelectorAll('img[data-night-event-cover]')){
    const cover=poster.dataset.nightEventCover;
    if(!cover)continue;

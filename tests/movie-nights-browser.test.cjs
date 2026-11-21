@@ -244,7 +244,14 @@ test('Home fits the screening artwork and deep links to real ballot picks on des
      if(active?.getAttribute('href')!==href||!poster?.naturalWidth||!rail)return false;
      const imageBox=poster.getBoundingClientRect(),railBox=rail.getBoundingClientRect();
      return imageBox.left>=railBox.left-1&&imageBox.right<=railBox.right+1;
-    },room+'#night-film-'+film.id);
+    },room+'#night-film-'+film.id,{timeout:6000}).catch(async error=>{
+     const focus=await reel.evaluate(node=>{
+      const active=document.activeElement,poster=active?.querySelector('.svHomeNightPickFrame img');
+      return {href:active?.getAttribute('href'),loaded:Boolean(poster?.naturalWidth),scrollLeft:node.scrollLeft,
+       image:poster?.getBoundingClientRect().toJSON(),rail:node.getBoundingClientRect().toJSON()};
+     });
+     throw new Error(`${label} ballot card ${index+1} never came fully into view: ${JSON.stringify(focus)}`,{cause:error});
+    });
    }
    assert(await reel.evaluate(node=>node.scrollLeft>0),label+' keeps horizontal scrolling inside the reel');
   }

@@ -231,6 +231,8 @@ body.svCleanShell .svHomeNightCopy h2 {
     scrollbar-color: #6985ab77 transparent;
   }
   .svHomeNightReel li { scroll-snap-align: start; }
+  .svHomeNightReel:focus-within { scroll-snap-type: none; }
+  .svHomeNightReel a:focus-visible { outline-offset: 1px; }
   .svHomeNightPickName { margin-top: 6px; font-size: 12px; }
   .svHomeNightPickName svg { display: none; }
 }
